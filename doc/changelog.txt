@@ -2,8 +2,13 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
--- 93.1 ---------------------------------------------------------
+-- 9x.0 ---------------------------------------------------------
+Misc:
+- support double-resolution yardmaps for buildings (these require four times as many characters, beware)
+  the engine will interpret a yardmap string as such if its FIRST (and ONLY its first) character is 'h'
 
+
+-- 93.1 ---------------------------------------------------------
 Bugfixes:
  - fixed treedrawer crash
  - fixed MT crashes
@@ -15,14 +20,7 @@ Bugfixes:
  - fixed wrong assimp texture
 
 
---- 9x.0 ---------------------------------------------------------
-Misc:
-- support double-resolution yardmaps for buildings (these require four times as many characters, beware)
-  the engine will interpret a yardmap string as such if its FIRST (and ONLY its first) character is 'h'
-
-
 -- 93.0 ---------------------------------------------------------
-
 Bugfixes:
  - fixed disappearing GUI with non-GLSL drivers & grass rendering (3dtrees=1)
  - fixed not working assimp textures
