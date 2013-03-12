@@ -118,3 +118,4 @@ void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
 		}
 	}
 }
+

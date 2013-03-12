@@ -451,11 +451,11 @@ void CBasicTreeDrawer::AddTree(int treeID, int treeType, const float3& pos, floa
 	ts.pos = pos;
 
 	const int treeSquareSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
-	const int treeSquare =
+	const int treeSquareIdx =
 		(((int)pos.x) / (treeSquareSize)) +
 		(((int)pos.z) / (treeSquareSize) * treesX);
 
-	trees[treeSquare].trees[treeID] = ts;
+	trees[treeSquareIdx].trees[treeID] = ts;
 	ResetPos(pos);
 }
 
@@ -464,11 +464,12 @@ void CBasicTreeDrawer::DeleteTree(int treeID, const float3& pos)
 	GML_STDMUTEX_LOCK(tree); // DeleteTree
 
 	const int treeSquareSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
-	const int treeSquare =
+	const int treeSquareIdx =
 		(((int)pos.x) / (treeSquareSize)) +
 		(((int)pos.z) / (treeSquareSize) * treesX);
 
-	trees[treeSquare].trees.erase(treeID);
+	trees[treeSquareIdx].trees.erase(treeID);
 
 	ResetPos(pos);
 }
+
