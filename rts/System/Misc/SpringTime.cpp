@@ -4,6 +4,7 @@
 
 #ifdef STATIC_SPRING_TIME
 
+#ifdef USING_CREG
 #include "System/creg/Serializer.h"
 
 //FIXME always use class even in non-debug! for creg!
@@ -12,7 +13,7 @@ CR_REG_METADATA(spring_time,(
 	CR_IGNORED(x),
 	CR_SERIALIZER(Serialize)
 ));
-
+#endif
 
 void spring_time::Serialize(creg::ISerializer& s)
 {
