@@ -16,7 +16,7 @@ class CVertexArray;
 
 class CFeatureDrawer: public CEventClient
 {
-	CR_DECLARE(CFeatureDrawer);
+	CR_DECLARE_STRUCT(CFeatureDrawer);
 	CR_DECLARE_SUB(DrawQuad);
 
 typedef std::map<CFeature*, float> FeatureSet;

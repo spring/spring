@@ -3,6 +3,7 @@
 #ifndef TEAMSTATISTICS_H
 #define TEAMSTATISTICS_H
 
+#include "System/creg/creg_cond.h"
 #include "System/Platform/byteorder.h"
 
 #include <cstring>
@@ -11,6 +12,8 @@
 
 struct TeamStatistics
 {
+	CR_DECLARE_STRUCT(TeamStatistics);
+
 	TeamStatistics() {
 		/*metalUsed     = energyUsed     = 0.0f;
 		metalProduced = energyProduced = 0.0f;
@@ -26,7 +29,7 @@ struct TeamStatistics
 		unitsOutCaptured = 0;
 		unitsKilled      = 0;
 		frame            = 0;*/
-		
+
 		memset(this, 0, sizeof(TeamStatistics));
 	};
 

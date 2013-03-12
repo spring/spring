@@ -29,7 +29,8 @@ public:
 	float ageSpeed;
 
 	struct SubParticle {
-		CR_DECLARE(SubParticle);
+		CR_DECLARE_STRUCT(SubParticle);
+
 		float3 pos;
 		float3 posDif;
 		float age;

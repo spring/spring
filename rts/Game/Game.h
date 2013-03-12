@@ -29,7 +29,7 @@ class CWorldDrawer;
 class CGame : public CGameController
 {
 private:
-	CR_DECLARE(CGame);	// Do not use CGame pointer in CR_MEMBER()!!!
+	CR_DECLARE_STRUCT(CGame);
 
 public:
 	CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
@@ -113,7 +113,7 @@ private:
 	void DrawSkip(bool blackscreen = true);
 	void DrawInputText();
 	void UpdateUI(bool cam);
-	
+
 	/// Format and display a chat message received over network
 	void HandleChatMsg(const ChatMessage& msg);
 

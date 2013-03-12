@@ -20,11 +20,11 @@ class CGroupHandler;
  */
 class CGroup
 {
-	CR_DECLARE(CGroup);
+	CR_DECLARE_STRUCT(CGroup);
 
 public:
 	CGroup(int id, CGroupHandler* groupHandler);
-	virtual ~CGroup();
+	~CGroup();
 	void PostLoad();
 
 	void Update();

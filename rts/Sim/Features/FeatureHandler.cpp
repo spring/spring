@@ -22,22 +22,16 @@ CFeatureHandler* featureHandler = NULL;
 /******************************************************************************/
 
 CR_BIND(CFeatureHandler, );
-
 CR_REG_METADATA(CFeatureHandler, (
-
-//	CR_MEMBER(featureDefs),
-//	CR_MEMBER(featureDefsVector),
-
+	CR_MEMBER(featureDefs),
+	CR_MEMBER(featureDefsVector),
 	CR_MEMBER(freeFeatureIndexToIdentMap),
 	CR_MEMBER(freeFeatureIdentToIndexMap),
 	CR_MEMBER(toBeFreedFeatureIDs),
 	CR_MEMBER(activeFeatures),
 	CR_MEMBER(features),
-
 	CR_MEMBER(toBeRemoved),
-	CR_MEMBER(updateFeatures),
-
-	CR_RESERVED(128)
+	CR_MEMBER(updateFeatures)
 ));
 
 /******************************************************************************/

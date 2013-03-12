@@ -14,13 +14,13 @@ static const float METAL_MAP_SQUARE_SIZE = SQUARE_SIZE * 2;
 
 class CMetalMap
 {
-	CR_DECLARE(CMetalMap);
+	CR_DECLARE_STRUCT(CMetalMap);
 
 public:
 	/** Receiving a map over all metal, and creating a map over extraction. */
 	CMetalMap(const unsigned char* map, int sizeX, int sizeZ, float metalScale);
 	/** Frees the memory used by maps. */
-	virtual ~CMetalMap();
+	~CMetalMap();
 
 	/** Returns the amount of metal over an area. */
 	float GetMetalAmount(int x1, int z1, int x2, int z2);

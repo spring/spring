@@ -17,7 +17,6 @@ CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (ProjectileParams()));
 
 CR_REG_METADATA(CLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
-	CR_MEMBER(dir),
 	CR_MEMBER(intensity),
 	CR_MEMBER(color),
 	CR_MEMBER(color2),
@@ -26,8 +25,7 @@ CR_REG_METADATA(CLaserProjectile,(
 	CR_MEMBER(speedf),
 	CR_MEMBER(stayTime),
 	CR_MEMBER(intensityFalloff),
-	CR_MEMBER(midtexx),
-	CR_RESERVED(16)
+	CR_MEMBER(midtexx)
 ));
 
 CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)

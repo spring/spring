@@ -19,7 +19,7 @@ class CCommandQueue;
 
 
 class CWaitCommandsAI {
-	CR_DECLARE(CWaitCommandsAI);
+	CR_DECLARE_STRUCT(CWaitCommandsAI);
 	CR_DECLARE_SUB(Wait);
 	CR_DECLARE_SUB(TimeWait);
 	CR_DECLARE_SUB(DeathWait);

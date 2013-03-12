@@ -58,7 +58,7 @@ private:
 	static const int NUM_TRACER_PARTS = 5;
 
 	struct TracerPart {
-		CR_DECLARE(TracerPart);
+		CR_DECLARE_STRUCT(TracerPart);
 
 		float3 pos;
 		float3 dir;

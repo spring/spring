@@ -51,8 +51,7 @@ CR_REG_METADATA(MoveDef, (
 CR_REG_METADATA(MoveDefHandler, (
 	CR_MEMBER(moveDefs),
 	CR_MEMBER(moveDefNames),
-	CR_MEMBER(checksum),
-	CR_RESERVED(16)
+	CR_MEMBER(checksum)
 ));
 
 

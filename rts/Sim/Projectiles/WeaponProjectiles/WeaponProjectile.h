@@ -116,7 +116,7 @@ protected:
 
 protected:
 	const WeaponDef* weaponDef;
-	// const CWorldObject* target;
+
 	CWorldObject* target;
 
 	unsigned int weaponDefID;

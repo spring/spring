@@ -21,7 +21,6 @@
 std::vector<CGroupHandler*> grouphandlers;
 
 CR_BIND(CGroupHandler, (0))
-
 CR_REG_METADATA(CGroupHandler, (
 	CR_MEMBER(groups),
 	CR_MEMBER(team),

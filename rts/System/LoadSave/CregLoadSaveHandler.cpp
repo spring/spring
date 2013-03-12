@@ -19,6 +19,7 @@
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/CategoryHandler.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -31,6 +32,7 @@
 #include "System/creg/Serializer.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
+
 
 CCregLoadSaveHandler::CCregLoadSaveHandler()
 	: ifs(NULL)
@@ -69,24 +71,25 @@ static void ReadString(std::istream& s, std::string& str)
 
 void CGameStateCollector::Serialize(creg::ISerializer& s)
 {
-	// GetClass() works because readmap and uh both have to exist already
 	s.SerializeObjectInstance(gs, gs->GetClass());
 	s.SerializeObjectInstance(gu, gu->GetClass());
 	s.SerializeObjectInstance(gameSetup, gameSetup->GetClass());
 	s.SerializeObjectInstance(game, game->GetClass());
 	s.SerializeObjectInstance(readmap, readmap->GetClass());
 	s.SerializeObjectInstance(quadField, quadField->GetClass());
+	s.SerializeObjectInstance(unitHandler, unitHandler->GetClass());
 	s.SerializeObjectInstance(featureHandler, featureHandler->GetClass());
 	s.SerializeObjectInstance(loshandler, loshandler->GetClass());
 	s.SerializeObjectInstance(radarhandler, radarhandler->GetClass());
 	s.SerializeObjectInstance(airBaseHandler, airBaseHandler->GetClass());
 	s.SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());
 	s.SerializeObjectInstance(CCategoryHandler::Instance(), CCategoryHandler::Instance()->GetClass());
-	s.SerializeObjectInstance(unitHandler, unitHandler->GetClass());
 	s.SerializeObjectInstance(projectileHandler, projectileHandler->GetClass());
 	s.SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
 	s.SerializeObjectInstance(&wind, wind.GetClass());
 	s.SerializeObjectInstance(inMapDrawerModel, inMapDrawerModel->GetClass());
+	s.SerializeObjectInstance(moveDefHandler, moveDefHandler->GetClass());
+	s.SerializeObjectInstance(teamHandler, teamHandler->GetClass());
 	for (int a=0; a < teamHandler->ActiveTeams(); a++) {
 		s.SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
 	}

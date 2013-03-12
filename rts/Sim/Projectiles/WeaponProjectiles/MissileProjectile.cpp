@@ -26,7 +26,6 @@ CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ProjectileParams()));
 
 CR_REG_METADATA(CMissileProjectile,(
 	CR_SETFLAG(CF_Synced),
-	CR_MEMBER(dir),
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(curSpeed),
 	// CR_MEMBER(ttl),
@@ -46,8 +45,7 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_MEMBER(isDancing),
 	CR_MEMBER(extraHeight),
 	CR_MEMBER(extraHeightDecay),
-	CR_MEMBER(extraHeightTime),
-	CR_RESERVED(16)
+	CR_MEMBER(extraHeightTime)
 ));
 
 CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponProjectile(params)
