@@ -11,6 +11,8 @@ FIND_PACKAGE_STATIC(DevIL REQUIRED)
 
 LIST(APPEND unitsync_libs ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${PNG_LIBRARY} ${TIFF_LIBRARY} ${GIF_LIBRARY})
 LIST(APPEND unitsync_libs ${SPRING_MINIZIP_LIBRARY})
+LIST(APPEND unitsync_libs ${ZLIB_LIBRARY})
+LIST(APPEND unitsync_libs ${CMAKE_DL_LIBS})
 LIST(APPEND unitsync_libs ${Boost_REGEX_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 LIST(APPEND unitsync_libs 7zip lua headlessStubs archives)
 
