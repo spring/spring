@@ -188,20 +188,23 @@ bool GetProcs() {
     // This function is used to get all other function procs
     QueryInterface = (QueryInterfaceT) GetProcAddress(hMod, "nvapi_QueryInterface");
 
+#define SaveQueryInterface(var, type, value) \
+	var = (type) (*QueryInterface)(value); \
+	if (var == NULL) return false;
     // Query the procs with an ID
     // the IDs can be retrieved by parsing the nvapi.lib such that no library has to be linked
-    CreateApplication = (CreateApplicationT) (*QueryInterface)(0x4347A9DE);
-    CreateProfile = (CreateProfileT) (*QueryInterface)(0xCC176068);
-    CreateSession = (CreateSessionT) (*QueryInterface)(0x0694D52E);
-    DeleteProfile = (DeleteProfileT) (*QueryInterface)(0x17093206);
-    DestroySession = (DestroySessionT) (*QueryInterface)(0xDAD9CFF8);
-    EnumApplications = (EnumApplicationsT) (*QueryInterface)(0x7FA2173A);
-    FindProfileByName = (FindProfileByNameT) (*QueryInterface)(0x7E4A9A0B);
-    GetProfileInfo = (GetProfileInfoT) (*QueryInterface)(0x61CD6FD6);
-    LoadSettings = (LoadSettingsT) (*QueryInterface)(0x375DBD6B);
-    SaveSettings = (SaveSettingsT) (*QueryInterface)(0xFCBC7E14);
-    SetSetting = (SetSettingT) (*QueryInterface)(0x577DD202);
-    Initialize = (InitializeT) (*QueryInterface)(0x0150E828);
+    SaveQueryInterface(CreateApplication, CreateApplicationT, 0x4347A9DE);
+    SaveQueryInterface(CreateProfile,     CreateProfileT,     0xCC176068);
+    SaveQueryInterface(CreateSession,     CreateSessionT,     0x0694D52E);
+    SaveQueryInterface(DeleteProfile,     DeleteProfileT,     0x17093206);
+    SaveQueryInterface(DestroySession,    DestroySessionT,    0xDAD9CFF8);
+    SaveQueryInterface(EnumApplications,  EnumApplicationsT,  0x7FA2173A);
+    SaveQueryInterface(FindProfileByName, FindProfileByNameT, 0x7E4A9A0B);
+    SaveQueryInterface(GetProfileInfo,    GetProfileInfoT,    0x61CD6FD6);
+    SaveQueryInterface(LoadSettings,      LoadSettingsT,      0x375DBD6B);
+    SaveQueryInterface(SaveSettings,      SaveSettingsT,      0xFCBC7E14);
+    SaveQueryInterface(SetSetting,        SetSettingT,        0x577DD202);
+    SaveQueryInterface(Initialize,        InitializeT,        0x0150E828);
 
     return true;
 }
