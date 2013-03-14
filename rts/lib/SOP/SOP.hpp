@@ -188,23 +188,23 @@ bool GetProcs() {
     // This function is used to get all other function procs
     QueryInterface = (QueryInterfaceT) GetProcAddress(hMod, "nvapi_QueryInterface");
 
-#define SaveQueryInterface(var, type, value) \
+#define SafeQueryInterface(var, type, value) \
 	var = (type) (*QueryInterface)(value); \
 	if (var == NULL) return false;
     // Query the procs with an ID
     // the IDs can be retrieved by parsing the nvapi.lib such that no library has to be linked
-    SaveQueryInterface(CreateApplication, CreateApplicationT, 0x4347A9DE);
-    SaveQueryInterface(CreateProfile,     CreateProfileT,     0xCC176068);
-    SaveQueryInterface(CreateSession,     CreateSessionT,     0x0694D52E);
-    SaveQueryInterface(DeleteProfile,     DeleteProfileT,     0x17093206);
-    SaveQueryInterface(DestroySession,    DestroySessionT,    0xDAD9CFF8);
-    SaveQueryInterface(EnumApplications,  EnumApplicationsT,  0x7FA2173A);
-    SaveQueryInterface(FindProfileByName, FindProfileByNameT, 0x7E4A9A0B);
-    SaveQueryInterface(GetProfileInfo,    GetProfileInfoT,    0x61CD6FD6);
-    SaveQueryInterface(LoadSettings,      LoadSettingsT,      0x375DBD6B);
-    SaveQueryInterface(SaveSettings,      SaveSettingsT,      0xFCBC7E14);
-    SaveQueryInterface(SetSetting,        SetSettingT,        0x577DD202);
-    SaveQueryInterface(Initialize,        InitializeT,        0x0150E828);
+    SafeQueryInterface(CreateApplication, CreateApplicationT, 0x4347A9DE);
+    SafeQueryInterface(CreateProfile,     CreateProfileT,     0xCC176068);
+    SafeQueryInterface(CreateSession,     CreateSessionT,     0x0694D52E);
+    SafeQueryInterface(DeleteProfile,     DeleteProfileT,     0x17093206);
+    SafeQueryInterface(DestroySession,    DestroySessionT,    0xDAD9CFF8);
+    SafeQueryInterface(EnumApplications,  EnumApplicationsT,  0x7FA2173A);
+    SafeQueryInterface(FindProfileByName, FindProfileByNameT, 0x7E4A9A0B);
+    SafeQueryInterface(GetProfileInfo,    GetProfileInfoT,    0x61CD6FD6);
+    SafeQueryInterface(LoadSettings,      LoadSettingsT,      0x375DBD6B);
+    SafeQueryInterface(SaveSettings,      SaveSettingsT,      0xFCBC7E14);
+    SafeQueryInterface(SetSetting,        SetSettingT,        0x577DD202);
+    SafeQueryInterface(Initialize,        InitializeT,        0x0150E828);
 
     return true;
 }
