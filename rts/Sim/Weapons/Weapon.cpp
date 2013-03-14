@@ -932,7 +932,10 @@ bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* 
 	if (targetUnit != NULL) {
 		return (targetUnit->inWater);
 	} else {
-		return (targetPos.y < 0.0f);
+		// consistent with CUnit::inWater, and needed because
+		// GUIHandler places (some) user ground-attack orders
+		// on water surface
+		return (targetPos.y <= 0.0f);
 	}
 }
 
@@ -1100,13 +1103,16 @@ bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, const CUnit*
 	if (!weaponDef->waterweapon && TargetUnitOrPositionInUnderWater(tgtPos, targetUnit))
 		return false;
 
-	// test: water -> *
-	if ((weaponMuzzlePos.y < 0.0f) && !weaponDef->fireSubmersed)
-		return false;
-
-	// test: water -> ground
-	if ((weaponMuzzlePos.y < 0.0f) && (!weaponDef->submissile) && (!TargetUnitOrPositionInWater(tgtPos, targetUnit)))
-		return false;
+	if (weaponMuzzlePos.y < 0.0f) {
+		// weapon muzzle underwater but we cannot fire underwater
+		if (!weaponDef->fireSubmersed) {
+			return false;
+		}
+		// target outside water but we cannot travel out of water
+		if (!weaponDef->submissile && !TargetUnitOrPositionInWater(tgtPos, targetUnit)) {
+			return false;
+		}
+	}
 
 	if (targetUnit && ((targetUnit->isDead       && (modInfo.fireAtKilled   == 0)) ||
 	                   (targetUnit->IsCrashing() && (modInfo.fireAtCrashing == 0)))) {
