@@ -53,8 +53,12 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 	while ((nxtIdx = extensions.find(";", curIdx)) != std::string::npos) {
 		extension = extensions.substr(curIdx, nxtIdx - curIdx);
 		extension = extension.substr(extension.find("*.") + 2);
+		extension = StringToLower(extension);
 
-		formats[StringToLower(extension)] = MODELTYPE_ASS;
+		if (formats.find(extension) == formats.end()) {
+			formats[extension] = MODELTYPE_ASS;
+		}
+
 		curIdx = nxtIdx + 1;
 	}
 }
