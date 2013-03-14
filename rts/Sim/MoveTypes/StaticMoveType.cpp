@@ -13,6 +13,10 @@ CR_REG_METADATA(CStaticMoveType, (
 
 void CStaticMoveType::SlowUpdate()
 {
+	// buildings and pseudo-static units can be transported
+	if (owner->GetTransporter() != NULL)
+		return;
+
 	// NOTE:
 	//     static buildings don't have any unitDef->moveDef, hence we need
 	//     to get the ground height instead of calling CMoveMath::yLevel()
