@@ -43,6 +43,15 @@ void CTorpedoLauncher::Update()
 	CWeapon::Update();
 }
 
+bool CTorpedoLauncher::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const
+{
+	// NOTE: only here for #3557
+	if (!TargetUnitOrPositionInWater(pos, unit))
+		return false;
+
+	return (CWeapon::TestTarget(pos, userTarget, unit));
+}
+
 void CTorpedoLauncher::FireImpl()
 {
 	float3 dir = (targetPos - weaponMuzzlePos).Normalize();

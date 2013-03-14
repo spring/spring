@@ -17,7 +17,8 @@ public:
 	float tracking;
 
 private:
-	virtual void FireImpl();
+	bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
+	void FireImpl();
 };
 
 
