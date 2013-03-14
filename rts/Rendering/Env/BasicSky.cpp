@@ -55,7 +55,6 @@ CBasicSky::CBasicSky()
 	, oldCoverBaseY(0)
 	, updatecounter(0)
 {
-	sunFlareList = glGenLists(1);
 	skytexpart = new unsigned char[512][4];
 
 	memset(alphaTransform, 0, 1024);
@@ -512,16 +511,16 @@ void CBasicSky::CreateTransformVectors()
 			alpha=1;
 		*at=(unsigned char)(alpha*255);
 
-		float d=f*2;
-		if(d>1)
-			d=1;
+		const float d = std::min(1.0f, f * 2.0f);
 		*tt++=(unsigned char)(128+d*64+(*at++)*255/(4*255));
 	}
 }
 
 void CBasicSky::DrawSun()
 {
-	const CMatrix44f discMat(camera->pos, sundir1, UpVector, sundir2);
+	if (!SunVisible(camera->pos))
+		return;
+
 	const float3 xzSunCameraPos =
 		sundir1 * camera->pos.x +
 		sundir2 * camera->pos.z;
@@ -530,8 +529,8 @@ void CBasicSky::DrawSun()
 	// sun-disc vertices might be clipped against the
 	// near-plane (which is variable) without scaling
 	glPushMatrix();
-	glMultMatrixf(discMat.m);
-	glScalef(globalRendering->zNear, globalRendering->zNear, globalRendering->zNear);
+	glTranslatef3(camera->pos);
+	glScalef(globalRendering->zNear + 0.1f, globalRendering->zNear + 0.1f, globalRendering->zNear + 0.1f);
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_ALPHA_TEST);
@@ -588,10 +587,14 @@ void CBasicSky::DrawSun()
 }
 
 void CBasicSky::UpdateSunFlare() {
-	const float3 ydir = UpVector;
-	const float3 xdir = float3(1.0f, 0.0f, 0.0f);
-	const float3 zdir = float3(0.0f, 0.0f, 1.0f);
+	if (sunFlareList != 0)
+		glDeleteLists(sunFlareList, 1);
 
+	const float3 zdir = skyLight->GetLightDir();
+	const float3 xdir = zdir.cross(UpVector);
+	const float3 ydir = zdir.cross(xdir);
+
+	sunFlareList = glGenLists(1);
 	glNewList(sunFlareList, GL_COMPILE);
 		glDisable(GL_FOG);
 		glBindTexture(GL_TEXTURE_2D, sunFlareTex);
@@ -730,6 +733,7 @@ void CBasicSky::UpdateSunDir() {
 	sunTexCoordX = 0.5f;
 	sunTexCoordY = GetTexCoordFromDir(modSunDir);
 
+	// FIXME: expensive with dynamic sun
 	UpdateSunFlare();
 }
 

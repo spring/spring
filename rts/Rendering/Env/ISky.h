@@ -27,6 +27,8 @@ public:
 	ISkyLight* GetLight() const { return skyLight; }
 	void SetLight(bool dynamic);
 
+	bool SunVisible(const float3 pos) const;
+
 	/**
 	 * Sets up OpenGL to draw fog or not, according to the value of
 	 * globalRendering->drawFog.

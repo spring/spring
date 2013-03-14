@@ -5,6 +5,7 @@
 #include "BasicSky.h"
 #include "AdvSky.h"
 #include "SkyBox.h"
+#include "Game/TraceRay.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
@@ -82,3 +83,16 @@ void ISky::SetLight(bool dynamic) {
 	else
 		skyLight = new StaticSkyLight();
 }
+
+bool ISky::SunVisible(const float3 pos) const {
+	CUnit* hitUnit = NULL;
+	CFeature* hitFeature = NULL;
+
+	// cast a ray *toward* the sun from <pos>
+	// sun is visible if no terrain blocks it
+	const float3 sunDir = skyLight->GetLightDir();
+	const float sunDist = TraceRay::GuiTraceRay(pos, sunDir, globalRendering->viewRange, NULL, hitUnit, hitFeature, false, true, false);
+
+	return (sunDist < 0.0f || sunDist >= globalRendering->viewRange);
+}
+
