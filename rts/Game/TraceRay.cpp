@@ -35,7 +35,7 @@ inline static bool TestConeHelper(
 	const CollisionVolume* cv = obj->collisionVolume;
 
 	const float3 objVec3D = cv->GetWorldSpacePos(obj, ZeroVector) - pos3D;
-	const float  objDst1D = Clamp(objVec3D.dot(dir3D), -length, length);
+	const float  objDst1D = Clamp(objVec3D.dot(dir3D), 0.0f, length);
 	const float  coneSize = math::fabs(objDst1D) * spread + 1.0f;
 
 	// theoretical impact position assuming no spread
@@ -45,9 +45,11 @@ inline static bool TestConeHelper(
 	bool ret = false;
 
 	if (obj->GetBlockingMapID() < unitHandler->MaxUnits()) {
-		ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL,    pos3D) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	} else {
-		ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL,    pos3D) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	}
 
 	if (globalRendering->drawdebugtraceray && (!GML::SimEnabled() || Threading::IsSimThread())) {
@@ -102,12 +104,13 @@ inline static bool TestTrajectoryConeHelper(
 	const CollisionVolume* cv = obj->collisionVolume;
 
 	const float3 objVec3D = cv->GetWorldSpacePos(obj, ZeroVector) - pos3D;
-	const float  objDst1D = Clamp(objVec3D.dot(dir2D), -length, length);
+	const float  objDst1D = Clamp(objVec3D.dot(dir2D), 0.0f, length);
 	const float  coneSize = math::fabs(objDst1D) * spread + baseSize;
 
 	// theoretical impact position assuming no spread
 	// note that unlike TestConeHelper these positions
 	// lie along curve f(x) here, not a straight line
+	// (if 1D object-distance is 0, pos3D == expPos3D)
 	const float3 expVec2D = dir2D * objDst1D;
 	const float3 expPos2D = pos3D + expVec2D;
 	const float3 expPos3D = expPos2D + (UpVector * (quadratic * objDst1D * objDst1D + linear * objDst1D));
@@ -115,9 +118,13 @@ inline static bool TestTrajectoryConeHelper(
 	bool ret = false;
 
 	if (obj->GetBlockingMapID() < unitHandler->MaxUnits()) {
-		ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
+		// first test the muzzle-position, then the impact-position
+		// (if neither is inside obstacle's CV, the weapon can fire)
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL,    pos3D) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	} else {
-		ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL,    pos3D) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	}
 
 	if (globalRendering->drawdebugtraceray && (!GML::SimEnabled() || Threading::IsSimThread())) {
