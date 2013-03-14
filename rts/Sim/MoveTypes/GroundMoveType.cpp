@@ -1024,7 +1024,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 
 	static const float AVOIDER_DIR_WEIGHT = 1.0f;
 	static const float DESIRED_DIR_WEIGHT = 0.5f;
-	static const float MAX_AVOIDEE_COSINE = math::cosf(105.0f * (PI / 180.0f));
+	static const float MAX_AVOIDEE_COSINE = math::cosf(120.0f * (PI / 180.0f));
 	static const float LAST_DIR_MIX_ALPHA = 0.7f;
 
 	// now we do the obstacle avoidance proper
@@ -1073,7 +1073,13 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 				continue;
 			}
 		}
+
 		// ignore objects that are more than this many degrees off-center from us
+		// NOTE:
+		//   if MAX_AVOIDEE_COSINE is too small, then this condition can be true
+		//   one frame and false the next (after avoider has turned) causing the
+		//   avoidance vector to oscillate --> units with turnInPlace = true will
+		//   slow to a crawl as a result
 		if (avoider->frontdir.dot(-(avoideeVector / avoideeDist)) < MAX_AVOIDEE_COSINE)
 			continue;
 
