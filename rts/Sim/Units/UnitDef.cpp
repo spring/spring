@@ -565,21 +565,20 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		upright           |= !canfly;
 		floatOnWater      |= canFloat;
 
-		cantBeTransported |= (!modInfo.transportAir && !canfly);
+		// we have no MoveDef, so pathType == -1 and IsAirUnit() MIGHT be true
+		cantBeTransported |= (!modInfo.transportAir && canfly);
 	} else {
 		upright           |= (moveDef->moveFamily == MoveDef::Hover);
 		upright           |= (moveDef->moveFamily == MoveDef::Ship );
 		floatOnWater      |= (moveDef->moveFamily == MoveDef::Hover);
 		floatOnWater      |= (moveDef->moveFamily == MoveDef::Ship );
 
+		// we have a MoveDef, so pathType != -1 and IsGroundUnit() MUST be true
 		cantBeTransported |= (!modInfo.transportGround && moveDef->moveFamily == MoveDef::Tank );
 		cantBeTransported |= (!modInfo.transportGround && moveDef->moveFamily == MoveDef::KBot );
 		cantBeTransported |= (!modInfo.transportShip   && moveDef->moveFamily == MoveDef::Ship );
 		cantBeTransported |= (!modInfo.transportHover  && moveDef->moveFamily == MoveDef::Hover);
 	}
-
-	// modrules transport settings
-	cantBeTransported |= (!modInfo.transportGround && IsGroundUnit());
 
 	if (IsAirUnit()) {
 		if (IsFighterUnit() || IsBomberUnit()) {
