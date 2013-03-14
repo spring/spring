@@ -351,10 +351,6 @@ CGame::~CGame()
 	CEndGameBox::Destroy();
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
 
-	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
-	UnsyncedGameCommands::DestroyInstance();
-	SyncedGameCommands::DestroyInstance();
-
 	IVideoCapturing::FreeInstance();
 
 	CLuaGaia::FreeHandler();
@@ -372,6 +368,10 @@ CGame::~CGame()
 	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		teamHandler->Team(t)->Died(false);
 	}
+
+	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
+	UnsyncedGameCommands::DestroyInstance();
+	SyncedGameCommands::DestroyInstance();
 
 	CWordCompletion::DestroyInstance();
 
