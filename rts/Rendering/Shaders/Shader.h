@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include "ShaderStates.h"
+#include "lib/gml/gmlcnf.h"
 
 
 namespace Shader {
@@ -61,17 +62,17 @@ namespace Shader {
 
 	struct IProgramObject : public SShaderFlagState {
 	public:
-		IProgramObject(const std::string& poName): name(poName), objID(0), curHash(0), valid(false), bound(false) {}
+		IProgramObject(const std::string& poName);
 		virtual ~IProgramObject() {}
 
-		virtual void Enable() = 0;
-		virtual void Disable() = 0;
+		virtual void Enable();
+		virtual void Disable();
 		virtual void Link() {}
 		virtual void Validate() {}
 		virtual void Release() = 0;
 		virtual void Reload(bool reloadFromDisk) = 0;
 		void RecompileIfNeeded();
-		bool IsBound() const { return bound; }
+		bool IsBound() const;
 
 		virtual void SetUniformTarget(int) {}
 		virtual void SetUniformLocation(const std::string&) {}
@@ -123,6 +124,9 @@ namespace Shader {
 
 		bool valid;
 		bool bound;
+#ifdef USE_GML
+		char tbound[GML_MAX_NUM_THREADS];
+#endif
 
 		SOVec shaderObjs;
 	};

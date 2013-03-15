@@ -60,6 +60,7 @@ int gmlNoGLThreadNum = GML_NO_THREAD_NUM;
 volatile bool gmlMultiThreadSim = true;
 volatile bool gmlStartSim = false;
 volatile bool gmlKeepRunning = false;
+bool gmlServerActive = false;
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
