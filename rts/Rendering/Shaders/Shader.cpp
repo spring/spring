@@ -178,8 +178,45 @@ namespace Shader {
 
 
 
+	IProgramObject::IProgramObject(const std::string& poName): name(poName), objID(0), curHash(0), valid(false), bound(false) {
+#ifdef USE_GML
+		memset(tbound, 0, sizeof(tbound));
+#endif
+	}
 
+	void IProgramObject::Enable() {
+#ifdef USE_GML
+		if (GML::ServerActive()) {
+			tbound[gmlThreadNumber] = bound ? 0 : 1;
+		} else
+#endif
+		{
+			bound = true;
+		}
+	}
 
+	void IProgramObject::Disable() {
+#ifdef USE_GML
+		if (GML::ServerActive()) {
+			tbound[gmlThreadNumber] = bound ? -1 : 0;
+		} else
+#endif
+		{
+			bound = false;
+		}
+	}
+
+	bool IProgramObject::IsBound() const {
+#ifdef USE_GML
+		if (GML::ServerActive()) {
+			char tb = tbound[gmlThreadNumber];
+			return (tb != 0) ? tb > 0 : bound;
+		} else
+#endif
+		{
+			return bound;
+		}
+	}
 
 	void IProgramObject::Release() {
 		for (SOVecIt it = shaderObjs.begin(); it != shaderObjs.end(); ++it) {
@@ -217,14 +254,14 @@ namespace Shader {
 			glEnable((*it)->GetType());
 			glBindProgramARB((*it)->GetType(), (*it)->GetObjID());
 		}
-		bound = true;
+		IProgramObject::Enable();
 	}
 	void ARBProgramObject::Disable() {
 		for (SOVecConstIt it = shaderObjs.begin(); it != shaderObjs.end(); it++) {
 			glBindProgramARB((*it)->GetType(), 0);
 			glDisable((*it)->GetType());
 		}
-		bound = false;
+		IProgramObject::Disable();
 	}
 
 	void ARBProgramObject::Link() {
@@ -276,8 +313,8 @@ namespace Shader {
 		objID = glCreateProgram();
 	}
 
-	void GLSLProgramObject::Enable() { RecompileIfNeeded(); glUseProgram(objID); bound = true; }
-	void GLSLProgramObject::Disable() { glUseProgram(0); bound = false; }
+	void GLSLProgramObject::Enable() { RecompileIfNeeded(); glUseProgram(objID); IProgramObject::Enable(); }
+	void GLSLProgramObject::Disable() { glUseProgram(0); IProgramObject::Disable(); }
 
 	void GLSLProgramObject::Link() {
 		assert(glIsProgram(objID));
