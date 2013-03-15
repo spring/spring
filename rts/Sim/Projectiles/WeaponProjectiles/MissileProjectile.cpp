@@ -88,7 +88,7 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 			const float dist = pos.distance(targetPos);
 
 			assert(maxSpeed > 0.0f);
-			assert(extraHeightTime > 0);
+			assert((std::max(dist, maxSpeed) / maxSpeed) >= 1.0f);
 
 			extraHeight = (dist * weaponDef->trajectoryHeight);
 			extraHeightTime = int(std::max(dist, maxSpeed) / maxSpeed);
