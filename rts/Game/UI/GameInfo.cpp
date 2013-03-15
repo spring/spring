@@ -171,11 +171,6 @@ void CGameInfo::Draw()
 	labels.push_back("Spring Version:");
 	values.push_back(SpringVersion::GetFull());
 
-	if (GML::Enabled()) {
-		labels.push_back("MT Threads:");
-		values.push_back(IntToString(GML::ThreadCount()));
-	}
-
 	labels.push_back("Game Speed:");
 	values.push_back(gs->speedFactor);
 
@@ -195,7 +190,7 @@ void CGameInfo::Draw()
 	labels.push_back("Map Size:");
 	sprintf(buf, "%ix%i", readmap->width / 64, readmap->height / 64);
 	values.push_back(buf);
-	
+
 	labels.push_back("Map Name:");
 	values.push_back(gameSetup->mapName);
 
@@ -203,11 +198,18 @@ void CGameInfo::Draw()
 	values.push_back(gameSetup->modName);
 
 	labels.push_back("PathFinder:");
-
 	switch (pathManager->GetPathFinderType()) {
 		case PFS_TYPE_DEFAULT: { values.push_back("Default"); } break;
 		case PFS_TYPE_QTPFS:   { values.push_back("QTPFS"  ); } break;
 		default:               { values.push_back("UNKNOWN"); } break; // not reachable
+	}
+
+	labels.push_back("GML:");
+	values.push_back(GML::Enabled() ? "true" : "false");
+
+	if (GML::Enabled()) {
+		labels.push_back("MT Threads:");
+		values.push_back(IntToString(GML::ThreadCount()));
 	}
 
 	if (gs->cheatEnabled) {
@@ -231,7 +233,7 @@ void CGameInfo::Draw()
 
 	const float dy = height / (float)labels.size();
 
-	box.x1 = 0.5f - (width * 0.5f); 
+	box.x1 = 0.5f - (width * 0.5f);
 	box.x2 = 0.5f + (width * 0.5f);
 	box.y1 = 0.5f - (height * 0.5f);
 	box.y2 = 0.5f + (height * 0.5f);

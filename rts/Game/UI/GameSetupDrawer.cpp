@@ -95,9 +95,7 @@ void GameSetupDrawer::Draw()
 		state = "Choose start pos";
 	} else if (gameServer) {
 		CKeyBindings::HotkeyList list = keyBindings->GetHotkeys("forcestart");
-		std::string primary = "<none>";
-		if (!list.empty())
-			primary = list.front();
+		const std::string primary = list.empty() ? "<none>" : list.front();
 		state = std::string("Waiting for players, press ")+primary + " to force start";
 	} else {
 		state = "Waiting for players";
