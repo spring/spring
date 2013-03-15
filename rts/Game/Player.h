@@ -24,7 +24,6 @@ public:
 	CR_DECLARE(CPlayer);
 
 	CPlayer();
-	~CPlayer() {}
 
 	bool CanControlTeam(int teamID) const {
 		return (controlledTeams.find(teamID) != controlledTeams.end());

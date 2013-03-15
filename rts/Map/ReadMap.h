@@ -17,7 +17,6 @@ class CMetalMap;
 class CCamera;
 class CUnit;
 class CSolidObject;
-class CLoadSaveInterface;
 class CBaseGroundDrawer;
 
 

@@ -25,8 +25,8 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(hitFrames),
 	CR_MEMBER(rechargeDelay),
 	CR_MEMBER(isEnabled),
-	CR_MEMBER(hasGfx),
-	CR_RESERVED(8)
+	CR_MEMBER(shieldProjectile),
+	CR_MEMBER(hasGfx)
 ));
 
 

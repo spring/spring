@@ -347,6 +347,11 @@ namespace creg {
 	size_t alignofv(const T& v) {
 		return alignof(T);
 	}
+
+	template<typename T>
+	size_t alignofv(T& v) {
+		return alignof(T);
+	}
 #else
 	#define alignofv(v) alignof(v)
 #endif

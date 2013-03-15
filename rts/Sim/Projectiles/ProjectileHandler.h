@@ -52,7 +52,7 @@ class CProjectileHandler
 
 public:
 	CProjectileHandler();
-	virtual ~CProjectileHandler();
+	~CProjectileHandler();
 	void Serialize(creg::ISerializer* s);
 	void PostLoad();
 

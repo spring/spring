@@ -15,6 +15,9 @@
 CR_BIND_DERIVED_INTERFACE(AAirMoveType, AMoveType);
 
 CR_REG_METADATA(AAirMoveType, (
+	CR_ENUM_MEMBER(aircraftState),
+	CR_ENUM_MEMBER(padStatus),
+
 	CR_MEMBER(oldGoalPos),
 	CR_MEMBER(reservedLandingPos),
 
@@ -29,9 +32,7 @@ CR_REG_METADATA(AAirMoveType, (
 	CR_MEMBER(reservedPad),
 
 	CR_MEMBER(lastColWarningType),
-	CR_MEMBER(lastFuelUpdateFrame),
-
-	CR_RESERVED(16)
+	CR_MEMBER(lastFuelUpdateFrame)
 ));
 
 AAirMoveType::AAirMoveType(CUnit* unit):

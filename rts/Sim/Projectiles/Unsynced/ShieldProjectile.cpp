@@ -15,7 +15,7 @@
 CR_BIND_DERIVED(ShieldProjectile, CProjectile, (NULL));
 CR_REG_METADATA(ShieldProjectile, (
 	CR_MEMBER(shield),
-	//CR_IGNORED(shieldTexture), FIXME is pointer
+	CR_MEMBER(shieldTexture),
 	CR_MEMBER(lastAllowDrawingUpdate),
 	CR_MEMBER(allowDrawing),
 	CR_MEMBER(shieldSegments)

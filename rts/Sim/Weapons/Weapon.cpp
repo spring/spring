@@ -38,6 +38,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(salvoLeft),
 	CR_MEMBER(salvoDelay),
 	CR_MEMBER(salvoSize),
+	CR_MEMBER(projectilesPerShot),
 	CR_MEMBER(nextSalvo),
 	CR_MEMBER(predict),
 	CR_MEMBER(targetUnit),

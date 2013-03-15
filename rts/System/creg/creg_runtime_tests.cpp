@@ -154,7 +154,7 @@ static bool TestCregClasses3()
 		}
 
 		// class vtable
-		if (c->base || !c->derivedClasses.empty()) {
+		if (c->base || !c->derivedClasses.empty() || c->binder->hasVTable) {
 			assert(memberMap.size() >= sizeof(void*));
 			for (int i = 0; i < sizeof(void*); ++i) {
 				if (!memberMap[i])
