@@ -187,7 +187,7 @@ namespace Shader {
 	void IProgramObject::Enable() {
 #ifdef USE_GML
 		if (GML::ServerActive()) {
-			tbound[gmlThreadNumber] = bound ? 0 : 1;
+			tbound[GML::ThreadNumber()] = bound ? 0 : 1;
 		} else
 #endif
 		{
@@ -198,7 +198,7 @@ namespace Shader {
 	void IProgramObject::Disable() {
 #ifdef USE_GML
 		if (GML::ServerActive()) {
-			tbound[gmlThreadNumber] = bound ? -1 : 0;
+			tbound[GML::ThreadNumber()] = bound ? -1 : 0;
 		} else
 #endif
 		{
@@ -209,7 +209,7 @@ namespace Shader {
 	bool IProgramObject::IsBound() const {
 #ifdef USE_GML
 		if (GML::ServerActive()) {
-			char tb = tbound[gmlThreadNumber];
+			char tb = tbound[GML::ThreadNumber()];
 			return (tb != 0) ? tb > 0 : bound;
 		} else
 #endif
