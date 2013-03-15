@@ -615,7 +615,10 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 
 void CEngineOutHandler::SetSkirmishAIDieing(const size_t skirmishAIId) {
 	SCOPED_TIMER("AI Total");
-
+	if (id_skirmishAI[skirmishAIId]==NULL) { //FIXME: this shouldn't happen
+		LOG_L(L_ERROR, "Tried to mark AI %d dead, but is already dead", (unsigned int)skirmishAIId);
+		return;
+	}
 	try {
 		id_skirmishAI[skirmishAIId]->Dieing();
 	} CATCH_AI_EXCEPTION;

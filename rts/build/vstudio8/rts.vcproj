@@ -6466,14 +6466,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\LoadSave\LoadSaveInterface.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\LoadSave\LoadSaveInterface.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\LoadSave\LuaLoadSaveHandler.cpp"
 					>
 					<FileConfiguration
@@ -6563,6 +6555,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\creg\creg.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\creg\creg_runtime_tests.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\creg\creg_runtime_tests.h"
 					>
 				</File>
 				<File
