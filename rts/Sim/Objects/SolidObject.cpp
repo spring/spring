@@ -25,55 +25,41 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(mass),
 	CR_MEMBER(crushResistance),
 	CR_MEMBER(impulseDecayRate),
-
 	CR_MEMBER(blocking),
 	CR_MEMBER(crushable),
 	CR_MEMBER(immobile),
 	CR_MEMBER(crushKilled),
 	CR_MEMBER(blockEnemyPushing),
 	CR_MEMBER(blockHeightChanges),
-
 	CR_MEMBER(luaDraw),
 	CR_MEMBER(noSelect),
-
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
  	CR_MEMBER(footprint),
-
 	CR_MEMBER(heading),
 	CR_ENUM_MEMBER(physicalState),
-
 	CR_MEMBER(isMoving),
 	CR_MEMBER(isUnderWater),
 	CR_MEMBER(isMarkedOnBlockingMap),
 	CR_MEMBER(groundBlockPos),
-
 	CR_MEMBER(speed),
 	CR_MEMBER(residualImpulse),
-
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
-
- 	// TODO: register SolidObjectDef with CREG
-	//CR_MEMBER(objectDef),
-
+	CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
 	CR_MEMBER(collisionVolume),
-	//CR_MEMBER(groundDecal),
-
+	CR_IGNORED(groundDecal),
 	CR_MEMBER(frontdir),
 	CR_MEMBER(rightdir),
 	CR_MEMBER(updir),
-
 	CR_MEMBER(relMidPos),
  	CR_MEMBER(relAimPos),
 	CR_MEMBER(midPos),
 	CR_MEMBER(aimPos),
 	CR_MEMBER(mapPos),
-
 	CR_MEMBER(drawPos),
 	CR_MEMBER(drawMidPos),
-
 	//CR_MEMBER(blockMap), //FIXME add bitwiseenum to creg
 	CR_MEMBER(buildFacing)
 ));

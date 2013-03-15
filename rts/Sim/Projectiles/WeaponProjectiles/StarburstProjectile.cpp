@@ -43,6 +43,7 @@ CR_REG_METADATA(CStarburstProjectile, (
 	CR_MEMBER(maxGoodDif),
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(curSpeed),
+	CR_MEMBER(acceleration),
 	CR_MEMBER(uptime),
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(age),

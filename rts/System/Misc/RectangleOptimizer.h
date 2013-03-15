@@ -6,6 +6,8 @@
 #include <list>
 #include <bitset>
 #include "System/Rectangle.h"
+#include "System/creg/creg_cond.h"
+
 
 /**
  * @brief CRectangleOptimizer
@@ -14,9 +16,11 @@
  */
 class CRectangleOptimizer
 {
+	CR_DECLARE_STRUCT(CRectangleOptimizer);
+
 public:
 	CRectangleOptimizer();
-	virtual ~CRectangleOptimizer();
+	~CRectangleOptimizer();
 
 	void Optimize();
 

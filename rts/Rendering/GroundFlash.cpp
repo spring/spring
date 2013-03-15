@@ -54,6 +54,10 @@ CR_REG_METADATA(CSeismicGroundFlash, (
 
 CR_BIND_DERIVED(CSimpleGroundFlash, CGroundFlash, );
 CR_REG_METADATA(CSimpleGroundFlash, (
+	CR_MEMBER(side1),
+	CR_MEMBER(side2),
+	CR_MEMBER(age),
+	CR_MEMBER(agerate),
  	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(ttl),

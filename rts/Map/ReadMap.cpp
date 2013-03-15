@@ -42,7 +42,7 @@ CReadMap* readmap = NULL;
 
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
-	//CR_MEMBER(metalMap), //handled in Serialize
+	CR_MEMBER(metalMap),
 	CR_MEMBER(width),
 	CR_MEMBER(height),
 	CR_MEMBER(initMinHeight),
@@ -63,8 +63,8 @@ CR_REG_METADATA(CReadMap, (
 	CR_IGNORED(centerNormalsUnsynced),
 	CR_IGNORED(slopeMap),
 	CR_MEMBER(typeMap),
-	//CR_MEMBER(unsyncedHeightMapUpdates),
-	//CR_MEMBER(unsyncedHeightMapUpdatesTemp),
+	CR_MEMBER(unsyncedHeightMapUpdates),
+	CR_MEMBER(unsyncedHeightMapUpdatesTemp),
 	HEIGHTMAP_DIGESTS
 	CR_SERIALIZER(Serialize)
 ));

@@ -20,7 +20,7 @@ class SkirmishAIKey;
  */
 class CSkirmishAIHandler
 {
-	CR_DECLARE(CSkirmishAIHandler);
+	CR_DECLARE_STRUCT(CSkirmishAIHandler);
 
 	CSkirmishAIHandler();
 	~CSkirmishAIHandler();

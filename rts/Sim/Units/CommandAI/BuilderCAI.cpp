@@ -41,9 +41,10 @@ CR_BIND_DERIVED(CBuilderCAI ,CMobileCAI , );
 
 CR_REG_METADATA(CBuilderCAI , (
 				CR_MEMBER(buildOptions),
+				CR_MEMBER(owner_builder),
 				CR_MEMBER(building),
 				CR_MEMBER(range3D),
-//				CR_MEMBER(build),
+				CR_IGNORED(build),
 
 				CR_MEMBER(cachedRadiusId),
 				CR_MEMBER(cachedRadius),
@@ -54,7 +55,6 @@ CR_REG_METADATA(CBuilderCAI , (
 				CR_MEMBER(lastPC1),
 				CR_MEMBER(lastPC2),
 				CR_MEMBER(lastPC3),
-				CR_RESERVED(16),
 				CR_POSTLOAD(PostLoad)
 				));
 
@@ -887,7 +887,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 
 	const float3 pos    = guardee->pos;
 	const float  radius = (guardee->immobile) ? guardee->radius : guardee->radius * 0.8f; // in case of mobile units reduce radius a bit
-	
+
 	if (MoveInBuildRange(pos, radius)) {
 		StartSlowGuard(guardee->moveType->GetMaxSpeed());
 
@@ -952,7 +952,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 				if (recUnits)     recopt |= REC_UNITS;
 				if (recEnemyOnly) recopt |= REC_ENEMYONLY;
 				if (recSpecial)   recopt |= REC_SPECIAL;
-				
+
 				const int rid = FindReclaimTarget(pos, radius, c.options, recopt, curdist);
 				if ((rid > 0) && (rid != uid)) {
 					FinishCommand();
@@ -1685,7 +1685,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 				if (unit->beingBuilt && owner->team != unit->team && (owner->moveState != MOVESTATE_ROAM)) {
 					continue;
 				}
-				// don't help factories produce units when set on hold pos                
+				// don't help factories produce units when set on hold pos
 				if (unit->beingBuilt && unit->moveDef != NULL && (owner->moveState == MOVESTATE_HOLDPOS)) {
 					continue;
 				}

@@ -5,8 +5,11 @@
 
 #include "Vec2.h"
 #include "myMath.h"
+#include "System/creg/creg_cond.h"
 
 struct SRectangle {
+	CR_DECLARE_STRUCT(SRectangle);
+
 	SRectangle()
 		: x1(0)
 		, z1(0)
