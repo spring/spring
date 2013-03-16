@@ -5,7 +5,7 @@ set -e
 REMOTE_HOST=springrts.com
 REMOTE_USER=buildbot
 REMOTE_BASE=/home/buildbot/www
-RSYNC="rsync -avz --chmod=D+rx,F+r --bwlimit 4000"
+RSYNC="rsync -avz --chmod=D+rx,F+r --bwlimit 4000 --exclude=download/ --exclude=tests/"
 REMOTE_RSYNC="nice -19 ionice -c3 rsync" #prevent QQ about rsync killing server
 
 umask 022
