@@ -295,7 +295,7 @@ bool CPathFinder::TestSquare(
 		return false;
 	}
 
-	const CMoveMath::BlockType blockStatus = CMoveMath::IsBlocked(moveDef, square.x, square.y, owner);
+	const CMoveMath::BlockType blockStatus = CMoveMath::IsBlockedNoSpeedModCheck(moveDef, square.x, square.y, owner);
 
 	// Check if square are out of constraints or blocked by something.
 	// Doesn't need to be done on open squares, as those are already tested.

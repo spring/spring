@@ -88,28 +88,14 @@ void QTPFS::NodeLayer::QueueUpdate(const SRectangle& r, const MoveDef* md) {
 	layerUpdate->blockBits.resize(r.GetArea());
 	layerUpdate->counter = ++updateCounter;
 
-	#ifdef QTPFS_IGNORE_MAP_EDGES
-	const unsigned int xsizehMD = md->xsizeh;
-	const unsigned int zsizehMD = md->zsizeh;
-	#endif
-
 	// make a snapshot of the terrain-state within <r>
 	for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
 		for (unsigned int hmx = r.x1; hmx < r.x2; hmx++) {
 			const unsigned int recIdx = (hmz - r.z1) * r.GetWidth() + (hmx - r.x1);
 
-			#ifdef QTPFS_IGNORE_MAP_EDGES
-			const unsigned int chmx = Clamp(hmx, xsizehMD, r.x2 - xsizehMD - 1);
-			const unsigned int chmz = Clamp(hmz, zsizehMD, r.z2 - zsizehMD - 1);
-			#else
-			const unsigned int chmx = hmx;
-			const unsigned int chmz = hmz;
-			#endif
-
-			layerUpdate->speedMods[recIdx] = NodeLayer::MAX_SPEEDMOD_VALUE;
-			layerUpdate->blockBits[recIdx] = 0;
-
-			md->TestMoveSquare(NULL, chmx, chmz, ZeroVector, true, true, false, &layerUpdate->speedMods[recIdx], &layerUpdate->blockBits[recIdx]);
+			layerUpdate->speedMods[recIdx] = CMoveMath::GetPosSpeedMod(*md, hmx, hmz);
+			layerUpdate->blockBits[recIdx] = CMoveMath::IsBlockedNoSpeedModCheck(*md, hmx, hmz, NULL);
+			// layerUpdate->blockBits[recIdx] = CMoveMath::SquareIsBlocked(*md, hmx, hmz, NULL);
 		}
 	}
 }
@@ -121,7 +107,7 @@ bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 	const std::vector<float>* speedMods = &layerUpdate.speedMods;
 	const std::vector<  int>* blockBits = &layerUpdate.blockBits;
 
-	return (Update(rectangle, NULL, speedMods, blockBits));
+	return (Update(rectangle, moveDefHandler->GetMoveDefByPathType(layerNumber), speedMods, blockBits));
 }
 #endif
 
@@ -138,11 +124,6 @@ bool QTPFS::NodeLayer::Update(
 	unsigned int numNewBinSquares = 0;
 	unsigned int numClosedSquares = 0;
 
-	#ifdef QTPFS_IGNORE_MAP_EDGES
-	const unsigned int xsizehMD = (md == NULL)? 0: md->xsizeh;
-	const unsigned int zsizehMD = (md == NULL)? 0: md->zsizeh;
-	#endif
-
 	const bool globalUpdate =
 		((r.x1 == 0 && r.x2 == gs->mapx) &&
 		 (r.z1 == 0 && r.z2 == gs->mapy));
@@ -158,24 +139,21 @@ bool QTPFS::NodeLayer::Update(
 			const unsigned int sqrIdx = hmz * xsize + hmx;
 			const unsigned int recIdx = (hmz - r.z1) * r.GetWidth() + (hmx - r.x1);
 
-			#ifdef QTPFS_IGNORE_MAP_EDGES
-			const unsigned int chmx = Clamp(hmx, xsizehMD, r.x2 - xsizehMD - 1);
-			const unsigned int chmz = Clamp(hmz, zsizehMD, r.z2 - zsizehMD - 1);
-			#else
-			const unsigned int chmx = hmx;
-			const unsigned int chmz = hmz;
-			#endif
-
-			float minSpeedMod = NodeLayer::MAX_SPEEDMOD_VALUE;
-			int   maxBlockBit = 0;
-
-			if (luBlockBits == NULL || luSpeedMods == NULL) {
-				// FIXME: this needs to be faster (fewer duplicate checks per square)
-				md->TestMoveSquare(NULL, chmx, chmz, ZeroVector, true, true, false, &minSpeedMod, &maxBlockBit);
-			} else {
-				minSpeedMod = (*luSpeedMods)[recIdx];
-				maxBlockBit = (*luBlockBits)[recIdx];
-			}
+			const float minSpeedMod = (luSpeedMods == NULL)? CMoveMath::GetPosSpeedMod(*md, hmx, hmz): (*luSpeedMods)[recIdx];
+			const   int maxBlockBit = (luBlockBits == NULL)? CMoveMath::IsBlockedNoSpeedModCheck(*md, hmx, hmz, NULL): (*luBlockBits)[recIdx];
+			// NOTE:
+			//   movetype code checks ONLY the *CENTER* square of a unit's footprint
+			//   to get the current speedmod affecting it, and the default pathfinder
+			//   only takes the entire footprint into account for STRUCTURE-blocking
+			//   tests --> do the same here because full-footprint checking for both
+			//   structures AND terrain is much slower (and if not handled correctly
+			//   units will get stuck everywhere)
+			// NOTE:
+			//   IsBlockedNoSpeedModCheck works at HALF-heightmap resolution (as does
+			//   the default pathfinder for DETAILED_DISTANCE searches!), so this can
+			//   generate false negatives!
+			//   
+			// const int maxBlockBit = (luBlockBits == NULL)? CMoveMath::SquareIsBlocked(*md, hmx, hmz, NULL): (*luBlockBits)[recIdx];
 
 			#define NL QTPFS::NodeLayer
 			const float tmpAbsSpeedMod = Clamp(minSpeedMod, NL::MIN_SPEEDMOD_VALUE, NL::MAX_SPEEDMOD_VALUE);
