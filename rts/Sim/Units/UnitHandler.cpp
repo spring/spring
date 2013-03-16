@@ -156,8 +156,8 @@ void CUnitHandler::InsertActiveUnit(CUnit* unit)
 	if (freeUnitIndexToIdentMap.empty()) {
 		// throw each ID recycled up until now back into the pool
 		// (better if the unit count never gets close to maxUnits)
-		freeUnitIndexToIdentMap = tempUnitIndexToIdentMap;
-		tempUnitIndexToIdentMap = IDMap();
+		freeUnitIndexToIdentMap.insert(tempUnitIndexToIdentMap.begin(), tempUnitIndexToIdentMap.end());
+		tempUnitIndexToIdentMap.clear();
 	}
 
 	units[unit->id] = unit;

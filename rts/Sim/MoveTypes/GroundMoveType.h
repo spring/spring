@@ -47,6 +47,8 @@ public:
 
 private:
 	float3 GetObstacleAvoidanceDir(const float3& desiredDir);
+	float3 GetNewSpeedVector(const float hAcc, const float vAcc) const;
+
 	float Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal = 0.0f);
 
 	void GetNewPath();
@@ -161,9 +163,6 @@ private:
 	unsigned int numIdlingUpdates;
 	/// {in, de}creased every SlowUpdate if idling is true/false and pathId != 0
 	unsigned int numIdlingSlowUpdates;
-
-	int moveSquareX;
-	int moveSquareY;
 
 	short wantedHeading;
 };
