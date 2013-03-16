@@ -8,8 +8,10 @@
 #include <vector>
 #include <boost/noncopyable.hpp>
 #include "System/creg/creg_cond.h"
+
 #include "FeatureDef.h"
 #include "FeatureSet.h"
+#include "Sim/Misc/SimObjectIDPool.h"
 
 
 struct S3DModel;
@@ -63,8 +65,8 @@ public:
 private:
 	bool CanAddFeature(int id) const {
 		// do we want to be assigned a random ID? (in case
-		// freeFeatureIndexToIdentMap is empty, AddFeature
-		// will always allocate more)
+		// idPool is empty, AddFeature will always allocate
+		// more)
 		if (id < 0)
 			return true;
 		// is this ID not already in use?
@@ -84,11 +86,10 @@ private:
 	void AddFeatureDef(const std::string& name, FeatureDef* feature);
 
 private:
+	SimObjectIDPool idPool;
+
 	std::map<std::string, const FeatureDef*> featureDefs;
 	std::vector<const FeatureDef*> featureDefsVector;
-
-	std::map<unsigned int, unsigned int> freeFeatureIndexToIdentMap;
-	std::map<unsigned int, unsigned int> freeFeatureIdentToIndexMap;
 
 	std::list<int> toBeFreedFeatureIDs;
 	CFeatureSet activeFeatures;

@@ -7,6 +7,7 @@
 
 #include "UnitDef.h"
 #include "UnitSet.h"
+#include "Sim/Misc/SimObjectIDPool.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
 
@@ -30,7 +31,7 @@ public:
 	bool CanAddUnit(int id) const {
 		// do we want to be assigned a random ID and are any left in pool?
 		if (id < 0)
-			return (!freeUnitIndexToIdentMap.empty());
+			return (!idPool.IsEmpty());
 		// is this ID not already in use?
 		if (id < MaxUnits())
 			return (units[id] == NULL);
@@ -51,23 +52,17 @@ public:
 	CUnit* GetUnitUnsafe(unsigned int unitID) const { return units[unitID]; }
 	CUnit* GetUnit(unsigned int unitID) const { return (unitID < MaxUnits()? units[unitID]: NULL); }
 
-
-	std::vector< std::vector<CUnitSet> > unitsByDefs; ///< units sorted by team and unitDef
-
-	std::list<CUnit*> activeUnits;                    ///< used to get all active units
 	std::vector<CUnit*> units;                        ///< used to get units from IDs (0 if not created)
+	std::vector< std::vector<CUnitSet> > unitsByDefs; ///< units sorted by team and unitDef
+	std::list<CUnit*> activeUnits;                    ///< used to get all active units
+
 	std::map<unsigned int, CBuilderCAI*> builderCAIs;
 
 private:
 	void InsertActiveUnit(CUnit* unit);
 
 private:
-	typedef std::pair<unsigned int, unsigned int> IDPair;
-	typedef std::map<unsigned int, unsigned int> IDMap;
-
-	IDMap tempUnitIndexToIdentMap;
-	IDMap freeUnitIndexToIdentMap;
-	IDMap freeUnitIdentToIndexMap;
+	SimObjectIDPool idPool;
 
 	std::vector<CUnit*> unitsToBeRemoved;              ///< units that will be removed at start of next update
 	std::list<CUnit*>::iterator activeSlowUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame

@@ -28,6 +28,7 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/ResourceHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/ResourceMapAnalyzer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/SideParser.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/SimObjectIDPool.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/SmoothHeightMesh.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/Team.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/TeamBase.cpp"
