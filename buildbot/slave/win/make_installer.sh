@@ -25,7 +25,7 @@ if [ -z "$MINGW_HOST" ]; then
 fi
 
 cd ${BUILDDIR}
-make install DESTDIR=${DEST}
+DESTDIR=${DEST} ninja install
 
 #strip symbols and archive them
 cd ${INSTALLDIR}
