@@ -32,6 +32,7 @@ CR_BIND(CUnitHandler, );
 CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(activeUnits),
 	CR_MEMBER(units),
+	CR_MEMBER(tempUnitIndexToIdentMap),
 	CR_MEMBER(freeUnitIndexToIdentMap),
 	CR_MEMBER(freeUnitIdentToIndexMap),
 	CR_MEMBER(maxUnits),
@@ -99,8 +100,8 @@ CUnitHandler::CUnitHandler()
 		//
 		//   (the ID --> index map is never changed at runtime!)
 		for (unsigned int n = 0; n < freeIDs.size(); n++) {
-			freeUnitIndexToIdentMap.insert(std::pair<unsigned int, unsigned int>(n, freeIDs[n]));
-			freeUnitIdentToIndexMap.insert(std::pair<unsigned int, unsigned int>(freeIDs[n], n));
+			freeUnitIndexToIdentMap.insert(IDPair(n, freeIDs[n]));
+			freeUnitIdentToIndexMap.insert(IDPair(freeIDs[n], n));
 		}
 	}
 
@@ -152,6 +153,13 @@ void CUnitHandler::InsertActiveUnit(CUnit* unit)
 	freeUnitIndexToIdentMap.erase(freeUnitIdentToIndexMap[unit->id]);
 	activeUnits.insert(ui, unit);
 
+	if (freeUnitIndexToIdentMap.empty()) {
+		// throw each ID recycled up until now back into the pool
+		// (better if the unit count never gets close to maxUnits)
+		freeUnitIndexToIdentMap = tempUnitIndexToIdentMap;
+		tempUnitIndexToIdentMap = IDMap();
+	}
+
 	units[unit->id] = unit;
 }
 
@@ -197,8 +205,8 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
 			activeUnits.erase(usi);
-			freeUnitIndexToIdentMap.insert(std::pair<unsigned int, unsigned int>(freeUnitIdentToIndexMap[delUnit->id], delUnit->id));
 			unitsByDefs[delTeam][delType].erase(delUnit);
+			tempUnitIndexToIdentMap.insert(IDPair(freeUnitIdentToIndexMap[delUnit->id], delUnit->id));
 
 			units[delUnit->id] = NULL;
 

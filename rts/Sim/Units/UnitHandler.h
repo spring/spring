@@ -62,8 +62,12 @@ private:
 	void InsertActiveUnit(CUnit* unit);
 
 private:
-	std::map<unsigned int, unsigned int> freeUnitIndexToIdentMap;
-	std::map<unsigned int, unsigned int> freeUnitIdentToIndexMap;
+	typedef std::pair<unsigned int, unsigned int> IDPair;
+	typedef std::map<unsigned int, unsigned int> IDMap;
+
+	IDMap tempUnitIndexToIdentMap;
+	IDMap freeUnitIndexToIdentMap;
+	IDMap freeUnitIdentToIndexMap;
 
 	std::vector<CUnit*> unitsToBeRemoved;              ///< units that will be removed at start of next update
 	std::list<CUnit*>::iterator activeSlowUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
