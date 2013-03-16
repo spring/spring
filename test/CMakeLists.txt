@@ -126,7 +126,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
 		)
-
+	set_target_properties(test_RectangleOptimizer PROPERTIES COMPILE_FLAGS "-DNOT_USING_CREG")
 	ADD_TEST(NAME testRectangleOptimizer COMMAND test_RectangleOptimizer)
 	Add_Dependencies(tests test_RectangleOptimizer)
 
