@@ -23,10 +23,9 @@ CFeatureHandler* featureHandler = NULL;
 
 CR_BIND(CFeatureHandler, );
 CR_REG_METADATA(CFeatureHandler, (
+	CR_MEMBER(idPool),
 	CR_MEMBER(featureDefs),
 	CR_MEMBER(featureDefsVector),
-	CR_MEMBER(freeFeatureIndexToIdentMap),
-	CR_MEMBER(freeFeatureIdentToIndexMap),
 	CR_MEMBER(toBeFreedFeatureIDs),
 	CR_MEMBER(activeFeatures),
 	CR_MEMBER(features),
@@ -332,7 +331,7 @@ CFeature* CFeatureHandler::LoadFeature(const FeatureLoadParams& params) {
 
 bool CFeatureHandler::NeedAllocateNewFeatureIDs(const CFeature* feature) const
 {
-	if (feature->id < 0 && freeFeatureIndexToIdentMap.empty())
+	if (feature->id < 0 && idPool.IsEmpty())
 		return true;
 	if (feature->id >= 0 && feature->id >= features.size())
 		return true;
@@ -342,44 +341,25 @@ bool CFeatureHandler::NeedAllocateNewFeatureIDs(const CFeature* feature) const
 
 void CFeatureHandler::AllocateNewFeatureIDs(const CFeature* feature)
 {
-	// allocate new batch of (randomly shuffled) feature id's
-	//
 	// if feature->id is non-negative, then allocate enough to
 	// make it a valid index (we have no hard MAX_FEATURES cap)
-	const unsigned int K = features.size();
-	const unsigned int N = freeFeatureIdentToIndexMap.size();
+	const unsigned int numNewIDs = (feature->id < 0)? 100: ((feature->id + 1) - features.size());
 
-	std::vector<int> newIDs(std::max(int(K) + 100, feature->id + 1) - int(K));
-
-	for (unsigned k = 0; k < newIDs.size(); k++)
-		newIDs[k] = K + k;
-
-	features.resize(K + newIDs.size(), NULL);
-
-	SyncedRNG rng;
-	std::random_shuffle(newIDs.begin(), newIDs.end(), rng);
-	std::random_shuffle(newIDs.begin(), newIDs.end(), rng);
-
-	for (unsigned int n = 0; n < newIDs.size(); n++) {
-		freeFeatureIndexToIdentMap.insert(std::pair<unsigned int, unsigned int>(N + n, newIDs[n]));
-		freeFeatureIdentToIndexMap.insert(std::pair<unsigned int, unsigned int>(newIDs[n], N + n));
-	}
+	idPool.Expand(features.size(), numNewIDs);
+	features.resize(features.size() + numNewIDs, NULL);
 }
 
 void CFeatureHandler::InsertActiveFeature(CFeature* feature)
 {
 	if (feature->id < 0) {
-		assert(!freeFeatureIndexToIdentMap.empty());
-		assert(!freeFeatureIdentToIndexMap.empty());
-
-		feature->id = (freeFeatureIndexToIdentMap.begin())->second;
+		feature->id = idPool.ExtractID();
+	} else {
+		idPool.ReserveID(feature->id);
 	}
 
 	assert(feature->id < features.size());
 	assert(features[feature->id] == NULL);
-	assert(freeFeatureIndexToIdentMap.find(freeFeatureIdentToIndexMap[feature->id]) != freeFeatureIndexToIdentMap.end());
 
-	freeFeatureIndexToIdentMap.erase(freeFeatureIdentToIndexMap[feature->id]);
 	activeFeatures.insert(feature);
 	features[feature->id] = feature;
 }
@@ -466,7 +446,7 @@ void CFeatureHandler::Update()
 				++it;
 			} else {
 				assert(features[*it] == NULL);
-				freeFeatureIndexToIdentMap.insert(std::pair<unsigned int, unsigned int>(freeFeatureIdentToIndexMap[*it], *it));
+				idPool.FreeID(*it, true);
 				it = toBeFreedFeatureIDs.erase(it);
 			}
 		}

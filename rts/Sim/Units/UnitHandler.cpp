@@ -30,16 +30,14 @@ CUnitHandler* unitHandler = NULL;
 
 CR_BIND(CUnitHandler, );
 CR_REG_METADATA(CUnitHandler, (
-	CR_MEMBER(activeUnits),
 	CR_MEMBER(units),
-	CR_MEMBER(tempUnitIndexToIdentMap),
-	CR_MEMBER(freeUnitIndexToIdentMap),
-	CR_MEMBER(freeUnitIdentToIndexMap),
+	CR_MEMBER(unitsByDefs),
+	CR_MEMBER(activeUnits),
+	CR_MEMBER(builderCAIs),
+	CR_MEMBER(idPool),
+	CR_MEMBER(unitsToBeRemoved),
 	CR_MEMBER(maxUnits),
 	CR_MEMBER(maxUnitRadius),
-	CR_MEMBER(unitsToBeRemoved),
-	CR_MEMBER(builderCAIs),
-	CR_MEMBER(unitsByDefs),
 	CR_POSTLOAD(PostLoad)
 ));
 
@@ -71,39 +69,9 @@ CUnitHandler::CUnitHandler()
 	units.resize(maxUnits, NULL);
 	unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->unitDefs.size()));
 
-	{
-		std::vector<unsigned int> freeIDs(units.size());
-
-		// id's are used as indices, so they must lie in [0, units.size() - 1]
-		// (furthermore all id's are treated equally, none have special status)
-		for (unsigned int id = 0; id < freeIDs.size(); id++) {
-			freeIDs[id] = id;
-		}
-
-		// randomize the unit ID's so that Lua widgets can not
-		// easily determine enemy unit counts from ID's alone
-		// (shuffle twice for good measure)
-		SyncedRNG rng;
-
-		std::random_shuffle(freeIDs.begin(), freeIDs.end(), rng);
-		std::random_shuffle(freeIDs.begin(), freeIDs.end(), rng);
-
-		// NOTE:
-		//   any randomization would be undone by using a std::set as-is
-		//   instead create a bi-directional mapping from indices to ID's
-		//   (where the ID's are a random permutation of the index range)
-		//   such that ID's can be assigned and returned to the pool with
-		//   their original index
-		//
-		//     freeUnitIndexToIdentMap = {<0, 13>, < 1, 27>, < 2, 54>, < 3, 1>, ...}
-		//     freeUnitIdentToIndexMap = {<1,  3>, <13,  0>, <27,  1>, <54, 2>, ...}
-		//
-		//   (the ID --> index map is never changed at runtime!)
-		for (unsigned int n = 0; n < freeIDs.size(); n++) {
-			freeUnitIndexToIdentMap.insert(IDPair(n, freeIDs[n]));
-			freeUnitIdentToIndexMap.insert(IDPair(freeIDs[n], n));
-		}
-	}
+	// id's are used as indices, so they must lie in [0, units.size() - 1]
+	// (furthermore all id's are treated equally, none have special status)
+	idPool.Expand(0, units.size());
 
 	activeSlowUpdateUnit = activeUnits.end();
 	airBaseHandler = new CAirBaseHandler();
@@ -136,30 +104,15 @@ void CUnitHandler::InsertActiveUnit(CUnit* unit)
 	}
 
 	if (unit->id < 0) {
-		// should be unreachable (all code that goes through
-		// UnitLoader::LoadUnit --> Unit::PreInit checks the
-		// unit limit first)
-		assert(!freeUnitIndexToIdentMap.empty());
-		assert(!freeUnitIdentToIndexMap.empty());
-
-		// pick first available free ID if we want a random one
-		unit->id = (freeUnitIndexToIdentMap.begin())->second;
+		unit->id = idPool.ExtractID();
+	} else {
+		idPool.ReserveID(unit->id);
 	}
 
 	assert(unit->id < units.size());
 	assert(units[unit->id] == NULL);
-	assert(freeUnitIndexToIdentMap.find(freeUnitIdentToIndexMap[unit->id]) != freeUnitIndexToIdentMap.end());
 
-	freeUnitIndexToIdentMap.erase(freeUnitIdentToIndexMap[unit->id]);
 	activeUnits.insert(ui, unit);
-
-	if (freeUnitIndexToIdentMap.empty()) {
-		// throw each ID recycled up until now back into the pool
-		// (better if the unit count never gets close to maxUnits)
-		freeUnitIndexToIdentMap.insert(tempUnitIndexToIdentMap.begin(), tempUnitIndexToIdentMap.end());
-		tempUnitIndexToIdentMap.clear();
-	}
-
 	units[unit->id] = unit;
 }
 
@@ -206,7 +159,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 
 			activeUnits.erase(usi);
 			unitsByDefs[delTeam][delType].erase(delUnit);
-			tempUnitIndexToIdentMap.insert(IDPair(freeUnitIdentToIndexMap[delUnit->id], delUnit->id));
+			idPool.FreeID(delUnit->id, true);
 
 			units[delUnit->id] = NULL;
 
