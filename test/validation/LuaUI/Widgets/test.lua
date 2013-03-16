@@ -34,6 +34,7 @@ end
 function widget:GameOver()
 	Spring.Echo("GameOver called!")
 	ShowStats()
+	Spring.SendCommands("quit")
 end
 
 function widget:GameFrame(n)
