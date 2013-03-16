@@ -35,6 +35,7 @@ for i in $(find ${TESTDIR}/.spring -maxdepth 1 -type f -name "core.*") ; do
 done
 if [ $EXITCODE -ne 0 ]; then
 	echo Tests failed, uploading spring writeable dir
-	source buildbot/slave/validation/upload.sh
+	mkdir -p ${TMP_PATH}/validation/
+	mv ${TMP_BASE}/tests/.spring/ ${TMP_PATH}/validation/
 fi
 exit $EXITCODE
