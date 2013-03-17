@@ -2,6 +2,7 @@
 
 #include "SimObjectIDPool.h"
 #include "GlobalSynced.h"
+#include "Sim/Objects/SolidObject.h"
 
 CR_BIND(SimObjectIDPool, );
 CR_REG_METADATA(SimObjectIDPool, (
@@ -9,6 +10,47 @@ CR_REG_METADATA(SimObjectIDPool, (
 	CR_MEMBER(liveIndexIdentMap),
 	CR_MEMBER(tempIndexIdentMap)
 ));
+
+void SimObjectIDPool::Expand(unsigned int baseID, unsigned int numIDs) {
+	// allocate new batch of (randomly shuffled) id's
+	std::vector<int> newIDs(numIDs);
+
+	for (unsigned int offsetID = 0; offsetID < newIDs.size(); offsetID++)
+		newIDs[offsetID] = baseID + offsetID;
+
+	// randomize so that Lua widgets can not easily determine counts
+	SyncedRNG rng;
+	std::random_shuffle(newIDs.begin(), newIDs.end(), rng);
+	std::random_shuffle(newIDs.begin(), newIDs.end(), rng);
+
+	const unsigned int numPoolIDs = MaxSize();
+
+	// NOTE:
+	//   any randomization would be undone by using a std::set as-is
+	//   instead create a bi-directional mapping from indices to ID's
+	//   (where the ID's are a random permutation of the index range)
+	//   such that ID's can be assigned and returned to the pool with
+	//   their original index
+	//
+	//     indexIdentMap = {<0, 13>, < 1, 27>, < 2, 54>, < 3, 1>, ...}
+	//     identIndexMap = {<1,  3>, <13,  0>, <27,  1>, <54, 2>, ...}
+	//
+	//   (the ID --> index map is never changed at runtime!)
+	for (unsigned int offsetID = 0; offsetID < newIDs.size(); offsetID++) {
+		liveIndexIdentMap.insert(IDPair(numPoolIDs + offsetID, newIDs[offsetID]));
+		liveIdentIndexMap.insert(IDPair(newIDs[offsetID], numPoolIDs + offsetID));
+	}
+}
+
+
+
+void SimObjectIDPool::AssignID(CSolidObject* object) {
+	if (object->id < 0) {
+		object->id = ExtractID();
+	} else {
+		ReserveID(object->id);
+	}
+}
 
 unsigned int SimObjectIDPool::ExtractID() {
 	// extract a random ID from the pool
@@ -70,38 +112,5 @@ bool SimObjectIDPool::HasID(unsigned int id) const {
 	const unsigned int idx = it->second;
 
 	return (liveIndexIdentMap.find(idx) != liveIndexIdentMap.end());
-}
-
-
-
-void SimObjectIDPool::Expand(unsigned int baseID, unsigned int numIDs) {
-	// allocate new batch of (randomly shuffled) id's
-	std::vector<int> newIDs(numIDs);
-
-	for (unsigned int offsetID = 0; offsetID < newIDs.size(); offsetID++)
-		newIDs[offsetID] = baseID + offsetID;
-
-	// randomize so that Lua widgets can not easily determine counts
-	SyncedRNG rng;
-	std::random_shuffle(newIDs.begin(), newIDs.end(), rng);
-	std::random_shuffle(newIDs.begin(), newIDs.end(), rng);
-
-	const unsigned int numPoolIDs = MaxSize();
-
-	// NOTE:
-	//   any randomization would be undone by using a std::set as-is
-	//   instead create a bi-directional mapping from indices to ID's
-	//   (where the ID's are a random permutation of the index range)
-	//   such that ID's can be assigned and returned to the pool with
-	//   their original index
-	//
-	//     indexIdentMap = {<0, 13>, < 1, 27>, < 2, 54>, < 3, 1>, ...}
-	//     identIndexMap = {<1,  3>, <13,  0>, <27,  1>, <54, 2>, ...}
-	//
-	//   (the ID --> index map is never changed at runtime!)
-	for (unsigned int offsetID = 0; offsetID < newIDs.size(); offsetID++) {
-		liveIndexIdentMap.insert(IDPair(numPoolIDs + offsetID, newIDs[offsetID]));
-		liveIdentIndexMap.insert(IDPair(newIDs[offsetID], numPoolIDs + offsetID));
-	}
 }
 

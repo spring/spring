@@ -351,11 +351,7 @@ void CFeatureHandler::AllocateNewFeatureIDs(const CFeature* feature)
 
 void CFeatureHandler::InsertActiveFeature(CFeature* feature)
 {
-	if (feature->id < 0) {
-		feature->id = idPool.ExtractID();
-	} else {
-		idPool.ReserveID(feature->id);
-	}
+	idPool.AssignID(feature);
 
 	assert(feature->id < features.size());
 	assert(features[feature->id] == NULL);
