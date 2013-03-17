@@ -6,6 +6,9 @@ Spring changelog
 Misc:
 - support double-resolution yardmaps for buildings (these require four times as many characters, beware)
   the engine will interpret a yardmap string as such if its FIRST (and ONLY its first) character is 'h'
+- default LogFlush to true again
+- fix crash at start related to Optimus
+! remove Tobis rapid client (its broken)
 
 -- 93.2 ---------------------------------------------------------
  - fixed unitsync in linux static builds
