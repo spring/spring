@@ -261,9 +261,11 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	}
 
 	const CCommandAI* bcai = buildee->commandAI;
-	const bool assignOrders = bcai->commandQue.empty() || (dynamic_cast<const CMobileCAI*>(bcai) != NULL);
+	// if not idle, the buildee already has user orders
+	const bool buildeeIdle = (bcai->commandQue.empty());
+	const bool buildeeMobile = (dynamic_cast<const CMobileCAI*>(bcai) != NULL);
 
-	if (assignOrders) {
+	if (buildeeIdle || buildeeMobile) {
 		AssignBuildeeOrders(buildee);
 		waitCommandsAI.AddLocalUnit(buildee, this);
 	}
@@ -272,7 +274,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	finishedBuildFunc(this, finishedBuildCommand);
 	finishedBuildFunc = NULL;
 
-	eventHandler.UnitFromFactory(buildee, this, !assignOrders);
+	eventHandler.UnitFromFactory(buildee, this, !buildeeIdle);
 	StopBuild();
 }
 
