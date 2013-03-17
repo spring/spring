@@ -308,7 +308,11 @@ bool CPathFinder::TestSquare(
 	}
 
 	// Evaluate this square.
-	float squareSpeedMod = CMoveMath::GetPosSpeedMod(moveDef, square.x, square.y, dirVec3D);
+	//
+	// use the minimum of positional and directional speed-modifiers
+	// because this agrees more with current assumptions in movetype
+	// code and the estimators have no directional information
+	float squareSpeedMod = std::min(CMoveMath::GetPosSpeedMod(moveDef, square.x, square.y), CMoveMath::GetPosSpeedMod(moveDef, square.x, square.y, dirVec3D));
 
 	if (squareSpeedMod == 0.0f) {
 		squareStates.nodeMask[sqrIdx] |= PATHOPT_FORBIDDEN;
