@@ -103,11 +103,7 @@ void CUnitHandler::InsertActiveUnit(CUnit* unit)
 		}
 	}
 
-	if (unit->id < 0) {
-		unit->id = idPool.ExtractID();
-	} else {
-		idPool.ReserveID(unit->id);
-	}
+	idPool.AssignID(unit);
 
 	assert(unit->id < units.size());
 	assert(units[unit->id] == NULL);
