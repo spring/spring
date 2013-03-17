@@ -1187,8 +1187,7 @@ void CGroundMoveType::GetNewPath()
 		atGoal = false;
 		atEndOfPath = false;
 
-		currWayPoint = owner->pos;
-		// currWayPoint = pathManager->NextWayPoint(owner, pathId, 0,   owner->pos, 1.25f * SQUARE_SIZE, true);
+		currWayPoint = pathManager->NextWayPoint(owner, pathId, 0,   owner->pos, 1.25f * SQUARE_SIZE, true);
 		nextWayPoint = pathManager->NextWayPoint(owner, pathId, 0, currWayPoint, 1.25f * SQUARE_SIZE, true);
 
 		pathController->SetRealGoalPosition(pathId, goalPos);
