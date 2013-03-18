@@ -165,7 +165,8 @@ namespace Shader {
 		void Release();
 		void Reload(bool reloadFromDisk);
 
-		void SetUniformTarget(int target) { uniformTarget = target; }
+		void SetUniformTarget(int target);
+		int GetUnitformTarget();
 
 		void SetUniform1i(int idx, int   v0);
 		void SetUniform2i(int idx, int   v0, int   v1);
@@ -187,6 +188,9 @@ namespace Shader {
 
 	private:
 		int uniformTarget;
+#ifdef USE_GML
+		int tuniformTargets[GML_MAX_NUM_THREADS];
+#endif
 	};
 
 	struct GLSLProgramObject: public Shader::IProgramObject {
