@@ -9,6 +9,11 @@ Misc:
 - default LogFlush to true again
 - fix crash at start related to Optimus
 ! remove Tobis rapid client (its broken)
+- add multi engine type support
+
+Bugfixes:
+ - Fix flashing team colors
+
 
 -- 93.2 ---------------------------------------------------------
  - fixed unitsync in linux static builds
