@@ -246,6 +246,32 @@ namespace Shader {
 	ARBProgramObject::ARBProgramObject(const std::string& poName): IProgramObject(poName) {
 		objID = -1; // not used for ARBProgramObject instances
 		uniformTarget = -1;
+#ifdef USE_GML
+		for (int i = 0; i < GML_MAX_NUM_THREADS; ++i) {
+			tuniformTargets[i] = -1;
+		}
+#endif
+	}
+
+	void ARBProgramObject::SetUniformTarget(int target) {
+#ifdef USE_GML
+		if (GML::ServerActive()) {
+			tuniformTargets[GML::ThreadNumber()] = target;
+		} else
+#endif
+		{
+			uniformTarget = target;
+		}
+	}
+	int ARBProgramObject::GetUnitformTarget() {
+#ifdef USE_GML
+		if (GML::ServerActive()) {
+			return tuniformTargets[GML::ThreadNumber()];
+		} else
+#endif
+		{
+			return uniformTarget;
+		}
 	}
 
 	void ARBProgramObject::Enable() {
