@@ -4888,6 +4888,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\SimObjectIDPool.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\SimObjectIDPool.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\SmoothHeightMesh.cpp"
 					>
 				</File>
@@ -5400,6 +5408,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\Option.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\Rectangle.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\Rectangle.h"
 				>
 			</File>
 			<File
