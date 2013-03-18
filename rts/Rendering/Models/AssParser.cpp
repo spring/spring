@@ -518,14 +518,14 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model)
 // Iterate over the model and calculate its overall dimensions
 void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
 {
+	// cannot set this until parent relations are known, so either here or in BuildPieceHierarchy()
+	piece->goffset = piece->offset + ((piece->parent != NULL)? piece->parent->goffset: ZeroVector);
+
 	model->numPieces += 1;
 
 	// update model min/max extents
 	model->mins = std::min(piece->goffset + piece->mins, model->mins);
 	model->maxs = std::max(piece->goffset + piece->maxs, model->maxs);
-
-	// cannot set this until parent relations are known, so either here or in BuildPieceHierarchy()
-	piece->goffset = piece->offset + ((piece->parent != NULL)? piece->parent->goffset: ZeroVector);
 
 	const float3 cvScales = piece->maxs - piece->mins;
 	const float3 cvOffset =
