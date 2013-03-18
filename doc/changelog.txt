@@ -31,7 +31,6 @@ Bugfixes:
  - fix #3545 (AddUnitImpulse() causes unit to move in random direction)
  - fix #3544 (units briefly invisible when transferred to another team)
  - fix #3490 (ships cannot be transported by aircraft)
- - fix #3505 (ground-transported units cannot be killed) [93.*]
  - fix 'fix #3506 (wrong calculation of goffset for assimp model pieces)'
  - fix pseudo-static units (nanotowers, etc) no longer being transportable
  - fix OBJ models being parsed by assimp
@@ -82,6 +81,7 @@ Bugfixes:
  - make mutual push-resistant unit collisions more like 0.82.x (smoth's issue)
  - fix some cases of units getting perma-stuck (s.t. even spammed user orders cannot free them) on terrain, esp. #3423
  - fix #3506 (wrong calculation of goffset for assimp model pieces)
+ - fix #3505 (ground-transported units cannot be killed)
  - fix #3465 (WeaponDef infolog error messages are unhelpful)
  - fix attack-ground orders placed on water
    GuiTraceRay now stops at water surface by default, not ocean floor
