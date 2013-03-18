@@ -24,7 +24,7 @@ Bugfixes:
  - fix #3553 (sun-flare has harsh edge)
  - fix #3562 (units are reluctant to fire in crowded situations after 'fix #3488')
  - fix #3559 (avoidGround weapon tag is broken)
- - fix #3563 (units rub against building edges and slow down to a crawl)
+ - fix #3563 (units rub against building edges and slow down to a crawl) and #3592 related to it
  - fix #3567 (transported nanotowers periodically teleporting to ground)
  - fix #3520 (kamikaze units always have bad attack cursor when giving manual attack command)
  - fix #3531 (wrong textures assigned to assimp models)

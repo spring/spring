@@ -1012,8 +1012,15 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	nextObstacleAvoidanceUpdate = gs->frameNum + 1;
 
 	CUnit* avoider = owner;
-	//const UnitDef* avoiderUD = avoider->unitDef;
+	// const UnitDef* avoiderUD = avoider->unitDef;
 	const MoveDef* avoiderMD = avoider->moveDef;
+
+	// degenerate case: if facing anti-parallel to desired direction,
+	// do not actively avoid obstacles since that can interfere with
+	// normal waypoint steering (if the final avoidanceDir demands a
+	// turn in the opposite direction of desiredDir)
+	if (avoider->frontdir.dot(desiredDir) < 0.0f)
+		return lastAvoidanceDir;
 
 	static const float AVOIDER_DIR_WEIGHT = 1.0f;
 	static const float DESIRED_DIR_WEIGHT = 0.5f;
