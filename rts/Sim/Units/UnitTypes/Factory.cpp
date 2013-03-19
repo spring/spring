@@ -60,13 +60,6 @@ CFactory::CFactory():
 {
 }
 
-CFactory::~CFactory() {
-	if (curBuild != NULL) {
-		curBuild->KillUnit(false, true, NULL);
-		curBuild = NULL;
-	}
-}
-
 
 
 void CFactory::PostLoad()
@@ -79,6 +72,16 @@ void CFactory::PostLoad()
 	if (curBuild) {
 		script->StartBuilding();
 	}
+}
+
+void CFactory::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence = true)
+{
+	if (curBuild != NULL) {
+		curBuild->KillUnit(false, true, NULL);
+		curBuild = NULL;
+	}
+
+	CUnit::KillUnit(selfDestruct, reclaimed, attacker, showDeathSequence);
 }
 
 void CFactory::PreInit(const UnitLoadParams& params)
