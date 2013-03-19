@@ -1397,7 +1397,7 @@ bool CAICallback::GetValue(int id, void *data)
 			*((int*)data) = damageArrayHandler->GetNumTypes();
 			return true;
 		}case AIVAL_EXCEPTION_HANDLING:{
-			*(bool*)data = CEngineOutHandler::IsCatchExceptions();
+			*(bool*)data = CEngineOutHandler::CatchExceptions();
 			return true;
 		}case AIVAL_MAP_CHECKSUM:{
 			*(unsigned int*)data = readmap->mapChecksum;

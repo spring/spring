@@ -350,15 +350,13 @@ CGame::~CGame()
 
 	CEndGameBox::Destroy();
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
+	CColorMap::DeleteColormaps();
 
 	IVideoCapturing::FreeInstance();
 
 	CLuaGaia::FreeHandler();
 	CLuaRules::FreeHandler();
 	LuaOpenGL::Free();
-	CColorMap::DeleteColormaps();
-	CEngineOutHandler::Destroy();
-	CResourceHandler::FreeInstance();
 
 	// Kill all teams that are still alive, in
 	// case the game did not do so through Lua.
@@ -368,6 +366,9 @@ CGame::~CGame()
 	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		teamHandler->Team(t)->Died(false);
 	}
+
+	CEngineOutHandler::Destroy();
+	CResourceHandler::FreeInstance();
 
 	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
 	UnsyncedGameCommands::DestroyInstance();
@@ -584,7 +585,6 @@ void CGame::PostLoadSimulation()
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
 	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
-	CEngineOutHandler::Initialize();
 
 	geometricObjects = new CGeometricObjects();
 
