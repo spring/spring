@@ -25,15 +25,9 @@ void handleAIException(const char* description);
 class CEngineOutHandler : public CObject {
 	CR_DECLARE(CEngineOutHandler);
 
-	CEngineOutHandler();
 	~CEngineOutHandler();
 
 public:
-	/**
-	 * This function initialized a singleton instance,
-	 * if not yet done by a call to GetInstance()
-	 */
-	static void Initialize();
 	static CEngineOutHandler* GetInstance();
 	static void Destroy();
 
@@ -112,7 +106,7 @@ public:
 	 * and the AI are compiled with the same compiler/exception system.
 	 * Shorlty: catching AI exceptions in the engine is deprecated
 	 */
-	static bool IsCatchExceptions();
+	static bool CatchExceptions();
 	/**
 	 * This is used inside a catch block for a try guarding a call form
 	 * the engine into an AI.
