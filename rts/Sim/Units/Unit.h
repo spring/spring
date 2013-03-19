@@ -182,7 +182,7 @@ public:
 	}
 
 public:
-	virtual void KillUnit(bool SelfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence = true);
+	virtual void KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence = true);
 	virtual void IncomingMissile(CMissileProjectile* missile);
 	void TempHoldFire();
 	void ReleaseTempHoldFire();
