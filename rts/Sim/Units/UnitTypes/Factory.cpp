@@ -74,7 +74,7 @@ void CFactory::PostLoad()
 	}
 }
 
-void CFactory::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence = true)
+void CFactory::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence)
 {
 	if (curBuild != NULL) {
 		curBuild->KillUnit(false, true, NULL);
