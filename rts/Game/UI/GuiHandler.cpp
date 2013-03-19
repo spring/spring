@@ -3390,33 +3390,24 @@ static void DrawWeaponCone(const float3& pos,
 
 static inline void DrawWeaponArc(const CUnit* unit)
 {
-	if (unit->weapons.empty()) {
-		return;
-	}
-	const CWeapon* w = unit->weapons.front();
-	float3 dir;
-	if (w->onlyForward) {
-		dir = unit->frontdir;
-	} else {
-		dir = w->wantedDir;
-	}
+	for (unsigned int n = 0; n < unit->weapons.size(); n++) {
+		const CWeapon* w = unit->weapons[n];
 
-	// copied from Weapon.cpp
-	const float3 interPos = unit->pos + (unit->speed * globalRendering->timeOffset);
-	float3 pos = interPos +
-	             (unit->frontdir * w->relWeaponPos.z) +
-	             (unit->updir    * w->relWeaponPos.y) +
-	             (unit->rightdir * w->relWeaponPos.x);
-	if (pos.y < ground->GetHeightReal(pos.x, pos.z, false)) {
-		// hope that we are underground because we are a
-		// popup weapon and will come above ground later
-		pos = interPos + (UpVector * 10.0f);
-	}
+		// attack order needs to have been issued or wantedDir is undefined
+		if (w->targetType == Target_None)
+			continue;
+		if (w->weaponDef->projectileType == WEAPON_BASE_PROJECTILE)
+			continue;
 
-	const float hrads   = math::acos(w->maxForwardAngleDif);
-	const float heading = math::atan2(-dir.z, dir.x);
-	const float pitch   = math::asin(dir.y);
-	DrawWeaponCone(pos, w->range, hrads, heading, pitch);
+		const float3 weaponDir = (unit->frontdir * w->onlyForward) + (w->wantedDir * (1 - w->onlyForward));
+
+		const float hrads   = math::acos(w->maxForwardAngleDif);
+		const float heading = math::atan2(-weaponDir.z, weaponDir.x);
+		const float pitch   = math::asin(weaponDir.y);
+
+		// note: cone visualization is invalid for ballistic weapons
+		DrawWeaponCone(w->weaponMuzzlePos, w->range, hrads, heading, pitch);
+	}
 }
 
 
