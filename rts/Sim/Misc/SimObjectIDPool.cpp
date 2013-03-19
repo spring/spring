@@ -90,7 +90,7 @@ void SimObjectIDPool::FreeID(unsigned int id, bool delayed) {
 	// or after all remaining free ID's run out (which
 	// is better iff the object count never gets close
 	// to the maximum)
-	assert(HasID(id));
+	assert(!HasID(id));
 
 	if (delayed) {
 		tempIndexIdentMap.insert(IDPair(liveIdentIndexMap[id], id));
@@ -106,7 +106,9 @@ void SimObjectIDPool::RecycleIDs() {
 }
 
 bool SimObjectIDPool::HasID(unsigned int id) const {
-	// check if given ID is within this pool's range
+	assert(liveIdentIndexMap.find(id) != liveIdentIndexMap.end());
+
+	// check if given ID is available in this pool
 	const IDMap::const_iterator it = liveIdentIndexMap.find(id);
 	const unsigned int idx = it->second;
 
