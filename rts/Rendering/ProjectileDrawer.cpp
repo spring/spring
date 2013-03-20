@@ -748,7 +748,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 
 	if (p->weapon) {
 		// weapon-projectile
-		const CWeaponProjectile* wp = dynamic_cast<const CWeaponProjectile*>(p);
+		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 
 		#define SET_TRANSFORM_VECTORS(dir)           \
 			float3 rightdir, updir;                  \
@@ -818,7 +818,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		#undef TRANSFORM_DRAW
 	} else {
 		// piece-projectile
-		const CPieceProjectile* pp = dynamic_cast<const CPieceProjectile*>(p);
+		const CPieceProjectile* pp = static_cast<const CPieceProjectile*>(p);
 
 		if (!shadowPass) {
 			unitDrawer->SetTeamColour(pp->GetTeamID());
