@@ -67,20 +67,22 @@ struct S3DModelPiece {
 public:
 	std::string name;
 	std::string parentName;
-	std::vector<S3DModelPiece*> children;
 
 	S3DModelPiece* parent;
 	CollisionVolume* colvol;
 
 	ModelType type;
+
 	bool isEmpty;
+	bool mIsIdentity; // if m is identity
+	float3 offset;    ///< @see parent
+	float3 rot;
+	CMatrix44f m;
+	std::vector<S3DModelPiece*> children;
 
 	float3 mins;
 	float3 maxs;
-	float3 offset;    ///< @see parent
 	float3 goffset;   ///< @see root
-	float3 rot;
-	float3 scale;
 
 protected:
 	virtual void DrawForList() const = 0;

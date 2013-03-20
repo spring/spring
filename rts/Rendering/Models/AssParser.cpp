@@ -51,36 +51,23 @@ static const int ASS_POSTPROCESS_OPTIONS =
 	| aiProcess_SplitLargeMeshes;
 
 
-// Convert Assimp quaternion to radians around x, y and z
-static float3 QuaternionToRadianAngles(aiQuaternion q1)
-{
-	float sqw = q1.w*q1.w;
-	float sqx = q1.x*q1.x;
-	float sqy = q1.y*q1.y;
-	float sqz = q1.z*q1.z;
-	float unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor
-	float test = q1.x*q1.y + q1.z*q1.w;
-
-	float3 result;
-
-	if (test > 0.499f * unit) { // singularity at north pole
-		result.x = 2 * math::atan2(q1.x,q1.w);
-		result.y = PI/2;
-	} else if (test < -0.499f * unit) { // singularity at south pole
-		result.x = -2 * math::atan2(q1.x,q1.w);
-		result.y = -PI/2;
-	} else {
-		result.x = math::atan2(2*q1.y*q1.w-2*q1.x*q1.z , sqx - sqy - sqz + sqw);
-		result.y = math::asin(2*test/unit);
-		result.z = math::atan2(2*q1.x*q1.w-2*q1.y*q1.z , -sqx + sqy - sqz + sqw);
-	}
-	return result;
-}
-
-
 static inline float3 aiVectorToFloat3(const aiVector3D v)
 {
 	return float3(v.x, v.y, v.z);
+}
+
+
+static inline CMatrix44f aiMatrixToMatrix(const aiMatrix4x4t<float>& m)
+{
+	CMatrix44f n;
+
+	// assimp uses row-major, spring column-major, transform it
+	n[0] = m.a1; n[4] = m.a2; n[8 ] = m.a3; n[12] = m.a4;
+	n[1] = m.b1; n[5] = m.b2; n[9 ] = m.b3; n[13] = m.b4;
+	n[2] = m.c1; n[6] = m.c2; n[10] = m.c3; n[14] = m.c4;
+	n[3] = m.d1; n[7] = m.d2; n[11] = m.d3; n[15] = m.d4;
+
+	return n;
 }
 
 
@@ -226,37 +213,47 @@ void CAssParser::CalculatePerMeshMinMax(SAssModel* model)
 
 void CAssParser::LoadPieceTransformations(const S3DModel* model, SAssPiece* piece, const LuaTable& pieceMetaTable)
 {
-	//! Process transforms
-	float3 rotate, scale, offset;
+	// Process transforms
+	float3 rotate, offset;
+	float3 scale(1.0,1.0,1.0);
 	aiVector3D _scale, _offset;
 	aiQuaternion _rotate;
 	piece->node->mTransformation.Decompose(_scale,_rotate,_offset);
+	const aiMatrix4x4t<float> aiRotMatrix = aiMatrix4x4t<float>(_rotate.GetMatrix());
 
 	LOG_S(LOG_SECTION_PIECE,
-			"(%d:%s) Assimp offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)",
+			"(%d:%s) Assimp offset (%f,%f,%f), rotate (%f,%f,%f,%f), scale (%f,%f,%f)",
 			model->numPieces, piece->name.c_str(),
 			_offset.x, _offset.y, _offset.z,
-			_rotate.x, _rotate.y, _rotate.z,
+			_rotate.w, _rotate.x, _rotate.y, _rotate.z,
 			_scale.x, _scale.y, _scale.z
 			);
 
-	offset   = pieceMetaTable.GetFloat3("offset", float3(_offset.x, _offset.y, _offset.z));
-	offset.x = pieceMetaTable.GetFloat("offsetx", offset.x);
-	offset.y = pieceMetaTable.GetFloat("offsety", offset.y);
-	offset.z = pieceMetaTable.GetFloat("offsetz", offset.z);
+	// Scale
+		scale   = pieceMetaTable.GetFloat3("scale", float3(_scale.x, _scale.z, _scale.y));
+		scale.x = pieceMetaTable.GetFloat("scalex", scale.x);
+		scale.y = pieceMetaTable.GetFloat("scaley", scale.y);
+		scale.z = pieceMetaTable.GetFloat("scalez", scale.z);
 
-	rotate   = QuaternionToRadianAngles(_rotate);
-	rotate   = float3(rotate.z, rotate.x, rotate.y); // swizzle
-	rotate   = pieceMetaTable.GetFloat3("rotate", rotate * RADTODEG);
-	rotate.x = pieceMetaTable.GetFloat("rotatex", rotate.x);
-	rotate.y = pieceMetaTable.GetFloat("rotatey", rotate.y);
-	rotate.z = pieceMetaTable.GetFloat("rotatez", rotate.z);
-	rotate  *= DEGTORAD;
+		if (scale.x != scale.y || scale.y != scale.z) {
+			//LOG_SL(LOG_SECTION_MODEL, L_WARNING, "Spring doesn't support non-uniform scaling");
+			scale.y = scale.x;
+			scale.z = scale.x;
+		}
 
-	scale   = pieceMetaTable.GetFloat3("scale", float3(_scale.x, _scale.z, _scale.y));
-	scale.x = pieceMetaTable.GetFloat("scalex", scale.x);
-	scale.y = pieceMetaTable.GetFloat("scaley", scale.y);
-	scale.z = pieceMetaTable.GetFloat("scalez", scale.z);
+	// Rotate
+		// Note these rotations are put into the `Spring rotations` and are not baked into the Assimp matrix!
+		rotate   = pieceMetaTable.GetFloat3("rotate", float3(0,0,0));
+		rotate.x = pieceMetaTable.GetFloat("rotatex", rotate.x);
+		rotate.y = pieceMetaTable.GetFloat("rotatey", rotate.y);
+		rotate.z = pieceMetaTable.GetFloat("rotatez", rotate.z);
+		rotate  *= DEGTORAD;
+
+	// Translate
+		offset   = pieceMetaTable.GetFloat3("offset", float3(_offset.x, _offset.y, _offset.z));
+		offset.x = pieceMetaTable.GetFloat("offsetx", offset.x);
+		offset.y = pieceMetaTable.GetFloat("offsety", offset.y);
+		offset.z = pieceMetaTable.GetFloat("offsetz", offset.z);
 
 	LOG_S(LOG_SECTION_PIECE,
 			"(%d:%s) Relative offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)",
@@ -265,9 +262,18 @@ void CAssParser::LoadPieceTransformations(const S3DModel* model, SAssPiece* piec
 			rotate.x, rotate.y, rotate.z,
 			scale.x, scale.y, scale.z
 			);
+
+	// construct 'baked' part of the modelpiece matrix
+	CMatrix44f M;
+	M.Scale(scale);
+	M *= aiMatrixToMatrix(aiRotMatrix);
+	//M.Translate(offset);
+
+	// Assimp order is: translate * rotate * scale * v
+	piece->m = M;
 	piece->offset = offset;
 	piece->rot = rotate;
-	piece->scale = scale;
+	piece->mIsIdentity = (scale.x == 1.0f) && aiRotMatrix.IsIdentity();
 }
 
 
@@ -287,7 +293,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		piece->name = "root"; //! The real model root
 	}
 
-	//! find a new name if none given or if a piece with the same name already exists
+	// find a new name if none given or if a piece with the same name already exists
 	if (piece->name.empty()) {
 		piece->name = "piece";
 	}
@@ -312,10 +318,10 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 				piece->name.c_str());
 	}
 
-	//! Load transforms
+	// Load transforms
 	LoadPieceTransformations(model, piece, pieceTable);
 
-	//! Update piece min/max extents
+	// Update piece min/max extents
 	for (unsigned meshListIndex = 0; meshListIndex < node->mNumMeshes; meshListIndex++) {
 		const unsigned int meshIndex = node->mMeshes[meshListIndex];
 		const SAssModel::MinMax& minmax = model->mesh_minmax[meshIndex];
@@ -340,15 +346,17 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	}
 	if (strcmp(node->mName.data, "SpringRadius") == 0) {
 		if (!metaTable.KeyExists("midpos")) {
-			//FIXME the swizzle looks wrong, the vertex positions below aren't swizzled and work fine!
-			model->relMidPos = float3(piece->offset.x, piece->offset.z, piece->offset.y); // Y and Z are swapped because this piece isn't rotated
+			model->relMidPos = piece->m.Mul(piece->offset);
 			LOG_S(LOG_SECTION_MODEL,
 					"Model midpos of (%f,%f,%f) set by special node 'SpringRadius'",
 					model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
 		}
 		if (!metaTable.KeyExists("radius")) {
 			if (piece->maxs.x <= 0.00001f) {
-				model->radius = piece->scale.x; // the blender import script only sets the scale property
+				aiVector3D _scale, _offset;
+				aiQuaternion _rotate;
+				piece->node->mTransformation.Decompose(_scale,_rotate,_offset);
+				model->radius = aiVectorToFloat3(_scale).x; // the blender import script only sets the scale property
 			} else {
 				model->radius = piece->maxs.x; // use the transformed mesh extents
 			}
@@ -437,7 +445,11 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		piece->vertexDrawIndices.reserve(piece->vertexDrawIndices.size() + mesh->mNumFaces * 3);
 		for (unsigned faceIndex = 0; faceIndex < mesh->mNumFaces; ++faceIndex) {
 			const aiFace& face = mesh->mFaces[faceIndex];
-			assert(face.mNumIndices == 3);
+
+			// some models contain lines (mNumIndices == 2)
+			// we cannot render those (esp. they would need to be called in a 2nd drawcall)
+			if (face.mNumIndices != 3)
+				continue;
 
 			for (unsigned vertexListID = 0; vertexListID < face.mNumIndices; ++vertexListID) {
 				const unsigned int vertexFaceIdx = face.mIndices[vertexListID];
@@ -446,7 +458,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 			}
 		}
 	}
-	
+
 	piece->isEmpty = piece->vertices.empty();
 
 	//! Get parent name from metadata or model
@@ -519,9 +531,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model)
 void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
 {
 	// cannot set this until parent relations are known, so either here or in BuildPieceHierarchy()
-	piece->goffset = piece->offset + ((piece->parent != NULL)? piece->parent->goffset: ZeroVector);
-
-	model->numPieces += 1;
+	piece->goffset = piece->m.Mul(piece->offset) + ((piece->parent != NULL)? piece->parent->goffset: ZeroVector);
 
 	// update model min/max extents
 	model->mins = std::min(piece->goffset + piece->mins, model->mins);

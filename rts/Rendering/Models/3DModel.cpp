@@ -76,6 +76,7 @@ S3DModelPiece::S3DModelPiece()
 	, colvol(NULL)
 	, type(MODELTYPE_OTHER)
 	, isEmpty(true)
+	, mIsIdentity(true)
 	, dispListID(0)
 {
 }
@@ -101,8 +102,9 @@ void S3DModelPiece::DrawStatic() const
 {
 	const bool transform = (offset.SqLength() != 0.0f);
 
-	if (transform) {
+	if (transform || !mIsIdentity) {
 		glPushMatrix();
+		if (!mIsIdentity) glMultMatrixf(m);
 		glTranslatef(offset.x, offset.y, offset.z);
 	}
 
@@ -113,7 +115,7 @@ void S3DModelPiece::DrawStatic() const
 			(*ci)->DrawStatic();
 		}
 
-	if (transform) {
+	if (transform || !mIsIdentity) {
 		glPopMatrix();
 	}
 }
@@ -222,14 +224,15 @@ bool LocalModelPiece::UpdateMatrix()
 	bool r = true;
 
 	{
-		pieceSpaceMat.LoadIdentity();
+		// Assimp's Matrix:  M = T * R * S; (SRT vs. RT in spring)
+		// else it's identity
+		pieceSpaceMat = original->m;
 
 		// Translate & Rotate are faster than matrix-mul!
-		if (original->scale.SqLength() != 0.0f) { pieceSpaceMat.Scale(original->scale);  r = false; }
 		if (pos.SqLength() != 0.0f) { pieceSpaceMat.Translate(pos);  r = false; }
-		if (         rot.y != 0.0f) { pieceSpaceMat.RotateY(-rot.y); r = false; }
-		if (         rot.x != 0.0f) { pieceSpaceMat.RotateX(-rot.x); r = false; }
-		if (         rot.z != 0.0f) { pieceSpaceMat.RotateZ(-rot.z); r = false; }
+		if (         rot.y != 0.0f) { pieceSpaceMat.RotateY(-rot.y); r = false; } // yaw
+		if (         rot.x != 0.0f) { pieceSpaceMat.RotateX(-rot.x); r = false; } // pitch
+		if (         rot.z != 0.0f) { pieceSpaceMat.RotateZ(-rot.z); r = false; } // roll
 	}
 
 	return r;
