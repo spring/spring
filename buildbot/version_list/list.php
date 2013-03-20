@@ -37,9 +37,13 @@ function getMD5($file){
 function getFileInfo($os, $regex, $path){
 	$ret = array();
 	if (preg_match($regex, $path, $res)) {
-		$version = $res[1];
+		$config = $res[1];
+		$branch = $res[2];
+		$version = $res[3];
 		if($version=="testing")
 			return $ret;
+		$ret['config'] = $config;
+		$ret['branch'] = $branch;
 		$ret['version'] = $version;
 		$fileinfo = getMD5($path);
 		$ret['filectime'] = $fileinfo['filectime'];
@@ -52,11 +56,13 @@ function getFileInfo($os, $regex, $path){
 }
 
 $res = array();
+$regex_path = "([^\/]+)";
+$regex_prefix = "\/$regex_path\/$regex_path\/$regex_path";
 $regexes = array(
-	"windows" => "/win32\/spring_(.*)_minimal-portable.7z$/",
-	"macosx" => "/osx64\/[sS]pring_(.*)[_-]MacOSX-.*.zip$/",
-	"linux" => "/linux32\/spring_(.*)_minimal-portable-linux32-static.7z$/",
-	"linux64" => "/linux64\/spring_(.*)_minimal-portable-linux64-static.7z$/"
+	"windows" => "/$regex_prefix\/win32\/spring_(.*)_minimal-portable.7z$/",
+	"macosx" =>  "/$regex_prefix\/osx64\/[sS]pring_(.*)[_-]MacOSX-.*.zip$/",
+	"linux" =>   "/$regex_prefix\/linux32\/spring_(.*)_minimal-portable-linux32-static.7z$/",
+	"linux64" => "/$regex_prefix\/linux64\/spring_(.*)_minimal-portable-linux64-static.7z$/"
 	);
 while(count($dirs)>0) {
 	$cur = array_pop($dirs);
