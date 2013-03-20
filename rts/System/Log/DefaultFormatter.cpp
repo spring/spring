@@ -56,9 +56,12 @@ static inline void PrintfAppend(char** buffer, size_t* bufferSize, const char* f
 		// So we need to make a copy, if want to run it again.
 		va_list arguments_;
 		va_copy(arguments_, arguments); 
-			VSNPRINTF(bufAppendPos, freeBufferSize, fmt, arguments_);
+		int writtenChars = VSNPRINTF(bufAppendPos, freeBufferSize, fmt, arguments_);
 		va_end(arguments_);
-		const bool bufferTooSmall = ((strlen(*buffer) + 1) >= *bufferSize);
+		// since writtenChars excludes the null terminator (if any was written),
+		// writtenChars >= freeBufferSize always means buffer was too small
+		// NOTE: earlier glibc versions and MSVC will return -1 when buffer is too small
+		const bool bufferTooSmall = writtenChars >= freeBufferSize || writtenChars < 0;
 		if (!bufferTooSmall) break;
 
 		ResizeBuffer(buffer, bufferSize, true);

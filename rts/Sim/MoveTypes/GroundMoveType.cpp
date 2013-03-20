@@ -2064,15 +2064,17 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 	float3 dir1 = frontWeapon->mainDir;
 	float3 dir2 = mainHeadingPos - owner->pos;
 
-	dir1.y = 0.0f;
-	dir1.Normalize();
-	dir2.y = 0.0f;
-	dir2.SafeNormalize();
+	// in this case aligning is impossible
+	if (dir1 == UpVector)
+		return;
+
+	dir1.y = 0.0f; dir1.SafeNormalize();
+	dir2.y = 0.0f; dir2.SafeNormalize();
 
 	if (dir2 == ZeroVector)
 		return;
 
-	short heading =
+	const short heading =
 		GetHeadingFromVector(dir2.x, dir2.z) -
 		GetHeadingFromVector(dir1.x, dir1.z);
 
