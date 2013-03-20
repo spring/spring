@@ -222,55 +222,54 @@ void CAssParser::LoadPieceTransformations(const S3DModel* model, SAssPiece* piec
 	const aiMatrix4x4t<float> aiRotMatrix = aiMatrix4x4t<float>(_rotate.GetMatrix());
 
 	LOG_S(LOG_SECTION_PIECE,
-			"(%d:%s) Assimp offset (%f,%f,%f), rotate (%f,%f,%f,%f), scale (%f,%f,%f)",
-			model->numPieces, piece->name.c_str(),
-			_offset.x, _offset.y, _offset.z,
-			_rotate.w, _rotate.x, _rotate.y, _rotate.z,
-			_scale.x, _scale.y, _scale.z
-			);
+		"(%d:%s) Assimp offset (%f,%f,%f), rotate (%f,%f,%f,%f), scale (%f,%f,%f)",
+		model->numPieces, piece->name.c_str(),
+		_offset.x, _offset.y, _offset.z,
+		_rotate.w, _rotate.x, _rotate.y, _rotate.z,
+		_scale.x, _scale.y, _scale.z
+	);
 
 	// Scale
-		scale   = pieceMetaTable.GetFloat3("scale", float3(_scale.x, _scale.z, _scale.y));
-		scale.x = pieceMetaTable.GetFloat("scalex", scale.x);
-		scale.y = pieceMetaTable.GetFloat("scaley", scale.y);
-		scale.z = pieceMetaTable.GetFloat("scalez", scale.z);
+	scale   = pieceMetaTable.GetFloat3("scale", float3(_scale.x, _scale.z, _scale.y));
+	scale.x = pieceMetaTable.GetFloat("scalex", scale.x);
+	scale.y = pieceMetaTable.GetFloat("scaley", scale.y);
+	scale.z = pieceMetaTable.GetFloat("scalez", scale.z);
 
-		if (scale.x != scale.y || scale.y != scale.z) {
-			//LOG_SL(LOG_SECTION_MODEL, L_WARNING, "Spring doesn't support non-uniform scaling");
-			scale.y = scale.x;
-			scale.z = scale.x;
-		}
+	if (scale.x != scale.y || scale.y != scale.z) {
+		//LOG_SL(LOG_SECTION_MODEL, L_WARNING, "Spring doesn't support non-uniform scaling");
+		scale.y = scale.x;
+		scale.z = scale.x;
+	}
 
 	// Rotate
-		// Note these rotations are put into the `Spring rotations` and are not baked into the Assimp matrix!
-		rotate   = pieceMetaTable.GetFloat3("rotate", float3(0,0,0));
-		rotate.x = pieceMetaTable.GetFloat("rotatex", rotate.x);
-		rotate.y = pieceMetaTable.GetFloat("rotatey", rotate.y);
-		rotate.z = pieceMetaTable.GetFloat("rotatez", rotate.z);
-		rotate  *= DEGTORAD;
+	// Note these rotations are put into the `Spring rotations` and are not baked into the Assimp matrix!
+	rotate   = pieceMetaTable.GetFloat3("rotate", float3(0,0,0));
+	rotate.x = pieceMetaTable.GetFloat("rotatex", rotate.x);
+	rotate.y = pieceMetaTable.GetFloat("rotatey", rotate.y);
+	rotate.z = pieceMetaTable.GetFloat("rotatez", rotate.z);
+	rotate  *= DEGTORAD;
 
 	// Translate
-		offset   = pieceMetaTable.GetFloat3("offset", float3(_offset.x, _offset.y, _offset.z));
-		offset.x = pieceMetaTable.GetFloat("offsetx", offset.x);
-		offset.y = pieceMetaTable.GetFloat("offsety", offset.y);
-		offset.z = pieceMetaTable.GetFloat("offsetz", offset.z);
+	offset   = pieceMetaTable.GetFloat3("offset", float3(_offset.x, _offset.y, _offset.z));
+	offset.x = pieceMetaTable.GetFloat("offsetx", offset.x);
+	offset.y = pieceMetaTable.GetFloat("offsety", offset.y);
+	offset.z = pieceMetaTable.GetFloat("offsetz", offset.z);
 
 	LOG_S(LOG_SECTION_PIECE,
-			"(%d:%s) Relative offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)",
-			model->numPieces, piece->name.c_str(),
-			offset.x, offset.y, offset.z,
-			rotate.x, rotate.y, rotate.z,
-			scale.x, scale.y, scale.z
-			);
+		"(%d:%s) Relative offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)",
+		model->numPieces, piece->name.c_str(),
+		offset.x, offset.y, offset.z,
+		rotate.x, rotate.y, rotate.z,
+		scale.x, scale.y, scale.z
+	);
 
 	// construct 'baked' part of the modelpiece matrix
-	CMatrix44f M;
-	M.Scale(scale);
-	M *= aiMatrixToMatrix(aiRotMatrix);
-	//M.Translate(offset);
-
 	// Assimp order is: translate * rotate * scale * v
-	piece->m = M;
+	piece->scaleRotMatrix.LoadIdentity();
+	piece->scaleRotMatrix.Scale(scale);
+	piece->scaleRotMatrix *= aiMatrixToMatrix(aiRotMatrix);
+	// piece->scaleRotMatrix.Translate(offset);
+
 	piece->offset = offset;
 	piece->rot = rotate;
 	piece->mIsIdentity = (scale.x == 1.0f) && aiRotMatrix.IsIdentity();
@@ -346,7 +345,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	}
 	if (strcmp(node->mName.data, "SpringRadius") == 0) {
 		if (!metaTable.KeyExists("midpos")) {
-			model->relMidPos = piece->m.Mul(piece->offset);
+			model->relMidPos = piece->scaleRotMatrix.Mul(piece->offset);
 			LOG_S(LOG_SECTION_MODEL,
 					"Model midpos of (%f,%f,%f) set by special node 'SpringRadius'",
 					model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
@@ -531,7 +530,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model)
 void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
 {
 	// cannot set this until parent relations are known, so either here or in BuildPieceHierarchy()
-	piece->goffset = piece->m.Mul(piece->offset) + ((piece->parent != NULL)? piece->parent->goffset: ZeroVector);
+	piece->goffset = piece->scaleRotMatrix.Mul(piece->offset) + ((piece->parent != NULL)? piece->parent->goffset: ZeroVector);
 
 	// update model min/max extents
 	model->mins = std::min(piece->goffset + piece->mins, model->mins);

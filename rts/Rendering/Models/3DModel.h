@@ -74,15 +74,16 @@ public:
 	ModelType type;
 
 	bool isEmpty;
-	bool mIsIdentity; // if m is identity
-	float3 offset;    ///< @see parent
-	float3 rot;
-	CMatrix44f m;
+	bool mIsIdentity; // if scaleRotMatrix is identity
+
+	CMatrix44f scaleRotMatrix; // pre-baked local-space transforms (assimp-only)
 	std::vector<S3DModelPiece*> children;
 
 	float3 mins;
 	float3 maxs;
-	float3 goffset;   ///< @see root
+	float3 rot;
+	float3 offset;    /// local offset wrt. parent piece
+	float3 goffset;   /// global offset wrt. root piece
 
 protected:
 	virtual void DrawForList() const = 0;
