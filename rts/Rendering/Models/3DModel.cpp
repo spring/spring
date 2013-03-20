@@ -100,11 +100,11 @@ unsigned int S3DModelPiece::CreateDrawForList() const
 
 void S3DModelPiece::DrawStatic() const
 {
-	const bool transform = (offset.SqLength() != 0.0f);
+	const bool transform = (offset.SqLength() != 0.0f || !mIsIdentity);
 
-	if (transform || !mIsIdentity) {
+	if (transform) {
 		glPushMatrix();
-		if (!mIsIdentity) glMultMatrixf(m);
+		if (!mIsIdentity) glMultMatrixf(scaleRotMatrix);
 		glTranslatef(offset.x, offset.y, offset.z);
 	}
 
@@ -115,7 +115,7 @@ void S3DModelPiece::DrawStatic() const
 			(*ci)->DrawStatic();
 		}
 
-	if (transform || !mIsIdentity) {
+	if (transform) {
 		glPopMatrix();
 	}
 }
@@ -221,12 +221,12 @@ LocalModelPiece::~LocalModelPiece() {
 
 bool LocalModelPiece::UpdateMatrix()
 {
-	bool r = true;
+	bool r = original->mIsIdentity;
 
 	{
 		// Assimp's Matrix:  M = T * R * S; (SRT vs. RT in spring)
 		// else it's identity
-		pieceSpaceMat = original->m;
+		pieceSpaceMat = original->scaleRotMatrix;
 
 		// Translate & Rotate are faster than matrix-mul!
 		if (pos.SqLength() != 0.0f) { pieceSpaceMat.Translate(pos);  r = false; }
