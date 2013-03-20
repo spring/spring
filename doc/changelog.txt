@@ -37,7 +37,8 @@ Bugfixes:
  - fix #3569 (texturing for OBJ and ASS projectile models)
  - fix OBJ models being parsed by assimp
  - fix SEGV on exit
- - Fix flashing team colors
+ - fix flashing team colors
+ - fix some trees drawn after being destroyed
 
 Lua:
  - add Spring.UnitWeapon{Fire,HoldFire}(number unitID, number weaponID) --> nil
