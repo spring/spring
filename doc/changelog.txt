@@ -34,6 +34,7 @@ Bugfixes:
  - fix #3596 (in debug-mode the firing-cone visualisation of weapons points up)
  - fix 'fix #3506 (wrong calculation of goffset for assimp model pieces)'
  - fix pseudo-static units (nanotowers, etc) no longer being transportable
+ - fix #3569 (texturing for OBJ and ASS projectile models)
  - fix OBJ models being parsed by assimp
  - fix SEGV on exit
  - Fix flashing team colors
