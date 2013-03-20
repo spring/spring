@@ -173,7 +173,7 @@ public:
 
 
 
-template <class C, class X, class R, class T, class D>
+template <class C, class R, class T, class D>
 class ThreadListRender {
 private:
 	typedef typename std::set<T>::const_iterator constSetIT;
@@ -246,7 +246,7 @@ public:
 		return NULL;
 	}
 
-	void dequeue(const T& x) {
+	void dequeue(const C& x) {
 		D::Remove(x);
 	}
 
@@ -709,7 +709,7 @@ private:
 
 
 
-template <class C, class X, class R, class T, class D>
+template <class C, class R, class T, class D>
 class ThreadListRender {
 private:
 	typedef typename std::set<T>::const_iterator constSetIT;
@@ -717,7 +717,6 @@ private:
 	typedef typename std::vector<T>::const_iterator VecIT;
 	typedef typename std::vector<C>::const_iterator VecITC;
 	typedef typename std::vector<T>::iterator VecITT;
-	typedef typename std::vector<X>::iterator VecITX;
 
 public:
 	CR_DECLARE_STRUCT(ThreadListRender);
@@ -823,14 +822,14 @@ public:
 	}
 
 	void clean() {
-		cleandef(&simDelQueue);
+		clean(&simDelQueue);
 	}
 
-	void cleandef(std::vector<T> *delQueue) {
+	void clean(std::vector<C> *delQueue) {
 		delay();
 		for (VecITT it = sharedQueue.begin(); it != sharedQueue.end(); ) {
 			bool found = false;
-			for (VecITT it2 = delQueue->begin(); it2 != delQueue->end(); ++it2) {
+			for (VecITC it2 = delQueue->begin(); it2 != delQueue->end(); ++it2) {
 				if(*it == *it2) {
 					found = true;
 					break;
@@ -843,44 +842,27 @@ public:
 		}
 	}
 
-	void clean(std::vector<X> *delQueue) {
-		delay();
-		for (VecITT it = sharedQueue.begin(); it != sharedQueue.end(); ) {
-			bool found = false;
-			for (VecITX it2 = delQueue->begin(); it2 != delQueue->end(); ++it2) {
-				if(*it == *it2) {
-					found = true;
-					break;
-				}
-			}
-			if(found)
-				it = sharedQueue.erase(it);
-			else
-				++it;
-		}
-	}
-
-	std::vector<T> *to_destroy() {
+	std::vector<C> *to_destroy() {
 		return &simDelQueue;
 	}
 
-	void dequeue(const T& x) {
+	void dequeue(const C& x) {
 		simDelQueue.push_back(x);
 	}
 
-	void dequeue_synced(const T& x) {
+	void dequeue_synced(const C& x) {
 		simDelQueue.push_back(x);
 	}
 
 	void destroy() {
-		for (VecITT it = simDelQueue.begin(); it != simDelQueue.end(); ++it) {
+		for (VecITC it = simDelQueue.begin(); it != simDelQueue.end(); ++it) {
 			D::Remove(*it);
 		}
 		simDelQueue.clear();
 	}
 
 	void destroy_synced() {
-		for (VecITT it = simDelQueue.begin(); it != simDelQueue.end(); ++it) {
+		for (VecITC it = simDelQueue.begin(); it != simDelQueue.end(); ++it) {
 			D::Remove(*it);
 		}
 		simDelQueue.clear();
@@ -889,7 +871,7 @@ public:
 private:
 	std::vector<T> simQueue;
 	std::vector<T> sharedQueue;
-	std::vector<T> simDelQueue;
+	std::vector<C> simDelQueue;
 
 	std::set<T> preAddRender;
 	std::set<T> addRender;
