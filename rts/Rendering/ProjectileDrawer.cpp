@@ -414,7 +414,7 @@ void CProjectileDrawer::DrawProjectiles(int modelType, int numFlyingPieces, int*
 	ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
 
 	for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
-		if (modelType == MODELTYPE_S3O) {
+		if (modelType != MODELTYPE_3DO) {
 			texturehandlerS3O->SetS3oTexture(binIt->first);
 		}
 
