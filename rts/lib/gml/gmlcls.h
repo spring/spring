@@ -36,7 +36,7 @@ extern bool gmlCheckCallChain;
 extern int gmlCallChainWarning;
 extern int gmlNextTickUpdate;
 extern unsigned gmlCurrentTicks;
-extern bool gmlServerActive;
+extern volatile bool gmlServerActive;
 
 #define GML_QUOTE(x) #x
 
