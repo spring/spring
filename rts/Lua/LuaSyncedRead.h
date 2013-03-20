@@ -128,6 +128,9 @@ class LuaSyncedRead {
 		static int GetUnitWeaponState(lua_State* L);
 		static int GetUnitWeaponVectors(lua_State* L);
 		static int GetUnitWeaponTryTarget(lua_State* L);
+		static int GetUnitWeaponTestTarget(lua_State* L);
+		static int GetUnitWeaponTestRange(lua_State* L);
+		static int GetUnitWeaponHaveFreeLineOfFire(lua_State* L);
 		static int GetUnitTravel(lua_State* L);
 		static int GetUnitFuel(lua_State* L);
 		static int GetUnitEstimatedPath(lua_State* L);
@@ -213,11 +216,6 @@ class LuaSyncedRead {
 		static int GetUnitPieceMatrix(lua_State* L);
 		static int GetUnitScriptPiece(lua_State* L);
 		static int GetUnitScriptNames(lua_State* L);
-
-		static int WeaponTryTarget(lua_State* L);
-		static int WeaponTestTarget(lua_State* L);
-		static int WeaponTestRange(lua_State* L);
-		static int WeaponHaveFreeLineOfFire(lua_State* L);
 
 		static int TraceRay(lua_State* L);           // not implemented
 		static int TraceRayUnits(lua_State* L);      // not implemented
