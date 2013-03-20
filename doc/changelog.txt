@@ -31,15 +31,18 @@ Bugfixes:
  - fix #3545 (AddUnitImpulse() causes unit to move in random direction)
  - fix #3544 (units briefly invisible when transferred to another team)
  - fix #3490 (ships cannot be transported by aircraft)
+ - fix #3596 (in debug-mode the firing-cone visualisation of weapons points up)
  - fix 'fix #3506 (wrong calculation of goffset for assimp model pieces)'
  - fix pseudo-static units (nanotowers, etc) no longer being transportable
+ - fix #3569 (texturing for OBJ and ASS projectile models)
  - fix OBJ models being parsed by assimp
  - fix SEGV on exit
- - Fix flashing team colors
+ - fix flashing team colors
+ - fix some trees drawn after being destroyed
 
 Lua:
  - add Spring.UnitWeapon{Fire,HoldFire}(number unitID, number weaponID) --> nil
- - add callouts Spring.Weapon{TryTarget,TestTarget,TestRange,HaveFreeLineOfFire}(number attackerID, number attackeeID, number weaponID, number targetPosX, number targetPosY, number targetPosZ) --> boolean
+ - add callouts Spring.GetUnitWeapon{TryTarget,TestTarget,TestRange,HaveFreeLineOfFire}(number attackerID, number weaponID, number attackeeID | [number targetPosX, number targetPosY, number targetPosZ]) --> boolean
  - add Spring.SetProjectileTarget(number projectileID, [number objectID, string objectType] | [number x, number y, number z]) --> boolean
  - add Spring.GetProjectileTarget(number projectileID) --> number targetID, string targetType
  - add Spring.SpawnProjectile(number weaponDefID, table projectileParams) --> number projectileID | nil

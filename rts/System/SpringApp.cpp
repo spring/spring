@@ -1056,8 +1056,8 @@ void SpringApp::Shutdown()
 	GML::Exit();
 	SafeDelete(pregame);
 	SafeDelete(game);
-	agui::FreeGui();
 	SafeDelete(selectMenu);
+	agui::FreeGui();
 	SafeDelete(net);
 	SafeDelete(gameServer);
 	SafeDelete(gameSetup);
