@@ -194,7 +194,7 @@ void CGrassDrawer::LoadGrassShaders() {
 		for (int i = GRASS_PROGRAM_NEAR_SHADOW; i < GRASS_PROGRAM_LAST; i++) {
 			grassShaders[i]->Link();
 
-			
+
 			for (int j = 0; j < NUM_UNIFORMS; j++) {
 				grassShaders[i]->SetUniformLocation(uniformNames[j]);
 			}
@@ -584,8 +584,8 @@ void CGrassDrawer::SetupGlStateFar()
 
 	if (shadowHandler->shadowsLoaded) {
 		grassShader = grassShaders[GRASS_PROGRAM_DIST_SHADOW];
-		grassShader->Enable();
 		grassShader->SetFlag("HAVE_INFOTEX", gd->DrawExtraTex());
+		grassShader->Enable();
 
 		grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
 		grassShader->SetUniform4fv(7, shadowHandler->GetShadowParams());
