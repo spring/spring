@@ -54,10 +54,12 @@ class LuaSyncedMoveCtrl {
 		static int SetCollideStop(lua_State* L);
 
 		// *MoveType-specific setters
-		static int SetGroundMoveTypeData(lua_State *L);
+		static int SetGroundMoveTypeData(lua_State* L);
 		static int SetAirMoveTypeData(lua_State* L);
 		static int SetGunshipMoveTypeData(lua_State* L);
 		static int SetBaseMoveTypeData(lua_State* L);
+
+		static int SetMoveDef(lua_State* L);
 };
 
 
