@@ -54,15 +54,10 @@ RE_VERSION =                          \
 
 ## Match complete version string, capture `Additional' version string.
 ## RE_VERSION = r'Spring [^\(]+ \(([^\)]+)\)[\w\(\) ]*'
-RE_OLD_VERSION = r'Spring [^\(]+ \(([^\)]+)\{\@\}-cmake-mingw32\)[\w\(\) ]*'
 
 # Match complete line containing version string.
 RE_VERSION_LINES = [
 	re.compile(x % (RE_PREFIX, RE_VERSION, RE_SUFFIX), re.MULTILINE) for x in
-	[r'%s%s has crashed\.%s', r'%sHang detection triggered for %s\.%s']
-]
-RE_OLD_VERSION_LINES = [
-	re.compile(x % (RE_PREFIX, RE_OLD_VERSION, RE_SUFFIX), re.MULTILINE) for x in
 	[r'%s%s has crashed\.%s', r'%sHang detection triggered for %s\.%s']
 ]
 
@@ -71,8 +66,6 @@ RE_CONFIG = r'(?:\[(?P<config>[^\]]+)\])?'
 RE_BRANCH = r'(?:\{(?P<branch>[^\}]+)\})?'
 RE_REV = r'(?P<rev>[0-9.]+(?:-[0-9]+-g[0-9A-Fa-f]+)?)'
 RE_VERSION_DETAILS = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'\s')
-# Same regex is safe, but can't be used to detect config or branch in old version strings.
-RE_OLD_VERSION_DETAILS = RE_VERSION_DETAILS
 
 # Match filename of file with debugging symbols, capture module name.
 RE_DEBUG_FILENAME = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'_(?P<module>[-\w]+)_dbg.7z')
@@ -148,27 +141,6 @@ def detect_version_helper(infolog, re_version_lines, re_version_details):
 
 	log.info('\t[OK] config = %s, branch = %s, rev = %s', config, branch, rev)
 	return config, branch, rev
-
-
-def detect_old_version_details(infolog):
-	'''\
-	Detect config, branch, rev from BuildServ version string in infolog.
-
-	Detects at least the latest official releases from before the switch to buildbot:
-
-		>>> detect_old_version_details('Spring 0.81.2.1 (0.81.2.1-0-g884a107{@}-cmake-mingw32) has crashed.')
-		('default', 'master', '0.81.2.1-0-g884a107')
-		>>> detect_old_version_details('Spring 0.81.2.0 (0.81.2-0-g76e4cf5{@}-cmake-mingw32) has crashed.')
-		('default', 'master', '0.81.2-0-g76e4cf5')
-
-	It should not detect new-style version strings:
-
-		>>> detect_old_version_details('Spring 0.81+.0.0 (0.81.2.1-1059-g7937d00) has crashed.')
-		Traceback (most recent call last):
-			...
-		FatalError: Unable to find detailed version in infolog
-	'''
-	return detect_version_helper(infolog, RE_OLD_VERSION_LINES, RE_OLD_VERSION_DETAILS)
 
 
 def detect_version_details(infolog):
@@ -377,27 +349,8 @@ def translate_stacktrace(infolog):
 	# 4) perform translation
 
 	try:
-		# Detected old style version string?
-		buildserv = False
-
-		try:
-			config, branch, rev = detect_version_details(infolog)
-		except FatalError:
-			# Try old version string, we might have debug symbols for some of them
-			config, branch, rev = detect_old_version_details(infolog)
-			buildserv = True
-
+		config, branch, rev = detect_version_details(infolog)
 		module_frames, frame_count = collect_stackframes(infolog)
-
-		# Hack to be able to translate symbols from Spring 0.82.6 and 0.82.6.1
-		# These symbols have had 0x400000 subtracted from them (within spring)
-		# module_frames = {'spring.exe': [(0, '0x1234'), (1, '0x2345')]
-		if rev == '0.82.6' or rev == '0.82.6.0' or rev == '0.82.6.1':
-			log.debug('Applying workaround for Spring 0.82.6 and 0.82.6.1')
-			for module, frames in module_frames.iteritems():
-				if re.search(r'spring(-.*)?.exe', module, re.IGNORECASE):
-					module_frames[module] = [(i, hex(int(addr, 16) + 0x400000)) for i, addr in frames]
-
 		modules = collect_modules(config, branch, rev, buildserv)
 
 		translated_stacktrace = translate_(module_frames, frame_count, modules)
