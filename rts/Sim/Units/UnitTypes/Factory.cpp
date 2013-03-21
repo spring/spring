@@ -74,14 +74,14 @@ void CFactory::PostLoad()
 	}
 }
 
-void CFactory::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence)
+void CFactory::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
 {
 	if (curBuild != NULL) {
-		curBuild->KillUnit(false, true, NULL);
+		curBuild->KillUnit(NULL, false, true);
 		curBuild = NULL;
 	}
 
-	CUnit::KillUnit(selfDestruct, reclaimed, attacker, showDeathSequence);
+	CUnit::KillUnit(attacker, selfDestruct, reclaimed, showDeathSequence);
 }
 
 void CFactory::PreInit(const UnitLoadParams& params)
@@ -316,7 +316,7 @@ void CFactory::StopBuild()
 	if (curBuild) {
 		if (curBuild->beingBuilt) {
 			AddMetal(curBuild->metalCost * curBuild->buildProgress, false);
-			curBuild->KillUnit(false, true, NULL);
+			curBuild->KillUnit(NULL, false, true);
 		}
 		DeleteDeathDependence(curBuild, DEPENDENCE_BUILD);
 	}

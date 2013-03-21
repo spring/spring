@@ -175,7 +175,8 @@ void CPieceProjectile::Collision()
 			1.0f,              // gfxMod
 			false,             // impactOnly
 			false,             // ignoreOwner
-			true               // damageGround
+			true,              // damageGround
+			id
 		};
 
 		helper->Explosion(params);
@@ -231,7 +232,8 @@ void CPieceProjectile::Collision(CUnit* unit)
 			1.0f,              // gfxMod
 			false,             // impactOnly
 			false,             // ignoreOwner
-			true               // damageGround
+			true,              // damageGround
+			id
 		};
 
 		helper->Explosion(params);

@@ -176,7 +176,7 @@ public:
 			CUnit* unit = unitHandler->GetUnit(unitId);
 
 			if (unit != NULL) {
-				unit->KillUnit(false, false, 0);
+				unit->KillUnit(NULL, false, false);
 			} else {
 				LOG("Wrong unitID: %i", unitId);
 			}

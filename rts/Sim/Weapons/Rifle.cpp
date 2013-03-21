@@ -59,7 +59,7 @@ void CRifle::FireImpl()
 	const float length = TraceRay::TraceRay(weaponMuzzlePos, dir, range, 0, owner, hitUnit, hitFeature);
 
 	if (hitUnit) {
-		hitUnit->DoDamage(weaponDef->damages, ZeroVector, owner, weaponDef->id);
+		hitUnit->DoDamage(weaponDef->damages, ZeroVector, owner, weaponDef->id, -1);
 		new CHeatCloudProjectile(weaponMuzzlePos + dir*length, hitUnit->speed * 0.9f, 30, 1, owner);
 	}
 

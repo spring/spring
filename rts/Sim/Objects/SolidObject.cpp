@@ -230,6 +230,6 @@ void CSolidObject::Kill(const float3& impulse, bool crushKill) {
 	crushKilled = crushKill;
 
 	DamageArray damage(health + 1.0f);
-	DoDamage(damage, impulse, NULL, -DAMAGE_EXTSOURCE_KILLED);
+	DoDamage(damage, impulse, NULL, -DAMAGE_EXTSOURCE_KILLED, -1);
 }
 

@@ -84,7 +84,7 @@ public:
 	virtual void SlowUpdateWeapons();
 	virtual void Update();
 
-	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID);
+	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID);
 	virtual void DoWaterDamage();
 	virtual void FinishedBuilding(bool postInit);
 
@@ -182,7 +182,7 @@ public:
 	}
 
 public:
-	virtual void KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence = true);
+	virtual void KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence = true);
 	virtual void IncomingMissile(CMissileProjectile* missile);
 	void TempHoldFire();
 	void ReleaseTempHoldFire();

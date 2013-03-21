@@ -514,7 +514,7 @@ void CClassicGroundMoveType::UpdateSkid()
 			owner->Move1D(wh+owner->relMidPos.y-speed.y*0.5f, 1, false);
 			float impactSpeed = -speed.dot(ground->GetNormal(midPos.x,midPos.z));
 			if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
-				owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), ZeroVector, NULL, -1);
+				owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), ZeroVector, NULL, -1, -1);
 			}
 		}
 	} else {
@@ -639,10 +639,10 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 					owner->speed += dif * (impactSpeed * 1.8f);
 
 					if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
-						owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1);
+						owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1, -1);
 					}
 					if (impactSpeed > u->unitDef->minCollisionSpeed && u->unitDef->minCollisionSpeed >= 0) {
-						u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1);
+						u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1, -1);
 					}
 				}
 			} else {
@@ -662,13 +662,13 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 					if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
 						owner->DoDamage(
 							DamageArray(impactSpeed * owner->mass * 0.2f * (1 - part)),
-							dif * impactSpeed * (owner->mass * (1 - part)), NULL, -1);
+							dif * impactSpeed * (owner->mass * (1 - part)), NULL, -1, -1);
 					}
 
 					if (impactSpeed > u->unitDef->minCollisionSpeed && u->unitDef->minCollisionSpeed >= 0) {
 						u->DoDamage(
 							DamageArray(impactSpeed * owner->mass * 0.2f * part),
-							dif * -impactSpeed * (u->mass * part), NULL, -1);
+							dif * -impactSpeed * (u->mass * part), NULL, -1, -1);
 					}
 					owner->speed *= 0.9f;
 					u->speed *= 0.9f;
@@ -692,9 +692,9 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 				owner->Move3D(dif*(impactSpeed), true);
 				owner->speed+=dif*(impactSpeed*1.8f);
 				if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
-					owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), ZeroVector, NULL, -1);
+					owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), ZeroVector, NULL, -1, -1);
 				}
-				u->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), -dif*impactSpeed, NULL, -1);
+				u->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), -dif*impactSpeed, NULL, -1, -1);
 			}
 		}
 	}

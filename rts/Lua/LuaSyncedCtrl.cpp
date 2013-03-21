@@ -1034,7 +1034,7 @@ int LuaSyncedCtrl::DestroyUnit(lua_State* L)
 	}
 	inDestroyUnit = true;
 	ASSERT_SYNCED(unit->id);
-	unit->KillUnit(selfd, reclaimed, attacker);
+	unit->KillUnit(attacker, selfd, reclaimed);
 	inDestroyUnit = false;
 
 	return 0;
@@ -2222,7 +2222,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 		damages.paralyzeDamageTime = paralyze;
 	}
 
-	unit->DoDamage(damages, impulse, attacker, weaponDefID);
+	unit->DoDamage(damages, impulse, attacker, weaponDefID, -1);
 	return 0;
 }
 
