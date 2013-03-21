@@ -253,7 +253,7 @@ bool CStrafeAirMoveType::Update()
 
 			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
 				owner->SetCrashing(false);
-				owner->KillUnit(true, false, 0);
+				owner->KillUnit(NULL, true, false);
 			}
 
 			new CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
@@ -316,8 +316,8 @@ bool CStrafeAirMoveType::HandleCollisions() {
 
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
-					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
-					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
+					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 
 					hitBuilding = true;
 				} else {
@@ -328,8 +328,8 @@ bool CStrafeAirMoveType::HandleCollisions() {
 
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
-					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
-					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
+					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 
 					owner->speed *= 0.99f;
 				}
@@ -340,7 +340,7 @@ bool CStrafeAirMoveType::HandleCollisions() {
 			// if crashing and we hit a building, die right now
 			// rather than waiting until we are close enough to
 			// the ground
-			owner->KillUnit(true, false, 0);
+			owner->KillUnit(NULL, true, false);
 			return true;
 		}
 

@@ -83,7 +83,8 @@ void CGameHelper::DoExplosionDamage(
 	const float expEdgeEffect,
 	const bool ignoreOwner,
 	const DamageArray& damages,
-	const int weaponDefID
+	const int weaponDefID,
+	const int projectileID
 ) {
 	if (ignoreOwner && (unit == owner)) {
 		return;
@@ -139,10 +140,10 @@ void CGameHelper::DoExplosionDamage(
 
 	if (expDist < (expSpeed * DIRECT_EXPLOSION_DAMAGE_SPEED_SCALE)) {
 		// damage directly
-		unit->DoDamage(expDamages, expImpulse, owner, weaponDefID);
+		unit->DoDamage(expDamages, expImpulse, owner, weaponDefID, projectileID);
 	} else {
 		// damage later
-		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, expDamages, expImpulse, weaponDefID);
+		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, expDamages, expImpulse, weaponDefID, projectileID);
 		waitingDamages[(gs->frameNum + int(expDist / expSpeed) - 3) & 127].push_front(wd);
 	}
 }
@@ -153,7 +154,8 @@ void CGameHelper::DoExplosionDamage(
 	const float expRadius,
 	const float expEdgeEffect,
 	const DamageArray& damages,
-	const int weaponDefID
+	const int weaponDefID,
+	const int projectileID
 ) {
 	const CollisionVolume* vol = CollisionVolume::GetVolume(feature, NULL);
 	const float3& volPos = vol->GetWorldSpacePos(feature, ZeroVector);
@@ -175,7 +177,7 @@ void CGameHelper::DoExplosionDamage(
 	const float3 impulseDir = (volPos - expPos).SafeNormalize();
 	const float3 expImpulse = impulseDir * modImpulseScale;
 
-	feature->DoDamage(damages * expMod, expImpulse, NULL, weaponDefID);
+	feature->DoDamage(damages * expMod, expImpulse, NULL, weaponDefID, projectileID);
 }
 
 
@@ -206,7 +208,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	const bool impactOnly = params.impactOnly;
 	const bool ignoreOwner = params.ignoreOwner;
 	const bool damageGround = params.damageGround;
-	const bool noGfx = eventHandler.Explosion(weaponDefID, expPos, owner);
+	const bool noGfx = eventHandler.Explosion(weaponDefID, params.projectileID, expPos, owner);
 
 	if (luaUI) {
 		if (weaponDef != NULL && weaponDef->cameraShake > 0.0f) {
@@ -216,9 +218,9 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 
 	if (impactOnly) {
 		if (hitUnit) {
-			DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID);
+			DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID, params.projectileID);
 		} else if (hitFeature) {
-			DoExplosionDamage(hitFeature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID);
+			DoExplosionDamage(hitFeature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID, params.projectileID);
 		}
 	} else {
 		{
@@ -233,14 +235,14 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 					hitUnitDamaged = true;
 				}
 
-				DoExplosionDamage(unit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID);
+				DoExplosionDamage(unit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID, params.projectileID);
 			}
 
 			// HACK: for a unit with an offset coldet volume, the explosion
 			// (from an impacting projectile) position might not correspond
 			// to its quadfield position so we need to damage it separately
 			if (hitUnit != NULL && !hitUnitDamaged) {
-				DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID);
+				DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID, params.projectileID);
 			}
 		}
 
@@ -256,11 +258,11 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 					hitFeatureDamaged = true;
 				}
 
-				DoExplosionDamage(feature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID);
+				DoExplosionDamage(feature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID, params.projectileID);
 			}
 
 			if (hitFeature != NULL && !hitFeatureDamaged) {
-				DoExplosionDamage(hitFeature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID);
+				DoExplosionDamage(hitFeature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID, params.projectileID);
 			}
 		}
 
@@ -1224,7 +1226,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(const float3& pos, c
 		if (pos.y < std::min(orgHgt - difHgt, curHgt - difHgt)) { return BUILDSQUARE_BLOCKED; }
 	}
 
-	if (!unitdef->IsAllowedTerrainHeight(groundHeight))
+	if (!unitdef->IsAllowedTerrainHeight(moveDef, groundHeight))
 		ret = BUILDSQUARE_BLOCKED;
 
 	return ret;
@@ -1288,7 +1290,7 @@ void CGameHelper::Update()
 		CUnit* attacker = (w->attacker == -1)? NULL: unitHandler->units[w->attacker];
 
 		if (attackee != NULL)
-			attackee->DoDamage(w->damage, w->impulse, attacker, w->weaponId);
+			attackee->DoDamage(w->damage, w->impulse, attacker, w->weaponID, w->projectileID);
 
 		delete w;
 	}

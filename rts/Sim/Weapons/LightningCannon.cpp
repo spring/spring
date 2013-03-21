@@ -119,7 +119,8 @@ void CLightningCannon::FireImpl()
 		0.5f,                                             // gfxMod
 		weaponDef->impactOnly,
 		weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
-		false                                             // damageGround
+		false,                                            // damageGround
+		-1u                                               // projectileID
 	};
 
 	helper->Explosion(params);

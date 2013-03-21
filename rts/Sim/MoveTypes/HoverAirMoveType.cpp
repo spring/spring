@@ -889,7 +889,7 @@ bool CHoverAirMoveType::Update()
 
 			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
 				owner->SetCrashing(false);
-				owner->KillUnit(true, false, 0);
+				owner->KillUnit(NULL, true, false);
 			} else {
 				#define SPIN_DIR(o) ((o->id & 1) * 2 - 1)
 				wantedHeading = GetHeadingFromVector(owner->rightdir.x * SPIN_DIR(owner), owner->rightdir.z * SPIN_DIR(owner));
@@ -1048,7 +1048,7 @@ bool CHoverAirMoveType::HandleCollisions()
 		}
 
 		if (hitBuilding && owner->IsCrashing()) {
-			owner->KillUnit(true, false, 0);
+			owner->KillUnit(NULL, true, false);
 			return true;
 		}
 

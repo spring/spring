@@ -249,7 +249,7 @@ void CUnitHandler::Update()
 			if (!unit->pos.IsInBounds() && (unit->speed.SqLength() > (MAX_UNIT_SPEED * MAX_UNIT_SPEED))) {
 				// this unit is not coming back, kill it now without any death
 				// sequence (so deathScriptFinished becomes true immediately)
-				unit->KillUnit(false, true, NULL, false);
+				unit->KillUnit(NULL, false, true, false);
 			}
 
 			UNIT_SANITY_CHECK(unit);
@@ -270,7 +270,7 @@ void CUnitHandler::Update()
 				// arrive here without having been properly killed (and isDead still false),
 				// which can result in MT deadlocking -- FIXME verify this
 				// (KU returns early if isDead)
-				unit->KillUnit(false, true, NULL);
+				unit->KillUnit(NULL, false, true);
 
 				DeleteUnit(unit);
 			} else {

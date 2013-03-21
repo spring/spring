@@ -157,8 +157,13 @@ class CLuaHandle : public CEventClient
 		void UnitIdle(const CUnit* unit);
 		void UnitCommand(const CUnit* unit, const Command& command);
 		void UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag);
-		void UnitDamaged(const CUnit* unit, const CUnit* attacker,
-		                 float damage, int weaponID, bool paralyzer);
+		void UnitDamaged(
+			const CUnit* unit,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID,
+			bool paralyzer);
 		void UnitExperience(const CUnit* unit, float oldExperience);
 
 		void UnitSeismicPing(const CUnit* unit, int allyTeam,
@@ -189,7 +194,7 @@ class CLuaHandle : public CEventClient
 		void ProjectileCreated(const CProjectile* p);
 		void ProjectileDestroyed(const CProjectile* p);
 
-		bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
+		bool Explosion(int weaponID, int projectileID, const float3& pos, const CUnit* owner);
 
 		void StockpileChanged(const CUnit* owner,
 		                      const CWeapon* weapon, int oldCount);

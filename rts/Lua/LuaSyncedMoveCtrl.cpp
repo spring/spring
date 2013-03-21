@@ -7,7 +7,9 @@
 
 #include "LuaHandle.h"
 #include "LuaHashString.h"
+#include "LuaHelper.h"
 #include "LuaUtils.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/ScriptMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
@@ -17,7 +19,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
-#include "LuaHelper.h"
 
 #include <cctype>
 
@@ -76,6 +77,8 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 	REGISTER_LUA_CFUNC(SetAirMoveTypeData);
 	REGISTER_LUA_CFUNC(SetGroundMoveTypeData);
 	REGISTER_LUA_CFUNC(SetGunshipMoveTypeData);
+
+	REGISTER_LUA_CFUNC(SetMoveDef);
 
 	lua_rawset(L, -3);
 
@@ -613,7 +616,7 @@ static inline void SetSingleAirMoveTypeValue(lua_State* L, int keyidx, int valid
 	}
 }
 
-int LuaSyncedMoveCtrl::SetAirMoveTypeData(lua_State *L)
+int LuaSyncedMoveCtrl::SetAirMoveTypeData(lua_State* L)
 {
 	CStrafeAirMoveType* moveType = ParseMoveType<CStrafeAirMoveType>(L, __FUNCTION__, 1);
 	if (moveType == NULL) {
@@ -813,3 +816,49 @@ int LuaSyncedMoveCtrl::SetGunshipMoveTypeData(lua_State *L)
 
 /******************************************************************************/
 /******************************************************************************/
+
+int LuaSyncedMoveCtrl::SetMoveDef(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	MoveDef* moveDef = NULL;
+
+	if (unit == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	if (unit->moveDef == NULL) {
+		// aircraft or structure, not supported
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	// MoveType instance must already have been assigned
+	assert(unit->moveType != NULL);
+
+	if (lua_isnumber(L, 2))
+		moveDef = moveDefHandler->GetMoveDefByPathType(Clamp(luaL_checkint(L, 2), 0, int(moveDefHandler->GetNumMoveDefs()) - 1));
+	if (lua_isstring(L, 2))
+		moveDef = moveDefHandler->GetMoveDefByName(lua_tostring(L, 2));
+
+	if (moveDef == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	if (moveDef->unitDefRefCount == 0) {
+		// pathfinder contains optimizations that
+		// make unreferenced movedef's non-usable
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	// the case where moveDef->pathType == unit->moveDef->pathType does no harm
+	// note: if a unit (ID) is available, then its current MoveDef should always
+	// be taken over the MoveDef corresponding to its UnitDef::pathType wherever
+	// MoveDef properties are used in decision logic
+	unit->moveDef = moveDef;
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+

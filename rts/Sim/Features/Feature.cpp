@@ -347,7 +347,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 }
 
 
-void CFeature::DoDamage(const DamageArray& damages, const float3& impulse, CUnit*, int)
+void CFeature::DoDamage(const DamageArray& damages, const float3& impulse, CUnit*, int, int)
 {
 	if (damages.paralyzeDamageTime) {
 		return; // paralyzers do not damage features

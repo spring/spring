@@ -26,7 +26,7 @@ public:
 
 	void Update();
 	void DependentDied(CObject* object);
-	void KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSeq = false);
+	void KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSeq = false);
 	void AttachUnit(CUnit* unit, int piece);
 	bool CanTransport(const CUnit* unit) const;
 	float GetLoadUnloadHeight(const float3& wantedPos, const CUnit* unit, bool* ok = NULL) const;
