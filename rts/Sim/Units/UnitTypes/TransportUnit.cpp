@@ -443,7 +443,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 		// unit is being transported, set <clampedHeight> to
 		// the altitude at which to UNload the transportee
 		wantedHeight = ground->GetHeightReal(wantedPos.x, wantedPos.z);
-		isAllowedHeight = transporteeUnitDef->IsAllowedTerrainHeight(wantedHeight, &clampedHeight);
+		isAllowedHeight = transporteeUnitDef->IsAllowedTerrainHeight(transporteeMoveDef, wantedHeight, &clampedHeight);
 
 		if (isAllowedHeight) {
 			if (transporteeMoveDef != NULL) {
@@ -483,7 +483,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 	float finalHeight = contactHeight;
 
 	// *we* must be capable of reaching the point-of-contact height
-	isAllowedHeight &= unitDef->IsAllowedTerrainHeight(contactHeight, &finalHeight);
+	isAllowedHeight &= unitDef->IsAllowedTerrainHeight(this->moveDef, contactHeight, &finalHeight);
 
 	if (allowedPos != NULL) {
 		*allowedPos = isAllowedHeight;
