@@ -46,6 +46,10 @@ Lua:
  - add Spring.SetProjectileTarget(number projectileID, [number objectID, string objectType] | [number x, number y, number z]) --> boolean
  - add Spring.GetProjectileTarget(number projectileID) --> number targetID, string targetType
  - add Spring.SpawnProjectile(number weaponDefID, table projectileParams) --> number projectileID | nil
+ - add MoveCtrl.SetMoveDef(number unitID, number moveDefID | string moveDefName) --> boolean
+ - add projectileID argument to UnitPreDamaged
+     OLD signature: unitID, unitDefID, unitTeam, damage, paralyzer [, weaponDefID               [, attackerID, attackerDefID, attackerTeam] ]
+     NEW signature: unitID, unitDefID, unitTeam, damage, paralyzer [, weaponDefID, projectileID [, attackerID, attackerDefID, attackerTeam] ]
 
 
 

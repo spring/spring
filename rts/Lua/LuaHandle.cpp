@@ -1016,13 +1016,11 @@ void CLuaHandle::UnitDamaged(
 	lua_pushnumber(L, unit->team);
 	lua_pushnumber(L, damage);
 	lua_pushboolean(L, paralyzer);
-	if (GetHandleFullRead(L)) {
-		lua_pushnumber(L, weaponDefID);
-		argCount += 1;
 
+	if (GetHandleFullRead(L)) {
+		lua_pushnumber(L, weaponDefID); argCount += 1;
 		// TODO: add to batch
-		// lua_pushnumber(L, projectileID);
-		// argCount += 1;
+		// lua_pushnumber(L, projectileID); // argCount += 1;
 
 		if (attacker != NULL) {
 			lua_pushnumber(L, attacker->id);
