@@ -30,45 +30,58 @@ PIDFILE = os.path.expanduser('~/run/stacktrace_translator.pid')
 # Object passed into the XMLRPC server object to listen on.
 LISTEN_ADDR = ('', 8000)
 
+# path to test file
+TESTFILE = os.path.join(WWWROOT, "default/release/93.2.1-56-gdca244e/win32/{release}93.2.1-56-gdca244e_spring_dbg.7z")
+
 # Match common pre- and suffix on infolog lines. This also allows
 # "empty" prefixes followed by any amount of trailing whitespace.
 RE_PREFIX = r'^(?:\[(?:f=)?\s*\d+\])?(?: Error:)?\s*'
-RE_SUFFIX = '\r?$'
+RE_SUFFIX = r'(?:\r$)?'
 
 # Match stackframe lines, captures the module name and the address.
 # Example: '[      0] (0) C:\Program Files\Spring\spring.exe [0x0080F268]'
 #          -> ('C:\\Program Files\\Spring\\spring.exe', '0x0080F268')
-RE_STACKFRAME = re.compile(RE_PREFIX + r'\(\d+\)\s+(.*(?:\.exe|\.dll))(?:\([^)]*\))?\s+\[(0x[\dA-Fa-f]+)\]' + RE_SUFFIX, re.MULTILINE)
+RE_STACKFRAME = RE_PREFIX + r'\(\d+\)\s+(.*(?:\.exe|\.dll))(?:\([^)]*\))?\s+\[(0x[\dA-Fa-f]+)\]' + RE_SUFFIX
 
 ## regex for RC12 versions: first two parts are
 ## mandatory, last two form one optional group
 RE_VERSION_NAME_PREFIX = "(?:[sS]pring)"
-RE_VERSION_MAJOR_PATCH = "([0-9]+\.[0-9]+[\.0-9]*)"
-RE_VERSION_COMMIT_HASH = "(?:-)?(?:([0-9]+-g[0-9a-f]+)"
-RE_VERSION_BRANCH_NAME = "([a-zA-Z0-9\-]+))?"
+RE_VERSION_STRING = "([0-9]+\.[0-9]+[\.0-9]*(?:-[0-9]+-g[0-9a-f]+)?)"
+RE_VERSION_BRANCH_NAME = "([a-zA-Z0-9\-]+)?"
 RE_VERSION =                          \
 	RE_VERSION_NAME_PREFIX + " ?" + \
-	RE_VERSION_MAJOR_PATCH + " ?" + \
-	RE_VERSION_COMMIT_HASH + " ?" + \
+	RE_VERSION_STRING + " ?" + \
 	RE_VERSION_BRANCH_NAME
 
-## Match complete version string, capture `Additional' version string.
-## RE_VERSION = r'Spring [^\(]+ \(([^\)]+)\)[\w\(\) ]*'
+
+def test_version(string):
+	'''
+		>>> test_version('Spring 91.0 (OMP)')
+		('91.0', None)
+
+		>>> test_version('spring 93.2.1-82-g863e91e release (Debug OMP)')
+		('93.2.1-82-g863e91e', 'release')
+	'''
+	log.debug('test_version():'+string)
+	return re.search(RE_VERSION, string, re.MULTILINE).groups()
 
 # Match complete line containing version string.
 RE_VERSION_LINES = [
-	re.compile(x % (RE_PREFIX, RE_VERSION, RE_SUFFIX), re.MULTILINE) for x in
-	[r'%s%s has crashed\.%s', r'%sHang detection triggered for %s\.%s']
+	x % (RE_PREFIX, RE_VERSION, RE_SUFFIX) for x in [
+		r'%s%s has crashed\.%s',
+		r'%sHang detection triggered for %s\.%s',
+		r'%sSegmentation fault \(SIGSEGV\) in %s%s',
+	]
 ]
 
 # Capture config, branch, rev from `Additional' version string.
-RE_CONFIG = r'(?:\[(?P<config>[^\]]+)\])?'
-RE_BRANCH = r'(?:\{(?P<branch>[^\}]+)\})?'
-RE_REV = r'(?P<rev>[0-9.]+(?:-[0-9]+-g[0-9A-Fa-f]+)?)'
-RE_VERSION_DETAILS = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'\s')
+#RE_CONFIG = r'(?:\[(?P<config>[^\]]+)\])?'
+#RE_BRANCH = r'(?:\{(?P<branch>[^\}]+)\})?'
+#RE_REV = r'(?P<rev>[0-9.]+(?:-[0-9]+-g[0-9A-Fa-f]+)?)'
+#RE_VERSION_DETAILS = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'\s')
 
 # Match filename of file with debugging symbols, capture module name.
-RE_DEBUG_FILENAME = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'_(?P<module>[-\w]+)_dbg.7z')
+RE_DEBUG_FILENAME = '.*_spring_dbg.7z'
 
 # Set up application log.
 log = logging.getLogger('stacktrace_translator')
@@ -118,51 +131,39 @@ def best_matching_module(needle, haystack):
 	return None
 
 
-def detect_version_helper(infolog, re_version_lines, re_version_details):
-	log.info('Detecting version details...')
-
-	version = None
-	for re_version_line in re_version_lines:
-		match = re_version_line.search(infolog)
-		if match:
-			version = match.group(1)
-			break
-	else:
-		fatal('Unable to find detailed version in infolog')
-
-	# a space is added so the regex can check for (end of string | space) easily.
-	match = re_version_details.match(version + ' ')
-	if not match:
-		fatal('Unable to parse detailed version string "%s"' % version)
-
-	config, branch, rev = match.group('config', 'branch', 'rev')
-	if not config: config = 'default'
-	if not branch: branch = 'master'
-
-	log.info('\t[OK] config = %s, branch = %s, rev = %s', config, branch, rev)
-	return config, branch, rev
-
-
 def detect_version_details(infolog):
 	'''\
 	Detect config, branch, rev from version string(s) in infolog.
 
 	These should be fine:
 
-		>>> detect_version_details('Spring 0.81+.0.0 (0.81.2.1-1059-g7937d00) has crashed.')
-		('default', 'master', '0.81.2.1-1059-g7937d00')
+		>>> detect_version_details('Segmentation fault (SIGSEGV) in spring 91.0 (OMP)')
+		('default', 'master', '91.0')
 
-		>>> detect_version_details('Hang detection triggered for Spring 0.81+.0.0 ([debug2]{pyAiInt}0.81.2.1-1059-g7937d00).')
-		('debug2', 'pyAiInt', '0.81.2.1-1059-g7937d00')
+		>>> detect_version_details('Segmentation fault (SIGSEGV) in spring 93.2.1-82-g863e91e release (Debug OMP)')
+		('default', 'release', '93.2.1-82-g863e91e')
+
 
 	This is an old-style (BuildServ) version string, it should be rejected:
 
 		>>> detect_version_details('Spring 0.81.2.1 (0.81.2.1-0-g884a107{@}-cmake-mingw32) has crashed.')
 		Traceback (most recent call last):
 			...
-		FatalError: Unable to parse detailed version string "0.81.2.1-0-g884a107{@}-cmake-mingw32"
+		FatalError: Unable to find detailed version in infolog
 	'''
-	return detect_version_helper(infolog, RE_VERSION_LINES, RE_VERSION_DETAILS)
+	version = None
+	branch = None
+	for re_version_line in RE_VERSION_LINES:
+		match = re.search(re_version_line, infolog, re.MULTILINE)
+		if match:
+			version = match.group(1)
+			branch = match.group(2)
+			break
+	else:
+		fatal('Unable to find detailed version in infolog')
+	if not branch: branch = 'master'
+	# FIXME: config support (how does a version string with config currently look like?!)
+	return 'default', branch, version
 
 
 def collect_stackframes(infolog):
@@ -177,7 +178,7 @@ def collect_stackframes(infolog):
 
 	frames = {}
 	frame_count = 0
-	for module, address in RE_STACKFRAME.findall(infolog):
+	for module, address in re.findall(RE_STACKFRAME,infolog):
 		frames.setdefault(module, []).append((frame_count, address))
 		frame_count += 1
 
@@ -185,39 +186,63 @@ def collect_stackframes(infolog):
 	log.info('\t[OK]')
 	return frames, frame_count
 
+def get_modules(dbgfile):
+	'''
+	returns a list of all available files in a 7z archive
+		>>> get_modules(TESTFILE)
+		['AI/Interfaces/C/0.1/AIInterface.dbg', 'AI/Interfaces/Java/0.1/AIInterface.dbg', 'AI/Skirmish/AAI/0.9/SkirmishAI.dbg', 'AI/Skirmish/CppTestAI/0.1/SkirmishAI.dbg', 'AI/Skirmish/E323AI/3.25.0/SkirmishAI.dbg', 'AI/Skirmish/KAIK/0.13/SkirmishAI.dbg', 'AI/Skirmish/NullAI/0.1/SkirmishAI.dbg', 'AI/Skirmish/RAI/0.601/SkirmishAI.dbg', 'AI/Skirmish/Shard/dev/SkirmishAI.dbg', 'spring.dbg', 'springserver.dbg', 'unitsync.dbg']
+	'''
+	sevenzip = Popen([SEVENZIP, 'l', dbgfile], stdout = PIPE, stderr = PIPE)
+	stdout, stderr = sevenzip.communicate()
+	if stderr:
+		log.debug('%s stderr: %s' % (SEVENZIP, stderr))
+	if sevenzip.returncode != 0:
+		fatal('%s exited with status %s' % (SEVENZIP, sevenzip.returncode))
 
-def collect_modules(config, branch, rev, buildserv):
+	files = []
+	for line in stdout.split('\n'):
+		match = re.match("^.* ([a-zA-Z\/0-9\.]+dbg)$", line)
+		if match:
+			files.append(match.group(1))
+	return files
+
+
+def collect_modules(config, branch, rev, platform):
 	'''\
 	Collect modules for which debug data is available.
 	Return dict which maps (simplified) module name to debug symbol filename.
+		>>> collect_modules('default', 'release', '93.2.1-56-gdca244e', 'win32')
+		{'Java/AIInterface.dll': 'AI/Interfaces/Java/0.1/AIInterface.dbg', 'unitsync.dll': 'unitsync.dbg', 'spring.exe': 'spring.dbg', 'CppTestAI': 'AI/Skirmish/CppTestAI/0.1/SkirmishAI.dbg/SkirmishAI.dll', 'E323AI': 'AI/Skirmish/E323AI/3.25.0/SkirmishAI.dbg/SkirmishAI.dll', 'AAI': 'AI/Skirmish/AAI/0.9/SkirmishAI.dbg/SkirmishAI.dll', 'Shard': 'AI/Skirmish/Shard/dev/SkirmishAI.dbg/SkirmishAI.dll', 'RAI': 'AI/Skirmish/RAI/0.601/SkirmishAI.dbg/SkirmishAI.dll', 'C/AIInterface.dll': 'AI/Interfaces/C/0.1/AIInterface.dbg', 'KAIK': 'AI/Skirmish/KAIK/0.13/SkirmishAI.dbg/SkirmishAI.dll', 'NullAI': 'AI/Skirmish/NullAI/0.1/SkirmishAI.dbg/SkirmishAI.dll'}
 	'''
 	log.info('Checking debug data availability...')
 
-	if buildserv:
-		dir = os.path.join(WWWROOT, 'buildserv', config, branch, rev)
-	else:
-		dir = os.path.join(WWWROOT, config, branch, rev)
-
+	dir = os.path.join(WWWROOT, config, branch, rev, platform)
+	log.debug(dir)
 	if not os.path.isdir(dir):
 		fatal('No debugging symbols available')
-
-	modules = {}
+	dbgfile = None
 	for filename in os.listdir(dir):
-		match = RE_DEBUG_FILENAME.match(filename)
+		match = re.match(RE_DEBUG_FILENAME, filename)
 		if match:
-			module = match.groupdict()['module']
-			path = os.path.join(dir, filename)
-			if module.startswith('spring'):
-				# executables
-				modules[module + '.exe'] = path
-			elif module == 'unitsync':
-				# 'normal' DLLs
-				modules[module + '.dll'] = path
-			else:
-				# AI DLLs
-				modules['%s/SkirmishAI.dll' % module] = path
+			dbgfile = os.path.join(dir, filename)
+	if not dbgfile:
+		return None
+	archivefiles = get_modules(dbgfile)
+	modules = {}
+	for module in archivefiles:
+		if module == 'spring.dbg':
+			modules["spring.exe"] = module
+		elif module == 'unitsync.dbg':
+			modules["unitsync.dll"] = module
+		elif module.startswith('AI/Interfaces'):
+			name = module.split('/')[2] + '/AIInterface.dll'
+			modules[name] = module
+		elif module.startswith('AI/Skirmish'):
+			name = module.split('/')[2]
+			modules[name] = module + '/SkirmishAI.dll'
+		else:
+			log.error("no match found: "+module)
 
-	log.debug('modules = %s', modules)
 	log.info('\t[OK]')
 	return modules
 
@@ -226,11 +251,14 @@ def translate_module_addresses(module, debugfile, addresses):
 	'''\
 	Translate addresses in a module to (module, address, filename, lineno) tuples
 	by invoking addr2line exactly once on the debugging symbols for that module.
+		>>> translate_module_addresses( 'spring.dbg', TESTFILE, ['0x0'])
+		[('spring.dbg', '0x0', '??', 0)]
 	'''
 	with NamedTemporaryFile() as tempfile:
 		log.info('\tExtracting debug symbols for module %s from archive %s...' % (module, os.path.basename(debugfile)))
+		log.info([SEVENZIP, 'e', '-so', '-y', debugfile, module])
 		# e = extract without path, -so = write output to stdout, -y = yes to all questions
-		sevenzip = Popen([SEVENZIP, 'e', '-so', '-y', debugfile], stdout = tempfile, stderr = PIPE)
+		sevenzip = Popen([SEVENZIP, 'e', '-so', '-y', debugfile, module], stdout = tempfile, stderr = PIPE)
 		stdout, stderr = sevenzip.communicate()
 		if stderr:
 			log.debug('%s stderr: %s' % (SEVENZIP, stderr))
@@ -351,7 +379,7 @@ def translate_stacktrace(infolog):
 	try:
 		config, branch, rev = detect_version_details(infolog)
 		module_frames, frame_count = collect_stackframes(infolog)
-		modules = collect_modules(config, branch, rev, buildserv)
+		modules = collect_modules(config, branch, rev, 'win32')
 
 		translated_stacktrace = translate_(module_frames, frame_count, modules)
 
