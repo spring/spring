@@ -70,9 +70,15 @@ class CLuaRules : public CLuaHandleSynced
 			unsigned int attackerWeaponDefID,
 			float* targetPriority);
 
-		bool UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
-                             float damage, int weaponID, bool paralyzer,
-                             float* newDamage, float* impulseMult);
+		bool UnitPreDamaged(
+			const CUnit* unit,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID,
+			bool paralyzer,
+			float* newDamage,
+			float* impulseMult);
 
 		bool ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool);
 

@@ -690,6 +690,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 					weaponDef->impactOnly,
 					weaponDef->noSelfDamage,           // ignoreOwner
 					true,                              // damageGround
+					-1u                                // projectileID
 				};
 
 				helper->Explosion(params);
@@ -1259,9 +1260,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 
 		if (u->beingBuilt) {
 			// no explosions and no corpse for units under construction
-			u->KillUnit(false, true, NULL);
+			u->KillUnit(NULL, false, true);
 		} else {
-			u->KillUnit(p2 != 0, p3 != 0, NULL);
+			u->KillUnit(NULL, p2 != 0, p3 != 0);
 		}
 
 		return 1;

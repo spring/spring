@@ -283,7 +283,8 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 			1.0f,                                             // gfxMod
 			weaponDef->impactOnly,
 			weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
-			true                                              // damageGround
+			true,                                             // damageGround
+			-1u                                               // projectileID
 		};
 
 		helper->Explosion(params);

@@ -119,7 +119,7 @@ void CTransportUnit::DependentDied(CObject* o)
 }
 
 
-void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool)
+void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool)
 {
 	if (!isDead) {
 		// guard against recursive invocation via
@@ -148,10 +148,10 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			if (!unitDef->releaseHeld) {
 				if (!selfDestruct) {
 					// we don't want transportees to leave a corpse
-					transportee->DoDamage(DamageArray(1e6f), ZeroVector, NULL, -DAMAGE_EXTSOURCE_KILLED);
+					transportee->DoDamage(DamageArray(1e6f), ZeroVector, NULL, -DAMAGE_EXTSOURCE_KILLED, -1);
 				}
 
-				transportee->KillUnit(selfDestruct, reclaimed, attacker);
+				transportee->KillUnit(attacker, selfDestruct, reclaimed);
 			} else {
 				// NOTE: game's responsibility to deal with edge-cases now
 				transportee->Move3D(transportee->pos.cClampInBounds(), false);
@@ -207,7 +207,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 		isDead = false;
 	}
 
-	CUnit::KillUnit(selfDestruct, reclaimed, attacker);
+	CUnit::KillUnit(attacker, selfDestruct, reclaimed);
 }
 
 

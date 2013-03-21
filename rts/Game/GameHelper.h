@@ -55,9 +55,12 @@ public:
 		float edgeEffectiveness;
 		float explosionSpeed;
 		float gfxMod;
+
 		bool impactOnly;
 		bool ignoreOwner;
 		bool damageGround;
+
+		unsigned int projectileID;
 	};
 
 	CGameHelper();
@@ -120,7 +123,8 @@ public:
 		const float expEdgeEffect,
 		const bool ignoreOwner,
 		const DamageArray& damages,
-		const int weaponDefID
+		const int weaponDefID,
+		const int projectileID
 	);
 	void DoExplosionDamage(
 		CFeature* feature,
@@ -128,7 +132,8 @@ public:
 		const float expRadius,
 		const float expEdgeEffect,
 		const DamageArray& damages,
-		const int weaponDefID
+		const int weaponDefID,
+		const int projectileID
 	);
 
 	void Explosion(const ExplosionParams& params);
@@ -136,7 +141,7 @@ public:
 private:
 	CStdExplosionGenerator* stdExplosionGenerator;
 
-	struct WaitingDamage{
+	struct WaitingDamage {
 #if !defined(SYNCIFY)
 		inline void* operator new(size_t size) {
 			return mempool.Alloc(size);
@@ -145,17 +150,20 @@ private:
 			mempool.Free(p, size);
 		};
 #endif
-		WaitingDamage(int attacker, int target, const DamageArray& damage, const float3& impulse, const int weaponId)
-			:	target(target),
-				attacker(attacker),
-				weaponId(weaponId),
-				damage(damage),
-				impulse(impulse)
+		WaitingDamage(int attacker, int target, const DamageArray& damage, const float3& impulse, const int _weaponID, const int _projectileID)
+		: target(target)
+		, attacker(attacker)
+		, weaponID(_weaponID)
+		, projectileID(_projectileID)
+		, damage(damage)
+		, impulse(impulse)
 		{}
 
 		int target;
 		int attacker;
-		int weaponId;
+		int weaponID;
+		int projectileID;
+
 		DamageArray damage;
 		float3 impulse;
 	};
