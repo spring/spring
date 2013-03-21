@@ -392,8 +392,14 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed, const CUnit* attac
 }
 
 
-void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
-		float damage, int weaponDefId, bool paralyzer) {
+void CEngineOutHandler::UnitDamaged(
+	const CUnit& damaged,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID,
+	bool paralyzer
+) {
 	AI_EVT_MTH();
 
 	const int damagedUnitId  = damaged.id;
@@ -417,7 +423,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 				visibleAttackerUnitId = attackerUnitId;
 			}
 			try {
-				id_skirmishAI[*ai]->UnitDamaged(damagedUnitId, visibleAttackerUnitId, damage, attackDir_damagedsView, weaponDefId, paralyzer);
+				id_skirmishAI[*ai]->UnitDamaged(damagedUnitId, visibleAttackerUnitId, damage, attackDir_damagedsView, weaponDefID, paralyzer);
 			} CATCH_AI_EXCEPTION;
 		}
 	}
@@ -439,7 +445,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 				{
 					try {
 						saw->EnemyDamaged(damagedUnitId, attackerUnitId, damage,
-								attackDir, weaponDefId, paralyzer);
+								attackDir, weaponDefID, paralyzer);
 					} CATCH_AI_EXCEPTION;
 				}
 			}

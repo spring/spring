@@ -161,7 +161,8 @@ void CWeaponProjectile::Explode(
 		weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod
 		weaponDef->impactOnly,
 		weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
-		true                                              // damgeGround
+		true,                                             // damgeGround
+		id
 	};
 
 	helper->Explosion(params);

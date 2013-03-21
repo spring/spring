@@ -873,8 +873,9 @@ void UnitDef::SetNoCost(bool noCost)
 	}
 }
 
-bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) const {
-	const MoveDef* moveDef = (pathType != -1U)? moveDefHandler->GetMoveDefByPathType(pathType): NULL;
+bool UnitDef::IsAllowedTerrainHeight(const MoveDef* moveDef, float rawHeight, float* clampedHeight) const {
+	// can fail if LuaMoveCtrl has changed a unit's MoveDef (UnitDef::pathType is not updated)
+	// assert(pathType == -1u || moveDef == moveDefHandler->GetMoveDefByPathType(pathType));
 
 	float maxDepth = +1e6f;
 	float minDepth = -1e6f;

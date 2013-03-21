@@ -119,7 +119,7 @@ void CTransportUnit::DependentDied(CObject* o)
 }
 
 
-void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool)
+void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool)
 {
 	if (!isDead) {
 		// guard against recursive invocation via
@@ -148,10 +148,10 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			if (!unitDef->releaseHeld) {
 				if (!selfDestruct) {
 					// we don't want transportees to leave a corpse
-					transportee->DoDamage(DamageArray(1e6f), ZeroVector, NULL, -DAMAGE_EXTSOURCE_KILLED);
+					transportee->DoDamage(DamageArray(1e6f), ZeroVector, NULL, -DAMAGE_EXTSOURCE_KILLED, -1);
 				}
 
-				transportee->KillUnit(selfDestruct, reclaimed, attacker);
+				transportee->KillUnit(attacker, selfDestruct, reclaimed);
 			} else {
 				// NOTE: game's responsibility to deal with edge-cases now
 				transportee->Move3D(transportee->pos.cClampInBounds(), false);
@@ -207,7 +207,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 		isDead = false;
 	}
 
-	CUnit::KillUnit(selfDestruct, reclaimed, attacker);
+	CUnit::KillUnit(attacker, selfDestruct, reclaimed);
 }
 
 
@@ -443,7 +443,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 		// unit is being transported, set <clampedHeight> to
 		// the altitude at which to UNload the transportee
 		wantedHeight = ground->GetHeightReal(wantedPos.x, wantedPos.z);
-		isAllowedHeight = transporteeUnitDef->IsAllowedTerrainHeight(wantedHeight, &clampedHeight);
+		isAllowedHeight = transporteeUnitDef->IsAllowedTerrainHeight(transporteeMoveDef, wantedHeight, &clampedHeight);
 
 		if (isAllowedHeight) {
 			if (transporteeMoveDef != NULL) {
@@ -483,7 +483,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 	float finalHeight = contactHeight;
 
 	// *we* must be capable of reaching the point-of-contact height
-	isAllowedHeight &= unitDef->IsAllowedTerrainHeight(contactHeight, &finalHeight);
+	isAllowedHeight &= unitDef->IsAllowedTerrainHeight(this->moveDef, contactHeight, &finalHeight);
 
 	if (allowedPos != NULL) {
 		*allowedPos = isAllowedHeight;

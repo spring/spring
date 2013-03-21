@@ -989,10 +989,15 @@ void CLuaHandle::UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag)
 }
 
 
-void CLuaHandle::UnitDamaged(const CUnit* unit, const CUnit* attacker,
-                             float damage, int weaponID, bool paralyzer)
+void CLuaHandle::UnitDamaged(
+	const CUnit* unit,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID,
+	bool paralyzer)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_DAMAGED, unit, attacker, damage, weaponID, paralyzer);
+	LUA_UNIT_BATCH_PUSH(,UNIT_DAMAGED, unit, attacker, damage, weaponDefID, paralyzer);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 11);
 
@@ -1011,9 +1016,12 @@ void CLuaHandle::UnitDamaged(const CUnit* unit, const CUnit* attacker,
 	lua_pushnumber(L, unit->team);
 	lua_pushnumber(L, damage);
 	lua_pushboolean(L, paralyzer);
+
 	if (GetHandleFullRead(L)) {
-		lua_pushnumber(L, weaponID);
-		argCount += 1;
+		lua_pushnumber(L, weaponDefID); argCount += 1;
+		// TODO: add to batch
+		// lua_pushnumber(L, projectileID); // argCount += 1;
+
 		if (attacker != NULL) {
 			lua_pushnumber(L, attacker->id);
 			lua_pushnumber(L, attacker->unitDef->id);
@@ -1429,7 +1437,7 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 
 /******************************************************************************/
 
-bool CLuaHandle::Explosion(int weaponDefID, const float3& pos, const CUnit* owner)
+bool CLuaHandle::Explosion(int weaponDefID, int projectileID, const float3& pos, const CUnit* owner)
 {
 	// piece-projectile collision (*ALL* other
 	// explosion events pass valid weaponDefIDs)
@@ -1548,7 +1556,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				UnitCmdDone(e.unit1, e.int1, e.int2);
 				break;
 			case UNIT_DAMAGED:
-				UnitDamaged(e.unit1, e.unit2, e.float1, e.int1, e.bool1);
+				UnitDamaged(e.unit1, e.unit2, e.float1, e.int1, -1, e.bool1);
 				break;
 			case UNIT_EXPERIENCE:
 				UnitExperience(e.unit1, e.float1);
@@ -1596,7 +1604,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				UnitMoveFailed(e.unit1);
 				break;
 			case UNIT_EXPLOSION:
-				Explosion(e.int1, e.cmd1->GetPos(0), e.unit1);
+				Explosion(e.int1, -1, e.cmd1->GetPos(0), e.unit1);
 				break;
 			case UNIT_UNIT_COLLISION:
 				UnitUnitCollision(e.unit1, e.unit2);
