@@ -36,7 +36,7 @@ TESTFILE = os.path.join(WWWROOT, "default/release/93.2.1-56-gdca244e/win32/{rele
 # Match common pre- and suffix on infolog lines. This also allows
 # "empty" prefixes followed by any amount of trailing whitespace.
 RE_PREFIX = r'^(?:\[(?:f=)?\s*\d+\])?(?: Error:)?\s*'
-RE_SUFFIX = r'(?:\r$)?'
+RE_SUFFIX = r'(?:[\r\n]+$)?'
 
 # Match stackframe lines, captures the module name and the address.
 # Example: '[      0] (0) C:\Program Files\Spring\spring.exe [0x0080F268]'
@@ -48,10 +48,12 @@ RE_STACKFRAME = RE_PREFIX + r'\(\d+\)\s+(.*(?:\.exe|\.dll))(?:\([^)]*\))?\s+\[(0
 RE_VERSION_NAME_PREFIX = "(?:[sS]pring)"
 RE_VERSION_STRING = "([0-9]+\.[0-9]+[\.0-9]*(?:-[0-9]+-g[0-9a-f]+)?)"
 RE_VERSION_BRANCH_NAME = "([a-zA-Z0-9\-]+)?"
+RE_VERSION_BUILD_FLAGS = "?(?: \((?:[a-zA-Z0-9\-]+\)))?"
 RE_VERSION =                          \
 	RE_VERSION_NAME_PREFIX + " ?" + \
 	RE_VERSION_STRING + " ?" + \
-	RE_VERSION_BRANCH_NAME
+	RE_VERSION_BRANCH_NAME + " ?" +\
+	RE_VERSION_BUILD_FLAGS
 
 
 def test_version(string):
@@ -143,6 +145,8 @@ def detect_version_details(infolog):
 		>>> detect_version_details('Segmentation fault (SIGSEGV) in spring 93.2.1-82-g863e91e release (Debug OMP)')
 		('default', 'release', '93.2.1-82-g863e91e')
 
+		>>> detect_version_details('Spring 93.2.1-56-gdca244e release (OMP) has crashed.')
+		('default', 'release', '93.2.1-56-gdca244e')
 
 	This is an old-style (BuildServ) version string, it should be rejected:
 
@@ -173,12 +177,15 @@ def collect_stackframes(infolog):
 
 		>>> collect_stackframes('(0) C:/spring.exe [0x0080F268]')
 		({'C:/spring.exe': [(0, '0x0080F268')]}, 1)
+
+		>>> collect_stackframes('[f=0000000] Error: (7) C:/Spring93.2.1-56/spring.exe [0x0061276A]')
+		({'C:/Spring93.2.1-56/spring.exe': [(0, '0x0061276A')]}, 1)
 	'''
 	log.info('Collecting stackframes per module...')
 
 	frames = {}
 	frame_count = 0
-	for module, address in re.findall(RE_STACKFRAME,infolog):
+	for module, address in re.findall(RE_STACKFRAME,infolog,re.MULTILINE):
 		frames.setdefault(module, []).append((frame_count, address))
 		frame_count += 1
 
@@ -239,15 +246,13 @@ def collect_modules(config, branch, rev, platform):
 			modules[name] = module
 		elif module.startswith('AI/Skirmish'):
 			name = module.split('/')[2]
-			modules[name] = module + '/SkirmishAI.dll'
+			modules[module + '/SkirmishAI.dll'] = module
 		else:
 			log.error("no match found: "+module)
-
 	log.info('\t[OK]')
-	return modules
+	return dbgfile, modules
 
-
-def translate_module_addresses(module, debugfile, addresses):
+def translate_module_addresses(module, debugarchive, addresses, debugfile):
 	'''\
 	Translate addresses in a module to (module, address, filename, lineno) tuples
 	by invoking addr2line exactly once on the debugging symbols for that module.
@@ -256,9 +261,8 @@ def translate_module_addresses(module, debugfile, addresses):
 	'''
 	with NamedTemporaryFile() as tempfile:
 		log.info('\tExtracting debug symbols for module %s from archive %s...' % (module, os.path.basename(debugfile)))
-		log.info([SEVENZIP, 'e', '-so', '-y', debugfile, module])
 		# e = extract without path, -so = write output to stdout, -y = yes to all questions
-		sevenzip = Popen([SEVENZIP, 'e', '-so', '-y', debugfile, module], stdout = tempfile, stderr = PIPE)
+		sevenzip = Popen([SEVENZIP, 'e', '-so', '-y', debugfile, debugarchive], stdout = tempfile, stderr = PIPE)
 		stdout, stderr = sevenzip.communicate()
 		if stderr:
 			log.debug('%s stderr: %s' % (SEVENZIP, stderr))
@@ -293,7 +297,7 @@ def translate_module_addresses(module, debugfile, addresses):
 	return [fixup(addr, *line.split(':')) for addr, line in zip(addresses, stdout.splitlines())]
 
 
-def translate_(module_frames, frame_count, modules):
+def translate_(module_frames, frame_count, modules, modulearchive):
 	'''\
 	Translate the stacktrace given in (module_frames, frame_count) by repeatedly
 	invoking addr2line on the debugging data for the modules.
@@ -306,7 +310,7 @@ def translate_(module_frames, frame_count, modules):
 		module_name = best_matching_module(module, module_names)
 		indices, addrs = zip(*frames)   # unzip
 		if module_name:
-			translated_frames = translate_module_addresses(module, modules[module_name], addrs)
+			translated_frames = translate_module_addresses(module, modules[module_name], addrs, modulearchive)
 			for index, translated_frame in zip(indices, translated_frames):
 				translated_stacktrace[index] = translated_frame
 		else:
@@ -379,9 +383,10 @@ def translate_stacktrace(infolog):
 	try:
 		config, branch, rev = detect_version_details(infolog)
 		module_frames, frame_count = collect_stackframes(infolog)
-		modules = collect_modules(config, branch, rev, 'win32')
-
-		translated_stacktrace = translate_(module_frames, frame_count, modules)
+		debugarchive, modules = collect_modules(config, branch, rev, 'win32')
+		if frame_count==0:
+			fatal("No stack found in infolog.txt")
+		translated_stacktrace = translate_(module_frames, frame_count, modules, debugarchive)
 
 	except FatalError:
 		# FatalError is intended to reach the client => re-raise
