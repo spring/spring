@@ -764,7 +764,10 @@ void CGrassDrawer::Draw()
 		readmap->GridVisibility(camera, blockMapSize, maxGrassDist, &drawer);
 	ResetGlStateNear();
 
-	if (globalRendering->haveGLSL) {
+	if (
+		globalRendering->haveGLSL
+		&& (!shadowHandler->shadowsLoaded || !globalRendering->atiHacks) // Ati crashes w/o an error when shadows are enabled!?
+	) {
 		SetupGlStateFar();
 			std::sort(drawer.inviewGrass.begin(), drawer.inviewGrass.end(), GrassSort);
 			std::sort(drawer.inviewNearGrass.begin(), drawer.inviewNearGrass.end(), GrassSortNear);
