@@ -9,10 +9,12 @@ Misc:
  ! remove Tobis rapid client (its broken)
  - add multi engine type support
  - recycle unit and feature ID's less quickly again, a la 91.0 and prior
-
    although this was an unintentional change in 92.* / 93.*, it exposed
    many bugs in widgets and gadgets which INCORRECTLY assumed ID's were
    globally unique for all time --> check your code for more latent bugs
+
+Rendering:
+ - automatic runtime recompression of groundtextures to ETC1 (future MESA drivers should support ETC)
 
 Bugfixes:
  - fix #3591 (UnitFromFactory(..., userOrders) always passes userOrders=false)
