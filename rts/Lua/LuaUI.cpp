@@ -830,7 +830,7 @@ bool CLuaUI::HasUnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	SELECT_LUA_STATE();
 #if (LUA_MT_OPT & LUA_MUTEX)
-	if (srcState != L && SingleState()) {
+	if (GML::Enabled() && srcState != L && SingleState()) {
 		GML_STDMUTEX_LOCK(xcall); // HasUnsyncedXCall
 
 		return unsyncedXCalls.find(funcName) != unsyncedXCalls.end();
@@ -847,7 +847,7 @@ bool CLuaUI::HasUnsyncedXCall(lua_State* srcState, const string& funcName)
 int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 #if (LUA_MT_OPT & LUA_MUTEX)
-	{
+	if (GML::Enabled()) {
 		SELECT_UNSYNCED_LUA_STATE();
 		if (srcState != L) {
 			DelayDataDump ddmp;
@@ -950,7 +950,7 @@ int CLuaUI::SetShockFrontFactors(lua_State* L)
 int CLuaUI::UpdateUnsyncedXCalls(lua_State* L)
 {
 #if (LUA_MT_OPT & LUA_MUTEX)
-	if (!SingleState() || L != L_Sim)
+	if (!GML::Enabled() || !SingleState() || L != L_Sim)
 #endif
 		return 0;
 

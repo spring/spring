@@ -758,7 +758,7 @@ void CLuaHandleSynced::RecvFromSynced(lua_State *srcState, int args)
 	SELECT_UNSYNCED_LUA_STATE();
 
 #if ((LUA_MT_OPT & LUA_STATE) && (LUA_MT_OPT & LUA_MUTEX))
-	if (!SingleState() && srcState != L) { // Sim thread sends to unsynced --> delay it
+	if (/*GML::Enabled() &&*/ !SingleState() && srcState != L) { // Sim thread sends to unsynced --> delay it
 		DelayRecvFromSynced(srcState, args);
 		return;
 	}
