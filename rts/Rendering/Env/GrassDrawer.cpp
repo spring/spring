@@ -194,7 +194,7 @@ void CGrassDrawer::LoadGrassShaders() {
 		for (int i = GRASS_PROGRAM_NEAR_SHADOW; i < GRASS_PROGRAM_LAST; i++) {
 			grassShaders[i]->Link();
 
-			
+
 			for (int j = 0; j < NUM_UNIFORMS; j++) {
 				grassShaders[i]->SetUniformLocation(uniformNames[j]);
 			}
@@ -584,8 +584,8 @@ void CGrassDrawer::SetupGlStateFar()
 
 	if (shadowHandler->shadowsLoaded) {
 		grassShader = grassShaders[GRASS_PROGRAM_DIST_SHADOW];
-		grassShader->Enable();
 		grassShader->SetFlag("HAVE_INFOTEX", gd->DrawExtraTex());
+		grassShader->Enable();
 
 		grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
 		grassShader->SetUniform4fv(7, shadowHandler->GetShadowParams());
@@ -764,7 +764,10 @@ void CGrassDrawer::Draw()
 		readmap->GridVisibility(camera, blockMapSize, maxGrassDist, &drawer);
 	ResetGlStateNear();
 
-	if (globalRendering->haveGLSL) {
+	if (
+		globalRendering->haveGLSL
+		&& (!shadowHandler->shadowsLoaded || !globalRendering->atiHacks) // Ati crashes w/o an error when shadows are enabled!?
+	) {
 		SetupGlStateFar();
 			std::sort(drawer.inviewGrass.begin(), drawer.inviewGrass.end(), GrassSort);
 			std::sort(drawer.inviewNearGrass.begin(), drawer.inviewNearGrass.end(), GrassSortNear);
