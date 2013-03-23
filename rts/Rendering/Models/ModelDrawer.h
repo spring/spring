@@ -30,7 +30,7 @@ public:
 	virtual void RenderUnitDestroyed(const CUnit* u);
 	virtual void RenderUnitCloakChanged(const CUnit* u, int cloaked);
 	virtual void RenderFeatureCreated(const CFeature* f);
-	virtual void RenderFeatureDestroyed(const CFeature* f, const float3& pos);
+	virtual void RenderFeatureDestroyed(const CFeature* f);
 	virtual void RenderProjectileCreated(const CProjectile* p);
 	virtual void RenderProjectileDestroyed(const CProjectile* p);
 

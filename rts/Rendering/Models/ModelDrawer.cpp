@@ -141,7 +141,7 @@ void IModelDrawer::RenderFeatureCreated(const CFeature* f)
 	#endif
 }
 
-void IModelDrawer::RenderFeatureDestroyed(const CFeature* f, const float3& pos)
+void IModelDrawer::RenderFeatureDestroyed(const CFeature* f)
 {
 	LOG_L(L_DEBUG, "[%s] id=%d", __FUNCTION__, f->id);
 

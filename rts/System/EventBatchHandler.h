@@ -22,7 +22,6 @@ private:
 
 	typedef ThreadListRender<
 		const CProjectile*,
-		const CProjectile*,
 		std::set<const CProjectile*>,
 		const CProjectile*,
 		ProjectileCreatedDestroyedEvent
@@ -37,23 +36,12 @@ private:
 
 	typedef ThreadListRender<
 		const CProjectile*,
-		const CProjectile*,
 		std::set<const CProjectile*>,
 		const CProjectile*,
 		UnsyncedProjectileCreatedDestroyedEvent
 	> UnsyncedProjectileCreatedDestroyedEventBatch;
 #endif
 
-public:
-	struct UD {
-		const CUnit* unit;
-		int data;
-
-		UD(const CUnit* u): unit(u), data(0) {}
-		UD(const CUnit* u, int d): unit(u), data(d) {}
-		bool operator==(const UD& u) const { return unit == u.unit; }
-		bool operator<(const UD& u) const { return unit < u.unit; }
-	};
 	struct UAD {
 		const CUnit* unit;
 		int data;
@@ -65,7 +53,16 @@ public:
 		bool operator==(const CUnit* u) const { return unit == u; }
 		bool operator==(const UAD& u) const { return unit == u.unit && seqnum == u.seqnum; }
 		bool operator<(const UAD& u) const { return unit < u.unit || (unit == u.unit && seqnum < u.seqnum); }
+	};
+public:
+	struct UD {
+		const CUnit* unit;
+		int data;
+
+		UD(const CUnit* u): unit(u), data(0) {}
+		UD(const CUnit* u, int d): unit(u), data(d) {}
 		bool operator==(const UD& u) const { return unit == u.unit; }
+		bool operator<(const UD& u) const { return unit < u.unit; }
 	};
 
 	struct UAP {
@@ -77,7 +74,6 @@ public:
 		bool operator==(const CUnit* u) const { return unit == u; }
 		bool operator==(const UAP& u) const { return unit == u.unit && seqnum == u.seqnum; }
 		bool operator<(const UAP& u) const { return unit < u.unit || (unit == u.unit && seqnum < u.seqnum); }
-		bool operator==(const UD& u) const { return unit == u.unit; }
 	};
 
 private:
@@ -105,25 +101,15 @@ private:
 		static void Delete(const UAP&) { }
 	};
 
-	typedef ThreadListRender<const CUnit *, const CUnit *, std::set<UD>, UD, UnitCreatedDestroyedEvent> UnitCreatedDestroyedEventBatch;
-	typedef ThreadListRender<const CUnit *, UD, std::set<UAD>, UAD, UnitCloakStateChangedEvent> UnitCloakStateChangedEventBatch;
-	typedef ThreadListRender<const CUnit *, UD, std::set<UAD>, UAD, UnitLOSStateChangedEvent> UnitLOSStateChangedEventBatch;
+	typedef ThreadListRender<const CUnit *, std::set<UD>, UD, UnitCreatedDestroyedEvent> UnitCreatedDestroyedEventBatch;
+	typedef ThreadListRender<const CUnit *, std::set<UAD>, UAD, UnitCloakStateChangedEvent> UnitCloakStateChangedEventBatch;
+	typedef ThreadListRender<const CUnit *, std::set<UAD>, UAD, UnitLOSStateChangedEvent> UnitLOSStateChangedEventBatch;
 	typedef ThreadListRender<
 		const CUnit*,
-		UD, 
 		std::set<UAP>,
 		UAP,
 		UnitMovedEvent
 	> UnitMovedEventBatch;
-	struct FP {
-		const CFeature* feat;
-		float3 pos;
-
-		FP(const CFeature* f, const float3& p): feat(f), pos(p) {}
-		bool operator==(const FP& f) const { return feat == f.feat; }
-		bool operator<(const FP& f) const { return feat < f.feat; }
-	};
-
 	struct FAP {
 		const CFeature* feat;
 		boost::int64_t seqnum;
@@ -134,13 +120,12 @@ private:
 		bool operator==(const CFeature* f) const { return feat == f; }
 		bool operator==(const FAP& f) const { return feat == f.feat && seqnum == f.seqnum; }
 		bool operator<(const FAP& f) const { return feat < f.feat || (feat == f.feat && seqnum < f.seqnum); }
-		bool operator==(const FP& f) const { return feat == f.feat; }
 	};
 
 	struct FeatureCreatedDestroyedEvent {
-		static void Add(const FP&);
-		static void Remove(const FP&);
-		static void Delete(const FP&) { }
+		static void Add(const CFeature*);
+		static void Remove(const CFeature*);
+		static void Delete(const CFeature*) { }
 	};
 
 	struct FeatureMovedEvent {
@@ -151,14 +136,12 @@ private:
 
 	typedef ThreadListRender<
 		const CFeature*,
+		std::set<const CFeature*>,
 		const CFeature*,
-		std::set<FP>,
-		FP,
 		FeatureCreatedDestroyedEvent
 	> FeatureCreatedDestroyedEventBatch;
 	typedef ThreadListRender<
 		const CFeature*,
-		FP,
 		std::set<FAP>,
 		FAP,
 		FeatureMovedEvent
@@ -207,12 +190,6 @@ public:
 
 	void EnqueueUnitMovedEvent(const CUnit* unit, const float3& newpos) {
 		unitMovedEventBatch.enqueue(UAP(unit, newpos));
-	}
-	void EnqueueFeatureCreatedEvent(const CFeature* feature, const float3& pos) {
-		featureCreatedDestroyedEventBatch.enqueue(FP(feature, pos));
-	}
-	void EnqueueFeatureDestroyedEvent(const CFeature* feature, const float3& pos) {
-		featureCreatedDestroyedEventBatch.dequeue(FP(feature, pos));
 	}
 	void EnqueueFeatureMovedEvent(const CFeature* feature, const float3& oldpos, const float3& newpos) {
 		featureMovedEventBatch.enqueue(FAP(feature, oldpos, newpos));

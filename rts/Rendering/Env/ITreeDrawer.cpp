@@ -111,12 +111,12 @@ void ITreeDrawer::RenderFeatureMoved(const CFeature* feature, const float3& oldp
 	}
 }
 
-void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature, const float3& pos) {
+void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
 	if (feature->def->drawType >= DRAWTYPE_TREE) {
-		DeleteTree(pos);
+		DeleteTree(feature->pos);
 
 		if (feature->speed.SqLength2D() > 0.25f) {
-			AddFallingTree(pos, feature->speed, feature->def->drawType - 1);
+			AddFallingTree(feature->pos, feature->speed, feature->def->drawType - 1);
 		}
 	}
 }
