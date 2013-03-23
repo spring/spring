@@ -42,7 +42,7 @@ public:
 			(eventName == "RenderFeatureDestroyed");
 	}
 	void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
-	void RenderFeatureDestroyed(const CFeature* feature, const float3& pos);
+	void RenderFeatureDestroyed(const CFeature* feature);
 
 	std::vector<GLuint> delDispLists;
 
