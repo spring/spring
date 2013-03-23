@@ -81,7 +81,7 @@ void SmoothHeightMeshDrawer::Draw(float yoffset) {
 		}
 	}
 
-	glColor4ub(0, 255, 0, 255);
+	glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
 	va->DrawArray0(GL_QUADS);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
