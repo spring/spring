@@ -370,7 +370,7 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 				verts[2] = vertices[vertexDrawIndices[i + 1]];
 				verts[3] = vertices[vertexDrawIndices[i + 2]];
 
-				ph->AddFlyingPiece(pos, speed + gu->RandVector() * 2.0f, team, texType, verts);
+				projectileHandler->AddFlyingPiece(pos, speed + gu->RandVector() * 2.0f, team, texType, verts);
 			}
 		} break;
 		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
@@ -386,7 +386,7 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 				verts[2] = vertices[vertexDrawIndices[i - 1]];
 				verts[3] = vertices[vertexDrawIndices[i - 0]];
 
-				ph->AddFlyingPiece(pos, speed + gu->RandVector() * 2.0f, team, texType, verts);
+				projectileHandler->AddFlyingPiece(pos, speed + gu->RandVector() * 2.0f, team, texType, verts);
 				i += 1;
 			}
 		} break;
@@ -402,7 +402,7 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 				verts[2] = vertices[vertexDrawIndices[i + 2]];
 				verts[3] = vertices[vertexDrawIndices[i + 3]];
 
-				ph->AddFlyingPiece(pos, speed + gu->RandVector() * 2.0f, team, texType, verts);
+				projectileHandler->AddFlyingPiece(pos, speed + gu->RandVector() * 2.0f, team, texType, verts);
 			}
 		} break;
 

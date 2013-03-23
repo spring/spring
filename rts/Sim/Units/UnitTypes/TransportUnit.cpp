@@ -95,7 +95,7 @@ void CTransportUnit::Update()
 
 		// see ::AttachUnit
 		if (transportee->IsStunned()) {
-			qf->MovedUnit(transportee);
+			quadField->MovedUnit(transportee);
 		}
 	}
 }
@@ -119,7 +119,7 @@ void CTransportUnit::DependentDied(CObject* o)
 }
 
 
-void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool)
+void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool)
 {
 	if (!isDead) {
 		// guard against recursive invocation via
@@ -148,10 +148,10 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			if (!unitDef->releaseHeld) {
 				if (!selfDestruct) {
 					// we don't want transportees to leave a corpse
-					transportee->DoDamage(DamageArray(1e6f), ZeroVector, NULL, -DAMAGE_EXTSOURCE_KILLED);
+					transportee->DoDamage(DamageArray(1e6f), ZeroVector, NULL, -DAMAGE_EXTSOURCE_KILLED, -1);
 				}
 
-				transportee->KillUnit(selfDestruct, reclaimed, attacker);
+				transportee->KillUnit(attacker, selfDestruct, reclaimed);
 			} else {
 				// NOTE: game's responsibility to deal with edge-cases now
 				transportee->Move3D(transportee->pos.cClampInBounds(), false);
@@ -174,7 +174,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 						if (!pos.IsInBounds())
 							continue;
 
-						if (qf->GetUnitsExact(pos, transportee->radius + 2.0f).empty()) {
+						if (quadField->GetUnitsExact(pos, transportee->radius + 2.0f).empty()) {
 							transportee->Move3D(pos, false);
 							break;
 						}
@@ -207,7 +207,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 		isDead = false;
 	}
 
-	CUnit::KillUnit(selfDestruct, reclaimed, attacker);
+	CUnit::KillUnit(attacker, selfDestruct, reclaimed);
 }
 
 
@@ -309,7 +309,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	// up-to-date by MoveType::SlowUpdate, otherwise by
 	// ::Update
 	//
-	// qf->RemoveUnit(unit);
+	// quadField->RemoveUnit(unit);
 
 	unit->los = NULL;
 
@@ -443,7 +443,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 		// unit is being transported, set <clampedHeight> to
 		// the altitude at which to UNload the transportee
 		wantedHeight = ground->GetHeightReal(wantedPos.x, wantedPos.z);
-		isAllowedHeight = transporteeUnitDef->IsAllowedTerrainHeight(wantedHeight, &clampedHeight);
+		isAllowedHeight = transporteeUnitDef->IsAllowedTerrainHeight(transporteeMoveDef, wantedHeight, &clampedHeight);
 
 		if (isAllowedHeight) {
 			if (transporteeMoveDef != NULL) {
@@ -470,10 +470,10 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 			// for transported structures, <wantedPos> must be free/buildable
 			// (note: TestUnitBuildSquare calls IsAllowedTerrainHeight again)
 			BuildInfo bi(transporteeUnitDef, wantedPos, unit->buildFacing);
-			bi.pos = helper->Pos2BuildPos(bi, true);
+			bi.pos = CGameHelper::Pos2BuildPos(bi, true);
 			CFeature* f = NULL;
 
-			if (isAllowedHeight && (!uh->TestUnitBuildSquare(bi, f, -1, true) || f != NULL))
+			if (isAllowedHeight && (!CGameHelper::TestUnitBuildSquare(bi, f, -1, true) || f != NULL))
 				isAllowedHeight = false;
 		}
 	}
@@ -483,7 +483,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 	float finalHeight = contactHeight;
 
 	// *we* must be capable of reaching the point-of-contact height
-	isAllowedHeight &= unitDef->IsAllowedTerrainHeight(contactHeight, &finalHeight);
+	isAllowedHeight &= unitDef->IsAllowedTerrainHeight(this->moveDef, contactHeight, &finalHeight);
 
 	if (allowedPos != NULL) {
 		*allowedPos = isAllowedHeight;

@@ -312,7 +312,7 @@ void CClassicGroundMoveType::SlowUpdate()
 			radarhandler->MoveUnit(owner);
 		}
 
-		qf->MovedUnit(owner);
+		quadField->MovedUnit(owner);
 	}
 }
 
@@ -514,7 +514,7 @@ void CClassicGroundMoveType::UpdateSkid()
 			owner->Move1D(wh+owner->relMidPos.y-speed.y*0.5f, 1, false);
 			float impactSpeed = -speed.dot(ground->GetNormal(midPos.x,midPos.z));
 			if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
-				owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), ZeroVector, NULL, -1);
+				owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), ZeroVector, NULL, -1, -1);
 			}
 		}
 	} else {
@@ -618,8 +618,8 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 {
 	const SyncedFloat3& midPos = owner->midPos;
 
-	const vector<CUnit*>& nearUnits = qf->GetUnitsExact(midPos, owner->radius);
-	const vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(midPos, owner->radius);
+	const vector<CUnit*>& nearUnits = quadField->GetUnitsExact(midPos, owner->radius);
+	const vector<CFeature*>& nearFeatures = quadField->GetFeaturesExact(midPos, owner->radius);
 
 	for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 		CUnit* u = (*ui);
@@ -639,10 +639,10 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 					owner->speed += dif * (impactSpeed * 1.8f);
 
 					if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
-						owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1);
+						owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1, -1);
 					}
 					if (impactSpeed > u->unitDef->minCollisionSpeed && u->unitDef->minCollisionSpeed >= 0) {
-						u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1);
+						u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1, -1);
 					}
 				}
 			} else {
@@ -662,13 +662,13 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 					if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
 						owner->DoDamage(
 							DamageArray(impactSpeed * owner->mass * 0.2f * (1 - part)),
-							dif * impactSpeed * (owner->mass * (1 - part)), NULL, -1);
+							dif * impactSpeed * (owner->mass * (1 - part)), NULL, -1, -1);
 					}
 
 					if (impactSpeed > u->unitDef->minCollisionSpeed && u->unitDef->minCollisionSpeed >= 0) {
 						u->DoDamage(
 							DamageArray(impactSpeed * owner->mass * 0.2f * part),
-							dif * -impactSpeed * (u->mass * part), NULL, -1);
+							dif * -impactSpeed * (u->mass * part), NULL, -1, -1);
 					}
 					owner->speed *= 0.9f;
 					u->speed *= 0.9f;
@@ -692,9 +692,9 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 				owner->Move3D(dif*(impactSpeed), true);
 				owner->speed+=dif*(impactSpeed*1.8f);
 				if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
-					owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), ZeroVector, NULL, -1);
+					owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), ZeroVector, NULL, -1, -1);
 				}
-				u->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), -dif*impactSpeed, NULL, -1);
+				u->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), -dif*impactSpeed, NULL, -1, -1);
 			}
 		}
 	}
@@ -789,7 +789,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 			MoveDef* moveDef = owner->moveDef;
 
-			vector<CSolidObject*> nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
+			vector<CSolidObject*> nearbyObjects = quadField->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
 			vector<CSolidObject*> objectsOnPath;
 			vector<CSolidObject*>::iterator oi;
 
@@ -1147,7 +1147,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 			}
 
 			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
-				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
+				CGameHelper::BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
 			}
 
 			owner->Move3D(posDelta, true);
@@ -1225,7 +1225,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 			}
 
 			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
-				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
+				CGameHelper::BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
 			}
 
 			owner->Move3D(posDelta, true);

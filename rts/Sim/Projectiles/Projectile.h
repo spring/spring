@@ -41,7 +41,8 @@ public:
 	virtual void DrawCallback() {}
 
 	CUnit* owner() const;
-	int GetOwnerID() const { return ownerId; }
+	unsigned int GetOwnerID() const { return ownerID; }
+	unsigned int GetTeamID() const { return teamID; }
 
 	void SetQuadFieldCellCoors(const int2& cell) { quadFieldCellCoors = cell; }
 	int2 GetQuadFieldCellCoors() const { return quadFieldCellCoors; }
@@ -52,6 +53,7 @@ public:
 	unsigned int GetProjectileType() const { return projectileType; }
 	unsigned int GetCollisionFlags() const { return collisionFlags; }
 
+	void SetCustomExplosionGeneratorID(unsigned int id) { cegID = id; }
 
 	static bool inArray;
 	static CVertexArray* va;
@@ -77,7 +79,10 @@ public:
 	float tempdist; ///< temp distance used for sorting when rendering
 
 protected:
-	int ownerId;
+	unsigned int ownerID;
+	unsigned int teamID;
+	unsigned int cegID;
+
 	unsigned int projectileType;
 	unsigned int collisionFlags;
 

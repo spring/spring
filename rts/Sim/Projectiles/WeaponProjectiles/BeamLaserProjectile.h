@@ -9,7 +9,7 @@ class CBeamLaserProjectile: public CWeaponProjectile
 {
 	CR_DECLARE(CBeamLaserProjectile);
 public:
-	CBeamLaserProjectile(const ProjectileParams& params, float startAlpha, float endAlpha, const float3& color);
+	CBeamLaserProjectile(const ProjectileParams& params);
 
 	void Update();
 	void Draw();
@@ -24,9 +24,8 @@ private:
 	float thickness;
 	float corethickness;
 	float flaresize;
-	float midtexx;
-	
 	float decay;
+	float midtexx;
 };
 
 #endif // BEAM_LASER_PROJECTILE_H

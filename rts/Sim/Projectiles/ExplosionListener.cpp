@@ -2,10 +2,14 @@
 
 #include "ExplosionListener.h"
 
-#include "System/float3.h"
 
-#include <set>
+std::set<IExplosionListener*> CExplosionCreator::explosionListeners;
 
+
+IExplosionListener::~IExplosionListener()
+{
+	CExplosionCreator::RemoveExplosionListener(this);
+}
 
 void CExplosionCreator::AddExplosionListener(IExplosionListener* listener)
 {

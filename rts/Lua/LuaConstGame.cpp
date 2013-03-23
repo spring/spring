@@ -47,8 +47,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedString(L, "version", SpringVersion::GetSync());
 	LuaPushNamedString(L, "buildFlags", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetAdditional(): "");
 
-	if (uh) {
-		LuaPushNamedNumber(L, "maxUnits",      uh->MaxUnits());
+	if (unitHandler != NULL) {
+		LuaPushNamedNumber(L, "maxUnits",      unitHandler->MaxUnits());
 	}
 	LuaPushNamedNumber(L, "maxTeams",      MAX_TEAMS);
 	LuaPushNamedNumber(L, "maxPlayers",    MAX_PLAYERS);

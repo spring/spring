@@ -9,8 +9,7 @@ class CFlameProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CFlameProjectile);
 public:
-	CFlameProjectile(const ProjectileParams& params, const float3& spread);
-	~CFlameProjectile();
+	CFlameProjectile(const ProjectileParams& params);
 
 	void Update();
 	void Draw();
@@ -20,11 +19,12 @@ public:
 			float shieldForce, float shieldMaxSpeed);
 
 private:
-	float3 spread;
 	float curTime;
 	/// precentage of lifetime when the projectile is active and can collide
 	float physLife;
 	float invttl;
+
+	float3 spread;
 };
 
 #endif // _FLAME_PROJECTILE_H_

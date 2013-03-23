@@ -51,7 +51,7 @@ public:
 
 	bool DontLand() const { return dlHoverFactor >= 0.0f; }
 	void SetNoCost(bool noCost);
-	bool IsAllowedTerrainHeight(float rawHeight, float* clampedHeight = NULL) const;
+	bool IsAllowedTerrainHeight(const MoveDef* moveDef, float rawHeight, float* clampedHeight = NULL) const;
 
 	bool IsTransportUnit()      const { return (transportCapacity > 0 && transportMass > 0.0f); }
 	bool IsImmobileUnit()       const { return (pathType == -1U && !canfly && speed <= 0.0f); }

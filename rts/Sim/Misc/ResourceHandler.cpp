@@ -11,10 +11,10 @@
 CR_BIND(CResourceHandler, );
 
 CR_REG_METADATA(CResourceHandler, (
-	CR_MEMBER(resources)
+	CR_MEMBER(resources),
 //	CR_MEMBER(resourceMapAnalyzers),
-//	CR_MEMBER(metalResourceId),
-//	CR_MEMBER(energyResourceId)
+	CR_MEMBER(metalResourceId),
+	CR_MEMBER(energyResourceId)
 ));
 
 CResourceHandler* CResourceHandler::instance;

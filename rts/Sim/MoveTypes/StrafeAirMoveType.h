@@ -61,7 +61,6 @@ public:
 
 	float maxBank;
 	float maxPitch;
-	float maxSpeed;
 	float turnRadius;
 
 	float maxAcc;

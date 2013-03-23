@@ -11,7 +11,6 @@ class CNoWeapon :
 	CR_DECLARE(CNoWeapon);
 public:
 	CNoWeapon(CUnit *owner = 0);
-	~CNoWeapon();
 
 	void Update();
 	void SlowUpdate();

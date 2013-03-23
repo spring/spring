@@ -11,9 +11,7 @@ CR_REG_METADATA(DamageArray, (
 	CR_MEMBER(impulseBoost),
 	CR_MEMBER(craterMult),
 	CR_MEMBER(craterBoost),
-	CR_MEMBER(damages),
-	CR_RESERVED(16),
-	CR_SERIALIZER(creg_Serialize) // damages
+	CR_MEMBER(damages)
 ));
 
 
@@ -59,10 +57,4 @@ void DamageArray::SetDefaultDamage(float damage)
 		// default-damage only (never reached?)
 		damages.resize(1, damage);
 	}
-}
-
-
-void DamageArray::creg_Serialize(creg::ISerializer& s)
-{
-	s.Serialize(&damages[0], damages.size() * sizeof(float));
 }

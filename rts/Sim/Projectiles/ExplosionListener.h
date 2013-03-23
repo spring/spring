@@ -42,27 +42,26 @@ public:
 	 */
 	virtual void ExplosionOccurred(const CExplosionEvent& event) = 0;
 protected:
-	~IExplosionListener() {}
+	~IExplosionListener();
 };
 
 
 /**
- * This is meant to be inherited by classes that may generate CExplosionEvent's.
+ * Base
  */
 class CExplosionCreator
 {
 public:
-	void AddExplosionListener(IExplosionListener* listener);
-	void RemoveExplosionListener(IExplosionListener* listener);
+	static void AddExplosionListener(IExplosionListener* listener);
+	static void RemoveExplosionListener(IExplosionListener* listener);
 
-protected:
 	/**
 	 * Sends the event to all registered listeners.
 	 */
-	void FireExplosionEvent(const CExplosionEvent& event);
+	static void FireExplosionEvent(const CExplosionEvent& event);
 
 private:
-	std::set<IExplosionListener*> explosionListeners;
+	static std::set<IExplosionListener*> explosionListeners;
 };
 
 #endif /* _EXPLOSION_LISTENER_H */

@@ -131,8 +131,79 @@ public:
 	float dance;              ///< how much the missile will dance
 	float trajectoryHeight;   ///< how high trajectory missiles will try to fly in
 
-	struct Visuals
-	{
+	bool largeBeamLaser;             // whether a BeamLaser should spawn LargeBeamLaserProjectile's or regular ones
+	bool laserHardStop;              // whether the shot should fade out or stop and contract at max-range (applies to LaserCannons only)
+
+	bool isShield;                   // if the weapon is a shield rather than a weapon //FIXME REMOVE! (this information is/should be saved in the weapontype)
+	bool shieldRepulser;             // if the weapon should be repulsed or absorbed
+	bool smartShield;                // only affect enemy projectiles
+	bool exteriorShield;             // only affect stuff coming from outside shield radius
+	bool visibleShield;              // if the shield should be graphically shown
+	bool visibleShieldRepulse;       // if a small graphic should be shown at each repulse
+	int  visibleShieldHitFrames;     // number of frames to draw the shield after it has been hit
+	float shieldEnergyUse;           // energy use per shot or per second depending on projectile
+	float shieldRadius;              // size of shielded area
+	float shieldForce;               // shield acceleration on plasma stuff
+	float shieldMaxSpeed;            // max speed shield can repulse plasma like weapons with
+	float shieldPower;               // how much damage the shield can reflect (0=infinite)
+	float shieldPowerRegen;          // how fast the power regenerates per second
+	float shieldPowerRegenEnergy;    // how much energy is needed to regenerate power per second
+	float shieldStartingPower;       // how much power the shield has when first created
+	int   shieldRechargeDelay;       // number of frames to delay recharging by after each hit
+	float3 shieldGoodColor;          // color when shield at full power
+	float3 shieldBadColor;           // color when shield is empty
+	float shieldAlpha;               // shield alpha value
+
+	unsigned int shieldInterceptType;      // type of shield (bitfield)
+	unsigned int interceptedByShieldType;  // weapon can be affected by shields where (shieldInterceptType & interceptedByShieldType) is not zero
+
+	bool avoidFriendly;     // if true, try to avoid friendly units while aiming
+	bool avoidFeature;      // if true, try to avoid features while aiming
+	bool avoidNeutral;      // if true, try to avoid neutral units while aiming
+	bool avoidGround;       // if true, try to avoid ground while aiming
+	/**
+	 * If nonzero, targetting units will TryTarget at the edge of collision sphere
+	 * (radius*tag value, [-1;1]) instead of its centre.
+	 */
+	float targetBorder;
+	/**
+	 * If greater than 0, the range will be checked in a cylinder
+	 * (height=range*cylinderTargeting) instead of a sphere.
+	 */
+	float cylinderTargeting;
+	/**
+	 * For beam-lasers only - always hit with some minimum intensity
+	 * (a damage coefficient normally dependent on distance).
+	 * Do not confuse this with the intensity tag, it i completely unrelated.
+	 */
+	float minIntensity;
+	/**
+	 * Controls cannon range height boost.
+	 *
+	 * default: -1: automatically calculate a more or less sane value
+	 */
+	float heightBoostFactor;
+	float proximityPriority;     // multiplier for the distance to the target for priority calculations
+
+	unsigned int projectileType;
+	unsigned int collisionFlags;
+
+	IExplosionGenerator* explosionGenerator;        // can be NULL for default explosions
+	IExplosionGenerator* bounceExplosionGenerator;  // called when a projectile bounces
+
+	bool sweepFire;
+	bool canAttackGround;
+
+	float cameraShake;
+
+	float dynDamageExp;
+	float dynDamageMin;
+	float dynDamageRange;
+	bool dynDamageInverted;
+
+	std::map<std::string, std::string> customParams;
+
+	struct Visuals {
 		Visuals()
 			: color(ZeroVector)
 			, color2(ZeroVector)
@@ -197,77 +268,6 @@ public:
 		bool alwaysVisible;
 	};
 	Visuals visuals;
-
-	bool largeBeamLaser;             // whether a BeamLaser should spawn LargeBeamLaserProjectile's or regular ones
-	bool laserHardStop;              // whether the shot should fade out or stop and contract at max-range (applies to LaserCannons only)
-
-	bool isShield;                   // if the weapon is a shield rather than a weapon //FIXME REMOVE! (this information is/should be saved in the weapontype)
-	bool shieldRepulser;             // if the weapon should be repulsed or absorbed
-	bool smartShield;                // only affect enemy projectiles
-	bool exteriorShield;             // only affect stuff coming from outside shield radius
-	bool visibleShield;              // if the shield should be graphically shown
-	bool visibleShieldRepulse;       // if a small graphic should be shown at each repulse
-	int  visibleShieldHitFrames;     // number of frames to draw the shield after it has been hit
-	float shieldEnergyUse;           // energy use per shot or per second depending on projectile
-	float shieldRadius;              // size of shielded area
-	float shieldForce;               // shield acceleration on plasma stuff
-	float shieldMaxSpeed;            // max speed shield can repulse plasma like weapons with
-	float shieldPower;               // how much damage the shield can reflect (0=infinite)
-	float shieldPowerRegen;          // how fast the power regenerates per second
-	float shieldPowerRegenEnergy;    // how much energy is needed to regenerate power per second
-	float shieldStartingPower;       // how much power the shield has when first created
-	int   shieldRechargeDelay;       // number of frames to delay recharging by after each hit
-	float3 shieldGoodColor;          // color when shield at full power
-	float3 shieldBadColor;           // color when shield is empty
-	float shieldAlpha;               // shield alpha value
-
-	unsigned int shieldInterceptType;      // type of shield (bitfield)
-	unsigned int interceptedByShieldType;  // weapon can be affected by shields where (shieldInterceptType & interceptedByShieldType) is not zero
-
-	bool avoidFriendly;     // if true, try to avoid friendly units while aiming
-	bool avoidFeature;      // if true, try to avoid features while aiming
-	bool avoidNeutral;      // if true, try to avoid neutral units while aiming
-	bool avoidGround;       // if true, try to avoid ground while aiming
-	/**
-	 * If nonzero, targetting units will TryTarget at the edge of collision sphere
-	 * (radius*tag value, [-1;1]) instead of its centre.
-	 */
-	float targetBorder;
-	/**
-	 * If greater than 0, the range will be checked in a cylinder
-	 * (height=range*cylinderTargeting) instead of a sphere.
-	 */
-	float cylinderTargeting;
-	/**
-	 * For beam-lasers only - always hit with some minimum intensity
-	 * (a damage coeffcient normally dependent on distance).
-	 * Do not confuse this with the intensity tag, it i completely unrelated.
-	 */
-	float minIntensity;
-	/**
-	 * Controls cannon range height boost.
-	 *
-	 * default: -1: automatically calculate a more or less sane value
-	 */
-	float heightBoostFactor;
-	float proximityPriority;     // multiplier for the distance to the target for priority calculations
-
-	unsigned int collisionFlags;
-
-	IExplosionGenerator* explosionGenerator;        // can be NULL for default explosions
-	IExplosionGenerator* bounceExplosionGenerator;  // called when a projectile bounces
-
-	bool sweepFire;
-	bool canAttackGround;
-
-	float cameraShake;
-
-	float dynDamageExp;
-	float dynDamageMin;
-	float dynDamageRange;
-	bool dynDamageInverted;
-
-	std::map<std::string, std::string> customParams;
 
 private:
 	void ParseWeaponSounds(const LuaTable& wdTable);

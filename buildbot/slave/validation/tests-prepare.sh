@@ -18,10 +18,7 @@ fi
 
 #install
 cd ${BUILDDIR}
-make install-spring-headless install-pr-downloader demotool unitsyncTest lua2php DESTDIR=${TESTDIR}
-
-# HACK/FIXME force spring to detect install dir as read-only
-chmod 555 ${TESTDIR}/usr/local/share/games/spring
+DESTDIR=${TESTDIR} ninja install-spring-headless install-pr-downloader demotool unitsyncTest lua2php
 
 cd ${SOURCEDIR}
 
@@ -66,7 +63,7 @@ cp -v ${SOURCEDIR}/test/validation/LuaUI/Config/ZK_data.lua ${CONTENT_DIR}/LuaUI
 cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${TESTDIR}/.springrc
 
 #set data directory to test directory
-echo "SpringData = ${TESTDIR}/usr/local/share/games/spring" >> ${TESTDIR}/.springrc
+echo "SpringData = ${CONTENT_DIR}:${TESTDIR}/usr/local/share/games/spring" >> ${TESTDIR}/.springrc
 
 makescript "$GAME1" "$MAP" AAI 0.9
 makescript "$GAME1" "$MAP" E323AI 3.25.0

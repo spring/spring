@@ -56,6 +56,7 @@
 #include "System/StartScriptGen.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
+#include "System/creg/creg_runtime_tests.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/FileHandler.h"
@@ -131,6 +132,8 @@ static bool MultisampleVerify()
 	}
 	return false;
 }
+
+
 
 
 
@@ -715,6 +718,7 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddSwitch(0,   "list-skirmish-ais",  "Dump a list of available Skirmish AIs to stdout");
 	cmdline->AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
 	cmdline->AddSwitch(0,   "list-def-tags",      "Dump a list of all unitdef-, weapondef-, ... tags and meta data to stdout");
+	cmdline->AddSwitch(0,   "test-creg",          "Test if all CREG classes are completed");
 	cmdline->AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
 	cmdline->AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
 	cmdline->AddString('g', "game",               "Specify the game that will be instantly loaded");
@@ -764,6 +768,10 @@ void SpringApp::ParseCmdLine()
 	else if (cmdline->IsSet("list-def-tags")) {
 		DefType::OutputTagMap();
 		exit(0);
+	}
+	else if (cmdline->IsSet("test-creg")) {
+		int res = creg::RuntimeTest() ? 0 : 1;
+		exit(res);
 	}
 
 	const string configSource = (cmdline->IsSet("config") ? cmdline->GetString("config") : "");
@@ -825,7 +833,7 @@ void SpringApp::ParseCmdLine()
 }
 
 
-void SpringApp::RunScript(const std::string buf) {
+void SpringApp::RunScript(const std::string& buf) {
 	startsetup = new ClientSetup();
 	startsetup->Init(buf);
 
@@ -1048,8 +1056,8 @@ void SpringApp::Shutdown()
 	GML::Exit();
 	SafeDelete(pregame);
 	SafeDelete(game);
-	agui::FreeGui();
 	SafeDelete(selectMenu);
+	agui::FreeGui();
 	SafeDelete(net);
 	SafeDelete(gameServer);
 	SafeDelete(gameSetup);

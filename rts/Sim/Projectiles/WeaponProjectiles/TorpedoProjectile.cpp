@@ -19,47 +19,49 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (ProjectileParams(), 0, 0, 0));
+CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (ProjectileParams()));
 
 CR_REG_METADATA(CTorpedoProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
-	CR_MEMBER(dir),
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(curSpeed),
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(nextBubble),
 	CR_MEMBER(texx),
-	CR_MEMBER(texy),
-	CR_RESERVED(16)
-	));
+	CR_MEMBER(texy)
+));
 
-CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params, float areaOfEffect, float maxSpeed, float tracking)
-	: CWeaponProjectile(params),
-	tracking(tracking),
-	maxSpeed(maxSpeed),
-	areaOfEffect(areaOfEffect),
-	nextBubble(4)
+CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponProjectile(params)
+	, tracking(0.0f)
+	, maxSpeed(0.0f)
+	, curSpeed(0.0f)
+	, areaOfEffect(0.0f)
+
+	, nextBubble(4)
+	, texx(0.0f)
+	, texy(0.0f)
 {
 	projectileType = WEAPON_TORPEDO_PROJECTILE;
+
+	tracking = params.tracking;
 	curSpeed = speed.Length();
 	dir = speed / curSpeed;
 
+	if (weaponDef != NULL) {
+		maxSpeed = weaponDef->projectilespeed;
+		areaOfEffect = weaponDef->damageAreaOfEffect;
+	}
+
 	drawRadius = maxSpeed * 8;
 
-//	const float3 camDir = (pos - camera->pos).Normalize();
 	texx = projectileDrawer->torpedotex->xstart - (projectileDrawer->torpedotex->xend - projectileDrawer->torpedotex->xstart) * 0.5f;
 	texy = projectileDrawer->torpedotex->ystart - (projectileDrawer->torpedotex->yend - projectileDrawer->torpedotex->ystart) * 0.5f;
+
 #ifdef TRACE_SYNC
 	tracefile << "New projectile: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
-}
-
-CTorpedoProjectile::~CTorpedoProjectile()
-{
 }
 
 void CTorpedoProjectile::Update()
@@ -99,7 +101,7 @@ void CTorpedoProjectile::Update()
 						if (pos.SqDistance(so->aimPos) > 150 * 150 && owner()) {
 							CUnit* u = dynamic_cast<CUnit*>(so);
 							if (u) {
-								targetPos = helper->GetUnitErrorPos(u, owner()->allyteam, true);
+								targetPos = CGameHelper::GetUnitErrorPos(u, owner()->allyteam, true);
 							}
 						}
 					} if (po) {

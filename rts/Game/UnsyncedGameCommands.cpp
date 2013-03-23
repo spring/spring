@@ -130,10 +130,6 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 		userWriting = false;
 		writingPos = 0;
 
-		if (key == SDLK_RETURN) {
-			// prevent game start when host enters a chat message
-			keyInput->SetKeyState(key, 0);
-		}
 		if (chatting) {
 			string command;
 
@@ -796,12 +792,9 @@ public:
 		if (!args.empty()) {
 			size_t skirmishAIId           = 0; // will only be used if !badArgs
 			bool share = false;
-			int teamToKillId         = -1;
 			int teamToReceiveUnitsId = -1;
+			int teamToKillId = atoi(args[0].c_str());
 
-			if (args.size() >= 1) {
-				teamToKillId = atoi(args[0].c_str());
-			}
 			if ((args.size() >= 2) && kill) {
 				teamToReceiveUnitsId = atoi(args[1].c_str());
 				share = true;
@@ -915,15 +908,12 @@ public:
 		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
 
 		if (!args.empty()) {
-			int         teamToControlId = -1;
 			std::string aiShortName     = "";
 			std::string aiVersion       = "";
 			std::string aiName          = "";
 			std::map<std::string, std::string> aiOptions;
 
-			if (args.size() >= 1) {
-				teamToControlId = atoi(args[0].c_str());
-			}
+			int teamToControlId = atoi(args[0].c_str());
 			if (args.size() >= 2) {
 				aiShortName = args[1];
 			} else {
@@ -1246,10 +1236,6 @@ class ChatActionExecutor : public IUnsyncedActionExecutor {
 
 public:
 	bool Execute(const UnsyncedAction& action) const {
-		// if chat is bound to enter and we're waiting for user to press enter to start game, ignore.
-		if (action.GetKey() == SDLK_RETURN && !game->playing && keyInput->IsKeyPressed(SDLK_LCTRL))
-			return false;
-
 		if (setUserInputPrefix) {
 			game->userInputPrefix = userInputPrefix;
 		}
@@ -1658,29 +1644,25 @@ public:
 class SpeedControlActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SpeedControlActionExecutor() : IUnsyncedActionExecutor("SpeedControl",
-			"Set the speed-control mode to one of: 0=Default, 1=Average_CPU, 2=Maximum_CPU") {}
+			"Sets how server adjusts speed according to player's load (CPU), 0: use highest, 1: use average") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!gameServer) {
+			return false;
+		}
 		if (action.GetArgs().empty()) {
 			// switch to next value
 			++game->speedControl;
-			if (game->speedControl > 2) {
-				game->speedControl = -2;
+			if (game->speedControl > 1) {
+				game->speedControl = 0;
 			}
 		} else {
 			// set value
 			game->speedControl = atoi(action.GetArgs().c_str());
 		}
 		// constrain to bounds
-		game->speedControl = std::max(-2, std::min(game->speedControl, 2));
-
-		net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, game->speedControl));
-		LOG("Speed Control: %s", CGameServer::SpeedControlToString(game->speedControl).c_str());
-		configHandler->Set("SpeedControl", game->speedControl);
-		if (gameServer) {
-			gameServer->UpdateSpeedControl(game->speedControl);
-		}
+		game->speedControl = std::max(0, std::min(game->speedControl, 1));
+		gameServer->UpdateSpeedControl(game->speedControl);
 		return true;
 	}
 };
@@ -2401,14 +2383,14 @@ public:
 class SafeGLActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SafeGLActionExecutor() : IUnsyncedActionExecutor("SafeGL",
-			"Enables/Disables OpenGL save-mode") {}
+			"Enables/Disables OpenGL safe-mode") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		bool saveMode = LuaOpenGL::GetSafeMode();
-		SetBoolArg(saveMode, action.GetArgs());
-		LuaOpenGL::SetSafeMode(saveMode);
-		LogSystemStatus("OpenGL save-mode", LuaOpenGL::GetSafeMode());
+		bool safeMode = LuaOpenGL::GetSafeMode();
+		SetBoolArg(safeMode, action.GetArgs());
+		LuaOpenGL::SetSafeMode(safeMode);
+		LogSystemStatus("OpenGL safe-mode", LuaOpenGL::GetSafeMode());
 		return true;
 	}
 };
@@ -2646,12 +2628,12 @@ public:
 			"Set the maximum number of particles (Graphics setting)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!ph)
+		if (projectileHandler == NULL)
 			return false;
 
 		if (!action.GetArgs().empty()) {
 			const int value = std::max(1, atoi(action.GetArgs().c_str()));
-			ph->SetMaxParticles(value);
+			projectileHandler->SetMaxParticles(value);
 			LOG("Set maximum particles to: %i", value);
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
@@ -2668,12 +2650,12 @@ public:
 			"Set the maximum number of nano-particles (Graphic setting)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!ph)
+		if (projectileHandler == NULL)
 			return false;
 
 		if (!action.GetArgs().empty()) {
 			const int value = std::max(1, atoi(action.GetArgs().c_str()));
-			ph->SetMaxNanoParticles(value);
+			projectileHandler->SetMaxNanoParticles(value);
 			LOG("Set maximum nano-particles to: %i", value);
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());

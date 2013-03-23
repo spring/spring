@@ -52,7 +52,7 @@ CGroundDecalHandler::CGroundDecalHandler()
 		return;
 
 	eventHandler.AddClient(this);
-	helper->AddExplosionListener(this);
+	CExplosionCreator::AddExplosionListener(this);
 
 	groundScarAlphaFade = (configHandler->GetInt("GroundScarAlphaFade") != 0);
 
@@ -95,7 +95,6 @@ CGroundDecalHandler::CGroundDecalHandler()
 CGroundDecalHandler::~CGroundDecalHandler()
 {
 	eventHandler.RemoveClient(this);
-	if (helper != NULL) helper->RemoveExplosionListener(this);
 
 	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
 		for (set<UnitTrackStruct*>::iterator ti = (*tti)->tracks.begin(); ti != (*tti)->tracks.end(); ++ti) {

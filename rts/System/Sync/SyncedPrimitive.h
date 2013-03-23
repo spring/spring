@@ -23,11 +23,9 @@ note: candidate 2: bool operator==(T, SyncedPrimitive) [with T = short unsigned 
 	DO(signed char) \
 	DO(signed short) \
 	DO(signed int) \
-	DO(signed long) \
 	DO(unsigned char) \
 	DO(unsigned short) \
 	DO(unsigned int) \
-	DO(unsigned long) \
 	DO(float) \
 	DO(double) \
 	DO(long double) \
@@ -93,11 +91,9 @@ typedef SyncedPrimitive<          bool  > SyncedBool;
 typedef SyncedPrimitive<   signed char  > SyncedSchar;
 typedef SyncedPrimitive<   signed short > SyncedSshort;
 typedef SyncedPrimitive<   signed int   > SyncedSint;
-typedef SyncedPrimitive<   signed long  > SyncedSlong;
 typedef SyncedPrimitive< unsigned char  > SyncedUchar;
 typedef SyncedPrimitive< unsigned short > SyncedUshort;
 typedef SyncedPrimitive< unsigned int   > SyncedUint;
-typedef SyncedPrimitive< unsigned long  > SyncedUlong;
 typedef SyncedPrimitive<          float > SyncedFloat;
 typedef SyncedPrimitive<         double > SyncedDouble;
 typedef SyncedPrimitive<    long double > SyncedLongDouble;
@@ -108,11 +104,9 @@ typedef          bool  SyncedBool;
 typedef   signed char  SyncedSchar;
 typedef   signed short SyncedSshort;
 typedef   signed int   SyncedSint;
-typedef   signed long  SyncedSlong;
 typedef unsigned char  SyncedUchar;
 typedef unsigned short SyncedUshort;
 typedef unsigned int   SyncedUint;
-typedef unsigned long  SyncedUlong;
 typedef          float SyncedFloat;
 typedef         double SyncedDouble;
 typedef    long double SyncedLongDouble;

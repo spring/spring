@@ -20,8 +20,8 @@ public:
 	CWeaponDefHandler();
 	~CWeaponDefHandler();
 
-	const WeaponDef* GetWeapon(std::string weaponname) const;
-	const WeaponDef* GetWeaponById(int weaponDefId) const;
+	const WeaponDef* GetWeaponDef(std::string weaponname) const;
+	const WeaponDef* GetWeaponDefByID(int weaponDefId) const;
 
 	static DamageArray DynamicDamages(const DamageArray& damages, const float3 startPos,
 					const float3 curPos, const float range, const float exp,

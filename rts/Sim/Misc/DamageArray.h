@@ -36,8 +36,6 @@ public:
 		craterBoost;
 
 private:
-	void creg_Serialize(creg::ISerializer& s);
-
 	std::vector<float> damages;
 };
 

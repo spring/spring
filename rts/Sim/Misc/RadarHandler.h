@@ -83,7 +83,7 @@ public:
 			(!unit->stealth || unit->beingBuilt) &&
 			radarMaps[allyTeam][square] &&
 			!commonJammerMap[square];
-		const bool sonarVisible = 
+		const bool sonarVisible =
 			(unit->pos.y < 0.0f) &&
 			(!unit->sonarStealth || unit->beingBuilt) &&
 			sonarMaps[allyTeam][square] &&
@@ -97,10 +97,11 @@ public:
 		return !!seismicMaps[allyTeam][square];
 	}
 
-	const int radarMipLevel;
-	const int radarDiv;
-	const float invRadarDiv;
-	const bool circularRadar;
+public:
+	int radarMipLevel;
+	int radarDiv;
+	float invRadarDiv;
+	bool circularRadar;
 
 	std::vector<CLosMap> radarMaps;
 	std::vector<CLosMap> airRadarMaps;
@@ -122,8 +123,6 @@ public:
 
 private:
 	CLosAlgorithm radarAlgo;
-
-	void Serialize(creg::ISerializer& s);
 };
 
 extern CRadarHandler* radarhandler;

@@ -6,12 +6,16 @@
 #include <string>
 #include <map>
 
+#include "System/creg/creg_cond.h"
+
 struct S3DModel;
 struct CollisionVolume;
 class LuaTable;
 
 struct SolidObjectDecalDef {
 public:
+	CR_DECLARE_STRUCT(SolidObjectDecalDef)
+
 	SolidObjectDecalDef();
 	void Parse(const LuaTable&);
 
@@ -35,6 +39,8 @@ public:
 
 struct SolidObjectDef {
 public:
+	CR_DECLARE(SolidObjectDef)
+
 	SolidObjectDef();
 	virtual ~SolidObjectDef();
 

@@ -1,28 +1,23 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "MissileLauncher.h"
+#include "WeaponDef.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
-#include "MissileLauncher.h"
 #include "Sim/MoveTypes/StrafeAirMoveType.h"
-#include "Sim/Projectiles/WeaponProjectiles/MissileProjectile.h"
-#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
-#include "WeaponDefHandler.h"
 
 CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL));
 
 CR_REG_METADATA(CMissileLauncher,(
 	CR_RESERVED(8)
-	));
+));
 
-CMissileLauncher::CMissileLauncher(CUnit* owner)
-: CWeapon(owner)
+CMissileLauncher::CMissileLauncher(CUnit* owner): CWeapon(owner)
 {
 }
 
-CMissileLauncher::~CMissileLauncher()
-{
-}
 
 void CMissileLauncher::Update()
 {
@@ -77,7 +72,7 @@ void CMissileLauncher::FireImpl()
 	params.speed = startSpeed;
 	params.ttl = weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
 
-	new CMissileProjectile(params, damageAreaOfEffect, projectileSpeed);
+	WeaponProjectileFactory::LoadProjectile(params);
 }
 
 bool CMissileLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
@@ -100,12 +95,13 @@ bool CMissileLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, co
 
 	const float linear = dir.y + weaponDef->trajectoryHeight;
 	const float quadratic = -weaponDef->trajectoryHeight / flatLength;
-	const float gc = ((collisionFlags & Collision::NOGROUND) == 0)?
+	const float groundDist = ((avoidFlags & Collision::NOGROUND) == 0)?
 		ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 30, linear, quadratic):
 		-1.0f;
+	// FIXME: _WHY_ the 30-elmo subtraction?
 	const float modFlatLength = flatLength - 30.0f;
 
-	if (gc > 0.0f)
+	if (groundDist > 0.0f)
 		return false;
 
 	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,

@@ -10,13 +10,12 @@
 #include "lib/gml/gmlmut.h"
 
 CR_BIND(CGroup, (0, NULL))
-
 CR_REG_METADATA(CGroup, (
-				CR_MEMBER(id),
-				CR_MEMBER(units),
-				CR_MEMBER(handler),
-				CR_POSTLOAD(PostLoad)
-				));
+	CR_MEMBER(id),
+	CR_MEMBER(units),
+	CR_MEMBER(handler),
+	CR_POSTLOAD(PostLoad)
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

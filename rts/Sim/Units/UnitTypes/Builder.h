@@ -85,7 +85,7 @@ public:
 	bool terraforming;
 	float terraformHelp;
 	float myTerraformLeft;
-	enum {
+	enum TerraformType {
 		Terraform_Building,
 		Terraform_Restore
 	} terraformType;

@@ -5,12 +5,11 @@
 
 #include "Weapon.h"
 
-class CRifle : public CWeapon  
+class CRifle : public CWeapon
 {
 	CR_DECLARE(CRifle);
 public:
 	CRifle(CUnit* owner);
-	~CRifle();
 
 	void Update();
 

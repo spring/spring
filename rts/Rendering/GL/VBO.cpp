@@ -12,6 +12,7 @@
 
 #include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/Log/ILog.h"
 
 CONFIG(bool, UseVBO).defaultValue(true).safemodeValue(false);
 CONFIG(bool, UsePBO).defaultValue(true).safemodeValue(false);
@@ -134,8 +135,19 @@ void VBO::Resize(GLsizeiptr _size, GLenum usage, const void* data_)
 
 	size = _size;
 	if (VBOused) {
+		glClearErrors();
+
 		this->usage = usage;
 		glBufferData(curBoundTarget, size, data_, usage);
+
+		const GLenum err = glGetError();
+		if (err != GL_NO_ERROR) {
+			LOG_L(L_ERROR, "VBO/PBO: out of memory");
+			Unbind();
+			VBOused = false;
+			Bind(curBoundTarget);
+			Resize(_size, usage, data_);
+		}
 	} else {
 		delete[] data;
 		data = NULL; // to prevent a dead-pointer in case of an out-of-memory exception on the next line

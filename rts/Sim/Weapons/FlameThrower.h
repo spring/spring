@@ -10,7 +10,7 @@ class CFlameThrower : public CWeapon
 	CR_DECLARE(CFlameThrower);
 public:
 	CFlameThrower(CUnit* owner);
-	~CFlameThrower();
+
 	void Update();
 
 	float3 color;

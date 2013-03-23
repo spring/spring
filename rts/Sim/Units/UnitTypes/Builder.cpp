@@ -58,7 +58,7 @@ CR_REG_METADATA(CBuilder, (
 	CR_MEMBER(terraformCenter),
 	CR_MEMBER(terraformRadius),
 	CR_ENUM_MEMBER(terraformType),
-	CR_RESERVED(12),
+	CR_MEMBER(nanoPieceCache),
 	CR_POSTLOAD(PostLoad)
 ));
 
@@ -404,7 +404,7 @@ void CBuilder::Update()
 
 								const int cmdFeatureId = c.params[0];
 
-								if (cmdFeatureId - uh->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam)) {
+								if (cmdFeatureId - unitHandler->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam)) {
 									bld->lastResurrected = resurrectee->id; // all units that were rezzing shall assist the repair too
 									c.params[0] = INT_MAX / 2; // prevent FinishCommand from removing this command when the feature is deleted, since it is needed to start the repair
 								}
@@ -615,18 +615,18 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 {
 	StopBuild(false);
 
-	buildInfo.pos = helper->Pos2BuildPos(buildInfo, true);
+	buildInfo.pos = CGameHelper::Pos2BuildPos(buildInfo, true);
 
 	// Pass -1 as allyteam to behave like we have maphack.
 	// This is needed to prevent building on top of cloaked stuff.
-	const BuildSquareStatus tbs = uh->TestUnitBuildSquare(buildInfo, feature, -1, true);
+	const CGameHelper::BuildSquareStatus tbs = CGameHelper::TestUnitBuildSquare(buildInfo, feature, -1, true);
 
 	switch (tbs) {
-		case BUILDSQUARE_OPEN:
+		case CGameHelper::BUILDSQUARE_OPEN:
 			break;
 
-		case BUILDSQUARE_BLOCKED:
-		case BUILDSQUARE_OCCUPIED: {
+		case CGameHelper::BUILDSQUARE_BLOCKED:
+		case CGameHelper::BUILDSQUARE_OCCUPIED: {
 			// the ground is blocked at the position we want
 			// to build at; check if the blocking object is
 			// of the same type as our buildee (which means
@@ -642,7 +642,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 			} else {
 				// <pos> might map to a non-blocking portion
 				// of the buildee's yardmap, fallback check
-				u = helper->GetClosestFriendlyUnit(NULL, buildInfo.pos, buildDistance, allyteam);
+				u = CGameHelper::GetClosestFriendlyUnit(NULL, buildInfo.pos, buildDistance, allyteam);
 			}
 
 			if (u != NULL && CanAssistUnit(u, buildInfo.def)) {
@@ -655,7 +655,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 			return false;
 		}
 
-		case BUILDSQUARE_RECLAIMABLE:
+		case CGameHelper::BUILDSQUARE_RECLAIMABLE:
 			// caller should handle this
 			return false;
 	}
@@ -824,5 +824,5 @@ void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse
 		+ (rightdir * relNanoFirePos.x);
 
 	// unsynced
-	ph->AddNanoParticle(nanoPos, goal, unitDef, team, radius, inverse, highPriority);
+	projectileHandler->AddNanoParticle(nanoPos, goal, unitDef, team, radius, inverse, highPriority);
 }

@@ -30,7 +30,11 @@ CR_REG_METADATA(CGlobalSynced, (
 	CR_MEMBER(wantedSpeedFactor),
 	CR_MEMBER(paused),
 	CR_MEMBER(mapx),
+	CR_MEMBER(mapxm1),
+	CR_MEMBER(mapxp1),
 	CR_MEMBER(mapy),
+	CR_MEMBER(mapym1),
+	CR_MEMBER(mapyp1),
 	CR_MEMBER(mapSquares),
 	CR_MEMBER(hmapx),
 	CR_MEMBER(hmapy),
@@ -44,8 +48,7 @@ CR_REG_METADATA(CGlobalSynced, (
 	CR_MEMBER(editDefsEnabled),
 	CR_MEMBER(useLuaGaia),
 	CR_MEMBER(randSeed),
-	CR_MEMBER(initRandSeed),
-	CR_RESERVED(64)
+	CR_MEMBER(initRandSeed)
 ));
 
 

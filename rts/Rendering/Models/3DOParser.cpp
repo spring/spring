@@ -486,6 +486,6 @@ void S3DOPiece::Shatter(float pieceChance, int /*texType*/, int team, const floa
 		if (gu->RandFloat() > pieceChance || pi->numVertex != 4)
 			continue;
 
-		ph->AddFlyingPiece(pos, speed + gu->RandVector() * 2.0f, team, this, &*pi);
+		projectileHandler->AddFlyingPiece(pos, speed + gu->RandVector() * 2.0f, team, this, &*pi);
 	}
 }

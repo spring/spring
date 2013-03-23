@@ -19,7 +19,7 @@ struct SAssVertex {
 	float3 pos;
 	float3 normal;
 	float2 texCoord;
-	float2 texCoord2; // optional, still good too have. Also makes sure the struct is 64byte in size (ATi's prefers such VBOs)
+	float2 texCoord2; //< optional, still good to have. Also makes sure the struct is 64byte in size (ATi's prefers such VBOs)
 	float3 sTangent;
 	float3 tTangent;
 };
@@ -58,7 +58,7 @@ public:
 	};
 	std::vector<MinMax> mesh_minmax;
 
-	const aiScene* scene;       //! Assimp scene containing all loaded model data. NULL for S30/3DO.
+	const aiScene* scene; //< Assimp scene containing all loaded model data. NULL for S30/3DO.
 };
 
 
@@ -66,6 +66,7 @@ class CAssParser: public IModelParser
 {
 public:
 	S3DModel* Load(const std::string& modelFileName);
+	ModelType GetType() const { return MODELTYPE_ASS; }
 
 private:
 	static SAssPiece* LoadPiece(SAssModel* model, aiNode* node, const LuaTable& metaTable);

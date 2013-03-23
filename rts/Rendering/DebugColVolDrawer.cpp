@@ -203,7 +203,7 @@ class CDebugColVolQuadDrawer : public CReadMap::IQuadDrawer {
 public:
 	void DrawQuad(int x, int y)
 	{
-		const CQuadField::Quad& q = qf->GetQuadAt(x, y);
+		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
 
 		for (std::list<CFeature*>::const_iterator fi = q.features.begin(); fi != q.features.end(); ++fi) {
 			DrawFeatureColVol(*fi);

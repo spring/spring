@@ -76,8 +76,13 @@ class CEventHandler
 		void UnitIdle(const CUnit* unit);
 		void UnitCommand(const CUnit* unit, const Command& command);
 		void UnitCmdDone(const CUnit* unit, int cmdType, int cmdTag);
-		void UnitDamaged(const CUnit* unit, const CUnit* attacker,
-		                 float damage, int weaponID, bool paralyzer);
+		void UnitDamaged(
+			const CUnit* unit,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID,
+			bool paralyzer);
 		void UnitExperience(const CUnit* unit, float oldExperience);
 
 		void UnitSeismicPing(const CUnit* unit, int allyTeam,
@@ -108,7 +113,7 @@ class CEventHandler
 		void FeatureMoved(const CFeature* feature, const float3& oldpos);
 
 		void RenderFeatureCreated(const CFeature* feature);
-		void RenderFeatureDestroyed(const CFeature* feature);
+		void RenderFeatureDestroyed(const CFeature* feature, const float3& pos);
 		void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
 
 		void UpdateFeatures();
@@ -131,7 +136,7 @@ class CEventHandler
 		void UpdateObjects();
 		void DeleteSyncedObjects();
 
-		bool Explosion(int weaponDefID, const float3& pos, const CUnit* owner);
+		bool Explosion(int weaponDefID, int projectileID, const float3& pos, const CUnit* owner);
 
 		void StockpileChanged(const CUnit* unit,
 		                      const CWeapon* weapon, int oldCount);
@@ -624,17 +629,20 @@ inline void CEventHandler::UnitCmdDone(const CUnit* unit,
 }
 
 
-inline void CEventHandler::UnitDamaged(const CUnit* unit,
-                                           const CUnit* attacker,
-                                           float damage, int weaponID,
-                                           bool paralyzer)
+inline void CEventHandler::UnitDamaged(
+	const CUnit* unit,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID,
+	bool paralyzer)
 {
 	const int unitAllyTeam = unit->allyteam;
 	const int count = listUnitDamaged.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listUnitDamaged[i];
 		if (ec->CanReadAllyTeam(unitAllyTeam)) {
-			ec->UnitDamaged(unit, attacker, damage, weaponID, paralyzer);
+			ec->UnitDamaged(unit, attacker, damage, weaponDefID, projectileID, paralyzer);
 		}
 	}
 }
@@ -712,7 +720,7 @@ inline void CEventHandler::RenderUnitMoved(const CUnit* unit, const float3& newp
 
 inline void CEventHandler::FeatureCreated(const CFeature* feature)
 {
-	(eventBatchHandler->GetFeatureCreatedDestroyedEventBatch()).enqueue(feature);
+	eventBatchHandler->EnqueueFeatureCreatedEvent(feature, feature->pos);
 
 	const int featureAllyTeam = feature->allyteam;
 	const int count = listFeatureCreated.size();
@@ -727,7 +735,7 @@ inline void CEventHandler::FeatureCreated(const CFeature* feature)
 
 inline void CEventHandler::FeatureDestroyed(const CFeature* feature)
 {
-	(eventBatchHandler->GetFeatureCreatedDestroyedEventBatch()).dequeue(feature);
+	eventBatchHandler->EnqueueFeatureDestroyedEvent(feature, feature->pos);
 
 	const int featureAllyTeam = feature->allyteam;
 	const int count = listFeatureDestroyed.size();
@@ -766,12 +774,12 @@ inline void CEventHandler::RenderFeatureCreated(const CFeature* feature)
 	}
 }
 
-inline void CEventHandler::RenderFeatureDestroyed(const CFeature* feature)
+inline void CEventHandler::RenderFeatureDestroyed(const CFeature* feature, const float3& pos)
 {
 	const int count = listRenderFeatureDestroyed.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderFeatureDestroyed[i];
-		ec->RenderFeatureDestroyed(feature);
+		ec->RenderFeatureDestroyed(feature, pos);
 	}
 }
 
@@ -864,14 +872,14 @@ inline void CEventHandler::UnsyncedHeightMapUpdate(const SRectangle& rect)
 
 
 
-inline bool CEventHandler::Explosion(int weaponDefID, const float3& pos, const CUnit* owner)
+inline bool CEventHandler::Explosion(int weaponDefID, int projectileID, const float3& pos, const CUnit* owner)
 {
 	const int count = listExplosion.size();
 	bool noGfx = false;
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listExplosion[i];
 		if (ec->GetFullRead()) {
-			noGfx = noGfx || ec->Explosion(weaponDefID, pos, owner);
+			noGfx = noGfx || ec->Explosion(weaponDefID, projectileID, pos, owner);
 		}
 	}
 	return noGfx;

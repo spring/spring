@@ -24,7 +24,7 @@
 
 
 
-CONFIG(int, GroundDetail).defaultValue(60);
+CONFIG(int, GroundDetail).defaultValue(60).minimumValue(0).maximumValue(200);
 
 CONFIG(int, MaxDynamicMapLights)
 	.defaultValue(1)

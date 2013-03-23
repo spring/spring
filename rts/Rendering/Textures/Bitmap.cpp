@@ -176,15 +176,13 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 	if (filename.find(".dds") != std::string::npos) {
 #ifndef BITMAP_NO_OPENGL
-		bool status = false;
-
 		type = BitmapTypeDDS;
 		xsize = 0;
 		ysize = 0;
 		channels = 0;
 
 		ddsimage = new nv_dds::CDDSImage();
-		status = ddsimage->load(filename);
+		bool status = ddsimage->load(filename);
 
 		if (status) {
 			xsize = ddsimage->get_width();

@@ -81,6 +81,7 @@ class LuaTable;
 class COBJParser: public IModelParser {
 public:
 	S3DModel* Load(const std::string& modelFileName);
+	ModelType GetType() const { return MODELTYPE_OBJ; }
 
 private:
 	typedef std::map<std::string, SOBJPiece*> PieceMap;

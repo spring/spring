@@ -67,7 +67,7 @@ public:
 	virtual ~CSolidObject();
 
 	virtual bool AddBuildPower(float amount, CUnit* builder) { return false; }
-	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID) {}
+	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) {}
 
 	virtual void StoreImpulse(const float3& impulse, float newImpulseDecayRate) {
 		if ((impulseDecayRate = std::min(std::max(newImpulseDecayRate, 0.0f), 1.0f)) > 0.0f) {
@@ -234,7 +234,7 @@ public:
 	static int deletingRefID;
 	static void SetDeletingRefID(int id) { deletingRefID = id; }
 	// returns the object (command reference) id of the object currently being deleted,
-	// for units this equals unit->id, and for features feature->id + uh->MaxUnits()
+	// for units this equals unit->id, and for features feature->id + unitHandler->MaxUnits()
 	static int GetDeletingRefID() { return deletingRefID; }
 };
 

@@ -52,8 +52,7 @@ LodScaleReflection=1.00
 LodScaleRefraction=1.00
 LodScaleShadow=1.00
 LuaAutoEnableUserWidgets=1
-# FIXME: remove this when #3280 is fixed
-# LuaModUICtrl=0
+LuaModUICtrl=0
 LuaShaders=0
 LuaUI=0
 MaxNanoParticles=0

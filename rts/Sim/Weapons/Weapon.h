@@ -75,7 +75,7 @@ protected:
 
 	void UpdateTargeting();
 	void UpdateFire();
-	void UpdateStockpile();
+	bool UpdateStockpile();
 	void UpdateSalvo();
 
 	static bool TargetUnitOrPositionInUnderWater(const float3& targetPos, const CUnit* targetUnit);

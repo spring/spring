@@ -11,17 +11,14 @@ class CLightningProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CLightningProjectile);
 public:
-	CLightningProjectile(const ProjectileParams& params, const float3& color);
-	~CLightningProjectile();
+	CLightningProjectile(const ProjectileParams& params);
 
 	void Update();
 	void Draw();
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
-	void DependentDied(CObject* o);
+	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 
 private:
 	float3 color;
-	CWeapon* weapon;
 
 	#define displacements_size 10
 	float displacements[displacements_size];

@@ -34,6 +34,7 @@ end
 function widget:GameOver()
 	Spring.Echo("GameOver called!")
 	ShowStats()
+	Spring.SendCommands("quit")
 end
 
 function widget:GameFrame(n)
@@ -45,7 +46,7 @@ function widget:GameFrame(n)
 	end
 	if (Spring.DiffTimers(Spring.GetTimer(), timer)) > maxruntime then
 		Spring.Log("test.lua", LOG.ERROR, string.format("Tests run longer than %i seconds, aborting!", maxruntime ))
-		Spring.SendCommands("quit")
+		Spring.SendCommands("pause 1", "quit")
 	end
 	if n==maxframes then
 		ShowStats()

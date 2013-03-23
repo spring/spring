@@ -7,9 +7,14 @@
 
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/bitops.h"
+#include "System/creg/creg_cond.h"
 
 class CUnitScript;
-struct NanoPieceCache {
+
+struct NanoPieceCache
+{
+	CR_DECLARE_STRUCT(NanoPieceCache);
+
 public:
 	NanoPieceCache(): lastNanoPieceCnt(0), curBuildPowerMask(0) {
 	}

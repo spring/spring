@@ -9,8 +9,7 @@ class CTorpedoProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CTorpedoProjectile);
 public:
-	CTorpedoProjectile(const ProjectileParams& params, float areaOfEffect, float maxSpeed, float tracking);
-	~CTorpedoProjectile();
+	CTorpedoProjectile(const ProjectileParams& params);
 
 	void Update();
 	void Draw();

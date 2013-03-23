@@ -25,56 +25,44 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(mass),
 	CR_MEMBER(crushResistance),
 	CR_MEMBER(impulseDecayRate),
-
 	CR_MEMBER(blocking),
 	CR_MEMBER(crushable),
 	CR_MEMBER(immobile),
 	CR_MEMBER(crushKilled),
 	CR_MEMBER(blockEnemyPushing),
 	CR_MEMBER(blockHeightChanges),
-
 	CR_MEMBER(luaDraw),
 	CR_MEMBER(noSelect),
-
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
  	CR_MEMBER(footprint),
-
 	CR_MEMBER(heading),
 	CR_ENUM_MEMBER(physicalState),
-
-	CR_MEMBER(frontdir),
-	CR_MEMBER(rightdir),
-	CR_MEMBER(updir),
-
-	CR_MEMBER(relMidPos),
-	CR_MEMBER(midPos),
-	// can not get creg work on templates
-	CR_MEMBER(mapPos),
-
-//	CR_MEMBER(drawPos),
-//	CR_MEMBER(drawMidPos),
-
 	CR_MEMBER(isMoving),
 	CR_MEMBER(isUnderWater),
 	CR_MEMBER(isMarkedOnBlockingMap),
 	CR_MEMBER(groundBlockPos),
-
 	CR_MEMBER(speed),
 	CR_MEMBER(residualImpulse),
-
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
-
-	// TODO: register SolidObjectDef with CREG
-	// CR_MEMBER(objectDef),
+	CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
 	CR_MEMBER(collisionVolume),
-
-	CR_MEMBER(buildFacing),
-
-	CR_RESERVED(16))
-);
+	CR_IGNORED(groundDecal),
+	CR_MEMBER(frontdir),
+	CR_MEMBER(rightdir),
+	CR_MEMBER(updir),
+	CR_MEMBER(relMidPos),
+ 	CR_MEMBER(relAimPos),
+	CR_MEMBER(midPos),
+	CR_MEMBER(aimPos),
+	CR_MEMBER(mapPos),
+	CR_MEMBER(drawPos),
+	CR_MEMBER(drawMidPos),
+	//CR_MEMBER(blockMap), //FIXME add bitwiseenum to creg
+	CR_MEMBER(buildFacing)
+));
 
 
 CSolidObject::CSolidObject():
@@ -141,7 +129,7 @@ void CSolidObject::UnBlock() {
 
 void CSolidObject::Block() {
 	if (physicalState == Flying) {
-		//FIXME why does airmovetypes really on Block() to UNblock!
+		//FIXME why does airmovetypes really rely on Block() to UNblock!
 		UnBlock();
 		return;
 	}
@@ -241,7 +229,7 @@ int2 CSolidObject::GetMapPos(const float3& position) const
 void CSolidObject::Kill(const float3& impulse, bool crushKill) {
 	crushKilled = crushKill;
 
-	DamageArray damage;
-	DoDamage(damage * (health + 1.0f), impulse, NULL, -DAMAGE_EXTSOURCE_KILLED);
+	DamageArray damage(health + 1.0f);
+	DoDamage(damage, impulse, NULL, -DAMAGE_EXTSOURCE_KILLED, -1);
 }
 

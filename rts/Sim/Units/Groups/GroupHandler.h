@@ -21,10 +21,10 @@ class CGroup;
  */
 class CGroupHandler {
 private:
-	CR_DECLARE(CGroupHandler);
+	CR_DECLARE_STRUCT(CGroupHandler);
 
 	CGroupHandler(int teamId);
-	virtual ~CGroupHandler();
+	~CGroupHandler();
 
 public:
 	/// lowest ID of the first group not reachable through a hot-key
@@ -48,6 +48,7 @@ public:
 
 	void PushGroupChange(int id);
 
+public:
 	std::vector<CGroup*> groups;
 	int team;
 

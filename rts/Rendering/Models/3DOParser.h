@@ -106,6 +106,7 @@ public:
 	C3DOParser();
 
 	S3DModel* Load(const std::string& name);
+	ModelType GetType() const { return MODELTYPE_3DO; }
 
 private:
 	void CalcNormals(S3DOPiece* o) const;

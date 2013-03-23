@@ -45,7 +45,7 @@ CWeaponDefHandler::~CWeaponDefHandler()
 
 
 
-const WeaponDef* CWeaponDefHandler::GetWeapon(std::string weaponname) const
+const WeaponDef* CWeaponDefHandler::GetWeaponDef(std::string weaponname) const
 {
 	StringToLowerInPlace(weaponname);
 
@@ -57,7 +57,7 @@ const WeaponDef* CWeaponDefHandler::GetWeapon(std::string weaponname) const
 }
 
 
-const WeaponDef* CWeaponDefHandler::GetWeaponById(int weaponDefId) const
+const WeaponDef* CWeaponDefHandler::GetWeaponDefByID(int weaponDefId) const
 {
 	if ((weaponDefId < 0) || (weaponDefId >= weaponDefs.size())) {
 		return NULL;

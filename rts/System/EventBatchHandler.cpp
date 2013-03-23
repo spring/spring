@@ -33,8 +33,8 @@ void EventBatchHandler::UnitCloakStateChangedEvent::Add(const UAD& u) { if(!u.un
 void EventBatchHandler::UnitLOSStateChangedEvent::Add(const UAD& u) { if(!u.unit->isDead) eventHandler.RenderUnitLOSChanged(u.unit, u.data, u.status); }
 void EventBatchHandler::UnitMovedEvent::Add(const UAP& u) { eventHandler.RenderUnitMoved(u.unit, u.newpos); }
 
-void EventBatchHandler::FeatureCreatedDestroyedEvent::Add(const CFeature* f) { eventHandler.RenderFeatureCreated(f); }
-void EventBatchHandler::FeatureCreatedDestroyedEvent::Remove(const CFeature* f) { eventHandler.RenderFeatureDestroyed(f); }
+void EventBatchHandler::FeatureCreatedDestroyedEvent::Add(const FP& f) { eventHandler.RenderFeatureCreated(f.feat); }
+void EventBatchHandler::FeatureCreatedDestroyedEvent::Remove(const FP& f) { eventHandler.RenderFeatureDestroyed(f.feat, f.pos); }
 void EventBatchHandler::FeatureMovedEvent::Add(const FAP& f) { eventHandler.RenderFeatureMoved(f.feat, f.oldpos, f.newpos); }
 
 EventBatchHandler* EventBatchHandler::GetInstance() {
@@ -93,19 +93,19 @@ void EventBatchHandler::UpdateProjectiles() {
 void EventBatchHandler::UpdateDrawProjectiles() {
 	GML_STDMUTEX_LOCK(rproj); // UpdateDrawProjectiles
 
-	ph->syncedRenderProjectileIDs.delete_delayed();
+	projectileHandler->syncedRenderProjectileIDs.delete_delayed();
 	syncedProjectileCreatedDestroyedEventBatch.delete_delayed();
 
 	syncedProjectileCreatedDestroyedEventBatch.add_delayed();
-	ph->syncedRenderProjectileIDs.add_delayed();
+	projectileHandler->syncedRenderProjectileIDs.add_delayed();
 
 #if !UNSYNCED_PROJ_NOEVENT
-	ph->unsyncedRenderProjectileIDs.delete_delayed();
+	projectileHandler->unsyncedRenderProjectileIDs.delete_delayed();
 #endif
 	unsyncedProjectileCreatedDestroyedEventBatch.delete_delayed();
 	unsyncedProjectileCreatedDestroyedEventBatch.add_delayed();
 #if !UNSYNCED_PROJ_NOEVENT
-	ph->unsyncedRenderProjectileIDs.add_delayed();
+	projectileHandler->unsyncedRenderProjectileIDs.add_delayed();
 #endif
 }
 void EventBatchHandler::DeleteSyncedProjectiles() {

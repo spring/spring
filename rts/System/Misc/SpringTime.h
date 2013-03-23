@@ -20,7 +20,7 @@
 
 	struct spring_time {
 	private:
-		CR_DECLARE(spring_time);
+		CR_DECLARE_STRUCT(spring_time);
 	public:
 		spring_time() : x(0) {}
 		explicit spring_time(int x_) : x(x_) {}
@@ -32,13 +32,15 @@
 		bool         operator>(const spring_time& v) const { return (x > v.x); }
 		bool        operator<=(const spring_time& v) const { return (x <= v.x); }
 		bool        operator>=(const spring_time& v) const { return (x >= v.x); }
-		
+
 		//float tomsecs() const { return x; }
 		int  tomsecs() const { return x; }
 		bool istime() const { return (x > 0); }
 		void sleep() const { SDL_Delay(x); }
 
 	private:
+		void Serialize(creg::ISerializer& s);
+
 		int x;
 	};
 

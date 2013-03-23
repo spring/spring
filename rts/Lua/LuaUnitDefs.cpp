@@ -918,7 +918,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("nanoColorB",   ud.nanoColor.z);
 
 	ADD_STRING("scriptName", ud.scriptName);
-	ADD_STRING("scriptPath", ud.scriptName); // backward compability
+	ADD_STRING("scriptPath", ud.scriptName); //FIXME // backward compability
 
 	return true;
 }

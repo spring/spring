@@ -14,12 +14,13 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (ProjectileParams(), 1, 1));
+CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (ProjectileParams()));
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(areaOfEffect),
-	CR_RESERVED(16)
+	CR_MEMBER(invttl),
+	CR_MEMBER(curTime)
 ));
 
 //////////////////////////////////////////////////////////////////////
@@ -27,24 +28,24 @@ CR_REG_METADATA(CExplosiveProjectile, (
 //////////////////////////////////////////////////////////////////////
 
 
-CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params, float areaOfEffect, float g)
-	: CWeaponProjectile(params)
-	, areaOfEffect(areaOfEffect)
-	, curTime(0)
+CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWeaponProjectile(params)
+	, areaOfEffect(0.0f)
+	, invttl(0.0f)
+	, curTime(0.0f)
 {
 	projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
 
-	//! either map or weaponDef gravity
-	mygravity = g;
+	mygravity = params.gravity;
 	useAirLos = true;
 
-	if (weaponDef) {
+	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
+		areaOfEffect = weaponDef->damageAreaOfEffect;
 	}
 
 	if (ttl <= 0) {
-		invttl = 1;
+		invttl = 1.0f;
 	} else {
 		invttl = 1.0f / ttl;
 	}
@@ -53,8 +54,6 @@ CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params, float
 	tracefile << "New explosive: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 void CExplosiveProjectile::Update()

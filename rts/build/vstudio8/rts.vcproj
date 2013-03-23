@@ -1277,6 +1277,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\TeamController.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\TeamController.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\TraceRay.cpp"
 				>
 			</File>
@@ -3930,6 +3938,18 @@
 						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\WeaponProjectile.h"
 						>
 					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\WeaponProjectileFactory.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\WeaponProjectileFactory.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\WeaponProjectileTypes.h"
+						>
+					</File>
 				</Filter>
 			</Filter>
 			<Filter
@@ -5798,6 +5818,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\Platform\EngineTypeHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\EngineTypeHandler.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Platform\errorhandler.cpp"
 					>
 				</File>
@@ -6430,27 +6458,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\LoadSave\LoadInterface.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\LoadSave\LoadInterface.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\LoadSave\LoadSaveHandler.cpp"
 					>
 				</File>
 				<File
 					RelativePath="..\..\System\LoadSave\LoadSaveHandler.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\LoadSave\LoadSaveInterface.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\LoadSave\LoadSaveInterface.h"
 					>
 				</File>
 				<File
@@ -6533,14 +6545,6 @@
 					RelativePath="..\..\System\LoadSave\LuaLoadSaveHandler.h"
 					>
 				</File>
-				<File
-					RelativePath="..\..\System\LoadSave\SaveInterface.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\LoadSave\SaveInterface.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="creg"
@@ -6551,6 +6555,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\creg\creg.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\creg\creg_runtime_tests.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\creg\creg_runtime_tests.h"
 					>
 				</File>
 				<File

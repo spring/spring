@@ -6,7 +6,7 @@
 #include "Map/MapInfo.h"
 #include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
-#include "Sim/Projectiles/WeaponProjectiles/ExplosiveProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "System/Sync/SyncTracer.h"
 #include "WeaponDefHandler.h"
@@ -25,7 +25,7 @@ CR_REG_METADATA(CCannon,(
 	CR_MEMBER(lastDir),
 	CR_MEMBER(gravity),
 	CR_RESERVED(32)
-	));
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -46,7 +46,7 @@ CCannon::CCannon(CUnit* owner)
 
 void CCannon::Init()
 {
-	gravity = weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity);
+	gravity = (weaponDef->myGravity == 0)? mapInfo->map.gravity : -(weaponDef->myGravity);
 	highTrajectory = weaponDef->highTrajectory == 1;
 	if(highTrajectory){
 		maxPredict=projectileSpeed*2/-gravity;
@@ -76,10 +76,6 @@ void CCannon::UpdateRange(float val)
 		heightBoostFactor = (2.f - rangeFactor) / math::sqrt(rangeFactor);
 }
 
-CCannon::~CCannon()
-{
-
-}
 
 void CCannon::Update()
 {
@@ -124,11 +120,11 @@ bool CCannon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 
 	const float linear = dir.y;
 	const float quadratic = gravity / (projectileSpeed * projectileSpeed) * 0.5f;
-	const float gc = ((collisionFlags & Collision::NOGROUND) == 0)?
+	const float groundDist = ((avoidFlags & Collision::NOGROUND) == 0)?
 		ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 10, linear, quadratic):
 		-1.0f;
 
-	if (gc > 0.0f) {
+	if (groundDist > 0.0f) {
 		return false;
 	}
 
@@ -150,7 +146,7 @@ void CCannon::FireImpl()
 {
 	float3 diff = targetPos - weaponMuzzlePos;
 	float3 dir = (diff.SqLength() > 4.0) ? GetWantedDir(diff) : diff; // prevent vertical aim when emit-sfx firing the weapon
-	dir += 
+	dir +=
 		(gs->randVector() * sprayAngle + salvoError) *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 	dir.SafeNormalize();
@@ -174,8 +170,9 @@ void CCannon::FireImpl()
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
 	params.ttl = ttl;
+	params.gravity = gravity;
 
-	new CExplosiveProjectile(params, damageAreaOfEffect, gravity);
+	WeaponProjectileFactory::LoadProjectile(params);
 }
 
 void CCannon::SlowUpdate()

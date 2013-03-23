@@ -2,7 +2,7 @@
 
 /**
 	lists all engine versions with metadata in json
-	
+
 */
 
 $allowed = array(
@@ -55,8 +55,8 @@ $res = array();
 $regexes = array(
 	"windows" => "/win32\/spring_(.*)_minimal-portable.7z$/",
 	"macosx" => "/osx64\/[sS]pring_(.*)[_-]MacOSX-.*.zip$/",
-	"linux" => "/linux\/spring_(.*)_minimal-portable-linux-static.7z$/",
-	"linux64" => "/linux64\/spring_(.*)_minimal-portable-linux-static.7z$/"
+	"linux" => "/linux32\/spring_(.*)_minimal-portable-linux32-static.7z$/",
+	"linux64" => "/linux64\/spring_(.*)_minimal-portable-linux64-static.7z$/"
 	);
 while(count($dirs)>0) {
 	$cur = array_pop($dirs);

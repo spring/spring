@@ -7,8 +7,6 @@
 #include <fstream>
 #include "LoadSaveHandler.h"
 
-class CLoadInterface;
-
 class CCregLoadSaveHandler : public ILoadSaveHandler
 {
 public:
@@ -17,7 +15,7 @@ public:
 	void SaveGame(const std::string& file);
 	/// load things such as map and mod, needed to fire up the engine
 	void LoadGameStartInfo(const std::string& file);
-	void LoadGame(); 
+	void LoadGame();
 
 protected:
 	std::ifstream* ifs;

@@ -60,6 +60,8 @@ CFileHandler::~CFileHandler()
 bool CFileHandler::TryReadFromPWD(const string& fileName)
 {
 #ifndef TOOLS
+	if (FileSystem::IsAbsolutePath(fileName))
+		return false;
 	const std::string fullpath(Platform::GetOrigCWD() + fileName);
 #else
 	const std::string fullpath(fileName);
@@ -163,6 +165,8 @@ bool CFileHandler::FileExists(const std::string& filePath, const std::string& mo
 	// PWD
 	if (modes.find(SPRING_VFS_PWD) != string::npos) {
 	#ifndef TOOLS
+		if (FileSystem::IsAbsolutePath(filePath))
+			return false;
 		const std::string fullpath(Platform::GetOrigCWD() + filePath);
 	#else
 		const std::string fullpath(filePath);

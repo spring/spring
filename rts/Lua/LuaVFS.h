@@ -39,6 +39,8 @@ class LuaVFS {
 
 		static int UseArchive(lua_State* L); ///< temporary
 
+		static int CompressFolder(lua_State* L);
+		static int SevenZipFolder(lua_State* L, const string& folderPath, const string& zipFilePath, bool includeFolder, const string& modes);
 		/**
 		@brief Permanent mapping of files into VFS (only from unsynced)
 		

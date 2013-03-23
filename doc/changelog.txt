@@ -2,8 +2,63 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
--- 93.1 ---------------------------------------------------------
+-- 94.0 ---------------------------------------------------------
+Misc:
+ - default LogFlush to true again
+ - fix crash at start related to Optimus
+ ! remove Tobis rapid client (its broken)
+ - add multi engine type support
+ - recycle unit and feature ID's less quickly again, a la 91.0 and prior
+   although this was an unintentional change in 92.* / 93.*, it exposed
+   many bugs in widgets and gadgets which INCORRECTLY assumed ID's were
+   globally unique for all time --> check your code for more latent bugs
 
+Rendering:
+ - automatic runtime recompression of groundtextures to ETC1 (future MESA drivers should support ETC)
+
+Bugfixes:
+ - fix #3591 (UnitFromFactory(..., userOrders) always passes userOrders=false)
+ - fix #3561 (units getting stuck on edges of impassable areas --> pathing is no longer FUBAR)
+ - fix #3575 (QTPFS terrain deformation lagspikes)
+ - fix #3580 (decreased unit/feature ID randomness)
+ - fix #3557 (TorpedoLauncher weapon fires only when on land)
+ - fix #3564 (sun-flare visible when obscured by terrain)
+ - fix #3553 (sun-flare has harsh edge)
+ - fix #3562 (units are reluctant to fire in crowded situations after 'fix #3488')
+ - fix #3559 (avoidGround weapon tag is broken)
+ - fix #3563 (units rub against building edges and slow down to a crawl) and #3592 related to it
+ - fix #3567 (transported nanotowers periodically teleporting to ground)
+ - fix #3520 (kamikaze units always have bad attack cursor when giving manual attack command)
+ - fix #3531 (wrong textures assigned to assimp models)
+ - fix #3545 (AddUnitImpulse() causes unit to move in random direction)
+ - fix #3544 (units briefly invisible when transferred to another team)
+ - fix #3490 (ships cannot be transported by aircraft)
+ - fix #3596 (in debug-mode the firing-cone visualisation of weapons points up)
+ - fix 'fix #3506 (wrong calculation of goffset for assimp model pieces)'
+ - fix pseudo-static units (nanotowers, etc) no longer being transportable
+ - fix #3569 (texturing for OBJ and ASS projectile models)
+ - fix OBJ models being parsed by assimp
+ - fix SEGV on exit
+ - fix flashing team colors
+ - fix some trees drawn after being destroyed
+
+Lua:
+ - add Spring.UnitWeapon{Fire,HoldFire}(number unitID, number weaponID) --> nil
+ - add callouts Spring.GetUnitWeapon{TryTarget,TestTarget,TestRange,HaveFreeLineOfFire}(number attackerID, number weaponID, number attackeeID | [number targetPosX, number targetPosY, number targetPosZ]) --> boolean
+ - add Spring.SetProjectileTarget(number projectileID, [number objectID, string objectType] | [number x, number y, number z]) --> boolean
+ - add Spring.GetProjectileTarget(number projectileID) --> number targetID, string targetType
+ - add Spring.SpawnProjectile(number weaponDefID, table projectileParams) --> number projectileID | nil
+ - add MoveCtrl.SetMoveDef(number unitID, number moveDefID | string moveDefName) --> boolean
+ - add projectileID argument to UnitPreDamaged
+     OLD signature: unitID, unitDefID, unitTeam, damage, paralyzer [, weaponDefID               [, attackerID, attackerDefID, attackerTeam] ]
+     NEW signature: unitID, unitDefID, unitTeam, damage, paralyzer [, weaponDefID, projectileID [, attackerID, attackerDefID, attackerTeam] ]
+
+
+
+-- 93.2 ---------------------------------------------------------
+ - fixed unitsync in linux static builds
+
+-- 93.1 ---------------------------------------------------------
 Bugfixes:
  - fixed treedrawer crash
  - fixed MT crashes
@@ -16,21 +71,35 @@ Bugfixes:
 
 
 -- 93.0 ---------------------------------------------------------
-
 Bugfixes:
  - fixed disappearing GUI with non-GLSL drivers & grass rendering (3dtrees=1)
  - fixed not working assimp textures
  - fixed /ally
  - fixed /chat[|ally|spec|all], so it doesn't misbehave when called from lua
  - fixed attack-ground orders placed on water
- - fixed collision bug
+ - fix bug in footprint overlap detection reported by dnw
  - make dead/crashing/stunned units unshareable (may fix #3476)
  - fixed objects with cylindrical CVs would not take damage if hit in rear endcap
  - block Lua from creating non-uniformly scaled COLVOL_TYPE_SPHERE volumes
  - make sure pastetext and buffertext don't strip whitespaces from the attached message
  - allow whisper between spec <-> spec (player -> spec and spec -> player whispers are still forbidden)
  - fixed flying transport reservation not flushed properly with area commands (#3478)
- - fixed #3481
+ - fix #3481 (unit targets not flushed on cloak + jam)
+ - fix #3488 (avoidFriendly check works improperly if firepoint is inside friendly unit)
+ - fix bug in ray-ground intersection logic
+ - make mutual push-resistant unit collisions more like 0.82.x (smoth's issue)
+ - fix some cases of units getting perma-stuck (s.t. even spammed user orders cannot free them) on terrain, esp. #3423
+ - fix #3506 (wrong calculation of goffset for assimp model pieces)
+ - fix #3505 (ground-transported units cannot be killed)
+ - fix #3465 (WeaponDef infolog error messages are unhelpful)
+ - fix attack-ground orders placed on water
+   GuiTraceRay now stops at water surface by default, not ocean floor
+   add sixth argument 'ignoreWater' to LuaUnsyncedRead::TraceScreenRay
+
+
+Misc:
+ - support double-resolution yardmaps for buildings (these require four times as many characters, beware)
+   the engine will interpret a yardmap string as such if its FIRST (and ONLY its first) character is 'h'
 
 Pr-Downloader:
  - workaround CVE-2013-0249 (disable all protocols expect http/https)

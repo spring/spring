@@ -18,7 +18,6 @@ protected:
 
 public:
 	CCannon(CUnit* owner);
-	~CCannon();
 
 	void Init();
 	void UpdateRange(float val);

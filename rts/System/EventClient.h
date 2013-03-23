@@ -99,8 +99,13 @@ class CEventClient
 		virtual void UnitIdle(const CUnit* unit) {}
 		virtual void UnitCommand(const CUnit* unit, const Command& command) {}
 		virtual void UnitCmdDone(const CUnit* unit, int cmdType, int cmdTag) {}
-		virtual void UnitDamaged(const CUnit* unit, const CUnit* attacker,
-		                         float damage, int weaponID, bool paralyzer) {}
+		virtual void UnitDamaged(
+			const CUnit* unit,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID,
+			bool paralyzer) {}
 		virtual void UnitExperience(const CUnit* unit, float oldExperience) {}
 
 		virtual void UnitSeismicPing(const CUnit* unit, int allyTeam,
@@ -137,7 +142,7 @@ class CEventClient
 		virtual void FeatureMoved(const CFeature* feature) {}
 
 		virtual void RenderFeatureCreated(const CFeature* feature) {}
-		virtual void RenderFeatureDestroyed(const CFeature* feature) {}
+		virtual void RenderFeatureDestroyed(const CFeature* feature, const float3& pos) {}
 		virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {}
 
 		virtual void ProjectileCreated(const CProjectile* proj) {}
@@ -149,7 +154,7 @@ class CEventClient
 		virtual void StockpileChanged(const CUnit* unit,
 		                              const CWeapon* weapon, int oldCount) {}
 
-		virtual bool Explosion(int weaponID, const float3& pos, const CUnit* owner) { return false; }
+		virtual bool Explosion(int weaponID, int projectileID, const float3& pos, const CUnit* owner) { return false; }
 		/// @}
 
 		/**

@@ -11,6 +11,11 @@ CONFIG(bool, MetalMapPalette).defaultValue(false);
 CR_BIND(CMetalMap,(NULL, 0, 0, 0.0f));
 
 CR_REG_METADATA(CMetalMap,(
+	CR_MEMBER(metalScale),
+	CR_MEMBER(sizeX),
+	CR_MEMBER(sizeZ),
+	CR_MEMBER(metalPal),
+	CR_MEMBER(metalMap),
 	CR_MEMBER(extractionMap)
 ));
 

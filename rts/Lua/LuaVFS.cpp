@@ -12,6 +12,7 @@
 #include "LuaHashString.h"
 #include "LuaIO.h"
 #include "LuaUtils.h"
+#include "LuaZip.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
@@ -80,13 +81,14 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 {
 	PushCommon(L);
 
-	HSTR_PUSH_CFUNC(L, "Include",    UnsyncInclude);
-	HSTR_PUSH_CFUNC(L, "LoadFile",   UnsyncLoadFile);
-	HSTR_PUSH_CFUNC(L, "FileExists", UnsyncFileExists);
-	HSTR_PUSH_CFUNC(L, "DirList",    UnsyncDirList);
-	HSTR_PUSH_CFUNC(L, "SubDirs",    UnsyncSubDirs);
-	HSTR_PUSH_CFUNC(L, "UseArchive", UseArchive);
-	HSTR_PUSH_CFUNC(L, "MapArchive", MapArchive);
+	HSTR_PUSH_CFUNC(L, "Include",		UnsyncInclude);
+	HSTR_PUSH_CFUNC(L, "LoadFile",		UnsyncLoadFile);
+	HSTR_PUSH_CFUNC(L, "FileExists",	UnsyncFileExists);
+	HSTR_PUSH_CFUNC(L, "DirList",		UnsyncDirList);
+	HSTR_PUSH_CFUNC(L, "SubDirs",		UnsyncSubDirs);
+	HSTR_PUSH_CFUNC(L, "UseArchive",	UseArchive);
+	HSTR_PUSH_CFUNC(L, "CompressFolder",	CompressFolder);
+	HSTR_PUSH_CFUNC(L, "MapArchive",	MapArchive);
 
 	HSTR_PUSH_CFUNC(L, "ZlibCompress", ZlibCompress);
 
@@ -460,6 +462,42 @@ int LuaVFS::MapArchive(lua_State* L)
 	{
 		lua_pushboolean(L, true);
 	}
+	return 0;
+}
+
+
+/******************************************************************************/
+
+int LuaVFS::CompressFolder(lua_State* L)
+{
+	const string folderPath = luaL_checkstring(L, 1);
+	
+	const string archiveType = luaL_optstring(L, 2, "zip");
+	if (archiveType != "zip" && archiveType != "7z") { //TODO: add 7z support
+		luaL_error(L, ("Unsupported archive type " + archiveType).c_str());
+	}
+
+	 // "sdz" is the default type if not specified
+	const string compressedFilePath = luaL_optstring(L, 3, (folderPath + ".sdz").c_str());
+	const bool includeFolder = luaL_optboolean(L, 4, false);
+	const string modes = GetModes(L, 5, false);
+
+	if (CFileHandler::FileExists(compressedFilePath, modes)) {
+		luaL_error(L, ("File already exists " + compressedFilePath).c_str());
+	}
+	if (archiveType == "zip") {
+		LuaZipFolder::ZipFolder(L, folderPath, compressedFilePath, includeFolder, modes);
+	} else if (archiveType == "7z") {
+		SevenZipFolder(L, folderPath, compressedFilePath, includeFolder, modes);
+	}
+	return 0;
+}
+
+/******************************************************************************/
+
+int LuaVFS::SevenZipFolder(lua_State* L, const string& folderPath, const string& zipFilePath, bool includeFolder, const string& modes)
+{
+	luaL_error(L, "Seven zip compression is not implemented yet.");
 	return 0;
 }
 

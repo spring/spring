@@ -20,58 +20,7 @@ using std::string;
 
 void BasicType::Serialize(ISerializer* s, void* inst)
 {
-	switch (id) {
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
-	case crSyncedSint://FIXME
-	case crSyncedUint:
-#endif
-	case crInt:
-	case crUInt:
-		s->SerializeInt(inst, 4);
-		break;
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
-	case crSyncedSshort://FIXME
-	case crSyncedUshort:
-#endif
-	case crShort:
-	case crUShort:
-		s->SerializeInt(inst, 2);
-		break;
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
-	case crSyncedSchar://FIXME
-	case crSyncedUchar:
-#endif
-	case crChar:
-	case crUChar:
-		s->Serialize(inst, 1);
-		break;
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
-	case crSyncedFloat://FIXME
-#endif
-	case crFloat:
-		s->Serialize(inst, 4);
-		break;
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
-	case crSyncedDouble://FIXME
-#endif
-	case crDouble:
-		s->Serialize(inst, 8);
-		break;
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
-	case crSyncedBool://FIXME
-#endif
-	case crBool:{
-		// I'm not sure if bool is the same size on all compilers.. so it's stored as a byte
-		if (s->IsWriting())  {
-			char v = *(bool*)inst ? 1 : 0;
-			s->Serialize(&v,1);
-		} else {
-			char v;
-			s->Serialize(&v,1);
-			*(bool*)inst=!!v;
-		}
-		break;}
-	}
+	s->SerializeInt(inst, GetSize());
 }
 
 std::string BasicType::GetName()
@@ -94,11 +43,40 @@ std::string BasicType::GetName()
 		case crUShort: return "ushort";
 		case crChar:  return "char";
 		case crUChar: return "uchar";
+		case crInt64: return "int64";
 		case crFloat: return "float";
 		case crDouble: return "double";
 		case crBool: return "bool";
 	};
 	return std::string();
+}
+
+size_t BasicType::GetSize()
+{
+	switch(id) {
+#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+		case crSyncedSint: return sizeof(int);
+		case crSyncedUint: return sizeof(unsigned);
+		case crSyncedSshort: return sizeof(short);
+		case crSyncedUshort: return sizeof(unsigned short);
+		case crSyncedSchar: return sizeof(char);
+		case crSyncedUchar: return sizeof(unsigned char);
+		case crSyncedFloat: return sizeof(float);
+		case crSyncedDouble: return sizeof(double);
+		case crSyncedBool: return sizeof(bool);
+#endif
+		case crInt: return sizeof(int);
+		case crUInt: return sizeof(unsigned);
+		case crShort: return sizeof(short);
+		case crUShort: return sizeof(unsigned short);
+		case crChar:  return sizeof(char);
+		case crUChar: return sizeof(unsigned char);
+		case crInt64: return sizeof(boost::int64_t);
+		case crFloat: return sizeof(float);
+		case crDouble: return sizeof(double);
+		case crBool: return sizeof(bool);
+	};
+	return 0; //???
 }
 
 boost::shared_ptr<IType> IType::CreateBasicType(BasicTypeID t)
@@ -109,6 +87,11 @@ boost::shared_ptr<IType> IType::CreateBasicType(BasicTypeID t)
 std::string StringType::GetName()
 {
 	return "string";
+}
+
+size_t StringType::GetSize()
+{
+	return sizeof(std::string);
 }
 
 StringType::StringType(boost::shared_ptr<IType> charType) : DynamicArrayType<string>(charType) {}
@@ -127,6 +110,11 @@ void ObjectInstanceType::Serialize(ISerializer* s, void* inst)
 std::string ObjectInstanceType::GetName()
 {
 	return objectClass->name;
+}
+
+size_t ObjectInstanceType::GetSize()
+{
+	return objectClass->size;
 }
 
 boost::shared_ptr<IType> IType::CreateObjInstanceType(Class* objectType)
