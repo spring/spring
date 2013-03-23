@@ -184,7 +184,7 @@ public:
 	std::vector<float> gCost;
 
 	/// combination of PATHOPT_{OPEN, ..., OBSOLETE} flags
-	std::vector<unsigned int> nodeMask;
+	std::vector<uint16_t> nodeMask;
 
 	/// needed for the PE to back-track path to goal
 	std::vector<int2> peParentNodePos;
