@@ -33,8 +33,8 @@ void EventBatchHandler::UnitCloakStateChangedEvent::Add(const UAD& u) { if(!u.un
 void EventBatchHandler::UnitLOSStateChangedEvent::Add(const UAD& u) { if(!u.unit->isDead) eventHandler.RenderUnitLOSChanged(u.unit, u.data, u.status); }
 void EventBatchHandler::UnitMovedEvent::Add(const UAP& u) { eventHandler.RenderUnitMoved(u.unit, u.newpos); }
 
-void EventBatchHandler::FeatureCreatedDestroyedEvent::Add(const CFeature* f) { eventHandler.RenderFeatureCreated(f); }
-void EventBatchHandler::FeatureCreatedDestroyedEvent::Remove(const CFeature* f) { eventHandler.RenderFeatureDestroyed(f); }
+void EventBatchHandler::FeatureCreatedDestroyedEvent::Add(const FP& f) { eventHandler.RenderFeatureCreated(f.feat); }
+void EventBatchHandler::FeatureCreatedDestroyedEvent::Remove(const FP& f) { eventHandler.RenderFeatureDestroyed(f.feat, f.pos); }
 void EventBatchHandler::FeatureMovedEvent::Add(const FAP& f) { eventHandler.RenderFeatureMoved(f.feat, f.oldpos, f.newpos); }
 
 EventBatchHandler* EventBatchHandler::GetInstance() {
