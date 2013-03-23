@@ -22,9 +22,16 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(checkCol),
 	CR_MEMBER(ignoreWater),
 	CR_MEMBER(deleteMe),
-	CR_MEMBER(castShadow), // unsynced
+	CR_MEMBER(castShadow),
 
-	CR_MEMBER(ownerId),
+	CR_MEMBER(lastProjUpdate),
+	CR_MEMBER(dir),
+	CR_MEMBER(drawPos),
+	CR_IGNORED(tempdist),
+
+	CR_MEMBER(ownerID),
+	CR_MEMBER(teamID),
+	CR_MEMBER(cegID),
 	CR_MEMBER(projectileType),
 	CR_MEMBER(collisionFlags),
 
@@ -34,7 +41,8 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(speed),
 	CR_MEMBER_ENDFLAG(CM_Config),
-	CR_RESERVED(8)
+
+	CR_IGNORED(quadFieldCellIter) // runtime. set in ctor
 ));
 
 
@@ -46,39 +54,52 @@ bool CProjectile::inArray = false;
 CVertexArray* CProjectile::va = NULL;
 
 
-CProjectile::CProjectile():
-	synced(false),
-	weapon(false),
-	piece(false),
-	luaMoveCtrl(false),
-	checkCol(true),
-	ignoreWater(false),
-	deleteMe(false),
-	castShadow(false),
-	speed(ZeroVector),
-	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
-	ownerId(-1),
-	projectileType(-1U),
-	collisionFlags(0)
+CProjectile::CProjectile()
+	: synced(false)
+	, weapon(false)
+	, piece(false)
+
+	, luaMoveCtrl(false)
+	, checkCol(true)
+	, ignoreWater(false)
+	, deleteMe(false)
+	, castShadow(false)
+
+	, speed(ZeroVector)
+	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
+
+	, ownerID(-1u)
+	, teamID(-1u)
+	, cegID(-1u)
+
+	, projectileType(-1u)
+	, collisionFlags(0)
 {
 	GML::GetTicks(lastProjUpdate);
 }
 
-CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece):
-	CExpGenSpawnable(pos),
-	synced(isSynced),
-	weapon(isWeapon),
-	piece(isPiece),
-	luaMoveCtrl(false),
-	checkCol(true),
-	ignoreWater(false),
-	deleteMe(false),
-	castShadow(false),
-	speed(spd),
-	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
-	ownerId(-1),
-	projectileType(-1U),
-	collisionFlags(0)
+CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece)
+	: CExpGenSpawnable(pos)
+
+	, synced(isSynced)
+	, weapon(isWeapon)
+	, piece(isPiece)
+
+	, luaMoveCtrl(false)
+	, checkCol(true)
+	, ignoreWater(false)
+	, deleteMe(false)
+	, castShadow(false)
+
+	, speed(spd)
+	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
+
+	, ownerID(-1u)
+	, teamID(-1u)
+	, cegID(-1u)
+
+	, projectileType(-1u)
+	, collisionFlags(0)
 {
 	Init(ZeroVector, owner);
 	GML::GetTicks(lastProjUpdate);
@@ -87,7 +108,7 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 void CProjectile::Detach() {
 	// SYNCED
 	if (synced) {
-		qf->RemoveProjectile(this);
+		quadField->RemoveProjectile(this);
 	}
 	CExpGenSpawnable::Detach();
 }
@@ -101,7 +122,8 @@ void CProjectile::Init(const float3& offset, CUnit* owner)
 {
 	if (owner != NULL) {
 		// must be set before the AddProjectile call
-		ownerId = owner->id;
+		ownerID = owner->id;
+		teamID = owner->team;
 	}
 	if (!(weapon || piece)) {
 		// NOTE:
@@ -109,10 +131,10 @@ void CProjectile::Init(const float3& offset, CUnit* owner)
 		//   to CProjectileHandler (other code needs to be able
 		//   to dyna-cast CProjectile*'s to those derived types,
 		//   and adding them here would throw away too much RTTI)
-		ph->AddProjectile(this);
+		projectileHandler->AddProjectile(this);
 	}
 	if (synced) {
-		qf->AddProjectile(this);
+		quadField->AddProjectile(this);
 	}
 
 	pos += offset;
@@ -157,7 +179,7 @@ int CProjectile::DrawArray()
 {
 	va->DrawArrayTC(GL_QUADS);
 
-	// draw-index gets divided by 24 because each element is 
+	// draw-index gets divided by 24 because each element is
 	// 12 + 4 + 4 + 4 = 24 bytes in size (pos + u + v + color)
 	// for each type of "projectile"
 	int idx = (va->drawIndex() / 24);
@@ -169,9 +191,9 @@ int CProjectile::DrawArray()
 }
 
 CUnit* CProjectile::owner() const {
-	// Note: this death dependency optimization using "ownerId" is logically flawed,
+	// Note: this death dependency optimization using "ownerID" is logically flawed,
 	//  since ids are being reused it could return a unit that is not the original owner
-	CUnit* unit = uh->GetUnit(ownerId);
+	CUnit* unit = unitHandler->GetUnit(ownerID);
 
 	// make volatile
 	if (GML::SimEnabled())

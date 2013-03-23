@@ -186,27 +186,27 @@ CGame* game = NULL;
 
 CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 
-CR_REG_METADATA(CGame,(
-//	CR_MEMBER(finishedLoading),
-//	CR_MEMBER(drawMode),
-//	CR_MEMBER(thisFps),
+CR_REG_METADATA(CGame, (
+	CR_IGNORED(finishedLoading),
+	CR_IGNORED(thisFps),
 	CR_MEMBER(lastSimFrame),
-//	CR_MEMBER(frameStartTime),
-//	CR_MEMBER(lastUpdateTime),
-//	CR_MEMBER(lastSimFrameTime),
-//	CR_MEMBER(lastDrawFrameTime),
-//	CR_MEMBER(lastModGameTimeMeasure),
-//	CR_MEMBER(updateDeltaSeconds),
+	CR_IGNORED(frameStartTime),
+	CR_IGNORED(lastUpdateTime),
+	CR_IGNORED(lastSimFrameTime),
+	CR_IGNORED(lastDrawFrameTime),
+	CR_IGNORED(lastModGameTimeMeasure),
+	CR_IGNORED(updateDeltaSeconds),
 	CR_MEMBER(totalGameTime),
 	CR_MEMBER(userInputPrefix),
 	CR_MEMBER(lastTick),
 	CR_MEMBER(chatSound),
-//	CR_MEMBER(camMove),
-//	CR_MEMBER(camRot),
+	CR_IGNORED(camMove),
+	CR_IGNORED(camRot),
 	CR_MEMBER(hideInterface),
 	CR_MEMBER(gameOver),
-//	CR_MEMBER(windowedEdgeMove),
-//	CR_MEMBER(fullscreenEdgeMove),
+	CR_IGNORED(gameDrawMode),
+	CR_IGNORED(windowedEdgeMove),
+	CR_IGNORED(fullscreenEdgeMove),
 	CR_MEMBER(showFPS),
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
@@ -215,21 +215,20 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(mtInfoCtrl),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(gameID),
-//	CR_MEMBER(script),
-//	CR_MEMBER(infoConsole),
-//	CR_MEMBER(consoleHistory),
-//	CR_MEMBER(hotBinding),
-//	CR_MEMBER(inputTextPosX),
-//	CR_MEMBER(inputTextPosY),
-//	CR_MEMBER(inputTextSizeX),
-//	CR_MEMBER(inputTextSizeY),
-//	CR_MEMBER(skipping),
+	//CR_MEMBER(infoConsole),
+	//CR_MEMBER(consoleHistory),
+	CR_IGNORED(hotBinding),
+	CR_IGNORED(inputTextPosX),
+	CR_IGNORED(inputTextPosY),
+	CR_IGNORED(inputTextSizeX),
+	CR_IGNORED(inputTextSizeY),
+	CR_IGNORED(skipping),
 	CR_MEMBER(playing),
-//	CR_MEMBER(lastFrameTime),
-//	CR_MEMBER(unconsumedFrames),
-//	CR_MEMBER(msgProcTimeLeft),
-//	CR_MEMBER(consumeSpeed),
-//	CR_MEMBER(lastframe),
+	CR_IGNORED(lastFrameTime),
+	CR_IGNORED(unconsumedFrames),
+	CR_IGNORED(msgProcTimeLeft),
+	CR_IGNORED(consumeSpeed),
+	CR_IGNORED(lastframe),
 
 	CR_POSTLOAD(PostLoad)
 ));
@@ -349,27 +348,31 @@ CGame::~CGame()
 
 	ENTER_SYNCED_CODE();
 
-	// Kill all teams that are still alive, in
-	// case the game did not do so through Lua.
-	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
-		teamHandler->Team(t)->Died(false);
-	} 
-
 	CEndGameBox::Destroy();
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
-
-	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
-	UnsyncedGameCommands::DestroyInstance();
-	SyncedGameCommands::DestroyInstance();
+	CColorMap::DeleteColormaps();
 
 	IVideoCapturing::FreeInstance();
 
 	CLuaGaia::FreeHandler();
 	CLuaRules::FreeHandler();
 	LuaOpenGL::Free();
-	CColorMap::DeleteColormaps();
+
+	// Kill all teams that are still alive, in
+	// case the game did not do so through Lua.
+	// must happen after Lua (cause CGame is
+	// already null'ed and it causes a Lua event,
+	// which could issue Lua code that tries to access it)
+	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
+		teamHandler->Team(t)->Died(false);
+	}
+
 	CEngineOutHandler::Destroy();
 	CResourceHandler::FreeInstance();
+
+	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
+	UnsyncedGameCommands::DestroyInstance();
+	SyncedGameCommands::DestroyInstance();
 
 	CWordCompletion::DestroyInstance();
 
@@ -399,8 +402,8 @@ CGame::~CGame()
 	SafeDelete(texturehandlerS3O);
 
 	SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
-	SafeDelete(uh); // CUnitHandler*, depends on modelParser (via ~CUnit)
-	SafeDelete(ph); // CProjectileHandler*
+	SafeDelete(unitHandler); // depends on modelParser (via ~CUnit)
+	SafeDelete(projectileHandler);
 
 	SafeDelete(cubeMapHandler);
 	SafeDelete(modelParser);
@@ -412,7 +415,7 @@ CGame::~CGame()
 	SafeDelete(radarhandler);
 	SafeDelete(loshandler);
 	SafeDelete(mapDamage);
-	SafeDelete(qf);
+	SafeDelete(quadField);
 	SafeDelete(moveDefHandler);
 	SafeDelete(unitDefHandler);
 	SafeDelete(weaponDefHandler);
@@ -549,7 +552,7 @@ void CGame::PreLoadSimulation(const std::string& mapName)
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
 	moveDefHandler = new MoveDefHandler();
-	qf = new CQuadField();
+	quadField = new CQuadField();
 	damageArrayHandler = new CDamageArrayHandler();
 	explGenHandler = new CExplosionGeneratorHandler();
 }
@@ -563,8 +566,8 @@ void CGame::PostLoadSimulation()
 
 	CGroundMoveType::CreateLineTable();
 
-	uh = new CUnitHandler();
-	ph = new CProjectileHandler();
+	unitHandler = new CUnitHandler();
+	projectileHandler = new CProjectileHandler();
 
 	loadscreen->SetLoadMessage("Loading Feature Definitions");
 	featureHandler = new CFeatureHandler();
@@ -582,7 +585,6 @@ void CGame::PostLoadSimulation()
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
 	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
-	CEngineOutHandler::Initialize();
 
 	geometricObjects = new CGeometricObjects();
 
@@ -749,8 +751,9 @@ void CGame::LoadFinalize()
 
 void CGame::PostLoad()
 {
+	GameSetupDrawer::Disable();
 	if (gameServer) {
-		gameServer->PostLoad(lastTick, gs->frameNum);
+		gameServer->PostLoad(gs->frameNum);
 	}
 }
 
@@ -1229,7 +1232,7 @@ bool CGame::Draw() {
 		font->SetTextColor(1,1,0.5f,0.8f);
 
 		font->glFormat(0.03f, 0.02f, 1.0f, DBG_FONT_FLAGS, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d)",
-		    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
+		    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, projectileHandler->syncedProjectiles.size() + projectileHandler->unsyncedProjectiles.size(), projectileHandler->currentParticles);
 
 		// 16ms := 60fps := 30simFPS + 30drawFPS
 		font->glFormat(0.03f, 0.07f, 0.7f, DBG_FONT_FLAGS, "avgFrame: %s%2.1fms\b avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
@@ -1465,8 +1468,6 @@ void CGame::StartPlaying()
 	// and both share the same SimFrame!
 	eventHandler.GameFrame(0);
 
-	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
-
 #if defined(USE_GML) && GML_ENABLE_SIM
 	extern void PrintMTStartupMessage(int showMTInfo);
 	PrintMTStartupMessage(showMTInfo);
@@ -1514,8 +1515,8 @@ void CGame::SimFrame() {
 	helper->Update();
 	mapDamage->Update();
 	pathManager->Update();
-	uh->Update();
-	ph->Update();
+	unitHandler->Update();
+	projectileHandler->Update();
 	featureHandler->Update();
 	GCobEngine.Tick(33);
 	GUnitScriptEngine.Tick(33);
@@ -1728,9 +1729,9 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 	if ((gs->frameNum % gFramePeriod) != 0) { return; }
 
 	// we only care about the synced projectile data here
-	const std::list<CUnit*>& units = uh->activeUnits;
+	const std::list<CUnit*>& units = unitHandler->activeUnits;
 	const CFeatureSet& features = featureHandler->GetActiveFeatures();
-	      ProjectileContainer& projectiles = ph->syncedProjectiles;
+	      ProjectileContainer& projectiles = projectileHandler->syncedProjectiles;
 
 	std::list<CUnit*>::const_iterator unitsIt;
 	CFeatureSet::const_iterator featuresIt;
@@ -2177,8 +2178,8 @@ void CGame::ReloadCOB(const string& msg, int player)
 		return;
 	}
 	int count = 0;
-	for (size_t i = 0; i < uh->MaxUnits(); i++) {
-		CUnit* unit = uh->units[i];
+	for (size_t i = 0; i < unitHandler->MaxUnits(); i++) {
+		CUnit* unit = unitHandler->units[i];
 		if (unit != NULL) {
 			CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
 			if (cob != NULL && cob->GetScriptAddr() == oldScript) {
@@ -2209,10 +2210,10 @@ void CGame::SelectUnits(const string& line)
 			if (endPtr == startPtr) {
 				continue; // bad number
 			}
-			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= uh->MaxUnits())) {
+			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= unitHandler->MaxUnits())) {
 				continue; // bad index
 			}
-			CUnit* unit = uh->units[unitIndex];
+			CUnit* unit = unitHandler->units[unitIndex];
 			if (unit == NULL) {
 				continue; // bad pointer
 			}
@@ -2247,7 +2248,7 @@ void CGame::SelectCycle(const string& command)
 		selectedUnits.ClearSelected();
 		set<int>::const_iterator it;
 		for (it = unitIDs.begin(); it != unitIDs.end(); ++it) {
-			CUnit* unit = uh->units[*it];
+			CUnit* unit = unitHandler->units[*it];
 			if (unit != NULL) {
 				selectedUnits.AddUnit(unit);
 			}
@@ -2264,7 +2265,7 @@ void CGame::SelectCycle(const string& command)
 		}
 		selectedUnits.ClearSelected();
 		lastID = *unitIDs.begin();
-		selectedUnits.AddUnit(uh->units[lastID]);
+		selectedUnits.AddUnit(unitHandler->units[lastID]);
 		return;
 	}
 
@@ -2272,12 +2273,12 @@ void CGame::SelectCycle(const string& command)
 	set<int> tmpSet;
 	set<int>::const_iterator it;
 	for (it = unitIDs.begin(); it != unitIDs.end(); ++it) {
-		if (uh->units[*it] != NULL) {
+		if (unitHandler->units[*it] != NULL) {
 			tmpSet.insert(*it);
 		}
 	}
 	unitIDs = tmpSet;
-	if ((lastID >= 0) && (uh->units[lastID] == NULL)) {
+	if ((lastID >= 0) && (unitHandler->units[lastID] == NULL)) {
 		lastID = -1;
 	}
 
@@ -2295,7 +2296,7 @@ void CGame::SelectCycle(const string& command)
 				lastID = *unitIDs.begin();
 			}
 		}
-		selectedUnits.AddUnit(uh->units[lastID]);
+		selectedUnits.AddUnit(unitHandler->units[lastID]);
 	}
 }
 

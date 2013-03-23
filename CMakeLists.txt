@@ -235,6 +235,11 @@ if    (HEADLESS_SYSTEM AND NOT NO_SOUND)
 	message(FATAL_ERROR "HEADLESS_SYSTEM requires NO_SOUND to be set!")
 endif (HEADLESS_SYSTEM AND NOT NO_SOUND)
 
+set(USE_LIBSQUISH TRUE CACHE BOOL "Enable libsquish for DXT decompressing. (needed for ETC1 support)")
+if    (USE_LIBSQUISH)
+	add_definitions(-DUSE_LIBSQUISH)
+endif (USE_LIBSQUISH)
+
 
 ### external libs
 if    (MINGW)

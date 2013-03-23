@@ -4,6 +4,7 @@
 #define SKIRMISH_AI_BASE_H
 
 #include "Game/TeamController.h"
+#include "System/creg/creg_cond.h"
 
 #include <string>
 #include <map>
@@ -28,6 +29,7 @@ enum ESkirmishAIStatus {
  * It is used on the Game-Server and on clients (as a base class).
  */
 class SkirmishAIBase : public TeamController {
+	CR_DECLARE(SkirmishAIBase);
 
 public:
 	typedef std::map<std::string, std::string> customOpts;
@@ -50,6 +52,8 @@ public:
  */
 class SkirmishAIStatistics : public TeamControllerStatistics
 {
+	CR_DECLARE(SkirmishAIStatistics);
+
 public:
 	/**
 	 * @brief Constructor assigning default values.

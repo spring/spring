@@ -13,11 +13,10 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (ProjectileParams(), 0.0f, ZeroVector, ZeroVector, 0.0f));
+CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (ProjectileParams()));
 
 CR_REG_METADATA(CLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
-	CR_MEMBER(dir),
 	CR_MEMBER(intensity),
 	CR_MEMBER(color),
 	CR_MEMBER(color2),
@@ -26,20 +25,18 @@ CR_REG_METADATA(CLaserProjectile,(
 	CR_MEMBER(speedf),
 	CR_MEMBER(stayTime),
 	CR_MEMBER(intensityFalloff),
-	CR_MEMBER(midtexx),
-	CR_RESERVED(16)
+	CR_MEMBER(midtexx)
 ));
 
-CLaserProjectile::CLaserProjectile(
-	const ProjectileParams& params,
-	float length, const float3& color, const float3& color2, float intensity)
-	: CWeaponProjectile(params)
-	, intensity(intensity)
-	, color(color)
-	, color2(color2)
-	, length(length)
+CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
+	, speedf(0.0f)
+
+	, length(0.0f)
 	, curLength(0.0f)
-	, intensityFalloff(weaponDef ? (intensity * weaponDef->falloffRate) : 0.0f)
+	, intensity(0.0f)
+	, intensityFalloff(0.0f)
+	, midtexx(0.0f)
+
 	, stayTime(0)
 {
 	projectileType = WEAPON_LASER_PROJECTILE;
@@ -47,12 +44,19 @@ CLaserProjectile::CLaserProjectile(
 	speedf = speed.Length();
 	dir = speed / speedf;
 
-	if (weaponDef) {
+	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
+
+		length = weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED);
+		intensity = weaponDef->intensity;
+		intensityFalloff = intensity * weaponDef->falloffRate;
 
 		midtexx =
 			(weaponDef->visuals.texture2->xstart +
 			(weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) * 0.5f);
+
+		color = weaponDef->visuals.color;
+		color2 = weaponDef->visuals.color2;
 	}
 
 	drawRadius = length;
@@ -61,12 +65,6 @@ CLaserProjectile::CLaserProjectile(
 	tracefile << "New laser: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
-}
-
-CLaserProjectile::~CLaserProjectile()
-{
 }
 
 void CLaserProjectile::Update()

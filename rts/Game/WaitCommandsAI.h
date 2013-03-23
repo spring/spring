@@ -3,12 +3,12 @@
 #ifndef WAIT_COMMANDS_AI_H
 #define WAIT_COMMANDS_AI_H
 
-#include <time.h>
 #include <map>
 #include <set>
 #include <deque>
 #include <string>
 #include "System/Object.h"
+#include "System/Misc/SpringTime.h"
 #include "Sim/Units/UnitSet.h"
 
 class float3;
@@ -19,7 +19,7 @@ class CCommandQueue;
 
 
 class CWaitCommandsAI {
-	CR_DECLARE(CWaitCommandsAI);
+	CR_DECLARE_STRUCT(CWaitCommandsAI);
 	CR_DECLARE_SUB(Wait);
 	CR_DECLARE_SUB(TimeWait);
 	CR_DECLARE_SUB(DeathWait);
@@ -74,7 +74,7 @@ class CWaitCommandsAI {
 				virtual void AddUnitPosition(const float3& pos) {}
 				virtual const std::string& GetStateText() const { return noText; }
 			public:
-				time_t GetDeadTime() const { return deadTime; }
+				spring_time GetDeadTime() const { return deadTime; }
 				float GetCode() const { return code; }
 				KeyType GetKey() const { return key; }
 			public:
@@ -95,7 +95,7 @@ class CWaitCommandsAI {
 				float code;
 				KeyType key;
 				bool valid;
-				time_t deadTime;
+				spring_time deadTime;
 			protected:
 				static KeyType GetNewKey();
 			private:

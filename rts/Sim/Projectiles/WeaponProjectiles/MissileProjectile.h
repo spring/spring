@@ -13,8 +13,8 @@ class CMissileProjectile : public CWeaponProjectile
 protected:
 	void UpdateGroundBounce();
 public:
-	CMissileProjectile(const ProjectileParams& params, float areaOfEffect, float maxSpeed);
-	~CMissileProjectile();
+	CMissileProjectile(const ProjectileParams& params);
+
 	void Collision(CUnit* unit);
 	void Collision(CFeature* feature);
 	void Collision();
@@ -29,32 +29,28 @@ private:
 	float maxSpeed;
 	float curSpeed;
 	float areaOfEffect;
-	int age;
-	float3 oldSmoke;
-	float3 oldDir;
-
-private:
-	bool drawTrail;
-	int numParts;
-
-	bool isWobbling;
-	float3 wobbleDir;
-	int wobbleTime;
-	float3 wobbleDif;
-	
-	bool isDancing;
-	int danceTime;
-	float3 danceMove;
-	/**
-	 * Vector that points towards the center of the dance
-	 * to keep the movement "coherent"
-	 */
-	float3 danceCenter;
-
 	float extraHeight;
 	float extraHeightDecay;
+
+	int age;
+	int numParts;
 	int extraHeightTime;
 
+	bool drawTrail;
+	bool isDancing;
+	bool isWobbling;
+
+	int danceTime;
+	int wobbleTime;
+
+	float3 danceMove; // points towards center of the dance to keep the movement "coherent"
+	float3 danceCenter;
+	float3 wobbleDir;
+	float3 wobbleDif;
+
+	float3 oldSmoke;
+	float3 oldDir;
+	
 	/// the smokes life-time in frames
 	static const float SMOKE_TIME;
 };

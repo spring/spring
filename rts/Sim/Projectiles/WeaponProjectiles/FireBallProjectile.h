@@ -7,19 +7,12 @@
 #include <deque>
 #include "lib/gml/gmlcnf.h"
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-#define SPARK_QUEUE gmlCircularQueue<CFireBallProjectile::Spark,32>
-#else
-#define SPARK_QUEUE std::deque<Spark>
-#endif
-
 class CFireBallProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CFireBallProjectile);
 	CR_DECLARE_SUB(Spark);
 public:
 	CFireBallProjectile(const ProjectileParams& params);
-	~CFireBallProjectile();
 
 	void Draw();
 	void Update();
@@ -34,8 +27,14 @@ public:
 		int ttl;
 	};
 
+#if defined(USE_GML) && GML_ENABLE_SIM
+	typedef gmlCircularQueue<CFireBallProjectile::Spark,32> spark_list_type;
+#else
+	typedef std::deque<Spark> spark_list_type;
+#endif
+
 private:
-	SPARK_QUEUE sparks;
+	spark_list_type sparks;
 
 	void EmitSpark();
 };

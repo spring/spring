@@ -136,7 +136,7 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 				}
 			}
 		}
-		else if ((command == "hotspot") && (words.size() >= 1)) {
+		else if ((command == "hotspot") && (!words.empty())) {
 			if (words[1] == "topleft") {
 				hotSpot = TopLeft;
 				hwCursor->hotSpot = TopLeft;
@@ -150,7 +150,7 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 						specFile.c_str(), words[1].c_str());
 			}
 		}
-		else if ((command == "lastframe") && (words.size() >= 1)) {
+		else if ((command == "lastframe") && (!words.empty())) {
 			lastFrame = atoi(words[1].c_str());
 		}
 		else {

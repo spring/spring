@@ -34,7 +34,6 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_SERIALIZER(creg_Serialize), // oldInfos
 	CR_MEMBER(flags),
 	CR_MEMBER(dispList),
-	CR_MEMBER(cegID),
 	// NOTE: what about this?
 	// CR_MEMBER(omp),
 	CR_MEMBER(spinVec),
@@ -47,9 +46,8 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_MEMBER(drawTrail),
 	CR_MEMBER(curCallback),
 	CR_MEMBER(age),
-	CR_MEMBER(colorTeam),
 	CR_RESERVED(36)
-	));
+));
 
 void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
 {
@@ -72,7 +70,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 {
 	checkCol = false;
 
-	if (owner) {
+	if (owner != NULL) {
 		if ((flags & PF_NoCEGTrail) == 0) {
 			const std::vector<std::string>& pieceCEGs = owner->unitDef->pieceCEGTags;
 			const std::string& cegTag = !pieceCEGs.empty()? pieceCEGs[gs->randInt() % pieceCEGs.size()]: "";
@@ -84,13 +82,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 			}
 		}
 
-		/* If we're an S3O unit, this is where ProjectileHandler
-		   fetches our texture from. */
 		model = owner->model;
-		/* If we're part of an S3O unit, save this so we can
-		   draw with the right teamcolour. */
-		colorTeam = owner->team;
-		// copy the owner's alphaThreshold value
 		alphaThreshold = owner->alphaThreshold;
 	}
 
@@ -137,7 +129,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 
-	ph->AddProjectile(this);
+	projectileHandler->AddProjectile(this);
 }
 
 void CPieceProjectile::Detach()
@@ -183,7 +175,8 @@ void CPieceProjectile::Collision()
 			1.0f,              // gfxMod
 			false,             // impactOnly
 			false,             // ignoreOwner
-			true               // damageGround
+			true,              // damageGround
+			id
 		};
 
 		helper->Explosion(params);
@@ -239,7 +232,8 @@ void CPieceProjectile::Collision(CUnit* unit)
 			1.0f,              // gfxMod
 			false,             // impactOnly
 			false,             // ignoreOwner
-			true               // damageGround
+			true,              // damageGround
+			id
 		};
 
 		helper->Explosion(params);

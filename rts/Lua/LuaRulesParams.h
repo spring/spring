@@ -26,7 +26,7 @@ namespace LuaRulesParams
 	};
 
 	struct Param {
-		CR_DECLARE(Param);
+		CR_DECLARE_STRUCT(Param);
 
 		Param() : value(0.0f),los(RULESPARAMLOS_PRIVATE) {};
 

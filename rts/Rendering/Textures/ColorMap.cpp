@@ -15,11 +15,17 @@
 std::vector<CColorMap*> CColorMap::colorMaps;
 std::map<std::string, CColorMap*> CColorMap::colorMapsMap;
 
-CR_BIND(CColorMap, );
+CR_BIND(CColorMap,);
+CR_REG_METADATA(CColorMap, (
+	CR_MEMBER_UN(map),
+	CR_MEMBER_UN(xsize),
+	CR_MEMBER_UN(nxsize),
+	CR_MEMBER_UN(ysize),
+	CR_MEMBER_UN(nysize)
+));
 
 CColorMap::CColorMap()
-	: map(NULL)
-	, xsize(0)
+	: xsize(0)
 	, nxsize(0)
 	, ysize(0)
 	, nysize(0)
@@ -27,7 +33,6 @@ CColorMap::CColorMap()
 }
 
 CColorMap::CColorMap(const std::vector<float>& vec)
-	: map(NULL)
 {
 	if (vec.size() < 8) {
 		throw content_error("[ColorMap] too few colors in colormap (need at least two RGBA values)");
@@ -43,11 +48,10 @@ CColorMap::CColorMap(const std::vector<float>& vec)
 		lmap[i] = (int) (vec[i] * 255);
 	}
 	LoadMap(lmap, xsize * 4);
-	delete [] lmap;
+	delete[] lmap;
 }
 
 CColorMap::CColorMap(const std::string& fileName)
-	: map(NULL)
 {
 	CBitmap bitmap;
 
@@ -68,7 +72,6 @@ CColorMap::CColorMap(const std::string& fileName)
 }
 
 CColorMap::CColorMap(const unsigned char* buf, int num)
-	: map(NULL)
 {
 	xsize  = num / 4;
 	ysize  = 1;
@@ -79,7 +82,6 @@ CColorMap::CColorMap(const unsigned char* buf, int num)
 
 CColorMap::~CColorMap()
 {
-	delete[] map;
 }
 
 void CColorMap::DeleteColormaps()
@@ -92,28 +94,22 @@ void CColorMap::DeleteColormaps()
 
 void CColorMap::LoadMap(const unsigned char* buf, int num)
 {
-	delete[] map;
-
-	map = NULL; // to prevent a dead-pointer in case of an out-of-memory exception on the next line
-	map = new unsigned char[num];
-	std::memcpy(map, buf, num);
+	map.resize(num);
+	std::memcpy(&map[0], buf, num);
 }
 
 
 CColorMap* CColorMap::LoadFromBitmapFile(const std::string& fileName)
 {
-	CColorMap* map;
+	const std::string& lowFilename = StringToLower(fileName);
 
-	std::string lowFilename = StringToLower(fileName);
+	CColorMap* map = colorMapsMap.find(lowFilename)->second;
+	if (colorMapsMap.find(lowFilename) != colorMapsMap.end())
+		return map;
 
-	if (colorMapsMap.find(lowFilename) == colorMapsMap.end()) {
-		map = new CColorMap(fileName);
-		colorMapsMap[lowFilename] = map;
-		colorMaps.push_back(map);
-	} else {
-		map = colorMapsMap.find(lowFilename)->second;
-	}
-
+	map = new CColorMap(fileName);
+	colorMapsMap[lowFilename] = map;
+	colorMaps.push_back(map);
 	return map;
 }
 
@@ -167,22 +163,6 @@ CColorMap* CColorMap::LoadFromDefString(const std::string& dString)
 }
 
 
-CColorMap* CColorMap::Load8f(float r1, float g1, float b1, float a1, float r2, float g2, float b2, float a2)
-{
-	std::vector<float> vec;
-
-	vec.push_back(r1);
-	vec.push_back(g1);
-	vec.push_back(b1);
-	vec.push_back(a1);
-	vec.push_back(r2);
-	vec.push_back(g2);
-	vec.push_back(b2);
-	vec.push_back(a2);
-
-	return CColorMap::LoadFromFloatVector(vec);
-}
-
 CColorMap* CColorMap::Load12f(float r1, float g1, float b1, float a1, float r2, float g2, float b2, float a2, float r3, float g3, float b3, float a3)
 {
 	std::vector<float> vec;
@@ -206,7 +186,7 @@ CColorMap* CColorMap::Load12f(float r1, float g1, float b1, float a1, float r2, 
 unsigned char* CColorMap::GetColor(unsigned char* color, float pos)
 {
 	if (pos >= 1.0f) {
-		*((int*)color) = ((int*)map)[nxsize];
+		*((int*)color) = ((int*)&map[0])[nxsize];
 		return color;
 	}
 

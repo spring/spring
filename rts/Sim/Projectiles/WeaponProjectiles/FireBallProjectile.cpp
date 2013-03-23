@@ -18,7 +18,7 @@ CR_REG_METADATA(CFireBallProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(sparks),
 	CR_RESERVED(8)
-	));
+));
 
 CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_MEMBER(pos),
@@ -26,23 +26,30 @@ CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_MEMBER(size),
 	CR_MEMBER(ttl),
 	CR_RESERVED(8)
-	));
+));
 
-CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params)
-	: CWeaponProjectile(params)
+#if defined(USE_GML) && GML_ENABLE_SIM
+	typedef CFireBallProjectile::spark_list_type spark_list_type; // the creg define dislikes "::" in the name
+
+	CR_BIND_TEMPLATE(spark_list_type, );
+	CR_REG_METADATA(spark_list_type, (
+		CR_MEMBER(elements),
+		CR_MEMBER(front),
+		CR_MEMBER(back),
+		CR_MEMBER(csize),
+		CR_MEMBER(msize)
+	));
+#endif
+
+
+CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 {
 	projectileType = WEAPON_FIREBALL_PROJECTILE;
 
-	if (weaponDef) {
+	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
 	}
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
-}
-
-CFireBallProjectile::~CFireBallProjectile()
-{
 }
 
 void CFireBallProjectile::Draw()

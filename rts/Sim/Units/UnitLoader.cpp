@@ -71,7 +71,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 		if (ud == NULL)
 			return unit;
 		// need to check this BEFORE creating the instance
-		if (!uh->CanAddUnit(cparams.unitID))
+		if (!unitHandler->CanAddUnit(cparams.unitID))
 			return unit;
 
 		if (params.teamID < 0) {
@@ -246,7 +246,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		if (receivingTeam->AtUnitLimit()) {
 			LOG_L(L_WARNING,
 				"[%s] unable to give more units to team %d (current: %u, team limit: %u, global limit: %u)",
-				__FUNCTION__, team, currentNumUnits, receivingTeam->GetMaxUnits(), uh->MaxUnits()
+				__FUNCTION__, team, currentNumUnits, receivingTeam->GetMaxUnits(), unitHandler->MaxUnits()
 			);
 			return;
 		}
@@ -373,7 +373,7 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 	// if we are float-capable, only flatten
 	// if the terrain here is above sea level
 	BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
-	bi.pos = helper->Pos2BuildPos(bi, true);
+	bi.pos = CGameHelper::Pos2BuildPos(bi, true);
 
 	const float hss = 0.5f * SQUARE_SIZE;
 	const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
@@ -401,7 +401,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 	if (unitDef->floatOnWater && groundheight <= 0.0f) return;
 
 	BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
-	bi.pos = helper->Pos2BuildPos(bi, true);
+	bi.pos = CGameHelper::Pos2BuildPos(bi, true);
 	const float hss = 0.5f * SQUARE_SIZE;
 	const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
 	const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetZSize() * hss)) / SQUARE_SIZE);
@@ -429,7 +429,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 		}
 	}
 	// but without affecting the build height
-	heightdiff = bi.pos.y - helper->Pos2BuildPos(bi, true).y;
+	heightdiff = bi.pos.y - CGameHelper::Pos2BuildPos(bi, true).y;
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
 			int index = z * gs->mapxp1 + x;

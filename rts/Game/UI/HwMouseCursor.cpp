@@ -300,7 +300,7 @@ void CHwWinCursor::buildIco(unsigned char* dst, ImageData &image)
 
 void CHwWinCursor::Finish()
 {
-	if (frames.size()<1)
+	if (frames.empty())
 		return;
 
 	hotx = (hotSpot==CMouseCursor::TopLeft) ? 0 : (short)xmaxsize/2;
@@ -498,7 +498,7 @@ void CHwX11Cursor::PushFrame(int index, float delay)
 
 void CHwX11Cursor::Finish()
 {
-	if (cimages.size()<1)
+	if (cimages.empty())
 		return;
 
 	int squaresize = next_power_of_2( std::max(xmaxsize,ymaxsize) );

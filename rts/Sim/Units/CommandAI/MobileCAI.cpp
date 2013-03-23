@@ -448,7 +448,7 @@ void CMobileCAI::ExecuteMove(Command &c)
 }
 
 void CMobileCAI::ExecuteLoadUnits(Command &c) {
-	CUnit* unit = uh->GetUnit(c.params[0]);
+	CUnit* unit = unitHandler->GetUnit(c.params[0]);
 	CTransportUnit* tran = dynamic_cast<CTransportUnit*>(unit);
 
 	if (!tran) {
@@ -516,7 +516,7 @@ void CMobileCAI::ExecuteFight(Command& c)
 		CWeapon* w = owner->weapons.front();
 
 		if ((orderTarget != NULL) && !w->AttackUnit(orderTarget, false)) {
-			CUnit* newTarget = helper->GetClosestValidTarget(owner->pos, owner->maxRange, owner->allyteam, this);
+			CUnit* newTarget = CGameHelper::GetClosestValidTarget(owner->pos, owner->maxRange, owner->allyteam, this);
 
 			if ((newTarget != NULL) && w->AttackUnit(newTarget, false)) {
 				c.params[0] = newTarget->id;
@@ -574,7 +574,7 @@ void CMobileCAI::ExecuteFight(Command& c)
 	if (owner->unitDef->canAttack && owner->fireState >= FIRESTATE_FIREATWILL && !owner->weapons.empty()) {
 		const float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 		const float searchRadius = owner->maxRange + 100 * owner->moveState * owner->moveState;
-		CUnit* enemy = helper->GetClosestValidTarget(curPosOnLine, searchRadius, owner->allyteam, this);
+		CUnit* enemy = CGameHelper::GetClosestValidTarget(curPosOnLine, searchRadius, owner->allyteam, this);
 
 		if (enemy != NULL) {
 			PushOrUpdateReturnFight();
@@ -641,7 +641,7 @@ void CMobileCAI::ExecuteGuard(Command &c)
 	assert(owner->unitDef->canGuard);
 	assert(!c.params.empty());
 
-	const CUnit* guardee = uh->GetUnit(c.params[0]);
+	const CUnit* guardee = unitHandler->GetUnit(c.params[0]);
 
 	if (guardee == NULL) { FinishCommand(); return; }
 	if (UpdateTargetLostTimer(guardee->id) == 0) { FinishCommand(); return; }
@@ -711,7 +711,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 	// check if we are in direct command of attacker
 	if (!inCommand) {
 		if (c.params.size() == 1) {
-			CUnit* targetUnit = uh->GetUnit(c.params[0]);
+			CUnit* targetUnit = unitHandler->GetUnit(c.params[0]);
 
 			// check if we have valid target parameter and that we aren't attacking ourselves
 			if (targetUnit == NULL) { StopMove(); FinishCommand(); return; }
@@ -1106,7 +1106,7 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 
 			if (owner->fireState >= FIRESTATE_FIREATWILL && (gs->frameNum >= lastIdleCheck + 10)) {
 				const float searchRadius = owner->maxRange + 150 * owner->moveState * owner->moveState;
-				const CUnit* enemy = helper->GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
+				const CUnit* enemy = CGameHelper::GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
 
 				if (enemy != NULL) {
 					Command c(CMD_ATTACK, INTERNAL_ORDER, enemy->id);

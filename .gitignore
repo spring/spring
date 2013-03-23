@@ -55,6 +55,13 @@ progress.make
 /rts/build/vstudio8/Release+MT with error catching
 /rts/build/vstudio8/Syncdebug
 
+/rts/build/vstudio10/Release
+/rts/build/vstudio10/Debug
+/rts/build/vstudio10/Debug+MT
+/rts/build/vstudio10/Release with error catching
+/rts/build/vstudio10/Release+MT with error catching
+/rts/build/vstudio10/Syncdebug
+
 # Windows libraries used by spring when compiling with MinGW
 # recommended: place the dir somewhere else, and specify with
 # MINGWLIBS=<your-path-here>/mingwlibs

@@ -5,23 +5,19 @@
 
 #include "WeaponProjectile.h"
 #include <vector>
-#include "lib/gml/gmlcnf.h"
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-#define AGEMOD_VECTOR gmlCircularQueue<float, 64>
-#else
-#define AGEMOD_VECTOR std::vector<float>
-#endif
 
 class CSmokeTrailProjectile;
 
 class CStarburstProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CStarburstProjectile);
-	void creg_Serialize(creg::ISerializer& s);
+	CR_DECLARE_SUB(TracerPart);
+
 public:
-	CStarburstProjectile(const ProjectileParams& params, float areaOfEffect, float maxSpeed, float tracking, int uptime, float maxRange, float3 aimError);
+	CStarburstProjectile(const ProjectileParams& params);
 	~CStarburstProjectile();
+
 	virtual void Detach();
 	void Collision(CUnit* unit);
 	void Collision(CFeature* feature);
@@ -40,28 +36,37 @@ private:
 	float maxSpeed;
 	float curSpeed;
 	float acceleration;
-	int uptime;
 	float areaOfEffect;
+	float distanceToTravel;
+
+	int uptime;
 	int age;
+
 	float3 oldSmoke;
 	float3 oldSmokeDir;
 	float3 aimError;
+
 	bool drawTrail;
-	int numParts;
 	bool doturn;
+
 	CSmokeTrailProjectile* curCallback;
+
+	int numParts;
 	int missileAge;
-	float distanceToTravel;
+	size_t curTracerPart;
 
 	static const int NUM_TRACER_PARTS = 5;
 
 	struct TracerPart {
+		CR_DECLARE_STRUCT(TracerPart);
+
 		float3 pos;
 		float3 dir;
 		float speedf;
-		AGEMOD_VECTOR ageMods;
+		std::vector<float> ageMods;
+		size_t numAgeMods;
 	};
-	size_t curTracerPart;
+
 	TracerPart tracerParts[NUM_TRACER_PARTS];
 };
 

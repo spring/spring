@@ -24,11 +24,20 @@ CR_BIND_DERIVED(CStandardGroundFlash, CGroundFlash, );
 CR_REG_METADATA(CStandardGroundFlash, (
  	CR_MEMBER_BEGINFLAG(CM_Config),
  		CR_MEMBER(flashSize),
-		CR_MEMBER(circleAlpha),
 		CR_MEMBER(flashAlpha),
 		CR_MEMBER(circleGrowth),
+		CR_MEMBER(circleAlpha),
 		CR_MEMBER(color),
-	CR_MEMBER_ENDFLAG(CM_Config)
+	CR_MEMBER_ENDFLAG(CM_Config),
+
+	CR_MEMBER(side1),
+	CR_MEMBER(side2),
+	CR_MEMBER(circleSize),
+	CR_MEMBER(flashAge),
+	CR_MEMBER(flashAgeSpeed),
+	CR_MEMBER(circleAlphaDec),
+	CR_MEMBER(color),
+	CR_MEMBER(ttl)
 ));
 
 CR_BIND_DERIVED(CSeismicGroundFlash, CGroundFlash, (ZeroVector, 1, 0, 1, 1, 1, ZeroVector));
@@ -45,6 +54,10 @@ CR_REG_METADATA(CSeismicGroundFlash, (
 
 CR_BIND_DERIVED(CSimpleGroundFlash, CGroundFlash, );
 CR_REG_METADATA(CSimpleGroundFlash, (
+	CR_MEMBER(side1),
+	CR_MEMBER(side2),
+	CR_MEMBER(age),
+	CR_MEMBER(agerate),
  	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(ttl),
@@ -83,7 +96,7 @@ CStandardGroundFlash::CStandardGroundFlash()
 	color[0] = 0;
 	color[1] = 0;
 	color[2] = 0;
-	
+
 	circleAlphaDec = 0.0f;
 	flashAgeSpeed = 0.0f;
 	flashAge = 0.0f;
@@ -139,7 +152,7 @@ CStandardGroundFlash::CStandardGroundFlash(const float3& p, float circleAlpha, f
 	side1.ANormalize();
 	side2 = side1.cross(normal);
 
-	ph->AddGroundFlash(this);
+	projectileHandler->AddGroundFlash(this);
 }
 
 bool CStandardGroundFlash::Update()
@@ -246,7 +259,7 @@ void CSimpleGroundFlash::Init(const float3& explosionPos, CUnit* owner)
 	side1.ANormalize();
 	side2 = side1.cross(normal);
 
-	ph->AddGroundFlash(this);
+	projectileHandler->AddGroundFlash(this);
 }
 
 void CSimpleGroundFlash::Draw()
@@ -316,7 +329,7 @@ CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, int ttl, int fade, flo
 	side1.SafeANormalize();
 	side2 = side1.cross(normal);
 
-	ph->AddGroundFlash(this);
+	projectileHandler->AddGroundFlash(this);
 }
 
 void CSeismicGroundFlash::Draw()

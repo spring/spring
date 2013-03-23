@@ -34,7 +34,7 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 		)
 	# This also works for custom targets
 	add_dependencies(${myBuildTarget} ${${targetName}-Deps})
-	Add_Dependencies(engine-${targetName} generateVersionFiles)
+	Add_Dependencies(engine-${targetName} generateVersionFiles basecontent)
 
 	# Only install spring-<targetName> executable & dependencies
 	set(${targetName}-InstallDirs
@@ -60,8 +60,8 @@ Macro    (AddEngineBuild build)
 EndMacro (AddEngineBuild)
 
 if    (NOT HEADLESS_SYSTEM)
-	AddEngineBuild(default)
-	AddEngineBuild(multithreaded)
+	AddEngineBuild(default)       ## ST, no GML
+	AddEngineBuild(multithreaded) ## MT-GML
 endif (NOT HEADLESS_SYSTEM)
 
 AddEngineBuild(dedicated)

@@ -83,7 +83,7 @@ bool CSelectedUnits::IsUnitSelected(const CUnit* unit) const
 
 bool CSelectedUnits::IsUnitSelected(const int unitID) const
 {
-	const CUnit* u = uh->GetUnit(unitID);
+	const CUnit* u = unitHandler->GetUnit(unitID);
 	return (u != NULL && IsUnitSelected(u));
 }
 
@@ -544,22 +544,27 @@ void CSelectedUnits::Draw()
 
 			bool myColor = true;
 			glColor4fv(cmdColors.buildBox);
-			std::list<CBuilderCAI*>::const_iterator bi;
-			for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {
-				CBuilderCAI* builder = *bi;
-				if (builder->owner->team == gu->myTeam) {
+
+			const std::map<unsigned int, CBuilderCAI*>& builderCAIs = unitHandler->builderCAIs;
+			      std::map<unsigned int, CBuilderCAI*>::const_iterator bi;
+
+			for (bi = builderCAIs.begin(); bi != builderCAIs.end(); ++bi) {
+				const CBuilderCAI* builderCAI = bi->second;
+				const CUnit* builder = builderCAI->owner;
+
+				if (builder->team == gu->myTeam) {
 					if (!myColor) {
 						glColor4fv(cmdColors.buildBox);
 						myColor = true;
 					}
-					commandDrawer->DrawQuedBuildingSquares(builder);
+					commandDrawer->DrawQuedBuildingSquares(builderCAI);
 				}
-				else if (teamHandler->AlliedTeams(builder->owner->team, gu->myTeam)) {
+				else if (teamHandler->AlliedTeams(builder->team, gu->myTeam)) {
 					if (myColor) {
 						glColor4fv(cmdColors.allyBuildBox);
 						myColor = false;
 					}
-					commandDrawer->DrawQuedBuildingSquares(builder);
+					commandDrawer->DrawQuedBuildingSquares(builderCAI);
 				}
 			}
 		}
@@ -608,7 +613,7 @@ void CSelectedUnits::ClearNetSelect(int playerId)
 
 void CSelectedUnits::AiOrder(int unitid, const Command &c, int playerId)
 {
-	CUnit* unit = uh->units[unitid];
+	CUnit* unit = unitHandler->units[unitid];
 	if (unit == NULL) {
 		return;
 	}

@@ -518,6 +518,67 @@ void LuaUtils::PrintStack(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+// from LuaShaders.cpp
+int LuaUtils::ParseIntArray(lua_State* L, int index, int* array, int size)
+{
+	if (!lua_istable(L, -1)) {
+		return -1;
+	}
+	const int table = lua_gettop(L);
+	for (int i = 0; i < size; i++) {
+		lua_rawgeti(L, table, (i + 1));
+		if (lua_isnumber(L, -1)) {
+			array[i] = lua_toint(L, -1);
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+	return size;
+}
+
+/*
+// from LuaShaders.cpp (index unused)
+int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
+{
+	if (!lua_istable(L, -1)) {
+		return -1;
+	}
+	const int table = lua_gettop(L);
+	for (int i = 0; i < size; i++) {
+		lua_rawgeti(L, table, (i + 1));
+		if (lua_isnumber(L, -1)) {
+			array[i] = lua_tofloat(L, -1);
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+	return size;
+}
+*/
+
+// from LuaUnsyncedCtrl.cpp
+int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
+{
+	if (!lua_istable(L, index)) {
+		return -1;
+	}
+	const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
+	for (int i = 0; i < size; i++) {
+		lua_rawgeti(L, table, (i + 1));
+		if (lua_isnumber(L, -1)) {
+			array[i] = lua_tofloat(L, -1);
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+	return size;
+}
 
 void LuaUtils::ParseCommandOptions(lua_State* L, const char* caller,
                                    int index, Command& cmd)
@@ -965,14 +1026,19 @@ int LuaUtils::isuserdata(lua_State* L)
 int LuaUtils::PushDebugTraceback(lua_State *L)
 {
 	lua_getglobal(L, DEBUG_TABLE);
-	if (!lua_istable(L, -1)) {
-		return 0;
+	if (lua_istable(L, -1)) {
+		lua_getfield(L, -1, DEBUG_FUNC);
+		if (!lua_isfunction(L, -1)) {
+			return 0;
+		}
+		lua_remove(L, -2);
+	} else {
+		lua_pop(L, 1);
+		static const LuaHashString traceback("traceback");
+		if (!traceback.GetRegistryFunc(L)) {
+			return 0;
+		}
 	}
-	lua_getfield(L, -1, DEBUG_FUNC);
-	if (!lua_isfunction(L, -1)) {
-		return 0;
-	}
-	lua_remove(L, -2);
 
 	return lua_gettop(L);
 }

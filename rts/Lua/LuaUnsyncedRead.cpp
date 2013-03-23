@@ -227,10 +227,10 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 		return NULL;
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
-	CUnit* unit = uh->units[unitID];
+	CUnit* unit = unitHandler->units[unitID];
 	if (unit == NULL) {
 		return NULL;
 	}
@@ -672,7 +672,7 @@ public:
 
 	void DrawQuad(int x, int y)
 	{
-		const CQuadField::Quad& q = qf->GetQuadAt(x,y);
+		const CQuadField::Quad& q = quadField->GetQuadAt(x,y);
 		if (!q.units.empty())
 			visunits.push_back(&q.units);
 		count += q.units.size();
@@ -690,7 +690,7 @@ public:
 
 	void DrawQuad(int x, int y)
 	{
-		const CQuadField::Quad& q = qf->GetQuadAt(x,y);
+		const CQuadField::Quad& q = quadField->GetQuadAt(x,y);
 		if (!q.features.empty())
 			visfeatures.push_back(&q.features);
 		count += q.features.size();
@@ -748,7 +748,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 		lua_createtable(L, quadIter.count, 0);
 
 		// setup the list of unit sets
-		if (quadIter.count > uh->activeUnits.size()/3) {
+		if (quadIter.count > unitHandler->activeUnits.size()/3) {
 			// if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
 			if (teamID >= 0) {
 				unitSets.push_back(&teamHandler->Team(teamID)->units);
@@ -1355,7 +1355,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 				lua_pushnumber(L, unit->id);
 				return 2;
 			}
-	
+
 			if (feature != NULL) {
 				lua_pushliteral(L, "feature");
 				lua_pushnumber(L, feature->id);
@@ -1378,7 +1378,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 
 /******************************************************************************/
 
-static void AddPlayerToRoster(lua_State* L, int playerID)
+static void AddPlayerToRoster(lua_State* L, int playerID, bool includePathingFlag)
 {
 #define PUSH_ROSTER_ENTRY(type, val) \
 	lua_pushnumber(L, index); index++; \
@@ -1394,8 +1394,14 @@ static void AddPlayerToRoster(lua_State* L, int playerID)
 	PUSH_ROSTER_ENTRY(boolean, p->spectator);
 	PUSH_ROSTER_ENTRY(number, p->cpuUsage);
 	const float pingScale = (GAME_SPEED * gs->speedFactor);
-	const float pingSecs = float(p->ping - 1) / pingScale;
-	PUSH_ROSTER_ENTRY(number, pingSecs);
+
+	if (!includePathingFlag || p->ping != PATHING_FLAG) {
+		const float pingSecs = float(p->ping - 1) / pingScale;
+		PUSH_ROSTER_ENTRY(number, pingSecs);
+	} else {
+		const float pingSecs = float(p->ping);
+		PUSH_ROSTER_ENTRY(number, pingSecs);
+	}
 }
 
 
@@ -2203,25 +2209,26 @@ int LuaUnsyncedRead::GetMyAllyTeamID(lua_State* L)
 int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
-		luaL_error(L, "Incorrect arguments to GetPlayerRoster([type])");
+	if ((args > 2) || ((args == 1 && !lua_isnumber(L, 1))) || (args == 2 && !lua_isboolean(L, 2))) {
+		luaL_error(L, "Incorrect arguments to %s([ rosterSortType [, includePathingFlag] ])", __FUNCTION__);
 	}
 
-	const PlayerRoster::SortType oldSort = playerRoster.GetSortType();
+	const PlayerRoster::SortType oldSortType = playerRoster.GetSortType();
 
-	if (args == 1) {
-		const int type = lua_toint(L, 1);
-		playerRoster.SetSortTypeByCode((PlayerRoster::SortType)type);
+	if (args >= 1) {
+		playerRoster.SetSortTypeByCode((PlayerRoster::SortType) lua_toint(L, 1));
 	}
+
+	const bool includePathingFlag = (args == 2 && lua_toboolean(L, 2));
 
 	int count;
-	const std::vector<int>& players = playerRoster.GetIndices(&count);
+	const std::vector<int>& players = playerRoster.GetIndices(&count, includePathingFlag);
 
-	playerRoster.SetSortTypeByCode(oldSort); // revert
+	playerRoster.SetSortTypeByCode(oldSortType); // revert
 
 	lua_createtable(L, count, 0);
 	for (int i = 0; i < count; i++) {
-		AddPlayerToRoster(L, players[i]);
+		AddPlayerToRoster(L, players[i], includePathingFlag);
 		lua_rawseti(L, -2, i + 1);
 	}
 

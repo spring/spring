@@ -11,5 +11,10 @@ ADD_SUBDIRECTORY(assimp)
 
 if    (NOT HEADLESS_SYSTEM)
 	Add_Subdirectory(gml)
+
+	if    (USE_LIBSQUISH)
+		ADD_SUBDIRECTORY(rg-etc1)
+		ADD_SUBDIRECTORY(squish)
+	endif (USE_LIBSQUISH)
 endif (NOT HEADLESS_SYSTEM)
 

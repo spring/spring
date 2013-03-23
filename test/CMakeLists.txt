@@ -34,7 +34,8 @@ Else  (NOT Boost_FOUND)
 
 	Add_Custom_Target(tests)
 	#FIXME: hardcoded path (is used in buildbot/slave/make_installer.sh, too)
-	add_custom_target(check WINEPATH=/tmp/spring/inst/${CMAKE_INSTALL_PREFIX} ${CMAKE_CTEST_COMMAND} --output-on-failure)
+	add_custom_target(check WINEPATH=/tmp/spring/inst/${CMAKE_INSTALL_PREFIX} ${CMAKE_CTEST_COMMAND} --output-on-failure
+			DEPENDS engine-multithreaded)
 
 
 
@@ -43,6 +44,7 @@ Else  (NOT Boost_FOUND)
 
 	Set(test_UDPListener_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Net/TestUDPListener.cpp"
+			"${ENGINE_SOURCE_DIR}/Game/GameVersion.cpp"
 			"${ENGINE_SOURCE_DIR}/System/BaseNetProtocol.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Net/UDPListener.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Net/RawPacket.cpp"
@@ -124,7 +126,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
 		)
-
+	set_target_properties(test_RectangleOptimizer PROPERTIES COMPILE_FLAGS "-DNOT_USING_CREG")
 	ADD_TEST(NAME testRectangleOptimizer COMMAND test_RectangleOptimizer)
 	Add_Dependencies(tests test_RectangleOptimizer)
 
@@ -206,11 +208,32 @@ Else  (NOT Boost_FOUND)
 
 	ADD_TEST(NAME LuaSocketRestrictions COMMAND test_LuaSocketRestrictions)
 	Add_Dependencies(tests test_LuaSocketRestrictions)
-
+################################################################################
+### CREG
+	add_test(NAME testCreg COMMAND ${CMAKE_BINARY_DIR}/spring${CMAKE_EXECUTABLE_SUFFIX} --test-creg)
+	add_dependencies(tests testCreg)
 
 ################################################################################
+### CREG LoadSave
+	add_definitions("-DTEST")
+	Set(test_CregLoadSave_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/LoadSave/testCregLoadSave.cpp"
+			"${ENGINE_SOURCE_DIR}/System/creg/Serializer.cpp"
+			"${ENGINE_SOURCE_DIR}/System/creg/VarTypes.cpp"
+			"${ENGINE_SOURCE_DIR}/System/creg/creg.cpp"
+			${test_Log_sources}
+		)
 
+	ADD_EXECUTABLE(test_CregLoadSave ${test_CregLoadSave_src})
+	TARGET_LINK_LIBRARIES(test_CregLoadSave
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_REGEX_LIBRARY}
+		)
 
+	ADD_TEST(NAME CregLoadSave COMMAND test_CregLoadSave)
+	Add_Dependencies(tests test_CregLoadSave)
+
+################################################################################
 EndIf (NOT Boost_FOUND)
 
 add_subdirectory(headercheck)

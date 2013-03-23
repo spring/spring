@@ -41,6 +41,18 @@ static const TdfParser& GetMapDefParser()
 
 
 CR_BIND_DERIVED(CSM3ReadMap, CReadMap, (""))
+CR_REG_METADATA(CSM3ReadMap, (
+	//FIXME save unsynced heightmap?
+	CR_IGNORED(groundDrawer),
+	CR_IGNORED(renderer),
+	CR_IGNORED(minimapTexture),
+	CR_IGNORED(infoMaps),
+	CR_IGNORED(featureTypes),
+	CR_IGNORED(featureInfo),
+	CR_IGNORED(numFeatures),
+	CR_IGNORED(tmpFrustum)
+));
+
 
 CSM3ReadMap::CSM3ReadMap(const std::string& mapName)
 	: groundDrawer(NULL)

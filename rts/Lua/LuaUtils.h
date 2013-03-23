@@ -93,7 +93,7 @@ class LuaUtils {
 		static int isfunction(lua_State* L);
 		static int isuserdata(lua_State* L);
 
-		// not implemented...
+		// not implemented (except for the first two)...
 		static int ParseIntArray(lua_State* L, int tableIndex,
 		                         int* array, int arraySize);
 		static int ParseFloatArray(lua_State* L, int tableIndex,

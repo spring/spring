@@ -95,12 +95,6 @@ ${!echonow} "Base dir:   <engine-source-root>/installer/"
 	${!echonow} "Using MIN_PORTABLE_ARCHIVE: ${MIN_PORTABLE_ARCHIVE}"
 !endif
 
-!ifndef RAPID_ARCHIVE
-	!warning "RAPID_ARCHIVE not defined"
-!else
-	${!echonow} "Using RAPID_ARCHIVE:        ${RAPID_ARCHIVE}"
-!endif
-
 !ifndef NSI_UNINSTALL_FILES
 	!warning "NSI_UNINSTALL_FILES not defined"
 !else
@@ -150,20 +144,6 @@ Section "Desktop shortcuts" SEC_DESKTOP
 		!undef INSTALL
 	${EndIf}
 SectionEnd
-
-SectionGroup "Tools"
-!ifdef RAPID_ARCHIVE
-	Section "Simple spring-rapid downloader" SEC_RAPID
-		!define INSTALL
-			${!echonow} "Processing: rapid"
-			!insertmacro extractFile "${RAPID_ARCHIVE}" "rapid-spring-latest-win32.7z" rapid
-			#FIXME workaround for #3369
-			CopyFiles "$INSTDIR\pthreadGC2.dll" "$INSTDIR\rapid"
-		!undef INSTALL
-	SectionEnd
-!endif
-SectionGroupEnd
-
 
 Section "Start menu shortcuts" SEC_START
 	!define INSTALL

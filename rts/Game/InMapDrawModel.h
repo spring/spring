@@ -8,7 +8,7 @@
 #include <list>
 
 #include "System/float3.h"
-#include "System/creg/creg.h"
+#include "System/creg/creg_cond.h"
 
 class CPlayer;
 class TeamController;
@@ -48,7 +48,7 @@ public:
 
 
 	struct MapDrawPrimitive {
-		CR_DECLARE_STRUCT(MapDrawPrimitive);
+		CR_DECLARE(MapDrawPrimitive);
 
 	public:
 		MapDrawPrimitive(bool spectator, int teamID, const TeamController* teamController)
@@ -83,7 +83,7 @@ public:
 	};
 
 	struct MapPoint : public MapDrawPrimitive {
-		CR_DECLARE_STRUCT(MapPoint);
+		CR_DECLARE(MapPoint);
 
 	public:
 		MapPoint(bool spectator, int teamID, const TeamController* teamController, const float3& pos, const std::string& label)
@@ -101,7 +101,7 @@ public:
 	};
 
 	struct MapLine : public MapDrawPrimitive {
-		CR_DECLARE_STRUCT(MapLine);
+		CR_DECLARE(MapLine);
 
 	public:
 		MapLine(bool spectator, int teamID, const TeamController* teamController, const float3& pos1, const float3& pos2)

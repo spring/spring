@@ -1379,15 +1379,17 @@ function gadgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag)
 end
 
 
-function gadgetHandler:UnitPreDamaged(unitID, unitDefID, unitTeam,
-                                   damage, paralyzer, weaponID,
-                                   attackerID, attackerDefID, attackerTeam)
+function gadgetHandler:UnitPreDamaged(
+	unitID, unitDefID, unitTeam,
+	damage, paralyzer,
+	weaponDefID, projectileID,
+	attackerID, attackerDefID, attackerTeam)
   local rDam = damage
   local rImp = 1.0
 
   for _,g in ipairs(self.UnitPreDamagedList) do
     dam, imp = g:UnitPreDamaged(unitID, unitDefID, unitTeam,
-                  rDam, paralyzer, weaponID,
+                  rDam, paralyzer, weaponDefID, projectileID,
                   attackerID, attackerDefID, attackerTeam)
     if (dam ~= nil) then
       rDam = dam
@@ -1402,11 +1404,11 @@ end
 
 
 function gadgetHandler:UnitDamaged(unitID, unitDefID, unitTeam,
-                                   damage, paralyzer, weaponID,
+                                   damage, paralyzer, weaponDefID,
                                    attackerID, attackerDefID, attackerTeam)
   for _,g in ipairs(self.UnitDamagedList) do
     g:UnitDamaged(unitID, unitDefID, unitTeam,
-                  damage, paralyzer, weaponID,
+                  damage, paralyzer, weaponDefID,
                   attackerID, attackerDefID, attackerTeam)
   end
   return

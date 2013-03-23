@@ -541,9 +541,9 @@ void CMiniMap::SelectUnits(int x, int y) const
 
 		CUnit* unit;
 		if (gu->spectatingFullSelect) {
-			unit = helper->GetClosestUnit(pos, size);
+			unit = CGameHelper::GetClosestUnit(pos, size);
 		} else {
-			unit = helper->GetClosestFriendlyUnit(NULL, pos, size, gu->myAllyTeam);
+			unit = CGameHelper::GetClosestFriendlyUnit(NULL, pos, size, gu->myAllyTeam);
 		}
 
 		selectedUnits.HandleSingleUnitClickSelection(unit, false);
@@ -699,7 +699,7 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 
 CUnit* CMiniMap::GetSelectUnit(const float3& pos) const
 {
-	CUnit* unit = helper->GetClosestUnit(pos, unitSelectRadius);
+	CUnit* unit = CGameHelper::GetClosestUnit(pos, unitSelectRadius);
 	if (unit != NULL) {
 		const int losMask = (LOS_INLOS | LOS_INRADAR);
 		if ((unit->losStatus[gu->myAllyTeam] & losMask) || gu->spectatingFullView) {
@@ -731,7 +731,7 @@ void CMiniMap::ProxyMousePress(int x, int y, int button)
 		if (gu->spectatingFullView) {
 			mapPos = unit->midPos;
 		} else {
-			mapPos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
+			mapPos = CGameHelper::GetUnitErrorPos(unit, gu->myAllyTeam);
 			mapPos.y = readmap->initMaxHeight + 1000.0f;
 		}
 	}
@@ -752,7 +752,7 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 		if (gu->spectatingFullView) {
 			mapPos = unit->midPos;
 		} else {
-			mapPos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
+			mapPos = CGameHelper::GetUnitErrorPos(unit, gu->myAllyTeam);
 			mapPos.y = readmap->initMaxHeight + 1000.0f;
 		}
 	}
@@ -1427,7 +1427,7 @@ void CMiniMap::DrawUnit(const CUnit* unit)
 	if (gu->spectatingFullView) {
 		pos = unit->midPos;
 	} else {
-		pos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
+		pos = CGameHelper::GetUnitErrorPos(unit, gu->myAllyTeam);
 	}
 
 	// set the color

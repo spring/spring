@@ -1,15 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "MeleeWeapon.h"
+#include "WeaponDef.h"
 #include "Sim/Units/Unit.h"
-#include "WeaponDefHandler.h"
 
 CR_BIND_DERIVED(CMeleeWeapon, CWeapon, (NULL));
 
 CR_REG_METADATA(CMeleeWeapon,(
 	CR_RESERVED(8)
-	));
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -20,10 +19,6 @@ CMeleeWeapon::CMeleeWeapon(CUnit* owner)
 {
 }
 
-CMeleeWeapon::~CMeleeWeapon()
-{
-
-}
 
 void CMeleeWeapon::Update()
 {
@@ -58,6 +53,6 @@ void CMeleeWeapon::FireImpl()
 		const float3 impulseVec = impulseDir * owner->mass * weaponDef->damages.impulseFactor;
 
 		// the heavier the unit, the more impulse it does
-		targetUnit->DoDamage(weaponDef->damages, impulseVec, owner, weaponDef->id);
+		targetUnit->DoDamage(weaponDef->damages, impulseVec, owner, weaponDef->id, -1);
 	}
 }

@@ -9,7 +9,8 @@
 #define _TYPE_DEDUCTION_H
 
 #include <boost/shared_ptr.hpp>
-#include "creg.h"
+#include "creg_cond.h"
+#include <boost/cstdint.hpp>
 
 namespace creg {
 
@@ -33,13 +34,13 @@ struct IsBasicType {
 		enum {Yes=1, No=0 };										\
 	};
 
+CREG_SUPPORT_BASIC_TYPE(boost::int64_t, crInt64)
 CREG_SUPPORT_BASIC_TYPE(int, crInt)
 CREG_SUPPORT_BASIC_TYPE(unsigned int, crUInt)
 CREG_SUPPORT_BASIC_TYPE(short, crShort)
 CREG_SUPPORT_BASIC_TYPE(unsigned short, crUShort)
 CREG_SUPPORT_BASIC_TYPE(char, crChar)
 CREG_SUPPORT_BASIC_TYPE(unsigned char, crUChar)
-CREG_SUPPORT_BASIC_TYPE(long, crInt) // Long is assumed to be an int (4 bytes)
 CREG_SUPPORT_BASIC_TYPE(unsigned long, crUInt)
 CREG_SUPPORT_BASIC_TYPE(float, crFloat)
 CREG_SUPPORT_BASIC_TYPE(double, crDouble)
@@ -52,8 +53,6 @@ CREG_SUPPORT_BASIC_TYPE(SyncedSshort, crSyncedSshort)
 CREG_SUPPORT_BASIC_TYPE(SyncedUshort, crSyncedUshort)
 CREG_SUPPORT_BASIC_TYPE(SyncedSchar,  crSyncedSchar)
 CREG_SUPPORT_BASIC_TYPE(SyncedUchar,  crSyncedUchar)
-CREG_SUPPORT_BASIC_TYPE(SyncedSlong,  crSyncedSint) // Long is assumed to be an int (4 bytes)
-CREG_SUPPORT_BASIC_TYPE(SyncedUlong,  crSyncedUint)
 CREG_SUPPORT_BASIC_TYPE(SyncedFloat,  crSyncedFloat)
 CREG_SUPPORT_BASIC_TYPE(SyncedDouble, crSyncedDouble)
 CREG_SUPPORT_BASIC_TYPE(SyncedBool,   crSyncedBool)
@@ -72,6 +71,7 @@ public:
 		else s->SerializeObjectPtr(ptr, objectClass);
 	}
 	std::string GetName() { return objectClass->name + "*"; }
+	size_t GetSize() { return sizeof(T*); }
 	Class* objectClass;
 };
 
@@ -102,6 +102,15 @@ struct DeduceType<std::vector<T> > {
 	boost::shared_ptr<IType> Get() {
 		DeduceType<T> elemtype;
 		return boost::shared_ptr<IType>(new DynamicArrayType<std::vector<T> >(elemtype.Get()));
+	}
+};
+
+// std::vector<bool> is not a std::vector but a BitArray instead!
+template<>
+struct DeduceType<std::vector<bool> > {
+	boost::shared_ptr<IType> Get() {
+		DeduceType<bool> elemtype;
+		return boost::shared_ptr<IType>(new BitArrayType<std::vector<bool> >(elemtype.Get()));
 	}
 };
 

@@ -19,6 +19,7 @@
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/CategoryHandler.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -31,6 +32,7 @@
 #include "System/creg/Serializer.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
+
 
 CCregLoadSaveHandler::CCregLoadSaveHandler()
 	: ifs(NULL)
@@ -47,63 +49,51 @@ public:
 	CGameStateCollector() {}
 
 	void Serialize(creg::ISerializer& s);
-
-	std::string mapName;
-	std::string modName;
 };
 
 CR_BIND(CGameStateCollector, );
-CR_REG_METADATA(CGameStateCollector, CR_SERIALIZER(Serialize));
+CR_REG_METADATA(CGameStateCollector, (
+	CR_SERIALIZER(Serialize)
+));
 
-static void WriteString(std::ostream& s, std::string& str)
+static void WriteString(std::ostream& s, const std::string& str)
 {
-	char c;
-	// write the string char by char
-	for (unsigned int a=0; a < str.length(); a++) {
-		c = str[a];
-		s.write(&c, sizeof(char));
-	}
-	// write the string-termination NULL char
-	c = '\0';
-	s.write(&c, sizeof(char));
+	assert(str.length() < (1 << 16));
+	s.write(str.c_str(), str.length() + 1);
 }
 
 static void ReadString(std::istream& s, std::string& str)
 {
-	char c;
-	// read until string-termination NULL char is encountered
-	s.read(&c, sizeof(char));
-	while (c != '\0') {
-		str += c;
-		s.read(&c, sizeof(char));
-	}
+	char cstr[1 << 16]; // 64kB
+	s.getline(cstr, sizeof(cstr), 0);
+	str += cstr;
 }
 
 void CGameStateCollector::Serialize(creg::ISerializer& s)
 {
-	// GetClass() works because readmap and uh both have to exist already
 	s.SerializeObjectInstance(gs, gs->GetClass());
 	s.SerializeObjectInstance(gu, gu->GetClass());
+	s.SerializeObjectInstance(gameSetup, gameSetup->GetClass());
 	s.SerializeObjectInstance(game, game->GetClass());
 	s.SerializeObjectInstance(readmap, readmap->GetClass());
-	s.SerializeObjectInstance(qf, qf->GetClass());
+	s.SerializeObjectInstance(quadField, quadField->GetClass());
+	s.SerializeObjectInstance(unitHandler, unitHandler->GetClass());
 	s.SerializeObjectInstance(featureHandler, featureHandler->GetClass());
 	s.SerializeObjectInstance(loshandler, loshandler->GetClass());
 	s.SerializeObjectInstance(radarhandler, radarhandler->GetClass());
 	s.SerializeObjectInstance(airBaseHandler, airBaseHandler->GetClass());
 	s.SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());
 	s.SerializeObjectInstance(CCategoryHandler::Instance(), CCategoryHandler::Instance()->GetClass());
-	s.SerializeObjectInstance(uh, uh->GetClass());
-	s.SerializeObjectInstance(ph, ph->GetClass());
-//	std::map<std::string, int> unitRestrictions;
+	s.SerializeObjectInstance(projectileHandler, projectileHandler->GetClass());
 	s.SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
 	s.SerializeObjectInstance(&wind, wind.GetClass());
 	s.SerializeObjectInstance(inMapDrawerModel, inMapDrawerModel->GetClass());
+	s.SerializeObjectInstance(moveDefHandler, moveDefHandler->GetClass());
+	s.SerializeObjectInstance(teamHandler, teamHandler->GetClass());
 	for (int a=0; a < teamHandler->ActiveTeams(); a++) {
 		s.SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
 	}
 	s.SerializeObjectInstance(eoh, eoh->GetClass());
-//	s.Serialize()
 }
 
 static void PrintSize(const char* txt, int size)
@@ -128,27 +118,32 @@ void CCregLoadSaveHandler::SaveGame(const std::string& file)
 			throw content_error("Unable to save game to file \"" + file + "\"");
 		}
 
-		std::string scriptText = gameSetup->gameSetupText;
-
-		WriteString(ofs, scriptText);
-
+		// write our own header. SavePackage() will add its own
+		WriteString(ofs, gameSetup->gameSetupText);
 		WriteString(ofs, modName);
 		WriteString(ofs, mapName);
 
-		CGameStateCollector* gsc = new CGameStateCollector();
+		CGameStateCollector gsc = CGameStateCollector();
 
+		// save creg state
 		creg::COutputStreamSerializer os;
-		os.SavePackage(&ofs, gsc, gsc->GetClass());
-		PrintSize("Game",ofs.tellp());
+		os.SavePackage(&ofs, &gsc, gsc.GetClass());
+		PrintSize("Game", ofs.tellp());
+
+		// save ai state
 		int aistart = ofs.tellp();
 		eoh->Save(&ofs);
-		PrintSize("AIs", ((int)ofs.tellp())-aistart);
+		PrintSize("AIs", ((int)ofs.tellp()) - aistart);
+
+		//FIXME add lua state
 	} catch (const content_error& ex) {
 		LOG_L(L_ERROR, "Save failed(content error): %s", ex.what());
 	} catch (const std::exception& ex) {
 		LOG_L(L_ERROR, "Save failed: %s", ex.what());
 	} catch (const char*& exStr) {
 		LOG_L(L_ERROR, "Save failed: %s", exStr);
+	} catch (const std::string& str) {
+		LOG_L(L_ERROR, "Save failed: %s", str.c_str());
 	} catch (...) {
 		LOG_L(L_ERROR, "Save failed(unknown error)");
 	}
@@ -158,57 +153,71 @@ void CCregLoadSaveHandler::SaveGame(const std::string& file)
 void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 {
 	const std::string file2 = FindSaveFile(file);
-	ifs = new std::ifstream (dataDirsAccess.LocateFile(file2).c_str(), std::ios::in|std::ios::binary);
+	ifs = new std::ifstream(dataDirsAccess.LocateFile(file2).c_str(), std::ios::in|std::ios::binary);
 
 	// in case these contained values alredy
 	// (this is the case when loading a game through the spring menu eg),
 	// we set them to empty strings, as ReadString() does append,
 	// and we would end up with the correct value but two times
 	// eg: "AbcAbc" instead of "Abc"
+
+	//FIXME remove
+	/**/
 	scriptText = "";
 	modName = "";
 	mapName = "";
 
+	// read our own header.
 	ReadString(*ifs, scriptText);
 	if (!scriptText.empty() && !gameSetup) {
 		CGameSetup* temp = new CGameSetup();
 		if (!temp->Init(scriptText)) {
 			delete temp;
-			temp = 0;
+			temp = NULL;
 		} else {
 			temp->saveName = file;
 			gameSetup = temp;
 		}
 	}
-
 	ReadString(*ifs, modName);
 	ReadString(*ifs, mapName);
+	/**/
 }
 
 /// this should be called on frame 0 when the game has started
 void CCregLoadSaveHandler::LoadGame()
 {
-	creg::CInputStreamSerializer inputStream;
+	ENTER_SYNCED_CODE();
+
 	void* pGSC = NULL;
 	creg::Class* gsccls = NULL;
-	inputStream.LoadPackage(ifs, pGSC, gsccls);
 
-	assert (pGSC && gsccls == CGameStateCollector::StaticClass());
+	// load creg state
+	creg::CInputStreamSerializer inputStream;
+	inputStream.LoadPackage(ifs, pGSC, gsccls);
+	assert(pGSC && gsccls == CGameStateCollector::StaticClass());
 
 	CGameStateCollector* gsc = static_cast<CGameStateCollector*>(pGSC);
 	delete gsc; // the only job of gsc is to collect gamestate data
 	gsc = NULL;
+
+	// load ai state
 	eoh->Load(ifs);
-	delete ifs;
-	ifs = NULL;
 	//for (int a=0; a < teamHandler->ActiveTeams(); a++) { // For old savegames
 	//	if (teamHandler->Team(a)->isDead && eoh->IsSkirmishAI(a)) {
 	//		eoh->DestroySkirmishAI(skirmishAIId(a), 2 /* = team died */);
 	//	}
 	//}
+
+	// cleanup
+	delete ifs;
+	ifs = NULL;
+
 	gs->paused = false;
 	if (gameServer) {
 		gameServer->isPaused = false;
 		gameServer->syncErrorFrame = 0;
 	}
+
+	LEAVE_SYNCED_CODE();
 }

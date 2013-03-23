@@ -486,7 +486,7 @@ void CGame::ClientReadNet()
 
 					for (int a = 0; a < numUnitIDs; ++a) {
 						short int unitID; pckt >> unitID;
-						const CUnit* unit = uh->GetUnit(unitID);
+						const CUnit* unit = unitHandler->GetUnit(unitID);
 
 						if (unit == NULL) {
 							// unit was destroyed in simulation (without its ID being recycled)
@@ -527,7 +527,7 @@ void CGame::ClientReadNet()
 
 					short int unitid;
 					pckt >> unitid;
-					if (unitid < 0 || static_cast<size_t>(unitid) >= uh->MaxUnits())
+					if (unitid < 0 || static_cast<size_t>(unitid) >= unitHandler->MaxUnits())
 						throw netcode::UnpackPacketException("Invalid unit ID");
 
 					int cmd_id;
@@ -671,10 +671,10 @@ void CGame::ClientReadNet()
 					for (int i = 0, j = fixedLen;  i < numUnitIDs;  i++, j += sizeof(short)) {
 						short int unitID;
 						pckt >> unitID;
-						if (unitID >= uh->MaxUnits() || unitID < 0)
+						if (unitID >= unitHandler->MaxUnits() || unitID < 0)
 							throw netcode::UnpackPacketException("Invalid unit ID");
 
-						CUnit* u = uh->units[unitID];
+						CUnit* u = unitHandler->units[unitID];
 						// ChangeTeam() handles the AllowUnitTransfer() LuaRule
 						if (u && u->team == srcTeam && !u->beingBuilt) {
 							u->ChangeTeam(dstTeam, CUnit::ChangeGiven);
@@ -752,7 +752,7 @@ void CGame::ClientReadNet()
 					vector<int>::const_iterator ui;
 
 					for (ui = netSelUnits.begin(); ui != netSelUnits.end(); ++ui) {
-						CUnit* unit = uh->GetUnit(*ui);
+						CUnit* unit = unitHandler->GetUnit(*ui);
 
 						if (unit == NULL)
 							continue;
@@ -1059,8 +1059,8 @@ void CGame::ClientReadNet()
 
 					// stop attacks against former foe
 					if (allied) {
-						for (std::list<CUnit*>::iterator it = uh->activeUnits.begin();
-								it != uh->activeUnits.end();
+						for (std::list<CUnit*>::iterator it = unitHandler->activeUnits.begin();
+								it != unitHandler->activeUnits.end();
 								++it) {
 							if (teamHandler->Ally((*it)->allyteam, whichAllyTeam)) {
 								(*it)->StopAttackingAllyTeam(whichAllyTeam);

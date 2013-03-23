@@ -11,7 +11,6 @@ class CLightningCannon :
 	CR_DECLARE(CLightningCannon);
 public:
 	CLightningCannon(CUnit* owner);
-	~CLightningCannon();
 
 	void Update();
 	void Init();

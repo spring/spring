@@ -48,7 +48,6 @@ private:
 public:
 	unsigned int flags;
 	unsigned int dispList;
-	unsigned int cegID;
 
 	const S3DModelPiece* omp;
 
@@ -70,7 +69,6 @@ public:
 	CSmokeTrailProjectile* curCallback;
 
 	int age;
-	int colorTeam;
 };
 
 #endif /* PIECE_PROJECTILE_H */

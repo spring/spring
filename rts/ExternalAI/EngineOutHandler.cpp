@@ -30,12 +30,11 @@ CONFIG(int, CatchAIExceptions).defaultValue(1);
 CONFIG(bool, AI_UnpauseAfterInit).defaultValue(true);
 
 CR_BIND_DERIVED(CEngineOutHandler, CObject, )
-
 CR_REG_METADATA(CEngineOutHandler, (
-				CR_MEMBER(id_skirmishAI),
-				CR_MEMBER(team_skirmishAIs),
-				CR_RESERVED(128)
-				));
+	CR_MEMBER(id_skirmishAI),
+	CR_MEMBER(team_skirmishAIs),
+	CR_RESERVED(128)
+));
 
 
 static inline bool IsUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int allyTeamId) {
@@ -51,22 +50,20 @@ static inline bool IsUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int all
 /////////////////////////////
 // BEGIN: Exception Handling
 
-bool CEngineOutHandler::IsCatchExceptions() {
+bool CEngineOutHandler::CatchExceptions() {
+	static bool initialized = false;
+	static bool catchExceptions = false;
 
-	static bool init = false;
-	static bool isCatchExceptions;
-
-	if (!init) {
-		isCatchExceptions = (configHandler->GetInt("CatchAIExceptions") != 0);
-		init = true;
+	if (!initialized) {
+		catchExceptions = (configHandler->GetInt("CatchAIExceptions") != 0);
+		initialized = true;
 	}
 
-	return isCatchExceptions;
+	return catchExceptions;
 }
 
 void CEngineOutHandler::HandleAIException(const char* description) {
-
-	if (CEngineOutHandler::IsCatchExceptions()) {
+	if (CEngineOutHandler::CatchExceptions()) {
 		if (description) {
 			LOG_L(L_ERROR, "AI Exception: \'%s\'", description);
 		} else {
@@ -82,22 +79,21 @@ void CEngineOutHandler::HandleAIException(const char* description) {
 
 CEngineOutHandler* CEngineOutHandler::singleton = NULL;
 
-void CEngineOutHandler::Initialize() {
+CEngineOutHandler* CEngineOutHandler::GetInstance() {
+	static unsigned int numInstances = 0;
 
 	if (singleton == NULL) {
+		numInstances += 1;
 		singleton = new CEngineOutHandler();
 	}
-}
-CEngineOutHandler* CEngineOutHandler::GetInstance() {
 
-	if (singleton == NULL) {
-		Initialize();
-	}
-
+	// if more than one instance, some code called eoh->func()
+	// and created another after Destroy was already executed
+	// from ~CGame --> usually dtors
+	assert(numInstances == 1);
 	return singleton;
 }
 void CEngineOutHandler::Destroy() {
-
 	if (singleton != NULL) {
 		singleton->PreDestroy();
 
@@ -109,12 +105,7 @@ void CEngineOutHandler::Destroy() {
 	}
 }
 
-CEngineOutHandler::CEngineOutHandler()
-{
-}
-
 CEngineOutHandler::~CEngineOutHandler() {
-
 	// id_skirmishAI should be empty already, but this can not hurt
 	for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
 		delete ai->second;
@@ -354,8 +345,7 @@ void CEngineOutHandler::UnitCaptured(const CUnit& unit, int oldTeam, int newTeam
 	}
 }
 
-void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
-		const CUnit* attacker) {
+void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed, const CUnit* attacker) {
 	AI_EVT_MTH();
 
 	const int destroyedId = destroyed.id;
@@ -365,9 +355,11 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 	// inform destroyed units team (not allies)
 	if (team_skirmishAIs.find(dt) != team_skirmishAIs.end()) {
 		const bool attackerInLosOrRadar = attacker && IsUnitInLosOrRadarOfAllyTeam(*attacker, destroyed.allyteam);
+
 		for (ids_t::iterator ai = team_skirmishAIs[dt].begin(); ai != team_skirmishAIs[dt].end(); ++ai) {
 			CSkirmishAIWrapper* saw = id_skirmishAI[*ai];
 			int visibleAttackerId = -1;
+
 			if (attackerInLosOrRadar || saw->IsCheatEventsEnabled()) {
 				visibleAttackerId = attackerId;
 			}
@@ -381,22 +373,33 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 	for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
 		const int t      = ai->second->GetTeamId();
 		const int allyT  = teamHandler->AllyTeam(t);
-		if (!teamHandler->Ally(allyT, destroyed.allyteam) &&
-				(ai->second->IsCheatEventsEnabled() || IsUnitInLosOrRadarOfAllyTeam(destroyed, allyT))) {
-			int myAttackerId = -1;
-			if ((attacker != NULL) && teamHandler->Ally(allyT, attacker->allyteam)) {
-				myAttackerId = attackerId;
-			}
-			try {
-				ai->second->EnemyDestroyed(destroyedId, myAttackerId);
-			} CATCH_AI_EXCEPTION;
+
+		if (teamHandler->Ally(allyT, destroyed.allyteam))
+			continue;
+
+		if (!ai->second->IsCheatEventsEnabled() && !IsUnitInLosOrRadarOfAllyTeam(destroyed, allyT))
+			continue;
+
+		int myAttackerId = -1;
+
+		if ((attacker != NULL) && teamHandler->Ally(allyT, attacker->allyteam)) {
+			myAttackerId = attackerId;
 		}
+		try {
+			ai->second->EnemyDestroyed(destroyedId, myAttackerId);
+		} CATCH_AI_EXCEPTION;
 	}
 }
 
 
-void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
-		float damage, int weaponDefId, bool paralyzer) {
+void CEngineOutHandler::UnitDamaged(
+	const CUnit& damaged,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID,
+	bool paralyzer
+) {
 	AI_EVT_MTH();
 
 	const int damagedUnitId  = damaged.id;
@@ -408,7 +411,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 		float3 attackDir_damagedsView = ZeroVector;
 		if (attacker) {
 			attackDir_damagedsView =
-					helper->GetUnitErrorPos(attacker, damaged.allyteam)
+					CGameHelper::GetUnitErrorPos(attacker, damaged.allyteam)
 					- damaged.pos;
 			attackDir_damagedsView.ANormalize();
 		}
@@ -420,7 +423,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 				visibleAttackerUnitId = attackerUnitId;
 			}
 			try {
-				id_skirmishAI[*ai]->UnitDamaged(damagedUnitId, visibleAttackerUnitId, damage, attackDir_damagedsView, weaponDefId, paralyzer);
+				id_skirmishAI[*ai]->UnitDamaged(damagedUnitId, visibleAttackerUnitId, damage, attackDir_damagedsView, weaponDefID, paralyzer);
 			} CATCH_AI_EXCEPTION;
 		}
 	}
@@ -432,7 +435,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 				&& (team_skirmishAIs.find(at) != team_skirmishAIs.end())) {
 			// direction from the attacker's view
 			const float3 attackDir = (attacker->pos
-						- helper->GetUnitErrorPos(&damaged, attacker->allyteam))
+						- CGameHelper::GetUnitErrorPos(&damaged, attacker->allyteam))
 						.ANormalize();
 			const bool damagedInLosOrRadar = IsUnitInLosOrRadarOfAllyTeam(damaged, attacker->allyteam);
 			for (ids_t::iterator ai = team_skirmishAIs[at].begin(); ai != team_skirmishAIs[at].end(); ++ai)
@@ -442,7 +445,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 				{
 					try {
 						saw->EnemyDamaged(damagedUnitId, attackerUnitId, damage,
-								attackDir, weaponDefId, paralyzer);
+								attackDir, weaponDefID, paralyzer);
 					} CATCH_AI_EXCEPTION;
 				}
 			}
@@ -486,7 +489,7 @@ void CEngineOutHandler::CommandFinished(const CUnit& unit, const Command& comman
 
 	const int teamId           = unit.team;
 	const int unitId           = unit.id;
-	const int aiCommandTopicId = extractAICommandTopic(&command, uh->MaxUnits());
+	const int aiCommandTopicId = extractAICommandTopic(&command, unitHandler->MaxUnits());
 
 	DO_FOR_TEAM_SKIRMISH_AIS(CommandFinished(unitId, command.aiCommandId, aiCommandTopicId), teamId);
 }
@@ -617,12 +620,12 @@ void CEngineOutHandler::SetSkirmishAIDieing(const size_t skirmishAIId) {
 	SCOPED_TIMER("AI Total");
 
 	try {
+		assert(id_skirmishAI[skirmishAIId] != NULL);
 		id_skirmishAI[skirmishAIId]->Dieing();
 	} CATCH_AI_EXCEPTION;
 }
 
 static void internal_aiErase(std::vector<unsigned char>& ais, const unsigned char skirmishAIId) {
-
 	for (std::vector<unsigned char>::iterator ai = ais.begin(); ai != ais.end(); ++ai) {
 		if (*ai == skirmishAIId) {
 			ais.erase(ai);
@@ -651,3 +654,4 @@ void CEngineOutHandler::DestroySkirmishAI(const size_t skirmishAIId) {
 		net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DEAD));
 	} CATCH_AI_EXCEPTION;
 }
+

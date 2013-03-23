@@ -66,7 +66,6 @@ CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order)
 {
 	UpdateThreading();
 	SetAllowChanges(false, true);
-	printTracebacks = true;
 }
 
 

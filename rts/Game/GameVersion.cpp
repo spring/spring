@@ -76,16 +76,22 @@ std::string GetAdditional()
 	#define GV_ADD_SPACE " "
 #endif
 	
-#if defined USE_GML
-	GV_ADD_SPACE "MT"
+#if defined USE_GML_SIM
+	GV_ADD_SPACE "ASIM"
 	#undef  GV_ADD_SPACE
 	#define GV_ADD_SPACE " "
 #endif
-#if defined USE_GML_SIM
-	"-Sim"
+
+#if defined USE_GML
+	GV_ADD_SPACE "GML"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
 #endif
+
 #if defined USE_GML_DEBUG
-	"+Debug"
+	GV_ADD_SPACE "GDB"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
 #endif
 
 #if defined TRACE_SYNC

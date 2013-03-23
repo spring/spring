@@ -9,6 +9,7 @@
 #include <map>
 #include "Rendering/GL/VBO.h"
 #include "System/Matrix44f.h"
+#include "System/creg/creg_cond.h"
 
 
 enum ModelType {
@@ -66,20 +67,25 @@ struct S3DModelPiece {
 public:
 	std::string name;
 	std::string parentName;
-	std::vector<S3DModelPiece*> children;
 
 	S3DModelPiece* parent;
 	CollisionVolume* colvol;
 
 	ModelType type;
-	bool isEmpty;
 
+	bool isEmpty;     /// if piece has no geometry
+	bool mIsIdentity; /// if scaleRotMatrix is identity
+
+	std::vector<S3DModelPiece*> children;
+
+	/// pre-baked local-space transforms (assimp-only)
+	CMatrix44f scaleRotMatrix;
+
+	float3 rot;
+	float3 offset;    /// local offset wrt. parent piece
+	float3 goffset;   /// global offset wrt. root piece
 	float3 mins;
 	float3 maxs;
-	float3 offset;    ///< @see parent
-	float3 goffset;   ///< @see root
-	float3 rot;
-	float3 scale;
 
 protected:
 	virtual void DrawForList() const = 0;
@@ -160,6 +166,8 @@ public:
 
 struct LocalModelPiece
 {
+	CR_DECLARE_STRUCT(LocalModelPiece);
+
 	LocalModelPiece(const S3DModelPiece* piece);
 	~LocalModelPiece();
 
@@ -226,6 +234,8 @@ public:
 
 struct LocalModel
 {
+	CR_DECLARE_STRUCT(LocalModel);
+
 	LocalModel(const S3DModel* model)
 		: original(model)
 		, dirtyPieces(model->numPieces)

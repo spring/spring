@@ -11,7 +11,6 @@ class CMissileLauncher :
 	CR_DECLARE(CMissileLauncher);
 public:
 	CMissileLauncher(CUnit* owner);
-	~CMissileLauncher();
 
 	void Update();
 

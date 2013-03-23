@@ -9,18 +9,18 @@
 #include "Sim/Misc/GlobalConstants.h"
 
 // Each square on metalmap is a 2x2 square on normal map.
-const float METAL_MAP_SQUARE_SIZE = SQUARE_SIZE * 2;
+static const float METAL_MAP_SQUARE_SIZE = SQUARE_SIZE * 2;
 
 
 class CMetalMap
 {
-	CR_DECLARE(CMetalMap);
+	CR_DECLARE_STRUCT(CMetalMap);
 
 public:
 	/** Receiving a map over all metal, and creating a map over extraction. */
 	CMetalMap(const unsigned char* map, int sizeX, int sizeZ, float metalScale);
 	/** Frees the memory used by maps. */
-	virtual ~CMetalMap();
+	~CMetalMap();
 
 	/** Returns the amount of metal over an area. */
 	float GetMetalAmount(int x1, int z1, int x2, int z2);
@@ -49,15 +49,16 @@ public:
 	int GetSizeX() const { return sizeX; }
 	int GetSizeZ() const { return sizeZ; }
 
-	unsigned char metalPal[768];
-
-	std::vector<unsigned char> metalMap;
-	std::vector<float> extractionMap;
-
 protected:
 	float metalScale;
 	int sizeX;
 	int sizeZ;
+
+public:
+	unsigned char metalPal[768];
+
+	std::vector<unsigned char> metalMap;
+	std::vector<float> extractionMap;
 };
 
 #endif /* METAL_MAP_H */

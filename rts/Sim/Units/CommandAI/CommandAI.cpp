@@ -23,7 +23,6 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
-#include "System/LoadSave/LoadSaveInterface.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 #include "System/creg/STL_Set.h"
@@ -68,8 +67,9 @@ CR_REG_METADATA(CCommandAI, (
 	CR_MEMBER(repeatOrders),
 	CR_MEMBER(lastSelectedCommandPage),
 	CR_MEMBER(unimportantMove),
+	CR_MEMBER(commandDeathDependences),
 	CR_MEMBER(targetLostTimer),
-	CR_RESERVED(64),
+
 	CR_POSTLOAD(PostLoad)
 ));
 
@@ -325,9 +325,9 @@ void CCommandAI::AddCommandDependency(const Command& c) {
 	int cpos;
 	if (c.IsObjectCommand(cpos)) {
 		int refId = c.params[cpos];
-		CObject* ref = (refId < uh->MaxUnits()) ?
-				static_cast<CObject*>(uh->GetUnit(refId)) :
-				static_cast<CObject*>(featureHandler->GetFeature(refId - uh->MaxUnits()));
+		CObject* ref = (refId < unitHandler->MaxUnits()) ?
+				static_cast<CObject*>(unitHandler->GetUnit(refId)) :
+				static_cast<CObject*>(featureHandler->GetFeature(refId - unitHandler->MaxUnits()));
 		if (ref) {
 			AddDeathDependence(ref, DEPENDENCE_COMMANDQUE);
 		}
@@ -359,7 +359,7 @@ static inline const CUnit* GetCommandUnit(const Command& c, int idx) {
 		return NULL;
 	}
 
-	const CUnit* unit = uh->GetUnit(c.params[idx]);
+	const CUnit* unit = unitHandler->GetUnit(c.params[idx]);
 	return unit;
 }
 
@@ -519,8 +519,8 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 			if (reclaimeeUnit == NULL && !c.params.empty()) {
 				const unsigned int reclaimeeFeatureID(c.params[0]);
 
-				if (reclaimeeFeatureID >= uh->MaxUnits()) {
-					reclaimeeFeature = featureHandler->GetFeature(reclaimeeFeatureID - uh->MaxUnits());
+				if (reclaimeeFeatureID >= unitHandler->MaxUnits()) {
+					reclaimeeFeature = featureHandler->GetFeature(reclaimeeFeatureID - unitHandler->MaxUnits());
 
 					if (reclaimeeFeature && !reclaimeeFeature->def->reclaimable) {
 						return false;
@@ -1237,7 +1237,7 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueu
 
 int CCommandAI::UpdateTargetLostTimer(int targetUnitID)
 {
-	const CUnit* targetUnit = uh->GetUnit(targetUnitID);
+	const CUnit* targetUnit = unitHandler->GetUnit(targetUnitID);
 	const UnitDef* targetUnitDef = (targetUnit != NULL)? targetUnit->unitDef: NULL;
 
 	if (targetUnit == NULL)
@@ -1269,7 +1269,7 @@ void CCommandAI::ExecuteAttack(Command& c)
 		}
 	} else {
 		if (c.params.size() == 1) {
-			CUnit* targetUnit = uh->GetUnit(c.params[0]);
+			CUnit* targetUnit = unitHandler->GetUnit(c.params[0]);
 
 			if (targetUnit == NULL) { FinishCommand(); return; }
 			if (targetUnit == owner) { FinishCommand(); return; }
@@ -1513,32 +1513,6 @@ void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
 	}
 }
 
-void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
-{
-	int queSize = commandQue.size();
-	file->lsInt(queSize);
-	for (int a = 0; a < queSize; ++a) {
-		if (loading) {
-			commandQue.push_back(Command());
-		}
-		Command& c = commandQue[a];
-		int cmdID = c.GetID();
-		file->lsInt(cmdID);
-		file->lsUChar(c.options);
-		file->lsInt(c.timeOut);
-
-		int paramSize = c.params.size();
-		file->lsInt(paramSize);
-		for (int b = 0; b < paramSize; ++b) {
-			if (loading) {
-				c.PushParam(0.0f);
-			}
-			file->lsFloat(c.params[b]);
-		}
-	}
-}
-
-
 void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2)
 {
 	const float3 pos = ClosestPointOnLine(cmdPos1, cmdPos2, owner->pos);
@@ -1634,7 +1608,7 @@ void CCommandAI::StopAttackingAllyTeam(int ally)
 		const Command& c = *it;
 
 		if ((c.GetID() == CMD_FIGHT || c.GetID() == CMD_ATTACK) && c.params.size() == 1) {
-			const CUnit* target = uh->GetUnit(c.params[0]);
+			const CUnit* target = unitHandler->GetUnit(c.params[0]);
 
 			if (target && target->allyteam == ally) {
 				todel.push_back(it - commandQue.begin());

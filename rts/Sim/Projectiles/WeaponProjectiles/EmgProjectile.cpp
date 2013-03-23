@@ -10,36 +10,33 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Sync/SyncTracer.h"
 
-CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, (ProjectileParams(), ZeroVector, 0));
+CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, (ProjectileParams()));
 
 CR_REG_METADATA(CEmgProjectile,(
 	CR_SETFLAG(CF_Synced),
-    CR_MEMBER(intensity),
-    CR_MEMBER(color),
-    CR_RESERVED(8)
-    ));
+	CR_MEMBER(intensity),
+	CR_MEMBER(color),
+	CR_RESERVED(8)
+));
 
-CEmgProjectile::CEmgProjectile(const ProjectileParams& params, const float3& color, float intensity)
-	: CWeaponProjectile(params)
-	, intensity(intensity)
-	, color(color)
+CEmgProjectile::CEmgProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 {
 	projectileType = WEAPON_EMG_PROJECTILE;
 
-	if (weaponDef) {
+	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
+
+		intensity = weaponDef->intensity;
+		color = weaponDef->visuals.color;
+	} else {
+		intensity = 0.0f;
 	}
+
 #ifdef TRACE_SYNC
 	tracefile << "New emg: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
-}
-
-CEmgProjectile::~CEmgProjectile()
-{
 }
 
 void CEmgProjectile::Update()
@@ -49,10 +46,8 @@ void CEmgProjectile::Update()
 	}
 
 	if (--ttl < 0) {
-		intensity -= 0.1f;
-		if (intensity <= 0){
+		if ((intensity = std::max(intensity - 0.1f, 0.0f)) <= 0.0f) {
 			deleteMe = true;
-			intensity = 0;
 		}
 	} else {
 		gCEG->Explosion(cegID, pos, ttl, intensity, NULL, 0.0f, NULL, speed);

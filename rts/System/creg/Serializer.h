@@ -4,7 +4,7 @@
 #define SERIALIZER_IMPL_H
 
 #include "ISerializer.h"
-#include "creg.h"
+#include "creg_cond.h"
 #include <map>
 #include <vector>
 #include <list>
@@ -26,7 +26,7 @@ namespace creg {
 			int size;
 		};
 		struct ObjectMemberGroup {
-			Class *membersClass;
+			Class* membersClass;
 			std::vector<COutputStreamSerializer::ObjectMember> members;
 			int size;
 		};
@@ -38,7 +38,7 @@ namespace creg {
 				isEmbedded=false;
 				class_=0;
 			}
-			ObjectRef(void *ptr,int id,bool isEmbedded,Class *class_) {
+			ObjectRef(void* ptr, int id, bool isEmbedded, Class* class_) {
 				this->ptr = ptr;
 				this->id=id;
 				classIndex=0;
@@ -52,23 +52,23 @@ namespace creg {
 				isEmbedded=src.isEmbedded;
 				class_=src.class_;
 			}
-			void *ptr;
+			void* ptr;
 			int id, classIndex;
 			bool isEmbedded;
-			Class *class_;
+			Class* class_;
 			std::vector<COutputStreamSerializer::ObjectMemberGroup> memberGroups;
-			bool isThisObject(void *objPtr,Class *objClass,bool objEmbedded) const
+			bool isThisObject(void* objPtr, Class* objClass, bool objEmbedded) const
 			{
-				if (ptr!=objPtr) return false;
-				if (class_==objClass) return true;
-				if (isEmbedded&&objEmbedded) return false;
+				if (ptr != objPtr) return false;
+				if (class_ == objClass) return true;
+				if (isEmbedded && objEmbedded) return false;
 				if (!objEmbedded) {
-					for (Class *base=class_->base;base;base=base->base)
-						if (base==objClass) return true;
-				} 
+					for (Class* base=class_->base; base; base=base->base)
+						if (base == objClass) return true;
+				}
 				if (!isEmbedded) {
-					for (Class *base=objClass->base;base;base=base->base)
-						if (base==class_) return true;
+					for (Class* base=objClass->base; base; base=base->base)
+						if (base == class_) return true;
 				}
 				return false;
 			}
@@ -77,22 +77,22 @@ namespace creg {
 		// Temporary class reference
 		struct ClassRef;
 
-		std::ostream *stream;
-		std::map <void*,std::vector<ObjectRef*> > ptrToId;
-		std::list <ObjectRef> objects;
-		std::vector <ObjectRef*> pendingObjects; // these objects still have to be saved
+		std::ostream* stream;
+		std::map<void*,std::vector<ObjectRef*> > ptrToId;
+		std::list<ObjectRef> objects;
+		std::vector<ObjectRef*> pendingObjects; // these objects still have to be saved
 
 		// Serialize all class names
-		void WriteObjectInfo ();
+		void WriteObjectInfo();
 		// Helper for instance/ptr saving
-		void WriteObjectRef (void *inst, Class *cls, bool embedded);
+		void WriteObjectRef(void* inst, Class* cls, bool embedded);
 
-		ObjectRef* FindObjectRef(void *inst, Class *objClass, bool isEmbedded);
+		ObjectRef* FindObjectRef(void* inst, Class* objClass, bool isEmbedded);
 
-		void SerializeObject (Class *c, void *ptr, ObjectRef *objr);
+		void SerializeObject(Class* c, void* ptr, ObjectRef* objr);
 
 	public:
-		COutputStreamSerializer ();
+		COutputStreamSerializer();
 
 		/** Create a package of the given root object and all the objects that it references
 		 * @param s stream to serialize the data to
@@ -100,25 +100,25 @@ namespace creg {
 		 * @param cls the class of the root object
 		 * This method throws an std::runtime_error when something goes wrong
 		 */
-		void SavePackage (std::ostream *s, void *rootObj, Class *cls);
+		void SavePackage(std::ostream* s, void* rootObj, Class* cls);
 
 		/** @see ISerializer::IsWriting */
-		bool IsWriting ();
+		bool IsWriting();
 
 		/** @see ISerializer::SerializeObjectPtr */
-		void SerializeObjectPtr (void **ptr, Class *cls);
-		
+		void SerializeObjectPtr(void** ptr, Class* cls);
+
 		/** @see ISerializer::SerializeObjectInstance */
-		void SerializeObjectInstance (void *inst, Class *cls);
+		void SerializeObjectInstance(void* inst, Class* cls);
 
 		/** @see ISerializer::Serialize */
-		void Serialize (void *data, int byteSize);
+		void Serialize(void* data, int byteSize);
 
 		/** @see ISerializer::SerializeInt */
-		void SerializeInt (void *data, int byteSize);
+		void SerializeInt(void* data, int byteSize);
 
 		/** Empty function, only applies to loading */
-		void AddPostLoadCallback (void (*cb)(void *d), void *d) {}
+		void AddPostLoadCallback(void (*cb)(void* d), void* d) {}
 	};
 
 	/** Input stream serializer
@@ -129,58 +129,58 @@ namespace creg {
 	{
 	protected:
 		std::istream* stream;
-		std::vector <Class *> classRefs;
+		std::vector<Class*> classRefs;
 
 		struct UnfixedPtr {
-			void **ptrAddr;
+			void** ptrAddr;
 			int objID;
 		};
-		std::vector <UnfixedPtr> unfixedPointers; // pointers to embedded objects that haven't been filled yet, because they are not yet loaded
+		std::vector<UnfixedPtr> unfixedPointers; // pointers to embedded objects that haven't been filled yet, because they are not yet loaded
 
 		struct StoredObject
 		{
-			void *obj;
+			void* obj;
 			int classRef;
 			bool isEmbedded;
 		};
-		std::vector <StoredObject> objects;
+		std::vector<StoredObject> objects;
 
 		struct PostLoadCallback
 		{
-			void (*cb)(void *d);
-			void *userdata;
+			void (*cb)(void* d);
+			void* userdata;
 		};
-		std::vector <PostLoadCallback> callbacks;
+		std::vector<PostLoadCallback> callbacks;
 
-		void SerializeObject (Class *c, void *ptr);
+		void SerializeObject(Class* c, void* ptr);
 	public:
-		CInputStreamSerializer ();
-		~CInputStreamSerializer ();
+		CInputStreamSerializer();
+		~CInputStreamSerializer();
 
 		/** @see ISerializer::IsWriting */
-		bool IsWriting ();
+		bool IsWriting();
 
 		/** @see ISerializer::SerializeObjectPtr */
-		void SerializeObjectPtr (void **ptr, Class *cls);
-		
+		void SerializeObjectPtr(void** ptr, Class* cls);
+
 		/** @see ISerializer::SerializeObjectInstance */
-		void SerializeObjectInstance (void *inst, Class *cls);
+		void SerializeObjectInstance(void* inst, Class* cls);
 
 		/** @see ISerializer::Serialize */
-		void Serialize (void *data, int byteSize);
+		void Serialize(void* data, int byteSize);
 
 		/** @see ISerializer::SerializeInt */
-		void SerializeInt (void *data, int byteSize);
+		void SerializeInt(void* data, int byteSize);
 
 		/** @see ISerializer::AddPostLoadCallback */
-		void AddPostLoadCallback (void (*cb)(void *userdata), void *userdata);
+		void AddPostLoadCallback(void (*cb)(void* userdata), void* userdata);
 
 		/** Load a package that is saved by CInputStreamSerializer
 		 * @param s the input stream to read from
 		 * @param root the root object address will be assigned to this
 		 * @param rootCls the root object class will be assigned to this
 		 * This method throws an std::runtime_error when something goes wrong */
-		void LoadPackage (std::istream *s, void *&root, Class *&rootCls);
+		void LoadPackage(std::istream* s, void*& root, Class*& rootCls);
 	};
 
 };

@@ -34,17 +34,65 @@ const float CGlobalRendering::SMF_INTENSITY_MULT = 210.0f / 255.0f;
 CR_BIND(CGlobalRendering, );
 
 CR_REG_METADATA(CGlobalRendering, (
-	CR_MEMBER(teamNanospray), // ??
+	CR_MEMBER(teamNanospray),
+	CR_MEMBER(drawSky),
+	CR_MEMBER(drawWater),
+	CR_MEMBER(drawGround),
+	CR_MEMBER(drawMapMarks),
+	CR_MEMBER(drawFog),
+	CR_MEMBER(drawdebug),
+	CR_MEMBER(drawdebugtraceray),
+	CR_MEMBER(timeOffset),
 	CR_MEMBER(lastFrameTime),
 	CR_MEMBER(lastFrameStart),
-	CR_MEMBER(weightedSpeedFactor), // ??
-	CR_MEMBER(drawFrame), // ??
-	CR_MEMBER(drawdebug), // ??
-	CR_MEMBER(active),
-	CR_MEMBER(viewRange),
-	CR_MEMBER(timeOffset),
-	CR_MEMBER(drawFog),
-	CR_RESERVED(64)
+	CR_MEMBER(weightedSpeedFactor),
+	CR_MEMBER(drawFrame),
+	CR_MEMBER(FPS),
+
+	CR_IGNORED(winState),
+	CR_IGNORED(screenSizeX),
+	CR_IGNORED(screenSizeY),
+	CR_IGNORED(winPosX),
+	CR_IGNORED(winPosY),
+	CR_IGNORED(winSizeX),
+	CR_IGNORED(winSizeY),
+	CR_IGNORED(viewPosX),
+	CR_IGNORED(viewPosY),
+	CR_IGNORED(viewSizeX),
+	CR_IGNORED(viewSizeY),
+	CR_IGNORED(pixelX),
+	CR_IGNORED(pixelY),
+	CR_IGNORED(aspectRatio),
+	CR_IGNORED(zNear),
+	CR_IGNORED(viewRange),
+	CR_IGNORED(FSAA),
+	CR_IGNORED(depthBufferBits),
+
+	CR_IGNORED(maxTextureSize),
+	CR_IGNORED(teamNanospray),
+	CR_IGNORED(active),
+	CR_IGNORED(compressTextures),
+	CR_IGNORED(haveATI),
+	CR_IGNORED(haveMesa),
+	CR_IGNORED(haveIntel),
+	CR_IGNORED(haveNvidia),
+	CR_IGNORED(atiHacks),
+	CR_IGNORED(supportNPOTs),
+	CR_IGNORED(support24bitDepthBuffers),
+	CR_IGNORED(supportRestartPrimitive),
+	CR_IGNORED(haveARB),
+	CR_IGNORED(haveGLSL),
+	CR_IGNORED(maxSmoothPointSize),
+	CR_IGNORED(glslMaxVaryings),
+	CR_IGNORED(glslMaxAttributes),
+	CR_IGNORED(glslMaxDrawBuffers),
+	CR_IGNORED(glslMaxRecommendedIndices),
+	CR_IGNORED(glslMaxRecommendedVertices),
+	CR_IGNORED(glslMaxUniformBufferBindings),
+	CR_IGNORED(glslMaxUniformBufferSize),
+	CR_IGNORED(dualScreenMode),
+	CR_IGNORED(dualScreenMiniMapOnLeft),
+	CR_IGNORED(fullScreen)
 ));
 
 CGlobalRendering::CGlobalRendering()

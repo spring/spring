@@ -24,6 +24,7 @@ namespace GML {
 	inline void EnableCallChainWarnings(bool cw) { gmlCallChainWarning = (cw ? 0 : GML_MAX_CALL_CHAIN_WARNINGS); }
 	inline unsigned int UpdateTicks() { gmlNextTickUpdate = 100; return gmlCurrentTicks = SDL_GetTicks(); }
 	inline void GetTicks(unsigned int &var) { var = (--gmlNextTickUpdate > 0) ? gmlCurrentTicks : UpdateTicks(); }
+	inline bool ServerActive() { return gmlServerActive; }
 };
 #else
 namespace GML {
@@ -43,6 +44,7 @@ namespace GML {
 	inline void EnableCallChainWarnings(bool cw) {}
 	inline unsigned int UpdateTicks() { return 0; }
 	inline void GetTicks(unsigned int &var) {}
+	inline bool ServerActive() { return false; }
 };
 #endif
 

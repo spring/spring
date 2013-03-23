@@ -38,7 +38,6 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 
 	CR_MEMBER(maxBank),
 	CR_MEMBER(maxPitch),
-	CR_MEMBER(maxSpeed),
 	CR_MEMBER(turnRadius),
 
 	CR_MEMBER(maxAcc),
@@ -86,7 +85,6 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	myGravity(0.8f),
 	maxBank(0.55f),
 	maxPitch(0.35f),
-	maxSpeed(0.0f),
 	turnRadius(150),
 	maxAcc(0.006f),
 	maxAileron(0.04f),
@@ -255,7 +253,7 @@ bool CStrafeAirMoveType::Update()
 
 			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
 				owner->SetCrashing(false);
-				owner->KillUnit(true, false, 0);
+				owner->KillUnit(NULL, true, false);
 			}
 
 			new CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
@@ -298,7 +296,7 @@ bool CStrafeAirMoveType::HandleCollisions() {
 		bool hitBuilding = false;
 
 		if (checkCollisions) {
-			const vector<CUnit*>& nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
+			const vector<CUnit*>& nearUnits = quadField->GetUnitsExact(pos, owner->radius + 6);
 
 			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 				CUnit* unit = *ui;
@@ -318,8 +316,8 @@ bool CStrafeAirMoveType::HandleCollisions() {
 
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
-					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
-					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
+					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 
 					hitBuilding = true;
 				} else {
@@ -330,8 +328,8 @@ bool CStrafeAirMoveType::HandleCollisions() {
 
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
-					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
-					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
+					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 
 					owner->speed *= 0.99f;
 				}
@@ -342,7 +340,7 @@ bool CStrafeAirMoveType::HandleCollisions() {
 			// if crashing and we hit a building, die right now
 			// rather than waiting until we are close enough to
 			// the ground
-			owner->KillUnit(true, false, 0);
+			owner->KillUnit(NULL, true, false);
 			return true;
 		}
 
@@ -1081,7 +1079,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 		case AIRCRAFT_LANDED:
 			owner->useAirLos = false;
 			owner->physicalState = CSolidObject::OnGround;
-			
+
 			//FIXME already inform commandAI in AIRCRAFT_LANDING!
 			//FIXME Problem is StopMove() also calls owner->script->StopMoving() what should only be called when landed. Also see CHoverAirMoveType::SetState().
 			owner->commandAI->StopMove();

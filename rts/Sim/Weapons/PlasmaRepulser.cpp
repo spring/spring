@@ -25,8 +25,8 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(hitFrames),
 	CR_MEMBER(rechargeDelay),
 	CR_MEMBER(isEnabled),
-	CR_MEMBER(hasGfx),
-	CR_RESERVED(8)
+	CR_MEMBER(shieldProjectile),
+	CR_MEMBER(hasGfx)
 ));
 
 
@@ -98,10 +98,10 @@ void CPlasmaRepulser::Update()
 	}
 
 	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
-		assert(ph->GetMapPairBySyncedID(pi->first)); // valid projectile id?
+		assert(projectileHandler->GetMapPairBySyncedID(pi->first)); // valid projectile id?
 
 		CWeaponProjectile* pro = pi->second;
-		const WeaponDef* proWd = pro->weaponDef;
+		const WeaponDef* proWD = pro->GetWeaponDef();
 
 		if (!pro->checkCol) {
 			continue;
@@ -117,7 +117,7 @@ void CPlasmaRepulser::Update()
 			continue;
 		}
 
-		if (curPower < proWd->damages[0]) {
+		if (curPower < proWD->damages[0]) {
 			// shield does not have enough power, don't touch the projectile
 			continue;
 		}
@@ -142,14 +142,14 @@ void CPlasmaRepulser::Update()
 
 				if (weaponDef->shieldPower != 0) {
 					//FIXME some weapons do range dependent damage! (mantis #2345)
-					curPower -= proWd->damages[0];
+					curPower -= proWD->damages[0];
 				}
 			} else {
 				//FIXME why do all weapons except LASERs do only (1 / GAME_SPEED) damage???
 				owner->UseEnergy(weaponDef->shieldEnergyUse / GAME_SPEED);
 
 				if (weaponDef->shieldPower != 0) {
-					curPower -= proWd->damages[0] / GAME_SPEED;
+					curPower -= proWD->damages[0] / GAME_SPEED;
 				}
 			}
 
@@ -174,7 +174,7 @@ void CPlasmaRepulser::Update()
 			if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
 				if (weaponDef->shieldPower != 0) {
 					//FIXME some weapons do range dependent damage! (mantis #2345)
-					curPower -= proWd->damages[0];
+					curPower -= proWD->damages[0];
 				}
 
 				pro->Collision(owner);
@@ -213,8 +213,9 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 	}
 
 	float3 dir = p->speed;
-	if (p->targetPos != ZeroVector) {
-		dir = p->targetPos - p->pos; // assume that it will travel roughly in the direction of the targetpos if it have one
+	if (p->GetTargetPos() != ZeroVector) {
+		// assume projectile will travel roughly in the direction of its targetpos
+		dir = p->GetTargetPos() - p->pos;
 	}
 
 	dir.y = 0.0f;

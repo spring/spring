@@ -82,7 +82,6 @@ class IExplosionGenerator
 {
 	CR_DECLARE(IExplosionGenerator);
 
-public:
 	IExplosionGenerator(): generatorID(0) {}
 	virtual ~IExplosionGenerator() {}
 
@@ -118,9 +117,14 @@ public:
 class CCustomExplosionGenerator: public CStdExplosionGenerator
 {
 	CR_DECLARE(CCustomExplosionGenerator);
+	CR_DECLARE_SUB(ProjectileSpawnInfo);
+	CR_DECLARE_SUB(GroundFlashInfo);
+	CR_DECLARE_SUB(CEGData);
 
 protected:
 	struct ProjectileSpawnInfo {
+		CR_DECLARE_STRUCT(ProjectileSpawnInfo);
+
 		ProjectileSpawnInfo()
 			: projectileClass(NULL)
 			, count(0)
@@ -145,6 +149,8 @@ protected:
 
 	// TODO: Handle ground flashes with more flexibility like the projectiles
 	struct GroundFlashInfo {
+		CR_DECLARE_STRUCT(GroundFlashInfo);
+
 		GroundFlashInfo()
 			: flashSize(0.0f)
 			, flashAlpha(0.0f)
@@ -165,25 +171,12 @@ protected:
 	};
 
 	struct CEGData {
+		CR_DECLARE_STRUCT(CEGData);
+
 		std::vector<ProjectileSpawnInfo> projectileSpawn;
 		GroundFlashInfo groundFlash;
 		bool useDefaultExplosions;
 	};
-
-	//! maps cegTags to explosion handles
-	std::map<std::string, unsigned int> explosionIDs;
-	//! indexed by explosion handles
-	std::vector<CEGData> explosionData;
-
-	/**
-	 * Explosion generators used by explosionData.projectileSpawn.
-	 * We only need this for unloading them later.
-	 * @see #ClearCache
-	 */
-	std::vector<IExplosionGenerator*> spawnExplGens;
-
-	void ParseExplosionCode(ProjectileSpawnInfo* psi, const int offset, const boost::shared_ptr<creg::IType> type, const std::string& script, std::string& code);
-	void ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir, bool synced);
 
 public:
 	CCustomExplosionGenerator(): CStdExplosionGenerator() {}
@@ -232,6 +225,23 @@ public:
 		OP_POW      = 17, // Power with code as exponent
 		OP_POWBUFF  = 18, // Power with buffer as exponent
 	};
+
+private:
+	void ParseExplosionCode(ProjectileSpawnInfo* psi, const int offset, const boost::shared_ptr<creg::IType> type, const std::string& script, std::string& code);
+	void ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir, bool synced);
+
+protected:
+	//! maps cegTags to explosion handles
+	std::map<std::string, unsigned int> explosionIDs;
+	//! indexed by explosion handles
+	std::vector<CEGData> explosionData;
+
+	/**
+	 * Explosion generators used by explosionData.projectileSpawn.
+	 * We only need this for unloading them later.
+	 * @see #ClearCache
+	 */
+	std::vector<IExplosionGenerator*> spawnExplGens;
 };
 
 

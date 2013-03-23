@@ -286,7 +286,9 @@ public:
 		}
 		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState;
 		new (ex) GML_TYPENAME gmlExecState<R,A,U>(wrk,wrka,wrkit,cls,mt,sm,nu,it,l1,l2,sw,swf);
+		gmlServerActive = true;
 		gmlServer();
+		gmlServerActive = false;
 	}
 
 	void NewWork(R (*wrk)(void *),R (*wrka)(void *,A), R (*wrkit)(void *,U),void *cls,int mt,BOOL_ sm, const GML_TYPENAME std::set<U> *it,int nu,int l1,int l2,BOOL_ sw,void (*swf)(void *)=NULL) {

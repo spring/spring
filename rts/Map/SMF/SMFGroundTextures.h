@@ -44,6 +44,7 @@ protected:
 
 	//! use Pixel Buffer Objects for async. uploading (DMA)
 	PBO pbo;
+	int texformat;
 
 	inline bool TexSquareInView(int, int) const;
 };

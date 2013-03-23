@@ -8,7 +8,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (ProjectileParams(), 0.0f, 0.0f, float3(ZeroVector)));
+CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (ProjectileParams()));
 
 CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -22,15 +22,15 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_MEMBER(decay),
 	CR_MEMBER(midtexx),
 	CR_RESERVED(16)
-	));
+));
 
 
-CBeamLaserProjectile::CBeamLaserProjectile(const ProjectileParams& params, float startAlpha, float endAlpha, const float3& color)
-	: CWeaponProjectile(params, true)
-	, thickness(weaponDef? weaponDef->visuals.thickness: 0.0f)
-	, corethickness(weaponDef? weaponDef->visuals.corethickness: 0.0f)
-	, flaresize(weaponDef? weaponDef->visuals.laserflaresize: 0.0f)
-	, decay(weaponDef? weaponDef->visuals.beamdecay: 0.0f)
+CBeamLaserProjectile::CBeamLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params, true)
+	, thickness(0.0f)
+	, corethickness(0.0f)
+	, flaresize(0.0f)
+	, decay(0.0f)
+	, midtexx(0.0f)
 {
 	projectileType = WEAPON_BEAMLASER_PROJECTILE;
 	checkCol = false;
@@ -38,32 +38,38 @@ CBeamLaserProjectile::CBeamLaserProjectile(const ProjectileParams& params, float
 
 	SetRadiusAndHeight(pos.distance(targetPos), 0.0f);
 
-	if (weaponDef) {
+	if (weaponDef != NULL) {
+		thickness = weaponDef->visuals.thickness;
+		corethickness = weaponDef->visuals.corethickness;
+		flaresize = weaponDef->visuals.laserflaresize;
+		decay = weaponDef->visuals.beamdecay;
+
 		midtexx =
 			(weaponDef->visuals.texture2->xstart +
 			(weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) * 0.5f);
 
-		coreColStart[0] = (weaponDef->visuals.color2.x * startAlpha);
-		coreColStart[1] = (weaponDef->visuals.color2.y * startAlpha);
-		coreColStart[2] = (weaponDef->visuals.color2.z * startAlpha);
+		coreColStart[0] = (weaponDef->visuals.color2.x * params.startAlpha);
+		coreColStart[1] = (weaponDef->visuals.color2.y * params.startAlpha);
+		coreColStart[2] = (weaponDef->visuals.color2.z * params.startAlpha);
 		coreColStart[3] = 1;
-		coreColEnd[0] = (weaponDef->visuals.color2.x * endAlpha);
-		coreColEnd[1] = (weaponDef->visuals.color2.y * endAlpha);
-		coreColEnd[2] = (weaponDef->visuals.color2.z * endAlpha);
+		coreColEnd[0] = (weaponDef->visuals.color2.x * params.endAlpha);
+		coreColEnd[1] = (weaponDef->visuals.color2.y * params.endAlpha);
+		coreColEnd[2] = (weaponDef->visuals.color2.z * params.endAlpha);
 		coreColEnd[3] = 1;
-		edgeColStart[0] = (color.x * startAlpha);
-		edgeColStart[1] = (color.y * startAlpha);
-		edgeColStart[2] = (color.z * startAlpha);
+		edgeColStart[0] = (weaponDef->visuals.color.x * params.startAlpha);
+		edgeColStart[1] = (weaponDef->visuals.color.y * params.startAlpha);
+		edgeColStart[2] = (weaponDef->visuals.color.z * params.startAlpha);
 		edgeColStart[3] = 1;
-		edgeColEnd[0] = (color.x * endAlpha);
-		edgeColEnd[1] = (color.y * endAlpha);
-		edgeColEnd[2] = (color.z * endAlpha);
+		edgeColEnd[0] = (weaponDef->visuals.color.x * params.endAlpha);
+		edgeColEnd[1] = (weaponDef->visuals.color.y * params.endAlpha);
+		edgeColEnd[2] = (weaponDef->visuals.color.z * params.endAlpha);
 		edgeColEnd[3] = 1;
 	} else {
-		midtexx = 0.0f;
+		memset(&coreColStart[0], 0, sizeof(coreColStart));
+		memset(&coreColEnd[0], 0, sizeof(coreColEnd));
+		memset(&edgeColStart[0], 0, sizeof(edgeColStart));
+		memset(&edgeColEnd[0], 0, sizeof(edgeColEnd));
 	}
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 

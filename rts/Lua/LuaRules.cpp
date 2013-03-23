@@ -717,9 +717,15 @@ bool CLuaRules::TerraformComplete(const CUnit* unit, const CUnit* build)
  * 1st is stored under *newDamage if newDamage != NULL
  * 2nd is stored under *impulseMult if impulseMult != NULL
  */
-bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
-                             float damage, int weaponID, bool paralyzer,
-                             float* newDamage, float* impulseMult)
+bool CLuaRules::UnitPreDamaged(
+	const CUnit* unit,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID,
+	bool paralyzer,
+	float* newDamage,
+	float* impulseMult)
 {
 	if (!haveUnitPreDamaged)
 		return false;
@@ -742,9 +748,11 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	lua_pushnumber(L, unit->team);
 	lua_pushnumber(L, damage);
 	lua_pushboolean(L, paralyzer);
+
 	if (GetHandleFullRead(L)) {
-		lua_pushnumber(L, weaponID);
-		argCount += 1;
+		lua_pushnumber(L, weaponDefID); argCount += 1;
+		lua_pushnumber(L, projectileID); argCount += 1;
+
 		if (attacker != NULL) {
 			lua_pushnumber(L, attacker->id);
 			lua_pushnumber(L, attacker->unitDef->id);

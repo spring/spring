@@ -56,15 +56,22 @@ bool CLuaHandle::useDualStates = false;
 /******************************************************************************/
 /******************************************************************************/
 
+static void PushTracebackFuncToRegistry(lua_State* L)
+{
+	LUA_OPEN_LIB(L, luaopen_debug);
+		HSTR_PUSH(L, "traceback");
+		LuaUtils::PushDebugTraceback(L);
+		lua_rawset(L, LUA_REGISTRYINDEX);
+	// We only need the debug.traceback function, the others are unsafe for syncing.
+	// Later CLuaHandle implementations decide themselves if they want to reload the lib or not (LuaUI does).
+	LUA_UNLOAD_LIB(L, LUA_DBLIBNAME);
+}
+
+
 CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 	: CEventClient(_name, _order, false) // FIXME
 	, userMode   (_userMode)
 	, killMe     (false)
-#ifdef DEBUG
-	, printTracebacks(true)
-#else
-	, printTracebacks(false)
-#endif
 	, callinErrors(0)
 {
 	UpdateThreading();
@@ -72,10 +79,12 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 	SetSynced(false, true);
 	D_Sim.owner = this;
 	L_Sim = LUA_OPEN(&D_Sim, GetUserMode(), true);
-	LUA_OPEN_LIB(L_Sim, luaopen_debug);
 	D_Draw.owner = this;
 	L_Draw = LUA_OPEN(&D_Draw, GetUserMode(), false);
-	LUA_OPEN_LIB(L_Draw, luaopen_debug);
+
+	// needed for engine traceback
+	PushTracebackFuncToRegistry(L_Sim);
+	PushTracebackFuncToRegistry(L_Draw);
 }
 
 
@@ -400,9 +409,6 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 
 int CLuaHandle::SetupTraceback(lua_State *L)
 {
-	if (!printTracebacks)
-		return 0;
-
 	return LuaUtils::PushDebugTraceback(L);
 }
 
@@ -983,10 +989,15 @@ void CLuaHandle::UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag)
 }
 
 
-void CLuaHandle::UnitDamaged(const CUnit* unit, const CUnit* attacker,
-                             float damage, int weaponID, bool paralyzer)
+void CLuaHandle::UnitDamaged(
+	const CUnit* unit,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID,
+	bool paralyzer)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_DAMAGED, unit, attacker, damage, weaponID, paralyzer);
+	LUA_UNIT_BATCH_PUSH(,UNIT_DAMAGED, unit, attacker, damage, weaponDefID, paralyzer);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 11);
 
@@ -1005,9 +1016,12 @@ void CLuaHandle::UnitDamaged(const CUnit* unit, const CUnit* attacker,
 	lua_pushnumber(L, unit->team);
 	lua_pushnumber(L, damage);
 	lua_pushboolean(L, paralyzer);
+
 	if (GetHandleFullRead(L)) {
-		lua_pushnumber(L, weaponID);
-		argCount += 1;
+		lua_pushnumber(L, weaponDefID); argCount += 1;
+		// TODO: add to batch
+		// lua_pushnumber(L, projectileID); // argCount += 1;
+
 		if (attacker != NULL) {
 			lua_pushnumber(L, attacker->id);
 			lua_pushnumber(L, attacker->unitDef->id);
@@ -1367,7 +1381,7 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 
 	const CUnit* owner = p->owner();
 	const CWeaponProjectile* wp = p->weapon? static_cast<const CWeaponProjectile*>(p): NULL;
-	const WeaponDef* wd = p->weapon? wp->weaponDef: NULL;
+	const WeaponDef* wd = p->weapon? wp->GetWeaponDef(): NULL;
 
 	// if this weapon-type is not being watched, bail
 	if (p->weapon && (wd == NULL || !watchWeaponDefs[wd->id]))
@@ -1400,7 +1414,7 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 	if (!p->weapon && !p->piece) return;
 	if (p->weapon) {
 		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
-		const WeaponDef* wd = wp->weaponDef;
+		const WeaponDef* wd = wp->GetWeaponDef();
 
 		// if this weapon-type is not being watched, bail
 		if (wd == NULL || !watchWeaponDefs[wd->id]) return;
@@ -1423,7 +1437,7 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 
 /******************************************************************************/
 
-bool CLuaHandle::Explosion(int weaponDefID, const float3& pos, const CUnit* owner)
+bool CLuaHandle::Explosion(int weaponDefID, int projectileID, const float3& pos, const CUnit* owner)
 {
 	// piece-projectile collision (*ALL* other
 	// explosion events pass valid weaponDefIDs)
@@ -1542,7 +1556,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				UnitCmdDone(e.unit1, e.int1, e.int2);
 				break;
 			case UNIT_DAMAGED:
-				UnitDamaged(e.unit1, e.unit2, e.float1, e.int1, e.bool1);
+				UnitDamaged(e.unit1, e.unit2, e.float1, e.int1, -1, e.bool1);
 				break;
 			case UNIT_EXPERIENCE:
 				UnitExperience(e.unit1, e.float1);
@@ -1590,7 +1604,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				UnitMoveFailed(e.unit1);
 				break;
 			case UNIT_EXPLOSION:
-				Explosion(e.int1, e.cmd1->GetPos(0), e.unit1);
+				Explosion(e.int1, -1, e.cmd1->GetPos(0), e.unit1);
 				break;
 			case UNIT_UNIT_COLLISION:
 				UnitUnitCollision(e.unit1, e.unit2);

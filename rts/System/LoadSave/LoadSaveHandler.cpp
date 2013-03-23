@@ -5,11 +5,18 @@
 #include "LoadSaveHandler.h"
 #include "CregLoadSaveHandler.h"
 #include "LuaLoadSaveHandler.h"
+#include "System/Config/ConfigHandler.h"
+
+
+CONFIG(bool, UseCREGSaveLoad).defaultValue(false);
 
 
 ILoadSaveHandler* ILoadSaveHandler::Create()
 {
-	return new CLuaLoadSaveHandler();
+	if (configHandler->GetBool("UseCREGSaveLoad"))
+		return new CCregLoadSaveHandler();
+	else
+		return new CLuaLoadSaveHandler();
 }
 
 

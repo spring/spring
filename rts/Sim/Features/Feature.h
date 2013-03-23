@@ -37,14 +37,14 @@ public:
 	 * This will add this to the FeatureHandler.
 	 */
 	void Initialize(const FeatureLoadParams& params);
-	int GetBlockingMapID() const { return id + (10 * uh->MaxUnits()); }
+	int GetBlockingMapID() const { return id + (10 * unitHandler->MaxUnits()); }
 
 	/**
 	 * Negative amount = reclaim
 	 * @return true if reclaimed
 	 */
 	bool AddBuildPower(float amount, CUnit* builder);
-	void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID);
+	void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID);
 	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
 	bool Update();

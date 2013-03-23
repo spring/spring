@@ -25,15 +25,9 @@ void handleAIException(const char* description);
 class CEngineOutHandler : public CObject {
 	CR_DECLARE(CEngineOutHandler);
 
-	CEngineOutHandler();
 	~CEngineOutHandler();
 
 public:
-	/**
-	 * This function initialized a singleton instance,
-	 * if not yet done by a call to GetInstance()
-	 */
-	static void Initialize();
 	static CEngineOutHandler* GetInstance();
 	static void Destroy();
 
@@ -55,7 +49,7 @@ public:
 	void UnitCreated(const CUnit& unit, const CUnit* builder);
 	void UnitFinished(const CUnit& unit);
 	void UnitDestroyed(const CUnit& destroyed, const CUnit* attacker);
-	void UnitDamaged(const CUnit& damaged, const CUnit* attacker, float damage, int weaponId, bool paralyzer);
+	void UnitDamaged(const CUnit& damaged, const CUnit* attacker, float damage, int weaponDefID, int projectileID, bool paralyzer);
 	void UnitMoveFailed(const CUnit& unit);
 	void UnitCaptured(const CUnit& unit, int oldTeam, int newTeam);
 	void UnitGiven(const CUnit& unit, int oldTeam, int newTeam);
@@ -112,7 +106,7 @@ public:
 	 * and the AI are compiled with the same compiler/exception system.
 	 * Shorlty: catching AI exceptions in the engine is deprecated
 	 */
-	static bool IsCatchExceptions();
+	static bool CatchExceptions();
 	/**
 	 * This is used inside a catch block for a try guarding a call form
 	 * the engine into an AI.

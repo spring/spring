@@ -25,6 +25,7 @@
 #include "Sim/Projectiles/Unsynced/WakeProjectile.h"
 #include "Sim/Projectiles/Unsynced/WreckProjectile.h"
 
+#include "System/creg/STL_Map.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
@@ -36,8 +37,45 @@ CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject);
 CR_REG_METADATA(CExpGenSpawnable, );
 
 CR_BIND_INTERFACE(IExplosionGenerator);
+CR_REG_METADATA(IExplosionGenerator, (
+	CR_MEMBER(generatorID)
+));
+
 CR_BIND_DERIVED(CStdExplosionGenerator, IExplosionGenerator, );
+
+CR_BIND(CCustomExplosionGenerator::ProjectileSpawnInfo, )
+CR_REG_METADATA_SUB(CCustomExplosionGenerator, ProjectileSpawnInfo, (
+	//CR_MEMBER(projectileClass), FIXME is pointer
+	CR_MEMBER(code),
+	CR_MEMBER(count),
+	CR_MEMBER(flags)
+));
+
+CR_BIND(CCustomExplosionGenerator::GroundFlashInfo, )
+CR_REG_METADATA_SUB(CCustomExplosionGenerator, GroundFlashInfo, (
+	CR_MEMBER(flashSize),
+	CR_MEMBER(flashAlpha),
+	CR_MEMBER(circleGrowth),
+	CR_MEMBER(circleAlpha),
+	CR_MEMBER(ttl),
+	CR_MEMBER(color),
+	CR_MEMBER(flags)
+));
+
+CR_BIND(CCustomExplosionGenerator::CEGData, )
+CR_REG_METADATA_SUB(CCustomExplosionGenerator, CEGData, (
+	CR_MEMBER(projectileSpawn),
+	CR_MEMBER(groundFlash),
+	CR_MEMBER(useDefaultExplosions)
+));
+
 CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
+CR_REG_METADATA(CCustomExplosionGenerator, (
+	CR_MEMBER(explosionIDs),
+	CR_MEMBER(explosionData)//,
+	//CR_MEMBER(spawnExplGens) FIXME
+));
+
 
 CExplosionGeneratorHandler* explGenHandler = NULL;
 CCustomExplosionGenerator* gCEG = NULL;
@@ -272,7 +310,7 @@ bool CStdExplosionGenerator::Explosion(
 
 	new CHeatCloudProjectile(npos, float3(0.0f, 0.3f, 0.0f), 8 + sqrtDmg * 0.5f, 7 + damage * 2.8f, owner);
 
-	if (ph->particleSaturation < 1.0f) {
+	if (projectileHandler->particleSaturation < 1.0f) {
 		// turn off lots of graphic only particles when we have more particles than we want
 		float smokeDamage      = damage;
 		float smokeDamageSQRT  = 0.0f;
@@ -918,7 +956,7 @@ bool CCustomExplosionGenerator::Explosion(
 
 		// If we're saturated, spawn only synced projectiles.
 		// Whether a class is synced is determined by the creg::CF_Synced flag.
-		if (ph->particleSaturation > 1 && !(psi.flags & SPW_SYNCED)) {
+		if (projectileHandler->particleSaturation > 1 && !(psi.flags & SPW_SYNCED)) {
 			continue;
 		}
 

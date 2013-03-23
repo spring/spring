@@ -76,7 +76,7 @@ public:
 	 * @brief Set frame after loading
 	 * WARNING! No checks are done, so be carefull
 	 */
-	void PostLoad(unsigned lastTick, int serverFrameNum);
+	void PostLoad(int serverFrameNum);
 
 	void CreateNewFrame(bool fromServerThread, bool fixedFrameTime);
 
@@ -114,6 +114,11 @@ private:
 	 * @brief force the specified player to spectate
 	 */
 	void SpecPlayer(const int playerNum);
+
+	/**
+	 * @brief drops chat or drawin messages for given playerNum
+	 */
+	void MutePlayer(const int playerNum, bool muteChat, bool muteDraw );
 
 	void ResignPlayer(const int playerNum);
 
@@ -189,6 +194,8 @@ private:
 	std::vector<GameParticipant> players;
 	std::vector<GameTeam> teams;
 	std::vector<unsigned char> winningAllyTeams;
+	//! bit0: chat mute, bit1: drawing mute
+	std::vector<int> mutedPlayers;
 
 	float medianCpu;
 	int medianPing;
@@ -218,7 +225,7 @@ private:
 	bool noHelperAIs;
 	bool canReconnect;
 	bool allowSpecDraw;
-	bool allowAdditionalPlayers;
+	bool bypassScriptPasswordCheck;
 	bool whiteListAdditionalPlayers;
 	std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > > packetCache;
 

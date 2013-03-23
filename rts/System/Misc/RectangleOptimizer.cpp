@@ -1,10 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "RectangleOptimizer.h"
+#include "System/creg/STL_List.h"
 #include "System/Log/ILog.h"
 
 #include <cassert>
 
+CR_BIND(CRectangleOptimizer, );
+CR_REG_METADATA(CRectangleOptimizer, (
+	CR_MEMBER(maxAreaPerRect),
+	CR_MEMBER(rectangles),
+	CR_MEMBER(needsUpdate)
+));
 
 unsigned CRectangleOptimizer::statsTotalSize = 0;
 unsigned CRectangleOptimizer::statsOptSize   = 0;
@@ -51,7 +58,7 @@ void CRectangleOptimizer::Optimize()
 	StageOverlap();
 	StageMerge();
 	StageSplitTooLarge();
-	
+
 	statsOptSize += GetTotalArea();
 
 	needsUpdate = false;

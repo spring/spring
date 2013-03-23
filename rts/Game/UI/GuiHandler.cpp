@@ -1018,11 +1018,11 @@ void CGuiHandler::SetCursorIcon() const
 			bi.pos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
 			bi.buildFacing = bi.buildFacing;
 			bi.def = unitDefHandler->GetUnitDefByID(-cmdDesc.id);
-			bi.pos = helper->Pos2BuildPos(bi, false);
+			bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 			// if an unit (enemy), is not in LOS, then TestUnitBuildSquare()
 			// does not consider it when checking for position blocking
 			CFeature* feature = NULL;
-			if (!uh->TestUnitBuildSquare(bi, feature, gu->myAllyTeam, false)) {
+			if (!CGameHelper::TestUnitBuildSquare(bi, feature, gu->myAllyTeam, false)) {
 				newCursor = "BuildBad";
 			} else {
 				newCursor = "BuildGood";
@@ -2229,7 +2229,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			if (buildPos.size() == 1) {
 				CFeature* feature = NULL;
 				// TODO Maybe also check out-of-range for immobile builder?
-				if (!uh->TestUnitBuildSquare(buildPos[0], feature, gu->myAllyTeam, false)) {
+				if (!CGameHelper::TestUnitBuildSquare(buildPos[0], feature, gu->myAllyTeam, false)) {
 					return defaultRet;
 				}
 			}
@@ -2337,7 +2337,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				}
 
 				if (feature && commands[tempInCommand].type == CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) { // clicked on feature
-					c.PushParam(uh->MaxUnits() + feature->id);
+					c.PushParam(unitHandler->MaxUnits() + feature->id);
 				} else if (unit && commands[tempInCommand].type != CMDTYPE_ICON_AREA) { // clicked on unit
 					if (c.GetID() == CMD_RESURRECT)
 						return defaultRet; // cannot resurrect units!
@@ -2453,7 +2453,7 @@ static void FillRowOfBuildPos(const BuildInfo& startInfo, float x, float z, floa
 {
 	for (int i = 0; i < n; ++i) {
 		BuildInfo bi(startInfo.def, float3(x, 0.0f, z), (startInfo.buildFacing + facing) % NUM_FACINGS);
-		bi.pos=helper->Pos2BuildPos(bi, false);
+		bi.pos=CGameHelper::Pos2BuildPos(bi, false);
 		if (!nocancel || !WouldCancelAnyQueued(bi)) {
 			ret.push_back(bi);
 		}
@@ -2467,8 +2467,8 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 {
 	std::vector<BuildInfo> ret;
 
-	float3 start = helper->Pos2BuildPos(startInfo, false);
-	float3 end = helper->Pos2BuildPos(endInfo, false);
+	float3 start = CGameHelper::Pos2BuildPos(startInfo, false);
+	float3 end = CGameHelper::Pos2BuildPos(endInfo, false);
 
 	BuildInfo other; // the unit around which buildings can be circled
 
@@ -2484,7 +2484,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 			other.pos = unit->pos;
 			other.buildFacing = unit->buildFacing;
 		} else {
-			Command c = uh->GetBuildCommand(cameraPos, mouseDir);
+			Command c = CGameHelper::GetBuildCommand(cameraPos, mouseDir);
 			if (c.GetID() < 0 && c.params.size() == 4) {
 				other.pos = c.GetPos(0);
 				other.def = unitDefHandler->GetUnitDefByID(-c.GetID());
@@ -2500,7 +2500,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		int xsize = startInfo.GetXSize() * SQUARE_SIZE;
 		int zsize = startInfo.GetZSize() * SQUARE_SIZE;
 
-		start = end = helper->Pos2BuildPos(other, false);
+		start = end = CGameHelper::Pos2BuildPos(other, false);
 		start.x -= oxsize / 2;
 		start.z -= ozsize / 2;
 		end.x += oxsize / 2;
@@ -3390,33 +3390,24 @@ static void DrawWeaponCone(const float3& pos,
 
 static inline void DrawWeaponArc(const CUnit* unit)
 {
-	if (unit->weapons.empty()) {
-		return;
-	}
-	const CWeapon* w = unit->weapons.front();
-	float3 dir;
-	if (w->onlyForward) {
-		dir = unit->frontdir;
-	} else {
-		dir = w->wantedDir;
-	}
+	for (unsigned int n = 0; n < unit->weapons.size(); n++) {
+		const CWeapon* w = unit->weapons[n];
 
-	// copied from Weapon.cpp
-	const float3 interPos = unit->pos + (unit->speed * globalRendering->timeOffset);
-	float3 pos = interPos +
-	             (unit->frontdir * w->relWeaponPos.z) +
-	             (unit->updir    * w->relWeaponPos.y) +
-	             (unit->rightdir * w->relWeaponPos.x);
-	if (pos.y < ground->GetHeightReal(pos.x, pos.z, false)) {
-		// hope that we are underground because we are a
-		// popup weapon and will come above ground later
-		pos = interPos + (UpVector * 10.0f);
-	}
+		// attack order needs to have been issued or wantedDir is undefined
+		if (w->targetType == Target_None)
+			continue;
+		if (w->weaponDef->projectileType == WEAPON_BASE_PROJECTILE)
+			continue;
 
-	const float hrads   = math::acos(w->maxForwardAngleDif);
-	const float heading = math::atan2(-dir.z, dir.x);
-	const float pitch   = math::asin(dir.y);
-	DrawWeaponCone(pos, w->range, hrads, heading, pitch);
+		const float3 weaponDir = (unit->frontdir * w->onlyForward) + (w->wantedDir * (1 - w->onlyForward));
+
+		const float hrads   = math::acos(w->maxForwardAngleDif);
+		const float heading = math::atan2(-weaponDir.z, weaponDir.x);
+		const float pitch   = math::asin(weaponDir.y);
+
+		// note: cone visualization is invalid for ballistic weapons
+		DrawWeaponCone(w->weaponMuzzlePos, w->range, hrads, heading, pitch);
+	}
 }
 
 
@@ -3688,21 +3679,27 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
 		{ // limit the locking scope to avoid deadlock
 			GML_STDMUTEX_LOCK(cai); // DrawMapStuff
+
 			// draw build distance for all immobile builders during build commands
-			std::list<CBuilderCAI*>::const_iterator bi;
-			for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {
-				const CUnit* unit = (*bi)->owner;
-				if ((unit == pointedAt) || (unit->team != gu->myTeam)) {
+			const std::map<unsigned int, CBuilderCAI*>& builderCAIs = unitHandler->builderCAIs;
+			      std::map<unsigned int, CBuilderCAI*>::const_iterator bi;
+
+			for (bi = builderCAIs.begin(); bi != builderCAIs.end(); ++bi) {
+				const CBuilderCAI* builderCAI = bi->second;
+				const CUnit* builder = builderCAI->owner;
+				const UnitDef* builderDef = builder->unitDef;
+
+				if ((builder == pointedAt) || (builder->team != gu->myTeam)) {
 					continue;
 				}
-				const UnitDef* unitdef = unit->unitDef;
-				if (unitdef->builder && (!unitdef->canmove || selectedUnits.IsUnitSelected(unit))) {
-					const float radius = unitdef->buildDistance;
+
+				if (builderDef->builder && (!builderDef->canmove || selectedUnits.IsUnitSelected(builder))) {
+					const float radius = builderDef->buildDistance;
 					if (radius > 0.0f) {
 						glDisable(GL_TEXTURE_2D);
 						const float* color = cmdColors.rangeBuild;
 						glColor4f(color[0], color[1], color[2], color[3] * 0.333f);
-						glSurfaceCircle(unit->pos, radius, 40);
+						glSurfaceCircle(builder->pos, radius, 40);
 					}
 				}
 			}

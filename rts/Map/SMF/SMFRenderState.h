@@ -4,6 +4,7 @@
 #define SMF_RENDERSTATE_H
 
 #include "Map/MapDrawPassTypes.h"
+#include <stddef.h> //required for NULL
 
 class CSMFGroundDrawer;
 struct ISkyLight;
@@ -47,6 +48,7 @@ public:
 
 struct SMFRenderStateARB: public ISMFRenderState {
 public:
+	SMFRenderStateARB():smfShaderBaseARB(NULL), smfShaderReflARB(NULL), smfShaderRefrARB(NULL), smfShaderCurrARB(NULL) {}
 	bool Init(const CSMFGroundDrawer* smfGroundDrawer);
 	void Kill();
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
@@ -66,6 +68,7 @@ private:
 
 struct SMFRenderStateGLSL: public ISMFRenderState {
 public:
+	SMFRenderStateGLSL():smfShaderGLSL(NULL) {}
 	bool Init(const CSMFGroundDrawer* smfGroundDrawer);
 	void Kill();
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;

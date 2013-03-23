@@ -52,7 +52,7 @@ void CGeoThermSmokeProjectile::Update()
 
 void CGeoThermSmokeProjectile::GeoThermDestroyed(const CFeature* geo)
 {
-	for (ProjectileContainer::iterator it = ph->unsyncedProjectiles.begin(); it != ph->unsyncedProjectiles.end(); ++it) {
+	for (ProjectileContainer::iterator it = projectileHandler->unsyncedProjectiles.begin(); it != projectileHandler->unsyncedProjectiles.end(); ++it) {
 		CGeoThermSmokeProjectile* geoPuff = dynamic_cast<CGeoThermSmokeProjectile*>(*it);
 		if (geoPuff) {
 			if (geoPuff->geo == geo) {

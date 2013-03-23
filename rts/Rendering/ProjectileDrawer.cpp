@@ -414,7 +414,7 @@ void CProjectileDrawer::DrawProjectiles(int modelType, int numFlyingPieces, int*
 	ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
 
 	for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
-		if (modelType == MODELTYPE_S3O) {
+		if (modelType != MODELTYPE_3DO) {
 			texturehandlerS3O->SetS3oTexture(binIt->first);
 		}
 
@@ -580,8 +580,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int* drawnPieces)
 {
 	static FlyingPieceContainer* containers[MODELTYPE_OTHER] = {
-		&ph->flyingPieces3DO,
-		&ph->flyingPiecesS3O,
+		&projectileHandler->flyingPieces3DO,
+		&projectileHandler->flyingPiecesS3O,
 		NULL
 	};
 
@@ -622,15 +622,15 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	{
 		GML_STDMUTEX_LOCK(rpiece); // Draw
 
-		ph->flyingPieces3DO.delete_delayed();
-		ph->flyingPieces3DO.add_delayed();
-		ph->flyingPiecesS3O.delete_delayed();
-		ph->flyingPiecesS3O.add_delayed();
+		projectileHandler->flyingPieces3DO.delete_delayed();
+		projectileHandler->flyingPieces3DO.add_delayed();
+		projectileHandler->flyingPiecesS3O.delete_delayed();
+		projectileHandler->flyingPiecesS3O.add_delayed();
 	}
 
 	zSortedProjectiles.clear();
 
-	int numFlyingPieces = ph->flyingPieces3DO.render_size() + ph->flyingPiecesS3O.render_size();
+	int numFlyingPieces = projectileHandler->flyingPieces3DO.render_size() + projectileHandler->flyingPiecesS3O.render_size();
 	int drawnPieces = 0;
 
 	Update();
@@ -651,7 +651,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		// z-sort the model-less projectiles
 		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
 
-		ph->currentParticles = 0;
+		projectileHandler->currentParticles = 0;
 		CProjectile::inArray = false;
 		CProjectile::va = GetVertexArray();
 		CProjectile::va->Initialize();
@@ -678,7 +678,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		// note: nano-particles (CGfxProjectile instances) also
 		// contribute to the count, but have their own creation
 		// cutoff
-		ph->currentParticles += CProjectile::DrawArray();
+		projectileHandler->currentParticles += CProjectile::DrawArray();
 	}
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -686,16 +686,16 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glDepthMask(GL_TRUE);
 
-	ph->currentParticles  = int(ph->currentParticles * 0.2f);
-	ph->currentParticles += int(0.2f * drawnPieces + 0.3f * numFlyingPieces);
-	ph->currentParticles += (renderProjectiles.size() * 0.8f);
+	projectileHandler->currentParticles  = int(projectileHandler->currentParticles * 0.2f);
+	projectileHandler->currentParticles += int(0.2f * drawnPieces + 0.3f * numFlyingPieces);
+	projectileHandler->currentParticles += (renderProjectiles.size() * 0.8f);
 
 	// NOTE: should projectiles that have a model be counted here?
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		ph->currentParticles += (modelRenderers[modelType]->GetNumProjectiles() * 0.8f);
+		projectileHandler->currentParticles += (modelRenderers[modelType]->GetNumProjectiles() * 0.8f);
 	}
 
-	ph->UpdateParticleSaturation();
+	projectileHandler->UpdateParticleSaturation();
 }
 
 void CProjectileDrawer::DrawShadowPass()
@@ -729,7 +729,7 @@ void CProjectileDrawer::DrawShadowPass()
 		glEnable(GL_ALPHA_TEST);
 		glShadeModel(GL_SMOOTH);
 
-		ph->currentParticles += CProjectile::DrawArray();
+		projectileHandler->currentParticles += CProjectile::DrawArray();
 	}
 
 	po->Disable();
@@ -748,7 +748,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 
 	if (p->weapon) {
 		// weapon-projectile
-		const CWeaponProjectile* wp = dynamic_cast<const CWeaponProjectile*>(p);
+		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 
 		#define SET_TRANSFORM_VECTORS(dir)           \
 			float3 rightdir, updir;                  \
@@ -769,12 +769,12 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 			glPopMatrix();
 
 		switch (wp->GetProjectileType()) {
-			case CWeaponProjectile::WEAPON_BASE_PROJECTILE:
-			case CWeaponProjectile::WEAPON_EXPLOSIVE_PROJECTILE: 
-			case CWeaponProjectile::WEAPON_LASER_PROJECTILE:
-			case CWeaponProjectile::WEAPON_TORPEDO_PROJECTILE: {
+			case WEAPON_BASE_PROJECTILE:
+			case WEAPON_EXPLOSIVE_PROJECTILE: 
+			case WEAPON_LASER_PROJECTILE:
+			case WEAPON_TORPEDO_PROJECTILE: {
 				if (!shadowPass) {
-					unitDrawer->SetTeamColour(wp->colorTeam);
+					unitDrawer->SetTeamColour(wp->GetTeamID());
 				}
 
 				float3 dir(wp->speed);
@@ -786,9 +786,9 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 				TRANSFORM_DRAW(transMatrix);
 			} break;
 
-			case CWeaponProjectile::WEAPON_MISSILE_PROJECTILE: {
+			case WEAPON_MISSILE_PROJECTILE: {
 				if (!shadowPass) {
-					unitDrawer->SetTeamColour(wp->colorTeam);
+					unitDrawer->SetTeamColour(wp->GetTeamID());
 				}
 
 				SET_TRANSFORM_VECTORS(wp->dir);
@@ -798,9 +798,9 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 				TRANSFORM_DRAW(transMatrix);
 			} break;
 
-			case CWeaponProjectile::WEAPON_STARBURST_PROJECTILE: {
+			case WEAPON_STARBURST_PROJECTILE: {
 				if (!shadowPass) {
-					unitDrawer->SetTeamColour(wp->colorTeam);
+					unitDrawer->SetTeamColour(wp->GetTeamID());
 				}
 
 				SET_TRANSFORM_VECTORS(wp->dir);
@@ -818,10 +818,10 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		#undef TRANSFORM_DRAW
 	} else {
 		// piece-projectile
-		const CPieceProjectile* pp = dynamic_cast<const CPieceProjectile*>(p);
+		const CPieceProjectile* pp = static_cast<const CPieceProjectile*>(p);
 
 		if (!shadowPass) {
-			unitDrawer->SetTeamColour(pp->colorTeam);
+			unitDrawer->SetTeamColour(pp->GetTeamID());
 		}
 
 		if (pp->alphaThreshold != 0.1f) {
@@ -862,15 +862,15 @@ void CProjectileDrawer::DrawGroundFlashes()
 	{
 		GML_STDMUTEX_LOCK(rflash); // DrawGroundFlashes
 
-		ph->groundFlashes.delete_delayed();
-		ph->groundFlashes.add_delayed();
+		projectileHandler->groundFlashes.delete_delayed();
+		projectileHandler->groundFlashes.add_delayed();
 	}
 
 	CGroundFlash::va = GetVertexArray();
 	CGroundFlash::va->Initialize();
 	CGroundFlash::va->EnlargeArrays(8, 0, VA_SIZE_TC);
 
-	GroundFlashContainer& gfc = ph->groundFlashes;
+	GroundFlashContainer& gfc = projectileHandler->groundFlashes;
 	GroundFlashContainer::render_iterator gfi;
 
 	bool depthTest = true;

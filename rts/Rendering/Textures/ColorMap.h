@@ -43,8 +43,6 @@ public:
 	static CColorMap* LoadFromDefString(const std::string& dString);
 
 	/// To load default values
-	static CColorMap* Load8f( float r1, float g1, float b1, float a1, float r2, float g2, float b2, float a2);
-	/// To load default values
 	static CColorMap* Load12f(float r1, float g1, float b1, float a1, float r2, float g2, float b2, float a2, float r3, float g3, float b3, float a3);
 
 	/**
@@ -56,7 +54,7 @@ public:
 	static void DeleteColormaps();
 
 protected:
-	unsigned char* map;
+	std::vector<unsigned char> map;
 	int xsize;
 	int nxsize;
 	int ysize;

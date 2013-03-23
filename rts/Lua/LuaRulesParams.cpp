@@ -6,6 +6,6 @@ using namespace LuaRulesParams;
 
 CR_BIND(Param,);
 CR_REG_METADATA(Param, (
-				CR_MEMBER(value),
-				CR_MEMBER(los)
+	CR_MEMBER(value),
+	CR_MEMBER(los)
 ));

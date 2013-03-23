@@ -23,20 +23,6 @@
 C3DModelLoader* modelParser = NULL;
 
 
-
-static inline ModelType ModelExtToModelType(const C3DModelLoader::ParserMap& parsers, const std::string& ext) {
-	if (ext == "3do") { return MODELTYPE_3DO; }
-	if (ext == "s3o") { return MODELTYPE_S3O; }
-	if (ext == "obj") { return MODELTYPE_OBJ; }
-
-	if (parsers.find(ext) != parsers.end()) {
-		return MODELTYPE_ASS;
-	}
-
-	// FIXME: this should be a content error?
-	return MODELTYPE_OTHER;
-}
-
 static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
 	if (type == MODELTYPE_3DO) { return (new S3DOPiece()); }
 	if (type == MODELTYPE_S3O) { return (new SS3OPiece()); }
@@ -46,7 +32,7 @@ static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
 	return NULL;
 }
 
-static void RegisterAssimpModelParsers(C3DModelLoader::ParserMap& parsers, CAssParser* assParser) {
+static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 	std::string extension;
 	std::string extensions;
 	Assimp::Importer importer;
@@ -60,21 +46,20 @@ static void RegisterAssimpModelParsers(C3DModelLoader::ParserMap& parsers, CAssP
 	LOG("[%s] supported Assimp model formats: %s",
 			__FUNCTION__, extensions.c_str());
 
-	size_t i = 0;
-	size_t j = 0;
+	size_t curIdx = 0;
+	size_t nxtIdx = 0;
 
 	// split the list, strip off the "*." extension prefixes
-	while ((j = extensions.find(";", i)) != std::string::npos) {
-		extension = extensions.substr(i, j - i);
+	while ((nxtIdx = extensions.find(";", curIdx)) != std::string::npos) {
+		extension = extensions.substr(curIdx, nxtIdx - curIdx);
 		extension = extension.substr(extension.find("*.") + 2);
+		extension = StringToLower(extension);
 
-		StringToLowerInPlace(extension);
-
-		if (parsers.find(extension) == parsers.end()) {
-			parsers[extension] = assParser;
+		if (formats.find(extension) == formats.end()) {
+			formats[extension] = MODELTYPE_ASS;
 		}
 
-		i = j + 1;
+		curIdx = nxtIdx + 1;
 	}
 }
 
@@ -83,12 +68,17 @@ static void RegisterAssimpModelParsers(C3DModelLoader::ParserMap& parsers, CAssP
 C3DModelLoader::C3DModelLoader()
 {
 	// file-extension should be lowercase
-	parsers["3do"] = new C3DOParser();
-	parsers["s3o"] = new CS3OParser();
-	parsers["obj"] = new COBJParser();
+	formats["3do"] = MODELTYPE_3DO;
+	formats["s3o"] = MODELTYPE_S3O;
+	formats["obj"] = MODELTYPE_OBJ;
+
+	parsers[MODELTYPE_3DO] = new C3DOParser();
+	parsers[MODELTYPE_S3O] = new CS3OParser();
+	parsers[MODELTYPE_OBJ] = new COBJParser();
+	parsers[MODELTYPE_ASS] = new CAssParser();
 
 	// FIXME: unify the metadata formats of CAssParser and COBJParser
-	RegisterAssimpModelParsers(parsers, new CAssParser());
+	RegisterAssimpModelFormats(formats);
 
 	// dummy first model, model IDs start at 1
 	models.reserve(32);
@@ -111,20 +101,12 @@ C3DModelLoader::~C3DModelLoader()
 		delete model;
 	}
 
-	models.clear();
-	cache.clear();
-
-	// get rid of Spring's native parsers
-	delete parsers["3do"]; parsers.erase("3do");
-	delete parsers["s3o"]; parsers.erase("s3o");
-	delete parsers["obj"]; parsers.erase("obj");
-
-	if (!parsers.empty()) {
-		// delete the shared Assimp parser
-		ParserMap::iterator pi = parsers.begin();
-		delete pi->second;
+	for (ParserMap::const_iterator it = parsers.begin(); it != parsers.end(); ++it) {
+		delete (it->second);
 	}
 
+	models.clear();
+	cache.clear();
 	parsers.clear();
 
 	if (GML::SimEnabled() && !GML::ShareLists()) {
@@ -168,11 +150,11 @@ std::string C3DModelLoader::FindModelPath(std::string name) const
 	const std::string& fileExt = FileSystem::GetExtension(name);
 
 	if (fileExt.empty()) {
-		for (ParserMap::const_iterator it = parsers.begin(); it != parsers.end(); ++it) {
-			const std::string& supportedExt = it->first;
+		for (FormatMap::const_iterator it = formats.begin(); it != formats.end(); ++it) {
+			const std::string& formatExt = it->first;
 
-			if (CFileHandler::FileExists(name + "." + supportedExt, SPRING_VFS_ZIP)) {
-				name += "." + supportedExt; break;
+			if (CFileHandler::FileExists(name + "." + formatExt, SPRING_VFS_ZIP)) {
+				name += ("." + formatExt); break;
 			}
 		}
 	}
@@ -195,7 +177,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 
 	// search in cache first
 	ModelMap::iterator ci;
-	ParserMap::iterator pi;
+	FormatMap::iterator fi;
 
 	if ((ci = cache.find(modelName)) != cache.end()) {
 		return models[ci->second];
@@ -211,8 +193,8 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 	// not found in cache, create the model and cache it
 	const std::string& fileExt = StringToLower(FileSystem::GetExtension(modelPath));
 
-	if ((pi = parsers.find(fileExt)) != parsers.end()) {
-		IModelParser* p = pi->second;
+	if ((fi = formats.find(fileExt)) != formats.end()) {
+		IModelParser* p = parsers[fi->second];
 		S3DModel* model = NULL;
 		S3DModelPiece* root = NULL;
 

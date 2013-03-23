@@ -19,7 +19,6 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/LoadSave/LoadSaveInterface.h"
 #include "System/Misc/RectangleOptimizer.h"
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
@@ -34,8 +33,39 @@
 // assigned to in CGame::CGame ("readmap = CReadMap::LoadMap(mapname)")
 CReadMap* readmap = NULL;
 
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	#define	HEIGHTMAP_DIGESTS CR_MEMBER(syncedHeightMapDigests), \
+					CR_MEMBER(unsyncedHeightMapDigests),
+#else
+	#define HEIGHTMAP_DIGESTS
+#endif
+
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
+	CR_MEMBER(metalMap),
+	CR_MEMBER(width),
+	CR_MEMBER(height),
+	CR_MEMBER(initMinHeight),
+	CR_MEMBER(initMaxHeight),
+	CR_IGNORED(currMinHeight),
+	CR_IGNORED(currMaxHeight),
+	CR_MEMBER(mapChecksum),
+	//CR_MEMBER(heightMapSyncedPtr),
+	//CR_MEMBER(heightMapUnsyncedPtr),
+	CR_MEMBER(originalHeightMap),
+	CR_IGNORED(centerHeightMap),
+	CR_IGNORED(mipCenterHeightMaps),
+	//CR_MEMBER(mipPointerHeightMaps),
+	CR_IGNORED(visVertexNormals),
+	CR_IGNORED(faceNormalsSynced),
+	CR_IGNORED(faceNormalsUnsynced),
+	CR_IGNORED(centerNormalsSynced),
+	CR_IGNORED(centerNormalsUnsynced),
+	CR_IGNORED(slopeMap),
+	CR_MEMBER(typeMap),
+	CR_MEMBER(unsyncedHeightMapUpdates),
+	CR_MEMBER(unsyncedHeightMapUpdatesTemp),
+	HEIGHTMAP_DIGESTS
 	CR_SERIALIZER(Serialize)
 ));
 

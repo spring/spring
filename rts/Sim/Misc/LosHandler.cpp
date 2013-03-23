@@ -24,7 +24,7 @@ CR_BIND(CLosHandler, );
 CR_BIND(CLosHandler::DelayedInstance, );
 
 CR_REG_METADATA(LosInstance,(
-//		CR_MEMBER(losSquares),
+		CR_IGNORED(losSquares),
 		CR_MEMBER(losSize),
 		CR_MEMBER(airLosSize),
 		CR_MEMBER(refCount),
@@ -34,8 +34,7 @@ CR_REG_METADATA(LosInstance,(
 		CR_MEMBER(baseAirPos),
 		CR_MEMBER(hashNum),
 		CR_MEMBER(baseHeight),
-		CR_MEMBER(toBeDeleted),
-		CR_RESERVED(16)
+		CR_MEMBER(toBeDeleted)
 		));
 
 void CLosHandler::PostLoad()

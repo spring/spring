@@ -257,7 +257,7 @@ void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& ino
 	args.push_back((int)(500 * hitDir.x));
 
 	if (HasFunction(COBFN_HitByWeaponId)) {
-		const WeaponDef* wd = weaponDefHandler->GetWeaponById(weaponDefId);
+		const WeaponDef* wd = weaponDefHandler->GetWeaponDefByID(weaponDefId);
 		args.push_back(wd ? wd->tdfId : -1);
 		args.push_back((int)(100 * inout_damage));
 

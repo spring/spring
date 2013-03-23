@@ -32,7 +32,14 @@ CONFIG(std::string, RotateLogFiles).defaultValue("auto")
 		.description("rotate logfiles, valid values are \"always\" (default in debug builds) and \"never\" (default in release builds).");
 CONFIG(std::string, LogSections).defaultValue("")
 		.description("Comma seperated list of enabled logsections, see infolog.txt / console output for possible values");
-CONFIG(bool, LogFlush).defaultValue(false)
+
+/*
+LogFlush defaults to true, because there should be pretty low performance gains as most
+fwrite implementations cache on their own. Also cut-off logs often caused stack-traces
+to be cut off. BEFORE letting it default to false again, verify that it really increases
+performance as the drawbacks really suck
+*/
+CONFIG(bool, LogFlush).defaultValue(true)
 		.description("Instantly write to the logfile, use only for debugging as it will cause a slowdown");
 
 /******************************************************************************/

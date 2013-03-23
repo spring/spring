@@ -3,6 +3,7 @@
 #ifndef TEAM_CONTROLLER_H
 #define TEAM_CONTROLLER_H
 
+#include "System/creg/creg_cond.h"
 #include "System/Platform/byteorder.h" // for swabDWord
 
 #include <string>
@@ -18,6 +19,7 @@
 class TeamController
 {
 public:
+	CR_DECLARE(TeamController);
 
 	/**
 	 * @brief Constructor assigning default values.
@@ -49,6 +51,8 @@ public:
  */
 class TeamControllerStatistics {
 public:
+	CR_DECLARE(TeamControllerStatistics);
+
 	TeamControllerStatistics()
 		: numCommands(0)
 		, unitCommands(0) {}
@@ -62,7 +66,7 @@ public:
 
 protected:
 	/// Change structure from host endian to little endian or vice versa.
-	void swabTC() {
+	void swab() {
 		swabDWordInPlace(numCommands);
 		swabDWordInPlace(unitCommands);
 	}

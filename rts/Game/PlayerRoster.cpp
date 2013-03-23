@@ -103,7 +103,7 @@ const char* PlayerRoster::GetSortName()
 
 /******************************************************************************/
 
-const std::vector<int>& PlayerRoster::GetIndices(int* count, bool pathinfo) const
+const std::vector<int>& PlayerRoster::GetIndices(int* count, bool includePathingFlag) const
 {
 	static std::vector<int> players;
 	static int knownPlayers = 0;
@@ -124,11 +124,13 @@ const std::vector<int>& PlayerRoster::GetIndices(int* count, bool pathinfo) cons
 		int& c = *count;
 		for (c = 0; c < playerHandler->ActivePlayers(); c++) {
 			const CPlayer* p = playerHandler->Player(players[c]);
-			if ((p == NULL) ||
-				(!p->active &&
-					!(pathinfo &&
-					  p->ping == PATHING_FLAG &&
-					  gs->frameNum == 0))) {
+
+			if (p == NULL)
+				break;
+			if (p->active)
+				continue;
+
+			if (!includePathingFlag || p->ping != PATHING_FLAG || gs->frameNum != 0) {
 				break;
 			}
 		}

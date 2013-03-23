@@ -10,7 +10,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, (ProjectileParams(), ZeroVector));
+CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, (ProjectileParams()));
 
 CR_REG_METADATA(CFlameProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -19,34 +19,32 @@ CR_REG_METADATA(CFlameProjectile,(
 	CR_MEMBER(physLife),
 	CR_MEMBER(invttl),
 	CR_RESERVED(16)
-	));
+));
 
 
-CFlameProjectile::CFlameProjectile(const ProjectileParams& params, const float3& spread)
-	: CWeaponProjectile(params)
-	, spread(spread)
-	, curTime(0)
+CFlameProjectile::CFlameProjectile(const ProjectileParams& params): CWeaponProjectile(params)
+	, curTime(0.0f)
+	, physLife(0.0f)
+	, invttl(0.0f)
 {
 	projectileType = WEAPON_FLAME_PROJECTILE;
-	invttl = 1.0f / ttl;
 
-	if (weaponDef) {
+	invttl = 1.0f / ttl;
+	spread = params.spread;
+
+	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->size * weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
+
 		physLife = 1.0f / weaponDef->duration;
 	}
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
-}
-
-CFlameProjectile::~CFlameProjectile()
-{
 }
 
 void CFlameProjectile::Collision()
 {
 	const float3 norm = ground->GetNormal(pos.x, pos.z);
 	const float ns = speed.dot(norm);
+
 	speed -= (norm * ns);
 	pos.y += 0.05f;
 	curTime += 0.05f;

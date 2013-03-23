@@ -117,6 +117,10 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 	smfShaderGLSL->SetFlag("BASE_DYNAMIC_MAP_LIGHT",       lightHandler->GetBaseLight());
 	smfShaderGLSL->SetFlag("MAX_DYNAMIC_MAP_LIGHTS",       lightHandler->GetMaxLights());
 
+	// both are runtime set, but ATI drivers need them set from the beginning
+	smfShaderGLSL->SetFlag("HAVE_SHADOWS", 0);
+	smfShaderGLSL->SetFlag("HAVE_INFOTEX", 0);
+
 	smfShaderGLSL->Link();
 	smfShaderGLSL->SetUniformLocation("diffuseTex");          // idx  0
 	smfShaderGLSL->SetUniformLocation("normalsTex");          // idx  1

@@ -89,4 +89,24 @@ inline void LUA_CLOSE(lua_State *L_Old) {
 	lua_close(L_Old);
 }
 
+
+inline void LUA_UNLOAD_LIB(lua_State* L, std::string libname) {
+	luaL_findtable(L, LUA_REGISTRYINDEX, "_LOADED", 1);
+	lua_pushsstring(L, libname);
+	lua_pushnil(L);
+	lua_rawset(L, -3);
+
+	lua_pushnil(L); lua_setglobal(L, libname.c_str());
+}
+
+
+#if (LUA_VERSION_NUM < 500)
+#  define LUA_OPEN_LIB(L, lib) lib(L)
+#else
+#  define LUA_OPEN_LIB(L, lib) \
+     lua_pushcfunction((L), lib); \
+     lua_pcall((L), 0, 0, 0);
+#endif
+
+
 #endif // SPRING_LUA_INCLUDE

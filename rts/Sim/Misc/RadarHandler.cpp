@@ -7,46 +7,39 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/TimeProfiler.h"
 
+#ifdef SONAR_JAMMER_MAPS
+	#define SONAR_MAPS CR_MEMBER(sonarJammerMaps),
+#else
+	#define SONAR_MAPS
+#endif
 
 CR_BIND(CRadarHandler, (false));
 
 CR_REG_METADATA(CRadarHandler, (
-	CR_SERIALIZER(Serialize),
-	// radarMaps, airRadarMaps, sonarMaps, jammerMaps, sonarJammerMaps,
-	// seismicMaps, commonJammerMap, commonSonarJammerMap
-	//CR_MEMBER(circularRadar),
 	CR_MEMBER(radarErrorSize),
 	CR_MEMBER(baseRadarErrorSize),
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
 	CR_MEMBER(targFacEffect),
-	CR_RESERVED(32)
+
+	CR_MEMBER(radarMipLevel),
+	CR_MEMBER(radarDiv),
+	CR_MEMBER(invRadarDiv),
+	CR_MEMBER(circularRadar),
+	CR_MEMBER(radarAlgo),
+
+	CR_MEMBER(radarMaps),
+	CR_MEMBER(airRadarMaps),
+	CR_MEMBER(sonarMaps),
+	CR_MEMBER(jammerMaps),
+	SONAR_MAPS
+	CR_MEMBER(seismicMaps),
+	CR_MEMBER(commonJammerMap),
+	CR_MEMBER(commonSonarJammerMap)
 ));
 
 
 CRadarHandler* radarhandler = NULL;
-
-
-void CRadarHandler::Serialize(creg::ISerializer& s)
-{
-	const int size = xsize*zsize*2;
-
-	// NOTE This could be tricky if teamHandler is serialized after radarHandler.
-	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		s.Serialize(&radarMaps[a].front(), size);
-		if (!circularRadar) {
-			s.Serialize(&airRadarMaps[a].front(), size);
-		}
-		s.Serialize(&sonarMaps[a].front(), size);
-		s.Serialize(&jammerMaps[a].front(), size);
-#ifdef SONAR_JAMMER_MAPS
-		s.Serialize(&sonarJammerMaps[a].front(), size);
-#endif
-		s.Serialize(&seismicMaps[a].front(), size);
-	}
-	s.Serialize(&commonJammerMap.front(), size);
-	s.Serialize(&commonSonarJammerMap.front(), size);
-}
 
 
 CRadarHandler::CRadarHandler(bool circularRadar)

@@ -7,9 +7,13 @@
 #include <map>
 
 #include "System/float3.h"
+#include "System/creg/creg_cond.h"
+
 
 class TeamBase
 {
+	CR_DECLARE(TeamBase);
+
 public:
 	typedef std::map<std::string, std::string> customOpts;
 

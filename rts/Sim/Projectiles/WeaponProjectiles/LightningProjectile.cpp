@@ -6,7 +6,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
@@ -14,51 +13,38 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CLightningProjectile, CWeaponProjectile, (ProjectileParams(), ZeroVector));
+CR_BIND_DERIVED(CLightningProjectile, CWeaponProjectile, (ProjectileParams()));
 
 CR_REG_METADATA(CLightningProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(color),
-	CR_MEMBER(weapon),
 	CR_MEMBER(displacements),
-	CR_MEMBER(displacements2),
-	CR_RESERVED(16)
-	));
+	CR_MEMBER(displacements2)
+));
 
-CLightningProjectile::CLightningProjectile(const ProjectileParams& params, const float3& color)
-	: CWeaponProjectile(params, true)
-	, color(color)
-	, weapon(params.weapon) //remove!
+CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWeaponProjectile(params, true)
 {
 	projectileType = WEAPON_LIGHTNING_PROJECTILE;
-	checkCol = false; //FIXME?
+
+	checkCol = false; // FIXME?
 	drawRadius = pos.distance(targetPos);
-	//SetRadiusAndHeight(pos.distance(targetPos), 0.0f);
+	// SetRadiusAndHeight(pos.distance(targetPos), 0.0f);
+
+	if (weaponDef != NULL)
+		color = weaponDef->visuals.color;
 
 	displacements[0] = 0.0f;
+	displacements2[0] = 0.0f;
+
 	for (size_t d = 1; d < displacements_size; ++d) {
 		displacements[d]  = (gs->randFloat() - 0.5f) * drawRadius * 0.05f;
-	}
-
-	displacements2[0] = 0.0f;
-	for (size_t d = 1; d < displacements_size; ++d) {
 		displacements2[d] = (gs->randFloat() - 0.5f) * drawRadius * 0.05f;
-	}
-
-	if (weapon) {
-		AddDeathDependence(weapon, DEPENDENCE_WEAPON);
 	}
 
 #ifdef TRACE_SYNC
 	tracefile << "New lightning: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << end.x << " " << end.y << " " << end.z << "\n";
 #endif
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
-}
-
-CLightningProjectile::~CLightningProjectile()
-{
 }
 
 void CLightningProjectile::Update()
@@ -67,10 +53,6 @@ void CLightningProjectile::Update()
 		deleteMe = true;
 	} else {
 		gCEG->Explosion(cegID, startpos + ((targetPos - startpos) / ttl), 0.0f, displacements[0], NULL, 0.0f, NULL, targetPos - startpos);
-	}
-
-	if (weapon && !luaMoveCtrl) {
-		startpos = weapon->weaponMuzzlePos; //FIXME move to CWeaponProjectile
 	}
 
 	for (size_t d = 1; d < displacements_size; ++d) {
@@ -134,10 +116,3 @@ void CLightningProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& poin
 	lines.AddVertexQC(targetPos, lcolor);
 }
 
-void CLightningProjectile::DependentDied(CObject* o)
-{
-	if (o == weapon) {
-		weapon = NULL;
-	}
-	CWeaponProjectile::DependentDied(o);
-}
