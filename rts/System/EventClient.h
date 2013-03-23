@@ -142,7 +142,7 @@ class CEventClient
 		virtual void FeatureMoved(const CFeature* feature) {}
 
 		virtual void RenderFeatureCreated(const CFeature* feature) {}
-		virtual void RenderFeatureDestroyed(const CFeature* feature) {}
+		virtual void RenderFeatureDestroyed(const CFeature* feature, const float3& pos) {}
 		virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {}
 
 		virtual void ProjectileCreated(const CProjectile* proj) {}
