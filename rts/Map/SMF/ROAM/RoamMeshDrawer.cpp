@@ -247,6 +247,25 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 	}
 }
 
+void CRoamMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass)
+{
+	const bool inShadowPass = (drawPass == DrawPass::Shadow);
+	CCamera* cam = (inShadowPass)? camera: cam2;
+
+	for (int Y = 0; Y < numPatchesY; ++Y) {
+		for (int X = 0; X < numPatchesX; ++X) {
+			if (X % (numPatchesX - 1) == 0 || Y % (numPatchesY - 1) == 0) {
+				Patch& p = m_Patches[Y * numPatchesX + X];
+				if (p.IsVisible()) {
+					if (!inShadowPass)
+						p.SetSquareTexture();
+
+					p.DrawBorder();
+				}
+			}
+		}
+	}
+}
 
 #ifdef DRAW_DEBUG_IN_MINIMAP
 void CRoamMeshDrawer::DrawInMiniMap()

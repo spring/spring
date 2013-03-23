@@ -20,6 +20,7 @@ public:
 
 	virtual void Update() = 0;
 	virtual void DrawMesh(const DrawPass::e& drawPass) = 0;
+	virtual void DrawBorderMesh(const DrawPass::e& drawPass) = 0;
 };
 
 #endif // _MESH_DRAWER_H_
