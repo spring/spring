@@ -55,9 +55,7 @@ private:
 	bool LoadMapShaders();
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
-
-	void SetupTextureUnits(bool drawReflection);
-	void ResetTextureUnits(bool drawReflection);
+	inline void DrawBorder(const DrawPass::e drawPass);
 
 protected:
 	CSMFReadMap* smfMap;

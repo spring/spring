@@ -245,6 +245,8 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	smfRenderState->Disable(this, drawPass);
 	glDisable(GL_CULL_FACE);
 
+	DrawBorder(drawPass);
+
 	if (drawPass == DrawPass::Normal) {
 		if (mapInfo->water.hasWaterPlane) {
 			DrawWaterPlane(false);
@@ -253,6 +255,67 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		groundDecals->Draw();
 		projectileDrawer->DrawGroundFlashes();
 	}
+}
+
+
+void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
+{
+	glDisable(GL_BLEND);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glEnable(GL_TEXTURE_2D); // needed for the non-shader case
+
+	smfRenderState = smfRenderStateFFP;
+	//smfRenderState->Enable(this, drawPass);
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+	glActiveTexture(GL_TEXTURE2);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
+
+	glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f, 1.0f, 1.0f, 1.0f);
+	SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), -0.5f / gs->pwr2mapx, -0.5f / gs->pwr2mapy);
+
+	static const GLfloat planeX[] = {0.005f, 0.0f, 0.005f, 0.5f};
+	static const GLfloat planeZ[] = {0.0f, 0.005f, 0.0f, 0.5f};
+
+	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+	glTexGenfv(GL_S, GL_EYE_PLANE, planeX);
+	glEnable(GL_TEXTURE_GEN_S);
+
+	glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+	glTexGenfv(GL_T, GL_EYE_PLANE, planeZ);
+	glEnable(GL_TEXTURE_GEN_T);
+
+	glActiveTexture(GL_TEXTURE3);
+	glDisable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE1);
+	glDisable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D); // needed for the non-shader case
+
+	glEnable(GL_BLEND);
+
+		if (wireframe) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+			/*if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
+				glEnable(GL_ALPHA_TEST);
+				glAlphaFunc(GL_GREATER, 0.9f);
+			}*/
+
+				meshDrawer->DrawBorderMesh(drawPass);
+
+			/*if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
+				glDisable(GL_ALPHA_TEST);
+			}*/
+		if (wireframe) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+
+	smfRenderState->Disable(this, drawPass);
+	glDisable(GL_CULL_FACE);
 }
 
 

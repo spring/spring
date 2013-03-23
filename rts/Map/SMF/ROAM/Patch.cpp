@@ -16,6 +16,7 @@
 #include "Game/Camera.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
+#include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
@@ -357,7 +358,7 @@ void Patch::RecursTessellate(TriTreeNode* const tri, const int2 left, const int2
 		const int sizeY = std::max(left.y - right.y, right.y - left.y);
 		const int size  = std::max(sizeX, sizeY);
 
-		// Take both distance and variance and patch size into consideration
+		// Take distance, variance and patch size into consideration
 		TriVariance = (myVariance * PATCH_SIZE * size) * camDistLODFactor;
 	} else {
 		TriVariance = 10.0f; // >1 -> When variance isn't saved issue further tessellation
@@ -380,10 +381,10 @@ void Patch::RecursTessellate(TriTreeNode* const tri, const int2 left, const int2
 	}
 }
 
+
 // ---------------------------------------------------------------------
 // Render the tree.
 //
-
 
 void Patch::RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex)
 {
@@ -401,6 +402,13 @@ void Patch::RecursRender(TriTreeNode* const tri, const int2 left, const int2 rig
 	}
 }
 
+
+void Patch::GenerateIndices()
+{
+	indices.clear();
+	RecursRender(&m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0)                  );
+	RecursRender(&m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE));
+}
 
 
 // ---------------------------------------------------------------------
@@ -427,7 +435,7 @@ float Patch::RecursComputeVariance(const int leftX, const int leftY, const float
 	// Variance of this triangle is the actual height at it's hypotenuse midpoint minus the interpolated height.
 	// Use values passed on the stack instead of re-accessing the Height Field.
 	float myVariance = math::fabs(centerZ - ((leftZ + rightZ) / 2));
-	
+
 	if (leftZ*rightZ<0 || leftZ*centerZ<0 || rightZ*centerZ<0)
 		myVariance = std::max(myVariance * 1.5f, 20.0f); //shore lines get more variance for higher accuracy
 
@@ -511,6 +519,7 @@ void Patch::Tessellate(const float3& campos, int groundDetail)
 		1);
 }
 
+
 // ---------------------------------------------------------------------
 // Render the mesh.
 //
@@ -551,11 +560,84 @@ void Patch::Draw()
 }
 
 
-void Patch::GenerateIndices()
+void Patch::DrawBorder()
 {
-	indices.clear();
-	RecursRender(&m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0)                  );
-	RecursRender(&m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE));
+	CVertexArray* va = GetVertexArray();
+	GenerateBorderIndices(va);
+	va->DrawArrayC(GL_TRIANGLES);
+}
+
+
+void Patch::RecursBorderRender(CVertexArray* va, TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, int i, bool left_)
+{
+	if ( tri->IsLeaf() ) {
+		const float3& v1 = *(float3*)&vertices[(apex.x  + apex.y  * (PATCH_SIZE + 1))*3];
+		const float3& v2 = *(float3*)&vertices[(left.x  + left.y  * (PATCH_SIZE + 1))*3];
+		const float3& v3 = *(float3*)&vertices[(right.x + right.y * (PATCH_SIZE + 1))*3];
+
+		const unsigned char white[] = {255,255,255,255};
+		const unsigned char trans[] = {255,255,255,0};
+
+		if (i % 2 == 0) {
+			va->AddVertexC(float3(v2.x, v2.y, v2.z),    white);
+			va->AddVertexC(float3(v2.x, -400.0f, v2.z), trans);
+			va->AddVertexC(float3(v3.x, v3.y, v3.z),    white);
+
+			va->AddVertexC(float3(v3.x, v3.y, v3.z),    white);
+			va->AddVertexC(float3(v2.x, -400.0f, v2.z), trans);
+			va->AddVertexC(float3(v3.x, -400.0f, v3.z), trans);
+		} else {
+			if (left_) {
+				va->AddVertexC(float3(v1.x, v1.y, v1.z),    white);
+				va->AddVertexC(float3(v1.x, -400.0f, v1.z), trans);
+				va->AddVertexC(float3(v2.x, v2.y, v2.z),    white);
+
+				va->AddVertexC(float3(v2.x, v2.y, v2.z),    white);
+				va->AddVertexC(float3(v1.x, -400.0f, v1.z), trans);
+				va->AddVertexC(float3(v2.x, -400.0f, v2.z), trans);
+			} else {
+				va->AddVertexC(float3(v3.x, v3.y, v3.z),    white);
+				va->AddVertexC(float3(v3.x, -400.0f, v3.z), trans);
+				va->AddVertexC(float3(v1.x, v1.y, v1.z),    white);
+
+				va->AddVertexC(float3(v1.x, v1.y, v1.z),    white);
+				va->AddVertexC(float3(v3.x, -400.0f, v3.z), trans);
+				va->AddVertexC(float3(v1.x, -400.0f, v1.z), trans);
+			}
+		}
+
+	} else {
+		const int2 center(
+			(left.x + right.x) >> 1, // Compute X coordinate of center of Hypotenuse
+			(left.y + right.y) >> 1  // Compute Y coord...
+		);
+
+		if (i % 2 == 0) {
+			RecursBorderRender(va, tri->LeftChild,  apex,  left, center, i + 1, !left_);
+			RecursBorderRender(va, tri->RightChild, right, apex, center, i + 1, left_);
+		} else {
+			if (left_) {
+				RecursBorderRender(va, tri->LeftChild,  apex,  left, center, i + 1, left_);
+			} else {
+				RecursBorderRender(va, tri->RightChild, right, apex, center, i + 1, !left_);
+			}
+		}
+	}
+}
+
+void Patch::GenerateBorderIndices(CVertexArray* va)
+{
+	va->Initialize();
+
+	const bool isLeftBorder   = !m_BaseLeft.LeftNeighbor;
+	const bool isBottomBorder = !m_BaseRight.RightNeighbor;
+	const bool isRightBorder  = !m_BaseLeft.RightNeighbor;
+	const bool isTopBorder    = !m_BaseRight.LeftNeighbor;
+
+	if (isLeftBorder)   RecursBorderRender(va, &m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0),                   1, true);
+	if (isBottomBorder) RecursBorderRender(va, &m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE), 1, false);
+	if (isRightBorder)  RecursBorderRender(va, &m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0),                   1, false);
+	if (isTopBorder)    RecursBorderRender(va, &m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE), 1, true);
 }
 
 

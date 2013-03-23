@@ -113,7 +113,7 @@ public:
 	friend class CPatchInViewChecker;
 
 	void Reset();
-	
+
 	TriTreeNode* GetBaseLeft()  { return &m_BaseLeft;  }
 	TriTreeNode* GetBaseRight() { return &m_BaseRight; }
 	char IsDirty()     const { return m_isDirty; }
@@ -128,7 +128,7 @@ public:
 	void GenerateIndices();
 	void Upload();
 	void Draw();
-
+	void DrawBorder();
 	void SetSquareTexture() const;
 
 public:
@@ -147,6 +147,8 @@ private:
 	void RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex);
 	float RecursComputeVariance(const int leftX, const int leftY, const float leftZ, const int rightX, const int rightY, const float rightZ, const int apexX, const int apexY, const float apexZ, const int node);
 
+	void RecursBorderRender(CVertexArray* va, TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, int i, bool left_);
+	void GenerateBorderIndices(CVertexArray* va);
 protected:
 	static RenderMode renderMode;
 

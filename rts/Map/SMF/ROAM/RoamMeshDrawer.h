@@ -49,6 +49,7 @@ public:
 	void Update();
 
 	void DrawMesh(const DrawPass::e& drawPass);
+	void DrawBorderMesh(const DrawPass::e& drawPass);
 
 private:
 	void Reset();
