@@ -250,7 +250,6 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 void CRoamMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass)
 {
 	const bool inShadowPass = (drawPass == DrawPass::Shadow);
-	CCamera* cam = (inShadowPass)? camera: cam2;
 
 	for (int Y = 0; Y < numPatchesY; ++Y) {
 		for (int X = 0; X < numPatchesX; ++X) {

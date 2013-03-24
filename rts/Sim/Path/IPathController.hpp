@@ -83,7 +83,7 @@ public:
 	void SetTempGoalPosition(unsigned int pathID, const float3& pos) { realGoalPos = pos; }
 	void SetRealGoalPosition(unsigned int pathID, const float3& pos) { tempGoalPos = pos; }
 
-	bool IgnoreTerrain(const MoveDef& md, const float3& pos) const { return false; }
+	bool IgnoreTerrain(const MoveDef& md, const float3& pos) const;
 	bool IgnoreCollision(const CUnit* collider, const CUnit* collidee) const { return false; }
 	bool IgnoreCollision(const CUnit* collider, const CFeature* collidee) const { return false; }
 
