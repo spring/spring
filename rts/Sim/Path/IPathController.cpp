@@ -55,3 +55,7 @@ short GMTDefaultPathController::GetDeltaHeading(
 	return (deltaHeading * (1 - int(owner->inAir)));
 }
 
+bool GMTDefaultPathController::IgnoreTerrain(const MoveDef& md, const float3& pos) const {
+	return (owner->inAir);
+}
+

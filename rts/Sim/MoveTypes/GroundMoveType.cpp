@@ -2312,7 +2312,7 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		// NOTE:
 		//   does not check for structure blockage, coldet handles that
 		//   entering of impassable terrain is *also* handled by coldet
-		if (!owner->moveDef->TestMoveSquare(owner, owner->pos, ZeroVector, true, false, true)) {
+		if (!pathController->IgnoreTerrain(*owner->moveDef, owner->pos) && !owner->moveDef->TestMoveSquare(owner, owner->pos, ZeroVector, true, false, true)) {
 			owner->Move3D(owner->pos - speedVector, false);
 		}
 	}
