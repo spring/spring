@@ -355,7 +355,7 @@ void CFeature::DoDamage(const DamageArray& damages, const float3& impulse, CUnit
 
 	// NOTE: for trees, impulse is used to drive their falling animation
 	// TODO: replace RHS condition by adding Feature{Pre}Damaged callins
-	if ((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && udef->IsImmobileUnit())) {
+	if ((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit())) {
 		StoreImpulse(impulse / mass);
 		ApplyImpulse();
 	}
