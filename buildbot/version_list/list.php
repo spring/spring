@@ -57,7 +57,7 @@ function getFileInfo($os, $regex, $path){
 
 $res = array();
 $regex_path = "([^\/]+)";
-$regex_prefix = "\/$regex_path\/$regex_path\/$regex_path";
+$regex_prefix = "$regex_path\/$regex_path\/$regex_path";
 $regexes = array(
 	"windows" => "/$regex_prefix\/win32\/spring_(.*)_minimal-portable.7z$/",
 	"macosx" =>  "/$regex_prefix\/osx64\/[sS]pring_(.*)[_-]MacOSX-.*.zip$/",
