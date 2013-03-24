@@ -35,7 +35,7 @@ Else  (NOT Boost_FOUND)
 	Add_Custom_Target(tests)
 	#FIXME: hardcoded path (is used in buildbot/slave/make_installer.sh, too)
 	add_custom_target(check WINEPATH=/tmp/spring/inst/${CMAKE_INSTALL_PREFIX} ${CMAKE_CTEST_COMMAND} --output-on-failure
-			DEPENDS engine-multithreaded)
+			DEPENDS engine-headless)
 
 
 
@@ -210,7 +210,7 @@ Else  (NOT Boost_FOUND)
 	Add_Dependencies(tests test_LuaSocketRestrictions)
 ################################################################################
 ### CREG
-	add_test(NAME testCreg COMMAND ${CMAKE_BINARY_DIR}/spring${CMAKE_EXECUTABLE_SUFFIX} --test-creg)
+	add_test(NAME testCreg COMMAND ${CMAKE_BINARY_DIR}/spring-headless${CMAKE_EXECUTABLE_SUFFIX} --test-creg)
 	add_dependencies(tests testCreg)
 
 ################################################################################
