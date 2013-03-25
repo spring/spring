@@ -22,7 +22,7 @@ MACRO(CreateBaseContentArchive outputdir filename files)
 		OUTPUT "${outputfile}"
 		COMMAND ${SEVENZIP_BIN} a -tzip ${outputfile} ${files} ${QUIET}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
-		COMMENT "Creating ${output}"
+		COMMENT "Creating ${outputfile}"
 		DEPENDS ${files}
 	)
 
