@@ -64,10 +64,8 @@ Release Time
 	Upload them to SF (replace USER with your SF account name):
 		rsync --progress -h spring_${REL_VERS}* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-${REL_VERS}/
 10) Post the news post.
-11) download page mirror links:
-    Ask someone with access to http://springrts.com/dl/ to put spring_${REL_VERS}* stuff there.
 
-12) After 1 or 2 days, enforce it on the server, if it is a sync relevant change.
+11) After 1 or 2 days, enforce it on the server, if it is a sync relevant change.
 
 
 Enforcing on server
