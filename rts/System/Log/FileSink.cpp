@@ -196,14 +196,8 @@ void log_file_addLogFile(const char* filePath, const char* sections, int minLeve
 		// we are already logging to this file
 		return;
 	}
-#ifdef WIN32
-	// c (commit) makes fflush work on newer Windows like it should, see
-	// http://msdn.microsoft.com/en-us/library/aa246392%28v=vs.60%29.aspx
-	FILE* tmpStream = fopen(filePath, "wc");
-#else
-	FILE* tmpStream = fopen(filePath, "w");
-#endif
 
+	FILE* tmpStream = fopen(filePath, "w");
 	if (tmpStream == NULL) {
 		LOG_L(L_ERROR, "Failed to open log file for writing: %s", filePath);
 		return;
