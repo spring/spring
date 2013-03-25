@@ -21,7 +21,7 @@ static const float ESTIMATE_DISTANCE     = 55.0f;
 static const float MIN_ESTIMATE_DISTANCE = 40.0f;
 static const float MIN_DETAILED_DISTANCE = 12.0f;
 
-static const unsigned int PATHESTIMATOR_VERSION = 52;
+static const unsigned int PATHESTIMATOR_VERSION = 53;
 
 static const unsigned int MEDRES_PE_BLOCKSIZE =  8;
 static const unsigned int LOWRES_PE_BLOCKSIZE = 32;
