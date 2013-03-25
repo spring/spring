@@ -274,6 +274,7 @@ GLAPI void APIENTRY glClearAccum(GLfloat red, GLfloat green, GLfloat blue, GLflo
 GLAPI void APIENTRY glColor3fv(const GLfloat *v) {}
 GLAPI void APIENTRY glColor3ub(GLubyte red, GLubyte green, GLubyte blue) {}
 GLAPI void APIENTRY glColor3ubv(const GLubyte *v) {}
+GLAPI void APIENTRY glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha) {}
 GLAPI void APIENTRY glColor4ubv(const GLubyte *v) {}
 
 GLAPI void APIENTRY glCopyTexImage2D(GLenum target, GLint level,
