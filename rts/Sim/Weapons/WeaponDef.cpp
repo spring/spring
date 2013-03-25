@@ -263,7 +263,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		LOG_L(L_WARNING, "WeaponDef (%s) color1 & color2 (= hue & sat) are removed. Use rgbColor instead!", name.c_str());
 
 	if (wdTable.KeyExists("isShield"))
-		LOG_L(L_WARNING, "WeaponDef (%s) isShield is removed. Use weaponType=\"Shield\" instead!", name.c_str());
+		LOG_L(L_WARNING, "WeaponDef (%s) The \"isShield\" tag has been removed. Use the weaponType=\"Shield\" tag instead!", name.c_str());
 
 	shieldRechargeDelay = int(wdTable.GetFloat("rechargeDelay", 0) * GAME_SPEED);
 	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * 32);
