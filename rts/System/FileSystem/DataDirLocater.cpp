@@ -290,6 +290,15 @@ void DataDirLocater::LocateDataDirs()
 	// Note: The first dir added will be the writable data dir!
 	dataDirs.clear();
 
+	// Same on all platforms
+	{
+		const char* env = getenv("SPRING_DATADIR");
+		if (env && *env) {
+			AddDirs(env); // ENV{SPRING_DATADIR}
+		}
+	}
+	AddDirs(configHandler->GetString("SpringData")); // user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
+
 	if (isolationMode) {
 		if (isolationModeDir.empty()) {
 			AddCwdOrParentDir(dd_curWorkDir, true); // "./" or "../"
@@ -301,15 +310,6 @@ void DataDirLocater::LocateDataDirs()
 			}
 		}
 	}
-
-	// Same on all platforms
-	{
-		const char* env = getenv("SPRING_DATADIR");
-		if (env && *env) {
-			AddDirs(SubstEnvVars(env)); // ENV{SPRING_DATADIR}
-		}
-	}
-	AddDirs(SubstEnvVars(configHandler->GetString("SpringData"))); // user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
 
 	if (!isolationMode) {
 		if (!isolationModeDir.empty()) {
