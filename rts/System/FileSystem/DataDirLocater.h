@@ -156,6 +156,7 @@ public:
 	void UpdateIsolationModeByEnvVar();
 
 private:
+	void AddOsDataDirs();
 
 	/**
 	 * Adds either the CWD "./", its parent dir "../" or none of the two as a
