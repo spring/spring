@@ -370,8 +370,13 @@ void DataDirLocater::LocateDataDirs()
 		}
 	} else {
 		// LEVEL 2b: InstallDir, HomeDirs & Shared dirs
-		AddInstallDir();
-		AddHomeDirs();
+		if (IsPortableMode()) {
+			AddInstallDir();
+			AddHomeDirs();
+		} else {
+			AddHomeDirs();
+			AddInstallDir();
+		}
 		AddOsSpecificDirs();
 		//AddCurWorkDir();
 
@@ -445,25 +450,36 @@ void DataDirLocater::LocateDataDirs()
 
 bool DataDirLocater::IsPortableMode()
 {
+	// Test 1
+	// Check if spring binary & unitsync library are in the same folder
 #if       defined(UNITSYNC)
-	const std::string dirUnitsync = Platform::GetModulePath();
-	const std::string fileExe = dirUnitsync + "/" + GetSpringBinaryName();
+	const std::string dir = Platform::GetModulePath();
+	const std::string fileExe = dir + "/" + GetSpringBinaryName();
 
-	if (FileSystem::FileExists(fileExe)) {
-		return true;
-	}
+	if (!FileSystem::FileExists(fileExe))
+		return false;
 
-#else  // !defined(UNITSYNC)
-	const std::string dirExe = Platform::GetProcessExecutablePath();
-	const std::string fileUnitsync = dirExe + "/" + GetUnitsyncLibName();
+#else
+	const std::string dir = Platform::GetProcessExecutablePath();
+	const std::string fileUnitsync = dir + "/" + GetUnitsyncLibName();
 
-	if (FileSystem::FileExists(fileUnitsync)) {
-		return true;
-	}
+	if (!FileSystem::FileExists(fileUnitsync))
+		return false;
 
-#endif // defined(UNITSYNC)
+#endif
 
-	return false;
+	// Test 2
+	// Check if "springsettings.cfg" is in the same folder, too.
+	//if (!FileSystem::FileExists(dir + "/springsettings.cfg"))
+	//	return false;
+
+	// Test 3
+	// Check if the directory is writeable
+	if (!FileSystem::DirIsWritable(dir + "/"))
+		return false;
+
+	// PortableMode (don't use HomeDirs as writedirs, instead save files next to binary)
+	return true;
 }
 
 bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath) {
