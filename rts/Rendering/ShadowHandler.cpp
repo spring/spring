@@ -589,7 +589,7 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& proje
 	cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
 	cam->ClipFrustumLines(true, -10000.0f, 400096.0f);
 
-	const std::vector<CCamera::FrustumLine>& sides = cam->negFrustumSides;
+	const std::vector<CCamera::FrustumLine> sides = cam->GetNegFrustumSides();
 
 	if (sides.empty())
 		return 0.0f;
@@ -671,8 +671,8 @@ void CShadowHandler::CalcMinMaxView()
 		maxSize *= 1.2f;
 	}
 
-	const std::vector<CCamera::FrustumLine>& negSides = cam2->negFrustumSides;
-	const std::vector<CCamera::FrustumLine>& posSides = cam2->posFrustumSides;
+	const std::vector<CCamera::FrustumLine> negSides = cam2->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine> posSides = cam2->GetPosFrustumSides();
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 	if (!negSides.empty()) {

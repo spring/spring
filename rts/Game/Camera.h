@@ -31,6 +31,8 @@ public:
 		bool upwardDir,
 		bool negSide);
 	void ClearFrustumSides() {
+		GML_RECMUTEX_LOCK(cam); // ClearFrustumSides
+
 		posFrustumSides.clear();
 		negFrustumSides.clear();
 	}
@@ -78,8 +80,17 @@ public:
 		float minz;
 		float maxz;
 	};
-	std::vector<FrustumLine> posFrustumSides;
-	std::vector<FrustumLine> negFrustumSides;
+
+	const std::vector<FrustumLine> GetNegFrustumSides() const {
+		GML_RECMUTEX_LOCK(cam); // GetNegFrustumSides
+
+		return negFrustumSides;
+	}
+	const std::vector<FrustumLine> GetPosFrustumSides() const {
+		GML_RECMUTEX_LOCK(cam); // GetPosFrustumSides
+
+		return posFrustumSides;
+	}
 
 private:
 	void ComputeViewRange();
@@ -98,6 +109,9 @@ private:
 
 	std::vector<GLdouble> viewMatrixD;
 	std::vector<GLdouble> projectionMatrixD;
+
+	std::vector<FrustumLine> posFrustumSides;
+	std::vector<FrustumLine> negFrustumSides;
 
 	float fov;         ///< in degrees
 	float halfFov;     ///< half the fov in radians

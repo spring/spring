@@ -847,8 +847,8 @@ void CDynWater::DrawWaterSurface()
 	//     2. even if it had been, DynWater::UpdateCamRestraints always used <cam2> to get the sides, not <camera>
 	// UpdateCamRestraints(cam2);
 
-	const std::vector<CCamera::FrustumLine>/*&*/ negSides /*= cam2->negFrustumSides*/;
-	const std::vector<CCamera::FrustumLine>/*&*/ posSides /*= cam2->posFrustumSides*/;
+	const std::vector<CCamera::FrustumLine> negSides /*= cam2->GetNegFrustumSides()*/;
+	const std::vector<CCamera::FrustumLine> posSides /*= cam2->GetPosFrustumSides()*/;
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
