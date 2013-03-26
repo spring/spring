@@ -117,7 +117,7 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 
 void DataDirLocater::AddDirs(const std::string& dirs)
 {
-	if (dir.empty())
+	if (dirs.empty())
 		return;
 
 	size_t prev_colon = 0;
@@ -358,6 +358,7 @@ void DataDirLocater::LocateDataDirs()
 		if (env && *env) {
 			AddDirs(env); // ENV{SPRING_WRITEDIR}
 		}
+		//AddDirs(configHandler->GetString("SpringWriteDir"));
 	}
 
 	// LEVEL 2: automated dirs
