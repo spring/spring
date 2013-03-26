@@ -26,10 +26,11 @@ CMatrix44f::CMatrix44f(const CMatrix44f& mat)
 
 CMatrix44f::CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z)
 {
-	m[0]  = x.x;   m[1]  = x.y;   m[2]  = x.z;   m[3]  = 0.0f;
-	m[4]  = y.x;   m[5]  = y.y;   m[6]  = y.z;   m[7]  = 0.0f;
-	m[8]  = z.x;   m[9]  = z.y;   m[10] = z.z;   m[11] = 0.0f;
-	m[12] = pos.x; m[13] = pos.y; m[14] = pos.z; m[15] = 1.0f;
+	// column-major!
+	m[0]  = x.x;   m[4]  = y.x;   m[8]  = z.x;   m[12] = pos.x;
+	m[1]  = x.y;   m[5]  = y.y;   m[9]  = z.y;   m[13] = pos.y;
+	m[2]  = x.z;   m[6]  = y.z;   m[10] = z.z;   m[14] = pos.z;
+	m[3]  = 0.0f;  m[7]  = 0.0f;  m[11] = 0.0f;  m[15] = 1.0f;
 }
 
 
@@ -62,8 +63,6 @@ void CMatrix44f::LoadIdentity()
 	m[4]  = m[6]  = m[7]  = 0.0f;
 	m[8]  = m[9]  = m[11] = 0.0f;
 	m[12] = m[13] = m[14] = 0.0f;
-//	memset(m, 0, 16 * sizeof(float));
-//	m[0] = m[5] = m[10] = m[15] = 1.0f;
 }
 
 
