@@ -38,6 +38,29 @@ CONFIG(std::string, SpringData).defaultValue("")
 DataDirLocater dataDirLocater;
 
 
+static std::string GetSpringBinaryName()
+{
+#if       defined(WIN32)
+	return "spring.exe";
+#else
+	return "spring";
+#endif // defined(WIN32)
+}
+
+
+static std::string GetUnitsyncLibName()
+{
+#if       defined(WIN32)
+	return "unitsync.dll";
+#elif     defined(__APPLE__)
+	return "libunitsync.dylib";
+#else
+	return "libunitsync.so";
+#endif // defined(WIN32)
+}
+
+
+
 DataDir::DataDir(const std::string& path)
 	: path(path)
 	, writable(false)
@@ -143,9 +166,6 @@ bool DataDirLocater::DeterminePermissions(DataDir* dataDir)
 	// (no support for write-only directories)
 	// We check for the executable bit, because otherwise we can not browse the
 	// directory.
-	// FIXME: We fail to test whether the path actually is a directory
-	// Modifying the permissions while or after this function runs has undefined
-	// behaviour.
 	if (FileSystem::DirExists(dataDir->path))
 	{
 		if (!writeDir && FileSystem::DirIsWritable(dataDir->path))
@@ -385,38 +405,28 @@ void DataDirLocater::LocateDataDirs()
 	}
 }
 
-bool DataDirLocater::IsPortableMode() {
 
-	bool portableMode = false;
-
+bool DataDirLocater::IsPortableMode()
+{
 #if       defined(UNITSYNC)
 	const std::string dirUnitsync = Platform::GetModulePath();
+	const std::string fileExe = dirUnitsync + "/" + GetSpringBinaryName();
 
-#if       defined(WIN32)
-	std::string fileExe = dirUnitsync + "\\spring.exe";
-#else
-	std::string fileExe = dirUnitsync + "/spring";
-#endif // defined(WIN32)
 	if (FileSystem::FileExists(fileExe)) {
-		portableMode = true;
+		return true;
 	}
 
 #else  // !defined(UNITSYNC)
 	const std::string dirExe = Platform::GetProcessExecutablePath();
+	const std::string fileUnitsync = dirExe + "/" + GetUnitsyncLibName();
 
-#if       defined(WIN32)
-	std::string fileUnitsync = dirExe + "\\unitsync.dll";
-#elif     defined(__APPLE__)
-	std::string fileUnitsync = dirExe + "/libunitsync.dylib";
-#else
-	std::string fileUnitsync = dirExe + "/libunitsync.so";
-#endif // defined(WIN32)
 	if (FileSystem::FileExists(fileUnitsync)) {
-		portableMode = true;
+		return true;
 	}
+
 #endif // defined(UNITSYNC)
 
-	return portableMode;
+	return false;
 }
 
 bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath) {
