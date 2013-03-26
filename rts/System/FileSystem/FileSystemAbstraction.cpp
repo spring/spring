@@ -24,6 +24,9 @@
 	#include <sstream>
 	#include <unistd.h>
 	#include <time.h>
+
+	#include <sys/types.h>
+	#include <sys/stat.h>
 #else
 	#include <windows.h>
 	#include <io.h>
@@ -384,6 +387,64 @@ bool FileSystemAbstraction::DirIsWritable(const std::string& dir)
 	return (access(dir.c_str(), W_OK) == 0);
 #endif
 }
+
+
+bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::string& path2)
+{
+#ifdef _WIN32
+	bool ret = false;
+
+	HANDLE fh1 = CreateFile(path1.c_str(), // file to open
+			GENERIC_READ,                   // open for reading
+			FILE_SHARE_READ,                // share for reading
+			NULL,                           // default security
+			OPEN_EXISTING,                  // existing file only
+			FILE_ATTRIBUTE_NORMAL,          // normal file
+			NULL);                          // no attr. template
+
+	HANDLE fh2 = CreateFile(path2.c_str(), // file to open
+			GENERIC_READ,                   // open for reading
+			FILE_SHARE_READ,                // share for reading
+			NULL,                           // default security
+			OPEN_EXISTING,                  // existing file only
+			FILE_ATTRIBUTE_NORMAL,          // normal file
+			NULL);                          // no attr. template
+
+	if ((fh1 != INVALID_HANDLE_VALUE) && (fh2 != INVALID_HANDLE_VALUE)) {
+		BY_HANDLE_FILE_INFORMATION info1, info2;
+
+		bool fine;
+		fine  = GetFileInformationByHandle(fh1, &info1);
+		fine &= GetFileInformationByHandle(fh2, &info2);
+
+		if (fine) {
+			ret =
+				   (info1.nFileIndexLow == info2.nFileIndexLow)
+				&& (info1.nFileIndexHigh == info2.nFileIndexHigh)
+				&& (info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber);
+		} else {
+			//GetLastError()
+		}
+	}
+
+	CloseHandle(fh1);
+	CloseHandle(fh2);
+
+	return ret;
+#else
+	int r = 0;
+	struct stat s1, s2;
+	r  = stat(path1.c_str(), &s1);
+	r |= stat(path2.c_str(), &s2);
+
+	if (r != 0) {
+		return false;
+	}
+
+	return (s1.st_ino == s2.st_ino) && (s1.st_dev == s2.st_dev);
+#endif
+}
+
 
 std::string FileSystemAbstraction::GetCwd()
 {
