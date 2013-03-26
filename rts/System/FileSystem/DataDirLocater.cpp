@@ -147,9 +147,6 @@ void DataDirLocater::AddDir(const std::string& dir)
 
 		if (!alreadyAdded) {
 			dataDirs.push_back(newDataDir);
-			LOG_L(L_DEBUG, "Adding %s to directories", newDataDir.path.c_str());
-		} else {
-			LOG_L(L_DEBUG, "Skipping already added directory %s", newDataDir.path.c_str());
 		}
 	}
 }
@@ -206,6 +203,9 @@ void DataDirLocater::DeterminePermissions()
 		if ((d->path != previous) && DeterminePermissions(&*d)) {
 			newDatadirs.push_back(*d);
 			previous = d->path;
+			LOG("DataDirs:    Adding %s", d->path.c_str());
+		} else {
+			LOG("DataDirs: Can't add %s", d->path.c_str());
 		}
 	}
 
@@ -238,7 +238,6 @@ void DataDirLocater::AddInstallDir()
 	// unitsyncs/unitsync-0.83.1.0.exe
 	const std::string curWorkDirParent = FileSystem::GetParent(dd_curWorkDir);
 
-	// we can not add both ./ and ../ as data-dir
 	if ((curWorkDirParent != "") && LooksLikeMultiVersionDataDir(curWorkDirParent)) {
 		AddDirs(curWorkDirParent); // "../"
 	}
@@ -362,7 +361,7 @@ void DataDirLocater::LocateDataDirs()
 	}
 
 	// LEVEL 2: automated dirs
-	if (isolationMode) {
+	if (IsIsolationMode()) {
 		// LEVEL 2a: Isolation Mode (either installDir or user set one)
 		if (isolationModeDir.empty()) {
 			AddInstallDir(); // better use curWorkDir?
@@ -420,6 +419,13 @@ void DataDirLocater::LocateDataDirs()
 	//       in the wrong directory.
 	// Update: now it actually may start before, log has preInitLog.
 	logOutput.Initialize();
+
+	if (IsIsolationMode()) {
+		LOG("DataDirs: Isolation Mode!");
+	} else
+	if (IsPortableMode()) {
+		LOG("DataDirs: Portable Mode!");
+	}
 
 	for (std::vector<DataDir>::const_iterator d = dataDirs.begin(); d != dataDirs.end(); ++d) {
 		if (d->writable) {
