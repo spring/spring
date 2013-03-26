@@ -32,6 +32,12 @@ public:
 	 */
 	static bool Remove(std::string file);
 
+		/**
+		 * @brief Compares if 2 paths point to the same file/directory
+		 *
+		 */
+		static bool ComparePaths(std::string path1, std::string path2);
+
 	/// @name meta-data
 	///@{
 	/// Returns true if the file exists, and is not a directory

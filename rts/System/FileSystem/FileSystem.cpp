@@ -95,6 +95,15 @@ std::string FileSystem::ConvertGlobToRegex(const std::string& glob)
 	return regex;
 }
 
+
+bool FileSystem::ComparePaths(std::string path1, std::string path2)
+{
+	FixSlashes(path1);
+	FixSlashes(path2);
+	return FileSystemAbstraction::ComparePaths(path1, path2);
+}
+
+
 bool FileSystem::FileExists(std::string file)
 {
 	FixSlashes(file);
