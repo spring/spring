@@ -121,8 +121,6 @@ bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label,
 		return false;
 	}
 
-	GML_STDMUTEX_LOCK(inmap); // LocalPoint
-
 	// GotNetMsg() alreadys checks validity of playerID
 	const CPlayer* sender = playerHandler->Player(playerID);
 	const bool allowed = AllowedMsg(sender);
@@ -136,6 +134,8 @@ bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label,
 	if (allowed && eventHandler.MapDrawCmd(playerID, MAPDRAW_POINT, &pos, NULL, &label)) {
 		return false;
 	}
+
+	GML_STDMUTEX_LOCK(inmap); // LocalPoint
 
 	// let the engine handle it (disallowed
 	// points added here are filtered while
@@ -158,8 +158,6 @@ bool CInMapDrawModel::AddLine(const float3& constPos1, const float3& constPos2, 
 		return false;
 	}
 
-	GML_STDMUTEX_LOCK(inmap); // LocalLine
-
 	const CPlayer* sender = playerHandler->Player(playerID);
 
 	float3 pos1 = constPos1;
@@ -172,6 +170,8 @@ bool CInMapDrawModel::AddLine(const float3& constPos1, const float3& constPos2, 
 	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_LINE, &pos1, &pos2, NULL)) {
 		return false;
 	}
+
+	GML_STDMUTEX_LOCK(inmap); // LocalLine
 
 	MapLine line(sender->spectator, sender->team, sender, pos1, pos2);
 
@@ -190,8 +190,6 @@ void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 	if (!playerHandler->IsValidPlayer(playerID))
 		return;
 
-	GML_STDMUTEX_LOCK(inmap); // LocalErase
-
 	const CPlayer* sender = playerHandler->Player(playerID);
 
 	float3 pos = constPos;
@@ -201,6 +199,8 @@ void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_ERASE, &pos, NULL, NULL)) {
 		return;
 	}
+
+	GML_STDMUTEX_LOCK(inmap); // LocalErase
 
 	const float radius = 100.0f;
 	const int maxY = drawQuadsY - 1;
