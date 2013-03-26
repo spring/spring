@@ -131,7 +131,7 @@ void DataDirLocater::AddDir(const std::string& dir)
 	if (!dir.empty()) {
 		// to make use of ensure-slash-at-end,
 		// we create a DataDir here already
-		const DataDir newDataDir(dir);
+		const DataDir newDataDir(SubstEnvVars(dir));
 		bool alreadyAdded = false;
 
 		std::vector<DataDir>::const_iterator ddi;
@@ -161,6 +161,7 @@ bool DataDirLocater::DeterminePermissions(DataDir* dataDir)
 	{
 		throw content_error(std::string("a datadir may not be specified with a relative path: \"") + dataDir->path + "\"");
 	}
+
 	// Figure out whether we have read/write permissions
 	// First check read access, if we got that, check write access too
 	// (no support for write-only directories)
@@ -231,21 +232,25 @@ void DataDirLocater::AddCwdOrParentDir(const std::string& curWorkDir, bool force
 	}
 }
 
-void DataDirLocater::LocateDataDirs()
+
+void DataDirLocater::AddOsDataDirs()
 {
-	// Prepare the data-dirs defined in different places
 #if       defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
 #else  // defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
 #endif // defined(UNITSYNC)
 
-	// Detect some useful dirs
-#if    defined(WIN32)
+#ifdef WIN32
+	// All MS Windows variants
+
 	// fetch my documents path
 	TCHAR pathMyDocsC[MAX_PATH];
+	TCHAR pathAppDataC[MAX_PATH];
 	SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, pathMyDocsC);
+	SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, pathAppDataC);
 	const std::string pathMyDocs = pathMyDocsC;
+	const std::string pathAppData = pathAppDataC;
 
 	// e.g. F:\Dokumente und Einstellungen\Karl-Robert\Eigene Dateien\Spring
 	const std::string dd_myDocs = pathMyDocs + "\\Spring";
@@ -254,14 +259,17 @@ void DataDirLocater::LocateDataDirs()
 	// most if not all new Games For Windows(TM) games use this dir
 	const std::string dd_myDocsMyGames = pathMyDocs + "\\My Games\\Spring";
 
-	// fetch common app-data path
-	TCHAR pathAppDataC[MAX_PATH];
-	SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, pathAppDataC);
-	const std::string pathAppData = pathAppDataC;
-
 	// e.g. F:\Dokumente und Einstellungen\All Users\Anwendungsdaten\Spring
 	const std::string dd_appData = pathAppData + "\\Spring";
-#else // *nix (-OSX)
+
+	AddCwdOrParentDir(dd_curWorkDir); // "./" or "../"
+	AddDirs(dd_myDocsMyGames);  // "C:/.../My Documents/My Games/Spring/"
+	AddDirs(dd_myDocs);         // "C:/.../My Documents/Spring/"
+	AddDirs(dd_appData);        // "C:/.../All Users/Applications/Spring/"
+
+#else
+	// Linux, FreeBSD, Solaris, Apple non-bundle
+
 	// settings in /etc
 	std::string dd_etc = "";
 	{
@@ -278,13 +286,46 @@ void DataDirLocater::LocateDataDirs()
 				// ignore lines consisting of only whitespaces
 				if ((strlen(lineBuf) > 0) && strspn(lineBuf, whiteSpaces) != strlen(lineBuf)) {
 					// append, separated by sPD (depending on OS): ';' or ':'
-					dd_etc = dd_etc + (dd_etc.empty() ? "" : sPD) + SubstEnvVars(lineBuf);
+					dd_etc = dd_etc + (dd_etc.empty() ? "" : sPD) + lineBuf;
 				}
 			}
 			fclose(fileH);
 		}
 	}
-#endif // defined(WIN32), defined(MACOSX_BUNDLE), else
+
+	AddCwdOrParentDir(dd_curWorkDir);             // "./" or "../"
+	AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
+	AddDirs(dd_etc);                              // from /etc/spring/datadir FIXME add in IsolatedMode too? FIXME
+#endif
+
+#if     defined(__APPLE__)
+	// Mac OS X Application Bundle (*.app) - single file install
+
+	// directory structure (Apple standard):
+	// Spring.app/Contents/MacOS/springlobby
+	// Spring.app/Contents/Resources/bin/spring
+	// Spring.app/Contents/Resources/lib/unitsync.dylib
+	// Spring.app/Contents/Resources/share/games/spring/base/
+
+	// This corresponds to Spring.app/Contents/Resources/
+	const std::string bundleResourceDir = FileSystem::GetParent(dd_curWorkDir);
+
+	// This has to correspond with the value in the build-script
+	const std::string dd_curWorkDirData = bundleResourceDir + "/share/games/spring";
+
+	AddDirs(dd_curWorkDirData);             // "Spring.app/Contents/Resources/share/games/spring"
+#endif
+}
+
+
+void DataDirLocater::LocateDataDirs()
+{
+	// Prepare the data-dirs defined in different places
+#if       defined(UNITSYNC)
+	const std::string dd_curWorkDir = Platform::GetModulePath();
+#else  // defined(UNITSYNC)
+	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
+#endif // defined(UNITSYNC)
 
 	// Construct the list of dataDirs from various sources.
 	// Note: The first dir added will be the writable data dir!
@@ -316,48 +357,12 @@ void DataDirLocater::LocateDataDirs()
 			LOG_L(L_WARNING, "Isolation directory was specified, but isolation mode is not active.");
 		}
 
-#ifdef WIN32
-		// All MS Windows variants
-
-		AddCwdOrParentDir(dd_curWorkDir); // "./" or "../"
-		AddDirs(dd_myDocsMyGames);  // "C:/.../My Documents/My Games/Spring/"
-		AddDirs(dd_myDocs);         // "C:/.../My Documents/Spring/"
-		AddDirs(dd_appData);        // "C:/.../All Users/Applications/Spring/"
-
-#elif defined(MACOSX_BUNDLE)
-		// Mac OS X Application Bundle (*.app) - single file install
-
-		// directory structure (Apple standard):
-		// Spring.app/Contents/MacOS/springlobby
-		// Spring.app/Contents/Resources/bin/spring
-		// Spring.app/Contents/Resources/lib/unitsync.dylib
-		// Spring.app/Contents/Resources/share/games/spring/base/
-
-		// This corresponds to Spring.app/Contents/Resources/
-		const std::string bundleResourceDir = FileSystem::GetParent(dd_curWorkDir);
-
-		// This has to correspond with the value in the build-script
-		const std::string dd_curWorkDirData = bundleResourceDir + "/share/games/spring";
-
-		// we need this as default writable dir, because the Bundle.pp dir
-		// might not be writable by the user starting the game
-		AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
-		AddDirs(dd_curWorkDirData);             // "Spring.app/Contents/Resources/share/games/spring"
-		AddDirs(dd_etc);                        // from /etc/spring/datadir FIXME add in IsolatedMode too?
-
-#else
-		// Linux, FreeBSD, Solaris, Apple non-bundle
-
-		AddCwdOrParentDir(dd_curWorkDir); // "./" or "../"
-		AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
-		AddDirs(dd_etc);            // from /etc/spring/datadir FIXME add in IsolatedMode too?
-#endif
-
+		AddOsDataDirs();
 
 #ifdef SPRING_DATADIR
 		//Note: using the defineflag SPRING_DATADIR & "SPRING_DATADIR" as string works fine, the preprocessor won't touch the 2nd
-		AddDirs(SubstEnvVars(SPRING_DATADIR)); // from -DSPRING_DATADIR
-#endif 
+		AddDirs(SPRING_DATADIR); // from -DSPRING_DATADIR
+#endif
 	}
 
 
