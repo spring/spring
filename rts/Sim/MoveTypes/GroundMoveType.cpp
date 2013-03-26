@@ -1530,7 +1530,10 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	// NOTE:
 	//   allow units to move _through_ idle open factories by extending the collidee's footprint such
 	//   that insideYardMap is true in a larger area (otherwise pathfinder and coldet would disagree)
-	// 
+	//   the transition from radius- to footprint-based handling is discontinuous --> cannot mix them
+	// TODO:
+	//   increase cost of squares inside open factories so PFS is less likely to path through them
+	//
 	const int xext = ((collidee->xsize >> 1) + std::max(1, colliderMD->xsizeh));
 	const int zext = ((collidee->zsize >> 1) + std::max(1, colliderMD->zsizeh));
 
@@ -1545,7 +1548,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 
 	bool wantRequestPath = false;
 
-	if ((checkYardMap && insideYardMap) || checkTerrain) {
+	if (checkYardMap || checkTerrain) {
 		const int xmid = (collider->pos.x + collider->speed.x) / SQUARE_SIZE;
 		const int zmid = (collider->pos.z + collider->speed.z) / SQUARE_SIZE;
 
