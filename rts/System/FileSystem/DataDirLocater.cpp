@@ -233,7 +233,13 @@ void DataDirLocater::AddCwdOrParentDir(const std::string& curWorkDir, bool force
 }
 
 
-void DataDirLocater::AddOsDataDirs()
+void DataDirLocater::AddCurWorkDir()
+{
+	AddDir(Platform::GetOrigCWD());
+}
+
+
+void DataDirLocater::AddInstallDir()
 {
 #if       defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
@@ -241,6 +247,12 @@ void DataDirLocater::AddOsDataDirs()
 	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
 #endif // defined(UNITSYNC)
 
+	AddCwdOrParentDir(dd_curWorkDir); // path to binary dirs
+}
+
+
+void DataDirLocater::AddHomeDirs()
+{
 #ifdef WIN32
 	// All MS Windows variants
 
@@ -262,10 +274,20 @@ void DataDirLocater::AddOsDataDirs()
 	// e.g. F:\Dokumente und Einstellungen\All Users\Anwendungsdaten\Spring
 	const std::string dd_appData = pathAppData + "\\Spring";
 
-	AddCwdOrParentDir(dd_curWorkDir); // "./" or "../"
 	AddDirs(dd_myDocsMyGames);  // "C:/.../My Documents/My Games/Spring/"
 	AddDirs(dd_myDocs);         // "C:/.../My Documents/Spring/"
 	AddDirs(dd_appData);        // "C:/.../All Users/Applications/Spring/"
+
+#else
+	// Linux, FreeBSD, Solaris, Apple non-bundle
+	AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
+#endif
+}
+
+
+void DataDirLocater::AddOsSpecificDirs()
+{
+#ifdef WIN32
 
 #else
 	// Linux, FreeBSD, Solaris, Apple non-bundle
@@ -293,8 +315,6 @@ void DataDirLocater::AddOsDataDirs()
 		}
 	}
 
-	AddCwdOrParentDir(dd_curWorkDir);             // "./" or "../"
-	AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
 	AddDirs(dd_etc);                              // from /etc/spring/datadir FIXME add in IsolatedMode too? FIXME
 #endif
 
@@ -320,48 +340,40 @@ void DataDirLocater::AddOsDataDirs()
 
 void DataDirLocater::LocateDataDirs()
 {
-	// Prepare the data-dirs defined in different places
-#if       defined(UNITSYNC)
-	const std::string dd_curWorkDir = Platform::GetModulePath();
-#else  // defined(UNITSYNC)
-	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
-#endif // defined(UNITSYNC)
-
 	// Construct the list of dataDirs from various sources.
 	// Note: The first dir added will be the writable data dir!
 	dataDirs.clear();
 
-	// Same on all platforms
-	{
+	// LEVEL 1: User defined dirs
 		const char* env = getenv("SPRING_DATADIR");
 		if (env && *env) {
 			AddDirs(env); // ENV{SPRING_DATADIR}
 		}
-	}
-	AddDirs(configHandler->GetString("SpringData")); // user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
+		AddDirs(configHandler->GetString("SpringData")); // user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
+
 
 	if (isolationMode) {
+		// LEVEL 2a: Isolation Mode (either installDir or user set one)
 		if (isolationModeDir.empty()) {
-			AddCwdOrParentDir(dd_curWorkDir, true); // "./" or "../"
+			AddInstallDir(); // better use curWorkDir?
 		} else {
+			//FIXME use AddDirs()
 			if (FileSystem::DirExists(isolationModeDir)) {
 				AddDir(isolationModeDir);
 			} else {
 				throw user_error(std::string("The specified isolation-mode directory does not exist: ") + isolationModeDir);
 			}
 		}
-	}
-
-	if (!isolationMode) {
-		if (!isolationModeDir.empty()) {
-			LOG_L(L_WARNING, "Isolation directory was specified, but isolation mode is not active.");
-		}
-
-		AddOsDataDirs();
+	} else {
+		// LEVEL 2b: InstallDir, HomeDirs & Shared dirs
+		AddInstallDir();
+		AddHomeDirs();
+		AddOsSpecificDirs();
+		//AddCurWorkDir();
 
 #ifdef SPRING_DATADIR
 		//Note: using the defineflag SPRING_DATADIR & "SPRING_DATADIR" as string works fine, the preprocessor won't touch the 2nd
-		AddDirs(SPRING_DATADIR); // from -DSPRING_DATADIR
+		AddDirs(SPRING_DATADIR); // from -DSPRING_DATADIR, example /usr/games/share/spring/
 #endif
 	}
 
