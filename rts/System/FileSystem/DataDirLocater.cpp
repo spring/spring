@@ -209,29 +209,6 @@ void DataDirLocater::DeterminePermissions()
 	dataDirs = newDatadirs;
 }
 
-void DataDirLocater::AddCwdOrParentDir(const std::string& curWorkDir, bool forceAdd)
-{
-	// This is useful in case of multiple engine/unitsync versions installed
-	// together in a sub-dir of the data-dir
-	// The data-dir structure then might look similar to this:
-	// maps/
-	// games/
-	// engines/engine-0.83.0.0.exe
-	// engines/engine-0.83.1.0.exe
-	// unitsyncs/unitsync-0.83.0.0.exe
-	// unitsyncs/unitsync-0.83.1.0.exe
-	const std::string curWorkDirParent = FileSystem::GetParent(curWorkDir);
-
-	// we can not add both ./ and ../ as data-dir
-	if ((curWorkDirParent != "") && LooksLikeMultiVersionDataDir(curWorkDirParent)) {
-		AddDirs(curWorkDirParent); // "../"
-	} else if (IsPortableMode() || forceAdd) {
-		// always using this would be unclean, because spring and unitsync
-		// would end up with different sets of data-dirs
-		AddDirs(curWorkDir); // "./"
-	}
-}
-
 
 void DataDirLocater::AddCurWorkDir()
 {
@@ -247,7 +224,26 @@ void DataDirLocater::AddInstallDir()
 	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
 #endif // defined(UNITSYNC)
 
-	AddCwdOrParentDir(dd_curWorkDir); // path to binary dirs
+	// This is useful in case of multiple engine/unitsync versions installed
+	// together in a sub-dir of the data-dir
+	// The data-dir structure then might look similar to this:
+	// maps/
+	// games/
+	// engines/engine-0.83.0.0.exe
+	// engines/engine-0.83.1.0.exe
+	// unitsyncs/unitsync-0.83.0.0.exe
+	// unitsyncs/unitsync-0.83.1.0.exe
+	const std::string curWorkDirParent = FileSystem::GetParent(dd_curWorkDir);
+
+	// we can not add both ./ and ../ as data-dir
+	if ((curWorkDirParent != "") && LooksLikeMultiVersionDataDir(curWorkDirParent)) {
+		AddDirs(curWorkDirParent); // "../"
+	}
+	if (IsPortableMode()) {
+		// always using this would be unclean, because spring and unitsync
+		// would end up with different sets of data-dirs
+		AddDirs(dd_curWorkDir); // "./"
+	}
 }
 
 
@@ -327,6 +323,12 @@ void DataDirLocater::AddOsSpecificDirs()
 	// Spring.app/Contents/Resources/lib/unitsync.dylib
 	// Spring.app/Contents/Resources/share/games/spring/base/
 
+	#if       defined(UNITSYNC)
+		const std::string dd_curWorkDir = Platform::GetModulePath();
+	#else  // defined(UNITSYNC)
+		const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
+	#endif // defined(UNITSYNC)
+
 	// This corresponds to Spring.app/Contents/Resources/
 	const std::string bundleResourceDir = FileSystem::GetParent(dd_curWorkDir);
 
@@ -343,6 +345,8 @@ void DataDirLocater::LocateDataDirs()
 	// Construct the list of dataDirs from various sources.
 	// Note: The first dir added will be the writable data dir!
 	dataDirs.clear();
+
+	// Note: first pushed dir is writeDir & dir priority decreases with pos in queue
 
 	// LEVEL 1: User defined dirs
 		const char* env = getenv("SPRING_DATADIR");

@@ -162,25 +162,6 @@ private:
 	void AddOsSpecificDirs();
 
 	/**
-	 * Adds either the CWD "./", its parent dir "../" or none of the two as a
-	 * data dir.
-	 * If ../ seems to be a multi-version data-dir, it is added.
-	 * Otherwise, ./ is added, if it seems to be a portable data-dir,
-	 * or adding is forced.
-	 * Adding ../ is useful in case of multiple engine/unitsync versions
-	 * installed together in a sub-dir of the data-dir.
-	 * The data-dir structure then might look similar to this:
-	 * maps/
-	 * games/
-	 * engines/engine-0.83.0.0.exe
-	 * engines/engine-0.83.1.0.exe
-	 * unitsyncs/unitsync-0.83.0.0.exe
-	 * unitsyncs/unitsync-0.83.1.0.exe
-	 * @param curWorkDir the CWD to possibly add (or the relative ../)
-	 * @param forceAdd whether to always add either the parent or the CWD
-	 */
-	void AddCwdOrParentDir(const std::string& curWorkDir, bool forceAdd = false);
-	/**
 	 * @brief substitutes environment variables with their values
 	 */
 	std::string SubstEnvVars(const std::string& in) const;
