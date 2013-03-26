@@ -2328,6 +2328,7 @@ void CGameServer::UpdateSpeedControl(int speedCtrl) {
 	if (speedCtrl != curSpeedCtrl) {
 		Message(str(format("Server speed control: %s")
 			%(SpeedControlToString(speedCtrl).c_str())));
+		curSpeedCtrl = speedCtrl;
 	}
 }
 
