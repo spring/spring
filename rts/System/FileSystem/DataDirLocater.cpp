@@ -117,6 +117,9 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 
 void DataDirLocater::AddDirs(const std::string& dirs)
 {
+	if (dir.empty())
+		return;
+
 	size_t prev_colon = 0;
 	size_t colon;
 	while ((colon = dirs.find(cPD, prev_colon)) != std::string::npos) { // cPD (depending on OS): ';' or ':'
@@ -346,27 +349,24 @@ void DataDirLocater::LocateDataDirs()
 	// Note: The first dir added will be the writable data dir!
 	dataDirs.clear();
 
+
 	// Note: first pushed dir is writeDir & dir priority decreases with pos in queue
 
-	// LEVEL 1: User defined dirs
-		const char* env = getenv("SPRING_DATADIR");
+	// LEVEL 1: User defined write dirs
+	{
+		const char* env = getenv("SPRING_WRITEDIR");
 		if (env && *env) {
-			AddDirs(env); // ENV{SPRING_DATADIR}
+			AddDirs(env); // ENV{SPRING_WRITEDIR}
 		}
-		AddDirs(configHandler->GetString("SpringData")); // user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
+	}
 
-
+	// LEVEL 2: automated dirs
 	if (isolationMode) {
 		// LEVEL 2a: Isolation Mode (either installDir or user set one)
 		if (isolationModeDir.empty()) {
 			AddInstallDir(); // better use curWorkDir?
 		} else {
-			//FIXME use AddDirs()
-			if (FileSystem::DirExists(isolationModeDir)) {
-				AddDir(isolationModeDir);
-			} else {
-				throw user_error(std::string("The specified isolation-mode directory does not exist: ") + isolationModeDir);
-			}
+			AddDirs(isolationModeDir);
 		}
 	} else {
 		// LEVEL 2b: InstallDir, HomeDirs & Shared dirs
@@ -379,6 +379,15 @@ void DataDirLocater::LocateDataDirs()
 		//Note: using the defineflag SPRING_DATADIR & "SPRING_DATADIR" as string works fine, the preprocessor won't touch the 2nd
 		AddDirs(SPRING_DATADIR); // from -DSPRING_DATADIR, example /usr/games/share/spring/
 #endif
+	}
+
+	// LEVEL 3: custom additional data sources
+	{
+		const char* env = getenv("SPRING_DATADIR");
+		if (env && *env) {
+			AddDirs(env); // ENV{SPRING_DATADIR}
+		}
+		AddDirs(configHandler->GetString("SpringData")); // user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
 	}
 
 
