@@ -108,8 +108,8 @@ void CLegacyMeshDrawer::FindRange(const CCamera* cam, int& xs, int& xe, int y, i
 {
 	int xt0, xt1;
 
-	const std::vector<CCamera::FrustumLine>& negSides = cam->negFrustumSides;
-	const std::vector<CCamera::FrustumLine>& posSides = cam->posFrustumSides;
+	const std::vector<CCamera::FrustumLine> negSides = cam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine> posSides = cam->GetPosFrustumSides();
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
@@ -161,8 +161,8 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 	//! only process the necessary big squares in the x direction
 	const int bigSquareSizeY = bty * smfReadMap->bigSquareSize;
 
-	const std::vector<CCamera::FrustumLine>& negSides = cam->negFrustumSides;
-	const std::vector<CCamera::FrustumLine>& posSides = cam->posFrustumSides;
+	const std::vector<CCamera::FrustumLine> negSides = cam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine> posSides = cam->GetPosFrustumSides();
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 

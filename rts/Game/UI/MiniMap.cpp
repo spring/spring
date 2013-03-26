@@ -1089,8 +1089,8 @@ void CMiniMap::DrawForReal(bool use_geo)
 		cam2->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
 		cam2->ClipFrustumLines(true, -10000.0f, 400096.0f);
 
-		const std::vector<CCamera::FrustumLine>& negSides = cam2->negFrustumSides;
-//		const std::vector<CCamera::FrustumLine>& posSides = cam2->posFrustumSides;
+		const std::vector<CCamera::FrustumLine> negSides = cam2->GetNegFrustumSides();
+//		const std::vector<CCamera::FrustumLine> posSides = cam2->GetPosFrustumSides();
 		std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 		CVertexArray* va = GetVertexArray();

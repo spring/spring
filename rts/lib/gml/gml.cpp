@@ -282,6 +282,7 @@ boost::recursive_mutex &grpselmutex=selmutex;
 boost::recursive_mutex projmutex;
 boost::recursive_mutex objmutex;
 boost::recursive_mutex modelmutex;
+boost::recursive_mutex cammutex;
 
 gmlMutex simmutex;
 

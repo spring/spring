@@ -793,8 +793,8 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 		groundDrawer->UpdateCamRestraints(frustumCam);
 	}
 
-	const std::vector<CCamera::FrustumLine>& negSides = frustumCam->negFrustumSides;
-	const std::vector<CCamera::FrustumLine>& posSides = frustumCam->posFrustumSides;
+	const std::vector<CCamera::FrustumLine> negSides = frustumCam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine> posSides = frustumCam->GetPosFrustumSides();
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 

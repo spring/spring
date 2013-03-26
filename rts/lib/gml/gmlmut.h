@@ -90,6 +90,7 @@ extern boost::recursive_mutex &grpselmutex;
 extern boost::recursive_mutex projmutex;
 extern boost::recursive_mutex objmutex;
 extern boost::recursive_mutex modelmutex;
+extern boost::recursive_mutex cammutex;
 
 #include "gmlcls.h"
 
