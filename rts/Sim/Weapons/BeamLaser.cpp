@@ -15,7 +15,6 @@
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/Building.h"
-
 #include "System/Matrix44f.h"
 
 CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL));

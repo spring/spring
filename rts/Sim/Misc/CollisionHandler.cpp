@@ -224,65 +224,91 @@ bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3&
 }
 
 
-void CCollisionHandler::IntersectPieceTreeHelper(
+/*
+bool CCollisionHandler::IntersectPieceTreeHelper(
 	LocalModelPiece* lmp,
-	CMatrix44f mat,
+	const CMatrix44f& mat,
 	const float3& p0,
 	const float3& p1,
-	std::list<CollisionQuery>* hits)
-{
-	const CollisionVolume* vol = lmp->GetCollisionVolume();
-	const float3& off = vol->GetOffsets();
-	const float3& rot = lmp->GetRotation();
+	std::list<CollisionQuery>* hits
+) {
+	bool ret = false;
 
-	mat.Translate(lmp->GetPosition());
-	mat.RotateY(-rot[1]);
-	mat.RotateX(-rot[0]);
-	mat.RotateZ(-rot[2]);
+	CollisionVolume* lmpVol = lmp->GetCollisionVolume();
+	CMatrix44f volMat = lmp->GetModelSpaceMatrix() * mat;
 
-	if (lmp->scriptSetVisible && !vol->IgnoreHits()) {
-		mat.Translate(off);
+	if (lmp->scriptSetVisible && !lmpVol->IgnoreHits()) {
+		volMat.Translate(lmpVol->GetOffsets());
 
 		CollisionQuery cq;
 
-		if (CCollisionHandler::Intersect(vol, mat, p0, p1, &cq)) {
+		if ((ret = CCollisionHandler::Intersect(lmpVol, volMat, p0, p1, &cq))) {
 			cq.SetHitPiece(lmp); hits->push_back(cq);
 		}
 
-		mat.Translate(-off);
+		volMat.Translate(-lmpVol->GetOffsets());
 	}
 
 	for (unsigned int i = 0; i < lmp->children.size(); i++) {
-		IntersectPieceTreeHelper(lmp->children[i], mat, p0, p1, hits);
+		ret |= IntersectPieceTreeHelper(lmp->children[i], mat, p0, p1, hits);
 	}
+
+	return ret;
 }
+*/
+
+bool CCollisionHandler::IntersectPiecesHelper(
+	const CUnit* u,
+	const float3& p0,
+	const float3& p1,
+	std::list<CollisionQuery>* hits
+) {
+	CMatrix44f unitMat = u->GetTransformMatrix(true);
+	CMatrix44f volMat;
+	CollisionQuery cq;
+
+	for (unsigned int n = 0; n < u->localModel->pieces.size(); n++) {
+		const LocalModelPiece* lmp = u->localModel->GetPiece(n);
+		const CollisionVolume* lmpVol = lmp->GetCollisionVolume();
+
+		if (!lmp->scriptSetVisible || lmpVol->IgnoreHits())
+			continue;
+
+		volMat = lmp->GetModelSpaceMatrix() * unitMat;
+		volMat.Translate(lmpVol->GetOffsets());
+
+		if (!CCollisionHandler::Intersect(lmpVol, volMat, p0, p1, &cq))
+			continue;
+		// skip if neither an ingress nor an egress hit
+		if (cq.GetHitPos() == ZeroVector)
+			continue;
+
+		cq.SetHitPiece(const_cast<LocalModelPiece*>(lmp));
+		hits->push_back(cq);
+	}
+
+	return (cq.GetHitPiece() != NULL);
+}
+
 
 bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* cq)
 {
 	std::list<CollisionQuery> hits;
 	std::list<CollisionQuery>::const_iterator hitsIt;
 
-	CMatrix44f mat = u->GetTransformMatrix(true);
-
 	// TODO:
 	//   needs an early-out test, but gets complicated because
 	//   pieces can move --> no clearly defined bounding volume
-	IntersectPieceTreeHelper(u->localModel->GetRoot(), mat, p0, p1, &hits);
+	if (IntersectPiecesHelper(u, p0, p1, &hits)) {
+		float minDstSq = std::numeric_limits<float>::max();
 
-	float dstNearSq = std::numeric_limits<float>::max();
+		// save the closest intersection
+		for (hitsIt = hits.begin(); hitsIt != hits.end(); ++hitsIt) {
+			const float curDstSq = (hitsIt->GetHitPos() - p0).SqLength();
 
-	// save the closest intersection
-	for (hitsIt = hits.begin(); hitsIt != hits.end(); ++hitsIt) {
-		const CollisionQuery& cqTmp = *hitsIt;
-
-		// skip if neither an ingress nor an egress hit
-		if (cqTmp.GetHitPos() == ZeroVector)
-			continue;
-
-		const float dstSq = (cqTmp.GetHitPos() - p0).SqLength();
-
-		if (cq != NULL && dstSq < dstNearSq) {
-			dstNearSq = dstSq; *cq = cqTmp;
+			if (cq != NULL && curDstSq < minDstSq) {
+				minDstSq = curDstSq; *cq = *hitsIt;
+			}
 		}
 	}
 
