@@ -307,9 +307,8 @@ __attribute__ ((force_align_arg_pointer))
 #endif
 float3 LocalModelPiece::GetAbsolutePos() const
 {
-	float3 pos = modelSpaceMat.GetPos();
-	pos.x = -pos.x;
-	return pos;
+	// note: actually OBJECT_TO_WORLD but transform is the same
+	return (modelSpaceMat.GetPos() * WORLD_TO_OBJECT_SPACE);
 }
 
 
@@ -336,10 +335,9 @@ bool LocalModelPiece::GetEmitDirPos(float3& pos, float3& dir) const
 		dir = p2 - p1;
 	}
 
-	// we use a 'right' vector, and the positive x axis points to the left
-	pos.x = -pos.x;
-	dir.x = -dir.x;
-
+	// note: actually OBJECT_TO_WORLD but transform is the same
+	pos *= WORLD_TO_OBJECT_SPACE;
+	dir *= WORLD_TO_OBJECT_SPACE;
 	return true;
 }
 

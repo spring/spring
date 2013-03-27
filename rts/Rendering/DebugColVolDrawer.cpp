@@ -126,33 +126,57 @@ static inline void DrawFeatureColVol(const CFeature* f)
 }
 
 
-static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap, int lapf, CMatrix44f mat)
+/*
+static void DrawUnitDebugPieceTree(const LocalModelPiece* lmp, const LocalModelPiece* lap, int lapf)
 {
-	const float3& rot = p->GetRotation();
-	mat.Translate(p->GetPosition());
-	mat.RotateY(-rot[1]);
-	mat.RotateX(-rot[0]);
-	mat.RotateZ(-rot[2]);
-
 	glPushMatrix();
-		glMultMatrixf(mat.m);
+		glMultMatrixf(lmp->GetModelSpaceMatrix());
 
-		if (p->scriptSetVisible && !p->GetCollisionVolume()->IgnoreHits()) {
-			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
+		if (lmp->scriptSetVisible && !lmp->GetCollisionVolume()->IgnoreHits()) {
+			if ((lmp == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
 				glColor3f((1.0f - ((gs->frameNum - lapf) / 150.0f)), 0.0f, 0.0f);
 			}
 
-			// factors in the offsets
-			DrawCollisionVolume(p->GetCollisionVolume());
+			// factors in the volume offsets
+			DrawCollisionVolume(lmp->GetCollisionVolume());
 
-			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
+			if ((lmp == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
 				glColorf3(DEFAULT_VOLUME_COLOR);
 			}
 		}
 	glPopMatrix();
 
-	for (unsigned int i = 0; i < p->children.size(); i++) {
-		DrawUnitDebugPieceTree(p->children[i], lap, lapf, mat);
+	for (unsigned int i = 0; i < lmp->children.size(); i++) {
+		DrawUnitDebugPieceTree(lmp->children[i], lap, lapf);
+	}
+}
+*/
+
+static void DrawUnitDebugPieces(const CUnit* u)
+{
+	const LocalModelPiece* lap = u->lastAttackedPiece;
+
+	for (unsigned int n = 0; n < u->localModel->pieces.size(); n++) {
+		const LocalModelPiece* lmp = u->localModel->GetPiece(n);
+		const CollisionVolume* lmpVol = lmp->GetCollisionVolume();
+		const bool lmpHit = ((u->lastAttackedPieceFrame > 0) && ((gs->frameNum - u->lastAttackedPieceFrame) < 150));
+
+		if (!lmp->scriptSetVisible || lmpVol->IgnoreHits())
+			continue;
+
+		if ((lmp == lap) && lmpHit) {
+			glColor3f((1.0f - ((gs->frameNum - u->lastAttackedPieceFrame) / 150.0f)), 0.0f, 0.0f);
+		}
+
+		glPushMatrix();
+		glMultMatrixf(lmp->GetModelSpaceMatrix());
+		// factors in the volume offsets
+		DrawCollisionVolume(lmpVol);
+		glPopMatrix();
+
+		if ((lmp == lap) && lmpHit) {
+			glColorf3(DEFAULT_VOLUME_COLOR);
+		}
 	}
 }
 
@@ -176,9 +200,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 			// point but all piece-positions are relative to pos
 			// --> undo it
 			glTranslatef3(-u->relMidPos * WORLD_TO_OBJECT_SPACE);
-
-			CMatrix44f mat;
-			DrawUnitDebugPieceTree(u->localModel->GetRoot(), u->lastAttackedPiece, u->lastAttackedPieceFrame, mat);
+			DrawUnitDebugPieces(u);
 		} else {
 			if (!v->IgnoreHits()) {
 				// make it fade red under attack
