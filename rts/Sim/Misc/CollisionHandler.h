@@ -21,17 +21,23 @@ enum {
 
 struct CollisionQuery {
 public:
-	CollisionQuery(): lmp(NULL) {
-		Reset();
-	}
+	CollisionQuery(): lmp(NULL) { Reset(); }
+	CollisionQuery(const CollisionQuery& cq): lmp(NULL) { Reset(&cq); }
 
-	void Reset() {
+	void Reset(const CollisionQuery* cq = NULL) {
 		// (0, 0, 0) is volume-space center, so impossible
 		// to obtain as actual points except in the special
 		// cases (which all calling code should check for!)
 		// when continuous hit-detection is enabled
-		b0 = CQ_POINT_NO_INT; t0 = 0.0f; p0 = ZeroVector;
-		b1 = CQ_POINT_NO_INT; t1 = 0.0f; p1 = ZeroVector;
+		if (cq == NULL) {
+			b0 = CQ_POINT_NO_INT; t0 = 0.0f; p0 = ZeroVector;
+			b1 = CQ_POINT_NO_INT; t1 = 0.0f; p1 = ZeroVector;
+		} else {
+			b0 = cq->b0; t0 = cq->t0; p0 = cq->p0;
+			b1 = cq->b1; t1 = cq->t1; p1 = cq->p1;
+
+			lmp = cq->lmp;
+		}
 	}
 
 	bool InsideHit() const { return (b0 == CQ_POINT_IN_VOL); }
@@ -54,6 +60,7 @@ public:
 	float GetEgressPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetEgressPos() - pos).dot(dir)))); }
 
 	LocalModelPiece* GetHitPiece() const { return lmp; }
+	void SetHitPiece(LocalModelPiece* p) { lmp = p; }
 
 private:
 	friend class CCollisionHandler;
@@ -77,17 +84,17 @@ class CCollisionHandler {
 
 		static void PrintStats();
 
-		static bool DetectHit(const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* q = NULL, bool forceTrace = false);
-		static bool DetectHit(const CSolidObject* f, const float3 p0, const float3 p1, CollisionQuery* q = NULL, bool forceTrace = false);
-		static bool DetectHit(const CollisionVolume* v, const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* q, bool forceTrace = false);
-		static bool DetectHit(const CollisionVolume* v, const CSolidObject* f, const float3 p0, const float3 p1, CollisionQuery* q, bool forceTrace = false);
-		static bool MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* q);
+		static bool DetectHit(const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* cq = NULL, bool forceTrace = false);
+		static bool DetectHit(const CSolidObject* f, const float3 p0, const float3 p1, CollisionQuery* cq = NULL, bool forceTrace = false);
+		static bool DetectHit(const CollisionVolume* v, const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace = false);
+		static bool DetectHit(const CollisionVolume* v, const CSolidObject* f, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace = false);
+		static bool MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* cq);
 
 	private:
 		// HITTEST_DISC helpers for DetectHit
-		static bool Collision(const CollisionVolume* v, const CSolidObject* u, const float3 p, CollisionQuery* q);
+		static bool Collision(const CollisionVolume* v, const CSolidObject* u, const float3 p, CollisionQuery* cq);
 		// HITTEST_CONT helpers for DetectHit
-		static bool Intersect(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* q);
+		static bool Intersect(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq);
 
 	private:
 		/**
@@ -106,14 +113,14 @@ class CCollisionHandler {
 		 * @param p0 start of ray (in world-coordinates)
 		 * @param p1 end of ray (in world-coordinates)
 		 */
-		static bool Intersect(const CollisionVolume* v, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* q);
-		static bool IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q);
+		static bool Intersect(const CollisionVolume* v, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* cq);
+		static bool IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* cq);
 		static void IntersectPieceTreeHelper(LocalModelPiece* lmp, CMatrix44f mat, const float3& p0, const float3& p1, std::list<CollisionQuery>* hits);
 
 	public:
-		static bool IntersectEllipsoid(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q);
-		static bool IntersectCylinder(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q);
-		static bool IntersectBox(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q);
+		static bool IntersectEllipsoid(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* cq);
+		static bool IntersectCylinder(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* cq);
+		static bool IntersectBox(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* cq);
 
 	private:
 		static unsigned int numDiscTests; // number of discrete hit-tests executed

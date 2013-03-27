@@ -6,9 +6,9 @@
 #include "WeaponDefHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
-#include "Map/Ground.h"
 #include "Rendering/Models/3DModel.h"
-#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/CollisionHandler.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
@@ -54,7 +54,6 @@ void CLightningCannon::Init()
 void CLightningCannon::FireImpl()
 {
 	float3 curPos = weaponMuzzlePos;
-	float3 hitPos;
 	float3 curDir = (targetPos - curPos).Normalize();
 	float3 newDir = curDir;
 
@@ -66,8 +65,9 @@ void CLightningCannon::FireImpl()
 	CUnit* hitUnit = NULL;
 	CFeature* hitFeature = NULL;
 	CPlasmaRepulser* hitShield = NULL;
+	CollisionQuery hitColQuery;
 
-	float boltLength = TraceRay::TraceRay(curPos, curDir, range, collisionFlags, owner, hitUnit, hitFeature);
+	float boltLength = TraceRay::TraceRay(curPos, curDir, range, collisionFlags, owner, hitUnit, hitFeature, &hitColQuery);
 
 	if (!weaponDef->waterweapon) {
 		// terminate bolt at water surface if necessary
@@ -83,12 +83,9 @@ void CLightningCannon::FireImpl()
 		hitShield->BeamIntercepted(this);
 	}
 
-	hitPos = curPos + curDir * boltLength;
-
 	if (hitUnit != NULL) {
-		hitUnit->SetLastAttackedPiece(hitUnit->localModel->GetRoot(), gs->frameNum);
+		hitUnit->SetLastAttackedPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 	}
-
 
 	const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
 		weaponDef->damages:
@@ -105,7 +102,7 @@ void CLightningCannon::FireImpl()
 		);
 
 	const CGameHelper::ExplosionParams params = {
-		hitPos,
+		curPos + curDir * boltLength,                     // hitPos (same as hitColQuery.GetHitPos() if no water or shield in way)
 		curDir,
 		damageArray,
 		weaponDef,

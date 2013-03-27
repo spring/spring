@@ -142,6 +142,7 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPie
 				glColor3f((1.0f - ((gs->frameNum - lapf) / 150.0f)), 0.0f, 0.0f);
 			}
 
+			// factors in the offsets
 			DrawCollisionVolume(p->GetCollisionVolume());
 
 			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
@@ -171,7 +172,12 @@ static inline void DrawUnitColVol(const CUnit* u)
 
 		if (v->DefaultToPieceTree()) {
 			// draw only the piece volumes for less clutter
-			CMatrix44f mat(u->relMidPos * float3(0.0f, -1.0f, 0.0f));
+			// note: relMidPos transform is on the stack at this
+			// point but all piece-positions are relative to pos
+			// --> undo it
+			glTranslatef3(-u->relMidPos * WORLD_TO_OBJECT_SPACE);
+
+			CMatrix44f mat;
 			DrawUnitDebugPieceTree(u->localModel->GetRoot(), u->lastAttackedPiece, u->lastAttackedPieceFrame, mat);
 		} else {
 			if (!v->IgnoreHits()) {

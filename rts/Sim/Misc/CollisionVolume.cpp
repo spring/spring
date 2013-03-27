@@ -284,22 +284,20 @@ float CollisionVolume::GetPointSurfaceDistance(const CUnit* u, const LocalModelP
 	const CollisionVolume* vol = u->collisionVolume;
 
 	CMatrix44f mat = u->GetTransformMatrix(true);
-	float3 off = GetOffsets();
-
-	// Unit::GetTransformMatrix does not include this
-	// (its translation component is pos, not midPos)
-	mat.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
 
 	if (vol->DefaultToPieceTree() && lmp != NULL) {
-		// NOTE: if we get here, then <this> is the piece-volume
+		// NOTE: if we get here, <this> is the piece-volume
 		assert(this == lmp->GetCollisionVolume());
 
-		// need to transform into piece-space
-		mat = mat * lmp->GetModelSpaceMatrix();
-		off = -off;
+		// transform into piece-space relative to pos
+		mat = lmp->GetModelSpaceMatrix() * mat;
+	} else {
+		// Unit::GetTransformMatrix does not include this
+		// (its translation component is pos, not midPos)
+		mat.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
 	}
 
-	mat.Translate(off);
+	mat.Translate(GetOffsets());
 	mat.InvertAffineInPlace();
 
 	return (GetPointSurfaceDistance(mat, p));

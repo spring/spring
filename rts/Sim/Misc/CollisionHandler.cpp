@@ -24,22 +24,22 @@ void CCollisionHandler::PrintStats()
 }
 
 
-bool CCollisionHandler::DetectHit(const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* q, bool forceTrace)
+bool CCollisionHandler::DetectHit(const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace)
 {
-	return DetectHit(u->collisionVolume, u, p0, p1, q, forceTrace);
+	return DetectHit(u->collisionVolume, u, p0, p1, cq, forceTrace);
 }
 
 
-bool CCollisionHandler::DetectHit(const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* q, bool forceTrace)
+bool CCollisionHandler::DetectHit(const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace)
 {
-	return DetectHit(o->collisionVolume, o, p0, p1, q, forceTrace);
+	return DetectHit(o->collisionVolume, o, p0, p1, cq, forceTrace);
 }
 
 
-bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* q, bool forceTrace)
+bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace)
 {
-	if (q != NULL) {
-		q->Reset();
+	if (cq != NULL) {
+		cq->Reset();
 	}
 
 	// test *only* for ray intersections with the piece tree
@@ -48,30 +48,30 @@ bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CUnit* u, cons
 	// overrides forceTrace, which itself overrides testType
 	// FIXME make this available to SolidObjects too! (not worth it?)
 	if (v->DefaultToPieceTree())
-		return (CCollisionHandler::IntersectPieceTree(u, p0, p1, q));
+		return (CCollisionHandler::IntersectPieceTree(u, p0, p1, cq));
 
-	return DetectHit(v, (const CSolidObject*)u, p0, p1, q, forceTrace);
+	return DetectHit(v, (const CSolidObject*)u, p0, p1, cq, forceTrace);
 }
 
 
-bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* q, bool forceTrace)
+bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace)
 {
 	bool hit = false;
 
-	if (q != NULL) {
-		q->Reset();
+	if (cq != NULL) {
+		cq->Reset();
 	}
 
 	if (v->IgnoreHits())
 		return false;
 
 	if (forceTrace)
-		return (CCollisionHandler::Intersect(v, o, p0, p1, q));
+		return (CCollisionHandler::Intersect(v, o, p0, p1, cq));
 
 	switch (int(v->UseContHitTest())) {
 		// Collision() does not need p1
-		case CollisionVolume::COLVOL_HITTEST_DISC: { hit = CCollisionHandler::Collision(v, o, p0    , q); } break;
-		case CollisionVolume::COLVOL_HITTEST_CONT: { hit = CCollisionHandler::Intersect(v, o, p0, p1, q); } break;
+		case CollisionVolume::COLVOL_HITTEST_DISC: { hit = CCollisionHandler::Collision(v, o, p0    , cq); } break;
+		case CollisionVolume::COLVOL_HITTEST_CONT: { hit = CCollisionHandler::Intersect(v, o, p0, p1, cq); } break;
 		default: assert(false);
 	}
 
@@ -79,7 +79,7 @@ bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CSolidObject* 
 }
 
 
-bool CCollisionHandler::Collision(const CollisionVolume* v, const CSolidObject* o, const float3 p, CollisionQuery* q)
+bool CCollisionHandler::Collision(const CollisionVolume* v, const CSolidObject* o, const float3 p, CollisionQuery* cq)
 {
 	// if <v> is a sphere, then the bounding radius is just its own radius -->
 	// we do not need to test the COLVOL_TYPE_SPHERE case again when this fails
@@ -109,10 +109,10 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CSolidObject* 
 		}
 	}
 
-	if (q != NULL && hit) {
+	if (cq != NULL && hit) {
 		// same as the special cases for the continuous tests
 		// (but here p is a valid coordinate and safe to use)
-		q->b0 = CQ_POINT_IN_VOL; q->t0 = 0.0f; q->p0 = p;
+		cq->b0 = CQ_POINT_IN_VOL; cq->t0 = 0.0f; cq->p0 = p;
 	}
 
 	return hit;
@@ -206,18 +206,18 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 }
 
 
-bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* q)
+bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* cq)
 {
 	bool hit = false;
 
 	if (v->DefaultToPieceTree()) {
-		hit = CCollisionHandler::IntersectPieceTree(u, p0, p1, q);
+		hit = CCollisionHandler::IntersectPieceTree(u, p0, p1, cq);
 	} else {
 		CMatrix44f m = u->GetTransformMatrix(false, true);
 		m.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
 		m.Translate(v->GetOffsets());
 
-		hit = CCollisionHandler::Intersect(v, m, p0, p1, q);
+		hit = CCollisionHandler::Intersect(v, m, p0, p1, cq);
 	}
 
 	return hit;
@@ -232,7 +232,7 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 	std::list<CollisionQuery>* hits)
 {
 	const CollisionVolume* vol = lmp->GetCollisionVolume();
-	const float3& offset = vol->GetOffsets();
+	const float3& off = vol->GetOffsets();
 	const float3& rot = lmp->GetRotation();
 
 	mat.Translate(lmp->GetPosition());
@@ -241,15 +241,15 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 	mat.RotateZ(-rot[2]);
 
 	if (lmp->scriptSetVisible && !vol->IgnoreHits()) {
-		mat.Translate(offset);
+		mat.Translate(off);
 
-		CollisionQuery q;
-		if (CCollisionHandler::Intersect(vol, mat, p0, p1, &q)) {
-			q.lmp = lmp;
-			hits->push_back(q);
+		CollisionQuery cq;
+
+		if (CCollisionHandler::Intersect(vol, mat, p0, p1, &cq)) {
+			cq.SetHitPiece(lmp); hits->push_back(cq);
 		}
 
-		mat.Translate(-offset);
+		mat.Translate(-off);
 	}
 
 	for (unsigned int i = 0; i < lmp->children.size(); i++) {
@@ -257,44 +257,45 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 	}
 }
 
-bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q)
+bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* cq)
 {
 	std::list<CollisionQuery> hits;
 	std::list<CollisionQuery>::const_iterator hitsIt;
 
-	// this probably needs an early-out test
 	CMatrix44f mat = u->GetTransformMatrix(true);
-	mat.Translate(u->relMidPos * float3(-1.0f, 0.0f, 1.0f));
 
+	// TODO:
+	//   needs an early-out test, but gets complicated because
+	//   pieces can move --> no clearly defined bounding volume
 	IntersectPieceTreeHelper(u->localModel->GetRoot(), mat, p0, p1, &hits);
 
-	float dstNearSq = 1e30f;
+	float dstNearSq = std::numeric_limits<float>::max();
 
 	// save the closest intersection
 	for (hitsIt = hits.begin(); hitsIt != hits.end(); ++hitsIt) {
-		const CollisionQuery& qTmp = *hitsIt;
-		const float dstSq = (qTmp.p0 - p0).SqLength();
+		const CollisionQuery& cqTmp = *hitsIt;
 
-		if (q != NULL && dstSq < dstNearSq) {
-			dstNearSq = dstSq;
+		// skip if neither an ingress nor an egress hit
+		if (cqTmp.GetHitPos() == ZeroVector)
+			continue;
 
-			q->b0 = qTmp.b0; q->t0 = qTmp.t0; q->p0 = qTmp.p0;
-			q->b1 = qTmp.b1; q->t1 = qTmp.t1; q->p1 = qTmp.p1;
+		const float dstSq = (cqTmp.GetHitPos() - p0).SqLength();
 
-			q->lmp = qTmp.lmp;
+		if (cq != NULL && dstSq < dstNearSq) {
+			dstNearSq = dstSq; *cq = cqTmp;
 		}
 	}
 
 	return (!hits.empty());
 }
 
-inline bool CCollisionHandler::Intersect(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* q)
+inline bool CCollisionHandler::Intersect(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq)
 {
 	CMatrix44f m = o->GetTransformMatrix(true);
 	m.Translate(o->relMidPos * WORLD_TO_OBJECT_SPACE);
 	m.Translate(v->GetOffsets());
 
-	return CCollisionHandler::Intersect(v, m, p0, p1, q);
+	return CCollisionHandler::Intersect(v, m, p0, p1, cq);
 }
 
 /*
