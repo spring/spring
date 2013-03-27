@@ -3,8 +3,10 @@
 #include "DemoReader.h"
 
 
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Log/ILog.h"
 #include "System/Net/RawPacket.h"
 #include "Game/GameVersion.h"
 
@@ -12,6 +14,8 @@
 #include <stdexcept>
 #include <cassert>
 #include <cstring>
+
+CONFIG(bool, DisableDemoVersionCheck).defaultValue(false);
 
 CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	: playbackDemo(NULL)
@@ -38,7 +42,10 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		|| (SpringVersion::IsRelease() && strcmp(fileHeader.versionString, SpringVersion::GetSync().c_str()))
 #endif
 		) {
-			throw std::runtime_error(std::string("Demofile corrupt or created by a different version of Spring: ")+filename);
+			std::string demoMsg = std::string("Demofile corrupt or created by a different version of Spring: ")+filename;
+			if (!configHandler->GetBool("DisableDemoVersionCheck"))
+				throw std::runtime_error(demoMsg);
+			LOG_L(L_WARNING, "%s", demoMsg.c_str());
 	}
 
 	if (fileHeader.scriptSize != 0) {
