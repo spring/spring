@@ -2,6 +2,13 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+
+-- 9x.0 ---------------------------------------------------------
+- fix #3643
+- fix #3641
+
+
+
 -- 94.0 ---------------------------------------------------------
 Misc:
  - default LogFlush to true again
