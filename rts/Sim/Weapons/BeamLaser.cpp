@@ -6,10 +6,8 @@
 #include "WeaponDefHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
-#include "Sim/Misc/TeamHandler.h"
-#include "Map/Ground.h"
-#include "System/Matrix44f.h"
-#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/CollisionHandler.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/StrafeAirMoveType.h"
@@ -17,6 +15,8 @@
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/Building.h"
+
+#include "System/Matrix44f.h"
 
 CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL));
 
@@ -184,9 +184,10 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 	CUnit* hitUnit = NULL;
 	CFeature* hitFeature = NULL;
 	CPlasmaRepulser* hitShield = NULL;
+	CollisionQuery hitColQuery;
 
 	for (int tries = 0; tries < 5 && tryAgain; ++tries) {
-		float beamLength = TraceRay::TraceRay(curPos, curDir, maxLength - curLength, collisionFlags, owner, hitUnit, hitFeature);
+		float beamLength = TraceRay::TraceRay(curPos, curDir, maxLength - curLength, collisionFlags, owner, hitUnit, hitFeature, &hitColQuery);
 
 		if (hitUnit && teamHandler->AlliedTeams(hitUnit->team, owner->team) && sweepFire) {
 			// never damage friendlies with sweepfire
@@ -208,11 +209,12 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 
 		if (shieldLength < beamLength) {
 			beamLength = shieldLength;
-			tryAgain = hitShield->BeamIntercepted(this, damageMul); // repulsed
+			tryAgain = hitShield->BeamIntercepted(this, damageMul);
 		} else {
 			tryAgain = false;
 		}
 
+		// same as hitColQuery.GetHitPos() if no water or shield in way
 		hitPos = curPos + curDir * beamLength;
 
 		{
@@ -239,10 +241,7 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 		return;
 
 	if (hitUnit != NULL) {
-		// getting the actual piece here is probably overdoing it
-		// TODO change this if we really need proper flanking bonus support
-		// for beam-lasers
-		hitUnit->SetLastAttackedPiece(hitUnit->localModel->GetRoot(), gs->frameNum);
+		hitUnit->SetLastAttackedPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 
 		if (targetBorder > 0.0f) {
 			actualRange += (hitUnit->radius * targetBorder);

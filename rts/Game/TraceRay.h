@@ -7,6 +7,7 @@ class float3;
 class CUnit;
 class CFeature;
 class CSolidObject;
+struct CollisionQuery;
 
 namespace Collision {
 	enum {
@@ -28,7 +29,9 @@ namespace TraceRay {
 		int avoidFlags,
 		const CUnit* owner,
 		CUnit*& hitUnit,
-		CFeature*& hitFeature);
+		CFeature*& hitFeature,
+		CollisionQuery* hitColQuery = 0x0
+	);
 	float GuiTraceRay(
 		const float3& start,
 		const float3& dir,
@@ -38,7 +41,8 @@ namespace TraceRay {
 		CFeature*& hitFeature,
 		bool useRadar,
 		bool groundOnly = false,
-		bool ignoreWater = false);
+		bool ignoreWater = false
+	);
 
 	/**
 	 * @return true if there is an object (allied/neutral unit, feature)

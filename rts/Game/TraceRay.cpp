@@ -161,7 +161,8 @@ float TraceRay(
 	int avoidFlags,
 	const CUnit* owner,
 	CUnit*& hitUnit,
-	CFeature*& hitFeature
+	CFeature*& hitFeature,
+	CollisionQuery* hitColQuery
 ) {
 	const bool ignoreEnemies  = ((avoidFlags & Collision::NOENEMIES   ) != 0);
 	const bool ignoreAllies   = ((avoidFlags & Collision::NOFRIENDLIES) != 0);
@@ -174,18 +175,23 @@ float TraceRay(
 	hitFeature = NULL;
 	hitUnit = NULL;
 
-	if (dir == ZeroVector) {
+	if (dir == ZeroVector)
 		return -1.0f;
-	}
 
 	if (!ignoreFeatures || !ignoreUnits) {
 		GML_RECMUTEX_LOCK(quad); // TraceRay
+
 		CollisionQuery cq;
 
 		int* begQuad = NULL;
 		int* endQuad = NULL;
 
 		quadField->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
+
+		// locally point somewhere non-NULL; we cannot pass hitColQuery
+		// to DetectHit directly because each call resets it internally
+		if (hitColQuery == NULL)
+			hitColQuery = &cq;
 
 		// feature intersection
 		if (!ignoreFeatures) {
@@ -208,6 +214,7 @@ float TraceRay(
 						if (len < length) {
 							length = len;
 							hitFeature = f;
+							*hitColQuery = cq;
 						}
 					}
 				}
@@ -238,6 +245,7 @@ float TraceRay(
 						if (len < length) {
 							length = len;
 							hitUnit = u;
+							*hitColQuery = cq;
 						}
 					}
 				}
