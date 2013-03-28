@@ -10,6 +10,10 @@
 
 #include <boost/regex.hpp>
 
+#ifdef _WIN32
+#include <io.h>
+#endif
+
 ////////////////////////////////////////
 ////////// FileSystem
 
