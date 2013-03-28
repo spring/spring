@@ -138,6 +138,23 @@ bool FileSystem::CreateDirectory(std::string dir)
 }
 
 
+bool FileSystem::TouchFile(std::string filePath)
+{
+	if (!CheckFile(filePath)) {
+		return false;
+	}
+
+	if (access(filePath.c_str(), 4) != -1) { // check for read access
+		return true;
+	}
+
+	FILE* f = fopen(filePath.c_str(), "a+b");
+	if (!f) return false;
+	fclose(f);
+	return (access(filePath.c_str(), 4) != -1); // check for read access
+}
+
+
 
 
 std::string FileSystem::GetDirectory(const std::string& path)
