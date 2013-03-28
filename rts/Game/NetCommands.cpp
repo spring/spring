@@ -181,19 +181,22 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_PLAYERSTAT: {
-				const unsigned char player = inbuf[1];
-				if (!playerHandler->IsValidPlayer(player)) {
-					LOG_L(L_ERROR, "Got invalid player num %i in playerstat msg", player);
+				const unsigned char playerNum = inbuf[1];
+				if (!playerHandler->IsValidPlayer(playerNum)) {
+					LOG_L(L_ERROR, "Got invalid player num %i in playerstat msg", playerNum);
 					break;
 				}
-				*(PlayerStatisticsData*)&playerHandler->Player(player)->currentStats.playerStatisticsData = *(PlayerStatisticsData*)&inbuf[2];
+
+				CPlayer* player = playerHandler->Player(playerNum);
+				player->currentStats.set_raw_data(reinterpret_cast<const PlayerStatisticsData*>(&inbuf[2]));
+
 				if (gameOver) {
 					CDemoRecorder* record = net->GetDemoRecorder();
 					if (record != NULL) {
-						record->SetPlayerStats(player, playerHandler->Player(player)->currentStats);
+						record->SetPlayerStats(playerNum, player->currentStats);
 					}
 				}
-				AddTraffic(player, packetCode, dataLength);
+				AddTraffic(playerNum, packetCode, dataLength);
 				break;
 			}
 

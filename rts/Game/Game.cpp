@@ -1947,9 +1947,11 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 			record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 		}
 		for (int i = 0; i < numTeams; ++i) {
-			record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
+			const CTeam* team = teamHandler->Team(i);
+			record->SetTeamStats(i, team->statHistory);
 			netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
-			*buf << (uint8_t)teamHandler->Team(i)->teamNum << *(TeamStatisticsData *)&teamHandler->Team(i)->currentStats->teamStatisticsData;
+			*buf << static_cast<uint8_t>(team->teamNum);
+			*buf << *(team->currentStats->get_raw_data());
 			net->Send(buf);
 		}
 	}
