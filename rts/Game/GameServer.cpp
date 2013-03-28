@@ -1291,7 +1291,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
 				break;
 			}
-			players[a].lastStats = *(PlayerStatistics*)&inbuf[2];
+			*(PlayerStatisticsData*)&players[a].lastStats.playerStatisticsData = *(PlayerStatisticsData*)&inbuf[2];
 			Broadcast(packet); //forward data
 			break;
 
