@@ -187,7 +187,9 @@ unsigned int CDemoRecorder::WriteFileHeader(bool updateStreamLength)
 #ifdef _MSC_VER
 	if (!empty)
 #endif
+	{
 		demoStream.seekp(0);
+	}
 
 
 	demoStream.write((char*) &tmpHeader, sizeof(tmpHeader));
