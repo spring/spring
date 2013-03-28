@@ -32,8 +32,6 @@
 	/* how many enemy units have been killed by this teams units */\
 	int unitsKilled;
 
-#define TEAM_STATISTICS_DATA_START_ADDRESS(teamStats) (teamStats->get_raw_data())
-
 // keep a raw data struct to prevent platform dependent size/layout mismatch caused by creg
 struct TeamStatisticsData {
 	TEAM_STATISTICS_DATA
@@ -47,8 +45,8 @@ struct TeamStatistics
 
 	TEAM_STATISTICS_DATA
 
-	const TeamStatisticsData* get_raw_data() const { return reinterpret_cast<const TeamStatisticsData*>(&frame); }
-	      TeamStatisticsData* get_raw_data()       { return reinterpret_cast<      TeamStatisticsData*>(&frame); }
+	const TeamStatisticsData* GetTeamStatisticsData() const { return reinterpret_cast<const TeamStatisticsData*>(&frame); }
+	      TeamStatisticsData* GetTeamStatisticsData()       { return reinterpret_cast<      TeamStatisticsData*>(&frame); }
 	void set_raw_data(const TeamStatisticsData* data) { *reinterpret_cast<TeamStatisticsData*>(&frame) = *data; }
 
 	/// Change structure from host endian to little endian or vice versa.
