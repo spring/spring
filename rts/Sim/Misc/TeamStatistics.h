@@ -11,7 +11,7 @@
 #pragma pack(push, 1)
 
 #define	TEAM_STATISTICS_DATA\
-	int frame;\
+	int frame; /* frame is the start address and must be the first element */ \
 	\
 	float metalUsed,     energyUsed;\
 	float metalProduced, energyProduced;\
