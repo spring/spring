@@ -289,7 +289,8 @@ void DataDirLocater::AddHomeDirs()
 
 #else
 	// Linux, FreeBSD, Solaris, Apple non-bundle
-	AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
+	AddDirs("${XDG_CONFIG_HOME-\"~/.config\"}/spring");
+	AddDirs("~/.spring");
 #endif
 }
 
@@ -368,7 +369,6 @@ void DataDirLocater::LocateDataDirs()
 		if (env && *env) {
 			AddDirs(env); // ENV{SPRING_WRITEDIR}
 		}
-		//AddDirs(configHandler->GetString("SpringWriteDir"));
 	}
 
 	// LEVEL 2: automated dirs
