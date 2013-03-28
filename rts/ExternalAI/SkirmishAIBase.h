@@ -52,7 +52,7 @@ public:
  */
 class SkirmishAIStatistics : public TeamControllerStatistics
 {
-	CR_DECLARE(SkirmishAIStatistics);
+	CR_DECLARE_STRUCT(SkirmishAIStatistics);
 
 public:
 	/**

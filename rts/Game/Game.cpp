@@ -1301,7 +1301,7 @@ bool CGame::Draw() {
 			smallFont->SetColors(&speedcol, NULL);
 			smallFont->glPrint(0.99f, 0.90f, 1.0f, INF_FONT_FLAGS, buf);
 		}
-		
+
 		if (GML::SimEnabled() && mtInfoCtrl >= 5 && (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT)) {
 			float pval = (showMTInfo == MT_LUA_DUAL_EXPORT) ? (float)luaExportSize / 1000.0f : (float)luaLockTime / 10.0f;
 			const char *pstr = (showMTInfo == MT_LUA_DUAL_EXPORT) ? "LUA-EXP-SIZE(MT): %2.1fK" : "LUA-SYNC-CPU(MT): %2.1f%%";
@@ -1458,7 +1458,7 @@ void CGame::StartPlaying()
 	}
 
 	eventHandler.GameStart();
-	
+
 	// This is a hack!!!
 	// Before 0.83 Lua had its GameFrame callin before gs->frameNum got updated,
 	// what caused it to have a `gameframe0` while the engine started with 1.
@@ -1951,7 +1951,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 			record->SetTeamStats(i, team->statHistory);
 			netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
 			*buf << static_cast<uint8_t>(team->teamNum);
-			*buf << *(team->currentStats->GetTeamStatisticsData());
+			*buf << team->currentStats;
 			net->Send(buf);
 		}
 	}

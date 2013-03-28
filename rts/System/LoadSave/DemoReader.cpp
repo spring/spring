@@ -33,8 +33,8 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic))
 		|| fileHeader.version != DEMOFILE_VERSION
 		|| fileHeader.headerSize != sizeof(fileHeader)
-		|| fileHeader.playerStatElemSize != sizeof(PlayerStatisticsData)
-		|| fileHeader.teamStatElemSize != sizeof(TeamStatisticsData)
+		|| fileHeader.playerStatElemSize != sizeof(PlayerStatistics)
+		|| fileHeader.teamStatElemSize != sizeof(TeamStatistics)
 		// Don't compare spring version in debug mode: we don't want to make
 		// debugging dev-version demos impossible (because the version is different
 		// each build.)
@@ -158,7 +158,7 @@ void CDemoReader::LoadStats()
 
 	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum) {
 		PlayerStatistics buf;
-		playbackDemo->Read(reinterpret_cast<char*>(buf.GetPlayerStatisticsData()), sizeof(PlayerStatisticsData));
+		playbackDemo->Read(reinterpret_cast<char*>(&buf), sizeof(PlayerStatistics));
 		buf.swab();
 		playerStats.push_back(buf);
 	}
@@ -172,7 +172,7 @@ void CDemoReader::LoadStats()
 		for (int teamNum = 0; teamNum < fileHeader.numTeams; ++teamNum) {
 			for (int i = 0; i < numStatsPerTeam[teamNum]; ++i) {
 				TeamStatistics buf;
-				playbackDemo->Read(reinterpret_cast<char*>(buf.GetTeamStatisticsData()), sizeof(TeamStatisticsData));
+				playbackDemo->Read(reinterpret_cast<char*>(&buf), sizeof(TeamStatistics));
 				buf.swab();
 				teamStats[teamNum].push_back(buf);
 			}

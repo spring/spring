@@ -7,9 +7,3 @@ CR_REG_METADATA(TeamController, (
 	CR_MEMBER(team),
 	CR_MEMBER(name)
 ));
-
-CR_BIND(TeamControllerStatistics, );
-CR_REG_METADATA(TeamControllerStatistics, (
-	CR_MEMBER(numCommands),
-	CR_MEMBER(unitCommands)
-));
