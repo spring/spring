@@ -171,7 +171,11 @@ Write the DemoFileHeader at the start of the file and restores the original
 position in the file afterwards. */
 unsigned int CDemoRecorder::WriteFileHeader(bool updateStreamLength)
 {
-	const unsigned int pos = demoStream.tellp();
+	bool empty = false;
+#ifdef _MSC_VER // MSVC8 behaves strange if tell/seek is called before anything has been written
+	empty = (demoStream.str() == "");
+#endif
+	const unsigned int pos = empty ? 0 : demoStream.tellp();
 
 	DemoFileHeader tmpHeader;
 	memcpy(&tmpHeader, &fileHeader, sizeof(fileHeader));
@@ -179,7 +183,8 @@ unsigned int CDemoRecorder::WriteFileHeader(bool updateStreamLength)
 		tmpHeader.demoStreamSize = 0;
 	tmpHeader.swab(); // to little endian
 
-	demoStream.seekp(0);
+	if (!empty)
+		demoStream.seekp(0);
 	demoStream.write((char*) &tmpHeader, sizeof(tmpHeader));
 	demoStream.seekp(pos);
 
