@@ -188,9 +188,13 @@ void DataDirLocater::FilterUsableDataDirs()
 			if (DeterminePermissions(&*d)) {
 				newDatadirs.push_back(*d);
 				previous = d->path;
-				LOG("DataDirs:    Adding %s", d->path.c_str());
+				if (d->writable) {
+					LOG("Using read-write data directory: %s", d->path.c_str());
+				} else {
+					LOG("Using read-only data directory: %s",  d->path.c_str());
+				}
 			} else {
-				LOG("DataDirs: Can't add %s", d->path.c_str());
+				LOG_L(L_DEBUG, "Potentional data directory: %s", d->path.c_str());
 			}
 		}
 	}
@@ -416,6 +420,13 @@ void DataDirLocater::LocateDataDirs()
 
 void DataDirLocater::Check()
 {
+	if (IsIsolationMode()) {
+		LOG("DataDirs: Isolation Mode!");
+	} else
+	if (IsPortableMode()) {
+		LOG("DataDirs: Portable Mode!");
+	}
+
 	// Filter usable DataDirs
 	FilterUsableDataDirs();
 
@@ -439,25 +450,11 @@ void DataDirLocater::Check()
 	// writeDir == current working directory
 	FileSystem::ChDir(GetWriteDir()->path.c_str());
 
-	if (IsIsolationMode()) {
-		LOG("DataDirs: Isolation Mode!");
-	} else
-	if (IsPortableMode()) {
-		LOG("DataDirs: Portable Mode!");
-	}
-
-	for (std::vector<DataDir>::const_iterator d = dataDirs.begin(); d != dataDirs.end(); ++d) {
-		if (d->writable) {
-			LOG("Using read-write data directory: %s", d->path.c_str());
-
-			// tag the cache dir
-			const std::string cacheDir = d->path + "cache";
-			if (FileSystem::CreateDirectory(cacheDir)) {
-				CacheDir::SetCacheDir(cacheDir, true);
-			}
-		} else {
-			LOG("Using read-only data directory: %s",  d->path.c_str());
-		}
+	// tag the cache dir
+	assert(writeDir);
+	const std::string cacheDir = writeDir->path + "cache";
+	if (FileSystem::CreateDirectory(cacheDir)) {
+		CacheDir::SetCacheDir(cacheDir, true);
 	}
 }
 
