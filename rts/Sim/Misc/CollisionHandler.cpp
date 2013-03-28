@@ -230,7 +230,7 @@ bool CCollisionHandler::IntersectPieceTreeHelper(
 	const CMatrix44f& mat,
 	const float3& p0,
 	const float3& p1,
-	std::list<CollisionQuery>* hits
+	std::list<CollisionQuery>* cqs
 ) {
 	bool ret = false;
 
@@ -243,14 +243,14 @@ bool CCollisionHandler::IntersectPieceTreeHelper(
 		CollisionQuery cq;
 
 		if ((ret = CCollisionHandler::Intersect(lmpVol, volMat, p0, p1, &cq))) {
-			cq.SetHitPiece(lmp); hits->push_back(cq);
+			cq.SetHitPiece(lmp); cqs->push_back(cq);
 		}
 
 		volMat.Translate(-lmpVol->GetOffsets());
 	}
 
 	for (unsigned int i = 0; i < lmp->children.size(); i++) {
-		ret |= IntersectPieceTreeHelper(lmp->children[i], mat, p0, p1, hits);
+		ret |= IntersectPieceTreeHelper(lmp->children[i], mat, p0, p1, cqs);
 	}
 
 	return ret;
@@ -261,7 +261,7 @@ bool CCollisionHandler::IntersectPiecesHelper(
 	const CUnit* u,
 	const float3& p0,
 	const float3& p1,
-	std::list<CollisionQuery>* hits
+	std::list<CollisionQuery>* cqs
 ) {
 	CMatrix44f unitMat = u->GetTransformMatrix(true);
 	CMatrix44f volMat;
@@ -284,35 +284,44 @@ bool CCollisionHandler::IntersectPiecesHelper(
 			continue;
 
 		cq.SetHitPiece(const_cast<LocalModelPiece*>(lmp));
-		hits->push_back(cq);
+		cqs->push_back(cq);
 	}
 
+	// true iff at least one piece was intersected
 	return (cq.GetHitPiece() != NULL);
 }
 
 
 bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* cq)
 {
-	std::list<CollisionQuery> hits;
-	std::list<CollisionQuery>::const_iterator hitsIt;
+	std::list<CollisionQuery> cqs;
+	std::list<CollisionQuery>::const_iterator cqsIt;
 
 	// TODO:
 	//   needs an early-out test, but gets complicated because
 	//   pieces can move --> no clearly defined bounding volume
-	if (IntersectPiecesHelper(u, p0, p1, &hits)) {
-		float minDstSq = std::numeric_limits<float>::max();
+	if (!IntersectPiecesHelper(u, p0, p1, &cqs))
+		return false;
 
-		// save the closest intersection
-		for (hitsIt = hits.begin(); hitsIt != hits.end(); ++hitsIt) {
-			const float curDstSq = (hitsIt->GetHitPos() - p0).SqLength();
+	assert(!cqs.empty());
 
-			if (cq != NULL && curDstSq < minDstSq) {
-				minDstSq = curDstSq; *cq = *hitsIt;
-			}
-		}
+	// not interested in the details
+	if (cq == NULL)
+		return true;
+
+	float minDstSq = std::numeric_limits<float>::max();
+	float curDstSq = 0.0f;
+
+	// save the closest intersection
+	for (cqsIt = cqs.begin(); cqsIt != cqs.end(); ++cqsIt) {
+		if ((curDstSq = (cqsIt->GetHitPos() - p0).SqLength()) >= minDstSq)
+			continue;
+
+		minDstSq = curDstSq;
+		*cq = *cqsIt;
 	}
 
-	return (!hits.empty());
+	return true;
 }
 
 inline bool CCollisionHandler::Intersect(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq)
