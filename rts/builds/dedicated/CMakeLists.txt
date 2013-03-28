@@ -1,4 +1,4 @@
-ADD_DEFINITIONS    (-DDEDICATED ${PIC_FLAG})
+ADD_DEFINITIONS    (-DDEDICATED ${PIC_FLAG} -DNOT_USING_CREG)
 ADD_DEFINITIONS    (-DHEADLESS -DNO_SOUND)
 REMOVE_DEFINITIONS (-DSTREFLOP_SSE -DAVI_CAPTURING)
 REMOVE_DEFINITIONS (-DTRACE_SYNC -DSYNCDEBUG)
@@ -71,7 +71,6 @@ SET(system_files
 	${sources_engine_System_FileSystem}
 	${sources_engine_System_Log}
 	${sources_engine_System_Net}
-	${sources_engine_System_creg}
 	${sources_engine_Platform_CrashHandler}
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigHandler.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigLocater.cpp
@@ -98,7 +97,6 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/UnsyncedRNG.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Util.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/float4.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/float3.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/Backend.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/DefaultFilter.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/DefaultFormatter.cpp
@@ -122,8 +120,6 @@ SET(engineDedicatedSources
 	${ENGINE_SRC_ROOT_DIR}/Game/GameData.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/PlayerBase.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/PlayerStatistics.cpp
-	${ENGINE_SRC_ROOT_DIR}/Game/TeamController.cpp
-	${ENGINE_SRC_ROOT_DIR}/ExternalAI/SkirmishAIData.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/GameVersion.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/IVideoCapturing.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/DummyVideoCapturing.cpp
