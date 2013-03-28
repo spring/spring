@@ -216,7 +216,7 @@ PacketType CBaseNetProtocol::SendSetShare(uchar myPlayerNum, uchar myTeam, float
 PacketType CBaseNetProtocol::SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats)
 {
 	PackPacket* packet = new PackPacket(2 + sizeof(PlayerStatisticsData), NETMSG_PLAYERSTAT);
-	*packet << myPlayerNum << *(PlayerStatisticsData *)&currentStats.playerStatisticsData;
+	*packet << myPlayerNum << *(currentStats.get_raw_data());
 	return PacketType(packet);
 }
 

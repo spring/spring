@@ -158,7 +158,7 @@ void CDemoReader::LoadStats()
 
 	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum) {
 		PlayerStatistics buf;
-		playbackDemo->Read((char*) &buf.playerStatisticsData, sizeof(PlayerStatisticsData));
+		playbackDemo->Read(reinterpret_cast<char*>(buf.get_raw_data()), sizeof(PlayerStatisticsData));
 		buf.swab();
 		playerStats.push_back(buf);
 	}
@@ -172,7 +172,7 @@ void CDemoReader::LoadStats()
 		for (int teamNum = 0; teamNum < fileHeader.numTeams; ++teamNum) {
 			for (int i = 0; i < numStatsPerTeam[teamNum]; ++i) {
 				TeamStatistics buf;
-				playbackDemo->Read((char*) &buf.teamStatisticsData, sizeof(TeamStatisticsData));
+				playbackDemo->Read(reinterpret_cast<char*>(buf.get_raw_data()), sizeof(TeamStatisticsData));
 				buf.swab();
 				teamStats[teamNum].push_back(buf);
 			}

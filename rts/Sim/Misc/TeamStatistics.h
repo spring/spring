@@ -11,8 +11,7 @@
 #pragma pack(push, 1)
 
 #define	TEAM_STATISTICS_DATA\
-	union {\
-	int frame, teamStatisticsData; };\
+	int frame;\
 	\
 	float metalUsed,     energyUsed;\
 	float metalProduced, energyProduced;\
@@ -33,6 +32,8 @@
 	/* how many enemy units have been killed by this teams units */\
 	int unitsKilled;
 
+#define TEAM_STATISTICS_DATA_START_ADDRESS(teamStats) (teamStats->get_raw_data())
+
 // keep a raw data struct to prevent platform dependent size/layout mismatch caused by creg
 struct TeamStatisticsData {
 	TEAM_STATISTICS_DATA
@@ -42,26 +43,13 @@ struct TeamStatistics
 {
 	CR_DECLARE_STRUCT(TeamStatistics);
 
-	TeamStatistics() {
-		/*metalUsed     = energyUsed     = 0.0f;
-		metalProduced = energyProduced = 0.0f;
-		metalExcess   = energyExcess   = 0.0f;
-		metalReceived = energyReceived = 0.0f;
-		metalSent     = energySent     = 0.0f;
-		damageDealt   = damageReceived = 0.0f;
-		unitsProduced    = 0;
-		unitsDied        = 0;
-		unitsReceived    = 0;
-		unitsSent        = 0;
-		unitsCaptured    = 0;
-		unitsOutCaptured = 0;
-		unitsKilled      = 0;
-		frame            = 0;*/
-
-		memset(this, 0, sizeof(TeamStatistics));
-	};
+	TeamStatistics();
 
 	TEAM_STATISTICS_DATA
+
+	const TeamStatisticsData* get_raw_data() const { return reinterpret_cast<const TeamStatisticsData*>(&frame); }
+	      TeamStatisticsData* get_raw_data()       { return reinterpret_cast<      TeamStatisticsData*>(&frame); }
+	void set_raw_data(const TeamStatisticsData* data) { *reinterpret_cast<TeamStatisticsData*>(&frame) = *data; }
 
 	/// Change structure from host endian to little endian or vice versa.
 	void swab();
