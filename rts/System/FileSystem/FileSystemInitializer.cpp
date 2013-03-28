@@ -16,6 +16,7 @@ void FileSystemInitializer::Initialize()
 		try {
 			Platform::SetOrigCWD();
 			dataDirLocater.LocateDataDirs();
+			dataDirLocater.Check();
 			archiveScanner = new CArchiveScanner();
 			vfsHandler = new CVFSHandler();
 			initialized = true;
