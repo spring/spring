@@ -6,7 +6,7 @@
 #include "System/creg/creg_cond.h"
 
 #define	PLAYER_STATISTICS_DATA\
-	int mousePixels;\
+	int mousePixels; /* mousePixels is the start address and must be the first element */ \
 	int mouseClicks;\
 	int keyPresses;\
 	int numCommands;\
