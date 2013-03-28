@@ -413,7 +413,7 @@ bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::st
 	if ((fh1 != INVALID_HANDLE_VALUE) && (fh2 != INVALID_HANDLE_VALUE)) {
 		BY_HANDLE_FILE_INFORMATION info1, info2;
 
-		bool fine;
+		BOOL fine;
 		fine  = GetFileInformationByHandle(fh1, &info1);
 		fine &= GetFileInformationByHandle(fh2, &info2);
 
