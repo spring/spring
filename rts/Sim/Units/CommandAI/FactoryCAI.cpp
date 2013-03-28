@@ -40,14 +40,15 @@ CR_REG_METADATA_SUB(CFactoryCAI,BuildOption , (
 
 static std::string GetUnitDefBuildOptionToolTip(const UnitDef* ud, bool disabled) {
 	std::string tooltip;
+	tooltip += (disabled)?
+		"\xff\xff\x22\x22" "DISABLED: " "\xff\xff\xff\xff":
+		"Build: ";
+	tooltip += (ud->humanName + " - " + ud->tooltip);
 	tooltip += ("\nHealth "      + FloatToString(ud->health, "%.0f"));
 	tooltip += ("\nMetal cost "  + FloatToString(ud->metal, "%.0f"));
 	tooltip += ("\nEnergy cost " + FloatToString(ud->energy, "%.0f"));
 	tooltip += ("\nBuild time "  + FloatToString(ud->buildTime, "%.0f"));
-	tooltip += (disabled)?
-		"\xff\xff\x22\x22" "DISABLED: " "\xff\xff\xff\xff":
-		"Build: ";
-	tooltip += (ud->humanName + " - " + ud->tooltip + tmp);
+
 	return tooltip;
 }
 
