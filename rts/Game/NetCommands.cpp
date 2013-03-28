@@ -186,7 +186,7 @@ void CGame::ClientReadNet()
 					LOG_L(L_ERROR, "Got invalid player num %i in playerstat msg", player);
 					break;
 				}
-				playerHandler->Player(player)->currentStats = *(PlayerStatistics*)&inbuf[2];
+				*(PlayerStatisticsData*)&playerHandler->Player(player)->currentStats.playerStatisticsData = *(PlayerStatisticsData*)&inbuf[2];
 				if (gameOver) {
 					CDemoRecorder* record = net->GetDemoRecorder();
 					if (record != NULL) {

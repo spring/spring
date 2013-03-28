@@ -10,6 +10,34 @@
 
 #pragma pack(push, 1)
 
+#define	TEAM_STATISTICS_DATA\
+	union {\
+	int frame, teamStatisticsData; };\
+	\
+	float metalUsed,     energyUsed;\
+	float metalProduced, energyProduced;\
+	float metalExcess,   energyExcess;\
+	float metalReceived, energyReceived; /* received from allies */\
+	float metalSent,     energySent;     /* sent to allies */\
+	\
+	float damageDealt,   damageReceived; /* Damage taken and dealt to enemy units */\
+	\
+	int unitsProduced;\
+	int unitsDied;\
+	int unitsReceived;\
+	int unitsSent;\
+	/* units captured from enemy by us */\
+	int unitsCaptured;\
+	/* units captured from us by enemy */\
+	int unitsOutCaptured;\
+	/* how many enemy units have been killed by this teams units */\
+	int unitsKilled;
+
+// keep a raw data struct to prevent platform dependent size/layout mismatch caused by creg
+struct TeamStatisticsData {
+	TEAM_STATISTICS_DATA
+};
+
 struct TeamStatistics
 {
 	CR_DECLARE_STRUCT(TeamStatistics);
@@ -33,26 +61,7 @@ struct TeamStatistics
 		memset(this, 0, sizeof(TeamStatistics));
 	};
 
-	int frame;
-
-	float metalUsed,     energyUsed;
-	float metalProduced, energyProduced;
-	float metalExcess,   energyExcess;
-	float metalReceived, energyReceived; ///< received from allies
-	float metalSent,     energySent;     ///< sent to allies
-
-	float damageDealt,   damageReceived; ///< Damage taken and dealt to enemy units
-
-	int unitsProduced;
-	int unitsDied;
-	int unitsReceived;
-	int unitsSent;
-	/// units captured from enemy by us
-	int unitsCaptured;
-	/// units captured from us by enemy
-	int unitsOutCaptured;
-	/// how many enemy units have been killed by this teams units
-	int unitsKilled;
+	TEAM_STATISTICS_DATA
 
 	/// Change structure from host endian to little endian or vice versa.
 	void swab();

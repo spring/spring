@@ -40,8 +40,8 @@ void CDemoRecorder::SetFileHeader()
 	fileHeader.headerSize = sizeof(DemoFileHeader);
 	STRNCPY(fileHeader.versionString, (SpringVersion::GetSync()).c_str(), sizeof(fileHeader.versionString) - 1);
 	fileHeader.unixTime = CTimeUtil::GetCurrentTime();
-	fileHeader.playerStatElemSize = sizeof(PlayerStatistics);
-	fileHeader.teamStatElemSize = sizeof(TeamStatistics);
+	fileHeader.playerStatElemSize = sizeof(PlayerStatisticsData);
+	fileHeader.teamStatElemSize = sizeof(TeamStatisticsData);
 	fileHeader.teamStatPeriod = TeamStatistics::statsPeriod;
 	fileHeader.winningAllyTeamsSize = 0;
 
@@ -197,7 +197,7 @@ void CDemoRecorder::WritePlayerStats()
 	for (std::vector< PlayerStatistics >::iterator it = playerStats.begin(); it != playerStats.end(); ++it) {
 		PlayerStatistics& stats = *it;
 		stats.swab();
-		demoStream.write((char*) &stats, sizeof(PlayerStatistics));
+		demoStream.write((char*) &stats.playerStatisticsData, sizeof(PlayerStatisticsData));
 	}
 	playerStats.clear();
 
@@ -243,7 +243,7 @@ void CDemoRecorder::WriteTeamStats()
 		for (std::vector< TeamStatistics >::iterator it2 = it->begin(); it2 != it->end(); ++it2) {
 			TeamStatistics& stats = *it2;
 			stats.swab();
-			demoStream.write((char*)&stats, sizeof(TeamStatistics));
+			demoStream.write((char*)&stats.teamStatisticsData, sizeof(TeamStatisticsData));
 		}
 	}
 	teamStats.clear();

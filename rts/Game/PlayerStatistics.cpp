@@ -4,11 +4,13 @@
 
 #include "System/Platform/byteorder.h"
 
-CR_BIND_DERIVED(PlayerStatistics, TeamControllerStatistics, );
+CR_BIND(PlayerStatistics, );
 CR_REG_METADATA(PlayerStatistics, (
 	CR_MEMBER(mousePixels),
 	CR_MEMBER(mouseClicks),
-	CR_MEMBER(keyPresses)
+	CR_MEMBER(keyPresses),
+	CR_MEMBER(numCommands),
+	CR_MEMBER(unitCommands)
 ));
 
 
@@ -16,6 +18,8 @@ PlayerStatistics::PlayerStatistics()
 	: mousePixels(0)
 	, mouseClicks(0)
 	, keyPresses(0)
+	, numCommands(0)
+	, unitCommands(0)
 {
 }
 
@@ -24,5 +28,6 @@ void PlayerStatistics::swab()
 	swabDWordInPlace(mousePixels);
 	swabDWordInPlace(mouseClicks);
 	swabDWordInPlace(keyPresses);
-	TeamControllerStatistics::swab();
+	swabDWordInPlace(numCommands);
+	swabDWordInPlace(unitCommands);
 }
