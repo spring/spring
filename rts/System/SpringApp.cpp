@@ -52,6 +52,7 @@
 #include "System/Sync/FPUCheck.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
+#include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/StartScriptGen.h"
 #include "System/TimeProfiler.h"
@@ -230,7 +231,7 @@ bool SpringApp::Initialize()
 		globalRendering->FSAA = 0;
 
 	globalRendering->PostInit();
-	
+
 	InitOpenGL();
 	agui::InitGui();
 	LoadFonts();
@@ -774,19 +775,25 @@ void SpringApp::ParseCmdLine()
 		exit(res);
 	}
 
+	dataDirLocater.LocateDataDirs();
+
 	const string configSource = (cmdline->IsSet("config") ? cmdline->GetString("config") : "");
 	const bool safemode = cmdline->IsSet("safemode");
 	ConfigHandler::Instantiate(configSource, safemode);
 	GlobalConfig::Instantiate();
 
+	// Initialize the log. Only after this moment log will be written to file.
+	// Note: Logging MAY NOT start before the chdir, otherwise the logfile ends up
+	//       in the wrong directory.
+	// Update: now it actually may start before, log has preInitLog.
+	logOutput.Initialize();
+
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->IsSet("list-ai-interfaces")) {
-		dataDirLocater.LocateDataDirs();
 		IAILibraryManager::OutputAIInterfacesInfo();
 		exit(0);
 	}
 	else if (cmdline->IsSet("list-skirmish-ais")) {
-		dataDirLocater.LocateDataDirs();
 		IAILibraryManager::OutputSkirmishAIInfo();
 		exit(0);
 	}

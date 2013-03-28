@@ -311,6 +311,7 @@ void ConfigHandler::Instantiate(const std::string configSource, const bool safem
 	else {
 		locations.push_back(configSource);
 	}
+	assert(!locations.empty());
 
 	// log here so unitsync shows configuration source(s), too
 	vector<string>::const_iterator loc = locations.begin();

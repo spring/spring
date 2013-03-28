@@ -22,7 +22,6 @@
 #include <string.h>
 
 #include "System/Log/ILog.h"
-#include "System/LogOutput.h"
 #include "System/Config/ConfigHandler.h"
 #include "FileSystem.h"
 #include "CacheDir.h"
@@ -40,23 +39,23 @@ DataDirLocater dataDirLocater;
 
 static std::string GetSpringBinaryName()
 {
-#if       defined(WIN32)
+#if defined(WIN32)
 	return "spring.exe";
 #else
 	return "spring";
-#endif // defined(WIN32)
+#endif
 }
 
 
 static std::string GetUnitsyncLibName()
 {
-#if       defined(WIN32)
+#if   defined(WIN32)
 	return "unitsync.dll";
-#elif     defined(__APPLE__)
+#elif defined(__APPLE__)
 	return "libunitsync.dylib";
 #else
 	return "libunitsync.so";
-#endif // defined(WIN32)
+#endif
 }
 
 
@@ -90,8 +89,8 @@ void DataDirLocater::UpdateIsolationModeByEnvVar()
 	}
 }
 
-const std::vector<DataDir>& DataDirLocater::GetDataDirs() const {
-
+const std::vector<DataDir>& DataDirLocater::GetDataDirs() const
+{
 	assert(!dataDirs.empty());
 	return dataDirs;
 }
@@ -105,12 +104,20 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 	ExpandEnvironmentStrings(in.c_str(), out_c, maxSize); // expands %HOME% etc.
 	out = out_c;
 #else
-	wordexp_t pwordexp;
-	wordexp(in.c_str(), &pwordexp, WRDE_NOCMD); // expands $FOO, ${FOO}, ~/, etc.
-	if (pwordexp.we_wordc > 0) {
-		out = pwordexp.we_wordv[0];
+	std::string previous = in;
+	for (int i = 0; i < 10; ++i) { // repeat substitution till we got a pure absolute path
+		wordexp_t pwordexp;
+		wordexp(previous.c_str(), &pwordexp, WRDE_NOCMD); // expands $FOO, ${FOO}, ${FOO-DEF} ~/, etc.
+		if (pwordexp.we_wordc > 0) {
+			out = pwordexp.we_wordv[0];
+		}
+		wordfree(&pwordexp);
+
+		if (previous == out) {
+			break;
+		}
+		previous.swap(out);
 	}
-	wordfree(&pwordexp);
 #endif
 	return out;
 }
@@ -162,54 +169,58 @@ bool DataDirLocater::DeterminePermissions(DataDir* dataDir)
 		throw content_error(std::string("a datadir may not be specified with a relative path: \"") + dataDir->path + "\"");
 	}
 
-	// Figure out whether we have read/write permissions
-	// First check read access, if we got that, check write access too
-	// (no support for write-only directories)
-	// We check for the executable bit, because otherwise we can not browse the
-	// directory.
-	if (FileSystem::DirExists(dataDir->path))
-	{
-		if (!writeDir && FileSystem::DirIsWritable(dataDir->path))
-		{
-			dataDir->writable = true;
-			writeDir = dataDir;
-		}
+	if (FileSystem::DirExists(dataDir->path)) {
 		return true;
 	}
-	else if (!writeDir) // if there is already a rw data directory, do not create new folder for read-only locations
-	{
-		if (FileSystem::CreateDirectory(dataDir->path))
-		{
-			// it did not exist before, now it does and we just created it with
-			// rw access, so we just assume we still have read-write access ...
-			dataDir->writable = true;
-			writeDir = dataDir;
-			return true;
-		}
-	}
+
 	return false;
 }
 
-void DataDirLocater::DeterminePermissions()
+void DataDirLocater::FilterUsableDataDirs()
 {
 	std::vector<DataDir> newDatadirs;
 	std::string previous; // used to filter out consecutive duplicates
 	// (I did not bother filtering out non-consecutive duplicates because then
 	//  there is the question which of the multiple instances to purge.)
 
-	writeDir = NULL;
-
 	for (std::vector<DataDir>::iterator d = dataDirs.begin(); d != dataDirs.end(); ++d) {
-		if ((d->path != previous) && DeterminePermissions(&*d)) {
-			newDatadirs.push_back(*d);
-			previous = d->path;
-			LOG("DataDirs:    Adding %s", d->path.c_str());
-		} else {
-			LOG("DataDirs: Can't add %s", d->path.c_str());
+		if (d->path != previous) {
+			if (DeterminePermissions(&*d)) {
+				newDatadirs.push_back(*d);
+				previous = d->path;
+				LOG("DataDirs:    Adding %s", d->path.c_str());
+			} else {
+				LOG("DataDirs: Can't add %s", d->path.c_str());
+			}
 		}
 	}
 
 	dataDirs = newDatadirs;
+}
+
+
+bool DataDirLocater::IsWriteableDir(DataDir* dataDir)
+{
+	if (FileSystem::DirExists(dataDir->path)) {
+		return FileSystem::DirIsWritable(dataDir->path);
+	} else {
+		// it did not exist before, now it does and we just created it with
+		// rw access, so we just assume we still have read-write access ...
+		return FileSystem::CreateDirectory(dataDir->path);
+	}
+	return false;
+}
+
+void DataDirLocater::FindWriteableDataDir()
+{
+	writeDir = NULL;
+	for (std::vector<DataDir>::iterator d = dataDirs.begin(); d != dataDirs.end(); ++d) {
+		if (IsWriteableDir(&*d)) {
+			d->writable = true;
+			writeDir = &*d;
+			break;
+		}
+	}
 }
 
 
@@ -221,11 +232,11 @@ void DataDirLocater::AddCurWorkDir()
 
 void DataDirLocater::AddInstallDir()
 {
-#if       defined(UNITSYNC)
+#if  defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
-#else  // defined(UNITSYNC)
+#else
 	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
-#endif // defined(UNITSYNC)
+#endif
 
 	// This is useful in case of multiple engine/unitsync versions installed
 	// together in a sub-dir of the data-dir
@@ -278,7 +289,8 @@ void DataDirLocater::AddHomeDirs()
 
 #else
 	// Linux, FreeBSD, Solaris, Apple non-bundle
-	AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
+	AddDirs("${XDG_CONFIG_HOME-\"~/.config\"}/spring");
+	AddDirs("~/.spring");
 #endif
 }
 
@@ -316,7 +328,7 @@ void DataDirLocater::AddOsSpecificDirs()
 	AddDirs(dd_etc);                              // from /etc/spring/datadir FIXME add in IsolatedMode too? FIXME
 #endif
 
-#if     defined(__APPLE__)
+#if defined(__APPLE__)
 	// Mac OS X Application Bundle (*.app) - single file install
 
 	// directory structure (Apple standard):
@@ -357,7 +369,6 @@ void DataDirLocater::LocateDataDirs()
 		if (env && *env) {
 			AddDirs(env); // ENV{SPRING_WRITEDIR}
 		}
-		//AddDirs(configHandler->GetString("SpringWriteDir"));
 	}
 
 	// LEVEL 2: automated dirs
@@ -380,37 +391,46 @@ void DataDirLocater::LocateDataDirs()
 		AddOsSpecificDirs();
 		//AddCurWorkDir();
 
-#ifdef SPRING_DATADIR
-		//Note: using the defineflag SPRING_DATADIR & "SPRING_DATADIR" as string works fine, the preprocessor won't touch the 2nd
+	#ifdef SPRING_DATADIR
+		// CompilerInfo: using the defineflag SPRING_DATADIR & "SPRING_DATADIR" as string works fine, the preprocessor won't touch the 2nd
 		AddDirs(SPRING_DATADIR); // from -DSPRING_DATADIR, example /usr/games/share/spring/
-#endif
+	#endif
 	}
 
-	// LEVEL 3: custom additional data sources
+	// LEVEL 3: additional custom data sources
 	{
 		const char* env = getenv("SPRING_DATADIR");
 		if (env && *env) {
 			AddDirs(env); // ENV{SPRING_DATADIR}
 		}
-		AddDirs(configHandler->GetString("SpringData")); // user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
+		if (configHandler) {
+			// user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
+			AddDirs(configHandler->GetString("SpringData"));
+		}
 	}
 
+	// Find the folder we save to
+	FindWriteableDataDir();
+}
 
-	// Figure out permissions of all dataDirs
-	DeterminePermissions();
+
+void DataDirLocater::Check()
+{
+	// Filter usable DataDirs
+	FilterUsableDataDirs();
 
 	if (!writeDir) {
 		// bail out
 		const std::string errstr = "Not a single writable data directory found!\n\n"
 				"Configure a writable data directory using either:\n"
 				"- the SPRING_DATADIR environment variable,\n"
-#ifdef WIN32
+			#ifdef WIN32
 				"- a SpringData=C:/path/to/data declaration in spring's config file ./springsettings.cfg\n"
 				"- by giving you write access to the installation directory";
-#else
+			#else
 				"- a SpringData=/path/to/data declaration in ~/.springrc or\n"
 				"- the configuration file /etc/spring/datadir";
-#endif
+			#endif
 		throw content_error(errstr);
 	}
 
@@ -418,12 +438,6 @@ void DataDirLocater::LocateDataDirs()
 	// Not only safety anymore, it's just easier if other code can safely assume that
 	// writeDir == current working directory
 	FileSystem::ChDir(GetWriteDir()->path.c_str());
-
-	// Initialize the log. Only after this moment log will be written to file.
-	// Note: Logging MAY NOT start before the chdir, otherwise the logfile ends up
-	//       in the wrong directory.
-	// Update: now it actually may start before, log has preInitLog.
-	logOutput.Initialize();
 
 	if (IsIsolationMode()) {
 		LOG("DataDirs: Isolation Mode!");
@@ -452,7 +466,7 @@ bool DataDirLocater::IsPortableMode()
 {
 	// Test 1
 	// Check if spring binary & unitsync library are in the same folder
-#if       defined(UNITSYNC)
+#if defined(UNITSYNC)
 	const std::string dir = Platform::GetModulePath();
 	const std::string fileExe = dir + "/" + GetSpringBinaryName();
 
@@ -482,8 +496,8 @@ bool DataDirLocater::IsPortableMode()
 	return true;
 }
 
-bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath) {
-
+bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath)
+{
 	bool looksLikeDataDir = false;
 
 	if (FileSystem::DirExists(dirPath + "/maps")

@@ -63,6 +63,9 @@ public:
 	static bool CreateDirectory(std::string dir);
 	///@}
 
+
+	static bool TouchFile(std::string filePath);
+
 	/// @name convenience
 	///@{
 	/**
