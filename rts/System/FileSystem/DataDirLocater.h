@@ -184,6 +184,7 @@ private:
 	 * adding it again would be pointless.
 	 */
 	void AddDir(const std::string& dir);
+
 	/**
 	 * @brief Figure out permissions we have for a single data directory.
 	 * @returns whether we have permissions to read the data directory.

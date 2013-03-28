@@ -13,74 +13,80 @@
 
 #include "ConfigLocater.h"
 #include "Game/GameVersion.h"
+#include "System/Exceptions.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/Misc.h"
+#include <boost/foreach.hpp>
 
 
 using std::string;
 using std::vector;
 
-static void GetPortableLocations(vector<string>& locations)
+
+static void AddCfgFile(vector<string>& locations, const  std::string& filepath)
 {
-#ifndef _WIN32
-	const std::string cfgName = ".springrc";
-#else
-	const std::string cfgName = "springsettings.cfg";
-#endif
-
-	if (dataDirLocater.IsIsolationMode()) {
-		// Search in IsolatedModeDir
-		const std::string confPath = FileSystem::EnsurePathSepAtEnd(dataDirLocater.GetIsolationModeDir()) + cfgName;
-		locations.push_back(confPath);
-	} else {
-		// Search in binary dir
-		const std::string confPath = FileSystem::EnsurePathSepAtEnd(Platform::GetProcessExecutablePath()) + cfgName;
-
-		// lets see if the file exists & is writable
-		// (otherwise it can fail/segfault/end up in virtualstore...)
-		// _access modes: 0 - exists; 2 - write; 4 - read; 6 - r/w
-		// doesn't work on directories (precisely, mode is always 0)
-		if (access(confPath.c_str(), 6) != -1) {
-			locations.push_back(confPath);
+	BOOST_FOREACH(std::string& fp, locations) {
+		if (fp == filepath) {
+			return;
 		}
 	}
+	locations.push_back(filepath);
 }
 
-static void GetPlatformLocations(vector<string>& locations)
+
+static void LoadCfgInFolder(vector<string>& locations, const std::string& path, const bool hidden = false, const bool force = false)
 {
 #ifndef _WIN32
-	const string base = ".springrc";
-	const string home = FileSystem::EnsurePathSepAtEnd(Platform::GetUserDir());
-
-	const string defCfg = home + base;
+	const string base = (hidden) ? ".springrc" : "springrc";
+	const string defCfg = path + base;
 	const string verCfg = defCfg + "-" + SpringVersion::Get();
 #else
-	// e.g. "C:\Users\USER\AppData\Local"
-	const string userDir = FileSystem::EnsurePathSepAtEnd(Platform::GetUserDir());
-
-	const string defCfg = userDir + "springsettings.cfg";
-	const string verCfg = userDir + "springsettings-" + SpringVersion::Get() + ".cfg";
+	const string defCfg = path + "springsettings.cfg";
+	const string verCfg = path + "springsettings-" + SpringVersion::Get() + ".cfg";
 #endif
 
-	if (access(verCfg.c_str(), 6) != -1) { // check for read & write access
-		locations.push_back(verCfg);
+	// lets see if the file exists & is writable
+	// (otherwise it can fail/segfault/end up in virtualstore...)
+	// _access modes: 0 - exists; 2 - write; 4 - read; 6 - r/w
+	// doesn't work on directories (precisely, mode is always 0)
+	const int _w = 6;
+	const int _r = 4;
+
+	if (locations.empty()) {
+		// add the config file we write to
+		AddCfgFile(locations, defCfg);
+
+		FileSystem::TouchFile(defCfg); // create file if doesn't exists
+		if (access(defCfg.c_str(), _w) == -1) { // check for write access
+			throw content_error(std::string("config file not writeable: \"") + defCfg + "\"");
+		}
 	}
 
-	locations.push_back(defCfg);
+	if (access(verCfg.c_str(), _r) != -1) { // check for read access
+		AddCfgFile(locations, verCfg);
+	}
+	if (access(defCfg.c_str(), _r) != -1) { // check for read access
+		AddCfgFile(locations, defCfg);
+	}
 }
+
 
 /**
  * @brief Get the names of the default configuration files
  */
 void ConfigLocater::GetDefaultLocations(vector<string>& locations)
 {
-	// check if there exists a config file in the same directory as the exe
-	GetPortableLocations(locations);
+	// first, add writeable config file
+	LoadCfgInFolder(locations, dataDirLocater.GetWriteDirPath(), false, true);
 
-	// portable implies isolated:
-	// no extra sources when a portable source has been found!
-	if (locations.empty()) {
-		GetPlatformLocations(locations);
+	// old primary
+	// e.g. linux: "~/.springrc"; windows: "C:\Users\USER\AppData\Local\springsettings.cfg"
+	const string userDir = FileSystem::EnsurePathSepAtEnd(Platform::GetUserDir());
+	LoadCfgInFolder(locations, userDir, true);
+
+	// add additional readonly config files
+	BOOST_FOREACH(std::string path, dataDirLocater.GetDataDirPaths()) {
+		LoadCfgInFolder(locations, path);
 	}
 }

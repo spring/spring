@@ -22,7 +22,6 @@
 #include <string.h>
 
 #include "System/Log/ILog.h"
-#include "System/LogOutput.h"
 #include "System/Config/ConfigHandler.h"
 #include "FileSystem.h"
 #include "CacheDir.h"
@@ -404,7 +403,10 @@ void DataDirLocater::LocateDataDirs()
 		if (env && *env) {
 			AddDirs(env); // ENV{SPRING_DATADIR}
 		}
-		AddDirs(configHandler->GetString("SpringData")); // user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
+		if (configHandler) {
+			// user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
+			AddDirs(configHandler->GetString("SpringData"));
+		}
 	}
 
 	// Find the folder we save to
@@ -436,12 +438,6 @@ void DataDirLocater::Check()
 	// Not only safety anymore, it's just easier if other code can safely assume that
 	// writeDir == current working directory
 	FileSystem::ChDir(GetWriteDir()->path.c_str());
-
-	// Initialize the log. Only after this moment log will be written to file.
-	// Note: Logging MAY NOT start before the chdir, otherwise the logfile ends up
-	//       in the wrong directory.
-	// Update: now it actually may start before, log has preInitLog.
-	logOutput.Initialize();
 
 	if (IsIsolationMode()) {
 		LOG("DataDirs: Isolation Mode!");
