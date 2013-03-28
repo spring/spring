@@ -1951,7 +1951,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 			record->SetTeamStats(i, team->statHistory);
 			netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
 			*buf << static_cast<uint8_t>(team->teamNum);
-			*buf << *(team->currentStats->get_raw_data());
+			*buf << *(team->currentStats->GetTeamStatisticsData());
 			net->Send(buf);
 		}
 	}
