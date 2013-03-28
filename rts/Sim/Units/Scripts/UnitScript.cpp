@@ -789,47 +789,47 @@ void CUnitScript::Explode(int piece, int flags)
 	}
 
 	// If this is true, no stuff should fly off
-	if (flags & PF_NONE) return;
+	if (flags & PF_NONE)
+		return;
 
 	// This means that we are going to do a full fledged piece explosion!
 	float3 baseSpeed = unit->speed + unit->residualImpulse * 0.5f;
-	float sql = baseSpeed.SqLength();
+	float3 speed((0.5f - gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
 
-	if (sql > 9) {
-		const float l  = math::sqrt(sql);
+	if (baseSpeed.SqLength() > 9) {
+		const float l  = baseSpeed.Length();
 		const float l2 = 3 + math::sqrt(l - 3);
 		baseSpeed *= (l2 / l);
 	}
-	float3 speed((0.5f-gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
 	if (unit->pos.y - ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 15) {
 		speed.y = (0.5f - gs->randFloat()) * 6.0f;
 	}
-	speed += baseSpeed;
-	if (speed.SqLength() > 12*12) {
-		speed.Normalize();
-		speed *= 12;
-	}
 
-	/* TODO Push this back. Don't forget to pass the team (color).  */
+	speed += baseSpeed;
+
+	// limit projectile speed to 12 elmos/frame (why?)
+	if (speed.SqLength() > (12.0f*12.0f)) {
+		speed = (speed.Normalize() * 12.0f);
+	}
 
 	if (flags & PF_Shatter) {
 		Shatter(piece, absPos, speed);
+		return;
 	}
-	else {
-		LocalModelPiece* pieceData = pieces[piece];
 
-		if (pieceData->original != NULL) {
-			int newflags = PF_Fall; // if they don't fall they could live forever
-			if (flags & PF_Explode) { newflags |= PF_Explode; }
-			//if (flags & PF_Fall) { newflags |=  PF_Fall; }
-			if ((flags & PF_Smoke) && projectileHandler->particleSaturation < 1) { newflags |= PF_Smoke; }
-			if ((flags & PF_Fire) && projectileHandler->particleSaturation < 0.95f) { newflags |= PF_Fire; }
-			if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
+	if (pieces[piece]->original == NULL)
+		return;
 
-			//LOG_L(L_DEBUG, "Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
-			new CPieceProjectile(absPos, speed, pieceData, newflags,unit,0.5f);
-		}
-	}
+	// projectiles that don't fall could live forever
+	int newflags = PF_Fall;
+
+	if (flags & PF_Explode) { newflags |= PF_Explode; }
+	// if (flags & PF_Fall) { newflags |=  PF_Fall; }
+	if ((flags & PF_Smoke) && projectileHandler->particleSaturation < 1.0f) { newflags |= PF_Smoke; }
+	if ((flags & PF_Fire) && projectileHandler->particleSaturation < 0.95f) { newflags |= PF_Fire; }
+	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
+
+	new CPieceProjectile(absPos, speed, pieces[piece], newflags, unit, 0.5f);
 #endif
 }
 
