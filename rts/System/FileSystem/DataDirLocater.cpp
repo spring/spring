@@ -170,54 +170,58 @@ bool DataDirLocater::DeterminePermissions(DataDir* dataDir)
 		throw content_error(std::string("a datadir may not be specified with a relative path: \"") + dataDir->path + "\"");
 	}
 
-	// Figure out whether we have read/write permissions
-	// First check read access, if we got that, check write access too
-	// (no support for write-only directories)
-	// We check for the executable bit, because otherwise we can not browse the
-	// directory.
-	if (FileSystem::DirExists(dataDir->path))
-	{
-		if (!writeDir && FileSystem::DirIsWritable(dataDir->path))
-		{
-			dataDir->writable = true;
-			writeDir = dataDir;
-		}
+	if (FileSystem::DirExists(dataDir->path)) {
 		return true;
 	}
-	else if (!writeDir) // if there is already a rw data directory, do not create new folder for read-only locations
-	{
-		if (FileSystem::CreateDirectory(dataDir->path))
-		{
-			// it did not exist before, now it does and we just created it with
-			// rw access, so we just assume we still have read-write access ...
-			dataDir->writable = true;
-			writeDir = dataDir;
-			return true;
-		}
-	}
+
 	return false;
 }
 
-void DataDirLocater::DeterminePermissions()
+void DataDirLocater::FilterUsableDataDirs()
 {
 	std::vector<DataDir> newDatadirs;
 	std::string previous; // used to filter out consecutive duplicates
 	// (I did not bother filtering out non-consecutive duplicates because then
 	//  there is the question which of the multiple instances to purge.)
 
-	writeDir = NULL;
-
 	for (std::vector<DataDir>::iterator d = dataDirs.begin(); d != dataDirs.end(); ++d) {
-		if ((d->path != previous) && DeterminePermissions(&*d)) {
-			newDatadirs.push_back(*d);
-			previous = d->path;
-			LOG("DataDirs:    Adding %s", d->path.c_str());
-		} else {
-			LOG("DataDirs: Can't add %s", d->path.c_str());
+		if (d->path != previous) {
+			if (DeterminePermissions(&*d)) {
+				newDatadirs.push_back(*d);
+				previous = d->path;
+				LOG("DataDirs:    Adding %s", d->path.c_str());
+			} else {
+				LOG("DataDirs: Can't add %s", d->path.c_str());
+			}
 		}
 	}
 
 	dataDirs = newDatadirs;
+}
+
+
+bool DataDirLocater::IsWriteableDir(DataDir* dataDir)
+{
+	if (FileSystem::DirExists(dataDir->path)) {
+		return FileSystem::DirIsWritable(dataDir->path);
+	} else {
+		// it did not exist before, now it does and we just created it with
+		// rw access, so we just assume we still have read-write access ...
+		return FileSystem::CreateDirectory(dataDir->path);
+	}
+	return false;
+}
+
+void DataDirLocater::FindWriteableDataDir()
+{
+	writeDir = NULL;
+	for (std::vector<DataDir>::iterator d = dataDirs.begin(); d != dataDirs.end(); ++d) {
+		if (IsWriteableDir(&*d)) {
+			d->writable = true;
+			writeDir = &*d;
+			break;
+		}
+	}
 }
 
 
@@ -403,9 +407,15 @@ void DataDirLocater::LocateDataDirs()
 		AddDirs(configHandler->GetString("SpringData")); // user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
 	}
 
+	// Find the folder we save to
+	FindWriteableDataDir();
+}
 
-	// Figure out permissions of all dataDirs
-	DeterminePermissions();
+
+void DataDirLocater::Check()
+{
+	// Filter usable DataDirs
+	FilterUsableDataDirs();
 
 	if (!writeDir) {
 		// bail out

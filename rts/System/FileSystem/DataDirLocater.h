@@ -104,6 +104,11 @@ public:
 	 */
 	void LocateDataDirs();
 
+	/**
+	 * @brief call after LocateDataDirs()
+	 */
+	void Check();
+
 	const std::vector<DataDir>& GetDataDirs() const;
 	const DataDir* GetWriteDir() const { return writeDir; }
 
@@ -187,7 +192,10 @@ private:
 	/**
 	 * @brief Figure out permissions we have for the data directories.
 	 */
-	void DeterminePermissions();
+	void FilterUsableDataDirs();
+
+	bool IsWriteableDir(DataDir* dataDir);
+	void FindWriteableDataDir();
 
 	/**
 	 * Determines whether we are in portable mode.
