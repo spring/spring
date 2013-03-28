@@ -40,23 +40,23 @@ DataDirLocater dataDirLocater;
 
 static std::string GetSpringBinaryName()
 {
-#if       defined(WIN32)
+#if defined(WIN32)
 	return "spring.exe";
 #else
 	return "spring";
-#endif // defined(WIN32)
+#endif
 }
 
 
 static std::string GetUnitsyncLibName()
 {
-#if       defined(WIN32)
+#if   defined(WIN32)
 	return "unitsync.dll";
-#elif     defined(__APPLE__)
+#elif defined(__APPLE__)
 	return "libunitsync.dylib";
 #else
 	return "libunitsync.so";
-#endif // defined(WIN32)
+#endif
 }
 
 
@@ -90,8 +90,8 @@ void DataDirLocater::UpdateIsolationModeByEnvVar()
 	}
 }
 
-const std::vector<DataDir>& DataDirLocater::GetDataDirs() const {
-
+const std::vector<DataDir>& DataDirLocater::GetDataDirs() const
+{
 	assert(!dataDirs.empty());
 	return dataDirs;
 }
@@ -221,11 +221,11 @@ void DataDirLocater::AddCurWorkDir()
 
 void DataDirLocater::AddInstallDir()
 {
-#if       defined(UNITSYNC)
+#if  defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
-#else  // defined(UNITSYNC)
+#else
 	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
-#endif // defined(UNITSYNC)
+#endif
 
 	// This is useful in case of multiple engine/unitsync versions installed
 	// together in a sub-dir of the data-dir
@@ -316,7 +316,7 @@ void DataDirLocater::AddOsSpecificDirs()
 	AddDirs(dd_etc);                              // from /etc/spring/datadir FIXME add in IsolatedMode too? FIXME
 #endif
 
-#if     defined(__APPLE__)
+#if defined(__APPLE__)
 	// Mac OS X Application Bundle (*.app) - single file install
 
 	// directory structure (Apple standard):
@@ -380,13 +380,13 @@ void DataDirLocater::LocateDataDirs()
 		AddOsSpecificDirs();
 		//AddCurWorkDir();
 
-#ifdef SPRING_DATADIR
-		//Note: using the defineflag SPRING_DATADIR & "SPRING_DATADIR" as string works fine, the preprocessor won't touch the 2nd
+	#ifdef SPRING_DATADIR
+		// CompilerInfo: using the defineflag SPRING_DATADIR & "SPRING_DATADIR" as string works fine, the preprocessor won't touch the 2nd
 		AddDirs(SPRING_DATADIR); // from -DSPRING_DATADIR, example /usr/games/share/spring/
-#endif
+	#endif
 	}
 
-	// LEVEL 3: custom additional data sources
+	// LEVEL 3: additional custom data sources
 	{
 		const char* env = getenv("SPRING_DATADIR");
 		if (env && *env) {
@@ -404,13 +404,13 @@ void DataDirLocater::LocateDataDirs()
 		const std::string errstr = "Not a single writable data directory found!\n\n"
 				"Configure a writable data directory using either:\n"
 				"- the SPRING_DATADIR environment variable,\n"
-#ifdef WIN32
+			#ifdef WIN32
 				"- a SpringData=C:/path/to/data declaration in spring's config file ./springsettings.cfg\n"
 				"- by giving you write access to the installation directory";
-#else
+			#else
 				"- a SpringData=/path/to/data declaration in ~/.springrc or\n"
 				"- the configuration file /etc/spring/datadir";
-#endif
+			#endif
 		throw content_error(errstr);
 	}
 
@@ -452,7 +452,7 @@ bool DataDirLocater::IsPortableMode()
 {
 	// Test 1
 	// Check if spring binary & unitsync library are in the same folder
-#if       defined(UNITSYNC)
+#if defined(UNITSYNC)
 	const std::string dir = Platform::GetModulePath();
 	const std::string fileExe = dir + "/" + GetSpringBinaryName();
 
@@ -482,8 +482,8 @@ bool DataDirLocater::IsPortableMode()
 	return true;
 }
 
-bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath) {
-
+bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath)
+{
 	bool looksLikeDataDir = false;
 
 	if (FileSystem::DirExists(dirPath + "/maps")
