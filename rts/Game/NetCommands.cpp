@@ -188,7 +188,7 @@ void CGame::ClientReadNet()
 				}
 
 				CPlayer* player = playerHandler->Player(playerNum);
-				player->currentStats.set_raw_data(reinterpret_cast<const PlayerStatisticsData*>(&inbuf[2]));
+				player->currentStats = *reinterpret_cast<const PlayerStatistics*>(&inbuf[2]);
 
 				if (gameOver) {
 					CDemoRecorder* record = net->GetDemoRecorder();

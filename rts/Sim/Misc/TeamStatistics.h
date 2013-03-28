@@ -10,44 +10,32 @@
 
 #pragma pack(push, 1)
 
-#define	TEAM_STATISTICS_DATA\
-	int frame; /* frame is the start address and must be the first element */ \
-	\
-	float metalUsed,     energyUsed;\
-	float metalProduced, energyProduced;\
-	float metalExcess,   energyExcess;\
-	float metalReceived, energyReceived; /* received from allies */\
-	float metalSent,     energySent;     /* sent to allies */\
-	\
-	float damageDealt,   damageReceived; /* Damage taken and dealt to enemy units */\
-	\
-	int unitsProduced;\
-	int unitsDied;\
-	int unitsReceived;\
-	int unitsSent;\
-	/* units captured from enemy by us */\
-	int unitsCaptured;\
-	/* units captured from us by enemy */\
-	int unitsOutCaptured;\
-	/* how many enemy units have been killed by this teams units */\
-	int unitsKilled;
-
-// keep a raw data struct to prevent platform dependent size/layout mismatch caused by creg
-struct TeamStatisticsData {
-	TEAM_STATISTICS_DATA
-};
-
 struct TeamStatistics
 {
 	CR_DECLARE_STRUCT(TeamStatistics);
 
 	TeamStatistics();
 
-	TEAM_STATISTICS_DATA
+	int frame; /* frame is the start address and must be the first element */
 
-	const TeamStatisticsData* GetTeamStatisticsData() const { return reinterpret_cast<const TeamStatisticsData*>(&frame); }
-	      TeamStatisticsData* GetTeamStatisticsData()       { return reinterpret_cast<      TeamStatisticsData*>(&frame); }
-	void set_raw_data(const TeamStatisticsData* data) { *reinterpret_cast<TeamStatisticsData*>(&frame) = *data; }
+	float metalUsed,     energyUsed;
+	float metalProduced, energyProduced;
+	float metalExcess,   energyExcess;
+	float metalReceived, energyReceived; /* received from allies */
+	float metalSent,     energySent;     /* sent to allies */
+
+	float damageDealt,   damageReceived; /* Damage taken and dealt to enemy units */
+
+	int unitsProduced;
+	int unitsDied;
+	int unitsReceived;
+	int unitsSent;
+	/* units captured from enemy by us */
+	int unitsCaptured;
+	/* units captured from us by enemy */
+	int unitsOutCaptured;
+	/* how many enemy units have been killed by this teams units */
+	int unitsKilled;
 
 	/// Change structure from host endian to little endian or vice versa.
 	void swab();

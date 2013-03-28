@@ -4,24 +4,12 @@
 #define PLAYER_STATISTICS_H
 
 #include "System/creg/creg_cond.h"
-
-#define	PLAYER_STATISTICS_DATA\
-	int mousePixels; /* mousePixels is the start address and must be the first element */ \
-	int mouseClicks;\
-	int keyPresses;\
-	int numCommands;\
-	int unitCommands;
-
-// keep a raw data struct to prevent platform dependent size/layout mismatch caused by creg
-struct PlayerStatisticsData {
-	PLAYER_STATISTICS_DATA
-};
+#include "TeamController.h"
 
 /**
  * @brief Contains statistical data about a player concerning a single game.
- * In the future, this should be inheriting TeamControllerStatistics.
  */
-struct PlayerStatistics
+struct PlayerStatistics : public TeamControllerStatistics
 {
 public:
 	CR_DECLARE_STRUCT(PlayerStatistics);
@@ -29,11 +17,9 @@ public:
 	PlayerStatistics();
 
 	/// how many pixels the mouse has traversed in total
-	PLAYER_STATISTICS_DATA
-
-	const PlayerStatisticsData* GetPlayerStatisticsData() const { return reinterpret_cast<const PlayerStatisticsData*>(&mousePixels); }
-	      PlayerStatisticsData* GetPlayerStatisticsData()       { return reinterpret_cast<      PlayerStatisticsData*>(&mousePixels); }
-	void set_raw_data(const PlayerStatisticsData* data) { *reinterpret_cast<PlayerStatisticsData*>(&mousePixels) = *data; }
+	int mousePixels;
+	int mouseClicks;
+	int keyPresses;
 
 	/// Change structure from host endian to little endian or vice versa.
 	void swab();

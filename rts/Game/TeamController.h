@@ -49,10 +49,8 @@ public:
  * This should be the base class of PlayerStatistics and SkirmishAIStatistics,
  * which it is not yet.
  */
-class TeamControllerStatistics {
+struct TeamControllerStatistics {
 public:
-	CR_DECLARE(TeamControllerStatistics);
-
 	TeamControllerStatistics()
 		: numCommands(0)
 		, unitCommands(0) {}
