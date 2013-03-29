@@ -370,6 +370,7 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	CBasicTreeSquareDrawer drawer(this, cx, cy, treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE);
 
+	GML_RECMUTEX_LOCK(feat); // Draw
 	GML_STDMUTEX_LOCK(tree); // Draw
 
 	readmap->GridVisibility (camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer);
