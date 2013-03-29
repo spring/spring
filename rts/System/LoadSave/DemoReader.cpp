@@ -2,8 +2,10 @@
 
 #include "DemoReader.h"
 
-
+#ifndef TOOLS
 #include "System/Config/ConfigHandler.h"
+CONFIG(bool, DisableDemoVersionCheck).defaultValue(false).description("Allow to play every replay file (may crash / cause undefined behaviour in replays)");
+#endif
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Log/ILog.h"
@@ -15,7 +17,6 @@
 #include <cassert>
 #include <cstring>
 
-CONFIG(bool, DisableDemoVersionCheck).defaultValue(false);
 
 CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	: playbackDemo(NULL)
@@ -43,8 +44,10 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 #endif
 		) {
 			std::string demoMsg = std::string("Demofile corrupt or created by a different version of Spring: ")+filename;
+#ifndef TOOLS
 			if (!configHandler->GetBool("DisableDemoVersionCheck"))
 				throw std::runtime_error(demoMsg);
+#endif
 			LOG_L(L_WARNING, "%s", demoMsg.c_str());
 	}
 
