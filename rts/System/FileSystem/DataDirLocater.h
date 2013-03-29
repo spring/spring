@@ -128,6 +128,14 @@ public:
 	bool IsIsolationMode() const { return isolationMode; }
 
 	/**
+	 * Determines whether we are in portable mode.
+	 * It defines portable mode as:
+	 * The spring binary (spring binary), the unitsync
+	 * and springsettings.cfg are in the same directory.
+	 */
+	static bool IsPortableMode();
+
+	/**
 	 * Sets whether isolation-mode is enabled.
 	 * @see #IsIsolationMode
 	 * @see #SetIsolationModeDir
@@ -197,16 +205,6 @@ private:
 
 	bool IsWriteableDir(DataDir* dataDir);
 	void FindWriteableDataDir();
-
-	/**
-	 * Determines whether we are in portable mode.
-	 * It defines portable mode as:
-	 * The spring binary (spring binary) and the synchronization
-	 * library (unitsync) are in the same directory.
-	 * This definition of portable mode is only valid for the data-dirs,
-	 * and can not be used spring wide.
-	 */
-	static bool IsPortableMode();
 
 	/**
 	 * Determines whether a given path may be a data-dir for multiple engine

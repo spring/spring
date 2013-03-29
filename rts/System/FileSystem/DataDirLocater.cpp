@@ -421,10 +421,10 @@ void DataDirLocater::LocateDataDirs()
 void DataDirLocater::Check()
 {
 	if (IsIsolationMode()) {
-		LOG("DataDirs: Isolation Mode!");
+		LOG("[DataDirs] Isolation Mode!");
 	} else
 	if (IsPortableMode()) {
-		LOG("DataDirs: Portable Mode!");
+		LOG("[DataDirs] Portable Mode!");
 	}
 
 	// Filter usable DataDirs
@@ -481,8 +481,8 @@ bool DataDirLocater::IsPortableMode()
 
 	// Test 2
 	// Check if "springsettings.cfg" is in the same folder, too.
-	//if (!FileSystem::FileExists(dir + "/springsettings.cfg"))
-	//	return false;
+	if (!FileSystem::FileExists(dir + "/springsettings.cfg"))
+		return false;
 
 	// Test 3
 	// Check if the directory is writeable
