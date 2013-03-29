@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "SelectedUnits.h"
-
+#include "SelectedUnitsHandler.h"
 #include "SelectedUnitsAI.h"
 #include "Camera.h"
 #include "GlobalUnsynced.h"
@@ -50,10 +49,10 @@ CONFIG(bool, BuildIconsFirst).defaultValue(false);
 CONFIG(bool, AutoAddBuiltUnitsToFactoryGroup).defaultValue(false);
 CONFIG(bool, AutoAddBuiltUnitsToSelectedGroup).defaultValue(false);
 
-CSelectedUnits selectedUnits;
+CSelectedUnitsHandler selectedUnitsHandler;
 
 
-CSelectedUnits::CSelectedUnits()
+CSelectedUnitsHandler::CSelectedUnitsHandler()
 	: selectionChanged(false)
 	, possibleCommandsChanged(true)
 	, selectedGroup(-1)
@@ -66,7 +65,7 @@ CSelectedUnits::CSelectedUnits()
 
 
 
-void CSelectedUnits::Init(unsigned numPlayers)
+void CSelectedUnitsHandler::Init(unsigned numPlayers)
 {
 	soundMultiselID = sound->GetSoundId("MultiSelect");
 	buildIconsFirst = configHandler->GetBool("BuildIconsFirst");
@@ -76,26 +75,26 @@ void CSelectedUnits::Init(unsigned numPlayers)
 }
 
 
-bool CSelectedUnits::IsUnitSelected(const CUnit* unit) const
+bool CSelectedUnitsHandler::IsUnitSelected(const CUnit* unit) const
 {
 	return (selectedUnits.find(const_cast<CUnit*>(unit)) != selectedUnits.end());
 }
 
-bool CSelectedUnits::IsUnitSelected(const int unitID) const
+bool CSelectedUnitsHandler::IsUnitSelected(const int unitID) const
 {
 	const CUnit* u = unitHandler->GetUnit(unitID);
 	return (u != NULL && IsUnitSelected(u));
 }
 
 
-void CSelectedUnits::ToggleBuildIconsFirst()
+void CSelectedUnitsHandler::ToggleBuildIconsFirst()
 {
 	buildIconsFirst = !buildIconsFirst;
 	possibleCommandsChanged = true;
 }
 
 
-CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
+CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailableCommands()
 {
 	GML_RECMUTEX_LOCK(grpsel); // GetAvailableCommands
 
@@ -194,7 +193,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 }
 
 
-void CSelectedUnits::GiveCommand(Command c, bool fromUser)
+void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 {
 	GML_RECMUTEX_LOCK(grpsel); // GiveCommand
 
@@ -274,7 +273,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 }
 
 
-void CSelectedUnits::HandleUnitBoxSelection(const float4& planeRight, const float4& planeLeft, const float4& planeTop, const float4& planeBottom)
+void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, const float4& planeLeft, const float4& planeTop, const float4& planeBottom)
 {
 	GML_RECMUTEX_LOCK(sel); // SelectUnits
 
@@ -320,7 +319,7 @@ void CSelectedUnits::HandleUnitBoxSelection(const float4& planeRight, const floa
 }
 
 
-void CSelectedUnits::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest)
+void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest)
 {
 	GML_RECMUTEX_LOCK(sel); // SelectUnits
 
@@ -369,7 +368,7 @@ void CSelectedUnits::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTe
 
 
 
-void CSelectedUnits::AddUnit(CUnit* unit)
+void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 {
 	// if unit is being transported by eg. Hulk or Atlas
 	// then we should not be able to select it
@@ -397,7 +396,7 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 }
 
 
-void CSelectedUnits::RemoveUnit(CUnit* unit)
+void CSelectedUnitsHandler::RemoveUnit(CUnit* unit)
 {
 	GML_RECMUTEX_LOCK(sel); // RemoveUnit
 
@@ -410,7 +409,7 @@ void CSelectedUnits::RemoveUnit(CUnit* unit)
 }
 
 
-void CSelectedUnits::ClearSelected()
+void CSelectedUnitsHandler::ClearSelected()
 {
 	GML_RECMUTEX_LOCK(sel); // ClearSelected
 
@@ -427,7 +426,7 @@ void CSelectedUnits::ClearSelected()
 }
 
 
-void CSelectedUnits::SelectGroup(int num)
+void CSelectedUnitsHandler::SelectGroup(int num)
 {
 	GML_RECMUTEX_LOCK(grpsel); // SelectGroup - not needed? only reading group
 
@@ -449,7 +448,7 @@ void CSelectedUnits::SelectGroup(int num)
 }
 
 
-void CSelectedUnits::Draw()
+void CSelectedUnitsHandler::Draw()
 {
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(false);
@@ -579,7 +578,7 @@ void CSelectedUnits::Draw()
 }
 
 
-void CSelectedUnits::DependentDied(CObject *o)
+void CSelectedUnitsHandler::DependentDied(CObject *o)
 {
 	GML_RECMUTEX_LOCK(sel); // DependentDied - maybe superfluous, too late anyway
 
@@ -589,14 +588,14 @@ void CSelectedUnits::DependentDied(CObject *o)
 }
 
 
-void CSelectedUnits::NetSelect(std::vector<int>& s, int playerId)
+void CSelectedUnitsHandler::NetSelect(std::vector<int>& s, int playerId)
 {
 	assert(unsigned(playerId) < netSelected.size());
 	netSelected[playerId] = s;
 }
 
 
-void CSelectedUnits::NetOrder(Command& c, int playerId)
+void CSelectedUnitsHandler::NetOrder(Command& c, int playerId)
 {
 	assert(unsigned(playerId) < netSelected.size());
 	selectedUnitsAI.GiveCommandNet(c, playerId);
@@ -606,12 +605,12 @@ void CSelectedUnits::NetOrder(Command& c, int playerId)
 	}
 }
 
-void CSelectedUnits::ClearNetSelect(int playerId)
+void CSelectedUnitsHandler::ClearNetSelect(int playerId)
 {
 	netSelected[playerId].clear();
 }
 
-void CSelectedUnits::AiOrder(int unitid, const Command &c, int playerId)
+void CSelectedUnitsHandler::AiOrder(int unitid, const Command &c, int playerId)
 {
 	CUnit* unit = unitHandler->units[unitid];
 	if (unit == NULL) {
@@ -636,7 +635,7 @@ void CSelectedUnits::AiOrder(int unitid, const Command &c, int playerId)
 }
 
 
-bool CSelectedUnits::CommandsChanged()
+bool CSelectedUnitsHandler::CommandsChanged()
 {
 	return possibleCommandsChanged;
 }
@@ -704,7 +703,7 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 // DrawMapStuff --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
 // CMouseHandler::DrawCursor --> DrawCentroidCursor --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
 // LuaUnsyncedRead::GetDefaultCommand --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
-int CSelectedUnits::GetDefaultCmd(const CUnit* unit, const CFeature* feature)
+int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feature)
 {
 	int luaCmd;
 	if (eventHandler.DefaultCommand(unit, feature, luaCmd)) {
@@ -746,7 +745,7 @@ int CSelectedUnits::GetDefaultCmd(const CUnit* unit, const CFeature* feature)
 
 /******************************************************************************/
 
-void CSelectedUnits::PossibleCommandChange(CUnit* sender)
+void CSelectedUnitsHandler::PossibleCommandChange(CUnit* sender)
 {
 	GML_RECMUTEX_LOCK(sel); // PossibleCommandChange
 
@@ -757,7 +756,7 @@ void CSelectedUnits::PossibleCommandChange(CUnit* sender)
 // CALLINFO:
 // CGame::Draw --> DrawCommands
 // CMiniMap::DrawForReal --> DrawCommands
-void CSelectedUnits::DrawCommands()
+void CSelectedUnitsHandler::DrawCommands()
 {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
@@ -805,7 +804,7 @@ void CSelectedUnits::DrawCommands()
 // LuaUnsyncedRead::GetCurrentTooltip --> CMouseHandler::GetCurrentTooltip
 // CMouseHandler::GetCurrentTooltip --> CMiniMap::GetToolTip --> GetTooltip
 // CMouseHandler::GetCurrentTooltip --> GetTooltip
-std::string CSelectedUnits::GetTooltip()
+std::string CSelectedUnitsHandler::GetTooltip()
 {
 	std::string s = "";
 	{
@@ -905,7 +904,7 @@ std::string CSelectedUnits::GetTooltip()
 }
 
 
-void CSelectedUnits::SetCommandPage(int page)
+void CSelectedUnitsHandler::SetCommandPage(int page)
 {
 	GML_RECMUTEX_LOCK(sel); // SetCommandPage - called from CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc
 
@@ -917,7 +916,7 @@ void CSelectedUnits::SetCommandPage(int page)
 
 
 
-void CSelectedUnits::SendCommand(const Command& c)
+void CSelectedUnitsHandler::SendCommand(const Command& c)
 {
 	if (selectionChanged) {
 		// send new selection
@@ -938,7 +937,7 @@ void CSelectedUnits::SendCommand(const Command& c)
 }
 
 
-void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const std::vector<Command>& commands, bool pairwise)
+void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs, const std::vector<Command>& commands, bool pairwise)
 {
 	if (gu->spectating && !gs->godMode) {
 		// do not waste bandwidth (units can be selected

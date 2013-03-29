@@ -6,7 +6,7 @@
 #include "CommandMessage.h"
 #include "GameSetup.h"
 #include "GlobalUnsynced.h"
-#include "SelectedUnits.h"
+#include "SelectedUnitsHandler.h"
 #include "Player.h"
 #include "PlayerHandler.h"
 #include "ChatMessage.h"
@@ -463,7 +463,7 @@ void CGame::ClientReadNet()
 						c.PushParam(param);
 					}
 
-					selectedUnits.NetOrder(c, playerNum);
+					selectedUnitsHandler.NetOrder(c, playerNum);
 					AddTraffic(playerNum, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "Got invalid Command: %s", ex.what());
@@ -505,7 +505,7 @@ void CGame::ClientReadNet()
 						}
 					}
 
-					selectedUnits.NetSelect(selectedUnitIDs, playerNum);
+					selectedUnitsHandler.NetSelect(selectedUnitIDs, playerNum);
 					AddTraffic(playerNum, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "Got invalid Select: %s", ex.what());
@@ -550,7 +550,7 @@ void CGame::ClientReadNet()
 						c.PushParam(param);
 					}
 
-					selectedUnits.AiOrder(unitid, c, player);
+					selectedUnitsHandler.AiOrder(unitid, c, player);
 					AddTraffic(player, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "Got invalid AICommand: %s", ex.what());
@@ -616,13 +616,13 @@ void CGame::ClientReadNet()
 					// apply the commands
 					if (pairwise) {
 						for (int x = 0; x < std::min(unitCount, commandCount); ++x) {
-							selectedUnits.AiOrder(unitIDs[x], commands[x], player);
+							selectedUnitsHandler.AiOrder(unitIDs[x], commands[x], player);
 						}
 					}
 					else {
 						for (int c = 0; c < commandCount; c++) {
 							for (int u = 0; u < unitCount; u++) {
-								selectedUnits.AiOrder(unitIDs[u], commands[c], player);
+								selectedUnitsHandler.AiOrder(unitIDs[u], commands[c], player);
 							}
 						}
 					}
@@ -751,7 +751,7 @@ void CGame::ClientReadNet()
 				}
 
 				if (shareUnits) {
-					vector<int>& netSelUnits = selectedUnits.netSelected[player];
+					vector<int>& netSelUnits = selectedUnitsHandler.netSelected[player];
 					vector<int>::const_iterator ui;
 
 					for (ui = netSelUnits.begin(); ui != netSelUnits.end(); ++ui) {
@@ -844,7 +844,7 @@ void CGame::ClientReadNet()
 							} else {
 								playerHandler->Player(player)->StartSpectating();
 							}
-							selectedUnits.ClearNetSelect(player);
+							selectedUnitsHandler.ClearNetSelect(player);
 						} else {
 							// player is giving stuff from one of his AI teams
 							if (numPlayersInTeam_g == 0) {
@@ -884,7 +884,7 @@ void CGame::ClientReadNet()
 						LOG("Player %i (%s) resigned and is now spectating!",
 								player,
 								playerHandler->Player(player)->name.c_str());
-						selectedUnits.ClearNetSelect(player);
+						selectedUnitsHandler.ClearNetSelect(player);
 						CPlayer::UpdateControlledTeams();
 						break;
 					}

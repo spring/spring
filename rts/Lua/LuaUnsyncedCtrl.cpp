@@ -15,7 +15,7 @@
 #include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/InMapDraw.h"
@@ -912,7 +912,7 @@ int LuaUnsyncedCtrl::SelectUnitArray(lua_State* L)
 
 	// clear the current units, unless the append flag is present
 	if ((args < 2) || !lua_toboolean(L, 2)) {
-		selectedUnits.ClearSelected();
+		selectedUnitsHandler.ClearSelected();
 	}
 
 	const int table = 1;
@@ -920,7 +920,7 @@ int LuaUnsyncedCtrl::SelectUnitArray(lua_State* L)
 		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {     // avoid 'n'
 			CUnit* unit = ParseSelectUnit(L, __FUNCTION__, -1); // the value
 			if (unit != NULL) {
-				selectedUnits.AddUnit(unit);
+				selectedUnitsHandler.AddUnit(unit);
 			}
 		}
 	}
@@ -938,7 +938,7 @@ int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 
 	// clear the current units, unless the append flag is present
 	if ((args < 2) || !lua_toboolean(L, 2)) {
-		selectedUnits.ClearSelected();
+		selectedUnitsHandler.ClearSelected();
 	}
 
 	const int table = 1;
@@ -946,7 +946,7 @@ int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 		if (lua_israwnumber(L, -2)) {
 			CUnit* unit = ParseSelectUnit(L, __FUNCTION__, -2); // the key
 			if (unit != NULL) {
-				selectedUnits.AddUnit(unit);
+				selectedUnitsHandler.AddUnit(unit);
 			}
 		}
 	}
@@ -1617,9 +1617,9 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 
 	// deselect the unit if it's selected and shouldn't be
 	if (unit->noSelect) {
-		const CUnitSet& selUnits = selectedUnits.selectedUnits;
+		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 		if (selUnits.find(unit) != selUnits.end()) {
-			selectedUnits.RemoveUnit(unit);
+			selectedUnitsHandler.RemoveUnit(unit);
 		}
 	}
 	return 0;
@@ -2388,7 +2388,7 @@ int LuaUnsyncedCtrl::GiveOrder(lua_State* L)
 
 	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 1);
 
-	selectedUnits.GiveCommand(cmd);
+	selectedUnitsHandler.GiveCommand(cmd);
 
 	lua_pushboolean(L, true);
 
@@ -2445,7 +2445,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 
 	vector<Command> commands;
 	commands.push_back(cmd);
-	selectedUnits.SendCommandsToUnits(unitIDs, commands);
+	selectedUnitsHandler.SendCommandsToUnits(unitIDs, commands);
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2476,7 +2476,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 
 	vector<Command> commands;
 	commands.push_back(cmd);
-	selectedUnits.SendCommandsToUnits(unitIDs, commands);
+	selectedUnitsHandler.SendCommandsToUnits(unitIDs, commands);
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2506,7 +2506,7 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 		return 1;
 	}
 
-	selectedUnits.SendCommandsToUnits(unitIDs, commands);
+	selectedUnitsHandler.SendCommandsToUnits(unitIDs, commands);
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2542,7 +2542,7 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 		return 1;
 	}
 
-	selectedUnits.SendCommandsToUnits(unitIDs, commands, pairwise);
+	selectedUnitsHandler.SendCommandsToUnits(unitIDs, commands, pairwise);
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2683,9 +2683,9 @@ int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 	if (type == "units") {
 		// update the selection, and clear the unit command queues
 		Command c(CMD_STOP);
-		selectedUnits.GiveCommand(c, false);
+		selectedUnitsHandler.GiveCommand(c, false);
 		net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 1, 0.0f, 0.0f));
-		selectedUnits.ClearSelected();
+		selectedUnitsHandler.ClearSelected();
 	}
 	else if (args >= 3) {
 		const float amount = lua_tofloat(L, 3);

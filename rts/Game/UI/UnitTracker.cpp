@@ -5,7 +5,7 @@
 #include "Game/Camera/FPSController.h"
 #include "Game/CameraHandler.h"
 #include "Game/Camera.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Units/Unit.h"
@@ -87,7 +87,7 @@ void CUnitTracker::Track()
 {
 	GML_RECMUTEX_LOCK(sel); // Track
 
-	CUnitSet& units = selectedUnits.selectedUnits;
+	CUnitSet& units = selectedUnitsHandler.selectedUnits;
 
 	CleanTrackGroup();
 
@@ -124,7 +124,7 @@ void CUnitTracker::MakeTrackGroup()
 	GML_RECMUTEX_LOCK(sel); // MakeTrackGroup
 
 	trackGroup.clear();
-	CUnitSet& units = selectedUnits.selectedUnits;
+	CUnitSet& units = selectedUnitsHandler.selectedUnits;
 	CUnitSet::const_iterator it;
 	for (it = units.begin(); it != units.end(); ++it) {
 		trackGroup.insert((*it)->id);

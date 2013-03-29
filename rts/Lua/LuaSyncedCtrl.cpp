@@ -20,7 +20,7 @@
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/PlayerHandler.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
@@ -3863,7 +3863,7 @@ int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 
 	ParseCommandDescription(L, 3, cmdDescs[cmdDescID]);
 
-	selectedUnits.PossibleCommandChange(unit);
+	selectedUnitsHandler.PossibleCommandChange(unit);
 
 	return 0;
 }
@@ -3910,7 +3910,7 @@ int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 		cmdDescs.insert(it, cd);
 	}
 
-	selectedUnits.PossibleCommandChange(unit);
+	selectedUnitsHandler.PossibleCommandChange(unit);
 
 	return 0;
 }
@@ -3941,7 +3941,7 @@ int LuaSyncedCtrl::RemoveUnitCmdDesc(lua_State* L)
 	advance(it, cmdDescID);
 	cmdDescs.erase(it);
 
-	selectedUnits.PossibleCommandChange(unit);
+	selectedUnitsHandler.PossibleCommandChange(unit);
 
 	return 0;
 }

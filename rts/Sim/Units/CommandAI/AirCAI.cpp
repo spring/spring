@@ -4,7 +4,7 @@
 #include "AirCAI.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -132,7 +132,7 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				break;
 			}
 		}
-		selectedUnits.PossibleCommandChange(owner);
+		selectedUnitsHandler.PossibleCommandChange(owner);
 		return;
 	}
 
@@ -157,7 +157,7 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				break;
 			}
 		}
-		selectedUnits.PossibleCommandChange(owner);
+		selectedUnitsHandler.PossibleCommandChange(owner);
 		return;
 	}
 
@@ -182,7 +182,7 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				break;
 			}
 		}
-		selectedUnits.PossibleCommandChange(owner);
+		selectedUnitsHandler.PossibleCommandChange(owner);
 		return;
 	}
 

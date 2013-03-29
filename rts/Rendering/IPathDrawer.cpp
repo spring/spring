@@ -2,7 +2,7 @@
 #include "IPathDrawer.h"
 #include "DefaultPathDrawer.h"
 #include "QTPFSPathDrawer.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "lib/gml/gmlmut.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Path/IPathManager.h"
@@ -40,7 +40,7 @@ const MoveDef* IPathDrawer::GetSelectedMoveDef() {
 	GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
 
 	const MoveDef* md = NULL;
-	const CUnitSet& unitSet = selectedUnits.selectedUnits;
+	const CUnitSet& unitSet = selectedUnitsHandler.selectedUnits;
 
 	if (!unitSet.empty()) {
 		const CUnit* unit = *(unitSet.begin());

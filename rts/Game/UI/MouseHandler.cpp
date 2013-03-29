@@ -15,7 +15,7 @@
 #include "Game/InMapDraw.h"
 #include "Game/Player.h"
 #include "Game/PlayerHandler.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/TraceRay.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/UI/UnitTracker.h"
@@ -414,7 +414,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
 
 		if (!keyInput->IsKeyPressed(SDLK_LSHIFT) && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
-			selectedUnits.ClearSelected();
+			selectedUnitsHandler.ClearSelected();
 		}
 
 		if (bp.movement > 4) {
@@ -440,13 +440,13 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			const float4 plane3(norm3, -(norm3.dot(camera->pos)));
 			const float4 plane4(norm4, -(norm4.dot(camera->pos)));
 
-			selectedUnits.HandleUnitBoxSelection(plane1, plane2, plane3, plane4);
+			selectedUnitsHandler.HandleUnitBoxSelection(plane1, plane2, plane3, plane4);
 		} else {
 			CUnit* unit;
 			CFeature* feature;
 			TraceRay::GuiTraceRay(camera->pos, dir, globalRendering->viewRange * 1.4f, NULL, unit, feature, false);
 
-			selectedUnits.HandleSingleUnitClickSelection(unit, true);
+			selectedUnitsHandler.HandleSingleUnitClickSelection(unit, true);
 		}
 
 		bp.lastRelease = gu->gameTime;
@@ -560,7 +560,7 @@ std::string CMouseHandler::GetCurrentTooltip()
 		if (feature) return CTooltipConsole::MakeFeatureString(feature);
 	}
 
-	const string selTip = selectedUnits.GetTooltip();
+	const string selTip = selectedUnitsHandler.GetTooltip();
 	if (selTip != "") {
 		return selTip;
 	}

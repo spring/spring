@@ -4,7 +4,7 @@
 
 #include "MouseHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Rendering/glFont.h"
@@ -369,11 +369,11 @@ void CShareBox::MouseRelease(int x, int y, int button)
 		if (shareUnits) {
 			Command c(CMD_STOP);
 			// make sure the units are stopped and that the selection is transmitted
-			selectedUnits.GiveCommand(c, false);
+			selectedUnitsHandler.GiveCommand(c, false);
 		}
 		net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, shareTeam, shareUnits, metalShare * teamHandler->Team(gu->myTeam)->metal, energyShare * teamHandler->Team(gu->myTeam)->energy));
 		if (shareUnits) {
-			selectedUnits.ClearSelected();
+			selectedUnitsHandler.ClearSelected();
 		}
 		lastShareTeam = shareTeam;
 	}

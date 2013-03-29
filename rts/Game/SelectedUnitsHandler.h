@@ -12,10 +12,10 @@
 
 class CFeature;
 
-class CSelectedUnits : public CObject
+class CSelectedUnitsHandler : public CObject
 {
 public:
-	CSelectedUnits();
+	CSelectedUnitsHandler();
 
 	void Init(unsigned numPlayers);
 	void SelectGroup(int num);
@@ -76,7 +76,7 @@ private:
 	bool buildIconsFirst;
 };
 
-extern CSelectedUnits selectedUnits;
+extern CSelectedUnitsHandler selectedUnitsHandler;
 
 #endif /* SELECTED_UNITS_H */
 

@@ -6,7 +6,7 @@
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/LosHandler.h"
@@ -232,7 +232,7 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 		}
 
-		selectedUnits.PossibleCommandChange(owner);
+		selectedUnitsHandler.PossibleCommandChange(owner);
 		return;
 	}
 
@@ -267,7 +267,7 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				break;
 			}
 		}
-		selectedUnits.PossibleCommandChange(owner);
+		selectedUnitsHandler.PossibleCommandChange(owner);
 		return;
 	}
 
