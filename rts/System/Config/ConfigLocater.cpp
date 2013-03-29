@@ -91,8 +91,10 @@ void ConfigLocater::GetDefaultLocations(vector<string>& locations)
 
 	// old primary
 	// e.g. linux: "~/.springrc"; windows: "C:\Users\USER\AppData\Local\springsettings.cfg"
-	const string userDir = FileSystem::EnsurePathSepAtEnd(Platform::GetUserDir());
-	LoadCfgInFolder(locations, userDir, true);
+	if (!dataDirLocater.IsIsolationMode()) {
+		const string userDir = FileSystem::EnsurePathSepAtEnd(Platform::GetUserDir());
+		LoadCfgsInFolder(locations, userDir, true);
+	}
 
 	// add additional readonly config files
 	BOOST_FOREACH(std::string path, dataDirLocater.GetDataDirPaths()) {
