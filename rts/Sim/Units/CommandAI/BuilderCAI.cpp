@@ -8,7 +8,7 @@
 #include "TransportCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/GameHelper.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"

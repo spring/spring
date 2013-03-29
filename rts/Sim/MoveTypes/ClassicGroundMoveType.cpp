@@ -44,7 +44,7 @@ void CClassicGroundMoveType::LeaveTransport() {}
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/Player.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "MoveMath/MoveMath.h"

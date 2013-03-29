@@ -403,18 +403,20 @@ void CSkirmishAIWrapper::WeaponFired(int unitId, int weaponDefId) {
 }
 
 void CSkirmishAIWrapper::PlayerCommandGiven(
-		const std::vector<int>& selectedUnits, const Command& c, int playerId) {
-
-	const int unitIds_size = selectedUnits.size();
-	int* unitIds = new int[unitIds_size];
-	for (int i = 0; i < unitIds_size; ++i) {
-		unitIds[i] = selectedUnits.at(i);
-	}
+	const std::vector<int>& playerSelectedUnits,
+	const Command& c,
+	int playerId
+) {
 	const int cCommandId = extractAICommandTopic(&c, unitHandler->MaxUnits());
+	int* unitIds = new int[playerSelectedUnits.size()];
 
-	SPlayerCommandEvent evtData = {unitIds, unitIds_size, cCommandId, playerId};
+	for (unsigned int i = 0; i < playerSelectedUnits.size(); ++i) {
+		unitIds[i] = playerSelectedUnits[i];
+	}
+
+	SPlayerCommandEvent evtData = {unitIds, playerSelectedUnits.size(), cCommandId, playerId};
 	ai->HandleEvent(EVENT_PLAYER_COMMAND, &evtData);
-	delete [] unitIds;
+	delete[] unitIds;
 }
 
 void CSkirmishAIWrapper::CommandFinished(int unitId, int commandId, int commandTopicId) {

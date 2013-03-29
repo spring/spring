@@ -16,7 +16,7 @@
 #include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/PlayerRoster.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/TraceRay.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/UI/GuiHandler.h"
@@ -552,7 +552,7 @@ int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 	lua_pushboolean(L, selUnits.find(unit) != selUnits.end());
 	return 1;
 }
@@ -969,7 +969,7 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	int count = 0;
-	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 	CUnitSet::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		count++;
@@ -988,7 +988,7 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 
 	map<int, vector<CUnit*> > unitDefMap;
-	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 	CUnitSet::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		CUnit* unit = *it;
@@ -1025,7 +1025,7 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 
 	// tally the types
 	map<int, int> countMap;
-	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 	CUnitSet::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		CUnit* unit = *it;
@@ -1054,7 +1054,7 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 int LuaUnsyncedRead::GetSelectedUnitsCount(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, selectedUnits.selectedUnits.size());
+	lua_pushnumber(L, selectedUnitsHandler.selectedUnits.size());
 	return 1;
 }
 
@@ -2038,7 +2038,7 @@ int LuaUnsyncedRead::GetGroupList(lua_State* L)
 int LuaUnsyncedRead::GetSelectedGroup(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, selectedUnits.GetSelectedGroup());
+	lua_pushnumber(L, selectedUnitsHandler.GetSelectedGroup());
 	return 1;
 }
 

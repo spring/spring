@@ -2,7 +2,7 @@
 
 #include "TransportUnit.h"
 #include "Game/GameHelper.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/HoverAirMoveType.h"
@@ -295,7 +295,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	if (unit->IsStunned()) {
 		// make sure unit does not fire etc in transport
-		selectedUnits.RemoveUnit(unit);
+		selectedUnitsHandler.RemoveUnit(unit);
 	}
 
 	unit->UnBlock();

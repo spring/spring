@@ -12,7 +12,7 @@
 #include "Game/GameSetup.h"
 #include "Game/Player.h"
 #include "Game/PlayerHandler.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/InMapDraw.h"
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaRules.h"
@@ -1783,8 +1783,8 @@ int CAICallback::GetSelectedUnits(int* unitIds, int unitIds_max)
 	// check if the allyteam of the player running
 	// the AI lib matches the AI's actual allyteam
 	if (gu->myAllyTeam == teamHandler->AllyTeam(team)) {
-		for (CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
-				(ui != selectedUnits.selectedUnits.end()) && (a < unitIds_max); ++ui) {
+		for (CUnitSet::iterator ui = selectedUnitsHandler.selectedUnits.begin();
+				(ui != selectedUnitsHandler.selectedUnits.end()) && (a < unitIds_max); ++ui) {
 			if (unitIds != NULL) {
 				unitIds[a] = (*ui)->id;
 			}

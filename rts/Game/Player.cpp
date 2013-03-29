@@ -9,7 +9,7 @@
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/UI/UnitTracker.h"
 #include "Lua/LuaRules.h"
@@ -106,7 +106,7 @@ void CPlayer::StartSpectating()
 
 		//FIXME use eventHandler?
 		CLuaUI::UpdateTeams();
-		selectedUnits.ClearSelected();
+		selectedUnitsHandler.ClearSelected();
 		if(readmap != NULL) readmap->BecomeSpectator();
 		unitTracker.Disable();
 	}
@@ -131,7 +131,7 @@ void CPlayer::JoinTeam(int newTeam)
 		gu->spectatingFullSelect = false;
 
 		CLuaUI::UpdateTeams();
-		selectedUnits.ClearSelected();
+		selectedUnitsHandler.ClearSelected();
 		unitTracker.Disable();
 	}
 
@@ -159,7 +159,7 @@ void CPlayer::StartControllingUnit()
 		StopControllingUnit();
 	} else {
 		// player took control
-		const std::vector<int>& ourSelectedUnits = selectedUnits.netSelected[this->playerNum];
+		const std::vector<int>& ourSelectedUnits = selectedUnitsHandler.netSelected[this->playerNum];
 
 		if (ourSelectedUnits.empty()) {
 			return;
@@ -187,11 +187,11 @@ void CPlayer::StartControllingUnit()
 		if (luaRules == NULL || luaRules->AllowDirectUnitControl(this->playerNum, newControlleeUnit)) {
 			newControlleeUnit->fpsControlPlayer = this;
 			fpsController.SetControlleeUnit(newControlleeUnit);
-			selectedUnits.ClearNetSelect(this->playerNum);
+			selectedUnitsHandler.ClearNetSelect(this->playerNum);
 
 			if (this->playerNum == gu->myPlayerNum) {
 				// update the unsynced state
-				selectedUnits.ClearSelected();
+				selectedUnitsHandler.ClearSelected();
 
 				gu->fpsMode = true;
 				mouse->wasLocked = mouse->locked;
@@ -221,11 +221,11 @@ void CPlayer::StopControllingUnit()
 	thisUnit->AttackUnit(NULL, true, false, true);
 	thisUnit->fpsControlPlayer = NULL;
 	fpsController.SetControlleeUnit(NULL);
-	selectedUnits.ClearNetSelect(this->playerNum);
+	selectedUnitsHandler.ClearNetSelect(this->playerNum);
 
 	if (thatUnit == thisUnit) {
 		// update the unsynced state
-		selectedUnits.ClearSelected();
+		selectedUnitsHandler.ClearSelected();
 
 		gu->fpsMode = false;
 		assert(gu->myPlayerNum == this->playerNum);

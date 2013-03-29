@@ -29,7 +29,7 @@
 #include "GameSetup.h"
 #include "GlobalUnsynced.h"
 #include "LoadScreen.h"
-#include "SelectedUnits.h"
+#include "SelectedUnitsHandler.h"
 #include "Player.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
@@ -639,7 +639,7 @@ void CGame::LoadInterface()
 		camHandler = new CCameraHandler();
 	}
 
-	selectedUnits.Init(playerHandler->ActivePlayers());
+	selectedUnitsHandler.Init(playerHandler->ActivePlayers());
 
 	// interface components
 	ReColorTeams();
@@ -2203,7 +2203,7 @@ void CGame::SelectUnits(const string& line)
 	for (int i = 0; i < (int)args.size(); i++) {
 		const string& arg = args[i];
 		if (arg == "clear") {
-			selectedUnits.ClearSelected();
+			selectedUnitsHandler.ClearSelected();
 		}
 		else if ((arg[0] == '+') || (arg[0] == '-')) {
 			char* endPtr;
@@ -2228,9 +2228,9 @@ void CGame::SelectUnits(const string& line)
 
 			// perform the selection
 			if (arg[0] == '+') {
-				selectedUnits.AddUnit(unit);
+				selectedUnitsHandler.AddUnit(unit);
 			} else {
-				selectedUnits.RemoveUnit(unit);
+				selectedUnitsHandler.RemoveUnit(unit);
 			}
 		}
 	}
@@ -2244,15 +2244,15 @@ void CGame::SelectCycle(const string& command)
 
 	GML_RECMUTEX_LOCK(sel); // SelectCycle
 
-	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 
 	if (command == "restore") {
-		selectedUnits.ClearSelected();
+		selectedUnitsHandler.ClearSelected();
 		set<int>::const_iterator it;
 		for (it = unitIDs.begin(); it != unitIDs.end(); ++it) {
 			CUnit* unit = unitHandler->units[*it];
 			if (unit != NULL) {
-				selectedUnits.AddUnit(unit);
+				selectedUnitsHandler.AddUnit(unit);
 			}
 		}
 		return;
@@ -2265,9 +2265,9 @@ void CGame::SelectCycle(const string& command)
 		for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 			unitIDs.insert((*it)->id);
 		}
-		selectedUnits.ClearSelected();
+		selectedUnitsHandler.ClearSelected();
 		lastID = *unitIDs.begin();
-		selectedUnits.AddUnit(unitHandler->units[lastID]);
+		selectedUnitsHandler.AddUnit(unitHandler->units[lastID]);
 		return;
 	}
 
@@ -2285,7 +2285,7 @@ void CGame::SelectCycle(const string& command)
 	}
 
 	// selectedUnits size is 0 or 1
-	selectedUnits.ClearSelected();
+	selectedUnitsHandler.ClearSelected();
 	if (!unitIDs.empty()) {
 		set<int>::const_iterator fit = unitIDs.find(lastID);
 		if (fit == unitIDs.end()) {
@@ -2298,7 +2298,7 @@ void CGame::SelectCycle(const string& command)
 				lastID = *unitIDs.begin();
 			}
 		}
-		selectedUnits.AddUnit(unitHandler->units[lastID]);
+		selectedUnitsHandler.AddUnit(unitHandler->units[lastID]);
 	}
 }
 

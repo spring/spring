@@ -44,7 +44,7 @@ SET(sources_engine_Game_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/PlayerRosterDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/PlayerStatistics.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/PreGame.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/SelectedUnits.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/SelectedUnitsHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SelectedUnitsAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SyncedGameCommands.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TraceRay.cpp"

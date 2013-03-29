@@ -7,7 +7,7 @@
 #include "Game/PlayerHandler.h"
 #include "Game/Game.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalSynced.h"

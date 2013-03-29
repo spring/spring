@@ -2,7 +2,7 @@
 
 
 #include "WaitCommandsAI.h"
-#include "SelectedUnits.h"
+#include "SelectedUnitsHandler.h"
 #include "GameHelper.h"
 #include "GlobalUnsynced.h"
 #include "UI/CommandColors.h"
@@ -148,15 +148,15 @@ void CWaitCommandsAI::AddTimeWait(const Command& cmd)
 	GML_RECMUTEX_LOCK(sel); // AddTimeWait
 
 	// save the current selection
-	const CUnitSet tmpSet = selectedUnits.selectedUnits;
+	const CUnitSet tmpSet = selectedUnitsHandler.selectedUnits;
 	CUnitSet::const_iterator it;
 	for (it = tmpSet.begin(); it != tmpSet.end(); ++it) {
 		InsertWaitObject(TimeWait::New(cmd, *it));
 	}
 	// restore the selection
-	selectedUnits.ClearSelected();
+	selectedUnitsHandler.ClearSelected();
 	for (it = tmpSet.begin(); it != tmpSet.end(); ++it) {
-		selectedUnits.AddUnit(*it);
+		selectedUnitsHandler.AddUnit(*it);
 	}
 }
 
@@ -446,25 +446,25 @@ void CWaitCommandsAI::Wait::SendCommand(const Command& cmd,
 		return;
 	}
 
-	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 	if (unitSet == selUnits) {
-		selectedUnits.GiveCommand(cmd, false);
+		selectedUnitsHandler.GiveCommand(cmd, false);
 		return;
 	}
 
 	CUnitSet tmpSet = selUnits;
 	CUnitSet::const_iterator it;
 
-	selectedUnits.ClearSelected();
+	selectedUnitsHandler.ClearSelected();
 	for (it = unitSet.begin(); it != unitSet.end(); ++it) {
-		selectedUnits.AddUnit(*it);
+		selectedUnitsHandler.AddUnit(*it);
 	}
 
-	selectedUnits.GiveCommand(cmd, false);
+	selectedUnitsHandler.GiveCommand(cmd, false);
 
-	selectedUnits.ClearSelected();
+	selectedUnitsHandler.ClearSelected();
 	for (it = tmpSet.begin(); it != tmpSet.end(); ++it) {
-		selectedUnits.AddUnit(*it);
+		selectedUnitsHandler.AddUnit(*it);
 	}
 }
 
@@ -533,9 +533,9 @@ CWaitCommandsAI::TimeWait::TimeWait(const Command& cmd, CUnit* _unit)
 	Command waitCmd(CMD_WAIT, cmd.options, code);
 	waitCmd.PushParam(GetFloatFromKey(key));
 
-	selectedUnits.ClearSelected();
-	selectedUnits.AddUnit(unit);
-	selectedUnits.GiveCommand(waitCmd);
+	selectedUnitsHandler.ClearSelected();
+	selectedUnitsHandler.AddUnit(unit);
+	selectedUnitsHandler.GiveCommand(waitCmd);
 
 	AddDeathDependence(unit, DEPENDENCE_WAITCMD);
 
@@ -670,7 +670,7 @@ CWaitCommandsAI::DeathWait::DeathWait(const Command& cmd)
 {
 	GML_RECMUTEX_LOCK(sel); // DeathWait
 
-	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 
 	if (cmd.params.size() == 1) {
 		const int unitID = (int)cmd.params[0];
@@ -712,7 +712,7 @@ CWaitCommandsAI::DeathWait::DeathWait(const Command& cmd)
 
 	Command waitCmd(CMD_WAIT, cmd.options, code);
 	waitCmd.PushParam(GetFloatFromKey(key));
-	selectedUnits.GiveCommand(waitCmd);
+	selectedUnitsHandler.GiveCommand(waitCmd);
 
 	CUnitSet::iterator it;
 	for (it = waitUnits.begin(); it != waitUnits.end(); ++it) {
@@ -892,7 +892,7 @@ CWaitCommandsAI::SquadWait::SquadWait(const Command& cmd)
 		return;
 	}
 
-	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 	CUnitSet::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		CUnit* unit = *it;
@@ -1044,7 +1044,7 @@ CWaitCommandsAI::GatherWait::GatherWait(const Command& cmd)
 	}
 
 	// only add valid units
-	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 	CUnitSet::const_iterator sit;
 	for (sit = selUnits.begin(); sit != selUnits.end(); ++sit) {
 		CUnit* unit = *sit;
@@ -1063,7 +1063,7 @@ CWaitCommandsAI::GatherWait::GatherWait(const Command& cmd)
 
 	Command waitCmd(CMD_WAIT, SHIFT_KEY, code);
 	waitCmd.PushParam(GetFloatFromKey(key));
-	selectedUnits.GiveCommand(waitCmd, true);
+	selectedUnitsHandler.GiveCommand(waitCmd, true);
 
 	CUnitSet::iterator wit;
 	for (wit = waitUnits.begin(); wit != waitUnits.end(); ++wit) {

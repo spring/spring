@@ -7,7 +7,7 @@
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "KeyBindings.h"
 #include "MouseHandler.h"
 #include "SelectionKeyHandler.h"
@@ -154,7 +154,7 @@ namespace
 		std::set<int> prevTypes;
 		void Prepare() {
 			prevTypes.clear();
-			const CUnitSet& tu = selectedUnits.selectedUnits;
+			const CUnitSet& tu = selectedUnitsHandler.selectedUnits;
 			for (CUnitSet::const_iterator si = tu.begin(); si != tu.end(); ++si) {
 				prevTypes.insert((*si)->unitDef->id);
 			}
@@ -277,7 +277,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 			}
 		}
 	} else if(s=="PrevSelection"){
-		CUnitSet* su=&selectedUnits.selectedUnits;
+		CUnitSet* su=&selectedUnitsHandler.selectedUnits;
 		for(CUnitSet::iterator ui=su->begin();ui!=su->end();++ui){
 			selection.push_back(*ui);
 		}
@@ -333,7 +333,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	s=ReadToken(selectString);
 
 	if(s=="ClearSelection"){
-		selectedUnits.ClearSelected();
+		selectedUnitsHandler.ClearSelected();
 
 		ReadDelimiter(selectString);
 		s=ReadToken(selectString);
@@ -341,7 +341,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 	if(s=="SelectAll"){
 		for (std::list<CUnit*>::iterator ui=selection.begin();ui!=selection.end();++ui)
-			selectedUnits.AddUnit(*ui);
+			selectedUnitsHandler.AddUnit(*ui);
 	} else if(s=="SelectOne"){
 		if(selection.empty())
 			return;
@@ -356,7 +356,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		if (sel == NULL)
 			return;
 
-		selectedUnits.AddUnit(sel);
+		selectedUnitsHandler.AddUnit(sel);
 		camHandler->CameraTransition(0.8f);
 		if(camHandler->GetCurrentControllerNum() != 0){
 			camHandler->GetCurrentController().SetPos(sel->pos);
@@ -389,7 +389,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		for (int a=0;a<num;++ui,++a){
 			if(ui==selection.end())
 				ui=selection.begin();
-			selectedUnits.AddUnit(*ui);
+			selectedUnitsHandler.AddUnit(*ui);
 		}
 
 		selectNumber+=num;
@@ -410,7 +410,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		for(int a=0;a<num;++ui,++a){
 			if(ui==selection.end())
 				ui=selection.begin();
-			selectedUnits.AddUnit(*ui);
+			selectedUnitsHandler.AddUnit(*ui);
 		}
 
 		selectNumber+=num;

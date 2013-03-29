@@ -19,7 +19,7 @@
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/Player.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/UI/UnitTracker.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Lua/LuaUI.h" // FIXME: for GML
@@ -513,7 +513,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 	GML_RECMUTEX_LOCK(sel); //FIXME redundant? (selectedUnits already has mutexes)
 
 	if (!keyInput->IsKeyPressed(SDLK_LSHIFT) && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
-		selectedUnits.ClearSelected();
+		selectedUnitsHandler.ClearSelected();
 	}
 
 	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
@@ -532,7 +532,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 		const float4    planeTop( 0.0f, 0.0f,  1.0f, -zmax);
 		const float4 planeBottom( 0.0f, 0.0f, -1.0f,  zmin);
 
-		selectedUnits.HandleUnitBoxSelection(planeRight, planeLeft, planeTop, planeBottom);
+		selectedUnitsHandler.HandleUnitBoxSelection(planeRight, planeLeft, planeTop, planeBottom);
 	}
 	else {
 		// Single unit
@@ -546,7 +546,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 			unit = CGameHelper::GetClosestFriendlyUnit(NULL, pos, size, gu->myAllyTeam);
 		}
 
-		selectedUnits.HandleSingleUnitClickSelection(unit, false);
+		selectedUnitsHandler.HandleSingleUnitClickSelection(unit, false);
 	}
 }
 
@@ -824,7 +824,7 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		}
 	}
 
-	const string selTip = selectedUnits.GetTooltip();
+	const string selTip = selectedUnitsHandler.GetTooltip();
 	if (selTip != "") {
 		return selTip;
 	}
@@ -1039,7 +1039,7 @@ void CMiniMap::DrawForReal(bool use_geo)
 
 	LuaUnsyncedCtrl::DrawUnitCommandQueues();
 	if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
-		selectedUnits.DrawCommands();
+		selectedUnitsHandler.DrawCommands();
 	}
 
 	lineDrawer.DrawAll();
@@ -1054,7 +1054,7 @@ void CMiniMap::DrawForReal(bool use_geo)
 
 		// draw unit ranges
 		const float radarSquare = radarhandler->radarDiv;
-		CUnitSet& selUnits = selectedUnits.selectedUnits;
+		CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 		for(CUnitSet::iterator si = selUnits.begin(); si != selUnits.end(); ++si) {
 			CUnit* unit = *si;
 			if (unit->radarRadius && !unit->beingBuilt && unit->activated) {

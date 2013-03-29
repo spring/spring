@@ -7,7 +7,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/WaitCommandsAI.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/BuildInfo.h"
@@ -444,5 +444,5 @@ void CFactoryCAI::UpdateIconName(int cmdID, const BuildOption& bo)
 		break;
 	}
 
-	selectedUnits.PossibleCommandChange(owner);
+	selectedUnitsHandler.PossibleCommandChange(owner);
 }

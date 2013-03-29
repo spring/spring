@@ -6,7 +6,7 @@
 #include "lib/gml/gmlmut.h"
 #include "GroupHandler.h"
 #include "Group.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/CameraHandler.h"
@@ -108,7 +108,7 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 		if (cmd == "set") {
 			group->ClearUnits();
 		}
-		const CUnitSet& selUnits = selectedUnits.selectedUnits;
+		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 		CUnitSet::const_iterator ui;
 		for(ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
 			(*ui)->SetGroup(group);
@@ -118,7 +118,7 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 		// do not select the group, just add its members to the current selection
 		CUnitSet::const_iterator ui;
 		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
-			selectedUnits.AddUnit(*ui);
+			selectedUnitsHandler.AddUnit(*ui);
 		}
 		return;
 	}
@@ -126,31 +126,31 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 		// do not select the group, just remove its members from the current selection
 		CUnitSet::const_iterator ui;
 		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
-			selectedUnits.RemoveUnit(*ui);
+			selectedUnitsHandler.RemoveUnit(*ui);
 		}
 		return;
 	}
 	else if (cmd == "selecttoggle")  {
 		// do not select the group, just toggle its members with the current selection
-		const CUnitSet& selUnits = selectedUnits.selectedUnits;
+		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 		CUnitSet::const_iterator ui;
 		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
 			if (selUnits.find(*ui) == selUnits.end()) {
-				selectedUnits.AddUnit(*ui);
+				selectedUnitsHandler.AddUnit(*ui);
 			} else {
-				selectedUnits.RemoveUnit(*ui);
+				selectedUnitsHandler.RemoveUnit(*ui);
 			}
 		}
 		return;
 	}
 
-	if ((selectedUnits.IsGroupSelected(num)) && !group->units.empty()) {
+	if ((selectedUnitsHandler.IsGroupSelected(num)) && !group->units.empty()) {
 		const float3 groupCenter = group->CalculateCenter();
 		camHandler->CameraTransition(0.5f);
 		camHandler->GetCurrentController().SetPos(groupCenter);
 	}
 
-	selectedUnits.SelectGroup(num);
+	selectedUnitsHandler.SelectGroup(num);
 }
 
 CGroup* CGroupHandler::CreateNewGroup()
@@ -178,8 +178,8 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 		LOG_L(L_WARNING, "Trying to remove hot-key group %i", group->id);
 		return;
 	}
-	if (selectedUnits.IsGroupSelected(group->id)) {
-		selectedUnits.ClearSelected();
+	if (selectedUnitsHandler.IsGroupSelected(group->id)) {
+		selectedUnitsHandler.ClearSelected();
 	}
 	groups[group->id] = NULL;
 	freeGroups.push_back(group->id);

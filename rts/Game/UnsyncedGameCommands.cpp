@@ -14,7 +14,7 @@
 #include "CommandMessage.h"
 #include "GameSetup.h"
 #include "GlobalUnsynced.h"
-#include "SelectedUnits.h"
+#include "SelectedUnitsHandler.h"
 #include "Player.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
@@ -429,7 +429,7 @@ public:
 			"Deselects all currently selected units") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		selectedUnits.ClearSelected();
+		selectedUnitsHandler.ClearSelected();
 		return true;
 	}
 };
@@ -728,7 +728,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		GML_RECMUTEX_LOCK(sel); // ActionPressed
 
-		const CUnitSet& selUnits = selectedUnits.selectedUnits;
+		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 		if (selUnits.empty())
 			return false;
 
@@ -1876,7 +1876,7 @@ public:
 
 		// we must cause the to-be-controllee to be put in
 		// netSelected[myPlayerNum] by giving it an order
-		selectedUnits.SendCommand(Command(CMD_STOP));
+		selectedUnitsHandler.SendCommand(Command(CMD_STOP));
 		net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
 		return true;
 	}
@@ -2990,14 +2990,14 @@ public:
 			"Destroys one or multiple units by unit-ID, instantly", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (selectedUnits.selectedUnits.empty())
+		if (selectedUnitsHandler.selectedUnits.empty())
 			return false;
 
 		// kill selected units
 		std::stringstream ss;
 		ss << GetCommand();
-		for (CUnitSet::iterator it = selectedUnits.selectedUnits.begin();
-				it != selectedUnits.selectedUnits.end(); ++it)
+		for (CUnitSet::iterator it = selectedUnitsHandler.selectedUnits.begin();
+				it != selectedUnitsHandler.selectedUnits.end(); ++it)
 		{
 			ss << " " << (*it)->id;
 		}

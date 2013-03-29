@@ -8,7 +8,7 @@
 #include "InMapDraw.h"
 #include "Player.h"
 #include "PlayerHandler.h"
-#include "SelectedUnits.h"
+#include "SelectedUnitsHandler.h"
 #include "SyncedActionExecutor.h"
 #ifdef _WIN32
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
@@ -56,7 +56,7 @@ public:
 
 	bool Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->noHelperAIs, action.GetArgs());
-		selectedUnits.PossibleCommandChange(NULL);
+		selectedUnitsHandler.PossibleCommandChange(NULL);
 		LogSystemStatus("LuaUI control", gs->noHelperAIs);
 		return true;
 	}

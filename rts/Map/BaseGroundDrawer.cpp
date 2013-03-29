@@ -5,7 +5,7 @@
 
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/UI/GuiHandler.h"
 #include "Ground.h"
 #include "HeightLinePalette.h"

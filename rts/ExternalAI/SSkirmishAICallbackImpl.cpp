@@ -12,7 +12,7 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "Game/GlobalUnsynced.h" // for myTeam
 #include "Game/GameVersion.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/UI/GuiHandler.h" //TODO: fix some switch for new gui
 #include "Map/ReadMap.h"
 #include "Map/MetalMap.h"
@@ -4532,7 +4532,7 @@ EXPORT(bool) skirmishAiCallback_Group_isSelected(int skirmishAIId, int groupId) 
 
 	if (!isControlledByLocalPlayer(skirmishAIId)) return false;
 
-	return (selectedUnits.IsGroupSelected(groupId));
+	return (selectedUnitsHandler.IsGroupSelected(groupId));
 }
 
 //##############################################################################

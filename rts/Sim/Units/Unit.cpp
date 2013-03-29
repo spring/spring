@@ -27,7 +27,7 @@
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/Player.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -1432,7 +1432,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	const int oldteam = team;
 
-	selectedUnits.RemoveUnit(this);
+	selectedUnitsHandler.RemoveUnit(this);
 	SetGroup(NULL);
 
 	eventHandler.UnitTaken(this, oldteam, newteam);
@@ -1727,7 +1727,7 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 	GML_RECMUTEX_LOCK(grpsel); // SetGroup
 
 	// factory is not necessarily selected
-	if (fromFactory && !selectedUnits.AutoAddBuiltUnitsToFactoryGroup())
+	if (fromFactory && !selectedUnitsHandler.AutoAddBuiltUnitsToFactoryGroup())
 		return false;
 
 	if (group != NULL) {
@@ -1744,8 +1744,8 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 		} else {
 			// add unit to the set of selected units iff its new group is already selected
 			// and (user wants the unit to be auto-selected or the unit is not newly built)
-			if (selectedUnits.IsGroupSelected(group->id) && (selectedUnits.AutoAddBuiltUnitsToSelectedGroup() || !fromFactory)) {
-				selectedUnits.AddUnit(this);
+			if (selectedUnitsHandler.IsGroupSelected(group->id) && (selectedUnitsHandler.AutoAddBuiltUnitsToSelectedGroup() || !fromFactory)) {
+				selectedUnitsHandler.AddUnit(this);
 			}
 		}
 	}

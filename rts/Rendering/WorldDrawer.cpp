@@ -26,7 +26,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Game/Camera.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/Game.h"
 #include "Game/LoadScreen.h"
 #include "Game/UI/UnitTracker.h"
@@ -136,7 +136,7 @@ void CWorldDrawer::Draw()
 		}
 	}
 
-	selectedUnits.Draw();
+	selectedUnitsHandler.Draw();
 	eventHandler.DrawWorldPreUnit();
 
 	{
@@ -206,7 +206,7 @@ void CWorldDrawer::Draw()
 
 	LuaUnsyncedCtrl::DrawUnitCommandQueues();
 	if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
-		selectedUnits.DrawCommands();
+		selectedUnitsHandler.DrawCommands();
 	}
 
 	lineDrawer.DrawAll();
