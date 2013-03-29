@@ -491,6 +491,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	CAdvTreeSquareDrawer drawer(this, cx, cy, treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE, drawDetailed);
 
+	GML_RECMUTEX_LOCK(feat); // Draw
 	GML_STDMUTEX_LOCK(tree); // Draw
 
 	oldTreeDistance = treeDistance;
@@ -906,6 +907,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 	Shader::IProgramObject* po = NULL;
 
+	GML_RECMUTEX_LOCK(feat); // DrawShadowPass
 	GML_STDMUTEX_LOCK(tree); // DrawShadowPass
 
 	// draw with extraSize=1
