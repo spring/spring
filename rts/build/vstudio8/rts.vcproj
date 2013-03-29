@@ -1257,19 +1257,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Game\SelectedUnits.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\SelectedUnits.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Game\SelectedUnitsAI.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\Game\SelectedUnitsAI.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\SelectedUnitsHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\SelectedUnitsHandler.h"
 				>
 			</File>
 			<File
