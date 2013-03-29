@@ -59,11 +59,13 @@ bool StringToBool(std::string str)
 	// regex would probably be more appropriate,
 	// but it is better not to rely on any external lib here
 	if (
+			(str.empty())    ||
+			(str == "0")     ||
 			(str == "n")     ||
 			(str == "no")    ||
 			(str == "f")     ||
 			(str == "false") ||
-			(str == "0")
+			(str == "off")
 		) {
 		value = false;
 	}

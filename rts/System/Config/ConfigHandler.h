@@ -11,6 +11,7 @@
 #include <boost/bind.hpp>
 
 #include "ConfigVariable.h"
+#include "System/Util.h"
 
 /**
  * @brief Config handler interface
@@ -59,7 +60,7 @@ public:
 	}
 
 	/// @brief Get bool, throw if key not present
-	bool  GetBool(const std::string& key)     const { return Get<bool>(key); }
+	bool  GetBool(const std::string& key)     const { return Get(key); }
 	/// @brief Get int, throw if key not present
 	int   GetInt(const std::string& key)      const { return Get<int>(key); }
 	/// @brief Get int, throw if key not present
@@ -143,6 +144,13 @@ private:
 		T temp;
 		buf >> temp;
 		return temp;
+	}
+
+	/// @see Get
+	/// @brief <bool> specialization of Get<> (we cannot use template spezialization here, so just overload it)
+	bool Get(const std::string& key) const
+	{
+		return StringToBool(GetString(key));
 	}
 };
 
