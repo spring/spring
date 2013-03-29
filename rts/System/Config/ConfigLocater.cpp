@@ -35,17 +35,8 @@ static void AddCfgFile(vector<string>& locations, const  std::string& filepath)
 }
 
 
-static void LoadCfgInFolder(vector<string>& locations, const std::string& path, const bool hidden = false, const bool force = false)
+static void LoadCfgs(vector<string>& locations, const std::string& defCfg, const std::string& verCfg)
 {
-#ifndef _WIN32
-	const string base = (hidden) ? ".springrc" : "springrc";
-	const string defCfg = path + base;
-	const string verCfg = defCfg + "-" + SpringVersion::Get();
-#else
-	const string defCfg = path + "springsettings.cfg";
-	const string verCfg = path + "springsettings-" + SpringVersion::Get() + ".cfg";
-#endif
-
 	// lets see if the file exists & is writable
 	// (otherwise it can fail/segfault/end up in virtualstore...)
 	// _access modes: 0 - exists; 2 - write; 4 - read; 6 - r/w
@@ -72,13 +63,31 @@ static void LoadCfgInFolder(vector<string>& locations, const std::string& path, 
 }
 
 
+static void LoadCfgsInFolder(vector<string>& locations, const std::string& path, const bool hidden = false)
+{
+	// all platforms: springsettings.cfg
+	const string defCfg = path + "springsettings.cfg";
+	const string verCfg = path + "springsettings-" + SpringVersion::Get() + ".cfg";
+	LoadCfgs(locations, defCfg, verCfg);
+
+#ifndef _WIN32
+	// unix only: (.)springrc (lower priority than springsettings.cfg!)
+	const string base = (hidden) ? ".springrc" : "springrc";
+	const string unixDefCfg = path + base;
+	const string unixVerCfg = unixDefCfg + "-" + SpringVersion::Get();
+	LoadCfgs(locations, unixDefCfg, unixVerCfg);
+#endif
+}
+
+
+
 /**
  * @brief Get the names of the default configuration files
  */
 void ConfigLocater::GetDefaultLocations(vector<string>& locations)
 {
 	// first, add writeable config file
-	LoadCfgInFolder(locations, dataDirLocater.GetWriteDirPath(), false, true);
+	LoadCfgsInFolder(locations, dataDirLocater.GetWriteDirPath(), false);
 
 	// old primary
 	// e.g. linux: "~/.springrc"; windows: "C:\Users\USER\AppData\Local\springsettings.cfg"
@@ -87,6 +96,6 @@ void ConfigLocater::GetDefaultLocations(vector<string>& locations)
 
 	// add additional readonly config files
 	BOOST_FOREACH(std::string path, dataDirLocater.GetDataDirPaths()) {
-		LoadCfgInFolder(locations, path);
+		LoadCfgsInFolder(locations, path);
 	}
 }
