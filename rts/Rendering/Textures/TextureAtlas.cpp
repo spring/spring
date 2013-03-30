@@ -13,7 +13,6 @@
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
-#include "System/Vec2.h"
 
 #include <list>
 #include <cstring>
@@ -31,23 +30,26 @@ CR_REG_METADATA(GroundFXTexture,
 
 bool CTextureAtlas::debug;
 
-CTextureAtlas::CTextureAtlas()
-	: gltex(0)
-	, freeTexture(true)
-	, xsize(0)
-	, ysize(0)
+CTextureAtlas::CTextureAtlas(unsigned int allocType)
+	: atlasAllocator(NULL)
+	, atlasTexID(0)
 	, initialized(false)
+	, freeTexture(true)
 {
-	atlasAllocator = new CLegacyAtlasAlloc();
-	//atlasAllocator = new CQuadtreeAtlasAlloc();
+	switch (allocType) {
+		case ATLAS_ALLOC_LEGACY: { atlasAllocator = new CLegacyAtlasAlloc(); } break;
+		case ATLAS_ALLOC_QUADTREE: { atlasAllocator = new CQuadtreeAtlasAlloc(); } break;
+		default: { assert(false); } break;
+	}
+
 	atlasAllocator->SetNonPowerOfTwo(globalRendering->supportNPOTs);
-	//atlasAllocator->SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
+	// atlasAllocator->SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
 }
 
 CTextureAtlas::~CTextureAtlas()
 {
 	if (freeTexture) {
-		glDeleteTextures(1, &gltex);
+		glDeleteTextures(1, &atlasTexID);
 	}
 	delete atlasAllocator;
 }
@@ -116,7 +118,7 @@ bool CTextureAtlas::Finalize()
 
 	CreateTexture();
 
-	for(std::vector<MemTex*>::iterator it = memtextures.begin(); it != memtextures.end(); ++it) {
+	for (std::vector<MemTex*>::iterator it = memtextures.begin(); it != memtextures.end(); ++it) {
 		delete[] (char*)(*it)->data;
 		delete (*it);
 	}
@@ -128,19 +130,20 @@ bool CTextureAtlas::Finalize()
 void CTextureAtlas::CreateTexture()
 {
 	const int2 atlasSize = atlasAllocator->GetAtlasSize();
-	xsize = atlasSize.x;
-	ysize = atlasSize.y;
 
 	PBO pbo;
 	pbo.Bind();
 	pbo.Resize(atlasSize.x * atlasSize.y * 4);
 
 	unsigned char* data = (unsigned char*)pbo.MapBuffer(GL_WRITE_ONLY);
-		std::memset(data, 0, atlasSize.x * atlasSize.y * 4); // make spacing between textures black transparent to avoid ugly lines with linear filtering
 
-		for(std::vector<MemTex*>::iterator it = memtextures.begin(); it != memtextures.end(); ++it) {
-			float4 texCoords = atlasAllocator->GetTexCoords((*it)->names[0]);
-			float4 absCoords = atlasAllocator->GetEntry((*it)->names[0]);
+	{
+		// make spacing between textures black transparent to avoid ugly lines with linear filtering
+		std::memset(data, 0, atlasSize.x * atlasSize.y * 4);
+
+		for (std::vector<MemTex*>::iterator it = memtextures.begin(); it != memtextures.end(); ++it) {
+			const float4 texCoords = atlasAllocator->GetTexCoords((*it)->names[0]);
+			const float4 absCoords = atlasAllocator->GetEntry((*it)->names[0]);
 			const int xpos = absCoords.x;
 			const int ypos = absCoords.y;
 
@@ -157,20 +160,16 @@ void CTextureAtlas::CreateTexture()
 		}
 
 		if (debug) {
-			// hack to make sure we don't overwrite our own atlases
-			static int count = 0;
-			char fname[256];
-			SNPRINTF(fname, sizeof(fname), "textureatlas%d.png", ++count);
-
-			CBitmap save(data, atlasSize.x, atlasSize.y);
-			save.Save(fname);
-			LOG("Saved finalized texture-atlas to '%s'.", fname);
+			CBitmap tex(data, atlasSize.x, atlasSize.y);
+			tex.Save(name + "-" + IntToString(atlasSize.x) + "x" + IntToString(atlasSize.y) + ".png");
 		}
+	}
+
 	pbo.UnmapBuffer();
 
 	const int maxMipMaps = atlasAllocator->GetMaxMipMaps();
-	glGenTextures(1, &gltex);
-		glBindTexture(GL_TEXTURE_2D, gltex);
+	glGenTextures(1, &atlasTexID);
+		glBindTexture(GL_TEXTURE_2D, atlasTexID);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (maxMipMaps > 0) ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
@@ -199,7 +198,7 @@ int CTextureAtlas::GetBPP(TextureType texType)
 
 void CTextureAtlas::BindTexture()
 {
-	glBindTexture(GL_TEXTURE_2D, gltex);
+	glBindTexture(GL_TEXTURE_2D, atlasTexID);
 }
 
 bool CTextureAtlas::TextureExists(const std::string& name)
@@ -222,3 +221,8 @@ AtlasedTexture& CTextureAtlas::GetTextureWithBackup(const std::string& name, con
 		return textures[StringToLower(backupName)];
 	}
 }
+
+int2 CTextureAtlas::GetSize() const {
+	return (atlasAllocator->GetAtlasSize());
+}
+

@@ -9,12 +9,12 @@
 
 #include "System/creg/creg_cond.h"
 #include "System/float4.h"
+#include "System/Vec2.h"
 
 
 class IAtlasAllocator;
 
-
-/** @brief texture coordinations of an atlas image. */
+/** @brief texture coordinates of an atlas subimage. */
 //typedef float4 AtlasedTexture;
 
 struct AtlasedTexture : public float4
@@ -41,20 +41,17 @@ struct GroundFXTexture : public AtlasedTexture
 class CTextureAtlas
 {
 public:
-	unsigned int gltex;
-	bool freeTexture; //! free texture on atlas destruction?
-
-	int xsize;
-	int ysize;
-
-public:
-	CTextureAtlas();
-	~CTextureAtlas();
-
-public:
 	enum TextureType {
 		RGBA32
 	};
+	enum {
+		ATLAS_ALLOC_LEGACY   = 0,
+		ATLAS_ALLOC_QUADTREE = 1,
+	};
+
+public:
+	CTextureAtlas(unsigned int allocType = ATLAS_ALLOC_LEGACY);
+	~CTextureAtlas();
 
 	//! Add a texture from a memory pointer returns -1 if failed.
 	int AddTexFromMem(std::string name, int xsize, int ysize, TextureType texType, void* data);
@@ -68,20 +65,20 @@ public:
 	//! Add a texture from a file, returns -1 if failed.
 	int AddTexFromFile(std::string name, std::string file);
 
-public:
+
 	/**
 	 * Creates the atlas containing all the specified textures.
 	 * @return true if suceeded, false if not all textures did fit
 	 *         into the specified maxsize.
 	 */
 	bool Finalize();
-	void BindTexture();
 
 	/**
 	 * @return a boolean true if the texture exists within
 	 *         the "textures" map and false if it does not.
 	 */
 	bool TextureExists(const std::string& name);
+
 
 	//! @return reference to the Texture struct of the specified texture
 	AtlasedTexture& GetTexture(const std::string& name);
@@ -92,8 +89,24 @@ public:
 	 */
 	AtlasedTexture& GetTextureWithBackup(const std::string& name, const std::string& backupName);
 
+
+	IAtlasAllocator* GetAllocator() { return atlasAllocator; }
+
+	int2 GetSize() const;
+	std::string GetName() const { return name; }
+
+	unsigned int GetTexID() const { return atlasTexID; }
+
+	void BindTexture();
+	void SetFreeTexture(bool b) { freeTexture = b; }
+	void SetName(const std::string& s) { name = s; }
+
 	static void SetDebug(bool b) { debug = true; }
 	static bool GetDebug() { return debug; }
+
+protected:
+	int GetBPP(TextureType tetxType);
+	void CreateTexture();
 
 protected:
 	IAtlasAllocator* atlasAllocator;
@@ -106,18 +119,21 @@ protected:
 		void* data;
 	};
 
+	std::string name;
+
 	// temporary storage of all textures
 	std::vector<MemTex*> memtextures;
 	std::map<std::string, MemTex*> files;
 
 	std::map<std::string, AtlasedTexture> textures;
 
-	bool initialized;
+	unsigned int atlasTexID;
+
 	//! set to true to write finalized texture atlas to disk
 	static bool debug;
 
-	int GetBPP(TextureType tetxType);
-	void CreateTexture();
+	bool initialized;
+	bool freeTexture; //! free texture on atlas destruction?
 };
 
 #endif // TEXTURE_ATLAS_H
