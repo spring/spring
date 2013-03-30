@@ -159,9 +159,12 @@ SpringApp::~SpringApp()
  */
 bool SpringApp::Initialize()
 {
+	CLogOutput::LogSystemInfo();
+	CMyMath::Init();
+
 #if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
-	//! this MUST run before any other X11 call (esp. those by SDL!)
-	//! we need it to make calls to X11 threadsafe
+	// this MUST run before any other X11 call (esp. those by SDL!)
+	// we need it to make calls to X11 threadsafe
 	if (!XInitThreads()) {
 		LOG_L(L_FATAL, "Xlib is not thread safe");
 		return false;
@@ -189,17 +192,7 @@ bool SpringApp::Initialize()
 	globalRendering = new CGlobalRendering();
 
 	ParseCmdLine();
-	CMyMath::Init();
 	good_fpu_control_registers("::Run");
-
-	// log OS version
-	LOG("OS: %s", Platform::GetOS().c_str());
-	if (Platform::Is64Bit())
-		LOG("OS: 64bit native mode");
-	else if (Platform::Is32BitEmulation())
-		LOG("OS: emulated 32bit mode");
-	else
-		LOG("OS: 32bit native mode");
 
 	// Install Watchdog
 	Watchdog::Install();
@@ -785,10 +778,6 @@ void SpringApp::ParseCmdLine()
 	ConfigHandler::Instantiate(configSource, safemode);
 	GlobalConfig::Instantiate();
 
-	// Initialize the log. Only after this moment log will be written to file.
-	// Note: Logging MAY NOT start before the chdir, otherwise the logfile ends up
-	//       in the wrong directory.
-	// Update: now it actually may start before, log has preInitLog.
 	logOutput.Initialize();
 
 	// mutually exclusive options that cause spring to quit immediately

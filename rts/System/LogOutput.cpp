@@ -11,6 +11,7 @@
 #include "System/Log/FileSink.h"
 #include "System/Log/ILog.h"
 #include "System/Log/Level.h"
+#include "System/Platform/Misc.h"
 
 #include <string>
 #include <set>
@@ -175,10 +176,6 @@ void CLogOutput::Initialize()
 	preInitLog().clear();*/
 
 	LOG("LogOutput initialized.");
-	LOG("Spring %s", SpringVersion::GetFull().c_str());
-	LOG("Build date/time: %s", SpringVersion::GetBuildTime().c_str());
-	LOG("Build environment: %s", SpringVersion::GetBuildEnvironment().c_str());
-	LOG("Compiler: %s", SpringVersion::GetCompiler().c_str());
 }
 
 void CLogOutput::InitializeSections()
@@ -270,5 +267,21 @@ void CLogOutput::InitializeSections()
 	LOG("Enable or disable log sections using the LogSections configuration key");
 	LOG("  or the SPRING_LOG_SECTIONS environment variable (both comma separated).");
 	LOG("  Use \"none\" to disable the default log sections.");
+}
+
+
+void CLogOutput::LogSystemInfo()
+{
+	LOG("Spring %s", SpringVersion::GetFull().c_str());
+	LOG("Build date/time: %s", SpringVersion::GetBuildTime().c_str());
+	LOG("Build environment: %s", SpringVersion::GetBuildEnvironment().c_str());
+	LOG("Compiler: %s", SpringVersion::GetCompiler().c_str());
+	LOG("OS: %s", Platform::GetOS().c_str());
+	if (Platform::Is64Bit())
+		LOG("OS: 64bit native mode");
+	else if (Platform::Is32BitEmulation())
+		LOG("OS: emulated 32bit mode");
+	else
+		LOG("OS: 32bit native mode");
 }
 

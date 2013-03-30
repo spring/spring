@@ -56,6 +56,11 @@ public:
 	 */
 	void Initialize();
 
+	/**
+	 * Log()s system informations (CPU, 32/64bit, gcc/boost version, ...)
+	 */
+	static void LogSystemInfo();
+
 private:
 	void End();
 
