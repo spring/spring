@@ -382,6 +382,10 @@ void DataDirLocater::LocateDataDirs()
 
 	// LEVEL 1: User defined write dirs
 	{
+		if (!forcedWriteDir.empty()) {
+			AddDirs(forcedWriteDir);
+		}
+
 		const char* env = getenv("SPRING_WRITEDIR");
 		if (env && *env) {
 			AddDirs(env); // ENV{SPRING_WRITEDIR}

@@ -720,6 +720,7 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddSwitch(0,   "test-creg",          "Test if all CREG classes are completed");
 	cmdline->AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
 	cmdline->AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
+	cmdline->AddString('d', "write-dir",          "Specify where Spring writes to.");
 	cmdline->AddString('g', "game",               "Specify the game that will be instantly loaded");
 	cmdline->AddString('m', "map",                "Specify the map that will be instantly loaded");
 
@@ -757,6 +758,10 @@ void SpringApp::ParseCmdLine()
 	if (cmdline->IsSet("isolation-dir")) {
 		dataDirLocater.SetIsolationMode(true);
 		dataDirLocater.SetIsolationModeDir(cmdline->GetString("isolation-dir"));
+	}
+
+	if (cmdline->IsSet("write-dir")) {
+		dataDirLocater.SetWriteDir(cmdline->GetString("write-dir"));
 	}
 
 	// mutually exclusive options that cause spring to quit immediately

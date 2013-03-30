@@ -38,69 +38,7 @@ public:
 	 * windows, the chdir will have no effect.
 	 *
 	 * The first dir added will be the writable data dir.
-	 *
-	 * How the dirs get assembled
-	 * --------------------------
-	 * (descending priority -> first entry is searched first)
-	 *
-	 * If "-i isolationDir" is passed via cli or the environment variable
-	 * SPRING_ISOLATED is present, isolation mode is activated. Any valid
-	 * path in either of the two is added. If neither conatins a valid path,
-	 * _only_ Platform::GetProcessExecutablePath() (non-UNITSYNC)
-	 *     or Platform::GetModulePath() (UNITSYNC)
-	 * or the relative parent dir, in case of a multi-version engine install,
-	 * will be added.
-	 * If the var is not present, the following hierarchy is observed:
-	 *
-	 * Windows:
-	 * - SPRING_DATADIR env-variable (semi-colon separated list, like PATH)
-	 * - ./springsettings.cfg:SpringData=C:\\data (semi-colon separated list)
-	 * - CWD; in portable mode only (usually: on):
-	 *   ~ path to the current work-dir/module,
-	 *     which is either spring.exe or unitsync.dll, or
-	 *   ~ the parent dir of the above, if it is a multi-version data-dir
-	 * - "C:/.../My Documents/My Games/Spring/"
-	 * - "C:/.../My Documents/Spring/"
-	 * - "C:/.../All Users/Applications/Spring/"
-	 * - SPRING_DATADIR compiler flag (semi-colon separated list)
-	 *
-	 * Max OS X:
-	 * - SPRING_DATADIR env-variable (colon separated list, like PATH)
-	 * - ~/.springrc:SpringData=/path/to/data (colon separated list)
-	 * - path to the current work-dir/module
-	 *   (either spring(binary) or libunitsync.dylib)
-	 * - CWD; allways:
-	 *   ~ path to the current work-dir/module,
-	 *     which is either the spring binary or libunitsync.so, or
-	 *   ~ the parent dir of the above, if it is a multi-version data-dir
-	 * - {module-path}/data/
-	 * - {module-path}/lib/
-	 * - SPRING_DATADIR compiler flag (colon separated list)
-	 *
-	 * Unixes:
-	 * - SPRING_DATADIR env-variable (colon separated list, like PATH)
-	 * - ~/.springrc:SpringData=/path/to/data (colon separated list)
-	 * - CWD; in portable mode only (usually: off):
-	 *   ~ path to the current work-dir/module,
-	 *     which is either the spring binary or libunitsync.so, or
-	 *   ~ the parent dir of the above, if it is a multi-version data-dir
-	 * - "$HOME/.spring"
-	 * - from file '/etc/spring/datadir', preserving order
-	 *   (new-line separated list)
-	 * - SPRING_DATADIR compiler flag (colon separated list)
-	 *   This is set by the build system, and will usually contain dirs like:
-	 *   * /usr/share/games/spring/
-	 *   * /usr/lib/
-	 *   * /usr/lib64/
-	 *   * /usr/share/lib/
-	 *
-	 * All of the above methods support environment variable substitution, eg.
-	 * '$HOME/myspringdatadir' will be converted by spring to something like
-	 * '/home/username/myspringdatadir'.
-	 *
-	 * If we end up with no data-dir that points to an existing path,
-	 * we asume the current working directory is the data directory.
-	 * @see IsPortableMode()
+	 * @see Manpage
 	 */
 	void LocateDataDirs();
 
@@ -161,6 +99,11 @@ public:
 	 */
 	void SetIsolationModeDir(const std::string& dir) { isolationModeDir = dir; }
 
+	/**
+	 * Force the write directory.
+	 * If set to "", we use the default one.
+	 */
+	void SetWriteDir(const std::string& dir) { forcedWriteDir = dir; }
 
 	/**
 	 * @brief reads envvar to detect if we should run in isolated mode
@@ -220,8 +163,10 @@ private:
 	 */
 	static bool LooksLikeMultiVersionDataDir(const std::string& dirPath);
 
+private:
 	bool isolationMode;
 	std::string isolationModeDir;
+	std::string forcedWriteDir;
 
 	std::vector<DataDir> dataDirs;
 	const DataDir* writeDir;

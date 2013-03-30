@@ -117,6 +117,9 @@ ifndef::GUILESS[  Benchmark start time in minutes.]
 *--isolation-dir*::'PATH'::
   Specify the isolation-mode data-dir
   (see --isolation and the SPRING_ISOLATED env var)
+
+*--write-dir*::'PATH'::
+  Specify the directory used for all saving.
 ifndef::DEDICATED[ ]
 ifndef::DEDICATED[*-n, --name*::'NAME'::]
 ifndef::DEDICATED[  Set your player name]
@@ -200,7 +203,7 @@ Data directories are searched for content, and among other things, may contain:
 
 {set:NORMAL_DIRS:CONFIG_HOME \n\n ETC_DIRS \n\n USR_SHARE}
 {set:PORTABLE_DIRS:INSTALL_DIR \n\n CONFIG_HOME \n\n ETC_DIRS \n\n USR_SHARE}
-{set:USER_WRITEDIRS:SPRING_WRITEDIR envvar}
+{set:USER_WRITEDIRS:directory defined via --write-dir \n\n SPRING_WRITEDIR envvar}
 {set:USER_READDIRS:SPRING_DATADIR envvar \n\n SpringData configtag}
 
 Sorted by priority the engine may use multiple data directories,
