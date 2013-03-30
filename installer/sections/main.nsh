@@ -52,6 +52,7 @@
 			CAREFULL: ALL CONTENTS OF YOUR SPRING INSTALLATION DIRECTORY WILL BE REMOVED! " \
 			/SD IDNO IDNO skip_purge
 		RmDir /r "$INSTDIR"
+		RmDir /r "$DOCUMENTS\My Games\Spring"
 		Delete "$LOCALAPPDATA\springsettings.cfg"
 		Delete "$APPDATA\springlobby.conf"
 	skip_purge:
