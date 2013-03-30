@@ -46,8 +46,8 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 
 	loadscreen->SetLoadMessage("Creating Projectile Textures");
 
-	textureAtlas = new CTextureAtlas();
-	groundFXAtlas = new CTextureAtlas();
+	textureAtlas = new CTextureAtlas(); textureAtlas->SetName("ProjectileTextureAtlas");
+	groundFXAtlas = new CTextureAtlas(); groundFXAtlas->SetName("ProjectileEffectsAtlas");
 
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	LuaParser mapResParser("gamedata/resources_map.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
@@ -237,7 +237,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		perlinFB.reloadOnAltTab = true;
 
 		perlinFB.Bind();
-		perlinFB.AttachTexture(textureAtlas->gltex);
+		perlinFB.AttachTexture(textureAtlas->GetTexID());
 		drawPerlinTex = perlinFB.CheckStatus("PERLIN");
 		perlinFB.Unbind();
 	}
@@ -928,7 +928,7 @@ void CProjectileDrawer::UpdateTextures() {
 
 void CProjectileDrawer::UpdatePerlin() {
 	perlinFB.Bind();
-	glViewport(perlintex->xstart * textureAtlas->xsize, perlintex->ystart * textureAtlas->ysize, 128, 128);
+	glViewport(perlintex->xstart * (textureAtlas->GetSize()).x, perlintex->ystart * (textureAtlas->GetSize()).y, 128, 128);
 
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();

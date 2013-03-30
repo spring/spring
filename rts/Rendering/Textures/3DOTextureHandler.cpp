@@ -6,12 +6,11 @@
 #include <sstream>
 
 #include "3DOTextureHandler.h"
-#include "LegacyAtlasAlloc.h"
-#include "QuadtreeAtlasAlloc.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/IAtlasAllocator.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "TAPalette.h"
 #include "System/Exceptions.h"
@@ -39,27 +38,28 @@ C3DOTextureHandler::C3DOTextureHandler()
 {
 	std::vector<TexFile*> texfiles = LoadTexFiles();
 
-	CLegacyAtlasAlloc atlas;
-	// CQuadtreeAtlasAlloc atlas;
+	// TODO: make this use TextureAtlas directly
+	CTextureAtlas atlas;
+	atlas.SetName("3DOModelTextureAtlas");
+
+	IAtlasAllocator* atlasAlloc = atlas.GetAllocator();
 
 	// NOTE: most Intels report maxTextureSize=2048, some even 1024 (!)
-	atlas.SetNonPowerOfTwo(globalRendering->supportNPOTs);
-	atlas.SetMaxSize(std::min(globalRendering->maxTextureSize, 2048), std::min(globalRendering->maxTextureSize, 2048));
+	atlasAlloc->SetNonPowerOfTwo(globalRendering->supportNPOTs);
+	atlasAlloc->SetMaxSize(std::min(globalRendering->maxTextureSize, 2048), std::min(globalRendering->maxTextureSize, 2048));
 
 	// default for 3DO primitives that point to non-existing textures
 	textures["___dummy___"] = UnitTexture(0.0f, 0.0f, 1.0f, 1.0f);
 
-	glGenTextures(1, &atlas3do1);
-	glGenTextures(1, &atlas3do2);
-
 	for (std::vector<TexFile*>::iterator it = texfiles.begin(); it != texfiles.end(); ++it) {
-		atlas.AddEntry((*it)->name, int2((*it)->tex.xsize, (*it)->tex.ysize));
+		atlasAlloc->AddEntry((*it)->name, int2((*it)->tex.xsize, (*it)->tex.ysize));
 	}
 
-	const int2 curAtlasSize = atlas.GetAtlasSize();
-	const int2 maxAtlasSize = atlas.GetMaxSize();
+	const bool allocated = atlasAlloc->Allocate();
+	const int2 curAtlasSize = atlasAlloc->GetAtlasSize();
+	const int2 maxAtlasSize = atlasAlloc->GetMaxSize();
 
-	if (!atlas.Allocate()) {
+	if (!allocated) {
 		// either the algorithm simply failed to fit all
 		// textures or the textures would really not fit
 		LOG_L(L_WARNING,
@@ -93,9 +93,9 @@ C3DOTextureHandler::C3DOTextureHandler()
 		CBitmap& curtex1 = (*it)->tex;
 		CBitmap& curtex2 = (*it)->tex2;
 
-		const size_t foundx = atlas.GetEntry((*it)->name).x;
-		const size_t foundy = atlas.GetEntry((*it)->name).y;
-		const float4 texCoords = atlas.GetTexCoords((*it)->name);
+		const size_t foundx = atlasAlloc->GetEntry((*it)->name).x;
+		const size_t foundy = atlasAlloc->GetEntry((*it)->name).y;
+		const float4 texCoords = atlasAlloc->GetTexCoords((*it)->name);
 
 		for (int y = 0; y < curtex1.ysize; ++y) {
 			for (int x = 0; x < curtex1.xsize; ++x) {
@@ -111,9 +111,10 @@ C3DOTextureHandler::C3DOTextureHandler()
 		delete (*it);
 	}
 
-	const int maxMipMaps = atlas.GetMaxMipMaps();
+	const int maxMipMaps = atlasAlloc->GetMaxMipMaps();
 
 	{
+		glGenTextures(1, &atlas3do1);
 		glBindTexture(GL_TEXTURE_2D, atlas3do1);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (maxMipMaps > 0) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
@@ -127,6 +128,7 @@ C3DOTextureHandler::C3DOTextureHandler()
 		}
 	}
 	{
+		glGenTextures(1, &atlas3do2);
 		glBindTexture(GL_TEXTURE_2D, atlas3do2);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (maxMipMaps > 0) ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST);
@@ -141,8 +143,11 @@ C3DOTextureHandler::C3DOTextureHandler()
 	}
 
 	if (CTextureAtlas::GetDebug()) {
-		CBitmap tex1(bigtex1, curAtlasSize.x, curAtlasSize.y); tex1.Save("unittex1-3do.png");
-		CBitmap tex2(bigtex2, curAtlasSize.x, curAtlasSize.y); tex2.Save("unittex2-3do.png");
+		CBitmap tex1(bigtex1, curAtlasSize.x, curAtlasSize.y);
+		CBitmap tex2(bigtex2, curAtlasSize.x, curAtlasSize.y);
+
+		tex1.Save(atlas.GetName() + "-1-" + IntToString(curAtlasSize.x) + "x" + IntToString(curAtlasSize.y) + ".png");
+		tex2.Save(atlas.GetName() + "-2-" + IntToString(curAtlasSize.x) + "x" + IntToString(curAtlasSize.y) + ".png");
 	}
 
 	delete[] bigtex1;
@@ -199,10 +204,8 @@ std::vector<TexFile*> C3DOTextureHandler::LoadTexFiles()
 	}
 
 	for (unsigned a = 0; a < CTAPalette::NUM_PALETTE_ENTRIES; ++a) {
-		const std::string name = "ta_color" + IntToString(a, "%i");
-
-		TexFile* tex = new TexFile;
-		tex->name = name;
+		TexFile* tex = new TexFile();
+		tex->name = "ta_color" + IntToString(a, "%i");
 		tex->tex.Alloc(1, 1);
 		tex->tex.mem[0] = palette[a][0];
 		tex->tex.mem[1] = palette[a][1];
