@@ -170,9 +170,10 @@ public:
 
 private:
 	void AddCurWorkDir();
-	void AddInstallDir();
+	void AddPortableDir();
 	void AddHomeDirs();
-	void AddOsSpecificDirs();
+	void AddEtcDirs();
+	void AddShareDirs();
 
 	/**
 	 * @brief substitutes environment variables with their values
