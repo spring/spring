@@ -234,7 +234,7 @@ void DataDirLocater::AddCurWorkDir()
 }
 
 
-void DataDirLocater::AddInstallDir()
+void DataDirLocater::AddPortableDir()
 {
 #if  defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
@@ -256,11 +256,7 @@ void DataDirLocater::AddInstallDir()
 	if ((curWorkDirParent != "") && LooksLikeMultiVersionDataDir(curWorkDirParent)) {
 		AddDirs(curWorkDirParent); // "../"
 	}
-	if (IsPortableMode()) {
-		// always using this would be unclean, because spring and unitsync
-		// would end up with different sets of data-dirs
-		AddDirs(dd_curWorkDir); // "./"
-	}
+	AddDirs(dd_curWorkDir);
 }
 
 
@@ -299,11 +295,9 @@ void DataDirLocater::AddHomeDirs()
 }
 
 
-void DataDirLocater::AddOsSpecificDirs()
+void DataDirLocater::AddEtcDirs()
 {
-#ifdef WIN32
-
-#else
+#ifndef WIN32
 	// Linux, FreeBSD, Solaris, Apple non-bundle
 
 	// settings in /etc
@@ -331,6 +325,20 @@ void DataDirLocater::AddOsSpecificDirs()
 
 	AddDirs(dd_etc);                              // from /etc/spring/datadir FIXME add in IsolatedMode too? FIXME
 #endif
+}
+
+
+void DataDirLocater::AddShareDirs()
+{
+#ifndef WIN32
+	// under windows the install dir is also the data/share dir
+#if  defined(UNITSYNC)
+	const std::string dd_curWorkDir = Platform::GetModulePath();
+#else
+	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
+#endif
+	AddDirs(dd_curWorkDir);
+#endif
 
 #if defined(__APPLE__)
 	// Mac OS X Application Bundle (*.app) - single file install
@@ -354,6 +362,11 @@ void DataDirLocater::AddOsSpecificDirs()
 	const std::string dd_curWorkDirData = bundleResourceDir + "/share/games/spring";
 
 	AddDirs(dd_curWorkDirData);             // "Spring.app/Contents/Resources/share/games/spring"
+#endif
+
+#ifdef SPRING_DATADIR
+	// CompilerInfo: using the defineflag SPRING_DATADIR & "SPRING_DATADIR" as string works fine, the preprocessor won't touch the 2nd
+	AddDirs(SPRING_DATADIR); // from -DSPRING_DATADIR, example /usr/games/share/spring/
 #endif
 }
 
@@ -379,26 +392,19 @@ void DataDirLocater::LocateDataDirs()
 	if (IsIsolationMode()) {
 		// LEVEL 2a: Isolation Mode (either installDir or user set one)
 		if (isolationModeDir.empty()) {
-			AddInstallDir(); // better use curWorkDir?
+			AddPortableDir(); // better use curWorkDir?
 		} else {
 			AddDirs(isolationModeDir);
 		}
 	} else {
 		// LEVEL 2b: InstallDir, HomeDirs & Shared dirs
 		if (IsPortableMode()) {
-			AddInstallDir();
-			AddHomeDirs();
-		} else {
-			AddHomeDirs();
-			AddInstallDir();
+			AddPortableDir();
 		}
-		AddOsSpecificDirs();
+		AddHomeDirs();
 		//AddCurWorkDir();
-
-	#ifdef SPRING_DATADIR
-		// CompilerInfo: using the defineflag SPRING_DATADIR & "SPRING_DATADIR" as string works fine, the preprocessor won't touch the 2nd
-		AddDirs(SPRING_DATADIR); // from -DSPRING_DATADIR, example /usr/games/share/spring/
-	#endif
+		AddEtcDirs();
+		AddShareDirs();
 	}
 
 	// LEVEL 3: additional custom data sources
