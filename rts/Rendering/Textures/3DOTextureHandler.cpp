@@ -12,6 +12,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "TAPalette.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
@@ -19,7 +20,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/SimpleParser.h"
-
+#include "System/Log/ILog.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -39,17 +40,38 @@ C3DOTextureHandler::C3DOTextureHandler()
 	std::vector<TexFile*> texfiles = LoadTexFiles();
 
 	CLegacyAtlasAlloc atlas;
-	//CQuadtreeAtlasAlloc atlas;
+	// CQuadtreeAtlasAlloc atlas;
+
+	// NOTE: most Intels report maxTextureSize=2048, some even 1024 (!)
 	atlas.SetNonPowerOfTwo(globalRendering->supportNPOTs);
-	atlas.SetMaxSize(2048, 2048);
+	atlas.SetMaxSize(std::min(globalRendering->maxTextureSize, 2048), std::min(globalRendering->maxTextureSize, 2048));
+
+	// default for 3DO primitives that point to non-existing textures
+	textures["___dummy___"] = UnitTexture(0.0f, 0.0f, 1.0f, 1.0f);
+
+	glGenTextures(1, &atlas3do1);
+	glGenTextures(1, &atlas3do2);
 
 	for (std::vector<TexFile*>::iterator it = texfiles.begin(); it != texfiles.end(); ++it) {
 		atlas.AddEntry((*it)->name, int2((*it)->tex.xsize, (*it)->tex.ysize));
 	}
 
-	bool success = atlas.Allocate();
-	if (!success) {
-		throw content_error("Too many/large texture in 3do texture-atlas to fit in 2048*2048");
+	const int2 curAtlasSize = atlas.GetAtlasSize();
+	const int2 maxAtlasSize = atlas.GetMaxSize();
+
+	if (!atlas.Allocate()) {
+		// either the algorithm simply failed to fit all
+		// textures or the textures would really not fit
+		LOG_L(L_WARNING,
+			"[%s] failed to allocate 3DO texture-atlas memory (size=%dx%d max=%dx%d)",
+			__FUNCTION__,
+			curAtlasSize.x, curAtlasSize.y,
+			maxAtlasSize.x, maxAtlasSize.y
+		);
+		return;
+	} else {
+		assert(curAtlasSize.x <= maxAtlasSize.x);
+		assert(curAtlasSize.y <= maxAtlasSize.y);
 	}
 
 	const size_t bigTexX = atlas.GetAtlasSize().x;
@@ -93,7 +115,7 @@ C3DOTextureHandler::C3DOTextureHandler()
 
 	const int maxMipMaps = atlas.GetMaxMipMaps();
 
-	glGenTextures(1, &atlas3do1);
+	{
 		glBindTexture(GL_TEXTURE_2D, atlas3do1);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (maxMipMaps > 0) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
@@ -105,8 +127,8 @@ C3DOTextureHandler::C3DOTextureHandler()
 		} else {
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, bigTexX, bigTexY, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1);
 		}
-
-	glGenTextures(1, &atlas3do2);
+	}
+	{
 		glBindTexture(GL_TEXTURE_2D, atlas3do2);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (maxMipMaps > 0) ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST);
@@ -118,15 +140,12 @@ C3DOTextureHandler::C3DOTextureHandler()
 		} else {
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, bigTexX, bigTexY, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2);
 		}
+	}
 
-#if 0
-	CBitmap save(bigtex1, bigTexX, bigTexY);
-	save.Save("unittex1.jpg");
-	CBitmap save2(bigtex2, bigTexX, bigTexY);
-	save2.Save("unittex2.jpg");
-#endif
-
-	textures["___dummy___"] = UnitTexture(0.0f, 0.0f, 1.0f, 1.0f);
+	if (CTextureAtlas::GetDebug()) {
+		CBitmap tex1(bigtex1, bigTexX, bigTexY); tex1.Save("unittex1-3do.png");
+		CBitmap tex2(bigtex2, bigTexX, bigTexY); tex2.Save("unittex2-3do.png");
+	}
 
 	delete[] bigtex1;
 	delete[] bigtex2;

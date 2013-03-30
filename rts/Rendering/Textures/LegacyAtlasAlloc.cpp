@@ -23,20 +23,20 @@ inline int CLegacyAtlasAlloc::CompareTex(SAtlasEntry* tex1, SAtlasEntry* tex2)
 bool CLegacyAtlasAlloc::IncreaseSize()
 {
 	if (atlasSize.y < atlasSize.x) {
-		if (atlasSize.y < maxsize.y) {
+		if ((atlasSize.y * 2) <= maxsize.y) {
 			atlasSize.y *= 2;
 			return true;
 		}
-		if (atlasSize.x < maxsize.x) {
+		if ((atlasSize.x * 2) <= maxsize.x) {
 			atlasSize.x *= 2;
 			return true;
 		}
 	} else {
-		if (atlasSize.x < maxsize.x) {
+		if ((atlasSize.x * 2) <= maxsize.x) {
 			atlasSize.x *= 2;
 			return true;
 		}
-		if (atlasSize.y < maxsize.y) {
+		if ((atlasSize.y * 2) <= maxsize.y) {
 			atlasSize.y *= 2;
 			return true;
 		}
@@ -72,6 +72,7 @@ bool CLegacyAtlasAlloc::Allocate()
 				if (nextSub.empty()) {
 					cur.y = max.y;
 					max.y += curtex->size.y + TEXMARGIN;
+
 					if (max.y > atlasSize.y) {
 						if (IncreaseSize()) {
  							nextSub.clear();
@@ -91,7 +92,7 @@ bool CLegacyAtlasAlloc::Allocate()
 				}
 			}
 
-			if (thisSub.front().x + curtex->size.x > atlasSize.x) {
+			if ((thisSub.front().x + curtex->size.x + TEXMARGIN) > atlasSize.x) {
 				thisSub.clear();
 				continue;
 			}
@@ -100,22 +101,24 @@ bool CLegacyAtlasAlloc::Allocate()
 				continue;
 			}
 
-			// ok found space for us
+			// found space in both dimensions s.t. texture
+			// PLUS margin fits within current atlas bounds
 			curtex->texCoords.x1 = thisSub.front().x;
 			curtex->texCoords.y1 = thisSub.front().y;
 			curtex->texCoords.x2 = thisSub.front().x + curtex->size.x - 1;
 			curtex->texCoords.y2 = thisSub.front().y + curtex->size.y - 1;
 
 			cur.x = thisSub.front().x + curtex->size.x + TEXMARGIN;
-			max.x = std::max(max.x,cur.x);
+			max.x = std::max(max.x, cur.x);
 
 			done = true;
 
-			if (thisSub.front().y + curtex->size.y + TEXMARGIN < max.y) {
+			if ((thisSub.front().y + curtex->size.y + TEXMARGIN) < max.y) {
 				nextSub.push_back(int2(thisSub.front().x + TEXMARGIN, thisSub.front().y + curtex->size.y + TEXMARGIN));
 			}
 
-			thisSub.front().x += curtex->size.x + TEXMARGIN;
+			thisSub.front().x += (curtex->size.x + TEXMARGIN);
+
 			while (thisSub.size()>1 && thisSub.front().x >= (++thisSub.begin())->x) {
 				(++thisSub.begin())->x = thisSub.front().x;
 				thisSub.erase(thisSub.begin());

@@ -31,13 +31,11 @@ CR_REG_METADATA(GroundFXTexture,
 
 bool CTextureAtlas::debug;
 
-CTextureAtlas::CTextureAtlas(int maxxsize, int maxysize)
+CTextureAtlas::CTextureAtlas()
 	: gltex(0)
 	, freeTexture(true)
 	, xsize(0)
 	, ysize(0)
-	, maxxsize(maxxsize)
-	, maxysize(maxysize)
 	, initialized(false)
 {
 	atlasAllocator = new CLegacyAtlasAlloc();

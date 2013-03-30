@@ -41,9 +41,6 @@ struct GroundFXTexture : public AtlasedTexture
 class CTextureAtlas
 {
 public:
-	//! set to true to write finalized texture atlas to disk
-	static bool debug;
-
 	unsigned int gltex;
 	bool freeTexture; //! free texture on atlas destruction?
 
@@ -51,7 +48,7 @@ public:
 	int ysize;
 
 public:
-	CTextureAtlas(int maxxSize, int maxySize);
+	CTextureAtlas();
 	~CTextureAtlas();
 
 public:
@@ -80,7 +77,6 @@ public:
 	bool Finalize();
 	void BindTexture();
 
-public:
 	/**
 	 * @return a boolean true if the texture exists within
 	 *         the "textures" map and false if it does not.
@@ -95,6 +91,9 @@ public:
 	 *         otherwise return a backup texture.
 	 */
 	AtlasedTexture& GetTextureWithBackup(const std::string& name, const std::string& backupName);
+
+	static void SetDebug(bool b) { debug = true; }
+	static bool GetDebug() { return debug; }
 
 protected:
 	IAtlasAllocator* atlasAllocator;
@@ -112,9 +111,10 @@ protected:
 	std::map<std::string, MemTex*> files;
 
 	std::map<std::string, AtlasedTexture> textures;
-	int maxxsize;
-	int maxysize;
+
 	bool initialized;
+	//! set to true to write finalized texture atlas to disk
+	static bool debug;
 
 	int GetBPP(TextureType tetxType);
 	void CreateTexture();
