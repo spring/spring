@@ -126,8 +126,6 @@ CR_REG_METADATA(CGroundMoveType, (
 
 
 
-std::vector<int2> CGroundMoveType::lineTable[LINETABLE_SIZE][LINETABLE_SIZE];
-
 CGroundMoveType::CGroundMoveType(CUnit* owner):
 	AMoveType(owner),
 	pathController(owner ? IPathController::GetInstance(owner) : NULL),
@@ -312,7 +310,7 @@ void CGroundMoveType::SlowUpdate()
 {
 	if (owner->GetTransporter() != NULL) {
 		if (progressState == Active) {
-			StopEngine();
+			StopEngine(false);
 		}
 	} else {
 		if (progressState == Active) {
@@ -330,12 +328,12 @@ void CGroundMoveType::SlowUpdate()
 							owner->id, pathId, numIdlingUpdates);
 
 					if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
-						StopEngine();
-						StartEngine();
+						StopEngine(false);
+						StartEngine(false);
 					} else {
 						// unit probably ended up on a non-traversable
 						// square, or got stuck in a non-moving crowd
-						Fail();
+						Fail(false);
 					}
 				}
 			} else {
@@ -343,8 +341,8 @@ void CGroundMoveType::SlowUpdate()
 					// case B: we want to be moving but don't have a path
 					LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
 
-					StopEngine();
-					StartEngine();
+					StopEngine(false);
+					StartEngine(false);
 				}
 			}
 		}
@@ -362,33 +360,17 @@ void CGroundMoveType::SlowUpdate()
 }
 
 
-/*
-Sets unit to start moving against given position with max speed.
-*/
-void CGroundMoveType::StartMoving(float3 pos, float goalRadius) {
-	StartMoving(pos, goalRadius, (reversing? maxReverseSpeed: maxSpeed));
-}
-
-
-/*
-Sets owner unit to start moving against given position with requested speed.
-*/
-void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float speed)
-{
+void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 #ifdef TRACE_SYNC
 	tracefile << "[" << __FUNCTION__ << "] ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 
-	if (progressState == Active) {
-		StopEngine();
-	}
-
 	// set the new goal
 	goalPos.x = moveGoalPos.x;
 	goalPos.z = moveGoalPos.z;
 	goalPos.y = 0.0f;
-	goalRadius = _goalRadius;
+	goalRadius = moveGoalRadius;
 	atGoal = false;
 
 	useMainHeading = false;
@@ -402,7 +384,12 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float s
 
 	LOG_L(L_DEBUG, "StartMoving: starting engine for unit %i", owner->id);
 
-	StartEngine();
+	// silently free previous path if unit already had one
+	// units passing intermediate waypoints will TYPICALLY
+	// not cause Stop+Start script calls now (not even when
+	// turnInPlace=true) unless they come to a full stop
+	StopEngine(false);
+	StartEngine(owner->speed == ZeroVector);
 
 	#if (PLAY_SOUNDS == 1)
 	if (owner->team == gu->myTeam) {
@@ -419,7 +406,10 @@ void CGroundMoveType::StopMoving() {
 
 	LOG_L(L_DEBUG, "StopMoving: stopping engine for unit %i", owner->id);
 
-	StopEngine();
+	// this gets called under a variety of conditions (see MobileCAI)
+	// the most common case is a CMD_STOP being issued which means no
+	// StartMoving-->StartEngine will follow
+	StopEngine(owner->speed != ZeroVector);
 
 	useMainHeading = false;
 	progressState = Done;
@@ -469,7 +459,7 @@ bool CGroundMoveType::FollowPath()
 			GetNextWayPoint();
 		} else {
 			if (atGoal) {
-				Arrived();
+				Arrived(true);
 			}
 		}
 
@@ -1200,7 +1190,7 @@ void CGroundMoveType::GetNewPath()
 		pathController->SetRealGoalPosition(pathId, goalPos);
 		pathController->SetTempGoalPosition(pathId, currWayPoint);
 	} else {
-		Fail();
+		Fail(false);
 	}
 
 	// limit frequency of (case B) path-requests from SlowUpdate's
@@ -1331,7 +1321,7 @@ void CGroundMoveType::GetNextWayPoint()
 	}
 
 	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
-		Fail();
+		Fail(true);
 	} else {
 		#define CWP_BLOCK_MASK CMoveMath::SquareIsBlocked(*owner->moveDef, currWayPoint, owner)
 		#define NWP_BLOCK_MASK CMoveMath::SquareIsBlocked(*owner->moveDef, nextWayPoint, owner)
@@ -1340,8 +1330,8 @@ void CGroundMoveType::GetNextWayPoint()
 			// this can happen if we crushed a non-blocking feature
 			// and it spawned another feature which we cannot crush
 			// (eg.) --> repath
-			StopEngine();
-			StartEngine();
+			StopEngine(false);
+			StartEngine(false);
 		}
 
 		#undef NWP_BLOCK_MASK
@@ -1385,24 +1375,24 @@ float3 CGroundMoveType::Here()
 
 
 
-void CGroundMoveType::StartEngine() {
-	// ran only if the unit has no path and is not already at goal
-	if (pathId == 0 && !atGoal) {
+void CGroundMoveType::StartEngine(bool callScript) {
+	if (pathId == 0)
 		GetNewPath();
 
-		// activate "engine" only if a path was found
-		if (pathId != 0) {
-			pathManager->UpdatePath(owner, pathId);
+	if (pathId != 0) {
+		pathManager->UpdatePath(owner, pathId);
 
-			owner->isMoving = true;
+		if (callScript) {
+			// makes no sense to call this unless we have a new path
 			owner->script->StartMoving();
 		}
 	}
 
+	owner->isMoving = (pathId != 0);
 	nextObstacleAvoidanceUpdate = gs->frameNum;
 }
 
-void CGroundMoveType::StopEngine() {
+void CGroundMoveType::StopEngine(bool callScript) {
 	if (pathId != 0) {
 		pathManager->DeletePath(pathId);
 		pathId = 0;
@@ -1411,25 +1401,25 @@ void CGroundMoveType::StopEngine() {
 			currWayPoint = Here();
 		}
 
-		// Stop animation.
-		owner->script->StopMoving();
+		if (callScript) {
+			owner->script->StopMoving();
+		}
 
 		LOG_L(L_DEBUG, "StopEngine: engine stopped for unit %i", owner->id);
 	}
 
-	owner->isMoving = false;
+	owner->isMoving = (pathId == 0);
 	wantedSpeed = 0.0f;
 }
 
 
 
 /* Called when the unit arrives at its goal. */
-void CGroundMoveType::Arrived()
+void CGroundMoveType::Arrived(bool callScript)
 {
 	// can only "arrive" if the engine is active
 	if (progressState == Active) {
-		// we have reached our goal
-		StopEngine();
+		StopEngine(callScript);
 
 		#if (PLAY_SOUNDS == 1)
 		if (owner->team == gu->myTeam) {
@@ -1462,11 +1452,11 @@ void CGroundMoveType::Arrived()
 Makes the unit fail this action.
 No more trials will be done before a new goal is given.
 */
-void CGroundMoveType::Fail()
+void CGroundMoveType::Fail(bool callScript)
 {
 	LOG_L(L_DEBUG, "Fail: unit %i failed", owner->id);
 
-	StopEngine();
+	StopEngine(callScript);
 
 	// failure of finding a path means that
 	// this action has failed to reach its goal.
@@ -1652,18 +1642,8 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		wantRequestPath = (penDistance < 0.0f);
 	}
 
-	// NOTE:
-	//   we want an initial speed of 0 to avoid ramming into the
-	//   obstacle again right after the push, but if our leading
-	//   command is not a CMD_MOVE then SetMaxSpeed will not get
-	//   called later and 0 will immobilize us
-	//
 	if (canRequestPath && wantRequestPath) {
-		if (UNIT_HAS_MOVE_CMD(owner)) {
-			StartMoving(goalPos, goalRadius, 0.0f);
-		} else {
-			StartMoving(goalPos, goalRadius);
-		}
+		StartMoving(goalPos, goalRadius);
 	}
 }
 
@@ -1951,97 +1931,6 @@ void CGroundMoveType::HandleFeatureCollisions(
 		collider->Move3D( colResponseVec * colliderMassScale, true);
 		collidee->Move3D(-colResponseVec * collideeMassScale, true);
 		quadField->AddFeature(collidee);
-	}
-}
-
-
-
-
-void CGroundMoveType::CreateLineTable()
-{
-	// for every <xt, zt> pair, computes a set of regularly spaced
-	// grid sample-points (int2 offsets) along the line from <start>
-	// to <to>; <to> ranges from [x=-4.5, z=-4.5] to [x=+5.5, z=+5.5]
-	//
-	// TestNewTerrainSquare() and CanGetNextWayPoint() check whether
-	// squares are blocked at these offsets to get a fast estimate of
-	// terrain passability
-	for (int yt = 0; yt < LINETABLE_SIZE; ++yt) {
-		for (int xt = 0; xt < LINETABLE_SIZE; ++xt) {
-			// center-point of grid-center cell
-			const float3 start(0.5f, 0.0f, 0.5f);
-			// center-point of target cell
-			const float3 to((xt - (LINETABLE_SIZE / 2)) + 0.5f, 0.0f, (yt - (LINETABLE_SIZE / 2)) + 0.5f);
-
-			const float dx = to.x - start.x;
-			const float dz = to.z - start.z;
-			float xp = start.x;
-			float zp = start.z;
-
-			if (math::floor(start.x) == math::floor(to.x)) {
-				if (dz > 0.0f) {
-					for (int a = 1; a <= math::floor(to.z); ++a)
-						lineTable[yt][xt].push_back(int2(0, a));
-				} else {
-					for (int a = -1; a >= math::floor(to.z); --a)
-						lineTable[yt][xt].push_back(int2(0, a));
-				}
-			} else if (math::floor(start.z) == math::floor(to.z)) {
-				if (dx > 0.0f) {
-					for (int a = 1; a <= math::floor(to.x); ++a)
-						lineTable[yt][xt].push_back(int2(a, 0));
-				} else {
-					for (int a = -1; a >= math::floor(to.x); --a)
-						lineTable[yt][xt].push_back(int2(a, 0));
-				}
-			} else {
-				float xn, zn;
-				bool keepgoing = true;
-
-				while (keepgoing) {
-					if (dx > 0.0f) {
-						xn = (math::floor(xp) + 1.0f - xp) / dx;
-					} else {
-						xn = (math::floor(xp)        - xp) / dx;
-					}
-					if (dz > 0.0f) {
-						zn = (math::floor(zp) + 1.0f - zp) / dz;
-					} else {
-						zn = (math::floor(zp)        - zp) / dz;
-					}
-
-					if (xn < zn) {
-						xp += (xn + 0.0001f) * dx;
-						zp += (xn + 0.0001f) * dz;
-					} else {
-						xp += (zn + 0.0001f) * dx;
-						zp += (zn + 0.0001f) * dz;
-					}
-
-					keepgoing =
-						math::fabs(xp - start.x) <= math::fabs(to.x - start.x) &&
-						math::fabs(zp - start.z) <= math::fabs(to.z - start.z);
-					int2 pt(int(math::floor(xp)), int(math::floor(zp)));
-
-					static const int MIN_IDX = -int(LINETABLE_SIZE / 2);
-					static const int MAX_IDX = -MIN_IDX;
-
-					if (MIN_IDX > pt.x || pt.x > MAX_IDX) continue;
-					if (MIN_IDX > pt.y || pt.y > MAX_IDX) continue;
-
-					lineTable[yt][xt].push_back(pt);
-				}
-			}
-		}
-	}
-}
-
-void CGroundMoveType::DeleteLineTable()
-{
-	for (int yt = 0; yt < LINETABLE_SIZE; ++yt) {
-		for (int xt = 0; xt < LINETABLE_SIZE; ++xt) {
-			lineTable[yt][xt].clear();
-		}
 	}
 }
 
