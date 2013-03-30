@@ -58,7 +58,7 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 	#define LOG_SECTION_CURRENT LOG_SECTION_DEFAULT
 
 	std::string binaryname = argv[0];
-	
+
 	CmdLineParams cmdline(argc, argv);
 	cmdline.SetUsageDescription("Usage: " + binaryname + " [options] path_to_script.txt");
 	cmdline.AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
@@ -104,7 +104,7 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 		dataDirLocater.SetIsolationModeDir(cmdline.GetString("isolation-dir"));
 	}
 
-	
+
 	std::string configSource = "";
 	if (cmdline.IsSet("config")) {
 		configSource = cmdline.GetString("config");
@@ -139,6 +139,8 @@ int main(int argc, char* argv[])
 #ifdef _WIN32
 	try {
 #endif
+	CLogOutput::LogSystemInfo();
+
 	std::string scriptName;
 	std::string scriptText;
 
