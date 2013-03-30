@@ -146,6 +146,31 @@ namespace Threading {
 			return __sync_fetch_and_add(&num, boost::int64_t(1));
 	#endif
 		}
+
+		boost::int64_t operator+=(int x) {
+	#ifdef _MSC_VER
+			return InterlockedAdd64(boost::int64_t(x), &num););
+	#elif defined(__APPLE__)
+			return OSAtomicAdd64(boost::int64_t(x), &num);
+	#else // assuming GCC (__sync_fetch_and_add is a builtin)
+			return __sync_fetch_and_add(&num, boost::int64_t(x));
+	#endif
+		}
+
+		boost::int64_t operator-=(int x) {
+	#ifdef _MSC_VER
+			return InterlockedAdd64(boost::int64_t(-x), &num););
+	#elif defined(__APPLE__)
+			return OSAtomicAdd64(boost::int64_t(-x), &num);
+	#else // assuming GCC (__sync_fetch_and_add is a builtin)
+			return __sync_fetch_and_add(&num, boost::int64_t(-x));
+	#endif
+		}
+
+		operator boost::int64_t() {
+			return num;
+		}
+
 	private:
 	#ifdef _MSC_VER
 		volatile __declspec(align(8)) boost::int64_t num;
