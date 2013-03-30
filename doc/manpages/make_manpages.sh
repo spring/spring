@@ -30,6 +30,7 @@ then
 	XSL_DOCBOOK=${4}
 else
 	XSL_DOCBOOK=/usr/share/xml/docbook/stylesheet/nwalsh/manpages/docbook.xsl
+	if [ ! -f ${XSL_DOCBOOK} ]; then XSL_DOCBOOK=/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl; fi
 fi
 
 if [ $# -ge 5 ]
