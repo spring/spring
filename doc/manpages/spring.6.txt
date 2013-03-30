@@ -146,22 +146,91 @@ ifndef::DEDICATED[  Dump a list of available Definition Tags to STDOUT]
 DATA DIR
 --------
 Data directories are searched for content, and among other things, may contain:
-*cache
-*games
-*maps
-*AI
 
-When running the engine, it may use multiple data directories,
-but it will use only a single one of them as writable, to write cache & log
+- config files
+- logs
+- games
+- maps
+- AIs
+- cache
+
+{set:NORMAL_DIRS:CONFIG_HOME \n\n ETC_DIRS \n\n USR_SHARE}
+{set:PORTABLE_DIRS:INSTALL_DIR \n\n CONFIG_HOME \n\n ETC_DIRS \n\n USR_SHARE}
+{set:USER_WRITEDIRS:SPRING_WRITEDIR envvar}
+{set:USER_READDIRS:SPRING_DATADIR envvar \n\n SpringData configtag}
+
+Sorted by priority the engine may use multiple data directories,
+but it will use only the one with the highest priority as writable, to write cache & log
 files to.
+The hierarchy the engine loads DATA DIRs can be grouped in 3 sections:
+
+[options="header"]
+|=======
+^| priority ^| section          ^| normal                           ^| portable                         ^| isolation
+>| high      | custom user write | {sys: echo -e "{USER_WRITEDIRS}"} | {sys: echo -e "{USER_WRITEDIRS}"} | {sys: echo -e "{USER_WRITEDIRS}"}
+ |           | automatic scanned | {sys: echo -e "{NORMAL_DIRS}"}    | {sys: echo -e "{PORTABLE_DIRS}"}  | ISOLATION_DIR
+>| low       | custom user read  | {sys: echo -e "{USER_READDIRS}"}  | {sys: echo -e "{USER_READDIRS}"}  | {sys: echo -e "{USER_READDIRS}"}
+|=======
+
+*CONFIG_HOME*::
+  Config directories in user's home. +
+  *nix/MacOSX: :::
+		${XDG_CONFIG_HOME-"\~/.config"}/spring +
+		~/.spring +
+  Windows: :::
+		C:/.../My Documents/My Games/Spring/ +
+		C:/.../My Documents/Spring/ +
+		C:/.../All Users/Applications/Spring/
+
+*INSTALL_DIR*
+  Location of {BINARY} binary.
+
+*ETC_DIRS*
+  Additional ':' separated DATA DIRs defined in /etc/spring/datadir.
+
+*USR_SHARE*::
+  *nix: /usr/.../share/spring +
+  MacOSX: .../Spring.app/Contents/Resources/share/games/spring/base/ +
+  Windows: Install directory
+
+*ISOLATION_DIR*::
+  Mode A (--isolation): INSTALL_DIR +
+  Mode B (--isolation-dir): supplied dir
+
+Config Files
+------------
+Spring can load configurations from multiple files and merge them.
+So similar to DATA DIRs there is one file where the engine writes to and multiple read-only files.
+
+It scans following directories for config files :
+[options="header"]
+|=======
+| priority | scanned directories
+>| high | file defined via *--config*
+ |      | write DATA DIR
+ |      | {sys: echo -e "(skipped in Isolated mode) \n\n *nix/MacOSX: ~/.springrc \n\n Windows: C:\Users\USER\AppData\Local\springsettings.cfg"}
+>|  low | all read DATA DIRs
+|=======
+(The one with highest priority will be used for writing.)
+
+The filename of such config files can be as following:
+[options="header"]
+|=======
+| priority | filenames
+>| high | springsettings-%Engine_Version%.cfg
+ |      | springsettings.cfg
+ |      | springrc-%Engine_Version% (*nix/MacOSX only)
+>|  low | springrc (*nix/MacOSX only)
+|=======
+(An example for a versioned config file is "springsettings-94.1.cfg".)
 
 Files
------
-  ~/.spring/
+------
+  ~/.config/spring/
 
 The default data-directory (see section DATA DIR).
 
-  ~/.springrc
+  ~/.config/spring/springsettings.cfg
 
 Contains the users settings for the engine, for things like graphic and sound.
 
@@ -174,8 +243,11 @@ Enviroment Variables
 *SPRING_LOG_SECTIONS*
   Selective functionality to change the verbosity (separated by ',').
 
+*SPRING_WRITEDIR*
+  Define custom primary write DATA DIR. Place where spring saves logs, settings, ...
+
 *SPRING_DATADIR*
-  Adds additional directories Spring will search for files (separated by ':').
+  Adds additional DATA DIRs Spring will search for files (separated by ':').
 
 *SPRING_ISOLATED*
   If defined, Spring will stop searching files outside of the binaries
