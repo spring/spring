@@ -103,7 +103,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ResourceHandler.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "Sim/MoveTypes/GroundMoveType.h"
+#include "Sim/MoveTypes/ClassicGroundMoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -424,7 +424,7 @@ CGame::~CGame()
 	SafeDelete(helper);
 	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
-	CGroundMoveType::DeleteLineTable();
+	CClassicGroundMoveType::DeleteLineTable();
 	CCategoryHandler::RemoveInstance();
 
 	for (unsigned int i = 0; i < grouphandlers.size(); i++) {
@@ -564,7 +564,7 @@ void CGame::PostLoadSimulation()
 	loadscreen->SetLoadMessage("Loading Unit Definitions");
 	unitDefHandler = new CUnitDefHandler();
 
-	CGroundMoveType::CreateLineTable();
+	CClassicGroundMoveType::CreateLineTable();
 
 	unitHandler = new CUnitHandler();
 	projectileHandler = new CProjectileHandler();
