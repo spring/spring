@@ -209,7 +209,7 @@ Data directories are searched for content, and among other things, may contain:
 Sorted by priority the engine may use multiple data directories,
 but it will use only the one with the highest priority as writable, to write cache & log
 files to.
-The hierarchy the engine loads DATA DIRs can be grouped in 3 sections:
+The hierarchy the engine loads DATA DIRs in can be grouped in 3 sections:
 
 [options="header"]
 |=======
@@ -236,7 +236,7 @@ The hierarchy the engine loads DATA DIRs can be grouped in 3 sections:
   Additional ':' separated DATA DIRs defined in /etc/spring/datadir.
 
 *USR_SHARE*::
-  *nix: /usr/.../share/spring +
+  *nix/MacOSX: /usr/.../share/spring & binary dir if is Data Dir +
   MacOSX: .../Spring.app/Contents/Resources/share/games/spring/base/ +
   Windows: Install directory
 

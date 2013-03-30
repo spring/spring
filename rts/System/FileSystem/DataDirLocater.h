@@ -150,6 +150,8 @@ private:
 	bool IsWriteableDir(DataDir* dataDir);
 	void FindWriteableDataDir();
 
+	static void IsInstallDirDataDir();
+
 	/**
 	 * Determines whether a given path may be a data-dir for multiple engine
 	 * versions.
