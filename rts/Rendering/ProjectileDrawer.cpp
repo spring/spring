@@ -46,8 +46,8 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 
 	loadscreen->SetLoadMessage("Creating Projectile Textures");
 
-	textureAtlas = new CTextureAtlas(2048, 2048);
-	groundFXAtlas = new CTextureAtlas(2048, 2048);
+	textureAtlas = new CTextureAtlas();
+	groundFXAtlas = new CTextureAtlas();
 
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	LuaParser mapResParser("gamedata/resources_map.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);

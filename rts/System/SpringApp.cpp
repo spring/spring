@@ -29,14 +29,8 @@
 #include "Game/LoadScreen.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MouseHandler.h"
-#include "System/Input/KeyInput.h"
-#include "System/Input/MouseInput.h"
-#include "System/Input/Joystick.h"
-#include "System/MsgStrings.h"
-#include "System/NetProtocol.h"
 #include "Lua/LuaOpenGL.h"
 #include "Menu/SelectMenu.h"
-
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GLContext.h"
@@ -49,15 +43,19 @@
 #include "System/bitops.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "System/Sync/FPUCheck.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
+#include "System/MsgStrings.h"
+#include "System/NetProtocol.h"
 #include "System/StartScriptGen.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 #include "System/creg/creg_runtime_tests.h"
+#include "System/Input/KeyInput.h"
+#include "System/Input/MouseInput.h"
+#include "System/Input/Joystick.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/FileHandler.h"
@@ -69,7 +67,7 @@
 #include "System/Platform/Watchdog.h"
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Sound/ISound.h"
-
+#include "System/Sync/FPUCheck.h"
 
 #ifdef WIN32
 	#include "System/Platform/Win/WinVersion.h"
@@ -811,7 +809,7 @@ void SpringApp::ParseCmdLine()
 	}
 
 	if (cmdline->IsSet("textureatlas")) {
-		CTextureAtlas::debug = true;
+		CTextureAtlas::SetDebug(true);
 	}
 
 	if (cmdline->IsSet("name")) {
