@@ -36,6 +36,7 @@ SET(luaSources
 		"src/lvm.cpp"
 		"src/lzio.cpp"
 		"src/print.cpp"
+		"include/LuaUser.cpp"
 	)
 
 ADD_LIBRARY(lua STATIC EXCLUDE_FROM_ALL ${luaSources})

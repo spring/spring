@@ -7,6 +7,7 @@
 #include "lualib.h"
 #include "lauxlib.h"
 #include "lib/streflop/streflop_cond.h"
+#include "LuaUser.h"
 #include <boost/thread/recursive_mutex.hpp>
 
 
@@ -76,11 +77,12 @@ inline bool luaL_optboolean(lua_State* L, int idx, bool def)
 struct luaContextData;
 extern boost::recursive_mutex* getLuaMutex(bool userMode, bool primary);
 
-inline lua_State *LUA_OPEN(luaContextData* lcd = NULL, bool userMode = true, bool primary = true) {
-	lua_State *L_New = lua_open();
-	L_New->lcd = lcd;
-	L_New->luamutex = getLuaMutex(userMode, primary);
-	return L_New;
+inline lua_State* LUA_OPEN(luaContextData* lcd = NULL, bool userMode = true, bool primary = true) {
+	//lua_State* L = lua_open();
+	lua_State* L = lua_newstate(spring_lua_alloc, NULL);
+	L->lcd = lcd;
+	L->luamutex = getLuaMutex(userMode, primary);
+	return L;
 }
 
 inline void LUA_CLOSE(lua_State *L_Old) {
