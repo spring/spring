@@ -159,6 +159,7 @@
 #include "System/TimeProfiler.h"
 
 #include <boost/cstdint.hpp>
+#include "lib/lua/include/LuaUser.h"
 
 #undef CreateDirectory
 
@@ -1252,6 +1253,10 @@ bool CGame::Draw() {
 				font->glFormat(0.03f, 0.12f, 0.7f, DBG_FONT_FLAGS, fmtString, "QT", pfsUpdates.x, pfsUpdates.y);
 			} break;
 		}
+
+		int allocedBytes;
+		spring_lua_alloc_get_stats(&allocedBytes);
+		font->glFormat(0.03f, 0.15f, 0.7f, DBG_FONT_FLAGS, "Lua allocated memory: %.1fMB", allocedBytes/1024.f/1024.f);
 
 		font->End();
 	}
