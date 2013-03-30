@@ -59,6 +59,15 @@ static std::string GetUnitsyncLibName()
 }
 
 
+static std::string GetBinaryLocation()
+{
+#if  defined(UNITSYNC)
+	return Platform::GetModulePath();
+#else
+	return Platform::GetProcessExecutablePath();
+#endif
+}
+
 
 DataDir::DataDir(const std::string& path)
 	: path(path)
@@ -236,11 +245,7 @@ void DataDirLocater::AddCurWorkDir()
 
 void DataDirLocater::AddPortableDir()
 {
-#if  defined(UNITSYNC)
-	const std::string dd_curWorkDir = Platform::GetModulePath();
-#else
-	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
-#endif
+	const std::string dd_curWorkDir = GetBinaryLocation();
 
 	// This is useful in case of multiple engine/unitsync versions installed
 	// together in a sub-dir of the data-dir
@@ -330,15 +335,11 @@ void DataDirLocater::AddEtcDirs()
 
 void DataDirLocater::AddShareDirs()
 {
-#ifdef WIN32
-	// under windows the install dir is also the data/share dir
-#if  defined(UNITSYNC)
-	const std::string dd_curWorkDir = Platform::GetModulePath();
-#else
-	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
-#endif
-	AddDirs(dd_curWorkDir);
-#endif
+	// always true under Windows and true for `multi-engine` setups under *nix
+	if (IsInstallDirDataDir()) {
+		const std::string dd_curWorkDir = GetBinaryLocation()
+		AddDirs(dd_curWorkDir);
+	}
 
 #if defined(__APPLE__)
 	// Mac OS X Application Bundle (*.app) - single file install
@@ -349,11 +350,7 @@ void DataDirLocater::AddShareDirs()
 	// Spring.app/Contents/Resources/lib/unitsync.dylib
 	// Spring.app/Contents/Resources/share/games/spring/base/
 
-	#if       defined(UNITSYNC)
-		const std::string dd_curWorkDir = Platform::GetModulePath();
-	#else  // defined(UNITSYNC)
-		const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
-	#endif // defined(UNITSYNC)
+	const std::string dd_curWorkDir = GetBinaryLocation()
 
 	// This corresponds to Spring.app/Contents/Resources/
 	const std::string bundleResourceDir = FileSystem::GetParent(dd_curWorkDir);
@@ -469,9 +466,8 @@ void DataDirLocater::Check()
 }
 
 
-bool DataDirLocater::IsPortableMode()
+bool DataDirLocater::IsInstallDirDataDir()
 {
-	// Test 1
 	// Check if spring binary & unitsync library are in the same folder
 #if defined(UNITSYNC)
 	const std::string dir = Platform::GetModulePath();
@@ -488,6 +484,16 @@ bool DataDirLocater::IsPortableMode()
 		return false;
 
 #endif
+	return true;
+}
+
+
+bool DataDirLocater::IsPortableMode()
+{
+	// Test 1
+	// Check if spring binary & unitsync library are in the same folder
+	if (!IsInstallDirDataDir())
+		return true;
 
 	// Test 2
 	// Check if "springsettings.cfg" is in the same folder, too.
@@ -522,9 +528,10 @@ bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath)
 std::string DataDirLocater::GetWriteDirPath() const
 {
 	const DataDir* writedir = GetWriteDir();
-	assert(writedir && writedir->writable); // duh
+	assert(writedir && writedir->writable);
 	return writedir->path;
 }
+
 
 std::vector<std::string> DataDirLocater::GetDataDirPaths() const
 {
