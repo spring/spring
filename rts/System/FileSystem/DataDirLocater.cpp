@@ -330,7 +330,7 @@ void DataDirLocater::AddEtcDirs()
 
 void DataDirLocater::AddShareDirs()
 {
-#ifndef WIN32
+#ifdef WIN32
 	// under windows the install dir is also the data/share dir
 #if  defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
