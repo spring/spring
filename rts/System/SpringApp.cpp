@@ -772,6 +772,7 @@ void SpringApp::ParseCmdLine()
 	}
 
 	dataDirLocater.LocateDataDirs();
+	dataDirLocater.ChangeCwdToWriteDir();
 
 	const string configSource = (cmdline->IsSet("config") ? cmdline->GetString("config") : "");
 	const bool safemode = cmdline->IsSet("safemode");

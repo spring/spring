@@ -111,6 +111,11 @@ public:
 	 */
 	void UpdateIsolationModeByEnvVar();
 
+	/**
+	 * @brief cd's into writedir
+	 */
+	void ChangeCwdToWriteDir();
+
 private:
 	void AddCurWorkDir();
 	void AddPortableDir();
