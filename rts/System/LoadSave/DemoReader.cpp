@@ -43,7 +43,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		|| (SpringVersion::IsRelease() && strcmp(fileHeader.versionString, SpringVersion::GetSync().c_str()))
 #endif
 		) {
-			std::string demoMsg = std::string("Demofile corrupt or created by a different version of Spring: ")+filename;
+			const std::string demoMsg = std::string("Demofile ") + filename + " corrupt or created by a different version of Spring, expects version " + fileHeader.versionString + ".";
 #ifndef TOOLS
 			if (!configHandler->GetBool("DisableDemoVersionCheck"))
 				throw std::runtime_error(demoMsg);
