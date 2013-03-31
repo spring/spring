@@ -150,8 +150,6 @@ private:
 	bool IsWriteableDir(DataDir* dataDir);
 	void FindWriteableDataDir();
 
-	static void IsInstallDirDataDir();
-
 	/**
 	 * Determines whether a given path may be a data-dir for multiple engine
 	 * versions.
@@ -163,6 +161,7 @@ private:
 	 *   for multiple engine versions.
 	 * @returns whether dirPath may be a data-dir for multiple engine versions.
 	 */
+	static bool IsInstallDirDataDir();
 	static bool LooksLikeMultiVersionDataDir(const std::string& dirPath);
 
 private:

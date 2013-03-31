@@ -337,7 +337,7 @@ void DataDirLocater::AddShareDirs()
 {
 	// always true under Windows and true for `multi-engine` setups under *nix
 	if (IsInstallDirDataDir()) {
-		const std::string dd_curWorkDir = GetBinaryLocation()
+		const std::string dd_curWorkDir = GetBinaryLocation();
 		AddDirs(dd_curWorkDir);
 	}
 
@@ -508,6 +508,7 @@ bool DataDirLocater::IsPortableMode()
 	// PortableMode (don't use HomeDirs as writedirs, instead save files next to binary)
 	return true;
 }
+
 
 bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath)
 {
