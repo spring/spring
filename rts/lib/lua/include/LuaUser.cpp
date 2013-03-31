@@ -71,7 +71,7 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 	return realloc(ptr, nsize);
 }
 
-void spring_lua_alloc_get_stats(int* allocedBytes, int* allocedTotalBlocks)
+void spring_lua_alloc_get_stats(int* allocedBytes)
 {
 	*allocedBytes = allocedCur;
 }
