@@ -63,7 +63,8 @@ cp -v ${SOURCEDIR}/test/validation/LuaUI/Config/ZK_data.lua ${CONTENT_DIR}/LuaUI
 cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${TESTDIR}/.springrc
 
 #set data directory to test directory
-echo "SpringData = ${CONTENT_DIR}:${TESTDIR}/usr/local/share/games/spring" >> ${TESTDIR}/.springrc
+mkdir -p ${TESTDIR}/.config/spring/
+echo "SpringData = ${CONTENT_DIR}:${TESTDIR}/usr/local/share/games/spring" >> ${TESTDIR}/.config/spring/springsettings.cfg
 
 makescript "$GAME1" "$MAP" AAI 0.9
 makescript "$GAME1" "$MAP" E323AI 3.25.0
