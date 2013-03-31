@@ -679,8 +679,6 @@ void SAssPiece::DrawForList() const
 	if (isEmpty)
 		return;
 
-	LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "Compiling piece %s", name.c_str());
-
 	vboAttributes.Bind(GL_ARRAY_BUFFER);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(3, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, pos)));
@@ -739,7 +737,5 @@ void SAssPiece::DrawForList() const
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
-
-	LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "Completed compiling piece %s",
-			name.c_str());
 }
+

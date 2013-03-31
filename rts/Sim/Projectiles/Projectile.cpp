@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "Projectile.h"
 #include "Map/MapInfo.h"
 #include "Rendering/Colors.h"
@@ -9,6 +8,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "System/Matrix44f.h"
 
 CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
 
@@ -148,7 +148,9 @@ void CProjectile::Update()
 	if (!luaMoveCtrl) {
 		speed.y += mygravity;
 		pos += speed;
-		dir = speed; dir.SafeNormalize();
+		// projectiles always point directly along their speed-vector
+		dir = speed;
+		dir = dir.SafeNormalize();
 	}
 }
 
@@ -200,5 +202,21 @@ CUnit* CProjectile::owner() const {
 		return (*(CUnit* volatile*) &unit);
 
 	return unit;
+}
+
+CMatrix44f CProjectile::GetTransformMatrix(bool offsetPos) const {
+	float3 xdir;
+	float3 ydir;
+
+	if (math::fabs(dir.y) < 0.95f) {
+		xdir = dir.cross(UpVector);
+		xdir.SafeANormalize();
+	} else {
+		xdir.x = 1.0f;
+	}
+
+	ydir = xdir.cross(dir);
+
+	return (CMatrix44f(drawPos + (dir * radius * 0.9f * offsetPos), -xdir, ydir, dir));
 }
 
