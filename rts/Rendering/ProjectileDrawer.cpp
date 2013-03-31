@@ -435,9 +435,12 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 {
 	const CUnit* owner = pro->owner();
 
-	const float time = !GML::SimEnabled() ? globalRendering->timeOffset :
-		((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)pro->lastProjUpdate) * globalRendering->weightedSpeedFactor;
-		pro->drawPos = pro->pos + (pro->speed * time);
+	if (GML::SimEnabled()) {
+		pro->drawPos = pro->pos + (pro->speed * (spring_tomsecs(globalRendering->lastFrameStart)*1.0f - pro->lastProjUpdate*1.0f) * globalRendering->weightedSpeedFactor);
+	} else {
+		pro->drawPos = pro->pos + (pro->speed * globalRendering->timeOffset);
+	}
+
 	const bool visible = (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)));
 
 	if (!visible)
@@ -750,72 +753,14 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		// weapon-projectile
 		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 
-		#define SET_TRANSFORM_VECTORS(dir)           \
-			float3 rightdir, updir;                  \
-                                                     \
-			if (math::fabs(dir.y) < 0.95f) {         \
-				rightdir = dir.cross(UpVector);      \
-				rightdir.SafeANormalize();           \
-			} else {                                 \
-				rightdir = float3(1.0f, 0.0f, 0.0f); \
-			}                                        \
-                                                     \
-			updir = rightdir.cross(dir);
-
-		#define TRANSFORM_DRAW(mat)                                        \
-			glPushMatrix();                                                \
-				glMultMatrixf(mat);                                        \
-				glCallList(wp->model->GetRootPiece()->GetDisplayListID()); \
-			glPopMatrix();
-
-		switch (wp->GetProjectileType()) {
-			case WEAPON_BASE_PROJECTILE:
-			case WEAPON_EXPLOSIVE_PROJECTILE: 
-			case WEAPON_LASER_PROJECTILE:
-			case WEAPON_TORPEDO_PROJECTILE: {
-				if (!shadowPass) {
-					unitDrawer->SetTeamColour(wp->GetTeamID());
-				}
-
-				float3 dir(wp->speed);
-				dir.SafeANormalize();
-				SET_TRANSFORM_VECTORS(dir);
-
-				CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, dir);
-
-				TRANSFORM_DRAW(transMatrix);
-			} break;
-
-			case WEAPON_MISSILE_PROJECTILE: {
-				if (!shadowPass) {
-					unitDrawer->SetTeamColour(wp->GetTeamID());
-				}
-
-				SET_TRANSFORM_VECTORS(wp->dir);
-
-				CMatrix44f transMatrix(wp->drawPos + wp->dir * wp->radius * 0.9f, -rightdir, updir, wp->dir);
-
-				TRANSFORM_DRAW(transMatrix);
-			} break;
-
-			case WEAPON_STARBURST_PROJECTILE: {
-				if (!shadowPass) {
-					unitDrawer->SetTeamColour(wp->GetTeamID());
-				}
-
-				SET_TRANSFORM_VECTORS(wp->dir);
-
-				CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, wp->dir);
-
-				TRANSFORM_DRAW(transMatrix);
-			} break;
-
-			default: {
-			} break;
+		if (!shadowPass) {
+			unitDrawer->SetTeamColour(wp->GetTeamID());
 		}
 
-		#undef SET_TRANSFORM_VECTORS
-		#undef TRANSFORM_DRAW
+		glPushMatrix();
+			glMultMatrixf(wp->GetTransformMatrix(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE));
+			wp->model->DrawStatic();
+		glPopMatrix();
 	} else {
 		// piece-projectile
 		const CPieceProjectile* pp = static_cast<const CPieceProjectile*>(p);

@@ -69,6 +69,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 	if (s3oTextureNames.find(totalName) != s3oTextureNames.end()) {
 		if (GML::SimEnabled() && GML::ShareLists() && !GML::IsSimThread())
 			DoUpdateDraw();
+
 		return s3oTextureNames[totalName];
 	}
 
@@ -77,7 +78,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 	S3oTex* tex = new S3oTex();
 
 	if (!tex1bm.Load(model->tex1)) {
-		if (!tex1bm.Load(std::string("unittextures/" + model->tex1))) {
+		if (!tex1bm.Load("unittextures/" + model->tex1)) {
 			LOG_L(L_WARNING, "[%s] could not load texture \"%s\" from model \"%s\"",
 					__FUNCTION__, model->tex1.c_str(), model->name.c_str());
 
@@ -90,20 +91,13 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 			tex1bm.mem[3] = 255; // team-color
 		}
 	}
-	if (model->flipTexY) tex1bm.ReverseYAxis();
-	if (model->invertTexAlpha) tex1bm.InvertAlpha();
-
-	tex->num       = s3oTextures.size();
-	tex->tex1      = tex1bm.CreateTexture(true);
-	tex->tex1SizeX = tex1bm.xsize;
-	tex->tex1SizeY = tex1bm.ysize;
 
 	// No error checking here... other code relies on an empty texture
 	// being generated if it couldn't be loaded.
 	// Also many map features specify a tex2 but don't ship it with the map,
 	// so throwing here would cause maps to break.
 	if (!tex2bm.Load(model->tex2)) {
-		if (!tex2bm.Load(std::string("unittextures/" + model->tex2))) {
+		if (!tex2bm.Load("unittextures/" + model->tex2)) {
 			tex2bm.channels = 4;
 			tex2bm.Alloc(1, 1);
 			tex2bm.mem[0] =   0; // self-illum
@@ -112,8 +106,18 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 			tex2bm.mem[3] = 255; // transparency
 		}
 	}
-	if (model->flipTexY) tex2bm.ReverseYAxis();
 
+	if (model->invertTexAlpha)
+		tex1bm.InvertAlpha();
+	if (model->flipTexY) {
+		tex1bm.ReverseYAxis();
+		tex2bm.ReverseYAxis();
+	}
+
+	tex->num       = s3oTextures.size();
+	tex->tex1      = tex1bm.CreateTexture(true);
+	tex->tex1SizeX = tex1bm.xsize;
+	tex->tex1SizeY = tex1bm.ysize;
 	tex->tex2      = tex2bm.CreateTexture(true);
 	tex->tex2SizeX = tex2bm.xsize;
 	tex->tex2SizeY = tex2bm.ysize;
@@ -128,13 +132,13 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 }
 
 
-inline void DoSetS3oTexture(int num, std::vector<CS3OTextureHandler::S3oTex *>& s3oTex) {
+inline void DoSetS3oTexture(int num, std::vector<CS3OTextureHandler::S3oTex*>& s3oTex) {
 	if (shadowHandler->inShadowPass) {
 		glBindTexture(GL_TEXTURE_2D, s3oTex[num]->tex2);
 	} else {
-		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, s3oTex[num]->tex1);
-		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, s3oTex[num]->tex2);
 	}
 }
@@ -145,13 +149,12 @@ void CS3OTextureHandler::SetS3oTexture(int num)
 	if (GML::SimEnabled() && GML::ShareLists()) {
 		if (!GML::IsSimThread()) {
 			DoSetS3oTexture(num, s3oTexturesDraw);
-			return;
+		} else {
+			// it seems this is only accessed by draw thread, but just in case..
+			GML_RECMUTEX_LOCK(model); // SetS3oTexture
+			DoSetS3oTexture(num, s3oTextures);
 		}
-		// it seems this is only accessed by draw thread, but just in case..
-		GML_RECMUTEX_LOCK(model); // SetS3oTexture
-		DoSetS3oTexture(num, s3oTextures);
-	}
-	else {
+	} else {
 		DoSetS3oTexture(num, s3oTextures);
 	}
 }
