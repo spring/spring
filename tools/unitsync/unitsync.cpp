@@ -351,6 +351,7 @@ EXPORT(int) Init(bool isServer, int id)
 
 		// LogSystem 2
 		if (!logOutputInitialised) {
+			// must happen after FileSystemInitializer, else it will write the infolog to the wrong dir
 			logOutput.Initialize();
 			logOutputInitialised = true;
 		}

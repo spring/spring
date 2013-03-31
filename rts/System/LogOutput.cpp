@@ -114,7 +114,7 @@ void CLogOutput::SetFileName(std::string fname)
 
 std::string CLogOutput::CreateFilePath(const std::string& fileName)
 {
-	return FileSystem::GetCwd() + (char)FileSystem::GetNativePathSeparator() + fileName;
+	return FileSystem::EnsurePathSepAtEnd(FileSystem::GetCwd()) + fileName;
 }
 
 

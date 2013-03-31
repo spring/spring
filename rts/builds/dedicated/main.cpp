@@ -150,12 +150,11 @@ int main(int argc, char* argv[])
 	CrashHandler::Install();
 
 	SDL_Init(SDL_INIT_TIMER);
-	logOutput.Initialize();
-
 	LOG("report any errors to Mantis or the forums.");
 	LOG("loading script from file: %s", scriptName.c_str());
 
 	FileSystemInitializer::Initialize();
+	logOutput.Initialize();
 
 	CGameServer* server = NULL;
 	CGameSetup* gameSetup = NULL;

@@ -452,10 +452,7 @@ void DataDirLocater::Check()
 		throw content_error(errstr);
 	}
 
-	// for now, chdir to the data directory as a safety measure:
-	// Not only safety anymore, it's just easier if other code can safely assume that
-	// writeDir == current working directory
-	FileSystem::ChDir(GetWriteDir()->path.c_str());
+	ChangeCwdToWriteDir();
 
 	// tag the cache dir
 	assert(writeDir);
@@ -463,6 +460,15 @@ void DataDirLocater::Check()
 	if (FileSystem::CreateDirectory(cacheDir)) {
 		CacheDir::SetCacheDir(cacheDir, true);
 	}
+}
+
+
+void DataDirLocater::ChangeCwdToWriteDir()
+{
+	// for now, chdir to the data directory as a safety measure:
+	// Not only safety anymore, it's just easier if other code can safely assume that
+	// writeDir == current working directory
+	FileSystem::ChDir(GetWriteDir()->path.c_str());
 }
 
 
@@ -497,7 +503,7 @@ bool DataDirLocater::IsPortableMode()
 
 	// Test 2
 	// Check if "springsettings.cfg" is in the same folder, too.
-	const std::string dir = GetBinaryPath();
+	const std::string dir = GetBinaryLocation();
 	if (!FileSystem::FileExists(dir + "/springsettings.cfg"))
 		return false;
 
