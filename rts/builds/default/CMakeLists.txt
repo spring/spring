@@ -87,6 +87,10 @@ ELSE  (WIN32)
 	SET(ENGINE_ICON "")
 ENDIF (WIN32)
 
+### allow engineLibraries to be used in multithreaded, too
+MakeGlobal(engineLibraries)
+MakeGlobal(engineIncludes)
+
 ### Build the executable
 ADD_EXECUTABLE(engine-default ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(engine-default ${engineLibraries})
