@@ -188,20 +188,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	minUserSpeed = setup->minSpeed;
 	noHelperAIs = setup->noHelperAIs;
 
-	{ // modify and save GameSetup text (remove passwords)
-		TdfParser parser(newGameData->GetSetup().c_str(), newGameData->GetSetup().length());
-		TdfParser::TdfSection* root = parser.GetRootSection();
-		for (TdfParser::sectionsMap_t::iterator it = root->sections.begin(); it != root->sections.end(); ++it) {
-			if (it->first.substr(0, 6) == "PLAYER")
-				it->second->remove("Password");
-		}
-		std::ostringstream strbuf;
-		parser.print(strbuf);
-		std::string cleanedSetupText = strbuf.str();
-		GameData* newData = new GameData(*newGameData);
-		newData->SetSetup(cleanedSetupText);
-		gameData.reset(newData);
-	}
+	StripGameSetupText(newGameData);
 
 	if (setup->hostDemo) {
 		Message(str(format(PlayingDemo) %setup->demoName));
@@ -287,6 +274,31 @@ CGameServer::~CGameServer()
 	}*/ //TODO add
 #endif // DEDICATED
 }
+
+void CGameServer::StripGameSetupText(const GameData* const newGameData)
+{
+	// modify and save GameSetup text (remove passwords)
+	TdfParser parser(newGameData->GetSetup().c_str(), newGameData->GetSetup().length());
+	TdfParser::TdfSection* rootSec = parser.GetRootSection();
+
+	for (TdfParser::sectionsMap_t::iterator it = rootSec->sections.begin(); it != rootSec->sections.end(); ++it) {
+		const std::string& sectionKey = StringToLower(it->first);
+
+		if (sectionKey.find("player") != 0)
+			continue;
+
+		TdfParser::TdfSection* playerSec = it->second;
+		playerSec->remove("password", false);
+	}
+
+	std::ostringstream strbuf;
+	parser.print(strbuf);
+
+	GameData* newData = new GameData(*newGameData);
+	newData->SetSetup(strbuf.str());
+	gameData.reset(newData);
+}
+
 
 void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)
 {
