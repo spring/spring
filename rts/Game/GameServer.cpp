@@ -73,7 +73,8 @@
 
 using netcode::RawPacket;
 
-CONFIG(int, SpeedControl).defaultValue(1).description("Sets how server adjusts speed according to player's load (CPU), 0: use highest, 1: use average");
+CONFIG(int, SpeedControl).defaultValue(1).minimumValue(1).maximumValue(2)
+	.description("Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest");
 CONFIG(bool, BypassScriptPasswordCheck).defaultValue(false);
 CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
 CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
