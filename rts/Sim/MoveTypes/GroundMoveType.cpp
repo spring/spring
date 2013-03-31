@@ -385,11 +385,17 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	LOG_L(L_DEBUG, "StartMoving: starting engine for unit %i", owner->id);
 
 	// silently free previous path if unit already had one
+	//
 	// units passing intermediate waypoints will TYPICALLY
-	// not cause Stop+Start script calls now (not even when
-	// turnInPlace=true) unless they come to a full stop
+	// not cause script->StopMove + script->StartMove calls
+	// now (even when turnInPlace=true) unless they come to
+	// a full stop first
+	// note: in-range attack orders trigger the StartMoving
+	// plus StopMoving combo, so both also check for pathId
+	// --> not ideal, should filter this from scripts (test
+	// if path is empty?)
 	StopEngine(false);
-	StartEngine(owner->speed == ZeroVector);
+	StartEngine(owner->speed == ZeroVector && pathId == 0);
 
 	#if (PLAY_SOUNDS == 1)
 	if (owner->team == gu->myTeam) {
@@ -409,7 +415,7 @@ void CGroundMoveType::StopMoving() {
 	// this gets called under a variety of conditions (see MobileCAI)
 	// the most common case is a CMD_STOP being issued which means no
 	// StartMoving-->StartEngine will follow
-	StopEngine(owner->speed != ZeroVector);
+	StopEngine(owner->speed != ZeroVector || pathId != 0);
 
 	useMainHeading = false;
 	progressState = Done;
