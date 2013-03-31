@@ -497,6 +497,7 @@ bool DataDirLocater::IsPortableMode()
 
 	// Test 2
 	// Check if "springsettings.cfg" is in the same folder, too.
+	const std::string dir = GetBinaryPath();
 	if (!FileSystem::FileExists(dir + "/springsettings.cfg"))
 		return false;
 
