@@ -149,7 +149,7 @@ namespace Threading {
 
 		boost::int64_t operator+=(int x) {
 	#ifdef _MSC_VER
-			return InterlockedAdd64(boost::int64_t(x), &num););
+			return InterlockedExchangeAdd64(&num, boost::int64_t(x));
 	#elif defined(__APPLE__)
 			return OSAtomicAdd64(boost::int64_t(x), &num);
 	#else // assuming GCC (__sync_fetch_and_add is a builtin)
@@ -159,7 +159,7 @@ namespace Threading {
 
 		boost::int64_t operator-=(int x) {
 	#ifdef _MSC_VER
-			return InterlockedAdd64(boost::int64_t(-x), &num););
+			return InterlockedExchangeAdd64(&num, boost::int64_t(-x));
 	#elif defined(__APPLE__)
 			return OSAtomicAdd64(boost::int64_t(-x), &num);
 	#else // assuming GCC (__sync_fetch_and_add is a builtin)
