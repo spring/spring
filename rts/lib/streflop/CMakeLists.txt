@@ -68,7 +68,7 @@ SET(libm_flt32_source
 	"libm/flt-32/w_expf.cpp"
 	)
 
-SET(cxxflags "-I${CMAKE_CURRENT_SOURCE_DIR}/libm/headers")
+SET(cxxflags "-I\"${CMAKE_CURRENT_SOURCE_DIR}/libm/headers\"")
 if   (NOT MSVC)
 	SET(cxxflags "${cxxflags} -w -O3")
 	if (NOT $ENV{CXX} MATCHES "icpc")
