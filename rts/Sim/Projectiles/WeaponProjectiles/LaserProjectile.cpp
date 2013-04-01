@@ -133,71 +133,45 @@ void CLaserProjectile::Update()
 
 
 
+void CLaserProjectile::CollisionCommon(const float3& oldPos) {
+	// we will fade out over some time
+	deleteMe = false;
+
+	if (weaponDef->noExplode)
+		return;
+
+	checkCol = false;
+	speed = ZeroVector;
+	pos = oldPos;
+
+	if (curLength < length) {
+		curLength += speedf;
+		stayTime = 1 + (length - curLength) / speedf;
+	}
+}
+
 void CLaserProjectile::Collision(CUnit* unit)
 {
-	float3 oldPos = pos;
-	CWeaponProjectile::Collision(unit);
+	const float3 oldPos = pos;
 
-	deleteMe = false; // we will fade out over some time
-	if (!weaponDef->noExplode) {
-		checkCol = false;
-		speed = ZeroVector;
-		pos = oldPos;
-		if (curLength < length) {
-			// if the laser wasn't fully extended yet
-			// and was too short for some reason,
-			// remember how long until it would have
-			// been fully extended
-			curLength += speedf;
-			stayTime = 1 + (length - curLength) / speedf;
-		}
-	}
+	CWeaponProjectile::Collision(unit);
+	CollisionCommon(oldPos);
 }
 
 void CLaserProjectile::Collision(CFeature* feature)
 {
-	float3 oldPos = pos;
+	const float3 oldPos = pos;
+
 	CWeaponProjectile::Collision(feature);
-
-	// we will fade out over some time
-	deleteMe = false;
-
-	if (weaponDef->noExplode)
-		return;
-
-	checkCol = false;
-	speed = ZeroVector;
-	pos = oldPos;
-
-	if (curLength < length) {
-		// if the laser wasn't fully extended yet,
-		// remember how long until it would have been
-		// fully extended
-		stayTime = 1 + (length - curLength) / speedf;
-	}
+	CollisionCommon(oldPos);
 }
 
 void CLaserProjectile::Collision()
 {
-	float3 oldPos = pos;
+	const float3 oldPos = pos;
+
 	CWeaponProjectile::Collision();
-
-	// we will fade out over some time
-	deleteMe = false;
-
-	if (weaponDef->noExplode)
-		return;
-
-	checkCol = false;
-	speed = ZeroVector;
-	pos = oldPos;
-
-	if (curLength < length) {
-		// if the laser wasn't fully extended yet,
-		// remember how long until it would have been
-		// fully extended
-		stayTime = 1 + (length - curLength) / speedf;
-	}
+	CollisionCommon(oldPos);
 }
 
 
