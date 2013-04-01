@@ -96,13 +96,12 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(currWayPointDist),
 	CR_MEMBER(prevWayPointDist),
 
-	CR_MEMBER(pathRequestDelay),
-
 	CR_MEMBER(numIdlingUpdates),
 	CR_MEMBER(numIdlingSlowUpdates),
 	CR_MEMBER(wantedHeading),
 
 	CR_MEMBER(nextObstacleAvoidanceUpdate),
+	CR_MEMBER(pathRequestDelay),
 
 	CR_MEMBER(skidding),
 	CR_MEMBER(flying),
@@ -235,7 +234,6 @@ bool CGroundMoveType::Update()
 	const short heading = owner->heading;
 
 	if (owner->IsStunned() || owner->beingBuilt) {
-		owner->script->StopMoving();
 		ChangeSpeed(0.0f, false);
 	} else {
 		if (owner->fpsControlPlayer != NULL) {
@@ -386,16 +384,11 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 
 	// silently free previous path if unit already had one
 	//
-	// units passing intermediate waypoints will TYPICALLY
-	// not cause script->StopMove + script->StartMove calls
-	// now (even when turnInPlace=true) unless they come to
-	// a full stop first
-	// note: in-range attack orders trigger the StartMoving
-	// plus StopMoving combo, so both also check for pathId
-	// --> not ideal, should filter this from scripts (test
-	// if path is empty?)
+	// units passing intermediate waypoints will TYPICALLY not cause any
+	// script->{Start,Stop}Moving calls now (even when turnInPlace=true)
+	// unless they come to a full stop first
 	StopEngine(false);
-	StartEngine(owner->speed == ZeroVector && pathId == 0);
+	StartEngine(false);
 
 	#if (PLAY_SOUNDS == 1)
 	if (owner->team == gu->myTeam) {
@@ -415,7 +408,7 @@ void CGroundMoveType::StopMoving() {
 	// this gets called under a variety of conditions (see MobileCAI)
 	// the most common case is a CMD_STOP being issued which means no
 	// StartMoving-->StartEngine will follow
-	StopEngine(owner->speed != ZeroVector || pathId != 0);
+	StopEngine(false);
 
 	useMainHeading = false;
 	progressState = Done;
@@ -465,7 +458,7 @@ bool CGroundMoveType::FollowPath()
 			GetNextWayPoint();
 		} else {
 			if (atGoal) {
-				Arrived(true);
+				Arrived(false);
 			}
 		}
 
@@ -1327,7 +1320,7 @@ void CGroundMoveType::GetNextWayPoint()
 	}
 
 	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
-		Fail(true);
+		Fail(false);
 	} else {
 		#define CWP_BLOCK_MASK CMoveMath::SquareIsBlocked(*owner->moveDef, currWayPoint, owner)
 		#define NWP_BLOCK_MASK CMoveMath::SquareIsBlocked(*owner->moveDef, nextWayPoint, owner)
@@ -2024,7 +2017,6 @@ void CGroundMoveType::SetMainHeading() {
 	if (progressState == Active) {
 		if (owner->heading == newHeading) {
 			// stop turning
-			owner->script->StopMoving();
 			progressState = Done;
 		} else {
 			ChangeHeading(newHeading);
@@ -2034,7 +2026,7 @@ void CGroundMoveType::SetMainHeading() {
 			if (!frontWeapon->TryTarget(mainHeadingPos, true, 0)) {
 				// start moving
 				progressState = Active;
-				owner->script->StartMoving();
+
 				ChangeHeading(newHeading);
 			}
 		}
@@ -2121,18 +2113,15 @@ bool CGroundMoveType::UpdateDirectControl()
 		ChangeSpeed(maxSpeed, wantReverse, true);
 
 		owner->isMoving = true;
-		owner->script->StartMoving();
 	} else if (unitCon.back) {
 		ChangeSpeed(maxReverseSpeed, wantReverse, true);
 
 		owner->isMoving = true;
-		owner->script->StartMoving();
 	} else {
 		// not moving forward or backward, stop
 		ChangeSpeed(0.0f, false, true);
 
 		owner->isMoving = false;
-		owner->script->StopMoving();
 	}
 
 	if (unitCon.left ) { ChangeHeading(owner->heading + turnRate); turnSign =  1.0f; }
@@ -2150,7 +2139,8 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 	float3 speedVector;
 
 	if (modInfo.allowGroundUnitGravity) {
-		const bool applyGravity = ((owner->pos.y + owner->speed.y) >= GetGroundHeight(owner->pos + owner->speed));
+		const bool applyGravity = ((owner->pos.y + owner->speed.y + vAcc) > GetGroundHeight(owner->pos + owner->speed));
+		const bool aboveTerrain = ((owner->pos.y + owner->speed.y       ) > GetGroundHeight(owner->pos + owner->speed));
 
 		// NOTE:
 		//   the drag terms ensure speed-vector always
@@ -2162,24 +2152,24 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 		// depend on UnitDef::upright (unlike o->frontdir)
 		const float3& gndNormVec = GetGroundNormal(owner->pos);
 		const float3  gndTangVec = gndNormVec.cross(owner->rightdir);
-		const float3   flatSpeed = float3(owner->speed.x, 0.0f, owner->speed.z);
 
-		// never drop below terrain
-		owner->speed.y =
-			(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - applyGravity)) +
-			(  UpVector.y * owner->speed.dot(  UpVector) * (    applyGravity));
+		// never drop below terrain while following tangent
+		const float3 horSpeed = float3(owner->speed.x, 0.0f, owner->speed.z);
+		const float3 verSpeed = UpVector *
+			((gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - aboveTerrain)) +
+			 (  UpVector.y * owner->speed.dot(  UpVector) * (0 + aboveTerrain)));
 
 		if (owner->moveDef->moveFamily != MoveDef::Hover || !modInfo.allowHoverUnitStrafing) {
-			const float3 accelVec = (gndTangVec * hAcc) + (UpVector * vAcc);
-			const float3 speedVec = owner->speed + accelVec;
+			const float3 accelVec = (gndTangVec * hAcc) + (UpVector * vAcc * applyGravity);
+			const float3 speedVec = (horSpeed + verSpeed) + accelVec;
 
 			speedVector += (flatFrontDir * speedVec.dot(flatFrontDir)) * dragCoeff;
 			speedVector += (    UpVector * speedVec.dot(    UpVector));
 		} else {
 			// TODO: also apply to non-hovercraft on low-gravity maps?
-			speedVector += (               gndTangVec * (  std::max(0.0f,   owner->speed.dot(gndTangVec) + hAcc * 1.0f))) * dragCoeff;
-			speedVector += (   flatSpeed - gndTangVec * (/*std::max(0.0f,*/ owner->speed.dot(gndTangVec) - hAcc * 0.0f )) * slipCoeff;
-			speedVector += UpVector * (owner->speed + UpVector * vAcc).dot(UpVector);
+			speedVector += (              gndTangVec * (  std::max(0.0f,   owner->speed.dot(gndTangVec) + hAcc * 1.0f))) * dragCoeff;
+			speedVector += (   horSpeed - gndTangVec * (/*std::max(0.0f,*/ owner->speed.dot(gndTangVec) - hAcc * 0.0f )) * slipCoeff;
+			speedVector += (UpVector * (owner->speed + UpVector * vAcc * applyGravity).dot(UpVector));
 		}
 	} else {
 		// LuaSyncedCtrl::SetUnitVelocity directly assigns
@@ -2197,7 +2187,11 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 
 void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 {
-	const float3 speedVector = GetNewSpeedVector(deltaSpeed, mapInfo->map.gravity);
+	const float3 oldSpeedVector = owner->speed;
+	const float3 newSpeedVector = GetNewSpeedVector(deltaSpeed, mapInfo->map.gravity);
+
+	const float oldSpeed = math::fabs(oldSpeedVector.dot(flatFrontDir));
+	const float newSpeed = math::fabs(newSpeedVector.dot(flatFrontDir));
 
 	// if being built, the nanoframe might not be exactly on
 	// the ground and would jitter from gravity acting on it
@@ -2206,20 +2200,23 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 	if (owner->beingBuilt)
 		return;
 
-	if (speedVector != ZeroVector) {
+	if (newSpeedVector != ZeroVector) {
 		// use the simplest possible Euler integration
-		owner->Move3D(owner->speed = speedVector, true);
+		owner->Move3D(owner->speed = newSpeedVector, true);
 
 		// NOTE:
 		//   does not check for structure blockage, coldet handles that
 		//   entering of impassable terrain is *also* handled by coldet
 		if (!pathController->IgnoreTerrain(*owner->moveDef, owner->pos) && !owner->moveDef->TestMoveSquare(owner, owner->pos, ZeroVector, true, false, true)) {
-			owner->Move3D(owner->pos - speedVector, false);
+			owner->Move3D(owner->pos - newSpeedVector, false);
 		}
 	}
 
-	reversing    = (speedVector.dot(flatFrontDir) < 0.0f);
-	currentSpeed = math::fabs(speedVector.dot(flatFrontDir));
+	if (oldSpeed <= 0.01f && newSpeed >  0.01f) { owner->script->StartMoving(); }
+	if (oldSpeed >  0.01f && newSpeed <= 0.01f) { owner->script->StopMoving(); }
+
+	reversing    = (newSpeedVector.dot(flatFrontDir) < 0.0f);
+	currentSpeed = newSpeed;
 	deltaSpeed   = 0.0f;
 
 	assert(math::fabs(currentSpeed) < 1e6f);
