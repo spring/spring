@@ -159,6 +159,10 @@ SpringApp::~SpringApp()
  */
 bool SpringApp::Initialize()
 {
+	globalRendering = new CGlobalRendering();
+
+	ParseCmdLine();
+
 	CLogOutput::LogSystemInfo();
 	CMyMath::Init();
 
@@ -189,9 +193,6 @@ bool SpringApp::Initialize()
 	// Initialize crash reporting
 	CrashHandler::Install();
 
-	globalRendering = new CGlobalRendering();
-
-	ParseCmdLine();
 	good_fpu_control_registers("::Run");
 
 	// Install Watchdog
@@ -722,24 +723,25 @@ void SpringApp::ParseCmdLine()
 	} catch (const std::exception& err) {
 		std::cerr << err.what() << std::endl << std::endl;
 		cmdline->PrintUsage();
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->IsSet("help")) {
 		cmdline->PrintUsage();
-		exit(0);
+		exit(EXIT_SUCCESS);
 	}
 	if (cmdline->IsSet("version")) {
 		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
-		exit(0);
+		exit(EXIT_SUCCESS);
 	}
 	if (cmdline->IsSet("sync-version")) {
 		// Note, the missing "Spring " is intentionally to make it compatible with `spring-dedicated --sync-version`
 		std::cout << SpringVersion::GetSync() << std::endl;
-		exit(0);
+		exit(EXIT_SUCCESS);
 	}
 	if (cmdline->IsSet("projectiledump")) {
+		//FIXME must run after a game is loaded (it depends on basecontent that isn't loaded yet!)
 		CCustomExplosionGenerator::OutputProjectileClassInfo();
 		exit(0);
 	}
@@ -760,14 +762,14 @@ void SpringApp::ParseCmdLine()
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->IsSet("list-config-vars")) {
 		ConfigVariable::OutputMetaDataMap();
-		exit(0);
+		exit(EXIT_SUCCESS);
 	}
 	else if (cmdline->IsSet("list-def-tags")) {
 		DefType::OutputTagMap();
 		exit(0);
 	}
 	else if (cmdline->IsSet("test-creg")) {
-		int res = creg::RuntimeTest() ? 0 : 1;
+		const int res = creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE;
 		exit(res);
 	}
 
