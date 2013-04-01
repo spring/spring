@@ -23,7 +23,7 @@ CLaserCannon::CLaserCannon(CUnit* owner): CWeapon(owner)
 
 void CLaserCannon::Update()
 {
-	if(targetType != Target_None){
+	if (targetType != Target_None) {
 		weaponPos = owner->pos +
 			owner->frontdir * relWeaponPos.z +
 			owner->updir    * relWeaponPos.y +
@@ -33,14 +33,17 @@ void CLaserCannon::Update()
 			owner->updir    * relWeaponMuzzlePos.y +
 			owner->rightdir * relWeaponMuzzlePos.x;
 
-		float3 wantedDirTemp(targetPos - weaponPos);
-		float len = wantedDirTemp.Length();
-		if(!onlyForward && (len != 0.0f)) {
+		float3 wantedDirTemp = targetPos - weaponPos;
+		float targetDist = wantedDirTemp.Length();
+
+		if (!onlyForward && (targetDist != 0.0f)) {
 			wantedDir = wantedDirTemp;
-			wantedDir /= len;
+			wantedDir /= targetDist;
 		}
-		predict=len/projectileSpeed;
+
+		predict = targetDist / projectileSpeed;
 	}
+
 	CWeapon::Update();
 }
 
@@ -53,12 +56,12 @@ void CLaserCannon::Init()
 void CLaserCannon::FireImpl()
 {
 	float3 dir;
+
 	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
 		// HoverAirMovetype cannot align itself properly, change back when that is fixed
 		dir = owner->frontdir;
 	} else {
-		dir = targetPos - weaponMuzzlePos;
-		dir.Normalize();
+		dir = (targetPos - weaponMuzzlePos).Normalize();
 	}
 
 	dir +=
@@ -66,14 +69,10 @@ void CLaserCannon::FireImpl()
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 	dir.Normalize();
 
-	// subtract a magic 24 elmos in FPS mode (helps against range-exploits)
-	const int fpsRangeSub = (owner->fpsControlPlayer != NULL)? (SQUARE_SIZE * 3): 0;
-	const int boltTTL = ((weaponDef->range - fpsRangeSub) / weaponDef->projectilespeed) - (fpsRangeSub >> 2);
-
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
-	params.ttl = boltTTL;
+	params.ttl = weaponDef->range / weaponDef->projectilespeed;
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

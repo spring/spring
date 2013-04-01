@@ -41,17 +41,26 @@ CEmgProjectile::CEmgProjectile(const ProjectileParams& params): CWeaponProjectil
 
 void CEmgProjectile::Update()
 {
+	// disable collisions when ttl reaches 0 since the
+	// projectile will travel far past its range while
+	// fading out
+	ttl -= 1;
+	checkCol &= (ttl >= 0);
+	deleteMe |= (intensity <= 0.0f);
+
 	if (!luaMoveCtrl) {
 		pos += speed;
 	}
-
-	if (--ttl < 0) {
-		if ((intensity = std::max(intensity - 0.1f, 0.0f)) <= 0.0f) {
-			deleteMe = true;
-		}
+	if (ttl <= 0) {
+		// fade out over the next 10 frames
+		intensity -= 0.1f;
+		intensity = std::max(intensity, 0.0f);
 	} else {
-		gCEG->Explosion(cegID, pos, ttl, intensity, NULL, 0.0f, NULL, speed);
+		if (checkCol) {
+			gCEG->Explosion(cegID, pos, ttl, intensity, NULL, 0.0f, NULL, speed);
+		}
 	}
+
 	UpdateGroundBounce();
 	UpdateInterception();
 }
@@ -63,7 +72,7 @@ void CEmgProjectile::Draw()
 	col[0] = (unsigned char) (color.x * intensity * 255);
 	col[1] = (unsigned char) (color.y * intensity * 255);
 	col[2] = (unsigned char) (color.z * intensity * 255);
-	col[3] = 5; //intensity*255;
+	col[3] = intensity * 255;
 	va->AddVertexTC(drawPos - camera->right * drawRadius-camera->up * drawRadius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
 	va->AddVertexTC(drawPos + camera->right * drawRadius-camera->up * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
 	va->AddVertexTC(drawPos + camera->right * drawRadius+camera->up * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);

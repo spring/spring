@@ -74,54 +74,54 @@ void CLaserProjectile::Update()
 	}
 
 	if (checkCol) {
-		// normal
+		// expand bolt to at most <length>
 		curLength += speedf;
-		if (curLength > length)
-			curLength = length;
+		curLength = std::min(length, curLength);
 	} else {
-		// fading out after hit
-		if (stayTime <= 0)
+		// contract bolt to zero length after reaching max-range
+		// (further collision-checking is disabled at that point)
+		//
+		// since this is usually also the point where ttl reaches
+		// 0, allow the bolt to visually continue beyond max-range
+		// but no longer test for collisions (to avoid exploits)
+		if (stayTime <= 0) {
 			curLength -= speedf;
-		else
+			curLength = std::max(curLength, 0.0f);
+		} else {
 			stayTime--;
-
-		if (curLength <= 0.0f) {
-			deleteMe = true;
-			curLength = 0.0f;
 		}
 	}
 
+	ttl -= 1;
+	checkCol &= (ttl >= 0);
+	deleteMe |= ((curLength <= 0.0f) *  weaponDef->laserHardStop);
+	deleteMe |= ((intensity <= 0.0f) * !weaponDef->laserHardStop);
 
-	if (--ttl > 0 && checkCol) {
-		gCEG->Explosion(cegID, pos, ttl, intensity, NULL, 0.0f, NULL, speed);
-	}
-
-	if (weaponDef->laserHardStop) {
-		if (ttl == 0 && checkCol) {
-			checkCol = false;
-			speed = ZeroVector;
-			if (curLength < length) {
-				// if the laser wasn't fully extended yet,
-				// remember how long until it would have been
-				// fully extended
-				stayTime = 1 + (length - curLength) / speedf;
+	if (ttl <= 0) {
+		if (weaponDef->laserHardStop) {
+			if (curLength < length && speed != ZeroVector) {
+				// projectile reached its max-range but wasn't fully extended yet
+				// in this case (and ONLY in this case) let it stick around for a
+				// few more frames WITHOUT testing for further collisions
+				stayTime = 1 + int((length - curLength) / speedf);
+				speed = ZeroVector;
 			}
+		} else {
+			// fade out over the next 5 frames
+			intensity -= (intensityFalloff * 0.2f);
+			intensity = std::max(intensity, 0.0f);
 		}
 	} else {
-		if (ttl < 5 && checkCol) {
-			intensity -= (intensityFalloff * 0.2f);
-
-			if (intensity <= 0.0f) {
-				intensity = 0.0f;
-				deleteMe = true;
-			}
+		if (checkCol) {
+			gCEG->Explosion(cegID, pos, ttl, intensity, NULL, 0.0f, NULL, speed);
 		}
 	}
 
 	if (luaMoveCtrl)
 		return;
 
-	float3 tempSpeed = speed;
+	const float3 tempSpeed = speed;
+
 	UpdateGroundBounce();
 	UpdateInterception();
 
