@@ -153,7 +153,7 @@ void CTorpedoProjectile::Update()
 			const float3 pspeed = (gs->randVector() * 0.1f) + float3(0.0f, 0.2f, 0.0f);
 
 			new CBubbleProjectile(
-				pos + gs->randVector(), pspeed, 40 + gs->randFloat() * 30,
+				pos + gs->randVector(), pspeed, 40 + gs->randFloat() * GAME_SPEED,
 				1 + gs->randFloat() * 2, 0.01f, owner(), 0.3f + gs->randFloat() * 0.3f
 			);
 		}

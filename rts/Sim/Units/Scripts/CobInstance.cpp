@@ -176,24 +176,29 @@ bool CCobInstance::HasTargetWeight(int weaponNum) const
 void CCobInstance::Create()
 {
 	// Calculate the max() of the available weapon reloadtimes
-	int relMax = 0;
+	int maxReloadTime = 0;
+
 	for (vector<CWeapon*>::iterator i = unit->weapons.begin(); i != unit->weapons.end(); ++i) {
-		if ((*i)->reloadTime > relMax)
-			relMax = (*i)->reloadTime;
+		maxReloadTime = std::max(maxReloadTime, (*i)->reloadTime);
+
+		#if 0
 		if (dynamic_cast<CBeamLaser*>(*i))
-			relMax = 150;
+			maxReloadTime = 150; // ???
+		#endif
 	}
 
 	// convert ticks to milliseconds
-	relMax *= 30;
+	maxReloadTime *= GAME_SPEED;
 
-	// TA does some special handling depending on weapon count
+	#if 0
+	// TA does some special handling depending on weapon count, Spring != TA
 	if (unit->weapons.size() > 1) {
-		relMax = std::max(relMax, 3000);
+		maxReloadTime = std::max(maxReloadTime, 3000);
 	}
+	#endif
 
 	Call(COBFN_Create);
-	Call(COBFN_SetMaxReloadTime, relMax);
+	Call(COBFN_SetMaxReloadTime, maxReloadTime);
 }
 
 

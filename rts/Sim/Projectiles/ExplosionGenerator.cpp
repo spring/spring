@@ -350,7 +350,7 @@ bool CStdExplosionGenerator::Explosion(
 					 1.7f + gu->RandFloat()  * 1.6f,
 					(0.5f - gu->RandFloat()) * 1.5f
 				);
-				speed *= (0.7f + std::min(30.0f, damage) / 30.0f);
+				speed *= (0.7f + std::min(30.0f, damage) / GAME_SPEED);
 
 				const float3 npos(
 					pos.x - (0.5f - gu->RandFloat()) * (radius * 0.6f),
@@ -368,7 +368,7 @@ bool CStdExplosionGenerator::Explosion(
 
 			for (int a = 0; a < numDirt; ++a) {
 				float3 speed((0.5f - gu->RandFloat()) * 0.2f, a * 0.1f + gu->RandFloat()*0.8f, (0.5f - gu->RandFloat()) * 0.2f);
-				speed *= 0.7f + std::min((float)30, damage) / 30;
+				speed *= 0.7f + std::min(30.0f, damage) / GAME_SPEED;
 				float3 npos(pos.x-(0.5f-gu->RandFloat())*(radius*0.2f), pos.y - 2.0f - sqrtDmg * 2.0f, pos.z-(0.5f-gu->RandFloat())*(radius*0.2f));
 				new CDirtProjectile(npos, speed, 90 + damage*2, 2.0f + sqrtDmg * 2.0f, 0.3f, 0.99f, owner, color);
 			}

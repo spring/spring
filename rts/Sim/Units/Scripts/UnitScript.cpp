@@ -602,7 +602,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 			new CBubbleProjectile(
 				pos + gu->RandVector() * 2.0f,
 				pspeed,
-				40.0f + gu->RandFloat() * 30.0f,
+				40.0f + gu->RandFloat() * GAME_SPEED,
 				1.0f + gu->RandFloat() * 2.0f,
 				0.01f,
 				unit,
