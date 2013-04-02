@@ -8,7 +8,7 @@ set -e
 
 TESTDIR=${TMP_BASE}/tests
 DOWNLOADDIR=${TMP_BASE}/download
-CONTENT_DIR=${TESTDIR}/.spring
+CONTENT_DIR=${TESTDIR}/.config/spring
 
 if [ ! -d test/validation/ ];
 then
@@ -32,7 +32,8 @@ function makescript {
 	${SOURCEDIR}/test/validation/prepare.sh "$GAME" "$MAP" "$AI" "$AIVERSION" > "$OUTPUT"
 }
 
-mkdir -p $DOWNLOADDIR
+mkdir -p "${DOWNLOADDIR}"
+mkdir -p "${CONTENT_DIR}"
 
 PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
 # get the name of the latest versions
@@ -60,11 +61,10 @@ cp -suv ${SOURCEDIR}/test/validation/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI
 cp -v ${SOURCEDIR}/test/validation/LuaUI/Config/ZK_data.lua ${CONTENT_DIR}/LuaUI/Config/ZK_data.lua
 
 #copy default config for spring-headless
-cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${TESTDIR}/.springrc
+cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${CONTENT_DIR}/springsettings.cfg
 
 #set data directory to test directory
-mkdir -p ${TESTDIR}/.config/spring/
-echo "SpringData = ${CONTENT_DIR}:${TESTDIR}/usr/local/share/games/spring" >> ${TESTDIR}/.config/spring/springsettings.cfg
+echo "SpringData = ${TESTDIR}/usr/local/share/games/spring" >> ${CONTENT_DIR}/springsettings.cfg
 
 makescript "$GAME1" "$MAP" AAI 0.9
 makescript "$GAME1" "$MAP" E323AI 3.25.0
