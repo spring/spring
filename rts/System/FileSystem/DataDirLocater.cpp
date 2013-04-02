@@ -21,12 +21,12 @@
 #include <cassert>
 #include <string.h>
 
-#include "System/Log/ILog.h"
-#include "System/Config/ConfigHandler.h"
 #include "FileSystem.h"
 #include "CacheDir.h"
 #include "System/Exceptions.h"
 #include "System/maindefines.h" // for sPS, cPS, cPD
+#include "System/Config/ConfigHandler.h"
+#include "System/Log/ILog.h"
 #include "System/Platform/Misc.h"
 
 CONFIG(std::string, SpringData).defaultValue("")
@@ -456,7 +456,7 @@ void DataDirLocater::Check()
 
 	// tag the cache dir
 	assert(writeDir);
-	const std::string cacheDir = writeDir->path + "cache";
+	const std::string cacheDir = writeDir->path + FileSystem::GetCacheDir();
 	if (FileSystem::CreateDirectory(cacheDir)) {
 		CacheDir::SetCacheDir(cacheDir, true);
 	}

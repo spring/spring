@@ -124,6 +124,8 @@ public:
 	 */
 	static bool CheckFile(const std::string& file);
 //	static bool CheckDir(const std::string& dir) const;
+
+	static const std::string& GetCacheDir();
 };
 
 #endif // !FILE_SYSTEM_H
