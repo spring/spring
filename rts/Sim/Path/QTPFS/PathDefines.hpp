@@ -26,7 +26,6 @@
 #define QTPFS_NETPOINT_EDGE_SPACING_SCALE (1.0f / (QTPFS_MAX_NETPOINTS_PER_NODE_EDGE + 1))
 
 #define QTPFS_CACHE_VERSION 13
-#define QTPFS_CACHE_BASEDIR "cache/QTPFS/"
 #define QTPFS_CACHE_XACCESS
 
 #define QTPFS_POSITIVE_INFINITY (std::numeric_limits<float>::infinity())

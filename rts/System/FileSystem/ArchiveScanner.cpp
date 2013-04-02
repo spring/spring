@@ -8,7 +8,6 @@
 #include <sys/stat.h>
 
 #include "ArchiveScanner.h"
-
 #include "ArchiveLoader.h"
 #include "DataDirLocater.h"
 #include "Archives/IArchive.h"
@@ -341,8 +340,12 @@ CArchiveScanner::CArchiveScanner()
 : isDirty(false)
 {
 	std::ostringstream file;
+
 	// the "cache" dir is created in DataDirLocater
-	file << "cache" << (char)FileSystem::GetNativePathSeparator() << "ArchiveCache.lua";
+	file << FileSystem::GetCacheDir();
+	file << (char)FileSystem::GetNativePathSeparator();
+	file << "ArchiveCache.lua";
+
 	cachefile = file.str();
 	ReadCacheData(dataDirLocater.GetWriteDirPath() + GetFilename());
 

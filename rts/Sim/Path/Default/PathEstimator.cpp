@@ -36,7 +36,9 @@
 
 CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512 * 1024 * 1024);
 
-static const std::string PATH_CACHE_DIR = "cache/paths/";
+static const std::string GetPathCacheDir() {
+	return (FileSystem::GetCacheDir() + "/paths/");
+}
 
 static size_t GetNumThreads() {
 	const size_t numThreads = std::max(0, configHandler->GetInt("PathingThreadCount"));
@@ -848,7 +850,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 	char hashString[50];
 	sprintf(hashString, "%u", hash);
 
-	std::string filename = std::string(PATH_CACHE_DIR) + map + hashString + "." + cacheFileName + ".zip";
+	std::string filename = GetPathCacheDir() + map + hashString + "." + cacheFileName + ".zip";
 	if (!FileSystem::FileExists(filename))
 		return false;
 	// open file for reading from a suitable location (where the file exists)
@@ -912,7 +914,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::string& map)
 {
 	// We need this directory to exist
-	if (!FileSystem::CreateDirectory(PATH_CACHE_DIR))
+	if (!FileSystem::CreateDirectory(GetPathCacheDir()))
 		return;
 
 	const unsigned int hash = Hash();
@@ -921,7 +923,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 	sprintf(hashString, "%u", hash);
 	printf("[PathEstimator::%s] %s\n", __FUNCTION__, hashString);
 
-	const std::string filename = std::string(PATH_CACHE_DIR) + map + hashString + "." + cacheFileName + ".zip";
+	const std::string filename = GetPathCacheDir() + map + hashString + "." + cacheFileName + ".zip";
 	zipFile file;
 
 	// open file for writing in a suitable location

@@ -5,6 +5,7 @@
  */
 #include "FileSystem.h"
 
+#include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
@@ -270,3 +271,10 @@ bool FileSystem::Remove(std::string file)
 	FixSlashes(file);
 	return FileSystem::DeleteFile(file);
 }
+
+const std::string& FileSystem::GetCacheDir()
+{
+	static const std::string cacheDir = "cache-" + SpringVersion::GetMajor() + "/";
+	return cacheDir;
+}
+
