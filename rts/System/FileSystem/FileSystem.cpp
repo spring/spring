@@ -274,7 +274,7 @@ bool FileSystem::Remove(std::string file)
 
 const std::string& FileSystem::GetCacheDir()
 {
-	static const std::string cacheDir = "cache-" + SpringVersion::GetMajor() + "/";
+	static const std::string cacheDir = "cache-" + SpringVersion::GetMajor();
 	return cacheDir;
 }
 
