@@ -63,7 +63,9 @@ if    (NOT HEADLESS_SYSTEM)
 	add_custom_target(spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 	add_custom_target(install-spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 	AddEngineBuild(default) ## ASIM GML OMP
-	AddEngineBuild(legacy) ## OMP
+	if    (LEGACY_SYSTEM)
+		AddEngineBuild(legacy) ## OMP
+	endif (LEGACY_SYSTEM)
 endif (NOT HEADLESS_SYSTEM)
 
 AddEngineBuild(dedicated)
