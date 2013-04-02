@@ -42,11 +42,6 @@
 #endif
 
 
-#ifndef _WIN32
-const int FileSystemAbstraction::nativePathSeparator = '/';
-#else
-const int FileSystemAbstraction::nativePathSeparator = '\\';
-#endif
 
 std::string FileSystemAbstraction::RemoveLocalPathPrefix(const std::string& path)
 {
@@ -89,10 +84,7 @@ bool FileSystemAbstraction::HasPathSepAtEnd(const std::string& path) {
 	bool pathSepAtEnd = false;
 
 	if (!path.empty()) {
-		const char lastChar = path.at(path.size() - 1);
-		if (IsNativePathSeparator(lastChar)) {
-			pathSepAtEnd = true;
-		}
+		pathSepAtEnd = IsNativePathSeparator(path.at(path.size() - 1));
 	}
 
 	return pathSepAtEnd;
@@ -251,6 +243,15 @@ std::string FileSystemAbstraction::GetFileModificationDate(const std::string& fi
 }
 
 
+char FileSystemAbstraction::GetNativePathSeparator()
+{
+	#ifndef _WIN32
+	return '/';
+	#else
+	return '\\';
+	#endif
+}
+
 bool FileSystemAbstraction::IsAbsolutePath(const std::string& path)
 {
 #ifdef WIN32
@@ -259,6 +260,7 @@ bool FileSystemAbstraction::IsAbsolutePath(const std::string& path)
 	return ((path.length() > 0) && (path[0] == '/'));
 #endif
 }
+
 
 /**
  * @brief creates a rwxr-xr-x dir in the writedir
@@ -551,3 +553,4 @@ void FileSystemAbstraction::FindFiles(std::vector<std::string>& matches, const s
 	const boost::regex regexPattern(regex);
 	::FindFiles(matches, dataDir, dir, regexPattern, flags);
 }
+

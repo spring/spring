@@ -343,7 +343,7 @@ CArchiveScanner::CArchiveScanner()
 
 	// the "cache" dir is created in DataDirLocater
 	file << FileSystem::GetCacheDir();
-	file << (char)FileSystem::GetNativePathSeparator();
+	file << FileSystem::GetNativePathSeparator();
 	file << "ArchiveCache.lua";
 
 	cachefile = file.str();
