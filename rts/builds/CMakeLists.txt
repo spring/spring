@@ -60,8 +60,10 @@ Macro    (AddEngineBuild build)
 EndMacro (AddEngineBuild)
 
 if    (NOT HEADLESS_SYSTEM)
-	AddEngineBuild(default)       ## ST, no GML
-	AddEngineBuild(multithreaded) ## MT-GML
+	add_custom_target(spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+	add_custom_target(install-spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+	AddEngineBuild(default) ## ASIM GML OMP
+	AddEngineBuild(legacy) ## OMP
 endif (NOT HEADLESS_SYSTEM)
 
 AddEngineBuild(dedicated)

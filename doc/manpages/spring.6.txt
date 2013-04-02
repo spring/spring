@@ -6,7 +6,7 @@
 Name
 ----
 ifdef::DEFAULT[{BINARY} - An open source RTS game engine - Default Engine]
-ifdef::MULTITHREADED[{BINARY} - An open source RTS game engine - Multithreaded Engine]
+ifdef::LEGACY[{BINARY} - An open source RTS game engine - Legacy Engine]
 ifdef::HEADLESS[{BINARY} - An open source RTS game engine - Headless Engine]
 ifdef::DEDICATED[{BINARY} - An open source RTS game engine - Dedicated Server]
 
@@ -58,10 +58,15 @@ only redirects network traffic.
 It is useful for testing and simulating AI only games at high speeds
 on systems without graphics and sound output support.
 endif::HEADLESS[]
-ifdef::MULTITHREADED[]
-This is the engine version which runs graphics and simulation
-in two separate threads. This may boost performance on multi-core systems.
-endif::MULTITHREADED[]
+ifdef::DEFAULT[]
+The engine can run graphics and simulation in two separate threads, 
+depending on the game and engine settings.
+This will typically boost the performance on multi-core systems.
+endif::DEFAULT[]
+ifdef::LEGACY[]
+This engine version runs graphics and simulation in a single thread,
+and may marginally increase the performance on single-core systems.
+endif::LEGACY[]
 
 Options
 -------
@@ -275,7 +280,7 @@ The filename of such config files can be as following:
 See also
 --------
 ifndef::DEFAULT[spring(6)]
-ifndef::MULTITHREADED[spring-multithreaded(6)]
+ifndef::LEGACY[spring-legacy(6)]
 ifndef::HEADLESS[spring-headless(6)]
 ifndef::DEDICATED[spring-dedicated(6)]
 

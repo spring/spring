@@ -45,7 +45,7 @@ if    (UNIX)
 		Set(man_dst
 				"${MAN_BUILD_DIR}/spring-dedicated.6.gz"
 				"${MAN_BUILD_DIR}/spring-headless.6.gz"
-				"${MAN_BUILD_DIR}/spring-multithreaded.6.gz"
+				"${MAN_BUILD_DIR}/spring-legacy.6.gz"
 				"${MAN_BUILD_DIR}/spring.6.gz")
 		set_source_files_properties(${man_dst} PROPERTIES GENERATED TRUE)
 

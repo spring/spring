@@ -75,56 +75,41 @@ if   (MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /MP")
 endif(MSVC)
 
-### Assemble defines
-ADD_DEFINITIONS(-DUSE_GML)
-
-if   (NOT MSVC)
-	# USE_GML requires this
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-tls-direct-seg-refs")
-endif(NOT MSVC)
-
-# USE_GML_SIM requires USE_GML
-ADD_DEFINITIONS(-DUSE_GML_SIM)
-
-if (USE_GML_DEBUG)
-	ADD_DEFINITIONS(-DUSE_GML_DEBUG)
-endif (USE_GML_DEBUG)
-
 ### Add icon and manifest to exe using windres
 IF    (WIN32)
 	IF   (MINGW)
-		SET(ENGINE_ICON_DIR "${ENGINE_SRC_ROOT_DIR}")
-		SET(ENGINE_ICON_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-		SET(ENGINE_ICON_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
-		CreateResourceCompileCommand(ENGINE_ICON "${ENGINE_ICON_DIR}" "${ENGINE_ICON_RES}" "${ENGINE_ICON_OBJ}")
+		SET(ENGINE_ICON_LEGACY_DIR "${ENGINE_SRC_ROOT_DIR}")
+		SET(ENGINE_ICON_LEGACY_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
+		SET(ENGINE_ICON_LEGACY_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
+		CreateResourceCompileCommand(ENGINE_ICON_LEGACY "${ENGINE_ICON_LEGACY_DIR}" "${ENGINE_ICON_LEGACY_RES}" "${ENGINE_ICON_LEGACY_OBJ}")
 	ENDIF(MINGW)
 ELSE  (WIN32)
-	SET(ENGINE_ICON "")
+	SET(ENGINE_ICON_LEGACY "")
 ENDIF (WIN32)
 
 ### Build the executable
-ADD_EXECUTABLE(engine-default ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
-TARGET_LINK_LIBRARIES(engine-default gml ${engineLibraries})
-SET_TARGET_PROPERTIES(engine-default PROPERTIES OUTPUT_NAME "spring")
+ADD_EXECUTABLE(engine-legacy ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON_LEGACY} ${engineHeaders})
+TARGET_LINK_LIBRARIES(engine-legacy ${engineLibraries})
+SET_TARGET_PROPERTIES(engine-legacy PROPERTIES OUTPUT_NAME "spring-legacy")
 
 
 ### Install the executable
-INSTALL(TARGETS engine-default DESTINATION ${BINDIR})
+INSTALL(TARGETS engine-legacy DESTINATION ${BINDIR})
 
 #IF    (MINGW)
-#	SET_TARGET_PROPERTIES(engine-default PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
-#	install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
+#	SET_TARGET_PROPERTIES(engine-legacy PROPERTIES LINK_FLAGS "-Wl,--output-def,spring-legacy.def")
+#	install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring-legacy.def DESTINATION ${BINDIR})
 #ENDIF (MINGW)
 
-# Only build & install spring (default) executable & dependencies
+# Only build & install spring (legacy) executable & dependencies
 # use cases:
-# * make spring-default
-# * make install-spring-default
-CreateEngineBuildAndInstallTarget(default)
+# * make spring-legacy
+# * make install-spring-legacy
+CreateEngineBuildAndInstallTarget(legacy)
 
 # Create shortcuts
 # * make spring
 # * make install-spring
-add_dependencies(spring spring-default) # This also works for custom targets
+add_dependencies(spring spring-legacy) # This also works for custom targets
 
-add_dependencies(install-spring install-spring-default) # This also works for custom targets
+add_dependencies(install-spring install-spring-legacy) # This also works for custom targets
