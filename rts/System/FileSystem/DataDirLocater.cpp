@@ -499,7 +499,7 @@ bool DataDirLocater::IsPortableMode()
 	// Test 1
 	// Check if spring binary & unitsync library are in the same folder
 	if (!IsInstallDirDataDir())
-		return true;
+		return false;
 
 	// Test 2
 	// Check if "springsettings.cfg" is in the same folder, too.
