@@ -230,7 +230,9 @@ if    (WIN32)
 	endif(NOT MSVC)
 endif (WIN32)
 
-set(HEADLESS_SYSTEM FALSE CACHE BOOL "Compile for a headless system (default- and MT-spring will not be built!)")
+set(LEGACY_SYSTEM FALSE CACHE BOOL "Compile/install a legacy (single-threaded) executable alongside the default")
+
+set(HEADLESS_SYSTEM FALSE CACHE BOOL "Compile a headless executable (other executables will not be built!)")
 if    (HEADLESS_SYSTEM AND NOT NO_SOUND)
 	message(FATAL_ERROR "HEADLESS_SYSTEM requires NO_SOUND to be set!")
 endif (HEADLESS_SYSTEM AND NOT NO_SOUND)
