@@ -350,7 +350,7 @@ void DataDirLocater::AddShareDirs()
 	// Spring.app/Contents/Resources/lib/unitsync.dylib
 	// Spring.app/Contents/Resources/share/games/spring/base/
 
-	const std::string dd_curWorkDir = GetBinaryLocation()
+	const std::string dd_curWorkDir = GetBinaryLocation();
 
 	// This corresponds to Spring.app/Contents/Resources/
 	const std::string bundleResourceDir = FileSystem::GetParent(dd_curWorkDir);
