@@ -130,7 +130,7 @@ CGlobalRendering::CGlobalRendering()
 	, FSAA(0)
 	, depthBufferBits(0)
 
-	, maxTextureSize(1024)
+	, maxTextureSize(2048)
 
 	, drawSky(true)
 	, drawWater(true)
