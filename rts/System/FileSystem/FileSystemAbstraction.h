@@ -110,13 +110,10 @@ public:
 	 */
 	static std::string GetFileModificationDate(const std::string& file);
 
-	static int GetNativePathSeparator() { return nativePathSeparator; }
+	static char GetNativePathSeparator();
 	static bool IsAbsolutePath(const std::string& path);
 
 	static void FindFiles(std::vector<std::string>& matches, const std::string& dataDir, const std::string& dir, const std::string& regex, int flags);
-
-private:
-	static const int nativePathSeparator;
 };
 
 #endif // !FILE_SYSTEM_ABSTACTION_H

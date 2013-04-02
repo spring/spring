@@ -228,7 +228,7 @@ std::string FileSystem::GetNormalizedPath(const std::string& path) {
 
 std::string& FileSystem::FixSlashes(std::string& path)
 {
-	int sep = FileSystem::GetNativePathSeparator();
+	const char sep = GetNativePathSeparator();
 	for (size_t i = 0; i < path.size(); ++i) {
 		if (path[i] == '/' || path[i] == '\\') {
 			path[i] = sep;
@@ -274,7 +274,9 @@ bool FileSystem::Remove(std::string file)
 
 const std::string& FileSystem::GetCacheDir()
 {
-	static const std::string cacheDir = "cache-" + SpringVersion::GetMajor();
+	static const std::string cacheBase = "cache";
+	static const std::string cacheDir = cacheBase + GetNativePathSeparator() + SpringVersion::GetMajor();
+
 	return cacheDir;
 }
 
