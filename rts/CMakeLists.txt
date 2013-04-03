@@ -10,12 +10,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
-SET(TRACE_SYNC FALSE CACHE BOOL "Enable sync tracker")
+option(TRACE_SYNC "Enable sync tracker" FALSE)
 if (TRACE_SYNC)
 	ADD_DEFINITIONS(-DTRACE_SYNC)
 endif (TRACE_SYNC)
 
-SET(SYNCDEBUG FALSE CACHE BOOL "Enable sync debugger (needs SYNCCHECK=true)")
+option(SYNCDEBUG "Enable sync debugger (needs SYNCCHECK=true)" FALSE)
 if (SYNCDEBUG)
 	ADD_DEFINITIONS(-DSYNCDEBUG)
 	If     (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG2" AND NOT "${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG3")
@@ -30,7 +30,7 @@ if (SYNCDEBUG)
 endif (SYNCDEBUG)
 
 # Only used by GML build, but used in builds/GML and lib/gml
-SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
+option(USE_GML_DEBUG "Use GML call debugging?" FALSE)
 
 ### give error when not found
 FIND_PACKAGE_STATIC(DevIL REQUIRED)
@@ -83,7 +83,7 @@ IF (WIN32)
 ENDIF (WIN32)
 
 FIND_PACKAGE_STATIC(TCMalloc)
-set(USE_TCMALLOC TRUE CACHE BOOL "use tcmalloc (part of google's perftools)")
+option(USE_TCMALLOC "use tcmalloc (part of google's perftools)" TRUE)
 if    (USE_TCMALLOC AND TCMALLOC_LIBRARY)
 	MESSAGE(STATUS "Using tcmalloc")
 	LIST(APPEND engineCommonLibraries ${TCMALLOC_LIBRARY})
