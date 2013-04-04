@@ -512,7 +512,7 @@ end
 
 
 function gadget:Initialize()
-	Spring.Log(section, LOG.ERROR, string.format("Loading gadget: %-18s  <%s>", ghInfo.name, ghInfo.basename))
+	Spring.Log(section, LOG.INFO, string.format("Loading gadget: %-18s  <%s>", ghInfo.name, ghInfo.basename))
 
 	-- This initialization code has following properties:
 	--  * all used scripts are loaded => early syntax error detection
