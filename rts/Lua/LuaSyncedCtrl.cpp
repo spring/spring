@@ -3632,7 +3632,7 @@ int LuaSyncedCtrl::UnitWeaponFire(lua_State* L)
 	if (static_cast<uint32_t>(luaL_checkint(L, 2)-1) >= unit->weapons.size())
 		return 0;
 
-	unit->weapons[luaL_checkint(L, 2)]->Fire();
+	unit->weapons[luaL_checkint(L, 2)-1]->Fire();
 	return 0;
 }
 int LuaSyncedCtrl::UnitWeaponHoldFire(lua_State* L)
@@ -3644,7 +3644,7 @@ int LuaSyncedCtrl::UnitWeaponHoldFire(lua_State* L)
 	if (static_cast<uint32_t>(luaL_checkint(L, 2)-1) >= unit->weapons.size())
 		return 0;
 
-	unit->weapons[luaL_checkint(L, 2)]->HoldFire();
+	unit->weapons[luaL_checkint(L, 2)-1]->HoldFire();
 	return 0;
 }
 
