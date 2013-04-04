@@ -100,7 +100,7 @@ const unsigned playerBandwidthInterval = 100;
 const unsigned gameProgressFrameInterval = GAME_SPEED * 10;
 
 const std::string commands[numCommands] = {
-	"kick", "kickbynum", "setminspeed", "setmaxspeed",
+	"kick", "kickbynum", "mute", "mutebynum", "setminspeed", "setmaxspeed",
 	"nopause", "nohelp", "cheat", "godmode", "globallos",
 	"nocost", "forcestart", "nospectatorchat", "nospecdraw",
 	"skip", "reloadcob", "reloadcegs", "devlua", "editdefs",
