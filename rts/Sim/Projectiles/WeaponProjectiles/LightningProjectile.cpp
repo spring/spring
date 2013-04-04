@@ -42,8 +42,9 @@ CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWea
 	}
 
 #ifdef TRACE_SYNC
-	tracefile << "New lightning: ";
-	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << end.x << " " << end.y << " " << end.z << "\n";
+	tracefile << __FUNCTION__;
+	tracefile << params.pos.x << " " << params.pos.y << " " << params.pos.z << " ";
+	tracefile << params.end.x << " " << params.end.y << " " << params.end.z << "\n";
 #endif
 }
 

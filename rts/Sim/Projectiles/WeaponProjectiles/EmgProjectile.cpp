@@ -52,13 +52,11 @@ void CEmgProjectile::Update()
 		pos += speed;
 	}
 	if (ttl <= 0) {
-		// fade out over the next 10 frames
+		// fade out over the next 10 frames at most
 		intensity -= 0.1f;
 		intensity = std::max(intensity, 0.0f);
 	} else {
-		if (checkCol) {
-			gCEG->Explosion(cegID, pos, ttl, intensity, NULL, 0.0f, NULL, speed);
-		}
+		gCEG->Explosion(cegID, pos, ttl, intensity, NULL, 0.0f, NULL, speed);
 	}
 
 	UpdateGroundBounce();
