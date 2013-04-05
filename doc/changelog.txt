@@ -4,10 +4,12 @@ Spring changelog
 
 
 -- 9x.0 ---------------------------------------------------------
-- fix #3643
-- fix #3641
-! fix {Get,Set}UnitWeapon{Fire,HoldFire,TryTarget,TestTarget,TestRange,HaveFreeLineOfFire} WeaponID argument to use the same 1-starting indexes as rest of lua interface
-
+ - fix #3643
+ - fix #3641
+ ! fix {Get,Set}UnitWeapon{Fire,HoldFire,TryTarget,TestTarget,TestRange,HaveFreeLineOfFire} WeaponID argument to use the same 1-starting indexes as rest of lua interface
+ - fix #3675: wrong loglevel in unit_script.lua
+ ! removed VS project files (use cmake -G "Visual Studio ..." to generate them
+ - fix #3645 (Can't build if source directory has white spaces)
 
 
 -- 94.0 ---------------------------------------------------------
