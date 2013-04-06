@@ -20,12 +20,15 @@ public:
 	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed);
 
 private:
+	void UpdateIntensity();
+	void UpdateLength();
+	void UpdatePos(const float3& oldSpeed);
 	void CollisionCommon(const float3& oldPos);
 
 private:
 	float speedf;
 
-	float length;
+	float maxLength;
 	float curLength;
 	float intensity;
 	float intensityFalloff;
