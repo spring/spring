@@ -24,17 +24,15 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/Scripts/CobInstance.h"
+#include "Sim/Units/Scripts/CobInstance.h" // for UNPACK{X,Z}
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "System/Log/ILog.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/VFSModes.h" // for SPRING_VFS_*
 
 #include <assert.h>
 
