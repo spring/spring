@@ -483,7 +483,12 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 	float finalHeight = contactHeight;
 
 	// *we* must be capable of reaching the point-of-contact height
-	isAllowedHeight &= unitDef->IsAllowedTerrainHeight(this->moveDef, contactHeight, &finalHeight);
+	// however this check fails for eg. ships that want to (un)load
+	// land units on shore --> would require too many special cases
+	// therefore restrict its use to transport aircraft
+	if (this->moveDef == NULL) {
+		isAllowedHeight &= unitDef->IsAllowedTerrainHeight(NULL, contactHeight, &finalHeight);
+	}
 
 	if (allowedPos != NULL) {
 		*allowedPos = isAllowedHeight;
