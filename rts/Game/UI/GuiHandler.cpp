@@ -1708,7 +1708,7 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 {
 	const bool dualStates = (LUA_MT_OPT & LUA_STATE) && (globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_ALL || globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_UNMANAGED);
 
-	if (command == "reload" || (dualStates && command == "update")) {
+	if (command == "reload" || command == "enable" || (dualStates && command == "update")) {
 		if (luaUI && luaUI->IsRunning()) {
 			// NOTE: causes a SEGV through RunCallIn()
 			LOG_L(L_WARNING, "Can not reload from within LuaUI, yet");
@@ -1722,12 +1722,16 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 				LOG_L(L_WARNING, "Loading failed");
 			}
 		} else {
-			LOG("Reloading: \"%s\"", "luaui.lua"); // FIXME
-			CLuaUI::FreeHandler();
-			CLuaUI::LoadHandler();
-			if (luaUI == NULL) {
-				LoadConfig("ctrlpanel.txt");
-				LOG_L(L_WARNING, "Reloading failed");
+			if (command == "enable") {
+				LOG_L(L_WARNING, "LuaUI is already enabled");
+			} else {
+				LOG("Reloading: \"%s\"", "luaui.lua"); // FIXME
+				CLuaUI::FreeHandler();
+				CLuaUI::LoadHandler();
+				if (luaUI == NULL) {
+					LoadConfig("ctrlpanel.txt");
+					LOG_L(L_WARNING, "Reloading failed");
+				}
 			}
 		}
 		LayoutIcons(false);
