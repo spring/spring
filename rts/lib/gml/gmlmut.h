@@ -166,10 +166,12 @@ public:
 class gmlMutexLock {
 	gmlMutex &mtx;
 public:
-	gmlMutexLock(gmlMutex &m) : mtx(m) { mtx.Lock(); }
+	gmlMutexLock(gmlMutex &m, int wait = 0) : mtx(m) {
+		mtx.Lock(wait);
+	}
 	virtual ~gmlMutexLock() { mtx.Unlock(); }
 };
-#define GML_MSTMUTEX_LOCK(name) gmlMutexLock name##mutexlock(name##mutex)
+#define GML_MSTMUTEX_LOCK(name, ...) gmlMutexLock name##mutexlock(name##mutex, __VA_ARGS__)
 #define GML_MSTMUTEX_DOLOCK(name) name##mutex.Lock()
 #define GML_MSTMUTEX_DOUNLOCK(name) name##mutex.Unlock()
 #define GML_STDMUTEX_LOCK_NOPROF(name) gmlMutexScopedLock name##lock(name##mutex)
@@ -185,7 +187,7 @@ public:
 #define GML_THRMUTEX_LOCK(name,thr)
 #define GML_OBJMUTEX_LOCK(name,thr,...)
 #define GML_STDMUTEX_LOCK_NOPROF(name)
-#define GML_MSTMUTEX_LOCK(name)
+#define GML_MSTMUTEX_LOCK(name, ...)
 #define GML_MSTMUTEX_DOLOCK(name)
 #define GML_MSTMUTEX_DOUNLOCK(name)
 

@@ -61,6 +61,7 @@ volatile bool gmlMultiThreadSim = true;
 volatile bool gmlStartSim = false;
 volatile bool gmlKeepRunning = false;
 volatile bool gmlServerActive = false;
+volatile bool gmlMutexLockWait = false; 
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
