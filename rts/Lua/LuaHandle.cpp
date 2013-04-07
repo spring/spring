@@ -423,6 +423,7 @@ int CLuaHandle::RunCallInTraceback(const LuaHashString* hs, int inArgs, int outA
 	SetRunning(L, true);
 	// disable GC outside of this scope to prevent sync errors and similar
 	lua_gc(L, LUA_GCRESTART, 0);
+	int top = lua_gettop(L);
 	MatrixStateData prevMSD = L->lcd->PushMatrixState();
 	LuaOpenGL::InitMatrixState(L, hs);
 	const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
@@ -434,11 +435,27 @@ int CLuaHandle::RunCallInTraceback(const LuaHashString* hs, int inArgs, int outA
 
 	if (error == 0) {
 		// pop the error handler
+		if (outArgs != LUA_MULTRET) {
+			int retdiff = (lua_gettop(L) - (top - 1)) - (outArgs - inArgs);
+			if (retdiff != 0) {
+				LOG_L(L_ERROR, "Internal Lua error: %d return values, %d expected", outArgs + retdiff, outArgs);
+				lua_pop(L, retdiff);
+			}
+		}
+		else {
+			int retdiff = (lua_gettop(L) - (top - 1)) + inArgs;
+			if (retdiff < 0) {
+				LOG_L(L_ERROR, "Internal Lua error: %d return values", retdiff);
+				lua_pop(L, retdiff);
+			}
+		}
 		if (errfuncIndex != 0) {
 			lua_remove(L, errfuncIndex);
 		}
 	} else {
-		traceback = lua_tostring(L, -1);
+		int retdiff = (lua_gettop(L) - (top - 1)) - (1 - inArgs);
+		lua_pop(L, retdiff); // BUG? only the traceback shall be returned, but occasionally something goes wrong
+		traceback = std::string((retdiff != 0) ? "[Internal Lua error: Traceback failure] " : "") + (lua_isstring(L, -1) ? lua_tostring(L, -1) : "[No traceback returned]");
 		lua_pop(L, 1);
 		if (errfuncIndex != 0)
 			lua_remove(L, errfuncIndex);
