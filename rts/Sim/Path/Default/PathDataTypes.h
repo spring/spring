@@ -9,6 +9,7 @@
 
 #include "PathConstants.h"
 #include "System/Vec2.h"
+#include <boost/cstdint.hpp>
 
 /// represents either a single square (PF) or a block of squares (PE)
 struct PathNode {
@@ -184,7 +185,7 @@ public:
 	std::vector<float> gCost;
 
 	/// combination of PATHOPT_{OPEN, ..., OBSOLETE} flags
-	std::vector<uint16_t> nodeMask;
+	std::vector<boost::uint16_t> nodeMask;
 
 	/// needed for the PE to back-track path to goal
 	std::vector<int2> peParentNodePos;
