@@ -214,7 +214,7 @@ EXTERN inline GLuint GML_GLAPIENTRY gmlGenLists(GLsizei items) {
 #define GML_THRMUTEX_LOCK(name,thr)
 #define GML_OBJMUTEX_LOCK(name,thr,...)
 #define GML_STDMUTEX_LOCK_NOPROF(name)
-#define GML_MSTMUTEX_LOCK(name)
+#define GML_MSTMUTEX_LOCK(name,...)
 #define GML_MSTMUTEX_DOLOCK(name)
 #define GML_MSTMUTEX_DOUNLOCK(name)
 

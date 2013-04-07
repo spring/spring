@@ -359,7 +359,7 @@ namespace Threading {
 	}
 
 	bool UpdateGameController(CGameController* ac) {
-		GML_MSTMUTEX_LOCK(sim); // UpdateGameController
+		GML_MSTMUTEX_LOCK(sim, 1); // UpdateGameController
 
 		SetSimThread(true);
 		bool ret = ac->Update();

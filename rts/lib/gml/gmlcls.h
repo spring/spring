@@ -308,9 +308,21 @@ public:
 	}
 	virtual ~gmlMutex() {
 	}
-	void Lock() {
-		if (GML::Enabled())
+	void Lock(int wait = 0) {
+		if (GML::Enabled()) {
+			extern volatile bool gmlMutexLockWait;
+			if (wait < 0)
+				gmlMutexLockWait = true;
+			else if (wait > 0) {
+				// a really weird bug, this mutex does not seem to immediately wake up waiting
+				// threads when unlocked, and this can cause a live-lock unless we wait a bit
+				while (gmlMutexLockWait)
+					boost::thread::yield();
+			}
 			new (((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber) boost::mutex::scoped_lock(sl_mutex);
+			if (wait < 0)
+				gmlMutexLockWait = false;
+		}
 	}
 	void Unlock() {
 		if (GML::Enabled()) {
