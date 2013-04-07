@@ -1,5 +1,5 @@
 
-if not Spring.GetConfigInt("LuaSocketEnabled", 0) == 1 then
+if not (Spring.GetConfigInt("LuaSocketEnabled", 0) == 1) then
 	Spring.Echo("LuaSocketEnabled is disabled")
 	return false
 end
