@@ -116,11 +116,15 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 	std::string previous = in;
 	for (int i = 0; i < 10; ++i) { // repeat substitution till we got a pure absolute path
 		wordexp_t pwordexp;
-		wordexp(previous.c_str(), &pwordexp, WRDE_NOCMD); // expands $FOO, ${FOO}, ${FOO-DEF} ~/, etc.
-		if (pwordexp.we_wordc > 0) {
-			out = pwordexp.we_wordv[0];
+		int r = wordexp(previous.c_str(), &pwordexp, WRDE_NOCMD); // expands $FOO, ${FOO}, ${FOO-DEF} ~/, etc.
+		if (r == EXIT_SUCCESS) {
+			if (pwordexp.we_wordc > 0) {
+				out = pwordexp.we_wordv[0];
+			}
+			wordfree(&pwordexp);
+		} else {
+			out = in;
 		}
-		wordfree(&pwordexp);
 
 		if (previous == out) {
 			break;
