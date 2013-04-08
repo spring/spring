@@ -14,7 +14,8 @@
 #include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
 
-CONFIG(bool, MultiThreadShareLists).defaultValue(true);
+//GPU debug tools report calls to gl functions from different threads as errors -> disable in safemode
+CONFIG(bool, MultiThreadShareLists).defaultValue(true).safemodeValue(false).description("render-helper threads");
 CONFIG(bool, MultiThreadSim).defaultValue(true);
 
 
