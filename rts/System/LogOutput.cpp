@@ -55,6 +55,7 @@ static bool initialized = false;
 CLogOutput::CLogOutput()
 	: fileName("")
 	, filePath("")
+	, rotateLogFiles(false)
 {
 	// multiple infologs can't exist together!
 	assert(this == &logOutput);
@@ -62,8 +63,6 @@ CLogOutput::CLogOutput()
 
 	SetFileName("infolog.txt");
 
-	const bool doRotateLogFiles = configHandler->GetBool("RotateLogFiles");
-	SetLogFileRotating(doRotateLogFiles);
 }
 
 
@@ -141,7 +140,11 @@ void CLogOutput::RotateLogFile() const
 
 void CLogOutput::Initialize()
 {
+	assert(configHandler!=NULL);
+
 	if (initialized) return;
+
+	rotateLogFiles = configHandler->GetBool("RotateLogFiles");
 
 	filePath = CreateFilePath(fileName);
 	RotateLogFile();
