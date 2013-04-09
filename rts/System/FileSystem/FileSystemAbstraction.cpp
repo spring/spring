@@ -56,16 +56,15 @@ std::string FileSystemAbstraction::RemoveLocalPathPrefix(const std::string& path
 
 bool FileSystemAbstraction::IsFSRoot(const std::string& p)
 {
-	bool isFsRoot = false;
 
 #ifdef WIN32
 	// examples: "C:\", "C:/", "C:", "c:", "D:"
-	isFsRoot = (p.length() >= 2 && p[1] == ':' &&
+	bool isFsRoot = (p.length() >= 2 && p[1] == ':' &&
 			((p[0] >= 'a' && p[0] <= 'z') || (p[0] >= 'A' && p[0] <= 'Z')) &&
 			(p.length() == 2 || (p.length() == 3 && IsPathSeparator(p[2]))));
 #else
 	// examples: "/"
-	isFsRoot = (p.length() == 1 && IsNativePathSeparator(p[0]));
+	bool isFsRoot = (p.length() == 1 && IsNativePathSeparator(p[0]));
 #endif
 
 	return isFsRoot;
@@ -283,13 +282,12 @@ bool FileSystemAbstraction::MkDir(const std::string& dir)
 		return true;
 	}
 
-	bool dirCreated = false;
 
 	// If it doesn't exist we try to mkdir it and return success if that succeeds.
 #ifndef _WIN32
-	dirCreated = (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0);
+	bool dirCreated = (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0);
 #else
-	dirCreated = (::_mkdir(StripTrailingSlashes(dir).c_str()) == 0);
+	bool dirCreated = (::_mkdir(StripTrailingSlashes(dir).c_str()) == 0);
 #endif
 
 	if (!dirCreated) {
@@ -312,16 +310,15 @@ bool FileSystemAbstraction::DeleteFile(const std::string& file)
 
 bool FileSystemAbstraction::FileExists(const std::string& file)
 {
-	bool fileExists = false;
 
 #ifdef _WIN32
 	struct _stat info;
 	const int ret = _stat(StripTrailingSlashes(file).c_str(), &info);
-	fileExists = ((ret == 0 && (info.st_mode & _S_IFREG)));
+	bool fileExists = ((ret == 0 && (info.st_mode & _S_IFREG)));
 #else
 	struct stat info;
 	const int ret = stat(file.c_str(), &info);
-	fileExists = ((ret == 0 && !S_ISDIR(info.st_mode)));
+	bool fileExists = ((ret == 0 && !S_ISDIR(info.st_mode)));
 #endif
 
 	return fileExists;
@@ -329,7 +326,6 @@ bool FileSystemAbstraction::FileExists(const std::string& file)
 
 bool FileSystemAbstraction::DirExists(const std::string& dir)
 {
-	bool dirExists = false;
 
 #ifdef _WIN32
 	struct _stat info;
@@ -342,11 +338,11 @@ bool FileSystemAbstraction::DirExists(const std::string& dir)
 		myDir += "\\";
 	}
 	const int ret = _stat(myDir.c_str(), &info);
-	dirExists = ((ret == 0) && (info.st_mode & _S_IFDIR));
+	bool dirExists = ((ret == 0) && (info.st_mode & _S_IFDIR));
 #else
 	struct stat info;
 	const int ret = stat(dir.c_str(), &info);
-	dirExists = ((ret == 0) && S_ISDIR(info.st_mode));
+	bool dirExists = ((ret == 0) && S_ISDIR(info.st_mode));
 #endif
 
 	return dirExists;

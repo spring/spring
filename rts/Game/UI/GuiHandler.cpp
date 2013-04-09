@@ -1558,7 +1558,7 @@ float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
 {
 	float minV = 0.0f;
 	float maxV = 100.0f;
-	if (cd.params.size() >= 1) { minV = atof(cd.params[0].c_str()); }
+	if (!cd.params.empty()) { minV = atof(cd.params[0].c_str()); }
 	if (cd.params.size() >= 2) { maxV = atof(cd.params[1].c_str()); }
 	const int minX = (globalRendering->viewSizeX * 1) / 4;
 	const int maxX = (globalRendering->viewSizeX * 3) / 4;
@@ -1975,7 +1975,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 					float value = atof(action.extra.c_str());
 					float minV = 0.0f;
 					float maxV = 100.0f;
-					if (cd.params.size() >= 1) { minV = atof(cd.params[0].c_str()); }
+					if (!cd.params.empty()) { minV = atof(cd.params[0].c_str()); }
 					if (cd.params.size() >= 2) { maxV = atof(cd.params[1].c_str()); }
 					value = std::max(std::min(value, maxV), minV);
 					Command c(cd.id, 0, value);
@@ -3073,7 +3073,7 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 				// command name (or parameter)
 				std::string toPrint = cmdDesc.name;
 				if (cmdDesc.type == CMDTYPE_ICON_MODE
-						&& cmdDesc.params.size() >= 1) {
+						&& !cmdDesc.params.empty()) {
 					const int opt = atoi(cmdDesc.params[0].c_str()) + 1;
 					if (opt < 0 || static_cast<size_t>(opt) < cmdDesc.params.size()) {
 						toPrint = cmdDesc.params[opt];

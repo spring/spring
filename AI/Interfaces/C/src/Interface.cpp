@@ -20,10 +20,11 @@ CInterface::CInterface(int interfaceId,
 
 	char* logFileName = util_allocStrCatFSPath(2, "log", "interface-log.txt");
 	bool timeStamps = true;
+#ifdef DEBUG
+	int logLevel = SIMPLELOG_LEVEL_FINE;
+#else
 	int logLevel = SIMPLELOG_LEVEL_ERROR;
-#if defined DEBUG
-	logLevel = SIMPLELOG_LEVEL_FINE;
-#endif // defined DEBUG
+#endif
 	static const unsigned int logFilePath_sizeMax = 1024;
 	char logFilePath[logFilePath_sizeMax];
 	// eg: "~/.spring/AI/Interfaces/C/log/interface-log.txt"
