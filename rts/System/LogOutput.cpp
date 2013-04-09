@@ -55,7 +55,6 @@ static bool initialized = false;
 CLogOutput::CLogOutput()
 	: fileName("")
 	, filePath("")
-	, rotateLogFiles(false)
 {
 	// multiple infologs can't exist together!
 	assert(this == &logOutput);
@@ -103,37 +102,25 @@ std::string CLogOutput::CreateFilePath(const std::string& fileName)
 }
 
 
-void CLogOutput::SetLogFileRotating(bool enabled)
-{
-	assert(!initialized);
-	rotateLogFiles = enabled;
-}
-bool CLogOutput::IsLogFileRotating() const
-{
-	return rotateLogFiles;
-}
-
 void CLogOutput::RotateLogFile() const
 {
-	if (IsLogFileRotating()) {
-		if (FileSystem::FileExists(filePath)) {
-			// logArchiveDir: /absolute/writeable/data/dir/log/
-			std::string logArchiveDir = filePath.substr(0, filePath.find_last_of("/\\") + 1);
-			logArchiveDir = logArchiveDir + "log" + FileSystem::GetNativePathSeparator();
+	if (FileSystem::FileExists(filePath)) {
+		// logArchiveDir: /absolute/writeable/data/dir/log/
+		std::string logArchiveDir = filePath.substr(0, filePath.find_last_of("/\\") + 1);
+		logArchiveDir = logArchiveDir + "log" + FileSystem::GetNativePathSeparator();
 
-			const std::string archivedLogFile = logArchiveDir + FileSystem::GetFileModificationDate(filePath) + "_" + fileName;
+		const std::string archivedLogFile = logArchiveDir + FileSystem::GetFileModificationDate(filePath) + "_" + fileName;
 
-			// create the log archive dir if it does not exist yet
-			if (!FileSystem::DirExists(logArchiveDir)) {
-				FileSystem::CreateDirectory(logArchiveDir);
-			}
+		// create the log archive dir if it does not exist yet
+		if (!FileSystem::DirExists(logArchiveDir)) {
+			FileSystem::CreateDirectory(logArchiveDir);
+		}
 
-			// move the old log to the archive dir
-			const int moveError = rename(filePath.c_str(), archivedLogFile.c_str());
-			if (moveError != 0) {
-				// no log here yet
-				std::cerr << "Failed rotating the log file" << std::endl;
-			}
+		// move the old log to the archive dir
+		const int moveError = rename(filePath.c_str(), archivedLogFile.c_str());
+		if (moveError != 0) {
+			// no log here yet
+			std::cerr << "Failed rotating the log file" << std::endl;
 		}
 	}
 }
@@ -144,10 +131,13 @@ void CLogOutput::Initialize()
 
 	if (initialized) return;
 
-	rotateLogFiles = configHandler->GetBool("RotateLogFiles");
 
 	filePath = CreateFilePath(fileName);
-	RotateLogFile();
+
+	const bool rotateLogFiles = configHandler->GetBool("RotateLogFiles");
+	if (rotateLogFiles) {
+		RotateLogFile();
+	}
 
 	/*filelog = new std::ofstream(filePath.c_str());
 	if (filelog->bad())
