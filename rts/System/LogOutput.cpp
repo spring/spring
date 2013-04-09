@@ -37,9 +37,9 @@ CONFIG(std::string, LogSections).defaultValue("")
 
 /*
 LogFlush defaults to true, because there should be pretty low performance gains as most
-fwrite implementations cache on their own. Also cut-off logs often caused stack-traces
-to be cut off. BEFORE letting it default to false again, verify that it really increases
-performance as the drawbacks really suck
+fwrite implementations cache on their own. Also disabling this causes stack-traces to
+be cut off. BEFORE letting it default to false again, verify that it really increases
+performance as the drawbacks really suck.
 */
 CONFIG(bool, LogFlush).defaultValue(true)
 		.description("Instantly write to the logfile, use only for debugging as it will cause a slowdown");
@@ -67,16 +67,9 @@ CLogOutput::CLogOutput()
 
 CLogOutput::~CLogOutput()
 {
-	End();
-}
-
-
-void CLogOutput::End()
-{
 	GML_STDMUTEX_LOCK_NOPROF(log); // End
 
 	SafeDelete(filelog);
-	//log_file_removeLogFile(filePath.c_str());
 }
 
 const std::string& CLogOutput::GetFileName() const
@@ -139,20 +132,11 @@ void CLogOutput::Initialize()
 		RotateLogFile();
 	}
 
-	/*filelog = new std::ofstream(filePath.c_str());
-	if (filelog->bad())
-		SafeDelete(filelog);*/
 	const bool flush = configHandler->GetBool("LogFlush");
 	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, flush);
 
 	initialized = true;
 	InitializeSections();
-
-	/*std::vector<std::string>::iterator pili;
-	for (pili = preInitLog().begin(); pili != preInitLog().end(); ++pili) {
-		ToFile(*pili);
-	}
-	preInitLog().clear();*/
 
 	LOG("LogOutput initialized.");
 }

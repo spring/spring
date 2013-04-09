@@ -62,8 +62,6 @@ public:
 	static void LogSystemInfo();
 
 private:
-	void End();
-
 	/**
 	 * @brief initialize the log sections
 	 *
