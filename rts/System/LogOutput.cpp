@@ -29,8 +29,9 @@
 /******************************************************************************/
 /******************************************************************************/
 
-CONFIG(std::string, RotateLogFiles).defaultValue("auto")
-		.description("rotate logfiles, valid values are \"always\" (default in debug builds) and \"never\" (default in release builds).");
+CONFIG(bool, RotateLogFiles).defaultValue(false)
+		.description("rotate logfiles, old logfiles will be moved into the subfolder \"log\".");
+
 CONFIG(std::string, LogSections).defaultValue("")
 		.description("Comma seperated list of enabled logsections, see infolog.txt / console output for possible values");
 
@@ -61,22 +62,7 @@ CLogOutput::CLogOutput()
 
 	SetFileName("infolog.txt");
 
-	bool doRotateLogFiles = false;
-	std::string rotatePolicy = "auto";
-	if (configHandler != NULL) {
-		rotatePolicy = configHandler->GetString("RotateLogFiles");
-	}
-	if (rotatePolicy == "always") {
-		doRotateLogFiles = true;
-	} else if (rotatePolicy == "never") {
-		doRotateLogFiles = false;
-	} else { // auto
-#ifdef DEBUG
-		doRotateLogFiles = true;
-#else
-		doRotateLogFiles = false;
-#endif
-	}
+	const bool doRotateLogFiles = configHandler->GetBool("RotateLogFiles");
 	SetLogFileRotating(doRotateLogFiles);
 }
 
