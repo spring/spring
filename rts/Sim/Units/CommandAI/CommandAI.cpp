@@ -1577,7 +1577,7 @@ bool CCommandAI::HasMoreMoveCommands()
 bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 {
 	// check to see if we are about to paralyze a unit that is already paralyzed
-	if ((target == NULL) || (owner->weapons.size() <= 0)) {
+	if ((target == NULL) || (owner->weapons.empty())) {
 		return false;
 	}
 	const CWeapon* w = owner->weapons.front();

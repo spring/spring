@@ -618,12 +618,10 @@ static bool util_makeDirS(const char* dirPath) {
 
 bool util_makeDir(const char* dirPath, bool recursive) {
 
-	bool exists = false;
-
 	char* dirPath_cpy = util_allocStrCpy(dirPath);
 	util_removeTrailingSlash(dirPath_cpy);
 
-	exists = util_fileExists(dirPath_cpy);
+	bool exists = util_fileExists(dirPath_cpy);
 
 	if (!exists) {
 		char* parentDir = util_allocStrCpy(dirPath_cpy);

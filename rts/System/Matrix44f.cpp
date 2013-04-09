@@ -331,7 +331,7 @@ void CMatrix44f::Transpose()
 CMatrix44f& CMatrix44f::InvertAffineInPlace()
 {
 	//! transpose the rotation
-	float tmp = 0.0f;
+	float tmp;
 	tmp = m[1]; m[1] = m[4]; m[4] = tmp;
 	tmp = m[2]; m[2] = m[8]; m[8] = tmp;
 	tmp = m[6]; m[6] = m[9]; m[9] = tmp;

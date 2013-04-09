@@ -2048,7 +2048,7 @@ void CGameServer::PushAction(const Action& action)
 		}
 		else {
 			const std::vector<std::string> &tokens = CSimpleParser::Tokenize(action.extra);
-			if ( tokens.size() < 1 || tokens.size() > 3 ) {
+			if ( tokens.empty() || tokens.size() > 3 ) {
 				LOG_L(L_WARNING,"failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
 			}
 			else {
@@ -2056,7 +2056,7 @@ void CGameServer::PushAction(const Action& action)
 				StringToLowerInPlace(name);
 				bool muteChat;
 				bool muteDraw;
-				if ( tokens.size() >= 1 ) SetBoolArg(muteChat, tokens[1]);
+				if ( !tokens.empty() ) SetBoolArg(muteChat, tokens[1]);
 				if ( tokens.size() >= 2 ) SetBoolArg(muteDraw, tokens[2]);
 				for (size_t a=0; a < players.size();++a) {
 					std::string playerLower = StringToLower(players[a].name);
@@ -2075,14 +2075,14 @@ void CGameServer::PushAction(const Action& action)
 		}
 		else {
 			const std::vector<std::string> &tokens = CSimpleParser::Tokenize(action.extra);
-			if ( tokens.size() < 1 || tokens.size() > 3 ) {
+			if ( tokens.empty() || tokens.size() > 3 ) {
 				LOG_L(L_WARNING,"failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
 			}
 			else {
 				int playerID = atoi(tokens[0].c_str());
 				bool muteChat;
 				bool muteDraw;
-				if ( tokens.size() >= 1 ) SetBoolArg(muteChat, tokens[1]);
+				if ( !tokens.empty() ) SetBoolArg(muteChat, tokens[1]);
 				if ( tokens.size() >= 2 ) SetBoolArg(muteDraw, tokens[2]);
 				MutePlayer(playerID,muteChat,muteDraw);
 			}
