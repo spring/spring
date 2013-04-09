@@ -343,11 +343,11 @@ EXPORT(int) Init(bool isServer, int id)
 		if (archiveScanner || vfsHandler){
 			FileSystemInitializer::Cleanup(); //reinitialize filesystem to detect new files
 		}
+		FileSystemInitializer::Initialize();
 		if (!configHandler) {
 			ConfigHandler::Instantiate(); // use the default config file
 		}
 		dataDirLocater.UpdateIsolationModeByEnvVar();
-		FileSystemInitializer::Initialize();
 
 		// LogSystem 2
 		if (!logOutputInitialised) {
