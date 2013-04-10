@@ -808,7 +808,10 @@ unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler
 			psi.count = spawnTable.GetInt("count", 1);
 
 			if (psi.projectileClass->binder->flags & creg::CF_Synced) {
-				psi.flags |= SPW_SYNCED;
+				LOG_L(L_WARNING,
+					"[CCEG::Load] %s: Tried to access synced class \"%s\"",
+					tag.c_str(), className.c_str());
+				continue;
 			}
 
 			string code;
@@ -992,16 +995,21 @@ void CCustomExplosionGenerator::OutputProjectileClassInfo()
 	}
 
 	for (vector<creg::Class*>::const_iterator ci = classes.begin(); ci != classes.end(); ++ci) {
-		if (!(*ci)->IsSubclassOf (CExpGenSpawnable::StaticClass()) || (*ci) == CExpGenSpawnable::StaticClass()) {
+		creg::Class* c = *ci;
+
+		if (!c->IsSubclassOf(CExpGenSpawnable::StaticClass()) || c == CExpGenSpawnable::StaticClass()) {
 			continue;
 		}
 
-		creg::Class *klass = *ci;
-		fs << "Class: " << klass->name << ".  Scriptname: " << egh.projectileClasses.FindAlias(klass->name) << std::endl;
-		for (; klass; klass = klass->base) {
-			for (unsigned int a = 0; a < klass->members.size(); a++) {
-				if (klass->members[a]->flags & creg::CM_Config) {
-					fs << "\t" << klass->members[a]->name << ": " << klass->members[a]->type->GetName() << "\n";
+		if (c->binder->flags & creg::CF_Synced) {
+			continue;
+		}
+
+		fs << "Class: " << c->name << ".  Scriptname: " << egh.projectileClasses.FindAlias(c->name) << std::endl;
+		for (; c; c = c->base) {
+			for (unsigned int a = 0; a < c->members.size(); a++) {
+				if (c->members[a]->flags & creg::CM_Config) {
+					fs << "\t" << c->members[a]->name << ": " << c->members[a]->type->GetName() << "\n";
 				}
 			}
 		}
