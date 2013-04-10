@@ -803,9 +803,16 @@ unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler
 
 			const string className = spawnTable.GetString("class", spawnName);
 
-			psi.projectileClass = handler->projectileClasses.GetClass(className);
-			psi.flags = GetFlagsFromTable(spawnTable);
-			psi.count = spawnTable.GetInt("count", 1);
+			try {
+				psi.projectileClass = handler->projectileClasses.GetClass(className);
+				psi.flags = GetFlagsFromTable(spawnTable);
+				psi.count = spawnTable.GetInt("count", 1);
+			} catch(...) {
+				LOG_L(L_WARNING,
+					"[CCEG::Load] %s: Unknown class \"%s\"",
+					tag.c_str(), className.c_str());
+				continue;
+			}
 
 			if (psi.projectileClass->binder->flags & creg::CF_Synced) {
 				LOG_L(L_WARNING,
@@ -823,6 +830,10 @@ unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler
 				creg::Class::Member* m = psi.projectileClass->FindMember(propIt->first.c_str());
 				if (m && (m->flags & creg::CM_Config)) {
 					ParseExplosionCode(&psi, m->offset, m->type, propIt->second, code);
+				} else {
+					LOG_L(L_WARNING,
+						"[CCEG::Load] %s: Unknown tag %s::%s",
+						tag.c_str(), className.c_str(), propIt->first.c_str());
 				}
 			}
 
