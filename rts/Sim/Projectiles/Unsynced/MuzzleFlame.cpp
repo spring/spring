@@ -13,7 +13,6 @@ CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (ZeroVector, ZeroVector, ZeroVector, 
 
 CR_REG_METADATA(CMuzzleFlame,(
 	CR_SERIALIZER(creg_Serialize), // randSmokeDir
-	CR_MEMBER(dir),
 	CR_MEMBER(size),
 	CR_MEMBER(age),
 	CR_MEMBER(numFlame),
@@ -29,10 +28,10 @@ void CMuzzleFlame::creg_Serialize(creg::ISerializer& s)
 
 CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size):
 	CProjectile(pos, speed, NULL, false, false, false),
-	dir(dir),
 	size(size),
 	age(0)
 {
+	this->dir = dir;
 	this->pos -= dir * size * 0.2f;
 	checkCol = false;
 	castShadow = true;

@@ -25,7 +25,6 @@ private:
 	AtlasedTexture* sideTexture;
 	AtlasedTexture* frontTexture;
 
-	float3 dir;
 	CColorMap* colorMap;
 
 	float size;

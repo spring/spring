@@ -25,7 +25,9 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(castShadow),
 
 	CR_MEMBER(lastProjUpdate),
-	CR_MEMBER(dir),
+	CR_MEMBER_BEGINFLAG(CM_Config),
+		CR_MEMBER(dir),
+	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_MEMBER(drawPos),
 	CR_IGNORED(tempdist),
 
@@ -91,6 +93,7 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	, deleteMe(false)
 	, castShadow(false)
 
+	, dir((spd == ZeroVector) ? ZeroVector : spd / spd.Length())
 	, speed(spd)
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
 

@@ -23,7 +23,6 @@ private:
 	float speedf;
 	float length;
 	float drawLength;
-	float3 dir;
 };
 
 #endif /* TRACER_PROJECTILE_H */
