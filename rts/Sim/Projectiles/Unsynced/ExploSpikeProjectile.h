@@ -27,7 +27,6 @@ private:
 	float alpha;
 	float alphaDecay;
 	float lengthGrowth;
-	float3 dir;
 	float3 color;
 };
 

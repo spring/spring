@@ -6,11 +6,10 @@
 
 CR_BIND_DERIVED(CTracerProjectile, CProjectile, )
 
-CR_REG_METADATA(CTracerProjectile, 
+CR_REG_METADATA(CTracerProjectile,
 (
 	CR_MEMBER(speedf),
 	CR_MEMBER(drawLength),
-	CR_MEMBER(dir),
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(length),
 	CR_MEMBER_ENDFLAG(CM_Config),
@@ -37,7 +36,6 @@ CTracerProjectile::CTracerProjectile()
 	: speedf(0.0f)
 	, length(0.0f)
 	, drawLength(0.0f)
-	, dir(ZeroVector)
 {
 	checkCol = false;
 }
@@ -78,8 +76,8 @@ void CTracerProjectile::Draw()
 	glTexCoord2f(1.0f/16, 1.0f/16);
 	glColor4f(1, 1, 0.1f, 0.4f);
 	glBegin(GL_LINES);
-		glVertexf3(drawPos);				
-		glVertexf3(drawPos-dir * drawLength);				
+		glVertexf3(drawPos);
+		glVertexf3(drawPos-dir * drawLength);
 	glEnd();
 	glColor4f(1, 1, 1, 1);
 	glTexCoord2f(0, 0);

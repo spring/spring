@@ -19,7 +19,6 @@ public:
 	void Update();
 
 private:
-	float3 dir;
 	float size;
 	int age;
 	int numFlame;

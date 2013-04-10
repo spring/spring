@@ -19,7 +19,6 @@ CR_REG_METADATA(CBitmapMuzzleFlame,
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(sideTexture),
 		CR_MEMBER(frontTexture),
-		CR_MEMBER(dir),
 		CR_MEMBER(colorMap),
 		CR_MEMBER(size),
 		CR_MEMBER(length),
@@ -33,7 +32,6 @@ CBitmapMuzzleFlame::CBitmapMuzzleFlame()
 	: CProjectile()
 	, sideTexture(NULL)
 	, frontTexture(NULL)
-	, dir(ZeroVector)
 	, colorMap(NULL)
 	, size(0.0f)
 	, length(0.0f)
