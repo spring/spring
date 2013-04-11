@@ -27,11 +27,17 @@
 
 #include "System/creg/STL_Map.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/FileSystem/FileSystemInitializer.h"
+#include "System/Log/DefaultFilter.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/creg/VarTypes.h"
+#include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/VFSHandler.h"
 #include "System/Util.h"
+#include "System/TimeProfiler.h"
+
 
 CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject);
 CR_REG_METADATA(CExpGenSpawnable, );
@@ -995,15 +1001,20 @@ bool CCustomExplosionGenerator::Explosion(
 }
 
 
-void CCustomExplosionGenerator::OutputProjectileClassInfo()
+bool CCustomExplosionGenerator::OutputProjectileClassInfo()
 {
+	LOG_DISABLE();
+		// we need to load basecontent for class aliases
+		FileSystemInitializer::Initialize();
+		vfsHandler->AddArchiveWithDeps(archiveScanner->ArchiveFromName("Spring content v1"), false);
+	LOG_ENABLE();
+
+	creg::System::InitializeClasses();
 	const vector<creg::Class*>& classes = creg::System::GetClasses();
-	std::ofstream fs("projectiles.txt");
 	CExplosionGeneratorHandler egh;
 
-	if (fs.bad() || !fs.is_open()) {
-		return;
-	}
+	bool first = true;
+	std::cout << "{" << std::endl;
 
 	for (vector<creg::Class*>::const_iterator ci = classes.begin(); ci != classes.end(); ++ci) {
 		creg::Class* c = *ci;
@@ -1016,16 +1027,29 @@ void CCustomExplosionGenerator::OutputProjectileClassInfo()
 			continue;
 		}
 
-		fs << "Class: " << c->name << ".  Scriptname: " << egh.projectileClasses.FindAlias(c->name) << std::endl;
+		if (first) {
+			first = false;
+		} else {
+			std::cout << "," << std::endl;
+		}
+
+		std::cout << "  \"" << c->name << "\": {" << std::endl;
+		std::cout << "    \"alias\": \"" << egh.projectileClasses.FindAlias(c->name) << "\"";
 		for (; c; c = c->base) {
 			for (unsigned int a = 0; a < c->members.size(); a++) {
 				if (c->members[a]->flags & creg::CM_Config) {
-					fs << "\t" << c->members[a]->name << ": " << c->members[a]->type->GetName() << "\n";
+					std::cout << "," << std::endl;
+					std::cout << "    \"" << c->members[a]->name << "\": \"" << c->members[a]->type->GetName() << "\"";
 				}
 			}
 		}
-		fs << "\n\n";
+
+		std::cout << std::endl << "  }";
 	}
+	std::cout << std::endl << "}" << std::endl;
+
+	FileSystemInitializer::Cleanup();
+	return true;
 }
 
 void CCustomExplosionGenerator::Unload(CExplosionGeneratorHandler* handler) {
