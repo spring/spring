@@ -78,12 +78,18 @@ int log_filter_section_getRegistered();
  */
 const char* log_filter_section_getRegisteredIndex(int index);
 
+#define LOG_DISABLE() log_enable_and_disable(false)
+#define LOG_ENABLE()  log_enable_and_disable(true)
+
+void log_enable_and_disable(const bool enable);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
 #ifdef __cplusplus
 #include <set>
+
 
 /**
  * Returns the registered sections.
