@@ -103,8 +103,6 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(nextObstacleAvoidanceUpdate),
 	CR_MEMBER(pathRequestDelay),
 
-	CR_MEMBER(skidding),
-	CR_MEMBER(flying),
 	CR_MEMBER(reversing),
 	CR_MEMBER(idling),
 	CR_MEMBER(canReverse),
@@ -118,7 +116,6 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(skidRotVector),
 	CR_MEMBER(skidRotSpeed),
 	CR_MEMBER(skidRotAccel),
-	CR_ENUM_MEMBER(oldPhysState),
 
 	CR_POSTLOAD(PostLoad)
 ));
@@ -148,18 +145,14 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	currWayPointDist(0.0f),
 	prevWayPointDist(0.0f),
 
-	skidding(false),
-	flying(false),
 	reversing(false),
 	idling(false),
-	canReverse(owner ? owner->unitDef->rSpeed > 0.0f : false),
+	canReverse((owner != NULL) && (owner->unitDef->rSpeed > 0.0f)),
 	useMainHeading(false),
 
 	skidRotVector(UpVector),
 	skidRotSpeed(0.0f),
 	skidRotAccel(0.0f),
-
-	oldPhysState(CSolidObject::OnGround),
 
 	flatFrontDir(0.0f, 0.0, 1.0f),
 	lastAvoidanceDir(ZeroVector),
@@ -211,9 +204,9 @@ bool CGroundMoveType::Update()
 	}
 
 	if (OnSlope(1.0f)) {
-		skidding = true;
+		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
 	}
-	if (skidding) {
+	if (owner->IsSkidding()) {
 		UpdateSkid();
 		return false;
 	}
@@ -221,7 +214,7 @@ bool CGroundMoveType::Update()
 	ASSERT_SYNCED(owner->pos);
 
 	// set drop height when we start to drop
-	if (owner->falling) {
+	if (owner->IsFalling()) {
 		UpdateControlledDrop();
 		return false;
 	}
@@ -345,7 +338,7 @@ void CGroundMoveType::SlowUpdate()
 			}
 		}
 
-		if (!flying) {
+		if (!owner->IsFlying()) {
 			// move us into the map, and update <oldPos>
 			// to prevent any extreme changes in <speed>
 			if (!owner->pos.IsInBounds()) {
@@ -594,7 +587,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
  * FIXME near-duplicate of HoverAirMoveType::UpdateHeading
  */
 void CGroundMoveType::ChangeHeading(short newHeading) {
-	if (flying) return;
+	if (owner->IsFlying()) return;
 	if (owner->GetTransporter() != NULL) return;
 
 	owner->heading += pathController->GetDeltaHeading(pathId, (wantedHeading = newHeading), owner->heading, turnRate);
@@ -632,7 +625,6 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	if (owner->residualImpulse.SqLength() <= 9.0f)
 		return false;
 
-	skidding = true;
 	useHeading = false;
 
 	skidRotSpeed = 0.0f;
@@ -641,21 +633,20 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	float3 newSpeed = owner->speed + owner->residualImpulse;
 	float3 skidDir = owner->frontdir;
 
+	const bool startSkidding = true;
+	const bool startFlying = (newSpeed.dot(ground->GetNormal(owner->pos.x, owner->pos.z)) > 0.2f);
+
 	if (newSpeed.SqLength2D() >= 0.01f) {
 		skidDir = newSpeed;
 		skidDir.y = 0.0f;
 		skidDir.Normalize();
 	}
 
-	skidRotVector = skidDir.cross(UpVector);
+	skidRotVector = skidDir.cross(UpVector) * startSkidding;
+	skidRotAccel = ((gs->randFloat() - 0.5f) * 0.04f) * startFlying;
 
-	oldPhysState = owner->physicalState;
-	owner->physicalState = CSolidObject::Flying;
-
-	if (newSpeed.dot(ground->GetNormal(owner->pos.x, owner->pos.z)) > 0.2f) {
-		skidRotAccel = (gs->randFloat() - 0.5f) * 0.04f;
-		flying = true;
-	}
+	owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING * startSkidding);
+	owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING * startFlying);
 
 	ASSERT_SANE_OWNER_SPEED(newSpeed);
 	// indicate we want to react to the impulse
@@ -672,7 +663,7 @@ void CGroundMoveType::UpdateSkid()
 	const UnitDef* ud = owner->unitDef;
 	const float groundHeight = GetGroundHeight(pos);
 
-	if (flying) {
+	if (owner->IsFlying()) {
 		// water drag
 		if (pos.y < 0.0f)
 			speed *= 0.95f;
@@ -685,8 +676,7 @@ void CGroundMoveType::UpdateSkid()
 
 		if (groundHeight > pos.y) {
 			// ground impact, stop flying
-			flying = false;
-
+			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			owner->Move1D(groundHeight, 1, false);
 
 			// deal ground impact damage
@@ -714,16 +704,13 @@ void CGroundMoveType::UpdateSkid()
 		if (speedf < speedReduction && !onSlope) {
 			// stop skidding
 			speed = ZeroVector;
-
-			skidding = false;
 			useHeading = true;
-
-			owner->physicalState = oldPhysState;
 
 			skidRotSpd = math::floor(skidRotSpeed + skidRotAccel + 0.5f);
 			skidRotAccel = (skidRotSpd - skidRotSpeed) * 0.5f;
 			skidRotAccel *= (PI / 180.0f);
 
+			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
 			ChangeHeading(owner->heading);
 		} else {
 			if (onSlope) {
@@ -754,9 +741,11 @@ void CGroundMoveType::UpdateSkid()
 		if ((groundHeight - pos.y) < (speed.y + mapInfo->map.gravity)) {
 			speed.y += mapInfo->map.gravity;
 
-			flying = true;
-			skidding = true; // flying requires skidding
-			useHeading = false; // and relies on CalcSkidRot
+			// flying requires skidding and relies on CalcSkidRot
+			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
+			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
+
+			useHeading = false;
 		} else if ((groundHeight - pos.y) > speed.y) {
 			const float3& normal = (pos.IsInBounds())? ground->GetNormal(pos.x, pos.z): UpVector;
 			const float dot = speed.dot(normal);
@@ -774,7 +763,7 @@ void CGroundMoveType::UpdateSkid()
 	owner->Move3D(speed, true);
 	owner->UpdateDirVectors(true, true);
 
-	if (skidding) {
+	if (owner->IsSkidding()) {
 		CalcSkidRot();
 		CheckCollisionSkid();
 	} else {
@@ -793,27 +782,24 @@ void CGroundMoveType::UpdateSkid()
 
 void CGroundMoveType::UpdateControlledDrop()
 {
-	if (!owner->falling)
+	if (!owner->IsFalling())
 		return;
 
-	const float3& pos = owner->pos;
-	      float3& speed = owner->speed;
+	const float3&  pos = owner->pos;
+	const float3   acc = UpVector * std::min(mapInfo->map.gravity * owner->fallSpeed, 0.0f);
+	const float   drag = (pos.y < 0.0f) * 0.9f + (pos.y >= 0.0f) * 1.0f;
+	const float     wh = GetGroundHeight(pos);
 
-	speed.y += (mapInfo->map.gravity * owner->fallSpeed);
-	speed.y = std::min(speed.y, 0.0f);
+	owner->speed += acc;
+	owner->speed *= drag;
 
-	owner->Move3D(speed, true);
-
-	// water drag
-	if (pos.y < 0.0f)
-		speed *= 0.90;
-
-	const float wh = GetGroundHeight(pos);
+	owner->Move3D(owner->speed, true);
 
 	if (wh > pos.y) {
-		// ground impact
-		owner->Move1D(wh, 1, (owner->falling = false));
-		owner->script->Landed(); //stop parachute animation
+		// ground impact, stop parachute animation
+		owner->Move1D(wh, 1, false);
+		owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FALLING);
+		owner->script->Landed();
 	}
 }
 
@@ -1032,7 +1018,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		if (avoidee == owner)
 			continue;
 		// ignore aircraft (or flying ground units)
-		if (avoidee->physicalState == CSolidObject::Hovering || avoidee->physicalState == CSolidObject::Flying)
+		if (avoidee->IsInAir() || avoidee->IsFlying())
 			continue;
 		if (CMoveMath::IsNonBlocking(*avoiderMD, avoidee, avoider))
 			continue;
@@ -1511,7 +1497,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	bool checkYardMap,
 	bool checkTerrain
 ) {
-	if (checkTerrain && (!collider->isMoving || collider->inAir))
+	if (checkTerrain && (!collider->isMoving || collider->IsInAir()))
 		return;
 
 	// for factories, check if collidee's position is behind us (which means we are likely exiting)
@@ -1688,8 +1674,8 @@ void CGroundMoveType::HandleUnitCollisions(
 			continue;
 
 		if (collidee == collider) continue;
-		if (collidee->moveType->IsSkidding()) continue;
-		if (collidee->moveType->IsFlying()) continue;
+		if (collidee->IsSkidding()) continue;
+		if (collidee->IsFlying()) continue;
 
 		// disable collisions between collider and collidee
 		// if collidee is currently inside any transporter,
@@ -2039,7 +2025,7 @@ bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 	const float3& pos = owner->pos;
 
 	if (ud->slideTolerance < minSlideTolerance) { return false; }
-	if (owner->unitDef->floatOnWater && owner->inWater) { return false; }
+	if (owner->unitDef->floatOnWater && owner->IsInWater()) { return false; }
 	if (!pos.IsInBounds()) { return false; }
 
 	// if minSlideTolerance is zero, do not multiply maxSlope by ud->slideTolerance
@@ -2055,7 +2041,7 @@ bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 
 const float3& CGroundMoveType::GetGroundNormal(const float3& p) const
 {
-	if (owner->inWater && owner->unitDef->floatOnWater) {
+	if (owner->IsInWater() && owner->unitDef->floatOnWater) {
 		// return (ground->GetNormalAboveWater(p));
 		return UpVector;
 	}
@@ -2081,9 +2067,9 @@ float CGroundMoveType::GetGroundHeight(const float3& p) const
 
 void CGroundMoveType::AdjustPosToWaterLine()
 {
-	if (owner->falling)
+	if (owner->IsFalling())
 		return;
-	if (flying)
+	if (owner->IsFlying())
 		return;
 
 	if (modInfo.allowGroundUnitGravity) {
@@ -2145,8 +2131,8 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 		// NOTE:
 		//   the drag terms ensure speed-vector always
 		//   decays if wantedSpeed and deltaSpeed are 0
-		const float dragCoeff = (0.9999f * owner->inAir) + (0.99f * (1 - owner->inAir));
-		const float slipCoeff = (0.9999f * owner->inAir) + (0.95f * (1 - owner->inAir));
+		const float dragCoeff = (0.9999f * owner->IsInAir()) + (0.99f * (1 - owner->IsInAir()));
+		const float slipCoeff = (0.9999f * owner->IsInAir()) + (0.95f * (1 - owner->IsInAir()));
 
 		// use terrain-tangent vector because it does not
 		// depend on UnitDef::upright (unlike o->frontdir)

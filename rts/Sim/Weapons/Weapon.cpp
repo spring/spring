@@ -922,7 +922,7 @@ void CWeapon::DependentDied(CObject* o)
 bool CWeapon::TargetUnitOrPositionInUnderWater(const float3& targetPos, const CUnit* targetUnit)
 {
 	if (targetUnit != NULL) {
-		return (targetUnit->isUnderWater);
+		return (targetUnit->IsUnderWater());
 	} else {
 		return (targetPos.y < 0.0f);
 	}
@@ -931,11 +931,11 @@ bool CWeapon::TargetUnitOrPositionInUnderWater(const float3& targetPos, const CU
 bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit)
 {
 	if (targetUnit != NULL) {
-		return (targetUnit->inWater);
+		return (targetUnit->IsInWater());
 	} else {
-		// consistent with CUnit::inWater, and needed because
-		// GUIHandler places (some) user ground-attack orders
-		// on water surface
+		// consistent with CUnit::IsInWater(), and needed because
+		// GUIHandler places (some) user ground-attack orders on
+		// water surface
 		return (targetPos.y <= 0.0f);
 	}
 }

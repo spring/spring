@@ -196,10 +196,7 @@ CUnit::CUnit() : CSolidObject(),
 	activated(false),
 	crashing(false),
 	isDead(false),
-	falling(false),
 	fallSpeed(0.2f),
-	inAir(false),
-	inWater(false),
 	flankingBonusMode(0),
 	flankingBonusDir(1.0f, 0.0f, 0.0f),
 	flankingBonusMobility(10.0f),
@@ -442,7 +439,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	decloakDistance = unitDef->decloakDistance;
 	cloakTimeout = unitDef->cloakTimeout;
 
-	// <inWater> and friends are still false at this point
+	// physicalState has not been set at this point
 	if (unitDef->floatOnWater && (pos.y <= 0.0f)) {
 		Move1D(-unitDef->waterline, 1, false);
 	}
@@ -471,24 +468,6 @@ void CUnit::PostInit(const CUnit* builder)
 	// Call initializing script functions
 	script->Create();
 
-	if (moveDef != NULL) {
-		switch (moveDef->moveFamily) {
-			case MoveDef::Hover: {
-				physicalState = CSolidObject::Hovering;
-			} break;
-			case MoveDef::Ship: {
-				physicalState = CSolidObject::Floating;
-			} break;
-			default: {
-				physicalState = CSolidObject::OnGround;
-			} break;
-		}
-	} else {
-		physicalState = (unitDef->floatOnWater)?
-			CSolidObject::Floating:
-			CSolidObject::OnGround;
-	}
-
 	// all units are blocking (ie. register on the blocking-map
 	// when not flying) except mines, since their position would
 	// be given away otherwise by the PF, etc.
@@ -507,6 +486,7 @@ void CUnit::PostInit(const CUnit* builder)
 	}
 
 	UpdateTerrainType();
+	UpdatePhysicalState();
 
 	if (unitDef->canmove || unitDef->builder) {
 		if (unitDef->moveState <= FIRESTATE_NONE) {
@@ -617,7 +597,7 @@ void CUnit::SetDirVectors(const CMatrix44f& matrix) {
 // NOTE: movetypes call this directly
 void CUnit::UpdateDirVectors(bool useGroundNormal, bool isGroundUnit)
 {
-	if (isGroundUnit && inAir)
+	if (isGroundUnit && !IsOnGround())
 		return;
 
 	updir    = useGroundNormal? ground->GetSmoothNormal(pos.x, pos.z): UpVector;
@@ -632,7 +612,6 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 {
 	// drop unit from position
 	fallSpeed = unitDef->unitFallSpeed > 0 ? unitDef->unitFallSpeed : parent->unitDef->fallSpeed;
-	falling = true;
 
 	speed.y = 0.0f;
 	frontdir = parentDir;
@@ -640,6 +619,8 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 
 	Move1D(parentPos.y - height, 1, false);
 	UpdateMidAndAimPos();
+	SetPhysicalStateBit(CSolidObject::STATE_BIT_FALLING);
+
 	// start parachute animation
 	script->Falling();
 }
@@ -685,29 +666,7 @@ void CUnit::Update()
 	// TODO: move this to UnitScript::Tick?
 	localModel->UpdatePieceMatrices();
 
-	{
-		const bool oldInAir   = inAir;
-		const bool oldInWater = inWater;
-
-		inWater = (pos.y <= 0.0f);
-		inAir   = (!inWater) && ((pos.y - ground->GetHeightAboveWater(pos.x, pos.z)) > 1.0f);
-		isUnderWater = ((pos.y + ((moveDef == NULL || !moveDef->subMarine) * model->height)) < 0.0f);
-
-		if (inAir != oldInAir) {
-			if (inAir) {
-				eventHandler.UnitEnteredAir(this);
-			} else {
-				eventHandler.UnitLeftAir(this);
-			}
-		}
-		if (inWater != oldInWater) {
-			if (inWater) {
-				eventHandler.UnitEnteredWater(this);
-			} else {
-				eventHandler.UnitLeftWater(this);
-			}
-		}
-	}
+	UpdatePhysicalState();
 
 	residualImpulse *= impulseDecayRate;
 	posErrorVector += posErrorDelta;
@@ -743,7 +702,6 @@ void CUnit::Update()
 		}
 	}
 }
-
 
 void CUnit::UpdateResources()
 {
@@ -1133,13 +1091,11 @@ void CUnit::DoWaterDamage()
 
 	const int  px            = pos.x / (SQUARE_SIZE * 2);
 	const int  pz            = pos.z / (SQUARE_SIZE * 2);
-	const bool isFloating    = (physicalState == CSolidObject::Floating);
-	const bool onGround      = (physicalState == CSolidObject::OnGround);
 	const bool isWaterSquare = (readmap->GetMIPHeightMapSynced(1)[pz * gs->hmapx + px] <= 0.0f);
 
 	if (!isWaterSquare)
 		return;
-	if (!isFloating && !onGround)
+	if (!IsInWater())
 		return;
 
 	DoDamage(DamageArray(mapInfo->water.damage), ZeroVector, NULL, -DAMAGE_EXTSOURCE_WATER, -1);
@@ -1295,7 +1251,7 @@ void CUnit::StoreImpulse(const float3& impulse) {
 	const float3& groundNormal = ground->GetNormal(pos.x, pos.z);
 	const float groundImpulseScale = std::min(0.0f, residualImpulse.dot(groundNormal));
 
-	CSolidObject::StoreImpulse(impulse - (groundNormal * groundImpulseScale * (1 - inAir)));
+	CSolidObject::StoreImpulse(impulse - (groundNormal * groundImpulseScale * IsOnGround()));
 
 	if (moveType->CanApplyImpulse(impulse)) {
 		CSolidObject::ApplyImpulse();
@@ -1673,6 +1629,29 @@ void CUnit::DependentDied(CObject* o)
 }
 
 
+
+void CUnit::UpdatePhysicalState()
+{
+	const bool inAir   = IsInAir();
+	const bool inWater = IsInWater();
+
+	CSolidObject::UpdatePhysicalState();
+
+	if (IsInAir() != inAir) {
+		if (IsInAir()) {
+			eventHandler.UnitEnteredAir(this);
+		} else {
+			eventHandler.UnitLeftAir(this);
+		}
+	}
+	if (IsInWater() != inWater) {
+		if (IsInWater()) {
+			eventHandler.UnitEnteredWater(this);
+		} else {
+			eventHandler.UnitLeftWater(this);
+		}
+	}
+}
 
 void CUnit::UpdateTerrainType()
 {
@@ -2423,11 +2402,7 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(crashing),
 	CR_MEMBER(isDead),
-	CR_MEMBER(falling),
 	CR_MEMBER(fallSpeed),
-
-	CR_MEMBER(inAir),
-	CR_MEMBER(inWater),
 
 	CR_MEMBER(flankingBonusMode),
 	CR_MEMBER(flankingBonusDir),

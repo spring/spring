@@ -1169,7 +1169,7 @@ void CDynWater::AddShipWakes()
 				}
 
 				// skip submarines (which have deep waterlines)
-				if (unit->isUnderWater || !unit->inWater)
+				if (unit->IsUnderWater() || !unit->IsInWater())
 					continue;
 
 				const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;

@@ -34,7 +34,7 @@ float GMTDefaultPathController::GetDeltaSpeed(
 	const float deltaSpeed = (rawSpeedDiff < 0.0f)? -modDecRate: modAccRate;
 
 	// no acceleration changes if not on ground
-	return (deltaSpeed * (1 - int(owner->inAir)));
+	return (deltaSpeed * owner->IsOnGround());
 }
 
 short GMTDefaultPathController::GetDeltaHeading(
@@ -52,10 +52,10 @@ short GMTDefaultPathController::GetDeltaHeading(
 	}
 
 	// no orientation changes if not on ground
-	return (deltaHeading * (1 - int(owner->inAir)));
+	return (deltaHeading * owner->IsOnGround());
 }
 
 bool GMTDefaultPathController::IgnoreTerrain(const MoveDef& md, const float3& pos) const {
-	return (owner->inAir);
+	return (!owner->IsOnGround());
 }
 

@@ -665,7 +665,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 				tempTargetUnits[targetUnit->id] = tempNum;
 
-				if (targetUnit->isUnderWater && !weaponDef->waterweapon) {
+				if (targetUnit->IsUnderWater() && !weaponDef->waterweapon) {
 					continue;
 				}
 				if (targetUnit->isDead) {

@@ -180,8 +180,9 @@ void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed
 						}
 					}
 				} else {
-					if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(transportee->moveType)) {
-						mt->StartFlying();
+					if (transportee->unitDef->IsGroundUnit()) {
+						transportee->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
+						transportee->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
 					}
 				}
 

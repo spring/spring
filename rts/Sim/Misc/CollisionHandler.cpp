@@ -126,7 +126,7 @@ bool CCollisionHandler::CollisionFootPrint(const CSolidObject* o, const float3& 
 	// or Collision(CFeature*)) is performed (which we already passed).
 	if (!o->isMarkedOnBlockingMap)
 		return false;
-	if (o->physicalState == CSolidObject::Flying)
+	if (o->IsInAir())
 		return false;
 
 	// this is semi-equivalent to testing if <p> is inside the rectangular

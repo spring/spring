@@ -81,9 +81,6 @@ CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 	atGoal(false),
 	haveFinalWaypoint(false),
 
-	skidding(false),
-	flying(false),
-
 	turnRate(0.1f),
 	accRate(0.01f),
 	decRate(0.01f),
@@ -119,9 +116,7 @@ CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 
 	pathFailures(0),
 	etaFailures(0),
-	nonMovingFailures(0),
-
-	oldPhysState(CSolidObject::OnGround)
+	nonMovingFailures(0)
 {
 	assert(owner != NULL);
 	assert(owner->unitDef != NULL);
@@ -154,17 +149,17 @@ bool CClassicGroundMoveType::Update()
 	if (OnSlope() &&
 		(!owner->unitDef->floatOnWater || ground->GetHeightAboveWater(owner->midPos.x, owner->midPos.z) > 0))
 	{
-		skidding = true;
+		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
 	}
 
-	if (skidding) {
+	if (owner->IsSkidding()) {
 		UpdateSkid();
 		return false;
 	}
 
 	ASSERT_SYNCED(owner->pos);
 
-	if (owner->falling) {
+	if (owner->IsFalling()) {
 		UpdateControlledDrop();
 		return false;
 	}
@@ -280,14 +275,14 @@ void CClassicGroundMoveType::SlowUpdate()
 		StartEngine();
 	}
 
-	if (!flying) {
+	if (!owner->IsFlying()) {
 		if (!owner->pos.IsInBounds()) {
 			owner->pos.ClampInBounds();
 			oldPos = owner->pos;
 		}
 	}
 
-	if (!(owner->falling || flying)) {
+	if (!(owner->IsFalling() || owner->IsFlying())) {
 		float wh = 0.0f;
 
 		if (owner->unitDef->floatOnWater) {
@@ -453,7 +448,7 @@ bool CClassicGroundMoveType::CanApplyImpulse()
 	float3& impulse = owner->residualImpulse;
 	float3& speed = owner->speed;
 
-	if (skidding) {
+	if (owner->IsSkidding()) {
 		speed += impulse;
 		impulse = ZeroVector;
 	}
@@ -466,7 +461,6 @@ bool CClassicGroundMoveType::CanApplyImpulse()
 	const float sqstrength = impulse.SqLength();
 
 	if (sqstrength > 9 || impulse.dot(groundNormal) > 0.3f) {
-		skidding = true;
 		speed += impulse;
 		impulse = ZeroVector;
 
@@ -477,12 +471,12 @@ bool CClassicGroundMoveType::CanApplyImpulse()
 			skidDir.y = 0;
 			skidDir.Normalize();
 		skidRotVector = skidDir.cross(UpVector);
-		oldPhysState = owner->physicalState;
-		owner->physicalState = CSolidObject::Flying;
+
+		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
 		owner->moveType->useHeading = false;
 
 		if (speed.dot(groundNormal) > 0.2f) {
-			flying = true;
+			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			skidRotSpeed2 = (gs->randFloat() - 0.5f) * 0.04f;
 		}
 	}
@@ -497,7 +491,7 @@ void CClassicGroundMoveType::UpdateSkid()
 	const float3& pos = owner->pos;
 	const SyncedFloat3& midPos = owner->midPos;
 
-	if (flying) {
+	if (owner->IsFlying()) {
 		speed.y += mapInfo->map.gravity;
 		if (midPos.y < 0)
 			speed *= 0.95f;
@@ -509,8 +503,8 @@ void CClassicGroundMoveType::UpdateSkid()
 			wh = ground->GetHeightReal(midPos.x, midPos.z);
 
 		if(wh>midPos.y-owner->relMidPos.y){
-			flying=false;
 			skidRotSpeed+=(gs->randFloat()-0.5f)*1500;
+			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			owner->Move1D(wh+owner->relMidPos.y-speed.y*0.5f, 1, false);
 			float impactSpeed = -speed.dot(ground->GetNormal(midPos.x,midPos.z));
 			if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
@@ -527,12 +521,11 @@ void CClassicGroundMoveType::UpdateSkid()
 		if (speedf < speedReduction && !onSlope) {
 			currentSpeed = 0.0f;
 			speed = ZeroVector;
-			skidding = false;
 			skidRotSpeed = 0.0f;
-			owner->physicalState = oldPhysState;
+			skidRotSpeed2 = (math::floor(skidRotPos2 + skidRotSpeed2 + 0.5f) - skidRotPos2) * 0.5f;
+
 			owner->moveType->useHeading = true;
-			float rp = math::floor(skidRotPos2 + skidRotSpeed2 + 0.5f);
-			skidRotSpeed2 = (rp - skidRotPos2) * 0.5f;
+			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
 			ChangeHeading(owner->heading);
 		} else {
 			if (onSlope) {
@@ -564,8 +557,9 @@ void CClassicGroundMoveType::UpdateSkid()
 
 		if(wh-pos.y < speed.y + mapInfo->map.gravity){
 			speed.y += mapInfo->map.gravity;
-			skidding = true;
-			flying = true;
+
+			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
+			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
 		} else if(wh-pos.y > speed.y){
 			const float3& normal = ground->GetNormal(pos.x, pos.z);
 			float dot = speed.dot(normal);
@@ -589,7 +583,7 @@ void CClassicGroundMoveType::UpdateControlledDrop()
 	float3& speed = owner->speed;
 	const SyncedFloat3& midPos = owner->midPos;
 
-	if (owner->falling) {
+	if (owner->IsFalling()) {
 		speed.y += mapInfo->map.gravity * owner->fallSpeed;
 
 		if (owner->speed.y > 0)
@@ -608,7 +602,8 @@ void CClassicGroundMoveType::UpdateControlledDrop()
 			wh = ground->GetHeightReal(midPos.x, midPos.z);
 
 		if(wh > midPos.y-owner->relMidPos.y){
-			owner->Move1D(wh + owner->relMidPos.y - speed.y*0.8, 1, (owner->falling = false));
+			owner->Move1D(wh + owner->relMidPos.y - speed.y*0.8, 1, false);
+			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FALLING);
 			owner->script->Landed();
 		}
 	}
@@ -656,9 +651,6 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 					owner->speed += dif * (impactSpeed * (1 - part) * 2);
 					u->speed -= dif * (impactSpeed * part * 2);
 
-					if (CClassicGroundMoveType* mt = dynamic_cast<CClassicGroundMoveType*>(u->moveType)) {
-						mt->skidding = true;
-					}
 					if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
 						owner->DoDamage(
 							DamageArray(impactSpeed * owner->mass * 0.2f * (1 - part)),
@@ -1579,7 +1571,7 @@ void CClassicGroundMoveType::AdjustPosToWaterLine()
 		wh = ground->GetHeightReal(owner->pos.x, owner->pos.z);
 	}
 
-	if (!(owner->falling || flying)) {
+	if (!(owner->IsFalling() || owner->IsFlying())) {
 		owner->Move1D(wh, 1, false);
 	}
 }

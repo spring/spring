@@ -858,9 +858,9 @@ void CStrafeAirMoveType::UpdateLanding()
 			const float3 originalPos = pos;
 
 			owner->Move3D(reservedLandingPos, false);
-			owner->physicalState = CSolidObject::OnGround;
+			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			owner->Block();
-			owner->physicalState = CSolidObject::Flying;
+			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 
 			owner->Move3D(originalPos, false);
 			owner->Deactivate();
@@ -1064,7 +1064,6 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 		aircraftState = newState;
 	}
 
-	owner->physicalState = CSolidObject::Flying;
 	owner->isMoving = (aircraftState != AIRCRAFT_LANDED);
 	owner->useAirLos = true;
 
@@ -1075,14 +1074,15 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 		case AIRCRAFT_FLYING:
 			owner->Activate();
 			owner->script->StartMoving();
+			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			break;
 		case AIRCRAFT_LANDED:
 			owner->useAirLos = false;
-			owner->physicalState = CSolidObject::OnGround;
 
 			//FIXME already inform commandAI in AIRCRAFT_LANDING!
 			//FIXME Problem is StopMove() also calls owner->script->StopMoving() what should only be called when landed. Also see CHoverAirMoveType::SetState().
 			owner->commandAI->StopMove();
+			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			break;
 		default:
 			break;
