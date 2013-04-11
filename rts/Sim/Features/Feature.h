@@ -99,7 +99,6 @@ public:
 	 */
 	bool isRepairingBeforeResurrect;
 	bool isAtFinalHeight;
-	bool isMoving;
 	bool inUpdateQue;
 
 	float resurrectProgress;
