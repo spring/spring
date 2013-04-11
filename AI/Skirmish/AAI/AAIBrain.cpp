@@ -984,14 +984,14 @@ void AAIBrain::BuildUnitOfMovementType(unsigned int allowed_move_type, float cos
 
 	if(rand()%cfg->HIGH_RANGE_UNITS_RATE == 1)
 	{
-		int t = rand()%1000;
+		const int t = rand()%1000;
 
 		if(t < 350)
 			range = 0.75;
 		else if(t == 700)
 			range = 1.3f;
 		else
-			t = 1.7f;
+			range = 1.7f;
 	}
 	else
 		range = 0.1f;
