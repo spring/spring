@@ -104,14 +104,12 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 		dataDirLocater.SetIsolationModeDir(cmdline.GetString("isolation-dir"));
 	}
 
+	const std::string configSource = cmdline.IsSet("config") ? cmdline.GetString("config") : "";
 
-	std::string configSource = "";
-	if (cmdline.IsSet("config")) {
-		configSource = cmdline.GetString("config");
-	}
+	dataDirLocater.LocateDataDirs();
+	dataDirLocater.ChangeCwdToWriteDir();
 	ConfigHandler::Instantiate(configSource);
 	GlobalConfig::Instantiate();
-
 
 	if (cmdline.IsSet("list-config-vars")) {
 		ConfigVariable::OutputMetaDataMap();
@@ -144,8 +142,9 @@ int main(int argc, char* argv[])
 	std::string scriptName;
 	std::string scriptText;
 
-	FileSystemInitializer::Initialize();
 	ParseCmdLine(argc, argv, &scriptName);
+
+	FileSystemInitializer::Initialize();
 
 	// Initialize crash reporting
 	CrashHandler::Install();
