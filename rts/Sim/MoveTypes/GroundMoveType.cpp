@@ -782,22 +782,19 @@ void CGroundMoveType::UpdateSkid()
 
 void CGroundMoveType::UpdateControlledDrop()
 {
-	if (!owner->IsFalling())
-		return;
-
 	const float3&  pos = owner->pos;
 	const float3   acc = UpVector * std::min(mapInfo->map.gravity * owner->fallSpeed, 0.0f);
 	const float   drag = (pos.y < 0.0f) * 0.9f + (pos.y >= 0.0f) * 1.0f;
-	const float     wh = GetGroundHeight(pos);
+	const float     gh = GetGroundHeight(pos);
 
 	owner->speed += acc;
 	owner->speed *= drag;
 
 	owner->Move3D(owner->speed, true);
 
-	if (wh > pos.y) {
+	if (gh > pos.y) {
 		// ground impact, stop parachute animation
-		owner->Move1D(wh, 1, false);
+		owner->Move1D(gh, 1, false);
 		owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FALLING);
 		owner->script->Landed();
 	}
