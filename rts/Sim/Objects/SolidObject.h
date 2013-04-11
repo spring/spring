@@ -48,10 +48,20 @@ public:
 	CR_DECLARE(CSolidObject)
 
 	enum PhysicalState {
-		OnGround,
-		Floating,
-		Hovering,
-		Flying,
+		// NOTE: {ONGROUND,*WATER} and INAIR are mutually exclusive
+		STATE_BIT_ONGROUND   = (1 << 0),
+		STATE_BIT_INWATER    = (1 << 1),
+		STATE_BIT_UNDERWATER = (1 << 2),
+		STATE_BIT_INAIR      = (1 << 3),
+
+		// special bits for impulse-affected objects that do
+		// not get set automatically by UpdatePhysicalState;
+		// also used by aircraft to control block / unblock
+		// behavior
+		// NOTE: FLYING DOES NOT ALWAYS IMPLY INAIR!
+		STATE_BIT_FLYING   = (1 << 4),
+		STATE_BIT_FALLING  = (1 << 5),
+		STATE_BIT_SKIDDING = (1 << 6),
 	};
 	enum DamageType {
 		DAMAGE_EXPLOSION_WEAPON = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
@@ -89,6 +99,8 @@ public:
 	virtual void ForcedMove(const float3& newPos) {}
 	virtual void ForcedSpin(const float3& newDir) {}
 
+	virtual void UpdatePhysicalState();
+
 	void Move3D(const float3& v, bool relative) {
 		const float3& dv = relative? v: (v - pos);
 
@@ -117,11 +129,13 @@ public:
 		SetAimPos(ap, relative);
 	}
 
+
 	virtual CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const {
 		// should never get called (should be pure virtual, but cause of CREG we cannot use it)
 		assert(false);
 		return CMatrix44f();
 	}
+
 
 	/**
 	 * Adds this object to the GroundBlockingMap if and only if its collidable
@@ -134,10 +148,23 @@ public:
 	 */
 	void UnBlock();
 
+
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
 
 	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
+
+	bool IsOnGround() const { return ((physicalState & STATE_BIT_ONGROUND) != 0); }
+	bool IsInAir() const { return ((physicalState & STATE_BIT_INAIR) != 0); }
+	bool IsInWater() const { return ((physicalState & STATE_BIT_INWATER) != 0); }
+	bool IsUnderWater() const { return ((physicalState & STATE_BIT_UNDERWATER) != 0); }
+
+	bool IsFlying() const { return ((physicalState & STATE_BIT_FLYING) != 0); }
+	bool IsFalling() const { return ((physicalState & STATE_BIT_FALLING) != 0); }
+	bool IsSkidding() const { return ((physicalState & STATE_BIT_SKIDDING) != 0); }
+
+	void SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= (bit); physicalState = static_cast<PhysicalState>(ps); }
+	void ClearPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps &= (~bit); physicalState = static_cast<PhysicalState>(ps); }
 
 private:
 	void SetMidPos(const float3& mp, bool relative) {
@@ -191,11 +218,11 @@ public:
 	int2 footprint;                             ///< The unrotated x-/z-size of this object, according to its footprint.
 
 	SyncedSshort heading;                       ///< Contains the same information as frontdir, but in a short signed integer.
-	PhysicalState physicalState;                ///< The current state of the object within the gameworld. I.e Flying or OnGround.
+	PhysicalState physicalState;                ///< The current state of the object within the gameworld.
 
 	bool isMoving;                              ///< = velocity.length() > 0.0
-	bool isUnderWater;                          ///< true if this object is completely submerged (pos + height < 0)
 	bool isMarkedOnBlockingMap;                 ///< true if this object is currently marked on the GroundBlockingMap
+
 	float3 groundBlockPos;
 
 	float3 speed;                               ///< current velocity vector (length in elmos/frame)

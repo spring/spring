@@ -4,10 +4,11 @@
 #define GROUNDMOVETYPE_H
 
 #include "MoveType.h"
-#include "Sim/Objects/SolidObject.h"
+#include "System/Sync/SyncedFloat3.h"
 
 struct UnitDef;
 struct MoveDef;
+class CSolidObject;
 class IPathController;
 
 class CGroundMoveType : public AMoveType
@@ -34,12 +35,7 @@ public:
 	bool CanApplyImpulse(const float3&);
 	void LeaveTransport();
 
-	void StartSkidding() { skidding = true; }
-	void StartFlying() { skidding = true; flying = true; } // flying requires skidding
-
 	bool OnSlope(float minSlideTolerance);
-	bool IsSkidding() const { return skidding; }
-	bool IsFlying() const { return flying; }
 	bool IsReversing() const { return reversing; }
 
 private:
@@ -131,8 +127,6 @@ private:
 	float currWayPointDist;
 	float prevWayPointDist;
 
-	bool skidding;
-	bool flying;
 	bool reversing;
 	bool idling;
 	bool canReverse;
@@ -141,8 +135,6 @@ private:
 	float3 skidRotVector;  /// vector orthogonal to skidDir
 	float skidRotSpeed;    /// rotational speed when skidding (radians / (GAME_SPEED frames))
 	float skidRotAccel;    /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
-
-	CSolidObject::PhysicalState oldPhysState;
 
 	float3 waypointDir;
 	float3 flatFrontDir;

@@ -39,7 +39,6 @@ void CBuilding::PostInit(const CUnit* builder)
 {
 	if (unitDef->cantBeTransported)
 		mass = CSolidObject::DEFAULT_MASS;
-	physicalState = OnGround;
 
 	CUnit::PostInit(builder);
 }

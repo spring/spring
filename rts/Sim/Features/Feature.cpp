@@ -72,8 +72,6 @@ CFeature::CFeature() : CSolidObject(),
 {
 	crushable = true;
 	immobile = true;
-
-	physicalState = OnGround;
 }
 
 CFeature::~CFeature()
@@ -523,9 +521,9 @@ bool CFeature::UpdatePosition()
 	}
 
 	residualImpulse *= impulseDecayRate;
-
-	isUnderWater = ((pos.y + height) < 0.0f);
 	isMoving = ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f));
+
+	UpdatePhysicalState();
 
 	return isMoving;
 }

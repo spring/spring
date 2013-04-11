@@ -1777,7 +1777,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 		file << "\t\t\theading: " << int(u->heading) << ", mapSquare: " << u->mapSquare << "\n";
 		file << "\t\t\thealth: " << u->health << ", experience: " << u->experience << "\n";
 		file << "\t\t\tisDead: " << u->isDead << ", activated: " << u->activated << "\n";
-		file << "\t\t\tinAir: " << u->inAir << ", inWater: " << u->inWater << "\n";
+		file << "\t\t\tphysicalState: " << u->physicalState << "\n";
 		file << "\t\t\tfireState: " << u->fireState << ", moveState: " << u->moveState << "\n";
 		file << "\t\t\tmodelID: " << om->id << " (name: " << om->name << ")\n";
 		file << "\t\t\tmodelRadius: " << om->radius << ", modelHeight: " << om->height << "\n";

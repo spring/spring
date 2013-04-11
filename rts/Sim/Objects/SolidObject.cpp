@@ -5,6 +5,7 @@
 #include "SolidObjectDef.h"
 #include "Map/ReadMap.h"
 #include "Map/Ground.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
@@ -39,7 +40,6 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(heading),
 	CR_ENUM_MEMBER(physicalState),
 	CR_MEMBER(isMoving),
-	CR_MEMBER(isUnderWater),
 	CR_MEMBER(isMarkedOnBlockingMap),
 	CR_MEMBER(groundBlockPos),
 	CR_MEMBER(speed),
@@ -83,12 +83,14 @@ CSolidObject::CSolidObject():
 
 	xsize(1),
 	zsize(1),
-	footprint(1,1),
+	footprint(1, 1),
+
 	heading(0),
-	physicalState(OnGround),
+	physicalState(STATE_BIT_ONGROUND),
+
 	isMoving(false),
-	isUnderWater(false),
 	isMarkedOnBlockingMap(false),
+
 	speed(ZeroVector),
 	residualImpulse(ZeroVector),
 	team(0),
@@ -117,6 +119,25 @@ CSolidObject::~CSolidObject() {
 	collisionVolume = NULL;
 }
 
+void CSolidObject::UpdatePhysicalState() {
+	const float mh = model->height * (moveDef == NULL || !moveDef->subMarine);
+	const float gh = ground->GetHeightReal(pos.x, pos.z);
+
+	unsigned int ps = physicalState;
+
+	ps &= (~CSolidObject::STATE_BIT_ONGROUND);
+	ps &= (~CSolidObject::STATE_BIT_INWATER);
+	ps &= (~CSolidObject::STATE_BIT_UNDERWATER);
+	ps &= (~CSolidObject::STATE_BIT_INAIR);
+
+	ps |= (CSolidObject::STATE_BIT_ONGROUND   * ((pos.y -                 gh) <= 1.0f));
+	ps |= (CSolidObject::STATE_BIT_INWATER    * ( pos.y                       <= 0.0f));
+	ps |= (CSolidObject::STATE_BIT_UNDERWATER * ((pos.y +                 mh) <  0.0f));
+	ps |= (CSolidObject::STATE_BIT_INAIR      * ((pos.y - std::max(gh, 0.0f)) >  1.0f));
+
+	physicalState = static_cast<PhysicalState>(ps);
+}
+
 
 
 void CSolidObject::UnBlock() {
@@ -128,14 +149,13 @@ void CSolidObject::UnBlock() {
 }
 
 void CSolidObject::Block() {
-	if (physicalState == Flying) {
-		//FIXME why does airmovetypes really rely on Block() to UNblock!
+	if (IsFlying()) {
+		//FIXME why do airmovetypes really rely on Block() to UNblock!
 		UnBlock();
 		return;
 	}
 
 	if (!blocking) {
-		//FIXME just why???
 		UnBlock();
 		return;
 	}

@@ -130,7 +130,7 @@ public:
 		if (unit->useAirLos)
 			return (InAirLos(unit->pos, allyTeam));
 
-		if (unit->isUnderWater && requireSonarUnderWater)
+		if (unit->IsUnderWater() && requireSonarUnderWater)
 			return (radarhandler->InRadar(unit, allyTeam));
 
 		return (InLos(unit->pos, allyTeam));

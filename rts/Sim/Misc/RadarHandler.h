@@ -59,7 +59,7 @@ public:
 	bool InRadar(const CUnit* unit, int allyTeam) const {
 		const int square = GetSquare(unit->pos);
 
-		if (unit->isUnderWater) {
+		if (unit->IsUnderWater()) {
 			// unit is completely submerged, only sonar can see it
 			if (unit->sonarStealth && !unit->beingBuilt) {
 				return false;
