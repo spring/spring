@@ -355,7 +355,6 @@ CArchiveScanner::CArchiveScanner()
 		scanDirs.push_back(*d + "maps");
 		scanDirs.push_back(*d + "base");
 		scanDirs.push_back(*d + "games");
-		scanDirs.push_back(*d + "mods");
 		scanDirs.push_back(*d + "packages");
 	}
 	// ArchiveCache has been parsed at this point --> archiveInfos is populated
