@@ -5,7 +5,6 @@
 #include "SolidObjectDef.h"
 #include "Map/ReadMap.h"
 #include "Map/Ground.h"
-#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
@@ -120,7 +119,7 @@ CSolidObject::~CSolidObject() {
 }
 
 void CSolidObject::UpdatePhysicalState() {
-	const float mh = model->height * (moveDef == NULL || !moveDef->subMarine);
+	const float mh = height * (moveDef == NULL || !moveDef->subMarine);
 	const float gh = ground->GetHeightReal(pos.x, pos.z);
 
 	unsigned int ps = physicalState;
