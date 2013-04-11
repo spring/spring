@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <fstream>
+#include <iostream>
 #include <stdexcept>
 #include <cassert>
 #include <boost/cstdint.hpp>
@@ -36,7 +35,6 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Util.h"
-#include "System/TimeProfiler.h"
 
 
 CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject);
