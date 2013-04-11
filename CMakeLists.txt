@@ -365,7 +365,7 @@ elseif (CMAKE_COMPILER_IS_GNUCXX)
 elseif (MSVC)
 	# nothing to be done here
 else   (MSVC)
-	Message(FATAL_ERROR "unknown compiler")
+	Message(WARNING "unknown compiler")
 endif ($ENV{CXX} MATCHES "icpc")
 
 add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
