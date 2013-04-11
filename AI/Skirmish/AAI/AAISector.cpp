@@ -557,17 +557,17 @@ float AAISector::GetEnemyDefencePowerAgainstAssaultCategory(int assault_category
 
 float AAISector::GetEnemyThreatToMovementType(unsigned int movement_type)
 {
-	if(movement_type && MOVE_TYPE_GROUND)
+	if(movement_type & MOVE_TYPE_GROUND)
 		return enemy_stat_combat_power[0] + enemy_mobile_combat_power[0];
-	else if(movement_type && MOVE_TYPE_AIR)
+	else if(movement_type & MOVE_TYPE_AIR)
 		return enemy_stat_combat_power[1] + enemy_mobile_combat_power[1];
-	else if(movement_type && MOVE_TYPE_HOVER)
+	else if(movement_type & MOVE_TYPE_HOVER)
 		return enemy_stat_combat_power[2] + enemy_mobile_combat_power[2];
-	else if(movement_type && MOVE_TYPE_FLOATER)
+	else if(movement_type & MOVE_TYPE_FLOATER)
 		return enemy_stat_combat_power[3] + enemy_mobile_combat_power[3];
-	else if(movement_type && MOVE_TYPE_UNDERWATER)
+	else if(movement_type & MOVE_TYPE_UNDERWATER)
 		return enemy_stat_combat_power[4] + enemy_mobile_combat_power[4];
-	else if(movement_type && MOVE_TYPE_SEA)
+	else if(movement_type & MOVE_TYPE_SEA)
 		return 0.5 * (enemy_stat_combat_power[4] + enemy_mobile_combat_power[4] + enemy_stat_combat_power[3] + enemy_mobile_combat_power[3]);
 	else
 		return 0;
