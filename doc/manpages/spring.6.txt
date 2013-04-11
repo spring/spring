@@ -59,7 +59,7 @@ It is useful for testing and simulating AI only games at high speeds
 on systems without graphics and sound output support.
 endif::HEADLESS[]
 ifdef::DEFAULT[]
-The engine can run graphics and simulation in two separate threads, 
+The engine can run graphics and simulation in two separate threads,
 depending on the game and engine settings.
 This will typically boost the performance on multi-core systems.
 endif::DEFAULT[]
@@ -102,9 +102,6 @@ ifndef::DEDICATED[  Run as a server]
 ifndef::DEDICATED[ ]
 ifndef::DEDICATED[*-c, --client*::]
 ifndef::DEDICATED[  Run as a client]
-ifndef::DEDICATED[ ]
-ifndef::DEDICATED[*-p, --projectiledump*::]
-ifndef::DEDICATED[  Dump projectile class info (alias CEG classes) into projectiles.txt]
 ifndef::GUILESS[ ]
 ifndef::GUILESS[*-t, --textureatlas*::]
 ifndef::GUILESS[  Dump each finalised textureatlas into textureatlasN.tga]
@@ -139,7 +136,10 @@ ifndef::DEDICATED[*--list-skirmish-ais*::]
 ifndef::DEDICATED[  Dump a list of available Skirmish AIs to STDOUT]
 ifndef::DEDICATED[ ]
 ifndef::DEDICATED[*--list-def-tags*::]
-ifndef::DEDICATED[  Dump a list of available Definition Tags to STDOUT]
+ifndef::DEDICATED[  Dump a list of available Definition Tags in JSON-format to STDOUT]
+ifndef::DEDICATED[ ]
+ifndef::DEDICATED[*--list-ceg-classes*::]
+ifndef::DEDICATED[  Dump a list of available Projectile classes in JSON-format to STDOUT]
 
 *--list-config-vars*::
   Dump all default config vars in JSON-format to STDOUT

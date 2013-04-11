@@ -182,7 +182,7 @@ public:
 	CCustomExplosionGenerator(): CStdExplosionGenerator() {}
 	~CCustomExplosionGenerator() { ClearCache(); }
 
-	static void OutputProjectileClassInfo();
+	static bool OutputProjectileClassInfo();
 	static unsigned int GetFlagsFromTable(const LuaTable& table);
 	static unsigned int GetFlagsFromHeight(float height, float altitude);
 
