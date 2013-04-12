@@ -151,6 +151,7 @@ public:
 
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
+	float3 GetWantedUpDir(bool useGroundNormal) const;
 
 	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
 

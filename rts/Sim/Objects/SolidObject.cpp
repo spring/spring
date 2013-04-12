@@ -243,6 +243,37 @@ int2 CSolidObject::GetMapPos(const float3& position) const
 	return mp;
 }
 
+float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
+	// NOTE:
+	//   for aircraft IsOnGround is already factored into useGroundNormal
+	//   for ground-units the situation is more complicated because 1) it
+	//   depends on the 'upright' tag and 2) ships and hovercraft are not
+	//   "on the ground" all the time ('ground' is the ocean floor, *not*
+	//   the water surface) and neither are tanks / bots due to impulses,
+	//   gravity, ...
+	const float3 gn = ground->GetSmoothNormal(pos.x, pos.z) * useGroundNormal;
+	const float3 wn = UpVector * (1 - useGroundNormal);
+
+	if (moveDef == NULL)
+		return (gn + wn);
+
+	// not an aircraft if we get here, prevent pitch changes
+	// if(f) the object is neither on the ground nor in water
+	// for whatever reason (GMT also prevents heading changes)
+	if (IsInAir())
+		return updir;
+
+	switch (moveDef->moveFamily) {
+		case MoveDef::Tank:  { if (IsOnGround()) { return (gn + wn); } else { return UpVector; } } break;
+		case MoveDef::KBot:  { if (IsOnGround()) { return (gn + wn); } else { return UpVector; } } break;
+		case MoveDef::Hover: { if (IsInWater()) { return UpVector; } else { return (gn + wn); } } break;
+		case MoveDef::Ship:  { if (IsInWater()) { return UpVector; } else { return (gn + wn); } } break;
+	}
+
+	assert(false);
+	return ZeroVector;
+}
+
 
 
 void CSolidObject::Kill(const float3& impulse, bool crushKill) {

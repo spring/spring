@@ -592,7 +592,7 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 
 	owner->heading += pathController->GetDeltaHeading(pathId, (wantedHeading = newHeading), owner->heading, turnRate);
 
-	owner->UpdateDirVectors(!owner->upright && maxSpeed > 0.0f, true);
+	owner->UpdateDirVectors(!owner->upright);
 	owner->UpdateMidAndAimPos();
 
 	flatFrontDir = owner->frontdir;
@@ -711,6 +711,7 @@ void CGroundMoveType::UpdateSkid()
 			skidRotAccel *= (PI / 180.0f);
 
 			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
+			// update wanted-heading after coming to a stop
 			ChangeHeading(owner->heading);
 		} else {
 			if (onSlope) {
@@ -761,7 +762,7 @@ void CGroundMoveType::UpdateSkid()
 
 	// translate before rotate, match terrain normal if not in air
 	owner->Move3D(speed, true);
-	owner->UpdateDirVectors(true, true);
+	owner->UpdateDirVectors(!owner->upright);
 
 	if (owner->IsSkidding()) {
 		CalcSkidRot();
@@ -2038,8 +2039,8 @@ bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 
 const float3& CGroundMoveType::GetGroundNormal(const float3& p) const
 {
-	if (owner->IsInWater() && owner->unitDef->floatOnWater) {
-		// return (ground->GetNormalAboveWater(p));
+	if (owner->IsInWater() && !owner->IsOnGround()) {
+		// ship or hovercraft; return (ground->GetNormalAboveWater(p));
 		return UpVector;
 	}
 

@@ -181,7 +181,7 @@ void AAirMoveType::UpdateLanded()
 	owner->Move1D(std::max(curHeight, minHeight), 1, false);
 	owner->Move3D(owner->speed, true);
 	// match the terrain normal
-	owner->UpdateDirVectors(true);
+	owner->UpdateDirVectors(owner->IsOnGround());
 	owner->UpdateMidAndAimPos();
 }
 
