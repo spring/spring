@@ -14,7 +14,9 @@
 	// For GCC, unknown pragma warnings are disabled globally
 	// with "-Wno-unknown-pragmas".
 	// On MSVC, we can disable unknown pragma warnings locally:
+	#ifdef _MSC_VER
 	#pragma warning (disable : 4068 )
+	#endif
 #endif
 
 #endif // _OPEN_MP_COND_H
