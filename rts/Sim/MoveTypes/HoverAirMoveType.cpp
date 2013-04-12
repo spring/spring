@@ -597,7 +597,7 @@ void CHoverAirMoveType::UpdateHeading()
 		heading += std::max(deltaHeading, short(-turnRate));
 	}
 
-	owner->UpdateDirVectors(aircraftState == AIRCRAFT_LANDED);
+	owner->UpdateDirVectors(owner->IsOnGround());
 	owner->UpdateMidAndAimPos();
 }
 

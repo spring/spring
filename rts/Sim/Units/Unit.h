@@ -149,7 +149,7 @@ public:
 	void UpdatePhysicalState();
 
 	void SetDirVectors(const CMatrix44f&);
-	void UpdateDirVectors(bool, bool = false);
+	void UpdateDirVectors(bool useGroundNormal);
 
 	bool IsNeutral() const { return neutral; }
 	bool IsCloaked() const { return isCloaked; }

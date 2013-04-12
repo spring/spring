@@ -34,7 +34,12 @@ float GMTDefaultPathController::GetDeltaSpeed(
 	const float deltaSpeed = (rawSpeedDiff < 0.0f)? -modDecRate: modAccRate;
 
 	// no acceleration changes if not on ground
-	return (deltaSpeed * owner->IsOnGround());
+	//
+	// note: not 100% correct, depends on MoveDef::moveFamily
+	// ships should always use (1 - IsInWater()), hovercraft
+	// should use (1 - IsInWater()) but only when over water,
+	// tanks should also test if IsInWater() && !IsOnGround()
+	return (deltaSpeed * (1 - owner->IsInAir()));
 }
 
 short GMTDefaultPathController::GetDeltaHeading(
@@ -52,10 +57,10 @@ short GMTDefaultPathController::GetDeltaHeading(
 	}
 
 	// no orientation changes if not on ground
-	return (deltaHeading * owner->IsOnGround());
+	return (deltaHeading * (1 - owner->IsInAir()));
 }
 
 bool GMTDefaultPathController::IgnoreTerrain(const MoveDef& md, const float3& pos) const {
-	return (!owner->IsOnGround());
+	return (owner->IsInAir());
 }
 

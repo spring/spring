@@ -831,7 +831,7 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 	}
 
 	owner->Move3D(speed *= invDrag, true);
-	owner->UpdateDirVectors(false);
+	owner->UpdateDirVectors(owner->IsOnGround());
 	owner->UpdateMidAndAimPos();
 }
 
@@ -910,7 +910,7 @@ void CStrafeAirMoveType::UpdateLanding()
 	else if (rightdir.dot(reservedLandingPosDir) < -0.01f) { frontdir -= (rightdir * 0.02f); }
 
 	owner->Move3D(speed, true);
-	owner->UpdateDirVectors(false);
+	owner->UpdateDirVectors(owner->IsOnGround());
 	owner->UpdateMidAndAimPos();
 
 	// see if we are at the reserved (not user-clicked) landing spot

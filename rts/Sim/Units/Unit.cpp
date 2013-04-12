@@ -595,12 +595,9 @@ void CUnit::SetDirVectors(const CMatrix44f& matrix) {
 }
 
 // NOTE: movetypes call this directly
-void CUnit::UpdateDirVectors(bool useGroundNormal, bool isGroundUnit)
+void CUnit::UpdateDirVectors(bool useGroundNormal)
 {
-	if (isGroundUnit && !IsOnGround())
-		return;
-
-	updir    = useGroundNormal? ground->GetSmoothNormal(pos.x, pos.z): UpVector;
+	updir    = GetWantedUpDir(useGroundNormal);
 	frontdir = GetVectorFromHeading(heading);
 	rightdir = (frontdir.cross(updir)).Normalize();
 	frontdir = updir.cross(rightdir);
