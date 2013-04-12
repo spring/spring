@@ -110,6 +110,6 @@ CreateEngineBuildAndInstallTarget(legacy)
 # Create shortcuts
 # * make spring
 # * make install-spring
-add_dependencies(spring spring-legacy) # This also works for custom targets
+#add_dependencies(spring spring-legacy) # This also works for custom targets
+#add_dependencies(install-spring install-spring-legacy) # This also works for custom targets
 
-add_dependencies(install-spring install-spring-legacy) # This also works for custom targets
