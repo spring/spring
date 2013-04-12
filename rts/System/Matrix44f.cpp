@@ -2,6 +2,7 @@
 
 #include "System/Matrix44f.h"
 #include <memory.h>
+#include <algorithm>
 
 CR_BIND(CMatrix44f, );
 
