@@ -9,7 +9,7 @@
 #ifndef STREFLOP_COND_H
 #define STREFLOP_COND_H
 
-#if defined(STREFLOP_X87) || defined(STREFLOP_SSE) || defined(STREFLOP_SOFT)
+#if (defined(STREFLOP_X87) || defined(STREFLOP_SSE) || defined(STREFLOP_SOFT)) && (!defined(NOT_USING_STREFLOP))
 #include "streflop.h"
 namespace math {
 	using namespace streflop;
