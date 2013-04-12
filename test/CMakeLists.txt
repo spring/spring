@@ -147,6 +147,28 @@ Else  (NOT Boost_FOUND)
 	ADD_TEST(NAME testFloat3 COMMAND test_Float3)
 	Add_Dependencies(tests test_Float3)
 
+################################################################################
+### Matrix44f
+
+	Set(test_Matrix44f_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testMatrix44f.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Matrix44f.cpp"
+			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
+			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
+			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			${test_Log_sources}
+		)
+
+	ADD_EXECUTABLE(test_Matrix44f ${test_Matrix44f_src})
+	TARGET_LINK_LIBRARIES(test_Matrix44f
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
+			${SDL_LIBRARY}
+		)
+
+	set_target_properties(test_Matrix44f PROPERTIES COMPILE_FLAGS "-DNOT_USING_CREG -DNOT_USING_STREFLOP")
+	ADD_TEST(NAME testMatrix44f COMMAND test_Matrix44f)
+	Add_Dependencies(tests test_Matrix44f)
 
 ################################################################################
 ### BitwiseEnum
