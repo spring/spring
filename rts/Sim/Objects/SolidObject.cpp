@@ -264,10 +264,10 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 		return updir;
 
 	switch (moveDef->moveFamily) {
-		case MoveDef::Tank:  { if (IsOnGround()) { return (gn + wn); } else { return UpVector; } } break;
-		case MoveDef::KBot:  { if (IsOnGround()) { return (gn + wn); } else { return UpVector; } } break;
-		case MoveDef::Hover: { if (IsInWater()) { return UpVector; } else { return (gn + wn); } } break;
-		case MoveDef::Ship:  { if (IsInWater()) { return UpVector; } else { return (gn + wn); } } break;
+		case MoveDef::Tank:  { return ((gn + wn) * IsOnGround() + UpVector * (1 - IsOnGround())); } break;
+		case MoveDef::KBot:  { return ((gn + wn) * IsOnGround() + UpVector * (1 - IsOnGround())); } break;
+		case MoveDef::Hover: { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
+		case MoveDef::Ship:  { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
 	}
 
 	assert(false);
