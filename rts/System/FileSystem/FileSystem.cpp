@@ -103,16 +103,13 @@ std::string FileSystem::ConvertGlobToRegex(const std::string& glob)
 
 bool FileSystem::ComparePaths(std::string path1, std::string path2)
 {
-	FixSlashes(path1);
-	FixSlashes(path2);
-	return FileSystemAbstraction::ComparePaths(path1, path2);
+	return FileSystemAbstraction::ComparePaths(FixSlashes(path1), FixSlashes(path2));
 }
 
 
 bool FileSystem::FileExists(std::string file)
 {
-	FixSlashes(file);
-	return FileSystemAbstraction::FileExists(file);
+	return FileSystemAbstraction::FileExists(FixSlashes(file));
 }
 
 size_t FileSystem::GetFileSize(std::string file)
@@ -120,8 +117,8 @@ size_t FileSystem::GetFileSize(std::string file)
 	if (!CheckFile(file)) {
 		return 0;
 	}
-	FixSlashes(file);
-	return FileSystemAbstraction::GetFileSize(file);
+
+	return FileSystemAbstraction::GetFileSize(FixSlashes(file));
 }
 
 bool FileSystem::CreateDirectory(std::string dir)
@@ -255,27 +252,32 @@ bool FileSystem::CheckFile(const std::string& file)
 	// Don't allow code to escape from the data directories.
 	// Note: this does NOT mean this is a SAFE fopen function:
 	// symlink-, hardlink-, you name it-attacks are all very well possible.
-	// The check is just ment to "enforce" certain coding behaviour.
-	bool hasParentRef = (file.find("..") != std::string::npos);
-
-	return !hasParentRef;
+	// The check is just meant to "enforce" certain coding behaviour.
+	//
+	return (file.find("..") == std::string::npos);
 }
-// bool FileSystem::CheckDir(const std::string& dir) const {
-// 	return CheckFile(dir);
-// }
+
 bool FileSystem::Remove(std::string file)
 {
 	if (!CheckFile(file)) {
 		return false;
 	}
-	FixSlashes(file);
-	return FileSystem::DeleteFile(file);
+
+	return FileSystem::DeleteFile(FixSlashes(file));
 }
 
 const std::string& FileSystem::GetCacheDir()
 {
-	static const std::string cacheBase = "cache";
-	static const std::string cacheDir = cacheBase + GetNativePathSeparator() + SpringVersion::GetMajor();
+	// cache-dir versioning must not be too finegrained,
+	// we do want to regenerate cache after every commit
+	//
+	// release builds must however also *never* use the
+	// same directory as any previous development build
+	// (regardless of branch), so keep caches separate
+	static const std::string cacheType[2] = {"dev-", "rel-"};
+	static const std::string cacheBaseDir = "cache";
+	static const std::string cacheVersion = SpringVersion::GetMajor() + cacheType[SpringVersion::IsRelease()] + SpringVersion::GetBranch();
+	static const std::string cacheDir = cacheBaseDir + GetNativePathSeparator() + cacheVersion;
 
 	return cacheDir;
 }
