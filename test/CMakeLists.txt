@@ -166,7 +166,7 @@ Else  (NOT Boost_FOUND)
 			${SDL_LIBRARY}
 		)
 
-	set_target_properties(test_Matrix44f PROPERTIES COMPILE_FLAGS "-DNOT_USING_CREG -DNOT_USING_STREFLOP")
+	set_target_properties(test_Matrix44f PROPERTIES COMPILE_FLAGS "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 	ADD_TEST(NAME testMatrix44f COMMAND test_Matrix44f)
 	Add_Dependencies(tests test_Matrix44f)
 
