@@ -119,7 +119,7 @@ CSolidObject::~CSolidObject() {
 }
 
 void CSolidObject::UpdatePhysicalState() {
-	const float mh = height * (moveDef == NULL || !moveDef->subMarine);
+	const float mh = /*model->*/height;
 	const float gh = ground->GetHeightReal(pos.x, pos.z);
 
 	unsigned int ps = physicalState;
@@ -181,7 +181,7 @@ YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 	float3 frontv;
 	float3 rightv;
 
-	if (true) {
+	#if 1
 		// use continuous floating-point space
 		gpos   -= pos;
 		gpos.x += SQUARE_SIZE / 2; //??? needed to move to SQUARE-center? (possibly current input is wrong)
@@ -189,7 +189,7 @@ YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 
 		frontv =  frontdir;
 		rightv = -rightdir; //??? spring's unit-rightdir is in real the LEFT vector :x
-	} else {
+	#else
 		// use old fixed space (4 facing dirs & ints for unit positions)
 
 		// form the rotated axis vectors
@@ -209,7 +209,7 @@ YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 		// need to revert some of the transformations of CSolidObject::GetMapPos()
 		gpos.x += SQUARE_SIZE / 2 - (this->xsize >> 1) * SQUARE_SIZE; 
 		gpos.z += SQUARE_SIZE / 2 - (this->zsize >> 1) * SQUARE_SIZE;
-	}
+	#endif
 
 	// transform worldspace pos to unit rotation dependent `centered blockmap space` [-hxsize .. +hxsize] x [-hzsize .. +hzsize]
 	float by = frontv.dot(gpos) / SQUARE_SIZE;
@@ -251,8 +251,16 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	//   "on the ground" all the time ('ground' is the ocean floor, *not*
 	//   the water surface) and neither are tanks / bots due to impulses,
 	//   gravity, ...
+	//
+	// prefer to keep local up-vector as long as possible
+	#if 0
+	#define uv UpVector
+	#else
+	#define uv updir
+	#endif
+
 	const float3 gn = ground->GetSmoothNormal(pos.x, pos.z) * useGroundNormal;
-	const float3 wn = UpVector * (1 - useGroundNormal);
+	const float3 wn = uv * (1 - useGroundNormal);
 
 	if (moveDef == NULL)
 		return (gn + wn);
@@ -260,18 +268,16 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	// not an aircraft if we get here, prevent pitch changes
 	// if(f) the object is neither on the ground nor in water
 	// for whatever reason (GMT also prevents heading changes)
-	if (IsInAir())
-		return updir;
-
-	switch (moveDef->moveFamily) {
-		case MoveDef::Tank:  { return ((gn + wn) * IsOnGround() + UpVector * (1 - IsOnGround())); } break;
-		case MoveDef::KBot:  { return ((gn + wn) * IsOnGround() + UpVector * (1 - IsOnGround())); } break;
-		case MoveDef::Hover: { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
-		case MoveDef::Ship:  { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
+	if (!IsInAir()) {
+		switch (moveDef->moveFamily) {
+			case MoveDef::Tank:  { return ((gn + wn) * IsOnGround() +        uv * (1 - IsOnGround())); } break;
+			case MoveDef::KBot:  { return ((gn + wn) * IsOnGround() +        uv * (1 - IsOnGround())); } break;
+			case MoveDef::Hover: { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
+			case MoveDef::Ship:  { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
+		}
 	}
 
-	assert(false);
-	return ZeroVector;
+	return uv;
 }
 
 
