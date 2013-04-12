@@ -62,7 +62,7 @@ void MatrixMultiply3(const CMatrix44f& m, const float4 vin, float4* vout)
 	out =                 _mm_mul_ps(mx, _mm_load1_ps(&vin.x));
 	out = _mm_add_ps(out, _mm_mul_ps(my, _mm_load1_ps(&vin.y)));
 	out = _mm_add_ps(out, _mm_mul_ps(mz, _mm_load1_ps(&vin.z)));
-	out = _mm_add_ps(out, _mm_mul_ps(mw, _mm_load1_ps(&vin.q)));
+	out = _mm_add_ps(out, _mm_mul_ps(mw, _mm_load1_ps(&vin.w)));
 }
 
 void MatrixMatrixMultiply(const CMatrix44f& m1, const CMatrix44f& m2, CMatrix44f* mout)
@@ -77,20 +77,24 @@ void MatrixMatrixMultiply(const CMatrix44f& m1, const CMatrix44f& m2, CMatrix44f
 	const __m128& m1c3 = *reinterpret_cast<const __m128*>(&m1.md[2]);
 	const __m128& m1c4 = *reinterpret_cast<const __m128*>(&m1.md[3]);
 
+	assert(m2.m[3] == 0.0f);
+	assert(m2.m[7] == 0.0f);
+	assert(m2.m[11] == 0.0f);
+
 	moutc1 =                    _mm_mul_ps(m1c1, _mm_load1_ps(&m2.m[0]));
 	moutc1 = _mm_add_ps(moutc1, _mm_mul_ps(m1c1, _mm_load1_ps(&m2.m[1])));
 	moutc1 = _mm_add_ps(moutc1, _mm_mul_ps(m1c1, _mm_load1_ps(&m2.m[2])));
-	moutc1 = _mm_add_ps(moutc1, _mm_mul_ps(m1c1, _mm_load1_ps(&m2.m[3])));
+	//moutc1 = _mm_add_ps(moutc1, _mm_mul_ps(m1c1, _mm_load1_ps(&m2.m[3])));
 
 	moutc2 =                    _mm_mul_ps(m1c2, _mm_load1_ps(&m2.m[4]));
 	moutc2 = _mm_add_ps(moutc2, _mm_mul_ps(m1c2, _mm_load1_ps(&m2.m[5])));
 	moutc2 = _mm_add_ps(moutc2, _mm_mul_ps(m1c2, _mm_load1_ps(&m2.m[6])));
-	moutc2 = _mm_add_ps(moutc2, _mm_mul_ps(m1c2, _mm_load1_ps(&m2.m[7])));
+	//moutc2 = _mm_add_ps(moutc2, _mm_mul_ps(m1c2, _mm_load1_ps(&m2.m[7])));
 
 	moutc3 =                    _mm_mul_ps(m1c3, _mm_load1_ps(&m2.m[8]));
 	moutc3 = _mm_add_ps(moutc3, _mm_mul_ps(m1c3, _mm_load1_ps(&m2.m[9])));
 	moutc3 = _mm_add_ps(moutc3, _mm_mul_ps(m1c3, _mm_load1_ps(&m2.m[10])));
-	moutc3 = _mm_add_ps(moutc3, _mm_mul_ps(m1c3, _mm_load1_ps(&m2.m[11])));
+	//moutc3 = _mm_add_ps(moutc3, _mm_mul_ps(m1c3, _mm_load1_ps(&m2.m[11])));
 
 	moutc4 =                    _mm_mul_ps(m1c4, _mm_load1_ps(&m2.m[12]));
 	moutc4 = _mm_add_ps(moutc4, _mm_mul_ps(m1c4, _mm_load1_ps(&m2.m[13])));

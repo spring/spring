@@ -247,10 +247,9 @@ void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices)
 	}
 
 	if (updateChildMatrices) {
-		if (parent == NULL) {
-			modelSpaceMat = pieceSpaceMat;
-		} else {
-			modelSpaceMat = pieceSpaceMat * parent->modelSpaceMat;
+		modelSpaceMat = pieceSpaceMat;
+		if (parent) {
+			modelSpaceMat *= parent->modelSpaceMat;
 		}
 	}
 
