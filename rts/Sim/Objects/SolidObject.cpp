@@ -252,32 +252,27 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	//   the water surface) and neither are tanks / bots due to impulses,
 	//   gravity, ...
 	//
-	// prefer to keep local up-vector as long as possible
-	#if 0
-	#define uv UpVector
-	#else
-	#define uv updir
-	#endif
-
-	const float3 gn = ground->GetSmoothNormal(pos.x, pos.z) * useGroundNormal;
-	const float3 wn = uv * (1 - useGroundNormal);
+	const float3 gn = ground->GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
+	const float3 wn =                             UpVector  * (1 - useGroundNormal);
 
 	if (moveDef == NULL)
-		return (gn + wn);
+		return (gn + updir * (1 - useGroundNormal));
 
 	// not an aircraft if we get here, prevent pitch changes
 	// if(f) the object is neither on the ground nor in water
 	// for whatever reason (GMT also prevents heading changes)
 	if (!IsInAir()) {
 		switch (moveDef->moveFamily) {
-			case MoveDef::Tank:  { return ((gn + wn) * IsOnGround() +        uv * (1 - IsOnGround())); } break;
-			case MoveDef::KBot:  { return ((gn + wn) * IsOnGround() +        uv * (1 - IsOnGround())); } break;
+			case MoveDef::Tank:  { return ((gn + wn) * IsOnGround() + updir * (1 - IsOnGround())); } break;
+			case MoveDef::KBot:  { return ((gn + wn) * IsOnGround() + updir * (1 - IsOnGround())); } break;
+
 			case MoveDef::Hover: { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
 			case MoveDef::Ship:  { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
 		}
 	}
 
-	return uv;
+	// prefer to keep local up-vector as long as possible
+	return updir;
 }
 
 
