@@ -495,10 +495,10 @@ static int MoveDefTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "id", md->pathType);
 
 	switch (md->moveFamily) {
-		case 0:  { HSTR_PUSH_STRING(L, "family", "tank");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
-		case 1:  { HSTR_PUSH_STRING(L, "family", "kbot");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
-		case 2:  { HSTR_PUSH_STRING(L, "family", "hover"); HSTR_PUSH_STRING(L, "type",  "hover"); break; }
-		case 3:  { HSTR_PUSH_STRING(L, "family", "ship");  HSTR_PUSH_STRING(L, "type",   "ship"); break; }
+		case MoveDef::Tank:  { HSTR_PUSH_STRING(L, "family", "tank");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
+		case MoveDef::KBot:  { HSTR_PUSH_STRING(L, "family", "kbot");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
+		case MoveDef::Hover: { HSTR_PUSH_STRING(L, "family", "hover"); HSTR_PUSH_STRING(L, "type",  "hover"); break; }
+		case MoveDef::Ship:  { HSTR_PUSH_STRING(L, "family", "ship");  HSTR_PUSH_STRING(L, "type",   "ship"); break; }
 		default: { HSTR_PUSH_STRING(L, "family", "error"); HSTR_PUSH_STRING(L, "type",  "error"); break; }
 	}
 
@@ -769,11 +769,12 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("floater",           ud.floatOnWater);  // backward compability (TODO: find a way to print a warning when used!)
 	ADD_BOOL("canFly",            ud.canfly);
 	ADD_BOOL("canMove",           ud.canmove);
-	ADD_BOOL("canHover",          ud.canHover);
 	ADD_BOOL("isBuilder",         ud.builder);  // backward compability (TODO: find a way to print a warning when used!)
 	ADD_BOOL("builder",           ud.builder);
 	ADD_BOOL("onOffable",         ud.onoffable);
 	ADD_BOOL("activateWhenBuilt", ud.activateWhenBuilt);
+
+	ADD_DEPRECATED_LUADEF_KEY("canHover");
 
 	ADD_BOOL("reclaimable", ud.reclaimable);
 	ADD_BOOL("capturable",  ud.capturable);

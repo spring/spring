@@ -1015,6 +1015,9 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		// cases in which there is no need to avoid this obstacle
 		if (avoidee == owner)
 			continue;
+		// do not avoid statics (it interferes too much with PFS)
+		if (avoideeMD == NULL)
+			continue;
 		// ignore aircraft (or flying ground units)
 		if (avoidee->IsInAir() || avoidee->IsFlying())
 			continue;
@@ -1035,7 +1038,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 			FOOTPRINT_RADIUS(avoidee  ->xsize, avoidee  ->zsize, 1.0f);
 		const float avoidanceRadiusSum = avoiderRadius + avoideeRadius;
 		const float avoidanceMassSum = avoider->mass + avoidee->mass;
-		const float avoideeMassScale = (avoideeMobile)? (avoidee->mass / avoidanceMassSum): 1.0f;
+		const float avoideeMassScale = avoideeMobile? (avoidee->mass / avoidanceMassSum): 1.0f;
 		const float avoideeDistSq = avoideeVector.SqLength();
 		const float avoideeDist   = fastmath::sqrt2(avoideeDistSq) + 0.01f;
 
