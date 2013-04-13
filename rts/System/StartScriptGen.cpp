@@ -282,6 +282,12 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& game, 
 		ai->add_name_value("Version", aiData.version);
 		ai->AddPair("Host", 0);
 		ai->AddPair("Team", 1);
+	} else if (!ai.empty()) { // is no native ai, try lua ai
+		TdfParser::TdfSection* aisec = g->construct_subsection("AI0");
+		aisec->add_name_value("Name", "AI: " + ai);
+		aisec->add_name_value("ShortName", ai);
+		aisec->AddPair("Host", 0);
+		aisec->AddPair("Team", 1);
 	} else {
 		TdfParser::TdfSection* player1 = g->construct_subsection("PLAYER1");
 		player1->add_name_value("Name", "Enemy");
@@ -293,7 +299,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& game, 
 	team0->AddPair("AllyTeam", 0);
 
 	TdfParser::TdfSection* team1 = g->construct_subsection("TEAM1");
-	if (isSkirmishAITestScript) {
+	if (isSkirmishAITestScript || !ai.empty()) {
 		team1->AddPair("TeamLeader", 0);
 	} else {
 		team1->AddPair("TeamLeader", 1);

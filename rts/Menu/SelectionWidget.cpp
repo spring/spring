@@ -6,9 +6,13 @@
 
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/VFSHandler.h"
 #include "System/Exceptions.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/AIScriptHandler.h"
+#include "ExternalAI/LuaAIImplHandler.h"
+#include "ExternalAI/Interface/SSkirmishAILibrary.h"
+#include "System/Info.h"
 
 const std::string SelectionWidget::NoModSelect = "No game selected";
 const std::string SelectionWidget::NoMapSelect = "No map selected";
@@ -98,6 +102,22 @@ void SelectionWidget::ShowMapList()
 	curSelect->list->SetCurrentItem(userMap);
 }
 
+static void AddArchive(const std::string& name) {
+	if (!name.empty()) {
+		const std::string filename = archiveScanner->ArchiveFromName(name);
+		const std::string path = archiveScanner->GetArchivePath(filename);
+		vfsHandler->AddArchive(path + filename, true);
+	}
+}
+
+static void RemoveArchive(const std::string& name) {
+	if (!name.empty()) {
+		const std::string filename = archiveScanner->ArchiveFromName(name);
+		const std::string path = archiveScanner->GetArchivePath(filename);
+		vfsHandler->RemoveArchive(path);
+	}
+}
+
 void SelectionWidget::ShowScriptList()
 {
 	if (curSelect)
@@ -106,6 +126,23 @@ void SelectionWidget::ShowScriptList()
 	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectScript, this, _1));
 	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
 
+	// load selected archives to get lua ais
+	AddArchive(userMod);
+	AddArchive(userMap);
+
+	std::vector< std::vector<InfoItem> > luaAIInfos = luaAIImplHandler.LoadInfos();
+	for(int i=0; i<luaAIInfos.size(); i++) {
+		for (int j=0; j<luaAIInfos[i].size(); j++) {
+			if (luaAIInfos[i][j].key==SKIRMISH_AI_PROPERTY_SHORT_NAME)
+				curSelect->list->AddItem(info_getValueAsString(&luaAIInfos[i][j]), "");
+		}
+	}
+
+	// close archives
+	RemoveArchive(userMap);
+	RemoveArchive(userMod);
+
+	// add native ai's to the list, too (but second, lua ai's are prefered)
 	CAIScriptHandler::ScriptList scriptList = CAIScriptHandler::Instance().GetScriptList();
 	for (CAIScriptHandler::ScriptList::iterator it = scriptList.begin(); it != scriptList.end(); ++it) {
 		curSelect->list->AddItem(*it, "");
