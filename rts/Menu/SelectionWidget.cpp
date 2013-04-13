@@ -102,19 +102,24 @@ void SelectionWidget::ShowMapList()
 	curSelect->list->SetCurrentItem(userMap);
 }
 
+
+static const std::string GetFileName(const std::string& name){
+	if (name.empty())
+		return name;
+	const std::string filename = archiveScanner->ArchiveFromName(name);
+	const std::string path = archiveScanner->GetArchivePath(filename);
+	return path + filename;
+}
+
 static void AddArchive(const std::string& name) {
 	if (!name.empty()) {
-		const std::string filename = archiveScanner->ArchiveFromName(name);
-		const std::string path = archiveScanner->GetArchivePath(filename);
-		vfsHandler->AddArchive(path + filename, true);
+		vfsHandler->AddArchive(GetFileName(name), true);
 	}
 }
 
 static void RemoveArchive(const std::string& name) {
 	if (!name.empty()) {
-		const std::string filename = archiveScanner->ArchiveFromName(name);
-		const std::string path = archiveScanner->GetArchivePath(filename);
-		vfsHandler->RemoveArchive(path);
+		vfsHandler->RemoveArchive(GetFileName(name));
 	}
 }
 
