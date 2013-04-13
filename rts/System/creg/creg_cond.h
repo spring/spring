@@ -6,7 +6,9 @@
 // AIs which want to use creg have to specify this when compiling:
 // '-DUSING_CREG'
 #if defined BUILDING_AI && !defined USING_CREG
-	#define NOT_USING_CREG
+	#if !defined NOT_USING_CREG
+		#define NOT_USING_CREG
+	#endif
 #elif !defined NOT_USING_CREG // defined BUILDING_AI && !defined USING_CREG
 	#if !defined USING_CREG
 		#define USING_CREG
