@@ -330,7 +330,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 
 	unitDrawer->SetTeamColour(feature->team, alpha);
 
-	if (!(feature->luaDraw && luaRules && luaRules->DrawFeature(feature))) {
+	if (!(feature->luaDraw && luaRules != NULL && luaRules->DrawFeature(feature))) {
 		feature->model->DrawStatic();
 	}
 
