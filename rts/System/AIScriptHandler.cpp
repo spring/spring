@@ -53,8 +53,6 @@ void CAIScriptHandler::Add(CScript* script)
 
 CAIScriptHandler::CAIScriptHandler()
 {
-	// default script
-	Add(new CScript("Player Only: Testing Sandbox"));
 
 	// add the C interface Skirmish AIs
 	// Lua AIs can not be added, as the selection would get invalid when

@@ -5,7 +5,6 @@
 #include <set>
 
 #include "System/FileSystem/ArchiveScanner.h"
-#include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Exceptions.h"
 #include "System/Config/ConfigHandler.h"
@@ -17,6 +16,7 @@
 const std::string SelectionWidget::NoModSelect = "No game selected";
 const std::string SelectionWidget::NoMapSelect = "No map selected";
 const std::string SelectionWidget::NoScriptSelect = "No script selected";
+const std::string SelectionWidget::SandboxAI = "Player Only: Testing Sandbox";
 
 CONFIG(std::string, LastSelectedMod).defaultValue(SelectionWidget::NoModSelect);
 CONFIG(std::string, LastSelectedMap).defaultValue(SelectionWidget::NoMapSelect);
@@ -131,6 +131,9 @@ void SelectionWidget::ShowScriptList()
 	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectScript, this, _1));
 	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
 
+	//FIXME: lua ai's should be handled in AIScriptHandler.cpp, too respecting the selected game and map
+	// maybe also merge it with StartScriptGen.cpp
+
 	// load selected archives to get lua ais
 	AddArchive(userMod);
 	AddArchive(userMap);
@@ -146,6 +149,9 @@ void SelectionWidget::ShowScriptList()
 	// close archives
 	RemoveArchive(userMap);
 	RemoveArchive(userMod);
+
+	// add sandbox script to list
+	curSelect->list->AddItem(SandboxAI, "");
 
 	// add native ai's to the list, too (but second, lua ai's are prefered)
 	CAIScriptHandler::ScriptList scriptList = CAIScriptHandler::Instance().GetScriptList();

@@ -205,6 +205,10 @@ void SelectMenu::Single()
 	}
 	else if (!once) // in case of double-click
 	{
+
+		if (selw->userScript == SelectionWidget::SandboxAI) {
+			selw->userScript.clear();
+		}
 		once = true;
 		mySettings->isHost = true;
 		pregame = new CPreGame(mySettings);
