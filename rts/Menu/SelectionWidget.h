@@ -64,6 +64,7 @@ public:
 	static const std::string NoModSelect;
 	static const std::string NoMapSelect;
 	static const std::string NoScriptSelect;
+	static const std::string SandboxAI;
 
 	SelectionWidget(agui::GuiElement* parent);
 	~SelectionWidget();
