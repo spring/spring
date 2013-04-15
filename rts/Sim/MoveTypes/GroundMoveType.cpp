@@ -626,7 +626,7 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 		return false;
 
 	// units under water don't receive impulses, else they can jump out of water
-	if (owner->IsInWater())
+	if (owner->IsUnderWater())
 		return false;
 
 	useHeading = false;
