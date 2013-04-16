@@ -140,14 +140,14 @@ public:
 		if (gs->globalLOS[allyTeam]) { return true; }
 		const int gx = pos.x * invLosDiv;
 		const int gz = pos.z * invLosDiv;
-		return !!losMaps[allyTeam].At(gx, gz);
+		return (losMaps[allyTeam].At(gx, gz) != 0);
 	}
 
 	inline bool InAirLos(const float3& pos, int allyTeam) const {
 		if (gs->globalLOS[allyTeam]) { return true; }
 		const int gx = pos.x * invAirDiv;
 		const int gz = pos.z * invAirDiv;
-		return !!airLosMaps[allyTeam].At(gx, gz);
+		return (airLosMaps[allyTeam].At(gx, gz) != 0);
 	}
 
 
@@ -155,13 +155,13 @@ public:
 		if (gs->globalLOS[allyTeam]) { return true; }
 		const int gx = hmx * SQUARE_SIZE * invLosDiv;
 		const int gz = hmz * SQUARE_SIZE * invLosDiv;
-		return !!losMaps[allyTeam].At(gx, gz);
+		return (losMaps[allyTeam].At(gx, gz) != 0);
 	}
 	inline bool InAirLos(int hmx, int hmz, int allyTeam) const {
 		if (gs->globalLOS[allyTeam]) { return true; }
 		const int gx = hmx * SQUARE_SIZE * invAirDiv;
 		const int gz = hmz * SQUARE_SIZE * invAirDiv;
-		return !!airLosMaps[allyTeam].At(gx, gz);
+		return (airLosMaps[allyTeam].At(gx, gz) != 0);
 	}
 
 	CLosHandler();
