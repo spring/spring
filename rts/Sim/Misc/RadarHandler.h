@@ -5,10 +5,9 @@
 
 #include <boost/noncopyable.hpp>
 
-#include "System/Object.h"
 #include "Sim/Misc/LosMap.h"
 #include "Sim/Units/Unit.h"
-#include <assert.h>
+#include "System/myMath.h"
 
 // Because submerged units are only given LOS if they are also
 // in sonar range (see LosHandler.h), sonar stealth and sonar
@@ -36,8 +35,8 @@ public:
 	{
 		const int gx = pos.x * invRadarDiv;
 		const int gz = pos.z * invRadarDiv;
-		const int rowIdx = std::max(0, std::min(zsize - 1, gz));
-		const int colIdx = std::max(0, std::min(xsize - 1, gx));
+		const int rowIdx = Clamp(gx, 0, xsize - 1);
+		const int colIdx = Clamp(gz, 0, zsize - 1);
 		return (rowIdx * xsize) + colIdx;
 	}
 
@@ -46,14 +45,14 @@ public:
 
 		if (pos.y < 0.0f) {
 			// position is underwater, only sonar can see it
-			return (sonarMaps[allyTeam][square] && !commonSonarJammerMap[square]);
+			return (sonarMaps[allyTeam][square] != 0 && commonSonarJammerMap[square] == 0);
 		}
 		if (circularRadar) {
 			// position is not in water, but height is irrelevant for this mode
-			return (airRadarMaps[allyTeam][square] && !commonJammerMap[square]);
+			return (airRadarMaps[allyTeam][square] != 0 && commonJammerMap[square] == 0);
 		}
 
-		return (radarMaps[allyTeam][square] && !commonJammerMap[square]);
+		return (radarMaps[allyTeam][square] != 0 && commonJammerMap[square] == 0);
 	}
 
 	bool InRadar(const CUnit* unit, int allyTeam) const {
@@ -65,7 +64,7 @@ public:
 				return false;
 			}
 
-			return (!!sonarMaps[allyTeam][square] && !commonSonarJammerMap[square]);
+			return (sonarMaps[allyTeam][square] != 0 && commonSonarJammerMap[square] == 0);
 		}
 		if (circularRadar && unit->useAirLos) {
 			// circular mode and unit is an aircraft (and currently not landed)
@@ -73,7 +72,7 @@ public:
 				return false;
 			}
 
-			return (airRadarMaps[allyTeam][square] && !commonJammerMap[square]);
+			return (airRadarMaps[allyTeam][square] != 0 && commonJammerMap[square] == 0);
 		}
 
 		// (surface) units that are not completely submerged can potentially
@@ -81,20 +80,49 @@ public:
 		// the model is still inside water)
 		const bool radarVisible =
 			(!unit->stealth || unit->beingBuilt) &&
-			radarMaps[allyTeam][square] &&
-			!commonJammerMap[square];
+			(radarMaps[allyTeam][square] != 0) &&
+			(commonJammerMap[square] == 0);
 		const bool sonarVisible =
 			(unit->pos.y < 0.0f) &&
 			(!unit->sonarStealth || unit->beingBuilt) &&
-			sonarMaps[allyTeam][square] &&
-			!commonSonarJammerMap[square];
+			(sonarMaps[allyTeam][square] != 0) &&
+			(commonSonarJammerMap[square] == 0);
 
 		return (radarVisible || sonarVisible);
 	}
 
+
+	// returns whether a square is being radar- or sonar-jammed
+	// (even when the square is not in radar- or sonar-coverage)
+	bool InJammer(const float3& pos, int allyTeam) const {
+		const int square = GetSquare(pos);
+		bool ret = false;
+
+		#if 1
+		if (pos.y < 0.0f) {
+			ret = (commonSonarJammerMap[square] != 0);
+		} else {
+			ret = (commonJammerMap[square] != 0);
+		}
+		#else
+		if (pos.y < 0.0f) {
+			#ifdef SONAR_JAMMER_MAPS
+			ret = (sonarJammerMaps[allyTeam][square] != 0);
+			#endif
+		} else {
+			ret = (jammerMaps[allyTeam][square] != 0);
+		}
+		#endif
+
+		return ret;
+	}
+	bool InJammer(const CUnit* unit, int allyTeam) const {
+		return (InJammer(unit->pos, allyTeam));
+	}
+
+
 	bool InSeismicDistance(const CUnit* unit, int allyTeam) const {
-		const int square = GetSquare(unit->pos);
-		return !!seismicMaps[allyTeam][square];
+		return (seismicMaps[allyTeam][GetSquare(unit->pos)] != 0);
 	}
 
 public:
