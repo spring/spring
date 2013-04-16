@@ -197,6 +197,7 @@ CMiniMap::CMiniMap()
 CMiniMap::~CMiniMap()
 {
 	glDeleteLists(circleLists, circleListsCount);
+	glDeleteTextures(1, &buttonsTexture);
 }
 
 
