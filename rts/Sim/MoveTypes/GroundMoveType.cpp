@@ -625,10 +625,6 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	if (owner->residualImpulse.SqLength() <= 9.0f)
 		return false;
 
-	// units under water don't receive impulses, else they can jump out of water
-	if (owner->IsUnderWater())
-		return false;
-
 	useHeading = false;
 
 	skidRotSpeed = 0.0f;
