@@ -2,6 +2,7 @@
 
 
 #include "UnitDrawer.h"
+#include "UnitDrawerState.hpp"
 
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
@@ -28,7 +29,6 @@
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
@@ -152,17 +152,31 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	multiThreadDrawUnitShadow = configHandler->GetBool("MultiThreadDrawUnitShadow");
 #endif
 
+	// LH must be initialized before drawer-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
 
+	unitDrawerStateSSP = IUnitDrawerState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
+	unitDrawerStateFFP = IUnitDrawerState::GetInstance(                   false,                     false);
+
+	// set in ::Draw, but SunChanged can be called first if DynamicSun is enabled
+	unitDrawerState = unitDrawerStateFFP;
+
+	// NOTE:
+	//     advShading can NOT change at runtime if initially false
+	//     (see AdvModelShadingActionExecutor), so we will always use
+	//     unitDrawerStateFFP (in ::Draw) in that special case and it
+	//     does not matter if unitDrawerStateSSP is initialized
 	advFade = GLEW_NV_vertex_program2;
-	advShading = (LoadModelShaders() && cubeMapHandler->Init());
+	advShading = (unitDrawerStateSSP->Init(this) && cubeMapHandler->Init());
 }
 
 CUnitDrawer::~CUnitDrawer()
 {
 	eventHandler.RemoveClient(this);
 
-	shaderHandler->ReleaseProgramObjects("[UnitDrawer]");
+	unitDrawerStateSSP->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStateSSP);
+	unitDrawerStateFFP->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStateFFP);
+
 	cubeMapHandler->Free();
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
@@ -187,95 +201,11 @@ CUnitDrawer::~CUnitDrawer()
 
 	opaqueModelRenderers.clear();
 	cloakedModelRenderers.clear();
-	modelShaders.clear();
 
 	unitRadarIcons.clear();
 	unsortedUnits.clear();
 
 	lightHandler.Kill();
-}
-
-
-
-bool CUnitDrawer::LoadModelShaders()
-{
-	#define sh shaderHandler
-
-	if (!globalRendering->haveARB) {
-		// not possible to do (ARB) shader-based model rendering
-		LOG_L(L_WARNING,
-				"[%s] OpenGL ARB extensions missing for advanced unit shading",
-				__FUNCTION__);
-		return false;
-	}
-	if (!configHandler->GetBool("AdvUnitShading")) {
-		// not allowed to do shader-based model rendering
-		return false;
-	}
-
-	modelShaders.resize(MODEL_SHADER_S3O_LAST, NULL);
-
-	modelShaders[MODEL_SHADER_S3O_BASIC ] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderDefARB", true);
-	modelShaders[MODEL_SHADER_S3O_SHADOW] = modelShaders[MODEL_SHADER_S3O_BASIC];
-	modelShaders[MODEL_SHADER_S3O_ACTIVE] = modelShaders[MODEL_SHADER_S3O_BASIC];
-
-	// with advFade, submerged transparent objects are clipped against GL_CLIP_PLANE3
-	const char* vertexProgNameARB = (advFade)? "ARB/units3o2.vp": "ARB/units3o.vp";
-	const std::string extraDefs =
-		("#define BASE_DYNAMIC_MODEL_LIGHT " + IntToString(lightHandler.GetBaseLight()) + "\n") +
-		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(lightHandler.GetMaxLights()) + "\n");
-
-	modelShaders[MODEL_SHADER_S3O_BASIC]->AttachShaderObject(sh->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_S3O_BASIC]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_S3O_BASIC]->Link();
-
-	if (!globalRendering->haveGLSL) {
-		modelShaders[MODEL_SHADER_S3O_SHADOW] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvARB", true);
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o_shadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->Link();
-	} else {
-		modelShaders[MODEL_SHADER_S3O_SHADOW] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvGLSL", false);
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", extraDefs, GL_VERTEX_SHADER));
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", extraDefs, GL_FRAGMENT_SHADER));
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->Link();
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("diffuseTex");        // idx  0 (t1: diffuse + team-color)
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadingTex");        // idx  1 (t2: spec/refl + self-illum)
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowTex");         // idx  2
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("reflectTex");        // idx  3 (cube)
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("specularTex");       // idx  4 (cube)
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("sunDir");            // idx  5
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraPos");         // idx  6
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraMat");         // idx  7
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraMatInv");      // idx  8
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("teamColor");         // idx  9
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("sunAmbient");        // idx 10
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("sunDiffuse");        // idx 11
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowDensity");     // idx 12
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowMatrix");      // idx 13
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowParams");      // idx 14
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("numModelDynLights"); // idx 15
-
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->Enable();
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(1, 1); // shadingTex  (idx 1, texunit 1)
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(10, &unitAmbientColor[0]);
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &unitSunColor[0]);
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, sky->GetLight()->GetUnitShadowDensity());
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(15, 0); // numModelDynLights
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->Validate();
-	}
-
-	if (shadowHandler->shadowsLoaded)
-		modelShaders[MODEL_SHADER_S3O_ACTIVE] = modelShaders[MODEL_SHADER_S3O_SHADOW];
-
-	#undef sh
-	return true;
 }
 
 
@@ -341,7 +271,7 @@ void CUnitDrawer::Update()
 
 
 
-//! only called by DrawOpaqueUnit
+// only called by DrawOpaqueUnit
 inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 {
 	GML_LODMUTEX_LOCK(unit); // DrawUnitLOD
@@ -430,6 +360,10 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
+	unitDrawerState = unitDrawerStateSSP->CanEnable(this)?
+		unitDrawerStateSSP:
+		unitDrawerStateFFP;
+
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	ISky::SetupFog();
 
@@ -494,8 +428,7 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 
 		const UnitSet& unitSet = unitBinIt->second;
 #ifdef USE_GML
-		bool mt = GML_PROFILER(multiThreadDrawUnit)
-		if (mt && unitSet.size() >= GML::ThreadCount() * 4) { // small unitSets will add a significant overhead
+		if (GML_PROFILER(multiThreadDrawUnit) && unitSet.size() >= GML::ThreadCount() * 4) { // small unitSets will add a significant overhead
 			gmlProcessor->Work( // Profiler results, 4 threads, one single large unitSet: Approximately 20% faster with multiThreadDrawUnit
 				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitMT, this, GML::ThreadCount(),
 				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
@@ -1221,85 +1154,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
 
-	if (advShading && !water->IsDrawReflection()) {
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glMultMatrixf(camera->GetViewMatrix());
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
-
-		// ARB standard does not seem to support
-		// vertex program + clipplanes (used for
-		// reflective pass) at once ==> not true,
-		// but needs option ARB_position_invariant
-		modelShaders[MODEL_SHADER_S3O_ACTIVE] = (shadowHandler->shadowsLoaded)?
-			modelShaders[MODEL_SHADER_S3O_SHADOW]:
-			modelShaders[MODEL_SHADER_S3O_BASIC];
-		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
-
-		if (globalRendering->haveGLSL && shadowHandler->shadowsLoaded) {
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(13, false, shadowHandler->shadowMatrix);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
-
-			lightHandler.Update(modelShaders[MODEL_SHADER_S3O_ACTIVE]);
-		} else {
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(10, &sky->GetLight()->GetLightDir().x);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(11, unitSunColor.x, unitSunColor.y, unitSunColor.z, 0.0f);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(12, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f); //!
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(13, camera->GetPos().x, camera->GetPos().y, camera->GetPos().z, 0.0f);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, sky->GetLight()->GetUnitShadowDensity());
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(11, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f);
-
-			glMatrixMode(GL_MATRIX0_ARB);
-			glLoadMatrixf(shadowHandler->shadowMatrix);
-			glMatrixMode(GL_MODELVIEW);
-		}
-
-		glActiveTexture(GL_TEXTURE0);
-		glEnable(GL_TEXTURE_2D);
-
-		glActiveTexture(GL_TEXTURE1);
-		glEnable(GL_TEXTURE_2D);
-
-		if (shadowHandler->shadowsLoaded) {
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-			glEnable(GL_TEXTURE_2D);
-		}
-
-		glActiveTexture(GL_TEXTURE3);
-		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetEnvReflectionTextureID());
-
-		glActiveTexture(GL_TEXTURE4);
-		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
-
-		glActiveTexture(GL_TEXTURE0);
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	} else {
-		glEnable(GL_LIGHTING);
-		glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
-		glEnable(GL_LIGHT1);
-
-		SetupBasicS3OTexture1();
-		SetupBasicS3OTexture0();
-
-		// Set material color
-		static const float cols[] = {1.0f, 1.0f, 1.0, 1.0f};
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
-		glColor4fv(cols);
-	}
+	unitDrawerState->Enable(this);
 }
 
 void CUnitDrawer::CleanUpUnitDrawing() const
@@ -1307,62 +1162,14 @@ void CUnitDrawer::CleanUpUnitDrawing() const
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_ALPHA_TEST);
 
-	if (advShading && !water->IsDrawReflection()) {
-		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
-
-		glActiveTexture(GL_TEXTURE1);
-		glDisable(GL_TEXTURE_2D);
-
-		glActiveTexture(GL_TEXTURE2);
-		glDisable(GL_TEXTURE_2D);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-
-		glActiveTexture(GL_TEXTURE3);
-		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-
-		glActiveTexture(GL_TEXTURE4);
-		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-
-		glActiveTexture(GL_TEXTURE0);
-
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
-	} else {
-		glDisable(GL_LIGHTING);
-		glDisable(GL_LIGHT1);
-
-		CleanupBasicS3OTexture1();
-		CleanupBasicS3OTexture0();
-	}
+	unitDrawerState->Disable(this);
 }
 
 
 
 void CUnitDrawer::SetTeamColour(int team, float alpha) const
 {
-	if (advShading && !water->IsDrawReflection()) {
-		const CTeam* t = teamHandler->Team(team);
-		const float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
-
-		if (modelShaders[MODEL_SHADER_S3O_ACTIVE]->IsBound()) {
-			if (globalRendering->haveGLSL && shadowHandler->shadowsLoaded) {
-				modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(9, &c[0]);
-			} else {
-				modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-				modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &c[0]);
-			}
-		}
-
-		if (LUA_DRAWING) {// FIXME?
-			SetBasicTeamColour(team, alpha);
-		}
-	} else {
-		// non-shader case via texture combiners
-		SetBasicTeamColour(team, alpha);
-	}
+	unitDrawerState->SetTeamColor(team, alpha);
 }
 
 void CUnitDrawer::SetBasicTeamColour(int team, float alpha)
@@ -1451,76 +1258,6 @@ void CUnitDrawer::CleanupBasicS3OTexture0()
 	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB, GL_SRC_ALPHA);
 	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-}
-
-
-
-
-/**
- * The companion to UnitDrawingTexturesOff(), re-enables the texture units
- * needed for drawing a model.
- *
- * Does *not* restore the texture bindings.
- */
-void CUnitDrawer::UnitDrawingTexturesOn()
-{
-	// XXX FIXME GL_VERTEX_PROGRAM_ARB is very slow on ATIs here for some reason
-	// if clip planes are enabled
-	// check later after driver updates
-	if (advShading && !water->IsDrawReflection()) {
-		glEnable(GL_TEXTURE_2D);
-		glActiveTexture(GL_TEXTURE1);
-		glEnable(GL_TEXTURE_2D);
-		glActiveTexture(GL_TEXTURE2);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-		glEnable(GL_TEXTURE_2D);
-		glActiveTexture(GL_TEXTURE3);
-		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		glActiveTexture(GL_TEXTURE4);
-		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		glActiveTexture(GL_TEXTURE0);
-	} else {
-		glEnable(GL_LIGHTING);
-		glColor3f(1.0f, 1.0f, 1.0f);
-		glEnable(GL_TEXTURE_2D);
-		glActiveTexture(GL_TEXTURE1);
-		glEnable(GL_TEXTURE_2D);
-		glActiveTexture(GL_TEXTURE0);
-	}
-}
-
-/**
- * Between a pair of SetupFor/CleanUpUnitDrawing,
- * temporarily turns off textures and shaders.
- *
- * Used by CUnit::Draw() for drawing a unit under construction.
- *
- * Unfortunately, it doesn't work! With advanced shading on, the green
- * is darker than usual; with shadows as well, it's almost black. -- krudat
- */
-void CUnitDrawer::UnitDrawingTexturesOff()
-{
-	/* If SetupForUnitDrawing is changed, this may need tweaking too. */
-	if (advShading && !water->IsDrawReflection()) {
-		glActiveTexture(GL_TEXTURE1); //! 'Shiny' texture.
-		glDisable(GL_TEXTURE_2D);
-		glActiveTexture(GL_TEXTURE2); //! Shadows.
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-		glDisable(GL_TEXTURE_2D);
-		glActiveTexture(GL_TEXTURE3); //! reflectionTex
-		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-		glActiveTexture(GL_TEXTURE4); //! specularTex
-		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-		glActiveTexture(GL_TEXTURE0);
-		glDisable(GL_TEXTURE_2D); //! albedo + teamcolor
-	} else {
-		glDisable(GL_LIGHTING);
-		glDisable(GL_TEXTURE_2D);
-		glActiveTexture(GL_TEXTURE1); //! GL lighting, I think.
-		glDisable(GL_TEXTURE_2D);
-		glActiveTexture(GL_TEXTURE0);
-		glDisable(GL_TEXTURE_2D); //! albedo + teamcolor
-	}
 }
 
 
@@ -1659,7 +1396,7 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 	glDepthMask(GL_TRUE);
 }
 
-//! used by LuaOpenGL::DrawUnitShape only
+// used by LuaOpenGL::DrawUnitShape only
 void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 {
 	const S3DModel* model = unitDef->LoadModel();
@@ -1732,12 +1469,10 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 	glColorf3(fc * col);
 
-	//! render wireframe with FFP
-	if (!LUA_DRAWING && advShading && !water->IsDrawReflection()) {
-		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
-	}
+	// render wireframe with FFP
+	unitDrawerState->DisableShaders(this);
+	unitDrawerState->DisableTextures(this);
 
-	unitDrawer->UnitDrawingTexturesOff();
 
 	// first stage: wireframe model
 	//
@@ -1756,7 +1491,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 		DrawUnitModel(unit);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	} else {
-		//! some ATi mobility cards/drivers dont like clipping wireframes...
+		// some ATi mobility cards/drivers dont like clipping wireframes...
 		glDisable(GL_CLIP_PLANE0);
 		glDisable(GL_CLIP_PLANE1);
 
@@ -1780,17 +1515,11 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	}
 
 	glDisable(GL_CLIP_PLANE1);
-	unitDrawer->UnitDrawingTexturesOn();
 
-	if (!LUA_DRAWING && advShading && !water->IsDrawReflection()) {
-		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
-	}
+	unitDrawerState->EnableTextures(this);
+	unitDrawerState->EnableShaders(this);
 
 	// second stage: texture-mapped model
-	//
-	// XXX FIXME
-	// ATI has issues with textures, clip planes and shader programs at once - very low performance
-	// FIXME: This may work now I added OPTION ARB_position_invariant to the ARB programs.
 	if (unit->buildProgress > (2.0f / 3.0f)) {
 		if (globalRendering->atiHacks) {
 			glDisable(GL_CLIP_PLANE0);
@@ -2071,7 +1800,7 @@ bool CUnitDrawer::DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const
 
 
 
-//! visualize if a unit can be built at specified position
+// visualize if a unit can be built at specified position
 bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo)
 {
 	return ShowUnitBuildSquare(buildInfo, std::vector<Command>());
@@ -2528,14 +2257,6 @@ void CUnitDrawer::PlayerChanged(int playerNum) {
 }
 
 void CUnitDrawer::SunChanged(const float3& sunDir) {
-	if (advShading && shadowHandler->shadowsSupported && globalRendering->haveGLSL) {
-		const float3 factoredUnitSunColor = unitSunColor * sky->GetLight()->GetLightIntensity();
-
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->Enable();
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, sky->GetLight()->GetUnitShadowDensity());
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &factoredUnitSunColor[0]);
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
-	}
+	unitDrawerState->UpdateCurrentShader(this, sky->GetLight());
 }
 

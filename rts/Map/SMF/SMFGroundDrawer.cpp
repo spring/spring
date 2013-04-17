@@ -51,11 +51,16 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	// set in ::Draw, but UpdateSunDir can be called first if DynamicSun is enabled
 	smfRenderState = smfRenderStateFFP;
 
-	// LH must be initialized before LoadMapShaders is called
+	// LH must be initialized before render-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
 
+	// NOTE:
+	//     advShading can NOT change at runtime if initially false
+	//     (see AdvMapShadingActionExecutor), so we will always use
+	//     smfRenderStateFFP (in ::Draw) in that special case and it
+	//     does not matter if smfRenderStateSSP is initialized
 	groundDetail = configHandler->GetInt("GroundDetail");
-	advShading = LoadMapShaders();
+	advShading = smfRenderStateSSP->Init(this);
 
 	waterPlaneCamInDispList  = 0;
 	waterPlaneCamOutDispList = 0;
@@ -123,16 +128,6 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int mode)
 	}
 
 	return meshDrawer;
-}
-
-
-bool CSMFGroundDrawer::LoadMapShaders() {
-	// NOTE:
-	//     advShading can NOT change at runtime if initially false
-	//     (see AdvMapShadingActionExecutor), so we will always use
-	//     smfRenderStateFFP (in ::Draw) in that special case and it
-	//     does not matter if smfRenderStateSSP is initialized
-	return (smfRenderStateSSP->Init(this));
 }
 
 

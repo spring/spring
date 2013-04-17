@@ -11,7 +11,6 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SkyLight.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/LightHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -46,8 +45,12 @@ bool SMFRenderStateARB::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 	smfShaderRefrARB = NULL;
 	smfShaderCurrARB = NULL;
 
+	if (!globalRendering->haveARB) {
+		// not possible to do (ARB) shader-based map rendering
+		return false;
+	}
 	if (!configHandler->GetBool("AdvMapShading")) {
-		// not allowed to do shader-based map rendering
+		// not allowed to do (ARB) shader-based map rendering
 		return false;
 	}
 
@@ -86,8 +89,12 @@ void SMFRenderStateARB::Kill() {
 bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 	smfShaderGLSL = NULL;
 
+	if (!globalRendering->haveGLSL) {
+		// not possible to do (GLSL) shader-based map rendering
+		return false;
+	}
 	if (!configHandler->GetBool("AdvMapShading")) {
-		// not allowed to do shader-based map rendering
+		// not allowed to do (GLSL) shader-based map rendering
 		return false;
 	}
 
@@ -420,9 +427,6 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 	const GL::LightHandler* lightHandler = smfGroundDrawer->GetLightHandler();
 
-	// XXX
-	GL::LightHandler* _lightHandler = const_cast<GL::LightHandler*>(lightHandler);
-
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	smfShaderGLSL->SetFlag("HAVE_SHADOWS", int(shadowHandler->shadowsLoaded));
@@ -437,7 +441,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 
 	// already on the MV stack at this point
 	glLoadIdentity();
-	_lightHandler->Update(smfShaderGLSL);
+	const_cast<GL::LightHandler*>(lightHandler)->Update(smfShaderGLSL);
 	glMultMatrixf(camera->GetViewMatrix());
 
 	glActiveTexture(GL_TEXTURE1);

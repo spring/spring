@@ -13,9 +13,9 @@
 // of acne itself
 
 
-//#define use_normalmapping
-//#define flip_normalmap
-#define use_shadows
+// #define use_normalmapping
+// #define flip_normalmap
+// #define use_shadows
 
   //uniform mat4 cameraMat;
   //uniform mat4 cameraInv;
