@@ -70,7 +70,7 @@ public:
 
 	inline bool isTime() const { return (x > 0); }
 	inline void sleep() const {
-		this_thread::sleep(boost::posix_time::nanoseconds(toNanoSecs()));
+		this_thread::sleep(boost::posix_time::milliseconds(toMSecs()));
 		//this_thread::sleep_for(chrono::nanoseconds( int(Cpp11Clock::ToNs<int64_t>(x)) ));
 	}
 
