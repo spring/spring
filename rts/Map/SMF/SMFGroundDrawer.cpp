@@ -245,12 +245,12 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	smfRenderState->Disable(this, drawPass);
 	glDisable(GL_CULL_FACE);
 
-	DrawBorder(drawPass);
-
 	if (drawPass == DrawPass::Normal) {
 		if (mapInfo->water.hasWaterPlane) {
 			DrawWaterPlane(false);
 		}
+
+		DrawBorder(drawPass);
 
 		groundDecals->Draw();
 		projectileDrawer->DrawGroundFlashes();
