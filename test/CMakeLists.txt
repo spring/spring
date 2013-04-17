@@ -181,15 +181,21 @@ Else  (NOT Boost_FOUND)
 			${test_Log_sources}
 		)
 
-	ADD_EXECUTABLE(test_SpringTime ${test_SpringTime_src})
-	TARGET_LINK_LIBRARIES(test_SpringTime
+	LIST(APPEND test_SpringTime_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
 			${Boost_CHRONO_LIBRARY}
-			${Boost_TIMER_LIBRARY}
 			${SDL_LIBRARY}
 		)
 
+	if (Boost_TIMER_FOUND)
+		LIST(APPEND test_SpringTime_libs ${Boost_TIMER_LIBRARY})
+	endif (Boost_TIMER_FOUND)
+
+	ADD_EXECUTABLE(test_SpringTime ${test_SpringTime_src})
+	TARGET_LINK_LIBRARIES(test_SpringTime ${test_SpringTime_libs})
+
+	set_target_properties(test_Matrix44f PROPERTIES COMPILE_FLAGS "-DBoost_TIMER_FOUND")
 	ADD_TEST(NAME testSpringTime COMMAND test_SpringTime)
 	Add_Dependencies(tests test_SpringTime)
 
