@@ -472,6 +472,7 @@ void DataDirLocater::ChangeCwdToWriteDir()
 	// for now, chdir to the data directory as a safety measure:
 	// Not only safety anymore, it's just easier if other code can safely assume that
 	// writeDir == current working directory
+	Platform::SetOrigCWD(); // save old cwd
 	FileSystem::ChDir(GetWriteDir()->path.c_str());
 }
 

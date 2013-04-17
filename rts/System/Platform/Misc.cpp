@@ -114,6 +114,9 @@ std::string GetOrigCWD()
 
 void SetOrigCWD()
 {
+	if (!origCWD.empty())
+		return;
+
 	char *buf;
 #ifdef WIN32
 	buf = _getcwd(NULL, 0);
