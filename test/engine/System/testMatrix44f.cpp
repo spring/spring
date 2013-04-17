@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <xmmintrin.h>
+#include <xmmintrin.h> //SSE1
 
 #include "System/Matrix44f.h"
 #include "System/float4.h"
@@ -12,6 +12,10 @@
 
 #define BOOST_TEST_MODULE Matrix44f
 #include <boost/test/unit_test.hpp>
+
+
+typedef CMatrix44f m44 __attribute__((aligned(16)));
+typedef float4 f4 __attribute__((aligned(16)));
 
 
 // MatrixMultiply1 -- a naive C++ matrix-vector multiplication function.
@@ -26,9 +30,9 @@ float4 MatrixMultiply1(CMatrix44f &m, float4 &vin)
 			m.md[1][2]*vin[2] + m.md[1][3]*vin[3];
 	float v2 =  m.md[2][0]*vin[0] + m.md[2][1]*vin[1] +
 			m.md[2][2]*vin[2] + m.md[2][3]*vin[3];
-	float v3 =  m.md[3][0]*vin[0] + m.md[3][1]*vin[1] +
-			m.md[3][2]*vin[6] + m.md[3][3]*vin[3];
-	return float4(v0,v1,v2,v3);
+	//float v3 =  m.md[3][0]*vin[0] + m.md[3][1]*vin[1] +
+	//		m.md[3][2]*vin[6] + m.md[3][3]*vin[3];
+	return float4(v0,v1,v2,0.0f);
 }
 
 
@@ -45,12 +49,12 @@ void MatrixMultiply2(CMatrix44f &m, float4 *vin, float4 *vout)
 			m.md[1][2]*in[2] + m.md[1][3]*in[3];
 	out[2] =  m.md[2][0]*in[0] + m.md[2][1]*in[1] +
 			m.md[2][2]*in[2] + m.md[2][3]*in[3];
-	out[3] =  m.md[3][0]*in[0] + m.md[3][1]*in[1] +
-			m.md[3][2]*in[2] + m.md[3][3]*in[3];
+	//out[3] =  m.md[3][0]*in[0] + m.md[3][1]*in[1] +
+	//		m.md[3][2]*in[2] + m.md[3][3]*in[3];
 }
 
 
-void MatrixMultiply3(const CMatrix44f& m, const float4 vin, float4* vout)
+void MatrixVectorSSE(const CMatrix44f& m, const float4 vin, float4* vout)
 {
 	__m128& out = *reinterpret_cast<__m128*>(vout);
 
@@ -64,6 +68,7 @@ void MatrixMultiply3(const CMatrix44f& m, const float4 vin, float4* vout)
 	out = _mm_add_ps(out, _mm_mul_ps(mz, _mm_load1_ps(&vin.z)));
 	out = _mm_add_ps(out, _mm_mul_ps(mw, _mm_load1_ps(&vin.w)));
 }
+
 
 void MatrixMatrixMultiply(const CMatrix44f& m1, const CMatrix44f& m2, CMatrix44f* mout)
 {
@@ -101,9 +106,6 @@ void MatrixMatrixMultiply(const CMatrix44f& m1, const CMatrix44f& m2, CMatrix44f
 	moutc4 = _mm_add_ps(moutc4, _mm_mul_ps(m1c4, _mm_load1_ps(&m2.m[14])));
 	moutc4 = _mm_add_ps(moutc4, _mm_mul_ps(m1c4, _mm_load1_ps(&m2.m[15])));
 }
-
-typedef CMatrix44f m44 __attribute__((aligned(16)));
-typedef float4 f4 __attribute__((aligned(16)));
 
 static const int testRuns = 4000000;
 
@@ -194,11 +196,12 @@ static inline int TestSSE()
 	m44 m;
 	f4 v_in(1,2,3,4), v_out, v_f;
 	for (int i=0; i<testRuns; ++i) {
-		MatrixMultiply3(m, v_in, &v_out);
+		MatrixVectorSSE(m, v_in, &v_out);
 		v_f += v_out;
 	}
 	return HsiehHash(&v_f, sizeof(float4), 0);
 }
+
 
 BOOST_AUTO_TEST_CASE( Matrix44VectorMultiply )
 {
