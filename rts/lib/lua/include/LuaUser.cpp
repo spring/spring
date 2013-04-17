@@ -66,6 +66,12 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 		return NULL;
 	}
 
+	if (nsize > osize) {
+		if (allocedCur > (256 * 1024*1024)) {
+			return NULL;
+		}
+	}
+
 	allocedCur -= osize;
 	allocedCur += nsize;
 	return realloc(ptr, nsize);
