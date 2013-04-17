@@ -119,10 +119,11 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 
 	process = GetCurrentProcess();
 
-	if(threadName)
+	if (threadName) {
 		LOG_I(logLevel, "Stacktrace (%s):", threadName);
-	else
+	} else {
 		LOG_I(logLevel, "Stacktrace:");
+	}
 
 	bool suspended = false;
 	CONTEXT c;
@@ -323,8 +324,8 @@ void OutputStacktrace() {
 	CleanupStacktrace();
 }
 
-void NewHandler(const int logLevel) {
-	LOG_I(logLevel, "Failed to allocate memory"); // make sure this ends up in the log also
+void NewHandler() {
+	LOG_L(L_ERROR, "Failed to allocate memory"); // make sure this ends up in the log also
 
 	OutputStacktrace();
 
