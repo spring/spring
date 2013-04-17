@@ -243,7 +243,7 @@ int main(int argc, char* argv[])
 		GlobalConfig::Deallocate();
 		ConfigHandler::Deallocate();
 	}
-	NO_CATCH_EXCEPTIONS
+	CATCH_SPRING_ERRORS
 
 	return GetExitCode();
 }
