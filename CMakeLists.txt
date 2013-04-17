@@ -158,7 +158,7 @@ endif (UNIX AND NOT MINGW)
 
 option(STABS_DEBUG_SYMBOLS "Use stabs debug symbols (-stabs) instead of the GDB format (-gdb). This probably makes gdb and eg. addr2line work better with windows binaries (depends mainly on the tools version)." FALSE)
 
-## Artificial Intelligence 
+## Artificial Intelligence
 # In theory, it should be possible to set this to LIBDIR instead
 # (next two are relative to CMAKE_INSTALL_PREFIX)
 set(AI_LIBS_DIR "${DATADIR}"     CACHE STRING "Where to install Skirmish AI libraries")
@@ -247,8 +247,8 @@ if    (MINGW)
 	set(SDL_INCLUDE_DIR "${MINGWLIBS}/include/SDL")
 endif (MINGW)
 
-FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex program_options system signals REQUIRED)
-FIND_PACKAGE(Boost 1.35.0 COMPONENTS chrono)
+FIND_PACKAGE(Boost 1.47.0 COMPONENTS thread regex program_options system chrono signals REQUIRED)
+FIND_PACKAGE(Boost 1.47.0 COMPONENTS timer)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 # Note the missing REQUIRED, as headless & dedi may not depend on those.

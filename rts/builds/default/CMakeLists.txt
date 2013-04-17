@@ -58,11 +58,7 @@ LIST(APPEND engineLibraries ${sound-impl})
 
 LIST(APPEND engineLibraries ${engineCommonLibraries})
 
-LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
-if (WIN32 AND Boost_CHRONO_FOUND)
-	# in newer boost versions the thread library depends on it
-	LIST(APPEND engineLibraries ${Boost_CHRONO_LIBRARY})
-endif (WIN32 AND Boost_CHRONO_FOUND)
+LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY} ${Boost_CHRONO_LIBRARY})
 
 ### Assemble external incude dirs
 LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
