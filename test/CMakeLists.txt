@@ -63,7 +63,7 @@ Else  (NOT Boost_FOUND)
 	TARGET_LINK_LIBRARIES(test_UDPListener
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
-			${SDL_LIBRARY}
+			${Boost_CHRONO_LIBRARY}
 			${WS2_32_LIBRARY}
 			7zip
 		)
@@ -163,7 +163,7 @@ Else  (NOT Boost_FOUND)
 	TARGET_LINK_LIBRARIES(test_Matrix44f
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
-			${SDL_LIBRARY}
+			${Boost_CHRONO_LIBRARY}
 		)
 
 	set_target_properties(test_Matrix44f PROPERTIES COMPILE_FLAGS "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
@@ -187,15 +187,17 @@ Else  (NOT Boost_FOUND)
 			${Boost_CHRONO_LIBRARY}
 			${SDL_LIBRARY}
 		)
+	Set(test_SpringTime_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 
 	if (Boost_TIMER_FOUND)
 		LIST(APPEND test_SpringTime_libs ${Boost_TIMER_LIBRARY})
+		Set(test_SpringTime_flags "${test_SpringTime_flags} -DBoost_TIMER_FOUND")
 	endif (Boost_TIMER_FOUND)
 
 	ADD_EXECUTABLE(test_SpringTime ${test_SpringTime_src})
 	TARGET_LINK_LIBRARIES(test_SpringTime ${test_SpringTime_libs})
 
-	set_target_properties(test_SpringTime PROPERTIES COMPILE_FLAGS "-DBoost_TIMER_FOUND")
+	set_target_properties(test_SpringTime PROPERTIES COMPILE_FLAGS "${test_SpringTime_flags}")
 	ADD_TEST(NAME testSpringTime COMMAND test_SpringTime)
 	Add_Dependencies(tests test_SpringTime)
 
