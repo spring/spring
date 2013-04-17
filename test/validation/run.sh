@@ -40,12 +40,14 @@ ulimit -v 1500000
 ulimit -t 180
 
 # delete path cache
-rm -rf ~/.spring/cache/
+rm -rf ~/.config/spring/cache/
 
 # start up the client in background
 $RUNCLIENT $1 &
 PID_CLIENT=$!
 
+# start host
+echo "Starting Host"
 set +e #temp disable abort on error
 $@ &
 PID_HOST=$!
