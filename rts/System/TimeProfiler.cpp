@@ -2,32 +2,46 @@
 
 #include "System/TimeProfiler.h"
 
-#include <SDL_timer.h>
 #include <cstring>
+#include <boost/unordered_map.hpp>
 
 #include "lib/gml/gmlmut.h"
 #include "System/Log/ILog.h"
 #include "System/UnsyncedRNG.h"
 
-static std::map<const std::string, int> refs;
 
-BasicTimer::BasicTimer(const char* const myname) : name(myname), starttime(SDL_GetTicks())
+static std::map<int, int> refs;
+CTimeProfiler profiler;
+
+static unsigned hash_(const std::string& s)
 {
-	++refs[name];
+	unsigned hash = s.size();
+	for (std::string::const_iterator it = s.begin(); it != s.end(); ++it) {
+		hash += *it;
+	}
+	return hash;
 }
 
+
+ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
+	: BasicTimer(name)
+	, autoShowGraph(autoShow)
+	, hash(hash_(name))
+{
+	++refs[hash];
+}
 
 
 ScopedTimer::~ScopedTimer()
 {
-	int& ref = refs[name];
+	int& ref = refs[hash];
 	if (--ref == 0)
-		profiler.AddTime(name, SDL_GetTicks() - starttime, autoShowGraph);
+		profiler.AddTime(name, spring_difftime(spring_gettime(), starttime), autoShowGraph);
 }
 
 ScopedOnceTimer::~ScopedOnceTimer()
 {
-	LOG("%s: %i ms", name.c_str(), (SDL_GetTicks() - starttime));
+	LOG("%s: %i ms", name.c_str(), spring_diffmsecs(spring_gettime(), starttime));
 }
 
 
@@ -35,12 +49,11 @@ ScopedOnceTimer::~ScopedOnceTimer()
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-CTimeProfiler profiler;
 
 CTimeProfiler::CTimeProfiler()
 {
 	currentPosition = 0;
-	lastBigUpdate = SDL_GetTicks();
+	lastBigUpdate = spring_gettime();
 }
 
 CTimeProfiler::~CTimeProfiler()
@@ -56,17 +69,17 @@ void CTimeProfiler::Update()
 	std::map<std::string,TimeRecord>::iterator pi;
 	for (pi = profile.begin(); pi != profile.end(); ++pi)
 	{
-		pi->second.frames[currentPosition]=0;
+		pi->second.frames[currentPosition] = spring_notime;
 	}
 
-	const unsigned curTime = SDL_GetTicks();
-	const unsigned timeDiff = curTime - lastBigUpdate;
-	if (timeDiff > 500) // twice every second
+	const spring_time curTime = spring_gettime();
+	const float timeDiff = spring_diffmsecs(curTime, lastBigUpdate);
+	if (timeDiff > 500.0f) // twice every second
 	{
 		for (std::map<std::string,TimeRecord>::iterator pi = profile.begin(); pi != profile.end(); ++pi)
 		{
-			pi->second.percent = ((float)pi->second.current) / ((float)timeDiff);
-			pi->second.current=0;
+			pi->second.percent = spring_tomsecs(pi->second.current) / timeDiff;
+			pi->second.current = spring_notime;
 
 			if(pi->second.percent > pi->second.peak) {
 				pi->second.peak = pi->second.percent;
@@ -86,24 +99,24 @@ float CTimeProfiler::GetPercent(const char* name)
 	return profile[name].percent;
 }
 
-void CTimeProfiler::AddTime(const std::string& name, unsigned time, bool showGraph)
+void CTimeProfiler::AddTime(const std::string& name, spring_time time, bool showGraph)
 {
 	GML_STDMUTEX_LOCK_NOPROF(time); // AddTime
 
 	std::map<std::string, TimeRecord>::iterator pi;
 	if ( (pi = profile.find(name)) != profile.end() ) {
 		// profile already exists
-		pi->second.total+=time;
-		pi->second.current+=time;
-		pi->second.frames[currentPosition]+=time;
+		pi->second.total   += time;
+		pi->second.current += time;
+		pi->second.frames[currentPosition] += time;
 	} else {
 		// create a new profile
-		profile[name].total=time;
-		profile[name].current=time;
-		profile[name].percent=0;
+		profile[name].total   = time;
+		profile[name].current = time;
+		profile[name].percent = 0;
 		memset(profile[name].frames, 0, TimeRecord::frames_size*sizeof(unsigned));
 		static UnsyncedRNG rand;
-		rand.Seed(SDL_GetTicks());
+		rand.Seed(spring_tomsecs(spring_gettime()));
 		profile[name].color.x = rand.RandFloat();
 		profile[name].color.y = rand.RandFloat();
 		profile[name].color.z = rand.RandFloat();
@@ -121,7 +134,7 @@ void CTimeProfiler::PrintProfilingInfo() const
 	for (pi = profile.begin(); pi != profile.end(); ++pi) {
 		LOG("%35s %16.2fs %5.2f%%",
 				pi->first.c_str(),
-				((float)pi->second.total) / 1000.f,
+				spring_tomsecs(pi->second.total) * 1000,
 				pi->second.percent * 100);
 	}
 }
