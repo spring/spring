@@ -266,7 +266,7 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 					float3 squarePos((xgbsx + 0.5f) * gSSsq, 0.0f, (ygbsy + 0.5f) * gSSsq);
 						squarePos.y = ground->GetHeightReal(squarePos.x, squarePos.z, false);
 
-					const float sqdist = (camera->pos - squarePos).SqLength();
+					const float sqdist = (camera->GetPos() - squarePos).SqLength();
 
 					if (sqdist < (maxDetailedDist * maxDetailedDist)) {
 						//! close grass, draw directly
@@ -289,7 +289,7 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 							CGrassDrawer::NearGrassStruct* ng = &nearGrass[(ygbsy & 31) * 32 + (xgbsx & 31)];
 
 							if (ng->square != ygbsy * 2048 + xgbsx) {
-								const float3 v = squarePos - camera->pos;
+								const float3 v = squarePos - camera->GetPos();
 								ng->rotation = GetHeadingFromVector(v.x, v.z) * 180.0f / 32768 + 180; //FIXME make more random
 								ng->square = ygbsy * 2048 + xgbsx;
 							}
@@ -321,9 +321,9 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 	}
 
 	float3 dif;
-		dif.x = camera->pos.x - ((x + 0.5f) * bMSsq);
+		dif.x = camera->GetPos().x - ((x + 0.5f) * bMSsq);
 		dif.y = 0.0f;
-		dif.z = camera->pos.z - ((y + 0.5f) * bMSsq);
+		dif.z = camera->GetPos().z - ((y + 0.5f) * bMSsq);
 	const float dist = dif.Length2D();
 	dif /= dist;
 
@@ -416,7 +416,7 @@ void CGrassDrawer::SetupGlStateNear()
 		grassShader->SetUniform4fv(7, shadowHandler->GetShadowParams());
 		grassShader->SetUniform1f(8, gs->frameNum);
 		grassShader->SetUniform3fv(9, &windSpeed.x);
-		grassShader->SetUniform3fv(10, &camera->pos.x);
+		grassShader->SetUniform3fv(10, &camera->GetPos().x);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 			glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
@@ -591,7 +591,7 @@ void CGrassDrawer::SetupGlStateFar()
 		grassShader->SetUniform4fv(7, shadowHandler->GetShadowParams());
 		grassShader->SetUniform1f(8, gs->frameNum);
 		grassShader->SetUniform3fv(9, &windSpeed.x);
-		grassShader->SetUniform3fv(10, &camera->pos.x);
+		grassShader->SetUniform3fv(10, &camera->GetPos().x);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 			glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
@@ -627,7 +627,7 @@ void CGrassDrawer::SetupGlStateFar()
 
 		grassShader->SetUniform1f(8, gs->frameNum);
 		grassShader->SetUniform3fv(9, &windSpeed.x);
-		grassShader->SetUniform3fv(10, &camera->pos.x);
+		grassShader->SetUniform3fv(10, &camera->GetPos().x);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
@@ -677,7 +677,7 @@ void CGrassDrawer::DrawFarBillboards(const std::vector<CGrassDrawer::InviewGrass
 			glColor4f(0.62f, 0.62f, 0.62f, 1.0f - ((*gi).dist + 128 - grassDistance) / 128.0f);
 		}
 
-		const float3 billboardDirZ = (grass[(*gi).num].pos - camera->pos).ANormalize();
+		const float3 billboardDirZ = (grass[(*gi).num].pos - camera->GetPos()).ANormalize();
 		const float3 billboardDirX = (billboardDirZ.cross(UpVector)).ANormalize();
 		const float3 billboardDirY = billboardDirX.cross(billboardDirZ);
 
@@ -703,7 +703,7 @@ void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inview
 		if (grassMap[y * gs->mapx / grassSquareSize + x]) {
 			float3 squarePos((x + 0.5f) * gSSsq, 0.0f, (y + 0.5f) * gSSsq);
 				squarePos.y = ground->GetHeightReal(squarePos.x, squarePos.z, false);
-			const float3 billboardDirZ = (squarePos - camera->pos).ANormalize();
+			const float3 billboardDirZ = (squarePos - camera->GetPos()).ANormalize();
 			const float3 billboardDirX = (billboardDirZ.cross(UpVector)).ANormalize();
 			const float3 billboardDirY = billboardDirX.cross(billboardDirZ);
 
@@ -755,8 +755,8 @@ void CGrassDrawer::Draw()
 	SetupGlStateNear();
 		GML_RECMUTEX_LOCK(grass); // Draw
 		static CGrassBlockDrawer drawer;
-			drawer.cx = int(camera->pos.x / bMSsq);
-			drawer.cy = int(camera->pos.z / bMSsq);
+			drawer.cx = int(camera->GetPos().x / bMSsq);
+			drawer.cy = int(camera->GetPos().z / bMSsq);
 			drawer.inviewGrass.clear();
 			drawer.inviewNearGrass.clear();
 			drawer.gd = this;
@@ -803,7 +803,7 @@ void CGrassDrawer::DrawShadow()
 		grassShader->SetUniform4fv(7, shadowHandler->GetShadowParams());
 		grassShader->SetUniform1f(8, gs->frameNum);
 		grassShader->SetUniform3fv(9, &windSpeed.x);
-		grassShader->SetUniform3fv(10, &camera->pos.x);
+		grassShader->SetUniform3fv(10, &camera->GetPos().x);
 
 	glActiveTexture(GL_TEXTURE0);
 	//glBindTexture(GL_TEXTURE_2D, activeFarTex);
@@ -816,8 +816,8 @@ void CGrassDrawer::DrawShadow()
 
 	GML_RECMUTEX_LOCK(grass); // Draw
 	static CGrassBlockDrawer drawer;
-		drawer.cx = int(camera->pos.x / bMSsq);
-		drawer.cy = int(camera->pos.z / bMSsq);
+		drawer.cx = int(camera->GetPos().x / bMSsq);
+		drawer.cy = int(camera->GetPos().z / bMSsq);
 		drawer.inviewGrass.clear();
 		drawer.inviewNearGrass.clear();
 		drawer.gd = this;

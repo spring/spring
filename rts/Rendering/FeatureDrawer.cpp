@@ -319,7 +319,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 	if (!camera->InView(feature->drawMidPos, feature->drawRadius)) { return false; }
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
 
-	const float sqDist = (feature->pos - camera->pos).SqLength();
+	const float sqDist = (feature->pos - camera->GetPos()).SqLength();
 	const float farLength = feature->sqRadius * unitDrawer->unitDrawDistSqr;
 	const float sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 
@@ -511,10 +511,10 @@ public:
 					if (f->midPos.y < 0.0f) {
 						zeroPos = f->midPos;
 					} else {
-						const float dif = f->midPos.y - camera->pos.y;
+						const float dif = f->midPos.y - camera->GetPos().y;
 						zeroPos =
-							camera->pos * (f->midPos.y / dif) +
-							f->midPos * (-camera->pos.y / dif);
+							camera->GetPos() * (f->midPos.y / dif) +
+							f->midPos * (-camera->GetPos().y / dif);
 					}
 					if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z, false) > f->drawRadius) {
 						continue;
@@ -525,7 +525,7 @@ public:
 						continue;
 				}
 
-				const float sqDist = (f->pos - camera->pos).SqLength();
+				const float sqDist = (f->pos - camera->GetPos()).SqLength();
 				const float farLength = f->sqRadius * unitDrawer->unitDrawDistSqr;
 #ifdef USE_GML
 				if (statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))

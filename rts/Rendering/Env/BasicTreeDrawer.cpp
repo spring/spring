@@ -156,7 +156,7 @@ private:
 	CVertexArray* va;
 };
 
-void CBasicTreeSquareDrawer::DrawTreeVertexFar1(const float3& pos, const float3& swd, bool enlarge) { 
+void CBasicTreeSquareDrawer::DrawTreeVertexFar1(const float3& pos, const float3& swd, bool enlarge) {
 	if (enlarge)
 		va->EnlargeArrays(4, 0, VA_SIZE_T);
 	float3 base = pos + swd;
@@ -170,7 +170,7 @@ void CBasicTreeSquareDrawer::DrawTreeVertexFar1(const float3& pos, const float3&
 	SetArrayQ(va, 0.5f, 0.0f, base);
 }
 
-void CBasicTreeSquareDrawer::DrawTreeVertexFar2(const float3& pos, const float3& swd, bool enlarge) { 
+void CBasicTreeSquareDrawer::DrawTreeVertexFar2(const float3& pos, const float3& swd, bool enlarge) {
 	if(enlarge)
 		va->EnlargeArrays(4, 0, VA_SIZE_T);
 	float3 base = pos + swd;
@@ -267,9 +267,9 @@ void CBasicTreeSquareDrawer::DrawQuad(int x, int y)
 	ITreeDrawer::TreeSquareStruct* tss = &td->trees[(y * td->treesX) + x];
 
 	float3 dif;
-		dif.x = camera->pos.x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
+		dif.x = camera->GetPos().x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
 		dif.y = 0.0f;
-		dif.z = camera->pos.z - ((y * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
+		dif.z = camera->GetPos().z - ((y * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
 	const float dist = dif.Length();
 	const float distFactor = dist / treeDistance;
 	dif.Normalize();
@@ -365,8 +365,8 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	ISky::SetupFog();
 	glColor4f(1, 1, 1, 1);
 
-	const int cx = (int)(camera->pos.x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
-	const int cy = (int)(camera->pos.z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	const int cx = (int)(camera->GetPos().x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	const int cy = (int)(camera->GetPos().z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
 
 	CBasicTreeSquareDrawer drawer(this, cx, cy, treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE);
 

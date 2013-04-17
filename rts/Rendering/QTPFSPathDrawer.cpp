@@ -295,7 +295,7 @@ void QTPFSPathDrawer::DrawNode(
 		}
 	}
 
-	if (showCost && camera->pos.SqDistance(verts[4]) < (2000.0f * 2000.0f)) {
+	if (showCost && camera->GetPos().SqDistance(verts[4]) < (2000.0f * 2000.0f)) {
 		font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);
 		font->glWorldPrint(verts[4], 4.0f, FloatToString(node->GetMoveCost(), "%8.2f"));
 	}

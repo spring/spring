@@ -412,7 +412,7 @@ void CDecalsDrawerGL4::CreateBoundingBoxVBOs()
 		float3(-1.0f,  1.0f, -1.0f),
 		float3( 1.0f, -1.0f, -1.0f),
 		float3( 1.0f,  1.0f, -1.0f),
-		
+
 		float3( 1.0f, -1.0f,  1.0f),
 		float3( 1.0f,  1.0f,  1.0f),
 		float3(-1.0f, -1.0f,  1.0f),
@@ -449,7 +449,7 @@ void CDecalsDrawerGL4::CreateBoundingBoxVBOs()
 
 	vboVertices.Resize(sizeof(boxverts) * sizeof(float3), GL_STATIC_DRAW, &boxverts[0]);
 	vboIndices.Resize(sizeof(indices) * sizeof(GLubyte), GL_STATIC_DRAW, &indices[0]);
-	
+
 	vboVertices.Unbind();
 	vboIndices.Unbind();
 }
@@ -582,7 +582,7 @@ void CDecalsDrawerGL4::Draw()
 
 	decalShader->Enable();
  		static GLint camPosLoc = glGetUniformLocation(decalShader->GetObjID(), "camPos");
-		glUniformf3(camPosLoc, camera->pos);
+		glUniformf3(camPosLoc, camera->GetPos());
 
 		static GLint shadowMatrixLoc = glGetUniformLocation(decalShader->GetObjID(), "shadowMatrix");
 		glUniformMatrix4fv(shadowMatrixLoc, 1, false, &shadowHandler->shadowMatrix.m[0]);

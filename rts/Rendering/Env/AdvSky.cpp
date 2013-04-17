@@ -199,11 +199,11 @@ void CAdvSky::Draw()
 	glEnable(GL_BLEND);
 
 	glPushMatrix();
-//	glTranslatef(camera->pos.x,camera->pos.y,camera->pos.z);
-	CMatrix44f m(camera->pos,skydir1,UpVector,skydir2);
+//	glTranslatef(camera->GetPos().x,camera->GetPos().y,camera->GetPos().z);
+	CMatrix44f m(camera->GetPos(),skydir1,UpVector,skydir2);
 	glMultMatrixf(m.m);
 
-	float3 modCamera=skydir1*camera->pos.x+skydir2*camera->pos.z;
+	float3 modCamera=skydir1*camera->GetPos().x+skydir2*camera->GetPos().z;
 
 	glMatrixMode(GL_TEXTURE);
 	  glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -544,18 +544,18 @@ void CAdvSky::CreateTransformVectors()
 
 void CAdvSky::DrawSun()
 {
-	if (!SunVisible(camera->pos))
+	if (!SunVisible(camera->GetPos()))
 		return;
 
 	const float3 xzSunCameraPos =
-		sundir1 * camera->pos.x +
-		sundir2 * camera->pos.z;
+		sundir1 * camera->GetPos().x +
+		sundir2 * camera->GetPos().z;
 	const float3 modSunColor = sunColor * skyLight->GetLightIntensity();
 
 	// sun-disc vertices might be clipped against the
 	// near-plane (which is variable) without scaling
 	glPushMatrix();
-	glTranslatef3(camera->pos);
+	glTranslatef3(camera->GetPos());
 	glScalef(globalRendering->zNear + 0.1f, globalRendering->zNear + 0.1f, globalRendering->zNear + 0.1f);
 
 	glDisable(GL_DEPTH_TEST);

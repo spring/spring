@@ -71,7 +71,7 @@ void CExploSpikeProjectile::Draw()
 {
 	inArray = true;
 
-	const float3 dif = (pos - camera->pos).ANormalize();
+	const float3 dif = (pos - camera->GetPos()).ANormalize();
 	const float3 dir2 = (dif.cross(dir)).ANormalize();
 
 	unsigned char col[4];

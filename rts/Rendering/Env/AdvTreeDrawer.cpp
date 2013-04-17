@@ -340,9 +340,9 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 	}
 
 	float3 dif;
-		dif.x = camera->pos.x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
+		dif.x = camera->GetPos().x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
 		dif.y = 0.0f;
-		dif.z = camera->pos.z - ((y * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
+		dif.z = camera->GetPos().z - ((y * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
 	const float dist = dif.Length();
 	const float distFactor = dist / treeDistance;
 	dif.Normalize();
@@ -486,8 +486,8 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	}
 
 
-	const int cx = int(camera->pos.x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
-	const int cy = int(camera->pos.z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	const int cx = int(camera->GetPos().x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	const int cy = int(camera->GetPos().z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
 
 	CAdvTreeSquareDrawer drawer(this, cx, cy, treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE, drawDetailed);
 
@@ -502,10 +502,10 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	if (drawDetailed) {
 		// draw near-trees
-		const int xstart = std::max(                              0, cx - 2);
-		const int xend   = std::min(gs->mapx / TREE_SQUARE_SIZE - 1, cx + 2);
-		const int ystart = std::max(                              0, cy - 2);
-		const int yend   = std::min(gs->mapy / TREE_SQUARE_SIZE - 1, cy + 2);
+		const int xstart = Clamp(cx - 2, 0, gs->mapx / TREE_SQUARE_SIZE - 1);
+		const int xend   = Clamp(cx + 2, 0, gs->mapx / TREE_SQUARE_SIZE - 1);
+		const int ystart = Clamp(cy - 2, 0, gs->mapy / TREE_SQUARE_SIZE - 1);
+		const int yend   = Clamp(cy + 2, 0, gs->mapy / TREE_SQUARE_SIZE - 1);
 
 		if (shadowHandler->shadowsLoaded) {
 			treeShader->Disable();
@@ -577,7 +577,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 					if (!camera->InView(ts->pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 						continue;
 
-					const float camDist = (ts->pos - camera->pos).SqLength();
+					const float camDist = (ts->pos - camera->GetPos()).SqLength();
 					int type = ts->type;
 					float dy = 0.0f;
 					unsigned int dispList;
@@ -597,7 +597,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 						glCallList(dispList);
 					} else if (camDist < (SQUARE_SIZE * SQUARE_SIZE * 125 * 125)) {
 						// draw mid-distance tree
-						const float relDist = (ts->pos.distance(camera->pos) - SQUARE_SIZE * 110) / (SQUARE_SIZE * 15);
+						const float relDist = (ts->pos.distance(camera->GetPos()) - SQUARE_SIZE * 110) / (SQUARE_SIZE * 15);
 
 						treeShader->SetUniform3f(((globalRendering->haveGLSL)? 2: 10), ts->pos.x, ts->pos.y, ts->pos.z);
 
@@ -785,9 +785,9 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 	}
 
 	float3 dif;
-		dif.x = camera->pos.x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
+		dif.x = camera->GetPos().x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
 		dif.y = 0.0f;
-		dif.z = camera->pos.z - ((y * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
+		dif.z = camera->GetPos().z - ((y * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
 	const float dist = dif.Length();
 	const float distFactor = dist / treeDistance;
 	dif.Normalize();
@@ -898,8 +898,8 @@ void CAdvTreeDrawer::DrawShadowPass()
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	CAdvTreeSquareShadowPassDrawer drawer;
-	const int cx = drawer.cx = (int)(camera->pos.x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
-	const int cy = drawer.cy = (int)(camera->pos.z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	const int cx = drawer.cx = (int)(camera->GetPos().x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	const int cy = drawer.cy = (int)(camera->GetPos().z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
 
 	drawer.drawDetailed = drawDetailed;
 	drawer.td = this;
@@ -914,10 +914,10 @@ void CAdvTreeDrawer::DrawShadowPass()
 	readmap->GridVisibility(camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer, 1);
 
 	if (drawDetailed) {
-		const int xstart = std::max(                              0, cx - 2);
-		const int xend   = std::min(gs->mapx / TREE_SQUARE_SIZE - 1, cx + 2);
-		const int ystart = std::max(                              0, cy - 2);
-		const int yend   = std::min(gs->mapy / TREE_SQUARE_SIZE - 1, cy + 2);
+		const int xstart = Clamp(cx - 2, 0, gs->mapx / TREE_SQUARE_SIZE - 1);
+		const int xend   = Clamp(cx + 2, 0, gs->mapx / TREE_SQUARE_SIZE - 1);
+		const int ystart = Clamp(cy - 2, 0, gs->mapy / TREE_SQUARE_SIZE - 1);
+		const int yend   = Clamp(cy + 2, 0, gs->mapy / TREE_SQUARE_SIZE - 1);
 
 		glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
 		glEnable(GL_TEXTURE_2D);
@@ -962,7 +962,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 					if (!camera->InView(ts->pos + float3(0, MAX_TREE_HEIGHT / 2, 0), MAX_TREE_HEIGHT / 2 + 150))
 						continue;
 
-					const float camDist = (ts->pos - camera->pos).SqLength();
+					const float camDist = (ts->pos - camera->GetPos()).SqLength();
 					int type = ts->type;
 					float dy = 0.0f;
 					unsigned int dispList;
@@ -980,7 +980,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 						po->SetUniform3f((globalRendering->haveGLSL? 3: 10), ts->pos.x, ts->pos.y, ts->pos.z);
 						glCallList(dispList);
 					} else if (camDist < SQUARE_SIZE * SQUARE_SIZE * 125 * 125) {
-						const float relDist = (ts->pos.distance(camera->pos) - SQUARE_SIZE * 110) / (SQUARE_SIZE * 15);
+						const float relDist = (ts->pos.distance(camera->GetPos()) - SQUARE_SIZE * 110) / (SQUARE_SIZE * 15);
 
 						glAlphaFunc(GL_GREATER, 0.8f + relDist * 0.2f);
 						po->SetUniform3f((globalRendering->haveGLSL? 3: 10), ts->pos.x, ts->pos.y, ts->pos.z);

@@ -92,7 +92,7 @@ void CLargeBeamLaserProjectile::Draw()
 {
 	inArray = true;
 
-	const float3 cameraDir = (pos - camera->pos).SafeANormalize();
+	const float3 cameraDir = (pos - camera->GetPos()).SafeANormalize();
 	// beam's coor-system; degenerate if targetPos == startPos
 	const float3 zdir = (targetPos - startpos).SafeANormalize();
 	const float3 xdir = (cameraDir.cross(zdir)).SafeANormalize();

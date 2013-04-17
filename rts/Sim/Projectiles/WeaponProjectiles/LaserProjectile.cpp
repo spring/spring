@@ -188,7 +188,7 @@ void CLaserProjectile::Draw()
 	}
 
 	inArray = true;
-	float3 dif(pos - camera->pos);
+	float3 dif(pos - camera->GetPos());
 	const float camDist = dif.Length();
 	dif /= camDist;
 	float3 dir1(dif.cross(dir));

@@ -220,7 +220,7 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 
 			if (w->targetType != Target_None) {
 				float3 pos = w->targetPos;
-				float3 v1 = (pos-camera->pos).ANormalize();
+				float3 v1 = (pos-camera->GetPos()).ANormalize();
 				float3 v2 = (v1.cross(UpVector)).ANormalize();
 				float3 v3 = (v2.cross(v1)).Normalize();
 				float radius = 10.0f;
@@ -241,7 +241,7 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 					const float dist = std::min(c.targetDist, w->range * 0.9f);
 
 					pos = w->weaponPos + w->wantedDir * dist;
-					v1 = (pos - camera->pos).ANormalize();
+					v1 = (pos - camera->GetPos()).ANormalize();
 					v2 = (v1.cross(UpVector)).ANormalize();
 					v3 = (v2.cross(v1)).ANormalize();
 					radius = dist / 100.0f;
@@ -264,9 +264,9 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 					glVertexf3(pos + (v2 * fastmath::sin(PI * -0.25f) + v3 * fastmath::cos(PI * -0.25f)) * radius);
 					glVertexf3(pos + (v2 * fastmath::sin(PI * -1.25f) + v3 * fastmath::cos(PI * -1.25f)) * radius);
 				}
-				if ((w->targetPos - camera->pos).ANormalize().dot(camera->forward) < 0.7f) {
+				if ((w->targetPos - camera->GetPos()).ANormalize().dot(camera->forward) < 0.7f) {
 					glVertexf3(w->targetPos);
-					glVertexf3(camera->pos + camera->forward * 100.0f);
+					glVertexf3(camera->GetPos() + camera->forward * 100.0f);
 				}
 				glEnd();
 			}

@@ -1074,8 +1074,8 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 	CFeature* feature = NULL;
 
 	const float viewRange = globalRendering->viewRange * 1.4f;
-	const float dist = TraceRay::GuiTraceRay(camera->pos, mouse->dir, viewRange, NULL, unit, feature, true);
-	const float3 groundPos = camera->pos + mouse->dir * dist;
+	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, NULL, unit, feature, true);
+	const float3 groundPos = camera->GetPos() + mouse->dir * dist;
 
 	if (dist <= 0.0f)
 		return false;
@@ -2524,7 +2524,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		const float xsize = SQUARE_SIZE * (startInfo.GetXSize() + buildSpacing * 2);
 		const int xnum = (int)((math::fabs(delta.x) + xsize * 1.4f)/xsize);
 		float xstep = (int)((0 < delta.x) ? xsize : -xsize);
- 
+
 		const float zsize = SQUARE_SIZE * (startInfo.GetZSize() + buildSpacing * 2);
 		const int znum = (int)((math::fabs(delta.z) + zsize * 1.4f)/zsize);
 		float zstep = (int)((0 < delta.z) ? zsize : -zsize);
@@ -3426,7 +3426,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		glDisable(GL_ALPHA_TEST);
 	}
 
-	float3 cameraPos=camera->pos;
+	float3 cameraPos=camera->GetPos();
 	float3 mouseDir=mouse->dir;
 
 	// setup for minimap proxying

@@ -64,7 +64,7 @@ void CGenericParticleProjectile::Draw()
 	inArray = true;
 
 	if (directional) {
-		float3 dif(pos-camera->pos);
+		float3 dif(pos-camera->GetPos());
 		dif.ANormalize();
 		float3 dir1(dif.cross(speed));
 		dir1.ANormalize();

@@ -49,7 +49,7 @@ static void SpringCamToTerrainCam(CCamera &sc, terrain::Camera& tc)
 	tc.front = sc.forward;
 	tc.right = sc.right;
 	tc.up = sc.up;
-	tc.pos = sc.pos;
+	tc.pos = sc.GetPos();
 	tc.aspect = globalRendering->aspectRatio;
 
 	tc.right = tc.front.cross(tc.up);
@@ -184,7 +184,7 @@ void CSM3GroundDrawer::DrawShadowPass()
 	shadowCam.front = camera->forward;
 	shadowCam.right = camera->right;
 	shadowCam.up = camera->up;
-	shadowCam.pos = camera->pos;
+	shadowCam.pos = camera->GetPos();
 	shadowCam.aspect = 1.0f;
 
 	Shader::IProgramObject* po =

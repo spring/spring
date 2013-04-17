@@ -46,16 +46,18 @@ public:
 	const CMatrix44f& GetViewProjectionMatrixInverse() const { return viewProjectionMatrixInverse; }
 	const CMatrix44f& GetBillBoardMatrix() const { return billboardMatrix; }
 
+	const float3& GetPos() const { return pos; }
 	float GetFov() const { return fov; }
 	float GetHalfFov() const { return halfFov; }
 	float GetTanHalfFov() const { return tanHalfFov; }
 	float GetLPPScale() const { return lppScale; }
 
 	/// @param fov in degree
+	float3& SetPos() { return pos; }
+	void SetPos(float3 p) { pos = p; }
 	void SetFov(float fov);
 
-
-	float3 pos;
+public:
 	float3 rot;        ///< warning is not always updated
 
 	float3 forward;    ///< local z-axis
@@ -113,6 +115,7 @@ private:
 	std::vector<FrustumLine> posFrustumSides;
 	std::vector<FrustumLine> negFrustumSides;
 
+	float3 pos;
 	float fov;         ///< in degrees
 	float halfFov;     ///< half the fov in radians
 	float tanHalfFov;  ///< math::tan(halfFov)
