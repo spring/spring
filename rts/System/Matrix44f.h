@@ -19,9 +19,6 @@ public:
 
 	void LoadIdentity();
 
-	float& operator[](int a) { return m[a]; }
-	float operator[](int a) const { return m[a]; }
-
 	void SetUpVector(const float3& up);
 	void RotateX(float rad);
 	void RotateY(float rad);
@@ -34,24 +31,33 @@ public:
 	void SetPos(const float3& pos);
 	float3 GetPos() const { return float3(m[12], m[13], m[14]); }
 
-	float3 Mul(const float3& vect) const;
-
 	void Transpose();
 
-	CMatrix44f operator* (const CMatrix44f& other) const;
+	/// general matrix inversion
+	bool InvertInPlace();
+	CMatrix44f Invert(bool* status = NULL) const;
+
+	/// affine matrix inversion
+	CMatrix44f& InvertAffineInPlace();
+	CMatrix44f InvertAffine() const;
+
+	float3 Mul(const float3& vect) const;
+	//float3 operator* (const float3 v) const;
+
+	CMatrix44f operator* (const CMatrix44f& m2) const {
+		CMatrix44f res(*this);
+		res *= m2;
+		return res;
+	}
 	CMatrix44f& operator*= (const CMatrix44f& other);
+
 	inline void operator*= (const float a) {
 		for (size_t i=0; i < 16; ++i)
 			m[i] *= a;
 	}
 
-	//! affine matrix inversion
-	CMatrix44f& InvertAffineInPlace();
-	CMatrix44f InvertAffine() const;
-
-	//! general matrix inversion
-	bool InvertInPlace();
-	CMatrix44f Invert(bool* status = NULL) const;
+	float& operator[](int a) { return m[a]; }
+	float operator[](int a) const { return m[a]; }
 
 	/// Allows implicit conversion to float* (for passing to gl functions)
 	operator const float* () const { return m; }
