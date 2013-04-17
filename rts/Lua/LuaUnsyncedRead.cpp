@@ -665,36 +665,41 @@ enum UnitAllegiance {
 class CUnitQuads : public CReadMap::IQuadDrawer
 {
 public:
-	CUnitQuads() : count(0) {};
+	unsigned int GetCount() const { return (visUnits.size()); }
 
-	int count;
-	std::vector<const std::list<CUnit*>*> visunits;
+	void Reset() { visUnits.clear(); }
+	void DrawQuad(int x, int y) {
+		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
 
-	void DrawQuad(int x, int y)
-	{
-		const CQuadField::Quad& q = quadField->GetQuadAt(x,y);
-		if (!q.units.empty())
-			visunits.push_back(&q.units);
-		count += q.units.size();
+		if (!q.units.empty()) {
+			visUnits.push_back(&q.units);
+		}
 	}
-};
 
+	std::vector<const std::list<CUnit*>*>& GetVisUnits() { return visUnits; }
+
+private:
+	std::vector<const std::list<CUnit*>*> visUnits;
+};
 
 class CFeatureQuads : public CReadMap::IQuadDrawer
 {
 public:
-	CFeatureQuads() : count(0) {};
+	unsigned int GetCount() const { return (visFeatures.size()); }
 
-	int count;
-	std::vector<const std::list<CFeature*>*> visfeatures;
+	void Reset() { visFeatures.clear(); }
+	void DrawQuad(int x, int y) {
+		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
 
-	void DrawQuad(int x, int y)
-	{
-		const CQuadField::Quad& q = quadField->GetQuadAt(x,y);
-		if (!q.features.empty())
-			visfeatures.push_back(&q.features);
-		count += q.features.size();
+		if (!q.features.empty()) {
+			visFeatures.push_back(&q.features);
+		}
 	}
+
+	std::vector<const std::list<CFeature*>*>& GetVisFeatures() { return visFeatures; }
+
+private:
+	std::vector<const std::list<CFeature*>*> visFeatures;
 };
 
 
@@ -736,19 +741,20 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 
 	vector<const CUnitSet*> unitSets;
 	static CUnitSet visQuadUnits;
+	static CUnitQuads unitQuadIter;
 
-	CUnitQuads quadIter;
 	int count = 0;
 
 	{
 		GML_RECMUTEX_LOCK(quad); // GetVisibleUnits
 
-		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &quadIter, INT_MAX);
+		unitQuadIter.Reset();
+		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
 
-		lua_createtable(L, quadIter.count, 0);
+		lua_createtable(L, unitQuadIter.GetCount(), 0);
 
 		// setup the list of unit sets
-		if (quadIter.count > unitHandler->activeUnits.size()/3) {
+		if (unitQuadIter.GetCount() > unitHandler->activeUnits.size()/3) {
 			// if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
 			if (teamID >= 0) {
 				unitSets.push_back(&teamHandler->Team(teamID)->units);
@@ -766,7 +772,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 			// objects can exist in multiple quads, so we still need to do a duplication check
 			visQuadUnits.clear();
 			std::vector<const std::list<CUnit*>*>::iterator sit;
-			for (sit = quadIter.visunits.begin(); sit != quadIter.visunits.end(); ++sit) {
+			for (sit = unitQuadIter.GetVisUnits().begin(); sit != unitQuadIter.GetVisUnits().end(); ++sit) {
 				std::list<CUnit*>::const_iterator unitIt;
 				for (unitIt = (*sit)->begin(); unitIt != (*sit)->end(); ++unitIt) {
 					CUnit* unit = *unitIt;
@@ -859,25 +865,26 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 
 	bool scanAll = false;
 	static CFeatureSet visQuadFeatures;
-	static CFeatureQuads quadIter;
+	static CFeatureQuads featureQuadIter;
 	int count = 0;
 
 	{
 		GML_RECMUTEX_LOCK(quad); // GetVisibleFeatures
 
-		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &quadIter, INT_MAX);
+		featureQuadIter.Reset();
+		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
 
-		lua_createtable(L, quadIter.count, 0);
+		lua_createtable(L, featureQuadIter.GetCount(), 0);
 
 		//! setup the list of features
-		if (quadIter.count > featureHandler->GetActiveFeatures().size()/3) {
+		if (featureQuadIter.GetCount() > featureHandler->GetActiveFeatures().size()/3) {
 			//! if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
 			scanAll = true;
 		} else {
 			//! features can exist in multiple quads, so we need to do a duplication check
 			visQuadFeatures.clear();
 			std::vector<const std::list<CFeature*>*>::iterator it;
-			for (it = quadIter.visfeatures.begin(); it != quadIter.visfeatures.end(); ++it) {
+			for (it = featureQuadIter.GetVisFeatures().begin(); it != featureQuadIter.GetVisFeatures().end(); ++it) {
 				std::list<CFeature*>::const_iterator featureIt;
 				for (featureIt = (*it)->begin(); featureIt != (*it)->end(); ++featureIt) {
 					visQuadFeatures.insert(*featureIt);
