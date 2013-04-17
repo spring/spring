@@ -117,17 +117,17 @@ namespace Watchdog
 			}
 
 			if (hangDetected) {
-				CrashHandler::PrepareStacktrace();
+				CrashHandler::PrepareStacktrace(LOG_LEVEL_WARNING);
 
 				for (unsigned int i = 0; i < WDT_LAST; ++i) {
 					if (!threadSlots[i].active)
 						continue;
 
 					WatchDogThreadInfo* th_info = registeredThreads[i];
-					CrashHandler::Stacktrace(th_info->thread, threadNames[i]);
+					CrashHandler::Stacktrace(th_info->thread, threadNames[i], LOG_LEVEL_WARNING);
 				}
 
-				CrashHandler::CleanupStacktrace();
+				CrashHandler::CleanupStacktrace(LOG_LEVEL_WARNING);
 			}
 
 			boost::this_thread::sleep(boost::posix_time::seconds(1));
