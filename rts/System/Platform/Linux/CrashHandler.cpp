@@ -355,12 +355,12 @@ static sigaction_t& GetSigAction(void (*s_hand)(int))
 
 namespace CrashHandler
 {
-	static void Stacktrace(bool* keepRunning, pthread_t* hThread = NULL, const char* threadName = NULL)
+	static void Stacktrace(bool* keepRunning, pthread_t* hThread = NULL, const char* threadName = NULL, const int logLevel = LOG_LEVEL_ERROR)
 	{
 		if (threadName) {
-			LOG_L(L_ERROR, "Stacktrace (%s):", threadName);
+			LOG_I(logLevel, "Stacktrace (%s):", threadName);
 		} else {
-			LOG_L(L_ERROR, "Stacktrace:");
+			LOG_I(logLevel, "Stacktrace:");
 		}
 
 		bool _keepRunning = false;
@@ -380,7 +380,7 @@ namespace CrashHandler
 			std::vector<void*> buffer(MAX_STACKTRACE_DEPTH + 2);
 			int numLines;
 			if (hThread && Threading::GetCurrentThread() != *hThread) {
-				LOG_L(L_ERROR, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
+				LOG_I(logLevel, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
 				LOG_CLEANUP();
 				numLines = thread_backtrace(*hThread, &buffer[0], buffer.size());    //! stack pointers
 			} else {
@@ -400,7 +400,7 @@ namespace CrashHandler
 		}
 
 		if (stacktrace.empty()) {
-			LOG_L(L_ERROR, "  Unable to create stacktrace");
+			LOG_I(logLevel, "  Unable to create stacktrace");
 			return;
 		}
 
@@ -431,7 +431,7 @@ namespace CrashHandler
 
 			//! Linux Graphic drivers are known to fail with moderate OpenGL usage
 			if (containsOglSo) {
-				LOG_L(L_ERROR, "This stack trace indicates a problem with your graphic card driver. "
+				LOG_I(logLevel, "This stack trace indicates a problem with your graphic card driver. "
 						"Please try upgrading or downgrading it. "
 						"Specifically recommended is the latest driver, and one that is as old as your graphic card. "
 						"Also try lower graphic details and disabling Lua widgets in spring-settings.\n");
@@ -443,11 +443,11 @@ namespace CrashHandler
 				containedAIInterfaceSo = false;
 			}
 			if (containedAIInterfaceSo) {
-				LOG_L(L_ERROR, "This stack trace indicates a problem with an AI Interface library.");
+				LOG_I(logLevel, "This stack trace indicates a problem with an AI Interface library.");
 				*keepRunning = true;
 			}
 			if (containedSkirmishAISo) {
-				LOG_L(L_ERROR, "This stack trace indicates a problem with a Skirmish AI library.");
+				LOG_I(logLevel, "This stack trace indicates a problem with a Skirmish AI library.");
 				*keepRunning = true;
 			}
 
@@ -460,26 +460,26 @@ namespace CrashHandler
 		//! Print out the translated StackTrace
 		unsigned numLine = 0;
 		for (std::vector<std::string>::iterator it = stacktrace.begin(); it != stacktrace.end(); ++it) {
-			LOG_L(L_ERROR, "  <%u> %s", numLine++, it->c_str());
+			LOG_I(logLevel, "  <%u> %s", numLine++, it->c_str());
 		}
 	}
 
 
-	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName)
+	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel)
 	{
 		//TODO Our custom thread_backtrace() only works on the mainthread.
 		//     Use to gdb's libthread_db to get the stacktraces of all threads.
 		if (!Threading::IsMainThread(thread) && Threading::GetCurrentThread() != thread) {
-			LOG_L(L_ERROR, "Stacktrace (%s):", threadName.c_str());
-			LOG_L(L_ERROR, "  No Stacktraces for non-MainThread.");
+			LOG_I(logLevel, "Stacktrace (%s):", threadName.c_str());
+			LOG_I(logLevel, "  No Stacktraces for non-MainThread.");
 			return;
 		}
-		Stacktrace(NULL, &thread, threadName.c_str());
+		Stacktrace(NULL, &thread, threadName.c_str(), logLevel);
 	}
 
-	void PrepareStacktrace() {}
+	void PrepareStacktrace(const int logLevel) {}
 
-	void CleanupStacktrace() {
+	void CleanupStacktrace(const int logLevel) {
 		LOG_CLEANUP();
 	}
 
@@ -565,7 +565,7 @@ namespace CrashHandler
 		if (!keepRunning) {
 			//! don't handle any further signals when exiting
 			Remove();
-			
+
 			std::ostringstream buf;
 			buf << "Spring has crashed:\n"
 				<< error << ".\n\n"
