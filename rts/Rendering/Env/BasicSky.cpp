@@ -229,14 +229,14 @@ void CBasicSky::Draw()
 
 	if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	float3 modCamera=skydir1*camera->pos.x+skydir2*camera->pos.z;
+	float3 modCamera=skydir1*camera->GetPos().x+skydir2*camera->GetPos().z;
 
 	glMatrixMode(GL_TEXTURE);
 		glPushMatrix();
 		glTranslatef((gs->frameNum%20000)*0.00005f+modCamera.x*0.000025f,modCamera.z*0.000025f,0);
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
-		CMatrix44f m(camera->pos,skydir1,UpVector,skydir2);
+		CMatrix44f m(camera->GetPos(),skydir1,UpVector,skydir2);
 		glMultMatrixf(m.m);
 
 	glCallList(skyDomeList);
@@ -518,18 +518,18 @@ void CBasicSky::CreateTransformVectors()
 
 void CBasicSky::DrawSun()
 {
-	if (!SunVisible(camera->pos))
+	if (!SunVisible(camera->GetPos()))
 		return;
 
 	const float3 xzSunCameraPos =
-		sundir1 * camera->pos.x +
-		sundir2 * camera->pos.z;
+		sundir1 * camera->GetPos().x +
+		sundir2 * camera->GetPos().z;
 	const float3 modSunColor = sunColor * skyLight->GetLightIntensity();
 
 	// sun-disc vertices might be clipped against the
 	// near-plane (which is variable) without scaling
 	glPushMatrix();
-	glTranslatef3(camera->pos);
+	glTranslatef3(camera->GetPos());
 	glScalef(globalRendering->zNear + 0.1f, globalRendering->zNear + 0.1f, globalRendering->zNear + 0.1f);
 
 	glDisable(GL_DEPTH_TEST);

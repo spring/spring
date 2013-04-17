@@ -112,8 +112,8 @@ void CSmokeTrailProjectile::Draw()
 	va->EnlargeArrays(8 * 4, 0, VA_SIZE_TC);
 
 	if (drawTrail) {
-		const float3 dif1  = (pos1 - camera->pos).ANormalize();
-		const float3 dif2  = (pos2 - camera->pos).ANormalize();
+		const float3 dif1  = (pos1 - camera->GetPos()).ANormalize();
+		const float3 dif2  = (pos2 - camera->GetPos()).ANormalize();
 		const float3 odir1 = (dif1.cross(dir1)).ANormalize();
 		const float3 odir2 = (dif2.cross(dir2)).ANormalize();
 
@@ -145,7 +145,7 @@ void CSmokeTrailProjectile::Draw()
 		float size2 = 1 + ((age + 8) * (1.0f / lifeTime)) * orgSize;
 
 		if (drawSegmented) {
-			const float3 dif3 = (midpos - camera->pos).ANormalize();
+			const float3 dif3 = (midpos - camera->GetPos()).ANormalize();
 			const float3 odir3 = (dif3.cross(middir)).ANormalize();
 			float size3 = 0.2f + ((age + 4) * (1.0f / lifeTime)) * orgSize;
 

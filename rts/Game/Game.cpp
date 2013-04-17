@@ -1048,7 +1048,7 @@ bool CGame::UpdateUnsynced()
 			}
 
 			// TODO call only when camera changed
-			sound->UpdateListener(camera->pos, camera->forward, camera->up, deltaSec);
+			sound->UpdateListener(camera->GetPos(), camera->forward, camera->up, deltaSec);
 
 			profiler.Update();
 		}

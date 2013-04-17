@@ -161,7 +161,7 @@ void CRoamMeshDrawer::Update()
 	// Further conditions that can cause a retessellation
 #if (RETESSELLATE_MODE == 2)
 	static const float maxCamDeltaDistSq = 500.0f * 500.0f;
-	retessellate |= ((cam->pos - lastCamPos).SqLength() > maxCamDeltaDistSq);
+	retessellate |= ((cam->GetPos() - lastCamPos).SqLength() > maxCamDeltaDistSq);
 #endif
 	retessellate |= forceRetessellate;
 	retessellate |= (lastGroundDetail != smfGroundDrawer->GetGroundDetail());
@@ -172,7 +172,7 @@ void CRoamMeshDrawer::Update()
 			//FIXME this tessellates with current camera + viewRadius
 			//  so it doesn't retessellate patches that are e.g. only vis. in the shadow frustum
 			Reset();
-			Tessellate(cam->pos, smfGroundDrawer->GetGroundDetail());
+			Tessellate(cam->GetPos(), smfGroundDrawer->GetGroundDetail());
 		}
 
 		{ //SCOPED_TIMER("ROAM::GenerateIndexArray");
@@ -201,15 +201,15 @@ void CRoamMeshDrawer::Update()
 					tricount += it->GetTriCount();
 				}
 			}
-		
+
 			LOG_L(L_DEBUG, "ROAM dbg: Framechange, fram=%i tris=%i, viewrad=%i, cd=%f, camera=(%5.0f, %5.0f, %5.0f) camera2=  (%5.0f, %5.0f, %5.0f)",
 				globalRendering->drawFrame,
 				tricount,
 				smfGroundDrawer->viewRadius,
 				(cam->pos - lastCamPos).SqLength();,
-				camera->pos.x,
-				camera->pos.y,
-				camera->pos.z,
+				camera->GetPos().x,
+				camera->GetPos().y,
+				camera->GetPos().z,
 				cam2->pos.x,
 				cam2->pos.y,
 				cam2->pos.z
@@ -217,7 +217,7 @@ void CRoamMeshDrawer::Update()
 		}*/
 
 		lastGroundDetail = smfGroundDrawer->GetGroundDetail();
-		lastCamPos = cam->pos;
+		lastCamPos = cam->GetPos();
 		forceRetessellate = false;
 	}
 }

@@ -276,7 +276,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	bp.time     = gu->gameTime;
 	bp.x        = x;
 	bp.y        = y;
-	bp.camPos   = camera->pos;
+	bp.camPos   = camera->GetPos();
 	bp.dir      = dir;
 	bp.movement = 0;
 
@@ -350,8 +350,8 @@ void CMouseHandler::GetSelectionBoxCoeff(const float3& pos1, const float3& dir1,
 	if(dist < 0) dist = globalRendering->viewRange * 1.4f;
 	float3 gpos2 = pos2 + dir2 * dist;
 
-	const float3 cdir1 = (gpos1 - camera->pos).ANormalize();
-	const float3 cdir2 = (gpos2 - camera->pos).ANormalize();
+	const float3 cdir1 = (gpos1 - camera->GetPos()).ANormalize();
+	const float3 cdir2 = (gpos2 - camera->GetPos()).ANormalize();
 
 	// prevent DivByZero
 	float cdir1_fw = cdir1.dot(camera->forward); if (cdir1_fw == 0.0f) cdir1_fw = 0.0001f;
@@ -420,7 +420,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		if (bp.movement > 4) {
 			// select box
 			float2 topright, btmleft;
-			GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->pos, dir, topright, btmleft);
+			GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->GetPos(), dir, topright, btmleft);
 
 			// GetSelectionBoxCoeff returns us the corner pos, but we want to do a inview frustum check.
 			// To do so we need the frustum planes (= plane normal + plane offset).
@@ -435,16 +435,16 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			if (topright.x != 0) norm3 = (camera->forward * signf(-topright.x)) + (camera->right / math::fabs(topright.x));
 			if (btmleft.x  != 0) norm4 = (camera->forward * signf(  btmleft.x)) - (camera->right / math::fabs(btmleft.x));
 
-			const float4 plane1(norm1, -(norm1.dot(camera->pos)));
-			const float4 plane2(norm2, -(norm2.dot(camera->pos)));
-			const float4 plane3(norm3, -(norm3.dot(camera->pos)));
-			const float4 plane4(norm4, -(norm4.dot(camera->pos)));
+			const float4 plane1(norm1, -(norm1.dot(camera->GetPos())));
+			const float4 plane2(norm2, -(norm2.dot(camera->GetPos())));
+			const float4 plane3(norm3, -(norm3.dot(camera->GetPos())));
+			const float4 plane4(norm4, -(norm4.dot(camera->GetPos())));
 
 			selectedUnitsHandler.HandleUnitBoxSelection(plane1, plane2, plane3, plane4);
 		} else {
 			CUnit* unit;
 			CFeature* feature;
-			TraceRay::GuiTraceRay(camera->pos, dir, globalRendering->viewRange * 1.4f, NULL, unit, feature, false);
+			TraceRay::GuiTraceRay(camera->GetPos(), dir, globalRendering->viewRange * 1.4f, NULL, unit, feature, false);
 
 			selectedUnitsHandler.HandleSingleUnitClickSelection(unit, true);
 		}
@@ -481,7 +481,7 @@ void CMouseHandler::DrawSelectionBox()
 	   (!inMapDrawer || !inMapDrawer->IsDrawMode()))
 	{
 		float2 topright, btmleft;
-		GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->pos, dir, topright, btmleft);
+		GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->GetPos(), dir, topright, btmleft);
 
 		float3 dir1S = camera->right * topright.x;
 		float3 dir1U = camera->up    * topright.y;
@@ -503,10 +503,10 @@ void CMouseHandler::DrawSelectionBox()
 		glLineWidth(cmdColors.MouseBoxLineWidth());
 
 		float3 verts[] = {
-			camera->pos + (dir1U + dir1S + camera->forward) * 30,
-			camera->pos + (dir2U + dir1S + camera->forward) * 30,
-			camera->pos + (dir2U + dir2S + camera->forward) * 30,
-			camera->pos + (dir1U + dir2S + camera->forward) * 30,
+			camera->GetPos() + (dir1U + dir1S + camera->forward) * 30,
+			camera->GetPos() + (dir2U + dir1S + camera->forward) * 30,
+			camera->GetPos() + (dir2U + dir2S + camera->forward) * 30,
+			camera->GetPos() + (dir1U + dir2S + camera->forward) * 30,
 		};
 
 		glEnableClientState(GL_VERTEX_ARRAY);
@@ -554,7 +554,7 @@ std::string CMouseHandler::GetCurrentTooltip()
 		GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCurrentTooltip
 		GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCurrentTooltip
 
-		dist = TraceRay::GuiTraceRay(camera->pos, dir, range, NULL, unit, feature, true, false, true);
+		dist = TraceRay::GuiTraceRay(camera->GetPos(), dir, range, NULL, unit, feature, true, false, true);
 
 		if (unit)    return CTooltipConsole::MakeUnitString(unit);
 		if (feature) return CTooltipConsole::MakeFeatureString(feature);
@@ -566,7 +566,7 @@ std::string CMouseHandler::GetCurrentTooltip()
 	}
 
 	if (dist <= range) {
-		const float3 pos = camera->pos + (dir * dist);
+		const float3 pos = camera->GetPos() + (dir * dist);
 		return CTooltipConsole::MakeGroundString(pos);
 	}
 
@@ -801,7 +801,7 @@ void CMouseHandler::DrawFPSCursor()
 void CMouseHandler::DrawCursor()
 {
 	assert(currentCursor);
-	
+
 	if (guihandler)
 		guihandler->DrawCentroidCursor();
 

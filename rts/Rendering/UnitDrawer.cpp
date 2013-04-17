@@ -325,7 +325,7 @@ void CUnitDrawer::Update()
 	useDistToGroundForIcons = (camHandler->GetCurrentController()).GetUseDistToGroundForIcons();
 
 	if (useDistToGroundForIcons) {
-		const float3& camPos = camera->pos;
+		const float3& camPos = camera->GetPos();
 		// use the height at the current camera position
 		//const float groundHeight = ground->GetHeightAboveWater(camPos.x, camPos.z, false);
 		// use the middle between the highest and lowest position on the map as average
@@ -394,10 +394,10 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 			if (unit->drawMidPos.y < 0.0f) {
 				zeroPos = unit->drawMidPos;
 			} else {
-				const float dif = unit->drawMidPos.y - camera->pos.y;
+				const float dif = unit->drawMidPos.y - camera->GetPos().y;
 				zeroPos =
-					camera->pos  * (unit->drawMidPos.y / dif) +
-					unit->drawMidPos * (-camera->pos.y / dif);
+					camera->GetPos()  * (unit->drawMidPos.y / dif) +
+					unit->drawMidPos * (-camera->GetPos().y / dif);
 			}
 			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
 				return;
@@ -414,7 +414,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 #endif
 
 		if (!unit->isIcon) {
-			if ((unit->pos).SqDistance(camera->pos) > (unit->sqRadius * unitDrawDistSqr)) {
+			if ((unit->pos).SqDistance(camera->GetPos()) > (unit->sqRadius * unitDrawDistSqr)) {
 				farTextureHandler->Queue(unit);
 			} else {
 				if (!DrawUnitLOD(unit)) {
@@ -777,7 +777,7 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 		return;
 	}
 
-	const float sqDist = (unit->pos - camera->pos).SqLength();
+	const float sqDist = (unit->pos - camera->GetPos()).SqLength();
 	const float farLength = unit->sqRadius * unitDrawDistSqr;
 
 	if (unit->noDraw) { return; }
@@ -909,7 +909,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 		pos = CGameHelper::GetUnitErrorPos(unit, gu->myAllyTeam);
 	}
 
-	float dist = fastmath::sqrt2(fastmath::sqrt2((pos - camera->pos).SqLength()));
+	float dist = fastmath::sqrt2(fastmath::sqrt2((pos - camera->GetPos()).SqLength()));
 	float scale = 0.4f * iconData->GetSize() * dist;
 
 	if (iconData->GetRadiusAdjust() && !useDefaultIcon) {
@@ -1239,7 +1239,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 
 		if (globalRendering->haveGLSL && shadowHandler->shadowsLoaded) {
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform3fv(6, &camera->pos[0]);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(13, false, shadowHandler->shadowMatrix);
@@ -1251,7 +1251,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(10, &sky->GetLight()->GetLightDir().x);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(11, unitSunColor.x, unitSunColor.y, unitSunColor.z, 0.0f);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(12, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f); //!
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(13, camera->pos.x, camera->pos.y, camera->pos.z, 0.0f);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(13, camera->GetPos().x, camera->GetPos().y, camera->GetPos().z, 0.0f);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, sky->GetLight()->GetUnitShadowDensity());
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(11, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f);
@@ -2010,17 +2010,17 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	unit->isIcon = false;
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-		unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->pos).SqLength());
+		unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength());
 #ifdef USE_GML
 		if (showHealthBars && !unit->noDraw &&
 			(unit->health < unit->maxHealth || unit->paralyzeDamage > 0.0f || unit->limExperience > 0.0f ||
 			unit->beingBuilt || unit->stockpileWeapon || unit->group) &&
-			((unit->pos - camera->pos).SqLength() < (unitDrawDistSqr * 500.0f)))
+			((unit->pos - camera->GetPos()).SqLength() < (unitDrawDistSqr * 500.0f)))
 			drawStat.insert(unit);
 #endif
 	} else if ((losStatus & LOS_PREVLOS) && (losStatus & LOS_CONTRADAR)) {
 		if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-			unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->pos).SqLength());
+			unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength());
 		}
 	}
 
@@ -2442,7 +2442,7 @@ unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD)
 {
 	if (lastLOD == 0) { return 0; }
 
-	const float3 diff = (unit->pos - camera->pos);
+	const float3 diff = (unit->pos - camera->GetPos());
 	const float dist = diff.dot(camera->forward);
 	const float lpp = std::max(0.0f, dist * UNIT_GLOBAL_LOD_FACTOR);
 
@@ -2465,7 +2465,7 @@ unsigned int CUnitDrawer::CalcUnitShadowLOD(const CUnit* unit, unsigned int last
 
 	// FIXME: fix it, cap it for shallow shadows?
 	const float3& sun = sky->GetLight()->GetLightDir();
-	const float3 diff = (camera->pos - unit->pos);
+	const float3 diff = (camera->GetPos() - unit->pos);
 	const float  dot  = diff.dot(sun);
 	const float3 gap  = diff - (sun * dot);
 	const float  lpp  = std::max(0.0f, gap.Length() * UNIT_GLOBAL_LOD_FACTOR);

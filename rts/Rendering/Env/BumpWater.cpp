@@ -292,7 +292,7 @@ CBumpWater::CBumpWater()
 
 		if (shoreWaves)
 			eventHandler.InsertEvent(this, "UnsyncedHeightMapUpdate");
-		
+
 		//coastFBO.Unbind(); // gets done below
 	}
 
@@ -1111,9 +1111,9 @@ void CBumpWater::Draw()
 	waterShader->SetFlag("opt_infotex", gd->DrawExtraTex());
 
 	waterShader->Enable();
-	waterShader->SetUniform3fv(0, &camera->pos[0]);
+	waterShader->SetUniform3fv(0, &camera->GetPos()[0]);
 	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
- 
+
 	if (shadowHandler && shadowHandler->shadowsLoaded) {
 		waterShader->SetUniformMatrix4fv(13, false, &shadowHandler->shadowMatrix.m[0]);
 
@@ -1225,7 +1225,7 @@ void CBumpWater::DrawReflection(CGame* game)
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
 	camera->forward.y *= -1.0f;
-	camera->pos.y *= -1.0f;
+	camera->SetPos().y *= -1.0f;
 	camera->Update();
 
 	game->SetDrawMode(CGame::gameReflectionDraw);

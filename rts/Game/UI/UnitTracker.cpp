@@ -253,7 +253,7 @@ void CUnitTracker::SetCam()
 		// Transition between 2 targets
 		timeOut++;
 		camera->forward = oldCamDir;
-		camera->pos = oldCamPos;
+		camera->SetPos(oldCamPos);
 		if (camHandler->GetCurrentControllerNum() == CCameraHandler::CAMERA_MODE_FIRSTPERSON) {
 			camHandler->GetCurrentController().SetDir(oldCamDir);
 			camHandler->GetCurrentController().SetPos(oldCamPos);
@@ -300,9 +300,9 @@ void CUnitTracker::SetCam()
 		trackDir += (u->frontdir - trackDir) * (1 - math::pow(0.90f, deltaTime));
 		trackDir.ANormalize();
 
-		camera->pos = trackPos;
+		camera->SetPos(trackPos);
 
-		camera->forward = u->pos + (u->speed * globalRendering->timeOffset) - camera->pos;
+		camera->forward = u->pos + (u->speed * globalRendering->timeOffset) - camera->GetPos();
 		camera->forward.ANormalize();
 		camera->forward += trackDir;
 		camera->forward.ANormalize();
@@ -323,6 +323,6 @@ void CUnitTracker::SetCam()
 		}
 
 		oldCamDir = camera->forward;
-		oldCamPos = camera->pos;
+		oldCamPos = camera->GetPos();
 	}
 }

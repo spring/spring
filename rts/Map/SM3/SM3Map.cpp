@@ -377,7 +377,7 @@ static void DrawGrid(terrain::TQuad* tq, DrawGridParms* param)
 void CSM3ReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize)
 {
 	float aspect = cam->viewport[2]/(float)cam->viewport[3];
-	tmpFrustum.CalcCameraPlanes(&cam->pos, &cam->right, &cam->up, &cam->forward, cam->GetTanHalfFov(), aspect);
+	tmpFrustum.CalcCameraPlanes(&cam->SetPos(), &cam->right, &cam->up, &cam->forward, cam->GetTanHalfFov(), aspect);
 
 	DrawGridParms dgp;
 	dgp.cb = cb;

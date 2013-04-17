@@ -289,7 +289,7 @@ bool CStdExplosionGenerator::Explosion(
 	const float groundHeight = ground->GetHeightReal(pos.x, pos.z);
 	const float altitude = pos.y - groundHeight;
 
-	float3 camVect = camera->pos - pos;
+	float3 camVect = camera->GetPos() - pos;
 
 	const unsigned int flags = CCustomExplosionGenerator::GetFlagsFromHeight(pos.y, altitude);
 	const bool airExplosion    = ((flags & CCustomExplosionGenerator::SPW_AIR       ) != 0);

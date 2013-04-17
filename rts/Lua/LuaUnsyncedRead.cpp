@@ -492,7 +492,7 @@ int LuaUnsyncedRead::IsUnitInView(lua_State* L)
 
 static bool UnitIsIcon(const CUnit* unit)
 {
-	const float sqDist = (unit->pos - camera->pos).SqLength();
+	const float sqDist = (unit->pos - camera->GetPos()).SqLength();
 	const float iconLength = unitDrawer->iconLength;
 	const float iconDistSqrMult = unit->unitDef->iconType->GetDistanceSqr();
 	const float realIconLength = iconLength * iconDistSqrMult;
@@ -804,7 +804,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 			}
 
 			if (noIcons) {
-				const float sqDist = (unit.pos - camera->pos).SqLength();
+				const float sqDist = (unit.pos - camera->GetPos()).SqLength();
 				const float iconDistSqrMult = unit.unitDef->iconType->GetDistanceSqr();
 				const float realIconLength = iconLength * iconDistSqrMult;
 				if (sqDist > realIconLength) {
@@ -895,7 +895,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 			continue;
 
 		if (noIcons) {
-			float sqDist = (f.pos - camera->pos).SqLength2D();
+			float sqDist = (f.pos - camera->GetPos()).SqLength2D();
 			float farLength = f.sqRadius * unitDrawer->unitDrawDist * unitDrawer->unitDrawDist;
 			if (sqDist >= farLength) {
 				continue;
@@ -1219,9 +1219,9 @@ int LuaUnsyncedRead::GetCameraState(lua_State* L)
 int LuaUnsyncedRead::GetCameraPosition(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, camera->pos.x);
-	lua_pushnumber(L, camera->pos.y);
-	lua_pushnumber(L, camera->pos.z);
+	lua_pushnumber(L, camera->GetPos().x);
+	lua_pushnumber(L, camera->GetPos().y);
+	lua_pushnumber(L, camera->GetPos().z);
 	return 3;
 }
 
@@ -1332,7 +1332,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 	const float range = globalRendering->viewRange * 1.4f;
 	const float badRange = range - 300.0f;
 
-	const float3& pos = camera->pos;
+	const float3& pos = camera->GetPos();
 	const float3 dir = camera->CalcPixelDir(wx, wy);
 
 

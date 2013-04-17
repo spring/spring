@@ -451,7 +451,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					if (!camera->InView(p2))
 						continue;
-					if (camera->pos.SqDistance(p2) >= (4000.0f * 4000.0f))
+					if (camera->GetPos().SqDistance(p2) >= (4000.0f * 4000.0f))
 						continue;
 
 					font->SetTextColor(1.0f, 1.0f / cost, peBlueValue, 1.0f);
@@ -516,7 +516,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 			if (!camera->InView(p1))
 				continue;
-			if (camera->pos.SqDistance(p1) >= (4000.0f * 4000.0f))
+			if (camera->GetPos().SqDistance(p1) >= (4000.0f * 4000.0f))
 				continue;
 
 			SNPRINTF(blockCostsStr, sizeof(blockCostsStr), "f(%.2f) g(%.2f)", ob->fCost, ob->gCost);

@@ -90,7 +90,7 @@ void CSimpleParticleSystem::Draw()
 			const Particle* p = &particles[i];
 
 			if (p->life < 1.0f) {
-				const float3 zdir = (p->pos - camera->pos).SafeANormalize();
+				const float3 zdir = (p->pos - camera->GetPos()).SafeANormalize();
 				const float3 ydir = (zdir.cross(p->speed)).SafeANormalize();
 				const float3 xdir = (zdir.cross(ydir));
 

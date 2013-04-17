@@ -106,8 +106,8 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	dir = speed / curSpeed;
 	oldSmokeDir = dir;
 
-	const float3 camDir = (pos - camera->pos).ANormalize();
-	const float camDist = (camera->pos.distance(pos) * 0.2f) + ((1.0f - math::fabs(camDir.dot(dir))) * 3000);
+	const float3 camDir = (pos - camera->GetPos()).ANormalize();
+	const float camDist = (camera->GetPos().distance(pos) * 0.2f) + ((1.0f - math::fabs(camDir.dot(dir))) * 3000);
 
 	drawTrail = (camDist >= 200.0f);
 	drawRadius = maxSpeed * 8.0f;
@@ -309,8 +309,8 @@ void CStarburstProjectile::Update()
 		useAirLos = curCallback->useAirLos;
 
 		if (!drawTrail) {
-			const float3 camDir = (pos - camera->pos).ANormalize();
-			const float camDist = (camera->pos.distance(pos) * 0.2f + (1 - math::fabs(camDir.dot(dir))) * 3000);
+			const float3 camDir = (pos - camera->GetPos()).ANormalize();
+			const float camDist = (camera->GetPos().distance(pos) * 0.2f + (1 - math::fabs(camDir.dot(dir))) * 3000);
 
 			drawTrail = (camDist > 300.0f);
 		}
@@ -333,9 +333,9 @@ void CStarburstProjectile::Draw()
 
 		if (drawTrail) {
 			// draw the trail as a single quad
-			const float3 dif1 = (drawPos - camera->pos).ANormalize();
+			const float3 dif1 = (drawPos - camera->GetPos()).ANormalize();
 			const float3 dir1 = (dif1.cross(dir)).ANormalize();
-			const float3 dif2 = (oldSmoke - camera->pos).ANormalize();
+			const float3 dif2 = (oldSmoke - camera->GetPos()).ANormalize();
 			const float3 dir2 = (dif2.cross(oldSmokeDir)).ANormalize();
 
 			const float a1 =

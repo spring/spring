@@ -74,7 +74,7 @@ void CLightningProjectile::Draw()
 	col[3] = 1; //intensity*255;
 
 	const float3 ddir = (targetPos - startpos).Normalize();
-	const float3 dif  = (startpos - camera->pos).Normalize();
+	const float3 dif  = (startpos - camera->GetPos()).Normalize();
 	const float3 dir1 = (dif.cross(ddir)).Normalize();
 	float3 tempPos = startpos;
 

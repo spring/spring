@@ -40,13 +40,11 @@ COrbitController::COrbitController():
 
 void COrbitController::Init(const float3& p, const float3& tar)
 {
-	CCamera* cam = camera;
-
 	const float l = (tar == ZeroVector)?
-		std::max(ground->LineGroundCol(p, p + cam->forward * 1024.0f, false), 512.0f):
+		std::max(ground->LineGroundCol(p, p + camera->forward * 1024.0f, false), 512.0f):
 		p.distance(tar);
 
-	const float3 t = (tar == ZeroVector)? (p + cam->forward * l): tar;
+	const float3 t = (tar == ZeroVector)? (p + camera->forward * l): tar;
 	const float3 v = (t - p);
 	const float3 w = (v / v.Length()); // do not normalize v in-place
 
@@ -148,58 +146,54 @@ void COrbitController::MyMouseMove(int dx, int dy, int rdx, int rdy, int button)
 
 float3 COrbitController::GetPos() const
 {
-	return camera->pos;
+	return camera->GetPos();
 }
 
 float3 COrbitController::GetDir() const
 {
-	float3 dir = cen - camera->pos;
+	float3 dir = cen - camera->GetPos();
 	dir.ANormalize();
 	return dir;
 }
 
 void COrbitController::Orbit()
 {
-	CCamera* cam = camera;
-
-	cam->pos = cen + GetOrbitPos();
-	cam->pos.y = std::max(cam->pos.y, ground->GetHeightReal(cam->pos.x, cam->pos.z, false));
-	cam->forward = (cen - cam->pos).ANormalize();
-	cam->up = YVEC;
+	camera->SetPos() = cen + GetOrbitPos();
+	camera->SetPos().y = std::max(camera->GetPos().y, ground->GetHeightReal(camera->GetPos().x, camera->GetPos().z, false));
+	camera->forward = (cen - camera->GetPos()).ANormalize();
+	camera->up = YVEC;
 }
 
 void COrbitController::Pan(int rdx, int rdy)
 {
-	CCamera* cam = camera;
-
 	// horizontal pan
-	cam->pos += (cam->right * -rdx * panSpeedFact);
-	cen += (cam->right * -rdx * panSpeedFact);
+	camera->SetPos() += (camera->right * -rdx * panSpeedFact);
+	cen += (camera->right * -rdx * panSpeedFact);
 
 	// vertical pan
-	cam->pos += (cam->up * rdy * panSpeedFact);
-	cen += (cam->up * rdy * panSpeedFact);
+	camera->SetPos() += (camera->up * rdy * panSpeedFact);
+	cen += (camera->up * rdy * panSpeedFact);
 
 
 	// don't allow orbit center or ourselves to drop below the terrain
-	const float camGH = ground->GetHeightReal(cam->pos.x, cam->pos.z, false);
+	const float camGH = ground->GetHeightReal(camera->GetPos().x, camera->GetPos().z, false);
 	const float cenGH = ground->GetHeightReal(cen.x, cen.z, false);
 
-	if (cam->pos.y < camGH) {
-		cam->pos.y = camGH;
+	if (camera->GetPos().y < camGH) {
+		camera->SetPos().y = camGH;
 	}
 
 	if (cen.y < cenGH) {
 		cen.y = cenGH;
-		cam->forward = (cen - cam->pos).ANormalize();
+		camera->forward = (cen - camera->GetPos()).ANormalize();
 
-		Init(cam->pos, cen);
+		Init(camera->GetPos(), cen);
 	}
 }
 
 void COrbitController::Zoom()
 {
-	camera->pos = cen - (camera->forward * distance);
+	camera->SetPos(cen - (camera->forward * distance));
 }
 
 
@@ -227,17 +221,17 @@ void COrbitController::SetPos(const float3& newPos)
 	}
 
 	// support minimap position hopping
-	const float dx = newPos.x - camera->pos.x;
-	const float dz = newPos.z - camera->pos.z;
+	const float dx = newPos.x - camera->GetPos().x;
+	const float dz = newPos.z - camera->GetPos().z;
 
 	cen.x += dx;
 	cen.z += dz;
 	cen.y = ground->GetHeightReal(cen.x, cen.z, false);
 
-	camera->pos.x += dx;
-	camera->pos.z += dz;
+	camera->SetPos().x += dx;
+	camera->SetPos().z += dz;
 
-	Init(camera->pos, cen);
+	Init(camera->GetPos(), cen);
 }
 
 float3 COrbitController::GetOrbitPos() const
@@ -265,7 +259,7 @@ float3 COrbitController::GetOrbitPos() const
 
 float3 COrbitController::SwitchFrom() const
 {
-	return camera->pos;
+	return camera->GetPos();
 }
 
 void COrbitController::SwitchTo(bool showText)
@@ -274,7 +268,7 @@ void COrbitController::SwitchTo(bool showText)
 		LOG("Switching to Orbit style camera");
 	}
 
-	Init(camera->pos, ZeroVector);
+	Init(camera->GetPos(), ZeroVector);
 }
 
 

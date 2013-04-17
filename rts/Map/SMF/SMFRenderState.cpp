@@ -371,7 +371,7 @@ void SMFRenderStateARB::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 	smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 	smfShaderCurrARB->SetUniform4f(10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 1);
 	smfShaderCurrARB->SetUniform4f(12, 1.0f / smfMap->bigTexSize, 1.0f / smfMap->bigTexSize, 0, 1);
-	smfShaderCurrARB->SetUniform4f(13, -math::floor(camera->pos.x * 0.02f), -math::floor(camera->pos.z * 0.02f), 0, 0);
+	smfShaderCurrARB->SetUniform4f(13, -math::floor(camera->GetPos().x * 0.02f), -math::floor(camera->GetPos().z * 0.02f), 0, 0);
 	smfShaderCurrARB->SetUniform4f(14, 0.02f, 0.02f, 0, 1);
 	smfShaderCurrARB->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 	smfShaderCurrARB->SetUniform4f(10, ambientColor.x, ambientColor.y, ambientColor.z, 1);
@@ -430,7 +430,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 
 	smfShaderGLSL->Enable();
 	smfShaderGLSL->SetUniform2f(9, readmap->currMinHeight, readmap->currMaxHeight);
-	smfShaderGLSL->SetUniform3fv(11, &camera->pos[0]);
+	smfShaderGLSL->SetUniform3fv(11, &camera->GetPos()[0]);
 	smfShaderGLSL->SetUniformMatrix4fv(13, false, shadowHandler->shadowMatrix);
 	smfShaderGLSL->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
 	smfShaderGLSL->SetUniform1f(31, float(smfGroundDrawer->drawMode == CBaseGroundDrawer::drawMetal) + 1.0f);

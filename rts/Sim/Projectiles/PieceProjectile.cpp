@@ -100,9 +100,9 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 
 	oldSmokeDir = speed;
 	oldSmokeDir.Normalize();
-	const float3 camDir = (pos - camera->pos).Normalize();
+	const float3 camDir = (pos - camera->GetPos()).Normalize();
 
-	if (camera->pos.distance(pos) + (1 - math::fabs(camDir.dot(oldSmokeDir))) * 3000 < 200) {
+	if (camera->GetPos().distance(pos) + (1 - math::fabs(camDir.dot(oldSmokeDir))) * 3000 < 200) {
 		drawTrail = false;
 	}
 
@@ -326,8 +326,8 @@ void CPieceProjectile::Update()
 			oldSmokeDir = dir;
 
 			if (!drawTrail) {
-				float3 camDir = (pos - camera->pos).Normalize();
-				if (camera->pos.distance(pos) + (1 - math::fabs(camDir.dot(dir))) * 3000 > 300) {
+				float3 camDir = (pos - camera->GetPos()).Normalize();
+				if (camera->GetPos().distance(pos) + (1 - math::fabs(camDir.dot(dir))) * 3000 > 300) {
 					drawTrail = true;
 				}
 			}
@@ -361,9 +361,9 @@ void CPieceProjectile::Draw()
 			va->EnlargeArrays(4+4*numParts,0,VA_SIZE_TC);
 			if (drawTrail) {
 				// draw the trail as a single quad if camera close enough
-				const float3 dif  = (drawPos - camera->pos).Normalize();
+				const float3 dif  = (drawPos - camera->GetPos()).Normalize();
 				const float3 dir1 = (dif.cross(dir)).Normalize();
-				const float3 dif2 = (oldSmokePos - camera->pos).Normalize();
+				const float3 dif2 = (oldSmokePos - camera->GetPos()).Normalize();
 				const float3 dir2 = (dif2.cross(oldSmokeDir)).Normalize();
 
 				float a1 = ((1 - 0.0f / (Smoke_Time)) * 255) * (0.7f + math::fabs(dif.dot(dir)));

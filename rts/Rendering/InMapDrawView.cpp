@@ -123,7 +123,7 @@ private:
 void InMapDraw_QuadDrawer::DrawPoint(const CInMapDrawModel::MapPoint* point) const
 {
 	const float3& pos = point->GetPos();
-	const float3 dif = (pos - camera->pos).ANormalize();
+	const float3 dif = (pos - camera->GetPos()).ANormalize();
 	const float3 dir1 = (dif.cross(UpVector)).ANormalize();
 	const float3 dir2 = (dif.cross(dir1));
 
@@ -163,8 +163,8 @@ void InMapDraw_QuadDrawer::DrawPoint(const CInMapDrawModel::MapPoint* point) con
 void InMapDraw_QuadDrawer::DrawLine(const CInMapDrawModel::MapLine* line) const
 {
 	const unsigned char* color = line->IsBySpectator() ? color4::white : teamHandler->Team(line->GetTeamID())->color;
-	linesVa->AddVertexQC(line->GetPos1() - (line->GetPos1() - camera->pos).ANormalize() * 26, color);
-	linesVa->AddVertexQC(line->GetPos2() - (line->GetPos2() - camera->pos).ANormalize() * 26, color);
+	linesVa->AddVertexQC(line->GetPos1() - (line->GetPos1() - camera->GetPos()).ANormalize() * 26, color);
+	linesVa->AddVertexQC(line->GetPos2() - (line->GetPos2() - camera->GetPos()).ANormalize() * 26, color);
 }
 
 void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
@@ -226,7 +226,7 @@ void CInMapDrawView::Draw()
 	// draw points
 	glLineWidth(1);
 	glEnable(GL_TEXTURE_2D);
-	pointsVa->DrawArrayTC(GL_QUADS); //! draw point markers 
+	pointsVa->DrawArrayTC(GL_QUADS); //! draw point markers
 
 	if (!visibleLabels.empty()) {
 		font->SetColors(); //! default

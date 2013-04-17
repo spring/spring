@@ -219,7 +219,7 @@ void CSMFReadMap::CreateSplatDetailTextures()
 	if (!haveSplatTexture) {
 		return;
 	}
-	
+
 	CBitmap splatDistrTexBM;
 	CBitmap splatDetailTexBM;
 
@@ -755,8 +755,8 @@ void CSMFReadMap::DrawMinimap() const
 
 void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CReadMap::IQuadDrawer* qd, int extraSize)
 {
-	const int cx = cam->pos.x / (SQUARE_SIZE * quadSize);
-	const int cy = cam->pos.z / (SQUARE_SIZE * quadSize);
+	const int cx = cam->GetPos().x / (SQUARE_SIZE * quadSize);
+	const int cy = cam->GetPos().z / (SQUARE_SIZE * quadSize);
 
 	const int drawSquare = int(maxdist / (SQUARE_SIZE * quadSize)) + 1;
 

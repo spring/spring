@@ -98,7 +98,7 @@ void CBeamLaserProjectile::Draw()
 {
 	inArray = true;
 
-	const float3 cameraDir = (pos - camera->pos).SafeANormalize();
+	const float3 cameraDir = (pos - camera->GetPos()).SafeANormalize();
 	// beam's coor-system; degenerate if targetPos == startPos
 	const float3 zdir = (targetPos - startpos).SafeANormalize();
 	const float3 xdir = (cameraDir.cross(zdir)).SafeANormalize();
@@ -118,7 +118,7 @@ void CBeamLaserProjectile::Draw()
 	#define WT2 weaponDef->visuals.texture2
 	#define WT3 weaponDef->visuals.texture3
 
-	if ((pos - camera->pos).SqLength() < (1000.0f * 1000.0f)) {
+	if ((pos - camera->GetPos()).SqLength() < (1000.0f * 1000.0f)) {
 		va->AddVertexQTC(pos1 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart);
 		va->AddVertexQTC(pos1 + xdir * beamEdgeSize,                       midtexx,   WT2->yend,   edgeColStart);
 		va->AddVertexQTC(pos1 + xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart);

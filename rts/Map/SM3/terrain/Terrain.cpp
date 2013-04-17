@@ -433,8 +433,8 @@ namespace terrain {
 
 			// Update the frustum based on the camera, to cull away TQuad nodes
 			//Camera* camera = rc->cam;
-		//	frustum.CalcCameraPlanes(&camera->pos, &camera->right, &camera->up, &camera->front, camera->fov, camera->aspect);
-			//assert(camera->pos.x == 0.0f || frustum.IsPointVisible(camera->pos + camera->front * 20)==Frustum::Inside);
+		//	frustum.CalcCameraPlanes(&camera->GetPos(), &camera->right, &camera->up, &camera->front, camera->fov, camera->aspect);
+			//assert(camera->GetPos().x == 0.0f || frustum.IsPointVisible(camera->GetPos() + camera->front * 20)==Frustum::Inside);
 
 			// determine the new set of quads to draw
 			QuadVisLod(quadtree);

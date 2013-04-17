@@ -98,9 +98,9 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 
 	drawRadius = radius + maxSpeed * 8;
 
-	float3 camDir = (pos - camera->pos).ANormalize();
+	float3 camDir = (pos - camera->GetPos()).ANormalize();
 
-	if ((camera->pos.distance(pos) * 0.2f + (1 - math::fabs(camDir.dot(dir))) * 3000) < 200) {
+	if ((camera->GetPos().distance(pos) * 0.2f + (1 - math::fabs(camDir.dot(dir))) * 3000) < 200) {
 		drawTrail = false;
 	}
 
@@ -282,9 +282,9 @@ void CMissileProjectile::Update()
 		useAirLos = tp->useAirLos;
 
 		if (!drawTrail) {
-			const float3 camDir = (pos - camera->pos).ANormalize();
+			const float3 camDir = (pos - camera->GetPos()).ANormalize();
 
-			if ((camera->pos.distance(pos) * 0.2f + (1 - math::fabs(camDir.dot(dir))) * 3000) > 300) {
+			if ((camera->GetPos().distance(pos) * 0.2f + (1 - math::fabs(camDir.dot(dir))) * 3000) > 300) {
 				drawTrail = true;
 			}
 		}
@@ -323,11 +323,11 @@ void CMissileProjectile::Draw()
 		const float color = 0.6f;
 		if (drawTrail) {
 			// draw the trail as a single quad
-			float3 dif(drawPos - camera->pos);
+			float3 dif(drawPos - camera->GetPos());
 			dif.ANormalize();
 			float3 dir1(dif.cross(dir));
 			dir1.ANormalize();
-			float3 dif2(oldSmoke - camera->pos);
+			float3 dif2(oldSmoke - camera->GetPos());
 			dif2.ANormalize();
 			float3 dir2(dif2.cross(oldDir));
 			dir2.ANormalize();
