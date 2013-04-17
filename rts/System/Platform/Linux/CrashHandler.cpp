@@ -45,6 +45,16 @@ static const std::string INVALID_LINE_INDICATOR = "#####";
 static const uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
 
 
+static std::string GetBinaryLocation()
+{
+#if  defined(UNITSYNC)
+	return Platform::GetModulePath();
+#else
+	return Platform::GetProcessExecutablePath();
+#endif
+}
+
+
 /**
  * Returns the absolute version of a supplied relative path.
  * This is very simple, and can only handle "./", but not "../".
@@ -63,8 +73,12 @@ static std::string CreateAbsolutePath(const std::string& relativePath)
 			//! remove initial "./"
 			absolutePath = absolutePath.substr(2);
 		}
-		absolutePath = Platform::GetModulePath() + '/' + absolutePath;
+
+		absolutePath = FileSystemAbstraction::EnsurePathSepAtEnd(GetBinaryLocation()) + absolutePath;
 	}
+
+	if (!FileSystem::FileExists(absolutePath))
+		return relativePath;
 
 	return absolutePath;
 }
