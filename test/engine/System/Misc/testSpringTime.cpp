@@ -38,7 +38,7 @@ struct TestProcessor {
 	}
 };
 
-
+#include <SDL_Timer.h>
 struct SDLClock {
 	static inline float ToMs() { return 1.0f; }
 	static inline std::string GetName() { return "SDL_GetTicks"; }
