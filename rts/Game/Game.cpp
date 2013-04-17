@@ -13,7 +13,7 @@
 #include <boost/bind.hpp>
 
 #include <SDL_keyboard.h>
-#include <SDL_Timer.h>
+#include <SDL_timer.h>
 
 #include "Game.h"
 #include "Benchmark.h"
