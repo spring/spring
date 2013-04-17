@@ -262,7 +262,7 @@ void UnitDrawerStateARB::Enable(const CUnitDrawer* ud) {
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(10, &sky->GetLight()->GetLightDir().x);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, ud->unitSunColor.x, ud->unitSunColor.y, ud->unitSunColor.z, 0.0f);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(12, ud->unitAmbientColor.x, ud->unitAmbientColor.y, ud->unitAmbientColor.z, 1.0f); //!
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(13, camera->pos.x, camera->pos.y, camera->pos.z, 0.0f);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(13, camera->GetPos().x, camera->GetPos().y, camera->GetPos().z, 0.0f);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, sky->GetLight()->GetUnitShadowDensity());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, ud->unitAmbientColor.x, ud->unitAmbientColor.y, ud->unitAmbientColor.z, 1.0f);
@@ -389,7 +389,7 @@ bool UnitDrawerStateGLSL::CanEnable(const CUnitDrawer* ud) const {
 void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud) {
 	EnableCommon(unitDrawer);
 
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->pos[0]);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(13, false, shadowHandler->shadowMatrix);
