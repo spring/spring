@@ -357,7 +357,7 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 	}
 
 	if (cameraPosLoc >= 0) {
-		glUniformf3(cameraPosLoc, camera->pos);
+		glUniformf3(cameraPosLoc, camera->GetPos());
 	}
 
 	if (sunPosLoc >= 0) {
