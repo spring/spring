@@ -134,7 +134,7 @@ void CTimeProfiler::PrintProfilingInfo() const
 	for (pi = profile.begin(); pi != profile.end(); ++pi) {
 		LOG("%35s %16.2fs %5.2f%%",
 				pi->first.c_str(),
-				spring_tomsecs(pi->second.total) * 1000,
+				pi->second.total.toSecsf(),
 				pi->second.percent * 100);
 	}
 }

@@ -65,7 +65,7 @@ void ProfileDrawer::Draw()
 #else
 		const float fStartY = start_y - y * 0.024f;
 #endif
-		const float s = ((float)pi->second.total) / 1000.0f;
+		const float s = pi->second.total.toSecsf();
 		const float p = pi->second.percent * 100;
 		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
 
@@ -122,7 +122,7 @@ void ProfileDrawer::Draw()
 			// profile runtime; eg 0.5f means: uses 50% of a CPU (during that frame)
 			// This may be more then 1.0f, in case an operation
 			// which ran over many frames, ended in this one.
-			const float p = ((float)pi->second.frames[a]) / 1000.0f * GAME_SPEED;
+			const float p = pi->second.frames[a].toSecsf() * GAME_SPEED;
 			const float x = start_x + (a * steps_x);
 			const float y = 0.02f + (p * 0.4f);
 			va->AddVertex0(float3(x, y, 0.0f));
