@@ -256,14 +256,6 @@ void CMatrix44f::SetPos(const float3& pos)
 }
 
 
-CMatrix44f CMatrix44f::operator* (const CMatrix44f& m2) const
-{
-	CMatrix44f res(*this);
-	res *= m2;
-	return res;
-}
-
-
 CMatrix44f& CMatrix44f::operator*= (const CMatrix44f& m2)
 {
 	float m10, m11, m12, m13;
