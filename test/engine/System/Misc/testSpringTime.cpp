@@ -7,19 +7,7 @@
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
 
-#include <boost/timer/timer.hpp> // boost timer
 #include <boost/chrono/include.hpp> // boost chrono
-
-// posix
-#if defined(__USE_GNU) && !defined(WIN32)
-	#include <time.h>
-#endif
-
-// c++11 chrono
-#if __cplusplus > 199711L
-	#include <chrono>
-#endif
-
 
 
 static const int testRuns = 10000000;
@@ -60,6 +48,8 @@ struct SDLClock {
 };
 
 
+#ifdef Boost_TIMER_FOUND
+#include <boost/timer/timer.hpp> // boost timer
 static boost::timer::cpu_timer boost_clock;
 struct BoostTimerClock {
 	static inline float ToMs() { return 1.0f / 1e6; }
@@ -68,7 +58,7 @@ struct BoostTimerClock {
 		return boost_clock.elapsed().wall;
 	}
 };
-
+#endif
 
 struct BoostChronoClock {
 	static inline float ToMs() { return 1.0f / 1e6; }
@@ -89,6 +79,7 @@ struct BoostChronoMicroClock {
 
 
 #if __cplusplus > 199711L
+#include <chrono>
 struct Cpp11ChronoClock {
 	static inline float ToMs() { return 1.0f / 1e6; }
 	static inline std::string GetName() { return "BoostChrono"; }
@@ -100,6 +91,7 @@ struct Cpp11ChronoClock {
 
 
 #if defined(__USE_GNU) && !defined(WIN32)
+#include <time.h>
 struct PosixClock {
 	static inline float ToMs() { return 1.0f / 1e6; }
 	static inline std::string GetName() { return "clock_gettime"; }
@@ -115,9 +107,11 @@ struct PosixClock {
 BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 {
 	TestProcessor<SDLClock>::Run();
-	TestProcessor<BoostTimerClock>::Run();
 	TestProcessor<BoostChronoClock>::Run();
 	TestProcessor<BoostChronoMicroClock>::Run();
+#ifdef Boost_TIMER_FOUND
+	TestProcessor<BoostTimerClock>::Run();
+#endif
 #if defined(__USE_GNU) && !defined(WIN32)
 	TestProcessor<PosixClock>::Run();
 #endif
