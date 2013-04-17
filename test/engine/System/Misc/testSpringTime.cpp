@@ -109,9 +109,9 @@ struct PosixClock {
 
 BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 {
-	BOOST_CHECK(boost::chrono::high_resolution_clock::is_steady());
+	BOOST_CHECK(boost::chrono::high_resolution_clock::is_steady);
 #if __cplusplus > 199711L
-	BOOST_CHECK(std::chrono::high_resolution_clock::is_steady());
+	BOOST_CHECK(std::chrono::high_resolution_clock::is_steady);
 #endif
 
 	TestProcessor<SDLClock>::Run();
