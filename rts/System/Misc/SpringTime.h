@@ -3,104 +3,107 @@
 #ifndef SPRINGTIME_H
 #define SPRINGTIME_H
 
-#if defined(DEBUG) && !defined(UNIT_TEST) && !defined(SPRING_TIME)
-	#define STATIC_SPRING_TIME
-#endif
+#include "System/creg/creg_cond.h"
+#include <boost/thread/thread.hpp>
+#include <boost/cstdint.hpp>
 
-#ifndef SPRING_TIME
-	#define SPRING_TIME 1 // boost microsec timer SUCKS atm, when it works again, set to 0
-#endif
+typedef boost::int64_t int64_t;
 
-
-#ifdef STATIC_SPRING_TIME
-	// SDL Timers
-	#include <SDL.h>
-	#include <SDL_timer.h>
-	#include "System/creg/creg_cond.h"
-
-	struct spring_time {
-	private:
-		CR_DECLARE_STRUCT(spring_time);
-	public:
-		spring_time() : x(0) {}
-		explicit spring_time(int x_) : x(x_) {}
-
-		spring_time& operator=(const spring_time& v)       { x = v.x; return *this; }
-		spring_time  operator-(const spring_time& v) const { return spring_time(x - v.x); }
-		spring_time  operator+(const spring_time& v) const { return spring_time(x + v.x); }
-		bool         operator<(const spring_time& v) const { return (x < v.x); }
-		bool         operator>(const spring_time& v) const { return (x > v.x); }
-		bool        operator<=(const spring_time& v) const { return (x <= v.x); }
-		bool        operator>=(const spring_time& v) const { return (x >= v.x); }
-
-		//float tomsecs() const { return x; }
-		int  tomsecs() const { return x; }
-		bool istime() const { return (x > 0); }
-		void sleep() const { SDL_Delay(x); }
-
-	private:
-		void Serialize(creg::ISerializer& s);
-
-		int x;
-	};
-
-	typedef spring_time spring_duration;
-	static const spring_time spring_notime(0);
-
-	#define spring_tomsecs(t) ((t).tomsecs())
-	#define spring_istime(t) ((t).istime())
-	#define spring_sleep(t) ((t).sleep())
-
-	#define spring_msecs(msecs) spring_time(msecs)
-	#define spring_secs(secs) spring_time((secs) * 1000)
-	//inline spring_time spring_gettime() { assert(SDL_WasInit(SDL_INIT_TIMER)); return spring_time(SDL_GetTicks()); };
-	inline spring_time spring_gettime() { return SDL_WasInit(SDL_INIT_TIMER) ? spring_time(SDL_GetTicks()) : spring_notime; };
-
-
-
-#elif defined(SPRING_TIME)
-
-	// SDL Timers
-	#include <SDL.h>
-	#include <SDL_timer.h>
-
-	//typedef unsigned spring_time; SDL_GetTicks returns an unsigned, but then we (could) run into overflows when subtracting 2 timers
-	typedef int spring_time;
-	typedef int spring_duration;
-	#define spring_notime 0
-
-	#define spring_tomsecs(time) (time)
-	#define spring_istime(time) ((time) > 0)
-	#define spring_sleep(time) SDL_Delay(time)
-
-	#define spring_msecs(time) (time)
-	#define spring_secs(time) ((time) * 1000)
-	inline spring_time spring_gettime() { return SDL_WasInit(SDL_INIT_TIMER) ? SDL_GetTicks() : spring_notime; };
-
+#if __cplusplus > 199711L
+	#include <chrono>
+	namespace chrono { using namespace std::chrono; };
+	namespace this_thread { using namespace std::this_thread; };
 #else
-
-	// boost Timers
-	#include <boost/date_time/posix_time/posix_time.hpp>
-	#include <boost/date_time/posix_time/ptime.hpp>
-	using namespace boost::posix_time;
-
-	typedef ptime spring_time;
-	typedef time_duration spring_duration;
-
-	#define spring_tomsecs(time) ((time).total_milliseconds())
-	#define spring_istime(time) (!(time).is_not_a_date_time())
-	#define spring_sleep(time) boost::this_thread::sleep(time)
-
-	#define spring_msecs(time) (milliseconds(time))
-	#define spring_secs(time) (seconds(time))
-	inline spring_time spring_gettime() { return microsec_clock::local_time(); };
-
-	#define spring_notime not_a_date_time
-
+	#undef gt
+	#include <boost/chrono/include.hpp>
+	namespace chrono { using namespace boost::chrono; };
+	namespace this_thread { using namespace boost::this_thread; };
 #endif
 
-#define spring_difftime(now, before) (now - before)
-#define spring_diffsecs(now, before) (spring_tomsecs(now - before) * 0.001f)
+
+
+struct Cpp11Clock {
+	template<typename T> static inline T ToSecs(int64_t x) { return x * (1.0f / 1e9); }
+	template<typename T> static inline T ToMs(int64_t x)   { return x * (1.0f / 1e6); }
+	template<typename T> static inline T ToNs(int64_t x)   { return x; }
+	static inline int64_t FromMs(int64_t ms) { return ms * int64_t(1e6); }
+	static inline std::string GetName() { return "Cpp11Clock"; }
+	static inline int64_t Get() {
+		return chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
+	}
+};
+
+
+
+// class Timer
+struct spring_time {
+private:
+	CR_DECLARE_STRUCT(spring_time);
+
+public:
+	inline static spring_time gettime() { return spring_time_native(Cpp11Clock::Get()); }
+
+public:
+	spring_time() : x(0) {}
+	explicit spring_time(const int64_t ms) : x(Cpp11Clock::FromMs(ms)) {}
+
+	spring_time& operator+=(const spring_time v)       { x += v.x; return *this; }
+	spring_time& operator-=(const spring_time v)       { x -= v.x; return *this; }
+	spring_time   operator-(const spring_time v) const { return spring_time_native(x - v.x); }
+	spring_time   operator+(const spring_time v) const { return spring_time_native(x + v.x); }
+	bool          operator<(const spring_time v) const { return (x < v.x); }
+	bool          operator>(const spring_time v) const { return (x > v.x); }
+	bool         operator<=(const spring_time v) const { return (x <= v.x); }
+	bool         operator>=(const spring_time v) const { return (x >= v.x); }
+
+
+	inline int toSecs()        const { return toSecs<int>(); }
+	inline int toMSecs()       const { return toMSecs<int>(); }
+	inline int toNanoSecs()    const { return toNanoSecs<int>(); }
+	inline float toSecsf()     const { return toSecs<float>(); }
+	inline float toMSecsf()    const { return toMSecs<float>(); }
+	inline float toNanoSecsf() const { return toNanoSecs<float>(); }
+	template<typename T> inline T toSecs()     const { return Cpp11Clock::ToSecs<T>(x); }
+	template<typename T> inline T toMSecs()    const { return Cpp11Clock::ToMs<T>(x); }
+	template<typename T> inline T toNanoSecs() const { return Cpp11Clock::ToNs<T>(x); }
+
+
+	inline bool isTime() const { return (x > 0); }
+	inline void sleep() const {
+		//this_thread::sleep(boost::posix_time::nanoseconds(toNanoSecs()));
+		this_thread::sleep_for(chrono::nanoseconds( int(Cpp11Clock::ToNs<int64_t>(x)) ));
+	}
+
+	//inline void sleep_until() const {
+	//	this_thread::sleep_until(chrono::nanoseconds( int(Cpp11Clock::ToNs<int64_t>(x)) ));
+	//}
+
+private:
+	inline static spring_time spring_time_native(const int64_t n) { spring_time s; s.x = n; return s; }
+
+	void Serialize(creg::ISerializer& s);
+	boost::int64_t x;
+};
+
+
+
+static const spring_time spring_notime(0);
+
+#define spring_gettime() spring_time::gettime()
+
+#define spring_tomsecs(t) ((t).toMSecs())
+#define spring_istime(t) ((t).isTime())
+#define spring_sleep(t) ((t).sleep())
+
+#define spring_msecs(msecs) spring_time(msecs)
+#define spring_secs(secs) spring_time((secs) * 1000)
+
+
+
+
+
+#define spring_difftime(now, before)  (now - before)
+#define spring_diffsecs(now, before)  (spring_tomsecs(now - before) * 0.001f)
+#define spring_diffmsecs(now, before) (spring_tomsecs(now - before))
 
 #endif // SPRINGTIME_H
-

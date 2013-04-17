@@ -2,8 +2,6 @@
 
 #include "SpringTime.h"
 
-#ifdef STATIC_SPRING_TIME
-
 #ifdef USING_CREG
 #include "System/creg/Serializer.h"
 
@@ -26,6 +24,3 @@ void spring_time::Serialize(creg::ISerializer& s)
 		*this = *this + spring_msecs(y);
 	}
 }
-
-
-#endif

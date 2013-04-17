@@ -137,7 +137,7 @@ void CCameraHandler::UpdateCam()
 	const float3 wantedCamPos = currCamCtrl->GetPos();
 	const float3 wantedCamDir = currCamCtrl->GetDir();
 
-	const float curTime = spring_tomsecs(spring_gettime()) / 1000.0f;
+	const float curTime = spring_gettime().toSecsf();
 	if (curTime >= cameraTimeEnd) {
 		camera->SetPos(wantedCamPos);
 		camera->forward = wantedCamDir;
@@ -164,7 +164,7 @@ void CCameraHandler::CameraTransition(float time)
 	UpdateCam(); // this prevents camera stutter when multithreading
 	time = std::max(time, 0.0f) * cameraTimeFactor;
 
-	cameraTimeStart = spring_tomsecs(spring_gettime()) / 1000.0f;
+	cameraTimeStart = spring_gettime().toSecsf();
 	cameraTimeEnd   = cameraTimeStart + time;
 	startCam.pos = camera->GetPos();
 	startCam.dir = camera->forward;

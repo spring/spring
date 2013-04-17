@@ -160,7 +160,7 @@ Lightmap::Lightmap(Heightmap* orghm, int level, int shadowLevelDif, LightingInfo
 	delete[] shading;
 	delete[] centerhm;
 
-	const spring_duration numTicks = spring_gettime() - startTicks;
+	const spring_time numTicks = spring_gettime() - startTicks;
 	LOG("Lightmap generation: %2.3f seconds", spring_tomsecs(numTicks) * 0.001f);
 }
 
