@@ -387,7 +387,7 @@ bool UnitDrawerStateGLSL::CanEnable(const CUnitDrawer* ud) const {
 }
 
 void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud) {
-	EnableCommon(unitDrawer);
+	EnableCommon(ud);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
@@ -400,12 +400,12 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud) {
 
 void UnitDrawerStateGLSL::Disable(const CUnitDrawer* ud) {
 	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
-	DisableCommon(unitDrawer);
+	DisableCommon(ud);
 }
 
 
-void UnitDrawerStateGLSL::EnableTextures(const CUnitDrawer* ud) { EnableTexturesCommon(unitDrawer); }
-void UnitDrawerStateGLSL::DisableTextures(const CUnitDrawer* ud) { DisableTexturesCommon(unitDrawer); }
+void UnitDrawerStateGLSL::EnableTextures(const CUnitDrawer* ud) { EnableTexturesCommon(ud); }
+void UnitDrawerStateGLSL::DisableTextures(const CUnitDrawer* ud) { DisableTexturesCommon(ud); }
 
 void UnitDrawerStateGLSL::EnableShaders(const CUnitDrawer*) { modelShaders[MODEL_SHADER_ACTIVE]->Enable(); }
 void UnitDrawerStateGLSL::DisableShaders(const CUnitDrawer*) { modelShaders[MODEL_SHADER_ACTIVE]->Disable(); }
