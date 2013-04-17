@@ -171,6 +171,29 @@ Else  (NOT Boost_FOUND)
 	Add_Dependencies(tests test_Matrix44f)
 
 ################################################################################
+### SpringTime
+
+	Set(test_SpringTime_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Misc/testSpringTime.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
+			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			${test_Log_sources}
+		)
+
+	ADD_EXECUTABLE(test_SpringTime ${test_SpringTime_src})
+	TARGET_LINK_LIBRARIES(test_SpringTime
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
+			${Boost_CHRONO_LIBRARY}
+			${Boost_TIMER_LIBRARY}
+			${SDL_LIBRARY}
+		)
+
+	ADD_TEST(NAME testSpringTime COMMAND test_SpringTime)
+	Add_Dependencies(tests test_SpringTime)
+
+################################################################################
 ### BitwiseEnum
 
 	Set(test_BitwiseEnum_src
