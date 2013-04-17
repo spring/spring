@@ -35,8 +35,8 @@ public:
 	{
 		const int gx = pos.x * invRadarDiv;
 		const int gz = pos.z * invRadarDiv;
-		const int rowIdx = Clamp(gx, 0, xsize - 1);
-		const int colIdx = Clamp(gz, 0, zsize - 1);
+		const int colIdx = Clamp(gx, 0, xsize - 1);
+		const int rowIdx = Clamp(gz, 0, zsize - 1);
 		return (rowIdx * xsize) + colIdx;
 	}
 
