@@ -52,7 +52,6 @@ public:
 	IMeshDrawer* SwitchMeshDrawer(int mode = -1);
 
 private:
-	bool LoadMapShaders();
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 	inline void DrawBorder(const DrawPass::e drawPass);

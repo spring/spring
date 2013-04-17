@@ -8,6 +8,7 @@
 #include <list>
 #include <string>
 #include <map>
+
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/LightHandler.h"
 #include "System/EventClient.h"
@@ -22,12 +23,10 @@ struct Command;
 struct BuildInfo;
 struct SolidObjectGroundDecal;
 struct GhostSolidObject;
+struct IUnitDrawerState;
 
 namespace icon {
 	class CIconData;
-}
-namespace Shader {
-	struct IProgramObject;
 }
 
 class CUnitDrawer: public CEventClient
@@ -63,10 +62,10 @@ public:
 	void DrawCloakedUnits(bool noAdvShading = false);
 	void DrawShadowPass();
 
-	static void DrawUnitRaw(CUnit* unit);
-	static void DrawUnitRawModel(CUnit* unit);
+	void DrawUnitRaw(CUnit* unit);
+	void DrawUnitRawModel(CUnit* unit);
 	void DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
-	static void DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
+	void DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
 
 	void SetTeamColour(int team, float alpha = 1.0f) const;
 	void SetupForUnitDrawing();
@@ -85,10 +84,7 @@ public:
 	void DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing = 0);
 	static void DrawUnitDef(const UnitDef* unitDef, int team);
 
-	void UnitDrawingTexturesOff();
-	void UnitDrawingTexturesOn();
-
-	/** CGame::DrawDirectControlHud,  **/
+	/** LuaOpenGL::Unit{Raw} **/
 	void DrawIndividual(CUnit* unit);
 
 	void DrawUnitMiniMapIcons() const;
@@ -101,7 +97,8 @@ public:
 	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
 	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }
 
-	GL::LightHandler* GetLightHandler() { return &lightHandler; }
+	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
+	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
 
 
 #ifdef USE_GML
@@ -128,8 +125,6 @@ public:
 
 
 private:
-	bool LoadModelShaders();
-
 	bool DrawUnitLOD(CUnit* unit);
 	void DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
 	void DrawOpaqueUnitShadow(CUnit* unit);
@@ -150,23 +145,25 @@ private:
 
 	// note: make these static?
 	void DrawUnitBeingBuilt(CUnit* unit);
-	static void DrawUnitModel(CUnit* unit);
+	void DrawUnitModel(CUnit* unit);
 	void DrawUnitNow(CUnit* unit);
 
 	void UpdateUnitIconState(CUnit* unit);
 	static void UpdateUnitDrawPos(CUnit* unit);
 
-	static void SetBasicTeamColour(int team, float alpha = 1.0f);
-	static void SetupBasicS3OTexture0();
-	static void SetupBasicS3OTexture1();
-	static void CleanupBasicS3OTexture1();
-	static void CleanupBasicS3OTexture0();
 	static void DrawIcon(CUnit* unit, bool asRadarBlip);
 	void DrawCloakedUnitsHelper(int modelType);
 	void DrawCloakedUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass);
 
 	/// Returns true if the given unit should be drawn as icon in the current frame.
 	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
+
+public:
+	static void SetBasicTeamColour(int team, float alpha = 1.0f);
+	static void SetupBasicS3OTexture0();
+	static void SetupBasicS3OTexture1();
+	static void CleanupBasicS3OTexture1();
+	static void CleanupBasicS3OTexture0();
 
 
 public:
@@ -208,14 +205,6 @@ private:
 	float cloakAlpha2;
 	float cloakAlpha3;
 
-	enum ModelShaderProgram {
-		MODEL_SHADER_S3O_SHADOW,   ///< S3O model shader (V+F) with self-shadowing
-		MODEL_SHADER_S3O_BASIC,    ///< S3O model shader (V+F) without self-shadowing
-		MODEL_SHADER_S3O_ACTIVE,   ///< currently active S3O shader
-		MODEL_SHADER_S3O_LAST
-	};
-
-	std::vector<Shader::IProgramObject*> modelShaders;
 	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
 	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;
 
@@ -237,6 +226,10 @@ private:
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
 	std::map<icon::CIconData*, std::set<const CUnit*> > unitsByIcon;
+
+	IUnitDrawerState* unitDrawerStateSSP; // default shader-driven rendering path
+	IUnitDrawerState* unitDrawerStateFFP; // fallback shader-less rendering path
+	IUnitDrawerState* unitDrawerState;
 
 	GL::LightHandler lightHandler;
 };
