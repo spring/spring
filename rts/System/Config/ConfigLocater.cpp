@@ -39,25 +39,21 @@ static void LoadCfgs(vector<string>& locations, const std::string& defCfg, const
 {
 	// lets see if the file exists & is writable
 	// (otherwise it can fail/segfault/end up in virtualstore...)
-	// _access modes: 0 - exists; 2 - write; 4 - read; 6 - r/w
-	// doesn't work on directories (precisely, mode is always 0)
-	const int _w = 6;
-	const int _r = 4;
 
 	if (locations.empty()) {
 		// add the config file we write to
 		AddCfgFile(locations, defCfg);
 
 		FileSystem::TouchFile(defCfg); // create file if doesn't exists
-		if (access(defCfg.c_str(), _w) == -1) { // check for write access
+		if (access(defCfg.c_str(), R_OK | W_OK) == -1) {
 			throw content_error(std::string("config file not writeable: \"") + defCfg + "\"");
 		}
 	}
 
-	if (access(verCfg.c_str(), _r) != -1) { // check for read access
+	if (access(verCfg.c_str(), R_OK) != -1) {
 		AddCfgFile(locations, verCfg);
 	}
-	if (access(defCfg.c_str(), _r) != -1) { // check for read access
+	if (access(defCfg.c_str(), R_OK) != -1) {
 		AddCfgFile(locations, defCfg);
 	}
 }

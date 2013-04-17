@@ -146,14 +146,14 @@ bool FileSystem::TouchFile(std::string filePath)
 		return false;
 	}
 
-	if (access(filePath.c_str(), 4) != -1) { // check for read access
+	if (access(filePath.c_str(), R_OK) == 0) { // check for read access
 		return true;
 	}
 
 	FILE* f = fopen(filePath.c_str(), "a+b");
 	if (!f) return false;
 	fclose(f);
-	return (access(filePath.c_str(), 4) != -1); // check for read access
+	return (access(filePath.c_str(), R_OK) == 0); // check for read access
 }
 
 
