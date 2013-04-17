@@ -3,7 +3,6 @@
 #define BOOST_TEST_MODULE Matrix44f
 #include <boost/test/unit_test.hpp>
 
-#include "System/Misc/SpringTime.h"
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
 
@@ -97,7 +96,11 @@ struct PosixClock {
 	static inline std::string GetName() { return "clock_gettime"; }
 	static inline int64_t Get() {
 		timespec t1;
+	#ifdef CLOCK_MONOTONIC_RAW
 		clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
+	#else
+		clock_gettime(CLOCK_MONOTONIC, &t1);
+	#endif
 		return t1.tv_nsec + int64_t(t1.tv_sec) * int64_t(1e9);
 	}
 };
@@ -106,6 +109,11 @@ struct PosixClock {
 
 BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 {
+	BOOST_CHECK(boost::chrono::high_resolution_clock::is_steady());
+#if __cplusplus > 199711L
+	BOOST_CHECK(std::chrono::high_resolution_clock::is_steady());
+#endif
+
 	TestProcessor<SDLClock>::Run();
 	TestProcessor<BoostChronoClock>::Run();
 	TestProcessor<BoostChronoMicroClock>::Run();
