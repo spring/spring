@@ -9,7 +9,10 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
-#include "System/Sync/FPUCheck.h"
+
+#ifndef DEDICATED
+	#include "System/Sync/FPUCheck.h"
+#endif
 
 #include <boost/version.hpp>
 #include <boost/thread.hpp>
@@ -218,7 +221,8 @@ namespace Threading {
 			return;
 		}
 		OMPInited = true;
-	#ifdef _OPENMP
+
+	#if defined(_OPENMP) && !defined(DEDICATED)
 		if (useOMP) {
 			boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
 			boost::uint32_t mainAffinity  = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
