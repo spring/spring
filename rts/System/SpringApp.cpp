@@ -1036,8 +1036,11 @@ int SpringApp::Run(int argc, char *argv[])
 	cmdline = new CmdLineParams(argc, argv);
 	binaryName = argv[0];
 
-	if (!Initialize())
-		return -1;
+	try {
+		if (!Initialize())
+			return -1;
+	}
+	CATCH_SPRING_ERRORS
 
 	while (!gu->globalQuit) {
 		ResetScreenSaverTimeout();

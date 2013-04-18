@@ -5,9 +5,9 @@
 #endif
 
 #include "System/myMath.h"
+#include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
 #include "System/Log/ILog.h"
-#include "System/Platform/errorhandler.h"
 #include "Sim/Units/Scripts/CobInstance.h" // for TAANG2RAD (ugh)
 
 float2 CMyMath::headingToVectorTable[NUM_HEADINGS];
@@ -41,11 +41,10 @@ void CMyMath::Init()
 
 #ifdef STREFLOP_H
 	if (checksum != HEADING_CHECKSUM) {
-		handleerror(0,
+		throw unsupported_error(
 			"Invalid headingToVectorTable checksum. Most likely"
 			" your streflop library was not compiled with the correct"
-			" options, or you are not using streflop at all.",
-			"Sync Error", 0);
+			" options, or you are not using streflop at all.");
 	}
 #endif
 }
