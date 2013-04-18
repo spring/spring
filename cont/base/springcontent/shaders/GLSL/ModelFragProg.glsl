@@ -1,6 +1,6 @@
-//#define use_normalmapping
-//#define flip_normalmap
-#define use_shadows
+// #define use_normalmapping
+// #define flip_normalmap
+// #define use_shadows
 
 #define textureS3o1 diffuseTex
 #define textureS3o2 shadingTex

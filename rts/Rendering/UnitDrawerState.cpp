@@ -324,15 +324,18 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		"S3OShaderDefGLSL",
 		"S3OShaderAdvGLSL",
 	};
+	const std::string shaderDefs[2] = {
+		"// #define use_shadows\n",
+		"#define use_shadows\n",
+	};
 	const std::string extraDefs =
 		("#define BASE_DYNAMIC_MODEL_LIGHT " + IntToString(lightHandler->GetBaseLight()) + "\n") +
-		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(lightHandler->GetMaxLights()) + "\n") +
-		("#define              use_shadows " + IntToString(shadowHandler->shadowsLoaded) + "\n");
+		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(lightHandler->GetMaxLights()) + "\n");
 
 	for (unsigned int n = MODEL_SHADER_BASIC; n <= MODEL_SHADER_SHADOW; n++) {
 		modelShaders[n] = sh->CreateProgramObject("[UnitDrawer]", shaderNames[n], false);
-		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", extraDefs, GL_VERTEX_SHADER));
-		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", extraDefs, GL_FRAGMENT_SHADER));
+		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", shaderDefs[n] + extraDefs, GL_VERTEX_SHADER));
+		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", shaderDefs[n] + extraDefs, GL_FRAGMENT_SHADER));
 		modelShaders[n]->Link();
 		modelShaders[n]->SetUniformLocation("diffuseTex");        // idx  0 (t1: diffuse + team-color)
 		modelShaders[n]->SetUniformLocation("shadingTex");        // idx  1 (t2: spec/refl + self-illum)
