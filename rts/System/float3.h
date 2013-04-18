@@ -9,10 +9,6 @@
 #include "lib/streflop/streflop_cond.h"
 #include "System/creg/creg_cond.h"
 #include "System/FastMath.h"
-#ifndef BUILDING_AI
-#include "lib/gml/gml_base.h"
-#include "System/Platform/Threading.h"
-#endif
 
 
 /**
@@ -457,8 +453,7 @@ public:
 	float3& Normalize() {
 #if defined(__SUPPORT_SNAN__)
 #ifndef BUILDING_AI
-		if (GML::Enabled() && !Threading::IsSimThread())
-			return SafeNormalize();
+		return SafeNormalize();
 #endif
 		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeNormalize();
@@ -508,8 +503,7 @@ public:
 	float3& ANormalize() {
 #if defined(__SUPPORT_SNAN__)
 #ifndef BUILDING_AI
-		if (GML::Enabled() && !Threading::IsSimThread())
-			return SafeANormalize();
+		return SafeANormalize();
 #endif
 		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeANormalize();
@@ -687,7 +681,7 @@ const float3 ZeroVector(0.0f, 0.0f, 0.0f);
 namespace std {
 	float3 min(float3 v1, float3 v2);
 	float3 max(float3 v1, float3 v2);
-	
+
 	float3 fabs(float3 v);
 };
 
