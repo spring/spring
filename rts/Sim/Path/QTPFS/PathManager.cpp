@@ -27,6 +27,11 @@
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 
+#ifdef GetTempPath
+#undef GetTempPath
+#undef GetTempPathA
+#endif
+
 #define NUL_RECTANGLE SRectangle(0, 0,         0,        0)
 #define MAP_RECTANGLE SRectangle(0, 0,  gs->mapx, gs->mapy)
 
