@@ -206,53 +206,53 @@ void streflop_init_omp() {
 
 namespace proc {
 	#if defined(__GNUC__)
-	// function inlining breaks this
-	__attribute__((__noinline__))
-	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
-	{
-	#ifndef __APPLE__
-		__asm__ __volatile__(
-			"cpuid"
-			: "=a" (*a), "=b" (*b), "=c" (*c), "=d" (*d)
-			: "0" (*a)
-		);
-	#else
-		#ifdef __x86_64__
+		// function inlining breaks this
+		__attribute__((__noinline__))
+		void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
+		{
+		#ifndef __APPLE__
 			__asm__ __volatile__(
-				"pushq %%rbx\n\t"
-				"cpuid\n\t"
-				"movl %%ebx, %1\n\t"
-				"popq %%rbx"
-				: "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
+				"cpuid"
+				: "=a" (*a), "=b" (*b), "=c" (*c), "=d" (*d)
 				: "0" (*a)
 			);
 		#else
-			__asm__ __volatile__(
-				"pushl %%ebx\n\t"
-				"cpuid\n\t"
-				"movl %%ebx, %1\n\t"
-				"popl %%ebx"
-				: "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
-				: "0" (*a)
-			);
+			#ifdef __x86_64__
+				__asm__ __volatile__(
+					"pushq %%rbx\n\t"
+					"cpuid\n\t"
+					"movl %%ebx, %1\n\t"
+					"popq %%rbx"
+					: "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
+					: "0" (*a)
+				);
+			#else
+				__asm__ __volatile__(
+					"pushl %%ebx\n\t"
+					"cpuid\n\t"
+					"movl %%ebx, %1\n\t"
+					"popl %%ebx"
+					: "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
+					: "0" (*a)
+				);
+			#endif
 		#endif
-	#endif
-	}
+		}
 	#elif defined(_MSC_VER) && (_MSC_VER >= 1310)
-	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
-	{
-		int features[4];
-		__cpuid(features, *a);
-		*a=features[0];
-		*b=features[1];
-		*c=features[2];
-		*d=features[3];
-	}
+		void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
+		{
+			int features[4];
+			__cpuid(features, *a);
+			*a=features[0];
+			*b=features[1];
+			*c=features[2];
+			*d=features[3];
+		}
 	#else
-	// no-op on other compilers
-	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
-	{
-	}
+		// no-op on other compilers
+		void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
+		{
+		}
 	#endif
 
 	unsigned int GetProcMaxStandardLevel()
@@ -266,6 +266,7 @@ namespace proc {
 
 		return rEAX;
 	}
+
 	unsigned int GetProcMaxExtendedLevel()
 	{
 		unsigned int rEAX = 0x80000000;
