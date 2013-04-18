@@ -437,7 +437,7 @@ void CPathEstimator::Update() {
 	if (updatedBlocks.empty())
 		return;
 
-	const unsigned int progressiveUpdates = updatedBlocks.size() * 0.01f * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f);
+	const unsigned int progressiveUpdates = updatedBlocks.size() * 0.009f * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f);
 	const unsigned int blocksToUpdate = std::max(BLOCKS_TO_UPDATE, progressiveUpdates);
 
 	std::vector<SingleBlock> v;
