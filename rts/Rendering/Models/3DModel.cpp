@@ -224,8 +224,8 @@ bool LocalModelPiece::UpdateMatrix()
 	bool r = original->mIsIdentity;
 
 	{
-		// Assimp's Matrix:  M = T * R * S; (SRT vs. RT in spring)
-		// else it's identity
+		// for Assimp models SRM = T * R * S (SRT vs. RT in spring)
+		// for all other models SRM = identity
 		pieceSpaceMat = original->scaleRotMatrix;
 
 		// Translate & Rotate are faster than matrix-mul!

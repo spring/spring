@@ -1314,6 +1314,19 @@ int CLuaUnitScript::Turn(lua_State* L)
 	} else {
 		activeScript->Turn(piece, axis, speed, dest);
 	}
+
+	if (lua_isboolean(L, 5) && lua_toboolean(L, 5)) {
+		CUnit* unit = activeScript->GetUnit();
+		LocalModelPiece* piece = ParseLocalModelPiece(L, activeScript, __FUNCTION__);
+		// LocalModel* model = unit->localModel;
+
+		// note:
+		//   both of these only have effect if MoveNow() was called, but
+		//   the former starts from the ROOT piece (less efficient here)
+		// model->UpdatePieceMatrices();
+		piece->UpdateMatricesRec(true);
+	}
+
 	return 0;
 }
 
@@ -1335,6 +1348,19 @@ int CLuaUnitScript::Move(lua_State* L)
 	} else {
 		activeScript->Move(piece, axis, speed, dest);
 	}
+
+	if (lua_isboolean(L, 5) && lua_toboolean(L, 5)) {
+		CUnit* unit = activeScript->GetUnit();
+		LocalModelPiece* piece = ParseLocalModelPiece(L, activeScript, __FUNCTION__);
+		// LocalModel* model = unit->localModel;
+
+		// note:
+		//   both of these only have effect if MoveNow() was called, but
+		//   the former starts from the ROOT piece (less efficient here)
+		// model->UpdatePieceMatrices();
+		piece->UpdateMatricesRec(true);
+	}
+
 	return 0;
 }
 
