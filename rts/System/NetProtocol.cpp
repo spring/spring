@@ -147,7 +147,7 @@ void CNetProtocol::UpdateLoop()
 	loading = true;
 	while (loading) {
 		Update();
-		SDL_Delay(400);
+		spring_msecs(400).sleep();
 	}
 }
 

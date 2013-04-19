@@ -180,7 +180,7 @@ SelectMenu::~SelectMenu()
 
 bool SelectMenu::Draw()
 {
-	SDL_Delay(10); // milliseconds
+	spring_msecs(10).sleep();
 	ClearScreen();
 	agui::gui->Draw();
 
