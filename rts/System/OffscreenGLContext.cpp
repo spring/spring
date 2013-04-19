@@ -34,7 +34,7 @@ COffscreenGLContext::COffscreenGLContext()
 	//! so don't render to the the default framebuffer (always bind FBOs,DLs,...) !!!
 
 	if (!mainGlActiveTexture)
-		mainGlActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress((const GLubyte*)"glActiveTexture");
+		mainGlActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress("glActiveTexture");
 
 	//! get the main (onscreen) GL context
 	HGLRC mainRC = wglGetCurrentContext();
@@ -87,7 +87,7 @@ void COffscreenGLContext::WorkerThreadPost()
 	if (!wglMakeCurrent(hdc, offscreenRC))
 		throw opengl_error("Could not activate worker rendering context");
 
-	const PFNGLACTIVETEXTUREPROC workerGlActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress((const GLubyte*)"glActiveTexture");
+	const PFNGLACTIVETEXTUREPROC workerGlActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress("glActiveTexture");
 	if (workerGlActiveTexture != mainGlActiveTexture) {
 		WorkerThreadFree();
 		throw opengl_error("Could not activate worker rendering context (uses different function pointers)");

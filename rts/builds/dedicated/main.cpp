@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
 				break;
 			}
 
-			spring_sec(1).sleep();
+			spring_secs(1).sleep();
 		}
 
 		while (!server->HasFinished()) {
@@ -227,7 +227,7 @@ int main(int argc, char* argv[])
 			}
 
 			// wait 1 second between checks
-			spring_sec(1).sleep();
+			spring_secs(1).sleep();
 		}
 
 		delete server;

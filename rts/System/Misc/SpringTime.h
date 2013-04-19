@@ -26,8 +26,8 @@ typedef boost::int64_t int64_t;
 struct Cpp11Clock {
 	#define i10E6 1000000LL
 	#define i10E9 1000000000LL
-	#define d10E6_rcp (1./1e6)
-	#define d10E9_rcp (1./1e9)
+	#define d10E6_rcp (1e-6)
+	#define d10E9_rcp (1e-9)
 
 	// Cause we limit FloatingPoint precision to 32bit it fails with our int64.
 	// To preserve max precision for integer, we need to overload float-target.
