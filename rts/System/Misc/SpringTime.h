@@ -23,10 +23,12 @@ typedef boost::int64_t int64_t;
 
 
 struct Cpp11Clock {
-	template<typename T> static inline T ToSecs(int64_t x) { return x * (1.0f / 1e9); }
-	template<typename T> static inline T ToMs(int64_t x)   { return x * (1.0f / 1e6); }
+	#define i10E6 1000000
+	#define i10E9 1000000000
+	template<typename T> static inline T ToSecs(int64_t x) { return x / i10E9; }
+	template<typename T> static inline T ToMs(int64_t x)   { return x / i10E6; }
 	template<typename T> static inline T ToNs(int64_t x)   { return x; }
-	static inline int64_t FromMs(int64_t ms) { return ms * int64_t(1e6); }
+	static inline int64_t FromMs(int64_t ms) { return ms * i10E6; }
 	static inline std::string GetName() { return "Cpp11Clock"; }
 	static inline int64_t Get() {
 		return chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
