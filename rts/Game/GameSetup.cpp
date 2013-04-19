@@ -403,7 +403,7 @@ bool CGameSetup::Init(const std::string& buf)
 	file.GetDef(onlyLocal,           "0", "GAME\\OnlyLocal");
 	file.GetDef(useLuaGaia,          "1", "GAME\\ModOptions\\LuaGaia");
 	file.GetDef(noHelperAIs,         "0", "GAME\\ModOptions\\NoHelperAIs");
-	file.GetDef(maxUnitsPerTeam,  "1500", "GAME\\ModOptions\\MaxUnits");
+	file.GetDef(maxUnitsPerTeam, "32000", "GAME\\ModOptions\\MaxUnits");
 	file.GetDef(disableMapDamage,    "0", "GAME\\ModOptions\\DisableMapDamage");
 	file.GetDef(ghostedBuildings,    "1", "GAME\\ModOptions\\GhostedBuildings");
 
