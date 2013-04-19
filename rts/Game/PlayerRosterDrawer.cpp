@@ -14,7 +14,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/GlobalConfig.h"
-#include <SDL_timer.h>
+#include "System/Misc/SpringTime.h"
 
 /******************************************************************************/
 
@@ -24,7 +24,7 @@ void CPlayerRosterDrawer::Draw()
 	if (playerRoster.GetSortType() == PlayerRoster::Disabled)
 		return;
 
-	const unsigned currentTime = SDL_GetTicks();
+	const unsigned currentTime = spring_gettime().toSecs();
 
 	static std::string chart; chart = "";
 	static std::string prefix;
@@ -86,7 +86,7 @@ void CPlayerRosterDrawer::Draw()
 		chart += "\n";
 		chart += buf;
 	}
-	
+
 	int font_options = FONT_RIGHT | FONT_BOTTOM | FONT_SCALE | FONT_NORM;
 	if (guihandler->GetOutlineFonts())
 		font_options |= FONT_OUTLINE;

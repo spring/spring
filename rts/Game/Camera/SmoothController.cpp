@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <SDL_keysym.h>
-#include <SDL_timer.h>
 #include <boost/cstdint.hpp>
 
 #include "SmoothController.h"
@@ -15,6 +14,8 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Input/KeyInput.h"
+#include "System/Misc/SpringTime.h"
+
 
 CONFIG(int, SmoothScrollSpeed).defaultValue(10);
 CONFIG(float, SmoothTiltSpeed).defaultValue(1.0f);
@@ -28,7 +29,7 @@ SmoothController::SmoothController()
 	, oldAltHeight(1500)
 	, changeAltHeight(true)
 	, maxHeight(10000)
-	, speedFactor(1)
+	, speedFactor(1.0f)
 {
 	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
 	scrollSpeed = configHandler->GetInt("SmoothScrollSpeed") * 0.1f;
@@ -58,18 +59,42 @@ void SmoothController::KeyMove(float3 move)
 
 	const float3 thisMove(move.x * pixelSize * 2.0f * scrollSpeed, 0.0f, -move.y * pixelSize * 2.0f * scrollSpeed);
 
-	static unsigned lastKeyMove = SDL_GetTicks();
-	const unsigned timeDiff = SDL_GetTicks() - lastKeyMove;
-
-	lastKeyMove = SDL_GetTicks();
+	static spring_time lastScreenMove = spring_gettime();
+	const spring_time timeDiff = spring_gettime() - lastScreenMove;
+	lastScreenMove = spring_gettime();
 
 	if (thisMove.x != 0 || thisMove.z != 0) {
 		// user want to move with keys
 		lastSource = Key;
-		Move(thisMove, timeDiff);
+		Move(thisMove, timeDiff.toMilliSecsf());
 	} else if (lastSource == Key) {
 		// last move order was given by keys, so call Move() to break
-		Move(thisMove, timeDiff);
+		Move(thisMove, timeDiff.toMilliSecsf());
+	}
+}
+
+
+void SmoothController::ScreenEdgeMove(float3 move)
+{
+	if (flipped) {
+		move.x = -move.x;
+		move.y = -move.y;
+	}
+	move *= math::sqrt(move.z) * 200.0f;
+
+	const float3 thisMove(move.x * pixelSize * 2.0f * scrollSpeed, 0.0f, -move.y * pixelSize * 2.0f * scrollSpeed);
+
+	static spring_time lastScreenMove = spring_gettime();
+	const spring_time timeDiff = spring_gettime() - lastScreenMove;
+	lastScreenMove = spring_gettime();
+
+	if (thisMove.x != 0 || thisMove.z != 0) {
+		// user want to move with mouse on screen edge
+		lastSource = ScreenEdge;
+		Move(thisMove, timeDiff.toMilliSecsf());
+	} else if (lastSource == ScreenEdge) {
+		// last move order was given by screen edge, so call Move() to break
+		Move(thisMove, timeDiff.toMilliSecsf());
 	}
 }
 
@@ -93,32 +118,6 @@ void SmoothController::MouseMove(float3 move)
 	pos += (thisMove + lastMove) / 2.0f;
 	lastMove = (thisMove + lastMove) / 2.0f;
 	UpdateVectors();
-}
-
-
-void SmoothController::ScreenEdgeMove(float3 move)
-{
-	if (flipped) {
-		move.x = -move.x;
-		move.y = -move.y;
-	}
-	move *= math::sqrt(move.z) * 200.0f;
-
-	const float3 thisMove(move.x * pixelSize * 2.0f * scrollSpeed, 0.0f, -move.y * pixelSize * 2.0f * scrollSpeed);
-
-	static unsigned lastScreenMove = SDL_GetTicks();
-	const unsigned timeDiff = SDL_GetTicks() - lastScreenMove;
-
-	lastScreenMove = SDL_GetTicks();
-
-	if (thisMove.x != 0 || thisMove.z != 0) {
-		// user want to move with mouse on screen edge
-		lastSource = ScreenEdge;
-		Move(thisMove, timeDiff);
-	} else if (lastSource == ScreenEdge) {
-		// last move order was given by screen edge, so call Move() to break
-		Move(thisMove, timeDiff);
-	}
 }
 
 
@@ -238,7 +237,7 @@ bool SmoothController::SetState(const StateMap& sm)
 }
 
 
-void SmoothController::Move(const float3& move, const unsigned timeDiff)
+void SmoothController::Move(const float3& move, const float timeDiff)
 {
 	if ((move.x != 0 || move.z != 0) && speedFactor < maxSpeedFactor)
 	{
@@ -247,16 +246,16 @@ void SmoothController::Move(const float3& move, const unsigned timeDiff)
 		if (speedFactor > maxSpeedFactor)
 			speedFactor = maxSpeedFactor; // don't know why, but std::min produces undefined references here
 		lastMove = move;
-		pos += move * float(speedFactor) / maxSpeedFactor;
+		pos += move * speedFactor / maxSpeedFactor;
 	}
 	else if ((move.x == 0 || move.z == 0) && speedFactor > 1)
 	{
 		// break
 		if (timeDiff > speedFactor)
-			speedFactor = 0;
+			speedFactor = 0.0f;
 		else
 			speedFactor -= timeDiff;
-		pos += lastMove * float(speedFactor) / maxSpeedFactor;
+		pos += lastMove * speedFactor / maxSpeedFactor;
 	}
 	else
 	{

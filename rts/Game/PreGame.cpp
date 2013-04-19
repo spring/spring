@@ -2,7 +2,6 @@
 
 #include <map>
 #include <SDL_keysym.h>
-#include <SDL_timer.h>
 #include <set>
 #include <cfloat>
 
@@ -60,7 +59,7 @@ extern SelectMenu* selectMenu;
 CPreGame::CPreGame(const ClientSetup* setup) :
 	settings(setup),
 	savefile(NULL),
-	timer(0),
+	timer(spring_gettime()),
 	wantDemo(true)
 {
 	net = new CNetProtocol();
@@ -70,7 +69,6 @@ CPreGame::CPreGame(const ClientSetup* setup) :
 		//don't allow luasocket to connect to the host
 		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, settings->hostIP, settings->hostPort, false);
 		net->InitClient(settings->hostIP.c_str(), settings->hostPort, settings->myPlayerName, settings->myPasswd, SpringVersion::GetFull());
-		timer = SDL_GetTicks();
 	} else {
 		net->InitLocalClient();
 	}
@@ -138,7 +136,7 @@ bool CPreGame::Draw()
 			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server to start");
 		else
 		{
-			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Connecting to server (%d s)", (SDL_GetTicks()-timer)/1000);
+			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Connecting to server (%d s)", (spring_gettime() - timer).toMilliSecsf());
 		}
 	}
 	else

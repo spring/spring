@@ -8,6 +8,8 @@
 #include <boost/signal.hpp>
 
 #include "GuiElement.h"
+#include "System/Misc/SpringTime.h"
+
 
 namespace agui
 {
@@ -58,7 +60,7 @@ private:
 	int NumDisplay();
 	float ScaleFactor();
 
-	unsigned clickedTime;
+	spring_time clickedTime;
 	int place;
 
 	bool activeMousePress;
