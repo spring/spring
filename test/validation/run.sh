@@ -23,9 +23,6 @@ if [ "$(cat /proc/sys/kernel/core_uses_pid)" != "1" ]; then
 	exit 1
 fi
 
-# enable core dumps
-ulimit -c unlimited
-
 RUNCLIENT=test/validation/run-client.sh
 
 if [ ! -x $RUNCLIENT ]; then
@@ -33,7 +30,8 @@ if [ ! -x $RUNCLIENT ]; then
 	exit 1
 fi
 
-
+# enable core dumps
+#ulimit -c unlimited
 # limit to 1.5GB RAM
 ulimit -v 1500000
 # max 3 min cpu time
