@@ -3,7 +3,6 @@
 #include "SelectMenu.h"
 
 #include <SDL_keysym.h>
-#include <SDL_timer.h>
 #include <boost/bind.hpp>
 #include <sstream>
 #include <stack>

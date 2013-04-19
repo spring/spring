@@ -3,12 +3,15 @@
 #ifndef OGG_STREAM_H
 #define OGG_STREAM_H
 
+#include "System/Misc/SpringTime.h"
+
 #include <al.h>
 #include <ogg/ogg.h>
 #include <vorbis/vorbisfile.h>
 
 #include <string>
 #include <vector>
+
 
 class COggStream
 {
@@ -26,7 +29,7 @@ public:
 	float GetTotalTime();
 	bool Valid() const;
 	bool IsFinished();
-	
+
 	const TagVector& VorbisTags() const;
 
 private:
@@ -60,9 +63,9 @@ private:
 	bool stopped;
 	bool paused;
 
-	unsigned msecsPlayed;
-	unsigned lastTick;
-	
+	spring_time msecsPlayed;
+	spring_time lastTick;
+
 	std::vector<std::string> vorbisTags;
 	std::string vendor;
 };

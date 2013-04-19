@@ -25,6 +25,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/Misc/SpringTime.h"
 #include "System/GlobalConfig.h"
 #include "System/Exceptions.h"
 #include "System/UnsyncedRNG.h"
@@ -124,14 +125,6 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 
 
 
-void zzz(unsigned int secs) {
-#ifdef _WIN32
-	Sleep(secs * 1000);
-#else
-	sleep(secs);
-#endif
-}
-
 int main(int argc, char* argv[])
 {
 	try {
@@ -215,7 +208,7 @@ int main(int argc, char* argv[])
 				break;
 			}
 
-			zzz(1);
+			spring_sec(1).sleep();
 		}
 
 		while (!server->HasFinished()) {
@@ -234,7 +227,7 @@ int main(int argc, char* argv[])
 			}
 
 			// wait 1 second between checks
-			zzz(1);
+			spring_sec(1).sleep();
 		}
 
 		delete server;

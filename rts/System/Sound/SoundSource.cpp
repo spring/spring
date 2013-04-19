@@ -4,7 +4,6 @@
 
 #include <climits>
 #include <alc.h>
-#include <SDL_timer.h>
 
 #include "ALShared.h"
 #include "EFX.h"
@@ -74,7 +73,7 @@ void CSoundSource::Update()
 			alSourcef(id, AL_ROLLOFF_FACTOR, ROLLOFF_FACTOR * curPlaying->rolloff * heightRolloffModifier);
 		}
 
-		if (!IsPlaying() || ((curPlaying->loopTime > 0) && (loopStop < SDL_GetTicks())))
+		if (!IsPlaying() || ((curPlaying->loopTime > 0) && (spring_gettime() > loopStop)))
 			Stop();
 	}
 
@@ -114,7 +113,7 @@ bool CSoundSource::IsPlaying() const
 
 	if (!curPlaying)
 		return false;
-	
+
 	CheckError("CSoundSource::IsPlaying");
 	ALint state;
 	alGetSourcei(id, AL_SOURCE_STATE, &state);
@@ -155,7 +154,7 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 	velocity *= item->dopplerScale * ELMOS_TO_METERS;
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	alSourcei(id, AL_LOOPING, (item->loopTime > 0) ? AL_TRUE : AL_FALSE);
-	loopStop = SDL_GetTicks() + item->loopTime;
+	loopStop = spring_gettime() + spring_msecs(item->loopTime);
 	if (relative || !item->in3D) {
 		in3D = false;
 		if (efxEnabled) {

@@ -10,8 +10,6 @@
 
 #ifndef _CONSOLE
 
-#include <SDL_timer.h>
-
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
