@@ -9,6 +9,9 @@
 #include "System/Platform/errorhandler.h"
 
 
+static PFNGLACTIVETEXTUREPROC mainGlActiveTexture = NULL;
+
+
 #ifdef HEADLESS
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //! Headless
@@ -29,6 +32,9 @@ COffscreenGLContext::COffscreenGLContext()
 {
 	//! this creates a 2nd OpenGL context on the >onscreen< window/HDC
 	//! so don't render to the the default framebuffer (always bind FBOs,DLs,...) !!!
+
+	if (!mainGlActiveTexture)
+		mainGlActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress((const GLubyte*)"glActiveTexture");
 
 	//! get the main (onscreen) GL context
 	HGLRC mainRC = wglGetCurrentContext();
@@ -72,22 +78,27 @@ COffscreenGLContext::COffscreenGLContext()
 
 
 COffscreenGLContext::~COffscreenGLContext() {
-	if(!wglDeleteContext(offscreenRC))
-		throw opengl_error("Could not delete off-screen rendering context");
+	wglDeleteContext(offscreenRC);
 }
 
 void COffscreenGLContext::WorkerThreadPost()
 {
 	//! activate the offscreen GL context in the worker thread
-	if(!wglMakeCurrent(hdc, offscreenRC))
+	if (!wglMakeCurrent(hdc, offscreenRC))
 		throw opengl_error("Could not activate worker rendering context");
+
+	const PFNGLACTIVETEXTUREPROC workerGlActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress((const GLubyte*)"glActiveTexture");
+	if (workerGlActiveTexture != mainGlActiveTexture) {
+		WorkerThreadFree();
+		throw opengl_error("Could not activate worker rendering context (uses different function pointers)");
+	}
 }
 
 
 void COffscreenGLContext::WorkerThreadFree()
 {
 	//! must run in the same thread as the offscreen GL context!
-	if(!wglMakeCurrent(NULL, NULL))
+	if (!wglMakeCurrent(NULL, NULL))
 		throw opengl_error("Could not deactivate worker rendering context");
 }
 
@@ -131,13 +142,15 @@ COffscreenGLContext::~COffscreenGLContext() {
 
 void COffscreenGLContext::WorkerThreadPost()
 {
-	CGLSetCurrentContext(cglWorkerCtx);
+	if (!CGLSetCurrentContext(cglWorkerCtx))
+		throw opengl_error("Could not activate worker rendering context");
 }
 
 
 void COffscreenGLContext::WorkerThreadFree()
 {
-	CGLSetCurrentContext(NULL);
+	if (!CGLSetCurrentContext(NULL))
+		throw opengl_error("Could not deactivate worker rendering context");
 }
 
 #else
@@ -149,6 +162,9 @@ void COffscreenGLContext::WorkerThreadFree()
 
 COffscreenGLContext::COffscreenGLContext()
 {
+	if (!mainGlActiveTexture)
+		mainGlActiveTexture = (PFNGLACTIVETEXTUREPROC)glXGetProcAddress((const GLubyte*)"glActiveTexture");
+
 	//! Get MainCtx & X11-Display
 	GLXContext mainCtx = glXGetCurrentContext();
 	display = glXGetCurrentDisplay();
@@ -218,13 +234,21 @@ COffscreenGLContext::~COffscreenGLContext() {
 
 void COffscreenGLContext::WorkerThreadPost()
 {
-	glXMakeCurrent(display, pbuf, workerCtx);
+	if (!glXMakeCurrent(display, pbuf, workerCtx))
+		throw opengl_error("Could not activate worker rendering context");
+
+	const PFNGLACTIVETEXTUREPROC workerGlActiveTexture = (PFNGLACTIVETEXTUREPROC)glXGetProcAddress((const GLubyte*)"glActiveTexture");
+	if (workerGlActiveTexture != mainGlActiveTexture) {
+		WorkerThreadFree();
+		throw opengl_error("Could not activate worker rendering context (uses different function pointers)");
+	}
 }
 
 
 void COffscreenGLContext::WorkerThreadFree()
 {
-	glXMakeCurrent(display, None, NULL);
+	if (!glXMakeCurrent(display, None, NULL))
+		throw opengl_error("Could not deactivate worker rendering context");
 }
 
 #endif
@@ -268,8 +292,9 @@ void COffscreenGLThread::WrapFunc(boost::function<void()> f)
 	glOffscreenCtx.WorkerThreadPost();
 
 #ifdef STREFLOP_H
-	// init streflop to make it available for synced computations, too
-	// redundant? threads copy the FPU state of their parent.
+	// init streflop
+	// not needed for sync'ness (precision flags are per-process)
+	// but fpu exceptions are per-thread
 	streflop::streflop_init<streflop::Simple>();
 #endif
 
@@ -278,7 +303,6 @@ void COffscreenGLThread::WrapFunc(boost::function<void()> f)
 	} catch(boost::thread_interrupted const&) {
 		// do nothing
 	} CATCH_SPRING_ERRORS
-
 
 	glOffscreenCtx.WorkerThreadFree();
 }
