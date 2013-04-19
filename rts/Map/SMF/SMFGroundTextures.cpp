@@ -25,7 +25,6 @@
 #include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Platform/Threading.h"
 
 using std::sprintf;
 

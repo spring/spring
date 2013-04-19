@@ -3,7 +3,6 @@
 #ifndef QTPFS_NODEHEAP_HDR
 #define QTPFS_NODEHEAP_HDR
 
-#include <limits>
 #include <vector>
 #include "PathDefines.hpp"
 
