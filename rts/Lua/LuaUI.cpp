@@ -57,7 +57,6 @@
 #include <cctype>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
-#include <SDL_timer.h>
 
 CONFIG(bool, LuaSocketEnabled)
 	.defaultValue(true)

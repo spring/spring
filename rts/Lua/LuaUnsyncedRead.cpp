@@ -54,6 +54,7 @@
 #include "System/LoadSave/demofile.h"
 #include "System/LoadSave/DemoReader.h"
 #include "System/Sound/SoundChannels.h"
+#include "System/Misc/SpringTime.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 	#include "System/Sound/EFX.h"
@@ -64,7 +65,6 @@
 #include <list>
 #include <cctype>
 
-#include <SDL_timer.h>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
@@ -1458,7 +1458,8 @@ int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
 int LuaUnsyncedRead::GetTimer(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushlightuserdata(L, (void*)SDL_GetTicks());
+	const int time = spring_gettime().toMilliSecs();
+	lua_pushlightuserdata(L, reinterpret_cast<void*>(time)); // hack, treat time as pointer
 	return 1;
 }
 
