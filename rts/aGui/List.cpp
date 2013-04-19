@@ -4,7 +4,6 @@
 
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
-#include <SDL_timer.h>
 
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
@@ -27,7 +26,7 @@ List::List(GuiElement* parent) :
 		GuiElement(parent),
 		cancelPlace(-1),
 		tooltip("No tooltip defined"),
-		clickedTime(SDL_GetTicks()),
+		clickedTime(spring_gettime()),
 		place(0),
 		activeMousePress(false),
 		activeScrollbar(false),
@@ -92,7 +91,7 @@ bool List::MousePress(int x, int y, int button)
 		case SDL_BUTTON_WHEELDOWN:
 			ScrollDownOne();
 			break;
-			
+
 		case SDL_BUTTON_WHEELUP:
 			ScrollUpOne();
 			break;
@@ -151,7 +150,7 @@ bool List::MouseUpdate(int x, int y)
 	GuiElement b;
 	b.SetPos(pos[0] + borderSpacing, pos[1] + size[1] - borderSpacing - itemHeight);
 	b.SetSize(size[0] - 2.0f * borderSpacing - ((scrollbar.GetSize()[0] < 0) ? 0 : (itemHeight + itemSpacing)), itemHeight);
-	
+
 	// Get list started up here
 	std::vector<std::string>::iterator ii = filteredItems->begin();
 	UpdateTopIndex();
@@ -167,11 +166,11 @@ bool List::MouseUpdate(int x, int y)
 	{
 		if (b.MouseOver(mx, my))
 		{
-			if (nCurIndex == place && clickedTime + 250 > SDL_GetTicks())
+			if (nCurIndex == place && (clickedTime + spring_msecs(250)) > spring_gettime())
 			{
 				FinishSelection();
 			}
-			clickedTime = SDL_GetTicks();
+			clickedTime = spring_gettime();
 			place = nCurIndex;
 			return true;
 		}
@@ -274,11 +273,11 @@ void List::DrawSelf()
 		float sbSize = ((float)nDrawOffset / (float)filteredItems->size()) * sbHeight;
 
 		if(activeScrollbar) {
-			topIndex = std::max(0, std::min((int)(((float)filteredItems->size() * ((sbY1 - sbSize) - (my - std::min(scrollbarGrabPos, sbSize))) / sbHeight) + 0.5f), 
+			topIndex = std::max(0, std::min((int)(((float)filteredItems->size() * ((sbY1 - sbSize) - (my - std::min(scrollbarGrabPos, sbSize))) / sbHeight) + 0.5f),
 				(int)filteredItems->size() - numDisplay));
 		}
 
-		scrollbar.SetPos(sbX + (size[0] - 2.0f * borderSpacing) - (itemHeight + itemSpacing), 
+		scrollbar.SetPos(sbX + (size[0] - 2.0f * borderSpacing) - (itemHeight + itemSpacing),
 							sbY1 - sbSize - ((float)topIndex / (float)filteredItems->size()) * sbHeight);
 		scrollbar.SetSize((itemHeight + itemSpacing) , sbSize);
 

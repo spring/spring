@@ -16,9 +16,9 @@
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/creg/creg_cond.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Sync/SyncTracer.h"
 
-#include <SDL_timer.h>
 #include <time.h>
 
 
@@ -56,7 +56,7 @@ CR_REG_METADATA(CGlobalUnsynced, (
 
 CGlobalUnsynced::CGlobalUnsynced()
 {
-	unsigned seed = time(NULL) % ((SDL_GetTicks() + 1) * 9007);
+	unsigned seed = time(NULL) % ((spring_gettime().toNanoSecs() + 1) * 9007);
 	rng.Seed(seed);
 
 	simFPS = 0.0f;

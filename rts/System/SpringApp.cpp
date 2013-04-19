@@ -996,9 +996,9 @@ static void ResetScreenSaverTimeout()
 {
 #ifndef HEADLESS
   #if defined(WIN32)
-	static unsigned lastreset = 0;
-	unsigned curreset = SDL_GetTicks();
-	if(globalRendering->active && (curreset - lastreset > 1000)) {
+	static spring_time lastreset;
+	spring_time curreset = spring_gettime();
+	if(globalRendering->active && (curreset - lastreset) > spring_secs(1)) {
 		lastreset = curreset;
 		int timeout; // reset screen saver timer
 		if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
@@ -1009,9 +1009,9 @@ static void ResetScreenSaverTimeout()
 	// TODO: implement
 	return;
   #else
-	static unsigned lastreset = 0;
-	unsigned curreset = SDL_GetTicks();
-	if(globalRendering->active && (curreset - lastreset > 1000)) {
+	static spring_time lastreset;
+	spring_time curreset = spring_gettime();
+	if(globalRendering->active && (curreset - lastreset) > spring_secs(1)) {
 		lastreset = curreset;
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);

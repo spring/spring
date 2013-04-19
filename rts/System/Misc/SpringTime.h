@@ -14,6 +14,7 @@ typedef boost::int64_t int64_t;
 	namespace chrono { using namespace std::chrono; };
 	namespace this_thread { using namespace std::this_thread; };
 #else
+	#define SPRINGTIME_USING_BOOST
 	#undef gt
 	#include <boost/chrono/include.hpp>
 	namespace chrono { using namespace boost::chrono; };
@@ -23,10 +24,17 @@ typedef boost::int64_t int64_t;
 
 
 struct Cpp11Clock {
-	#define i10E6 1000000
-	#define i10E9 1000000000
-	template<typename T> static inline T ToSecs(int64_t x) { return x / i10E9; }
-	template<typename T> static inline T ToMs(int64_t x)   { return x / i10E6; }
+	#define i10E6 1000000LL
+	#define i10E9 1000000000LL
+	#define d10E6_rcp (1./1e6)
+	#define d10E9_rcp (1./1e9)
+
+	// Cause we limit FloatingPoint precision to 32bit it fails with our int64.
+	// To preserve max precision for integer, we need to overload float-target.
+	static inline float ToSecs(int64_t x) { return x * d10E9_rcp; }
+	static inline float ToMs(int64_t x)   { return x * d10E6_rcp; }
+	template<typename T> static inline T ToSecs(int64_t x) { return x * d10E9_rcp; }
+	template<typename T> static inline T ToMs(int64_t x)   { return x * d10E6_rcp; }
 	template<typename T> static inline T ToNs(int64_t x)   { return x; }
 	static inline int64_t FromMs(int64_t ms) { return ms * i10E6; }
 	static inline std::string GetName() { return "Cpp11Clock"; }
@@ -59,15 +67,15 @@ public:
 	bool         operator>=(const spring_time v) const { return (x >= v.x); }
 
 
-	inline int toSecs()        const { return toSecs<int>(); }
-	inline int toMSecs()       const { return toMSecs<int>(); }
-	inline int toNanoSecs()    const { return toNanoSecs<int>(); }
-	inline float toSecsf()     const { return toSecs<float>(); }
-	inline float toMSecsf()    const { return toMSecs<float>(); }
-	inline float toNanoSecsf() const { return toNanoSecs<float>(); }
-	template<typename T> inline T toSecs()     const { return Cpp11Clock::ToSecs<T>(x); }
-	template<typename T> inline T toMSecs()    const { return Cpp11Clock::ToMs<T>(x); }
-	template<typename T> inline T toNanoSecs() const { return Cpp11Clock::ToNs<T>(x); }
+	inline int toSecs()         const { return toSecs<int>(); }
+	inline int toMilliSecs()    const { return toMilliSecs<int>(); }
+	inline int toNanoSecs()     const { return toNanoSecs<int>(); }
+	inline float toSecsf()      const { return toSecs<float>(); }
+	inline float toMilliSecsf() const { return toMilliSecs<float>(); }
+	inline float toNanoSecsf()  const { return toNanoSecs<float>(); }
+	template<typename T> inline T toSecs()      const { return Cpp11Clock::ToSecs<T>(x); }
+	template<typename T> inline T toMilliSecs() const { return Cpp11Clock::ToMs<T>(x); }
+	template<typename T> inline T toNanoSecs()  const { return Cpp11Clock::ToNs<T>(x); }
 
 
 	inline bool isTime() const { return (x > 0); }
@@ -90,10 +98,12 @@ private:
 
 
 static const spring_time spring_notime(0);
+static const spring_time spring_nulltime(0);
+
 
 #define spring_gettime() spring_time::gettime()
 
-#define spring_tomsecs(t) ((t).toMSecs())
+#define spring_tomsecs(t) ((t).toMilliSecs())
 #define spring_istime(t) ((t).isTime())
 #define spring_sleep(t) ((t).sleep())
 

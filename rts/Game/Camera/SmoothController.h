@@ -38,7 +38,7 @@ public:
 
 private:
 	void UpdateVectors();
-	void Move(const float3& move, const unsigned timeDiff);
+	void Move(const float3& move, const float timeDiff);
 
 private:
 	float middleClickScrollSpeed;
@@ -49,7 +49,7 @@ private:
 	float maxHeight;
 	float tiltSpeed;
 	enum MoveSource {Key, ScreenEdge, Noone};
-	
+
 	/// The source of the last move command by the user
 	MoveSource lastSource;
 
@@ -58,13 +58,13 @@ private:
 
 	/**
 	@brief the current speed factor
-	
+
 	If this is maxSpeedFactor, the camera has its full speed. Otherwise the camera moves with (speedFactor/maxSpeedFactor)
 	*/
-	unsigned speedFactor;
+	float speedFactor;
 
 	/// the time in ms needed to accelerate to full speed
-	static const unsigned maxSpeedFactor = 300;
+	static const float maxSpeedFactor = 300;
 };
 
 #endif // _SMOOTH_CONTROLLER_H

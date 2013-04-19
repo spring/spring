@@ -17,7 +17,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 
-#include <SDL_timer.h>
 #include <SDL_keysym.h>
 
 #include <cassert>
@@ -46,8 +45,8 @@ void GameSetupDrawer::Disable()
 void GameSetupDrawer::StartCountdown(unsigned time)
 {
 	if (instance) {
-		instance->lastTick = SDL_GetTicks();
-		instance->readyCountdown = (int)time;
+		instance->lastTick = spring_gettime(); //FIXME
+		instance->readyCountdown = spring_msecs(time);
 		const std::string modeName = configHandler->GetString("CamModeName");
 		if (!modeName.empty()) {
 			camHandler->SetCameraMode(modeName);
@@ -61,8 +60,8 @@ void GameSetupDrawer::StartCountdown(unsigned time)
 
 GameSetupDrawer::GameSetupDrawer()
 {
-	readyCountdown = 0;
-	lastTick = 0;
+	readyCountdown = spring_notime;
+	lastTick = spring_notime;
 	if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame && !gameSetup->hostDemo) {
 		new CStartPosSelecter();
 	}
@@ -76,20 +75,20 @@ GameSetupDrawer::~GameSetupDrawer()
 
 void GameSetupDrawer::Draw()
 {
-	if (readyCountdown > 0) {
-		readyCountdown -= (SDL_GetTicks() - lastTick);
-		lastTick = SDL_GetTicks();
+	if (readyCountdown > spring_nulltime) {
+		readyCountdown -= (spring_gettime() - lastTick);
+		lastTick = spring_gettime();
 
-		if (readyCountdown <= 0) {
+		if (readyCountdown <= spring_nulltime) {
 			GameSetupDrawer::Disable();
 			return; // *this is deleted!
 		}
 	}
 
 	std::string state = "Unknown state.";
-	if (readyCountdown > 0) {
+	if (readyCountdown > spring_nulltime) {
 		char buf[64];
-		sprintf(buf, "Starting in %i", readyCountdown / 1000);
+		sprintf(buf, "Starting in %i", readyCountdown.toSecs());
 		state = buf;
 	} else if (!playerHandler->Player(gu->myPlayerNum)->spectator && !playerHandler->Player(gu->myPlayerNum)->readyToStart) {
 		state = "Choose start pos";
