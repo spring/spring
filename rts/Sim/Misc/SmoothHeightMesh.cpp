@@ -12,6 +12,7 @@
 #include "System/myMath.h"
 #include "System/OpenMP_cond.h"
 #include "System/TimeProfiler.h"
+#include "System/Platform/Threading.h"
 
 
 
@@ -419,7 +420,7 @@ void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 	std::vector<float> colsMaxima(maxx + 1, -std::numeric_limits<float>::max());
 	std::vector<int> maximaRows(maxx + 1, -1);
 	std::vector<float> smoothed(size);
-	
+
 	FindMaximumColumnHeights(maxx, maxy, intrad, resolution, colsMaxima, maximaRows);
 
 	for (int y = 0; y <= maxy; ++y) {
