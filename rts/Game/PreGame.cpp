@@ -124,7 +124,7 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 
 bool CPreGame::Draw()
 {
-	SDL_Delay(10); // milliseconds
+	spring_msecs(10).sleep();
 	ClearScreen();
 	agui::gui->Draw();
 
