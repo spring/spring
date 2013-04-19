@@ -320,7 +320,7 @@ void CUnitScript::RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator
 	if (animInfoIt != anims[type].end()) {
 		AnimInfo* ai = *animInfoIt;
 		anims[type].erase(animInfoIt);
- 
+
 		// If this was the last animation, remove from currently animating list
 		// FIXME: this could be done in a cleaner way
 		if (!HaveAnimations()) {
@@ -1663,47 +1663,6 @@ void CUnitScript::SetUnitVal(int val, int param)
 	}
 #endif
 }
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-#ifndef _CONSOLE
-
-void CUnitScript::BenchmarkScript(CUnitScript* script)
-{
-	const int duration = 10000; // millisecs
-
-	const unsigned start = SDL_GetTicks();
-	unsigned end = start;
-	int count = 0;
-
-	while ((end - start) < duration) {
-		for (int i = 0; i < 10000; ++i) {
-			script->QueryWeapon(0);
-		}
-		++count;
-		end = SDL_GetTicks();
-	}
-
-	LOG("%d0000 calls in %u ms -> %.0f calls/second",
-			count, end - start, float(count) * (10000 / (duration / 1000)));
-}
-
-
-void CUnitScript::BenchmarkScript(const std::string& unitname)
-{
-	std::list<CUnit*>::iterator ui = unitHandler->activeUnits.begin();
-	for (; ui != unitHandler->activeUnits.end(); ++ui) {
-		CUnit* unit = *ui;
-		if (unit->unitDef->name == unitname) {
-			BenchmarkScript(unit->script);
-			return;
-		}
-	}
-}
-
-#endif
 
 /******************************************************************************/
 /******************************************************************************/
