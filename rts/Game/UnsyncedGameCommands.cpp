@@ -2934,7 +2934,7 @@ public:
 			"Invoke an artificial crash by performing a division-by-Zero", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		float a = 0;
+		float a = 0.0f;
 		LOG("Result: %f", 1.0f/a);
 		return true;
 	}
@@ -3115,20 +3115,6 @@ public:
 		} else {
 			LOG_L(L_WARNING, "Give either of these as argument: sound, profiling");
 		}
-		return true;
-	}
-};
-
-
-
-class BenchmarkScriptActionExecutor : public IUnsyncedActionExecutor {
-public:
-	// XXX '-' in command name is inconsistent with the rest of the commands, which only use "[a-zA-Z]" -> remove it
-	BenchmarkScriptActionExecutor() : IUnsyncedActionExecutor("Benchmark-Script",
-			"Runs the benchmark-script for a given unit-type") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		CUnitScript::BenchmarkScript(action.GetArgs());
 		return true;
 	}
 };
@@ -3466,7 +3452,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ReloadGameActionExecutor());
 	AddActionExecutor(new ReloadShadersActionExecutor());
 	AddActionExecutor(new DebugInfoActionExecutor());
-	AddActionExecutor(new BenchmarkScriptActionExecutor());
+
 	// XXX are these redirects really required?
 	AddActionExecutor(new RedirectToSyncedActionExecutor("ATM"));
 #ifdef DEBUG
