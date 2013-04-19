@@ -107,7 +107,7 @@ static DWORD __stdcall AllocTest(void *param) {
 }
 
 /** Print out a stacktrace. */
-static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR)
+inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR)
 {
 	PIMAGEHLP_SYMBOL pSym;
 	STACKFRAME sf;
@@ -224,7 +224,7 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 			SymGetModuleBase,
 			NULL
 		);
-		if (!more || sf.AddrFrame.Offset == 0 || count > MAX_STACK_DEPTH) {
+		if (!more || /*sf.AddrFrame.Offset == 0 ||*/ count > MAX_STACK_DEPTH) {
 			break;
 		}
 
@@ -286,6 +286,10 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 
 	GlobalFree(printstrings);
 	GlobalFree(pSym);
+}
+
+static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR) {
+	StacktraceInline(threadName, e, hThread, logLevel);
 }
 
 
@@ -350,7 +354,7 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	LOG_L(L_ERROR, "Exception Address: 0x%08lx", (unsigned long int) (PVOID) e->ExceptionRecord->ExceptionAddress);
 
 	// Print stacktrace.
-	Stacktrace(NULL, e);
+	StacktraceInline(NULL, e); // inline: avoid modifying the stack, it might confuse StackWalk when using the context record passed to ExceptionHandler
 
 	CleanupStacktrace();
 
