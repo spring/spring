@@ -13,6 +13,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/asio.hpp>
+#include <boost/cstdint.hpp>
 #include <list>
 #include <queue>
 
@@ -122,7 +123,7 @@ void UDPListener::Update() {
 	size_t bytes_avail = 0;
 
 	while ((bytes_avail = mySocket->available()) > 0) {
-		std::vector<uint8_t> buffer(bytes_avail);
+		std::vector<boost::uint8_t> buffer(bytes_avail);
 		ip::udp::endpoint sender_endpoint;
 		boost::asio::ip::udp::socket::message_flags flags = 0;
 		boost::system::error_code err;

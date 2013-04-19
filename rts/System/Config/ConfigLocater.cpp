@@ -17,6 +17,7 @@
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/Misc.h"
+#include "System/Platform/Win/win32.h"
 #include <boost/foreach.hpp>
 
 
