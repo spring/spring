@@ -68,8 +68,7 @@ echo "SpringData = ${TESTDIR}/usr/local/share/games/spring" >> ${CONTENT_DIR}/sp
 
 makescript "$GAME1" "$MAP" AAI 0.9
 makescript "$GAME1" "$MAP" E323AI 3.25.0
-# disabled until https://github.com/Kaylewt/KAIK/issues/6 is fixed
-#makescript "$GAME1" "$MAP" KAIK 0.13
+makescript "$GAME1" "$MAP" KAIK 0.13
 makescript "$GAME1" "$MAP" RAI 0.601
 makescript "$GAME1" "$MAP" Shard dev
 makescript "$GAME2" "$MAP" CAI ""
