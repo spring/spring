@@ -17,10 +17,10 @@ public:
 	static IUnitDrawerState* GetInstance(bool haveARB, bool haveGLSL);
 	static void FreeInstance(IUnitDrawerState* state) { delete state; }
 
-	virtual bool Init(const CUnitDrawer*) {}
+	virtual bool Init(const CUnitDrawer*) { return false; }
 	virtual void Kill() {}
 
-	virtual bool CanEnable(const CUnitDrawer*) const {}
+	virtual bool CanEnable(const CUnitDrawer*) const { return false; }
 
 	virtual void Enable(const CUnitDrawer*) {}
 	virtual void Disable(const CUnitDrawer*) {}

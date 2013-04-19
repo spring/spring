@@ -19,6 +19,8 @@
 
 		#undef  PlaySound
 		#define PlaySound  use_PlaySample_instead_of_PlaySound
+		#define W_OK 2
+		#define R_OK 4
 
 		#undef CreateDirectory
 		#undef DeleteFile
