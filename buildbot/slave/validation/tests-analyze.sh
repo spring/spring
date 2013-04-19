@@ -13,7 +13,7 @@ fi
 
 EXITCODE=0
 
-for i in $(find ${TESTDIR}/.spring -maxdepth 1 -type f -name "core.*") ; do
+for i in $(find ${TESTDIR}/.config/spring -maxdepth 1 -type f -name "core.*") ; do
 
 	COREFILE=$i
 
