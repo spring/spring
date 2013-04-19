@@ -5,11 +5,12 @@
 
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
+#include "System/Misc/SpringTime.h"
 
 #include <boost/chrono/include.hpp> // boost chrono
 
 
-static const int testRuns = 10000000;
+static const int testRuns = 1000000;
 
 template<class Clock>
 struct TestProcessor {
@@ -126,4 +127,31 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 #if __cplusplus > 199711L
 	TestProcessor<Cpp11ChronoClock>::Run();
 #endif
+}
+
+
+void sleep_posix()  { boost::this_thread::sleep(boost::posix_time::milliseconds(1)); }
+void sleep_chrono() { boost::this_thread::sleep_for(boost::chrono::nanoseconds( 1 )); }
+
+void BenchmarkSleepFnc(const std::string& name, void (*sleep)() )
+{
+	spring_time t = spring_gettime();
+	spring_time tmin, tmax;
+
+	for (int i=0; i<1000; ++i) {
+		sleep();
+
+		spring_time diff = spring_gettime() - t;
+		if ((diff > tmax) || !spring_istime(tmax)) tmax = diff;
+		if ((diff < tmin) || !spring_istime(tmin)) tmin = diff;
+		t = spring_gettime();
+	}
+
+	LOG("[%12s] min: %.6fms max: %.6fms", name.c_str(), tmin.toMilliSecsf(), tmax.toMilliSecsf());
+}
+
+BOOST_AUTO_TEST_CASE( ThreadSleepTime )
+{
+	BenchmarkSleepFnc("sleep_posix",  &sleep_posix);
+	BenchmarkSleepFnc("sleep_chrono", &sleep_chrono);
 }
