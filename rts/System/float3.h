@@ -9,7 +9,9 @@
 #include "lib/streflop/streflop_cond.h"
 #include "System/creg/creg_cond.h"
 #include "System/FastMath.h"
+#ifdef _MSC_VER
 #include "System/Platform/Win/win32.h"
+#endif
 
 
 /**
