@@ -9,7 +9,6 @@
 #include <boost/utility.hpp>
 #include <boost/static_assert.hpp>
 #include <map>
-#include <list>
 #include <vector>
 #include <sstream>
 #include <string>
@@ -32,7 +31,7 @@ namespace {
 	{
 		return v;
 	}
-
+	
 	std::ostream& operator<<(std::ostream& os, const float3& point)
 	{
 		return os << "[ " <<  point.x << ", " <<  point.y << ", " <<  point.z << " ]";
@@ -166,7 +165,7 @@ protected:
  *   .minimumValue(1.0f)
  *   .maximumValue(10.0f)
  *   .description("This is an example");
- *
+ * 
  * DEFTAG(Defs, DefClass, float, exampleDefTagName, exampleCppVarName);
  * DEFTAG(Defs, DefClass, float, exampleDefTagName2, subclass.exampleCppVarName[0]);
  */

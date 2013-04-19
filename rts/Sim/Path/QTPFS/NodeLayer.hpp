@@ -3,7 +3,6 @@
 #ifndef QTPFS_NODELAYER_HDR
 #define QTPFS_NODELAYER_HDR
 
-#include <limits>
 #include <vector>
 #include <list> // for QTPFS_STAGGERED_LAYER_UPDATES
 #include <boost/cstdint.hpp>

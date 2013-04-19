@@ -4,7 +4,6 @@
 #include "LegacyAtlasAlloc.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
-#include <list>
 
 
 // texture spacing in the atlas (in pixels)
