@@ -7,15 +7,19 @@
 #if defined(__SUPPORT_SNAN__) && !defined(DEDICATED) && !defined(UNITSYNC)
 
 #include "lib/streflop/streflop_cond.h"
+#include "System/Platform/Threading.h"
 
 class ScopedDisableFpuExceptions {
 public:
 	ScopedDisableFpuExceptions() {
-		streflop::fegetenv(&fenv);
-		streflop::feclearexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+		if (Threading::IsSimThread()) {
+			streflop::fegetenv(&fenv);
+			streflop::feclearexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+		}
 	}
 	~ScopedDisableFpuExceptions() {
-		streflop::fesetenv(&fenv);
+		if (Threading::IsSimThread())
+			streflop::fesetenv(&fenv);
 	}
 private:
 	streflop::fpenv_t fenv;
