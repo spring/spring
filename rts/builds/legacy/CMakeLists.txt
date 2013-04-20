@@ -55,9 +55,7 @@ if    (USE_LIBSQUISH)
 endif (USE_LIBSQUISH)
 
 LIST(APPEND engineLibraries ${sound-impl})
-
 LIST(APPEND engineLibraries ${engineCommonLibraries})
-
 LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY} ${Boost_CHRONO_LIBRARY})
 
 ### Assemble external incude dirs
@@ -71,40 +69,13 @@ if   (MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /MP")
 endif(MSVC)
 
-### Add icon and manifest to exe using windres
-IF    (WIN32)
-	IF   (MINGW)
-		SET(ENGINE_ICON_LEGACY_DIR "${ENGINE_SRC_ROOT_DIR}")
-		SET(ENGINE_ICON_LEGACY_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-		SET(ENGINE_ICON_LEGACY_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
-		CreateResourceCompileCommand(ENGINE_ICON_LEGACY "${ENGINE_ICON_LEGACY_DIR}" "${ENGINE_ICON_LEGACY_RES}" "${ENGINE_ICON_LEGACY_OBJ}")
-	ENDIF(MINGW)
-ELSE  (WIN32)
-	SET(ENGINE_ICON_LEGACY "")
-ENDIF (WIN32)
-
 ### Build the executable
-ADD_EXECUTABLE(engine-legacy ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON_LEGACY} ${engineHeaders})
+ADD_EXECUTABLE(engine-legacy ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(engine-legacy ${engineLibraries})
 
 
 ### Install the executable
 INSTALL(TARGETS engine-legacy DESTINATION ${BINDIR})
 
-#IF    (MINGW)
-#	SET_TARGET_PROPERTIES(engine-legacy PROPERTIES LINK_FLAGS "-Wl,--output-def,spring-legacy.def")
-#	install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring-legacy.def DESTINATION ${BINDIR})
-#ENDIF (MINGW)
-
-# Only build & install spring (legacy) executable & dependencies
-# use cases:
-# * make spring-legacy
-# * make install-spring-legacy
 CreateEngineBuildAndInstallTarget(legacy)
-
-# Create shortcuts
-# * make spring
-# * make install-spring
-#add_dependencies(spring spring-legacy) # This also works for custom targets
-#add_dependencies(install-spring install-spring-legacy) # This also works for custom targets
 

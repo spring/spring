@@ -34,35 +34,19 @@ ENDIF (MINGW OR APPLE)
 
 # headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
 LIST(APPEND engineHeadlessLibraries headlessStubs)
-
 LIST(APPEND engineHeadlessLibraries no-sound)
-
 LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
 
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 
 
-### Add icon and manifest to exe using windres
-IF    (MINGW)
-	SET(ENGINE_ICON_HL_DIR "${ENGINE_SRC_ROOT_DIR}")
-	SET(ENGINE_ICON_HL_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-	SET(ENGINE_ICON_HL_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
-	CreateResourceCompileCommand(ENGINE_ICON_HL "${ENGINE_ICON_HL_DIR}" "${ENGINE_ICON_HL_RES}" "${ENGINE_ICON_HL_OBJ}")
-ELSE  (MINGW)
-	SET(ENGINE_ICON_HL "")
-ENDIF (MINGW)
-
-
 ### Build the executable
-ADD_EXECUTABLE(engine-headless ${engineSources} ${ENGINE_ICON_HL})
+ADD_EXECUTABLE(engine-headless ${engineSources} ${ENGINE_ICON})
 TARGET_LINK_LIBRARIES(engine-headless ${engineHeadlessLibraries})
 
 IF    (MINGW)
 	# To enable console output/force a console window to open
 	SET_TARGET_PROPERTIES(engine-headless PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
-
-	#SET_TARGET_PROPERTIES(engine-headless PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
-	#INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 ENDIF (MINGW)
 
 
