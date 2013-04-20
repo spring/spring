@@ -168,8 +168,6 @@ TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
 ### Install the executable
 INSTALL(TARGETS springserver     DESTINATION ${LIBDIR})
 INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
-SET_TARGET_PROPERTIES(engine-dedicated PROPERTIES OUTPUT_NAME "spring-dedicated")
-
 
 # Only build & install spring-dedicated executable & dependencies
 # use cases:
@@ -181,17 +179,10 @@ set(springDsDeps
 		gamedata
 		unitsync
 	)
-add_custom_target(spring-dedicated
-	WORKING_DIRECTORY
-		"${CMAKE_BINARY_DIR}"
-	COMMENT
-		"  spring-dedicated: Building all dependencies ..." VERBATIM
-	)
-add_dependencies(spring-dedicated ${springDsDeps}) # This also works for custom targets
-
 set(springDsInstallDirs
 		"rts/builds/dedicated"
 		"tools/unitsync"
 		"cont"
 	)
-CreateInstallTarget(spring-dedicated springDsDeps springDsInstallDirs)
+CreateEngineBuildAndInstallTarget(dedicated)
+add_dependencies(spring-dedicated springDsDeps springDsInstallDirs)

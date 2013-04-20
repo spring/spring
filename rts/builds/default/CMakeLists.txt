@@ -100,13 +100,12 @@ ELSE  (WIN32)
 ENDIF (WIN32)
 
 ### Build the executable
-ADD_EXECUTABLE(engine-default ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
-TARGET_LINK_LIBRARIES(engine-default gml ${engineLibraries})
-SET_TARGET_PROPERTIES(engine-default PROPERTIES OUTPUT_NAME "spring")
+ADD_EXECUTABLE(engine-multithreaded ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
+TARGET_LINK_LIBRARIES(engine-multithreaded gml ${engineLibraries})
 
 
 ### Install the executable
-INSTALL(TARGETS engine-default DESTINATION ${BINDIR})
+INSTALL(TARGETS engine-multithreaded DESTINATION ${BINDIR})
 
 #IF    (MINGW)
 #	SET_TARGET_PROPERTIES(engine-default PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
@@ -117,11 +116,5 @@ INSTALL(TARGETS engine-default DESTINATION ${BINDIR})
 # use cases:
 # * make spring-default
 # * make install-spring-default
-CreateEngineBuildAndInstallTarget(default)
+CreateEngineBuildAndInstallTarget(multithreaded)
 
-# Create shortcuts
-# * make spring
-# * make install-spring
-add_dependencies(spring spring-default) # This also works for custom targets
-
-add_dependencies(install-spring install-spring-default) # This also works for custom targets
