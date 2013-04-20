@@ -229,8 +229,6 @@ if    (WIN32)
 	endif(NOT MSVC)
 endif (WIN32)
 
-option(LEGACY_SYSTEM "Compile/install a legacy (single-threaded) executable alongside the default" TRUE)
-
 option(HEADLESS_SYSTEM "Compile a headless executable (other executables will not be built!)" FALSE)
 if    (HEADLESS_SYSTEM AND NOT NO_SOUND)
 	message(FATAL_ERROR "HEADLESS_SYSTEM requires NO_SOUND to be set!")
