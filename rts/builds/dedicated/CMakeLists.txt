@@ -22,10 +22,14 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
 LIST(APPEND engineDedicatedLibraries headlessStubs)
-IF    (UNIX)
+IF    (UNIX AND NOT MINGW)
+	IF    (PREFER_STATIC_LIBS)
+		LIST(APPEND engineDedicatedLibraries ${C_LIBRARY} ${MATH_LIBRARY} ${REALTIME_LIBRARY})
+	ENDIF (PREFER_STATIC_LIBS)
+
 	# Needed for dynamically loading shared libraries (on some OS)
 	LIST(APPEND engineDedicatedLibraries dl)
-ENDIF (UNIX)
+ENDIF (UNIX AND NOT MINGW)
 
 IF    (MINGW OR APPLE)
 	# Windows:
