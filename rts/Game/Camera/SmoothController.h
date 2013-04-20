@@ -64,7 +64,7 @@ private:
 	float speedFactor;
 
 	/// the time in ms needed to accelerate to full speed
-	static const float maxSpeedFactor = 300;
+	static const float maxSpeedFactor;
 };
 
 #endif // _SMOOTH_CONTROLLER_H
