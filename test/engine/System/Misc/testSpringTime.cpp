@@ -6,6 +6,7 @@
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
 #include "System/Misc/SpringTime.h"
+#include <cmath>
 
 #include <boost/chrono/include.hpp> // boost chrono
 
