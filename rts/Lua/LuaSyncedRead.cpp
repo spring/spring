@@ -2435,7 +2435,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 	const float3 mins(xmin, 0.0f, zmin);
 	const float3 maxs(xmax, 0.0f, zmax);
 
-	bool renderAccess = GML::SimEnabled() && !Threading::IsSimThread();
+	bool renderAccess = !Threading::IsSimThread();
 
 	const vector<CProjectile*>& rectProjectiles = quadField->GetProjectilesExact(mins, maxs);
 	const unsigned int rectProjectileCount = rectProjectiles.size();
