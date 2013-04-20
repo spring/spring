@@ -25,13 +25,9 @@ typedef boost::int64_t int64_t;
 
 struct Cpp11Clock {
 	#define i10E6 1000000LL
-	#define d10E6_rcp double(1e-6)
-	#define d10E9_rcp double(1e-9)
 
-	// Cause we limit FloatingPoint precision to 32bit it fails with our int64.
-	// To preserve max precision for integer, we need to overload float-target.
-	template<typename T> static inline T ToSecs(int64_t x) { return x * d10E9_rcp; }
-	template<typename T> static inline T ToMs(int64_t x)   { return x * d10E6_rcp; }
+	template<typename T> static inline T ToSecs(int64_t x) { return (x / 1000000LL) * 1e-3; }
+	template<typename T> static inline T ToMs(int64_t x)   { return x * 1e-6; }
 	template<typename T> static inline T ToNs(int64_t x)   { return x; }
 	static inline int64_t FromMs(int64_t ms) { return ms * i10E6; }
 	static inline std::string GetName() { return "Cpp11Clock"; }
