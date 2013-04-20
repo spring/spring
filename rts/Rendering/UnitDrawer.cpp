@@ -162,10 +162,11 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitDrawerState = unitDrawerStateFFP;
 
 	// NOTE:
-	//     advShading can NOT change at runtime if initially false
+	//     advShading can NOT change at runtime if initially false***
 	//     (see AdvModelShadingActionExecutor), so we will always use
 	//     unitDrawerStateFFP (in ::Draw) in that special case and it
 	//     does not matter if unitDrawerStateSSP is initialized
+	//     *** except for DrawCloakedUnits
 	advFade = GLEW_NV_vertex_program2;
 	advShading = (unitDrawerStateSSP->Init(this) && cubeMapHandler->Init());
 }
@@ -931,7 +932,8 @@ void CUnitDrawer::CleanUpGhostDrawing() const
 void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 {
 	const bool oldAdvShading = advShading;
-	// don't use shaders if shadows are enabled
+	// don't use shaders if shadows are enabled (WHY?)
+	// also not safe: should set state instance to FFP
 	advShading = advShading && !disableAdvShading;
 
 	if (advShading) {
@@ -1155,6 +1157,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
 
+	assert(unitDrawerState->CanEnable(this));
 	unitDrawerState->Enable(this);
 }
 

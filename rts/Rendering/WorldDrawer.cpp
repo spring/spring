@@ -153,8 +153,6 @@ void CWorldDrawer::Draw()
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 
-	const bool noAdvShading = shadowHandler->shadowsLoaded;
-
 	static const double plane_below[4] = {0.0f, -1.0f, 0.0f, 0.0f};
 	static const double plane_above[4] = {0.0f,  1.0f, 0.0f, 0.0f};
 
@@ -163,8 +161,8 @@ void CWorldDrawer::Draw()
 		glEnable(GL_CLIP_PLANE3);
 
 		//! draw cloaked objects below water surface
-		unitDrawer->DrawCloakedUnits(noAdvShading);
-		featureDrawer->DrawFadeFeatures(noAdvShading);
+		unitDrawer->DrawCloakedUnits(shadowHandler->shadowsLoaded);
+		featureDrawer->DrawFadeFeatures(shadowHandler->shadowsLoaded);
 
 		glDisable(GL_CLIP_PLANE3);
 	}
@@ -187,8 +185,8 @@ void CWorldDrawer::Draw()
 		glEnable(GL_CLIP_PLANE3);
 
 		//! draw cloaked objects above water surface
-		unitDrawer->DrawCloakedUnits(noAdvShading);
-		featureDrawer->DrawFadeFeatures(noAdvShading);
+		unitDrawer->DrawCloakedUnits(shadowHandler->shadowsLoaded);
+		featureDrawer->DrawFadeFeatures(shadowHandler->shadowsLoaded);
 
 		glDisable(GL_CLIP_PLANE3);
 	}
