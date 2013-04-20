@@ -289,10 +289,16 @@ void UnitDrawerStateARB::SetTeamColor(int team, float alpha) const {
 	const CTeam* t = teamHandler->Team(team);
 	const float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
-	// FIXME: shader is NOT always bound when team-color gets set??
-	if (true || modelShaders[MODEL_SHADER_ACTIVE]->IsBound()) {
+	// NOTE:
+	//   UnitDrawer::DrawCloakedUnits and FeatureDrawer::DrawFadeFeatures
+	//   disable advShading so shader is NOT always bound when team-color
+	//   gets set (but the state instance is not changed to FFP! --> does
+	//   not matter since Enable* and Disable* are not called)
+	if (modelShaders[MODEL_SHADER_ACTIVE]->IsBound()) {
 		modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 		modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, &c[0]);
+	} else {
+		CUnitDrawer::SetBasicTeamColour(team, alpha);
 	}
 
 	#if 0
@@ -429,9 +435,15 @@ void UnitDrawerStateGLSL::SetTeamColor(int team, float alpha) const {
 	const CTeam* t = teamHandler->Team(team);
 	const float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
-	// FIXME: shader is NOT always bound when team-color gets set??
-	if (true || modelShaders[MODEL_SHADER_ACTIVE]->IsBound()) {
+	// NOTE:
+	//   UnitDrawer::DrawCloakedUnits and FeatureDrawer::DrawFadeFeatures
+	//   disable advShading so shader is NOT always bound when team-color
+	//   gets set (but the state instance is not changed to FFP! --> does
+	//   not matter since Enable* and Disable* are not called)
+	if (modelShaders[MODEL_SHADER_ACTIVE]->IsBound()) {
 		modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(9, &c[0]);
+	} else {
+		CUnitDrawer::SetBasicTeamColour(team, alpha);
 	}
 
 	#if 0
