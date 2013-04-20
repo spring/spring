@@ -22,6 +22,8 @@ CONFIG(float, SmoothTiltSpeed).defaultValue(1.0f);
 CONFIG(bool, SmoothEnabled).defaultValue(true);
 CONFIG(float, SmoothFOV).defaultValue(45.0f);
 
+const float SmoothController::maxSpeedFactor = 300;
+
 SmoothController::SmoothController()
 	: flipped(false)
 	, zscale(0.5f)
