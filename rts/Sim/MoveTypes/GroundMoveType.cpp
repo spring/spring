@@ -790,7 +790,7 @@ void CGroundMoveType::UpdateControlledDrop()
 {
 	const float3&  pos = owner->pos;
 	const float3   acc = UpVector * std::min(mapInfo->map.gravity * owner->fallSpeed, 0.0f);
-	const float   drag = (pos.y < 0.0f) * 0.9f + (pos.y >= 0.0f) * 1.0f;
+	const float   drag = owner->IsInWater() * 0.9f + (1 - owner->IsInWater()) * 1.0f;
 	const float     gh = GetGroundHeight(pos);
 
 	owner->speed += acc;
