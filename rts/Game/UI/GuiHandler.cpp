@@ -3436,7 +3436,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		  (GetReceiverAt(mouse->lastx, mouse->lasty) == minimap)));
 	if (minimapCoords) {
 		cameraPos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
-		mouseDir = float3(0.0f, -1.0f, 0.0f);
+		mouseDir = -UpVector;
 		if (miniMapMarker && minimap->FullProxy() &&
 		    !onMinimap && !minimap->GetMinimized()) {
 			DrawMiniMapMarker(cameraPos);

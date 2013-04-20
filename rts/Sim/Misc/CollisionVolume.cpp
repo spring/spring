@@ -27,10 +27,10 @@ CR_REG_METADATA(CollisionVolume, (
 // base ctor (CREG-only)
 CollisionVolume::CollisionVolume()
 {
-	fAxisScales            = float3(2.0f, 2.0f, 2.0f);
-	hAxisScales            = float3(1.0f, 1.0f, 1.0f);
-	hsqAxisScales          = float3(1.0f, 1.0f, 1.0f);
-	hiAxisScales           = float3(1.0f, 1.0f, 1.0f);
+	fAxisScales            = OnesVector * 2.0f;
+	hAxisScales            = OnesVector;
+	hsqAxisScales          = OnesVector;
+	hiAxisScales           = OnesVector;
 	axisOffsets            = ZeroVector;
 
 	volumeBoundingRadius   = 1.0f;
@@ -110,7 +110,7 @@ void CollisionVolume::InitSphere(float radius)
 {
 	// <r> is the object's default RADIUS (not its diameter),
 	// so we need to double it to get the full-length scales
-	InitShape(float3(1.0f, 1.0f, 1.0f) * radius * 2.0f, ZeroVector, COLVOL_TYPE_SPHERE, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
+	InitShape(OnesVector * radius * 2.0f, ZeroVector, COLVOL_TYPE_SPHERE, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
 }
 
 void CollisionVolume::InitBox(const float3& scales)

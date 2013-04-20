@@ -331,10 +331,10 @@ void SS3OPiece::SetVertexTangents()
 		int h = 1;
 
 		if (math::isnan(n.x) || math::isnan(n.y) || math::isnan(n.z)) {
-			n = float3(0.0f, 0.0f, 1.0f);
+			n = FwdVector;
 		}
-		if (s == ZeroVector) { s = float3(1.0f, 0.0f, 0.0f); }
-		if (t == ZeroVector) { t = float3(0.0f, 1.0f, 0.0f); }
+		if (s == ZeroVector) { s = RgtVector; }
+		if (t == ZeroVector) { t =  UpVector; }
 
 		h = ((n.cross(s)).dot(t) < 0.0f)? -1: 1;
 		s = (s - n * n.dot(s));

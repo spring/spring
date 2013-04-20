@@ -136,7 +136,7 @@ void CMapInfo::ReadAtmosphere()
 
 	atmo.skyBox       = atmoTable.GetString("skyBox", "");
 	atmo.skyColor     = atmoTable.GetFloat3("skyColor", float3(0.1f, 0.15f, 0.7f));
-	atmo.skyDir       = atmoTable.GetFloat3("skyDir", float3(0.0f, 0.0f, -1.0f));
+	atmo.skyDir       = atmoTable.GetFloat3("skyDir", -FwdVector);
 	atmo.skyDir.ANormalize();
 	atmo.sunColor     = atmoTable.GetFloat3("sunColor", float3(1.0f, 1.0f, 1.0f));
 	atmo.cloudColor   = atmoTable.GetFloat3("cloudColor", float3(1.0f, 1.0f, 1.0f));

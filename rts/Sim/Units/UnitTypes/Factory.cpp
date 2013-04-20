@@ -236,7 +236,7 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 	if (buildee->unitDef->floatOnWater && (buildeePos.y <= 0.0f))
 		buildeePos.y = -buildee->unitDef->waterline;
 
-	buildee->Move3D(buildeePos, false);
+	buildee->Move(buildeePos, false);
 	buildee->UpdateDirVectors(false);
 	buildee->UpdateMidAndAimPos();
 

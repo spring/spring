@@ -5,6 +5,7 @@
 #include "Game/Player.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/ModInfo.h"
@@ -311,7 +312,7 @@ bool CStrafeAirMoveType::HandleCollisions() {
 				const float3 dif = (pos - unit->pos).Normalize();
 
 				if (unit->immobile) {
-					owner->Move3D(-dif * (dist - totRad), true);
+					owner->Move(-dif * (dist - totRad), true);
 					owner->speed *= 0.99f;
 
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
@@ -323,8 +324,8 @@ bool CStrafeAirMoveType::HandleCollisions() {
 				} else {
 					const float part = owner->mass / (owner->mass + unit->mass);
 
-					owner->Move3D(-dif * (dist - totRad) * (1 - part), true);
-					unit->Move3D(dif * (dist - totRad) * (part), true);
+					owner->Move(-dif * (dist - totRad) * (1 - part), true);
+					unit->Move(dif * (dist - totRad) * (part), true);
 
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
@@ -345,15 +346,15 @@ bool CStrafeAirMoveType::HandleCollisions() {
 		}
 
 		if (pos.x < 0.0f) {
-			owner->Move1D(1.5f, 0, true);
+			owner->Move( RgtVector * 1.5f, true);
 		} else if (pos.x > float3::maxxpos) {
-			owner->Move1D(-1.5f, 0, true);
+			owner->Move(-RgtVector * 1.5f, true);
 		}
 
 		if (pos.z < 0.0f) {
-			owner->Move1D(1.5f, 2, true);
+			owner->Move( FwdVector * 1.5f, true);
 		} else if (pos.z > float3::maxzpos) {
-			owner->Move1D(-1.5f, 2, true);
+			owner->Move(-FwdVector * 1.5f, true);
 		}
 
 		return true;
@@ -367,23 +368,6 @@ bool CStrafeAirMoveType::HandleCollisions() {
 void CStrafeAirMoveType::SlowUpdate()
 {
 	UpdateFuel();
-
-	// try to handle aircraft getting unlimited height
-	if (owner->pos != oldSlowUpdatePos) {
-		const float posy = owner->pos.y;
-		const float gndy = ground->GetHeightReal(owner->pos.x, owner->pos.z);
-
-		#if 0
-		// if wantedHeight suddenly jumps (from eg. 400 to 20)
-		// this will teleport the aircraft down *instantly* to
-		// match the new value --> bad
-		if ((posy - gndy) > (wantedHeight * 5.0f + 100.0f)) {
-			owner->Move1D(gndy + (wantedHeight * 5.0f + 100.0f), 1, false);
-		}
-		#endif
-
-		owner->Move1D(Clamp(posy, gndy, gndy + owner->unitDef->wantedHeight * 5.0f), 1, false);
-	}
 
 	// note: NOT AAirMoveType::SlowUpdate
 	AMoveType::SlowUpdate();
@@ -662,7 +646,8 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 	// do not check if the plane can be submerged here,
 	// since it'll cause ground collisions later on (?)
-	float gHeight;
+	float gHeight = 0.0f;
+
 	if (UseSmoothMesh())
 		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), ground->GetApproximateHeight(pos.x, pos.z));
 	else
@@ -709,6 +694,7 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	if (speedf > 1.5f && pos.y + speed.y * 10 > gHeight + wantedHeight * 0.6f) {
 		const float goalBankDif = goalDotRight + rightdir.y * 0.5f;
 		const float maxAileronSpeedf = maxAileron * speedf * 4.0f;
+
 		if (goalBankDif > maxAileronSpeedf && rightdir.y > -maxBank) {
 			aileron = 1;
 		} else if (goalBankDif < -maxAileronSpeedf && rightdir.y < maxBank) {
@@ -735,6 +721,7 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	// yaw
 	if (pos.y > gHeight + 15) {
 		const float maxRudderSpeedf = maxRudder * speedf * 2.0f;
+
 		if (goalDotRight < -maxRudderSpeedf) {
 			rudder = -1;
 		} else if (goalDotRight > maxRudderSpeedf) {
@@ -830,7 +817,7 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 		speed += (owner->frontdir * maxAcc);
 	}
 
-	owner->Move3D(speed *= invDrag, true);
+	owner->Move(speed *= invDrag, true);
 	owner->UpdateDirVectors(owner->IsOnGround());
 	owner->UpdateMidAndAimPos();
 }
@@ -857,12 +844,12 @@ void CStrafeAirMoveType::UpdateLanding()
 		if (reservedLandingPos.x >= 0.0f) {
 			const float3 originalPos = pos;
 
-			owner->Move3D(reservedLandingPos, false);
+			owner->Move(reservedLandingPos, false);
 			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			owner->Block();
 			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 
-			owner->Move3D(originalPos, false);
+			owner->Move(originalPos, false);
 			owner->Deactivate();
 			owner->script->StopMoving();
 		} else {
@@ -909,7 +896,7 @@ void CStrafeAirMoveType::UpdateLanding()
 	     if (rightdir.dot(reservedLandingPosDir) >  0.01f) { frontdir += (rightdir * 0.02f); }
 	else if (rightdir.dot(reservedLandingPosDir) < -0.01f) { frontdir -= (rightdir * 0.02f); }
 
-	owner->Move3D(speed, true);
+	owner->Move(speed, true);
 	owner->UpdateDirVectors(owner->IsOnGround());
 	owner->UpdateMidAndAimPos();
 
@@ -990,8 +977,11 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	}
 
 	if (nextPosInBounds) {
-		owner->Move3D(speed, true);
+		owner->Move(speed, true);
 	}
+
+	// [?] prevent aircraft from gaining unlimited altitude
+	owner->Move(UpVector * Clamp(pos.y, gHeight, readmap->currMaxHeight + owner->unitDef->wantedHeight * 5.0f), false);
 
 	// bounce away on ground collisions (including water surface)
 	// NOTE:
@@ -1007,7 +997,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF);
 
 		if (groundContact && handleContact) {
-			owner->Move1D(gHeight - (owner->midPos.y - owner->radius) + 0.01f, 1, true);
+			owner->Move(UpVector * (gHeight - (owner->midPos.y - owner->radius) + 0.01f), true);
 
 			const float3& gNormal = ground->GetNormal(pos.x, pos.z);
 			const float impactSpeed = -speed.dot(gNormal) * int(1 - owner->IsStunned());

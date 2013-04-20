@@ -89,7 +89,7 @@ void CTransportUnit::Update()
 			transportee->rightdir = rightdir;
 		}
 
-		transportee->Move3D(absPiecePos, false);
+		transportee->Move(absPiecePos, false);
 		transportee->UpdateMidAndAimPos();
 		transportee->SetHeadingFromDirection();
 
@@ -154,7 +154,7 @@ void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed
 				transportee->KillUnit(attacker, selfDestruct, reclaimed);
 			} else {
 				// NOTE: game's responsibility to deal with edge-cases now
-				transportee->Move3D(transportee->pos.cClampInBounds(), false);
+				transportee->Move(transportee->pos.cClampInBounds(), false);
 
 				// if this transporter uses the piece-underneath-ground
 				// method to "hide" transportees, place transportee near
@@ -175,7 +175,7 @@ void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed
 							continue;
 
 						if (quadField->GetUnitsExact(pos, transportee->radius + 2.0f).empty()) {
-							transportee->Move3D(pos, false);
+							transportee->Move(pos, false);
 							break;
 						}
 					}

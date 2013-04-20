@@ -727,7 +727,7 @@ void CHoverAirMoveType::UpdateAirPhysics()
 		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF);
 
 		if (groundContact && handleContact) {
-			owner->Move1D(curAbsHeight - (owner->midPos.y - owner->radius) + 0.01f, 1, true);
+			owner->Move(UpVector * (curAbsHeight - (owner->midPos.y - owner->radius) + 0.01f), true);
 		}
 	}
 
@@ -784,7 +784,7 @@ void CHoverAirMoveType::UpdateAirPhysics()
 
 
 	if (modInfo.allowAircraftToLeaveMap || (pos + speed).IsInBounds()) {
-		owner->Move3D(speed, true);
+		owner->Move(speed, true);
 	}
 }
 
@@ -1032,15 +1032,15 @@ bool CHoverAirMoveType::HandleCollisions()
 				const float3 dif = (pos - unit->pos).Normalize();
 
 				if (unit->mass >= CSolidObject::DEFAULT_MASS || unit->immobile) {
-					owner->Move3D(-dif * (dist - totRad), true);
+					owner->Move(-dif * (dist - totRad), true);
 					owner->speed *= 0.99f;
 
 					hitBuilding = true;
 				} else {
 					const float part = owner->mass / (owner->mass + unit->mass);
 
-					owner->Move3D(-dif * (dist - totRad) * (1.0f - part), true);
-					unit->Move3D(dif * (dist - totRad) * (part), true);
+					owner->Move(-dif * (dist - totRad) * (1.0f - part), true);
+					unit->Move(dif * (dist - totRad) * (part), true);
 
 					const float colSpeed = -owner->speed.dot(dif) + unit->speed.dot(dif);
 
@@ -1056,15 +1056,15 @@ bool CHoverAirMoveType::HandleCollisions()
 		}
 
 		if (pos.x < 0.0f) {
-			owner->Move1D(0.6f, 0, true);
+			owner->Move( RgtVector * 0.6f, true);
 		} else if (pos.x > float3::maxxpos) {
-			owner->Move1D(-0.6f, 0, true);
+			owner->Move(-RgtVector * 0.6f, true);
 		}
 
 		if (pos.z < 0.0f) {
-			owner->Move1D(0.6f, 2, true);
+			owner->Move( FwdVector * 0.6f, true);
 		} else if (pos.z > float3::maxzpos) {
-			owner->Move1D(-0.6f, 2, true);
+			owner->Move(-FwdVector * 0.6f, true);
 		}
 
 		return true;

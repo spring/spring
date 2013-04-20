@@ -133,20 +133,20 @@ void CubeMapHandler::UpdateReflectionTexture()
 	switch (currReflectionFace++) {
 		case 0: {
 			reflectionCubeFBO.Bind();
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, float3(0.0f, 0.0f, -1.0f), false);
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,  UpVector, false);
+			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, -FwdVector, false);
+			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,   UpVector, false);
 
 			if (mapSkyReflections) {
-				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, float3( 1.0f, 0.0f, 0.0f), true);
-				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, float3(-1.0f, 0.0f, 0.0f), true);
+				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,  RgtVector, true);
+				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, -RgtVector, true);
 			}
 		} break;
 		case 1: {} break;
 		case 2: {} break;
 		case 3: {
 			reflectionCubeFBO.Bind();
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, float3( 1.0f, 0.0f, 0.0f), false);
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, float3(-1.0f, 0.0f, 0.0f), false);
+			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,  RgtVector, false);
+			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, -RgtVector, false);
 
 			if (mapSkyReflections) {
 				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,  UpVector, true);
@@ -157,12 +157,12 @@ void CubeMapHandler::UpdateReflectionTexture()
 		case 5: {} break;
 		case 6: {
 			reflectionCubeFBO.Bind();
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, float3(0.0f, 0.0f,  1.0f), false);
+			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, FwdVector, false);
 			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, -UpVector, false);
 
 			if (mapSkyReflections) {
-				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, float3(0.0f, 0.0f,  1.0f), true);
-				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, float3(0.0f, 0.0f, -1.0f), true);
+				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,  FwdVector, true);
+				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, -FwdVector, true);
 			}
 		} break;
 		case 7: {} break;
@@ -199,8 +199,8 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	camera->forward = camDir;
 	camera->up = -UpVector;
 
-	if (camera->forward.y ==  1.0f) { camera->up = float3(0.0f, 0.0f,  1.0f); }
-	if (camera->forward.y == -1.0f) { camera->up = float3(0.0f, 0.0f, -1.0f); }
+	if (camera->forward.y ==  1.0f) { camera->up =  FwdVector; }
+	if (camera->forward.y == -1.0f) { camera->up = -FwdVector; }
 
 	camera->SetPos().y = ground->GetHeightAboveWater(camera->GetPos().x, camera->GetPos().z, false) + 50.0f;
 	camera->Update(false);

@@ -639,7 +639,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			const float ang = fti->fallPos * PI;
 
 			const float3 yvec(fti->dir.x * math::sin(ang), math::cos(ang), fti->dir.z * math::sin(ang));
-			const float3 zvec((yvec.cross(float3(-1.0f, 0.0f, 0.0f))).ANormalize());
+			const float3 zvec((yvec.cross(-RgtVector)).ANormalize());
 			const float3 xvec(yvec.cross(zvec));
 
 			CMatrix44f transMatrix(pos, xvec, yvec, zvec);
@@ -1018,7 +1018,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 			const float ang = fti->fallPos * PI;
 
 			const float3 yvec(fti->dir.x * math::sin(ang), math::cos(ang), fti->dir.z * math::sin(ang));
-			const float3 zvec((yvec.cross(float3(1.0f, 0.0f, 0.0f))).ANormalize());
+			const float3 zvec((yvec.cross(RgtVector)).ANormalize());
 			const float3 xvec(zvec.cross(yvec));
 
 			CMatrix44f transMatrix(pos, xvec, yvec, zvec);

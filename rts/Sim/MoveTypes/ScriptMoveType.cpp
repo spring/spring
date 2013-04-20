@@ -130,9 +130,9 @@ bool CScriptMoveType::Update()
 			(owner->rightdir * -relVel.x):
 			ZeroVector;
 
-		owner->Move3D(gravVec + vel, true);
-		owner->Move3D(windVec,       true);
-		owner->Move3D(unitVec,       true);
+		owner->Move(gravVec + vel, true);
+		owner->Move(windVec,       true);
+		owner->Move(unitVec,       true);
 
 		// quadratic drag does not work well here
 		vel += gravVec;
@@ -145,7 +145,7 @@ bool CScriptMoveType::Update()
 		const float gndMin = ground->GetHeightReal(owner->pos.x, owner->pos.z) + groundOffset;
 
 		if (owner->pos.y <= gndMin) {
-			owner->Move1D(gndMin, 1, false);
+			owner->Move(UpVector * gndMin, false);
 			owner->speed.y = 0.0f;
 
 			if (gndStop) {
@@ -205,7 +205,7 @@ void CScriptMoveType::SetPhysics(const float3& _pos,
 }
 
 
-void CScriptMoveType::SetPosition(const float3& pos) { owner->Move3D(pos, false); }
+void CScriptMoveType::SetPosition(const float3& pos) { owner->Move(pos, false); }
 void CScriptMoveType::SetVelocity(const float3& _vel) { owner->speed = (vel = _vel); }
 
 

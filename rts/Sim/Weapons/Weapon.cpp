@@ -174,13 +174,13 @@ CWeapon::CWeapon(CUnit* owner):
 	relWeaponMuzzlePos(UpVector),
 	weaponMuzzlePos(ZeroVector),
 	weaponDir(ZeroVector),
-	mainDir(0.0f, 0.0f, 1.0f),
+	mainDir(FwdVector),
 	wantedDir(UpVector),
 	lastRequestedDir(-UpVector),
 	salvoError(ZeroVector),
 	errorVector(ZeroVector),
 	errorVectorAdd(ZeroVector),
-	targetPos(1.0f, 1.0f, 1.0f)
+	targetPos(OnesVector)
 {
 }
 

@@ -243,9 +243,10 @@ void CBasicMapDamage::Update()
 				}
 			}
 
-			CUnit* unit = unitHandler->units[bi->id];
-			if (unit) {
-				unit->Move1D(dif, 1, true);
+			CUnit* unit = unitHandler->GetUnit(bi->id);
+
+			if (unit != NULL) {
+				unit->Move(UpVector * dif, true);
 			}
 		}
 		if (e->ttl == 0) {

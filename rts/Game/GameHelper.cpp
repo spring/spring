@@ -920,8 +920,8 @@ static const vector<SearchOffset>& GetSearchOffsetTable (int radius)
 //! only used by the AI callback of the same name
 float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing)
 {
-	if (!unitDef) {
-		return float3(-1.0f, 0.0f, 0.0f);
+	if (unitDef == NULL) {
+		return -RgtVector;
 	}
 
 	CFeature* feature = NULL;
@@ -994,7 +994,7 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 		}
 	}
 
-	return float3(-1.0f, 0.0f, 0.0f);
+	return -RgtVector;
 }
 
 // find the reference height for a build-position

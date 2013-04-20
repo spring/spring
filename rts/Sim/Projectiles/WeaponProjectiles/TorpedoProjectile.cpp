@@ -180,7 +180,7 @@ void CTorpedoProjectile::Draw()
 
 	float3 r = dir.cross(UpVector);
 	if (r.Length() < 0.001f) {
-		r = float3(1.0f, 0.0f, 0.0f);
+		r = float3(RgtVector);
 	}
 	r.Normalize();
 	const float3 u = dir.cross(r);

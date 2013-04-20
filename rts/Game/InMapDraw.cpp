@@ -57,7 +57,7 @@ public:
 			LOG("%s added point: %s", sender->name.c_str(), label->c_str());
 			eventHandler.LastMessagePosition(*pos0);
 			Channels::UserInterface.PlaySample(blippSound, *pos0);
-			minimap->AddNotification(*pos0, float3(1.0f, 1.0f, 1.0f), 1.0f);
+			minimap->AddNotification(*pos0, OnesVector, 1.0f);
 		}
 
 		return false;
@@ -73,7 +73,7 @@ CInMapDraw::CInMapDraw()
 	, wantLabel(false)
 	, lastLeftClickTime(0.0f)
 	, lastDrawTime(0.0f)
-	, lastPos(float3(1.0f, 1.0f, 1.0f))
+	, lastPos(OnesVector)
 	, allowSpecMapDrawing(true)
 	, allowLuaMapDrawing(true)
 	, notificationPeeper(NULL)
