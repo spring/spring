@@ -30,7 +30,7 @@ UnitDefWeapon::UnitDefWeapon()
 , maxMainDirAngleDif(-1.0f)
 , badTargetCat(0)
 , onlyTargetCat(0)
-, mainDir(0.0f, 0.0f, 1.0f)
+, mainDir(FwdVector)
 {
 }
 
@@ -58,7 +58,7 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 	this->badTargetCat =                                   CCategoryHandler::Instance()->GetCategories(btcString);
 	this->onlyTargetCat = (otcString.empty())? 0xffffffff: CCategoryHandler::Instance()->GetCategories(otcString);
 
-	this->mainDir = weaponTable.GetFloat3("mainDir", float3(0.0f, 0.0f, 1.0f));
+	this->mainDir = weaponTable.GetFloat3("mainDir", FwdVector);
 	this->mainDir.SafeNormalize();
 }
 
@@ -388,7 +388,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	flankingBonusMode = udTable.GetInt("flankingBonusMode", modInfo.flankingBonusModeDefault);
 	flankingBonusMax  = udTable.GetFloat("flankingBonusMax", 1.9f);
 	flankingBonusMin  = udTable.GetFloat("flankingBonusMin", 0.9);
-	flankingBonusDir  = udTable.GetFloat3("flankingBonusDir", float3(0.0f, 0.0f, 1.0f));
+	flankingBonusDir  = udTable.GetFloat3("flankingBonusDir", FwdVector);
 	flankingBonusMobilityAdd = udTable.GetFloat("flankingBonusMobilityAdd", 0.01f);
 
 	armoredMultiple = udTable.GetFloat("damageModifier", 1.0f);

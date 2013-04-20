@@ -528,10 +528,10 @@ void CMiniMap::SelectUnits(int x, int y) const
 		const float zmin = std::min(oldPos.z, newPos.z);
 		const float zmax = std::max(oldPos.z, newPos.z);
 
-		const float4  planeRight(-1.0f, 0.0f,  0.0f,  xmin);
-		const float4   planeLeft( 1.0f, 0.0f,  0.0f, -xmax);
-		const float4    planeTop( 0.0f, 0.0f,  1.0f, -zmax);
-		const float4 planeBottom( 0.0f, 0.0f, -1.0f,  zmin);
+		const float4  planeRight(-RgtVector,  xmin);
+		const float4   planeLeft( RgtVector, -xmax);
+		const float4    planeTop( FwdVector, -zmax);
+		const float4 planeBottom(-FwdVector,  zmin);
 
 		selectedUnitsHandler.HandleUnitBoxSelection(planeRight, planeLeft, planeTop, planeBottom);
 	}
@@ -739,7 +739,7 @@ void CMiniMap::ProxyMousePress(int x, int y, int button)
 
 	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
 	bp.camPos = mapPos;
-	bp.dir = float3(0.0f, -1.0f, 0.0f);
+	bp.dir = -UpVector;
 
 	guihandler->MousePress(x, y, -button);
 }
@@ -758,7 +758,7 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 		}
 	}
 
-	float3 mousedir = float3(0.0f, -1.0f, 0.0f);
+	float3 mousedir = -UpVector;
 	float3 campos = mapPos;
 
 	guihandler->MouseRelease(x, y, -button, campos, mousedir);

@@ -293,7 +293,7 @@ void CClassicGroundMoveType::SlowUpdate()
 		} else {
 			wh = ground->GetHeightReal(owner->pos.x, owner->pos.z);
 		}
-		owner->Move1D(wh, 1, false);
+		owner->Move(UpVector * wh, false);
 	}
 
 	if (owner->pos != oldSlowUpdatePos) {
@@ -505,7 +505,7 @@ void CClassicGroundMoveType::UpdateSkid()
 		if(wh>midPos.y-owner->relMidPos.y){
 			skidRotSpeed+=(gs->randFloat()-0.5f)*1500;
 			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
-			owner->Move1D(wh+owner->relMidPos.y-speed.y*0.5f, 1, false);
+			owner->Move(UpVector * (wh + owner->relMidPos.y - speed.y * 0.5f), false);
 			float impactSpeed = -speed.dot(ground->GetNormal(midPos.x,midPos.z));
 			if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
 				owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), ZeroVector, NULL, -1, -1);
@@ -574,7 +574,7 @@ void CClassicGroundMoveType::UpdateSkid()
 	}
 
 	CalcSkidRot();
-	owner->Move3D(speed, true);
+	owner->Move(speed, true);
 	CheckCollisionSkid();
 }
 
@@ -589,7 +589,7 @@ void CClassicGroundMoveType::UpdateControlledDrop()
 		if (owner->speed.y > 0)
 			owner->speed.y = 0;
 
-		owner->Move3D(speed, true);
+		owner->Move(speed, true);
 
 		if(midPos.y < 0)
 			speed*=0.90;
@@ -602,7 +602,7 @@ void CClassicGroundMoveType::UpdateControlledDrop()
 			wh = ground->GetHeightReal(midPos.x, midPos.z);
 
 		if(wh > midPos.y-owner->relMidPos.y){
-			owner->Move1D(wh + owner->relMidPos.y - speed.y*0.8, 1, false);
+			owner->Move(UpVector * (wh + owner->relMidPos.y - speed.y * 0.8), false);
 			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FALLING);
 			owner->script->Landed();
 		}
@@ -630,7 +630,7 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 				float impactSpeed = -owner->speed.dot(dif);
 
 				if (impactSpeed > 0) {
-					owner->Move3D(dif * impactSpeed, true);
+					owner->Move(dif * impactSpeed, true);
 					owner->speed += dif * (impactSpeed * 1.8f);
 
 					if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
@@ -645,8 +645,8 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 				float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
 
 				if (impactSpeed > 0) {
-					owner->Move3D(dif * (impactSpeed * (1 - part) * 2), true);
-					u->Move3D(dif * (impactSpeed * part * 2), true);
+					owner->Move(dif * (impactSpeed * (1 - part) * 2), true);
+					u->Move(dif * (impactSpeed * part * 2), true);
 
 					owner->speed += dif * (impactSpeed * (1 - part) * 2);
 					u->speed -= dif * (impactSpeed * part * 2);
@@ -681,7 +681,7 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 			dif/=std::max(dist, 1.f);
 			float impactSpeed = -owner->speed.dot(dif);
 			if(impactSpeed > 0){
-				owner->Move3D(dif*(impactSpeed), true);
+				owner->Move(dif*(impactSpeed), true);
 				owner->speed+=dif*(impactSpeed*1.8f);
 				if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
 					owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), ZeroVector, NULL, -1, -1);
@@ -771,7 +771,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 			const float currentDistanceToGoal = owner->pos.distance2D(goalPos);
 			const float currentDistanceToGoalSq = currentDistanceToGoal * currentDistanceToGoal;
-			const float3 rightOfPath = desiredDir.cross(float3(0.0f, 1.0f, 0.0f));
+			const float3 rightOfPath = desiredDir.cross(UpVector);
 			const float speedf = owner->speed.Length2D();
 
 			float avoidLeft = 0.0f;
@@ -813,14 +813,14 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 									AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir += (rightOfAvoid * avoidRight);
 								avoidanceDir.Normalize();
-								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
+								rightOfAvoid = avoidanceDir.cross(UpVector);
 							} else {
 								avoidLeft +=
 									(radiusSum - math::fabs(objectDistToAvoidDirCenter)) *
 									AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir -= (rightOfAvoid * avoidLeft);
 								avoidanceDir.Normalize();
-								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
+								rightOfAvoid = avoidanceDir.cross(UpVector);
 							}
 							objectsOnPath.push_back(o);
 						}
@@ -1119,7 +1119,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 					const bool allied = (teamHandler->Ally(uAllyTeam, oAllyTeam) || teamHandler->Ally(oAllyTeam, uAllyTeam));
 
 					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
-						u->Move3D((dif * part), true);
+						u->Move((dif * part), true);
 						u->UpdateMidAndAimPos();
 					}
 				}
@@ -1142,8 +1142,8 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 				CGameHelper::BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
 			}
 
-			owner->Move3D(posDelta, true);
-			owner->Move1D(xmove, 0, false);
+			owner->Move(posDelta, true);
+			owner->Move(RgtVector * xmove, false);
 
 			currentSpeed *= 0.97f;
 			ret = true;
@@ -1197,7 +1197,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 					const bool allied = (teamHandler->Ally(uAllyTeam, oAllyTeam) || teamHandler->Ally(oAllyTeam, uAllyTeam));
 
 					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
-						u->Move3D((dif * part), true);
+						u->Move((dif * part), true);
 						u->UpdateMidAndAimPos();
 					}
 				}
@@ -1220,8 +1220,8 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 				CGameHelper::BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
 			}
 
-			owner->Move3D(posDelta, true);
-			owner->Move1D(zmove, 2, false);
+			owner->Move(posDelta, true);
+			owner->Move(FwdVector * zmove, false);
 
 			currentSpeed *= 0.97f;
 			ret = true;
@@ -1381,7 +1381,7 @@ void CClassicGroundMoveType::TestNewTerrainSquare()
 			newMoveSquareX = (int) owner->pos.x / (SQUARE_SIZE * 2);
 			newMoveSquareY = (int) owner->pos.z / (SQUARE_SIZE * 2);
 		} else {
-			owner->Move3D(newpos, false);
+			owner->Move(newpos, false);
 		}
 
 		if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
@@ -1572,7 +1572,7 @@ void CClassicGroundMoveType::AdjustPosToWaterLine()
 	}
 
 	if (!(owner->IsFalling() || owner->IsFlying())) {
-		owner->Move1D(wh, 1, false);
+		owner->Move(UpVector * wh, false);
 	}
 }
 
@@ -1618,7 +1618,7 @@ void CClassicGroundMoveType::UpdateOwnerPos()
 {
 	if (wantedSpeed > 0.0f || currentSpeed != 0.0f) {
 		currentSpeed += deltaSpeed;
-		owner->Move3D(flatFrontDir * currentSpeed, true);
+		owner->Move(flatFrontDir * currentSpeed, true);
 
 		AdjustPosToWaterLine();
 	}

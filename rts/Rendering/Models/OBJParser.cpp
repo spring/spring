@@ -673,8 +673,8 @@ void SOBJPiece::SetVertexTangents()
 		float3& t = tTangents[vrtIdx];
 		int h = 1;
 
-		if (s == ZeroVector) { s = float3(1.0f, 0.0f, 0.0f); }
-		if (t == ZeroVector) { t = float3(0.0f, 1.0f, 0.0f); }
+		if (s == ZeroVector) { s = RgtVector; }
+		if (t == ZeroVector) { t =  UpVector; }
 
 		h = ((n.cross(s)).dot(t) < 0.0f)? -1: 1;
 		s = (s - n * n.dot(s));

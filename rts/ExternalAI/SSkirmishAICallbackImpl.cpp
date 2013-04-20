@@ -1316,24 +1316,20 @@ EXPORT(float) skirmishAiCallback_Gui_getScreenY(int skirmishAIId) {
 }
 
 EXPORT(void) skirmishAiCallback_Gui_Camera_getDirection(int skirmishAIId, float* return_posF3_out) {
-
 	float3 cameraDir;
 
-	const bool fetchOk = skirmishAIId_callback[skirmishAIId]->GetValue(AIVAL_GUI_CAMERA_DIR, &cameraDir);
-	if (!fetchOk) {
-		cameraDir = float3(1.0f, 0.0f, 0.0f);
+	if (!skirmishAIId_callback[skirmishAIId]->GetValue(AIVAL_GUI_CAMERA_DIR, &cameraDir)) {
+		cameraDir = RgtVector;
 	}
 
 	cameraDir.copyInto(return_posF3_out);
 }
 
 EXPORT(void) skirmishAiCallback_Gui_Camera_getPosition(int skirmishAIId, float* return_posF3_out) {
-
 	float3 cameraPosition;
 
-	const bool fetchOk = skirmishAIId_callback[skirmishAIId]->GetValue(AIVAL_GUI_CAMERA_POS, &cameraPosition);
-	if (!fetchOk) {
-		cameraPosition = float3(1.0f, 0.0f, 0.0f);
+	if (!skirmishAIId_callback[skirmishAIId]->GetValue(AIVAL_GUI_CAMERA_POS, &cameraPosition)) {
+		cameraPosition = RgtVector;
 	}
 
 	cameraPosition.copyInto(return_posF3_out);

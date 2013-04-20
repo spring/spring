@@ -134,7 +134,7 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 
 void AudioChannel::PlaySample(size_t id, float volume)
 {
-	FindSourceAndPlay(id, float3(0.0f, 0.0f, -1.0f), ZeroVector, volume, true);
+	FindSourceAndPlay(id, -FwdVector, ZeroVector, volume, true);
 }
 
 void AudioChannel::PlaySample(size_t id, const float3& pos, float volume)

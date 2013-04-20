@@ -670,7 +670,9 @@ public:
  * Defines constant upwards vector
  * (0, 1, 0)
  */
-const float3 UpVector(0.0f, 1.0f, 0.0f);
+const float3  UpVector(0.0f, 1.0f, 0.0f);
+const float3 FwdVector(0.0f, 0.0f, 1.0f);
+const float3 RgtVector(1.0f, 0.0f, 0.0f);
 
 /**
  * @brief zero vector
@@ -679,7 +681,7 @@ const float3 UpVector(0.0f, 1.0f, 0.0f);
  * (0, 0, 0)
  */
 const float3 ZeroVector(0.0f, 0.0f, 0.0f);
-
+const float3 OnesVector(1.0f, 1.0f, 1.0f);
 
 namespace std {
 	float3 min(float3 v1, float3 v2);

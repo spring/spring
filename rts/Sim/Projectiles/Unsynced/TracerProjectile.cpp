@@ -42,11 +42,11 @@ CTracerProjectile::CTracerProjectile()
 
 void CTracerProjectile::Init(const float3& pos, CUnit* owner)
 {
-	speedf = this->speed.Length();
+	speedf = speed.Length();
 	if (speedf == 0.0f) {
-		speed = float3(1.0f, 0.0f, 0.0f);
+		speed = RgtVector;
 	}
-	dir = this->speed / speedf;
+	dir = speed / speedf;
 
 	CProjectile::Init(pos, owner);
 }

@@ -207,7 +207,7 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	children.reserve(piece->children.size());
 
 	if (piece->GetVertexCount() < 2) {
-		dir = float3(1.0f, 1.0f, 1.0f);
+		dir = OnesVector;
 	} else {
 		dir = piece->GetVertexPos(0) - piece->GetVertexPos(1);
 	}
@@ -323,7 +323,7 @@ bool LocalModelPiece::GetEmitDirPos(float3& pos, float3& dir) const
 
 	if (count == 0) {
 		pos = modelSpaceMat.GetPos();
-		dir = modelSpaceMat.Mul(float3(0.0f, 0.0f, 1.0f)) - pos;
+		dir = modelSpaceMat.Mul(FwdVector) - pos;
 	} else if (count == 1) {
 		pos = modelSpaceMat.GetPos();
 		dir = modelSpaceMat.Mul(piece->GetVertexPos(0)) - pos;

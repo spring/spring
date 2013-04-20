@@ -24,8 +24,8 @@ void CStaticMoveType::SlowUpdate()
 	const UnitDef* ud = owner->unitDef;
 
 	if (ud->floatOnWater && (owner->pos.y <= 0.0f)) {
-		owner->Move1D(-ud->waterline, 1, false);
+		owner->Move(-UpVector * ud->waterline, false);
 	} else {
-		owner->Move1D(ground->GetHeightReal(owner->pos.x, owner->pos.z), 1, false);
+		owner->Move(UpVector * ground->GetHeightReal(owner->pos.x, owner->pos.z), false);
 	}
 }

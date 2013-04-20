@@ -36,7 +36,7 @@ CWind::CWind():
 	minWind(0.0f),
 	curStrength(0.0f),
 
-	curDir(float3(1.0f, 0.0f, 0.0f)),
+	curDir(RgtVector),
 	curWind(ZeroVector),
 	newWind(ZeroVector),
 	oldWind(ZeroVector),

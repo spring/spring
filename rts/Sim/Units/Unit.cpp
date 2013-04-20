@@ -125,7 +125,7 @@ CUnit::CUnit() : CSolidObject(),
 	haveTarget(false),
 	haveManualFireRequest(false),
 	lastMuzzleFlameSize(0.0f),
-	lastMuzzleFlameDir(0.0f, 1.0f, 0.0f),
+	lastMuzzleFlameDir(UpVector),
 	armorType(0),
 	category(0),
 	los(NULL),
@@ -198,7 +198,7 @@ CUnit::CUnit() : CSolidObject(),
 	isDead(false),
 	fallSpeed(0.2f),
 	flankingBonusMode(0),
-	flankingBonusDir(1.0f, 0.0f, 0.0f),
+	flankingBonusDir(RgtVector),
 	flankingBonusMobility(10.0f),
 	flankingBonusMobilityAdd(0.01f),
 	flankingBonusAvgDamage(1.4f),
@@ -369,7 +369,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	rightdir = frontdir.cross(updir);
 	upright  = unitDef->upright;
 
-	Move3D((params.pos).cClampInMap(), false);
+	Move((params.pos).cClampInMap(), false);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model);
 	UpdateDirVectors(!upright);
@@ -441,7 +441,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 	// physicalState has not been set at this point
 	if (unitDef->floatOnWater && (pos.y <= 0.0f)) {
-		Move1D(-unitDef->waterline, 1, false);
+		Move(-UpVector * unitDef->waterline, false);
 	}
 
 	flankingBonusMode        = unitDef->flankingBonusMode;
@@ -543,7 +543,7 @@ void CUnit::ForcedMove(const float3& newPos)
 		UnBlock();
 	}
 
-	Move3D(newPos - pos, true);
+	Move(newPos - pos, true);
 
 	eventHandler.UnitMoved(this);
 
@@ -614,7 +614,7 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 	frontdir = parentDir;
 	frontdir.y = 0.0f;
 
-	Move1D(parentPos.y - height, 1, false);
+	Move(UpVector * (parentPos.y - height), false);
 	UpdateMidAndAimPos();
 	SetPhysicalStateBit(CSolidObject::STATE_BIT_FALLING);
 

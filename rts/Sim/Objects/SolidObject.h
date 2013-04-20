@@ -101,20 +101,12 @@ public:
 
 	virtual void UpdatePhysicalState();
 
-	void Move3D(const float3& v, bool relative) {
+	void Move(const float3& v, bool relative) {
 		const float3& dv = relative? v: (v - pos);
 
 		pos += dv;
 		midPos += dv;
 		aimPos += dv;
-	}
-
-	void Move1D(const float v, int d, bool relative) {
-		const float dv = relative? v: (v - pos[d]);
-
-		pos[d] += dv;
-		midPos[d] += dv;
-		aimPos[d] += dv;
 	}
 
 	// this should be called whenever the direction

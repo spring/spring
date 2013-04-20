@@ -20,7 +20,6 @@ CONFIG(float, OrbitControllerZoomSpeed).defaultValue(5.00f).minimumValue(0.1f).m
 
 #define DEG2RAD(a) ((a) * (3.141592653f / 180.0f))
 #define RAD2DEG(a) ((a) * (180.0f / 3.141592653f))
-static const float3 YVEC(0.0f, 1.0f, 0.0f);
 
 COrbitController::COrbitController():
 	lastMouseMoveX(0), lastMouseMoveY(0),
@@ -161,7 +160,7 @@ void COrbitController::Orbit()
 	camera->SetPos() = cen + GetOrbitPos();
 	camera->SetPos().y = std::max(camera->GetPos().y, ground->GetHeightReal(camera->GetPos().x, camera->GetPos().z, false));
 	camera->forward = (cen - camera->GetPos()).ANormalize();
-	camera->up = YVEC;
+	camera->up = UpVector;
 }
 
 void COrbitController::Pan(int rdx, int rdy)

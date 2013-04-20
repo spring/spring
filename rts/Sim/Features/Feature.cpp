@@ -152,7 +152,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	noSelect = def->noSelect;
 
 	// set position before mid-position
-	Move3D((params.pos).cClampInMap(), false);
+	Move((params.pos).cClampInMap(), false);
 
 	if (def->drawType == DRAWTYPE_MODEL) {
 		if ((model = def->LoadModel()) == NULL) {
@@ -398,7 +398,7 @@ void CFeature::ForcedMove(const float3& newPos)
 
 	const float3 oldPos = pos;
 
-	Move3D(newPos - pos, true);
+	Move(newPos - pos, true);
 	eventHandler.FeatureMoved(this, oldPos);
 
 	// setup the visual transformation matrix
@@ -454,7 +454,7 @@ bool CFeature::UpdatePosition()
 
 				// update our forward speed (and quadfield
 				// position) if it is still greater than 0
-				Move3D(speed, true);
+				Move(speed, true);
 
 				quadField->AddFeature(this);
 				Block();
@@ -472,14 +472,14 @@ bool CFeature::UpdatePosition()
 					speed.y = mapInfo->map.gravity;
 				}
 
-				Move1D(speed.y, 1, true);
+				Move(UpVector * speed.y, true);
 			} else {
 				speed.y = 0.0f;
 
 				// last Update() may have sunk us into
 				// ground if pos.y was only marginally
 				// larger than ground height, correct
-				Move1D(realGroundHeight, 1, false);
+				Move(UpVector * realGroundHeight, false);
 			}
 
 			if (!pos.IsInBounds()) {
@@ -507,13 +507,13 @@ bool CFeature::UpdatePosition()
 
 			// stop falling when we reach our finalHeight
 			// (which can be arbitrary, even below ground)
-			Move1D(std::min(pos.y - finalHeight, speed.y), 1, true);
+			Move(UpVector * std::min(pos.y - finalHeight, speed.y), true);
 			eventHandler.FeatureMoved(this, oldPos);
 		} else if (pos.y < finalHeight) {
 			// stop vertical movement and teleport up
 			speed.y = 0.0f;
 
-			Move1D((finalHeight - pos.y), 1, true);
+			Move(UpVector * (finalHeight - pos.y), true);
 			eventHandler.FeatureMoved(this, oldPos);
 		}
 

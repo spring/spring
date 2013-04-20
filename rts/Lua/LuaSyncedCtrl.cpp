@@ -2095,7 +2095,7 @@ int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 	matrix.RotateX(rot.x);
 	matrix.RotateY(rot.y);
 
-	unit->Move3D(pos, false);
+	unit->Move(pos, false);
 	unit->SetDirVectors(matrix);
 	unit->UpdateMidAndAimPos();
 	unit->SetHeadingFromDirection();
