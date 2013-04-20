@@ -79,17 +79,9 @@ add_custom_target(install-spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 if    (NOT HEADLESS_SYSTEM)
 	### Add icon and manifest to exe using windres
-	IF    (WIN32)
-		IF   (MINGW)
-			SET(ENGINE_ICON_DIR "${ENGINE_SRC_ROOT_DIR}")
-			SET(ENGINE_ICON_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-			SET(ENGINE_ICON_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
-			CreateResourceCompileCommand(ENGINE_ICON "${ENGINE_ICON_DIR}" "${ENGINE_ICON_RES}" "${ENGINE_ICON_OBJ}")
-		ENDIF(MINGW)
-	ELSE  (WIN32)
-		SET(ENGINE_ICON "")
+	IF    (WIN32 AND MINGW)
+		SET(ENGINE_ICON "${ENGINE_SRC_ROOT_DIR}/icon.rc")
 	ENDIF (WIN32)
-
 	AddEngineBuild(multithreaded) ## ASIM GML OMP
 	AddEngineBuild(legacy) ## OMP
 endif (NOT HEADLESS_SYSTEM)
