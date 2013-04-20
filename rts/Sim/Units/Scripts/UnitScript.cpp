@@ -998,7 +998,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case ON_ROAD:
 		return 0;
 	case IN_WATER:
-		return (unit->pos.y < 0.0f) ? 1 : 0;
+		return (unit->IsInWater());
 	case MAX_ID:
 		return unitHandler->MaxUnits()-1;
 	case MY_ID:
