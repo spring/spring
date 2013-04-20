@@ -151,6 +151,9 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 
 bool CStrafeAirMoveType::Update()
 {
+	const float3 lastPos = owner->pos;
+	const float3 lastSpeed = owner->speed;
+
 	AAirMoveType::Update();
 
 	// need to additionally check that we are not crashing,
@@ -228,7 +231,7 @@ bool CStrafeAirMoveType::Update()
 				if (maneuver) {
 					UpdateManeuver();
 					inefficientAttackTime = 0;
-				} else if (isFighter && goalPos.SqDistance(owner->pos) < Square(owner->maxRange * 4)) {
+				} else if (isFighter && goalPos.SqDistance(lastPos) < Square(owner->maxRange * 4)) {
 					inefficientAttackTime++;
 					UpdateFighterAttack();
 				} else {
@@ -265,6 +268,9 @@ bool CStrafeAirMoveType::Update()
 		default:
 			break;
 	}
+
+	if (lastSpeed == ZeroVector && owner->speed != ZeroVector) { owner->script->StartMoving(); }
+	if (lastSpeed != ZeroVector && owner->speed == ZeroVector) { owner->script->StopMoving(); }
 
 	return (HandleCollisions());
 }
@@ -851,7 +857,6 @@ void CStrafeAirMoveType::UpdateLanding()
 
 			owner->Move(originalPos, false);
 			owner->Deactivate();
-			owner->script->StopMoving();
 		} else {
 			goalPos.ClampInBounds();
 			UpdateFlying(wantedHeight, 1);
@@ -1063,14 +1068,12 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 			break;
 		case AIRCRAFT_FLYING:
 			owner->Activate();
-			owner->script->StartMoving();
 			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			break;
 		case AIRCRAFT_LANDED:
 			owner->useAirLos = false;
 
-			//FIXME already inform commandAI in AIRCRAFT_LANDING!
-			//FIXME Problem is StopMove() also calls owner->script->StopMoving() what should only be called when landed. Also see CHoverAirMoveType::SetState().
+			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
 			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			break;

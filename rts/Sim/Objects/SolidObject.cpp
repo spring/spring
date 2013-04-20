@@ -251,8 +251,12 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	const float3 gn = ground->GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
 	const float3 wn =                             UpVector  * (1 - useGroundNormal);
 
-	if (moveDef == NULL)
-		return (gn + updir * (1 - useGroundNormal));
+	if (moveDef == NULL) {
+		// aircraft cannot use updir reliably or their
+		// coordinate-system would degenerate too much
+		// over time without periodic re-ortho'ing
+		return (gn + UpVector * (1 - useGroundNormal));
+	}
 
 	// not an aircraft if we get here, prevent pitch changes
 	// if(f) the object is neither on the ground nor in water

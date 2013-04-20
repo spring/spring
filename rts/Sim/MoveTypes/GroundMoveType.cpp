@@ -39,7 +39,7 @@
 
 #if 1
 #include "Rendering/IPathDrawer.h"
-#define DEBUG_DRAWING_ENABLED pathDrawer->IsEnabled()
+#define DEBUG_DRAWING_ENABLED ((gs->cheatEnabled || gu->spectatingFullView) && pathDrawer->IsEnabled())
 #else
 #define DEBUG_DRAWING_ENABLED false
 #endif
