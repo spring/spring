@@ -81,7 +81,7 @@ if    (NOT HEADLESS_SYSTEM)
 	### Add icon and manifest to exe using windres
 	IF    (WIN32 AND MINGW)
 		SET(ENGINE_ICON "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-	ENDIF (WIN32)
+	ENDIF (WIN32 AND MINGW)
 	AddEngineBuild(multithreaded) ## ASIM GML OMP
 	AddEngineBuild(legacy) ## OMP
 endif (NOT HEADLESS_SYSTEM)
