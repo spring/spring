@@ -51,7 +51,7 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 	CreateInstallTarget(spring-${targetName} myBuildTarget ${targetName}-InstallDirs)
 
 	# allow easy switching of the default engine
-	if    (${targetName} STREQUAL "multithreaded")
+	if    (${targetName} STREQUAL "legacy")
 		# Create shortcuts
 		# * make spring
 		# * make install-spring
