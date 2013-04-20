@@ -54,10 +54,12 @@ IF    (UNIX AND NOT MINGW)
 		PREFER_STATIC_LIBS()
 		FIND_LIBRARY(C_LIBRARY c)
 		FIND_LIBRARY(MATH_LIBRARY m)
-		FIND_LIBRARY(REALTIME_LIBRARY rt)
 		#FIND_LIBRARY(PTHREAD_LIBRARY pthread)
 		#FIND_LIBRARY(OMP_LIBRARY gomp) FIXME it's hidden in some subfolders
 		UNPREFER_STATIC_LIBS()
+
+		# gives linker error when linked static, so link dynamic
+		FIND_LIBRARY(REALTIME_LIBRARY rt)
 
 		LIST(APPEND engineCommonLibraries ${C_LIBRARY} ${MATH_LIBRARY} ${REALTIME_LIBRARY})
 		#LIST(APPEND engineCommonLibraries ${PTHREAD_LIBRARY} ${OMP_LIBRARY})
