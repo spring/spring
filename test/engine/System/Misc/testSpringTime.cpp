@@ -26,15 +26,15 @@ struct TestProcessor {
 		for (int i=0; i < testRuns; ++i) {
 			int64_t curTick = Clock::Get();
 			int64_t tick = curTick - lastTick;
-			maxTick = std::max(tick, maxTick);
-			minTick = std::min(tick, minTick);
+			maxTick = std::max<int64_t>(tick, maxTick);
+			minTick = std::min<int64_t>(tick, minTick);
 			avgTick = float(i * avgTick + tick) / (i + 1);
 			lastTick = curTick;
 		}
 
 		float maxMsTick = maxTick * Clock::ToMs();
-		float minMsTick = std::max(minTick, 1LL) * Clock::ToMs();
-		float avgMsTick = std::max(avgTick, 1.0f) * Clock::ToMs();
+		float minMsTick = std::max<int64_t>(minTick, 1LL) * Clock::ToMs();
+		float avgMsTick = std::max<int64_t>(avgTick, 1.0f) * Clock::ToMs();
 		LOG("[%17s] maxTick: %3.6fms minTick: %3.6fms avgTick: %3.6fms", Clock::GetName().c_str(), maxMsTick, minMsTick, avgMsTick);
 	}
 };
