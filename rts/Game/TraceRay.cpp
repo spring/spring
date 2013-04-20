@@ -52,7 +52,7 @@ inline static bool TestConeHelper(
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	}
 
-	if (globalRendering->drawdebugtraceray && (!GML::SimEnabled() || Threading::IsSimThread())) {
+	if (globalRendering->drawdebugtraceray && Threading::IsSimThread()) {
 		#define go geometricObjects
 
 		if (ret) {
@@ -127,7 +127,7 @@ inline static bool TestTrajectoryConeHelper(
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	}
 
-	if (globalRendering->drawdebugtraceray && (!GML::SimEnabled() || Threading::IsSimThread())) {
+	if (globalRendering->drawdebugtraceray && Threading::IsSimThread()) {
 		// FIXME? seems to under-estimate gravity near edge of range
 		// (Cannon and MissileLauncher both subtract 30 elmos from it
 		// in HaveFreeLineOfFire???)
