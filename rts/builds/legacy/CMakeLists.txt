@@ -86,7 +86,6 @@ ENDIF (WIN32)
 ### Build the executable
 ADD_EXECUTABLE(engine-legacy ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON_LEGACY} ${engineHeaders})
 TARGET_LINK_LIBRARIES(engine-legacy ${engineLibraries})
-SET_TARGET_PROPERTIES(engine-legacy PROPERTIES OUTPUT_NAME "spring-legacy")
 
 
 ### Install the executable

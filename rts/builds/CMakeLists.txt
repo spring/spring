@@ -47,7 +47,21 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 	If    (NOT "${AI_TYPES}" STREQUAL "NONE")
 		Set(${targetName}-InstallDirs ${${targetName}-InstallDirs} "AI")
 	EndIf (NOT "${AI_TYPES}" STREQUAL "NONE")
+
 	CreateInstallTarget(spring-${targetName} myBuildTarget ${targetName}-InstallDirs)
+
+	# allow easy switching of the default engine
+	if    (${targetName} STREQUAL "multithreaded")
+		# Create shortcuts
+		# * make spring
+		# * make install-spring
+		message(STATUS "Using ${targetName} as default engine")
+		add_dependencies(spring spring-${targetName}) # This also works for custom targets
+		add_dependencies(install-spring install-spring-${targetName}) # This also works for custom targets
+		set_target_properties(engine-${targetName} PROPERTIES OUTPUT_NAME "spring")
+	else()
+		set_target_properties(engine-${targetName} PROPERTIES OUTPUT_NAME "spring-${targetName}")
+	endif ()
 endmacro (CreateEngineBuildAndInstallTarget targetName)
 
 

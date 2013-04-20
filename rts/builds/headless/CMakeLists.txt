@@ -56,7 +56,6 @@ ENDIF (MINGW)
 ### Build the executable
 ADD_EXECUTABLE(engine-headless ${engineSources} ${ENGINE_ICON_HL})
 TARGET_LINK_LIBRARIES(engine-headless ${engineHeadlessLibraries})
-SET_TARGET_PROPERTIES(engine-headless PROPERTIES OUTPUT_NAME "spring-headless")
 
 IF    (MINGW)
 	# To enable console output/force a console window to open
