@@ -55,7 +55,7 @@ if    (USE_LIBSQUISH)
 endif (USE_LIBSQUISH)
 
 LIST(APPEND engineLibraries ${sound-impl})
-LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY} ${Boost_CHRONO_LIBRARY})
+LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
 LIST(APPEND engineLibraries ${engineCommonLibraries})
 
 
