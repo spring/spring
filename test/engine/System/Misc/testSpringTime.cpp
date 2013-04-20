@@ -132,7 +132,9 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 
 
 void sleep_posix()  { boost::this_thread::sleep(boost::posix_time::milliseconds(1)); }
+#ifdef BOOST_THREAD_USES_CHRONO
 void sleep_chrono() { boost::this_thread::sleep_for(boost::chrono::nanoseconds( 1 )); }
+#endif
 
 void BenchmarkSleepFnc(const std::string& name, void (*sleep)() )
 {
@@ -154,5 +156,7 @@ void BenchmarkSleepFnc(const std::string& name, void (*sleep)() )
 BOOST_AUTO_TEST_CASE( ThreadSleepTime )
 {
 	BenchmarkSleepFnc("sleep_posix",  &sleep_posix);
+#ifdef BOOST_THREAD_USES_CHRONO
 	BenchmarkSleepFnc("sleep_chrono", &sleep_chrono);
+#endif
 }
