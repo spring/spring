@@ -981,7 +981,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	}
 
 	// [?] prevent aircraft from gaining unlimited altitude
-	owner->Move(UpVector * Clamp(pos.y, gHeight, readmap->currMaxHeight + owner->unitDef->wantedHeight * 5.0f), false);
+	owner->Move(UpVector * (Clamp(pos.y, gHeight, readmap->currMaxHeight + owner->unitDef->wantedHeight * 5.0f) - pos.y), true);
 
 	// bounce away on ground collisions (including water surface)
 	// NOTE:

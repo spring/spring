@@ -670,7 +670,7 @@ void CGroundMoveType::UpdateSkid()
 
 	if (owner->IsFlying()) {
 		// water drag
-		if (pos.y < 0.0f)
+		if (owner->IsInWater())
 			speed *= 0.95f;
 
 		const float impactSpeed = pos.IsInBounds()?
@@ -682,7 +682,7 @@ void CGroundMoveType::UpdateSkid()
 		if (groundHeight > pos.y) {
 			// ground impact, stop flying
 			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
-			owner->Move(UpVector * groundHeight, false);
+			owner->Move(UpVector * (groundHeight - pos.y), true);
 
 			// deal ground impact damage
 			// TODO:
@@ -800,7 +800,7 @@ void CGroundMoveType::UpdateControlledDrop()
 
 	if (gh > pos.y) {
 		// ground impact, stop parachute animation
-		owner->Move(UpVector * gh, false);
+		owner->Move(UpVector * (gh - pos.y), true);
 		owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FALLING);
 		owner->script->Landed();
 	}
@@ -2078,12 +2078,12 @@ void CGroundMoveType::AdjustPosToWaterLine()
 
 	if (modInfo.allowGroundUnitGravity) {
 		if (owner->unitDef->floatOnWater) {
-			owner->Move(UpVector * std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z), -owner->unitDef->waterline), false);
+			owner->Move(UpVector * (std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z), -owner->unitDef->waterline) - owner->pos.y), true);
 		} else {
-			owner->Move(UpVector * std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z),               owner->pos.y), false);
+			owner->Move(UpVector * (std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z),               owner->pos.y) - owner->pos.y), true);
 		}
 	} else {
-		owner->Move(UpVector * GetGroundHeight(owner->pos), false);
+		owner->Move(UpVector * (GetGroundHeight(owner->pos) - owner->pos.y), true);
 	}
 }
 

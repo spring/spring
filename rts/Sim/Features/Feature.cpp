@@ -479,7 +479,7 @@ bool CFeature::UpdatePosition()
 				// last Update() may have sunk us into
 				// ground if pos.y was only marginally
 				// larger than ground height, correct
-				Move(UpVector * realGroundHeight, false);
+				Move(UpVector * (realGroundHeight - pos.y), true);
 			}
 
 			if (!pos.IsInBounds()) {

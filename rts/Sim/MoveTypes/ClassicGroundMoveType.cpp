@@ -293,7 +293,7 @@ void CClassicGroundMoveType::SlowUpdate()
 		} else {
 			wh = ground->GetHeightReal(owner->pos.x, owner->pos.z);
 		}
-		owner->Move(UpVector * wh, false);
+		owner->Move(UpVector * (wh - owner->pos.y), true);
 	}
 
 	if (owner->pos != oldSlowUpdatePos) {
@@ -505,7 +505,7 @@ void CClassicGroundMoveType::UpdateSkid()
 		if(wh>midPos.y-owner->relMidPos.y){
 			skidRotSpeed+=(gs->randFloat()-0.5f)*1500;
 			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
-			owner->Move(UpVector * (wh + owner->relMidPos.y - speed.y * 0.5f), false);
+			owner->Move(UpVector * (wh + owner->relMidPos.y - speed.y * 0.5f - pos.y), true);
 			float impactSpeed = -speed.dot(ground->GetNormal(midPos.x,midPos.z));
 			if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
 				owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), ZeroVector, NULL, -1, -1);
@@ -602,7 +602,7 @@ void CClassicGroundMoveType::UpdateControlledDrop()
 			wh = ground->GetHeightReal(midPos.x, midPos.z);
 
 		if(wh > midPos.y-owner->relMidPos.y){
-			owner->Move(UpVector * (wh + owner->relMidPos.y - speed.y * 0.8), false);
+			owner->Move(UpVector * (wh + owner->relMidPos.y - speed.y * 0.8 - midPos.y), true);
 			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FALLING);
 			owner->script->Landed();
 		}
@@ -1143,7 +1143,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 			}
 
 			owner->Move(posDelta, true);
-			owner->Move(RgtVector * xmove, false);
+			owner->Move(RgtVector * (xmove - owner->pos.x), true);
 
 			currentSpeed *= 0.97f;
 			ret = true;
@@ -1221,7 +1221,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 			}
 
 			owner->Move(posDelta, true);
-			owner->Move(FwdVector * zmove, false);
+			owner->Move(FwdVector * (zmove - owner->pos.z), true);
 
 			currentSpeed *= 0.97f;
 			ret = true;
@@ -1572,7 +1572,7 @@ void CClassicGroundMoveType::AdjustPosToWaterLine()
 	}
 
 	if (!(owner->IsFalling() || owner->IsFlying())) {
-		owner->Move(UpVector * wh, false);
+		owner->Move(UpVector * (wh - owner->pos.y), true);
 	}
 }
 

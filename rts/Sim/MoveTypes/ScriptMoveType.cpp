@@ -145,7 +145,7 @@ bool CScriptMoveType::Update()
 		const float gndMin = ground->GetHeightReal(owner->pos.x, owner->pos.z) + groundOffset;
 
 		if (owner->pos.y <= gndMin) {
-			owner->Move(UpVector * gndMin, false);
+			owner->Move(UpVector * (gndMin - owner->pos.y), true);
 			owner->speed.y = 0.0f;
 
 			if (gndStop) {
