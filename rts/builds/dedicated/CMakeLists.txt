@@ -161,6 +161,7 @@ ADD_EXECUTABLE(engine-dedicated
 		${sources_engine_System_Log_sinkConsole}
 		${sources_engine_System_Log_sinkFile}
 		${sources_engine_System_Log_sinkOutputDebugString}
+		${ENGINE_ICON}
 		main
 	)
 TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
