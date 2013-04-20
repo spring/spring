@@ -235,9 +235,11 @@ public:
 	virtual ~gmlBaseMutexLock() {
 		if (GML::Enabled()) {
 #if (BOOST_VERSION >= 103500)
-			((T*)lockdata)->boost::template unique_lock<U>::~unique_lock();
+			typedef typename boost::template unique_lock<U> lock_t;
+			((T*)lockdata)->lock_t::~unique_lock();
 #else
-			((T*)lockdata)->boost::template scoped_lock<U>::~scoped_lock();
+			typedef typename boost::template scoped_lock<U> lock_t;
+			((T*)lockdata)->lock_t::~scoped_lock();
 #endif
 		}
 	}
