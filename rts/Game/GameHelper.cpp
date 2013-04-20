@@ -108,12 +108,9 @@ void CGameHelper::DoExplosionDamage(
 	assert(expRadius >= expRim);
 
 	// expMod will also be in [0, 1], no negatives
+	// TODO: damage attenuation for underwater units from surface explosions?
 	const float expMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
 	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
-
-	// TODO: damage attenuation for underwater units?
-	if (expPos.y >= 0.0f && unit->pos.y <  0.0f) {}
-	if (expPos.y <  0.0f && unit->pos.y >= 0.0f) {}
 
 	// NOTE: if an explosion occurs right underneath a
 	// unit's map footprint, it might cause damage even
