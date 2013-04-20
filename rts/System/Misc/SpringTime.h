@@ -80,11 +80,10 @@ public:
 
 	inline bool isTime() const { return (x > 0); }
 	inline void sleep() const {
-	#if (BOOST_VERSION < 105100) && defined(SPRINGTIME_USING_BOOST)
-		// boost <1.51 was missing sleep_for
-		boost::this_thread::sleep(boost::posix_time::milliseconds(toMilliSecs()));
-	#else
+	#if defined(BOOST_THREAD_USES_CHRONO) || !defined(SPRINGTIME_USING_BOOST)
 		this_thread::sleep_for(chrono::nanoseconds( toNanoSecs() ));
+	#else
+		boost::this_thread::sleep(boost::posix_time::milliseconds(toMilliSecs()));
 	#endif
 	}
 
