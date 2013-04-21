@@ -13,10 +13,8 @@ fi
 
 EXITCODE=0
 
-for i in $(find ${TESTDIR}/.config/spring -maxdepth 1 -type f -name "core.*") ; do
-
-	COREFILE=$i
-
+for COREFILE in $(find ${TESTDIR}/.config/spring ${TESTDIR}/.spring/ ${TESTDIR}/ -maxdepth 1 -type f -name "core.*")
+do
 	echo Core file found, creating backtrace
 	GDBCMDS=$(mktemp)
 	(
@@ -25,7 +23,7 @@ for i in $(find ${TESTDIR}/.config/spring -maxdepth 1 -type f -name "core.*") ; 
 		echo info program
 		echo bt full
 		echo quit
-	)>$GDBCMDS
+	) > $GDBCMDS
 	gdb -batch -x $GDBCMDS
 	cat $GDBCMDS
 	# cleanup
