@@ -12,9 +12,6 @@
 #ifdef _MSC_VER
 #include "System/Platform/Win/win32.h"
 #endif
-#ifndef BUILDING_AI
-#include "System/Platform/Threading.h"
-#endif
 
 
 /**
@@ -459,8 +456,7 @@ public:
 	float3& Normalize() {
 #if defined(__SUPPORT_SNAN__)
 #ifndef BUILDING_AI
-		if (!Threading::IsSimThread())
-			return SafeNormalize();
+		return SafeNormalize();
 #endif
 		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeNormalize();
@@ -510,8 +506,7 @@ public:
 	float3& ANormalize() {
 #if defined(__SUPPORT_SNAN__)
 #ifndef BUILDING_AI
-		if (!Threading::IsSimThread())
-			return SafeANormalize();
+		return SafeANormalize();
 #endif
 		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeANormalize();

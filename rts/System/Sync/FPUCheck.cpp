@@ -111,8 +111,7 @@ void good_fpu_control_registers(const char* text)
 		// Set single precision floating point math.
 		streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
-		if (Threading::IsSimThread())
-			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 	}
 
@@ -129,8 +128,7 @@ void good_fpu_control_registers(const char* text)
 		// Set single precision floating point math.
 		streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
-		if (Threading::IsSimThread())
-			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 	}
 #endif
@@ -169,8 +167,7 @@ void good_fpu_init()
 	// Set single precision floating point math.
 	streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
-		if (Threading::IsSimThread())
-			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 
 #else
@@ -195,8 +192,7 @@ void streflop_init_omp() {
 			//good_fpu_control_registers("OMP-Init");
 			streflop::streflop_init<streflop::Simple>();
 		#if defined(__SUPPORT_SNAN__)
-			if (Threading::IsSimThread())
-				streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 		#endif
 		}
 	#endif
