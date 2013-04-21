@@ -1513,8 +1513,8 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	// TODO:
 	//   increase cost of squares inside open factories so PFS is less likely to path through them
 	//
-	const int xext = ((collidee->xsize >> 1) + std::max(1, colliderMD->xsizeh));
-	const int zext = ((collidee->zsize >> 1) + std::max(1, colliderMD->zsizeh));
+//	const int xext = ((collidee->xsize >> 1) + std::max(1, colliderMD->xsizeh));
+//	const int zext = ((collidee->zsize >> 1) + std::max(1, colliderMD->zsizeh));
 
 	const bool exitingYardMap =
 		((collider->frontdir.dot(separationVector) > 0.0f) &&
