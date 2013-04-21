@@ -72,7 +72,7 @@ namespace EngineTypeHandler {
 		std::string springExeFile = exe;
 		const std::string curExe = FileSystem::GetFilename(Platform::GetProcessExecutableFile());
 #ifdef WIN32
-		springExeFile += std::string(".exe"); 
+		springExeFile += std::string(".exe");
 		for (int i = 0; i < args.size(); ++i) {
 			if (args[i].find('\"') == std::string::npos) {
 				args[i] = "\"" + args[i] + "\"";
