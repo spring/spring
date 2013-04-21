@@ -21,6 +21,11 @@ Else  (NOT Boost_FOUND)
 	EndIf	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
 	add_definitions(-DSYNCCHECK -DUNIT_TEST)
 
+	Set(Boost_CHRONO_LIBRARY_WITH_RT ${Boost_CHRONO_LIBRARY})
+	IF    (UNIX AND NOT MINGW)
+		LIST(APPEND Boost_CHRONO_LIBRARY_WITH_RT ${REALTIME_LIBRARY})
+	ENDIF (UNIX AND NOT MINGW)
+
 	Set(test_Log_sources
 			"${ENGINE_SOURCE_DIR}/System/SafeCStrings.c"
 			"${ENGINE_SOURCE_DIR}/System/Log/Backend.cpp"
@@ -63,7 +68,7 @@ Else  (NOT Boost_FOUND)
 	TARGET_LINK_LIBRARIES(test_UDPListener
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
-			${Boost_CHRONO_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${WS2_32_LIBRARY}
 			7zip
 		)
@@ -163,7 +168,7 @@ Else  (NOT Boost_FOUND)
 	TARGET_LINK_LIBRARIES(test_Matrix44f
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
-			${Boost_CHRONO_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
 		)
 
 	set_target_properties(test_Matrix44f PROPERTIES COMPILE_FLAGS "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
@@ -184,7 +189,7 @@ Else  (NOT Boost_FOUND)
 	LIST(APPEND test_SpringTime_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
-			${Boost_CHRONO_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${Boost_THREAD_LIBRARY}
 			${SDL_LIBRARY}
 		)
@@ -194,9 +199,6 @@ Else  (NOT Boost_FOUND)
 		LIST(APPEND test_SpringTime_libs ${Boost_TIMER_LIBRARY})
 		Set(test_SpringTime_flags "${test_SpringTime_flags} -DBoost_TIMER_FOUND")
 	endif (Boost_TIMER_FOUND)
-	IF    (UNIX AND NOT MINGW)
-		LIST(APPEND test_SpringTime_libs ${REALTIME_LIBRARY})
-	ENDIF (UNIX AND NOT MINGW)
 
 	ADD_EXECUTABLE(test_SpringTime ${test_SpringTime_src})
 	TARGET_LINK_LIBRARIES(test_SpringTime ${test_SpringTime_libs})
