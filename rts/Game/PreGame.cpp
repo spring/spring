@@ -222,6 +222,7 @@ void CPreGame::UpdateClientNet()
 		return;
 	}
 
+	int engineType = -1;
 	boost::shared_ptr<const RawPacket> packet;
 	while ((packet = net->GetData(gs->frameNum)))
 	{

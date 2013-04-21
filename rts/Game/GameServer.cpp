@@ -1750,13 +1750,12 @@ void CGameServer::ServerReadNet()
 				msg >> netloss;
 				boost::shared_ptr<netcode::CConnection> newconn = UDPNet->AcceptConnection();
 				unsigned int curenginetype = EngineTypeHandler::GetCurrentEngineType();
-				unsigned int curengineminor = SpringVersion::GetMinorInt();
-				if (enginetype != curenginetype || engineversionmajor != SpringVersion::GetMajorInt() || engineversionminor != curengineminor) {
+				if (enginetype != curenginetype || engineversionmajor != SpringVersion::GetMajorInt() || engineversionminor != SpringVersion::GetMinorInt()) {
 					std::string enginereq = EngineTypeHandler::GetEngine(curenginetype, SpringVersion::GetMajorInt(), SpringVersion::GetMinorInt(), SpringVersion::GetPatchSetInt());
 					std::string enginereqshort = EngineTypeHandler::GetEngine(curenginetype, SpringVersion::GetMajorInt(), SpringVersion::GetMinorInt(), SpringVersion::GetPatchSetInt(), true);
 					std::string engineinst = EngineTypeHandler::GetEngine(enginetype, engineversionmajor, engineversionminor, enginepatchset);
 					newconn->Unmute();
-					newconn->SendData(CBaseNetProtocol::Get().SendRequestEngineType(curenginetype, curengineminor));
+					newconn->SendData(CBaseNetProtocol::Get().SendRequestEngineType(curenginetype));
 					newconn->SendData(CBaseNetProtocol::Get().SendQuit("Wrong engine type or version!\n\nThis server requires engine: " + enginereq + "\n\nCurrently installed engine: " + engineinst));
 					newconn->Flush(true);
 					newconn->Close();
