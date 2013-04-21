@@ -133,11 +133,9 @@ static void inline SetArrayQ(CVertexArray* va, float t1, float t2, float3 v)
 
 struct CBasicTreeSquareDrawer : CReadMap::IQuadDrawer
 {
-	CBasicTreeSquareDrawer(CBasicTreeDrawer* td, int cx, int cy, float treeDistance)
+	CBasicTreeSquareDrawer(CBasicTreeDrawer* td, int /*cx*/, int /*cy*/, float treeDistance)
 		: treeDistance(treeDistance)
 		, td(td)
-		, cx(cx)
-		, cy(cy)
 		, va(NULL)
 	{}
 
@@ -152,7 +150,6 @@ private:
 	void DrawTreeVertexMid2(const float3& pos, bool enlarge = true);
 
 	CBasicTreeDrawer* td;
-	int cx, cy;
 	CVertexArray* va;
 };
 

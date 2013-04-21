@@ -326,16 +326,19 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		const unsigned int dir = pf->squareStates.nodeMask[square] & PATHOPT_AXIS_DIRS;
 		const unsigned int obx = sqr.x - pf->directionVectors2D[dir].x;
 		const unsigned int obz = sqr.y - pf->directionVectors2D[dir].y;
+		/*
 		const unsigned int obsquare =  obz * gs->mapx + obx;
 
+		// is always greater 0?
 		if (obsquare >= 0) {
+		*/
 			p2.x = obx * SQUARE_SIZE;
 			p2.z = obz * SQUARE_SIZE;
 			p2.y = ground->GetHeightAboveWater(p2.x, p2.z, false) + 15.0f;
 
 			glVertexf3(p1);
 			glVertexf3(p2);
-		}
+		//}
 	}
 
 	glEnd();
