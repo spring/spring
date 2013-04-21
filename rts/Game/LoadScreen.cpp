@@ -412,8 +412,10 @@ void CLoadScreen::RandomStartPicture(const std::string& sidePref)
 void CLoadScreen::LoadStartPicture(const std::string& name)
 {
 	CBitmap bm;
+
 	if (!bm.Load(name)) {
-		throw content_error("Could not load startpicture from file " + name);
+		LOG_L(L_WARNING, "[%s] could not load \"%s\" (wrong format?)", __FUNCTION__, name.c_str());
+		return;
 	}
 
 	aspectRatio = (float)bm.xsize / bm.ysize;
@@ -426,10 +428,11 @@ void CLoadScreen::LoadStartPicture(const std::string& name)
 		// The resulting resolution will make it fill one axis of the
 		// screen, and be smaller or equal to the screen on the other axis.
 		const float ratioComp = globalRendering->aspectRatio / aspectRatio;
+
 		if (ratioComp > 1.0f) {
-			newX = newX / ratioComp;
+			newX /= ratioComp;
 		} else {
-			newY = newY * ratioComp;
+			newY *= ratioComp;
 		}
 
 		bm = bm.CreateRescaled((int) newX, (int) newY);
