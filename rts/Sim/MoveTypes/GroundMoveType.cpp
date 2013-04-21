@@ -1519,11 +1519,13 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	const bool exitingYardMap =
 		((collider->frontdir.dot(separationVector) > 0.0f) &&
 		 (collider->   speed.dot(separationVector) > 0.0f));
+/*
 	const bool insideYardMap =
 		(collider->pos.x >= (collidee->pos.x - xext * SQUARE_SIZE)) &&
 		(collider->pos.x <= (collidee->pos.x + xext * SQUARE_SIZE)) &&
 		(collider->pos.z >= (collidee->pos.z - zext * SQUARE_SIZE)) &&
 		(collider->pos.z <= (collidee->pos.z + zext * SQUARE_SIZE));
+*/
 
 	bool wantRequestPath = false;
 
