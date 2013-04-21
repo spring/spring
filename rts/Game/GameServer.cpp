@@ -2080,8 +2080,8 @@ void CGameServer::PushAction(const Action& action)
 			}
 			else {
 				int playerID = atoi(tokens[0].c_str());
-				bool muteChat;
-				bool muteDraw;
+				bool muteChat = true;
+				bool muteDraw = true;
 				if ( !tokens.empty() ) SetBoolArg(muteChat, tokens[1]);
 				if ( tokens.size() >= 2 ) SetBoolArg(muteDraw, tokens[2]);
 				MutePlayer(playerID,muteChat,muteDraw);

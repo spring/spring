@@ -227,7 +227,7 @@ namespace Shader {
 		{
 			std::map<std::string, std::string>::const_iterator it = flags.find(flag);
 			if (it != flags.end()) {
-				std::istringstream buf(*it);
+				std::istringstream buf(it->second);
 				T temp;
 				buf >> temp;
 				return temp;

@@ -41,7 +41,6 @@ CSelectedUnitsHandlerAI::CSelectedUnitsHandlerAI()
 	, frontDir(ZeroVector)
 	, sideDir(ZeroVector)
 	, columnDist(64.0f)
-	, lineDist(64.0f)
 	, numColumns(0)
 {
 }
