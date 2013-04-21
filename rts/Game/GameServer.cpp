@@ -1736,7 +1736,7 @@ void CGameServer::ServerReadNet()
 				unsigned short netversion;
 				msg >> netversion;
 				if (netversion != NETWORK_VERSION)
-					throw netcode::UnpackPacketException("Wrong network version");
+					throw netcode::UnpackPacketException(str(format("Wrong network version: %d, required version: %d") %(int)netversion %(int)NETWORK_VERSION)); 
 				msg >> name;
 				msg >> passwd;
 				msg >> version;
@@ -1747,12 +1747,20 @@ void CGameServer::ServerReadNet()
 				Message(str(format(ConnectionReject) %ex.what() %packet->data[0] %packet->data[2] %packet->length));
 				UDPNet->RejectConnection();
 			}
-		}
-		else {
-			if (packet && packet->length >= 3)
-				Message(str(format(ConnectionReject) %"Invalid message ID" %packet->data[0] %packet->data[2] %packet->length));
-			else
-				Message("Connection attempt rejected: Packet too short");
+		} else {
+			if (packet) {
+				if (packet->length >= 3) {
+					Message(str(format(ConnectionReject) %"Invalid message ID" %packet->data[0] %packet->data[2] %packet->length));
+				} else {
+					std::string pkts;
+
+					for (int i = 0; i < packet->length; ++i) {
+						pkts += str(format(" 0x%x") %(int)packet->data[i]);
+					}
+
+					Message("Connection attempt rejected: Packet too short (data: " + pkts + ")");
+				}
+			}
 			UDPNet->RejectConnection();
 		}
 	}
