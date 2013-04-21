@@ -385,7 +385,7 @@ public:
 		ASSERT_SYNCED((short)(gu->myPlayerNum * 123 + 123));
 		//ASSERT_SYNCED(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
 
-		for (size_t i = unitHandler->MaxUnits() - 1; i >= 0; --i) {
+		for (int i = unitHandler->MaxUnits() - 1; i >= 0; --i) {
 			if (unitHandler->units[i]) {
 				if (action.GetPlayerID() == gu->myPlayerNum) {
 					++unitHandler->units[i]->midPos.x; // and desync...

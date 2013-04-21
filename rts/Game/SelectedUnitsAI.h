@@ -48,7 +48,6 @@ private:
 	float3 frontDir;
 	float3 sideDir;
 	float columnDist;
-	float lineDist;
 	int numColumns;
 };
 
