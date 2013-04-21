@@ -296,7 +296,7 @@ static void CopyShaderState_UniformBlocks(GLuint newProgID, GLuint oldProgID)
 		GLuint oldLoc = glGetUniformBlockIndex(oldProgID, &name[0]);
 		GLuint newLoc = glGetUniformBlockIndex(newProgID, &name[0]);
 
-		if (oldLoc < 0 || newLoc < 0)
+		if (oldLoc == GL_INVALID_INDEX || newLoc == GL_INVALID_INDEX)
 			continue;
 
 		GLint value;
