@@ -249,6 +249,13 @@ FIND_PACKAGE(Boost 1.47.0 COMPONENTS thread regex program_options system chrono 
 FIND_PACKAGE(Boost 1.47.0 COMPONENTS timer)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
+# boost::chrono depends on clock_gettime which we need to link ourself when boost is static linked
+Set(Boost_CHRONO_LIBRARY_WITH_RT ${Boost_CHRONO_LIBRARY})
+IF    (PREFER_STATIC_LIBS AND UNIX AND NOT MINGW)
+	FIND_LIBRARY(REALTIME_LIBRARY rt)
+	LIST(APPEND Boost_CHRONO_LIBRARY_WITH_RT ${REALTIME_LIBRARY})
+ENDIF (PREFER_STATIC_LIBS AND UNIX AND NOT MINGW)
+
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.
 FIND_PACKAGE(SDL)
