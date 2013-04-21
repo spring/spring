@@ -44,8 +44,7 @@ void CBuilding::PostInit(const CUnit* builder)
 }
 
 
-void CBuilding::ForcedMove(const float3& newPos, int facing) {
-	buildFacing = facing;
+void CBuilding::ForcedMove(const float3& newPos) {
 	speed = ZeroVector;
 	heading = GetHeadingFromFacing(buildFacing);
 	frontdir = GetVectorFromHeading(heading);

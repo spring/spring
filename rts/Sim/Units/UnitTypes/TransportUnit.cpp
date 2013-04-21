@@ -365,7 +365,7 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 			unit->moveType->LeaveTransport();
 
 			if (CBuilding* building = dynamic_cast<CBuilding*>(unit))
-				building->ForcedMove(building->pos, building->buildFacing);
+				building->ForcedMove(building->pos);
 
 			transportCapacityUsed -= ti->size;
 			transportMassUsed -= ti->mass;
