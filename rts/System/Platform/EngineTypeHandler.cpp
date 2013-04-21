@@ -7,12 +7,9 @@
 #include "System/Log/ILog.h"
 #include "System/Platform/Misc.h"
 #include "System/Util.h"
-#include "System/VersionGenerated.h"
 #include <boost/format.hpp>
 
 namespace EngineTypeHandler {
-
-//#define CUSTOM_ENGINE_TYPE
 
 	std::vector<EngineTypeInfo> engineTypes;
 	std::string restartExecutable;
@@ -35,12 +32,12 @@ namespace EngineTypeHandler {
 		return &engineTypes[enginetype];
 	}
 
-	std::string GetEngine(const EngineTypeVersion &etv, bool brief) {
-		std::string minorversion = (etv.minor == 0) ? "" : boost::str(boost::format("-%d") %(int)etv.minor);
-		EngineTypeInfo* et = GetEngineTypeInfo(etv.type);
+	std::string GetEngine(unsigned short enginetype, unsigned short engineversionmajor, unsigned short engineversionminor, unsigned short enginepatchset, bool brief) {
+		std::string minorversion = (engineversionminor == 0) ? "" : boost::str(boost::format("-%d") %(int)engineversionminor);
+		EngineTypeInfo* et = GetEngineTypeInfo(enginetype);
 		if (et == NULL)
-			return boost::str(boost::format("Unknown (%d) %d%s.%d") %(int)etv.type %(int)etv.major %minorversion %(int)etv.patch);
-		return boost::str(boost::format("%s %d%s.%d%s") %et->name %(int)etv.major %minorversion %(int)etv.patch %(brief ? "" : ("   [ " + et->info + " ]")));
+			return boost::str(boost::format("Unknown (%d) %d%s.%d") %(int)enginetype %(int)engineversionmajor %minorversion %(int)enginepatchset);
+		return boost::str(boost::format("%s %d%s.%d%s") %et->name %(int)engineversionmajor %minorversion %(int)enginepatchset %(brief ? "" : ("   [ " + et->info + " ]")));
 	}
 
 	void SetRequestedEngineType(int engineType, int engineMinor) {
@@ -50,9 +47,9 @@ namespace EngineTypeHandler {
 	}
 
 	bool WillRestartEngine(const std::string& message) {
-		if ((reqEngineType >= 0 && (reqEngineType != GetCurrentEngineType())) || 
-			(reqEngineMinor >= 0 && (reqEngineMinor != GetMinorVersion()))) {
-				EngineTypeInfo* eti = GetEngineTypeInfo(reqEngineType);
+		if ((reqEngineType >= 0 && (reqEngineType != EngineTypeHandler::GetCurrentEngineType())) || 
+			(reqEngineMinor >= 0 && (reqEngineMinor != SpringVersion::GetMinorInt()))) {
+				EngineTypeHandler::EngineTypeInfo* eti = EngineTypeHandler::GetEngineTypeInfo(reqEngineType);
 				if (eti == NULL) {
 					LOG_L(L_ERROR, "Unknown engine type: %d", reqEngineType);
 				} else {
@@ -126,3 +123,4 @@ namespace EngineTypeHandler {
 	}
 
 }
+

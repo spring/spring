@@ -23,6 +23,7 @@
 #include "GameServer.h"
 
 #include "GameSetup.h"
+#include "GameVersion.h"
 #include "Action.h"
 #include "ChatMessage.h"
 #include "CommandMessage.h"
@@ -1734,25 +1735,28 @@ void CGameServer::ServerReadNet()
 				netcode::UnpackPacket msg(packet, 3);
 				std::string name, passwd, version;
 				unsigned char reconnect, netloss;
-				unsigned short netversion;
-				EngineTypeHandler::EngineTypeVersion etv;
+				unsigned short netversion, enginetype, engineversionmajor, engineversionminor, enginepatchset;
 				msg >> netversion;
 				if (netversion != NETWORK_VERSION)
 					throw netcode::UnpackPacketException(str(format("Wrong network version: %d, required version: %d") %(int)netversion %(int)NETWORK_VERSION));
-				msg >> etv;
+				msg >> enginetype;
+				msg >> engineversionmajor;
+				msg >> engineversionminor;
+				msg >> enginepatchset;
 				msg >> name;
 				msg >> passwd;
 				msg >> version;
 				msg >> reconnect;
 				msg >> netloss;
 				boost::shared_ptr<netcode::CConnection> newconn = UDPNet->AcceptConnection();
-				EngineTypeHandler::EngineTypeVersion curetv = EngineTypeHandler::GetCurrentEngineTypeVersion();
-				if (curetv != etv) {
-					std::string enginereq = EngineTypeHandler::GetEngine(curetv);
-					std::string enginereqshort = EngineTypeHandler::GetEngine(curetv, true);
-					std::string engineinst = EngineTypeHandler::GetEngine(etv);
+				unsigned int curenginetype = EngineTypeHandler::GetCurrentEngineType();
+				unsigned int curengineminor = SpringVersion::GetMinorInt();
+				if (enginetype != curenginetype || engineversionmajor != SpringVersion::GetMajorInt() || engineversionminor != curengineminor) {
+					std::string enginereq = EngineTypeHandler::GetEngine(curenginetype, SpringVersion::GetMajorInt(), SpringVersion::GetMinorInt(), SpringVersion::GetPatchSetInt());
+					std::string enginereqshort = EngineTypeHandler::GetEngine(curenginetype, SpringVersion::GetMajorInt(), SpringVersion::GetMinorInt(), SpringVersion::GetPatchSetInt(), true);
+					std::string engineinst = EngineTypeHandler::GetEngine(enginetype, engineversionmajor, engineversionminor, enginepatchset);
 					newconn->Unmute();
-					newconn->SendData(CBaseNetProtocol::Get().SendRequestEngineType(curetv.type, curetv.minor));
+					newconn->SendData(CBaseNetProtocol::Get().SendRequestEngineType(curenginetype, curengineminor));
 					newconn->SendData(CBaseNetProtocol::Get().SendQuit("Wrong engine type or version!\n\nThis server requires engine: " + enginereq + "\n\nCurrently installed engine: " + engineinst));
 					newconn->Flush(true);
 					newconn->Close();
