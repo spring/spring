@@ -166,7 +166,7 @@ public:
 	PacketType SendCPUUsage(float cpuUsage);
 	PacketType SendCustomData(uchar myPlayerNum, uchar dataType, int dataValue);
 	PacketType SendLuaDrawTime(uchar myPlayerNum, int mSec);
-	PacketType SendRequestEngineType(int type, int minor);
+	PacketType SendRequestEngineType(int type);
 	PacketType SendDirectControl(uchar myPlayerNum);
 	PacketType SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
 	PacketType SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, int netloss, bool reconnect = false);
