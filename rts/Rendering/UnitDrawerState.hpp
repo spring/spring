@@ -17,6 +17,8 @@ public:
 	static IUnitDrawerState* GetInstance(bool haveARB, bool haveGLSL);
 	static void FreeInstance(IUnitDrawerState* state) { delete state; }
 
+	virtual ~IUnitDrawerState() {}
+
 	virtual bool Init(const CUnitDrawer*) { return false; }
 	virtual void Kill() {}
 
