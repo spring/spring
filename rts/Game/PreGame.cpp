@@ -222,9 +222,15 @@ void CPreGame::UpdateClientNet()
 	}
 
 	boost::shared_ptr<const RawPacket> packet;
-	while ((packet = net->GetData(gs->frameNum)))
-	{
+
+	while ((packet = net->GetData(gs->frameNum))) {
 		const unsigned char* inbuf = packet->data;
+
+		if (packet->length <= 0) {
+			LOG_L(L_WARNING, "[CPreGame::%s] zero-length packet (header: %i)", __FUNCTION__, inbuf[0]);
+			continue;
+		} 
+
 		switch (inbuf[0]) {
 			case NETMSG_QUIT: {
 				try {
@@ -238,9 +244,10 @@ void CPreGame::UpdateClientNet()
 				}
 				break;
 			}
+
 			case NETMSG_CREATE_NEWPLAYER: {
 				// server will send this first if we're using mid-game join
-				// feature, to let us know about ourself (we won't be in
+				// feature, to let us know about ourselves (we won't be in
 				// gamedata), otherwise skip to gamedata
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
@@ -270,6 +277,7 @@ void CPreGame::UpdateClientNet()
 				}
 				break;
 			}
+
 			case NETMSG_GAMEDATA: {
 				// server first sends this to let us know about teams, allyteams
 				// etc.
@@ -280,6 +288,7 @@ void CPreGame::UpdateClientNet()
 				GameDataReceived(packet);
 				break;
 			}
+
 			case NETMSG_SETPLAYERNUM: {
 				// this is sent after NETMSG_GAMEDATA, to let us know which
 				// playernum we have
@@ -300,9 +309,9 @@ void CPreGame::UpdateClientNet()
 				delete this;
 				return;
 			}
+
 			default: {
-				LOG_L(L_WARNING, "Unknown net-msg received from CPreGame: %i",
-						(int)(packet->data[0]));
+				LOG_L(L_WARNING, "[CPreGame::%s] unknown packet type (header: %i)", __FUNCTION__, inbuf[0]);
 				break;
 			}
 		}
@@ -316,11 +325,10 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	LOG("Pre-scanning demo file for game data...");
 	CDemoReader scanner(demoName, 0);
 
-	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(FLT_MAX )));
-	while ( buf )
-	{
-		if (buf->data[0] == NETMSG_GAMEDATA)
-		{
+	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(FLT_MAX)));
+
+	while (buf) {
+		if (buf->data[0] == NETMSG_GAMEDATA) {
 			GameData* data = NULL;
 			try {
 				data = new GameData(boost::shared_ptr<const RawPacket>(buf));
@@ -329,8 +337,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			}
 
 			CGameSetup* demoScript = new CGameSetup();
-			if (!demoScript->Init(data->GetSetup()))
-			{
+			if (!demoScript->Init(data->GetSetup())) {
 				throw content_error("Demo contains incorrect script");
 			}
 
@@ -343,10 +350,8 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			tgame->AddPair("Demofile", demoName);
 			tgame->AddPair("OnlyLocal", 1);
 
-			for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it)
-			{
-				if (it->first.size() > 6 && it->first.substr(0, 6) == "player")
-				{
+			for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it) {
+				if (it->first.size() > 6 && it->first.substr(0, 6) == "player") {
 					it->second->AddPair("isfromdemo", 1);
 				}
 			}
@@ -384,8 +389,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			data->SetSetup(buf.str());
 			CGameSetup* tempSetup = new CGameSetup();
 
-			if (!tempSetup->Init(buf.str()))
-			{
+			if (!tempSetup->Init(buf.str())) {
 				throw content_error("Demo contains incorrect script");
 			}
 			LOG("Starting GameServer");
@@ -400,8 +404,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			break;
 		}
 
-		if (scanner.ReachedEnd())
-		{
+		if (scanner.ReachedEnd()) {
 			throw content_error("End of demo reached and no game data found");
 		}
 		buf.reset(scanner.GetData(FLT_MAX));
