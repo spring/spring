@@ -21,11 +21,6 @@ Else  (NOT Boost_FOUND)
 	EndIf	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
 	add_definitions(-DSYNCCHECK -DUNIT_TEST)
 
-	Set(Boost_CHRONO_LIBRARY_WITH_RT ${Boost_CHRONO_LIBRARY})
-	IF    (UNIX AND NOT MINGW)
-		LIST(APPEND Boost_CHRONO_LIBRARY_WITH_RT ${REALTIME_LIBRARY})
-	ENDIF (UNIX AND NOT MINGW)
-
 	Set(test_Log_sources
 			"${ENGINE_SOURCE_DIR}/System/SafeCStrings.c"
 			"${ENGINE_SOURCE_DIR}/System/Log/Backend.cpp"
