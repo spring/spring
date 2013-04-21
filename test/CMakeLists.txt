@@ -158,6 +158,7 @@ Else  (NOT Boost_FOUND)
 	Set(test_Matrix44f_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testMatrix44f.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Matrix44f.cpp"
+			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
 			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
