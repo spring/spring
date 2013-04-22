@@ -845,9 +845,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	float scale = 0.4f * iconData->GetSize() * dist;
 
 	if (iconData->GetRadiusAdjust() && !useDefaultIcon) {
-		// I take the standard unit radius to be 30
-		// ... call it an educated guess. (Teake Nutma)
-		scale *= (unit->radius / 30);
+		scale *= (unit->radius / WORLDOBJECT_DEFAULT_DRAWRADIUS);
 	}
 
 	unit->iconRadius = scale; // store the icon size so that we don't have to calculate it again
@@ -1952,7 +1950,7 @@ inline float GetUnitIconScale(const CUnit* unit) {
 	const bool unitVisible = ((losStatus & LOS_INLOS) || ((losStatus & LOS_INRADAR) && ((losStatus & prevMask) == prevMask)));
 
 	if ((unitVisible || gu->spectatingFullView)) {
-		scale *= (unit->radius / 30.0f);
+		scale *= (unit->radius / WORLDOBJECT_DEFAULT_DRAWRADIUS);
 	}
 
 	return scale;
