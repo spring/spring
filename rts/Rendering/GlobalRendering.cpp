@@ -15,6 +15,7 @@
 #include <string>
 
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true); // in safemode enabled, cause it ways more likely the gpu runs out of memory than this extension cause crashes!
+CONFIG(bool, ForceEnableIntelShaderSupport).defaultValue(false);
 CONFIG(int, AtiHacks).defaultValue(-1);
 CONFIG(bool, DualScreenMode).defaultValue(false);
 CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false);
@@ -187,10 +188,21 @@ void CGlobalRendering::PostInit() {
 		haveIntel  = (vendor.find("intel") != std::string::npos);
 		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
 
-		//FIXME Neither Intel's nor Mesa's GLSL implementation seem to be in a workable state atm (date: Nov. 2011)
-		haveGLSL &= !haveIntel;
-		haveGLSL &= !haveMesa;
-		//FIXME add an user config to force enable it!
+		// FIXME:
+		//   neither Intel's nor Mesa's GLSL implementation seem to be
+		//   in a workable state atm (date: Nov. 2011), ARB support is
+		//   also still crap (April 2013)
+		if (configHandler->GetBool("ForceEnableIntelShaderSupport")) {
+			haveARB |= haveIntel;
+			haveARB |= haveMesa;
+			haveGLSL |= haveIntel;
+			haveGLSL |= haveMesa;
+		} else {
+			haveARB &= !haveIntel;
+			haveARB &= !haveMesa;
+			haveGLSL &= !haveIntel;
+			haveGLSL &= !haveMesa;
+		}
 
 		if (haveATI) {
 			// x-series doesn't support NPOTs (but hd-series does)
