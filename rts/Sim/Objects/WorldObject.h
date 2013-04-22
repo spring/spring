@@ -6,6 +6,8 @@
 #include "System/Object.h"
 #include "System/float3.h"
 
+#define WORLDOBJECT_DEFAULT_DRAWRADIUS 30.0f
+
 struct S3DModel;
 
 

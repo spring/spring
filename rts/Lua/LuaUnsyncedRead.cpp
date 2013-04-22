@@ -707,6 +707,8 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 {
 	// arg 1 - teamID
 	int teamID = luaL_optint(L, 1, -1);
+	int allyTeamID = CLuaHandle::GetHandleReadAllyTeam(L);
+
 	if (teamID == MyUnits) {
 		const int scriptTeamID = CLuaHandle::GetHandleReadTeam(L);
 		if (scriptTeamID >= 0) {
@@ -715,8 +717,11 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 			teamID = AllUnits;
 		}
 	}
-	int allyTeamID = CLuaHandle::GetHandleReadAllyTeam(L);
+
 	if (teamID >= 0) {
+		if (!teamHandler->IsValidTeam(teamID))
+			return 0;
+
 		allyTeamID = teamHandler->AllyTeam(teamID);
 	}
 	if (allyTeamID < 0) {
@@ -727,13 +732,12 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 
 	// arg 2 - unit radius
 	bool fixedRadius = false;
-	float radius = 30.0f; // value from UnitDrawer.cpp
+	float testRadius = WORLDOBJECT_DEFAULT_DRAWRADIUS;
+
 	if (lua_israwnumber(L, 2)) {
-		radius = lua_tofloat(L, 2);
-		if (radius < 0.0f) {
-			fixedRadius = true;
-			radius = -radius;
-		}
+		testRadius = lua_tofloat(L, 2);
+		fixedRadius = (testRadius < 0.0f);
+		testRadius = std::max(testRadius, -testRadius);
 	}
 
 	// arg 3 - noIcons
@@ -755,7 +759,9 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 
 		// setup the list of unit sets
 		if (unitQuadIter.GetCount() > unitHandler->activeUnits.size()/3) {
-			// if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
+			// if we see nearly all features, it is just faster to
+			// check them all, instead of doing slow duplication checks
+			// FIXME? 1/3 != "nearly all"
 			if (teamID >= 0) {
 				unitSets.push_back(&teamHandler->Team(teamID)->units);
 			} else {
@@ -818,8 +824,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 				}
 			}
 
-			const float testRadius = fixedRadius ? radius : (unit.drawRadius + radius);
-			if (!camera->InView(unit.midPos, testRadius)) {
+			if (!camera->InView(unit.midPos, testRadius + (unit.drawRadius * fixedRadius))) {
 				continue;
 			}
 
@@ -851,13 +856,12 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 
 	// arg 2 - feature radius
 	bool fixedRadius = false;
-	float radius = 30.0f; // value from UnitDrawer.cpp
+	float testRadius = WORLDOBJECT_DEFAULT_DRAWRADIUS;
+
 	if (lua_israwnumber(L, 2)) {
-		radius = lua_tofloat(L, 2);
-		if (radius < 0.0f) {
-			fixedRadius = true;
-			radius = -radius;
-		}
+		testRadius = lua_tofloat(L, 2);
+		fixedRadius = (testRadius < 0.0f);
+		testRadius = std::max(testRadius, -testRadius);
 	}
 
 	const bool noIcons = lua_isboolean(L, 3) && !lua_toboolean(L, 3);
@@ -876,12 +880,14 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 
 		lua_createtable(L, featureQuadIter.GetCount(), 0);
 
-		//! setup the list of features
+		// setup the list of features
 		if (featureQuadIter.GetCount() > featureHandler->GetActiveFeatures().size()/3) {
-			//! if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
+			// if we see nearly all features, it is just faster to
+			// check them all, instead of doing slow duplication checks
+			// FIXME? 1/3 != "nearly all"
 			scanAll = true;
 		} else {
-			//! features can exist in multiple quads, so we need to do a duplication check
+			// features can exist in multiple quads, so we need to do a duplication check
 			visQuadFeatures.clear();
 			std::vector<const std::list<CFeature*>*>::iterator it;
 			for (it = featureQuadIter.GetVisFeatures().begin(); it != featureQuadIter.GetVisFeatures().end(); ++it) {
@@ -913,8 +919,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 			continue;
 		}
 
-		const float testRadius = fixedRadius ? radius : (f.drawRadius + radius);
-		if (!camera->InView(f.midPos, testRadius)) {
+		if (!camera->InView(f.midPos, testRadius + (f.drawRadius * fixedRadius))) {
 			continue;
 		}
 
