@@ -824,7 +824,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 				}
 			}
 
-			if (!camera->InView(unit.midPos, testRadius + (unit.drawRadius * fixedRadius))) {
+			if (!camera->InView(unit.midPos, testRadius + (unit.drawRadius * !fixedRadius))) {
 				continue;
 			}
 
@@ -919,7 +919,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 			continue;
 		}
 
-		if (!camera->InView(f.midPos, testRadius + (f.drawRadius * fixedRadius))) {
+		if (!camera->InView(f.midPos, testRadius + (f.drawRadius * !fixedRadius))) {
 			continue;
 		}
 
