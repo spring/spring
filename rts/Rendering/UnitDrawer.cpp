@@ -158,7 +158,8 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitDrawerStateSSP = IUnitDrawerState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
 	unitDrawerStateFFP = IUnitDrawerState::GetInstance(                   false,                     false);
 
-	// set in ::Draw, but SunChanged can be called first if DynamicSun is enabled
+	// also set in ::SetupForUnitDrawing, but SunChanged can be
+	// called first if DynamicSun is enabled --> must be non-NULL
 	unitDrawerState = unitDrawerStateFFP;
 
 	// NOTE:
@@ -361,10 +362,6 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
-	unitDrawerState = unitDrawerStateSSP->CanEnable(this)?
-		unitDrawerStateSSP:
-		unitDrawerStateFFP;
-
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	ISky::SetupFog();
 
@@ -1157,7 +1154,10 @@ void CUnitDrawer::SetupForUnitDrawing()
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
 
-	assert(unitDrawerState->CanEnable(this));
+	unitDrawerState = unitDrawerStateSSP->CanEnable(this)?
+		unitDrawerStateSSP:
+		unitDrawerStateFFP;
+
 	unitDrawerState->Enable(this);
 }
 

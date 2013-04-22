@@ -48,7 +48,8 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	smfRenderStateSSP = ISMFRenderState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
 	smfRenderStateFFP = ISMFRenderState::GetInstance(                   false,                     false);
 
-	// set in ::Draw, but UpdateSunDir can be called first if DynamicSun is enabled
+	// also set in ::Draw, but UpdateSunDir can be called
+	// first if DynamicSun is enabled --> must be non-NULL
 	smfRenderState = smfRenderStateFFP;
 
 	// LH must be initialized before render-state is initialized
