@@ -671,7 +671,17 @@ void CGroundMoveType::UpdateSkid()
 	if (owner->IsFlying()) {
 		// water drag
 		if (owner->IsInWater())
-			speed *= 0.95f;
+		{
+			#define SIGN(v) ((int(v >= 0.0f) * 2) - 1)
+			const float drag = 0.1;
+			const int xsign = SIGN(speed.x);
+			const int ysign = SIGN(speed.y);
+			const int zsign = SIGN(speed.z);
+			const float3 DragVector((-xsign)*(speed.x*speed.x*0.5*drag)*1.0f, (-ysign)*(speed.y*speed.y*0.5*drag)*1.0f, (-zsign)*(speed.z*speed.z*0.5*drag)*1.0f);
+			speed += DragVector;
+			#undef SIGN
+			// speed *= 0.95f;
+		}
 
 		const float impactSpeed = pos.IsInBounds()?
 			-speed.dot(ground->GetNormal(pos.x, pos.z)):
