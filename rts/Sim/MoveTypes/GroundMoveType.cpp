@@ -79,6 +79,7 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(turnRate),
 	CR_MEMBER(accRate),
 	CR_MEMBER(decRate),
+	CR_MEMBER(myGravity),
 
 	CR_MEMBER(maxReverseSpeed),
 	CR_MEMBER(wantedSpeed),
@@ -129,6 +130,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	turnRate(0.1f),
 	accRate(0.01f),
 	decRate(0.01f),
+	myGravity(0.0f),
+
 	maxReverseSpeed(0.0f),
 	wantedSpeed(0.0f),
 	currentSpeed(0.0f),
@@ -166,14 +169,19 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 	wantedHeading(0)
 {
-	if (owner && owner->unitDef) {
-		// maxSpeed is set in AMoveType's ctor
-		maxReverseSpeed = owner->unitDef->rSpeed / GAME_SPEED;
+	if (owner == NULL)
+		return;
+	if (owner->unitDef == NULL)
+		return;
 
-		turnRate = owner->unitDef->turnRate;
-		accRate = std::max(0.01f, owner->unitDef->maxAcc);
-		decRate = std::max(0.01f, owner->unitDef->maxDec);
-	}
+	// maxSpeed is set in AMoveType's ctor
+	maxReverseSpeed = owner->unitDef->rSpeed / GAME_SPEED;
+
+	turnRate = owner->unitDef->turnRate;
+	accRate = std::max(0.01f, owner->unitDef->maxAcc);
+	decRate = std::max(0.01f, owner->unitDef->maxDec);
+
+	myGravity = mix(-owner->unitDef->myGravity, mapInfo->map.gravity, owner->unitDef->myGravity == 0.0f);
 }
 
 CGroundMoveType::~CGroundMoveType()
@@ -2187,7 +2195,7 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 {
 	const float3 oldSpeedVector = owner->speed;
-	const float3 newSpeedVector = GetNewSpeedVector(deltaSpeed, mapInfo->map.gravity);
+	const float3 newSpeedVector = GetNewSpeedVector(deltaSpeed, myGravity);
 
 	const float oldSpeed = math::fabs(oldSpeedVector.dot(flatFrontDir));
 	const float newSpeed = math::fabs(newSpeedVector.dot(flatFrontDir));
@@ -2213,8 +2221,7 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		// NOTE:
 		//   this can fail when gravity is allowed (a unit catching air
 		//   can easily end up on an impassable square, especially when
-		//   terrain contains micro-bumps) --> ground-units might want
-		//   to use UnitDef::myGravity too
+		//   terrain contains micro-bumps) --> more likely at lower g's
 		// assert(owner->moveDef->TestMoveSquare(owner, owner->pos, ZeroVector, true, false, true));
 	}
 

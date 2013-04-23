@@ -108,6 +108,7 @@ public:
 	float turnRate;
 	float accRate;
 	float decRate;
+	float myGravity;
 
 	float maxReverseSpeed;
 	float wantedSpeed;
