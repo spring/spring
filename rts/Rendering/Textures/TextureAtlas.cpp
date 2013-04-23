@@ -114,9 +114,10 @@ int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 
 bool CTextureAtlas::Finalize()
 {
-	bool success = atlasAllocator->Allocate();
+	const bool success = atlasAllocator->Allocate();
 
-	CreateTexture();
+	if (success)
+		CreateTexture();
 
 	for (std::vector<MemTex*>::iterator it = memtextures.begin(); it != memtextures.end(); ++it) {
 		delete[] (char*)(*it)->data;
