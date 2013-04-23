@@ -47,13 +47,6 @@ void GameSetupDrawer::StartCountdown(unsigned time)
 	if (instance) {
 		instance->lastTick = spring_gettime(); //FIXME
 		instance->readyCountdown = spring_msecs(time);
-		const std::string modeName = configHandler->GetString("CamModeName");
-		if (!modeName.empty()) {
-			camHandler->SetCameraMode(modeName);
-		} else {
-			const int modeIndex = configHandler->GetInt("CamMode");
-			camHandler->SetCameraMode(modeIndex);
-		}
 	}
 }
 
