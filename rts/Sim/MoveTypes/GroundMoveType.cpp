@@ -1513,19 +1513,20 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	// TODO:
 	//   increase cost of squares inside open factories so PFS is less likely to path through them
 	//
-//	const int xext = ((collidee->xsize >> 1) + std::max(1, colliderMD->xsizeh));
-//	const int zext = ((collidee->zsize >> 1) + std::max(1, colliderMD->zsizeh));
+	/*
+	const int xext = ((collidee->xsize >> 1) + std::max(1, colliderMD->xsizeh));
+	const int zext = ((collidee->zsize >> 1) + std::max(1, colliderMD->zsizeh));
 
-	const bool exitingYardMap =
-		((collider->frontdir.dot(separationVector) > 0.0f) &&
-		 (collider->   speed.dot(separationVector) > 0.0f));
-/*
 	const bool insideYardMap =
 		(collider->pos.x >= (collidee->pos.x - xext * SQUARE_SIZE)) &&
 		(collider->pos.x <= (collidee->pos.x + xext * SQUARE_SIZE)) &&
 		(collider->pos.z >= (collidee->pos.z - zext * SQUARE_SIZE)) &&
 		(collider->pos.z <= (collidee->pos.z + zext * SQUARE_SIZE));
-*/
+	*/
+
+	const bool exitingYardMap =
+		((collider->frontdir.dot(separationVector) > 0.0f) &&
+		 (collider->   speed.dot(separationVector) > 0.0f));
 
 	bool wantRequestPath = false;
 
@@ -1533,11 +1534,17 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		const int xmid = (collider->pos.x + collider->speed.x) / SQUARE_SIZE;
 		const int zmid = (collider->pos.z + collider->speed.z) / SQUARE_SIZE;
 
+		#if 1
 		// mantis3614
-		// const int xmin = std::min(-1, -colliderMD->xsizeh * (1 - checkTerrain)), xmax = std::max(1, colliderMD->xsizeh * (1 - checkTerrain));
-		// const int zmin = std::min(-1, -colliderMD->xsizeh * (1 - checkTerrain)), zmax = std::max(1, colliderMD->zsizeh * (1 - checkTerrain));
+		// we cannot nicely bounce off terrain when checking only the center square
+		// however, testing more squares means CD can (sometimes) disagree with PFS
+		// --> compromise and assume a 3x3 footprint
+		const int xmin = std::min(-1, -colliderMD->xsizeh * (1 - checkTerrain)), xmax = std::max(1, colliderMD->xsizeh * (1 - checkTerrain));
+		const int zmin = std::min(-1, -colliderMD->zsizeh * (1 - checkTerrain)), zmax = std::max(1, colliderMD->zsizeh * (1 - checkTerrain));
+		#else
 		const int xmin = std::min(-1, -colliderMD->xsizeh), xmax = std::max(1, colliderMD->xsizeh);
-		const int zmin = std::min(-1, -colliderMD->xsizeh), zmax = std::max(1, colliderMD->zsizeh);
+		const int zmin = std::min(-1, -colliderMD->zsizeh), zmax = std::max(1, colliderMD->zsizeh);
+		#endif
 
 		float3 strafeVec;
 		float3 bounceVec;
@@ -1576,13 +1583,13 @@ void CGroundMoveType::HandleStaticObjectCollision(
 						continue;
 				}
 
-				const float3 squarePos = float3(xabs * SQUARE_SIZE + (SQUARE_SIZE >> 1), 0.0f, zabs * SQUARE_SIZE + (SQUARE_SIZE >> 1));
+				const float3 squarePos = float3(xabs * SQUARE_SIZE + (SQUARE_SIZE >> 1), collider->pos.y, zabs * SQUARE_SIZE + (SQUARE_SIZE >> 1));
 				const float3 squareVec = collider->pos - squarePos;
 
 				if (squareVec.dot(collider->speed) > 0.0f)
 					continue;	
 
-				// radius of a square is the RHS magic constant (sqrt(2*(SQUARE_SIZE>>1)*(SQUARE_SIZE>>1)))
+				// RHS magic constant is the radius of a square (sqrt(2*(SQUARE_SIZE>>1)*(SQUARE_SIZE>>1)))
 				const float  sqColRadiusSum = colliderRadius + 5.656854249492381f;
 				const float   sqSepDistance = squareVec.Length2D() + 0.1f;
 				const float   sqPenDistance = std::min(sqSepDistance - sqColRadiusSum, 0.0f);
@@ -1599,12 +1606,13 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		}
 
 		if (sqPenDistanceCtr > 0.0f) {
+			sqCenterPosition.y = 0.0f;
 			sqCenterPosition /= sqPenDistanceCtr;
 			sqPenDistanceSum /= sqPenDistanceCtr;
 
 			const float strafeSign = ((sqCenterPosition.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir)) < 0.0f) * 2.0f - 1.0f;
-			const float strafeScale = std::min(currentSpeed, std::max(0.0f, -sqPenDistanceSum * 0.5f));
-			const float bounceScale =                        std::max(0.0f, -sqPenDistanceSum        );
+			const float strafeScale = std::min(currentSpeed, std::max(0.1f, -sqPenDistanceSum * 0.5f));
+			const float bounceScale = std::min(currentSpeed, std::max(0.1f, -sqPenDistanceSum       ));
 
 			strafeVec = collider->rightdir * strafeSign;
 			strafeVec.y = 0.0f; strafeVec.SafeNormalize();
@@ -1622,7 +1630,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		const float  colSlideSign = ((collidee->pos.dot(collider->rightdir) - collider->pos.dot(collider->rightdir)) <= 0.0f) * 2.0f - 1.0f;
 
 		const float strafeScale = std::min(currentSpeed, std::max(0.0f, -penDistance * 0.5f)) * (1 -                exitingYardMap);
-		const float bounceScale =                        std::max(0.0f, -penDistance        ) * (1 - checkYardMap * exitingYardMap);
+		const float bounceScale = std::min(currentSpeed, std::max(0.0f, -penDistance       )) * (1 - checkYardMap * exitingYardMap);
 
 		// when exiting a lab, insideYardMap goes from true to false
 		// before we stop colliding and we get a slight unneeded push
@@ -1878,7 +1886,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 		eventHandler.UnitFeatureCollision(collider, collidee);
 
-		if (collidee->isMoving) {
+		if (!collidee->isMoving) {
 			HandleStaticObjectCollision(
 				collider,
 				collidee,
@@ -2131,9 +2139,6 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 	float3 speedVector;
 
 	if (modInfo.allowGroundUnitGravity) {
-		const bool applyGravity = ((owner->pos.y + owner->speed.y + vAcc) > GetGroundHeight(owner->pos + owner->speed));
-		const bool aboveTerrain = ((owner->pos.y + owner->speed.y       ) > GetGroundHeight(owner->pos + owner->speed));
-
 		// NOTE:
 		//   the drag terms ensure speed-vector always
 		//   decays if wantedSpeed and deltaSpeed are 0
@@ -2145,14 +2150,11 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 		const float3& gndNormVec = GetGroundNormal(owner->pos);
 		const float3  gndTangVec = gndNormVec.cross(owner->rightdir);
 
-		// never drop below terrain while following tangent
 		const float3 horSpeed = float3(owner->speed.x, 0.0f, owner->speed.z);
-		const float3 verSpeed = UpVector *
-			((gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - aboveTerrain)) +
-			 (  UpVector.y * owner->speed.dot(  UpVector) * (0 + aboveTerrain)));
+		const float3 verSpeed = UpVector * owner->speed.y;
 
 		if (owner->moveDef->moveFamily != MoveDef::Hover || !modInfo.allowHoverUnitStrafing) {
-			const float3 accelVec = (gndTangVec * hAcc) + (UpVector * vAcc * applyGravity);
+			const float3 accelVec = (gndTangVec * hAcc) + (UpVector * vAcc);
 			const float3 speedVec = (horSpeed + verSpeed) + accelVec;
 
 			speedVector += (flatFrontDir * speedVec.dot(flatFrontDir)) * dragCoeff;
@@ -2161,7 +2163,12 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 			// TODO: also apply to non-hovercraft on low-gravity maps?
 			speedVector += (              gndTangVec * (  std::max(0.0f,   owner->speed.dot(gndTangVec) + hAcc * 1.0f))) * dragCoeff;
 			speedVector += (   horSpeed - gndTangVec * (/*std::max(0.0f,*/ owner->speed.dot(gndTangVec) - hAcc * 0.0f )) * slipCoeff;
-			speedVector += (UpVector * (owner->speed + UpVector * vAcc * applyGravity).dot(UpVector));
+			speedVector += (UpVector * (owner->speed + UpVector * vAcc).dot(UpVector));
+		}
+
+		// never drop below terrain while following tangent
+		if (owner->pos.y + speedVector.y <= GetGroundHeight(owner->pos + speedVector)) {
+			speedVector.y = GetGroundHeight(owner->pos + speedVector) - owner->pos.y;
 		}
 	} else {
 		// LuaSyncedCtrl::SetUnitVelocity directly assigns
@@ -2202,6 +2209,13 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		if (!pathController->IgnoreTerrain(*owner->moveDef, owner->pos) && !owner->moveDef->TestMoveSquare(owner, owner->pos, ZeroVector, true, false, true)) {
 			owner->Move(owner->pos - newSpeedVector, false);
 		}
+
+		// NOTE:
+		//   this can fail when gravity is allowed (a unit catching air
+		//   can easily end up on an impassable square, especially when
+		//   terrain contains micro-bumps) --> ground-units might want
+		//   to use UnitDef::myGravity too
+		// assert(owner->moveDef->TestMoveSquare(owner, owner->pos, ZeroVector, true, false, true));
 	}
 
 	if (oldSpeed <= 0.01f && newSpeed >  0.01f) { owner->script->StartMoving(); }
