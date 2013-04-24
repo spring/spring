@@ -656,12 +656,6 @@ void CUnit::Update()
 {
 	ASSERT_SYNCED(pos);
 
-	// UnitScript only applies piece-space transforms so
-	// we apply the forward kinematics update separately
-	// (only if we have any dirty pieces)
-	// TODO: move this to UnitScript::Tick?
-	localModel->UpdatePieceMatrices();
-
 	UpdatePhysicalState();
 
 	residualImpulse *= impulseDecayRate;
