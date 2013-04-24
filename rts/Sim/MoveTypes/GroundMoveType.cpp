@@ -181,7 +181,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	accRate = std::max(0.01f, owner->unitDef->maxAcc);
 	decRate = std::max(0.01f, owner->unitDef->maxDec);
 
-	myGravity = mix(-owner->unitDef->myGravity, mapInfo->map.gravity, owner->unitDef->myGravity == 0.0f);
+	// unit-gravity must always be negative
+	myGravity = mix(-math::fabs(owner->unitDef->myGravity), mapInfo->map.gravity, owner->unitDef->myGravity == 0.0f);
 }
 
 CGroundMoveType::~CGroundMoveType()

@@ -107,7 +107,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	invDrag = 1.0f - owner->unitDef->drag;
 	frontToSpeed = owner->unitDef->frontToSpeed;
 	speedToFront = owner->unitDef->speedToFront;
-	myGravity = owner->unitDef->myGravity;
+	myGravity = math::fabs(owner->unitDef->myGravity);
 
 	maxBank = owner->unitDef->maxBank;
 	maxPitch = owner->unitDef->maxPitch;
