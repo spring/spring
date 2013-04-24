@@ -29,8 +29,8 @@ struct Cpp11Clock {
 
 	static inline int64_t ToSecs(int64_t x) { return x / i1e9; }
 	static inline int64_t ToMs(int64_t x)   { return x / i1e6; }
-	template<typename T> static inline T ToSecs(int64_t x) { return T(x) * 1e-9; }
-	template<typename T> static inline T ToMs(int64_t x)   { return T(x) * 1e-6; }
+	template<typename T> static inline T ToSecs(int64_t x) { return double(x) * 1e-9; }
+	template<typename T> static inline T ToMs(int64_t x)   { return double(x) * 1e-6; }
 	template<typename T> static inline T ToNs(int64_t x)   { return x; }
 	static inline int64_t FromMs(int64_t ms) { return ms * i1e6; }
 	static inline std::string GetName() { return "Cpp11Clock"; }
