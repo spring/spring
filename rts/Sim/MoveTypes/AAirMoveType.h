@@ -43,6 +43,7 @@ public:
 	virtual void SetState(AircraftState state) {}
 	virtual AircraftState GetLandingState() const { return AIRCRAFT_LANDING; }
 
+	bool CanApplyImpulse(const float3&) { return true; }
 	bool UseSmoothMesh() const;
 	int GetPadStatus() const { return padStatus; }
 
