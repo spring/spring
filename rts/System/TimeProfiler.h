@@ -20,15 +20,15 @@
 class BasicTimer : public boost::noncopyable
 {
 public:
-	BasicTimer(const std::string& myname)
-		: name(myname)
-		, starttime(spring_gettime())
-	{
-	}
+	BasicTimer(const std::string& myname);
+	BasicTimer(const char* myname);
+
+	const std::string& GetName() const;
 
 protected:
-	const std::string name;
+	const unsigned hash;
 	const spring_time starttime;
+	std::map<int, std::string>::iterator nameIterator;
 };
 
 
@@ -42,11 +42,12 @@ class ScopedTimer : public BasicTimer
 {
 public:
 	ScopedTimer(const std::string& name, bool autoShow = false);
+	ScopedTimer(const char* name, bool autoShow = false);
 	~ScopedTimer();
 
 private:
 	const bool autoShowGraph;
-	const unsigned hash;
+	std::map<int, int>::iterator it;
 };
 
 
@@ -58,6 +59,7 @@ class ScopedOnceTimer : public BasicTimer
 {
 public:
 	ScopedOnceTimer(const std::string& name): BasicTimer(name) {}
+	ScopedOnceTimer(const char* name): BasicTimer(name) {}
 	~ScopedOnceTimer();
 };
 
@@ -65,6 +67,17 @@ public:
 
 class CTimeProfiler
 {
+public:
+	CTimeProfiler();
+	~CTimeProfiler();
+
+	float GetPercent(const char *name);
+	void Update();
+
+	void PrintProfilingInfo() const;
+
+	void AddTime(const std::string& name, const spring_time time, const bool showGraph = false);
+
 public:
 	struct TimeRecord {
 		TimeRecord() : total(0), current(0), percent(0), color(0,0,0), showGraph(false), peak(0), newpeak(false) {
@@ -80,15 +93,6 @@ public:
 		float peak;
 		bool newpeak;
 	};
-
-	CTimeProfiler();
-	~CTimeProfiler();
-
-	float GetPercent(const char *name);
-	void AddTime(const std::string& name, spring_time time, bool showGraph = false);
-	void Update();
-
-	void PrintProfilingInfo() const;
 
 	std::map<std::string,TimeRecord> profile;
 

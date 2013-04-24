@@ -9,9 +9,10 @@
 #include "System/Log/ILog.h"
 #include "System/UnsyncedRNG.h"
 
-
+static std::map<int, std::string> hashToName;
 static std::map<int, int> refs;
 CTimeProfiler profiler;
+
 
 static unsigned hash_(const std::string& s)
 {
@@ -23,25 +24,88 @@ static unsigned hash_(const std::string& s)
 }
 
 
+static unsigned hash_(const char* s)
+{
+	unsigned hash = 0;
+	for (size_t i = 0; ; ++i) {
+		if (s[i]) {
+			hash += s[i];
+		} else {
+			unsigned len = i;
+			hash += len;
+			break;
+		}
+	}
+	return hash;
+}
+
+
+BasicTimer::BasicTimer(const std::string& myname)
+: hash(hash_(myname))
+, starttime(spring_gettime())
+
+{
+	nameIterator = hashToName.find(hash);
+	if (nameIterator == hashToName.end()) {
+		nameIterator = hashToName.insert(std::pair<int,std::string>(hash, myname)).first;
+	}
+}
+
+
+BasicTimer::BasicTimer(const char* myname)
+: hash(hash_(myname))
+, starttime(spring_gettime())
+
+{
+	nameIterator = hashToName.find(hash);
+	if (nameIterator == hashToName.end()) {
+		nameIterator = hashToName.insert(std::pair<int,std::string>(hash, myname)).first;
+	}
+}
+
+
+const std::string& BasicTimer::GetName() const
+{
+	return nameIterator->second;
+}
+
+
 ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
 	: BasicTimer(name)
 	, autoShowGraph(autoShow)
-	, hash(hash_(name))
+
 {
-	++refs[hash];
+	it = refs.find(hash);
+	if (it == refs.end()) {
+		it = refs.insert(std::pair<int,int>(hash, 0)).first;
+	}
+	++(it->second);
+}
+
+
+ScopedTimer::ScopedTimer(const char* name, bool autoShow)
+	: BasicTimer(name)
+	, autoShowGraph(autoShow)
+
+{
+	it = refs.find(hash);
+	if (it == refs.end()) {
+		it = refs.insert(std::pair<int,int>(hash, 0)).first;
+	}
+	++(it->second);
 }
 
 
 ScopedTimer::~ScopedTimer()
 {
-	int& ref = refs[hash];
+	int& ref = it->second;
 	if (--ref == 0)
-		profiler.AddTime(name, spring_difftime(spring_gettime(), starttime), autoShowGraph);
+		profiler.AddTime(GetName(), spring_difftime(spring_gettime(), starttime), autoShowGraph);
 }
 
 ScopedOnceTimer::~ScopedOnceTimer()
 {
-	LOG("%s: %i ms", name.c_str(), spring_diffmsecs(spring_gettime(), starttime));
+	LOG("%s: %i ms", GetName().c_str(), spring_diffmsecs(spring_gettime(), starttime));
 }
 
 
@@ -99,7 +163,7 @@ float CTimeProfiler::GetPercent(const char* name)
 	return profile[name].percent;
 }
 
-void CTimeProfiler::AddTime(const std::string& name, spring_time time, bool showGraph)
+void CTimeProfiler::AddTime(const std::string& name, const spring_time time, const bool showGraph)
 {
 	GML_STDMUTEX_LOCK_NOPROF(time); // AddTime
 
