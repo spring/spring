@@ -16,12 +16,7 @@ CMatrix44f::CMatrix44f()
 
 CMatrix44f::CMatrix44f(const CMatrix44f& mat)
 {
-	for (int i = 0; i < 16; i += 4) {
-		m[i    ] = mat[i    ];
-		m[i + 1] = mat[i + 1];
-		m[i + 2] = mat[i + 2];
-		m[i + 3] = mat[i + 3];
-	}
+	memcpy(&m[0], &mat.m[0], sizeof(CMatrix44f));
 }
 
 
@@ -214,33 +209,12 @@ void CMatrix44f::Scale(const float3 scales)
 }
 
 
-void CMatrix44f::Translate(float x, float y, float z)
+void CMatrix44f::Translate(const float x, const float y, const float z)
 {
 	m[12] += x*m[0] + y*m[4] + z*m[8];
 	m[13] += x*m[1] + y*m[5] + z*m[9];
 	m[14] += x*m[2] + y*m[6] + z*m[10];
 	m[15] += x*m[3] + y*m[7] + z*m[11];
-}
-
-
-void CMatrix44f::Translate(const float3& pos)
-{
-	const float& x=pos.x;
-	const float& y=pos.y;
-	const float& z=pos.z;
-	m[12] += x*m[0] + y*m[4] + z*m[8];
-	m[13] += x*m[1] + y*m[5] + z*m[9];
-	m[14] += x*m[2] + y*m[6] + z*m[10];
-	m[15] += x*m[3] + y*m[7] + z*m[11];
-}
-
-
-void CMatrix44f::SetPos(float x, float y, float z)
-{
-	m[12] = x*m[0] + y*m[4] + z*m[8];
-	m[13] = x*m[1] + y*m[5] + z*m[9];
-	m[14] = x*m[2] + y*m[6] + z*m[10];
-	m[15] = x*m[3] + y*m[7] + z*m[11];
 }
 
 
@@ -256,33 +230,104 @@ void CMatrix44f::SetPos(const float3& pos)
 }
 
 
-CMatrix44f& CMatrix44f::operator*= (const CMatrix44f& m2)
+static inline void MatrixMatrixMultiplySSE(const CMatrix44f& m1, const CMatrix44f& m2, CMatrix44f* mout)
 {
-	float m10, m11, m12, m13;
+	//SCOPED_TIMER("CMatrix44f::MM-Mul");
 
-	for(int i = 0; i < 16; i += 4){
-		m10 = m[i];
-		m11 = m[i+1];
-		m12 = m[i+2];
-		m13 = m[i+3];
+	const __m128 m1c1 = _mm_loadu_ps(&m1.md[0][0]);
+	const __m128 m1c2 = _mm_loadu_ps(&m1.md[1][0]);
+	const __m128 m1c3 = _mm_loadu_ps(&m1.md[2][0]);
+	const __m128 m1c4 = _mm_loadu_ps(&m1.md[3][0]);
 
-		m[i]   = m2[0]*m10 + m2[4]*m11 + m2[8]*m12  + m2[12]*m13;
-		m[i+1] = m2[1]*m10 + m2[5]*m11 + m2[9]*m12  + m2[13]*m13;
-		m[i+2] = m2[2]*m10 + m2[6]*m11 + m2[10]*m12 + m2[14]*m13;
-		m[i+3] = m2[3]*m10 + m2[7]*m11 + m2[11]*m12 + m2[15]*m13;
-	}
+	// an optimization we assume
+	assert(m2.m[3] == 0.0f);
+	assert(m2.m[7] == 0.0f);
+	// assert(m2.m[11] == 0.0f); in case of a gluPerspective it's -1
 
+	const __m128 m2i0 = _mm_load1_ps(&m2.m[0]);
+	const __m128 m2i1 = _mm_load1_ps(&m2.m[1]);
+	const __m128 m2i2 = _mm_load1_ps(&m2.m[2]);
+	//const __m128 m2i3 = _mm_load1_ps(&m2.m[3]);
+	const __m128 m2i4 = _mm_load1_ps(&m2.m[4]);
+	const __m128 m2i5 = _mm_load1_ps(&m2.m[5]);
+	const __m128 m2i6 = _mm_load1_ps(&m2.m[6]);
+	//const __m128 m2i7 = _mm_load1_ps(&m2.m[7]);
+	const __m128 m2i8 = _mm_load1_ps(&m2.m[8]);
+	const __m128 m2i9 = _mm_load1_ps(&m2.m[9]);
+	const __m128 m2i10 = _mm_load1_ps(&m2.m[10]);
+	const __m128 m2i11 = _mm_load1_ps(&m2.m[11]);
+	const __m128 m2i12 = _mm_load1_ps(&m2.m[12]);
+	const __m128 m2i13 = _mm_load1_ps(&m2.m[13]);
+	const __m128 m2i14 = _mm_load1_ps(&m2.m[14]);
+	const __m128 m2i15 = _mm_load1_ps(&m2.m[15]);
+
+	__m128 moutc1, moutc2, moutc3, moutc4;
+	moutc1 =                    _mm_mul_ps(m1c1, m2i0);
+	moutc2 =                    _mm_mul_ps(m1c1, m2i4);
+	moutc3 =                    _mm_mul_ps(m1c1, m2i8);
+	moutc4 =                    _mm_mul_ps(m1c1, m2i12);
+
+	moutc1 = _mm_add_ps(moutc1, _mm_mul_ps(m1c2, m2i1));
+	moutc2 = _mm_add_ps(moutc2, _mm_mul_ps(m1c2, m2i5));
+	moutc3 = _mm_add_ps(moutc3, _mm_mul_ps(m1c2, m2i9));
+	moutc4 = _mm_add_ps(moutc4, _mm_mul_ps(m1c2, m2i13));
+
+	moutc1 = _mm_add_ps(moutc1, _mm_mul_ps(m1c3, m2i2));
+	moutc2 = _mm_add_ps(moutc2, _mm_mul_ps(m1c3, m2i6));
+	moutc3 = _mm_add_ps(moutc3, _mm_mul_ps(m1c3, m2i10));
+	moutc4 = _mm_add_ps(moutc4, _mm_mul_ps(m1c3, m2i14));
+
+	//moutc1 = _mm_add_ps(moutc1, _mm_mul_ps(m1c4, _mm_load1_ps(&m2.m[3])));
+	//moutc2 = _mm_add_ps(moutc2, _mm_mul_ps(m1c4, _mm_load1_ps(&m2.m[7])));
+	moutc3 = _mm_add_ps(moutc3, _mm_mul_ps(m1c4, m2i11));
+	moutc4 = _mm_add_ps(moutc4, _mm_mul_ps(m1c4, m2i15));
+
+	_mm_storeu_ps(&mout->md[0][0], moutc1);
+	_mm_storeu_ps(&mout->md[1][0], moutc2);
+	_mm_storeu_ps(&mout->md[2][0], moutc3);
+	_mm_storeu_ps(&mout->md[3][0], moutc4);
+}
+
+
+CMatrix44f CMatrix44f::operator* (const CMatrix44f& m2) const
+{
+	CMatrix44f mout;
+	MatrixMatrixMultiplySSE(*this, m2, &mout);
+	return mout;
+}
+
+
+CMatrix44f& CMatrix44f::operator>>= (const CMatrix44f& m2)
+{
+	MatrixMatrixMultiplySSE(m2, *this, this);
 	return (*this);
 }
 
 
-float3 CMatrix44f::Mul(const float3& vect) const
+CMatrix44f& CMatrix44f::operator<<= (const CMatrix44f& m2)
 {
-	const float v0(vect[0]), v1(vect[1]), v2(vect[2]);
-	return float3(
-		v0*m[0] + v1*m[4] + v2*m[8] + m[12],
-		v0*m[1] + v1*m[5] + v2*m[9] + m[13],
-		v0*m[2] + v1*m[6] + v2*m[10] + m[14]);
+	MatrixMatrixMultiplySSE(*this, m2, this);
+	return (*this);
+}
+
+
+float3 CMatrix44f::operator* (const float3& v) const
+{
+	//SCOPED_TIMER("CMatrix44f::Mul");
+
+	/*return float3(
+		m[0] * v.x + m[4] * v.y + m[8 ] * v.z + m[12],
+		m[1] * v.x + m[5] * v.y + m[9 ] * v.z + m[13],
+		m[2] * v.x + m[6] * v.y + m[10] * v.z + m[14]);*/
+
+	__m128 out;
+	out =                 _mm_mul_ps(_mm_loadu_ps(&md[0][0]), _mm_load1_ps(&v.x));
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[1][0]), _mm_load1_ps(&v.y)));
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[2][0]), _mm_load1_ps(&v.z)));
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[3][0]), _mm_set1_ps(1.0f)));
+
+	const float* fout = reinterpret_cast<float*>(&out);
+	return float3(fout[0], fout[1], fout[2]);
 }
 
 
@@ -350,7 +395,7 @@ CMatrix44f CMatrix44f::InvertAffine() const
 
 
 template<typename T>
-static inline T CalculateCofactor(const T m[4][4], int ei, int ej)
+static inline T CalculateCofactor(const T m[4][4], const int ei, const int ej)
 {
 	size_t ai, bi, ci;
 	switch (ei) {

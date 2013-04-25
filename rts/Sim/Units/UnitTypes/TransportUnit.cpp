@@ -77,7 +77,7 @@ void CTransportUnit::Update()
 			if (ti->piece >= 0) {
 				const CMatrix44f& transMat = GetTransformMatrix(true);
 				const CMatrix44f& pieceMat = script->GetPieceMatrix(ti->piece);
-				const CMatrix44f  slaveMat = pieceMat * transMat;
+				const CMatrix44f  slaveMat = transMat * pieceMat;
 
 				transportee->SetDirVectors(slaveMat);
 			}

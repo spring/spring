@@ -120,7 +120,7 @@ void CollisionVolume::InitBox(const float3& scales)
 
 void CollisionVolume::InitShape(
 	const float3& scales,
-	const float3& offsets,	
+	const float3& offsets,
 	const int vType,
 	const int tType,
 	const int pAxis)
@@ -290,7 +290,7 @@ float CollisionVolume::GetPointSurfaceDistance(const CUnit* u, const LocalModelP
 		assert(this == lmp->GetCollisionVolume());
 
 		// transform into piece-space relative to pos
-		mat = lmp->GetModelSpaceMatrix() * mat;
+		mat <<= lmp->GetModelSpaceMatrix();
 	} else {
 		// Unit::GetTransformMatrix does not include this
 		// (its translation component is pos, not midPos)

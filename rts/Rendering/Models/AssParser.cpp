@@ -267,7 +267,7 @@ void CAssParser::LoadPieceTransformations(const S3DModel* model, SAssPiece* piec
 	// Assimp order is: translate * rotate * scale * v
 	piece->scaleRotMatrix.LoadIdentity();
 	piece->scaleRotMatrix.Scale(scale);
-	piece->scaleRotMatrix *= aiMatrixToMatrix(aiRotMatrix);
+	piece->scaleRotMatrix >>= aiMatrixToMatrix(aiRotMatrix);
 	// piece->scaleRotMatrix.Translate(offset);
 
 	piece->offset = offset;
