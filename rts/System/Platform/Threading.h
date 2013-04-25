@@ -173,9 +173,9 @@ namespace Threading {
 
 	private:
 	#ifdef _MSC_VER
-		volatile __declspec(align(8)) boost::int64_t num;
+		__declspec(align(8)) boost::int64_t num;
 	#else
-		volatile __attribute__ ((aligned (8))) boost::int64_t num;
+		__attribute__ ((aligned (8))) boost::int64_t num;
 	#endif
 	};
 }
