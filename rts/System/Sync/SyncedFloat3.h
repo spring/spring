@@ -612,6 +612,12 @@ public:
 	 */
 	operator float3() const { return float3(x, y, z); }
 
+	void AssertNaNs() const {
+		assert(!math::isnan(x) && !math::isinf(x));
+		assert(!math::isnan(y) && !math::isinf(y));
+		assert(!math::isnan(z) && !math::isinf(z));
+	}
+
 public:
 	SyncedFloat x; ///< x component
 	SyncedFloat y; ///< y component

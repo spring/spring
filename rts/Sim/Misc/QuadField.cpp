@@ -66,9 +66,7 @@ CQuadField::~CQuadField()
 std::vector<int> CQuadField::GetQuads(float3 pos, float radius) const
 {
 	pos.ClampInBounds();
-	assert(!math::isnan(pos.x));
-	assert(!math::isnan(pos.y));
-	assert(!math::isnan(pos.z));
+	pos.AssertNaNs();
 
 	std::vector<int> ret;
 
@@ -101,9 +99,7 @@ std::vector<int> CQuadField::GetQuads(float3 pos, float radius) const
 unsigned int CQuadField::GetQuads(float3 pos, float radius, int*& begQuad, int*& endQuad) const
 {
 	pos.ClampInBounds();
-	assert(!math::isnan(pos.x));
-	assert(!math::isnan(pos.y));
-	assert(!math::isnan(pos.z));
+	pos.AssertNaNs();
 
 	assert(begQuad == &tempQuads[0]);
 	assert(endQuad == &tempQuads[0]);
