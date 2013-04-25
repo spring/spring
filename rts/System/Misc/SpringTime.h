@@ -24,13 +24,14 @@ typedef boost::int64_t int64_t;
 
 
 struct Cpp11Clock {
+	#define i1e3 1000LL
 	#define i1e6 1000000LL
 	#define i1e9 1000000000LL
 
 	static inline int64_t ToSecs(int64_t x) { return x / i1e9; }
 	static inline int64_t ToMs(int64_t x)   { return x / i1e6; }
-	template<typename T> static inline T ToSecs(int64_t x) { return double(x) * 1e-9; }
-	template<typename T> static inline T ToMs(int64_t x)   { return double(x) * 1e-6; }
+	template<typename T> static inline T ToSecs(int64_t x) { return int(x / i1e6) * 1e-3; }
+	template<typename T> static inline T ToMs(int64_t x)   { return int(x / i1e3) * 1e-3; }
 	template<typename T> static inline T ToNs(int64_t x)   { return x; }
 	static inline int64_t FromMs(int64_t ms) { return ms * i1e6; }
 	static inline std::string GetName() { return "Cpp11Clock"; }
