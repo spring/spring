@@ -1493,8 +1493,6 @@ void CGame::SimFrame() {
 #endif
 
 	if (!skipping) {
-		SCOPED_TIMER("Game::SimFrame_Unsynced");
-
 		// everything here is unsynced and should ideally moved to Game::Update()
 		infoConsole->Update();
 		waitCommandsAI.Update();

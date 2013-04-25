@@ -33,7 +33,6 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Watchdog.h"
-#include "System/TimeProfiler.h"
 
 CUnitLoader* CUnitLoader::GetInstance()
 {
@@ -59,8 +58,6 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 {
 	CUnit* unit = NULL;
 	UnitLoadParams& params = const_cast<UnitLoadParams&>(cparams);
-
-	SCOPED_TIMER("UnitLoader::LoadUnit");
 
 	{
 		GML_RECMUTEX_LOCK(sel); // LoadUnit - for anti deadlock purposes.
@@ -224,7 +221,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 
 			const UnitLoadParams unitParams = {
 				unitDefHandler->GetUnitDefByID(a),
-				NULL, 
+				NULL,
 
 				float3(px, ground->GetHeightReal(px, pz), pz),
 				ZeroVector,
@@ -285,7 +282,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 
 					const UnitLoadParams unitParams = {
 						unitDef,
-						NULL, 
+						NULL,
 
 						float3(px, ground->GetHeightReal(px, pz), pz),
 						ZeroVector,
