@@ -212,10 +212,6 @@ void CUnitHandler::Update()
 
 	GML::UpdateTicks();
 
-	#define VECTOR_SANITY_CHECK(v)                              \
-		assert(!math::isnan(v.x) && !math::isinf(v.x)); \
-		assert(!math::isnan(v.y) && !math::isinf(v.y)); \
-		assert(!math::isnan(v.z) && !math::isinf(v.z));
 	#define MAPPOS_SANITY_CHECK(unit)                          \
 		if (unit->unitDef->IsGroundUnit()) {                   \
 			assert(unit->pos.x >= -(float3::maxxpos * 16.0f)); \
@@ -223,16 +219,16 @@ void CUnitHandler::Update()
 			assert(unit->pos.z >= -(float3::maxzpos * 16.0f)); \
 			assert(unit->pos.z <=  (float3::maxzpos * 16.0f)); \
 		}
-	#define UNIT_SANITY_CHECK(unit)                 \
-		VECTOR_SANITY_CHECK(unit->pos);             \
-		VECTOR_SANITY_CHECK(unit->midPos);          \
-		VECTOR_SANITY_CHECK(unit->relMidPos);       \
-		VECTOR_SANITY_CHECK(unit->speed);           \
-		VECTOR_SANITY_CHECK(unit->deathSpeed);      \
-		VECTOR_SANITY_CHECK(unit->residualImpulse); \
-		VECTOR_SANITY_CHECK(unit->rightdir);        \
-		VECTOR_SANITY_CHECK(unit->updir);           \
-		VECTOR_SANITY_CHECK(unit->frontdir);        \
+	#define UNIT_SANITY_CHECK(unit)            \
+		unit->pos.AssertNaNs();             \
+		unit->midPos.AssertNaNs();          \
+		unit->relMidPos.AssertNaNs();       \
+		unit->speed.AssertNaNs();           \
+		unit->deathSpeed.AssertNaNs();      \
+		unit->residualImpulse.AssertNaNs(); \
+		unit->rightdir.AssertNaNs();        \
+		unit->updir.AssertNaNs();           \
+		unit->frontdir.AssertNaNs();        \
 		MAPPOS_SANITY_CHECK(unit);
 
 	{

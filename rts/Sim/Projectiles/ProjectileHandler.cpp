@@ -172,10 +172,6 @@ void CProjectileHandler::PostLoad()
 void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool synced) {
 	ProjectileContainer::iterator pci = pc.begin();
 
-	#define VECTOR_SANITY_CHECK(v)                              \
-		assert(!math::isnan(v.x) && !math::isinf(v.x)); \
-		assert(!math::isnan(v.y) && !math::isinf(v.y)); \
-		assert(!math::isnan(v.z) && !math::isinf(v.z));
 	#define MAPPOS_SANITY_CHECK(v)                 \
 		assert(v.x >= -(float3::maxxpos * 16.0f)); \
 		assert(v.x <=  (float3::maxxpos * 16.0f)); \
@@ -184,7 +180,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		assert(v.y >= -MAX_PROJECTILE_HEIGHT);     \
 		assert(v.y <=  MAX_PROJECTILE_HEIGHT);
 	#define PROJECTILE_SANITY_CHECK(p) \
-		VECTOR_SANITY_CHECK(p->pos);   \
+		p->pos.AssertNaNs();   \
 		MAPPOS_SANITY_CHECK(p->pos);
 
 	while (pci != pc.end()) {
