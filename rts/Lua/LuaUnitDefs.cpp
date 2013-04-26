@@ -405,11 +405,9 @@ static int WeaponsTable(lua_State* L, const void* data)
 	const vector<UnitDefWeapon>& weapons =
 		*((const vector<UnitDefWeapon>*)data);
 
-	const int weaponCount = (int)weapons.size();
-
 	lua_newtable(L);
 
-	for (int i = 0; i < weaponCount; i++) {
+	for (size_t i = 0; i < weapons.size(); i++) {
 		const UnitDefWeapon& udw = weapons[i];
 		const WeaponDef* weapon = udw.def;
 		lua_pushnumber(L, i + 1);

@@ -38,7 +38,7 @@
 // seconds (!) before eg. aircraft would stop tracking a
 // target that cloaked after flying over it --> obviously
 // unreasonable
-static const int TARGET_LOST_TIMER = 15;
+static const int TARGET_LOST_TIMER = 4;
 static const float COMMAND_CANCEL_DIST = 17.0f;
 
 CR_BIND(CCommandQueue, );

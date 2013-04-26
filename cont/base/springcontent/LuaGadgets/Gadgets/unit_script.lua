@@ -126,7 +126,6 @@ local sp_WaitForTurn = Spring.UnitScript.WaitForTurn
 local sp_SetPieceVisibility = Spring.UnitScript.SetPieceVisibility
 local sp_SetDeathScriptFinished = Spring.UnitScript.SetDeathScriptFinished
 
-
 local UNITSCRIPT_DIR = (UNITSCRIPT_DIR or "scripts/"):lower()
 local VFSMODE = VFS.ZIP_ONLY
 if (Spring.IsDevLuaEnabled()) then
@@ -571,12 +570,19 @@ local function Wrap_AimWeapon(unitID, callins)
 
 	-- SetUnitShieldState wants true or false, while
 	-- SetUnitWeaponState wants 1.0 or 0.0, niiice =)
+	--
+	-- NOTE:
+	--   the LuaSynced* API functions all EXPECT 1-based arguments
+	--   the LuaUnitScript::*Weapon* callins all SUPPLY 1-based arguments
+	--
+	--   therefore on the Lua side all weapon indices are ASSUMED to be
+	--   1-based and if LuaConfig::LUA_WEAPON_BASE_INDEX is changed to 0
+	--   no Lua code should need to be updated
 	local function AimWeaponThread(weaponNum, heading, pitch)
 		local bAimReady = AimWeapon(weaponNum, heading, pitch) or false
 		local fAimReady = (bAimReady and 1.0) or 0.0
 
-		-- SetUnitWeaponState counts weapons from 0
-		return sp_SetUnitWeaponState(unitID, weaponNum - 1, "aimReady", fAimReady)
+		return sp_SetUnitWeaponState(unitID, weaponNum, "aimReady", fAimReady)
 	end
 
 	callins["AimWeapon"] = function(weaponNum, heading, pitch)
@@ -593,8 +599,8 @@ local function Wrap_AimShield(unitID, callins)
 	-- SetUnitWeaponState wants 1 or 0, niiice =)
 	local function AimShieldThread(weaponNum)
 		local enabled = AimShield(weaponNum) and true or false
-		-- SetUnitShieldState counts weapons from 0
-		return sp_SetUnitShieldState(unitID, weaponNum - 1, enabled)
+
+		return sp_SetUnitShieldState(unitID, weaponNum, enabled)
 	end
 
 	callins["AimShield"] = function(weaponNum)

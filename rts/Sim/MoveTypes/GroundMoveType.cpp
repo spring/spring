@@ -2254,8 +2254,7 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
 	const float waypointDist  = waypointDif.Length();                                             // in elmos
 	const float waypointFETA  = (waypointDist / maxSpeed);                                        // in frames (simplistic)
 	const float waypointRETA  = (waypointDist / maxReverseSpeed);                                 // in frames (simplistic)
-	const float waypointDirDP = waypointDir2D.dot(owner->frontdir);
-	const float waypointAngle = Clamp(waypointDirDP, -1.0f, 1.0f);                                // prevent NaN's
+	const float waypointAngle = Clamp(waypointDir2D.dot(owner->frontdir), -1.0f, 1.0f);           // clamp to prevent NaN's
 	const float turnAngleDeg  = math::acosf(waypointAngle) * (180.0f / PI);                       // in degrees
 	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * SPRING_CIRCLE_DIVS;                     // in "headings"
 	const float revAngleSpr   = SHORTINT_MAXVALUE - turnAngleSpr;                                 // 180 deg - angle
