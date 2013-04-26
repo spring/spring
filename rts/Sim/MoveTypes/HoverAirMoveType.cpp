@@ -339,7 +339,7 @@ void CHoverAirMoveType::UpdateHovering()
 	// behind us when we have more waypoints to get to
 	// *** this behavior interferes with the loading procedure of transports ***
 	const bool b0 = (aircraftState != AIRCRAFT_LANDING && owner->commandAI->HasMoreMoveCommands());
-	const bool b1 = (goalDistance < 120.0f && goalDistance > 1.0f);
+	const bool b1 = (goalDistance < brakeDistance && goalDistance > 1.0f);
 
 	if (b0 && b1 && dynamic_cast<CTransportUnit*>(owner) == NULL) {
 		deltaDir = owner->frontdir;
@@ -488,15 +488,16 @@ void CHoverAirMoveType::UpdateFlying()
 	// if we are close to our goal and not in attack mode,
 	// we should go slow enough to be able to brake in time
 	const float goalDist = goalVec.Length() + 0.1f;
-	const float approachSpeed =
+	const float goalSpeed =
 		(flyState != FLY_ATTACKING && goalDist < brakeDistance)?
 		((goalDist / (speed.Length2D() + 0.01f)) * decRate):
 		maxSpeed;
 
-	// do not set wantedSpeed if approachSpeed exceeds goal-distance
-	// because this can lead to overshooting oscillations (jitter)
-	if (approachSpeed < goalDist)
-		wantedSpeed = (goalVec / goalDist) * approachSpeed;
+	// do not set wantedSpeed if goal is behind us because
+	// this can lead to overshooting oscillations (jitter)
+	// --> wait for turn first
+	if (goalVec.dot(owner->frontdir) >= 0.0f)
+		wantedSpeed = (goalVec / goalDist) * std::min(goalSpeed, maxSpeed);
 
 	UpdateAirPhysics();
 
@@ -505,7 +506,7 @@ void CHoverAirMoveType::UpdateFlying()
 		goalVec = circlingPos - pos;
 	} else {
 		const bool b0 = (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands()));
-		const bool b1 = (goalDist < 120.0f && goalDist > 1.0);
+		const bool b1 = (goalDist < brakeDistance && goalDist > 1.0f);
 
 		if (b0 && b1) {
 			goalVec = owner->frontdir;

@@ -1333,22 +1333,26 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 		return 0;
 	}
 
-	const int weaponNum = luaL_checkint(L, 2) -1;
-	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
+	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
+
+	if (weaponNum >= unit->weapons.size()) {
 		return 0;
 	}
+
 	CWeapon* weapon = unit->weapons[weaponNum];
 
-	if (lua_istable(L,3)) {
-		const int table = 3;
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+	if (lua_istable(L, 3)) {
+		// {key1 = value1, ...}
+		for (lua_pushnil(L); lua_next(L, 3) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 				SetSingleUnitWeaponState(L, weapon, -2);
 			}
 		}
-	}
-	else if (lua_israwstring(L, 3) && lua_isnumber(L, 4)) {
-		SetSingleUnitWeaponState(L, weapon, 3);
+	} else {
+		// key, value
+		if (lua_israwstring(L, 3) && lua_isnumber(L, 4)) {
+			SetSingleUnitWeaponState(L, weapon, 3);
+		}
 	}
 
 	return 0;
@@ -1718,14 +1722,16 @@ int LuaSyncedCtrl::SetUnitShieldState(lua_State* L)
 	}
 
 	int args = lua_gettop(L);
-	int arg = 2;
+	int arg = 2 + (lua_isnumber(L, 2) && args > 2);
 
 	CPlasmaRepulser* shield = static_cast<CPlasmaRepulser*>(unit->shieldWeapon);
-	if (lua_isnumber(L, 2) && args > 2) {
-		arg++;
-		const int idx = luaL_optint(L, 2, -1);
-		if (idx >= 0 && idx < unit->weapons.size())
+
+	if (arg == 3) {
+		const size_t idx = luaL_optint(L, 2, -1) - LUA_WEAPON_BASE_INDEX;
+
+		if (idx < unit->weapons.size()) {
 			shield = dynamic_cast<CPlasmaRepulser*>(unit->weapons[idx]);
+		}
 	}
 
 	if (shield == NULL) {
@@ -3629,7 +3635,7 @@ int LuaSyncedCtrl::UnitWeaponFire(lua_State* L)
 
 	if (unit == NULL)
 		return 0;
-	if (static_cast<uint32_t>(luaL_checkint(L, 2)-1) >= unit->weapons.size())
+	if (static_cast<uint32_t>(luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX) >= unit->weapons.size())
 		return 0;
 
 	unit->weapons[luaL_checkint(L, 2)-1]->Fire();
@@ -3641,7 +3647,7 @@ int LuaSyncedCtrl::UnitWeaponHoldFire(lua_State* L)
 
 	if (unit == NULL)
 		return 0;
-	if (static_cast<uint32_t>(luaL_checkint(L, 2)-1) >= unit->weapons.size())
+	if (static_cast<uint32_t>(luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX) >= unit->weapons.size())
 		return 0;
 
 	unit->weapons[luaL_checkint(L, 2)-1]->HoldFire();

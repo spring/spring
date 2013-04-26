@@ -9,6 +9,7 @@
 #include "LuaInclude.h"
 #include "NullUnitScript.h"
 #include "LuaScriptNames.h"
+#include "Lua/LuaConfig.h"
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaHandleSynced.h"
 #include "Sim/Units/UnitHandler.h"
@@ -418,19 +419,19 @@ int CLuaUnitScript::RunQueryCallIn(int fn)
 	if (!RunCallIn(fn, 0, 1))
 		return -1;
 
-	const int scriptNum = (int)PopNumber(fn, 0) - 1;
+	const int scriptPieceNum = (int)PopNumber(fn, 0) - 1;
 
 	if (LOG_IS_ENABLED(L_DEBUG)) {
-		if (PieceExists(scriptNum)) {
-			LocalModelPiece* piece = GetScriptLocalModelPiece(scriptNum);
+		if (PieceExists(scriptPieceNum)) {
+			LocalModelPiece* piece = GetScriptLocalModelPiece(scriptPieceNum);
 			LOG_L(L_DEBUG, "%s: %d %s",
 					CLuaUnitScriptNames::GetScriptName(fn).c_str(),
-					scriptNum,
+					scriptPieceNum,
 					(piece->original) ? piece->original->name.c_str() : "n/a");
 		}
 	}
 
-	return scriptNum;
+	return scriptPieceNum;
 }
 
 
@@ -448,19 +449,19 @@ int CLuaUnitScript::RunQueryCallIn(int fn, float arg1)
 	if (!RunCallIn(fn, 1, 1))
 		return -1;
 
-	const int scriptNum = (int)PopNumber(fn, 0) - 1;
+	const int scriptPieceNum = (int)PopNumber(fn, 0) - 1;
 
 	if (LOG_IS_ENABLED(L_DEBUG)) {
-		if (PieceExists(scriptNum)) {
-			LocalModelPiece* piece = GetScriptLocalModelPiece(scriptNum);
+		if (PieceExists(scriptPieceNum)) {
+			LocalModelPiece* piece = GetScriptLocalModelPiece(scriptPieceNum);
 			LOG_L(L_DEBUG, "%s: %d %s",
 					CLuaUnitScriptNames::GetScriptName(fn).c_str(),
-					scriptNum,
+					scriptPieceNum,
 					(piece->original) ? piece->original->name.c_str() : "n/a");
 		}
 	}
 
-	return scriptNum;
+	return scriptPieceNum;
 }
 
 
@@ -744,32 +745,32 @@ int CLuaUnitScript::QueryBuildInfo()
 
 int CLuaUnitScript::QueryWeapon(int weaponNum)
 {
-	return RunQueryCallIn(LUAFN_QueryWeapon, weaponNum + 1);
+	return RunQueryCallIn(LUAFN_QueryWeapon, weaponNum + LUA_WEAPON_BASE_INDEX);
 }
 
 
 void CLuaUnitScript::AimWeapon(int weaponNum, float heading, float pitch)
 {
-	Call(LUAFN_AimWeapon, weaponNum + 1, heading, pitch);
+	Call(LUAFN_AimWeapon, weaponNum + LUA_WEAPON_BASE_INDEX, heading, pitch);
 }
 
 
 void  CLuaUnitScript::AimShieldWeapon(CPlasmaRepulser* weapon)
 {
-	Call(LUAFN_AimShield, weapon->weaponNum + 1);
+	Call(LUAFN_AimShield, weapon->weaponNum + LUA_WEAPON_BASE_INDEX);
 }
 
 
 int CLuaUnitScript::AimFromWeapon(int weaponNum)
 {
-	return RunQueryCallIn(LUAFN_AimFromWeapon, weaponNum + 1);
+	return RunQueryCallIn(LUAFN_AimFromWeapon, weaponNum + LUA_WEAPON_BASE_INDEX);
 }
 
 
 void CLuaUnitScript::Shot(int weaponNum)
 {
 	// FIXME: pass projectileID?
-	Call(LUAFN_Shot, weaponNum + 1);
+	Call(LUAFN_Shot, weaponNum + LUA_WEAPON_BASE_INDEX);
 }
 
 
@@ -784,7 +785,7 @@ bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool user
 	lua_checkstack(L, 4);
 
 	PushFunction(fn);
-	lua_pushnumber(L, weaponNum + 1);
+	lua_pushnumber(L, weaponNum + LUA_WEAPON_BASE_INDEX);
 	PushUnit(targetUnit);
 	lua_pushboolean(L, userTarget);
 
@@ -806,7 +807,7 @@ float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 	lua_checkstack(L, 3);
 
 	PushFunction(fn);
-	lua_pushnumber(L, weaponNum + 1);
+	lua_pushnumber(L, weaponNum + LUA_WEAPON_BASE_INDEX);
 	PushUnit(targetUnit);
 
 	if (!RunCallIn(fn, 2, 1))
@@ -888,8 +889,8 @@ void CLuaUnitScript::Landed()        { Call(LUAFN_Landed); }
 void CLuaUnitScript::Activate()      { Call(LUAFN_Activate); }
 void CLuaUnitScript::Deactivate()    { Call(LUAFN_Deactivate); }
 void CLuaUnitScript::MoveRate(int curRate)     { Call(LUAFN_MoveRate, curRate); }
-void CLuaUnitScript::FireWeapon(int weaponNum) { Call(LUAFN_FireWeapon, weaponNum + 1); }
-void CLuaUnitScript::EndBurst(int weaponNum)   { Call(LUAFN_EndBurst, weaponNum + 1); }
+void CLuaUnitScript::FireWeapon(int weaponNum) { Call(LUAFN_FireWeapon, weaponNum + LUA_WEAPON_BASE_INDEX); }
+void CLuaUnitScript::EndBurst(int weaponNum)   { Call(LUAFN_EndBurst, weaponNum + LUA_WEAPON_BASE_INDEX); }
 
 
 /******************************************************************************/
@@ -1093,7 +1094,7 @@ int CLuaUnitScript::CallAsUnit(lua_State* L)
 		lua_error(L);
 	}
 
-	return lua_gettop(L) - funcIndex + 1;
+	return (lua_gettop(L) - funcIndex + 1);
 }
 
 

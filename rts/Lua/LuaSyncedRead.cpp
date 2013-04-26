@@ -3087,13 +3087,13 @@ int LuaSyncedRead::GetUnitShieldState(lua_State* L)
 		return 0;
 	}
 
-	CPlasmaRepulser* shield = NULL;
-	const int idx = luaL_optint(L, 2, -1);
+	const CPlasmaRepulser* shield = NULL;
+	const size_t idx = luaL_optint(L, 2, -1) - LUA_WEAPON_BASE_INDEX;
 
-	if (idx < 0 || idx >= unit->weapons.size()) {
-		shield = static_cast<CPlasmaRepulser*>(unit->shieldWeapon);
+	if (idx >= unit->weapons.size()) {
+		shield = static_cast<const CPlasmaRepulser*>(unit->shieldWeapon);
 	} else {
-		shield = dynamic_cast<CPlasmaRepulser*>(unit->weapons[idx]);
+		shield = dynamic_cast<const CPlasmaRepulser*>(unit->weapons[idx]);
 	}
 
 	if (shield == NULL) {
@@ -3162,12 +3162,16 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int weaponNum = luaL_checkint(L, 2) -1;
-	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
+
+	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
+
+	if (weaponNum >= unit->weapons.size()) {
 		return 0;
 	}
+
 	const CWeapon* weapon = unit->weapons[weaponNum];
 	const string key = luaL_optstring(L, 3, "");
+
 	if (key.empty()) { // backwards compatible
 		lua_pushboolean(L, weapon->angleGood);
 		lua_pushboolean(L, weapon->reloadStatus <= gs->frameNum);
@@ -3216,8 +3220,10 @@ int LuaSyncedRead::GetUnitWeaponVectors(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int weaponNum = luaL_checkint(L, 2) -1;
-	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
+
+	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
+
+	if (weaponNum >= unit->weapons.size()) {
 		return 0;
 	}
 
@@ -3250,8 +3256,10 @@ int LuaSyncedRead::GetUnitWeaponTryTarget(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int weaponNum = luaL_checkint(L, 2) -1;
-	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
+
+	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
+
+	if (weaponNum >= unit->weapons.size()) {
 		return 0;
 	}
 
@@ -3279,8 +3287,10 @@ int LuaSyncedRead::GetUnitWeaponTestTarget(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int weaponNum = luaL_checkint(L, 2) -1;
-	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
+
+	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
+
+	if (weaponNum >= unit->weapons.size()) {
 		return 0;
 	}
 
@@ -3308,8 +3318,10 @@ int LuaSyncedRead::GetUnitWeaponTestRange(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int weaponNum = luaL_checkint(L, 2) -1;
-	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
+
+	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
+
+	if (weaponNum >= unit->weapons.size()) {
 		return 0;
 	}
 
@@ -3337,8 +3349,10 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int weaponNum = luaL_checkint(L, 2) -1;
-	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
+
+	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
+
+	if (weaponNum >= unit->weapons.size()) {
 		return 0;
 	}
 
