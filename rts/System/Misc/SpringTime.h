@@ -28,12 +28,14 @@ struct Cpp11Clock {
 	#define i1e6 1000000LL
 	#define i1e9 1000000000LL
 
-	static inline int64_t ToSecs(int64_t x) { return x / i1e9; }
-	static inline int64_t ToMs(int64_t x)   { return x / i1e6; }
-	template<typename T> static inline T ToSecs(int64_t x) { return int(x / i1e6) * 1e-3; }
-	template<typename T> static inline T ToMs(int64_t x)   { return int(x / i1e3) * 1e-3; }
-	template<typename T> static inline T ToNs(int64_t x)   { return x; }
-	static inline int64_t FromMs(int64_t ms) { return ms * i1e6; }
+	static inline int64_t ToSecs(const int64_t x) { return x / i1e9; }
+	static inline int64_t ToMs(const int64_t x)   { return x / i1e6; }
+	template<typename T> static inline T ToSecs(const int64_t x) { return int(x / i1e6) * 1e-3; }
+	template<typename T> static inline T ToMs(const int64_t x)   { return int(x / i1e3) * 1e-3; }
+	template<typename T> static inline T ToNs(const int64_t x)   { return x; }
+	template<typename T> static inline int64_t FromSecs(const T s) { return s * i1e9; }
+	template<typename T> static inline int64_t FromMs(const T ms)  { return ms * i1e6; }
+	template<typename T> static inline int64_t FromNs(const T ns)  { return ns; }
 	static inline std::string GetName() { return "Cpp11Clock"; }
 	static inline int64_t Get() {
 		return chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -49,10 +51,14 @@ private:
 
 public:
 	inline static spring_time gettime() { return spring_time_native(Cpp11Clock::Get()); }
+	inline static spring_time fromNanoSecs(const int64_t ns) { return spring_time_native(Cpp11Clock::FromNs(ns)); }
 
 public:
 	spring_time() : x(0) {}
+	explicit spring_time(const int ms) : x(Cpp11Clock::FromMs(ms)) {}
+	explicit spring_time(const unsigned ms) : x(Cpp11Clock::FromMs(ms)) {}
 	explicit spring_time(const int64_t ms) : x(Cpp11Clock::FromMs(ms)) {}
+	explicit spring_time(const float ms) : x(Cpp11Clock::FromMs(ms)) {}
 
 	spring_time& operator+=(const spring_time v)       { x += v.x; return *this; }
 	spring_time& operator-=(const spring_time v)       { x -= v.x; return *this; }
