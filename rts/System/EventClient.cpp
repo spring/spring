@@ -12,6 +12,8 @@ CEventClient::CEventClient(const std::string& _name, int _order, bool _synced)
 	, order(_order)
 	, synced_(_synced)
 {
+	// Note: virtual functions aren't available in the ctor!
+	//RegisterLinkedEvents(this);
 }
 
 

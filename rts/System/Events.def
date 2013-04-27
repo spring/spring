@@ -1,0 +1,179 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+/**
+ * @file events.def
+ *
+ * @section DESCRIPTION
+ * This file contains a `list` of all known
+ * events & their attributes. You can use
+ * the two preprocessor definitions
+ * SETUP_EVENT & SETUP_UNMANAGED_EVENT to
+ * generate your code from this data.
+ */
+
+
+#ifndef SETUP_EVENT
+	#pragma push_macro("SETUP_EVENT")
+	#define SETUP_EVENT(name,props)
+#endif
+
+#ifndef SETUP_UNMANAGED_EVENT
+	#pragma push_macro("SETUP_UNMANAGED_EVENT")
+	#define SETUP_UNMANAGED_EVENT(name,props)
+#endif
+
+	// synced call-ins
+	SETUP_EVENT(Load, MANAGED_BIT);
+
+	SETUP_EVENT(GamePreload,   MANAGED_BIT);
+	SETUP_EVENT(GameStart,     MANAGED_BIT);
+	SETUP_EVENT(GameOver,      MANAGED_BIT);
+	SETUP_EVENT(GamePaused,    MANAGED_BIT);
+	SETUP_EVENT(GameFrame,     MANAGED_BIT);
+	SETUP_EVENT(TeamDied,      MANAGED_BIT);
+	SETUP_EVENT(TeamChanged,   MANAGED_BIT);
+	SETUP_EVENT(PlayerChanged, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(PlayerAdded,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(PlayerRemoved, MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(UnitCreated,     MANAGED_BIT);
+	SETUP_EVENT(UnitFinished,    MANAGED_BIT);
+	SETUP_EVENT(UnitFromFactory, MANAGED_BIT);
+	SETUP_EVENT(UnitDestroyed,   MANAGED_BIT);
+	SETUP_EVENT(UnitTaken,       MANAGED_BIT);
+	SETUP_EVENT(UnitGiven,       MANAGED_BIT);
+
+	SETUP_EVENT(UnitIdle,       MANAGED_BIT);
+	SETUP_EVENT(UnitCommand,    MANAGED_BIT);
+	SETUP_EVENT(UnitCmdDone,    MANAGED_BIT);
+	SETUP_EVENT(UnitDamaged,    MANAGED_BIT);
+	SETUP_EVENT(UnitExperience, MANAGED_BIT);
+
+	SETUP_EVENT(UnitSeismicPing,  MANAGED_BIT);
+	SETUP_EVENT(UnitEnteredRadar, MANAGED_BIT);
+	SETUP_EVENT(UnitEnteredLos,   MANAGED_BIT);
+	SETUP_EVENT(UnitLeftRadar,    MANAGED_BIT);
+	SETUP_EVENT(UnitLeftLos,      MANAGED_BIT);
+
+	SETUP_EVENT(UnitEnteredWater, MANAGED_BIT);
+	SETUP_EVENT(UnitEnteredAir,   MANAGED_BIT);
+	SETUP_EVENT(UnitLeftWater,    MANAGED_BIT);
+	SETUP_EVENT(UnitLeftAir,      MANAGED_BIT);
+
+	SETUP_EVENT(UnitLoaded,     MANAGED_BIT);
+	SETUP_EVENT(UnitUnloaded,   MANAGED_BIT);
+	SETUP_EVENT(UnitCloaked,    MANAGED_BIT);
+	SETUP_EVENT(UnitDecloaked,  MANAGED_BIT);
+
+	SETUP_EVENT(UnitUnitCollision,    MANAGED_BIT);
+	SETUP_EVENT(UnitFeatureCollision, MANAGED_BIT);
+	SETUP_EVENT(UnitMoved,            MANAGED_BIT);
+	SETUP_EVENT(UnitMoveFailed,       MANAGED_BIT);
+
+	SETUP_EVENT(FeatureCreated,   MANAGED_BIT);
+	SETUP_EVENT(FeatureDestroyed, MANAGED_BIT);
+	SETUP_EVENT(FeatureMoved,     MANAGED_BIT);
+
+	SETUP_EVENT(ProjectileCreated,   MANAGED_BIT);
+	SETUP_EVENT(ProjectileDestroyed, MANAGED_BIT);
+
+	SETUP_EVENT(Explosion, MANAGED_BIT);
+
+	SETUP_EVENT(StockpileChanged, MANAGED_BIT);
+
+	// unsynced call-ins
+	SETUP_EVENT(Save,           MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(UnsyncedHeightMapUpdate, MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(Update,         MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(KeyPress,       MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(KeyRelease,     MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(MouseMove,      MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(MousePress,     MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(MouseRelease,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(MouseWheel,     MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(JoystickEvent,  MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(IsAbove,        MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(GetTooltip,     MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(LastMessagePosition, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(DefaultCommand,      MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(CommandNotify,       MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(AddConsoleLine,      MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(GroupChanged,        MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(GameSetup,           MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(WorldTooltip,        MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(MapDrawCmd,          MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(SunChanged,     MANAGED_BIT | UNSYNCED_BIT); //FIXME make synced? (whole dynSun code needs to then)
+
+	SETUP_EVENT(ViewResize,     MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(DrawGenesis,         MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(DrawWorld,           MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(DrawWorldPreUnit,    MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(DrawWorldShadow,     MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(DrawWorldReflection, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(DrawWorldRefraction, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(DrawScreenEffects,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(DrawScreen,          MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(DrawInMiniMap,       MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(RenderUnitCreated,      MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderUnitDestroyed,    MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderUnitCloakChanged, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderUnitLOSChanged,   MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(RenderFeatureCreated,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderFeatureDestroyed, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderFeatureMoved,     MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(RenderProjectileCreated,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderProjectileDestroyed, MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(GameProgress,  MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(GameID,        MANAGED_BIT);
+
+	SETUP_EVENT(RenderUnitMoved,     MANAGED_BIT | UNSYNCED_BIT);
+
+	// unmanaged call-ins
+	SETUP_UNMANAGED_EVENT(Shutdown, 0);
+	SETUP_UNMANAGED_EVENT(RecvLuaMsg, 0);
+
+	SETUP_UNMANAGED_EVENT(DrawUnit, UNSYNCED_BIT);
+	SETUP_UNMANAGED_EVENT(DrawFeature, UNSYNCED_BIT);
+	SETUP_UNMANAGED_EVENT(RecvSkirmishAIMessage, UNSYNCED_BIT);
+
+	// LuaUI
+	SETUP_UNMANAGED_EVENT(ConfigureLayout, UNSYNCED_BIT | CONTROL_BIT);
+
+	// LuaRules
+	SETUP_UNMANAGED_EVENT(CommandFallback,        CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(AllowCommand,           CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(AllowUnitCreation,      CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(AllowUnitTransfer,      CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(AllowUnitBuildStep,     CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(AllowFeatureCreation,   CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(AllowFeatureBuildStep,  CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(AllowResourceLevel,     CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(AllowResourceTransfer,  CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(AllowDirectUnitControl, CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(AllowStartPosition,     CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(TerraformComplete,      CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(MoveCtrlNotify,         CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(UnitPreDamaged,         CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(ShieldPreDamaged,       CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(AllowWeaponTargetCheck, CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(AllowWeaponTarget,      CONTROL_BIT);
+
+	// LuaIntro
+	SETUP_UNMANAGED_EVENT(DrawLoadScreen, UNSYNCED_BIT);
+	SETUP_UNMANAGED_EVENT(LoadProgress,   UNSYNCED_BIT);
+
+
+
+
+#pragma pop_macro("SETUP_EVENT")
+#pragma pop_macro("SETUP_UNMANAGED_EVENT")
