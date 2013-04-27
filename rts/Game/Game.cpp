@@ -1201,7 +1201,7 @@ bool CGame::Draw() {
 	glEnable(GL_TEXTURE_2D);
 
 	{
-		SCOPED_TIMER("InputReceivers::Draw");
+		SCOPED_TIMER("CInputReceiver::DrawScreen");
 
 		if (!hideInterface) {
 			std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
