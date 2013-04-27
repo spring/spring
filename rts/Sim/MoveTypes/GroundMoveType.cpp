@@ -33,6 +33,7 @@
 #include "System/Log/ILog.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
+#include "System/TimeProfiler.h"
 #include "System/Vec2.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
@@ -876,7 +877,7 @@ void CGroundMoveType::CheckCollisionSkid()
 			const float impactSpeed = (collidee->speed - collider->speed).dot(dif) * 0.5f;
 			const float colliderRelMass = (collider->mass / (collider->mass + collidee->mass));
 			const float colliderRelImpactSpeed = impactSpeed * (1.0f - colliderRelMass);
-			const float collideeRelImpactSpeed = impactSpeed * (       colliderRelMass); 
+			const float collideeRelImpactSpeed = impactSpeed * (       colliderRelMass);
 
 			const float  colliderImpactDmgMult = std::min(colliderRelImpactSpeed * collider->mass * COLLISION_DAMAGE_MULT, MAX_UNIT_SPEED);
 			const float  collideeImpactDmgMult = std::min(collideeRelImpactSpeed * collider->mass * COLLISION_DAMAGE_MULT, MAX_UNIT_SPEED);
@@ -930,7 +931,7 @@ void CGroundMoveType::CheckCollisionSkid()
 		collider->Move(impactImpulse, true);
 		collider->speed += (impactImpulse * 1.8f);
 
-		// damage the collider, no added impulse (!) 
+		// damage the collider, no added impulse (!)
 		if (doColliderDamage) {
 			collider->DoDamage(DamageArray(impactDamageMult), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 		}
@@ -1469,6 +1470,8 @@ void CGroundMoveType::Fail(bool callScript)
 
 void CGroundMoveType::HandleObjectCollisions()
 {
+	SCOPED_TIMER("Unit::MoveType::Collisions");
+
 	static const float3 sepDirMask = float3(1.0f, 0.0f, 1.0f);
 
 	CUnit* collider = owner;
@@ -1596,7 +1599,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 				const float3 squareVec = collider->pos - squarePos;
 
 				if (squareVec.dot(collider->speed) > 0.0f)
-					continue;	
+					continue;
 
 				// RHS magic constant is the radius of a square (sqrt(2*(SQUARE_SIZE>>1)*(SQUARE_SIZE>>1)))
 				const float  sqColRadiusSum = colliderRadius + 5.656854249492381f;
@@ -2151,8 +2154,8 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 		// NOTE:
 		//   the drag terms ensure speed-vector always
 		//   decays if wantedSpeed and deltaSpeed are 0
-		const float dragCoeff = (0.9999f * owner->IsInAir()) + (0.99f * (1 - owner->IsInAir()));
-		const float slipCoeff = (0.9999f * owner->IsInAir()) + (0.95f * (1 - owner->IsInAir()));
+		const float dragCoeff = mix(0.99f, 0.9999f, owner->IsInAir());
+		const float slipCoeff = mix(0.95f, 0.9999f, owner->IsInAir());
 
 		// use terrain-tangent vector because it does not
 		// depend on UnitDef::upright (unlike o->frontdir)
@@ -2176,9 +2179,10 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 		}
 
 		// never drop below terrain while following tangent
-		if (owner->pos.y + speedVector.y <= GetGroundHeight(owner->pos + speedVector)) {
-			speedVector.y = GetGroundHeight(owner->pos + speedVector) - owner->pos.y;
-		}
+		/*const float gndHeight = GetGroundHeight(owner->pos + speedVector);
+		if ((owner->pos.y + speedVector.y) <= gndHeight) {
+			speedVector.y = gndHeight - owner->pos.y;
+		}*/
 	} else {
 		// LuaSyncedCtrl::SetUnitVelocity directly assigns
 		// to owner->speed which gets overridden below, so
