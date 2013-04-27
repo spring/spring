@@ -577,6 +577,9 @@ bool CLuaHandleSynced::HasCallIn(lua_State *L, const string& name)
 		return false;
 	}
 
+	if (name == "CollectGarbage")
+		return true;
+
 	static const std::string unsyncedNames[] = {
 		"DrawUnit",
 		"DrawFeature",

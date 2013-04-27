@@ -172,7 +172,8 @@
 	SETUP_UNMANAGED_EVENT(DrawLoadScreen, UNSYNCED_BIT);
 	SETUP_UNMANAGED_EVENT(LoadProgress,   UNSYNCED_BIT);
 
-
+	// System
+	SETUP_EVENT(CollectGarbage,     MANAGED_BIT | UNSYNCED_BIT);
 
 
 #pragma pop_macro("SETUP_EVENT")

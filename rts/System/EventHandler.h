@@ -203,6 +203,8 @@ class CEventHandler
 		/// it skips network queuing and caching and can be used to calculate the current catchup
 		/// percentage when reconnecting to a running game
 		void GameProgress(int gameFrame);
+
+		void CollectGarbage();
 		/// @}
 
 		inline void LoadedModelRequested();
@@ -366,6 +368,8 @@ class CEventHandler
 		EventClientList listDrawInMiniMap;
 
 		EventClientList listGameProgress;
+
+		EventClientList listCollectGarbage;
 };
 
 

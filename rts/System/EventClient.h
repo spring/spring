@@ -216,6 +216,8 @@ class CEventClient
 
 		virtual void DrawLoadScreen() {}
 		virtual void LoadProgress(const std::string& msg, const bool replace_lastline) {}
+
+		virtual void CollectGarbage() {}
 		/// @}
 };
 
