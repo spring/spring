@@ -64,7 +64,7 @@ namespace fastmath {
 		__m128 vec = _mm_load_ss(&x);
 		vec = _mm_rsqrt_ss(vec);
 		_mm_store_ss(&x, vec);
-		
+
 		return x;
 #else
 		return isqrt_nosse(x);
@@ -82,7 +82,7 @@ namespace fastmath {
 		__m128 vec = _mm_load_ss(&x);
 		vec = _mm_sqrt_ss(vec);
 		_mm_store_ss(&x, vec);
-		
+
 		return x;
 #else
 		return sqrt(x);
@@ -278,8 +278,7 @@ namespace fastmath {
 	* @brief fast version of std::floor
 	*
 	* Like 2-3x faster than glibc ones.
-	* Note: It seems std::floor operates on FPU's 80bit while this custom solution always works on 32bit.
-	* So the results differ at the end of the 32bit precision range.
+	* Note: The results differ at the end of the 32bit precision range.
 	*/
 	template<typename T>
 	inline float floor(const T& f)
@@ -298,7 +297,7 @@ namespace math {
 
 	using fastmath::isqrt;
 	using fastmath::isqrt2;
-	
+
 	using fastmath::floor;
 }
 
