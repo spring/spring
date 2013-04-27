@@ -355,7 +355,7 @@ static sigaction_t& GetSigAction(void (*s_hand)(int))
 
 namespace CrashHandler
 {
-	static void Stacktrace(bool* keepRunning, pthread_t* hThread = NULL, const char* threadName = NULL, const int logLevel = LOG_LEVEL_ERROR)
+	static void Stacktrace(bool* aiCrash, pthread_t* hThread = NULL, const char* threadName = NULL, const int logLevel = LOG_LEVEL_ERROR)
 	{
 		if (threadName) {
 			LOG_I(logLevel, "Stacktrace (%s):", threadName);
@@ -363,10 +363,6 @@ namespace CrashHandler
 			LOG_I(logLevel, "Stacktrace:");
 		}
 
-		bool _keepRunning = false;
-		if (!keepRunning)
-			keepRunning = &_keepRunning;
-		*keepRunning = false;
 		bool containsOglSo = false; //! OpenGL lib -> graphic problem
 		bool containedAIInterfaceSo = false;
 		bool containedSkirmishAISo  = false;
@@ -444,11 +440,11 @@ namespace CrashHandler
 			}
 			if (containedAIInterfaceSo) {
 				LOG_I(logLevel, "This stack trace indicates a problem with an AI Interface library.");
-				*keepRunning = true;
+				if (aiCrash) *aiCrash = true;
 			}
 			if (containedSkirmishAISo) {
 				LOG_I(logLevel, "This stack trace indicates a problem with a Skirmish AI library.");
-				*keepRunning = true;
+				if (aiCrash) *aiCrash = true;
 			}
 
 			LOG_CLEANUP();
@@ -521,28 +517,36 @@ namespace CrashHandler
 		}
 		LOG_L(L_ERROR, "%s in spring %s", error.c_str(), SpringVersion::GetFull().c_str());
 
-		//! print stacktrace
-		bool keepRunning = false;
 
+		const bool nonFatalSignal = false;
+		const bool fatalSignal =
+			(signal == SIGSEGV) ||
+			(signal == SIGILL)  ||
+			(signal == SIGPIPE) ||
+			(signal == SIGFPE)  || // causes a endless loop, and process never gets far the causing cmd :<
+			(signal == SIGABRT) || // same
+			(signal == SIGBUS);
+
+		bool keepRunning = false;
+		bool aiCrash = false;
+
+		if (fatalSignal)
+			keepRunning = false;
+		if (nonFatalSignal)
+			keepRunning = true;
+
+		// print stacktrace
 		PrepareStacktrace();
-		Stacktrace(&keepRunning);
+		Stacktrace(&aiCrash);
 		CleanupStacktrace();
 
-		//! don't try to keep on running after these signals
-		if (keepRunning &&
-		    (signal != SIGSEGV) &&
-		    (signal != SIGILL) &&
-		    (signal != SIGPIPE) &&
-		    (signal != SIGABRT) &&
-		    (signal != SIGBUS)) {
-			keepRunning = false;
-		}
-
-		//! try to clean up
+		// try to clean up
 		if (keepRunning) {
-			bool cleanupOk = false;
-			{
-				//! try to cleanup
+			bool cleanupOk = true;
+
+			// try to cleanup AIs
+			if (aiCrash) {
+				cleanupOk = false;
 				/*if (!containedAIInterfaceSo.empty()) {
 					//LOG_L(L_ERROR, "Trying to kill AI Interface library only ...\n");
 					// TODO
@@ -561,9 +565,9 @@ namespace CrashHandler
 			}
 		}
 
-		//! exit app if we catched a critical one
+		// exit app if we catched a critical one
 		if (!keepRunning) {
-			//! don't handle any further signals when exiting
+			// don't handle any further signals when exiting
 			Remove();
 
 			std::ostringstream buf;
@@ -576,9 +580,8 @@ namespace CrashHandler
 	}
 
 	void OutputStacktrace() {
-		bool keepRunning = true;
 		PrepareStacktrace();
-		Stacktrace(&keepRunning);
+		Stacktrace(NULL);
 		CleanupStacktrace();
 	}
 
