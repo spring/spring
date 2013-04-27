@@ -1028,11 +1028,6 @@ bool CGame::UpdateUnsynced()
 		}
 	}
 
-
-	if (newSimFrame) {
-		CInputReceiver::CollectGarbage();
-	}
-
 	// always update ExtraTexture & SoundListener with <=30Hz (even when paused)
 	if (newSimFrame || gs->paused) {
 		static spring_time lastUpdate = spring_gettime();
@@ -1040,6 +1035,12 @@ bool CGame::UpdateUnsynced()
 
 		if (!gs->paused || deltaSec >= (1.0f/GAME_SPEED)) {
 			lastUpdate = currentTime;
+
+			{
+				SCOPED_TIMER("CollectGarbage");
+				eventHandler.CollectGarbage();
+				CInputReceiver::CollectGarbage();
+			}
 
 			{
 				SCOPED_TIMER("GroundDrawer::UpdateExtraTex");

@@ -420,15 +420,15 @@ int CLuaHandle::RunCallInTraceback(const LuaHashString* hs, int inArgs, int outA
 
 	SELECT_LUA_STATE();
 	SetRunning(L, true);
-	// disable GC outside of this scope to prevent sync errors and similar
-	lua_gc(L, LUA_GCRESTART, 0);
 	int top = lua_gettop(L);
 	MatrixStateData prevMSD = L->lcd->PushMatrixState();
 	LuaOpenGL::InitMatrixState(L, hs);
-	const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
+		// disable GC outside of this scope to prevent sync errors and similar
+		//lua_gc(L, LUA_GCRESTART, 0); // we collect garbage now in its own callin "CollectGarbage"
+			const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
+		lua_gc(L, LUA_GCSTOP, 0); // only run GC inside of "SetRunning(L, true) ... SetRunning(L, false)"!
 	LuaOpenGL::CheckMatrixState(L, hs, error);
 	L->lcd->PopMatrixState(prevMSD);
-	lua_gc(L, LUA_GCSTOP, 0);
 
 	SetRunning(L, false);
 
@@ -2862,6 +2862,32 @@ const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, in
 	return outData;
 }
 
+/******************************************************************************/
+/******************************************************************************/
+
+void CLuaHandle::CollectGarbage()
+{
+	SELECT_LUA_STATE();
+	lua_gc(L, LUA_GCSTOP, 0); // don't collect garbage outside of this function
+
+	//FIXME make configureable?
+	const int memUsageInMB = lua_gc(L, LUA_GCCOUNT, 0) / 1024;
+	static const float TIME_PER_MB = 0.04f; // 40microsec per MB -> 25 * 40microsec = 1000microsec = 1millisec (30x per second!)
+	const float maxRuntime = TIME_PER_MB * memUsageInMB;
+	const spring_time endTime = spring_gettime() + spring_msecs(maxRuntime);
+
+	// Collect Garbage till time runs out
+	SetRunning(L, true);
+		do {
+			if (lua_gc(L, LUA_GCSTEP, 2)) {
+				SetRunning(L, false);
+				return;
+			}
+		} while(spring_gettime() < endTime);
+	SetRunning(L, false);
+
+	//LOG("%s GC not finished in time %.3fms %iMB", GetName().c_str(), (spring_gettime() - endTime).toMilliSecsf() + maxRuntime, memUsageInMB);
+}
 
 /******************************************************************************/
 /******************************************************************************/

@@ -286,6 +286,9 @@ bool CLuaUI::HasCallIn(lua_State *L, const string& name)
 		return false;
 	}
 
+	if (name == "CollectGarbage")
+		return true;
+
 	lua_getglobal(L, name.c_str());
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, 1);

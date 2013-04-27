@@ -275,6 +275,12 @@ void CEventHandler::PlayerRemoved(int playerID, int reason)
 /******************************************************************************/
 /******************************************************************************/
 
+void CEventHandler::CollectGarbage()
+{
+	ITERATE_EVENTCLIENTLIST(CollectGarbage);
+}
+
+
 void CEventHandler::Load(IArchive* archive)
 {
 	ITERATE_EVENTCLIENTLIST(Load, archive);

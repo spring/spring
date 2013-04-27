@@ -255,6 +255,8 @@ class CLuaHandle : public CEventClient
 
 		void GameProgress(int frameNum);
 
+		void CollectGarbage();
+
 	public: // custom call-in  (inter-script calls)
 		virtual bool HasSyncedXCall(const string& funcName) { return false; }
 		virtual bool HasUnsyncedXCall(lua_State* srcState, const string& funcName) { return false; }
@@ -336,7 +338,7 @@ class CLuaHandle : public CEventClient
 
 	protected:
 		bool userMode;
-		
+
 		lua_State* L_Sim;
 		lua_State* L_Draw;
 

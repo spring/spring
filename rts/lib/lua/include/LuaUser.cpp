@@ -4,6 +4,9 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include "System/Platform/Threading.h"
 
+///////////////////////////////////////////////////////////////////////////
+// Custom Lua Mutexes
+
 /*boost::recursive_mutex* getLuaMutex(bool userMode, bool primary) {
 #if (LUA_MT_OPT & LUA_MUTEX)
 	if(userMode)
@@ -54,6 +57,11 @@ void LuaDestroyMutex(lua_State* L)
 	}
 }
 
+
+
+///////////////////////////////////////////////////////////////////////////
+// Custom Memory Allocator
+
 static Threading::AtomicCounterInt64 allocedCur = 0;
 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
@@ -66,14 +74,7 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 		return NULL;
 	}
 
-	if (nsize > osize) {
-		if (allocedCur > (256 * 1024*1024)) {
-			return NULL;
-		}
-	}
-
-	allocedCur -= osize;
-	allocedCur += nsize;
+	allocedCur += nsize - osize;
 	return realloc(ptr, nsize);
 }
 
