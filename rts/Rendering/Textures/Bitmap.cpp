@@ -34,8 +34,9 @@ static const float blurkernel[9] = {
 };
 // this is a minimal list of file formats that (should) be available at all platforms
 static const int formatList[] = {
-		IL_PNG, IL_JPG, IL_TGA, IL_DDS, IL_BMP, IL_RGBA, IL_RGB,
-		IL_BGRA, IL_BGR, IL_COLOUR_INDEX, IL_LUMINANCE
+	IL_PNG, IL_JPG, IL_TGA, IL_DDS, IL_BMP,
+	IL_RGBA, IL_RGB, IL_BGRA, IL_BGR,
+	IL_COLOUR_INDEX, IL_LUMINANCE
 };
 
 static bool IsValidImageFormat(int format) {
