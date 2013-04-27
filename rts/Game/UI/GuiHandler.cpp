@@ -1016,7 +1016,7 @@ void CGuiHandler::SetCursorIcon() const
 		if (useMinimap && (cmdDesc.id < 0)) {
 			BuildInfo bi;
 			bi.pos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
-			bi.buildFacing = bi.buildFacing;
+			bi.buildFacing = buildFacing;
 			bi.def = unitDefHandler->GetUnitDefByID(-cmdDesc.id);
 			bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 			// if an unit (enemy), is not in LOS, then TestUnitBuildSquare()
