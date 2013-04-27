@@ -13,7 +13,6 @@ class CStrafeAirMoveType: public AAirMoveType
 {
 	CR_DECLARE(CStrafeAirMoveType);
 	CR_DECLARE_SUB(DrawLine);
-	CR_DECLARE_SUB(RudderInfo);
 
 public:
 	CStrafeAirMoveType(CUnit* owner);
@@ -73,19 +72,6 @@ public:
 	float crashElevator;
 	float crashRudder;
 
-	struct RudderInfo{
-		CR_DECLARE_STRUCT(RudderInfo);
-		RudderInfo() : rotation(0.f) {}
-		float rotation;
-	};
-
-	RudderInfo rudder;
-	RudderInfo elevator;
-	RudderInfo aileronRight;
-	RudderInfo aileronLeft;
-	std::vector<RudderInfo*> rudders;
-
-	float lastRudderUpdate;
 	float lastRudderPos;
 	float lastElevatorPos;
 	float lastAileronPos;
