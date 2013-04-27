@@ -2186,7 +2186,7 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 		const float newGroundHeight = GetGroundHeight(owner->pos + speedVector);
 
 		if ((owner->pos.y + speedVector.y) <= newGroundHeight) {
-			speedVector.y = Clamp(newGroundHeight - owner->pos.y, -std::numeric_limits<float>::max(), math::fabs(newGroundHeight - oldGroundHeight));
+			speedVector.y = std::min(newGroundHeight - owner->pos.y, math::fabs(newGroundHeight - oldGroundHeight));
 		}
 	} else {
 		// LuaSyncedCtrl::SetUnitVelocity directly assigns
