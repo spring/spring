@@ -2179,10 +2179,15 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 		}
 
 		// never drop below terrain while following tangent
-		/*const float gndHeight = GetGroundHeight(owner->pos + speedVector);
-		if ((owner->pos.y + speedVector.y) <= gndHeight) {
-			speedVector.y = gndHeight - owner->pos.y;
-		}*/
+		// (SPEED must be adjusted so that it does not keep
+		// building up when the unit is on the ground or is
+		// within one frame of hitting it)
+		const float oldGroundHeight = GetGroundHeight(owner->pos              );
+		const float newGroundHeight = GetGroundHeight(owner->pos + speedVector);
+
+		if ((owner->pos.y + speedVector.y) <= newGroundHeight) {
+			speedVector.y = Clamp(newGroundHeight - owner->pos.y, -std::numeric_limits<float>::max(), math::fabs(newGroundHeight - oldGroundHeight));
+		}
 	} else {
 		// LuaSyncedCtrl::SetUnitVelocity directly assigns
 		// to owner->speed which gets overridden below, so
