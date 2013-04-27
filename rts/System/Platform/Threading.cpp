@@ -38,9 +38,9 @@ namespace Threading {
 	static int simThreadID      = noThreadID;
 	static int batchThreadID    = noThreadID;
 #else
-	static boost::thread::id noThreadID;
-	static boost::thread::id simThreadID;
-	static boost::thread::id batchThreadID;
+	static NativeThreadId noThreadID = -1;
+	static NativeThreadId simThreadID;
+	static NativeThreadId batchThreadID;
 #endif
 #if defined(__APPLE__)
 #elif defined(WIN32)
@@ -222,48 +222,45 @@ namespace Threading {
 		}
 		OMPInited = true;
 
-	#if defined(_OPENMP) && !defined(DEDICATED)
-		if (useOMP) {
-			boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
-			boost::uint32_t mainAffinity  = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
-			boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
+	#ifndef DEDICATED
+		#ifdef _OPENMP
+			if (useOMP) {
+				boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
+				boost::uint32_t mainAffinity  = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
+				boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
 
-			// For latency reasons our openmp threads yield rarely and so eat a lot cputime with idleing.
-			// So it's better we always leave 1 core free for our other threads, drivers & OS
-			if (omp_get_max_threads() > 2)
-				omp_set_num_threads(omp_get_max_threads() - 1);
+				// For latency reasons our openmp threads yield rarely and so eat a lot cputime with idleing.
+				// So it's better we always leave 1 core free for our other threads, drivers & OS
+				if (omp_get_max_threads() > 2)
+					omp_set_num_threads(omp_get_max_threads() - 1);
 
-			streflop_init_omp();
+				streflop_init_omp();
 
-			// omp threads
-			boost::uint32_t ompCores = 0;
-			Threading::OMPCheck();
-			#pragma omp parallel reduction(|:ompCores)
-			{
-				int i = omp_get_thread_num();
-				if (i != 0) { // 0 is the source thread
-					Threading::SetThreadName(IntToString(i, "omp%i"));
-					//boost::uint32_t ompCore = 1 << i;
-					boost::uint32_t ompCore = GetOpenMPCpuCore(i - 1, ompAvailCores, mainAffinity);
-					Threading::SetAffinity(ompCore);
-					ompCores |= ompCore;
+				// omp threads
+				boost::uint32_t ompCores = 0;
+				Threading::OMPCheck();
+				#pragma omp parallel reduction(|:ompCores)
+				{
+					int i = omp_get_thread_num();
+					if (i != 0) { // 0 is the source thread
+						Threading::SetThreadName(IntToString(i, "omp%i"));
+						//boost::uint32_t ompCore = 1 << i;
+						boost::uint32_t ompCore = GetOpenMPCpuCore(i - 1, ompAvailCores, mainAffinity);
+						Threading::SetAffinity(ompCore);
+						ompCores |= ompCore;
+					}
 				}
+
+				// mainthread
+				boost::uint32_t nonOmpCores = ~ompCores;
+				if (mainAffinity == 0) mainAffinity = systemCores;
+				Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
+			} else
+		#endif
+			{
+				Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
 			}
-
-			// mainthread
-			boost::uint32_t nonOmpCores = ~ompCores;
-			if (mainAffinity == 0) mainAffinity = systemCores;
-			Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
-		} else
 	#endif
-		{
-			Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
-		}
-	}
-
-	void OMPError() {
-		LOG_L(L_ERROR, "OMPCheck: Attempt to use OMP before initialization");
-		CrashHandler::OutputStacktrace();
 	}
 
 	void SetThreadScheduler()
@@ -332,7 +329,7 @@ namespace Threading {
 
 	bool IsMainThread()
 	{
-		return (boost::this_thread::get_id() == Threading::mainThreadID);
+		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), nativeMainThreadID);
 	}
 
 	bool IsMainThread(NativeThreadId threadID)
@@ -344,16 +341,17 @@ namespace Threading {
 
 	void SetSimThread(bool set) {
 	#ifdef USE_GML // GML::ThreadNumber() is likely to be much faster than boost::this_thread::get_id()
-		batchThreadID = simThreadID = set ? GML::ThreadNumber() : noThreadID;
+		simThreadID = set ? GML::ThreadNumber() : noThreadID;
 	#else
-		batchThreadID = simThreadID = set ? boost::this_thread::get_id() : noThreadID;
+		simThreadID = set ? Threading::GetCurrentThreadId() : noThreadID;
 	#endif
+		batchThreadID = simThreadID;
 	}
 	bool IsSimThread() {
 	#ifdef USE_GML
 		return GML::ThreadNumber() == simThreadID;
 	#else
-		return boost::this_thread::get_id() == simThreadID;
+		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), simThreadID);
 	#endif
 	}
 
@@ -370,14 +368,14 @@ namespace Threading {
 	#ifdef USE_GML // GML::ThreadNumber() is likely to be much faster than boost::this_thread::get_id()
 		batchThreadID = set ? GML::ThreadNumber() : noThreadID;
 	#else
-		batchThreadID = set ? boost::this_thread::get_id() : noThreadID;
+		batchThreadID = set ? Threading::GetCurrentThreadId() : noThreadID;
 	#endif
 	}
 	bool IsBatchThread() {
 	#ifdef USE_GML
 		return GML::ThreadNumber() == batchThreadID;
 	#else
-		return boost::this_thread::get_id() == batchThreadID;
+		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), batchThreadID);
 	#endif
 	}
 

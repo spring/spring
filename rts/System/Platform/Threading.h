@@ -55,7 +55,6 @@ namespace Threading {
 	 * OpenMP related stuff
 	 */
 	void InitOMP(bool useOMP);
-	void OMPError();
 	extern bool OMPInited;
 	inline void OMPCheck();
 
@@ -114,21 +113,34 @@ namespace Threading {
 namespace Threading {
 	bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2)
 	{
-	#ifdef WIN32
-		return (thID1 == thID2);
-	#else
-		return pthread_equal(thID1, thID2);
+	#ifndef WIN32
+		// quote from the pthread_equal manpage:
+		// Implementations may choose to define a thread ID as a structure.
+		// This allows additional flexibility and robustness over using an int.
+		//
+		// -> Afaik only windows implementation of pthread uses it, but we don't use pthread on windows.
+		//   So there is no reason for us to use the much slower function.
+
+		//return pthread_equal(thID1, thID2);
 	#endif
+
+		return (thID1 == thID2);
 	}
 
+
 	void OMPCheck() {
-	#ifndef NDEBUG
-		if (!OMPInited)
-			OMPError();
-	#endif
-	#if !defined(DEDICATED) && defined(_OPENMP)
-		if (GML::Enabled()) // the only way to completely avoid OMP threads to be created
-			omp_set_num_threads(1); // is to call omp_set_num_threads before EVERY omp section
+	#ifndef DEDICATED
+		#ifndef NDEBUG
+			if (!OMPInited) {
+				throw ("OMPCheck: Attempt to use OMP before initialization");
+				//LOG_L(L_ERROR, "OMPCheck: Attempt to use OMP before initialization");
+				//CrashHandler::OutputStacktrace();
+			}
+		#endif
+		#ifdef _OPENMP
+			if (GML::Enabled()) // the only way to completely avoid OMP threads to be created
+				omp_set_num_threads(1); // is to call omp_set_num_threads before EVERY omp section
+		#endif
 	#endif
 	}
 
