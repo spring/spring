@@ -32,6 +32,25 @@ static const float blurkernel[9] = {
 	2.0f/16.0f, 4.0f/16.0f, 2.0f/16.0f,
 	1.0f/16.0f, 2.0f/16.0f, 1.0f/16.0f
 };
+// this is a minimal list of file formats that (should) be available at all platforms
+static const int formatList[] = {
+		IL_PNG, IL_JPG, IL_TGA, IL_DDS, IL_BMP, IL_RGBA, IL_RGB,
+		IL_BGRA, IL_BGR, IL_COLOUR_INDEX, IL_LUMINANCE
+};
+
+static bool IsValidImageFormat(int format) {
+	bool valid = false;
+
+	// check if format is in the allowed list
+	for (size_t i = 0; i < (sizeof(formatList) / sizeof(int)); i++) {
+		if (format == formatList[i]) {
+			valid = true;
+			break;
+		}
+	}
+
+	return valid;
+}
 
 
 //////////////////////////////////////////////////////////////////////
@@ -245,22 +264,8 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	}
 
 	{
-		// check if format is in the allowed list
-		// this is a minimal list of file formats that (should) be available at all platforms
-		const int format = ilGetInteger(IL_IMAGE_FORMAT);
-		static const int formatList [] = {
-				IL_PNG, IL_JPG, IL_TGA, IL_DDS, IL_BMP, IL_RGBA, IL_RGB,
-				IL_BGRA, IL_BGR, IL_COLOUR_INDEX, IL_LUMINANCE
-			};
-		bool valid = false;
-		for (int i=0; i<sizeof(formatList); i++) {
-			if (format == formatList[i]) {
-				valid = true;
-				break;
-			}
-		}
-		if (!valid) {
-			LOG_L(L_ERROR, "Invalid image format for %s: %d", filename.c_str(), format);
+		if (!IsValidImageFormat(ilGetInteger(IL_IMAGE_FORMAT))) {
+			LOG_L(L_ERROR, "Invalid image format for %s: %d", filename.c_str(), ilGetInteger(IL_IMAGE_FORMAT));
 		}
 	}
 
