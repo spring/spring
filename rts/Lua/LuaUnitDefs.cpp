@@ -410,7 +410,7 @@ static int WeaponsTable(lua_State* L, const void* data)
 	for (size_t i = 0; i < weapons.size(); i++) {
 		const UnitDefWeapon& udw = weapons[i];
 		const WeaponDef* weapon = udw.def;
-		lua_pushnumber(L, i + 1);
+		lua_pushnumber(L, i + LUA_WEAPON_BASE_INDEX);
 		lua_newtable(L); {
 			HSTR_PUSH_NUMBER(L, "weaponDef",   weapon->id);
 			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo);

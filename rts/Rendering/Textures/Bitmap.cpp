@@ -43,7 +43,7 @@ static bool IsValidImageFormat(int format) {
 	bool valid = false;
 
 	// check if format is in the allowed list
-	for (size_t i = 0; i < (sizeof(formatList) / sizeof(int)); i++) {
+	for (size_t i = 0; i < (sizeof(formatList) / sizeof(formatList[0])); i++) {
 		if (format == formatList[i]) {
 			valid = true;
 			break;
