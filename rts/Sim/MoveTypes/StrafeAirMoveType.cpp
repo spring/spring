@@ -20,7 +20,6 @@
 #include "System/myMath.h"
 
 CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (NULL));
-CR_BIND(CStrafeAirMoveType::RudderInfo, );
 
 CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(maneuver),
@@ -50,13 +49,6 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(crashElevator),
 	CR_MEMBER(crashRudder),
 
-	CR_MEMBER(rudder),
-	CR_MEMBER(elevator),
-	CR_MEMBER(aileronRight),
-	CR_MEMBER(aileronLeft),
-	CR_MEMBER(rudders),
-
-	CR_MEMBER(lastRudderUpdate),
 	CR_MEMBER(lastRudderPos),
 	CR_MEMBER(lastElevatorPos),
 	CR_MEMBER(lastAileronPos),
@@ -66,8 +58,6 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 
 	CR_RESERVED(63)
 ));
-
-CR_REG_METADATA_SUB(CStrafeAirMoveType, RudderInfo, (CR_MEMBER(rotation)));
 
 
 
@@ -137,10 +127,9 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	crashElevator = gs->randFloat();
 	crashRudder = gs->randFloat() - 0.5f;
 
-	lastRudderUpdate = gs->frameNum;
-	lastElevatorPos = 0;
-	lastRudderPos = 0;
-	lastAileronPos = 0;
+	lastRudderPos = 0.0f;
+	lastElevatorPos = 0.0f;
+	lastAileronPos = 0.0f;
 
 	exitVector = gs->randVector();
 	exitVector.y = math::fabs(exitVector.y);
@@ -160,7 +149,7 @@ bool CStrafeAirMoveType::Update()
 	// otherwise we might fall through the map when stunned
 	// (the kill-on-impact code is not reached in that case)
 	if ((owner->IsStunned() && !owner->IsCrashing()) || owner->beingBuilt) {
-		UpdateAirPhysics(0, lastAileronPos, lastElevatorPos, 0, ZeroVector);
+		UpdateAirPhysics(0.0f * lastRudderPos, lastAileronPos, lastElevatorPos, 0, ZeroVector);
 		return (HandleCollisions());
 	}
 
@@ -522,32 +511,38 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 	}
 
 	// roll
-	const float maxAileronSpeedf = maxAileron * speedf;
-	const float maxAileronSpeedf2 = maxAileronSpeedf * 4.0f;
-	if (speedf > 0.45f && pos.y + owner->speed.y * 60 * math::fabs(frontdir.y) + std::min(0.0f, float(updir.y)) * 150 > gHeightAW + 60 + math::fabs(rightdir.y) * 150) {
-		const float goalBankDif = goalDotRight + rightdir.y * 0.2f;
-		if (goalBankDif > maxAileronSpeedf2) {
-			aileron = 1;
-		} else if (goalBankDif < -maxAileronSpeedf2) {
-			aileron = -1;
-		} else if (maxAileronSpeedf2 > 0.0f) {
-			aileron = goalBankDif / maxAileronSpeedf2;
-		}
-	} else {
-		if (rightdir.y > 0.0f) {
-			if (rightdir.y > maxAileronSpeedf || frontdir.y < -0.7f) {
+	{
+		const float maxAileronSpeedf = maxAileron * speedf;
+		const float maxAileronSpeedf2 = maxAileronSpeedf * 4.0f;
+		const float minPredictedHeight = pos.y + owner->speed.y * 60.0f * math::fabs(frontdir.y) + std::min(0.0f, updir.y * 1.0f) * (GAME_SPEED * 5);
+		const float maxPredictedHeight = gHeightAW + 60.0f + math::fabs(rightdir.y) * (GAME_SPEED * 5);
+
+		if (speedf > 0.45f && minPredictedHeight > maxPredictedHeight) {
+			const float goalBankDif = goalDotRight + rightdir.y * 0.2f;
+
+			if (goalBankDif > maxAileronSpeedf2) {
 				aileron = 1;
-			} else {
-				if (maxAileronSpeedf > 0.0f) {
-					aileron = rightdir.y / maxAileronSpeedf;
-				}
+			} else if (goalBankDif < -maxAileronSpeedf2) {
+				aileron = -1;
+			} else if (maxAileronSpeedf2 > 0.0f) {
+				aileron = goalBankDif / maxAileronSpeedf2;
 			}
 		} else {
-			if (rightdir.y < -maxAileronSpeedf || frontdir.y < -0.7f) {
-				aileron = -1;
+			if (rightdir.y > 0.0f) {
+				if (rightdir.y > maxAileronSpeedf || frontdir.y < -0.7f) {
+					aileron = 1;
+				} else {
+					if (maxAileronSpeedf > 0.0f) {
+						aileron = rightdir.y / maxAileronSpeedf;
+					}
+				}
 			} else {
-				if (maxAileronSpeedf > 0.0f) {
-					aileron = rightdir.y / maxAileronSpeedf;
+				if (rightdir.y < -maxAileronSpeedf || frontdir.y < -0.7f) {
+					aileron = -1;
+				} else {
+					if (maxAileronSpeedf > 0.0f) {
+						aileron = rightdir.y / maxAileronSpeedf;
+					}
 				}
 			}
 		}
@@ -556,6 +551,7 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 	// yaw
 	if (pos.y > gHeightAW + 30) {
 		const float maxRudderSpeedf = maxRudder * speedf;
+
 		if (goalDotRight < -maxRudderSpeedf) {
 			rudder = -1;
 		} else if (goalDotRight > maxRudderSpeedf) {
@@ -564,7 +560,8 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 			if (maxRudderSpeedf > 0.0f) {
 				rudder = goalDotRight / maxRudderSpeedf;
 				if (math::fabs(rudder) < 0.01f && aGoalDotFront < 0.0f) {
-					rudder = (goalDotRight < 0.0f) ? -0.01f : 0.01f; // target almost straight behind us, we have to choose a direction
+					// target almost straight behind us, we have to choose a direction
+					rudder = (goalDotRight < 0.0f) ? -0.01f : 0.01f;
 				}
 			}
 		}
@@ -736,7 +733,8 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 			if (maxRudderSpeedf > 0.0f) {
 				rudder = goalDotRight / maxRudderSpeedf;
 				if (math::fabs(rudder) < 0.01f && aGoalDotFront < 0.0f) {
-					rudder = (goalDotRight < 0.0f) ? -0.01f : 0.01f; // target almost straight behind us, we have to choose a direction
+					// target almost straight behind us, we have to choose a direction
+					rudder = (goalDotRight < 0.0f) ? -0.01f : 0.01f;
 				}
 			} else {
 				rudder = 0;
@@ -808,13 +806,18 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 	const float3& pos = owner->pos;
 	      float3& speed = owner->speed;
 
+	SyncedFloat3& rightdir = owner->rightdir;
+	SyncedFloat3& frontdir = owner->frontdir;
+	SyncedFloat3& updir    = owner->updir;
+
 	const float currentHeight = pos.y - (owner->unitDef->canSubmerge?
 		ground->GetHeightReal(pos.x, pos.z):
 		ground->GetHeightAboveWater(pos.x, pos.z));
+	const float yawSign = ((goalPos - pos).dot(rightdir) >= 0.0f) * 2.0f - 1.0f;
 
-	if (currentHeight > wantedHeight) {
-		SetState(AIRCRAFT_FLYING);
-	}
+	frontdir += (rightdir * yawSign * (maxRudder * speed.y));
+	frontdir.Normalize();
+	rightdir = frontdir.cross(updir);
 
 	speed.y += (maxAcc * GetVTOLAccelerationSign(currentHeight, wantedHeight, speed.y, true));
 
@@ -822,9 +825,12 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 	if (currentHeight > wantedHeight * 0.4f) {
 		speed += (owner->frontdir * maxAcc);
 	}
+	if (currentHeight > wantedHeight) {
+		SetState(AIRCRAFT_FLYING);
+	}
 
 	owner->Move(speed *= invDrag, true);
-	owner->UpdateDirVectors(owner->IsOnGround());
+	owner->SetHeadingFromDirection();
 	owner->UpdateMidAndAimPos();
 }
 
@@ -940,7 +946,6 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 
 	bool nextPosInBounds = true;
 
-	lastRudderPos = rudder;
 	lastAileronPos = aileron;
 	lastElevatorPos = elevator;
 
