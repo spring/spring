@@ -126,6 +126,9 @@ local sp_WaitForTurn = Spring.UnitScript.WaitForTurn
 local sp_SetPieceVisibility = Spring.UnitScript.SetPieceVisibility
 local sp_SetDeathScriptFinished = Spring.UnitScript.SetDeathScriptFinished
 
+local LUA_WEAPON_MIN_INDEX = 1
+local LUA_WEAPON_MAX_INDEX = LUA_WEAPON_MIN_INDEX + 31
+
 local UNITSCRIPT_DIR = (UNITSCRIPT_DIR or "scripts/"):lower()
 local VFSMODE = VFS.ZIP_ONLY
 if (Spring.IsDevLuaEnabled()) then
@@ -440,7 +443,7 @@ end
 
 function Spring.UnitScript.GetLongestReloadTime(unitID)
 	local longest = 0
-	for i=0,31 do
+	for i = LUA_WEAPON_MIN_INDEX, LUA_WEAPON_MAX_INDEX do
 		local reloadTime = sp_GetUnitWeaponState(unitID, i, "reloadTime")
 		if (not reloadTime) then break end
 		if (reloadTime > longest) then longest = reloadTime end
