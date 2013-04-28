@@ -732,7 +732,7 @@
 ** extra when a thread is created/deleted/resumed/yielded.
 */
 //SPRING
-#if !defined(BUILDING_AI) || !defined(DEDICATED) || !defined(UNITSYNC)
+#if !defined(BUILDING_AI) && !defined(DEDICATED) && !defined(UNITSYNC)
 	#ifndef LUA_USER_H
 		#define LUA_USER_H "LuaUser.h"
 	#endif
@@ -748,6 +748,13 @@
 	//#define luai_userstateyield(L,n)	LuaMutexYield(L)
 	//#define lua_lock(L) 			LuaMutexLock(L)
 	//#define lua_unlock(L) 			LuaMutexUnlock(L)
+#else
+	#define luai_userstateopen(L)		((void)L)
+	#define luai_userstateclose(L)		((void)L)
+	#define luai_userstatethread(L,L1)	((void)L)
+	#define luai_userstatefree(L)		((void)L)
+	#define luai_userstateresume(L,n)	((void)L)
+	#define luai_userstateyield(L,n)	((void)L)
 #endif
 
 /*
