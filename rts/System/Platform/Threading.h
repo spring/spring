@@ -113,15 +113,17 @@ namespace Threading {
 namespace Threading {
 	bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2)
 	{
-	#ifndef WIN32
+	#ifdef __APPLE__
 		// quote from the pthread_equal manpage:
 		// Implementations may choose to define a thread ID as a structure.
 		// This allows additional flexibility and robustness over using an int.
 		//
-		// -> Afaik only windows implementation of pthread uses it, but we don't use pthread on windows.
-		//   So there is no reason for us to use the much slower function.
-
-		//return pthread_equal(thID1, thID2);
+		// -> Linux implementation seems always to be done as integer type.
+		//    Only Windows & MacOSX use structs afaik. But for Windows we use their native thread funcs.
+		//    So only MacOSX is left.
+		{
+			return pthread_equal(thID1, thID2);
+		}
 	#endif
 
 		return (thID1 == thID2);
