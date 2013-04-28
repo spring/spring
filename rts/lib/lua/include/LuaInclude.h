@@ -84,11 +84,7 @@ inline luaContextData* GetLuaContextData(const lua_State* L)
 }
 
 inline lua_State* LUA_OPEN(luaContextData* lcd = NULL) {
-#if !defined(BUILDING_AI) && !defined(DEDICATED) && !defined(UNITSYNC)
 	lua_State* L = lua_newstate(spring_lua_alloc, lcd); // we want to use our own memory allocator
-#else
-	lua_State* L = luaL_newstate();
-#endif
 	return L;
 }
 
