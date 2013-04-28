@@ -34,10 +34,9 @@ public:
 		DISCONNECTED
 	};
 	State myState;
-	
+
 	int lastFrameResponse;
 	int speedControl;
-	int luaLockTime;
 
 	bool isLocal;
 	bool isReconn;

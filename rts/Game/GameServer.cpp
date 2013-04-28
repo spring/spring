@@ -463,7 +463,6 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 
 			case NETMSG_AI_STATE_CHANGED: /* many of these messages are not likely to be sent by a spec, but there are cheats */
 			case NETMSG_ALLIANCE:
-			case NETMSG_CUSTOM_DATA:
 			case NETMSG_DC_UPDATE:
 			case NETMSG_DIRECT_CONTROL:
 			case NETMSG_PATH_CHECKSUM:
@@ -853,7 +852,7 @@ void CGameServer::LagProtection()
 			const int curPing = (serverFrameNum - player.lastFrameResponse);
 			Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, player.cpuUsage, curPing));
 
-			const float playerCpuUsage = player.isLocal ? player.cpuUsage : player.cpuUsage - 0.0025f * (float)player.luaLockTime;
+			const float playerCpuUsage = player.isLocal ? player.cpuUsage : player.cpuUsage;
 			const float correctedCpu   = Clamp(playerCpuUsage, 0.0f, 1.0f);
 
 			if (player.isReconn && curPing < 2 * GAME_SPEED)
@@ -1012,23 +1011,6 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 		case NETMSG_CPU_USAGE:
 			players[a].cpuUsage = *((float*)&inbuf[1]);
 			break;
-
-		case NETMSG_CUSTOM_DATA: {
-			unsigned playerNum = inbuf[1];
-			if (playerNum != a) {
-				Message(str(format(WrongPlayer) %msgCode %a %playerNum));
-				break;
-			}
-			const enum CustomData dataType = (enum CustomData)inbuf[2];
-			switch (dataType) {
-				case CUSTOM_DATA_LUADRAWTIME:
-					players[a].luaLockTime = *((int*)&inbuf[3]);
-					break;
-				default:
-					Message(str(format("Player %s sent invalid CustomData type %d") %players[a].name %dataType));
-			}
-			break;
-		}
 
 		case NETMSG_QUIT: {
 			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" normal quit"));
@@ -1736,7 +1718,7 @@ void CGameServer::ServerReadNet()
 				unsigned short netversion;
 				msg >> netversion;
 				if (netversion != NETWORK_VERSION)
-					throw netcode::UnpackPacketException(str(format("Wrong network version: %d, required version: %d") %(int)netversion %(int)NETWORK_VERSION)); 
+					throw netcode::UnpackPacketException(str(format("Wrong network version: %d, required version: %d") %(int)netversion %(int)NETWORK_VERSION));
 				msg >> name;
 				msg >> passwd;
 				msg >> version;

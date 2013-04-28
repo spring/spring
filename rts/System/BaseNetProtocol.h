@@ -85,7 +85,6 @@ enum NETMSG {
 	                              // std::string mod, int modChecksum, int randomSeed (each string ends with \0)
 	NETMSG_ALLIANCE         = 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
 	NETMSG_CCOMMAND         = 54, // /* short! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
-	NETMSG_CUSTOM_DATA      = 55, // uchar myPlayerNum, uchar dataType, uchar dataValue
 	NETMSG_TEAMSTAT         = 60, // uchar teamNum, struct TeamStatistics statistics      # used by LadderBot #
 
 	NETMSG_ATTEMPTCONNECT   = 65, // ushort msgsize, ushort netversion, string playername, string passwd, string VERSION_STRING_DETAILED
@@ -105,11 +104,6 @@ enum NETMSG {
 	NETMSG_LAST //max types of netmessages, internal only
 };
 
-/// Data types for NETMSG_CUSTOM_DATA
-enum CustomData {
-	// CUSTOM_DATA_SPEEDCONTROL = 0,
-	CUSTOM_DATA_LUADRAWTIME  = 1
-};
 
 /// sub-action-types of NETMSG_TEAM
 enum TEAMMSG {
