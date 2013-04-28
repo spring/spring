@@ -1241,9 +1241,9 @@ bool CGame::Draw() {
 			} break;
 		}
 
-		int allocedBytes;
-		spring_lua_alloc_get_stats(&allocedBytes);
-		font->glFormat(0.03f, 0.15f, 0.7f, DBG_FONT_FLAGS, "Lua allocated memory: %.1fMB", allocedBytes/1024.f/1024.f);
+		SLuaInfo luaInfo;
+		spring_lua_alloc_get_stats(&luaInfo);
+		font->glFormat(0.03f, 0.15f, 0.7f, DBG_FONT_FLAGS, "Lua allocated memory: %.1fMB in %i LuaStates", luaInfo.allocedBytes/1024.f/1024.f, luaInfo.numStates);
 
 		font->End();
 	}
