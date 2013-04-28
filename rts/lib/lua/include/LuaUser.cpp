@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#if !defined(BUILDING_AI) || !defined(DEDICATED) || !defined(UNITSYNC)
+#if !defined(BUILDING_AI) && !defined(DEDICATED) && !defined(UNITSYNC)
 
 #include <map>
 #include <boost/thread/recursive_mutex.hpp>

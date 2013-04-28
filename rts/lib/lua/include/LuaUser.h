@@ -3,7 +3,7 @@
 #ifndef SPRING_LUA_USER_H
 #define SPRING_LUA_USER_H
 
-#if !defined(BUILDING_AI) || !defined(DEDICATED) || !defined(UNITSYNC)
+#if !defined(BUILDING_AI) && !defined(DEDICATED) && !defined(UNITSYNC)
 	extern void LuaCreateMutex(lua_State * L);
 	extern void LuaDestroyMutex(lua_State * L);
 	extern void LuaLinkMutex(lua_State* L_parent, lua_State* L_child);
