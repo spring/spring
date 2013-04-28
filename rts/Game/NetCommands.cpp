@@ -378,7 +378,7 @@ void CGame::ClientReadNet()
 				const int serverFrameNum = *(int*)(inbuf + 1);
 
 				if (gs->frameNum != (serverFrameNum - 1)) {
-					LOG_L(L_ERROR, "Keyframe difference: %i", gs->frameNum - (serverFrameNum - 1));
+					LOG_L(L_ERROR, "[%s] keyframe difference: %i (client: %d, server: %d)", __FUNCTION__, gs->frameNum - (serverFrameNum - 1), gs->frameNum, serverFrameNum);
 					break;
 				}
 
