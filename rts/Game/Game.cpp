@@ -1295,13 +1295,10 @@ bool CGame::Draw() {
 		}
 
 		if (GML::SimEnabled() && showMTInfo != -1) {
-			// Update Lua lock time warning
-			extern int backupSize; //FIXME
-
 			const char* pstr = "LUA-EXP-SIZE(MT): %2.1fK LUA-SYNC-CPU(MT): %2.1fms";
 			char buf[80];
-			SNPRINTF(buf, sizeof(buf), pstr, backupSize / 1000.0f, GML_LOCK_TIME());
-			const float warnMix = std::max(backupSize / 5000.0f, (GML_LOCK_TIME() - 1.0f) / 50.0f);
+			SNPRINTF(buf, sizeof(buf), pstr, LuaUtils::exportedDataSize / 1000.0f, GML_LOCK_TIME());
+			const float warnMix = std::max(LuaUtils::exportedDataSize / 5000.0f, (GML_LOCK_TIME() - 1.0f) / 50.0f);
 			const float4 warncol(float(spring_tomsecs(currentTimePreDraw) & 128) * warnMix, 1.0f - warnMix, 0.0f,1.0f);
 			smallFont->SetColors(&warncol, NULL);
 			smallFont->glPrint(0.99f, 0.88f, 1.0f, INF_FONT_FLAGS, buf);
