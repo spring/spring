@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SPRING_LUA_INCLUDE
 #define SPRING_LUA_INCLUDE
 
@@ -19,67 +21,66 @@ inline void lua_pushsstring(lua_State* L, const std::string& str)
 
 inline bool lua_israwnumber(lua_State* L, int index)
 {
-  return (lua_type(L, index) == LUA_TNUMBER);
+	return (lua_type(L, index) == LUA_TNUMBER);
 }
 
 
 inline bool lua_israwstring(lua_State* L, int index)
 {
-  return (lua_type(L, index) == LUA_TSTRING);
+	return (lua_type(L, index) == LUA_TSTRING);
 }
 
 
 inline int lua_checkgeti(lua_State* L, int idx, int n)
 {
-  lua_rawgeti(L, idx, n);
-  if (lua_isnoneornil(L, -1)) {
-    lua_pop(L, 1);
-    return 0;
-  }
-  return 1;
+	lua_rawgeti(L, idx, n);
+	if (lua_isnoneornil(L, -1)) {
+		lua_pop(L, 1);
+		return 0;
+	}
+	return 1;
 }
 
 
 inline int lua_toint(lua_State* L, int idx)
 {
-  return (int)lua_tointeger(L, idx);
+	return (int)lua_tointeger(L, idx);
 }
 
 
 inline float lua_tofloat(lua_State* L, int idx)
 {
-  const float n = lua_tonumber(L, idx);
+	const float n = lua_tonumber(L, idx);
 #ifdef DEBUG
-  if (math::isinf(n) || math::isnan(n)) luaL_argerror(L, idx, "number expected, got NAN (check your code for div0)");
-  //assert(!math::isinf(d));
-  //assert(!math::isnan(d));
+	if (math::isinf(n) || math::isnan(n)) luaL_argerror(L, idx, "number expected, got NAN (check your code for div0)");
+	//assert(!math::isinf(d));
+	//assert(!math::isnan(d));
 #endif
-  return n;
+	return n;
 }
 
 
 inline float luaL_checkfloat(lua_State* L, int idx)
 {
-  return (float)luaL_checknumber(L, idx);
+	return (float)luaL_checknumber(L, idx);
 }
 
 
 inline float luaL_optfloat(lua_State* L, int idx, float def)
 {
-  return (float)luaL_optnumber(L, idx, def);
+	return (float)luaL_optnumber(L, idx, def);
 }
 
 inline bool luaL_optboolean(lua_State* L, int idx, bool def)
 {
-  return lua_isboolean(L, idx) ? lua_toboolean(L, idx) : def;
+	return lua_isboolean(L, idx) ? lua_toboolean(L, idx) : def;
 }
 
 struct luaContextData;
 extern boost::recursive_mutex* getLuaMutex(bool userMode, bool primary);
 
 inline lua_State* LUA_OPEN(luaContextData* lcd = NULL, bool userMode = true, bool primary = true) {
-	//lua_State* L = lua_open();
-	lua_State* L = lua_newstate(spring_lua_alloc, NULL);
+	lua_State* L = lua_newstate(spring_lua_alloc, NULL); // we want to use our own memory allocator
 	L->lcd = lcd;
 	L->luamutex = getLuaMutex(userMode, primary);
 	return L;
