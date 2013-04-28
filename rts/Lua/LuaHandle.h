@@ -52,9 +52,9 @@ class CLuaHandle : public CEventClient
 		void ResetCallinErrors() { callinErrors = 0; }
 
 	public:
-#define GET_CONTEXT_DATA(v) ((L ? L : GetActiveState())->lcd->v)
-#define GET_ACTIVE_CONTEXT_DATA(v) (GetActiveState()->lcd->v)
-#define GET_HANDLE_CONTEXT_DATA(v) (L->lcd->v)
+#define GET_CONTEXT_DATA(v) (GetLuaContextData(L ? L : GetActiveState())->v)
+#define GET_ACTIVE_CONTEXT_DATA(v) (GetLuaContextData(GetActiveState())->v)
+#define GET_HANDLE_CONTEXT_DATA(v) (GetLuaContextData(L)->v)
 #define SET_ACTIVE_CONTEXT_DATA(v) if(all) { D_Sim.v = _##v; D_Draw.v = _##v; } else GET_ACTIVE_CONTEXT_DATA(v) = _##v
 #define SET_HANDLE_CONTEXT_DATA(v) GET_HANDLE_CONTEXT_DATA(v) = _##v
 

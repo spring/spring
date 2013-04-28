@@ -119,7 +119,7 @@ class LuaOpenGL {
 		static int HasExtension(lua_State* L);
 		static int GetNumber(lua_State* L);
 		static int GetString(lua_State* L);
-	
+
 		static int ConfigScreen(lua_State* L);
 
 		static int GetViewSizes(lua_State* L);
@@ -194,7 +194,7 @@ class LuaOpenGL {
 		static int SecondaryColor(lua_State* L);
 		static int FogCoord(lua_State* L);
 		static int EdgeFlag(lua_State* L);
-		
+
 		static int Rect(lua_State* L);
 		static int TexRect(lua_State* L);
 
@@ -254,7 +254,7 @@ class LuaOpenGL {
 		static int DeleteQuery(lua_State* L);
 		static int RunQuery(lua_State* L);
 		static int GetQuery(lua_State* L);
-		
+
 		static int GetGlobalTexNames(lua_State* L);
 		static int GetGlobalTexCoords(lua_State* L);
 		static int GetShadowMapParams(lua_State* L);
@@ -275,9 +275,9 @@ inline void LuaOpenGL::InitMatrixState(lua_State* L, const LuaHashString* hs) {
 }
 
 inline void LuaOpenGL::CheckMatrixState(lua_State* L, const LuaHashString* hs, int error) {
-	if (!L->lcd->HasMatrixStateError())
+	if (!GetLuaContextData(L)->HasMatrixStateError())
 		return;
-	L->lcd->HandleMatrixStateError(error, (hs == NULL) ? "Unknown" : hs->GetString().c_str());
+	GetLuaContextData(L)->HandleMatrixStateError(error, (hs == NULL) ? "Unknown" : hs->GetString().c_str());
 }
 
 #endif /* LUA_UNITDEFS_H */
