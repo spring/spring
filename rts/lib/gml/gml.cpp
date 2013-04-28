@@ -49,7 +49,7 @@ bool gmlEnabled = true;
 
 
 const char *gmlProfMutex = "lua";
-unsigned gmlLockTime = 0;
+float gmlLockTime = 0;
 
 int gmlProcNumLoop = 25;
 int gmlProcInterval = 8;
@@ -61,7 +61,7 @@ volatile bool gmlMultiThreadSim = true;
 volatile bool gmlStartSim = false;
 volatile bool gmlKeepRunning = false;
 volatile bool gmlServerActive = false;
-volatile bool gmlMutexLockWait = false; 
+volatile bool gmlMutexLockWait = false;
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1

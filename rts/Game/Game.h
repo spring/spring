@@ -214,8 +214,6 @@ public:
 	 * @see CGameServer#speedControl
 	 */
 	int speedControl;
-	int luaLockTime;
-	int luaExportSize;
 
 	/// for reloading the savefile
 	ILoadSaveHandler* saveFile;
