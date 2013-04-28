@@ -16,31 +16,15 @@
 
 class CLuaHandle;
 
-struct luaContextData {
-	luaContextData() : luamutex(NULL), primary(true), fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
-		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false),
-		owner(NULL), drawingEnabled(false), running(0), listMode(false) {}
-	boost::recursive_mutex* luamutex;
-	bool primary; //GML crap
-	bool fullCtrl;
-	bool fullRead;
-	int  ctrlTeam;
-	int  readTeam;
-	int  readAllyTeam;
-	int  selectTeam;
-	//FIXME		LuaArrays arrays;
-	LuaShaders shaders;
-	LuaTextures textures;
-	//FIXME		LuaVBOs vbos;
-	LuaFBOs fbos;
-	LuaRBOs rbos;
-	CLuaDisplayLists displayLists;
-	bool synced;
-	CLuaHandle *owner;
-	bool drawingEnabled;
-	int running; //< is currently running? (0: not running; >0: is running)
+
+//FIXME move to diff file
+struct GLMatrixStateTracker {
+public:
 	MatrixStateData matrixData; // [>0] = stack depth for mode, [0] = matrix mode
 	bool listMode; // if creating display list
+
+public:
+	GLMatrixStateTracker() : listMode(false) {}
 
 	MatrixStateData PushMatrixState() {
 		MatrixStateData md;
@@ -62,13 +46,13 @@ struct luaContextData {
 		PopMatrixState(md);
 	}
 
-	unsigned int GetMode() {
-		MatrixStateData::iterator i = matrixData.find(0);
+	unsigned int GetMode() const {
+		MatrixStateData::const_iterator i = matrixData.find(0);
 		return (i == matrixData.end()) ? GL_MODELVIEW : i->second;
 	}
 
-	int GetDepth(unsigned int mode) {
-		MatrixStateData::iterator i = matrixData.find(mode);
+	int GetDepth(unsigned int mode) const {
+		MatrixStateData::const_iterator i = matrixData.find(mode);
 		return (i == matrixData.end()) ? 0 : i->second;
 	}
 
@@ -136,11 +120,11 @@ struct luaContextData {
 		return 0;
 	}
 
-	MatrixStateData GetMatrixState() {
+	const MatrixStateData& GetMatrixState() const {
 		return matrixData;
 	}
 
-	bool HasMatrixStateError() {
+	bool HasMatrixStateError() const {
 		return !matrixData.empty();
 	}
 
@@ -163,5 +147,36 @@ struct luaContextData {
 		matrixData.clear();
 	}
 };
+
+
+
+
+struct luaContextData {
+	luaContextData() : luamutex(NULL), primary(true), fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
+		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false),
+		owner(NULL), drawingEnabled(false), running(0){}
+	boost::recursive_mutex* luamutex;
+	bool primary; //GML crap
+	bool fullCtrl;
+	bool fullRead;
+	int  ctrlTeam;
+	int  readTeam;
+	int  readAllyTeam;
+	int  selectTeam;
+	//FIXME		LuaArrays arrays;
+	LuaShaders shaders;
+	LuaTextures textures;
+	//FIXME		LuaVBOs vbos;
+	LuaFBOs fbos;
+	LuaRBOs rbos;
+	CLuaDisplayLists displayLists;
+	bool synced;
+	CLuaHandle* owner;
+	bool drawingEnabled;
+	int running; //< is currently running? (0: not running; >0: is running)
+
+	GLMatrixStateTracker glMatrixTracker;
+};
+
 
 #endif // LUA_CONTEXT_DATA_H
