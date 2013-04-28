@@ -375,13 +375,15 @@ void CGame::ClientReadNet()
 			} break;
 
 			case NETMSG_KEYFRAME: {
-				int serverframenum = *(int*)(inbuf+1);
-				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverframenum));
-				if (gs->frameNum != (serverframenum - 1)) {
-					LOG_L(L_ERROR, "Keyframe difference: %i",
-							gs->frameNum - (serverframenum - 1));
+				const int serverFrameNum = *(int*)(inbuf + 1);
+
+				if (gs->frameNum != (serverFrameNum - 1)) {
+					LOG_L(L_ERROR, "Keyframe difference: %i", gs->frameNum - (serverFrameNum - 1));
+					break;
 				}
-				// Fall-through
+
+				// fall-through and run SimFrame() iff this message really came from the server
+				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
 			}
 			case NETMSG_NEWFRAME: {
 				msgProcTimeLeft -= 1.0f;
