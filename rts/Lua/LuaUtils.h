@@ -37,6 +37,8 @@ class LuaUtils {
 			} data;
 		};
 
+		static int exportedDataSize; //< performance stat
+
 		static int Backup(std::vector<DataDump> &backup, lua_State* src, int count);
 
 		static int Restore(const std::vector<DataDump> &backup, lua_State* dst);
