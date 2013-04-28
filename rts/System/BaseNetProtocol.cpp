@@ -158,17 +158,6 @@ PacketType CBaseNetProtocol::SendCPUUsage(float cpuUsage)
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendCustomData(uchar myPlayerNum, uchar dataType, int dataValue)
-{
-	PackPacket* packet = new PackPacket(7, NETMSG_CUSTOM_DATA);
-	*packet << myPlayerNum << dataType << dataValue;
-	return PacketType(packet);
-}
-
-PacketType CBaseNetProtocol::SendLuaDrawTime(uchar myPlayerNum, int mSec) {
-	return SendCustomData(myPlayerNum, CUSTOM_DATA_LUADRAWTIME, mSec);
-}
-
 PacketType CBaseNetProtocol::SendDirectControl(uchar myPlayerNum)
 {
 	PackPacket* packet = new PackPacket(2, NETMSG_DIRECT_CONTROL);
@@ -471,7 +460,6 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_USER_SPEED, 6);
 	proto->AddType(NETMSG_INTERNAL_SPEED, 5);
 	proto->AddType(NETMSG_CPU_USAGE, 5);
-	proto->AddType(NETMSG_CUSTOM_DATA, 7);
 	proto->AddType(NETMSG_DIRECT_CONTROL, 2);
 	proto->AddType(NETMSG_DC_UPDATE, 7);
 	proto->AddType(NETMSG_ATTEMPTCONNECT, -2);
