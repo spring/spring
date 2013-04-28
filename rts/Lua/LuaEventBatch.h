@@ -288,6 +288,7 @@ struct LuaUIEvent {
 	#define GML_MEASURE_LOCK_TIME(lock) lock
 #endif
 
+
 #if (LUA_MT_OPT & LUA_STATE)
 	#define BEGIN_ITERATE_LUA_STATES() lua_State* L_Cur = L_Sim; do { lua_State * const L = L_Cur
 	#define END_ITERATE_LUA_STATES() if(SingleState() || L_Cur == L_Draw) break; L_Cur = L_Draw; } while(true)
@@ -299,13 +300,7 @@ struct LuaUIEvent {
 		#define SELECT_UNSYNCED_LUA_STATE()
 	#endif
 	#if defined(USE_GML) && GML_ENABLE_SIM
-		#if GML_DEBUG_MUTEX
-			#define GML_LOCK_TEST(nme) { std::map<std::string, int>::iterator locki = lockmaps[GML::ThreadNumber()].find(#nme); if((lockmi==lockmmaps[GML::ThreadNumber()].end() || (*lockmi).second == 0) && locki!=lockmaps[GML::ThreadNumber()].end() && (*locki).second>0) while(1); }
-			#define GML_DEBUG_LOCK(name) { GML_STDMUTEX_LOCK(lm); std::map<boost::recursive_mutex*, int>::iterator lockmi = lockmmaps[GML::ThreadNumber()].find(L->##name##mutex); GML_LOCK_TEST(sel); GML_LOCK_TEST(group); GML_LOCK_TEST(grpsel); GML_LOCK_TEST(gui); GML_LOCK_TEST(quad); GML_LOCK_TEST(qnum); }
-		#else
-			#define GML_DEBUG_LOCK(name)
-		#endif
-		#define GML_DRCMUTEX_LOCK(name) GML_DEBUG_LOCK(name); GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
+		#define GML_DRCMUTEX_LOCK(name) GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
 	#else
 		#define GML_DRCMUTEX_LOCK(name)
 	#endif
