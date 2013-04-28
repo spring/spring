@@ -17,6 +17,7 @@
 #include <boost/version.hpp>
 #include <boost/thread.hpp>
 #include <boost/cstdint.hpp>
+#include <boost/optional.hpp>
 #if defined(__APPLE__)
 #elif defined(WIN32)
 	#include <windows.h>
@@ -32,16 +33,11 @@ namespace Threading {
 	static Error* threadError = NULL;
 	static bool haveMainThreadID = false;
 	static boost::thread::id mainThreadID;
+
 	static NativeThreadId nativeMainThreadID;
-#ifdef USE_GML
-	static int const noThreadID = -1;
-	static int simThreadID      = noThreadID;
-	static int batchThreadID    = noThreadID;
-#else
-	static NativeThreadId noThreadID = -1;
-	static NativeThreadId simThreadID;
-	static NativeThreadId batchThreadID;
-#endif
+	static boost::optional<NativeThreadId> simThreadID;
+	static boost::optional<NativeThreadId> batchThreadID;
+
 #if defined(__APPLE__)
 #elif defined(WIN32)
 	static DWORD cpusSystem = 0;
@@ -141,13 +137,7 @@ namespace Threading {
 	int GetAvailableCores()
 	{
 		// auto-detect number of system threads
-	#if (BOOST_VERSION >= 103500)
 		return boost::thread::hardware_concurrency();
-	#elif defined(USE_GML)
-		return gmlCPUCount();
-	#else
-		return 1;
-	#endif
 	}
 
 
@@ -340,19 +330,15 @@ namespace Threading {
 
 
 	void SetSimThread(bool set) {
-	#ifdef USE_GML // GML::ThreadNumber() is likely to be much faster than boost::this_thread::get_id()
-		simThreadID = set ? GML::ThreadNumber() : noThreadID;
-	#else
-		simThreadID = set ? Threading::GetCurrentThreadId() : noThreadID;
-	#endif
-		batchThreadID = simThreadID;
+		if (set) {
+			simThreadID = Threading::GetCurrentThreadId();
+			batchThreadID = simThreadID;
+		} else {
+			simThreadID.reset();
+		}
 	}
 	bool IsSimThread() {
-	#ifdef USE_GML
-		return GML::ThreadNumber() == simThreadID;
-	#else
-		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), simThreadID);
-	#endif
+		return simThreadID ? NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *simThreadID) : false;
 	}
 
 	bool UpdateGameController(CGameController* ac) {
@@ -365,18 +351,14 @@ namespace Threading {
 	}
 
 	void SetBatchThread(bool set) {
-	#ifdef USE_GML // GML::ThreadNumber() is likely to be much faster than boost::this_thread::get_id()
-		batchThreadID = set ? GML::ThreadNumber() : noThreadID;
-	#else
-		batchThreadID = set ? Threading::GetCurrentThreadId() : noThreadID;
-	#endif
+		if (set) {
+			batchThreadID = Threading::GetCurrentThreadId();
+		} else {
+			batchThreadID.reset();
+		}
 	}
 	bool IsBatchThread() {
-	#ifdef USE_GML
-		return GML::ThreadNumber() == batchThreadID;
-	#else
-		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), batchThreadID);
-	#endif
+		return batchThreadID ? NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *batchThreadID) : false;
 	}
 
 
