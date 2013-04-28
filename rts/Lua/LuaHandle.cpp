@@ -77,9 +77,11 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 
 	SetSynced(false, true);
 	D_Sim.owner = this;
-	L_Sim = LUA_OPEN(&D_Sim, GetUserMode(), true);
+	D_Sim.primary = true; //GML crap
+	L_Sim = LUA_OPEN(&D_Sim);
 	D_Draw.owner = this;
-	L_Draw = LUA_OPEN(&D_Draw, GetUserMode(), false);
+	D_Draw.primary = false; //GML crap
+	L_Draw = LUA_OPEN(&D_Draw);
 
 	// needed for engine traceback
 	PushTracebackFuncToRegistry(L_Sim);
@@ -421,14 +423,14 @@ int CLuaHandle::RunCallInTraceback(const LuaHashString* hs, int inArgs, int outA
 	SELECT_LUA_STATE();
 	SetRunning(L, true);
 	int top = lua_gettop(L);
-	MatrixStateData prevMSD = L->lcd->PushMatrixState();
+	MatrixStateData prevMSD = GetLuaContextData(L)->PushMatrixState();
 	LuaOpenGL::InitMatrixState(L, hs);
 		// disable GC outside of this scope to prevent sync errors and similar
 		//lua_gc(L, LUA_GCRESTART, 0); // we collect garbage now in its own callin "CollectGarbage"
 			const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
 		lua_gc(L, LUA_GCSTOP, 0); // only run GC inside of "SetRunning(L, true) ... SetRunning(L, false)"!
 	LuaOpenGL::CheckMatrixState(L, hs, error);
-	L->lcd->PopMatrixState(prevMSD);
+	GetLuaContextData(L)->PopMatrixState(prevMSD);
 
 	SetRunning(L, false);
 

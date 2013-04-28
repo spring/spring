@@ -77,18 +77,18 @@ inline bool luaL_optboolean(lua_State* L, int idx, bool def)
 }
 
 struct luaContextData;
-extern boost::recursive_mutex* getLuaMutex(bool userMode, bool primary);
 
-inline lua_State* LUA_OPEN(luaContextData* lcd = NULL, bool userMode = true, bool primary = true) {
-	lua_State* L = lua_newstate(spring_lua_alloc, NULL); // we want to use our own memory allocator
-	L->lcd = lcd;
-	L->luamutex = getLuaMutex(userMode, primary);
+inline luaContextData* GetLuaContextData(const lua_State* L)
+{
+	return reinterpret_cast<luaContextData*>(G(L)->ud);
+}
+
+inline lua_State* LUA_OPEN(luaContextData* lcd = NULL) {
+	lua_State* L = lua_newstate(spring_lua_alloc, lcd); // we want to use our own memory allocator
 	return L;
 }
 
-inline void LUA_CLOSE(lua_State *L_Old) {
-	if(L_Old->luamutex != getLuaMutex(false, false) && L_Old->luamutex != getLuaMutex(false, true))
-		delete L_Old->luamutex;
+inline void LUA_CLOSE(lua_State* L_Old) {
 	lua_close(L_Old);
 }
 

@@ -17,9 +17,11 @@
 class CLuaHandle;
 
 struct luaContextData {
-	luaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
+	luaContextData() : luamutex(NULL), primary(true), fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
 		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false),
 		owner(NULL), drawingEnabled(false), running(0), listMode(false) {}
+	boost::recursive_mutex* luamutex;
+	bool primary; //GML crap
 	bool fullCtrl;
 	bool fullRead;
 	int  ctrlTeam;
