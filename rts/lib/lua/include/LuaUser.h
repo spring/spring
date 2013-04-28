@@ -10,7 +10,12 @@ extern void LuaMutexLock(lua_State * L);
 extern void LuaMutexUnlock(lua_State * L);
 extern void LuaMutexYield(lua_State * L);
 
+
+struct SLuaInfo {
+	int allocedBytes;
+	int numStates;
+};
 extern void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize);
-extern void spring_lua_alloc_get_stats(int* allocedBytes);
+extern void spring_lua_alloc_get_stats(SLuaInfo* info);
 
 #endif // SPRING_LUA_USER_H
