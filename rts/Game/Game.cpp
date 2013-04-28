@@ -268,8 +268,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, skipOldUserSpeed(0.0f)
 	, skipLastDraw(spring_gettime())
 	, speedControl(-1)
-	, luaLockTime(0)
-	, luaExportSize(0)
 	, saveFile(saveFile)
 	, infoConsole(NULL)
 	, consoleHistory(NULL)
@@ -992,18 +990,7 @@ bool CGame::UpdateUnsynced()
 		globalRendering->FPS = thisFps / diffsecs;
 		thisFps = 0;
 
-		if (GML::SimEnabled()) {
-			// Update Lua lock time warning
-			extern int backupSize;
-			luaExportSize = backupSize;
-			backupSize = 0;
-			luaLockTime = (int)GML_LOCK_TIME();
-			float amount = (showMTInfo == MT_LUA_DUAL_EXPORT) ? luaExportSize / 1000.0f : luaLockTime / 10.0f;
-			if (amount >= mtInfoThreshold) {
-				if ((mtInfoCtrl = std::min(mtInfoCtrl + 1, 9)) == 5) mtInfoCtrl = 9;
-			}
-			else if ((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 4) mtInfoCtrl = 0;
-		}
+		if (GML::SimEnabled()) GML_RESET_LOCK_TIME(); //FIXME move to a GML update place?
 	}
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
@@ -1307,13 +1294,15 @@ bool CGame::Draw() {
 			smallFont->glPrint(0.99f, 0.90f, 1.0f, INF_FONT_FLAGS, buf);
 		}
 
-		if (GML::SimEnabled() && mtInfoCtrl >= 5 && (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT)) {
-			float pval = (showMTInfo == MT_LUA_DUAL_EXPORT) ? (float)luaExportSize / 1000.0f : (float)luaLockTime / 10.0f;
-			const char *pstr = (showMTInfo == MT_LUA_DUAL_EXPORT) ? "LUA-EXP-SIZE(MT): %2.1fK" : "LUA-SYNC-CPU(MT): %2.1f%%";
-			char buf[40];
-			SNPRINTF(buf, sizeof(buf), pstr, pval);
-			float4 warncol(pval >= 10.0f && ((int)spring_tomsecs(currentTimePreDraw) & 128) ?
-				0.5f : std::max(0.0f, std::min(pval / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - pval / 5.0f, 1.0f)), 0.0f, 1.0f);
+		if (GML::SimEnabled() && showMTInfo != -1) {
+			// Update Lua lock time warning
+			extern int backupSize; //FIXME
+
+			const char* pstr = "LUA-EXP-SIZE(MT): %2.1fK LUA-SYNC-CPU(MT): %2.1fms";
+			char buf[80];
+			SNPRINTF(buf, sizeof(buf), pstr, backupSize / 1000.0f, GML_LOCK_TIME());
+			const float warnMix = std::max(backupSize / 5000.0f, (GML_LOCK_TIME() - 1.0f) / 50.0f);
+			const float4 warncol(float(spring_tomsecs(currentTimePreDraw) & 128) * warnMix, 1.0f - warnMix, 0.0f,1.0f);
 			smallFont->SetColors(&warncol, NULL);
 			smallFont->glPrint(0.99f, 0.88f, 1.0f, INF_FONT_FLAGS, buf);
 		}

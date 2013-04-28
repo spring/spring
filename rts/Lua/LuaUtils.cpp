@@ -17,7 +17,7 @@
 #include <boost/thread/recursive_mutex.hpp>
 
 static const int maxDepth = 256;
-int backupSize = 0;
+int backupSize = 0; //FIXME rename and refactor
 
 
 /******************************************************************************/
@@ -152,6 +152,7 @@ static bool BackupData(LuaUtils::DataDump &d, lua_State* src, int index, int dep
 }
 
 static bool RestoreData(const LuaUtils::DataDump &d, lua_State* dst, int depth) {
+	--backupSize;
 	const int type = d.type;
 	switch (type) {
 		case LUA_TBOOLEAN: {

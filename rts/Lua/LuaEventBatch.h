@@ -283,7 +283,7 @@ struct LuaUIEvent {
 #endif
 
 #if defined(USE_GML) && GML_ENABLE_SIM && GML_CALL_DEBUG
-	#define GML_MEASURE_LOCK_TIME(lock) unsigned luatime = SDL_GetTicks(); lock; luatime = SDL_GetTicks() - luatime; if(luatime >= 1) gmlLockTime += luatime
+	#define GML_MEASURE_LOCK_TIME(lock) spring_time luatime = spring_gettime(); lock; luatime = spring_gettime() - luatime; gmlLockTime += luatime.toMilliSecsf()
 #else
 	#define GML_MEASURE_LOCK_TIME(lock) lock
 #endif
