@@ -871,7 +871,7 @@ bool CGame::Update()
 	good_fpu_control_registers("CGame::Update");
 
 	const spring_time timeNow = spring_gettime();
-	const float diffsecs = spring_tomsecs(spring_difftime(timeNow, lastUpdateTime)) / 1000.0f;
+	const float diffsecs = spring_difftime(timeNow, lastUpdateTime).toSecsf();
 
 	if (diffsecs >= 1.0f) { // do once every second
 		lastUpdateTime = timeNow;
@@ -926,13 +926,13 @@ bool CGame::UpdateUnsynced()
 	// timings and frame interpolation
 	const spring_time currentTime = spring_gettime();
 
-	const float difTime = spring_tomsecs(currentTime - lastModGameTimeMeasure);
+	const float difTime = (currentTime - lastModGameTimeMeasure).toMilliSecsf();
 	const float dif = skipping ? 0.010f : difTime * 0.001f;
 	lastModGameTimeMeasure = currentTime;
 
-	globalRendering->lastFrameTime = spring_tomsecs(currentTime - lastDrawFrameTime) / 1000.f;
+	globalRendering->lastFrameTime = (currentTime - lastDrawFrameTime).toSecsf();
+	gu->avgFrameTime = mix(gu->avgFrameTime, (currentTime - lastDrawFrameTime).toMilliSecsf(), 0.05f);
 	lastDrawFrameTime = currentTime; //FIXME merge with lastModGameTimeMeasure
-	gu->avgFrameTime = mix(gu->avgFrameTime, globalRendering->lastFrameTime * 1000.f, 0.05f);
 
 	// Update game times
 	gu->gameTime += dif;
@@ -946,7 +946,7 @@ bool CGame::UpdateUnsynced()
 	{
 		static int lsf = gs->frameNum;
 		static spring_time lsft = currentTime;
-		const float diffsecs_ = spring_diffsecs(currentTime, lsft);
+		const float diffsecs_ = (currentTime - lsft).toSecsf();
 		if (diffsecs_ >= 1.0f) {
 			gu->simFPS = (gs->frameNum - lsf) / diffsecs_;
 			lsft = currentTime;
@@ -975,7 +975,7 @@ bool CGame::UpdateUnsynced()
 	if (!gs->paused && !HasLag() && gs->frameNum>1 && !videoCapturing->IsCapturing()) {
 		globalRendering->lastFrameStart = currentTime;
 		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
-		globalRendering->timeOffset = spring_tomsecs(globalRendering->lastFrameStart - lastSimFrameTime) * globalRendering->weightedSpeedFactor;
+		globalRendering->timeOffset = (currentTime - lastSimFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
 	} else  {
 		globalRendering->timeOffset = 0;
 		lastSimFrameTime = currentTime;
@@ -1108,7 +1108,7 @@ bool CGame::Draw() {
 		// return early if and only if less than 30K milliseconds have passed since last draw-frame
 		// so we force render two frames per minute when minimized to clear batches and free memory
 		// don't need to mess with globalRendering->active since only mouse-input code depends on it
-		if (spring_tomsecs(currentTimePreDraw - lastDrawFrameTime) < GAME_SPEED*1000)
+		if ((currentTimePreDraw - lastDrawFrameTime).toSecs() < 30)
 			return true;
 	}
 
@@ -1326,7 +1326,7 @@ bool CGame::Draw() {
 	CTeamHighlight::Disable();
 
 	const spring_time currentTimePostDraw = spring_gettime();
-	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, spring_tomsecs(currentTimePostDraw - currentTimePreDraw), 0.05f);
+	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, (currentTimePostDraw - currentTimePreDraw).toMilliSecsf(), 0.05f);
 
 	return true;
 }
@@ -1520,12 +1520,13 @@ void CGame::SimFrame() {
 	playerHandler->GameFrame(gs->frameNum);
 
 	lastSimFrameTime = spring_gettime();
-	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, float(spring_tomsecs(lastSimFrameTime - lastFrameTime)), 0.05f);
+	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, (lastSimFrameTime - lastFrameTime).toMilliSecsf(), 0.05f);
+	gu->avgSimFrameTime = std::max(gu->avgSimFrameTime, 0.001f);
 
 	#ifdef HEADLESS
 	{
 		const float msecMaxSimFrameTime = 1000.0f / (GAME_SPEED * gs->wantedSpeedFactor);
-		const float msecDifSimFrameTime = spring_tomsecs(lastSimFrameTime) - spring_tomsecs(lastFrameTime);
+		const float msecDifSimFrameTime = (lastSimFrameTime - lastFrameTime).toMilliSecsf();
 		// multiply by 0.5 to give unsynced code some execution time (50% of our sleep-budget)
 		const float msecSleepTime = (msecMaxSimFrameTime - msecDifSimFrameTime) * 0.5f;
 
