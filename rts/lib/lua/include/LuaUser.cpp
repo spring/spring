@@ -1,3 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#if !defined(BUILDING_AI) || !defined(DEDICATED) || !defined(UNITSYNC)
 
 #include <map>
 #include <boost/thread/recursive_mutex.hpp>
@@ -65,6 +68,13 @@ void LuaDestroyMutex(lua_State* L)
 }
 
 
+void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
+{
+	isCoroutine[L_child] = true;
+	mutexes[L_child] = mutexes[L_parent];
+}
+
+
 void LuaMutexLock(lua_State* L)
 {
 	boost::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
@@ -80,13 +90,6 @@ void LuaMutexUnlock(lua_State* L)
 {
 	boost::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
 	mutex->unlock();
-}
-
-
-void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
-{
-	isCoroutine[L_child] = true;
-	mutexes[L_child] = mutexes[L_parent];
 }
 
 
@@ -132,3 +135,5 @@ void spring_lua_alloc_get_stats(SLuaInfo* info)
 	info->allocedBytes = allocedCur;
 	info->numStates = mutexes.size() - isCoroutine.size();
 }
+
+#endif
