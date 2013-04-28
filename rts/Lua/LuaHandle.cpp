@@ -423,14 +423,14 @@ int CLuaHandle::RunCallInTraceback(const LuaHashString* hs, int inArgs, int outA
 	SELECT_LUA_STATE();
 	SetRunning(L, true);
 	int top = lua_gettop(L);
-	MatrixStateData prevMSD = GetLuaContextData(L)->PushMatrixState();
+	MatrixStateData prevMSD = GetLuaContextData(L)->glMatrixTracker.PushMatrixState();
 	LuaOpenGL::InitMatrixState(L, hs);
 		// disable GC outside of this scope to prevent sync errors and similar
 		//lua_gc(L, LUA_GCRESTART, 0); // we collect garbage now in its own callin "CollectGarbage"
 			const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
 		lua_gc(L, LUA_GCSTOP, 0); // only run GC inside of "SetRunning(L, true) ... SetRunning(L, false)"!
 	LuaOpenGL::CheckMatrixState(L, hs, error);
-	GetLuaContextData(L)->PopMatrixState(prevMSD);
+	GetLuaContextData(L)->glMatrixTracker.PopMatrixState(prevMSD);
 
 	SetRunning(L, false);
 

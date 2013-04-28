@@ -4297,7 +4297,7 @@ int LuaOpenGL::MatrixMode(lua_State* L)
 		luaL_error(L, "Incorrect arguments to gl.MatrixMode");
 	}
 	GLenum mode = (GLenum)lua_tonumber(L, 1);
-	if (!GetLuaContextData(L)->SetMatrixMode(mode))
+	if (!GetLuaContextData(L)->glMatrixTracker.SetMatrixMode(mode))
 		luaL_error(L, "Incorrect value to gl.MatrixMode");
 	glMatrixMode(mode);
 	return 0;
@@ -4388,7 +4388,7 @@ int LuaOpenGL::PushMatrix(lua_State* L)
 		luaL_error(L, "gl.PushMatrix takes no arguments");
 	}
 
-	if (!GetLuaContextData(L)->PushMatrix())
+	if (!GetLuaContextData(L)->glMatrixTracker.PushMatrix())
 		luaL_error(L, "Matrix stack overflow");
 	glPushMatrix();
 
@@ -4405,7 +4405,7 @@ int LuaOpenGL::PopMatrix(lua_State* L)
 		luaL_error(L, "gl.PopMatrix takes no arguments");
 	}
 
-	if (!GetLuaContextData(L)->PopMatrix())
+	if (!GetLuaContextData(L)->glMatrixTracker.PopMatrix())
 		luaL_error(L, "Matrix stack underflow");
 	glPopMatrix();
 
@@ -4591,10 +4591,10 @@ int LuaOpenGL::CreateList(lua_State* L)
 
 	// build the list with the specified lua call/args
 	glNewList(list, GL_COMPILE);
-	MatrixStateData prevMSD = GetLuaContextData(L)->PushMatrixState(true);
+	MatrixStateData prevMSD = GetLuaContextData(L)->glMatrixTracker.PushMatrixState(true);
 	const int error = lua_pcall(L, (args - 1), 0, 0);
-	MatrixStateData matData = GetLuaContextData(L)->GetMatrixState();
-	GetLuaContextData(L)->PopMatrixState(prevMSD, false);
+	MatrixStateData matData = GetLuaContextData(L)->glMatrixTracker.GetMatrixState();
+	GetLuaContextData(L)->glMatrixTracker.PopMatrixState(prevMSD, false);
 	glEndList();
 
 	if (error != 0) {
@@ -4624,7 +4624,7 @@ int LuaOpenGL::CallList(lua_State* L)
 	const unsigned int dlist = displayLists.GetDList(listIndex);
 	if (dlist) {
 		MatrixStateData matrixStateData = displayLists.GetMatrixState(listIndex);
-		int error = GetLuaContextData(L)->ApplyMatrixState(matrixStateData);
+		int error = GetLuaContextData(L)->glMatrixTracker.ApplyMatrixState(matrixStateData);
 		if (error == 0) {
 			glCallList(dlist);
 			return 0;
