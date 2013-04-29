@@ -93,44 +93,6 @@ int gmlCallChainWarning=0;
 
 std::set<Threading::NativeThreadId> threadnums;
 
-// gmlCPUCount returns the number of CPU cores
-// it was taken from the latest version of boost
-// boost::thread::hardware_concurrency()
-#ifdef _WIN32
-#	include <windows.h>
-#else
-#	ifdef __linux__
-#		include <sys/sysinfo.h>
-#	elif defined(__APPLE__) || defined(__FreeBSD__)
-#		include <sys/types.h>
-#		include <sys/sysctl.h>
-#	elif defined(__sun)
-#		include <unistd.h>
-#	endif
-#endif
-unsigned gmlCPUCount() {
-#ifdef _WIN32
-	SYSTEM_INFO info={0};
-	GetSystemInfo(&info);
-	return info.dwNumberOfProcessors;
-#else
-#	if defined(PTW32_VERSION) || defined(__hpux)
-	return pthread_num_processors_np();
-#	elif defined(__linux__)
-	return get_nprocs();
-#	elif defined(__APPLE__) || defined(__FreeBSD__)
-	int count;
-	size_t size=sizeof(count);
-	return sysctlbyname("hw.ncpu",&count,&size,NULL,0)?0:count;
-#	elif defined(__sun)
-	int const count=sysconf(_SC_NPROCESSORS_ONLN);
-	return (count>0)?count:0;
-#	else
-	return 0;
-#	endif
-#endif
-}
-
 #define GML_NOP 0
 const char *gmlFunctionNames[512];
 inline int gmlResetNames() {
