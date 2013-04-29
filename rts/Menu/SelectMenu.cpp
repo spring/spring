@@ -254,7 +254,7 @@ void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 	{
 		agui::gui->RmElement(settingsWindow);
 		settingsWindow = NULL;
-		int p = name.find(" = ");
+		size_t p = name.find(" = ");
 		if(p != std::string::npos) {
 			configHandler->SetString(name.substr(0,p), name.substr(p + 3));
 			ShowSettingsList();
@@ -281,7 +281,7 @@ void SelectMenu::ShowSettingsList()
 }
 
 void SelectMenu::SelectSetting(std::string setting) {
-	int p = setting.find(" = ");
+	size_t p = setting.find(" = ");
 	if(p != std::string::npos)
 		setting = setting.substr(0, p);
 	userSetting = setting;
