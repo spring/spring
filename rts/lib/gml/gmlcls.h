@@ -3,8 +3,8 @@
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
 // Ware Zerver Tech. licenses this library
-// to be used, distributed and modified 
-// freely for any purpose, as long as 
+// to be used, distributed and modified
+// freely for any purpose, as long as
 // this notice remains unchanged
 
 #ifndef GMLCLASSES_H
@@ -55,7 +55,7 @@ extern bool ThreadRegistered();
 #		define GML_MEMBAR asm volatile("mfence":::"memory")
 #	endif
 #elif defined(_MSC_VER)
-#	if (_MSC_VER >= 1400) 
+#	if (_MSC_VER >= 1400)
 #		define GML_MEMBAR // no barrier needed for MSVS 2005
 #	else
 #		define GML_MEMBAR MemoryBarrier() // _asm {lock add [esp], 0}
@@ -182,12 +182,7 @@ extern int gmlThreadNumber;
 
 extern int gmlThreadCount;
 extern int gmlThreadCountOverride;
-extern unsigned gmlCPUCount();
-#if (BOOST_VERSION >= 103500)
-#	define GML_CPU_COUNT (gmlThreadCountOverride ? gmlThreadCountOverride : boost::thread::hardware_concurrency() )
-#else
-#	define GML_CPU_COUNT (gmlThreadCountOverride ? gmlThreadCountOverride : gmlCPUCount() )
-#endif
+#define GML_CPU_COUNT (gmlThreadCountOverride ? gmlThreadCountOverride : boost::thread::hardware_concurrency() )
 #define GML_IF_SERVER_THREAD(thread) if(!GML_ENABLE || (thread <= gmlMaxServerThreadNum))
 #define GML_IF_SHARE_THREAD(thread) if(!GML_ENABLE || (thread <= gmlMaxShareThreadNum))
 extern int gmlItemsConsumed;
@@ -341,7 +336,7 @@ public:
 class gmlLock {
 	boost::try_mutex sl_mutex;
 	BYTE sl_lock[sizeof(boost::try_mutex::scoped_try_lock)*GML_MAX_NUM_THREADS];
-	
+
 public:
 	gmlLock() {
 	}
@@ -383,23 +378,23 @@ public:
 template<class T>
 class gmlVectorIter {
 public:
-	T *p; 
+	T *p;
 	gmlVectorIter():p(NULL) {}
-	gmlVectorIter(T *d) {p=d;} 
+	gmlVectorIter(T *d) {p=d;}
 	void operator=(const GML_TYPENAME gmlVectorIter<T> &i) {p=i.p;}
-	GML_TYPENAME gmlVectorIter<T> &operator++() {++p; return *this;} 
-	GML_TYPENAME gmlVectorIter<T> operator++(int) {return GML_TYPENAME gmlVectorIter<T>(p++);} 
+	GML_TYPENAME gmlVectorIter<T> &operator++() {++p; return *this;}
+	GML_TYPENAME gmlVectorIter<T> operator++(int) {return GML_TYPENAME gmlVectorIter<T>(p++);}
 	int operator!=(const GML_TYPENAME gmlVectorIter<T> &i) const {return p!=i.p;}
-	
+
 	ptrdiff_t operator-(const GML_TYPENAME gmlVectorIter<T> &i) const {return p-i.p;}
 	int operator<(const GML_TYPENAME gmlVectorIter<T> &i) const {return p<i.p;}
-	GML_TYPENAME gmlVectorIter<T> &operator--() {--p; return *this;} 
-	GML_TYPENAME gmlVectorIter<T> operator--(int) {return GML_TYPENAME gmlVectorIter<T>(p--);} 
+	GML_TYPENAME gmlVectorIter<T> &operator--() {--p; return *this;}
+	GML_TYPENAME gmlVectorIter<T> operator--(int) {return GML_TYPENAME gmlVectorIter<T>(p--);}
 	GML_TYPENAME gmlVectorIter<T> operator+(int i) const {return GML_TYPENAME gmlVectorIter<T>(p+i);}
 	GML_TYPENAME gmlVectorIter<T> operator-(int i) const {return GML_TYPENAME gmlVectorIter<T>(p-i);}
 	int operator==(const GML_TYPENAME gmlVectorIter<T> &i) const {return p==i.p;}
 	T &operator*() {return *p;}
-	
+
 	typedef std::random_access_iterator_tag iterator_category;
 	typedef T value_type;
 	typedef ptrdiff_t difference_type;
@@ -425,7 +420,7 @@ class gmlClassVector {
 	int doshrink;
 	int shrinksize;
 	int nalloc;
-	
+
 public:
 	gmlClassVector():doshrink(0),shrinksize(0),nalloc(0),
 #if GML_ORDERED_VOLATILE
@@ -435,7 +430,7 @@ public:
 		data=(T *)malloc(1*sizeof(T));
 		maxsize=1;
 	}
-	
+
 	~gmlClassVector() {
 		if(added>nalloc)
 			nalloc=added;
@@ -443,17 +438,17 @@ public:
 			data[i].~T();
 		free(data);
 	}
-	
+
 	typedef GML_TYPENAME gmlVectorIter<T> iterator;
-	
+
 	iterator begin() {
 		return iterator(data);
 	}
-	
+
 	iterator end() {
 		return iterator(data+added);
 	}
-	
+
 	long size() const {
 		return added;
 	}
@@ -461,15 +456,15 @@ public:
 	const bool empty() const {
 		return !added;
 	}
-	
+
 	const T &operator[](int i) const {
 		return data[i];
 	}
-	
+
 	T &operator[](int i) {
 		return data[i];
 	}
-	
+
 	T &acquire(int i) { // thread safe
 #if GML_ORDERED_VOLATILE
 		long sz;
@@ -518,7 +513,7 @@ public:
 		return data[i];
 #endif
 	}
-	
+
 	void release() { // thread safe
 #if GML_ORDERED_VOLATILE
 		--count;
@@ -526,7 +521,7 @@ public:
 		mutex.Unlock();
 #endif
 	}
-	
+
 	void push_back(const T &d) { // thread safe
 #if GML_ORDERED_VOLATILE
 		while(TRUE) {
@@ -556,10 +551,10 @@ public:
 		mutex.Unlock();
 #endif
 	}
-	
+
 	// this is probably overkill since realloced memory will never be cached in registers anyway
 	BYTE *volatile_realloc(BYTE *dt, const int osz, const int sz) {
-#if GML_ORDERED_VOLATILE 
+#if GML_ORDERED_VOLATILE
 		BYTE *dtn=(BYTE *)malloc(sz);
 		for(int i=0; i<osz; ++i)
 			*(volatile BYTE *)dtn++=*(volatile BYTE *)dt++;
@@ -574,11 +569,11 @@ public:
 		shrinksize=ms;
 		int ms2=ms<<1;
 		da=(T *)volatile_realloc((BYTE *)da,ms*sizeof(T),ms2*sizeof(T));
-		GML_VOLATILE(T *) data=da; 
+		GML_VOLATILE(T *) data=da;
 		GML_MEMBAR;
 		GML_VOLATILE(int) maxsize=ms2;
 	}
-	
+
 	void Shrink() {
 		int ms=shrinksize;
 		shrinksize=ms>>1;
@@ -590,7 +585,7 @@ public:
 		data=(T *)realloc(data,ms*sizeof(T));
 		maxsize=ms;
 	}
-	
+
 	void clear() {
 		if(added>nalloc)
 			nalloc=added;
@@ -622,7 +617,7 @@ class gmlVector {
 	int maxsize;
 	int doshrink;
 	int shrinksize;
-	
+
 public:
 	gmlVector() :
 #if GML_ORDERED_VOLATILE
@@ -685,21 +680,21 @@ public:
 			Shrink();
 		return *this;
 	}
-	
+
 	~gmlVector() {
 		free(data);
 	}
-	
+
 	typedef GML_TYPENAME gmlVectorIter<T> iterator;
-	
+
 	iterator begin() const {
 		return iterator(data);
 	}
-	
+
 	iterator end() const {
 		return iterator(data+added);
 	}
-	
+
 	const long size() const {
 		return added;
 	}
@@ -707,15 +702,15 @@ public:
 	const bool empty() const {
 		return !added;
 	}
-	
+
 	const T &operator[](const int i) const {
 		return data[i];
 	}
-	
+
 	T &operator[](const int i) {
 		return data[i];
 	}
-	
+
 	void push_back(const T &d) { // thread safe
 #if GML_ORDERED_VOLATILE
 		long sz=++count;
@@ -737,10 +732,10 @@ public:
 		mutex.Unlock();
 #endif
 	}
-	
+
 	// this is probably overkill since realloced memory will never be cached in registers anyway
 	BYTE *volatile_realloc(BYTE *dt, const int osz, const int sz) {
-#if GML_ORDERED_VOLATILE 
+#if GML_ORDERED_VOLATILE
 		BYTE *dtn=(BYTE *)malloc(sz);
 		for(int i=0; i<osz; ++i)
 			*(volatile BYTE *)dtn++=*(volatile BYTE *)dt++;
@@ -750,7 +745,7 @@ public:
 		return (BYTE *)realloc(dt,sz);
 #endif
 	}
-	
+
 	void Expand(T *&da, const int ms) {
 		shrinksize=ms;
 		int ms2=ms<<1;
@@ -759,7 +754,7 @@ public:
 		GML_MEMBAR;
 		GML_VOLATILE(int) maxsize=ms2;
 	}
-	
+
 	void Shrink() {
 		int ms=shrinksize;
 		shrinksize=ms>>1;
@@ -767,7 +762,7 @@ public:
 		data=(T *)realloc(data,ms*sizeof(T));
 		maxsize=ms;
 	}
-	
+
 	void clear() {
 		long sz=added;
 #if GML_ORDERED_VOLATILE
@@ -795,12 +790,12 @@ class gmlItemSequenceServer {
 	gmlCount req_large;
 	gmlCount avail_large;
 	gmlCount size_large;
-	int pregen_large;	
+	int pregen_large;
 	int large_arr_size;
 	T *large_item_arr;
 	S *large_size_arr;
 	GML_MUTEX;
-	
+
 public:
 	gmlItemSequenceServer(C gf, delitemseqfun df, int sz, int pg, int sz_l, int pg_l):
 		req(0),avail(0),req_large(0),avail_large(0),size_large(2) {
@@ -817,16 +812,16 @@ public:
 		memset(large_item_arr,0,large_arr_size*sizeof(T));
 		memset(large_size_arr,0,large_arr_size*sizeof(S));
 	}
-	
+
 	virtual ~gmlItemSequenceServer() {
 		delete [] item_arr;
 		delete [] large_item_arr;
 		delete [] large_size_arr;
 	}
-	
+
 	inline void GenerateItems() {
 		// small
-		int i;		
+		int i;
 		while(avail<req+pregen && item_arr[i=(avail%arr_size)]==0) {
 			GML_MUTEX_LOCK();
 			*(volatile T *)(item_arr+i)=(*genfun)(1);
@@ -846,7 +841,7 @@ public:
 			++avail_large;
 		}
 	}
-	
+
 	inline T GetItems(S n) {
 		++gmlItemsConsumed;
 		if(n==1) {
@@ -896,7 +891,7 @@ class gmlSingleItemServer {
 	int arr_size;
 	T *arr;
 	GML_MUTEX;
-	
+
 public:
 	gmlSingleItemServer(C gf, int sz, int pg):req(0),avail(0) {
 		genfun=gf;
@@ -905,13 +900,13 @@ public:
 		arr=new T[arr_size];
 		memset(arr,0,arr_size*sizeof(T));
 	}
-	
+
 	virtual ~gmlSingleItemServer() {
 		delete [] arr;
 	}
-	
+
 	inline void GenerateItems() {
-		int i;		
+		int i;
 		while(avail<req+pregen && arr[i=(avail%arr_size)]==0) {
 			GML_MUTEX_LOCK();
 			*(volatile T *)(arr+i)=(*genfun)();
@@ -920,7 +915,7 @@ public:
 			++avail;
 		}
 	}
-	
+
 	inline T GetItems() {
 		++gmlItemsConsumed;
 		long num=++req;
@@ -946,7 +941,7 @@ class gmlMultiItemServer {
 	int arr_size;
 	T *arr;
 	GML_MUTEX;
-	
+
 public:
 	gmlMultiItemServer(C gf, int sz, int pg):req(0),avail(0) {
 		genfun=gf;
@@ -955,13 +950,13 @@ public:
 		arr=new T[arr_size];
 		memset(arr,0,arr_size*sizeof(T));
 	}
-	
+
 	virtual ~gmlMultiItemServer() {
 		delete [] arr;
 	}
-	
+
 	inline void GenerateItems() {
-		int i;		
+		int i;
 		while(avail<req+pregen && arr[i=(avail%arr_size)]==0) {
 			T val;
 			(*genfun)(1,&val);
@@ -972,7 +967,7 @@ public:
 			++avail;
 		}
 	}
-	
+
 	inline void GetItems(S n, T *data) {
 		gmlItemsConsumed+=n;
 		for(int i=0; i<n; ++i) {
@@ -1083,11 +1078,11 @@ template<class U, class V, class W>
 		size_t p;
 		W *q;
 	public:
-		CQIter() {} 
+		CQIter() {}
 		CQIter(size_t d, W *r) {p=d; q=r;}
 		void operator=(const CQIter<U,V,W> &i) {p=i.p;}
-		CQIter<U,V,W> &operator++() {++p; return *this;} 
-		CQIter<U,V,W> operator++(int) {return CQIter<U,V,W>(p++);} 
+		CQIter<U,V,W> &operator++() {++p; return *this;}
+		CQIter<U,V,W> operator++(int) {return CQIter<U,V,W>(p++);}
 		int operator!=(const CQIter<U,V,W> &i) const {return p<i.p;}
 		V &operator*() {return (*q)[p];}
 		V *operator->() {return &(*q)[p];}
