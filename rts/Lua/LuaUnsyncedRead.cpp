@@ -1462,25 +1462,25 @@ int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
 
 int LuaUnsyncedRead::GetTimer(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
-	const int time = spring_gettime().toMilliSecs();
-	lua_pushlightuserdata(L, reinterpret_cast<void*>(time)); // hack, treat time as pointer
+	const float time = spring_gettime().toMilliSecsf();
+	ptrdiff_t p = 0;
+	*reinterpret_cast<float*>(&p) = time; // map 32bit float into 32/64bit pointer type
+	lua_pushlightuserdata(L, reinterpret_cast<void*>(p)); // hack, treat time as pointer
 	return 1;
 }
 
 
 int LuaUnsyncedRead::DiffTimers(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isuserdata(L, 1) || !lua_isuserdata(L, 2)) {
+	if (!lua_islightuserdata(L, 1) || !lua_islightuserdata(L, 2)) {
 		luaL_error(L, "Incorrect arguments to DiffTimers()");
 	}
 	const void* p1 = lua_touserdata(L, 1);
 	const void* p2 = lua_touserdata(L, 2);
-	const Uint32 t1 = *((const Uint32*)&p1);
-	const Uint32 t2 = *((const Uint32*)&p2);
-	const Uint32 diffTime = (t1 - t2);
-	lua_pushnumber(L, (float)diffTime * 0.001f); // return seconds
+	const float t1 = *reinterpret_cast<float*>(&p1);
+	const float t2 = *reinterpret_cast<float*>(&p2);
+	const float diffTime = (t1 - t2);
+	lua_pushnumber(L, diffTime * 0.001f); // return seconds
 	return 1;
 }
 
