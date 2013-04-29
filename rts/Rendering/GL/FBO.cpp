@@ -43,7 +43,7 @@ GLenum FBO::GetTextureTargetByID(const GLuint id, const unsigned int i)
 		return _targets[i];
 	} else if (i<3) {
 		return GetTextureTargetByID(id, i+1);
-	} else	return -1;
+	} else	return GL_INVALID_ENUM;
 }
 
 
@@ -70,7 +70,7 @@ void FBO::DownloadAttachment(const GLenum attachment)
 	if (target==GL_TEXTURE) {
 		target = GetTextureTargetByID(id);
 
-		if (target<0)
+		if (target == GL_INVALID_ENUM)
 			return;
 	}
 

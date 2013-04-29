@@ -2,10 +2,8 @@
 
 ADD_DEFINITIONS(-DUSE_GML)
 
-if   (NOT MSVC)
-	# USE_GML requires this
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-tls-direct-seg-refs")
-endif(NOT MSVC)
+# USE_GML requires this
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${NO_TLS_DIRECT_SEG_REFS}")
 
 # USE_GML_SIM requires USE_GML
 ADD_DEFINITIONS(-DUSE_GML_SIM)

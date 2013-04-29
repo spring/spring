@@ -11,8 +11,9 @@
 	#include <hash_set>
 	#define SPRING_HASH_SET stdext::hash_set
 #elif __GNUG__
-	/* Test for GCC >= 4.3.2 */
+	/* Test for GCC >= 4.3.2 or clang (and assume tr1 is present) */
 	#if __GNUC__ > 4 || \
+		__clang__ || \
 		(__GNUC__ == 4 && (__GNUC_MINOR__ > 3 || \
 						(__GNUC_MINOR__ == 3 && \
 							__GNUC_PATCHLEVEL__ >= 2)))

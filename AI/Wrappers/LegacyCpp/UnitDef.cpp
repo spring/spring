@@ -238,11 +238,11 @@ springLegacyAI::UnitDef::UnitDef()
 , minAirBasePower(0.0f)
 , pieceTrailCEGRange(-1)
 , maxThisUnit(0)
-, realMetalCost(0.0f)
-, realEnergyCost(0.0f)
-, realMetalUpkeep(0.0f)
-, realEnergyUpkeep(0.0f)
-, realBuildTime(0.0f)
+//, realMetalCost(0.0f)
+//, realEnergyCost(0.0f)
+//, realMetalUpkeep(0.0f)
+//, realEnergyUpkeep(0.0f)
+//, realBuildTime(0.0f)
 {
 	yardmaps[0] = NULL;
 	yardmaps[1] = NULL;

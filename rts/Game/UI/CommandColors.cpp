@@ -309,7 +309,7 @@ bool CCommandColors::LoadConfigFromString(const string& cfg)
 			if (words.size() > 1) {
 				map<string, int>::iterator it = colorNames.find(command);
 				if (it != colorNames.end()) {
-					colors[it->second];
+					//colors[it->second];
 					float tmp[4];
 					int count = sscanf(words[1].c_str(), "%f %f %f %f",
 														 &tmp[0], &tmp[1], &tmp[2], &tmp[3]);

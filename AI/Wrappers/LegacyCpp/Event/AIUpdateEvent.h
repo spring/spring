@@ -10,15 +10,15 @@ namespace springLegacyAI {
 
 class CAIUpdateEvent : public CAIEvent {
 public:
-	CAIUpdateEvent(const SUpdateEvent& event) : event(event) {}
+	CAIUpdateEvent(const SUpdateEvent& event) : /*event(event)*/ {}
 	~CAIUpdateEvent() {}
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
 		ai.Update();
 	}
 
-private:
-	SUpdateEvent event;
+//private:
+//	SUpdateEvent event;
 };
 
 } // namespace springLegacyAI
