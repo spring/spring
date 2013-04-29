@@ -2874,7 +2874,7 @@ void CLuaHandle::CollectGarbage()
 
 	//TODO make configureable?
 	const int memUsageInMB = lua_gc(L, LUA_GCCOUNT, 0) / 1024;
-	static const float TIME_PER_MB = 0.02f + 0.08f * smoothstep(25, 100, memUsageInMB); // alloced Mem 25MB: 20microsec  100MB: 100microsec (30x per second)
+	const float TIME_PER_MB = 0.02f + 0.08f * smoothstep(25, 100, memUsageInMB); // alloced Mem 25MB: 20microsec  100MB: 100microsec (30x per second)
 	const float maxRuntime = TIME_PER_MB * memUsageInMB;
 	const spring_time endTime = spring_gettime() + spring_msecs(maxRuntime);
 
