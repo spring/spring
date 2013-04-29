@@ -10,7 +10,7 @@ namespace springLegacyAI {
 
 class CAIReleaseEvent : public CAIEvent {
 public:
-	CAIReleaseEvent(const SReleaseEvent& event) : /*event(event)*/ {}
+	CAIReleaseEvent(const SReleaseEvent& event) /* :event(event)*/ {}
 	~CAIReleaseEvent() {}
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
