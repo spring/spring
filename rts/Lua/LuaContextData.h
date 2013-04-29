@@ -152,17 +152,35 @@ public:
 
 
 struct luaContextData {
-	luaContextData() : luamutex(NULL), primary(true), fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
-		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false),
-		owner(NULL), drawingEnabled(false), running(0){}
+	luaContextData()
+	: luamutex(NULL)
+	, primary(true)
+	, synced(false)
+	, owner(NULL)
+	, drawingEnabled(false)
+	, running(0)
+	, fullCtrl(false)
+	, fullRead(false)
+	, ctrlTeam(CEventClient::NoAccessTeam)
+	, readTeam(0)
+	, readAllyTeam(0)
+	, selectTeam(CEventClient::NoAccessTeam) {}
+
 	boost::recursive_mutex* luamutex;
 	bool primary; //GML crap
+	bool synced;
+	CLuaHandle* owner;
+	bool drawingEnabled;
+	int running; //< is currently running? (0: not running; >0: is running)
+
+	// permission rights
 	bool fullCtrl;
 	bool fullRead;
 	int  ctrlTeam;
 	int  readTeam;
 	int  readAllyTeam;
 	int  selectTeam;
+
 	//FIXME		LuaArrays arrays;
 	LuaShaders shaders;
 	LuaTextures textures;
@@ -170,10 +188,6 @@ struct luaContextData {
 	LuaFBOs fbos;
 	LuaRBOs rbos;
 	CLuaDisplayLists displayLists;
-	bool synced;
-	CLuaHandle* owner;
-	bool drawingEnabled;
-	int running; //< is currently running? (0: not running; >0: is running)
 
 	GLMatrixStateTracker glMatrixTracker;
 };
