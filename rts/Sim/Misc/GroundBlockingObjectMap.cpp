@@ -173,7 +173,7 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlocked(const float3& pos) const {
 bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, CSolidObject* ignoreObj) const
 {
 	if (x < 0 || x >= gs->mapx || z < 0 || z >= gs->mapy)
-		return NULL;
+		return false;
 
 	const int mapSquare = x + z * gs->mapx;
 

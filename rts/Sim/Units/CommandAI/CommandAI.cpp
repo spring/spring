@@ -78,7 +78,7 @@ CCommandAI::CCommandAI():
 	lastUserCommand(-1000),
 	selfDCountdown(0),
 	lastFinishCommand(0),
-	owner(owner),
+	owner(NULL),
 	orderTarget(0),
 	targetDied(false),
 	inCommand(false),
