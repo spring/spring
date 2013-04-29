@@ -354,6 +354,22 @@ class CLuaHandle : public CEventClient
 
 		int callinErrors;
 
+	public: // EventBatch
+		void ExecuteUnitEventBatch();
+		void ExecuteFeatEventBatch();
+		void ExecuteObjEventBatch();
+		void ExecuteProjEventBatch();
+		void ExecuteFrameEventBatch();
+		void ExecuteLogEventBatch();
+
+	protected:
+		std::vector<LuaUnitEvent> luaUnitEventBatch;
+		std::vector<LuaFeatEvent> luaFeatEventBatch;
+		std::vector<LuaObjEvent> luaObjEventBatch;
+		std::vector<LuaProjEvent> luaProjEventBatch;
+		std::vector<int> luaFrameEventBatch;
+		std::vector<LuaLogEvent> luaLogEventBatch;
+
 	protected: // call-outs
 		static int KillActiveHandle(lua_State* L);
 		static int CallOutGetName(lua_State* L);
@@ -390,23 +406,10 @@ class CLuaHandle : public CEventClient
 		static bool IsDrawCallIn() {
 			return (LUA_MT_OPT & LUA_MUTEX) && !Threading::IsSimThread();
 		}
-		void ExecuteUnitEventBatch();
-		void ExecuteFeatEventBatch();
-		void ExecuteObjEventBatch();
-		void ExecuteProjEventBatch();
-		void ExecuteFrameEventBatch();
-		void ExecuteLogEventBatch();
 
 	protected: // static
 		static bool devMode; // allows real file access
 		static bool modUICtrl; // allows non-user scripts to use UI controls
-
-		std::vector<LuaUnitEvent> luaUnitEventBatch;
-		std::vector<LuaFeatEvent> luaFeatEventBatch;
-		std::vector<LuaObjEvent> luaObjEventBatch;
-		std::vector<LuaProjEvent> luaProjEventBatch;
-		std::vector<int> luaFrameEventBatch;
-		std::vector<LuaLogEvent> luaLogEventBatch;
 
 		// FIXME: because CLuaUnitScript needs to access RunCallIn
 		friend class CLuaUnitScript;

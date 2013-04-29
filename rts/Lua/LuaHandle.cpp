@@ -2872,9 +2872,9 @@ void CLuaHandle::CollectGarbage()
 	SELECT_LUA_STATE();
 	lua_gc(L, LUA_GCSTOP, 0); // don't collect garbage outside of this function
 
-	//FIXME make configureable?
+	//TODO make configureable?
 	const int memUsageInMB = lua_gc(L, LUA_GCCOUNT, 0) / 1024;
-	static const float TIME_PER_MB = 0.04f; // 40microsec per MB -> 25 * 40microsec = 1000microsec = 1millisec (30x per second!)
+	static const float TIME_PER_MB = 0.02f + 0.08f * smoothstep(25, 100, memUsageInMB); // alloced Mem 25MB: 20microsec  100MB: 100microsec (30x per second)
 	const float maxRuntime = TIME_PER_MB * memUsageInMB;
 	const spring_time endTime = spring_gettime() + spring_msecs(maxRuntime);
 
