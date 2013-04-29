@@ -1,0 +1,7 @@
+language: cpp
+compiler:
+	- gcc
+before_install:
+	- sudo apt-get install cmake
+script:	cmake . && make spring-headless && make check
+
