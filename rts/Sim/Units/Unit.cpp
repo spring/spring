@@ -1011,7 +1011,7 @@ void CUnit::SlowUpdateWeapons() {
 			//     target-unit which the CAI did *not* auto-select, or
 			//     2) ::AttackGround was called with any user-selected
 			//     position and all checks succeeded
-			if ((haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire))) {
+			if (haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire)) {
 				if (attackTarget != NULL) {
 					w->AttackUnit(attackTarget, w->haveUserTarget);
 				} else if (userAttackGround) {

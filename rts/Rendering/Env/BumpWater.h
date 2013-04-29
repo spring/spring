@@ -119,7 +119,7 @@ private:
 
 	float3 windVec;
 	float3 windndir;
-	float  windStrength;
+//	float  windStrength;
 };
 
 #endif // BUMP_WATER_H

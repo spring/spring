@@ -440,7 +440,7 @@ void CClassicGroundMoveType::ChangeHeading(short wantedHeading) {
 	flatFrontDir.Normalize();
 }
 
-bool CClassicGroundMoveType::CanApplyImpulse()
+bool CClassicGroundMoveType::CanApplyImpulse(const float3&)
 {
 	if (owner->beingBuilt || owner->moveDef->moveFamily == MoveDef::Ship)
 		return false;

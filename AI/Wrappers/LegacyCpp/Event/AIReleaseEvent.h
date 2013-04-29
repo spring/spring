@@ -10,15 +10,15 @@ namespace springLegacyAI {
 
 class CAIReleaseEvent : public CAIEvent {
 public:
-	CAIReleaseEvent(const SReleaseEvent& event) : event(event) {}
+	CAIReleaseEvent(const SReleaseEvent& event) : /*event(event)*/ {}
 	~CAIReleaseEvent() {}
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
 		ai.ReleaseAI();
 	}
 
-private:
-	SReleaseEvent event;
+//private:
+//	SReleaseEvent event;
 };
 
 } // namespace springLegacyAI
