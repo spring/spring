@@ -197,17 +197,17 @@ bool CCamera::InView(const float3& mins, const float3& maxs) const
 
 bool CCamera::InView(const float3& p, float radius) const
 {
-	const float3 t   = (p - pos);
-	const float  lsq = t.SqLength();
-
-	if (lsq > Square(globalRendering->viewRange)) {
-		return false;
-	}
+	const float3 t(p - pos);
 
 	if ((t.dot(rgtFrustumSideDir) > radius) ||
 	    (t.dot(lftFrustumSideDir) > radius) ||
 	    (t.dot(botFrustumSideDir) > radius) ||
 	    (t.dot(topFrustumSideDir) > radius)) {
+		return false;
+	}
+
+	const float lsq = t.SqLength();
+	if (lsq > Square(globalRendering->viewRange)) {
 		return false;
 	}
 
