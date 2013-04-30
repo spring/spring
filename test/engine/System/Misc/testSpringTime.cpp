@@ -9,7 +9,7 @@
 #include <cmath>
 
 #include <boost/chrono/include.hpp> // boost chrono
-
+#include <boost/thread.hpp>
 
 static const int testRuns = 1000000;
 
