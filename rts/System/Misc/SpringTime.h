@@ -37,7 +37,6 @@ struct Cpp11Clock {
 	template<typename T> static inline int64_t FromSecs(const T s) { return s * i1e9; }
 	template<typename T> static inline int64_t FromMs(const T ms)  { return ms * i1e6; }
 	template<typename T> static inline int64_t FromNs(const T ns)  { return ns; }
-	static inline std::string GetName() { return "Cpp11Clock"; }
 	static inline int64_t Get() {
 		return chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
 	}

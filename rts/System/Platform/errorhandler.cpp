@@ -11,6 +11,7 @@
 #include <string>
 #include <sstream>
 #include <boost/bind.hpp>
+#include <boost/thread.hpp>
 
 #include "Game/GameServer.h"
 #include "Game/GlobalUnsynced.h"
@@ -35,7 +36,7 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 		LOG_L(L_ERROR, "failed to shutdown normally, exit forced");
 	}
 	LOG_L(L_ERROR, "%s %s", caption.c_str(), msg.c_str());
-	
+
 	if (!forced) {
 	#if !defined(DEDICATED) && !defined(HEADLESS)
 		Platform::MsgBox(msg, caption, flags);
@@ -72,7 +73,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	ExitMessage(msg, caption, flags, false);
 
 #else
-	//! SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any 
+	//! SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any
 	//! MT thread has crashed or deviated from its normal execution path by throwing an exception
 	boost::thread* forcedExitThread = new boost::thread(boost::bind(&ForcedExit, msg, caption, flags));
 
@@ -87,7 +88,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	}
 
 	Watchdog::ClearTimer();
-	
+
 	//! exiting any possibly threads
 	//! (else they would still run while the error messagebox is shown)
 	SpringApp::Shutdown();
