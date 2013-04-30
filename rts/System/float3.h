@@ -30,7 +30,10 @@ public:
 	void operator delete(void* p, size_t size) { mempool.Free(p, size); }
 */
 
-#if defined(__GNUC__) && !defined (__clang__)  // optimization for gnu compilers, so it can be inlined
+#if __cplusplus > 199711L
+	static constexpr float CMP_EPS = 1e-4f;
+	static constexpr float NORMALIZE_EPS = 1e-12f;
+#elif defined(__GNUC__) && !defined (__clang__)  // optimization for gnu compilers, so it can be inlined
 	static const float CMP_EPS = 1e-4f;
 	static const float NORMALIZE_EPS = 1e-12f;
 #else

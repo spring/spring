@@ -251,8 +251,8 @@ std::string GetModuleFile(std::string moduleName)
 		// add extension if it is not in the file name
 		// it could also be "libXZY.so-1.2.3"
 		// -> does not have to be the end, my friend
-		if (moduleName.find("."SHARED_LIBRARY_EXTENSION) == std::string::npos) {
-			moduleName = moduleName + "."SHARED_LIBRARY_EXTENSION;
+		if (moduleName.find("." SHARED_LIBRARY_EXTENSION) == std::string::npos) {
+			moduleName = moduleName + "." SHARED_LIBRARY_EXTENSION;
 		}
 
 		// will not not try to load, but return the libs address

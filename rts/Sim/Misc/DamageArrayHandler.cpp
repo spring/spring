@@ -41,7 +41,7 @@ CDamageArrayHandler::CDamageArrayHandler()
 		typeList.insert(typeList.begin(), "default");
 		name2type["default"] = 0;
 
-		LOG("Number of damage types: "_STPF_, typeList.size());
+		LOG("Number of damage types: " _STPF_, typeList.size());
 
 		for (int armorID = 1; armorID < (int)typeList.size(); armorID++) {
 			const std::string armorName = StringToLower(typeList[armorID]);

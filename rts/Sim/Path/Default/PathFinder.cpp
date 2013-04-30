@@ -138,7 +138,7 @@ IPath::SearchResult CPathFinder::GetPath(
 			LOG_L(L_DEBUG, "Path found.");
 			LOG_L(L_DEBUG, "Nodes tested: %u", testedNodes);
 			LOG_L(L_DEBUG, "Open squares: %u", openSquareBuffer.GetSize());
-			LOG_L(L_DEBUG, "Path nodes: "_STPF_, path.path.size());
+			LOG_L(L_DEBUG, "Path nodes: " _STPF_, path.path.size());
 			LOG_L(L_DEBUG, "Path cost: %f", path.pathCost);
 		}
 	} else {

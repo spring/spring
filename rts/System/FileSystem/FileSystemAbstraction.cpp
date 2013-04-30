@@ -41,8 +41,6 @@
 	#endif
 #endif
 
-
-
 std::string FileSystemAbstraction::RemoveLocalPathPrefix(const std::string& path)
 {
 	std::string p(path);
@@ -92,13 +90,13 @@ bool FileSystemAbstraction::HasPathSepAtEnd(const std::string& path) {
 void FileSystemAbstraction::EnsurePathSepAtEnd(std::string& path) {
 
 	if (path.empty()) {
-		path += "."sPS;
+		path += "." sPS;
 	} else if (!HasPathSepAtEnd(path)) {
 		path += cPS;
 	}
 }
 std::string FileSystemAbstraction::EnsurePathSepAtEnd(const std::string& path) {
-	
+
 	std::string pathCopy(path);
 	EnsurePathSepAtEnd(pathCopy);
 	return pathCopy;
@@ -111,7 +109,7 @@ void FileSystemAbstraction::EnsureNoPathSepAtEnd(std::string& path) {
 	}
 }
 std::string FileSystemAbstraction::EnsureNoPathSepAtEnd(const std::string& path) {
-	
+
 	std::string pathCopy(path);
 	EnsureNoPathSepAtEnd(pathCopy);
 	return pathCopy;

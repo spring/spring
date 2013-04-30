@@ -1670,7 +1670,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		// bonus command for debugging
 		LOG("Available Commands:");
 		for(size_t i = 0; i < commands.size(); ++i){
-			LOG("  command: "_STPF_", id = %i, action = %s",
+			LOG("  command: " _STPF_ ", id = %i, action = %s",
 					i, commands[i].id, commands[i].action.c_str());
 		}
 		// show the icon/command linkage
@@ -1682,7 +1682,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		LOG("activePage      = %i", activePage);
 		LOG("iconsSize       = %u", iconsSize);
 		LOG("iconsCount      = %i", iconsCount);
-		LOG("commands.size() = "_STPF_, commands.size());
+		LOG("commands.size() = " _STPF_, commands.size());
 		return true;
 	}
 	else if (action.command == "luaui") {

@@ -67,7 +67,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 		if (smf.smtFileNames.size() != tileHeader.numTileFiles) {
 			LOG_L(L_WARNING,
 					"mismatched number of .smt file "
-					"references between the map's .smd ("_STPF_")"
+					"references between the map's .smd (" _STPF_ ")"
 					" and header (%d); ignoring .smd overrides",
 					smf.smtFileNames.size(), tileHeader.numTileFiles);
 		} else {
