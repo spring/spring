@@ -56,10 +56,7 @@ public:
 
 public:
 	spring_time() : x(0) {}
-	explicit spring_time(const int ms) : x(Cpp11Clock::FromMs(ms)) {}
-	explicit spring_time(const unsigned ms) : x(Cpp11Clock::FromMs(ms)) {}
-	explicit spring_time(const int64_t ms) : x(Cpp11Clock::FromMs(ms)) {}
-	explicit spring_time(const float ms) : x(Cpp11Clock::FromMs(ms)) {}
+	template<typename T> explicit spring_time(const T ms) : x(Cpp11Clock::FromMs(ms)) {}
 
 	spring_time& operator+=(const spring_time v)       { x += v.x; return *this; }
 	spring_time& operator-=(const spring_time v)       { x -= v.x; return *this; }
