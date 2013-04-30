@@ -499,12 +499,12 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 		// debug purposes:
 		if(sectorType == LAND_SECTOR)
 		{
-			ai->Log("\nAdding land sector %i,%i to base; base size: "_STPF_, best_sector->x, best_sector->y, sectors[0].size());
+			ai->Log("\nAdding land sector %i,%i to base; base size: " _STPF_, best_sector->x, best_sector->y, sectors[0].size());
 			ai->Log("\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
 		}
 		else
 		{
-			ai->Log("\nAdding water sector %i,%i to base; base size: "_STPF_, best_sector->x, best_sector->y, sectors[0].size());
+			ai->Log("\nAdding water sector %i,%i to base; base size: " _STPF_, best_sector->x, best_sector->y, sectors[0].size());
 			ai->Log("\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
 		}
 
