@@ -334,7 +334,6 @@ if    (USE_CXX11)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS}")
 	add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # issue in std::chrono with gentoo and few other distros
 	add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants
-	add_definitions(-D__STDC_LIMIT_MACROS) # needed for INT_MAX, also in 3rd party libs so cannot switch to std::numeric_limits<>
 endif (USE_CXX11)
 
 
