@@ -94,7 +94,7 @@ CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable, bool fro
 				SetInfoItemValueInteger(*key, archiveTable.GetInt(*key, 0));
 				continue;
 			}
-			
+
 			const int luaType = archiveTable.GetType(*key);
 			switch (luaType) {
 				case LuaTable::STRING: {
@@ -169,7 +169,7 @@ bool CArchiveScanner::ArchiveData::IsReservedKey(const std::string& keyLower)
 bool CArchiveScanner::ArchiveData::IsValid(std::string& err) const
 {
 	std::string missingtag;
-	
+
 	static const int extCount = sizeof(knownTags) / sizeof(KnownInfoTag);
 	for (int i = 0; i < extCount; ++i) {
 		const KnownInfoTag tag = knownTags[i];
@@ -534,7 +534,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 
 		const bool hasModinfo = ar->FileExists("modinfo.lua");
 		const bool hasMapinfo = ar->FileExists("mapinfo.lua");
-		
+
 		// check for smf/sm3 and if the uncompression of important files is too costy
 		for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
 			std::string name;
@@ -912,7 +912,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 	fprintf(out, "local archiveCache = {\n\n");
 	fprintf(out, "\tinternalver = %i,\n\n", INTERNAL_VER);
-	fprintf(out, "\tarchives = {  -- count = "_STPF_"\n", archiveInfos.size());
+	fprintf(out, "\tarchives = {  -- count = " _STPF_ "\n", archiveInfos.size());
 
 	std::map<std::string, ArchiveInfo>::const_iterator arcIt;
 	for (arcIt = archiveInfos.begin(); arcIt != archiveInfos.end(); ++arcIt) {
@@ -955,7 +955,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 			} else if (archData.GetModType() == modtype::primary) {
 				FilterDep(deps, "Spring content v1");
 			}
-			
+
 			if (!deps.empty()) {
 				fprintf(out, "\t\t\t\tdepend = {\n");
 				for (unsigned d = 0; d < deps.size(); d++) {
@@ -971,7 +971,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 	fprintf(out, "\t},\n\n"); // close 'archives'
 
-	fprintf(out, "\tbrokenArchives = {  -- count = "_STPF_"\n", brokenArchives.size());
+	fprintf(out, "\tbrokenArchives = {  -- count = " _STPF_ "\n", brokenArchives.size());
 
 	std::map<std::string, BrokenArchive>::const_iterator bai;
 	for (bai = brokenArchives.begin(); bai != brokenArchives.end(); ++bai) {

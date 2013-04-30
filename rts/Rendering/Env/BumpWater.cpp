@@ -104,7 +104,7 @@ static GLuint LoadTexture(const string& filename, const float anisotropy = 0.0f,
 	GLuint texID;
 	CBitmap bm;
 	if (!bm.Load(filename)) {
-		throw content_error("["LOG_SECTION_BUMP_WATER"] Could not load texture from file " + filename);
+		throw content_error("[" LOG_SECTION_BUMP_WATER "] Could not load texture from file " + filename);
 	}
 
 	glGenTextures(1, &texID);
@@ -191,7 +191,7 @@ CBumpWater::CBumpWater()
 
 	// CHECK HARDWARE
 	if (!globalRendering->haveGLSL) {
-		throw content_error("["LOG_SECTION_BUMP_WATER"] your hardware/driver setup does not support GLSL");
+		throw content_error("[" LOG_SECTION_BUMP_WATER "] your hardware/driver setup does not support GLSL");
 	}
 
 	shoreWaves = shoreWaves && (GLEW_EXT_framebuffer_object);
@@ -205,7 +205,7 @@ CBumpWater::CBumpWater()
 	//! caustic textures
 	const vector<string>& causticNames = mapInfo->water.causticTextures;
 	if (causticNames.empty()) {
-		throw content_error("["LOG_SECTION_BUMP_WATER"] no caustic textures");
+		throw content_error("[" LOG_SECTION_BUMP_WATER "] no caustic textures");
 	}
 	for (int i = 0; i < (int)causticNames.size(); ++i) {
 		caustTextures.push_back(LoadTexture(causticNames[i]));
@@ -253,7 +253,7 @@ CBumpWater::CBumpWater()
 				LOG_L(L_ERROR, fmt, log);
 
 				//! string size is limited with content_error()
-				throw content_error(string("["LOG_SECTION_BUMP_WATER"] shorewaves-shader compilation error!"));
+				throw content_error(string("[" LOG_SECTION_BUMP_WATER "] shorewaves-shader compilation error!"));
 			}
 
 			blurShader->SetUniformLocation("tex0"); // idx 0
@@ -269,7 +269,7 @@ CBumpWater::CBumpWater()
 				const char* log = (blurShader->GetLog()).c_str();
 
 				LOG_L(L_ERROR, fmt, log);
-				throw content_error(string("["LOG_SECTION_BUMP_WATER"] shorewaves-shader validation error!"));
+				throw content_error(string("[" LOG_SECTION_BUMP_WATER "] shorewaves-shader validation error!"));
 			}
 		}
 
@@ -502,7 +502,7 @@ CBumpWater::CBumpWater()
 			const char* fmt = "water-shader compilation error: %s";
 			const char* log = (waterShader->GetLog()).c_str();
 			LOG_L(L_ERROR, fmt, log);
-			throw content_error(string("["LOG_SECTION_BUMP_WATER"] water-shader compilation error!"));
+			throw content_error(string("[" LOG_SECTION_BUMP_WATER "] water-shader compilation error!"));
 		}
 
 		if (useUniforms) {
@@ -532,7 +532,7 @@ CBumpWater::CBumpWater()
 			const char* log = (waterShader->GetLog()).c_str();
 
 			LOG_L(L_ERROR, fmt, log);
-			throw content_error(string("["LOG_SECTION_BUMP_WATER"] water-shader validation error!"));
+			throw content_error(string("[" LOG_SECTION_BUMP_WATER "] water-shader validation error!"));
 		}
 	}
 

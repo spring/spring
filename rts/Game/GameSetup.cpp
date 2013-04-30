@@ -167,7 +167,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 	unsigned playerCount = 0;
 	if (file.GetValue(playerCount, "GAME\\NumPlayers") && playerStartingData.size() != playerCount) {
 		LOG_L(L_WARNING,
-				_STPF_" players in GameSetup script (NumPlayers says %i)",
+				_STPF_ " players in GameSetup script (NumPlayers says %i)",
 				playerStartingData.size(), playerCount);
 	}
 }
@@ -264,7 +264,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 	unsigned teamCount = 0;
 	if (file.GetValue(teamCount, "Game\\NumTeams") && teamStartingData.size() != teamCount) {
 		LOG_L(L_WARNING,
-				_STPF_" teams in GameSetup script (NumTeams: %i)",
+				_STPF_ " teams in GameSetup script (NumTeams: %i)",
 				teamStartingData.size(), teamCount);
 	}
 }

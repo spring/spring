@@ -4,19 +4,20 @@
 #define SPRINGTIME_H
 
 #include "System/creg/creg_cond.h"
-#include <boost/thread/thread.hpp>
-#include <boost/cstdint.hpp>
 
+#include <boost/cstdint.hpp>
 typedef boost::int64_t int64_t;
 
 #if __cplusplus > 199711L
 	#include <chrono>
+	#include <thread>
 	namespace chrono { using namespace std::chrono; };
 	namespace this_thread { using namespace std::this_thread; };
 #else
 	#define SPRINGTIME_USING_BOOST
 	#undef gt
 	#include <boost/chrono/include.hpp>
+	#include <boost/thread/thread.hpp>
 	namespace chrono { using namespace boost::chrono; };
 	namespace this_thread { using namespace boost::this_thread; };
 #endif

@@ -1470,7 +1470,7 @@ void CGroundMoveType::Fail(bool callScript)
 
 void CGroundMoveType::HandleObjectCollisions()
 {
-	SCOPED_TIMER("Unit::MoveType::Collisions");
+	SCOPED_TIMER("Unit::MoveType::Update::Collisions");
 
 	static const float3 sepDirMask = float3(1.0f, 0.0f, 1.0f);
 

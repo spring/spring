@@ -573,7 +573,7 @@ IPath::SearchResult CPathEstimator::GetPath(
 			LOG_L(L_DEBUG, "PE: Search completed.");
 			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
 			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
-			LOG_L(L_DEBUG, "Path length: "_STPF_, path.path.size());
+			LOG_L(L_DEBUG, "Path length: " _STPF_, path.path.size());
 			LOG_L(L_DEBUG, "Path cost: %f", path.pathCost);
 		}
 	} else {

@@ -268,7 +268,7 @@ ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* s
 
 	// diffuse + bumpmap in one pass?
 	if (total.Fits(hwmax)) {
-		LOG("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapSP", sd->normalMapStages.size());
+		LOG("\tnormalMapStages.size()=" _STPF_ ", SM_DiffuseBumpmapSP", sd->normalMapStages.size());
 		return SM_DiffuseBumpmapSP;
 	}
 
@@ -282,7 +282,7 @@ ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* s
 
 	// is multipass possible?
 	if (diffuseRQ.Fits(hwmax) && (bumpmapRQ + special).Fits(hwmax)) {
-		LOG("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapMP", sd->normalMapStages.size());
+		LOG("\tnormalMapStages.size()=" _STPF_ ", SM_DiffuseBumpmapMP", sd->normalMapStages.size());
 		return SM_DiffuseBumpmapMP;
 	}
 
@@ -505,7 +505,7 @@ void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, Shader
 	static const size_t buf_sizeMax = 160;
 	for (size_t a = 0; a < ns->texCoordGen.size(); a++) {
 		char buf[buf_sizeMax];
-		SNPRINTF(buf, buf_sizeMax, "gl_TexCoord["_STPF_"].st = vec2(dot(gl_Vertex, gl_ObjectPlaneS["_STPF_"]), dot(gl_Vertex,gl_ObjectPlaneT["_STPF_"]));\n", a, a, a);
+		SNPRINTF(buf, buf_sizeMax, "gl_TexCoord[" _STPF_ "].st = vec2(dot(gl_Vertex, gl_ObjectPlaneS[" _STPF_ "]), dot(gl_Vertex,gl_ObjectPlaneT[" _STPF_ "]));\n", a, a, a);
 		tcgen += buf;
 	}
 	tcgen += "}\n";

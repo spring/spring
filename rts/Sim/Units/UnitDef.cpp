@@ -800,10 +800,10 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 
 	// print warnings
 	if (ymCopyIdx > defYardMap.size())
-		LOG_L(L_WARNING, "%s: Given yardmap contains "_STPF_" excess char(s)!", name.c_str(), ymCopyIdx - defYardMap.size());
+		LOG_L(L_WARNING, "%s: Given yardmap contains " _STPF_ " excess char(s)!", name.c_str(), ymCopyIdx - defYardMap.size());
 
 	if (ymCopyIdx > 0 && ymCopyIdx < defYardMap.size())
-		LOG_L(L_WARNING, "%s: Given yardmap requires "_STPF_" extra char(s)!", name.c_str(), defYardMap.size() - ymCopyIdx);
+		LOG_L(L_WARNING, "%s: Given yardmap requires " _STPF_ " extra char(s)!", name.c_str(), defYardMap.size() - ymCopyIdx);
 
 	if (!unknownChars.empty())
 		LOG_L(L_WARNING, "%s: Given yardmap contains unknown char(s) \"%s\"!", name.c_str(), unknownChars.c_str());
