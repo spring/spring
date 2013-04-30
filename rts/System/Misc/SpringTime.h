@@ -8,7 +8,8 @@
 #include <boost/cstdint.hpp>
 typedef boost::int64_t int64_t;
 
-#if __cplusplus > 199711L
+// mingw doesn't support std::thread (yet?)
+#if (__cplusplus > 199711L) && !defined(__MINGW32__)
 	#include <chrono>
 	#include <thread>
 	namespace chrono { using namespace std::chrono; };
