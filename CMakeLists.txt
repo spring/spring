@@ -206,7 +206,7 @@ if    (NOT "${LOG_LEVEL}" STREQUAL "DEFAULT")
 	add_definitions(-D_LOG_LEVEL_MIN=LOG_LEVEL_${LOG_LEVEL})
 endif (NOT "${LOG_LEVEL}" STREQUAL "DEFAULT")
 
-option(SYNCCHECK"Check sync during gameplay (Required for online play!)" TRUE)
+option(SYNCCHECK "Check sync during gameplay (Required for online play!)" TRUE)
 if    (SYNCCHECK)
 	add_definitions(-DSYNCCHECK)
 endif (SYNCCHECK)
@@ -234,7 +234,7 @@ if    (HEADLESS_SYSTEM AND NOT NO_SOUND)
 	message(FATAL_ERROR "HEADLESS_SYSTEM requires NO_SOUND to be set!")
 endif (HEADLESS_SYSTEM AND NOT NO_SOUND)
 
-set(OPTION "Enable libsquish for DXT decompressing. (needed for ETC1 support)" TRUE)
+option(USE_LIBSQUISH "Enable libsquish for DXT decompressing. (needed for ETC1 support)" TRUE)
 if    (USE_LIBSQUISH)
 	add_definitions(-DUSE_LIBSQUISH)
 endif (USE_LIBSQUISH)
@@ -311,6 +311,7 @@ Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${LTO_FLAGS}")
 Set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${LTO_FLAGS}")
 Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
 
+### OpenMP
 option(OPENMP "Enable local multithreading" TRUE)
 if    (OPENMP)
 	include(FindOpenMP)
@@ -326,7 +327,18 @@ if    (OPENMP)
 	endif(OPENMP_FOUND)
 endif (OPENMP)
 
+### C++11
+option(USE_CXX11 "Enable c++11" TRUE)
+if    (USE_CXX11)
+	Message(STATUS "Compiling with C++11")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS}")
+	add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # issue in std::chrono with gentoo and few other distros
+	add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants
+endif (USE_CXX11)
+
+
 if(NOT MSVC)
+	### SigNan
 	option(SIGNAL_NANS "Enable NaN-Signalling" ${DEBUG_BUILD})
 	if (SIGNAL_NANS)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsignaling-nans")
