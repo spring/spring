@@ -2635,7 +2635,7 @@ char strBuf[STRBUF_SIZE];
 const char* GetStr(std::string str)
 {
 	if (str.length() + 1 > STRBUF_SIZE) {
-		sprintf(strBuf, "Increase STRBUF_SIZE (needs "_STPF_" bytes)", str.length() + 1);
+		sprintf(strBuf, "Increase STRBUF_SIZE (needs " _STPF_ " bytes)", str.length() + 1);
 	} else {
 		STRCPY(strBuf, str.c_str());
 	}
