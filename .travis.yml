@@ -1,7 +1,7 @@
 language: cpp
 compiler:
-	- gcc
+  - gcc
 before_install:
-	- sudo apt-get install cmake
+  - sudo apt-get install libglew-dev libsdl-dev libdevil-dev libopenal-dev libogg-dev libvorbis-dev libfreetype6-dev p7zip-full libxcursor-dev libboost-thread-dev libboost-regex-dev libboost-system-dev libboost-program-options-dev libboost-signals-dev
 script:	cmake . && make spring-headless && make check
 
