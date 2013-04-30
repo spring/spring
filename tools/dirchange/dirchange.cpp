@@ -6,7 +6,7 @@
 // Example for spring:
 // 	dch <trunk-path>/rts -ISystem
 
-#include <cstdio> 
+#include <cstdio>
 #include <cassert>
 #include <cstring>
 #include <vector>
@@ -63,7 +63,7 @@ list<file_t> filelist;
 void RemoveExtension(char *file)
 {
 	int a = strlen(file)-1;
-	while(a>0) 
+	while(a>0)
 	{
 		if(file[a] == '.') {
 			file[a] = 0;
@@ -108,7 +108,7 @@ void Scan(const string& curPath, const string& storePath)
 	string curPattern = curPath;
 	curPattern += "/*.*";
 
-	handle = _findfirst(curPattern.c_str(), &files);	
+	handle = _findfirst(curPattern.c_str(), &files);
 	for (moreFiles = (int)handle; moreFiles != -1; moreFiles = _findnext(handle, &files)) {
 
 		string filepath=curPath + "/" + files.name;
@@ -134,7 +134,7 @@ void Scan(const string& curPath, const string& storePath)
 			else
 				f.inclpath = storePath + "/" +  files.name;
 			const char *ext=GetExtension (files.name);
-			if (ext) 
+			if (ext)
 				f.ext = ext;
 
 			filelist.push_back (f);
@@ -287,11 +287,11 @@ int main (int argc, char *argv[])
 			hmap [i->name]=&*i;
 		}
 	}
-	printf (_STPF_" headers.\n", hmap.size());
+	printf (_STPF_ " headers.\n", hmap.size());
 
 	for (list<file_t>::iterator i=filelist.begin();i!=filelist.end();++i)
 	{
-		// read all cpp and h files for #include <headerfile> 
+		// read all cpp and h files for #include <headerfile>
 		// and replace the headerfile with header path
 
 		if (i->ext != "cpp" && i->ext != "h")
@@ -325,7 +325,7 @@ int main (int argc, char *argv[])
 				string headerpath;
 				int j=0;
 
-				while (headernamesrc[j]!='"' && headernamesrc+j<&buffer.back()) 
+				while (headernamesrc[j]!='"' && headernamesrc+j<&buffer.back())
 					headerpath += headernamesrc[j++];
 
 				// strip the directory part of it
