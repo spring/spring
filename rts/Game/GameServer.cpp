@@ -1798,7 +1798,7 @@ void CGameServer::ServerReadNet()
 			bool bwLimitIsReached = globalConfig->linkIncomingPeakBandwidth > 0 && bandwidthUsage > globalConfig->linkIncomingPeakBandwidth;
 			while (link) {
 				if (dropPacket)
-					dropPacket = (packet = link->Peek(globalConfig->linkIncomingMaxWaitingPackets));
+					dropPacket = (NULL != (packet = link->Peek(globalConfig->linkIncomingMaxWaitingPackets)));
 				packet = (!bwLimitIsReached || dropPacket) ? link->GetData() : link->Peek(ahead++);
 				if (!packet)
 					break;
