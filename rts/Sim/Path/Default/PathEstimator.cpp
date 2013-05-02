@@ -954,7 +954,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 			return;
 		}
 
-		std::auto_ptr<IArchive> auto_pfile(pfile);
+		std::unique_ptr<IArchive> auto_pfile(pfile);
 		IArchive& file(*pfile);
 
 		const unsigned fid = file.FindFile("pathinfo");
