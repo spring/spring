@@ -12,7 +12,7 @@ CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
 float float3::maxxpos = -1.0f;
 float float3::maxzpos = -1.0f;
 
-#if (cplusplus <= 199711L) && (!defined(__GNUC__) || defined (__clang__))
+#if (__cplusplus <= 199711L) && (!defined(__GNUC__) || defined (__clang__))
 const float float3::CMP_EPS = 1e-4f;
 const float float3::NORMALIZE_EPS = 1e-12f;
 #endif
