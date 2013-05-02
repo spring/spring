@@ -87,9 +87,13 @@ static int os_getenv (lua_State *L) {
   return 1;
 }
 
+//SPRING
+#include "System/Misc/SpringTime.h"
 
 static int os_clock (lua_State *L) {
-  lua_pushnumber(L, (lua_Number)(clock()/CLOCKS_PER_SEC));
+  //SPRING
+  //Lua's used clock() ran too fast on some linux systems, so rely on spring_time instead
+  lua_pushnumber(L, spring_gettime().toSecsf());
   return 1;
 }
 
