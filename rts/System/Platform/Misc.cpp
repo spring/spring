@@ -2,7 +2,7 @@
 
 #include "Misc.h"
 
-#ifdef linux
+#ifdef __linux__
 #include <unistd.h>
 #include <dlfcn.h> // for dladdr(), dlopen()
 
@@ -180,7 +180,7 @@ std::string GetProcessExecutableFile()
 	// error will only be used if procExeFilePath stays empty
 	const char* error = NULL;
 
-#ifdef linux
+#ifdef __linux__
 	char file[512];
 	const int ret = readlink("/proc/self/exe", file, sizeof(file)-1);
 	if (ret >= 0) {
