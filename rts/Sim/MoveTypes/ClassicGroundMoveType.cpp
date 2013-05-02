@@ -86,8 +86,8 @@ CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 	decRate(0.01f),
 
 	skidRotSpeed(0.0f),
-	dropSpeed(0.0f),
-	dropHeight(0.0f),
+	//dropSpeed(0.0f),
+	//dropHeight(0.0f),
 
 	skidRotVector(UpVector),
 	skidRotSpeed2(0.0f),

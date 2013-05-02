@@ -162,7 +162,7 @@ void CWeaponProjectile::Explode(
 		weaponDef->impactOnly,
 		weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
 		true,                                             // damgeGround
-		id
+		static_cast<unsigned int>(id)
 	};
 
 	helper->Explosion(params);

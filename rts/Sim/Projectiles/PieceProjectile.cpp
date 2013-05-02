@@ -176,7 +176,7 @@ void CPieceProjectile::Collision()
 			false,             // impactOnly
 			false,             // ignoreOwner
 			true,              // damageGround
-			id
+			static_cast<unsigned int>(id)
 		};
 
 		helper->Explosion(params);
@@ -233,7 +233,7 @@ void CPieceProjectile::Collision(CUnit* unit)
 			false,             // impactOnly
 			false,             // ignoreOwner
 			true,              // damageGround
-			id
+			static_cast<unsigned int>(id)
 		};
 
 		helper->Explosion(params);
