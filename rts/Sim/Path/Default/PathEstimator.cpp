@@ -954,7 +954,12 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 			return;
 		}
 
+//std::auto_ptr is deprecated in c++0x
+#if __cplusplus >= 201103L
 		std::unique_ptr<IArchive> auto_pfile(pfile);
+#else
+		std::auto_ptr<IArchive> auto_pfile(pfile);
+#endif
 		IArchive& file(*pfile);
 
 		const unsigned fid = file.FindFile("pathinfo");
