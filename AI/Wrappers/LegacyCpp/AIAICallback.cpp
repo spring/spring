@@ -1603,7 +1603,7 @@ void springLegacyAI::CAIAICallback::AddNotification(float3 pos, float3 color, fl
 
 bool springLegacyAI::CAIAICallback::SendResources(float mAmount, float eAmount, int receivingTeam) {
 
-	SSendResourcesCommand cmd = {mAmount, eAmount, receivingTeam};
+	SSendResourcesCommand cmd = {static_cast<int>(mAmount), eAmount, receivingTeam};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_RESOURCES, &cmd);
 	return cmd.ret_isExecuted;
 }
@@ -1614,7 +1614,7 @@ int springLegacyAI::CAIAICallback::SendUnits(const std::vector<int>& unitIds, in
 	for (size_t i=0; i < unitIds.size(); ++i) {
 		arr_unitIds[i] = unitIds[i];
 	}
-	SSendUnitsCommand cmd = {arr_unitIds, unitIds.size(), receivingTeam};
+	SSendUnitsCommand cmd = {arr_unitIds, static_cast<int>(unitIds.size()), receivingTeam};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_UNITS, &cmd);
 	free(arr_unitIds);
 	return cmd.ret_sentUnits;
@@ -1821,7 +1821,7 @@ int springLegacyAI::CAIAICallback::CreateSplineFigure(float3 pos1, float3 pos2, 
 		pos3_f3,
 		pos4_f3,
 		width,
-		arrow,
+		static_cast<bool>(arrow),
 		lifeTime,
 		figureGroupId
 	};
@@ -1841,7 +1841,7 @@ int springLegacyAI::CAIAICallback::CreateLineFigure(float3 pos1, float3 pos2, fl
 		pos1_f3,
 		pos2_f3,
 		width,
-		arrow,
+		static_cast<bool>(arrow),
 		lifeTime,
 		figureGroupId
 	};
