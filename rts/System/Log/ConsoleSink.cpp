@@ -45,7 +45,13 @@ static void log_sink_record_console(const char* section, int level,
 	log_framePrefixer_createPrefix(framePrefix, sizeof(framePrefix));
 
 	FILE* outStream = log_chooseStream(level);
-	FPRINTF(outStream, "%s%s\n", framePrefix, record);
+	if (level >= LOG_LEVEL_ERROR) {
+		FPRINTF(outStream, "\033[90m%s\033[31m%s\033[39m\n", framePrefix, record);
+	} else if (level >= LOG_LEVEL_WARNING) {
+		FPRINTF(outStream, "\033[90m%s\033[33m%s\033[39m\n", framePrefix, record);
+	} else {
+		FPRINTF(outStream, "\033[90m%s\033[39m%s\n", framePrefix, record);
+	}
 	// *printf does not always flush after a newline
 	// (eg. if stdout is being redirected to a file)
 	fflush(outStream);
