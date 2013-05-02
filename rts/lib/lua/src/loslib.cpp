@@ -88,13 +88,19 @@ static int os_getenv (lua_State *L) {
 }
 
 //SPRING
+#ifndef BUILDING_AI
 #include "System/Misc/SpringTime.h"
-static spring_time start = spring_gettime();
+static const spring_time start = spring_gettime();
+#endif
 
 static int os_clock (lua_State *L) {
   //SPRING
+#ifndef BUILDING_AI
   //Lua's used clock() ran too fast on some linux systems, so rely on spring_time instead
   lua_pushnumber(L, (spring_gettime() - start).toSecsf());
+#else
+  lua_pushnumber(L, (lua_Number)clock()/(lua_Number)CLOCKS_PER_SEC);
+#endif
   return 1;
 }
 
