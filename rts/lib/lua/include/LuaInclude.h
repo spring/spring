@@ -12,25 +12,25 @@
 #include "LuaUser.h"
 
 
-inline void lua_pushsstring(lua_State* L, const std::string& str)
+static inline void lua_pushsstring(lua_State* L, const std::string& str)
 {
 	lua_pushlstring(L, str.data(), str.size());
 }
 
 
-inline bool lua_israwnumber(lua_State* L, int index)
+static inline bool lua_israwnumber(lua_State* L, int index)
 {
 	return (lua_type(L, index) == LUA_TNUMBER);
 }
 
 
-inline bool lua_israwstring(lua_State* L, int index)
+static inline bool lua_israwstring(lua_State* L, int index)
 {
 	return (lua_type(L, index) == LUA_TSTRING);
 }
 
 
-inline int lua_checkgeti(lua_State* L, int idx, int n)
+static inline int lua_checkgeti(lua_State* L, int idx, int n)
 {
 	lua_rawgeti(L, idx, n);
 	if (lua_isnoneornil(L, -1)) {
@@ -41,13 +41,13 @@ inline int lua_checkgeti(lua_State* L, int idx, int n)
 }
 
 
-inline int lua_toint(lua_State* L, int idx)
+static inline int lua_toint(lua_State* L, int idx)
 {
 	return (int)lua_tointeger(L, idx);
 }
 
 
-inline float lua_tofloat(lua_State* L, int idx)
+static inline float lua_tofloat(lua_State* L, int idx)
 {
 	const float n = lua_tonumber(L, idx);
 #ifdef DEBUG
@@ -59,40 +59,40 @@ inline float lua_tofloat(lua_State* L, int idx)
 }
 
 
-inline float luaL_checkfloat(lua_State* L, int idx)
+static inline float luaL_checkfloat(lua_State* L, int idx)
 {
 	return (float)luaL_checknumber(L, idx);
 }
 
 
-inline float luaL_optfloat(lua_State* L, int idx, float def)
+static inline float luaL_optfloat(lua_State* L, int idx, float def)
 {
 	return (float)luaL_optnumber(L, idx, def);
 }
 
-inline bool luaL_optboolean(lua_State* L, int idx, bool def)
+static inline bool luaL_optboolean(lua_State* L, int idx, bool def)
 {
 	return lua_isboolean(L, idx) ? lua_toboolean(L, idx) : def;
 }
 
 struct luaContextData;
 
-inline luaContextData* GetLuaContextData(const lua_State* L)
+static inline luaContextData* GetLuaContextData(const lua_State* L)
 {
 	return reinterpret_cast<luaContextData*>(G(L)->ud);
 }
 
-inline lua_State* LUA_OPEN(luaContextData* lcd = NULL) {
+static inline lua_State* LUA_OPEN(luaContextData* lcd = NULL) {
 	lua_State* L = lua_newstate(spring_lua_alloc, lcd); // we want to use our own memory allocator
 	return L;
 }
 
-inline void LUA_CLOSE(lua_State* L_Old) {
+static inline void LUA_CLOSE(lua_State* L_Old) {
 	lua_close(L_Old);
 }
 
 
-inline void LUA_UNLOAD_LIB(lua_State* L, std::string libname) {
+static inline void LUA_UNLOAD_LIB(lua_State* L, std::string libname) {
 	luaL_findtable(L, LUA_REGISTRYINDEX, "_LOADED", 1);
 	lua_pushsstring(L, libname);
 	lua_pushnil(L);
