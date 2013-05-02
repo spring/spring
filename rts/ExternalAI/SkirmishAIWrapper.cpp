@@ -414,7 +414,7 @@ void CSkirmishAIWrapper::PlayerCommandGiven(
 		unitIds[i] = playerSelectedUnits[i];
 	}
 
-	SPlayerCommandEvent evtData = {unitIds, playerSelectedUnits.size(), cCommandId, playerId};
+	SPlayerCommandEvent evtData = {unitIds, static_cast<int>(playerSelectedUnits.size()), cCommandId, playerId};
 	ai->HandleEvent(EVENT_PLAYER_COMMAND, &evtData);
 	delete[] unitIds;
 }

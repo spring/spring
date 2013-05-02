@@ -84,8 +84,8 @@ private:
 	float decRate;
 
 	float skidRotSpeed;
-	float dropSpeed;
-	float dropHeight;
+	//float dropSpeed;
+	//float dropHeight;
 
 	float3 skidRotVector;
 	float skidRotSpeed2;
