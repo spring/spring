@@ -36,7 +36,7 @@ CONFIG(std::string, SpringData).defaultValue("")
 
 DataDirLocater dataDirLocater;
 
-
+/*
 static std::string GetSpringBinaryName()
 {
 #if defined(WIN32)
@@ -45,7 +45,7 @@ static std::string GetSpringBinaryName()
 	return "spring";
 #endif
 }
-
+*/
 
 static std::string GetUnitsyncLibName()
 {
