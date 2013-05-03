@@ -33,7 +33,6 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Util.h"
-#include "System/TimeProfiler.h"
 #include "System/FileSystem/FileSystem.h"
 
 using std::list;
@@ -449,8 +448,8 @@ void CGroundDecalHandler::DrawObjectDecals() {
 						continue;
 					}
 
-					if (decalOwner == NULL || 
-						(decalOwnerUnit != NULL && (decalOwnerUnit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS))) || 
+					if (decalOwner == NULL ||
+						(decalOwnerUnit != NULL && (decalOwnerUnit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS))) ||
 						(decalOwnerFeature != NULL && decalOwnerFeature->IsInLosForAllyTeam(gu->myAllyTeam)) || // FIXME: Support "Prev Los" stuff for features?
 						gu->spectatingFullView) {
 						decalsToDraw.push_back(decal);
@@ -658,8 +657,6 @@ void CGroundDecalHandler::Draw()
 	if (!drawDecals) {
 		return;
 	}
-
-	SCOPED_TIMER("GroundDecals");
 
 	const float3 ambientColor = mapInfo->light.groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
 	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();

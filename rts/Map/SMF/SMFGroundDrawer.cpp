@@ -9,9 +9,7 @@
 #include "Map/ReadMap.h"
 #include "Map/SMF/Legacy/LegacyMeshDrawer.h"
 #include "Map/SMF/ROAM/RoamMeshDrawer.h"
-#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/ProjectileDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/myGL.h"
@@ -21,7 +19,7 @@
 #include "System/FastMath.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-
+#include "System/TimeProfiler.h"
 
 
 CONFIG(int, GroundDetail).defaultValue(60).minimumValue(0).maximumValue(200);
@@ -246,10 +244,10 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 			DrawWaterPlane(false);
 		}
 
-		DrawBorder(drawPass);
-
-		groundDecals->Draw();
-		projectileDrawer->DrawGroundFlashes();
+		{
+			SCOPED_TIMER("CSMFGroundDrawer::DrawBorder");
+			DrawBorder(drawPass);
+		}
 	}
 }
 

@@ -38,7 +38,6 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Util.h"
-#include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 
@@ -550,8 +549,6 @@ void CDecalsDrawerGL4::Draw()
 
 	if (decals.empty())
 		return;
-
-	SCOPED_TIMER("GroundDecals2");
 
 	UpdateDecalsVBO();
 	//UpdateVisibilityVBO();
