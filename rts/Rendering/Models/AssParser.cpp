@@ -13,6 +13,7 @@
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Exceptions.h"
+#include "System/ScopedFPUSettings.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 
@@ -138,7 +139,12 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 
 	// Read the model file to build a scene object
 	LOG_S(LOG_SECTION_MODEL, "Importing model file: %s", modelFilePath.c_str() );
-	const aiScene* scene = importer.ReadFile( modelFilePath, ASS_POSTPROCESS_OPTIONS );
+	const aiScene* scene;
+	{
+		// ASSIMP spams a lot SIGFPEs atm in normal & tangent generation
+		ScopedDisableFpuExceptions fe;
+		scene = importer.ReadFile( modelFilePath, ASS_POSTPROCESS_OPTIONS );
+	}
 	if (scene != NULL) {
 		LOG_S(LOG_SECTION_MODEL,
 				"Processing scene for model: %s (%d meshes / %d materials / %d textures)",
