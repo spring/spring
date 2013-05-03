@@ -231,7 +231,6 @@ class CGrassBlockDrawer: public CReadMap::IQuadDrawer
 public:
 	std::vector<CGrassDrawer::InviewGrass> inviewGrass;
 	std::vector<CGrassDrawer::InviewNearGrass> inviewNearGrass;
-	CVertexArray* va;
 	int cx, cy;
 	CGrassDrawer* gd;
 
@@ -243,53 +242,39 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 {
 	const float maxDetailedDist = gd->maxDetailedDist;
 
-	int xgbs = x * grassBlockSize, xgbsx = 0;
-	int ygbs = y * grassBlockSize, ygbsy = 0;
-
 	CGrassDrawer::NearGrassStruct* nearGrass = gd->nearGrass;
 
 	if (abs(x - cx) <= gd->detailedBlocks && abs(y - cy) <= gd->detailedBlocks) {
 		//! blocks close to the camera
-		ygbsy = ygbs;
-
-		for (int y2 = 0; y2 < grassBlockSize; ++y2) {
-			xgbsx = xgbs;
-
-			const unsigned char* gm = gd->grassMap +
-				ygbsy * gs->mapx / grassSquareSize +
-				xgbsx;
-
-			for (int x2 = 0; x2 < grassBlockSize; ++x2) { //!loop over all squares in block
-				if (*gm) {
-					float3 squarePos((xgbsx + 0.5f) * gSSsq, 0.0f, (ygbsy + 0.5f) * gSSsq);
+		for (int y2 = y * grassBlockSize; y2 < (y + 1) * grassBlockSize; ++y2) {
+			for (int x2 = x * grassBlockSize; x2 < (x + 1) * grassBlockSize; ++x2) {
+				if (gd->grassMap[y2 * gs->mapx / grassSquareSize + x2]) {
+					float3 squarePos((x2 + 0.5f) * gSSsq, 0.0f, (y2 + 0.5f) * gSSsq);
 						squarePos.y = ground->GetHeightReal(squarePos.x, squarePos.z, false);
 
 					const float sqdist = (camera->GetPos() - squarePos).SqLength();
 
+					CGrassDrawer::NearGrassStruct* ng = &nearGrass[(y2 & 31) * 32 + (x2 & 31)];
+
 					if (sqdist < (maxDetailedDist * maxDetailedDist)) {
 						//! close grass, draw directly
-						rng.Seed(ygbsy * 1025 + xgbsx);
+						rng.Seed(y2 * 1025 + x2);
 
 						for (int a = 0; a < gd->numTurfs; a++) {
-							const float dx = (xgbsx + rng.RandFloat()) * gSSsq;
-							const float dy = (ygbsy + rng.RandFloat()) * gSSsq;
-							const float col = 0.62f;
+							const float dx = (x2 + rng.RandFloat()) * gSSsq;
+							const float dy = (y2 + rng.RandFloat()) * gSSsq;
 
 							float3 pos(dx, ground->GetHeightReal(dx, dy, false), dy);
 								pos.y -= ground->GetSlope(dx, dy, false) * 10.0f + 0.03f;
 
-							glColor3f(col, col, col);
+							if (ng->square != y2 * 2048 + x2) {
+								const float3 v = squarePos - camera->GetPos();
+								ng->rotation = GetHeadingFromVector(v.x, v.z) * 180.0f / 32768 + 180; //FIXME make more random
+								ng->square = y2 * 2048 + x2;
+							}
 
 							glPushMatrix();
 							glTranslatef3(pos);
-							CGrassDrawer::NearGrassStruct* ng = &nearGrass[(ygbsy & 31) * 32 + (xgbsx & 31)];
-
-							if (ng->square != ygbsy * 2048 + xgbsx) {
-								const float3 v = squarePos - camera->GetPos();
-								ng->rotation = GetHeadingFromVector(v.x, v.z) * 180.0f / 32768 + 180; //FIXME make more random
-								ng->square = ygbsy * 2048 + xgbsx;
-							}
-
 							glRotatef(ng->rotation, 0.0f, 1.0f, 0.0f);
 							glCallList(gd->grassDL);
 							glPopMatrix();
@@ -298,34 +283,24 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 						//! near but not close, save for later drawing
 						CGrassDrawer::InviewNearGrass iv;
 							iv.dist = sqdist;
-							iv.x = xgbsx;
-							iv.y = ygbsy;
+							iv.x = x2;
+							iv.y = y2;
 						inviewNearGrass.push_back(iv);
-						nearGrass[(ygbsy & 31) * 32 + (xgbsx & 31)].square = -1;
+						ng->square = -1;
 					}
-
 				}
-
-				++gm;
-				++xgbsx;
 			}
-
-			++ygbsy;
 		}
 
 		return;
 	}
 
-	float3 dif;
-		dif.x = camera->GetPos().x - ((x + 0.5f) * bMSsq);
-		dif.y = 0.0f;
-		dif.z = camera->GetPos().z - ((y + 0.5f) * bMSsq);
-	const float dist = dif.Length2D();
-	dif /= dist;
+	const float3 dif(camera->GetPos().x - ((x + 0.5f) * bMSsq), 0.0f, camera->GetPos().z - ((y + 0.5f) * bMSsq));
+	const float dist = dif.SqLength2D();
 
-	if (dist < gd->maxGrassDist) {
-		int curSquare = y * gd->blocksX + x;
-		int curModSquare = (y & 31) * 32 + (x & 31);
+	if (dist < Square(gd->maxGrassDist)) {
+		const int curSquare = y * gd->blocksX + x;
+		const int curModSquare = (y & 31) * 32 + (x & 31);
 
 		CGrassDrawer::GrassStruct* grass = gd->grass + curModSquare;
 		grass->lastSeen = gs->frameNum;
@@ -341,52 +316,35 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 			grass->va = new CVertexArray;
 			grass->pos = float3((x + 0.5f) * bMSsq, ground->GetHeightReal((x + 0.5f) * bMSsq, (y + 0.5f) * bMSsq, false), (y + 0.5f) * bMSsq);
 
-			va = grass->va;
+			CVertexArray* va = grass->va;
 			va->Initialize();
-			va->EnlargeArrays(grassBlockSize * grassBlockSize * gd->numTurfs * 4, 0, VA_SIZE_TN);
 
-			ygbsy = ygbs;
-
-			for (int y2 = 0; y2 < grassBlockSize; ++y2) {
-				//! CAUTION: loop count must match EnlargeArrays above
-				xgbsx = xgbs;
-
-				unsigned char* gm = gd->grassMap +
-					ygbsy * gs->mapx / grassSquareSize +
-					xgbsx;
-
-				for (int x2 = 0; x2 < grassBlockSize; ++x2) {
-					//! CAUTION: loop count must match EnlargeArrays above
-					if (*gm) {
-						rng.Seed(ygbsy * 1025 + xgbsx);
+			for (int y2 = y * grassBlockSize; y2 < (y + 1) * grassBlockSize; ++y2) {
+				for (int x2 = x * grassBlockSize; x2 < (x + 1) * grassBlockSize; ++x2) {
+					if (gd->grassMap[y2 * gs->mapx / grassSquareSize + x2]) {
+						rng.Seed(y2 * 1025 + x2);
 
 						for (int a = 0; a < gd->numTurfs; a++) {
-							//! CAUTION: loop count must match EnlargeArrays above
-							const float dx = (xgbsx + rng.RandFloat()) * gSSsq;
-							const float dy = (ygbsy + rng.RandFloat()) * gSSsq;
+							const float dx = (x2 + rng.RandFloat()) * gSSsq;
+							const float dy = (y2 + rng.RandFloat()) * gSSsq;
 							const float col = 1.0f;
 
 							float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
 								pos.y -= (ground->GetSlope(dx, dy, false) * 10.0f + 0.03f);
 
-							va->AddVertexQTN(pos, 0.0f,         0.0f, float3(-partTurfSize, -partTurfSize, col));
-							va->AddVertexQTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
-							va->AddVertexQTN(pos, 1.0f / 16.0f, 1.0f, float3( partTurfSize,  partTurfSize, col));
-							va->AddVertexQTN(pos, 0.0f,         1.0f, float3(-partTurfSize,  partTurfSize, col));
+							va->AddVertexTN(pos, 0.0f,         0.0f, float3(-partTurfSize, -partTurfSize, col));
+							va->AddVertexTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
+							va->AddVertexTN(pos, 1.0f / 16.0f, 1.0f, float3( partTurfSize,  partTurfSize, col));
+							va->AddVertexTN(pos, 0.0f,         1.0f, float3(-partTurfSize,  partTurfSize, col));
 						}
 					}
-
-					++gm;
-					++xgbsx;
 				}
-
-				++ygbsy;
 			}
 		}
 
 		CGrassDrawer::InviewGrass ig;
 			ig.num = curModSquare;
-			ig.dist = dist;
+			ig.dist = dif.Length2D();
 		inviewGrass.push_back(ig);
 	}
 }
