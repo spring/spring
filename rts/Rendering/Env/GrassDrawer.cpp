@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <algorithm>
+#include <cmath>
 
 #include "GrassDrawer.h"
 #include "Game/Camera.h"
@@ -21,6 +21,7 @@
 #include "System/myMath.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
+#include "System/UnsyncedRNG.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 
@@ -35,11 +36,8 @@ static const int   blockMapSize    = grassSquareSize * grassBlockSize;
 static const int   gSSsq = SQUARE_SIZE * grassSquareSize;
 static const int   bMSsq = SQUARE_SIZE * blockMapSize;
 
+static UnsyncedRNG rng;
 
-inline float fRand(float size)
-{
-	return float(rand()) / RAND_MAX * size;
-}
 
 CGrassDrawer::CGrassDrawer()
 {
@@ -74,12 +72,12 @@ CGrassDrawer::CGrassDrawer()
 	}
 
 	// TODO: get rid of the magic constants
-	maxGrassDist = 800 + math::sqrt((float) detail) * 240;
+	maxGrassDist = 800 + std::sqrt((float) detail) * 240;
 	maxDetailedDist = 146 + detail * 24;
 	detailedBlocks = int((maxDetailedDist - 24) / bMSsq) + 1;
 	const float detail_lim = std::min(3, detail);
 	numTurfs = 3 + int(detail_lim * 0.5f);
-	strawPerTurf = 50 + int(math::sqrt(detail_lim) * 10);
+	strawPerTurf = 50 + int(std::sqrt(detail_lim) * 10);
 
 	blocksX = gs->mapx / grassSquareSize / grassBlockSize;
 	blocksY = gs->mapy / grassSquareSize / grassBlockSize;
@@ -97,7 +95,7 @@ CGrassDrawer::CGrassDrawer()
 
 	lastListClean = 0;
 	grassDL = glGenLists(1);
-	srand(15);
+	rng.Seed(15);
 	CreateGrassDispList(grassDL);
 
 	{
@@ -270,13 +268,11 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 
 					if (sqdist < (maxDetailedDist * maxDetailedDist)) {
 						//! close grass, draw directly
-						srand(ygbsy * 1025 + xgbsx);
-						rand();
-						rand();
+						rng.Seed(ygbsy * 1025 + xgbsx);
 
 						for (int a = 0; a < gd->numTurfs; a++) {
-							const float dx = (xgbsx + fRand(1)) * gSSsq;
-							const float dy = (ygbsy + fRand(1)) * gSSsq;
+							const float dx = (xgbsx + rng.RandFloat()) * gSSsq;
+							const float dy = (ygbsy + rng.RandFloat()) * gSSsq;
 							const float col = 0.62f;
 
 							float3 pos(dx, ground->GetHeightReal(dx, dy, false), dy);
@@ -362,14 +358,12 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 				for (int x2 = 0; x2 < grassBlockSize; ++x2) {
 					//! CAUTION: loop count must match EnlargeArrays above
 					if (*gm) {
-						srand(ygbsy * 1025 + xgbsx);
-						rand();
-						rand();
+						rng.Seed(ygbsy * 1025 + xgbsx);
 
 						for (int a = 0; a < gd->numTurfs; a++) {
 							//! CAUTION: loop count must match EnlargeArrays above
-							const float dx = (xgbsx + fRand(1)) * gSSsq;
-							const float dy = (ygbsy + fRand(1)) * gSSsq;
+							const float dx = (xgbsx + rng.RandFloat()) * gSSsq;
+							const float dy = (ygbsy + rng.RandFloat()) * gSSsq;
 							const float col = 1.0f;
 
 							float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
@@ -681,7 +675,7 @@ void CGrassDrawer::DrawFarBillboards(const std::vector<CGrassDrawer::InviewGrass
 		const float3 billboardDirX = (billboardDirZ.cross(UpVector)).ANormalize();
 		const float3 billboardDirY = billboardDirX.cross(billboardDirZ);
 
-		const float ang = math::acos(billboardDirZ.y);
+		const float ang = std::acos(billboardDirZ.y);
 		const int texPart = std::min(15, int(std::max(0, int((ang + PI / 16 - PI / 2) / PI * 30))));
 
 		grassShader->SetUniform2f(2, texPart / 16.0f, 0.0f);
@@ -707,7 +701,7 @@ void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inview
 			const float3 billboardDirX = (billboardDirZ.cross(UpVector)).ANormalize();
 			const float3 billboardDirY = billboardDirX.cross(billboardDirZ);
 
-			const float ang = math::acos(billboardDirZ.y);
+			const float ang = std::acos(billboardDirZ.y);
 			const int texPart = std::min(15, int(std::max(0, int((ang + PI / 16 - PI / 2) / PI * 30))));
 
 			grassShader->SetUniform2f(2, texPart / 16.0f, 0.0f);
@@ -715,9 +709,7 @@ void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inview
 			grassShader->SetUniform3f(4,  billboardDirY.x,  billboardDirY.y,  billboardDirY.z);
 			grassShader->SetUniform3f(5, -billboardDirZ.x, -billboardDirZ.y, -billboardDirZ.z);
 
-			srand(y * 1025 + x);
-			rand();
-			rand();
+			rng.Seed(y * 1025 + x);
 
 			CVertexArray* va = GetVertexArray();
 			va->Initialize();
@@ -725,8 +717,8 @@ void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inview
 
 			for (int a = 0; a < numTurfs; a++) {
 				//! CAUTION: loop count must match EnlargeArrays above
-				const float dx = (x + fRand(1)) * gSSsq;
-				const float dy = (y + fRand(1)) * gSSsq;
+				const float dx = (x + rng.RandFloat()) * gSSsq;
+				const float dy = (y + rng.RandFloat()) * gSSsq;
 				const float col = 1.0f;
 
 				float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
@@ -890,22 +882,22 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 	va->Initialize();
 
 	for (int a = 0; a < strawPerTurf; ++a) {
-		const float maxAng = fRand(mapInfo->grass.bladeAngle);
-		const float length = mapInfo->grass.bladeHeight + fRand(mapInfo->grass.bladeHeight);
+		const float maxAng = mapInfo->grass.bladeAngle * rng.RandFloat();
+		const float length = mapInfo->grass.bladeHeight + mapInfo->grass.bladeHeight * rng.RandFloat();
 
-		float3 sideVect(fRand(1.0f) - 0.5f, 0.0f, fRand(1.0f) - 0.5f);
+		float3 sideVect(rng.RandFloat() - 0.5f, 0.0f, rng.RandFloat() - 0.5f);
 		sideVect.ANormalize();
 		float3 forwardVect = sideVect.cross(UpVector);
 		sideVect *= mapInfo->grass.bladeWidth;
 
-		const float3 cornerPos = (UpVector * math::cos(maxAng) + forwardVect * math::sin(maxAng)) * length;
+		const float3 cornerPos = (UpVector * std::cos(maxAng) + forwardVect * std::sin(maxAng)) * length;
 		float3 basePos(30.0f, 0.0f, 30.0f);
 
 		while (basePos.SqLength2D() > (turfSize * turfSize / 4)) {
-			basePos = float3(fRand(turfSize) - turfSize * 0.5f, 0.0f, fRand(turfSize) - turfSize * 0.5f);
+			basePos = float3(turfSize * rng.RandFloat() - turfSize * 0.5f, 0.0f, turfSize * rng.RandFloat() - turfSize * 0.5f);
 		}
 
-		const int xtexOffset = int(fRand(15.9999f));
+		const int xtexOffset = int(15.9999f * rng.RandFloat());
 		const float xtexBase = xtexOffset * (1.0f / 16.0f);
 		const int numSections = 1 + int(maxAng * 5.0f);
 
@@ -915,10 +907,10 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 
 			const float3 edgePosL =
 				-sideVect * (1 - h) +
-				(UpVector * math::cos(ang) + forwardVect * math::sin(ang)) * length * h;
+				(UpVector * std::cos(ang) + forwardVect * std::sin(ang)) * length * h;
 			const float3 edgePosR =
 				sideVect * (1.0f - h) +
-				(UpVector * math::cos(ang) + forwardVect * math::sin(ang)) * length * h;
+				(UpVector * std::cos(ang) + forwardVect * std::sin(ang)) * length * h;
 
 			if (b == 0) {
 				va->AddVertexT(basePos + (edgePosR - float3(0.0f, 0.1f, 0.0f)), xtexBase + xtexOffset, h);
@@ -941,7 +933,7 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 
 void CGrassDrawer::CreateGrassBladeTex(unsigned char* buf)
 {
-	float3 col( mapInfo->grass.color + float3(fRand(0.11f),fRand(0.08f),fRand(0.11f)) );
+	float3 col( mapInfo->grass.color + float3(0.11f * rng.RandFloat(), 0.08f * rng.RandFloat(), 0.11f * rng.RandFloat()) );
 	col.x = Clamp(col.x, 0.f, 1.f);
 	col.y = Clamp(col.y, 0.f, 1.f);
 	col.z = Clamp(col.z, 0.f, 1.f);

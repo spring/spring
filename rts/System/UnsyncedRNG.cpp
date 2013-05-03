@@ -36,7 +36,7 @@ void UnsyncedRNG::Seed(unsigned seed)
 #ifdef USE_BOOST_RNG
 	rng.seed(seed);
 #else
-	randSeed ^= seed;
+	randSeed = seed;
 #endif
 }
 
