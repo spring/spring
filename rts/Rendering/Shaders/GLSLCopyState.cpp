@@ -64,12 +64,12 @@ static void CreateBindingTypeMap()
 	bindingType[GL_FLOAT_MAT3] = FLOAT_MAT3;
 	bindingType[GL_FLOAT_MAT4] = FLOAT_MAT4;
 /*
-	bindingType[GL_FLOAT_MAT2x3] = 
-	bindingType[GL_FLOAT_MAT2x4] = 
-	bindingType[GL_FLOAT_MAT3x2] = 
-	bindingType[GL_FLOAT_MAT3x4] = 
-	bindingType[GL_FLOAT_MAT4x2] = 
-	bindingType[GL_FLOAT_MAT4x3] = 
+	bindingType[GL_FLOAT_MAT2x3] =
+	bindingType[GL_FLOAT_MAT2x4] =
+	bindingType[GL_FLOAT_MAT3x2] =
+	bindingType[GL_FLOAT_MAT3x4] =
+	bindingType[GL_FLOAT_MAT4x2] =
+	bindingType[GL_FLOAT_MAT4x3] =
 
 	bindingType[GL_DOUBLE]
 	bindingType[GL_DOUBLE_VEC2]
@@ -363,7 +363,7 @@ static void CopyShaderState_TransformFeedback(GLuint newProgID, GLuint oldProgID
 
 		if (nameLength == 0)
 			continue;
-		
+
 		varyings[i].assign(name.data(), nameLength + 1);
 		varyingsPtr[i] = &varyings[i][0];
 	}
@@ -379,14 +379,14 @@ static void CopyShaderState_Geometry(GLuint newProgID, GLuint oldProgID)
 	if (!GLEW_ARB_geometry_shader4)
 		return;
 
-	GLint verticesOut, inputType, outputType;
+	GLint verticesOut = 0, inputType = 0, outputType = 0;
 	glGetProgramiv(oldProgID, GL_GEOMETRY_INPUT_TYPE, &inputType);
 	glGetProgramiv(oldProgID, GL_GEOMETRY_OUTPUT_TYPE, &outputType);
 	glGetProgramiv(oldProgID, GL_GEOMETRY_VERTICES_OUT, &verticesOut);
 
-	glProgramParameteri(newProgID, GL_GEOMETRY_INPUT_TYPE, inputType);
-	glProgramParameteri(newProgID, GL_GEOMETRY_OUTPUT_TYPE, outputType);
-	glProgramParameteri(newProgID, GL_GEOMETRY_VERTICES_OUT, verticesOut);
+	if (inputType != 0)   glProgramParameteri(newProgID, GL_GEOMETRY_INPUT_TYPE, inputType);
+	if (outputType != 0)  glProgramParameteri(newProgID, GL_GEOMETRY_OUTPUT_TYPE, outputType);
+	if (verticesOut != 0) glProgramParameteri(newProgID, GL_GEOMETRY_VERTICES_OUT, verticesOut);
 #endif
 }
 #endif
