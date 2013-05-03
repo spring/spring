@@ -20,6 +20,25 @@ Spring changelog
  ! converted RotateLogFiles to a bool var (defaults to false)
  - fix C stack overflow in Shard
  ! removed unused AI_UnpauseAfterInit config setting
+ - fix logLevel of WatchDog stacktraces
+ - add map border rendering
+ - switch to a high precision clock all over the engine (including Lua)
+ - reduce PFS update rate by 10%
+ - use SSE in some matrix math
+ - LoadingMT: add a runtime check that should detect incompatibilities
+ - move Lua GC to its own callin and fix so a bug when GC was too slow to catch up and so eating >>100MB ram
+ - show LuaMemUsage in /debug view
+ - compile Spring as c++11
+ - colorized stdout
+ - fix decals were rendered twice
+ - speedup grass rendering
+ - save a little mem in Pathfinder
+ ! new datadir structure $FIXME add forum link$
+ - fix spike CEGs
+ - more verbose CEG parsing (warns now about unknown tags)
+ ! remove "--projectiledump" and add "--list-ceg-classes" (converted to JSON format )
+
+
 
 -- 94.0 ---------------------------------------------------------
 Misc:
