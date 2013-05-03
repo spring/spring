@@ -83,7 +83,7 @@ struct BoostChronoMicroClock {
 #include <chrono>
 struct Cpp11ChronoClock {
 	static inline float ToMs() { return 1.0f / 1e6; }
-	static inline std::string GetName() { return "BoostChrono"; }
+	static inline std::string GetName() { return "StdChrono"; }
 	static inline int64_t Get() {
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 	}
