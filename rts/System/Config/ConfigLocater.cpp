@@ -28,7 +28,7 @@ using std::vector;
 static void AddCfgFile(vector<string>& locations, const  std::string& filepath)
 {
 	BOOST_FOREACH(std::string& fp, locations) {
-		if (fp == filepath) {
+		if (FileSystem::ComparePaths(fp, filepath)) {
 			return;
 		}
 	}

@@ -157,7 +157,7 @@ void DataDirLocater::AddDir(const std::string& dir)
 
 		std::vector<DataDir>::const_iterator ddi;
 		for (ddi = dataDirs.begin(); ddi != dataDirs.end(); ++ddi) {
-			if (newDataDir.path == ddi->path) {
+			if (FileSystem::ComparePaths(newDataDir.path, ddi->path)) {
 				alreadyAdded = true;
 				break;
 			}
