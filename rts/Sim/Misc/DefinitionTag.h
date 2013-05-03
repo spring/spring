@@ -16,33 +16,36 @@
 #include <typeinfo>
 #include "Lua/LuaParser.h"
 #include "System/float3.h"
-#include "System/Util.h"
 
-//example usage: DUMMYTAG(Defs, DefClass, table, customParams)
+// table placeholder (used for LuaTables)
+// example usage: DUMMYTAG(Defs, DefClass, table, customParams)
 struct table {};
 
 namespace {
 	template<typename T, typename T2>
-	T scale(T v, T2 a)
+	static T scale(T v, T2 a)
 	{
 		return v * a;
 	}
 
-	const std::string& scale(const std::string& v, float a)
+	static const std::string& scale(const std::string& v, float a)
 	{
 		return v;
 	}
 
-	std::ostream& operator<<(std::ostream& os, const float3& point)
+	static std::ostream& operator<<(std::ostream& os, const float3& point)
 	{
 		return os << "[ " <<  point.x << ", " <<  point.y << ", " <<  point.z << " ]";
 	}
 
-	std::ostream& operator<<(std::ostream& os, const table& point)
+	static std::ostream& operator<<(std::ostream& os, const table& t)
 	{
 		return os << "\"\"";
 	}
 };
+
+// must be included after "std::ostream& operator<<" definitions for LLVM/Clang compilation
+#include "System/Util.h"
 
 
 /**
