@@ -103,8 +103,9 @@ private:
 
 static const spring_time spring_notime(0);
 static const spring_time spring_nulltime(0);
+static const spring_time spring_starttime = spring_time::gettime();
 
-
+#define spring_now() (spring_time::gettime() - spring_starttime)
 #define spring_gettime() spring_time::gettime()
 
 #define spring_tomsecs(t) ((t).toMilliSecs())
