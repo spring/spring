@@ -3,14 +3,22 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 
--- 9x.0 ---------------------------------------------------------
- - fix #3643
- - fix #3641
+-- 95.0 ---------------------------------------------------------
+ - allow lua ais to be selected with the menu
+ ! removed "mods" from archive scandirs
+ - fix #3643 Unit can get stuck on kbot factory
+ - fix #3641 Per piece collision volumes result in invincible units
  ! fix {Get,Set}UnitWeapon{Fire,HoldFire,TryTarget,TestTarget,TestRange,HaveFreeLineOfFire} WeaponID argument to use the same 1-starting indexes as rest of lua interface
  - fix #3675: wrong loglevel in unit_script.lua
  ! removed VS project files (use cmake -G "Visual Studio ..." to generate them
- - fix #3645 (Can't build if source directory has white spaces)
-
+ - fix #3645 Can't build if source directory has white spaces
+ - fix compile in path with spaces
+ ! slightly refactored build system, now every target can be disabled:
+   spring-dedicated, spring-headless, spring-legacy, spring-multithreaded
+ - fix many clang compile errors + some bugs detected by clang (still doesn't compile)
+ ! converted RotateLogFiles to a bool var (defaults to false)
+ - fix C stack overflow in Shard
+ ! removed unused AI_UnpauseAfterInit config setting
 
 -- 94.0 ---------------------------------------------------------
 Misc:
