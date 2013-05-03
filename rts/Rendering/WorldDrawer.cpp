@@ -118,12 +118,21 @@ void CWorldDrawer::Draw()
 	}
 
 	if (globalRendering->drawGround) {
-		SCOPED_TIMER("WorldDrawer::Terrain");
-		gd->Draw(DrawPass::Normal);
-		groundDecals->Draw();
+		{
+			SCOPED_TIMER("WorldDrawer::Terrain");
+			gd->Draw(DrawPass::Normal);
+		}
+		{
+			SCOPED_TIMER("WorldDrawer::GroundDecals");
+			groundDecals->Draw();
+			projectileDrawer->DrawGroundFlashes();
+		}
+		{
+			SCOPED_TIMER("WorldDrawer::Foliage");
+			treeDrawer->DrawGrass();
+			gd->DrawTrees();
+		}
 		smoothHeightMeshDrawer->Draw(1.0f);
-		treeDrawer->DrawGrass();
-		gd->DrawTrees();
 	}
 
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {

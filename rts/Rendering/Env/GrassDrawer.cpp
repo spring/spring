@@ -702,7 +702,7 @@ void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inview
 			const float3 billboardDirY = billboardDirX.cross(billboardDirZ);
 
 			const float ang = std::acos(billboardDirZ.y);
-			const int texPart = std::min(15, int(std::max(0, int((ang + PI / 16 - PI / 2) / PI * 30))));
+			const int texPart = Clamp(0, 15, int((ang + PI / 16 - PI / 2) / PI * 30));
 
 			grassShader->SetUniform2f(2, texPart / 16.0f, 0.0f);
 			grassShader->SetUniform3f(3,  billboardDirX.x,  billboardDirX.y,  billboardDirX.z);
