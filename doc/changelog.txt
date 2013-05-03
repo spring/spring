@@ -4,6 +4,7 @@ Spring changelog
 
 
 -- 95.0 ---------------------------------------------------------
+ ! updated gentoo overlay url to https://github.com/springlobby/overlay
  - allow lua ais to be selected with the menu
  ! removed "mods" from archive scandirs
  - fix #3643 Unit can get stuck on kbot factory
