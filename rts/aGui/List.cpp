@@ -26,7 +26,7 @@ List::List(GuiElement* parent) :
 		GuiElement(parent),
 		cancelPlace(-1),
 		tooltip("No tooltip defined"),
-		clickedTime(spring_gettime()),
+		clickedTime(spring_now()),
 		place(0),
 		activeMousePress(false),
 		activeScrollbar(false),
@@ -166,11 +166,11 @@ bool List::MouseUpdate(int x, int y)
 	{
 		if (b.MouseOver(mx, my))
 		{
-			if (nCurIndex == place && (clickedTime + spring_msecs(250)) > spring_gettime())
+			if (nCurIndex == place && (clickedTime + spring_msecs(250)) > spring_now())
 			{
 				FinishSelection();
 			}
-			clickedTime = spring_gettime();
+			clickedTime = spring_now();
 			place = nCurIndex;
 			return true;
 		}

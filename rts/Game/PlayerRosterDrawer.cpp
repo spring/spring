@@ -24,7 +24,7 @@ void CPlayerRosterDrawer::Draw()
 	if (playerRoster.GetSortType() == PlayerRoster::Disabled)
 		return;
 
-	const unsigned currentTime = spring_gettime().toSecs();
+	const unsigned currentTime = spring_now().toSecs();
 
 	static std::string chart; chart = "";
 	static std::string prefix;
