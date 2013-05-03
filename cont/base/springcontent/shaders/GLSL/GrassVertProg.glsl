@@ -1,12 +1,6 @@
 uniform vec2 mapSizePO2;     // (1.0 / pwr2map{x,z} * SQUARE_SIZE)
 uniform vec2 mapSize;        // (1.0 /     map{x,z} * SQUARE_SIZE)
 
-uniform vec2 texOffset;
-
-uniform vec3 billboardDirX;
-uniform vec3 billboardDirY;
-uniform vec3 billboardDirZ;
-
 uniform mat4 shadowMatrix;
 uniform vec4 shadowParams;
 
@@ -15,7 +9,11 @@ uniform vec3 camPos;
 uniform float simFrame;
 uniform vec3 windSpeed;
 
+const float PI = 3.14159265358979323846264;
+
 void main() {
+	vec2 texOffset = vec2(0.,0.);
+
 	#ifdef DISTANCE_NEAR
 		#ifdef SHADOW_GEN
 		vec4 vertexPos = gl_Vertex;
@@ -37,6 +35,12 @@ void main() {
 
 	#ifdef DISTANCE_FAR
 	vec4 worldPos = gl_Vertex;
+		vec3 billboardDirZ = normalize(gl_Vertex.xyz - camPos.xyz);
+		vec3 billboardDirX = normalize(cross(billboardDirZ, vec3(0.,1.,0.)));
+		vec3 billboardDirY = cross(billboardDirX, billboardDirZ);
+		float ang = acos(billboardDirZ.y);
+		texOffset.x = clamp(floor((ang + PI / 16.0 - PI / 2.0) / PI * 30.0), 0.0, 15.0) / 16.0;
+
 		#ifdef ANIMATION
 		float windScale =
 			0.005 * (1.0 + sin((worldPos.x + worldPos.z) / 45.0 + simFrame / 15.0)) *

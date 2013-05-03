@@ -662,26 +662,12 @@ void CGrassDrawer::ResetGlStateFar()
 
 void CGrassDrawer::DrawFarBillboards(const std::vector<CGrassDrawer::InviewGrass>& inviewGrass)
 {
-	const float grassDistance = maxGrassDist;
-
 	for (std::vector<CGrassDrawer::InviewGrass>::const_iterator gi = inviewGrass.begin(); gi != inviewGrass.end(); ++gi) {
-		if ((*gi).dist + 128 < grassDistance) {
+		if ((*gi).dist + 128 < maxGrassDist) {
 			glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
 		} else {
-			glColor4f(0.62f, 0.62f, 0.62f, 1.0f - ((*gi).dist + 128 - grassDistance) / 128.0f);
+			glColor4f(0.62f, 0.62f, 0.62f, 1.0f - ((*gi).dist + 128 - maxGrassDist) / 128.0f);
 		}
-
-		const float3 billboardDirZ = (grass[(*gi).num].pos - camera->GetPos()).ANormalize();
-		const float3 billboardDirX = (billboardDirZ.cross(UpVector)).ANormalize();
-		const float3 billboardDirY = billboardDirX.cross(billboardDirZ);
-
-		const float ang = std::acos(billboardDirZ.y);
-		const int texPart = std::min(15, int(std::max(0, int((ang + PI / 16 - PI / 2) / PI * 30))));
-
-		grassShader->SetUniform2f(2, texPart / 16.0f, 0.0f);
-		grassShader->SetUniform3f(3,  billboardDirX.x,  billboardDirX.y,  billboardDirX.z);
-		grassShader->SetUniform3f(4,  billboardDirY.x,  billboardDirY.y,  billboardDirY.z);
-		grassShader->SetUniform3f(5, -billboardDirZ.x, -billboardDirZ.y, -billboardDirZ.z);
 
 		grass[(*gi).num].va->DrawArrayTN(GL_QUADS);
 	}
@@ -690,49 +676,32 @@ void CGrassDrawer::DrawFarBillboards(const std::vector<CGrassDrawer::InviewGrass
 
 void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inviewNearGrass)
 {
+	CVertexArray* va = GetVertexArray();
+	va->Initialize();
+	va->EnlargeArrays(inviewNearGrass.size() * numTurfs * 4, 0, VA_SIZE_TN);
+
 	for (std::vector<InviewNearGrass>::const_iterator gi = inviewNearGrass.begin(); gi != inviewNearGrass.end(); ++gi) {
 		const int x = (*gi).x;
 		const int y = (*gi).y;
 
-		if (grassMap[y * gs->mapx / grassSquareSize + x]) {
-			float3 squarePos((x + 0.5f) * gSSsq, 0.0f, (y + 0.5f) * gSSsq);
-				squarePos.y = ground->GetHeightReal(squarePos.x, squarePos.z, false);
-			const float3 billboardDirZ = (squarePos - camera->GetPos()).ANormalize();
-			const float3 billboardDirX = (billboardDirZ.cross(UpVector)).ANormalize();
-			const float3 billboardDirY = billboardDirX.cross(billboardDirZ);
+		rng.Seed(y * 1025 + x);
 
-			const float ang = std::acos(billboardDirZ.y);
-			const int texPart = Clamp(0, 15, int((ang + PI / 16 - PI / 2) / PI * 30));
+		for (int a = 0; a < numTurfs; a++) {
+			const float dx = (x + rng.RandFloat()) * gSSsq;
+			const float dy = (y + rng.RandFloat()) * gSSsq;
+			const float col = 1.0f;
 
-			grassShader->SetUniform2f(2, texPart / 16.0f, 0.0f);
-			grassShader->SetUniform3f(3,  billboardDirX.x,  billboardDirX.y,  billboardDirX.z);
-			grassShader->SetUniform3f(4,  billboardDirY.x,  billboardDirY.y,  billboardDirY.z);
-			grassShader->SetUniform3f(5, -billboardDirZ.x, -billboardDirZ.y, -billboardDirZ.z);
+			float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
+				pos.y -= (ground->GetSlope(dx, dy, false) * 10.0f + 0.03f);
 
-			rng.Seed(y * 1025 + x);
-
-			CVertexArray* va = GetVertexArray();
-			va->Initialize();
-			va->EnlargeArrays(numTurfs * 4, 0, VA_SIZE_TN);
-
-			for (int a = 0; a < numTurfs; a++) {
-				//! CAUTION: loop count must match EnlargeArrays above
-				const float dx = (x + rng.RandFloat()) * gSSsq;
-				const float dy = (y + rng.RandFloat()) * gSSsq;
-				const float col = 1.0f;
-
-				float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
-					pos.y -= (ground->GetSlope(dx, dy, false) * 10.0f + 0.03f);
-
-				va->AddVertexQTN(pos,         0.0f, 0.0f, float3(-partTurfSize, -partTurfSize, col));
-				va->AddVertexQTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
-				va->AddVertexQTN(pos, 1.0f / 16.0f, 1.0f, float3( partTurfSize,  partTurfSize, col));
-				va->AddVertexQTN(pos,         0.0f, 1.0f, float3(-partTurfSize,  partTurfSize, col));
-			}
-
-			va->DrawArrayTN(GL_QUADS);
+			va->AddVertexQTN(pos,         0.0f, 0.0f, float3(-partTurfSize, -partTurfSize, col));
+			va->AddVertexQTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
+			va->AddVertexQTN(pos, 1.0f / 16.0f, 1.0f, float3( partTurfSize,  partTurfSize, col));
+			va->AddVertexQTN(pos,         0.0f, 1.0f, float3(-partTurfSize,  partTurfSize, col));
 		}
 	}
+
+	va->DrawArrayTN(GL_QUADS);
 }
 
 
