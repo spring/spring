@@ -45,6 +45,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
+#include "System/ScopedFPUSettings.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -519,6 +520,9 @@ bool CLuaHandleSynced::LightCopyTable(lua_State *L, int dstIndex, int srcIndex)
 
 bool CLuaHandleSynced::LoadUnsyncedCode(lua_State *L, const string& code, const string& debug)
 {
+	// do not signal floating point exceptions in user Lua code
+	ScopedDisableFpuExceptions fe;
+
 	lua_settop(L, 0);
 
 	int error;
