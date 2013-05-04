@@ -8,9 +8,7 @@
 #include <locale>
 #include <fstream>
 #include <stdexcept>
-
-#include <boost/thread/thread.hpp>
-#include <boost/bind.hpp>
+#include <functional> // C++11
 
 #include <SDL_keyboard.h>
 
@@ -232,6 +230,77 @@ CR_REG_METADATA(CGame, (
 
 	CR_POSTLOAD(PostLoad)
 ));
+
+
+
+class JobDispatcher
+{
+public:
+	struct Job {
+		Job()
+		: freq(0)
+		//, inSim(false)
+		//, inDraw(false)
+		, startDirect(true)
+		, catchUp(false)
+		{}
+
+		std::function<bool()> f; // allows us to use lambdas
+		float freq;
+		//bool inSim;
+		//bool inDraw;
+		bool startDirect;
+		bool catchUp;
+	};
+
+public:
+	static void AddJob(Job j) {
+		jobs[spring_gettime() + spring_time(j.startDirect ? 0 : 1000.0f/j.freq)] = j;
+	}
+
+	static void Update() {
+		const spring_time now = spring_gettime();
+		std::map<spring_time, Job>::iterator it = jobs.begin();
+		while (it != jobs.end() && it->first <= now) {
+			Job* j = &it->second;
+			if (j->f()) {
+				spring_time nextCallTime = j->catchUp ? it->first : spring_gettime();
+				nextCallTime += spring_time(1000.0f / j->freq);
+				jobs[nextCallTime] = *j;
+			}
+			jobs.erase(it); //FIXME remove by range? (faster!)
+			it = jobs.begin();
+		}
+	}
+
+private:
+	static std::map<spring_time, Job> jobs;
+};
+
+std::map<spring_time, JobDispatcher::Job> JobDispatcher::jobs;
+
+
+DO_ONCE_FNC(
+	JobDispatcher::Job j;
+	j.f = []() -> bool {
+		SCOPED_TIMER("CollectGarbage");
+		eventHandler.CollectGarbage();
+		CInputReceiver::CollectGarbage();
+		return true;
+	};
+	j.freq = 30;
+	JobDispatcher::AddJob(j);
+);
+
+DO_ONCE_FNC(
+	JobDispatcher::Job j;
+	j.f = []() -> bool {
+		profiler.Update();
+		return true;
+	};
+	j.freq = 1;
+	JobDispatcher::AddJob(j);
+);
 
 
 
@@ -870,6 +939,8 @@ bool CGame::Update()
 
 	good_fpu_control_registers("CGame::Update");
 
+	JobDispatcher::Update();
+
 	const spring_time timeNow = spring_gettime();
 	const float diffsecs = spring_difftime(timeNow, lastUpdateTime).toSecsf();
 
@@ -1029,20 +1100,12 @@ bool CGame::UpdateUnsynced()
 		lastUnsyncedUpdateTime = currentTime;
 
 		{
-			SCOPED_TIMER("CollectGarbage");
-			eventHandler.CollectGarbage();
-			CInputReceiver::CollectGarbage();
-		}
-
-		{
 			SCOPED_TIMER("GroundDrawer::UpdateExtraTex");
 			gd->UpdateExtraTexture();
 		}
 
 		// TODO call only when camera changed
 		sound->UpdateListener(camera->GetPos(), camera->forward, camera->up, unsyncedUpdateDeltaTime);
-
-		profiler.Update();
 	}
 
 	UpdateUI(true);

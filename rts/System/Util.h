@@ -15,6 +15,19 @@
 #define DO_ONCE(func) \
 	struct do_once##func { do_once##func() {func();} }; static do_once##func do_once_var##func;
 
+/*
+ * Pre-processor trickery, useful to create unique identifiers.
+ * see http://stackoverflow.com/questions/461062/c-anonymous-variables
+ */
+#define _CONCAT_SUB2(start, end) \
+	start##end
+#define _CONCAT2(start, end) \
+	_CONCAT_SUB2(start, end)
+#define _UNIQUE_IDENT2(prefix) \
+	_CONCAT(prefix##__, __LINE__)
+
+#define DO_ONCE_FNC(code) \
+	struct _UNIQUE_IDENT2(doOnce) { _UNIQUE_IDENT2(doOnce)() { code; } }; static _UNIQUE_IDENT2(doOnce) _UNIQUE_IDENT2(doOnceVar);
 
 static inline void StringToLowerInPlace(std::string& s)
 {
@@ -45,7 +58,7 @@ static inline std::string Quote(std::string esc)
 		}
 		pos += 2;
 	}
-	
+
 	std::ostringstream buf;
 	buf << "\"" << esc << "\"";
 	return buf.str();
