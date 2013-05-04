@@ -119,7 +119,7 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 		exit(0);
 	}
 
-	LOG("Run: %s", cmdline.GetCommandLine().c_str());
+	LOG("Run: %s", cmdline.GetCmdLine().c_str());
 
 	#undef  LOG_SECTION_CURRENT
 	#define LOG_SECTION_CURRENT LOG_SECTION_DEFAULT
