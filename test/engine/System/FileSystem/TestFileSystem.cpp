@@ -84,9 +84,17 @@ BOOST_AUTO_TEST_CASE(GetFileSize)
 
 BOOST_AUTO_TEST_CASE(CreateDirectory)
 {
+	BOOST_CHECK(FileSystem::DirExists("testDir"));
 	BOOST_CHECK(FileSystem::CreateDirectory("testDir")); // already exists
 	BOOST_CHECK(FileSystem::CreateDirectory("testDir1")); // should be created
+	BOOST_CHECK(!FileSystem::DirExists("test Dir2"));
+	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // should be created
+	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // already exists
+	BOOST_CHECK(FileSystem::DirExists("test Dir2"));
 	FileSystem::DeleteFile("testDir1");
+	FileSystem::DeleteFile("test Dir2");
+	BOOST_CHECK(!FileSystem::DirExists("testDir1"));
+	BOOST_CHECK(!FileSystem::DirExists("test Dir2"));
 	BOOST_CHECK(!FileSystem::CreateDirectory("testFile.txt")); // file with this name already exists
 }
 
