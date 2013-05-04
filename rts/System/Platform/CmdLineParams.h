@@ -24,7 +24,7 @@ public:
 	~CmdLineParams();
 
 	/**
-	 * 
+	 *
 	 */
 	void SetUsageDescription(std::string usagedesc) {
 		usage_desc = usagedesc;
@@ -35,6 +35,11 @@ public:
 	 * options that have been set up for this command-line parser.
 	 */
 	void PrintUsage() const;
+
+	/**
+	 * @return The used cmdline to start the program.
+	 */
+	std::string GetCommandLine() const;
 
 	/**
 	 * @return the script or demofile given on the command-line,

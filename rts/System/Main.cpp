@@ -17,7 +17,6 @@
 #include "System/Platform/Misc.h"
 #include "System/Log/ILog.h"
 
-
 #if !defined(__APPLE__) || !defined(HEADLESS)
 	// SDL_main.h contains a macro that replaces the main function on some OS, see SDL_main.h for details
 	#include <SDL_main.h>
@@ -81,7 +80,7 @@ int Run(int argc, char* argv[])
 static bool SetOpenMpEnvVars(char* argv[])
 {
 	bool restart = false;
-	
+
 //FIXME GML creates additional threads that need `free` cores too, the problem is to detect if
 //      GML is used or not and to reduce the omp threads then (gomp doesn't give you an interface to kill threads once they are started!)
 #if !defined(USE_GML)
