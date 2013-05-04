@@ -49,8 +49,11 @@ namespace {
 				if (tmpDir != NULL) {
 					testCwd = oldDir + tmpDir;
 					FileSystem::CreateDirectory(testCwd);
+					if (!FileSystem::DirIsWritable(testCwd)) {
+						BOOST_FAIL("Failed to create temporary test dir");
+					}
 				} else {
-					BOOST_FAIL("Failed to create temporary test dir");
+					BOOST_FAIL("Failed to get temporary file name");
 				}
 			}
 			return testCwd;
@@ -84,6 +87,7 @@ BOOST_AUTO_TEST_CASE(GetFileSize)
 
 BOOST_AUTO_TEST_CASE(CreateDirectory)
 {
+	BOOST_CHECK(FileSystem::DirIsWritable("./"));
 	BOOST_CHECK(FileSystem::DirExists("testDir"));
 	BOOST_CHECK(FileSystem::CreateDirectory("testDir")); // already exists
 	BOOST_CHECK(FileSystem::CreateDirectory("testDir1")); // should be created
@@ -91,8 +95,8 @@ BOOST_AUTO_TEST_CASE(CreateDirectory)
 	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // should be created
 	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // already exists
 	BOOST_CHECK(FileSystem::DirExists("test Dir2"));
-	FileSystem::DeleteFile("testDir1");
-	FileSystem::DeleteFile("test Dir2");
+	BOOST_CHECK(FileSystem::DeleteFile("testDir1"));
+	BOOST_CHECK(FileSystem::DeleteFile("test Dir2"));
 	BOOST_CHECK(!FileSystem::DirExists("testDir1"));
 	BOOST_CHECK(!FileSystem::DirExists("test Dir2"));
 	BOOST_CHECK(!FileSystem::CreateDirectory("testFile.txt")); // file with this name already exists
