@@ -7,6 +7,7 @@
 #include <cstdio>
 
 #include "Game/GameVersion.h"
+#include "System/Util.h"
 
 namespace po = boost::program_options;
 
@@ -71,11 +72,21 @@ void CmdLineParams::PrintUsage() const
 	if (!usage_desc.empty()) {
 		std::cout << usage_desc << std::endl;
 	}
-	
+
 	std::cout << desc << std::endl;
 
 	std::cout << "Spring" << " " << SpringVersion::GetFull() << std::endl;
 	std::cout << "This program is licensed under the GNU General Public License" << std::endl;
+}
+
+std::string CmdLineParams::GetCommandLine() const
+{
+	std::string cmdLine = (argc > 0) ? UnQuote(argv[0]) : "unknown";
+	for (int i = 1; i < argc; ++i) {
+		cmdLine += " ";
+		cmdLine += argv[i];
+	}
+	return cmdLine;
 }
 
 bool CmdLineParams::IsSet(const std::string& var) const
