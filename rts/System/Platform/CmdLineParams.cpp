@@ -79,7 +79,7 @@ void CmdLineParams::PrintUsage() const
 	std::cout << "This program is licensed under the GNU General Public License" << std::endl;
 }
 
-std::string CmdLineParams::GetCommandLine() const
+std::string CmdLineParams::GetCmdLine() const
 {
 	std::string cmdLine = (argc > 0) ? UnQuote(argv[0]) : "unknown";
 	for (int i = 1; i < argc; ++i) {

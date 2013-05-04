@@ -808,7 +808,7 @@ void SpringApp::ParseCmdLine()
 		exit(0);
 	}
 
-	LOG("Run: %s", cmdline->GetCommandLine().c_str());
+	LOG("Run: %s", cmdline->GetCmdLine().c_str());
 	InitConfigHandlerAndLogOutput(configSource, safemode);
 
 #ifdef _DEBUG

@@ -39,7 +39,7 @@ public:
 	/**
 	 * @return The used cmdline to start the program.
 	 */
-	std::string GetCommandLine() const;
+	std::string GetCmdLine() const;
 
 	/**
 	 * @return the script or demofile given on the command-line,
