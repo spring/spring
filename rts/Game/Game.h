@@ -208,7 +208,7 @@ public:
 	bool skipSoundmute;
 	float skipOldSpeed;
 	float skipOldUserSpeed;
-	spring_time skipLastDraw;
+	spring_time skipLastDrawTime;
 
 	/**
 	 * @see CGameServer#speedControl

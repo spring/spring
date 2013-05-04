@@ -266,7 +266,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, skipSoundmute(false)
 	, skipOldSpeed(0.0f)
 	, skipOldUserSpeed(0.0f)
-	, skipLastDraw(spring_gettime())
+	, skipLastDrawTime(spring_gettime())
 	, speedControl(-1)
 	, saveFile(saveFile)
 	, infoConsole(NULL)
@@ -926,27 +926,33 @@ bool CGame::UpdateUnsynced()
 	// timings and frame interpolation
 	const spring_time currentTime = spring_gettime();
 
-	const float difTime = (currentTime - lastModGameTimeMeasure).toMilliSecsf();
-	const float dif = skipping ? 0.010f : difTime * 0.001f;
-	lastModGameTimeMeasure = currentTime;
+	const float modGameDeltaTime = skipping ? 0.01f : (currentTime - lastModGameTimeMeasure).toMilliSecsf() * 0.001f;
 
 	globalRendering->lastFrameTime = (currentTime - lastDrawFrameTime).toSecsf();
 	gu->avgFrameTime = mix(gu->avgFrameTime, (currentTime - lastDrawFrameTime).toMilliSecsf(), 0.05f);
+
+	lastModGameTimeMeasure = currentTime;
 	lastDrawFrameTime = currentTime; //FIXME merge with lastModGameTimeMeasure
 
-	// Update game times
-	gu->gameTime += dif;
-	gu->modGameTime += (gs->paused) ? 0.0f : dif * gs->speedFactor;
-	if (playing && !gameOver) {
-		totalGameTime += dif;
-	}
-	updateDeltaSeconds = dif;
-
-	// Update simFPS
 	{
+		// update game timings
+		gu->gameTime += modGameDeltaTime;
+		gu->modGameTime += (modGameDeltaTime * gs->speedFactor * (1 - gs->paused));
+
+		if (playing && !gameOver) {
+			totalGameTime += modGameDeltaTime;
+		}
+
+		updateDeltaSeconds = modGameDeltaTime;
+	}
+
+	{
+		// update simFPS counter
 		static int lsf = gs->frameNum;
 		static spring_time lsft = currentTime;
+
 		const float diffsecs_ = (currentTime - lsft).toSecsf();
+
 		if (diffsecs_ >= 1.0f) {
 			gu->simFPS = (gs->frameNum - lsf) / diffsecs_;
 			lsft = currentTime;
@@ -954,13 +960,12 @@ bool CGame::UpdateUnsynced()
 		}
 	}
 
-	// FastForwarding
 	if (skipping) {
-		const float diff = spring_tomsecs(currentTime - skipLastDraw);
-
-		if (diff < 500) // render at 2 FPS
+		// when fast-forwarding, maintain a draw-rate of 2Hz
+		if (spring_tomsecs(currentTime - skipLastDrawTime) < 500.0f)
 			return true;
-		skipLastDraw = currentTime;
+
+		skipLastDrawTime = currentTime;
 
 		if (!GML::SimEnabled() || !GML::MultiThreadSim()) {
 			DrawSkip();
@@ -981,13 +986,13 @@ bool CGame::UpdateUnsynced()
 		lastSimFrameTime = currentTime;
 	}
 
-	// do once every second
-	const float diffsecs = spring_diffsecs(currentTime, frameStartTime);
-	if (diffsecs >= 1.0f) {
+	const float frameDeltaTime = spring_diffsecs(currentTime, frameStartTime);
+
+	if (frameDeltaTime >= 1.0f) {
+		// update FPS counter once every second
 		frameStartTime = currentTime;
 
-		// Update FPS
-		globalRendering->FPS = thisFps / diffsecs;
+		globalRendering->FPS = thisFps / frameDeltaTime;
 		thisFps = 0;
 
 		if (GML::SimEnabled()) GML_RESET_LOCK_TIME(); //FIXME move to a GML update place?
@@ -1015,30 +1020,29 @@ bool CGame::UpdateUnsynced()
 		}
 	}
 
-	// always update ExtraTexture & SoundListener with <=30Hz (even when paused)
-	if (newSimFrame || gs->paused) {
-		static spring_time lastUpdate = spring_gettime();
-		const float deltaSec = spring_diffsecs(currentTime, lastUpdate);
+	static spring_time lastUnsyncedUpdateTime = spring_gettime();
+	const float unsyncedUpdateDeltaTime = spring_diffsecs(currentTime, lastUnsyncedUpdateTime);
 
-		if (!gs->paused || deltaSec >= (1.0f/GAME_SPEED)) {
-			lastUpdate = currentTime;
+	// always update ExtraTexture & SoundListener with <= 30Hz (even when paused)
+	// garbage collection event must also run regularly because of unsynced code
+	if (newSimFrame || unsyncedUpdateDeltaTime >= (1.0f / GAME_SPEED)) {
+		lastUnsyncedUpdateTime = currentTime;
 
-			{
-				SCOPED_TIMER("CollectGarbage");
-				eventHandler.CollectGarbage();
-				CInputReceiver::CollectGarbage();
-			}
-
-			{
-				SCOPED_TIMER("GroundDrawer::UpdateExtraTex");
-				gd->UpdateExtraTexture();
-			}
-
-			// TODO call only when camera changed
-			sound->UpdateListener(camera->GetPos(), camera->forward, camera->up, deltaSec);
-
-			profiler.Update();
+		{
+			SCOPED_TIMER("CollectGarbage");
+			eventHandler.CollectGarbage();
+			CInputReceiver::CollectGarbage();
 		}
+
+		{
+			SCOPED_TIMER("GroundDrawer::UpdateExtraTex");
+			gd->UpdateExtraTexture();
+		}
+
+		// TODO call only when camera changed
+		sound->UpdateListener(camera->GetPos(), camera->forward, camera->up, unsyncedUpdateDeltaTime);
+
+		profiler.Update();
 	}
 
 	UpdateUI(true);
@@ -2093,7 +2097,7 @@ void CGame::StartSkip(int toFrame) {
 	gs->speedFactor     = speed;
 	gs->wantedSpeedFactor = speed;
 
-	skipLastDraw = spring_gettime();
+	skipLastDrawTime = spring_gettime();
 
 	skipping = true;
 }
