@@ -230,7 +230,7 @@ void CWorldDrawer::Draw()
 
 
 	//! underwater overlay
-	if (camera->GetPos().y < 0.0f) {
+	if (camera->GetPos().y < 0.0f && globalRendering->drawWater && !mapInfo->map.voidWater) {
 		glEnableClientState(GL_VERTEX_ARRAY);
 		const float3& cpos = camera->GetPos();
 		const float vr = globalRendering->viewRange * 0.5f;
@@ -281,7 +281,7 @@ void CWorldDrawer::Draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// underwater overlay, part 2
-	if (camera->GetPos().y < 0.0f) {
+	if (camera->GetPos().y < 0.0f && globalRendering->drawWater && !mapInfo->map.voidWater) {
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(0.0f, 0.2f, 0.8f, 0.333f);
