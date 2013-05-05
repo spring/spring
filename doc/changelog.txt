@@ -4,11 +4,68 @@ Spring changelog
 
 
 -- 95.0 ---------------------------------------------------------
- ! updated gentoo overlay url to https://github.com/springlobby/overlay
+
+Misc:
+ - add map border rendering
  - allow lua ais to be selected with the menu
+ ! new datadir structure: http://springrts.com/phpbb/viewtopic.php?f=12&t=30044
  ! removed "mods" from archive scandirs
- - fix #3675: wrong loglevel in unit_script.lua
+ - do not switch camera-mode on countdown
+ - speedup grass rendering
+ - reduce target-lost CAI timeout from 8 to 2 seconds
+ - colorized stdout
+ - show LuaMemUsage in /debug view
+ ! log error when an image format is used which doesn't work on all platforms
+     current supported image formats are:
+     PNG, JPG, TGA, DDS, BMP
+ - make calls to script->{Start, Stop}Moving more consistent: only run them
+     when a unit transitions from zero to non-zero speed or vice versa, and no
+     longer do so during in-place rotations --> animations should no longer be
+     interrupted / reset
+     THIS APPLIES TO ALL UNIT TYPES (AIR AND GROUND), TEST YOUR SCRIPTS
+ ! remove TA-specific code in CobInstance::Create
+    (this changes the argument value to COB's SetMaxReloadTime for
+    units equipped with BeamLasers and / or more than one weapon)
+ - {Laser, Emg}Projectile: disable all collision-testing when ttl <= 0
+     these projectile types could exceed their range due to fadeout
+     and only removed themselves (deleteMe=true) when intensity or
+     length reached 0, so without disabling coldet (checkCol=false)
+     range-exploits were possible
+ - block impulses from applying to 'static' features
+ - LoadingMT: add a runtime check that should detect incompatibilities
+ - disable ARB shaders with Intel/Mesa drivers (can be overridden by setting ForceEnableIntelShaderSupport=1)
+ - apply UnitDef::myGravity to ground units (if non-zero)
+     NOTE: myGravity acts as a map-gravity MULTIPLIER for aircraft; it REPLACES map gravity for land-based units
+ ! converted RotateLogFiles to a bool var (defaults to false)
+ ! remove "--projectiledump" and add "--list-ceg-classes" (converted to JSON format )
+ ! LuaUnitDefs: deprecate canHover (check moveDef.family instead to determine if a unit is a hovercraft)
+ - LuaRules: setup "proper" (transformation) state for the DrawProjectile callin
+ - LuaRules: add AllowWeaponInterceptTarget(number interceptorUnitID, number interceptorWeaponID, number targetProjectileID) --> boolean
+ - LuaUnitScript: optionally make Turn and Move insta-update piece matrices (pass "true" fifth argument)
+ ! LuaSynced*: make sure ALL weapon API functions are 1-based
+     UPDATE YOUR GAME'S UNIT_SCRIPT.LUA IF IT HAS LUA-SCRIPTED
+     UNITS AND YOU ARE NOT USING SPRING'S (BASECONTENT) VERSION
+ - move Lua GC to its own callin and fix so a bug when GC was too slow to catch up and so eating >>100MB ram
+ - more verbose CEG parsing (warns now about unknown tags)
+ - switch to a high precision clock all over the engine (including Lua)
+ - reduce PFS update rate by 10%
+ - removed unused AI_UnpauseAfterInit config setting
+ - use SSE in some matrix math
+ - save a little mem in Pathfinder
+ - steering/avoidance: actively avoid only mobile units, let PFS/CD handle statics
+
+Buildprocess:
+ ! updated gentoo overlay url to https://github.com/springlobby/overlay
  - fix #3645 Can't build if source directory has white spaces
+ ! removed VS project files (use cmake -G "Visual Studio ..." to generate them
+ ! compile Spring as c++11
+ - fix clang compile errors + some bugs detected by clang
+ ! slightly refactored build system, now every target can be disabled:
+     spring-dedicated, spring-headless, spring-legacy, spring-multithreaded
+
+Bugfixes:
+ ! fix {Get,Set}UnitWeapon{Fire,HoldFire,TryTarget,TestTarget,TestRange,HaveFreeLineOfFire} WeaponID argument to use the same 1-starting indexes as rest of lua interface
+ - fix #3675: wrong loglevel in unit_script.lua
  - fix #3752 (safeguard execution of SimFrame() against garbage keyframe messages)
  - fix #3641 (fix several issues with units using per-piece collision volumes)
  - fix #3739 (apply impulse to aircraft)
@@ -32,21 +89,6 @@ Spring changelog
  - fix (non-hovering) aircraft jittering at high altitude
  - fix #3743 (partially: make non-hovering aircraft start turning to goal during takeoff)
  - fix submarines being considered "underwater" even when pos.y + height > 0
- - disable ARB shaders with Intel/Mesa drivers (can be overridden by setting ForceEnableIntelShaderSupport=1)
- - block impulses from applying to 'static' features
- - make calls to script->{Start, Stop}Moving more consistent: only run them
-     when a unit transitions from zero to non-zero speed or vice versa, and no
-     longer do so during in-place rotations --> animations should no longer be
-     interrupted / reset
-     THIS APPLIES TO ALL UNIT TYPES (AIR AND GROUND), TEST YOUR SCRIPTS
- ! remove TA-specific code in CobInstance::Create
-    (this changes the argument value to COB's SetMaxReloadTime for
-    units equipped with BeamLasers and / or more than one weapon)
- - {Laser, Emg}Projectile: disable all collision-testing when ttl <= 0
-     these projectile types could exceed their range due to fadeout
-     and only removed themselves (deleteMe=true) when intensity or
-     length reached 0, so without disabling coldet (checkCol=false)
-     range-exploits were possible
  - fix subtle bug in LegacyAtlasAlloc::Allocate exposed by Intel GMA
      atlas could grow LARGER than its maximum size in x-dimension due to TEXMARGIN not being considered
      3DO texture atlas has a maximum size of 2048 pixels but grew to 2050 pixels in at least one *A game
@@ -55,45 +97,13 @@ Spring changelog
  - fix debug-vectors for ground units being drawn even when not cheating or not spectating
  - fix LoadScreen exception being thrown just for failing to load a startpic
  - fix crash in Spring.GetVisibleUnits on bad teamID value
- - do not switch camera-mode on countdown
- - apply UnitDef::myGravity to ground units (if non-zero)
-     NOTE: myGravity acts as a map-gravity MULTIPLIER for aircraft; it REPLACES map gravity for land-based units
- - reduce target-lost CAI timeout from 8 to 2 seconds
- ! fix {Get,Set}UnitWeapon{Fire,HoldFire,TryTarget,TestTarget,TestRange,HaveFreeLineOfFire} WeaponID argument to use the same 1-starting indexes as rest of lua interface
- ! removed VS project files (use cmake -G "Visual Studio ..." to generate them
- - fix compile in path with spaces
- ! slightly refactored build system, now every target can be disabled:
-     spring-dedicated, spring-headless, spring-legacy, spring-multithreaded
- - fix many clang compile errors + some bugs detected by clang (still doesn't compile)
- ! converted RotateLogFiles to a bool var (defaults to false)
  - fix C stack overflow in Shard
- ! removed unused AI_UnpauseAfterInit config setting
  - fix logLevel of WatchDog stacktraces
- - add map border rendering
- - switch to a high precision clock all over the engine (including Lua)
- - reduce PFS update rate by 10%
- - steering/avoidance: actively avoid only mobile units, let PFS/CD handle statics
- - use SSE in some matrix math
- - LoadingMT: add a runtime check that should detect incompatibilities
- - move Lua GC to its own callin and fix so a bug when GC was too slow to catch up and so eating >>100MB ram
- - show LuaMemUsage in /debug view
- - compile Spring as c++11
- - colorized stdout
  - fix decals were rendered twice
- - speedup grass rendering
- - save a little mem in Pathfinder
- ! new datadir structure $FIXME add forum link$
  - fix spike CEGs
- - more verbose CEG parsing (warns now about unknown tags)
- ! remove "--projectiledump" and add "--list-ceg-classes" (converted to JSON format )
- ! LuaUnitDefs: deprecate canHover (check moveDef.family instead to determine if a unit is a hovercraft)
- - LuaRules: setup "proper" (transformation) state for the DrawProjectile callin
- - LuaRules: add AllowWeaponInterceptTarget(number interceptorUnitID, number interceptorWeaponID, number targetProjectileID) --> boolean
- - LuaUnitScript: optionally make Turn and Move insta-update piece matrices (pass "true" fifth argument)
- ! LuaSynced*: make sure ALL weapon API functions are 1-based
-     UPDATE YOUR GAME'S UNIT_SCRIPT.LUA IF IT HAS LUA-SCRIPTED
-     UNITS AND YOU ARE NOT USING SPRING'S (BASECONTENT) VERSION
 
+-- 94.1 ---------------------------------------------------------
+ - bump path cache version
 
 -- 94.0 ---------------------------------------------------------
 Misc:
