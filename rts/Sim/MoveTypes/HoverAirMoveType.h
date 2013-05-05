@@ -76,9 +76,9 @@ public:
 	void StopMoving();
 
 	void ForceHeading(short h);
-	void SetGoal(float3 newPos, float distance);
+	void SetGoal(const float3& pos, float distance = 0.0f);
 	void SetState(AircraftState newState);
-	virtual AircraftState GetLandingState() const { return AIRCRAFT_FLYING; }
+	AircraftState GetLandingState() const { return AIRCRAFT_FLYING; }
 	void SetWantedAltitude(float altitude);
 	void SetDefaultAltitude(float altitude);
 
