@@ -1527,7 +1527,7 @@ void CGame::StartPlaying()
 	// and both share the same SimFrame!
 	eventHandler.GameFrame(0);
 
-	GML::PrintMTStartupMessage(showMTInfo);
+	GML::PrintStartupMessage(showMTInfo);
 }
 
 
