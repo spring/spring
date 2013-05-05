@@ -101,25 +101,24 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 	const GL::LightHandler* lightHandler = smfGroundDrawer->GetLightHandler();
 
-	#define sh shaderHandler
-	std::ostringstream defBuf;
-	defBuf
-		<< "#define SMF_TEXSQUARE_SIZE " << float(SMF_TEXSQUARE_SIZE) << std::endl
-		<< "#define SMF_INTENSITY_MULT " << float(CGlobalRendering::SMF_INTENSITY_MULT);
-	smfShaderGLSL = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderGLSL", false);
-	smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", defBuf.str(), GL_VERTEX_SHADER));
-	smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", defBuf.str(), GL_FRAGMENT_SHADER));
+	const std::string defs =
+		("#define SMF_TEXSQUARE_SIZE " + FloatToString(                  SMF_TEXSQUARE_SIZE) + "\n") +
+		("#define SMF_INTENSITY_MULT " + FloatToString(CGlobalRendering::SMF_INTENSITY_MULT) + "\n");
 
-	smfShaderGLSL->SetFlag("SMF_WATER_ABSORPTION",         (smfMap->initMinHeight <= 0.0f) ? 1 : 0);
-	smfShaderGLSL->SetFlag("SMF_VOID_WATER",               (mapInfo->map.voidWater) ? 1 : 0);
-	smfShaderGLSL->SetFlag("SMF_VOID_GROUND",              (mapInfo->map.voidGround) ? 1 : 0);
-	smfShaderGLSL->SetFlag("SMF_ARB_LIGHTING",             (smfMap->HaveSpecularTexture()) ? 0 : 1);
-	smfShaderGLSL->SetFlag("SMF_DETAIL_TEXTURE_SPLATTING", (smfMap->HaveSplatTexture()) ? 1 : 0);
-	smfShaderGLSL->SetFlag("SMF_WATER_ABSORPTION",         (!(smfMap->initMinHeight > 0.0f || mapInfo->map.voidWater)) ? 1 : 0);
-	smfShaderGLSL->SetFlag("SMF_SKY_REFLECTIONS",          (smfMap->GetSkyReflectModTexture() != 0) ? 1 : 0);
-	smfShaderGLSL->SetFlag("SMF_DETAIL_NORMALS",           (smfMap->GetDetailNormalTexture() != 0) ? 1 : 0);
-	smfShaderGLSL->SetFlag("SMF_LIGHT_EMISSION",           (smfMap->GetLightEmissionTexture() != 0) ? 1 : 0);
-	smfShaderGLSL->SetFlag("SMF_PARALLAX_MAPPING",         (smfMap->GetParallaxHeightTexture() != 0) ? 1 : 0);
+	#define sh shaderHandler
+	smfShaderGLSL = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderGLSL", false);
+	smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", defs, GL_VERTEX_SHADER));
+	smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", defs, GL_FRAGMENT_SHADER));
+
+	smfShaderGLSL->SetFlag("SMF_VOID_WATER",               int(mapInfo->map.voidWater));
+	smfShaderGLSL->SetFlag("SMF_VOID_GROUND",              int(mapInfo->map.voidGround));
+	smfShaderGLSL->SetFlag("SMF_ARB_LIGHTING",             int(!smfMap->HaveSpecularTexture()));
+	smfShaderGLSL->SetFlag("SMF_DETAIL_TEXTURE_SPLATTING", int(smfMap->HaveSplatTexture()));
+	smfShaderGLSL->SetFlag("SMF_WATER_ABSORPTION",         int(smfMap->initMinHeight <= 0.0f && !mapInfo->map.voidWater));
+	smfShaderGLSL->SetFlag("SMF_SKY_REFLECTIONS",          int(smfMap->GetSkyReflectModTexture() != 0));
+	smfShaderGLSL->SetFlag("SMF_DETAIL_NORMALS",           int(smfMap->GetDetailNormalTexture() != 0));
+	smfShaderGLSL->SetFlag("SMF_LIGHT_EMISSION",           int(smfMap->GetLightEmissionTexture() != 0));
+	smfShaderGLSL->SetFlag("SMF_PARALLAX_MAPPING",         int(smfMap->GetParallaxHeightTexture() != 0));
 
 	smfShaderGLSL->SetFlag("BASE_DYNAMIC_MAP_LIGHT",       lightHandler->GetBaseLight());
 	smfShaderGLSL->SetFlag("MAX_DYNAMIC_MAP_LIGHTS",       lightHandler->GetMaxLights());
