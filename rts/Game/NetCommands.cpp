@@ -35,6 +35,26 @@
 
 #include <boost/cstdint.hpp>
 
+
+void CGame::AddTraffic(int playerID, int packetCode, int length)
+{
+	std::map<int, PlayerTrafficInfo>::iterator it = playerTraffic.find(playerID);
+	if (it == playerTraffic.end()) {
+		playerTraffic[playerID] = PlayerTrafficInfo();
+		it = playerTraffic.find(playerID);
+	}
+	PlayerTrafficInfo& pti = it->second;
+	pti.total += length;
+
+	std::map<int, int>::iterator cit = pti.packets.find(packetCode);
+	if (cit == pti.packets.end()) {
+		pti.packets[packetCode] = length;
+	} else {
+		cit->second += length;
+	}
+}
+
+
 void CGame::ClientReadNet()
 {
 	if (gu->gameTime - lastCpuUsageTime >= 1) {

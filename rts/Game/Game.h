@@ -96,7 +96,6 @@ public:
 
 	void ReloadGame();
 	void SaveGame(const std::string& filename, bool overwrite);
-	void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod);
 
 	void ResizeEvent();
 	void SetupRenderingParams();
