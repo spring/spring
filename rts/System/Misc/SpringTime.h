@@ -8,8 +8,12 @@
 #include <boost/cstdint.hpp>
 typedef boost::int64_t int64_t;
 
+// glibc's chrono is non monotonic/not steady atm (it depends on set timezone and can change at runtime!)
+// we don't want to special handles all the problems caused by this, so just use boost one instead
+#define FORCE_BOOST_CHRONO
+
 // mingw doesn't support std::thread (yet?)
-#if (__cplusplus > 199711L) && !defined(__MINGW32__)
+#if (__cplusplus > 199711L) && !defined(__MINGW32__) && !defined(FORCE_BOOST_CHRONO)
 	#include <chrono>
 	#include <thread>
 	namespace chrono { using namespace std::chrono; };
