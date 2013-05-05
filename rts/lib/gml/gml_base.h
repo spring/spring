@@ -12,6 +12,7 @@ namespace GML {
 	void Exit();
 	void PumpAux();
 	bool SimThreadRunning();
+	void PrintStartupMessage(int showMTInfo);
 	inline bool IsSimThread() { return gmlThreadNumber == GML_SIM_THREAD_NUM; }
 	inline bool ShareLists() { return gmlShareLists; }
 	inline bool MultiThreadSim() { return gmlMultiThreadSim; }
@@ -31,6 +32,7 @@ namespace GML {
 	inline void Init() {}
 	inline void Exit() {}
 	inline void PumpAux() {}
+	inline void PrintStartupMessage(int showMTInfo) {}
 	inline bool SimThreadRunning() { return false; }
 	inline bool IsSimThread() { return false; }
 	inline bool ShareLists() { return false; }

@@ -255,35 +255,6 @@ std::map<std::string, int> lockmaps[GML_MAX_NUM_THREADS];
 std::map<boost::recursive_mutex *, int> lockmmaps[GML_MAX_NUM_THREADS];
 #endif
 
-void PrintMTStartupMessage(int showMTInfo) {
-	if (showMTInfo == -1)
-		return;
-	if (showMTInfo != MT_LUA_NONE) {
-		if (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT) {
-			LOG("[Threading] Multithreading is enabled but currently running in compatibility mode %d", showMTInfo);
-		} else {
-			LOG("[Threading] Multithreading is enabled and currently running in mode %d", showMTInfo);
-		}
-		if (showMTInfo == MT_LUA_SINGLE) {
-			CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
-			std::string lskey = lslist.empty() ? "" : " (press " + lslist.front() + ")";
-			LOG("[Threading] Games that use lua based rendering may run very slow in this mode, "
-				"indicated by a high LUA-SYNC-CPU(MT) value displayed in the upper right corner");
-			LOG("[Threading] Consider MultiThreadLua = %d in the settings to improve performance, "
-				"or try to disable LuaShaders and all rendering widgets%s", (int)MT_LUA_SINGLE_BATCH, lskey.c_str());
-		} else if (showMTInfo == MT_LUA_SINGLE_BATCH) {
-			LOG("[Threading] Games that use lua gadget based rendering may run very slow in this mode, "
-				"indicated by a high LUA-SYNC-CPU(MT) value displayed in the upper right corner");
-		} else if (showMTInfo == MT_LUA_DUAL_EXPORT) {
-			LOG("[Threading] Games that use lua gadgets which export data may run very slow in this mode, "
-				"indicated by a high LUA-EXP-SIZE(MT) value displayed in the upper right corner");
-		}
-	} else {
-		LOG("[Threading] Multithreading is disabled because the game or system appears incompatible");
-		LOG("[Threading] MultiThreadCount > 1 in the settings will forcefully enable multithreading");
-	}
-}
-
 void gmlPrintCallChainWarning(const char *func) {
 	LOG_SL("Threading", L_ERROR, "Invalid attempt (%d/%d) to invoke LuaUI (%s) from another Lua environment, "
 			"certain widgets require LuaThreadingModel > %d to work properly with multithreading", gmlCallChainWarning, GML_MAX_CALL_CHAIN_WARNINGS, func, (int)MT_LUA_SINGLE_BATCH);
