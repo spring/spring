@@ -5,6 +5,8 @@
 #include "gml_base.h"
 #include "gmlsrv.h"
 
+#include "Game/UI/KeyBindings.h"
+#include "Lua/LuaConfig.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/OffscreenGLContext.h"
