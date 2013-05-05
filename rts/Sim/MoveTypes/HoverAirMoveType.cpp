@@ -105,15 +105,17 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 }
 
 
-void CHoverAirMoveType::SetGoal(float3 newPos, float distance)
+void CHoverAirMoveType::SetGoal(const float3& pos, float distance)
 {
+	goalPos = pos;
+	oldGoalPos = pos;
+
 	// aircraft need some marginals to avoid uber stacking
 	// when lots of them are ordered to one place
 	maxDrift = std::max(16.0f, distance);
-	goalPos = newPos;
-	oldGoalPos = newPos;
-	forceHeading = false;
 	wantedHeight = orgWantedHeight;
+
+	forceHeading = false;
 }
 
 void CHoverAirMoveType::SetState(AircraftState newState)

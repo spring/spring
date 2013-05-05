@@ -33,7 +33,7 @@ class CScriptMoveType : public AMoveType
 		void KeepPointingTo(CUnit* unit, float distance, bool aggressive) {}
 		void StopMoving() {}
 
-		void SetGoal(float3 pos) {}
+		void SetGoal(const float3& pos, float distance = 0.0f) {}
 		void SetMaxSpeed(float speed) {}
 		void SetWantedMaxSpeed(float speed) {}
 		void LeaveTransport() {}

@@ -26,7 +26,7 @@ public:
 	virtual bool CanApplyImpulse(const float3&) { return false; }
 	virtual void LeaveTransport() {}
 
-	virtual void SetGoal(const float3& pos) { goalPos = pos; }
+	virtual void SetGoal(const float3& pos, float distance = 0.0f) { goalPos = pos; }
 
 	// NOTE:
 	//     SetMaxSpeed is ONLY called by LuaSyncedMoveCtrl now
