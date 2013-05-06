@@ -647,8 +647,8 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	//   unit does not react at all (can re-use SolidObject::residualImpulse for
 	//   this) but also does NOT store the impulse like a small-charge capacitor
 	//
-	const bool startSkidding = (Square(newSpeed.dot(skidDir)) < (newSpeed.SqLength() * 0.95f));
-	const bool startFlying = (newSpeed.dot(ground->GetNormal(owner->pos.x, owner->pos.z)) > 0.2f);
+	const bool startSkidding = StartSkidding(newSpeed, skidDir);
+	const bool startFlying = StartFlying(newSpeed, ground->GetNormal(owner->pos.x, owner->pos.z));
 
 	if (newSpeed.SqLength2D() >= 0.01f) {
 		skidDir = newSpeed;
@@ -672,7 +672,7 @@ void CGroundMoveType::UpdateSkid()
 	ASSERT_SYNCED(owner->midPos);
 
 	const float3& pos = owner->pos;
-	      float3& speed  = owner->speed;
+	      float3& speed = owner->speed;
 
 	const UnitDef* ud = owner->unitDef;
 	const float groundHeight = GetGroundHeight(pos);
@@ -715,9 +715,7 @@ void CGroundMoveType::UpdateSkid()
 		const bool onSlope = OnSlope(-1.0f);
 		const float speedReduction = 0.35f;
 
-		if (!onSlope && (Square(speed.dot(owner->frontdir)) >= (speed.SqLength() * 0.95f))) {
-			// stop skidding
-			speed = ZeroVector;
+		if (!onSlope && StopSkidding(speed, owner->frontdir)) {
 			useHeading = true;
 
 			skidRotSpd = math::floor(skidRotSpeed + skidRotAccel + 0.5f);
