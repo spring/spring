@@ -1240,10 +1240,10 @@ void CUnit::StoreImpulse(const float3& impulse, float newImpulseDecayRate) {
 void CUnit::StoreImpulse(const float3& impulse) {
 	const float3& groundNormal = ground->GetNormal(pos.x, pos.z);
 	const float groundImpulseScale = std::min(0.0f, residualImpulse.dot(groundNormal));
+	const float3 modImpulse = impulse - (groundNormal * groundImpulseScale * IsOnGround());
 
-	CSolidObject::StoreImpulse(impulse - (groundNormal * groundImpulseScale * IsOnGround()));
-
-	if (moveType->CanApplyImpulse(impulse)) {
+	if (moveType->CanApplyImpulse(modImpulse)) {
+		CSolidObject::StoreImpulse(modImpulse);
 		CSolidObject::ApplyImpulse();
 	}
 }
