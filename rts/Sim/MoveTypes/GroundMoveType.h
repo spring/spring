@@ -42,6 +42,13 @@ private:
 	float3 GetObstacleAvoidanceDir(const float3& desiredDir);
 	float3 GetNewSpeedVector(const float hAcc, const float vAcc) const;
 
+	#define SQUARE(x) ((x) * (x))
+	bool StartSkidding(const float3& vel, const float3& dir) const { return (SQUARE(vel.dot(dir)) < (vel.SqLength() * 0.95f)); }
+	bool StopSkidding(const float3& vel, const float3& dir) const { return (SQUARE(vel.dot(dir)) >= (vel.SqLength() * 0.95f)); }
+	bool StartFlying(const float3& vel, const float3& dir) const { return (vel.dot(dir) > 0.2f); }
+	bool StopFlying(const float3& vel, const float3& dir) const { return (vel.dot(dir) <= 0.2f); }
+	#undef SQUARE
+
 	float Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal = 0.0f);
 
 	void GetNewPath();
