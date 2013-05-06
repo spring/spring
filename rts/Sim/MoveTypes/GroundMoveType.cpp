@@ -628,17 +628,6 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 		return false;
 	if (impulse.SqLength() <= 0.01f)
 		return false;
-	// TODO (92.0+):
-	//   we should not delay the skidding-state until owner has "accumulated" an
-	//   arbitrary hardcoded amount of impulse (possibly across several frames!),
-	//   but enter it on any vector with non-zero length --> most weapon impulses
-	//   will just reduce the unit's speed a bit
-	//   there should probably be a configurable minimum-impulse below which the
-	//   unit does not react at all (can re-use SolidObject::residualImpulse for
-	//   this) but also does NOT store the impulse like a small-charge capacitor,
-	//   see CUnit::StoreImpulse
-	if (owner->residualImpulse.SqLength() <= 9.0f)
-		return false;
 
 	useHeading = false;
 
@@ -648,7 +637,17 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	float3 newSpeed = owner->speed + owner->residualImpulse;
 	float3 skidDir = owner->frontdir;
 
-	const bool startSkidding = true;
+	// NOTE:
+	//   we no longer delay the skidding-state until owner has "accumulated" an
+	//   arbitrary hardcoded amount of impulse (possibly across several frames),
+	//   but enter it on any vector that causes speed to become misaligned with
+	//   frontdir
+	// TODO (95.0+):
+	//   there should probably be a configurable minimum-impulse below which the
+	//   unit does not react at all (can re-use SolidObject::residualImpulse for
+	//   this) but also does NOT store the impulse like a small-charge capacitor
+	//
+	const bool startSkidding = (Square(newSpeed.dot(skidDir)) < (newSpeed.SqLength() * 0.95f));
 	const bool startFlying = (newSpeed.dot(ground->GetNormal(owner->pos.x, owner->pos.z)) > 0.2f);
 
 	if (newSpeed.SqLength2D() >= 0.01f) {
@@ -716,7 +715,7 @@ void CGroundMoveType::UpdateSkid()
 		const bool onSlope = OnSlope(-1.0f);
 		const float speedReduction = 0.35f;
 
-		if (speedf < speedReduction && !onSlope) {
+		if (!onSlope && (Square(speed.dot(owner->frontdir)) >= (speed.SqLength() * 0.95f))) {
 			// stop skidding
 			speed = ZeroVector;
 			useHeading = true;
