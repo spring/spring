@@ -109,9 +109,6 @@ private:
 	CMatrix44f viewProjectionMatrixInverse;
 	CMatrix44f billboardMatrix;
 
-	std::vector<GLdouble> viewMatrixD;
-	std::vector<GLdouble> projectionMatrixD;
-
 	std::vector<FrustumLine> posFrustumSides;
 	std::vector<FrustumLine> negFrustumSides;
 
