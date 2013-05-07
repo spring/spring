@@ -232,11 +232,15 @@ int main(int argc, char* argv[])
 			spring_secs(1).sleep();
 		}
 
+		LOG("exiting");
+
 		delete server;
 
 		FileSystemInitializer::Cleanup();
 		GlobalConfig::Deallocate();
 		ConfigHandler::Deallocate();
+
+		LOG("exited");
 	}
 	CATCH_SPRING_ERRORS
 

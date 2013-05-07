@@ -35,7 +35,7 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 	if (forced) {
 		LOG_L(L_ERROR, "failed to shutdown normally, exit forced");
 	}
-	LOG_L(L_ERROR, "%s %s", caption.c_str(), msg.c_str());
+	LOG_L(L_FATAL, "%s\n%s", caption.c_str(), msg.c_str());
 
 	if (!forced) {
 	#if !defined(DEDICATED) && !defined(HEADLESS)

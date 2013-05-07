@@ -25,6 +25,7 @@ CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modN
 
 CDemoRecorder::~CDemoRecorder()
 {
+	LOG("Writing demo: %s", GetName().c_str());
 	WriteWinnerList();
 	WritePlayerStats();
 	WriteTeamStats();
