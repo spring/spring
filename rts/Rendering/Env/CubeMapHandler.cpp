@@ -203,7 +203,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	if (camera->forward.y == -1.0f) { camera->up = -FwdVector; }
 
 	camera->SetPos().y = ground->GetHeightAboveWater(camera->GetPos().x, camera->GetPos().z, false) + 50.0f;
-	camera->Update(false);
+	camera->Update();
 
 	sky->Draw();
 

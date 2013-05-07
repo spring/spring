@@ -61,12 +61,10 @@ void CCamera::CopyState(const CCamera* cam) {
 	lppScale  = cam->lppScale;
 }
 
-
-void CCamera::Update(bool resetUp)
+void CCamera::Update()
 {
-	if (resetUp) {
+	if (forward.cross(UpVector) != ZeroVector)
 		up = UpVector;
-	}
 
 	right = forward.cross(up);
 	right.UnsafeANormalize();

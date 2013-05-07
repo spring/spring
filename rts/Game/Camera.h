@@ -19,7 +19,7 @@ public:
 	void UpdateForward();
 	bool InView(const float3& p, float radius = 0) const;
 	bool InView(const float3& mins, const float3& maxs) const;
-	void Update(bool resetUp = true);
+	void Update();
 
 	void GetFrustumSides(float miny, float maxy, float scale, bool negSide = false);
 	void GetFrustumSide(
