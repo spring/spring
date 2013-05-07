@@ -530,7 +530,7 @@ void CBasicSky::DrawSun()
 	// near-plane (which is variable) without scaling
 	glPushMatrix();
 	glTranslatef3(camera->GetPos());
-	glScalef(globalRendering->zNear + 0.1f, globalRendering->zNear + 0.1f, globalRendering->zNear + 0.1f);
+	glScalef(globalRendering->zNear + 1.0f, globalRendering->zNear + 1.0f, globalRendering->zNear + 1.0f);
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_ALPHA_TEST);
