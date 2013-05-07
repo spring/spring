@@ -1125,6 +1125,8 @@ public:
 			gu->spectatingFullSelect = gu->spectatingFullView;
 		}
 		CLuaUI::UpdateTeams();
+		// NOTE: unsynced, so do not inform via eventHandler
+		unitDrawer->PlayerChanged(gu->myPlayerNum);
 		return true;
 	}
 };

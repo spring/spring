@@ -76,7 +76,8 @@ Bugfixes:
  - fix #3655 (UnitDef::canMove misinterpreted by factory CAI code)
  - fix #3662
  - fix #3633 (non-3DO projectile models not being rendered fully)
- - fix #3598 ("vibrating" units)
+ - fix #3714 (minimap icons of enemy units visible after /spectator plus /specfullview 0)
+ - fix #3598 ("vibrating" ground units due to gravity)
  - fix #3637 (desyncs due to not versioning cache-data, also #3692)
  - fix #3617 (ship transports can't load units)
  - fix #3686 (free flying ground units follow terrain slope)
