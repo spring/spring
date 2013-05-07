@@ -1924,9 +1924,10 @@ inline const icon::CIconData* GetUnitIcon(const CUnit* unit) {
 
 	// use the unit's custom icon if we can currently see it,
 	// or have seen it before and did not lose contact since
-	const bool unitVisible = ((losStatus & LOS_INLOS) || ((losStatus & LOS_INRADAR) && ((losStatus & prevMask) == prevMask)));
+	const bool unitVisible = ((losStatus & (LOS_INLOS | LOS_INRADAR)) && ((losStatus & prevMask) == prevMask));
+	const bool customIcon = (minimap->UseUnitIcons() && (unitVisible || gu->spectatingFullView));
 
-	if (minimap->UseUnitIcons() && (unitVisible || gu->spectatingFullView)) {
+	if (customIcon) {
 		iconData = unitDef->iconType.GetIconData();
 	} else {
 		if (losStatus & LOS_INRADAR) {
