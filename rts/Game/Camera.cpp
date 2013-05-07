@@ -18,26 +18,12 @@ CCamera* camera;
 CCamera* cam2;
 
 
-
-inline void GetGLdoubleMatrix(const CMatrix44f& m, GLdouble* dm)
-{
-	for (int i = 0; i < 16; i += 4) {
-		dm[i+0] = m[i+0];
-		dm[i+1] = m[i+1];
-		dm[i+2] = m[i+2];
-		dm[i+3] = m[i+3];
-	}
-}
-
-
 CCamera::CCamera()
 	: rot(0.0f, 0.0f, 0.0f)
 	, forward(RgtVector)
 	, up(UpVector)
 	, posOffset(ZeroVector)
 	, tiltOffset(ZeroVector)
-	, viewMatrixD(16, 0.0)
-	, projectionMatrixD(16, 0.0)
 	, pos(ZeroVector)
 	, fov(0.0f)
 	, halfFov(0.0f)
@@ -132,10 +118,6 @@ void CCamera::Update(bool resetUp)
 	viewMatrixInverse = viewMatrix.InvertAffine();
 	projectionMatrixInverse = projectionMatrix.Invert();
 	viewProjectionMatrixInverse = viewProjectionMatrix.Invert();
-
-	// GLdouble versions
-	GetGLdoubleMatrix(viewMatrix, &viewMatrixD[0]);
-	GetGLdoubleMatrix(projectionMatrix, &projectionMatrixD[0]);
 
 	// Billboard Matrix
 	billboardMatrix = viewMatrix;
@@ -251,11 +233,13 @@ float3 CCamera::CalcPixelDir(int x, int y) const
 
 float3 CCamera::CalcWindowCoordinates(const float3& objPos) const
 {
-	double winPos[3];
-	gluProject((GLdouble)objPos.x, (GLdouble)objPos.y, (GLdouble)objPos.z,
-	           &viewMatrixD[0], &projectionMatrixD[0], viewport,
-	           &winPos[0], &winPos[1], &winPos[2]);
-	return float3((float)winPos[0], (float)winPos[1], (float)winPos[2]);
+	// does same as gluProject()
+	const float4 v = viewProjectionMatrix * float4(objPos, 1.0f);
+	float3 winPos;
+	winPos.x = viewport[0] + viewport[2] * (v.x / v.w + 1.0f) * 0.5f;
+	winPos.y = viewport[1] + viewport[3] * (v.y / v.w + 1.0f) * 0.5f;
+	winPos.z =                             (v.z / v.w + 1.0f) * 0.5f;
+	return winPos;
 }
 
 
