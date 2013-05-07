@@ -7,6 +7,7 @@
 #include <queue>
 #include <set>
 #include <map>
+#include <new>
 #include <signal.h>
 #include <execinfo.h>
 #include <cstdlib>
@@ -28,11 +29,12 @@
 #include "System/Util.h"
 #include "System/Misc/SpringTime.h"
 #include "System/Platform/Misc.h"
-#include "System/Platform/Watchdog.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
-#include <new>
 
+#ifndef DEDICATED
+#include "System/Platform/Watchdog.h"
+#endif
 
 #ifdef __APPLE__
 #define ADDR2LINE "gaddr2line"
@@ -482,8 +484,9 @@ namespace CrashHandler
 
 	void HandleSignal(int signal)
 	{
+#ifndef DEDICATED
 		Watchdog::ClearTimer();
-
+#endif
 		if (signal == SIGINT) {
 			//! ctrl+c = kill
 			LOG("caught SIGINT, aborting");
