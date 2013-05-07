@@ -385,7 +385,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	// units passing intermediate waypoints will TYPICALLY not cause any
 	// script->{Start,Stop}Moving calls now (even when turnInPlace=true)
 	// unless they come to a full stop first
-	ReRequestPath(false, false);
+	ReRequestPath(false, true);
 
 	#if (PLAY_SOUNDS == 1)
 	if (owner->team == gu->myTeam) {
@@ -1653,7 +1653,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	}
 
 	if (canRequestPath && wantRequestPath) {
-		StartMoving(goalPos, goalRadius);
+		ReRequestPath(false, false);
 	}
 }
 
@@ -1765,7 +1765,7 @@ void CGroundMoveType::HandleUnitCollisions(
 				colliderRadius,
 				collideeRadius,
 				separationVector,
-				(gs->frameNum > lastPathRequestFrame),
+				true,
 				collideeUD->IsFactoryUnit(),
 				false);
 
@@ -1905,7 +1905,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 				colliderRadius,
 				collideeRadius,
 				separationVector,
-				(gs->frameNum > lastPathRequestFrame),
+				true,
 				false,
 				false);
 
