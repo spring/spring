@@ -290,6 +290,23 @@ Else  (NOT Boost_FOUND)
 	Add_Dependencies(tests test_CregLoadSave)
 
 ################################################################################
+### UnitSync
+	Set(test_UnitSync_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/unitsync/testUnitSync.cpp"
+			${test_Log_sources}
+		)
+
+	ADD_EXECUTABLE(test_UnitSync ${test_UnitSync_src})
+	TARGET_LINK_LIBRARIES(test_UnitSync
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${CMAKE_DL_LIBS}
+			unitsync
+		)
+
+	ADD_TEST(NAME testUnitSync COMMAND test_UnitSync)
+	ADD_DEPENDENCIES(tests test_UnitSync)
+
+################################################################################
 EndIf (NOT Boost_FOUND)
 
 add_subdirectory(headercheck)
