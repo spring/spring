@@ -54,6 +54,7 @@ private:
 	void GetNewPath();
 	void GetNextWayPoint();
 	bool CanGetNextWayPoint();
+	bool ReRequestPath(bool callScript, bool forceRequest);
 
 	float BrakingDistance(float speed) const;
 	float3 Here();
@@ -149,8 +150,8 @@ private:
 	float3 lastAvoidanceDir;
 	float3 mainHeadingPos;
 
-	unsigned int nextObstacleAvoidanceUpdate;
-	unsigned int pathRequestDelay;
+	unsigned int nextObstacleAvoidanceFrame;
+	unsigned int lastPathRequestFrame;
 
 	/// {in, de}creased every Update if idling is true/false and pathId != 0
 	unsigned int numIdlingUpdates;
