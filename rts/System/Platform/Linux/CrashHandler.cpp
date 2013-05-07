@@ -28,6 +28,7 @@
 #include "System/Util.h"
 #include "System/Misc/SpringTime.h"
 #include "System/Platform/Misc.h"
+#include "System/Platform/Watchdog.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
 #include <new>
@@ -481,6 +482,8 @@ namespace CrashHandler
 
 	void HandleSignal(int signal)
 	{
+		Watchdog::ClearTimer();
+
 		if (signal == SIGINT) {
 			//! ctrl+c = kill
 			LOG("caught SIGINT, aborting");
