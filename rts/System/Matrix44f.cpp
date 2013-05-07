@@ -331,6 +331,19 @@ float3 CMatrix44f::operator* (const float3& v) const
 }
 
 
+float4 CMatrix44f::operator* (const float4& v) const
+{
+	__m128 out;
+	out =                 _mm_mul_ps(_mm_loadu_ps(&md[0][0]), _mm_load1_ps(&v.x));
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[1][0]), _mm_load1_ps(&v.y)));
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[2][0]), _mm_load1_ps(&v.z)));
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[3][0]), _mm_load1_ps(&v.w)));
+
+	const float* fout = reinterpret_cast<float*>(&out);
+	return float4(fout[0], fout[1], fout[2], fout[3]);
+}
+
+
 void CMatrix44f::SetUpVector(const float3& up)
 {
 	float3 zdir(m[8],m[9],m[10]);

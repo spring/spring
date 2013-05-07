@@ -4,6 +4,7 @@
 #define MATRIX44F_H
 
 #include "System/float3.h"
+#include "System/float4.h"
 
 class CMatrix44f
 {
@@ -48,6 +49,7 @@ public:
 	/// vector multiply
 	float3 operator* (const float3& v) const;
 	float3 Mul(const float3& v) const { return (*this) * v; }
+	float4 operator* (const float4& v) const;
 
 	/// matrix multiply
 	CMatrix44f operator* (const CMatrix44f& mat) const;
