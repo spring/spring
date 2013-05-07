@@ -437,8 +437,10 @@ void CPathEstimator::Update() {
 	if (updatedBlocks.empty())
 		return;
 
-	const unsigned int progressiveUpdates = updatedBlocks.size() * 0.009f * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f);
-	const unsigned int blocksToUpdate = std::max(BLOCKS_TO_UPDATE, progressiveUpdates);
+	static const unsigned int MIN_BLOCKS_TO_UPDATE = std::max(1U, BLOCKS_TO_UPDATE >> 1);
+	static const unsigned int MAX_BLOCKS_TO_UPDATE = BLOCKS_TO_UPDATE << 1;
+	const unsigned int progressiveUpdates = updatedBlocks.size() * 0.007f * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f);
+	const unsigned int blocksToUpdate = Clamp(progressiveUpdates, MIN_BLOCKS_TO_UPDATE, MAX_BLOCKS_TO_UPDATE);
 
 	std::vector<SingleBlock> v;
 	v.reserve(blocksToUpdate);
@@ -505,8 +507,6 @@ void CPathEstimator::Update() {
 			}
 		}
 	}
-
-	v.clear();
 }
 
 
