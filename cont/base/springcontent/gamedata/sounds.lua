@@ -63,6 +63,9 @@ local Sounds = {
 			--- you can loop it for X miliseconds
 			looptime = 0,
 		},
+		FailedCommand = {
+			file = "sounds/beep3.wav",
+		},
 
 		default = {
 			--- new since 89.0
