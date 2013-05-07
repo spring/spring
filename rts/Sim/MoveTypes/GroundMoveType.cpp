@@ -102,8 +102,8 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(numIdlingSlowUpdates),
 	CR_MEMBER(wantedHeading),
 
-	CR_MEMBER(nextObstacleAvoidanceUpdate),
-	CR_MEMBER(pathRequestDelay),
+	CR_MEMBER(nextObstacleAvoidanceFrame),
+	CR_MEMBER(lastPathRequestFrame),
 
 	CR_MEMBER(reversing),
 	CR_MEMBER(idling),
@@ -162,8 +162,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	lastAvoidanceDir(ZeroVector),
 	mainHeadingPos(ZeroVector),
 
-	nextObstacleAvoidanceUpdate(0),
-	pathRequestDelay(0),
+	nextObstacleAvoidanceFrame(0),
+	lastPathRequestFrame(0),
 
 	numIdlingUpdates(0),
 	numIdlingSlowUpdates(0),
@@ -329,8 +329,7 @@ void CGroundMoveType::SlowUpdate()
 							owner->id, pathId, numIdlingUpdates);
 
 					if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
-						StopEngine(false);
-						StartEngine(false);
+						ReRequestPath(false, true);
 					} else {
 						// unit probably ended up on a non-traversable
 						// square, or got stuck in a non-moving crowd
@@ -338,13 +337,9 @@ void CGroundMoveType::SlowUpdate()
 					}
 				}
 			} else {
-				if (gs->frameNum > pathRequestDelay) {
-					// case B: we want to be moving but don't have a path
-					LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
-
-					StopEngine(false);
-					StartEngine(false);
-				}
+				// case B: we want to be moving but don't have a path
+				LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
+				ReRequestPath(false, true);
 			}
 		}
 
@@ -390,8 +385,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	// units passing intermediate waypoints will TYPICALLY not cause any
 	// script->{Start,Stop}Moving calls now (even when turnInPlace=true)
 	// unless they come to a full stop first
-	StopEngine(false);
-	StartEngine(false);
+	ReRequestPath(false, false);
 
 	#if (PLAY_SOUNDS == 1)
 	if (owner->team == gu->myTeam) {
@@ -987,14 +981,14 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		return ZeroVector;
 
 	// Speed-optimizer. Reduces the times this system is run.
-	if (gs->frameNum < nextObstacleAvoidanceUpdate)
+	if (gs->frameNum < nextObstacleAvoidanceFrame)
 		return lastAvoidanceDir;
 
 	float3 avoidanceVec = ZeroVector;
 	float3 avoidanceDir = desiredDir;
 
 	lastAvoidanceDir = desiredDir;
-	nextObstacleAvoidanceUpdate = gs->frameNum + 1;
+	nextObstacleAvoidanceFrame = gs->frameNum + 1;
 
 	CUnit* avoider = owner;
 	// const UnitDef* avoiderUD = avoider->unitDef;
@@ -1190,9 +1184,18 @@ void CGroundMoveType::GetNewPath()
 	} else {
 		Fail(false);
 	}
+}
 
-	// limit frequency of (case B) path-requests from SlowUpdate's
-	pathRequestDelay = gs->frameNum + (UNIT_SLOWUPDATE_RATE << 1);
+bool CGroundMoveType::ReRequestPath(bool callScript, bool forceRequest) {
+	// limit frequency of repath-requests from outside SlowUpdate
+	if (((gs->frameNum - lastPathRequestFrame) < (UNIT_SLOWUPDATE_RATE >> 1)) && (!forceRequest))
+		return false;
+
+	StopEngine(callScript);
+	StartEngine(callScript);
+
+	lastPathRequestFrame = gs->frameNum;
+	return true;
 }
 
 
@@ -1326,8 +1329,7 @@ void CGroundMoveType::GetNextWayPoint()
 			// this can happen if we crushed a non-blocking feature
 			// and it spawned another feature which we cannot crush
 			// (eg.) --> repath
-			StopEngine(false);
-			StartEngine(false);
+			ReRequestPath(false, false);
 		}
 
 		#undef NWP_BLOCK_MASK
@@ -1385,7 +1387,7 @@ void CGroundMoveType::StartEngine(bool callScript) {
 	}
 
 	owner->isMoving = (pathId != 0);
-	nextObstacleAvoidanceUpdate = gs->frameNum;
+	nextObstacleAvoidanceFrame = gs->frameNum;
 }
 
 void CGroundMoveType::StopEngine(bool callScript) {
@@ -1763,7 +1765,7 @@ void CGroundMoveType::HandleUnitCollisions(
 				colliderRadius,
 				collideeRadius,
 				separationVector,
-				(gs->frameNum > pathRequestDelay),
+				(gs->frameNum > lastPathRequestFrame),
 				collideeUD->IsFactoryUnit(),
 				false);
 
@@ -1903,7 +1905,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 				colliderRadius,
 				collideeRadius,
 				separationVector,
-				(gs->frameNum > pathRequestDelay),
+				(gs->frameNum > lastPathRequestFrame),
 				false,
 				false);
 
