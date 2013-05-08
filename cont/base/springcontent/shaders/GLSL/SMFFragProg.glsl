@@ -1,17 +1,18 @@
-#define SSMF_UNCOMPRESSED_NORMALS 0
-#define SMF_SHALLOW_WATER_DEPTH     (10.0                          )
-#define SMF_SHALLOW_WATER_DEPTH_INV ( 1.0 / SMF_SHALLOW_WATER_DEPTH)
-
 #if (SMF_PARALLAX_MAPPING == 1)
 #version 120
 #endif
 
-uniform vec4 lightDir;
+#define SSMF_UNCOMPRESSED_NORMALS 0
+#define SMF_SHALLOW_WATER_DEPTH     (10.0                          )
+#define SMF_SHALLOW_WATER_DEPTH_INV ( 1.0 / SMF_SHALLOW_WATER_DEPTH)
+#define SMF_DETAILTEX_RES 0.02
 
 uniform sampler2D diffuseTex;
 uniform sampler2D normalsTex;
 uniform sampler2D detailTex;
 uniform sampler2D infoTex;
+uniform vec2 normalTexGen;   // either 1.0/mapSize (when NPOT are supported) or 1.0/mapSizePO2
+uniform vec2 specularTexGen; // 1.0/mapSize
 
 #if (SMF_ARB_LIGHTING == 0)
 	uniform sampler2D specularTex;
@@ -37,10 +38,10 @@ uniform float groundShadowDensity;
 #if (SMF_DETAIL_TEXTURE_SPLATTING == 1)
 	uniform sampler2D splatDetailTex;
 	uniform sampler2D splatDistrTex;
-
-	// per-channel splat intensity multipliers
-	uniform vec4 splatTexMults;
+	uniform vec4 splatTexMults;  // per-channel splat intensity multipliers
+	uniform vec4 splatTexScales; // defaults to SMF_DETAILTEX_RES per channel
 #endif
+
 
 #if (SMF_SKY_REFLECTIONS == 1)
 	uniform samplerCube skyReflectTex;
@@ -57,25 +58,20 @@ uniform float groundShadowDensity;
 
 #if (SMF_PARALLAX_MAPPING == 1)
 	uniform sampler2D parallaxHeightTex;
-
-	uniform vec2 normalTexGen;
-	uniform vec2 specularTexGen;
 #endif
 
+#if (HAVE_INFOTEX == 1)
+uniform float infoTexIntensityMul;
+uniform vec2 infoTexGen;     // 1.0/(pwr2map{x,z} * SQUARE_SIZE)
+#endif
+
+uniform vec4 lightDir;
 uniform vec3 cameraPos;
 varying vec3 halfDir;
 
 varying float fogFactor;
-
 varying vec4 vertexWorldPos;
 varying vec2 diffuseTexCoords;
-varying vec2 specularTexCoords;
-varying vec2 normalTexCoords;
-varying vec2 infoTexCoords;
-
-#if (HAVE_INFOTEX == 1)
-uniform float infoTexIntensityMul;
-#endif
 
 
 
@@ -115,13 +111,16 @@ vec3 GetFragmentNormal(vec2 uv) {
 
 vec4 GetDetailTextureColor(vec2 uv) {
 	#if (SMF_DETAIL_TEXTURE_SPLATTING == 0)
-		vec4 detailCol = (texture2D(detailTex, gl_TexCoord[0].st) * 2.0) - 1.0;
+		vec2 detailTexCoord = vertexWorldPos.xz * vec2(SMF_DETAILTEX_RES);
+		vec4 detailCol = (texture2D(detailTex, detailTexCoord) * 2.0) - 1.0;
 	#else
+		vec4 splatTexCoord0 = vertexWorldPos.xzxz * splatTexScales.rrgg;
+		vec4 splatTexCoord1 = vertexWorldPos.xzxz * splatTexScales.bbaa;
 		vec4 splatDetails;
-			splatDetails.r = texture2D(splatDetailTex, gl_TexCoord[0].st).r;
-			splatDetails.g = texture2D(splatDetailTex, gl_TexCoord[0].pq).g;
-			splatDetails.b = texture2D(splatDetailTex, gl_TexCoord[1].st).b;
-			splatDetails.a = texture2D(splatDetailTex, gl_TexCoord[1].pq).a;
+			splatDetails.r = texture2D(splatDetailTex, splatTexCoord0.st).r;
+			splatDetails.g = texture2D(splatDetailTex, splatTexCoord0.pq).g;
+			splatDetails.b = texture2D(splatDetailTex, splatTexCoord1.st).b;
+			splatDetails.a = texture2D(splatDetailTex, splatTexCoord1.pq).a;
 			splatDetails   = (splatDetails * 2.0) - 1.0;
 
 		vec4 splatCofac = texture2D(splatDistrTex, uv) * splatTexMults;
@@ -184,8 +183,8 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 
 void main() {
 	vec2 diffTexCoords = diffuseTexCoords;
-	vec2 normTexCoords = normalTexCoords;
-	vec2 specTexCoords = specularTexCoords;
+	vec2 specTexCoords = vertexWorldPos.xz * specularTexGen;
+	vec2 normTexCoords = vertexWorldPos.xz * normalTexGen;
 
 	// not calculated in the vertex shader to save varying components (OpenGL2.0 allows just 32)
 	vec3 cameraDir = vertexWorldPos.xyz - cameraPos;
@@ -252,6 +251,7 @@ void main() {
 	#if (HAVE_INFOTEX == 1)
 		// increase contrast and brightness for the overlays
 		// TODO: make the multiplier configurable by users?
+		vec2 infoTexCoords = vertexWorldPos.xz * infoTexGen;
 		diffuseCol.rgb += (texture2D(infoTex, infoTexCoords).rgb * infoTexIntensityMul);
 		diffuseCol.rgb -= (vec3(0.5, 0.5, 0.5) * float(infoTexIntensityMul == 1.0));
 	#endif
