@@ -240,7 +240,7 @@ bool CShadowHandler::InitDepthTarget()
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shadowMapSize, shadowMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 		fb.AttachTexture(shadowTexture);
 	} else {
-		const GLint texFormat = globalRendering->support24bitDepthBuffers ? GL_DEPTH_COMPONENT24 : GL_DEPTH_COMPONENT16;
+		const GLint texFormat = GL_DEPTH_COMPONENT32;
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
