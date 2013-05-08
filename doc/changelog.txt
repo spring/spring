@@ -11,7 +11,6 @@ Misc:
  ! new datadir structure: http://springrts.com/phpbb/viewtopic.php?f=12&t=30044
  ! removed "mods" from archive scandirs
  - do not switch camera-mode on countdown
- - speedup grass rendering
  - reduce target-lost CAI timeout from 8 to 2 seconds
  - colorized stdout
  - show LuaMemUsage in /debug view
@@ -39,6 +38,13 @@ Misc:
      NOTE: myGravity acts as a map-gravity MULTIPLIER for aircraft; it REPLACES map gravity for land-based units
  ! converted RotateLogFiles to a bool var (defaults to false)
  ! remove "--projectiledump" and add "--list-ceg-classes" (converted to JSON format )
+ - move Lua GC to its own callin and fix so a bug when GC was too slow to catch up and so eating >>100MB ram
+ - more verbose CEG parsing (warns now about unknown tags)
+ - switch to a high precision clock all over the engine (including Lua)
+ - removed unused AI_UnpauseAfterInit config setting
+ - steering/avoidance: actively avoid only mobile units, let PFS/CD handle statics
+
+Lua:
  ! LuaUnitDefs: deprecate canHover (check moveDef.family instead to determine if a unit is a hovercraft)
  - LuaRules: setup "proper" (transformation) state for the DrawProjectile callin
  - LuaRules: add AllowWeaponInterceptTarget(number interceptorUnitID, number interceptorWeaponID, number targetProjectileID) --> boolean
@@ -46,14 +52,12 @@ Misc:
  ! LuaSynced*: make sure ALL weapon API functions are 1-based
      UPDATE YOUR GAME'S UNIT_SCRIPT.LUA IF IT HAS LUA-SCRIPTED
      UNITS AND YOU ARE NOT USING SPRING'S (BASECONTENT) VERSION
- - move Lua GC to its own callin and fix so a bug when GC was too slow to catch up and so eating >>100MB ram
- - more verbose CEG parsing (warns now about unknown tags)
- - switch to a high precision clock all over the engine (including Lua)
- - reduce PFS update rate by 10%
- - removed unused AI_UnpauseAfterInit config setting
+
+Performance:
  - use SSE in some matrix math
  - save a little mem in Pathfinder
- - steering/avoidance: actively avoid only mobile units, let PFS/CD handle statics
+ - reduce PFS update rate by 10%
+ - little speedup in Grass rendering (it's still slow on some maps)
 
 Buildprocess:
  ! updated gentoo overlay url to https://github.com/springlobby/overlay
@@ -104,8 +108,13 @@ Bugfixes:
  - fix decals were rendered twice
  - fix spike CEGs
 
+UnitSync:
+ - add DeleteSpringConfigKey(const char* name)
+
+
 -- 94.1 ---------------------------------------------------------
  - bump path cache version
+
 
 -- 94.0 ---------------------------------------------------------
 Misc:
