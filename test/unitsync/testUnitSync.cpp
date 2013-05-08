@@ -230,142 +230,57 @@ static bool TestLuaParser()
 
 BOOST_AUTO_TEST_CASE( UnitSync )
 {
-	us::Init(false, 0);
+	const char* errmsg;
+
+	BOOST_CHECK(us::Init(false, 0) != 0);
+
+	BOOST_CHECK(TestLuaParser());
 
 	int i = us::GetMapCount() - 1, j = us::GetPrimaryModCount() - 1;
 	while (i > 0 && !us::GetMapName(i)) --i;
 	while (j > 0 && !us::GetPrimaryModName(j)) --j;
+	const string map = (i > 0) ? us::GetMapName(i) : "";
+	const string mod = (j > 0) ? us::GetPrimaryModName(j) : "";
+	BOOST_WARN_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 
-	const string map = us::GetMapName(i);
-	const string mod = us::GetPrimaryModName(j);
-	LOG("MAP = %s", map.c_str());
-	LOG("MOD = %s", mod.c_str());
+	if (i >= 0 && j >= 0) {
+		BOOST_CHECK(us::GetMapArchiveCount(map.c_str()) >= 1); // expects map name
+		BOOST_CHECK(us::GetPrimaryModArchiveCount(j) >= 1); // expects game index!
 
-	LOG("GetSpringVersion() = %s", us::GetSpringVersion());
+		// map info
+		PrintMapInfo(map);
 
-	// test the lua parser interface
-	BOOST_CHECK(TestLuaParser());
+		// load the mod archives
+		us::AddAllArchives(mod.c_str());
+		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 
-	// map names
-	LOG("  MAPS");
-	std::vector<string> mapNames;
-	const int mapCount = us::GetMapCount();
-	for (int i = 0; i < mapCount; i++) {
-		const string mapName = us::GetMapName(i);
-		mapNames.push_back(mapName);
-		LOG("    [map %3i]   %s", i, mapName.c_str());
+		// unit names
+		BOOST_CHECK(us::ProcessUnits() == 0);
+		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
+		BOOST_CHECK(us::GetUnitCount() >= 1);
+		BOOST_CHECK(us::GetSideCount() >= 1);
 	}
 
-	// map archives
-	LOG("  MAP ARCHIVES  (for %s)", map.c_str());
-	const int mapArcCount = us::GetMapArchiveCount(map.c_str());
-	for (int a = 0; a < mapArcCount; a++) {
-		LOG("      arc %i: %s", a, us::GetMapArchiveName(a));
-	}
-
-	// map info
-	PrintMapInfo(map);
-
-	if (true && false) { // FIXME -- debugging
-		for (int i = 0; i < mapNames.size(); i++) {
-			PrintMapInfo(mapNames[i]);
-		}
-	}
-
-	// mod names
-	LOG("  GAMES");
-	const int modCount = us::GetPrimaryModCount();
-	for (int i = 0; i < modCount; i++) {
-		const string modArchive = us::GetPrimaryModArchive(i);
-		const int infoCount = us::GetPrimaryModInfoCount(i);
-		for (int j=0; j < infoCount; j++) {
-			const char* key = us::GetInfoKey(j);
-			string skey="";
-			string svalue="";
-			if (key!=NULL)
-				skey=key;
-			const char* value = us::GetInfoValueString(j);
-			if (value!=NULL)
-				svalue=value;
-			LOG("    [%s]: %s = %s", modArchive.c_str(), skey.c_str(), svalue.c_str());
-		}
-	}
-
-	// load the mod archives
-	us::AddAllArchives(mod.c_str());
-
-	// unit names
-	while (true) {
-		const int left = us::ProcessUnits();
-		//LOG("unitsLeft = %i", left);
-		if (left <= 0) {
-			break;
-		}
-	}
-	LOG("  UNITS");
-	const int unitCount = us::GetUnitCount();
-	for (int i = 0; i < unitCount; i++) {
-		const string unitName     = us::GetUnitName(i);
-		const string unitFullName = us::GetFullUnitName(i);
-		LOG("    [unit %3i]   %-16s  <%s>", i,
-		unitName.c_str(), unitFullName.c_str());
-	}
-	LOG("  SIDES");
-	const int sideCount = us::GetSideCount();
-	for (int i = 0; i < sideCount; i++) {
-		const string sideName  = us::GetSideName(i);
-		const string startUnit = us::GetSideStartUnit(i);
-		LOG("    side %i = '%s' <%s>",
-		i, sideName.c_str(), startUnit.c_str());
-	}
-
-	// available Skirmish AIs
-	LOG("  SkirmishAI");
-	const int skirmishAICount = us::GetSkirmishAICount();
-	for (int i = 0; i < skirmishAICount; i++) {
-		const int skirmishAIInfoCount = us::GetSkirmishAIInfoCount(i);
-		LOG("    %i:", i);
-		for (int j = 0; j < skirmishAIInfoCount; j++) {
-			const string key = us::GetInfoKey(j);
-			if ((key == SKIRMISH_AI_PROPERTY_SHORT_NAME) || (key == SKIRMISH_AI_PROPERTY_VERSION)) {
-				const string value = us::GetInfoValueString(j);
-				LOG("        %s = %s", key.c_str(), value.c_str());
-			}
-		}
-	}
-
-	// MapOptions
-	LOG("  MapOptions");
-	const int mapOptCount = us::GetMapOptionCount(map.c_str());
-	DisplayOptions(mapOptCount);
-
-	// ModOptions
-	LOG("  ModOptions");
-	const int modOptCount = us::GetModOptionCount();
-	DisplayOptions(modOptCount);
-
-	// ModValidMaps
-	LOG("  ModValidMaps");
-	const int modValidMapCount = us::GetModValidMapCount();
-	if (modValidMapCount == 0) {
-		LOG("    * ALL MAPS *");
-	}
-	else {
-		for (int i = 0; i < modValidMapCount; i++) {
-			LOG("    %i: %s", i, us::GetModValidMap(i));
-		}
-	}
-
-	us::InitDirListVFS(NULL, NULL, NULL);
+	// VFS
+	BOOST_CHECK(us::InitDirListVFS(NULL, NULL, NULL) == 0);
 	char buf[512];
-	for (int i = 0; (i = us::FindFilesVFS(i, buf, sizeof(buf))); /* noop */) {
+	for (int i = 0; (i = us::FindFilesVFS(i, buf, sizeof(buf))); ) {
 		LOG("FOUND FILE:  %s", buf);
 	}
 
-	us::InitSubDirsVFS(NULL, NULL, NULL);
-	for (int i = 0; (i = us::FindFilesVFS(i, buf, sizeof(buf))); /* noop */) {
+	BOOST_CHECK(us::InitSubDirsVFS(NULL, NULL, NULL) == 0);
+	for (int i = 0; (i = us::FindFilesVFS(i, buf, sizeof(buf))); ) {
 		LOG("FOUND DIR:  %s", buf);
 	}
 
+	// Check Config Interface
+	BOOST_CHECK(us::GetSpringConfigFile() != NULL);
+	us::SetSpringConfigInt("_unitsync_test", 1);
+	BOOST_CHECK(us::GetSpringConfigInt("_unitsync_test", 1e9) == 1);
+	us::DeleteSpringConfigKey("_unitsync_test");
+	BOOST_CHECK(us::GetSpringConfigInt("_unitsync_test", 1e9) == 1e9);
+
+	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 	us::UnInit();
+	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 }
