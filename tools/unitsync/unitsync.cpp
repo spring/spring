@@ -2732,3 +2732,11 @@ EXPORT(void) SetSpringConfigFloat(const char* name, const float value)
 	UNITSYNC_CATCH_BLOCKS;
 }
 
+EXPORT(void) DeleteSpringConfigKey(const char* name)
+{
+	try {
+		CheckConfigHandler();
+		configHandler->Delete(name);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+}

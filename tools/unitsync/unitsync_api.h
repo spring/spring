@@ -155,19 +155,14 @@ EXPORT(int         ) GetDataDirectoryCount();
 EXPORT(const char* ) GetDataDirectory(int index);
 
 /**
- * @brief Process another unit and return how many are left to process
+ * @brief Process units
  *
- * Call this function repeatedly until it returns 0 before calling any other
- * function related to units.
+ * Must be called before GetUnitCount(), GetUnitName(), ...
  *
- * Before any units are available, you will first need to map a mod's archives
+ * Before caling this function, you will first need to load a game's archives
  * into the VFS using AddArchive() or AddAllArchives().
  *
- * @return negative integer (< 0) on error;
- *   the number of units left to process (>= 0) on success.
- *   Because of risk for infinite loops, this function does not yet return
- *   any error code.
- *   It is advised to poll GetNextError() after calling this function.
+ * @return always 0!
  * @see ProcessUnitsNoChecksum
  */
 EXPORT(int         ) ProcessUnits();
@@ -1177,6 +1172,11 @@ EXPORT(void        ) SetSpringConfigInt(const char* name, const int value);
  * @param value float value to set
  */
 EXPORT(void        ) SetSpringConfigFloat(const char* name, const float value);
+/**
+ * @brief deletes configkey in Spring configuration
+ * @param name name of key to set
+ */
+EXPORT(void        ) DeleteSpringConfigKey(const char* name);
 
 
 // from LuaParserAPI.cpp:

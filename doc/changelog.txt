@@ -104,8 +104,13 @@ Bugfixes:
  - fix decals were rendered twice
  - fix spike CEGs
 
+UnitSync:
+ - add DeleteSpringConfigKey(const char* name)
+
+
 -- 94.1 ---------------------------------------------------------
  - bump path cache version
+
 
 -- 94.0 ---------------------------------------------------------
 Misc:
