@@ -122,7 +122,7 @@ private:
 
 static void CheckInit()
 {
-	if (!archiveScanner || !vfsHandler || !syncer)
+	if (!archiveScanner || !vfsHandler || !syncer || !logOutputInitialised)
 		throw std::logic_error("Unitsync not initialized. Call Init first.");
 }
 
