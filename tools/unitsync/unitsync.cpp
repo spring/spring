@@ -388,7 +388,14 @@ EXPORT(void) UnInit()
 EXPORT(const char*) GetWritableDataDirectory()
 {
 	try {
-		LOG("GetWritableDataDirectory \"%s\"", dataDirLocater.GetWriteDirPath().c_str());
+		if (dataDirLocater.GetWriteDirPath().empty()) {
+			if (!logOutputInitialised) {
+				logOutput.SetFileName("unitsync_pre.log");
+				logOutput.Initialize();
+				logOutputInitialised = true;
+			}
+			LOG("GetWritableDataDirectory \"%s\"", dataDirLocater.GetWriteDirPath().c_str());
+		}
 		CheckInit();
 		return GetStr(dataDirLocater.GetWriteDirPath());
 	}
