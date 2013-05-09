@@ -540,6 +540,14 @@ std::string DataDirLocater::GetWriteDirPath() const
 {
 	const DataDir* writedir = GetWriteDir();
 	assert(writedir && writedir->writable);
+
+	if (!writedir) {
+		const std::string errstr =
+			"None writable data directory set!\n"
+			"Forgot to initialize DataDirLocator?";
+		throw user_error(errstr);
+	}
+
 	return writedir->path;
 }
 
