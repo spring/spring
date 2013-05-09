@@ -346,7 +346,7 @@ EXPORT(int) Init(bool isServer, int id)
 
 		dataDirLocater.UpdateIsolationModeByEnvVar();
 		dataDirLocater.LocateDataDirs();
-		dataDirLocater.Check();
+		dataDirLocater.ChangeCwdToWriteDir();
 		if (!configHandler) {
 			ConfigHandler::Instantiate(); // use the default config file
 		}
@@ -388,7 +388,7 @@ EXPORT(void) UnInit()
 EXPORT(const char*) GetWritableDataDirectory()
 {
 	try {
-		LOG("GetWritableDataDirectory");
+		LOG("GetWritableDataDirectory \"%s\"", dataDirLocater.GetWriteDirPath().c_str());
 		CheckInit();
 		return GetStr(dataDirLocater.GetWriteDirPath());
 	}
