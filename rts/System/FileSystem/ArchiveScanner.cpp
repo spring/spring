@@ -347,6 +347,7 @@ CArchiveScanner::CArchiveScanner()
 	file << "ArchiveCache.lua";
 
 	cachefile = file.str();
+	if (dataDirLocater.GetWriteDirPath().empty()) LOG("CArchiveScanner() failed");
 	ReadCacheData(dataDirLocater.GetWriteDirPath() + GetFilename());
 
 	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
@@ -359,6 +360,7 @@ CArchiveScanner::CArchiveScanner()
 	}
 	// ArchiveCache has been parsed at this point --> archiveInfos is populated
 	ScanDirs(scanDirs, true);
+	if (dataDirLocater.GetWriteDirPath().empty()) LOG("CArchiveScanner() failed");
 	WriteCacheData(dataDirLocater.GetWriteDirPath() + GetFilename());
 }
 

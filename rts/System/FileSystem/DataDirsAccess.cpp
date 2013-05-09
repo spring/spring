@@ -5,6 +5,7 @@
 #include "FileHandler.h"
 #include "FileQueryFlags.h"
 #include "FileSystem.h"
+#include "System/Log/ILog.h"
 
 #include <cassert>
 #include <string>
@@ -104,6 +105,7 @@ std::string DataDirsAccess::LocateFile(std::string file, int flags) const
 	FileSystem::FixSlashes(file);
 
 	if (flags & FileQueryFlags::WRITE) {
+		if (dataDirLocater.GetWriteDirPath().empty()) LOG("DataDirsAccess::LocateFile() failed");
 		std::string writeableFile = dataDirLocater.GetWriteDirPath() + file;
 		FileSystem::FixSlashes(writeableFile);
 		if (flags & FileQueryFlags::CREATE_DIRS) {
@@ -130,6 +132,7 @@ std::string DataDirsAccess::LocateDir(std::string _dir, int flags) const
 	FileSystem::FixSlashes(dir);
 
 	if (flags & FileQueryFlags::WRITE) {
+		if (dataDirLocater.GetWriteDirPath().empty()) LOG("DataDirsAccess::LocateDir() failed");
 		std::string writeableDir = dataDirLocater.GetWriteDirPath() + dir;
 		FileSystem::FixSlashes(writeableDir);
 		if (flags & FileQueryFlags::CREATE_DIRS) {
