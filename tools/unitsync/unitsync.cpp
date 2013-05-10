@@ -348,6 +348,7 @@ EXPORT(int) Init(bool isServer, int id)
 		dataDirLocater.LocateDataDirs();
 		dataDirLocater.ChangeCwdToWriteDir();
 		if (!configHandler) {
+			LOG("unitsync::Init()");
 			ConfigHandler::Instantiate(); // use the default config file
 		}
 
