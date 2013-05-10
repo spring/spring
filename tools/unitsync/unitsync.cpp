@@ -2653,6 +2653,7 @@ void PrintLoadMsg(const char* text)
 
 EXPORT(void) SetSpringConfigFile(const char* fileNameAsAbsolutePath)
 {
+	LOG("SetSpringConfigFile %s", fileNameAsAbsolutePath);
 	ConfigHandler::Instantiate(fileNameAsAbsolutePath);
 }
 
