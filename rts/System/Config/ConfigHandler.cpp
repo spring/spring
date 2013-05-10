@@ -17,6 +17,8 @@
 
 #include <boost/thread/mutex.hpp>
 
+#include "System/FileSystem/DataDirLocater.h"
+
 /******************************************************************************/
 
 using std::list;
@@ -306,6 +308,7 @@ void ConfigHandler::Instantiate(const std::string configSource, const bool safem
 	vector<string> locations;
 	if (!configSource.empty()) locations.push_back(configSource);
 	ConfigLocater::GetDefaultLocations(locations);
+	if (dataDirLocater.GetWriteDirPath().empty()) LOG("ConfigHandler::Instantiate() failed");
 	assert(!locations.empty());
 
 	// log here so unitsync shows configuration source(s), too
