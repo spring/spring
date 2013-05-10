@@ -348,7 +348,7 @@ EXPORT(int) Init(bool isServer, int id)
 		dataDirLocater.LocateDataDirs();
 		dataDirLocater.ChangeCwdToWriteDir();
 		if (!configHandler) {
-			LOG("unitsync::Init()");
+			LOG_L(L_ERROR, "unitsync::Init()");
 			ConfigHandler::Instantiate(); // use the default config file
 		}
 
@@ -2654,7 +2654,7 @@ void PrintLoadMsg(const char* text)
 
 EXPORT(void) SetSpringConfigFile(const char* fileNameAsAbsolutePath)
 {
-	LOG("SetSpringConfigFile %s", fileNameAsAbsolutePath);
+	LOG_L(L_ERROR, "SetSpringConfigFile %s", fileNameAsAbsolutePath);
 	ConfigHandler::Instantiate(fileNameAsAbsolutePath);
 }
 
