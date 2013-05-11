@@ -33,8 +33,8 @@ static m44 m_;
 			m.md[2][1] * vin.z + m.md[3][1] * vin.w;
 	float v2 =  m.md[0][2] * vin.x + m.md[1][2] * vin.y +
 			m.md[2][2] * vin.z + m.md[3][2] * vin.w;
-	float v3 =  m.md[0][3] * vin.x + m.md[1][3] * vin.y +
-			m.md[2][3] * vin.z + m.md[3][3] * vin.w;
+	//float v3 =  m.md[0][3] * vin.x + m.md[1][3] * vin.y +
+	//		m.md[2][3] * vin.z + m.md[3][3] * vin.w;
 	return float4(v0,v1,v2,0.0f);
 }
 
@@ -69,7 +69,7 @@ static m44 m_;
 
 _noinline static void MatrixMatrixMultiply(CMatrix44f* m1, const CMatrix44f& m2)
 {
-	assert(int(&m1->m[0]) % 16 == 0); // 16byte aligned
+	assert(long(&m1->m[0]) % 16 == 0); // 16byte aligned
 
 	__m128& moutc1 = *reinterpret_cast<__m128*>(&m1->md[0]);
 	__m128& moutc2 = *reinterpret_cast<__m128*>(&m1->md[1]);
