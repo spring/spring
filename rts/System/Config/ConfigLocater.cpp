@@ -19,7 +19,7 @@
 #include "System/Platform/Misc.h"
 #include "System/Platform/Win/win32.h"
 #include <boost/foreach.hpp>
-#include "System/Log/ILog.h"
+
 
 using std::string;
 using std::vector;
@@ -84,7 +84,6 @@ static void LoadCfgsInFolder(vector<string>& locations, const std::string& path,
 void ConfigLocater::GetDefaultLocations(vector<string>& locations)
 {
 	// first, add writeable config file
-	if (dataDirLocater.GetWriteDirPath().empty()) LOG("ConfigLocater::GetDefaultLocations() failed");
 	LoadCfgsInFolder(locations, dataDirLocater.GetWriteDirPath(), false);
 
 	// old primary
