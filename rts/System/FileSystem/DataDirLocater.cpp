@@ -539,6 +539,8 @@ bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath)
 std::string DataDirLocater::GetWriteDirPath() const
 {
 	const DataDir* writedir = GetWriteDir();
+	if (!writeDir)
+		LOG("DataDirLocater::GetWriteDirPath() failed");
 	assert(writedir && writedir->writable);
 	return writedir ? writedir->path : "";
 }
