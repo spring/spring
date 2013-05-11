@@ -45,7 +45,7 @@ Else  (NOT Boost_FOUND)
 	Set(test_UDPListener_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Net/TestUDPListener.cpp"
 			"${ENGINE_SOURCE_DIR}/Game/GameVersion.cpp"
-			"${ENGINE_SOURCE_DIR}/Net/Protocol/BaseNetProtocol.h"
+			"${ENGINE_SOURCE_DIR}/Net/Protocol/BaseNetProtocol.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Net/UDPListener.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Net/RawPacket.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Net/PackPacket.cpp"
