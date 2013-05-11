@@ -3,9 +3,20 @@
 
 #include <string>
 #include <cstdio>
+#include <sys/stat.h>
+#include "System/Log/ILog.h"
 
 #define BOOST_TEST_MODULE FileSystem
 #include <boost/test/unit_test.hpp>
+
+
+void LogPermissions(const char* file)
+{
+	struct stat s;
+	stat("testDir", &s);
+	mode_t mode = s.st_mode;
+	LOG("%s permissions: %o", "testDir", mode & (S_IRWXU | S_IRWXG | S_IRWXO));
+}
 
 
 namespace {
@@ -85,21 +96,35 @@ BOOST_AUTO_TEST_CASE(GetFileSize)
 	BOOST_CHECK(FileSystem::GetFileSize("testDir99") == -1);
 }
 
+
 BOOST_AUTO_TEST_CASE(CreateDirectory)
 {
+	// create & exists
 	BOOST_CHECK(FileSystem::DirIsWritable("./"));
 	BOOST_CHECK(FileSystem::DirExists("testDir"));
+	BOOST_CHECK(FileSystem::DirExists("testDir///"));
+	BOOST_CHECK(FileSystem::DirExists("testDir////./"));
+	BOOST_CHECK(FileSystem::ComparePaths("testDir", "testDir////./"));
 	BOOST_CHECK(FileSystem::CreateDirectory("testDir")); // already exists
 	BOOST_CHECK(FileSystem::CreateDirectory("testDir1")); // should be created
+
+	// check if exists & no overwrite
+	LogPermissions("./");
+	LogPermissions("testDir");
+	LogPermissions("test Dir2");
 	BOOST_CHECK(!FileSystem::DirExists("test Dir2"));
 	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // should be created
 	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // already exists
-	BOOST_CHECK(FileSystem::DirExists("test Dir2"));
+	BOOST_CHECK(FileSystem::DirIsWritable("test Dir2"));
+	BOOST_CHECK(!FileSystem::CreateDirectory("testFile.txt")); // file with this name already exists
+
+	// delete temporaries
 	BOOST_CHECK(FileSystem::DeleteFile("testDir1"));
 	BOOST_CHECK(FileSystem::DeleteFile("test Dir2"));
+
+	// check if really deleted
 	BOOST_CHECK(!FileSystem::DirExists("testDir1"));
 	BOOST_CHECK(!FileSystem::DirExists("test Dir2"));
-	BOOST_CHECK(!FileSystem::CreateDirectory("testFile.txt")); // file with this name already exists
 }
 
 
