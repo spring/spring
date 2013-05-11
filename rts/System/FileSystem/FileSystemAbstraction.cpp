@@ -294,7 +294,11 @@ bool FileSystemAbstraction::MkDir(const std::string& dir)
 
 bool FileSystemAbstraction::DeleteFile(const std::string& file)
 {
+#ifdef WIN32
+	bool fileDeleted = DeleteFile(file.c_str());
+#else
 	bool fileDeleted = (remove(file.c_str()) == 0);
+#endif
 
 	if (!fileDeleted) {
 		LOG_L(L_WARNING, "Could not delete file %s: %s", file.c_str(), strerror(errno));
@@ -314,7 +318,7 @@ bool FileSystemAbstraction::FileExists(const std::string& file)
 bool FileSystemAbstraction::DirExists(const std::string& dir)
 {
 	std::string myDir = dir;
-#ifdef _WIN32 //FIXME
+#ifdef _WIN32
 	// only for the root dir on a drive (for example C:\)
 	// we need the trailing slash
 	if (!IsFSRoot(myDir)) {
