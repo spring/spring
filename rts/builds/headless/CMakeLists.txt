@@ -35,8 +35,8 @@ ENDIF (MINGW OR APPLE)
 # headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
 LIST(APPEND engineHeadlessLibraries headlessStubs)
 LIST(APPEND engineHeadlessLibraries no-sound)
-LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
 LIST(APPEND engineHeadlessLibraries engineSystemNet)
+LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
 
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 
