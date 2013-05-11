@@ -55,6 +55,8 @@ public:
 	 * after the engine chdir'ed to the correct directory.
 	 */
 	void Initialize();
+	bool IsInitialized();
+
 
 	/**
 	 * Log()s system informations (CPU, 32/64bit, gcc/boost version, ...)
