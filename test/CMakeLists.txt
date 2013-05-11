@@ -54,12 +54,12 @@ Else  (NOT Boost_FOUND)
 
 	ADD_EXECUTABLE(test_UDPListener ${test_UDPListener_src})
 	TARGET_LINK_LIBRARIES(test_UDPListener
+			engineSystemNet
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${WS2_32_LIBRARY}
 			7zip
-			engineSystemNet
 		)
 
 	Add_Dependencies(test_UDPListener generateVersionFiles)
