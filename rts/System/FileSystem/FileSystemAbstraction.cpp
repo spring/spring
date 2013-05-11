@@ -414,8 +414,10 @@ bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::st
 	CloseHandle(fh1);
 	CloseHandle(fh2);
 
-	return ret;
-#else
+	if (ret)
+		return true;
+#endif
+
 	int r = 0;
 	struct stat s1, s2;
 	r  = stat(path1.c_str(), &s1);
@@ -426,7 +428,6 @@ bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::st
 	}
 
 	return (s1.st_ino == s2.st_ino) && (s1.st_dev == s2.st_dev);
-#endif
 }
 
 
