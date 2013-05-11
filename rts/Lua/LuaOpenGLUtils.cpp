@@ -25,7 +25,6 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/Matrix44f.h"
 #include "System/Util.h"
-#include "System/Log/ILOG.h"
 
 
 /******************************************************************************/
