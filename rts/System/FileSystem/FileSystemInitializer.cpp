@@ -4,11 +4,29 @@
 #include "DataDirLocater.h"
 #include "ArchiveScanner.h"
 #include "VFSHandler.h"
+#include "System/LogOutput.h"
 #include "System/Util.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Platform/Misc.h"
 
 
+
 bool FileSystemInitializer::initialized = false;
+
+void FileSystemInitializer::PreInitializeConfigHandler(const std::string& configSource, const bool safemode)
+{
+	dataDirLocater.LocateDataDirs();
+	dataDirLocater.ChangeCwdToWriteDir();
+	ConfigHandler::Instantiate(configSource, safemode);
+}
+
+
+void FileSystemInitializer::InitializeLogOutput(const std::string& filename)
+{
+	if (!filename.empty() && !logOutput.IsInitialized()) logOutput.SetFileName(filename);
+	logOutput.Initialize();
+}
+
 
 void FileSystemInitializer::Initialize()
 {
@@ -37,4 +55,5 @@ void FileSystemInitializer::Cleanup()
 		SafeDelete(vfsHandler);
 		initialized = false;
 	}
+	ConfigHandler::Deallocate();
 }

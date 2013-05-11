@@ -540,7 +540,7 @@ std::string DataDirLocater::GetWriteDirPath() const
 {
 	const DataDir* writedir = GetWriteDir();
 	if (!writeDir)
-		LOG("DataDirLocater::GetWriteDirPath() failed");
+		LOG_L(L_ERROR, "DataDirLocater::GetWriteDirPath() called before DataDirLocater::LocateDataDirs()");
 	assert(writedir && writedir->writable);
 	return writedir ? writedir->path : "";
 }

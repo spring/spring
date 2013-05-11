@@ -20,6 +20,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Log/ILog.h"
+#include "System/Log/DefaultFilter.h"
 #include "System/LogOutput.h"
 #include "System/Platform/CmdLineParams.h"
 #include "System/Platform/CrashHandler.h"
@@ -107,22 +108,20 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 
 	const std::string configSource = cmdline.IsSet("config") ? cmdline.GetString("config") : "";
 
-	dataDirLocater.LocateDataDirs();
-	dataDirLocater.ChangeCwdToWriteDir();
-	ConfigHandler::Instantiate(configSource);
-	GlobalConfig::Instantiate();
-
 	if (cmdline.IsSet("list-config-vars")) {
+		LOG_DISABLE();
+		FileSystemInitializer::PreInitializeConfigHandler(configSource);
+		FileSystemInitializer::InitializeLogOutput();
+		LOG_ENABLE();
 		ConfigVariable::OutputMetaDataMap();
-		GlobalConfig::Deallocate();
-		ConfigHandler::Deallocate();
 		exit(0);
 	}
 
 	LOG("Run: %s", cmdline.GetCmdLine().c_str());
+	FileSystemInitializer::PreInitializeConfigHandler(configSource);
 
 	#undef  LOG_SECTION_CURRENT
-	#define LOG_SECTION_CURRENT LOG_SECTION_DEFAULT
+	#define LOG_SECTION_CURRENT LOG_SECTION_DEDICATED_SERVER
 }
 
 
@@ -137,6 +136,8 @@ int main(int argc, char* argv[])
 
 		ParseCmdLine(argc, argv, &scriptName);
 
+		GlobalConfig::Instantiate();
+		FileSystemInitializer::InitializeLogOutput();
 		FileSystemInitializer::Initialize();
 
 		// Initialize crash reporting
@@ -145,8 +146,6 @@ int main(int argc, char* argv[])
 		SDL_Init(SDL_INIT_TIMER);
 		LOG("report any errors to Mantis or the forums.");
 		LOG("loading script from file: %s", scriptName.c_str());
-
-		logOutput.Initialize();
 
 		CGameServer* server = NULL;
 		CGameSetup* gameSetup = NULL;
@@ -238,7 +237,6 @@ int main(int argc, char* argv[])
 
 		FileSystemInitializer::Cleanup();
 		GlobalConfig::Deallocate();
-		ConfigHandler::Deallocate();
 
 		LOG("exited");
 	}
