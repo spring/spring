@@ -36,6 +36,7 @@ ENDIF (MINGW OR APPLE)
 LIST(APPEND engineHeadlessLibraries headlessStubs)
 LIST(APPEND engineHeadlessLibraries no-sound)
 LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
+LIST(APPEND engineHeadlessLibraries engineSystemNet)
 
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 

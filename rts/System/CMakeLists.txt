@@ -106,18 +106,6 @@ SET(sources_engine_System_Log_sinkFile
 SET(sources_engine_System_Log_sinkOutputDebugString
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/OutputDebugStringSink.cpp"
 	)
-SET(sources_engine_System_Net
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/Connection.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/LocalConnection.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/LoopbackConnection.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/PackPacket.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/ProtocolDef.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/RawPacket.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/Socket.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/UDPConnection.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/UDPListener.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/UnpackPacket.cpp"
-	)
 SET(sources_engine_System_Platform_Linux
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/CrashHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/myX11.cpp"
@@ -149,7 +137,6 @@ IF     (APPLE)
 			${sources_engine_System_Log}
 			${sources_engine_System_Log_sinkConsole}
 			${sources_engine_System_Log_sinkFile}
-			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Mac}
 		)
 ELSEIF (UNIX)
@@ -160,7 +147,6 @@ ELSEIF (UNIX)
 			${sources_engine_System_Log}
 			${sources_engine_System_Log_sinkConsole}
 			${sources_engine_System_Log_sinkFile}
-			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Linux}
 		)
 ELSEIF (WIN32)
@@ -172,7 +158,6 @@ ELSEIF (WIN32)
 			${sources_engine_System_Log_sinkConsole}
 			${sources_engine_System_Log_sinkFile}
 			${sources_engine_System_Log_sinkOutputDebugString}
-			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Windows}
 		)
 ELSE   ()
@@ -183,7 +168,6 @@ ELSE   ()
 			${sources_engine_System_Log}
 			${sources_engine_System_Log_sinkConsole}
 			${sources_engine_System_Log_sinkFile}
-			${sources_engine_System_Net}
 		)
 ENDIF  ()
 
@@ -195,9 +179,9 @@ MakeGlobal(sources_engine_System_Log_sinkStream)
 MakeGlobal(sources_engine_System_Log_sinkConsole)
 MakeGlobal(sources_engine_System_Log_sinkFile)
 MakeGlobal(sources_engine_System_Log_sinkOutputDebugString)
-MakeGlobal(sources_engine_System_Net)
 MakeGlobal(sources_engine_System_Platform_Linux)
 MakeGlobal(sources_engine_System_Platform_Mac)
 MakeGlobal(sources_engine_System_Platform_Windows)
 MakeGlobal(sources_engine_System)
 Add_Subdirectory(FileSystem)
+Add_Subdirectory(Net)
