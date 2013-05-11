@@ -15,7 +15,11 @@ void LogPermissions(const char* file)
 	struct stat s;
 	stat("testDir", &s);
 	mode_t mode = s.st_mode;
+#ifdef WIN32
+	LOG("%s permissions: %o", "testDir", mode & S_IRWXU);
+#else
 	LOG("%s permissions: %o", "testDir", mode & (S_IRWXU | S_IRWXG | S_IRWXO));
+#endif
 }
 
 
@@ -107,13 +111,14 @@ BOOST_AUTO_TEST_CASE(CreateDirectory)
 	BOOST_CHECK(FileSystem::ComparePaths("testDir", "testDir////./"));
 	BOOST_CHECK(FileSystem::CreateDirectory("testDir")); // already exists
 	BOOST_CHECK(FileSystem::CreateDirectory("testDir1")); // should be created
+	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // should be created
 
 	// check if exists & no overwrite
 	LogPermissions("./");
 	LogPermissions("testDir");
 	LogPermissions("test Dir2");
-	BOOST_CHECK(!FileSystem::DirExists("test Dir2"));
-	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // should be created
+	LOG("LastModificationTime of \"%s\": %s", "testDir", FileSystem::GetFileModificationDate("testDir").c_str());
+	LOG("LastModificationTime of \"%s\": %s", "test Dir2", FileSystem::GetFileModificationDate("test Dir2").c_str());
 	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // already exists
 	BOOST_CHECK(FileSystem::DirIsWritable("test Dir2"));
 	BOOST_CHECK(!FileSystem::CreateDirectory("testFile.txt")); // file with this name already exists
