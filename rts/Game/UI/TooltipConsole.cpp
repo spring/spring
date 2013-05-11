@@ -4,7 +4,7 @@
 #include "TooltipConsole.h"
 #include "MouseHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/PlayerHandler.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"

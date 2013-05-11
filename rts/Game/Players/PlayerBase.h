@@ -3,7 +3,7 @@
 #ifndef PLAYER_BASE_H
 #define PLAYER_BASE_H
 
-#include "Game/TeamController.h"
+#include "Game/Players/TeamController.h"
 #include "System/creg/creg_cond.h"
 
 #include <string>

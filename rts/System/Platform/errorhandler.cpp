@@ -12,8 +12,6 @@
 #include <sstream>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
-
-#include "Game/GameServer.h"
 #include "Game/GlobalUnsynced.h"
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
@@ -27,7 +25,9 @@
 #if !defined(DEDICATED) && !defined(HEADLESS)
 	#include "System/Platform/MessageBox.h"
 #endif
-
+#ifdef DEDICATED
+	#include "Net/GameServer.h"
+#endif
 
 static void ExitMessage(const std::string& msg, const std::string& caption, unsigned int flags, bool forced)
 {

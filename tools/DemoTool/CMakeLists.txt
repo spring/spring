@@ -16,7 +16,7 @@ ADD_DEFINITIONS(-DTOOLS)
 
 SET(demoToolSpringSources
 	${ENGINE_SRC_ROOT_DIR}/Game/GameVersion.cpp
-	${ENGINE_SRC_ROOT_DIR}/Game/PlayerStatistics.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/Players/PlayerStatistics.cpp
 	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/TeamStatistics.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/FileSystem/FileHandler.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/FileSystem/FileSystem.cpp

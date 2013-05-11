@@ -7,7 +7,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "System/BaseNetProtocol.h" // not used in here, but in all files including this one
+#include "BaseNetProtocol.h" // not used in here, but in all files including this one
 
 class CDemoRecorder;
 namespace netcode

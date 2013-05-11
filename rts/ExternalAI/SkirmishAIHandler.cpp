@@ -9,7 +9,7 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/Option.h"
 
 #include "System/creg/STL_Map.h"

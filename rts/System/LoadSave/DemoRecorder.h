@@ -8,7 +8,7 @@
 #include <list>
 
 #include "Demo.h"
-#include "Game/PlayerStatistics.h"
+#include "Game/Players/PlayerStatistics.h"
 #include "Sim/Misc/TeamStatistics.h"
 
 /**
@@ -22,7 +22,7 @@ public:
 
 	void WriteSetupText(const std::string& text);
 	void SaveToDemo(const unsigned char* buf, const unsigned length, const float modGameTime);
-	
+
 	/**
 	@brief assign a map name for the demo file
 	*/

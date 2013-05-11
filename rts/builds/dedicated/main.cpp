@@ -8,11 +8,11 @@
 
 #include <SDL.h>
 
-#include "Game/GameServer.h"
 #include "Game/GameSetup.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameData.h"
 #include "Game/GameVersion.h"
+#include "Net/GameServer.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/ArchiveScanner.h"

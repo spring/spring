@@ -9,7 +9,7 @@
 // NOTE: these _must_ be included before NetProtocol.h due to some ambiguity in
 // Boost hash_float.hpp ("call of overloaded ‘ldexp(float&, int&)’ is ambiguous")
 #include "System/Net/LocalConnection.h"
-#include "System/NetProtocol.h"
+#include "NetProtocol.h"
 
 #include "Game/GameData.h"
 #include "Game/GlobalUnsynced.h"

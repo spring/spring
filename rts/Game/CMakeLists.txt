@@ -1,7 +1,7 @@
 
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp" | sort
-SET(sources_engine_Game_common
+SET(sources_engine_Game
 		"${CMAKE_CURRENT_SOURCE_DIR}/Action.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/AviVideoCapturing.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Benchmark.cpp"
@@ -27,28 +27,26 @@ SET(sources_engine_Game_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/GameController.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GameData.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GameHelper.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/GameServer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GameSetup.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GameVersion.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GlobalUnsynced.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/GUI/PlayerRoster.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/GUI/PlayerRosterDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/IVideoCapturing.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/InMapDraw.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/InMapDrawModel.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LoadScreen.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Messages.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/NetCommands.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Player.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/PlayerBase.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/PlayerHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/PlayerRoster.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/PlayerRosterDrawer.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/PlayerStatistics.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Players/Player.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Players/PlayerBase.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Players/PlayerHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Players/PlayerStatistics.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Players/TeamController.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/PreGame.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SelectedUnitsHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SelectedUnitsAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SyncedGameCommands.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TraceRay.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/TeamController.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/CommandColors.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/CursorIcons.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/EndGameBox.cpp"
@@ -77,14 +75,5 @@ SET(sources_engine_Game_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/WaitCommandsAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/WordCompletion.cpp"
 	)
-SET(sources_engine_Game_Server
-		"${CMAKE_CURRENT_SOURCE_DIR}/Server/GameParticipant.cpp"
-	)
-SET(sources_engine_Game
-		${sources_engine_Game_common}
-		${sources_engine_Game_Server}
-	)
 
-MakeGlobal(sources_engine_Game_common)
-MakeGlobal(sources_engine_Game_Server)
 MakeGlobal(sources_engine_Game)

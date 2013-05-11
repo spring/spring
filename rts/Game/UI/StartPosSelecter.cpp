@@ -11,7 +11,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
 #include "Sim/Misc/Team.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 
 
 CStartPosSelecter* CStartPosSelecter::selector = NULL;

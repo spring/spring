@@ -2,14 +2,14 @@
 
 #include "InMapDrawModel.h"
 
-#include "Player.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/PlayerHandler.h"
-#include "Game/TeamController.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
+#include "Game/Players/TeamController.h"
+#include "Net/Protocol/BaseNetProtocol.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/EventHandler.h"
-#include "System/BaseNetProtocol.h"
 #include "System/creg/STL_List.h"
 #include "lib/gml/gmlmut.h"
 

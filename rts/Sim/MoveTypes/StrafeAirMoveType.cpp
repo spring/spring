@@ -2,7 +2,7 @@
 
 
 #include "StrafeAirMoveType.h"
-#include "Game/Player.h"
+#include "Game/Players/Player.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"

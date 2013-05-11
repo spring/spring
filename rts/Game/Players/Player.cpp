@@ -4,8 +4,8 @@
 
 
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "Game/Player.h"
-#include "Game/PlayerHandler.h"
+#include "Player.h"
+#include "PlayerHandler.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"

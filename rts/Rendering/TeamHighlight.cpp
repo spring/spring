@@ -4,8 +4,8 @@
 
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/Player.h"
-#include "Game/PlayerHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"

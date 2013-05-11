@@ -9,7 +9,7 @@
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/Player.h"
+#include "Game/Players/Player.h"
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaMaterial.h"
 #include "Lua/LuaUnitMaterial.h"

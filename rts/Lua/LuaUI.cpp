@@ -30,7 +30,6 @@
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/PlayerRoster.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"

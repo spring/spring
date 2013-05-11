@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/BaseNetProtocol.h"
+#include "BaseNetProtocol.h"
 
-#include "Game/PlayerStatistics.h"
+#include "Game/Players/PlayerStatistics.h"
 #include "Sim/Misc/TeamStatistics.h"
 #include "System/Net/RawPacket.h"
 #include "System/Net/PackPacket.h"

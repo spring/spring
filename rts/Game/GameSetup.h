@@ -8,7 +8,7 @@
 #include <vector>
 #include <set>
 
-#include "PlayerBase.h"
+#include "Players/PlayerBase.h"
 #include "Sim/Misc/TeamBase.h"
 #include "Sim/Misc/AllyTeam.h"
 #include "ExternalAI/SkirmishAIData.h"

@@ -11,7 +11,7 @@
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "seh.h"
 #include "System/Util.h"
 #include "System/SafeCStrings.h"

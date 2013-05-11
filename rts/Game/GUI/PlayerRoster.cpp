@@ -2,8 +2,8 @@
 
 #include "PlayerRoster.h"
 
-#include "Player.h"
-#include "PlayerHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"

@@ -6,14 +6,14 @@
 #include "Game.h"
 #include "GlobalUnsynced.h"
 #include "InMapDraw.h"
-#include "Player.h"
-#include "PlayerHandler.h"
 #include "SelectedUnitsHandler.h"
 #include "SyncedActionExecutor.h"
 #ifdef _WIN32
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
 
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
@@ -493,7 +493,7 @@ public:
 
 
 void SyncedGameCommands::AddDefaultActionExecutors() {
-	
+
 	AddActionExecutor(new CheatActionExecutor());
 	AddActionExecutor(new NoHelpActionExecutor());
 	AddActionExecutor(new NoSpecDrawActionExecutor());
