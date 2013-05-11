@@ -118,6 +118,13 @@ void CLogOutput::RotateLogFile() const
 	}
 }
 
+
+bool CLogOutput::IsInitialized()
+{
+	return initialized;
+}
+
+
 void CLogOutput::Initialize()
 {
 	assert(configHandler!=NULL);
