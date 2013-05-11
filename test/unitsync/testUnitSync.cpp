@@ -11,6 +11,9 @@
 
 #include <string>
 #include <vector>
+#include <future>
+#include <chrono>
+
 
 namespace us {
 	#include "../tools/unitsync/unitsync_api.h"
@@ -28,7 +31,7 @@ using std::string;
 
 static void PrintMapInfo(const string& mapName)
 {
-	const int map_count = us::GetMapCount();
+	/*const int map_count = us::GetMapCount();
 	int mapidx = -1;
 	for (int i = 0; i < map_count; i++){
 		if (us::GetMapName(i) == mapName) {
@@ -65,18 +68,8 @@ static void PrintMapInfo(const string& mapName)
 	for (int i = 0; infomaps[i]; ++i) {
 		if (us::GetInfoMapSize(mapName.c_str(), infomaps[i], &width, &height)) {
 			LOG("    %smap: %i x %i", infomaps[i], width, height);
-			/*void* data = malloc(width*height);
-			 *	us::GetInfoMap(mapName.c_str(), infomaps[i], data, 1);
-			 *	FILE* f = fopen(infomaps[i], "w");
-			 *	if (f == NULL) {
-			 *	perror(infomaps[i]);
-			 } else {
-				 fwrite(data, 1, width*height, f);
-				 fclose(f);
-			 }
-			 free(data);*/
 		}
-	}
+	}*/
 }
 
 
@@ -85,7 +78,7 @@ static void PrintMapInfo(const string& mapName)
 
 static void DisplayOptions(int optionCount)
 {
-	for (int i = 0; i < optionCount; i++) {
+	/*for (int i = 0; i < optionCount; i++) {
 		LOG("    Option #%i", i);
 		LOG("      key  = '%s'", us::GetOptionKey(i));
 		LOG("      name = '%s'", us::GetOptionName(i));
@@ -125,7 +118,7 @@ static void DisplayOptions(int optionCount)
 				LOG("           desc = '%s'", us::GetOptionListItemDesc(i, li));
 			}
 		}
-	}
+	}*/
 }
 
 
@@ -232,10 +225,24 @@ BOOST_AUTO_TEST_CASE( UnitSync )
 {
 	const char* errmsg;
 
-	BOOST_CHECK(us::Init(false, 0) != 0);
+	// PreInit tests
+	us::SetSpringConfigFile("/tmp/foo.cfg");
+	BOOST_CHECK(us::GetWritableDataDirectory() == NULL);
+	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) != NULL, errmsg); // there's an error cause we called GetWritableDataDirectory() before Init()!
 
+	// Init Unitsync
+	LOG("ArchiveScanner: ");
+	auto fut = std::async(std::launch::async, [](){ return us::Init(false, 0); } );
+	while (fut.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+		LOG("still scanning");
+	}
+	BOOST_CHECK_MESSAGE(fut.get() != 0, "us::Init(false, 0) != 0");
+	//same as BOOST_CHECK(us::Init(false, 0) != 0); just threaded
+
+	// Lua
 	BOOST_CHECK(TestLuaParser());
 
+	// Select random Game & Map
 	int i = us::GetMapCount() - 1, j = us::GetPrimaryModCount() - 1;
 	while (i > 0 && !us::GetMapName(i)) --i;
 	while (j > 0 && !us::GetPrimaryModName(j)) --j;
@@ -243,6 +250,7 @@ BOOST_AUTO_TEST_CASE( UnitSync )
 	const string mod = (j > 0) ? us::GetPrimaryModName(j) : "";
 	BOOST_WARN_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 
+	// Test them
 	if (i >= 0 && j >= 0) {
 		BOOST_CHECK(us::GetMapArchiveCount(map.c_str()) >= 1); // expects map name
 		BOOST_CHECK(us::GetPrimaryModArchiveCount(j) >= 1); // expects game index!
@@ -267,7 +275,6 @@ BOOST_AUTO_TEST_CASE( UnitSync )
 	for (int i = 0; (i = us::FindFilesVFS(i, buf, sizeof(buf))); ) {
 		LOG("FOUND FILE:  %s", buf);
 	}
-
 	BOOST_CHECK(us::InitSubDirsVFS(NULL, NULL, NULL) == 0);
 	for (int i = 0; (i = us::FindFilesVFS(i, buf, sizeof(buf))); ) {
 		LOG("FOUND DIR:  %s", buf);
@@ -280,7 +287,12 @@ BOOST_AUTO_TEST_CASE( UnitSync )
 	us::DeleteSpringConfigKey("_unitsync_test");
 	BOOST_CHECK(us::GetSpringConfigInt("_unitsync_test", 1e9) == 1e9);
 
+	// DeInit Unitsync
 	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 	us::UnInit();
 	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
+
+	// Check if VFS is deinit'ed
+	BOOST_CHECK(us::GetWritableDataDirectory() == NULL);
+	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) != NULL, errmsg);
 }
