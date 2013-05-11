@@ -193,12 +193,11 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(lastUpdateTime),
 	CR_IGNORED(lastSimFrameTime),
 	CR_IGNORED(lastDrawFrameTime),
-	CR_IGNORED(lastModGameTimeMeasure),
+	CR_IGNORED(lastFrameTime),
 	CR_IGNORED(updateDeltaSeconds),
 	CR_MEMBER(totalGameTime),
 	CR_MEMBER(userInputPrefix),
-	CR_MEMBER(lastTick),
-	CR_MEMBER(chatSound),
+	CR_IGNORED(chatSound),
 	CR_IGNORED(camMove),
 	CR_IGNORED(camRot),
 	CR_MEMBER(hideInterface),
@@ -223,7 +222,6 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(inputTextSizeY),
 	CR_IGNORED(skipping),
 	CR_MEMBER(playing),
-	CR_IGNORED(lastFrameTime),
 	CR_IGNORED(unconsumedFrames),
 	CR_IGNORED(msgProcTimeLeft),
 	CR_IGNORED(consumeSpeed),
@@ -309,16 +307,14 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	: finishedLoading(false)
 	, gameOver(false)
 	, gameDrawMode(gameNotDrawing)
-	, defsParser(NULL)
 	, thisFps(0)
 	, lastSimFrame(-1)
 	, frameStartTime(spring_gettime())
 	, lastUpdateTime(spring_gettime())
 	, lastSimFrameTime(spring_gettime())
 	, lastDrawFrameTime(spring_gettime())
-	, lastModGameTimeMeasure(spring_gettime())
+	, lastFrameTime(spring_gettime())
 	, updateDeltaSeconds(0.0f)
-	, lastCpuUsageTime(0.0f)
 	, totalGameTime(0)
 	, hideInterface(false)
 	, noSpectatorChat(false)
@@ -338,6 +334,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, skipOldUserSpeed(0.0f)
 	, skipLastDrawTime(spring_gettime())
 	, speedControl(-1)
+	, defsParser(NULL)
 	, saveFile(saveFile)
 	, infoConsole(NULL)
 	, consoleHistory(NULL)
@@ -346,10 +343,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	game = this;
 
 	memset(gameID, 0, sizeof(gameID));
-
-	frameStartTime = spring_gettime();
-	lastFrameTime  = spring_gettime();
-	lastTick = clock();
 
 	for (int a = 0; a < 8; ++a) { camMove[a] = false; }
 	for (int a = 0; a < 4; ++a) { camRot[a] = false; }
@@ -806,10 +799,8 @@ void CGame::LoadFinalize()
 	}
 
 	lastframe = spring_gettime();
-	lastModGameTimeMeasure = lastframe;
 	lastSimFrameTime = lastframe;
 	lastDrawFrameTime = lastframe;
-	lastCpuUsageTime = gu->gameTime;
 	updateDeltaSeconds = 0.0f;
 
 	finishedLoading = true;
@@ -997,14 +988,12 @@ bool CGame::UpdateUnsynced()
 {
 	// timings and frame interpolation
 	const spring_time currentTime = spring_gettime();
+	const spring_time diffLastCall = (currentTime - lastDrawFrameTime);
+	lastDrawFrameTime = currentTime;
 
-	const float modGameDeltaTime = skipping ? 0.01f : (currentTime - lastModGameTimeMeasure).toMilliSecsf() * 0.001f;
-
-	globalRendering->lastFrameTime = (currentTime - lastDrawFrameTime).toSecsf();
-	gu->avgFrameTime = mix(gu->avgFrameTime, (currentTime - lastDrawFrameTime).toMilliSecsf(), 0.05f);
-
-	lastModGameTimeMeasure = currentTime;
-	lastDrawFrameTime = currentTime; //FIXME merge with lastModGameTimeMeasure
+	const float modGameDeltaTime = skipping ? 0.01f : diffLastCall.toSecsf();
+	globalRendering->lastFrameTime = diffLastCall.toSecsf();
+	gu->avgFrameTime = mix(gu->avgFrameTime, diffLastCall.toMilliSecsf(), 0.05f);
 
 	{
 		// update game timings
@@ -1469,7 +1458,6 @@ void CGame::StartPlaying()
 	assert(!playing);
 	playing = true;
 	GameSetupDrawer::Disable();
-	lastTick = clock();
 	lastframe = spring_gettime();
 
 	gu->startTime = gu->gameTime;

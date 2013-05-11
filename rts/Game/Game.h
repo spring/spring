@@ -141,8 +141,6 @@ public:
 
 	unsigned char gameID[16];
 
-	LuaParser* defsParser;
-
 	unsigned int thisFps;
 
 	int lastSimFrame;
@@ -151,16 +149,13 @@ public:
 	spring_time lastUpdateTime;
 	spring_time lastSimFrameTime;
 	spring_time lastDrawFrameTime;
-	spring_time lastModGameTimeMeasure;
+	spring_time lastFrameTime;
 
 	float updateDeltaSeconds;
-
-	float lastCpuUsageTime;
 
 	/// Time in seconds, stops at game end
 	float totalGameTime;
 
-	int lastTick;
 	int chatSound;
 
 	bool camMove[8];
@@ -189,8 +184,6 @@ public:
 	bool chatting;
 	std::string userInputPrefix;
 
-	spring_time lastFrameTime;
-
 	/// <playerID, <packetCode, total bytes> >
 	std::map<int, PlayerTrafficInfo> playerTraffic;
 
@@ -213,6 +206,8 @@ public:
 	 * @see CGameServer#speedControl
 	 */
 	int speedControl;
+
+	LuaParser* defsParser;
 
 	/// for reloading the savefile
 	ILoadSaveHandler* saveFile;
