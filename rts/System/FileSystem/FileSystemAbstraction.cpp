@@ -24,9 +24,6 @@
 	#include <sstream>
 	#include <unistd.h>
 	#include <time.h>
-
-	#include <sys/types.h>
-	#include <sys/stat.h>
 #else
 	#include <windows.h>
 	#include <io.h>
@@ -308,26 +305,16 @@ bool FileSystemAbstraction::DeleteFile(const std::string& file)
 
 bool FileSystemAbstraction::FileExists(const std::string& file)
 {
-
-#ifdef _WIN32
-	struct _stat info;
-	const int ret = _stat(StripTrailingSlashes(file).c_str(), &info);
-	bool fileExists = ((ret == 0 && (info.st_mode & _S_IFREG)));
-#else
 	struct stat info;
 	const int ret = stat(file.c_str(), &info);
 	bool fileExists = ((ret == 0 && !S_ISDIR(info.st_mode)));
-#endif
-
 	return fileExists;
 }
 
 bool FileSystemAbstraction::DirExists(const std::string& dir)
 {
-
-#ifdef _WIN32
-	struct _stat info;
 	std::string myDir = dir;
+#ifdef _WIN32 //FIXME
 	// only for the root dir on a drive (for example C:\)
 	// we need the trailing slash
 	if (!IsFSRoot(myDir)) {
@@ -335,14 +322,10 @@ bool FileSystemAbstraction::DirExists(const std::string& dir)
 	} else if ((myDir.length() == 2) && (myDir[1] == ':')) {
 		myDir += "\\";
 	}
-	const int ret = _stat(myDir.c_str(), &info);
-	bool dirExists = ((ret == 0) && (info.st_mode & _S_IFDIR));
-#else
+#endif
 	struct stat info;
 	const int ret = stat(dir.c_str(), &info);
 	bool dirExists = ((ret == 0) && S_ISDIR(info.st_mode));
-#endif
-
 	return dirExists;
 }
 
