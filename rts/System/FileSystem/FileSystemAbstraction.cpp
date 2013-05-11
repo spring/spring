@@ -294,10 +294,11 @@ bool FileSystemAbstraction::MkDir(const std::string& dir)
 
 bool FileSystemAbstraction::DeleteFile(const std::string& file)
 {
-#ifdef WIN32
-	bool fileDeleted = DeleteFile(file.c_str());
-#else
 	bool fileDeleted = (remove(file.c_str()) == 0);
+#ifdef WIN32
+	if (!fileDeleted && DirExists(file)) {
+		fileDeleted = RemoveDirectory(file.c_str());
+	}
 #endif
 
 	if (!fileDeleted) {
