@@ -104,7 +104,9 @@ std::string FileSystem::ConvertGlobToRegex(const std::string& glob)
 
 bool FileSystem::ComparePaths(std::string path1, std::string path2)
 {
-	return FileSystemAbstraction::ComparePaths(FileSystem::GetNormalizedPath(path1), FileSystem::GetNormalizedPath(path2));
+	path1 = FileSystem::EnsureNoPathSepAtEnd(FileSystem::GetNormalizedPath(path1));
+	path2 = FileSystem::EnsureNoPathSepAtEnd(FileSystem::GetNormalizedPath(path2));
+	return FileSystemAbstraction::ComparePaths(path1, path2);
 }
 
 
