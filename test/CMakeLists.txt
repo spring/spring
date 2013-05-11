@@ -46,13 +46,6 @@ Else  (NOT Boost_FOUND)
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Net/TestUDPListener.cpp"
 			"${ENGINE_SOURCE_DIR}/Game/GameVersion.cpp"
 			"${ENGINE_SOURCE_DIR}/Net/Protocol/BaseNetProtocol.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Net/UDPListener.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Net/RawPacket.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Net/PackPacket.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Net/ProtocolDef.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Net/UDPConnection.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Net/Connection.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Net/Socket.cpp"
 			"${ENGINE_SOURCE_DIR}/System/CRC.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/NullGlobalConfig.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Nullerrorhandler.cpp"
@@ -66,6 +59,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${WS2_32_LIBRARY}
 			7zip
+			engineSystemNet
 		)
 
 	Add_Dependencies(test_UDPListener generateVersionFiles)
