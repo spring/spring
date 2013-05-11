@@ -104,13 +104,13 @@ std::string FileSystem::ConvertGlobToRegex(const std::string& glob)
 
 bool FileSystem::ComparePaths(std::string path1, std::string path2)
 {
-	return FileSystemAbstraction::ComparePaths(FixSlashes(path1), FixSlashes(path2));
+	return FileSystemAbstraction::ComparePaths(FileSystem::GetNormalizedPath(path1), FileSystem::GetNormalizedPath(path2));
 }
 
 
 bool FileSystem::FileExists(std::string file)
 {
-	return FileSystemAbstraction::FileExists(FixSlashes(file));
+	return FileSystemAbstraction::FileExists(FileSystem::GetNormalizedPath(file));
 }
 
 size_t FileSystem::GetFileSize(std::string file)
@@ -119,7 +119,7 @@ size_t FileSystem::GetFileSize(std::string file)
 		return 0;
 	}
 
-	return FileSystemAbstraction::GetFileSize(FixSlashes(file));
+	return FileSystemAbstraction::GetFileSize(FileSystem::GetNormalizedPath(file));
 }
 
 bool FileSystem::CreateDirectory(std::string dir)
@@ -264,7 +264,7 @@ bool FileSystem::Remove(std::string file)
 		return false;
 	}
 
-	return FileSystem::DeleteFile(FixSlashes(file));
+	return FileSystem::DeleteFile(FileSystem::GetNormalizedPath(file));
 }
 
 const std::string& FileSystem::GetCacheDir()
