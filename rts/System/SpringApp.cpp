@@ -164,6 +164,7 @@ bool SpringApp::Initialize()
 
 	ParseCmdLine();
 
+	FileSystemInitializer::InitializeLogOutput();
 	CLogOutput::LogSystemInfo();
 	CMyMath::Init();
 
@@ -200,6 +201,7 @@ bool SpringApp::Initialize()
 	Watchdog::Install();
 	Watchdog::RegisterThread(WDT_MAIN, true);
 
+	GlobalConfig::Instantiate();
 	FileSystemInitializer::Initialize();
 
 	// Create Window
@@ -685,15 +687,6 @@ void SpringApp::LoadFonts()
 }
 
 
-static void InitConfigHandlerAndLogOutput(const std::string& configSource, const bool safemode)
-{
-	dataDirLocater.LocateDataDirs();
-	dataDirLocater.ChangeCwdToWriteDir();
-	ConfigHandler::Instantiate(configSource, safemode);
-	GlobalConfig::Instantiate();
-	logOutput.Initialize();
-}
-
 
 /**
  * @return whether commandline parsing was successful
@@ -795,21 +788,23 @@ void SpringApp::ParseCmdLine()
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->IsSet("list-ai-interfaces")) {
 		LOG_DISABLE();
-		InitConfigHandlerAndLogOutput(configSource, safemode);
+		FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
+		FileSystemInitializer::InitializeLogOutput();
 		LOG_ENABLE();
 		IAILibraryManager::OutputAIInterfacesInfo();
 		exit(0);
 	}
 	else if (cmdline->IsSet("list-skirmish-ais")) {
 		LOG_DISABLE();
-		InitConfigHandlerAndLogOutput(configSource, safemode);
+		FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
+		FileSystemInitializer::InitializeLogOutput();
 		LOG_ENABLE();
 		IAILibraryManager::OutputSkirmishAIInfo();
 		exit(0);
 	}
 
 	LOG("Run: %s", cmdline->GetCmdLine().c_str());
-	InitConfigHandlerAndLogOutput(configSource, safemode);
+	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
 
 #ifdef _DEBUG
 	globalRendering->fullScreen = false;
@@ -1092,7 +1087,6 @@ void SpringApp::Shutdown()
 	CNamedTextures::Kill();
 	GLContext::Free();
 	GlobalConfig::Deallocate();
-	ConfigHandler::Deallocate();
 	UnloadExtensions();
 
 	IMouseInput::FreeInstance(mouseInput);

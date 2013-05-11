@@ -64,7 +64,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_UNITSYNC)
 //   This is no problem in the current architecture.
 static CSyncer* syncer = NULL;
 
-static bool logOutputInitialised = false;
 // for we do not have to include global-stuff (Sim/Misc/GlobalConstants.h)
 #define SQUARE_SIZE 8
 
@@ -122,7 +121,7 @@ private:
 
 static void CheckInit()
 {
-	if (!archiveScanner || !vfsHandler || !syncer || !logOutputInitialised)
+	if (!archiveScanner || !vfsHandler || !syncer)
 		throw std::logic_error("Unitsync not initialized. Call Init first.");
 }
 
@@ -197,21 +196,6 @@ static std::string GetMapFile(const std::string& mapName)
 		//! translation finished fine
 		return mapFile;
 	}
-
-	/*CFileHandler f(mapFile);
-	if (f.FileExists()) {
-		return mapFile;
-	}
-
-	CFileHandler f = CFileHandler(map);
-	if (f.FileExists()) {
-		return map;
-	}
-
-	f = CFileHandler("maps/" + map);
-	if (f.FileExists()) {
-		return "maps/" + map;
-	}*/
 
 	throw std::invalid_argument("Could not find a map named \"" + mapName + "\"");
 	return "";
@@ -331,35 +315,21 @@ EXPORT(int) Init(bool isServer, int id)
 
 		CLogOutput::LogSystemInfo();
 
-		// LogSystem 1
-		if (!logOutputInitialised) {
-			logOutput.SetFileName("unitsync.log");
-		}
 #ifndef DEBUG
 		log_filter_section_setMinLevel(LOG_SECTION_UNITSYNC, LOG_LEVEL_INFO);
 #endif
 
 		// VFS
-		if (archiveScanner || vfsHandler){
-			FileSystemInitializer::Cleanup(); //reinitialize filesystem to detect new files
+		if (archiveScanner || vfsHandler) {
+			FileSystemInitializer::Cleanup(); // reinitialize filesystem to detect new files
 		}
 
+		const std::string configSource = (configHandler) ? configHandler->GetConfigFile() : "";
 		dataDirLocater.UpdateIsolationModeByEnvVar();
-		dataDirLocater.LocateDataDirs();
-		dataDirLocater.ChangeCwdToWriteDir();
-		if (!configHandler) {
-			LOG_L(L_ERROR, "unitsync::Init()");
-			ConfigHandler::Instantiate(); // use the default config file
-		}
-
+		FileSystemInitializer::PreInitializeConfigHandler(configSource);
+		FileSystemInitializer::InitializeLogOutput("unitsync.log");
 		FileSystemInitializer::Initialize();
 
-		// LogSystem 2
-		if (!logOutputInitialised) {
-			// must happen after FileSystemInitializer, else it will write the infolog to the wrong dir
-			logOutput.Initialize();
-			logOutputInitialised = true;
-		}
 		LOG("loaded, %s", SpringVersion::GetFull().c_str());
 
 		// check if VFS is okay
@@ -2644,18 +2614,14 @@ const char* GetStr(std::string str)
 	return strBuf;
 }
 
-void PrintLoadMsg(const char* text)
-{
-}
-
 
 //////////////////////////
 //////////////////////////
 
 EXPORT(void) SetSpringConfigFile(const char* fileNameAsAbsolutePath)
 {
-	LOG_L(L_ERROR, "SetSpringConfigFile %s", fileNameAsAbsolutePath);
-	ConfigHandler::Instantiate(fileNameAsAbsolutePath);
+	dataDirLocater.UpdateIsolationModeByEnvVar();
+	FileSystemInitializer::PreInitializeConfigHandler(fileNameAsAbsolutePath);
 }
 
 static void CheckConfigHandler()
