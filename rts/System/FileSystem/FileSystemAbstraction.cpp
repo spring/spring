@@ -398,7 +398,7 @@ bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::st
 		BY_HANDLE_FILE_INFORMATION info1, info2;
 
 		BOOL fine;
-		fine  = GetFileInformationByHandle(fh1, &info1);
+		fine = GetFileInformationByHandle(fh1, &info1);
 		fine = GetFileInformationByHandle(fh2, &info2) && fine;
 
 		if (fine) {
