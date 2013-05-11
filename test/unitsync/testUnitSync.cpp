@@ -231,13 +231,13 @@ BOOST_AUTO_TEST_CASE( UnitSync )
 	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) != NULL, errmsg); // there's an error cause we called GetWritableDataDirectory() before Init()!
 
 	// Init Unitsync
-	LOG("ArchiveScanner: ");
-	auto fut = std::async(std::launch::async, [](){ return us::Init(false, 0); } );
+	/*LOG("ArchiveScanner: ");
+	auto fut = std::async(std::launch::async, []() -> int { return us::Init(false, 0); } );
 	while (fut.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
 		LOG("still scanning");
 	}
-	BOOST_CHECK_MESSAGE(fut.get() != 0, "us::Init(false, 0) != 0");
-	//same as BOOST_CHECK(us::Init(false, 0) != 0); just threaded
+	BOOST_CHECK_MESSAGE(fut.get() != 0, "us::Init(false, 0) != 0");*/
+	BOOST_CHECK(us::Init(false, 0) != 0);
 
 	// Lua
 	BOOST_CHECK(TestLuaParser());
