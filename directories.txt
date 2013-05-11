@@ -13,9 +13,10 @@ rts/ExternalAI                    engine side AI interface
 rts/ExternalAI/Interface          AI side AI interface (also used by the engine)
 rts/Game                          General game code
 rts/Game/Camera                   different camera implementations
-rts/Game/Server                   server part of the game (communication heart of all engine builds)
+rts/Game/Players                  Player related structs
 rts/Game/StartScripts             Hardcoded startscripts
 rts/Game/UI                       Game controls including current gui
+rts/Game/GUI                      pure GUI `widgets`
 rts/lib                           Third party libraries
 rts/lib/7z                        7zip library
 rts/lib/assimp                    Open Asset Import Library (short name: Assimp)
@@ -34,6 +35,7 @@ rts/Map                           Map loading & rendering
 rts/Map/SM3                       SM3 map support
 rts/Map/SMF                       SMF map support
 rts/Menu                          Menu shown when the engine executable is launched without parameters
+rts/Net                           netcode, game server & net client
 rts/aGui                          engine internal, OpenGL based simple GUI framework
 rts/Rendering
 rts/Rendering/Env                 Sky(box), trees, water, grass

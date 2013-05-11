@@ -13,7 +13,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Game/GameServer.h"
+#include "Net/GameServer.h"
 #include "Game/GameSetup.h"
 #include "System/myMath.h"
 

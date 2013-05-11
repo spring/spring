@@ -43,7 +43,7 @@ void CClassicGroundMoveType::LeaveTransport() {}
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/Player.h"
+#include "Game/Players/Player.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -92,7 +92,7 @@ CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 	skidRotVector(UpVector),
 	skidRotSpeed2(0.0f),
 	skidRotPos2(0.0f),
-	
+
 	flatFrontDir(1, 0, 0),
 	mainHeadingPos(0.0f, 0.0f, 0.0f),
 	lastGetPathPos(0.0f, 0.0f, 0.0f),

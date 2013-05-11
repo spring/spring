@@ -12,7 +12,7 @@
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/myMath.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 
 #include <SDL_mouse.h>
 

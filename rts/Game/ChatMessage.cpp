@@ -3,7 +3,7 @@
 
 #include "ChatMessage.h"
 
-#include "System/BaseNetProtocol.h"
+#include "Net/Protocol/BaseNetProtocol.h"
 #include "System/Net/PackPacket.h"
 #include "System/Net/UnpackPacket.h"
 

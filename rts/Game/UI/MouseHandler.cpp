@@ -13,11 +13,11 @@
 #include "Game/Game.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/InMapDraw.h"
-#include "Game/Player.h"
-#include "Game/PlayerHandler.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/TraceRay.h"
 #include "Game/Camera/CameraController.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Game/UI/UnitTracker.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaUI.h" // FIXME: for GML

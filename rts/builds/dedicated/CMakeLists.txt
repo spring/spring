@@ -76,6 +76,7 @@ SET(system_files
 	${sources_engine_System_Log}
 	${sources_engine_System_Net}
 	${sources_engine_Platform_CrashHandler}
+	${ENGINE_SRC_ROOT_DIR}/Net/AutohostInterface.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigHandler.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigLocater.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigSource.cpp
@@ -91,11 +92,9 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Info.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LogOutput.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/TimeUtil.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/BaseNetProtocol.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/Demo.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoReader.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoRecorder.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/AutohostInterface.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings.c
 	${ENGINE_SRC_ROOT_DIR}/System/UnsyncedRNG.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Util.cpp
@@ -115,14 +114,13 @@ ENDIF (WIN32)
 
 SET(engineDedicatedSources
 	${system_files}
-	${sources_engine_Game_Server}
+	${sources_engine_NetServer}
 	${sources_engine_System_Log}
-	${ENGINE_SRC_ROOT_DIR}/Game/GameServer.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/ClientSetup.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/GameSetup.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/GameData.cpp
-	${ENGINE_SRC_ROOT_DIR}/Game/PlayerBase.cpp
-	${ENGINE_SRC_ROOT_DIR}/Game/PlayerStatistics.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/Players/PlayerBase.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/Players/PlayerStatistics.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/GameVersion.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/IVideoCapturing.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/DummyVideoCapturing.cpp

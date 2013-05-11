@@ -8,7 +8,7 @@
 #include "lib/gml/gmlmut.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Game/GameSetup.h"
-#include "SelectedUnitsHandler.h"
+#include "Game/SelectedUnitsHandler.h"
 
 CR_BIND(CPlayerHandler,);
 
@@ -38,7 +38,7 @@ void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 {
 	int oldSize = players.size();
 	int newSize = std::max( players.size(), setup->playerStartingData.size() );
-	
+
 	for (unsigned int i = oldSize; i < newSize; ++i) {
 		players.push_back(new CPlayer());
 	}

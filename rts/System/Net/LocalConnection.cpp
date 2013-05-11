@@ -4,9 +4,9 @@
 
 #include <boost/format.hpp>
 
+#include "Net/Protocol/BaseNetProtocol.h"
 #include "Exception.h"
 #include "ProtocolDef.h"
-#include "System/BaseNetProtocol.h"
 #include "System/Log/ILog.h"
 
 namespace netcode {

@@ -18,8 +18,8 @@
 #include "Game/CameraHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/Player.h"
 #include "Game/SelectedUnitsHandler.h"
+#include "Game/Players/Player.h"
 #include "Game/UI/UnitTracker.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Lua/LuaUI.h" // FIXME: for GML

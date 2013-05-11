@@ -94,11 +94,13 @@ Add_Subdirectory(Rendering)
 Add_Subdirectory(aGui)
 Add_Subdirectory(Menu)
 Add_Subdirectory(Map)
+Add_Subdirectory(Net)
 Add_Subdirectory(Sim)
 #Add_Subdirectory(System) # this is already added in ../
 
 SET(engineSources
 		${sources_engine_Game}
+		${sources_engine_Net}
 		${sources_engine_Lua}
 		${sources_engine_Map}
 		${sources_engine_Rendering}

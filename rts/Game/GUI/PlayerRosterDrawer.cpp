@@ -3,11 +3,11 @@
 
 #include "PlayerRosterDrawer.h"
 
-#include "GlobalUnsynced.h"
-#include "Player.h"
-#include "PlayerHandler.h"
 #include "PlayerRoster.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/UI/GuiHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalConstants.h"

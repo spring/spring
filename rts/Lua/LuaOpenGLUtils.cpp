@@ -4,10 +4,28 @@
 #include <boost/assign/list_of.hpp>
 
 #include "LuaOpenGLUtils.h"
+
+#include "LuaHandle.h"
+#include "LuaTextures.h"
 #include "Game/Camera.h"
+#include "Map/BaseGroundDrawer.h"
+#include "Map/HeightMapTexture.h"
+#include "Map/ReadMap.h"
+#include "Rendering/glFont.h"
+#include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/Env/CubeMapHandler.h"
+#include "Rendering/Models/3DModel.h"
+#include "Rendering/Textures/NamedTextures.h"
+#include "Rendering/Textures/3DOTextureHandler.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitDefHandler.h"
 #include "System/Matrix44f.h"
 #include "System/Util.h"
+#include "System/Log/ILOG.h"
 
 
 /******************************************************************************/
@@ -34,7 +52,7 @@ static const std::map<std::string, LUAMATRICES> matrixNameToId = boost::assign::
 	("viewprojection", LUAMATRICES_VIEWPROJECTION)
 	("viewprojectioninverse", LUAMATRICES_VIEWPROJECTIONINVERSE)
 	("billboard", LUAMATRICES_BILLBOARD)
-	//!backward compability
+	// backward compability
 	("camera", LUAMATRICES_VIEW)
 	("caminv", LUAMATRICES_VIEWINVERSE)
 	("camprj", LUAMATRICES_PROJECTION)

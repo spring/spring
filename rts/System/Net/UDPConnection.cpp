@@ -14,7 +14,7 @@
 #include "Socket.h"
 #include "ProtocolDef.h"
 #include "Exception.h"
-#include "System/BaseNetProtocol.h"
+#include "Net/Protocol/BaseNetProtocol.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/CRC.h"
 #include "System/GlobalConfig.h"
@@ -364,7 +364,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 		return;
 	}
 
-	if (incoming.lastContinuous < 0 && lastInOrder >= 0 && 
+	if (incoming.lastContinuous < 0 && lastInOrder >= 0 &&
 		(unackedChunks.empty() || unackedChunks[0]->chunkNumber > 0)) {
 		LOG_L(L_WARNING, "Discarding superfluous reconnection attempt");
 		return;
@@ -712,7 +712,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 
 			while (resMidIter != resendRequested.end() && resMidIter->first <= lastMidChunk)
 				++resMidIter;
-			if (resMidIter == resendRequested.end() || resMidIterEnd == resendRequested.end() || 
+			if (resMidIter == resendRequested.end() || resMidIterEnd == resendRequested.end() ||
 				resMidIter->first >= resMidIterEnd->first)
 				resMidIter = resMidIterStart;
 		}

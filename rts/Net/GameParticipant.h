@@ -5,8 +5,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "Game/PlayerBase.h"
-#include "Game/PlayerStatistics.h"
+#include "Game/Players/PlayerBase.h"
+#include "Game/Players/PlayerStatistics.h"
 #include "System/Net/LoopbackConnection.h"
 
 namespace netcode

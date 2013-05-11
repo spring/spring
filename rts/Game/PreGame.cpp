@@ -11,13 +11,13 @@
 #include "System/Sync/FPUCheck.h"
 #include "Game.h"
 #include "GameData.h"
-#include "GameServer.h"
 #include "GameSetup.h"
 #include "GameVersion.h"
 #include "GlobalUnsynced.h"
 #include "LoadScreen.h"
-#include "Player.h"
-#include "PlayerHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
+#include "Net/GameServer.h"
 #include "System/TimeProfiler.h"
 #include "UI/InfoConsole.h"
 #include "Map/Generation/SimpleMapGenerator.h"
@@ -31,7 +31,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/TdfParser.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -229,7 +229,7 @@ void CPreGame::UpdateClientNet()
 		if (packet->length <= 0) {
 			LOG_L(L_WARNING, "[CPreGame::%s] zero-length packet (header: %i)", __FUNCTION__, inbuf[0]);
 			continue;
-		} 
+		}
 
 		switch (inbuf[0]) {
 			case NETMSG_QUIT: {

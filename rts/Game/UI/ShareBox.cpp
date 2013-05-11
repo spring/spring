@@ -5,13 +5,13 @@
 #include "MouseHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
-#include "Game/Player.h"
-#include "Game/PlayerHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/MsgStrings.h"
 
 #include <SDL_keysym.h>
@@ -165,7 +165,7 @@ void CShareBox::Draw()
 	} else {
 		glColor4f(0.2f, 0.2f, 0.2f, alpha);
 	}
-	
+
 	DrawBox(box + unitBox);
 
 	glColor4f(0.8f, 0.8f, 0.9f, 0.7f);

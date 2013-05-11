@@ -7,10 +7,9 @@
 
 #include "DumpState.h"
 
-#include "Game/Game.h"
-#include "Game/GameServer.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
+#include "Net/GameServer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"

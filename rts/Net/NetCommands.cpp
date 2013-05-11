@@ -1,34 +1,35 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "Game.h"
-#include "CameraHandler.h"
+#include "Game/Game.h"
 #include "GameServer.h"
-#include "CommandMessage.h"
-#include "GameSetup.h"
-#include "GlobalUnsynced.h"
-#include "SelectedUnitsHandler.h"
-#include "Player.h"
-#include "PlayerHandler.h"
-#include "ChatMessage.h"
-#include "System/TimeProfiler.h"
-#include "WordCompletion.h"
-#include "IVideoCapturing.h"
-#include "InMapDraw.h"
+
 #ifdef _WIN32
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "Game/CameraHandler.h"
+#include "Game/CommandMessage.h"
+#include "Game/GameSetup.h"
+#include "Game/GlobalUnsynced.h"
+#include "Game/SelectedUnitsHandler.h"
+#include "Game/ChatMessage.h"
+#include "Game/WordCompletion.h"
+#include "Game/IVideoCapturing.h"
+#include "Game/InMapDraw.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
+#include "Game/UI/GameSetupDrawer.h"
+#include "Game/UI/MouseHandler.h"
 #include "Lua/LuaRules.h"
-#include "UI/GameSetupDrawer.h"
-#include "UI/MouseHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
+#include "System/TimeProfiler.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/Sound/ISound.h"
@@ -57,22 +58,6 @@ void CGame::AddTraffic(int playerID, int packetCode, int length)
 
 void CGame::ClientReadNet()
 {
-	if (gu->gameTime - lastCpuUsageTime >= 1) {
-		lastCpuUsageTime = gu->gameTime;
-
-		if (playing) {
-			float simCpuUsage = profiler.GetPercent("SimFrame");
-
-			if (!GML::SimEnabled() || !GML::MultiThreadSim()) // take the minimum drawframes into account, too
-				simCpuUsage += (profiler.GetPercent("GameController::Draw") / std::max(1.0f, globalRendering->FPS)) * gu->minFPS;
-
-			net->Send(CBaseNetProtocol::Get().SendCPUUsage(simCpuUsage));
-		} else {
-			// the CPU-load percentage is undefined prior to SimFrame()
-			net->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));
-		}
-	}
-
 	boost::shared_ptr<const netcode::RawPacket> packet;
 
 	// compute new msgProcTimeLeft to "smooth" out SimFrame() calls

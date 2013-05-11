@@ -6,7 +6,7 @@
 #include <sstream>
 #include <cstdio>
 
-#include "Game/PlayerStatistics.h"
+#include "Game/Players/PlayerStatistics.h"
 #include "Sim/Misc/TeamStatistics.h"
 #include "System/LoadSave/demofile.h"
 

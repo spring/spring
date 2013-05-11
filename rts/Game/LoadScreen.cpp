@@ -7,8 +7,8 @@
 #include "Game.h"
 #include "GameVersion.h"
 #include "GlobalUnsynced.h"
-#include "Player.h"
-#include "PlayerHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/UI/InputReceiver.h"
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -24,7 +24,7 @@
 #include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
 #include "System/Log/ILog.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/Watchdog.h"
 #include "System/Sound/ISound.h"
@@ -140,7 +140,7 @@ CLoadScreen::~CLoadScreen()
 
 	if (!gu->globalQuit)
 		activeController = game;
-	
+
 	if (activeController == this)
 		activeController = NULL;
 

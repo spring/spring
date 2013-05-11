@@ -4,13 +4,12 @@
 #ifdef SYNCDEBUG
 
 #include "SyncDebugger.h"
-
 #include "Game/GlobalUnsynced.h"
-#include "Game/PlayerHandler.h"
+#include "Game/Players/PlayerHandler.h"
+#include "Net/Protocol/BaseNetProtocol.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/BaseNetProtocol.h"
 #include "System/Log/ILog.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 
 #include "HsiehHash.h"
 #include "Logger.h"

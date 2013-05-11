@@ -3,11 +3,11 @@
 #include "EndGameBox.h"
 
 #include "MouseHandler.h"
-#include "Game/Player.h"
-#include "Game/PlayerHandler.h"
 #include "Game/Game.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalSynced.h"

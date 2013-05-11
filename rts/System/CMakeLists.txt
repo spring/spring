@@ -4,8 +4,6 @@
 # Then Sound/ stuff was removed, because it is now a separate static lib.
 SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/AIScriptHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/AutohostInterface.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/BaseNetProtocol.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigLocater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigSource.cpp"
@@ -32,7 +30,6 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/MemPool.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/RectangleOptimizer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/SpringTime.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/NetProtocol.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Object.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/OffscreenGLContext.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Option.cpp"

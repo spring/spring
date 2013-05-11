@@ -4,9 +4,9 @@
 
 #include "SelectedUnitsHandler.h"
 #include "GlobalUnsynced.h"
-#include "Player.h"
-#include "PlayerHandler.h"
 #include "WaitCommandsAI.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
@@ -16,7 +16,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 
 const int CMDPARAM_MOVE_X = 0;
 const int CMDPARAM_MOVE_Y = 1;

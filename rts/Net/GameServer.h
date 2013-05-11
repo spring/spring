@@ -11,7 +11,7 @@
 #include <vector>
 #include <list>
 
-#include "GameData.h"
+#include "Game/GameData.h"
 #include "Sim/Misc/TeamBase.h"
 #include "System/UnsyncedRNG.h"
 #include "System/float3.h"

@@ -2,9 +2,9 @@
 
 #include "GameParticipant.h"
 
+#include "Net/Protocol/BaseNetProtocol.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Net/Connection.h"
-#include "System/BaseNetProtocol.h"
 #include "System/Misc/SpringTime.h"
 
 GameParticipant::GameParticipant()

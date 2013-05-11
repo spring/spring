@@ -2,7 +2,7 @@
 
 #include "AutohostInterface.h"
 
-#include "System/BaseNetProtocol.h"
+#include "Net/Protocol/BaseNetProtocol.h"
 #include "System/Log/ILog.h"
 #include "System/Net/Socket.h"
 

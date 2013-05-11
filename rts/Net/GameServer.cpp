@@ -21,29 +21,29 @@
 #include "System/Net/Connection.h"
 
 #include "GameServer.h"
+#include "Net/Protocol/BaseNetProtocol.h"
 
-#include "GameSetup.h"
-#include "Action.h"
-#include "ChatMessage.h"
-#include "CommandMessage.h"
-#include "System/BaseNetProtocol.h"
-#include "PlayerHandler.h"
-#ifdef DEDICATED
-	#include "System/LoadSave/DemoRecorder.h"
-#endif
-#include "System/AutohostInterface.h"
+#include "GameParticipant.h"
+#include "GameSkirmishAI.h"
+#include "AutohostInterface.h"
+#include "Game/GameSetup.h"
+#include "Game/Action.h"
+#include "Game/ChatMessage.h"
+#include "Game/CommandMessage.h"
+#include "Game/GlobalUnsynced.h" // for syncdebug
 #include "System/Util.h"
 #include "System/TdfParser.h"
-#include "GlobalUnsynced.h" // for syncdebug
 #include "Sim/Misc/GlobalConstants.h"
-#ifndef DEDICATED
+
+#ifdef DEDICATED
+	#include "System/LoadSave/DemoRecorder.h"
+#else
 	#include "Sim/Misc/GlobalSynced.h"
 #endif
 
-#include "Player.h"
-#include "IVideoCapturing.h"
-#include "Server/GameParticipant.h"
-#include "Server/GameSkirmishAI.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
+#include "Game/IVideoCapturing.h"
 // This undef is needed, as somewhere there is a type interface specified,
 // which we need not!
 // (would cause problems in ExternalAI/Interface/SAIInterfaceLibrary.h)
