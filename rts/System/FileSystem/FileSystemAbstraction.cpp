@@ -421,8 +421,8 @@ bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::st
 	//TODO another way to compare dirs under windows would be CreateUri & IsEqual
 	TCHAR apath1[MAX_PATH];
 	TCHAR apath2[MAX_PATH];
-	GetFullPathName(path1.c_str(), MAX_PATH, &apath1, NULL);
-	GetFullPathName(path2.c_str(), MAX_PATH, &apath2, NULL);
+	GetFullPathName(path1.c_str(), MAX_PATH, apath1, NULL);
+	GetFullPathName(path2.c_str(), MAX_PATH, apath2, NULL);
 	return (std::string(apath1) == std::string(apath2));
 
 #else
