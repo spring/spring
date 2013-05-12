@@ -10,18 +10,6 @@
 #include <boost/test/unit_test.hpp>
 
 
-void LogPermissions(const std::string& file)
-{
-	struct stat s;
-	stat(file.c_str(), &s);
-	mode_t mode = s.st_mode;
-#ifdef WIN32
-	LOG("perm. of \"%s\": %o", file.c_str(), mode & S_IRWXU);
-#else
-	LOG("perm. of \"%s\": %o", file.c_str(), mode & (S_IRWXU | S_IRWXG | S_IRWXO));
-#endif
-}
-
 
 namespace {
 	struct PrepareFileSystem {
@@ -40,13 +28,11 @@ namespace {
 			if (!testCwd.empty()) {
 				// delete files and dirs created in the ctor
 				FileSystem::DeleteFile("testFile.txt");
-				LogPermissions("testDir");
 				FileSystem::DeleteFile("testDir");
 			}
 
 			FileSystem::ChDir(oldDir);
 			if (!testCwd.empty()) {
-				LogPermissions(testCwd);
 				FileSystem::DeleteFile(testCwd);
 			}
 		}
@@ -105,25 +91,18 @@ BOOST_AUTO_TEST_CASE(GetFileSize)
 
 BOOST_AUTO_TEST_CASE(CreateDirectory)
 {
-	#define LOG_MTIME(file) LOG("mtime of \"%s\": %s", file, FileSystem::GetFileModificationDate(file).c_str());
-
 	// create & exists
 	BOOST_CHECK(FileSystem::DirIsWritable("./"));
 	BOOST_CHECK(FileSystem::DirExists("testDir"));
 	BOOST_CHECK(FileSystem::DirExists("testDir///"));
 	BOOST_CHECK(FileSystem::DirExists("testDir////./"));
 	BOOST_CHECK(FileSystem::ComparePaths("testDir", "testDir////./"));
+	BOOST_CHECK(!FileSystem::ComparePaths("testDir", "test Dir2"));
 	BOOST_CHECK(FileSystem::CreateDirectory("testDir")); // already exists
 	BOOST_CHECK(FileSystem::CreateDirectory("testDir1")); // should be created
 	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // should be created
 
 	// check if exists & no overwrite
-	LogPermissions("./");
-	LogPermissions("testDir");
-	LogPermissions("test Dir2");
-	LOG_MTIME("testDir");
-	LOG_MTIME("test Dir2");
-	LOG_MTIME("testFile.txt");
 	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // already exists
 	BOOST_CHECK(FileSystem::DirIsWritable("test Dir2"));
 	BOOST_CHECK(!FileSystem::CreateDirectory("testFile.txt")); // file with this name already exists

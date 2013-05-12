@@ -416,8 +416,16 @@ bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::st
 
 	if (ret)
 		return true;
-#endif
 
+
+	//TODO another way to compare dirs under windows would be CreateUri & IsEqual
+	char apath1[1024];
+	char apath2[1024];
+	GetFullPathName(path1.c_str(), sizeof(apath1), &apath1, NULL);
+	GetFullPathName(path2.c_str(), sizeof(apath2), &apath2, NULL);
+	return (std::string(apath1) == std::string(apath2));
+
+#else
 	int r = 0;
 	struct stat s1, s2;
 	r  = stat(path1.c_str(), &s1);
@@ -428,6 +436,7 @@ bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::st
 	}
 
 	return (s1.st_ino == s2.st_ino) && (s1.st_dev == s2.st_dev);
+#endif
 }
 
 
