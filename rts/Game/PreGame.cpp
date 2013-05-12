@@ -129,17 +129,12 @@ bool CPreGame::Draw()
 
 	font->Begin();
 
-	if (!net->Connected())
-	{
+	if (!net->Connected()) {
 		if (settings->isHost)
 			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server to start");
 		else
-		{
-			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Connecting to server (%d s)", (spring_gettime() - timer).toMilliSecsf());
-		}
-	}
-	else
-	{
+			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Connecting to server (%ds)", (spring_gettime() - timer).toSecs());
+	} else {
 		font->glPrint(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server response");
 	}
 
@@ -214,6 +209,8 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 void CPreGame::UpdateClientNet()
 {
+	//FIXME move this code to a external file and move that to rts/Net/
+
 	if (net->CheckTimeout(0, true)) {
 		LOG_L(L_WARNING, "Server not reachable");
 		SetExitCode(1);
