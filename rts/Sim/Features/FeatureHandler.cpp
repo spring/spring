@@ -343,7 +343,8 @@ void CFeatureHandler::AllocateNewFeatureIDs(const CFeature* feature)
 {
 	// if feature->id is non-negative, then allocate enough to
 	// make it a valid index (we have no hard MAX_FEATURES cap)
-	const unsigned int numNewIDs = (feature->id < 0)? 100: ((feature->id + 1) - features.size());
+	// and always make sure to at least double the pool
+	const unsigned int numNewIDs = std::max(features.size() + (128u * idPool.IsEmpty()), (feature->id + 1u) - features.size());
 
 	idPool.Expand(features.size(), numNewIDs);
 	features.resize(features.size() + numNewIDs, NULL);
