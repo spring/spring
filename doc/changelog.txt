@@ -6,17 +6,23 @@ Spring changelog
 -- 95.0 ---------------------------------------------------------
 
 Misc:
+ ! new datadir structure: http://springrts.com/phpbb/viewtopic.php?f=12&t=30044
  - add map border rendering
  - allow Lua AI's to be selected from the menu
- ! new datadir structure: http://springrts.com/phpbb/viewtopic.php?f=12&t=30044
  ! removed "mods" from archive scandirs
+ ! converted RotateLogFiles to a bool var (defaults to false)
+ ! remove "--projectiledump" and add "--list-ceg-classes" (converted to JSON format )
  - do not switch camera-mode on countdown
- - reduce target-lost CAI timeout from 8 to 2 seconds
  - colorized stdout
  - show LuaMemUsage in /debug view
  ! log error when an image format is used which doesn't work on all platforms
      current supported image formats are:
      PNG, JPG, TGA, DDS, BMP
+ - more verbose CEG parsing (warns now about unknown tags)
+ - switch to a high precision clock all over the engine (including Lua)
+
+Sim:
+ - reduce target-lost CAI timeout from 8 to 2 seconds
  - make calls to script->{Start, Stop}Moving more consistent: only run them
      when a unit transitions from zero to non-zero speed or vice versa, and no
      longer do so during in-place rotations --> animations should no longer be
@@ -32,16 +38,8 @@ Misc:
      range-exploits were possible
  - block impulses from applying to 'static' features
  - remove impulse "capacitance" from ground units
- - LoadingMT: add a runtime check that should detect incompatibilities
- - disable ARB shaders with Intel/Mesa drivers (can be overridden by setting ForceEnableIntelShaderSupport=1)
  - apply UnitDef::myGravity to ground units (if non-zero)
      NOTE: myGravity acts as a map-gravity MULTIPLIER for aircraft; it REPLACES map gravity for land-based units
- ! converted RotateLogFiles to a bool var (defaults to false)
- ! remove "--projectiledump" and add "--list-ceg-classes" (converted to JSON format )
- - move Lua GC to its own callin and fix so a bug when GC was too slow to catch up and so eating >>100MB ram
- - more verbose CEG parsing (warns now about unknown tags)
- - switch to a high precision clock all over the engine (including Lua)
- - removed unused AI_UnpauseAfterInit config setting
  - steering/avoidance: actively avoid only mobile units, let PFS/CD handle statics
 
 Lua:
@@ -53,11 +51,18 @@ Lua:
      UPDATE YOUR GAME'S UNIT_SCRIPT.LUA IF IT HAS LUA-SCRIPTED
      UNITS AND YOU ARE NOT USING SPRING'S (BASECONTENT) VERSION
 
+Rendering:
+ - LoadingMT: add a runtime check that should detect incompatibilities
+ - disable ARB shaders with Intel/Mesa drivers (can be overridden by setting ForceEnableIntelShaderSupport=1)
+ - reduce used varyings in SMF GLSL shader in the hope it will fix advmapshading on some lowend GPUs
+
 Performance:
  - use SSE in some matrix math
  - save a little mem in Pathfinder
  - reduce PFS update rate by 10%
  - little speedup in Grass rendering (it's still slow on some maps)
+ - use 32bit shadowmap. ~7% faster than 24bit one, cause of better alignment
+ - move Lua GC to its own callin and fix so a bug when GC was too slow to catch up and so eating >>100MB ram
 
 Buildprocess:
  ! updated gentoo overlay url to https://github.com/springlobby/overlay
@@ -67,6 +72,7 @@ Buildprocess:
  - fix clang compile errors + some bugs detected by clang
  ! slightly refactored build system, now every target can be disabled:
      spring-dedicated, spring-headless, spring-legacy, spring-multithreaded
+ - more unittests (extended FileSystem, timers, unitsync, SSE Matrix Math, ...)
 
 Bugfixes:
  ! fix {Get,Set}UnitWeapon{Fire,HoldFire,TryTarget,TestTarget,TestRange,HaveFreeLineOfFire} WeaponID argument to use the same 1-starting indexes as rest of lua interface
@@ -107,6 +113,9 @@ Bugfixes:
  - fix logLevel of WatchDog stacktraces
  - fix decals were rendered twice
  - fix spike CEGs
+
+AI:
+ - removed unused AI_UnpauseAfterInit config setting
 
 UnitSync:
  - add DeleteSpringConfigKey(const char* name)
