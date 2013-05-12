@@ -2,10 +2,6 @@
 
 #include "UDPListener.h"
 
-#if defined(_WIN32)
-#	include <windows.h>
-#endif
-
 #ifdef DEBUG
 	#include <boost/format.hpp>
 #endif
