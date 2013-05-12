@@ -68,7 +68,7 @@ void CGame::SendClientProcUsage()
 			const float totalProcUsage = simProcUsage + drawProcUsage * (!GML::SimEnabled() || !GML::MultiThreadSim());
 
 			// take the minimum drawframes into account, too
-			net->Send(CBaseNetProtocol::Get().SendCPUUsage(totalProcUsage);
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(totalProcUsage));
 		} else {
 			// the CPU-load percentage is undefined prior to SimFrame()
 			net->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));
