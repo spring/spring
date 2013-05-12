@@ -65,9 +65,10 @@ void CGame::SendClientProcUsage()
 		if (playing) {
 			const float simProcUsage = (profiler.GetPercent("SimFrame"));
 			const float drawProcUsage = (profiler.GetPercent("GameController::Draw") / std::max(1.0f, globalRendering->FPS)) * gu->minFPS;
+			const float totalProcUsage = simProcUsage + drawProcUsage * (!GML::SimEnabled() || !GML::MultiThreadSim());
 
 			// take the minimum drawframes into account, too
-			net->Send(CBaseNetProtocol::Get().SendCPUUsage(simProcUsage + drawProcUsage * (!GML::SimEnabled() || !GML::MultiThreadSim())));
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(totalProcUsage);
 		} else {
 			// the CPU-load percentage is undefined prior to SimFrame()
 			net->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));
