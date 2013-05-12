@@ -128,6 +128,7 @@ private:
 
 	void ReColorTeams();
 
+	void SendClientProcUsage();
 	void ClientReadNet();
 	void SimFrame();
 	void StartPlaying();

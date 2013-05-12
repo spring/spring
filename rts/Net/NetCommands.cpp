@@ -55,6 +55,25 @@ void CGame::AddTraffic(int playerID, int packetCode, int length)
 	}
 }
 
+void CGame::SendClientProcUsage()
+{
+	static spring_time lastProcUsageUpdateTime = spring_gettime();
+
+	if ((spring_gettime() - lastProcUsageUpdateTime).toSecsf() >= 1.0f) {
+		lastProcUsageUpdateTime = spring_gettime();
+
+		if (playing) {
+			const float simProcUsage = (profiler.GetPercent("SimFrame"));
+			const float drawProcUsage = (profiler.GetPercent("GameController::Draw") / std::max(1.0f, globalRendering->FPS)) * gu->minFPS;
+
+			// take the minimum drawframes into account, too
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(simProcUsage + drawProcUsage * (!GML::SimEnabled() || !GML::MultiThreadSim())));
+		} else {
+			// the CPU-load percentage is undefined prior to SimFrame()
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));
+		}
+	}
+}
 
 void CGame::ClientReadNet()
 {
@@ -67,10 +86,8 @@ void CGame::ClientReadNet()
 		if (skipping) {
 			msgProcTimeLeft = 0.01f;
 		} else {
-			if (msgProcTimeLeft > 1.0f)
-				msgProcTimeLeft -= 1.0f;
-
-			msgProcTimeLeft += consumeSpeed * (spring_tomsecs(currentFrame - lastframe) / 1000.0f);
+			msgProcTimeLeft -= ((msgProcTimeLeft > 1.0f) * 1.0f);
+			msgProcTimeLeft += (consumeSpeed * (spring_tomsecs(currentFrame - lastframe) / 1000.0f));
 		}
 
 		lastframe = currentFrame;

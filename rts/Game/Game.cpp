@@ -962,6 +962,7 @@ bool CGame::Update()
 	}
 
 	ENTER_SYNCED_CODE();
+	SendClientProcUsage();
 	ClientReadNet(); // this can issue new SimFrame()s
 
 	if (!gameOver) {
