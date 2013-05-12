@@ -2,10 +2,6 @@
 
 #include "UDPConnection.h"
 
-#if defined(_WIN32)
-#	include <windows.h>
-#endif
-
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/cstdint.hpp>
