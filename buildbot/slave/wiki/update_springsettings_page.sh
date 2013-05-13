@@ -4,7 +4,7 @@
 # Config
 SPRING="spring"
 PAGE="Springsettings.cfg"
-SECTIONNAME="Available_Options"
+SECTIONNAME="Available Options"
 
 if [ ! -f ~/.ssh/spring_wiki_account ]; then
 	echo "couldn't find ~/.ssh/spring_wiki_account with proper username & password!"

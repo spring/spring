@@ -127,14 +127,15 @@ s=d['parse']['sections']
 for t in s:
 	if 'line' in t:
 		if t['line'] == '$SECTION':
-			print str(t['number'])
+			print str(t['index'])
 			exit
 	"
 
 	SECTION_NUM=`echo "$CR" | python2 -c "$PYCODE"`
 
-	if [ $? != 0 ]; then
+	if [ $? != 0 ] || [ "$SECTION_NUM" == "" ]; then
 		echo "python-json section parsing failed"
+		#echo "$CR"
 		exit 1
 	fi
 
