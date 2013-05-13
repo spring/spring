@@ -15,6 +15,9 @@ USERANDPASS=$(cat ~/.ssh/spring_wiki_account)
 USERNAME=$(echo "${USERANDPASS}" | awk '{split($0,a,":"); print a[1]}')
 USERPASS=$(echo "${USERANDPASS}" | awk '{split($0,a,":"); print a[2]}')
 
+. buildbot/slave/prepare.sh $*
+SPRING="${BUILDDIR}/${SPRING}"
+
 #########################
 # Parse & Transform JSON
 SPRINGCFG_JSON=`$SPRING --list-def-tags`
