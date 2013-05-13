@@ -37,11 +37,13 @@ CONFIG(bool, ShowRezBars).defaultValue(true);
 
 CONFIG(float, FeatureDrawDistance)
 .defaultValue(6000.0f)
-.minimumValue(0.0f);
+.minimumValue(0.0f)
+.description("Maximum distance at which features will be drawn.");
 
 CONFIG(float, FeatureFadeDistance)
 .defaultValue(4500.0f)
-.minimumValue(0.0f);
+.minimumValue(0.0f)
+.description("Distance at which features will begin to fade from view.");
 
 CFeatureDrawer* featureDrawer = NULL;
 

@@ -42,7 +42,7 @@ using agui::HorizontalLayout;
 
 CONFIG(std::string, address).defaultValue("");
 CONFIG(bool, NoHelperAIs).defaultValue(false);
-CONFIG(std::string, LastSelectedSetting).defaultValue("");
+CONFIG(std::string, LastSelectedSetting).defaultValue("").description("Stores the previously selected setting, when editing settings within the Spring main menu.");
 
 class ConnectWindow : public agui::Window
 {

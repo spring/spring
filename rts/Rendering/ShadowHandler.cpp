@@ -26,8 +26,8 @@
 
 #define SHADOWMATRIX_NONLINEAR      0
 
-CONFIG(int, Shadows).defaultValue(2);
-CONFIG(int, ShadowMapSize).defaultValue(CShadowHandler::DEF_SHADOWMAP_SIZE).minimumValue(1);
+CONFIG(int, Shadows).defaultValue(2).minimumValue(0).description("Sets whether shadows are rendered.\n0:=off, 1:=full, 2:=fast (skip terrain)"); //FIXME document bitmask
+CONFIG(int, ShadowMapSize).defaultValue(CShadowHandler::DEF_SHADOWMAP_SIZE).minimumValue(32).description("Sets the resolution of shadows. Higher numbers increase quality at the cost of performance.");
 CONFIG(int, ShadowProjectionMode).defaultValue(CShadowHandler::SHADOWPROMODE_CAM_CENTER);
 
 CShadowHandler* shadowHandler = NULL;

@@ -29,15 +29,15 @@
 
 #include "System/float3.h"
 
-CONFIG(int, MaxSounds).defaultValue(128);
-CONFIG(bool, PitchAdjust).defaultValue(false);
-CONFIG(int, snd_volmaster).defaultValue(60);
-CONFIG(int, snd_volgeneral).defaultValue(100);
-CONFIG(int, snd_volunitreply).defaultValue(100);
-CONFIG(int, snd_volbattle).defaultValue(100);
-CONFIG(int, snd_volui).defaultValue(100);
-CONFIG(int, snd_volmusic).defaultValue(100);
-CONFIG(std::string, snd_device).defaultValue("");
+CONFIG(int, MaxSounds).defaultValue(128).minimumValue(0).description("Maximum parallel played sounds.");
+CONFIG(bool, PitchAdjust).defaultValue(false).description("When enabled adjust sound speed/pitch to game speed.");
+CONFIG(int, snd_volmaster).defaultValue(60).minimumValue(0).maximumValue(200).description("Master sound volume.");
+CONFIG(int, snd_volgeneral).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"general\" sound channel.");
+CONFIG(int, snd_volunitreply).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"unit reply\" sound channel.");
+CONFIG(int, snd_volbattle).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"battle\" sound channel.");
+CONFIG(int, snd_volui).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"ui\" sound channel.");
+CONFIG(int, snd_volmusic).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"music\" sound channel.");
+CONFIG(std::string, snd_device).defaultValue("").description("Sets the used output device. See \"Available Devices\" section in infolog.txt.");
 
 boost::recursive_mutex soundMutex;
 
@@ -404,10 +404,10 @@ size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
 		return 0;
 
 	boost::shared_ptr<SoundBuffer> buffer = SoundBuffer::GetById(LoadSoundBuffer(it->second));
-	
+
 	if (!buffer)
 		return 0;
-		
+
 	SoundItem* buf = new SoundItem(buffer, itemDef);
 	sounds.push_back(buf);
 	soundMap[buf->Name()] = newid;

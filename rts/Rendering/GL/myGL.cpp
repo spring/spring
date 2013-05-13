@@ -25,7 +25,7 @@
 #endif
 
 
-CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false);
+CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false).description("Disables the warning an user will receive if (s)he attempts to run Spring on an outdated and underpowered video card.");
 CONFIG(bool, ReportGLErrors).defaultValue(false);
 CONFIG(bool, StacktraceOnGLErrors).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs (only available in DEBUG builds)");
 
@@ -313,7 +313,7 @@ void LoadExtensions()
 			SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, totalMemMB, availMemMB);
 		}
 	}
-	
+
 	// log some useful version info
 	LOG("SDL version:  %d.%d.%d", sdlVersion->major, sdlVersion->minor, sdlVersion->patch);
 	LOG("GL version:   %s", glVersion);

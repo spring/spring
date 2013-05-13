@@ -43,15 +43,15 @@ using std::vector;
 using std::min;
 using std::max;
 
-CONFIG(int, BumpWaterTexSizeReflection).defaultValue(512);
-CONFIG(int, BumpWaterReflection).defaultValue(1);
-CONFIG(int, BumpWaterRefraction).defaultValue(1); // 0:=off, 1:=screencopy, 2:=own rendering cycle
-CONFIG(float, BumpWaterAnisotropy).defaultValue(0.0f);
+CONFIG(int, BumpWaterTexSizeReflection).defaultValue(512).minimumValue(32).description("Sets the size of the framebuffer texture used to store the reflection in Bumpmapped water.");
+CONFIG(int, BumpWaterReflection).defaultValue(1).minimumValue(0).maximumValue(2).description("Determines the amount of objects reflected in Bumpmapped water.\n0:=off, 1:=fast (skip terrain), 2:=full");
+CONFIG(int, BumpWaterRefraction).defaultValue(1).minimumValue(0).maximumValue(2).description("Determines the method of refraction with Bumpmapped water.\n0:=off, 1:=screencopy, 2:=own rendering cycle");
+CONFIG(float, BumpWaterAnisotropy).defaultValue(0.0f).minimumValue(0.0f);
 CONFIG(bool, BumpWaterUseDepthTexture).defaultValue(true);
-CONFIG(int, BumpWaterDepthBits).defaultValue(24);
+CONFIG(int, BumpWaterDepthBits).defaultValue(24).minimumValue(16).maximumValue(32);
 CONFIG(bool, BumpWaterBlurReflection).defaultValue(false);
-CONFIG(bool, BumpWaterShoreWaves).defaultValue(true);
-CONFIG(bool, BumpWaterEndlessOcean).defaultValue(true);
+CONFIG(bool, BumpWaterShoreWaves).defaultValue(true).safemodeValue(false).description("Enables rendering of shorewaves.");
+CONFIG(bool, BumpWaterEndlessOcean).defaultValue(true).description("Sets whether Bumpmapped water will be drawn beyond the map edge.");
 CONFIG(bool, BumpWaterDynamicWaves).defaultValue(true);
 CONFIG(bool, BumpWaterUseUniforms).defaultValue(false);
 CONFIG(bool, BumpWaterOcclusionQuery).defaultValue(false); //FIXME doesn't work as expected (it's slower than w/o), needs fixing

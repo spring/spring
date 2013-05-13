@@ -22,18 +22,20 @@
 #include "System/TimeProfiler.h"
 
 
-CONFIG(int, GroundDetail).defaultValue(60).minimumValue(0).maximumValue(200);
+CONFIG(int, GroundDetail).defaultValue(60).minimumValue(0).maximumValue(200).description("Controls how detailed the map geometry will be. On lowered settings, cliffs may appear to be jagged or \"melting\".");
 
 CONFIG(int, MaxDynamicMapLights)
 	.defaultValue(1)
 	.minimumValue(0);
 
-CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false);
+CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false).description("Enable shaders for terrain rendering and enable so more effects.");
 
 CONFIG(int, ROAM)
 	.defaultValue(Patch::VBO)
 	.safemodeValue(Patch::DL)
-	.description("Use ROAM for terrain mesh rendering. 1=VBO mode, 2=DL mode, 3=VA mode");
+	.minimumValue(0)
+	.minimumValue(Patch::VA)
+	.description("Use ROAM for terrain mesh rendering. 0:=disable ROAM, 1=VBO mode, 2=DL mode, 3=VA mode");
 
 
 CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
