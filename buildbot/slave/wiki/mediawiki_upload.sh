@@ -137,6 +137,8 @@ for t in s:
 		echo "python-json section parsing failed"
 		exit 1
 	fi
+
+	echo "Section number for \"${SECTION}\" is \"${SECTION_NUM}\""
 fi
 
 #########################
