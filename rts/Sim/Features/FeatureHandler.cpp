@@ -344,7 +344,8 @@ void CFeatureHandler::AllocateNewFeatureIDs(const CFeature* feature)
 	// if feature->id is non-negative, then allocate enough to
 	// make it a valid index (we have no hard MAX_FEATURES cap)
 	// and always make sure to at least double the pool
-	const unsigned int numNewIDs = std::max(features.size() + (128u * idPool.IsEmpty()), (feature->id + 1u) - features.size());
+	// note: WorldObject::id is signed, so block RHS underflow
+	const unsigned int numNewIDs = std::max(int(features.size()) + (128 * idPool.IsEmpty()), (feature->id + 1) - int(features.size()));
 
 	idPool.Expand(features.size(), numNewIDs);
 	features.resize(features.size() + numNewIDs, NULL);
