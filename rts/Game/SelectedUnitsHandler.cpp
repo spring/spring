@@ -46,7 +46,7 @@
 #define PLAY_SOUNDS 1
 
 CONFIG(bool, BuildIconsFirst).defaultValue(false);
-CONFIG(bool, AutoAddBuiltUnitsToFactoryGroup).defaultValue(false);
+CONFIG(bool, AutoAddBuiltUnitsToFactoryGroup).defaultValue(false).description("Controls whether or not units built by factories will inherit that factory's unit group.");
 CONFIG(bool, AutoAddBuiltUnitsToSelectedGroup).defaultValue(false);
 
 CSelectedUnitsHandler selectedUnitsHandler;

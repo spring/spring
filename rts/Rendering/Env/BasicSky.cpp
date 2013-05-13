@@ -18,7 +18,7 @@
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
 
-CONFIG(bool, DynamicSky).defaultValue(false);
+CONFIG(bool, DynamicSky).defaultValue(false).description("Sets whether the clouds in the sky will be procedurally generated and moved. Resource heavy!");
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

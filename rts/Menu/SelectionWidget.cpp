@@ -18,9 +18,9 @@ const std::string SelectionWidget::NoMapSelect = "No map selected";
 const std::string SelectionWidget::NoScriptSelect = "No script selected";
 const std::string SelectionWidget::SandboxAI = "Player Only: Testing Sandbox";
 
-CONFIG(std::string, LastSelectedMod).defaultValue(SelectionWidget::NoModSelect);
-CONFIG(std::string, LastSelectedMap).defaultValue(SelectionWidget::NoMapSelect);
-CONFIG(std::string, LastSelectedScript).defaultValue(SelectionWidget::NoScriptSelect);
+CONFIG(std::string, LastSelectedMod).defaultValue(SelectionWidget::NoModSelect).description("Stores the previously played game.");
+CONFIG(std::string, LastSelectedMap).defaultValue(SelectionWidget::NoMapSelect).description("Stores the previously played map.");
+CONFIG(std::string, LastSelectedScript).defaultValue(SelectionWidget::NoScriptSelect).description("Stores the previously played AI.");
 
 SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(parent)
 {

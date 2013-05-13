@@ -34,7 +34,7 @@
 #include "System/Platform/Watchdog.h"
 
 
-CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512 * 1024 * 1024);
+CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512).minimumValue(64).description("Maximum memusage (in MByte) of mutlithreaded pathcache generator at loading time.");
 
 static const std::string GetPathCacheDir() {
 	return (FileSystem::GetCacheDir() + "/paths/");
@@ -117,7 +117,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		// start extra threads if applicable, but always keep the total
 		// memory-footprint made by CPathFinder instances within bounds
 		const unsigned int minMemFootPrint = sizeof(CPathFinder) + pathFinder->GetMemFootPrint();
-		const unsigned int maxMemFootPrint = configHandler->GetInt("MaxPathCostsMemoryFootPrint");
+		const unsigned int maxMemFootPrint = configHandler->GetInt("MaxPathCostsMemoryFootPrint") * 1024 * 1024;
 		const unsigned int numExtraThreads = std::min(int(numThreads - 1), std::max(0, int(maxMemFootPrint / minMemFootPrint) - 1));
 		const unsigned int reqMemFootPrint = minMemFootPrint * (numExtraThreads + 1);
 
