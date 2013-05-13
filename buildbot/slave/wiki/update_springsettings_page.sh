@@ -4,7 +4,7 @@
 # Config
 SPRING="spring"
 PAGE="Springsettings.cfg"
-SECTIONNAME="Available%20Options"
+SECTIONNAME="Available_Options"
 
 if [ ! -f ~/.ssh/spring_wiki_account ]; then
 	echo "couldn't find ~/.ssh/spring_wiki_account with proper username & password!"
@@ -23,6 +23,7 @@ SPRING="${BUILDDIR}/${SPRING}"
 
 #TODO also reparse doc of previous spring and then check for new ones and mark them on the wiki (and maybe removed ones too)
 SPRINGCFG_JSON=`$SPRING --list-config`
+SPRING_VERSION=`$SPRING --sync-version`
 
 PYCODE=$(cat <<EOF
 import json, sys
@@ -66,7 +67,7 @@ EOF
 )
 
 TEMPLATE_CONTENT=`echo "$SPRINGCFG_JSON" | python2 -c "$PYCODE"`
-TEMPLATE_CONTENT=$(echo -e "=${SECTIONNAME}=\n<center><span class=warning>'''THIS SECTION IS AUTOMATICALLY GENERATED! DON'T EDIT IT!'''</span></center>\n${TEMPLATE_CONTENT}")
+TEMPLATE_CONTENT=$(echo -e "=${SECTIONNAME}=\n<center><span class=warning>'''THIS SECTION IS AUTOMATICALLY GENERATED! DON'T EDIT IT!'''</span></center>\n<span>(last update: ${SPRING_VERSION})\n${TEMPLATE_CONTENT}")
 
 if [ $? != 0 ]; then
 	echo "python parsing failed"
