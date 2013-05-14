@@ -236,6 +236,7 @@ Else  (NOT Boost_FOUND)
 	TARGET_LINK_LIBRARIES(test_FileSystem
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_REGEX_LIBRARY}
+			${Boost_FILESYSTEM_LIBRARY}
 		)
 
 	ADD_TEST(NAME testFileSystem COMMAND test_FileSystem)
@@ -255,7 +256,6 @@ Else  (NOT Boost_FOUND)
 	TARGET_LINK_LIBRARIES(test_LuaSocketRestrictions
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_REGEX_LIBRARY}
-			${Boost_FILESYSTEM_LIBRARY}
 		)
 
 	ADD_TEST(NAME LuaSocketRestrictions COMMAND test_LuaSocketRestrictions)
