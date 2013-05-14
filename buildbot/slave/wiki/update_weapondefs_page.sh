@@ -55,7 +55,7 @@ EOF
 )
 
 TEMPLATE_CONTENT=`echo "$SPRINGCFG_JSON" | python2 -c "$PYCODE"`
-TEMPLATE_CONTENT=$(echo -e "=${SECTIONNAME}=\n<center><span class=warning>'''THIS SECTION IS AUTOMATICALLY GENERATED! DON'T EDIT IT!'''</span></center>\n<span>(last update: ${SPRING_VERSION})</span>\n${TEMPLATE_CONTENT}")
+TEMPLATE_CONTENT=$(echo -e "=${SECTIONNAME}=\n<center><span class=warning>'''THIS SECTION IS AUTOMATICALLY GENERATED! DON'T EDIT IT!'''</span></center>\n<span style=\"align:right\">(last update: ${SPRING_VERSION})</span>\n${TEMPLATE_CONTENT}")
 
 if [ $? != 0 ]; then
 	echo "python parsing failed"
