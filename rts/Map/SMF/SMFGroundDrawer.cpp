@@ -34,7 +34,7 @@ CONFIG(int, ROAM)
 	.defaultValue(Patch::VBO)
 	.safemodeValue(Patch::DL)
 	.minimumValue(0)
-	.minimumValue(Patch::VA)
+	.maximumValue(Patch::VA)
 	.description("Use ROAM for terrain mesh rendering. 0:=disable ROAM, 1=VBO mode, 2=DL mode, 3=VA mode");
 
 

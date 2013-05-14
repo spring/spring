@@ -25,6 +25,11 @@ SPRING="${BUILDDIR}/${SPRING}"
 SPRINGCFG_JSON=`$SPRING --list-config`
 SPRING_VERSION=`$SPRING --sync-version`
 
+if [ $? != 0 ]; then
+	echo "spring failed"
+	exit 1
+fi
+
 PYCODE=$(cat <<EOF
 import json, sys, re
 d=json.load(sys.stdin)
@@ -68,7 +73,7 @@ EOF
 )
 
 TEMPLATE_CONTENT=`echo "$SPRINGCFG_JSON" | python2 -c "$PYCODE"`
-TEMPLATE_CONTENT=$(echo -e "=${SECTIONNAME}=\n<center><span class=warning>'''THIS SECTION IS AUTOMATICALLY GENERATED! DON'T EDIT IT!'''</span></center>\n<span style=\"align:right\">(last update: ${SPRING_VERSION})\n${TEMPLATE_CONTENT}")
+TEMPLATE_CONTENT=$(echo -e "=${SECTIONNAME}=\n<center><span class=warning>'''THIS SECTION IS AUTOMATICALLY GENERATED! DON'T EDIT IT!'''</span></center>\n<span style=\"text-align:right\">(last update: ${SPRING_VERSION})\n${TEMPLATE_CONTENT}")
 
 if [ $? != 0 ]; then
 	echo "python parsing failed"
