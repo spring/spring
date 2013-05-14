@@ -12,6 +12,12 @@
 #ifdef WIN32
 	#include <windows.h>
 	#include <shlwapi.h>
+	#if defined(CreateDirectory)
+		#undef CreateDirectory
+	#endif
+	#if defined(DeleteFile)
+		#undef DeleteFile
+	#endif
 #endif
 
 
