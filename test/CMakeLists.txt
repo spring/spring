@@ -1,6 +1,6 @@
 # See README.md for usage instructions
 
-FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework filesystem)
+FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework)
 
 If    (NOT Boost_FOUND)
 	Message(STATUS "Note: Unit tests will not be built: Boost::test library was not found")
@@ -235,9 +235,9 @@ Else  (NOT Boost_FOUND)
 	ADD_EXECUTABLE(test_FileSystem ${test_FileSystem_src})
 	TARGET_LINK_LIBRARIES(test_FileSystem
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_REGEX_LIBRARY}
 			${Boost_FILESYSTEM_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
+			${Boost_REGEX_LIBRARY}
 		)
 
 	ADD_TEST(NAME testFileSystem COMMAND test_FileSystem)

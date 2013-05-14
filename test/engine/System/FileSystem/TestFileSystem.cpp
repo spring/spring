@@ -4,7 +4,6 @@
 #include <string>
 #include <cstdio>
 #include <sys/stat.h>
-#include <boost/filesystem.hpp>
 #include "System/Log/ILog.h"
 
 #define BOOST_TEST_MODULE FileSystem
@@ -70,18 +69,6 @@ namespace {
 
 BOOST_FIXTURE_TEST_SUITE(everything, PrepareFileSystem)
 
-BOOST_AUTO_TEST_CASE(Boost)
-{
-	boost::filesystem::path p1("testDir");
-	boost::filesystem::path p2("testDir////./");
-	boost::filesystem::path p3("test Dir2");
-	boost::filesystem::path p4("fooxyz");
-	boost::filesystem::path p5("fooxyz");
-	BOOST_CHECK(boost::filesystem::equivalent(p1, p2));
-	BOOST_CHECK(boost::filesystem::equivalent(p2, p3));
-	BOOST_CHECK(boost::filesystem::equivalent(p4, p5));
-}
-
 BOOST_AUTO_TEST_CASE(FileExists)
 {
 	BOOST_CHECK(FileSystem::FileExists("testFile.txt"));
@@ -97,6 +84,14 @@ BOOST_AUTO_TEST_CASE(GetFileSize)
 	BOOST_CHECK(FileSystem::GetFileSize("testFile99.txt") == -1);
 	BOOST_CHECK(FileSystem::GetFileSize("testDir") == -1);
 	BOOST_CHECK(FileSystem::GetFileSize("testDir99") == -1);
+}
+
+
+BOOST_AUTO_TEST_CASE(GetFileModificationDate)
+{
+	BOOST_CHECK(FileSystem::GetFileModificationDate("testDir") != "");
+	BOOST_CHECK(FileSystem::GetFileModificationDate("testFile.txt") != "");
+	BOOST_CHECK(FileSystem::GetFileModificationDate("not_there") == "");
 }
 
 
