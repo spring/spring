@@ -231,6 +231,11 @@ Else  (NOT Boost_FOUND)
 			${test_Log_sources}
 		)
 
+	Set(win32libs "")
+	IF (WIN32)
+		Set(win32libs ${WIN32_LIBRARIES})
+	ENDIF (WIN32)
+
 	ADD_EXECUTABLE(test_FileSystem ${test_FileSystem_src})
 	TARGET_LINK_LIBRARIES(test_FileSystem
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
@@ -254,6 +259,7 @@ Else  (NOT Boost_FOUND)
 	TARGET_LINK_LIBRARIES(test_LuaSocketRestrictions
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_REGEX_LIBRARY}
+			${win32libs}
 		)
 
 	ADD_TEST(NAME LuaSocketRestrictions COMMAND test_LuaSocketRestrictions)
