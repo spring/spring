@@ -4,21 +4,11 @@
 #include <string>
 #include <cstdio>
 #include <sys/stat.h>
+#include <boost/filesystem.hpp>
 #include "System/Log/ILog.h"
 
 #define BOOST_TEST_MODULE FileSystem
 #include <boost/test/unit_test.hpp>
-
-#ifdef WIN32
-	#include <windows.h>
-	#include <shlwapi.h>
-	#if defined(CreateDirectory)
-		#undef CreateDirectory
-	#endif
-	#if defined(DeleteFile)
-		#undef DeleteFile
-	#endif
-#endif
 
 
 namespace {
@@ -80,24 +70,17 @@ namespace {
 
 BOOST_FIXTURE_TEST_SUITE(everything, PrepareFileSystem)
 
-#ifdef WIN32
-BOOST_AUTO_TEST_CASE(WinApi)
+BOOST_AUTO_TEST_CASE(Boost)
 {
-	char szOut[MAX_PATH] = "";
-	PathRelativePathTo(szOut,
-                       "testDir////./",
-                       FILE_ATTRIBUTE_DIRECTORY,
-                       "testDir",
-                       FILE_ATTRIBUTE_DIRECTORY);
-	LOG("PathRelativePathTo from \"testDir////./\" to \"testDir\" is \"%s\"", szOut);
-
-	BOOST_CHECK(PathIsSameRoot("testDir/", "testDir"));
-	BOOST_CHECK(PathIsSameRoot("testDir////./", "testDir"));
-	BOOST_CHECK(PathIsSameRoot("testDir////./", "testDir/"));
-	BOOST_CHECK(PathIsSameRoot("c:/testDir////./", "c:/testDir"));
-	BOOST_CHECK(PathIsSameRoot("c:/testDir////./", "c:/testDir/"));
+	boost::filesystem::path p1("testDir");
+	boost::filesystem::path p2("testDir////./");
+	boost::filesystem::path p3("test Dir2");
+	boost::filesystem::path p4("fooxyz");
+	boost::filesystem::path p5("fooxyz");
+	BOOST_CHECK(boost::filesystem::equivalent(p1, p2));
+	BOOST_CHECK(boost::filesystem::equivalent(p2, p3));
+	BOOST_CHECK(boost::filesystem::equivalent(p4, p5));
 }
-#endif
 
 BOOST_AUTO_TEST_CASE(FileExists)
 {
