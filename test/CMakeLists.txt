@@ -233,7 +233,7 @@ Else  (NOT Boost_FOUND)
 
 	Set(win32libs "")
 	IF (WIN32)
-		Set(win32libs ${WIN32_LIBRARIES})
+		Set(win32libs shlwapi)
 	ENDIF (WIN32)
 
 	ADD_EXECUTABLE(test_FileSystem ${test_FileSystem_src})
