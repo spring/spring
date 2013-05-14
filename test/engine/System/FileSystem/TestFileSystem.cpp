@@ -9,6 +9,10 @@
 #define BOOST_TEST_MODULE FileSystem
 #include <boost/test/unit_test.hpp>
 
+#ifdef WIN32
+	#include <windows.h>
+	#include <shlwapi.h>
+#endif
 
 
 namespace {
@@ -70,6 +74,24 @@ namespace {
 
 BOOST_FIXTURE_TEST_SUITE(everything, PrepareFileSystem)
 
+#ifdef WIN32
+BOOST_AUTO_TEST_CASE(WinApi)
+{
+	char szOut[MAX_PATH] = "";
+	PathRelativePathTo(szOut,
+                       "testDir////./",
+                       FILE_ATTRIBUTE_DIRECTORY,
+                       "testDir",
+                       FILE_ATTRIBUTE_DIRECTORY);
+	LOG("PathRelativePathTo from \"testDir////./\" to \"testDir\" is \"%s\"", szOut);
+
+	BOOST_CHECK(PathIsSameRoot("testDir/", "testDir"));
+	BOOST_CHECK(PathIsSameRoot("testDir////./", "testDir"));
+	BOOST_CHECK(PathIsSameRoot("testDir////./", "testDir/"));
+	BOOST_CHECK(PathIsSameRoot("c:/testDir////./", "c:/testDir"));
+	BOOST_CHECK(PathIsSameRoot("c:/testDir////./", "c:/testDir/"));
+}
+#endif
 
 BOOST_AUTO_TEST_CASE(FileExists)
 {
