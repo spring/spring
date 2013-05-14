@@ -237,6 +237,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_REGEX_LIBRARY}
 			${Boost_FILESYSTEM_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
 		)
 
 	ADD_TEST(NAME testFileSystem COMMAND test_FileSystem)
