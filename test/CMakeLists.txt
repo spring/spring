@@ -1,6 +1,7 @@
 # See README.md for usage instructions
 
-FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework)
+FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework filesystem)
+
 If    (NOT Boost_FOUND)
 	Message(STATUS "Note: Unit tests will not be built: Boost::test library was not found")
 Else  (NOT Boost_FOUND)
@@ -231,15 +232,10 @@ Else  (NOT Boost_FOUND)
 			${test_Log_sources}
 		)
 
-	IF (WIN32)
-		LIST(APPEND win32libs shlwapi)
-	ENDIF (WIN32)
-
 	ADD_EXECUTABLE(test_FileSystem ${test_FileSystem_src})
 	TARGET_LINK_LIBRARIES(test_FileSystem
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_REGEX_LIBRARY}
-			${win32libs}
 		)
 
 	ADD_TEST(NAME testFileSystem COMMAND test_FileSystem)
@@ -259,6 +255,7 @@ Else  (NOT Boost_FOUND)
 	TARGET_LINK_LIBRARIES(test_LuaSocketRestrictions
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_REGEX_LIBRARY}
+			${Boost_FILESYSTEM_LIBRARY}
 		)
 
 	ADD_TEST(NAME LuaSocketRestrictions COMMAND test_LuaSocketRestrictions)
