@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <string.h>
 #include <boost/regex.hpp>
+#include <boost/filesystem.hpp>
 
 #ifndef _WIN32
 	#include <dirent.h>
@@ -37,6 +38,8 @@
 		#undef DeleteFile
 	#endif
 #endif
+
+
 
 std::string FileSystemAbstraction::RemoveLocalPathPrefix(const std::string& path)
 {
@@ -127,7 +130,15 @@ std::string FileSystemAbstraction::StripTrailingSlashes(const std::string& path)
 	return path.substr(0, len);
 }
 
-std::string FileSystemAbstraction::GetParent(const std::string& path) {
+std::string FileSystemAbstraction::GetParent(const std::string& path)
+{
+	//TODO uncomment and test if it breaks other code
+	/*try {
+		const boost::filesystem::path p(path);
+		return p.parent_path.string();
+	} catch (const boost::filesystem::filesystem_error& ex) {
+		return "";
+	}*/
 
 	std::string parent = path;
 	EnsureNoPathSepAtEnd(parent);
@@ -171,69 +182,20 @@ bool FileSystemAbstraction::IsReadableFile(const std::string& file)
 
 std::string FileSystemAbstraction::GetFileModificationDate(const std::string& file)
 {
-	std::string time = "";
+	try {
+		const boost::filesystem::path f(file);
+		const std::time_t t = boost::filesystem::last_write_time(f);
+		struct tm* clock = std::gmtime(&t);
 
-#if       defined(WIN32)
-	HANDLE hFile = CreateFile(file.c_str(), // file to open
-			GENERIC_READ,                   // open for reading
-			FILE_SHARE_READ,                // share for reading
-			NULL,                           // default security
-			OPEN_EXISTING,                  // existing file only
-			FILE_ATTRIBUTE_NORMAL,          // normal file
-			NULL);                          // no attr. template
-
-	if (hFile == INVALID_HANDLE_VALUE) {
-		LOG_L(L_WARNING, "Failed opening file for retreiving last modification time: %s", file.c_str());
-	} else {
-		FILETIME /*ftCreate, ftAccess,*/ ftWrite;
-
-		// Retrieve the file times for the file.
-		if (GetFileTime(hFile, NULL, NULL, &ftWrite) != 0) {
-			LOG_L(L_WARNING, "Failed fetching last modification time from file: %s", file.c_str());
-		} else {
-			// Convert the last-write time to local time.
-			const size_t cTime_size = 20;
-			char cTime[cTime_size];
-
-			SYSTEMTIME stUTC, stLocal;
-			if ((FileTimeToSystemTime(&ftWrite, &stUTC) != 0) &&
-				SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal))
-			{
-				// Build a string showing the date and time.
-				SNPRINTF(cTime, cTime_size,
-						"%d%02d%02d%02d%02d%02d",
-						stLocal.wYear, stLocal.wMonth, stLocal.wDay,
-						stLocal.wHour, stLocal.wMinute, stLocal.wSecond);
-				time = cTime;
-			} else {
-				LOG_L(L_WARNING, "Failed converting last modification time to a string");
-			}
-		}
-		CloseHandle(hFile);
+		size_t cTime_size = 20;
+		char cTime[cTime_size];
+		SNPRINTF(cTime, cTime_size, "%d%02d%02d%02d%02d%02d", 1900+clock->tm_year, clock->tm_mon, clock->tm_mday, clock->tm_hour, clock->tm_min, clock->tm_sec);
+		return cTime;
+	} catch (const boost::filesystem::filesystem_error& ex) {
+		LOG_L(L_WARNING, "Failed fetching last modification time from file: %s", file.c_str());
+		LOG_L(L_WARNING, "Error is: \"%s\"", ex.what());
+		return "";
 	}
-
-#else  // defined(WIN32)
-	struct tm* clock;
-	struct stat attrib;
-	const size_t cTime_size = 20;
-	char cTime[cTime_size];
-
-	const int fetchOk = stat(file.c_str(), &attrib); // get the attributes of file
-	if (fetchOk != 0) {
-		LOG_L(L_WARNING, "Failed opening file for retrieving last modification time: %s", file.c_str());
-	} else {
-		// Get the last modified time and put it into the time structure
-		clock = gmtime(&(attrib.st_mtime));
-		if (clock == NULL) {
-			LOG_L(L_WARNING, "Failed fetching last modification time from file: %s", file.c_str());
-		} else {
-			SNPRINTF(cTime, cTime_size, "%d%02d%02d%02d%02d%02d", 1900+clock->tm_year, clock->tm_mon, clock->tm_mday, clock->tm_hour, clock->tm_min, clock->tm_sec);
-			time = cTime;
-		}
-	}
-#endif // defined(WIN32)
-
-	return time;
 }
 
 
@@ -248,6 +210,10 @@ char FileSystemAbstraction::GetNativePathSeparator()
 
 bool FileSystemAbstraction::IsAbsolutePath(const std::string& path)
 {
+	//TODO uncomment this and test if there are conflicts in the code when this returns true but other custom code doesn't (e.g. with IsFSRoot)
+	//const boost::filesystem::path f(file);
+	//return f.is_absolute();
+
 #ifdef WIN32
 	return ((path.length() > 1) && (path[1] == ':'));
 #else
@@ -294,18 +260,15 @@ bool FileSystemAbstraction::MkDir(const std::string& dir)
 
 bool FileSystemAbstraction::DeleteFile(const std::string& file)
 {
-	bool fileDeleted = (remove(file.c_str()) == 0);
-#ifdef WIN32
-	if (!fileDeleted && DirExists(file)) {
-		fileDeleted = RemoveDirectory(file.c_str());
+	try {
+		const boost::filesystem::path f(file);
+		// same as posix remove(), but on windows that func doesn't allow deletion of dirs
+		// so it's easier to use boost from the start
+		return (boost::filesystem::remove_all(f) >= 1);
+	} catch (const boost::filesystem::filesystem_error& ex) {
+		LOG_L(L_WARNING, "Could not delete file %s: %s", file.c_str(), ex.what());
+		return false;
 	}
-#endif
-
-	if (!fileDeleted) {
-		LOG_L(L_WARNING, "Could not delete file %s: %s", file.c_str(), strerror(errno));
-	}
-
-	return fileDeleted;
 }
 
 bool FileSystemAbstraction::FileExists(const std::string& file)
@@ -318,20 +281,12 @@ bool FileSystemAbstraction::FileExists(const std::string& file)
 
 bool FileSystemAbstraction::DirExists(const std::string& dir)
 {
-	std::string myDir = dir;
-#ifdef _WIN32
-	// only for the root dir on a drive (for example C:\)
-	// we need the trailing slash
-	if (!IsFSRoot(myDir)) {
-		myDir = StripTrailingSlashes(myDir);
-	} else if ((myDir.length() == 2) && (myDir[1] == ':')) {
-		myDir += "\\";
+	try {
+		const boost::filesystem::path p(dir);
+		return boost::filesystem::exists(p) && boost::filesystem::is_directory(p);
+	} catch (const boost::filesystem::filesystem_error& ex) {
+		return false;
 	}
-#endif
-	struct stat info;
-	const int ret = stat(dir.c_str(), &info);
-	bool dirExists = ((ret == 0) && S_ISDIR(info.st_mode));
-	return dirExists;
 }
 
 
@@ -375,68 +330,13 @@ bool FileSystemAbstraction::DirIsWritable(const std::string& dir)
 
 bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::string& path2)
 {
-#ifdef _WIN32
-	bool ret = false;
-
-	HANDLE fh1 = CreateFile(path1.c_str(), // file to open
-			GENERIC_READ,                   // open for reading
-			FILE_SHARE_READ,                // share for reading
-			NULL,                           // default security
-			OPEN_EXISTING,                  // existing file only
-			FILE_ATTRIBUTE_NORMAL,          // normal file
-			NULL);                          // no attr. template
-
-	HANDLE fh2 = CreateFile(path2.c_str(), // file to open
-			GENERIC_READ,                   // open for reading
-			FILE_SHARE_READ,                // share for reading
-			NULL,                           // default security
-			OPEN_EXISTING,                  // existing file only
-			FILE_ATTRIBUTE_NORMAL,          // normal file
-			NULL);                          // no attr. template
-
-	if ((fh1 != INVALID_HANDLE_VALUE) && (fh2 != INVALID_HANDLE_VALUE)) {
-		BY_HANDLE_FILE_INFORMATION info1, info2;
-
-		BOOL fine;
-		fine = GetFileInformationByHandle(fh1, &info1);
-		fine = GetFileInformationByHandle(fh2, &info2) && fine;
-
-		if (fine) {
-			ret =
-				   (info1.nFileIndexLow == info2.nFileIndexLow)
-				&& (info1.nFileIndexHigh == info2.nFileIndexHigh)
-				&& (info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber);
-		} else {
-			//GetLastError()
-		}
-	}
-
-	CloseHandle(fh1);
-	CloseHandle(fh2);
-
-	if (ret)
-		return true;
-
-
-	//TODO another way to compare dirs under windows would be CreateUri & IsEqual
-	TCHAR apath1[MAX_PATH];
-	TCHAR apath2[MAX_PATH];
-	GetFullPathName(path1.c_str(), MAX_PATH, apath1, NULL);
-	GetFullPathName(path2.c_str(), MAX_PATH, apath2, NULL);
-	return (std::string(apath1) == std::string(apath2));
-
-#else
-	int r = 0;
-	struct stat s1, s2;
-	r  = stat(path1.c_str(), &s1);
-	r |= stat(path2.c_str(), &s2);
-
-	if (r != 0) {
+	try {
+		const boost::filesystem::path p1(path1);
+		const boost::filesystem::path p2(path2);
+		return boost::filesystem::equivalent(p1, p2);
+	} catch (const boost::filesystem::filesystem_error& ex) {
 		return false;
 	}
-
-	return (s1.st_ino == s2.st_ino) && (s1.st_dev == s2.st_dev);
-#endif
 }
 
 
