@@ -24,7 +24,7 @@ static DefType WeaponDefs("WeaponDefs");
 
 #define WEAPONTAG(T, name, ...) DEFTAG(WeaponDefs, WeaponDef, T, name, ##__VA_ARGS__)
 #define WEAPONDUMMYTAG(T, name) DUMMYTAG(WeaponDefs, T, name)
-	
+
 // General
 WEAPONTAG(std::string, description).externalName("name").defaultValue("Weapon").description("The descriptive name of the weapon as listed in FPS mode.");
 WEAPONTAG(std::string, type).externalName("weaponType").defaultValue("Cannon");
@@ -119,7 +119,7 @@ WEAPONTAG(float, predictBoost).defaultValue(0.0f);
 WEAPONDUMMYTAG(float, ownerExpAccWeight);
 
 // Laser Stuff
-WEAPONTAG(float, minIntensity).defaultValue(0.0f).description("The minimum percentage the weapon's damage can fall-off to over its range. Setting to 1.0 will disable fall off entirely. Unrelated to the visual-only [[intensity]] tag.");
+WEAPONTAG(float, minIntensity).defaultValue(0.0f).description("The minimum percentage the weapon's damage can fall-off to over its range. Setting to 1.0 will disable fall off entirely. Unrelated to the visual-only intensity tag.");
 WEAPONTAG(float, duration).defaultValue(0.05f);
 WEAPONTAG(float, beamtime).defaultValue(1.0f);
 WEAPONTAG(bool, beamburst).defaultValue(false);
@@ -136,45 +136,67 @@ WEAPONTAG(float, metalcost).externalName("metalPerShot").defaultValue(0.0f);
 WEAPONTAG(float, energycost).externalName("energyPerShot").defaultValue(0.0f);
 
 // Other Properties
-WEAPONTAG(float, fireStarter).defaultValue(0.0f).scaleValue(0.01f);
-WEAPONTAG(bool, paralyzer).defaultValue(false);
-WEAPONTAG(int, paralyzeTime,  damages.paralyzeDamageTime).defaultValue(10).minimumValue(0);
-WEAPONTAG(bool, stockpile).defaultValue(false);
-WEAPONTAG(float, stockpileTime).fallbackName("reload").defaultValue(1.0f);
+WEAPONTAG(float, fireStarter).defaultValue(0.0f).minimumValue(0.0f).maximumValue(100.0f).scaleValue(0.01f)
+	.description("The percentage chance of the weapon setting fire to static map features on impact.");
+WEAPONTAG(bool, paralyzer).defaultValue(false).description("Is the weapon a paralyzer? If true the weapon only stuns enemy units and does not cause damage in the form of lost hit-points.");
+WEAPONTAG(int, paralyzeTime,  damages.paralyzeDamageTime).defaultValue(10).minimumValue(0).description("Determines the maximum length of time in seconds that the target will be paralyzed. The timer is restarted every time the target is hit by the weapon. Cannot be less than 0.");
+WEAPONTAG(bool, stockpile).defaultValue(false).description("Does each round of the weapon have to be built and stockpiled by the player? Will only correctly function for the first of each stockpiled weapons a unit has.");
+WEAPONTAG(float, stockpileTime).fallbackName("reload").defaultValue(1.0f).description("The time in seconds taken to stockpile one round of the weapon.");
 
 // Interceptor
-WEAPONTAG(int, targetable).defaultValue(0);
-WEAPONTAG(int, interceptor).defaultValue(0);
-WEAPONDUMMYTAG(unsigned, interceptedByShieldType);
-WEAPONTAG(float, coverageRange).externalName("coverage").defaultValue(0.0f);
-WEAPONTAG(bool, interceptSolo).defaultValue(true).description("If true don't allow any other interceptors to target the same projectile.");
+WEAPONTAG(int, targetable).defaultValue(0).description("Bitmask representing the types of weapon that can intercept this weapon. Each digit of binary that is set to one means that a weapon with the corresponding digit in its interceptor tag will intercept this weapon. Instant-hitting weapons such as [#BeamLaser], [#LightningCannon] and [#Rifle] cannot be targeted.");
+WEAPONTAG(int, interceptor).defaultValue(0).description("Bitmask representing the types of weapons that this weapon can intercept. Each digit of binary that is set to one means that a weapon with the corresponding digit in its targetable tag will be intercepted by this weapon.");
+WEAPONDUMMYTAG(unsigned, interceptedByShieldType).description("");
+WEAPONTAG(float, coverageRange).externalName("coverage").defaultValue(0.0f).description("The radius in elmos within which an interceptor weapon will fire on targetable weapons.");
+WEAPONTAG(bool, interceptSolo).defaultValue(true).description("If true no other interceptors may target the same projectile.");
 
 // Dynamic Damage
-WEAPONTAG(bool, dynDamageInverted).defaultValue(false);
-WEAPONTAG(float, dynDamageExp).defaultValue(0.0f);
-WEAPONTAG(float, dynDamageMin).defaultValue(0.0f);
-WEAPONTAG(float, dynDamageRange).defaultValue(0.0f);
+WEAPONTAG(bool, dynDamageInverted).defaultValue(false).description("If true the damage curve is inverted i.e. the weapon does more damage at greater ranges as opposed to less.");
+WEAPONTAG(float, dynDamageExp).defaultValue(0.0f).description("Exponent of the range-dependent damage formula, the default of 0.0 disables dynamic damage, 1.0 means linear scaling, 2.0 quadratic and so on.");
+WEAPONTAG(float, dynDamageMin).defaultValue(0.0f).description("The minimum floor value that range-dependent damage can drop to.");
+WEAPONTAG(float, dynDamageRange).defaultValue(0.0f).description("If set to non-zero values the weapon will use this value in the range-dependant damage formula instead of the actual range.");
 
 // Shield
-WEAPONTAG(bool, shieldRepulser).externalName("shield.repulser").fallbackName("shieldRepulser").defaultValue(false);
-WEAPONTAG(bool, smartShield).externalName("shield.smart").fallbackName("smartShield").defaultValue(false);
-WEAPONTAG(bool, exteriorShield).externalName("shield.exterior").fallbackName("exteriorShield").defaultValue(false);
-WEAPONTAG(bool, visibleShield).externalName("shield.visible").fallbackName("visibleShield").defaultValue(false);
-WEAPONTAG(bool, visibleShieldRepulse).externalName("shield.visibleRepulse").fallbackName("visibleShieldRepulse").defaultValue(false);
-WEAPONTAG(int, visibleShieldHitFrames).externalName("visibleHitFrames").fallbackName("visibleShieldHitFrames").defaultValue(0);
-WEAPONTAG(float, shieldEnergyUse).externalName("shield.energyUse").fallbackName("shieldEnergyUse").defaultValue(0.0f);
-WEAPONTAG(float, shieldForce).externalName("shield.force").fallbackName("shieldForce").defaultValue(0.0f);
-WEAPONTAG(float, shieldRadius).externalName("shield.radius").fallbackName("shieldRadius").defaultValue(0.0f);
-WEAPONTAG(float, shieldMaxSpeed).externalName("shield.maxSpeed").fallbackName("shieldMaxSpeed").defaultValue(0.0f);
-WEAPONTAG(float, shieldPower).externalName("shield.power").fallbackName("shieldPower").defaultValue(0.0f);
-WEAPONTAG(float, shieldPowerRegen).externalName("shield.powerRegen").fallbackName("shieldPowerRegen").defaultValue(0.0f);
-WEAPONTAG(float, shieldPowerRegenEnergy).externalName("shield.powerRegenEnergy").fallbackName("shieldPowerRegenEnergy").defaultValue(0.0f);
-WEAPONDUMMYTAG(float, shieldRechargeDelay).externalName("rechargeDelay").fallbackName("shieldRechargeDelay").defaultValue(0).scaleValue(GAME_SPEED); // must be read as float
-WEAPONTAG(float, shieldStartingPower).externalName("shield.startingPower").fallbackName("shieldStartingPower").defaultValue(0.0f);
-WEAPONTAG(unsigned int, shieldInterceptType).externalName("shield.interceptType").fallbackName("shieldInterceptType").defaultValue(0);
-WEAPONTAG(float3, shieldBadColor).externalName("shield.badColor").fallbackName("shieldBadColor").defaultValue(float3(1.0f, 0.5f, 0.5f));
-WEAPONTAG(float3, shieldGoodColor).externalName("shield.goodColor").fallbackName("shieldGoodColor").defaultValue(float3(0.5f, 0.5f, 1.0f));
-WEAPONTAG(float, shieldAlpha).externalName("shield.alpha").fallbackName("shieldAlpha").defaultValue(0.2f);
+WEAPONTAG(bool, shieldRepulser).externalName("shield.repulser").fallbackName("shieldRepulser")
+	.defaultValue(false).description("Does the shield repulse (deflect) projectiles or absorb them?");
+WEAPONTAG(bool, smartShield).externalName("shield.smart").fallbackName("smartShield")
+	.defaultValue(false).description("Determines whether or not projectiles fired by allied units can pass through the shield (true) or are intercepted as enemy weapons are (false).");
+WEAPONTAG(bool, exteriorShield).externalName("shield.exterior").fallbackName("exteriorShield")
+	.defaultValue(false).description("Determines whether or not projectiles fired within the shield's radius can pass through the shield (true) or are intercepted (false).");
+
+WEAPONTAG(float, shieldMaxSpeed).externalName("shield.maxSpeed").fallbackName("shieldMaxSpeed")
+	.defaultValue(0.0f).description("The maximum speed the repulsor will impart to deflected projectiles.");
+WEAPONTAG(float, shieldForce).externalName("shield.force").fallbackName("shieldForce")
+	.defaultValue(0.0f).description("The force applied by the repulsor to the weapon - higher values will deflect weapons away at higher velocities.");
+WEAPONTAG(float, shieldRadius).externalName("shield.radius").fallbackName("shieldRadius")
+	.defaultValue(0.0f).description("The radius of the circular area the shield covers.");
+WEAPONTAG(float, shieldPower).externalName("shield.power").fallbackName("shieldPower")
+	.defaultValue(0.0f).description("Essentially the maximum allowed hit-points of the shield - reduced by the damage of a weapon upon impact.");
+WEAPONTAG(float, shieldStartingPower).externalName("shield.startingPower").fallbackName("shieldStartingPower")
+	.defaultValue(0.0f).description("How many hit-points the shield starts with - otherwise the shield must regenerate from 0 until it reaches maximum power.");
+WEAPONTAG(float, shieldPowerRegen).externalName("shield.powerRegen").fallbackName("shieldPowerRegen")
+	.defaultValue(0.0f).description("How many hit-points the shield regenerates each second.");
+WEAPONTAG(float, shieldPowerRegenEnergy).externalName("shield.powerRegenEnergy").fallbackName("shieldPowerRegenEnergy")
+	.defaultValue(0.0f).description("How much energy resource is consumed to regenerate each hit-point.");
+WEAPONTAG(float, shieldEnergyUse).externalName("shield.energyUse").fallbackName("shieldEnergyUse")
+	.defaultValue(0.0f).description("The amount of the energy resource consumed by the shield to absorb or repulse weapons, continually drained by a repulsor as long as the projectile is in range.");
+WEAPONDUMMYTAG(float, shieldRechargeDelay).externalName("rechargeDelay").fallbackName("shieldRechargeDelay").defaultValue(0)
+	.scaleValue(GAME_SPEED).description("The delay in seconds before a shield begins to regenerate after it is hit."); // must be read as float
+WEAPONTAG(unsigned int, shieldInterceptType).externalName("shield.interceptType").fallbackName("shieldInterceptType")
+	.defaultValue(0).description("Bitmask representing the types of weapons that this shield can intercept. Each digit of binary that is set to one means that a weapon with the corresponding digit in its [interceptedByShieldType] will be intercepted by this shield (See [Shield Interception Tag] Use).");
+
+WEAPONTAG(bool, visibleShield).externalName("shield.visible").fallbackName("visibleShield")
+	.defaultValue(false).description("Is the shield visible or not?");
+WEAPONTAG(bool, visibleShieldRepulse).externalName("shield.visibleRepulse").fallbackName("visibleShieldRepulse")
+	.defaultValue(false).description("Is the (hard-coded) repulse effect rendered or not?");
+WEAPONTAG(int, visibleShieldHitFrames).externalName("visibleHitFrames").fallbackName("visibleShieldHitFrames")
+	.defaultValue(0).description("The number of frames a shield becomes visible for when hit.");
+WEAPONTAG(float3, shieldBadColor).externalName("shield.badColor").fallbackName("shieldBadColor")
+	.defaultValue(float3(1.0f, 0.5f, 0.5f)).description("The RGB colour the shield transitions to as its hit-points are reduced towards 0.");
+WEAPONTAG(float3, shieldGoodColor).externalName("shield.goodColor").fallbackName("shieldGoodColor")
+	.defaultValue(float3(0.5f, 0.5f, 1.0f)).description("The RGB colour the shield transitions to as its hit-points are regenerated towards its maximum power.");
+WEAPONTAG(float, shieldAlpha).externalName("shield.alpha").fallbackName("shieldAlpha")
+	.defaultValue(0.2f).description("The alpha transparency of the shield whilst it is visible.");
 
 
 
@@ -209,7 +231,7 @@ WEAPONTAG(bool, laserHardStop).externalName("hardstop").defaultValue(false);
 // Color
 WEAPONTAG(float3, rgbColor, visuals.color).defaultValue(float3(1.0f, 0.5f, 0.0f));
 WEAPONTAG(float3, rgbColor2, visuals.color2).defaultValue(float3(1.0f, 1.0f, 1.0f));
-WEAPONTAG(float, intensity).defaultValue(0.9f).description("Alpha transparency for non-3D model projectiles. Lower values are more opaque, but 0.0 will cause the projectile to disappear entirely.");
+WEAPONTAG(float, intensity).defaultValue(0.9f).description("Alpha transparency for non-model projectiles. Lower values are more opaque, but 0.0 will cause the projectile to disappear entirely.");
 WEAPONDUMMYTAG(std::string, colormap);
 
 WEAPONTAG(std::string, textures1, visuals.texNames[0]).externalName("textures.1").fallbackName("texture1").defaultValue("");
