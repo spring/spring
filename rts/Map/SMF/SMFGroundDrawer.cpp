@@ -23,6 +23,8 @@
 
 
 CONFIG(int, GroundDetail).defaultValue(60).minimumValue(0).maximumValue(200).description("Controls how detailed the map geometry will be. On lowered settings, cliffs may appear to be jagged or \"melting\".");
+CONFIG(bool, MapBorder).defaultValue(true).description("Draws a border around the map.");
+
 
 CONFIG(int, MaxDynamicMapLights)
 	.defaultValue(1)
@@ -60,6 +62,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	//     (see AdvMapShadingActionExecutor), so we will always use
 	//     smfRenderStateFFP (in ::Draw) in that special case and it
 	//     does not matter if smfRenderStateSSP is initialized
+	mapborder    = configHandler->GetBool("MapBorder");
 	groundDetail = configHandler->GetInt("GroundDetail");
 	advShading = smfRenderStateSSP->Init(this);
 
@@ -246,7 +249,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 			DrawWaterPlane(false);
 		}
 
-		{
+		if (mapborder) {
 			SCOPED_TIMER("CSMFGroundDrawer::DrawBorder");
 			DrawBorder(drawPass);
 		}

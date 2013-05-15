@@ -464,6 +464,29 @@ public:
 };
 
 
+class MapBorderActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MapBorderActionExecutor() : IUnsyncedActionExecutor("MapBorder",
+			"Set or toggle map border rendering") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readmap->GetGroundDrawer());
+		if (!smfGD)
+			return false;
+
+		if (!action.GetArgs().empty()) {
+			bool enable = true;
+			SetBoolArg(enable, action.GetArgs());
+
+			if (enable != smfGD->ToggleMapBorder())
+				smfGD->ToggleMapBorder();
+
+		} else {
+			smfGD->ToggleMapBorder();
+		}
+		return true;
+	}
+};
 
 
 class ShadowsActionExecutor : public IUnsyncedActionExecutor {
@@ -3303,6 +3326,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DeselectActionExecutor());
 	AddActionExecutor(new ShadowsActionExecutor());
 	AddActionExecutor(new RoamActionExecutor());
+	AddActionExecutor(new MapBorderActionExecutor());
 	AddActionExecutor(new WaterActionExecutor());
 	AddActionExecutor(new AdvModelShadingActionExecutor());
 	AddActionExecutor(new AdvMapShadingActionExecutor());
