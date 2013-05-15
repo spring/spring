@@ -20,6 +20,8 @@ Misc:
      PNG, JPG, TGA, DDS, BMP
  - more verbose CEG parsing (warns now about unknown tags)
  - switch to a high precision clock all over the engine (including Lua)
+ - copied a lot config descriptions from wiki to the engine (thx for all the wiki'ers)
+ - Springsettings.cfg wiki page is now automatically updated with each release
 
 Sim:
  - reduce target-lost CAI timeout from 8 to 2 seconds
