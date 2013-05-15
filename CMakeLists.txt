@@ -245,7 +245,7 @@ if    (MINGW)
 	set(SDL_INCLUDE_DIR "${MINGWLIBS}/include/SDL")
 endif (MINGW)
 
-FIND_PACKAGE(Boost 1.47.0 COMPONENTS thread regex program_options system chrono signals REQUIRED)
+FIND_PACKAGE(Boost 1.47.0 COMPONENTS thread regex program_options system chrono signals filesystem REQUIRED)
 FIND_PACKAGE(Boost 1.47.0 COMPONENTS timer)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
