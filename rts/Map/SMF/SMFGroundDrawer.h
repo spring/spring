@@ -43,6 +43,7 @@ public:
 	void IncreaseDetail();
 	void DecreaseDetail();
 	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
+	bool ToggleMapBorder() { mapborder = !mapborder; return mapborder; }
 
 	const CSMFReadMap* GetReadMap() const { return smfMap; }
 	      CSMFReadMap* GetReadMap()       { return smfMap; }
@@ -61,6 +62,7 @@ protected:
 	IMeshDrawer* meshDrawer;
 
 	int groundDetail;
+	bool mapborder;
 
 	GLuint waterPlaneCamOutDispList;
 	GLuint waterPlaneCamInDispList;
