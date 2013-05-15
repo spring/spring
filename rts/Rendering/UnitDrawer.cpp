@@ -78,7 +78,7 @@ CONFIG(int, MaxDynamicModelLights)
 	.defaultValue(1)
 	.minimumValue(0);
 
-CONFIG(bool, AdvUnitShading).defaultValue(true);
+CONFIG(bool, AdvUnitShading).defaultValue(true).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
 CONFIG(float, LODScaleReflection).defaultValue(1.0f);

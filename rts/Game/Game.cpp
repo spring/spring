@@ -168,7 +168,7 @@ extern gmlClientServer<void, int,CUnit*>* gmlProcessor;
 
 
 CONFIG(bool, WindowedEdgeMove).defaultValue(true).description("Sets whether moving the mouse cursor to the screen edge will move the camera across the map.");
-CONFIG(bool, FullscreenEdgeMove).defaultValue(true).description("see [[#WindowedEdgeMove]], just for fullscreen mode");
+CONFIG(bool, FullscreenEdgeMove).defaultValue(true).description("see WindowedEdgeMove, just for fullscreen mode");
 CONFIG(bool, ShowFPS).defaultValue(false).description("Displays current framerate.");
 CONFIG(bool, ShowClock).defaultValue(true).description("Displays a clock on the top-right corner of the screen showing the elapsed time of the current game.");
 CONFIG(bool, ShowSpeed).defaultValue(false).description("Displays current game speed.");
