@@ -30,7 +30,15 @@ fi
 PYCODE=$(cat <<EOF
 import json, sys
 d=json.load(sys.stdin)
-for cfgtag,t in sorted(d['WeaponDefs'].iteritems()):
+d=d['WeaponDefs']
+for cfgtag in d.iterkeys():
+	needle = " " + cfgtag + " "
+ 	anchor = " {{taglink|" + cfgtag + "}} "
+ 	for c,t in d.iteritems():
+		if c != cfgtag:
+			if "description" in t:
+				t['description'] = t['description'].replace(needle, anchor, 1)
+for cfgtag,t in sorted(d.iteritems()):
 	tmp = "|name=" + cfgtag
 	if "fallbackName" in t:
 		tmp += "|fallback=" + t['fallbackName']

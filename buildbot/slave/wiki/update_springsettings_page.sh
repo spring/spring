@@ -33,6 +33,13 @@ fi
 PYCODE=$(cat <<EOF
 import json, sys, re
 d=json.load(sys.stdin)
+for cfgtag in d.iterkeys():
+	needle = " " + cfgtag + " "
+ 	anchor = "{{taglink|" + cfgtag + "}}"
+ 	for c,t in d.iteritems():
+		if c != cfgtag:
+			if "description" in t:
+				t['description'] = t['description'].replace(needle, anchor, 1)
 for cfgtag,t in sorted(d.iteritems()):
 	if cfgtag == 'test':
 		continue
