@@ -28,7 +28,7 @@ if [ $? != 0 ]; then
 fi
 
 PYCODE=$(cat <<EOF
-import json, sys
+import json, sys, re
 d=json.load(sys.stdin)
 d=d['WeaponDefs']
 
