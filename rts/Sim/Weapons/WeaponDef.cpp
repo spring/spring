@@ -183,7 +183,7 @@ WEAPONTAG(float, shieldEnergyUse).externalName("shield.energyUse").fallbackName(
 WEAPONDUMMYTAG(float, shieldRechargeDelay).externalName("rechargeDelay").fallbackName("shieldRechargeDelay").defaultValue(0)
 	.scaleValue(GAME_SPEED).description("The delay in seconds before a shield begins to regenerate after it is hit."); // must be read as float
 WEAPONTAG(unsigned int, shieldInterceptType).externalName("shield.interceptType").fallbackName("shieldInterceptType")
-	.defaultValue(0).description("Bitmask representing the types of weapons that this shield can intercept. Each digit of binary that is set to one means that a weapon with the corresponding digit in its [interceptedByShieldType] will be intercepted by this shield (See [Shield Interception Tag] Use).");
+	.defaultValue(0).description("Bitmask representing the types of weapons that this shield can intercept. Each digit of binary that is set to one means that a weapon with the corresponding digit in its interceptedByShieldType will be intercepted by this shield (See [[Shield Interception Tag]] Use).");
 
 WEAPONTAG(bool, visibleShield).externalName("shield.visible").fallbackName("visibleShield")
 	.defaultValue(false).description("Is the shield visible or not?");

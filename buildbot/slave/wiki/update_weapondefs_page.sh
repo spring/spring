@@ -31,13 +31,19 @@ PYCODE=$(cat <<EOF
 import json, sys
 d=json.load(sys.stdin)
 d=d['WeaponDefs']
+
 for cfgtag in d.iterkeys():
-	needle = " " + cfgtag + " "
- 	anchor = " {{taglink|" + cfgtag + "}} "
- 	for c,t in d.iteritems():
+	anchor = "{{taglink|" + cfgtag + "}}"
+	rneedle  = r"(.*\w*)" + cfgtag + r"(\w*.*)"
+	rh = re.compile(rneedle)
+	rreplace = r"\1" + anchor + r"\2"
+
+	for c,t in d.iteritems():
 		if c != cfgtag:
 			if "description" in t:
-				t['description'] = t['description'].replace(needle, anchor, 1)
+				if t['description'].find(cfgtag) >= 0:
+					t['description'] = rh.sub(rreplace, t['description'])
+
 for cfgtag,t in sorted(d.iteritems()):
 	tmp = "|name=" + cfgtag
 	if "fallbackName" in t:
