@@ -1695,8 +1695,11 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float3 separationVector   = collider->pos - collidee->pos;
 		const float separationMinDistSq = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
 
-		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
-			continue;
+		if (collideeMobile && colliderMobile)
+		{	//Leeway for collision with mobile unit only
+			if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
+				continue;
+		}
 
 		if (collidee == collider) continue;
 		if (collidee->IsSkidding()) continue;
