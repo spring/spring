@@ -364,7 +364,6 @@ void CSound::StartThread(int maxSounds)
 
 		alListenerf(AL_GAIN, masterVolume);
 	}
-	configHandler->Set("MaxSounds", maxSounds);
 
 	Threading::SetThreadName("audio");
 	Watchdog::RegisterThread(WDT_AUDIO);
