@@ -319,6 +319,7 @@ void CSound::StartThread(int maxSounds)
 				return;
 			}
 		}
+		maxSounds = GetMaxMonoSources(device, maxSounds);
 
 		LOG("OpenAL info:");
 		if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
@@ -590,3 +591,25 @@ void CSound::NewFrame()
 	Channels::UnitReply.UpdateFrame();
 	Channels::UserInterface.UpdateFrame();
 }
+
+
+// try to get the maximum number of supported sounds, this is similar to code CSound::StartThread
+// but should be more safe
+int CSound::GetMaxMonoSources(ALCdevice* device, int maxSounds)
+{
+	ALCint size;
+	alcGetIntegerv(device, ALC_ATTRIBUTES_SIZE, 1, &size);
+	std::vector<ALCint> attrs(size);
+	alcGetIntegerv(device, ALC_ALL_ATTRIBUTES, size, &attrs[0] );
+	for (int i=0; i<attrs.size(); ++i){
+		if (attrs[i] == ALC_MONO_SOURCES) {
+			const int maxMonoSources = attrs.at(i + 1);
+			if (maxMonoSources < maxSounds) {
+				LOG_L(L_WARNING, "Hardware supports only %d Sound sources, MaxSounds=%d, using Hardware Limit", maxMonoSources, maxSounds);
+			}
+			return std::min(maxSounds, maxMonoSources);
+		}
+	}
+	return maxSounds;
+}
+
