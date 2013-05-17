@@ -70,10 +70,10 @@ static std::string CreateAbsolutePath(const std::string& relativePath)
 	std::string absolutePath = UnQuote(relativePath);
 
 	if (absolutePath.length() > 0 && (absolutePath[0] == '/')) {
-		//! is already absolute
+		// is already absolute
 	} else {
 		if (absolutePath.find("./") == 0) {
-			//! remove initial "./"
+			// remove initial "./"
 			absolutePath = absolutePath.substr(2);
 		}
 
@@ -166,7 +166,7 @@ static uintptr_t HexToInt(const char* hexStr)
  */
 static void FindBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_baseMemAddr)
 {
-	//! store all paths which we have to find
+	// store all paths which we have to find
 	std::set<std::string> paths_notFound;
 	std::map<std::string,uintptr_t>::const_iterator bpbmai;
 	for (bpbmai = binPath_baseMemAddr.begin(); bpbmai != binPath_baseMemAddr.end(); ++bpbmai) {
@@ -174,32 +174,32 @@ static void FindBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 	}
 
 	FILE* mapsFile = NULL;
-	//! /proc/self/maps contains the base addresses for all loaded dynamic
-	//! libaries of the current process + other stuff (which we are not interested in)
+	// /proc/self/maps contains the base addresses for all loaded dynamic
+	// libaries of the current process + other stuff (which we are not interested in)
 	mapsFile = fopen("/proc/self/maps", "rb");
 	if (mapsFile != NULL) {
 		std::set<std::string>::const_iterator pi;
-		//! format of /proc/self/maps:
-		//! (column names)  address           perms offset  dev   inode      pathname
-		//! (example 32bit) 08048000-08056000 r-xp 00000000 03:0c 64593      /usr/sbin/gpm
-		//! (example 64bit) ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0   [vsyscall]
+		// format of /proc/self/maps:
+		// (column names)  address           perms offset  dev   inode      pathname
+		// (example 32bit) 08048000-08056000 r-xp 00000000 03:0c 64593      /usr/sbin/gpm
+		// (example 64bit) ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0   [vsyscall]
 		unsigned long int mem_start;
 		unsigned long int binAddr_offset;
 		char              binPathName[512];
 
 		char line[512];
 		int red;
-		//! read all lines
+		// read all lines
 		while (!paths_notFound.empty() && (fgets(line, 511, mapsFile) != NULL)) {
-			//! parse the line
+			// parse the line
 			red = sscanf(line, "%lx-%*x %*s %lx %*s %*u %s",
 					&mem_start, &binAddr_offset, binPathName);
 
 			if (red == 3) {
 				if (binAddr_offset == 0) {
-					//!-> start of binary's memory space
+					//-> start of binary's memory space
 					std::string matchingPath = "";
-					//! go through all paths of the binaries involved in the stack trace
+					// go through all paths of the binaries involved in the stack trace
 					for (pi = paths_notFound.begin(); pi != paths_notFound.end(); ++pi) {
 						// does the current line contain this binary?
 						if (*pi == binPathName) {
@@ -224,13 +224,13 @@ static void FindBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
  */
 static std::string ExtractPath(const std::string& line)
 {
-	//! example paths: "./spring" "/usr/lib/AI/Skirmish/NTai/0.666/libSkirmishAI.so"
+	// example paths: "./spring" "/usr/lib/AI/Skirmish/NTai/0.666/libSkirmishAI.so"
 	std::string path;
-	size_t end   = line.find_last_of('('); //! if there is a function name
+	size_t end   = line.find_last_of('('); // if there is a function name
 	if (end == std::string::npos) {
-		end = line.find_last_of('['); //! if there is only the memory address
+		end = line.find_last_of('['); // if there is only the memory address
 		if ((end != std::string::npos) && (end > 0)) {
-			end--; //! to get rid of the ' ' before the '['
+			end--; // to get rid of the ' ' before the '['
 		}
 	}
 	if (end == std::string::npos) {
@@ -248,7 +248,7 @@ static std::string ExtractPath(const std::string& line)
  */
 static uintptr_t ExtractAddr(const std::string& line)
 {
-	//! example address: "0x89a8206"
+	// example address: "0x89a8206"
 	uintptr_t addr = INVALID_ADDR_INDICATOR;
 	size_t begin = line.find_last_of('[');
 	size_t end = std::string::npos;
@@ -264,7 +264,7 @@ static uintptr_t ExtractAddr(const std::string& line)
 
 static void TranslateStackTrace(std::vector<std::string>* lines, const std::vector< std::pair<std::string,uintptr_t> >& paths)
 {
-	//! Check if addr2line is available
+	// Check if addr2line is available
 	static int addr2line_found = -1;
 	if (addr2line_found < 0)
 	{
@@ -281,14 +281,14 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 		return;
 	}
 
-	//! Detect BaseMemoryAddresses of all Lib's found in the stacktrace
+	// Detect BaseMemoryAddresses of all Lib's found in the stacktrace
 	std::map<std::string,uintptr_t> binPath_baseMemAddr;
 	for (std::vector< std::pair<std::string,uintptr_t> >::const_iterator it = paths.begin(); it != paths.end(); ++it) {
 		binPath_baseMemAddr[it->first] = 0;
 	}
 	FindBaseMemoryAddresses(binPath_baseMemAddr);
 
-	//! Finally translate it
+	// Finally translate it
 	for (std::map<std::string,uintptr_t>::const_iterator it = binPath_baseMemAddr.begin(); it != binPath_baseMemAddr.end(); ++it) {
 		const std::string& libName = it->first;
 		const uintptr_t&   libAddr = it->second;
@@ -369,30 +369,30 @@ namespace CrashHandler
 			LOG_I(logLevel, "Stacktrace:");
 		}
 
-		bool containsOglSo = false; //! OpenGL lib -> graphic problem
+		bool containsOglSo = false; // OpenGL lib -> graphic problem
 		bool containedAIInterfaceSo = false;
 		bool containedSkirmishAISo  = false;
 
 		std::vector<std::string> stacktrace;
 		std::vector< std::pair<std::string,uintptr_t> > symbols;
 
-		//! Get untranslated stacktrace symbols
+		// Get untranslated stacktrace symbols
 		{
-			//! process and analyse the raw stack trace
+			// process and analyse the raw stack trace
 			std::vector<void*> buffer(MAX_STACKTRACE_DEPTH + 2);
 			int numLines;
 			if (hThread && Threading::GetCurrentThread() != *hThread) {
 				LOG_I(logLevel, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
 				LOG_CLEANUP();
-				numLines = thread_backtrace(*hThread, &buffer[0], buffer.size());    //! stack pointers
+				numLines = thread_backtrace(*hThread, &buffer[0], buffer.size());    // stack pointers
 			} else {
-				numLines = backtrace(&buffer[0], buffer.size());    //! stack pointers
-				buffer.erase(buffer.begin()); //! pop Stacktrace()
-				buffer.erase(buffer.begin()); //! pop HandleSignal()
+				numLines = backtrace(&buffer[0], buffer.size());    // stack pointers
+				buffer.erase(buffer.begin()); // pop Stacktrace()
+				buffer.erase(buffer.begin()); // pop HandleSignal()
 				numLines -= 2;
 			}
 			numLines = (numLines > MAX_STACKTRACE_DEPTH) ? MAX_STACKTRACE_DEPTH : numLines;
-			char** lines = backtrace_symbols(&buffer[0], numLines); //! give them meaningfull names
+			char** lines = backtrace_symbols(&buffer[0], numLines); // give them meaningfull names
 
 			stacktrace.reserve(numLines);
 			for (int l = 0; l < numLines; l++) {
@@ -406,19 +406,19 @@ namespace CrashHandler
 			return;
 		}
 
-		//! Extract important data from backtrace_symbols' output
+		// Extract important data from backtrace_symbols' output
 		{
 			for (std::vector<std::string>::iterator it = stacktrace.begin(); it != stacktrace.end(); ++it) {
 				std::pair<std::string,uintptr_t> data;
 
-				//! prepare for TranslateStackTrace()
+				// prepare for TranslateStackTrace()
 				const std::string path    = ExtractPath(*it);
 				const std::string absPath = CreateAbsolutePath(path);
 				data.first  = absPath;
 				data.second = ExtractAddr(*it);
 				symbols.push_back(data);
 
-				//! check if there are known sources of fail on the stack
+				// check if there are known sources of fail on the stack
 				containsOglSo = (containsOglSo || (path.find("libGLcore.so") != std::string::npos));
 				containsOglSo = (containsOglSo || (path.find("psb_dri.so") != std::string::npos));
 				containsOglSo = (containsOglSo || (path.find("i965_dri.so") != std::string::npos));
@@ -431,7 +431,7 @@ namespace CrashHandler
 				}
 			}
 
-			//! Linux Graphic drivers are known to fail with moderate OpenGL usage
+			// Linux Graphic drivers are known to fail with moderate OpenGL usage
 			if (containsOglSo) {
 				LOG_I(logLevel, "This stack trace indicates a problem with your graphic card driver. "
 						"Please try upgrading or downgrading it. "
@@ -439,8 +439,8 @@ namespace CrashHandler
 						"Also try lower graphic details and disabling Lua widgets in spring-settings.\n");
 			}
 
-			//! if stack trace contains AI and AI Interface frames,
-			//! it is very likely that the problem lies in the AI only
+			// if stack trace contains AI and AI Interface frames,
+			// it is very likely that the problem lies in the AI only
 			if (containedSkirmishAISo) {
 				containedAIInterfaceSo = false;
 			}
@@ -456,10 +456,10 @@ namespace CrashHandler
 			LOG_CLEANUP();
 		}
 
-		//! Translate it
+		// Translate it
 		TranslateStackTrace(&stacktrace, symbols);
 
-		//! Print out the translated StackTrace
+		// Print out the translated StackTrace
 		unsigned numLine = 0;
 		for (std::vector<std::string>::iterator it = stacktrace.begin(); it != stacktrace.end(); ++it) {
 			LOG_I(logLevel, "  <%u> %s", numLine++, it->c_str());
@@ -488,15 +488,15 @@ namespace CrashHandler
 	void HandleSignal(int signal)
 	{
 		if (signal == SIGINT) {
-			//! ctrl+c = kill
+			// ctrl+c = kill
 			LOG("caught SIGINT, aborting");
 
-			//! first try a clean exit
+			// first try a clean exit
 			SDL_Event event;
 			event.type = SDL_QUIT;
 			SDL_PushEvent(&event);
 
-			//! abort after 5sec
+			// abort after 5sec
 			boost::thread(boost::bind(&ForcedExitAfterFiveSecs));
 			boost::thread(boost::bind(&ForcedExitAfterTenSecs));
 			return;
@@ -581,7 +581,7 @@ namespace CrashHandler
 				<< error << ".\n\n"
 				<< "A stacktrace has been written to:\n"
 				<< "  " << logOutput.GetFilePath();
-			ErrorMessageBox(buf.str(), "Spring crashed", MBF_OK | MBF_CRASH); //! this also calls exit()
+			ErrorMessageBox(buf.str(), "Spring crashed", MBF_OK | MBF_CRASH); // this also calls exit()
 		}
 	}
 
