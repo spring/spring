@@ -360,6 +360,9 @@ namespace CrashHandler
 {
 	static void Stacktrace(bool* aiCrash, pthread_t* hThread = NULL, const char* threadName = NULL, const int logLevel = LOG_LEVEL_ERROR)
 	{
+#ifndef DEDICATED
+		Watchdog::ClearTimer();
+#endif
 		if (threadName) {
 			LOG_I(logLevel, "Stacktrace (%s):", threadName);
 		} else {
@@ -484,9 +487,6 @@ namespace CrashHandler
 
 	void HandleSignal(int signal)
 	{
-#ifndef DEDICATED
-		Watchdog::ClearTimer();
-#endif
 		if (signal == SIGINT) {
 			//! ctrl+c = kill
 			LOG("caught SIGINT, aborting");
