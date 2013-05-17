@@ -39,7 +39,7 @@ public:
 
 struct SolidObjectDef {
 public:
-	CR_DECLARE(SolidObjectDef)
+	CR_DECLARE_STRUCT(SolidObjectDef)
 
 	SolidObjectDef();
 	virtual ~SolidObjectDef();
