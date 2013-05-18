@@ -1060,7 +1060,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)msg.fromPlayer));
 					break;
 				}
-				if (a < mutedPlayers.size() && mutedPlayersChat[a] ) {
+				if (a < mutedPlayersChat.size() && mutedPlayersChat[a] ) {
 					//this player is muted, drop his messages quietly
 					break;
 				}
@@ -1298,7 +1298,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
 					break;
 				}
-				if (a < mutedPlayers.size() && mutedPlayersDraw[a] ) {
+				if (a < mutedPlayersDraw.size() && mutedPlayersDraw[a] ) {
 					//this player is muted, drop his messages quietly
 					break;
 				}
