@@ -195,8 +195,9 @@ private:
 	std::vector<GameParticipant> players;
 	std::vector<GameTeam> teams;
 	std::vector<unsigned char> winningAllyTeams;
-	//! bit0: chat mute, bit1: drawing mute
-	std::vector<int> mutedPlayers;
+
+	std::vector<bool> mutedPlayersChat;
+	std::vector<bool> mutedPlayersDraw;
 
 	float medianCpu;
 	int medianPing;

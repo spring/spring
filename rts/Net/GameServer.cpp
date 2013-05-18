@@ -1060,7 +1060,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)msg.fromPlayer));
 					break;
 				}
-				if (a < mutedPlayers.size() && mutedPlayers[a]&0x1 ) {
+				if (a < mutedPlayers.size() && mutedPlayersChat[a] ) {
 					//this player is muted, drop his messages quietly
 					break;
 				}
@@ -1298,7 +1298,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
 					break;
 				}
-				if (a < mutedPlayers.size() && mutedPlayers[a]&0x2 ) {
+				if (a < mutedPlayers.size() && mutedPlayersDraw[a] ) {
 					//this player is muted, drop his messages quietly
 					break;
 				}
@@ -2378,15 +2378,14 @@ void CGameServer::MutePlayer(const int playerNum, bool muteChat, bool muteDraw )
 		LOG_L(L_WARNING,"invalid playerNum");
 		return;
 	}
-	int muteState = 0;
-	muteState = muteChat;
-	muteState += ((int)muteDraw)*2;
-	if ( playerNum < mutedPlayers.size() ) {
-		mutedPlayers[playerNum] = muteState;
+	if ( playerNum < mutedPlayersChat.size() ) {
+		mutedPlayersChat.resize(playerNum);
 	}
-	else {
-		mutedPlayers.insert(mutedPlayers.begin()+playerNum,muteState);
+	if ( playerNum < mutedPlayersDraw.size() ) {
+		mutedPlayersDraw.resize(playerNum);
 	}
+	mutedPlayersChat[playerNum] = muteChat;
+	mutedPlayersDraw[playerNum] = muteDraw;
 }
 
 void CGameServer::SpecPlayer(const int player) {
