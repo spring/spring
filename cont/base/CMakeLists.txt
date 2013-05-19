@@ -26,6 +26,9 @@ MACRO(CreateBaseContentArchive outputdir filename files)
 		DEPENDS ${files}
 	)
 
+	### regenerate output file, when input changed
+	set_source_files_properties(${outputfile} PROPERTIES GENERATED TRUE)
+
 	### add target & dependencies to basecontent
 	add_custom_target(${filename} DEPENDS ${outputfile})
 	add_dependencies(basecontent ${filename})
