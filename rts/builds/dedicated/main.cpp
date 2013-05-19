@@ -19,6 +19,7 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
+#include "System/Log/ConsoleSink.h"
 #include "System/Log/ILog.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/LogOutput.h"
@@ -68,6 +69,7 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 	cmdline.AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
 	cmdline.AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
 	cmdline.AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
+	cmdline.AddSwitch(0,   "nocolor",            "Disables colorized stdout");
 
 	try {
 		cmdline.Parse();
@@ -76,6 +78,12 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 		cmdline.PrintUsage();
 		exit(1);
 	}
+
+#ifndef WIN32
+	if (!cmdline.IsSet("nocolor")) {
+		log_console_colorizedOutput(true);
+	}
+#endif
 
 	if (cmdline.IsSet("help")) {
 		cmdline.PrintUsage();

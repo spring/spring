@@ -43,13 +43,13 @@ ulimit -t 180
 rm -rf ~/.config/spring/cache/
 
 # start up the client in background
-$RUNCLIENT $1 &
+$RUNCLIENT "$1 --nocolor" &
 PID_CLIENT=$!
 
 # start host
 echo "Starting Host"
 set +e #temp disable abort on error
-$@ &
+$@ --nocolor &
 PID_HOST=$!
 
 # auto kill host after 15mins

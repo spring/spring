@@ -17,6 +17,9 @@
 extern "C" {
 #endif
 
+static bool colorizedOutput = false;
+
+
 /// Choose the out-stream for logging
 static inline FILE* log_chooseStream(int level) {
 
@@ -37,6 +40,12 @@ static inline FILE* log_chooseStream(int level) {
  */
 ///@{
 
+
+void log_console_colorizedOutput(bool enable) {
+	colorizedOutput = enable;
+}
+
+
 /// Records a log entry
 static void log_sink_record_console(const char* section, int level,
 		const char* record)
@@ -45,13 +54,20 @@ static void log_sink_record_console(const char* section, int level,
 	log_framePrefixer_createPrefix(framePrefix, sizeof(framePrefix));
 
 	FILE* outStream = log_chooseStream(level);
-	if (level >= LOG_LEVEL_ERROR) {
-		FPRINTF(outStream, "\033[90m%s\033[31m%s\033[39m\n", framePrefix, record);
-	} else if (level >= LOG_LEVEL_WARNING) {
-		FPRINTF(outStream, "\033[90m%s\033[33m%s\033[39m\n", framePrefix, record);
-	} else {
-		FPRINTF(outStream, "\033[90m%s\033[39m%s\n", framePrefix, record);
+
+	const char* fstr = "%s%s\n";
+	if (colorizedOutput) {
+		if (level >= LOG_LEVEL_ERROR) {
+			fstr = "\033[90m%s\033[31m%s\033[39m\n";
+		} else if (level >= LOG_LEVEL_WARNING) {
+			fstr = "\033[90m%s\033[33m%s\033[39m\n";
+		} else {
+			fstr = "\033[90m%s\033[39m%s\n";
+		}
 	}
+
+	FPRINTF(outStream, fstr, framePrefix, record);
+
 	// *printf does not always flush after a newline
 	// (eg. if stdout is being redirected to a file)
 	fflush(outStream);
