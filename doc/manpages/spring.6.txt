@@ -78,6 +78,9 @@ Options
 
 *--sync-version*::
   Display program sync version (for online gaming) and exit
+
+*--nocolor*::
+  Disables colorized stdout
 ifndef::GUILESS[ ]
 ifndef::GUILESS[*-f, --fullscreen*::]
 ifndef::GUILESS[  Run in fullscreen mode]

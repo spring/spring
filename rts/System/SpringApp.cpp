@@ -44,6 +44,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/GlobalConfig.h"
+#include "System/Log/ConsoleSink.h"
 #include "System/Log/ILog.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/LogOutput.h"
@@ -686,6 +687,7 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddInt(   'x', "xresolution",        "Set X resolution");
 	cmdline->AddInt(   'y', "yresolution",        "Set Y resolution");
 	cmdline->AddSwitch('b', "minimise",           "Start in background (minimised)");
+	cmdline->AddSwitch(0,   "nocolor",            "Disables colorized stdout");
 	cmdline->AddSwitch('s', "server",             "Run as a server");
 	cmdline->AddSwitch('c', "client",             "Run as a client");
 
@@ -717,6 +719,12 @@ void SpringApp::ParseCmdLine()
 		cmdline->PrintUsage();
 		exit(EXIT_FAILURE);
 	}
+
+#ifndef WIN32
+	if (!cmdline->IsSet("nocolor")) {
+		log_console_colorizedOutput(true);
+	}
+#endif
 
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->IsSet("help")) {

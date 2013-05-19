@@ -53,9 +53,9 @@
 #include <SDL_keysym.h>
 
 
-CONFIG(bool, HardwareCursor).defaultValue(false).description("Sets hardware mouse cursor rendering. If you have a low framerate, your mouse cursor will seem \"laggy\". Setting hardware cursor will render the mouse cursor separately from spring and the mouse will behave normally. Note not supported by all GPU drivers in fullscreen mode!");
+CONFIG(bool, HardwareCursor).defaultValue(false).description("Sets hardware mouse cursor rendering. If you have a low framerate, your mouse cursor will seem \"laggy\". Setting hardware cursor will render the mouse cursor separately from spring and the mouse will behave normally. Note, not all GPU drivers support it in fullscreen mode!");
 CONFIG(bool, InvertMouse).defaultValue(false);
-CONFIG(float, DoubleClickTime).defaultValue(200.0f);
+CONFIG(float, DoubleClickTime).defaultValue(200.0f).description("Double click time in milliseconds.");
 
 CONFIG(float, ScrollWheelSpeed)
 	.defaultValue(25.0f)
