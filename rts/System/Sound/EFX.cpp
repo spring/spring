@@ -135,7 +135,9 @@ CEFX::CEFX(ALCdevice* device)
 		|| (maxSlots<1)
 		|| (maxSlotsPerSource<1)
 	) {
-		LOG_L(L_WARNING, "  EFX Supported: no");
+		if (enabled) {
+			LOG_L(L_WARNING, "  EFX Supported: no");
+		}
 		supported = false;
 		return;
 	}
