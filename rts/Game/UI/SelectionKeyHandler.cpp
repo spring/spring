@@ -8,7 +8,6 @@
 #include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
-#include "KeyBindings.h"
 #include "MouseHandler.h"
 #include "SelectionKeyHandler.h"
 #include "Map/Ground.h"
