@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <string>
+#include <exception>
 #include <boost/program_options.hpp>
 
 /**
@@ -14,6 +15,8 @@
  */
 class CmdLineParams
 {
+public:
+	typedef std::runtime_error unrecognized_option;
 
 public:
 	/**

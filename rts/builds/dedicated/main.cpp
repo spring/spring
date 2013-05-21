@@ -70,13 +70,16 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 	cmdline.AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
 	cmdline.AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
 	cmdline.AddSwitch(0,   "nocolor",            "Disables colorized stdout");
+	cmdline.AddSwitch('q', "quiet",              "Ignore unrecognized arguments");
 
 	try {
 		cmdline.Parse();
-	} catch (const std::exception& err) {
-		LOG("%s\n", err.what());
-		cmdline.PrintUsage();
-		exit(1);
+	} catch (const CmdLineParams::unrecognized_option& err) {
+		LOG_L(L_ERROR, "%s\n", err.what());
+		if (!cmdline.IsSet("quiet")) {
+			cmdline.PrintUsage();
+			exit(EXIT_FAILURE);
+		}
 	}
 
 #ifndef WIN32

@@ -688,6 +688,7 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddInt(   'y', "yresolution",        "Set Y resolution");
 	cmdline->AddSwitch('b', "minimise",           "Start in background (minimised)");
 	cmdline->AddSwitch(0,   "nocolor",            "Disables colorized stdout");
+	cmdline->AddSwitch('q', "quiet",              "Ignore unrecognized arguments");
 	cmdline->AddSwitch('s', "server",             "Run as a server");
 	cmdline->AddSwitch('c', "client",             "Run as a client");
 
@@ -714,10 +715,12 @@ void SpringApp::ParseCmdLine()
 
 	try {
 		cmdline->Parse();
-	} catch (const std::exception& err) {
-		std::cerr << err.what() << std::endl << std::endl;
-		cmdline->PrintUsage();
-		exit(EXIT_FAILURE);
+	} catch (const CmdLineParams::unrecognized_option& err) {
+		LOG_L(L_ERROR, "%s\n", err.what());
+		if (!cmdline->IsSet("quiet")) {
+			cmdline->PrintUsage();
+			exit(EXIT_FAILURE);
+		}
 	}
 
 #ifndef WIN32

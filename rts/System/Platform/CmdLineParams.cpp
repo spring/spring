@@ -63,8 +63,13 @@ void CmdLineParams::Parse()
 	po::positional_options_description p;
 	p.add("input-file", 1);
 
-	po::store(po::command_line_parser(argc, argv).options(all).positional(p).run(), vm);
+	po::parsed_options parsed = po::command_line_parser(argc, argv).options(all).positional(p).allow_unregistered().run();
+	po::store(parsed, vm);
 	po::notify(vm);
+
+	std::vector<std::string> unrecognized = po::collect_unrecognized(parsed.options, po::exclude_positional);
+	if (!unrecognized.empty())
+		throw unrecognized_option("unrecognized option '" + unrecognized[0] + "'");
 }
 
 void CmdLineParams::PrintUsage() const
