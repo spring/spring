@@ -11,6 +11,9 @@
 #include "System/Log/ILog.h"
 #include <boost/cstdint.hpp>
 
+
+CONFIG(bool, NoHelperAIs).defaultValue(false);
+
 namespace StartScriptGen {
 
 //////////////////////////////////////////////////////////////////////////////
