@@ -43,7 +43,6 @@ using agui::HorizontalLayout;
 CONFIG(std::string, address).defaultValue("").description("Last Ip/hostname used as direct connect in the menu.");
 CONFIG(std::string, LastSelectedSetting).defaultValue("").description("Stores the previously selected setting, when editing settings within the Spring main menu.");
 CONFIG(std::string, MenuArchive).defaultValue("Spring Bitmaps").description("Archive name for the default Menu.");
-CONFIG(std::string, MenuBackgroundImage).defaultValue("bitmaps/ui/background.jpg").description("Path to the background image.");
 
 class ConnectWindow : public agui::Window
 {
@@ -141,7 +140,11 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), setting
 			const std::string archive = archiveScanner->ArchiveFromName(configHandler->GetString("MenuArchive"));
 			const std::string archivePath = archiveScanner->GetArchivePath(archive)+archive;
 			vfsHandler->AddArchive(archivePath, false);
-			background->Load(configHandler->GetString("MenuBackgroundImage"));
+			const std::vector<std::string> files = CFileHandler::FindFiles("bitmaps/background/", "*");
+			if (!files.empty()) {
+				//TODO: select by resolution / aspect ratio with fallback image
+				background->Load(files[gu->RandInt() % files.size()]);
+			}
 			vfsHandler->RemoveArchive(archivePath);
 		}
 		selw = new SelectionWidget(this);
