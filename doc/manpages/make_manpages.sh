@@ -92,11 +92,14 @@ do
 	# strip off the extension
 	manFile="${BUILD_DIR}/${binary}.6"
 	manFile_xml=${manFile}.xml
+	manFile_htm=${manFile}.html
 	manFile_man=${manFile}
 	manFile_cmp=${manFile}.gz
 
 	# compile
 	${EXEC_ASCIIDOC} -a "BINARY=${binary}" ${attributes} --doctype=manpage --backend=docbook --out-file="${manFile_xml}" - < "${manFile_src}" > /dev/null
+
+	${EXEC_ASCIIDOC} -a "BINARY=${binary}" ${attributes} --doctype=manpage --backend=html5 --out-file="${manFile_htm}" - < "${manFile_src}" > /dev/null
 
 	# format
 	# workaround: xsltproc ignores `--output` for xml/manpages, instead it reads refname from the xml file itself and uses that.

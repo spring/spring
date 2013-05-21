@@ -83,7 +83,7 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 	}
 
 #ifndef WIN32
-	if (!cmdline.IsSet("nocolor")) {
+	if (!cmdline.IsSet("nocolor") && (getenv("SPRING_NOCOLOR") == NULL)) {
 		log_console_colorizedOutput(true);
 	}
 #endif
