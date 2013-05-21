@@ -81,6 +81,9 @@ Options
 
 *--nocolor*::
   Disables colorized stdout
+
+*--quiet*::
+  Ignore unreccognized arguments
 ifndef::GUILESS[ ]
 ifndef::GUILESS[*-f, --fullscreen*::]
 ifndef::GUILESS[  Run in fullscreen mode]
@@ -184,6 +187,9 @@ Enviroment Variables
   directory. If it is set to a valid directory path, it will be used as the
   isolation directory.
   See the --isolation and the --isolation-dir options.
+
+*SPRING_NOCOLOR*
+  Same as `spring --quiet`.
 
 Portable Mode
 -------------

@@ -724,7 +724,7 @@ void SpringApp::ParseCmdLine()
 	}
 
 #ifndef WIN32
-	if (!cmdline->IsSet("nocolor")) {
+	if (!cmdline->IsSet("nocolor") && (getenv("SPRING_NOCOLOR") == NULL)) {
 		log_console_colorizedOutput(true);
 	}
 #endif
