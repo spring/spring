@@ -140,7 +140,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), setting
 			const std::string archive = archiveScanner->ArchiveFromName(configHandler->GetString("MenuArchive"));
 			const std::string archivePath = archiveScanner->GetArchivePath(archive)+archive;
 			vfsHandler->AddArchive(archivePath, false);
-			const std::vector<std::string> files = CFileHandler::FindFiles("bitmaps/background/", "*");
+			const std::vector<std::string> files = CFileHandler::FindFiles("bitmaps/ui/background/", "*");
 			if (!files.empty()) {
 				//TODO: select by resolution / aspect ratio with fallback image
 				background->Load(files[gu->RandInt() % files.size()]);
