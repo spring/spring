@@ -37,8 +37,7 @@ set(FILES
 	bitmaps/guiicon_move.bmp
 	bitmaps/detailtex2.bmp
 	bitmaps/graphPaper.bmp
-	bitmaps/ui/background.jpg
-	bitmaps/ui/background2.png
+	bitmaps/ui/background/background.jpg
 	bitmaps/wake.tga
 	bitmaps/smoketrail.tga
 	bitmaps/bleaf.bmp
