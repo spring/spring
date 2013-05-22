@@ -608,7 +608,13 @@ bool CKeyBindings::ExecuteCommand(const string& line)
 	const string command = StringToLower(words[0]);
 
 	if (command == "keydebug") {
-		debugEnabled = !debugEnabled;
+		if (words.size() == 1) {
+			// toggle
+			debugEnabled = !debugEnabled;
+		} else if (words.size() >= 2) {
+			// set
+			debugEnabled = atoi(words[1].c_str());
+		}
 	}
 	else if ((command == "fakemeta") && (words.size() > 1)) {
 		if (!SetFakeMetaKey(words[1])) { return false; }
