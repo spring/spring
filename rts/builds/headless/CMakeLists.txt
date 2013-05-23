@@ -37,6 +37,8 @@ LIST(APPEND engineHeadlessLibraries headlessStubs)
 LIST(APPEND engineHeadlessLibraries no-sound)
 LIST(APPEND engineHeadlessLibraries engineSystemNet)
 LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
+LIST(APPEND engineHeadlessLibraries engineaGui)
+
 
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 
