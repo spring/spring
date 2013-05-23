@@ -2794,9 +2794,8 @@ int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 		} break;
 
 		case 4: {
-			if (wpro->GetTargetObject() == NULL) {
-				wpro->SetTargetPos(float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)));
-			}
+			wpro->SetTargetObject(NULL);
+			wpro->SetTargetPos(float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)));
 
 			lua_pushboolean(L, wpro->GetTargetObject() == NULL);
 			return 1;
