@@ -136,7 +136,7 @@ void good_fpu_control_registers(const char* text)
 
 void good_fpu_init()
 {
-	const unsigned int sseBits = proc::GetProcSSEBits();
+	const unsigned int sseBits = springproc::GetProcSSEBits();
 		LOG("[CMyMath::Init] CPU SSE mask: %u, flags:", sseBits);
 		LOG("\tSSE 1.0:  %d,  SSE 2.0:  %d", (sseBits >> 5) & 1, (sseBits >> 4) & 1);
 		LOG("\tSSE 3.0:  %d, SSSE 3.0:  %d", (sseBits >> 3) & 1, (sseBits >> 2) & 1);
@@ -199,7 +199,7 @@ void streflop_init_omp() {
 #endif
 }
 
-namespace proc {
+namespace springproc {
 	#if defined(__GNUC__)
 		// function inlining breaks this
 		__attribute__((__noinline__))

@@ -21,7 +21,7 @@ extern void streflop_init_omp();
 	#define _noinline
 #endif
 
-namespace proc {
+namespace springproc {
 	_noinline void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d);
 
 	unsigned int GetProcMaxStandardLevel();
