@@ -17,6 +17,9 @@
 #include "System/myMath.h"
 #include "lib/gml/gml_base.h"
 
+
+CONFIG(bool, EnableUnsafeAndBrokenMT).defaultValue(false).description("Enable unsafe MT modes (very likely to cause crashes / hangs / graphical errors)");
+
 CModInfo modInfo;
 
 
@@ -57,9 +60,14 @@ void CModInfo::Init(const char* modArchive)
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 		luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
 
-		if (luaThreadingModel > 2) {
+		if (luaThreadingModel > 2)  {
 			LOG_L(L_WARNING, "Experimental luaThreadingModel %d selected! This is currently unmaintained and may be deprecated and/or removed in the future!", luaThreadingModel);
-			LOG_L(L_WARNING, "If you experience crashes / hangs / graphical errors in your game try to set luaThreadingModel=2!");
+			LOG_L(L_WARNING, "Automaticly disabled to prevent desyncs / crashes / hangs / graphical errors!");
+			if (!configHandler->GetBool("EnableUnsafeAndBrokenMT")) {
+				luaThreadingModel = 2;
+			} else {
+				LOG_L(L_WARNING, "MT enforced: expect desyncs / crashes / hangs / graphical errors!");
+			}
 		}
 
 		if (numThreads == 0) {
