@@ -58,6 +58,7 @@ LIST(APPEND engineLibraries ${sound-impl})
 LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
 LIST(APPEND engineLibraries engineSystemNet)
 LIST(APPEND engineLibraries ${engineCommonLibraries})
+LIST(APPEND engineLibraries engineaGui)
 
 
 ### Assemble external incude dirs

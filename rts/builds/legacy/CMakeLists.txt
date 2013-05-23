@@ -57,6 +57,7 @@ endif (USE_LIBSQUISH)
 LIST(APPEND engineLibraries ${sound-impl})
 LIST(APPEND engineLibraries engineSystemNet)
 LIST(APPEND engineLibraries ${engineCommonLibraries})
+LIST(APPEND engineLibraries engineaGui)
 LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
 
 ### Assemble external incude dirs
