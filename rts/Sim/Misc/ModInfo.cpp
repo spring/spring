@@ -60,7 +60,8 @@ void CModInfo::Init(const char* modArchive)
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 		luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
 
-		if (luaThreadingModel > 2)  {
+		//FIXME: remove unsave modes
+		if (luaThreadingModel > 2) {
 			LOG_L(L_WARNING, "Experimental luaThreadingModel %d selected! This is currently unmaintained and may be deprecated and/or removed in the future!", luaThreadingModel);
 			LOG_L(L_WARNING, "Automaticly disabled to prevent desyncs / crashes / hangs / graphical errors!");
 			if (!configHandler->GetBool("EnableUnsafeAndBrokenMT")) {
