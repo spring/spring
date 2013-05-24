@@ -122,29 +122,13 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 	for (int z = zmin; z <= zmax; z += zstep) {
 		for (int x = xmin; x <= xmax; x += xstep) {
 			ret |= SquareIsBlocked(moveDef, x, z, collider);
+			if (ret & BLOCK_STRUCTURE) return ret;
 		}
 	}
 	return ret;
 }
 
-/* Optimized function to check if a given square-position has a structure block. */
-bool CMoveMath::IsBlockedStructure(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
-{
-	const int xmin = xSquare - moveDef.xsizeh, xmax = xSquare + moveDef.xsizeh;
-	const int zmin = zSquare - moveDef.zsizeh, zmax = zSquare + moveDef.zsizeh;
-	const int xstep = 2, zstep = 2;
-	// (footprints are point-symmetric around <xSquare, zSquare>)
-	for (int z = zmin; z <= zmax; z += zstep) {
-		for (int x = xmin; x <= xmax; x += xstep) {
-			if (SquareIsBlocked(moveDef, x, z, collider) & BLOCK_STRUCTURE)
-				return true;
-		}
-	}
-
-	return false;
-}
-
-/* Optimized function to check if the square at the given position has a structure block, 
+/* Optimized function to check if the square at the given position has a structure block,
    provided that the square at (xSquare - 1, zSquare) did not have a structure block */
 bool CMoveMath::IsBlockedStructureXmax(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
@@ -160,7 +144,7 @@ bool CMoveMath::IsBlockedStructureXmax(const MoveDef& moveDef, int xSquare, int 
 	return false;
 }
 
-/* Optimized function to check if the square at the given position has a structure block, 
+/* Optimized function to check if the square at the given position has a structure block,
    provided that the square at (xSquare, zSquare - 1) did not have a structure block */
 bool CMoveMath::IsBlockedStructureZmax(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
