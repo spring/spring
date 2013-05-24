@@ -3,6 +3,7 @@
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/UI/GuiHandler.h"
+#include "Game/UI/Minimap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
@@ -29,6 +30,7 @@
 #include "Rendering/DefaultPathDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
+#include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
@@ -48,7 +50,11 @@ static inline const SColor& GetBuildColor(const DefaultPathDrawer::BuildSquareSt
 
 
 
-DefaultPathDrawer::DefaultPathDrawer(): IPathDrawer() {
+DefaultPathDrawer::DefaultPathDrawer()
+	: IPathDrawer()
+	, CEventClient("[DefaultPathDrawer]", 271991, false)
+{
+	eventHandler.AddClient(this);
 	pm = dynamic_cast<CPathManager*>(pathManager);
 }
 
@@ -66,6 +72,49 @@ void DefaultPathDrawer::DrawAll() const {
 	}
 }
 
+
+void DefaultPathDrawer::DrawInMiniMap()
+{
+	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	if (
+		(gd->drawMode != CBaseGroundDrawer::drawPathTraversability) &&
+		(gd->drawMode != CBaseGroundDrawer::drawPathHeat) &&
+		(gd->drawMode != CBaseGroundDrawer::drawPathFlow) &&
+		(gd->drawMode != CBaseGroundDrawer::drawPathCost)
+	) return;
+
+
+	glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
+		glTranslatef((float)minimap->GetPosX() * globalRendering->pixelX, (float)minimap->GetPosY() * globalRendering->pixelY, 0.0f);
+		glScalef((float)minimap->GetSizeX() * globalRendering->pixelX, (float)minimap->GetSizeY() * globalRendering->pixelY, 1.0f);
+	glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+		glTranslatef(0.0f, 1.0f, 0.0f);
+		glScalef(1.0f / gs->mapx, -1.0f / gs->mapy, 1.0f);
+
+	glDisable(GL_TEXTURE_2D);
+	glColor4f(1.0f, 1.0f, 0.0f, 0.7f);
+	auto pe = pm->medResPE;
+	const MoveDef* md = moveDefHandler->GetMoveDefByPathType(0);
+	for (const CPathEstimator::SingleBlock& sb: pe->updatedBlocks) {
+		if (sb.moveDef == md) {
+			const int blockIdxX = sb.blockPos.x * pe->GetBlockSize();
+			const int blockIdxY = sb.blockPos.y * pe->GetBlockSize();
+			glRectf(blockIdxX, blockIdxY, blockIdxX + pe->GetBlockSize(), blockIdxY + pe->GetBlockSize());
+		}
+	}
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glEnable(GL_TEXTURE_2D);
+
+	glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
+}
 
 
 void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {

@@ -137,6 +137,7 @@ private:
 
 private:
 	friend class CPathManager;
+	friend class CDefaultPathDrawer;
 
 	struct SingleBlock {
 		int2 blockPos;

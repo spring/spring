@@ -4,6 +4,7 @@
 #define DEFAULT_PATHDRAWER_HDR
 
 #include "IPathDrawer.h"
+#include "System/EventClient.h"
 
 class CPathManager;
 class CPathFinderDef;
@@ -11,7 +12,14 @@ class CPathFinder;
 class CPathEstimator;
 struct UnitDef;
 
-struct DefaultPathDrawer: public IPathDrawer {
+struct DefaultPathDrawer: public IPathDrawer, public CEventClient {
+public:
+	// CEventClient interface
+	bool WantsEvent(const std::string& eventName) {
+		return (eventName == "DrawInMiniMap");
+	}
+	void DrawInMiniMap();
+
 public:
 	DefaultPathDrawer();
 
