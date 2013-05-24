@@ -17,9 +17,6 @@ set(mySources
 	"${mySourceDir}/Util.c"
 	"${mySourceDir}/TimeUtil.cpp"
 	)
-add_library(CUtils ${mySources})
-
-# FIXME: this shouldn't be global:
 SetGlobal(${myName}_SRC "${mySources}")
 
 AIMessage(STATUS "Found AI Wrapper: ${myName} (sources only wrapper)")
