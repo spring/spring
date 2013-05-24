@@ -3242,81 +3242,6 @@ int LuaOpenGL::PointParameter(lua_State* L)
 }
 
 
-static bool ParseUnitTexture(const string& texture)
-{
-	if (texture.length()<4) {
-		return false;
-	}
-
-	char* endPtr;
-	const char* startPtr = texture.c_str() + 1; // skip the '%'
-	const int id = (int)strtol(startPtr, &endPtr, 10);
-	if ((endPtr == startPtr) || (*endPtr != ':')) {
-		return false;
-	}
-
-	endPtr++; // skip the ':'
-	if ( (startPtr-1)+texture.length() <= endPtr ) {
-		return false; // ':' is end of string, but we expect '%num:0'
-	}
-
-
-	if (id == 0) {
-		glEnable(GL_TEXTURE_2D);
-		if (*endPtr == '0') {
-			glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex1ID() );
-		}
-		else if (*endPtr == '1') {
-			glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID() );
-		}
-		return true;
-	}
-
-	S3DModel* model;
-
-	if (id < 0) {
-		const FeatureDef* fd = featureHandler->GetFeatureDefByID(-id);
-		if (fd == NULL) {
-			return false;
-		}
-		model = fd->LoadModel();
-	} else {
-		const UnitDef* ud = unitDefHandler->GetUnitDefByID(id);
-		if (ud == NULL) {
-			return false;
-		}
-		model = ud->LoadModel();
-	}
-
-	if (model == NULL) {
-		return false;
-	}
-
-	const unsigned int texType = model->textureType;
-	if (texType == 0) {
-		return false;
-	}
-
-	const CS3OTextureHandler::S3oTex* stex = texturehandlerS3O->GetS3oTex(texType);
-	if (stex == NULL) {
-		return false;
-	}
-
-	if (*endPtr == '0') {
-		glBindTexture(GL_TEXTURE_2D, stex->tex1);
-		glEnable(GL_TEXTURE_2D);
-		return true;
-	}
-	else if (*endPtr == '1') {
-		glBindTexture(GL_TEXTURE_2D, stex->tex2);
-		glEnable(GL_TEXTURE_2D);
-		return true;
-	}
-
-	return false;
-}
-
-
 int LuaOpenGL::Texture(lua_State* L)
 {
 	// NOTE: current formats:
@@ -3376,140 +3301,18 @@ int LuaOpenGL::Texture(lua_State* L)
 
 	const string texture = lua_tostring(L, nextArg);
 
-	if (texture.empty()) {
-		glDisable(GL_TEXTURE_2D); // equivalent to 'false'
-		lua_pushboolean(L, true);
-	}
-	else if (texture[0] == '#') {
-		// unit build picture
-		char* endPtr;
-		const char* startPtr = texture.c_str() + 1; // skip the '#'
-		const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
-		if (endPtr == startPtr) {
-			lua_pushboolean(L, false);
-		} else {
-			const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-			if (ud != NULL) {
-				glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitDefImage(ud));
-				glEnable(GL_TEXTURE_2D);
-				lua_pushboolean(L, true);
-			} else {
-				lua_pushboolean(L, false);
-			}
-		}
-	}
-	else if (texture[0] == '^') {
-		// unit icon
-		char* endPtr;
-		const char* startPtr = texture.c_str() + 1; // skip the '^'
-		const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
-		if (endPtr == startPtr) {
-			lua_pushboolean(L, false);
-		} else {
-			const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-			if (ud != NULL) {
-				ud->iconType->BindTexture();
-				glEnable(GL_TEXTURE_2D);
-				lua_pushboolean(L, true);
-			} else {
-				lua_pushboolean(L, false);
-			}
-		}
-	}
-	else if (texture[0] == LuaTextures::prefix) { // '!'
-		// dynamic texture
-		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
-		if (textures.Bind(texture)) {
-			glEnable(GL_TEXTURE_2D);
-			lua_pushboolean(L, true);
-		} else {
-			lua_pushboolean(L, false);
-		}
-	}
-	else if (texture[0] == '$') {
-		// never enables
-		if (texture == "$units1" || texture == "$units") {
-			glBindTexture(GL_TEXTURE_2D,  texturehandler3DO->GetAtlasTex1ID() );
-			glEnable(GL_TEXTURE_2D);
-			lua_pushboolean(L, true);
-		}
-		if (texture == "$units2") {
-			glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID() );
-			glEnable(GL_TEXTURE_2D);
-			lua_pushboolean(L, true);
-		}
-		else if (texture == "$shadow") {
-			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-			glEnable(GL_TEXTURE_2D);
-			lua_pushboolean(L, true);
-		}
-		else if (texture == "$specular") {
-			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
-			lua_pushboolean(L, true);
-		}
-		else if (texture == "$reflection") {
-			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetEnvReflectionTextureID());
-			lua_pushboolean(L, true);
-		}
-		else if (texture == "$heightmap") {
-			const GLuint texID = heightMapTexture->GetTextureID();
-			if (texID == 0) {
-				lua_pushboolean(L, false);
-			} else {
-				glBindTexture(GL_TEXTURE_2D, texID);
-				glEnable(GL_TEXTURE_2D);
-				lua_pushboolean(L, true);
-			}
-		}
-		else if (texture == "$minimap") {
-			glBindTexture(GL_TEXTURE_2D, readmap->GetMiniMapTexture());
-			glEnable(GL_TEXTURE_2D);
-			lua_pushboolean(L, true);
-		}
-		else if (texture == "$shading") {
-			glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
-			glEnable(GL_TEXTURE_2D);
-			lua_pushboolean(L, true);
-		}
-		else if (texture == "$grass") {
-			glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
-			glEnable(GL_TEXTURE_2D);
-			lua_pushboolean(L, true);
-		}
-		else if (texture == "$info") {
-			glBindTexture(GL_TEXTURE_2D, readmap->GetGroundDrawer()->infoTex);
-			glEnable(GL_TEXTURE_2D);
-			lua_pushboolean(L, true);
-		}
-		else if (texture == "$font") {
-			glBindTexture(GL_TEXTURE_2D, font->GetTexture());
-			glEnable(GL_TEXTURE_2D);
-			lua_pushboolean(L, true);
-		}
-		else if (texture == "$smallfont") {
-			glBindTexture(GL_TEXTURE_2D, smallFont->GetTexture());
-			glEnable(GL_TEXTURE_2D);
-			lua_pushboolean(L, true);
-		}
-		else {
-			lua_pushboolean(L, false);
-		}
-	}
-	else if (texture[0] == '%') {
-		lua_pushboolean(L, ParseUnitTexture(texture));
-	}
-	else {
-		if (CNamedTextures::Bind(texture)) {
-			glEnable(GL_TEXTURE_2D);
-			lua_pushboolean(L, true);
-		} else {
-			lua_pushboolean(L, false);
-		}
+	LuaMatTexture tex;
+	const bool loaded = LuaOpenGLUtils::ParseTextureImage(L, tex, texture);
+	if (loaded) {
+		tex.enable = true;
+		tex.Bind();
 	}
 
 	if (texUnit != GL_TEXTURE0) {
 		glActiveTexture(GL_TEXTURE0);
 	}
+
+	lua_pushboolean(L, loaded);
 	return 1;
 }
 

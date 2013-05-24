@@ -10,6 +10,7 @@ using std::string;
 using std::vector;
 using std::set;
 
+#include "LuaOpenGLUtils.h"
 #include "LuaUnitMaterial.h" // for LuaMatRef
 #include "LuaUniqueBin.h"
 
@@ -26,7 +27,7 @@ class LuaMatUnifSetRef;
 /******************************************************************************/
 /******************************************************************************/
 
-class LuaMatShader {   
+class LuaMatShader {
 	public:
 		enum Type {
 			LUASHADER_NONE = 0,
@@ -37,7 +38,7 @@ class LuaMatShader {
 
 	public:
 		LuaMatShader() : type(LUASHADER_NONE), openglID(0) {}
-	
+
 		void Finalize();
 
 		void Execute(const LuaMatShader& prev) const;
@@ -60,61 +61,16 @@ class LuaMatShader {
 		GLuint openglID;
 };
 
-
 /******************************************************************************/
 
-class LuaMatTexture {   
-	public:
-		enum Type {
-			LUATEX_NONE       = 0,
-			LUATEX_GL         = 1,
-			LUATEX_SHADOWMAP  = 2,
-			LUATEX_REFLECTION = 3,
-			LUATEX_SPECULAR   = 4
-		};
-
-	public:
-		LuaMatTexture()
-		: type(LUATEX_NONE), openglID(0), enable(false) {}
-
-		void Finalize();
-
-		void Bind(const LuaMatTexture& prev) const;
-		void Unbind() const;
-
-		void Print(const string& indent) const;
-
-		static int Compare(const LuaMatTexture& a, const LuaMatTexture& b);
-		bool operator <(const LuaMatTexture& mt) const {
-			return Compare(*this, mt)  < 0;
-		}
-		bool operator==(const LuaMatTexture& mt) const {
-			return Compare(*this, mt) == 0;
-		}
-		bool operator!=(const LuaMatTexture& mt) const {
-			return Compare(*this, mt) != 0;
-		}
-
-	public:
-		Type type;
-		GLuint openglID;
-		bool enable;
-
-	public:
-		static const int maxTexUnits = 16;
-};
-
-
-/******************************************************************************/
-
-class LuaMatTexSet {   
+class LuaMatTexSet {
 	public:
 		static const int maxTexUnits = 16;
 
 	public:
 		LuaMatTexSet() : texCount(0) {}
 
-	public:	
+	public:
 		int texCount;
 		LuaMatTexture textures[LuaMatTexture::maxTexUnits];
 };
@@ -205,7 +161,7 @@ class LuaMatBin : public LuaMaterial {
 /******************************************************************************/
 
 struct LuaMatBinPtrLessThan {
-	bool operator()(const LuaMatBin* a, const LuaMatBin* b) const {	
+	bool operator()(const LuaMatBin* a, const LuaMatBin* b) const {
 		const LuaMaterial* ma = static_cast<const LuaMaterial*>(a);
 		const LuaMaterial* mb = static_cast<const LuaMaterial*>(b);
 		return (*ma < *mb);

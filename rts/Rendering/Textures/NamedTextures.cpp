@@ -17,7 +17,7 @@
 
 #ifdef _MSC_VER
 	#include <map>
-	// only way to compile unordered_map with MSVC appears to require inclusion of math.h instead of streflop, 
+	// only way to compile unordered_map with MSVC appears to require inclusion of math.h instead of streflop,
 	// and that cannot be done here because it gives rise to other conflicts
 	typedef std::map<std::string, CNamedTextures::TexInfo> TEXMAP;
 #else
@@ -262,7 +262,7 @@ namespace CNamedTextures {
 		}
 
 		GML_STDMUTEX_LOCK(ntex); // Update
-		
+
 		glPushAttrib(GL_TEXTURE_BIT);
 		for (std::vector<std::string>::iterator it = texWaiting.begin(); it != texWaiting.end(); ++it) {
 			TEXMAP::iterator mit = texMap.find(*it);
@@ -294,7 +294,7 @@ namespace CNamedTextures {
 	}
 
 
-	const TexInfo* GetInfo(const std::string& texName)
+	const TexInfo* GetInfo(const std::string& texName, const bool forceLoad)
 	{
 		if (texName.empty()) {
 			return NULL;
@@ -306,6 +306,28 @@ namespace CNamedTextures {
 		if (it != texMap.end()) {
 			return &it->second;
 		}
+
+		if (forceLoad) {
+			// load texture
+			GLboolean inListCompile;
+			glGetBooleanv(GL_LIST_INDEX, &inListCompile);
+			if (inListCompile) {
+				GLuint texID = 0;
+				glGenTextures(1, &texID);
+
+				TexInfo texInfo;
+				texInfo.id = texID;
+				texMap[texName] = texInfo;
+
+				texWaiting.push_back(texName);
+			} else {
+				GLuint texID = 0;
+				glGenTextures(1, &texID);
+				Load(texName, texID);
+			}
+			return &texMap[texName];
+		}
+
 		return NULL;
 	}
 

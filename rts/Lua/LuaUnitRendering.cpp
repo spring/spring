@@ -331,71 +331,6 @@ static GLuint ParseUnitTexture(const string& texture)
 }
 
 
-static void ParseTextureImage(lua_State *L, LuaMatTexture& texUnit, const string& image)
-{
-	GLuint texID = 0;
-
-	if (image[0] == '%') {
-		texID = ParseUnitTexture(image);
-	}
-	else if (image[0] == '#') {
-		// unit build picture
-		char* endPtr;
-		const char* startPtr = image.c_str() + 1; // skip the '#'
-		const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
-		if (endPtr == startPtr) {
-			return;
-		}
-		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-		if (ud == NULL) {
-			return;
-		}
-		texID = unitDefHandler->GetUnitDefImage(ud);
-	}
-	else if (image[0] == LuaTextures::prefix) {
-		// dynamic texture
-		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
-		const LuaTextures::Texture* texInfo = textures.GetInfo(image);
-		if (texInfo != NULL) {
-			texID = texInfo->id;
-		}
-	}
-	else if (image[0] == '$') {
-		if (image == "$units" || image == "$units1") {
-			texUnit.type = LuaMatTexture::LUATEX_GL;
-			texUnit.openglID = texturehandler3DO->GetAtlasTex1ID();
-		}
-		if (image == "$units2") {
-			texUnit.type = LuaMatTexture::LUATEX_GL;
-			texUnit.openglID = texturehandler3DO->GetAtlasTex2ID();
-		}
-		else if (image == "$shadow") {
-			texUnit.type = LuaMatTexture::LUATEX_SHADOWMAP;
-		}
-		else if (image == "$specular") {
-			texUnit.type = LuaMatTexture::LUATEX_SPECULAR;
-		}
-		else if (image == "$reflection") {
-			texUnit.type = LuaMatTexture::LUATEX_REFLECTION;
-		}
-		return;
-	}
-	else {
-		const CNamedTextures::TexInfo* texInfo = CNamedTextures::GetInfo(image);
-		if (texInfo != NULL) {
-			texID = texInfo->id;
-		}
-	}
-
-	if (texID != 0) {
-		texUnit.type = LuaMatTexture::LUATEX_GL;
-		texUnit.openglID = texID;
-	}
-
-	return;
-}
-
-
 static void ParseTexture(lua_State* L, const char* caller, int index,
                         LuaMatTexture& texUnit)
 {
@@ -405,7 +340,7 @@ static void ParseTexture(lua_State* L, const char* caller, int index,
 
 	if (lua_isstring(L, index)) {
 		const string texName = lua_tostring(L, index);
-		ParseTextureImage(L, texUnit, texName);
+		LuaOpenGLUtils::ParseTextureImage(L, texUnit, texName);
 		texUnit.enable = true;
 		return;
 	}
@@ -422,7 +357,7 @@ static void ParseTexture(lua_State* L, const char* caller, int index,
 		const string key = StringToLower(lua_tostring(L, -2));
 		if (key == "tex") {
 			const string texName = lua_tostring(L, -1);
-			ParseTextureImage(L, texUnit, texName);
+			LuaOpenGLUtils::ParseTextureImage(L, texUnit, texName);
 		}
 		else if (key == "enable") {
 			if (lua_isboolean(L, -1)) {
