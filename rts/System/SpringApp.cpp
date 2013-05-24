@@ -1214,13 +1214,20 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					// use unicode for printed characters
 					const boost::uint16_t usym = keyInput->GetCurrentKeyUnicodeChar();
 
-					if ((usym >= SDLK_SPACE) && (usym <= 255)) {
+					const bool isDelete = (usym == 127);
+					const bool isIllegalUnicode = (127 < usym) && (usym < 161);
+
+					//TODO spring doesn't support unicode/non-latin yet :<
+					const bool isLatin = (usym >= 32) && (usym <= 255);
+					const bool isColor = (usym == 255); // we use \255 for inlined colorcodes!
+
+					if (isLatin && !isDelete && !isIllegalUnicode) {
 						CGameController* ac = activeController;
 
 						if (ac->ignoreNextChar || (ac->ignoreChar == (char)usym)) {
 							ac->ignoreNextChar = false;
 						} else {
-							if (usym < 255 && (!isRepeat || ac->userInput.length() > 0)) {
+							if (!isColor && (!isRepeat || ac->userInput.length() > 0)) {
 								const int len = (int)ac->userInput.length();
 								const char str[2] = { (char)usym, 0 };
 
