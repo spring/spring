@@ -437,8 +437,8 @@ void CPathEstimator::Update() {
 	if (updatedBlocks.empty())
 		return;
 
-	static const unsigned int MIN_BLOCKS_TO_UPDATE = std::max(1U, BLOCKS_TO_UPDATE >> 1);
-	static const unsigned int MAX_BLOCKS_TO_UPDATE = BLOCKS_TO_UPDATE << 1;
+	static const unsigned int MIN_BLOCKS_TO_UPDATE = std::max(BLOCKS_TO_UPDATE >> 1, 4U);
+	static const unsigned int MAX_BLOCKS_TO_UPDATE = std::min(BLOCKS_TO_UPDATE << 1, MIN_BLOCKS_TO_UPDATE);
 	const unsigned int progressiveUpdates = updatedBlocks.size() * 0.007f * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f);
 	const unsigned int blocksToUpdate = Clamp(progressiveUpdates, MIN_BLOCKS_TO_UPDATE, MAX_BLOCKS_TO_UPDATE);
 
@@ -449,6 +449,7 @@ void CPathEstimator::Update() {
 	for (unsigned int n = 0; !updatedBlocks.empty() && n < blocksToUpdate; ) {
 		// copy the next block in line
 		const SingleBlock sb = updatedBlocks.front();
+		updatedBlocks.pop_front();
 
 		// check if it's not already updated
 		if (blockStates.nodeMask[sb.blockPos.y * nbrOfBlocksX + sb.blockPos.x] & PATHOPT_OBSOLETE) {
@@ -456,11 +457,22 @@ void CPathEstimator::Update() {
 			// and so even when we compute it multiple times the result will be the same
 			v.push_back(sb);
 
+			// always process all movedefs of a square in one rush
+			// needed cause blockStates.nodeMask saves PATHOPT_OBSOLETE just for the square and not the movedefs
+			// if we wouldn't process them in one rush, it could happen that square changes are missed for `lower` movdefs
+			for (auto it = updatedBlocks.begin(), E = updatedBlocks.end(); it != E; ++it) {
+				if ((it->blockPos.x == sb.blockPos.x) && (it->blockPos.y == sb.blockPos.y)) {
+					v.push_back(sb);
+					n++;
+				} else {
+					updatedBlocks.erase(updatedBlocks.begin(), ++it);
+					break;
+				}
+			}
+
 			// one stale SingleBlock consumed
 			n++;
 		}
-
-		updatedBlocks.pop_front();
 	}
 
 	// FindOffset (threadsafe)
@@ -494,7 +506,10 @@ void CPathEstimator::Update() {
 			const unsigned int blockN = blockZ * nbrOfBlocksX + blockX;
 
 			const MoveDef* currBlockMD = sb.moveDef;
-			const MoveDef* nextBlockMD = (updatedBlocks.empty())? NULL: (updatedBlocks.front()).moveDef;
+			const MoveDef* nextBlockMD = NULL;
+			if ((n + 1) < v.size()) {
+				nextBlockMD = v[n + 1].moveDef;
+			}
 
 			CalculateVertices(*currBlockMD, blockX, blockZ);
 
