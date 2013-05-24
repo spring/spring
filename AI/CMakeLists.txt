@@ -70,7 +70,9 @@ endmacro (AIMessage type msg)
 find_package(AWK)
 
 # CUtils has to come first, because the Interfaces use it too
-Add_Subdirectory(Wrappers/CUtils)
+if    (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Wrappers/CUtils)
+	Add_Subdirectory(Wrappers/CUtils)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Wrappers/CUtils)
 Add_Subdirectory(Interfaces)
 Add_Subdirectory(Wrappers)
 Add_Subdirectory(Skirmish)
