@@ -200,116 +200,6 @@ void LuaMatShader::Print(const string& indent) const
 	LOG("%s%s %i", indent.c_str(), typeName, openglID);
 }
 
-/******************************************************************************/
-/******************************************************************************/
-//
-//  LuaMatTexture
-//
-
-void LuaMatTexture::Finalize()
-{
-	for (int t = 0; t < maxTexUnits; t++) {
-		if ((type == LUATEX_GL) && (openglID == 0)) {
-			type = LUATEX_NONE;
-		}
-		if (type == LUATEX_NONE) {
-			enable = false;
-		}
-		if (type != LUATEX_GL) {
-			openglID = 0;
-		}
-	}
-}
-
-
-int LuaMatTexture::Compare(const LuaMatTexture& a, const LuaMatTexture& b)
-{
-	if (a.type != b.type) {
-		return (a.type < b.type) ? -1 : +1;
-	}
-	if (a.type == LUATEX_GL) {
-		if (a.openglID != b.openglID) {
-			return (a.openglID < b.openglID) ? -1 : +1;
-		}
-	}
-	if (a.enable != b.enable) {
-		return a.enable ? -1 : +1;
-	}
-	return 0; // LUATEX_NONE and LUATEX_SHADOWMAP ignore openglID
-}
-
-
-void LuaMatTexture::Bind(const LuaMatTexture& prev) const
-{
-	// blunt force -- poor form
-	prev.Unbind();
-
-	if (type == LUATEX_GL) {
-		glBindTexture(GL_TEXTURE_2D, openglID);
-		if (enable) {
-			glEnable(GL_TEXTURE_2D);
-		}
-	}
-	else if (type == LUATEX_SHADOWMAP) {
-		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-		if (enable) {
-			glEnable(GL_TEXTURE_2D);
-		}
-	}
-	else if (type == LUATEX_REFLECTION) {
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetEnvReflectionTextureID());
-		if (enable) {
-			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		}
-	}
-	else if (type == LUATEX_SPECULAR) {
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
-		if (enable) {
-			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		}
-	}
-}
-
-
-void LuaMatTexture::Unbind() const
-{
-	if (type == LUATEX_NONE || (!enable && (type != LUATEX_SHADOWMAP)))
-        return;
-
-	if (type == LUATEX_GL) {
-		glDisable(GL_TEXTURE_2D);
-	}
-	else if (type == LUATEX_SHADOWMAP) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-		glDisable(GL_TEXTURE_2D);
-	}
-	else if (type == LUATEX_REFLECTION) {
-		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-	}
-	else if (type == LUATEX_SPECULAR) {
-		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-	}
-}
-
-
-void LuaMatTexture::Print(const string& indent) const
-{
-	const char* typeName = "Unknown";
-	switch (type) {
-		STRING_CASE(typeName, LUATEX_NONE);
-		STRING_CASE(typeName, LUATEX_GL);
-		STRING_CASE(typeName, LUATEX_SHADOWMAP);
-		STRING_CASE(typeName, LUATEX_REFLECTION);
-		STRING_CASE(typeName, LUATEX_SPECULAR);
-	}
-	LOG("%s%s %i %s", indent.c_str(),
-			typeName, openglID, (enable ? "true" : "false"));
-}
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -375,7 +265,8 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 	const int maxTex = std::max(texCount, prev.texCount);
 	for (int t = (maxTex - 1); t >= 0; t--) {
 		glActiveTexture(GL_TEXTURE0 + t);
-		textures[t].Bind(prev.textures[t]);
+		prev.textures[t].Unbind();
+		textures[t].Bind();
 	}
 
 	if (useCamera != prev.useCamera) {
