@@ -3,7 +3,7 @@
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/UI/GuiHandler.h"
-#include "Game/UI/Minimap.h"
+#include "Game/UI/MiniMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
