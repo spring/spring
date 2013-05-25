@@ -6,14 +6,14 @@ Spring changelog
 -- 95.0 ---------------------------------------------------------
 
 Misc:
- ! new datadir structure: http://springrts.com/phpbb/viewtopic.php?f=12&t=30044
+ ! new datadir structure: http://springrts.com/phpbb/viewtopic.php?f=12&t=30044 & http://springrts.com/dl/buildbot/default/master/95.0/manpages/spring.6.html
  - add map border rendering
  - allow Lua AI's to be selected from the menu
  ! removed "mods" from archive scandirs
  ! converted RotateLogFiles to a bool var (defaults to false)
  ! remove "--projectiledump" and add "--list-ceg-classes" (converted to JSON format )
  - do not switch camera-mode on countdown
- - colorized stdout
+ - colorized stdout (you can use `spring --nocolor` & SPRING_NOCOLOR envvar to disable)
  - show LuaMemUsage in /debug view
  ! log error when an image format is used which doesn't work on all platforms
      current supported image formats are:
@@ -21,7 +21,7 @@ Misc:
  - more verbose CEG parsing (warns now about unknown tags)
  - switch to a high precision clock all over the engine (including Lua)
  - copied a lot config descriptions from wiki to the engine (thx for all the wiki'ers)
- - Springsettings.cfg wiki page is now automatically updated with each release
+ - http://springrts.com/wiki/Springsettings.cfg is now automatically updated with each release
 
 Sim:
  - reduce target-lost CAI timeout from 8 to 2 seconds
@@ -57,6 +57,7 @@ Rendering:
  - LoadingMT: add a runtime check that should detect incompatibilities
  - disable ARB shaders with Intel/Mesa drivers (can be overridden by setting ForceEnableIntelShaderSupport=1)
  - reduce used varyings in SMF GLSL shader in the hope it will fix advmapshading on some lowend GPUs
+ - render MiniMap to a texture and update it async from screen (new configtags: MiniMapRenderToTexture & MiniMapRefreshRate)
 
 Performance:
  - use SSE in some matrix math
@@ -65,6 +66,7 @@ Performance:
  - little speedup in Grass rendering (it's still slow on some maps)
  - use 32bit shadowmap. ~7% faster than 24bit one, cause of better alignment
  - move Lua GC to its own callin and fix so a bug when GC was too slow to catch up and so eating >>100MB ram
+ - nihiliate MiniMap usage by rendering it to a texture
 
 Buildprocess:
  ! updated gentoo overlay url to https://github.com/springlobby/overlay
