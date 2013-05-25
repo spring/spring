@@ -65,7 +65,7 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 	CmdLineParams cmdline(argc, argv);
 	cmdline.SetUsageDescription("Usage: " + binaryname + " [options] path_to_script.txt");
 	cmdline.AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
-	cmdline.AddString('C', "config",             "Configuration file");
+	cmdline.AddString('C', "config",             "Exclusive configuration file");
 	cmdline.AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
 	cmdline.AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
 	cmdline.AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
