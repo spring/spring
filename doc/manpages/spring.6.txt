@@ -188,7 +188,7 @@ Enviroment Variables
   See the --isolation and the --isolation-dir options.
 
 *SPRING_NOCOLOR*
-  Same as `spring --quiet`.
+  Same as `spring --nocolor`.
 
 Portable Mode
 -------------
