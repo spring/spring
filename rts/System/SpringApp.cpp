@@ -705,7 +705,7 @@ void SpringApp::ParseCmdLine()
 
 	cmdline->AddSwitch(0,   "safemode",           "Turns off many things that are known to cause problems (i.e. on PC/Mac's with lower-end graphic cards)");
 
-	cmdline->AddString('C', "config",             "Configuration file");
+	cmdline->AddString('C', "config",             "Exclusive configuration file");
 	cmdline->AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
 	cmdline->AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
 	cmdline->AddString('d', "write-dir",          "Specify where Spring writes to.");

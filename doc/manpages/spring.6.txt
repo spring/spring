@@ -34,10 +34,9 @@ endif::DEDICATED[]
 
 Description
 -----------
-Spring is a free Real Time Strategy (RTS) game engine, originally designed to
-play Total Annihilation ((C) 1997 Cavedog) content.
-It has since evolved into a general RTS engine, capable of running various
-kind of games (mods).
+Spring is a versatile 3D RTS game engine. Using extensively Lua for scripting
+game-specific code to make nearly every aspect of the engine customizable,
+from GUI, to unit AI, to pathfinding.
 
 It is mainly designed around online multiplayer games but can also be played in
 single-player mode against AIs.
@@ -133,7 +132,7 @@ ifndef::DEDICATED[*-n, --name*::'NAME'::]
 ifndef::DEDICATED[  Set your player name]
 
 *-C, --config*::'FILE'::
-  Configuration file
+  Exclusive configuration file
 ifndef::DEDICATED[ ]
 ifndef::DEDICATED[*--list-ai-interfaces*::]
 ifndef::DEDICATED[  Dump a list of available AI Interfaces to STDOUT]
@@ -204,7 +203,7 @@ Isolation Mode
 Not to confuse with Portable Mode, this mode disables all automatic Data Dir scanning and limit reading & writing to a single folder.
 This is very usefull when games want to run separate from other Spring games.
 
-DATA DIR
+Data Dirs
 --------
 Data directories are searched for content, and among other things, may contain:
 
@@ -267,10 +266,10 @@ It scans following directories for config files :
 [options="header"]
 |=======
 | priority | scanned directories
->| high | file defined via *--config*
- |      | write DATA DIR
- |      | {sys: echo -e "(skipped in Isolated mode) \n\n *nix/MacOSX: ~/.springrc \n\n Windows: C:\Users\USER\AppData\Local\springsettings.cfg"}
->|  low | all read DATA DIRs
+>| exclusive | file defined via *--config* (when defined only this is loaded)
+ |      high | write DATA DIR
+ |           | {sys: echo -e "(skipped in Isolated mode) \n\n *nix/MacOSX: ~/.springrc \n\n Windows: C:\Users\USER\AppData\Local\springsettings.cfg"}
+>|       low | all read DATA DIRs
 |=======
 (The one with highest priority will be used for writing.)
 
