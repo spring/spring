@@ -10,7 +10,7 @@
 #include "Rendering/GL/FBO.h"
 #include "System/Color.h"
 #include "System/float3.h"
-#include "System/vec2.h"
+#include "System/Vec2.h"
 
 
 class CUnit;
