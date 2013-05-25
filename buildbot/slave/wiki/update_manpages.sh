@@ -25,6 +25,12 @@ if [ ${REMOTE_HOST} = localhost ] && [ -w ${REMOTE_BASE} ]; then
 	mkdir -p ${REMOTE_BASE}/default/${BRANCH}/${REV}/manpages/
 	${RSYNC} ${MANPAGES} ${REMOTE_BASE}/default/${BRANCH}/${REV}/manpages/
 else
+	#hack: first create the subdirs
+	mkdir -p /tmp/default/${BRANCH}/${REV}/manpages/
+	${RSYNC} --rsync-path="${REMOTE_RSYNC}"  /tmp/default ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_BASE}/
+	rm -r /tmp/default
+
+	# now copy files
 	${RSYNC} --rsync-path="${REMOTE_RSYNC}" --recursive ${MANPAGES} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_BASE}/default/${BRANCH}/${REV}/manpages/
 fi
 
