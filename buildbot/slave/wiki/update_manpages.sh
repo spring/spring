@@ -22,8 +22,9 @@ umask 022
 
 # Rsync archives to a world-visible location.
 if [ ${REMOTE_HOST} = localhost ] && [ -w ${REMOTE_BASE} ]; then
-	${RSYNC} ${MANPAGES} ${REMOTE_BASE}/${CONFIG}/${BRANCH}/${REV}/manpages/
+	mkdir -p ${REMOTE_BASE}/default/${BRANCH}/${REV}/manpages/
+	${RSYNC} ${MANPAGES} ${REMOTE_BASE}/default/${BRANCH}/${REV}/manpages/
 else
-	${RSYNC} --rsync-path="${REMOTE_RSYNC}" ${MANPAGES} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_BASE}/${CONFIG}/${BRANCH}/${REV}/manpages/
+	${RSYNC} --rsync-path="${REMOTE_RSYNC}" --recursive ${MANPAGES} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_BASE}/default/${BRANCH}/${REV}/manpages/
 fi
 
