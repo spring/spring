@@ -1176,37 +1176,41 @@ bool CGame::Draw() {
 		unitTracker.SetCam();
 	}
 
-	if (doDrawWorld) {
-		if (shadowHandler->shadowsLoaded) {
-			SCOPED_TIMER("ShadowHandler::CreateShadows");
-			SetDrawMode(gameShadowDraw);
-			shadowHandler->CreateShadows();
-			SetDrawMode(gameNormalDraw);
-		}
+	{
+		minimap->Update();
 
-		{
-			SCOPED_TIMER("CubeMapHandler::UpdateReflTex");
-			cubeMapHandler->UpdateReflectionTexture();
-		}
+		if (doDrawWorld) {
+			if (shadowHandler->shadowsLoaded) {
+				SCOPED_TIMER("ShadowHandler::CreateShadows");
+				SetDrawMode(gameShadowDraw);
+				shadowHandler->CreateShadows();
+				SetDrawMode(gameNormalDraw);
+			}
 
-		if (sky->GetLight()->IsDynamic()) {
 			{
-				SCOPED_TIMER("CubeMapHandler::UpdateSpecTex");
-				cubeMapHandler->UpdateSpecularTexture();
+				SCOPED_TIMER("CubeMapHandler::UpdateReflTex");
+				cubeMapHandler->UpdateReflectionTexture();
 			}
-			{
-				SCOPED_TIMER("Sky::UpdateSkyTex");
-				sky->UpdateSkyTexture();
-			}
-			{
-				SCOPED_TIMER("ReadMap::UpdateShadingTex");
-				readmap->UpdateShadingTexture();
-			}
-		}
 
+			if (sky->GetLight()->IsDynamic()) {
+				{
+					SCOPED_TIMER("CubeMapHandler::UpdateSpecTex");
+					cubeMapHandler->UpdateSpecularTexture();
+				}
+				{
+					SCOPED_TIMER("Sky::UpdateSkyTex");
+					sky->UpdateSkyTexture();
+				}
+				{
+					SCOPED_TIMER("ReadMap::UpdateShadingTex");
+					readmap->UpdateShadingTexture();
+				}
+			}
+
+
+		}
 		if (FBO::IsSupported())
 			FBO::Unbind();
-
 		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
