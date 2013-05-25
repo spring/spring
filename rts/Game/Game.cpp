@@ -64,6 +64,7 @@
 #include "Rendering/InMapDrawView.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Models/ModelDrawer.h"
 #include "Rendering/Models/IModelParser.h"
