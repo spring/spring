@@ -98,7 +98,6 @@ do
 
 	# compile
 	${EXEC_ASCIIDOC} -a "BINARY=${binary}" ${attributes} --doctype=manpage --backend=docbook --out-file="${manFile_xml}" - < "${manFile_src}" > /dev/null
-
 	${EXEC_ASCIIDOC} -a "BINARY=${binary}" ${attributes} --doctype=manpage --backend=html5 --out-file="${manFile_htm}" - < "${manFile_src}" > /dev/null
 
 	# format
