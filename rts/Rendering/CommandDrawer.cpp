@@ -73,7 +73,7 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 					const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
 
 					if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-						const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+						const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.attack);
 					}
 				} else {
@@ -141,7 +141,7 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 					const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
 
 					if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-						const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+						const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.attack);
 					}
 				} else {
@@ -167,7 +167,7 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 				const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
 
 				if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-					const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+					const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.guard);
 				}
 				break;
@@ -254,7 +254,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 				const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
 
 				if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-					const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+					const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.guard);
 				}
 				break;
@@ -274,7 +274,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 					const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
 
 					if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-						const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+						const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.attack);
 					}
 				} else {
@@ -320,7 +320,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 						const CUnit* unit = unitHandler->GetUnitUnsafe(id);
 
 						if ((unit != NULL) && (unit != owner) && IsUnitTrackable(unit, owner)) {
-							const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+							const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 							lineDrawer.DrawLineAndIcon(cmdID, endPos, color);
 						}
 					}
@@ -343,7 +343,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 						const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
 
 						if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-							const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+							const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 							lineDrawer.DrawLineAndIcon(cmdID, endPos, color);
 						}
 					}
@@ -416,7 +416,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 					const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
 
 					if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-						const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+						const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.attack);
 					}
 				} else {
@@ -432,7 +432,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 				const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
 
 				if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-					const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+					const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.guard);
 				}
 				break;
@@ -515,7 +515,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 					const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
 
 					if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-						const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+						const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.attack);
 					}
 				}
@@ -532,7 +532,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 				const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
 
 				if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-					const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+					const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.guard);
 				}
 				break;
@@ -599,7 +599,7 @@ void CommandDrawer::DrawTransportCAICommands(const CTransportCAI* cai) const
 					const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
 
 					if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-						const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+						const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.attack);
 					}
 				} else {
@@ -614,7 +614,7 @@ void CommandDrawer::DrawTransportCAICommands(const CTransportCAI* cai) const
 			case CMD_GUARD: {
 				const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
 				if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-					const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+					const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.guard);
 				}
 				break;
@@ -631,7 +631,7 @@ void CommandDrawer::DrawTransportCAICommands(const CTransportCAI* cai) const
 				} else {
 					const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
 					if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-						const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+						const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.load);
 					}
 				}
@@ -693,7 +693,7 @@ void CommandDrawer::DrawDefaultCommand(const Command& c, const CUnit* owner) con
 		const CUnit* unit = unitHandler->GetUnit(c.params[0]);
 
 		if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-			const float3& endPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam);
+			const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
 			lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
 		}
 

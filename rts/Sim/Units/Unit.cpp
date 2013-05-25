@@ -581,6 +581,7 @@ void CUnit::SetHeadingFromDirection()
 	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
 }
 
+
 void CUnit::SetDirVectors(const CMatrix44f& matrix) {
 	rightdir.x = -matrix[ 0];
 	rightdir.y = -matrix[ 1];
@@ -602,6 +603,24 @@ void CUnit::UpdateDirVectors(bool useGroundNormal)
 	frontdir = updir.cross(rightdir);
 }
 
+
+float3 CUnit::GetErrorVector(int allyteam) const
+{
+	if (teamHandler->Ally(allyteam, this->allyteam) || (losStatus[allyteam] & LOS_INLOS)) {
+		// ^ it's one of our own, or it's in LOS, so don't add an error ^
+		return ZeroVector;
+	}
+	if (gameSetup->ghostedBuildings && (losStatus[allyteam] & LOS_PREVLOS) && unitDef->IsBuildingUnit()) {
+		// ^ this is a ghosted building, so don't add an error ^
+		return ZeroVector;
+	}
+
+	if ((losStatus[allyteam] & LOS_INRADAR) != 0) {
+		return (posErrorVector * radarhandler->radarErrorSize[allyteam]);
+	} else {
+		return (posErrorVector * radarhandler->baseRadarErrorSize * 2);
+	}
+}
 
 
 void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent)
@@ -1258,7 +1277,7 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 	float3 interPos = synced ? pos : drawPos;
 
 	if (error && !synced && !gu->spectatingFullView) {
-		interPos += CGameHelper::GetUnitErrorPos(this, gu->myAllyTeam) - midPos;
+		interPos += GetErrorVector(gu->myAllyTeam);
 	}
 
 	return CMatrix44f(interPos, -rightdir, updir, frontdir);

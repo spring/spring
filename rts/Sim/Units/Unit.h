@@ -151,6 +151,10 @@ public:
 	void SetDirVectors(const CMatrix44f&);
 	void UpdateDirVectors(bool useGroundNormal);
 
+	float3 GetErrorVector(int allyteam) const;
+	float3 GetErrorPos(int allyteam, bool aiming = false) const { return (aiming? aimPos: midPos) + GetErrorVector(allyteam); }
+	float3 GetDrawErrorPos(int allyteam) const { return drawMidPos + GetErrorVector(allyteam); }
+
 	bool IsNeutral() const { return neutral; }
 	bool IsCloaked() const { return isCloaked; }
 

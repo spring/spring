@@ -337,7 +337,7 @@ static inline void QueryUnits(TFilter filter, TQuery& query)
 	const vector<int> &quads = quadField->GetQuads(query.pos, query.radius);
 
 	const int tempNum = gs->tempNum++;
-	
+
 	for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = quadField->GetQuad(*qi);
 		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
@@ -500,7 +500,7 @@ namespace {
 		};
 
 		/**
-		 * Return the closest unit, using CGameHelper::GetUnitErrorPos
+		 * Return the closest unit, using GetUnitErrorPos
 		 * instead of the unit's actual position.
 		 *
 		 * NOT SYNCED
@@ -515,7 +515,7 @@ namespace {
 				if (gu->spectatingFullView) {
 					unitPos = u->midPos;
 				} else {
-					unitPos = CGameHelper::GetUnitErrorPos(u, gu->myAllyTeam);
+					unitPos = u->GetErrorPos(gu->myAllyTeam);
 				}
 				const float sqDist = (pos - unitPos).SqLength2D();
 				if (sqDist <= closeSqDist) {
@@ -817,29 +817,6 @@ void CGameHelper::GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, 
 //////////////////////////////////////////////////////////////////////
 // Miscellaneous (i.e. not yet categorized)
 //////////////////////////////////////////////////////////////////////
-
-float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam, bool aiming)
-{
-	float3 pos = aiming? unit->aimPos: unit->midPos;
-
-	if (teamHandler->Ally(allyteam, unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)) {
-		// ^ it's one of our own, or it's in LOS, so don't add an error ^
-		return pos;
-	}
-	if (gameSetup->ghostedBuildings && (unit->losStatus[allyteam] & LOS_PREVLOS) && unit->unitDef->IsBuildingUnit()) {
-		// ^ this is a ghosted building, so don't add an error ^
-		return pos;
-	}
-
-	if ((unit->losStatus[allyteam] & LOS_INRADAR) != 0) {
-		pos += (unit->posErrorVector * radarhandler->radarErrorSize[allyteam]);
-	} else {
-		pos += (unit->posErrorVector * radarhandler->baseRadarErrorSize * 2);
-	}
-
-	return pos;
-}
-
 
 void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* excludeUnit)
 {

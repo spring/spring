@@ -170,7 +170,7 @@ void CMissileProjectile::Update()
 					if (owner()) {
 						CUnit* u = dynamic_cast<CUnit*>(so);
 						if (u) {
-							targetPos = CGameHelper::GetUnitErrorPos(u, owner()->allyteam, true);
+							targetPos = u->GetErrorPos(owner()->allyteam, true);
 						}
 					}
 				} if (po) {

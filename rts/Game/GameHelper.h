@@ -82,9 +82,6 @@ public:
 	static CUnit* GetClosestFriendlyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
 	static CUnit* GetClosestEnemyAircraft(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
 
-	// get the mid- or aim-position of a unit, offset by an error vector if not in LOS for <allyteam>
-	static float3 GetUnitErrorPos(const CUnit* unit, int allyteam, bool aiming = false);
-
 	static void BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* exclude);
 	static float3 Pos2BuildPos(const BuildInfo& buildInfo, bool synced);
 

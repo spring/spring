@@ -2840,7 +2840,7 @@ int LuaSyncedRead::GetUnitPosition(lua_State* L)
 	float3 err = ZeroVector;
 
 	if (!IsAllyUnit(L, unit)) {
-		err += CGameHelper::GetUnitErrorPos(unit, CLuaHandle::GetHandleReadAllyTeam(L));
+		err += unit->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
 		err -= unit->midPos;
 	}
 
@@ -3534,13 +3534,13 @@ int LuaSyncedRead::GetUnitSeparation(lua_State* L)
 	if (IsAllyUnit(L, unit1)) {
 		pos1 = unit1->midPos;
 	} else {
-		pos1 = CGameHelper::GetUnitErrorPos(unit1, CLuaHandle::GetHandleReadAllyTeam(L));
+		pos1 = unit1->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
 	}
 	float3 pos2;
 	if (IsAllyUnit(L, unit1)) {
 		pos2 = unit2->midPos;
 	} else {
-		pos2 = CGameHelper::GetUnitErrorPos(unit2, CLuaHandle::GetHandleReadAllyTeam(L));
+		pos2 = unit2->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
 	}
 
 	float dist;
