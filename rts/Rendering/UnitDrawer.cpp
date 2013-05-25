@@ -838,7 +838,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	if (gu->spectatingFullView) {
 		pos = unit->drawMidPos;
 	} else {
-		pos = CGameHelper::GetUnitErrorPos(unit, gu->myAllyTeam);
+		pos = unit->GetDrawErrorPos(gu->myAllyTeam);
 	}
 
 	float dist = fastmath::sqrt2(fastmath::sqrt2((pos - camera->GetPos()).SqLength()));
@@ -1982,9 +1982,9 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 	}
 
 	const float iconScale = GetUnitIconScale(unit);
-	const float3& iconPos = (!gu->spectatingFullView)?
-		CGameHelper::GetUnitErrorPos(unit, gu->myAllyTeam):
-		static_cast<float3>(unit->midPos);
+	const float3& iconPos = (!gu->spectatingFullView) ?
+		unit->GetDrawErrorPos(gu->myAllyTeam):
+		unit->drawMidPos;
 
 	const float iconSizeX = (iconScale * minimap->GetUnitSizeX());
 	const float iconSizeY = (iconScale * minimap->GetUnitSizeY());

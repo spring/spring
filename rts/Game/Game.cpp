@@ -1069,6 +1069,8 @@ bool CGame::UpdateUnsynced()
 	camera->Update();
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	unitDrawer->Update();
+	lineDrawer.UpdateLineStipple();
 	if (doDrawWorld) {
 		worldDrawer->Update();
 		CNamedTextures::Update();
@@ -1170,8 +1172,8 @@ bool CGame::Draw() {
 			return true;
 	}
 
+	//FIXME move both to UpdateUnsynced?
 	CTeamHighlight::Enable(spring_tomsecs(currentTimePreDraw));
-
 	if (unitTracker.Enabled()) {
 		unitTracker.SetCam();
 	}

@@ -707,7 +707,7 @@ void CMiniMap::ProxyMousePress(int x, int y, int button)
 		if (gu->spectatingFullView) {
 			mapPos = unit->midPos;
 		} else {
-			mapPos = CGameHelper::GetUnitErrorPos(unit, gu->myAllyTeam);
+			mapPos = unit->GetDrawErrorPos(gu->myAllyTeam);
 			mapPos.y = readmap->initMaxHeight + 1000.0f;
 		}
 	}
@@ -728,7 +728,7 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 		if (gu->spectatingFullView) {
 			mapPos = unit->midPos;
 		} else {
-			mapPos = CGameHelper::GetUnitErrorPos(unit, gu->myAllyTeam);
+			mapPos = unit->GetDrawErrorPos(gu->myAllyTeam);
 			mapPos.y = readmap->initMaxHeight + 1000.0f;
 		}
 	}

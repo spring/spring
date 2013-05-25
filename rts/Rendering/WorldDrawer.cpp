@@ -99,10 +99,11 @@ void CWorldDrawer::Update()
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		gd->Update();
 	}
+	//XXX: do in CGame, cause it needs to get updated even when doDrawWorld==false, cause it updates unitdrawpos which is used for maximized minimap too
+	//unitDrawer->Update();
+	//lineDrawer.UpdateLineStipple();
 	treeDrawer->Update();
-	unitDrawer->Update();
 	featureDrawer->Update();
-	lineDrawer.UpdateLineStipple();
 	IWater::ApplyPushedChanges(game);
 }
 

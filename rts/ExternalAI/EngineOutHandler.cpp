@@ -411,7 +411,7 @@ void CEngineOutHandler::UnitDamaged(
 		float3 attackDir_damagedsView = ZeroVector;
 		if (attacker) {
 			attackDir_damagedsView =
-					CGameHelper::GetUnitErrorPos(attacker, damaged.allyteam)
+					attacker->GetErrorPos(damaged.allyteam)
 					- damaged.pos;
 			attackDir_damagedsView.ANormalize();
 		}
@@ -435,7 +435,7 @@ void CEngineOutHandler::UnitDamaged(
 				&& (team_skirmishAIs.find(at) != team_skirmishAIs.end())) {
 			// direction from the attacker's view
 			const float3 attackDir = (attacker->pos
-						- CGameHelper::GetUnitErrorPos(&damaged, attacker->allyteam))
+						- damaged.GetErrorPos(attacker->allyteam))
 						.ANormalize();
 			const bool damagedInLosOrRadar = IsUnitInLosOrRadarOfAllyTeam(damaged, attacker->allyteam);
 			for (ids_t::iterator ai = team_skirmishAIs[at].begin(); ai != team_skirmishAIs[at].end(); ++ai)

@@ -652,7 +652,7 @@ float3 CAICallback::GetUnitPos(int unitId)
 	verify();
 	const CUnit* unit = GetInLosAndRadarUnit(unitId);
 	if (unit) {
-		return CGameHelper::GetUnitErrorPos(unit, teamHandler->AllyTeam(team));
+		return unit->GetErrorPos(teamHandler->AllyTeam(team));
 	}
 	return ZeroVector;
 }
