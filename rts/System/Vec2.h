@@ -16,6 +16,9 @@ struct int2
 	int2() : x(0), y(0) {}
 	int2(const int nx, const int ny) : x(nx), y(ny) {}
 
+	bool operator==(const int2& v) const { return (x == v.x) && (y == v.y); }
+	bool operator!=(const int2& v) const { return (x != v.x) || (y != v.y); }
+
 	int x;
 	int y;
 };

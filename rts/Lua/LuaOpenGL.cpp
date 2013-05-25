@@ -956,11 +956,11 @@ void LuaOpenGL::ResetMiniMapMatrices()
 		glLoadIdentity();
 		assert(minimap);
 		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
-		glTranslatef((float)minimap->GetPosX() * globalRendering->pixelX, (float)minimap->GetPosY() * globalRendering->pixelY, 0.0f);
-		glScalef((float)minimap->GetSizeX() * globalRendering->pixelX, (float)minimap->GetSizeY() * globalRendering->pixelY, 1.0f);
+		minimap->ApplyConstraintsMatrix();
 	}
 	glMatrixMode(GL_MODELVIEW); {
 		glLoadIdentity();
+		// engine draw minimap in 0..1 range, lua uses 0..minimapSizeX
 		glScalef(1.0f / (float)minimap->GetSizeX(),
 		         1.0f / (float)minimap->GetSizeY(), 1.0f);
 	}
