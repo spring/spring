@@ -70,6 +70,9 @@ do
 		echo "---- installing ${dylib}"
 		cp ${MACPORTS_BASE}/${dylib} lib
 
+		# strip down lib's subdirectories (if any)
+		dylib=lib/`echo ${dylib} | egrep -o [^/]*$`
+
 		# take write permissions on the bundled lib
 		chmod u+w ${dylib}
 
