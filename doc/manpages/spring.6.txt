@@ -267,7 +267,7 @@ It scans following directories for config files :
 |=======
 | priority | scanned directories
 >| exclusive | file defined via *--config* (when defined only this is loaded)
- |      high | write DATA DIR
+>|      high | write DATA DIR
  |           | {sys: echo -e "(skipped in Isolated mode) \n\n *nix/MacOSX: ~/.springrc \n\n Windows: C:\Users\USER\AppData\Local\springsettings.cfg"}
 >|       low | all read DATA DIRs
 |=======
