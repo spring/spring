@@ -888,6 +888,7 @@ void CMiniMap::Update()
 			if (minimapTexSize != int2(width, height)) {
 				minimapTexSize = int2(width, height);
 
+				//TODO use multisample RBO instead and blit it to pixel-perfect texture instead of 4x bigger tex (increases mem usage, but might be reduce GPU bandwidth)
 				glDeleteTextures(1, &minimapTex);
 				glGenTextures(1, &minimapTex);
 				glBindTexture(GL_TEXTURE_2D, minimapTex);
@@ -1168,8 +1169,6 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 
 	glPopMatrix(); // revert to the 2d xform
 
-	DrawNotes();
-
 	glMatrixMode(GL_MODELVIEW);
 	if (use_geo) {
 		glPopMatrix();
@@ -1250,7 +1249,7 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 }
 
 
-void CMiniMap::DrawCameraFrustumAndMouseSelection() const
+void CMiniMap::DrawCameraFrustumAndMouseSelection()
 {
 	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
@@ -1330,6 +1329,8 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection() const
 		glLineWidth(1.0f);
 		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
+
+	DrawNotes();
 
 	// disable ClipPlanes
 	glDisable(GL_CLIP_PLANE0);
