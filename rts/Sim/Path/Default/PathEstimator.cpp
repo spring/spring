@@ -63,7 +63,8 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, const std::s
 	pathChecksum(0),
 	offsetBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
 	costBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
-	blockStates(int2(nbrOfBlocksX, nbrOfBlocksZ), int2(gs->mapx, gs->mapy))
+	blockStates(int2(nbrOfBlocksX, nbrOfBlocksZ), int2(gs->mapx, gs->mapy)),
+	penalty(0)
 {
  	pathFinder = pf;
 
@@ -434,13 +435,18 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 void CPathEstimator::Update() {
 	pathCache->Update();
 
-	if (updatedBlocks.empty())
-		return;
-
 	static const unsigned int MIN_BLOCKS_TO_UPDATE = std::max(BLOCKS_TO_UPDATE >> 1, 4U);
 	static const unsigned int MAX_BLOCKS_TO_UPDATE = std::min(BLOCKS_TO_UPDATE << 1, MIN_BLOCKS_TO_UPDATE);
 	const unsigned int progressiveUpdates = updatedBlocks.size() * 0.007f * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f);
 	const unsigned int blocksToUpdate = Clamp(progressiveUpdates, MIN_BLOCKS_TO_UPDATE, MAX_BLOCKS_TO_UPDATE);
+
+	penalty = std::max(0, penalty - int(blocksToUpdate));
+
+	if (penalty >= blocksToUpdate)
+		return;
+
+	if (updatedBlocks.empty())
+		return;
 
 	std::vector<SingleBlock> v;
 	v.reserve(blocksToUpdate);
@@ -474,6 +480,8 @@ void CPathEstimator::Update() {
 			n++;
 		}
 	}
+
+	penalty += std::max(0, int(v.size()) - int(blocksToUpdate));
 
 	// FindOffset (threadsafe)
 	{
