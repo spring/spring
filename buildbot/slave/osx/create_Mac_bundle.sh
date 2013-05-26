@@ -69,7 +69,7 @@ do
 	do
 		# dylib =~ "lib{/optional-sub-dirs}/lib{name-version}.dylib"
 
-		echo "---- ${executable} requires ${MACPORTS_BASE}/${requiredlib}"
+		#echo "---- ${executable} requires ${MACPORTS_BASE}/${dylib}"
 
 		# strip down the optional subdirectories (if any)
 		locallib=lib/`echo ${dylib} | egrep -o [^/]*$`
@@ -86,7 +86,7 @@ do
 			install_name_tool -id @loader_path/../${locallib} ${locallib}
 		fi
 		
-		echo "---- telling ${executable} to use ${locallib} instead of ${MACPORTS_BASE}/${dylib}"
+		#echo "---- telling ${executable} to use ${locallib} instead of ${MACPORTS_BASE}/${dylib}"
 		# point the executable to the bundled lib in relative pathing mode
 		install_name_tool -change ${MACPORTS_BASE}/${dylib} @loader_path/../${locallib} MacOS/${executable}
 
@@ -114,7 +114,7 @@ do
 
 		for requiredlib in `otool -L lib/${dylib} | grep ${MACPORTS_BASE} | egrep -o lib.*dylib`
 		do
-			echo "---- lib/${dylib} requires ${MACPORTS_BASE}/${requiredlib}"
+			#echo "---- lib/${dylib} requires ${MACPORTS_BASE}/${requiredlib}"
 			
 			# strip down lib's subdirectories (if any)
 			locallib=lib/`echo ${requiredlib} | egrep -o [^/]*$`
@@ -139,7 +139,7 @@ do
 			fi
 
 			# point the parent lib to the bundled lib in relative pathing mode
-			echo "---- telling lib/${dylib} to use ${locallib} instead of ${MACPORTS_BASE}/${requiredlib}"
+			#echo "---- telling lib/${dylib} to use ${locallib} instead of ${MACPORTS_BASE}/${requiredlib}"
 			install_name_tool -change ${MACPORTS_BASE}/${requiredlib} @loader_path/../${locallib} lib/${dylib}
 		done
 	done
