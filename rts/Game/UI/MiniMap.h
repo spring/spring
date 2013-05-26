@@ -91,7 +91,7 @@ class CMiniMap : public CInputReceiver {
 		void DrawSquare(const float3& pos, float xsize, float zsize);
 		const icon::CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
 
-		void DrawCameraFrustumAndMouseSelection() const;
+		void DrawCameraFrustumAndMouseSelection();
 
 	protected:
 		static void DrawSurfaceCircle(const float3& pos, float radius, unsigned int resolution);
