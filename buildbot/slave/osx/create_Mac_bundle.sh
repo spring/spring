@@ -63,80 +63,83 @@ mv ${INSTALLDIR}/share .
 
 echo "-- copying 3rd-party libraries into folder: lib (provided by MacPorts)"
 for executable in `ls MacOS`
-do
-	echo "--- copying libraries for ${executable}"
-	
+do	
 	# for each MacPorts's dylib required by the executable
 	for dylib in `otool -L MacOS/${executable} | grep ${MACPORTS_BASE} | egrep -o lib.*dylib`
 	do
-		# dylib =~ "lib/lib*.dylib"
+		# dylib =~ "lib{/optional-sub-dirs}/lib{name-version}.dylib"
 
-		echo "---- copying ${MACPORTS_BASE}/${dylib} to folder: lib"
-		cp ${MACPORTS_BASE}/${dylib} lib
+		echo "---- ${executable} requires ${MACPORTS_BASE}/${requiredlib}"
 
-		# strip down lib's subdirectories (if any)
-		dylib=lib/`echo ${dylib} | egrep -o [^/]*$`
+		# strip down the optional subdirectories (if any)
+		locallib=lib/`echo ${dylib} | egrep -o [^/]*$`
 
-		echo "---- taking write permissions on ${dylib}"
-		chmod u+w ${dylib}
-
-		# change the bundled lib's id to relative pathing mode (not necessary but cleaner)
-		install_name_tool -id @loader_path/../${dylib} ${dylib}
-
-		echo "---- telling ${executable} how to find ${dylib}"
+		if [ ! -f ${locallib} ]
+		then
+			echo "---- copying ${MACPORTS_BASE}/${dylib} to ${locallib}"
+			cp ${MACPORTS_BASE}/${dylib} ${locallib}
+	
+			#echo "---- taking write permissions on ${locallib}"
+			chmod u+w ${locallib}
+	
+			# change the bundled lib's id to relative pathing mode (not necessary but cleaner)
+			install_name_tool -id @loader_path/../${locallib} ${locallib}
+		fi
+		
+		echo "---- telling ${executable} to use ${locallib} instead of ${MACPORTS_BASE}/${dylib}"
 		# point the executable to the bundled lib in relative pathing mode
-		install_name_tool -change ${MACPORTS_BASE}/${dylib} @loader_path/../${dylib} MacOS/${executable}
+		install_name_tool -change ${MACPORTS_BASE}/${dylib} @loader_path/../${locallib} MacOS/${executable}
 
 		# the bundled lib is autonomous => it can be stripped
-		echo "---- stripping down ${dylib}"
-		${STRIP} ${dylib}
+		#echo "---- stripping down ${locallib}"
+		${STRIP} ${locallib}
 	done
 
-	echo "--- stripping down ${executable}"
+	#echo "--- stripping down ${executable}"
 	${STRIP} MacOS/${executable}
 done
 
 # continue with recursive dependencies
-echo "-- copying other required 3rd-party libraries into folder: lib"
+echo "-- copying other required 3rd-party libraries into folder: lib (provided by MacPorts)"
 end=0
 while [ $end -eq 0 ]
 do
-	# don't loop unless necessary
+	# assume we're already done
 	end=1
 
 	# for each dylib already bundled
 	for dylib in `ls lib`
 	do
 		# check if all dependent MacPorts libs are also bundled
-		echo "--- looking for missing dependencies of lib/${dylib}"
+
 		for requiredlib in `otool -L lib/${dylib} | grep ${MACPORTS_BASE} | egrep -o lib.*dylib`
 		do
+			echo "---- lib/${dylib} requires ${MACPORTS_BASE}/${requiredlib}"
+			
 			# strip down lib's subdirectories (if any)
 			locallib=lib/`echo ${requiredlib} | egrep -o [^/]*$`
 
-			echo "---- scanning dependency: ${locallib}"
-
 			if [ ! -f ${locallib} ]
 			then
-				# loop
+				# a new library will be copied, we'll have to loop to scan it
 				end=0
 
-				echo "---- copying ${MACPORTS_BASE}/${requiredlib} to folder: lib"
-				cp ${MACPORTS_BASE}/${requiredlib} lib
+				echo "---- copying ${MACPORTS_BASE}/${requiredlib} to ${locallib}"
+				cp ${MACPORTS_BASE}/${requiredlib} ${locallib}
 
-				echo "---- taking write permissions on ${locallib}"
+				#echo "---- taking write permissions on ${locallib}"
 				chmod u+w ${locallib}
 
 				# change the bundled lib's id to relative pathing mode (not necessary but cleaner)
 				install_name_tool -id @loader_path/../${locallib} ${locallib}
 
 				# the bundled lib is autonomous => it can be stripped
-				echo "---- stripping down ${locallib}"
+				#echo "---- stripping down ${locallib}"
 				${STRIP} ${locallib}
 			fi
 
 			# point the parent lib to the bundled lib in relative pathing mode
-			echo "---- telling lib/${dylib} how to find ${locallib}"
+			echo "---- telling lib/${dylib} to use ${locallib} instead of ${MACPORTS_BASE}/${requiredlib}"
 			install_name_tool -change ${MACPORTS_BASE}/${requiredlib} @loader_path/../${locallib} lib/${dylib}
 		done
 	done
