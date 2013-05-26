@@ -52,6 +52,16 @@ struct PackageHeader
 		swabDWordInPlace(numObjects);
 		swabDWordInPlace(metadataChecksum);
 	}
+	PackageHeader():
+		magic({0, 0, 0, 0}),
+		objDataOffset(0),
+		objTableOffset(0),
+		numObjects(0),
+		objClassRefOffset(0),
+		numObjClassRefs(0),
+		metadataChecksum(0)
+	{
+	}
 };
 
 
