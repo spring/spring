@@ -16,8 +16,6 @@ MACRO(CreateBaseContentArchive outputdir filename files)
 		set(QUIET ">nul")
 	endif()
 	set(outputfile "${Spring_BINARY_DIR}/${outputdir}/${filename}")
-	### remove old file to force recreation from scratch
-	file(REMOVE "${outputfile}")
 	add_custom_command(
 		OUTPUT "${outputfile}"
 		COMMAND ${SEVENZIP_BIN} a -tzip ${outputfile} ${files} ${QUIET}
