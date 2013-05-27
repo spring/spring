@@ -11,13 +11,31 @@
 #include <cmath>
 
 
+static void PreCregTest(const char* logmsg)
+{
+	LOG("%s", logmsg);
+	creg::System::InitializeClasses();
+}
+
+static bool PostCregTest(int fineClasses, int brokenClasses)
+{
+	creg::System::FreeClasses();
+
+	if (brokenClasses > 0) {
+		LOG_L(L_WARNING, "CREG Results: %i of %i classes are broken", brokenClasses, brokenClasses + fineClasses);
+		return false;
+	}
+
+	LOG("CREG: Everything fine");
+	return true;
+}
+
 /**
  * Tests if all CREG classes are complete
  */
 static bool TestCregClasses1()
 {
-	creg::System::InitializeClasses();
-	LOG("CREG: Test1 (Duplicated Members)");
+	PreCregTest("CREG: Test1 (Duplicated Members)");
 
 	int fineClasses = 0;
 	int brokenClasses = 0;
@@ -52,20 +70,13 @@ static bool TestCregClasses1()
 		}
 	}
 
-	if (brokenClasses > 0) {
-		LOG_L(L_WARNING, "CREG Results: %i of %i classes are broken", brokenClasses, brokenClasses + fineClasses);
-		return false;
-	}
-
-	LOG("CREG: Everything fine");
-	return true;
+	return PostCregTest(fineClasses, brokenClasses);
 }
 
 
 static bool TestCregClasses2()
 {
-	creg::System::InitializeClasses();
-	LOG("CREG: Test2 (Class' Sizes)");
+	PreCregTest("CREG: Test2 (Class' Sizes)");
 
 	int fineClasses = 0;
 	int brokenClasses = 0;
@@ -110,20 +121,12 @@ static bool TestCregClasses2()
 			fineClasses++;
 		}
 	}
-
-	if (brokenClasses > 0) {
-		LOG_L(L_WARNING, "CREG Results: %i of %i classes are broken", brokenClasses, brokenClasses + fineClasses);
-		return false;
-	}
-
-	LOG("CREG: Everything fine");
-	return true;
+	return PostCregTest(fineClasses, brokenClasses);
 }
 
 static bool TestCregClasses3()
 {
-	creg::System::InitializeClasses();
-	LOG("CREG: Test3 (Missing Class Members)");
+	PreCregTest("CREG: Test3 (Missing Class Members)");
 
 	int fineClasses = 0;
 	int brokenClasses = 0;
@@ -251,21 +254,13 @@ static bool TestCregClasses3()
 			fineClasses++;
 		}
 	}
-
-	if (brokenClasses > 0) {
-		LOG_L(L_WARNING, "CREG Results: %i of %i classes are broken", brokenClasses, brokenClasses + fineClasses);
-		return false;
-	}
-
-	LOG("CREG: Everything fine");
-	return true;
+	return PostCregTest(fineClasses, brokenClasses);
 }
 
 
 static bool TestCregClasses4()
 {
-	creg::System::InitializeClasses();
-	LOG("CREG: Test4 (Incorrect Usage of CR_DECLARE vs. CR_DECLARE_STRUCT)");
+	PreCregTest("CREG: Test4 (Incorrect Usage of CR_DECLARE vs. CR_DECLARE_STRUCT)");
 	LOG("  Note, CR_DECLARE_STRUCT is for plain structs only without a vTable and/or inheritance.");
 	LOG("  While CR_DECLARE should be used for derived classes (both sub & base!).");
 	LOG("  It adds a virtual method! And so a vTable if there isn't one already.");
@@ -305,14 +300,7 @@ static bool TestCregClasses4()
 			fineClasses++;
 		}
 	}
-
-	if (brokenClasses > 0) {
-		LOG_L(L_WARNING, "CREG Results: %i of %i classes are broken", brokenClasses, brokenClasses + fineClasses);
-		return false;
-	}
-
-	LOG("CREG: Everything fine");
-	return true;
+	return PostCregTest(fineClasses, brokenClasses);
 }
 
 
