@@ -1,8 +1,7 @@
 !ifdef INSTALL
 	SetOutPath "$INSTDIR"
 
-	File "/oname=Zero-K.exe" "..\installer\downloads\setup.exe"
-	File "/oname=Zero-K.ico" "..\installer\downloads\setup_icon.ico"
+	File "..\installer\downloads\Zero-K.exe"
 
 	; This is not required anymore.
 	; The installed Zero-K.exe (setup) will check
@@ -12,6 +11,5 @@
 !else
 
 	Delete "$INSTDIR\Zero-K.exe"
-	Delete "$INSTDIR\Zero-K.ico"
 
 !endif ; !INSTALL

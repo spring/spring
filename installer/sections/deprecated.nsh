@@ -25,6 +25,9 @@
 	Delete "$INSTDIR\springfiles.url"
 	Delete "$INSTDIR\ArchiveCacheV7.lua"
 
+	; zero-k lobby icon
+	Delete "$INSTDIR\Zero-K.ico"
+
 	RmDir "$INSTDIR\mods"
 
 	; deprecated Shortcuts
