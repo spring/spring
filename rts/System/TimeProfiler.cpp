@@ -114,9 +114,9 @@ ScopedOnceTimer::~ScopedOnceTimer()
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CTimeProfiler::CTimeProfiler()
+CTimeProfiler::CTimeProfiler():
+	currentPosition(0)
 {
-	currentPosition = 0;
 	lastBigUpdate = spring_gettime();
 }
 

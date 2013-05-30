@@ -25,26 +25,21 @@ CR_REG_METADATA(CollisionVolume, (
 ));
 
 // base ctor (CREG-only)
-CollisionVolume::CollisionVolume()
+CollisionVolume::CollisionVolume():
+	fAxisScales(OnesVector * 2.0f),
+	hAxisScales(OnesVector),
+	hsqAxisScales(OnesVector),
+	hiAxisScales(OnesVector),
+	axisOffsets(ZeroVector),
+	volumeBoundingRadius(1.0f),
+	volumeBoundingRadiusSq(1.0f),
+	volumeType(COLVOL_TYPE_SPHERE),
+	volumeAxes{COLVOL_AXIS_Z, COLVOL_AXIS_X, COLVOL_AXIS_Y},
+	ignoreHits(false),
+	useContHitTest(COLVOL_HITTEST_CONT),
+	defaultToFootPrint(false),
+	defaultToPieceTree(false)
 {
-	fAxisScales            = OnesVector * 2.0f;
-	hAxisScales            = OnesVector;
-	hsqAxisScales          = OnesVector;
-	hiAxisScales           = OnesVector;
-	axisOffsets            = ZeroVector;
-
-	volumeBoundingRadius   = 1.0f;
-	volumeBoundingRadiusSq = 1.0f;
-
-	volumeType             = COLVOL_TYPE_SPHERE;
-	volumeAxes[0]          = COLVOL_AXIS_Z;
-	volumeAxes[1]          = COLVOL_AXIS_X;
-	volumeAxes[2]          = COLVOL_AXIS_Y;
-
-	ignoreHits             = false;
-	useContHitTest         = COLVOL_HITTEST_CONT;
-	defaultToFootPrint     = false;
-	defaultToPieceTree     = false;
 }
 
 CollisionVolume& CollisionVolume::operator = (const CollisionVolume& v) {
