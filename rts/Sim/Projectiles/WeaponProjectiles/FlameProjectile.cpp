@@ -22,15 +22,14 @@ CR_REG_METADATA(CFlameProjectile,(
 ));
 
 
-CFlameProjectile::CFlameProjectile(const ProjectileParams& params): CWeaponProjectile(params)
+CFlameProjectile::CFlameProjectile(const ProjectileParams& params):CWeaponProjectile(params)
 	, curTime(0.0f)
 	, physLife(0.0f)
-	, invttl(0.0f)
+	, invttl(1.0f / ttl)
+	, spread(params.spread)
 {
-	projectileType = WEAPON_FLAME_PROJECTILE;
 
-	invttl = 1.0f / ttl;
-	spread = params.spread;
+	projectileType = WEAPON_FLAME_PROJECTILE;
 
 	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->size * weaponDef->collisionSize, 0.0f);

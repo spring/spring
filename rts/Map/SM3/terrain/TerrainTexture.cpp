@@ -77,20 +77,20 @@ namespace terrain {
 //-----------------------------------------------------------------------
 
 
-	TerrainTexture::TerrainTexture()
+	TerrainTexture::TerrainTexture():
+		debugShader(-1),
+		heightmapW(0),
+		blendmapLOD(0),
+		useBumpMaps(false),
+		optimizeEpsilon(0.0f),
+		currentRenderSetup(NULL),
+		shaderHandler(NULL),
+		maxPasses(0),
+		tdfParser(NULL),
+		lightmap(NULL),
+		flatBumpmap(NULL),
+		shadowMapParams(0)
 	{
-		tdfParser = 0;
-		heightmapW = 0;
-		blendmapLOD = 0;
-		debugShader = -1;
-		shaderHandler = 0;
-		maxPasses = 0;
-		currentRenderSetup = 0;
-		lightmap = 0;
-		flatBumpmap = 0;
-		shadowMapParams = 0;
-		optimizeEpsilon = 0.0f;
-		useBumpMaps = false;
 	}
 
 	TerrainTexture::~TerrainTexture()
