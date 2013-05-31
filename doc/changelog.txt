@@ -22,6 +22,12 @@ Misc:
  - switch to a high precision clock all over the engine (including Lua)
  - copied a lot config descriptions from wiki to the engine (thx for all the wiki'ers)
  - http://springrts.com/wiki/Springsettings.cfg is now automatically updated with each release
+ ! disable luaThreadingModel > 2, can be overriden with EnableUnsafeAndBrokenMT=1
+	fixes #3774, #2884, #2784, #3673, #3808
+ - more verbosity for spring-dedicated on exit & demo-writing
+ - add /mapborder command
+ - add config "MenuArchive" to allow background image to be set which is read from the archive in the path bitmaps/ui/background/
+ - fix /keydebug for release builds
 
 Sim:
  - reduce target-lost CAI timeout from 8 to 2 seconds
@@ -77,10 +83,13 @@ Buildprocess:
  ! slightly refactored build system, now every target can be disabled:
      spring-dedicated, spring-headless, spring-legacy, spring-multithreaded
  - more unittests (extended FileSystem, timers, unitsync, SSE Matrix Math, ...)
+ - fix some errors when running spring in-source (AI / Interfaces are still broken)
 
 Bugfixes:
  ! fix {Get,Set}UnitWeapon{Fire,HoldFire,TryTarget,TestTarget,TestRange,HaveFreeLineOfFire} WeaponID argument to use the same 1-starting indexes as rest of lua interface
- - fix #3675: wrong loglevel in unit_script.lua
+ - fix #3785 Construction aircraft getting stuck
+ - fix #3783 add FailedCommand sound to default sounds.lua
+ - fix #3675 wrong loglevel in unit_script.lua
  - fix #3752 (safeguard execution of SimFrame() against garbage keyframe messages)
  - fix #3641 (fix several issues with units using per-piece collision volumes)
  - fix #3739 (apply impulse to aircraft)
@@ -95,8 +104,7 @@ Bugfixes:
  - fix #3637 (desyncs due to not versioning cache-data, also #3692)
  - fix #3617 (ship transports can't load units)
  - fix #3686 (free flying ground units follow terrain slope)
- - fix #3697
-     Spring.GetPositionLosState now returns a 4th argument which indicates
+ - fix #3697 Spring.GetPositionLosState now returns a 4th argument which indicates
      if a position is actively being radar- or sonar-jammed by any allyteam
  - fix #3683 (minimap textures not freed on exit)
  - fix #3660 (memory leak in Spring.GetVisibleFeatures)
@@ -117,6 +125,10 @@ Bugfixes:
  - fix logLevel of WatchDog stacktraces
  - fix decals were rendered twice
  - fix spike CEGs
+
+Sound:
+ - don't automaticly set "MaxSounds"
+ - try to fix "[Sound] Error: CSoundSource::Play: Unknown Internal Error" on Mac
 
 AI:
  - removed unused AI_UnpauseAfterInit config setting
