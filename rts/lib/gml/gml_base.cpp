@@ -175,7 +175,7 @@ namespace GML {
 				LOG("[Threading] Games that use lua gadgets which export data may run very slow in this mode, "
 					"indicated by a high LUA-EXP-SIZE(MT) value displayed in the upper right corner");
 			}
-		} else {
+		}  else if (configHandler->GetBool("EnableUnsafeAndBrokenMT"))  {
 			LOG("[Threading] Multithreading is disabled because the game or system appears incompatible");
 			LOG("[Threading] MultiThreadCount > 1 in the settings will forcefully enable multithreading");
 		}
