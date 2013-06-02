@@ -1070,7 +1070,7 @@ void SpringApp::Shutdown()
 
 	GML::Exit();
 	SafeDelete(pregame);
-	SafeDelete(game);
+	delete game; // don't use SafeDelete some stuff in it's dtor needs valid game ptr
 	SafeDelete(selectMenu);
 	agui::FreeGui();
 	SafeDelete(net);
