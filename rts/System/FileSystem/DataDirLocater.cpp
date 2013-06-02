@@ -89,10 +89,8 @@ void DataDirLocater::UpdateIsolationModeByEnvVar()
 
 	const char* const envIsolation = getenv("SPRING_ISOLATED");
 	if (envIsolation != NULL) {
-		isolationMode = true;
-		if (FileSystem::DirExists(SubstEnvVars(envIsolation))) {
-			isolationModeDir = envIsolation;
-		}
+		SetIsolationMode(true);
+		SetIsolationModeDir(envIsolation);
 	}
 }
 
