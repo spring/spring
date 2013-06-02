@@ -1407,7 +1407,6 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	quads.clear();
 	loshandler->FreeInstance(los);
 	los = 0;
-	losStatus[allyteam] = 0;
 	radarhandler->RemoveUnit(this);
 
 	if (unitDef->isAirBase) {
@@ -1439,7 +1438,14 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	unitHandler->unitsByDefs[newteam][unitDef->id].insert(this);
 
 	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
-		UpdateLosStatus(at);
+		if (teamHandler->Ally(at, allyteam)) {
+			SetLosStatus(at, LOS_ALL_MASK_BITS | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR);
+		}
+		else {
+			//re-calc LOS status
+			losStatus[at] = 0;
+			UpdateLosStatus(at);
+		}
 	}
 
 	loshandler->MoveUnit(this, false);
