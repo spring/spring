@@ -847,10 +847,8 @@ bool LuaUtils::PushLogEntries(lua_State* L)
 int LuaUtils::Log(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if (args < 2)
-		return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
 	if (args < 3)
-		return 0;
+		return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
 
 	const std::string section = luaL_checkstring(L, 1);
 
