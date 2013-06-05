@@ -259,10 +259,8 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 
 void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 {
-	glDisable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	glEnable(GL_TEXTURE_2D); // needed for the non-shader case
 
 	smfRenderState = smfRenderStateFFP;
 	//smfRenderState->Enable(this, drawPass);
@@ -273,8 +271,8 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 
-	glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f, 1.0f, 1.0f, 1.0f);
-	SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), -0.5f / gs->pwr2mapx, -0.5f / gs->pwr2mapy);
+	//glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f, 1.0f, 1.0f, 1.0f);
+	//SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), -0.5f / gs->pwr2mapx, -0.5f / gs->pwr2mapy);
 
 	static const GLfloat planeX[] = {0.005f, 0.0f, 0.005f, 0.5f};
 	static const GLfloat planeZ[] = {0.0f, 0.005f, 0.0f, 0.5f};
@@ -313,8 +311,12 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
+	glDisable(GL_BLEND);
+
 	glActiveTexture(GL_TEXTURE2);
 	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_GEN_S);
+	glDisable(GL_TEXTURE_GEN_T);
 
 	glActiveTexture(GL_TEXTURE0);
 	glDisable(GL_TEXTURE_2D);
