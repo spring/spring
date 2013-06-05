@@ -324,10 +324,7 @@ const CKeyBindings::ActionList&
 			// combine the two lists (normal first)
 			static ActionList merged;
 			merged = nit->second;
-			const ActionList& aal = ait->second;
-			for (int i = 0; i < (int)aal.size(); ++i) {
-				merged.push_back(aal[i]);
-			}
+			merged.insert(merged.end(), ait->second.begin(), ait->second.end());
 			alPtr = &merged;
 		}
 	}
@@ -340,7 +337,7 @@ const CKeyBindings::ActionList&
 		if (!isEmpty) {
 			const ActionList& al = *alPtr;
 			for (size_t i = 0; i < al.size(); ++i) {
-				LOG("  %s  \"%s\"", al[i].command.c_str(), al[i].rawline.c_str());
+				LOG("  %s  \"%s\" %s", al[i].command.c_str(), al[i].rawline.c_str(), al[i].boundWith.c_str());
 			}
 		}
 	}
