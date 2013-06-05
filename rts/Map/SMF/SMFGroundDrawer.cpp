@@ -313,6 +313,12 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
+	glActiveTexture(GL_TEXTURE2);
+	glDisable(GL_TEXTURE_2D);
+
+	glActiveTexture(GL_TEXTURE0);
+	glDisable(GL_TEXTURE_2D);
+
 	smfRenderState->Disable(this, drawPass);
 	glDisable(GL_CULL_FACE);
 }
