@@ -78,9 +78,10 @@ void ProfileDrawer::Draw()
 		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", p);
 		fStartX += 0.04f;
 		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", pi->second.newpeak?1:255, pi->second.newpeak?1:255, pi->second.peak * 100);
+
 		// print timer name
 		fStartX += 0.01f;
-		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM, "%s", pi->first.c_str());
+		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM, pi->first);
 	}
 	font->End();
 
@@ -88,26 +89,29 @@ void ProfileDrawer::Draw()
 	glPushMatrix();
 	glTranslatef(start_x + 0.005f, start_y, 0);
 	glScalef(0.015f, 0.02f, 0.02f);
-	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi){
-		glColorf3((float3)pi->second.color);
 		glBegin(GL_QUADS);
-		glVertex3f(0,0,0);
-		glVertex3f(1,0,0);
-		glVertex3f(1,1,0);
-		glVertex3f(0,1,0);
+			int i = 0;
+			for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++i){
+				glColorf3((float3)pi->second.color);
+				glVertex3f(0, 0 - i * 1.2f, 0);
+				glVertex3f(1, 0 - i * 1.2f, 0);
+				glVertex3f(1, 1 - i * 1.2f, 0);
+				glVertex3f(0, 1 - i * 1.2f, 0);
+			}
 		glEnd();
 		// draw the 'graph view disabled' cross
-		if (!pi->second.showGraph) {
+		glBegin(GL_LINES);
+			i = 0;
 			glColor3f(1,0,0);
-			glBegin(GL_LINES);
-			glVertex3f(0,0,0);
-			glVertex3f(1,1,0);
-			glVertex3f(1,0,0);
-			glVertex3f(0,1,0);
-			glEnd();
-		}
-		glTranslatef(0,-1.2f,0);
-	}
+			for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++i){
+				if (!pi->second.showGraph) {
+					glVertex3f(0, 0 - i * 1.2f, 0);
+					glVertex3f(1, 1 - i * 1.2f, 0);
+					glVertex3f(1, 0 - i * 1.2f, 0);
+					glVertex3f(0, 1 - i * 1.2f, 0);
+				}
+			}
+		glEnd();
 	glPopMatrix();
 
 	// draw the graph
