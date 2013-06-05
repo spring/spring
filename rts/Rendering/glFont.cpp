@@ -1259,7 +1259,7 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 		}
 	}
 
-	
+
 
 	//! empty row
 	if (!currLineValid || (currLine->start == words.end() && !currLine->forceLineBreak)) {
@@ -1635,6 +1635,12 @@ void CglFont::Begin(const bool immediate, const bool resetColors)
 	stripOutlineColors.clear();
 	stripTextColors.push_back(textColor);
 	stripOutlineColors.push_back(outlineColor);
+
+	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 
@@ -1647,16 +1653,12 @@ void CglFont::End()
 	inBeginEnd = false;
 
 	if (va->drawIndex() == 0) {
+		glPopAttrib();
 		return;
 	}
 
-	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, fontTexture);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (va2->drawIndex() > 0) {
 		if (stripOutlineColors.size() > 1) {
