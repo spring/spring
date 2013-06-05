@@ -1022,6 +1022,8 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 		if (use_geo)
 			glPopMatrix();
 
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(1,1,1,1);
 		return;
 	}
 
