@@ -47,6 +47,9 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 	teams.resize(setup->teamStartingData.size());
 	allyTeams = setup->allyStartingData;
 
+	const int numTeams = teams.size() + ((gs->useLuaGaia) ? 1 : 0);
+	const int maxUnitsPerTeam = std::min(setup->maxUnitsPerTeam, int(MAX_UNITS / numTeams));
+
 	for (size_t i = 0; i < teams.size(); ++i) {
 		// TODO: this loop body could use some more refactoring
 		CTeam* team = new CTeam(i);
@@ -55,7 +58,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 
 		// all non-Gaia teams (within one allyteam) get and maintain the same unit-limit
 		// (because of this it would be better treated as a pool owned by class AllyTeam)
-		team->SetMaxUnits(std::min(setup->maxUnitsPerTeam, int(MAX_UNITS / teams.size())));
+		team->SetMaxUnits(maxUnitsPerTeam);
 
 		assert(team->teamAllyteam >=                0);
 		assert(team->teamAllyteam <  allyTeams.size());
