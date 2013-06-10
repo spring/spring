@@ -24,7 +24,7 @@ static bool PostCregTest(int fineClasses, int brokenClasses, int ignore = 0)
 	if (brokenClasses > 0) {
 		LOG_L(L_WARNING, "CREG Results: %i of %i classes are broken", brokenClasses, brokenClasses + fineClasses);
 		if (ignore>0) { //FIXME: remove this
-			LOG_L(L_ERROR, "ignored %d CREG errors: %d", ignore, brokenClasses - ignore);
+			LOG_L(L_ERROR, "%d broken classes of CREG ignored", ignore);
 		}
 		return (brokenClasses - ignore) <= 0;
 	}
