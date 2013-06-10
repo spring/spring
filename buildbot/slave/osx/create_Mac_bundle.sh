@@ -10,7 +10,7 @@ INSTALLDIR=${DEST}/usr/local
 echo "Installing into $DEST"
 
 cd ${BUILDDIR}
-make install DESTDIR=${DEST}
+${MAKE} install DESTDIR=${DEST}
 
 # The Spring.app bundle will have the following folder hierarchy:
 # -> Contents

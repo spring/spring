@@ -18,7 +18,7 @@ fi
 
 #install
 cd ${BUILDDIR}
-DESTDIR=${TESTDIR} ninja install-spring-headless install-pr-downloader demotool lua2php
+DESTDIR=${TESTDIR} ${MAKE} install-spring-headless install-pr-downloader demotool lua2php
 
 cd ${SOURCEDIR}
 
