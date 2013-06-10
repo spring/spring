@@ -108,3 +108,5 @@ progress.make
 /lobby
 /log
 /infolog.txt
+/demos
+/LuaUI
