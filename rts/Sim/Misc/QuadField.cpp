@@ -181,8 +181,8 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, b
 			const float totRad       = radius + (*ui)->radius;
 			const float totRadSq     = totRad * totRad;
 			const float posUnitDstSq = spherical?
-				(pos - (*ui)->midPos).SqLength():
-				(pos - (*ui)->midPos).SqLength2D();
+				pos.SqDistance((*ui)->midPos):
+				pos.SqDistance2D((*ui)->midPos);
 
 			if (posUnitDstSq >= totRadSq) { continue; }
 
@@ -568,7 +568,7 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float rad
 			const float totRad = radius + (*fi)->radius;
 
 			if ((*fi)->tempNum == tempNum) { continue; }
-			if ((pos - (*fi)->midPos).SqLength() >= (totRad * totRad)) { continue; }
+			if (pos.SqDistance((*fi)->midPos) >= (totRad * totRad)) { continue; }
 
 			(*fi)->tempNum = tempNum;
 			features.push_back(*fi);
@@ -787,21 +787,26 @@ void CQuadField::GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit
 		Quad& quad = baseQuads[*a];
 
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if ((*ui)->tempNum == tempNum) { continue; }
+			CUnit& u = **ui;
+			if (u.tempNum == tempNum) { continue; } // prevent double adding
 
-			(*ui)->tempNum = tempNum;
-			*dstUnit = *ui;
+			const float totRad = radius + u.radius;
+			if (pos.SqDistance(u.midPos) >= (totRad * totRad)) { continue; }
+
+			u.tempNum = tempNum;
+			*dstUnit = &u;
 			++dstUnit;
 		}
 
 		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
-			const float totRad = radius + (*fi)->radius;
+			CFeature& f = **fi;
+			if (f.tempNum == tempNum) { continue; } // prevent double adding
 
-			if ((*fi)->tempNum == tempNum) { continue; }
-			if ((pos - (*fi)->midPos).SqLength() >= (totRad * totRad)) { continue; }
+			const float totRad = radius + f.radius;
+			if (pos.SqDistance(f.midPos) >= (totRad * totRad)) { continue; }
 
-			(*fi)->tempNum = tempNum;
-			*dstFeature = *fi;
+			f.tempNum = tempNum;
+			*dstFeature = &f;
 			++dstFeature;
 		}
 	}
