@@ -852,7 +852,7 @@ int LuaUtils::Log(lua_State* L)
 
 	const std::string section = luaL_checkstring(L, 1);
 
-	int loglevel;
+	int loglevel = 0;
 	if (lua_israwnumber(L, 2)) {
 		loglevel = lua_tonumber(L, 2);
 	}
