@@ -77,7 +77,10 @@ Performance:
 Buildprocess:
  ! updated gentoo overlay url to https://github.com/springlobby/overlay
  - fix #3645 Can't build if source directory has white spaces
- ! removed VS project files (use cmake -G "Visual Studio ..." to generate them
+ ! removed VS project files / fix compile with Visual Studio 2012 Express for Windows Desktop:
+    use cmake -G "Visual Studio 11" to generate project files
+    dropped support for Visual Studio 8, 9 & 10
+    see http://springrts.com/wiki/Building_Spring_on_Windows
  ! compile Spring as c++11
  - fix clang compile errors + some bugs detected by clang
  ! slightly refactored build system, now every target can be disabled:
@@ -112,6 +115,7 @@ Bugfixes:
  - fix ground units not moving in FPS mode
  - fix (non-hovering) aircraft jittering at high altitude
  - fix #3743 (partially: make non-hovering aircraft start turning to goal during takeoff)
+ - fix #3681 (make widgetHandler:LoadConfigData() more robust)
  - fix submarines being considered "underwater" even when pos.y + height > 0
  - fix subtle bug in LegacyAtlasAlloc::Allocate exposed by Intel GMA
      atlas could grow LARGER than its maximum size in x-dimension due to TEXMARGIN not being considered
