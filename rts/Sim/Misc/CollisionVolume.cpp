@@ -34,12 +34,14 @@ CollisionVolume::CollisionVolume():
 	volumeBoundingRadius(1.0f),
 	volumeBoundingRadiusSq(1.0f),
 	volumeType(COLVOL_TYPE_SPHERE),
-	volumeAxes{COLVOL_AXIS_Z, COLVOL_AXIS_X, COLVOL_AXIS_Y},
 	ignoreHits(false),
 	useContHitTest(COLVOL_HITTEST_CONT),
 	defaultToFootPrint(false),
 	defaultToPieceTree(false)
 {
+	volumeAxes[0] = COLVOL_AXIS_Z;
+	volumeAxes[1] = COLVOL_AXIS_X;
+	volumeAxes[2] = COLVOL_AXIS_Y;
 }
 
 CollisionVolume& CollisionVolume::operator = (const CollisionVolume& v) {

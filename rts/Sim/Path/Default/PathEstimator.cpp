@@ -488,7 +488,7 @@ void CPathEstimator::Update() {
 		SCOPED_TIMER("CPathEstimator::FindOffset");
 		Threading::OMPCheck();
 		#pragma omp parallel for
-		for (unsigned int n = 0; n < v.size(); ++n) {
+		for (int n = 0; n < v.size(); ++n) {
 			// copy the next block in line
 			const SingleBlock sb = v[n];
 
