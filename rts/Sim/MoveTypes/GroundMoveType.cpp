@@ -653,7 +653,7 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	skidRotVector = skidDir.cross(UpVector) * startSkidding;
 	skidRotAccel = ((gs->randFloat() - 0.5f) * 0.04f) * startFlying;
 
-	owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING * startSkidding);
+	owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING * (startSkidding | startFlying));
 	owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING * startFlying);
 
 	ASSERT_SANE_OWNER_SPEED(newSpeed);
