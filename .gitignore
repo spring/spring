@@ -110,3 +110,9 @@ progress.make
 /infolog.txt
 /demos
 /LuaUI
+
+#Visual Studio files
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
