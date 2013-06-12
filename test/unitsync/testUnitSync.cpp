@@ -237,9 +237,8 @@ BOOST_AUTO_TEST_CASE( UnitSync )
 		LOG("still scanning");
 	}
 	BOOST_CHECK_MESSAGE(fut.get() != 0, "us::Init(false, 0) != 0");*/
-	const int res = us::Init(false, 0);
+	BOOST_CHECK(us::Init(false, 0) != 0);
 	BOOST_WARN_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
-	BOOST_CHECK(res != 0);
 
 	// Lua
 	BOOST_CHECK(TestLuaParser());
