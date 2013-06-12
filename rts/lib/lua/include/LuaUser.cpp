@@ -5,7 +5,6 @@
 
 #include "lua.h"
 #include "LuaInclude.h"
-#include "Lua/LuaContextData.h"
 #include "Lua/LuaHandle.h"
 #include "System/Platform/Threading.h"
 #include "System/Log/ILog.h"
