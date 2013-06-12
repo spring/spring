@@ -187,7 +187,7 @@ std::string FileSystemAbstraction::GetFileModificationDate(const std::string& fi
 		const std::time_t t = boost::filesystem::last_write_time(f);
 		struct tm* clock = std::gmtime(&t);
 
-		size_t cTime_size = 20;
+		const size_t cTime_size = 20;
 		char cTime[cTime_size];
 		SNPRINTF(cTime, cTime_size, "%d%02d%02d%02d%02d%02d", 1900+clock->tm_year, clock->tm_mon, clock->tm_mday, clock->tm_hour, clock->tm_min, clock->tm_sec);
 		return cTime;
