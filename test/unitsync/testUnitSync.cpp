@@ -237,6 +237,7 @@ BOOST_AUTO_TEST_CASE( UnitSync )
 		LOG("still scanning");
 	}
 	BOOST_CHECK_MESSAGE(fut.get() != 0, "us::Init(false, 0) != 0");*/
+	us::SetSpringConfigFile(""); //reset to default config file
 	BOOST_CHECK(us::Init(false, 0) != 0);
 	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 
