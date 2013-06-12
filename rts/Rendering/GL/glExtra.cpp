@@ -79,7 +79,7 @@ void glBallisticCircle(const float3& center, const float radius,
 
 	Threading::OMPCheck();
 	#pragma omp parallel for
-	for (unsigned int i = 0; i < resolution; ++i) {
+	for (int i = 0; i < resolution; ++i) {
 		const float radians = (2.0f * PI) * (float)i / (float)resolution;
 		float rad = radius;
 		float sinR = fastmath::sin(radians);

@@ -4,6 +4,7 @@
 RemoveFlag("-fsignaling-nans")
 
 INCLUDE_DIRECTORIES(BEFORE ../streflop include)
+INCLUDE_DIRECTORIES(${GLEW_INCLUDE_DIR})
 
 SET(luaSources
 		"src/lapi.cpp"
