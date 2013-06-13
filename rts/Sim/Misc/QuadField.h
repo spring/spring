@@ -37,7 +37,8 @@ public:
 	//
 	unsigned int GetQuads(float3 pos, float radius, int*& begQuad, int*& endQuad) const;
 	unsigned int GetQuadsOnRay(float3 start, float3 dir, float length, int*& begQuad, int*& endQuad);
-	void GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature);
+
+	void GetUnitsAndFeaturesColVol(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature);
 
 	/**
 	 * Returns all units within @c radius of @c pos,
