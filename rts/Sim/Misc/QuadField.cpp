@@ -4,6 +4,7 @@
 
 #include "lib/gml/gmlmut.h"
 #include "QuadField.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -767,9 +768,8 @@ std::vector<int> CQuadField::GetQuadsRectangle(const float3& pos1, const float3&
 }
 
 
-
 // optimization specifically for projectile collisions
-void CQuadField::GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature)
+void CQuadField::GetUnitsAndFeaturesColVol(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature)
 {
 	GML_RECMUTEX_LOCK(qnum); // GetUnitsAndFeaturesExact
 
@@ -790,8 +790,9 @@ void CQuadField::GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit
 			CUnit& u = **ui;
 			if (u.tempNum == tempNum) { continue; } // prevent double adding
 
-			const float totRad = radius + u.radius;
-			if (pos.SqDistance(u.midPos) >= (totRad * totRad)) { continue; }
+			const auto& colvol = *(u.collisionVolume);
+			const float totRad = radius + colvol.GetBoundingRadius();
+			if (pos.SqDistance(u.midPos + colvol.GetOffsets()) >= (totRad * totRad)) { continue; }
 
 			u.tempNum = tempNum;
 			*dstUnit = &u;
@@ -802,8 +803,9 @@ void CQuadField::GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit
 			CFeature& f = **fi;
 			if (f.tempNum == tempNum) { continue; } // prevent double adding
 
-			const float totRad = radius + f.radius;
-			if (pos.SqDistance(f.midPos) >= (totRad * totRad)) { continue; }
+			const auto& colvol = *(f.collisionVolume);
+			const float totRad = radius + colvol.GetBoundingRadius();
+			if (pos.SqDistance(f.midPos + colvol.GetOffsets()) >= (totRad * totRad)) { continue; }
 
 			f.tempNum = tempNum;
 			*dstFeature = &f;

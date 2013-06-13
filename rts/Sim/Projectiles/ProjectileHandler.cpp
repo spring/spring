@@ -473,7 +473,7 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc) {
 			CUnit** endUnit = &tempUnits[0];
 			CFeature** endFeature = &tempFeatures[0];
 
-			quadField->GetUnitsAndFeaturesExact(p->pos, p->radius + speedf, endUnit, endFeature);
+			quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + speedf, endUnit, endFeature);
 
 			CheckUnitCollisions(p, tempUnits, endUnit, ppos0, ppos1);
 			CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);
