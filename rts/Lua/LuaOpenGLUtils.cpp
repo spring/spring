@@ -366,7 +366,7 @@ void LuaMatTexture::Bind() const
 
 	if (texID != 0) {
 		glBindTexture(texType, texID);
-		if (enable) {
+		if (enable && (texType == GL_TEXTURE_2D)) {
 			glEnable(texType);
 		}
 	}
