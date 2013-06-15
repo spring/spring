@@ -220,46 +220,25 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 			DoExplosionDamage(hitFeature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID, params.projectileID);
 		}
 	} else {
+		static std::vector<CUnit*> tempUnits(unitHandler->MaxUnits(), NULL);
+		static std::vector<CFeature*> tempFeatures(unitHandler->MaxUnits(), NULL);
+		CUnit** endUnit = &tempUnits[0];
+		CFeature** endFeature = &tempFeatures[0];
+		quadField->GetUnitsAndFeaturesColVol(expPos, damageAOE, endUnit, endFeature);
+
 		{
 			// damage all units within the explosion radius
-			const vector<CUnit*>& units = quadField->GetUnitsExact(expPos, damageAOE);
-			bool hitUnitDamaged = false;
-
-			for (vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
+			for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
 				CUnit* unit = *ui;
-
-				if (unit == hitUnit) {
-					hitUnitDamaged = true;
-				}
-
 				DoExplosionDamage(unit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID, params.projectileID);
-			}
-
-			// HACK: for a unit with an offset coldet volume, the explosion
-			// (from an impacting projectile) position might not correspond
-			// to its quadfield position so we need to damage it separately
-			if (hitUnit != NULL && !hitUnitDamaged) {
-				DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID, params.projectileID);
 			}
 		}
 
 		{
 			// damage all features within the explosion radius
-			const vector<CFeature*>& features = quadField->GetFeaturesExact(expPos, damageAOE);
-			bool hitFeatureDamaged = false;
-
-			for (vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
+			for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
 				CFeature* feature = *fi;
-
-				if (feature == hitFeature) {
-					hitFeatureDamaged = true;
-				}
-
 				DoExplosionDamage(feature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID, params.projectileID);
-			}
-
-			if (hitFeature != NULL && !hitFeatureDamaged) {
-				DoExplosionDamage(hitFeature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID, params.projectileID);
 			}
 		}
 
