@@ -110,8 +110,9 @@ function getinfolog(){
 		if (array_key_exists('request',$_REQUEST))
 			$infolog=$_REQUEST['request'];
 		else
-			return "";	
+			return "";
 	}
+	$infolog=addslashes($infolog);
 	$infolog=str_replace("\r\n","\n",$infolog); //windows linebreaks f'up some things here...
 	$infolog=str_replace("\n\n","\n",$infolog);
 	return stripslashes($infolog);
