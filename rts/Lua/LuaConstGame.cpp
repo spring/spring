@@ -42,9 +42,11 @@ bool LuaConstGame::PushEntries(lua_State* L)
 {
 	assert(mapInfo);
 	assert(gameSetup);
-	
+
 	// FIXME  --  this is getting silly, convert to userdata?
 	LuaPushNamedString(L, "version", SpringVersion::GetSync());
+	LuaPushNamedString(L, "versionFull", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetFull(): "");
+	LuaPushNamedString(L, "versionPatchSet", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetPatchSet(): "");
 	LuaPushNamedString(L, "buildFlags", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetAdditional(): "");
 
 	if (unitHandler != NULL) {
