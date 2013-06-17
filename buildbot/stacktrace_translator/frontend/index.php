@@ -29,11 +29,11 @@ function limit(){
 function getVersion($filecontents){
 	$res=preg_match('/(Spring ([0-9]+.[0-9]+)(.\d*-\d*-g([0-9a-f]{7})\s)?(\w*)\s?(\((.*)\))?)(\n)/',$filecontents,$matches);
 	if ($res==1) {
-		$wholeVersion=$matches[0];
-		$syncVersion=$matches[1];
-		$commit=$matches[3];
-		$branch=$matches[5];
-		$buildFlags=$matches[7];
+		$wholeVersion=$matches[1];
+		$syncVersion=$matches[2];
+		$commit=$matches[4];
+		$branch=$matches[6];
+		$buildFlags=$matches[8];
 		return $wholeVersion;
 	}
 	return "";
@@ -45,11 +45,11 @@ function getVersion($filecontents){
 function getCommit($filecontents) {
 	$res=preg_match('/(Spring ([0-9]+.[0-9]+)(.\d*-\d*-g([0-9a-f]{7})\s)?(\w*)\s?(\((.*)\))?)(\n)/',$filecontents,$matches);
 	if ($res==1) {
-		$wholeVersion=$matches[0];
-		$syncVersion=$matches[1];
-		$commit=$matches[3];
-		$branch=$matches[5];
-		$buildFlags=$matches[7];
+		$wholeVersion=$matches[1];
+		$syncVersion=$matches[2];
+		$commit=$matches[4];
+		$branch=$matches[6];
+		$buildFlags=$matches[8];
 		return $commit;
 	}
 	return "";
@@ -61,11 +61,11 @@ function getCommit($filecontents) {
 function getBranch($filecontents) {
 	$res=preg_match('/(Spring ([0-9]+.[0-9]+)(.\d*-\d*-g([0-9a-f]{7})\s)?(\w*)\s?(\((.*)\))?)(\n)/',$filecontents,$matches);
 	if ($res==1) {
-		$wholeVersion=$matches[0];
-		$syncVersion=$matches[1];
-		$commit=$matches[3];
-		$branch=$matches[5];
-		$buildFlags=$matches[7];
+		$wholeVersion=$matches[1];
+		$syncVersion=$matches[2];
+		$commit=$matches[4];
+		$branch=$matches[6];
+		$buildFlags=$matches[8];
 		return (!empty($branch)) ? $branch : "master";
 	}
 	return "develop";
@@ -176,12 +176,19 @@ function parse_result($res,$ver,$commit,$branch){
 			$address = $res[$i][1];
 			$filename = $res[$i][2];
 			$line = $res[$i][3];
+			if (!empty($filename)) {
+				$regres=preg_match('/.*(rts\/.*)/', $filename, $matches);
+				if ($regres==1 && !empty($matches[1])) {
+					$filename=$matches[1];
+				}
+			}
 			if ($name=="")
 				$name=$filename.":".$line;
 			$textwithlinks.="<tr>\n";
 			$textwithlinks.= "<td>".$module . "</td><td> " . $address . "</td><td> " . $filename . "</td>\n";
 			$cleantext.= $module." ".$address." ".$filename.":".$line."\n";
-			if ((strlen($filename)>0) && ($filename[0]=='r')){
+
+			if (!empty($filename) && ($filename[0]=='r')){
 				if (!empty($commit)){
 					$textwithlinks.='<td><a target="_blank" href="https://github.com/spring/spring/blob/'.$commit.'/'.$filename.'#L'.$line.'">'.$line.'</a></td>';
 				} else {
