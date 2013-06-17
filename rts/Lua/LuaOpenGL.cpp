@@ -172,8 +172,10 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Blending);
 	REGISTER_LUA_CFUNC(BlendEquation);
 	REGISTER_LUA_CFUNC(BlendFunc);
-	if (globalRendering->haveGLSL) {
+	if (GLEW_EXT_blend_equation_separate) {
 		REGISTER_LUA_CFUNC(BlendEquationSeparate);
+	}
+	if (GLEW_EXT_blend_func_separate) {
 		REGISTER_LUA_CFUNC(BlendFuncSeparate);
 	}
 
@@ -187,7 +189,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(StencilMask);
 	REGISTER_LUA_CFUNC(StencilFunc);
 	REGISTER_LUA_CFUNC(StencilOp);
-	if (globalRendering->haveGLSL) {
+	if (GLEW_EXT_stencil_two_side) {
 		REGISTER_LUA_CFUNC(StencilMaskSeparate);
 		REGISTER_LUA_CFUNC(StencilFuncSeparate);
 		REGISTER_LUA_CFUNC(StencilOpSeparate);
@@ -284,7 +286,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ReadPixels);
 	REGISTER_LUA_CFUNC(SaveImage);
 
-	if (globalRendering->haveGLSL) {
+	if (GLEW_ARB_occlusion_query) {
 		REGISTER_LUA_CFUNC(CreateQuery);
 		REGISTER_LUA_CFUNC(DeleteQuery);
 		REGISTER_LUA_CFUNC(RunQuery);
