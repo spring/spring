@@ -5284,7 +5284,7 @@ int LuaSyncedRead::GetUnitPieceMatrix(lua_State* L)
 	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
 		return 0;
 	}
-	const CMatrix44f mat = localModel->GetRawPieceMatrix(piece);
+	const CMatrix44f& mat = localModel->GetRawPieceMatrix(piece);
 	for (int m = 0; m < 16; m++) {
 		lua_pushnumber(L, mat.m[m]);
 	}

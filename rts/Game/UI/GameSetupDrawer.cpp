@@ -51,10 +51,10 @@ void GameSetupDrawer::StartCountdown(unsigned time)
 }
 
 
-GameSetupDrawer::GameSetupDrawer()
+GameSetupDrawer::GameSetupDrawer():
+	readyCountdown(spring_notime),
+	lastTick(spring_notime)
 {
-	readyCountdown = spring_notime;
-	lastTick = spring_notime;
 	if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame && !gameSetup->hostDemo) {
 		new CStartPosSelecter();
 	}

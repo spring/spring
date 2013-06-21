@@ -1418,7 +1418,7 @@ void CCommandAI::FinishCommand()
 {
 	assert(!commandQue.empty());
 
-	const Command cmd = commandQue.front();
+	const Command& cmd = commandQue.front();
 	const int cmdID  = cmd.GetID();
 	const int cmdTag = cmd.tag;
 	const bool dontRepeat = (cmd.options & INTERNAL_ORDER);

@@ -115,9 +115,9 @@ ScopedOnceTimer::~ScopedOnceTimer()
 //////////////////////////////////////////////////////////////////////
 
 CTimeProfiler::CTimeProfiler():
+	lastBigUpdate(spring_gettime()),
 	currentPosition(0)
 {
-	lastBigUpdate = spring_gettime();
 }
 
 CTimeProfiler::~CTimeProfiler()
