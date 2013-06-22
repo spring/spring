@@ -842,7 +842,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	}
 
 	float dist = fastmath::sqrt2(fastmath::sqrt2((pos - camera->GetPos()).SqLength()));
-	float scale = 0.4f * iconData->GetSize() * dist;
+	float scale = iconData->GetSize() * Clamp(0.4f * dist, 0.01f, 1.0f);
 
 	if (iconData->GetRadiusAdjust() && !useDefaultIcon) {
 		scale *= (unit->radius / WORLDOBJECT_DEFAULT_DRAWRADIUS);
