@@ -1063,22 +1063,9 @@ int LuaUnsyncedCtrl::SetCustomCommandDrawData(lua_State* L)
 	}
 
 	float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	const int size = LuaUtils::ParseFloatArray(L, 3, color, 4);
 
-	const int table = 3;
-	if (lua_istable(L, table)) {
-		for (int i = 0; i < 4; i++) {
-			lua_rawgeti(L, table, i + 1);
-			if (lua_israwnumber(L, -1)) {
-				color[i] = lua_tofloat(L, -1);
-				lua_pop(L, 1);
-			} else {
-				lua_pop(L, 1);
-				break;
-			}
-		}
-	}
-
-	const bool showArea = lua_isboolean(L, 4) && lua_toboolean(L, 4);
+	const bool showArea = luaL_optboolean(L, 4, false);
 
 	cmdColors.SetCustomCmdData(cmdID, iconID, color, showArea);
 
