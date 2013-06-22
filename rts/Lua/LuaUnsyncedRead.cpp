@@ -145,7 +145,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetCameraVectors);
 	REGISTER_LUA_CFUNC(WorldToScreenCoords);
 	REGISTER_LUA_CFUNC(TraceScreenRay);
-	REGISTER_LUA_CFUNC(PixelDir);
+	REGISTER_LUA_CFUNC(GetPixelDir);
 
 	REGISTER_LUA_CFUNC(GetTimer);
 	REGISTER_LUA_CFUNC(DiffTimers);
@@ -1389,7 +1389,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 }
 
 
-int LuaUnsyncedRead::PixelDir(lua_State* L)
+int LuaUnsyncedRead::GetPixelDir(lua_State* L)
 {
 	const int x = luaL_checkint(L, 1);
 	const int y = luaL_checkint(L, 2);

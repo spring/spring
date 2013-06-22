@@ -58,6 +58,8 @@ Lua:
  ! LuaSynced*: make sure ALL weapon API functions are 1-based
      UPDATE YOUR GAME'S UNIT_SCRIPT.LUA IF IT HAS LUA-SCRIPTED
      UNITS AND YOU ARE NOT USING SPRING'S (BASECONTENT) VERSION
+ - LuaUnsyncedRead: add Spring.GetPixelDir(int x, int y) -> number dirx, number diry, number dirz
+ ! Spring.GetUnitNearestEnemy doesn't return neutral units anymore
 
 Rendering:
  - LoadingMT: add a runtime check that should detect incompatibilities
