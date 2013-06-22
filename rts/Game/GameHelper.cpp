@@ -373,7 +373,7 @@ namespace {
 		public:
 			Enemy(const CUnit* exclUnit, int allyTeam) : Base(allyTeam), excludeUnit(exclUnit) {}
 			bool Team(int allyTeam) { return !teamHandler->Ally(searchAllyteam, allyTeam); }
-			bool Unit(const CUnit* unit) { return (unit != excludeUnit); }
+			bool Unit(const CUnit* unit) { return (unit != excludeUnit && !unit->IsNeutral()); }
 		protected:
 			const CUnit* excludeUnit;
 		};
@@ -385,7 +385,7 @@ namespace {
 		{
 			Enemy_InLos(const CUnit* exclUnit, int allyTeam) : Enemy(exclUnit, allyTeam) {}
 			bool Unit(const CUnit* u) {
-				return (u != excludeUnit && u->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR));
+				return (u->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR) && Enemy::Unit(u));
 			}
 		};
 
