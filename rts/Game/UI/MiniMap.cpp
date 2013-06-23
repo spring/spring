@@ -899,10 +899,11 @@ void CMiniMap::Update()
 				if (multisampledFBO) {
 					// multisampled FBO we are render to
 					fbo.Detach(GL_COLOR_ATTACHMENT0_EXT); // delete old RBO
-					fbo.CreateRenderBufferMultisample(GL_COLOR_ATTACHMENT0_EXT, GL_RGB8, minimapTexSize.x, minimapTexSize.y, 4);
+					fbo.CreateRenderBufferMultisample(GL_COLOR_ATTACHMENT0_EXT, GL_RGB8, minimapTexSize.x, minimapTexSize.y, 16);
 					//fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, minimapTexSize.x, minimapTexSize.y);
 					const bool status = fbo.CheckStatus("MINIMAP");
 					if (!status) {
+						fbo.Detach(GL_COLOR_ATTACHMENT0_EXT);
 						multisampledFBO = false;
 					}
 				}
@@ -920,19 +921,15 @@ void CMiniMap::Update()
 				if (multisampledFBO) {
 					// resolve FBO with attached final texture target
 					fboResolve.AttachTexture(minimapTex);
-					const bool status = fboResolve.CheckStatus("MINIMAP-RESOLVE");
-					if (!status) {
-						renderToTexture = false;
-						return;
-					}
 				} else {
 					// directly render to texture without multisampling (fallback solution)
 					fbo.AttachTexture(minimapTex);
-					const bool status = fbo.CheckStatus("MINIMAP-RESOLVE");
-					if (!status) {
-						renderToTexture = false;
-						return;
-					}
+				}
+
+				const bool status = fbo.CheckStatus("MINIMAP-RESOLVE");
+				if (!status) {
+					renderToTexture = false;
+					return;
 				}
 			}
 
@@ -1030,7 +1027,7 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 
 	// Render `cached` minimap
 	if (renderToTexture && !updateTex) {
-		glDisable(GL_BLEND);
+		glPushAttrib(GL_COLOR_BUFFER_BIT);
 		glBindTexture(GL_TEXTURE_2D, minimapTex);
 		glEnable(GL_TEXTURE_2D);
 
@@ -1049,6 +1046,7 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 		glEnd();
 
 		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		DrawCameraFrustumAndMouseSelection();
 
@@ -1057,12 +1055,13 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(1,1,1,1);
+		glPopAttrib();
 		return;
 	}
 
-	glEnable(GL_BLEND);
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glPushAttrib(GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_FALSE);
