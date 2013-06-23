@@ -963,9 +963,9 @@ void CMiniMap::Update()
 
 				// resolve multisampled FBO if there is one
 				if (multisampledFBO) {
-					glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo.fboId);
-					glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboResolve.fboId);
-					glBlitFramebuffer(
+					glBindFramebufferEXT(GL_READ_FRAMEBUFFER, fbo.fboId);
+					glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER, fboResolve.fboId);
+					glBlitFramebufferEXT(
 						0, 0, minimapTexSize.x, minimapTexSize.y,
 						0, 0, minimapTexSize.x, minimapTexSize.y,
 						GL_COLOR_BUFFER_BIT, GL_LINEAR);

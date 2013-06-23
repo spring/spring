@@ -56,6 +56,7 @@ extern "C" {
 #define GLEW_ARB_transform_feedback3 GL_FALSE
 #define GLEW_EXT_blend_equation_separate GL_FALSE
 #define GLEW_EXT_blend_func_separate GL_FALSE
+#define GLEW_ARB_framebuffer_object GL_FALSE
 
 #define GLXEW_SGI_video_sync GL_FALSE
 
