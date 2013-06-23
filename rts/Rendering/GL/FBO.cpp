@@ -421,3 +421,22 @@ void FBO::CreateRenderBuffer(const GLenum attachment, const GLenum format, const
 	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, rbo);
 	myRBOs.push_back(rbo);
 }
+
+
+/**
+ * Creates and attaches a multisampled RBO
+ */
+void FBO::CreateRenderBufferMultisample(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height, const GLsizei samples)
+{
+	if (GLEW_EXT_framebuffer_multisample) {
+		GLuint rbo;
+		glGenRenderbuffersEXT(1, &rbo);
+		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rbo);
+		glRenderbufferStorageMultisample(GL_RENDERBUFFER_EXT, samples, format, width, height);
+		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, rbo);
+		myRBOs.push_back(rbo);
+	} else {
+		CreateRenderBuffer(attachment, format, width, height);
+		LOG_L(L_WARNING, "FBO: tried to create a multisample RBO, but hw doesn't support it!");
+	}
+}

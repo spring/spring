@@ -156,6 +156,8 @@ class CMiniMap : public CInputReceiver {
 
 		bool renderToTexture;
 		FBO fbo;
+		FBO fboResolve;
+		bool multisampledFBO;
 		GLuint minimapTex;
 		int2 minimapTexSize;
 		float minimapRefreshRate;

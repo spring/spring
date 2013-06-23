@@ -103,6 +103,7 @@ CMiniMap::CMiniMap()
 	, allyColor(0.3f, 0.3f, 0.9f, 1.0f)
 	, enemyColor(0.9f, 0.2f, 0.2f, 1.0f)
 	, renderToTexture(true)
+	, multisampledFBO(false)
 	, minimapTex(0)
  {
 	lastWindowSizeX = globalRendering->viewSizeX;
@@ -880,7 +881,7 @@ void CMiniMap::Update()
 			float refreshRate = minimapRefreshRate;
 			if (minimapRefreshRate == 0) {
 				const float screenArea = (width * height) / (globalRendering->viewSizeX * globalRendering->viewSizeY);
-				refreshRate = (screenArea > 0.5f) ? 60 : (screenArea > 0.25f) ? 25 : 15;
+				refreshRate = (screenArea >= 0.45f) ? 60 : (screenArea > 0.15f) ? 25 : 15;
 			}
 			nextDrawScreen = spring_gettime() + spring_msecs(1000.0f / refreshRate);
 
@@ -888,29 +889,50 @@ void CMiniMap::Update()
 			if (minimapTexSize != int2(width, height)) {
 				minimapTexSize = int2(width, height);
 
-				//TODO use multisample RBO instead and blit it to pixel-perfect texture instead of 4x bigger tex (increases mem usage, but might be reduce GPU bandwidth)
+				multisampledFBO = multisampledFBO || (GLEW_EXT_framebuffer_multisample && GLEW_EXT_framebuffer_blit);
+
+				if (multisampledFBO) {
+					// multisampled FBO we are render to
+					fbo.Detach(GL_COLOR_ATTACHMENT0_EXT); // delete old RBO
+					fbo.CreateRenderBufferMultisample(GL_COLOR_ATTACHMENT0_EXT, GL_RGB8, minimapTexSize.x, minimapTexSize.y, 4);
+					//fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, minimapTexSize.x, minimapTexSize.y);
+					const bool status = fbo.CheckStatus("MINIMAP");
+					if (!status) {
+						multisampledFBO = false;
+					}
+				}
+
 				glDeleteTextures(1, &minimapTex);
 				glGenTextures(1, &minimapTex);
+
 				glBindTexture(GL_TEXTURE_2D, minimapTex);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 2*width, 2*height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, minimapTexSize.x, minimapTexSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 
-				fbo.AttachTexture(minimapTex);
-				//fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, width, height);
-				const bool status = fbo.CheckStatus("MINIMAP");
-				if (!status) {
-					renderToTexture = false;
-					return;
+				if (multisampledFBO) {
+					// resolve FBO with attached final texture target
+					fboResolve.AttachTexture(minimapTex);
+					const bool status = fboResolve.CheckStatus("MINIMAP-RESOLVE");
+					if (!status) {
+						renderToTexture = false;
+						return;
+					}
+				} else {
+					// directly render to texture without multisampling (fallback solution)
+					fbo.AttachTexture(minimapTex);
+					const bool status = fbo.CheckStatus("MINIMAP-RESOLVE");
+					if (!status) {
+						renderToTexture = false;
+						return;
+					}
 				}
 			}
 
 			// draws minimap into FBO
 			{
-				glViewport(0, 0, 2*width, 2*height);
-
 				glMatrixMode(GL_PROJECTION);
 				glPushMatrix();
 				glLoadIdentity();
@@ -922,21 +944,27 @@ void CMiniMap::Update()
 				const int2 oldPos(xpos, ypos);
 				xpos = 0.0f;
 				ypos = 0.0f;
-				const int2 oldSize(width, height);
-				width  = 2 * width;
-				height = 2 * height;
 
+					glViewport(0, 0, minimapTexSize.x, minimapTexSize.y);
 					DrawForReal(false, true);
 
 				xpos = oldPos.x;
 				ypos = oldPos.y;
-				width  = oldSize.x;
-				height = oldSize.y;
 
 				glMatrixMode(GL_PROJECTION);
 				glPopMatrix();
 				glMatrixMode(GL_MODELVIEW);
 				glPopMatrix();
+
+				// resolve multisampled FBO if there is one
+				if (multisampledFBO) {
+					glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo.fboId);
+					glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboResolve.fboId);
+					glBlitFramebuffer(
+						0, 0, minimapTexSize.x, minimapTexSize.y,
+						0, 0, minimapTexSize.x, minimapTexSize.y,
+						GL_COLOR_BUFFER_BIT, GL_LINEAR);
+				}
 			}
 
 			// no need, gets done in CGame

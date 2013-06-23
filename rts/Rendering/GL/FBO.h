@@ -91,6 +91,16 @@ public:
 	void CreateRenderBuffer(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height);
 
 	/**
+	 * @brief Creates a multisampled RenderBufferObject and attachs it to the FBO (it is also auto destructed)
+	 * @param attachment
+	 * @param format
+	 * @param width
+	 * @param height
+	 * @param samples
+	 */
+	void CreateRenderBufferMultisample(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height, const GLsizei samples);
+
+	/**
 	 * @brief Detach
 	 * @param attachment
 	 */
