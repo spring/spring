@@ -94,6 +94,7 @@ GLAPI void APIENTRY glBindRenderbufferEXT(GLenum target, GLuint renderbuffer) {}
 GLAPI void APIENTRY glDeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers) {}
 GLAPI void APIENTRY glGenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers) {}
 GLAPI void APIENTRY glRenderbufferStorageEXT(GLenum target, GLenum internalformat, GLsizei width, GLsizei height) {}
+GLAPI void APIENTRY glRenderbufferStorageMultisampleEXT(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height) {}
 GLAPI void APIENTRY glBlendFuncSeparate(GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha) {}
 GLAPI GLboolean APIENTRY glIsRenderbufferEXT(GLuint renderbuffer) {
 	return GL_FALSE;
@@ -282,12 +283,12 @@ GLAPI void APIENTRY glCopyTexImage2D(GLenum target, GLint level,
                                         GLint x, GLint y,
                                         GLsizei width, GLsizei height,
                                         GLint border) {}
-                                        
+
 GLAPI void APIENTRY glCopyTexSubImage2D(GLenum target, GLint level,
                                            GLint xoffset, GLint yoffset,
                                            GLint x, GLint y,
                                            GLsizei width, GLsizei height) {}
-                                           
+
 GLAPI void APIENTRY glDrawBuffer(GLenum mode) {}
 GLAPI void APIENTRY glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices) {}
 GLAPI void APIENTRY glEdgeFlag(GLboolean flag) {}
