@@ -428,11 +428,21 @@ void FBO::CreateRenderBuffer(const GLenum attachment, const GLenum format, const
  */
 void FBO::CreateRenderBufferMultisample(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height, const GLsizei samples)
 {
-	if (GLEW_EXT_framebuffer_multisample) {
+	bool supportsMultisample = false;
+	#ifdef GLEW_EXT_framebuffer_multisample
+		supportsMultisample = supportsMultisample || (GLEW_EXT_framebuffer_multisample && GLEW_EXT_framebuffer_blit);
+	#endif
+	#ifdef GLEW_ARB_framebuffer_object
+		supportsMultisample = supportsMultisample || GLEW_ARB_framebuffer_object;
+	#else
+		#warning "GLEW_ARB_framebuffer_object not available"
+	#endif
+
+	if (supportsMultisample) {
 		GLuint rbo;
 		glGenRenderbuffersEXT(1, &rbo);
 		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rbo);
-		glRenderbufferStorageMultisample(GL_RENDERBUFFER_EXT, samples, format, width, height);
+		glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, samples, format, width, height);
 		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, rbo);
 		myRBOs.push_back(rbo);
 	} else {

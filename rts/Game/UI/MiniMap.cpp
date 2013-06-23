@@ -889,7 +889,12 @@ void CMiniMap::Update()
 			if (minimapTexSize != int2(width, height)) {
 				minimapTexSize = int2(width, height);
 
+			#ifdef GLEW_EXT_framebuffer_multisample
 				multisampledFBO = multisampledFBO || (GLEW_EXT_framebuffer_multisample && GLEW_EXT_framebuffer_blit);
+			#endif
+			#ifdef GLEW_ARB_framebuffer_object
+				multisampledFBO = multisampledFBO || GLEW_ARB_framebuffer_object;
+			#endif
 
 				if (multisampledFBO) {
 					// multisampled FBO we are render to
