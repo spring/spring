@@ -3,7 +3,7 @@
 # and debug symbols older than ${DBG_AGE}.
 # ${DBG_AGE} must be smaller than or equal to ${AGE}.
 
-AGE=90
+AGE=180
 DBG_AGE=14
 
 renice 19 -p $$ >/dev/null
