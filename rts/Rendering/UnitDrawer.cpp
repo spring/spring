@@ -841,11 +841,22 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 		pos = unit->GetDrawErrorPos(gu->myAllyTeam);
 	}
 
+	// make sure icon is above ground (needed before we calculate scale below)
+	const float h = ground->GetHeightAboveWater(pos.x, pos.z, false);
+	if (pos.y < h) {
+		pos.y = h;
+	}
+
 	float dist = fastmath::sqrt2(fastmath::sqrt2(pos.SqDistance(camera->GetPos())));
 	float scale = iconData->GetSize() * std::max(0.4f * dist, 0.0f);
 
 	if (iconData->GetRadiusAdjust() && !useDefaultIcon) {
 		scale *= (unit->radius / WORLDOBJECT_DEFAULT_DRAWRADIUS);
+	}
+
+	// make sure icon is not partly under ground
+	if (pos.y < (h + scale)) {
+		pos.y = (h + scale);
 	}
 
 	unit->iconRadius = scale; // store the icon size so that we don't have to calculate it again
@@ -855,12 +866,6 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 		glColor3ub(255, 255, 255);
 	} else {
 		glColor3ubv(teamHandler->Team(unit->team)->color);
-	}
-
-	// If the icon is partly under the ground, move it up.
-	const float h = ground->GetHeightAboveWater(pos.x, pos.z, false);
-	if (pos.y < (h + scale)) {
-		pos.y = (h + scale);
 	}
 
 	// calculate the vertices
