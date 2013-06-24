@@ -28,6 +28,7 @@ Misc:
  - add /mapborder command
  - add config "MenuArchive" to allow background image to be set which is read from the archive in the path bitmaps/ui/background/
  - fix /keydebug for release builds
+ - updated game_end example gadget to handle quit/resigns better, reacts faster, and better code
 
 Sim:
  - reduce target-lost CAI timeout from 8 to 2 seconds
