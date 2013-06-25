@@ -45,10 +45,10 @@ TEMPLATE_CONTENT=`echo "$TEMPLATE_CONTENT" |
 awk '{ if (match($0, /^--.*--/)) { gsub(/^-*\s?/, "="); gsub(/\s?-*$/, "="); } print }'`
 
 # translate `items` to wiki syntax
-# " - item" -> ":*<span>item</span>"
-# " ! item" -> ":*<span class=warning>item</span>"
-# " - itemParent" -> ":*<span>itemParent</span>"
-# "  - itemSub"   -> "::*<span>itemSub</span>"
+# " - item" -> "*<span>item</span>"
+# " ! item" -> "*<span class=warning>item</span>"
+# " - itemParent" -> "*<span>itemParent</span>"
+# "  - itemSub"   -> ":*<span>itemSub</span>"
 TEMPLATE_CONTENT=`echo "$TEMPLATE_CONTENT" |
 awk 'function rep(str, num,     remain, result) {
     if (num < 2) {
@@ -59,13 +59,15 @@ awk 'function rep(str, num,     remain, result) {
     }
     return result result (remain ? str  : "")
 }
-{ j=0; leadingSpaces=$0; gsub(/[^ ].*/,"", leadingSpaces); j=gsub(/^(\s*)[-]/,":*<span>"); j+=gsub(/^(\s*)[!]/,":*<span class=warning>"); printf "%s%s%s\n", rep(":", length(leadingSpaces)-1), $0, rep("</span>", j)}'`
+{ j=0; leadingSpaces=$0; gsub(/[^ ].*/,"", leadingSpaces); j=gsub(/^(\s*)[-]/,"*<span>"); j+=gsub(/^(\s*)[!]/,"*<span class=warning>"); printf "%s%s%s\n", rep(":", length(leadingSpaces)-1), $0, rep("</span>", j)}'`
 
 # find section headers
 # "Misc:" -> "==Misc=="
 TEMPLATE_CONTENT=`echo "$TEMPLATE_CONTENT" |
 awk '{ if (match($0, /^[^:=].*:/)) { gsub(/:/,""); printf "==%s==\n", $0;} else print }'`
 
+
+TEMPLATE_CONTENT="__NOTOC__$TEMPLATE_CONTENT"
 
 #########################
 # Upload
