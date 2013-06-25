@@ -156,7 +156,7 @@ if [ -f "$CONTENT" ]; then
 		--header "Expect:" \
 		--form "title=$PAGE" \
 		--form "bot=1" \
-		--form "text=@$CONTENT" \
+		--form "text=<$CONTENT" \
 		--form "section=${SECTION_NUM-0}" \
 		--form "token=${EDITTOKEN}" \
 		--request "POST" "${WIKIAPI}?action=edit&format=txt&")
