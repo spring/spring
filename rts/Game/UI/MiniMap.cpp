@@ -921,15 +921,19 @@ void CMiniMap::Update()
 				if (multisampledFBO) {
 					// resolve FBO with attached final texture target
 					fboResolve.AttachTexture(minimapTex);
+					const bool status = fboResolve.CheckStatus("MINIMAP-RESOLVE");
+					if (!status) {
+						renderToTexture = false;
+						return;
+					}
 				} else {
 					// directly render to texture without multisampling (fallback solution)
 					fbo.AttachTexture(minimapTex);
-				}
-
-				const bool status = fbo.CheckStatus("MINIMAP-RESOLVE");
-				if (!status) {
-					renderToTexture = false;
-					return;
+					const bool status = fbo.CheckStatus("MINIMAP-RESOLVE");
+					if (!status) {
+						renderToTexture = false;
+						return;
+					}
 				}
 			}
 
