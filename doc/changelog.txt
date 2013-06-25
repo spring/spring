@@ -864,14 +864,12 @@ Pathing:
      unhardcode default pathfinder cost-adjustment and
      speed-multipliers for squares blocked by *mobile*
      units:
-
        avoidMobilesOnPath = boolean,
        speedModMults = {
          mobileBusyMult = number,
          mobileIdleMult = number,
          mobileMoveMult = number,
        }
-
      unhardcode the DepthMod equation:
        depthModParams = {
          minHeight      = number,
@@ -881,7 +879,6 @@ Pathing:
          linearCoeff    = number, -- deprecates "depthMod"
          constantCoeff  = number,
        }
-
        new formula is given by
          if h < depthModParams.minHeight: 1.0
          if h > depthModParams.maxHeight: 0.0
@@ -893,7 +890,6 @@ Pathing:
          a = depthModParams.quadraticCoeff
          b = depthModParams.linearCoeff
          c = depthModParams.constantCoeff
-
 
 unitsync:
  - reload IsolatedMode & Dir via the EnvVar on Init() calls
@@ -1377,7 +1373,7 @@ Installer:
 AI:
  - KAIK: add missing initialization checks
 
-0.82.7:
+-- 0.82.7 --------------------------------------
 Engine / General:
  - fix crash due to invalid lastAttacker
  - do not bind a UDP socket for local games -> allows multiple local instances again sans hassle)
@@ -1475,7 +1471,7 @@ Installer:
  - delete all files that were installed
  - add Tobis rapid client
 
-0.82.6.1:
+-- 0.82.6.1 --------------------------------------
 Engine / General:
  - prevent false hang detection trigger
 
@@ -1486,7 +1482,7 @@ Installer:
  - rename SpringDownloader to Zero-K Lobby
  - re-add MSVCR71.dll
 
-0.82.6:
+-- 0.82.6 --------------------------------------
 Engine / General:
  - fix various bugs related to mid-game join
  - fix LosHandler ignoring units with losRadius <= 0 but airLosRadius > 0
@@ -1529,7 +1525,7 @@ Installer:
 Repository:
  - remove SelectionEditor
 
-0.82.5.1:
+-- 0.82.5.1 --------------------------------------
 Engine / General:
  - fix FPS/direct controlling crash
 
@@ -1539,7 +1535,7 @@ Engine / multi-threaded:
 Engine / AI:
  - E323AI: NOTA and XTA support enhanced & lots of improvements
 
-0.82.5:
+-- 0.82.5 --------------------------------------
 Engine / General:
  - draw icons for cloaked units again
  - fix NaNs if map hardness is zero
@@ -1551,7 +1547,7 @@ Engine / AI:
  - AAI: do not crash on game end if mod did not spawn a commander in the first 450 frames
  - E323AI: lots of fixes & support for NOTA & Conflict Terra and AI options
 
-0.82.4:
+-- 0.82.4 --------------------------------------
 Engine / General:
  - fix demo desyncs if commands were issued during pause
  - fix abnormal demo speed (during reconnect and temporary lags)
@@ -1603,13 +1599,13 @@ Documentation:
  - updated man pages: spring & spring-dedicated
  - new man pages: spring-headless & spring-multithreaded
 
-0.82.3:
+-- 0.82.3 --------------------------------------
 Engine / General:
  - rebuild because of stale base content packages
    (different checksums between windows and linux)
  - fix NullAI installing into /
 
-0.82.2:
+-- 0.82.2 --------------------------------------
 Engine / General:
  - miscellaneous OS X compile/link fixes
  - fixed incorrect handling of negative references in OBJParser
@@ -1634,7 +1630,7 @@ Engine / Lua:
 Engine / AI:
  - updated E323AI to latest version
 
-0.82.1:
+-- 0.82.1 --------------------------------------
 Engine / General:
  - fixed source package build
  - fixed MT crash in DrawCommands
@@ -1681,7 +1677,7 @@ AI:
 Installer:
  - made main part mandatory
 
-0.82:
+-- 0.82 --------------------------------------
 Engine / General:
  - added HeadLess version of the engine (no graphics, no sound) by hughperkins
  - better overall handling of connection problems, with highlighting of uncontrolled units
@@ -1883,7 +1879,7 @@ Bugfixes:
  - improved error handling on network packet level
 
 
-0.81.2.1:
+-- 0.81.2.1 --------------------------------------
 Engine:
  - Fixed incorrect projection matrix (i.e. tiny build menu)
  - Fixed some Mac and MSVC compile errors
@@ -1897,7 +1893,7 @@ AIs:
  - KAIK: removed dependence on TEDClass
 
 
-0.81.2:
+-- 0.81.2 --------------------------------------
 Engine:
  - Removed OpenGL 1.4 version check
  - Fixed sync with GCC 4.3 builds
@@ -1942,7 +1938,7 @@ AIs:
  - AAI: Fixed some NaNs
 
 
-0.81.1.3:
+-- 0.81.1.3 --------------------------------------
 Engine:
  - Fixed automatically assigning start position if none is chosen
  - Fixed bug in DXT5 loading (caused artifacts with teamcolors)
@@ -1961,7 +1957,7 @@ AIs:
 - KAIK: do not build MExes on spots used by allies
 
 
-0.81.1:
+-- 0.81.1 --------------------------------------
 Engine / Simulation:
  - Terrain types and water damage are now taken into account for pathing checksum
    (Fixes desyncs on maps with map options which modify terrain types or water damage)
@@ -1984,7 +1980,7 @@ Engine / System:
  - Menu doesn't crash anymore if no mods/maps found
 
 
-0.81.0:
+-- 0.81.0 --------------------------------------
 Engine / Simulation:
  - Builders are now smart enough to to reclaim features that block their
    buildsite, which weren't there when they started moving to it
@@ -2044,7 +2040,7 @@ AIs:
  - KAIK: better D-Gun handling
 
 
-0.80.5.2:
+-- 0.80.5.2 --------------------------------------
 Bugfixes:
  - AI: Properly fix Lua AI loading
  - AI: Fix crash when Lua AI team dies
@@ -2066,7 +2062,7 @@ Changes:
  - Show an AI's shortName + version + nick in tooltips
 
 
-0.80.5.1:
+-- 0.80.5.1 --------------------------------------
 Bugfixes:
  - fix a bug where empty network packets were spammed (eating bandwith and demo space)
  - fix a possible desync in the pathfinder
@@ -2074,7 +2070,7 @@ Bugfixes:
  - fixed crash in KAIK
 
 
-0.80.5:
+-- 0.80.5 --------------------------------------
 Bugfixes:
  - lots of bugs in the AI interface fixed
  - fix some network-related problems and improve behaviour under worse conditions
@@ -2097,7 +2093,7 @@ Misc:
  - some fixes for OS X
 
 
-0.80.4.2:
+-- 0.80.4.2 --------------------------------------
 Bugfixes:
  - fix crash when doing lots of mapdrawing (#1632)
  - fix crash when loading certain cursornormal files
@@ -2109,7 +2105,7 @@ Bugfixes:
  - Spring compiles boost 1.40
 
 
-0.80.4.1:
+-- 0.80.4.1 --------------------------------------
 Bugfixes:
  - Fix missing tree fog, misc fog fixes
  - fix crash in AI pathing
@@ -2119,13 +2115,13 @@ Bugfixes:
  - fix crash when loading certain ogg-files
 
 
-0.80.4.0:
+-- 0.80.4.0 --------------------------------------
 Bugfixes:
  - don't reclaim dragonteeth with area-reclaim
  - lua unit script framework respects script tag
 
 
-0.80.3.0:
+-- 0.80.3.0 --------------------------------------
 Bugfixes:
  - fix direct control unit movement (forwards and backwards)
  - don't spam empty directories everywhere
@@ -2155,7 +2151,7 @@ Lua:
  -
 
 
-0.80.2.0:
+-- 0.80.2.0 --------------------------------------
 Bugfixes:
  - fix creation of DDS textures
  - Unbreak transports when loadingRadius <= some magic number
@@ -2166,7 +2162,7 @@ Lua:
  - added some more map water configs to Game. table
 
 
-0.80.1.0:
+-- 0.80.1.0 --------------------------------------
 Bugfixes:
  - don't write spring-files where they don't belong
  - some rendering fixes (ATI errors, bumpwater)
@@ -2177,7 +2173,7 @@ Bugfixes:
    My Documents\My Games\Spring and should be more reliable
 
 
-0.80.0.0:
+-- 0.80.0.0 --------------------------------------
 Engine / Simulation:
  - units can now move backwards
  - notable speed improvement of feature handling (unit wrecks, tress...)
@@ -2207,7 +2203,7 @@ Dedicated Server:
  - allow password-protecting client slots to prevent name spoofing (needs lobby support)
 
 
-0.79.1.1:
+-- 0.79.1.1 --------------------------------------
 Bugfixes:
  - fix microlags and increased CPU usage for dedicated server
  - fix the game ending when playign with AIs
@@ -2216,7 +2212,7 @@ Bugfixes:
  - fixed exploit where spectator could make Team 0 resign
  - fix certain soundeffects
 
-0.79.1:
+-- 0.79.1 --------------------------------------
 Bugfixes:
  - fix crash when a direct-controlled unit dies
  - fix watching of demos
@@ -2225,14 +2221,14 @@ Bugfixes:
  - fix an infinite memory allocation loop on startup
  - restore acceptable framerate on vey old cards
 
-0.79:
+-- 0.79 --------------------------------------
 Major stuff:
  - rewritten AI interface in C
  - new font renderer
  - sound system and music overhaul
  -> 2292 files changed, 149700 insertions, 290245 deletions
 
-0.78.2.1:
+-- 0.78.2.1 --------------------------------------
 Bugfixes:
  - fix for game refusing to speed up after a slowdown
  - set MaxSpeed to 20 on (test)singleplayer
@@ -2240,7 +2236,7 @@ Bugfixes:
  - fixed the server to run away from the local player on high gamespeeds
 
 
-0.78.2:
+-- 0.78.2 --------------------------------------
 General bugfixes:
  - fix crash on gamestart with lots of players
  - should fix most of the desyncs
@@ -2285,10 +2281,10 @@ Installer:
  - allow the user to close TASClient / downloader during install
 
 
-0.78.1.1:
+-- 0.78.1.1 --------------------------------------
  - fix Features (wrecks, rocks) not beeing drawn with reflective units
 
-0.78.1:
+-- 0.78.1 --------------------------------------
 (notice the new version number scheme, its MAJOR (0.78) - MINOR (1))
 Crashes:
  - fix crash on window resizing
@@ -2379,7 +2375,7 @@ AAI v0.875
 - Continent file version bumped to 0.87
 - Fixed a crash on shut down
 
-0.77b5
+-- 0.77b5 --------------------------------------
 Installer:
  - check if common unitsync users are running, abort installation if any is found
  - don't download and install RiverDale and SmallDivide when the user already has it
@@ -2420,7 +2416,7 @@ Random:
  - minor KAIK stability fixes
 
 
-0.77b4:
+-- 0.77b4 --------------------------------------
 Crashes:
  - fixed a crash (on exit) in colormap.cpp
  - fixed another division /0
@@ -2459,7 +2455,7 @@ User Interface
 
 
 
-0.77b1, 0.77b2
+-- 0.77b1, 0.77b2 --------------------------------------
 
 User Interface:
  - all commands are prefixed with '/' instead of '.' (".cheat" becomes "/cheat", etc.)
@@ -2867,7 +2863,7 @@ Bugfixes:
 
 
 
-0.76b1
+-- 0.76b1 --------------------------------------
 
 Installer:
 - Add new installer SideBanner, Spring icon and ArchiveMover icon all
@@ -3617,7 +3613,7 @@ COB
     FLANK_B_MIN_DAMAGE   124 // set or get
 
 
-0.75b2
+-- 0.75b2 --------------------------------------
 
 - Fixed possible crash while waiting for connection to the host.
 - Fixed unknown net msg in read ahead bugs when large UDP packets were received.
@@ -3633,7 +3629,7 @@ COB
 - Added gui_team_platter.lua widget
 - Added camera_smooth_move.lua widget
 
-0.75b1
+-- 0.75b1 --------------------------------------
 
 Uncategorized:
 - Added LuaCob, LuaGaia, LuaRules synchronized scripting:
@@ -3945,7 +3941,7 @@ Unitsync:
 
 
 
-0.74b3
+-- 0.74b3 --------------------------------------
 
 - Added LuaUI v0.1  (with widget management code, somewhat experimental)
   (requires the LuaUI setting to be on to be autoloaded,
@@ -3979,7 +3975,7 @@ Unitsync:
 
 - Smoothed LOS / Radar view.
 
-0.74b2
+-- 0.74b2 --------------------------------------
 
 - Planes can land on water surface if FBI tag floater is set to true.
 
@@ -4013,7 +4009,7 @@ Unitsync:
 
 - Shadow mapping works for SM3
 
-0.74b1
+-- 0.74b1 --------------------------------------
 
 - Linux vs Windows is now synced if binaries are built using gcc 4.0 or higher.
 
@@ -4093,7 +4089,7 @@ Unitsync:
 
 - Added CLOAKED (76) and WANT_CLOAK (77) to get/set in cob script.
 
-0.73b1
+-- 0.73b1 --------------------------------------
 
 - added the ability to layout the control panel widget layout with a LUA script
   (uses a file called "ctrlpanel.lua")
@@ -4382,7 +4378,7 @@ Unitsync:
 - New map format SM3, currently supported for testing purposes.
 
 
-0.72b1
+-- 0.72b1 --------------------------------------
 
 - Bos/Cob script for units can now animate the death of the unit. Just have the Kill function return after a while instead of directly and return wreck level in return value instead of in function argument.
 - Fixed the com dies, game ends exploit: sharing your com now kills you
@@ -4440,7 +4436,7 @@ Unitsync:
 - Mod can be selected when starting the spring exe directly.
 - Various other small changes.
 
-0.71b1
+-- 0.71b1 --------------------------------------
 
 - Added new water renderer
 - Fixed lasers firing two projectiles at once, efficiently doing double damage.
@@ -4461,7 +4457,7 @@ Unitsync:
 - Several other smaller fixes and improvements.
 - Unit reply sounds are non-positional and have a seperate volume setting in the config application. Their volume is also affected by the global volume.
 
-0.70b3
+-- 0.70b3 --------------------------------------
 
 - Shift/ctrl do not change rotation speed in rotating camera mode anymore.
 - Submarines work again.
@@ -4471,7 +4467,7 @@ Unitsync:
 - Fixed shift+letter bug.
 - Fixed Pathing Map (F2 view) bug.
 
-0.70b2
+-- 0.70b2 --------------------------------------
 
 - Fixed some (debug) message colors.
 - Fixed keyboard layout problems.
@@ -4483,7 +4479,7 @@ Unitsync:
 - Fixed map loading by less strict tdf parser.
 - Don't crash on parse errors, but show an error message instead.
 
-0.70b1
+-- 0.70b1 --------------------------------------
 
 - First use of crossplatform code! This required a lot of bugfixing and changes, which are not mentioned here.
   Among these changes are switches to using boost, SDL, freetype, instead of Win32 SDK + DirectX. For a full list of changes, see the subversion log.
@@ -4505,11 +4501,11 @@ Unitsync:
 - Fixed ghosted buildings option.
 - Fixed isairbase=1 unit tag.
 
-0.67b3
+-- 0.67b3 --------------------------------------
 
 -AI dll's can be used with startscripts again
 
-0.67b2
+-- 0.67b2 --------------------------------------
 
 -Fixed black map bug
 -Impulsefactor now affects ground damage
@@ -4527,7 +4523,7 @@ Unitsync:
   Note that some issues still exist with currently implemented nat traversal method,
   so players hosting battles are advised to forward their port nonetheless.
 
-0.67b1
+-- 0.67b1 --------------------------------------
 
 -Catching AI exceptions can be disabled with the settings app.
 -Fixed access-violation bug when creating sky.
@@ -4542,7 +4538,7 @@ Unitsync:
 	This will only affect AI console messages.
 -Ghosted buildings can now be disabled by the lobby. They are enabled by default.
 
-0.66b1
+-- 0.66b1 --------------------------------------
 
 -Fixed transport units being able to load themself.
 -Fixed gunship like aircraft always having the same altitude
@@ -4570,7 +4566,7 @@ Unitsync:
 -UnitDestroyed/EnemyDestroyed get the attacker unit id if any (by submarine)
 
 
-0.65b2
+-- 0.65b2 --------------------------------------
 
 -Fixed crash with factories closing at the moment they die
 
@@ -4582,7 +4578,7 @@ Unitsync:
 
 -Added UnitMoveFailed to global AI interface. Called when ground units fail to move to their destination.
 
-0.65b1
+-- 0.65b1 --------------------------------------
 
 -Fixed crash bug involving radars on non square maps
 -Fixed crash bug involving gunships landing on repairpads that get destroyed
@@ -4607,7 +4603,7 @@ Unitsync:
 -Fixed bugs in the AI interface GetMetal* and GetEnergy* functions, they returned the values of the human player.
 -Moved shared functions in the GroupAI callback and GlobalAI callback to a new AICallback interface. For AI developers: This means a small adjustment of your current code will be required to get it compiled again.
 
-0.64b1
+-- 0.64b1 --------------------------------------
 
 -Solved troublesome crash bug involving several pointers to a single object
 -Fixed crash when calls such as get PIECE_XZ were used in the Create function of a unit
@@ -4624,11 +4620,11 @@ Unitsync:
 -Added command .kick <playername> that server can use to kick out players from game
 -Updated global AI interface with GetNumUnitDefs() and GetUnitDefList()
 
-0.63b2
+-- 0.63b2 --------------------------------------
 -Fixed crash when using new formation move commands
 -Script interpreter now warns about incorrect piecenames in scripts instead of crashing
 
-0.63b1
+-- 0.63b1 --------------------------------------
 
 -Fixed multi delete error in LosHandler
 -Fixed crash with features defined in mapfile
@@ -4652,7 +4648,7 @@ Unitsync:
 -New start file tag LimitDgun, if 1 it restricts dgunning to a radius around your startpos, size depending on mapsize, default 0
 -New start file tags AllyTeam<x>/StartRect<Top.Bottom,Left,Right>, allows host to define where different allyteams might start on the map, given in the range 0-1 and scaled with map size
 
-0.62b1
+-- 0.62b1 --------------------------------------
 
 -Fixed crash when units exploded
 
@@ -4668,7 +4664,7 @@ Unitsync:
 -Added possibility for surface of units to be shiny/reflective by using the alpha channel of the textures
 -Addded command .take, will take the units from all teams allied with you that is missing a player (due to disconnect etc) and transfer them to your team
 
-0.61b2
+-- 0.61b2 --------------------------------------
 
 -Added tag "WATER\\WaterTexture" to smd file to specify another texture for the map than the default ocean.jpg (mapspecific water textures should be in the maps directory)
 -Added tag "WATER\\WaterSurfaceColor" to smd file, changes the surface color of the water when using reflective water (default is 0.75 0.8 0.85 ).
@@ -4676,7 +4672,7 @@ Unitsync:
 -Fixed spawn.txt not being readable from archives
 -Fixed problem with reading large files from sd7 archives (such as skyboxes)
 
-0.61b1
+0.61b1 --------------------------------------
 
 -Fixed crash in weapon aiming
 -Fixed some other crashes
@@ -4699,7 +4695,7 @@ Unitsync:
 -New weapon tdf value, intensity, controls the alpha value of lasers, default 0.9
 -New smd terraintype value, receivetracks, if this is 0 there wont be any tracks from units on this terrain type, default 1
 
-0.60b1
+-- 0.60b1 --------------------------------------
 -Added tag SmoothAnim=0/1 to the fbi. If it is 1, unis will use animation interpolation
 -Added MAP\\WATER\\WaterPlaneColor tag to maps to set the color of the waterplane beneath the ground
 -Added MAP\\ATMOSPHERE\\SkyBox tag to maps to use a dds cubemap as a sky instead of the cloud rendering
@@ -4731,7 +4727,7 @@ Unitsync:
 -Added boot option for battleroom host
 -Hopefully fixed unit sync and some other bugs in battleroom
 
-0.51b1
+-- 0.51b1 --------------------------------------
 -Fixed a cob animation related crash
 -Fixed crash using "simple formation ai"
 
@@ -4746,13 +4742,13 @@ Unitsync:
 -Changed so several units cant reclaim a feature at once
 -Flakker like units can now target fast units better
 
-0.50b2
+-- 0.50b2 --------------------------------------
 
 -Changed default DamageModifier to be 1 instead of 0
 -Fixed so units no longer can dip slightly into lava and explode
 -Adds a random enemies script for those that really want to test in single player. The enemies are read from spawn.txt (frame/enemyname pairs) and spawns at startpos 1-3 randomly
 
-0.50b1
+-- 0.50b1 --------------------------------------
 
 -Added support for set/get of unit variable ACTIVATION (allowing solars to close under attack for example)
 -Added call to cob function SetMaxReloadTime for better ta unit compatibility
@@ -4777,7 +4773,7 @@ Unitsync:
 -New .smd command MAP/WATER/WaterDamage. Indicates the amount of damage per second units take for being in "water". Make it >1000 to prevent ground units from entering water entirely, >10000 prevents hovers from moving over water.
 -New in game commands for host .setmaxspeed .setminspeed sets the maximum and minimum game speeds
 
-0.41b1
+-- 0.41b1 --------------------------------------
 
 -Removed log spam with Use of GetPieceDir..
 -Fixed "Error looking up server from ip" errors when trying to connect
@@ -4810,6 +4806,6 @@ Unitsync:
 -Added unit syncing.  Now if users have different units, the differences are disabled
 -Fixed a bug that allowed invalid log in names to be submitted
 
-0.40b2
+-- 0.40b2 --------------------------------------
 
 First public release
