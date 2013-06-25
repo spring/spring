@@ -69,6 +69,8 @@ awk '{ if (match($0, /^[^:=].*:/)) { gsub(/:/,""); printf "==%s==\n", $0;} else 
 
 #########################
 # Upload
-$(dirname $0)/mediawiki_upload.sh "$USERNAME" "$USERPASS" "${PAGE}" "${SECTIONNAME}" "$TEMPLATE_CONTENT"
+echo "$TEMPLATE_CONTENT" > /tmp/spring_changelog # the string is too long to pass by argument
+$(dirname $0)/mediawiki_upload.sh "$USERNAME" "$USERPASS" "${PAGE}" "${SECTIONNAME}" "/tmp/spring_changelog"
+rm /tmp/spring_changelog
 
 exit $?
