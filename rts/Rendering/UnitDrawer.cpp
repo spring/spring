@@ -847,8 +847,9 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 		pos.y = h;
 	}
 
-	float dist = fastmath::sqrt2(fastmath::sqrt2(pos.SqDistance(camera->GetPos())));
-	float scale = iconData->GetSize() * std::max(0.4f * dist, 0.0f);
+	const float dist = std::min(8000.0f, fastmath::sqrt2(camera->GetPos().SqDistance(pos)));
+	const float iconScale = 0.4f * fastmath::sqrt2(dist); // makes far icons bigger
+	float scale = iconData->GetSize() * iconScale;
 
 	if (iconData->GetRadiusAdjust() && !useDefaultIcon) {
 		scale *= (unit->radius / WORLDOBJECT_DEFAULT_DRAWRADIUS);
