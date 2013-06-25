@@ -10,6 +10,7 @@
 #include "Map/MapInfo.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/QuadField.h"
+#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/ModInfo.h"
@@ -161,12 +162,10 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 			SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 			SetRadiusAndHeight(model);
 		}
-	} else {
-		if (def->drawType >= DRAWTYPE_TREE) {
-			// LoadFeaturesFromMap() doesn't set a scale for trees
-			SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
-			SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
-		}
+	} else if (def->drawType >= DRAWTYPE_TREE) {
+		// LoadFeaturesFromMap() doesn't set a scale for trees
+		SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
+		SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
 	}
 
 	UpdateMidAndAimPos();
@@ -198,6 +197,10 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	speed = params.speed;
 	isMoving = ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f));
+
+	if (def->drawType >= DRAWTYPE_TREE) {
+		if (treeDrawer) treeDrawer->AddTree(id, def->drawType - 1, pos, 1.0f);
+	}
 }
 
 
