@@ -10,10 +10,6 @@ CONTENT=$5
 WIKIAPI="http://springrts.com/mediawiki/api.php"
 cookie_jar="wikicj"
 
-if [ -f "$CONTENT" ]; then
-	CONTENT=`cat "$CONTENT"`
-fi
-
 #########################
 # Login
 echo "Logging into $WIKIAPI as $USERNAME..."
@@ -148,21 +144,39 @@ fi
 #########################
 # Upload
 
-CR=$(curl -s \
-	--location \
-	--cookie $cookie_jar \
-	--cookie-jar $cookie_jar \
-	--user-agent "Curl Shell Script" \
-	--keepalive-time 60 \
-	--header "Accept-Language: en-us" \
-	--header "Connection: keep-alive" \
-	--header "Expect:" \
-	--form "title=$PAGE" \
-	--form "bot=1" \
-	--form "text=$CONTENT" \
-	--form "section=${SECTION_NUM-0}" \
-	--form "token=${EDITTOKEN}" \
-	--request "POST" "${WIKIAPI}?action=edit&format=txt&")
+if [ -f "$CONTENT" ]; then
+	CR=$(curl -s \
+		--location \
+		--cookie $cookie_jar \
+		--cookie-jar $cookie_jar \
+		--user-agent "Curl Shell Script" \
+		--keepalive-time 60 \
+		--header "Accept-Language: en-us" \
+		--header "Connection: keep-alive" \
+		--header "Expect:" \
+		--form "title=$PAGE" \
+		--form "bot=1" \
+		--form "text=@$CONTENT" \
+		--form "section=${SECTION_NUM-0}" \
+		--form "token=${EDITTOKEN}" \
+		--request "POST" "${WIKIAPI}?action=edit&format=txt&")
+else
+	CR=$(curl -s \
+		--location \
+		--cookie $cookie_jar \
+		--cookie-jar $cookie_jar \
+		--user-agent "Curl Shell Script" \
+		--keepalive-time 60 \
+		--header "Accept-Language: en-us" \
+		--header "Connection: keep-alive" \
+		--header "Expect:" \
+		--form "title=$PAGE" \
+		--form "bot=1" \
+		--form "text=$CONTENT" \
+		--form "section=${SECTION_NUM-0}" \
+		--form "token=${EDITTOKEN}" \
+		--request "POST" "${WIKIAPI}?action=edit&format=txt&")
+fi
 
 echo $CR
 
