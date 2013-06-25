@@ -157,9 +157,9 @@ if [ -f "$CONTENT" ]; then
 		--form "title=$PAGE" \
 		--form "bot=1" \
 		--form "text=<$CONTENT" \
-		--form "section=${SECTION_NUM-0}" \
 		--form "token=${EDITTOKEN}" \
 		--request "POST" "${WIKIAPI}?action=edit&format=txt&")
+		#FIXME --form "section=${SECTION_NUM-0}" \
 else
 	CR=$(curl -s \
 		--location \

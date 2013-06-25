@@ -67,7 +67,8 @@ TEMPLATE_CONTENT=`echo "$TEMPLATE_CONTENT" |
 awk '{ if (match($0, /^[^:=*].*:/)) { gsub(/:/,""); printf "==%s==\n", $0;} else print }'`
 
 
-TEMPLATE_CONTENT="__NOTOC__$TEMPLATE_CONTENT"
+TEMPLATE_CONTENT="__NOTOC__<b>
+$TEMPLATE_CONTENT</b>"
 
 #########################
 # Upload
