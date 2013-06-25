@@ -10,6 +10,9 @@ CONTENT=$5
 WIKIAPI="http://springrts.com/mediawiki/api.php"
 cookie_jar="wikicj"
 
+if [ -f "$CONTENT" ]; then
+	CONTENT=`cat "$CONTENT"`
+fi
 
 #########################
 # Login
