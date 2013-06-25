@@ -64,7 +64,7 @@ awk 'function rep(str, num,     remain, result) {
 # find section headers
 # "Misc:" -> "==Misc=="
 TEMPLATE_CONTENT=`echo "$TEMPLATE_CONTENT" |
-awk '{ if (match($0, /^[^:=].*:/)) { gsub(/:/,""); printf "==%s==\n", $0;} else print }'`
+awk '{ if (match($0, /^[^:=*].*:/)) { gsub(/:/,""); printf "==%s==\n", $0;} else print }'`
 
 
 TEMPLATE_CONTENT="__NOTOC__$TEMPLATE_CONTENT"
