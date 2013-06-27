@@ -8,6 +8,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/float3.h"
+#include "System/Vec2.h"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/RectangleOptimizer.h"
 
@@ -81,6 +82,7 @@ public:
 	virtual CBaseGroundDrawer* GetGroundDrawer() { return 0; }
 
 	virtual unsigned int GetMiniMapTexture() const { return 0; }
+	virtual int2 GetMiniMapTextureSize() const { return int2(0,0); }
 	virtual unsigned int GetGrassShadingTexture() const { return 0; }
 	/**
 	 * a texture with RGB for shading and A for height
@@ -165,7 +167,7 @@ public:
 
 	int width, height;
 	float initMinHeight, initMaxHeight; //< initial minimum- and maximum-height (before any deformations)
-	float currMinHeight, currMaxHeight; //< current minimum- and maximum-height 
+	float currMinHeight, currMaxHeight; //< current minimum- and maximum-height
 
 	unsigned int mapChecksum;
 
@@ -174,7 +176,7 @@ private:
 	void UpdateMipHeightmaps(const SRectangle& rect);
 	void UpdateFaceNormals(const SRectangle& rect);
 	void UpdateSlopemap(const SRectangle& rect);
-	
+
 	inline void HeightMapUpdateLOSCheck(const SRectangle& rect);
 	inline bool HasHeightMapChanged(const int lmx, const int lmy);
 	inline void InitHeightMapDigestsVectors();

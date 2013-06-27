@@ -33,6 +33,7 @@ public:
 
 	unsigned int GetDetailTexture() const { return detailTex; }
 	unsigned int GetMiniMapTexture() const { return minimapTex; }
+	int2 GetMiniMapTextureSize() const { return int2(1024, 1024); }
 	unsigned int GetShadingTexture() const { return shadingTex; }
 	unsigned int GetNormalsTexture() const { return normalsTex; }
 	unsigned int GetSpecularTexture() const { return specularTex; }

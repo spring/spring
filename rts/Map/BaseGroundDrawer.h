@@ -9,6 +9,7 @@
 #include "Rendering/GL/LightHandler.h"
 #include "Rendering/GL/PBO.h"
 #include "System/float3.h"
+#include "System/Vec2.h"
 
 class CMetalMap;
 class CHeightLinePalette;
@@ -87,6 +88,7 @@ public:
 	int updateTextureState;
 
 	GLuint infoTex;
+	int2 GetInfoTexSize() const;
 	PBO extraTexPBO;
 	bool highResInfoTex;
 	bool highResInfoTexWanted;

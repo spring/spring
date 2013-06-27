@@ -498,6 +498,15 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 }
 
 
+int2 CBaseGroundDrawer::GetInfoTexSize() const
+{
+	if (highResInfoTex)
+		return int2(gs->pwr2mapx, gs->pwr2mapy);
+	else
+		return int2(gs->pwr2mapx>>1, gs->pwr2mapy>>1);
+}
+
+
 void CBaseGroundDrawer::UpdateCamRestraints(CCamera* cam)
 {
 	// add restraints for camera sides
