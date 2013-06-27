@@ -6,6 +6,7 @@
 #include <string>
 
 //#include "LuaInclude.h"
+#include "System/Vec2.h"
 
 class CMatrix44f;
 class LuaMatTexture;
@@ -17,7 +18,6 @@ typedef unsigned int GLuint;
 class LuaOpenGLUtils {
 	public:
 		static const CMatrix44f* GetNamedMatrix(const std::string& name);
-		static const GLuint ParseUnitTexture(const std::string& texture);
 		static bool ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, const std::string& image);
 };
 
@@ -26,11 +26,16 @@ class LuaMatTexture {
 	public:
 		enum Type {
 			LUATEX_NONE       = 0,
-			LUATEX_GL,
+			LUATEX_NAMED,
+			LUATEX_LUATEXTURE,
+			LUATEX_UNITTEXTURE1,
+			LUATEX_UNITTEXTURE2,
+			LUATEX_3DOTEXTURE,
+			LUATEX_UNITBUILDPIC,
+			LUATEX_UNITRADARICON,
 			LUATEX_SHADOWMAP,
 			LUATEX_REFLECTION,
 			LUATEX_SPECULAR,
-			LUATEX_EXTRA,
 			LUATEX_HEIGHTMAP,
 			LUATEX_SHADING,
 			LUATEX_GRASS,
@@ -42,7 +47,7 @@ class LuaMatTexture {
 
 	public:
 		LuaMatTexture()
-		: type(LUATEX_NONE), openglID(0), enable(false) {}
+		: type(LUATEX_NONE), data(NULL), enable(false), enableTexParams(false) {}
 
 		void Finalize();
 
@@ -64,8 +69,13 @@ class LuaMatTexture {
 
 	public:
 		Type type;
-		GLuint openglID;
+		const void* data;
 		bool enable;
+		bool enableTexParams;
+
+		int2 GetSize() const;
+		GLuint GetTextureID() const;
+		GLuint GetTextureTarget() const;
 
 	public:
 		static const int maxTexUnits = 16;

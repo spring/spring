@@ -3406,171 +3406,21 @@ int LuaOpenGL::DeleteTextureFBO(lua_State* L)
 }
 
 
-
-static bool PushUnitTextureInfo(lua_State* L, const string& texture)
-{
-	if (texture[1] == 0) {
-		lua_createtable(L, 0, 2);
-		HSTR_PUSH_NUMBER(L, "xsize", texturehandler3DO->GetAtlasTexSizeX());
-		HSTR_PUSH_NUMBER(L, "ysize", texturehandler3DO->GetAtlasTexSizeY());
-		return 1;
-	}
-
-	char* endPtr;
-	const char* startPtr = texture.c_str() + 1; // skip the '%'
-	const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
-	if ((endPtr == startPtr) || (*endPtr != ':')) {
-		return 0;
-	}
-	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-	if (ud == NULL) {
-		return 0;
-	}
-	const S3DModel* model = ud->LoadModel();
-	const unsigned int texType = model->textureType;
-	if (texType == 0) {
-		return 0;
-	}
-
-	const CS3OTextureHandler::S3oTex* stex = texturehandlerS3O->GetS3oTex(texType);
-	if (stex == NULL) {
-		return 0;
-	}
-
-	endPtr++; // skip the ':'
-	if (*endPtr == '0') {
-		lua_createtable(L, 0, 2);
-		HSTR_PUSH_NUMBER(L, "xsize", stex->tex1SizeX);
-		HSTR_PUSH_NUMBER(L, "ysize", stex->tex1SizeY);
-		return 1;
-	}
-	else if (*endPtr == '1') {
-		lua_createtable(L, 0, 2);
-		HSTR_PUSH_NUMBER(L, "xsize", stex->tex2SizeX);
-		HSTR_PUSH_NUMBER(L, "ysize", stex->tex2SizeY);
-		return 1;
-	}
-
-	return 0;
-}
-
-
-
-
 int LuaOpenGL::TextureInfo(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to gl.TextureInfo()");
+	const string texture = luaL_checkstring(L, 1);
+
+	LuaMatTexture tex;
+	const bool loaded = LuaOpenGLUtils::ParseTextureImage(L, tex, texture);
+	if (!loaded) {
+		return 0;
 	}
-	const string texture = lua_tostring(L, 1);
-	if (texture[0] == '#') {
-		char* endPtr;
-		const char* startPtr = texture.c_str() + 1; // skip the '#'
-		const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
-		if (endPtr == startPtr) {
-			return 0;
-		}
-		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-		if (ud == NULL) {
-			return 0;
-		}
-		lua_createtable(L, 0, 2);
-		unitDefHandler->GetUnitDefImage(ud); // forced existance
-		HSTR_PUSH_NUMBER(L, "xsize", ud->buildPic->imageSizeX);
-		HSTR_PUSH_NUMBER(L, "ysize", ud->buildPic->imageSizeY);
-	}
-	else if (texture[0] == '^') {
-		char* endPtr;
-		const char* startPtr = texture.c_str() + 1; // skip the '^'
-		const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
-		if (endPtr == startPtr) {
-			return 0;
-		}
-		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-		if (ud == NULL) {
-			return 0;
-		}
-		lua_createtable(L, 0, 2);
-		HSTR_PUSH_NUMBER(L, "xsize", ud->iconType->GetSizeX());
-		HSTR_PUSH_NUMBER(L, "ysize", ud->iconType->GetSizeY());
-	}
-	else if (texture[0] == '%') {
-		return PushUnitTextureInfo(L, texture);
-	}
-	else if (texture[0] == LuaTextures::prefix) { // '!'
-		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
-		const LuaTextures::Texture* tex = textures.GetInfo(texture);
-		if (tex == NULL) {
-			return 0;
-		}
-		lua_createtable(L, 0, 2);
-		HSTR_PUSH_NUMBER(L, "xsize", tex->xsize);
-		HSTR_PUSH_NUMBER(L, "ysize", tex->ysize);
-	}
-	else if (texture[0] == '$') {
-		if (texture == "$units") {
-			lua_createtable(L, 0, 2);
-			HSTR_PUSH_NUMBER(L, "xsize", texturehandler3DO->GetAtlasTexSizeX());
-			HSTR_PUSH_NUMBER(L, "ysize", texturehandler3DO->GetAtlasTexSizeY());
-		}
-		else if (texture == "$shadow") {
-			lua_createtable(L, 0, 2);
-			HSTR_PUSH_NUMBER(L, "xsize", shadowHandler->shadowMapSize);
-			HSTR_PUSH_NUMBER(L, "ysize", shadowHandler->shadowMapSize);
-		}
-		else if (texture == "$reflection") {
-			lua_createtable(L, 0, 2);
-			HSTR_PUSH_NUMBER(L, "xsize", cubeMapHandler->GetReflectionTextureSize());
-			HSTR_PUSH_NUMBER(L, "ysize", cubeMapHandler->GetReflectionTextureSize());
-		}
-		else if (texture == "$specular") {
-			lua_createtable(L, 0, 2);
-			HSTR_PUSH_NUMBER(L, "xsize", cubeMapHandler->GetSpecularTextureSize());
-			HSTR_PUSH_NUMBER(L, "ysize", cubeMapHandler->GetSpecularTextureSize());
-		}
-		else if (texture == "$heightmap") {
-			if (heightMapTexture->GetTextureID() == 0) {
-				return 0;
-			} else {
-				lua_createtable(L, 0, 2);
-				HSTR_PUSH_NUMBER(L, "xsize", heightMapTexture->GetSizeX());
-				HSTR_PUSH_NUMBER(L, "ysize", heightMapTexture->GetSizeY());
-			}
-		}
-		else if (texture == "$shading") {
-			lua_createtable(L, 0, 2);
-			HSTR_PUSH_NUMBER(L, "xsize", gs->pwr2mapx);
-			HSTR_PUSH_NUMBER(L, "ysize", gs->pwr2mapy);
-		}
-		else if (texture == "$grass") {
-			lua_createtable(L, 0, 2);
-			HSTR_PUSH_NUMBER(L, "xsize", 1024);
-			HSTR_PUSH_NUMBER(L, "ysize", 1024);
-		}
-		else if (texture == "$font") {
-			lua_createtable(L, 0, 2);
-			HSTR_PUSH_NUMBER(L, "xsize", font->GetTexWidth());
-			HSTR_PUSH_NUMBER(L, "ysize", font->GetTexHeight());
-		}
-		else if (texture == "$smallfont") {
-			lua_createtable(L, 0, 2);
-			HSTR_PUSH_NUMBER(L, "xsize", smallFont->GetTexWidth());
-			HSTR_PUSH_NUMBER(L, "ysize", smallFont->GetTexHeight());
-		}
-	}
-	else {
-		const CNamedTextures::TexInfo* texInfo;
-		texInfo = CNamedTextures::GetInfo(texture);
-		if (texInfo == NULL) {
-			return 0;
-		}
-		lua_createtable(L, 0, 2);
-		HSTR_PUSH_NUMBER(L, "xsize", texInfo->xsize);
-		HSTR_PUSH_NUMBER(L, "ysize", texInfo->ysize);
-		// HSTR_PUSH_BOOL(L,   "alpha", texInfo->alpha);  FIXME
-		// HSTR_PUSH_NUMBER(L, "type",  texInfo->type);
-	}
+
+	lua_createtable(L, 0, 2);
+	HSTR_PUSH_NUMBER(L, "xsize", tex.GetSize().x);
+	HSTR_PUSH_NUMBER(L, "ysize", tex.GetSize().y);
+	// HSTR_PUSH_BOOL(L,   "alpha", texInfo.alpha);  FIXME
+	// HSTR_PUSH_NUMBER(L, "type",  texInfo.type);
 	return 1;
 }
 
