@@ -134,12 +134,13 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 
 inline void DoSetS3oTexture(int num, std::vector<CS3OTextureHandler::S3oTex*>& s3oTex) {
 	if (shadowHandler->inShadowPass) {
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, s3oTex[num]->tex2);
 	} else {
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, s3oTex[num]->tex1);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, s3oTex[num]->tex2);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, s3oTex[num]->tex1);
 	}
 }
 
