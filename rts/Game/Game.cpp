@@ -223,7 +223,6 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(inputTextSizeY),
 	CR_IGNORED(skipping),
 	CR_MEMBER(playing),
-	CR_IGNORED(unconsumedFrames),
 	CR_IGNORED(msgProcTimeLeft),
 	CR_IGNORED(consumeSpeed),
 	CR_IGNORED(lastframe),
@@ -322,7 +321,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, skipping(false)
 	, playing(false)
 	, chatting(false)
-	, unconsumedFrames(0)
 	, msgProcTimeLeft(0.0f)
 	, consumeSpeed(1.0f)
 	, lastframe(spring_gettime())
@@ -941,17 +939,11 @@ bool CGame::Update()
 		lastUpdateTime = timeNow;
 
 		// Some netcode stuff
-		if (!gameServer) {
-			const int consumeFrameSpeed = (unconsumedFrames < 0) ? 10000 : unconsumedFrames;
-			consumeSpeed = GAME_SPEED * gs->speedFactor + consumeFrameSpeed - 2;
-			unconsumedFrames = -1;
-			msgProcTimeLeft = 0.0f;
-		}
+		UpdateConsumeSpeed();
 	}
 
 	//TODO: why? it already gets called with `true` in ::Draw()?
-	if (!skipping)
-	{
+	if (!skipping) {
 		UpdateUI(false);
 	}
 

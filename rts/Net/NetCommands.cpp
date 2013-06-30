@@ -79,10 +79,44 @@ void CGame::SendClientProcUsage()
 	}
 }
 
+
+void CGame::UpdateConsumeSpeed()
+{
+	if (gameServer)
+		return;
+
+	// read ahead to calculate the number of NETMSG_XXXFRAMES we still have to process
+	boost::shared_ptr<const netcode::RawPacket> packet;
+	int numUnconsumedFrames = 0;
+	unsigned ahead = 0;
+	while ((packet = net->Peek(ahead))) {
+		switch (packet->data[0]) {
+			case NETMSG_GAME_FRAME_PROGRESS: {
+				// this special packet skips queue entirely, so gets processed here
+				// it's meant to indicate current game progress for clients fast-forwarding to current point the game
+				// NOTE: this event should be unsynced, since its time reference frame is not related to the current
+				// progress of the game from the client's point of view
+				const int serverframenum = *(int*)(packet->data+1);
+				// send the event to lua call-in
+				eventHandler.GameProgress(serverframenum);
+				// pop it out of the net buffer
+				net->DeleteBufferPacketAt(ahead);
+			} break;
+			case NETMSG_NEWFRAME:
+			case NETMSG_KEYFRAME:
+				++numUnconsumedFrames;
+			default:
+				++ahead;
+		}
+	}
+
+	consumeSpeed = GAME_SPEED * gs->speedFactor + (numUnconsumedFrames / 2);
+	msgProcTimeLeft = 0.0f;
+}
+
+
 void CGame::ClientReadNet()
 {
-	boost::shared_ptr<const netcode::RawPacket> packet;
-
 	// compute new msgProcTimeLeft to "smooth" out SimFrame() calls
 	if (gameServer == NULL) {
 		const spring_time currentFrame = spring_gettime();
@@ -95,41 +129,11 @@ void CGame::ClientReadNet()
 		}
 
 		lastframe = currentFrame;
-
-		// "unconsumedFrames" is only used to calculate the consumeSpeed once per second,
-		// so we should not waste time here, there can be 10000's waiting packets
-		if (unconsumedFrames < GAME_SPEED) {
-			// read ahead to calculate the number of NETMSG_XXXFRAMES we still have to process
-			int numUnconsumedFrames = 0;
-			unsigned ahead = 0;
-			while ((packet = net->Peek(ahead))) {
-				if (packet->data[0] == NETMSG_NEWFRAME || packet->data[0] == NETMSG_KEYFRAME)
-					++numUnconsumedFrames;
-
-				// this special packet skips queue entirely, so gets processed here
-				// it's meant to indicate current game progress for clients fast-forwarding to current point the game
-				// NOTE: this event should be unsynced, since its time reference frame is not related to the current
-				// progress of the game from the client's point of view
-				if ( packet->data[0] == NETMSG_GAME_FRAME_PROGRESS ) {
-					int serverframenum = *(int*)(packet->data+1);
-					// send the event to lua call-in
-					eventHandler.GameProgress(serverframenum);
-					// pop it out of the net buffer
-					net->DeleteBufferPacketAt(ahead);
-				}
-				else
-					++ahead;
-			}
-			if (unconsumedFrames < 0 || numUnconsumedFrames < unconsumedFrames)
-				unconsumedFrames = numUnconsumedFrames;
-		}
 	} else {
 		// make sure ClientReadNet returns at least every 15 game frames
 		// so CGame can process keyboard input, and render etc.
 		msgProcTimeLeft = GAME_SPEED / float(gu->minFPS) * gs->wantedSpeedFactor;
 	}
-
-	const spring_time msgProcStartTime = spring_gettime();
 
 	// balance the time spent in simulation & drawing (esp. when reconnecting)
 	// always render at least 2FPS (will otherwise be highly unresponsive when catching up after a reconnection)
@@ -142,6 +146,8 @@ void CGame::ClientReadNet()
 	const float simDrawRatio = maxSimFPS / minDrawFPS;
 	const float msgProcTimeLimit = (GML::SimEnabled() && GML::MultiThreadSim()) ? (1000.0f / gu->minFPS) :
 		Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
+
+	const spring_time msgProcStartTime = spring_gettime();
 
 	// really process the messages
 	while (true) {
