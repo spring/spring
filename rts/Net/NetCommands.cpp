@@ -36,6 +36,9 @@
 
 #include <boost/cstdint.hpp>
 
+#define LOG_SECTION_NET "Net"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_NET)
+
 
 void CGame::AddTraffic(int playerID, int packetCode, int length)
 {
@@ -151,9 +154,11 @@ void CGame::ClientReadNet()
 			break;
 
 		// get netpacket from the queue
-		packet = net->GetData(gs->frameNum);
-		if (!packet)
+		boost::shared_ptr<const netcode::RawPacket> packet = net->GetData(gs->frameNum);
+		if (!packet) {
+			LOG_SL(LOG_SECTION_NET, L_DEBUG, "Run out of netpackets!");
 			break;
+		}
 
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;
@@ -427,8 +432,7 @@ void CGame::ClientReadNet()
 				if (videoCapturing->IsCapturing()) {
 					return;
 				}
-				break;
-			}
+			} break;
 
 			case NETMSG_SYNCRESPONSE: {
 #if (defined(SYNCCHECK))

@@ -898,7 +898,6 @@ void CGameServer::LagProtection()
 
 #ifndef DEDICATED
 		// adjust game speed to localclient's (:= host) maximum SimFrame rate
-		//FIXME instead of using CpuUsage for connected clients use their avgSimFrameTime or rather maxSimFPS, too (which isn't send via network yet!)
 		const float maxSimFPS = (1000.0f / gu->avgSimFrameTime) * (1.0f - gu->reconnectSimDrawBalance);
 		newSpeed = Clamp(newSpeed, 0.1f, ((maxSimFPS / GAME_SPEED) + internalSpeed) * 0.5f);
 #endif
@@ -2255,7 +2254,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		if (timeElapsed > spring_msecs(200))
 			timeElapsed = spring_msecs(200);
 
-		timeLeft += GAME_SPEED * internalSpeed * float(spring_tomsecs(timeElapsed)) * 0.001f;
+		timeLeft += GAME_SPEED * internalSpeed * timeElapsed.toSecsf();
 		lastTick  = currentTick;
 		newFrames = (timeLeft > 0)? int(math::ceil(timeLeft)): 0;
 		timeLeft -= newFrames;
@@ -2289,7 +2288,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 				Broadcast(CBaseNetProtocol::Get().SendNewFrame());
 
 			// every gameProgressFrameInterval, we broadcast current frame in a special message that doesn't get cached and skips normal queue, to let players know their loading %
-			if ((serverFrameNum%gameProgressFrameInterval) == 0) {
+			if ((serverFrameNum % gameProgressFrameInterval) == 0) {
 				CBaseNetProtocol::PacketType progressPacket = CBaseNetProtocol::Get().SendCurrentFrameProgress(serverFrameNum);
 				// we cannot use broadcast here, since we want to skip caching
 				for (size_t p = 0; p < players.size(); ++p)
