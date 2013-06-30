@@ -130,6 +130,7 @@ private:
 
 	void SendClientProcUsage();
 	void ClientReadNet();
+	void UpdateConsumeSpeed();
 	void SimFrame();
 	void StartPlaying();
 	bool Update();
@@ -189,7 +190,6 @@ public:
 	std::map<int, PlayerTrafficInfo> playerTraffic;
 
 	// to smooth out SimFrame calls
-	int unconsumedFrames;          ///< Lowest number of unconsumed frames in the past second.
 	float msgProcTimeLeft; ///< How many SimFrame() calls we still may do.
 	float consumeSpeed;    ///< How fast we should eat NETMSG_NEWFRAMEs.
 	spring_time lastframe; ///< time of previous ClientReadNet() call.
