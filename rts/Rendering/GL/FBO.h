@@ -98,7 +98,7 @@ public:
 	 * @param height
 	 * @param samples
 	 */
-	void CreateRenderBufferMultisample(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height, const GLsizei samples);
+	void CreateRenderBufferMultisample(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height, GLsizei samples);
 
 	/**
 	 * @brief Detach
