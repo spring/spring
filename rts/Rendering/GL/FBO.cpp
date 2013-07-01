@@ -426,7 +426,7 @@ void FBO::CreateRenderBuffer(const GLenum attachment, const GLenum format, const
 /**
  * Creates and attaches a multisampled RBO
  */
-void FBO::CreateRenderBufferMultisample(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height, const GLsizei samples)
+void FBO::CreateRenderBufferMultisample(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height, GLsizei samples)
 {
 	bool supportsMultisample = false;
 	#ifdef GLEW_EXT_framebuffer_multisample
@@ -439,6 +439,11 @@ void FBO::CreateRenderBufferMultisample(const GLenum attachment, const GLenum fo
 	#endif
 
 	if (supportsMultisample) {
+		static GLsizei maxSamples = -1;
+		if (maxSamples == -1)
+			glGetIntegerv(GL_MAX_SAMPLES_EXT, &maxSamples);
+		samples = std::min(maxSamples, samples);
+
 		GLuint rbo;
 		glGenRenderbuffersEXT(1, &rbo);
 		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rbo);
