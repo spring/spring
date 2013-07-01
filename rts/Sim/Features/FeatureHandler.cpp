@@ -422,6 +422,7 @@ CFeature* CFeatureHandler::CreateWreckage(
 
 		params.unitDef = ((fd->resurrectable == 0) || (numWreckLevels > 1 && fd->resurrectable < 0))? NULL: cparams.unitDef;
 		params.smokeTime = fd->smokeTime * emitSmoke;
+		params.featureDef = fd;
 
 		return (LoadFeature(params));
 	}
