@@ -1418,7 +1418,7 @@ void CCommandAI::FinishCommand()
 {
 	assert(!commandQue.empty());
 
-	const Command& cmd = commandQue.front();
+	const Command cmd = commandQue.front();
 	const int cmdID  = cmd.GetID();
 	const int cmdTag = cmd.tag;
 	const bool dontRepeat = (cmd.options & INTERNAL_ORDER);
@@ -1428,7 +1428,7 @@ void CCommandAI::FinishCommand()
 	    && (cmdID != CMD_STOP)
 	    && (cmdID != CMD_PATROL)
 	    && (cmdID != CMD_SET_WANTED_MAX_SPEED)){
-		commandQue.push_back(commandQue.front());
+		commandQue.push_back(cmd);
 	}
 
 	commandQue.pop_front();
