@@ -18,6 +18,7 @@ CONFIG(bool, AtiSwapRBFix).defaultValue(false);
 std::vector<FBO*> FBO::fboList;
 std::map<GLuint,FBO::TexData*> FBO::texBuf;
 GLint FBO::maxAttachments = 0;
+GLint FBO::maxSamples = -1;
 
 
 /**
@@ -214,6 +215,27 @@ FBO::FBO() : fboId(0), reloadOnAltTab(false)
 	if (!IsSupported()) return;
 
 	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS_EXT, &maxAttachments);
+
+	// set maxSamples once
+	if (maxSamples == -1) {
+		bool multisampleExtensionFound = false;
+
+	#ifdef GLEW_EXT_framebuffer_multisample
+		multisampleExtensionFound = multisampleExtensionFound || (GLEW_EXT_framebuffer_multisample && GLEW_EXT_framebuffer_blit);
+	#endif
+	#ifdef GLEW_ARB_framebuffer_object
+		multisampleExtensionFound = multisampleExtensionFound || GLEW_ARB_framebuffer_object;
+	#endif
+
+		if (multisampleExtensionFound) {
+			glGetIntegerv(GL_MAX_SAMPLES_EXT, &maxSamples);
+			maxSamples = std::max(0, maxSamples);
+		}
+		else {
+			maxSamples = 0;
+		}
+		LOG_L(L_INFO, "FBO::maxSamples: %d", maxSamples);
+	}
 
 	glGenFramebuffersEXT(1,&fboId);
 
@@ -428,30 +450,18 @@ void FBO::CreateRenderBuffer(const GLenum attachment, const GLenum format, const
  */
 void FBO::CreateRenderBufferMultisample(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height, GLsizei samples)
 {
-	bool supportsMultisample = false;
-	#ifdef GLEW_EXT_framebuffer_multisample
-		supportsMultisample = supportsMultisample || (GLEW_EXT_framebuffer_multisample && GLEW_EXT_framebuffer_blit);
-	#endif
-	#ifdef GLEW_ARB_framebuffer_object
-		supportsMultisample = supportsMultisample || GLEW_ARB_framebuffer_object;
-	#else
-		#warning "GLEW_ARB_framebuffer_object not available"
-	#endif
+	assert(maxSamples > 0);
+	samples = std::min(samples, maxSamples);
 
-	if (supportsMultisample) {
-		static GLsizei maxSamples = -1;
-		if (maxSamples == -1)
-			glGetIntegerv(GL_MAX_SAMPLES_EXT, &maxSamples);
-		samples = std::min(maxSamples, samples);
+	GLuint rbo;
+	glGenRenderbuffersEXT(1, &rbo);
+	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rbo);
+	glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, samples, format, width, height);
+	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, rbo);
+	myRBOs.push_back(rbo);
+}
 
-		GLuint rbo;
-		glGenRenderbuffersEXT(1, &rbo);
-		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rbo);
-		glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, samples, format, width, height);
-		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, rbo);
-		myRBOs.push_back(rbo);
-	} else {
-		CreateRenderBuffer(attachment, format, width, height);
-		LOG_L(L_WARNING, "FBO: tried to create a multisample RBO, but hw doesn't support it!");
-	}
+GLsizei FBO::GetMaxSamples()
+{
+	return maxSamples;
 }
