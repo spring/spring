@@ -59,6 +59,11 @@ public:
 	GLenum GetStatus();
 
 	/**
+	 * @return GL_MAX_SAMPLES or 0 if multi-sampling not supported
+	 */
+	static GLsizei GetMaxSamples();
+
+	/**
 	 * @brief IsValid
 	 * @return whether a valid framebuffer exists
 	 */
@@ -154,6 +159,7 @@ private:
 	};
 	static std::map<GLuint,TexData*> texBuf;
 	static GLint maxAttachments;
+	static GLsizei maxSamples;
 
 	/**
 	 * @brief DownloadAttachment
