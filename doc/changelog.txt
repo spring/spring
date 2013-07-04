@@ -15,13 +15,13 @@ Misc:
  - do not switch camera-mode on countdown
  - colorized stdout (you can use `spring --nocolor` & SPRING_NOCOLOR envvar to disable)
  - show LuaMemUsage in /debug view
- ! log error when an image format is used which doesn't work on all platforms
-     current supported image formats are:
+ ! load only image formats which work on all platforms, current supported image formats are:
      PNG, JPG, TGA, DDS, BMP
  - more verbose CEG parsing (warns now about unknown tags)
  - switch to a high precision clock all over the engine (including Lua)
  - copied a lot config descriptions from wiki to the engine (thx for all the wiki'ers)
  - http://springrts.com/wiki/Springsettings.cfg is now automatically updated with each release
+ ! disable build of spring-multithreaded (unmaintained / doesn't compile)
  ! disable luaThreadingModel > 2, can be overriden with EnableUnsafeAndBrokenMT=1
 	fixes #3774, #2884, #2784, #3673, #3808
  - more verbosity for spring-dedicated on exit & demo-writing
