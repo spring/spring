@@ -267,6 +267,8 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	{
 		if (!IsValidImageFormat(ilGetInteger(IL_IMAGE_FORMAT))) {
 			LOG_L(L_ERROR, "Invalid image format for %s: %d", filename.c_str(), ilGetInteger(IL_IMAGE_FORMAT));
+			delete[] buffer;
+			return false;
 		}
 	}
 
