@@ -241,6 +241,8 @@ bool CLuaIntro::LoadUnsyncedCtrlFunctions(lua_State *L)
 	REGISTER_LUA_CFUNC(SetWMIcon);
 	REGISTER_LUA_CFUNC(SetWMCaption);
 
+	REGISTER_LUA_CFUNC(SetLogSectionFilterLevel);
+
 	#undef REGISTER_LUA_CFUNC
 	return true;
 }
@@ -289,6 +291,8 @@ bool CLuaIntro::LoadUnsyncedReadFunctions(lua_State *L)
 
 	REGISTER_LUA_CFUNC(GetMyAllyTeamID);
 	REGISTER_LUA_CFUNC(GetMyTeamID);
+
+	REGISTER_LUA_CFUNC(GetLogSections);
 
 	#undef REGISTER_LUA_CFUNC
 	return true;
@@ -342,7 +346,7 @@ bool CLuaIntro::LoadSyncedReadFunctions(lua_State *L)
 
 string CLuaIntro::LoadFile(const string& filename) const
 {
-	CFileHandler f(filename, SPRING_VFS_RAW); //FIXME SPRING_VFS_MOD
+	CFileHandler f(filename, SPRING_VFS_RAW_FIRST);
 
 	string code;
 	if (!f.LoadStringData(code)) {
