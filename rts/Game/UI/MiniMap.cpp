@@ -895,7 +895,7 @@ void CMiniMap::Update()
 				if (multisampledFBO) {
 					// multisampled FBO we are render to
 					fbo.Detach(GL_COLOR_ATTACHMENT0_EXT); // delete old RBO
-					fbo.CreateRenderBufferMultisample(GL_COLOR_ATTACHMENT0_EXT, GL_RGB8, minimapTexSize.x, minimapTexSize.y, 16);
+					fbo.CreateRenderBufferMultisample(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, minimapTexSize.x, minimapTexSize.y, 4);
 					//fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, minimapTexSize.x, minimapTexSize.y);
 					const bool status = fbo.CheckStatus("MINIMAP");
 					if (!status) {
@@ -912,7 +912,7 @@ void CMiniMap::Update()
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, minimapTexSize.x, minimapTexSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, minimapTexSize.x, minimapTexSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
 				if (multisampledFBO) {
 					// resolve FBO with attached final texture target
@@ -948,6 +948,8 @@ void CMiniMap::Update()
 				ypos = 0.0f;
 
 					glViewport(0, 0, minimapTexSize.x, minimapTexSize.y);
+					glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+					glClear(GL_COLOR_BUFFER_BIT);
 					DrawForReal(false, true);
 
 				xpos = oldPos.x;
@@ -965,7 +967,7 @@ void CMiniMap::Update()
 					glBlitFramebufferEXT(
 						0, 0, minimapTexSize.x, minimapTexSize.y,
 						0, 0, minimapTexSize.x, minimapTexSize.y,
-						GL_COLOR_BUFFER_BIT, GL_LINEAR);
+						GL_COLOR_BUFFER_BIT, GL_NEAREST);
 				}
 			}
 
@@ -1025,11 +1027,14 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 	if (minimized)
 		return;
 
+	glActiveTexture(GL_TEXTURE0);
+
 	// Render `cached` minimap
 	if (renderToTexture && !updateTex) {
 		glPushAttrib(GL_COLOR_BUFFER_BIT);
 		glBindTexture(GL_TEXTURE_2D, minimapTex);
 		glEnable(GL_TEXTURE_2D);
+		glDisable(GL_BLEND);
 
 		if (use_geo) {
 			glPushMatrix();
@@ -1094,6 +1099,7 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 	glMatrixMode(GL_MODELVIEW);
 
 	// draw the map
+	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_BLEND);
 		readmap->DrawMinimap();
 	glEnable(GL_BLEND);
