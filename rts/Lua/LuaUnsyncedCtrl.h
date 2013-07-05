@@ -149,6 +149,8 @@ class LuaUnsyncedCtrl {
 
 		static int SendSkirmishAIMessage(lua_State* L);
 
+		static int SetLogSectionFilterLevel(lua_State* L);
+
 		static int ClearWatchDogTimer(lua_State* L);
 };
 

@@ -142,6 +142,8 @@ class LuaUnsyncedRead {
 		static int GetDrawSelectionInfo(lua_State* L);
 
 		static int GetConfigParams(lua_State* L);
+
+		static int GetLogSections(lua_State* L);
 };
 
 
