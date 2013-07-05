@@ -890,7 +890,7 @@ void CMiniMap::Update()
 				minimapTexSize = int2(width, height);
 
 				const GLsizei maxSamples = fbo.GetMaxSamples();
-				multisampledFBO = (maxSamples > 0);
+				multisampledFBO = (maxSamples > 1);
 
 				if (multisampledFBO) {
 					// multisampled FBO we are render to

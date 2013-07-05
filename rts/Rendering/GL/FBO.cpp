@@ -18,7 +18,7 @@ CONFIG(bool, AtiSwapRBFix).defaultValue(false);
 std::vector<FBO*> FBO::fboList;
 std::map<GLuint,FBO::TexData*> FBO::texBuf;
 GLint FBO::maxAttachments = 0;
-GLint FBO::maxSamples = -1;
+GLsizei FBO::maxSamples = -1;
 
 
 /**
