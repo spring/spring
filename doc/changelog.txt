@@ -61,6 +61,7 @@ Lua:
      UNITS AND YOU ARE NOT USING SPRING'S (BASECONTENT) VERSION
  - LuaUnsyncedRead: add Spring.GetPixelDir(int x, int y) -> number dirx, number diry, number dirz
  ! Spring.GetUnitNearestEnemy doesn't return neutral units anymore
+ - add Spring.GetLogSections() & Spring.SetLogSectionFilterLevel(string sectionName, string|number logLevel)
 
 Rendering:
  - LoadingMT: add a runtime check that should detect incompatibilities
