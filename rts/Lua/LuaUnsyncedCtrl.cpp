@@ -53,6 +53,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
+#include "System/Log/DefaultFilter.h"
 #include "System/Log/ILog.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "System/Net/PackPacket.h"
@@ -233,6 +234,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetSunDirection);
 
 	REGISTER_LUA_CFUNC(SendSkirmishAIMessage);
+
+	REGISTER_LUA_CFUNC(SetLogSectionFilterLevel);
 
 	REGISTER_LUA_CFUNC(ClearWatchDogTimer);
 
@@ -2925,6 +2928,43 @@ int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 	}
 
 	return 2;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
+	const char* section = luaL_checkstring(L, 1);
+
+	int loglevel = LOG_LEVEL_INFO;
+	if (lua_israwnumber(L, 2)) {
+		loglevel = lua_tonumber(L, 2);
+	} else {
+		std::string loglvlstr = lua_tostring(L, 2);
+		StringToLowerInPlace(loglvlstr);
+		if (loglvlstr == "debug") {
+			loglevel = LOG_LEVEL_DEBUG;
+		}
+		else if (loglvlstr == "info") {
+			loglevel = LOG_LEVEL_INFO;
+		}
+		else if (loglvlstr == "warning") {
+			loglevel = LOG_LEVEL_WARNING;
+		}
+		else if (loglvlstr == "error") {
+			loglevel = LOG_LEVEL_ERROR;
+		}
+		else if (loglvlstr == "fatal") {
+			loglevel = LOG_LEVEL_FATAL;
+		}
+		else {
+			return luaL_error(L, "Incorrect arguments to Spring.SetLogSectionFilterLevel(logsection, loglevel)");
+		}
+	}
+
+	//LOG();
+	log_filter_section_setMinLevel(section, loglevel);
+	return 0;
 }
 
 /******************************************************************************/

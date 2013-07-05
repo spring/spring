@@ -53,6 +53,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/LoadSave/demofile.h"
 #include "System/LoadSave/DemoReader.h"
+#include "System/Log/DefaultFilter.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Misc/SpringTime.h"
 
@@ -210,6 +211,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetDrawSelectionInfo);
 
 	REGISTER_LUA_CFUNC(GetConfigParams);
+
+	REGISTER_LUA_CFUNC(GetLogSections);
 
 	return true;
 }
@@ -2406,6 +2409,24 @@ int LuaUnsyncedRead::GetConfigParams(lua_State* L)
 
 		lua_rawseti(L, -2, i++);
 	}
+	return 1;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetLogSections(lua_State* L) {
+	const int numLogSections = log_filter_section_getRegistered();
+
+	lua_createtable(L, 0, numLogSections);
+	for (int i = 0; i < numLogSections; ++i) {
+		const char* sectionName = log_filter_section_getRegisteredIndex(i);
+		const int logLevel = log_filter_section_getMinLevel(sectionName);
+		lua_pushstring(L, sectionName);
+		lua_pushnumber(L, logLevel);
+		lua_rawset(L, -3);
+	}
+
 	return 1;
 }
 
