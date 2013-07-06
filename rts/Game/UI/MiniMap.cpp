@@ -916,6 +916,7 @@ void CMiniMap::Update()
 
 				if (multisampledFBO) {
 					// resolve FBO with attached final texture target
+					fboResolve.Bind();
 					fboResolve.AttachTexture(minimapTex);
 					const bool status = fboResolve.CheckStatus("MINIMAP-RESOLVE");
 					if (!status) {
@@ -924,6 +925,7 @@ void CMiniMap::Update()
 					}
 				} else {
 					// directly render to texture without multisampling (fallback solution)
+					fbo.Bind();
 					fbo.AttachTexture(minimapTex);
 					const bool status = fbo.CheckStatus("MINIMAP-RESOLVE");
 					if (!status) {
@@ -933,6 +935,7 @@ void CMiniMap::Update()
 				}
 			}
 
+			fbo.Bind();
 			// draws minimap into FBO
 			{
 				glMatrixMode(GL_PROJECTION);
