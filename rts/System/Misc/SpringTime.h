@@ -14,6 +14,7 @@ typedef boost::int64_t int64_t;
 
 // mingw doesn't support std::thread (yet?)
 #if (__cplusplus > 199711L) && !defined(__MINGW32__) && !defined(FORCE_BOOST_CHRONO)
+	#define SPRINGTIME_USING_STDCHRONO
 	#include <chrono>
 	#include <thread>
 	namespace chrono { using namespace std::chrono; };
@@ -85,7 +86,7 @@ public:
 
 	inline bool isTime() const { return (x > 0); }
 	inline void sleep() const {
-	#if defined(BOOST_THREAD_USES_CHRONO) || !defined(SPRINGTIME_USING_BOOST)
+	#if defined(SPRINGTIME_USING_STDCHRONO)
 		this_thread::sleep_for(chrono::nanoseconds( toNanoSecs() ));
 	#else
 		boost::this_thread::sleep(boost::posix_time::milliseconds(toMilliSecs()));
