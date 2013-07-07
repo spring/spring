@@ -57,8 +57,9 @@ public:
 	void GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool timeout = false);
 
 private:
+	void LoadMap(const std::string& mapName);
 	void LoadDefs();
-	void PreLoadSimulation(const std::string& mapName);
+	void PreLoadSimulation();
 	void PostLoadSimulation();
 	void PreLoadRendering();
 	void PostLoadRendering();
