@@ -144,8 +144,10 @@ CLoadScreen::~CLoadScreen()
 	if (activeController == this)
 		activeController = NULL;
 
-	if (LuaIntro)
+	if (LuaIntro) {
+		Draw(); // one last frame
 		LuaIntro->Shutdown();
+	}
 	CLuaIntro::FreeHandler();
 
 	if (!gu->globalQuit) {
@@ -259,6 +261,11 @@ bool CLoadScreen::Draw()
 
 	//! cause of `curLoadMessage`
 	boost::recursive_mutex::scoped_lock lck(mutex);
+
+	if (LuaIntro) {
+		LuaIntro->Update();
+		LuaIntro->DrawGenesis();
+	}
 
 	ClearScreen();
 
