@@ -154,6 +154,32 @@ set(FILES
 	LuaGadgets/colors.h.lua
 	LuaGadgets/setupdefs.lua
 	LuaGadgets/gadgets.lua
+	LuaHandler/config.lua
+	LuaHandler/doc/gpl-2.0.txt
+	LuaHandler/doc/changelog.txt
+	LuaHandler/handler.lua
+	LuaHandler/SystemAddons/watchdog.lua
+	LuaHandler/Utilities/vector.lua
+	LuaHandler/Utilities/setupdefs.lua
+	LuaHandler/Utilities/ctrlpanel.lua
+	LuaHandler/Utilities/keysym.lua
+	LuaHandler/Utilities/list.lua
+	LuaHandler/Utilities/cache.lua
+	LuaHandler/Utilities/colors.lua
+	LuaHandler/Utilities/table.lua
+	LuaHandler/Utilities/savetable.lua
+	LuaHandler/Utilities/VFS_GetFileChecksum.lua
+	LuaHandler/Utilities/utils.lua
+	LuaHandler/Utilities/crashHandler.lua
+	LuaHandler/Utilities/specialCallinHandlers.lua
+	LuaHandler/Utilities/actions.lua
+	LuaHandler/Utilities/addonRevisions.lua
+	LuaIntro/config.lua
+	LuaIntro/main.lua
+	LuaIntro/Addons/bg_logo.lua
+	LuaIntro/Addons/loadprogress.lua
+	LuaIntro/Addons/main.lua
+	LuaIntro/Addons/bg_texture.lua
 )
 
 CreateBaseContentArchive("base" "springcontent.sdz" "${FILES}")
