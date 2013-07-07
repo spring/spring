@@ -511,8 +511,9 @@ void CGame::LoadGame(const std::string& mapName)
 	Threading::SetThreadName("loading");
 
 	Watchdog::RegisterThread(WDT_LOAD);
+	if (!gu->globalQuit) LoadMap(mapName);
 	if (!gu->globalQuit) LoadDefs();
-	if (!gu->globalQuit) PreLoadSimulation(mapName);
+	if (!gu->globalQuit) PreLoadSimulation();
 	if (!gu->globalQuit) PreLoadRendering();
 	if (!gu->globalQuit) PostLoadSimulation();
 	if (!gu->globalQuit) PostLoadRendering();
@@ -527,6 +528,31 @@ void CGame::LoadGame(const std::string& mapName)
 
 	Threading::SetThreadName("unknown");
 	Watchdog::DeregisterThread(WDT_LOAD);
+}
+
+
+void CGame::LoadMap(const std::string& mapName)
+{
+	ENTER_SYNCED_CODE();
+
+	{
+		// after this, other components are able to register chat action-executors
+		SyncedGameCommands::CreateInstance();
+		UnsyncedGameCommands::CreateInstance();
+
+		CWordCompletion::CreateInstance();
+
+		// simulation components
+		helper = new CGameHelper();
+		ground = new CGround();
+
+		loadscreen->SetLoadMessage("Parsing Map Information");
+
+		readmap = CReadMap::LoadMap(mapName);
+		groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
+	}
+
+	LEAVE_SYNCED_CODE();
 }
 
 
@@ -588,24 +614,9 @@ void CGame::LoadDefs()
 	LEAVE_SYNCED_CODE();
 }
 
-void CGame::PreLoadSimulation(const std::string& mapName)
+void CGame::PreLoadSimulation()
 {
 	ENTER_SYNCED_CODE();
-
-	// after this, other components are able to register chat action-executors
-	SyncedGameCommands::CreateInstance();
-	UnsyncedGameCommands::CreateInstance();
-
-	CWordCompletion::CreateInstance();
-
-	// simulation components
-	helper = new CGameHelper();
-	ground = new CGround();
-
-	loadscreen->SetLoadMessage("Parsing Map Information");
-
-	readmap = CReadMap::LoadMap(mapName);
-	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 
 	loadscreen->SetLoadMessage("Creating Smooth Height Mesh");
 	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE * 2, SQUARE_SIZE * 40);
