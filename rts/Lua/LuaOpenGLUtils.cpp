@@ -367,7 +367,7 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_FONTSMALL: {
 			texID = smallFont->GetTexture();
 		} break;
-		case LUATEX_MINIMAP: {
+		case LUATEX_MINIMAP: if (readmap) {
 			texID = readmap->GetMiniMapTexture();
 		} break;
 		case LUATEX_INFOTEX: {
@@ -506,8 +506,9 @@ int2 LuaMatTexture::GetSize() const
 			return int2(font->GetTexWidth(), font->GetTexHeight());
 		case LUATEX_FONTSMALL:
 			return int2(smallFont->GetTexWidth(), smallFont->GetTexHeight());
-		case LUATEX_MINIMAP:
-			return readmap->GetMiniMapTextureSize();
+		case LUATEX_MINIMAP: if (readmap) {
+			 return readmap->GetMiniMapTextureSize();
+		} break;
 		case LUATEX_INFOTEX:
 			return readmap->GetGroundDrawer()->GetInfoTexSize();
 		case LUATEX_HEIGHTMAP:
