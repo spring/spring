@@ -627,7 +627,11 @@ static int PushRulesParams(lua_State* L, const char* caller,
 			}
 		}
 
-		LuaPushNamedNumber(L, name, param.value);
+		if (!param.valueString.empty()) {
+			LuaPushNamedString(L, name, param.valueString);
+		} else {
+			LuaPushNamedNumber(L, name, param.valueInt);
+		}
 		lua_rawset(L, -3);
 	}
 
@@ -666,7 +670,11 @@ static int GetRulesParam(lua_State* L, const char* caller, int index,
 	const LuaRulesParams::Param& param = params[pIndex];
 
 	if (param.los & losStatus) {
-		lua_pushnumber(L, param.value);
+		if (!param.valueString.empty()) {
+			lua_pushsstring(L, param.valueString);
+		} else {
+			lua_pushnumber(L, param.valueInt);
+		}
 		return 1;
 	}
 

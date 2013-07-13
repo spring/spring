@@ -3148,7 +3148,8 @@ EXPORT(float) skirmishAiCallback_Unit_ModParam_getValue(int skirmishAIId,
 
 	const CUnit* unit = getUnit(unitId);
 	if (unit && unitModParamIsVisible(skirmishAIId, *unit, modParamId)) {
-		value = unit->modParams[modParamId].value;
+		//FIXME add function to get string params, too!
+		value = unit->modParams[modParamId].valueInt;
 	}
 
 	return value;

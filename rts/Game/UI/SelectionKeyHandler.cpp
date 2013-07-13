@@ -176,13 +176,22 @@ namespace
 	);
 
 	DECLARE_FILTER_EX(RulesParamEquals, 2, unit->modParamsMap.find(param) != unit->modParamsMap.end() &&
-	                  unit->modParams[unit->modParamsMap.find(param)->second].value == wantedValue,
+			((wantedValueStr.empty()) ? unit->modParams[unit->modParamsMap.find(param)->second].valueInt == wantedValue
+			: unit->modParams[unit->modParamsMap.find(param)->second].valueString == wantedValueStr),
 		std::string param;
 		float wantedValue;
+		std::string wantedValueStr;
 		void SetParam(int index, const std::string& value) {
 			switch (index) {
-				case 0: param = value; break;
-				case 1: wantedValue = atof(value.c_str()); break;
+				case 0: {
+					param = value;
+				} break;
+				case 1: {
+					const char* cstr = value.c_str();
+					char* endNumPos = NULL;
+					wantedValue = strtof(cstr, &endNumPos);
+					if (endNumPos == cstr) wantedValueStr = value;
+				} break;
 			}
 		},
 		wantedValue=0.0f;
