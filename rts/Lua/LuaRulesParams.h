@@ -28,10 +28,11 @@ namespace LuaRulesParams
 	struct Param {
 		CR_DECLARE_STRUCT(Param);
 
-		Param() : value(0.0f),los(RULESPARAMLOS_PRIVATE) {};
+		Param() : los(RULESPARAMLOS_PRIVATE),valueInt(0.0f) {};
 
-		float value;
 		int   los;
+		float valueInt;
+		std::string valueString;
 	};
 
 	typedef std::vector<Param>         Params;

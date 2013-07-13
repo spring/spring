@@ -729,7 +729,7 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 
 	if ((pIndex < 0)
 		|| (pIndex >= (int)params.size())
-		|| !lua_isnumber(L, valIndex)
+		|| !(lua_isnumber(L, valIndex) || lua_isstring(L, valIndex))
 	) {
 		luaL_error(L, "Incorrect arguments to %s()", caller);
 	}
@@ -737,7 +737,12 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 	LuaRulesParams::Param& param = params[pIndex];
 
 	//! set the value of the parameter
-	param.value = lua_tofloat(L, valIndex);
+	if (lua_isstring(L, valIndex)) {
+		param.valueString = lua_tostring(L, valIndex);
+	} else {
+		param.valueInt = lua_tofloat(L, valIndex);
+		param.valueString.resize(0);
+	}
 
 	//! set the los checking of the parameter
 	if (lua_istable(L, losIndex)) {
