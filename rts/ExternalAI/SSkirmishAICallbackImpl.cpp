@@ -1354,10 +1354,10 @@ EXPORT(const char*) skirmishAiCallback_Mod_getFileName(int skirmishAIId) {
 }
 
 EXPORT(int) skirmishAiCallback_Mod_getHash(int skirmishAIId) {
-	return archiveScanner->GetArchiveCompleteChecksum(modInfo.humanName);
+	return archiveScanner->GetArchiveCompleteChecksum(modInfo.humanNameVersioned);
 }
 EXPORT(const char*) skirmishAiCallback_Mod_getHumanName(int skirmishAIId) {
-	return modInfo.humanName.c_str();
+	return modInfo.humanNameVersioned.c_str();
 }
 
 EXPORT(const char*) skirmishAiCallback_Mod_getShortName(int skirmishAIId) {
@@ -2404,7 +2404,7 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToMove(int skirmishAIId, int unitD
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToHover(int skirmishAIId, int unitDefId) {
 	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
 	const MoveDef* md = (ud->pathType != -1U)? moveDefHandler->GetMoveDefByPathType(ud->pathType): NULL;
- 
+
 	return ((md != NULL)? (md->moveFamily == MoveDef::Hover): false);
 }
 
@@ -2593,7 +2593,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int skirmishAIId, int unitDefI
 		int2 zdir(0,1);
 		int row_width = xsize;
 		int startidx = 0; // position of yardMapInternal[0] in the new destination array
-		
+
 		switch (facing) {
 			case FACING_SOUTH:
 				xdir = int2( 1, 0);

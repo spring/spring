@@ -178,7 +178,7 @@ function addon.DrawLoadScreen()
 		local barTextSize = vsy * (0.05 - 0.015)
 
 		--font:Print(lastLoadMessage, vsx * 0.5, vsy * 0.3, 50, "sc")
-		font:Print(Game.modDesc, vsx * 0.5, vsy * 0.95, vsy * 0.07, "sca")
+		font:Print(Game.gameName, vsx * 0.5, vsy * 0.95, vsy * 0.07, "sca")
 		font:Print(lastLoadMessage, vsx * 0.2, vsy * 0.14, barTextSize * 0.5, "sa")
 		if loadProgress>0 then
 			font:Print(("%.0f%%"):format(loadProgress * 100), vsx * 0.5, vsy * 0.165, barTextSize, "oc")

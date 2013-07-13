@@ -1316,7 +1316,7 @@ EXPORT(const char*) GetPrimaryModName(int index)
 		CheckInit();
 		CheckBounds(index, modData.size());
 
-		const std::string& x = modData[index].GetName();
+		const std::string& x = modData[index].GetNameVersioned();
 		return GetStr(x);
 	}
 	UNITSYNC_CATCH_BLOCKS;

@@ -41,7 +41,7 @@ namespace StartScriptGen {
 		return versionInt;
 	}
 
-	
+
 	static bool GetGameByExactName(const std::string& lazyName, std::string* applicableName)
 	{
 		const CArchiveScanner::ArchiveData& aData = archiveScanner->GetArchiveData(lazyName);
@@ -73,7 +73,7 @@ namespace StartScriptGen {
 				boost::uint64_t versionInt = ExtractVersionNumber(it->GetVersion());
 
 				if (versionInt > matchingVersionInt) {
-					matchingName = it->GetName();
+					matchingName = it->GetNameVersioned();
 					matchingVersion = it->GetVersion();
 					matchingVersionInt = versionInt;
 					continue;
@@ -83,7 +83,7 @@ namespace StartScriptGen {
 					// very bad solution, fails with `10.0` vs. `9.10`
 					const int compareInt = matchingVersion.compare(it->GetVersion());
 					if (compareInt <= 0) {
-						matchingName = it->GetName();
+						matchingName = it->GetNameVersioned();
 						matchingVersion = it->GetVersion();
 						//matchingVersionInt = versionInt;
 					}
@@ -105,7 +105,7 @@ namespace StartScriptGen {
 		if (std::string("random").find(lazyName) != std::string::npos) {
 			const std::vector<CArchiveScanner::ArchiveData>& games = archiveScanner->GetPrimaryMods();
 			if (!games.empty()) {
-				*applicableName = games[gu->RandInt() % games.size()].GetName();
+				*applicableName = games[gu->RandInt() % games.size()].GetNameVersioned();
 				return true;
 			}
 		}
