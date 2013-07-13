@@ -26,10 +26,11 @@ CModInfo modInfo;
 void CModInfo::Init(const char* modArchive)
 {
 	filename = modArchive;
-	humanName = archiveScanner->NameFromArchive(modArchive);
+	humanNameVersioned = archiveScanner->NameFromArchive(modArchive);
 
-	const CArchiveScanner::ArchiveData md = archiveScanner->GetArchiveData(humanName);
+	const CArchiveScanner::ArchiveData md = archiveScanner->GetArchiveData(humanNameVersioned);
 
+	humanName   = md.GetName();
 	shortName   = md.GetShortName();
 	version     = md.GetVersion();
 	mutator     = md.GetMutator();

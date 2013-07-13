@@ -71,7 +71,7 @@ void SelectionWidget::ShowModList()
 
 	std::map<std::string, std::string> modMap; // name, desc  (using a map to sort)
 	for (std::vector<CArchiveScanner::ArchiveData>::const_iterator it = found.begin(); it != found.end(); ++it) {
-		modMap[it->GetName()] = it->GetDescription();
+		modMap[it->GetNameVersioned()] = it->GetDescription();
 	}
 
 	std::map<std::string, std::string>::iterator mit;

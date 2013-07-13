@@ -128,7 +128,13 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	LuaPushNamedBool(L,   "allowTeamColors", true);
 
-	LuaPushNamedString(L, "modName",         modInfo.humanName);
+	LuaPushNamedString(L, "gameName",         modInfo.humanName);
+	LuaPushNamedString(L, "gameShortName",    modInfo.shortName);
+	LuaPushNamedString(L, "gameVersion",      modInfo.version);
+	LuaPushNamedString(L, "gameMutator",      modInfo.mutator);
+	LuaPushNamedString(L, "gameDesc",         modInfo.description);
+
+	LuaPushNamedString(L, "modName",         modInfo.humanNameVersioned);
 	LuaPushNamedString(L, "modShortName",    modInfo.shortName);
 	LuaPushNamedString(L, "modVersion",      modInfo.version);
 	LuaPushNamedString(L, "modMutator",      modInfo.mutator);
