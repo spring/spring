@@ -592,10 +592,18 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	deathExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("explodeAs", ""));
 	selfdExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("selfDestructAs", ""));
-	if (deathExpWeaponDef == NULL) { deathExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON"); }
-	if (selfdExpWeaponDef == NULL) { selfdExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON"); }
-	assert(deathExpWeaponDef);
-	assert(selfdExpWeaponDef);
+	if (deathExpWeaponDef == NULL) {
+		deathExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON");
+		if (deathExpWeaponDef == NULL) {
+			LOG_L(L_ERROR, "Couldn't find WeaponDef NOWEAPON and explodeAs for %s is missing!", unitName.c_str());
+		}
+	}
+	if (selfdExpWeaponDef == NULL) {
+		selfdExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON");
+		if (selfdExpWeaponDef == NULL) {
+			LOG_L(L_ERROR, "Couldn't find WeaponDef NOWEAPON and selfDestructAs for %s is missing!", unitName.c_str());
+		}
+	}
 
 	power = udTable.GetFloat("power", (metal + (energy / 60.0f)));
 
