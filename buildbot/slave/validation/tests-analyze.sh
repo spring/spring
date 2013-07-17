@@ -31,9 +31,4 @@ do
 	rm -f $COREFILE
 	EXITCODE=1
 done
-if [ $EXITCODE -ne 0 ]; then
-	echo Tests failed, uploading spring writeable dir
-	mkdir -p ${TMP_PATH}/validation/
-	mv ${TMP_BASE}/tests/.config/spring/ ${TMP_PATH}/validation/
-fi
 exit $EXITCODE
