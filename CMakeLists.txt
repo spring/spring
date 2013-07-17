@@ -73,6 +73,7 @@ endif (WIN32)
 # XCode
 if    (APPLE)
 	option(MACOSX_BUNDLE "Compile spring to work as a Bundle.app" TRUE)
+	add_definitions(${PIC_FLAG})
 	if    (MACOSX_BUNDLE)
 		add_definitions(-DMACOSX_BUNDLE)
 	endif (MACOSX_BUNDLE)
