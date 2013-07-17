@@ -19,6 +19,6 @@ HOME=${TESTDIR} ${SOURCEDIR}/test/validation/run.sh ${TESTDIR}/usr/local/bin/spr
 
 # zip output for upload
 mkdir -p ${TMP_PATH}/validation/
-${SEVENZIP} ${TMP_PATH}/validation/$VERSION_$(date +"%Y-%m-%d_%H-%M-%S").7z ${TMP_BASE}/tests/.config/spring/
+${SEVENZIP} ${TMP_PATH}/validation/$VERSION_$(date +"%Y-%m-%d_%H-%M-%S")-dbg.7z ${TMP_BASE}/tests/.config/spring/
 rm -rf ${TMP_BASE}/tests/.config/spring/
 
