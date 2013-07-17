@@ -64,7 +64,15 @@ cp -v ${SOURCEDIR}/test/validation/LuaUI/Config/ZK_data.lua ${CONTENT_DIR}/LuaUI
 cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${CONTENT_DIR}/springsettings.cfg
 
 #set data directory to test directory
-echo "SpringData = ${TESTDIR}/usr/local/share/games/spring" >> ${CONTENT_DIR}/springsettings.cfg
+(
+	echo "SpringData = ${TESTDIR}/usr/local/share/games/spring"
+	# disable bandwith limits (for syncdebug)
+	echo "LinkIncomingMaxPacketRate = 0"
+	echo "LinkIncomingMaxWaitingPackets = 0"
+	echo "LinkIncomingPeakBandwidth = 0"
+	echo "LinkIncomingSustainedBandwidth = 0"
+	echo "LinkOutgoingBandwidth = 0"
+) >> ${CONTENT_DIR}/springsettings.cfg
 
 makescript "$GAME1" "$MAP" AAI 0.9
 makescript "$GAME1" "$MAP" E323AI 3.25.0
