@@ -10,7 +10,8 @@
 #include <cstring>
 #include <string>
 #include <map>
-
+#include <deque>
+#include <vector>
 
 // disable this if you want minimal profiling
 // (sim time is still measured because of game slowdown)
@@ -109,6 +110,8 @@ public:
 	};
 
 	std::map<std::string,TimeRecord> profile;
+
+	std::vector<std::deque<std::pair<spring_time,spring_time>>> profileCore;
 
 private:
 	spring_time lastBigUpdate;
