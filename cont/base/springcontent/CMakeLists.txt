@@ -179,6 +179,7 @@ set(FILES
 	LuaIntro/Addons/bg_logo.lua
 	LuaIntro/Addons/loadprogress.lua
 	LuaIntro/Addons/main.lua
+	LuaIntro/Addons/music.lua
 	LuaIntro/Addons/bg_texture.lua
 )
 
