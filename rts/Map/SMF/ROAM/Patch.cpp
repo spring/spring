@@ -19,8 +19,8 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Log/ILog.h"
+#include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
-#include "System/OpenMP_cond.h"
 #include <cfloat>
 #include <limits.h>
 
@@ -37,22 +37,14 @@ void CTriNodePool::InitPools(const size_t newPoolSize)
 {
 	if (pools.empty()) {
 		Threading::OMPCheck();
-		#pragma omp parallel
-		{
-			#pragma omp master
-			{
-			#ifdef _OPENMP
-				int numThreads = omp_get_num_threads();
-			#else
-				int numThreads = 1;
-			#endif
-				poolSize = newPoolSize;
-				const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3);
-				pools.reserve(numThreads);
-				for (; numThreads > 0; --numThreads) {
-					pools.push_back(new CTriNodePool(allocPerThread));
-				}
-			}
+		//int numThreads = GetNumThreads();
+		int numThreads = ThreadPool::GetMaxThreads();
+
+		poolSize = newPoolSize;
+		const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3);
+		pools.reserve(numThreads);
+		for (; numThreads > 0; --numThreads) {
+			pools.push_back(new CTriNodePool(allocPerThread));
 		}
 	}
 }
@@ -92,12 +84,8 @@ void CTriNodePool::ResetAll()
 
 CTriNodePool* CTriNodePool::GetPool()
 {
-#ifdef _OPENMP
-	const size_t th_id = omp_get_thread_num();
+	const size_t th_id = ThreadPool::GetThreadNum();
 	return pools[th_id];
-#else
-	return pools[0];
-#endif
 }
 
 

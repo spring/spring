@@ -15,6 +15,7 @@
 // disable this if you want minimal profiling
 // (sim time is still measured because of game slowdown)
 #define SCOPED_TIMER(name) ScopedTimer myScopedTimerFromMakro(name);
+#define SCOPED_MT_TIMER(name) ScopedMtTimer myScopedTimerFromMakro(name);
 
 
 class BasicTimer : public boost::noncopyable
@@ -44,6 +45,19 @@ public:
 	ScopedTimer(const std::string& name, bool autoShow = false);
 	ScopedTimer(const char* name, bool autoShow = false);
 	~ScopedTimer();
+
+private:
+	const bool autoShowGraph;
+	std::map<int, int>::iterator it;
+};
+
+
+class ScopedMtTimer : public BasicTimer
+{
+public:
+	ScopedMtTimer(const std::string& name, bool autoShow = false);
+	ScopedMtTimer(const char* name, bool autoShow = false);
+	~ScopedMtTimer();
 
 private:
 	const bool autoShowGraph;

@@ -5,7 +5,7 @@
 #include "VertexArray.h"
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"
-
+#include "System/ThreadPool.h"
 
 /**
  *  Draws a trigonometric circle in 'resolution' steps.
@@ -77,9 +77,7 @@ void glBallisticCircle(const float3& center, const float radius,
 	float3* vertices = reinterpret_cast<float3*>(va->drawArray);
 	va->drawArrayPos = va->drawArray + resolution * 3;
 
-	Threading::OMPCheck();
-	#pragma omp parallel for
-	for (int i = 0; i < resolution; ++i) {
+	for_mt(0, resolution, [&](const int i) {
 		const float radians = (2.0f * PI) * (float)i / (float)resolution;
 		float rad = radius;
 		float sinR = fastmath::sin(radians);
@@ -113,7 +111,7 @@ void glBallisticCircle(const float3& center, const float radius,
 		pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false) + 5.0f;
 
 		vertices[i] = pos;
-	}
+	});
 
 	va->DrawArray0(GL_LINE_LOOP);
 }

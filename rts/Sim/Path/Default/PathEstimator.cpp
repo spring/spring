@@ -24,6 +24,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Net/Protocol/NetProtocol.h"
+#include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/Archives/IArchive.h"
@@ -486,9 +487,7 @@ void CPathEstimator::Update() {
 	// FindOffset (threadsafe)
 	{
 		SCOPED_TIMER("CPathEstimator::FindOffset");
-		Threading::OMPCheck();
-		#pragma omp parallel for
-		for (int n = 0; n < v.size(); ++n) {
+		for_mt(0, v.size(), [&](const int n) {
 			// copy the next block in line
 			const SingleBlock sb = v[n];
 
@@ -499,7 +498,7 @@ void CPathEstimator::Update() {
 			const MoveDef* currBlockMD = sb.moveDef;
 
 			blockStates.peNodeOffsets[blockN][currBlockMD->pathType] = FindOffset(*currBlockMD, blockX, blockZ);
-		}
+		});
 	}
 
 	// CalculateVertices (not threadsafe)

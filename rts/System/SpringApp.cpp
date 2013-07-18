@@ -53,6 +53,7 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/StartScriptGen.h"
 #include "System/TimeProfiler.h"
+#include "System/ThreadPool.h"
 #include "System/Util.h"
 #include "System/creg/creg_runtime_tests.h"
 #include "System/Input/KeyInput.h"
@@ -203,13 +204,15 @@ bool SpringApp::Initialize()
 	Watchdog::RegisterThread(WDT_MAIN, true);
 
 	GlobalConfig::Instantiate();
-	FileSystemInitializer::Initialize();
 
 	// Create Window
 	if (!InitWindow(("Spring " + SpringVersion::GetSync()).c_str())) {
 		SDL_Quit();
 		return false;
 	}
+
+	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
+	FileSystemInitializer::Initialize();
 
 	mouseInput = IMouseInput::GetInstance();
 	keyInput = KeyInput::GetInstance();
@@ -1067,6 +1070,8 @@ int SpringApp::Run(int argc, char *argv[])
 void SpringApp::Shutdown()
 {
 	if (gu) gu->globalQuit = true;
+
+	ThreadPool::SetThreadCount(0);
 
 	GML::Exit();
 	SafeDelete(pregame);

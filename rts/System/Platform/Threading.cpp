@@ -6,6 +6,7 @@
 #include "Game/GameController.h"
 #include "System/bitops.h"
 #include "System/OpenMP_cond.h"
+#include "System/ThreadPool.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
@@ -212,45 +213,31 @@ namespace Threading {
 		}
 		OMPInited = true;
 
-	#ifndef DEDICATED
-		#ifdef _OPENMP
-			if (useOMP) {
-				boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
-				boost::uint32_t mainAffinity  = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
-				boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
+		boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
+		boost::uint32_t mainAffinity  = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
+		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
 
-				// For latency reasons our openmp threads yield rarely and so eat a lot cputime with idleing.
-				// So it's better we always leave 1 core free for our other threads, drivers & OS
-				if (omp_get_max_threads() > 2)
-					omp_set_num_threads(omp_get_max_threads() - 1);
+		// For latency reasons our worker threads yield rarely and so eat a lot cputime with idleing.
+		// So it's better we always leave 1 core free for our other threads, drivers & OS
+		if (ThreadPool::GetMaxThreads() > 2)
+			ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads() - 1);
 
-				streflop_init_omp();
-
-				// omp threads
-				boost::uint32_t ompCores = 0;
-				Threading::OMPCheck();
-				#pragma omp parallel reduction(|:ompCores)
-				{
-					int i = omp_get_thread_num();
-					if (i != 0) { // 0 is the source thread
-						Threading::SetThreadName(IntToString(i, "omp%i"));
-						//boost::uint32_t ompCore = 1 << i;
-						boost::uint32_t ompCore = GetOpenMPCpuCore(i - 1, ompAvailCores, mainAffinity);
-						Threading::SetAffinity(ompCore);
-						ompCores |= ompCore;
-					}
-				}
-
-				// mainthread
-				boost::uint32_t nonOmpCores = ~ompCores;
-				if (mainAffinity == 0) mainAffinity = systemCores;
-				Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
-			} else
-		#endif
-			{
-				Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
+		// set affinity of worker threads
+		boost::uint32_t ompCores = 0;
+		ompCores = parallel_reduce([&]() -> boost::uint32_t {
+			int i = ThreadPool::GetThreadNum();
+			if (i != 0) { // 0 is the source thread
+				boost::uint32_t ompCore = GetOpenMPCpuCore(i - 1, ompAvailCores, mainAffinity);
+				Threading::SetAffinity(ompCore);
+				return ompCore;
 			}
-	#endif
+			return 0;
+		}, [](boost::uint32_t a, std::future<boost::uint32_t>& b) -> boost::uint32_t { return a | b.get(); });
+
+		// affinity of mainthread
+		boost::uint32_t nonOmpCores = ~ompCores;
+		if (mainAffinity == 0) mainAffinity = systemCores;
+		Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
 	}
 
 	void SetThreadScheduler()
