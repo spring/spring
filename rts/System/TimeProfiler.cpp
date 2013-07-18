@@ -110,6 +110,27 @@ ScopedOnceTimer::~ScopedOnceTimer()
 
 
 
+ScopedMtTimer::ScopedMtTimer(const std::string& name, bool autoShow)
+	: BasicTimer(name)
+	, autoShowGraph(autoShow)
+{
+}
+
+
+ScopedMtTimer::ScopedMtTimer(const char* name, bool autoShow)
+	: BasicTimer(name)
+	, autoShowGraph(autoShow)
+{
+}
+
+
+ScopedMtTimer::~ScopedMtTimer()
+{
+	profiler.AddTime(GetName(), spring_difftime(spring_gettime(), starttime), autoShowGraph);
+}
+
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////

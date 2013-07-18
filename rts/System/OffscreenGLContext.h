@@ -66,6 +66,7 @@ public:
 
 	bool IsFinished(boost::posix_time::time_duration wait = boost::posix_time::milliseconds(200));
 	void Join();
+	void join() {Join();}
 
 private:
 	void WrapFunc(boost::function<void()> f);

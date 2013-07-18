@@ -19,8 +19,8 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/OpenMP_cond.h"
 #include "System/Rectangle.h"
+#include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
@@ -176,14 +176,12 @@ void CRoamMeshDrawer::Update()
 		}
 
 		{ //SCOPED_TIMER("ROAM::GenerateIndexArray");
-			Threading::OMPCheck();
-			#pragma omp parallel for
-			for (int i = m_Patches.size() - 1; i >= 0; --i) {
+			for_mt(0, m_Patches.size(), [&](const int i){
 				Patch* it = &m_Patches[i];
 				if (it->IsVisible()) {
 					it->GenerateIndices();
 				}
-			}
+			});
 		}
 
 		{ //SCOPED_TIMER("ROAM::Upload");
@@ -348,9 +346,7 @@ void CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 	// But instead we take a safety distance between the thread's working
 	// area (which is 2 patches), so they don't conflict with each other.
 	for (int idx = 0; idx < 9; ++idx) {
-		Threading::OMPCheck();
-		#pragma omp parallel for
-		for (int i = m_Patches.size() - 1; i >= 0; --i) {
+		for_mt(0, m_Patches.size(), [&](const int i){
 			Patch* it = &m_Patches[i];
 
 			const int X = it->m_WorldX;
@@ -360,7 +356,7 @@ void CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 			if ((subindex == idx) && it->IsVisible()) {
 				it->Tessellate(campos, viewradius);
 			}
-		}
+		});
 	}
 #else
 	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
