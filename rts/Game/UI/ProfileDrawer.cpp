@@ -3,9 +3,11 @@
 #include <assert.h>
 
 #include "ProfileDrawer.h"
+#include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalConstants.h" // for GAME_SPEED
 
@@ -134,6 +136,47 @@ void ProfileDrawer::Draw()
 		glColorf3((float3)pi->second.color);
 		va->DrawArray0(GL_LINE_STRIP);
 	}
+
+	const float maxHist = 4.0f;
+	const auto curTime = spring_gettime();
+	const float r = std::fmod(curTime.toSecsf(), maxHist) / maxHist;
+
+	CVertexArray* va = GetVertexArray();
+	va->Initialize();
+	auto& coreProf = profiler.profileCore;
+	for (int i = 0; i < coreProf.size(); ++i) {
+		if (coreProf[i].empty())
+			continue;
+
+		const float y1 = 0.1f * i;
+		const float y2 = 0.1f * (i+1);
+
+		while (!coreProf[i].empty() && (curTime - coreProf[i].front().second) > spring_secs(maxHist))
+			coreProf[i].pop_front();
+
+		for (const auto& data: coreProf[i]) {
+			float x1 = std::fmod(data.first.toSecsf(), maxHist)  / maxHist;
+			float x2 = std::fmod(data.second.toSecsf(), maxHist) / maxHist;
+			x2 = std::max(x1 + globalRendering->pixelX, x2);
+
+			va->AddVertex0(float3(x1, y1, 0.0f));
+			va->AddVertex0(float3(x1, y2, 0.0f));
+
+			va->AddVertex0(float3(x2, y2, 0.0f));
+			va->AddVertex0(float3(x2, y1, 0.0f));
+		}
+	}
+
+	const float y1 = 0.0f;
+	const float y2 = 0.1f * (ThreadPool::GetNumThreads());
+	va->AddVertex0(float3(r, y1, 0.0f));
+	va->AddVertex0(float3(r, y2, 0.0f));
+	va->AddVertex0(float3(r + 10 * globalRendering->pixelX, y2, 0.0f));
+	va->AddVertex0(float3(r + 10 * globalRendering->pixelX, y1, 0.0f));
+
+	glColor3f(1.0f,0.0f,0.0f);
+	va->DrawArray0(GL_QUADS);
+
 	glEnable(GL_TEXTURE_2D);
 }
 

@@ -7,6 +7,7 @@
 
 #include "lib/gml/gmlmut.h"
 #include "System/Log/ILog.h"
+#include "System/ThreadPool.h"
 #include "System/UnsyncedRNG.h"
 
 static std::map<int, std::string> hashToName;
@@ -127,6 +128,8 @@ ScopedMtTimer::ScopedMtTimer(const char* name, bool autoShow)
 ScopedMtTimer::~ScopedMtTimer()
 {
 	profiler.AddTime(GetName(), spring_difftime(spring_gettime(), starttime), autoShowGraph);
+	auto& list = profiler.profileCore[ThreadPool::GetThreadNum()];
+	list.emplace_back(starttime, spring_gettime());
 }
 
 
@@ -139,6 +142,7 @@ CTimeProfiler::CTimeProfiler():
 	lastBigUpdate(spring_gettime()),
 	currentPosition(0)
 {
+	profileCore.resize(ThreadPool::GetMaxThreads());
 }
 
 CTimeProfiler::~CTimeProfiler()
