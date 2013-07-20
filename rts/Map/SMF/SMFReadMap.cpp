@@ -17,7 +17,7 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/OpenMP_cond.h"
+#include "System/ThreadPool.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
@@ -363,10 +363,7 @@ void CSMFReadMap::UpdateVertexNormals(const SRectangle& update)
 	const int maxx = std::min(update.x2 + 1, W - 1);
 	const int maxz = std::min(update.y2 + 1, H - 1);
 
-	int z;
-	Threading::OMPCheck();
-	#pragma omp parallel for private(z)
-	for (z = minz; z <= maxz; z++) {
+	for_mt(minz, maxz+1, [&](const int z) {
 		for (int x = minx; x <= maxx; x++) {
 			const int vIdxTL = (z    ) * W + x;
 
@@ -423,7 +420,7 @@ void CSMFReadMap::UpdateVertexNormals(const SRectangle& update)
 			uhm[vIdxTL] = shm[vIdxTL];
 			vvn[vIdxTL] = vn.ANormalize();
 		}
-	}
+	});
 	#endif
 }
 
@@ -532,20 +529,17 @@ void CSMFReadMap::UpdateShadingTexture(const SRectangle& update)
 		//TODO switch to PBO?
 		std::vector<unsigned char> pixels(xsize * ysize * 4, 0.0f);
 
-		int y;
-		Threading::OMPCheck();
-		#pragma omp parallel for private(y)
-		for (y = 0; y < ysize; ++y) {
+		for_mt(0, ysize, [&](const int y) {
 			const int idx1 = (y + y1) * gs->mapx + x1;
 			const int idx2 = (y + y1) * gs->mapx + x2;
 			UpdateShadingTexPart(idx1, idx2, &pixels[y * xsize * 4]);
-		}
+		});
 
 		// check if we were in a dynamic sun issued shadingTex update
 		// and our updaterect was already updated (buffered, not send to the GPU yet!)
 		// if so update it in that buffer, too
 		if (shadingTexUpdateProgress > (y1 * gs->mapx + x1)) {
-			for (y = 0; y < ysize; ++y) {
+			for (int y = 0; y < ysize; ++y) {
 				const int idx = (y + y1) * gs->mapx + x1;
 				memcpy(&shadingTexBuffer[idx * 4] , &pixels[y * xsize * 4], xsize);
 			}
@@ -677,13 +671,10 @@ void CSMFReadMap::UpdateShadingTexture()
 	const int idx1 = shadingTexUpdateProgress;
 	const int idx2 = std::min(idx1 + update_rate, pixels - 1);
 
-	int idx;
-	Threading::OMPCheck();
-	#pragma omp parallel for private(idx)
-	for (idx = idx1; idx <= idx2; idx += 1025) {
+	for_mt(idx1, idx2+1, 1025, [&](const int idx){
 		const int idx3 = std::min(idx2, idx + 1024);
 		UpdateShadingTexPart(idx, idx3, &shadingTexBuffer[idx * 4]);
-	}
+	});
 
 	shadingTexUpdateProgress += update_rate;
 }
