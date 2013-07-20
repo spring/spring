@@ -76,10 +76,10 @@ void CLaserProjectile::Update()
 	UpdateInterception();
 	UpdatePos(oldSpeed);
 
-	ttl -= 1;
 	checkCol &= (ttl >= 0);
 	deleteMe |= ((curLength <= 0.01f) * ( weaponDef->laserHardStop));
 	deleteMe |= ((intensity <= 0.01f) * (!weaponDef->laserHardStop));
+	--ttl;
 }
 
 void CLaserProjectile::UpdateIntensity() {
