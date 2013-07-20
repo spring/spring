@@ -52,12 +52,13 @@ void CEmgCannon::Init()
 
 void CEmgCannon::FireImpl()
 {
-	float3 dir;
+	float3 dir = targetPos - weaponMuzzlePos;
+	const float dist = dir.Length();
+	dir /= dist;
+
 	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
 		// HoverAirMoveType canot align itself properly, change back when that is fixed
 		dir = owner->frontdir;
-	} else {
-		dir = (targetPos - weaponMuzzlePos).Normalize();
 	}
 
 	dir +=
@@ -68,7 +69,7 @@ void CEmgCannon::FireImpl()
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
-	params.ttl = (int) (range / projectileSpeed);
+	params.ttl = std::ceil(std::max(dist, range) / projectileSpeed);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

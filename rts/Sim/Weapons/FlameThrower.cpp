@@ -22,7 +22,10 @@ CFlameThrower::CFlameThrower(CUnit* owner): CWeapon(owner)
 
 void CFlameThrower::FireImpl()
 {
-	const float3 dir = (targetPos - weaponMuzzlePos).Normalize();
+	float3 dir = targetPos - weaponMuzzlePos;
+	const float dist = dir.Length();
+	dir /= dist;
+
 	const float3 spread =
 		((gs->randVector() * sprayAngle + salvoError) *
 		weaponDef->ownerExpAccWeight) -
@@ -32,7 +35,7 @@ void CFlameThrower::FireImpl()
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
 	params.spread = spread;
-	params.ttl = (int) (range / projectileSpeed * weaponDef->duration);
+	params.ttl = std::ceil(std::max(dist, range) / projectileSpeed * weaponDef->duration);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

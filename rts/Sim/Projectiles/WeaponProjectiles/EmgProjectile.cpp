@@ -44,7 +44,6 @@ void CEmgProjectile::Update()
 	// disable collisions when ttl reaches 0 since the
 	// projectile will travel far past its range while
 	// fading out
-	ttl -= 1;
 	checkCol &= (ttl >= 0);
 	deleteMe |= (intensity <= 0.0f);
 
@@ -61,6 +60,7 @@ void CEmgProjectile::Update()
 
 	UpdateGroundBounce();
 	UpdateInterception();
+	--ttl;
 }
 
 void CEmgProjectile::Draw()
