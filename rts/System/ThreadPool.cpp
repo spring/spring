@@ -60,7 +60,7 @@ int GetNumThreads()
 	//return omp_get_num_threads();
 
 	//FIXME mutex/atomic?
-	return thread_group.size() + 1;
+	return thread_group.size() + 1; // +1 cause we also count mainthread
 }
 
 
@@ -78,7 +78,11 @@ static void DoTask(std::unique_lock<std::mutex>& lk)
 			if (p) {
 				lk.unlock();
 				SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
-				(*p)();
+				try {
+					(*p)();
+				} catch(...) {
+					tg.PushException(std::current_exception());
+				}
 				return;
 			}
 		}
@@ -124,12 +128,14 @@ void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 {
 	std::unique_lock<std::mutex> lk(taskMutex, std::defer_lock);
 
-	//FIXME handle exceptions from worker threads
 	while (!taskgroup->IsEmpty()) {
 		DoTask(taskgroup, lk);
 	}
 
 	while (!taskgroup->IsFinished()) { }
+
+	for (auto& ep: taskgroup->GetExceptions())
+		std::rethrow_exception(ep);
 }
 
 
