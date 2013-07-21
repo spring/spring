@@ -5,7 +5,6 @@
 #include "Threading.h"
 #include "Game/GameController.h"
 #include "System/bitops.h"
-#include "System/OpenMP_cond.h"
 #include "System/ThreadPool.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
@@ -167,10 +166,7 @@ namespace Threading {
 	}
 
 
-	bool OMPInited = false;
-
-	#ifdef _OPENMP
-	static boost::uint32_t GetOpenMPCpuCore(int index, boost::uint32_t availCores, boost::uint32_t avoidCores)
+	static boost::uint32_t GetCpuCoreForWorkerThread(int index, boost::uint32_t availCores, boost::uint32_t avoidCores)
 	{
 		boost::uint32_t ompCore = 1;
 
@@ -203,15 +199,12 @@ namespace Threading {
 
 		return ompCore;
 	}
-	#endif
 
 
 	void InitOMP(bool useOMP) {
-		if (OMPInited) {
-			LOG_L(L_ERROR, "InitOMP: OMP already initialized!");
-			return;
-		}
-		OMPInited = true;
+		static bool inited = false;
+		assert(!inited);
+		inited = true;
 
 		boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
 		boost::uint32_t mainAffinity  = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
@@ -227,7 +220,7 @@ namespace Threading {
 		ompCores = parallel_reduce([&]() -> boost::uint32_t {
 			int i = ThreadPool::GetThreadNum();
 			if (i != 0) { // 0 is the source thread
-				boost::uint32_t ompCore = GetOpenMPCpuCore(i - 1, ompAvailCores, mainAffinity);
+				boost::uint32_t ompCore = GetCpuCoreForWorkerThread(i - 1, ompAvailCores, mainAffinity);
 				Threading::SetAffinity(ompCore);
 				return ompCore;
 			}
@@ -239,6 +232,7 @@ namespace Threading {
 		if (mainAffinity == 0) mainAffinity = systemCores;
 		Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
 	}
+
 
 	void SetThreadScheduler()
 	{
