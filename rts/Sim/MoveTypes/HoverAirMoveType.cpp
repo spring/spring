@@ -498,7 +498,7 @@ void CHoverAirMoveType::UpdateFlying()
 	// do not set wantedSpeed if goal is behind us because
 	// this can lead to overshooting oscillations (jitter)
 	// --> wait for turn first --> TURN NEVER HAPPENS
-	if (goalVec.dot(owner->frontdir) >= 0.0f) {
+	if (turnRate == 0.0f || goalVec.dot(owner->frontdir) >= 0.0f) {
 		wantedSpeed = (goalVec / goalDist) * std::min(goalSpeed, maxSpeed);
 	} else {
 		wantedHeading = GetHeadingFromVector(goalVec.x, goalVec.z);
