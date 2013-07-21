@@ -66,10 +66,8 @@ void glBallisticCircle(const float3& center, const float radius,
                        unsigned int resolution, float slope)
 {
 	int rdiv = 50;
-#ifdef _OPENMP
 	resolution *= 2;
 	rdiv *= 1;
-#endif
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(resolution, 0, VA_SIZE_0);

@@ -13,7 +13,6 @@
 	#include <libkern/OSAtomic.h> // OSAtomicIncrement64
 #endif
 
-#include "System/OpenMP_cond.h"
 #include "System/Platform/Win/win32.h"
 #include "lib/gml/gmlcnf.h"
 #include <boost/cstdint.hpp>
@@ -55,8 +54,6 @@ namespace Threading {
 	 * OpenMP related stuff
 	 */
 	void InitOMP(bool useOMP);
-	extern bool OMPInited;
-	inline void OMPCheck();
 
 	/**
 	 * Inform the OS kernel that we are a cpu-intensive task
@@ -127,23 +124,6 @@ namespace Threading {
 	#endif
 
 		return (thID1 == thID2);
-	}
-
-
-	void OMPCheck() {
-	#ifndef DEDICATED
-		#ifndef NDEBUG
-			if (!OMPInited) {
-				throw ("OMPCheck: Attempt to use OMP before initialization");
-				//LOG_L(L_ERROR, "OMPCheck: Attempt to use OMP before initialization");
-				//CrashHandler::OutputStacktrace();
-			}
-		#endif
-		#ifdef _OPENMP
-			if (GML::Enabled()) // the only way to completely avoid OMP threads to be created
-				omp_set_num_threads(1); // is to call omp_set_num_threads before EVERY omp section
-		#endif
-	#endif
 	}
 
 

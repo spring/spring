@@ -5,7 +5,7 @@
 #include <boost/thread/condition.hpp>
 #include <boost/cstdint.hpp>
 
-#include "System/OpenMP_cond.h"
+#include "System/ThreadPool.h"
 
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
@@ -267,29 +267,17 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
-		Threading::OMPCheck();
-		#pragma omp parallel
-		if (omp_get_thread_num() == 0) {
-			// "trust" OpenMP implementation to set a pool-size that
-			// matches the CPU threading capacity (eg. the number of
-			// active physical cores * number of threads per core);
-			// too many and esp. too few threads would be wasteful
-			//
-			// TODO: OpenMP needs project-global linking changes
-			sprintf(loadMsg, fmtString, __FUNCTION__, omp_get_num_threads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
-			pmLoadScreen.AddLoadMessage(loadMsg);
-		}
+		sprintf(loadMsg, fmtString, __FUNCTION__, ThreadPool::GetNumThreads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
+		pmLoadScreen.AddLoadMessage(loadMsg);
 
 		#ifndef NDEBUG
 		const char* preFmtStr = "  initializing node-layer %u (thread %u)";
 		const char* pstFmtStr = "  initialized node-layer %u (%u MB, %u leafs, ratio %f)";
 		#endif
 
-		Threading::OMPCheck();
-		#pragma omp parallel for private(loadMsg)
-		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+		for_mt(0, nodeLayers.size(), [&,loadMsg](const int layerNum){
 			#ifndef NDEBUG
-			sprintf(loadMsg, preFmtStr, layerNum, omp_get_thread_num());
+			sprintf(loadMsg, preFmtStr, layerNum, ThreadPool::GetThreadNum());
 			pmLoadScreen.AddLoadMessage(loadMsg);
 			#endif
 
@@ -310,7 +298,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 			sprintf(loadMsg, pstFmtStr, layerNum, mem, layer.GetNumLeafNodes(), layer.GetNodeRatio());
 			pmLoadScreen.AddLoadMessage(loadMsg);
 			#endif
-		}
+		});
 	}
 	#else
 	{
@@ -379,11 +367,9 @@ void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
 
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
-		Threading::OMPCheck();
-		#pragma omp parallel for
-		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+		for_mt(0, nodeLayers.size(), [&,rect](const int layerNum) {
 			UpdateNodeLayer(layerNum, rect);
-		}
+		});
 	}
 	#else
 	{
