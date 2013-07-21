@@ -2,7 +2,6 @@
 #ifndef _THREADPOOL_H
 #define _THREADPOOL_H
 
-#include "OpenMP_cond.h"
 #include "TimeProfiler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
@@ -24,9 +23,13 @@ public:
 	virtual bool IsFinished() const = 0;
 	virtual bool IsEmpty() const = 0;
 
+	const std::list<std::exception_ptr>& GetExceptions() const { return exceptions; }
+	void PushException(std::exception_ptr excep) { exceptions.emplace_back(excep); }
 private:
 	//virtual void FinishedATask() = 0;
-	//virtual void PushException(std::exception_ptr& excep) = 0;
+
+private:
+	std::list<std::exception_ptr> exceptions;
 };
 
 
@@ -68,7 +71,7 @@ public:
 
 	bool IsEmpty() const    { return done; }
 	bool IsFinished() const { return finished; }
-	std::shared_ptr<std::future<return_type>> GetFuture() { assert(result->valid()); return std::move(result); }
+	std::shared_ptr<std::future<return_type>> GetFuture() { assert(result->valid()); return std::move(result); } //FIXME rethrow exceptions some time
 
 private:
 	//void FinishedATask() { finished = true; }
@@ -78,7 +81,6 @@ public:
 	std::atomic<bool> done;
 	std::function<void()> task;
 	std::shared_ptr<std::future<return_type>> result;
-	std::list<std::exception_ptr> exceptions;
 };
 
 
@@ -144,7 +146,6 @@ public:
 	std::atomic<int> remainingTasks;
 	std::deque<std::function<void()>> tasks; //make vector?
 	std::vector<std::future<return_type>> results;
-	std::list<std::exception_ptr> exceptions;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> start; // use for latency profiling!
 	std::chrono::nanoseconds latency;
@@ -171,7 +172,7 @@ public:
 		this->remainingTasks++;
 	}
 
-	/*void enqueue_unique(const int threadNum, F&& f, Args&&... args)
+	void enqueue_unique(const int threadNum, F&& f, Args&&... args)
 	{
 		auto task = std::make_shared< std::packaged_task<return_type()> >(
 			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
@@ -179,7 +180,7 @@ public:
 		this->results.emplace_back(task->get_future());
 		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); --this->remainingTasks; });
 		this->remainingTasks++;
-	}*/
+	}
 
 
 	boost::optional<std::function<void()>> GetTask()
@@ -221,17 +222,16 @@ static inline void for_mt(int start, int end, int step, const std::function<void
 
 	if (end > start) {
 		if ((end - start) < step) {
+			// single iteration -> directly process
 			f(start);
 			return;
 		}
 
 		SCOPED_MT_TIMER("::ThreadWorkers (real)");
-
 		auto taskgroup = std::make_shared<TaskGroup<const std::function<void(const int)>, const int>>((end-start)/step);
 		for (int i = start; i < end; i+=step) { //FIXME optimize worksize (group tasks in bigger ones than 1-steps)
 			taskgroup->enqueue(f, i);
 		}
-
 		ThreadPool::PushTaskGroup(taskgroup);
 		ThreadPool::WaitForFinished(taskgroup);
 	}
@@ -275,13 +275,18 @@ namespace ThreadPool {
 	static inline auto enqueue(F&& f, Args&&... args)
 	-> std::shared_ptr<std::future<typename std::result_of<F(Args...)>::type>>
 	{
-		//FIXME check if there are worker threads at all (we dont call WaitForFinished!!!)
-
 		typedef typename std::result_of<F(Args...)>::type return_type;
+
+		if (ThreadPool::GetNumThreads() <= 1) {
+			// directly process when there are no worker threads
+			auto task = std::make_shared< std::packaged_task<return_type()> >(std::bind(f, args ...));
+			auto fut = task->get_future();
+			(*task)();
+			return fut;
+		}
 
 		auto singletask = std::make_shared<SingleTask<F, Args...>>(std::forward<F>(f), std::forward<Args>(args)...);
 		ThreadPool::PushTaskGroup(singletask);
-
 		return singletask->GetFuture();
 	}
 };
