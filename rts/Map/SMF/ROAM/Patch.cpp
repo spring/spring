@@ -473,7 +473,7 @@ void Patch::ComputeVariance()
 // ---------------------------------------------------------------------
 // Create an approximate mesh.
 //
-void Patch::Tessellate(const float3& campos, int groundDetail)
+bool Patch::Tessellate(const float3& campos, int groundDetail)
 {
 	// Set/Update LOD params
 	const float myx = (m_WorldX + PATCH_SIZE / 2) * SQUARE_SIZE;
@@ -505,6 +505,8 @@ void Patch::Tessellate(const float3& campos, int groundDetail)
 		int2(m_WorldX,              m_WorldY + PATCH_SIZE),
 		int2(m_WorldX + PATCH_SIZE, m_WorldY + PATCH_SIZE),
 		1);
+
+	return !CTriNodePool::GetPool()->RunOutOfNodes();
 }
 
 

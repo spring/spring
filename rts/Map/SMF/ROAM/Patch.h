@@ -60,7 +60,7 @@ struct TriTreeNode
 /**
  * CTriNodePool class
  * Allocs a pool of TriTreeNodes, so we can reconstruct the whole tree w/o to dealloc the old nodes.
- * InitPools() creates for each OpenMP thread its own pool to avoid locking.
+ * InitPools() creates for each worker thread its own pool to avoid locking.
  */
 class CTriNodePool
 {
@@ -122,7 +122,7 @@ public:
 
 	void UpdateHeightMap(const SRectangle& rect = SRectangle(0,0,PATCH_SIZE,PATCH_SIZE));
 
-	void Tessellate(const float3& campos, int viewradius);
+	bool Tessellate(const float3& campos, int viewradius);
 	void ComputeVariance();
 
 	void GenerateIndices();
