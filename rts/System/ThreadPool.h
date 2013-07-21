@@ -280,7 +280,7 @@ namespace ThreadPool {
 		if (ThreadPool::GetNumThreads() <= 1) {
 			// directly process when there are no worker threads
 			auto task = std::make_shared< std::packaged_task<return_type()> >(std::bind(f, args ...));
-			auto fut = task->get_future();
+			auto fut = std::make_shared<std::future<return_type>>(task->get_future());
 			(*task)();
 			return fut;
 		}
