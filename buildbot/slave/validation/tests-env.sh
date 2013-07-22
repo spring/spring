@@ -4,6 +4,7 @@
 
 TESTDIR=${TMP_BASE}/tests
 DOWNLOADDIR=${TMP_BASE}/download
+CONTENT_DIR=${TESTDIR}/.config/spring
 
 if [ ! -d test/validation/ ];
 then
