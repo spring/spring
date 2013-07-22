@@ -13,7 +13,7 @@ fi
 
 EXITCODE=0
 
-for COREFILE in $(find ${TESTDIR}/.config/spring ${TESTDIR}/.spring/ ${TESTDIR}/ -maxdepth 1 -type f -name "core.*")
+for COREFILE in $(find ${TESTDIR}/.config/spring ${TESTDIR}/ -maxdepth 1 -type f -name "core.*")
 do
 	echo Core file found, creating backtrace
 	GDBCMDS=$(mktemp)
