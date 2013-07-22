@@ -16,32 +16,23 @@ then
 	exit 1
 fi
 
+GAME=$1
+MAP=$2
+AI=$3
+AIVER=$4
+
 #install
 cd ${BUILDDIR}
 DESTDIR=${TESTDIR} ${MAKE} install-spring-headless install-pr-downloader demotool lua2php
 
 cd ${SOURCEDIR}
 
-function makescript {
-	GAME=$1
-	MAP=$2
-	AI=$3
-	AIVERSION=$4
-	OUTPUT=${CONTENT_DIR}/$AI.script.txt
-	echo "Creating script: test/validation/prepare.sh \"$GAME\" \"$MAP\" \"$AI\" \"$AIVERSION\""
-	${SOURCEDIR}/test/validation/prepare.sh "$GAME" "$MAP" "$AI" "$AIVERSION" > "$OUTPUT"
-}
-
 mkdir -p "${DOWNLOADDIR}"
 mkdir -p "${CONTENT_DIR}"
 
 PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
 # get the name of the latest versions
-GAME1=$($PRDL ba:latest |egrep -o '\[Download\] (.*)' |cut -b 12-)
-GAME2=$($PRDL zk:stable |egrep -o '\[Download\] (.*)' |cut -b 12-)
-#GAME3=$($PRDL bar:test |egrep -o '\[Download\] (.*)' |cut -b 12-)
-MAP="Altair_Crossing-V1"
-
+GAME1=$($PRDL $GAME |egrep -o '\[Download\] (.*)' |cut -b 12-)
 $PRDL "$MAP"
 
 #install required files into spring dir
@@ -63,8 +54,9 @@ cp -v ${SOURCEDIR}/test/validation/LuaUI/Config/ZK_data.lua ${CONTENT_DIR}/LuaUI
 #copy default config for spring-headless
 cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${CONTENT_DIR}/springsettings.cfg
 
-#set data directory to test directory
+# adjust springsettings.cfg
 (
+	# set datadir
 	echo "SpringData = ${TESTDIR}/usr/local/share/games/spring"
 	# disable bandwith limits (for syncdebug)
 	echo "LinkIncomingMaxPacketRate = 0"
@@ -74,11 +66,8 @@ cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${CONTENT_DIR}/springsett
 	echo "LinkOutgoingBandwidth = 0"
 ) >> ${CONTENT_DIR}/springsettings.cfg
 
-makescript "$GAME1" "$MAP" AAI 0.9
-makescript "$GAME1" "$MAP" E323AI 3.25.0
-makescript "$GAME1" "$MAP" KAIK 0.13
-makescript "$GAME1" "$MAP" RAI 0.601
-makescript "$GAME1" "$MAP" Shard dev
-makescript "$GAME2" "$MAP" CAI ""
+echo "Creating script: test/validation/prepare.sh \"$GAME1\" \"$MAP\" \"$AI\" \"$AIVER\""
+${SOURCEDIR}/test/validation/prepare.sh "$GAME1" "$MAP" "$AI" "$AIVER" > "$OUTPUT"
+
 ${SOURCEDIR}/test/validation/prepare-client.sh ValidationClient 127.0.0.1 8452 >${CONTENT_DIR}/connect.txt
 

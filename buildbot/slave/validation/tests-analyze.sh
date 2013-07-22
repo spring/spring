@@ -31,4 +31,10 @@ do
 	rm -f $COREFILE
 	EXITCODE=1
 done
+
+# zip output for upload
+mkdir -p ${TMP_PATH}/validation/
+${SEVENZIP} ${TMP_PATH}/validation/$VERSION_$(date +"%Y-%m-%d_%H-%M-%S")-dbg.7z ${TMP_BASE}/tests/.config/spring/
+rm -rf ${TMP_BASE}/tests/.config/spring/
+
 exit $EXITCODE
