@@ -1,20 +1,7 @@
 #!/bin/sh
 
 set -e
-. buildbot/slave/prepare.sh
-
-TESTDIR=${TMP_BASE}/tests
-
-GAME=$2
-MAP=$3
-AI=$4
-AIVER=$5
-echo "Running test: GAME=$GAME MAP=$MAP AI=$AI AIVER=$AIVER"
-
-if [ ! -n "$1" ]; then
-	echo "Error in $0: no test script given"
-	exit 1
-fi
+. buildbot/slave/validation/tests-env.sh
 
 # don't abort on error
 set +e
