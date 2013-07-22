@@ -1,9 +1,9 @@
 #!/bin/sh
 
 set -e
-. buildbot/slave/prepare.sh
+. buildbot/slave/validation/tests-env.sh
 
-TESTDIR=${TMP_BASE}/tests
+
 SPRING=${TESTDIR}/usr/local/bin/spring-headless
 SEVENZIP="7z a"
 
