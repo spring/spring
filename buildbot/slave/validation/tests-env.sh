@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# setups environment vars used in the validation test
+
 . buildbot/slave/prepare.sh
 
 TESTDIR=${TMP_BASE}/tests
