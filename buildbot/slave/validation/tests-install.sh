@@ -1,7 +1,7 @@
 #!/bin/sh
 
 set -e
-. buildbot/slave/tests-env.sh
+. buildbot/slave/validation/tests-env.sh
 
 TESTDIR=${TMP_BASE}/tests
 
