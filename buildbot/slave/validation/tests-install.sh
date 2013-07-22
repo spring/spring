@@ -4,6 +4,8 @@ set -e
 . buildbot/slave/prepare.sh
 
 TESTDIR=${TMP_BASE}/tests
+CONTENT_DIR=${TESTDIR}/.config/spring
+
 
 #install
 cd ${BUILDDIR}

@@ -9,7 +9,6 @@ set -e
 cd ${SOURCEDIR}
 
 mkdir -p "${DOWNLOADDIR}"
-mkdir -p "${CONTENT_DIR}"
 
 PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
 # get the name of the latest versions
