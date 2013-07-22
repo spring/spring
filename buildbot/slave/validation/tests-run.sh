@@ -4,7 +4,6 @@ set -e
 . buildbot/slave/prepare.sh
 
 TESTDIR=${TMP_BASE}/tests
-SEVENZIP="7z a"
 
 GAME=$2
 MAP=$3
