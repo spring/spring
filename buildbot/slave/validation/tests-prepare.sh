@@ -6,9 +6,7 @@
 set -e
 . buildbot/slave/validation/tests-env.sh
 
-cd ${SOURCEDIR}
-
-mkdir -p "${DOWNLOADDIR}"
+mkdir -p "${DOWNLOADDIR}" "${CONTENT_DIR}"
 
 PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
 # get the name of the latest versions
