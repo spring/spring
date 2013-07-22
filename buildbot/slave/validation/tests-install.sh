@@ -1,10 +1,9 @@
 #!/bin/sh
 
 set -e
-. buildbot/slave/prepare.sh
+. buildbot/slave/tests-env.sh
 
 TESTDIR=${TMP_BASE}/tests
-CONTENT_DIR=${TESTDIR}/.config/spring
 
 
 #install
