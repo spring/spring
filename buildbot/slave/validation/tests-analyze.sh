@@ -5,6 +5,7 @@ set -e
 
 TESTDIR=${TMP_BASE}/tests
 SPRING=${TESTDIR}/usr/local/bin/spring-headless
+SEVENZIP="7z a"
 
 if ! [ -x $SPRING ]; then
 	echo Usage: $0 /path/to/spring
