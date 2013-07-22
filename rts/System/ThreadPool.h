@@ -101,7 +101,7 @@ public:
 			std::bind(f, args ...)
 		);
 		results.emplace_back(task->get_future());
-		tasks.emplace_back([&,task]{ (*task)(); --remainingTasks; });
+		tasks.emplace_back([&,task]{ (*task)(); remainingTasks--; });
 		remainingTasks++;
 	}
 
@@ -111,7 +111,7 @@ public:
 			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 		);
 		results.emplace_back(task->get_future());
-		tasks.emplace_back([&,task]{ (*task)(); --remainingTasks; });
+		tasks.emplace_back([&,task]{ (*task)(); remainingTasks--; });
 		remainingTasks++;
 	}
 
@@ -140,7 +140,7 @@ public:
 	}
 
 private:
-	//void FinishedATask() { --remainingTasks; }
+	//void FinishedATask() { remainingTasks--; }
 
 public:
 	std::atomic<int> remainingTasks;
@@ -168,7 +168,7 @@ public:
 			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 		);
 		this->results.emplace_back(task->get_future());
-		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); --this->remainingTasks; });
+		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); this->remainingTasks--; });
 		this->remainingTasks++;
 	}
 
@@ -178,7 +178,7 @@ public:
 			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 		);
 		this->results.emplace_back(task->get_future());
-		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); --this->remainingTasks; });
+		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); this->remainingTasks--; });
 		this->remainingTasks++;
 	}
 
