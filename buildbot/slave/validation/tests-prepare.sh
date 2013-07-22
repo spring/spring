@@ -21,6 +21,8 @@ MAP=$2
 AI=$3
 AIVER=$4
 
+echo "Running test: GAME=$GAME MAP=$MAP AI=$AI AIVER=$AIVER"
+
 #install
 cd ${BUILDDIR}
 DESTDIR=${TESTDIR} ${MAKE} install-spring-headless install-pr-downloader demotool lua2php
