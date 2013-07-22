@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# runs the validation test
 set -e
 . buildbot/slave/validation/tests-env.sh
 

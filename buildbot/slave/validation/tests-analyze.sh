@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# analyzes existing coredumps and uploads all files created by spring to springrts.com/dl/buildbot
 set -e
 . buildbot/slave/validation/tests-env.sh
 
