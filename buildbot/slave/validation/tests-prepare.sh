@@ -69,7 +69,6 @@ cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${CONTENT_DIR}/springsett
 ) >> ${CONTENT_DIR}/springsettings.cfg
 
 echo "Creating script: test/validation/prepare.sh \"$GAME1\" \"$MAP\" \"$AI\" \"$AIVER\""
-${SOURCEDIR}/test/validation/prepare.sh "$GAME1" "$MAP" "$AI" "$AIVER" > "$OUTPUT"
-
+${SOURCEDIR}/test/validation/prepare.sh "$GAME1" "$MAP" "$AI" "$AIVER" > ${CONTENT_DIR}/script.txt
 ${SOURCEDIR}/test/validation/prepare-client.sh ValidationClient 127.0.0.1 8452 >${CONTENT_DIR}/connect.txt
 
