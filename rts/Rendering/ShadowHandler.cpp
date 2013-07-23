@@ -4,6 +4,7 @@
 
 #include "ShadowHandler.h"
 #include "Game/Camera.h"
+#include "Game/GameVersion.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -90,6 +91,9 @@ void CShadowHandler::Init()
 		shadowGenBits &= (~shadowConfig);
 	}
 
+	// no warnings when running headless
+	if (SpringVersion::IsHeadless())
+		return;
 
 	if (!globalRendering->haveARB && !globalRendering->haveGLSL) {
 		LOG_L(L_WARNING, "[%s] GPU does not support either ARB or GLSL shaders for shadow rendering", __FUNCTION__);
