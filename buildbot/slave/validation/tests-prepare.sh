@@ -9,8 +9,8 @@ mkdir -p "${DOWNLOADDIR}" "${CONTENT_DIR}/LuaUI/Widgets" "${CONTENT_DIR}/LuaUI/C
 
 PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
 # get the name of the latest versions
-GAME1=$($PRDL $GAME |egrep -o '\[Download\] (.*)' |cut -b 12-)
-$PRDL "$MAP"
+GAME1=$($PRDL --download-game "$GAME" |egrep -o '\[Download\] (.*)' |cut -b 12-)
+$PRDL --download-map "$MAP"
 
 echo "Creating script: test/validation/prepare.sh \"$GAME1\" \"$MAP\" \"$AI\" \"$AIVER\""
 ${SOURCEDIR}/test/validation/prepare.sh "$GAME1" "$MAP" "$AI" "$AIVER" > ${CONTENT_DIR}/script.txt
