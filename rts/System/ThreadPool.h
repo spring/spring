@@ -16,6 +16,17 @@
 #include <numeric>
 #include <chrono>
 
+#ifdef __MINGW32__
+namespace std {
+	template<>
+	class future<void> : public future<int> {
+	public:
+		void get() {}
+	};
+};
+#endif
+
+
 class ITaskGroup
 {
 public:
@@ -35,7 +46,7 @@ private:
 
 namespace ThreadPool {
 	template<class F, class... Args>
-	auto enqueue(F&& f, Args&&... args)
+	static auto enqueue(F&& f, Args&&... args)
 	-> std::shared_ptr<std::future<typename std::result_of<F(Args...)>::type>>;
 
 	void PushTaskGroup(std::shared_ptr<ITaskGroup> taskgroup);
@@ -143,7 +154,7 @@ private:
 	//void FinishedATask() { remainingTasks--; }
 
 public:
-	std::atomic<int> remainingTasks;
+	std::atomic_int remainingTasks;
 	std::deque<std::function<void()>> tasks; //make vector?
 	std::vector<std::future<return_type>> results;
 
