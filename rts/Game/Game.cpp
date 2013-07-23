@@ -347,13 +347,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	for (int a = 0; a < 4; ++a) { camRot[a] = false; }
 
 	// set "Headless" in config overlay (not persisted)
-	const bool isHeadless =
-#ifdef HEADLESS
-			true;
-#else
-			false;
-#endif
-	configHandler->Set("Headless", isHeadless ? 1 : 0, true);
+	configHandler->Set("Headless", (SpringVersion::IsHeadless()) ? 1 : 0, true);
 
 	//FIXME move to MouseHandler!
 	windowedEdgeMove   = configHandler->GetBool("WindowedEdgeMove");
