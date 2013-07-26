@@ -5,7 +5,7 @@
 
 #include <string>
 #include <vector>
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 
 #include "GuiElement.h"
 #include "System/Misc/SpringTime.h"
@@ -43,7 +43,7 @@ public:
 	int cancelPlace;
 	std::string tooltip;
 
-	boost::signal<void (void)> FinishSelection; // Return or Double-Click
+	boost::signals2::signal<void (void)> FinishSelection; // Return or Double-Click
 	void SetFocus(bool focus);
 	void RefreshQuery();
 
