@@ -76,6 +76,7 @@ Lua:
  - add Spring.GetLogSections() & Spring.SetLogSectionFilterLevel(string sectionName, string|number logLevel)
  - add new Game. constants: Game.gameName, Game.gameVersion, ...
  - allow to save strings in RulesParams
+ - add 'parent' field to Spring.GetUnitPieceInfo
 
 Rendering:
  - LoadingMT: add a runtime check that should detect incompatibilities
