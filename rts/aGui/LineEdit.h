@@ -4,7 +4,7 @@
 #define LINE_EDIT_H
 
 #include <string>
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 
 #include "GuiElement.h"
 
@@ -25,7 +25,7 @@ public:
 	void SetFocus(bool focus);
 	void SetCrypt(bool focus);
 
-	boost::signal<void (void)> DefaultAction;
+	boost::signals2::signal<void (void)> DefaultAction;
 
 private:
 	virtual void DrawSelf();
