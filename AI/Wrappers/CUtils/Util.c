@@ -491,7 +491,12 @@ static const char* fileSelectorSuffix = NULL;
 static void util_initFileSelector(const char* suffix) {
 	fileSelectorSuffix = suffix;
 }
+
+#if defined(__APPLE__)
+static int util_fileSelector(struct dirent* fileDesc) {
+#else
 static int util_fileSelector(const struct dirent* fileDesc) {
+#endif
 	return util_endsWith(fileDesc->d_name, fileSelectorSuffix);
 }
 
