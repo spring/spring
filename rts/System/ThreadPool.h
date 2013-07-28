@@ -2,7 +2,8 @@
 #ifndef _THREADPOOL_H
 #define _THREADPOOL_H
 
-#ifdef __GNUC__
+#ifdef __MINGW32__
+	#include <pthread.h>
 	#ifndef _GLIBCXX_HAS_GTHREADS
 		#error "pthreads missing"
 	#endif
