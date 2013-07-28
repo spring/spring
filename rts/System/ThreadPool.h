@@ -2,12 +2,6 @@
 #ifndef _THREADPOOL_H
 #define _THREADPOOL_H
 
-#ifdef __MINGW32__
-	#ifndef _GLIBCXX_HAS_GTHREADS
-		#error "pthreads missing"
-	#endif
-#endif
-
 #include "TimeProfiler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
@@ -18,18 +12,12 @@
 #include <boost/optional.hpp>
 #include <numeric>
 
-//#ifdef __MINGW32__
-	#include <boost/atomic.hpp>
-	#include <boost/thread/future.hpp>
-	#include <boost/chrono/include.hpp>
-	#include <boost/utility.hpp>
-	#include <memory>
-/*#else
-	#include <atomic>
-	#include <future>
-	#include <memory>
-	#include <chrono>
-#endif*/
+// mingw is missing c++11 thread support atm, so for KISS always prefer boost atm
+#include <boost/atomic.hpp>
+#include <boost/thread/future.hpp>
+#include <boost/chrono/include.hpp>
+#include <boost/utility.hpp>
+#include <memory>
 
 
 class ITaskGroup
