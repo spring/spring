@@ -225,7 +225,7 @@ namespace Threading {
 				return ompCore;
 			}
 			return 0;
-		}, [](boost::uint32_t a, std::future<boost::uint32_t>& b) -> boost::uint32_t { return a | b.get(); });
+		}, [](boost::uint32_t a, boost::unique_future<boost::uint32_t>& b) -> boost::uint32_t { return a | b.get(); });
 
 		// affinity of mainthread
 		boost::uint32_t nonOmpCores = ~ompCores;

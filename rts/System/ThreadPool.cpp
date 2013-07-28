@@ -7,8 +7,6 @@
 
 #include <deque>
 #include <vector>
-#include <thread>
-#include <mutex>
 #include <utility>
 #include <boost/optional.hpp>
 
@@ -18,8 +16,8 @@ typedef COffscreenGLThread thread_class;
 static std::deque<std::shared_ptr<ITaskGroup>> taskGroups;
 static std::deque<thread_class> thread_group;
 
-static std::mutex taskMutex;
-static std::condition_variable newTasks;
+static boost::mutex taskMutex;
+static boost::condition_variable newTasks;
 
 static __thread int threadnum(0); //FIXME __thread is gcc only, thread_local is c++11 but doesn't work in <4.8, and is also slower
 static __thread bool exitThread(false);
@@ -64,7 +62,7 @@ int GetNumThreads()
 }
 
 
-static void DoTask(std::unique_lock<std::mutex>& lk)
+static void DoTask(boost::unique_lock<boost::mutex>& lk)
 {
 	if (lk.try_lock()) {
 		for(auto it = taskGroups.begin(); it != taskGroups.end();) {
@@ -91,7 +89,7 @@ static void DoTask(std::unique_lock<std::mutex>& lk)
 }
 
 
-static void DoTask(std::shared_ptr<ITaskGroup> tg, std::unique_lock<std::mutex>& lk)
+static void DoTask(std::shared_ptr<ITaskGroup> tg, boost::unique_lock<boost::mutex>& lk)
 {
 	if (lk.try_lock()) {
 		auto p = tg->GetTask();
@@ -109,15 +107,15 @@ static void WorkerLoop(int id)
 {
 	SetThreadNum(id);
 	Threading::SetThreadName(IntToString(id, "worker%i"));
-	std::unique_lock<std::mutex> lk(taskMutex, std::defer_lock);
-	std::mutex m;
-	std::unique_lock<std::mutex> lk2(m, std::defer_lock);
+	boost::unique_lock<boost::mutex> lk(taskMutex, boost::defer_lock);
+	boost::mutex m;
+	boost::unique_lock<boost::mutex> lk2(m, boost::defer_lock);
 
 	while (!exitThread) {
-		if (taskGroups.empty()) {
+		/*if (taskGroups.empty()) {
 			//std::this_thread::yield();
 			newTasks.wait_for(lk2, std::chrono::nanoseconds(1));
-		}
+		}*/
 
 		DoTask(lk);
 	}
@@ -126,7 +124,7 @@ static void WorkerLoop(int id)
 
 void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 {
-	std::unique_lock<std::mutex> lk(taskMutex, std::defer_lock);
+	boost::unique_lock<boost::mutex> lk(taskMutex, boost::defer_lock);
 
 	while (!taskgroup->IsEmpty()) {
 		DoTask(taskgroup, lk);
@@ -141,7 +139,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 
 void PushTaskGroup(std::shared_ptr<ITaskGroup> taskgroup)
 {
-	std::unique_lock<std::mutex> lk(taskMutex, std::defer_lock);
+	boost::unique_lock<boost::mutex> lk(taskMutex, boost::defer_lock);
 	while (!lk.try_lock()) {}
 	taskGroups.emplace_back(taskgroup);
 	lk.unlock();

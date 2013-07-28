@@ -21,10 +21,9 @@
 //#ifdef __MINGW32__
 	#include <boost/atomic.hpp>
 	#include <boost/thread/future.hpp>
-	#include <boost/pointer_cast.hpp>
 	#include <boost/chrono/include.hpp>
 	#include <boost/utility.hpp>
-	#include <boost/make_shared.hpp>
+	#include <memory>
 /*#else
 	#include <atomic>
 	#include <future>
@@ -36,32 +35,32 @@
 class ITaskGroup
 {
 public:
-	virtual boost::optional<boost::function<void()>> GetTask() = 0;
+	virtual boost::optional<std::function<void()>> GetTask() = 0;
 	virtual bool IsFinished() const = 0;
 	virtual bool IsEmpty() const = 0;
 
-	const std::list<boost::exception_ptr>& GetExceptions() const { return exceptions; }
-	void PushException(boost::exception_ptr excep) { exceptions.emplace_back(excep); }
+	const std::list<std::exception_ptr>& GetExceptions() const { return exceptions; }
+	void PushException(std::exception_ptr excep) { exceptions.emplace_back(excep); }
 private:
 	//virtual void FinishedATask() = 0;
 
 private:
-	std::list<boost::exception_ptr> exceptions;
+	std::list<std::exception_ptr> exceptions;
 };
 
 
 namespace ThreadPool {
 	template<class F, class... Args>
 	static auto enqueue(F&& f, Args&&... args)
-	-> boost::shared_ptr<boost::unique_future<typename boost::result_of<F(Args...)>::type>>;
+	-> std::shared_ptr<boost::unique_future<typename std::result_of<F(Args...)>::type>>;
 
-	void PushTaskGroup(boost::shared_ptr<ITaskGroup> taskgroup);
-	void WaitForFinished(boost::shared_ptr<ITaskGroup> taskgroup);
+	void PushTaskGroup(std::shared_ptr<ITaskGroup> taskgroup);
+	void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup);
 
 	template<typename T>
-	inline void PushTaskGroup(boost::shared_ptr<T> taskgroup) { PushTaskGroup(boost::static_pointer_cast<ITaskGroup>(taskgroup)); }
+	inline void PushTaskGroup(std::shared_ptr<T> taskgroup) { PushTaskGroup(std::static_pointer_cast<ITaskGroup>(taskgroup)); }
 	template<typename T>
-	inline void WaitForFinished(boost::shared_ptr<T> taskgroup) { WaitForFinished(boost::static_pointer_cast<ITaskGroup>(taskgroup)); }
+	inline void WaitForFinished(std::shared_ptr<T> taskgroup) { WaitForFinished(std::static_pointer_cast<ITaskGroup>(taskgroup)); }
 
 	void SetThreadCount(int num);
 	int GetThreadNum();
@@ -74,21 +73,21 @@ template<class F, class... Args>
 class SingleTask : public ITaskGroup
 {
 public:
-	typedef typename boost::result_of<F(Args...)>::type return_type;
+	typedef typename std::result_of<F(Args...)>::type return_type;
 
 	SingleTask(F&& f, Args&&... args) : finished(false), done(false) {
-		auto p = boost::make_shared<boost::packaged_task<return_type()>>(
-			boost::bind(boost::forward<F>(f), boost::forward<Args>(args)...)
+		auto p = std::make_shared<boost::packaged_task<return_type>>(
+			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 		);
-		result = boost::make_shared<boost::unique_future<return_type>>(p->get_future());
+		result = std::make_shared<boost::unique_future<return_type>>(p->get_future());
 		task = [&,p]{ (*p)(); finished = true; };
 	}
 
-	boost::optional<boost::function<void()>> GetTask() { done = true; return task; }
+	boost::optional<std::function<void()>> GetTask() { done = true; return task; }
 
 	bool IsEmpty() const    { return done; }
 	bool IsFinished() const { return finished; }
-	boost::shared_ptr<boost::unique_future<return_type>> GetFuture() { assert(result->valid()); return boost::move(result); } //FIXME rethrow exceptions some time
+	std::shared_ptr<boost::unique_future<return_type>> GetFuture() { assert(result->valid()); return std::move(result); } //FIXME rethrow exceptions some time
 
 private:
 	//void FinishedATask() { finished = true; }
@@ -96,8 +95,8 @@ private:
 public:
 	boost::atomic<bool> finished;
 	boost::atomic<bool> done;
-	boost::function<void()> task;
-	boost::shared_ptr<boost::unique_future<return_type>> result;
+	std::function<void()> task;
+	std::shared_ptr<boost::unique_future<return_type>> result;
 };
 
 
@@ -110,12 +109,12 @@ public:
 		results.reserve(num);
 	}
 
-	typedef typename boost::result_of<F(Args...)>::type return_type;
+	typedef typename std::result_of<F(Args...)>::type return_type;
 
 	void enqueue(F& f, Args&... args)
 	{
-		auto task = boost::make_shared< boost::packaged_task<return_type()> >(
-			boost::bind(f, args ...)
+		auto task = std::make_shared<boost::packaged_task<return_type>>(
+			std::bind(f, args ...)
 		);
 		results.emplace_back(task->get_future());
 		tasks.emplace_back([&,task]{ (*task)(); remainingTasks--; });
@@ -124,8 +123,8 @@ public:
 
 	void enqueue(F&& f, Args&&... args)
 	{
-		auto task = boost::make_shared< boost::packaged_task<return_type()> >(
-			boost::bind(boost::forward<F>(f), boost::forward<Args>(args)...)
+		auto task = std::make_shared< boost::packaged_task<return_type> >(
+			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 		);
 		results.emplace_back(task->get_future());
 		tasks.emplace_back([&,task]{ (*task)(); remainingTasks--; });
@@ -133,7 +132,7 @@ public:
 	}
 
 
-	boost::optional<boost::function<void()>> GetTask()
+	boost::optional<std::function<void()>> GetTask()
 	{
 		if (!tasks.empty()) {
 			auto t = tasks.front();
@@ -145,7 +144,7 @@ public:
 			}*/
 			return t;
 		}
-		return boost::optional<boost::function<void()>>();
+		return boost::optional<std::function<void()>>();
 	}
 
 	bool IsEmpty() const    { return tasks.empty(); }
@@ -161,7 +160,7 @@ private:
 
 public:
 	boost::atomic<int> remainingTasks;
-	std::deque<boost::function<void()>> tasks; //make vector?
+	std::deque<std::function<void()>> tasks; //make vector?
 	std::vector<boost::unique_future<return_type>> results;
 
 	boost::chrono::time_point<boost::chrono::high_resolution_clock> start; // use for latency profiling!
@@ -177,12 +176,12 @@ public:
 		uniqueTasks.resize(ThreadPool::GetNumThreads());
 	}
 
-	typedef typename boost::result_of<F(Args...)>::type return_type;
+	typedef typename std::result_of<F(Args...)>::type return_type;
 
 	void enqueue_unique(const int threadNum, F& f, Args&... args)
 	{
-		auto task = boost::make_shared< boost::packaged_task<return_type()> >(
-			boost::bind(boost::forward<F>(f), boost::forward<Args>(args)...)
+		auto task = std::make_shared< boost::packaged_task<return_type> >(
+			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 		);
 		this->results.emplace_back(task->get_future());
 		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); this->remainingTasks--; });
@@ -191,8 +190,8 @@ public:
 
 	void enqueue_unique(const int threadNum, F&& f, Args&&... args)
 	{
-		auto task = boost::make_shared< boost::packaged_task<return_type()> >(
-			boost::bind(boost::forward<F>(f), boost::forward<Args>(args)...)
+		auto task = std::make_shared< boost::packaged_task<return_type> >(
+			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 		);
 		this->results.emplace_back(task->get_future());
 		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); this->remainingTasks--; });
@@ -200,7 +199,7 @@ public:
 	}
 
 
-	boost::optional<boost::function<void()>> GetTask()
+	boost::optional<std::function<void()>> GetTask()
 	{
 		auto& ut = uniqueTasks[ThreadPool::GetThreadNum()];
 		if (!ut.empty()) {
@@ -213,7 +212,7 @@ public:
 			return TaskGroup<F,Args...>::GetTask();
 		}
 
-		return boost::optional<boost::function<void()>>();
+		return boost::optional<std::function<void()>>();
 	}
 
 	bool IsEmpty() const {
@@ -222,12 +221,12 @@ public:
 	}
 
 public:
-	std::vector<std::deque<boost::function<void()>>> uniqueTasks;
+	std::vector<std::deque<std::function<void()>>> uniqueTasks;
 };
 
 
 
-static inline void for_mt(int start, int end, int step, const boost::function<void(const int i)>&& f)
+static inline void for_mt(int start, int end, int step, const std::function<void(const int i)>&& f)
 {
 /*
 	Threading::OMPCheck();
@@ -250,7 +249,7 @@ static inline void for_mt(int start, int end, int step, const boost::function<vo
 		LOG("for_mt steps %f %i", foo, (end-start)/step);
 
 		SCOPED_MT_TIMER("::ThreadWorkers (real)");
-		auto taskgroup = boost::make_shared<TaskGroup<const boost::function<void(const int)>, const int>>((end-start)/step);
+		auto taskgroup = std::make_shared<TaskGroup<const std::function<void(const int)>, const int>>((end-start)/step);
 		for (int i = start; i < end; i+=step) { //FIXME optimize worksize (group tasks in bigger ones than 1-steps)
 			taskgroup->enqueue(f, i);
 		}
@@ -260,16 +259,16 @@ static inline void for_mt(int start, int end, int step, const boost::function<vo
 }
 
 
-static inline void for_mt(int start, int end, const boost::function<void(const int i)>&& f)
+static inline void for_mt(int start, int end, const std::function<void(const int i)>&& f)
 {
-	for_mt(start, end, 1, boost::move(f));
+	for_mt(start, end, 1, std::move(f));
 }
 
 
-static inline void parallel(const boost::function<void()>&& f)
+static inline void parallel(const std::function<void()>&& f)
 {
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
-	auto taskgroup = boost::make_shared<ParallelTaskGroup<const boost::function<void()>>>();
+	auto taskgroup = std::make_shared<ParallelTaskGroup<const std::function<void()>>>();
 	for (int i = 0; i < ThreadPool::GetNumThreads(); ++i) {
 		taskgroup->enqueue_unique(i, f);
 	}
@@ -279,35 +278,35 @@ static inline void parallel(const boost::function<void()>&& f)
 
 
 template<class F, class G>
-static inline auto parallel_reduce(F&& f, G&& g) -> typename boost::result_of<F()>::type
+static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>::type
 {
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
-	auto taskgroup = boost::make_shared<ParallelTaskGroup<F>>();
+ 	auto taskgroup = std::make_shared<ParallelTaskGroup<F>>();
 	for (int i = 0; i < ThreadPool::GetNumThreads(); ++i) {
 		taskgroup->enqueue_unique(i, f);
 	}
 	ThreadPool::PushTaskGroup(taskgroup);
 	ThreadPool::WaitForFinished(taskgroup);
-	return taskgroup->GetResult(boost::move(g));
+	return taskgroup->GetResult(std::move(g));
 }
 
 
 namespace ThreadPool {
 	template<class F, class... Args>
 	static inline auto enqueue(F&& f, Args&&... args)
-	-> boost::shared_ptr<boost::unique_future<typename boost::result_of<F(Args...)>::type>>
+	-> std::shared_ptr<boost::unique_future<typename std::result_of<F(Args...)>::type>>
 	{
-		typedef typename boost::result_of<F(Args...)>::type return_type;
+		typedef typename std::result_of<F(Args...)>::type return_type;
 
 		if (ThreadPool::GetNumThreads() <= 1) {
 			// directly process when there are no worker threads
-			auto task = boost::make_shared< boost::packaged_task<return_type()> >(boost::bind(f, args ...));
-			auto fut = boost::make_shared<boost::unique_future<return_type>>(task->get_future());
+			auto task = std::make_shared< boost::packaged_task<return_type()> >(std::bind(f, args ...));
+			auto fut = std::make_shared<boost::unique_future<return_type>>(task->get_future());
 			(*task)();
 			return fut;
 		}
 
-		auto singletask = boost::make_shared<SingleTask<F, Args...>>(boost::forward<F>(f), boost::forward<Args>(args)...);
+		auto singletask = std::make_shared<SingleTask<F, Args...>>(std::forward<F>(f), std::forward<Args>(args)...);
 		ThreadPool::PushTaskGroup(singletask);
 		return singletask->GetFuture();
 	}
