@@ -400,7 +400,7 @@ else  (MSVC)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 	endif (UNIX)
 	if    (MINGW)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mthreads -pthread -lstdthread -lpthread")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mthreads")
 	endif (MINGW)
 
 	add_definitions(-DBOOST_NO_FENV_H) # streflop overrides fenv.h
