@@ -5,8 +5,9 @@
 #ifdef __MINGW32__
 	#include <pthread.h>
 	#ifndef _GLIBCXX_HAS_GTHREADS
-		#error "pthreads missing"
+		//#error "pthreads missing"
 	#endif
+	#define _GLIBCXX_HAS_GTHREADS
 #endif
 
 #include "TimeProfiler.h"
