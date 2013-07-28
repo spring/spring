@@ -66,10 +66,6 @@
 #include "System/Platform/Watchdog.h"
 #include "System/Platform/WindowManagerHelper.h"
 
-#ifdef _WIN32
-#include "System/Platform/CrashHandler.h"
-#endif
-
 #include <boost/cstdint.hpp>
 #include "System/Platform/Misc.h"
 #include "LuaHelper.h"
@@ -2130,8 +2126,6 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 #ifdef _WIN32
 		// else OpenAL soft crashes when using execvp
 		ISound::Shutdown();
-		// workaround for win32-pthreads bug
-		CrashHandler::Remove();
 #endif
 
 	const std::string execError = Platform::ExecuteProcess(springFullName, processArgs);
