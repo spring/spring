@@ -2,6 +2,12 @@
 #ifndef _THREADPOOL_H
 #define _THREADPOOL_H
 
+#ifdef __GNUC__
+	#ifndef _GLIBCXX_HAS_GTHREADS
+		#error "pthreads missing"
+	#endif
+#endif
+
 #include "TimeProfiler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
