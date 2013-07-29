@@ -193,6 +193,15 @@ bool IsRelease()
 	return release;
 }
 
+bool IsHeadless()
+{
+#ifdef HEADLESS
+	return true;
+#else
+	return false;
+#endif
+}
+
 const std::string& Get()
 {
 	static const std::string base = IsRelease()

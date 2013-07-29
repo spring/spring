@@ -14,7 +14,8 @@
 namespace agui
 {
 
-Gui::Gui()
+Gui::Gui():
+	inputConBlock(inputCon)
 {
 	inputCon = input.AddHandler(boost::bind(&Gui::HandleEvent, this, _1));
 }
@@ -81,7 +82,7 @@ Gui::~Gui() {
 void Gui::AddElement(GuiElement* elem, bool asBackground)
 {
 	if (elements.empty()) {
-		inputCon.unblock();
+		inputConBlock.unblock();
 	}
 	toBeAdded.push_back(GuiItem(elem,asBackground));
 }
@@ -97,7 +98,7 @@ void Gui::RmElement(GuiElement* elem)
 	}
 
 	if (elements.empty()) {
-		inputCon.block();
+		inputConBlock.block();
 	}
 }
 

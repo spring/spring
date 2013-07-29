@@ -68,7 +68,7 @@ public:
 		GeometryChange();
 	}
 
-	boost::signal<void (std::string)> Connect;
+	boost::signals2::signal<void (std::string)> Connect;
 	agui::LineEdit* address;
 
 private:
@@ -106,7 +106,7 @@ public:
 		GeometryChange();
 	}
 
-	boost::signal<void (std::string)> OK;
+	boost::signals2::signal<void (std::string)> OK;
 	agui::LineEdit* value;
 
 private:

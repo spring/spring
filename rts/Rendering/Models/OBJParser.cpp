@@ -381,6 +381,9 @@ void COBJParser::BuildModelPieceTreeRec(
 ) {
 	const S3DModelPiece* parentPiece = piece->parent;
 
+	if (parentPiece != NULL) {
+		piece->parentName = parentPiece->name;
+	}
 	piece->isEmpty = (piece->GetVertexCount() == 0);
 	piece->mins = pieceTable.GetFloat3("mins", DEF_MIN_SIZE);
 	piece->maxs = pieceTable.GetFloat3("maxs", DEF_MAX_SIZE);

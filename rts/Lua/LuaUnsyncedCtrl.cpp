@@ -2124,7 +2124,7 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	}
 
 #ifdef _WIN32
-		//! else OpenAL soft crashes when using execvp
+		// else OpenAL soft crashes when using execvp
 		ISound::Shutdown();
 #endif
 

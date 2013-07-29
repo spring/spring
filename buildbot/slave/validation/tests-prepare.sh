@@ -1,59 +1,30 @@
 #!/bin/bash
 
-# installs spring-headless, downloads some content files and
-# runs a simple high level tests of the engine (AI vs AI)
+# downloads game/map and creates script.txt
 
 set -e
-. buildbot/slave/prepare.sh
+. buildbot/slave/validation/tests-env.sh
 
-TESTDIR=${TMP_BASE}/tests
-DOWNLOADDIR=${TMP_BASE}/download
-CONTENT_DIR=${TESTDIR}/.config/spring
-
-if [ ! -d test/validation/ ];
-then
-	echo "$0 has to be run from the source root dir"
-	exit 1
-fi
-
-#install
-cd ${BUILDDIR}
-DESTDIR=${TESTDIR} ${MAKE} install-spring-headless install-pr-downloader demotool lua2php
-
-cd ${SOURCEDIR}
-
-function makescript {
-	GAME=$1
-	MAP=$2
-	AI=$3
-	AIVERSION=$4
-	OUTPUT=${CONTENT_DIR}/$AI.script.txt
-	echo "Creating script: test/validation/prepare.sh \"$GAME\" \"$MAP\" \"$AI\" \"$AIVERSION\""
-	${SOURCEDIR}/test/validation/prepare.sh "$GAME" "$MAP" "$AI" "$AIVERSION" > "$OUTPUT"
-}
-
-mkdir -p "${DOWNLOADDIR}"
-mkdir -p "${CONTENT_DIR}"
+mkdir -p "${DOWNLOADDIR}" "${CONTENT_DIR}/LuaUI/Widgets" "${CONTENT_DIR}/LuaUI/Config"
 
 PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
 # get the name of the latest versions
-GAME1=$($PRDL ba:latest |egrep -o '\[Download\] (.*)' |cut -b 12-)
-GAME2=$($PRDL zk:stable |egrep -o '\[Download\] (.*)' |cut -b 12-)
-#GAME3=$($PRDL bar:test |egrep -o '\[Download\] (.*)' |cut -b 12-)
-MAP="Altair_Crossing-V1"
+GAME1=$($PRDL --download-game "$GAME" |egrep -o '\[Download\] (.*)' |cut -b 12-)
+$PRDL --download-map "$MAP"
 
-$PRDL "$MAP"
+echo "Creating script: test/validation/prepare.sh \"$GAME1\" \"$MAP\" \"$AI\" \"$AIVER\""
+${SOURCEDIR}/test/validation/prepare.sh "$GAME1" "$MAP" "$AI" "$AIVER" > ${CONTENT_DIR}/script.txt
+${SOURCEDIR}/test/validation/prepare-client.sh ValidationClient 127.0.0.1 8452 >${CONTENT_DIR}/connect.txt
 
 #install required files into spring dir
 cd ${SOURCEDIR}
-mkdir -p ${CONTENT_DIR}/LuaUI/Widgets ${CONTENT_DIR}/LuaUI/Config
 
 #symlink files into into destination dir
 for i in games maps pool packages;
 do
-	# delete existing destination dir
-	rm -rf ${CONTENT_DIR}/$i
-	ln -sfv ${DOWNLOADDIR}/$i ${CONTENT_DIR}/$i
+        # delete existing destination dir
+        rm -rf ${CONTENT_DIR}/$i
+        ln -sfv ${DOWNLOADDIR}/$i ${CONTENT_DIR}/$i
 done
 
 #copy widget + config
@@ -63,22 +34,15 @@ cp -v ${SOURCEDIR}/test/validation/LuaUI/Config/ZK_data.lua ${CONTENT_DIR}/LuaUI
 #copy default config for spring-headless
 cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${CONTENT_DIR}/springsettings.cfg
 
-#set data directory to test directory
+# adjust springsettings.cfg
 (
-	echo "SpringData = ${TESTDIR}/usr/local/share/games/spring"
-	# disable bandwith limits (for syncdebug)
-	echo "LinkIncomingMaxPacketRate = 0"
-	echo "LinkIncomingMaxWaitingPackets = 0"
-	echo "LinkIncomingPeakBandwidth = 0"
-	echo "LinkIncomingSustainedBandwidth = 0"
-	echo "LinkOutgoingBandwidth = 0"
+        # set datadir
+        echo "SpringData = ${TESTDIR}/usr/local/share/games/spring"
+        # disable bandwith limits (for syncdebug)
+        echo "LinkIncomingMaxPacketRate = 0"
+        echo "LinkIncomingMaxWaitingPackets = 0"
+        echo "LinkIncomingPeakBandwidth = 0"
+        echo "LinkIncomingSustainedBandwidth = 0"
+        echo "LinkOutgoingBandwidth = 0"
 ) >> ${CONTENT_DIR}/springsettings.cfg
-
-makescript "$GAME1" "$MAP" AAI 0.9
-makescript "$GAME1" "$MAP" E323AI 3.25.0
-makescript "$GAME1" "$MAP" KAIK 0.13
-makescript "$GAME1" "$MAP" RAI 0.601
-makescript "$GAME1" "$MAP" Shard dev
-makescript "$GAME2" "$MAP" CAI ""
-${SOURCEDIR}/test/validation/prepare-client.sh ValidationClient 127.0.0.1 8452 >${CONTENT_DIR}/connect.txt
 

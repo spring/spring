@@ -305,7 +305,7 @@ void PrepareStacktrace(const int logLevel) {
 
 	// Record list of loaded DLLs.
 	LOG_I(logLevel, "DLL information:");
-	SymEnumerateModules(GetCurrentProcess(), EnumModules, NULL);
+	SymEnumerateModules(GetCurrentProcess(), (PSYM_ENUMMODULES_CALLBACK)EnumModules, NULL);
 }
 
 void CleanupStacktrace(const int logLevel) {

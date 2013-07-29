@@ -43,7 +43,7 @@ public:
 		GeometryChange();
 	}
 
-	boost::signal<void (std::string)> Selected;
+	boost::signals2::signal<void (std::string)> Selected;
 	agui::List* list;
 
 private:
