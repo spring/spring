@@ -112,10 +112,11 @@ static void WorkerLoop(int id)
 	boost::unique_lock<boost::mutex> lk2(m, boost::defer_lock);
 
 	while (!exitThread) {
-		/*if (taskGroups.empty()) {
+		if (taskGroups.empty()) {
 			//std::this_thread::yield();
-			newTasks.wait_for(lk2, std::chrono::nanoseconds(1));
-		}*/
+			if (lk2.owns_lock() || lk2.try_lock())
+				newTasks.wait_for(lk2, boost::chrono::nanoseconds(1));
+		}
 
 		DoTask(lk);
 	}
