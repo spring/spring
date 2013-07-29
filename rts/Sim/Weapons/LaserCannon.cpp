@@ -55,13 +55,13 @@ void CLaserCannon::Init()
 
 void CLaserCannon::FireImpl()
 {
-	float3 dir;
+	float3 dir = targetPos - weaponMuzzlePos;
+	const float dist = dir.Length();
+	dir /= dist;
 
 	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
 		// HoverAirMovetype cannot align itself properly, change back when that is fixed
 		dir = owner->frontdir;
-	} else {
-		dir = (targetPos - weaponMuzzlePos).Normalize();
 	}
 
 	dir +=
@@ -72,7 +72,7 @@ void CLaserCannon::FireImpl()
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
-	params.ttl = weaponDef->range / weaponDef->projectilespeed;
+	params.ttl = std::ceil(std::max(dist, weaponDef->range) / weaponDef->projectilespeed);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

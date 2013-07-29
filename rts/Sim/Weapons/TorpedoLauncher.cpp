@@ -54,7 +54,9 @@ bool CTorpedoLauncher::TestTarget(const float3& pos, bool userTarget, const CUni
 
 void CTorpedoLauncher::FireImpl()
 {
-	float3 dir = (targetPos - weaponMuzzlePos).Normalize();
+	float3 dir = targetPos - weaponMuzzlePos;
+	const float dist = dir.Length();
+	dir /= dist;
 
 	if (weaponDef->trajectoryHeight > 0) {
 		dir.y += weaponDef->trajectoryHeight;
@@ -65,7 +67,7 @@ void CTorpedoLauncher::FireImpl()
 	params.speed = ((weaponDef->fixedLauncher)? weaponDir: dir) * weaponDef->startvelocity;
 	params.pos = weaponMuzzlePos;
 	params.end = targetPos;
-	params.ttl = (weaponDef->flighttime == 0)? (int) (range / projectileSpeed + 25): weaponDef->flighttime;
+	params.ttl = (weaponDef->flighttime == 0)? std::ceil(std::max(dist, range) / projectileSpeed + 25): weaponDef->flighttime;
 	params.tracking = tracking;
 
 	WeaponProjectileFactory::LoadProjectile(params);
