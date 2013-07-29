@@ -76,7 +76,7 @@ std::string GetAdditional()
 	#undef  GV_ADD_SPACE
 	#define GV_ADD_SPACE " "
 #endif
-	
+
 #if defined USE_GML_SIM
 	GV_ADD_SPACE "ASIM"
 	#undef  GV_ADD_SPACE
@@ -127,12 +127,6 @@ std::string GetAdditional()
 
 #if defined UNITSYNC
 	GV_ADD_SPACE "Unitsync"
-	#undef  GV_ADD_SPACE
-	#define GV_ADD_SPACE " "
-#endif
-
-#if defined _OPENMP
-	GV_ADD_SPACE "OMP"
 	#undef  GV_ADD_SPACE
 	#define GV_ADD_SPACE " "
 #endif
