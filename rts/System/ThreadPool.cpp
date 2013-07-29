@@ -64,7 +64,7 @@ int GetNumThreads()
 
 static void DoTask(boost::unique_lock<boost::mutex>& lk)
 {
-	if (lk.try_lock()) {
+	if (lk.try_lock()) { //FIXME make it lock-free?
 		for(auto it = taskGroups.begin(); it != taskGroups.end();) {
 			auto& tg = **it;
 			auto p = tg.GetTask();
@@ -92,7 +92,7 @@ static void DoTask(boost::unique_lock<boost::mutex>& lk)
 
 static void DoTask(std::shared_ptr<ITaskGroup> tg, boost::unique_lock<boost::mutex>& lk)
 {
-	if (lk.try_lock()) {
+	if (lk.try_lock()) { //FIXME make it lock-free?
 		auto p = tg->GetTask();
 		lk.unlock();
 		if (p) {
