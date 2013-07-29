@@ -79,6 +79,7 @@ static void DoTask(boost::unique_lock<boost::mutex>& lk)
 				try {
 					(*p)();
 				} catch(...) {
+					assert(false);
 					tg.PushException(std::current_exception());
 				}
 				return;
@@ -109,13 +110,14 @@ static void WorkerLoop(int id)
 	Threading::SetThreadName(IntToString(id, "worker%i"));
 	boost::unique_lock<boost::mutex> lk(taskMutex, boost::defer_lock);
 	boost::mutex m;
-	boost::unique_lock<boost::mutex> lk2(m, boost::defer_lock);
+	boost::unique_lock<boost::mutex> lk2(m);
 
 	while (!exitThread) {
-		if (taskGroups.empty()) {
-			//std::this_thread::yield();
-			if (lk2.owns_lock() || lk2.try_lock())
+		const auto spinlockStart = boost::chrono::high_resolution_clock::now() + boost::chrono::milliseconds(5);
+		while (taskGroups.empty()) {
+			if (spinlockStart < boost::chrono::high_resolution_clock::now()) {
 				newTasks.wait_for(lk2, boost::chrono::nanoseconds(1));
+			}
 		}
 
 		DoTask(lk);
@@ -144,6 +146,12 @@ void PushTaskGroup(std::shared_ptr<ITaskGroup> taskgroup)
 	while (!lk.try_lock()) {}
 	taskGroups.emplace_back(taskgroup);
 	lk.unlock();
+	newTasks.notify_all();
+}
+
+
+void NotifyWorkerThreads()
+{
 	newTasks.notify_all();
 }
 

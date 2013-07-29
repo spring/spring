@@ -54,6 +54,7 @@ namespace ThreadPool {
 	int GetThreadNum();
 	int GetMaxThreads();
 	int GetNumThreads();
+	void NotifyWorkerThreads();
 };
 
 
@@ -231,11 +232,7 @@ static inline void for_mt(int start, int end, int step, const std::function<void
 			return;
 		}
 
-		static float foo = 0.0f;
-		foo = foo * 0.8f + ((end-start)/step) * 0.2f;
-
-		LOG("for_mt steps %f %i", foo, (end-start)/step);
-
+		ThreadPool::NotifyWorkerThreads();
 		SCOPED_MT_TIMER("::ThreadWorkers (real)");
 		auto taskgroup = std::make_shared<TaskGroup<const std::function<void(const int)>, const int>>((end-start)/step);
 		for (int i = start; i < end; i+=step) { //FIXME optimize worksize (group tasks in bigger ones than 1-steps)
@@ -255,6 +252,7 @@ static inline void for_mt(int start, int end, const std::function<void(const int
 
 static inline void parallel(const std::function<void()>&& f)
 {
+	ThreadPool::NotifyWorkerThreads();
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
 	auto taskgroup = std::make_shared<ParallelTaskGroup<const std::function<void()>>>();
 	for (int i = 0; i < ThreadPool::GetNumThreads(); ++i) {
@@ -268,6 +266,7 @@ static inline void parallel(const std::function<void()>&& f)
 template<class F, class G>
 static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>::type
 {
+	ThreadPool::NotifyWorkerThreads();
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
  	auto taskgroup = std::make_shared<ParallelTaskGroup<F>>();
 	for (int i = 0; i < ThreadPool::GetNumThreads(); ++i) {
@@ -288,7 +287,7 @@ namespace ThreadPool {
 
 		if (ThreadPool::GetNumThreads() <= 1) {
 			// directly process when there are no worker threads
-			auto task = std::make_shared< boost::packaged_task<return_type()> >(std::bind(f, args ...));
+			auto task = std::make_shared< boost::packaged_task<return_type> >(std::bind(f, args ...));
 			auto fut = std::make_shared<boost::unique_future<return_type>>(task->get_future());
 			(*task)();
 			return fut;
