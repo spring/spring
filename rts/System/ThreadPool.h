@@ -57,9 +57,9 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 #include <list>
 #include <boost/optional.hpp>
 #include <numeric>
+#include <atomic>
 
 // mingw is missing c++11 thread support atm, so for KISS always prefer boost atm
-#include <boost/atomic.hpp>
 #include <boost/thread/future.hpp>
 #include <boost/chrono/include.hpp>
 #include <boost/utility.hpp>
@@ -133,8 +133,8 @@ private:
 	//void FinishedATask() { finished = true; }
 
 public:
-	boost::atomic<bool> finished;
-	boost::atomic<bool> done;
+	std::atomic<bool> finished;
+	std::atomic<bool> done;
 	std::function<void()> task;
 	std::shared_ptr<boost::unique_future<return_type>> result;
 };
@@ -199,7 +199,7 @@ private:
 	//void FinishedATask() { remainingTasks--; }
 
 public:
-	boost::atomic<int> remainingTasks;
+	std::atomic<int> remainingTasks;
 	std::deque<std::function<void()>> tasks; //make vector?
 	std::vector<boost::unique_future<return_type>> results;
 
