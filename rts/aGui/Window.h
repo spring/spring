@@ -4,7 +4,7 @@
 #define WINDOW_H
 
 #include <string>
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 
 #include "GuiElement.h"
 
@@ -16,7 +16,7 @@ public:
 	Window(const std::string& title = "", GuiElement* parent = NULL);
 	
 	virtual void AddChild(GuiElement* elem);
-	boost::signal<void (void)> WantClose;
+	boost::signals2::signal<void (void)> WantClose;
 
 protected:
 	std::string title;

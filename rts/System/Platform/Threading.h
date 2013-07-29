@@ -4,9 +4,7 @@
 #define _THREADING_H_
 
 #include <string>
-#ifdef WIN32
-	#include <windows.h> // HANDLE & DWORD
-#else
+#ifndef WIN32
 	#include <pthread.h>
 #endif
 #ifdef __APPLE__

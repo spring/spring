@@ -68,11 +68,6 @@ EXITCHILD=$?
 #reenable abbort on error
 set -e
 
-if [ -d ~/.config/spring/AI ]; then
-	echo Server and client exited, dumping log files in ~/.config/spring/AI
-	find ~/.config/spring/AI -regex '.*\.\(txt\|log\)' -type f -exec echo {} \; -exec cat {} \; -delete
-fi
-
 # exit with exit code of server/client if failed
 if [ $EXITCHILD -ne 0 ];
 then

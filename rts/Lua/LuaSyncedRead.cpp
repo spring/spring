@@ -5142,6 +5142,8 @@ static int GetUnitPieceInfo(lua_State* L, const ModelType& op)
 {
 	lua_newtable(L);
 	HSTR_PUSH_STRING(L, "name", op.name.c_str());
+	
+	HSTR_PUSH_STRING(L, "parent", op.parentName.c_str());
 
 	HSTR_PUSH(L, "children");
 	lua_newtable(L);

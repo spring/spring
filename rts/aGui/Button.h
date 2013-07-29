@@ -4,7 +4,7 @@
 #define BUTTON_H
 
 #include <string>
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 
 #include "GuiElement.h"
 
@@ -18,7 +18,7 @@ public:
 	
 	void Label(const std::string& label);
 	
-	boost::signal<void (void)> Clicked;
+	boost::signals2::signal<void (void)> Clicked;
 
 private:
 	virtual void DrawSelf();
