@@ -312,21 +312,6 @@ Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${LTO_FLAGS}")
 Set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${LTO_FLAGS}")
 Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
 
-### OpenMP
-option(OPENMP "Enable local multithreading" TRUE)
-if    (OPENMP)
-	include(FindOpenMP)
-	if(OPENMP_FOUND)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-		if(NOT MSVC)
-			# Currently FindOpenMP fails and doesn't give _any_ linker flags
-			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp -lgomp")
-			set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fopenmp -lgomp")
-			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fopenmp -lgomp")
-		endif(NOT MSVC)
-	endif(OPENMP_FOUND)
-endif (OPENMP)
 
 ### C++11
 option(USE_CXX11 "Enable c++11" TRUE)
