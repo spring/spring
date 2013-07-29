@@ -2,6 +2,52 @@
 #ifndef _THREADPOOL_H
 #define _THREADPOOL_H
 
+
+#ifndef THREADPOOL
+
+//#include <boost/thread/future.hpp>
+
+namespace ThreadPool {
+	//template<class F, class... Args>
+	//static inline auto enqueue(F&& f, Args&&... args)
+	//-> std::shared_ptr<boost::unique_future<typename std::result_of<F(Args...)>::type>> {}
+
+	static inline void SetThreadCount(int num) {}
+	static inline int GetThreadNum() { return 1; }
+	static inline int GetMaxThreads() { return 1; }
+	static inline int GetNumThreads() { return 1; }
+	static inline void NotifyWorkerThreads() {}
+};
+
+
+static inline void for_mt(int start, int end, int step, const std::function<void(const int i)>&& f)
+{
+	for (int i = start; i < end; i+=step) {
+		f(i);
+	}
+}
+
+
+static inline void for_mt(int start, int end, const std::function<void(const int i)>&& f)
+{
+	for_mt(start, end, 1, std::move(f));
+}
+
+
+static inline void parallel(const std::function<void()>&& f)
+{
+	f();
+}
+
+
+template<class F, class G>
+static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>::type
+{
+	return f();
+}
+
+#else
+
 #include "TimeProfiler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
@@ -18,6 +64,11 @@
 #include <boost/chrono/include.hpp>
 #include <boost/utility.hpp>
 #include <memory>
+
+#ifdef UNITSYNC
+	#undef SCOPED_MT_TIMER
+	#define SCOPED_MT_TIMER(x)
+#endif
 
 
 class ITaskGroup
@@ -217,14 +268,6 @@ public:
 
 static inline void for_mt(int start, int end, int step, const std::function<void(const int i)>&& f)
 {
-/*
-	Threading::OMPCheck();
-	#pragma omp parallel for
-	for (int i = start; i < end; i+=step) {
-		f(i);
-	}
-*/
-
 	if (end > start) {
 		if ((end - start) < step) {
 			// single iteration -> directly process
@@ -299,5 +342,5 @@ namespace ThreadPool {
 	}
 };
 
-
+#endif
 #endif

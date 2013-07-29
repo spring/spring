@@ -36,6 +36,7 @@ ADD_DEFINITIONS(-DNOT_USING_CREG)
 ADD_DEFINITIONS(-DHEADLESS)
 ADD_DEFINITIONS(-DNO_SOUND)
 ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
+#REMOVE_DEFINITIONS(-DTHREADPOOL)
 
 set(ENGINE_SRC_ROOT "../../rts")
 
@@ -56,8 +57,10 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/System/CRC.cpp"
 	"${ENGINE_SRC_ROOT}/System/Platform/Misc.cpp"
 	"${ENGINE_SRC_ROOT}/System/Platform/ScopedFileLock.cpp"
+	"${ENGINE_SRC_ROOT}/System/Platform/Threading.cpp"
 	"${ENGINE_SRC_ROOT}/System/LogOutput.cpp"
 	"${ENGINE_SRC_ROOT}/System/TdfParser.cpp"
+	"${ENGINE_SRC_ROOT}/System/ThreadPool.cpp"
 	"${ENGINE_SRC_ROOT}/System/Info.cpp"
 	"${ENGINE_SRC_ROOT}/System/Option.cpp"
 	"${ENGINE_SRC_ROOT}/System/SafeCStrings.c"

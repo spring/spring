@@ -40,6 +40,7 @@
 #include "System/Info.h"
 #include "System/Option.h"
 #include "System/SafeCStrings.h"
+#include "System/ThreadPool.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -324,6 +325,7 @@ EXPORT(int) Init(bool isServer, int id)
 			FileSystemInitializer::Cleanup(); // reinitialize filesystem to detect new files
 		}
 
+		ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
 		const std::string configSource = (configHandler) ? configHandler->GetConfigFile() : "";
 		dataDirLocater.UpdateIsolationModeByEnvVar();
 		FileSystemInitializer::PreInitializeConfigHandler(configSource);
@@ -334,6 +336,7 @@ EXPORT(int) Init(bool isServer, int id)
 
 		// check if VFS is okay
 		CheckForImportantFilesInVFS();
+		ThreadPool::SetThreadCount(0);
 
 		// Finish
 		syncer = new CSyncer();

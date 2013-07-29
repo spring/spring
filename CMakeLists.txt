@@ -323,6 +323,10 @@ if    (USE_CXX11)
 endif (USE_CXX11)
 
 
+### our custom OpenMP replacement
+add_definitions(-DTHREADPOOL)
+
+
 if(NOT MSVC)
 	### SigNan
 	option(SIGNAL_NANS "Enable NaN-Signalling" ${DEBUG_BUILD})

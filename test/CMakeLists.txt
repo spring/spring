@@ -21,6 +21,7 @@ Else  (NOT Boost_FOUND)
 		add_definitions(-DBOOST_TEST_DYN_LINK)
 	EndIf	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
 	add_definitions(-DSYNCCHECK -DUNIT_TEST)
+	REMOVE_DEFINITIONS(-DTHREADPOOL)
 
 	Set(test_Log_sources
 			"${ENGINE_SOURCE_DIR}/System/SafeCStrings.c"
@@ -151,7 +152,6 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
 			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
-			"${ENGINE_SOURCE_DIR}/System/ThreadPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			${test_Log_sources}
 		)
@@ -174,7 +174,6 @@ Else  (NOT Boost_FOUND)
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Misc/testSpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
-			"${ENGINE_SOURCE_DIR}/System/ThreadPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			${test_Log_sources}
 		)
