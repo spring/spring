@@ -17,6 +17,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/Config/ConfigHandler.h"
@@ -238,8 +239,10 @@ bool CLoadScreen::Update()
 
 	if (game->finishedLoading) {
 		CLoadScreen::DeleteInstance();
+		return true;
 	}
 
+	CNamedTextures::Update();
 	return true;
 }
 
