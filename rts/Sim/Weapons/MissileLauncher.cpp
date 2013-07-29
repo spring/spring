@@ -42,19 +42,17 @@ void CMissileLauncher::Update()
 
 void CMissileLauncher::FireImpl()
 {
-	float3 dir;
+	float3 dir = targetPos - weaponMuzzlePos;
+	const float dist = dir.Length();
+	dir /= dist;
+
 	if (onlyForward) {
 		dir = owner->frontdir;
 	} else if (weaponDef->fixedLauncher) {
 		dir = weaponDir;
-	} else {
-		dir = targetPos - weaponMuzzlePos;
+	} else if (weaponDef->trajectoryHeight > 0.0f) {
+		dir.y += weaponDef->trajectoryHeight;
 		dir.Normalize();
-
-		if (weaponDef->trajectoryHeight > 0.0f) {
-			dir.y += weaponDef->trajectoryHeight;
-			dir.Normalize();
-		}
 	}
 
 	dir +=
@@ -70,7 +68,7 @@ void CMissileLauncher::FireImpl()
 	params.pos = weaponMuzzlePos;
 	params.end = targetPos;
 	params.speed = startSpeed;
-	params.ttl = weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
+	params.ttl = weaponDef->flighttime == 0? std::ceil(std::max(dist, range) / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

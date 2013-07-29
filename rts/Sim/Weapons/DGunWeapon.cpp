@@ -42,11 +42,12 @@ void CDGunWeapon::Update()
 
 void CDGunWeapon::FireImpl()
 {
-	float3 dir;
+	float3 dir = targetPos - weaponMuzzlePos;
+	const float dist = dir.Length();
+	dir /= dist;
+
 	if (onlyForward) {
 		dir = owner->frontdir;
-	} else {
-		dir = (targetPos - weaponMuzzlePos).Normalize();
 	}
 
 	dir +=
