@@ -10,8 +10,11 @@
 #include <utility>
 #include <boost/optional.hpp>
 
-//typedef std::thread thread_class;
+#ifdef UNITSYNC
+typedef boost::thread thread_class;
+#else
 typedef COffscreenGLThread thread_class;
+#endif
 
 static std::deque<std::shared_ptr<ITaskGroup>> taskGroups;
 static std::deque<thread_class> thread_group;
