@@ -21,7 +21,6 @@ IF    (MINGW OR APPLE)
 	# Cocoa requires the SDL libary, whenever the SDL headers are used,
 	# due to some #define magic, which is practically impossible to workaround.
 	FIND_PACKAGE(OpenGL REQUIRED)
-	FIND_PACKAGE(GLU REQUIRED)
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
 ELSE  (MINGW OR APPLE)
