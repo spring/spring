@@ -1,4 +1,6 @@
 
+#ifdef THREADPOOL
+
 #include "ThreadPool.h"
 #include "Platform/Threading.h"
 #include "TimeProfiler.h"
@@ -183,3 +185,5 @@ void SetThreadCount(int num)
 }
 
 };
+
+#endif
