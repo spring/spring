@@ -19,8 +19,8 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/OpenMP_cond.h"
 #include "System/Rectangle.h"
+#include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
@@ -127,8 +127,8 @@ void CRoamMeshDrawer::Update()
 	// Check if a retessellation is needed
 #define RETESSELLATE_MODE 1
 	bool retessellate = false;
-	{ //SCOPED_TIMER("ROAM::ComputeVariance");
-		for (int i = 0; i < (numPatchesX * numPatchesY); ++i) {
+	{ SCOPED_TIMER("ROAM::ComputeVariance");
+		for (int i = 0; i < (numPatchesX * numPatchesY); ++i) { //FIXME multithread?
 			Patch& p = m_Patches[i];
 		#if (RETESSELLATE_MODE == 2)
 			if (p.IsVisible()) {
@@ -166,27 +166,27 @@ void CRoamMeshDrawer::Update()
 	retessellate |= forceRetessellate;
 	retessellate |= (lastGroundDetail != smfGroundDrawer->GetGroundDetail());
 
+	bool retessellateAgain = false;
+
 	// Retessellate
 	if (retessellate) {
-		{ //SCOPED_TIMER("ROAM::Tessellate");
+		{ SCOPED_TIMER("ROAM::Tessellate");
 			//FIXME this tessellates with current camera + viewRadius
 			//  so it doesn't retessellate patches that are e.g. only vis. in the shadow frustum
 			Reset();
-			Tessellate(cam->GetPos(), smfGroundDrawer->GetGroundDetail());
+			retessellateAgain = Tessellate(cam->GetPos(), smfGroundDrawer->GetGroundDetail());
 		}
 
-		{ //SCOPED_TIMER("ROAM::GenerateIndexArray");
-			Threading::OMPCheck();
-			#pragma omp parallel for
-			for (int i = m_Patches.size() - 1; i >= 0; --i) {
+		{ SCOPED_TIMER("ROAM::GenerateIndexArray");
+			for_mt(0, m_Patches.size(), [&](const int i){
 				Patch* it = &m_Patches[i];
 				if (it->IsVisible()) {
 					it->GenerateIndices();
 				}
-			}
+			});
 		}
 
-		{ //SCOPED_TIMER("ROAM::Upload");
+		{ SCOPED_TIMER("ROAM::Upload");
 			for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
 				if (it->IsVisible()) {
 					it->Upload();
@@ -218,7 +218,7 @@ void CRoamMeshDrawer::Update()
 
 		lastGroundDetail = smfGroundDrawer->GetGroundDetail();
 		lastCamPos = cam->GetPos();
-		forceRetessellate = false;
+		forceRetessellate = retessellateAgain;
 	}
 }
 
@@ -331,11 +331,10 @@ void CRoamMeshDrawer::Reset()
 // ---------------------------------------------------------------------
 // Create an approximate mesh of the landscape.
 //
-void CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
+bool CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 {
 	// Perform Tessellation
-#ifdef _OPENMP
-	// hint: just helps a little with huge cpu usage in retessellation, still better than nothing
+	// hint: threading just helps a little with huge cpu usage in retessellation, still better than nothing
 
 	//  _____
 	// |0|_|_|..
@@ -347,10 +346,9 @@ void CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 	// not multi-thread the whole loop w/o mutexes (in ::Split).
 	// But instead we take a safety distance between the thread's working
 	// area (which is 2 patches), so they don't conflict with each other.
+	bool forceRetessellate = false;
 	for (int idx = 0; idx < 9; ++idx) {
-		Threading::OMPCheck();
-		#pragma omp parallel for
-		for (int i = m_Patches.size() - 1; i >= 0; --i) {
+		for_mt(0, m_Patches.size(), [&](const int i){
 			Patch* it = &m_Patches[i];
 
 			const int X = it->m_WorldX;
@@ -358,16 +356,15 @@ void CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 			const int subindex = (X % 3) + (Z % 3) * 3;
 
 			if ((subindex == idx) && it->IsVisible()) {
-				it->Tessellate(campos, viewradius);
+				if (!it->Tessellate(campos, viewradius))
+					forceRetessellate = true;
 			}
-		}
+		});
+		if (forceRetessellate)
+			return true;
 	}
-#else
-	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
-		if (it->IsVisible())
-			it->Tessellate(campos, viewradius);
-	}
-#endif
+
+	return false;
 }
 
 

@@ -21,6 +21,7 @@ Else  (NOT Boost_FOUND)
 		add_definitions(-DBOOST_TEST_DYN_LINK)
 	EndIf	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
 	add_definitions(-DSYNCCHECK -DUNIT_TEST)
+	REMOVE_DEFINITIONS(-DTHREADPOOL)
 
 	Set(test_Log_sources
 			"${ENGINE_SOURCE_DIR}/System/SafeCStrings.c"

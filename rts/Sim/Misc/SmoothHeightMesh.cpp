@@ -10,9 +10,8 @@
 #include "Map/ReadMap.h"
 #include "System/float3.h"
 #include "System/myMath.h"
-#include "System/OpenMP_cond.h"
 #include "System/TimeProfiler.h"
-#include "System/Platform/Threading.h"
+#include "System/ThreadPool.h"
 
 
 
@@ -263,10 +262,7 @@ inline static void BlurHorizontal(
 	const float n = 2.0f * smoothrad + 1.0f;
 	const float recipn = 1.0f / n;
 
-	int y;
-	Threading::OMPCheck();
-	#pragma omp parallel for private(y) schedule(static, 1000)
-	for (y = 0; y <= maxy; ++y) {
+	for_mt(0, maxy+1, [&](const int y) {
 		float avg = 0.0f;
 
 		for (int x = 0; x <= 2 * smoothrad; ++x) {
@@ -304,7 +300,7 @@ inline static void BlurHorizontal(
 			assert(smoothed[idx] <= std::max(readmap->currMaxHeight, 0.0f));
 			assert(smoothed[idx] >=          readmap->currMinHeight       );
 		}
-	}
+	});
 }
 
 inline static void BlurVertical(
@@ -318,10 +314,7 @@ inline static void BlurVertical(
 	const float n = 2.0f * smoothrad + 1.0f;
 	const float recipn = 1.0f / n;
 
-	int x;
-	Threading::OMPCheck();
-	#pragma omp parallel for private(x) schedule(static, 1000)
-	for (x = 0; x <= maxx; ++x) {
+	for_mt(0, maxx+1, [&](const int x) {
 		float avg = 0.0f;
 
 		for (int y = 0; y <= 2 * smoothrad; ++y) {
@@ -359,7 +352,7 @@ inline static void BlurVertical(
 			assert(smoothed[idx] <= std::max(readmap->currMaxHeight, 0.0f));
 			assert(smoothed[idx] >=          readmap->currMinHeight       );
 		}
-	}
+	});
 }
 
 
