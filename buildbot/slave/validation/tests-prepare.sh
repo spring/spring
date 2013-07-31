@@ -7,7 +7,7 @@ set -e
 
 mkdir -p "${DOWNLOADDIR}" "${CONTENT_DIR}/LuaUI/Widgets" "${CONTENT_DIR}/LuaUI/Config"
 
-PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
+PRDL="time ${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
 # get the name of the latest versions
 GAME1=$($PRDL --download-game "$GAME" |egrep -o '\[Download\] (.*)' |cut -b 12-)
 $PRDL --download-map "$MAP"
