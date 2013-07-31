@@ -200,6 +200,7 @@ public:
 	virtual int  QueryBuildInfo() = 0; // returns piece
 
 	virtual void Destroy() = 0;
+	virtual void StartMoving(bool reversing) = 0;
 	virtual void StartMoving() = 0;
 	virtual void StopMoving() = 0;
 	virtual void StartUnload() = 0;

@@ -730,6 +730,21 @@ void CLuaUnitScript::StartBuilding(float heading, float pitch)
 	Call(LUAFN_StartBuilding, heading, pitch);
 }
 
+void CLuaUnitScript::StartMoving(bool reversing)   
+{ 
+	const int fn = LUAFN_StartMoving;
+
+	if (!HasFunction(fn))
+		return;
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 2);
+
+	PushFunction(fn);
+	lua_pushboolean(L, reversing);
+
+	RunCallIn(fn, 1, 0);
+}
 
 int CLuaUnitScript::QueryNanoPiece()
 {
