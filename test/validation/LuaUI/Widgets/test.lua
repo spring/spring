@@ -45,7 +45,7 @@ function widget:GameFrame(n)
 		timer = Spring.GetTimer()
 	end
 	if (Spring.DiffTimers(Spring.GetTimer(), timer)) > maxruntime then
-		Spring.Log("test.lua", LOG.ERROR, string.format("Tests run longer than %i seconds, aborting!", maxruntime ))
+		Spring.Log("test.lua", LOG.WARNING, string.format("Tests run longer than %i seconds, aborting!", maxruntime ))
 		Spring.SendCommands("pause 1", "quit")
 	end
 	if n==maxframes then
