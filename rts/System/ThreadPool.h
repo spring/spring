@@ -157,8 +157,11 @@ public:
 			std::bind(f, args ...)
 		);
 		results.emplace_back(task->get_future());
-		tasks.emplace_back([&,task]{ (*task)(); remainingTasks--; });
-		remainingTasks++;
+		// workaround a Fedora gcc bug else it reports in the lambda below:
+		// error: no 'operator--(int)' declared for postfix '--'
+		auto* atomicCounter = &remainingTasks;
+		tasks.emplace_back([task,atomicCounter]{ (*task)(); --(*atomicCounter); });
+		++remainingTasks;
 	}
 
 	void enqueue(F&& f, Args&&... args)
@@ -167,8 +170,11 @@ public:
 			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 		);
 		results.emplace_back(task->get_future());
-		tasks.emplace_back([&,task]{ (*task)(); remainingTasks--; });
-		remainingTasks++;
+		// workaround a Fedora gcc bug else it reports in the lambda below:
+		// error: no 'operator--(int)' declared for postfix '--'
+		auto* atomicCounter = &remainingTasks;
+		tasks.emplace_back([task,atomicCounter]{ (*task)(); --(*atomicCounter); });
+		++remainingTasks;
 	}
 
 
