@@ -19,8 +19,8 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Log/ILog.h"
+#include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
-#include "System/OpenMP_cond.h"
 #include <cfloat>
 #include <limits.h>
 
@@ -36,23 +36,14 @@ static std::vector<CTriNodePool*> pools;
 void CTriNodePool::InitPools(const size_t newPoolSize)
 {
 	if (pools.empty()) {
-		Threading::OMPCheck();
-		#pragma omp parallel
-		{
-			#pragma omp master
-			{
-			#ifdef _OPENMP
-				int numThreads = omp_get_num_threads();
-			#else
-				int numThreads = 1;
-			#endif
-				poolSize = newPoolSize;
-				const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3);
-				pools.reserve(numThreads);
-				for (; numThreads > 0; --numThreads) {
-					pools.push_back(new CTriNodePool(allocPerThread));
-				}
-			}
+		//int numThreads = GetNumThreads();
+		int numThreads = ThreadPool::GetMaxThreads();
+
+		poolSize = newPoolSize;
+		const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3);
+		pools.reserve(numThreads);
+		for (; numThreads > 0; --numThreads) {
+			pools.push_back(new CTriNodePool(allocPerThread));
 		}
 	}
 }
@@ -92,12 +83,8 @@ void CTriNodePool::ResetAll()
 
 CTriNodePool* CTriNodePool::GetPool()
 {
-#ifdef _OPENMP
-	const size_t th_id = omp_get_thread_num();
+	const size_t th_id = ThreadPool::GetThreadNum();
 	return pools[th_id];
-#else
-	return pools[0];
-#endif
 }
 
 
@@ -486,7 +473,7 @@ void Patch::ComputeVariance()
 // ---------------------------------------------------------------------
 // Create an approximate mesh.
 //
-void Patch::Tessellate(const float3& campos, int groundDetail)
+bool Patch::Tessellate(const float3& campos, int groundDetail)
 {
 	// Set/Update LOD params
 	const float myx = (m_WorldX + PATCH_SIZE / 2) * SQUARE_SIZE;
@@ -518,6 +505,8 @@ void Patch::Tessellate(const float3& campos, int groundDetail)
 		int2(m_WorldX,              m_WorldY + PATCH_SIZE),
 		int2(m_WorldX + PATCH_SIZE, m_WorldY + PATCH_SIZE),
 		1);
+
+	return !CTriNodePool::GetPool()->RunOutOfNodes();
 }
 
 

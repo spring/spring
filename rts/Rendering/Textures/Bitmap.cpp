@@ -19,7 +19,7 @@
 #include "System/bitops.h"
 #include "System/ScopedFPUSettings.h"
 #include "System/Log/ILog.h"
-#include "System/OpenMP_cond.h"
+#include "System/ThreadPool.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileHandler.h"
@@ -643,17 +643,13 @@ void CBitmap::Blur(int iterations, float weight)
 
 	for (int i=0; i < iterations; ++i){
 		{
-			int j,y,x;
-//			Threading::OMPCheck();
-//			This is currently used too early, OMP is not initialized here
-//			#pragma omp parallel for private(j,x,y)
-			for (y=0; y < ysize; y++) {
-				for (x=0; x < xsize; x++) {
-					for (j=0; j < channels; j++) {
+			for_mt(0, ysize, [&](const int y) {
+				for (int x=0; x < xsize; x++) {
+					for (int j=0; j < channels; j++) {
 						kernelBlur(dst, src->mem, x, y, j, weight);
 					}
 				}
-			}
+			});
 		}
 		std::swap(src, dst);
 	}
