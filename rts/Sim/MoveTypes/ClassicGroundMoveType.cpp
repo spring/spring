@@ -29,7 +29,7 @@ bool CClassicGroundMoveType::Update() { return false; }
 void CClassicGroundMoveType::SlowUpdate() {}
 void CClassicGroundMoveType::StartMoving(float3, float) {}
 void CClassicGroundMoveType::StartMoving(float3, float, float) {}
-void CClassicGroundMoveType::StopMoving() {}
+void CClassicGroundMoveType::StopMoving(bool, bool) {}
 void CClassicGroundMoveType::KeepPointingTo(float3, float, bool) {}
 void CClassicGroundMoveType::KeepPointingTo(CUnit*, float, bool) {}
 bool CClassicGroundMoveType::CanApplyImpulse() { return false; }
@@ -337,7 +337,7 @@ void CClassicGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadiu
 	}
 }
 
-void CClassicGroundMoveType::StopMoving() {
+void CClassicGroundMoveType::StopMoving(bool callScript, bool hardStop) {
 	StopEngine();
 
 	useMainHeading = false;

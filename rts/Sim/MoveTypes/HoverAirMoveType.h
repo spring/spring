@@ -73,7 +73,7 @@ public:
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
-	void StopMoving();
+	void StopMoving(bool callScript = false, bool hardStop = false);
 
 	void ForceHeading(short h);
 	void SetGoal(const float3& pos, float distance = 0.0f);
