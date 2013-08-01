@@ -38,7 +38,7 @@ public:
 	void KeepPointingTo(float3 pos, float distance, bool aggressive) {}
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
-	void StopMoving();
+	void StopMoving(bool callScript = false, bool hardStop = false);
 
 	void Takeoff();
 	bool IsFighter() const { return isFighter; }

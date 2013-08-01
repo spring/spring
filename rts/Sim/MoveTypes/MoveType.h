@@ -22,7 +22,7 @@ public:
 	virtual void StartMoving(float3 pos, float goalRadius, float speed) = 0;
 	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive) = 0;
 	virtual void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
-	virtual void StopMoving() = 0;
+	virtual void StopMoving(bool callScript = false, bool hardStop = false) = 0;
 	virtual bool CanApplyImpulse(const float3&) { return false; }
 	virtual void LeaveTransport() {}
 

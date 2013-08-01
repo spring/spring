@@ -19,7 +19,7 @@ public:
 
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
-	void StopMoving();
+	void StopMoving(bool callScript = false, bool hardStop = false);
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
