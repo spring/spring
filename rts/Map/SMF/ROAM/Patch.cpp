@@ -84,6 +84,8 @@ void CTriNodePool::ResetAll()
 CTriNodePool* CTriNodePool::GetPool()
 {
 	const size_t th_id = ThreadPool::GetThreadNum();
+	assert(th_id<pools.size());
+	assert(th_id>=0);
 	return pools[th_id];
 }
 
