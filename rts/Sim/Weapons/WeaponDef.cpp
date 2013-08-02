@@ -454,7 +454,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
 		defInterceptType = 8;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
+		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
 	} else {
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
 	}

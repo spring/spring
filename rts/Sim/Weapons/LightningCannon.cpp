@@ -58,8 +58,7 @@ void CLightningCannon::FireImpl()
 	float3 newDir = curDir;
 
 	curDir +=
-		(gs->randVector() * sprayAngle + salvoError) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
+		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	curDir.Normalize();
 
 	CUnit* hitUnit = NULL;
