@@ -6,6 +6,7 @@
 #ifndef THREADPOOL
 
 //#include <boost/thread/future.hpp>
+#include  <functional>
 
 namespace ThreadPool {
 	//template<class F, class... Args>
