@@ -303,6 +303,27 @@ Else  (NOT Boost_FOUND)
 
 	ADD_TEST(NAME testUnitSync COMMAND test_UnitSync)
 	ADD_DEPENDENCIES(tests test_UnitSync)
+################################################################################
+### ThreadPool
+	Set(test_ThreadPool_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testThreadPool.cpp"
+			"${ENGINE_SOURCE_DIR}/System/ThreadPool.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
+			${test_Log_sources}
+		)
+
+	ADD_EXECUTABLE(test_ThreadPool ${test_ThreadPool_src})
+	TARGET_LINK_LIBRARIES(test_ThreadPool
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_THREAD_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${Boost_SYSTEM_LIBRARY}
+		)
+	SET_TARGET_PROPERTIES(test_ThreadPool PROPERTIES COMPILE_FLAGS "-DTHREADPOOL -DUNITSYNC")
+	ADD_TEST(NAME testThreadPool COMMAND test_UnitSync)
+	ADD_DEPENDENCIES(tests test_ThreadPool)
+
+
 
 ################################################################################
 EndIf (NOT Boost_FOUND)
