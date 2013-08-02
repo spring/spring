@@ -28,11 +28,9 @@ static __thread int threadnum(0); //FIXME __thread is gcc only, thread_local is 
 static __thread bool exitThread(false);
 
 static struct do_once {
-#ifndef UNITSYNC
 	do_once() {
-		ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
+		//ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
 	}
-#endif
 	~do_once() {
 		ThreadPool::SetThreadCount(0);
 	}
