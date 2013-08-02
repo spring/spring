@@ -8,6 +8,12 @@
 
 #define NUM_THREADS 10
 
+static boost::mutex m;
+
+// !!! BOOST.TEST IS NOT THREADSAFE !!! (facepalms)
+#define SAFE_BOOST_CHECK( P )           do { boost::lock_guard<boost::mutex> _(m); BOOST_CHECK( ( P ) );               } while( 0 );
+
+
 BOOST_AUTO_TEST_CASE( testThreadPool1 )
 {
 	#define RUNS 1000
@@ -18,10 +24,8 @@ BOOST_AUTO_TEST_CASE( testThreadPool1 )
 	BOOST_CHECK(ThreadPool::GetNumThreads() == NUM_THREADS);
 	for_mt(0, RUNS, 2, [&](const int i) {
 		const int threadnum = ThreadPool::GetThreadNum();
-		{
-			BOOST_CHECK(threadnum >= 0);
-			BOOST_CHECK(threadnum < NUM_THREADS);
-		}
+			SAFE_BOOST_CHECK(threadnum >= 0);
+		SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
 		runs[threadnum]++;
 		nums[i] = 1;
 		++cnt;
