@@ -324,7 +324,7 @@ endif (USE_CXX11)
 
 
 ### our custom OpenMP replacement
-add_definitions(-DTHREADPOOL)
+#add_definitions(-DTHREADPOOL)
 
 
 if(NOT MSVC)
