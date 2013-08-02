@@ -14,7 +14,7 @@ namespace ThreadPool {
 	//-> std::shared_ptr<boost::unique_future<typename std::result_of<F(Args...)>::type>> {}
 
 	static inline void SetThreadCount(int num) {}
-	static inline int GetThreadNum() { return 1; }
+	static inline int GetThreadNum() { return 0; }
 	static inline int GetMaxThreads() { return 1; }
 	static inline int GetNumThreads() { return 1; }
 	static inline void NotifyWorkerThreads() {}
