@@ -51,8 +51,7 @@ void CStarburstLauncher::FireImpl()
 	}
 
 	const float3 aimError =
-		(gs->randVector() * sprayAngle + salvoError) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
+		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos + float3(0, 2, 0);

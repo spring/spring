@@ -50,8 +50,7 @@ void CRifle::FireImpl()
 {
 	float3 dir = (targetPos - weaponMuzzlePos).Normalize();
 	dir +=
-		((gs->randVector() * sprayAngle + salvoError) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
+		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	CUnit* hitUnit;

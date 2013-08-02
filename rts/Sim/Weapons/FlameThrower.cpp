@@ -27,8 +27,7 @@ void CFlameThrower::FireImpl()
 	dir /= dist;
 
 	const float3 spread =
-		((gs->randVector() * sprayAngle + salvoError) *
-		weaponDef->ownerExpAccWeight) -
+		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience()) -
 		(dir * 0.001f);
 
 	ProjectileParams params = GetProjectileParams();
