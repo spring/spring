@@ -207,7 +207,11 @@ namespace Threading {
 		inited = true;
 
 		boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
+#ifndef UNIT_TEST
 		boost::uint32_t mainAffinity  = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
+#else
+		boost::uint32_t mainAffinity  = systemCores;
+#endif
 		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
 
 		// For latency reasons our worker threads yield rarely and so eat a lot cputime with idleing.
