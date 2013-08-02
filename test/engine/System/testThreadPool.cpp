@@ -8,33 +8,63 @@
 
 #define NUM_THREADS 10
 
-BOOST_AUTO_TEST_CASE( ThreadPoolTest )
+BOOST_AUTO_TEST_CASE( testThreadPool1 )
 {
-	std::vector<int> nums(1000);
-	std::vector<int> runs(NUM_THREADS);
+	#define RUNS 1000
+	std::atomic<int> cnt(0);
+	std::vector<int> nums(RUNS,0);
+	std::vector<int> runs(NUM_THREADS,0);
 	ThreadPool::SetThreadCount(NUM_THREADS);
 	BOOST_CHECK(ThreadPool::GetNumThreads() == NUM_THREADS);
-	for_mt(0, nums.size(), [&](const int y) {
+	for_mt(0, RUNS, 2, [&](const int i) {
 		const int threadnum = ThreadPool::GetThreadNum();
-		BOOST_CHECK(threadnum >= 0);
-		BOOST_CHECK(threadnum < NUM_THREADS);
-		for(int i=0; i<=y; i++) {
-			nums[y] = i;
+		{
+			BOOST_CHECK(threadnum >= 0);
+			BOOST_CHECK(threadnum < NUM_THREADS);
 		}
-
 		runs[threadnum]++;
+		nums[i] = 1;
+		++cnt;
 	});
-
-	for(int i=0; i<nums.size(); i++) {
-		BOOST_CHECK(nums[i] == i);
-	}
+	BOOST_CHECK(cnt == RUNS / 2);
 
 	int rounds = 0;
 	for(int i=0; i<runs.size(); i++) {
-		printf("Thread %d executed %d times\n", i, runs[i]);
+		LOG("Thread %d executed %d times", i, runs[i]);
 		rounds += runs[i];
 	}
-	BOOST_CHECK(rounds = nums.size());
+	BOOST_CHECK(rounds == (RUNS/2));
+
+	for(int i=0; i<RUNS; i++) {
+		BOOST_CHECK((i % 2) == (1 - nums[i]));
+	}
 }
 
+BOOST_AUTO_TEST_CASE( testThreadPool2 )
+{
+	std::vector<int> runs(NUM_THREADS);
+	ThreadPool::SetThreadCount(NUM_THREADS);
+	BOOST_CHECK(ThreadPool::GetNumThreads() == NUM_THREADS);
+	parallel([&]{
+		const int threadnum = ThreadPool::GetThreadNum();
+		BOOST_CHECK(threadnum >= 0);
+		BOOST_CHECK(threadnum < NUM_THREADS);
+		runs[threadnum]++;
+	});
+
+	for(int i=0; i<NUM_THREADS; i++) {
+		BOOST_CHECK(runs[i] == 1);
+	}
+}
+
+BOOST_AUTO_TEST_CASE( testThreadPool3 )
+{
+	std::vector<int> runs(NUM_THREADS);
+	ThreadPool::SetThreadCount(NUM_THREADS);
+	BOOST_CHECK(ThreadPool::GetNumThreads() == NUM_THREADS);
+	int result = parallel_reduce([]() -> int {
+		return ThreadPool::GetThreadNum();
+	}, [](int a, boost::unique_future<int>& b) -> int { return a + b.get(); });
+	BOOST_CHECK(result == ((NUM_THREADS-1)*((NUM_THREADS-1) + 1))/2);
+}
 
