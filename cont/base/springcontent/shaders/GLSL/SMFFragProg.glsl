@@ -206,7 +206,7 @@ void main() {
 		// (ie. specularTex and parallaxHeightTex must have equal size)
 		// cameraDir does not need to be normalized, x/z and y/z ratios
 		// do not change
-		vec2 uvOffset = GetParallaxUVOffset(specularTexCoords, transpose(stnMatrix) * cameraDir);
+		vec2 uvOffset = GetParallaxUVOffset(specTexCoords, transpose(stnMatrix) * cameraDir);
 		vec2 normTexSize = 1.0 / normalTexGen;
 		vec2 specTexSize = 1.0 / specularTexGen;
 
