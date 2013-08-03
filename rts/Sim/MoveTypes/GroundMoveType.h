@@ -26,7 +26,7 @@ public:
 
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed) { StartMoving(pos, goalRadius); }
-	void StopMoving();
+	void StopMoving(bool callScript = false, bool hardStop = false);
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
@@ -60,7 +60,7 @@ private:
 	float3 Here();
 
 	void StartEngine(bool callScript);
-	void StopEngine(bool callScript);
+	void StopEngine(bool callScript, bool hardStop = false);
 
 	void Arrived(bool callScript);
 	void Fail(bool callScript);
@@ -105,7 +105,8 @@ private:
 	float GetGroundHeight(const float3&) const;
 	void AdjustPosToWaterLine();
 	bool UpdateDirectControl();
-	void UpdateOwnerPos(bool);
+	void UpdateOwnerPos(const float3&, const float3&);
+	bool OwnerMoved(const short, const float3&, const float3&);
 	bool FollowPath();
 	bool WantReverse(const float3&) const;
 

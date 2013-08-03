@@ -31,7 +31,7 @@ class CScriptMoveType : public AMoveType
 		void StartMoving(float3, float goalRadius, float speed) {}
 		void KeepPointingTo(float3, float distance, bool aggressive) {}
 		void KeepPointingTo(CUnit* unit, float distance, bool aggressive) {}
-		void StopMoving() {}
+		void StopMoving(bool callScript = false, bool hardStop = false) {}
 
 		void SetGoal(const float3& pos, float distance = 0.0f) {}
 		void SetMaxSpeed(float speed) {}

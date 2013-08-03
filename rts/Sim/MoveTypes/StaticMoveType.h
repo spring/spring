@@ -13,7 +13,7 @@ public:
 	CStaticMoveType(CUnit* unit) : AMoveType(unit) {}
 	void StartMoving(float3 pos, float goalRadius) {}
 	void StartMoving(float3 pos, float goalRadius, float speed) {}
-	void StopMoving() {}
+	void StopMoving(bool callScript = false, bool hardStop = false) {}
 
 	void SetMaxSpeed(float speed) { /* override AMoveType (our maxSpeed IS allowed to be 0) */ }
 	void KeepPointingTo(float3 pos, float distance, bool aggressive) {}

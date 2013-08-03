@@ -3195,10 +3195,10 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 		lua_pushnumber(L, (weapon->reloadTime / unit->reloadSpeed) / GAME_SPEED);
 	}
 	else if (key == "accuracy") {
-		lua_pushnumber(L, weapon->accuracy);
+		lua_pushnumber(L, weapon->AccuracyExperience());
 	}
 	else if (key == "sprayAngle") {
-		lua_pushnumber(L, weapon->sprayAngle);
+		lua_pushnumber(L, weapon->SprayAngleExperience());
 	}
 	else if (key == "range") {
 		lua_pushnumber(L, weapon->range);
@@ -3214,6 +3214,15 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 	}
 	else if (key == "projectiles") {
 		lua_pushnumber(L, weapon->projectilesPerShot);
+	}
+	else if (key == "salvoError") {
+		float3 salvoError =  weapon->SalvoErrorExperience();
+		lua_pushnumber(L,salvoError.x);
+		lua_pushnumber(L,salvoError.y);
+		lua_pushnumber(L,salvoError.z);
+	}
+	else if (key == "targetMoveError") {
+		lua_pushnumber(L, weapon->MoveErrorExperience());
 	}
 	else {
 		return 0;

@@ -25,7 +25,7 @@
 #include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Platform/Threading.h"
+#include "System/ThreadPool.h"
 
 using std::sprintf;
 
@@ -170,13 +170,11 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 		rg_etc1::etc1_pack_params pack_params;
 		pack_params.m_quality = rg_etc1::cLowQuality; // must be low, all others take _ages_ to process
 
-		Threading::OMPCheck();
-		#pragma omp parallel for
-		for (int i = 0; i < numTiles; ++i) {
+		for_mt(0, numTiles, [&](const int i) {
 			squish::u8 rgba[64]; // 4x4 pixels * 4 * 1byte channels = 64byte
 			squish::Decompress(rgba, &tiles[i * 8], squish::kDxt1);
 			rg_etc1::pack_etc1_block(&tiles[i * 8], (const unsigned int*)rgba, pack_params);
-		}
+		});
 	}
 #endif
 

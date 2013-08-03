@@ -127,9 +127,7 @@ bool CCannon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 		return false;
 	}
 
-	const float spread =
-		((accuracy + sprayAngle) * 0.6f) *
-		((1.0f - owner->limExperience * weaponDef->ownerExpAccWeight) * 0.9f);
+	const float spread = (AccuracyExperience() + SprayAngleExperience()) * 0.6f * 0.9f;
 	const float modFlatLength = flatLength - 30.0f;
 
 	//FIXME add a forcedUserTarget (a forced fire mode enabled with meta key or something) and skip the test below then
@@ -146,8 +144,7 @@ void CCannon::FireImpl()
 	float3 diff = targetPos - weaponMuzzlePos;
 	float3 dir = (diff.SqLength() > 4.0) ? GetWantedDir(diff) : diff; // prevent vertical aim when emit-sfx firing the weapon
 	dir +=
-		(gs->randVector() * sprayAngle + salvoError) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
+		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.SafeNormalize();
 
 	int ttl = 0;

@@ -66,6 +66,12 @@ public:
 	void AimReady(int value);
 	void Fire();
 	void HoldFire();
+	
+	float ExperienceScale() const;
+	float AccuracyExperience() const { return accuracy*ExperienceScale(); }
+	float SprayAngleExperience() const { return sprayAngle*ExperienceScale(); }
+	float3 SalvoErrorExperience() const { return salvoError*ExperienceScale(); }
+	float MoveErrorExperience() const;
 
 	void StopAttackingAllyTeam(int ally);
 	void UpdateInterceptTarget();

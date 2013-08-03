@@ -53,9 +53,9 @@ public:
 
 private:
 	void Reset();
-	void Tessellate(const float3& campos, int viewradius);
+	bool Tessellate(const float3& campos, int viewradius);
 	int Render(bool shadows);
-	
+
 public:
 	static bool forceRetessellate;
 

@@ -208,7 +208,7 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 	// due to isShield being a separate tag (in 91.0)
 	assert(weaponDef->isShield);
 
-	if (weaponDef->smartShield && teamHandler->AlliedTeams(p->owner()->team, owner->team)) {
+	if (weaponDef->smartShield && p->owner() && teamHandler->AlliedTeams(p->owner()->team, owner->team)) {
 		return;
 	}
 

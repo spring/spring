@@ -325,18 +325,19 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	TransportedUnit tu;
 		tu.unit = unit;
 		tu.piece = piece;
-		tu.size = unit->xsize / 2;
+		tu.size = unit->xsize / SPRING_FOOTPRINT_SCALE;
 		tu.mass = unit->mass;
 
 	transportCapacityUsed += tu.size;
 	transportMassUsed += tu.mass;
 	transportedUnits.push_back(tu);
 
+	unit->moveType->StopMoving(true, true);
 	unit->CalculateTerrainType();
 	unit->UpdateTerrainType();
 
 	eventHandler.UnitLoaded(unit, this);
-	commandAI->BuggerOff(pos, -1.0f); // make sure not to get buggered off :) by transportee
+	commandAI->BuggerOff(pos, -1.0f);
 }
 
 

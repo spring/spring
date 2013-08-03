@@ -20,9 +20,8 @@
 #include "System/CRC.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
-#include "System/OpenMP_cond.h"
+#include "System/ThreadPool.h"
 #if       !defined(DEDICATED) && !defined(UNITSYNC)
-#include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
 #endif // !defined(DEDICATED) && !defined(UNITSYNC)
 
@@ -751,13 +750,7 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	//       it has to load the full file to calc it! For the other formats (sd7, sdz, sdp) the CRC is saved
 	//       in the metainformation of the container and so the loading is much faster. Neither does any of our
 	//       current (2011) packing libraries support multithreading :/
-	int i;
-#if !defined(DEDICATED) && !defined(UNITSYNC)
-//	Threading::OMPCheck();
-#endif
-//	This is currently used too early, OMP is not initialized here
-//	#pragma omp parallel for private(i)
-	for (i=0; i<crcs.size(); ++i) {
+	for_mt(0, crcs.size(), [&](const int i) {
 		CRCPair& crcp = crcs[i];
 		const unsigned int nameCRC = CRC().Update(crcp.filename->data(), crcp.filename->size()).GetDigest();
 		const unsigned fid = ar->FindFile(*crcp.filename);
@@ -767,7 +760,7 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	#if !defined(DEDICATED) && !defined(UNITSYNC)
 		Watchdog::ClearTimer(WDT_MAIN);
 	#endif
-	}
+	});
 
 	// Add file CRCs to the main archive CRC
 	for (std::vector<CRCPair>::iterator it = crcs.begin(); it != crcs.end(); ++it) {

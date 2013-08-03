@@ -1156,7 +1156,7 @@ void CStrafeAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
 	SetGoal(pos);
 }
 
-void CStrafeAirMoveType::StopMoving()
+void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop)
 {
 	SetGoal(owner->pos);
 	SetWantedMaxSpeed(0.0f);
