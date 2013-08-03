@@ -183,11 +183,11 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 	while (pci != pc.end()) {
 		CProjectile* p = *pci;
+		assert(p->synced == synced);
 
 		if (p->deleteMe) {
 			ProjectileMap::iterator pIt;
-
-			if (p->synced) {
+			if (synced) {
 				//! iterator is always valid
 				pIt = syncedProjectileIDs.find(p->id);
 
