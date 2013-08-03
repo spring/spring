@@ -128,7 +128,7 @@ void CBeamLaser::FireImpl()
 		}
 	}
 
-	dir += ((salvoError) * (1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
+	dir += SalvoErrorExperience();
 	dir.SafeNormalize();
 
 	FireInternal(dir, false);
@@ -157,8 +157,7 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 	float3 newDir;
 
 	curDir +=
-		((gs->randVector() * sprayAngle *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight)));
+		gs->randVector() * SprayAngleExperience();
 	curDir.SafeNormalize();
 
 	bool tryAgain = true;

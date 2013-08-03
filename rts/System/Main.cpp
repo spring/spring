@@ -74,31 +74,6 @@ int Run(int argc, char* argv[])
 
 
 /**
- * Set some performance relevant OpenMP EnvVars.
- * @return true when restart is required with new env vars
- */
-static bool SetOpenMpEnvVars(char* argv[])
-{
-	bool restart = false;
-
-//FIXME GML creates additional threads that need `free` cores too, the problem is to detect if
-//      GML is used or not and to reduce the omp threads then (gomp doesn't give you an interface to kill threads once they are started!)
-#if !defined(USE_GML)
-	if (Threading::GetAvailableCores() >= 3) {
-		if (!getenv("OMP_WAIT_POLICY")) {
-			// omp threads will use a spinlock instead of yield'ing when waiting
-			// cause 100% cpu usage in the omp threads
-			setenv("OMP_WAIT_POLICY", "ACTIVE", 1);
-			restart = true;
-		}
-		// another envvar is "GOMP_SPINCOUNT", but it seems to be less predictable
-	}
-#endif
-	return restart;
-}
-
-
-/**
  * Always run on dedicated GPU
  * @return true when restart is required with new env vars
  */
@@ -133,7 +108,6 @@ int main(int argc, char* argv[])
 #if !defined(PROFILE) && !defined(HEADLESS)
 	bool restart = false;
 	restart |= SetNvOptimusProfile(argv);
-	restart |= SetOpenMpEnvVars(argv);
 
   #ifndef WIN32
 	if (restart) {

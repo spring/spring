@@ -8,6 +8,9 @@
 #include "lib/gml/gmlmut.h"
 #include "System/Log/ILog.h"
 #include "System/UnsyncedRNG.h"
+#ifdef THREADPOOL
+	#include "System/ThreadPool.h"
+#endif
 
 static std::map<int, std::string> hashToName;
 static std::map<int, int> refs;
@@ -110,6 +113,31 @@ ScopedOnceTimer::~ScopedOnceTimer()
 
 
 
+ScopedMtTimer::ScopedMtTimer(const std::string& name, bool autoShow)
+	: BasicTimer(name)
+	, autoShowGraph(autoShow)
+{
+}
+
+
+ScopedMtTimer::ScopedMtTimer(const char* name, bool autoShow)
+	: BasicTimer(name)
+	, autoShowGraph(autoShow)
+{
+}
+
+
+ScopedMtTimer::~ScopedMtTimer()
+{
+	profiler.AddTime(GetName(), spring_difftime(spring_gettime(), starttime), autoShowGraph);
+#ifdef THREADPOOL
+	auto& list = profiler.profileCore[ThreadPool::GetThreadNum()];
+	list.emplace_back(starttime, spring_gettime());
+#endif
+}
+
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -118,6 +146,9 @@ CTimeProfiler::CTimeProfiler():
 	lastBigUpdate(spring_gettime()),
 	currentPosition(0)
 {
+#ifdef THREADPOOL
+	profileCore.resize(ThreadPool::GetMaxThreads());
+#endif
 }
 
 CTimeProfiler::~CTimeProfiler()

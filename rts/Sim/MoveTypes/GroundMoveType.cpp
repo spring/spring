@@ -205,6 +205,53 @@ void CGroundMoveType::PostLoad()
 	}
 }
 
+bool CGroundMoveType::OwnerMoved(const short oldHeading, const float3& posDif, const float3& cmpEps) {
+	if (posDif.equals(ZeroVector, cmpEps)) {
+		// note: the float3::== test is not exact, so even if this
+		// evaluates to true the unit might still have an epsilon
+		// speed vector --> nullify it to prevent apparent visual
+		// micro-stuttering (speed is used to extrapolate drawPos)
+		owner->speed = ZeroVector;
+
+		// negative y-coordinates indicate temporary waypoints that
+		// only exist while we are still waiting for the pathfinder
+		// (so we want to avoid being considered "idle", since that
+		// will cause our path to be re-requested and again give us
+		// a temporary waypoint, etc.)
+		// NOTE: this is only relevant for QTPFS (at present)
+		// if the unit is just turning in-place over several frames
+		// (eg. to maneuver around an obstacle), do not consider it
+		// as "idling"
+		idling = true;
+		idling &= (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f);
+		idling &= (std::abs(owner->heading - oldHeading) < turnRate);
+
+		return false;
+	}
+
+	// note: HandleObjectCollisions() may have negated the position set
+	// by UpdateOwnerPos() (so that owner->pos is again equal to oldPos)
+	// note: the idling-check can only succeed if we are oriented in the
+	// direction of our waypoint, which compensates for the fact distance
+	// decreases much less quickly when moving orthogonal to <waypointDir>
+	oldPos = owner->pos;
+
+	const float3 ffd = flatFrontDir * posDif.SqLength() * 0.5f;
+	const float3 wpd = waypointDir * ((int(!reversing) * 2) - 1);
+
+	// too many false negatives: speed is unreliable if stuck behind an obstacle
+	//   idling = (owner->speed.SqLength() < (accRate * accRate));
+	//   idling &= (Square(currWayPointDist - prevWayPointDist) <= (accRate * accRate));
+	// too many false positives: waypoint-distance delta and speed vary too much
+	//   idling = (Square(currWayPointDist - prevWayPointDist) < owner->speed.SqLength());
+	// too many false positives: many slow units cannot even manage 1 elmo/frame
+	//   idling = (Square(currWayPointDist - prevWayPointDist) < 1.0f);
+	idling = true;
+	idling &= (math::fabs(posDif.y) < math::fabs(cmpEps.y * owner->pos.y));
+	idling &= (Square(currWayPointDist - prevWayPointDist) < ffd.dot(wpd));
+	return true;
+}
+
 bool CGroundMoveType::Update()
 {
 	ASSERT_SYNCED(owner->pos);
@@ -231,24 +278,21 @@ bool CGroundMoveType::Update()
 
 	ASSERT_SYNCED(owner->pos);
 
-	bool hasMoved = false;
-	bool wantReverse = false;
-
 	const short heading = owner->heading;
 
 	if (owner->IsStunned() || owner->beingBuilt) {
 		ChangeSpeed(0.0f, false);
 	} else {
 		if (owner->fpsControlPlayer != NULL) {
-			wantReverse = UpdateDirectControl();
+			UpdateDirectControl();
 		} else {
-			wantReverse = FollowPath();
+			FollowPath();
 		}
 	}
 
 	// these must be executed even when stunned (so
 	// units do not get buried by restoring terrain)
-	UpdateOwnerPos(wantReverse);
+	UpdateOwnerPos(owner->speed, GetNewSpeedVector(deltaSpeed, myGravity));
 	AdjustPosToWaterLine();
 	HandleObjectCollisions();
 
@@ -257,54 +301,7 @@ bool CGroundMoveType::Update()
 	// <dif> is normally equal to owner->speed (if no collisions)
 	// we need more precision (less tolerance) in the y-dimension
 	// for all-terrain units that are slowed down a lot on cliffs
-	const float3 posDif = owner->pos - oldPos;
-	const float3 cmpEps = float3(float3::CMP_EPS, float3::CMP_EPS * 1e-2f, float3::CMP_EPS);
-
-	if (posDif.equals(ZeroVector, cmpEps)) {
-		// note: the float3::== test is not exact, so even if this
-		// evaluates to true the unit might still have an epsilon
-		// speed vector --> nullify it to prevent apparent visual
-		// micro-stuttering (speed is used to extrapolate drawPos)
-		owner->speed = ZeroVector;
-
-		// negative y-coordinates indicate temporary waypoints that
-		// only exist while we are still waiting for the pathfinder
-		// (so we want to avoid being considered "idle", since that
-		// will cause our path to be re-requested and again give us
-		// a temporary waypoint, etc.)
-		// NOTE: this is only relevant for QTPFS (at present)
-		// if the unit is just turning in-place over several frames
-		// (eg. to maneuver around an obstacle), do not consider it
-		// as "idling"
-		idling = true;
-		idling &= (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f);
-		idling &= (std::abs(owner->heading - heading) < turnRate);
-		hasMoved = false;
-	} else {
-		// note: HandleObjectCollisions() may have negated the position set
-		// by UpdateOwnerPos() (so that owner->pos is again equal to oldPos)
-		// note: the idling-check can only succeed if we are oriented in the
-		// direction of our waypoint, which compensates for the fact distance
-		// decreases much less quickly when moving orthogonal to <waypointDir>
-		oldPos = owner->pos;
-
-		const float3 ffd = flatFrontDir * posDif.SqLength() * 0.5f;
-		const float3 wpd = waypointDir * ((int(!reversing) * 2) - 1);
-
-		// too many false negatives: speed is unreliable if stuck behind an obstacle
-		//   idling = (owner->speed.SqLength() < (accRate * accRate));
-		//   idling &= (Square(currWayPointDist - prevWayPointDist) <= (accRate * accRate));
-		// too many false positives: waypoint-distance delta and speed vary too much
-		//   idling = (Square(currWayPointDist - prevWayPointDist) < owner->speed.SqLength());
-		// too many false positives: many slow units cannot even manage 1 elmo/frame
-		//   idling = (Square(currWayPointDist - prevWayPointDist) < 1.0f);
-		idling = true;
-		idling &= (math::fabs(posDif.y) < math::fabs(cmpEps.y * owner->pos.y));
-		idling &= (Square(currWayPointDist - prevWayPointDist) < ffd.dot(wpd));
-		hasMoved = true;
-	}
-
-	return hasMoved;
+	return (OwnerMoved(heading, owner->pos - oldPos, float3(float3::CMP_EPS, float3::CMP_EPS * 1e-2f, float3::CMP_EPS)));
 }
 
 void CGroundMoveType::SlowUpdate()
@@ -394,7 +391,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	#endif
 }
 
-void CGroundMoveType::StopMoving() {
+void CGroundMoveType::StopMoving(bool callScript, bool hardStop) {
 #ifdef TRACE_SYNC
 	tracefile << "[" << __FUNCTION__ << "] ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
@@ -405,7 +402,7 @@ void CGroundMoveType::StopMoving() {
 	// this gets called under a variety of conditions (see MobileCAI)
 	// the most common case is a CMD_STOP being issued which means no
 	// StartMoving-->StartEngine will follow
-	StopEngine(false);
+	StopEngine(callScript, hardStop);
 
 	useMainHeading = false;
 	progressState = Done;
@@ -1390,7 +1387,7 @@ void CGroundMoveType::StartEngine(bool callScript) {
 	nextObstacleAvoidanceFrame = gs->frameNum;
 }
 
-void CGroundMoveType::StopEngine(bool callScript) {
+void CGroundMoveType::StopEngine(bool callScript, bool hardStop) {
 	if (pathId != 0) {
 		pathManager->DeletePath(pathId);
 		pathId = 0;
@@ -1407,6 +1404,9 @@ void CGroundMoveType::StopEngine(bool callScript) {
 	}
 
 	owner->isMoving = (pathId == 0);
+	owner->speed *= (1 - hardStop);
+
+	currentSpeed *= (1 - hardStop);
 	wantedSpeed = 0.0f;
 }
 
@@ -2201,11 +2201,7 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 	return speedVector;
 }
 
-void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
-{
-	const float3 oldSpeedVector = owner->speed;
-	const float3 newSpeedVector = GetNewSpeedVector(deltaSpeed, myGravity);
-
+void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3& newSpeedVector) {
 	const float oldSpeed = math::fabs(oldSpeedVector.dot(flatFrontDir));
 	const float newSpeed = math::fabs(newSpeedVector.dot(flatFrontDir));
 

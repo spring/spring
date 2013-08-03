@@ -289,7 +289,7 @@ void CWeapon::UpdateTargeting()
 		}
 
 		const float3 errorPos = targetUnit->GetErrorPos(owner->allyteam, true);
-		const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * targetUnit->speed.Length() * (1.0f - owner->limExperience));
+		const float errorScale = ( MoveErrorExperience() * GAME_SPEED * targetUnit->speed.Length() );
 
 		float3 tmpTargetPos = errorPos + lead + errorVector * errorScale;
 		float3 tmpTargetVec = tmpTargetPos - weaponMuzzlePos;
@@ -632,7 +632,7 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	#endif
 
 	const float3 errorPos = newTargetUnit->GetErrorPos(owner->allyteam, true);
-	const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * newTargetUnit->speed.Length() * (1.0f - owner->limExperience));
+	const float errorScale = (MoveErrorExperience() * GAME_SPEED * newTargetUnit->speed.Length() );
 	const float3 newTargetPos = errorPos + errorVector * errorScale;
 
 	if (!TryTarget(newTargetPos, isUserTarget, newTargetUnit))
@@ -746,8 +746,7 @@ void CWeapon::AutoTarget() {
 		if (nextTargetUnit->IsNeutral() && (owner->fireState <= FIRESTATE_FIREATWILL))
 			continue;
 
-		const float weaponLead = weaponDef->targetMoveError * GAME_SPEED * nextTargetUnit->speed.Length();
-		const float weaponError = weaponLead * (1.0f - owner->limExperience);
+		const float weaponError = MoveErrorExperience() * GAME_SPEED * nextTargetUnit->speed.Length();
 
 		prevTargetUnit = nextTargetUnit;
 		nextTargetPos = nextTargetUnit->aimPos + (errorVector * weaponError);
@@ -870,7 +869,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		if (slavedTo->targetType == Target_Unit) {
 			const float3 tp =
 				slavedTo->targetUnit->GetErrorPos(owner->allyteam, true) +
-				errorVector * (weaponDef->targetMoveError * GAME_SPEED * slavedTo->targetUnit->speed.Length() * (1.0f - owner->limExperience));
+				errorVector * (MoveErrorExperience() * GAME_SPEED * slavedTo->targetUnit->speed.Length() );
 
 			if (TryTarget(tp, false, slavedTo->targetUnit)) {
 				targetType = Target_Unit;
@@ -1163,9 +1162,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 	float3 dir = pos - weaponMuzzlePos;
 
 	const float length = dir.Length();
-	const float spread =
-		(accuracy + sprayAngle) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
+	const float spread = AccuracyExperience() + SprayAngleExperience();
 
 	if (length == 0.0f)
 		return true;
@@ -1199,7 +1196,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 
 bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
 	const float3 errorPos = unit->GetErrorPos(owner->allyteam, true);
-	const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
+	const float errorScale = ( MoveErrorExperience() * GAME_SPEED * unit->speed.Length() );
 
 	float3 tempTargetPos = errorPos + errorVector * errorScale;
 	tempTargetPos.y = std::max(tempTargetPos.y, ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f);
@@ -1209,7 +1206,7 @@ bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
 
 bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget) {
 	const float3 errorPos = unit->GetErrorPos(owner->allyteam, true);
-	const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
+	const float errorScale = ( MoveErrorExperience() * GAME_SPEED * unit->speed.Length() );
 
 	float3 tempTargetPos = errorPos + errorVector * errorScale;
 	tempTargetPos.y = std::max(tempTargetPos.y, ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f);
@@ -1391,4 +1388,14 @@ void CWeapon::StopAttackingAllyTeam(int ally)
 	if (targetUnit && targetUnit->allyteam == ally) {
 		HoldFire();
 	}
+}
+
+float CWeapon::ExperienceScale() const
+{
+	return (1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
+}
+
+float CWeapon::MoveErrorExperience() const
+{
+	return weaponDef->targetMoveError*(1.0f - owner->limExperience);
 }

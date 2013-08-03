@@ -286,7 +286,7 @@ void CHoverAirMoveType::ExecuteStop()
 	}
 }
 
-void CHoverAirMoveType::StopMoving()
+void CHoverAirMoveType::StopMoving(bool callScript, bool hardStop)
 {
 	forceHeading = false;
 	wantToStop = true;

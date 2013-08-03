@@ -8,7 +8,7 @@
 #include <cstddef>
 #include "lib/streflop/streflop_cond.h"
 #include "System/Exceptions.h"
-#include "System/OpenMP_cond.h"
+#include "System/ThreadPool.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
 
@@ -180,23 +180,16 @@ void good_fpu_init()
 }
 
 void streflop_init_omp() {
-#if defined(STREFLOP_H) && !defined(DEDICATED)
-	// Initialize FPU in all OpenMP threads, too
+	// Initialize FPU in all worker threads, too
 	// Note: It's not needed for sync'ness cause all precision relevant
 	//       mode flags are shared across the process!
 	//       But the exception ones aren't (but are copied from the calling thread).
-	#ifdef _OPENMP
-		Threading::OMPCheck();
-		#pragma omp parallel
-		{
-			//good_fpu_control_registers("OMP-Init");
-			streflop::streflop_init<streflop::Simple>();
-		#if defined(__SUPPORT_SNAN__)
-			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
-		#endif
-		}
+	parallel([&]{
+		streflop::streflop_init<streflop::Simple>();
+	#if defined(__SUPPORT_SNAN__)
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
-#endif
+	});
 }
 
 namespace springproc {
