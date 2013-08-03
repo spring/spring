@@ -261,7 +261,7 @@ static void ParseShader(lua_State* L, const char* caller, int index,
 	return;
 }
 
-
+/*
 static GLuint ParseUnitTexture(const string& texture)
 {
 	if (texture.length()<4) {
@@ -329,7 +329,7 @@ static GLuint ParseUnitTexture(const string& texture)
 
 	return 0;
 }
-
+*/
 
 static void ParseTexture(lua_State* L, const char* caller, int index,
                         LuaMatTexture& texUnit)

@@ -1066,7 +1066,7 @@ int LuaUnsyncedCtrl::SetCustomCommandDrawData(lua_State* L)
 	}
 
 	float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	const int size = LuaUtils::ParseFloatArray(L, 3, color, 4);
+	/*const int size =*/ LuaUtils::ParseFloatArray(L, 3, color, 4);
 
 	const bool showArea = luaL_optboolean(L, 4, false);
 
