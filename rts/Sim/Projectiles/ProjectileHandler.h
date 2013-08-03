@@ -94,7 +94,6 @@ public:
 	void UpdateProjectileContainer(ProjectileContainer&, bool);
 	void UpdateParticleSaturation() {
 		particleSaturation     = (maxParticles     > 0)? (currentParticles     / float(maxParticles    )): 1.0f;
-		nanoParticleSaturation = (maxNanoParticles > 0)? (currentNanoParticles / float(maxNanoParticles)): 1.0f;
 	}
 
 	void AddProjectile(CProjectile* p);
@@ -117,12 +116,12 @@ public:
 	int currentParticles;          // number of particles weighted by how complex they are
 	int currentNanoParticles;
 	float particleSaturation;      // currentParticles / maxParticles ratio
-	float nanoParticleSaturation;
-
 	ProjectileRenderMap syncedRenderProjectileIDs;        // same as syncedProjectileIDs, used by render thread
+private:
+
+
 	ProjectileRenderMap unsyncedRenderProjectileIDs;      // same as unsyncedProjectileIDs, used by render thread
 
-private:
 	int maxUsedSyncedID;
 	int maxUsedUnsyncedID;
 	std::list<int> freeSyncedIDs;             // available synced (weapon, piece) projectile ID's

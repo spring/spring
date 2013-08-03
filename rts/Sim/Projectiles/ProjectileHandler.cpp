@@ -64,7 +64,6 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(currentParticles),
 	CR_MEMBER(currentNanoParticles),
 	CR_MEMBER(particleSaturation),
-	CR_MEMBER(nanoParticleSaturation),
 
 	CR_MEMBER(maxUsedSyncedID),
 	CR_MEMBER(maxUsedUnsyncedID),
@@ -95,7 +94,6 @@ CProjectileHandler::CProjectileHandler()
 	currentParticles       = 0;
 	currentNanoParticles   = 0;
 	particleSaturation     = 0.0f;
-	nanoParticleSaturation = 0.0f;
 
 	// preload some IDs
 	for (int i = 0; i < 16384; i++) {
