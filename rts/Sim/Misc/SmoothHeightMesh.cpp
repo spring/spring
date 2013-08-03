@@ -261,16 +261,17 @@ inline static void BlurHorizontal(
 {
 	const float n = 2.0f * smoothrad + 1.0f;
 	const float recipn = 1.0f / n;
+	const int lineSize = maxx + 1;
 
 	for_mt(0, maxy+1, [&](const int y) {
 		float avg = 0.0f;
 
 		for (int x = 0; x <= 2 * smoothrad; ++x) {
-			avg += mesh[x + y * maxx];
+			avg += mesh[x + y * lineSize];
 		}
 
 		for (int x = 0; x <= maxx; ++x) {
-			const int idx = x + y * maxx;
+			const int idx = x + y * lineSize;
 
 			if (x <= smoothrad || x > (maxx - smoothrad)) {
 				// map-border case
@@ -280,7 +281,7 @@ inline static void BlurHorizontal(
 				const int xend   = std::min(x + smoothrad, maxx);
 
 				for (int x1 = xstart; x1 <= xend; ++x1) {
-					smoothed[idx] += mesh[x1 + y * maxx];
+					smoothed[idx] += mesh[x1 + y * lineSize];
 				}
 
 				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
@@ -313,16 +314,17 @@ inline static void BlurVertical(
 {
 	const float n = 2.0f * smoothrad + 1.0f;
 	const float recipn = 1.0f / n;
+	const int lineSize = maxx + 1;
 
 	for_mt(0, maxx+1, [&](const int x) {
 		float avg = 0.0f;
 
 		for (int y = 0; y <= 2 * smoothrad; ++y) {
-			avg += mesh[x + y * maxx];
+			avg += mesh[x + y * lineSize];
 		}
 
 		for (int y = 0; y <= maxy; ++y) {
-			const int idx = x + y * maxx;
+			const int idx = x + y * lineSize;
 
 			if (y <= smoothrad || y > (maxy - smoothrad)) {
 				// map-border case
@@ -332,7 +334,7 @@ inline static void BlurVertical(
 				const int yend   = std::min(y + smoothrad, maxy);
 
 				for (int y1 = ystart; y1 <= yend; ++y1) {
-					smoothed[idx] += mesh[x + y1 * maxx];
+					smoothed[idx] += mesh[x + y1 * lineSize];
 				}
 
 				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
@@ -341,7 +343,7 @@ inline static void BlurVertical(
 				smoothed[idx] = std::min(readmap->currMaxHeight, std::max(gh, sh));
 			} else {
 				// non-border case
-				avg += mesh[x + (y + smoothrad) * maxx] - mesh[x + (y - smoothrad - 1) * maxx];
+				avg += mesh[x + (y + smoothrad) * lineSize] - mesh[x + (y - smoothrad - 1) * lineSize];
 
 				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
 				const float sh = recipn * avg;
