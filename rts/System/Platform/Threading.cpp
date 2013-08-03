@@ -323,7 +323,7 @@ namespace Threading {
 		}
 	}
 	bool IsSimThread() {
-		return simThreadID ? NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *simThreadID) : false;
+		return !simThreadID ? false : NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *simThreadID);
 	}
 
 	bool UpdateGameController(CGameController* ac) {
@@ -343,7 +343,7 @@ namespace Threading {
 		}
 	}
 	bool IsBatchThread() {
-		return batchThreadID ? NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *batchThreadID) : false;
+		return !batchThreadID ? false : NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *batchThreadID);
 	}
 
 
