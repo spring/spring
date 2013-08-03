@@ -91,7 +91,6 @@ public:
 	void SetMaxNanoParticles(int value) { maxNanoParticles = value; }
 
 	void Update();
-	void UpdateProjectileContainer(ProjectileContainer&, bool);
 	void UpdateParticleSaturation() {
 		particleSaturation     = (maxParticles     > 0)? (currentParticles     / float(maxParticles    )): 1.0f;
 	}
@@ -118,6 +117,7 @@ public:
 	float particleSaturation;      // currentParticles / maxParticles ratio
 	ProjectileRenderMap syncedRenderProjectileIDs;        // same as syncedProjectileIDs, used by render thread
 private:
+	void UpdateProjectileContainer(ProjectileContainer&, bool);
 
 
 	ProjectileRenderMap unsyncedRenderProjectileIDs;      // same as unsyncedProjectileIDs, used by render thread
