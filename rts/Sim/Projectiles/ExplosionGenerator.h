@@ -201,7 +201,6 @@ public:
 		SPW_UNDERWATER =  8,
 		SPW_UNIT       = 16,  // only execute when the explosion hits a unit
 		SPW_NO_UNIT    = 32,  // only execute when the explosion doesn't hit a unit (environment)
-		SPW_SYNCED     = 64,  // spawn this projectile even if particleSaturation > 1
 	};
 
 	enum {
@@ -228,7 +227,7 @@ public:
 
 private:
 	void ParseExplosionCode(ProjectileSpawnInfo* psi, const int offset, const boost::shared_ptr<creg::IType> type, const std::string& script, std::string& code);
-	void ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir, bool synced);
+	void ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir);
 
 protected:
 	//! maps cegTags to explosion handles

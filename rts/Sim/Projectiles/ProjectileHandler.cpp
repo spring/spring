@@ -313,6 +313,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 {
 	// already initialized?
 	assert(p->id < 0);
+	assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
 
 	std::list<int>* freeIDs = NULL;
 	ProjectileMap* proIDs = NULL;
