@@ -184,6 +184,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 	while (pci != pc.end()) {
 		CProjectile* p = *pci;
 		assert(p->synced == synced);
+		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
 
 		if (p->deleteMe) {
 			ProjectileMap::iterator pIt;
@@ -313,10 +314,6 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 {
 	// already initialized?
 	assert(p->id < 0);
-	if (p->synced)
-		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
-	if (p->GetClass()->binder->flags & creg::CF_Synced)
-		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
 
 	std::list<int>* freeIDs = NULL;
 	ProjectileMap* proIDs = NULL;
