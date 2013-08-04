@@ -471,7 +471,7 @@ bool CStdExplosionGenerator::Explosion(
 
 
 
-void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir, bool synced)
+void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir)
 {
 	float val = 0.0f;
 	void* ptr = NULL;
@@ -509,12 +509,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				break;
 			}
 			case OP_RAND: {
-				if (synced) {
-					val += gs->randFloat() * (*(float*) code);
-				} else {
-					val += gu->RandFloat() * (*(float*) code);
-				}
-
+				val += gu->RandFloat() * (*(float*) code);
 				code += 4;
 				break;
 			}
@@ -972,16 +967,14 @@ bool CCustomExplosionGenerator::Explosion(
 			continue;
 		}
 
-		// If we're saturated, spawn only synced projectiles.
-		// Whether a class is synced is determined by the creg::CF_Synced flag.
-		if (projectileHandler->particleSaturation > 1 && !(psi.flags & SPW_SYNCED)) {
+		// If we're saturated
+		if (projectileHandler->particleSaturation > 1) {
 			continue;
 		}
 
 		for (int c = 0; c < psi.count; c++) {
 			CExpGenSpawnable* projectile = static_cast<CExpGenSpawnable*>((psi.projectileClass)->CreateInstance());
-
-			ExecuteExplosionCode(&psi.code[0], damage, (char*) projectile, c, dir, (psi.flags & SPW_SYNCED) != 0);
+			ExecuteExplosionCode(&psi.code[0], damage, (char*) projectile, c, dir);
 			projectile->Init(pos, owner);
 		}
 	}

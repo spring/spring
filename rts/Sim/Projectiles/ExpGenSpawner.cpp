@@ -23,7 +23,6 @@ CExpGenSpawner::CExpGenSpawner() :
 {
 	checkCol = false;
 	deleteMe = false;
-	synced = true;
 }
 
 void CExpGenSpawner::Update()
