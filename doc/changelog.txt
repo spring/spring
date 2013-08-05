@@ -65,6 +65,7 @@ Sim:
 
 Lua:
  ! LuaUnitDefs: deprecate canHover (check moveDef.family instead to determine if a unit is a hovercraft)
+ - LuaUnitDefs: log error when explodeAs & selfDestructAs are missing
  - LuaRules: setup "proper" (transformation) state for the DrawProjectile callin
  - LuaRules: add AllowWeaponInterceptTarget(number interceptorUnitID, number interceptorWeaponID, number targetProjectileID) --> boolean
  - LuaUnitScript: optionally make Turn and Move insta-update piece matrices (pass "true" as the fifth argument)
@@ -86,6 +87,8 @@ Rendering:
 
 Buildprocess:
  ! updated gentoo overlay url to https://github.com/springlobby/overlay
+ - switch to mingw64 for the windows build
+ - remove some custom Find*.cmake files
  - fix #3645 Can't build if source directory has white spaces
  ! removed VS project files / fix compile with Visual Studio 2012 Express for Windows Desktop:
     use cmake -G "Visual Studio 11" to generate project files
@@ -122,10 +125,11 @@ Bugfixes:
  - fix #3683 (minimap textures not freed on exit)
  - fix #3660 (memory leak in Spring.GetVisibleFeatures)
  - fix #3718 (units moving in circles near obstacles)
- - fix ground units not moving in FPS mode
- - fix (non-hovering) aircraft jittering at high altitude
  - fix #3743 (partially: make non-hovering aircraft start turning to goal during takeoff)
  - fix #3681 (make widgetHandler:LoadConfigData() more robust)
+ - fix #3890 (Unloaded units fly across the map)
+ - fix ground units not moving in FPS mode
+ - fix (non-hovering) aircraft jittering at high altitude
  - fix submarines being considered "underwater" even when pos.y + height > 0
  - fix subtle bug in LegacyAtlasAlloc::Allocate exposed by Intel GMA
      atlas could grow LARGER than its maximum size in x-dimension due to TEXMARGIN not being considered
