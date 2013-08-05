@@ -374,7 +374,7 @@ function Spring.UnitScript.StartThread(fun, ...)
 	local thread = {
 		thread = co,
 		-- signal_mask is inherited from current thread, if any
-		signal_mask = (co_running() and activeUnit.threads[co_running()].signal_mask or 0),
+		signal_mask = (co_running() and (activeUnit.threads[co_running()] and activeUnit.threads[co_running()].signal_mask) or 0),
 		unitID = activeUnit.unitID,
 	}
 
