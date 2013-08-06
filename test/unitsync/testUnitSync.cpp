@@ -246,11 +246,16 @@ BOOST_AUTO_TEST_CASE( UnitSync )
 
 	// Select random Game & Map
 	int i = us::GetMapCount() - 1, j = us::GetPrimaryModCount() - 1;
+	BOOST_CHECK(i>0);
+	BOOST_CHECK(j>0);
+
 	while (i > 0 && !us::GetMapName(i)) --i;
 	while (j > 0 && !us::GetPrimaryModName(j)) --j;
 	const string map = (i > 0) ? us::GetMapName(i) : "";
 	const string mod = (j > 0) ? us::GetPrimaryModName(j) : "";
 	BOOST_WARN_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
+	LOG("Using game: %s", map.c_str());
+	LOG("Using map: %s", mod.c_str());
 
 	// Test them
 	if (i >= 0 && j >= 0) {
