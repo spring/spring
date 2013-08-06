@@ -51,6 +51,7 @@ CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(forceHeadingTo),
 
 	CR_MEMBER(maxDrift),
+	CR_MEMBER(maxTurnAngle),
 
 	CR_MEMBER(randomWind),
 
@@ -83,7 +84,8 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	lastMoveRate(0),
 	forceHeading(false),
 	forceHeadingTo(wantedHeading),
-	maxDrift(1)
+	maxDrift(1.0f),
+	maxTurnAngle(math::cos(owner->unitDef->turnInPlaceAngleLimit * (PI / 180.0f)) * -1.0f)
 {
 	assert(owner != NULL);
 	assert(owner->unitDef != NULL);
@@ -494,11 +496,14 @@ void CHoverAirMoveType::UpdateFlying()
 		(flyState != FLY_ATTACKING && goalDist < brakeDistance)?
 		((goalDist / (speed.Length2D() + 0.01f)) * decRate):
 		maxSpeed;
+	// UnitDef::TIPAL is specified in degrees; turns greater
+	// than this angle will initially be executed "in place"
+	const bool skipTurn = (turnRate == 0.0f || goalVec.dot(owner->frontdir) >= maxTurnAngle);
 
 	// do not set wantedSpeed if goal is behind us because
 	// this can lead to overshooting oscillations (jitter)
 	// --> wait for turn first --> TURN NEVER HAPPENS
-	if (turnRate == 0.0f || goalVec.dot(owner->frontdir) >= 0.0f) {
+	if (skipTurn) {
 		wantedSpeed = (goalVec / goalDist) * std::min(goalSpeed, maxSpeed);
 	} else {
 		wantedHeading = GetHeadingFromVector(goalVec.x, goalVec.z);

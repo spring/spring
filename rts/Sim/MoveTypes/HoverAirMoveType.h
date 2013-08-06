@@ -23,21 +23,13 @@ public:
 	bool loadingUnits;
 	bool bankingAllowed;
 	bool airStrafe;
-
-	float3 circlingPos;
-	/// Used when circling something
-	float goalDistance;
-	/// need to pause between circling steps
-	int waitCounter;
 	/// Set to true on StopMove, to be able to not stop if a new order comes directly after
 	bool wantToStop;
+	/// Set to true when transporting stuff
+	bool dontLand;
 
-	/// TODO: Seems odd to use heading in unit, since we have toggled useHeading to false..
-	short wantedHeading;
-
-	float3 wantedSpeed;
-	/// Used to determine banking (since it is the current acceleration)
-	float3 deltaSpeed;
+	/// Used when circling something
+	float goalDistance;
 
 	float currentBank;
 	float currentPitch;
@@ -50,21 +42,11 @@ public:
 
 	/// Distance needed to come to a full stop when going at max speed
 	float brakeDistance;
-	/// Set to true when transporting stuff
-	bool dontLand;
-	/// Scripts expect moverate functions to be called
-	int lastMoveRate;
-
-	/// force the aircraft to turn toward specific heading (for transports)
-	bool forceHeading;
-	short forceHeadingTo;
 
 	float maxDrift;
+	float maxTurnAngle;
 
-	/// buffets the plane when idling
-	float3 randomWind;
-
-
+public:
 	CHoverAirMoveType(CUnit* owner);
 
 	// MoveType interface
@@ -105,6 +87,27 @@ private:
 	bool IsFighter() const { return false; }
 
 	bool HandleCollisions();
+
+private:
+	float3 wantedSpeed;
+	/// Used to determine banking (since it is the current acceleration)
+	float3 deltaSpeed;
+
+	float3 circlingPos;
+	/// buffets the plane when idling
+	float3 randomWind;
+
+	/// force the aircraft to turn toward specific heading (for transports)
+	bool forceHeading;
+
+	/// TODO: Seems odd to use heading in unit, since we have toggled useHeading to false..
+	short wantedHeading;
+	short forceHeadingTo;
+
+	/// need to pause between circling steps
+	int waitCounter;
+	/// Scripts expect moverate functions to be called
+	int lastMoveRate;
 };
 
 #endif // TA_AIR_MOVE_TYPE_H
