@@ -65,14 +65,10 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	loadingUnits(false),
 	bankingAllowed(true),
 	airStrafe(owner->unitDef->airStrafe),
-	circlingPos(ZeroVector),
-	goalDistance(1),
-	waitCounter(0),
 	wantToStop(false),
+	dontLand(false),
+	goalDistance(1),
 	// we want to take off in direction of factory facing
-	wantedHeading(GetHeadingFromFacing(owner->buildFacing)),
-	wantedSpeed(ZeroVector),
-	deltaSpeed(ZeroVector),
 	currentBank(0),
 	currentPitch(0),
 	turnRate(1),
@@ -80,12 +76,16 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	decRate(1),
 	altitudeRate(3.0f),
 	brakeDistance(1),
-	dontLand(false),
-	lastMoveRate(0),
-	forceHeading(false),
-	forceHeadingTo(wantedHeading),
 	maxDrift(1.0f),
-	maxTurnAngle(math::cos(owner->unitDef->turnInPlaceAngleLimit * (PI / 180.0f)) * -1.0f)
+	maxTurnAngle(math::cos(owner->unitDef->turnInPlaceAngleLimit * (PI / 180.0f)) * -1.0f),
+	wantedSpeed(ZeroVector),
+	deltaSpeed(ZeroVector),
+	circlingPos(ZeroVector),
+	forceHeading(false),
+	wantedHeading(GetHeadingFromFacing(owner->buildFacing)),
+	forceHeadingTo(wantedHeading),
+	waitCounter(0),
+	lastMoveRate(0)
 {
 	assert(owner != NULL);
 	assert(owner->unitDef != NULL);
