@@ -395,7 +395,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	armorType = damageArrayHandler->GetTypeFromName(name);
 
 	losHeight = udTable.GetFloat("losEmitHeight", 20.0f);
-	radarHeight = udTable.GetFloat("radarEmitHeight", 20.0f);
+	radarHeight = udTable.GetFloat("radarEmitHeight", losHeight);
 
 	radarRadius    = udTable.GetInt("radarDistance",    0);
 	sonarRadius    = udTable.GetInt("sonarDistance",    0);
@@ -591,7 +591,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	scriptName = udTable.GetString("script", unitName + ".cob");
 
 	deathExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("explodeAs", ""));
-	selfdExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("selfDestructAs", ""));
+	selfdExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("selfDestructAs", udTable.GetString("explodeAs", "")));
 	if (deathExpWeaponDef == NULL) {
 		deathExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON");
 		if (deathExpWeaponDef == NULL) {
