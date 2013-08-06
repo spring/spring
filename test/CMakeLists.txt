@@ -278,6 +278,7 @@ Else  (NOT Boost_FOUND)
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
+	add_dependencies(test_${test_name} springcontent.sdz)
 ################################################################################
 ### ThreadPool
 	set(test_name ThreadPool)
