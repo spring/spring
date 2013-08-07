@@ -166,7 +166,7 @@ function addon.DrawLoadScreen()
 		if loadProgress>0 then
 			font:Print(("%.0f%%"):format(loadProgress * 100), vsx * 0.5, vsy * 0.165, barTextSize, "oc")
 		else
-			font:Print("???", vsx * 0.5, vsy * 0.165, barTextSize, "oc")
+			font:Print("Loading...", vsx * 0.5, vsy * 0.165, barTextSize, "oc")
 		end
 	gl.PopMatrix()
 end
