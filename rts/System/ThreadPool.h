@@ -124,7 +124,7 @@ public:
 		task = [&,p]{ (*p)(); finished = true; };
 	}
 
-	boost::optional<std::function<void()>> GetTask() { done = true; return task; }
+	boost::optional<std::function<void()>> GetTask() { return (!std::atomic_exchange(&done, true)) ? boost::optional<std::function<void()>>(task) : boost::optional<std::function<void()>>(); }
 
 	bool IsEmpty() const    { return done; }
 	bool IsFinished() const { return finished; }
@@ -145,9 +145,10 @@ template<class F, class... Args>
 class TaskGroup : public ITaskGroup
 {
 public:
-	TaskGroup(const int num = 0) : remainingTasks(0), latency(0) {
-		start = boost::chrono::high_resolution_clock::now();
+	TaskGroup(const int num = 0) : remainingTasks(0), curtask(0), latency(0) {
+		//start = boost::chrono::high_resolution_clock::now();
 		results.reserve(num);
+		tasks.reserve(num);
 	}
 
 	typedef typename std::result_of<F(Args...)>::type return_type;
@@ -181,20 +182,19 @@ public:
 
 	boost::optional<std::function<void()>> GetTask()
 	{
-		if (!tasks.empty()) {
-			auto t = tasks.front();
-			tasks.pop_front();
+		const int pos = curtask++;
+		if (pos < tasks.size()) {
 			/*if (latency.count() == 0) {
 				auto now = boost::chrono::high_resolution_clock::now();
 				latency = (now - start);
 				LOG("latency %fms", latency.count() / 1000000.f);
 			}*/
-			return t;
+			return tasks[pos];
 		}
 		return boost::optional<std::function<void()>>();
 	}
 
-	bool IsEmpty() const    { return tasks.empty(); }
+	bool IsEmpty() const    { return curtask >= tasks.size() /*tasks.empty()*/; }
 	bool IsFinished() const { return (remainingTasks == 0); }
 
 	template<typename G>
@@ -207,7 +207,8 @@ private:
 
 public:
 	std::atomic<int> remainingTasks;
-	std::deque<std::function<void()>> tasks; //make vector?
+	std::atomic<int> curtask;
+	std::vector<std::function<void()>> tasks;
 	std::vector<boost::unique_future<return_type>> results;
 
 	boost::chrono::time_point<boost::chrono::high_resolution_clock> start; // use for latency profiling!
@@ -250,16 +251,13 @@ public:
 	{
 		auto& ut = uniqueTasks[ThreadPool::GetThreadNum()];
 		if (!ut.empty()) {
+			// no need to make threadsafe cause each thread got its own container
 			auto t = ut.front();
 			ut.pop_front();
 			return t;
 		}
 
-		if (!this->tasks.empty()) {
-			return TaskGroup<F,Args...>::GetTask();
-		}
-
-		return boost::optional<std::function<void()>>();
+		return TaskGroup<F,Args...>::GetTask();
 	}
 
 	bool IsEmpty() const {
