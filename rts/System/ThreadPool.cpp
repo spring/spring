@@ -2,10 +2,13 @@
 #ifdef THREADPOOL
 
 #include "ThreadPool.h"
+#include "Exceptions.h"
 #include "Platform/Threading.h"
 #include "TimeProfiler.h"
 #include "Util.h"
-#include "OffscreenGLContext.h"
+#ifndef UNITSYNC
+	#include "OffscreenGLContext.h"
+#endif
 
 #include <deque>
 #include <vector>
