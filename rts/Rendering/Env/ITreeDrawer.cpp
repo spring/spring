@@ -102,6 +102,15 @@ void ITreeDrawer::Update() {
 	delDispLists.clear();
 }
 
+
+
+void ITreeDrawer::FeatureCreated(const CFeature* feature) {
+	// support /give'ing tree objects
+	if (feature->def->drawType >= DRAWTYPE_TREE) {
+		AddTree(feature->id, feature->def->drawType - 1, feature->pos, 1.0f);
+	}
+}
+
 void ITreeDrawer::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {
 	if (feature->def->drawType >= DRAWTYPE_TREE) {
 		DeleteTree(feature->id, oldpos);

@@ -380,12 +380,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 	hasRadarPos = false;
 
-	losStatus[allyteam] =
-		LOS_ALL_MASK_BITS |
-		LOS_INLOS         |
-		LOS_INRADAR       |
-		LOS_PREVLOS       |
-		LOS_CONTRADAR;
+	losStatus[allyteam] = LOS_ALL_MASK_BITS | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
 	posErrorVector = gs->randVector();
 	posErrorVector.y *= 0.2f;
@@ -677,7 +672,6 @@ void CUnit::Update()
 
 	UpdatePhysicalState();
 
-	residualImpulse *= impulseDecayRate;
 	posErrorVector += posErrorDelta;
 
 	if (beingBuilt)
@@ -1149,7 +1143,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 		damage = newDamage;
 	}
 
-	StoreImpulse((impulse * impulseMult) / mass);
+	ApplyImpulse((impulse * impulseMult) / mass);
 
 	if (!isParalyzer) { // real damage
 		if (damage > 0.0f) {
@@ -1252,18 +1246,13 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 
 
 
-void CUnit::StoreImpulse(const float3& impulse, float newImpulseDecayRate) {
-	CSolidObject::StoreImpulse(impulse, newImpulseDecayRate);
-}
-
-void CUnit::StoreImpulse(const float3& impulse) {
+void CUnit::ApplyImpulse(const float3& impulse) {
 	const float3& groundNormal = ground->GetNormal(pos.x, pos.z);
-	const float groundImpulseScale = std::min(0.0f, residualImpulse.dot(groundNormal));
+	const float groundImpulseScale = std::min(0.0f, impulse.dot(groundNormal));
 	const float3 modImpulse = impulse - (groundNormal * groundImpulseScale * IsOnGround());
 
 	if (moveType->CanApplyImpulse(modImpulse)) {
-		CSolidObject::StoreImpulse(modImpulse);
-		CSolidObject::ApplyImpulse();
+		CSolidObject::ApplyImpulse(modImpulse);
 	}
 }
 
@@ -1281,6 +1270,15 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 	}
 
 	return CMatrix44f(interPos, -rightdir, updir, frontdir);
+}
+
+const CollisionVolume* CUnit::GetCollisionVolume(const LocalModelPiece* lmp) const {
+	if (lmp == NULL)
+		return collisionVolume;
+	if (!collisionVolume->DefaultToPieceTree())
+		return collisionVolume;
+
+	return (lmp->GetCollisionVolume());
 }
 
 
@@ -1440,9 +1438,8 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
 		if (teamHandler->Ally(at, allyteam)) {
 			SetLosStatus(at, LOS_ALL_MASK_BITS | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR);
-		}
-		else {
-			//re-calc LOS status
+		} else {
+			// re-calc LOS status
 			losStatus[at] = 0;
 			UpdateLosStatus(at);
 		}

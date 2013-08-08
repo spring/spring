@@ -154,14 +154,7 @@ namespace QTPFS {
 
 			if (valid_idx(idx)) {
 				debug_print(r_child_idx(idx), calls - 1, tabs + "\t");
-
-				const TNode n = nodes[idx];
-				const unsigned int nn = n->GetNodeNumber();
-				const unsigned int hi = n->GetHeapIndex();
-				const float hp = n->GetPathCost(NODE_PATH_COST_F);
-
-				printf("%s%f (idx=%lu :: nn=%u :: hi=%u)\n", tabs.c_str(), hp, idx, nn, hi);
-
+				printf("%shi=%u :: hp=%.2f\n", tabs.c_str(), nodes[idx]->GetHeapIndex(), nodes[idx]->GetHeapPriority());
 				debug_print(l_child_idx(idx), calls - 1, tabs + "\t");
 			}
 		}

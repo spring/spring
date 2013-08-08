@@ -23,9 +23,8 @@ CFlameThrower::CFlameThrower(CUnit* owner): CWeapon(owner)
 void CFlameThrower::FireImpl()
 {
 	float3 dir = targetPos - weaponMuzzlePos;
-	const float dist = dir.Length();
-	dir /= dist;
 
+	const float dist = dir.LengthNormalize();
 	const float3 spread =
 		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience()) -
 		(dir * 0.001f);

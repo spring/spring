@@ -91,7 +91,7 @@ void CGameHelper::DoExplosionDamage(
 	}
 
 	const LocalModelPiece* lap = unit->GetLastAttackedPiece(gs->frameNum);
-	const CollisionVolume* vol = CollisionVolume::GetVolume(unit, lap);
+	const CollisionVolume* vol = unit->GetCollisionVolume(lap);
 
 	const float3& lapPos = (lap != NULL && vol == lap->GetCollisionVolume())? lap->GetAbsolutePos(): ZeroVector;
 	const float3& volPos = vol->GetWorldSpacePos(unit, lapPos);
@@ -154,7 +154,7 @@ void CGameHelper::DoExplosionDamage(
 	const int weaponDefID,
 	const int projectileID
 ) {
-	const CollisionVolume* vol = CollisionVolume::GetVolume(feature, NULL);
+	const CollisionVolume* vol = feature->GetCollisionVolume(NULL);
 	const float3& volPos = vol->GetWorldSpacePos(feature, ZeroVector);
 
 	const float expDist = vol->GetPointSurfaceDistance(feature, NULL, expPos);
@@ -222,24 +222,20 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	} else {
 		static std::vector<CUnit*> tempUnits(unitHandler->MaxUnits(), NULL);
 		static std::vector<CFeature*> tempFeatures(unitHandler->MaxUnits(), NULL);
+
 		CUnit** endUnit = &tempUnits[0];
 		CFeature** endFeature = &tempFeatures[0];
+
 		quadField->GetUnitsAndFeaturesColVol(expPos, damageAOE, endUnit, endFeature);
 
-		{
-			// damage all units within the explosion radius
-			for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
-				CUnit* unit = *ui;
-				DoExplosionDamage(unit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID, params.projectileID);
-			}
+		// damage all units within the explosion radius
+		for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
+			DoExplosionDamage(*ui, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID, params.projectileID);
 		}
 
-		{
-			// damage all features within the explosion radius
-			for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
-				CFeature* feature = *fi;
-				DoExplosionDamage(feature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID, params.projectileID);
-			}
+		// damage all features within the explosion radius
+		for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
+			DoExplosionDamage(*fi, expPos, damageAOE, expEdgeEffect, damages, weaponDefID, params.projectileID);
 		}
 
 		// deform the map if the explosion was above-ground

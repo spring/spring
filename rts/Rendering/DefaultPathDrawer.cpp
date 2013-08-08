@@ -30,7 +30,6 @@
 #include "Rendering/DefaultPathDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
-#include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
@@ -50,11 +49,8 @@ static inline const SColor& GetBuildColor(const DefaultPathDrawer::BuildSquareSt
 
 
 
-DefaultPathDrawer::DefaultPathDrawer()
-	: IPathDrawer()
-	, CEventClient("[DefaultPathDrawer]", 271991, false)
+DefaultPathDrawer::DefaultPathDrawer(): IPathDrawer()
 {
-	eventHandler.AddClient(this);
 	pm = dynamic_cast<CPathManager*>(pathManager);
 }
 
@@ -75,19 +71,22 @@ void DefaultPathDrawer::DrawAll() const {
 
 void DefaultPathDrawer::DrawInMiniMap()
 {
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-	if (
-		(gd->drawMode != CBaseGroundDrawer::drawPathTraversability) &&
-		(gd->drawMode != CBaseGroundDrawer::drawPathHeat) &&
-		(gd->drawMode != CBaseGroundDrawer::drawPathFlow) &&
-		(gd->drawMode != CBaseGroundDrawer::drawPathCost)
-	) return;
+	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	const auto pe = pm->medResPE;
+	const MoveDef* md = GetSelectedMoveDef();
 
+	if (md == NULL)
+		return;
+
+	if (gd->drawMode < CBaseGroundDrawer::drawPathTraversability)
+		return;
+	if (gd->drawMode > CBaseGroundDrawer::drawPathCost)
+		return;
 
 	glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glLoadIdentity();
-		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
+		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f);
 		glTranslatef((float)minimap->GetPosX() * globalRendering->pixelX, (float)minimap->GetPosY() * globalRendering->pixelY, 0.0f);
 		glScalef((float)minimap->GetSizeX() * globalRendering->pixelX, (float)minimap->GetSizeY() * globalRendering->pixelY, 1.0f);
 	glMatrixMode(GL_MODELVIEW);
@@ -98,8 +97,7 @@ void DefaultPathDrawer::DrawInMiniMap()
 
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 0.0f, 0.7f);
-	auto pe = pm->medResPE;
-	const MoveDef* md = moveDefHandler->GetMoveDefByPathType(0);
+
 	for (const CPathEstimator::SingleBlock& sb: pe->updatedBlocks) {
 		if (sb.moveDef == md) {
 			const int blockIdxX = sb.blockPos.x * pe->GetBlockSize();

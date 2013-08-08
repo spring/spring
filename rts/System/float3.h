@@ -34,8 +34,8 @@ public:
 	static constexpr float CMP_EPS = 1e-4f;
 	static constexpr float NORMALIZE_EPS = 1e-12f;
 #elif defined(__GNUC__) && !defined (__clang__)  // optimization for gnu compilers, so it can be inlined
-	static const float CMP_EPS = 1e-4f;
-	static const float NORMALIZE_EPS = 1e-12f;
+	static constexpr float CMP_EPS = 1e-4f;
+	static constexpr float NORMALIZE_EPS = 1e-12f;
 #else
 	static const float CMP_EPS;
 	static const float NORMALIZE_EPS;
@@ -90,7 +90,6 @@ public:
 	 * Sets the float[3] to this float3.
 	 */
 	void copyInto(float f[3]) const {
-
 		f[0] = x;
 		f[1] = y;
 		f[2] = z;
@@ -179,7 +178,6 @@ public:
 	 * the new float3 inside this one.
 	 */
 	void operator-= (const float3& f) {
-
 		x -= f.x;
 		y -= f.y;
 		z -= f.z;
@@ -257,9 +255,8 @@ public:
 	 * each x/y/z component by that float.
 	 */
 	float3 operator/ (const float f) const {
-
-		const float inv = (float) 1.0f / f;
-		return *this * inv;
+		const float inv = 1.0f / f;
+		return (*this) * inv;
 	}
 
 	/**
@@ -270,7 +267,6 @@ public:
 	 * the new values inside this float3.
 	 */
 	void operator/= (const float3& f) {
-
 		x /= f.x;
 		y /= f.y;
 		z /= f.z;
@@ -284,9 +280,8 @@ public:
 	 * the new values inside this float3.
 	 */
 	void operator/= (const float f) {
-
-		const float inv = (float) 1.f / f;
-		*this *= inv;
+		const float inv = 1.0f / f;
+		(*this) *= inv;
 	}
 
 	/**
@@ -398,11 +393,10 @@ public:
 	 * x/y/z component, square root for pythagorean theorem)
 	 */
 	float distance(const float3& f) const {
-
 		const float dx = x - f.x;
 		const float dy = y - f.y;
 		const float dz = z - f.z;
-		return (float) math::sqrt(dx*dx + dy*dy + dz*dz);
+		return math::sqrt(dx*dx + dy*dy + dz*dz);
 	}
 
 	/**
@@ -417,10 +411,9 @@ public:
 	 * root for pythagorean theorem
 	 */
 	float distance2D(const float3& f) const {
-
 		const float dx = x - f.x;
 		const float dz = z - f.z;
-		return (float) math::sqrt(dx*dx + dz*dz);
+		return math::sqrt(dx*dx + dz*dz);
 	}
 
 	/**
@@ -433,7 +426,7 @@ public:
 	 */
 	float Length() const {
 		//assert(x!=0.f || y!=0.f || z!=0.f);
-		return (float) math::sqrt(SqLength());
+		return math::sqrt(SqLength());
 	}
 
 	/**
@@ -446,7 +439,18 @@ public:
 	 */
 	float Length2D() const {
 		//assert(x!=0.f || y!=0.f || z!=0.f);
-		return (float) math::sqrt(SqLength2D());
+		return math::sqrt(SqLength2D());
+	}
+
+	/**
+	 * normalize vector in-place, return its old length
+	 */
+	float LengthNormalize() {
+		const float len = Length();
+		if (likely(len > NORMALIZE_EPS)) {
+			(*this) *= (1.0f / len);
+		}
+		return len;
 	}
 
 	/**
@@ -476,7 +480,7 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	float3& UnsafeNormalize() {
-		*this *= math::isqrt(SqLength());
+		(*this) *= math::isqrt(SqLength());
 		return *this;
 	}
 
@@ -489,10 +493,9 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	float3& SafeNormalize() {
-
 		const float sql = SqLength();
 		if (likely(sql > NORMALIZE_EPS)) {
-			*this *= math::isqrt(sql);
+			(*this) *= math::isqrt(sql);
 		}
 
 		return *this;
@@ -528,7 +531,7 @@ public:
 	 * the vector's approx. length.
 	 */
 	float3& UnsafeANormalize() {
-		*this *= fastmath::isqrt(SqLength());
+		(*this) *= fastmath::isqrt(SqLength());
 		return *this;
 	}
 
@@ -542,10 +545,9 @@ public:
 	 * else do nothing.
 	 */
 	float3& SafeANormalize() {
-
 		const float sql = SqLength();
 		if (likely(sql > NORMALIZE_EPS)) {
-			*this *= fastmath::isqrt(sql);
+			(*this) *= fastmath::isqrt(sql);
 		}
 
 		return *this;
@@ -582,11 +584,10 @@ public:
 	 * Returns the squared distance of 2 float3s
 	 */
 	float SqDistance(const float3& f) const {
-
 		const float dx = x - f.x;
 		const float dy = y - f.y;
 		const float dz = z - f.z;
-		return (float)(dx*dx + dy*dy + dz*dz);
+		return (dx*dx + dy*dy + dz*dz);
 	}
 
 
@@ -598,10 +599,9 @@ public:
 	 * Returns the squared 2d-distance of 2 float3s
 	 */
 	float SqDistance2D(const float3& f) const {
-
 		const float dx = x - f.x;
 		const float dz = z - f.z;
-		return (float)(dx*dx + dz*dz);
+		return (dx*dx + dz*dz);
 	}
 
 	void AssertNaNs() const {

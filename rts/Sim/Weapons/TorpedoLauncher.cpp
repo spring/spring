@@ -35,9 +35,7 @@ void CTorpedoLauncher::Update()
 			owner->rightdir * relWeaponMuzzlePos.x;
 
 		wantedDir = targetPos - weaponPos;
-		const float dist = wantedDir.Length();
-		predict = dist / projectileSpeed;
-		wantedDir /= dist;
+		predict = wantedDir.LengthNormalize() / projectileSpeed;
 	}
 
 	CWeapon::Update();
@@ -55,8 +53,7 @@ bool CTorpedoLauncher::TestTarget(const float3& pos, bool userTarget, const CUni
 void CTorpedoLauncher::FireImpl()
 {
 	float3 dir = targetPos - weaponMuzzlePos;
-	const float dist = dir.Length();
-	dir /= dist;
+	const float dist = dir.LengthNormalize();
 
 	if (weaponDef->trajectoryHeight > 0) {
 		dir.y += weaponDef->trajectoryHeight;

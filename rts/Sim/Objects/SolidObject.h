@@ -12,6 +12,7 @@
 
 struct MoveDef;
 struct CollisionVolume;
+struct LocalModelPiece;
 struct SolidObjectDef;
 struct SolidObjectGroundDecal;
 
@@ -79,19 +80,7 @@ public:
 	virtual bool AddBuildPower(float amount, CUnit* builder) { return false; }
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) {}
 
-	virtual void StoreImpulse(const float3& impulse, float newImpulseDecayRate) {
-		if ((impulseDecayRate = std::min(std::max(newImpulseDecayRate, 0.0f), 1.0f)) > 0.0f) {
-			StoreImpulse(impulse);
-		}
-	}
-
-	virtual void StoreImpulse(const float3& impulse) {
-		residualImpulse += impulse;
-	}
-	virtual void ApplyImpulse() {
-		speed += residualImpulse;
-		residualImpulse = ZeroVector;
-	}
+	virtual void ApplyImpulse(const float3& impulse) { speed += impulse; }
 
 	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual int GetBlockingMapID() const { return -1; }
@@ -127,6 +116,8 @@ public:
 		assert(false);
 		return CMatrix44f();
 	}
+
+	virtual const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const { return collisionVolume; }
 
 
 	/**
@@ -194,7 +185,6 @@ public:
 	float health;
 	float mass;                                 ///< the physical mass of this object (run-time constant)
 	float crushResistance;                      ///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
-	float impulseDecayRate;                     ///< multiplier decaying this object's (residual) impulse each frame
 
 	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
@@ -216,11 +206,6 @@ public:
 	bool isMoving;                              ///< = velocity.length() > 0.0
 	bool isMarkedOnBlockingMap;                 ///< true if this object is currently marked on the GroundBlockingMap
 
-	float3 groundBlockPos;
-
-	float3 speed;                               ///< current velocity vector (length in elmos/frame)
-	float3 residualImpulse;                     ///< Used to sum up external impulses. TODO: remove this, impulse is ALWAYS applied immediately now
-
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of
 
@@ -240,6 +225,9 @@ public:
 	SyncedFloat3 aimPos;                        ///< used as aiming position by weapons
 	int2 mapPos;                                ///< current position on GroundBlockingObjectMap
 
+	float3 speed;                               ///< current velocity vector (length in elmos/frame)
+	float3 groundBlockPos;
+
 	float3 drawPos;                             ///< = pos + speed * timeOffset (unsynced)
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
 
@@ -249,7 +237,6 @@ public:
 	static const float DEFAULT_MASS;
 	static const float MINIMUM_MASS;
 	static const float MAXIMUM_MASS;
-	static const float IMPULSE_RATE;
 
 	static int deletingRefID;
 	static void SetDeletingRefID(int id) { deletingRefID = id; }

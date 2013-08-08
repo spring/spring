@@ -105,8 +105,6 @@ public:
 	float GetPointSurfaceDistance(const CUnit* u, const LocalModelPiece* lmp, const float3& p) const;
 	float GetPointSurfaceDistance(const CFeature* u, const LocalModelPiece* lmp, const float3& p) const;
 
-	static const CollisionVolume* GetVolume(const CSolidObject* o, const LocalModelPiece* lmp);
-
 private:
 	float GetPointSurfaceDistance(const CMatrix44f& m, const float3& p) const;
 

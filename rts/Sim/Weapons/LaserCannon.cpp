@@ -34,11 +34,10 @@ void CLaserCannon::Update()
 			owner->rightdir * relWeaponMuzzlePos.x;
 
 		float3 wantedDirTemp = targetPos - weaponPos;
-		float targetDist = wantedDirTemp.Length();
+		const float targetDist = wantedDirTemp.LengthNormalize();
 
-		if (!onlyForward && (targetDist != 0.0f)) {
+		if (!onlyForward && targetDist != 0.0f) {
 			wantedDir = wantedDirTemp;
-			wantedDir /= targetDist;
 		}
 
 		predict = targetDist / projectileSpeed;
@@ -56,22 +55,20 @@ void CLaserCannon::Init()
 void CLaserCannon::FireImpl()
 {
 	float3 dir = targetPos - weaponMuzzlePos;
-	const float dist = dir.Length();
-	dir /= dist;
+	const float dist = dir.LengthNormalize();
 
 	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
 		// HoverAirMovetype cannot align itself properly, change back when that is fixed
 		dir = owner->frontdir;
 	}
 
-	dir +=
-		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
-	params.ttl = std::ceil(std::max(dist, weaponDef->range) / weaponDef->projectilespeed);
+	params.ttl = std::ceil(std::max(dist, range) / weaponDef->projectilespeed);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

@@ -265,18 +265,6 @@ float3 CollisionVolume::GetWorldSpacePos(const CSolidObject* o, const float3& ex
 
 
 
-const CollisionVolume* CollisionVolume::GetVolume(const CSolidObject* o, const LocalModelPiece* lmp) {
-	const CollisionVolume* vol = o->collisionVolume;
-
-	if (vol->DefaultToPieceTree() && lmp != NULL) {
-		vol = lmp->GetCollisionVolume();
-	}
-
-	return vol;
-}
-
-
-
 float CollisionVolume::GetPointSurfaceDistance(const CUnit* u, const LocalModelPiece* lmp, const float3& p) const {
 	const CollisionVolume* vol = u->collisionVolume;
 

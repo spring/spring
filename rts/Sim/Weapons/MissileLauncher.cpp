@@ -27,9 +27,7 @@ void CMissileLauncher::Update()
 
 		if (!onlyForward) {
 			wantedDir = targetPos - weaponPos;
-			float dist = wantedDir.Length();
-			predict = dist / projectileSpeed;
-			wantedDir /= dist;
+			predict = wantedDir.LengthNormalize() / projectileSpeed;
 
 			if (weaponDef->trajectoryHeight > 0.0f) {
 				wantedDir.y += weaponDef->trajectoryHeight;
@@ -43,8 +41,7 @@ void CMissileLauncher::Update()
 void CMissileLauncher::FireImpl()
 {
 	float3 dir = targetPos - weaponMuzzlePos;
-	const float dist = dir.Length();
-	dir /= dist;
+	const float dist = dir.LengthNormalize();
 
 	if (onlyForward) {
 		dir = owner->frontdir;
@@ -55,11 +52,12 @@ void CMissileLauncher::FireImpl()
 		dir.Normalize();
 	}
 
-	dir +=
-		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	float3 startSpeed = dir * weaponDef->startvelocity;
+
+	// NOTE: why only for SAMT units?
 	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType))
 		startSpeed += owner->speed;
 

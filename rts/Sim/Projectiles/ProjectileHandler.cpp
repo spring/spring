@@ -188,6 +188,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 		if (p->deleteMe) {
 			ProjectileMap::iterator pIt;
+
 			if (synced) {
 				//! iterator is always valid
 				pIt = syncedProjectileIDs.find(p->id);

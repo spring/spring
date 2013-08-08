@@ -177,7 +177,6 @@ private:
 	std::vector<float> vertexCosts;
 	std::list<unsigned int> dirtyBlocks;        /// List of blocks changed in last search.
 	std::list<SingleBlock> updatedBlocks;       /// Blocks that may need an update due to map changes.
-	int penalty;
 
 	int2 directionVectors[PATH_DIRECTIONS];
 	int2 mStartBlock;
@@ -187,6 +186,7 @@ private:
 	unsigned int mStartBlockIdx;
 	float mGoalHeuristic;
 
+	int blockUpdatePenalty;
 };
 
 #endif

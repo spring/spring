@@ -791,7 +791,7 @@ void CUnitScript::Explode(int piece, int flags)
 		return;
 
 	// This means that we are going to do a full fledged piece explosion!
-	float3 baseSpeed = unit->speed + unit->residualImpulse * 0.5f;
+	float3 baseSpeed = unit->speed;
 	float3 speed((0.5f - gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
 
 	if (baseSpeed.SqLength() > 9) {

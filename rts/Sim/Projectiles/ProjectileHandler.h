@@ -81,6 +81,9 @@ public:
 		return &(it->second);
 	}
 
+	ProjectileRenderMap& GetSyncedRenderProjectileIDs() { return syncedRenderProjectileIDs; }
+	ProjectileRenderMap& GetUnsyncedRenderProjectileIDs() { return unsyncedRenderProjectileIDs; }
+
 	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, CUnit**, const float3&, const float3&);
 	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, CFeature**, const float3&, const float3&);
 	void CheckUnitFeatureCollisions(ProjectileContainer&);
@@ -92,7 +95,7 @@ public:
 
 	void Update();
 	void UpdateParticleSaturation() {
-		particleSaturation     = (maxParticles     > 0)? (currentParticles     / float(maxParticles    )): 1.0f;
+		particleSaturation = (maxParticles > 0)? (currentParticles / float(maxParticles)): 1.0f;
 	}
 
 	void AddProjectile(CProjectile* p);
@@ -115,11 +118,11 @@ public:
 	int currentParticles;          // number of particles weighted by how complex they are
 	int currentNanoParticles;
 	float particleSaturation;      // currentParticles / maxParticles ratio
-	ProjectileRenderMap syncedRenderProjectileIDs;        // same as syncedProjectileIDs, used by render thread
+
 private:
 	void UpdateProjectileContainer(ProjectileContainer&, bool);
 
-
+	ProjectileRenderMap syncedRenderProjectileIDs;        // same as syncedProjectileIDs, used by render thread
 	ProjectileRenderMap unsyncedRenderProjectileIDs;      // same as unsyncedProjectileIDs, used by render thread
 
 	int maxUsedSyncedID;
