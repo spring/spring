@@ -72,21 +72,23 @@ int GetNumThreads()
 
 static void DoTask(boost::shared_lock<boost::shared_mutex>& lk)
 {
-	if (lk.try_lock()) {
+	if (!taskGroups.empty() && lk.try_lock()) {
 		bool foundEmpty = false;
 
 		for(auto tg: taskGroups) {
 			auto p = tg->GetTask();
 
 			if (p) {
+				lk.unlock();
 				SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
 				try {
 					(*p)();
 				} catch(...) {
+					// note, tg must by a copy and not a ref!
+					// else tg could be freed and make tg->PushException invalid!
 					assert(false);
 					tg->PushException(std::current_exception());
 				}
-				lk.unlock();
 				return;
 			}
 
