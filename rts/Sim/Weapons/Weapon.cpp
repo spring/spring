@@ -1375,11 +1375,10 @@ ProjectileParams CWeapon::GetProjectileParams()
 float CWeapon::GetRange2D(float yDiff) const
 {
 	const float root1 = range * range - yDiff * yDiff;
-	if (root1 < 0) {
-		return 0;
-	} else {
-		return math::sqrt(root1);
+	if (root1 < 0.0f) {
+		return 0.0f;
 	}
+	return (math::sqrt(root1));
 }
 
 

@@ -22,15 +22,14 @@ public:
 	void Init();
 	void UpdateRange(float val);
 	void Update();
-	bool AttackGround(float3 pos, bool userTarget);
-	float GetRange2D(float yDiff) const;
 	void SlowUpdate();
 
+	bool AttackGround(float3 pos, bool userTarget);
 
-	/// unused?
-	float maxPredict;
-	/// unused?
-	float minPredict;
+	float GetRange2D(float yDiff, float rFact) const;
+	float GetRange2D(float yDiff) const;
+
+
 	/// indicates high trajectory on/off state
 	bool highTrajectory;
 	/// burnblow tag. defines flakker-like behaviour
