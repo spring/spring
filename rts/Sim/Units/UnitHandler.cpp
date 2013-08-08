@@ -219,13 +219,12 @@ void CUnitHandler::Update()
 			assert(unit->pos.z >= -(float3::maxzpos * 16.0f)); \
 			assert(unit->pos.z <=  (float3::maxzpos * 16.0f)); \
 		}
-	#define UNIT_SANITY_CHECK(unit)            \
+	#define UNIT_SANITY_CHECK(unit)         \
 		unit->pos.AssertNaNs();             \
 		unit->midPos.AssertNaNs();          \
 		unit->relMidPos.AssertNaNs();       \
 		unit->speed.AssertNaNs();           \
 		unit->deathSpeed.AssertNaNs();      \
-		unit->residualImpulse.AssertNaNs(); \
 		unit->rightdir.AssertNaNs();        \
 		unit->updir.AssertNaNs();           \
 		unit->frontdir.AssertNaNs();        \

@@ -3399,20 +3399,18 @@ int LuaOpenGL::DeleteTextureFBO(lua_State* L)
 	if (lua_isnil(L, 1)) {
 		return 0;
 	}
-	const string texture = luaL_checkstring(L, 1);
+
 	LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
-	lua_pushboolean(L, textures.FreeFBO(texture));
+	lua_pushboolean(L, textures.FreeFBO(luaL_checkstring(L, 1)));
 	return 1;
 }
 
 
 int LuaOpenGL::TextureInfo(lua_State* L)
 {
-	const string texture = luaL_checkstring(L, 1);
-
 	LuaMatTexture tex;
-	const bool loaded = LuaOpenGLUtils::ParseTextureImage(L, tex, texture);
-	if (!loaded) {
+
+	if (!LuaOpenGLUtils::ParseTextureImage(L, tex, luaL_checkstring(L, 1))) {
 		return 0;
 	}
 

@@ -25,6 +25,7 @@ namespace QTPFS {
 		void SetHeapIndex(unsigned int n) { heapIndex = n; }
 		unsigned int GetNodeNumber() const { return nodeNumber; }
 		unsigned int GetHeapIndex() const { return heapIndex; }
+		float GetHeapPriority() const { return GetPathCost(NODE_PATH_COST_F); }
 
 		bool operator <  (const INode* n) const { return (fCost <  n->fCost); }
 		bool operator >  (const INode* n) const { return (fCost >  n->fCost); }

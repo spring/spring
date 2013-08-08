@@ -88,8 +88,7 @@ public:
 	virtual void DoWaterDamage();
 	virtual void FinishedBuilding(bool postInit);
 
-	void StoreImpulse(const float3& impulse, float newImpulseDecayRate);
-	void StoreImpulse(const float3& impulse);
+	void ApplyImpulse(const float3& impulse);
 
 	bool AttackUnit(CUnit* unit, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
 	bool AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
@@ -115,6 +114,8 @@ public:
 	void ApplyTransformMatrix() const;
 	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const;
 
+	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const;
+
 	void SetLastAttacker(CUnit* attacker);
 	void SetLastAttackedPiece(LocalModelPiece* p, int f) {
 		lastAttackedPiece      = p;
@@ -125,6 +126,7 @@ public:
 			return lastAttackedPiece;
 		return NULL;
 	}
+
 
 	void DependentDied(CObject* o);
 

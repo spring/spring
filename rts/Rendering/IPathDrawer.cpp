@@ -10,6 +10,7 @@
 #include "Sim/Path/QTPFS/PathManager.hpp"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/EventHandler.h"
 
 IPathDrawer* pathDrawer = NULL;
 
@@ -35,6 +36,13 @@ void IPathDrawer::FreeInstance(IPathDrawer* pd) {
 }
 
 
+
+IPathDrawer::IPathDrawer(): CEventClient("[IPathDrawer]", 271991, false), enabled(false) {
+	eventHandler.AddClient(this);
+}
+IPathDrawer::~IPathDrawer() {
+	eventHandler.RemoveClient(this);
+}
 
 const MoveDef* IPathDrawer::GetSelectedMoveDef() {
 	GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture

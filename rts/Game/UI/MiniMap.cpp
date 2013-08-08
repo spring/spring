@@ -888,17 +888,15 @@ void CMiniMap::Update()
 			fbo.Bind();
 			if (minimapTexSize != int2(width, height)) {
 				minimapTexSize = int2(width, height);
-
-				const GLsizei maxSamples = fbo.GetMaxSamples();
-				multisampledFBO = (maxSamples > 1);
+				multisampledFBO = (fbo.GetMaxSamples() > 1);
 
 				if (multisampledFBO) {
 					// multisampled FBO we are render to
 					fbo.Detach(GL_COLOR_ATTACHMENT0_EXT); // delete old RBO
 					fbo.CreateRenderBufferMultisample(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, minimapTexSize.x, minimapTexSize.y, 4);
 					//fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, minimapTexSize.x, minimapTexSize.y);
-					const bool status = fbo.CheckStatus("MINIMAP");
-					if (!status) {
+
+					if (!fbo.CheckStatus("MINIMAP")) {
 						fbo.Detach(GL_COLOR_ATTACHMENT0_EXT);
 						multisampledFBO = false;
 					}
@@ -918,8 +916,8 @@ void CMiniMap::Update()
 					// resolve FBO with attached final texture target
 					fboResolve.Bind();
 					fboResolve.AttachTexture(minimapTex);
-					const bool status = fboResolve.CheckStatus("MINIMAP-RESOLVE");
-					if (!status) {
+
+					if (!fboResolve.CheckStatus("MINIMAP-RESOLVE")) {
 						renderToTexture = false;
 						return;
 					}
@@ -927,8 +925,8 @@ void CMiniMap::Update()
 					// directly render to texture without multisampling (fallback solution)
 					fbo.Bind();
 					fbo.AttachTexture(minimapTex);
-					const bool status = fbo.CheckStatus("MINIMAP-RESOLVE");
-					if (!status) {
+
+					if (!fbo.CheckStatus("MINIMAP-RESOLVE")) {
 						renderToTexture = false;
 						return;
 					}

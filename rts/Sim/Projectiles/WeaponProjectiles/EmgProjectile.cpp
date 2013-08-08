@@ -60,6 +60,7 @@ void CEmgProjectile::Update()
 
 	UpdateGroundBounce();
 	UpdateInterception();
+
 	--ttl;
 }
 

@@ -10,7 +10,6 @@
 #include "Map/MapInfo.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/QuadField.h"
-#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/ModInfo.h"
@@ -197,10 +196,6 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	speed = params.speed;
 	isMoving = ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f));
-
-	if (def->drawType >= DRAWTYPE_TREE) {
-		if (treeDrawer) treeDrawer->AddTree(id, def->drawType - 1, pos, 1.0f);
-	}
 }
 
 
@@ -355,8 +350,7 @@ void CFeature::DoDamage(const DamageArray& damages, const float3& impulse, CUnit
 	// NOTE: for trees, impulse is used to drive their falling animation
 	// TODO: replace RHS condition by adding Feature{Pre}Damaged callins
 	if ((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit())) {
-		StoreImpulse(impulse / mass);
-		ApplyImpulse();
+		ApplyImpulse(impulse / mass);
 	}
 
 	if (impulse != ZeroVector) {
@@ -523,7 +517,6 @@ bool CFeature::UpdatePosition()
 		transMatrix[13] = pos.y;
 	}
 
-	residualImpulse *= impulseDecayRate;
 	isMoving = ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f));
 
 	UpdatePhysicalState();

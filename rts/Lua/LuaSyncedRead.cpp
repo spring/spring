@@ -4615,8 +4615,12 @@ int LuaSyncedRead::GetProjectileTarget(lua_State* L)
 	const CWeaponProjectile* wpro = static_cast<const CWeaponProjectile*>(pro);
 	const CWorldObject* wtgt = wpro->GetTargetObject();
 
-	if (wtgt == NULL)
-		return 0;
+	if (wtgt == NULL) {
+		lua_pushnumber(L, (wpro->GetTargetPos()).x);
+		lua_pushnumber(L, (wpro->GetTargetPos()).y);
+		lua_pushnumber(L, (wpro->GetTargetPos()).z);
+		return 3;
+	}
 
 	if (dynamic_cast<const CUnit*>(wtgt) != NULL) {
 		lua_pushnumber(L, wtgt->id);

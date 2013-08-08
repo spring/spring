@@ -625,7 +625,7 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	skidRotSpeed = 0.0f;
 	skidRotAccel = 0.0f;
 
-	float3 newSpeed = owner->speed + owner->residualImpulse;
+	float3 newSpeed = owner->speed + impulse;
 	float3 skidDir = owner->frontdir;
 
 	// NOTE:
@@ -635,8 +635,8 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	//   frontdir
 	// TODO (95.0+):
 	//   there should probably be a configurable minimum-impulse below which the
-	//   unit does not react at all (can re-use SolidObject::residualImpulse for
-	//   this) but also does NOT store the impulse like a small-charge capacitor
+	//   unit does not react at all but also does NOT "store" the impulse like a
+	//   small-charge capacitor
 	//
 	const bool startSkidding = StartSkidding(newSpeed, skidDir);
 	const bool startFlying = StartFlying(newSpeed, ground->GetNormal(owner->pos.x, owner->pos.z));

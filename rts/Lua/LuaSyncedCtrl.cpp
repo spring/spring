@@ -2251,12 +2251,7 @@ int LuaSyncedCtrl::AddUnitImpulse(lua_State* L)
 	                     Clamp(luaL_checkfloat(L, 3), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
 	                     Clamp(luaL_checkfloat(L, 4), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE));
 
-	if (lua_isnumber(L, 5)) {
-		unit->StoreImpulse(impulse, lua_tonumber(L, 5));
-	} else {
-		unit->StoreImpulse(impulse);
-	}
-
+	unit->ApplyImpulse(impulse);
 	return 0;
 }
 
@@ -2756,6 +2751,14 @@ int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 	if (!pro->weapon)
 		return 0;
 
+	struct ProjectileTarget {
+		static DependenceType GetObjectDepType(const CWorldObject* o) {
+			if (dynamic_cast<const      CSolidObject*>(o) != NULL) return DEPENDENCE_WEAPONTARGET;
+			if (dynamic_cast<const CWeaponProjectile*>(o) != NULL) return DEPENDENCE_INTERCEPTTARGET;
+			return DEPENDENCE_NONE;
+		}
+	};
+
 	wpro = static_cast<CWeaponProjectile*>(pro);
 
 	switch (lua_gettop(L)) {
@@ -2763,26 +2766,20 @@ int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 			const int id = luaL_checkint(L, 2);
 			const char* type = luaL_checkstring(L, 3);
 
-			if ((type == NULL) || ((*type) == 0))
-				return 0;
-
 			CWorldObject* oldTargetObject = wpro->GetTargetObject();
 			CWorldObject* newTargetObject = NULL;
 
-			switch (type[0]) {
-				case 'u': { newTargetObject = ParseUnit(L, __FUNCTION__, 2); } break;
-				case 'f': { newTargetObject = ParseFeature(L, __FUNCTION__, 2); } break;
-				case 'p': { newTargetObject = ParseProjectile(L, __FUNCTION__, 2); } break;
+			if ((type != NULL) && ((*type) != 0)) {
+				// if no string arg, current target will be cleared
+				switch (type[0]) {
+					case 'u': { newTargetObject = ParseUnit(L, __FUNCTION__, 2); } break;
+					case 'f': { newTargetObject = ParseFeature(L, __FUNCTION__, 2); } break;
+					case 'p': { newTargetObject = ParseProjectile(L, __FUNCTION__, 2); } break;
+				}
 			}
 
-			const DependenceType oldDepType =
-				(dynamic_cast<     CSolidObject*>(oldTargetObject) != NULL)? DEPENDENCE_WEAPONTARGET:
-				(dynamic_cast<CWeaponProjectile*>(oldTargetObject) != NULL)? DEPENDENCE_INTERCEPTTARGET:
-				DEPENDENCE_NONE;
-			const DependenceType newDepType =
-				(dynamic_cast<     CSolidObject*>(newTargetObject) != NULL)? DEPENDENCE_WEAPONTARGET:
-				(dynamic_cast<CWeaponProjectile*>(newTargetObject) != NULL)? DEPENDENCE_INTERCEPTTARGET:
-				DEPENDENCE_NONE;
+			const DependenceType oldDepType = ProjectileTarget::GetObjectDepType(oldTargetObject);
+			const DependenceType newDepType = ProjectileTarget::GetObjectDepType(newTargetObject);
 
 			if (oldTargetObject != NULL) {
 				wpro->DeleteDeathDependence(oldTargetObject, oldDepType);
@@ -2799,6 +2796,10 @@ int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 		} break;
 
 		case 4: {
+			if (wpro->GetTargetObject() != NULL) {
+				wpro->DeleteDeathDependence(wpro->GetTargetObject(), ProjectileTarget::GetObjectDepType(wpro->GetTargetObject()));
+			}
+
 			wpro->SetTargetObject(NULL);
 			wpro->SetTargetPos(float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)));
 

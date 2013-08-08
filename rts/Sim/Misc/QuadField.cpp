@@ -149,7 +149,8 @@ std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
 		Quad& quad = baseQuads[*a];
 
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if ((*ui)->tempNum == tempNum) { continue; }
+			if ((*ui)->tempNum == tempNum)
+				continue;
 
 			(*ui)->tempNum = tempNum;
 			units.push_back(*ui);
@@ -177,7 +178,8 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, b
 		Quad& quad = baseQuads[*a];
 
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if ((*ui)->tempNum == tempNum) { continue; }
+			if ((*ui)->tempNum == tempNum)
+				continue;
 
 			const float totRad       = radius + (*ui)->radius;
 			const float totRadSq     = totRad * totRad;
@@ -185,7 +187,8 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, b
 				pos.SqDistance((*ui)->midPos):
 				pos.SqDistance2D((*ui)->midPos);
 
-			if (posUnitDstSq >= totRadSq) { continue; }
+			if (posUnitDstSq >= totRadSq)
+				continue;
 
 			(*ui)->tempNum = tempNum;
 			units.push_back(*ui);
@@ -566,10 +569,8 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float rad
 
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		for (fi = baseQuads[*qi].features.begin(); fi != baseQuads[*qi].features.end(); ++fi) {
-			const float totRad = radius + (*fi)->radius;
-
 			if ((*fi)->tempNum == tempNum) { continue; }
-			if (pos.SqDistance((*fi)->midPos) >= (totRad * totRad)) { continue; }
+			if (pos.SqDistance((*fi)->midPos) >= Square(radius + (*fi)->radius)) { continue; }
 
 			(*fi)->tempNum = tempNum;
 			features.push_back(*fi);
@@ -653,9 +654,7 @@ std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& pos, flo
 		std::list<CProjectile*>& quadProjectiles = baseQuads[*qi].projectiles;
 
 		for (pi = quadProjectiles.begin(); pi != quadProjectiles.end(); ++pi) {
-			const float totRad = radius + (*pi)->radius;
-
-			if ((pos - (*pi)->pos).SqLength() >= (totRad * totRad)) {
+			if ((pos - (*pi)->pos).SqLength() >= Square(radius + (*pi)->radius)) {
 				continue;
 			}
 
@@ -708,11 +707,9 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos, float r
 
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		for (ui = baseQuads[*qi].units.begin(); ui != baseQuads[*qi].units.end(); ++ui) {
-			const float totRad = radius + (*ui)->radius;
-
 			if (!(*ui)->blocking) { continue; }
 			if ((*ui)->tempNum == tempNum) { continue; }
-			if ((pos - (*ui)->midPos).SqLength() >= (totRad * totRad)) { continue; }
+			if ((pos - (*ui)->midPos).SqLength() >= Square(radius + (*ui)->radius)) { continue; }
 
 			(*ui)->tempNum = tempNum;
 			solids.push_back(*ui);
@@ -720,11 +717,9 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos, float r
 
 		std::list<CFeature*>::iterator fi;
 		for (fi = baseQuads[*qi].features.begin(); fi != baseQuads[*qi].features.end(); ++fi) {
-			const float totRad = radius + (*fi)->radius;
-
 			if (!(*fi)->blocking) { continue; }
 			if ((*fi)->tempNum == tempNum) { continue; }
-			if ((pos - (*fi)->midPos).SqLength() >= (totRad * totRad)) { continue; }
+			if ((pos - (*fi)->midPos).SqLength() >= Square(radius + (*fi)->radius)) { continue; }
 
 			(*fi)->tempNum = tempNum;
 			solids.push_back(*fi);
@@ -771,7 +766,7 @@ std::vector<int> CQuadField::GetQuadsRectangle(const float3& pos1, const float3&
 // optimization specifically for projectile collisions
 void CQuadField::GetUnitsAndFeaturesColVol(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetUnitsAndFeaturesExact
+	GML_RECMUTEX_LOCK(qnum); // GetUnitsAndFeaturesColVol
 
 	const int tempNum = gs->tempNum++;
 
@@ -787,28 +782,34 @@ void CQuadField::GetUnitsAndFeaturesColVol(const float3& pos, float radius, CUni
 		Quad& quad = baseQuads[*a];
 
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			CUnit& u = **ui;
-			if (u.tempNum == tempNum) { continue; } // prevent double adding
+			CUnit* u = *ui;
+			if (u->tempNum == tempNum)
+				continue; // prevent double adding
 
-			const auto& colvol = *(u.collisionVolume);
-			const float totRad = radius + colvol.GetBoundingRadius();
-			if (pos.SqDistance(u.midPos + colvol.GetOffsets()) >= (totRad * totRad)) { continue; }
+			const auto* colvol = u->collisionVolume;
+			const float totRad = radius + colvol->GetBoundingRadius();
 
-			u.tempNum = tempNum;
-			*dstUnit = &u;
+			if (pos.SqDistance(colvol->GetWorldSpacePos(u)) >= (totRad * totRad))
+				continue;
+
+			u->tempNum = tempNum;
+			*dstUnit = u;
 			++dstUnit;
 		}
 
 		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
-			CFeature& f = **fi;
-			if (f.tempNum == tempNum) { continue; } // prevent double adding
+			CFeature* f = *fi;
+			if (f->tempNum == tempNum)
+				continue; // prevent double adding
 
-			const auto& colvol = *(f.collisionVolume);
-			const float totRad = radius + colvol.GetBoundingRadius();
-			if (pos.SqDistance(f.midPos + colvol.GetOffsets()) >= (totRad * totRad)) { continue; }
+			const auto* colvol = f->collisionVolume;
+			const float totRad = radius + colvol->GetBoundingRadius();
 
-			f.tempNum = tempNum;
-			*dstFeature = &f;
+			if (pos.SqDistance(colvol->GetWorldSpacePos(f)) >= (totRad * totRad))
+				continue;
+
+			f->tempNum = tempNum;
+			*dstFeature = f;
 			++dstFeature;
 		}
 	}

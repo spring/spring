@@ -42,16 +42,13 @@ void CDGunWeapon::Update()
 
 void CDGunWeapon::FireImpl()
 {
-	float3 dir = targetPos - weaponMuzzlePos;
-	const float dist = dir.Length();
-	dir /= dist;
+	float3 dir = owner->frontdir;
 
-	if (onlyForward) {
-		dir = owner->frontdir;
+	if (!onlyForward) {
+		dir = (targetPos - weaponMuzzlePos).Normalize(); 
 	}
 
-	dir +=
-		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	ProjectileParams params = GetProjectileParams();

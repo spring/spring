@@ -23,7 +23,7 @@ CEmgCannon::CEmgCannon(CUnit* owner): CWeapon(owner)
 
 void CEmgCannon::Update()
 {
-	if(targetType != Target_None){
+	if (targetType != Target_None) {
 		weaponPos = owner->pos +
 			owner->frontdir * relWeaponPos.z +
 			owner->updir    * relWeaponPos.y +
@@ -33,13 +33,14 @@ void CEmgCannon::Update()
 			owner->updir    * relWeaponMuzzlePos.y +
 			owner->rightdir * relWeaponMuzzlePos.x;
 
-		float3 wantedDirTemp(targetPos - weaponPos);
-		float len = wantedDirTemp.Length();
-		if(!onlyForward && (len != 0.0f)) {
+		float3 wantedDirTemp = targetPos - weaponPos;
+		const float targetDist = wantedDirTemp.LengthNormalize();
+
+		if (!onlyForward && targetDist != 0.0f) {
 			wantedDir = wantedDirTemp;
-			wantedDir /= len;
 		}
-		predict=len/projectileSpeed;
+
+		predict = targetDist / projectileSpeed;
 	}
 	CWeapon::Update();
 }
@@ -53,16 +54,14 @@ void CEmgCannon::Init()
 void CEmgCannon::FireImpl()
 {
 	float3 dir = targetPos - weaponMuzzlePos;
-	const float dist = dir.Length();
-	dir /= dist;
+	const float dist = dir.LengthNormalize();
 
 	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
 		// HoverAirMoveType canot align itself properly, change back when that is fixed
 		dir = owner->frontdir;
 	}
 
-	dir +=
-		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	ProjectileParams params = GetProjectileParams();
