@@ -6,7 +6,7 @@
 #include "Platform/Threading.h"
 #include "TimeProfiler.h"
 #include "Util.h"
-#ifndef UNITSYNC
+#if !defined(UNITSYNC) && !defined(UNIT_TEST)
 	#include "OffscreenGLContext.h"
 #endif
 
@@ -21,7 +21,7 @@ static std::deque<void*> thread_group;
 static boost::shared_mutex taskMutex;
 static boost::condition_variable newTasks;
 
-#ifndef UNITSYNC
+#if !defined(UNITSYNC) && !defined(UNIT_TEST)
 static bool hasOGLthreads = false; // disable for now (not used atm)
 #else
 static bool hasOGLthreads = false;
