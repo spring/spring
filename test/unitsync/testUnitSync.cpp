@@ -246,8 +246,8 @@ BOOST_AUTO_TEST_CASE( UnitSync )
 
 	// Select random Game & Map
 	int i = us::GetMapCount() - 1, j = us::GetPrimaryModCount() - 1;
-	BOOST_CHECK(i>0);
-	BOOST_CHECK(j>0);
+//	BOOST_CHECK(i>0);
+//	BOOST_CHECK(j>0);
 
 	while (i > 0 && !us::GetMapName(i)) --i;
 	while (j > 0 && !us::GetPrimaryModName(j)) --j;
