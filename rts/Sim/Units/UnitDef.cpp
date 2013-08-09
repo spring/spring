@@ -358,7 +358,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	factoryHeadingTakeoff = udTable.GetBool("factoryHeadingTakeoff", true);
 
 	upright = udTable.GetBool("upright", false);
-	blocking = udTable.GetBool("blocking", true);
+	collidable = udTable.GetBool("blocking", true);
 	collide = udTable.GetBool("collide", true);
 
 	const float maxSlopeDeg = Clamp(udTable.GetFloat("maxSlope", 0.0f), 0.0f, 89.0f);

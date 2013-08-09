@@ -43,10 +43,13 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 
 	const int objID = GetObjectID(object);
 
-	object->isMarkedOnBlockingMap = true;
+	object->SetPhysicalStateBit(CSolidObject::STATE_BIT_BLOCKING);
 	object->mapPos = object->GetMapPos();
+	object->groundBlockPos = object->pos;
 
 	if (object->immobile) {
+		// align position to even-numbered squares (because
+		// the default pathfinder does not explore odd ones!)
 		object->mapPos.x &= 0xfffffe;
 		object->mapPos.y &= 0xfffffe;
 	}
@@ -75,8 +78,9 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 
 	const int objID = GetObjectID(object);
 
-	object->isMarkedOnBlockingMap = true;
+	object->SetPhysicalStateBit(CSolidObject::STATE_BIT_BLOCKING);
 	object->mapPos = object->GetMapPos();
+	object->groundBlockPos = object->pos;
 
 	if (object->immobile) {
 		object->mapPos.x &= 0xfffffe;
@@ -119,7 +123,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 	const int sx = object->xsize;
 	const int sz = object->zsize;
 
-	object->isMarkedOnBlockingMap = false;
+	object->ClearPhysicalStateBit(CSolidObject::STATE_BIT_BLOCKING);
 
 	for (int z = bz; z < bz + sz; ++z) {
 		for (int x = bx; x < bx + sx; ++x) {

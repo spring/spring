@@ -898,7 +898,7 @@ void CGroundMoveType::CheckCollisionSkid()
 	for (fi = nearFeatures.begin(); fi != nearFeatures.end(); ++fi) {
 		CFeature* f = *fi;
 
-		if (!f->blocking)
+		if (!f->collidable)
 			continue;
 
 		const float sqDist = (pos - f->pos).SqLength();

@@ -160,7 +160,7 @@ void PathFlowMap::Update() {
 void PathFlowMap::AddFlow(const CSolidObject* o) {
 	return;
 
-	if (!o->blocking) {
+	if (!o->collidable) {
 		return;
 	}
 	if (!o->pos.IsInBounds()) {

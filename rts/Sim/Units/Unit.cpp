@@ -464,12 +464,10 @@ void CUnit::PostInit(const CUnit* builder)
 	// NOTE: this does mean that mines can be stacked indefinitely
 	// (an extra yardmap character would be needed to prevent this)
 	immobile = unitDef->IsImmobileUnit();
-	blocking = unitDef->blocking;
-	blocking &= !(immobile && unitDef->canKamikaze);
+	collidable = unitDef->collidable;
+	collidable &= !(immobile && unitDef->canKamikaze);
 
-	if (blocking) {
-		Block();
-	}
+	Block();
 
 	if (unitDef->windGenerator > 0.0f) {
 		wind.AddUnit(this);
@@ -533,17 +531,11 @@ void CUnit::PostInit(const CUnit* builder)
 
 void CUnit::ForcedMove(const float3& newPos)
 {
-	if (blocking) {
-		UnBlock();
-	}
-
+	UnBlock();
 	Move(newPos - pos, true);
+	Block();
 
 	eventHandler.UnitMoved(this);
-
-	if (blocking) {
-		Block();
-	}
 
 	quadField->MovedUnit(this);
 	loshandler->MoveUnit(this, false);
@@ -1920,7 +1912,7 @@ void CUnit::FinishedBuilding(bool postInit)
 		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
 		CFeature* f = featureHandler->CreateWreckage(p, 0, false);
 
-		if (f) {
+		if (f != NULL) {
 			f->blockHeightChanges = true;
 		}
 

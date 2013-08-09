@@ -707,7 +707,7 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos, float r
 
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		for (ui = baseQuads[*qi].units.begin(); ui != baseQuads[*qi].units.end(); ++ui) {
-			if (!(*ui)->blocking) { continue; }
+			if (!(*ui)->collidable) { continue; }
 			if ((*ui)->tempNum == tempNum) { continue; }
 			if ((pos - (*ui)->midPos).SqLength() >= Square(radius + (*ui)->radius)) { continue; }
 
@@ -717,7 +717,7 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos, float r
 
 		std::list<CFeature*>::iterator fi;
 		for (fi = baseQuads[*qi].features.begin(); fi != baseQuads[*qi].features.end(); ++fi) {
-			if (!(*fi)->blocking) { continue; }
+			if (!(*fi)->collidable) { continue; }
 			if ((*fi)->tempNum == tempNum) { continue; }
 			if ((pos - (*fi)->midPos).SqLength() >= Square(radius + (*fi)->radius)) { continue; }
 

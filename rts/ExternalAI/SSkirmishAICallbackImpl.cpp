@@ -3691,7 +3691,7 @@ EXPORT(bool) skirmishAiCallback_FeatureDef_isReclaimable(int skirmishAIId, int f
 }
 
 EXPORT(bool) skirmishAiCallback_FeatureDef_isBlocking(int skirmishAIId, int featureDefId) {
-	return getFeatureDefById(skirmishAIId, featureDefId)->blocking;
+	return getFeatureDefById(skirmishAIId, featureDefId)->collidable;
 }
 
 EXPORT(bool) skirmishAiCallback_FeatureDef_isBurnable(int skirmishAIId, int featureDefId) {

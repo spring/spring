@@ -100,7 +100,7 @@ unsigned int CPathManager::RequestPath(
 	newPath->finalGoal = goalPos;
 	newPath->caller = caller;
 
-	if (caller) {
+	if (caller != NULL) {
 		caller->UnBlock();
 	}
 
@@ -189,7 +189,7 @@ unsigned int CPathManager::RequestPath(
 		delete newPath;
 	}
 
-	if (caller) {
+	if (caller != NULL) {
 		caller->Block();
 	}
 

@@ -63,6 +63,7 @@ public:
 		STATE_BIT_FLYING   = (1 << 4),
 		STATE_BIT_FALLING  = (1 << 5),
 		STATE_BIT_SKIDDING = (1 << 6),
+		STATE_BIT_BLOCKING = (1 << 7),
 	};
 	enum DamageType {
 		DAMAGE_EXPLOSION_WEAPON = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
@@ -121,13 +122,13 @@ public:
 
 
 	/**
-	 * Adds this object to the GroundBlockingMap if and only if its collidable
-	 * property is set (blocking), else does nothing (except call UnBlock()).
+	 * Adds this object to the GroundBlockingMap if and only
+	 * if its collidable property is set, else does nothing
 	 */
 	void Block();
 	/**
-	 * Removes this object from the GroundBlockingMap if it is currently marked
-	 * on it, does nothing otherwise.
+	 * Removes this object from the GroundBlockingMap if it
+	 * is currently marked on it, does nothing otherwise.
 	 */
 	void UnBlock();
 
@@ -138,6 +139,8 @@ public:
 
 	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
 
+	bool BlockMapPosChanged() const { return (groundBlockPos != pos); }
+
 	bool IsOnGround() const { return ((physicalState & STATE_BIT_ONGROUND) != 0); }
 	bool IsInAir() const { return ((physicalState & STATE_BIT_INAIR) != 0); }
 	bool IsInWater() const { return ((physicalState & STATE_BIT_INWATER) != 0); }
@@ -146,6 +149,7 @@ public:
 	bool IsFlying() const { return ((physicalState & STATE_BIT_FLYING) != 0); }
 	bool IsFalling() const { return ((physicalState & STATE_BIT_FALLING) != 0); }
 	bool IsSkidding() const { return ((physicalState & STATE_BIT_SKIDDING) != 0); }
+	bool IsBlocking() const { return ((physicalState & STATE_BIT_BLOCKING) != 0); }
 
 	void SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= (bit); physicalState = static_cast<PhysicalState>(ps); }
 	void ClearPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps &= (~bit); physicalState = static_cast<PhysicalState>(ps); }
@@ -186,7 +190,7 @@ public:
 	float mass;                                 ///< the physical mass of this object (run-time constant)
 	float crushResistance;                      ///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
 
-	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
+	bool collidable;                            ///< if this object can be collided with at all (can be true while state&STATE_BIT_BLOCKING == 0), when false object is also skipped by ray-traces
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
 	bool immobile;                              ///< whether this object can be moved or not (except perhaps along y-axis, to make it stay on ground)
 	bool crushKilled;                           ///< true if this object died by being crushed during a collision
@@ -204,7 +208,6 @@ public:
 	PhysicalState physicalState;                ///< The current state of the object within the gameworld.
 
 	bool isMoving;                              ///< = velocity.length() > 0.0
-	bool isMarkedOnBlockingMap;                 ///< true if this object is currently marked on the GroundBlockingMap
 
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of

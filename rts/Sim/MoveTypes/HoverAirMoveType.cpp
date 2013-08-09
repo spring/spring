@@ -153,12 +153,8 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
 
-			if (padStatus == PAD_STATUS_FLYING) {
-				// set us on ground if we are not on a pad
-				owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
-				owner->Block();
-			}
-
+			owner->Block();
+			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			break;
 		case AIRCRAFT_LANDING:
 			owner->Deactivate();
@@ -168,10 +164,11 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 			wantedSpeed = ZeroVector;
 			// fall through
 		default:
-			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
-			owner->UnBlock();
 			owner->Activate();
-			reservedLandingPos.x = -1;
+			owner->UnBlock();
+			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
+
+			reservedLandingPos.x = -1.0f;
 			break;
 	}
 
@@ -554,16 +551,16 @@ void CHoverAirMoveType::UpdateLanding()
 			reservedLandingPos = pos;
 			goalPos = pos;
 
-			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			owner->Block();
-			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			owner->Deactivate();
 			owner->script->StopMoving();
 		} else {
 			if (goalPos.SqDistance2D(pos) < 900) {
 				goalPos = goalPos + gs->randVector() * 300;
 				goalPos.ClampInBounds();
-				progressState = AMoveType::Failed; // exact landing pos failed, make sure finishcommand is called anyway
+
+				// exact landing pos failed, make sure finishcommand is called anyway
+				progressState = AMoveType::Failed;
 			}
 			flyState = FLY_LANDING;
 			UpdateFlying();

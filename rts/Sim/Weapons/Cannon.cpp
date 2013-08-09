@@ -53,7 +53,8 @@ void CCannon::UpdateRange(float val)
 {
 	// clamp so as to not extend range if projectile
 	// speed is too low to reach the updated range
-	// note: new range can be zero (!)
+	// note: new range can be zero (!) making range
+	// and height factors irrelevant
 	range = val;
 	rangeFactor = Clamp(range / GetRange2D(0.0f, 1.0f), 0.0f, 1.0f);
 
