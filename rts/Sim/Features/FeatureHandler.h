@@ -14,7 +14,6 @@
 #include "Sim/Misc/SimObjectIDPool.h"
 
 
-struct S3DModel;
 struct UnitDef;
 class LuaTable;
 

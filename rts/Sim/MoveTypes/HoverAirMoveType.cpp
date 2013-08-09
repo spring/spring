@@ -177,7 +177,7 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 		flyState = FLY_CRUISING;
 	}
 
-	owner->isMoving = (aircraftState != AIRCRAFT_LANDED);
+	owner->UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, (aircraftState != AIRCRAFT_LANDED));
 	waitCounter = 0;
 }
 
@@ -185,8 +185,9 @@ void CHoverAirMoveType::StartMoving(float3 pos, float goalRadius)
 {
 	forceHeading = false;
 	wantToStop = false;
-	owner->isMoving = true;
 	waitCounter = 0;
+
+	owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 
 	switch (aircraftState) {
 		case AIRCRAFT_LANDED:
@@ -289,8 +290,9 @@ void CHoverAirMoveType::StopMoving(bool callScript, bool hardStop)
 {
 	forceHeading = false;
 	wantToStop = true;
-	owner->isMoving = false;
 	wantedHeight = orgWantedHeight;
+
+	owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 
 	if (progressState != AMoveType::Failed)
 		progressState = AMoveType::Done;

@@ -1068,7 +1068,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 		aircraftState = newState;
 	}
 
-	owner->isMoving = (aircraftState != AIRCRAFT_LANDED);
+	owner->UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, (aircraftState != AIRCRAFT_LANDED));
 	owner->useAirLos = true;
 
 	switch (aircraftState) {

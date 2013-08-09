@@ -1048,7 +1048,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		// do not bother steering around idling MOBILE objects
 		// (since collision handling will just push them aside)
 		if (avoideeMobile && avoideeMovable) {
-			if (!avoiderMD->avoidMobilesOnPath || (!avoidee->isMoving && avoidee->allyteam == avoider->allyteam)) {
+			if (!avoiderMD->avoidMobilesOnPath || (!avoidee->IsMoving() && avoidee->allyteam == avoider->allyteam)) {
 				continue;
 			}
 		}
@@ -1381,9 +1381,10 @@ void CGroundMoveType::StartEngine(bool callScript) {
 			// makes no sense to call this unless we have a new path
 			owner->script->StartMoving();
 		}
+
+		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 	}
 
-	owner->isMoving = (pathId != 0);
 	nextObstacleAvoidanceFrame = gs->frameNum;
 }
 
@@ -1400,10 +1401,9 @@ void CGroundMoveType::StopEngine(bool callScript, bool hardStop) {
 			owner->script->StopMoving();
 		}
 
-		LOG_L(L_DEBUG, "StopEngine: engine stopped for unit %i", owner->id);
+		owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 	}
 
-	owner->isMoving = (pathId == 0);
 	owner->speed *= (1 - hardStop);
 
 	currentSpeed *= (1 - hardStop);
@@ -1512,7 +1512,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	bool checkYardMap,
 	bool checkTerrain
 ) {
-	if (checkTerrain && (!collider->isMoving || collider->IsInAir()))
+	if (checkTerrain && (!collider->IsMoving() || collider->IsInAir()))
 		return;
 
 	// for factories, check if collidee's position is behind us (which means we are likely exiting)
@@ -1723,7 +1723,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		const bool alliedCollision =
 			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
-		const bool collideeYields = (collider->isMoving && !collidee->isMoving);
+		const bool collideeYields = (collider->IsMoving() && !collidee->IsMoving());
 		const bool ignoreCollidee = (collideeYields && alliedCollision);
 
 		// FIXME:
@@ -1779,8 +1779,8 @@ void CGroundMoveType::HandleUnitCollisions(
 			// check the progress-states so collisions with units which
 			// failed to reach goalPos for whatever reason do not count
 			// (or those that still have orders)
-			if (collider->isMoving && collider->moveType->progressState == AMoveType::Active) {
-				if (!collidee->isMoving && collidee->moveType->progressState == AMoveType::Done) {
+			if (collider->IsMoving() && collider->moveType->progressState == AMoveType::Active) {
+				if (!collidee->IsMoving() && collidee->moveType->progressState == AMoveType::Done) {
 					if (UNIT_CMD_QUE_SIZE(collidee) == 0) {
 						atEndOfPath = true; atGoal = true;
 					}
@@ -1897,7 +1897,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 		eventHandler.UnitFeatureCollision(collider, collidee);
 
-		if (!collidee->isMoving) {
+		if (!collidee->IsMoving()) {
 			HandleStaticObjectCollision(
 				collider,
 				collidee,
@@ -2120,19 +2120,13 @@ bool CGroundMoveType::UpdateDirectControl()
 	currWayPoint.z = owner->pos.z + owner->frontdir.z * (wantReverse)? -100.0f: 100.0f;
 	currWayPoint.ClampInBounds();
 
-	if (unitCon.forward) {
-		ChangeSpeed(maxSpeed, wantReverse, true);
-
-		owner->isMoving = true;
-	} else if (unitCon.back) {
-		ChangeSpeed(maxReverseSpeed, wantReverse, true);
-
-		owner->isMoving = true;
+	if (unitCon.forward || unitCon.back) {
+		ChangeSpeed((maxSpeed * unitCon.forward) + (maxReverseSpeed * unitCon.back), wantReverse, true);
+		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 	} else {
 		// not moving forward or backward, stop
 		ChangeSpeed(0.0f, false, true);
-
-		owner->isMoving = false;
+		owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 	}
 
 	if (unitCon.left ) { ChangeHeading(owner->heading + turnRate); turnSign =  1.0f; }

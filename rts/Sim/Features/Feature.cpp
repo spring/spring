@@ -130,6 +130,8 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	udef = params.unitDef;
 	objectDef = params.featureDef;
 
+	speed = params.speed;
+
 	team = params.teamID;
 	allyteam = params.allyTeamID;
 
@@ -188,8 +190,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 		finalHeight = ground->GetHeightReal(pos.x, pos.z);
 	}
 
-	speed = params.speed;
-	isMoving = ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f));
+	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
 }
 
 
@@ -425,7 +426,7 @@ bool CFeature::UpdatePosition()
 		// ground-unit wrecks), so just assume wrecks always sink in water
 		// even if their "owner" was a floating object (as is the case for
 		// ships anyway)
-		if (isMoving) {
+		if (IsMoving()) {
 			const float realGroundHeight = ground->GetHeightReal(pos.x, pos.z);
 			const bool reachedWater  = ( pos.y                     <= 0.1f);
 			const bool reachedGround = ((pos.y - realGroundHeight) <= 0.1f);
@@ -506,11 +507,10 @@ bool CFeature::UpdatePosition()
 		transMatrix[13] = pos.y;
 	}
 
-	isMoving = ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f));
-
+	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
 	UpdatePhysicalState();
 
-	return isMoving;
+	return (IsMoving());
 }
 
 void CFeature::UpdateFinalHeight(bool useGroundHeight)

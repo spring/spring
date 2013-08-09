@@ -60,10 +60,11 @@ public:
 		// also used by aircraft to control block / unblock
 		// behavior
 		// NOTE: FLYING DOES NOT ALWAYS IMPLY INAIR!
-		STATE_BIT_FLYING   = (1 << 4),
-		STATE_BIT_FALLING  = (1 << 5),
-		STATE_BIT_SKIDDING = (1 << 6),
-		STATE_BIT_BLOCKING = (1 << 7),
+		STATE_BIT_MOVING   = (1 << 4),
+		STATE_BIT_FLYING   = (1 << 5),
+		STATE_BIT_FALLING  = (1 << 6),
+		STATE_BIT_SKIDDING = (1 << 7),
+		STATE_BIT_BLOCKING = (1 << 8),
 	};
 	enum DamageType {
 		DAMAGE_EXPLOSION_WEAPON = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
@@ -146,6 +147,7 @@ public:
 	bool IsInWater() const { return ((physicalState & STATE_BIT_INWATER) != 0); }
 	bool IsUnderWater() const { return ((physicalState & STATE_BIT_UNDERWATER) != 0); }
 
+	bool IsMoving() const { return ((physicalState & STATE_BIT_MOVING) != 0); }
 	bool IsFlying() const { return ((physicalState & STATE_BIT_FLYING) != 0); }
 	bool IsFalling() const { return ((physicalState & STATE_BIT_FALLING) != 0); }
 	bool IsSkidding() const { return ((physicalState & STATE_BIT_SKIDDING) != 0); }
@@ -153,6 +155,13 @@ public:
 
 	void SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= (bit); physicalState = static_cast<PhysicalState>(ps); }
 	void ClearPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps &= (~bit); physicalState = static_cast<PhysicalState>(ps); }
+	void UpdatePhysicalStateBit(unsigned int bit, bool set) {
+		if (set) {
+			SetPhysicalStateBit(bit);
+		} else {
+			ClearPhysicalStateBit(bit);
+		}
+	}
 
 private:
 	void SetMidPos(const float3& mp, bool relative) {
@@ -206,8 +215,6 @@ public:
 
 	SyncedSshort heading;                       ///< Contains the same information as frontdir, but in a short signed integer.
 	PhysicalState physicalState;                ///< The current state of the object within the gameworld.
-
-	bool isMoving;                              ///< = velocity.length() > 0.0
 
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of

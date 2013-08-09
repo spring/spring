@@ -291,7 +291,7 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 
 		if (!obstacle->immobile) {
 			// mobile obstacle
-			if (obstacle->isMoving) {
+			if (obstacle->IsMoving()) {
 				r |= BLOCK_MOVING;
 			} else {
 				const CUnit* u = static_cast<const CUnit*>(obstacle);
