@@ -7,7 +7,6 @@
 #include "MapDamage.h"
 #include "MapInfo.h"
 #include "MetalMap.h"
-#include "SM3/SM3Map.h"
 #include "SMF/SMFReadMap.h"
 #include "lib/gml/gmlmut.h"
 #include "Game/LoadScreen.h"
@@ -81,7 +80,7 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	}
 
 	if (extension == "sm3") {
-		rm = new CSM3ReadMap(mapname);
+		//rm = new CSM3ReadMap(mapname);
 	} else {
 		rm = new CSMFReadMap(mapname);
 	}
