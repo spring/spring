@@ -36,7 +36,6 @@ CR_REG_METADATA(CSolidObject,
  	CR_MEMBER(footprint),
 	CR_MEMBER(heading),
 	CR_ENUM_MEMBER(physicalState),
-	CR_MEMBER(isMoving),
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
 	CR_MEMBER(objectDef),
@@ -81,8 +80,6 @@ CSolidObject::CSolidObject():
 
 	heading(0),
 	physicalState(STATE_BIT_ONGROUND),
-
-	isMoving(false),
 
 	team(0),
 	allyteam(0),

@@ -968,7 +968,8 @@ void CClassicGroundMoveType::StartEngine() {
 		if (pathId != 0) {
 			pathFailures = 0;
 			etaFailures = 0;
-			owner->isMoving = true;
+
+			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 			owner->script->StartMoving();
 		} else {
 			Fail();
@@ -989,7 +990,7 @@ void CClassicGroundMoveType::StopEngine() {
 		owner->script->StopMoving();
 	}
 
-	owner->isMoving = false;
+	owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 	wantedSpeed = 0;
 }
 
@@ -1590,17 +1591,17 @@ bool CClassicGroundMoveType::UpdateDirectControl()
 	if (unitCon.forward) {
 		ChangeSpeed();
 
-		owner->isMoving = true;
+		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 		owner->script->StartMoving();
 	} else if (unitCon.back) {
 		ChangeSpeed();
 
-		owner->isMoving = true;
+		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 		owner->script->StartMoving();
 	} else {
 		ChangeSpeed();
 
-		owner->isMoving = false;
+		owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 		owner->script->StopMoving();
 	}
 

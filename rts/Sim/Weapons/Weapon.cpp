@@ -417,7 +417,7 @@ void CWeapon::UpdateFire()
 
 				salvoLeft = salvoSize;
 				nextSalvo = gs->frameNum;
-				salvoError = gs->randVector() * (owner->isMoving? weaponDef->movingAccuracy: accuracy);
+				salvoError = gs->randVector() * (owner->IsMoving()? weaponDef->movingAccuracy: accuracy);
 
 				if (targetType == Target_Pos || (targetType == Target_Unit && !(targetUnit->losStatus[owner->allyteam] & LOS_INLOS))) {
 					// area firing stuff is too effective at radar firing...

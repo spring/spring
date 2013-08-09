@@ -195,7 +195,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 
 			// subtracting 1 square to account for pathfinder/groundmovetype inaccuracy
 			if (goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE) || 
-				(!inLoadingRadius && (!owner->isMoving || (am && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)))) {
+				(!inLoadingRadius && (!owner->IsMoving() || (am && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)))) {
 				SetGoal(unit->pos, owner->pos, std::min(64.0f, owner->unitDef->loadingRadius));
 			}
 
