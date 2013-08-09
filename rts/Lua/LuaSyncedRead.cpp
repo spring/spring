@@ -273,6 +273,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetProjectileSpinAngle);
 	REGISTER_LUA_CFUNC(GetProjectileSpinSpeed);
 	REGISTER_LUA_CFUNC(GetProjectileSpinVec);
+	REGISTER_LUA_CFUNC(GetPieceProjectileParams);
 	REGISTER_LUA_CFUNC(GetProjectileTarget);
 	REGISTER_LUA_CFUNC(GetProjectileType);
 	REGISTER_LUA_CFUNC(GetProjectileName);
@@ -4565,7 +4566,11 @@ int LuaSyncedRead::GetProjectileGravity(lua_State* L)
 	return 1;
 }
 
-int LuaSyncedRead::GetProjectileSpinAngle(lua_State* L)
+int LuaSyncedRead::GetProjectileSpinAngle(lua_State* L) { return 0; } // DEPRECATED
+int LuaSyncedRead::GetProjectileSpinSpeed(lua_State* L) { return 0; } // DEPRECATED
+int LuaSyncedRead::GetProjectileSpinVec(lua_State* L) { return 0; } // DEPRECATED
+
+int LuaSyncedRead::GetPieceProjectileParams(lua_State* L)
 {
 	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
 
@@ -4573,35 +4578,14 @@ int LuaSyncedRead::GetProjectileSpinAngle(lua_State* L)
 		return 0;
 
 	const CPieceProjectile* ppro = static_cast<const CPieceProjectile*>(pro);
+
+	lua_pushnumber(L, ppro->explFlags);
 	lua_pushnumber(L, ppro->spinAngle);
-	return 1;
-}
-
-int LuaSyncedRead::GetProjectileSpinSpeed(lua_State* L)
-{
-	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
-
-	if (pro == NULL || !pro->piece)
-		return 0;
-
-	const CPieceProjectile* ppro = static_cast<const CPieceProjectile*>(pro);
 	lua_pushnumber(L, ppro->spinSpeed);
-	return 1;
-}
-
-int LuaSyncedRead::GetProjectileSpinVec(lua_State* L)
-{
-	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
-
-	if (pro == NULL || !pro->piece)
-		return 0;
-
-	const CPieceProjectile* ppro = static_cast<const CPieceProjectile*>(pro);
-
 	lua_pushnumber(L, ppro->spinVec.x);
 	lua_pushnumber(L, ppro->spinVec.y);
 	lua_pushnumber(L, ppro->spinVec.z);
-	return 3;
+	return (1 + 1 + 1 + 3);
 }
 
 

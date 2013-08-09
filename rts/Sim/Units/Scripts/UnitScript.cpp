@@ -827,7 +827,7 @@ void CUnitScript::Explode(int piece, int flags)
 	if ((flags & PF_Fire) && projectileHandler->particleSaturation < 0.95f) { newflags |= PF_Fire; }
 	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
 
-	new CPieceProjectile(absPos, speed, pieces[piece], newflags, unit, 0.5f);
+	new CPieceProjectile(absPos, speed, unit, pieces[piece], newflags, 0.5f);
 #endif
 }
 

@@ -6,7 +6,7 @@
 #include "Projectile.h"
 #include "Sim/Misc/DamageArray.h"
 
-//! Piece Flags
+// Piece Explosion Flags
 const int PF_Shatter    = (1 << 0); // 1
 const int PF_Explode    = (1 << 1); // 2
 const int PF_Fall       = (1 << 2); // 4, if they dont fall they could live forever
@@ -29,7 +29,14 @@ class CPieceProjectile: public CProjectile
 	void creg_Serialize(creg::ISerializer& s);
 
 public:
-	CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int flags, CUnit* owner, float radius);
+	CPieceProjectile(
+		const float3& pos,
+		const float3& speed,
+		CUnit* owner,
+		LocalModelPiece* piece,
+		int flags,
+		float radius
+	);
 	virtual ~CPieceProjectile();
 	virtual void Detach();
 
@@ -46,7 +53,7 @@ private:
 	float3 RandomVertexPos();
 
 public:
-	unsigned int flags;
+	unsigned int explFlags;
 	unsigned int dispList;
 
 	const S3DModelPiece* omp;

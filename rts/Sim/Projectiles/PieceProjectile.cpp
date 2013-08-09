@@ -32,7 +32,7 @@ CR_BIND_DERIVED(CPieceProjectile, CProjectile, (float3(0, 0, 0), float3(0, 0, 0)
 CR_REG_METADATA(CPieceProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_SERIALIZER(creg_Serialize), // oldInfos
-	CR_MEMBER(flags),
+	CR_MEMBER(explFlags),
 	CR_MEMBER(dispList),
 	// NOTE: what about this?
 	// CR_MEMBER(omp),
@@ -56,9 +56,16 @@ void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
 	}
 }
 
-CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* lmp, int f, CUnit* owner, float radius):
+CPieceProjectile::CPieceProjectile(
+	const float3& pos,
+	const float3& speed,
+	CUnit* owner,
+	LocalModelPiece* lmp,
+	int flags,
+	float radius
+):
 	CProjectile(pos, speed, owner, true, false, true),
-	flags(f),
+	explFlags(flags),
 	dispList(lmp? lmp->dispListID: 0),
 	omp(NULL),
 	spinAngle(0.0f),
@@ -71,14 +78,14 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	checkCol = false;
 
 	if (owner != NULL) {
-		if ((flags & PF_NoCEGTrail) == 0) {
+		if ((explFlags & PF_NoCEGTrail) == 0) {
 			const std::vector<std::string>& pieceCEGs = owner->unitDef->pieceCEGTags;
 			const std::string& cegTag = !pieceCEGs.empty()? pieceCEGs[gs->randInt() % pieceCEGs.size()]: "";
 
 			if (!cegTag.empty()) {
 				cegID = gCEG->Load(explGenHandler, cegTag.c_str());
 			} else {
-				flags |= PF_NoCEGTrail;
+				explFlags |= PF_NoCEGTrail;
 			}
 		}
 
@@ -100,17 +107,21 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 
 	oldSmokeDir = speed;
 	oldSmokeDir.Normalize();
-	const float3 camDir = (pos - camera->GetPos()).Normalize();
 
-	if (camera->GetPos().distance(pos) + (1 - math::fabs(camDir.dot(oldSmokeDir))) * 3000 < 200) {
+
+	const float3 camVec = pos - camera->GetPos();
+	const float  camDst = camVec.Length() + 0.01f;
+	const float3 camDir = camVec / camDst;
+
+	if ((camDst + (1.0f - math::fabs(camDir.dot(oldSmokeDir))) * 3000.0f) < 200.0f) {
 		drawTrail = false;
 	}
 
-	//! neither spinVec nor spinSpeed technically
-	//! needs to be synced, but since instances of
-	//! this class are themselves synced and have
-	//! LuaSynced{Ctrl, Read} exposure we treat
-	//! them that way for consistency
+	// neither spinVec nor spinSpeed technically
+	// needs to be synced, but since instances of
+	// this class are themselves synced and have
+	// LuaSynced{Ctrl, Read} exposure we treat
+	// them that way for consistency
 	spinVec = gs->randVector();
 	spinVec.Normalize();
 	spinSpeed = gs->randFloat() * 20;
@@ -158,7 +169,7 @@ void CPieceProjectile::Collision()
 	speed -= (norm * ns * 1.6f);
 	pos += (norm * 0.1f);
 
-	if (flags & PF_Explode) {
+	if (explFlags & PF_Explode) {
 		const DamageArray damageArray(50.0f);
 		const CGameHelper::ExplosionParams params = {
 			pos,
@@ -181,8 +192,8 @@ void CPieceProjectile::Collision()
 
 		helper->Explosion(params);
 	}
-	if (flags & PF_Smoke) {
-		if (flags & PF_NoCEGTrail) {
+	if (explFlags & PF_Smoke) {
+		if (explFlags & PF_NoCEGTrail) {
 			float3 dir = speed;
 			dir.Normalize();
 
@@ -215,7 +226,7 @@ void CPieceProjectile::Collision(CUnit* unit)
 	if (unit == owner()) {
 		return;
 	}
-	if (flags & PF_Explode) {
+	if (explFlags & PF_Explode) {
 		const DamageArray damageArray(50.0f);
 		const CGameHelper::ExplosionParams params = {
 			pos,
@@ -238,8 +249,8 @@ void CPieceProjectile::Collision(CUnit* unit)
 
 		helper->Explosion(params);
 	}
-	if (flags & PF_Smoke) {
-		if (flags & PF_NoCEGTrail) {
+	if (explFlags & PF_Smoke) {
+		if (explFlags & PF_NoCEGTrail) {
 			float3 dir = speed;
 			dir.Normalize();
 
@@ -280,7 +291,7 @@ float3 CPieceProjectile::RandomVertexPos()
 void CPieceProjectile::Update()
 {
 	if (!luaMoveCtrl) {
-		if (flags & PF_Fall) {
+		if (explFlags & PF_Fall) {
 			speed.y += mygravity;
 		}
 
@@ -290,7 +301,7 @@ void CPieceProjectile::Update()
 
 	spinAngle += spinSpeed;
 
-	if (flags & PF_Fire && HasVertices()) {
+	if ((explFlags & PF_Fire) && HasVertices()) {
 		OldInfo* tempOldInfo = oldInfos[7];
 		for (int a = 6; a >= 0; --a) {
 			oldInfos[a + 1] = oldInfos[a];
@@ -308,8 +319,8 @@ void CPieceProjectile::Update()
 
 	age++;
 
-	if (flags & PF_NoCEGTrail) {
-		if (!(age & 7) && (flags & PF_Smoke)) {
+	if (explFlags & PF_NoCEGTrail) {
+		if (!(age & 7) && (explFlags & PF_Smoke)) {
 			float3 dir = speed;
 			dir.Normalize();
 
@@ -346,8 +357,8 @@ void CPieceProjectile::Update()
 
 void CPieceProjectile::Draw()
 {
-	if (flags & PF_NoCEGTrail) {
-		if (flags & PF_Smoke) {
+	if (explFlags & PF_NoCEGTrail) {
+		if (explFlags & PF_Smoke) {
 			// this piece leaves a default (non-CEG) smoketrail
 			inArray = true;
 			float age2 = (age & 7) + globalRendering->timeOffset;
@@ -402,7 +413,8 @@ void CPieceProjectile::Draw()
 				const float3 dirpos1 = pos - dir * dist * 0.33f;
 				const float3 dirpos2 = oldSmokePos + oldSmokeDir * dist * 0.33f;
 
-				for (int a = 0; a < numParts; ++a) { //! CAUTION: loop count must match EnlargeArrays above
+				// CAUTION: loop count must match EnlargeArrays above
+				for (int a = 0; a < numParts; ++a) {
 					float alpha = 255.0f;
 					col[0] = (unsigned char) (color * alpha);
 					col[1] = (unsigned char) (color * alpha);
@@ -435,7 +447,7 @@ void CPieceProjectile::DrawCallback()
 {
 	inArray = true;
 
-	if (flags & PF_Fire) {
+	if (explFlags & PF_Fire) {
 		va->EnlargeArrays(8 * 4, 0, VA_SIZE_TC);
 		for (int age = 0; age < 8; ++age) {
 			float modage = age;
