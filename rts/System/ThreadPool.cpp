@@ -81,14 +81,7 @@ static void DoTask(boost::shared_lock<boost::shared_mutex>& lk)
 			if (p) {
 				lk.unlock();
 				SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
-				try {
-					(*p)();
-				} catch(...) {
-					// note, tg must by a copy and not a ref!
-					// else tg could be freed and make tg->PushException invalid!
-					assert(false);
-					tg->PushException(std::current_exception());
-				}
+				(*p)();
 				return;
 			}
 
@@ -154,8 +147,9 @@ void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 
 	while (!taskgroup->IsFinished()) { }
 
-	for (auto& ep: taskgroup->GetExceptions())
-		std::rethrow_exception(ep);
+	//LOG("WaitForFinished %i", taskgroup->GetExceptions().size());
+	//for (auto& r: taskgroup->results())
+	//	r.get();
 }
 
 
