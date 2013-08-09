@@ -7,6 +7,7 @@
 #include "MapDamage.h"
 #include "MapInfo.h"
 #include "MetalMap.h"
+// #include "SM3/SM3Map.h"
 #include "SMF/SMFReadMap.h"
 #include "lib/gml/gmlmut.h"
 #include "Game/LoadScreen.h"
@@ -72,49 +73,42 @@ CR_REG_METADATA(CReadMap, (
 
 CReadMap* CReadMap::LoadMap(const std::string& mapname)
 {
-	const std::string extension = FileSystem::GetExtension(mapname);
 	CReadMap* rm = NULL;
 
-	if (extension.empty()) {
-		throw content_error("CReadMap::LoadMap(): missing file extension in mapname '" + mapname + "'");
-	}
-
-	if (extension == "sm3") {
-		//rm = new CSM3ReadMap(mapname);
+	if (FileSystem::GetExtension(mapname) == "sm3") {
+		throw content_error("[CReadMap::LoadMap] SM3 maps are no longer supported as of Spring 95.0");
+		// rm = new CSM3ReadMap(mapname);
 	} else {
+		// assume SMF format by default
 		rm = new CSMFReadMap(mapname);
 	}
 
-	if (!rm) {
+	if (rm == NULL)
 		return NULL;
-	}
 
-	/* Read metal map */
+	/* read metal- and type-map */
 	MapBitmapInfo mbi;
+	MapBitmapInfo tbi;
+
 	unsigned char* metalmapPtr = rm->GetInfoMap("metal", &mbi);
+	unsigned char* typemapPtr = rm->GetInfoMap("type", &tbi);
 
 	assert(mbi.width == (rm->width >> 1));
 	assert(mbi.height == (rm->height >> 1));
 
 	rm->metalMap = new CMetalMap(metalmapPtr, mbi.width, mbi.height, mapInfo->map.maxMetal);
 
-	if (metalmapPtr != NULL) {
+	if (metalmapPtr != NULL)
 		rm->FreeInfoMap("metal", metalmapPtr);
-	}
-
-
-	/* Read type map */
-	MapBitmapInfo tbi;
-	unsigned char* typemapPtr = rm->GetInfoMap("type", &tbi);
 
 	if (typemapPtr && tbi.width == (rm->width >> 1) && tbi.height == (rm->height >> 1)) {
 		assert(gs->hmapx == tbi.width && gs->hmapy == tbi.height);
 		rm->typeMap.resize(tbi.width * tbi.height);
 		memcpy(&rm->typeMap[0], typemapPtr, tbi.width * tbi.height);
 	} else
-		throw content_error("Bad/no terrain type map.");
+		throw content_error("[CReadMap::LoadMap] bad/no terrain typemap");
 
-	if (typemapPtr)
+	if (typemapPtr != NULL)
 		rm->FreeInfoMap("type", typemapPtr);
 
 	return rm;
