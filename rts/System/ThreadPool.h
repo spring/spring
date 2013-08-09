@@ -78,14 +78,8 @@ public:
 	virtual boost::optional<std::function<void()>> GetTask() = 0;
 	virtual bool IsFinished() const = 0;
 	virtual bool IsEmpty() const = 0;
-
-	const std::list<std::exception_ptr>& GetExceptions() const { return exceptions; }
-	void PushException(std::exception_ptr excep) { exceptions.emplace_back(excep); }
 private:
 	//virtual void FinishedATask() = 0;
-
-private:
-	std::list<std::exception_ptr> exceptions;
 };
 
 
@@ -199,7 +193,15 @@ public:
 
 	template<typename G>
 	return_type GetResult(const G&& g) {
+	#ifdef __MINGW32__
+		// WORKAROUND: std::accumulate hangs in MinGW, likely a posix issue (2013)
+		return_type res = 0;
+		for (auto& r: results)
+			res = g(res, r);
+		return res;
+	#else
 		return std::accumulate(results.begin(), results.end(), 0, g);
+	#endif
 	}
 
 private:
