@@ -440,7 +440,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 	for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
 		CFeature* feature = *fi;
 
-		if (!feature->blocking) {
+		if (!feature->collidable) {
 			continue;
 		}
 

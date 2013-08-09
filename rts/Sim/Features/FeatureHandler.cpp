@@ -118,7 +118,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const std
 	fd->name = name;
 	fd->description = fdTable.GetString("description", "");
 
-	fd->blocking      =  fdTable.GetBool("blocking",        true);
+	fd->collidable    =  fdTable.GetBool("blocking",        true);
 	fd->burnable      =  fdTable.GetBool("flammable",       false);
 	fd->destructable  = !fdTable.GetBool("indestructible",  false);
 	fd->reclaimable   =  fdTable.GetBool("reclaimable",     fd->destructable);
@@ -174,7 +174,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const std
 
 FeatureDef* CFeatureHandler::CreateDefaultTreeFeatureDef(const std::string& name) const {
 	FeatureDef* fd = new FeatureDef();
-	fd->blocking = true;
+	fd->collidable = true;
 	fd->burnable = true;
 	fd->destructable = true;
 	fd->reclaimable = true;
@@ -194,7 +194,7 @@ FeatureDef* CFeatureHandler::CreateDefaultTreeFeatureDef(const std::string& name
 
 FeatureDef* CFeatureHandler::CreateDefaultGeoFeatureDef(const std::string& name) const {
 	FeatureDef* fd = new FeatureDef();
-	fd->blocking = false;
+	fd->collidable = false;
 	fd->burnable = false;
 	fd->destructable = false;
 	fd->reclaimable = false;

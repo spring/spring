@@ -857,11 +857,15 @@ void CStrafeAirMoveType::UpdateLanding()
 			const float3 originalPos = pos;
 
 			owner->Move(reservedLandingPos, false);
-			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			owner->Block();
-			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
-
 			owner->Move(originalPos, false);
+			// Block updates the blocking-map position (mapPos)
+			// via GroundBlockingObjectMap (which calculates it
+			// from object->pos) and UnBlock always uses mapPos
+			// --> we cannot block in one part of the map *and*
+			// unblock in another
+			// owner->UnBlock();
+
 			owner->Deactivate();
 		} else {
 			goalPos.ClampInBounds();
@@ -1071,15 +1075,24 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 		case AIRCRAFT_CRASHING:
 			owner->SetCrashing(true);
 			break;
+
 		case AIRCRAFT_FLYING:
 			owner->Activate();
+			// fall-through
+
+		case AIRCRAFT_TAKEOFF:
+			// should be in the STATE_FLYING case, but these aircraft
+			// take forever to reach it reducing factory cycle-times
+			owner->UnBlock();
 			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			break;
+
 		case AIRCRAFT_LANDED:
 			owner->useAirLos = false;
 
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
+			owner->Block();
 			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			break;
 		default:
@@ -1090,10 +1103,6 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 		// don't need a reserved position anymore
 		reservedLandingPos.x = -1.0f;
 	}
-
-	// this checks our physicalState, and blocks only
-	// if not flying (otherwise unblocks and returns)
-	owner->Block();
 }
 
 

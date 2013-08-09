@@ -3609,7 +3609,7 @@ int LuaSyncedRead::GetUnitBlocking(lua_State *L)
 		return 0;
 	}
 
-	lua_pushboolean(L, unit->blocking);
+	lua_pushboolean(L, unit->collidable);
 	lua_pushboolean(L, unit->crushable);
 	return 2;
 }

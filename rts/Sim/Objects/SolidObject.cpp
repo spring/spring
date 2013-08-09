@@ -23,7 +23,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(health),
 	CR_MEMBER(mass),
 	CR_MEMBER(crushResistance),
-	CR_MEMBER(blocking),
+	CR_MEMBER(collidable),
 	CR_MEMBER(crushable),
 	CR_MEMBER(immobile),
 	CR_MEMBER(crushKilled),
@@ -37,7 +37,6 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(heading),
 	CR_ENUM_MEMBER(physicalState),
 	CR_MEMBER(isMoving),
-	CR_MEMBER(isMarkedOnBlockingMap),
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
 	CR_MEMBER(objectDef),
@@ -66,7 +65,7 @@ CSolidObject::CSolidObject():
 	mass(DEFAULT_MASS),
 	crushResistance(0.0f),
 
-	blocking(false),
+	collidable(false),
 	crushable(false),
 	immobile(false),
 	crushKilled(false),
@@ -84,7 +83,6 @@ CSolidObject::CSolidObject():
 	physicalState(STATE_BIT_ONGROUND),
 
 	isMoving(false),
-	isMarkedOnBlockingMap(false),
 
 	team(0),
 	allyteam(0),
@@ -108,7 +106,7 @@ CSolidObject::CSolidObject():
 }
 
 CSolidObject::~CSolidObject() {
-	blocking = false;
+	collidable = false;
 
 	delete collisionVolume;
 	collisionVolume = NULL;
@@ -136,33 +134,26 @@ void CSolidObject::UpdatePhysicalState() {
 
 
 void CSolidObject::UnBlock() {
-	if (isMarkedOnBlockingMap) {
-		groundBlockingObjectMap->RemoveGroundBlockingObject(this);
-	}
+	if (!IsBlocking())
+		return;
 
-	assert(!isMarkedOnBlockingMap);
+	groundBlockingObjectMap->RemoveGroundBlockingObject(this);
+	assert(!IsBlocking());
 }
 
 void CSolidObject::Block() {
-	if (IsFlying()) {
-		//FIXME why do airmovetypes really rely on Block() to UNblock!
-		UnBlock();
+	// no point calling this if object is not
+	// collidable in principle, but simplifies
+	// external code to allow it
+	if (!collidable)
 		return;
-	}
 
-	if (!blocking) {
-		UnBlock();
+	if (IsBlocking() && !BlockMapPosChanged())
 		return;
-	}
-
-	if (isMarkedOnBlockingMap && groundBlockPos == pos) {
-		return;
-	}
 
 	UnBlock();
-	groundBlockPos = pos;
 	groundBlockingObjectMap->AddGroundBlockingObject(this);
-	assert(isMarkedOnBlockingMap);
+	assert(IsBlocking());
 }
 
 

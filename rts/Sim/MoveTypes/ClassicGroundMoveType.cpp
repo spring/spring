@@ -671,7 +671,7 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 
 	for (vector<CFeature*>::const_iterator fi = nearFeatures.begin(); fi != nearFeatures.end(); ++fi) {
 		CFeature* u=(*fi);
-		if(!u->blocking)
+		if (!u->collidable)
 			continue;
 		float sqDist=(midPos-u->midPos).SqLength();
 		float totRad=owner->radius+u->radius;

@@ -204,7 +204,7 @@ float TraceRay(
 					// NOTE:
 					//     if f is non-blocking, ProjectileHandler will not test
 					//     for collisions with projectiles so we can skip it here
-					if (!f->blocking)
+					if (!f->collidable)
 						continue;
 
 					if (CCollisionHandler::DetectHit(f, start, start + dir * length, &cq, true)) {
@@ -466,7 +466,7 @@ bool TestCone(
 			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 				const CFeature* f = *featuresIt;
 
-				if (!f->blocking)
+				if (!f->collidable)
 					continue;
 
 				if (TestConeHelper(from, dir, length, spread, f))
@@ -551,7 +551,7 @@ bool TestTrajectoryCone(
 			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 				const CFeature* f = *featuresIt;
 
-				if (!f->blocking)
+				if (!f->collidable)
 					continue;
 
 				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, 0.0f, f))

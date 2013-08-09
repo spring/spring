@@ -30,7 +30,7 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(windFactor),
 	CR_MEMBER(mins),
 	CR_MEMBER(maxs),
-	CR_MEMBER(noBlocking), // copy of CSolidObject::isMarkedOnBlockingMap
+	CR_MEMBER(noBlocking), // copy of CSolidObject::STATE_BIT_BLOCKING
 	CR_MEMBER(gndStop),
 	CR_MEMBER(shotStop),
 	CR_MEMBER(slopeStop),
@@ -77,7 +77,7 @@ CScriptMoveType::~CScriptMoveType()
 	// clean up if noBlocking was made true at
 	// some point during this script's lifetime
 	// and not reset
-	owner->Block();
+	owner->UnBlock();
 }
 
 #if defined(USE_GML) && defined(__GNUC__) && (__GNUC__ == 4)

@@ -62,7 +62,7 @@ public:
 	float mass;
 	float crushResistance;
 
-	bool blocking;
+	bool collidable;
 	bool upright;
 	bool reclaimable;
 

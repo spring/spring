@@ -73,7 +73,7 @@ CR_REG_METADATA(SolidObjectDef,
 	CR_MEMBER(mass),
 	CR_MEMBER(crushResistance),
 
-	CR_MEMBER(blocking),
+	CR_MEMBER(collidable),
 	CR_MEMBER(upright),
 	CR_MEMBER(reclaimable),
 
@@ -100,7 +100,7 @@ SolidObjectDef::SolidObjectDef()
 	, mass(0.0f)
 	, crushResistance(0.0f)
 
-	, blocking(false)
+	, collidable(false)
 	, upright(false)
 	, reclaimable(true)
 

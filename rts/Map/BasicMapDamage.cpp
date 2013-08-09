@@ -128,7 +128,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 		CUnit* unit = *ui;
 
 		if (!unit->blockHeightChanges) { continue; }
-		if (!unit->isMarkedOnBlockingMap) { continue; }
+		if (!unit->IsBlocking()) { continue; }
 
 		float totalDif = 0.0f;
 

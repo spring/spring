@@ -124,7 +124,7 @@ bool CCollisionHandler::CollisionFootPrint(const CSolidObject* o, const float3& 
 	// If the object isn't marked on blocking map, or if it is flying,
 	// effecively only the early-out sphere check (in Collision(CUnit*)
 	// or Collision(CFeature*)) is performed (which we already passed).
-	if (!o->isMarkedOnBlockingMap)
+	if (!o->IsBlocking())
 		return false;
 	if (o->IsInAir())
 		return false;

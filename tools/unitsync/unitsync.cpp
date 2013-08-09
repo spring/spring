@@ -1071,10 +1071,12 @@ EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName)
 // Used to return the image
 static unsigned short imgbuf[1024*1024];
 
-/*
-// SM3 maps are no longer supported as of Spring 95.0
 static unsigned short* GetMinimapSM3(std::string mapFileName, int mipLevel)
 {
+	throw content_error("SM3 maps are no longer supported as of Spring 95.0");
+	return NULL;
+
+	/*
 	MapParser mapParser(mapFileName);
 	const std::string minimapFile = mapParser.GetRoot().GetString("minimap", "");
 
@@ -1108,8 +1110,8 @@ static unsigned short* GetMinimapSM3(std::string mapFileName, int mipLevel)
 	}
 
 	return imgbuf;
+	*/
 }
-*/
 
 static unsigned short* GetMinimapSMF(std::string mapFileName, int mipLevel)
 {
@@ -1188,7 +1190,7 @@ EXPORT(unsigned short*) GetMinimap(const char* mapName, int mipLevel)
 		if (extension == "smf") {
 			ret = GetMinimapSMF(mapFile, mipLevel);
 		} else if (extension == "sm3") {
-			throw content_error("SM3 maps are no longer supported as of Spring 95.0");
+			ret = GetMinimapSM3(mapFile, mipLevel);
 		}
 
 		return ret;

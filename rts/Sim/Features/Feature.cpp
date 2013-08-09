@@ -76,10 +76,7 @@ CFeature::CFeature() : CSolidObject(),
 
 CFeature::~CFeature()
 {
-	if (blocking) {
-		UnBlock();
-	}
-
+	UnBlock();
 	quadField->RemoveFeature(this);
 
 	if (myFire) {
@@ -141,10 +138,10 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	smokeTime = params.smokeTime;
 
 	mass = def->mass;
-	crushResistance = def->crushResistance;
+	health = def->health;
 
-	health   = def->health;
-	blocking = def->blocking;
+	crushResistance = def->crushResistance;
+	collidable = def->collidable;
 
 	xsize = ((buildFacing & 1) == 0) ? def->xsize : def->zsize;
 	zsize = ((buildFacing & 1) == 1) ? def->xsize : def->zsize;
@@ -183,10 +180,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	// maybe should not be here, but it prevents crashes caused by team = -1
 	ChangeTeam(team);
-
-	if (blocking) {
-		Block();
-	}
+	Block();
 
 	if (def->floating) {
 		finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
@@ -386,16 +380,15 @@ void CFeature::DependentDied(CObject *o)
 
 void CFeature::ForcedMove(const float3& newPos)
 {
-	if (blocking) {
-		UnBlock();
-	}
-
 	// remove from managers
 	quadField->RemoveFeature(this);
 
 	const float3 oldPos = pos;
 
+	UnBlock();
 	Move(newPos - pos, true);
+	Block();
+
 	eventHandler.FeatureMoved(this, oldPos);
 
 	// setup the visual transformation matrix
@@ -403,10 +396,6 @@ void CFeature::ForcedMove(const float3& newPos)
 
 	// insert into managers
 	quadField->AddFeature(this);
-
-	if (blocking) {
-		Block();
-	}
 }
 
 void CFeature::ForcedSpin(const float3& newDir)
