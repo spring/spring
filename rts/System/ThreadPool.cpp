@@ -182,9 +182,9 @@ void SetThreadCount(int num)
 				}
 			} catch (const opengl_error& gle) {
 				// shared gl context creation failed :<
-				SetThreadCount(0);
+				SetThreadCount(1);
 				hasOGLthreads = false;
-				curThreads = 0;
+				curThreads = 1;
 			}
 		}
 #endif
