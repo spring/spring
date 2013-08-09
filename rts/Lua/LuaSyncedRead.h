@@ -173,6 +173,7 @@ class LuaSyncedRead {
 		static int GetFeatureDirection(lua_State* L);
 		static int GetFeatureHeading(lua_State* L);
 		static int GetFeatureResources(lua_State* L);
+		static int GetFeatureBlocking(lua_State* L);
 		static int GetFeatureNoSelect(lua_State* L);
 		static int GetFeatureResurrect(lua_State* L);
 		static int GetFeatureCollisionVolumeData(lua_State* L);
@@ -180,9 +181,9 @@ class LuaSyncedRead {
 		static int GetProjectilePosition(lua_State* L);
 		static int GetProjectileVelocity(lua_State* L);
 		static int GetProjectileGravity(lua_State* L);
-		static int GetProjectileSpinAngle(lua_State* L);
-		static int GetProjectileSpinSpeed(lua_State* L);
-		static int GetProjectileSpinVec(lua_State* L);
+		static int GetProjectileSpinAngle(lua_State* L); // DEPRECATED
+		static int GetProjectileSpinSpeed(lua_State* L); // DEPRECATED
+		static int GetProjectileSpinVec(lua_State* L); // DEPRECATED
 		static int GetPieceProjectileParams(lua_State* L);
 		static int GetProjectileTarget(lua_State* L);
 		static int GetProjectileType(lua_State* L);

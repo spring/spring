@@ -195,6 +195,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureResurrect);
 	REGISTER_LUA_CFUNC(SetFeaturePosition);
 	REGISTER_LUA_CFUNC(SetFeatureDirection);
+	REGISTER_LUA_CFUNC(SetFeatureBlocking);
 	REGISTER_LUA_CFUNC(SetFeatureNoSelect);
 	REGISTER_LUA_CFUNC(SetFeatureMidAndAimPos);
 	REGISTER_LUA_CFUNC(SetFeatureRadiusAndHeight);
@@ -211,6 +212,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetProjectileSpinAngle);
 	REGISTER_LUA_CFUNC(SetProjectileSpinSpeed);
 	REGISTER_LUA_CFUNC(SetProjectileSpinVec);
+	REGISTER_LUA_CFUNC(SetPieceProjectileParams);
 
 	REGISTER_LUA_CFUNC(SetProjectileCEG);
 
@@ -429,6 +431,37 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 	return team;
 }
 
+static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
+{
+	if (o == NULL)
+		return 0;
+
+	if (lua_isboolean(L, 2)) {
+		if (lua_toboolean(L, 2)) {
+			o->Block();
+		} else {
+			o->UnBlock();
+		}
+	}
+
+	if (lua_isboolean(L, 3)) {
+		// change the collidable state
+		if (!(o->collidable = lua_toboolean(L, 3))) {
+			// run this again so that object gets removed from
+			// the blocking map iff object->collidable was set
+			// to false but second argument was true (no point
+			// still being registered on the map then)
+			o->UnBlock();
+		}
+	}
+
+	o->crushable = luaL_optboolean(L, 4, o->crushable);
+	o->blockEnemyPushing = luaL_optboolean(L, 5, o->blockEnemyPushing);
+	o->blockHeightChanges = luaL_optboolean(L, 6, o->blockHeightChanges);
+
+	lua_pushboolean(L, o->IsBlocking());
+	return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -1658,34 +1691,7 @@ int LuaSyncedCtrl::SetUnitNanoPieces(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-
-	if (lua_isboolean(L, 2)) {
-		if (lua_toboolean(L, 2)) {
-			unit->Block();
-		} else {
-			unit->UnBlock();
-		}
-	}
-
-	if (lua_isboolean(L, 3)) {
-		// change the collidable state
-		if (!(unit->collidable = lua_toboolean(L, 3))) {
-			// run this again so that unit gets removed from
-			// the blocking map iff unit->collidable was set
-			// to false but second arg was true (no point in
-			// being registered on the map then)
-			unit->UnBlock();
-		}
-	}
-
-	unit->crushable = luaL_optboolean(L, 4, unit->crushable);
-	unit->blockEnemyPushing = luaL_optboolean(L, 5, unit->blockEnemyPushing);
-	unit->blockHeightChanges = luaL_optboolean(L, 6, unit->blockHeightChanges);
-	return 0;
+	return (SetSolidObjectBlocking(L, ParseUnit(L, __FUNCTION__, 1)));
 }
 
 
@@ -2582,6 +2588,11 @@ int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetFeatureBlocking(lua_State* L)
+{
+	return (SetSolidObjectBlocking(L, ParseFeature(L, __FUNCTION__, 1)));
+}
+
 int LuaSyncedCtrl::SetFeatureNoSelect(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
@@ -2823,7 +2834,11 @@ int LuaSyncedCtrl::SetProjectileGravity(lua_State* L)
 	return 0;
 }
 
-int LuaSyncedCtrl::SetProjectileSpinAngle(lua_State* L)
+int LuaSyncedCtrl::SetProjectileSpinAngle(lua_State* L) { return 0; } // DEPRECATED
+int LuaSyncedCtrl::SetProjectileSpinSpeed(lua_State* L) { return 0; } // DEPRECATED
+int LuaSyncedCtrl::SetProjectileSpinVec(lua_State* L) { return 0; } // DEPRECATED
+
+int LuaSyncedCtrl::SetPieceProjectileParams(lua_State* L)
 {
 	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
 
@@ -2831,33 +2846,13 @@ int LuaSyncedCtrl::SetProjectileSpinAngle(lua_State* L)
 		return 0;
 
 	CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);
-	pproj->spinAngle = luaL_optfloat(L, 2, 0.0f);
-	return 0;
-}
 
-int LuaSyncedCtrl::SetProjectileSpinSpeed(lua_State* L)
-{
-	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
-
-	if (proj == NULL || !proj->piece)
-		return 0;
-
-	CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);
-	pproj->spinSpeed = luaL_optfloat(L, 2, 0.0f);
-	return 0;
-}
-
-int LuaSyncedCtrl::SetProjectileSpinVec(lua_State* L)
-{
-	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
-
-	if (proj == NULL || !proj->piece)
-		return 0;
-
-	CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);
-	pproj->spinVec.x = luaL_optfloat(L, 2, 0.0f);
-	pproj->spinVec.y = luaL_optfloat(L, 3, 0.0f);
-	pproj->spinVec.z = luaL_optfloat(L, 4, 0.0f);
+	pproj->explFlags = luaL_optint(L, 2, pproj->explFlags);
+	pproj->spinAngle = luaL_optfloat(L, 3, pproj->spinAngle);
+	pproj->spinSpeed = luaL_optfloat(L, 4, pproj->spinSpeed);
+	pproj->spinVec.x = luaL_optfloat(L, 5, pproj->spinVec.x);
+	pproj->spinVec.y = luaL_optfloat(L, 6, pproj->spinVec.y);
+	pproj->spinVec.z = luaL_optfloat(L, 7, pproj->spinVec.z);
 	return 0;
 }
 
