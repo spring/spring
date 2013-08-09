@@ -263,6 +263,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureDirection);
 	REGISTER_LUA_CFUNC(GetFeatureHeading);
 	REGISTER_LUA_CFUNC(GetFeatureResources);
+	REGISTER_LUA_CFUNC(GetFeatureBlocking);
 	REGISTER_LUA_CFUNC(GetFeatureNoSelect);
 	REGISTER_LUA_CFUNC(GetFeatureResurrect);
 	REGISTER_LUA_CFUNC(GetFeatureCollisionVolumeData);
@@ -473,6 +474,17 @@ static int PushTerrainTypeData(lua_State* L, const CMapInfo::TerrainType* tt, bo
 	return (7 + int(groundInfo));
 }
 
+static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
+{
+	if (o == NULL)
+		return 0;
+
+	lua_pushboolean(L, o->collidable);
+	lua_pushboolean(L, o->crushable);
+	lua_pushboolean(L, o->IsBlocking());
+	return 3;
+}
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -542,6 +554,29 @@ static inline CUnit* ParseTypedUnit(lua_State* L, const char* caller, int index)
 		return NULL;
 	}
 	return IsUnitTyped(L, unit) ? unit : NULL;
+}
+
+
+static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
+{
+	if (!lua_isnumber(L, index)) {
+		if (caller != NULL) {
+			luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
+		} else {
+			return NULL;
+		}
+	}
+	const int featureID = lua_toint(L, index);
+	CFeature* feature = featureHandler->GetFeature(featureID);
+
+	if (!feature) {
+		return NULL;
+	}
+
+	if (!IsFeatureVisible(L, feature)) {
+		return NULL;
+	}
+	return feature;
 }
 
 
@@ -3603,20 +3638,13 @@ int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 }
 
 
-int LuaSyncedRead::GetUnitBlocking(lua_State *L)
+int LuaSyncedRead::GetUnitBlocking(lua_State* L)
 {
-	const CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-
-	lua_pushboolean(L, unit->collidable);
-	lua_pushboolean(L, unit->crushable);
-	return 2;
+	return (GetSolidObjectBlocking(L, ParseTypedUnit(L, __FUNCTION__, 1)));
 }
 
 
-int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
+int LuaSyncedRead::GetUnitMoveTypeData(lua_State* L)
 {
 	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
@@ -4282,32 +4310,6 @@ int LuaSyncedRead::FindUnitCmdDesc(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
-{
-	if (!lua_isnumber(L, index)) {
-		if (caller != NULL) {
-			luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
-		} else {
-			return NULL;
-		}
-	}
-	const int featureID = lua_toint(L, index);
-	CFeature* feature = featureHandler->GetFeature(featureID);
-
-	if (!feature) {
-		return NULL;
-	}
-
-	if (!IsFeatureVisible(L, feature)) {
-		return NULL;
-	}
-	return feature;
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-
 int LuaSyncedRead::ValidFeatureID(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, NULL, 1); // note the NULL
@@ -4485,6 +4487,12 @@ int LuaSyncedRead::GetFeatureResources(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetFeatureBlocking(lua_State* L)
+{
+	return (GetSolidObjectBlocking(L, ParseFeature(L, __FUNCTION__, 1)));
+}
+
+
 int LuaSyncedRead::GetFeatureNoSelect(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
@@ -4566,9 +4574,14 @@ int LuaSyncedRead::GetProjectileGravity(lua_State* L)
 	return 1;
 }
 
-int LuaSyncedRead::GetProjectileSpinAngle(lua_State* L) { return 0; } // DEPRECATED
-int LuaSyncedRead::GetProjectileSpinSpeed(lua_State* L) { return 0; } // DEPRECATED
-int LuaSyncedRead::GetProjectileSpinVec(lua_State* L) { return 0; } // DEPRECATED
+int LuaSyncedRead::GetProjectileSpinAngle(lua_State* L) { lua_pushnumber(L, 0.0f); return 1; } // DEPRECATED
+int LuaSyncedRead::GetProjectileSpinSpeed(lua_State* L) { lua_pushnumber(L, 0.0f); return 1; } // DEPRECATED
+int LuaSyncedRead::GetProjectileSpinVec(lua_State* L) {
+	lua_pushnumber(L, 0.0f);
+	lua_pushnumber(L, 0.0f);
+	lua_pushnumber(L, 0.0f);
+	return 3;
+} // DEPRECATED
 
 int LuaSyncedRead::GetPieceProjectileParams(lua_State* L)
 {
@@ -4819,7 +4832,7 @@ int LuaSyncedRead::GetTerrainTypeData(lua_State* L)
 
 /******************************************************************************/
 
-int LuaSyncedRead::GetSmoothMeshHeight(lua_State *L)
+int LuaSyncedRead::GetSmoothMeshHeight(lua_State* L)
 {
 	const float x = luaL_checkfloat(L, 1);
 	const float z = luaL_checkfloat(L, 2);

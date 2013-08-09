@@ -109,6 +109,7 @@ class LuaSyncedCtrl
 		static int SetFeatureResurrect(lua_State* L);
 		static int SetFeaturePosition(lua_State* L);
 		static int SetFeatureDirection(lua_State* L);
+		static int SetFeatureBlocking(lua_State* L);
 		static int SetFeatureNoSelect(lua_State* L);
 		static int SetFeatureMidAndAimPos(lua_State* L);
 		static int SetFeatureRadiusAndHeight(lua_State* L);
@@ -121,9 +122,10 @@ class LuaSyncedCtrl
 		static int SetProjectileTarget(lua_State* L);
 
 		static int SetProjectileGravity(lua_State* L);
-		static int SetProjectileSpinAngle(lua_State* L);
-		static int SetProjectileSpinSpeed(lua_State* L);
-		static int SetProjectileSpinVec(lua_State* L);
+		static int SetProjectileSpinAngle(lua_State* L); // DEPRECATED
+		static int SetProjectileSpinSpeed(lua_State* L); // DEPRECATED
+		static int SetProjectileSpinVec(lua_State* L); // DEPRECATED
+		static int SetPieceProjectileParams(lua_State* L);
 		static int SetProjectileCEG(lua_State* L);
 
 		static int LevelHeightMap(lua_State* L);
