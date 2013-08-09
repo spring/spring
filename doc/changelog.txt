@@ -10,6 +10,7 @@ Major:
  ! new LuaIntro (Lua based loadscreen with examples)
  - add map border rendering (+ /mapborder command)
  - bugfixes & speedups
+ - remove support for SM3 maps
 
 Performance:
  - use SSE in some matrix math
