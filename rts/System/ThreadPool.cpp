@@ -145,7 +145,9 @@ void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 		DoTask(taskgroup);
 	}
 
-	while (!taskgroup->IsFinished()) { }
+	while (!taskgroup->wait_for(boost::chrono::seconds(5))) {
+		LOG_L(L_WARNING, "Hang in ThreadPool");
+	}
 
 	//LOG("WaitForFinished %i", taskgroup->GetExceptions().size());
 	//for (auto& r: taskgroup->results())
@@ -182,9 +184,9 @@ void SetThreadCount(int num)
 				}
 			} catch (const opengl_error& gle) {
 				// shared gl context creation failed :<
-				SetThreadCount(1);
+				SetThreadCount(0);
 				hasOGLthreads = false;
-				curThreads = 1;
+				curThreads = GetNumThreads();
 			}
 		}
 #endif
