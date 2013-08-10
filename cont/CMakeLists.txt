@@ -53,20 +53,15 @@ endif()
 ### Install dependencies (windows, mingwlibs DLLs)
 if    (MINGW)
 	install (DIRECTORY ${MINGWLIBS}/dll/ DESTINATION ${BINDIR} PATTERN "*.dll")
-	if(OPENMP_FOUND AND CMAKE_CROSSCOMPILING)
-		# note we need to use gcc to find the library cause it isn't at the default /usr/lib/location
-		#execute_process(COMMAND ${CMAKE_CXX_COMPILER} "-print-file-name=libgomp-1.dll" OUTPUT_VARIABLE GOMP_LIBRARY OUTPUT_STRIP_TRAILING_WHITESPACE)
-		#install(FILES ${GOMP_LIBRARY} DESTINATION ${BINDIR})
 
-		#execute_process(COMMAND ${CMAKE_CXX_COMPILER} "-print-file-name=libstdc++-6.dll" OUTPUT_VARIABLE STDCXX_LIBRARY OUTPUT_STRIP_TRAILING_WHITESPACE)
-		#install(FILES ${STDCXX_LIBRARY} DESTINATION ${BINDIR})
+	#execute_process(COMMAND ${CMAKE_CXX_COMPILER} "-print-file-name=libstdc++-6.dll" OUTPUT_VARIABLE STDCXX_LIBRARY OUTPUT_STRIP_TRAILING_WHITESPACE)
+	#install(FILES ${STDCXX_LIBRARY} DESTINATION ${BINDIR})
 
-		# pthreadGC2 is a dependency of gomp
-		find_library(PTHREADGC2_LIBRARY NAMES pthreadGC2)
-		if(NOT EXISTS ${PTHREADGC2_LIBRARY})
-			message(SEND_ERROR "pthreadGC2 not found!")
-		endif()
-		install(FILES ${PTHREADGC2_LIBRARY} DESTINATION ${BINDIR})
-	endif(OPENMP_FOUND AND CMAKE_CROSSCOMPILING)
+	# pthreadGC2 is a dependency of ThreadPool
+	find_library(PTHREADGC2_LIBRARY NAMES pthreadGC2)
+	if(NOT EXISTS ${PTHREADGC2_LIBRARY})
+		message(SEND_ERROR "pthreadGC2 not found!")
+	endif()
+	install(FILES ${PTHREADGC2_LIBRARY} DESTINATION ${BINDIR})
 endif (MINGW)
 
