@@ -688,6 +688,10 @@ bool CWeapon::AllowWeaponTargetCheck()
 	if (weaponDef->noAutoTarget)                 { return false; }
 	if (owner->fireState < FIRESTATE_FIREATWILL) { return false; }
 
+	// if CAI has an auto-generated attack order, do not interfere
+	if (!owner->commandAI->CanWeaponAutoTarget())
+		return false;
+
 	if (avoidTarget)               { return true; }
 	if (targetType == Target_None) { return true; }
 

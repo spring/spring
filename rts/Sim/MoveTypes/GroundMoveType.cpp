@@ -2254,24 +2254,24 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
 	const float waypointRETA  = (waypointDist / maxReverseSpeed);                                 // in frames (simplistic)
 	const float waypointAngle = Clamp(waypointDir2D.dot(owner->frontdir), -1.0f, 1.0f);           // clamp to prevent NaN's
 	const float turnAngleDeg  = math::acosf(waypointAngle) * (180.0f / PI);                       // in degrees
-	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * SPRING_CIRCLE_DIVS;                     // in "headings"
-	const float revAngleSpr   = SHORTINT_MAXVALUE - turnAngleSpr;                                 // 180 deg - angle
+	const float fwdTurnAngle  = (turnAngleDeg / 360.0f) * SPRING_CIRCLE_DIVS;                     // in "headings"
+	const float revTurnAngle  = SHORTINT_MAXVALUE - fwdTurnAngle;                                 // 180 deg - angle
 
 	// units start accelerating before finishing the turn, so subtract something
-	const float turnTimeMod   = 5.0f;
-	const float turnAngleTime = std::max(0.0f, (turnAngleSpr / turnRate) - turnTimeMod); // in frames
-	const float revAngleTime  = std::max(0.0f, (revAngleSpr  / turnRate) - turnTimeMod);
+	const float turnTimeMod      = 5.0f;
+	const float fwdTurnAngleTime = std::max(0.0f, (fwdTurnAngle / turnRate) - turnTimeMod); // in frames
+	const float revTurnAngleTime = std::max(0.0f, (revTurnAngle / turnRate) - turnTimeMod);
 
-	const float apxSpeedAfterTurn  = std::max(0.f, currentSpeed - 0.125f * (turnAngleTime * decRate));
-	const float apxRevSpdAfterTurn = std::max(0.f, currentSpeed - 0.125f * (revAngleTime  * decRate));
-	const float decTime       = ( reversing * apxSpeedAfterTurn)  / decRate;
-	const float revDecTime    = (!reversing * apxRevSpdAfterTurn) / decRate;
-	const float accTime       = (maxSpeed        - !reversing * apxSpeedAfterTurn)  / accRate;
-	const float revAccTime    = (maxReverseSpeed -  reversing * apxRevSpdAfterTurn) / accRate;
-	const float revAccDecTime = revDecTime + revAccTime;
+	const float apxFwdSpdAfterTurn = std::max(0.0f, currentSpeed - 0.125f * (fwdTurnAngleTime * decRate));
+	const float apxRevSpdAfterTurn = std::max(0.0f, currentSpeed - 0.125f * (revTurnAngleTime * decRate));
 
-	const float fwdETA = waypointFETA + turnAngleTime + accTime + decTime;
-	const float revETA = waypointRETA + revAngleTime + revAccDecTime;
+	const float fwdDecTime = ( reversing * apxFwdSpdAfterTurn) / decRate;
+	const float revDecTime = (!reversing * apxRevSpdAfterTurn) / decRate;
+	const float fwdAccTime = (maxSpeed        - !reversing * apxFwdSpdAfterTurn) / accRate;
+	const float revAccTime = (maxReverseSpeed -  reversing * apxRevSpdAfterTurn) / accRate;
+
+	const float fwdETA = waypointFETA + fwdTurnAngleTime + fwdAccTime + fwdDecTime;
+	const float revETA = waypointRETA + revTurnAngleTime + revDecTime + revAccTime;
 
 	return (fwdETA > revETA);
 }

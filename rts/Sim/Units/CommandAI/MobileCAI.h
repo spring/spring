@@ -51,6 +51,7 @@ public:
 	int GetCancelDistance() { return cancelDistance; }
 
 	virtual bool IsValidTarget(const CUnit* enemy) const;
+	virtual bool CanWeaponAutoTarget() const { return (!tempOrder); }
 
 	float3 goalPos;
 	float  goalRadius;
