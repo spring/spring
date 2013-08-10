@@ -32,11 +32,12 @@ public:
 
 	virtual void AddDeathDependence(CObject* o, DependenceType dep);
 	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
-	void AddCommandDependency(const Command &c);
+	void AddCommandDependency(const Command& c);
 	void ClearCommandDependencies();
 	/// feeds into GiveCommandReal()
 	void GiveCommand(const Command& c, bool fromSynced = true);
-	void ClearTargetLock(const Command &fc);
+	void ClearTargetLock(const Command& fc);
+	virtual bool CanWeaponAutoTarget() const { return true; }
 	virtual int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
