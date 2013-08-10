@@ -147,21 +147,25 @@ void CheckModelNormals(const S3DModel* model) {
 
 std::string C3DModelLoader::FindModelPath(std::string name) const
 {
-	const std::string& fileExt = FileSystem::GetExtension(name);
+	// check for empty string because we can be called
+	// from Lua*Defs and certain features have no models
+	if (!name.empty()) {
+		const std::string& fileExt = FileSystem::GetExtension(name);
 
-	if (fileExt.empty()) {
-		for (FormatMap::const_iterator it = formats.begin(); it != formats.end(); ++it) {
-			const std::string& formatExt = it->first;
+		if (fileExt.empty()) {
+			for (FormatMap::const_iterator it = formats.begin(); it != formats.end(); ++it) {
+				const std::string& formatExt = it->first;
 
-			if (CFileHandler::FileExists(name + "." + formatExt, SPRING_VFS_ZIP)) {
-				name += ("." + formatExt); break;
+				if (CFileHandler::FileExists(name + "." + formatExt, SPRING_VFS_ZIP)) {
+					name += ("." + formatExt); break;
+				}
 			}
 		}
-	}
 
-	if (!CFileHandler::FileExists(name, SPRING_VFS_ZIP)) {
-		if (name.find("objects3d/") == std::string::npos) {
-			return FindModelPath("objects3d/" + name);
+		if (!CFileHandler::FileExists(name, SPRING_VFS_ZIP)) {
+			if (name.find("objects3d/") == std::string::npos) {
+				return FindModelPath("objects3d/" + name);
+			}
 		}
 	}
 
