@@ -53,11 +53,7 @@ endif()
 ### Install dependencies (windows, mingwlibs DLLs)
 if    (MINGW)
 	install (DIRECTORY ${MINGWLIBS}/dll/ DESTINATION ${BINDIR} PATTERN "*.dll")
-	if(OPENMP_FOUND AND CMAKE_CROSSCOMPILING)
-		# note we need to use gcc to find the library cause it isn't at the default /usr/lib/location
-		#execute_process(COMMAND ${CMAKE_CXX_COMPILER} "-print-file-name=libgomp-1.dll" OUTPUT_VARIABLE GOMP_LIBRARY OUTPUT_STRIP_TRAILING_WHITESPACE)
-		#install(FILES ${GOMP_LIBRARY} DESTINATION ${BINDIR})
-
+	if(CMAKE_CROSSCOMPILING)
 		#execute_process(COMMAND ${CMAKE_CXX_COMPILER} "-print-file-name=libstdc++-6.dll" OUTPUT_VARIABLE STDCXX_LIBRARY OUTPUT_STRIP_TRAILING_WHITESPACE)
 		#install(FILES ${STDCXX_LIBRARY} DESTINATION ${BINDIR})
 
@@ -67,6 +63,6 @@ if    (MINGW)
 			message(SEND_ERROR "pthreadGC2 not found!")
 		endif()
 		install(FILES ${PTHREADGC2_LIBRARY} DESTINATION ${BINDIR})
-	endif(OPENMP_FOUND AND CMAKE_CROSSCOMPILING)
+	endif(CMAKE_CROSSCOMPILING)
 endif (MINGW)
 
