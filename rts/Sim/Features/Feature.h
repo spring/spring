@@ -60,25 +60,7 @@ public:
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
 
-	bool IsInLosForAllyTeam(int argAllyTeam) const
-	{
-		if (alwaysVisible)
-			return true;
-
-		const bool inLOS = (argAllyTeam == -1 || loshandler->InLos(this->pos, argAllyTeam));
-
-		switch (modInfo.featureVisibility) {
-			case CModInfo::FEATURELOS_NONE:
-			default:
-				return inLOS;
-			case CModInfo::FEATURELOS_GAIAONLY:
-				return (this->allyteam == -1 || inLOS);
-			case CModInfo::FEATURELOS_GAIAALLIED:
-				return (this->allyteam == -1 || this->allyteam == argAllyTeam || inLOS);
-			case CModInfo::FEATURELOS_ALL:
-				return true;
-		}
-	}
+	bool IsInLosForAllyTeam(int argAllyTeam) const;
 
 	// NOTE:
 	//   unlike CUnit which recalculates the matrix on each call

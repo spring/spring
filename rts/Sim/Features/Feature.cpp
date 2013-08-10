@@ -112,11 +112,34 @@ void CFeature::PostLoad()
 void CFeature::ChangeTeam(int newTeam)
 {
 	if (newTeam < 0) {
-		team = 0; // NOTE: this should probably be -1, would need work
-		allyteam = -1;
+		// remap all negative teams to Gaia
+		// if the Gaia team is not enabled, these would become
+		// -1 and we remap them again (to 0) to prevent crashes
+		team = std::max(0, teamHandler->GaiaTeamID());
+		allyteam = std::max(0, teamHandler->GaiaAllyTeamID());
 	} else {
 		team = newTeam;
 		allyteam = teamHandler->AllyTeam(newTeam);
+	}
+}
+
+bool CFeature::IsInLosForAllyTeam(int argAllyTeam) const
+{
+	if (alwaysVisible)
+		return true;
+
+	const bool inLOS = (argAllyTeam == -1 || loshandler->InLos(this->pos, argAllyTeam));
+
+	switch (modInfo.featureVisibility) {
+		case CModInfo::FEATURELOS_NONE:
+		default:
+			return inLOS;
+		case CModInfo::FEATURELOS_GAIAONLY:
+			return (this->allyteam == teamHandler->GaiaAllyTeamID() || inLOS);
+		case CModInfo::FEATURELOS_GAIAALLIED:
+			return (this->allyteam == teamHandler->GaiaAllyTeamID() || this->allyteam == argAllyTeam || inLOS);
+		case CModInfo::FEATURELOS_ALL:
+			return true;
 	}
 }
 
@@ -180,7 +203,6 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	featureHandler->AddFeature(this);
 	quadField->AddFeature(this);
 
-	// maybe should not be here, but it prevents crashes caused by team = -1
 	ChangeTeam(team);
 	Block();
 
