@@ -104,7 +104,7 @@ void ITreeDrawer::Update() {
 
 
 
-void ITreeDrawer::FeatureCreated(const CFeature* feature) {
+void ITreeDrawer::RenderFeatureCreated(const CFeature* feature) {
 	// support /give'ing tree objects
 	if (feature->def->drawType >= DRAWTYPE_TREE) {
 		AddTree(feature->id, feature->def->drawType - 1, feature->pos, 1.0f);
