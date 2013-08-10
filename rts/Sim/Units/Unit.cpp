@@ -208,7 +208,7 @@ CUnit::CUnit() : CSolidObject(),
 	curArmorMultiple(1.0f),
 	posErrorVector(ZeroVector),
 	posErrorDelta(ZeroVector),
-	nextPosErrorUpdate(0),
+	nextPosErrorUpdate(1),
 	wantCloak(false),
 	scriptCloak(0),
 	cloakTimeout(128),
@@ -381,9 +381,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	hasRadarPos = false;
 
 	losStatus[allyteam] = LOS_ALL_MASK_BITS | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
-
-	/// posErrorVector = gs->randVector();
-	/// posErrorVector.y *= 0.2f;
 
 #ifdef TRACE_SYNC
 	tracefile << "[" << __FUNCTION__ << "] id: " << id << ", name: " << unitDef->name << " ";
