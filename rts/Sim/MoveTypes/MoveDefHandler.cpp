@@ -257,22 +257,23 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 		(moveFamily == MoveDef::Tank ||
 		 moveFamily == MoveDef::KBot);
 
+	// TODO:
+	//   remove terrainClass, not used anywhere
+	//   and only AI's MIGHT have benefit from it
+	//
 	// tank or bot that cannot get its threads / feet
 	// wet, or hovercraft (which doesn't touch ground
 	// or water)
-	const bool b0 = ((followGround && maxWaterDepth <= 0.0) || moveFamily == MoveDef::Hover);
-
+	if ((followGround && maxWaterDepth <= 0.0) || moveFamily == MoveDef::Hover)
+		terrainClass = MoveDef::Land;
 	// ship (or sub) that cannot crawl onto shore, OR tank or
 	// kbot restricted to snorkling (strange but possible)
-	const bool b1 = ((moveFamily == MoveDef::Ship && minWaterDepth > 0.0) || ((followGround) && minWaterDepth > 0.0));
-
+	if ((moveFamily == MoveDef::Ship && minWaterDepth > 0.0) || ((followGround) && minWaterDepth > 0.0))
+		terrainClass = MoveDef::Water;
 	// tank or kbot that CAN go skinny-dipping (amph.),
 	// or ship that CAN sprout legs when at the beach
-	const bool b2 = ((followGround) && maxWaterDepth > 0.0) || (moveFamily == MoveDef::Ship && minWaterDepth < 0.0);
-
-	if (b0) { terrainClass = MoveDef::Land;  }
-	if (b1) { terrainClass = MoveDef::Water; }
-	if (b2) { terrainClass = MoveDef::Mixed; }
+	if ((followGround) && maxWaterDepth > 0.0) || (moveFamily == MoveDef::Ship && minWaterDepth < 0.0)
+		terrainClass = MoveDef::Mixed;
 
 	const int xsizeDef = std::max(1, moveTable.GetInt("footprintX",        1));
 	const int zsizeDef = std::max(1, moveTable.GetInt("footprintZ", xsizeDef));
