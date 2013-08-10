@@ -202,6 +202,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
 
 
+	REGISTER_LUA_CFUNC(SetProjectileAlwaysVisible);
 	REGISTER_LUA_CFUNC(SetProjectileMoveControl);
 	REGISTER_LUA_CFUNC(SetProjectilePosition);
 	REGISTER_LUA_CFUNC(SetProjectileVelocity);
@@ -461,6 +462,19 @@ static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 
 	lua_pushboolean(L, o->IsBlocking());
 	return 1;
+}
+
+static int SetWorldObjectAlwaysVisible(lua_State* L, CWorldObject* o, const char* caller)
+{
+	if (o == NULL)
+		return 0;
+
+	if (!lua_isboolean(L, 2)) {
+		luaL_error(L, "[%s] incorrect arguments", caller);
+	}
+
+	o->alwaysVisible = lua_toboolean(L, 2);
+	return 0;
 }
 
 /******************************************************************************/
@@ -1570,15 +1584,7 @@ int LuaSyncedCtrl::SetUnitSonarStealth(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitAlwaysVisible(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	if (!lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitAlwaysVisible()");
-	}
-	unit->alwaysVisible = lua_toboolean(L, 2);
-	return 0;
+	return (SetWorldObjectAlwaysVisible(L, ParseUnit(L, __FUNCTION__, 1), __FUNCTION__));
 }
 
 
@@ -2501,15 +2507,7 @@ int LuaSyncedCtrl::TransferFeature(lua_State* L)
 
 int LuaSyncedCtrl::SetFeatureAlwaysVisible(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
-		return 0;
-	}
-	if (!lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitAlwaysVisible()");
-	}
-	feature->alwaysVisible = lua_toboolean(L, 2);
-	return 0;
+	return (SetWorldObjectAlwaysVisible(L, ParseFeature(L, __FUNCTION__, 1), __FUNCTION__));
 }
 
 
@@ -2696,6 +2694,11 @@ int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
+
+int LuaSyncedCtrl::SetProjectileAlwaysVisible(lua_State* L)
+{
+	return (SetWorldObjectAlwaysVisible(L, ParseProjectile(L, __FUNCTION__, 1), __FUNCTION__));
+}
 
 int LuaSyncedCtrl::SetProjectileMoveControl(lua_State* L)
 {
