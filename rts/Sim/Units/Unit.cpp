@@ -208,7 +208,7 @@ CUnit::CUnit() : CSolidObject(),
 	curArmorMultiple(1.0f),
 	posErrorVector(ZeroVector),
 	posErrorDelta(ZeroVector),
-	nextPosErrorUpdate(1),
+	nextPosErrorUpdate(0),
 	wantCloak(false),
 	scriptCloak(0),
 	cloakTimeout(128),
@@ -382,8 +382,8 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 	losStatus[allyteam] = LOS_ALL_MASK_BITS | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
-	posErrorVector = gs->randVector();
-	posErrorVector.y *= 0.2f;
+	/// posErrorVector = gs->randVector();
+	/// posErrorVector.y *= 0.2f;
 
 #ifdef TRACE_SYNC
 	tracefile << "[" << __FUNCTION__ << "] id: " << id << ", name: " << unitDef->name << " ";
@@ -475,6 +475,7 @@ void CUnit::PostInit(const CUnit* builder)
 
 	UpdateTerrainType();
 	UpdatePhysicalState();
+	UpdatePosErrorParams(true, true);
 
 	if (unitDef->floatOnWater && IsInWater()) {
 		Move(UpVector * (-unitDef->waterline - pos.y), true);
@@ -594,11 +595,11 @@ void CUnit::UpdateDirVectors(bool useGroundNormal)
 float3 CUnit::GetErrorVector(int allyteam) const
 {
 	if (teamHandler->Ally(allyteam, this->allyteam) || (losStatus[allyteam] & LOS_INLOS)) {
-		// ^ it's one of our own, or it's in LOS, so don't add an error ^
+		// it's one of our own, or it's in LOS, so don't add an error
 		return ZeroVector;
 	}
 	if (gameSetup->ghostedBuildings && (losStatus[allyteam] & LOS_PREVLOS) && unitDef->IsBuildingUnit()) {
-		// ^ this is a ghosted building, so don't add an error ^
+		// this is a ghosted building, so don't add an error
 		return ZeroVector;
 	}
 
@@ -609,6 +610,28 @@ float3 CUnit::GetErrorVector(int allyteam) const
 	}
 }
 
+void CUnit::UpdatePosErrorParams(bool updateError, bool updateDelta)
+{
+	if (updateError) {
+		// every frame, magnitude of error increases
+		// error-direction is fixed until next delta
+		posErrorVector += posErrorDelta;
+	}
+
+	if (updateDelta) {
+		if ((--nextPosErrorUpdate) <= 0) {
+			float3 newPosError = gs->randVector();
+			newPosError.y *= 0.2f;
+
+			if (posErrorVector.dot(newPosError) < 0.0f) {
+				newPosError = -newPosError;
+			}
+
+			posErrorDelta = (newPosError - posErrorVector) * (1.0f / 256.0f);
+			nextPosErrorUpdate = UNIT_SLOWUPDATE_RATE;
+		}
+	}
+}
 
 void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent)
 {
@@ -663,8 +686,7 @@ void CUnit::Update()
 	ASSERT_SYNCED(pos);
 
 	UpdatePhysicalState();
-
-	posErrorVector += posErrorDelta;
+	UpdatePosErrorParams(true, false);
 
 	if (beingBuilt)
 		return;
@@ -814,16 +836,7 @@ void CUnit::SetStunned(bool stun) {
 
 void CUnit::SlowUpdate()
 {
-	--nextPosErrorUpdate;
-	if (nextPosErrorUpdate == 0) {
-		float3 newPosError(gs->randVector());
-		newPosError.y *= 0.2f;
-		if (posErrorVector.dot(newPosError) < 0.0f) {
-			newPosError = -newPosError;
-		}
-		posErrorDelta = (newPosError - posErrorVector) * (1.0f / 256.0f);
-		nextPosErrorUpdate = 16;
-	}
+	UpdatePosErrorParams(false, true);
 
 	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
 		UpdateLosStatus(at);

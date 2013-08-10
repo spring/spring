@@ -109,6 +109,7 @@ class LuaSyncedRead {
 		static int GetUnitSelfDTime(lua_State* L);
 		static int GetUnitStockpile(lua_State* L);
 		static int GetUnitSensorRadius(lua_State* L);
+		static int GetUnitPosErrorParams(lua_State* L);
 		static int GetUnitHeight(lua_State* L);
 		static int GetUnitRadius(lua_State* L);
 		static int GetUnitPosition(lua_State* L);

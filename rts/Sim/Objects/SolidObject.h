@@ -153,6 +153,7 @@ public:
 	bool IsSkidding() const { return ((physicalState & STATE_BIT_SKIDDING) != 0); }
 	bool IsBlocking() const { return ((physicalState & STATE_BIT_BLOCKING) != 0); }
 
+	bool HasPhysicalStateBit(unsigned int bit) const { return ((physicalState & bit) != 0); }
 	void SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= (bit); physicalState = static_cast<PhysicalState>(ps); }
 	void ClearPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps &= (~bit); physicalState = static_cast<PhysicalState>(ps); }
 	void UpdatePhysicalStateBit(unsigned int bit, bool set) {
