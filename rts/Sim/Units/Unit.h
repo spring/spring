@@ -155,7 +155,8 @@ public:
 
 	float3 GetErrorVector(int allyteam) const;
 	float3 GetErrorPos(int allyteam, bool aiming = false) const { return (aiming? aimPos: midPos) + GetErrorVector(allyteam); }
-	float3 GetDrawErrorPos(int allyteam) const { return drawMidPos + GetErrorVector(allyteam); }
+	float3 GetDrawErrorPos(int allyteam) const { return (drawMidPos + GetErrorVector(allyteam)); }
+	void UpdatePosErrorParams(bool updateError, bool updateDelta);
 
 	bool IsNeutral() const { return neutral; }
 	bool IsCloaked() const { return isCloaked; }

@@ -171,6 +171,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitPieceCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
+	REGISTER_LUA_CFUNC(SetUnitPosErrorParams);
 
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
@@ -2067,6 +2068,19 @@ int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
 	}
 
 	return 1;
+}
+
+int LuaSyncedCtrl::SetUnitPosErrorParams(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
+		return 0;
+
+	unit->posErrorVector = float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
+	unit->posErrorDelta = float3(luaL_checkfloat(L, 5), luaL_checkfloat(L, 6), luaL_checkfloat(L, 7));
+	unit->nextPosErrorUpdate = luaL_optint(L, 8, unit->nextPosErrorUpdate);
+	return 0;
 }
 
 
