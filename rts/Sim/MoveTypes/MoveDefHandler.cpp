@@ -272,7 +272,7 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 		terrainClass = MoveDef::Water;
 	// tank or kbot that CAN go skinny-dipping (amph.),
 	// or ship that CAN sprout legs when at the beach
-	if ((followGround) && maxWaterDepth > 0.0) || (moveFamily == MoveDef::Ship && minWaterDepth < 0.0)
+	if (((followGround) && maxWaterDepth > 0.0) || (moveFamily == MoveDef::Ship && minWaterDepth < 0.0))
 		terrainClass = MoveDef::Mixed;
 
 	const int xsizeDef = std::max(1, moveTable.GetInt("footprintX",        1));
