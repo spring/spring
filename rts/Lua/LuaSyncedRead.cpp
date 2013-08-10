@@ -4863,6 +4863,11 @@ int LuaSyncedRead::TestMoveOrder(lua_State* L)
 	}
 
 	const float3 pos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
+	const float3 dir(luaL_optfloat(L, 5, 0.0f), luaL_optfloat(L, 6, 0.0f), luaL_optfloat(L, 7, 0.0f));
+
+	const bool testTerrain = luaL_optboolean(L, 8, true);
+	const bool testObjects = luaL_optboolean(L, 9, true);
+	const bool centerOnly = luaL_optboolean(L, 10, false);
 
 	bool los = false;
 	bool ret = false;
@@ -4874,7 +4879,7 @@ int LuaSyncedRead::TestMoveOrder(lua_State* L)
 	}
 
 	if (los) {
-		ret = moveDef->TestMoveSquare(NULL, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE);
+		ret = moveDef->TestMoveSquare(NULL, pos, dir, testTerrain, testObjects, centerOnly);
 	}
 
 	lua_pushboolean(L, ret);
