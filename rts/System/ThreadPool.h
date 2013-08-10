@@ -78,6 +78,14 @@ public:
 	virtual boost::optional<std::function<void()>> GetTask() = 0;
 	virtual bool IsFinished() const = 0;
 	virtual bool IsEmpty() const = 0;
+
+	template< class Rep, class Period >
+	bool wait_for(const boost::chrono::duration<Rep, Period>& rel_time) const {
+		const auto end = boost::chrono::high_resolution_clock::now() + rel_time;
+		while (!IsFinished() && (boost::chrono::high_resolution_clock::now() < end)) {
+		}
+		return IsFinished();
+	}
 private:
 	//virtual void FinishedATask() = 0;
 };
