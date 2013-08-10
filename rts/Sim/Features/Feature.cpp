@@ -134,10 +134,13 @@ bool CFeature::IsInLosForAllyTeam(int argAllyTeam) const
 		case CModInfo::FEATURELOS_NONE:
 		default:
 			return inLOS;
+
+		// these next two only make sense when Gaia is enabled
 		case CModInfo::FEATURELOS_GAIAONLY:
-			return (this->allyteam == teamHandler->GaiaAllyTeamID() || inLOS);
+			return (this->allyteam == std::max(0, teamHandler->GaiaAllyTeamID()) || inLOS);
 		case CModInfo::FEATURELOS_GAIAALLIED:
-			return (this->allyteam == teamHandler->GaiaAllyTeamID() || this->allyteam == argAllyTeam || inLOS);
+			return (this->allyteam == std::max(0, teamHandler->GaiaAllyTeamID()) || this->allyteam == argAllyTeam || inLOS);
+
 		case CModInfo::FEATURELOS_ALL:
 			return true;
 	}
