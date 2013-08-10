@@ -3794,7 +3794,7 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State* L)
 		HSTR_PUSH_NUMBER(L, "maxPitch", sAMT->maxBank);
 		HSTR_PUSH_NUMBER(L, "turnRadius", sAMT->turnRadius);
 
-		HSTR_PUSH_NUMBER(L, "maxAcc", sAMT->maxAcc);
+		HSTR_PUSH_NUMBER(L, "maxAcc", sAMT->accRate);
 		HSTR_PUSH_NUMBER(L, "maxAileron", sAMT->maxAileron);
 		HSTR_PUSH_NUMBER(L, "maxElevator", sAMT->maxElevator);
 		HSTR_PUSH_NUMBER(L, "maxRudder", sAMT->maxRudder);

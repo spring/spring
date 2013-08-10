@@ -24,6 +24,9 @@ CR_REG_METADATA(AAirMoveType, (
 	CR_MEMBER(wantedHeight),
 	CR_MEMBER(orgWantedHeight),
 
+	CR_MEMBER(accRate),
+	CR_MEMBER(decRate),
+
 	CR_MEMBER(collide),
 	CR_MEMBER(useSmoothMesh),
 	CR_MEMBER(autoLand),
@@ -40,11 +43,14 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 	aircraftState(AIRCRAFT_LANDED),
 	padStatus(PAD_STATUS_FLYING),
 
-	oldGoalPos(owner? owner->pos : ZeroVector),
+	oldGoalPos(unit? unit->pos : ZeroVector),
 	reservedLandingPos(-1.0f, -1.0f, -1.0f),
 
 	wantedHeight(80.0f),
 	orgWantedHeight(0.0f),
+
+	accRate(1.0f),
+	decRate(1.0f),
 
 	collide(true),
 	useSmoothMesh(false),
@@ -56,6 +62,10 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 	lastColWarningType(0),
 	lastFuelUpdateFrame(gs->frameNum)
 {
+	// same as {Ground, HoverAir}MoveType::accRate
+	accRate = std::max(0.01f, unit->unitDef->maxAcc);
+	decRate = std::max(0.01f, unit->unitDef->maxDec);
+
 	useHeading = false;
 }
 
@@ -262,7 +272,6 @@ void AAirMoveType::CheckForCollision()
 }
 
 
-
 bool AAirMoveType::MoveToRepairPad() {
 	CUnit* airBase = reservedPad->GetUnit();
 
@@ -278,18 +287,23 @@ bool AAirMoveType::MoveToRepairPad() {
 			(airBase->rightdir * relPadPos.x);
 
 		if (padStatus == PAD_STATUS_FLYING) {
+			// flying toward pad
 			if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_TAKEOFF) {
 				SetState(AIRCRAFT_FLYING);
 			}
 
 			goalPos = absPadPos;
 
-			if (absPadPos.SqDistance2D(owner->pos) < (400.0f * 400.0f)) {
+			// once distance to pad becomes smaller than current braking distance, switch states
+			// braking distance is 0.5*a*t*t where t is v/a --> 0.5*a*((v*v)/(a*a)) --> 0.5*v*v*(1/a)
+			// NOTE: <a> should be decRate but StrafeAirMoveType only uses accRate
+			if (absPadPos.SqDistance2D(owner->pos) < Square(0.5f * owner->speed.SqLength() / accRate)) {
 				padStatus = PAD_STATUS_LANDING;
 			}
 		} else if (padStatus == PAD_STATUS_LANDING) {
-			// landing on pad
+			// preparing to land on pad
 			const AircraftState landingState = GetLandingState();
+
 			if (aircraftState != landingState)
 				SetState(landingState);
 
@@ -298,7 +312,7 @@ bool AAirMoveType::MoveToRepairPad() {
 			wantedHeight = absPadPos.y - ground->GetHeightAboveWater(absPadPos.x, absPadPos.z);
 
 			const float curPadDistanceSq = owner->midPos.SqDistance(absPadPos);
-			const float minPadDistanceSq = owner->radius * owner->radius;
+			const float minPadDistanceSq = Square(owner->radius + owner->relMidPos.y);
 
 			if (curPadDistanceSq < minPadDistanceSq || aircraftState == AIRCRAFT_LANDED) {
 				padStatus = PAD_STATUS_ARRIVED;
@@ -310,8 +324,7 @@ bool AAirMoveType::MoveToRepairPad() {
 				SetState(AIRCRAFT_LANDED);
 			}
 
-			owner->pos = absPadPos;
-
+			owner->Move(absPadPos, false);
 			owner->UpdateMidAndAimPos(); // needed here?
 			owner->AddBuildPower(airBase->unitDef->buildSpeed / GAME_SPEED, airBase);
 

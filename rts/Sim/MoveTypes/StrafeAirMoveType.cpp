@@ -40,7 +40,6 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(maxPitch),
 	CR_MEMBER(turnRadius),
 
-	CR_MEMBER(maxAcc),
 	CR_MEMBER(maxAileron),
 	CR_MEMBER(maxElevator),
 	CR_MEMBER(maxRudder),
@@ -77,7 +76,6 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	maxBank(0.55f),
 	maxPitch(0.35f),
 	turnRadius(150),
-	maxAcc(0.006f),
 	maxAileron(0.04f),
 	maxElevator(0.02f),
 	maxRudder(0.01f),
@@ -106,8 +104,6 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 		(owner->unitDef->wantedHeight * 1.5f) +
 		((gs->randFloat() - 0.3f) * 15.0f * (isFighter? 2.0f: 1.0f));
 
-	// same as {Ground, HoverAir}MoveType::accRate
-	maxAcc = owner->unitDef->maxAcc;
 	maxAileron = owner->unitDef->maxAileron;
 	maxElevator = owner->unitDef->maxElevator;
 	maxRudder = owner->unitDef->maxRudder;
@@ -118,7 +114,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	maxRudder   *= (0.99f + gs->randFloat() * 0.02f);
 	maxElevator *= (0.99f + gs->randFloat() * 0.02f);
 	maxAileron  *= (0.99f + gs->randFloat() * 0.02f);
-	maxAcc      *= (0.99f + gs->randFloat() * 0.02f);
+	accRate     *= (0.99f + gs->randFloat() * 0.02f);
 
 	crashAileron = 1 - gs->randFloat() * gs->randFloat();
 	if (gs->randInt() & 1) {
@@ -819,11 +815,11 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 	frontdir.Normalize();
 	rightdir = frontdir.cross(updir);
 
-	speed.y += (maxAcc * GetVTOLAccelerationSign(currentHeight, wantedHeight, speed.y, true));
+	speed.y += (accRate * GetVTOLAccelerationSign(currentHeight, wantedHeight, speed.y, true));
 
 	// initiate forward motion before reaching wantedHeight
 	if (currentHeight > wantedHeight * 0.4f) {
-		speed += (owner->frontdir * maxAcc);
+		speed += (owner->frontdir * accRate);
 	}
 	if (currentHeight > wantedHeight) {
 		SetState(AIRCRAFT_FLYING);
@@ -879,7 +875,7 @@ void CStrafeAirMoveType::UpdateLanding()
 	float3 wantedSpeed;
 
 	const float reservedLandingPosDist = reservedLandingPosDir.Length() + 0.1f;
-	const float landingSpeed = (speedf > 0.0f)? ((reservedLandingPosDist / speedf) * (maxAcc * 3.0f)): 0.1f;
+	const float verticalLandingSpeed = (speedf > 0.0f)? ((reservedLandingPosDist / speedf) * (accRate * 3.0f)): 0.1f;
 
 	reservedLandingPosDir /= reservedLandingPosDist;
 
@@ -887,17 +883,17 @@ void CStrafeAirMoveType::UpdateLanding()
 	// on the ground, so make sure to not get stuck in mid-air
 	wantedSpeed.x = reservedLandingPosDir.x * speedf;
 	wantedSpeed.z = reservedLandingPosDir.z * speedf;
-	wantedSpeed.y = reservedLandingPosDir.y * landingSpeed;
+	wantedSpeed.y = reservedLandingPosDir.y * verticalLandingSpeed;
 
 	const float3 deltaSpeed = wantedSpeed - speed;
 	const float deltaSpeedScale = deltaSpeed.Length();
 
 	// update our speed
-	if (deltaSpeedScale < (maxAcc * 3.0f)) {
+	if (deltaSpeedScale < (accRate * 3.0f)) {
 		speed = wantedSpeed;
 	} else {
-		if (deltaSpeedScale > 0.0f && maxAcc > 0.0f) {
-			speed += ((deltaSpeed / deltaSpeedScale) * (maxAcc * 3.0f));
+		if (deltaSpeedScale > 0.0f && accRate > 0.0f) {
+			speed += ((deltaSpeed / deltaSpeedScale) * (accRate * 3.0f));
 		}
 	}
 
@@ -968,7 +964,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 
 	// apply gravity only when in the air
 	speed.y += (mapInfo->map.gravity * myGravity) * int((owner->midPos.y - owner->radius) > gHeight);
-	speed += (engineThrustVector * maxAcc * engine);
+	speed += (engineThrustVector * accRate * engine);
 
 	if (aircraftState == AIRCRAFT_CRASHING) {
 		speed *= crashDrag;
@@ -1112,7 +1108,7 @@ float3 CStrafeAirMoveType::FindLandingPos() const
 	const float3 ret(-1.0f, -1.0f, -1.0f);
 	const UnitDef* ud = owner->unitDef;
 
-	float3 tryPos = owner->pos + owner->speed * owner->speed.Length() / (maxAcc * 3);
+	float3 tryPos = owner->pos + owner->speed * owner->speed.Length() / (accRate * 3.0f);
 	tryPos.y = ground->GetHeightReal(tryPos.x, tryPos.z);
 
 	if ((tryPos.y < 0.0f) && !(ud->floatOnWater || ud->canSubmerge)) {
@@ -1144,9 +1140,9 @@ void CStrafeAirMoveType::SetMaxSpeed(float speed)
 {
 	maxSpeed = speed;
 
-	if (maxAcc != 0.0f && maxSpeed != 0.0f) {
+	if (accRate != 0.0f && maxSpeed != 0.0f) {
 		// meant to set the drag such that the maxspeed becomes what it should be
-		float drag = 1.0f / (maxSpeed * 1.1f / maxAcc) - wingAngle * wingAngle * wingDrag;
+		float drag = 1.0f / (maxSpeed * 1.1f / accRate) - wingAngle * wingAngle * wingDrag;
 		drag = std::min(1.0f, std::max(0.0f, drag));
 		invDrag = 1.0f - drag;
 	}

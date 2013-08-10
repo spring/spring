@@ -54,6 +54,7 @@ public:
 	float invDrag;
 	/// actually the invDrag of crashDrag
 	float crashDrag;
+
 	float frontToSpeed;
 	float speedToFront;
 	float myGravity;
@@ -62,7 +63,6 @@ public:
 	float maxPitch;
 	float turnRadius;
 
-	float maxAcc;
 	float maxAileron;
 	float maxElevator;
 	float maxRudder;
@@ -77,6 +77,7 @@ public:
 	float lastAileronPos;
 
 	float inefficientAttackTime;
+
 	/// used by fighters to turn away when closing in on ground targets
 	float3 exitVector;
 

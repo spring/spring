@@ -62,6 +62,9 @@ public:
 	/// to reset altitude back
 	float orgWantedHeight;
 
+	float accRate;
+	float decRate;
+
 	/// mods can use this to disable plane collisions
 	bool collide;
 	/// controls use of smoothGround for determining altitude
