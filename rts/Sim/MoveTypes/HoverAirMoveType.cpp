@@ -39,8 +39,6 @@ CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(currentPitch),
 
 	CR_MEMBER(turnRate),
-	CR_MEMBER(accRate),
-	CR_MEMBER(decRate),
 	CR_MEMBER(altitudeRate),
 
 	CR_MEMBER(brakeDistance),
@@ -72,8 +70,6 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	currentBank(0),
 	currentPitch(0),
 	turnRate(1),
-	accRate(1),
-	decRate(1),
 	altitudeRate(3.0f),
 	brakeDistance(1),
 	maxDrift(1.0f),
@@ -91,8 +87,6 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	assert(owner->unitDef != NULL);
 
 	turnRate = owner->unitDef->turnRate;
-	accRate = std::max(0.01f, owner->unitDef->maxAcc);
-	decRate = std::max(0.01f, owner->unitDef->maxDec);
 
 	wantedHeight = owner->unitDef->wantedHeight + gs->randFloat() * 5.0f;
 	orgWantedHeight = wantedHeight;

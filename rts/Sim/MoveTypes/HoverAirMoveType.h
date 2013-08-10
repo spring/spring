@@ -34,10 +34,7 @@ public:
 	float currentBank;
 	float currentPitch;
 
-	// Provided by the unitloader
 	float turnRate;
-	float accRate;
-	float decRate;
 	float altitudeRate;
 
 	/// Distance needed to come to a full stop when going at max speed

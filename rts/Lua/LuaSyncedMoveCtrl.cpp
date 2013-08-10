@@ -575,7 +575,7 @@ static inline bool SetAirMoveTypeValue(CStrafeAirMoveType* mt, const string& key
 	} else if (key == "turnRadius") {
 		mt->turnRadius = value; return true;
 	} else if (key == "maxAcc") {
-		mt->maxAcc = value; return true;
+		mt->accRate = value; return true;
 	} else if (key == "maxAileron") {
 		mt->maxAileron = value; return true;
 	} else if (key == "maxElevator") {
