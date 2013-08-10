@@ -38,12 +38,12 @@ public:
 
 	bool WantsEvent(const std::string& eventName) {
 		return
-			(eventName == "FeatureCreated") ||
+			(eventName == "RenderFeatureCreated") ||
 			(eventName == "RenderFeatureMoved") ||
 			(eventName == "RenderFeatureDestroyed");
 	}
 
-	void FeatureCreated(const CFeature* feature);
+	void RenderFeatureCreated(const CFeature* feature);
 	void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
 	void RenderFeatureDestroyed(const CFeature* feature);
 
