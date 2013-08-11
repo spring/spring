@@ -87,6 +87,15 @@ class CLuaRules : public CLuaHandleSynced
 			float* newDamage,
 			float* impulseMult);
 
+		bool FeaturePreDamaged(
+			const CFeature* feature,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID,
+			float* newDamage,
+			float* impulseMult);
+
 		bool ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool);
 
 		// unsynced
@@ -123,6 +132,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveMoveCtrlNotify;
 		bool haveTerraformComplete;
 		bool haveUnitPreDamaged;
+		bool haveFeaturePreDamaged;
 		bool haveShieldPreDamaged;
 		bool haveAllowWeaponTargetCheck;
 		bool haveAllowWeaponTarget;

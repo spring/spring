@@ -139,6 +139,12 @@ class CEventClient
 
 		virtual void FeatureCreated(const CFeature* feature) {}
 		virtual void FeatureDestroyed(const CFeature* feature) {}
+		virtual void FeatureDamaged(
+			const CFeature* feature,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID) {}
 		virtual void FeatureMoved(const CFeature* feature) {}
 
 		virtual void RenderFeatureCreated(const CFeature* feature) {}

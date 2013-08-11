@@ -361,23 +361,40 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 }
 
 
-void CFeature::DoDamage(const DamageArray& damages, const float3& impulse, CUnit*, int, int)
-{
-	if (damages.paralyzeDamageTime) {
-		return; // paralyzers do not damage features
+void CFeature::DoDamage(
+	const DamageArray& damages,
+	const float3& impulse,
+	CUnit* attacker,
+	int weaponDefID,
+	int projectileID
+) {
+	// paralyzers do not damage features
+	if (damages.paralyzeDamageTime)
+		return;
+
+	// features have no armor-type, so use default damage
+	float baseDamage = damages.GetDefaultDamage();
+	float impulseMult = 1.0f;
+
+	if (luaRules != NULL) {
+		luaRules->FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult);
 	}
 
 	// NOTE: for trees, impulse is used to drive their falling animation
-	// TODO: replace RHS condition by adding Feature{Pre}Damaged callins
-	if ((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit())) {
-		ApplyImpulse(impulse / mass);
-	}
+	// if ((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()))
+	ApplyImpulse((impulse * impulseMult) / mass);
 
-	if (impulse != ZeroVector) {
+	if ((impulse * impulseMult) != ZeroVector) {
 		featureHandler->SetFeatureUpdateable(this);
 	}
 
-	if ((health -= damages[0]) <= 0.0f && def->destructable) {
+	// clamp in case Lua-modified damage is negative
+	health -= baseDamage;
+	health = std::min(health, def->health);
+
+	eventHandler.FeatureDamaged(this, attacker, baseDamage, weaponDefID, projectileID);
+
+	if (health <= 0.0f && def->destructable) {
 		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(def->deathFeatureDefID), NULL, pos, ZeroVector, -1, team, -1, heading, buildFacing, 0};
 		CFeature* deathFeature = featureHandler->CreateWreckage(params, 0, false);
 

@@ -190,6 +190,12 @@ class CLuaHandle : public CEventClient
 
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
+		void FeatureDamaged(
+			const CFeature* feature,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID);
 
 		void ProjectileCreated(const CProjectile* p);
 		void ProjectileDestroyed(const CProjectile* p);

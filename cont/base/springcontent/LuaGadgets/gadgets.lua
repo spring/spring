@@ -127,11 +127,15 @@ local callInLists = {
 	-- "UnitUnitCollision",
 	-- "UnitFeatureCollision",
 	-- "UnitMoveFailed",
+	"UnitMoved", -- not exposed to Lua yet (as of 95.0)
 	"StockpileChanged",
 
 	-- Feature CallIns
 	"FeatureCreated",
 	"FeatureDestroyed",
+	"FeatureDamaged",
+	"FeatureMoved", -- not exposed to Lua yet (as of 95.0)
+	"FeaturePreDamaged",
 
 	-- Projectile CallIns
 	"ProjectileCreated",
@@ -1380,38 +1384,49 @@ end
 
 
 function gadgetHandler:UnitPreDamaged(
-	unitID, unitDefID, unitTeam,
-	damage, paralyzer,
-	weaponDefID, projectileID,
-	attackerID, attackerDefID, attackerTeam)
-  local rDam = damage
-  local rImp = 1.0
+  unitID,
+  unitDefID,
+  unitTeam,
+  damage,
+  paralyzer,
+  weaponDefID,
+  projectileID,
+  attackerID,
+  attackerDefID,
+  attackerTeam
+)
+  local retDamage = damage
+  local retImpulse = 1.0
 
   for _,g in ipairs(self.UnitPreDamagedList) do
-    dam, imp = g:UnitPreDamaged(unitID, unitDefID, unitTeam,
-                  rDam, paralyzer, weaponDefID, projectileID,
+    dmg, imp = g:UnitPreDamaged(unitID, unitDefID, unitTeam,
+                  damage, paralyzer, weaponDefID, projectileID,
                   attackerID, attackerDefID, attackerTeam)
-    if (dam ~= nil) then
-      rDam = dam
-    end
-    if (imp ~= nil) then
-      rImp = math.min(imp, rImp)
-    end
+
+    if (dmg ~= nil) then retDamage = dmg end
+    if (imp ~= nil) then retImpulse = imp end
   end
 
-  return rDam, rImp
+  return retDamage, retImpulse
 end
 
 
-function gadgetHandler:UnitDamaged(unitID, unitDefID, unitTeam,
-                                   damage, paralyzer, weaponDefID,
-                                   attackerID, attackerDefID, attackerTeam)
+function gadgetHandler:UnitDamaged(
+  unitID,
+  unitDefID,
+  unitTeam,
+  damage,
+  paralyzer,
+  weaponDefID,
+  attackerID,
+  attackerDefID,
+  attackerTeam
+)
   for _,g in ipairs(self.UnitDamagedList) do
     g:UnitDamaged(unitID, unitDefID, unitTeam,
                   damage, paralyzer, weaponDefID,
                   attackerID, attackerDefID, attackerTeam)
   end
-  return
 end
 
 
@@ -1550,6 +1565,49 @@ function gadgetHandler:FeatureDestroyed(featureID, allyTeam)
     g:FeatureDestroyed(featureID, allyTeam)
   end
   return
+end
+
+function gadgetHandler:FeatureDamaged(
+  featureID,
+  featureDefID,
+  featureTeam,
+  damage,
+  weaponDefID,
+  attackerID,
+  attackerDefID,
+  attackerTeam
+)
+  for _,g in ipairs(self.FeatureDamagedList) do
+    g:FeatureDamaged(featureID, featureDefID, featureTeam,
+                  damage, weaponDefID,
+                  attackerID, attackerDefID, attackerTeam)
+  end
+end
+
+function gadgetHandler:FeaturePreDamaged(
+  featureID,
+  featureDefID,
+  featureTeam,
+  damage,
+  weaponDefID,
+  projectileID,
+  attackerID,
+  attackerDefID,
+  attackerTeam
+)
+  local retDamage = damage
+  local retImpulse = 1.0
+
+  for _,g in ipairs(self.FeaturePreDamagedList) do
+    dmg, imp = g:FeaturePreDamaged(featureID, featureDefID, featureTeam,
+                  damage, weaponDefID, projectileID,
+                  attackerID, attackerDefID, attackerTeam)
+
+    if (dmg ~= nil) then retDamage = dmg end
+    if (imp ~= nil) then retImpulse = imp end
+  end
+
+  return retDamage, retImpulse
 end
 
 

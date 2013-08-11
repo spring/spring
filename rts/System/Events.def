@@ -72,6 +72,7 @@
 
 	SETUP_EVENT(FeatureCreated,   MANAGED_BIT);
 	SETUP_EVENT(FeatureDestroyed, MANAGED_BIT);
+	SETUP_EVENT(FeatureDamaged,   MANAGED_BIT);
 	SETUP_EVENT(FeatureMoved,     MANAGED_BIT);
 
 	SETUP_EVENT(ProjectileCreated,   MANAGED_BIT);
@@ -164,6 +165,7 @@
 	SETUP_UNMANAGED_EVENT(TerraformComplete,      CONTROL_BIT);
 	SETUP_UNMANAGED_EVENT(MoveCtrlNotify,         CONTROL_BIT);
 	SETUP_UNMANAGED_EVENT(UnitPreDamaged,         CONTROL_BIT);
+	SETUP_UNMANAGED_EVENT(FeaturePreDamaged,      CONTROL_BIT);
 	SETUP_UNMANAGED_EVENT(ShieldPreDamaged,       CONTROL_BIT);
 	SETUP_UNMANAGED_EVENT(AllowWeaponTargetCheck, CONTROL_BIT);
 	SETUP_UNMANAGED_EVENT(AllowWeaponTarget,      CONTROL_BIT);
