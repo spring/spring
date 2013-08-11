@@ -631,7 +631,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			// featureID is invalid for falling trees
 			// if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 			//   continue;
-			if (!loshandler->InLos(pos, gu->myAllyTeam))
+			if (!losHandler->InLos(pos, gu->myAllyTeam))
 				continue;
 			if (!camera->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 				continue;
@@ -1007,7 +1007,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 			// featureID is invalid for falling trees
 			// if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 			//   continue;
-			if (!loshandler->InLos(pos, gu->myAllyTeam))
+			if (!losHandler->InLos(pos, gu->myAllyTeam))
 				continue;
 			if (!camera->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 				continue;

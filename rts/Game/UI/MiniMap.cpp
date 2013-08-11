@@ -1179,7 +1179,7 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 		GML_RECMUTEX_LOCK(sel); // DrawForReal
 
 		// draw unit ranges
-		const float radarSquare = radarhandler->radarDiv;
+		const float radarSquare = radarHandler->radarDiv;
 		CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 		for(CUnitSet::iterator si = selUnits.begin(); si != selUnits.end(); ++si) {
 			CUnit* unit = *si;

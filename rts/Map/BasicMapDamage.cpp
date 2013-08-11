@@ -296,6 +296,6 @@ void CBasicMapDamage::UpdateLos()
 			continue;
 		}
 
-		loshandler->MoveUnit(unit, true);
+		losHandler->MoveUnit(unit, true);
 	}
 }

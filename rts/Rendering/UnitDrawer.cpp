@@ -1114,7 +1114,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 	// buildings that died while ghosted
 	for (std::set<GhostSolidObject*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
-		if (loshandler->InLos((*it)->pos, gu->myAllyTeam) || gu->spectatingFullView) {
+		if (losHandler->InLos((*it)->pos, gu->myAllyTeam) || gu->spectatingFullView) {
 			// obtained LOS on the ghost of a dead building
 			groundDecals->GhostDestroyed(*it);
 

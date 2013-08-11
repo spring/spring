@@ -528,7 +528,7 @@ namespace {
 				const float dist = pos.distance(u->midPos) - u->radius;
 
 				if (dist <= closeDist &&
-					(canBeBlind || u->losRadius * loshandler->losDiv > dist)) {
+					(canBeBlind || u->losRadius * losHandler->losDiv > dist)) {
 					closeDist = dist;
 					closeUnit = u;
 				}
@@ -554,7 +554,7 @@ namespace {
 				const float sqDist = (pos - u->midPos).SqLength2D();
 
 				if (sqDist <= closeSqDist &&
-					(canBeBlind || Square(u->losRadius * loshandler->losDiv) > sqDist)) {
+					(canBeBlind || Square(u->losRadius * losHandler->losDiv) > sqDist)) {
 					closeSqDist = sqDist;
 					closeUnit = u;
 				}
@@ -650,7 +650,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				if (targetLOSState & LOS_INLOS) {
 					targPos = targetUnit->aimPos;
 				} else if (targetLOSState & LOS_INRADAR) {
-					targPos = targetUnit->aimPos + (targetUnit->posErrorVector * radarhandler->radarErrorSize[attacker->allyteam]);
+					targPos = targetUnit->aimPos + (targetUnit->posErrorVector * radarHandler->GetAllyTeamRadarErrorSize(attacker->allyteam));
 					targetPriority *= 10.0f;
 				} else {
 					continue;

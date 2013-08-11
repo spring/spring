@@ -1043,17 +1043,17 @@ const float* CAICallback::GetSlopeMap()
 
 const unsigned short* CAICallback::GetLosMap()
 {
-	return &loshandler->losMaps[teamHandler->AllyTeam(team)].front();
+	return &losHandler->losMaps[teamHandler->AllyTeam(team)].front();
 }
 
 const unsigned short* CAICallback::GetRadarMap()
 {
-	return &radarhandler->radarMaps[teamHandler->AllyTeam(team)].front();
+	return &radarHandler->radarMaps[teamHandler->AllyTeam(team)].front();
 }
 
 const unsigned short* CAICallback::GetJammerMap()
 {
-	return &radarhandler->jammerMaps[teamHandler->AllyTeam(team)].front();
+	return &radarHandler->jammerMaps[teamHandler->AllyTeam(team)].front();
 }
 
 const unsigned char* CAICallback::GetMetalMap()

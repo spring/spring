@@ -321,7 +321,7 @@ float GuiTraceRay(
 			CUnit* unit = *ui;
 
 			const bool unitIsEnemy = !teamHandler->Ally(unit->allyteam, gu->myAllyTeam);
-			const bool unitOnRadar = (useRadar && radarhandler->InRadar(unit, gu->myAllyTeam));
+			const bool unitOnRadar = (useRadar && radarHandler->InRadar(unit, gu->myAllyTeam));
 			const bool unitInSight = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR));
 			const bool unitVisible = !unitIsEnemy || unitOnRadar || unitInSight || gu->spectatingFullView;
 

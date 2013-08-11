@@ -309,6 +309,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitScriptPiece);
 	REGISTER_LUA_CFUNC(GetUnitScriptNames);
 
+	REGISTER_LUA_CFUNC(GetRadarErrorParams);
+
 	REGISTER_LUA_CFUNC(GetCOBUnitVar);
 	REGISTER_LUA_CFUNC(GetCOBTeamVar);
 	REGISTER_LUA_CFUNC(GetCOBAllyTeamVar);
@@ -431,7 +433,7 @@ static inline bool IsProjectileVisible(lua_State* L, const ProjectileMapValPair&
 		return CLuaHandle::GetHandleFullRead(L);
 	}
 	if ((CLuaHandle::GetHandleReadAllyTeam(L) != proAllyteam) &&
-	    (!loshandler->InLos(pro->pos, CLuaHandle::GetHandleReadAllyTeam(L)))) {
+	    (!losHandler->InLos(pro->pos, CLuaHandle::GetHandleReadAllyTeam(L)))) {
 		return false;
 	}
 	return true;
@@ -2643,12 +2645,12 @@ int LuaSyncedRead::GetUnitSensorRadius(lua_State* L)
 	}
 	const string key = luaL_checkstring(L, 2);
 
-	const int radarDiv = radarhandler->radarDiv;
+	const int radarDiv = radarHandler->radarDiv;
 
 	if (key == "los") {
-		lua_pushnumber(L, unit->losRadius * loshandler->losDiv);
+		lua_pushnumber(L, unit->losRadius * losHandler->losDiv);
 	} else if (key == "airLos") {
-		lua_pushnumber(L, unit->airLosRadius * loshandler->airDiv);
+		lua_pushnumber(L, unit->airLosRadius * losHandler->airDiv);
 	} else if (key == "radar") {
 		lua_pushnumber(L, unit->radarRadius * radarDiv);
 	} else if (key == "sonar") {
@@ -4893,7 +4895,7 @@ int LuaSyncedRead::TestMoveOrder(lua_State* L)
 	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
 		los = CLuaHandle::GetHandleFullRead(L);
 	} else {
-		los = loshandler->InLos(pos, CLuaHandle::GetHandleReadAllyTeam(L));
+		los = losHandler->InLos(pos, CLuaHandle::GetHandleReadAllyTeam(L));
 	}
 
 	if (los) {
@@ -5012,19 +5014,19 @@ int LuaSyncedRead::GetPositionLosState(lua_State* L)
 	bool inJammer = false;
 
 	if (allyTeamID >= 0) {
-		inLos    = loshandler->InLos(pos, allyTeamID);
-		inRadar  = radarhandler->InRadar(pos, allyTeamID);
-		inJammer = radarhandler->InJammer(pos, allyTeamID);
+		inLos    = losHandler->InLos(pos, allyTeamID);
+		inRadar  = radarHandler->InRadar(pos, allyTeamID);
+		inJammer = radarHandler->InJammer(pos, allyTeamID);
 	} else {
 		// this does not seem useful
 		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
-			if (loshandler->InLos(pos, at)) {
+			if (losHandler->InLos(pos, at)) {
 				inLos = true;
 			}
-			if (radarhandler->InRadar(pos, at)) {
+			if (radarHandler->InRadar(pos, at)) {
 				inRadar = true;
 			}
-			if (radarhandler->InJammer(pos, at)) {
+			if (radarHandler->InJammer(pos, at)) {
 				inJammer = true;
 			}
 		}
@@ -5048,11 +5050,11 @@ int LuaSyncedRead::IsPosInLos(lua_State* L)
 
 	bool state = false;
 	if (allyTeamID >= 0) {
-		state = loshandler->InLos(pos, allyTeamID);
+		state = losHandler->InLos(pos, allyTeamID);
 	}
 	else {
 		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
-			if (loshandler->InLos(pos, at)) {
+			if (losHandler->InLos(pos, at)) {
 				state = true;
 				break;
 			}
@@ -5074,11 +5076,11 @@ int LuaSyncedRead::IsPosInRadar(lua_State* L)
 
 	bool state = false;
 	if (allyTeamID >= 0) {
-		state = radarhandler->InRadar(pos, allyTeamID);
+		state = radarHandler->InRadar(pos, allyTeamID);
 	}
 	else {
 		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
-			if (radarhandler->InRadar(pos, at)) {
+			if (radarHandler->InRadar(pos, at)) {
 				state = true;
 				break;
 			}
@@ -5100,11 +5102,11 @@ int LuaSyncedRead::IsPosInAirLos(lua_State* L)
 
 	bool state = false;
 	if (allyTeamID >= 0) {
-		state = loshandler->InAirLos(pos, allyTeamID);
+		state = losHandler->InAirLos(pos, allyTeamID);
 	}
 	else {
 		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
-			if (loshandler->InAirLos(pos, at)) {
+			if (losHandler->InAirLos(pos, at)) {
 				state = true;
 				break;
 			}
@@ -5384,6 +5386,20 @@ int LuaSyncedRead::GetUnitScriptNames(lua_State* L)
 	}
 
 	return 1;
+}
+
+
+int LuaSyncedRead::GetRadarErrorParams(lua_State* L)
+{
+	const int allyTeamID = lua_tonumber(L, 1);
+
+	if (!teamHandler->IsValidAllyTeam(allyTeamID))
+		return 0;
+
+	lua_pushnumber(L, radarHandler->GetAllyTeamRadarErrorSize(allyTeamID));
+	lua_pushnumber(L, radarHandler->GetBaseRadarErrorSize());
+	lua_pushnumber(L, radarHandler->GetBaseRadarErrorMult());
+	return 3;
 }
 
 

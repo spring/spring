@@ -353,7 +353,7 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 						const int sqx = (tx << 1);
 						const int sqz = (ty << 1);
 						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
-						const bool losSqr = loshandler->InLos(sqx, sqz, gu->myAllyTeam);
+						const bool losSqr = losHandler->InLos(sqx, sqz, gu->myAllyTeam);
 
 						#if 1
 						// use node-modifiers as baseline so visualisation is in sync with alt+B

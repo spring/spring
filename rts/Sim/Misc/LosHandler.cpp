@@ -66,7 +66,7 @@ CR_REG_METADATA_SUB(CLosHandler,DelayedInstance,(
 //////////////////////////////////////////////////////////////////////
 
 
-CLosHandler* loshandler;
+CLosHandler* losHandler;
 
 
 CLosHandler::CLosHandler() :

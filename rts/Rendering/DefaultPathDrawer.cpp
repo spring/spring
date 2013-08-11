@@ -138,7 +138,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 						BuildSquareStatus status = FREE;
 
-						if (!loshandler->InLos(pos, gu->myAllyTeam)) {
+						if (!losHandler->InLos(pos, gu->myAllyTeam)) {
 							status = NOLOS;
 						} else {
 							const UnitDef* ud = unitDefHandler->GetUnitDefByID(-guihandler->commands[guihandler->inCommand].id);
@@ -175,7 +175,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 							const int sqx = (tx << 1);
 							const int sqy = (ty << 1);
 							const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
-							const bool losSqr = loshandler->InLos(sqx, sqy, gu->myAllyTeam);
+							const bool losSqr = losHandler->InLos(sqx, sqy, gu->myAllyTeam);
 
 							float scale = 1.0f;
 

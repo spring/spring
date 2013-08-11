@@ -131,7 +131,7 @@ public:
 			return (InAirLos(unit->pos, allyTeam));
 
 		if (unit->IsUnderWater() && requireSonarUnderWater)
-			return (radarhandler->InRadar(unit, allyTeam));
+			return (radarHandler->InRadar(unit, allyTeam));
 
 		return (InLos(unit->pos, allyTeam));
 	}
@@ -211,6 +211,6 @@ public:
 	void DelayedFreeInstance(LosInstance* instance);
 };
 
-extern CLosHandler* loshandler;
+extern CLosHandler* losHandler;
 
 #endif /* LOS_HANDLER_H */

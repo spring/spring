@@ -1582,7 +1582,7 @@ EXPORT(int) skirmishAiCallback_Map_getSlopeMap(int skirmishAIId,
 EXPORT(int) skirmishAiCallback_Map_getLosMap(int skirmishAIId,
 		int* losValues, int losValues_sizeMax) {
 
-	static const int losValues_sizeReal = loshandler->losSizeX * loshandler->losSizeY;
+	static const int losValues_sizeReal = losHandler->losSizeX * losHandler->losSizeY;
 
 	int losValues_size = losValues_sizeReal;
 
@@ -1601,7 +1601,7 @@ EXPORT(int) skirmishAiCallback_Map_getLosMap(int skirmishAIId,
 EXPORT(int) skirmishAiCallback_Map_getRadarMap(int skirmishAIId,
 		int* radarValues, int radarValues_sizeMax) {
 
-	static const int radarValues_sizeReal = radarhandler->xsize * radarhandler->zsize;
+	static const int radarValues_sizeReal = radarHandler->xsize * radarHandler->zsize;
 
 	int radarValues_size = radarValues_sizeReal;
 
@@ -1621,7 +1621,7 @@ EXPORT(int) skirmishAiCallback_Map_getJammerMap(int skirmishAIId,
 		int* jammerValues, int jammerValues_sizeMax) {
 
 	// Yes, it is correct, jammer-map has the same size as the radar map
-	static const int jammerValues_sizeReal = radarhandler->xsize * radarhandler->zsize;
+	static const int jammerValues_sizeReal = radarHandler->xsize * radarHandler->zsize;
 
 	int jammerValues_size = jammerValues_sizeReal;
 
