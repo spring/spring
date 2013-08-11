@@ -53,45 +53,26 @@ public:
 	void SetNoCost(bool noCost);
 	bool IsAllowedTerrainHeight(const MoveDef* moveDef, float rawHeight, float* clampedHeight = NULL) const;
 
-	bool IsTransportUnit()      const { return (transportCapacity > 0 && transportMass > 0.0f); }
-	bool IsImmobileUnit()       const { return (pathType == -1U && !canfly && speed <= 0.0f); }
-	bool IsBuildingUnit()       const { return (IsImmobileUnit() && !yardmap.empty()); }
-	bool IsMobileBuilderUnit()  const { return (builder && !IsImmobileUnit()); }
-	bool IsStaticBuilderUnit()  const { return (builder &&  IsImmobileUnit()); }
-	bool IsFactoryUnit()        const { return (builder &&  IsBuildingUnit()); }
-	bool IsExtractorUnit()      const { return (extractsMetal > 0.0f && extractRange > 0.0f); }
-	bool IsGroundUnit()         const { return (pathType != -1U && !canfly); }
-	bool IsAirUnit()            const { return (pathType == -1U &&  canfly); }
-	bool IsNonHoveringAirUnit() const { return (IsAirUnit() && !hoverAttack); }
-	bool IsFighterUnit()        const { return (IsNonHoveringAirUnit() && !HasBomberWeapon()); }
-	bool IsBomberUnit()         const { return (IsNonHoveringAirUnit() &&  HasBomberWeapon()); }
+	bool IsTransportUnit()     const { return (transportCapacity > 0 && transportMass > 0.0f); }
+	bool IsImmobileUnit()      const { return (pathType == -1U && !canfly && speed <= 0.0f); }
+	bool IsBuildingUnit()      const { return (IsImmobileUnit() && !yardmap.empty()); }
+	bool IsBuilderUnit()       const { return (builder && buildSpeed > 0.0f && buildDistance > 0.0f); }
+	bool IsMobileBuilderUnit() const { return (IsBuilderUnit() && !IsImmobileUnit()); }
+	bool IsStaticBuilderUnit() const { return (IsBuilderUnit() &&  IsImmobileUnit()); }
+	bool IsFactoryUnit()       const { return (IsBuilderUnit() &&  IsBuildingUnit()); }
+	bool IsExtractorUnit()     const { return (extractsMetal > 0.0f && extractRange > 0.0f); }
+	bool IsGroundUnit()        const { return (pathType != -1U && !canfly); }
+	bool IsAirUnit()           const { return (pathType == -1U &&  canfly); }
+	bool IsStrafingAirUnit()   const { return (IsAirUnit() && !hoverAttack); }
+	bool IsHoveringAirUnit()   const { return (IsAirUnit() &&  hoverAttack); }
+	bool IsFighterAirUnit()    const { return (IsStrafingAirUnit() && !HasBomberWeapon()); }
+	bool IsBomberAirUnit()     const { return (IsStrafingAirUnit() &&  HasBomberWeapon()); }
 
-	bool RequireMoveDef() const { return (canmove && speed > 0.0f && !canfly); }
+	bool RequireMoveDef() const { return (speed > 0.0f && !canfly); }
 	bool HasBomberWeapon() const;
 	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
 
-	// NOTE: deprecated, only used by LuaUnitDefs.cpp
-	const char* GetTypeString() const {
-		if (IsTransportUnit()) { return "Transport"; }
-
-		if (IsBuildingUnit()) {
-			if (IsFactoryUnit()) { return "Factory"; }
-			if (IsExtractorUnit()) { return "MetalExtractor"; }
-			return "Building";
-		}
-
-		if (IsMobileBuilderUnit() || IsStaticBuilderUnit()) { return "Builder"; }
-
-		if (IsGroundUnit()) { return "GroundUnit"; }
-		if (IsAirUnit()) {
-			if (IsFighterUnit()) { return "Fighter"; }
-			if (IsBomberUnit()) { return "Bomber"; }
-			return "Aircraft";
-		}
-
-		return "Unknown";
-	}
-
+public:
 	std::string humanName;
 	std::string decoyName;
 
@@ -201,15 +182,13 @@ public:
 
 	std::string tooltip;
 	std::string wreckName;
+	std::string categoryString;
+	std::string buildPicName;
 
 	const WeaponDef* deathExpWeaponDef;
 	const WeaponDef* selfdExpWeaponDef;
 
-	std::string categoryString;
-
-	std::string buildPicName;
 	mutable UnitDefImage* buildPic;
-
 	mutable icon::CIcon iconType;
 
 	int selfDCountdown;

@@ -142,16 +142,16 @@ public:
 
 	bool BlockMapPosChanged() const { return (groundBlockPos != pos); }
 
-	bool IsOnGround() const { return ((physicalState & STATE_BIT_ONGROUND) != 0); }
-	bool IsInAir() const { return ((physicalState & STATE_BIT_INAIR) != 0); }
-	bool IsInWater() const { return ((physicalState & STATE_BIT_INWATER) != 0); }
-	bool IsUnderWater() const { return ((physicalState & STATE_BIT_UNDERWATER) != 0); }
+	bool IsOnGround() const { return (HasPhysicalStateBit(STATE_BIT_ONGROUND)); }
+	bool IsInAir() const { return (HasPhysicalStateBit(STATE_BIT_INAIR)); }
+	bool IsInWater() const { return (HasPhysicalStateBit(STATE_BIT_INWATER)); }
+	bool IsUnderWater() const { return (HasPhysicalStateBit(STATE_BIT_UNDERWATER)); }
 
-	bool IsMoving() const { return ((physicalState & STATE_BIT_MOVING) != 0); }
-	bool IsFlying() const { return ((physicalState & STATE_BIT_FLYING) != 0); }
-	bool IsFalling() const { return ((physicalState & STATE_BIT_FALLING) != 0); }
-	bool IsSkidding() const { return ((physicalState & STATE_BIT_SKIDDING) != 0); }
-	bool IsBlocking() const { return ((physicalState & STATE_BIT_BLOCKING) != 0); }
+	bool IsMoving() const { return (HasPhysicalStateBit(STATE_BIT_MOVING)); }
+	bool IsFlying() const { return (HasPhysicalStateBit(STATE_BIT_FLYING)); }
+	bool IsFalling() const { return (HasPhysicalStateBit(STATE_BIT_FALLING)); }
+	bool IsSkidding() const { return (HasPhysicalStateBit(STATE_BIT_SKIDDING)); }
+	bool IsBlocking() const { return (HasPhysicalStateBit(STATE_BIT_BLOCKING)); }
 
 	bool HasPhysicalStateBit(unsigned int bit) const { return ((physicalState & bit) != 0); }
 	void SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= (bit); physicalState = static_cast<PhysicalState>(ps); }
