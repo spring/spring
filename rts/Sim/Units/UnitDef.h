@@ -68,7 +68,7 @@ public:
 	bool IsFighterAirUnit()    const { return (IsStrafingAirUnit() && !HasBomberWeapon()); }
 	bool IsBomberAirUnit()     const { return (IsStrafingAirUnit() &&  HasBomberWeapon()); }
 
-	bool RequireMoveDef() const { return (speed > 0.0f && !canfly); }
+	bool RequireMoveDef() const { return (canmove && speed > 0.0f && !canfly); }
 	bool HasBomberWeapon() const;
 	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
 
