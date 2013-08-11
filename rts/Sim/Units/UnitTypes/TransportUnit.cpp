@@ -300,8 +300,8 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	}
 
 	unit->UnBlock();
-	loshandler->FreeInstance(unit->los);
-	radarhandler->RemoveUnit(unit);
+	losHandler->FreeInstance(unit->los);
+	radarHandler->RemoveUnit(unit);
 
 	// do not remove unit from QF, otherwise projectiles
 	// will not be able to connect with (ie. damage) it

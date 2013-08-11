@@ -263,6 +263,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitToFeature);
 	REGISTER_LUA_CFUNC(SetExperienceGrade);
 
+	REGISTER_LUA_CFUNC(SetRadarErrorParams);
 
 	if (!LuaSyncedMoveCtrl::PushMoveCtrl(L))
 		return false;
@@ -2035,19 +2036,19 @@ int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
 	const string key = luaL_checkstring(L, 2);
 	const float radius = luaL_checkfloat(L, 3);
 
-	const int radarDiv    = radarhandler->radarDiv;
-	const int radarRadius = (int)(radius * radarhandler->invRadarDiv);
+	const int radarDiv    = radarHandler->radarDiv;
+	const int radarRadius = (int)(radius * radarHandler->invRadarDiv);
 
 	if (key == "los") {
-		const int losRange = (int)(radius * loshandler->invLosDiv);
+		const int losRange = (int)(radius * losHandler->invLosDiv);
 		unit->ChangeLos(losRange, unit->realAirLosRadius);
 		unit->realLosRadius = losRange;
-		lua_pushnumber(L, unit->losRadius * loshandler->losDiv);
+		lua_pushnumber(L, unit->losRadius * losHandler->losDiv);
 	} else if (key == "airLos") {
-		const int airRange = (int)(radius * loshandler->invAirDiv);
+		const int airRange = (int)(radius * losHandler->invAirDiv);
 		unit->ChangeLos(unit->realLosRadius, airRange);
 		unit->realAirLosRadius = airRange;
-		lua_pushnumber(L, unit->airLosRadius * loshandler->airDiv);
+		lua_pushnumber(L, unit->airLosRadius * losHandler->airDiv);
 	} else if (key == "radar") {
 		unit->ChangeSensorRadius(&unit->radarRadius, radarRadius);
 		lua_pushnumber(L, unit->radarRadius * radarDiv);
@@ -3744,8 +3745,8 @@ int LuaSyncedCtrl::SetExperienceGrade(lua_State* L)
 	if (!FullCtrl(L)) {
 		return 0;
 	}
-	const float expGrade = luaL_checkfloat(L, 1);
-	CUnit::SetExpGrade(expGrade);
+
+	CUnit::SetExpGrade(luaL_checkfloat(L, 1));
 
 	// NOTE: for testing, should be using modrules.tdf
 	if (gs->cheatEnabled) {
@@ -3759,6 +3760,20 @@ int LuaSyncedCtrl::SetExperienceGrade(lua_State* L)
 			CUnit::SetExpReloadScale(lua_tofloat(L, 4));
 		}
 	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetRadarErrorParams(lua_State* L)
+{
+	const int allyTeamID = lua_tonumber(L, 1);
+
+	if (!teamHandler->IsValidAllyTeam(allyTeamID))
+		return 0;
+
+	radarHandler->SetAllyTeamRadarErrorSize(allyTeamID, luaL_checknumber(L, 2));
+	radarHandler->SetBaseRadarErrorSize(luaL_optnumber(L, 3, radarHandler->GetBaseRadarErrorSize()));
+	radarHandler->SetBaseRadarErrorMult(luaL_optnumber(L, 4, radarHandler->GetBaseRadarErrorMult()));
 	return 0;
 }
 

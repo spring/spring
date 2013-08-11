@@ -16,11 +16,11 @@
 CR_BIND(CRadarHandler, (false));
 
 CR_REG_METADATA(CRadarHandler, (
-	CR_MEMBER(radarErrorSize),
-	CR_MEMBER(baseRadarErrorSize),
+	CR_MEMBER(radarErrorSizes),
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
-	CR_MEMBER(targFacEffect),
+	CR_MEMBER(baseRadarErrorSize),
+	CR_MEMBER(baseRadarErrorMult),
 
 	CR_MEMBER(radarMipLevel),
 	CR_MEMBER(radarDiv),
@@ -39,7 +39,7 @@ CR_REG_METADATA(CRadarHandler, (
 ));
 
 
-CRadarHandler* radarhandler = NULL;
+CRadarHandler* radarHandler = NULL;
 
 
 CRadarHandler::CRadarHandler(bool circularRadar)
@@ -47,10 +47,10 @@ CRadarHandler::CRadarHandler(bool circularRadar)
   radarDiv(SQUARE_SIZE * (1 << radarMipLevel)),
   invRadarDiv(1.0f / radarDiv),
   circularRadar(circularRadar),
-  baseRadarErrorSize(96),
   xsize(std::max(1, gs->mapx >> radarMipLevel)),
   zsize(std::max(1, gs->mapy >> radarMipLevel)),
-  targFacEffect(2),
+  baseRadarErrorSize(96.0f),
+  baseRadarErrorMult(2.0f),
   radarAlgo(int2(xsize, zsize), -1000, 20, readmap->GetMIPHeightMapSynced(radarMipLevel))
 {
 	commonJammerMap.SetSize(xsize, zsize, false);
@@ -66,7 +66,7 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 #ifdef SONAR_JAMMER_MAPS
 	sonarJammerMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
 #endif
-	radarErrorSize.resize(teamHandler->ActiveAllyTeams(), 96);
+	radarErrorSizes.resize(teamHandler->ActiveAllyTeams(), baseRadarErrorSize);
 }
 
 

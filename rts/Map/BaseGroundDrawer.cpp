@@ -285,13 +285,13 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 		return true;
 	}
 
-	const unsigned short* myLos         = &loshandler->losMaps[gu->myAllyTeam].front();
-	const unsigned short* myAirLos      = &loshandler->airLosMaps[gu->myAllyTeam].front();
-	const unsigned short* myRadar       = &radarhandler->radarMaps[gu->myAllyTeam].front();
-	const unsigned short* myJammer      = &radarhandler->jammerMaps[gu->myAllyTeam].front();
+	const unsigned short* myLos         = &losHandler->losMaps[gu->myAllyTeam].front();
+	const unsigned short* myAirLos      = &losHandler->airLosMaps[gu->myAllyTeam].front();
+	const unsigned short* myRadar       = &radarHandler->radarMaps[gu->myAllyTeam].front();
+	const unsigned short* myJammer      = &radarHandler->jammerMaps[gu->myAllyTeam].front();
 #ifdef SONAR_JAMMER_MAPS
-	const unsigned short* mySonar       = &radarhandler->sonarMaps[gu->myAllyTeam].front();
-	const unsigned short* mySonarJammer = &radarhandler->sonarJammerMaps[gu->myAllyTeam].front();
+	const unsigned short* mySonar       = &radarHandler->sonarMaps[gu->myAllyTeam].front();
+	const unsigned short* mySonarJammer = &radarHandler->sonarJammerMaps[gu->myAllyTeam].front();
 #endif
 
 	if (updateTextureState < extraTextureUpdateRate) {
@@ -334,9 +334,9 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 					for (int x = 0; x < gs->hmapx; ++x) {
 						const int a   = (y_pwr2mapx_half + x) * 4 - offset;
-						const int alx = ((x*2) >> loshandler->airMipLevel);
-						const int aly = ((y_2) >> loshandler->airMipLevel);
-						if (myAirLos[alx + (aly * loshandler->airSizeX)]) {
+						const int alx = ((x*2) >> losHandler->airMipLevel);
+						const int aly = ((y_2) >> losHandler->airMipLevel);
+						if (myAirLos[alx + (aly * losHandler->airSizeX)]) {
 							infoTexMem[a + COLOR_R] = (unsigned char)std::min(255.0f, 900.0f * fastmath::apxsqrt(fastmath::apxsqrt(extractDepthMap[y_hmapx + x])));
 						} else {
 							infoTexMem[a + COLOR_R] = 0;
@@ -379,16 +379,16 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				const int lowRes = highResInfoTexWanted ? 0 : -1;
 				const int endx = highResInfoTexWanted ? gs->mapx : gs->hmapx;
 				const int pwr2mapx = gs->pwr2mapx >> (-lowRes);
-				const int losSizeX = loshandler->losSizeX;
-				const int losSizeY = loshandler->losSizeY;
-				const int airSizeX = loshandler->airSizeX;
-				const int airSizeY = loshandler->airSizeY;
-				const int losMipLevel = loshandler->losMipLevel + lowRes;
-				const int airMipLevel = loshandler->airMipLevel + lowRes;
+				const int losSizeX = losHandler->losSizeX;
+				const int losSizeY = losHandler->losSizeY;
+				const int airSizeX = losHandler->airSizeX;
+				const int airSizeY = losHandler->airSizeY;
+				const int losMipLevel = losHandler->losMipLevel + lowRes;
+				const int airMipLevel = losHandler->airMipLevel + lowRes;
 
 				if (drawRadarAndJammer) {
-					const int rxsize = radarhandler->xsize;
-					const int rzsize = radarhandler->zsize;
+					const int rxsize = radarHandler->xsize;
+					const int rzsize = radarHandler->zsize;
 
 					for (int y = starty; y < endy; ++y) {
 						for (int x = 0; x < endx; ++x) {

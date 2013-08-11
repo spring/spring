@@ -3333,7 +3333,7 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 static inline void DrawSensorRange(int radius,
                                    const float* color, const float3& pos)
 {
-	const int sensorScale = radarhandler->radarDiv;
+	const int sensorScale = radarHandler->radarDiv;
 	const int realRadius = ((radius / sensorScale) * sensorScale);
 	if (realRadius > 0) {
 		glColor4fv(color);

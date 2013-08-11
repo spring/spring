@@ -220,6 +220,8 @@ class LuaSyncedRead {
 		static int GetUnitScriptPiece(lua_State* L);
 		static int GetUnitScriptNames(lua_State* L);
 
+		static int GetRadarErrorParams(lua_State* L);
+
 		static int TraceRay(lua_State* L);           // not implemented
 		static int TraceRayUnits(lua_State* L);      // not implemented
 		static int TraceRayFeatures(lua_State* L);   // not implemented

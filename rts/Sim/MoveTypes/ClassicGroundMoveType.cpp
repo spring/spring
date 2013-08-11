@@ -303,8 +303,8 @@ void CClassicGroundMoveType::SlowUpdate()
 		if (newmapSquare != owner->mapSquare) {
 			owner->mapSquare = newmapSquare;
 
-			loshandler->MoveUnit(owner, false);
-			radarhandler->MoveUnit(owner);
+			losHandler->MoveUnit(owner, false);
+			radarHandler->MoveUnit(owner);
 		}
 
 		quadField->MovedUnit(owner);

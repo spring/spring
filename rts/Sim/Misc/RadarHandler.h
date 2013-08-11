@@ -125,6 +125,19 @@ public:
 		return (seismicMaps[allyTeam][GetSquare(unit->pos)] != 0);
 	}
 
+	// default operations for targeting-facilities
+	void IncreaseAllyTeamRadarErrorSize(int allyTeam) { radarErrorSizes[allyTeam] *= baseRadarErrorMult; }
+	void DecreaseAllyTeamRadarErrorSize(int allyTeam) { radarErrorSizes[allyTeam] /= baseRadarErrorMult; }
+
+	// API functions
+	void SetAllyTeamRadarErrorSize(int allyTeam, float size) { radarErrorSizes[allyTeam] = size; }
+	float GetAllyTeamRadarErrorSize(int allyTeam) const { return radarErrorSizes[allyTeam]; }
+
+	void SetBaseRadarErrorSize(float size) { baseRadarErrorSize = size; }
+	void SetBaseRadarErrorMult(float mult) { baseRadarErrorMult = mult; }
+	float GetBaseRadarErrorSize() const { return baseRadarErrorSize; }
+	float GetBaseRadarErrorMult() const { return baseRadarErrorMult; }
+
 public:
 	int radarMipLevel;
 	int radarDiv;
@@ -141,18 +154,18 @@ public:
 	std::vector<CLosMap> seismicMaps;
 	CLosMap commonJammerMap;
 	CLosMap commonSonarJammerMap;
-	std::vector<float> radarErrorSize;
-	float baseRadarErrorSize;
+	std::vector<float> radarErrorSizes;
 
 	int xsize;
 	int zsize;
 
-	float targFacEffect;
-
 private:
 	CLosAlgorithm radarAlgo;
+
+	float baseRadarErrorSize;
+	float baseRadarErrorMult;
 };
 
-extern CRadarHandler* radarhandler;
+extern CRadarHandler* radarHandler;
 
 #endif /* RADARHANDLER_H */

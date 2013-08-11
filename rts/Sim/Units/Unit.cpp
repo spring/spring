@@ -271,7 +271,7 @@ CUnit::~CUnit()
 	}
 
 	if (activated && unitDef->targfac) {
-		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
+		radarHandler->IncreaseAllyTeamRadarErrorSize(allyteam);
 	}
 
 	SetMetalStorage(0);
@@ -298,9 +298,9 @@ CUnit::~CUnit()
 	}
 
 	quadField->RemoveUnit(this);
-	loshandler->DelayedFreeInstance(los);
+	losHandler->DelayedFreeInstance(los);
 	los = NULL;
-	radarhandler->RemoveUnit(this);
+	radarHandler->RemoveUnit(this);
 
 	modelParser->DeleteLocalModel(localModel);
 }
@@ -536,8 +536,8 @@ void CUnit::ForcedMove(const float3& newPos)
 	eventHandler.UnitMoved(this);
 
 	quadField->MovedUnit(this);
-	loshandler->MoveUnit(this, false);
-	radarhandler->MoveUnit(this);
+	losHandler->MoveUnit(this, false);
+	radarHandler->MoveUnit(this);
 }
 
 
@@ -601,9 +601,9 @@ float3 CUnit::GetErrorVector(int allyteam) const
 	}
 
 	if ((losStatus[allyteam] & LOS_INRADAR) != 0) {
-		return (posErrorVector * radarhandler->radarErrorSize[allyteam]);
+		return (posErrorVector * radarHandler->GetAllyTeamRadarErrorSize(allyteam));
 	} else {
-		return (posErrorVector * radarhandler->baseRadarErrorSize * 2);
+		return (posErrorVector * radarHandler->GetBaseRadarErrorSize() * 2.0f);
 	}
 }
 
@@ -785,7 +785,7 @@ unsigned short CUnit::CalcLosStatus(int at)
 	unsigned short newStatus = currStatus;
 	unsigned short mask = ~(currStatus >> 8);
 
-	if (loshandler->InLos(this, at)) {
+	if (losHandler->InLos(this, at)) {
 		if (!beingBuilt) {
 			newStatus |= (mask & (LOS_INLOS   | LOS_INRADAR |
 			                      LOS_PREVLOS | LOS_CONTRADAR));
@@ -796,7 +796,7 @@ unsigned short CUnit::CalcLosStatus(int at)
 			newStatus &= ~(mask & (LOS_PREVLOS | LOS_CONTRADAR));
 		}
 	}
-	else if (radarhandler->InRadar(this, at)) {
+	else if (radarHandler->InRadar(this, at)) {
 		newStatus |=  (mask & LOS_INRADAR);
 		newStatus &= ~(mask & LOS_INLOS);
 	}
@@ -1290,7 +1290,7 @@ const CollisionVolume* CUnit::GetCollisionVolume(const LocalModelPiece* lmp) con
 
 void CUnit::ChangeSensorRadius(int* valuePtr, int newValue)
 {
-	radarhandler->RemoveUnit(this);
+	radarHandler->RemoveUnit(this);
 
 	*valuePtr = newValue;
 
@@ -1302,7 +1302,7 @@ void CUnit::ChangeSensorRadius(int* valuePtr, int newValue)
 		                   (seismicRadius > 0.0f);
 	}
 
-	radarhandler->MoveUnit(this);
+	radarHandler->MoveUnit(this);
 }
 
 
@@ -1342,18 +1342,18 @@ void CUnit::DoSeismicPing(float pingSize)
 	float rx = gs->randFloat();
 	float rz = gs->randFloat();
 
-	const float* errorScale = &radarhandler->radarErrorSize[0];
 	if (!(losStatus[gu->myAllyTeam] & LOS_INLOS) &&
-	    radarhandler->InSeismicDistance(this, gu->myAllyTeam)) {
-		const float3 err(errorScale[gu->myAllyTeam] * (0.5f - rx), 0.0f,
-		                 errorScale[gu->myAllyTeam] * (0.5f - rz));
+	    radarHandler->InSeismicDistance(this, gu->myAllyTeam)) {
+
+		const float3 err(radarHandler->GetAllyTeamRadarErrorSize(gu->myAllyTeam) * (0.5f - rx), 0.0f,
+		                 radarHandler->GetAllyTeamRadarErrorSize(gu->myAllyTeam) * (0.5f - rz));
 
 		new CSeismicGroundFlash(pos + err, 30, 15, 0, pingSize, 1, float3(0.8f, 0.0f, 0.0f));
 	}
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		if (radarhandler->InSeismicDistance(this, a)) {
-			const float3 err(errorScale[a] * (0.5f - rx), 0.0f,
-			                 errorScale[a] * (0.5f - rz));
+		if (radarHandler->InSeismicDistance(this, a)) {
+			const float3 err(radarHandler->GetAllyTeamRadarErrorSize(a) * (0.5f - rx), 0.0f,
+			                 radarHandler->GetAllyTeamRadarErrorSize(a) * (0.5f - rz));
 			const float3 pingPos = (pos + err);
 			eventHandler.UnitSeismicPing(this, a, pingPos, pingSize);
 			eoh->SeismicPing(a, *this, pingPos, pingSize);
@@ -1364,11 +1364,11 @@ void CUnit::DoSeismicPing(float pingSize)
 
 void CUnit::ChangeLos(int losRad, int airRad)
 {
-	loshandler->FreeInstance(los);
+	losHandler->FreeInstance(los);
 	los = NULL;
 	losRadius = losRad;
 	airLosRadius = airRad;
-	loshandler->MoveUnit(this, false);
+	losHandler->MoveUnit(this, false);
 }
 
 
@@ -1405,9 +1405,9 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	quadField->RemoveUnit(this);
 	quads.clear();
-	loshandler->FreeInstance(los);
+	losHandler->FreeInstance(los);
 	los = 0;
-	radarhandler->RemoveUnit(this);
+	radarHandler->RemoveUnit(this);
 
 	if (unitDef->isAirBase) {
 		airBaseHandler->DeregisterAirBase(this);
@@ -1447,9 +1447,9 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		}
 	}
 
-	loshandler->MoveUnit(this, false);
+	losHandler->MoveUnit(this, false);
 	quadField->MovedUnit(this);
-	radarhandler->MoveUnit(this);
+	radarHandler->MoveUnit(this);
 
 	if (unitDef->isAirBase) {
 		airBaseHandler->RegisterAirBase(this);
@@ -2070,10 +2070,10 @@ void CUnit::Activate()
 	script->Activate();
 
 	if (unitDef->targfac) {
-		radarhandler->radarErrorSize[allyteam] /= radarhandler->targFacEffect;
+		radarHandler->DecreaseAllyTeamRadarErrorSize(allyteam);
 	}
 
-	radarhandler->MoveUnit(this);
+	radarHandler->MoveUnit(this);
 
 	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
@@ -2091,10 +2091,10 @@ void CUnit::Deactivate()
 	script->Deactivate();
 
 	if (unitDef->targfac) {
-		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
+		radarHandler->IncreaseAllyTeamRadarErrorSize(allyteam);
 	}
 
-	radarhandler->RemoveUnit(this);
+	radarHandler->RemoveUnit(this);
 
 	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {

@@ -251,11 +251,11 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
 		file << "\t\tallyteamID: " << a << ", LOS-map:" << "\n";
 
-		for (int y = 0; y < loshandler->losSizeY; ++y) {
+		for (int y = 0; y < losHandler->losSizeY; ++y) {
 			file << " ";
 
-			for (int x = 0; x < loshandler->losSizeX; ++x) {
-				file << "\t\t\t" << loshandler->losMaps[a][y * loshandler->losSizeX + x] << " ";
+			for (int x = 0; x < losHandler->losSizeX; ++x) {
+				file << "\t\t\t" << losHandler->losMaps[a][y * losHandler->losSizeX + x] << " ";
 			}
 
 			file << "\n";

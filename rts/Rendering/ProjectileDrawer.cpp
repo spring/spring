@@ -441,7 +441,7 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 		pro->drawPos = pro->pos + (pro->speed * globalRendering->timeOffset);
 	}
 
-	const bool visible = (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)));
+	const bool visible = (gu->spectatingFullView || losHandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)));
 
 	if (!visible)
 		return;
@@ -496,7 +496,7 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 {
 	const CUnit* owner = p->owner();
 
-	if ((gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam) ||
+	if ((gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam) ||
 		(owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)))) {
 
 		// if this returns false, then projectile is
@@ -543,7 +543,7 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 					CUnit *owner = p->owner();
 					if ((owner && (owner->allyteam == gu->myAllyTeam)) ||
-						gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
+						gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam)) {
 							p->DrawOnMinimap(*lines, *points);
 					}
 				}
@@ -570,7 +570,7 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 			const CUnit* owner = p->owner();
 			if ((owner && (owner->allyteam == gu->myAllyTeam)) ||
-				gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
+				gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam)) {
 				p->DrawOnMinimap(*lines, *points);
 			}
 		}
@@ -828,7 +828,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 	for (gfi = gfc.render_begin(); gfi != gfc.render_end(); ++gfi) {
 		CGroundFlash* gf = *gfi;
 
-		const bool los = gu->spectatingFullView || loshandler->InAirLos(gf->pos, gu->myAllyTeam);
+		const bool los = gu->spectatingFullView || losHandler->InAirLos(gf->pos, gu->myAllyTeam);
 		const bool vis = camera->InView(gf->pos, gf->size);
 
 		if (depthTest != gf->depthTest) {

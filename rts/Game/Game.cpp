@@ -466,8 +466,8 @@ CGame::~CGame()
 	SafeDelete(ground);
 	SafeDelete(smoothGround);
 	SafeDelete(groundBlockingObjectMap);
-	SafeDelete(radarhandler);
-	SafeDelete(loshandler);
+	SafeDelete(radarHandler);
+	SafeDelete(losHandler);
 	SafeDelete(mapDamage);
 	SafeDelete(quadField);
 	SafeDelete(moveDefHandler);
@@ -637,8 +637,8 @@ void CGame::PostLoadSimulation()
 	loadscreen->SetLoadMessage("Loading Feature Definitions");
 	featureHandler = new CFeatureHandler();
 
-	loshandler = new CLosHandler();
-	radarhandler = new CRadarHandler(false);
+	losHandler = new CLosHandler();
+	radarHandler = new CRadarHandler(false);
 
 	mapDamage = IMapDamage::GetMapDamage();
 	pathManager = IPathManager::GetInstance(modInfo.pathFinderSystem);
@@ -1568,7 +1568,7 @@ void CGame::SimFrame() {
 	GCobEngine.Tick(33);
 	GUnitScriptEngine.Tick(33);
 	wind.Update();
-	loshandler->Update();
+	losHandler->Update();
 	interceptHandler.Update(false);
 
 	teamHandler->GameFrame(gs->frameNum);

@@ -425,7 +425,7 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect, floa
 		return; // the call is not defined
 	}
 
-	if (!gu->spectatingFullView && !loshandler->InLos(pos, gu->myAllyTeam)) {
+	if (!gu->spectatingFullView && !losHandler->InLos(pos, gu->myAllyTeam)) {
 		const float fuzz = 0.25f;
 		gap.x *= fuzzRand(fuzz);
 		gap.y *= fuzzRand(fuzz);

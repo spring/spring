@@ -68,8 +68,8 @@ void AMoveType::SlowUpdate()
 				owner->radarHeight = owner->losHeight;
 			}
 
-			loshandler->MoveUnit(owner, false);
-			radarhandler->MoveUnit(owner);
+			losHandler->MoveUnit(owner, false);
+			radarHandler->MoveUnit(owner);
 
 			if (isAirMoveType) {
 				owner->losHeight = losHeight;

@@ -128,7 +128,7 @@ bool CFeature::IsInLosForAllyTeam(int argAllyTeam) const
 	if (alwaysVisible)
 		return true;
 
-	const bool inLOS = (argAllyTeam == -1 || loshandler->InLos(this->pos, argAllyTeam));
+	const bool inLOS = (argAllyTeam == -1 || losHandler->InLos(this->pos, argAllyTeam));
 
 	switch (modInfo.featureVisibility) {
 		case CModInfo::FEATURELOS_NONE:
