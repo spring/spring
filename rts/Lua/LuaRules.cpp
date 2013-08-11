@@ -113,6 +113,7 @@ CLuaRules::CLuaRules()
 		haveAllowWeaponTarget          = HasCallIn(L, "AllowWeaponTarget");
 		haveAllowWeaponInterceptTarget = HasCallIn(L, "AllowWeaponInterceptTarget");
 		haveUnitPreDamaged             = HasCallIn(L, "UnitPreDamaged");
+		haveFeaturePreDamaged          = HasCallIn(L, "FeaturePreDamaged");
 		haveShieldPreDamaged           = HasCallIn(L, "ShieldPreDamaged");
 	}
 	if (SingleState() || L == L_Draw) {
@@ -205,6 +206,7 @@ bool CLuaRules::SyncedUpdateCallIn(lua_State *L, const string& name)
 	else if (name == "MoveCtrlNotify"        ) { UPDATE_HAVE_CALLIN(MoveCtrlNotify); }
 	else if (name == "TerraformComplete"     ) { UPDATE_HAVE_CALLIN(TerraformComplete); }
 	else if (name == "UnitPreDamaged"        ) { UPDATE_HAVE_CALLIN(UnitPreDamaged); }
+	else if (name == "FeaturePreDamaged"     ) { UPDATE_HAVE_CALLIN(FeaturePreDamaged); }
 	else if (name == "ShieldPreDamaged"      ) { UPDATE_HAVE_CALLIN(ShieldPreDamaged); }
 	else if (name == "AllowWeaponTargetCheck") { UPDATE_HAVE_CALLIN(AllowWeaponTargetCheck); }
 	else if (name == "AllowWeaponTarget"     ) { UPDATE_HAVE_CALLIN(AllowWeaponTarget); }
@@ -732,16 +734,13 @@ bool CLuaRules::UnitPreDamaged(
 	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 9 + 4);
 
-	const int errfunc = SetupTraceback(L);
 	static const LuaHashString cmdStr(__FUNCTION__);
 
-	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc != 0) // remove error handler
-			lua_pop(L, 1);
-		return false; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
 
 	int argCount = 5;
+
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
@@ -761,27 +760,82 @@ bool CLuaRules::UnitPreDamaged(
 	}
 
 	// call the routine
-	const bool success = RunCallInTraceback(cmdStr, argCount, 2, errfunc);
-
-	if (!success)
+	if (!RunCallInTraceback(cmdStr, argCount, 2, SetupTraceback(L)))
 		return false;
 
 	if (newDamage && lua_isnumber(L, -2)) {
 		*newDamage = lua_tonumber(L, -2);
 	} else if (!lua_isnumber(L, -2) || lua_isnil(L, -2)) {
 		// first value is obligatory, so may not be nil
-		LOG_L(L_WARNING,
-				"%s(): 1st value returned should be a number (newDamage)",
-				cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s(): 1st return-value should be a number (newDamage)", (cmdStr.GetString()).c_str());
 	}
 
 	if (impulseMult && lua_isnumber(L, -1)) {
 		*impulseMult = lua_tonumber(L, -1);
 	} else if (!lua_isnumber(L, -1) && !lua_isnil(L, -1)) {
 		// second value is optional, so nils are OK
-		LOG_L(L_WARNING,
-				"%s(): 2nd value returned should be a number (impulseMult)",
-				cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s(): 2nd return-value should be a number (impulseMult)", (cmdStr.GetString()).c_str());
+	}
+
+	lua_pop(L, 2);
+	return true;
+}
+
+bool CLuaRules::FeaturePreDamaged(
+	const CFeature* feature,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID,
+	float* newDamage,
+	float* impulseMult)
+{
+	if (!haveFeaturePreDamaged)
+		return false;
+
+	LUA_CALL_IN_CHECK(L, false);
+	lua_checkstack(L, 9 + 4);
+
+	static const LuaHashString cmdStr(__FUNCTION__);
+
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
+
+	int argCount = 4;
+
+	lua_pushnumber(L, feature->id);
+	lua_pushnumber(L, feature->def->id);
+	lua_pushnumber(L, feature->team);
+	lua_pushnumber(L, damage);
+
+	if (GetHandleFullRead(L)) {
+		lua_pushnumber(L, weaponDefID); argCount += 1;
+		lua_pushnumber(L, projectileID); argCount += 1;
+
+		if (attacker != NULL) {
+			lua_pushnumber(L, attacker->id);
+			lua_pushnumber(L, attacker->unitDef->id);
+			lua_pushnumber(L, attacker->team);
+			argCount += 3;
+		}
+	}
+
+	// call the routine
+	if (!RunCallInTraceback(cmdStr, argCount, 2, SetupTraceback(L)))
+		return false;
+
+	if (newDamage && lua_isnumber(L, -2)) {
+		*newDamage = lua_tonumber(L, -2);
+	} else if (!lua_isnumber(L, -2) || lua_isnil(L, -2)) {
+		// first value is obligatory, so may not be nil
+		LOG_L(L_WARNING, "%s(): 1st value returned should be a number (newDamage)", (cmdStr.GetString()).c_str());
+	}
+
+	if (impulseMult && lua_isnumber(L, -1)) {
+		*impulseMult = lua_tonumber(L, -1);
+	} else if (!lua_isnumber(L, -1) && !lua_isnil(L, -1)) {
+		// second value is optional, so nils are OK
+		LOG_L(L_WARNING, "%s(): 2nd value returned should be a number (impulseMult)", (cmdStr.GetString()).c_str());
 	}
 
 	lua_pop(L, 2);
@@ -800,15 +854,10 @@ bool CLuaRules::ShieldPreDamaged(
 	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 5 + 3);
 
-	const int errfunc(SetupTraceback(L));
 	static const LuaHashString cmdStr(__FUNCTION__);
 
-	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc != 0)
-			lua_pop(L, 1);
-		// undefined call-in
+	if (!cmdStr.GetGlobalFunc(L))
 		return false;
-	}
 
 	// push the call-in arguments
 	lua_pushnumber(L, projectile->id);
@@ -818,15 +867,13 @@ bool CLuaRules::ShieldPreDamaged(
 	lua_pushboolean(L, bounceProjectile);
 
 	// call the routine
-	const bool success = RunCallInTraceback(cmdStr, 5, 1, errfunc);
-
-	if (!success)
+	if (!RunCallInTraceback(cmdStr, 5, 1, SetupTraceback(L)))
 		return false;
 
 	// pop the return-value; must be true or false
 	const bool ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));
-	lua_pop(L, -1);
 
+	lua_pop(L, -1);
 	return ret;
 }
 

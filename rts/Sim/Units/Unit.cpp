@@ -1106,58 +1106,74 @@ void CUnit::DoWaterDamage()
 	DoDamage(DamageArray(mapInfo->water.damage), ZeroVector, NULL, -DAMAGE_EXTSOURCE_WATER, -1);
 }
 
-void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID)
+
+
+static void AddUnitDamageStats(CUnit* unit, float damage, bool dealt)
 {
-	if (isDead || crashing) {
+	if (unit == NULL)
 		return;
+
+	CTeam* team = teamHandler->Team(unit->team);
+	TeamStatistics* stats = team->currentStats;
+
+	if (dealt) {
+		stats->damageDealt += damage;
+	} else {
+		stats->damageReceived += damage;
 	}
+}
 
-	float damage = damages[armorType];
+void CUnit::DoDamage(
+	const DamageArray& damages,
+	const float3& impulse,
+	CUnit* attacker,
+	int weaponDefID,
+	int projectileID
+) {
+	if (isDead || crashing)
+		return;
 
-	if (damage > 0.0f) {
-		if (attacker) {
+	float baseDamage = damages[armorType];
+	float experienceMod = expMultiplier;
+	float impulseMult = 1.0f;
+
+	const bool isParalyzer = (damages.paralyzeDamageTime != 0);
+
+	if (baseDamage > 0.0f) {
+		if (attacker != NULL) {
 			SetLastAttacker(attacker);
 
 			// FIXME -- not the impulse direction?
-			damage *= GetFlankingDamageBonus((attacker->pos - pos).SafeNormalize());
+			baseDamage *= GetFlankingDamageBonus((attacker->pos - pos).SafeNormalize());
 		}
 
-		damage *= curArmorMultiple;
+		baseDamage *= curArmorMultiple;
 		restTime = 0; // bleeding != resting
 	}
 
 	{
 		float3 hitDir = -impulse;
 		hitDir.y = 0.0f;
-		hitDir.SafeNormalize();
 
-		script->HitByWeapon(hitDir, weaponDefID, /*inout*/ damage);
+		script->HitByWeapon(hitDir.SafeNormalize(), weaponDefID, /*inout*/ baseDamage);
 	}
 
-	float experienceMod = expMultiplier;
-	float newDamage = damage;
-	float impulseMult = 1.0f;
-
-	const int paralyzeTime = damages.paralyzeDamageTime;
-	const bool isParalyzer = (paralyzeTime != 0);
-
-	if (luaRules && luaRules->UnitPreDamaged(this, attacker, damage, weaponDefID, projectileID, isParalyzer, &newDamage, &impulseMult)) {
-		damage = newDamage;
+	if (luaRules != NULL) {
+		luaRules->UnitPreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer, &baseDamage, &impulseMult);
 	}
 
 	ApplyImpulse((impulse * impulseMult) / mass);
 
-	if (!isParalyzer) { // real damage
-		if (damage > 0.0f) {
-			// Do not log overkill damage (so nukes etc do not inflate values)
-			const float statsdamage = std::max(0.0f, std::min(maxHealth - health, damage));
-			if (attacker) {
-				teamHandler->Team(attacker->team)->currentStats->damageDealt += statsdamage;
-			}
-			teamHandler->Team(team)->currentStats->damageReceived += statsdamage;
-			health -= damage;
+	if (!isParalyzer) {
+		// real damage
+		if (baseDamage > 0.0f) {
+			// do not log overkill damage (so nukes etc do not inflate values)
+			AddUnitDamageStats(attacker, Clamp(maxHealth - health, 0.0f, baseDamage), true);
+			AddUnitDamageStats(this, Clamp(maxHealth - health, 0.0f, baseDamage), false);
+
+			health -= baseDamage;
 		} else { // healing
-			health -= damage;
+			health -= baseDamage;
 			health = std::min(health, maxHealth);
 
 			if (health > paralyzeDamage && !modInfo.paralyzeOnMaxHealth) {
@@ -1176,12 +1192,12 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 		// maximum health to ensure stun-time is always equal to <paralyzeTime>
 		const float baseHealth = (modInfo.paralyzeOnMaxHealth? maxHealth: health);
 		const float paralysisDecayRate = baseHealth * CUnit::empDecline;
-		const float sumParalysisDamage = paralysisDecayRate * paralyzeTime;
+		const float sumParalysisDamage = paralysisDecayRate * damages.paralyzeDamageTime;
 		const float maxParalysisDamage = baseHealth + sumParalysisDamage - paralyzeDamage;
 
-		if (damage > 0.0f) {
+		if (baseDamage > 0.0f) {
 			// clamp the dealt paralysis-damage to [0, maxParalysisDamage]
-			damage = std::min(damage, std::max(0.0f, maxParalysisDamage));
+			baseDamage = Clamp(baseDamage, 0.0f, maxParalysisDamage);
 
 			if (IsStunned()) {
 				// no attacker gains experience from a stunned target
@@ -1189,7 +1205,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 			}
 
 			// increase the current level of paralysis-damage
-			paralyzeDamage += damage;
+			paralyzeDamage += baseDamage;
 
 			if (paralyzeDamage >= baseHealth) {
 				SetStunned(true);
@@ -1201,7 +1217,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 			}
 
 			// decrease ("heal") the current level of paralysis-damage
-			paralyzeDamage += damage;
+			paralyzeDamage += baseDamage;
 			paralyzeDamage = std::max(paralyzeDamage, 0.0f);
 
 			if (paralyzeDamage <= baseHealth) {
@@ -1210,20 +1226,20 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 		}
 	}
 
-	recentDamage += damage;
+	recentDamage += baseDamage;
 
-	eventHandler.UnitDamaged(this, attacker, damage, weaponDefID, projectileID, isParalyzer);
-	eoh->UnitDamaged(*this, attacker, damage, weaponDefID, projectileID, isParalyzer);
+	eventHandler.UnitDamaged(this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer);
+	eoh->UnitDamaged(*this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer);
 
 #ifdef TRACE_SYNC
 	tracefile << "Damage: ";
-	tracefile << id << " " << damage << "\n";
+	tracefile << id << " " << baseDamage << "\n";
 #endif
 
-	if (damage > 0.0f) {
+	if (baseDamage > 0.0f) {
 		if ((attacker != NULL) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
 			const float scaledExpMod = 0.1f * experienceMod * (power / attacker->power);
-			const float scaledDamage = std::max(0.0f, (damage + std::min(0.0f, health))) / maxHealth;
+			const float scaledDamage = std::max(0.0f, (baseDamage + std::min(0.0f, health))) / maxHealth;
 			// alternative
 			// scaledDamage = (max(healthPreDamage, 0) - max(health, 0)) / maxHealth
 

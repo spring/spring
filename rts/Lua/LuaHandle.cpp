@@ -96,11 +96,11 @@ CLuaHandle::~CLuaHandle()
 	// free the lua state
 	KillLua();
 
-	for(int i = 0; i < delayedCallsFromSynced.size(); ++i) {
+	for (int i = 0; i < delayedCallsFromSynced.size(); ++i) {
 		DelayDataDump& ddp = delayedCallsFromSynced[i];
-		for(int d = 0; d < ddp.data.size(); ++d) {
+		for (int d = 0; d < ddp.data.size(); ++d) {
 			LuaUtils::ShallowDataDump& sdd = ddp.data[d];
-			if(sdd.type == LUA_TSTRING)
+			if (sdd.type == LUA_TSTRING)
 				delete sdd.data.str;
 		}
 	}
@@ -274,7 +274,7 @@ void CLuaHandle::RecvFromSynced(lua_State *srcState, int args) {
 void CLuaHandle::DelayRecvFromSynced(lua_State* srcState, int args) {
 	DelayDataDump ddmp;
 
-	if(CopyExportTable()) {
+	if (CopyExportTable()) {
 		HSTR_PUSH(srcState, "EXPORT");
 		lua_rawget(srcState, LUA_GLOBALSINDEX);
 
@@ -335,7 +335,7 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 	{
 		GML_STDMUTEX_LOCK(scall); // ExecuteCallsFromSynced
 
-		if(delayedCallsFromSynced.empty())
+		if (delayedCallsFromSynced.empty())
 			return false;
 
 		delayedCallsFromSynced.swap(drfs);
@@ -1016,20 +1016,17 @@ void CLuaHandle::UnitDamaged(
 	int projectileID,
 	bool paralyzer)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_DAMAGED, unit, attacker, damage, weaponDefID, paralyzer);
+	LUA_UNIT_BATCH_PUSH(, UNIT_DAMAGED, unit, attacker, damage, weaponDefID, projectileID, paralyzer);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 11);
 
-	int errfunc = SetupTraceback(L);
+	static const LuaHashString cmdStr(__FUNCTION__);
 
-	static const LuaHashString cmdStr("UnitDamaged");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	int argCount = 5;
+
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
@@ -1038,8 +1035,7 @@ void CLuaHandle::UnitDamaged(
 
 	if (GetHandleFullRead(L)) {
 		lua_pushnumber(L, weaponDefID); argCount += 1;
-		// TODO: add to batch
-		// lua_pushnumber(L, projectileID); // argCount += 1;
+		lua_pushnumber(L, projectileID); argCount += 1;
 
 		if (attacker != NULL) {
 			lua_pushnumber(L, attacker->id);
@@ -1050,7 +1046,7 @@ void CLuaHandle::UnitDamaged(
 	}
 
 	// call the routine
-	RunCallInTraceback(cmdStr, argCount, 0, errfunc);
+	RunCallInTraceback(cmdStr, argCount, 0, SetupTraceback(L));
 }
 
 
@@ -1364,7 +1360,6 @@ void CLuaHandle::FeatureCreated(const CFeature* feature)
 	RunCallInTraceback(cmdStr, 2, 0, errfunc);
 }
 
-
 void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 {
 	LUA_FEAT_BATCH_PUSH(FEAT_DESTROYED, feature);
@@ -1385,6 +1380,45 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 2, 0, errfunc);
+}
+
+void CLuaHandle::FeatureDamaged(
+	const CFeature* feature,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID)
+{
+	LUA_FEAT_BATCH_PUSH(, FEAT_DAMAGED, feature, attacker, damage, weaponDefID, projectileID);
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 11);
+
+	static const LuaHashString cmdStr(__FUNCTION__);
+
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
+
+	int argCount = 4;
+
+	lua_pushnumber(L, feature->id);
+	lua_pushnumber(L, feature->def->id);
+	lua_pushnumber(L, feature->team);
+	lua_pushnumber(L, damage);
+
+	if (GetHandleFullRead(L)) {
+		lua_pushnumber(L, weaponDefID); argCount += 1;
+		lua_pushnumber(L, projectileID); argCount += 1;
+
+		if (attacker != NULL) {
+			lua_pushnumber(L, attacker->id);
+			lua_pushnumber(L, attacker->unitDef->id);
+			lua_pushnumber(L, attacker->team);
+			argCount += 3;
+		}
+	}
+
+	// call the routine
+	RunCallInTraceback(cmdStr, argCount, 0, SetupTraceback(L));
 }
 
 
@@ -1521,7 +1555,8 @@ void CLuaHandle::StockpileChanged(const CUnit* unit,
 
 
 void CLuaHandle::ExecuteUnitEventBatch() {
-	if(!UseEventBatch()) return;
+	if (!UseEventBatch())
+		return;
 
 	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteUnitEventBatch
 
@@ -1529,7 +1564,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 	{
 		GML_STDMUTEX_LOCK(ulbatch);
 
-		if(luaUnitEventBatch.empty())
+		if (luaUnitEventBatch.empty())
 			return;
 
 		luaUnitEventBatch.swap(lueb);
@@ -1544,6 +1579,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 
 	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
+
 	for (std::vector<LuaUnitEvent>::iterator i = lueb.begin(); i != lueb.end(); ++i) {
 		LuaUnitEvent &e = *i;
 		switch (e.id) {
@@ -1575,7 +1611,8 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				UnitCmdDone(e.unit1, e.int1, e.int2);
 				break;
 			case UNIT_DAMAGED:
-				UnitDamaged(e.unit1, e.unit2, e.float1, e.int1, -1, e.bool1);
+				// unit, attacker, damage, weaponDefID, projectileID, paralyzer
+				UnitDamaged(e.unit1, e.unit2, e.float1, e.int1, e.int2, e.bool1);
 				break;
 			case UNIT_EXPERIENCE:
 				UnitExperience(e.unit1, e.float1);
@@ -1636,13 +1673,15 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				break;
 		}
 	}
+
 	if (Threading::IsSimThread())
 		Threading::SetBatchThread(true);
 }
 
 
 void CLuaHandle::ExecuteFeatEventBatch() {
-	if(!UseEventBatch()) return;
+	if (!UseEventBatch())
+		return;
 
 	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteFeatEventBatch
 
@@ -1650,7 +1689,7 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 	{
 		GML_STDMUTEX_LOCK(flbatch);
 
-		if(luaFeatEventBatch.empty())
+		if (luaFeatEventBatch.empty())
 			return;
 
 		luaFeatEventBatch.swap(lfeb);
@@ -1663,29 +1702,36 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFeatEventBatch
 
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
-	for(std::vector<LuaFeatEvent>::iterator i = lfeb.begin(); i != lfeb.end(); ++i) {
-		LuaFeatEvent &e = *i;
-		switch(e.id) {
+
+	for (std::vector<LuaFeatEvent>::iterator i = lfeb.begin(); i != lfeb.end(); ++i) {
+		LuaFeatEvent& e = *i;
+		switch (e.id) {
 			case FEAT_CREATED:
 				FeatureCreated(e.feat1);
 				break;
 			case FEAT_DESTROYED:
 				FeatureDestroyed(e.feat1);
 				break;
+			case FEAT_DAMAGED:
+				// feature, attacker, damage, weaponDefID, projectileID
+				FeatureDamaged(e.feat1, e.unit2, e.float1, e.int1, e.int2);
+				break;
 			default:
 				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.id);
 				break;
 		}
 	}
-	if(Threading::IsSimThread())
+
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(true);
 }
 
 
 void CLuaHandle::ExecuteObjEventBatch() {
-	if(!UseEventBatch()) return;
+	if (!UseEventBatch())
+		return;
 
 	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteObjEventBatch
 
@@ -1693,7 +1739,7 @@ void CLuaHandle::ExecuteObjEventBatch() {
 	{
 		GML_STDMUTEX_LOCK(olbatch);
 
-		if(luaObjEventBatch.empty())
+		if (luaObjEventBatch.empty())
 			return;
 
 		luaObjEventBatch.swap(loeb);
@@ -1706,11 +1752,12 @@ void CLuaHandle::ExecuteObjEventBatch() {
 	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteObjEventBatch
 
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
-	for(std::vector<LuaObjEvent>::iterator i = loeb.begin(); i != loeb.end(); ++i) {
-		LuaObjEvent &e = *i;
-		switch(e.id) {
+
+	for (std::vector<LuaObjEvent>::iterator i = loeb.begin(); i != loeb.end(); ++i) {
+		LuaObjEvent& e = *i;
+		switch (e.id) {
 			case UNIT_FEAT_COLLISION:
 				UnitFeatureCollision(e.unit, e.feat);
 				break;
@@ -1719,13 +1766,15 @@ void CLuaHandle::ExecuteObjEventBatch() {
 				break;
 		}
 	}
-	if(Threading::IsSimThread())
+
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(true);
 }
 
 
 void CLuaHandle::ExecuteProjEventBatch() {
-	if(!UseEventBatch()) return;
+	if (!UseEventBatch())
+		return;
 
 //	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteProjEventBatch
 //	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteProjEventBatch
@@ -1735,7 +1784,7 @@ void CLuaHandle::ExecuteProjEventBatch() {
 	{
 		GML_STDMUTEX_LOCK(plbatch);
 
-		if(luaProjEventBatch.empty())
+		if (luaProjEventBatch.empty())
 			return;
 
 		luaProjEventBatch.swap(lpeb);
@@ -1744,11 +1793,12 @@ void CLuaHandle::ExecuteProjEventBatch() {
 	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteProjEventBatch
 
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
-	for(std::vector<LuaProjEvent>::iterator i = lpeb.begin(); i != lpeb.end(); ++i) {
-		LuaProjEvent &e = *i;
-		switch(e.id) {
+
+	for (std::vector<LuaProjEvent>::iterator i = lpeb.begin(); i != lpeb.end(); ++i) {
+		LuaProjEvent& e = *i;
+		switch (e.id) {
 			case PROJ_CREATED:
 				ProjectileCreated(e.proj1);
 				break;
@@ -1760,19 +1810,21 @@ void CLuaHandle::ExecuteProjEventBatch() {
 				break;
 		}
 	}
-	if(Threading::IsSimThread())
+
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(true);
 }
 
 
 void CLuaHandle::ExecuteFrameEventBatch() {
-	if(!UseEventBatch()) return;
+	if (!UseEventBatch())
+		return;
 
 	std::vector<int> lgeb;
 	{
 		GML_STDMUTEX_LOCK(glbatch);
 
-		if(luaFrameEventBatch.empty())
+		if (luaFrameEventBatch.empty())
 			return;
 
 		luaFrameEventBatch.swap(lgeb);
@@ -1785,12 +1837,14 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFrameEventBatch
 
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
-	for(std::vector<int>::iterator i = lgeb.begin(); i != lgeb.end(); ++i) {
+
+	for (std::vector<int>::iterator i = lgeb.begin(); i != lgeb.end(); ++i) {
 		GameFrame(*i);
 	}
-	if(Threading::IsSimThread())
+
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(true);
 }
 
@@ -3025,7 +3079,7 @@ int CLuaHandle::CallOutGetCallInList(lua_State* L)
 
 int CLuaHandle::CallOutSyncedUpdateCallIn(lua_State* L)
 {
-	if(!Threading::IsSimThread())
+	if (!Threading::IsSimThread())
 		return 0; // FIXME: If this can be called from a non-sim context, this code is insufficient
 	const int args = lua_gettop(L);
 	if ((args != 1) || !lua_isstring(L, 1)) {
@@ -3040,7 +3094,7 @@ int CLuaHandle::CallOutSyncedUpdateCallIn(lua_State* L)
 
 int CLuaHandle::CallOutUnsyncedUpdateCallIn(lua_State* L)
 {
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		return 0; // FIXME: If this can be called from a sim context, this code is insufficient
 	const int args = lua_gettop(L);
 	if ((args != 1) || !lua_isstring(L, 1)) {

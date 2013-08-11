@@ -44,7 +44,8 @@ enum UnitEvent {
 
 enum FeatEvent {
 	FEAT_CREATED,
-	FEAT_DESTROYED
+	FEAT_DESTROYED,
+	FEAT_DAMAGED
 };
 
 enum ObjEvent {
@@ -64,6 +65,9 @@ enum UIEvent {
 	SHOCK_FRONT
 };
 
+// FIXME:
+//   THIS A FUCKING RETARDED WAY OF DOING IT, UNMAINTAINABLE AND UNEXTENDIBLE
+//   CREATE SIMPLE DEDICATED EVENT STRUCTURES OR THROW BATCHING THE FUCK OUT
 struct LuaUnitEvent {
 	LuaUnitEvent(UnitEvent i, const CUnit* u1)
 		: id(i)
@@ -104,7 +108,7 @@ struct LuaUnitEvent {
 		, int1(0)
 		, float1(0.0f)
 		, unit2(NULL)
-	{cmd1.reset(new Command(c1));}
+	{ cmd1.reset(new Command(c1)); }
 	LuaUnitEvent(UnitEvent i, const CUnit* u1, int i1, int i2)
 		: id(i)
 		, unit1(u1)
@@ -171,10 +175,26 @@ struct LuaFeatEvent {
 	LuaFeatEvent(FeatEvent i, const CFeature* f1)
 		: id(i)
 		, feat1(f1)
+		, unit2(NULL)
+		, float1(0.0f)
+		, int1(0)
+		, int2(0)
+	{}
+	LuaFeatEvent(FeatEvent i, const CFeature* f1, const CUnit* u2, float f, int i1, int i2)
+		: id(i)
+		, feat1(f1)
+		, unit2(u2)
+		, float1(f)
+		, int1(i1)
+		, int2(i2)
 	{}
 
 	FeatEvent id;
 	const CFeature* feat1;
+	const CUnit* unit2;
+	float float1;
+	int int1;
+	int int2;
 };
 
 struct LuaObjEvent {
@@ -230,47 +250,47 @@ struct LuaUIEvent {
 };
 
 #if (LUA_MT_OPT & LUA_BATCH)
-	#define LUA_UNIT_BATCH_PUSH(r,...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(ulbatch);\
-			luaUnitEventBatch.push_back(LuaUnitEvent(__VA_ARGS__));\
-			return r;\
+	#define LUA_UNIT_BATCH_PUSH(r, ...)                             \
+		if (UseEventBatch() && Threading::IsBatchThread()) {        \
+			GML_STDMUTEX_LOCK(ulbatch);                             \
+			luaUnitEventBatch.push_back(LuaUnitEvent(__VA_ARGS__)); \
+			return r;                                               \
 		}
-	#define LUA_FEAT_BATCH_PUSH(...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(flbatch);\
-			luaFeatEventBatch.push_back(LuaFeatEvent(__VA_ARGS__));\
-			return;\
+	#define LUA_FEAT_BATCH_PUSH(...)                                \
+		if (UseEventBatch() && Threading::IsBatchThread()) {        \
+			GML_STDMUTEX_LOCK(flbatch);                             \
+			luaFeatEventBatch.push_back(LuaFeatEvent(__VA_ARGS__)); \
+			return;                                                 \
 		}
-	#define LUA_OBJ_BATCH_PUSH(...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(olbatch);\
-			luaObjEventBatch.push_back(LuaObjEvent(__VA_ARGS__));\
-			return;\
+	#define LUA_OBJ_BATCH_PUSH(...)                               \
+		if (UseEventBatch() && Threading::IsBatchThread()) {      \
+			GML_STDMUTEX_LOCK(olbatch);                           \
+			luaObjEventBatch.push_back(LuaObjEvent(__VA_ARGS__)); \
+			return;                                               \
 		}
-	#define LUA_PROJ_BATCH_PUSH(...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(plbatch);\
-			luaProjEventBatch.push_back(LuaProjEvent(__VA_ARGS__));\
-			return;\
+	#define LUA_PROJ_BATCH_PUSH(...)                                \
+		if (UseEventBatch() && Threading::IsBatchThread()) {        \
+			GML_STDMUTEX_LOCK(plbatch);                             \
+			luaProjEventBatch.push_back(LuaProjEvent(__VA_ARGS__)); \
+			return;                                                 \
 		}
-	#define LUA_FRAME_BATCH_PUSH(...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(glbatch);\
-			luaFrameEventBatch.push_back(__VA_ARGS__);\
-			return;\
+	#define LUA_FRAME_BATCH_PUSH(...)                        \
+		if (UseEventBatch() && Threading::IsBatchThread()) { \
+			GML_STDMUTEX_LOCK(glbatch);                      \
+			luaFrameEventBatch.push_back(__VA_ARGS__);       \
+			return;                                          \
 		}
-	#define LUA_LOG_BATCH_PUSH(r,...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(mlbatch);\
-			luaLogEventBatch.push_back(LuaLogEvent(__VA_ARGS__));\
-			return r;\
+	#define LUA_LOG_BATCH_PUSH(r, ...)                            \
+		if (UseEventBatch() && Threading::IsBatchThread()) {      \
+			GML_STDMUTEX_LOCK(mlbatch);                           \
+			luaLogEventBatch.push_back(LuaLogEvent(__VA_ARGS__)); \
+			return r;                                             \
 		}
-	#define LUA_UI_BATCH_PUSH(...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(llbatch);\
-			luaUIEventBatch.push_back(LuaUIEvent(__VA_ARGS__));\
-			return;\
+	#define LUA_UI_BATCH_PUSH(...)                              \
+		if (UseEventBatch() && Threading::IsBatchThread()) {    \
+			GML_STDMUTEX_LOCK(llbatch);                         \
+			luaUIEventBatch.push_back(LuaUIEvent(__VA_ARGS__)); \
+			return;                                             \
 		}
 #else
 	#define LUA_UNIT_BATCH_PUSH(r,...)
