@@ -314,7 +314,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// to not overlap for a 1x1 constructor building a 1x1 structure
 	buildDistance = std::max(38.0f, buildDistance);
 	buildSpeed = udTable.GetFloat("workerTime", 0.0f);
-	builder = udTable.GetBool("builder", false) && (buildSpeed > 0.0f);
+	builder = udTable.GetBool("builder", false);
+	builder &= IsBuilderUnit();
 
 	repairSpeed    = udTable.GetFloat("repairSpeed",    buildSpeed);
 	maxRepairSpeed = udTable.GetFloat("maxRepairSpeed",      1e20f);
@@ -565,9 +566,9 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	}
 
 	if (IsAirUnit()) {
-		if (IsFighterUnit() || IsBomberUnit()) {
+		if (IsFighterAirUnit() || IsBomberAirUnit()) {
 			// double turn-radius for bombers if not set explicitly
-			if (IsBomberUnit() && turnRadius == 500.0f) {
+			if (IsBomberAirUnit() && turnRadius == 500.0f) {
 				turnRadius *= 2.0f;
 			}
 

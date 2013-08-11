@@ -108,7 +108,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 			new CFactoryCAI(unit);
 		} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
 			new CBuilderCAI(unit);
-		} else if (ud->IsNonHoveringAirUnit()) {
+		} else if (ud->IsStrafingAirUnit()) {
 			// non-hovering fighter or bomber aircraft; coupled to StrafeAirMoveType
 			new CAirCAI(unit);
 		} else if (ud->IsAirUnit()) {

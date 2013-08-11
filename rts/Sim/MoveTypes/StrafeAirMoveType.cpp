@@ -87,7 +87,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	// force LOS recalculation
 	owner->mapSquare += 1;
 
-	isFighter = (owner->unitDef->IsFighterUnit());
+	isFighter = (owner->unitDef->IsFighterAirUnit());
 	collide = owner->unitDef->collide;
 
 	wingAngle = owner->unitDef->wingAngle;
