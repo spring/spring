@@ -275,6 +275,11 @@ public:
 		return TaskGroup<F,Args...>::IsEmpty();
 	}
 	bool IsFinished() const {
+#ifdef __MINGW32__
+		bool uf = true;
+		for(auto& ut: uniqueTasks) { uf = false; }
+		LOG("%s %i %i", __FUNCTION__, int(TaskGroup<F,Args...>::IsFinished()), int(uf));
+#endif
 		for(auto& ut: uniqueTasks) { if (!ut.empty()) return false; }
 		return TaskGroup<F,Args...>::IsFinished();
 	}
