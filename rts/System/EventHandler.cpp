@@ -364,8 +364,6 @@ void CEventHandler::UpdateObjects() {
 }
 void CEventHandler::DeleteSyncedObjects() {
 	ExecuteAllCallsFromSynced();
-
-	if (luaUI) luaUI->ExecuteObjEventBatch();
 }
 
 

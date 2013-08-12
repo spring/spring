@@ -209,7 +209,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 
 	if (luaUI) {
 		if (weaponDef != NULL && weaponDef->cameraShake > 0.0f) {
-			luaUI->ShockFront(weaponDef->cameraShake, expPos, damageAOE);
+			luaUI->ShockFront(expPos, weaponDef->cameraShake, damageAOE);
 		}
 	}
 

@@ -363,18 +363,16 @@ class CLuaHandle : public CEventClient
 	public: // EventBatch
 		void ExecuteUnitEventBatch();
 		void ExecuteFeatEventBatch();
-		void ExecuteObjEventBatch();
 		void ExecuteProjEventBatch();
 		void ExecuteFrameEventBatch();
 		void ExecuteLogEventBatch();
 
 	protected:
-		std::vector<LuaUnitEvent> luaUnitEventBatch;
-		std::vector<LuaFeatEvent> luaFeatEventBatch;
-		std::vector<LuaObjEvent> luaObjEventBatch;
-		std::vector<LuaProjEvent> luaProjEventBatch;
+		std::vector<LuaUnitEventBase> luaUnitEventBatch;
+		std::vector<LuaFeatEventBase> luaFeatEventBatch;
+		std::vector<LuaProjEventBase> luaProjEventBatch;
+		std::vector<LuaLogEventBase> luaLogEventBatch;
 		std::vector<int> luaFrameEventBatch;
-		std::vector<LuaLogEvent> luaLogEventBatch;
 
 	protected: // call-outs
 		static int KillActiveHandle(lua_State* L);

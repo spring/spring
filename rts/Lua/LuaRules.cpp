@@ -739,6 +739,7 @@ bool CLuaRules::UnitPreDamaged(
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
+	const int errFunc = SetupTraceback(L);
 	int argCount = 5;
 
 	lua_pushnumber(L, unit->id);
@@ -760,7 +761,7 @@ bool CLuaRules::UnitPreDamaged(
 	}
 
 	// call the routine
-	if (!RunCallInTraceback(cmdStr, argCount, 2, SetupTraceback(L)))
+	if (!RunCallInTraceback(cmdStr, argCount, 2, errFunc))
 		return false;
 
 	if (newDamage && lua_isnumber(L, -2)) {
@@ -801,6 +802,7 @@ bool CLuaRules::FeaturePreDamaged(
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
+	const int errFunc = SetupTraceback(L);
 	int argCount = 4;
 
 	lua_pushnumber(L, feature->id);
@@ -821,7 +823,7 @@ bool CLuaRules::FeaturePreDamaged(
 	}
 
 	// call the routine
-	if (!RunCallInTraceback(cmdStr, argCount, 2, SetupTraceback(L)))
+	if (!RunCallInTraceback(cmdStr, argCount, 2, errFunc))
 		return false;
 
 	if (newDamage && lua_isnumber(L, -2)) {
@@ -859,6 +861,8 @@ bool CLuaRules::ShieldPreDamaged(
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
+	const int errFunc = SetupTraceback(L);
+
 	// push the call-in arguments
 	lua_pushnumber(L, projectile->id);
 	lua_pushnumber(L, projectile->GetOwnerID());
@@ -867,7 +871,7 @@ bool CLuaRules::ShieldPreDamaged(
 	lua_pushboolean(L, bounceProjectile);
 
 	// call the routine
-	if (!RunCallInTraceback(cmdStr, 5, 1, SetupTraceback(L)))
+	if (!RunCallInTraceback(cmdStr, 5, 1, errFunc))
 		return false;
 
 	// pop the return-value; must be true or false
