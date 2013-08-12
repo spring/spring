@@ -413,7 +413,7 @@ int CLuaHandle::RunCallInTraceback(
 	int outArgs,
 	int errFuncIndex,
 	std::string& traceback,
-	bool popErrFunc
+	bool popErrorFunc
 ) {
 	// do not signal floating point exceptions in user Lua code
 	ScopedDisableFpuExceptions fe;
@@ -426,9 +426,10 @@ int CLuaHandle::RunCallInTraceback(
 			CLuaHandle* handle,
 			lua_State* state,
 			const LuaHashString* func,
-			int numInArgs,
-			int numOutArgs,
-			int errFuncIdx
+			int _nInArgs,
+			int _nOutArgs,
+			int _errFuncIdx,
+			bool _popErrFunc
 		) {
 			handle->SetRunning(state, true);
 
@@ -439,8 +440,10 @@ int CLuaHandle::RunCallInTraceback(
 			luaState = state;
 			luaHandle = handle;
 
-			nInArgs = numInArgs;
-			nOutArgs = numOutArgs;
+			nInArgs = _nInArgs;
+			nOutArgs = _nOutArgs;
+			errFuncIdx = _errFuncIdx;
+			popErrFunc = _popErrFunc;
 
 			top = lua_gettop(state);
 			// disable GC outside of this scope to prevent sync errors and similar
@@ -457,15 +460,24 @@ int CLuaHandle::RunCallInTraceback(
 		}
 
 		~ScopedLuaCall() {
+			if (popErrFunc != 0 && errFuncIdx != 0) {
+				lua_remove(luaState, errFuncIdx);
+			}
+		}
+
+		void CheckFixStack() {
+			// note: assumes error-handler has not been popped yet (!)
 			if (GetError() == 0) {
 				if (nOutArgs != LUA_MULTRET) {
 					const int retdiff = (lua_gettop(luaState) - (GetTop() - 1)) - (nOutArgs - nInArgs);
+
 					if (retdiff != 0) {
 						LOG_L(L_ERROR, "Internal Lua error: %d return values, %d expected", nOutArgs + retdiff, nOutArgs);
 						lua_pop(luaState, retdiff);
 					}
 				} else {
 					const int retdiff = (lua_gettop(luaState) - (GetTop() - 1)) + nInArgs;
+
 					if (retdiff < 0) {
 						LOG_L(L_ERROR, "Internal Lua error: %d return values", retdiff);
 						lua_pop(luaState, retdiff);
@@ -485,15 +497,10 @@ int CLuaHandle::RunCallInTraceback(
 			}
 		}
 
-		void PopErrorFunc(int errFuncIdx) {
-			if (errFuncIdx != 0) {
-				lua_remove(luaState, errFuncIdx);
-			}
-		}
-
 		const std::string& GetTrace() const { return trace; }
 		int GetTop() const { return top; }
 		int GetError() const { return error; }
+
 	private:
 		lua_State* luaState;
 		CLuaHandle* luaHandle;
@@ -502,18 +509,17 @@ int CLuaHandle::RunCallInTraceback(
 
 		int nInArgs;
 		int nOutArgs;
+		int errFuncIdx;
+		int popErrFunc;
 
 		int top;
 		int error;
 	};
 
 	// TODO: use closure so we do not need to copy args
-	ScopedLuaCall call(this, L, hs, inArgs, outArgs, errFuncIndex);
+	ScopedLuaCall call(this, L, hs, inArgs, outArgs, errFuncIndex, popErrorFunc);
+	call.CheckFixStack();
 	traceback.assign(call.GetTrace());
-
-	if (popErrFunc) {
-		call.PopErrorFunc(errFuncIndex);
-	}
 
 	return (call.GetError());
 }
