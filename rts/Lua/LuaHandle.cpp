@@ -465,7 +465,7 @@ int CLuaHandle::RunCallInTraceback(
 			}
 		}
 
-		void CheckFixStack() {
+		void CheckFixStack(std::string& trace) {
 			// note: assumes error-handler has not been popped yet (!)
 			if (GetError() == 0) {
 				if (nOutArgs != LUA_MULTRET) {
@@ -497,15 +497,12 @@ int CLuaHandle::RunCallInTraceback(
 			}
 		}
 
-		const std::string& GetTrace() const { return trace; }
 		int GetTop() const { return top; }
 		int GetError() const { return error; }
 
 	private:
 		lua_State* luaState;
 		CLuaHandle* luaHandle;
-
-		std::string trace;
 
 		int nInArgs;
 		int nOutArgs;
@@ -518,8 +515,7 @@ int CLuaHandle::RunCallInTraceback(
 
 	// TODO: use closure so we do not need to copy args
 	ScopedLuaCall call(this, L, hs, inArgs, outArgs, errFuncIndex, popErrorFunc);
-	call.CheckFixStack();
-	traceback.assign(call.GetTrace());
+	call.CheckFixStack(traceback);
 
 	return (call.GetError());
 }
