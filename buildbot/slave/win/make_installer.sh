@@ -37,15 +37,18 @@ for tostripfile in ${EXECUTABLES}; do
 		if ! ${MINGW_HOST}objdump -h ${tostripfile} | grep -q .gnu_debuglink; then
 			echo "stripping ${tostripfile}"
 			debugfile=${tostripfile%.*}.dbg
-			${MINGW_HOST}objcopy --only-keep-debug ${tostripfile} ${debugfile}
-			${MINGW_HOST}strip --strip-debug --strip-unneeded ${tostripfile}
-			${MINGW_HOST}objcopy --add-gnu-debuglink=${debugfile} ${tostripfile}
+			(${MINGW_HOST}objcopy --only-keep-debug ${tostripfile} ${debugfile} && \
+			${MINGW_HOST}strip --strip-debug --strip-unneeded ${tostripfile} && \
+			${MINGW_HOST}objcopy --add-gnu-debuglink=${debugfile} ${tostripfile}) &
 			DEBUGFILES="${DEBUGFILES} ${debugfile}"
 		else
 			echo "not stripping ${tostripfile}"
 		fi
 	fi
 done
+
+# wait for finished stripping
+wait
 
 mkdir -p ${TMP_PATH}
 
@@ -57,7 +60,7 @@ MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portab
 touch ${INSTALLDIR}/springsettings.cfg
 ${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -xr!*.dbg &
 #for ZKL
-(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe \*.dbg &)
+(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe \*.dbg) &
 
 # compress files excluded from portable archive
 for file in spring-dedicated.exe spring-headless.exe; do
@@ -79,12 +82,17 @@ mkdir -p ${SOURCEDIR}/installer/downloads/
 ln -sv ${MIN_PORTABLE_ARCHIVE} ${SOURCEDIR}/installer/downloads/spring_testing_minimal-portable.7z
 
 # create installer
-./installer/make_installer.sh
+./installer/make_installer.sh &
 
 # move installer to rsync-directory
-mv ./installer/spring*.exe ${TMP_PATH}
+cp ./installer/spring*.exe ${TMP_PATH}
 
-./installer/make_portable_archive.sh ${TMP_PATH}/spring*.exe ${TMP_PATH}
+./installer/make_portable_archive.sh ${TMP_PATH}/spring*.exe ${TMP_PATH} &
+
+rm ./installer/spring*.exe
+
+# wait for nsis
+wait
 
 # create relative symbolic links to current files for rsyncing
 cd ${TMP_PATH}/../..
