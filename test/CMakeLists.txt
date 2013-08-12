@@ -135,7 +135,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_SYSTEM_LIBRARY}
 		)
 
-	add_spring_test(${test_name} ${test_src} ${test_libs})
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 
 ################################################################################
 ### Matrix44f
