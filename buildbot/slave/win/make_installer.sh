@@ -82,17 +82,12 @@ mkdir -p ${SOURCEDIR}/installer/downloads/
 ln -sv ${MIN_PORTABLE_ARCHIVE} ${SOURCEDIR}/installer/downloads/spring_testing_minimal-portable.7z
 
 # create installer
-./installer/make_installer.sh &
+./installer/make_installer.sh
 
 # move installer to rsync-directory
-cp ./installer/spring*.exe ${TMP_PATH}
+mv ./installer/spring*.exe ${TMP_PATH}
 
-./installer/make_portable_archive.sh ${TMP_PATH}/spring*.exe ${TMP_PATH} &
-
-rm ./installer/spring*.exe
-
-# wait for nsis
-wait
+./installer/make_portable_archive.sh ${TMP_PATH}/spring*.exe ${TMP_PATH}
 
 # create relative symbolic links to current files for rsyncing
 cd ${TMP_PATH}/../..
