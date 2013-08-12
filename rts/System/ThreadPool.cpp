@@ -108,13 +108,15 @@ static void DoTask(boost::shared_lock<boost::shared_mutex>& lk)
 }
 
 
-static void DoTask(std::shared_ptr<ITaskGroup> tg)
+static bool DoTask(std::shared_ptr<ITaskGroup> tg)
 {
 	auto p = tg->GetTask();
-	if (p) {
+	const bool f = p;
+	if (f) {
 		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
 		(*p)();
 	}
+	return f;
 }
 
 
@@ -141,8 +143,7 @@ static void WorkerLoop(int id)
 
 void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 {
-	while (!taskgroup->IsEmpty()) {
-		DoTask(taskgroup);
+	while (DoTask(taskgroup)) {
 	}
 
 	while (!taskgroup->wait_for(boost::chrono::seconds(5))) {
