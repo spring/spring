@@ -242,7 +242,7 @@ public:
 			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 		);
 		this->results.emplace_back(task->get_future());
-		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); this->remainingTasks--; });
+		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); --this->remainingTasks; });
 		this->remainingTasks++;
 	}
 
@@ -252,7 +252,7 @@ public:
 			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 		);
 		this->results.emplace_back(task->get_future());
-		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); this->remainingTasks--; });
+		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); --this->remainingTasks; });
 		this->remainingTasks++;
 	}
 
@@ -276,11 +276,8 @@ public:
 	}
 	bool IsFinished() const {
 #ifdef __MINGW32__
-		bool uf = true;
-		for(auto& ut: uniqueTasks) { uf = false; }
-		LOG("%s %i %i", __FUNCTION__, int(TaskGroup<F,Args...>::IsFinished()), int(uf));
+		LOG("%s %i %i", __FUNCTION__, int(TaskGroup<F,Args...>::IsFinished()), int(this->remainingTasks));
 #endif
-		for(auto& ut: uniqueTasks) { if (!ut.empty()) return false; }
 		return TaskGroup<F,Args...>::IsFinished();
 	}
 
