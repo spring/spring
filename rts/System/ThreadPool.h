@@ -274,12 +274,6 @@ public:
 		for(auto& ut: uniqueTasks) { if (!ut.empty()) return false; }
 		return TaskGroup<F,Args...>::IsEmpty();
 	}
-	bool IsFinished() const {
-#ifdef __MINGW32__
-		LOG("%s %i %i", __FUNCTION__, int(TaskGroup<F,Args...>::IsFinished()), int(this->remainingTasks));
-#endif
-		return TaskGroup<F,Args...>::IsFinished();
-	}
 
 public:
 	std::vector<std::deque<std::function<void()>>> uniqueTasks;
@@ -338,6 +332,9 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 	}
 	ThreadPool::PushTaskGroup(taskgroup);
 	ThreadPool::WaitForFinished(taskgroup);
+#ifdef __MINGW32__
+	LOG("%s %i %i", __FUNCTION__, int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()));
+#endif
 	return taskgroup->GetResult(std::move(g));
 }
 
