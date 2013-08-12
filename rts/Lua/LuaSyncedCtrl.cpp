@@ -2793,18 +2793,17 @@ int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 	switch (lua_gettop(L)) {
 		case 3: {
 			const int id = luaL_checkint(L, 2);
-			const char* type = luaL_checkstring(L, 3);
+			const int type = luaL_checkint(L, 3);
 
 			CWorldObject* oldTargetObject = wpro->GetTargetObject();
 			CWorldObject* newTargetObject = NULL;
 
-			if ((type != NULL) && ((*type) != 0)) {
-				// if no string arg, current target will be cleared
-				switch (type[0]) {
-					case 'u': { newTargetObject = ParseUnit(L, __FUNCTION__, 2); } break;
-					case 'f': { newTargetObject = ParseFeature(L, __FUNCTION__, 2); } break;
-					case 'p': { newTargetObject = ParseProjectile(L, __FUNCTION__, 2); } break;
-				}
+			switch (type) {
+				case 'u': { newTargetObject = ParseUnit(L, __FUNCTION__, 2); } break;
+				case 'f': { newTargetObject = ParseFeature(L, __FUNCTION__, 2); } break;
+				case 'p': { newTargetObject = ParseProjectile(L, __FUNCTION__, 2); } break;
+				case 'g': { /* fall-through, needs four arguments (todo: or a table?) */ }
+				default: { /* if invalid type-argument, current target will be cleared */ } break;
 			}
 
 			const DependenceType oldDepType = ProjectileTarget::GetObjectDepType(oldTargetObject);

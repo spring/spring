@@ -874,9 +874,7 @@ int LuaSyncedRead::GetGameRulesParam(lua_State* L)
 int LuaSyncedRead::GetMapOptions(lua_State* L)
 {
 	lua_newtable(L);
-	if (!gameSetup) {
-		return 1;
-	}
+
 	const map<string, string>& mapOpts = gameSetup->mapOptions;
 	map<string, string>::const_iterator it;
 	for (it = mapOpts.begin(); it != mapOpts.end(); ++it) {
@@ -891,9 +889,7 @@ int LuaSyncedRead::GetMapOptions(lua_State* L)
 int LuaSyncedRead::GetModOptions(lua_State* L)
 {
 	lua_newtable(L);
-	if (!gameSetup) {
-		return 1;
-	}
+
 	const map<string, string>& modOpts = gameSetup->modOptions;
 	map<string, string>::const_iterator it;
 	for (it = modOpts.begin(); it != modOpts.end(); ++it) {
@@ -1121,13 +1117,11 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 		return 0;
 	}
 
-	const bool hasAIs = (skirmishAIHandler.GetSkirmishAIsInTeam(teamID).size() > 0);
-
 	lua_pushnumber(L,  team->teamNum);
 	lua_pushnumber(L,  team->leader);
 	lua_pushboolean(L, team->isDead);
-	lua_pushboolean(L, hasAIs);
-	lua_pushsstring(L,  team->side);
+	lua_pushboolean(L, !skirmishAIHandler.GetSkirmishAIsInTeam(teamID).empty()); // hasAIs
+	lua_pushsstring(L, team->side);
 	lua_pushnumber(L,  teamHandler->AllyTeam(team->teamNum));
 
 	lua_newtable(L);
@@ -4633,25 +4627,27 @@ int LuaSyncedRead::GetProjectileTarget(lua_State* L)
 	const CWorldObject* wtgt = wpro->GetTargetObject();
 
 	if (wtgt == NULL) {
-		lua_pushnumber(L, (wpro->GetTargetPos()).x);
-		lua_pushnumber(L, (wpro->GetTargetPos()).y);
-		lua_pushnumber(L, (wpro->GetTargetPos()).z);
-		return 3;
+		lua_pushnumber(L, int('g')); // ground
+		lua_createtable(L, 3, 0);
+		lua_pushnumber(L, 1); lua_pushnumber(L, (wpro->GetTargetPos()).x); lua_rawset(L, -3);
+		lua_pushnumber(L, 2); lua_pushnumber(L, (wpro->GetTargetPos()).y); lua_rawset(L, -3);
+		lua_pushnumber(L, 3); lua_pushnumber(L, (wpro->GetTargetPos()).z); lua_rawset(L, -3);
+		return 2;
 	}
 
 	if (dynamic_cast<const CUnit*>(wtgt) != NULL) {
+		lua_pushnumber(L, int('u'));
 		lua_pushnumber(L, wtgt->id);
-		lua_pushstring(L, "u");
 		return 2;
 	}
 	if (dynamic_cast<const CFeature*>(wtgt) != NULL) {
+		lua_pushnumber(L, int('f'));
 		lua_pushnumber(L, wtgt->id);
-		lua_pushstring(L, "f");
 		return 2;
 	}
 	if (dynamic_cast<const CWeaponProjectile*>(wtgt) != NULL) {
+		lua_pushnumber(L, int('p'));
 		lua_pushnumber(L, wtgt->id);
-		lua_pushstring(L, "p");
 		return 2;
 	}
 
