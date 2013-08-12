@@ -322,9 +322,11 @@ if    (USE_CXX11)
 	add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants
 endif (USE_CXX11)
 
-
+option(THREADPOOL "Enable ThreadPools" TRUE)
 ### our custom OpenMP replacement
-add_definitions(-DTHREADPOOL)
+if(THREADPOOL)
+	add_definitions(-DTHREADPOOL)
+endif()
 
 
 if(NOT MSVC)
