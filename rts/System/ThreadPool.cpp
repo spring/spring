@@ -156,6 +156,21 @@ void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 }
 
 
+void WaitForFinishedDebug(std::shared_ptr<ITaskGroup> taskgroup)
+{
+	while (DoTask(taskgroup)) {
+		LOG("%s step", __FUNCTION__);
+	}
+
+	while (!taskgroup->wait_for(boost::chrono::seconds(5))) {
+		LOG_L(L_WARNING, "Hang in ThreadPool");
+	}
+
+	//LOG("WaitForFinished %i", taskgroup->GetExceptions().size());
+	//for (auto& r: taskgroup->results())
+	//	r.get();
+}
+
 void PushTaskGroup(std::shared_ptr<ITaskGroup> taskgroup)
 {
 	boost::unique_lock<boost::shared_mutex> lk(taskMutex, boost::defer_lock);
