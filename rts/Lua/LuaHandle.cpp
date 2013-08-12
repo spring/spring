@@ -410,8 +410,8 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 int CLuaHandle::RunCallInTraceback(
 	const LuaHashString* hs,
 	int inArgs,
-	int outArgs, int
-	errFuncIndex,
+	int outArgs,
+	int errFuncIndex,
 	std::string& traceback,
 	bool popErrFunc
 ) {
@@ -419,42 +419,69 @@ int CLuaHandle::RunCallInTraceback(
 	ScopedDisableFpuExceptions fe;
 
 	SELECT_LUA_STATE();
-	SetRunning(L, true);
-	const int top = lua_gettop(L);
-	MatrixStateData prevMSD = GetLuaContextData(L)->glMatrixTracker.PushMatrixState();
-	LuaOpenGL::InitMatrixState(L, hs);
-		// disable GC outside of this scope to prevent sync errors and similar
-		//lua_gc(L, LUA_GCRESTART, 0); // we collect garbage now in its own callin "CollectGarbage"
-			const int error = lua_pcall(L, inArgs, outArgs, errFuncIndex);
-		lua_gc(L, LUA_GCSTOP, 0); // only run GC inside of "SetRunning(L, true) ... SetRunning(L, false)"!
-	LuaOpenGL::CheckMatrixState(L, hs, error);
-	GetLuaContextData(L)->glMatrixTracker.PopMatrixState(prevMSD);
 
-	SetRunning(L, false);
+	struct ScopedLuaCall {
+	public:
+		ScopedLuaCall(
+			CLuaHandle* handle,
+			lua_State* state,
+			const LuaHashString* func,
+			int numInArgs,
+			int numOutArgs,
+			int errFuncIdx
+		) {
+			handle->SetRunning(state, true);
 
-	if (error == 0) {
+			GLMatrixStateTracker& matTracker = GetLuaContextData(state)->glMatrixTracker;
+			MatrixStateData prevMatState = matTracker.PushMatrixState();
+			LuaOpenGL::InitMatrixState(state, func);
+
+			top = lua_gettop(state);
+			// disable GC outside of this scope to prevent sync errors and similar
+			// we collect garbage now in its own callin "CollectGarbage"
+			// lua_gc(L, LUA_GCRESTART, 0);
+			error = lua_pcall(state, numInArgs, numOutArgs, errFuncIdx);
+			// only run GC inside of "SetRunning(L, true) ... SetRunning(L, false)"!
+			lua_gc(state, LUA_GCSTOP, 0);
+
+			LuaOpenGL::CheckMatrixState(state, func, error);
+			matTracker.PopMatrixState(prevMatState);
+
+			handle->SetRunning(state, false);
+		}
+
+		int GetTop() const { return top; }
+		int GetError() const { return error; }
+	private:
+		int top;
+		int error;
+	};
+
+	ScopedLuaCall call(this, L, hs, inArgs, outArgs, errFuncIndex);
+
+	if (call.GetError() == 0) {
 		if (outArgs != LUA_MULTRET) {
-			const int retdiff = (lua_gettop(L) - (top - 1)) - (outArgs - inArgs);
+			const int retdiff = (lua_gettop(L) - (call.GetTop() - 1)) - (outArgs - inArgs);
 			if (retdiff != 0) {
 				LOG_L(L_ERROR, "Internal Lua error: %d return values, %d expected", outArgs + retdiff, outArgs);
 				lua_pop(L, retdiff);
 			}
 		} else {
-			const int retdiff = (lua_gettop(L) - (top - 1)) + inArgs;
+			const int retdiff = (lua_gettop(L) - (call.GetTop() - 1)) + inArgs;
 			if (retdiff < 0) {
 				LOG_L(L_ERROR, "Internal Lua error: %d return values", retdiff);
 				lua_pop(L, retdiff);
 			}
 		}
 	} else {
-		const int retdiff = (lua_gettop(L) - (top - 1)) - (1 - inArgs);
+		const int retdiff = (lua_gettop(L) - (call.GetTop() - 1)) - (1 - inArgs);
 
 		lua_pop(L, retdiff); // BUG? only the traceback shall be returned, but occasionally something goes wrong
 		traceback = std::string((retdiff != 0) ? "[Internal Lua error: Traceback failure] " : "") + (lua_isstring(L, -1) ? lua_tostring(L, -1) : "[No traceback returned]");
 		lua_pop(L, 1);
 
 		// log only errors that lead to a crash
-		callinErrors += (error == 2);
+		callinErrors += (call.GetError() == 2);
 	}
 
 	if (popErrFunc) {
@@ -463,7 +490,7 @@ int CLuaHandle::RunCallInTraceback(
 		}
 	}
 
-	return error;
+	return call.GetError();
 }
 
 
