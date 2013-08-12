@@ -98,6 +98,7 @@ namespace ThreadPool {
 
 	void PushTaskGroup(std::shared_ptr<ITaskGroup> taskgroup);
 	void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup);
+	void WaitForFinishedDebug(std::shared_ptr<ITaskGroup> taskgroup);
 
 	template<typename T>
 	inline void PushTaskGroup(std::shared_ptr<T> taskgroup) { PushTaskGroup(std::static_pointer_cast<ITaskGroup>(taskgroup)); }
@@ -331,9 +332,12 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 		taskgroup->enqueue_unique(i, f);
 	}
 	ThreadPool::PushTaskGroup(taskgroup);
-	ThreadPool::WaitForFinished(taskgroup);
 #ifdef __MINGW32__
-	LOG("%s %i %i", __FUNCTION__, int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()));
+	LOG("%s1 %i %i", __FUNCTION__, int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()));
+#endif
+	ThreadPool::WaitForFinishedDebug(taskgroup);
+#ifdef __MINGW32__
+	LOG("%s2 %i %i", __FUNCTION__, int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()));
 #endif
 	return taskgroup->GetResult(std::move(g));
 }
