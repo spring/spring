@@ -407,25 +407,25 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 /******************************************************************************/
 /******************************************************************************/
 
-int CLuaHandle::SetupTraceback(lua_State *L)
-{
-	return LuaUtils::PushDebugTraceback(L);
-}
-
-
-int CLuaHandle::RunCallInTraceback(const LuaHashString* hs, int inArgs, int outArgs, int errfuncIndex, std::string& traceback)
-{
+int CLuaHandle::RunCallInTraceback(
+	const LuaHashString* hs,
+	int inArgs,
+	int outArgs, int
+	errFuncIndex,
+	std::string& traceback,
+	bool popErrFunc
+) {
 	// do not signal floating point exceptions in user Lua code
 	ScopedDisableFpuExceptions fe;
 
 	SELECT_LUA_STATE();
 	SetRunning(L, true);
-	int top = lua_gettop(L);
+	const int top = lua_gettop(L);
 	MatrixStateData prevMSD = GetLuaContextData(L)->glMatrixTracker.PushMatrixState();
 	LuaOpenGL::InitMatrixState(L, hs);
 		// disable GC outside of this scope to prevent sync errors and similar
 		//lua_gc(L, LUA_GCRESTART, 0); // we collect garbage now in its own callin "CollectGarbage"
-			const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
+			const int error = lua_pcall(L, inArgs, outArgs, errFuncIndex);
 		lua_gc(L, LUA_GCSTOP, 0); // only run GC inside of "SetRunning(L, true) ... SetRunning(L, false)"!
 	LuaOpenGL::CheckMatrixState(L, hs, error);
 	GetLuaContextData(L)->glMatrixTracker.PopMatrixState(prevMSD);
@@ -433,43 +433,44 @@ int CLuaHandle::RunCallInTraceback(const LuaHashString* hs, int inArgs, int outA
 	SetRunning(L, false);
 
 	if (error == 0) {
-		// pop the error handler
 		if (outArgs != LUA_MULTRET) {
-			int retdiff = (lua_gettop(L) - (top - 1)) - (outArgs - inArgs);
+			const int retdiff = (lua_gettop(L) - (top - 1)) - (outArgs - inArgs);
 			if (retdiff != 0) {
 				LOG_L(L_ERROR, "Internal Lua error: %d return values, %d expected", outArgs + retdiff, outArgs);
 				lua_pop(L, retdiff);
 			}
-		}
-		else {
-			int retdiff = (lua_gettop(L) - (top - 1)) + inArgs;
+		} else {
+			const int retdiff = (lua_gettop(L) - (top - 1)) + inArgs;
 			if (retdiff < 0) {
 				LOG_L(L_ERROR, "Internal Lua error: %d return values", retdiff);
 				lua_pop(L, retdiff);
 			}
 		}
-		if (errfuncIndex != 0) {
-			lua_remove(L, errfuncIndex);
-		}
 	} else {
-		int retdiff = (lua_gettop(L) - (top - 1)) - (1 - inArgs);
+		const int retdiff = (lua_gettop(L) - (top - 1)) - (1 - inArgs);
+
 		lua_pop(L, retdiff); // BUG? only the traceback shall be returned, but occasionally something goes wrong
 		traceback = std::string((retdiff != 0) ? "[Internal Lua error: Traceback failure] " : "") + (lua_isstring(L, -1) ? lua_tostring(L, -1) : "[No traceback returned]");
 		lua_pop(L, 1);
-		if (errfuncIndex != 0)
-			lua_remove(L, errfuncIndex);
+
 		// log only errors that lead to a crash
 		callinErrors += (error == 2);
+	}
+
+	if (popErrFunc) {
+		if (errFuncIndex != 0) {
+			lua_remove(L, errFuncIndex);
+		}
 	}
 
 	return error;
 }
 
 
-bool CLuaHandle::RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errfuncIndex)
+bool CLuaHandle::RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errFuncIndex, bool popErrFunc)
 {
 	std::string traceback;
-	const int error = RunCallInTraceback(&hs, inArgs, outArgs, errfuncIndex, traceback);
+	const int error = RunCallInTraceback(&hs, inArgs, outArgs, errFuncIndex, traceback, popErrFunc);
 
 	if (error != 0) {
 		LOG_L(L_ERROR, "%s::RunCallIn: error = %i, %s, %s", GetName().c_str(),
@@ -480,9 +481,9 @@ bool CLuaHandle::RunCallInTraceback(const LuaHashString& hs, int inArgs, int out
 }
 
 
-int CLuaHandle::RunCallIn(int inArgs, int outArgs, std::string& errormessage)
+int CLuaHandle::RunCallIn(int inArgs, int outArgs, std::string& errorMsg)
 {
-	return RunCallInTraceback(NULL, inArgs, outArgs, 0, errormessage);
+	return RunCallInTraceback(NULL, inArgs, outArgs, 0, errorMsg, true);
 }
 
 /******************************************************************************/
@@ -492,7 +493,7 @@ void CLuaHandle::Shutdown()
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 3);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("Shutdown");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -510,7 +511,7 @@ void CLuaHandle::Load(IArchive* archive)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("Load");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -531,7 +532,7 @@ void CLuaHandle::GamePreload()
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 3);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("GamePreload");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -549,7 +550,7 @@ void CLuaHandle::GameStart()
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 3);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("GameStart");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -567,7 +568,7 @@ void CLuaHandle::GameOver(const std::vector<unsigned char>& winningAllyTeams)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 2);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("GameOver");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -593,7 +594,7 @@ void CLuaHandle::GamePaused(int playerID, bool paused)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("GamePaused");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -628,7 +629,7 @@ void CLuaHandle::GameFrame(int frameNum)
 		DelayRecvFromSynced(L, 0); // Copy _G.EXPORT --> SYNCED.EXPORT once a game frame
 	lua_checkstack(L, 4);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("GameFrame");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -650,7 +651,7 @@ void CLuaHandle::GameID(const unsigned char* gameID, unsigned int numBytes)
 	lua_checkstack(L, 4);
 
 	const LuaHashString cmdStr("GameID");
-	const int errFunc = SetupTraceback(L);
+	const int errFunc = LuaUtils::PushDebugTraceback(L);
 
 	if (!cmdStr.GetGlobalFunc(L)) {
 		if (errFunc != 0) {
@@ -670,7 +671,7 @@ void CLuaHandle::TeamDied(int teamID)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("TeamDied");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -691,7 +692,7 @@ void CLuaHandle::TeamChanged(int teamID)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("TeamChanged");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -712,7 +713,7 @@ void CLuaHandle::PlayerChanged(int playerID)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("PlayerChanged");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -733,7 +734,7 @@ void CLuaHandle::PlayerAdded(int playerID)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("PlayerAdded");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -754,7 +755,7 @@ void CLuaHandle::PlayerRemoved(int playerID, int reason)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("PlayerRemoved");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -777,7 +778,7 @@ inline void CLuaHandle::UnitCallIn(const LuaHashString& hs, const CUnit* unit)
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 6);
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	if (!hs.GetGlobalFunc(L)) {
 		if (errfunc) // remove error handler
@@ -800,7 +801,7 @@ void CLuaHandle::UnitCreated(const CUnit* unit, const CUnit* builder)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 7);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("UnitCreated");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -837,7 +838,7 @@ void CLuaHandle::UnitFromFactory(const CUnit* unit,
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 9);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("UnitFromFactory");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -864,7 +865,7 @@ void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 9);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("UnitDestroyed");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -894,7 +895,7 @@ void CLuaHandle::UnitTaken(const CUnit* unit, int oldTeam, int newTeam)
 	LUA_UNIT_BATCH_PUSH(, LuaUnitTakenEvent(unit, oldTeam, newTeam))
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 7);
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("UnitTaken");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -918,7 +919,7 @@ void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam, int newTeam)
 	LUA_UNIT_BATCH_PUSH(, LuaUnitGivenEvent(unit, oldTeam, newTeam))
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 7);
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("UnitGiven");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -951,7 +952,7 @@ void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 11);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("UnitCommand");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -986,7 +987,7 @@ void CLuaHandle::UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 8);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("UnitCmdDone");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -1019,11 +1020,11 @@ void CLuaHandle::UnitDamaged(
 	lua_checkstack(L, 11);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
+	const int errFunc = LuaUtils::PushDebugTraceback(L);
 
 	if (!cmdStr.GetGlobalFunc(L))
 		return;
 
-	const int errFunc = SetupTraceback(L);
 	int argCount = 5;
 
 	lua_pushnumber(L, unit->id);
@@ -1055,7 +1056,7 @@ void CLuaHandle::UnitExperience(const CUnit* unit, float oldExperience)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 8);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("UnitExperience");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -1169,7 +1170,7 @@ void CLuaHandle::UnitLoaded(const CUnit* unit, const CUnit* transport)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 8);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("UnitLoaded");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -1195,7 +1196,7 @@ void CLuaHandle::UnitUnloaded(const CUnit* unit, const CUnit* transport)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 8);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("UnitUnloaded");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -1280,7 +1281,7 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 	lua_checkstack(L, 5);
 
 	static const LuaHashString cmdStr("UnitUnitCollision");
-	const int errFunc = SetupTraceback(L);
+	const int errFunc = LuaUtils::PushDebugTraceback(L);
 
 	if (!cmdStr.GetGlobalFunc(L)) {
 		if (errFunc != 0)
@@ -1308,7 +1309,7 @@ void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 	lua_checkstack(L, 5);
 
 	static const LuaHashString cmdStr("UnitFeatureCollision");
-	const int errFunc = SetupTraceback(L);
+	const int errFunc = LuaUtils::PushDebugTraceback(L);
 
 	if (!cmdStr.GetGlobalFunc(L)) {
 		if (errFunc != 0)
@@ -1343,7 +1344,7 @@ void CLuaHandle::FeatureCreated(const CFeature* feature)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 	static const LuaHashString cmdStr("FeatureCreated");
 
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -1365,7 +1366,7 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = LuaUtils::PushDebugTraceback(L);
 
 	static const LuaHashString cmdStr("FeatureDestroyed");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -1393,11 +1394,11 @@ void CLuaHandle::FeatureDamaged(
 	lua_checkstack(L, 11);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
+	const int errFunc = LuaUtils::PushDebugTraceback(L);
 
 	if (!cmdStr.GetGlobalFunc(L))
 		return;
 
-	const int errFunc = SetupTraceback(L);
 	int argCount = 4;
 
 	lua_pushnumber(L, feature->id);

@@ -130,15 +130,21 @@ public:
 
 	void HandleMatrixStateError(int error, const char* errsrc) {
 		unsigned int mode = GetMode();
+
 		// dont complain about stack/mode issues if some other error occurred
-		if (error == 0 && mode != GL_MODELVIEW) // check if the lua code did not restore the matrix mode
+		// check if the lua code did not restore the matrix mode
+		if (error == 0 && mode != GL_MODELVIEW)
 			LOG_L(L_ERROR, "%s: OpenGL state check error, matrix mode = %d, please restore mode to GL.MODELVIEW before end", errsrc, mode);
+
 		for (MatrixStateData::iterator i = matrixData.begin(); i != matrixData.end(); ++i) {
 			if (i->first == 0)
 				continue;
-			if (error == 0) // check if the lua code fucked up the stack for matrix mode X
+			// check if the lua code fucked up the stack for matrix mode X
+			if (error == 0)
 				LOG_L(L_ERROR, "%s: OpenGL stack check error, matrix mode = %d, depth = %d, please make sure to pop all matrices before end", errsrc, i->first, i->second);
+
 			glMatrixMode(i->first);
+
 			for (int p = 0; p < i->second; ++p) {
 				glPopMatrix();
 			}

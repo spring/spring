@@ -299,12 +299,10 @@ class CLuaHandle : public CEventClient
 		bool LoadCode(lua_State* L, const string& code, const string& debug);
 		bool AddEntriesToTable(lua_State* L, const char* name, bool (*entriesFunc)(lua_State*));
 
-		/// returns stack index of traceback function
-		int SetupTraceback(lua_State* L);
 		/// returns error code and sets traceback on error
-		int  RunCallInTraceback(const LuaHashString* hs, int inArgs, int outArgs, int errfuncIndex, std::string& traceback);
+		int  RunCallInTraceback(const LuaHashString* hs, int inArgs, int outArgs, int errFuncIndex, std::string& traceback, bool popErrFunc);
 		/// returns false and prints message to log on error
-		bool RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errfuncIndex);
+		bool RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errFuncIndex, bool popErrFunc = true);
 		/// returns error code and sets errormessage on error
 		int  RunCallIn(int inArgs, int outArgs, std::string& errormessage);
 		/// returns false and prints message to log on error

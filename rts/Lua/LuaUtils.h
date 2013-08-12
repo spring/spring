@@ -36,6 +36,18 @@ class LuaUtils {
 				bool bol;
 			} data;
 		};
+		struct ScopedDebugTraceBack {
+		public:
+			ScopedDebugTraceBack(lua_State* L);
+			~ScopedDebugTraceBack();
+			void SetErrFuncIdx(int idx) { errFuncIdx = idx; }
+			int GetErrFuncIdx() const { return errFuncIdx; }
+
+		private:
+			lua_State* luaState;
+
+			int errFuncIdx;
+		};
 
 		static int exportedDataSize; //< performance stat
 
@@ -51,7 +63,9 @@ class LuaUtils {
 
 		static void PushCurrentFuncEnv(lua_State* L, const char* caller);
 
-		static int PushDebugTraceback(lua_State *L);
+		// returns stack index of traceback function
+		static int PushDebugTraceback(lua_State* L);
+		static int PopDebugTraceback(lua_State* L, int idx);
 
 		// lower case all keys in the table, with recursion
 		static bool LowerKeys(lua_State* L, int tableIndex);

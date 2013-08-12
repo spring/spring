@@ -1009,14 +1009,18 @@ int LuaUtils::isuserdata(lua_State* L)
 #define DEBUG_TABLE "debug"
 #define DEBUG_FUNC "traceback"
 
-int LuaUtils::PushDebugTraceback(lua_State *L)
+int LuaUtils::PushDebugTraceback(lua_State* L)
 {
 	lua_getglobal(L, DEBUG_TABLE);
+
 	if (lua_istable(L, -1)) {
 		lua_getfield(L, -1, DEBUG_FUNC);
+
 		if (!lua_isfunction(L, -1)) {
+			// leave two elements on stack
 			return 0;
 		}
+
 		lua_remove(L, -2);
 	} else {
 		lua_pop(L, 1);
@@ -1027,6 +1031,25 @@ int LuaUtils::PushDebugTraceback(lua_State *L)
 	}
 
 	return lua_gettop(L);
+}
+
+
+
+LuaUtils::ScopedDebugTraceBack::ScopedDebugTraceBack(lua_State* L) {
+	luaState = L;
+	errFuncIdx = PushDebugTraceback(L);
+	assert(errFuncIdx >= 0);
+}
+
+LuaUtils::ScopedDebugTraceBack::~ScopedDebugTraceBack() {
+	if (errFuncIdx == -1)
+		return;
+
+	if (errFuncIdx == 0) {
+		lua_pop(luaState, 2);
+	} else {
+		lua_pop(luaState, 1);
+	}
 }
 
 /******************************************************************************/
