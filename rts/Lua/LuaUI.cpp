@@ -397,40 +397,42 @@ static inline float fuzzRand(float fuzz)
 }
 
 
-void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect, float *distadj)
+void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, const float* distMod)
 {
-	if (!haveShockFront) {
+	if (!haveShockFront)
 		return;
-	}
-	if (areaOfEffect < shockFrontMinArea && !distadj) {
+	if (areaOfEffect < shockFrontMinArea && distMod == NULL)
 		return;
-	}
-#if defined(USE_GML) && GML_ENABLE_SIM
-	float shockFrontDistAdj = (GML::Enabled() && distadj) ? *distadj : this->shockFrontDistAdj;
-#endif
+
 	float3 gap = (camera->GetPos() - pos);
-	float dist = gap.Length() + shockFrontDistAdj;
 
-	power = power / (dist * dist);
-	if (power < shockFrontMinPower && !distadj) {
+#if defined(USE_GML) && GML_ENABLE_SIM
+	// WTF?
+	const float shockFrontDistMod = (GML::Enabled() && distMod != NULL)? *distMod : this->shockFrontDistAdj;
+#else
+	const float shockFrontDistMod = this->shockFrontDistAdj;
+#endif
+	float dist = gap.Length() + shockFrontDistMod;
+
+	if ((power /= (dist * dist)) < shockFrontMinPower && distMod == NULL)
 		return;
-	}
 
-	LUA_UI_BATCH_PUSH(SHOCK_FRONT, power, pos, areaOfEffect, shockFrontDistAdj);
+	LUA_UI_BATCH_PUSH(, UIShockFrontEvent(pos, power, areaOfEffect, shockFrontDistMod))
 	LUA_CALL_IN_CHECK(L);
+
 	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("ShockFront");
+
 	if (!cmdStr.GetGlobalFunc(L)) {
 		haveShockFront = false;
 		return; // the call is not defined
 	}
 
 	if (!gu->spectatingFullView && !losHandler->InLos(pos, gu->myAllyTeam)) {
-		const float fuzz = 0.25f;
-		gap.x *= fuzzRand(fuzz);
-		gap.y *= fuzzRand(fuzz);
-		gap.z *= fuzzRand(fuzz);
-		dist = gap.Length() + shockFrontDistAdj;
+		gap.x *= fuzzRand(0.25f);
+		gap.y *= fuzzRand(0.25f);
+		gap.z *= fuzzRand(0.25f);
+		dist = gap.Length() + shockFrontDistMod;
 	}
 	const float3 dir = (gap / dist); // normalize
 
@@ -449,13 +451,14 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect, floa
 
 
 void CLuaUI::ExecuteUIEventBatch() {
-	if(!UseEventBatch()) return;
+	if (!UseEventBatch())
+		return;
 
-	std::vector<LuaUIEvent> lleb;
+	std::vector<UIEventBase> lleb;
 	{
 		GML_STDMUTEX_LOCK(llbatch); // ExecuteUIEventBatch
 
-		if(luaUIEventBatch.empty())
+		if (luaUIEventBatch.empty())
 			return;
 
 		luaUIEventBatch.swap(lleb);
@@ -464,20 +467,22 @@ void CLuaUI::ExecuteUIEventBatch() {
 	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteUIEventBatch
 
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
-	for(std::vector<LuaUIEvent>::iterator i = lleb.begin(); i != lleb.end(); ++i) {
-		LuaUIEvent &e = *i;
-		switch(e.id) {
-			case SHOCK_FRONT:
-				ShockFront(e.flt1, e.pos1, e.flt2, &e.flt3);
-				break;
-			default:
-				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.id);
-				break;
+
+	for (std::vector<UIEventBase>::iterator i = lleb.begin(); i != lleb.end(); ++i) {
+		const UIEventBase& e = *i;
+		switch (e.GetID()) {
+			case SHOCK_FRONT: {
+				LUA_EVENT_CAST(UIShockFrontEvent, e); ShockFront(ee.GetPos(), ee.GetPower(), ee.GetAreaOfEffect(), ee.GetDistMod());
+			} break;
+			default: {
+				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.GetID());
+			} break;
 		}
 	}
-	if(Threading::IsSimThread())
+
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(true);
 }
 
