@@ -272,7 +272,11 @@ public:
 
 	bool IsEmpty() const {
 		for(auto& ut: uniqueTasks) { if (!ut.empty()) return false; }
-		return this->tasks.empty();
+		return TaskGroup<F,Args...>::IsEmpty();
+	}
+	bool IsFinished() const {
+		for(auto& ut: uniqueTasks) { if (!ut.empty()) return false; }
+		return TaskGroup<F,Args...>::IsFinished();
 	}
 
 public:
