@@ -735,12 +735,13 @@ bool CLuaRules::UnitPreDamaged(
 	lua_checkstack(L, 9 + 4);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
-	const int errFunc = SetupTraceback(L);
-	int argCount = 5;
+	int inArgCount = 5;
+	int outArgCount = 2;
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
@@ -749,19 +750,23 @@ bool CLuaRules::UnitPreDamaged(
 	lua_pushboolean(L, paralyzer);
 
 	if (GetHandleFullRead(L)) {
-		lua_pushnumber(L, weaponDefID); argCount += 1;
-		lua_pushnumber(L, projectileID); argCount += 1;
+		lua_pushnumber(L, weaponDefID); inArgCount += 1;
+		lua_pushnumber(L, projectileID); inArgCount += 1;
 
 		if (attacker != NULL) {
 			lua_pushnumber(L, attacker->id);
 			lua_pushnumber(L, attacker->unitDef->id);
 			lua_pushnumber(L, attacker->team);
-			argCount += 3;
+			inArgCount += 3;
 		}
 	}
 
 	// call the routine
-	if (!RunCallInTraceback(cmdStr, argCount, 2, errFunc))
+	// NOTE:
+	//   RunCallInTraceback removes the error-handler by default
+	//   this has to be disabled when using ScopedDebugTraceBack
+	//   or it would mess up the stack
+	if (!RunCallInTraceback(cmdStr, inArgCount, outArgCount, traceBack.GetErrFuncIdx(), false))
 		return false;
 
 	if (newDamage && lua_isnumber(L, -2)) {
@@ -778,7 +783,7 @@ bool CLuaRules::UnitPreDamaged(
 		LOG_L(L_WARNING, "%s(): 2nd return-value should be a number (impulseMult)", (cmdStr.GetString()).c_str());
 	}
 
-	lua_pop(L, 2);
+	lua_pop(L, outArgCount);
 	return true;
 }
 
@@ -798,12 +803,13 @@ bool CLuaRules::FeaturePreDamaged(
 	lua_checkstack(L, 9 + 4);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
-	const int errFunc = SetupTraceback(L);
-	int argCount = 4;
+	int inArgCount = 4;
+	int outArgCount = 2;
 
 	lua_pushnumber(L, feature->id);
 	lua_pushnumber(L, feature->def->id);
@@ -811,19 +817,19 @@ bool CLuaRules::FeaturePreDamaged(
 	lua_pushnumber(L, damage);
 
 	if (GetHandleFullRead(L)) {
-		lua_pushnumber(L, weaponDefID); argCount += 1;
-		lua_pushnumber(L, projectileID); argCount += 1;
+		lua_pushnumber(L, weaponDefID); inArgCount += 1;
+		lua_pushnumber(L, projectileID); inArgCount += 1;
 
 		if (attacker != NULL) {
 			lua_pushnumber(L, attacker->id);
 			lua_pushnumber(L, attacker->unitDef->id);
 			lua_pushnumber(L, attacker->team);
-			argCount += 3;
+			inArgCount += 3;
 		}
 	}
 
 	// call the routine
-	if (!RunCallInTraceback(cmdStr, argCount, 2, errFunc))
+	if (!RunCallInTraceback(cmdStr, inArgCount, outArgCount, traceBack.GetErrFuncIdx(), false))
 		return false;
 
 	if (newDamage && lua_isnumber(L, -2)) {
@@ -840,7 +846,7 @@ bool CLuaRules::FeaturePreDamaged(
 		LOG_L(L_WARNING, "%s(): 2nd value returned should be a number (impulseMult)", (cmdStr.GetString()).c_str());
 	}
 
-	lua_pop(L, 2);
+	lua_pop(L, outArgCount);
 	return true;
 }
 
@@ -857,11 +863,10 @@ bool CLuaRules::ShieldPreDamaged(
 	lua_checkstack(L, 5 + 3);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
-
-	const int errFunc = SetupTraceback(L);
 
 	// push the call-in arguments
 	lua_pushnumber(L, projectile->id);
@@ -871,7 +876,7 @@ bool CLuaRules::ShieldPreDamaged(
 	lua_pushboolean(L, bounceProjectile);
 
 	// call the routine
-	if (!RunCallInTraceback(cmdStr, 5, 1, errFunc))
+	if (!RunCallInTraceback(cmdStr, 5, 1, traceBack.GetErrFuncIdx(), false))
 		return false;
 
 	// pop the return-value; must be true or false
@@ -895,8 +900,8 @@ int CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int atta
 	LUA_CALL_IN_CHECK(L, -1);
 	lua_checkstack(L, 3 + 1);
 
-	const int errfunc(SetupTraceback(L));
 	static const LuaHashString cmdStr(__FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	int ret = -1;
 
@@ -905,15 +910,11 @@ int CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int atta
 		lua_pushnumber(L, attackerWeaponNum);
 		lua_pushnumber(L, attackerWeaponDefID);
 
-		if (!RunCallInTraceback(cmdStr, 3, 1, errfunc))
+		if (!RunCallInTraceback(cmdStr, 3, 1, traceBack.GetErrFuncIdx(), false))
 			return ret;
 
-		ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1))? 1: 0;
+		ret = int(lua_isboolean(L, -1) && lua_toboolean(L, -1));
 		lua_pop(L, -1);
-	} else {
-		if (errfunc != 0) {
-			lua_pop(L, 1);
-		}
 	}
 
 	return ret;
@@ -938,8 +939,8 @@ bool CLuaRules::AllowWeaponTarget(
 	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 5 + 2);
 
-	const int errfunc(SetupTraceback(L));
 	static const LuaHashString cmdStr(__FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (cmdStr.GetGlobalFunc(L)) {
 		lua_pushnumber(L, attackerID);
@@ -948,20 +949,16 @@ bool CLuaRules::AllowWeaponTarget(
 		lua_pushnumber(L, attackerWeaponDefID);
 		lua_pushnumber(L, *targetPriority);
 
-		if (!RunCallInTraceback(cmdStr, 5, 2, errfunc))
+		if (!RunCallInTraceback(cmdStr, 5, 2, traceBack.GetErrFuncIdx(), false))
 			return ret;
 
-		ret = lua_toboolean(L, -2);
+		ret = (lua_isboolean(L, -2) && lua_toboolean(L, -2));
 
 		if (lua_isnumber(L, -1)) {
 			*targetPriority = lua_tonumber(L, -1);
 		}
 
 		lua_pop(L, 2);
-	} else {
-		if (errfunc != 0) {
-			lua_pop(L, 1);
-		}
 	}
 
 	return ret;
@@ -982,23 +979,19 @@ bool CLuaRules::AllowWeaponInterceptTarget(
 	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 3 + 1);
 
-	const int errfunc(SetupTraceback(L));
 	static const LuaHashString cmdStr(__FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (cmdStr.GetGlobalFunc(L)) {
 		lua_pushnumber(L, interceptorUnit->id);
 		lua_pushnumber(L, interceptorWeapon->weaponNum);
 		lua_pushnumber(L, interceptorTarget->id);
 
-		if (!RunCallInTraceback(cmdStr, 3, 1, errfunc))
+		if (!RunCallInTraceback(cmdStr, 3, 1, traceBack.GetErrFuncIdx(), false))
 			return ret;
 
-		ret = lua_toboolean(L, -1);
+		ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));
 		lua_pop(L, 1);
-	} else {
-		if (errfunc != 0) {
-			lua_pop(L, 1);
-		}
 	}
 
 	return ret;

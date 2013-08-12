@@ -668,7 +668,7 @@ bool CLuaHandleSynced::Initialize(const string& syncData)
 		return true;
 	}
 
-	int errfunc = SetupTraceback(L) ? -2 : 0;
+	int errfunc = LuaUtils::PushDebugTraceback(L) ? -2 : 0;
 	LOG("Initialize errfunc=%d", errfunc);
 
 	lua_pushsstring(L, syncData);
