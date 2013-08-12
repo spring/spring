@@ -1468,7 +1468,7 @@ EXPORT(int) GetPrimaryModIndex(const char* name)
 
 		const std::string searchedName(name);
 		for (unsigned i = 0; i < modData.size(); ++i) {
-			if (modData[i].GetName() == searchedName)
+			if (modData[i].GetNameVersioned() == searchedName)
 				return i;
 		}
 	}
