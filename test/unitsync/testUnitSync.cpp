@@ -75,10 +75,10 @@ static void PrintMapInfo(const string& mapName)
 
 /******************************************************************************/
 /******************************************************************************/
-
+/*
 static void DisplayOptions(int optionCount)
 {
-	/*for (int i = 0; i < optionCount; i++) {
+	for (int i = 0; i < optionCount; i++) {
 		LOG("    Option #%i", i);
 		LOG("      key  = '%s'", us::GetOptionKey(i));
 		LOG("      name = '%s'", us::GetOptionName(i));
@@ -118,9 +118,9 @@ static void DisplayOptions(int optionCount)
 				LOG("           desc = '%s'", us::GetOptionListItemDesc(i, li));
 			}
 		}
-	}*/
+	}
 }
-
+*/
 
 /******************************************************************************/
 /******************************************************************************/
@@ -220,6 +220,19 @@ static bool TestLuaParser()
 /******************************************************************************/
 /******************************************************************************/
 
+static std::string GetGameName(int gameidx)
+{
+	const int infocount = us::GetPrimaryModInfoCount(gameidx);
+	const char* errmsg;
+	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
+	for (int i=0; i<infocount; i++) {
+		const std::string key = us::GetInfoKey(i);
+		if (key == "name") {
+			return us::GetInfoValueString(i);
+		}
+	}
+	return "";
+}
 
 BOOST_AUTO_TEST_CASE( UnitSync )
 {
@@ -245,28 +258,43 @@ BOOST_AUTO_TEST_CASE( UnitSync )
 	BOOST_CHECK(TestLuaParser());
 
 	// Select random Game & Map
-	int i = us::GetMapCount() - 1, j = us::GetPrimaryModCount() - 1;
-//	BOOST_CHECK(i>0);
-//	BOOST_CHECK(j>0);
+	const int mapcount = us::GetMapCount() - 1;
+	const int gamecount = us::GetPrimaryModCount() - 1;
+	const int mapidx = 1;
+	const int gameidx = 1;
+//	BOOST_CHECK(gamecount>0);
+//	BOOST_CHECK(mapcount>0);
 
-	while (i > 0 && !us::GetMapName(i)) --i;
-	while (j > 0 && !us::GetPrimaryModName(j)) --j;
-	const string map = (i > 0) ? us::GetMapName(i) : "";
-	const string mod = (j > 0) ? us::GetPrimaryModName(j) : "";
-	BOOST_WARN_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
-	LOG("Using game: %s", map.c_str());
-	LOG("Using map: %s", mod.c_str());
+	for (int i=0; i<gamecount; i++) {
+		const std::string game = GetGameName(i);
+		BOOST_CHECK_MESSAGE(us::GetPrimaryModIndex(game.c_str()) == i, game.c_str());
+		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
+	}
+	for (int i=0; i<mapcount; i++) {
+		const std::string mapname = us::GetMapName(i);
+		BOOST_CHECK_MESSAGE(!mapname.empty(), i);
+		BOOST_CHECK_MESSAGE(us::GetMapChecksum(i) == us::GetMapChecksumFromName(mapname.c_str()), mapname.c_str());
+		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
+	}
+//	while (i > 0 && !us::GetMapName(i)) --i;
+//	while (j > 0 && !us::GetPrimaryModName(j)) --j;
 
 	// Test them
-	if (i >= 0 && j >= 0) {
-		BOOST_CHECK(us::GetMapArchiveCount(map.c_str()) >= 1); // expects map name
-		BOOST_CHECK(us::GetPrimaryModArchiveCount(j) >= 1); // expects game index!
+	if (gamecount > 0 && mapcount > 0) {
+		const std::string map = us::GetMapName(mapidx);
+		const std::string game = GetGameName(gameidx);
+		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
+		BOOST_CHECK(!map.empty());
+		BOOST_CHECK(!game.empty());
+
+	//	BOOST_CHECK(us::GetMapArchiveCount(map.c_str()) >= 1); // expects map name
+	//	BOOST_CHECK(us::GetPrimaryModArchiveCount(j) >= 1); // expects game index!
 
 		// map info
 		PrintMapInfo(map);
 
 		// load the mod archives
-		us::AddAllArchives(mod.c_str());
+		us::AddAllArchives(game.c_str());
 		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 
 		// unit names
