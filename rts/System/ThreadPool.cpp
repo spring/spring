@@ -159,7 +159,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 void WaitForFinishedDebug(std::shared_ptr<ITaskGroup> taskgroup)
 {
 	while (DoTask(taskgroup)) {
-		LOG("%s step", __FUNCTION__);
+		LOG_L(L_WARNING, "%s step", __FUNCTION__);
 	}
 
 	while (!taskgroup->wait_for(boost::chrono::seconds(5))) {

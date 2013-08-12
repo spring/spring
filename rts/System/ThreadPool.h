@@ -327,17 +327,20 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 {
 	ThreadPool::NotifyWorkerThreads();
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
+#ifdef __MINGW32__
+	LOG_L(L_WARNING, "%s", __FUNCTION__);
+#endif
  	auto taskgroup = std::make_shared<ParallelTaskGroup<F>>();
 	for (int i = 0; i < ThreadPool::GetNumThreads(); ++i) {
 		taskgroup->enqueue_unique(i, f);
 	}
 	ThreadPool::PushTaskGroup(taskgroup);
 #ifdef __MINGW32__
-	LOG("%s1 %i %i", __FUNCTION__, int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()));
+	LOG_L(L_WARNING, "%s1 %i %i", __FUNCTION__, int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()));
 #endif
 	ThreadPool::WaitForFinishedDebug(taskgroup);
 #ifdef __MINGW32__
-	LOG("%s2 %i %i", __FUNCTION__, int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()));
+	LOG_L(L_WARNING, "%s2 %i %i", __FUNCTION__, int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()));
 #endif
 	return taskgroup->GetResult(std::move(g));
 }
