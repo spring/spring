@@ -15,7 +15,7 @@ public:
 	CMatrix44f(const CMatrix44f& mat);
 
 	CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z);
-	CMatrix44f(const float& rotX, const float& rotY, const float& rotZ);
+	CMatrix44f(const float rotX, const float rotY, const float rotZ);
 	explicit CMatrix44f(const float3& pos);
 
 	void LoadIdentity();
@@ -30,6 +30,9 @@ public:
 	void Translate(const float3& pos) { Translate(pos.x, pos.y, pos.z); }
 	void SetPos(const float3& pos);
 	float3 GetPos() const { return float3(m[12], m[13], m[14]); }
+	float3 GetX() const { return float3(m[0], m[1], m[ 2]); }
+	float3 GetY() const { return float3(m[4], m[5], m[ 6]); }
+	float3 GetZ() const { return float3(m[8], m[9], m[10]); }
 
 	inline void operator*= (const float a) {
 		for (size_t i=0; i < 16; ++i)

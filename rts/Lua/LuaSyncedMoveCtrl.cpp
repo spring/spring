@@ -722,9 +722,6 @@ int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State *L)
 static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string& key, float value)
 {
 	if (SetGenericMoveTypeValue(mt, key, value)) {
-		if (key == "maxSpeed") {
-			mt->brakeDistance = (mt->GetMaxSpeed() * mt->GetMaxSpeed()) / mt->decRate;
-		}
 		return true;
 	}
 
@@ -735,17 +732,13 @@ static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string&
 	} else if (key == "accRate") {
 		mt->accRate = value; return true;
 	} else if (key == "decRate") {
-		mt->decRate = value;
-		mt->brakeDistance = (mt->GetMaxSpeed() * mt->GetMaxSpeed()) / mt->decRate;
-		return true;
+		mt->decRate = value; return true;
 	} else if (key == "altitudeRate") {
 		mt->altitudeRate = value; return true;
 	} else if (key == "currentBank") {
 		mt->currentBank = value; return true;
 	} else if (key == "currentPitch") {
 		mt->currentPitch = value; return true;
-	} else if (key == "brakeDistance") {
-		mt->brakeDistance = value; return true;
 	} else if (key == "maxDrift") {
 		mt->maxDrift = value; return true;
 	}

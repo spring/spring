@@ -41,7 +41,6 @@ CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(turnRate),
 	CR_MEMBER(altitudeRate),
 
-	CR_MEMBER(brakeDistance),
 	CR_MEMBER(dontLand),
 	CR_MEMBER(lastMoveRate),
 
@@ -71,7 +70,6 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	currentPitch(0),
 	turnRate(1),
 	altitudeRate(3.0f),
-	brakeDistance(1),
 	maxDrift(1.0f),
 	maxTurnAngle(math::cos(owner->unitDef->turnInPlaceAngleLimit * (PI / 180.0f)) * -1.0f),
 	wantedSpeed(ZeroVector),
@@ -205,7 +203,6 @@ void CHoverAirMoveType::StartMoving(float3 pos, float goalRadius)
 	}
 
 	SetGoal(pos, goalRadius);
-	brakeDistance = ((maxSpeed * maxSpeed) / decRate);
 	progressState = AMoveType::Active;
 }
 
@@ -331,6 +328,7 @@ void CHoverAirMoveType::UpdateHovering()
 
 	const float driftSpeed = math::fabs(owner->unitDef->dlHoverFactor);
 	const float goalDistance = NOZERO(deltaDir.Length2D());
+	const float brakeDistance = 0.5f * owner->speed.SqLength2D() / decRate;
 
 	// move towards goal position if it's not immediately
 	// behind us when we have more waypoints to get to
@@ -480,26 +478,33 @@ void CHoverAirMoveType::UpdateFlying()
 	}
 
 	// not "close" to goal yet, so keep going
+	// use 2D math since goal is on the ground
+	// but we are not
 	goalVec.y = 0.0f;
 
-	// if we are close to our goal and not in attack mode,
-	// we should go slow enough to be able to brake in time
+	// if we are close to our goal, we should
+	// adjust speed st. we never overshoot it
+	// (by respecting current brake-distance)
+	const float curSpeed = owner->speed.Length2D();
+	const float brakeDist = (0.5f * curSpeed * curSpeed) / decRate;
 	const float goalDist = goalVec.Length() + 0.1f;
 	const float goalSpeed =
-		(flyState != FLY_ATTACKING && goalDist < brakeDistance)?
-		((goalDist / (speed.Length2D() + 0.01f)) * decRate):
-		maxSpeed;
-	// UnitDef::TIPAL is specified in degrees; turns greater
-	// than this angle will initially be executed "in place"
-	const bool skipTurn = (turnRate == 0.0f || goalVec.dot(owner->frontdir) >= maxTurnAngle);
+		(maxSpeed          ) * (goalDist >  brakeDist) +
+		(curSpeed - decRate) * (goalDist <= brakeDist);
 
-	// do not set wantedSpeed if goal is behind us because
-	// this can lead to overshooting oscillations (jitter)
-	// --> wait for turn first --> TURN NEVER HAPPENS
-	if (skipTurn) {
-		wantedSpeed = (goalVec / goalDist) * std::min(goalSpeed, maxSpeed);
-	} else {
+	if (goalDist > goalSpeed) {
+		// update our velocity and heading so long as goal is still
+		// further away than the distance we can cover in one frame
+		// we must use a variable-size "dead zone" to avoid freezing
+		// in mid-air or oscillation behavior at very close distances
+		// NOTE:
+		//   wantedSpeed is a vector, so even aircraft with turnRate=0
+		//   are coincidentally able to reach any goal by side-strafing
 		wantedHeading = GetHeadingFromVector(goalVec.x, goalVec.z);
+		wantedSpeed = (goalVec / goalDist) * goalSpeed;
+	} else {
+		// switch to hovering (if dontLand or !autoLand)
+		ExecuteStop();
 	}
 
 	// redundant, done in Update()
@@ -511,7 +516,7 @@ void CHoverAirMoveType::UpdateFlying()
 		goalVec = circlingPos - pos;
 	} else {
 		const bool b0 = (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands()));
-		const bool b1 = (goalDist < brakeDistance && goalDist > 1.0f);
+		const bool b1 = (goalDist < brakeDist && goalDist > 1.0f);
 
 		if (b0 && b1) {
 			goalVec = owner->frontdir;
@@ -521,6 +526,7 @@ void CHoverAirMoveType::UpdateFlying()
 	}
 
 	if (goalVec.SqLength2D() > 1.0f) {
+		// update heading again in case goalVec changed
 		wantedHeading = GetHeadingFromVector(goalVec.x, goalVec.z);
 	}
 }

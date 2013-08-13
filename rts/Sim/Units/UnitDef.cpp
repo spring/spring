@@ -452,7 +452,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	turnInPlaceSpeedLimit *= ((PI + PI) * SQUARE_SIZE);
 	turnInPlaceSpeedLimit /= std::max(speed / GAME_SPEED, 1.0f);
 	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", std::min(speed, turnInPlaceSpeedLimit));
-	turnInPlaceAngleLimit = udTable.GetFloat("turnInPlaceAngleLimit", (canfly? 90.0f: 0.0f));
+	turnInPlaceAngleLimit = udTable.GetFloat("turnInPlaceAngleLimit", 0.0f);
 
 
 	transportSize     = udTable.GetInt("transportSize",      0);
