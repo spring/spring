@@ -174,7 +174,7 @@ void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed
 						if (!pos.IsInBounds())
 							continue;
 
-						if (quadField->GetUnitsExact(pos, transportee->radius + 2.0f).empty()) {
+						if (quadField->GetSolidsExact(pos, transportee->radius + 2.0f).empty()) {
 							transportee->Move(pos, false);
 							break;
 						}
