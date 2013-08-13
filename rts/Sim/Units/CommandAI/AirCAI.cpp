@@ -269,16 +269,18 @@ void CAirCAI::SlowUpdate()
 
 bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 	assert(commandQue.empty());
+	assert(myPlane->owner == owner);
 
-	const bool autoLand = !owner->unitDef->DontLand() && myPlane->autoLand;
+	const UnitDef* ownerDef = owner->unitDef;
+	const bool autoLand = !ownerDef->DontLand() && myPlane->autoLand;
 	const bool autoAttack = ((owner->fireState >= FIRESTATE_FIREATWILL) && (owner->moveState != MOVESTATE_HOLDPOS));
 
 	if (myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING && autoLand) {
 		StopMove();
 	}
 
-	if (owner->unitDef->canAttack && autoAttack && owner->maxRange > 0) {
-		if (myPlane->IsFighter()) {
+	if (ownerDef->canAttack && autoAttack && owner->maxRange > 0) {
+		if (ownerDef->IsFighterAirUnit()) {
 			const float3 P = owner->pos + (owner->speed * 10.0);
 			const float R = 1000.0f * owner->moveState;
 			const CUnit* enemy = CGameHelper::GetClosestEnemyAircraft(NULL, P, R, owner->allyteam);
@@ -312,6 +314,8 @@ void CAirCAI::ExecuteFight(Command& c)
 {
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
 	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
+
+	assert(owner == myPlane->owner);
 
 	if (tempOrder) {
 		tempOrder = false;
@@ -358,7 +362,7 @@ void CAirCAI::ExecuteFight(Command& c)
 	{
 		CUnit* enemy = NULL;
 
-		if (myPlane->IsFighter()) {
+		if (owner->unitDef->IsFighterAirUnit()) {
 			const float3 P = ClosestPointOnLine(commandPos1, commandPos2, owner->pos + owner->speed*10);
 			const float R = 1000.0f * owner->moveState;
 

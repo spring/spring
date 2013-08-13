@@ -43,7 +43,7 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 	aircraftState(AIRCRAFT_LANDED),
 	padStatus(PAD_STATUS_FLYING),
 
-	oldGoalPos(unit? unit->pos : ZeroVector),
+	oldGoalPos((unit != NULL)? unit->pos : ZeroVector),
 	reservedLandingPos(-1.0f, -1.0f, -1.0f),
 
 	wantedHeight(80.0f),
@@ -51,6 +51,7 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 
 	accRate(1.0f),
 	decRate(1.0f),
+	altitudeRate(3.0f),
 
 	collide(true),
 	useSmoothMesh(false),
@@ -65,6 +66,7 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 	// same as {Ground, HoverAir}MoveType::accRate
 	accRate = std::max(0.01f, unit->unitDef->maxAcc);
 	decRate = std::max(0.01f, unit->unitDef->maxDec);
+	altitudeRate = std::max(0.01f, unit->unitDef->verticalSpeed);
 
 	useHeading = false;
 }
@@ -296,7 +298,14 @@ bool AAirMoveType::MoveToRepairPad() {
 
 			// once distance to pad becomes smaller than current braking distance, switch states
 			// braking distance is 0.5*a*t*t where t is v/a --> 0.5*a*((v*v)/(a*a)) --> 0.5*v*v*(1/a)
-			if (absPadPos.SqDistance2D(owner->pos) < Square(0.5f * owner->speed.SqLength2D() / decRate)) {
+			// FIXME:
+			//   use N-second lookahead when deciding to switch state for strafing aircraft
+			//   (see comments in StrafeAirMoveType::UpdateLanding, overshooting prevention)
+			const float padDistSq = absPadPos.SqDistance2D(owner->pos);
+			const float extDistSq = Square(maxSpeed * GAME_SPEED * 2.5f) * owner->unitDef->IsStrafingAirUnit();
+			const float minDistSq = Square(0.5f * owner->speed.SqLength2D() / decRate);
+
+			if (padDistSq < std::max(extDistSq, minDistSq)) {
 				padStatus = PAD_STATUS_LANDING;
 			}
 		} else if (padStatus == PAD_STATUS_LANDING) {

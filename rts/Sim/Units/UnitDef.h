@@ -65,8 +65,8 @@ public:
 	bool IsAirUnit()           const { return (pathType == -1U &&  canfly); }
 	bool IsStrafingAirUnit()   const { return (IsAirUnit() && !hoverAttack); }
 	bool IsHoveringAirUnit()   const { return (IsAirUnit() &&  hoverAttack); }
-	bool IsFighterAirUnit()    const { return (IsStrafingAirUnit() && !HasBomberWeapon()); }
-	bool IsBomberAirUnit()     const { return (IsStrafingAirUnit() &&  HasBomberWeapon()); }
+	bool IsFighterAirUnit()    const { return (IsStrafingAirUnit() && !weapons.empty() && !HasBomberWeapon()); }
+	bool IsBomberAirUnit()     const { return (IsStrafingAirUnit() && !weapons.empty() &&  HasBomberWeapon()); }
 
 	bool RequireMoveDef() const { return (canmove && speed > 0.0f && !canfly); }
 	bool HasBomberWeapon() const;
@@ -171,6 +171,10 @@ public:
 	float  flankingBonusMobilityAdd; ///< how much the ability of the flanking bonus direction to move builds up each frame
 
 	std::string scriptName;     ///< the name of the unit's script, e.g. "armjeth.cob"
+	std::string tooltip;
+	std::string wreckName;
+	std::string categoryString;
+	std::string buildPicName;
 
 	std::vector<UnitDefWeapon> weapons;
 	const WeaponDef* shieldWeaponDef;
@@ -179,11 +183,6 @@ public:
 	float maxCoverage;
 
 	std::map<int, std::string> buildOptions;
-
-	std::string tooltip;
-	std::string wreckName;
-	std::string categoryString;
-	std::string buildPicName;
 
 	const WeaponDef* deathExpWeaponDef;
 	const WeaponDef* selfdExpWeaponDef;
@@ -321,8 +320,8 @@ public:
 	int flareSalvoSize;
 	int flareSalvoDelay;
 
-	bool canLoopbackAttack;  ///< only matters for fighter aircraft
-	bool levelGround;        ///< only matters for buildings
+	bool canLoopbackAttack;                         ///< only matters for fighter aircraft
+	bool levelGround;                               ///< only matters for buildings
 
 	bool showNanoFrame;								///< Does the nano frame animation get shown during construction?
 	bool showNanoSpray;								///< Does nano spray get shown at all?

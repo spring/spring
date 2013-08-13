@@ -453,6 +453,15 @@ public:
 		return len;
 	}
 
+	float LengthNormalize2D() {
+		const float len = Length2D();
+		if (likely(len > NORMALIZE_EPS)) {
+			y = 0.0f; (*this) *= (1.0f / len);
+		}
+		return len;
+	}
+
+
 	/**
 	 * @brief normalizes the vector using one of Normalize implementations
 	 * @return pointer to self
@@ -472,6 +481,11 @@ public:
 #endif
 	}
 
+	float3& Normalize2D() {
+		y = 0.0f; return Normalize();
+	}
+
+
 	/**
 	 * @brief normalizes the vector without checking for zero vector
 	 * @return pointer to self
@@ -482,6 +496,10 @@ public:
 	float3& UnsafeNormalize() {
 		(*this) *= math::isqrt(SqLength());
 		return *this;
+	}
+
+	float3& UnsafeNormalize2D() {
+		y = 0.0f; return UnsafeNormalize();
 	}
 
 
@@ -499,6 +517,10 @@ public:
 		}
 
 		return *this;
+	}
+
+	float3& SafeNormalize2D() {
+		y = 0.0f; return SafeNormalize();
 	}
 
 
@@ -521,6 +543,10 @@ public:
 #endif
 	}
 
+	float3& ANormalize2D() {
+		y = 0.0f; return ANormalize();
+	}
+
 
 	/**
 	 * @brief normalizes the vector approximately without checking
@@ -533,6 +559,10 @@ public:
 	float3& UnsafeANormalize() {
 		(*this) *= fastmath::isqrt(SqLength());
 		return *this;
+	}
+
+	float3& UnsafeANormalize2D() {
+		y = 0.0f; return UnsafeANormalize();
 	}
 
 
@@ -551,6 +581,10 @@ public:
 		}
 
 		return *this;
+	}
+
+	float3& SafeANormalize2D() {
+		y = 0.0f; return SafeANormalize();
 	}
 
 
