@@ -37,7 +37,6 @@ public:
 
 	virtual bool Update();
 	virtual void UpdateLanded();
-	virtual bool IsFighter() const = 0;
 	virtual void Takeoff() {}
 	virtual void Land() {}
 	virtual void SetState(AircraftState state) {}
@@ -64,6 +63,7 @@ public:
 
 	float accRate;
 	float decRate;
+	float altitudeRate;
 
 	/// mods can use this to disable plane collisions
 	bool collide;

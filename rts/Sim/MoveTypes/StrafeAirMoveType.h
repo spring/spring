@@ -41,7 +41,6 @@ public:
 	void StopMoving(bool callScript = false, bool hardStop = false);
 
 	void Takeoff();
-	bool IsFighter() const { return isFighter; }
 
 	int maneuver;
 	int maneuverSubState;

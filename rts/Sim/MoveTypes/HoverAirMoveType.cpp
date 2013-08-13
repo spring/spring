@@ -39,7 +39,6 @@ CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(currentPitch),
 
 	CR_MEMBER(turnRate),
-	CR_MEMBER(altitudeRate),
 
 	CR_MEMBER(dontLand),
 	CR_MEMBER(lastMoveRate),
@@ -69,7 +68,6 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	currentBank(0),
 	currentPitch(0),
 	turnRate(1),
-	altitudeRate(3.0f),
 	maxDrift(1.0f),
 	maxTurnAngle(math::cos(owner->unitDef->turnInPlaceAngleLimit * (PI / 180.0f)) * -1.0f),
 	wantedSpeed(ZeroVector),
@@ -90,7 +88,6 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	orgWantedHeight = wantedHeight;
 	dontLand = owner->unitDef->DontLand();
 	collide = owner->unitDef->collide;
-	altitudeRate = owner->unitDef->verticalSpeed;
 	bankingAllowed = owner->unitDef->bankingAllowed;
 	useSmoothMesh = owner->unitDef->useSmoothMesh;
 
@@ -436,13 +433,10 @@ void CHoverAirMoveType::UpdateFlying()
 							relPos.x = 0.0001f;
 						}
 
-						relPos.y = 0.0f;
-						relPos.Normalize();
-
 						static CMatrix44f rot(0.0f, fastmath::PI / 4.0f, 0.0f);
 
 						// make sure the point is on the circle, go there in a straight line
-						goalPos = circlingPos + (rot.Mul(relPos) * goalDistance);
+						goalPos = circlingPos + (rot.Mul(relPos.Normalize2D()) * goalDistance);
 					}
 					waitCounter = 0;
 				}
@@ -456,9 +450,6 @@ void CHoverAirMoveType::UpdateFlying()
 						relPos.x = 0.0001f;
 					}
 
-					relPos.y = 0;
-					relPos.Normalize();
-
 					CMatrix44f rot;
 
 					if (gs->randFloat() > 0.5f) {
@@ -468,7 +459,7 @@ void CHoverAirMoveType::UpdateFlying()
 					}
 
 					// Go there in a straight line
-					goalPos = circlingPos + (rot.Mul(relPos) * goalDistance);
+					goalPos = circlingPos + (rot.Mul(relPos.Normalize2D()) * goalDistance);
 				}
 			} break;
 
@@ -504,7 +495,9 @@ void CHoverAirMoveType::UpdateFlying()
 		wantedSpeed = (goalVec / goalDist) * goalSpeed;
 	} else {
 		// switch to hovering (if dontLand or !autoLand)
-		ExecuteStop();
+		if (flyState != FLY_ATTACKING) {
+			ExecuteStop();
+		}
 	}
 
 	// redundant, done in Update()
@@ -859,8 +852,7 @@ bool CHoverAirMoveType::Update()
 			const float3 nextPos = lastPos + owner->speed;
 
 			float3 flatForward = forward;
-			flatForward.y = 0.0f;
-			flatForward.Normalize();
+			flatForward.Normalize2D();
 
 			wantedSpeed = ZeroVector;
 

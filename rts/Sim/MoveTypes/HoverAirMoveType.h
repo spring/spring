@@ -35,7 +35,6 @@ public:
 	float currentPitch;
 
 	float turnRate;
-	float altitudeRate;
 
 	float maxDrift;
 	float maxTurnAngle;
@@ -78,7 +77,6 @@ private:
 
 	void Takeoff();
 	void Land();
-	bool IsFighter() const { return false; }
 
 	bool HandleCollisions();
 
