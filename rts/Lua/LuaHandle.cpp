@@ -1636,9 +1636,9 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 		Threading::SetBatchThread(false);
 
 	for (std::vector<LuaUnitEventBase>::iterator i = lueb.begin(); i != lueb.end(); ++i) {
-		const LuaUnitEventBase& e = *i;
 		#if 0
 		// TODO: FINISH ME
+		const LuaUnitEventBase& e = *i;
 		switch (e.GetID()) {
 			case UNIT_FINISHED: {
 				LUA_EVENT_CAST(LuaUnitFinishedEvent, e); UnitFinished(ee.GetUnit());
