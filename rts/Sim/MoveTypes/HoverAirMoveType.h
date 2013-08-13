@@ -37,9 +37,6 @@ public:
 	float turnRate;
 	float altitudeRate;
 
-	/// Distance needed to come to a full stop when going at max speed
-	float brakeDistance;
-
 	float maxDrift;
 	float maxTurnAngle;
 

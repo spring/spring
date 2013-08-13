@@ -296,8 +296,7 @@ bool AAirMoveType::MoveToRepairPad() {
 
 			// once distance to pad becomes smaller than current braking distance, switch states
 			// braking distance is 0.5*a*t*t where t is v/a --> 0.5*a*((v*v)/(a*a)) --> 0.5*v*v*(1/a)
-			// NOTE: <a> should be decRate but StrafeAirMoveType only uses accRate
-			if (absPadPos.SqDistance2D(owner->pos) < Square(0.5f * owner->speed.SqLength() / accRate)) {
+			if (absPadPos.SqDistance2D(owner->pos) < Square(0.5f * owner->speed.SqLength2D() / decRate)) {
 				padStatus = PAD_STATUS_LANDING;
 			}
 		} else if (padStatus == PAD_STATUS_LANDING) {

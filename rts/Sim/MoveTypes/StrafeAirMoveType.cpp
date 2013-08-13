@@ -875,7 +875,7 @@ void CStrafeAirMoveType::UpdateLanding()
 	float3 wantedSpeed;
 
 	const float reservedLandingPosDist = reservedLandingPosDir.Length() + 0.1f;
-	const float verticalLandingSpeed = (speedf > 0.0f)? ((reservedLandingPosDist / speedf) * (accRate * 3.0f)): 0.1f;
+	const float verticalLandingSpeed = (speedf > 0.0f)? ((reservedLandingPosDist / speedf) * decRate): 0.1f;
 
 	reservedLandingPosDir /= reservedLandingPosDist;
 
@@ -889,11 +889,11 @@ void CStrafeAirMoveType::UpdateLanding()
 	const float deltaSpeedScale = deltaSpeed.Length();
 
 	// update our speed
-	if (deltaSpeedScale < (accRate * 3.0f)) {
+	if (deltaSpeedScale < decRate) {
 		speed = wantedSpeed;
 	} else {
 		if (deltaSpeedScale > 0.0f && accRate > 0.0f) {
-			speed += ((deltaSpeed / deltaSpeedScale) * (accRate * 3.0f));
+			speed += ((deltaSpeed / deltaSpeedScale) * accRate);
 		}
 	}
 
@@ -1108,7 +1108,7 @@ float3 CStrafeAirMoveType::FindLandingPos() const
 	const float3 ret(-1.0f, -1.0f, -1.0f);
 	const UnitDef* ud = owner->unitDef;
 
-	float3 tryPos = owner->pos + owner->speed * owner->speed.Length() / (accRate * 3.0f);
+	float3 tryPos = owner->pos + owner->speed * owner->speed.Length() / decRate;
 	tryPos.y = ground->GetHeightReal(tryPos.x, tryPos.z);
 
 	if ((tryPos.y < 0.0f) && !(ud->floatOnWater || ud->canSubmerge)) {
@@ -1142,7 +1142,8 @@ void CStrafeAirMoveType::SetMaxSpeed(float speed)
 
 	if (accRate != 0.0f && maxSpeed != 0.0f) {
 		// meant to set the drag such that the maxspeed becomes what it should be
-		float drag = 1.0f / (maxSpeed * 1.1f / accRate) - wingAngle * wingAngle * wingDrag;
+		float drag = 1.0f / (maxSpeed * 1.1f / accRate);
+		drag -= wingAngle * wingAngle * wingDrag;
 		drag = std::min(1.0f, std::max(0.0f, drag));
 		invDrag = 1.0f - drag;
 	}

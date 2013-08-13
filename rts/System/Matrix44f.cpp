@@ -30,7 +30,7 @@ CMatrix44f::CMatrix44f(const float3& pos, const float3& x, const float3& y, cons
 }
 
 
-CMatrix44f::CMatrix44f(const float& rotX, const float& rotY, const float& rotZ)
+CMatrix44f::CMatrix44f(const float rotX, const float rotY, const float rotZ)
 {
 	LoadIdentity();
 	RotateX(rotX);
