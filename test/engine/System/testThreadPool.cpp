@@ -46,8 +46,6 @@ BOOST_AUTO_TEST_CASE( testThreadPool1 )
 BOOST_AUTO_TEST_CASE( testThreadPool2 )
 {
 	std::vector<int> runs(NUM_THREADS);
-	ThreadPool::SetThreadCount(NUM_THREADS);
-	BOOST_CHECK(ThreadPool::GetNumThreads() == NUM_THREADS);
 	parallel([&]{
 		const int threadnum = ThreadPool::GetThreadNum();
 		SAFE_BOOST_CHECK(threadnum >= 0);
@@ -62,9 +60,6 @@ BOOST_AUTO_TEST_CASE( testThreadPool2 )
 
 BOOST_AUTO_TEST_CASE( testThreadPool3 )
 {
-	std::vector<int> runs(NUM_THREADS);
-	ThreadPool::SetThreadCount(NUM_THREADS);
-	BOOST_CHECK(ThreadPool::GetNumThreads() == NUM_THREADS);
 	int result = parallel_reduce([]() -> int {
 		return ThreadPool::GetThreadNum();
 	}, [](int a, boost::unique_future<int>& b) -> int { return a + b.get(); });

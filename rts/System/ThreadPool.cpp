@@ -241,6 +241,13 @@ void SetThreadCount(int num)
 		}
 		if (num == 0) assert(thread_group.empty());
 	}
+
+#ifdef __MINGW32__
+	LOG_L(L_WARNING, "%s %i", __FUNCTION__, num);
+	parallel([]{
+		LOG_L(L_WARNING, "ThreadPool registered new worker thread %i", GetThreadNum());
+	});
+#endif
 }
 
 };
