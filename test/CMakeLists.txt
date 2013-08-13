@@ -37,8 +37,8 @@ Else  (NOT Boost_FOUND)
 
 	Add_Custom_Target(tests)
 	#FIXME: hardcoded path (is used in buildbot/slave/make_installer.sh, too)
-	add_custom_target(check WINEPATH=/tmp/spring/inst/${CMAKE_INSTALL_PREFIX} ${CMAKE_CTEST_COMMAND} --output-on-failure
-			DEPENDS engine-headless)
+	add_custom_target(check WINEPATH=/tmp/spring/inst/${CMAKE_INSTALL_PREFIX} ${CMAKE_CTEST_COMMAND} --output-on-failure --timeout 180
+		DEPENDS engine-headless)
 	add_custom_target(install-tests)
 
 	macro (add_spring_test target sources libraries flags)

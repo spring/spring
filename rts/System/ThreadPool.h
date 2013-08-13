@@ -75,6 +75,8 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 class ITaskGroup
 {
 public:
+	virtual ~ITaskGroup() {}
+
 	virtual boost::optional<std::function<void()>> GetTask() = 0;
 	virtual bool IsFinished() const = 0;
 	virtual bool IsEmpty() const = 0;
@@ -154,6 +156,8 @@ public:
 		tasks.reserve(num);
 	}
 
+	virtual ~TaskGroup() {}
+
 	typedef typename std::result_of<F(Args...)>::type return_type;
 
 	void enqueue(F& f, Args&... args)
@@ -183,7 +187,7 @@ public:
 	}
 
 
-	boost::optional<std::function<void()>> GetTask()
+	virtual boost::optional<std::function<void()>> GetTask()
 	{
 		const int pos = curtask++;
 		if (pos < tasks.size()) {
@@ -197,8 +201,8 @@ public:
 		return boost::optional<std::function<void()>>();
 	}
 
-	bool IsEmpty() const    { return curtask >= tasks.size() /*tasks.empty()*/; }
-	bool IsFinished() const { return (remainingTasks == 0); }
+	virtual bool IsEmpty() const    { return curtask >= tasks.size() /*tasks.empty()*/; }
+	virtual bool IsFinished() const { return (remainingTasks == 0); }
 
 	template<typename G>
 	return_type GetResult(const G&& g) {
@@ -334,6 +338,9 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 	for (int i = 0; i < ThreadPool::GetNumThreads(); ++i) {
 		taskgroup->enqueue_unique(i, f);
 	}
+#ifdef __MINGW32__
+	LOG_L(L_WARNING, "%s", __FUNCTION__);
+#endif
 	ThreadPool::PushTaskGroup(taskgroup);
 #ifdef __MINGW32__
 	LOG_L(L_WARNING, "%s1 %i %i", __FUNCTION__, int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()));

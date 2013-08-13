@@ -159,10 +159,17 @@ void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 void WaitForFinishedDebug(std::shared_ptr<ITaskGroup> taskgroup)
 {
 	while (DoTask(taskgroup)) {
+#ifdef __MINGW32__
 		LOG_L(L_WARNING, "%s step", __FUNCTION__);
+#endif
 	}
 
 	while (!taskgroup->wait_for(boost::chrono::seconds(5))) {
+#ifdef __MINGW32__
+		auto tg = static_cast<ParallelTaskGroup<const std::function<void()>>*>(&(*taskgroup));
+		LOG_L(L_WARNING, "%s2 %i %i %i %i", __FUNCTION__, int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()), int(tg->remainingTasks), int(tg->curtask));
+		for(int i = 0; i < tg->uniqueTasks.size(); ++i) { if (!tg->uniqueTasks[i].empty()) LOG_L(L_WARNING, "%s tasks for thread %i remaining", __FUNCTION__, i); }
+#endif
 		LOG_L(L_WARNING, "Hang in ThreadPool");
 	}
 
