@@ -359,11 +359,10 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 		if (moveDef != NULL && ground->GetSlope(pos.x, pos.z) > moveDef->maxSlope)
 			continue;
 
-		const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, spread);
+		const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, spread);
 
-		if ((isAirTrans && (units.size() > 1 || (units.size() == 1 && units[0] != owner))) ||
-			(!isAirTrans && !units.empty()))
-			continue;
+		if (isAirTrans && (units.size() > 1 || (units.size() == 1 && units[0] != owner))) continue;
+		if (!isAirTrans && !units.empty()) continue;
 
 		found = pos;
 		return true;
@@ -381,7 +380,7 @@ bool CTransportCAI::SpotIsClear(float3 pos, CUnit* unitToUnload)
 	if (unitToUnload->moveDef && ground->GetSlope(pos.x,pos.z) > unitToUnload->moveDef->maxSlope) {
 		return false;
 	}
-	if (!quadField->GetUnitsExact(pos, std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE).empty()) {
+	if (!quadField->GetSolidsExact(pos, std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE).empty()) {
 		return false;
 	}
 
@@ -399,17 +398,19 @@ bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload)
 		return false;
 	}
 
-	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE);
-	CTransportUnit* me = static_cast<CTransportUnit*>(owner);
-	for (std::vector<CUnit*>::const_iterator it = units.begin(); it != units.end(); ++it) {
+	const CTransportUnit* me = static_cast<CTransportUnit*>(owner);
+	const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE);
+	const std::list<CTransportUnit::TransportedUnit>& transportees = me->GetTransportedUnits();
+
+	for (std::vector<CSolidObject*>::const_iterator it = units.begin(); it != units.end(); ++it) {
 		// check if the units are in the transport
 		bool found = false;
-		for (std::list<CTransportUnit::TransportedUnit>::const_iterator it2 = me->GetTransportedUnits().begin();
-				it2 != me->GetTransportedUnits().end(); ++it2) {
-			if (it2->unit == *it) {
-				found = true;
+
+		std::list<CTransportUnit::TransportedUnit>::const_iterator transporteesIt;
+
+		for (transporteesIt = transportees.begin(); transporteesIt != transportees.end(); ++transporteesIt) {
+			if ((found |= (*it == transporteesIt->unit)))
 				break;
-			}
 		}
 		if (!found && (*it != owner)) {
 			return false;
