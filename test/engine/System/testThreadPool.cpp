@@ -61,6 +61,7 @@ BOOST_AUTO_TEST_CASE( testThreadPool2 )
 BOOST_AUTO_TEST_CASE( testThreadPool3 )
 {
 	int result = parallel_reduce([]() -> int {
+		LOG_L(L_WARNING, "testThreadPool3: worker %i answers", __FUNCTION__, ThreadPool::GetThreadNum());
 		return ThreadPool::GetThreadNum();
 	}, [](int a, boost::unique_future<int>& b) -> int { return a + b.get(); });
 	BOOST_CHECK(result == ((NUM_THREADS-1)*((NUM_THREADS-1) + 1))/2);
