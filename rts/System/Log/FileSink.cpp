@@ -246,7 +246,7 @@ void log_file_removeAllLogFiles() {
 static void log_sink_record_file(const char* section, int level,
 		const char* record)
 {
-	if (log_file_isActivelyLogging()) {
+	if (logFilesValidTracker && log_file_isActivelyLogging()) {
 		// write buffer to log file
 		log_file_writeBufferToFiles();
 
