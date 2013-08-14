@@ -15,6 +15,9 @@ static boost::mutex m;
 
 BOOST_AUTO_TEST_CASE( testThreadPool1 )
 {
+#ifdef __MINGW32__
+	LOG_L(L_WARNING, "testThreadPool1");
+#endif
 	#define RUNS 1000
 	std::atomic<int> cnt(0);
 	std::vector<int> nums(RUNS,0);
@@ -45,6 +48,9 @@ BOOST_AUTO_TEST_CASE( testThreadPool1 )
 
 BOOST_AUTO_TEST_CASE( testThreadPool2 )
 {
+#ifdef __MINGW32__
+	LOG_L(L_WARNING, "testThreadPool2");
+#endif
 	std::vector<int> runs(NUM_THREADS);
 	parallel([&]{
 		const int threadnum = ThreadPool::GetThreadNum();
@@ -60,6 +66,9 @@ BOOST_AUTO_TEST_CASE( testThreadPool2 )
 
 BOOST_AUTO_TEST_CASE( testThreadPool3 )
 {
+#ifdef __MINGW32__
+	LOG_L(L_WARNING, "testThreadPool3");
+#endif
 	int result = parallel_reduce([]() -> int {
 		LOG_L(L_WARNING, "testThreadPool3: worker %i answers", __FUNCTION__, ThreadPool::GetThreadNum());
 		return ThreadPool::GetThreadNum();
@@ -69,6 +78,9 @@ BOOST_AUTO_TEST_CASE( testThreadPool3 )
 
 BOOST_AUTO_TEST_CASE( testThreadPool4 )
 {
+#ifdef __MINGW32__
+	LOG_L(L_WARNING, "testThreadPool4");
+#endif
 	for_mt(0, 100, [&](const int y) {
 		for_mt(0, 100, [&](const int x) {
 			const int threadnum = ThreadPool::GetThreadNum();
