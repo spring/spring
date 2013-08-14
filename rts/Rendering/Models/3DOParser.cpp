@@ -379,18 +379,13 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 	CalcNormals(piece);
 	piece->SetMinMaxExtends();
 
-	model->mins = std::min(piece->mins, model->mins);
-	model->maxs = std::max(piece->maxs, model->maxs);
+	model->mins = std::min(piece->goffset + piece->mins, model->mins);
+	model->maxs = std::max(piece->goffset + piece->maxs, model->maxs);
 
-	const float3 cvScales = piece->maxs - piece->mins;
-	const float3 cvOffset =
-		(piece->maxs - piece->goffset) +
-		(piece->mins - piece->goffset);
-	const float radiusSq = (cvScales * 0.5f).SqLength();
-	piece->radius = math::sqrt(radiusSq);
-	piece->relMidPos = cvOffset * 0.5f;
-	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f));
+	piece->SetCollisionVolume(new CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
+	piece->radius = (piece->GetCollisionVolume())->GetBoundingRadius();
+	piece->relMidPos = (piece->GetCollisionVolume())->GetOffsets();
 
 	if (me.OffsetToChildObject > 0) {
 		piece->children.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj));
@@ -479,8 +474,8 @@ void S3DOPiece::DrawForList() const
 void S3DOPiece::SetMinMaxExtends()
 {
 	for (std::vector<S3DOVertex>::const_iterator vi = vertices.begin(); vi != vertices.end(); ++vi) {
-		mins = std::min(mins, (goffset + vi->pos));
-		maxs = std::max(maxs, (goffset + vi->pos));
+		mins = std::min(mins, vi->pos);
+		maxs = std::max(maxs, vi->pos);
 	}
 }
 

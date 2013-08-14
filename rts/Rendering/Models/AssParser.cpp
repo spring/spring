@@ -270,8 +270,8 @@ void CAssParser::CalculatePerMeshMinMax(SAssModel* model)
 			minmax.maxs = std::max(minmax.maxs, aiVectorToFloat3(aiVertex));
 		}
 
-		if (minmax.mins == DEF_MIN_SIZE) minmax.mins = ZeroVector;
-		if (minmax.maxs == DEF_MAX_SIZE) minmax.maxs = ZeroVector;
+		if (minmax.mins == DEF_MIN_SIZE) { minmax.mins = ZeroVector; }
+		if (minmax.maxs == DEF_MAX_SIZE) { minmax.maxs = ZeroVector; }
 	}
 }
 
@@ -619,12 +619,7 @@ void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
 	model->mins = std::min(piece->goffset + piece->mins, model->mins);
 	model->maxs = std::max(piece->goffset + piece->maxs, model->maxs);
 
-	const float3 cvScales = piece->maxs - piece->mins;
-	const float3 cvOffset =
-		(piece->maxs - piece->goffset) +
-		(piece->mins - piece->goffset);
-
-	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f));
+	piece->SetCollisionVolume(new CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
 	// Repeat with children
 	for (unsigned int i = 0; i < piece->children.size(); i++) {
