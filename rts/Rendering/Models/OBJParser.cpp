@@ -399,52 +399,12 @@ void COBJParser::BuildModelPieceTreeRec(
 		(piece->offset - ((parentPiece != NULL)? parentPiece->offset: ZeroVector));
 
 	piece->SetVertexTangents();
-	piece->SetMinMaxExtends(); // no-op
+	piece->SetMinMaxExtends(globalVertexOffsets);
 
-	const bool overrideMins = (piece->mins == DEF_MIN_SIZE);
-	const bool overrideMaxs = (piece->maxs == DEF_MAX_SIZE);
+	model->mins = std::min(piece->goffset + piece->mins, model->mins);
+	model->maxs = std::max(piece->goffset + piece->maxs, model->maxs);
 
-	for (int i = piece->GetVertexCount() - 1; i >= 0; i--) {
-		float3 vertexGlobalPos;
-		float3 vertexLocalPos;
-
-		if (globalVertexOffsets) {
-			// metadata indicates vertices are defined in model-space
-			//
-			// for converted S3O's, the piece offsets are defined wrt.
-			// the parent piece, *not* wrt. the root piece (<goffset>
-			// stores the concatenated transform)
-			vertexGlobalPos = piece->GetVertex(i);
-			vertexLocalPos = vertexGlobalPos - piece->goffset;
-		} else {
-			vertexLocalPos = piece->GetVertex(i);
-			vertexGlobalPos = vertexLocalPos + piece->goffset;
-		}
-
-		// NOTE: the min- and max-extends of a piece are not calculated
-		// recursively over its children since this makes little sense
-		// for (per-piece) coldet purposes; the model extends do bound
-		// all pieces
-		if (overrideMins) {
-			piece->mins = std::min(piece->mins, vertexGlobalPos);
-		}
-		if (overrideMaxs) {
-			piece->maxs = std::max(piece->maxs, vertexGlobalPos);
-		}
-
-		// we want vertices in piece-space
-		piece->SetVertex(i, vertexLocalPos);
-	}
-
-	model->mins = std::min(piece->mins, model->mins);
-	model->maxs = std::max(piece->maxs, model->maxs);
-
-	const float3 cvScales = piece->maxs - piece->mins;
-	const float3 cvOffset =
-		(piece->maxs - (localPieceOffsets? piece->goffset: piece->offset)) +
-		(piece->mins - (localPieceOffsets? piece->goffset: piece->offset));
-
-	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f));
+	piece->SetCollisionVolume(new CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
 	std::vector<int> childPieceNumbers;
 	std::vector<std::string> childPieceNames;
@@ -618,8 +578,38 @@ void SOBJPiece::DrawForList() const
 	glDisableClientState(GL_NORMAL_ARRAY);
 }
 
-void SOBJPiece::SetMinMaxExtends()
+void SOBJPiece::SetMinMaxExtends(bool globalVertexOffsets)
 {
+	const bool overrideMins = (mins == DEF_MIN_SIZE);
+	const bool overrideMaxs = (maxs == DEF_MAX_SIZE);
+
+	for (int i = GetVertexCount() - 1; i >= 0; i--) {
+		float3 vertexGlobalPos;
+		float3 vertexLocalPos;
+
+		if (globalVertexOffsets) {
+			// metadata indicates vertices are defined in model-space
+			//
+			// for converted S3O's, the piece offsets are defined wrt.
+			// the parent piece, *not* wrt. the root piece (<goffset>
+			// stores the concatenated transform)
+			vertexGlobalPos = GetVertex(i);
+			vertexLocalPos = vertexGlobalPos - goffset;
+		} else {
+			vertexLocalPos = GetVertex(i);
+			vertexGlobalPos = vertexLocalPos + goffset;
+		}
+
+		// NOTE: the min- and max-extends of a piece are not calculated
+		// recursively over its children since this makes little sense
+		// for (per-piece) coldet purposes; the model extends do bound
+		// all pieces
+		if (overrideMins) { mins = std::min(mins, vertexLocalPos); }
+		if (overrideMaxs) { maxs = std::max(maxs, vertexLocalPos); }
+
+		// we want vertices in piece-space
+		SetVertex(i, vertexLocalPos);
+	}
 }
 
 void SOBJPiece::SetVertexTangents()

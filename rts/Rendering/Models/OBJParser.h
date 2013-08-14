@@ -26,7 +26,7 @@ public:
 
 	void UploadGeometryVBOs();
 	void DrawForList() const;
-	void SetMinMaxExtends();
+	void SetMinMaxExtends(bool globalVertexOffsets);
 	void SetVertexTangents();
 
 	void SetVertexCount(unsigned int n) { vertices.resize(n); }
