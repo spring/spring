@@ -368,6 +368,7 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 
 		piece->mins = DEF_MIN_SIZE;
 		piece->maxs = DEF_MAX_SIZE;
+		piece->rsigns = -OnesVector;
 		piece->offset.x =  me.XFromParent * scaleFactor;
 		piece->offset.y =  me.YFromParent * scaleFactor;
 		piece->offset.z = -me.ZFromParent * scaleFactor;

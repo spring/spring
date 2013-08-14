@@ -18,6 +18,7 @@ public:
 	CMatrix44f(const float rotX, const float rotY, const float rotZ);
 	explicit CMatrix44f(const float3& pos);
 
+	bool IsIdentity() const;
 	void LoadIdentity();
 
 	void SetUpVector(const float3& up);
@@ -25,9 +26,11 @@ public:
 	void RotateY(float rad);
 	void RotateZ(float rad);
 	void Rotate(float rad, const float3& axis); //! axis is assumed to be normalized
-	void Scale(const float3 scales);
 	void Translate(const float x, const float y, const float z);
 	void Translate(const float3& pos) { Translate(pos.x, pos.y, pos.z); }
+
+	CMatrix44f& Scale(const float3 scales);
+
 	void SetPos(const float3& pos);
 	float3 GetPos() const { return float3(m[12], m[13], m[14]); }
 	float3 GetX() const { return float3(m[0], m[1], m[ 2]); }

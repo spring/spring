@@ -51,6 +51,16 @@ CMatrix44f::CMatrix44f(const float3& pos)
 }
 
 
+bool CMatrix44f::IsIdentity() const
+{
+	if (m[ 0] != 1.0f || m[ 1] != 0.0f || m[ 2] != 0.0f || m[ 3] != 0.0f) return false; // 1st col
+	if (m[ 4] != 0.0f || m[ 5] != 1.0f || m[ 6] != 0.0f || m[ 7] != 0.0f) return false; // 2nd col
+	if (m[ 8] != 0.0f || m[ 9] != 0.0f || m[10] != 1.0f || m[11] != 0.0f) return false; // 3rd col
+	if (m[12] != 0.0f || m[13] != 0.0f || m[14] != 0.0f || m[15] != 1.0f) return false; // 4th col
+
+	return true;
+}
+
 void CMatrix44f::LoadIdentity()
 {
 	m[0]  = m[5]  = m[10] = m[15] = 1.0f;
@@ -172,47 +182,49 @@ void CMatrix44f::Rotate(float rad, const float3& axis)
 	const float sr = math::sin(rad);
 	const float cr = math::cos(rad);
 
-	for(int a=0;a<3;++a){
-		float3 v(m[a*4],m[a*4+1],m[a*4+2]);
+	for (int a = 0; a < 3; ++a) {
+		float3 v(m[a*4], m[a*4+1], m[a*4+2]);
 
-		float3 va(axis*v.dot(axis));
-		float3 vp(v-va);
+		float3 va(axis * v.dot(axis));
+		float3 vp(v - va);
 		float3 vp2(axis.cross(vp));
 
-		float3 vpnew(vp*cr+vp2*sr);
-		float3 vnew(va+vpnew);
+		float3 vpnew(vp*cr + vp2*sr);
+		float3 vnew(va + vpnew);
 
-		m[a*4]     = vnew.x;
+		m[a*4    ] = vnew.x;
 		m[a*4 + 1] = vnew.y;
 		m[a*4 + 2] = vnew.z;
 	}
 }
 
 
-void CMatrix44f::Scale(const float3 scales)
+CMatrix44f& CMatrix44f::Scale(const float3 scales)
 {
-	m[0]  *= scales.x;
-	m[1]  *= scales.y;
-	m[2]  *= scales.z;
+	m[ 0] *= scales.x;
+	m[ 1] *= scales.y;
+	m[ 2] *= scales.z;
 
-	m[4]  *= scales.x;
-	m[5]  *= scales.y;
-	m[6]  *= scales.z;
+	m[ 4] *= scales.x;
+	m[ 5] *= scales.y;
+	m[ 6] *= scales.z;
 
-	m[8]  *= scales.x;
-	m[9]  *= scales.y;
+	m[ 8] *= scales.x;
+	m[ 9] *= scales.y;
 	m[10] *= scales.z;
 
 	m[12] *= scales.x;
 	m[13] *= scales.y;
 	m[14] *= scales.z;
+
+	return *this;
 }
 
 
 void CMatrix44f::Translate(const float x, const float y, const float z)
 {
-	m[12] += x*m[0] + y*m[4] + z*m[8];
-	m[13] += x*m[1] + y*m[5] + z*m[9];
+	m[12] += x*m[0] + y*m[4] + z*m[ 8];
+	m[13] += x*m[1] + y*m[5] + z*m[ 9];
 	m[14] += x*m[2] + y*m[6] + z*m[10];
 	m[15] += x*m[3] + y*m[7] + z*m[11];
 }
@@ -220,11 +232,12 @@ void CMatrix44f::Translate(const float x, const float y, const float z)
 
 void CMatrix44f::SetPos(const float3& pos)
 {
-	const float& x=pos.x;
-	const float& y=pos.y;
-	const float& z=pos.z;
-	m[12] = x*m[0] + y*m[4] + z*m[8];
-	m[13] = x*m[1] + y*m[5] + z*m[9];
+	const float x = pos.x;
+	const float y = pos.y;
+	const float z = pos.z;
+
+	m[12] = x*m[0] + y*m[4] + z*m[ 8];
+	m[13] = x*m[1] + y*m[5] + z*m[ 9];
 	m[14] = x*m[2] + y*m[6] + z*m[10];
 	m[15] = x*m[3] + y*m[7] + z*m[11];
 }
