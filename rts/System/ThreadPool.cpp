@@ -134,6 +134,9 @@ static void WorkerLoop(int id)
 			if (spinlockStart < boost::chrono::high_resolution_clock::now()) {
 				newTasks.wait_for(lk2, boost::chrono::nanoseconds(1));
 			}
+#ifdef __MINGW32__
+			std::atomic_thread_fence(std::memory_order_acquire);
+#endif
 		}
 
 		DoTask(lk);
@@ -167,7 +170,7 @@ void WaitForFinishedDebug(std::shared_ptr<ITaskGroup> taskgroup)
 	while (!taskgroup->wait_for(boost::chrono::seconds(5))) {
 #ifdef __MINGW32__
 		auto tg = static_cast<ParallelTaskGroup<const std::function<void()>>*>(&(*taskgroup));
-		LOG_L(L_WARNING, "%s2 %i %i %i %i", __FUNCTION__, int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()), int(tg->remainingTasks), int(tg->curtask));
+		LOG_L(L_WARNING, "%s2 %i %i %i %i %i", __FUNCTION__, int(taskGroups.size()), int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()), int(tg->remainingTasks), int(tg->curtask));
 		for(int i = 0; i < tg->uniqueTasks.size(); ++i) { if (!tg->uniqueTasks[i].empty()) LOG_L(L_WARNING, "%s tasks for thread %i remaining", __FUNCTION__, i); }
 #endif
 		LOG_L(L_WARNING, "Hang in ThreadPool");
