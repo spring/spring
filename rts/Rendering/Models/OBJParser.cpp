@@ -387,6 +387,7 @@ void COBJParser::BuildModelPieceTreeRec(
 	piece->isEmpty = (piece->GetVertexCount() == 0);
 	piece->mins = pieceTable.GetFloat3("mins", DEF_MIN_SIZE);
 	piece->maxs = pieceTable.GetFloat3("maxs", DEF_MAX_SIZE);
+	piece->rsigns = -OnesVector;
 
 	// always convert <offset> to local coordinates
 	piece->offset = pieceTable.GetFloat3("offset", ZeroVector);

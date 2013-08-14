@@ -37,8 +37,8 @@ struct SAssPiece: public S3DModelPiece
 	unsigned int GetNormalCount() const { return vertices.size(); }
 	unsigned int GetTxCoorCount() const { return vertices.size(); }
 
-	//FIXME implement
-	//void Shatter(float, int, int, const float3&, const float3&) const
+	// FIXME implement
+	// void Shatter(float, int, int, const float3&, const float3&) const
 	
 public:
 	aiNode* node;

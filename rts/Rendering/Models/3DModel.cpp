@@ -75,6 +75,7 @@ S3DModelPiece::S3DModelPiece()
 	: parent(NULL)
 	, colvol(NULL)
 	, type(MODELTYPE_OTHER)
+	, axisMapType(AXIS_MAPPING_XYZ)
 	, isEmpty(true)
 	, mIsIdentity(true)
 	, dispListID(0)
@@ -104,7 +105,10 @@ void S3DModelPiece::DrawStatic() const
 
 	if (transform) {
 		glPushMatrix();
-		if (!mIsIdentity) glMultMatrixf(scaleRotMatrix);
+
+		if (!mIsIdentity)	
+			glMultMatrixf(scaleRotMatrix);
+
 		glTranslatef(offset.x, offset.y, offset.z);
 	}
 
@@ -202,16 +206,9 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 
 	dispListID =  piece->GetDisplayListID();
 	pos        =  piece->offset;
-	rot        =  piece->rot;
+	dir        = (piece->GetVertexCount() >= 2)? (piece->GetVertexPos(0) - piece->GetVertexPos(1)): FwdVector;
 
 	children.reserve(piece->children.size());
-
-	if (piece->GetVertexCount() < 2) {
-		dir = OnesVector;
-	} else {
-		dir = piece->GetVertexPos(0) - piece->GetVertexPos(1);
-	}
-
 	identityTransform = UpdateMatrix();
 }
 
@@ -219,23 +216,10 @@ LocalModelPiece::~LocalModelPiece() {
 	delete colvol; colvol = NULL;
 }
 
+
 bool LocalModelPiece::UpdateMatrix()
 {
-	bool r = original->mIsIdentity;
-
-	{
-		// for Assimp models SRM = T * R * S (SRT vs. RT in spring)
-		// for all other models SRM = identity
-		pieceSpaceMat = original->scaleRotMatrix;
-
-		// Translate & Rotate are faster than matrix-mul!
-		if (pos.SqLength() != 0.0f) { pieceSpaceMat.Translate(pos);  r = false; }
-		if (         rot.y != 0.0f) { pieceSpaceMat.RotateY(-rot.y); r = false; } // yaw
-		if (         rot.x != 0.0f) { pieceSpaceMat.RotateX(-rot.x); r = false; } // pitch
-		if (         rot.z != 0.0f) { pieceSpaceMat.RotateZ(-rot.z); r = false; } // roll
-	}
-
-	return r;
+	return (original->ComposeTransform((pieceSpaceMat = original->scaleRotMatrix), pos, rot));
 }
 
 void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices)
@@ -248,6 +232,7 @@ void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices)
 
 	if (updateChildMatrices) {
 		modelSpaceMat = pieceSpaceMat;
+
 		if (parent != NULL) {
 			modelSpaceMat >>= parent->modelSpaceMat;
 		}
@@ -311,7 +296,7 @@ float3 LocalModelPiece::GetAbsolutePos() const
 }
 
 
-bool LocalModelPiece::GetEmitDirPos(float3& pos, float3& dir) const
+bool LocalModelPiece::GetEmitDirPos(float3& emitPos, float3& emitDir) const
 {
 	const S3DModelPiece* piece = original;
 
@@ -321,22 +306,22 @@ bool LocalModelPiece::GetEmitDirPos(float3& pos, float3& dir) const
 	const unsigned int count = piece->GetVertexCount();
 
 	if (count == 0) {
-		pos = modelSpaceMat.GetPos();
-		dir = modelSpaceMat.Mul(FwdVector) - pos;
+		emitPos = modelSpaceMat.GetPos();
+		emitDir = modelSpaceMat.Mul(FwdVector) - emitPos;
 	} else if (count == 1) {
-		pos = modelSpaceMat.GetPos();
-		dir = modelSpaceMat.Mul(piece->GetVertexPos(0)) - pos;
+		emitPos = modelSpaceMat.GetPos();
+		emitDir = modelSpaceMat.Mul(piece->GetVertexPos(0)) - emitPos;
 	} else if (count >= 2) {
-		float3 p1 = modelSpaceMat.Mul(piece->GetVertexPos(0));
-		float3 p2 = modelSpaceMat.Mul(piece->GetVertexPos(1));
+		const float3 p1 = modelSpaceMat.Mul(piece->GetVertexPos(0));
+		const float3 p2 = modelSpaceMat.Mul(piece->GetVertexPos(1));
 
-		pos = p1;
-		dir = p2 - p1;
+		emitPos = p1;
+		emitDir = p2 - p1;
 	}
 
 	// note: actually OBJECT_TO_WORLD but transform is the same
-	pos *= WORLD_TO_OBJECT_SPACE;
-	dir *= WORLD_TO_OBJECT_SPACE;
+	emitPos *= WORLD_TO_OBJECT_SPACE;
+	emitDir *= WORLD_TO_OBJECT_SPACE;
 	return true;
 }
 

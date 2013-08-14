@@ -19,6 +19,14 @@ enum ModelType {
 	MODELTYPE_ASS   = 3, // Model loaded by Assimp library
 	MODELTYPE_OTHER = 4  // For future use. Still used in some parts of code.
 };
+enum AxisMappingType {
+	AXIS_MAPPING_XYZ = 0,
+	AXIS_MAPPING_ZXY = 1,
+	AXIS_MAPPING_YZX = 2,
+	AXIS_MAPPING_XZY = 3,
+	AXIS_MAPPING_ZYX = 4,
+	AXIS_MAPPING_YXZ = 5,
+};
 
 struct CollisionVolume;
 struct S3DModel;
@@ -52,6 +60,30 @@ struct S3DModelPiece {
 	virtual float3 GetPosOffset() const { return ZeroVector; }
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 
+	bool ComposeTransform(CMatrix44f& m, const float3& t, const float3& r) const {
+		bool ret = true;
+
+		// execute rotations in YPR order by default
+		// note: translating + rotating is faster than
+		// matrix-multiplying (but the branching hurts)
+		switch (axisMapType) {
+			case AXIS_MAPPING_XYZ: {
+				if (t.SqLength() != 0.0f) { m.Translate(t);            ret = false; }
+				if (r.y          != 0.0f) { m.RotateY(r.y * rsigns.y); ret = false; } // yaw
+				if (r.x          != 0.0f) { m.RotateX(r.x * rsigns.x); ret = false; } // pitch
+				if (r.z          != 0.0f) { m.RotateZ(r.z * rsigns.z); ret = false; } // roll
+			} break;
+			case AXIS_MAPPING_XZY: {
+				if (t.SqLength() != 0.0f) { m.Translate(t);            ret = false; }
+				if (r.y          != 0.0f) { m.RotateZ(r.y * rsigns.y); ret = false; } // yaw
+				if (r.x          != 0.0f) { m.RotateX(r.x * rsigns.x); ret = false; } // pitch
+				if (r.z          != 0.0f) { m.RotateY(r.z * rsigns.z); ret = false; } // roll
+			} break;
+		}
+
+		return ret;
+	}
+
 	void DrawStatic() const;
 
 	void SetCollisionVolume(CollisionVolume* cv) { colvol = cv; }
@@ -72,6 +104,7 @@ public:
 	CollisionVolume* colvol;
 
 	ModelType type;
+	AxisMappingType axisMapType;
 
 	bool isEmpty;     /// if piece has no geometry
 	bool mIsIdentity; /// if scaleRotMatrix is identity
@@ -81,11 +114,11 @@ public:
 	/// pre-baked local-space transforms (assimp-only)
 	CMatrix44f scaleRotMatrix;
 
-	float3 rot;
 	float3 offset;    /// local offset wrt. parent piece
 	float3 goffset;   /// global offset wrt. root piece
 	float3 mins;
 	float3 maxs;
+	float3 rsigns;
 
 protected:
 	virtual void DrawForList() const = 0;
@@ -205,7 +238,7 @@ struct LocalModelPiece
 
 private:
 	float3 pos; // translation relative to parent LMP
-	float3 rot; // orientation relative to parent LMP, in radians
+	float3 rot; // orientation relative to parent LMP, in radians (updated by scripts)
 	float3 dir; // direction from vertex[0] to vertex[1] (constant!)
 
 	CMatrix44f pieceSpaceMat; // transform relative to parent LMP (SYNCED), combines <pos> and <rot>
@@ -289,7 +322,9 @@ struct LocalModel
 	// NOTE:
 	//   GetRawPieceDirection is only useful for special pieces (used for emit-sfx)
 	//   it returns a direction in piece-space, NOT model-space as the "Raw" suggests
-	void GetRawEmitDirPos(int pieceIdx, float3& pos, float3& dir) const { pieces[pieceIdx]->GetEmitDirPos(pos, dir); }
+	//   this direction is vertex[0].pos - vertex[1].pos for pieces with >= 2 vertices
+	//   only LuaSyncedRead::GetUnitPieceDirection calls it, better mark as DEPRECATED
+	void GetRawEmitDirPos(int pieceIdx, float3& emitPos, float3& emitDir) const { pieces[pieceIdx]->GetEmitDirPos(emitPos, emitDir); }
 	float3 GetRawPiecePos(int pieceIdx) const { return pieces[pieceIdx]->GetAbsolutePos(); }
 	float3 GetRawPieceDirection(int pieceIdx) const { return pieces[pieceIdx]->GetDirection(); }
 	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx]->GetModelSpaceMatrix(); }
