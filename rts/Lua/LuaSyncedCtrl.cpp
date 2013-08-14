@@ -3690,12 +3690,8 @@ int LuaSyncedCtrl::SpawnProjectile(lua_State* L)
 int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 {
 	const string name = luaL_checkstring(L, 1);
-	const float3 pos(luaL_optfloat(L, 2, 0.0f),
-		luaL_optfloat(L, 3, 0.0f),
-		luaL_optfloat(L, 4, 0.0f));
-	const float3 dir(luaL_optfloat(L, 5, 0.0f),
-		luaL_optfloat(L, 6, 0.0f),
-		luaL_optfloat(L, 7, 0.0f));
+	const float3 pos(luaL_optfloat(L, 2, 0.0f), luaL_optfloat(L, 3, 0.0f), luaL_optfloat(L, 4, 0.0f));
+	const float3 dir(luaL_optfloat(L, 5, 0.0f), luaL_optfloat(L, 6, 0.0f), luaL_optfloat(L, 7, 0.0f));
 	const float rad = luaL_optfloat(L, 8, 0.0f);
 	const float dmg = luaL_optfloat(L, 9, 0.0f);
 	const float dmgMod = 1.0f;

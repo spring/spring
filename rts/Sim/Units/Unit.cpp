@@ -194,7 +194,6 @@ CUnit::CUnit() : CSolidObject(),
 	fireState(FIRESTATE_FIREATWILL),
 	moveState(MOVESTATE_MANEUVER),
 	activated(false),
-	crashing(false),
 	isDead(false),
 	fallSpeed(0.2f),
 	flankingBonusMode(0),
@@ -1130,7 +1129,7 @@ void CUnit::DoDamage(
 	int weaponDefID,
 	int projectileID
 ) {
-	if (isDead || crashing)
+	if (isDead || IsCrashing())
 		return;
 
 	float baseDamage = damages[armorType];
@@ -1829,7 +1828,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			return true;
 		}
 	} else { // reclaim
-		if (isDead || crashing) {
+		if (isDead || IsCrashing()) {
 			return false;
 		}
 
@@ -1951,7 +1950,7 @@ void CUnit::FinishedBuilding(bool postInit)
 void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
 {
 	if (isDead) { return; }
-	if (crashing && !beingBuilt) { return; }
+	if (IsCrashing() && !beingBuilt) { return; }
 
 	isDead = true;
 	deathSpeed = speed;
@@ -2430,7 +2429,6 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(activated),
 
-	CR_MEMBER(crashing),
 	CR_MEMBER(isDead),
 	CR_MEMBER(fallSpeed),
 

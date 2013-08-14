@@ -251,7 +251,7 @@ bool CStrafeAirMoveType::Update()
 			UpdateAirPhysics(crashRudder, crashAileron, crashElevator, 0, owner->frontdir);
 
 			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
-				owner->SetCrashing(false);
+				owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_CRASHING);
 				owner->KillUnit(NULL, true, false);
 			}
 
@@ -1092,7 +1092,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 
 	switch (aircraftState) {
 		case AIRCRAFT_CRASHING:
-			owner->SetCrashing(true);
+			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_CRASHING);
 			break;
 
 		case AIRCRAFT_FLYING:

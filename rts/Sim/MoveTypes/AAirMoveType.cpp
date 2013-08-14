@@ -132,7 +132,8 @@ void AAirMoveType::DependentDied(CObject* o) {
 	}
 
 	if (o == reservedPad) {
-		if (aircraftState!=AIRCRAFT_CRASHING) { //don't change state when crashing
+		if (aircraftState != AIRCRAFT_CRASHING) {
+			// change state only if not crashing
 			SetState(AIRCRAFT_TAKEOFF);
 
 			goalPos = oldGoalPos;

@@ -64,7 +64,8 @@ public:
 		STATE_BIT_FLYING   = (1 << 5),
 		STATE_BIT_FALLING  = (1 << 6),
 		STATE_BIT_SKIDDING = (1 << 7),
-		STATE_BIT_BLOCKING = (1 << 8),
+		STATE_BIT_CRASHING = (1 << 8),
+		STATE_BIT_BLOCKING = (1 << 9),
 	};
 	enum DamageType {
 		DAMAGE_EXPLOSION_WEAPON = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
@@ -151,6 +152,7 @@ public:
 	bool IsFlying() const { return (HasPhysicalStateBit(STATE_BIT_FLYING)); }
 	bool IsFalling() const { return (HasPhysicalStateBit(STATE_BIT_FALLING)); }
 	bool IsSkidding() const { return (HasPhysicalStateBit(STATE_BIT_SKIDDING)); }
+	bool IsCrashing() const { return (HasPhysicalStateBit(STATE_BIT_CRASHING)); }
 	bool IsBlocking() const { return (HasPhysicalStateBit(STATE_BIT_BLOCKING)); }
 
 	bool HasPhysicalStateBit(unsigned int bit) const { return ((physicalState & bit) != 0); }
