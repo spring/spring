@@ -322,7 +322,7 @@ static inline void parallel(const std::function<void()>&& f)
 		taskgroup->enqueue_unique(i, f);
 	}
 	ThreadPool::PushTaskGroup(taskgroup);
-	ThreadPool::WaitForFinished(taskgroup);
+	ThreadPool::WaitForFinishedDebug(taskgroup);
 }
 
 
