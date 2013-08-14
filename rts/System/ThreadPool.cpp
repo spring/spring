@@ -73,17 +73,21 @@ int GetNumThreads()
 /// returns false, when no further tasks were found
 static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk)
 {
-	if (taskGroups.empty())
-		return false;
-
-	if (lk.try_lock()) {
+//#ifdef __MINGW32__
+	boost::unique_lock<boost::shared_mutex> ulk(taskMutex, boost::defer_lock);
+	while (!ulk.try_lock()) {}
+	if (!taskGroups.empty()) {
+//#else
+//	if (!taskGroups.empty() && lk.try_lock()) {
+//#endif
 		bool foundEmpty = false;
 
 		for(auto tg: taskGroups) {
 			auto p = tg->GetTask();
 
 			if (p) {
-				lk.unlock();
+				//lk.unlock();
+				ulk.unlock();
 				SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
 				(*p)();
 				return true;
@@ -93,12 +97,12 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk)
 				foundEmpty = true;
 			}
 		}
-		lk.unlock();
+		//lk.unlock();
 
 		if (foundEmpty) {
 			//FIXME this could be made lock-free too, but is it worth it?
-			boost::unique_lock<boost::shared_mutex> ulk(taskMutex, boost::defer_lock);
-			while (!ulk.try_lock()) {}
+			//boost::unique_lock<boost::shared_mutex> ulk(taskMutex, boost::defer_lock);
+			//while (!ulk.try_lock()) {}
 			for(auto it = taskGroups.begin(); it != taskGroups.end();) {
 				if ((*it)->IsEmpty()) {
 					it = taskGroups.erase(it);
@@ -106,12 +110,13 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk)
 					++it;
 				}
 			}
-			ulk.unlock();
 		}
 
+		ulk.unlock();
 		return false;
 	}
 
+	ulk.unlock();
 	return true;
 }
 
@@ -173,11 +178,6 @@ void WaitForFinishedDebug(std::shared_ptr<ITaskGroup> taskgroup)
 	}
 
 	while (!taskgroup->wait_for(boost::chrono::seconds(5))) {
-#ifdef __MINGW32__
-		auto tg = static_cast<ParallelTaskGroup<const std::function<void()>>*>(&(*taskgroup));
-		LOG_L(L_WARNING, "%s2 %i %i %i %i %i", __FUNCTION__, int(taskGroups.size()), int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()), int(tg->remainingTasks), int(tg->curtask));
-		for(int i = 0; i < tg->uniqueTasks.size(); ++i) { if (!tg->uniqueTasks[i].empty()) LOG_L(L_WARNING, "%s tasks for thread %i remaining", __FUNCTION__, i); }
-#endif
 		LOG_L(L_WARNING, "Hang in ThreadPool");
 	}
 
