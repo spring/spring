@@ -71,6 +71,36 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 	#define SCOPED_MT_TIMER(x)
 #endif
 
+#ifdef __MINGW32__
+	class SAtomicInt32 {
+	public:
+		SAtomicInt32(int start = 0) : num(start) {}
+
+		int operator++(int) {
+			boost::lock_guard<boost::mutex> lk(m);
+			return __sync_fetch_and_add(&num, 1);
+		}
+		int operator--(int) {
+			boost::lock_guard<boost::mutex> lk(m);
+			return __sync_fetch_and_sub(&num, 1);
+		}
+
+		operator int() const {
+			boost::lock_guard<boost::mutex> lk(m);
+			return num;
+		}
+
+	private:
+		__attribute__ ((aligned (8))) int num;
+		mutable boost::mutex m;
+	};
+
+	typedef SAtomicInt32 saint;
+#else
+	typedef std::atomic<int> saint;
+#endif
+
+
 
 class ITaskGroup
 {
@@ -169,8 +199,8 @@ public:
 		// workaround a Fedora gcc bug else it reports in the lambda below:
 		// error: no 'operator--(int)' declared for postfix '--'
 		auto* atomicCounter = &remainingTasks;
-		tasks.emplace_back([task,atomicCounter]{ (*task)(); --(*atomicCounter); });
-		++remainingTasks;
+		tasks.emplace_back([task,atomicCounter]{ (*task)(); (*atomicCounter)--; });
+		remainingTasks++;
 	}
 
 	void enqueue(F&& f, Args&&... args)
@@ -182,8 +212,8 @@ public:
 		// workaround a Fedora gcc bug else it reports in the lambda below:
 		// error: no 'operator--(int)' declared for postfix '--'
 		auto* atomicCounter = &remainingTasks;
-		tasks.emplace_back([task,atomicCounter]{ (*task)(); --(*atomicCounter); });
-		++remainingTasks;
+		tasks.emplace_back([task,atomicCounter]{ (*task)(); (*atomicCounter)--; });
+		remainingTasks++;
 	}
 
 
@@ -221,8 +251,8 @@ private:
 	//void FinishedATask() { remainingTasks--; }
 
 public:
-	std::atomic<int> remainingTasks;
-	std::atomic<int> curtask;
+	saint remainingTasks;
+	saint curtask;
 	std::vector<std::function<void()>> tasks;
 	std::vector<boost::unique_future<return_type>> results;
 
@@ -247,7 +277,7 @@ public:
 			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 		);
 		this->results.emplace_back(task->get_future());
-		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); --this->remainingTasks; });
+		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); (this->remainingTasks)--; });
 		this->remainingTasks++;
 	}
 
@@ -257,7 +287,7 @@ public:
 			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 		);
 		this->results.emplace_back(task->get_future());
-		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); --this->remainingTasks; });
+		uniqueTasks[threadNum].emplace_back([&,task]{ (*task)(); (this->remainingTasks)--; });
 		this->remainingTasks++;
 	}
 
