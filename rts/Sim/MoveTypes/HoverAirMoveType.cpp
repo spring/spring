@@ -136,7 +136,7 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 
 	switch (aircraftState) {
 		case AIRCRAFT_CRASHING:
-			owner->SetCrashing(true);
+			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_CRASHING);
 			break;
 		case AIRCRAFT_LANDED:
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
@@ -901,7 +901,7 @@ bool CHoverAirMoveType::Update()
 			UpdateAirPhysics();
 
 			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
-				owner->SetCrashing(false);
+				owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_CRASHING);
 				owner->KillUnit(NULL, true, false);
 			} else {
 				#define SPIN_DIR(o) ((o->id & 1) * 2 - 1)

@@ -164,9 +164,6 @@ public:
 	void SetStunned(bool stun);
 	bool IsStunned() const { return stunned; }
 
-	void SetCrashing(bool crash) { crashing = crash; }
-	bool IsCrashing() const { return crashing; }
-
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
 	unsigned short CalcLosStatus(int allyTeam);
 
@@ -432,8 +429,6 @@ public:
 
 	/// if the unit is in it's 'on'-state
 	bool activated;
-
-	bool crashing;
 	/// prevent damage from hitting an already dead unit (causing multi wreck etc)
 	bool isDead;
 
