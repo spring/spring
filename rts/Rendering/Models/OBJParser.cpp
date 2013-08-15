@@ -24,10 +24,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_OBJ_PARSER)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_OBJ_PARSER
 
-
-static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
-static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
-
 S3DModel* COBJParser::Load(const std::string& modelFileName)
 {
 	std::string metaFileName = modelFileName.substr(0, modelFileName.find_last_of('.')) + ".lua";
