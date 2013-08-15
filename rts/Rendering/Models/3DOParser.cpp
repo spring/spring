@@ -364,7 +364,6 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 		if (parent != NULL) {
 			piece->parentName = parent->name;
 		}
-		piece->type = MODELTYPE_3DO;
 
 		piece->mins = DEF_MIN_SIZE;
 		piece->maxs = DEF_MAX_SIZE;

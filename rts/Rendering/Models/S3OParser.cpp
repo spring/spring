@@ -65,14 +65,13 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	fp->swap(); // Does it matter we mess with the original buffer here? Don't hope so.
 
 	SS3OPiece* piece = new SS3OPiece();
-		piece->type = MODELTYPE_S3O;
 		piece->mins = DEF_MIN_SIZE;
 		piece->maxs = DEF_MAX_SIZE;
 		piece->rsigns = -OnesVector;
 		piece->offset.x = fp->xoffset;
 		piece->offset.y = fp->yoffset;
 		piece->offset.z = fp->zoffset;
-		piece->primitiveType = fp->primitiveType;
+		piece->primType = fp->primitiveType;
 		piece->name = (char*) &buf[fp->name];
 		piece->parent = parent;
 		if (parent != NULL) {
@@ -189,7 +188,7 @@ void SS3OPiece::DrawForList() const
 	vboAttributes.Unbind();
 
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	switch (primitiveType) {
+	switch (primType) {
 		case S3O_PRIMTYPE_TRIANGLES: {
 			glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
 		} break;
@@ -245,12 +244,12 @@ void SS3OPiece::SetVertexTangents()
 	if (isEmpty)
 		return;
 
-	if (primitiveType == S3O_PRIMTYPE_QUADS)
+	if (primType == S3O_PRIMTYPE_QUADS)
 		return;
 
 	unsigned stride = 0;
 
-	switch (primitiveType) {
+	switch (primType) {
 		case S3O_PRIMTYPE_TRIANGLES: {
 			stride = 3;
 		} break;
@@ -270,7 +269,7 @@ void SS3OPiece::SetVertexTangents()
 	for (unsigned vrtNr = 0; vrtNr < vrtMaxNr; vrtNr += stride) {
 		bool flipWinding = false;
 
-		if (primitiveType == S3O_PRIMTYPE_TRIANGLE_STRIP) {
+		if (primType == S3O_PRIMTYPE_TRIANGLE_STRIP) {
 			flipWinding = ((vrtNr & 1) == 1);
 		}
 
@@ -356,7 +355,7 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 	if (texType <= 0)
 		return;
 
-	switch (primitiveType) {
+	switch (primType) {
 		case S3O_PRIMTYPE_TRIANGLES: {
 			for (size_t i = 0; i < vertexDrawIndices.size(); i += 3) {
 				if (gu->RandFloat() > pieceChance)

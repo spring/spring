@@ -26,7 +26,9 @@ struct SAssVertex {
 
 struct SAssPiece: public S3DModelPiece
 {
-	SAssPiece() : node(NULL), hasTexCoord2(false) {}
+	SAssPiece(): isRoot(false), extraUVs(false) {
+		type = MODELTYPE_ASS;
+	}
 
 	void DrawForList() const;
 	void UploadGeometryVBOs();
@@ -41,24 +43,11 @@ struct SAssPiece: public S3DModelPiece
 	// void Shatter(float, int, int, const float3&, const float3&) const
 	
 public:
-	aiNode* node;
 	std::vector<SAssVertex> vertices;
 	std::vector<unsigned int> vertexDrawIndices;
 
-	bool hasTexCoord2;
-};
-
-struct SAssModel: public S3DModel
-{
-	SAssModel() : scene(NULL) {}
-	
-public:
-	struct MinMax {
-		float3 mins,maxs;
-	};
-	std::vector<MinMax> mesh_minmax;
-
-	const aiScene* scene; //< Assimp scene containing all loaded model data. NULL for S30/3DO.
+	bool isRoot;
+	bool extraUVs;
 };
 
 
@@ -69,14 +58,17 @@ public:
 	ModelType GetType() const { return MODELTYPE_ASS; }
 
 private:
-	static SAssPiece* LoadPiece(SAssModel* model, aiNode* node, const LuaTable& metaTable);
+	static void SetPieceName(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode);
+	static void SetPieceParentName(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, const LuaTable& pieceTable);
+	static void LoadPieceTransformations(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, const LuaTable& metaTable);
+	static void LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, const aiScene* scene);
+	static SAssPiece* LoadPiece(S3DModel* model, const aiNode* pieceNode, const aiScene* scene, const LuaTable& metaTable);
+
 	static void BuildPieceHierarchy(S3DModel* model);
 	static void CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece);
 	static void CalculateModelProperties(S3DModel* model, const LuaTable& metaTable);
 	static void FindTextures(S3DModel* model, const aiScene* scene, const LuaTable& metaTable, const std::string& modelFilePath);
-	static void LoadPieceTransformations(const S3DModel* model, SAssPiece* piece, const LuaTable& metaTable);
-	
-	void CalculatePerMeshMinMax(SAssModel* model);
+	static bool SetModelRadiusAndHeight(S3DModel* model, const SAssPiece* piece, const aiNode* pieceNode, const LuaTable& metaTable);
 };
 
 #endif /* ASS_PARSER_H */
