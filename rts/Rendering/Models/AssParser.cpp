@@ -143,6 +143,7 @@ public:
 S3DModel* CAssParser::Load(const std::string& modelFilePath)
 {
 	LOG_S(LOG_SECTION_MODEL, "Loading model: %s", modelFilePath.c_str());
+	printf("\n\n\n\nmodelFilePath=%s\n", modelFilePath.c_str());
 
 	const std::string& modelPath = FileSystem::GetDirectory(modelFilePath);
 	const std::string& modelName = FileSystem::GetBasename(modelFilePath);
@@ -222,7 +223,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	model->type = MODELTYPE_ASS;
 
 	// Load textures
-	FindTextures(model, scene, metaTable, modelName);
+	FindTextures(model, scene, metaTable, modelPath, modelName);
 	LOG_S(LOG_SECTION_MODEL, "Loading textures. Tex1: '%s' Tex2: '%s'", model->tex1.c_str(), model->tex2.c_str());
 	texturehandlerS3O->LoadS3OTexture(model);
 
@@ -276,7 +277,7 @@ void CAssParser::LoadPieceTransformations(
 	SAssPiece* piece,
 	const S3DModel* model,
 	const aiNode* pieceNode,
-	const LuaTable& pieceMetaTable
+	const LuaTable& pieceTable
 ) {
 	float3 spRotateVec, spTransVec;
 	float3 spScaleVec = OnesVector;
@@ -296,10 +297,10 @@ void CAssParser::LoadPieceTransformations(
 	);
 
 	// metadata-scaling
-	spScaleVec   = pieceMetaTable.GetFloat3("scale", float3(aiScaleVec.x, aiScaleVec.y, aiScaleVec.z));
-	spScaleVec.x = pieceMetaTable.GetFloat("scalex", spScaleVec.x);
-	spScaleVec.y = pieceMetaTable.GetFloat("scaley", spScaleVec.y);
-	spScaleVec.z = pieceMetaTable.GetFloat("scalez", spScaleVec.z);
+	spScaleVec   = pieceTable.GetFloat3("scale", float3(aiScaleVec.x, aiScaleVec.y, aiScaleVec.z));
+	spScaleVec.x = pieceTable.GetFloat("scalex", spScaleVec.x);
+	spScaleVec.y = pieceTable.GetFloat("scaley", spScaleVec.y);
+	spScaleVec.z = pieceTable.GetFloat("scalez", spScaleVec.z);
 
 	if (spScaleVec.x != spScaleVec.y || spScaleVec.y != spScaleVec.z) {
 		// LOG_SL(LOG_SECTION_MODEL, L_WARNING, "Spring doesn't support non-uniform scaling");
@@ -313,18 +314,18 @@ void CAssParser::LoadPieceTransformations(
 	//   together with the (baked) aiRotateQuad they determine the
 	//   model's pose before any animations execute
 	//   
-	// spRotateVec   = pieceMetaTable.GetFloat3("rotate", aiQuaternionToRadianAngles(aiRotateQuat) * RADTODEG);
-	spRotateVec   = pieceMetaTable.GetFloat3("rotate", ZeroVector);
-	spRotateVec.x = pieceMetaTable.GetFloat("rotatex", spRotateVec.x);
-	spRotateVec.y = pieceMetaTable.GetFloat("rotatey", spRotateVec.y);
-	spRotateVec.z = pieceMetaTable.GetFloat("rotatez", spRotateVec.z);
+	// spRotateVec   = pieceTable.GetFloat3("rotate", aiQuaternionToRadianAngles(aiRotateQuat) * RADTODEG);
+	spRotateVec   = pieceTable.GetFloat3("rotate", ZeroVector);
+	spRotateVec.x = pieceTable.GetFloat("rotatex", spRotateVec.x);
+	spRotateVec.y = pieceTable.GetFloat("rotatey", spRotateVec.y);
+	spRotateVec.z = pieceTable.GetFloat("rotatez", spRotateVec.z);
 	spRotateVec  *= DEGTORAD;
 
 	// metadata-translation
-	spTransVec   = pieceMetaTable.GetFloat3("offset", aiVectorToFloat3(aiTransVec));
-	spTransVec.x = pieceMetaTable.GetFloat("offsetx", spTransVec.x);
-	spTransVec.y = pieceMetaTable.GetFloat("offsety", spTransVec.y);
-	spTransVec.z = pieceMetaTable.GetFloat("offsetz", spTransVec.z);
+	spTransVec   = pieceTable.GetFloat3("offset", aiVectorToFloat3(aiTransVec));
+	spTransVec.x = pieceTable.GetFloat("offsetx", spTransVec.x);
+	spTransVec.y = pieceTable.GetFloat("offsety", spTransVec.y);
+	spTransVec.z = pieceTable.GetFloat("offsetz", spTransVec.z);
 
 	LOG_S(LOG_SECTION_PIECE,
 		"(%d:%s) Relative offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)",
@@ -351,10 +352,10 @@ void CAssParser::LoadPieceTransformations(
 	#endif
 
 	piece->scaleRotMatrix = aiMatrixToMatrix(aiMatrix4x4t<float>(aiRotateQuat.GetMatrix()));
-	piece->axisMapType = AxisMappingType(pieceMetaTable.GetInt("axisMapType", AXIS_MAPPING_XZY));
+	piece->axisMapType = AxisMappingType(pieceTable.GetInt("axisMapType", AXIS_MAPPING_XZY));
 
 	piece->offset = spTransVec;
-	piece->rsigns = pieceMetaTable.GetFloat3("axisRotSigns", float3(-1.0f, -1.0f, 1.0f));
+	piece->rsigns = pieceTable.GetFloat3("axisRotSigns", float3(-1.0f, -1.0f, 1.0f));
 
 	// construct 'baked' part of the modelpiece matrix
 	// (AssImp order is translate * rotate * scale * v)
@@ -371,14 +372,14 @@ bool CAssParser::SetModelRadiusAndHeight(
 	S3DModel* model,
 	const SAssPiece* piece,
 	const aiNode* pieceNode,
-	const LuaTable& pieceMetaTable
+	const LuaTable& pieceTable
 ) {
 	// check if this piece is "special" (ie, used to set Spring model properties)
 	// if so, extract them and then remove the piece from the hierarchy entirely
 	//
-	if (strcmp(pieceNode->mName.data, "SpringHeight") == 0) {
+	if (piece->name == "SpringHeight") {
 		// set the model height to this node's Z-value (FIXME: 'z' is Blender-specific)
-		if (!pieceMetaTable.KeyExists("height")) {
+		if (!pieceTable.KeyExists("height")) {
 			model->height = piece->offset.z;
 
 			LOG_S(LOG_SECTION_MODEL, "Model height of %f set by special node 'SpringHeight'", model->height);
@@ -389,15 +390,15 @@ bool CAssParser::SetModelRadiusAndHeight(
 		return true;
 	}
 
-	if (strcmp(pieceNode->mName.data, "SpringRadius") == 0) {
-		if (!pieceMetaTable.KeyExists("midpos")) {
+	if (piece->name == "SpringRadius") {
+		if (!pieceTable.KeyExists("midpos")) {
 			model->relMidPos = piece->scaleRotMatrix.Mul(piece->offset);
 
 			LOG_S(LOG_SECTION_MODEL,
 				"Model midpos of (%f,%f,%f) set by special node 'SpringRadius'",
 				model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
 		}
-		if (!pieceMetaTable.KeyExists("radius")) {
+		if (!pieceTable.KeyExists("radius")) {
 			if (true || piece->maxs.x <= 0.00001f) {
 				// FIXME: geometry bounds are not calculated yet at this point
 				aiVector3D _scale, _offset;
@@ -429,6 +430,7 @@ void CAssParser::SetPieceName(SAssPiece* piece, const S3DModel* model, const aiN
 
 	if (piece->name.empty()) {
 		if (piece->isRoot) {
+			// root is always the first piece created, so safe to assign this
 			piece->name = "root";
 			return;
 		} else {
@@ -695,40 +697,45 @@ void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& metaT
 }
 
 
-void CAssParser::FindTextures(S3DModel* model, const aiScene* scene, const LuaTable& metaTable, const std::string& modelFilePath)
-{
-	const std::string modelPath = FileSystem::GetDirectory(modelFilePath);
-	const std::string modelName = FileSystem::GetBasename(modelFilePath);
-
+void CAssParser::FindTextures(
+	S3DModel* model,
+	const aiScene* scene,
+	const LuaTable& metaTable,
+	const std::string& modelPath,
+	const std::string& modelName
+) {
 	// Assign textures
 	// The S3O texture handler uses two textures.
 	// The first contains diffuse color (RGB) and teamcolor (A)
 	// The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
 
-	// gather model defined textures
-	if (scene->mNumMaterials > 0) {
-		const aiMaterial* mat = scene->mMaterials[0]; //only check first material
-
-		//FIXME support these too (we need to allow to construct tex1 & tex2 from several sources)
-		/*aiTextureType_EMISSIVE
+	const unsigned int texTypes[] = {
+		aiTextureType_DIFFUSE,
+		aiTextureType_UNKNOWN,
+		aiTextureType_SPECULAR,
+		/*
+		// TODO: support these too (we need to allow constructing tex1 & tex2 from several sources)
+		aiTextureType_EMISSIVE
 		aiTextureType_HEIGHT
 		aiTextureType_NORMALS
 		aiTextureType_SHININESS
-		aiTextureType_OPACITY*/
+		aiTextureType_OPACITY
+		*/
+	};
 
-		aiString textureFile;
+	// gather model defined textures (only check first material)
+	if (scene->mNumMaterials > 0) {
+		const aiMaterial* mat = scene->mMaterials[0];
 
-		mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE,  0), textureFile);
-		if (strcmp(textureFile.C_Str(), "") == 0) model->tex1 = textureFile.C_Str();
-		textureFile.Clear();
+		for (unsigned int n = 0; n < (sizeof(texTypes) / sizeof(texTypes[0])); n++) {
+			aiString textureFile;
+			mat->Get(AI_MATKEY_TEXTURE(texTypes[n], 0), textureFile);
 
-		mat->Get(AI_MATKEY_TEXTURE(aiTextureType_UNKNOWN,  0), textureFile);
-		if (strcmp(textureFile.C_Str(), "") == 0) model->tex1 = textureFile.C_Str();
-		textureFile.Clear();
-
-		mat->Get(AI_MATKEY_TEXTURE(aiTextureType_SPECULAR, 0), textureFile);
-		if (strcmp(textureFile.C_Str(), "") == 0) model->tex1 = textureFile.C_Str();
-		textureFile.Clear();
+			if (textureFile.length > 0) {
+				model->tex1 = std::string(textureFile.data);
+				break;
+			}
+		}
 	}
 
 	// try to load from metafile
