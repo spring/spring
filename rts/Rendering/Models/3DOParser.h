@@ -119,11 +119,13 @@ private:
 	S3DOPiece* LoadPiece(S3DModel* model, int pos, S3DOPiece* parent,
 			int* numobj);
 
+	void SimStreamRead(void* buf, int length);
+
 	std::set<std::string> teamtex;
+	std::vector<unsigned char> fileBuf;
 
 	int curOffset;
-	unsigned char* fileBuf;
-	void SimStreamRead(void* buf, int length);
+
 };
 
 #endif // SPRING_3DOPARSER_H

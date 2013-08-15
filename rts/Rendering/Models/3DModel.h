@@ -11,6 +11,8 @@
 #include "System/Matrix44f.h"
 #include "System/creg/creg_cond.h"
 
+static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
+static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
 
 enum ModelType {
 	MODELTYPE_3DO   = 0,
@@ -96,6 +98,9 @@ struct S3DModelPiece {
 	unsigned int GetDisplayListID() const { return dispListID; }
 	void SetDisplayListID(unsigned int id) { dispListID = id; }
 
+protected:
+	virtual void DrawForList() const = 0;
+
 public:
 	std::string name;
 	std::string parentName;
@@ -121,8 +126,6 @@ public:
 	float3 rsigns;
 
 protected:
-	virtual void DrawForList() const = 0;
-
 	unsigned int dispListID;
 
 	VBO vboIndices;
@@ -134,10 +137,7 @@ protected:
 struct S3DModel
 {
 	S3DModel()
-		: tex1("default.png")
-		, tex2("")
-
-		, id(-1)
+		: id(-1)
 		, numPieces(0)
 		, textureType(-1)
 
@@ -150,8 +150,8 @@ struct S3DModel
 		, height(0.0f)
 		, drawRadius(0.0f)
 
-		, mins(10000.0f, 10000.0f, 10000.0f)
-		, maxs(-10000.0f, -10000.0f, -10000.0f)
+		, mins(DEF_MIN_SIZE)
+		, maxs(DEF_MAX_SIZE)
 		, relMidPos(ZeroVector)
 
 		, rootPiece(NULL)

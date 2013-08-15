@@ -17,9 +17,6 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/byteorder.h"
 
-static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
-static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
-
 S3DModel* CS3OParser::Load(const std::string& name)
 {
 	CFileHandler file(name);
@@ -49,9 +46,7 @@ S3DModel* CS3OParser::Load(const std::string& name)
 	model->radius = (header.radius <= 0.01f)? (model->maxs.y - model->mins.y): header.radius;
 	model->height = (header.height <= 0.01f)? (model->radius + model->radius): header.height;
 	model->drawRadius = std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length();
-	
 	model->relMidPos = float3(header.midx, header.midy, header.midz);
-	model->relMidPos.y = std::max(model->relMidPos.y, 1.0f); // ?
 
 	delete[] fileBuf;
 	return model;

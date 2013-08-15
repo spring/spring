@@ -34,9 +34,6 @@
 static const float DEGTORAD = PI / 180.0f;
 static const float RADTODEG = 180.0f / PI;
 
-static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
-static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
-
 // triangulate guarantees the most complex mesh is a triangle
 // sortbytype ensure only 1 type of primitive type per mesh is used
 static const unsigned int ASS_POSTPROCESS_OPTIONS =
@@ -714,26 +711,27 @@ void CAssParser::FindTextures(
 		aiTextureType_SPECULAR,
 		/*
 		// TODO: support these too (we need to allow constructing tex1 & tex2 from several sources)
-		aiTextureType_EMISSIVE
-		aiTextureType_HEIGHT
-		aiTextureType_NORMALS
-		aiTextureType_SHININESS
-		aiTextureType_OPACITY
+		aiTextureType_EMISSIVE,
+		aiTextureType_HEIGHT,
+		aiTextureType_NORMALS,
+		aiTextureType_SHININESS,
+		aiTextureType_OPACITY,
 		*/
 	};
 
-	// gather model defined textures (only check first material)
+	// gather model-defined textures (only check first material)
 	if (scene->mNumMaterials > 0) {
 		const aiMaterial* mat = scene->mMaterials[0];
 
 		for (unsigned int n = 0; n < (sizeof(texTypes) / sizeof(texTypes[0])); n++) {
 			aiString textureFile;
-			mat->Get(AI_MATKEY_TEXTURE(texTypes[n], 0), textureFile);
 
-			if (textureFile.length > 0) {
-				model->tex1 = std::string(textureFile.data);
-				break;
-			}
+			if (mat->Get(AI_MATKEY_TEXTURE(texTypes[n], 0), textureFile) != aiReturn_SUCCESS)
+				continue;
+
+			assert(textureFile.length > 0);
+			model->tex1 = std::string(textureFile.data);
+			break;
 		}
 	}
 
