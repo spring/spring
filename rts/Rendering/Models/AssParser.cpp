@@ -143,7 +143,6 @@ public:
 S3DModel* CAssParser::Load(const std::string& modelFilePath)
 {
 	LOG_S(LOG_SECTION_MODEL, "Loading model: %s", modelFilePath.c_str());
-	printf("\n\n\n\nmodelFilePath=%s\n", modelFilePath.c_str());
 
 	const std::string& modelPath = FileSystem::GetDirectory(modelFilePath);
 	const std::string& modelName = FileSystem::GetBasename(modelFilePath);
