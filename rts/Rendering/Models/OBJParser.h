@@ -16,12 +16,7 @@ struct SOBJTriangle {
 struct SOBJPiece: public S3DModelPiece {
 public:
 	SOBJPiece() {
-		parent      = NULL;
-		dispListID  = 0;
-		isEmpty     = true;
-		type        = MODELTYPE_OBJ;
-		mins        = ZeroVector;
-		maxs        = ZeroVector;
+		type = MODELTYPE_OBJ;
 	}
 
 	void UploadGeometryVBOs();
