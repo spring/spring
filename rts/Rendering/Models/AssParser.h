@@ -60,15 +60,15 @@ public:
 private:
 	static void SetPieceName(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode);
 	static void SetPieceParentName(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, const LuaTable& pieceTable);
-	static void LoadPieceTransformations(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, const LuaTable& metaTable);
+	static void LoadPieceTransformations(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, const LuaTable& pieceTable);
 	static void LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, const aiScene* scene);
-	static SAssPiece* LoadPiece(S3DModel* model, const aiNode* pieceNode, const aiScene* scene, const LuaTable& metaTable);
+	static SAssPiece* LoadPiece(S3DModel* model, const aiNode* pieceNode, const aiScene* scene, const LuaTable& pieceTable);
 
 	static void BuildPieceHierarchy(S3DModel* model);
 	static void CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece);
-	static void CalculateModelProperties(S3DModel* model, const LuaTable& metaTable);
-	static void FindTextures(S3DModel* model, const aiScene* scene, const LuaTable& metaTable, const std::string& modelFilePath);
-	static bool SetModelRadiusAndHeight(S3DModel* model, const SAssPiece* piece, const aiNode* pieceNode, const LuaTable& metaTable);
+	static void CalculateModelProperties(S3DModel* model, const LuaTable& pieceTable);
+	static void FindTextures(S3DModel* model, const aiScene* scene, const LuaTable& pieceTable, const std::string& modelPath, const std::string& modelName);
+	static bool SetModelRadiusAndHeight(S3DModel* model, const SAssPiece* piece, const aiNode* pieceNode, const LuaTable& pieceTable);
 };
 
 #endif /* ASS_PARSER_H */
