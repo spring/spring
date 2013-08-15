@@ -61,7 +61,7 @@ struct S3DModelPiece {
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 
 	bool ComposeTransform(CMatrix44f& m, const float3& t, const float3& r) const {
-		bool ret = true;
+		bool ret = mIsIdentity;
 
 		// execute rotations in YPR order by default
 		// note: translating + rotating is faster than
