@@ -60,9 +60,6 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	fp->swap(); // Does it matter we mess with the original buffer here? Don't hope so.
 
 	SS3OPiece* piece = new SS3OPiece();
-		piece->mins = DEF_MIN_SIZE;
-		piece->maxs = DEF_MAX_SIZE;
-		piece->rsigns = -OnesVector;
 		piece->offset.x = fp->xoffset;
 		piece->offset.y = fp->yoffset;
 		piece->offset.z = fp->zoffset;
