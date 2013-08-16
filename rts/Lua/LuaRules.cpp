@@ -602,7 +602,7 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 }
 
 
-bool CLuaRules::AllowStartPosition(int playerID, const float3& rawPickPos, const float3& clampedPos)
+bool CLuaRules::AllowStartPosition(int playerID, const float3& clampedPos, const float3& rawPickPos)
 {
 	if (!haveAllowStartPosition)
 		return true; // the call is not defined

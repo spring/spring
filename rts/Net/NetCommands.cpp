@@ -352,7 +352,7 @@ void CGame::ClientReadNet()
 					CTeam* team = teamHandler->Team(teamID);
 					team->ClampStartPosInStartBox(&clampedPos);
 
-					if (!luaRules || luaRules->AllowStartPosition(playerID, rawPickPos, clampedPos)) {
+					if (!luaRules || luaRules->AllowStartPosition(playerID, clampedPos, rawPickPos)) {
 						team->SetStartPos(clampedPos);
 
 						if (inbuf[3] != 2 && playerID != SERVER_PLAYER) {
