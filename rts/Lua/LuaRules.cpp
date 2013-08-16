@@ -623,7 +623,7 @@ bool CLuaRules::AllowStartPosition(int playerID, const float3& rawPickPos, const
 	lua_pushnumber(L, rawPickPos.z);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 4, 1))
+	if (!RunCallIn(cmdStr, 7, 1))
 		return true;
 
 	// get the results
