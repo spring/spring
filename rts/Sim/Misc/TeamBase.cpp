@@ -39,7 +39,7 @@ unsigned char TeamBase::teamDefaultColor[10][4] =
 TeamBase::TeamBase() :
 	leader(-1),
 	incomeMultiplier(1.0f),
-	startPos(-100.0f, -100.0f, -100.0f),
+	startPos(UpVector * -100.0f),
 	teamStartNum(-1),
 	teamAllyteam(-1)
 {
@@ -48,10 +48,6 @@ TeamBase::TeamBase() :
 	color[2] = 255;
 	color[3] = 255;
 }
-
-TeamBase::~TeamBase() {
-}
-
 
 void TeamBase::SetValue(const std::string& key, const std::string& value)
 {

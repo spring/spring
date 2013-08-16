@@ -77,7 +77,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		gaia->color[3] = 255;
 		gaia->gaia = true;
 		gaia->SetMaxUnits(MAX_UNITS - (teams.size() * teams[0]->GetMaxUnits()));
-		gaia->StartposMessage(ZeroVector);
+		gaia->SetStartPos(ZeroVector);
 		gaia->teamAllyteam = gaiaAllyTeamID;
 		teams.push_back(gaia);
 

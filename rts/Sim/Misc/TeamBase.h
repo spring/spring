@@ -18,7 +18,7 @@ public:
 	typedef std::map<std::string, std::string> customOpts;
 
 	TeamBase();
-	virtual ~TeamBase();
+	virtual ~TeamBase() {}
 
 	void SetValue(const std::string& key, const std::string& value);
 	const customOpts& GetAllValues() const {
