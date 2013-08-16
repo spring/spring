@@ -118,7 +118,7 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 	// Show that we havent selected start pos yet
 	if (startPosType == StartPos_ChooseInGame) {
 		for (size_t a = 0; a < teamStartingData.size(); ++a) {
-			teamStartingData[a].startPos.y = -500;
+			teamStartingData[a].startPos = UpVector * -500.0f;
 		}
 	}
 }

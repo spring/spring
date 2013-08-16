@@ -602,7 +602,7 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 }
 
 
-bool CLuaRules::AllowStartPosition(int playerID, const float3& pos)
+bool CLuaRules::AllowStartPosition(int playerID, const float3& rawPickPos, const float3& clampedPos)
 {
 	if (!haveAllowStartPosition)
 		return true; // the call is not defined
@@ -614,10 +614,13 @@ bool CLuaRules::AllowStartPosition(int playerID, const float3& pos)
 		return true; // the call is not defined
 
 	// push the start position and playerID
-	lua_pushnumber(L, pos.x);
-	lua_pushnumber(L, pos.y);
-	lua_pushnumber(L, pos.z);
+	lua_pushnumber(L, clampedPos.x);
+	lua_pushnumber(L, clampedPos.y);
+	lua_pushnumber(L, clampedPos.z);
 	lua_pushnumber(L, playerID);
+	lua_pushnumber(L, rawPickPos.x);
+	lua_pushnumber(L, rawPickPos.y);
+	lua_pushnumber(L, rawPickPos.z);
 
 	// call the function
 	if (!RunCallIn(cmdStr, 4, 1))

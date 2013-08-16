@@ -335,28 +335,33 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_STARTPOS: {
-				const unsigned char player = inbuf[1];
-				if (!playerHandler->IsValidPlayer(player) && player != SERVER_PLAYER) {
-					LOG_L(L_ERROR, "Got invalid player num %i in start pos msg", player);
+				const unsigned char playerID = inbuf[1];
+				const int teamID = inbuf[2];
+
+				if (!playerHandler->IsValidPlayer(playerID) && playerID != SERVER_PLAYER) {
+					LOG_L(L_ERROR, "Got invalid player num %i in start pos msg", playerID);
 					break;
 				}
-				const int team = inbuf[2];
-				if (!teamHandler->IsValidTeam(team)) {
-					LOG_L(L_ERROR, "Got invalid team num %i in startpos msg", team);
+
+				if (!teamHandler->IsValidTeam(teamID)) {
+					LOG_L(L_ERROR, "Got invalid team num %i in startpos msg", teamID);
 				} else {
-					float3 pos(*(float*)&inbuf[4],
-					           *(float*)&inbuf[8],
-					           *(float*)&inbuf[12]);
-					teamHandler->Team(team)->ClampStartPosInStartBox(&pos);
-					if (!luaRules || luaRules->AllowStartPosition(player, pos)) {
-						teamHandler->Team(team)->StartposMessage(pos);
-						if (inbuf[3] != 2 && player != SERVER_PLAYER)
-						{
-							playerHandler->Player(player)->readyToStart = !!inbuf[3];
+					float3 rawPickPos(*(float*) &inbuf[4], *(float*) &inbuf[8], *(float*) &inbuf[12]);
+					float3 clampedPos(rawPickPos);
+
+					CTeam* team = teamHandler->Team(teamID);
+					team->ClampStartPosInStartBox(&clampedPos);
+
+					if (!luaRules || luaRules->AllowStartPosition(playerID, rawPickPos, clampedPos)) {
+						team->SetStartPos(clampedPos);
+
+						if (inbuf[3] != 2 && playerID != SERVER_PLAYER) {
+							playerHandler->Player(playerID)->readyToStart = !!inbuf[3];
 						}
 					}
 				}
-				AddTraffic(player, packetCode, dataLength);
+
+				AddTraffic(playerID, packetCode, dataLength);
 				break;
 			}
 
