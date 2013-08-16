@@ -670,8 +670,7 @@ void CUnit::DisableScriptMoveType()
 
 	// FIXME: prevent the issuing of extra commands ?
 	if (moveType) {
-		moveType->oldPos = pos;
-		moveType->SetGoal(pos);
+		moveType->SetGoal(moveType->oldPos = pos);
 		moveType->StopMoving();
 	}
 }

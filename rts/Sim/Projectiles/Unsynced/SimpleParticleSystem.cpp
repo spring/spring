@@ -165,11 +165,11 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit* owner)
 	// FIXME: should catch these earlier and for more projectile-types
 	if (colorMap == NULL) {
 		colorMap = CColorMap::LoadFromFloatVector(std::vector<float>(8, 1.0f));
-		LOG_L(L_WARNING, "[CSimpleParticleSystem::Init] no color-map specified");
+		LOG_L(L_WARNING, "[CSimpleParticleSystem::%s] no color-map specified", __FUNCTION__);
 	}
 	if (texture == NULL) {
 		texture = &projectileDrawer->textureAtlas->GetTexture("simpleparticle");
-		LOG_L(L_WARNING, "[CSimpleParticleSystem::Init] no texture specified");
+		LOG_L(L_WARNING, "[CSimpleParticleSystem::%s] no texture specified", __FUNCTION__);
 	}
 
 	for (int i = 0; i < numParticles; i++) {
@@ -213,11 +213,11 @@ void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 	// FIXME: should catch these earlier and for more projectile-types
 	if (colorMap == NULL) {
 		colorMap = CColorMap::LoadFromFloatVector(std::vector<float>(8, 1.0f));
-		LOG_L(L_WARNING, "[CSphereParticleSpawner::Init] no color-map specified");
+		LOG_L(L_WARNING, "[CSphereParticleSpawner::%s] no color-map specified", __FUNCTION__);
 	}
 	if (texture == NULL) {
 		texture = &projectileDrawer->textureAtlas->GetTexture("sphereparticle");
-		LOG_L(L_WARNING, "[CSphereParticleSpawner::Init] no texture specified");
+		LOG_L(L_WARNING, "[CSphereParticleSpawner::%s] no texture specified", __FUNCTION__);
 	}
 
 	for (int i = 0; i < numParticles; i++) {
