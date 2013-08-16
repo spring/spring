@@ -68,18 +68,18 @@ struct S3DModelPiece {
 		// execute rotations in YPR order by default
 		// note: translating + rotating is faster than
 		// matrix-multiplying (but the branching hurts)
-		switch (axisMapType) {
+		switch (ramType) {
 			case AXIS_MAPPING_XYZ: {
-				if (t.SqLength() != 0.0f) { m.Translate(t);            ret = false; }
-				if (r.y          != 0.0f) { m.RotateY(r.y * rsigns.y); ret = false; } // yaw
-				if (r.x          != 0.0f) { m.RotateX(r.x * rsigns.x); ret = false; } // pitch
-				if (r.z          != 0.0f) { m.RotateZ(r.z * rsigns.z); ret = false; } // roll
+				if (t.SqLength() != 0.0f) { m.Translate(t);             ret = false; }
+				if (r.y          != 0.0f) { m.RotateY(r.y * raSigns.y); ret = false; } // yaw
+				if (r.x          != 0.0f) { m.RotateX(r.x * raSigns.x); ret = false; } // pitch
+				if (r.z          != 0.0f) { m.RotateZ(r.z * raSigns.z); ret = false; } // roll
 			} break;
 			case AXIS_MAPPING_XZY: {
-				if (t.SqLength() != 0.0f) { m.Translate(t);            ret = false; }
-				if (r.y          != 0.0f) { m.RotateZ(r.y * rsigns.y); ret = false; } // yaw
-				if (r.x          != 0.0f) { m.RotateX(r.x * rsigns.x); ret = false; } // pitch
-				if (r.z          != 0.0f) { m.RotateY(r.z * rsigns.z); ret = false; } // roll
+				if (t.SqLength() != 0.0f) { m.Translate(t);             ret = false; }
+				if (r.y          != 0.0f) { m.RotateZ(r.y * raSigns.y); ret = false; } // yaw
+				if (r.x          != 0.0f) { m.RotateX(r.x * raSigns.x); ret = false; } // pitch
+				if (r.z          != 0.0f) { m.RotateY(r.z * raSigns.z); ret = false; } // roll
 			} break;
 		}
 
@@ -109,7 +109,7 @@ public:
 	CollisionVolume* colvol;
 
 	ModelType type;
-	AxisMappingType axisMapType;
+	AxisMappingType ramType;
 
 	bool isEmpty;     /// if piece has no geometry
 	bool mIsIdentity; /// if scaleRotMatrix is identity
@@ -123,7 +123,7 @@ public:
 	float3 goffset;   /// global offset wrt. root piece
 	float3 mins;
 	float3 maxs;
-	float3 rsigns;
+	float3 raSigns;
 
 protected:
 	unsigned int dispListID;

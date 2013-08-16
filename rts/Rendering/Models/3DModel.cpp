@@ -75,9 +75,12 @@ S3DModelPiece::S3DModelPiece()
 	: parent(NULL)
 	, colvol(NULL)
 	, type(MODELTYPE_OTHER)
-	, axisMapType(AXIS_MAPPING_XYZ)
+	, ramType(AXIS_MAPPING_XYZ)
 	, isEmpty(true)
 	, mIsIdentity(true)
+	, mins(DEF_MIN_SIZE)
+	, maxs(DEF_MAX_SIZE)
+	, raSigns(-OnesVector)
 	, dispListID(0)
 {
 }
