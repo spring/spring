@@ -6,27 +6,28 @@
 #include "InputReceiver.h"
 #include "System/float3.h"
 
-class CStartPosSelecter :
-	public CInputReceiver
+class CStartPosSelecter: public CInputReceiver
 {
 public:
-	static CStartPosSelecter* selector;
-
 	CStartPosSelecter();
 	~CStartPosSelecter();
 
 	virtual bool MousePress(int x, int y, int button);
 	virtual void Draw();
 
-	bool Ready();
-	void ShowReady(bool value) { showReady = value; }
+	bool Ready(bool forcedReady);
+	void ShowReadyBox(bool b) { showReadyBox = b; }
+
+	static CStartPosSelecter* GetSelector() { return selector; }
 
 private:
-	bool showReady;
 	ContainerBox readyBox;
+	float3 setStartPos;
 
+	bool showReadyBox;
 	bool startPosSet;
-	float3 startPos;
+
+	static CStartPosSelecter* selector;
 };
 
 

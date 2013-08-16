@@ -171,7 +171,7 @@ public:
 	PacketType SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label, bool);
 	PacketType SendSyncResponse(uchar myPlayerNum, int frameNum, uint checksum);
 	PacketType SendSystemMessage(uchar myPlayerNum, std::string message);
-	PacketType SendStartPos(uchar myPlayerNum, uchar teamNum, uchar ready, float x, float y, float z);
+	PacketType SendStartPos(uchar myPlayerNum, uchar teamNum, uchar readyState, float x, float y, float z);
 	PacketType SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
 	PacketType SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
 	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<boost::uint8_t>& msg);

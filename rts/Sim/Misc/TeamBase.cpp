@@ -39,7 +39,7 @@ unsigned char TeamBase::teamDefaultColor[10][4] =
 TeamBase::TeamBase() :
 	leader(-1),
 	incomeMultiplier(1.0f),
-	startPos(UpVector * -100.0f),
+	startPos(TeamBase::GetBaseStartPos()),
 	teamStartNum(-1),
 	teamAllyteam(-1)
 {

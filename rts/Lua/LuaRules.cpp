@@ -602,14 +602,16 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 }
 
 
-bool CLuaRules::AllowStartPosition(int playerID, const float3& clampedPos, const float3& rawPickPos)
+bool CLuaRules::AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos)
 {
 	if (!haveAllowStartPosition)
 		return true; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 9);
+	lua_checkstack(L, 13);
+
 	static const LuaHashString cmdStr(__FUNCTION__);
+
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -618,12 +620,13 @@ bool CLuaRules::AllowStartPosition(int playerID, const float3& clampedPos, const
 	lua_pushnumber(L, clampedPos.y);
 	lua_pushnumber(L, clampedPos.z);
 	lua_pushnumber(L, playerID);
+	lua_pushnumber(L, readyState);
 	lua_pushnumber(L, rawPickPos.x);
 	lua_pushnumber(L, rawPickPos.y);
 	lua_pushnumber(L, rawPickPos.z);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 7, 1))
+	if (!RunCallIn(cmdStr, 8, 1))
 		return true;
 
 	// get the results

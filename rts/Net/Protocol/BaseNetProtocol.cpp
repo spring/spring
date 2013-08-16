@@ -272,10 +272,10 @@ PacketType CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, std::string me
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendStartPos(uchar myPlayerNum, uchar teamNum, uchar ready, float x, float y, float z)
+PacketType CBaseNetProtocol::SendStartPos(uchar myPlayerNum, uchar teamNum, uchar readyState, float x, float y, float z)
 {
 	PackPacket* packet = new PackPacket(16, NETMSG_STARTPOS);
-	*packet << myPlayerNum << teamNum << ready << x << y << z;
+	*packet << myPlayerNum << teamNum << readyState << x << y << z;
 	return PacketType(packet);
 }
 

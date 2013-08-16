@@ -1479,22 +1479,30 @@ void CGame::StartPlaying()
 			continue;
 		}
 
-		if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame
-				&& (team->startPos.x < 0 || team->startPos.z < 0
-				|| (team->startPos.x <= 0 && team->startPos.z <= 0))) {
-			// if the player didn't choose a start position, choose one for him
-			// it should be near the center of his startbox
-			const int allyTeam = teamHandler->AllyTeam(a);
-			const float xmin = (gs->mapx * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectLeft;
-			const float zmin = (gs->mapy * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectTop;
-			const float xmax = (gs->mapx * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectRight;
-			const float zmax = (gs->mapy * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectBottom;
-			const float xcenter = (xmin + xmax) / 2;
-			const float zcenter = (zmin + zmax) / 2;
-			assert(xcenter >= 0 && xcenter < gs->mapx*SQUARE_SIZE);
-			assert(zcenter >= 0 && zcenter < gs->mapy*SQUARE_SIZE);
-			team->startPos.x = (a - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + xcenter;
-			team->startPos.z = (a - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + zcenter;
+		if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame) {
+			const float3& oldTeamStartPos = team->GetStartPos();
+
+			if ((oldTeamStartPos.x < 0.0f || oldTeamStartPos.z < 0.0f) || (oldTeamStartPos.x <= 0.0f && oldTeamStartPos.z <= 0.0f)) {
+				// if the player didn't choose a start position (if the game
+				// was force-started), silently choose one for him now near
+				// the center of his startbox
+				const int allyTeam = teamHandler->AllyTeam(a);
+				const float xmin = (gs->mapx * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectLeft;
+				const float zmin = (gs->mapy * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectTop;
+				const float xmax = (gs->mapx * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectRight;
+				const float zmax = (gs->mapy * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectBottom;
+				const float xcenter = (xmin + xmax) / 2;
+				const float zcenter = (zmin + zmax) / 2;
+				assert(xcenter >= 0 && xcenter < gs->mapx * SQUARE_SIZE);
+				assert(zcenter >= 0 && zcenter < gs->mapy * SQUARE_SIZE);
+
+				float3 newTeamStartPos;
+				newTeamStartPos.x = (a - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + xcenter;
+				newTeamStartPos.z = (a - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + zcenter;
+				newTeamStartPos.y = oldTeamStartPos.y;
+
+				team->SetStartPos(newTeamStartPos);
+			}
 		}
 
 		// create a Skirmish AI if required

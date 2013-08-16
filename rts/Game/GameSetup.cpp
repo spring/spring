@@ -84,7 +84,7 @@ void CGameSetup::LoadStartPositionsFromMap()
 		float3 pos(1000.0f, 100.0f, 1000.0f);
 		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos)) // don't fail when playing with more players than startpositions and we didn't use them anyway
 			throw content_error(mapParser.GetErrorLog());
-		teamStartingData[a].startPos = float3(pos.x, pos.y, pos.z);
+		teamStartingData[a].SetStartPos(float3(pos.x, pos.y, pos.z));
 	}
 }
 
@@ -118,7 +118,7 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 	// Show that we havent selected start pos yet
 	if (startPosType == StartPos_ChooseInGame) {
 		for (size_t a = 0; a < teamStartingData.size(); ++a) {
-			teamStartingData[a].startPos = UpVector * -500.0f;
+			teamStartingData[a].SetStartPos(TeamBase::GetNullStartPos());
 		}
 	}
 }

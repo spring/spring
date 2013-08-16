@@ -336,7 +336,8 @@ void CGame::ClientReadNet()
 
 			case NETMSG_STARTPOS: {
 				const unsigned char playerID = inbuf[1];
-				const int teamID = inbuf[2];
+				const unsigned int teamID = inbuf[2];
+				const unsigned char rdyState = inbuf[3];
 
 				if (!playerHandler->IsValidPlayer(playerID) && playerID != SERVER_PLAYER) {
 					LOG_L(L_ERROR, "Got invalid player num %i in start pos msg", playerID);
@@ -352,11 +353,11 @@ void CGame::ClientReadNet()
 					CTeam* team = teamHandler->Team(teamID);
 					team->ClampStartPosInStartBox(&clampedPos);
 
-					if (!luaRules || luaRules->AllowStartPosition(playerID, clampedPos, rawPickPos)) {
+					if (!luaRules || luaRules->AllowStartPosition(playerID, rdyState, clampedPos, rawPickPos)) {
 						team->SetStartPos(clampedPos);
 
-						if (inbuf[3] != 2 && playerID != SERVER_PLAYER) {
-							playerHandler->Player(playerID)->readyToStart = !!inbuf[3];
+						if (playerID != SERVER_PLAYER) {
+							playerHandler->Player(playerID)->SetReadyToStart(rdyState != CPlayer::PLAYER_RDYSTATE_UPDATED);
 						}
 					}
 				}

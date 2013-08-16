@@ -1001,7 +1001,7 @@ int LuaSyncedRead::GetTeamStartPosition(lua_State* L)
 	if (!IsAlliedTeam(L, teamID)) {
 		return 0;
 	}
-	const float3& pos = team->startPos;
+	const float3& pos = team->GetStartPos();
 	lua_pushnumber(L, pos.x);
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
@@ -1121,7 +1121,7 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	lua_pushnumber(L,  team->leader);
 	lua_pushboolean(L, team->isDead);
 	lua_pushboolean(L, !skirmishAIHandler.GetSkirmishAIsInTeam(teamID).empty()); // hasAIs
-	lua_pushsstring(L, team->side);
+	lua_pushsstring(L, team->GetSide());
 	lua_pushnumber(L,  teamHandler->AllyTeam(team->teamNum));
 
 	lua_newtable(L);
