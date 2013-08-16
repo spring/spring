@@ -14,7 +14,6 @@ class CBitmapMuzzleFlame : public CProjectile
 
 public:
 	CBitmapMuzzleFlame();
-	~CBitmapMuzzleFlame();
 
 	void Draw();
 	void Update();
