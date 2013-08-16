@@ -78,59 +78,68 @@ void GameSetupDrawer::Draw()
 		}
 	}
 
-	std::string state = "Unknown state.";
+	std::map<int, std::string> playerStates;
+	std::string startState = "Unknown state.";
+
 	if (readyCountdown > spring_nulltime) {
-		char buf[64];
-		sprintf(buf, "Starting in %i", readyCountdown.toSecs());
-		state = buf;
-	} else if (!playerHandler->Player(gu->myPlayerNum)->spectator && !playerHandler->Player(gu->myPlayerNum)->readyToStart) {
-		state = "Choose start pos";
+		startState = "Starting in " + IntToString(readyCountdown.toSecs(), "%i");
+	} else if (!playerHandler->Player(gu->myPlayerNum)->spectator && !playerHandler->Player(gu->myPlayerNum)->IsReadyToStart()) {
+		startState = "Choose start pos";
 	} else if (gameServer) {
 		CKeyBindings::HotkeyList list = keyBindings->GetHotkeys("forcestart");
 		const std::string primary = list.empty() ? "<none>" : list.front();
-		state = std::string("Waiting for players, press ")+primary + " to force start";
+		startState = std::string("Waiting for players, press ") + primary + " to force start";
 	} else {
-		state = "Waiting for players";
+		startState = "Waiting for players";
 	}
 
-	int numPlayers = (int)playerHandler->ActivePlayers();
-	//! not the most efficent way to do this, but who cares?
-	std::map<int, std::string> playerStates;
-	for (int a = 0; a < numPlayers; a++) {
+	const unsigned int numPlayers = playerHandler->ActivePlayers();
+
+	// not the most efficent way to do this, but who cares?
+	for (unsigned int a = 0; a < numPlayers; a++) {
 		const CPlayer* player = playerHandler->Player(a);
 
 		if (!player->active) {
 			// player does not become active until we receive NETMSG_PLAYERNAME
 			playerStates[a] = "missing";
-		} else if (!player->spectator && !player->readyToStart) {
+		} else if (!player->spectator && !player->IsReadyToStart()) {
 			playerStates[a] = "notready";
 		} else {
 			playerStates[a] = "ready";
 		}
 	}
 
-	CStartPosSelecter* selector = CStartPosSelecter::selector;
-	bool ready = (selector == NULL);
+	// if choosing in-game, selector remains non-NULL
+	// so long as a position has not been picked yet
+	// and deletes itself afterwards
+	bool playerHasReadied = (CStartPosSelecter::GetSelector() == NULL);
 
-	if (eventHandler.GameSetup(state, ready, playerStates)) {
-		if (selector) {
-			selector->ShowReady(false);
-			if (ready) {
-				selector->Ready();
+	if (eventHandler.GameSetup(startState, playerHasReadied, playerStates)) {
+		if (CStartPosSelecter::GetSelector() != NULL) {
+			CStartPosSelecter::GetSelector()->ShowReadyBox(false);
+
+			if (playerHasReadied) {
+				// either we were ready before or a client
+				// listening to the GameSetup event forced
+				// us to be
+				CStartPosSelecter::GetSelector()->Ready(true);
 			}
 		}
-		return; //! LuaUI says it will do the rendering
+
+		// LuaUI says it will do the rendering
+		return;
 	}
 
-	if (selector) {
-		selector->ShowReady(true);
+	// LuaUI doesn't want to draw, keep showing the box
+	if (CStartPosSelecter::GetSelector() != NULL) {
+		CStartPosSelecter::GetSelector()->ShowReadyBox(true);
 	}
 
 	font->Begin();
-	font->SetColors(); //! default
-	font->glPrint(0.3f, 0.7f, 1.0f, FONT_OUTLINE | FONT_SCALE | FONT_NORM, state);
+	font->SetColors(); // default
+	font->glPrint(0.3f, 0.7f, 1.0f, FONT_OUTLINE | FONT_SCALE | FONT_NORM, startState);
 
-	for (int a = 0; a <= numPlayers; a++) {
+	for (unsigned int a = 0; a <= numPlayers; a++) {
 		const float4* color;
 		static const float4      red(1.0f, 0.2f, 0.2f, 1.0f);
 		static const float4    green(0.2f, 1.0f, 0.2f, 1.0f);
@@ -138,17 +147,20 @@ void GameSetupDrawer::Draw()
 		static const float4    white(1.0f, 1.0f, 1.0f, 1.0f);
 		static const float4     cyan(0.0f, 0.9f, 0.9f, 1.0f);
 		static const float4 lightred(1.0f, 0.5f, 0.5f, 1.0f);
+
+		const CPlayer* player = playerHandler->Player(a);
+
 		if (a == numPlayers) {
 			color = &white;
-		} else if (playerHandler->Player(a)->spectator) {
-			if (!playerHandler->Player(a)->active) {
+		} else if (player->spectator) {
+			if (!player->active) {
 				color = &lightred;
 			} else {
 				color = &cyan;
 			}
-		} else if (!playerHandler->Player(a)->active) {
+		} else if (!player->active) {
 			color = &red;
-		} else if (!playerHandler->Player(a)->readyToStart) {
+		} else if (!player->IsReadyToStart()) {
 			color = &yellow;
 		} else {
 			color = &green;
@@ -156,7 +168,7 @@ void GameSetupDrawer::Draw()
 
 		std::string name = "Players:";
 		if (a != numPlayers) {
-			name = playerHandler->Player(a)->name;
+			name = player->name;
 		}
 		const float fontScale = 1.0f;
 		const float fontSize  = fontScale * font->GetSize();

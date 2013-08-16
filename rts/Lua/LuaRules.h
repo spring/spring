@@ -50,7 +50,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool AllowResourceTransfer(int oldTeam, int newTeam,
 		                           const string& type, float amount);
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
-		bool AllowStartPosition(int playerID, const float3& clampedPos, const float3& rawPickPos);
+		bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
 
 		bool TerraformComplete(const CUnit* unit, const CUnit* build);
 

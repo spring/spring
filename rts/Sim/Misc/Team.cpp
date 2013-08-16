@@ -13,7 +13,6 @@
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"

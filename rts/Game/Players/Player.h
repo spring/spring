@@ -23,6 +23,12 @@ class CPlayer : public PlayerBase
 public:
 	CR_DECLARE(CPlayer);
 
+	enum {
+		PLAYER_RDYSTATE_UPDATED = 0,
+		PLAYER_RDYSTATE_READIED = 1,
+		PLAYER_RDYSTATE_FORCED  = 2,
+	};
+
 	CPlayer();
 	virtual ~CPlayer(){}
 

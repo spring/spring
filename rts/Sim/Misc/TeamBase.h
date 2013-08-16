@@ -25,6 +25,14 @@ public:
 		return customValues;
 	}
 
+	const std::string& GetSide() const { return side; }
+
+	void SetStartPos(const float3& pos) { startPos = pos; }
+	const float3& GetStartPos() const { return startPos; }
+
+	static float3 GetNullStartPos() { return (UpVector * -500.0f); }
+	static float3 GetBaseStartPos() { return (UpVector * -100.0f); }
+
 	/**
 	 * Sets the (dis-)advantage.
 	 * The default is 0.0 -> no advantage, no disadvantage.
@@ -60,6 +68,12 @@ public:
 	 * The fourth channel (alpha) has to be 255, always.
 	 */
 	unsigned char color[4];
+
+	int teamStartNum;
+	int teamAllyteam;
+
+	static unsigned char teamDefaultColor[10][4];
+
 protected:
 	/**
 	 * All the teams resource income is multiplied by this factor.
@@ -68,16 +82,13 @@ protected:
 	 * @see #SetAdvantage()
 	 */
 	float incomeMultiplier;
-public:
+
 	/**
 	 * Side/Factions name, eg. "ARM" or "CORE".
 	 */
 	std::string side;
-	float3 startPos;
-	int teamStartNum;
-	int teamAllyteam;
 
-	static unsigned char teamDefaultColor[10][4];
+	float3 startPos;
 
 private:
 	customOpts customValues;

@@ -30,21 +30,34 @@ public:
 	}
 
 	const char* GetType(const bool capital = true) const {
-
 		if (capital) {
 			return spectator ? "Spectator" : "Player";
 		}
 		return spectator ? "spectator" : "player";
 	}
 
+	void SetReadyToStart(bool b) { readyToStart = b; }
 
+	int GetRank() const { return rank; }
+	float GetCPUUsage() const { return cpuUsage; }
+
+	bool IsSpectator() const { return spectator; }
+	bool IsFromDemo() const { return isFromDemo; }
+	bool IsReadyToStart() const { return readyToStart; }
+	bool IsDesynced() const { return desynced; }
+
+	const std::string& GetCountryCode() const { return countryCode; }
+
+// protected:
 	int rank;
-	std::string countryCode;
+	float cpuUsage;
+
 	bool spectator;
 	bool isFromDemo;
 	bool readyToStart;
 	bool desynced;
-	float cpuUsage;
+
+	std::string countryCode;
 
 private:
 	customOpts customValues;

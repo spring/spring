@@ -39,7 +39,6 @@ public:
 	void KillAIs();
 
 	void ClampStartPosInStartBox(float3* pos) const;
-	void SetStartPos(const float3& pos) { startPos = pos; }
 
 	void SetMaxUnits(unsigned int n) { maxUnits = n; }
 	unsigned int GetMaxUnits() const { return maxUnits; }

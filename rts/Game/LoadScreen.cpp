@@ -93,13 +93,15 @@ void CLoadScreen::Init()
 	// old stuff
 	if (!LuaIntro) {
 		const CTeam* team = teamHandler->Team(gu->myTeam);
-		assert(team);
 		const std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
 
-		if (mapStartPic.empty())
-			RandomStartPicture(team->side);
-		else
+		assert(team != NULL);
+
+		if (mapStartPic.empty()) {
+			RandomStartPicture(team->GetSide());
+		} else {
 			LoadStartPicture(mapStartPic);
+		}
 
 		const std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
 		if (!mapStartMusic.empty())

@@ -132,13 +132,13 @@ CAICallback::CAICallback(int teamId)
 	, gh(grouphandlers[teamId])
 {}
 
-CAICallback::~CAICallback()
-{}
-
 void CAICallback::SendStartPos(bool ready, float3 startPos)
 {
-	unsigned char readyness = ready? 1: 0;
-	net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, team, readyness, startPos.x, startPos.y, startPos.z));
+	if (ready) {
+		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, team, CPlayer::PLAYER_RDYSTATE_READIED, startPos.x, startPos.y, startPos.z));
+	} else {
+		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, team, CPlayer::PLAYER_RDYSTATE_UPDATED, startPos.x, startPos.y, startPos.z));
+	}
 }
 
 void CAICallback::SendTextMsg(const char* text, int zone)
@@ -147,8 +147,7 @@ void CAICallback::SendTextMsg(const char* text, int zone)
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*(teamAIs.begin())); // FIXME is there a better way?
 
 	if (!game->ProcessCommandText(-1, text)) {
-		LOG("<SkirmishAI: %s %s (team %d)>: %s",
-				aiData->shortName.c_str(), aiData->version.c_str(), team, text);
+		LOG("<SkirmishAI: %s %s (team %d)>: %s", aiData->shortName.c_str(), aiData->version.c_str(), team, text);
 	}
 }
 
@@ -281,10 +280,10 @@ int CAICallback::GetPlayerTeam(int playerId)
 const char* CAICallback::GetTeamSide(int teamId)
 {
 	if (teamHandler->IsValidTeam(teamId)) {
-		return (teamHandler->Team(teamId)->side.c_str());
-	} else {
-		return NULL;
+		return (teamHandler->Team(teamId)->GetSide().c_str());
 	}
+
+	return NULL;
 }
 
 void* CAICallback::CreateSharedMemArea(char* name, int size)
@@ -1883,7 +1882,7 @@ bool CAICallback::CanBuildUnit(int unitDefID)
 
 const float3* CAICallback::GetStartPos()
 {
-	return &teamHandler->Team(team)->startPos;
+	return &teamHandler->Team(team)->GetStartPos();
 }
 
 
