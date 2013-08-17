@@ -255,31 +255,32 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 
 CGameServer::~CGameServer()
 {
-	quitServer=true;
+	quitServer = true;
+
 	thread->join();
 	delete thread;
 
 #ifdef DEDICATED
-	// TODO: move this to a method in CTeamHandler
-	int numTeams = (int)setup->teamStartingData.size();
-
-	if (setup->useLuaGaia && (numTeams > 0)) {
-		--numTeams;
-	}
+	// there is always at least one non-Gaia team (numTeams > 0)
+	// the Gaia team itself does not count toward the statistics
 	demoRecorder->SetTime(serverFrameNum / GAME_SPEED, spring_tomsecs(spring_gettime() - serverStartTime) / 1000);
-	demoRecorder->InitializeStats(players.size(), numTeams);
+	demoRecorder->InitializeStats(players.size(), int((setup->GetTeamStartingDataCont()).size()) - setup->useLuaGaia);
 
 	// Pass the winners to the CDemoRecorder.
 	demoRecorder->SetWinningAllyTeams(winningAllyTeams);
+
 	for (size_t i = 0; i < players.size(); ++i) {
 		demoRecorder->SetPlayerStats(i, players[i].lastStats);
 	}
-	/*for (size_t i = 0; i < ais.size(); ++i) {
+	/*
+	// TODO add?
+	for (size_t i = 0; i < ais.size(); ++i) {
 		demoRecorder->SetSkirmishAIStats(i, ais[i].lastStats);
-	}*/
-	/*for (int i = 0; i < numTeams; ++i) {
+	}
+	for (int i = 0; i < numTeams; ++i) {
 		record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
-	}*/ //TODO add
+	}
+	*/
 #endif // DEDICATED
 }
 
