@@ -446,13 +446,11 @@ bool CGameSetup::Init(const std::string& buf)
 	// Copy buffer contents
 	gameSetupText = buf;
 
-	// Parse
+	// Parse game parameters
 	TdfParser file(buf.c_str(),buf.size());
 
 	if (!file.SectionExist("GAME"))
 		return false;
-
-	// Game parameters
 
 	// Used by dedicated server only
 	file.GetTDef(mapHash, unsigned(0), "GAME\\MapHash");
