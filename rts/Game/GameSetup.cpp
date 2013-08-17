@@ -112,14 +112,8 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 		}
 	}
 
-	if (startPosType == StartPos_Fixed || startPosType == StartPos_Random)
+	if (startPosType == StartPos_Fixed || startPosType == StartPos_Random) {
 		LoadStartPositionsFromMap();
-
-	// Show that we havent selected start pos yet
-	if (startPosType == StartPos_ChooseInGame) {
-		for (size_t a = 0; a < teamStartingData.size(); ++a) {
-			teamStartingData[a].SetStartPos(TeamBase::GetNullStartPos());
-		}
 	}
 }
 

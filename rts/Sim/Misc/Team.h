@@ -39,13 +39,16 @@ public:
 	void KillAIs();
 
 	bool HasValidStartPos() const {
-		if (startPos == ZeroVector) return false;
-		if (startPos == TeamBase::GetBaseStartPos()) return false;
-		if (startPos == TeamBase::GetNullStartPos()) return false;
+		// if a player never chose (net-sent) a position
+		if (startPos == ZeroVector)
+			return false;
 		// start-positions that are sent across the net
 		// will always be clamped to a team's start-box
-		// (and hence the map); this should be redundant
-		if (!startPos.IsInMap()) return false;
+		// (and hence the map) when clients receive them
+		// so this should be redundant
+		if (!startPos.IsInMap())
+			return false;
+
 		return true;
 	}
 	void SetDefaultStartPos();

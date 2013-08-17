@@ -293,16 +293,17 @@ void CGame::ClientReadNet()
 			case NETMSG_PLAYERNAME: {
 				try {
 					netcode::UnpackPacket pckt(packet, 2);
-					unsigned char player;
-					pckt >> player;
-					if (!playerHandler->IsValidPlayer(player))
+					unsigned char playerID;
+					pckt >> playerID;
+					if (!playerHandler->IsValidPlayer(playerID))
 						throw netcode::UnpackPacketException("Invalid player number");
 
-					pckt >> playerHandler->Player(player)->name;
-					playerHandler->Player(player)->readyToStart=(gameSetup->startPosType != CGameSetup::StartPos_ChooseInGame);
-					playerHandler->Player(player)->active=true;
-					wordCompletion->AddWord(playerHandler->Player(player)->name, false, false, false); // required?
-					AddTraffic(player, packetCode, dataLength);
+					CPlayer* player = playerHandler->Player(playerID);
+					pckt >> player->name;
+					player->SetReadyToStart(gameSetup->startPosType != CGameSetup::StartPos_ChooseInGame);
+					player->active = true;
+					wordCompletion->AddWord(player->name, false, false, false); // required?
+					AddTraffic(playerID, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "Received an invalid net-message PlayerName: %s", ex.what());
 				}
