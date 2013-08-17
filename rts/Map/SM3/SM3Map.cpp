@@ -75,8 +75,8 @@ CSM3ReadMap::CSM3ReadMap(const std::string& mapName)
 		Sm3LoadCB cb;
 		renderer->LoadHeightMap(GetMapDefParser(), &cb);
 
-		heightMapSyncedPtr   = renderer->GetCornerHeightMapSynced();
-		heightMapUnsyncedPtr = renderer->GetCornerHeightMapUnsynced();
+		heightMapSyncedPtr   = &renderer->GetCornerHeightMapSynced();
+		heightMapUnsyncedPtr = &renderer->GetCornerHeightMapUnsynced();
 
 		width  = renderer->GetHeightmapWidth() - 1;
 		height = renderer->GetHeightmapWidth() - 1; // note: not height (SM3 only supports square maps!)
@@ -201,7 +201,7 @@ void CSM3ReadMap::DrawMinimap() const
 	glBindTexture(GL_TEXTURE_2D, minimapTexture);
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
 
-	if(groundDrawer->DrawExtraTex()){
+	if (groundDrawer->DrawExtraTex()) {
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
@@ -210,8 +210,8 @@ void CSM3ReadMap::DrawMinimap() const
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-	float isx=gs->mapx/float(gs->pwr2mapx);
-	float isy=gs->mapy/float(gs->pwr2mapy);
+	const float isx = gs->mapx / float(gs->pwr2mapx);
+	const float isy = gs->mapy / float(gs->pwr2mapy);
 
 	glBegin(GL_QUADS);
 		glTexCoord2f(0,isy);

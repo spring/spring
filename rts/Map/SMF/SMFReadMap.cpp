@@ -124,8 +124,8 @@ void CSMFReadMap::LoadHeightMap()
 	heightMapSyncedPtr   = &cornerHeightMapSynced;
 	heightMapUnsyncedPtr = &cornerHeightMapUnsynced;
 
-	const float minH = mapInfo->smf.minHeightOverride ? mapInfo->smf.minHeight : header.minHeight;
-	const float maxH = mapInfo->smf.maxHeightOverride ? mapInfo->smf.maxHeight : header.maxHeight;
+	const float minHgt = mapInfo->smf.minHeightOverride ? mapInfo->smf.minHeight : header.minHeight;
+	const float maxHgt = mapInfo->smf.maxHeightOverride ? mapInfo->smf.maxHeight : header.maxHeight;
 	float* cornerHeightMapSyncedData = (cornerHeightMapSynced.empty())? NULL: &cornerHeightMapSynced[0];
 	float* cornerHeightMapUnsyncedData = (cornerHeightMapUnsynced.empty())? NULL: &cornerHeightMapUnsynced[0];
 
@@ -134,7 +134,7 @@ void CSMFReadMap::LoadHeightMap()
 	//     PushVisibleHeightMapUpdate --> (next UpdateDraw) UpdateHeightMapUnsynced(0, 0, gs->mapx, gs->mapy)
 	//     initializes the UHM a second time
 	//     merge them some way so UHM & shadingtex is available from the time readmap got created
-	file.ReadHeightmap(cornerHeightMapSyncedData, cornerHeightMapUnsyncedData, minH, (maxH - minH) / 65536.0f);
+	file.ReadHeightmap(cornerHeightMapSyncedData, cornerHeightMapUnsyncedData, minHgt, (maxHgt - minHgt) / 65536.0f);
 }
 
 
@@ -336,21 +336,19 @@ CBaseGroundDrawer* CSMFReadMap::GetGroundDrawer() { return groundDrawer; }
 
 void CSMFReadMap::UpdateHeightMapUnsynced(const SRectangle& update)
 {
-	// ReadMap::UpdateHeightMapSynced clamps to [0, gs->mapx - 1]
-
-	UpdateVertexNormals(update);
-	UpdateFaceNormals(update);
+	UpdateVertexNormalsUnsynced(update);
+	UpdateFaceNormalsUnsynced(update);
 	UpdateNormalTexture(update);
 	UpdateShadingTexture(update);
 }
 
 
-void CSMFReadMap::UpdateVertexNormals(const SRectangle& update)
+void CSMFReadMap::UpdateVertexNormalsUnsynced(const SRectangle& update)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 	const float*  shm = &cornerHeightMapSynced[0];
-		float*  uhm = &cornerHeightMapUnsynced[0];
-		float3* vvn = &visVertexNormals[0];
+		  float*  uhm = &cornerHeightMapUnsynced[0];
+		  float3* vvn = &visVertexNormals[0];
 
 	const int W = gs->mapxp1;
 	const int H = gs->mapyp1;
@@ -425,13 +423,13 @@ void CSMFReadMap::UpdateVertexNormals(const SRectangle& update)
 }
 
 
-void CSMFReadMap::UpdateFaceNormals(const SRectangle& update)
+void CSMFReadMap::UpdateFaceNormalsUnsynced(const SRectangle& update)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 	const float3* sfn = &faceNormalsSynced[0];
-		float3* ufn = &faceNormalsUnsynced[0];
+		  float3* ufn = &faceNormalsUnsynced[0];
 	const float3* scn = &centerNormalsSynced[0];
-		float3* ucn = &centerNormalsUnsynced[0];
+		  float3* ucn = &centerNormalsUnsynced[0];
 
 	// a heightmap update over (x1, y1) - (x2, y2) implies the
 	// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)

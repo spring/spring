@@ -215,8 +215,8 @@ inline static bool ClampInMapHeight(float3& from, float3& to)
 
 float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 {
-	const float* hm  = readmap->GetCornerHeightMap(synced);
-	const float3* nm = readmap->GetFaceNormals(synced);
+	const float* hm  = readmap->GetSharedCornerHeightMap(synced);
+	const float3* nm = readmap->GetSharedFaceNormals(synced);
 
 	const float3 pfrom = from;
 
@@ -386,12 +386,10 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 
 float CGround::GetApproximateHeight(float x, float y, bool synced) const
 {
-	int xsquare = int(x) / SQUARE_SIZE;
-	int ysquare = int(y) / SQUARE_SIZE;
-	xsquare = Clamp(xsquare, 0, gs->mapxm1);
-	ysquare = Clamp(ysquare, 0, gs->mapym1);
+	const int xsquare = Clamp(int(x) / SQUARE_SIZE, 0, gs->mapxm1);
+	const int ysquare = Clamp(int(y) / SQUARE_SIZE, 0, gs->mapym1);
+	const float* heightMap = readmap->GetSharedCenterHeightMap(synced);
 
-	const float* heightMap = readmap->GetCenterHeightMap(synced);
 	return heightMap[xsquare + ysquare * gs->mapx];
 }
 
@@ -402,7 +400,7 @@ float CGround::GetHeightAboveWater(float x, float y, bool synced) const
 
 float CGround::GetHeightReal(float x, float y, bool synced) const
 {
-	return InterpolateHeight(x, y, readmap->GetCornerHeightMap(synced));
+	return InterpolateHeight(x, y, readmap->GetSharedCornerHeightMap(synced));
 }
 
 float CGround::GetOrigHeight(float x, float y) const
@@ -416,7 +414,7 @@ const float3& CGround::GetNormal(float x, float z, bool synced) const
 	const int xsquare = Clamp(int(x) / SQUARE_SIZE, 0, gs->mapxm1);
 	const int zsquare = Clamp(int(z) / SQUARE_SIZE, 0, gs->mapym1);
 
-	const float3* normalMap = readmap->GetCenterNormals(synced);
+	const float3* normalMap = readmap->GetSharedCenterNormals(synced);
 	return normalMap[xsquare + zsquare * gs->mapx];
 }
 
@@ -431,12 +429,10 @@ const float3& CGround::GetNormalAboveWater(const float3& p, bool synced) const
 
 float CGround::GetSlope(float x, float y, bool synced) const
 {
-	int xhsquare = int(x) / (2 * SQUARE_SIZE);
-	int yhsquare = int(y) / (2 * SQUARE_SIZE);
-	xhsquare = Clamp(xhsquare, 0, gs->hmapx - 1);
-	yhsquare = Clamp(yhsquare, 0, gs->hmapy - 1);
+	const int xhsquare = Clamp(int(x) / (2 * SQUARE_SIZE), 0, gs->hmapx - 1);
+	const int yhsquare = Clamp(int(y) / (2 * SQUARE_SIZE), 0, gs->hmapy - 1);
+	const float* slopeMap = readmap->GetSharedSlopeMap(synced);
 
-	const float* slopeMap = readmap->GetSlopeMap(synced);
 	return slopeMap[xhsquare + yhsquare * gs->hmapx];
 }
 
@@ -483,7 +479,7 @@ float3 CGround::GetSmoothNormal(float x, float y, bool synced) const
 	float ify = 1.0f - fy;
 	float ifx = 1.0f - fx;
 
-	const float3* normalMap = readmap->GetCenterNormals(synced);
+	const float3* normalMap = readmap->GetSharedCenterNormals(synced);
 
 	const float3& n1 = normalMap[sy  * gs->mapx + sx ] * ifx * ify;
 	const float3& n2 = normalMap[sy  * gs->mapx + sx2] *  fx * ify;

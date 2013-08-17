@@ -61,14 +61,23 @@ namespace terrain {
 	}
 
 
-	void Heightmap::FindMinMax(int2 st, int2 size, float& minH, float& maxH)
+	void Heightmap::FindMinMax(int2 st, int2 size, float& minHgt, float& maxHgt, bool synced)
 	{
-		minH = maxH = atSynced(st.x, st.y);
+		if (synced) {
+			minHgt = maxHgt = atSynced(st.x, st.y);
+		} else {
+			minHgt = maxHgt = atUnsynced(st.x, st.y);
+		}
+
 		for (int y = st.y; y < st.y + size.y; y++)
 			for (int x = st.x; x < st.x + size.x; x++) {
-				const float v = atSynced(x, y);
-				if (v < minH) minH = v;
-				if (v > maxH) maxH = v;
+				if (synced) {
+					minHgt = std::min(minHgt, atSynced(x, y));
+					maxHgt = std::max(maxHgt, atSynced(x, y));
+				} else {
+					minHgt = std::min(minHgt, atUnsynced(x, y));
+					maxHgt = std::max(maxHgt, atUnsynced(x, y));
+				}
 			}
 	}
 
