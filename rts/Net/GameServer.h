@@ -125,8 +125,8 @@ private:
 
 	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect = false, int netloss = 0);
 
-	void CheckForGameStart(bool forced=false);
-	void StartGame();
+	void CheckForGameStart(bool forced = false);
+	void StartGame(bool forced);
 	void UpdateLoop();
 	void Update();
 	void ProcessPacket(const unsigned playerNum, boost::shared_ptr<const netcode::RawPacket> packet);

@@ -1479,9 +1479,8 @@ void CGame::StartPlaying()
 			continue;
 
 		if (!team->HasValidStartPos() && gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame) {
-			// if the player didn't choose a start position and none was
-			// sent across the net (if the game was force-started by the
-			// host), silently generate one for him now
+			// if the player didn't choose a start position (eg. if the game
+			// was force-started by the host), silently generate one for him
 			// TODO: notify Lua of this also?
 			team->SetDefaultStartPos();
 		}
