@@ -509,8 +509,8 @@ bool CGameSetup::Init(const std::string& buf)
 	return true;
 }
 
-const std::string& CGameSetup::MapFile() const
+const std::string CGameSetup::MapFile() const
 {
-	return archiveScanner->MapNameToMapFile(mapName);
+	return (archiveScanner->MapNameToMapFile(mapName));
 }
 

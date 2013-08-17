@@ -59,7 +59,7 @@ public:
 	const std::vector<AllyTeam>& GetAllyStartingDataCont() const { return allyStartingData; }
 	const std::vector<SkirmishAIData>& GetAIStartingDataCont() const { return skirmishAIStartingData; }
 
-	const std::string& MapFile() const;
+	const std::string MapFile() const;
 
 	enum StartPosType {
 		StartPos_Fixed            = 0,
