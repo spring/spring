@@ -116,7 +116,7 @@ void CTeam::SetDefaultStartPos()
 	const int allyTeam = teamHandler->AllyTeam(teamNum);
 	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
 
-	assert(!allyData.empty());
+	assert(!allyStartData.empty());
 	assert(allyTeam == teamAllyteam);
 
 	const AllyTeam& allyTeamData = allyStartData[allyTeam];

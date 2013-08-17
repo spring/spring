@@ -89,8 +89,14 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 			if (!updateUnsyncedHeightMap) { continue; }
 			if (!squareEnteredLOS) { continue; }
 
-			const SRectangle rect(lmx * LOS2HEIGHT_X, lmz * LOS2HEIGHT_Z, std::min(gs->mapxm1, (lmx + 1) * LOS2HEIGHT_X), std::min(gs->mapym1, (lmz + 1) * LOS2HEIGHT_Z));
-			readmap->UpdateLOS(rect);
+			const int
+				x1 = lmx * LOS2HEIGHT_X,
+				z1 = lmz * LOS2HEIGHT_Z;
+			const int
+				x2 = std::min((lmx + 1) * LOS2HEIGHT_X, gs->mapxm1),
+				z2 = std::min((lmz + 1) * LOS2HEIGHT_Z, gs->mapym1);
+
+			readmap->UpdateLOS(SRectangle(x1, z1, x2, z2));
 			#endif
 		}
 	}
@@ -106,6 +112,7 @@ void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int a
 	#endif
 
 	std::vector<int>::const_iterator lsi;
+
 	for (lsi = squares.begin(); lsi != squares.end(); ++lsi) {
 		const int losMapSquareIdx = *lsi;
 		#ifdef USE_UNSYNCED_HEIGHTMAP
@@ -118,10 +125,16 @@ void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int a
 		if (!updateUnsyncedHeightMap) { continue; }
 		if (!squareEnteredLOS) { continue; }
 
-		const int lmx = losMapSquareIdx % size.x;
-		const int lmz = losMapSquareIdx / size.x;
-		const SRectangle rect(lmx * LOS2HEIGHT_X, lmz * LOS2HEIGHT_Z, std::min(gs->mapxm1, (lmx + 1) * LOS2HEIGHT_X), std::min(gs->mapym1, (lmz + 1) * LOS2HEIGHT_Z));
-		readmap->UpdateLOS(rect);
+		const int
+			lmx = losMapSquareIdx % size.x,
+			lmz = losMapSquareIdx / size.x;
+		const int
+			x1 = lmx * LOS2HEIGHT_X,
+			z1 = lmz * LOS2HEIGHT_Z,
+			x2 = std::min((lmx + 1) * LOS2HEIGHT_X, gs->mapxm1),
+			z2 = std::min((lmz + 1) * LOS2HEIGHT_Z, gs->mapym1);
+
+		readmap->UpdateLOS(SRectangle(x1, z1, x2, z2));
 		#endif
 	}
 }
