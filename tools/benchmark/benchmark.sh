@@ -23,11 +23,9 @@ mkdir "$PREFIX"
 if ! [ -s "$DEMOFILE" ]; then
 	echo Creating demo
 	${CMD[0]} "$SCRIPT" >/dev/null 2>&1 &
-	CPID=$!
-	sleep 10s
-	DEMOFILE=`lsof -p $CPID -Fn | grep demos | cut -c2-`
+	wait
+	DEMOFILE=`cat infolog.txt | grep "Writing demo: " | cut -c27-`
 	echo demo file: $DEMOFILE
-	wait $CPID
 	cp -v "$DEMOFILE" "$PREFIX/benchmark.sdf"
 	mv benchmark.data "$PREFIX/data-0-cmd1.data"
 fi
