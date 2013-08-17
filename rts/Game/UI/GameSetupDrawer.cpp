@@ -141,7 +141,6 @@ void GameSetupDrawer::Draw()
 	font->glPrint(0.3f, 0.7f, 1.0f, FONT_OUTLINE | FONT_SCALE | FONT_NORM, startState);
 
 	for (unsigned int a = 0; a <= numPlayers; a++) {
-		const float4* color;
 		static const float4      red(1.0f, 0.2f, 0.2f, 1.0f);
 		static const float4    green(0.2f, 1.0f, 0.2f, 1.0f);
 		static const float4   yellow(0.8f, 0.8f, 0.2f, 1.0f);
@@ -149,33 +148,40 @@ void GameSetupDrawer::Draw()
 		static const float4     cyan(0.0f, 0.9f, 0.9f, 1.0f);
 		static const float4 lightred(1.0f, 0.5f, 0.5f, 1.0f);
 
-		const CPlayer* player = playerHandler->Player(a);
-
-		if (a == numPlayers) {
-			color = &white;
-		} else if (player->spectator) {
-			if (!player->active) {
-				color = &lightred;
-			} else {
-				color = &cyan;
-			}
-		} else if (!player->active) {
-			color = &red;
-		} else if (!player->IsReadyToStart()) {
-			color = &yellow;
-		} else {
-			color = &green;
-		}
-
-		std::string name = "Players:";
-		if (a != numPlayers) {
-			name = player->name;
-		}
 		const float fontScale = 1.0f;
 		const float fontSize  = fontScale * font->GetSize();
 		const float yScale = fontSize * font->GetLineHeight() * globalRendering->pixelY;
-		const float yPos = 0.5f - (0.5f * yScale * numPlayers) + (yScale * (float)a);
+		// note: list is drawn in reverse order, last player first
+		const float yPos = 0.5f - (0.5f * yScale * numPlayers) + (yScale * a);
 		const float xPos = 10.0f * globalRendering->pixelX;
+
+		const CPlayer* player = NULL;
+		const float4* color = NULL;
+
+		std::string name;
+
+		if (a == numPlayers) {
+			color = &white;
+			name = "Players:";
+		} else {
+			player = playerHandler->Player(a);
+			name = player->name;
+
+			if (player->spectator) {
+				if (!player->active) {
+					color = &lightred;
+				} else {
+					color = &cyan;
+				}
+			} else if (!player->active) {
+				color = &red;
+			} else if (!player->IsReadyToStart()) {
+				color = &yellow;
+			} else {
+				color = &green;
+			}
+		}
+
 		font->SetColors(color, NULL);
 		font->glPrint(xPos, yPos, fontSize, FONT_OUTLINE | FONT_NORM, name);
 	}
