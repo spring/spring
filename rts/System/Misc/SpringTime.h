@@ -6,7 +6,6 @@
 #include "System/creg/creg_cond.h"
 
 #include <boost/cstdint.hpp>
-typedef boost::int64_t int64_t;
 
 // glibc's chrono is non monotonic/not steady atm (it depends on set timezone and can change at runtime!)
 // we don't want to special handles all the problems caused by this, so just use boost one instead
@@ -35,15 +34,15 @@ struct Cpp11Clock {
 	#define i1e6 1000000LL
 	#define i1e9 1000000000LL
 
-	static inline int64_t ToSecs(const int64_t x) { return x / i1e9; }
-	static inline int64_t ToMs(const int64_t x)   { return x / i1e6; }
-	template<typename T> static inline T ToSecs(const int64_t x) { return int(x / i1e6) * 1e-3; }
-	template<typename T> static inline T ToMs(const int64_t x)   { return int(x / i1e3) * 1e-3; }
-	template<typename T> static inline T ToNs(const int64_t x)   { return x; }
-	template<typename T> static inline int64_t FromSecs(const T s) { return s * i1e9; }
-	template<typename T> static inline int64_t FromMs(const T ms)  { return ms * i1e6; }
-	template<typename T> static inline int64_t FromNs(const T ns)  { return ns; }
-	static inline int64_t Get() {
+	static inline boost::int64_t ToSecs(const boost::int64_t x) { return x / i1e9; }
+	static inline boost::int64_t ToMs(const boost::int64_t x)   { return x / i1e6; }
+	template<typename T> static inline T ToSecs(const boost::int64_t x) { return int(x / i1e6) * 1e-3; }
+	template<typename T> static inline T ToMs(const boost::int64_t x)   { return int(x / i1e3) * 1e-3; }
+	template<typename T> static inline T ToNs(const boost::int64_t x)   { return x; }
+	template<typename T> static inline boost::int64_t FromSecs(const T s) { return s * i1e9; }
+	template<typename T> static inline boost::int64_t FromMs(const T ms)  { return ms * i1e6; }
+	template<typename T> static inline boost::int64_t FromNs(const T ns)  { return ns; }
+	static inline boost::int64_t Get() {
 		return chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
 	}
 };
@@ -57,7 +56,7 @@ private:
 
 public:
 	inline static spring_time gettime() { return spring_time_native(Cpp11Clock::Get()); }
-	inline static spring_time fromNanoSecs(const int64_t ns) { return spring_time_native(Cpp11Clock::FromNs(ns)); }
+	inline static spring_time fromNanoSecs(const boost::int64_t ns) { return spring_time_native(Cpp11Clock::FromNs(ns)); }
 
 public:
 	spring_time() : x(0) {}
@@ -98,7 +97,7 @@ public:
 	//}
 
 private:
-	inline static spring_time spring_time_native(const int64_t n) { spring_time s; s.x = n; return s; }
+	inline static spring_time spring_time_native(const boost::int64_t n) { spring_time s; s.x = n; return s; }
 
 	void Serialize(creg::ISerializer& s);
 	boost::int64_t x;
