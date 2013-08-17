@@ -15,7 +15,7 @@ public:
 	virtual bool MousePress(int x, int y, int button);
 	virtual void Draw();
 
-	bool Ready(bool forcedReady);
+	bool Ready(bool luaForcedReady);
 	void ShowReadyBox(bool b) { showReadyBox = b; }
 
 	static CStartPosSelecter* GetSelector() { return selector; }

@@ -38,6 +38,17 @@ public:
 	void AddPlayer(int playerNum);
 	void KillAIs();
 
+	bool HasValidStartPos() const {
+		if (startPos == ZeroVector) return false;
+		if (startPos == TeamBase::GetBaseStartPos()) return false;
+		if (startPos == TeamBase::GetNullStartPos()) return false;
+		// start-positions that are sent across the net
+		// will always be clamped to a team's start-box
+		// (and hence the map); this should be redundant
+		if (!startPos.IsInMap()) return false;
+		return true;
+	}
+	void SetDefaultStartPos();
 	void ClampStartPosInStartBox(float3* pos) const;
 
 	void SetMaxUnits(unsigned int n) { maxUnits = n; }

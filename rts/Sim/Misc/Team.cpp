@@ -112,13 +112,31 @@ CTeam::CTeam(int _teamNum):
 }
 
 
+void CTeam::SetDefaultStartPos()
+{
+	const int allyTeam = teamHandler->AllyTeam(teamNum);
+	const AllyTeam& allyTeamData = gameSetup->allyStartingData[allyTeam];
+
+	assert(allyTeam == teamAllyteam);
+
+	// pick a spot near the center of our startbox
+	const float xmin = (gs->mapx * SQUARE_SIZE) * allyTeamData.startRectLeft;
+	const float zmin = (gs->mapy * SQUARE_SIZE) * allyTeamData.startRectTop;
+	const float xmax = (gs->mapx * SQUARE_SIZE) * allyTeamData.startRectRight;
+	const float zmax = (gs->mapy * SQUARE_SIZE) * allyTeamData.startRectBottom;
+	const float xcenter = (xmin + xmax) * 0.5f;
+	const float zcenter = (zmin + zmax) * 0.5f;
+
+	assert(xcenter >= 0 && xcenter < gs->mapx * SQUARE_SIZE);
+	assert(zcenter >= 0 && zcenter < gs->mapy * SQUARE_SIZE);
+
+	startPos.x = (teamNum - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + xcenter;
+	startPos.z = (teamNum - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + zcenter;
+}
+
 void CTeam::ClampStartPosInStartBox(float3* pos) const
 {
 	const int allyTeam = teamHandler->AllyTeam(teamNum);
-	if (allyTeam < 0 || allyTeam >= gameSetup->allyStartingData.size()) {
-		LOG_L(L_ERROR, "%s: invalid AllyStartingData (team %d)", __FUNCTION__, teamNum);
-		return;
-	}
 	const AllyTeam& at = gameSetup->allyStartingData[allyTeam];
 	const SRectangle rect(
 		at.startRectLeft   * gs->mapx * SQUARE_SIZE,
