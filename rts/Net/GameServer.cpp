@@ -1969,6 +1969,8 @@ void CGameServer::StartGame(bool forced)
 			// normal start but player did not ready; treat this position
 			// as though it was first selected (makes little sense though
 			// since game is about to start anyway...)
+			// if player never even sent a position to us, this will equal
+			// ZeroVector which is rarely picked during normal game-starts
 			Broadcast(CBaseNetProtocol::Get().SendStartPos(a, (int) team, CPlayer::PLAYER_RDYSTATE_UPDATED, teamStartPos.x, teamStartPos.y, teamStartPos.z));
 		}
 

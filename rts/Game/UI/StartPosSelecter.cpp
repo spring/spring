@@ -27,7 +27,6 @@ CStartPosSelecter::CStartPosSelecter() : CInputReceiver(BACK)
 	readyBox.x2 = 0.81f;
 	readyBox.y2 = 0.76f;
 
-	setStartPos = TeamBase::GetBaseStartPos();
 	selector = this;
 }
 

@@ -30,9 +30,6 @@ public:
 	void SetStartPos(const float3& pos) { startPos = pos; }
 	const float3& GetStartPos() const { return startPos; }
 
-	static float3 GetNullStartPos() { return (UpVector * -500.0f); }
-	static float3 GetBaseStartPos() { return (UpVector * -100.0f); }
-
 	/**
 	 * Sets the (dis-)advantage.
 	 * The default is 0.0 -> no advantage, no disadvantage.
