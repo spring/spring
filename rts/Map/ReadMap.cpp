@@ -35,8 +35,9 @@
 CReadMap* readmap = NULL;
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
-	#define	HEIGHTMAP_DIGESTS CR_MEMBER(syncedHeightMapDigests), \
-					CR_MEMBER(unsyncedHeightMapDigests),
+	#define	HEIGHTMAP_DIGESTS \
+		CR_MEMBER(syncedHeightMapDigests), \
+		CR_MEMBER(unsyncedHeightMapDigests),
 #else
 	#define HEIGHTMAP_DIGESTS
 #endif
@@ -209,13 +210,37 @@ void CReadMap::Initialize()
 	slopeMap.resize(gs->hmapx * gs->hmapy);
 	visVertexNormals.resize(gs->mapxp1 * gs->mapyp1);
 
+	// note: if USE_UNSYNCED_HEIGHTMAP is false, then
+	// heightMapUnsyncedPtr points to an empty vector
+	// for SMF maps so indexing it is forbidden (!)
 	assert(heightMapSyncedPtr != NULL);
 	assert(heightMapUnsyncedPtr != NULL);
 
+	{
+		#ifndef USE_UNSYNCED_HEIGHTMAP
+		heightMapUnsyncedPtr = heightMapSyncedPtr;
+		#endif
+
+		sharedCornerHeightMaps[0] = &(*heightMapUnsyncedPtr)[0];
+		sharedCornerHeightMaps[1] = &(*heightMapSyncedPtr)[0];
+
+		sharedCenterHeightMaps[0] = &centerHeightMap[0]; // NO UNSYNCED VARIANT
+		sharedCenterHeightMaps[1] = &centerHeightMap[0];
+
+		sharedFaceNormals[0] = &faceNormalsUnsynced[0];
+		sharedFaceNormals[1] = &faceNormalsSynced[0];
+
+		sharedCenterNormals[0] = &centerNormalsUnsynced[0];
+		sharedCenterNormals[1] = &centerNormalsSynced[0];
+
+		sharedSlopeMaps[0] = &slopeMap[0]; // NO UNSYNCED VARIANT
+		sharedSlopeMaps[1] = &slopeMap[0];
+	}
+
 	CalcHeightmapChecksum();
 	UpdateHeightMapSynced(SRectangle(0, 0, gs->mapx, gs->mapy), true);
-	//FIXME can't call that yet cause sky & skyLight aren't created yet (crashes in SMFReadMap.cpp)
-	//UpdateDraw();
+	// FIXME can't call that yet cause sky & skyLight aren't created yet (crashes in SMFReadMap.cpp)
+	// UpdateDraw();
 }
 
 
@@ -307,10 +332,10 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 	rect.x2 = std::min(gs->mapxm1, rect.x2 + 1);
 	rect.z2 = std::min(gs->mapym1, rect.z2 + 1);
 
-	UpdateCenterHeightmap(rect);
-	UpdateMipHeightmaps(rect);
-	UpdateFaceNormals(rect);
-	UpdateSlopemap(rect); // must happen after UpdateFaceNormals()!
+	UpdateCenterHeightmap(rect, initialize);
+	UpdateMipHeightmaps(rect, initialize);
+	UpdateFaceNormals(rect, initialize);
+	UpdateSlopemap(rect, initialize); // must happen after UpdateFaceNormals()!
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	// push the unsynced update
@@ -320,6 +345,7 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 		unsyncedHeightMapUpdates.push_back(rect);
 	} else {
 		InitHeightMapDigestsVectors();
+
 		const int losSquaresX = losHandler->losSizeX; // size of LOS square in heightmap coords
 		const SRectangle& lm = rect * (SQUARE_SIZE * losHandler->invLosDiv); // LOS space
 
@@ -341,7 +367,7 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 }
 
 
-void CReadMap::UpdateCenterHeightmap(const SRectangle& rect)
+void CReadMap::UpdateCenterHeightmap(const SRectangle& rect, bool initialize)
 {
 	const float* heightmapSynced = GetCornerHeightMapSynced();
 
@@ -363,7 +389,7 @@ void CReadMap::UpdateCenterHeightmap(const SRectangle& rect)
 }
 
 
-void CReadMap::UpdateMipHeightmaps(const SRectangle& rect)
+void CReadMap::UpdateMipHeightmaps(const SRectangle& rect, bool initialize)
 {
 	for (int i = 0; i < numHeightMipMaps - 1; i++) {
 		const int hmapx = gs->mapx >> i;
@@ -387,7 +413,7 @@ void CReadMap::UpdateMipHeightmaps(const SRectangle& rect)
 }
 
 
-void CReadMap::UpdateFaceNormals(const SRectangle& rect)
+void CReadMap::UpdateFaceNormals(const SRectangle& rect, bool initialize)
 {
 	const float* heightmapSynced = GetCornerHeightMapSynced();
 
@@ -441,15 +467,22 @@ void CReadMap::UpdateFaceNormals(const SRectangle& rect)
 
 			faceNormalsSynced[(y * gs->mapx + x) * 2    ] = fnTL;
 			faceNormalsSynced[(y * gs->mapx + x) * 2 + 1] = fnBR;
-
 			// square-normal
 			centerNormalsSynced[y * gs->mapx + x] = (fnTL + fnBR).Normalize();
+
+			#ifdef USE_UNSYNCED_HEIGHTMAP
+			if (initialize) {
+				faceNormalsUnsynced[(y * gs->mapx + x) * 2    ] = faceNormalsSynced[(y * gs->mapx + x) * 2    ];
+				faceNormalsUnsynced[(y * gs->mapx + x) * 2 + 1] = faceNormalsSynced[(y * gs->mapx + x) * 2 + 1];
+				centerNormalsUnsynced[y * gs->mapx + x] = centerNormalsSynced[y * gs->mapx + x];
+			}
+			#endif
 		}
 	});
 }
 
 
-void CReadMap::UpdateSlopemap(const SRectangle& rect)
+void CReadMap::UpdateSlopemap(const SRectangle& rect, bool initialize)
 {
 	const int sx = std::max(0, (rect.x1 / 2) - 1);
 	const int ex = std::min(gs->hmapx - 1, (rect.x2 / 2) + 1);
@@ -518,14 +551,14 @@ void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& rect)
 		for (int lmx = lm.x1; lmx <= lm.x2; ++lmx) {
 			hmx = lmx * losSqSize;
 
-			const bool inlos = (gu->spectatingFullView || losHandler->InLos(hmx, hmz, gu->myAllyTeam));
-			if (!inlos) {
+			#ifdef USE_UNSYNCED_HEIGHTMAP
+			if (!(gu->spectatingFullView || losHandler->InLos(hmx, hmz, gu->myAllyTeam))) {
 				PUSH_RECT
 				continue;
 			}
+			#endif
 
-			const bool heightmapChanged = HasHeightMapChanged(lmx, lmz);
-			if (!heightmapChanged) {
+			if (!HasHeightMapChanged(lmx, lmz)) {
 				PUSH_RECT
 				continue;
 			}

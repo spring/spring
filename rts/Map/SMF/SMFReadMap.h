@@ -80,8 +80,8 @@ private:
 	void CreateShadingTex();
 	void CreateNormalTex();
 
-	void UpdateVertexNormals(const SRectangle& update);
-	void UpdateFaceNormals(const SRectangle& update);
+	void UpdateVertexNormalsUnsynced(const SRectangle& update);
+	void UpdateFaceNormalsUnsynced(const SRectangle& update);
 	void UpdateNormalTexture(const SRectangle& update);
 	void UpdateShadingTexture(const SRectangle& update);
 
@@ -138,9 +138,7 @@ protected:
 
 private:
 	std::vector<float> cornerHeightMapSynced;
-#ifdef USE_UNSYNCED_HEIGHTMAP
 	std::vector<float> cornerHeightMapUnsynced;
-#endif
 
 	std::vector<unsigned char> shadingTexBuffer;
 	bool shadingTexUpdateNeeded;

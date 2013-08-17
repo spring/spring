@@ -159,8 +159,8 @@ namespace terrain {
 		void HeightMapUpdatedUnsynced(int x,int y,int w,int h);
 
 		// these return the top-level heightmaps
-		std::vector<float>* GetCornerHeightMapSynced();
-		std::vector<float>* GetCornerHeightMapUnsynced();
+		std::vector<float>& GetCornerHeightMapSynced();
+		std::vector<float>& GetCornerHeightMapUnsynced();
 
 		Vector3 TerrainSize();
 		int GetHeightmapWidth() const;
