@@ -86,9 +86,10 @@ void GameSetupDrawer::Draw()
 	} else if (!playerHandler->Player(gu->myPlayerNum)->spectator && !playerHandler->Player(gu->myPlayerNum)->IsReadyToStart()) {
 		startState = "Choose start pos";
 	} else if (gameServer) {
-		CKeyBindings::HotkeyList list = keyBindings->GetHotkeys("forcestart");
-		const std::string primary = list.empty() ? "<none>" : list.front();
-		startState = std::string("Waiting for players, press ") + primary + " to force start";
+		// we are the host and can get the show on the road
+		const CKeyBindings::HotkeyList fsKeys = keyBindings->GetHotkeys("forcestart");
+		const std::string& fsKey = fsKeys.empty() ? "<none>" : fsKeys.front();
+		startState = std::string("Waiting for players, press ") + fsKey + " to force start";
 	} else {
 		startState = "Waiting for players";
 	}

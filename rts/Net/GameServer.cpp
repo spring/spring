@@ -1908,9 +1908,8 @@ void CGameServer::CheckForGameStart(bool forced)
 		if (!spring_istime(readyTime)) {
 			readyTime = spring_gettime();
 
-			// we have to wait at least 1 msec, because 0 is a special case
-			const unsigned countdown = std::max(1, spring_tomsecs(gameStartDelay));
-			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(countdown));
+			// we have to wait at least 1 msec during countdown, because 0 is a special case
+			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(std::max(1, spring_tomsecs(gameStartDelay))));
 
 			// make seed more random
 			if (setup->gameID.empty())

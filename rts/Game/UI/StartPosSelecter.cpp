@@ -21,11 +21,14 @@ CStartPosSelecter::CStartPosSelecter() : CInputReceiver(BACK)
 {
 	showReadyBox = true;
 	startPosSet = false;
-	selector = this;
+
 	readyBox.x1 = 0.71f;
 	readyBox.y1 = 0.72f;
 	readyBox.x2 = 0.81f;
 	readyBox.y2 = 0.76f;
+
+	setStartPos = TeamBase::GetBaseStartPos();
+	selector = this;
 }
 
 CStartPosSelecter::~CStartPosSelecter()
@@ -34,7 +37,7 @@ CStartPosSelecter::~CStartPosSelecter()
 }
 
 
-bool CStartPosSelecter::Ready(bool forcedReady)
+bool CStartPosSelecter::Ready(bool luaForcedReady)
 {
 	if (gs->frameNum > 0) {
 		delete this;
@@ -43,10 +46,10 @@ bool CStartPosSelecter::Ready(bool forcedReady)
 
 	// player did not set a startpos yet, so do not let
 	// him ready up if he clicked on the ready-box first
-	if (!startPosSet && !forcedReady)
+	if (!startPosSet && !luaForcedReady)
 		return false;
 
-	if (forcedReady) {
+	if (luaForcedReady) {
 		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_FORCED, setStartPos.x, setStartPos.y, setStartPos.z));
 	} else {
 		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_READIED, setStartPos.x, setStartPos.y, setStartPos.z));
