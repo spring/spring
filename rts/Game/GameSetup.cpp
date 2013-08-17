@@ -158,14 +158,17 @@ void CGameSetup::LoadStartPositionsFromMap()
 		throw content_error("MapInfo: " + mapParser.GetErrorLog());
 	}
 
-	for(size_t a = 0; a < teamStartingData.size(); ++a) {
+	for (size_t a = 0; a < teamStartingData.size(); ++a) {
 		float3 pos;
 
-		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos)) // don't fail when playing with more players than startpositions and we didn't use them anyway
+		// don't fail when playing with more players than
+		// start positions and we didn't use them anyway
+		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos))
 			throw content_error(mapParser.GetErrorLog());
 
-		assert(pos != ZeroVector);
-		teamStartingData[a].SetStartPos(float3(pos.x, pos.y, pos.z));
+		// map should ensure positions are valid
+		// (but clients will always do clamping)
+		teamStartingData[a].SetStartPos(pos);
 	}
 }
 
