@@ -1917,11 +1917,11 @@ void CGameServer::CheckForGameStart(bool forced)
 		}
 	}
 	if (spring_istime(readyTime) && ((spring_gettime() - readyTime) > gameStartDelay)) {
-		StartGame();
+		StartGame(forced);
 	}
 }
 
-void CGameServer::StartGame()
+void CGameServer::StartGame(bool forced)
 {
 	assert(!gameHasStarted);
 	gameHasStarted = true;
@@ -1932,7 +1932,7 @@ void CGameServer::StartGame()
 	if (UDPNet && !canReconnect && !bypassScriptPasswordCheck)
 		UDPNet->SetAcceptingConnections(false); // do not accept new connections
 
-	// make sure initial game speed is within allowed range and sent a new speed if not
+	// make sure initial game speed is within allowed range and send a new speed if not
 	UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
 
 	if (demoReader) {
@@ -1945,25 +1945,44 @@ void CGameServer::StartGame()
 	{
 		std::vector<bool> teamStartPosSent(teams.size(), false);
 
-		// send start position for player controlled teams
+		// send start position for player-controlled teams
 		for (size_t a = 0; a < players.size(); ++a) {
-			if (!players[a].spectator) {
-				const unsigned aTeam = players[a].team;
-				const float3& teamStartPos = teams[aTeam].GetStartPos();
+			if (players[a].spectator)
+				continue;
 
-				Broadcast(CBaseNetProtocol::Get().SendStartPos(a, (int)aTeam, players[a].IsReadyToStart(), teamStartPos.x, teamStartPos.y, teamStartPos.z));
-				teamStartPosSent[aTeam] = true;
+			const unsigned int team = players[a].team;
+			const float3& teamStartPos = teams[team].GetStartPos();
+
+			teamStartPosSent[team] = true;
+
+			if (players[a].IsReadyToStart()) {
+				// ready players do not care whether start is forced
+				Broadcast(CBaseNetProtocol::Get().SendStartPos(a, (int) team, CPlayer::PLAYER_RDYSTATE_READIED, teamStartPos.x, teamStartPos.y, teamStartPos.z));
+				continue;
 			}
+			if (forced) {
+				// everyone else does
+				Broadcast(CBaseNetProtocol::Get().SendStartPos(a, (int) team, CPlayer::PLAYER_RDYSTATE_FORCED, teamStartPos.x, teamStartPos.y, teamStartPos.z));
+				continue;
+			}
+
+			// normal start but player did not ready; treat this position
+			// as though it was first selected (makes little sense though
+			// since game is about to start anyway...)
+			Broadcast(CBaseNetProtocol::Get().SendStartPos(a, (int) team, CPlayer::PLAYER_RDYSTATE_UPDATED, teamStartPos.x, teamStartPos.y, teamStartPos.z));
 		}
 
 		// send start position for all other teams
+		// non-controlled teams are always ready
 		for (size_t a = 0; a < teams.size(); ++a) {
-			const float3& teamStartPos = teams[a].GetStartPos();
+			if (teamStartPosSent[a])
+				continue;
 
-			if (!teamStartPosSent[a]) {
-				// teams which aren't player controlled are always ready
-				Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, true, teamStartPos.x, teamStartPos.y, teamStartPos.z));
-			}
+			const float3& teamStartPos = teams[a].GetStartPos();
+			const int teamLeader = teams[a].leader;
+
+			assert(teamLeader == -1);
+			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, CPlayer::PLAYER_RDYSTATE_READIED, teamStartPos.x, teamStartPos.y, teamStartPos.z));
 		}
 	}
 
