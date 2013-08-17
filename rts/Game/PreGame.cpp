@@ -104,6 +104,7 @@ void CPreGame::LoadSavefile(const std::string& save)
 	assert(settings->isHost);
 	savefile = ILoadSaveHandler::Create();
 	savefile->LoadGameStartInfo(save.c_str());
+
 	StartServer(savefile->scriptText);
 }
 
@@ -289,7 +290,7 @@ void CPreGame::UpdateClientNet()
 			case NETMSG_SETPLAYERNUM: {
 				// this is sent after NETMSG_GAMEDATA, to let us know which
 				// playernum we have
-				if (!gameSetup)
+				if (gameSetup == NULL)
 					throw content_error("No game data received from server");
 
 				unsigned char playerNum = packet->data[1];
@@ -430,6 +431,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 			setupTextFile.write(setupTextStr.c_str(), setupTextStr.size());
 			setupTextFile.close();
 		}
+		// set the global instance
 		gameSetup = temp;
 		gu->LoadFromSetup(gameSetup);
 		gs->LoadFromSetup(gameSetup);

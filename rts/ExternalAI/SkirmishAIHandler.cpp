@@ -47,9 +47,8 @@ CSkirmishAIHandler::~CSkirmishAIHandler()
 
 void CSkirmishAIHandler::LoadFromSetup(const CGameSetup& setup) {
 
-	for (size_t a = 0; a < setup.GetSkirmishAIs().size(); ++a) {
-		const SkirmishAIData& sai = setup.GetSkirmishAIs()[a];
-		AddSkirmishAI(sai, a);
+	for (size_t a = 0; a < setup.GetAIStartingDataCont().size(); ++a) {
+		AddSkirmishAI(setup.GetAIStartingDataCont()[a], a);
 	}
 }
 

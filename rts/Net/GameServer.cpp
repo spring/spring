@@ -194,25 +194,32 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 		demoReader.reset(new CDemoReader(setup->demoName, modGameTime + 0.1f));
 	}
 
-	players.reserve(MAX_PLAYERS); // no reallocation please
-	for (int i = 0; i < setup->playerStartingData.size(); ++i)
-		players.push_back(GameParticipant());
-	std::copy(setup->playerStartingData.begin(), setup->playerStartingData.end(), players.begin());
-	UpdatePlayerNumberMap();
+	{
+		const std::vector<PlayerBase>& playerStartData = setup->GetPlayerStartingDataCont();
+		const std::vector<TeamBase>& teamStartData = setup->GetTeamStartingDataCont();
+		const std::vector<SkirmishAIData>& aiStartData = setup->GetAIStartingDataCont();
 
-	const std::vector<SkirmishAIData> &said = setup->GetSkirmishAIs();
-	for (size_t a = 0; a < said.size(); ++a) {
-		const unsigned char skirmishAIId = ReserveNextAvailableSkirmishAIId();
-		if (skirmishAIId == MAX_AIS) {
-			Message(str(format("Too many AIs (%d) in game setup") %said.size()));
-			break;
+		players.reserve(MAX_PLAYERS); // no reallocation please
+		teams.resize(teamStartData.size());
+
+		for (int i = 0; i < playerStartData.size(); ++i)
+			players.push_back(GameParticipant());
+
+		for (size_t a = 0; a < aiStartData.size(); ++a) {
+			const unsigned char skirmishAIId = ReserveNextAvailableSkirmishAIId();
+			if (skirmishAIId == MAX_AIS) {
+				Message(str(format("Too many AIs (%d) in game setup") %aiStartData.size()));
+				break;
+			}
+			players[aiStartData[a].hostPlayer].linkData[skirmishAIId] = GameParticipant::PlayerLinkData();
+			ais[skirmishAIId] = aiStartData[a];
 		}
-		players[said[a].hostPlayer].linkData[skirmishAIId] = GameParticipant::PlayerLinkData();
-		ais[skirmishAIId] = said[a];
-	}
 
-	teams.resize(setup->teamStartingData.size());
-	std::copy(setup->teamStartingData.begin(), setup->teamStartingData.end(), teams.begin());
+		std::copy(playerStartData.begin(), playerStartData.end(), players.begin());
+		std::copy(teamStartData.begin(), teamStartData.end(), teams.begin());
+
+		UpdatePlayerNumberMap();
+	}
 
 	commandBlacklist = std::set<std::string>(commands, commands+numCommands);
 
@@ -251,9 +258,11 @@ CGameServer::~CGameServer()
 	quitServer=true;
 	thread->join();
 	delete thread;
+
 #ifdef DEDICATED
 	// TODO: move this to a method in CTeamHandler
 	int numTeams = (int)setup->teamStartingData.size();
+
 	if (setup->useLuaGaia && (numTeams > 0)) {
 		--numTeams;
 	}

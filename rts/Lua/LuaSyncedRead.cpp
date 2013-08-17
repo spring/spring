@@ -776,7 +776,7 @@ int LuaSyncedRead::FixedAllies(lua_State* L)
 	if (!game) {
 		return 0;
 	}
-	lua_pushboolean(L, !(gameSetup && !gameSetup->fixedAllies));
+	lua_pushboolean(L, !(gameSetup != NULL && !gameSetup->fixedAllies));
 	return 1;
 }
 
@@ -875,13 +875,14 @@ int LuaSyncedRead::GetMapOptions(lua_State* L)
 {
 	lua_newtable(L);
 
-	const map<string, string>& mapOpts = gameSetup->mapOptions;
+	const map<string, string>& mapOpts = CGameSetup::GetMapOptions();
 	map<string, string>::const_iterator it;
 	for (it = mapOpts.begin(); it != mapOpts.end(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_pushsstring(L, it->second);
 		lua_rawset(L, -3);
 	}
+
 	return 1;
 }
 
@@ -890,13 +891,14 @@ int LuaSyncedRead::GetModOptions(lua_State* L)
 {
 	lua_newtable(L);
 
-	const map<string, string>& modOpts = gameSetup->modOptions;
+	const map<string, string>& modOpts = CGameSetup::GetModOptions();
 	map<string, string>::const_iterator it;
 	for (it = modOpts.begin(); it != modOpts.end(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_pushsstring(L, it->second);
 		lua_rawset(L, -3);
 	}
+
 	return 1;
 }
 
@@ -970,18 +972,16 @@ int LuaSyncedRead::GetSideData(lua_State* L)
 
 int LuaSyncedRead::GetAllyTeamStartBox(lua_State* L)
 {
-	if (gameSetup == NULL) {
-		return 0;
-	}
-
+	const std::vector<AllyTeam>& allyData = CGameSetup::GetAllyStartingData();
 	const int allyTeam = (int)luaL_checkint(L, 1);
-	if ((allyTeam < 0) || ((size_t)allyTeam >= gameSetup->allyStartingData.size())) {
+
+	if ((allyTeam < 0) || ((size_t)allyTeam >= allyData.size()))
 		return 0;
-	}
-	const float xmin = (gs->mapx * 8.0f) * gameSetup->allyStartingData[allyTeam].startRectLeft;
-	const float zmin = (gs->mapy * 8.0f) * gameSetup->allyStartingData[allyTeam].startRectTop;
-	const float xmax = (gs->mapx * 8.0f) * gameSetup->allyStartingData[allyTeam].startRectRight;
-	const float zmax = (gs->mapy * 8.0f) * gameSetup->allyStartingData[allyTeam].startRectBottom;
+
+	const float xmin = (gs->mapx * 8.0f) * allyData[allyTeam].startRectLeft;
+	const float zmin = (gs->mapy * 8.0f) * allyData[allyTeam].startRectTop;
+	const float xmax = (gs->mapx * 8.0f) * allyData[allyTeam].startRectRight;
+	const float zmax = (gs->mapy * 8.0f) * allyData[allyTeam].startRectBottom;
 	lua_pushnumber(L, xmin);
 	lua_pushnumber(L, zmin);
 	lua_pushnumber(L, xmax);

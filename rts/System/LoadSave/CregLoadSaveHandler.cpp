@@ -162,26 +162,16 @@ void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 	// eg: "AbcAbc" instead of "Abc"
 
 	//FIXME remove
-	/**/
 	scriptText = "";
 	modName = "";
 	mapName = "";
 
 	// read our own header.
 	ReadString(*ifs, scriptText);
-	if (!scriptText.empty() && !gameSetup) {
-		CGameSetup* temp = new CGameSetup();
-		if (!temp->Init(scriptText)) {
-			delete temp;
-			temp = NULL;
-		} else {
-			temp->saveName = file;
-			gameSetup = temp;
-		}
-	}
 	ReadString(*ifs, modName);
 	ReadString(*ifs, mapName);
-	/**/
+
+	CGameSetup::LoadSavedScript(file, scriptText);
 }
 
 /// this should be called on frame 0 when the game has started

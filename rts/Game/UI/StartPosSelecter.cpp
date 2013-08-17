@@ -97,7 +97,9 @@ void CStartPosSelecter::Draw()
 	glEnable(GL_DEPTH_TEST);
 	glBegin(GL_QUADS);
 
-	const AllyTeam& myStartData = gameSetup->allyStartingData[gu->myAllyTeam];
+	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
+	const AllyTeam& myStartData = allyStartData[gu->myAllyTeam];
+
 	const float by = myStartData.startRectTop * gs->mapy * SQUARE_SIZE;
 	const float bx = myStartData.startRectLeft * gs->mapx * SQUARE_SIZE;
 

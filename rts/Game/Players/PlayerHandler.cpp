@@ -36,16 +36,18 @@ CPlayerHandler::~CPlayerHandler()
 
 void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 {
-	int oldSize = players.size();
-	int newSize = std::max( players.size(), setup->playerStartingData.size() );
+	const std::vector<PlayerBase>& playerData = setup->GetPlayerStartingDataCont();
+
+	const int oldSize = players.size();
+	const int newSize = std::max(players.size(), playerData.size());
 
 	for (unsigned int i = oldSize; i < newSize; ++i) {
 		players.push_back(new CPlayer());
 	}
 
-	for (size_t i = 0; i < setup->playerStartingData.size(); ++i) {
+	for (size_t i = 0; i < playerData.size(); ++i) {
 		CPlayer* player = players[i];
-		*player = setup->playerStartingData[i];
+		*player = playerData[i];
 
 		player->playerNum = (int)i;
 		player->fpsController.SetControllerPlayer(player);

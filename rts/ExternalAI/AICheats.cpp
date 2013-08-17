@@ -51,7 +51,7 @@ bool CAICheats::OnlyPassiveCheats()
 	// and the only client) if used by an AI
 	if (!gameServer) {
 		return true;
-	} else if (gameSetup && (gameSetup->playerStartingData.size() == 1)) {
+	} else if ((CGameSetup::GetPlayerStartingData()).size() == 1) {
 		// assumes AI's dont count toward numPlayers
 		return false;
 	} else {

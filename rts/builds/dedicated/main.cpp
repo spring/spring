@@ -161,7 +161,6 @@ int main(int argc, char* argv[])
 		LOG("loading script from file: %s", scriptName.c_str());
 
 		CGameServer* server = NULL;
-		CGameSetup* gameSetup = NULL;
 		ClientSetup settings;
 		CFileHandler fh(scriptName);
 
