@@ -111,14 +111,15 @@ CTeam::CTeam(int _teamNum):
 	currentStats = &statHistory.back();
 }
 
-
 void CTeam::SetDefaultStartPos()
 {
 	const int allyTeam = teamHandler->AllyTeam(teamNum);
-	const AllyTeam& allyTeamData = gameSetup->allyStartingData[allyTeam];
+	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
 
+	assert(!allyData.empty());
 	assert(allyTeam == teamAllyteam);
 
+	const AllyTeam& allyTeamData = allyStartData[allyTeam];
 	// pick a spot near the center of our startbox
 	const float xmin = (gs->mapx * SQUARE_SIZE) * allyTeamData.startRectLeft;
 	const float zmin = (gs->mapy * SQUARE_SIZE) * allyTeamData.startRectTop;
@@ -137,12 +138,13 @@ void CTeam::SetDefaultStartPos()
 void CTeam::ClampStartPosInStartBox(float3* pos) const
 {
 	const int allyTeam = teamHandler->AllyTeam(teamNum);
-	const AllyTeam& at = gameSetup->allyStartingData[allyTeam];
+	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
+	const AllyTeam& allyTeamData = allyStartData[allyTeam];
 	const SRectangle rect(
-		at.startRectLeft   * gs->mapx * SQUARE_SIZE,
-		at.startRectTop    * gs->mapy * SQUARE_SIZE,
-		at.startRectRight  * gs->mapx * SQUARE_SIZE,
-		at.startRectBottom * gs->mapy * SQUARE_SIZE
+		allyTeamData.startRectLeft   * gs->mapx * SQUARE_SIZE,
+		allyTeamData.startRectTop    * gs->mapy * SQUARE_SIZE,
+		allyTeamData.startRectRight  * gs->mapx * SQUARE_SIZE,
+		allyTeamData.startRectBottom * gs->mapy * SQUARE_SIZE
 	);
 
 	int2 ipos(pos->x, pos->z);
