@@ -860,41 +860,43 @@ void CGame::ClientReadNet()
 				const unsigned char action = inbuf[2];
 				const int fromTeam = playerHandler->Player(player)->team;
 
-				switch (action)
-				{
+				switch (action) {
 					case TEAMMSG_GIVEAWAY: {
 						const unsigned char toTeam = inbuf[3];
-						const unsigned char fromTeam_g = inbuf[4];
-						if (!teamHandler->IsValidTeam(toTeam) || !teamHandler->IsValidTeam(fromTeam_g)) {
-							LOG_L(L_ERROR, "Got invalid team nums %i %i in team giveaway msg", toTeam, fromTeam_g);
+						const unsigned char giverTeam = inbuf[4];
+
+						if (!teamHandler->IsValidTeam(toTeam) || !teamHandler->IsValidTeam(giverTeam)) {
+							LOG_L(L_ERROR, "Got invalid team nums %i %i in team giveaway msg", toTeam, giverTeam);
 							break;
 						}
 
-						const int numPlayersInTeam_g        = playerHandler->ActivePlayersInTeam(fromTeam_g).size();
-						const size_t numTotAIsInTeam_g      = skirmishAIHandler.GetSkirmishAIsInTeam(fromTeam_g).size();
-						const size_t numControllersInTeam_g = numPlayersInTeam_g + numTotAIsInTeam_g;
-						const bool isOwnTeam_g              = (fromTeam_g == fromTeam);
+						const int numPlayersInGiverTeam        = playerHandler->ActivePlayersInTeam(giverTeam).size();
+						const size_t numTotAIsInGiverTeam      = skirmishAIHandler.GetSkirmishAIsInTeam(giverTeam).size();
+						const size_t numControllersInGiverTeam = numPlayersInGiverTeam + numTotAIsInGiverTeam;
 
 						bool giveAwayOk = false;
-						if (isOwnTeam_g) {
+
+						if (giverTeam == fromTeam) {
 							// player is giving stuff from his own team
 							giveAwayOk = true;
-							if (numPlayersInTeam_g == 1) {
-								teamHandler->Team(fromTeam_g)->GiveEverythingTo(toTeam);
+
+							if (numPlayersInGiverTeam == 1) {
+								teamHandler->Team(giverTeam)->GiveEverythingTo(toTeam);
 							} else {
 								playerHandler->Player(player)->StartSpectating();
 							}
+
 							selectedUnitsHandler.ClearNetSelect(player);
 						} else {
 							// player is giving stuff from one of his AI teams
-							if (numPlayersInTeam_g == 0) {
+							if (numPlayersInGiverTeam == 0) {
 								giveAwayOk = true;
 							}
 						}
-						if (giveAwayOk && (numControllersInTeam_g == 1)) {
+						if (giveAwayOk && (numControllersInGiverTeam == 1)) {
 							// team has no controller left now
-							teamHandler->Team(fromTeam_g)->GiveEverythingTo(toTeam);
-							teamHandler->Team(fromTeam_g)->leader = -1;
+							teamHandler->Team(giverTeam)->GiveEverythingTo(toTeam);
+							teamHandler->Team(giverTeam)->SetLeader(-1);
 						}
 						CPlayer::UpdateControlledTeams();
 						break;
@@ -902,22 +904,24 @@ void CGame::ClientReadNet()
 					case TEAMMSG_RESIGN: {
 						playerHandler->Player(player)->StartSpectating();
 
-						// actualize all teams of which the player is leader
+						// update all teams of which the player is leader
 						for (size_t t = 0; t < teamHandler->ActiveTeams(); ++t) {
 							CTeam* team = teamHandler->Team(t);
-							if (team->leader == player) {
+
+							if (team->GetLeader() == player) {
 								const std::vector<int> &teamPlayers = playerHandler->ActivePlayersInTeam(t);
 								const std::vector<unsigned char> &teamAIs  = skirmishAIHandler.GetSkirmishAIsInTeam(t);
+
 								if ((teamPlayers.size() + teamAIs.size()) == 0) {
 									// no controllers left in team
 									//team.active = false;
-									team->leader = -1;
+									team->SetLeader(-1);
 								} else if (teamPlayers.empty()) {
 									// no human player left in team
-									team->leader = skirmishAIHandler.GetSkirmishAI(teamAIs[0])->hostPlayer;
+									team->SetLeader(skirmishAIHandler.GetSkirmishAI(teamAIs[0])->hostPlayer);
 								} else {
 									// still human controllers left in team
-									team->leader = teamPlayers[0];
+									team->SetLeader(teamPlayers[0]);
 								}
 							}
 						}
@@ -996,8 +1000,8 @@ void CGame::ClientReadNet()
 						wordCompletion->AddWord(aiData.name + " ", false, false, false);
 					}
 
-					if (tai->leader == -1) {
-						tai->leader = playerId;
+					if (!tai->HasLeader()) {
+						tai->SetLeader(playerId);
 					}
 					CPlayer::UpdateControlledTeams();
 					eventHandler.PlayerChanged(playerId);
@@ -1047,7 +1051,7 @@ void CGame::ClientReadNet()
 						// this could be done in the above function as well
 						if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
 							// team has no controller left now
-							tai->leader = -1;
+							tai->SetLeader(-1);
 						}
 						CPlayer::UpdateControlledTeams();
 						eventHandler.PlayerChanged(playerId);

@@ -392,12 +392,12 @@ void CGameSetup::RemapPlayers()
 {
 	// relocate Team.TeamLeader field
 	for (size_t a = 0; a < teamStartingData.size(); ++a) {
-		if (playerRemap.find(teamStartingData[a].leader) == playerRemap.end()) {
+		if (playerRemap.find(teamStartingData[a].GetLeader()) == playerRemap.end()) {
 			std::ostringstream buf;
-			buf << "GameSetup: Team " << a << " has invalid leader: " << teamStartingData[a].leader;
+			buf << "GameSetup: Team " << a << " has invalid leader: " << teamStartingData[a].GetLeader();
 			throw content_error(buf.str());
 		}
-		teamStartingData[a].leader = playerRemap[teamStartingData[a].leader];
+		teamStartingData[a].SetLeader(playerRemap[teamStartingData[a].GetLeader()]);
 	}
 	// relocate AI.hostPlayer field
 	for (size_t a = 0; a < skirmishAIStartingData.size(); ++a) {

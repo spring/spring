@@ -854,7 +854,8 @@ public:
 			if (!badArgs) {
 				const bool weAreAllied  = teamHandler->AlliedTeams(fromTeamId, teamToKillId);
 				const bool weAreAIHost  = (skirmishAIHandler.GetSkirmishAI(skirmishAIId)->hostPlayer == gu->myPlayerNum);
-				const bool weAreLeader  = (teamToKill->leader == gu->myPlayerNum);
+				const bool weAreLeader  = (teamToKill->GetLeader() == gu->myPlayerNum);
+
 				if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
 					LOG_L(L_WARNING, "Team to %s: player %s is not allowed to %s Skirmish AI controlling team %i (try with /cheat)",
 							actionName.c_str(), fromPlayer->name.c_str(), actionName.c_str(), teamToKillId);
@@ -927,17 +928,22 @@ public:
 
 		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
 		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
+
 		const bool cheating           = gs->cheatEnabled;
 		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
+
 		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
 
 		if (!args.empty()) {
-			std::string aiShortName     = "";
-			std::string aiVersion       = "";
-			std::string aiName          = "";
+			std::string aiShortName;
+			std::string aiVersion;
+			std::string aiName;
 			std::map<std::string, std::string> aiOptions;
 
-			int teamToControlId = atoi(args[0].c_str());
+			const int teamToControlId = atoi(args[0].c_str());
+			const CTeam* teamToControl = teamHandler->IsActiveTeam(teamToControlId) ?
+				teamHandler->Team(teamToControlId) : NULL;
+
 			if (args.size() >= 2) {
 				aiShortName = args[1];
 			} else {
@@ -950,17 +956,15 @@ public:
 				aiName = args[3];
 			}
 
-			CTeam* teamToControl = teamHandler->IsActiveTeam(teamToControlId) ?
-			                             teamHandler->Team(teamToControlId) : NULL;
-
 			if (teamToControl == NULL) {
 				LOG_L(L_WARNING, "Team to control: not a valid team number: \"%s\"", args[0].c_str());
 				badArgs = true;
 			}
 			if (!badArgs) {
 				const bool weAreAllied  = teamHandler->AlliedTeams(fromTeamId, teamToControlId);
-				const bool weAreLeader  = (teamToControl->leader == gu->myPlayerNum);
-				const bool noLeader     = (teamToControl->leader == -1);
+				const bool weAreLeader  = (teamToControl->GetLeader() == gu->myPlayerNum);
+				const bool noLeader     = (!teamToControl->HasLeader());
+
 				if (!(weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader)))) {
 					LOG_L(L_WARNING, "Team to control: player %s is not allowed to let a Skirmish AI take over control of team %i (try with /cheat)",
 							fromPlayer->name.c_str(), teamToControlId);
@@ -972,7 +976,7 @@ public:
 				badArgs = true;
 			}
 			// TODO remove this, if support for multiple Skirmish AIs per team is in place
-			if (!badArgs && (skirmishAIHandler.GetSkirmishAIsInTeam(teamToControlId).size() > 0)) {
+			if (!badArgs && (!skirmishAIHandler.GetSkirmishAIsInTeam(teamToControlId).empty())) {
 				LOG_L(L_WARNING, "Team to control: there is already an AI controlling this team: %i", teamToControlId);
 				badArgs = true;
 			}
@@ -991,6 +995,7 @@ public:
 			if (!badArgs) {
 				SkirmishAIKey aiKey(aiShortName, aiVersion);
 				aiKey = aiLibManager->ResolveSkirmishAIKey(aiKey);
+
 				if (aiKey.IsUnspecified()) {
 					LOG_L(L_WARNING, "Skirmish AI: not a valid Skirmish AI: %s %s",
 							aiShortName.c_str(), aiVersion.c_str());
@@ -1037,9 +1042,10 @@ public:
 			"Prints a list of all currently active Skirmish AIs") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		const CSkirmishAIHandler::id_ai_t& ais  = skirmishAIHandler.GetAllSkirmishAIs();
+		const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
+		CSkirmishAIHandler::id_ai_t::const_iterator ai;
+
 		if (!ais.empty()) {
-			CSkirmishAIHandler::id_ai_t::const_iterator ai;
 			LOG("%s | %s | %s | %s | %s | %s",
 					"ID",
 					"Team",
@@ -1047,14 +1053,17 @@ public:
 					"Lua",
 					"Name",
 					"(Hosting player name) or (Short name & Version)");
+
 			for (ai = ais.begin(); ai != ais.end(); ++ai) {
 				const bool isLocal = (ai->second.hostPlayer == gu->myPlayerNum);
 				std::string lastPart;
+
 				if (isLocal) {
 					lastPart = "(Key:)  " + ai->second.shortName + " " + ai->second.version;
 				} else {
 					lastPart = "(Host:) " + playerHandler->Player(gu->myPlayerNum)->name;
 				}
+
 				LOG("%i | %i | %s | %s | %s | %s",
 						ai->first,
 						ai->second.team,

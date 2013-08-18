@@ -236,9 +236,8 @@ public:
 	SyncedFloat3 relAimPos;                     ///< local-space vector from pos to aimPos (read from model, used to initialize aimPos)
 	SyncedFloat3 midPos;                        ///< mid-position of model in WS, used as center of mass (and many other things)
 	SyncedFloat3 aimPos;                        ///< used as aiming position by weapons
-	int2 mapPos;                                ///< current position on GroundBlockingObjectMap
 
-	float3 speed;                               ///< current velocity vector (length in elmos/frame)
+	int2 mapPos;                                ///< current position on GroundBlockingObjectMap
 	float3 groundBlockPos;
 
 	float3 drawPos;                             ///< = pos + speed * timeOffset (unsynced)

@@ -74,11 +74,10 @@ public:
 	bool deleteMe;
 	bool castShadow;
 
-	unsigned lastProjUpdate;
-
 	float3 dir;
-	float3 speed;
 	float3 drawPos;
+
+	unsigned lastProjUpdate;
 
 	float mygravity;
 	float tempdist; ///< temp distance used for sorting when rendering

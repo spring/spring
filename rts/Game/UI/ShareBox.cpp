@@ -230,15 +230,10 @@ void CShareBox::Draw()
 			actualTeam++;
 		}
 		const float alpha = (shareTeam == actualTeam) ? 0.8f : 0.4f;
-		std::string teamName;
 
-		if (teamHandler->Team(actualTeam)->leader >= 0) {
-			teamName = playerHandler->Player(teamHandler->Team(actualTeam)->leader)->name;
-		} else {
-			teamName = UncontrolledPlayerName;
-		}
-
+		std::string teamName = teamHandler->Team(actualTeam)->GetControllerName();
 		std::string ally, dead;
+
 		if (teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(actualTeam))) {
 			font->SetTextColor(0.5f, 1.0f, 0.5f, alpha);
 			ally = " <Ally>";

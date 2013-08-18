@@ -85,7 +85,7 @@ CExplosionGeneratorHandler* explGenHandler = NULL;
 CCustomExplosionGenerator* gCEG = NULL;
 
 CExpGenSpawnable::CExpGenSpawnable(): CWorldObject() { GML_EXPGEN_CHECK() }
-CExpGenSpawnable::CExpGenSpawnable(const float3& pos): CWorldObject(pos) { GML_EXPGEN_CHECK() }
+CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd): CWorldObject(pos, spd) { GML_EXPGEN_CHECK() }
 
 
 

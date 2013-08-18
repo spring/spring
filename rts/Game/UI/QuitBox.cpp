@@ -189,19 +189,15 @@ void CQuitBox::Draw()
 			glColor4f(1,1,1,0.4f);
 		}
 
-		std::string teamName;
-		if (teamHandler->Team(actualTeam)->leader >= 0)
-			teamName = playerHandler->Player(teamHandler->Team(actualTeam)->leader)->name;
-		else
-			teamName = UncontrolledPlayerName;
-
+		std::string teamName = teamHandler->Team(actualTeam)->GetControllerName();
 		std::string ally, dead;
+
 		if (teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(actualTeam))) {
 			ally = " <Ally>)";
 		} else {
 			ally = " <Enemy>";
 		}
-		if(teamHandler->Team(actualTeam)->isDead) {
+		if (teamHandler->Team(actualTeam)->isDead) {
 			dead = " <Dead>";
 		}
 		if (actualTeam == teamHandler->GaiaTeamID()) {
