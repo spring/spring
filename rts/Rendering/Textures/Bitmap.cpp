@@ -36,7 +36,7 @@ static const float blurkernel[9] = {
 static const int formatList[] = {
 	IL_PNG, IL_JPG, IL_TGA, IL_DDS, IL_BMP,
 	IL_RGBA, IL_RGB, IL_BGRA, IL_BGR,
-	IL_COLOUR_INDEX, IL_LUMINANCE
+	IL_COLOUR_INDEX, IL_LUMINANCE, IL_LUMINANCE_ALPHA
 };
 
 static bool IsValidImageFormat(int format) {
