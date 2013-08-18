@@ -1118,7 +1118,7 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	}
 
 	lua_pushnumber(L,  team->teamNum);
-	lua_pushnumber(L,  team->leader);
+	lua_pushnumber(L,  team->GetLeader());
 	lua_pushboolean(L, team->isDead);
 	lua_pushboolean(L, !skirmishAIHandler.GetSkirmishAIsInTeam(teamID).empty()); // hasAIs
 	lua_pushsstring(L, team->GetSide());
@@ -2699,8 +2699,8 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 			unitTeam = teamHandler->Team(unit->team);
 		}
 
-		if (unitTeam != NULL && unitTeam->leader != -1) {
-			tooltip = playerHandler->Player(unitTeam->leader)->name;
+		if (unitTeam != NULL && unitTeam->HasLeader()) {
+			tooltip = playerHandler->Player(unitTeam->GetLeader())->name;
 			CSkirmishAIHandler::ids_t teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(unit->team);
 
 			if (!teamAIs.empty()) {

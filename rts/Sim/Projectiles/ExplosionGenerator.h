@@ -22,9 +22,8 @@ class CExpGenSpawnable: public CWorldObject
 	CR_DECLARE(CExpGenSpawnable);
 public:
 	CExpGenSpawnable();
-	CExpGenSpawnable(const float3& pos);
+	CExpGenSpawnable(const float3& pos, const float3& spd);
 	virtual ~CExpGenSpawnable() {}
-
 	virtual void Init(const float3& pos, CUnit* owner) = 0;
 };
 

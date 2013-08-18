@@ -38,19 +38,6 @@ public:
 	void AddPlayer(int playerNum);
 	void KillAIs();
 
-	bool HasValidStartPos() const {
-		// if a player never chose (net-sent) a position
-		if (startPos == ZeroVector)
-			return false;
-		// start-positions that are sent across the net
-		// will always be clamped to a team's start-box
-		// (and hence the map) when clients receive them
-		// so this should be redundant
-		if (!startPos.IsInMap())
-			return false;
-
-		return true;
-	}
 	void SetDefaultStartPos();
 	void ClampStartPosInStartBox(float3* pos) const;
 

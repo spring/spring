@@ -233,7 +233,7 @@ void CTeam::Died(bool normalDeath)
 		return;
 
 	if (normalDeath) {
-		if (leader >= 0) {
+		if (HasLeader()) {
 			const CPlayer* leadPlayer = playerHandler->Player(leader);
 			const char* leaderName = leadPlayer->name.c_str();
 			LOG(CMessages::Tr("Team %i (lead by %s) is no more").c_str(), teamNum, leaderName);
@@ -270,8 +270,8 @@ void CTeam::AddPlayer(int playerNum)
 		teamHandler->UpdateTeamUnitLimitsPreSpawn(teamNum);
 	}
 
-	if (leader == -1) {
-		leader = playerNum;
+	if (!HasLeader()) {
+		SetLeader(playerNum);
 	}
 
 	playerHandler->Player(playerNum)->JoinTeam(teamNum);
@@ -440,15 +440,15 @@ std::string CTeam::GetControllerName() const {
 	std::string s;
 
 	// "Joe, AI: ABCAI 0.1 (nick: Killer), AI: DEFAI 1.2 (nick: Slayer), ..."
-	if (this->leader >= 0) {
-		const CPlayer* leadPlayer = playerHandler->Player(this->leader);
+	if (HasLeader()) {
+		const CPlayer* leadPlayer = playerHandler->Player(leader);
 
 		if (leadPlayer->team != this->teamNum) {
 			const CTeam*   realLeadPlayerTeam = teamHandler->Team(leadPlayer->team);
 			const CPlayer* realLeadPlayer     = NULL;
 
-			if (realLeadPlayerTeam->leader >= 0) {
-				realLeadPlayer = playerHandler->Player(realLeadPlayerTeam->leader);
+			if (realLeadPlayerTeam->HasLeader()) {
+				realLeadPlayer = playerHandler->Player(realLeadPlayerTeam->GetLeader());
 				s = realLeadPlayer->name;
 			} else {
 				s = "N/A"; // weird
@@ -458,9 +458,8 @@ std::string CTeam::GetControllerName() const {
 		}
 
 		const CSkirmishAIHandler::ids_t& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(this->teamNum);
-		const int numTeamAIs = teamAIs.size();
 
-		if (numTeamAIs > 0) {
+		if (!teamAIs.empty()) {
 			s += ", ";
 		}
 
@@ -473,7 +472,7 @@ std::string CTeam::GetControllerName() const {
 			s += (prefix + pstfix);
 			i += 1;
 
-			if (i < numTeamAIs) {
+			if (i < teamAIs.size()) {
 				s += ", ";
 			}
 		}

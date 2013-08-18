@@ -19,6 +19,7 @@ public:
 	CWorldObject()
 		: id(-1)
 		, pos(ZeroVector)
+		, speed(ZeroVector)
 		, radius(0.0f)
 		, height(0.0f)
 		, sqRadius(0.0f)
@@ -27,9 +28,11 @@ public:
 		, alwaysVisible(false)
 		, model(NULL)
 	{}
-	CWorldObject(const float3& pos) {
+	CWorldObject(const float3& pos, const float3& spd) {
 		*this = CWorldObject();
+
 		this->pos = pos;
+		this->speed = spd;
 	}
 
 	virtual ~CWorldObject() {}
@@ -49,6 +52,7 @@ public:
 	int id;
 
 	float3 pos;         ///< position of the very bottom of the object
+	float3 speed;       ///< current velocity vector (length in elmos/frame)
 
 	float radius;       ///< used for collisions
 	float height;       ///< The height of this object

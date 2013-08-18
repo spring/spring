@@ -50,7 +50,6 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(midPos),
 	CR_MEMBER(aimPos),
 	CR_MEMBER(mapPos),
-	CR_MEMBER(speed),
 	CR_MEMBER(groundBlockPos),
 	CR_MEMBER(drawPos),
 	CR_MEMBER(drawMidPos),
@@ -95,7 +94,6 @@ CSolidObject::CSolidObject():
 	relMidPos(ZeroVector),
 	midPos(pos),
 	mapPos(GetMapPos()),
-	speed(ZeroVector),
 
 	blockMap(NULL),
 	buildFacing(0)

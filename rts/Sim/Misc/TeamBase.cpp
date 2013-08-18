@@ -74,9 +74,7 @@ void TeamBase::SetValue(const std::string& key, const std::string& value)
 	else if (key == "rgbcolor") {
 		std::istringstream buf(value);
 		for (size_t b = 0; b < 3; ++b) {
-			float tmp;
-			buf >> tmp;
-			color[b] = tmp * 255;
+			buf >> color[b]; color[b] *= 255;
 		}
 		color[3] = 255;
 	}
