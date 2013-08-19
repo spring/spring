@@ -25,7 +25,7 @@ public:
 	 *
 	 * Re-instantiates if the configHandler already existed.
 	 */
-	static void Instantiate(const std::string configSource = "", const bool safemode = false);
+	static void Instantiate(const std::string& configSource = "", const bool safemode = false);
 
 	/**
 	 * @brief Deallocate global configHandler
