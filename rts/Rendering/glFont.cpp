@@ -1095,7 +1095,7 @@ void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float 
 		}
 
 		l->width -= w.width;
-		l->end--;
+		--(l->end);
 	}
 
 	//! we don't even have enough space for the ellipsis
