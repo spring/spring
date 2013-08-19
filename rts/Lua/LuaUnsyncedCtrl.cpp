@@ -1299,7 +1299,7 @@ int LuaUnsyncedCtrl::AddMapLight(lua_State* L)
 		return 0;
 	}
 
-	GL::LightHandler* lightHandler = readmap->GetGroundDrawer()->GetLightHandler();
+	GL::LightHandler* lightHandler = readMap->GetGroundDrawer()->GetLightHandler();
 	GL::Light light;
 
 	unsigned int lightHandle = -1U;
@@ -1344,7 +1344,7 @@ int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L)
 		return 0;
 	}
 
-	GL::LightHandler* lightHandler = readmap->GetGroundDrawer()->GetLightHandler();
+	GL::LightHandler* lightHandler = readMap->GetGroundDrawer()->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
 	bool ret = false;
 
@@ -1449,7 +1449,7 @@ int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L)
 	const bool trackEnable = lua_isboolean(L, 3)? lua_toboolean(L, 3): true;
 	const bool trackUnit = lua_isboolean(L, 4)? lua_toboolean(L, 4): true;
 
-	GL::LightHandler* lightHandler = readmap->GetGroundDrawer()->GetLightHandler();
+	GL::LightHandler* lightHandler = readMap->GetGroundDrawer()->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
 	bool ret = false;
 
@@ -1502,7 +1502,7 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 	const int texSquareY = luaL_checkint(L, 2);
 	const std::string& texName = luaL_checkstring(L, 3);
 
-	CBaseGroundDrawer* groundDrawer = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* groundDrawer = readMap->GetGroundDrawer();
 	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
 
 	if (groundTextures == NULL) {
@@ -1972,7 +1972,7 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetLosViewColors()");
 	}
 	const int scale = CBaseGroundDrawer::losColorScale;
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	gd->alwaysColor[0] = (int)(scale *   red[0]);
 	gd->alwaysColor[1] = (int)(scale * green[0]);
 	gd->alwaysColor[2] = (int)(scale *  blue[0]);

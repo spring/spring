@@ -198,7 +198,7 @@ void CFeatureDrawer::Draw()
 
 	GML_RECMUTEX_LOCK(feat); // Draw
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	if (gd->DrawExtraTex()) {
 		glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -270,7 +270,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 void CFeatureDrawer::DrawFeatureStats()
 {
 	if (!drawStat.empty()) {
-		if (!water->IsDrawReflection()) {
+		if (!water->DrawReflectionPass()) {
 			for (std::vector<CFeature *>::iterator fi = drawStat.begin(); fi != drawStat.end(); ++fi) {
 				DrawFeatureStatBars(*fi);
 			}
@@ -573,8 +573,8 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	CFeatureQuadDrawer drawer;
 	drawer.drawQuads = &drawQuads;
 	drawer.drawQuadsX = drawQuadsX;
-	drawer.drawReflection = water->IsDrawReflection();
-	drawer.drawRefraction = water->IsDrawRefraction();
+	drawer.drawReflection = water->DrawReflectionPass();
+	drawer.drawRefraction = water->DrawRefractionPass();
 	drawer.sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 	drawer.sqFadeDistBegin = featureFadeDistance * featureFadeDistance;
 	drawer.farFeatures = drawFar;
@@ -582,7 +582,7 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	drawer.statFeatures = showRezBars ? &drawStat : NULL;
 #endif
 
-	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
+	readMap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
 }
 
 void CFeatureDrawer::SwapFeatures() {

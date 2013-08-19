@@ -691,7 +691,7 @@ CUnit* CMiniMap::GetSelectUnit(const float3& pos) const
 
 float3 CMiniMap::GetMapPosition(int x, int y) const
 {
-	const float mapHeight = readmap->initMaxHeight + 1000.0f;
+	const float mapHeight = readMap->GetInitMaxHeight() + 1000.0f;
 	const float mapX = gs->mapx * SQUARE_SIZE;
 	const float mapY = gs->mapy * SQUARE_SIZE;
 	const float3 pos(mapX * float(x - xpos) / width, mapHeight,
@@ -709,7 +709,7 @@ void CMiniMap::ProxyMousePress(int x, int y, int button)
 			mapPos = unit->midPos;
 		} else {
 			mapPos = unit->GetDrawErrorPos(gu->myAllyTeam);
-			mapPos.y = readmap->initMaxHeight + 1000.0f;
+			mapPos.y = readMap->GetInitMaxHeight() + 1000.0f;
 		}
 	}
 
@@ -730,7 +730,7 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 			mapPos = unit->midPos;
 		} else {
 			mapPos = unit->GetDrawErrorPos(gu->myAllyTeam);
-			mapPos.y = readmap->initMaxHeight + 1000.0f;
+			mapPos.y = readMap->GetInitMaxHeight() + 1000.0f;
 		}
 	}
 
@@ -1102,7 +1102,7 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 	// draw the map
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_BLEND);
-		readmap->DrawMinimap();
+		readMap->DrawMinimap();
 	glEnable(GL_BLEND);
 
 	glMatrixMode(GL_TEXTURE);

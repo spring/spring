@@ -119,9 +119,8 @@ void CAdvWater::Draw()
 
 void CAdvWater::Draw(bool useBlending)
 {
-	if (!mapInfo->water.forceRendering && (readmap->currMinHeight > 1.0f)) {
+	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
 		return;
-	}
 
 	float3 base = camera->CalcPixelDir(globalRendering->viewPosX, globalRendering->viewSizeY);
 	float3 dv   = camera->CalcPixelDir(globalRendering->viewPosX, 0) - camera->CalcPixelDir(globalRendering->viewPosX, globalRendering->viewSizeY);
@@ -231,9 +230,8 @@ void CAdvWater::Draw(bool useBlending)
 
 void CAdvWater::UpdateWater(CGame* game)
 {
-	if ((!mapInfo->water.forceRendering && (readmap->currMinHeight > 0.0f)) || mapInfo->map.voidWater) {
+	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
 		return;
-	}
 
 	glPushAttrib(GL_FOG_BIT);
 	glPushAttrib(GL_COLOR_BUFFER_BIT);
@@ -325,7 +323,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	glClipPlane(GL_CLIP_PLANE2, plane);
 	drawReflection = true;
 
-	readmap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
+	readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 	unitDrawer->Draw(true);
 	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(true);

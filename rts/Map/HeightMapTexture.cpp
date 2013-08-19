@@ -33,7 +33,7 @@ HeightMapTexture::~HeightMapTexture()
 
 void HeightMapTexture::Init()
 {
-	if (readmap == NULL) {
+	if (readMap == NULL) {
 		return;
 	}
 
@@ -58,7 +58,7 @@ void HeightMapTexture::Init()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	const float* heightMap = readmap->GetCornerHeightMapUnsynced();
+	const float* heightMap = readMap->GetCornerHeightMapUnsynced();
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE32F_ARB,
 		xSize, ySize, 0,
@@ -82,7 +82,7 @@ void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 	if (texID == 0) {
 		return;
 	}
-	const float* heightMap = readmap->GetCornerHeightMapUnsynced();
+	const float* heightMap = readMap->GetCornerHeightMapUnsynced();
 
 	const int sizeX = rect.x2 - rect.x1 + 1;
 	const int sizeZ = rect.z2 - rect.z1 + 1;

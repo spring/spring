@@ -497,7 +497,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	oldTreeDistance = treeDistance;
 
 	// draw far-trees using map-dependent grid-visibility (FIXME: ignores LOS)
-	readmap->GridVisibility(camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer);
+	readMap->GridVisibility(camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer);
 
 
 	if (drawDetailed) {
@@ -908,7 +908,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 	GML_STDMUTEX_LOCK(tree); // DrawShadowPass
 
 	// draw with extraSize=1
-	readmap->GridVisibility(camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer, 1);
+	readMap->GridVisibility(camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer, 1);
 
 	if (drawDetailed) {
 		const int xstart = Clamp(cx - 2, 0, gs->mapx / TREE_SQUARE_SIZE - 1);

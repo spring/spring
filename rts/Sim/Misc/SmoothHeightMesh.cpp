@@ -169,7 +169,7 @@ inline static void FindRadialMaximum(
 
 #ifndef NDEBUG
 		const float curx = x * resolution;
-		assert(maxRowHeight <= std::max(readmap->currMaxHeight, 0.0f));
+		assert(maxRowHeight <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
 		assert(maxRowHeight >= ground->GetHeightAboveWater(curx, cury));
 
 	#ifdef SMOOTHMESH_CORRECTNESS_CHECK
@@ -287,7 +287,7 @@ inline static void BlurHorizontal(
 				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
 				const float sh = smoothed[idx] / (xend - xstart + 1);
 
-				smoothed[idx] = std::min(readmap->currMaxHeight, std::max(gh, sh));
+				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
 			} else {
 				// non-border case
 				avg += mesh[idx + smoothrad] - mesh[idx - smoothrad - 1];
@@ -295,11 +295,11 @@ inline static void BlurHorizontal(
 				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
 				const float sh = recipn * avg;
 
-				smoothed[idx] = std::min(readmap->currMaxHeight, std::max(gh, sh));
+				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
 			}
 
-			assert(smoothed[idx] <= std::max(readmap->currMaxHeight, 0.0f));
-			assert(smoothed[idx] >=          readmap->currMinHeight       );
+			assert(smoothed[idx] <= std::max(readMap->CetCurrMaxHeight(), 0.0f));
+			assert(smoothed[idx] >=          readMap->GetCurrMinHeight()       );
 		}
 	});
 }
@@ -340,7 +340,7 @@ inline static void BlurVertical(
 				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
 				const float sh = smoothed[idx] / (yend - ystart + 1);
 
-				smoothed[idx] = std::min(readmap->currMaxHeight, std::max(gh, sh));
+				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
 			} else {
 				// non-border case
 				avg += mesh[x + (y + smoothrad) * lineSize] - mesh[x + (y - smoothrad - 1) * lineSize];
@@ -348,11 +348,11 @@ inline static void BlurVertical(
 				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
 				const float sh = recipn * avg;
 
-				smoothed[idx] = std::min(readmap->currMaxHeight, std::max(gh, sh));
+				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
 			}
 
-			assert(smoothed[idx] <= std::max(readmap->currMaxHeight, 0.0f));
-			assert(smoothed[idx] >=          readmap->currMinHeight       );
+			assert(smoothed[idx] <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
+			assert(smoothed[idx] >=          readMap->GetCurrMinHeight()       );
 		}
 	});
 }
@@ -373,8 +373,8 @@ inline static void CheckInvariants(
 		for (int x = 0; x <= maxx; ++x) {
 			assert(maximaRows[x] > y - intrad);
 			assert(maximaRows[x] <= maxy);
-			assert(colsMaxima[x] <= std::max(readmap->currMaxHeight, 0.0f));
-			assert(colsMaxima[x] >=          readmap->currMinHeight       );
+			assert(colsMaxima[x] <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
+			assert(colsMaxima[x] >=          readMap->GetCurrMinHeight()       );
 		}
 	}
 	for (int y1 = std::max(0, y - intrad + 1); y1 <= std::min(maxy, y + intrad + 1); ++y1) {

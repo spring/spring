@@ -143,7 +143,7 @@ void CGroundDecalHandler::LoadDecalShaders() {
 	decalShaders.resize(DECAL_SHADER_LAST, NULL);
 
 	// SM3 maps have no baked lighting, so decals blend differently
-	const bool haveShadingTexture = (readmap->GetShadingTexture() != 0);
+	const bool haveShadingTexture = (readMap->GetShadingTexture() != 0);
 	const char* fragmentProgramNameARB = haveShadingTexture?
 		"ARB/GroundDecalsSMF.fp":
 		"ARB/GroundDecalsSM3.fp";
@@ -217,7 +217,7 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 		return;
 	}
 
-	const float* hm = readmap->GetCornerHeightMapUnsynced();
+	const float* hm = readMap->GetCornerHeightMapUnsynced();
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
 	const int gsmy = gs->mapy;
@@ -326,7 +326,7 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 		return;
 	}
 
-	const float* hm = readmap->GetCornerHeightMapUnsynced();
+	const float* hm = readMap->GetCornerHeightMapUnsynced();
 
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
@@ -659,7 +659,7 @@ void CGroundDecalHandler::Draw()
 	}
 
 	const float3 ambientColor = mapInfo->light.groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
-	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -670,7 +670,7 @@ void CGroundDecalHandler::Draw()
 
 	glActiveTexture(GL_TEXTURE1);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
+		glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
 		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
 		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
@@ -819,7 +819,7 @@ void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newpos)
 	const int xp = (int(newpos.x) / SQUARE_SIZE * 2);
 	const int mp = Clamp(zp * gs->hmapx + xp, 0, (gs->mapSquares / 4) - 1);
 
-	if (!mapInfo->terrainTypes[readmap->GetTypeMapSynced()[mp]].receiveTracks)
+	if (!mapInfo->terrainTypes[readMap->GetTypeMapSynced()[mp]].receiveTracks)
 		return;
 
 	const float trackLifeTime = GAME_SPEED * decalLevel * decalDef.trackDecalStrength;

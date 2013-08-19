@@ -757,7 +757,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 		GML_RECMUTEX_LOCK(quad); // GetVisibleUnits
 
 		unitQuadIter.Reset();
-		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
+		readMap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
 
 		lua_createtable(L, unitQuadIter.GetCount(), 0);
 
@@ -880,7 +880,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 		GML_RECMUTEX_LOCK(quad); // GetVisibleFeatures
 
 		featureQuadIter.Reset();
-		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
+		readMap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
 
 		lua_createtable(L, featureQuadIter.GetCount(), 0);
 
@@ -1130,7 +1130,7 @@ int LuaUnsyncedRead::GetWaterMode(lua_State* L)
 int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	switch (gd->drawMode) {
 		case CBaseGroundDrawer::drawNormal:             { HSTR_PUSH(L, "normal"            ); break; }
 		case CBaseGroundDrawer::drawHeight:             { HSTR_PUSH(L, "height"            ); break; }
@@ -1156,7 +1156,7 @@ int LuaUnsyncedRead::GetMapSquareTexture(lua_State* L)
 	const int texMipLevel = luaL_checkint(L, 3);
 	const std::string& texName = luaL_checkstring(L, 4);
 
-	CBaseGroundDrawer* groundDrawer = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* groundDrawer = readMap->GetGroundDrawer();
 	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
 
 	if (groundTextures == NULL) {

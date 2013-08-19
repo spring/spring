@@ -443,7 +443,7 @@ public:
 			"Disables/Enables ROAM mesh rendering: 0=off, 1=on") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readmap->GetGroundDrawer());
+		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readMap->GetGroundDrawer());
 		if (!smfGD)
 			return false;
 
@@ -470,7 +470,7 @@ public:
 			"Set or toggle map border rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readmap->GetGroundDrawer());
+		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readMap->GetGroundDrawer());
 		if (!smfGD)
 			return false;
 
@@ -561,7 +561,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		static bool canUseShaders = gd->advShading;
 		if (!canUseShaders)
 			return false;
@@ -1545,7 +1545,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		if (!GML::Enabled())
 			return false;
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		SetBoolArg(gd->multiThreadDrawGround, action.GetArgs());
 		configHandler->Set("MultiThreadDrawGround", gd->multiThreadDrawGround ? 1 : 0);
 		LogSystemStatus("Multi threaded ground rendering", gd->multiThreadDrawGround);
@@ -1563,7 +1563,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		if (!GML::Enabled())
 			return false;
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		SetBoolArg(gd->multiThreadDrawGroundShadow, action.GetArgs());
 		configHandler->Set("MultiThreadDrawGroundShadow", gd->multiThreadDrawGroundShadow ? 1 : 0);
 		LogSystemStatus("Multi threaded ground shadow rendering", gd->multiThreadDrawGroundShadow);
@@ -1615,7 +1615,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		if (!GML::Enabled())
 			return false;
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		bool mtEnabled = IsMTEnabled();
 		SetBoolArg(mtEnabled, action.GetArgs());
 		gd->multiThreadDrawGround = mtEnabled;
@@ -1629,7 +1629,7 @@ public:
 	}
 
 	static bool IsMTEnabled() {
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		// find out if most of the MT stuff is on or off so we can toggle based on that
 		return
 				((gd->multiThreadDrawGround ? 1 : 0)
@@ -1758,7 +1758,7 @@ public:
 			"Increase the view radius (lower performance, nicer view)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->IncreaseDetail();
+		readMap->GetGroundDrawer()->IncreaseDetail();
 		return true;
 	}
 };
@@ -1771,7 +1771,7 @@ public:
 			"Decrease the view radius (higher performance, uglier view)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->DecreaseDetail();
+		readMap->GetGroundDrawer()->DecreaseDetail();
 		return true;
 	}
 };
@@ -1925,7 +1925,7 @@ public:
 			"Disable rendering of all auxiliary map overlays") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->DisableExtraTexture();
+		readMap->GetGroundDrawer()->DisableExtraTexture();
 		return true;
 	}
 };
@@ -1938,7 +1938,7 @@ public:
 			"Enable rendering of the auxiliary height-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->SetHeightTexture();
+		readMap->GetGroundDrawer()->SetHeightTexture();
 		return true;
 	}
 };
@@ -1951,7 +1951,7 @@ public:
 			"Enable/Disable rendering of the auxiliary radar- & jammer-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->ToggleRadarAndJammer();
+		readMap->GetGroundDrawer()->ToggleRadarAndJammer();
 		return true;
 	}
 };
@@ -1964,7 +1964,7 @@ public:
 			"Enable rendering of the auxiliary metal-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->SetMetalTexture(readmap->metalMap);
+		readMap->GetGroundDrawer()->SetMetalTexture(readMap->metalMap);
 		return true;
 	}
 };
@@ -1977,7 +1977,7 @@ public:
 			"Enable rendering of the path traversability-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathTraversability);
+		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathTraversability);
 		return true;
 	}
 };
@@ -1988,7 +1988,7 @@ public:
 			"Enable/Disable rendering of the path heat-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathHeat);
+		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathHeat);
 		return true;
 	}
 };
@@ -1999,7 +1999,7 @@ public:
 			"Enable/Disable rendering of the path flow-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathFlow);
+		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathFlow);
 		return true;
 	}
 };
@@ -2010,7 +2010,7 @@ public:
 			"Enable rendering of the path cost-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathCost);
+		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathCost);
 		return true;
 	}
 };
@@ -2023,7 +2023,7 @@ public:
 			"Enable rendering of the auxiliary LOS-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->ToggleLosTexture();
+		readMap->GetGroundDrawer()->ToggleLosTexture();
 		return true;
 	}
 };
@@ -2865,7 +2865,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		SetBoolArg(gd->wireframe, action.GetArgs());
 		sky->wireframe = gd->wireframe;
 		LogSystemStatus("wireframe map-drawing mode", gd->wireframe);

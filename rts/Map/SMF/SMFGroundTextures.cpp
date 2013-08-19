@@ -195,7 +195,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 
 	ScopedOnceTimer timer("CSMFGroundTextures::ConvolveHeightMap");
 
-	const float* hdata = readmap->GetMIPHeightMapSynced(1);
+	const float* hdata = readMap->GetMIPHeightMapSynced(1);
 	const int mx = header.mapx / 2;
 	const int nbx = smfMap->numBigTexX;
 	const int nb = smfMap->numBigTexX * smfMap->numBigTexY;
@@ -203,8 +203,8 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 	// 64 is the heightmap square-size at MIP level 1 (bigSquareSize >> 1)
 	static const int mipSquareSize = 64;
 
-	heightMaxima.resize(nb, readmap->currMinHeight);
-	heightMinima.resize(nb, readmap->currMaxHeight);
+	heightMaxima.resize(nb, readMap->GetCurrMinHeight());
+	heightMinima.resize(nb, readMap->GetCurrMaxHeight());
 	stretchFactors.resize(nb, 0.0f);
 
 	for (int y = 0; y < smfMap->numBigTexY; ++y) {
@@ -265,7 +265,7 @@ CSMFGroundTextures::~CSMFGroundTextures()
 
 inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 {
-	static const float* hm = readmap->GetCornerHeightMapUnsynced();
+	static const float* hm = readMap->GetCornerHeightMapUnsynced();
 
 	static const float bigTexSquareRadius = fastmath::apxsqrt(
 		smfMap->bigTexSize * smfMap->bigTexSize +

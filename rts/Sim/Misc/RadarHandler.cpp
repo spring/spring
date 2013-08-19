@@ -49,7 +49,7 @@ CRadarHandler::CRadarHandler(bool circularRadar)
   circularRadar(circularRadar),
   xsize(std::max(1, gs->mapx >> radarMipLevel)),
   zsize(std::max(1, gs->mapy >> radarMipLevel)),
-  radarAlgo(int2(xsize, zsize), -1000, 20, readmap->GetMIPHeightMapSynced(radarMipLevel)),
+  radarAlgo(int2(xsize, zsize), -1000, 20, readMap->GetMIPHeightMapSynced(radarMipLevel)),
   baseRadarErrorSize(96.0f),
   baseRadarErrorMult(2.0f)
 {

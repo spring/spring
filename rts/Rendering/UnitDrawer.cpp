@@ -261,7 +261,7 @@ void CUnitDrawer::Update()
 		// use the height at the current camera position
 		//const float groundHeight = ground->GetHeightAboveWater(camPos.x, camPos.z, false);
 		// use the middle between the highest and lowest position on the map as average
-		const float groundHeight = (readmap->currMinHeight + readmap->currMaxHeight) / 2;
+		const float groundHeight = (readMap->GetCurrMinHeight() + readMap->GetCurrMaxHeight()) * 0.5f;
 		const float overGround = camPos.y - groundHeight;
 
 		sqCamDistToGroundForIcons = overGround * overGround;
@@ -280,7 +280,7 @@ inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 
 	if (unit->lodCount > 0) {
 		if (unit->isCloaked) {
-			const LuaMatType matType = (water->IsDrawReflection())?
+			const LuaMatType matType = (water->DrawReflectionPass())?
 				LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA;
 			LuaUnitMaterial& unitMat = unit->luaMats[matType];
 			const unsigned lod = CalcUnitLOD(unit, unitMat.GetLastLOD());
@@ -292,7 +292,7 @@ inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 			}
 		} else {
 			const LuaMatType matType =
-				(water->IsDrawReflection()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+				(water->DrawReflectionPass()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
 			LuaUnitMaterial& unitMat = unit->luaMats[matType];
 			const unsigned lod = CalcUnitLOD(unit, unitMat.GetLastLOD());
 			unit->currentLOD = lod;
@@ -640,7 +640,7 @@ void CUnitDrawer::DrawOpaqueShaderUnits()
 	luaMatHandler.setupS3oShader = SetupOpaqueS3O;
 	luaMatHandler.resetS3oShader = ResetOpaqueS3O;
 
-	const LuaMatType matType = (water->IsDrawReflection())?
+	const LuaMatType matType = (water->DrawReflectionPass())?
 		LUAMAT_OPAQUE_REFLECT:
 		LUAMAT_OPAQUE;
 
@@ -655,7 +655,7 @@ void CUnitDrawer::DrawCloakedShaderUnits()
 	luaMatHandler.setupS3oShader = SetupAlphaS3O;
 	luaMatHandler.resetS3oShader = ResetAlphaS3O;
 
-	const LuaMatType matType = (water->IsDrawReflection())?
+	const LuaMatType matType = (water->DrawReflectionPass())?
 		LUAMAT_ALPHA_REFLECT:
 		LUAMAT_ALPHA;
 
@@ -1288,7 +1288,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 	GML_LODMUTEX_LOCK(unit); // DrawIndividual
 
 	if (unit->lodCount > 0) {
-		const LuaMatType matType = (water->IsDrawReflection())?
+		const LuaMatType matType = (water->DrawReflectionPass())?
 			LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
 		LuaUnitMaterial& unitMat = unit->luaMats[matType];
 		lodMat = unitMat.GetMaterial(unit->currentLOD);

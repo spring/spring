@@ -347,7 +347,7 @@ void CShadowHandler::DrawShadowPasses()
 			// (could just disable culling of terrain faces, but we also want
 			// to prevent overdraw in such low-angle passes)
 			if ((shadowGenBits & SHADOWGEN_BIT_MAP) != 0)
-				readmap->GetGroundDrawer()->DrawShadowPass();
+				readMap->GetGroundDrawer()->DrawShadowPass();
 	glPopAttrib();
 
 	inShadowPass = false;
@@ -685,8 +685,8 @@ void CShadowHandler::CalcMinMaxView()
 				float3 p[5];
 				p[0] = float3(fli->base + fli->dir * fli->minz, 0.0f, fli->minz);
 				p[1] = float3(fli->base + fli->dir * fli->maxz, 0.0f, fli->maxz);
-				p[2] = float3(fli->base + fli->dir * fli->minz, readmap->initMaxHeight + 200, fli->minz);
-				p[3] = float3(fli->base + fli->dir * fli->maxz, readmap->initMaxHeight + 200, fli->maxz);
+				p[2] = float3(fli->base + fli->dir * fli->minz, readMap->initMaxHeight + 200, fli->minz);
+				p[3] = float3(fli->base + fli->dir * fli->maxz, readMap->initMaxHeight + 200, fli->maxz);
 				p[4] = centerPos;
 
 				for (int a = 0; a < 5; ++a) {

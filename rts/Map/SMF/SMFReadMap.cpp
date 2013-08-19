@@ -96,8 +96,8 @@ void CSMFReadMap::ParseHeader()
 {
 	const SMFHeader& header = file.GetHeader();
 
-	width  = header.mapx;
-	height = header.mapy;
+	gs->mapx = header.mapx;
+	gs->mapy = header.mapy;
 
 	numBigTexX      = (header.mapx / bigSquareSize);
 	numBigTexY      = (header.mapy / bigSquareSize);
@@ -116,9 +116,9 @@ void CSMFReadMap::LoadHeightMap()
 {
 	const SMFHeader& header = file.GetHeader();
 
-	cornerHeightMapSynced.resize((width + 1) * (height + 1));
+	cornerHeightMapSynced.resize((gs->mapx + 1) * (gs->mapy + 1));
 	#ifdef USE_UNSYNCED_HEIGHTMAP
-	cornerHeightMapUnsynced.resize((width + 1) * (height + 1));
+	cornerHeightMapUnsynced.resize((gs->mapx + 1) * (gs->mapy + 1));
 	#endif
 
 	heightMapSyncedPtr   = &cornerHeightMapSynced;
@@ -133,7 +133,7 @@ void CSMFReadMap::LoadHeightMap()
 	//     callchain CReadMap::Initialize --> CReadMap::UpdateHeightMapSynced(0, 0, gs->mapx, gs->mapy) -->
 	//     PushVisibleHeightMapUpdate --> (next UpdateDraw) UpdateHeightMapUnsynced(0, 0, gs->mapx, gs->mapy)
 	//     initializes the UHM a second time
-	//     merge them some way so UHM & shadingtex is available from the time readmap got created
+	//     merge them some way so UHM & shadingtex is available from the time readMap got created
 	file.ReadHeightmap(cornerHeightMapSyncedData, cornerHeightMapUnsyncedData, minHgt, (maxHgt - minHgt) / 65536.0f);
 }
 

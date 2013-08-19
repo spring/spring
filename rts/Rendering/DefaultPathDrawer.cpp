@@ -71,7 +71,7 @@ void DefaultPathDrawer::DrawAll() const {
 
 void DefaultPathDrawer::DrawInMiniMap()
 {
-	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	const auto pe = pm->medResPE;
 	const MoveDef* md = GetSelectedMoveDef();
 

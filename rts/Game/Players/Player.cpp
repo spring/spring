@@ -107,7 +107,7 @@ void CPlayer::StartSpectating()
 		//FIXME use eventHandler?
 		CLuaUI::UpdateTeams();
 		selectedUnitsHandler.ClearSelected();
-		if(readmap != NULL) readmap->BecomeSpectator();
+		if(readMap != NULL) readMap->BecomeSpectator();
 		unitTracker.Disable();
 	}
 

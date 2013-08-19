@@ -3202,7 +3202,7 @@ int LuaSyncedCtrl::LevelHeightMap(lua_State* L)
 
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
-			readmap->SetHeight((z * gs->mapxp1) + x, height);
+			readMap->SetHeight((z * gs->mapxp1) + x, height);
 		}
 	}
 
@@ -3224,7 +3224,7 @@ int LuaSyncedCtrl::AdjustHeightMap(lua_State* L)
 
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
-			readmap->AddHeight((z * gs->mapxp1) + x, height);
+			readMap->AddHeight((z * gs->mapxp1) + x, height);
 		}
 	}
 
@@ -3242,15 +3242,15 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 	int x1, x2, z1, z2;
 	ParseMapParams(L, __FUNCTION__, origFactor, x1, z1, x2, z2);
 
-	const float* origMap = readmap->GetOriginalHeightMapSynced();
-	const float* currMap = readmap->GetCornerHeightMapSynced();
+	const float* origMap = readMap->GetOriginalHeightMapSynced();
+	const float* currMap = readMap->GetCornerHeightMapSynced();
 
 	if (origFactor == 1.0f) {
 		for (int z = z1; z <= z2; z++) {
 			for (int x = x1; x <= x2; x++) {
 				const int idx = (z * gs->mapxp1) + x;
 
-				readmap->SetHeight(idx, origMap[idx]);
+				readMap->SetHeight(idx, origMap[idx]);
 			}
 		}
 	}
@@ -3261,7 +3261,7 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 				const int index = (z * gs->mapxp1) + x;
 				const float ofh = origFactor * origMap[index];
 				const float cfh = currFactor * currMap[index];
-				readmap->SetHeight(index, ofh + cfh);
+				readMap->SetHeight(index, ofh + cfh);
 			}
 		}
 	}
@@ -3294,7 +3294,7 @@ int LuaSyncedCtrl::AddHeightMap(lua_State* L)
 	}
 
 	const int index = (z * gs->mapxp1) + x;
-	const float oldHeight = readmap->GetCornerHeightMapSynced()[index];
+	const float oldHeight = readMap->GetCornerHeightMapSynced()[index];
 	heightMapAmountChanged += math::fabsf(h);
 
 	// update RecalcArea()
@@ -3303,7 +3303,7 @@ int LuaSyncedCtrl::AddHeightMap(lua_State* L)
 	if (z < heightMapz1) { heightMapz1 = z; }
 	if (z > heightMapz2) { heightMapz2 = z; }
 
-	readmap->AddHeight(index, h);
+	readMap->AddHeight(index, h);
 	// push the new height
 	lua_pushnumber(L, oldHeight + h);
 	return 1;
@@ -3331,7 +3331,7 @@ int LuaSyncedCtrl::SetHeightMap(lua_State* L)
 	}
 
 	const int index = (z * gs->mapxp1) + x;
-	const float oldHeight = readmap->GetCornerHeightMapSynced()[index];
+	const float oldHeight = readMap->GetCornerHeightMapSynced()[index];
 	float height = oldHeight;
 
 	if (lua_israwnumber(L, 4)) {
@@ -3350,7 +3350,7 @@ int LuaSyncedCtrl::SetHeightMap(lua_State* L)
 	if (z < heightMapz1) { heightMapz1 = z; }
 	if (z > heightMapz2) { heightMapz2 = z; }
 
-	readmap->SetHeight(index, height);
+	readMap->SetHeight(index, height);
 	lua_pushnumber(L, heightDiff);
 	return 1;
 }
@@ -3583,10 +3583,10 @@ int LuaSyncedCtrl::SetMapSquareTerrainType(lua_State* L)
 	const int tx = hx >> 1;
 	const int tz = hz >> 1;
 
-	const int ott = readmap->GetTypeMapSynced()[tz * gs->hmapx + tx];
+	const int ott = readMap->GetTypeMapSynced()[tz * gs->hmapx + tx];
 	const int ntt = luaL_checkint(L, 3);
 
-	readmap->GetTypeMapSynced()[tz * gs->hmapx + tx] = std::max(0, std::min(ntt, (CMapInfo::NUM_TERRAIN_TYPES - 1)));
+	readMap->GetTypeMapSynced()[tz * gs->hmapx + tx] = std::max(0, std::min(ntt, (CMapInfo::NUM_TERRAIN_TYPES - 1)));
 	pathManager->TerrainChange(hx, hz,  hx + 1, hz + 1,  TERRAINCHANGE_SQUARE_TYPEMAP_INDEX);
 
 	lua_pushnumber(L, ott);
@@ -3630,7 +3630,7 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 	}
 	*/
 
-	const unsigned char* typeMap = readmap->GetTypeMapSynced();
+	const unsigned char* typeMap = readMap->GetTypeMapSynced();
 
 	// update all map-squares set to this terrain-type (slow)
 	for (int tx = 0; tx < gs->hmapx; tx++) {

@@ -298,9 +298,8 @@ CDynWater::~CDynWater()
 
 void CDynWater::Draw()
 {
-	if (!mapInfo->water.forceRendering && (readmap->currMinHeight > 0.0f)) {
+	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
 		return;
-	}
 
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
@@ -317,7 +316,7 @@ void CDynWater::Draw()
 	glActiveTextureARB(GL_TEXTURE3_ARB);
 	glBindTexture(GL_TEXTURE_2D, refractTexture);
 	glActiveTextureARB(GL_TEXTURE4_ARB);
-	glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
+	glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
 	glActiveTextureARB(GL_TEXTURE5_ARB);
 	glBindTexture(GL_TEXTURE_2D, foamTex);
 	glActiveTextureARB(GL_TEXTURE6_ARB);
@@ -391,9 +390,8 @@ void CDynWater::Draw()
 
 void CDynWater::UpdateWater(CGame* game)
 {
-	if ((!mapInfo->water.forceRendering && (readmap->currMinHeight > 0.0f)) || mapInfo->map.voidWater) {
+	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
 		return;
-	}
 
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(0);
@@ -418,9 +416,8 @@ void CDynWater::UpdateWater(CGame* game)
 
 void CDynWater::Update()
 {
-	if ((!mapInfo->water.forceRendering) && (readmap->currMinHeight > 0.0f)) {
+	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
 		return;
-	}
 
 	oldCamPosBig = camPosBig;
 
@@ -484,7 +481,7 @@ void CDynWater::DrawReflection(CGame* game)
 			//   (because of abdb611014fbb903341fe731835ecf831e31d9b2)
 			// shadowHandler->shadowsLoaded = false;
 
-			CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+			CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 				gd->SetupReflDrawPass();
 				gd->Draw(DrawPass::WaterReflection);
 				gd->SetupBaseDrawPass();
@@ -543,7 +540,7 @@ void CDynWater::DrawRefraction(CGame* game)
 
 	game->SetDrawMode(CGame::gameRefractionDraw);
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		gd->SetupRefrDrawPass();
 		gd->Draw(DrawPass::WaterRefraction);
 		gd->SetupBaseDrawPass();
@@ -645,7 +642,7 @@ void CDynWater::DrawWaves()
 	glActiveTextureARB(GL_TEXTURE5_ARB);
 	glBindTexture(GL_TEXTURE_2D, waveTex1);
 	glActiveTextureARB(GL_TEXTURE6_ARB);
-	glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture ());
+	glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture ());
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, waveFP2);

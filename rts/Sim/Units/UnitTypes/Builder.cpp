@@ -167,7 +167,7 @@ void CBuilder::Update()
 		if (terraforming && inBuildStance) {
 			assert(!mapDamage->disabled); // The map should not be deformed in the first place.
 
-			const float* heightmap = readmap->GetCornerHeightMapSynced();
+			const float* heightmap = readMap->GetCornerHeightMapSynced();
 			float terraformScale = 0.1;
 
 			switch (terraformType) {
@@ -190,7 +190,7 @@ void CBuilder::Update()
 								int idx = z * gs->mapxp1 + x;
 								float ch = heightmap[idx];
 
-								readmap->AddHeight(idx, (curBuild->pos.y - ch) * terraformScale);
+								readMap->AddHeight(idx, (curBuild->pos.y - ch) * terraformScale);
 							}
 						}
 
@@ -219,9 +219,9 @@ void CBuilder::Update()
 						for (int x = tx1; x <= tx2; x++) {
 							int idx = z * gs->mapxp1 + x;
 							float ch = heightmap[idx];
-							float oh = readmap->GetOriginalHeightMapSynced()[idx];
+							float oh = readMap->GetOriginalHeightMapSynced()[idx];
 
-							readmap->AddHeight(idx, (oh - ch) * terraformScale);
+							readMap->AddHeight(idx, (oh - ch) * terraformScale);
 						}
 					}
 
@@ -245,7 +245,7 @@ void CBuilder::Update()
 						const float ch2 = heightmap[z * gs->mapxp1 + tx1 - 3];
 						const float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
 
-						readmap->AddHeight(z * gs->mapxp1 + tx1 - x, amount);
+						readMap->AddHeight(z * gs->mapxp1 + tx1 - x, amount);
 					}
 					if (tx2 + 3 < gs->mapx) {
 						const float ch3 = heightmap[z * gs->mapxp1 + tx2    ];
@@ -253,7 +253,7 @@ void CBuilder::Update()
 						const float ch2 = heightmap[z * gs->mapxp1 + tx2 + 3];
 						const float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
 
-						readmap->AddHeight(z * gs->mapxp1 + tx2 + x, amount);
+						readMap->AddHeight(z * gs->mapxp1 + tx2 + x, amount);
 					}
 				}
 			}
@@ -266,7 +266,7 @@ void CBuilder::Update()
 						const float ch2 = heightmap[(tz1 - 3) * gs->mapxp1 + x];
 						const float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
 
-						readmap->AddHeight((tz1 - z) * gs->mapxp1 + x, adjust);
+						readMap->AddHeight((tz1 - z) * gs->mapxp1 + x, adjust);
 					}
 					if (tz2 + 3 < gs->mapy) {
 						const float ch3 = heightmap[(tz2    ) * gs->mapxp1 + x];
@@ -274,7 +274,7 @@ void CBuilder::Update()
 						const float ch2 = heightmap[(tz2 + 3) * gs->mapxp1 + x];
 						const float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
 
-						readmap->AddHeight((tz2 + z) * gs->mapxp1 + x, adjust);
+						readMap->AddHeight((tz2 + z) * gs->mapxp1 + x, adjust);
 					}
 				}
 			}
@@ -569,8 +569,8 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 	tz2 = (int)min((float)gs->mapy,(centerPos.z+radius)/SQUARE_SIZE);
 
 	float tcost = 0.0f;
-	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
-	const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
+	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
+	const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
 
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
@@ -719,8 +719,8 @@ float CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 	float3& buildPos = buildInfo.pos;
 
 	float tcost = 0.0f;
-	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
-	const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
+	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
+	const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
 
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {

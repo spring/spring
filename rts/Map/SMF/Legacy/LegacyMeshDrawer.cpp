@@ -62,7 +62,7 @@ void CLegacyMeshDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y)
 {
 	// don't send the normals as vertex attributes
 	// (DLOD'ed triangles mess with interpolation)
-	// const float3& n = readmap->vertexNormals[(y * smfReadMap->heightMapSizeX) + x];
+	// const float3& n = readMap->vertexNormals[(y * smfReadMap->heightMapSizeX) + x];
 
 	DrawVertexAQ(ma, x, y, GetVisibleVertexHeight(y * smfReadMap->heightMapSizeX + x));
 }
@@ -93,7 +93,7 @@ bool CLegacyMeshDrawer::BigTexSquareRowVisible(const CCamera* cam, int bty) cons
 {
 	const int minz =  bty * smfReadMap->bigTexSize;
 	const int maxz = minz + smfReadMap->bigTexSize;
-	const float miny = readmap->currMinHeight;
+	const float miny = readMap->GetCurrMinHeight();
 	const float maxy = math::fabs(cam->GetPos().y);
 
 	const float3 mins(                   0, miny, minz);

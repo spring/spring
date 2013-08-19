@@ -72,7 +72,7 @@ CLosHandler* losHandler;
 CLosHandler::CLosHandler() :
 	losMaps(teamHandler->ActiveAllyTeams()),
 	airLosMaps(teamHandler->ActiveAllyTeams()),
-	// airAlgo(int2(airSizeX, airSizeY), -1e6f, 15, readmap->GetMIPHeightMapSynced(airMipLevel)),
+	// airAlgo(int2(airSizeX, airSizeY), -1e6f, 15, readMap->GetMIPHeightMapSynced(airMipLevel)),
 	losMipLevel(modInfo.losMipLevel),
 	airMipLevel(modInfo.airMipLevel),
 	losDiv(SQUARE_SIZE * (1 << losMipLevel)),
@@ -84,7 +84,7 @@ CLosHandler::CLosHandler() :
 	losSizeX(std::max(1, gs->mapx >> losMipLevel)),
 	losSizeY(std::max(1, gs->mapy >> losMipLevel)),
 	requireSonarUnderWater(modInfo.requireSonarUnderWater),
-	losAlgo(int2(losSizeX, losSizeY), -1e6f, 15, readmap->GetMIPHeightMapSynced(losMipLevel))
+	losAlgo(int2(losSizeX, losSizeY), -1e6f, 15, readMap->GetMIPHeightMapSynced(losMipLevel))
 {
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
 		losMaps[a].SetSize(losSizeX, losSizeY, true);

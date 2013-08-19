@@ -356,10 +356,10 @@ GLuint LuaMatTexture::GetTextureID() const
 				texID = heightMapTexture->GetTextureID();
 		} break;
 		case LUATEX_SHADING: {
-			texID = readmap->GetShadingTexture();
+			texID = readMap->GetShadingTexture();
 		} break;
 		case LUATEX_GRASS: {
-			texID = readmap->GetGrassShadingTexture();
+			texID = readMap->GetGrassShadingTexture();
 		} break;
 		case LUATEX_FONT: {
 			texID = font->GetTexture();
@@ -367,11 +367,11 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_FONTSMALL: {
 			texID = smallFont->GetTexture();
 		} break;
-		case LUATEX_MINIMAP: if (readmap) {
-			texID = readmap->GetMiniMapTexture();
+		case LUATEX_MINIMAP: if (readMap) {
+			texID = readMap->GetMiniMapTexture();
 		} break;
 		case LUATEX_INFOTEX: {
-			texID = readmap->GetGroundDrawer()->infoTex;
+			texID = readMap->GetGroundDrawer()->infoTex;
 		} break;
 		default:
 			assert(false);
@@ -506,11 +506,11 @@ int2 LuaMatTexture::GetSize() const
 			return int2(font->GetTexWidth(), font->GetTexHeight());
 		case LUATEX_FONTSMALL:
 			return int2(smallFont->GetTexWidth(), smallFont->GetTexHeight());
-		case LUATEX_MINIMAP: if (readmap) {
-			 return readmap->GetMiniMapTextureSize();
+		case LUATEX_MINIMAP: if (readMap) {
+			 return readMap->GetMiniMapTextureSize();
 		} break;
 		case LUATEX_INFOTEX:
-			return readmap->GetGroundDrawer()->GetInfoTexSize();
+			return readMap->GetGroundDrawer()->GetInfoTexSize();
 		case LUATEX_HEIGHTMAP:
 			if (heightMapTexture)
 				return int2(heightMapTexture->GetSizeX(), heightMapTexture->GetSizeY());

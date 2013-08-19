@@ -19,7 +19,7 @@ float CMoveMath::yLevel(const MoveDef& moveDef, int xSqr, int zSqr)
 {
 	switch (moveDef.moveFamily) {
 		case MoveDef::Tank: // fall-through
-		case MoveDef::KBot:  { return (readmap->GetCenterHeightMapSynced()[xSqr + zSqr * gs->mapx]);                 } break; // NOTE: why not just GetHeightReal too?
+		case MoveDef::KBot:  { return (readMap->GetCenterHeightMapSynced()[xSqr + zSqr * gs->mapx]);                 } break; // NOTE: why not just GetHeightReal too?
 		case MoveDef::Hover: { return (ground->GetHeightAboveWater(xSqr * SQUARE_SIZE, zSqr * SQUARE_SIZE) + 10.0f); } break;
 		case MoveDef::Ship:  { return (                                                                       0.0f); } break;
 	}
@@ -49,10 +49,10 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 	}
 
 	const int square = (xSquare >> 1) + ((zSquare >> 1) * gs->hmapx);
-	const int squareTerrType = readmap->GetTypeMapSynced()[square];
+	const int squareTerrType = readMap->GetTypeMapSynced()[square];
 
-	const float height  = readmap->GetMIPHeightMapSynced(1)[square];
-	const float slope   = readmap->GetSlopeMapSynced()[square];
+	const float height  = readMap->GetMIPHeightMapSynced(1)[square];
+	const float slope   = readMap->GetSlopeMapSynced()[square];
 
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
@@ -74,21 +74,21 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 	}
 
 	const int square = (xSquare >> 1) + ((zSquare >> 1) * gs->hmapx);
-	const int squareTerrType = readmap->GetTypeMapSynced()[square];
+	const int squareTerrType = readMap->GetTypeMapSynced()[square];
 
-	const float height = readmap->GetMIPHeightMapSynced(1)[square];
-	const float slope  = readmap->GetSlopeMapSynced()[square];
+	const float height = readMap->GetMIPHeightMapSynced(1)[square];
+	const float slope  = readMap->GetSlopeMapSynced()[square];
 
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
 	#if 1
 	// with a flat normal, only consider the normalized xz-direction
 	// (the actual steepness is represented by the "slope" variable)
-	float3 sqrNormal = readmap->GetCenterNormalsSynced()[xSquare + zSquare * gs->mapx];
+	float3 sqrNormal = readMap->GetCenterNormalsSynced()[xSquare + zSquare * gs->mapx];
 		sqrNormal.y = 0.0f;
 		sqrNormal.SafeNormalize();
 	#else
-	const float3& sqrNormal = readmap->GetCenterNormalsSynced()[xSquare + zSquare * gs->mapx];
+	const float3& sqrNormal = readMap->GetCenterNormalsSynced()[xSquare + zSquare * gs->mapx];
 	#endif
 
 	// note: moveDir is (or should be) a unit vector in the xz-plane, y=0

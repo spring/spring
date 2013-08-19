@@ -45,7 +45,7 @@ CWorldDrawer::CWorldDrawer()
 	shadowHandler = new CShadowHandler();
 
 	loadscreen->SetLoadMessage("Creating GroundDrawer");
-	readmap->NewGroundDrawer();
+	readMap->NewGroundDrawer();
 
 	loadscreen->SetLoadMessage("Creating TreeDrawer");
 	treeDrawer = ITreeDrawer::GetTreeDrawer();
@@ -93,10 +93,10 @@ CWorldDrawer::~CWorldDrawer()
 
 void CWorldDrawer::Update()
 {
-	readmap->UpdateDraw();
+	readMap->UpdateDraw();
 	if (globalRendering->drawGround) {
 		SCOPED_TIMER("GroundDrawer::Update");
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		gd->Update();
 	}
 	//XXX: do in CGame, cause it needs to get updated even when doDrawWorld==false, cause it updates unitdrawpos which is used for maximized minimap too
@@ -112,7 +112,7 @@ void CWorldDrawer::Draw()
 {
 	SCOPED_TIMER("WorldDrawer::Total");
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	if (globalRendering->drawSky) {
 		sky->Draw();
@@ -140,7 +140,7 @@ void CWorldDrawer::Draw()
 		SCOPED_TIMER("WorldDrawer::Water");
 
 		water->OcclusionQuery();
-		if (water->IsDrawSolid()) {
+		if (water->DrawSolid()) {
 			water->UpdateWater(game);
 			water->Draw();
 		}
@@ -181,7 +181,7 @@ void CWorldDrawer::Draw()
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("WorldDrawer::Water");
 
-		if (!water->IsDrawSolid()) {
+		if (!water->DrawSolid()) {
 			//! Water rendering will overwrite features, so save them
 			featureDrawer->SwapFeatures();
 			water->UpdateWater(game);

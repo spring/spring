@@ -40,8 +40,8 @@ bool LuaMetalMap::PushCtrlEntries(lua_State* L)
 
 int LuaMetalMap::GetMetalMapSize(lua_State* L)
 {
-	lua_pushnumber(L, readmap->metalMap->GetSizeX());
-	lua_pushnumber(L, readmap->metalMap->GetSizeZ());
+	lua_pushnumber(L, readMap->metalMap->GetSizeX());
+	lua_pushnumber(L, readMap->metalMap->GetSizeZ());
 	return 2;
 }
 
@@ -54,7 +54,7 @@ int LuaMetalMap::GetMetalAmount(lua_State* L)
 	const int x = lua_toint(L, 1);
 	const int z = lua_toint(L, 2);
 	// GetMetalAmount automatically clamps the value
-	lua_pushnumber(L, readmap->metalMap->GetMetalAmount(x, z));
+	lua_pushnumber(L, readMap->metalMap->GetMetalAmount(x, z));
 	return 1;
 }
 
@@ -68,7 +68,7 @@ int LuaMetalMap::SetMetalAmount(lua_State* L)
 	const int z = lua_toint(L, 2);
 	const float m = lua_tonumber(L, 3);
 	// SetMetalAmount automatically clamps the value
-	readmap->metalMap->SetMetalAmount(x, z, m);
+	readMap->metalMap->SetMetalAmount(x, z, m);
 	return 0;
 }
 
@@ -81,7 +81,7 @@ int LuaMetalMap::GetMetalExtraction(lua_State* L)
 	const int x = lua_toint(L, 1);
 	const int z = lua_toint(L, 2);
 	// GetMetalExtraction automatically clamps the value
-	lua_pushnumber(L, readmap->metalMap->GetMetalExtraction(x, z));
+	lua_pushnumber(L, readMap->metalMap->GetMetalExtraction(x, z));
 	return 1;
 }
 

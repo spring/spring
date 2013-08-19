@@ -61,7 +61,7 @@ void DynamicSkyLight::Update() {
 		updateNeeded = false;
 
 		sky->UpdateSunDir();
-		readmap->GetGroundDrawer()->UpdateSunDir();
+		readMap->GetGroundDrawer()->UpdateSunDir();
 		eventHandler.SunChanged(lightDir);
 	}
 }

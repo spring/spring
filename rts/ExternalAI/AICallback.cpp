@@ -1017,27 +1017,20 @@ float CAICallback::GetGravity() const {
 
 const float* CAICallback::GetHeightMap()
 {
-	return &readmap->GetCenterHeightMapSynced()[0];
+	return &readMap->GetCenterHeightMapSynced()[0];
 }
 
 const float* CAICallback::GetCornersHeightMap()
 {
-	return readmap->GetCornerHeightMapSynced();
+	return readMap->GetCornerHeightMapSynced();
 }
 
-float CAICallback::GetMinHeight()
-{
-	return readmap->initMinHeight;
-}
-
-float CAICallback::GetMaxHeight()
-{
-	return readmap->initMaxHeight;
-}
+float CAICallback::GetMinHeight() { return readMap->GetInitMinHeight(); }
+float CAICallback::GetMaxHeight() { return readMap->GetInitMaxHeight(); }
 
 const float* CAICallback::GetSlopeMap()
 {
-	return readmap->GetSlopeMapSynced();
+	return readMap->GetSlopeMapSynced();
 }
 
 const unsigned short* CAICallback::GetLosMap()
@@ -1057,7 +1050,7 @@ const unsigned short* CAICallback::GetJammerMap()
 
 const unsigned char* CAICallback::GetMetalMap()
 {
-	return &readmap->metalMap->metalMap[0];
+	return &readMap->metalMap->metalMap[0];
 }
 
 float CAICallback::GetElevation(float x, float z)
@@ -1399,7 +1392,7 @@ bool CAICallback::GetValue(int id, void *data)
 			*(bool*)data = CEngineOutHandler::CatchExceptions();
 			return true;
 		}case AIVAL_MAP_CHECKSUM:{
-			*(unsigned int*)data = readmap->mapChecksum;
+			*(unsigned int*)data = readMap->GetMapChecksum();
 			return true;
 		}case AIVAL_DEBUG_MODE:{
 			*(bool*)data = globalRendering->drawdebug;

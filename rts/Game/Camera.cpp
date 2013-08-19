@@ -141,7 +141,7 @@ void CCamera::ComputeViewRange()
 	const float minViewRange     = (1.0f - azimuthCos) * math::sqrt(Square(maxDistToBorderX) + Square(maxDistToBorderZ));
 
 	// Camera-height dependent (i.e. TAB-view)
-	wantedViewRange = std::max(wantedViewRange, (pos.y - std::max(0.0f, readmap->currMinHeight)) * 2.4f);
+	wantedViewRange = std::max(wantedViewRange, (pos.y - std::max(0.0f, readMap->GetCurrMinHeight())) * 2.4f);
 	// View-angle dependent (i.e. FPS-view)
 	wantedViewRange = std::max(wantedViewRange, minViewRange);
 
