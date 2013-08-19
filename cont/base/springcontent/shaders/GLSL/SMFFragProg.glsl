@@ -131,17 +131,22 @@ vec4 GetDetailTextureColor(vec2 uv) {
 }
 
 vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiffuseAlpha) {
-	vec4 groundShadeInt;
-	vec4 waterShadeInt;
+	vec4 groundShadeInt = vec4(0.0, 0.0, 0.0, 1.0);
+	vec4 waterShadeInt = vec4(0.0, 0.0, 0.0, 1.0);
 
 	groundShadeInt.rgb = groundAmbientColor + groundDiffuseColor * (groundLightInt * groundShadowCoeff);
 	groundShadeInt.rgb *= SMF_INTENSITY_MULT;
 
+	#if (SMF_VOID_WATER == 1)
+	// cut out all underwater fragments indiscriminately
+	groundShadeInt.a = float(vertexWorldPos.y >= 0.0);
+	#endif
+
 	#if (SMF_VOID_GROUND == 1)
 	// assume the map(per)'s diffuse texture provides sensible alphas
+	// note that voidground overrides voidwater if *both* are enabled
+	// (limiting it to just above-water fragments would be arbitrary)
 	groundShadeInt.a = groundDiffuseAlpha;
-	#else
-	groundShadeInt.a = 1.0;
 	#endif
 
 	#if (SMF_WATER_ABSORPTION == 1)
@@ -151,17 +156,14 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 		float vertexStepHeight = min(1023.0, -floor(vertexWorldPos.y));
 		float waterLightInt    = min((groundLightInt + 0.2) * 2.0, 1.0);
 
-		#if (SMF_VOID_WATER == 1)
-		// cut out all underwater fragments indiscriminately
-		waterShadeInt.a = float(vertexWorldPos.y >= 0.0);
-		#else
-		// allow voidground maps to create holes in the seabed
-		waterShadeInt.a = groundShadeInt.a;
-		#endif
-
 		waterShadeInt.rgb = waterBaseColor.rgb - (waterAbsorbColor.rgb * vertexStepHeight);
 		waterShadeInt.rgb = max(waterMinColor.rgb, waterShadeInt.rgb);
-		waterShadeInt.rgb *= SMF_INTENSITY_MULT * waterLightInt;
+		waterShadeInt.rgb *= (SMF_INTENSITY_MULT * waterLightInt);
+
+		// allow voidground maps to create holes in the seabed
+		// (SMF_WATER_ABSORPTION == 1 implies voidwater is not
+		// enabled but says nothing about the voidground state)
+		waterShadeInt.a = groundShadeInt.a;
 
 		// make shadowed areas darker over deeper water
 		waterShadeInt.rgb -= (waterShadeInt.rgb * waterShadeDecay * (1.0 - groundShadowCoeff));
