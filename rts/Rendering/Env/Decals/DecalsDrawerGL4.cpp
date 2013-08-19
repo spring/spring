@@ -177,10 +177,10 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 	if (!GLEW_ARB_depth_clamp) //GL_DEPTH_CLAMP
 		throw opengl_error(LOG_SECTION_DECALS_GL4 ": missing GL_ARB_depth_clamp");
 
-	if (!dynamic_cast<CSMFReadMap*>(readmap))
+	if (!dynamic_cast<CSMFReadMap*>(readMap))
 		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": only SMF supported");
 
-	if (dynamic_cast<CSMFReadMap*>(readmap)->GetNormalsTexture() <= 0)
+	if (dynamic_cast<CSMFReadMap*>(readMap)->GetNormalsTexture() <= 0)
 		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": advanced map shading must be enabled");
 
 	CreateBoundingBoxVBOs();
@@ -565,8 +565,8 @@ void CDecalsDrawerGL4::Draw()
 	}
 	glTimer.Start();*/
 
-	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-	const CSMFReadMap* smfrm = dynamic_cast<CSMFReadMap*>(readmap);
+	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+	const CSMFReadMap* smfrm = dynamic_cast<CSMFReadMap*>(readMap);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

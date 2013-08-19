@@ -153,7 +153,7 @@ bool UnitDrawerStateFFP::CanEnable(const CUnitDrawer* ud) const {
 	//
 	//   ATI has issues with textures, clip planes and shader programs
 	//   at once - very low performance
-	return (!ud->advShading || water->IsDrawReflection());
+	return (!ud->advShading || water->DrawReflectionPass());
 }
 
 void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud) {
@@ -252,7 +252,7 @@ void UnitDrawerStateARB::Kill() {
 }
 
 bool UnitDrawerStateARB::CanEnable(const CUnitDrawer* ud) const {
-	return (ud->advShading && !water->IsDrawReflection());
+	return (ud->advShading && !water->DrawReflectionPass());
 }
 
 void UnitDrawerStateARB::Enable(const CUnitDrawer* ud) {
@@ -392,7 +392,7 @@ void UnitDrawerStateGLSL::Kill() {
 }
 
 bool UnitDrawerStateGLSL::CanEnable(const CUnitDrawer* ud) const {
-	return (ud->advShading && !water->IsDrawReflection());
+	return (ud->advShading && !water->DrawReflectionPass());
 }
 
 void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud) {

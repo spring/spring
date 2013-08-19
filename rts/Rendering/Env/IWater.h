@@ -32,9 +32,9 @@ public:
 
 	virtual void ExplosionOccurred(const CExplosionEvent& event);
 
-	bool IsDrawReflection() const { return drawReflection; }
-	bool IsDrawRefraction() const { return drawRefraction; }
-	bool IsDrawSolid() const { return drawSolid; }
+	bool DrawReflectionPass() const { return drawReflection; }
+	bool DrawRefractionPass() const { return drawRefraction; }
+	bool DrawSolid() const { return drawSolid; }
 	bool BlockWakeProjectiles() const { return (GetID() == WATER_RENDERER_DYNAMIC); }
 
 	static IWater* GetWater(IWater* currWaterRenderer, int nextWaterRenderMode);

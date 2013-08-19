@@ -51,7 +51,7 @@ CGrassDrawer::CGrassDrawer()
 	}
 
 	MapBitmapInfo grassbm;
-	unsigned char* grassdata = readmap->GetInfoMap("grass", &grassbm);
+	unsigned char* grassdata = readMap->GetInfoMap("grass", &grassbm);
 
 	if (grassdata) {
 		if (grassbm.width != gs->mapx / grassSquareSize || grassbm.height != gs->mapy / grassSquareSize) {
@@ -65,7 +65,7 @@ CGrassDrawer::CGrassDrawer()
 		grassMap = new unsigned char[grassMapSize];
 
 		memcpy(grassMap, grassdata, grassMapSize);
-		readmap->FreeInfoMap("grass", grassdata);
+		readMap->FreeInfoMap("grass", grassdata);
 	} else {
 		grassOff = true;
 		return;
@@ -351,7 +351,7 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 
 void CGrassDrawer::SetupGlStateNear()
 {
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	const float3 windSpeed =
 		wind.GetCurrentDirection() *
@@ -371,7 +371,7 @@ void CGrassDrawer::SetupGlStateNear()
 		grassShader->SetUniform3fv(10, &camera->GetPos().x);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
-			glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
+			glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
@@ -387,7 +387,7 @@ void CGrassDrawer::SetupGlStateNear()
 			glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
-			glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
+			glBindTexture(GL_TEXTURE_2D, readMap->GetGrassShadingTexture());
 
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 			glBindTexture(GL_TEXTURE_2D, grassBladeTex);
@@ -427,13 +427,13 @@ void CGrassDrawer::SetupGlStateNear()
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
+			glBindTexture(GL_TEXTURE_2D, readMap->GetGrassShadingTexture());
 			glMultiTexCoord4f(GL_TEXTURE1_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
 			SetTexGen(1.0f / (gs->mapx * SQUARE_SIZE), 1.0f / (gs->mapy * SQUARE_SIZE), 0.0f, 0.0f);
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
+			glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
 
 		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
 			SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0.0f, 0.0f);
@@ -473,7 +473,7 @@ void CGrassDrawer::SetupGlStateNear()
 
 void CGrassDrawer::ResetGlStateNear()
 {
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	if (shadowHandler->shadowsLoaded && globalRendering->haveGLSL) {
 		grassShader->Disable();
@@ -521,7 +521,7 @@ void CGrassDrawer::SetupGlStateFar()
 {
 	assert(globalRendering->haveGLSL);
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	const float3 windSpeed =
 		wind.GetCurrentDirection() *
@@ -546,7 +546,7 @@ void CGrassDrawer::SetupGlStateFar()
 		grassShader->SetUniform3fv(10, &camera->GetPos().x);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
-			glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
+			glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
@@ -562,7 +562,7 @@ void CGrassDrawer::SetupGlStateFar()
 			glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
-			glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
+			glBindTexture(GL_TEXTURE_2D, readMap->GetGrassShadingTexture());
 
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 			glBindTexture(GL_TEXTURE_2D, farTex);
@@ -582,12 +582,12 @@ void CGrassDrawer::SetupGlStateFar()
 		grassShader->SetUniform3fv(10, &camera->GetPos().x);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
-		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
+		glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
 
 		//glActiveTextureARB(GL_TEXTURE1_ARB);
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
-		glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
+		glBindTexture(GL_TEXTURE_2D, readMap->GetGrassShadingTexture());
 
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glBindTexture(GL_TEXTURE_2D, farTex);
@@ -665,7 +665,7 @@ void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inview
 
 void CGrassDrawer::Draw()
 {
-	if (grassOff || !readmap->GetGrassShadingTexture())
+	if (grassOff || !readMap->GetGrassShadingTexture())
 		return;
 
 	glPushAttrib(GL_CURRENT_BIT);
@@ -680,7 +680,7 @@ void CGrassDrawer::Draw()
 			drawer.inviewNearGrass.clear();
 			drawer.gd = this;
 
-		readmap->GridVisibility(camera, blockMapSize, maxGrassDist, &drawer);
+		readMap->GridVisibility(camera, blockMapSize, maxGrassDist, &drawer);
 	ResetGlStateNear();
 
 	if (
@@ -707,7 +707,7 @@ void CGrassDrawer::Draw()
 void CGrassDrawer::DrawShadow()
 {
 	// Grass self-shadowing doesn't look that good atm
-	/*if (grassOff || !readmap->GetGrassShadingTexture())
+	/*if (grassOff || !readMap->GetGrassShadingTexture())
 		return;
 
 	const float3 windSpeed =
@@ -740,7 +740,7 @@ void CGrassDrawer::DrawShadow()
 		drawer.inviewGrass.clear();
 		drawer.inviewNearGrass.clear();
 		drawer.gd = this;
-	readmap->GridVisibility(camera, blockMapSize, maxGrassDist * 10.0f, &drawer);
+	readMap->GridVisibility(camera, blockMapSize, maxGrassDist * 10.0f, &drawer);
 
 	glEnable(GL_CULL_FACE);
 	glDisable(GL_POLYGON_OFFSET_FILL);

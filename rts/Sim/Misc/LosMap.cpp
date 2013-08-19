@@ -96,7 +96,7 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 				x2 = std::min((lmx + 1) * LOS2HEIGHT_X, gs->mapxm1),
 				z2 = std::min((lmz + 1) * LOS2HEIGHT_Z, gs->mapym1);
 
-			readmap->UpdateLOS(SRectangle(x1, z1, x2, z2));
+			readMap->UpdateLOS(SRectangle(x1, z1, x2, z2));
 			#endif
 		}
 	}
@@ -134,7 +134,7 @@ void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int a
 			x2 = std::min((lmx + 1) * LOS2HEIGHT_X, gs->mapxm1),
 			z2 = std::min((lmz + 1) * LOS2HEIGHT_Z, gs->mapym1);
 
-		readmap->UpdateLOS(SRectangle(x1, z1, x2, z2));
+		readMap->UpdateLOS(SRectangle(x1, z1, x2, z2));
 		#endif
 	}
 }

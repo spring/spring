@@ -78,8 +78,8 @@ CSM3ReadMap::CSM3ReadMap(const std::string& mapName)
 		heightMapSyncedPtr   = &renderer->GetCornerHeightMapSynced();
 		heightMapUnsyncedPtr = &renderer->GetCornerHeightMapUnsynced();
 
-		width  = renderer->GetHeightmapWidth() - 1;
-		height = renderer->GetHeightmapWidth() - 1; // note: not height (SM3 only supports square maps!)
+		gs->mapx = renderer->GetHeightmapWidth() - 1;
+		gs->mapy = renderer->GetHeightmapWidth() - 1; // note: not height (SM3 only supports square maps!)
 	}
 
 	CReadMap::Initialize();
@@ -174,15 +174,15 @@ void CSM3ReadMap::UpdateHeightMapUnsynced(const SRectangle& update)
 	x1 -= 2; x2 += 2;
 	y1 -= 2; y2 += 2;
 
-	if (x1 <     0) x1 =     0;
-	if (x1 > width) x1 = width;
-	if (x2 <     0) x2 =     0;
-	if (x2 > width) x2 = width;
+	if (x1 <        0) x1 =        0;
+	if (x2 <        0) x2 =        0;
+	if (x1 > gs->mapx) x1 = gs->mapx;
+	if (x2 > gs->mapx) x2 = gs->mapx;
 
-	if (y1 <     0) y1 =      0;
-	if (y1 > width) y1 = height;
-	if (y2 <     0) y2 =      0;
-	if (y2 > width) y2 = height;
+	if (y1 <        0) y1 =        0;
+	if (y2 <        0) y2 =        0;
+	if (y1 > gs->mapy) y1 = gs->mapy;
+	if (y2 > gs->mapy) y2 = gs->mapy;
 
 	renderer->HeightMapUpdatedUnsynced(x1, y1, x2 - x1, y2 - y1);
 }
@@ -304,8 +304,8 @@ void CSM3ReadMap::LoadFeatureData()
 		for (int a=0;a<numFeatures;a++) {
 			MapFeatureInfo& fi = featureInfo[a];
 			fi.featureType = featureTypes.size()-1;
-			fi.pos.x = gs->randFloat() * width * SQUARE_SIZE;
-			fi.pos.z = gs->randFloat() * height * SQUARE_SIZE;
+			fi.pos.x = gs->randFloat() * gs->mapx * SQUARE_SIZE;
+			fi.pos.z = gs->randFloat() * gs->mapy * SQUARE_SIZE;
 			fi.rotation = 0.0f;
 		}
 	}*/

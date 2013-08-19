@@ -4742,7 +4742,7 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 
 	const int maxIndex = (gs->hmapx * gs->hmapy) - 1;
 	const int sqrIndex = std::min(maxIndex, (gs->hmapx * iz) + ix);
-	const int typeIndex = readmap->GetTypeMapSynced()[sqrIndex];
+	const int typeIndex = readMap->GetTypeMapSynced()[sqrIndex];
 
 	// arguments to LuaMetalMap::GetMetalAmount in half-heightmap coors
 	lua_pop(L, 2);
@@ -4829,8 +4829,8 @@ int LuaSyncedRead::GetGroundBlocked(lua_State* L)
 int LuaSyncedRead::GetGroundExtremes(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, readmap->initMinHeight);
-	lua_pushnumber(L, readmap->initMaxHeight);
+	lua_pushnumber(L, readMap->GetInitMinHeight());
+	lua_pushnumber(L, readMap->GetInitMaxHeight());
 	return 2;
 }
 

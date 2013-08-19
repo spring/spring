@@ -253,10 +253,10 @@ const FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
 void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 {
 	// add default tree and geo FeatureDefs defined by the map
-	const int numFeatureTypes = readmap->GetNumFeatureTypes();
+	const int numFeatureTypes = readMap->GetNumFeatureTypes();
 
 	for (int a = 0; a < numFeatureTypes; ++a) {
-		const string& name = StringToLower(readmap->GetFeatureTypeName(a));
+		const string& name = StringToLower(readMap->GetFeatureTypeName(a));
 
 		if (GetFeatureDef(name, false) == NULL) {
 			if (name.find("treetype") != string::npos) {
@@ -279,12 +279,12 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 	if (!onlyCreateDefs) {
 		// create map-specified feature instances
-		const int numFeatures = readmap->GetNumFeatures();
+		const int numFeatures = readMap->GetNumFeatures();
 		MapFeatureInfo* mfi = new MapFeatureInfo[numFeatures];
-		readmap->GetFeatureInfo(mfi);
+		readMap->GetFeatureInfo(mfi);
 
 		for (int a = 0; a < numFeatures; ++a) {
-			const string& name = StringToLower(readmap->GetFeatureTypeName(mfi[a].featureType));
+			const string& name = StringToLower(readMap->GetFeatureTypeName(mfi[a].featureType));
 			map<string, const FeatureDef*>::iterator def = featureDefs.find(name);
 
 			if (def == featureDefs.end()) {

@@ -1310,7 +1310,7 @@ int LuaOpenGL::Unit(lua_State* L)
 		unsigned int lod = 0;
 		if (!lua_isnumber(L, 3)) {
 			const LuaMatType matType =
-				(water->IsDrawReflection()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+				(water->DrawReflectionPass()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
 			lod = unitDrawer->CalcUnitLOD(unit, unit->luaMats[matType].GetLastLOD());
 		} else {
 			int tmpLod = lua_toint(L, 3);
@@ -1373,7 +1373,7 @@ int LuaOpenGL::UnitRaw(lua_State* L)
 		unsigned int lod = 0;
 		if (!lua_isnumber(L, 3)) {
 			const LuaMatType matType =
-				(water->IsDrawReflection()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+				(water->DrawReflectionPass()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
 			lod = unitDrawer->CalcUnitLOD(unit, unit->luaMats[matType].GetLastLOD());
 		} else {
 			int tmpLod = lua_toint(L, 3);
@@ -1800,7 +1800,7 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 	}
 	const int mapxi = gs->mapxp1;
 	const int mapzi = gs->mapyp1;
-	const float* heightmap = readmap->GetCornerHeightMapUnsynced();
+	const float* heightmap = readMap->GetCornerHeightMapUnsynced();
 
 	const float xs = std::max(0.0f, std::min(float3::maxxpos, x0)); // x start
 	const float xe = std::max(0.0f, std::min(float3::maxxpos, x1)); // x end

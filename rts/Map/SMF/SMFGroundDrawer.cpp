@@ -164,7 +164,7 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	const float alphainc = fastmath::PI2 / 32;
 	float alpha,r1,r2;
 
-	float3 p(0.0f, std::min(-200.0f, smfMap->initMinHeight - 400.0f), 0.0f);
+	float3 p(0.0f, std::min(-200.0f, smfMap->GetInitMinHeight() - 400.0f), 0.0f);
 
 	for (int n = (camOufOfMap) ? 0 : 1; n < 4 ; ++n) {
 		if ((n == 1) && !camOufOfMap) {
@@ -207,9 +207,9 @@ inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 
 void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 {
-	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
+	// if entire map is under voidwater, no need to draw *ground*
+	if (readMap->HasOnlyVoidWater())
 		return;
-	}
 
 	smfRenderState = smfRenderStateSSP->CanEnable(this)?
 		smfRenderStateSSP:
@@ -328,9 +328,8 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 
 void CSMFGroundDrawer::DrawShadowPass()
 {
-	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
+	if (readMap->HasOnlyVoidWater())
 		return;
-	}
 
 	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
@@ -360,9 +359,8 @@ void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY
 
 void CSMFGroundDrawer::Update()
 {
-	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
+	if (readMap->HasOnlyVoidWater())
 		return;
-	}
 
 	groundTextures->DrawUpdate();
 	meshDrawer->Update();

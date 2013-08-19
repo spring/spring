@@ -114,7 +114,7 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 	smfShaderGLSL->SetFlag("SMF_VOID_GROUND",              int(mapInfo->map.voidGround));
 	smfShaderGLSL->SetFlag("SMF_ARB_LIGHTING",             int(!smfMap->HaveSpecularTexture()));
 	smfShaderGLSL->SetFlag("SMF_DETAIL_TEXTURE_SPLATTING", int(smfMap->HaveSplatTexture()));
-	smfShaderGLSL->SetFlag("SMF_WATER_ABSORPTION",         int(smfMap->initMinHeight <= 0.0f && !mapInfo->map.voidWater));
+	smfShaderGLSL->SetFlag("SMF_WATER_ABSORPTION",         int(smfMap->HasVisibleWater()));
 	smfShaderGLSL->SetFlag("SMF_SKY_REFLECTIONS",          int(smfMap->GetSkyReflectModTexture() != 0));
 	smfShaderGLSL->SetFlag("SMF_DETAIL_NORMALS",           int(smfMap->GetDetailNormalTexture() != 0));
 	smfShaderGLSL->SetFlag("SMF_LIGHT_EMISSION",           int(smfMap->GetLightEmissionTexture() != 0));
@@ -432,7 +432,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	smfShaderGLSL->SetFlag("HAVE_INFOTEX", int(smfGroundDrawer->DrawExtraTex()));
 
 	smfShaderGLSL->Enable();
-	smfShaderGLSL->SetUniform2f(9, readmap->currMinHeight, readmap->currMaxHeight);
+	smfShaderGLSL->SetUniform2f(9, readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight());
 	smfShaderGLSL->SetUniform3fv(11, &camera->GetPos()[0]);
 	smfShaderGLSL->SetUniformMatrix4fv(13, false, shadowHandler->shadowMatrix);
 	smfShaderGLSL->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));

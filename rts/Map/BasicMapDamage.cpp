@@ -79,9 +79,9 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	e->y2 = std::min((int) (pos.z + radius) / SQUARE_SIZE, gs->mapy - 3);
 	e->squares.reserve((e->y2 - e->y1 + 1) * (e->x2 - e->x1 + 1));
 
-	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
-	const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
-	const unsigned char* typeMap = readmap->GetTypeMapSynced();
+	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
+	const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
+	const unsigned char* typeMap = readMap->GetTypeMapSynced();
 	const float baseStrength = -math::pow(strength, 0.6f) * 3 / mapHardness;
 	const float invRadius = 1.0f / radius;
 
@@ -198,7 +198,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 		}
 	}
 
-	readmap->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
+	readMap->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
 	pathManager->TerrainChange(x1, y1, x2, y2, TERRAINCHANGE_DAMAGE_RECALCULATION);
 	featureHandler->TerrainChanged(x1, y1, x2, y2);
 }
@@ -226,7 +226,7 @@ void CBasicMapDamage::Update()
 		for (int y = y1; y <= y2; ++y) {
 			for (int x = x1; x<= x2; ++x) {
 				const float dif = *(si++);
-				readmap->AddHeight(y * gs->mapxp1 + x, dif);
+				readMap->AddHeight(y * gs->mapxp1 + x, dif);
 			}
 		}
 		std::vector<ExploBuilding>::const_iterator bi;
@@ -239,7 +239,7 @@ void CBasicMapDamage::Update()
 
 			for (int z = tz1; z < tz2; z++) {
 				for (int x = tx1; x < tx2; x++) {
-					readmap->AddHeight(z * gs->mapxp1 + x, dif);
+					readMap->AddHeight(z * gs->mapxp1 + x, dif);
 				}
 			}
 

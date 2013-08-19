@@ -113,7 +113,7 @@ private:
 
 	GLuint uniforms[20]; ///< see useUniforms
 
-	bool wasLastFrameVisible;
+	bool wasVisibleLastFrame;
 	GLuint occlusionQuery;
 	GLuint occlusionQueryResult;
 

@@ -999,5 +999,5 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
  */
 unsigned int CPathEstimator::Hash() const
 {
-	return (readmap->mapChecksum + moveDefHandler->GetCheckSum() + BLOCK_SIZE + PATHESTIMATOR_VERSION);
+	return (readMap->GetMapChecksum() + moveDefHandler->GetCheckSum() + BLOCK_SIZE + PATHESTIMATOR_VERSION);
 }

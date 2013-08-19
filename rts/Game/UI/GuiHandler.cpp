@@ -934,7 +934,7 @@ void CGuiHandler::ConvertCommands(std::vector<CommandDescription>& cmds)
 
 void CGuiHandler::SetShowingMetal(bool show)
 {
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	if (!show) {
 		if (showingMetal) {
@@ -944,7 +944,7 @@ void CGuiHandler::SetShowingMetal(bool show)
 	} else {
 		if (autoShowMetal) {
 			if (gd->drawMode != CBaseGroundDrawer::drawMetal) {
-				gd->SetMetalTexture(readmap->metalMap);
+				gd->SetMetalTexture(readMap->metalMap);
 				showingMetal = true;
 			}
 		}
@@ -4125,10 +4125,8 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
 		bool invColorSelect)
 {
 	BoxData boxData;
-	boxData.mins = float3(std::min(pos0.x, pos1.x),
-			readmap->currMinHeight - 250.0f, std::min(pos0.z, pos1.z));
-	boxData.maxs = float3(std::max(pos0.x, pos1.x),
-			readmap->currMaxHeight + 10000.0f, std::max(pos0.z, pos1.z));
+	boxData.mins = float3(std::min(pos0.x, pos1.x), readMap->GetCurrMinHeight() -   250.0f, std::min(pos0.z, pos1.z));
+	boxData.maxs = float3(std::max(pos0.x, pos1.x), readMap->GetCurrMaxHeight() + 10000.0f, std::max(pos0.z, pos1.z));
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
@@ -4200,10 +4198,8 @@ void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1, const fl
 		return;
 	}
 
-	const float3 mins(std::min(pos0.x, pos1.x), readmap->currMinHeight - 250.0f,
-	                  std::min(pos0.z, pos1.z));
-	const float3 maxs(std::max(pos0.x, pos1.x), readmap->currMaxHeight + 10000.0f,
-	                  std::max(pos0.z, pos1.z));
+	const float3 mins(std::min(pos0.x, pos1.x), readMap->GetCurrMinHeight() -   250.0f, std::min(pos0.z, pos1.z));
+	const float3 maxs(std::max(pos0.x, pos1.x), readMap->GetCurrMaxHeight() + 10000.0f, std::max(pos0.z, pos1.z));
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
@@ -4289,8 +4285,8 @@ void CGuiHandler::DrawSelectCircle(const float3& pos, float radius,
 	CylinderData cylData;
 	cylData.xc = pos.x;
 	cylData.zc = pos.z;
-	cylData.yp = readmap->currMaxHeight + 10000.0f;
-	cylData.yn = readmap->currMinHeight - 250.0f;
+	cylData.yp = readMap->GetCurrMaxHeight() + 10000.0f;
+	cylData.yn = readMap->GetCurrMinHeight() -   250.0f;
 	cylData.radius = radius;
 	cylData.divs = 128;
 

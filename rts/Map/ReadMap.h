@@ -151,6 +151,20 @@ public:
 	float SetHeight(const int idx, const float h, const int add = 0);
 	float AddHeight(const int idx, const float a);
 
+
+	float GetInitMinHeight() const { return initMinHeight; }
+	float GetCurrMinHeight() const { return currMinHeight; }
+	float GetInitMaxHeight() const { return initMaxHeight; }
+	float GetCurrMaxHeight() const { return currMaxHeight; }
+
+	bool IsUnderWater() const { return (currMaxHeight <  0.0f); }
+	bool IsAboveWater() const { return (currMinHeight >= 0.0f); }
+
+	bool HasVisibleWater() const;
+	bool HasOnlyVoidWater() const;
+
+	unsigned int GetMapChecksum() const { return mapChecksum; }
+
 private:
 	void UpdateCenterHeightmap(const SRectangle& rect, bool initialize);
 	void UpdateMipHeightmaps(const SRectangle& rect, bool initialize);
@@ -167,12 +181,6 @@ public:
 
 	/// Metal-density/height-map
 	CMetalMap* metalMap;
-
-	int width, height;
-	float initMinHeight, initMaxHeight; //< initial minimum- and maximum-height (before any deformations)
-	float currMinHeight, currMaxHeight; //< current minimum- and maximum-height
-
-	unsigned int mapChecksum;
 
 protected:
 	// these point to the actual heightmap data
@@ -218,9 +226,14 @@ private:
 	std::vector<unsigned char>   syncedHeightMapDigests;
 	std::vector<unsigned char> unsyncedHeightMapDigests;
 #endif
+
+	unsigned int mapChecksum;
+
+	float initMinHeight, initMaxHeight; //< initial minimum- and maximum-height (before any deformations)
+	float currMinHeight, currMaxHeight; //< current minimum- and maximum-height
 };
 
-extern CReadMap* readmap;
+extern CReadMap* readMap;
 
 
 
@@ -247,14 +260,14 @@ inline float CReadMap::AddHeight(const int idx, const float a) {
 
 /// Converts a map-square into a float3-position.
 inline float3 SquareToFloat3(int xSquare, int zSquare) {
-	const float* hm = readmap->GetCenterHeightMapSynced();
+	const float* hm = readMap->GetCenterHeightMapSynced();
 	const float h = hm[(zSquare * gs->mapx) + xSquare];
 	return float3(xSquare * SQUARE_SIZE, h, zSquare * SQUARE_SIZE);
 }
 
 /// TODO: use in SM3 renderer also
 inline float GetVisibleVertexHeight(int idx) {
-	const float* hm = readmap->GetCornerHeightMapUnsynced();
+	const float* hm = readMap->GetCornerHeightMapUnsynced();
 	return hm[idx];
 }
 

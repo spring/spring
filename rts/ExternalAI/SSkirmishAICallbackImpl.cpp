@@ -1642,7 +1642,7 @@ EXPORT(int) skirmishAiCallback_Map_getResourceMapRaw(
 
 	int resources_sizeReal = 0;
 	if (resourceId == resourceHandler->GetMetalId()) {
-		resources_sizeReal = readmap->metalMap->GetSizeX() * readmap->metalMap->GetSizeZ();
+		resources_sizeReal = readMap->metalMap->GetSizeX() * readMap->metalMap->GetSizeZ();
 	}
 
 	int resources_size = resources_sizeReal;

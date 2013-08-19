@@ -602,7 +602,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 	const float secDamage = weaponDef->damages.GetDefaultDamage() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
 	const bool paralyzer  = (weaponDef->damages.paralyzeDamageTime != 0);
 
-	const std::vector<int>& quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->initMinHeight)) * heightMod);
+	const std::vector<int>& quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
 
 	const int tempNum = targetTempNum++;
 
@@ -950,20 +950,20 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 // against which to compare all footprint squares
 float CGameHelper::GetBuildHeight(const float3& pos, const UnitDef* unitdef, bool synced)
 {
-	const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
-	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
+	const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
+	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
 
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 	if (!synced) {
-		orgHeightMap = readmap->GetCornerHeightMapUnsynced();
-		curHeightMap = readmap->GetCornerHeightMapUnsynced();
+		orgHeightMap = readMap->GetCornerHeightMapUnsynced();
+		curHeightMap = readMap->GetCornerHeightMapUnsynced();
 	}
 	#endif
 
 	const float difHgt = unitdef->maxHeightDif;
 
-	float minHgt = readmap->currMinHeight;
-	float maxHgt = readmap->currMaxHeight;
+	float minHgt = readMap->GetCurrMinHeight();
+	float maxHgt = readMap->GetCurrMaxHeight();
 
 	unsigned int numBorderSquares = 0;
 	float sumBorderSquareHeight = 0.0f;
@@ -1155,13 +1155,13 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(const float3& pos, c
 	if (!unitdef->floatOnWater || groundHeight > 0.0f) {
 		// if we are capable of floating, only test local
 		// height difference IF terrain is above sea-level
-		const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
-		const float* curHeightMap = readmap->GetCornerHeightMapSynced();
+		const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
+		const float* curHeightMap = readMap->GetCornerHeightMapSynced();
 
 		#ifdef USE_UNSYNCED_HEIGHTMAP
 		if (!synced) {
-			orgHeightMap = readmap->GetCornerHeightMapUnsynced();
-			curHeightMap = readmap->GetCornerHeightMapUnsynced();
+			orgHeightMap = readMap->GetCornerHeightMapUnsynced();
+			curHeightMap = readMap->GetCornerHeightMapUnsynced();
 		}
 		#endif
 

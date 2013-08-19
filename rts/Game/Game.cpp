@@ -542,7 +542,7 @@ void CGame::LoadMap(const std::string& mapName)
 
 		loadscreen->SetLoadMessage("Parsing Map Information");
 
-		readmap = CReadMap::LoadMap(mapName);
+		readMap = CReadMap::LoadMap(mapName);
 		groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 	}
 
@@ -1066,7 +1066,7 @@ bool CGame::UpdateUnsynced()
 	camHandler->UpdateCam();
 	camera->Update();
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	unitDrawer->Update();
 	lineDrawer.UpdateLineStipple();
 	if (doDrawWorld) {
@@ -1203,7 +1203,7 @@ bool CGame::Draw() {
 				}
 				{
 					SCOPED_TIMER("ReadMap::UpdateShadingTex");
-					readmap->UpdateShadingTexture();
+					readMap->UpdateShadingTexture();
 				}
 			}
 

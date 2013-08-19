@@ -277,13 +277,10 @@ static inline int InterpolateLos(const unsigned short* p, int xsize, int ysize,
 //   updateTextureState = extraTextureUpdateRate:   Copy the buffer into a texture
 bool CBaseGroundDrawer::UpdateExtraTexture()
 {
-	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
+	if (mapInfo->map.voidWater && readMap->IsUnderWater())
 		return true;
-	}
-
-	if (drawMode == drawNormal) {
+	if (drawMode == drawNormal)
 		return true;
-	}
 
 	const unsigned short* myLos         = &losHandler->losMaps[gu->myAllyTeam].front();
 	const unsigned short* myAirLos      = &losHandler->airLosMaps[gu->myAllyTeam].front();
@@ -357,7 +354,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				//      So for the case POT(gs->mapx) == gs->mapx we would get a buffer overrun in our PBO
 				//      when iterating (gs->mapx + 1) * (gs->mapy + 1). So we just skip +1, it may give
 				//      semi incorrect results, but it is the easiest solution.
-				const float* heightMap = readmap->GetCornerHeightMapUnsynced();
+				const float* heightMap = readMap->GetCornerHeightMapUnsynced();
 
 				for (int y = starty; y < endy; ++y) {
 					const int y_pwr2mapx = y * gs->pwr2mapx;
@@ -510,7 +507,7 @@ int2 CBaseGroundDrawer::GetInfoTexSize() const
 void CBaseGroundDrawer::UpdateCamRestraints(CCamera* cam)
 {
 	// add restraints for camera sides
-	cam->GetFrustumSides(readmap->currMinHeight - 100.0f,  readmap->currMaxHeight + 30.0f,  SQUARE_SIZE);
+	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 30.0f,  SQUARE_SIZE);
 
 	// CAMERA DISTANCE IS ALREADY CHECKED IN CGroundDrawer::GridVisibility()!
 /*

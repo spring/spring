@@ -188,7 +188,7 @@ void CGameInfo::Draw()
 	values.push_back(wind.GetMaxWind());
 
 	labels.push_back("Map Size:");
-	sprintf(buf, "%ix%i", readmap->width / 64, readmap->height / 64);
+	sprintf(buf, "%ix%i", gs->mapx / 64, gs->mapy / 64);
 	values.push_back(buf);
 
 	labels.push_back("Map Name:");

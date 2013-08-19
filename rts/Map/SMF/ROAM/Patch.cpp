@@ -150,7 +150,7 @@ Patch::Patch()
 void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ)
 {
 	smfGroundDrawer = _drawer;
-	heightData = readmap->GetCornerHeightMapUnsynced();;
+	heightData = readMap->GetCornerHeightMapUnsynced();;
 	m_WorldX = worldX;
 	m_WorldY = worldZ;
 
@@ -211,7 +211,7 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 		}
 	}
 
-	static const float* hMap = readmap->GetCornerHeightMapUnsynced();
+	static const float* hMap = readMap->GetCornerHeightMapUnsynced();
 	for (int z = rect.z1; z <= rect.z2; z++) {
 		for (int x = rect.x1; x <= rect.x2; x++) {
 			const float& h = hMap[(z + m_WorldY) * gs->mapxp1 + (x + m_WorldX)];
@@ -479,7 +479,7 @@ bool Patch::Tessellate(const float3& campos, int groundDetail)
 {
 	// Set/Update LOD params
 	const float myx = (m_WorldX + PATCH_SIZE / 2) * SQUARE_SIZE;
-	const float myy = (readmap->currMinHeight + readmap->currMaxHeight) * 0.5f;
+	const float myy = (readMap->GetCurrMinHeight() + readMap->GetCurrMaxHeight()) * 0.5f;
 	const float myz = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float3 myPos(myx,myy,myz);
 
@@ -713,12 +713,12 @@ void Patch::SwitchRenderMode(int mode)
 {
 	const float3 mins(
 		m_WorldX * SQUARE_SIZE,
-		readmap->currMinHeight,
+		readMap->GetCurrMinHeight(),
 		m_WorldY * SQUARE_SIZE
 	);
 	const float3 maxs(
 		(m_WorldX + PATCH_SIZE) * SQUARE_SIZE,
-		readmap->currMaxHeight,
+		readMap->GetCurrMaxHeight(),
 		(m_WorldY + PATCH_SIZE) * SQUARE_SIZE
 	);
 	m_isVisible = cam->InView(mins, maxs);
@@ -752,5 +752,5 @@ void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const i
 	for (std::vector<Patch>::iterator it = patches.begin(); it != patches.end(); ++it) {
 		it->m_isVisible = false;
 	}
-	readmap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker, INT_MAX);
+	readMap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker, INT_MAX);
 }

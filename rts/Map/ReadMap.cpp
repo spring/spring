@@ -31,8 +31,8 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-// assigned to in CGame::CGame ("readmap = CReadMap::LoadMap(mapname)")
-CReadMap* readmap = NULL;
+// assigned to in CGame::CGame ("readMap = CReadMap::LoadMap(mapname)")
+CReadMap* readMap = NULL;
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	#define	HEIGHTMAP_DIGESTS \
@@ -45,8 +45,6 @@ CReadMap* readmap = NULL;
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
 	CR_MEMBER(metalMap),
-	CR_MEMBER(width),
-	CR_MEMBER(height),
 	CR_MEMBER(initMinHeight),
 	CR_MEMBER(initMaxHeight),
 	CR_IGNORED(currMinHeight),
@@ -94,15 +92,15 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	unsigned char* metalmapPtr = rm->GetInfoMap("metal", &mbi);
 	unsigned char* typemapPtr = rm->GetInfoMap("type", &tbi);
 
-	assert(mbi.width == (rm->width >> 1));
-	assert(mbi.height == (rm->height >> 1));
+	assert(mbi.width == (gs->mapx >> 1));
+	assert(mbi.height == (gs->mapy >> 1));
 
 	rm->metalMap = new CMetalMap(metalmapPtr, mbi.width, mbi.height, mapInfo->map.maxMetal);
 
 	if (metalmapPtr != NULL)
 		rm->FreeInfoMap("metal", metalmapPtr);
 
-	if (typemapPtr && tbi.width == (rm->width >> 1) && tbi.height == (rm->height >> 1)) {
+	if (typemapPtr && tbi.width == (gs->mapx >> 1) && tbi.height == (gs->mapy >> 1)) {
 		assert(gs->hmapx == tbi.width && gs->hmapy == tbi.height);
 		rm->typeMap.resize(tbi.width * tbi.height);
 		memcpy(&rm->typeMap[0], typemapPtr, tbi.width * tbi.height);
@@ -131,8 +129,6 @@ void CReadMap::Serialize(creg::ISerializer& s)
 
 CReadMap::CReadMap()
 	: metalMap(NULL)
-	, width(0)
-	, height(0)
 	, initMinHeight(0.0f)
 	, initMaxHeight(0.0f)
 	, currMinHeight(0.0f)
@@ -153,12 +149,10 @@ CReadMap::~CReadMap()
 void CReadMap::Initialize()
 {
 	// set global map info (TODO: move these to ReadMap!)
-	gs->mapx = width;
-	gs->mapxm1 = width - 1;
-	gs->mapxp1 = width + 1;
-	gs->mapy = height;
-	gs->mapym1 = height - 1;
-	gs->mapyp1 = height + 1;
+	gs->mapxm1 = gs->mapx - 1;
+	gs->mapxp1 = gs->mapx + 1;
+	gs->mapym1 = gs->mapy - 1;
+	gs->mapyp1 = gs->mapy + 1;
 	gs->mapSquares = gs->mapx * gs->mapy;
 	gs->hmapx = gs->mapx >> 1;
 	gs->hmapy = gs->mapy >> 1;
@@ -632,3 +626,7 @@ void CReadMap::BecomeSpectator()
 	HeightMapUpdateLOSCheck(SRectangle(0, 0, gs->mapx, gs->mapy));
 #endif
 }
+
+bool CReadMap::HasVisibleWater() const { return (!mapInfo->map.voidWater && !IsAboveWater()); }
+bool CReadMap::HasOnlyVoidWater() const { return (mapInfo->map.voidWater && IsUnderWater()); }
+
