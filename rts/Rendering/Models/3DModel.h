@@ -81,10 +81,10 @@ struct S3DModelPiece {
 				if (r.x          != 0.0f) { m.RotateX(r.x * raSigns.x); ret = false; } // pitch
 				if (r.z          != 0.0f) { m.RotateY(r.z * raSigns.z); ret = false; } // roll
 			} break;
-			case AXIS_MAPPING_ZXY:
+			case AXIS_MAPPING_YXZ:
 			case AXIS_MAPPING_YZX:
-			case AXIS_MAPPING_ZYX:
-			case AXIS_MAPPING_YXZ: { //FIXME implement ?!
+			case AXIS_MAPPING_ZXY:
+			case AXIS_MAPPING_ZYX: { //FIXME implement ?!
 			} break;
 		}
 
