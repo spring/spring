@@ -26,6 +26,7 @@ CR_REG_METADATA(AAirMoveType, (
 
 	CR_MEMBER(accRate),
 	CR_MEMBER(decRate),
+	CR_MEMBER(altitudeRate),
 
 	CR_MEMBER(collide),
 	CR_MEMBER(useSmoothMesh),
