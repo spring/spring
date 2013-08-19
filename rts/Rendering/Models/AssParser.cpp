@@ -89,6 +89,7 @@ static inline CMatrix44f aiMatrixToMatrix(const aiMatrix4x4t<float>& m)
 	// return (CMatrix44f(n.GetPos(), n.GetX(), n.GetZ(), -n.GetY()));
 }
 
+/*
 static float3 aiQuaternionToRadianAngles(const aiQuaternion q1)
 {
 	const float sqw = q1.w * q1.w;
@@ -118,7 +119,7 @@ static float3 aiQuaternionToRadianAngles(const aiQuaternion q1)
 	// Blender --> Spring
 	// return (float3(result.x, result.z, -result.y));
 }
-
+*/
 
 
 

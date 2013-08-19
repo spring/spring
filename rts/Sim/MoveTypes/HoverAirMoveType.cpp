@@ -359,7 +359,7 @@ void CHoverAirMoveType::UpdateHovering()
 void CHoverAirMoveType::UpdateFlying()
 {
 	const float3& pos = owner->pos;
-	const float3& speed = owner->speed;
+	//const float3& speed = owner->speed;
 
 	// Direction to where we would like to be
 	float3 goalVec = goalPos - pos;
