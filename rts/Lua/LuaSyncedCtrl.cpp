@@ -194,7 +194,9 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
 	REGISTER_LUA_CFUNC(SetFeatureResurrect);
+	REGISTER_LUA_CFUNC(SetFeaturePhysics);
 	REGISTER_LUA_CFUNC(SetFeaturePosition);
+	REGISTER_LUA_CFUNC(SetFeatureVelocity);
 	REGISTER_LUA_CFUNC(SetFeatureDirection);
 	REGISTER_LUA_CFUNC(SetFeatureBlocking);
 	REGISTER_LUA_CFUNC(SetFeatureNoSelect);
@@ -464,6 +466,75 @@ static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 
 	lua_pushboolean(L, o->IsBlocking());
 	return 1;
+}
+
+static int SetSolidObjectDirection(lua_State* L, CSolidObject* o)
+{
+	if (o == NULL)
+		return 0;
+
+	float3 dir(luaL_checkfloat(L, 2),
+	           luaL_checkfloat(L, 3),
+	           luaL_checkfloat(L, 4));
+
+	o->ForcedSpin(dir.Normalize());
+	return 0;
+}
+
+static int SetWorldObjectVelocity(lua_State* L, CWorldObject* o)
+{
+	if (o == NULL)
+		return 0;
+
+	float3& speed = o->speed;
+	float3 dir = speed;
+
+	speed.x = Clamp(luaL_checkfloat(L, 2), -MAX_UNIT_SPEED, MAX_UNIT_SPEED);
+	speed.y = Clamp(luaL_checkfloat(L, 3), -MAX_UNIT_SPEED, MAX_UNIT_SPEED);
+	speed.z = Clamp(luaL_checkfloat(L, 4), -MAX_UNIT_SPEED, MAX_UNIT_SPEED);
+
+	if (dynamic_cast<CProjectile*>(o) != NULL) {
+		static_cast<CProjectile*>(o)->dir = dir.SafeNormalize();
+	}
+}
+
+static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
+{
+	if (o == NULL)
+		return 0;
+
+	float3  pos;
+	float3  rot;
+	float3& vel = o->speed;
+	float3& drag = o->dragScales;
+
+	pos.x = luaL_checknumber(L, 2);
+	pos.y = luaL_checknumber(L, 3);
+	pos.z = luaL_checknumber(L, 4);
+
+	vel.x = luaL_checknumber(L, 5);
+	vel.y = luaL_checknumber(L, 6);
+	vel.z = luaL_checknumber(L, 7);
+
+	rot.x = luaL_checknumber(L, 8);
+	rot.y = luaL_checknumber(L, 9);
+	rot.z = luaL_checknumber(L, 10);
+
+	drag.x = Clamp(luaL_optnumber(L, 11, drag.x), 0.0f, 1.0f);
+	drag.y = Clamp(luaL_optnumber(L, 12, drag.y), 0.0f, 1.0f);
+	drag.z = Clamp(luaL_optnumber(L, 13, drag.z), 0.0f, 1.0f);
+
+	CMatrix44f matrix;
+	matrix.RotateZ(rot.z);
+	matrix.RotateX(rot.x);
+	matrix.RotateY(rot.y);
+
+	o->Move(pos, false);
+	o->SetDirVectors(matrix);
+	o->UpdateMidAndAimPos();
+	o->SetHeadingFromDirection();
+	o->ForcedMove(pos);
+	return 0;
 }
 
 static int SetWorldObjectAlwaysVisible(lua_State* L, CWorldObject* o, const char* caller)
@@ -2109,40 +2180,8 @@ int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-
-	float3  pos;
-	float3  rot;
-	float3& vel = unit->speed;
-
-	pos.x = luaL_checknumber(L, 2);
-	pos.y = luaL_checknumber(L, 3);
-	pos.z = luaL_checknumber(L, 4);
-
-	vel.x = luaL_checknumber(L, 5);
-	vel.y = luaL_checknumber(L, 6);
-	vel.z = luaL_checknumber(L, 7);
-
-	rot.x = luaL_checknumber(L, 8);
-	rot.y = luaL_checknumber(L, 9);
-	rot.z = luaL_checknumber(L, 10);
-
-	CMatrix44f matrix;
-	matrix.RotateZ(rot.z);
-	matrix.RotateX(rot.x);
-	matrix.RotateY(rot.y);
-
-	unit->Move(pos, false);
-	unit->SetDirVectors(matrix);
-	unit->UpdateMidAndAimPos();
-	unit->SetHeadingFromDirection();
-	unit->ForcedMove(pos);
-	return 0;
+	return (SetSolidObjectPhysicalState(L, ParseUnit(L, __FUNCTION__, 1)));
 }
-
 
 int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 {
@@ -2201,32 +2240,12 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitDirection(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	float3 dir(luaL_checkfloat(L, 2),
-	           luaL_checkfloat(L, 3),
-	           luaL_checkfloat(L, 4));
-	dir.Normalize();
-	unit->ForcedSpin(dir);
-	return 0;
+	return (SetSolidObjectDirection(L, ParseUnit(L, __FUNCTION__, 1)));
 }
-
 
 int LuaSyncedCtrl::SetUnitVelocity(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-
-	const float3 speed(Clamp(luaL_checkfloat(L, 2), -MAX_UNIT_SPEED, MAX_UNIT_SPEED),
-	                   Clamp(luaL_checkfloat(L, 3), -MAX_UNIT_SPEED, MAX_UNIT_SPEED),
-	                   Clamp(luaL_checkfloat(L, 4), -MAX_UNIT_SPEED, MAX_UNIT_SPEED));
-	unit->speed = speed;
-
-	return 0;
+	return (SetWorldObjectVelocity(L, ParseUnit(L, __FUNCTION__, 1)));
 }
 
 
@@ -2548,6 +2567,11 @@ int LuaSyncedCtrl::SetFeatureReclaim(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetFeaturePhysics(lua_State* L)
+{
+	return (SetSolidObjectPhysicalState(L, ParseFeature(L, __FUNCTION__, 1)));
+}
+
 int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
@@ -2567,16 +2591,12 @@ int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 
 int LuaSyncedCtrl::SetFeatureDirection(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
-		return 0;
-	}
-	float3 dir(luaL_checkfloat(L, 2),
-	           luaL_checkfloat(L, 3),
-	           luaL_checkfloat(L, 4));
+	return (SetSolidObjectDirection(L, ParseFeature(L, __FUNCTION__, 1)));
+}
 
-	feature->ForcedSpin(dir.Normalize());
-	return 0;
+int LuaSyncedCtrl::SetFeatureVelocity(lua_State* L)
+{
+	return (SetWorldObjectVelocity(L, ParseFeature(L, __FUNCTION__, 1)));
 }
 
 
@@ -2744,19 +2764,7 @@ int LuaSyncedCtrl::SetProjectilePosition(lua_State* L)
 
 int LuaSyncedCtrl::SetProjectileVelocity(lua_State* L)
 {
-	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
-
-	if (proj == NULL)
-		return 0;
-
-	proj->speed.x = luaL_optfloat(L, 2, 0.0f);
-	proj->speed.y = luaL_optfloat(L, 3, 0.0f);
-	proj->speed.z = luaL_optfloat(L, 4, 0.0f);
-
-	proj->dir = proj->speed;
-	proj->dir.SafeNormalize();
-
-	return 0;
+	return (SetWorldObjectVelocity(L, ParseProjectile(L, __FUNCTION__, 1)));
 }
 
 int LuaSyncedCtrl::SetProjectileCollision(lua_State* L)

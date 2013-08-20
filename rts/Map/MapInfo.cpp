@@ -140,6 +140,7 @@ void CMapInfo::ReadAtmosphere()
 	atmo.skyDir.ANormalize();
 	atmo.sunColor     = atmoTable.GetFloat3("sunColor", float3(1.0f, 1.0f, 1.0f));
 	atmo.cloudColor   = atmoTable.GetFloat3("cloudColor", float3(1.0f, 1.0f, 1.0f));
+	atmo.fluidDensity = atmoTable.GetFloat("fluidDensity", 1.2f * 0.25f);
 	atmo.cloudDensity = atmoTable.GetFloat("cloudDensity", 0.5f);
 
 	// clamps
@@ -219,6 +220,7 @@ void CMapInfo::ReadWater()
 {
 	const LuaTable& wt = parser->GetRoot().SubTable("water");
 
+	water.fluidDensity = wt.GetFloat("fluidDensity", 960.0f * 0.25f);
 	water.repeatX = wt.GetFloat("repeatX", 0.0f);
 	water.repeatY = wt.GetFloat("repeatY", 0.0f);
 	water.damage  = wt.GetFloat("damage",  0.0f) * (16.0f / GAME_SPEED);

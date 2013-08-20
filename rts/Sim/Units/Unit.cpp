@@ -560,23 +560,6 @@ void CUnit::ForcedSpin(const float3& newDir)
 }
 
 
-void CUnit::SetHeadingFromDirection()
-{
-	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
-}
-
-
-void CUnit::SetDirVectors(const CMatrix44f& matrix) {
-	rightdir.x = -matrix[ 0];
-	rightdir.y = -matrix[ 1];
-	rightdir.z = -matrix[ 2];
-	updir.x    =  matrix[ 4];
-	updir.y    =  matrix[ 5];
-	updir.z    =  matrix[ 6];
-	frontdir.x =  matrix[ 8];
-	frontdir.y =  matrix[ 9];
-	frontdir.z =  matrix[10];
-}
 
 // NOTE: movetypes call this directly
 void CUnit::UpdateDirVectors(bool useGroundNormal)
@@ -586,6 +569,7 @@ void CUnit::UpdateDirVectors(bool useGroundNormal)
 	rightdir = (frontdir.cross(updir)).Normalize();
 	frontdir = updir.cross(rightdir);
 }
+
 
 
 float3 CUnit::GetErrorVector(int allyteam) const

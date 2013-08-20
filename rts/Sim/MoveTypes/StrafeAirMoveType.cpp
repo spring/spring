@@ -92,7 +92,12 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 
 	wingAngle = owner->unitDef->wingAngle;
 	crashDrag = 1.0f - owner->unitDef->crashDrag;
-	invDrag = 1.0f - owner->unitDef->drag;
+
+	if (accRate != 0.0f && owner->unitDef->speed != 0.0f) {
+		invDrag = (1.0f / (owner->unitDef->speed / GAME_SPEED * 1.1f / accRate)) - (wingAngle * wingAngle * wingDrag);
+		invDrag = 1.0f - Clamp(invDrag, 0.0f, 1.0f);
+	}
+
 	frontToSpeed = owner->unitDef->frontToSpeed;
 	speedToFront = owner->unitDef->speedToFront;
 	myGravity = math::fabs(owner->unitDef->myGravity);

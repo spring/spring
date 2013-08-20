@@ -473,9 +473,7 @@ bool CFeature::UpdatePosition()
 			const bool reachedWater  = ( pos.y                     <= 0.1f);
 			const bool reachedGround = ((pos.y - realGroundHeight) <= 0.1f);
 
-			speed *= 0.999999f;
-			speed *= (1.0f - (int(reachedWater ) * 0.05f));
-			speed *= (1.0f - (int(reachedGround) * 0.10f));
+			speed += GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f));
 
 			if (speed.SqLength2D() > 0.01f) {
 				UnBlock();

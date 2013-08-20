@@ -816,9 +816,9 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("factoryHeadingTakeoff", ud.factoryHeadingTakeoff);
 
 	//aircraft stuff
+	ADD_DEPRECATED_LUADEF_KEY("drag");
 	ADD_FLOAT("wingDrag",     ud.wingDrag);
 	ADD_FLOAT("wingAngle",    ud.wingAngle);
-	ADD_FLOAT("drag",         ud.drag);
 	ADD_FLOAT("crashDrag",    ud.crashDrag);
 	ADD_FLOAT("frontToSpeed", ud.frontToSpeed);
 	ADD_FLOAT("speedToFront", ud.speedToFront);

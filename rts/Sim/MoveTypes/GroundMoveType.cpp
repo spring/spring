@@ -665,14 +665,12 @@ void CGroundMoveType::UpdateSkid()
 	const float3& pos = owner->pos;
 	      float3& speed = owner->speed;
 
+	speed += owner->GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.01f));
+
 	const UnitDef* ud = owner->unitDef;
 	const float groundHeight = GetGroundHeight(pos);
 
 	if (owner->IsFlying()) {
-		// water drag
-		if (owner->IsInWater())
-			speed *= 0.95f;
-
 		const float impactSpeed = pos.IsInBounds()?
 			-speed.dot(ground->GetNormal(pos.x, pos.z)):
 			-speed.dot(UpVector);
@@ -718,13 +716,13 @@ void CGroundMoveType::UpdateSkid()
 			ChangeHeading(owner->heading);
 		} else {
 			if (onSlope) {
-				const float3 normal = ground->GetNormal(pos.x, pos.z);
-				const float3 normalForce = normal * normal.dot(UpVector * mapInfo->map.gravity);
+				const float3 normalVector = ground->GetNormal(pos.x, pos.z);
+				const float3 normalForce = normalVector * normalVector.dot(UpVector * mapInfo->map.gravity);
 				const float3 newForce = UpVector * mapInfo->map.gravity - normalForce;
 
 				speed += newForce;
 				speedf = speed.Length();
-				speed *= (1.0f - (0.1f * normal.y));
+				speed *= (1.0f - (0.1f * normalVector.y));
 			} else {
 				speed *= (1.0f - std::min(1.0f, speedReduction / speedf)); // clamped 0..1
 			}
@@ -751,10 +749,14 @@ void CGroundMoveType::UpdateSkid()
 
 			useHeading = false;
 		} else if ((groundHeight - pos.y) > speed.y) {
+			// LHS is always negative, so this becomes true when the
+			// unit is falling back down and will impact the ground
+			// in one frame
 			const float3& normal = (pos.IsInBounds())? ground->GetNormal(pos.x, pos.z): UpVector;
 			const float dot = speed.dot(normal);
 
 			if (dot > 0.0f) {
+				// not possible without lateral movement
 				speed *= 0.95f;
 			} else {
 				speed += (normal * (math::fabs(speed.dot(normal)) + 0.1f)) * 1.9f;
@@ -788,11 +790,10 @@ void CGroundMoveType::UpdateControlledDrop()
 {
 	const float3&  pos = owner->pos;
 	const float3   acc = UpVector * std::min(mapInfo->map.gravity * owner->fallSpeed, 0.0f);
-	const float   drag = owner->IsInWater() * 0.9f + (1 - owner->IsInWater()) * 1.0f;
 	const float     gh = GetGroundHeight(pos);
 
 	owner->speed += acc;
-	owner->speed *= drag;
+	owner->speed += owner->GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f));
 
 	owner->Move(owner->speed, true);
 
@@ -2145,8 +2146,10 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 
 	if (modInfo.allowGroundUnitGravity) {
 		// NOTE:
-		//   the drag terms ensure speed-vector always
-		//   decays if wantedSpeed and deltaSpeed are 0
+		//   the drag terms ensure speed-vector always decays if
+		//   wantedSpeed and deltaSpeed are 0 (needed because we
+		//   do not call GetDragAccelerationVect while a unit is
+		//   moving under its own power)
 		const float dragCoeff = mix(0.99f, 0.9999f, owner->IsInAir());
 		const float slipCoeff = mix(0.95f, 0.9999f, owner->IsInAir());
 

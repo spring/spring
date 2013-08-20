@@ -51,9 +51,10 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(aimPos),
 	CR_MEMBER(mapPos),
 	CR_MEMBER(groundBlockPos),
+	CR_MEMBER(dragScales),
 	CR_MEMBER(drawPos),
 	CR_MEMBER(drawMidPos),
-	//CR_MEMBER(blockMap), //FIXME add bitwiseenum to creg
+	// CR_MEMBER(blockMap), //FIXME add bitwiseenum to creg
 	CR_MEMBER(buildFacing)
 ));
 
@@ -91,9 +92,11 @@ CSolidObject::CSolidObject():
 	frontdir( FwdVector),
 	rightdir(-RgtVector),
 	updir(UpVector),
-	relMidPos(ZeroVector),
+
 	midPos(pos),
 	mapPos(GetMapPos()),
+
+	dragScales(OnesVector),
 
 	blockMap(NULL),
 	buildFacing(0)
@@ -200,6 +203,7 @@ YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 	// transform: [(-hxsize + eps) .. (+hxsize - eps)] x [(-hzsize + eps) .. (+hzsize - eps)] -> [0 .. (xsize - 1)] x [0 .. (zsize - 1)]
 	bx += hxsize;
 	by += hzsize;
+
 	assert(int(bx) >= 0 && int(bx) < footprint.x);
 	assert(int(by) >= 0 && int(by) < footprint.y);
 
@@ -219,6 +223,51 @@ int2 CSolidObject::GetMapPos(const float3& position) const
 	mp.y = Clamp(mp.y, 0, gs->mapy - zsize);
 
 	return mp;
+}
+
+float3 CSolidObject::GetDragAccelerationVec(const float4& params) const {
+	// KISS: use the cross-sectional area of a sphere, object shapes are complex
+	// this is a massive over-estimation so pretend the radius is in centimeters
+	// other units as normal: mass in kg, speed in elmos/frame, density in kg/m^3
+	//
+	// params.xyzw map: {{atmosphere, water}Density, {drag, friction}Coefficient}
+	//
+	#define SIGN(x) (((x) >= 0.0f) * 2.0f - 1.0f)
+	const float3 speedSignVec = float3(SIGN(speed.x), SIGN(speed.y), SIGN(speed.z));
+	const float3 dragScaleVec = float3(
+		IsInAir()    * dragScales.x * (0.5f * params.x * params.z * (M_PI * sqRadius * 0.01f * 0.01f)), // air
+		IsInWater()  * dragScales.y * (0.5f * params.y * params.z * (M_PI * sqRadius * 0.01f * 0.01f)), // water
+		IsOnGround() * dragScales.z * (                  params.w * (                           mass))  // ground
+	);
+	#undef SIGN
+
+	float3 dragAccelVec;
+
+	dragAccelVec.x += (speed.x * speed.x * dragScaleVec.x * -speedSignVec.x);
+	dragAccelVec.y += (speed.y * speed.y * dragScaleVec.x * -speedSignVec.y);
+	dragAccelVec.z += (speed.z * speed.z * dragScaleVec.x * -speedSignVec.z);
+
+	dragAccelVec.x += (speed.x * speed.x * dragScaleVec.y * -speedSignVec.x);
+	dragAccelVec.y += (speed.y * speed.y * dragScaleVec.y * -speedSignVec.y);
+	dragAccelVec.z += (speed.z * speed.z * dragScaleVec.y * -speedSignVec.z);
+
+	// FIXME?
+	//   magnitude of dynamic friction may or may not depend on speed
+	//   coefficient must be multiplied by mass or it will be useless
+	//   (due to division by mass since the coefficient is normalized)
+	dragAccelVec.x += (math::fabs(speed.x) * dragScaleVec.z * -speedSignVec.x);
+	dragAccelVec.y += (math::fabs(speed.y) * dragScaleVec.z * -speedSignVec.y);
+	dragAccelVec.z += (math::fabs(speed.z) * dragScaleVec.z * -speedSignVec.z);
+
+	// convert from force
+	dragAccelVec /= mass;
+
+	// limit the acceleration
+	dragAccelVec.x = Clamp(dragAccelVec.x, -math::fabs(speed.x), math::fabs(speed.x));
+	dragAccelVec.y = Clamp(dragAccelVec.y, -math::fabs(speed.y), math::fabs(speed.y));
+	dragAccelVec.z = Clamp(dragAccelVec.z, -math::fabs(speed.z), math::fabs(speed.z));
+
+	return dragAccelVec;
 }
 
 float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
@@ -255,6 +304,10 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 
 	// prefer to keep local up-vector as long as possible
 	return updir;
+}
+
+void CSolidObject::SetHeadingFromDirection() {
+	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
 }
 
 

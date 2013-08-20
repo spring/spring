@@ -178,7 +178,6 @@ UnitDef::UnitDef()
 	, moveState(MOVESTATE_HOLDPOS)
 	, wingDrag(0.0f)
 	, wingAngle(0.0f)
-	, drag(0.0f)
 	, frontToSpeed(0.0f)
 	, speedToFront(0.0f)
 	, myGravity(0.0f)
@@ -573,17 +572,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 			}
 
 			maxAcc = udTable.GetFloat("maxAcc", 0.065f); // engine power
-		}
-
-		if ((maxAcc != 0.0f) && (speed != 0.0f)) {
-			//meant to set the drag such that the maxspeed becomes what it should be
-			drag = (1.0f / (speed / GAME_SPEED * 1.1f / maxAcc)) - (wingAngle * wingAngle * wingDrag);
-			drag = Clamp(drag, 0.0f, 1.0f);
-		} else {
-			//shouldn't be needed since drag is only used in CStrafeAirMoveType anyway,
-			//and aircraft without acceleration or speed aren't common :)
-			//initializing it anyway just for safety
-			drag = 0.005f;
 		}
 	}
 
