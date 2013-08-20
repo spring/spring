@@ -157,10 +157,16 @@ static void WorkerLoop(int id)
 void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 {
 	while (DoTask(taskgroup)) {
+#ifdef __MINGW32__
+		LOG_L(L_WARNING, "%s step", __FUNCTION__);
+#endif
 	}
 
 	while (!taskgroup->wait_for(boost::chrono::seconds(5))) {
 		LOG_L(L_WARNING, "Hang in ThreadPool");
+#ifdef __MINGW32__
+		LOG_L(L_WARNING, "%s2 %i %i %i %i", __FUNCTION__, int(taskGroups.size()), int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()), int(taskgroup->RemainingTasks()));
+#endif
 	}
 
 	//LOG("WaitForFinished %i", taskgroup->GetExceptions().size());
@@ -179,6 +185,9 @@ void WaitForFinishedDebug(std::shared_ptr<ITaskGroup> taskgroup)
 
 	while (!taskgroup->wait_for(boost::chrono::seconds(5))) {
 		LOG_L(L_WARNING, "Hang in ThreadPool");
+#ifdef __MINGW32__
+		LOG_L(L_WARNING, "%s2 %i %i %i %i", __FUNCTION__, int(taskGroups.size()), int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()), int(taskgroup->RemainingTasks()));
+#endif
 	}
 
 	//LOG("WaitForFinished %i", taskgroup->GetExceptions().size());
