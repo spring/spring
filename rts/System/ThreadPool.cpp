@@ -20,6 +20,7 @@ static std::deque<void*> thread_group;
 
 static boost::shared_mutex taskMutex;
 static boost::condition_variable newTasks;
+static std::atomic<bool> waitForLock(false);
 
 #if !defined(UNITSYNC) && !defined(UNIT_TEST)
 static bool hasOGLthreads = false; // disable for now (not used atm)
@@ -73,6 +74,9 @@ int GetNumThreads()
 /// returns false, when no further tasks were found
 static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk)
 {
+	if (waitForLock)
+		return true;
+
 //#ifdef __MINGW32__
 	boost::unique_lock<boost::shared_mutex> ulk(taskMutex, boost::defer_lock);
 	while (!ulk.try_lock()) {}
@@ -197,9 +201,11 @@ void WaitForFinishedDebug(std::shared_ptr<ITaskGroup> taskgroup)
 
 void PushTaskGroup(std::shared_ptr<ITaskGroup> taskgroup)
 {
+	waitForLock = true;
 	boost::unique_lock<boost::shared_mutex> lk(taskMutex, boost::defer_lock);
 	while (!lk.try_lock()) {}
 	taskGroups.emplace_back(taskgroup);
+	waitForLock = false;
 	lk.unlock();
 	newTasks.notify_all();
 }
