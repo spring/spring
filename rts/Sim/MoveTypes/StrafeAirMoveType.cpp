@@ -470,10 +470,9 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 	}
 
 	const CUnit* attackee = owner->attackTarget;
-	const UnitDef* attackeeDef = attackee->unitDef;
 
-	const bool groundTarget = (attackee == NULL) || attackeeDef->IsGroundUnit();
-	const bool airTarget = (attackee != NULL) && attackeeDef->IsStrafingAirUnit(); // only count "real" aircraft (not gunships)
+	const bool groundTarget = (attackee == NULL) || attackee->unitDef->IsGroundUnit();
+	const bool airTarget = (attackee != NULL) && attackee->unitDef->IsStrafingAirUnit(); // only count "real" aircraft (not gunships)
 	const bool hasFired = (!owner->weapons.empty() && owner->weapons[0]->reloadStatus > gs->frameNum && owner->weapons[0]->salvoLeft == 0);
 
 	if (groundTarget) {
