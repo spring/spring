@@ -970,7 +970,7 @@ void CClassicGroundMoveType::StartEngine() {
 			etaFailures = 0;
 
 			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
-			owner->script->StartMoving();
+			owner->script->StartMoving(false);
 		} else {
 			Fail();
 		}
@@ -1535,7 +1535,7 @@ void CClassicGroundMoveType::SetMainHeading() {
 			  && owner->heading != heading
 			  && !owner->weapons.front()->TryTarget(mainHeadingPos, true, 0)) {
 				progressState = Active;
-				owner->script->StartMoving();
+				owner->script->StartMoving(false);
 				ChangeHeading(heading);
 			}
 		}
@@ -1592,12 +1592,12 @@ bool CClassicGroundMoveType::UpdateDirectControl()
 		ChangeSpeed();
 
 		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
-		owner->script->StartMoving();
+		owner->script->StartMoving(false);
 	} else if (unitCon.back) {
 		ChangeSpeed();
 
 		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
-		owner->script->StartMoving();
+		owner->script->StartMoving(false);
 	} else {
 		ChangeSpeed();
 

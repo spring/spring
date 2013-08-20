@@ -877,20 +877,20 @@ bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
 }
 
 
-void CLuaUnitScript::Destroy()       { Call(LUAFN_Destroy); }
-void CLuaUnitScript::StartMoving()   { Call(LUAFN_StartMoving); }
-void CLuaUnitScript::StopMoving()    { Call(LUAFN_StopMoving); }
-void CLuaUnitScript::StartUnload()   { Call(LUAFN_StartUnload); }
-void CLuaUnitScript::EndTransport()  { Call(LUAFN_EndTransport); }
+void CLuaUnitScript::Destroy() { Call(LUAFN_Destroy); }
+void CLuaUnitScript::StartMoving(bool reversing) { Call(LUAFN_StartMoving, reversing); }
+void CLuaUnitScript::StopMoving() { Call(LUAFN_StopMoving); }
+void CLuaUnitScript::StartUnload() { Call(LUAFN_StartUnload); }
+void CLuaUnitScript::EndTransport() { Call(LUAFN_EndTransport); }
 void CLuaUnitScript::StartBuilding() { Call(LUAFN_StartBuilding); }
-void CLuaUnitScript::StopBuilding()  { Call(LUAFN_StopBuilding); }
-void CLuaUnitScript::Falling()       { Call(LUAFN_Falling); }
-void CLuaUnitScript::Landed()        { Call(LUAFN_Landed); }
-void CLuaUnitScript::Activate()      { Call(LUAFN_Activate); }
-void CLuaUnitScript::Deactivate()    { Call(LUAFN_Deactivate); }
-void CLuaUnitScript::MoveRate(int curRate)     { Call(LUAFN_MoveRate, curRate); }
+void CLuaUnitScript::StopBuilding() { Call(LUAFN_StopBuilding); }
+void CLuaUnitScript::Falling() { Call(LUAFN_Falling); }
+void CLuaUnitScript::Landed() { Call(LUAFN_Landed); }
+void CLuaUnitScript::Activate() { Call(LUAFN_Activate); }
+void CLuaUnitScript::Deactivate() { Call(LUAFN_Deactivate); }
+void CLuaUnitScript::MoveRate(int curRate) { Call(LUAFN_MoveRate, curRate); }
 void CLuaUnitScript::FireWeapon(int weaponNum) { Call(LUAFN_FireWeapon, weaponNum + LUA_WEAPON_BASE_INDEX); }
-void CLuaUnitScript::EndBurst(int weaponNum)   { Call(LUAFN_EndBurst, weaponNum + LUA_WEAPON_BASE_INDEX); }
+void CLuaUnitScript::EndBurst(int weaponNum) { Call(LUAFN_EndBurst, weaponNum + LUA_WEAPON_BASE_INDEX); }
 
 
 /******************************************************************************/

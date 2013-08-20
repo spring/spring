@@ -914,7 +914,7 @@ bool CHoverAirMoveType::Update()
 		} break;
 	}
 
-	if (lastSpeed == ZeroVector && owner->speed != ZeroVector) { owner->script->StartMoving(); }
+	if (lastSpeed == ZeroVector && owner->speed != ZeroVector) { owner->script->StartMoving(false); }
 	if (lastSpeed != ZeroVector && owner->speed == ZeroVector) { owner->script->StopMoving(); }
 
 	// Banking requires deltaSpeed.y = 0

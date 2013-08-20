@@ -41,7 +41,7 @@ public:
 	 * @brief Checks whether the stack has at least size items.
 	 * @returns min(size, stack.size())
 	 */
-	int CheckStack(int size);
+	int CheckStack(unsigned int size, bool warn);
 	/**
 	 * @brief Returns the value at pos in the stack.
 	 * Neater than exposing the actual stack

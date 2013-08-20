@@ -1380,7 +1380,7 @@ void CGroundMoveType::StartEngine(bool callScript) {
 
 		if (callScript) {
 			// makes no sense to call this unless we have a new path
-			owner->script->StartMoving();
+			owner->script->StartMoving(reversing);
 		}
 
 		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
@@ -2227,14 +2227,12 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
 		// assert(owner->moveDef->TestMoveSquare(owner, owner->pos, ZeroVector, true, false, true));
 	}
 
-	if (oldSpeed <= 0.01f && newSpeed >  0.01f) { owner->script->StartMoving(); }
-	if (oldSpeed >  0.01f && newSpeed <= 0.01f) { owner->script->StopMoving(); }
-
 	reversing    = (newSpeedVector.dot(flatFrontDir) < 0.0f);
 	currentSpeed = newSpeed;
 	deltaSpeed   = 0.0f;
 
-	assert(math::fabs(currentSpeed) < 1e6f);
+	if (oldSpeed <= 0.01f && newSpeed >  0.01f) { owner->script->StartMoving(reversing); }
+	if (oldSpeed >  0.01f && newSpeed <= 0.01f) { owner->script->StopMoving(); }
 }
 
 bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
