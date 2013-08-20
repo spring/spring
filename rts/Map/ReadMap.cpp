@@ -129,13 +129,13 @@ void CReadMap::Serialize(creg::ISerializer& s)
 
 CReadMap::CReadMap()
 	: metalMap(NULL)
+	, heightMapSyncedPtr(NULL)
+	, heightMapUnsyncedPtr(NULL)
+	, mapChecksum(0)
 	, initMinHeight(0.0f)
 	, initMaxHeight(0.0f)
 	, currMinHeight(0.0f)
 	, currMaxHeight(0.0f)
-	, mapChecksum(0)
-	, heightMapSyncedPtr(NULL)
-	, heightMapUnsyncedPtr(NULL)
 {
 }
 
