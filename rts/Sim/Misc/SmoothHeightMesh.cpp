@@ -298,7 +298,7 @@ inline static void BlurHorizontal(
 				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
 			}
 
-			assert(smoothed[idx] <= std::max(readMap->CetCurrMaxHeight(), 0.0f));
+			assert(smoothed[idx] <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
 			assert(smoothed[idx] >=          readMap->GetCurrMinHeight()       );
 		}
 	});
