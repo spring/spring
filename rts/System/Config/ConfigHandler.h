@@ -24,8 +24,12 @@ public:
 	 * @param configSource the config file to be used, using the default one if empty
 	 *
 	 * Re-instantiates if the configHandler already existed.
+	 *
+	 * Note: we don't use &ConfigSource, because showed in past that under some
+	 *    conditions this default variable isn't initialized yet and so getting the
+	 *    ref of it fails causing a crash.
 	 */
-	static void Instantiate(const std::string& configSource = "", const bool safemode = false);
+	static void Instantiate(const std::string configSource = "", const bool safemode = false);
 
 	/**
 	 * @brief Deallocate global configHandler
