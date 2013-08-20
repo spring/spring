@@ -299,7 +299,7 @@ void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer) {
 
 /******************************************************************************/
 
-void ConfigHandler::Instantiate(const std::string& configSource, const bool safemode)
+void ConfigHandler::Instantiate(const std::string configSource, const bool safemode)
 {
 	Deallocate();
 
