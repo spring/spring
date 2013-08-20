@@ -106,7 +106,6 @@ public:
 
 	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
-	void SetHeadingFromDirection();
 
 	void EnableScriptMoveType();
 	void DisableScriptMoveType();
@@ -149,8 +148,6 @@ public:
 	void CalculateTerrainType();
 	void UpdateTerrainType();
 	void UpdatePhysicalState();
-
-	void SetDirVectors(const CMatrix44f&);
 	void UpdateDirVectors(bool useGroundNormal);
 
 	float3 GetErrorVector(int allyteam) const;

@@ -231,7 +231,6 @@ public:
 	//aircraft stuff
 	float wingDrag;
 	float wingAngle;
-	float drag;
 	float frontToSpeed;
 	float speedToFront;
 	float myGravity;

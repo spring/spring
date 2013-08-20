@@ -114,6 +114,13 @@ public:
 	}
 
 
+	void SetHeadingFromDirection();
+	void SetDirVectors(const CMatrix44f& matrix) {
+		rightdir.x = -matrix[0]; updir.x = matrix[4]; frontdir.x = matrix[ 8];
+		rightdir.y = -matrix[1]; updir.y = matrix[5]; frontdir.y = matrix[ 9];
+		rightdir.z = -matrix[2]; updir.z = matrix[6]; frontdir.z = matrix[10];
+	}
+
 	virtual CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const {
 		// should never get called (should be pure virtual, but cause of CREG we cannot use it)
 		assert(false);
@@ -137,6 +144,8 @@ public:
 
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
+
+	float3 GetDragAccelerationVec(const float4& params) const;
 	float3 GetWantedUpDir(bool useGroundNormal) const;
 
 	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
@@ -239,6 +248,8 @@ public:
 
 	int2 mapPos;                                ///< current position on GroundBlockingObjectMap
 	float3 groundBlockPos;
+
+	float3 dragScales;
 
 	float3 drawPos;                             ///< = pos + speed * timeOffset (unsynced)
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)

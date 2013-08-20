@@ -2504,8 +2504,9 @@ EXPORT(float) skirmishAiCallback_UnitDef_getWingAngle(int skirmishAIId, int unit
 	return getUnitDefById(skirmishAIId, unitDefId)->wingAngle;
 }
 
+// DEPRECATED
 EXPORT(float) skirmishAiCallback_UnitDef_getDrag(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->drag;
+	return 0.0f;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_getFrontToSpeed(int skirmishAIId, int unitDefId) {
