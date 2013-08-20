@@ -68,7 +68,7 @@ awk '{ if (match($0, /^[^:=*].*:/)) { gsub(/:/,""); printf "==%s==\n", $0;} else
 
 
 TEMPLATE_CONTENT="__NOTOC__<b>
-$TEMPLATE_CONTENT</b>"
+$TEMPLATE_CONTENT</b>[[category:Development]]"
 
 #########################
 # Upload
