@@ -269,7 +269,7 @@ bool CStrafeAirMoveType::Update()
 			break;
 	}
 
-	if (lastVel == ZeroVector && owner->speed != ZeroVector) { owner->script->StartMoving(); }
+	if (lastVel == ZeroVector && owner->speed != ZeroVector) { owner->script->StartMoving(false); }
 	if (lastVel != ZeroVector && owner->speed == ZeroVector) { owner->script->StopMoving(); }
 
 	return (HandleCollisions());

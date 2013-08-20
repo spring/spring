@@ -652,8 +652,10 @@ void CUnit::DisableScriptMoveType()
 	prevMoveType = NULL;
 	usingScriptMoveType = false;
 
+	// ensure unit does not try to move back to the
+	// position it was at when MoveCtrl was enabled
 	// FIXME: prevent the issuing of extra commands ?
-	if (moveType) {
+	if (moveType != NULL) {
 		moveType->SetGoal(moveType->oldPos = pos);
 		moveType->StopMoving();
 	}
@@ -807,7 +809,7 @@ void CUnit::SetStunned(bool stun) {
 		if (stunned) {
 			script->StopMoving();
 		} else {
-			script->StartMoving();
+			script->StartMoving(moveType->IsReversing());
 		}
 	}
 }
