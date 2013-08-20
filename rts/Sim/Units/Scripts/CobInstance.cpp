@@ -345,6 +345,10 @@ void CCobInstance::StartBuilding(float heading, float pitch)
 	Call(COBFN_StartBuilding, args);
 }
 
+void CCobInstance::StartMoving(bool reversing)   
+{ 
+	Call(COBFN_StartMoving, (int) reversing); 
+}
 
 int CCobInstance::QueryNanoPiece()
 {

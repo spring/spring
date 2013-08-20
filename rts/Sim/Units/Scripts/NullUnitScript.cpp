@@ -47,6 +47,7 @@ bool CNullUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool use
 float CNullUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit) { return 1.0f; }
 
 void CNullUnitScript::Destroy()       {}
+void CNullUnitScript::StartMoving(bool reversing)   {}
 void CNullUnitScript::StartMoving()   {}
 void CNullUnitScript::StopMoving()    {}
 void CNullUnitScript::StartUnload()   {}

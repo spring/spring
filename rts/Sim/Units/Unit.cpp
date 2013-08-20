@@ -807,7 +807,7 @@ void CUnit::SetStunned(bool stun) {
 		if (stunned) {
 			script->StopMoving();
 		} else {
-			script->StartMoving();
+			script->StartMoving(moveType->IsReversing());
 		}
 	}
 }
