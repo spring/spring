@@ -20,6 +20,7 @@ BOOST_AUTO_TEST_CASE( testThreadPool1 )
 #endif
 	#define RUNS 1000
 	std::atomic<int> cnt(0);
+	BOOST_CHECK(cnt.is_lock_free());
 	std::vector<int> nums(RUNS,0);
 	std::vector<int> runs(NUM_THREADS,0);
 	ThreadPool::SetThreadCount(NUM_THREADS);

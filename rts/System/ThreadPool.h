@@ -111,6 +111,8 @@ public:
 	virtual bool IsFinished() const = 0;
 	virtual bool IsEmpty() const = 0;
 
+	virtual int RemainingTasks() const = 0;
+
 	template< class Rep, class Period >
 	bool wait_for(const boost::chrono::duration<Rep, Period>& rel_time) const {
 		const auto end = boost::chrono::high_resolution_clock::now() + rel_time;
@@ -163,6 +165,7 @@ public:
 
 	bool IsEmpty() const    { return done; }
 	bool IsFinished() const { return finished; }
+	int RemainingTasks() const { return done ? 0 : 1; }
 	std::shared_ptr<boost::unique_future<return_type>> GetFuture() { assert(result->valid()); return std::move(result); } //FIXME rethrow exceptions some time
 
 private:
@@ -232,7 +235,8 @@ public:
 	}
 
 	virtual bool IsEmpty() const    { return curtask >= tasks.size() /*tasks.empty()*/; }
-	virtual bool IsFinished() const { return (remainingTasks == 0); }
+	bool IsFinished() const { return (remainingTasks == 0); }
+	int RemainingTasks() const { return remainingTasks; }
 
 	template<typename G>
 	return_type GetResult(const G&& g) {
@@ -346,13 +350,17 @@ static inline void for_mt(int start, int end, const std::function<void(const int
 static inline void parallel(const std::function<void()>&& f)
 {
 	ThreadPool::NotifyWorkerThreads();
+	LOG_L(L_WARNING, "%s1", __FUNCTION__);
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
 	auto taskgroup = std::make_shared<ParallelTaskGroup<const std::function<void()>>>();
 	for (int i = 0; i < ThreadPool::GetNumThreads(); ++i) {
 		taskgroup->enqueue_unique(i, f);
 	}
+	LOG_L(L_WARNING, "%s2", __FUNCTION__);
 	ThreadPool::PushTaskGroup(taskgroup);
+	LOG_L(L_WARNING, "%s3", __FUNCTION__);
 	ThreadPool::WaitForFinishedDebug(taskgroup);
+	LOG_L(L_WARNING, "%s4", __FUNCTION__);
 }
 
 
