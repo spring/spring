@@ -486,16 +486,13 @@ static int SetWorldObjectVelocity(lua_State* L, CWorldObject* o)
 	if (o == NULL)
 		return 0;
 
-	float3& speed = o->speed;
-	float3 dir = speed;
-
+	float3 speed;
 	speed.x = Clamp(luaL_checkfloat(L, 2), -MAX_UNIT_SPEED, MAX_UNIT_SPEED);
 	speed.y = Clamp(luaL_checkfloat(L, 3), -MAX_UNIT_SPEED, MAX_UNIT_SPEED);
 	speed.z = Clamp(luaL_checkfloat(L, 4), -MAX_UNIT_SPEED, MAX_UNIT_SPEED);
 
-	if (dynamic_cast<CProjectile*>(o) != NULL) {
-		static_cast<CProjectile*>(o)->dir = dir.SafeNormalize();
-	}
+	o->SetSpeed(speed);
+	return 0;
 }
 
 static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
@@ -503,18 +500,18 @@ static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
 	if (o == NULL)
 		return 0;
 
-	float3  pos;
-	float3  rot;
-	float3& vel = o->speed;
+	float3 pos;
+	float3 rot;
+	float3 speed;
 	float3& drag = o->dragScales;
 
 	pos.x = luaL_checknumber(L, 2);
 	pos.y = luaL_checknumber(L, 3);
 	pos.z = luaL_checknumber(L, 4);
 
-	vel.x = luaL_checknumber(L, 5);
-	vel.y = luaL_checknumber(L, 6);
-	vel.z = luaL_checknumber(L, 7);
+	speed.x = luaL_checknumber(L, 5);
+	speed.y = luaL_checknumber(L, 6);
+	speed.z = luaL_checknumber(L, 7);
 
 	rot.x = luaL_checknumber(L, 8);
 	rot.y = luaL_checknumber(L, 9);
@@ -534,6 +531,7 @@ static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
 	o->UpdateMidAndAimPos();
 	o->SetHeadingFromDirection();
 	o->ForcedMove(pos);
+	o->SetSpeed(speed);
 	return 0;
 }
 

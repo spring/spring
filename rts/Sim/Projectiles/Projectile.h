@@ -41,6 +41,10 @@ public:
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	virtual void DrawCallback() {}
 
+	void SetSpeed(const float3& v) {
+		speed = dir = v; dir = dir.SafeNormalize();
+	}
+
 	CUnit* owner() const;
 	unsigned int GetOwnerID() const { return ownerID; }
 	unsigned int GetTeamID() const { return teamID; }
