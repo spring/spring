@@ -36,7 +36,7 @@ Else  (NOT Boost_FOUND)
 		)
 
 	Add_Custom_Target(tests)
-	add_custom_target(check WINEPATH="${MINGWLIBS}" ${CMAKE_CTEST_COMMAND} --output-on-failure
+	add_custom_target(check WINEPATH="${MINGWLIBS}/dll" ${CMAKE_CTEST_COMMAND} --output-on-failure
 		DEPENDS engine-headless)
 	add_custom_target(install-tests)
 
