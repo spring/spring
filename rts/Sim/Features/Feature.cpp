@@ -421,6 +421,15 @@ void CFeature::DependentDied(CObject *o)
 }
 
 
+void CFeature::SetSpeed(const float3& v)
+{
+	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, ((speed = v) != ZeroVector));
+
+	if (IsMoving()) {
+		featureHandler->SetFeatureUpdateable(this);
+	}
+}
+
 void CFeature::ForcedMove(const float3& newPos)
 {
 	// remove from managers

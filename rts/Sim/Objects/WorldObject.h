@@ -37,7 +37,9 @@ public:
 
 	virtual ~CWorldObject() {}
 
-	void SetPos(const float3& p) { pos = p; }
+	virtual void SetPos(const float3& p) { pos = p; }
+	virtual void SetSpeed(const float3& v) { speed = v; }
+
 	void SetRadiusAndHeight(float r, float h)
 	{
 		radius = r;

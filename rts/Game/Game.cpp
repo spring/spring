@@ -371,10 +371,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	ParseInputTextGeometry("default");
 	ParseInputTextGeometry(inputTextGeo);
 
-	userInput  = "";
-	writingPos = 0;
-	userPrompt = "";
-
 	CLuaHandle::SetModUICtrl(configHandler->GetBool("LuaModUICtrl"));
 
 	modInfo.Init(modName.c_str());
@@ -386,8 +382,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 	}
 
-	int mtl = globalConfig->GetMultiThreadLua();
-	showMTInfo = showMTInfo ? mtl : -1;
+	showMTInfo = (showMTInfo != 0)? globalConfig->GetMultiThreadLua() : -1;
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
@@ -414,9 +409,10 @@ CGame::~CGame()
 
 	// Kill all teams that are still alive, in
 	// case the game did not do so through Lua.
-	// must happen after Lua (cause CGame is
-	// already null'ed and it causes a Lua event,
-	// which could issue Lua code that tries to access it)
+	//
+	// must happen after Lua (cause CGame is already
+	// null'ed and Died() causes a Lua event, which
+	// could issue Lua code that tries to access it)
 	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		teamHandler->Team(t)->Died(false);
 	}

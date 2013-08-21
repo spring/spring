@@ -1382,8 +1382,6 @@ void CGroundMoveType::StartEngine(bool callScript) {
 			// makes no sense to call this unless we have a new path
 			owner->script->StartMoving(reversing);
 		}
-
-		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 	}
 
 	nextObstacleAvoidanceFrame = gs->frameNum;
@@ -1401,8 +1399,6 @@ void CGroundMoveType::StopEngine(bool callScript, bool hardStop) {
 		if (callScript) {
 			owner->script->StopMoving();
 		}
-
-		owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 	}
 
 	owner->speed *= (1 - hardStop);
@@ -2123,11 +2119,9 @@ bool CGroundMoveType::UpdateDirectControl()
 
 	if (unitCon.forward || unitCon.back) {
 		ChangeSpeed((maxSpeed * unitCon.forward) + (maxReverseSpeed * unitCon.back), wantReverse, true);
-		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 	} else {
 		// not moving forward or backward, stop
 		ChangeSpeed(0.0f, false, true);
-		owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
 	}
 
 	if (unitCon.left ) { ChangeHeading(owner->heading + turnRate); turnSign =  1.0f; }
@@ -2201,6 +2195,8 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3& newSpeedVector) {
 	const float oldSpeed = math::fabs(oldSpeedVector.dot(flatFrontDir));
 	const float newSpeed = math::fabs(newSpeedVector.dot(flatFrontDir));
+
+	owner->UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, newSpeed > 0.01f);
 
 	// if being built, the nanoframe might not be exactly on
 	// the ground and would jitter from gravity acting on it

@@ -503,9 +503,9 @@ void CFeatureHandler::Update()
 
 void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 {
-	if (feature->inUpdateQue) {
+	if (feature->inUpdateQue)
 		return;
-	}
+
 	updateFeatures.insert(feature);
 	feature->inUpdateQue = true;
 }
