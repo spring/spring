@@ -380,13 +380,11 @@ void CFeature::DoDamage(
 		luaRules->FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult);
 	}
 
-	// NOTE: for trees, impulse is used to drive their falling animation
+	// NOTE:
+	//   for trees, impulse is used to drive their falling animation
+	//   this also calls our SetSpeed() to put us in the update queue
 	// if ((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()))
 	ApplyImpulse((impulse * impulseMult) / mass);
-
-	if ((impulse * impulseMult) != ZeroVector) {
-		featureHandler->SetFeatureUpdateable(this);
-	}
 
 	// clamp in case Lua-modified damage is negative
 	health -= baseDamage;
@@ -533,7 +531,7 @@ bool CFeature::UpdatePosition()
 	} else {
 		// any feature that is not a dead unit (ie. rocks, trees, ...)
 		// these never move in the xz-plane no matter how much impulse
-		// is applied, only gravity affects them
+		// is applied, only gravity affects them (FIXME: arbitrary..?)
 		if (pos.y > finalHeight) {
 			if (pos.y > 0.0f) {
 				speed.y += mapInfo->map.gravity;

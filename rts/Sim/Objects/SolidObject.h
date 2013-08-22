@@ -83,7 +83,7 @@ public:
 	virtual bool AddBuildPower(float amount, CUnit* builder) { return false; }
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) {}
 
-	virtual void ApplyImpulse(const float3& impulse) { speed += impulse; }
+	virtual void ApplyImpulse(const float3& impulse) { SetSpeed(speed + impulse); }
 
 	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual int GetBlockingMapID() const { return -1; }
@@ -167,12 +167,13 @@ public:
 	bool HasPhysicalStateBit(unsigned int bit) const { return ((physicalState & bit) != 0); }
 	void SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= (bit); physicalState = static_cast<PhysicalState>(ps); }
 	void ClearPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps &= (~bit); physicalState = static_cast<PhysicalState>(ps); }
-	void UpdatePhysicalStateBit(unsigned int bit, bool set) {
+	bool UpdatePhysicalStateBit(unsigned int bit, bool set) {
 		if (set) {
 			SetPhysicalStateBit(bit);
 		} else {
 			ClearPhysicalStateBit(bit);
 		}
+		return (HasPhysicalStateBit(bit));
 	}
 
 private:
