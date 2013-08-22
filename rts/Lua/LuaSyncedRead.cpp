@@ -225,6 +225,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitWeaponTestTarget);
 	REGISTER_LUA_CFUNC(GetUnitWeaponTestRange);
 	REGISTER_LUA_CFUNC(GetUnitWeaponHaveFreeLineOfFire);
+	REGISTER_LUA_CFUNC(GetUnitWeaponCanFire);
 	REGISTER_LUA_CFUNC(GetUnitTravel);
 	REGISTER_LUA_CFUNC(GetUnitFuel);
 	REGISTER_LUA_CFUNC(GetUnitEstimatedPath);
@@ -3283,10 +3284,10 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 
 int LuaSyncedRead::GetUnitWeaponVectors(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
 
@@ -3319,16 +3320,15 @@ int LuaSyncedRead::GetUnitWeaponVectors(lua_State* L)
 
 int LuaSyncedRead::GetUnitWeaponTryTarget(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
 
-	if (weaponNum >= unit->weapons.size()) {
+	if (weaponNum >= unit->weapons.size())
 		return 0;
-	}
 
 	const CWeapon* weapon = unit->weapons[weaponNum];
 	const CUnit* enemy = NULL;
@@ -3350,16 +3350,15 @@ int LuaSyncedRead::GetUnitWeaponTryTarget(lua_State* L)
 
 int LuaSyncedRead::GetUnitWeaponTestTarget(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
 
-	if (weaponNum >= unit->weapons.size()) {
+	if (weaponNum >= unit->weapons.size())
 		return 0;
-	}
 
 	const CWeapon* weapon = unit->weapons[weaponNum];
 	const CUnit* enemy = NULL;
@@ -3381,16 +3380,15 @@ int LuaSyncedRead::GetUnitWeaponTestTarget(lua_State* L)
 
 int LuaSyncedRead::GetUnitWeaponTestRange(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
 
-	if (weaponNum >= unit->weapons.size()) {
+	if (weaponNum >= unit->weapons.size())
 		return 0;
-	}
 
 	const CWeapon* weapon = unit->weapons[weaponNum];
 	const CUnit* enemy = NULL;
@@ -3412,16 +3410,15 @@ int LuaSyncedRead::GetUnitWeaponTestRange(lua_State* L)
 
 int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
 
-	if (weaponNum >= unit->weapons.size()) {
+	if (weaponNum >= unit->weapons.size())
 		return 0;
-	}
 
 	const CWeapon* weapon = unit->weapons[weaponNum];
 	const CUnit* enemy = NULL;
@@ -3437,6 +3434,22 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 	}
 
 	lua_pushboolean(L, weapon->HaveFreeLineOfFire(pos, true, enemy));
+	return 1;
+}
+
+int LuaSyncedRead::GetUnitWeaponCanFire(lua_State* L)
+{
+	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
+		return 0;
+
+	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
+
+	if (weaponNum >= unit->weapons.size())
+		return 0;
+
+	lua_pushboolean(L, unit->weapons[weaponNum]->CanFire());
 	return 1;
 }
 
