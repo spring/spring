@@ -218,13 +218,6 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 
 
 
-static inline bool isBeingServicedOnPad(CUnit* u)
-{
-	const AAirMoveType* a = dynamic_cast<AAirMoveType*>(u->moveType);
-	return (a != NULL && a->GetPadStatus() != 0);
-}
-
-
 void CWeapon::UpdateRelWeaponPos()
 {
 	// If we can't get a line of fire from the muzzle, try
@@ -365,27 +358,46 @@ void CWeapon::UpdateTargeting()
 }
 
 
+bool CWeapon::CanFire() const
+{
+	// FIXME merge some of the checks with TryTarget/TestRange/TestTarget (!)
+	if (!angleGood)
+		return false;
+	if (!subClassReady)
+		return false;
+	if (salvoLeft != 0)
+		return false;
+	if (targetType == Target_None)
+		return false;
+	if (reloadStatus > gs->frameNum)
+		return false;
+	if (weaponDef->stockpile && numStockpiled == 0)
+		return false;
+	// muzzle is underwater but we cannot fire underwater
+	if (!weaponDef->fireSubmersed && weaponMuzzlePos.y <= 0.0f)
+		return false;
+	// ~20 degree sanity check to force new aim
+	if (wantedDir.dot(lastRequestedDir) <= 0.94f)
+		return false;
+	if ((owner->unitDef->maxFuel != 0) && (owner->currentFuel <= 0.0f) && (fuelUsage != 0.0f))
+		return false;
+
+	const CPlayer* fpsPlayer = owner->fpsControlPlayer;
+	const AAirMoveType* airMoveType = dynamic_cast<AAirMoveType*>(owner->moveType);
+
+	// if in FPS mode, player must be pressing at least one button to fire
+	if (fpsPlayer != NULL && !fpsPlayer->fpsController.mouse1 && !fpsPlayer->fpsController.mouse2)
+		return false;
+	// FIXME: there is already CUnit::dontUseWeapons but only used by HoverAirMoveType when landed
+	if (airMoveType != NULL && airMoveType->GetPadStatus() != AAirMoveType::PAD_STATUS_FLYING)
+		return false;
+
+	return true;
+}
+
 void CWeapon::UpdateFire()
 {
-	bool canFire = true;
-	const CPlayer* fpsPlayer = owner->fpsControlPlayer;
-
-	//FIXME merge some of the checks with TryTarget/TestRange/TestTarget
-	canFire = canFire && angleGood;
-	canFire = canFire && subClassReady;
-	canFire = canFire && (salvoLeft == 0);
-	canFire = canFire && (targetType != Target_None);
-	canFire = canFire && (reloadStatus <= gs->frameNum);
-	canFire = canFire && (!weaponDef->stockpile || (numStockpiled > 0));
-	canFire = canFire && (weaponDef->fireSubmersed || (weaponMuzzlePos.y > 0.0f)); // muzzle is underwater but we cannot fire underwater
-	canFire = canFire && ((fpsPlayer == NULL)
-		 || fpsPlayer->fpsController.mouse1
-		 || fpsPlayer->fpsController.mouse2);
-	canFire = canFire && ((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0) || (fuelUsage == 0));
-	canFire = canFire && !isBeingServicedOnPad(owner);
-	canFire = canFire && (wantedDir.dot(lastRequestedDir) > 0.94f); // ~20 degree sanity check to force new aim
-
-	if (canFire) {
+	if (CanFire()) {
 		if ((weaponDef->stockpile ||
 		     (teamHandler->Team(owner->team)->metal >= metalFireCost &&
 		      teamHandler->Team(owner->team)->energy >= energyFireCost)))
