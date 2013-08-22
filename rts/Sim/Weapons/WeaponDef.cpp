@@ -72,7 +72,7 @@ WEAPONTAG(float, bounceSlip).defaultValue(1.0f);
 WEAPONTAG(float, bounceRebound).defaultValue(1.0f);
 WEAPONTAG(int, numBounce).defaultValue(-1);
 
-// Crater & Impuls
+// Crater & Impulse
 WEAPONTAG(float, impulseFactor, damages.impulseFactor).defaultValue(1.0f);
 WEAPONTAG(float, impulseBoost, damages.impulseBoost).defaultValue(0.0f);
 WEAPONTAG(float, craterMult, damages.craterMult).fallbackName("impulseFactor").defaultValue(1.0f);
@@ -81,8 +81,8 @@ WEAPONTAG(float, craterAreaOfEffect).externalName("areaOfEffect").defaultValue(8
 
 // Water
 WEAPONTAG(bool, waterweapon).defaultValue(false);
-WEAPONTAG(bool, fireSubmersed).fallbackName("waterweapon").defaultValue(false);
 WEAPONTAG(bool, submissile).defaultValue(false);
+WEAPONTAG(bool, fireSubmersed).fallbackName("waterweapon").defaultValue(false);
 
 // Targeting
 WEAPONTAG(bool, manualfire).externalName("commandfire").defaultValue(false);

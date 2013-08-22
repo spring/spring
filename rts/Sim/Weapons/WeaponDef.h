@@ -86,8 +86,8 @@ public:
 	bool turret;
 	bool onlyForward;
 	bool fixedLauncher;
-	bool waterweapon;
-	bool fireSubmersed;
+	bool waterweapon;           ///< can target underwater objects/positions if true
+	bool fireSubmersed;         ///< can fire even when underwater if true
 	bool submissile;            ///< Lets a torpedo travel above water like it does below water
 	bool tracks;
 	bool paralyzer;             ///< weapon will only paralyze not do real damage
