@@ -14,15 +14,16 @@
 #include "Sim/Units/Unit.h"
 
 
-CR_BIND_DERIVED(CLightningCannon, CWeapon, (NULL));
+CR_BIND_DERIVED(CLightningCannon, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CLightningCannon,(
 	CR_MEMBER(color),
 	CR_RESERVED(8)
 ));
 
-CLightningCannon::CLightningCannon(CUnit* owner): CWeapon(owner)
+CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
+	color = def->visuals.color;
 }
 
 

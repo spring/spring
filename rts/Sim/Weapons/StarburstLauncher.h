@@ -5,22 +5,22 @@
 
 #include "Weapon.h"
 
-class CStarburstLauncher :
-	public CWeapon
+class CStarburstLauncher: public CWeapon
 {
 	CR_DECLARE(CStarburstLauncher);
 public:
-	CStarburstLauncher(CUnit* owner);
+	CStarburstLauncher(CUnit* owner, const WeaponDef* def);
 
 	void Update();
 	float GetRange2D(float yDiff) const;
 
-	float tracking;
-	float uptime;
-
 private:
 	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
 	void FireImpl();
+
+private:
+	float tracking;
+	float uptime;
 };
 
 #endif /* STARBURSTLAUNCHER_H */

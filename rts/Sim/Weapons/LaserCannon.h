@@ -5,20 +5,20 @@
 
 #include "Weapon.h"
 
-class CLaserCannon :
-	public CWeapon
+class CLaserCannon: public CWeapon
 {
 	CR_DECLARE(CLaserCannon);
 public:
-	CLaserCannon(CUnit* owner);
+	CLaserCannon(CUnit* owner, const WeaponDef* def);
 
 	void Update();
 	void Init();
 
-	float3 color;
+private:
+	void FireImpl();
 
 private:
-	virtual void FireImpl();
+	float3 color;
 };
 
 #endif /* LASERCANNON_H */

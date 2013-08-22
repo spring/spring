@@ -14,27 +14,46 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitTypes/Building.h"
+#include "Sim/Units/UnitDef.h"
 #include "System/Matrix44f.h"
 
-CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL));
+#define SWEEPFIRE_ENABLED false
+
+CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CBeamLaser,(
 	CR_MEMBER(color),
 	CR_MEMBER(oldDir),
-	CR_MEMBER(damageMul),
-	CR_MEMBER(lastFireFrame)
+	CR_MEMBER(lastSweepFirePos),
+	CR_MEMBER(lastSweepFireDir),
+	CR_MEMBER(burstDamageMul)
 ));
 
-CBeamLaser::CBeamLaser(CUnit* owner)
-: CWeapon(owner),
-	oldDir(ZeroVector),
-	damageMul(0),
-	lastFireFrame(0)
+CBeamLaser::CBeamLaser(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
+	burstDamageMul = 1.0f;
+	sweepFiring = false;
+
+	color = def->visuals.color;
 }
 
 
+
+void CBeamLaser::Init()
+{
+	if (!weaponDef->beamburst) {
+		salvoDelay = 0;
+		salvoSize = int(weaponDef->beamtime * GAME_SPEED);
+		salvoSize = std::max(salvoSize, 1);
+
+		// multiply damage with this on each shot so the total damage done is correct
+		burstDamageMul = 1.0f / salvoSize;
+	}
+
+	CWeapon::Init();
+
+	muzzleFlareSize = 0.0f;
+}
 
 void CBeamLaser::Update()
 {
@@ -51,8 +70,7 @@ void CBeamLaser::Update()
 			owner->rightdir * relWeaponMuzzlePos.x;
 
 		if (!onlyForward) {
-			wantedDir = targetPos - weaponPos;
-			wantedDir.SafeNormalize();
+			wantedDir = (targetPos - weaponPos).SafeNormalize();
 		}
 
 		if (!weaponDef->beamburst) {
@@ -62,25 +80,76 @@ void CBeamLaser::Update()
 			predict = 0;
 		}
 	}
+
 	CWeapon::Update();
 
+	// sweeping always happens between targets
+	if (targetType == Target_None)
+		return;
 	if (!weaponDef->sweepFire)
 		return;
-	// FIXME: why only every 16 (was 18) frames?
-	if (lastFireFrame <= (gs->frameNum - UNIT_SLOWUPDATE_RATE))
+	#if (!SWEEPFIRE_ENABLED)
+	return;
+	#endif
+
+	CUnit* u = NULL;
+	CFeature* f = NULL;
+
+	const float3 sweepFireDir = GetFireDir(true);
+	const float3 sweepFirePos = weaponMuzzlePos + sweepFireDir * TraceRay::TraceRay(weaponMuzzlePos, sweepFireDir, range, collisionFlags, owner, u, f);
+
+	if (sweepFirePos == lastSweepFirePos) {
+		sweepFiring = false;
 		return;
+	}
 
-	if (teamHandler->Team(owner->team)->metal >= metalFireCost &&
-		teamHandler->Team(owner->team)->energy >= energyFireCost) {
+	if (teamHandler->Team(owner->team)->metal < metalFireCost) { return; }
+	if (teamHandler->Team(owner->team)->energy < energyFireCost) { return; }
 
-		owner->UseEnergy(energyFireCost / salvoSize);
-		owner->UseMetal(metalFireCost / salvoSize);
+	owner->UseEnergy(energyFireCost / salvoSize);
+	owner->UseMetal(metalFireCost / salvoSize);
 
-		const int piece = owner->script->QueryWeapon(weaponNum);
-		const CMatrix44f weaponMat = owner->script->GetPieceMatrix(piece);
+	lastSweepFirePos = sweepFirePos;
+	lastSweepFireDir = sweepFireDir;
+
+	FireInternal(sweepFiring = true);
+}
+
+float3 CBeamLaser::GetFireDir(bool sweepFire)
+{
+	float3 dir;
+
+	if (!sweepFire) {
+		if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType) != NULL) {
+			// [?] StrafeAirMovetype cannot align itself properly, change back when that is fixed
+			dir = owner->frontdir;
+		} else {
+			if (salvoLeft == salvoSize - 1) {
+				dir = (targetPos - weaponMuzzlePos).SafeNormalize();
+				oldDir = dir;
+			} else if (weaponDef->beamburst) {
+				dir = (targetPos - weaponMuzzlePos).SafeNormalize();
+			} else {
+				dir = oldDir;
+			}
+		}
+
+		dir += SalvoErrorExperience();
+		dir.SafeNormalize();
+
+		// NOTE:
+		//  on units with (extremely) long weapon barrels the muzzle
+		//  can be on the far side of the target unit such that <dir>
+		//  would point away from it
+		if ((targetPos - weaponMuzzlePos).dot(targetPos - owner->aimPos) < 0.0f) {
+			dir = -dir;
+		}
+	} else {
+		const int weaponPiece = owner->script->QueryWeapon(weaponNum);
+		const CMatrix44f weaponMat = owner->script->GetPieceMatrix(weaponPiece);
 
 		const float3 relWeaponPos = weaponMat.GetPos();
-		const float3 dir =
+		const float3 newWeaponDir =
 			owner->frontdir * weaponMat[10] +
 			owner->updir    * weaponMat[ 6] +
 			owner->rightdir * weaponMat[ 2];
@@ -91,69 +160,36 @@ void CBeamLaser::Update()
 			owner->updir    *  relWeaponPos.y +
 			owner->rightdir * -relWeaponPos.x;
 
-		FireInternal(dir, true);
-	}
-}
-
-
-void CBeamLaser::Init()
-{
-	if (!weaponDef->beamburst) {
-		salvoDelay = 0;
-		salvoSize = int(weaponDef->beamtime * GAME_SPEED);
-		salvoSize = std::max(salvoSize, 1);
-
-		// multiply damage with this on each shot so the total damage done is correct
-		damageMul = 1.0f / salvoSize;
-	} else {
-		damageMul = 1.0f;
+		// FIXME:
+		//   this way of implementing sweep-fire is extremely bugged
+		//   the intersection points traced by rays from the turning
+		//   weapon piece do NOT describe a fluid arc segment between
+		//   old and new target positions (nor even a straight line)
+		dir = newWeaponDir;
 	}
 
-	CWeapon::Init();
-	muzzleFlareSize = 0;
+	return dir;
 }
 
 void CBeamLaser::FireImpl()
 {
-	float3 dir;
-	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
-		// [?] HoverAirMoveType cannot align itself properly, change back when that is fixed
-		dir = owner->frontdir;
-	} else {
-		if (salvoLeft == salvoSize - 1) {
-			dir = (targetPos - weaponMuzzlePos).SafeNormalize();
-			oldDir = dir;
-		} else if (weaponDef->beamburst) {
-			dir = (targetPos - weaponMuzzlePos).SafeNormalize();
-		} else {
-			dir = oldDir;
-		}
-	}
+	// sweepfire must exclude regular fire (!)
+	if (sweepFiring)
+		return;
 
-	dir += SalvoErrorExperience();
-	dir.SafeNormalize();
-
-	// NOTE:
-	//  on units with (extremely) long weapon barrels the muzzle
-	//  can be on the far side of the target unit such that <dir>
-	//  would point away from it
-	if ((targetPos - weaponMuzzlePos).dot(targetPos - owner->aimPos) < 0.0f)
-		dir = -dir;
-
-	FireInternal(dir, false);
+	FireInternal(false);
 }
 
-void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
+void CBeamLaser::FireInternal(bool sweepFire)
 {
 	// fix negative damage when hitting big spheres
 	float actualRange = range;
 	float rangeMod = 1.0f;
 
-	if (dynamic_cast<CBuilding*>(owner) == NULL) {
+	if (!owner->unitDef->IsImmobileUnit()) {
 		// help units fire while chasing
 		rangeMod = 1.3f;
 	}
-
 	if (owner->fpsControlPlayer != NULL) {
 		rangeMod = 0.95f;
 	}
@@ -162,10 +198,11 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 	float curLength = 0.0f;
 
 	float3 curPos = weaponMuzzlePos;
+	float3 curDir = GetFireDir(sweepFire);
 	float3 hitPos;
 	float3 newDir;
 
-	curDir += (gs->randVector() * SprayAngleExperience());
+	curDir += (gs->randVector() * SprayAngleExperience() * (1 - sweepFire));
 	curDir.SafeNormalize();
 
 	bool tryAgain = true;
@@ -181,7 +218,7 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 	}
 
 	// increase range if targetting edge of hitsphere
-	if (targetType == Target_Unit && targetUnit && targetBorder != 0) {
+	if (targetType == Target_Unit && targetUnit != NULL && targetBorder != 0) {
 		maxLength += (targetUnit->radius * targetBorder);
 	}
 
@@ -195,9 +232,9 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 	for (int tries = 0; tries < 5 && tryAgain; ++tries) {
 		float beamLength = TraceRay::TraceRay(curPos, curDir, maxLength - curLength, collisionFlags, owner, hitUnit, hitFeature, &hitColQuery);
 
-		if (hitUnit && teamHandler->AlliedTeams(hitUnit->team, owner->team) && sweepFire) {
+		if (hitUnit != NULL && teamHandler->AlliedTeams(hitUnit->team, owner->team) && sweepFire) {
 			// never damage friendlies with sweepfire
-			lastFireFrame = 0; doDamage = false; break;
+			doDamage = false; break;
 		}
 
 		if (!weaponDef->waterweapon) {
@@ -215,7 +252,7 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 
 		if (shieldLength < beamLength) {
 			beamLength = shieldLength;
-			tryAgain = hitShield->BeamIntercepted(this, damageMul);
+			tryAgain = hitShield->BeamIntercepted(this, burstDamageMul);
 		} else {
 			tryAgain = false;
 		}
@@ -272,7 +309,7 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 		// make it possible to always hit with some minimal intensity (melee weapons have use for that)
 		const float hitIntensity = std::max(minIntensity, 1.0f - (curLength) / (actualRange * 2.0f));
 
-		const DamageArray damages = baseDamages * (hitIntensity * damageMul);
+		const DamageArray damages = baseDamages * (hitIntensity * burstDamageMul);
 		const CGameHelper::ExplosionParams params = {
 			hitPos,
 			curDir,
@@ -293,9 +330,5 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 		};
 
 		helper->Explosion(params);
-	}
-
-	if (targetUnit) {
-		lastFireFrame = gs->frameNum;
 	}
 }

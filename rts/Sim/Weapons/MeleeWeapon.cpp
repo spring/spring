@@ -4,7 +4,7 @@
 #include "WeaponDef.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CMeleeWeapon, CWeapon, (NULL));
+CR_BIND_DERIVED(CMeleeWeapon, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CMeleeWeapon,(
 	CR_RESERVED(8)
@@ -14,8 +14,7 @@ CR_REG_METADATA(CMeleeWeapon,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CMeleeWeapon::CMeleeWeapon(CUnit* owner)
-: CWeapon(owner)
+CMeleeWeapon::CMeleeWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 }
 

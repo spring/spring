@@ -5,7 +5,7 @@
 
 #include "Weapon.h"
 
-class CCannon : public CWeapon
+class CCannon: public CWeapon
 {
 	CR_DECLARE(CCannon);
 protected:
@@ -17,7 +17,7 @@ protected:
 	float3 lastDir;
 
 public:
-	CCannon(CUnit* owner);
+	CCannon(CUnit* owner, const WeaponDef* def);
 
 	void Init();
 	void UpdateRange(float val);
