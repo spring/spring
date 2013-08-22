@@ -26,7 +26,7 @@ private:
 	float3 lastSweepFirePos;
 	float3 lastSweepFireDir;
 
-	float burstDamageMul;
+	float salvoDamageMult;
 
 	bool sweepFiring;
 };
