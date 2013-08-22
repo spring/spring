@@ -885,7 +885,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		if (slavedTo->targetType == Target_Unit) {
 			const float3 tp =
 				slavedTo->targetUnit->GetErrorPos(owner->allyteam, true) +
-				errorVector * (MoveErrorExperience() * GAME_SPEED * slavedTo->targetUnit->speed.Length() );
+				errorVector * (MoveErrorExperience() * GAME_SPEED * slavedTo->targetUnit->speed.Length());
 
 			if (TryTarget(tp, false, slavedTo->targetUnit)) {
 				targetType = Target_Unit;
