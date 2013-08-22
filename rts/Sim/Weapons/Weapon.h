@@ -44,6 +44,7 @@ public:
 	/// test if something is blocking our LineOfFire
 	virtual bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
 
+	bool CanFire() const;
 	bool TryTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
 	bool TryTarget(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(CUnit* unit, bool userTarget);
@@ -68,9 +69,9 @@ public:
 	void HoldFire();
 	
 	float ExperienceScale() const;
-	float AccuracyExperience() const { return accuracy*ExperienceScale(); }
-	float SprayAngleExperience() const { return sprayAngle*ExperienceScale(); }
-	float3 SalvoErrorExperience() const { return salvoError*ExperienceScale(); }
+	float AccuracyExperience() const { return (accuracy * ExperienceScale()); }
+	float SprayAngleExperience() const { return (sprayAngle * ExperienceScale()); }
+	float3 SalvoErrorExperience() const { return (salvoError * ExperienceScale()); }
 	float MoveErrorExperience() const;
 
 	void StopAttackingAllyTeam(int ally);
@@ -78,8 +79,6 @@ public:
 
 protected:
 	virtual void FireImpl() {}
-
-	bool CanFire() const;
 
 	void UpdateTargeting();
 	void UpdateFire();
