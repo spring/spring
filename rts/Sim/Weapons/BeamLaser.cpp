@@ -64,30 +64,34 @@ void CBeamLaser::Update()
 	}
 	CWeapon::Update();
 
-	if (lastFireFrame > gs->frameNum - 18 && lastFireFrame != gs->frameNum && weaponDef->sweepFire) {
-		if (teamHandler->Team(owner->team)->metal >= metalFireCost &&
-			teamHandler->Team(owner->team)->energy >= energyFireCost) {
+	if (!weaponDef->sweepFire)
+		return;
+	// FIXME: why only every 16 (was 18) frames?
+	if (lastFireFrame <= (gs->frameNum - UNIT_SLOWUPDATE_RATE))
+		return;
 
-			owner->UseEnergy(energyFireCost / salvoSize);
-			owner->UseMetal(metalFireCost / salvoSize);
+	if (teamHandler->Team(owner->team)->metal >= metalFireCost &&
+		teamHandler->Team(owner->team)->energy >= energyFireCost) {
 
-			const int piece = owner->script->QueryWeapon(weaponNum);
-			const CMatrix44f weaponMat = owner->script->GetPieceMatrix(piece);
+		owner->UseEnergy(energyFireCost / salvoSize);
+		owner->UseMetal(metalFireCost / salvoSize);
 
-			const float3 relWeaponPos = weaponMat.GetPos();
-			const float3 dir =
-				owner->frontdir * weaponMat[10] +
-				owner->updir    * weaponMat[ 6] +
-				owner->rightdir * weaponMat[ 2];
+		const int piece = owner->script->QueryWeapon(weaponNum);
+		const CMatrix44f weaponMat = owner->script->GetPieceMatrix(piece);
 
-			weaponPos =
-				owner->pos +
-				owner->frontdir * -relWeaponPos.z +
-				owner->updir    *  relWeaponPos.y +
-				owner->rightdir * -relWeaponPos.x;
+		const float3 relWeaponPos = weaponMat.GetPos();
+		const float3 dir =
+			owner->frontdir * weaponMat[10] +
+			owner->updir    * weaponMat[ 6] +
+			owner->rightdir * weaponMat[ 2];
 
-			FireInternal(dir, true);
-		}
+		weaponPos =
+			owner->pos +
+			owner->frontdir * -relWeaponPos.z +
+			owner->updir    *  relWeaponPos.y +
+			owner->rightdir * -relWeaponPos.x;
+
+		FireInternal(dir, true);
 	}
 }
 
@@ -117,12 +121,10 @@ void CBeamLaser::FireImpl()
 		dir = owner->frontdir;
 	} else {
 		if (salvoLeft == salvoSize - 1) {
-			dir = targetPos - weaponMuzzlePos;
-			dir.SafeNormalize();
+			dir = (targetPos - weaponMuzzlePos).SafeNormalize();
 			oldDir = dir;
 		} else if (weaponDef->beamburst) {
-			dir = targetPos - weaponMuzzlePos;
-			dir.SafeNormalize();
+			dir = (targetPos - weaponMuzzlePos).SafeNormalize();
 		} else {
 			dir = oldDir;
 		}
@@ -130,6 +132,13 @@ void CBeamLaser::FireImpl()
 
 	dir += SalvoErrorExperience();
 	dir.SafeNormalize();
+
+	// NOTE:
+	//  on units with (extremely) long weapon barrels the muzzle
+	//  can be on the far side of the target unit such that <dir>
+	//  would point away from it
+	if ((targetPos - weaponMuzzlePos).dot(targetPos - owner->aimPos) < 0.0f)
+		dir = -dir;
 
 	FireInternal(dir, false);
 }
@@ -156,8 +165,7 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 	float3 hitPos;
 	float3 newDir;
 
-	curDir +=
-		gs->randVector() * SprayAngleExperience();
+	curDir += (gs->randVector() * SprayAngleExperience());
 	curDir.SafeNormalize();
 
 	bool tryAgain = true;
@@ -246,9 +254,6 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 		}
 	}
 
-	// make it possible to always hit with some minimal intensity (melee weapons have use for that)
-	const float hitIntensity = std::max(minIntensity, 1.0f - (curLength) / (actualRange * 2));
-
 	if (curLength < maxLength) {
 		const DamageArray& baseDamages = (weaponDef->dynDamageExp <= 0.0f)?
 			weaponDef->damages:
@@ -263,6 +268,9 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 				weaponDef->dynDamageMin,
 				weaponDef->dynDamageInverted
 			);
+
+		// make it possible to always hit with some minimal intensity (melee weapons have use for that)
+		const float hitIntensity = std::max(minIntensity, 1.0f - (curLength) / (actualRange * 2.0f));
 
 		const DamageArray damages = baseDamages * (hitIntensity * damageMul);
 		const CGameHelper::ExplosionParams params = {
