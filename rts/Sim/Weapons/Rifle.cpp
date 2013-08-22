@@ -11,18 +11,17 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CRifle, CWeapon, (NULL));
+CR_BIND_DERIVED(CRifle, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CRifle,(
 	CR_RESERVED(8)
-	));
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CRifle::CRifle(CUnit* owner)
-: CWeapon(owner)
+CRifle::CRifle(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 }
 

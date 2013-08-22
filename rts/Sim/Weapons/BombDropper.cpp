@@ -11,7 +11,7 @@
 #include "Sim/Units/Unit.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, false));
+CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, NULL, false));
 
 CR_REG_METADATA(CBombDropper,(
 	CR_MEMBER(dropTorpedoes),
@@ -24,11 +24,11 @@ CR_REG_METADATA(CBombDropper,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBombDropper::CBombDropper(CUnit* owner, bool useTorps)
-	: CWeapon(owner)
+CBombDropper::CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps)
+	: CWeapon(owner, def)
 	, dropTorpedoes(useTorps)
-	, bombMoveRange(3)
-	, tracking(0)
+	, bombMoveRange(def->range)
+	, tracking((def->tracks)? def->turnrate: 0)
 {
 	onlyForward = true;
 }

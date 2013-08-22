@@ -277,21 +277,21 @@ void ShieldSegmentProjectile::Draw() {
 	const CPlasmaRepulser* shield = shieldProjectile->GetShield();
 	if (shield == NULL)
 		return;
-	if (!shield->isEnabled)
+	if (!shield->IsEnabled())
 		return;
 	const WeaponDef* shieldDef = shield->weaponDef;
 
 	// lerp between badColor and goodColor based on shield's current power
-	const float colorMix = std::min(1.0f, shield->curPower / std::max(1.0f, shieldDef->shieldPower));
+	const float colorMix = std::min(1.0f, shield->GetCurPower() / std::max(1.0f, shieldDef->shieldPower));
 
 	segmentPos   = shieldProjectile->pos;
 	segmentColor = mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, colorMix);
 	segmentAlpha = shieldDef->visibleShield * shieldDef->shieldAlpha;
 
-	if (shield->hitFrames > 0 && shieldDef->visibleShieldHitFrames > 0) {
+	if (shield->GetHitFrames() > 0 && shieldDef->visibleShieldHitFrames > 0) {
 		// when a shield is hit, increase segment's opacity to
 		// min(1, def->alpha + k * def->alpha) with k in [1, 0]
-		segmentAlpha += (shield->hitFrames / float(shieldDef->visibleShieldHitFrames)) * shieldDef->shieldAlpha;
+		segmentAlpha += (shield->GetHitFrames() / float(shieldDef->visibleShieldHitFrames)) * shieldDef->shieldAlpha;
 		segmentAlpha = std::min(segmentAlpha, 1.0f);
 	}
 

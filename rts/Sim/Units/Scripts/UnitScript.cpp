@@ -1107,11 +1107,12 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return unit->transporter?unit->transporter->id:-1;
 
 	case SHIELD_POWER: {
-		if (unit->shieldWeapon == NULL) {
+		const CWeapon* shield = unit->shieldWeapon;
+
+		if (shield == NULL)
 			return -1;
-		}
-		const CPlasmaRepulser* shield = static_cast<CPlasmaRepulser*>(unit->shieldWeapon);
-		return int(shield->curPower * float(COBSCALE));
+
+		return int(static_cast<const CPlasmaRepulser*>(shield)->GetCurPower() * float(COBSCALE));
 	}
 
 	case STEALTH: {
@@ -1585,7 +1586,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		case SHIELD_POWER: {
 			if (unit->shieldWeapon != NULL) {
 				CPlasmaRepulser* shield = static_cast<CPlasmaRepulser*>(unit->shieldWeapon);
-				shield->curPower = std::max(0.0f, float(param) / float(COBSCALE));
+				shield->SetCurPower(std::max(0.0f, float(param) / float(COBSCALE)));
 			}
 			break;
 		}

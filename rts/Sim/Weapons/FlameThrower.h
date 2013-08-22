@@ -5,11 +5,11 @@
 
 #include "Weapon.h"
 
-class CFlameThrower : public CWeapon
+class CFlameThrower: public CWeapon
 {
 	CR_DECLARE(CFlameThrower);
 public:
-	CFlameThrower(CUnit* owner);
+	CFlameThrower(CUnit* owner, const WeaponDef* def);
 
 	void Update();
 
@@ -17,7 +17,7 @@ public:
 	float3 color2;
 
 private:
-	virtual void FireImpl();
+	void FireImpl();
 };
 
 #endif // _FLAME_THROWER_H

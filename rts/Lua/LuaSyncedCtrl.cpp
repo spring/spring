@@ -1828,8 +1828,8 @@ int LuaSyncedCtrl::SetUnitShieldState(lua_State* L)
 		return 0;
 	}
 
-	if (lua_isboolean(L, arg)) { shield->isEnabled = lua_toboolean(L, arg);	arg++; }
-	if (lua_isnumber(L, arg)) { shield->curPower = lua_tofloat(L, arg); }
+	if (lua_isboolean(L, arg)) { shield->SetEnabled(lua_toboolean(L, arg));	arg++; }
+	if (lua_isnumber(L, arg)) { shield->SetCurPower(lua_tofloat(L, arg)); }
 	return 0;
 }
 

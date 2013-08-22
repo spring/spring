@@ -8,15 +8,16 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL));
+CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CLaserCannon,(
 	CR_MEMBER(color),
 	CR_RESERVED(8)
 ));
 
-CLaserCannon::CLaserCannon(CUnit* owner): CWeapon(owner)
+CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
+	color = def->visuals.color;
 }
 
 
@@ -57,8 +58,8 @@ void CLaserCannon::FireImpl()
 	float3 dir = targetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();
 
-	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
-		// HoverAirMovetype cannot align itself properly, change back when that is fixed
+	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType) != NULL) {
+		// [?] StrafeAirMovetype cannot align itself properly, change back when that is fixed
 		dir = owner->frontdir;
 	}
 

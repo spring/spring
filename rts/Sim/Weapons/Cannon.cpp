@@ -13,7 +13,7 @@
 #include "System/myMath.h"
 #include "System/FastMath.h"
 
-CR_BIND_DERIVED(CCannon, CWeapon, (NULL));
+CR_BIND_DERIVED(CCannon, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CCannon,(
 	CR_MEMBER(highTrajectory),
@@ -29,15 +29,13 @@ CR_REG_METADATA(CCannon,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CCannon::CCannon(CUnit* owner)
-: CWeapon(owner),
-	lastDiff(ZeroVector),
-	lastDir(-UpVector)
+CCannon::CCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
+	lastDir = -UpVector;
 	highTrajectory = false;
 	rangeFactor = 1.0f;
 	gravity = 0.0f;
-	selfExplode = false;
+	selfExplode = def->selfExplode;
 }
 
 void CCannon::Init()

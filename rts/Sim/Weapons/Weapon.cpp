@@ -27,7 +27,7 @@
 #include "System/Sound/SoundChannels.h"
 #include "System/Log/ILog.h"
 
-CR_BIND_DERIVED(CWeapon, CObject, (NULL));
+CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL));
 
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
@@ -109,9 +109,9 @@ CR_REG_METADATA(CWeapon, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CWeapon::CWeapon(CUnit* owner):
+CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	owner(owner),
-	weaponDef(0),
+	weaponDef(def),
 	weaponNum(-1),
 	haveUserTarget(false),
 	craterAreaOfEffect(1.0f),

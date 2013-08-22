@@ -5,16 +5,16 @@
 
 #include "Weapon.h"
 
-class CRifle : public CWeapon
+class CRifle: public CWeapon
 {
 	CR_DECLARE(CRifle);
 public:
-	CRifle(CUnit* owner);
+	CRifle(CUnit* owner, const WeaponDef* def);
 
 	void Update();
 
 private:
-	virtual void FireImpl();
+	void FireImpl();
 };
 
 #endif /* RIFLE_H */

@@ -389,7 +389,7 @@ void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
 // Called when unit's AimWeapon script finished executing (for shield weapon)
 static void ShieldScriptCallback(int retCode, void* p1, void* p2)
 {
-	static_cast<CPlasmaRepulser*>(p1)->isEnabled = !!retCode;
+	static_cast<CPlasmaRepulser*>(p1)->SetEnabled(!!retCode);
 }
 
 void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)

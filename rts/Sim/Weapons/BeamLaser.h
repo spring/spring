@@ -5,25 +5,30 @@
 
 #include "Weapon.h"
 
-class CBeamLaser :
-	public CWeapon
+class CBeamLaser: public CWeapon
 {
 	CR_DECLARE(CBeamLaser);
 public:
-	CBeamLaser(CUnit* owner);
+	CBeamLaser(CUnit* owner, const WeaponDef* def);
 
 	void Update();
 	void Init();
-	void FireInternal(float3 dir, bool sweepFire);
-
-	float3 color;
-	float3 oldDir;
-	float damageMul;
-
-	unsigned int lastFireFrame;
 
 private:
-	virtual void FireImpl();
+	float3 GetFireDir(bool sweepFire);
+
+	void FireInternal(bool sweepFire);
+	void FireImpl();
+
+private:
+	float3 color;
+	float3 oldDir;
+	float3 lastSweepFirePos;
+	float3 lastSweepFireDir;
+
+	float burstDamageMul;
+
+	bool sweepFiring;
 };
 
 #endif

@@ -3159,8 +3159,8 @@ int LuaSyncedRead::GetUnitShieldState(lua_State* L)
 		return 0;
 	}
 
-	lua_pushnumber(L, shield->isEnabled);
-	lua_pushnumber(L, shield->curPower);
+	lua_pushnumber(L, shield->IsEnabled());
+	lua_pushnumber(L, shield->GetCurPower());
 	return 2;
 }
 
