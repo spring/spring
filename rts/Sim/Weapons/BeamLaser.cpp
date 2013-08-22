@@ -26,12 +26,12 @@ CR_REG_METADATA(CBeamLaser,(
 	CR_MEMBER(oldDir),
 	CR_MEMBER(lastSweepFirePos),
 	CR_MEMBER(lastSweepFireDir),
-	CR_MEMBER(burstDamageMul)
+	CR_MEMBER(salvoDamageMult)
 ));
 
 CBeamLaser::CBeamLaser(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
-	burstDamageMul = 1.0f;
+	salvoDamageMult = 1.0f;
 	sweepFiring = false;
 
 	color = def->visuals.color;
@@ -47,7 +47,7 @@ void CBeamLaser::Init()
 		salvoSize = std::max(salvoSize, 1);
 
 		// multiply damage with this on each shot so the total damage done is correct
-		burstDamageMul = 1.0f / salvoSize;
+		salvoDamageMult = 1.0f / salvoSize;
 	}
 
 	CWeapon::Init();
@@ -252,7 +252,7 @@ void CBeamLaser::FireInternal(bool sweepFire)
 
 		if (shieldLength < beamLength) {
 			beamLength = shieldLength;
-			tryAgain = hitShield->BeamIntercepted(this, burstDamageMul);
+			tryAgain = hitShield->BeamIntercepted(this, salvoDamageMult);
 		} else {
 			tryAgain = false;
 		}
@@ -309,7 +309,7 @@ void CBeamLaser::FireInternal(bool sweepFire)
 		// make it possible to always hit with some minimal intensity (melee weapons have use for that)
 		const float hitIntensity = std::max(minIntensity, 1.0f - (curLength) / (actualRange * 2.0f));
 
-		const DamageArray damages = baseDamages * (hitIntensity * burstDamageMul);
+		const DamageArray damages = baseDamages * (hitIntensity * salvoDamageMult);
 		const CGameHelper::ExplosionParams params = {
 			hitPos,
 			curDir,
