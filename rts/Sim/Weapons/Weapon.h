@@ -79,6 +79,8 @@ public:
 protected:
 	virtual void FireImpl() {}
 
+	bool CanFire() const;
+
 	void UpdateTargeting();
 	void UpdateFire();
 	bool UpdateStockpile();
