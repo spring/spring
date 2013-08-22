@@ -43,11 +43,10 @@ void CTorpedoLauncher::Update()
 
 bool CTorpedoLauncher::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const
 {
-	// NOTE: only here to preserve #3557 behavior
-	if (!TargetUnitOrPositionInWater(pos, unit))
-		return false;
-
 	// muzzle is underwater but target is outside water and we cannot travel outside water
+	// by default we are a waterweapon, therefore:
+	//   if muzzle is above water, target position is only allowed to be in water
+	//   if muzzle is below water, target position being valid depends on submissile
 	// NOTE:
 	//   generally a TorpedoLauncher has its muzzle UNDER water and can only fire at
 	//   targets IN water but depth-charge weapons break first part of this assumption
