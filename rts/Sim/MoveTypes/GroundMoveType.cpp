@@ -256,14 +256,12 @@ bool CGroundMoveType::Update()
 {
 	ASSERT_SYNCED(owner->pos);
 
-	if (owner->GetTransporter() != NULL) {
+	// do nothing at all if we are inside a transport
+	if (owner->GetTransporter() != NULL)
 		return false;
-	}
 
-	if (OnSlope(1.0f)) {
+	if (owner->IsSkidding() || OnSlope(1.0f)) {
 		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
-	}
-	if (owner->IsSkidding()) {
 		UpdateSkid();
 		return false;
 	}
@@ -280,18 +278,9 @@ bool CGroundMoveType::Update()
 
 	const short heading = owner->heading;
 
-	if (owner->IsStunned() || owner->beingBuilt) {
-		ChangeSpeed(0.0f, false);
-	} else {
-		if (owner->fpsControlPlayer != NULL) {
-			UpdateDirectControl();
-		} else {
-			FollowPath();
-		}
-	}
-
 	// these must be executed even when stunned (so
 	// units do not get buried by restoring terrain)
+	UpdateOwnerSpeedAndHeading();
 	UpdateOwnerPos(owner->speed, GetNewSpeedVector(deltaSpeed, myGravity));
 	AdjustPosToWaterLine();
 	HandleObjectCollisions();
@@ -302,6 +291,22 @@ bool CGroundMoveType::Update()
 	// we need more precision (less tolerance) in the y-dimension
 	// for all-terrain units that are slowed down a lot on cliffs
 	return (OwnerMoved(heading, owner->pos - oldPos, float3(float3::CMP_EPS, float3::CMP_EPS * 1e-2f, float3::CMP_EPS)));
+}
+
+void CGroundMoveType::UpdateOwnerSpeedAndHeading()
+{
+	if (owner->IsStunned() || owner->beingBuilt) {
+		ChangeSpeed(0.0f, false);
+		return;
+	}
+
+	// either follow user control input or pathfinder
+	// waypoints; change speed and heading as required
+	if (owner->fpsControlPlayer != NULL) {
+		UpdateDirectControl();
+	} else {
+		FollowPath();
+	}
 }
 
 void CGroundMoveType::SlowUpdate()
@@ -701,7 +706,7 @@ void CGroundMoveType::UpdateSkid()
 		float speedf = speed.Length();
 		float skidRotSpd = 0.0f;
 
-		const bool onSlope = OnSlope(-1.0f);
+		const bool onSlope = OnSlope(0.0f);
 		const float speedReduction = 0.35f;
 
 		if (!onSlope && StopSkidding(speed, owner->frontdir)) {
@@ -759,7 +764,7 @@ void CGroundMoveType::UpdateSkid()
 				// not possible without lateral movement
 				speed *= 0.95f;
 			} else {
-				speed += (normal * (math::fabs(speed.dot(normal)) + 0.1f)) * 1.9f;
+				speed += (normal * (math::fabs(speed.dot(normal)) + 0.1f));
 				speed *= 0.8f;
 			}
 		}
@@ -2032,7 +2037,7 @@ void CGroundMoveType::SetMainHeading() {
 	} else {
 		if (owner->heading != newHeading) {
 			if (!frontWeapon->TryTarget(mainHeadingPos, true, 0)) {
-				// start moving
+				// start turning
 				progressState = Active;
 
 				ChangeHeading(newHeading);
@@ -2047,16 +2052,17 @@ bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 	const float3& pos = owner->pos;
 
 	if (ud->slideTolerance < minSlideTolerance) { return false; }
-	if (owner->unitDef->floatOnWater && owner->IsInWater()) { return false; }
+	if (ud->floatOnWater && owner->IsInWater()) { return false; }
 	if (!pos.IsInBounds()) { return false; }
 
-	// if minSlideTolerance is zero, do not multiply maxSlope by ud->slideTolerance
+	// if minSlideTolerance is LEQ 0, do not multiply maxSlope by ud->slideTolerance
 	// (otherwise the unit could stop on an invalid path location, and be teleported
 	// back)
-	const float gSlope = ground->GetSlope(pos.x, pos.z);
-	const float uSlope = md->maxSlope * ((minSlideTolerance <= 0.0f)? 1.0f: ud->slideTolerance);
+	const float slopeMul = mix(ud->slideTolerance, 1.0f, (minSlideTolerance <= 0.0f));
+	const float curSlope = ground->GetSlope(pos.x, pos.z);
+	const float maxSlope = md->maxSlope * slopeMul;
 
-	return (gSlope > uSlope);
+	return (curSlope > maxSlope);
 }
 
 
