@@ -377,13 +377,13 @@ void CWeapon::UpdateFire()
 	canFire = canFire && (targetType != Target_None);
 	canFire = canFire && (reloadStatus <= gs->frameNum);
 	canFire = canFire && (!weaponDef->stockpile || (numStockpiled > 0));
-	canFire = canFire && (weaponDef->fireSubmersed || (weaponMuzzlePos.y > 0));
+	canFire = canFire && (weaponDef->fireSubmersed || (weaponMuzzlePos.y > 0.0f)); // muzzle is underwater but we cannot fire underwater
 	canFire = canFire && ((fpsPlayer == NULL)
 		 || fpsPlayer->fpsController.mouse1
 		 || fpsPlayer->fpsController.mouse2);
 	canFire = canFire && ((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0) || (fuelUsage == 0));
 	canFire = canFire && !isBeingServicedOnPad(owner);
-	canFire = canFire && (wantedDir.dot(lastRequestedDir) > 0.94); // ~20 degree sanity check to force new aim
+	canFire = canFire && (wantedDir.dot(lastRequestedDir) > 0.94f); // ~20 degree sanity check to force new aim
 
 	if (canFire) {
 		if ((weaponDef->stockpile ||
@@ -922,16 +922,16 @@ void CWeapon::DependentDied(CObject* o)
 	}
 }
 
-bool CWeapon::TargetUnitOrPositionInUnderWater(const float3& targetPos, const CUnit* targetUnit)
+bool CWeapon::TargetUnitOrPositionInUnderWater(const float3& targetPos, const CUnit* targetUnit, float offset)
 {
 	if (targetUnit != NULL) {
 		return (targetUnit->IsUnderWater());
 	} else {
-		return (targetPos.y < 0.0f);
+		return ((targetPos.y + offset) < 0.0f);
 	}
 }
 
-bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit)
+bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit, float offset)
 {
 	if (targetUnit != NULL) {
 		return (targetUnit->IsInWater());
@@ -939,7 +939,7 @@ bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* 
 		// consistent with CUnit::IsInWater(), and needed because
 		// GUIHandler places (some) user ground-attack orders on
 		// water surface
-		return (targetPos.y <= 0.0f);
+		return ((targetPos.y + offset) <= 0.0f);
 	}
 }
 
@@ -1095,33 +1095,24 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool userTarget, const CUnit* targ
 // (terrain is NOT checked here, HaveFreeLineOfFire does that)
 bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, const CUnit* targetUnit) const
 {
-	if (targetUnit && (targetUnit == owner)) {
-		return false;
-	}
-
-	if (targetUnit && !(onlyTargetCategory & targetUnit->category)) {
-		return false;
-	}
-
-	// test: ground/water -> water
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInUnderWater(tgtPos, targetUnit))
-		return false;
-
-	if (weaponMuzzlePos.y < 0.0f) {
-		// weapon muzzle underwater but we cannot fire underwater
-		if (!weaponDef->fireSubmersed) {
+	if (targetUnit != NULL) {
+		if (targetUnit == owner) {
 			return false;
 		}
-		// target outside water but we cannot travel out of water
-		if (!weaponDef->submissile && !TargetUnitOrPositionInWater(tgtPos, targetUnit)) {
+		if ((targetUnit->category & onlyTargetCategory) == 0) {
+			return false;
+		}
+		if (targetUnit->isDead && modInfo.fireAtKilled == 0) {
+			return false;
+		}
+		if (targetUnit->IsCrashing() && modInfo.fireAtCrashing == 0) {
 			return false;
 		}
 	}
 
-	if (targetUnit && ((targetUnit->isDead       && (modInfo.fireAtKilled   == 0)) ||
-	                   (targetUnit->IsCrashing() && (modInfo.fireAtCrashing == 0)))) {
+	// target is underwater but we cannot pick targets underwater
+	if (!weaponDef->waterweapon && TargetUnitOrPositionInUnderWater(tgtPos, targetUnit, -0.125f))
 		return false;
-	}
 
 	return true;
 }
