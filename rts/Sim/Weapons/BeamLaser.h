@@ -20,6 +20,7 @@ private:
 	float3 GetFireDir(bool sweepFire);
 
 	void UpdatePosAndMuzzlePos();
+	void UpdateWantedDir();
 	void UpdateSweep();
 
 	void FireInternal(float3 curDir);
@@ -52,6 +53,7 @@ private:
 		}
 
 		void SetSweepTempDir(const float3& dir) { sweepTempDir = dir; }
+		void SetSweepCurrDir(const float3& dir) { sweepCurrDir = dir; }
 		const float3& GetSweepTempDir() const { return sweepTempDir; } 
 		const float3& GetSweepCurrDir() const { return sweepCurrDir; }
 
