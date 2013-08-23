@@ -26,7 +26,8 @@ CR_REG_METADATA(CBeamLaser,(
 	CR_MEMBER(oldDir),
 	CR_MEMBER(lastSweepFirePos),
 	CR_MEMBER(lastSweepFireDir),
-	CR_MEMBER(salvoDamageMult)
+	CR_MEMBER(salvoDamageMult),
+	CR_MEMBER(sweepFiring)
 ));
 
 CBeamLaser::CBeamLaser(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
