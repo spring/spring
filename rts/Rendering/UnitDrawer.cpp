@@ -842,7 +842,8 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	}
 
 	// make sure icon is above ground (needed before we calculate scale below)
-	const float h = ground->GetHeightAboveWater(pos.x, pos.z, false);
+	const float h = ground->GetHeightReal(pos.x, pos.z, false);
+
 	if (pos.y < h) {
 		pos.y = h;
 	}
