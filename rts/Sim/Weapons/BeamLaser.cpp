@@ -142,6 +142,28 @@ void CBeamLaser::UpdatePosAndMuzzlePos()
 			owner->frontdir * relWeaponMuzzlePos.z +
 			owner->updir    * relWeaponMuzzlePos.y +
 			owner->rightdir * relWeaponMuzzlePos.x;
+
+		if (weaponDef->sweepFire) {
+			// needed for first call to GetFireDir() when new sweep starts after inactivity
+			sweepFireState.SetSweepTempDir((weaponMuzzlePos - weaponPos).SafeNormalize());
+		}
+	}
+}
+
+void CBeamLaser::UpdateWantedDir()
+{
+	if (targetType == Target_None)
+		return;
+
+	if (!onlyForward) {
+		wantedDir = (targetPos - weaponPos).SafeNormalize();
+	}
+
+	if (!weaponDef->beamburst) {
+		predict = salvoSize / 2;
+	} else {
+		// beamburst tracks the target during the burst so there's no need to lead
+		predict = 0;
 	}
 }
 
@@ -163,7 +185,8 @@ void CBeamLaser::UpdateSweep()
 	if (sweepFireState.StartSweep(targetPos))
 		sweepFireState.Init(targetPos, weaponMuzzlePos);
 
-	sweepFireState.Update(GetFireDir(true));
+	if (sweepFireState.IsSweepFiring())
+		sweepFireState.Update(GetFireDir(true));
 
 	// TODO:
 	//   also stop sweep if angle no longer changes, spawn
@@ -185,20 +208,8 @@ void CBeamLaser::UpdateSweep()
 
 void CBeamLaser::Update()
 {
-	if (targetType != Target_None) {
-		UpdatePosAndMuzzlePos();
-
-		if (!onlyForward) {
-			wantedDir = (targetPos - weaponPos).SafeNormalize();
-		}
-
-		if (!weaponDef->beamburst) {
-			predict = salvoSize / 2;
-		} else {
- 			// beamburst tracks the target during the burst so there's no need to lead
-			predict = 0;
-		}
-	}
+	UpdatePosAndMuzzlePos();
+	UpdateWantedDir();
 
 	CWeapon::Update();
 	UpdateSweep();
