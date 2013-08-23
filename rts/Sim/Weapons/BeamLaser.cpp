@@ -65,6 +65,9 @@ void CBeamLaser::SweepFireState::Init(const float3& newTargetPos, const float3& 
 }
 
 float CBeamLaser::SweepFireState::GetTargetDist2D() const {
+	if (sweepStartAngle < 0.01f)
+		return sweepGoalDst;
+
 	const float sweepCurAngleCos = sweepCurrDir.dot(sweepGoalDir);
 	const float sweepCurAngleRad = math::acosf(Clamp(sweepCurAngleCos, -1.0f, 1.0f));
 
