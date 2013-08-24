@@ -93,7 +93,7 @@ CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 	skidRotSpeed2(0.0f),
 	skidRotPos2(0.0f),
 
-	flatFrontDir(1, 0, 0),
+	flatFrontDir(FwdVector),
 	mainHeadingPos(0.0f, 0.0f, 0.0f),
 	lastGetPathPos(0.0f, 0.0f, 0.0f),
 

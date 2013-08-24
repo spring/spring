@@ -783,7 +783,7 @@ void CUnitScript::Explode(int piece, int flags)
 
 	if (!(flags & PF_NoHeatCloud)) {
 		// Do an explosion at the location first
-		new CHeatCloudProjectile(absPos, float3(0, 0, 0), 30, 30, NULL);
+		new CHeatCloudProjectile(absPos, ZeroVector, 30, 30, NULL);
 	}
 
 	// If this is true, no stuff should fly off

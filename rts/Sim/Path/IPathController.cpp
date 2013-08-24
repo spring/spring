@@ -22,8 +22,8 @@ float GMTDefaultPathController::GetDeltaSpeed(
 	bool wantReverse,
 	bool isReversing
 ) const {
-	const int targetSpeedSign = int(!wantReverse) * 2 - 1;
-	const int currentSpeedSign = int(!isReversing) * 2 - 1;
+	const int targetSpeedSign = Sign(int(!wantReverse));
+	const int currentSpeedSign = Sign(int(!isReversing));
 
 	const float rawSpeedDiff = (targetSpeed * targetSpeedSign) - (currentSpeed * currentSpeedSign);
 	const float absSpeedDiff = math::fabs(rawSpeedDiff);

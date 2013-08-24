@@ -232,14 +232,12 @@ float3 CSolidObject::GetDragAccelerationVec(const float4& params) const {
 	//
 	// params.xyzw map: {{atmosphere, water}Density, {drag, friction}Coefficient}
 	//
-	#define SIGN(x) (((x) >= 0.0f) * 2.0f - 1.0f)
-	const float3 speedSignVec = float3(SIGN(speed.x), SIGN(speed.y), SIGN(speed.z));
+	const float3 speedSignVec = float3(Sign(speed.x), Sign(speed.y), Sign(speed.z));
 	const float3 dragScaleVec = float3(
 		IsInAir()    * dragScales.x * (0.5f * params.x * params.z * (M_PI * sqRadius * 0.01f * 0.01f)), // air
 		IsInWater()  * dragScales.y * (0.5f * params.y * params.z * (M_PI * sqRadius * 0.01f * 0.01f)), // water
 		IsOnGround() * dragScales.z * (                  params.w * (                           mass))  // ground
 	);
-	#undef SIGN
 
 	float3 dragAccelVec;
 

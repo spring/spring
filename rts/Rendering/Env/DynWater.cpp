@@ -732,10 +732,10 @@ void CDynWater::DrawWaves()
 
 	//update normals pass
 	glBegin(GL_QUADS);
-	glTexCoord2f(start, start); glVertex3f(0, 0, 0);
-	glTexCoord2f(start, end);   glVertex3f(0, 1, 0);
-	glTexCoord2f(end,   end);   glVertex3f(1, 1, 0);
-	glTexCoord2f(end,   start); glVertex3f(1, 0, 0);
+	glTexCoord2f(start, start); glVertexf3(ZeroVector);
+	glTexCoord2f(start, end);   glVertexf3(  UpVector);
+	glTexCoord2f(end,   end);   glVertexf3(  XYVector);
+	glTexCoord2f(end,   start); glVertexf3( RgtVector);
 	glEnd();
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
@@ -1058,10 +1058,10 @@ void CDynWater::DrawDetailNormalTex()
 
 	//update detail normals
 	glBegin(GL_QUADS);
-	glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
-	glTexCoord2f(0, 1); glVertex3f(0, 1, 0);
-	glTexCoord2f(1, 1); glVertex3f(1, 1, 0);
-	glTexCoord2f(1, 0); glVertex3f(1, 0, 0);
+	glTexCoord2f(0, 0); glVertexf3(ZeroVector);
+	glTexCoord2f(0, 1); glVertexf3(  UpVector);
+	glTexCoord2f(1, 1); glVertexf3(  XYVector);
+	glTexCoord2f(1, 0); glVertexf3( RgtVector);
 	glEnd();
 
 

@@ -250,7 +250,7 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 //
 void CSelectedUnitsHandlerAI::CalculateGroupData(int player, bool queueing) {
 	//Finding the highest, lowest and weighted central positional coordinates among the selected units.
-	float3 sumCoor = minCoor = maxCoor = float3(0, 0, 0);
+	float3 sumCoor, minCoor, maxCoor;
 	float3 mobileSumCoor = sumCoor;
 	sumLength = 0; ///
 	int mobileUnits = 0;
@@ -333,7 +333,7 @@ void CSelectedUnitsHandlerAI::MakeFrontMove(Command* c,int player)
 	float3 sd = sideDir;
 	sd.y=frontLength/2;
 	sideDir.ANormalize();
-	frontDir=sideDir.cross(float3(0,1,0));
+	frontDir=sideDir.cross(UpVector);
 
 	numColumns=(int)(frontLength/columnDist);
 	if(numColumns==0)

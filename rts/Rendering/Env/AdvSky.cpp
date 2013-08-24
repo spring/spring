@@ -789,10 +789,10 @@ void CAdvSky::CreateDetailTex()
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->CheckInitSize(4*VA_SIZE_T);
-		va->AddVertexQT(ZeroVector,0,0);
-		va->AddVertexQT(float3(1,0,0),tSize,0);
-		va->AddVertexQT(float3(1,1,0),tSize,tSize);
-		va->AddVertexQT(UpVector,0,tSize);
+		va->AddVertexQT(ZeroVector,    0,     0);
+		va->AddVertexQT(RgtVector, tSize,     0);
+		va->AddVertexQT(XYVector,  tSize, tSize);
+		va->AddVertexQT(UpVector,      0, tSize);
 
 		float ifade = fade*fade*(3-2*fade);
 
