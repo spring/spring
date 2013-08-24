@@ -4,6 +4,8 @@
 
 #include <cstring>
 #include <boost/unordered_map.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/locks.hpp>
 
 #include "lib/gml/gmlmut.h"
 #include "System/Log/ILog.h"
@@ -12,6 +14,7 @@
 	#include "System/ThreadPool.h"
 #endif
 
+static boost::mutex m;
 static std::map<int, std::string> hashToName;
 static std::map<int, int> refs;
 CTimeProfiler profiler;
@@ -153,11 +156,15 @@ CTimeProfiler::CTimeProfiler():
 
 CTimeProfiler::~CTimeProfiler()
 {
+	boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
+	while (!ulk.try_lock()) {}
 }
 
 void CTimeProfiler::Update()
 {
-	GML_STDMUTEX_LOCK_NOPROF(time); // Update
+	//FIXME non-locking threadsafe
+	boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
+	while (!ulk.try_lock()) {}
 
 	++currentPosition;
 	currentPosition &= TimeRecord::frames_size-1;
@@ -189,33 +196,37 @@ void CTimeProfiler::Update()
 
 float CTimeProfiler::GetPercent(const char* name)
 {
-	GML_STDMUTEX_LOCK_NOPROF(time); // GetTimePercent
+	boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
+	while (!ulk.try_lock()) {}
 
 	return profile[name].percent;
 }
 
 void CTimeProfiler::AddTime(const std::string& name, const spring_time time, const bool showGraph)
 {
-	GML_STDMUTEX_LOCK_NOPROF(time); // AddTime
-
 	std::map<std::string, TimeRecord>::iterator pi;
 	if ( (pi = profile.find(name)) != profile.end() ) {
 		// profile already exists
+		//FIXME use atomic ints
 		pi->second.total   += time;
 		pi->second.current += time;
 		pi->second.frames[currentPosition] += time;
 	} else {
+		boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
+		while (!ulk.try_lock()) {}
+
 		// create a new profile
-		profile[name].total   = time;
-		profile[name].current = time;
-		profile[name].percent = 0;
-		memset(profile[name].frames, 0, TimeRecord::frames_size*sizeof(unsigned));
+		auto& p = profile[name];
+		p.total   = time;
+		p.current = time;
+		p.percent = 0;
+		memset(p.frames, 0, TimeRecord::frames_size * sizeof(unsigned));
 		static UnsyncedRNG rand;
 		rand.Seed(spring_tomsecs(spring_gettime()));
-		profile[name].color.x = rand.RandFloat();
-		profile[name].color.y = rand.RandFloat();
-		profile[name].color.z = rand.RandFloat();
-		profile[name].showGraph = showGraph;
+		p.color.x = rand.RandFloat();
+		p.color.y = rand.RandFloat();
+		p.color.z = rand.RandFloat();
+		p.showGraph = showGraph;
 	}
 }
 
