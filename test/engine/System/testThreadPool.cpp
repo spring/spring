@@ -15,9 +15,6 @@ static boost::mutex m;
 
 BOOST_AUTO_TEST_CASE( testThreadPool1 )
 {
-#ifdef __MINGW32__
-	LOG_L(L_WARNING, "testThreadPool1");
-#endif
 	#define RUNS 1000
 	std::atomic<int> cnt(0);
 	BOOST_CHECK(cnt.is_lock_free());
@@ -37,7 +34,6 @@ BOOST_AUTO_TEST_CASE( testThreadPool1 )
 
 	int rounds = 0;
 	for(int i=0; i<runs.size(); i++) {
-		LOG("Thread %d executed %d times", i, runs[i]);
 		rounds += runs[i];
 	}
 	BOOST_CHECK(rounds == (RUNS/2));
@@ -49,14 +45,11 @@ BOOST_AUTO_TEST_CASE( testThreadPool1 )
 
 BOOST_AUTO_TEST_CASE( testThreadPool2 )
 {
-#ifdef __MINGW32__
-	LOG_L(L_WARNING, "testThreadPool2");
-#endif
 	std::vector<int> runs(NUM_THREADS);
 	parallel([&]{
 		const int threadnum = ThreadPool::GetThreadNum();
-		//SAFE_BOOST_CHECK(threadnum >= 0);
-		//SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
+		SAFE_BOOST_CHECK(threadnum >= 0);
+		SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
 		runs[threadnum]++;
 	});
 
@@ -67,14 +60,10 @@ BOOST_AUTO_TEST_CASE( testThreadPool2 )
 
 BOOST_AUTO_TEST_CASE( testThreadPool3 )
 {
-#ifdef __MINGW32__
-	LOG_L(L_WARNING, "testThreadPool3");
-#endif
 	int result = parallel_reduce([]() -> int {
 		const int threadnum = ThreadPool::GetThreadNum();
-		//SAFE_BOOST_CHECK(threadnum >= 0);
-		//SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
-		LOG_L(L_WARNING, "testThreadPool3: worker %i answers", threadnum);
+		SAFE_BOOST_CHECK(threadnum >= 0);
+		SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
 		return threadnum;
 	}, [](int a, boost::unique_future<int>& b) -> int { return a + b.get(); });
 	BOOST_CHECK(result == ((NUM_THREADS-1)*((NUM_THREADS-1) + 1))/2);
@@ -82,9 +71,6 @@ BOOST_AUTO_TEST_CASE( testThreadPool3 )
 
 BOOST_AUTO_TEST_CASE( testThreadPool4 )
 {
-#ifdef __MINGW32__
-	LOG_L(L_WARNING, "testThreadPool4");
-#endif
 	for_mt(0, 100, [&](const int y) {
 		for_mt(0, 100, [&](const int x) {
 			const int threadnum = ThreadPool::GetThreadNum();

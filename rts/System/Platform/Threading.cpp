@@ -6,7 +6,9 @@
 #include "Game/GameController.h"
 #include "System/bitops.h"
 #include "System/ThreadPool.h"
-#include "System/Config/ConfigHandler.h"
+#ifndef UNIT_TEST
+	#include "System/Config/ConfigHandler.h"
+#endif
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
 
@@ -26,6 +28,11 @@
 		#include <sys/prctl.h>
 	#endif
 	#include <sched.h>
+#endif
+
+
+#ifndef UNIT_TEST
+CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1).description("Count of worker threads (including mainthread!) used in parallel sections.");
 #endif
 
 
@@ -201,23 +208,30 @@ namespace Threading {
 	}
 
 
-	void InitOMP(bool useOMP) {
+	void InitOMP() {
 		static bool inited = false;
 		assert(!inited);
 		inited = true;
 
 		boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
-#ifndef UNIT_TEST
-		boost::uint32_t mainAffinity  = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
-#else
 		boost::uint32_t mainAffinity  = systemCores;
-#endif
 		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
+#ifndef UNIT_TEST
+		mainAffinity = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
+#endif
 
-		// For latency reasons our worker threads yield rarely and so eat a lot cputime with idleing.
-		// So it's better we always leave 1 core free for our other threads, drivers & OS
-		if (ThreadPool::GetMaxThreads() > 2)
-			ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads() - 1);
+		{
+			int workerCount = -1;
+#ifndef UNIT_TEST
+			workerCount = configHandler->GetUnsigned("WorkerThreadCount");
+#endif
+			// For latency reasons our worker threads yield rarely and so eat a lot cputime with idleing.
+			// So it's better we always leave 1 core free for our other threads, drivers & OS
+			if (workerCount < 0) workerCount = ThreadPool::GetMaxThreads() - 1;
+			//if (workerCount > ThreadPool::GetMaxThreads()) LOG_L(L_WARNING, "");
+
+			ThreadPool::SetThreadCount(workerCount);
+		}
 
 		// set affinity of worker threads
 		boost::uint32_t ompCores = 0;
@@ -236,7 +250,6 @@ namespace Threading {
 		if (mainAffinity == 0) mainAffinity = systemCores;
 		Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
 	}
-
 
 	void SetThreadScheduler()
 	{
