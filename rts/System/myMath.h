@@ -106,10 +106,11 @@ template<class T> T mix(const T v1, const T v2, const float a) _pure _warn_unuse
 template<class T> T Blend(const T v1, const T v2, const float a) _pure _warn_unused_result;
 template<class T> inline T Blend(const T v1, const T v2, const float a) { return mix(v1, v2, a); }
 
-float Square(const float x) _const _warn_unused_result;
 int Round(const float f) _const _warn_unused_result;
+template<class T> T Square(const T x) { return x*x; }
 template<class T> T Clamp(const T v, const T min, const T max) _pure _warn_unused_result;
-
+// NOTE: '>' instead of '>=' s.t. Sign(int(true)) != Sign(int(false)) --> zero is negative!
+template<class T> T Sign(const T v) { return ((v > T(0)) * T(2) - T(1)); }
 
 /**
  * @brief Clamps an radian angle between 0 .. 2*pi

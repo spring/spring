@@ -91,7 +91,7 @@ CBuilder::CBuilder():
 	tx2(0),
 	tz1(0),
 	tz2(0),
-	terraformCenter(0,0,0),
+	terraformCenter(ZeroVector),
 	terraformRadius(0)
 {
 }

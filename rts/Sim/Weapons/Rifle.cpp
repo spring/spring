@@ -62,5 +62,5 @@ void CRifle::FireImpl()
 	}
 
 	new CTracerProjectile(weaponMuzzlePos, dir*projectileSpeed, length, owner);
-	new CSmokeProjectile(weaponMuzzlePos, float3(0,0,0), 70, 0.1f, 0.02f, owner, 0.6f);
+	new CSmokeProjectile(weaponMuzzlePos, ZeroVector, 70, 0.1f, 0.02f, owner, 0.6f);
 }

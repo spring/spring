@@ -259,40 +259,40 @@ void CAdvWater::UpdateWater(CGame* game)
 
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[0]);
 
-	va->AddVertexQT(float3(0, 0, 0), 0, 0 + gs->frameNum*0.0046f);
-	va->AddVertexQT(float3(0, 1, 0), 0, 2 + gs->frameNum*0.0046f);
-	va->AddVertexQT(float3(1, 1, 0), 2, 2 + gs->frameNum*0.0046f);
-	va->AddVertexQT(float3(1, 0, 0), 2, 0 + gs->frameNum*0.0046f);
+	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0046f);
+	va->AddVertexQT(  UpVector, 0, 2 + gs->frameNum*0.0046f);
+	va->AddVertexQT(  XYVector, 2, 2 + gs->frameNum*0.0046f);
+	va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0046f);
 
-	va->AddVertexQT(float3(0, 0, 0), 0, 0 + gs->frameNum*0.0026f);
-	va->AddVertexQT(float3(0, 1, 0), 0, 4 + gs->frameNum*0.0026f);
-	va->AddVertexQT(float3(1, 1, 0), 2, 4 + gs->frameNum*0.0026f);
-	va->AddVertexQT(float3(1, 0, 0), 2, 0 + gs->frameNum*0.0026f);
+	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0026f);
+	va->AddVertexQT(  UpVector, 0, 4 + gs->frameNum*0.0026f);
+	va->AddVertexQT(  XYVector, 2, 4 + gs->frameNum*0.0026f);
+	va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0026f);
 
-	va->AddVertexQT(float3(0, 0, 0), 0, 0 + gs->frameNum*0.0012f);
-	va->AddVertexQT(float3(0, 1, 0), 0, 8 + gs->frameNum*0.0012f);
-	va->AddVertexQT(float3(1, 1, 0), 2, 8 + gs->frameNum*0.0012f);
-	va->AddVertexQT(float3(1, 0, 0), 2, 0 + gs->frameNum*0.0012f);
+	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0012f);
+	va->AddVertexQT(  UpVector, 0, 8 + gs->frameNum*0.0012f);
+	va->AddVertexQT(  XYVector, 2, 8 + gs->frameNum*0.0012f);
+	va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0012f);
 
 	va->DrawArrayT(GL_QUADS);
 
 	va->Initialize();
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
 
-	va->AddVertexQT(float3(0, 0, 0), 0, 0 + gs->frameNum*0.0036f);
-	va->AddVertexQT(float3(0, 1, 0), 0, 1 + gs->frameNum*0.0036f);
-	va->AddVertexQT(float3(1, 1, 0), 1, 1 + gs->frameNum*0.0036f);
-	va->AddVertexQT(float3(1, 0, 0), 1, 0 + gs->frameNum*0.0036f);
+	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0036f);
+	va->AddVertexQT(  UpVector, 0, 1 + gs->frameNum*0.0036f);
+	va->AddVertexQT(  XYVector, 1, 1 + gs->frameNum*0.0036f);
+	va->AddVertexQT( RgtVector, 1, 0 + gs->frameNum*0.0036f);
 
 	va->DrawArrayT(GL_QUADS);
 
 	va->Initialize();
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
 
-	va->AddVertexQT(float3(0, 0, 0), 0, 0 + gs->frameNum*0.0082f);
-	va->AddVertexQT(float3(0, 1, 0), 0, 1 + gs->frameNum*0.0082f);
-	va->AddVertexQT(float3(1, 1, 0), 1, 1 + gs->frameNum*0.0082f);
-	va->AddVertexQT(float3(1, 0, 0), 1, 0 + gs->frameNum*0.0082f);
+	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0082f);
+	va->AddVertexQT(  UpVector, 0, 1 + gs->frameNum*0.0082f);
+	va->AddVertexQT(  XYVector, 1, 1 + gs->frameNum*0.0082f);
+	va->AddVertexQT( RgtVector, 1, 0 + gs->frameNum*0.0082f);
 
 	va->DrawArrayT(GL_QUADS);
 

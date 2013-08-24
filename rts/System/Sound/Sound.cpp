@@ -43,8 +43,8 @@ boost::recursive_mutex soundMutex;
 
 
 CSound::CSound()
-	: myPos(0., 0., 0.)
-	, prevVelocity(0., 0., 0.)
+	: myPos(ZeroVector)
+	, prevVelocity(ZeroVector)
 	, soundThread(NULL)
 	, soundThreadQuit(false)
 {

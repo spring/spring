@@ -98,7 +98,7 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 	// treat every move-direction as either fully uphill or fully downhill
 	// (otherwise units are still able to move orthogonally across vertical
 	// faces --> fixed)
-	//   const float dirSlopeMod = (moveDir.dot(sqrNormal) < 0.0f) * 2.0f - 1.0f;
+	//   const float dirSlopeMod = -Sign(moveDir.dot(sqrNormal));
 
 	switch (moveDef.moveFamily) {
 		case MoveDef::Tank:  { return (GroundSpeedMod(moveDef, height, slope, dirSlopeMod) * tt.tankSpeed ); } break;

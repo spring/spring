@@ -158,7 +158,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	skidRotSpeed(0.0f),
 	skidRotAccel(0.0f),
 
-	flatFrontDir(0.0f, 0.0, 1.0f),
+	flatFrontDir(FwdVector),
 	lastAvoidanceDir(ZeroVector),
 	mainHeadingPos(ZeroVector),
 
@@ -474,7 +474,7 @@ bool CGroundMoveType::FollowPath()
 		}
 
 		// apply obstacle avoidance (steering)
-		const float3 rawWantedDir = waypointDir * (int(!wantReverse) * 2 - 1);
+		const float3 rawWantedDir = waypointDir * Sign(int(!wantReverse));
 		const float3& modWantedDir = GetObstacleAvoidanceDir(rawWantedDir);
 
 		// ASSERT_SYNCED(modWantedDir);
@@ -1084,8 +1084,8 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 			}
 		}
 
-		float avoiderTurnSign = ((avoidee->pos.dot(avoider->rightdir) - avoider->pos.dot(avoider->rightdir)) <= 0.0f) * 2.0f - 1.0f;
-		float avoideeTurnSign = ((avoider->pos.dot(avoidee->rightdir) - avoidee->pos.dot(avoidee->rightdir)) <= 0.0f) * 2.0f - 1.0f;
+		float avoiderTurnSign = -Sign(avoidee->pos.dot(avoider->rightdir) - avoider->pos.dot(avoider->rightdir));
+		float avoideeTurnSign = -Sign(avoider->pos.dot(avoidee->rightdir) - avoidee->pos.dot(avoidee->rightdir));
 
 		// for mobile units, avoidance-response is modulated by angle
 		// between avoidee's and avoider's frontdir such that maximal
@@ -1244,7 +1244,7 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 		// and pass it without slowing down)
 		// note that we take the DIAMETER of the circle
 		// to prevent sine-like "snaking" trajectories
-		const int dirSign = int(!reversing) * 2 - 1;
+		const int dirSign = Sign(int(!reversing));
 		const float turnFrames = SPRING_CIRCLE_DIVS / turnRate;
 		const float turnRadius = (owner->speed.Length() * turnFrames) / (PI + PI);
 		const float waypointDot = Clamp(waypointDir.dot(flatFrontDir * dirSign), -1.0f, 1.0f);
@@ -1363,7 +1363,7 @@ from current velocity.
 float3 CGroundMoveType::Here()
 {
 	const float dist = BrakingDistance(currentSpeed);
-	const int   sign = int(!reversing) * 2 - 1;
+	const int   sign = Sign(int(!reversing));
 
 	const float3 pos2D = float3(owner->pos.x, 0.0f, owner->pos.z);
 	const float3 dir2D = flatFrontDir * dist * sign;
@@ -1606,7 +1606,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 				const float  sqColRadiusSum = colliderRadius + 5.656854249492381f;
 				const float   sqSepDistance = squareVec.Length2D() + 0.1f;
 				const float   sqPenDistance = std::min(sqSepDistance - sqColRadiusSum, 0.0f);
-				// const float  sqColSlideSign = ((squarePos.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir)) < 0.0f) * 2.0f - 1.0f;
+				// const float  sqColSlideSign = -Sign(squarePos.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir));
 
 				// this tends to cancel out too much on average
 				// strafeVec += (collider->rightdir * sqColSlideSign);
@@ -1623,7 +1623,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 			sqCenterPosition /= sqPenDistanceCtr;
 			sqPenDistanceSum /= sqPenDistanceCtr;
 
-			const float strafeSign = ((sqCenterPosition.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir)) < 0.0f) * 2.0f - 1.0f;
+			const float strafeSign = -Sign(sqCenterPosition.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir));
 			const float strafeScale = std::min(currentSpeed, std::max(0.1f, -sqPenDistanceSum * 0.5f));
 			const float bounceScale = std::min(currentSpeed, std::max(0.1f, -sqPenDistanceSum       ));
 
@@ -1640,7 +1640,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		const float  colRadiusSum = colliderRadius + collideeRadius;
 		const float   sepDistance = separationVector.Length() + 0.1f;
 		const float   penDistance = std::min(sepDistance - colRadiusSum, 0.0f);
-		const float  colSlideSign = ((collidee->pos.dot(collider->rightdir) - collider->pos.dot(collider->rightdir)) <= 0.0f) * 2.0f - 1.0f;
+		const float  colSlideSign = -Sign(collidee->pos.dot(collider->rightdir) - collider->pos.dot(collider->rightdir));
 
 		const float strafeScale = std::min(currentSpeed, std::max(0.0f, -penDistance * 0.5f)) * (1 -                exitingYardMap);
 		const float bounceScale = std::min(currentSpeed, std::max(0.0f, -penDistance       )) * (1 - checkYardMap * exitingYardMap);
@@ -1675,7 +1675,7 @@ void CGroundMoveType::HandleUnitCollisions(
 	      std::vector<CUnit*>::const_iterator uit;
 
 	// NOTE: probably too large for most units (eg. causes tree falling animations to be skipped)
-	const int dirSign = int(!reversing) * 2 - 1;
+	const int dirSign = Sign(int(!reversing));
 	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
 	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
@@ -1826,10 +1826,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		// if pushCollider and pushCollidee are both false (eg. if each party
 		// is pushResistant), treat the collision as regular and push both to
 		// avoid deadlocks
-		#define SIGN(v) ((int(v >= 0.0f) * 2) - 1)
-		const int colliderSlideSign = SIGN( separationVector.dot(collider->rightdir));
-		const int collideeSlideSign = SIGN(-separationVector.dot(collidee->rightdir));
-		#undef SIGN
+		const float colliderSlideSign = Sign( separationVector.dot(collider->rightdir));
+		const float collideeSlideSign = Sign(-separationVector.dot(collidee->rightdir));
 
 		const float3 colliderPushVec  =  colResponseVec * colliderMassScale * int(!ignoreCollidee);
 		const float3 collideePushVec  = -colResponseVec * collideeMassScale;
@@ -1871,7 +1869,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 	const std::vector<CFeature*>& nearFeatures = quadField->GetFeaturesExact(collider->pos, searchRadius);
 	      std::vector<CFeature*>::const_iterator fit;
 
-	const int dirSign = int(!reversing) * 2 - 1;
+	const int dirSign = Sign(int(!reversing));
 	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
 	for (fit = nearFeatures.begin(); fit != nearFeatures.end(); ++fit) {
@@ -2189,7 +2187,7 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 		// to owner->speed which gets overridden below, so
 		// need to calculate hSpeedScale from it (not from
 		// currentSpeed) directly
-		const int    speedSign  = int(!reversing) * 2 - 1;
+		const int    speedSign  = Sign(int(!reversing));
 		const float  speedScale = owner->speed.Length() * speedSign + hAcc;
 
 		speedVector = owner->frontdir * speedScale;

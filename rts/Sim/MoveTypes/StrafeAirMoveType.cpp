@@ -821,7 +821,7 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 	const float currentHeight = pos.y - (owner->unitDef->canSubmerge?
 		ground->GetHeightReal(pos.x, pos.z):
 		ground->GetHeightAboveWater(pos.x, pos.z));
-	const float yawSign = ((goalPos - pos).dot(rightdir) >= 0.0f) * 2.0f - 1.0f;
+	const float yawSign = Sign((goalPos - pos).dot(rightdir));
 
 	frontdir += (rightdir * yawSign * (maxRudder * speed.y));
 	frontdir.Normalize();

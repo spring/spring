@@ -924,10 +924,10 @@ void CProjectileDrawer::UpdatePerlin() {
 			col[b] = int((1.0f - perlinBlend[a]) * 16 * size);
 
 		glBindTexture(GL_TEXTURE_2D, perlinTex[a * 2]);
-		va->AddVertexQTC(float3(0, 0, 0), 0,         0, col);
-		va->AddVertexQTC(float3(0, 1, 0), 0,     tsize, col);
-		va->AddVertexQTC(float3(1, 1, 0), tsize, tsize, col);
-		va->AddVertexQTC(float3(1, 0, 0), tsize,     0, col);
+		va->AddVertexQTC(ZeroVector, 0,         0, col);
+		va->AddVertexQTC(  UpVector, 0,     tsize, col);
+		va->AddVertexQTC(  XYVector, tsize, tsize, col);
+		va->AddVertexQTC( RgtVector, tsize,     0, col);
 		va->DrawArrayTC(GL_QUADS);
 
 		if (a == 0)
@@ -941,10 +941,10 @@ void CProjectileDrawer::UpdatePerlin() {
 			col[b] = int(perlinBlend[a] * 16 * size);
 
 		glBindTexture(GL_TEXTURE_2D, perlinTex[a * 2 + 1]);
-		va->AddVertexQTC(float3(0, 0, 0),     0,     0, col);
-		va->AddVertexQTC(float3(0, 1, 0),     0, tsize, col);
-		va->AddVertexQTC(float3(1, 1, 0), tsize, tsize, col);
-		va->AddVertexQTC(float3(1, 0, 0), tsize,     0, col);
+		va->AddVertexQTC(ZeroVector,     0,     0, col);
+		va->AddVertexQTC(  UpVector,     0, tsize, col);
+		va->AddVertexQTC(  XYVector, tsize, tsize, col);
+		va->AddVertexQTC( RgtVector, tsize,     0, col);
 		va->DrawArrayTC(GL_QUADS);
 
 		speed *= 0.6f;

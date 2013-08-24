@@ -18,7 +18,7 @@
 #include "System/creg/STL_List.h"
 #include "lib/gml/gmlcnf.h"
 
-CR_BIND_DERIVED(CFireProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0));
+CR_BIND_DERIVED(CFireProjectile, CProjectile, (ZeroVector,ZeroVector,NULL,0,0,0,0));
 CR_BIND(CFireProjectile::SubParticle, );
 
 CR_REG_METADATA(CFireProjectile,(

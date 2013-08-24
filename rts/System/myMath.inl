@@ -144,11 +144,6 @@ inline T mix(const T v1, const T v2, const float a)
 	return v1 * (1.0f - a) + v2 * a;
 }
 
-inline float Square(const float x)
-{
-	return x * x;
-}
-
 inline int Round(const float f)
 {
 	return math::floor(f + 0.5f);
