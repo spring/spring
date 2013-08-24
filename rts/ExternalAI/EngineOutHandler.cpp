@@ -619,6 +619,11 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 void CEngineOutHandler::SetSkirmishAIDieing(const size_t skirmishAIId) {
 	SCOPED_TIMER("AI Total");
 
+	// if exiting before start, AI's have not been loaded yet
+	// and std::map<>::operator[] would insert a NULL instance
+	if (id_skirmishAI.find(skirmishAIId) == id_skirmishAI.end())
+		return;
+
 	try {
 		assert(id_skirmishAI[skirmishAIId] != NULL);
 		id_skirmishAI[skirmishAIId]->Dieing();
