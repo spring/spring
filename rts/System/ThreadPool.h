@@ -71,35 +71,6 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 	#define SCOPED_MT_TIMER(x)
 #endif
 
-#ifdef __MINGW32__
-	class SAtomicInt32 {
-	public:
-		SAtomicInt32(int start = 0) : num(start) {}
-
-		int operator++(int) {
-			boost::lock_guard<boost::mutex> lk(m);
-			return __sync_fetch_and_add(&num, 1);
-		}
-		int operator--(int) {
-			boost::lock_guard<boost::mutex> lk(m);
-			return __sync_fetch_and_sub(&num, 1);
-		}
-
-		operator int() const {
-			boost::lock_guard<boost::mutex> lk(m);
-			return num;
-		}
-
-	private:
-		__attribute__ ((aligned (8))) int num;
-		mutable boost::mutex m;
-	};
-
-	typedef SAtomicInt32 saint;
-#else
-	typedef std::atomic<int> saint;
-#endif
-
 
 
 class ITaskGroup
@@ -132,7 +103,6 @@ namespace ThreadPool {
 
 	void PushTaskGroup(std::shared_ptr<ITaskGroup> taskgroup);
 	void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup);
-	void WaitForFinishedDebug(std::shared_ptr<ITaskGroup> taskgroup);
 
 	template<typename T>
 	inline void PushTaskGroup(std::shared_ptr<T> taskgroup) { PushTaskGroup(std::static_pointer_cast<ITaskGroup>(taskgroup)); }
@@ -240,23 +210,15 @@ public:
 
 	template<typename G>
 	return_type GetResult(const G&& g) {
-	#ifdef __MINGW32__
-		// WORKAROUND: std::accumulate hangs in MinGW, likely a posix issue (2013)
-		return_type res = 0;
-		for (auto& r: results)
-			res = g(res, r);
-		return res;
-	#else
 		return std::accumulate(results.begin(), results.end(), 0, g);
-	#endif
 	}
 
 private:
 	//void FinishedATask() { remainingTasks--; }
 
 public:
-	saint remainingTasks;
-	saint curtask;
+	std::atomic<int> remainingTasks;
+	std::atomic<int> curtask;
 	std::vector<std::function<void()>> tasks;
 	std::vector<boost::unique_future<return_type>> results;
 
@@ -350,17 +312,13 @@ static inline void for_mt(int start, int end, const std::function<void(const int
 static inline void parallel(const std::function<void()>&& f)
 {
 	ThreadPool::NotifyWorkerThreads();
-	LOG_L(L_WARNING, "%s1", __FUNCTION__);
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
 	auto taskgroup = std::make_shared<ParallelTaskGroup<const std::function<void()>>>();
 	for (int i = 0; i < ThreadPool::GetNumThreads(); ++i) {
 		taskgroup->enqueue_unique(i, f);
 	}
-	LOG_L(L_WARNING, "%s2", __FUNCTION__);
 	ThreadPool::PushTaskGroup(taskgroup);
-	LOG_L(L_WARNING, "%s3", __FUNCTION__);
-	ThreadPool::WaitForFinishedDebug(taskgroup);
-	LOG_L(L_WARNING, "%s4", __FUNCTION__);
+	ThreadPool::WaitForFinished(taskgroup);
 }
 
 
@@ -369,24 +327,14 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 {
 	ThreadPool::NotifyWorkerThreads();
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
-#ifdef __MINGW32__
-	LOG_L(L_WARNING, "%s", __FUNCTION__);
-#endif
+
  	auto taskgroup = std::make_shared<ParallelTaskGroup<F>>();
 	for (int i = 0; i < ThreadPool::GetNumThreads(); ++i) {
 		taskgroup->enqueue_unique(i, f);
 	}
-#ifdef __MINGW32__
-	LOG_L(L_WARNING, "%s", __FUNCTION__);
-#endif
+
 	ThreadPool::PushTaskGroup(taskgroup);
-#ifdef __MINGW32__
-	LOG_L(L_WARNING, "%s1 %i %i", __FUNCTION__, int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()));
-#endif
-	ThreadPool::WaitForFinishedDebug(taskgroup);
-#ifdef __MINGW32__
-	LOG_L(L_WARNING, "%s2 %i %i", __FUNCTION__, int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()));
-#endif
+	ThreadPool::WaitForFinished(taskgroup);
 	return taskgroup->GetResult(std::move(g));
 }
 

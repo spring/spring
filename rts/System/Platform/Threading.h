@@ -51,7 +51,7 @@ namespace Threading {
 	/**
 	 * OpenMP related stuff
 	 */
-	void InitOMP(bool useOMP);
+	void InitOMP();
 
 	/**
 	 * Inform the OS kernel that we are a cpu-intensive task

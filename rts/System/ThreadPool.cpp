@@ -77,21 +77,23 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk)
 	if (waitForLock)
 		return true;
 
-//#ifdef __MINGW32__
-	boost::unique_lock<boost::shared_mutex> ulk(taskMutex, boost::defer_lock);
-	while (!ulk.try_lock()) {}
-	if (!taskGroups.empty()) {
-//#else
-//	if (!taskGroups.empty() && lk.try_lock()) {
-//#endif
+#ifndef __MINGW32__
+	if (!taskGroups.empty() && lk.try_lock()) {
+#else
+	if (lk.try_lock()) {
+#endif
 		bool foundEmpty = false;
 
+#ifndef __MINGW32__
 		for(auto tg: taskGroups) {
+#else
+		for(auto it = taskGroups.begin(); it != taskGroups.end(); ++it) {
+			auto tg = *it;
+#endif
 			auto p = tg->GetTask();
 
 			if (p) {
-				//lk.unlock();
-				ulk.unlock();
+				lk.unlock();
 				SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
 				(*p)();
 				return true;
@@ -101,12 +103,13 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk)
 				foundEmpty = true;
 			}
 		}
-		//lk.unlock();
+		lk.unlock();
 
 		if (foundEmpty) {
 			//FIXME this could be made lock-free too, but is it worth it?
-			//boost::unique_lock<boost::shared_mutex> ulk(taskMutex, boost::defer_lock);
-			//while (!ulk.try_lock()) {}
+			waitForLock = true;
+			boost::unique_lock<boost::shared_mutex> ulk(taskMutex, boost::defer_lock);
+			while (!ulk.try_lock()) {}
 			for(auto it = taskGroups.begin(); it != taskGroups.end();) {
 				if ((*it)->IsEmpty()) {
 					it = taskGroups.erase(it);
@@ -114,13 +117,13 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk)
 					++it;
 				}
 			}
+			waitForLock = false;
+			ulk.unlock();
 		}
 
-		ulk.unlock();
 		return false;
 	}
 
-	ulk.unlock();
 	return true;
 }
 
@@ -152,7 +155,6 @@ static void WorkerLoop(int id)
 			if (spinlockStart < boost::chrono::high_resolution_clock::now()) {
 				newTasks.wait_for(lk2, boost::chrono::nanoseconds(1));
 			}
-			//std::atomic_thread_fence(std::memory_order_acquire);
 		}
 	}
 }
@@ -161,16 +163,10 @@ static void WorkerLoop(int id)
 void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 {
 	while (DoTask(taskgroup)) {
-#ifdef __MINGW32__
-		LOG_L(L_WARNING, "%s step", __FUNCTION__);
-#endif
 	}
 
 	while (!taskgroup->wait_for(boost::chrono::seconds(5))) {
 		LOG_L(L_WARNING, "Hang in ThreadPool");
-#ifdef __MINGW32__
-		LOG_L(L_WARNING, "%s2 %i %i %i %i", __FUNCTION__, int(taskGroups.size()), int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()), int(taskgroup->RemainingTasks()));
-#endif
 	}
 
 	//LOG("WaitForFinished %i", taskgroup->GetExceptions().size());
@@ -178,26 +174,6 @@ void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 	//	r.get();
 }
 
-
-void WaitForFinishedDebug(std::shared_ptr<ITaskGroup> taskgroup)
-{
-	while (DoTask(taskgroup)) {
-#ifdef __MINGW32__
-		LOG_L(L_WARNING, "%s step", __FUNCTION__);
-#endif
-	}
-
-	while (!taskgroup->wait_for(boost::chrono::seconds(5))) {
-		LOG_L(L_WARNING, "Hang in ThreadPool");
-#ifdef __MINGW32__
-		LOG_L(L_WARNING, "%s2 %i %i %i %i", __FUNCTION__, int(taskGroups.size()), int(taskgroup->IsEmpty()), int(taskgroup->IsFinished()), int(taskgroup->RemainingTasks()));
-#endif
-	}
-
-	//LOG("WaitForFinished %i", taskgroup->GetExceptions().size());
-	//for (auto& r: taskgroup->results())
-	//	r.get();
-}
 
 void PushTaskGroup(std::shared_ptr<ITaskGroup> taskgroup)
 {
@@ -264,13 +240,6 @@ void SetThreadCount(int num)
 		}
 		if (num == 0) assert(thread_group.empty());
 	}
-
-#ifdef __MINGW32__
-	LOG_L(L_WARNING, "%s %i", __FUNCTION__, num);
-	parallel([]{
-		LOG_L(L_WARNING, "ThreadPool registered new worker thread %i", GetThreadNum());
-	});
-#endif
 }
 
 };
