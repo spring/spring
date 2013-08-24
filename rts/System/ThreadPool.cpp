@@ -72,24 +72,21 @@ int GetNumThreads()
 
 
 /// returns false, when no further tasks were found
-static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk)
+static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 {
 	if (waitForLock)
 		return true;
 
 #ifndef __MINGW32__
-	if (!taskGroups.empty() && lk.try_lock()) {
+	auto& lk = lk_;
 #else
-	if (lk.try_lock()) {
+	boost::unique_lock<boost::shared_mutex> lk(taskMutex, boost::defer_lock);
 #endif
+
+	if (!taskGroups.empty() && lk.try_lock()) {
 		bool foundEmpty = false;
 
-#ifndef __MINGW32__
 		for(auto tg: taskGroups) {
-#else
-		for(auto it = taskGroups.begin(); it != taskGroups.end(); ++it) {
-			auto tg = *it;
-#endif
 			auto p = tg->GetTask();
 
 			if (p) {
