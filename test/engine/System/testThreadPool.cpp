@@ -15,7 +15,9 @@ static boost::mutex m;
 
 BOOST_AUTO_TEST_CASE( testThreadPool1 )
 {
-	#define RUNS 1000
+	LOG_L(L_WARNING, "testThreadPool1");
+
+	#define RUNS 5000
 	std::atomic<int> cnt(0);
 	BOOST_CHECK(cnt.is_lock_free());
 	std::vector<int> nums(RUNS,0);
@@ -45,6 +47,8 @@ BOOST_AUTO_TEST_CASE( testThreadPool1 )
 
 BOOST_AUTO_TEST_CASE( testThreadPool2 )
 {
+	LOG_L(L_WARNING, "testThreadPool2");
+
 	std::vector<int> runs(NUM_THREADS);
 	parallel([&]{
 		const int threadnum = ThreadPool::GetThreadNum();
@@ -60,6 +64,8 @@ BOOST_AUTO_TEST_CASE( testThreadPool2 )
 
 BOOST_AUTO_TEST_CASE( testThreadPool3 )
 {
+	LOG_L(L_WARNING, "testThreadPool3");
+
 	int result = parallel_reduce([]() -> int {
 		const int threadnum = ThreadPool::GetThreadNum();
 		SAFE_BOOST_CHECK(threadnum >= 0);
@@ -71,6 +77,8 @@ BOOST_AUTO_TEST_CASE( testThreadPool3 )
 
 BOOST_AUTO_TEST_CASE( testThreadPool4 )
 {
+	LOG_L(L_WARNING, "testThreadPool4");
+
 	for_mt(0, 100, [&](const int y) {
 		for_mt(0, 100, [&](const int x) {
 			const int threadnum = ThreadPool::GetThreadNum();
