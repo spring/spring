@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "MoveDefHandler.h"
-#include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
@@ -15,7 +14,7 @@
 #include "System/Util.h"
 
 CR_BIND(MoveDef, ());
-CR_BIND(MoveDefHandler, );
+CR_BIND(MoveDefHandler, (NULL));
 
 CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(name),
@@ -74,9 +73,9 @@ static float DegreesToMaxSlope(float degrees)
 }
 
 
-MoveDefHandler::MoveDefHandler()
+MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 {
-	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("MoveDefs");
+	const LuaTable rootTable = defsParser->GetRoot().SubTable("MoveDefs");
 	if (!rootTable.IsValid()) {
 		throw content_error("Error loading movement definitions");
 	}

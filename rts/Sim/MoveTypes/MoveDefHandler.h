@@ -129,11 +129,12 @@ struct MoveDef {
 #pragma pack(pop)
 
 
+class LuaParser;
 class MoveDefHandler
 {
 	CR_DECLARE_STRUCT(MoveDefHandler);
 public:
-	MoveDefHandler();
+	MoveDefHandler(LuaParser* defsParser);
 	~MoveDefHandler();
 
 	MoveDef* GetMoveDefByPathType(unsigned int pathType) { return moveDefs[pathType]; }
