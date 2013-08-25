@@ -19,10 +19,10 @@
 CR_BIND(CDamageArrayHandler, );
 
 CR_REG_METADATA(CDamageArrayHandler, (
-		CR_MEMBER(name2type),
-		CR_MEMBER(typeList),
-		CR_RESERVED(16)
-		));
+	CR_MEMBER(armorDefNameIdxMap),
+	CR_MEMBER(armorDefKeys),
+	CR_RESERVED(16)
+));
 
 
 CDamageArrayHandler* damageArrayHandler;
@@ -30,57 +30,62 @@ CDamageArrayHandler* damageArrayHandler;
 
 CDamageArrayHandler::CDamageArrayHandler()
 {
+	#define DEFAULT_ARMORDEF_NAME "default"
+
 	try {
 		const LuaTable rootTable = game->defsParser->GetRoot().SubTable("ArmorDefs");
-		if (!rootTable.IsValid()) {
+
+		if (!rootTable.IsValid())
 			throw content_error("Error loading ArmorDefs");
-		}
 
-		rootTable.GetKeys(typeList);
+		// GetKeys() sorts the keys, so can not simply push_back before call
+		rootTable.GetKeys(armorDefKeys);
+		armorDefKeys.insert(armorDefKeys.begin(), DEFAULT_ARMORDEF_NAME);
 
-		typeList.insert(typeList.begin(), "default");
-		name2type["default"] = 0;
+		armorDefNameIdxMap[DEFAULT_ARMORDEF_NAME] = 0;
 
-		LOG("Number of damage types: " _STPF_, typeList.size());
+		LOG("[%s] number of ArmorDefs: " _STPF_, __FUNCTION__, armorDefKeys.size());
 
-		for (int armorID = 1; armorID < (int)typeList.size(); armorID++) {
-			const std::string armorName = StringToLower(typeList[armorID]);
-			if (armorName == "default") {
-				throw content_error("Tried to define the \"default\" armor type\n");
+		// expects the following structure, subtables are in array-format:
+		//
+		// {"tanks" = {[1] = "supertank", [2] = "megatank"}, "infantry" = {[1] = "dude"}, ...}
+		//
+		for (unsigned int armorDefIdx = 1; armorDefIdx < armorDefKeys.size(); armorDefIdx++) {
+			const std::string armorDefName = StringToLower(armorDefKeys[armorDefIdx]);
+
+			if (armorDefName == DEFAULT_ARMORDEF_NAME) {
+				// ignore, no need to clear entire table
+				LOG_L(L_WARNING, "[%s] ArmorDefs: tried to define the \"default\" armor type!", __FUNCTION__);
+				continue;
 			}
-			name2type[armorName] = armorID;
 
-			LuaTable armorTable = rootTable.SubTable(typeList[armorID]);
-			std::vector<std::string> units; // the values are not used (afaict)
-			armorTable.GetKeys(units);
+			armorDefNameIdxMap[armorDefName] = armorDefIdx;
 
-			std::vector<std::string>::const_iterator ui;
-			for (ui = units.begin(); ui != units.end(); ++ui) {
-				const std::string unitName = StringToLower(*ui); // NOTE: not required
-				name2type[unitName] = armorID;
+			const LuaTable armorDefTable = rootTable.SubTable(armorDefKeys[armorDefIdx]);
+			const unsigned int numArmorDefEntries = armorDefTable.GetLength();
+
+			for (unsigned int armorDefEntryIdx = 0; armorDefEntryIdx < numArmorDefEntries; armorDefEntryIdx++) {
+				armorDefNameIdxMap[armorDefTable.GetString(armorDefEntryIdx + 1, "")] = armorDefIdx;
 			}
 		}
-	}
-	catch (const content_error&) {
-		name2type.clear();
-		name2type["default"] = 0;
-		typeList.clear();
-		typeList.push_back("default");
+	} catch (const content_error&) {
+		armorDefNameIdxMap.clear();
+		armorDefNameIdxMap[DEFAULT_ARMORDEF_NAME] = 0;
+
+		armorDefKeys.clear();
+		armorDefKeys.push_back(DEFAULT_ARMORDEF_NAME);
 	}
 }
 
 
-CDamageArrayHandler::~CDamageArrayHandler()
-{
-}
 
-
-int CDamageArrayHandler::GetTypeFromName(std::string name) const
+int CDamageArrayHandler::GetTypeFromName(const std::string& name) const
 {
-	StringToLowerInPlace(name);
-	const std::map<std::string, int>::const_iterator it = name2type.find(name);
-	if (it != name2type.end()) {
+	const std::map<std::string, int>::const_iterator it = armorDefNameIdxMap.find(StringToLower(name));
+
+	if (it != armorDefNameIdxMap.end()) {
 		return it->second;
 	}
+
 	return 0; // 'default' armor index
 }

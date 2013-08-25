@@ -19,16 +19,27 @@ end
 
 
 local TDF = VFS.Include('gamedata/parse_tdf.lua')
-local armor, err = TDF.Parse(tdfFile)
-if (armor == nil) then
+local armorDefs, err = TDF.Parse(tdfFile)
+if (armorDefs == nil) then
   error('Error parsing armor.txt: ' .. err)
 end
 
+for categoryName, categoryTable in pairs(armorDefs) do
+  local t = {}
+  -- convert all ArmorDef <key,value> subtables to
+  -- array-format (engine expects this as of 95.0;
+  -- values were never used and had no meaning)
+  for unitName,_ in pairs(categoryTable) do
+    t[#t + 1] = unitName
+  end
+
+  armorDefs[categoryName] = t
+end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-return armor
+return armorDefs
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
