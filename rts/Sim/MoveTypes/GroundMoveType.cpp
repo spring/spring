@@ -837,10 +837,9 @@ void CGroundMoveType::CheckCollisionSkid()
 			continue;
 		}
 
-		// stop units from reaching escape velocity
 		const float3 dif = (pos - collidee->pos).SafeNormalize();
 
-		if (collidee->moveDef == NULL) {
+		if (collidee->unitDef->IsImmobileUnit()) {
 			const float impactSpeed = -collider->speed.dot(dif);
 			const float impactDamageMult = std::min(impactSpeed * collider->mass * COLLISION_DAMAGE_MULT, MAX_UNIT_SPEED);
 
