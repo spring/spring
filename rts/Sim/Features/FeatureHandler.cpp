@@ -2,7 +2,6 @@
 
 #include "FeatureHandler.h"
 
-#include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaRules.h"
 #include "Map/ReadMap.h"
@@ -21,7 +20,7 @@ CFeatureHandler* featureHandler = NULL;
 
 /******************************************************************************/
 
-CR_BIND(CFeatureHandler, );
+CR_BIND(CFeatureHandler, (NULL));
 CR_REG_METADATA(CFeatureHandler, (
 	CR_MEMBER(idPool),
 	CR_MEMBER(featureDefs),
@@ -35,9 +34,9 @@ CR_REG_METADATA(CFeatureHandler, (
 
 /******************************************************************************/
 
-CFeatureHandler::CFeatureHandler()
+CFeatureHandler::CFeatureHandler(LuaParser* defsParser)
 {
-	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("FeatureDefs");
+	const LuaTable rootTable = defsParser->GetRoot().SubTable("FeatureDefs");
 	if (!rootTable.IsValid()) {
 		throw content_error("Error loading FeatureDefs");
 	}

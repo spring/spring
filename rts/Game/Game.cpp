@@ -612,7 +612,7 @@ void CGame::PreLoadSimulation()
 	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE * 2, SQUARE_SIZE * 40);
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
-	moveDefHandler = new MoveDefHandler();
+	moveDefHandler = new MoveDefHandler(defsParser);
 	quadField = new CQuadField();
 	damageArrayHandler = new CDamageArrayHandler(defsParser);
 	explGenHandler = new CExplosionGeneratorHandler();
@@ -621,9 +621,9 @@ void CGame::PreLoadSimulation()
 void CGame::PostLoadSimulation()
 {
 	loadscreen->SetLoadMessage("Loading Weapon Definitions");
-	weaponDefHandler = new CWeaponDefHandler();
+	weaponDefHandler = new CWeaponDefHandler(defsParser);
 	loadscreen->SetLoadMessage("Loading Unit Definitions");
-	unitDefHandler = new CUnitDefHandler();
+	unitDefHandler = new CUnitDefHandler(defsParser);
 
 	CClassicGroundMoveType::CreateLineTable();
 
@@ -631,7 +631,7 @@ void CGame::PostLoadSimulation()
 	projectileHandler = new CProjectileHandler();
 
 	loadscreen->SetLoadMessage("Loading Feature Definitions");
-	featureHandler = new CFeatureHandler();
+	featureHandler = new CFeatureHandler(defsParser);
 
 	losHandler = new CLosHandler();
 	radarHandler = new CRadarHandler(false);

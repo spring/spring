@@ -34,12 +34,13 @@ struct FeatureLoadParams {
 	int smokeTime;
 };
 
+class LuaParser;
 class CFeatureHandler : public boost::noncopyable
 {
 	CR_DECLARE_STRUCT(CFeatureHandler);
 
 public:
-	CFeatureHandler();
+	CFeatureHandler(LuaParser* defsParser);
 	~CFeatureHandler();
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);

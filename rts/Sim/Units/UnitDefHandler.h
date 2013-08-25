@@ -14,11 +14,11 @@ class LuaTable;
 struct UnitDef;
 struct GuiSoundSet;
 
-/// Takes care of all the unit definitions
+class LuaParser;
 class CUnitDefHandler : CommonDefHandler
 {
 public:
-	CUnitDefHandler();
+	CUnitDefHandler(LuaParser* defsParser);
 	~CUnitDefHandler();
 
 	void Init();
