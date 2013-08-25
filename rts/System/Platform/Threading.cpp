@@ -30,6 +30,10 @@
 	#include <sched.h>
 #endif
 
+#include "lib/gml/gmlcnf.h"
+#include "lib/gml/gml_base.h"
+
+
 
 #ifndef UNIT_TEST
 CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1).description("Count of worker threads (including mainthread!) used in parallel sections.");
@@ -209,10 +213,6 @@ namespace Threading {
 
 
 	void InitOMP() {
-		static bool inited = false;
-		assert(!inited);
-		inited = true;
-
 		boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
 		boost::uint32_t mainAffinity  = systemCores;
 		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
