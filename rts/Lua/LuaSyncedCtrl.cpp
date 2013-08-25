@@ -436,6 +436,28 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 	return team;
 }
 
+static int SetSolidObjectCollisionVolumeData(lua_State* L, CSolidObject* o)
+{
+	if (o == NULL)
+		return 0;
+
+	const float xs = luaL_checkfloat(L, 2);
+	const float ys = luaL_checkfloat(L, 3);
+	const float zs = luaL_checkfloat(L, 4);
+	const float xo = luaL_checkfloat(L, 5);
+	const float yo = luaL_checkfloat(L, 6);
+	const float zo = luaL_checkfloat(L, 7);
+	const int vType = luaL_checkint(L,  8);
+	const int tType = luaL_checkint(L,  9);
+	const int pAxis = luaL_checkint(L, 10);
+
+	const float3 scales(xs, ys, zs);
+	const float3 offsets(xo, yo, zo);
+
+	o->collisionVolume->InitShape(scales, offsets, vType, tType, pAxis);
+	return 0;
+}
+
 static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 {
 	if (o == NULL)
@@ -2003,27 +2025,7 @@ int LuaSyncedCtrl::SetUnitRadiusAndHeight(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-
-	if (unit == NULL) {
-		return 0;
-	}
-
-	const float xs = luaL_checkfloat(L, 2);
-	const float ys = luaL_checkfloat(L, 3);
-	const float zs = luaL_checkfloat(L, 4);
-	const float xo = luaL_checkfloat(L, 5);
-	const float yo = luaL_checkfloat(L, 6);
-	const float zo = luaL_checkfloat(L, 7);
-	const unsigned int vType = luaL_checkint(L,  8);
-	const unsigned int tType = luaL_checkint(L,  9);
-	const unsigned int pAxis = luaL_checkint(L, 10);
-
-	const float3 scales(xs, ys, zs);
-	const float3 offsets(xo, yo, zo);
-
-	unit->collisionVolume->InitShape(scales, offsets, vType, tType, pAxis);
-	return 0;
+	return (SetSolidObjectCollisionVolumeData(L, ParseUnit(L, __FUNCTION__, 1)));
 }
 
 int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
@@ -2039,24 +2041,24 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 
 	// 1st argument: unitid
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		//luaL_argerror(L, 1, "invalid unitid");
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	LocalModel* localModel = unit->localModel;
 
 	// 2nd argument: piece index
-	const int  pieceIndex = luaL_checkint(L, 2);
-	if (pieceIndex < 0 || pieceIndex >= localModel->pieces.size()) {
+	const unsigned int  pieceIndex = luaL_checkint(L, 2);
+
+	if (pieceIndex >= localModel->pieces.size())
 		luaL_argerror(L, 2, "invalid piece index");
-	}
 
 	LocalModelPiece* lmp = localModel->pieces[pieceIndex];
 
 	// 3rd/5th argument: enable/disable colvol
 	bool enable = lua_toboolean(L, 3);
 	int arg = 4;
+
 	if (argc == 14) {
 		// old syntax had 3 additional arguments that were dropped now
 		// so skip 3rd, 4th & 6th argument
@@ -2070,7 +2072,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 
 	// n-th arguments: colvol data
 	if ((argc != 11) && (argc != 14)) {
-		luaL_error(L, "Incorrect arguments to SetUnitPieceCollisionVolumeData()");
+		luaL_error(L, "Incorrect arguments to %s()", __FUNCTION__);
 	}
 
 	const float xs  = luaL_checkfloat(L, arg++);
@@ -2219,14 +2221,10 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 		return 0;
 	}
 
-	const float3 rot(ClampRad(luaL_checkfloat(L, 2)),
-	                 ClampRad(luaL_checkfloat(L, 3)),
-	                 ClampRad(luaL_checkfloat(L, 4)));
-
 	CMatrix44f matrix;
-	matrix.RotateZ(rot.z);
-	matrix.RotateX(rot.x);
-	matrix.RotateY(rot.y);
+	matrix.RotateZ(ClampRad(luaL_checkfloat(L, 4))); // .z := roll
+	matrix.RotateX(ClampRad(luaL_checkfloat(L, 2))); // .x := pitch
+	matrix.RotateY(ClampRad(luaL_checkfloat(L, 3))); // .y := yaw
 
 	unit->SetDirVectors(matrix);
 	unit->UpdateMidAndAimPos();
@@ -2703,26 +2701,7 @@ int LuaSyncedCtrl::SetFeatureRadiusAndHeight(lua_State* L)
 
 int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
-		return 0;
-	}
-
-	const float xs = luaL_checkfloat(L, 2);
-	const float ys = luaL_checkfloat(L, 3);
-	const float zs = luaL_checkfloat(L, 4);
-	const float xo = luaL_checkfloat(L, 5);
-	const float yo = luaL_checkfloat(L, 6);
-	const float zo = luaL_checkfloat(L, 7);
-	const int vType = luaL_checkint(L,  8);
-	const int tType = luaL_checkint(L,  9);
-	const int pAxis = luaL_checkint(L, 10);
-
-	const float3 scales(xs, ys, zs);
-	const float3 offsets(xo, yo, zo);
-
-	feature->collisionVolume->InitShape(scales, offsets, vType, tType, pAxis);
-	return 0;
+	return (SetSolidObjectCollisionVolumeData(L, ParseFeature(L, __FUNCTION__, 1)));
 }
 
 /******************************************************************************/
