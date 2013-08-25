@@ -856,13 +856,14 @@ float3 GetWantedLandingVelocity(const float3& curVelocity, float3 landingPosVec,
 
 	// maxSpeed is set to 0 (when landing) before we are fully
 	// on the ground, so make sure to not get stuck in mid-air
+	// note: assume losing altitude is easier than gaining it?
 	float3 wantedVel;
 	wantedVel.x = landingPosVec.x * newSpeedXZ;
 	wantedVel.z = landingPosVec.z * newSpeedXZ;
 	wantedVel.y = -descendRate;
 
 	if (landPosDistXZ > 0.1f && curSpeedXZ > 0.1f) {
-		wantedVel.y = landPosDistY / (landPosDistXZ / curSpeedXZ);
+		wantedVel.y = std::max(wantedVel.y, landPosDistY / (landPosDistXZ / curSpeedXZ));
 	}
 
 	return wantedVel;
