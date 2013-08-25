@@ -34,12 +34,13 @@ float CPathFinderDef::Heuristic(unsigned int xSquare, unsigned int zSquare) cons
 // returns if the goal is inaccessable: this is
 // true if the goal area is "small" and blocked
 bool CPathFinderDef::GoalIsBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& blockMask, const CSolidObject* owner) const {
-	const float r0 = SQUARE_SIZE * SQUARE_SIZE * 4.0f;
+	const float r0 = SQUARE_SIZE * SQUARE_SIZE * 4.0f; // (SQUARE_SIZE*2)^2
 	const float r1 = ((moveDef.xsize * SQUARE_SIZE) >> 1) * ((moveDef.zsize * SQUARE_SIZE) >> 1) * 1.5f;
 
-	return
-		((sqGoalRadius < r0 || sqGoalRadius <= r1) &&
-		(CMoveMath::IsBlocked(moveDef, goal, owner) & blockMask));
+	if (sqGoalRadius >= r0 && sqGoalRadius > r1)
+		return false;
+
+	return ((CMoveMath::IsBlocked(moveDef, goal, owner) & blockMask) != 0);
 }
 
 int2 CPathFinderDef::GoalSquareOffset(unsigned int blockSize) const {

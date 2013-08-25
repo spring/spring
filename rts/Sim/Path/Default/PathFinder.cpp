@@ -153,9 +153,25 @@ IPath::SearchResult CPathFinder::GetPath(
 
 
 IPath::SearchResult CPathFinder::InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced) {
-	// If exact path is reqired and the goal is blocked, then no search is needed.
-	if (exactPath && pfDef.GoalIsBlocked(moveDef, CMoveMath::BLOCK_STRUCTURE, owner))
-		return IPath::CantGetCloser;
+	if (exactPath) {
+		// If exact (non-partial) path is required and the goal is blocked, then no search is needed.
+		if (pfDef.GoalIsBlocked(moveDef, CMoveMath::BLOCK_STRUCTURE, owner)) {
+			return IPath::CantGetCloser;
+		}
+	} else {
+		// also need a "dead zone" around blocked goal-squares for inexact paths
+		// otherwise CPU use can become unacceptable even with circular constraint
+		// (helps only a little because the allowed search radius in this case will
+		// be much smaller as well)
+		if (owner != NULL) {
+			const bool inRange = ((owner->pos - pfDef.goal).SqLength2D() < (Square(owner->radius) + pfDef.sqGoalRadius));
+			const bool blocked = ((CMoveMath::IsBlocked(moveDef, pfDef.goal, owner) & CMoveMath::BLOCK_STRUCTURE) != 0);
+
+			if (inRange && blocked) {
+				return IPath::CantGetCloser;
+			}
+		}
+	}
 
 	// Clamp the start position
 	if (startxSqr >= gs->mapx) { startxSqr = gs->mapxm1; }
