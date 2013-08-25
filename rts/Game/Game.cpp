@@ -614,7 +614,7 @@ void CGame::PreLoadSimulation()
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
 	moveDefHandler = new MoveDefHandler();
 	quadField = new CQuadField();
-	damageArrayHandler = new CDamageArrayHandler();
+	damageArrayHandler = new CDamageArrayHandler(defsParser);
 	explGenHandler = new CExplosionGeneratorHandler();
 }
 

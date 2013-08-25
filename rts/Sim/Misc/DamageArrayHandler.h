@@ -9,12 +9,13 @@
 #include <boost/noncopyable.hpp>
 #include "System/creg/creg_cond.h"
 
+class LuaParser;
 class CDamageArrayHandler : public boost::noncopyable
 {
 	CR_DECLARE_STRUCT(CDamageArrayHandler);
 
 public:
-	CDamageArrayHandler();
+	CDamageArrayHandler(LuaParser* defsParser);
 
 	int GetTypeFromName(const std::string& name) const;
 	int GetNumTypes() const { return armorDefKeys.size(); }
