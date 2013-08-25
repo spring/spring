@@ -83,45 +83,50 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 	boost::unique_lock<boost::shared_mutex> lk(taskMutex, boost::defer_lock);
 #endif
 
-	if (!taskGroups.empty() && lk.try_lock()) {
-		bool foundEmpty = false;
+	if (!taskGroups.empty()) {
+		if (lk.try_lock()) {
+			bool foundEmpty = false;
 
-		for(auto tg: taskGroups) {
-			auto p = tg->GetTask();
+			for(auto tg: taskGroups) {
+				auto p = tg->GetTask();
 
-			if (p) {
-				lk.unlock();
-				SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
-				(*p)();
-				return true;
-			}
+				if (p) {
+					lk.unlock();
+					SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
+					(*p)();
+					return true;
+				}
 
-			if (tg->IsEmpty()) {
-				foundEmpty = true;
-			}
-		}
-		lk.unlock();
-
-		if (foundEmpty) {
-			//FIXME this could be made lock-free too, but is it worth it?
-			waitForLock = true;
-			boost::unique_lock<boost::shared_mutex> ulk(taskMutex, boost::defer_lock);
-			while (!ulk.try_lock()) {}
-			for(auto it = taskGroups.begin(); it != taskGroups.end();) {
-				if ((*it)->IsEmpty()) {
-					it = taskGroups.erase(it);
-				} else {
-					++it;
+				if (tg->IsEmpty()) {
+					foundEmpty = true;
 				}
 			}
-			waitForLock = false;
-			ulk.unlock();
+			lk.unlock();
+
+			if (foundEmpty) {
+				//FIXME this could be made lock-free too, but is it worth it?
+				waitForLock = true;
+				boost::unique_lock<boost::shared_mutex> ulk(taskMutex, boost::defer_lock);
+				while (!ulk.try_lock()) {}
+				for(auto it = taskGroups.begin(); it != taskGroups.end();) {
+					if ((*it)->IsEmpty()) {
+						it = taskGroups.erase(it);
+					} else {
+						++it;
+					}
+				}
+				waitForLock = false;
+				ulk.unlock();
+			}
+
+			return false;
 		}
 
-		return false;
+		// we didn't got a lock, so we couldn't see if there are further tasks
+		return true;
 	}
 
-	return true;
+	return false;
 }
 
 

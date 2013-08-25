@@ -213,6 +213,7 @@ bool SpringApp::Initialize()
 
 	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
 	FileSystemInitializer::Initialize();
+	Threading::InitOMP();
 
 	mouseInput = IMouseInput::GetInstance();
 	keyInput = KeyInput::GetInstance();
