@@ -7,16 +7,15 @@
 #include <cctype>
 
 #include "DamageArrayHandler.h"
-#include "DamageArray.h"
-#include "System/Log/ILog.h"
-#include "Game/Game.h"
+#include "Game/GameVersion.h"
 #include "Lua/LuaParser.h"
 #include "System/creg/STL_Map.h"
-#include "System/Util.h"
+#include "System/Log/ILog.h"
 #include "System/Exceptions.h"
+#include "System/Util.h"
 
 
-CR_BIND(CDamageArrayHandler, );
+CR_BIND(CDamageArrayHandler, (NULL));
 
 CR_REG_METADATA(CDamageArrayHandler, (
 	CR_MEMBER(armorDefNameIdxMap),
@@ -28,12 +27,12 @@ CR_REG_METADATA(CDamageArrayHandler, (
 CDamageArrayHandler* damageArrayHandler;
 
 
-CDamageArrayHandler::CDamageArrayHandler()
+CDamageArrayHandler::CDamageArrayHandler(LuaParser* defsParser)
 {
 	#define DEFAULT_ARMORDEF_NAME "default"
 
 	try {
-		const LuaTable rootTable = game->defsParser->GetRoot().SubTable("ArmorDefs");
+		const LuaTable rootTable = defsParser->GetRoot().SubTable("ArmorDefs");
 
 		if (!rootTable.IsValid())
 			throw content_error("Error loading ArmorDefs");
@@ -46,16 +45,18 @@ CDamageArrayHandler::CDamageArrayHandler()
 
 		LOG("[%s] number of ArmorDefs: " _STPF_, __FUNCTION__, armorDefKeys.size());
 
-		// expects the following structure, subtables are in array-format:
+		// expects the following structure, subtables must be in array-format:
 		//
 		// {"tanks" = {[1] = "supertank", [2] = "megatank"}, "infantry" = {[1] = "dude"}, ...}
+		//
+		// the old (pre-95.0) <key, value> subtable definitions are no longer supported!
 		//
 		for (unsigned int armorDefIdx = 1; armorDefIdx < armorDefKeys.size(); armorDefIdx++) {
 			const std::string armorDefName = StringToLower(armorDefKeys[armorDefIdx]);
 
 			if (armorDefName == DEFAULT_ARMORDEF_NAME) {
 				// ignore, no need to clear entire table
-				LOG_L(L_WARNING, "[%s] ArmorDefs: tried to define the \"default\" armor type!", __FUNCTION__);
+				LOG_L(L_WARNING, "[%s] ArmorDefs: tried to define the \"%s\" armor type!", __FUNCTION__, DEFAULT_ARMORDEF_NAME);
 				continue;
 			}
 
@@ -64,8 +65,32 @@ CDamageArrayHandler::CDamageArrayHandler()
 			const LuaTable armorDefTable = rootTable.SubTable(armorDefKeys[armorDefIdx]);
 			const unsigned int numArmorDefEntries = armorDefTable.GetLength();
 
+			if (SpringVersion::GetMajor()[1] >= '4') {
+				std::vector<std::string> armorDefTableKeys;
+				armorDefTable.GetKeys(armorDefTableKeys);
+
+				// do not continue, table might ALSO have array-style entries
+				if (!armorDefTableKeys.empty()) {
+					LOG_L(L_WARNING,
+						"[%s] ArmorDefs contains sub-table \"%s\" in <key, value> "
+						"format which is deprecated as of Spring 95.0 and will not "
+						"be parsed anymore (UPDATE YOUR armordefs.lua ASAP)!\n",
+						__FUNCTION__, armorDefName.c_str());
+				}
+			}
+
 			for (unsigned int armorDefEntryIdx = 0; armorDefEntryIdx < numArmorDefEntries; armorDefEntryIdx++) {
-				armorDefNameIdxMap[armorDefTable.GetString(armorDefEntryIdx + 1, "")] = armorDefIdx;
+				const std::string unitDefName = StringToLower(armorDefTable.GetString(armorDefEntryIdx + 1, ""));
+				const std::map<std::string, int>::const_iterator armorDefTableIt = armorDefNameIdxMap.find(unitDefName);
+
+				if (armorDefTableIt == armorDefNameIdxMap.end()) {
+					armorDefNameIdxMap[unitDefName] = armorDefIdx;
+					continue;
+				}
+
+				LOG_L(L_WARNING,
+					"[%s] UnitDef \"%s\" in ArmorDef \"%s\" already belongs to ArmorDef category %d!",
+					__FUNCTION__, unitDefName.c_str(), armorDefName.c_str(), armorDefTableIt->second);
 			}
 		}
 	} catch (const content_error&) {
@@ -89,3 +114,4 @@ int CDamageArrayHandler::GetTypeFromName(const std::string& name) const
 
 	return 0; // 'default' armor index
 }
+
