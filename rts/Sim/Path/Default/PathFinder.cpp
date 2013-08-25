@@ -164,7 +164,7 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 		// (helps only a little because the allowed search radius in this case will
 		// be much smaller as well)
 		if (owner != NULL) {
-			const bool inRange = ((owner->pos - pfDef.goal).SqLength2D() < (Square(owner->radius) + pfDef.sqGoalRadius));
+			const bool inRange = ((owner->pos - pfDef.goal).SqLength2D() < (owner->sqRadius + pfDef.sqGoalRadius));
 			const bool blocked = ((CMoveMath::IsBlocked(moveDef, pfDef.goal, owner) & CMoveMath::BLOCK_STRUCTURE) != 0);
 
 			if (inRange && blocked) {
