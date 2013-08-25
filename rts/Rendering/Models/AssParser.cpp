@@ -434,10 +434,10 @@ void CAssParser::SetPieceName(SAssPiece* piece, const S3DModel* model, const aiN
 	if (piece->name.empty()) {
 		if (piece->isRoot) {
 			// root is always the first piece created, so safe to assign this
-			piece->name = "root";
+			piece->name = "$$root$$";
 			return;
 		} else {
-			piece->name = "piece";
+			piece->name = "$$piece$$";
 		}
 	}
 

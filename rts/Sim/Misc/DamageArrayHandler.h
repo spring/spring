@@ -15,16 +15,15 @@ class CDamageArrayHandler : public boost::noncopyable
 
 public:
 	CDamageArrayHandler();
-	~CDamageArrayHandler();
 
-	int GetTypeFromName(std::string name) const;
+	int GetTypeFromName(const std::string& name) const;
+	int GetNumTypes() const { return armorDefKeys.size(); }
 
-	int GetNumTypes() const { return typeList.size(); }
-	const std::vector<std::string>& GetTypeList() const { return typeList; }
+	const std::vector<std::string>& GetTypeList() const { return armorDefKeys; }
 
 private:
-	std::map<std::string, int> name2type;
-	std::vector<std::string> typeList;
+	std::map<std::string, int> armorDefNameIdxMap;
+	std::vector<std::string> armorDefKeys;
 };
 
 extern CDamageArrayHandler* damageArrayHandler;
