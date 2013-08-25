@@ -29,7 +29,6 @@ CMatrix44f::CMatrix44f(const float3& pos, const float3& x, const float3& y, cons
 	m[3]  = 0.0f;  m[7]  = 0.0f;  m[11] = 0.0f;  m[15] = 1.0f;
 }
 
-
 CMatrix44f::CMatrix44f(const float rotX, const float rotY, const float rotZ)
 {
 	LoadIdentity();
@@ -38,41 +37,53 @@ CMatrix44f::CMatrix44f(const float rotX, const float rotY, const float rotZ)
 	RotateZ(rotZ);
 }
 
-
-CMatrix44f::CMatrix44f(const float3& pos)
+CMatrix44f::CMatrix44f(const float3& p)
 {
-	m[0]  = m[5]  = m[10] = m[15] = 1.0f;
-
-	m[1]  = m[2]  = m[3]  = 0.0f;
-	m[4]  = m[6]  = m[7]  = 0.0f;
-	m[8]  = m[9]  = m[11] = 0.0f;
-
-	m[12] = pos.x; m[13] = pos.y; m[14] = pos.z;
+	LoadIdentity();
+	SetPos(p);
 }
 
 
-bool CMatrix44f::IsIdentity() const
+int CMatrix44f::IsOrthoNormal(float eps) const
 {
-	if (m[ 0] != 1.0f || m[ 1] != 0.0f || m[ 2] != 0.0f || m[ 3] != 0.0f) return false; // 1st col
-	if (m[ 4] != 0.0f || m[ 5] != 1.0f || m[ 6] != 0.0f || m[ 7] != 0.0f) return false; // 2nd col
-	if (m[ 8] != 0.0f || m[ 9] != 0.0f || m[10] != 1.0f || m[11] != 0.0f) return false; // 3rd col
-	if (m[12] != 0.0f || m[13] != 0.0f || m[14] != 0.0f || m[15] != 1.0f) return false; // 4th col
+	const float3& xdir = GetX();
+	const float3& ydir = GetY();
+	const float3& zdir = GetZ();
 
-	return true;
+	if (math::fabs(xdir.dot(ydir)) > eps) { return 1; }
+	if (math::fabs(ydir.dot(zdir)) > eps) { return 2; }
+	if (math::fabs(xdir.dot(zdir)) > eps) { return 3; }
+
+	if (xdir.SqLength() < (1.0f - eps) || xdir.SqLength() > (1.0f + eps)) { return 4; }
+	if (ydir.SqLength() < (1.0f - eps) || ydir.SqLength() > (1.0f + eps)) { return 5; }
+	if (zdir.SqLength() < (1.0f - eps) || zdir.SqLength() > (1.0f + eps)) { return 6; }
+
+	return 0;
+}
+
+int CMatrix44f::IsIdentity(float eps) const
+{
+	#define ABS(i) math::fabs(m[i])
+	if (ABS( 0) > (1.0f + eps) || ABS( 1) > (       eps) || ABS( 2) > (       eps) || ABS( 3) > (       eps)) return 1; // 1st col
+	if (ABS( 4) > (       eps) || ABS( 5) > (1.0f + eps) || ABS( 6) > (       eps) || ABS( 7) > (       eps)) return 2; // 2nd col
+	if (ABS( 8) > (       eps) || ABS( 9) > (       eps) || ABS(10) > (1.0f + eps) || ABS(11) > (       eps)) return 3; // 3rd col
+	if (ABS(12) > (       eps) || ABS(13) > (       eps) || ABS(14) > (       eps) || ABS(15) > (1.0f + eps)) return 4; // 4th col
+	#undef ABS
+	return 0;
 }
 
 void CMatrix44f::LoadIdentity()
 {
-	m[0]  = m[5]  = m[10] = m[15] = 1.0f;
+	m[ 0] = m[ 5] = m[10] = m[15] = 1.0f;
 
-	m[1]  = m[2]  = m[3]  = 0.0f;
-	m[4]  = m[6]  = m[7]  = 0.0f;
-	m[8]  = m[9]  = m[11] = 0.0f;
+	m[ 1] = m[ 2] = m[ 3] = 0.0f;
+	m[ 4] = m[ 6] = m[ 7] = 0.0f;
+	m[ 8] = m[ 9] = m[11] = 0.0f;
 	m[12] = m[13] = m[14] = 0.0f;
 }
 
 
-void CMatrix44f::RotateX(float rad)
+CMatrix44f& CMatrix44f::RotateX(float rad)
 {
 /*
 	const float sr = math::sin(rad);
@@ -104,10 +115,12 @@ void CMatrix44f::RotateX(float rad)
 	a=m[7];
 	m[7]  = cr*a - sr*m[11];
 	m[11] = sr*a + cr*m[11];
+
+	return *this;
 }
 
 
-void CMatrix44f::RotateY(float rad)
+CMatrix44f& CMatrix44f::RotateY(float rad)
 {
 /*
 	const float sr = math::sin(rad);
@@ -139,10 +152,12 @@ void CMatrix44f::RotateY(float rad)
 	a=m[3];
 	m[3]  =  cr*a + sr*m[11];
 	m[11] = -sr*a + cr*m[11];
+
+	return *this;
 }
 
 
-void CMatrix44f::RotateZ(float rad)
+CMatrix44f& CMatrix44f::RotateZ(float rad)
 {
 /*
 	const float sr = math::sin(rad);
@@ -174,21 +189,29 @@ void CMatrix44f::RotateZ(float rad)
 	a=m[3];
 	m[3] = cr*a - sr*m[7];
 	m[7] = sr*a + cr*m[7];
+
+	return *this;
 }
 
 
-void CMatrix44f::Rotate(float rad, const float3& axis)
+CMatrix44f& CMatrix44f::Rotate(float rad, const float3& axis)
 {
 	const float sr = math::sin(rad);
 	const float cr = math::cos(rad);
 
 	for (int a = 0; a < 3; ++a) {
-		float3 v(m[a*4], m[a*4+1], m[a*4+2]);
+		// a=0: x, a=1: y, a=2: z
+		float3 v(m[a*4], m[a*4 + 1], m[a*4 + 2]);
 
+		// project the rotation axis onto x/y/z (va)
+		// find component orthogonal to projection (vp)
+		// find another vector orthogonal to that (vp2)
+		// --> orthonormal basis, va is forward vector
 		float3 va(axis * v.dot(axis));
 		float3 vp(v - va);
 		float3 vp2(axis.cross(vp));
 
+		// rotate vp (around va), set x/y/z to va plus this
 		float3 vpnew(vp*cr + vp2*sr);
 		float3 vnew(va + vpnew);
 
@@ -196,6 +219,8 @@ void CMatrix44f::Rotate(float rad, const float3& axis)
 		m[a*4 + 1] = vnew.y;
 		m[a*4 + 2] = vnew.z;
 	}
+
+	return *this;
 }
 
 
@@ -221,12 +246,13 @@ CMatrix44f& CMatrix44f::Scale(const float3 scales)
 }
 
 
-void CMatrix44f::Translate(const float x, const float y, const float z)
+CMatrix44f& CMatrix44f::Translate(const float x, const float y, const float z)
 {
 	m[12] += x*m[0] + y*m[4] + z*m[ 8];
 	m[13] += x*m[1] + y*m[5] + z*m[ 9];
 	m[14] += x*m[2] + y*m[6] + z*m[10];
 	m[15] += x*m[3] + y*m[7] + z*m[11];
+	return *this;
 }
 
 
