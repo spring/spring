@@ -189,7 +189,14 @@ namespace
 				case 1: {
 					const char* cstr = value.c_str();
 					char* endNumPos = NULL;
-					wantedValue = strtof(cstr, &endNumPos);
+//FIXME: std::strtof is in C99 which M$ doesn't bother to support.
+#ifdef __MSVC__
+	#define STRTOF strtod
+#else
+	#define STRTOF strtof
+#endif
+					wantedValue = STRTOF(cstr, &endNumPos);
+#undef STRTOF
 					if (endNumPos == cstr) wantedValueStr = value;
 				} break;
 			}
