@@ -934,23 +934,26 @@ void CWeapon::DependentDied(CObject* o)
 	}
 }
 
-bool CWeapon::TargetUnitOrPositionInUnderWater(const float3& targetPos, const CUnit* targetUnit, float offset)
+bool CWeapon::TargetUnitOrPositionUnderWater(const float3& targetPos, const CUnit* targetUnit, float offset)
 {
+	// test if a target position or unit is strictly underwater
 	if (targetUnit != NULL) {
 		return (targetUnit->IsUnderWater());
 	} else {
+		// consistent with CSolidObject::IsUnderWater
 		return ((targetPos.y + offset) < 0.0f);
 	}
 }
 
 bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit, float offset)
 {
+	// test if a target position or unit is in water (including underwater)
 	if (targetUnit != NULL) {
 		return (targetUnit->IsInWater());
 	} else {
-		// consistent with CUnit::IsInWater(), and needed because
-		// GUIHandler places (some) user ground-attack orders on
-		// water surface
+		// consistent with CSolidObject::IsInWater, and needed because
+		// GUIHandler places (some) user ground-attack orders on water
+		// surface
 		return ((targetPos.y + offset) <= 0.0f);
 	}
 }
@@ -1123,7 +1126,7 @@ bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, const CUnit*
 	}
 
 	// target is underwater but we cannot pick targets underwater
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInUnderWater(tgtPos, targetUnit, -0.125f))
+	if (!weaponDef->waterweapon && TargetUnitOrPositionUnderWater(tgtPos, targetUnit, -0.125f))
 		return false;
 
 	return true;

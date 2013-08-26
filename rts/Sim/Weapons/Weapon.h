@@ -85,7 +85,7 @@ protected:
 	bool UpdateStockpile();
 	void UpdateSalvo();
 
-	static bool TargetUnitOrPositionInUnderWater(const float3& targetPos, const CUnit* targetUnit, float offset = 0.0f);
+	static bool TargetUnitOrPositionUnderWater(const float3& targetPos, const CUnit* targetUnit, float offset = 0.0f);
 	static bool TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit, float offset = 0.0f);
 
 protected:

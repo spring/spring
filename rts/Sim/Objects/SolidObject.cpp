@@ -111,8 +111,8 @@ CSolidObject::~CSolidObject() {
 }
 
 void CSolidObject::UpdatePhysicalState() {
-	const float mh = /*model->*/height;
 	const float gh = ground->GetHeightReal(pos.x, pos.z);
+	const float wh = std::max(gh, 0.0f);
 
 	unsigned int ps = physicalState;
 
@@ -121,10 +121,20 @@ void CSolidObject::UpdatePhysicalState() {
 	ps &= (~CSolidObject::STATE_BIT_UNDERWATER);
 	ps &= (~CSolidObject::STATE_BIT_INAIR);
 
-	ps |= (CSolidObject::STATE_BIT_ONGROUND   * ((pos.y -                 gh) <= 1.0f));
-	ps |= (CSolidObject::STATE_BIT_INWATER    * ( pos.y                       <= 0.0f));
-	ps |= (CSolidObject::STATE_BIT_UNDERWATER * ((pos.y +                 mh) <  0.0f));
-	ps |= (CSolidObject::STATE_BIT_INAIR      * ((pos.y - std::max(gh, 0.0f)) >  1.0f));
+	// NOTE:
+	//   height is not in general equivalent to radius * 2.0
+	//   the height property is used for much fewer purposes
+	//   than radius, so less reliable for determining state
+	ps |= (CSolidObject::STATE_BIT_ONGROUND   * ((   pos.y -     gh) <= 1.0f));
+	ps |= (CSolidObject::STATE_BIT_INWATER    * ((   pos.y         ) <= 0.0f));
+//	ps |= (CSolidObject::STATE_BIT_UNDERWATER * ((   pos.y + height) <  0.0f));
+	ps |= (CSolidObject::STATE_BIT_UNDERWATER * ((midPos.y + radius) <  0.0f));
+	ps |= (CSolidObject::STATE_BIT_INAIR      * ((   pos.y -     wh) >  1.0f));
+
+	// verify mutex relations
+	assert(IsInAir() != IsOnGround());
+	assert(IsInAir() != IsInWater());
+	assert(IsInAir() != IsUnderWater());
 
 	physicalState = static_cast<PhysicalState>(ps);
 }

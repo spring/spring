@@ -68,9 +68,10 @@ void CBombDropper::Update()
 
 bool CBombDropper::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const
 {
-	if (!dropTorpedoes && TargetUnitOrPositionInUnderWater(pos, unit)) {
+	// assume we can still fire at partially submerged targets
+	if (!dropTorpedoes && TargetUnitOrPositionUnderWater(pos, unit))
 		return false;
-	}
+
 	return CWeapon::TestTarget(pos, userTarget, unit);
 }
 
