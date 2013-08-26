@@ -131,10 +131,11 @@ void CSolidObject::UpdatePhysicalState() {
 	ps |= (CSolidObject::STATE_BIT_UNDERWATER * ((midPos.y + radius) <  0.0f));
 	ps |= (CSolidObject::STATE_BIT_INAIR      * ((   pos.y -     wh) >  1.0f));
 
-	// verify mutex relations
-	assert(IsInAir() != IsOnGround());
-	assert(IsInAir() != IsInWater());
-	assert(IsInAir() != IsUnderWater());
+	// verify mutex relations (A != B); if one
+	// fails then A and B *must* both be false
+	assert((IsInAir() != IsOnGround()) || IsInWater());
+	assert((IsInAir() != IsInWater()) || IsOnGround());
+	assert((IsInAir() != IsUnderWater()) || (IsOnGround() || IsInWater()));
 
 	physicalState = static_cast<PhysicalState>(ps);
 }
