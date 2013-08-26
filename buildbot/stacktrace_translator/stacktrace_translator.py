@@ -73,6 +73,7 @@ RE_VERSION_LINES = [
 		r'%s%s has crashed\.%s',
 		r'%sHang detection triggered for %s\.%s',
 		r'%sSegmentation fault \(SIGSEGV\) in %s%s',
+		r'%sAborted \(SIGABRT\) in %s%s',
 	]
 ]
 
@@ -214,7 +215,7 @@ def get_modules(dbgfile):
 	return files
 
 
-def collect_modules(config, branch, rev, platform):
+def collect_modules(config, branch, rev, platform, dbgsymdir = None):
 	'''\
 	Collect modules for which debug data is available.
 	Return dict which maps (simplified) module name to debug symbol filename.
@@ -223,19 +224,27 @@ def collect_modules(config, branch, rev, platform):
 	'''
 	log.info('Checking debug data availability...')
 
-	dir = os.path.join(WWWROOT, config, branch, rev, platform)
-	log.debug(dir)
-	if not os.path.isdir(dir):
-		fatal('No debugging symbols available')
+	if (dbgsymdir == None):
+		dbgsymdir = os.path.join(WWWROOT, config, branch, rev, platform)
+
+	log.debug(dbgsymdir)
+
+	if not os.path.isdir(dbgsymdir):
+		fatal('No debugging symbols available, \"%s\" not a directory' % dbgsymdir)
+
 	dbgfile = None
-	for filename in os.listdir(dir):
+
+	for filename in os.listdir(dbgsymdir):
 		match = re.match(RE_DEBUG_FILENAME, filename)
 		if match:
-			dbgfile = os.path.join(dir, filename)
+			dbgfile = os.path.join(dbgsymdir, filename)
+
 	if not dbgfile:
-		return None
+		return None, None
+
 	archivefiles = get_modules(dbgfile)
 	modules = {}
+
 	for module in archivefiles:
 		if module == 'spring.dbg':
 			modules["spring.exe"] = module
@@ -323,7 +332,7 @@ def translate_(module_frames, frame_count, modules, modulearchive):
 	return translated_stacktrace
 
 
-def translate_stacktrace(infolog):
+def translate_stacktrace(infolog, dbgsymdir = None):
 	r'''\
 	Translate a complete stacktrace to (module, address, filename, lineno) tuples.
 
@@ -383,9 +392,13 @@ def translate_stacktrace(infolog):
 	try:
 		config, branch, rev = detect_version_details(infolog)
 		module_frames, frame_count = collect_stackframes(infolog)
-		debugarchive, modules = collect_modules(config, branch, rev, 'win32')
-		if frame_count==0:
-			fatal("No stack found in infolog.txt")
+		debugarchive, modules = collect_modules(config, branch, rev, 'win32', dbgsymdir)
+
+		if (debugarchive == None):
+			fatal("No debug-archive(s) found for infolog.txt")
+		if frame_count == 0:
+			fatal("No stack-trace found in infolog.txt")
+
 		translated_stacktrace = translate_(module_frames, frame_count, modules, debugarchive)
 
 	except FatalError:
@@ -426,11 +439,36 @@ def run_xmlrpc_server():
 		os.remove(PIDFILE)
 
 
-if __name__ == '__main__':
-	if len(sys.argv) > 1 and sys.argv[1] == '--test':
-		import doctest
+def main(argc, argv):
+	if (argc > 1):
 		logging.basicConfig(format='%(message)s')
 		log.setLevel(logging.DEBUG)
-		doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE + doctest.ELLIPSIS)
+
+		if (argv[1] == '--test'):
+			import doctest
+			doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE + doctest.ELLIPSIS)
+		else:
+			try:
+				infolog = open(argv[1], 'r')
+				dbgsymdir = ((argc >= 3) and argv[2]) or None
+
+				## config, branch, githash = detect_version_details(infolog.read())
+				stacktrace = translate_stacktrace(infolog.read(), dbgsymdir)
+				for address in stacktrace:
+					print(address)
+
+			except FatalError:
+				## redundant
+				## print("FatalError:\n%s" % traceback.format_exc())
+				return
+			except IOError:
+				print("IOError: file \"%s\" not readable" % argv[1])
+				return
+
 	else:
 		run_xmlrpc_server()
+
+
+if (__name__ == '__main__'):
+	main(len(sys.argv), sys.argv)
+
