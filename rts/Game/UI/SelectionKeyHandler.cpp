@@ -174,6 +174,12 @@ namespace
 		},
 		cat=0;
 	);
+//FIXME: std::strtof is in C99 which M$ doesn't bother to support.
+#ifdef __MSVC__
+	#define STRTOF strtod
+#else
+	#define STRTOF strtof
+#endif
 
 	DECLARE_FILTER_EX(RulesParamEquals, 2, unit->modParamsMap.find(param) != unit->modParamsMap.end() &&
 			((wantedValueStr.empty()) ? unit->modParams[unit->modParamsMap.find(param)->second].valueInt == wantedValue
@@ -189,14 +195,7 @@ namespace
 				case 1: {
 					const char* cstr = value.c_str();
 					char* endNumPos = NULL;
-//FIXME: std::strtof is in C99 which M$ doesn't bother to support.
-#ifdef __MSVC__
-	#define STRTOF strtod
-#else
-	#define STRTOF strtof
-#endif
 					wantedValue = STRTOF(cstr, &endNumPos);
-#undef STRTOF
 					if (endNumPos == cstr) wantedValueStr = value;
 				} break;
 			}
@@ -206,6 +205,7 @@ namespace
 
 #undef DECLARE_FILTER_EX
 #undef DECLARE_FILTER
+#undef STRTOF
 };
 
 
