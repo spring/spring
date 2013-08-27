@@ -120,7 +120,8 @@ public:
 		reinterpret_cast<CUnitDrawer*>(c)->DrawOpaqueUnitShadow(unit);
 	}
 
-	void DrawUnitStats(CUnit* unit);
+	bool UnitStatBarVisible(const CUnit* unit);
+	void DrawUnitStatBars(CUnit* unit);
 #endif
 
 

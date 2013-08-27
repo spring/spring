@@ -1114,7 +1114,9 @@ void CUnit::DoDamage(
 	int weaponDefID,
 	int projectileID
 ) {
-	if (isDead || IsCrashing())
+	if (isDead)
+		return;
+	if (IsCrashing() || IsInVoid())
 		return;
 
 	float baseDamage = damages[armorType];

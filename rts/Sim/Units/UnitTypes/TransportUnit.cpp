@@ -59,10 +59,8 @@ void CTransportUnit::Update()
 
 		transportee->mapSquare = mapSquare;
 
-		// by default, "hide" the transportee far underneath terrain
-		// FIXME: this is stupid, just set noDraw and disable coldet
-		float3 relPiecePos = UpVector * -10000.0f;
-		float3 absPiecePos = pos + relPiecePos;
+		float3 relPiecePos = ZeroVector;
+		float3 absPiecePos = pos;
 
 		if (ti->piece >= 0) {
 			relPiecePos = script->GetPiecePos(ti->piece);
@@ -144,6 +142,7 @@ void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed
 
 			transportee->SetTransporter(NULL);
 			transportee->DeleteDeathDependence(this, DEPENDENCE_TRANSPORTER);
+			transportee->UpdateVoidState(false);
 
 			if (!unitDef->releaseHeld) {
 				if (!selfDestruct) {
@@ -273,6 +272,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 			}
 		}
 
+		unit->UpdateVoidState(piece < 0);
 		return;
 	} else {
 		// handle transfers from another transport to us
@@ -293,6 +293,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->SetTransporter(this);
 	unit->loadingTransportId = -1;
 	unit->SetStunned(!unitDef->isFirePlatform);
+	unit->UpdateVoidState(piece < 0);
 
 	if (unit->IsStunned()) {
 		// make sure unit does not fire etc in transport
@@ -372,6 +373,7 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 			transportMassUsed -= ti->mass;
 			transportedUnits.erase(ti);
 
+			unit->UpdateVoidState(false);
 			unit->CalculateTerrainType();
 			unit->UpdateTerrainType();
 

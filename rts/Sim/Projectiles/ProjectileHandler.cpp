@@ -389,9 +389,10 @@ void CProjectileHandler::CheckUnitCollisions(
 		const CUnit* attacker = p->owner();
 
 		// if this unit fired this projectile, always ignore
-		if (attacker == unit) {
+		if (attacker == unit)
 			continue;
-		}
+		if (!unit->collidable)
+			continue;
 
 		if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
 			if (attacker != NULL && (unit->allyteam == attacker->allyteam)) { continue; }
@@ -440,9 +441,8 @@ void CProjectileHandler::CheckFeatureCollisions(
 	for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
 		CFeature* feature = *fi;
 
-		if (!feature->collidable) {
+		if (!feature->collidable)
 			continue;
-		}
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
 			if (!cq.InsideHit()) {
