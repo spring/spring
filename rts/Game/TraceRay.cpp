@@ -231,6 +231,8 @@ float TraceRay(
 
 					if (u == owner)
 						continue;
+					if (!u->collidable)
+						continue;
 					if (ignoreAllies && u->allyteam == owner->allyteam)
 						continue;
 					if (ignoreNeutrals && u->IsNeutral())
@@ -327,6 +329,8 @@ float GuiTraceRay(
 
 			if (unit == exclude)
 				continue;
+			if (!unit->collidable)
+				continue;
 			if (!unitVisible)
 				continue;
 
@@ -369,6 +373,8 @@ float GuiTraceRay(
 
 			// FIXME add useradar?
 			if (!gu->spectatingFullView && !f->IsInLosForAllyTeam(gu->myAllyTeam))
+				continue;
+			if (!f->collidable)
 				continue;
 			if (f->noSelect)
 				continue;
@@ -436,6 +442,8 @@ bool TestCone(
 
 				if (u == owner)
 					continue;
+				if (!u->collidable)
+					continue;
 
 				if (TestConeHelper(from, dir, length, spread, u))
 					return true;
@@ -450,6 +458,8 @@ bool TestCone(
 				const CUnit* u = *unitsIt;
 
 				if (u == owner)
+					continue;
+				if (!u->collidable)
 					continue;
 				if (!u->IsNeutral())
 					continue;
@@ -518,6 +528,8 @@ bool TestTrajectoryCone(
 
 				if (u == owner)
 					continue;
+				if (!u->collidable)
+					continue;
 
 				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadii[u->immobile], u)) {
 					return true;
@@ -536,6 +548,8 @@ bool TestTrajectoryCone(
 				if (u == owner)
 					continue;
 				if (!u->IsNeutral())
+					continue;
+				if (!u->collidable)
 					continue;
 
 				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadii[u->immobile], u))

@@ -309,15 +309,14 @@ inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 
 inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
 {
-	if (unit == excludeUnit) {
+	if (unit == excludeUnit)
 		return;
-	}
-	if (unit->noDraw) {
+	if (unit->noDraw)
 		return;
-	}
-	if (!camera->InView(unit->drawMidPos, unit->drawRadius)) {
+	if (unit->IsInVoid())
 		return;
-	}
+	if (!camera->InView(unit->drawMidPos, unit->drawRadius))
+		return;
 
 	if ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView) {
 		if (drawReflection) {
@@ -488,7 +487,7 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 
 #ifdef USE_GML
 		for (std::set<CUnit*>::iterator ui = drawStat.begin(); ui != drawStat.end(); ++ui) {
-			DrawUnitStats(*ui);
+			DrawUnitStatBars(*ui);
 		}
 #endif
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -704,6 +703,10 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 
 	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
 
+	if (unit->noDraw)
+		return;
+	if (unit->IsInVoid())
+		return;
 	// FIXME: test against the shadow projection intersection
 	if (!(unitInLOS && camera->InView(unit->drawMidPos, unit->drawRadius + 700.0f))) {
 		return;
@@ -712,7 +715,6 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	const float sqDist = (unit->pos - camera->GetPos()).SqLength();
 	const float farLength = unit->sqRadius * unitDrawDistSqr;
 
-	if (unit->noDraw) { return; }
 	if (sqDist >= farLength) { return; }
 	if (unit->isCloaked) { return; }
 	if (DrawAsIcon(unit, sqDist)) { return; }
@@ -1669,7 +1671,7 @@ void CUnitDrawer::DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsign
 }
 
 #ifdef USE_GML
-void CUnitDrawer::DrawUnitStats(CUnit* unit)
+void CUnitDrawer::DrawUnitStatBars(CUnit* unit)
 {
 	if ((gu->myAllyTeam != unit->allyteam) &&
 	    !gu->spectatingFullView && unit->unitDef->hideDamage) {
@@ -1737,6 +1739,19 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 
 	glPopMatrix();
 }
+
+inline bool CUnitDrawer::UnitStatBarVisible(const CUnit* u) {
+	if (!showHealthBars)
+		return false;
+	if (u->noDraw)
+		return false;
+	if (u->IsInVoid())
+		return false;
+	if ((u->pos - camera->GetPos()).SqLength() >= (unitDrawDistSqr * 500.0f))
+		return false;
+
+	return (u->health < u->maxHealth || u->paralyzeDamage > 0.0f || u->limExperience > 0.0f || u->beingBuilt || u->stockpileWeapon || u->group != NULL);
+}
 #endif
 
 
@@ -1749,12 +1764,11 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 		unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength());
+
 #ifdef USE_GML
-		if (showHealthBars && !unit->noDraw &&
-			(unit->health < unit->maxHealth || unit->paralyzeDamage > 0.0f || unit->limExperience > 0.0f ||
-			unit->beingBuilt || unit->stockpileWeapon || unit->group) &&
-			((unit->pos - camera->GetPos()).SqLength() < (unitDrawDistSqr * 500.0f)))
+		if (UnitStatBarVisible(unit)) {
 			drawStat.insert(unit);
+		}
 #endif
 	} else if ((losStatus & LOS_PREVLOS) && (losStatus & LOS_CONTRADAR)) {
 		if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
@@ -1762,7 +1776,7 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 		}
 	}
 
-	if (unit->isIcon && !unit->noDraw)
+	if (unit->isIcon && !unit->noDraw && !unit->IsInVoid())
 		drawIcon.insert(unit);
 }
 
@@ -1969,6 +1983,8 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 	if (unit->noMinimap)
 		return;
 	if (unit->myIcon == NULL)
+		return;
+	if (unit->IsInVoid())
 		return;
 
 	const unsigned char defaultColor[4] = {255, 255, 255, 255};

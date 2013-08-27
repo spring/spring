@@ -54,18 +54,19 @@ public:
 		STATE_BIT_INWATER    = (1 << 1),
 		STATE_BIT_UNDERWATER = (1 << 2),
 		STATE_BIT_INAIR      = (1 << 3),
+		STATE_BIT_INVOID     = (1 << 4),
 
 		// special bits for impulse-affected objects that do
 		// not get set automatically by UpdatePhysicalState;
 		// also used by aircraft to control block / unblock
 		// behavior
 		// NOTE: FLYING DOES NOT ALWAYS IMPLY INAIR!
-		STATE_BIT_MOVING   = (1 << 4),
-		STATE_BIT_FLYING   = (1 << 5),
-		STATE_BIT_FALLING  = (1 << 6),
-		STATE_BIT_SKIDDING = (1 << 7),
-		STATE_BIT_CRASHING = (1 << 8),
-		STATE_BIT_BLOCKING = (1 << 9),
+		STATE_BIT_MOVING   = (1 <<  5),
+		STATE_BIT_FLYING   = (1 <<  6),
+		STATE_BIT_FALLING  = (1 <<  7),
+		STATE_BIT_SKIDDING = (1 <<  8),
+		STATE_BIT_CRASHING = (1 <<  9),
+		STATE_BIT_BLOCKING = (1 << 10),
 	};
 	enum DamageType {
 		DAMAGE_EXPLOSION_WEAPON = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
@@ -156,6 +157,7 @@ public:
 	bool IsInAir() const { return (HasPhysicalStateBit(STATE_BIT_INAIR)); }
 	bool IsInWater() const { return (HasPhysicalStateBit(STATE_BIT_INWATER)); }
 	bool IsUnderWater() const { return (HasPhysicalStateBit(STATE_BIT_UNDERWATER)); }
+	bool IsInVoid() const { return (HasPhysicalStateBit(STATE_BIT_INVOID)); }
 
 	bool IsMoving() const { return (HasPhysicalStateBit(STATE_BIT_MOVING)); }
 	bool IsFlying() const { return (HasPhysicalStateBit(STATE_BIT_FLYING)); }
@@ -175,6 +177,8 @@ public:
 		}
 		return (HasPhysicalStateBit(bit));
 	}
+
+	void UpdateVoidState(bool set);
 
 private:
 	void SetMidPos(const float3& mp, bool relative) {

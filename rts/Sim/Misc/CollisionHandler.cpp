@@ -50,7 +50,8 @@ bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CUnit* u, cons
 	if (v->DefaultToPieceTree())
 		return (CCollisionHandler::IntersectPieceTree(u, p0, p1, cq));
 
-	return DetectHit(v, (const CSolidObject*)u, p0, p1, cq, forceTrace);
+	// explicitly cast to avoid recursion
+	return DetectHit(v, (const CSolidObject*) u, p0, p1, cq, forceTrace);
 }
 
 
@@ -210,14 +211,16 @@ bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3&
 {
 	bool hit = false;
 
-	if (v->DefaultToPieceTree()) {
-		hit = CCollisionHandler::IntersectPieceTree(u, p0, p1, cq);
-	} else {
-		CMatrix44f m = u->GetTransformMatrix(false, true);
-		m.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
-		m.Translate(v->GetOffsets());
+	if (!v->IgnoreHits()) {
+		if (v->DefaultToPieceTree()) {
+			hit = CCollisionHandler::IntersectPieceTree(u, p0, p1, cq);
+		} else {
+			CMatrix44f m = u->GetTransformMatrix(false, true);
+			m.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
+			m.Translate(v->GetOffsets());
 
-		hit = CCollisionHandler::Intersect(v, m, p0, p1, cq);
+			hit = CCollisionHandler::Intersect(v, m, p0, p1, cq);
+		}
 	}
 
 	return hit;

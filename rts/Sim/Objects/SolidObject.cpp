@@ -140,6 +140,24 @@ void CSolidObject::UpdatePhysicalState() {
 	physicalState = static_cast<PhysicalState>(ps);
 }
 
+void CSolidObject::UpdateVoidState(bool set) {
+	if (set) {
+		SetPhysicalStateBit(STATE_BIT_INVOID);
+		UnBlock();
+		collisionVolume->SetIgnoreHits(true);
+
+		// make us transparent to raycasts, quadfield queries, etc.
+		// TODO: not checked everywhere, should push/pop old state?
+		collidable = false;
+	} else {
+		collidable = objectDef->collidable;
+
+		ClearPhysicalStateBit(STATE_BIT_INVOID);
+		Block();
+		collisionVolume->SetIgnoreHits(false);
+	}
+}
+
 
 
 void CSolidObject::UnBlock() {
@@ -324,7 +342,7 @@ void CSolidObject::SetHeadingFromDirection() {
 void CSolidObject::Kill(const float3& impulse, bool crushKill) {
 	crushKilled = crushKill;
 
-	DamageArray damage(health + 1.0f);
-	DoDamage(damage, impulse, NULL, -DAMAGE_EXTSOURCE_KILLED, -1);
+	UpdateVoidState(false);
+	DoDamage(DamageArray(health + 1.0f), impulse, NULL, -DAMAGE_EXTSOURCE_KILLED, -1);
 }
 

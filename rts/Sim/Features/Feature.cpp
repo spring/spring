@@ -371,6 +371,8 @@ void CFeature::DoDamage(
 	// paralyzers do not damage features
 	if (damages.paralyzeDamageTime)
 		return;
+	if (IsInVoid())
+		return;
 
 	// features have no armor-type, so use default damage
 	float baseDamage = damages.GetDefaultDamage();
