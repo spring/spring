@@ -102,6 +102,7 @@ static inline void DrawFeatureColVol(const CFeature* f)
 {
 	const CollisionVolume* v = f->collisionVolume;
 
+	if (f->IsInVoid()) return;
 	if (!f->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) return;
 	if (!camera->InView(f->pos, f->drawRadius)) return;
 
@@ -183,6 +184,7 @@ static void DrawUnitDebugPieces(const CUnit* u)
 
 static inline void DrawUnitColVol(const CUnit* u)
 {
+	if (u->IsInVoid()) return;
 	if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView) return;
 	if (!camera->InView(u->drawMidPos, u->drawRadius)) return;
 

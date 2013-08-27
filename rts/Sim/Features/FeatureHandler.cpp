@@ -118,6 +118,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const std
 	fd->description = fdTable.GetString("description", "");
 
 	fd->collidable    =  fdTable.GetBool("blocking",        true);
+	fd->selectable    = !fdTable.GetBool("noselect",        false);
 	fd->burnable      =  fdTable.GetBool("flammable",       false);
 	fd->destructable  = !fdTable.GetBool("indestructible",  false);
 	fd->reclaimable   =  fdTable.GetBool("reclaimable",     fd->destructable);
@@ -125,7 +126,6 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const std
 	fd->resurrectable =  fdTable.GetInt("resurrectable",    -1);
 	fd->geoThermal    =  fdTable.GetBool("geoThermal",      false);
 	fd->floating      =  fdTable.GetBool("floating",        false);
-	fd->noSelect      =  fdTable.GetBool("noselect",        false);
 
 	fd->metal       = fdTable.GetFloat("metal",  0.0f);
 	fd->energy      = fdTable.GetFloat("energy", 0.0f);

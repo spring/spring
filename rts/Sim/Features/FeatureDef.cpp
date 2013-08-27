@@ -29,7 +29,6 @@ FeatureDef::FeatureDef()
 	, autoreclaim(true)
 	, burnable(false)
 	, floating(false)
-	, noSelect(false)
 	, geoThermal(false)
 {
 }

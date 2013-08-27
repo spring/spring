@@ -63,6 +63,7 @@ public:
 	float crushResistance;
 
 	bool collidable;
+	bool selectable;
 	bool upright;
 	bool reclaimable;
 
