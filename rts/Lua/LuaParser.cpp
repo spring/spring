@@ -16,6 +16,7 @@
 #include "LuaIO.h"
 #include "LuaUtils.h"
 
+#include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
@@ -124,6 +125,10 @@ void LuaParser::SetupEnv()
 	AddFunc("Echo", LuaUtils::Echo);
 	AddFunc("Log", LuaUtils::Log);
 	AddFunc("TimeCheck", TimeCheck);
+	EndTable();
+
+	GetTable("Game");
+	LuaPushNamedString(L, "version", SpringVersion::GetSync());
 	EndTable();
 
 	GetTable("VFS");
@@ -987,7 +992,7 @@ LuaTable::DataType LuaTable::GetType(int key) const
 	}
 	const int type = lua_type(L, -1);
 	lua_pop(L, 1);
-	
+
 	switch (type) {
 		case LUA_TBOOLEAN: return BOOLEAN;
 		case LUA_TNUMBER:  return NUMBER;
@@ -1005,7 +1010,7 @@ LuaTable::DataType LuaTable::GetType(const string& key) const
 	}
 	const int type = lua_type(L, -1);
 	lua_pop(L, 1);
-	
+
 	switch (type) {
 		case LUA_TBOOLEAN: return BOOLEAN;
 		case LUA_TNUMBER:  return NUMBER;
