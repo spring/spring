@@ -55,7 +55,7 @@ bool CTorpedoLauncher::TestTarget(const float3& pos, bool userTarget, const CUni
 	//   (regardless of submissile which applies only to TorpedoLaunchers) but was not
 	//   able to, see #3951
 	//
-	if (weaponMuzzlePos.y < 0.0f && !weaponDef->submissile && !TargetUnitOrPositionInWater(pos, unit, -0.125f))
+	if (weaponMuzzlePos.y < 0.0f && !weaponDef->submissile && !TargetUnitOrPositionInWater(pos, unit))
 		return false;
 
 	return (CWeapon::TestTarget(pos, userTarget, unit));
