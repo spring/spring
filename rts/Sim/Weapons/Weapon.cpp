@@ -397,57 +397,60 @@ bool CWeapon::CanFire() const
 
 void CWeapon::UpdateFire()
 {
-	if (CanFire()) {
-		if ((weaponDef->stockpile ||
-		     (teamHandler->Team(owner->team)->metal >= metalFireCost &&
-		      teamHandler->Team(owner->team)->energy >= energyFireCost)))
-		{
-			const int piece = owner->script->QueryWeapon(weaponNum);
-			owner->script->GetEmitDirPos(piece, relWeaponMuzzlePos, weaponDir);
-			weaponMuzzlePos = owner->pos + owner->frontdir * relWeaponMuzzlePos.z +
-			                               owner->updir    * relWeaponMuzzlePos.y +
-			                               owner->rightdir * relWeaponMuzzlePos.x;
-			weaponDir = owner->frontdir * weaponDir.z +
-			            owner->updir    * weaponDir.y +
-			            owner->rightdir * weaponDir.x;
-			weaponDir.SafeNormalize();
-			useWeaponPosForAim = reloadTime / 16 + 8;
+	if (!CanFire())
+		return;
 
-			if (TryTarget(targetPos, haveUserTarget, targetUnit) && !CobBlockShot(targetUnit)) {
-				if (weaponDef->stockpile) {
-					const int oldCount = numStockpiled;
-					numStockpiled--;
-					owner->commandAI->StockpileChanged(this);
-					eventHandler.StockpileChanged(owner, this, oldCount);
-				} else {
-					owner->UseEnergy(energyFireCost);
-					owner->UseMetal(metalFireCost);
-					owner->currentFuel = std::max(0.0f, owner->currentFuel - fuelUsage);
-				}
+	CTeam* ownerTeam = teamHandler->Team(owner->team);
 
-				reloadStatus = gs->frameNum + int(reloadTime / owner->reloadSpeed);
+	if ((weaponDef->stockpile || (ownerTeam->metal >= metalFireCost && ownerTeam->energy >= energyFireCost))) {
+		owner->script->GetEmitDirPos(owner->script->QueryWeapon(weaponNum), relWeaponMuzzlePos, weaponDir);
 
-				salvoLeft = salvoSize;
-				nextSalvo = gs->frameNum;
-				salvoError = gs->randVector() * (owner->IsMoving()? weaponDef->movingAccuracy: accuracy);
+		weaponMuzzlePos = owner->pos +
+			(owner->frontdir * relWeaponMuzzlePos.z) +
+			(owner->updir    * relWeaponMuzzlePos.y) +
+			(owner->rightdir * relWeaponMuzzlePos.x);
+		weaponDir =
+			(owner->frontdir * weaponDir.z) +
+			(owner->updir    * weaponDir.y) +
+			(owner->rightdir * weaponDir.x);
+		weaponDir.SafeNormalize();
+		useWeaponPosForAim = reloadTime / 16 + 8;
 
-				if (targetType == Target_Pos || (targetType == Target_Unit && !(targetUnit->losStatus[owner->allyteam] & LOS_INLOS))) {
-					// area firing stuff is too effective at radar firing...
-					salvoError *= 1.3f;
-				}
-
-				owner->lastMuzzleFlameSize = muzzleFlareSize;
-				owner->lastMuzzleFlameDir = wantedDir;
-				owner->script->FireWeapon(weaponNum);
+		if (TryTarget(targetPos, haveUserTarget, targetUnit) && !CobBlockShot(targetUnit)) {
+			if (weaponDef->stockpile) {
+				const int oldCount = numStockpiled;
+				numStockpiled--;
+				owner->commandAI->StockpileChanged(this);
+				eventHandler.StockpileChanged(owner, this, oldCount);
+			} else {
+				owner->UseEnergy(energyFireCost);
+				owner->UseMetal(metalFireCost);
+				owner->currentFuel = std::max(0.0f, owner->currentFuel - fuelUsage);
 			}
-		} else {
-			if (!weaponDef->stockpile && TryTarget(targetPos, haveUserTarget, targetUnit)) {
-				// update the energy and metal required counts
-				const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
-				const float averageFactor = 1.0f / (float)minPeriod;
-				teamHandler->Team(owner->team)->energyPull += averageFactor * energyFireCost;
-				teamHandler->Team(owner->team)->metalPull += averageFactor * metalFireCost;
+
+			reloadStatus = gs->frameNum + int(reloadTime / owner->reloadSpeed);
+
+			salvoLeft = salvoSize;
+			nextSalvo = gs->frameNum;
+			salvoError = gs->randVector() * (owner->IsMoving()? weaponDef->movingAccuracy: accuracy);
+
+			if (targetType == Target_Pos || (targetType == Target_Unit && !(targetUnit->losStatus[owner->allyteam] & LOS_INLOS))) {
+				// area firing stuff is too effective at radar firing...
+				salvoError *= 1.3f;
 			}
+
+			owner->lastMuzzleFlameSize = muzzleFlareSize;
+			owner->lastMuzzleFlameDir = wantedDir;
+			owner->script->FireWeapon(weaponNum);
+		}
+	} else {
+		if (!weaponDef->stockpile && TryTarget(targetPos, haveUserTarget, targetUnit)) {
+			// update the energy and metal required counts
+			const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
+			const float averageFactor = 1.0f / (float)minPeriod;
+
+			ownerTeam->energyPull += (averageFactor * energyFireCost);
+			ownerTeam->metalPull += (averageFactor * metalFireCost);
 		}
 	}
 }
