@@ -147,7 +147,7 @@ void CSolidObject::UpdateVoidState(bool set) {
 		collisionVolume->SetIgnoreHits(true);
 
 		// make us transparent to raycasts, quadfield queries, etc.
-		// TODO: not checked everywhere, should push/pop old state?
+		// TODO: not checked everywhere, push/pop old state? (MSB(ps))
 		collidable = false;
 	} else {
 		collidable = objectDef->collidable;
