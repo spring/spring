@@ -318,6 +318,7 @@ void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
 
 bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 {
+	if (feature->IsInVoid()) { return false; }
 	if (!camera->InView(feature->drawMidPos, feature->drawRadius)) { return false; }
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
 
@@ -503,6 +504,9 @@ public:
 
 		for (std::set<CFeature*>::const_iterator fi = dq->features.begin(); fi != dq->features.end(); ++fi) {
 			CFeature* f = (*fi);
+
+			if (f->IsInVoid())
+				continue;
 
 			assert(f->def->drawType == DRAWTYPE_MODEL);
 
