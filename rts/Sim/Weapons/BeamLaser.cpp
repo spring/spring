@@ -196,6 +196,8 @@ void CBeamLaser::UpdateSweep()
 
 	if (!sweepFireState.IsSweepFiring())
 		return;
+	if (reloadStatus > gs->frameNum)
+		return;
 
 	if (teamHandler->Team(owner->team)->metal < metalFireCost) { return; }
 	if (teamHandler->Team(owner->team)->energy < energyFireCost) { return; }
@@ -204,6 +206,11 @@ void CBeamLaser::UpdateSweep()
 	owner->UseMetal(metalFireCost / salvoSize);
 
 	FireInternal(sweepFireState.GetSweepCurrDir());
+
+	// FIXME:
+	//   reloadStatus is normally only set in UpdateFire and only if CanFire
+	//   (which is not true during sweeping, the integration should be better)
+	reloadStatus = gs->frameNum + int(reloadTime / owner->reloadSpeed);
 }
 
 void CBeamLaser::Update()
