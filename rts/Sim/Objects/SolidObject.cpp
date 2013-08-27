@@ -149,8 +149,10 @@ void CSolidObject::UpdateVoidState(bool set) {
 		// make us transparent to raycasts, quadfield queries, etc.
 		// TODO: not checked everywhere, push/pop old state? (MSB(ps))
 		collidable = false;
+		noSelect = true;
 	} else {
 		collidable = objectDef->collidable;
+		noSelect = !objectDef->selectable;
 
 		ClearPhysicalStateBit(STATE_BIT_INVOID);
 		Block();

@@ -174,7 +174,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	xsize = ((buildFacing & 1) == 0) ? def->xsize : def->zsize;
 	zsize = ((buildFacing & 1) == 1) ? def->xsize : def->zsize;
 
-	noSelect = def->noSelect;
+	noSelect = !def->selectable;
 
 	// set position before mid-position
 	Move((params.pos).cClampInMap(), false);

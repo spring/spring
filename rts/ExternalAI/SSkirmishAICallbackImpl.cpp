@@ -3704,7 +3704,7 @@ EXPORT(bool) skirmishAiCallback_FeatureDef_isFloating(int skirmishAIId, int feat
 }
 
 EXPORT(bool) skirmishAiCallback_FeatureDef_isNoSelect(int skirmishAIId, int featureDefId) {
-	return getFeatureDefById(skirmishAIId, featureDefId)->noSelect;
+	return !getFeatureDefById(skirmishAIId, featureDefId)->selectable;
 }
 
 EXPORT(bool) skirmishAiCallback_FeatureDef_isGeoThermal(int skirmishAIId, int featureDefId) {

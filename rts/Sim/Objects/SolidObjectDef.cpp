@@ -74,6 +74,7 @@ CR_REG_METADATA(SolidObjectDef,
 	CR_MEMBER(crushResistance),
 
 	CR_MEMBER(collidable),
+	CR_MEMBER(selectable),
 	CR_MEMBER(upright),
 	CR_MEMBER(reclaimable),
 
@@ -101,6 +102,7 @@ SolidObjectDef::SolidObjectDef()
 	, crushResistance(0.0f)
 
 	, collidable(false)
+	, selectable(true)
 	, upright(false)
 	, reclaimable(true)
 
