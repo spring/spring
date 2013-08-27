@@ -375,6 +375,51 @@ static inline bool IsCommandInMap(const Command& c)
 	return true;
 }
 
+static inline bool AdjustGroundAttackCommand(const Command& c, bool fromSynced, bool aiOrder)
+{
+	if (c.params.size() < 3)
+		return false;
+	if (aiOrder)
+		return false;
+
+	const float3 cPos = c.GetPos(0);
+
+	#if 0
+	// check if attack-ground is really attack-ground
+	//
+	// NOTE:
+	//     problematic if command contains value from UHM
+	//     but is evaluated in synced context against SHM
+	//     after roundtrip (when UHM and SHM differ a lot)
+	//
+	//     instead just clamp the elevation, which creates
+	//     fewer issues overall (eg. artillery force-firing
+	//     at positions outside LOS where UHM and SHM do not
+	//     match will not be broken)
+	//
+	if (math::fabs(cPos.y - gHeight) > SQUARE_SIZE) {
+		return false;
+	}
+	#else
+	// FIXME: is fromSynced really sync-safe???
+	// NOTE:
+	//   uses gHeight = min(cPos.y, GetHeightAboveWater) instead
+	//   of gHeight = GetHeightReal because GuiTraceRay can stop
+	//   at water surface, so the attack-position would be moved
+	//   UNDERWATER and cause ground-attack orders to fail (this
+	//   SHOULD no longer happen, Weapon::AdjustTargetPosToWater
+	//   always forcibly adjusts positions to respect waterWeapon
+	//   now)
+	//
+	Command& cc = const_cast<Command&>(c);
+
+	cc.params[1] = std::min(cPos.y, ground->GetHeightAboveWater(cPos.x, cPos.z, true || fromSynced));
+	// cc.params[1] = ground->GetHeightReal(cPos.x, cPos.z, true || fromSynced);
+
+	return true;
+	#endif
+}
+
 
 
 bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
@@ -444,43 +489,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 				if (!attackee->pos.IsInBounds())
 					return false;
 			} else {
-				if (c.params.size() >= 3) {
-					const float3 cPos = c.GetPos(0);
-					// FIXME: is fromSynced really sync-safe???
-					// NOTE:
-					//   uses gHeight = min(cPos.y, GetHeightAboveWater) instead
-					//   of gHeight = GetHeightReal because GuiTraceRay can stop
-					//   at water surface, so the attack-position would be moved
-					//   UNDERWATER and cause ground-attack orders to fail
-					// const float gHeight = std::min(cPos.y, ground->GetHeightAboveWater(cPos.x, cPos.z, fromSynced));
-					const float gHeight = std::min(cPos.y, ground->GetHeightAboveWater(cPos.x, cPos.z, true));
-
-					#if 0
-					// check if attack-ground is really attack-ground
-					//
-					// NOTE:
-					//     problematic if command contains value from UHM
-					//     but is evaluated in synced context against SHM
-					//     after roundtrip (when UHM and SHM differ a lot)
-					//
-					//     instead just clamp the elevation, which creates
-					//     fewer issues overall (eg. artillery force-firing
-					//     at positions outside LOS where UHM and SHM do not
-					//     match will not be broken)
-					//
-
-					if (!aiOrder && math::fabs(cPos.y - gHeight) > SQUARE_SIZE) {
-						return false;
-					}
-					#else
-					if (!aiOrder) {
-						Command& cc = const_cast<Command&>(c);
-						cc.params[1] = gHeight;
-					}
-
-					return true;
-					#endif
-				}
+				AdjustGroundAttackCommand(c, fromSynced, aiOrder);
 			}
 			break;
 		}

@@ -218,6 +218,27 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 
 
 
+// NOTE:
+//   GUIHandler places (some) user ground-attack orders on the
+//   water surface, others on the ocean floor and in both cases
+//   without examining weapon abilities (its logic is "obtuse")
+//
+//   this inconsistency would be hard(er) to fix on the UI side
+//   so we must adjust all such target positions in synced code
+//
+//   see also CommandAI::AdjustGroundAttackCommand
+void CWeapon::AdjustTargetPosToWater(float3& tgtPos)
+{
+	if (targetType != Target_Pos)
+		return;
+
+	if (weaponDef->waterweapon) {
+		tgtPos.y = std::max(tgtPos.y, ground->GetHeightReal(tgtPos.x, tgtPos.z));
+	} else {
+		tgtPos.y = std::max(tgtPos.y, ground->GetHeightAboveWater(tgtPos.x, tgtPos.z));
+	}
+}
+
 void CWeapon::UpdateRelWeaponPos()
 {
 	// If we can't get a line of fire from the muzzle, try
@@ -292,10 +313,6 @@ void CWeapon::UpdateTargeting()
 
 		targetPos = (targetBorder == 0.0f)? tmpTargetPos: targetBorderPos;
 		targetPos.y = std::max(targetPos.y, ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
-
-		if (!weaponDef->waterweapon) {
-			targetPos.y = std::max(targetPos.y, 0.0f);
-		}
 	}
 
 	if (weaponDef->interceptor) {
@@ -304,6 +321,8 @@ void CWeapon::UpdateTargeting()
 	}
 
 	if (targetType != Target_None) {
+		AdjustTargetPosToWater(targetPos);
+
 		const float3 worldTargetDir = (targetPos - owner->pos).SafeNormalize();
 		const float3 worldMainDir =
 			owner->frontdir * mainDir.z +
@@ -565,9 +584,7 @@ bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 	}
 
 	// keep target positions on the surface if this weapon hates water
-	if (!weaponDef->waterweapon) {
-		newTargetPos.y = std::max(newTargetPos.y, 0.0f);
-	}
+	AdjustTargetPosToWater(newTargetPos);
 
 	weaponMuzzlePos =
 		owner->pos +
@@ -943,7 +960,7 @@ bool CWeapon::TargetUnitOrPositionUnderWater(const float3& targetPos, const CUni
 	if (targetUnit != NULL) {
 		return (targetUnit->IsUnderWater());
 	} else {
-		// consistent with CSolidObject::IsUnderWater
+		// consistent with CSolidObject::IsUnderWater (LT)
 		return ((targetPos.y + offset) < 0.0f);
 	}
 }
@@ -954,9 +971,7 @@ bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* 
 	if (targetUnit != NULL) {
 		return (targetUnit->IsInWater());
 	} else {
-		// consistent with CSolidObject::IsInWater, and needed because
-		// GUIHandler places (some) user ground-attack orders on water
-		// surface
+		// consistent with CSolidObject::IsInWater (LE)
 		return ((targetPos.y + offset) <= 0.0f);
 	}
 }
@@ -1129,7 +1144,7 @@ bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, const CUnit*
 	}
 
 	// target is underwater but we cannot pick targets underwater
-	if (!weaponDef->waterweapon && TargetUnitOrPositionUnderWater(tgtPos, targetUnit, -0.125f))
+	if (!weaponDef->waterweapon && TargetUnitOrPositionUnderWater(tgtPos, targetUnit))
 		return false;
 
 	return true;
@@ -1143,7 +1158,7 @@ bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, const CUnit* 
 
 	const bool normalized = GetTargetBorderPos(targetUnit, tmpTargetPos, tmpTargetVec, tmpTargetDir);
 
-	const float heightDiff = (weaponMuzzlePos.y + tmpTargetVec.y) - owner->pos.y; // negative when target below owner
+	const float heightDiff = (weaponMuzzlePos.y + tmpTargetVec.y) - owner->pos.y;
 	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargeting
 
 	if (targetUnit == NULL || cylinderTargeting < 0.01f) {
@@ -1238,9 +1253,7 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
 		return false;
 	}
 
-	if (!weaponDef->waterweapon) {
-		pos.y = std::max(pos.y, 0.0f);
-	}
+	AdjustTargetPosToWater(pos);
 
 	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
 	const short enemyHeading = GetHeadingFromVector(
