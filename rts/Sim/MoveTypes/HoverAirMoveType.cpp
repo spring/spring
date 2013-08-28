@@ -255,7 +255,7 @@ void CHoverAirMoveType::ExecuteStop()
 		case AIRCRAFT_FLYING: {
 			goalPos = owner->pos;
 
-			if (owner->unitDef->DontLand() || dontLand || !autoLand) {
+			if (dontLand || !autoLand) {
 				SetState(AIRCRAFT_HOVERING);
 			} else {
 				SetState(AIRCRAFT_LANDING);
