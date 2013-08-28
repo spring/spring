@@ -1195,9 +1195,17 @@ void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop)
 	SetGoal(owner->pos);
 	SetWantedMaxSpeed(0.0f);
 
-	if ((aircraftState == AAirMoveType::AIRCRAFT_FLYING) && !owner->unitDef->DontLand() && autoLand) {
-		SetState(AIRCRAFT_LANDING);
+	if (aircraftState != AAirMoveType::AIRCRAFT_FLYING)
+		return;
+
+	if (owner->unitDef->maxFuel <= 0.0f || owner->currentFuel > 0.0f) {
+		// if not using fuel or not out of fuel, allow disregarding stop
+		if (owner->unitDef->DontLand() || !autoLand) {
+			return;
+		}
 	}
+
+	SetState(AIRCRAFT_LANDING);
 }
 
 
