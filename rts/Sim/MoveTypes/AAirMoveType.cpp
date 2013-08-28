@@ -299,6 +299,7 @@ bool AAirMoveType::MoveToRepairPad() {
 			goalPos = absPadPos;
 
 			// once distance to pad becomes smaller than current braking distance, switch states
+			// (but do not allow state-switch until the aircraft is heading ~directly toward pad)
 			// braking distance is 0.5*a*t*t where t is v/a --> 0.5*a*((v*v)/(a*a)) --> 0.5*v*v*(1/a)
 			// FIXME:
 			//   apply N-frame lookahead when deciding to switch state for strafing aircraft
@@ -307,8 +308,9 @@ bool AAirMoveType::MoveToRepairPad() {
 			const float padDistSq = absPadPos.SqDistance2D(owner->pos);
 			const float extDistSq = Square(maxSpeed * ((owner->pos.y - goalPos.y) / altitudeRate)) * owner->unitDef->IsStrafingAirUnit();
 			const float minDistSq = Square(0.5f * owner->speed.SqLength2D() / decRate);
+			const float padCosine = owner->frontdir.dot((goalPos - owner->pos).SafeNormalize());
 
-			if (padDistSq < std::max(extDistSq, minDistSq)) {
+			if (padDistSq < std::max(extDistSq, minDistSq) && padCosine >= 0.925f) {
 				padStatus = PAD_STATUS_LANDING;
 			}
 		} else if (padStatus == PAD_STATUS_LANDING) {
