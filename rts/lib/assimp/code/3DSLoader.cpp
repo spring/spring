@@ -216,8 +216,8 @@ void Discreet3DSImporter::ReadChunk(Discreet3DS::Chunk* pcOut)
 {
 	ai_assert(pcOut != NULL);
 
-	pcOut->Flag = stream->GetI2();
-	pcOut->Size = stream->GetI4();
+	pcOut->Flag = stream->GetU2();
+	pcOut->Size = stream->GetU4();
 
 	if (pcOut->Size - sizeof(Discreet3DS::Chunk) > stream->GetRemainingSize())
 		throw DeadlyImportError("Chunk is too large");
