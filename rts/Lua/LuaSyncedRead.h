@@ -115,6 +115,7 @@ class LuaSyncedRead {
 		static int GetUnitPosition(lua_State* L);
 		static int GetUnitBasePosition(lua_State* L);
 		static int GetUnitVectors(lua_State* L);
+		static int GetUnitRotation(lua_State* L);
 		static int GetUnitDirection(lua_State* L);
 		static int GetUnitHeading(lua_State* L);
 		static int GetUnitVelocity(lua_State* L);

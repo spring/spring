@@ -227,7 +227,7 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 //   so we must adjust all such target positions in synced code
 //
 //   see also CommandAI::AdjustGroundAttackCommand
-void CWeapon::AdjustTargetPosToWater(float3& tgtPos)
+void CWeapon::AdjustTargetPosToWater(float3& tgtPos) const
 {
 	if (targetType != Target_Pos)
 		return;

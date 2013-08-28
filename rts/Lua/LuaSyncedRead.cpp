@@ -208,6 +208,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitPosition);
 	REGISTER_LUA_CFUNC(GetUnitBasePosition);
 	REGISTER_LUA_CFUNC(GetUnitVectors);
+	REGISTER_LUA_CFUNC(GetUnitRotation);
 	REGISTER_LUA_CFUNC(GetUnitDirection);
 	REGISTER_LUA_CFUNC(GetUnitHeading);
 	REGISTER_LUA_CFUNC(GetUnitVelocity);
@@ -2952,12 +2953,38 @@ int LuaSyncedRead::GetUnitVectors(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitRotation(lua_State* L)
+{
+	const CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
+		return 0;
+
+	const CMatrix44f& matrix = unit->GetTransformMatrix(CLuaHandle::GetHandleSynced(L));
+	const float3 xdir = (matrix.GetX() * XYVector).SafeNormalize(); // worldspace, NOT unitspace
+	const float3 ydir = (matrix.GetY() * YZVector).SafeNormalize();
+	const float3 zdir = (matrix.GetZ() * XZVector).SafeNormalize();
+
+	const float pitchAngle = math::acosf(Clamp(math::fabs(ydir.dot( UpVector)), -1.0f, 1.0f)); // x
+	const float yawAngle   = math::acosf(Clamp(math::fabs(zdir.dot(FwdVector)), -1.0f, 1.0f)); // y
+	const float rollAngle  = math::acosf(Clamp(math::fabs(xdir.dot(RgtVector)), -1.0f, 1.0f)); // z
+
+	assert(matrix.IsOrthoNormal());
+
+	// FIXME: inaccurate with chained rotations (output != input)
+	lua_pushnumber(L, -pitchAngle * Sign(ydir.dot(FwdVector))); // x
+	lua_pushnumber(L,   -yawAngle * Sign(zdir.dot(RgtVector))); // y
+	lua_pushnumber(L,  -rollAngle * Sign(xdir.dot( UpVector))); // z
+	return 3;
+}
+
 int LuaSyncedRead::GetUnitDirection(lua_State* L)
 {
-	CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	const CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
 		return 0;
-	}
+
 	lua_pushnumber(L, unit->frontdir.x);
 	lua_pushnumber(L, unit->frontdir.y);
 	lua_pushnumber(L, unit->frontdir.z);
