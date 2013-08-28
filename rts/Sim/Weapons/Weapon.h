@@ -93,7 +93,7 @@ protected:
 
 private:
 	inline bool AllowWeaponTargetCheck();
-	void AdjustTargetPosToWater(float3& tgtPos);
+	void AdjustTargetPosToWater(float3& tgtPos) const;
 	void UpdateRelWeaponPos();
 
 public:

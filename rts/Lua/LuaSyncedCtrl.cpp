@@ -2217,14 +2217,16 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	CMatrix44f matrix;
 	matrix.RotateZ(ClampRad(luaL_checkfloat(L, 4))); // .z := roll
 	matrix.RotateX(ClampRad(luaL_checkfloat(L, 2))); // .x := pitch
 	matrix.RotateY(ClampRad(luaL_checkfloat(L, 3))); // .y := yaw
+
+	assert(matrix.IsOrthoNormal());
 
 	unit->SetDirVectors(matrix);
 	unit->UpdateMidAndAimPos();
