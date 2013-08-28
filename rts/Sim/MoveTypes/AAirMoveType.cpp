@@ -286,14 +286,10 @@ bool AAirMoveType::CanLandOnPad(const float3& padPos) const {
 	//   the lookahead is roughly based on the time to descend to pad-target altitude
 	const float3 flatFrontDir = (float3(owner->frontdir)).Normalize2D();
 
-	const float padDistSq = padPos.SqDistance2D(owner->pos);
-	// const float padCosineXZ = flatFrontDir.dot((padPos - owner->pos).SafeNormalize2D());
-	// const float padCosineY = flatFrontDir.dot((padPos - owner->pos).SafeNormalize());
-
 	const float brakingDistSq = Square(0.5f * owner->speed.SqLength2D() / decRate);
 	const float descendDistSq = Square(maxSpeed * ((owner->pos.y - padPos.y) / altitudeRate)) * owner->unitDef->IsStrafingAirUnit();
 
-	if (padDistSq > std::max(brakingDistSq, descendDistSq))
+	if (padPos.SqDistance2D(owner->pos) > std::max(brakingDistSq, descendDistSq))
 		return false;
 
 	return (flatFrontDir.dot((padPos - owner->pos).SafeNormalize2D()) >= 0.925f);
