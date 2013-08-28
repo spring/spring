@@ -68,7 +68,7 @@ extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 CUnitDrawer* unitDrawer;
 
 CONFIG(int, UnitLodDist).defaultValue(1000);
-CONFIG(int, UnitIconDist).defaultValue(3000);
+CONFIG(int, UnitIconDist).defaultValue(200);
 CONFIG(float, UnitTransparency).defaultValue(0.7f);
 CONFIG(bool, ShowHealthBars).defaultValue(true);
 CONFIG(bool, MultiThreadDrawUnit).defaultValue(true);
