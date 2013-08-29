@@ -161,8 +161,6 @@ public:
 
 	int chatSound;
 
-	bool camMove[8];
-	bool camRot[4];
 	bool windowedEdgeMove;
 	bool fullscreenEdgeMove;
 

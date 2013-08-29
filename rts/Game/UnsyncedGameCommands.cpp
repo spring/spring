@@ -773,19 +773,18 @@ public:
 
 class CameraMoveActionExecutor : public IUnsyncedActionExecutor {
 public:
-	CameraMoveActionExecutor(int dimension, const std::string& commandPostfix)
-		: IUnsyncedActionExecutor("Move" + commandPostfix,
-			"Moves the camera " + commandPostfix + " a bit")
-		, dimension(dimension)
+	CameraMoveActionExecutor(int moveStateIdx, const std::string& commandPostfix)
+		: IUnsyncedActionExecutor("Move" + commandPostfix, "Moves the camera " + commandPostfix + " a bit")
+		, moveStateIdx(moveStateIdx)
 	{}
 
 	bool Execute(const UnsyncedAction& action) const {
-		game->camMove[dimension] = true;
+		camera->SetMovState(moveStateIdx, true);
 		return true;
 	}
 
 private:
-	int dimension;
+	int moveStateIdx;
 };
 
 
@@ -3274,28 +3273,28 @@ bool CGame::ActionReleased(const Action& action)
 		inMapDrawer->SetDrawMode(false);
 	}
 	else if (cmd == "moveforward") {
-		camMove[0] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_FWD, false);
 	}
 	else if (cmd == "moveback") {
-		camMove[1] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_BCK, false);
 	}
 	else if (cmd == "moveleft") {
-		camMove[2] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_LFT, false);
 	}
 	else if (cmd == "moveright") {
-		camMove[3] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_RGT, false);
 	}
 	else if (cmd == "moveup") {
-		camMove[4] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_UP, false);
 	}
 	else if (cmd == "movedown") {
-		camMove[5] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_DWN, false);
 	}
 	else if (cmd == "movefast") {
-		camMove[6] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_FST, false);
 	}
 	else if (cmd == "moveslow") {
-		camMove[7] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_SLW, false);
 	}
 	else if (cmd == "mouse1") {
 		mouse->MouseRelease(mouse->lastx, mouse->lasty, 1);

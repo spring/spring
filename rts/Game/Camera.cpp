@@ -36,6 +36,8 @@ CCamera::CCamera()
 	}
 
 	memset(viewport, 0, 4 * sizeof(int));
+	memset(movState, 0, sizeof(movState));
+	memset(rotState, 0, sizeof(rotState));
 
 	// stuff that will not change can be initialised here,
 	// so it does not need to be reinitialised every update
