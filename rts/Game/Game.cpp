@@ -1529,7 +1529,7 @@ void CGame::SimFrame() {
 			grouphandlers[a]->Update();
 		}
 
-		(playerHandler->Player(gu->myPlayerNum)->fpsController).SendStateUpdate(camera->GetMovState());
+		(playerHandler->Player(gu->myPlayerNum)->fpsController).SendStateUpdate(/*camera->GetMovState(), mouse->buttons*/);
 
 		CTeamHighlight::Update(gs->frameNum);
 	}

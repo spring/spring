@@ -106,17 +106,20 @@ void FPSUnitController::RecvStateUpdate(const unsigned char* buf) {
 	viewDir = GetVectorFromHAndPExact(h, p);
 }
 
-void FPSUnitController::SendStateUpdate(const bool* camMove) {
-	if (!gu->fpsMode) { return; }
+void FPSUnitController::SendStateUpdate() {
+	if (!gu->fpsMode)
+		return;
+
+	const bool* camMoveState = camera->GetMovState();
+	const CMouseHandler::ButtonPressEvt* mouseButtons = mouse->buttons;
 
 	unsigned char state = 0;
-
-	if (camMove[0]) { state |= (1 << 0); }
-	if (camMove[1]) { state |= (1 << 1); }
-	if (camMove[2]) { state |= (1 << 2); }
-	if (camMove[3]) { state |= (1 << 3); }
-	if (mouse->buttons[SDL_BUTTON_LEFT].pressed)  { state |= (1 << 4); }
-	if (mouse->buttons[SDL_BUTTON_RIGHT].pressed) { state |= (1 << 5); }
+	state |= ((camMoveState[CCamera::MOVE_STATE_FWD]) * (1 << 0));
+	state |= ((camMoveState[CCamera::MOVE_STATE_BCK]) * (1 << 1));
+	state |= ((camMoveState[CCamera::MOVE_STATE_LFT]) * (1 << 2));
+	state |= ((camMoveState[CCamera::MOVE_STATE_RGT]) * (1 << 3));
+	state |= ((mouseButtons[SDL_BUTTON_LEFT ].pressed) * (1 << 4));
+	state |= ((mouseButtons[SDL_BUTTON_RIGHT].pressed) * (1 << 5));
 
 	shortint2 hp = GetHAndPFromVector(camera->forward);
 

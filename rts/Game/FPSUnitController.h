@@ -26,7 +26,7 @@ struct FPSUnitController {
 	 * Compress direction info into byte array, and send it to the host.
 	 * TODO move this to network message handling code when it is modularized
 	 */
-	void SendStateUpdate(const bool* camMove);
+	void SendStateUpdate();
 
 	const CUnit* GetControllee() const { return controllee; }
 	      CUnit* GetControllee()       { return controllee; }
