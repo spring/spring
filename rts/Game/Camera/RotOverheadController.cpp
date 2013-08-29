@@ -60,8 +60,10 @@ void CRotOverheadController::MouseWheelMove(float move)
 {
 	const float gheight = ground->GetHeightAboveWater(pos.x, pos.z, false);
 	float height = pos.y - gheight;
-	height *= 1.0f + (move * mouseScale);
+
+	height *= (1.0f + (move * mouseScale));
 	pos.y = height + gheight;
+
 	UpdateVectors();
 }
 

@@ -78,30 +78,43 @@ void COverheadController::ScreenEdgeMove(float3 move)
 
 void COverheadController::MouseWheelMove(float move)
 {
+	// NOT idempotent
+	if (move == 0.0f)
+		return;
+
+	// FIXME:
+	//   except for the transition, code below is 100%
+	//   identical to SmoothController::MouseWheelMove
 	camHandler->CameraTransition(0.05f);
+
 	const float shiftSpeed = (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3.0f : 1.0f);
 	
 	// tilt the camera if LCTRL is pressed
 	if (keyInput->IsKeyPressed(SDLK_LCTRL)) {
 		zscale *= (1.0f + (0.01f * move * tiltSpeed * shiftSpeed));
 		zscale = Clamp(zscale, 0.05f, 10.0f);
-	} else { // holding down LALT uses 'instant-zoom' from here to the end of the function
+	} else {
+		// holding down LALT uses 'instant-zoom' from here to the end of the function
 		// ZOOM IN to mouse cursor instead of mid screen
-		if (move < 0) {
+		if (move < 0.0f) {
 			float3 cpos = pos - dir * height;
 			float dif = -height * move * 0.007f * shiftSpeed;
+
 			if ((height - dif) < 60.0f) {
 				dif = height - 60.0f;
 			}
-			if (keyInput->IsKeyPressed(SDLK_LALT)) { // instant-zoom: zoom in to standard view
+			if (keyInput->IsKeyPressed(SDLK_LALT)) {
+				// instant-zoom: zoom in to standard view
 				dif = (height - oldAltHeight) / mouse->dir.y * dir.y;
 			}
+
 			float3 wantedPos = cpos + mouse->dir * dif;
 			float newHeight = ground->LineGroundCol(wantedPos, wantedPos + dir * 15000, false);
-			if (newHeight < 0) {
+
+			if (newHeight < 0.0f) {
 				newHeight = height * (1.0f + move * 0.007f * shiftSpeed);
 			}
-			if ((wantedPos.y + (dir.y * newHeight)) < 0) {
+			if ((wantedPos.y + (dir.y * newHeight)) < 0.0f) {
 				newHeight = -wantedPos.y / dir.y;
 			}
 			if (newHeight < maxHeight) {
@@ -110,8 +123,9 @@ void COverheadController::MouseWheelMove(float move)
 			}
 		// ZOOM OUT from mid screen
 		} else {
-			if (keyInput->IsKeyPressed(SDLK_LALT)) { // instant-zoom: zoom out to the max
-				if(height < maxHeight*0.5f && changeAltHeight) {
+			if (keyInput->IsKeyPressed(SDLK_LALT)) {
+				// instant-zoom: zoom out to the max
+				if (height < maxHeight*0.5f && changeAltHeight) {
 					oldAltHeight = height;
 					changeAltHeight = false;
 				}

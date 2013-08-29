@@ -156,7 +156,7 @@ protected:
 			, circleGrowth(0.0f)
 			, circleAlpha(0.0f)
 			, ttl(0)
-			, color(0.0f, 0.0f, 0.0f)
+			, color(ZeroVector)
 			, flags(0)
 		{}
 

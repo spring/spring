@@ -3930,7 +3930,7 @@ void CGuiHandler::DrawCentroidCursor()
 		return;
 	}
 
-	float3 pos(0.0f, 0.0f, 0.0f);
+	float3 pos;
 	CUnitSet::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		pos += (*it)->midPos;

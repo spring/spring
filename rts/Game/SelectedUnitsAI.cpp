@@ -311,7 +311,8 @@ void CSelectedUnitsHandlerAI::MakeFrontMove(Command* c,int player)
 	rightPos.y=c->params[4];
 	rightPos.z=c->params[5];
 
-	float3 nextPos(0.0f, 0.0f, 0.0f);//it's in "front" coordinates (rotated to real, moved by rightPos)
+	// in "front" coordinates (rotated to real, moved by rightPos)
+	float3 nextPos;
 
 	if(centerPos.distance(rightPos)<selectedUnitsHandler.netSelected[player].size()+33){	//Strange line! treat this as a standard move if the front isnt long enough
 		for(std::vector<int>::iterator ui = selectedUnitsHandler.netSelected[player].begin(); ui != selectedUnitsHandler.netSelected[player].end(); ++ui) {

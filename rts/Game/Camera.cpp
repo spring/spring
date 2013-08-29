@@ -20,7 +20,7 @@ CCamera* cam2;
 
 
 CCamera::CCamera()
-	: rot(0.0f, 0.0f, 0.0f)
+	: rot(ZeroVector)
 	, forward(RgtVector)
 	, up(UpVector)
 	, posOffset(ZeroVector)
@@ -405,9 +405,11 @@ float CCamera::GetMoveDistance(float* time, float* speed, int idx) const
 	if (speed != NULL) { *speed = camMoveSpeed; }
 
 	switch (idx) {
-		case MOVE_STATE_UP: { camMoveSpeed *= (1.0f * movState[idx]); } break;
+		case MOVE_STATE_UP:  { camMoveSpeed *= ( 1.0f * movState[idx]); } break;
 		case MOVE_STATE_DWN: { camMoveSpeed *= (-1.0f * movState[idx]); } break;
-		default: {} break;
+
+		default: {
+		} break;
 	}
 
 	return (camDeltaTime * 200.0f * camMoveSpeed);

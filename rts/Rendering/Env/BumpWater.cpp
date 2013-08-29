@@ -136,10 +136,13 @@ static void DrawRadialDisc()
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 
+	float3 p;
+
 	const float alphainc = fastmath::PI2 / 32;
-	float alpha, r1, r2;
-	float3 p(0.0f, 0.0f, 0.0f);
 	const float size = std::min(xsize, ysize);
+
+	float alpha, r1, r2;
+
 	for (int n = 0; n < 4 ; ++n) {
 		r1 = n*n * size;
 		if (n == 3) {
