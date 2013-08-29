@@ -57,6 +57,7 @@ private:
 public:
 	inline static spring_time gettime() { return spring_time_native(Cpp11Clock::Get()); }
 	inline static spring_time fromNanoSecs(const boost::int64_t ns) { return spring_time_native(Cpp11Clock::FromNs(ns)); }
+	inline static spring_time fromSecs(const boost::int64_t secs) { return spring_time_native(Cpp11Clock::FromSecs(secs)); }
 
 public:
 	spring_time() : x(0) {}
