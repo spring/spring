@@ -478,6 +478,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 
 			inCommand = true;
 		} else {
+			SetGoal(c.GetPos(0), owner->pos, cancelDistance);
 			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, false);
 
 			inCommand = true;
