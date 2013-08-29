@@ -292,7 +292,14 @@ bool AAirMoveType::CanLandOnPad(const float3& padPos) const {
 	if (padPos.SqDistance2D(owner->pos) > std::max(brakingDistSq, descendDistSq))
 		return false;
 
-	return (flatFrontDir.dot((padPos - owner->pos).SafeNormalize2D()) >= 0.925f);
+	// horizontal guide
+	if (flatFrontDir.dot((padPos - owner->pos).SafeNormalize2D()) < 0.925f)
+		return false;
+	// vertical guide
+	if (flatFrontDir.dot((padPos - owner->pos).SafeNormalize()) < 0.707f)
+		return false;
+
+	return true;
 }
 
 bool AAirMoveType::MoveToRepairPad() {
