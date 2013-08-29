@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "Camera.h"
+#include "UI/MouseHandler.h"
 #include "Map/ReadMap.h"
 #include "System/myMath.h"
 #include "System/float3.h"
@@ -383,3 +384,63 @@ void CCamera::ClipFrustumLines(bool neg, const float zmin, const float zmax) {
 		}
 	}
 }
+
+
+
+float CCamera::GetMoveDistance(float* time, float* speed, int idx) const
+{
+	// NOTE:
+	//   lastFrameTime is MUCH smaller when map edge is in view
+	//   timer is not accurate enough to return non-zero values
+	//   for the majority of the time this condition holds, and
+	//   so the camera will barely react to key input since most
+	//   frames will effectively be 'skipped' (looks like lag)
+	float camDeltaTime = std::max(0.001f, globalRendering->lastFrameTime);
+	float camMoveSpeed = 1.0f;
+
+	camMoveSpeed *= (1.0f - movState[MOVE_STATE_SLW] * 0.9f);
+	camMoveSpeed *= (1.0f + movState[MOVE_STATE_FST] * 9.0f);
+
+	if (time != NULL) { *time = camDeltaTime; }
+	if (speed != NULL) { *speed = camMoveSpeed; }
+
+	switch (idx) {
+		case MOVE_STATE_UP: { camMoveSpeed *= (1.0f * movState[idx]); } break;
+		case MOVE_STATE_DWN: { camMoveSpeed *= (-1.0f * movState[idx]); } break;
+		default: {} break;
+	}
+
+	return (camDeltaTime * 200.0f * camMoveSpeed);
+}
+
+float3 CCamera::GetMoveVectorFromState(bool fromKeyState, bool* disableTracker)
+{
+	float camDeltaTime = 1.0f;
+	float camMoveSpeed = 1.0f;
+
+	(void) GetMoveDistance(&camDeltaTime, &camMoveSpeed, -1);
+
+	float3 v = FwdVector * camMoveSpeed;
+
+	if (fromKeyState) {
+		v.y += (camDeltaTime * movState[MOVE_STATE_FWD]);
+		v.y -= (camDeltaTime * movState[MOVE_STATE_BCK]);
+		v.x += (camDeltaTime * movState[MOVE_STATE_RGT]);
+		v.x -= (camDeltaTime * movState[MOVE_STATE_LFT]);
+	} else {
+		const int screenW = globalRendering->dualScreenMode?
+			(globalRendering->viewSizeX << 1):
+			(globalRendering->viewSizeX     );
+
+		v.y += (camDeltaTime * (mouse->lasty <                               2));
+		v.y -= (camDeltaTime * (mouse->lasty > (globalRendering->viewSizeY - 2)));
+		v.x += (camDeltaTime * (mouse->lastx >                    (screenW - 2)));
+		v.x -= (camDeltaTime * (mouse->lastx <                               2));
+	}
+
+	(*disableTracker) |= (v.x != 0.0f);
+	(*disableTracker) |= (v.y != 0.0f);
+
+	return v;
+}
+

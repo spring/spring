@@ -68,6 +68,9 @@ public:
 	void SetPos(float3 p) { pos = p; }
 	void SetFov(float fov);
 
+	float GetMoveDistance(float* time, float* speed, int idx) const;
+	float3 GetMoveVectorFromState(bool fromKeyState, bool* disableTracker);
+
 	void SetMovState(int idx, bool b) { movState[idx] = b; }
 	void SetRotState(int idx, bool b) { rotState[idx] = b; }
 	const bool* GetMovState() const { return movState; }

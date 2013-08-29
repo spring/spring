@@ -1595,63 +1595,33 @@ void CGame::UpdateUI(bool updateCam)
 	}
 
 	if (!gu->fpsMode) {
-		const bool* camMoveState = camera->GetMovState();
-
-		// NOTE:
-		//   lastFrameTime is MUCH smaller when map edge is in view
-		//   timer is not accurate enough to return non-zero values
-		//   for the majority of the time this condition holds, and
-		//   so the camera will barely react to key input since most
-		//   frames will effectively be 'skipped' (looks like lag)
-		float camDeltaTime = std::max(0.001f, globalRendering->lastFrameTime);
-		float cameraSpeed = 1.0f;
-		cameraSpeed *= (1.0f - camMoveState[CCamera::MOVE_STATE_SLW] * 0.9f);
-		cameraSpeed *= (1.0f + camMoveState[CCamera::MOVE_STATE_FST] * 9.0f);
-
-		float3 movement = ZeroVector;
-		movement.y += (camDeltaTime * camMoveState[CCamera::MOVE_STATE_FWD]);
-		movement.y -= (camDeltaTime * camMoveState[CCamera::MOVE_STATE_BCK]);
-		movement.x += (camDeltaTime * camMoveState[CCamera::MOVE_STATE_RGT]);
-		movement.x -= (camDeltaTime * camMoveState[CCamera::MOVE_STATE_LFT]);
-
 		bool disableTracker = false;
-		disableTracker |= camMoveState[CCamera::MOVE_STATE_FWD];
-		disableTracker |= camMoveState[CCamera::MOVE_STATE_BCK];
-		disableTracker |= camMoveState[CCamera::MOVE_STATE_RGT];
-		disableTracker |= camMoveState[CCamera::MOVE_STATE_LFT];
+		float3 camMoveVector = camera->GetMoveVectorFromState(true, &disableTracker);
 
 		if (!updateCam) {
 			if (disableTracker && camHandler->GetCurrentController().DisableTrackingByKey()) {
 				unitTracker.Disable();
 			}
 		} else {
-			movement.z = cameraSpeed;
-			camHandler->GetCurrentController().KeyMove(movement);
+			camHandler->GetCurrentController().KeyMove(camMoveVector);
 		}
 
-		movement = ZeroVector;
+		// cancel out x- and y-components, leave .z (movement-speed)
+		camMoveVector *= FwdVector;
 
-		if ((globalRendering->fullScreen && fullscreenEdgeMove) ||
-		    (!globalRendering->fullScreen && windowedEdgeMove)) {
-
-			const int screenW = globalRendering->dualScreenMode ? (globalRendering->viewSizeX << 1): globalRendering->viewSizeX;
+		if ((globalRendering->fullScreen && fullscreenEdgeMove) || (!globalRendering->fullScreen && windowedEdgeMove)) {
 			disableTracker = false;
-
-			if (mouse->lasty <                               2 ) { movement.y += camDeltaTime; disableTracker = true; }
-			if (mouse->lasty > (globalRendering->viewSizeY - 2)) { movement.y -= camDeltaTime; disableTracker = true; }
-			if (mouse->lastx >                    (screenW - 2)) { movement.x += camDeltaTime; disableTracker = true; }
-			if (mouse->lastx <                               2 ) { movement.x -= camDeltaTime; disableTracker = true; }
+			camMoveVector = camera->GetMoveVectorFromState(false, &disableTracker);
 
 			if (!updateCam && disableTracker) {
 				unitTracker.Disable();
 			}
 		}
-		if (updateCam) {
-			movement.z = cameraSpeed;
-			camHandler->GetCurrentController().ScreenEdgeMove(movement);
 
-			if (camMoveState[CCamera::MOVE_STATE_UP ]) { camHandler->GetCurrentController().MouseWheelMove( camDeltaTime * 200 * cameraSpeed); }
-			if (camMoveState[CCamera::MOVE_STATE_DWN]) { camHandler->GetCurrentController().MouseWheelMove(-camDeltaTime * 200 * cameraSpeed); }
+		if (updateCam) {
+			camHandler->GetCurrentController().ScreenEdgeMove(camMoveVector);
+			camHandler->GetCurrentController().MouseWheelMove(camera->GetMoveDistance(NULL, NULL, CCamera::MOVE_STATE_UP ));
+			camHandler->GetCurrentController().MouseWheelMove(camera->GetMoveDistance(NULL, NULL, CCamera::MOVE_STATE_DWN));
 		}
 	}
 
