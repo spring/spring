@@ -29,16 +29,17 @@
 
 
 
-struct Cpp11Clock {
+namespace Cpp11Clock {
 	#define i1e3 1000LL
 	#define i1e6 1000000LL
 	#define i1e9 1000000000LL
 
-	static inline boost::int64_t ToSecs(const boost::int64_t x) { return x / i1e9; }
-	static inline boost::int64_t ToMs(const boost::int64_t x)   { return x / i1e6; }
-	template<typename T> static inline T ToSecs(const boost::int64_t x) { return int(x / i1e6) * 1e-3; }
-	template<typename T> static inline T ToMs(const boost::int64_t x)   { return int(x / i1e3) * 1e-3; }
+	template<typename T> static inline T ToSecs(const boost::int64_t x) { return double(x * 1e-9); }
+	template<typename T> static inline T ToMs(const boost::int64_t x)   { return double(x * 1e-6); }
 	template<typename T> static inline T ToNs(const boost::int64_t x)   { return x; }
+	template<> inline boost::int64_t ToSecs<boost::int64_t>(const boost::int64_t x) { return x / i1e9; }
+	template<> inline boost::int64_t ToMs<boost::int64_t>(const boost::int64_t x)   { return x / i1e6; }
+
 	template<typename T> static inline boost::int64_t FromSecs(const T s) { return s * i1e9; }
 	template<typename T> static inline boost::int64_t FromMs(const T ms)  { return ms * i1e6; }
 	template<typename T> static inline boost::int64_t FromNs(const T ns)  { return ns; }
@@ -73,9 +74,9 @@ public:
 	bool         operator>=(const spring_time v) const { return (x >= v.x); }
 
 
-	inline int toSecs()         const { return toSecs<int>(); }
-	inline int toMilliSecs()    const { return toMilliSecs<int>(); }
-	inline int toNanoSecs()     const { return toNanoSecs<int>(); }
+	inline int toSecs()         const { return toSecs<boost::int64_t>(); }
+	inline int toMilliSecs()    const { return toMilliSecs<boost::int64_t>(); }
+	inline int toNanoSecs()     const { return toNanoSecs<boost::int64_t>(); }
 	inline float toSecsf()      const { return toSecs<float>(); }
 	inline float toMilliSecsf() const { return toMilliSecs<float>(); }
 	inline float toNanoSecsf()  const { return toNanoSecs<float>(); }
@@ -86,6 +87,8 @@ public:
 
 	inline bool isTime() const { return (x > 0); }
 	inline void sleep() const {
+		//FIXME for very short time intervals use a yielding loop instead? (precision of yield is like 5x better than sleep, see the UT)
+
 	#if defined(SPRINGTIME_USING_STDCHRONO)
 		this_thread::sleep_for(chrono::nanoseconds( toNanoSecs() ));
 	#else
