@@ -185,6 +185,10 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 {
 	GML_RECMUTEX_LOCK(model); // Load3DModel
 
+	// cannot happen except through SpawnProjectile
+	if (modelName.empty())
+		return NULL;
+
 	StringToLowerInPlace(modelName);
 
 	// search in cache first

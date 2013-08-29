@@ -5,6 +5,7 @@
 #include "Rendering/Models/IModelParser.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/EventHandler.h"
+#include "System/Log/ILog.h"
 
 CR_BIND(SolidObjectDecalDef, );
 CR_REG_METADATA(SolidObjectDecalDef,
@@ -119,7 +120,12 @@ SolidObjectDef::~SolidObjectDef() {
 S3DModel* SolidObjectDef::LoadModel() const
 {
 	if (model == NULL) {
-		model = modelParser->Load3DModel(modelName);
+		if (!modelName.empty()) {
+			model = modelParser->Load3DModel(modelName);
+		} else {
+			// not useful, too much spam
+			// LOG_L(L_WARNING, "[SolidObjectDef::%s] object \"%s\" has no model defined", __FUNCTION__, name.c_str());
+		}
 	} else {
 		eventHandler.LoadedModelRequested();
 	}
