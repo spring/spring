@@ -757,7 +757,7 @@ public:
 			return false;
 
 		// XXX this code is duplicated in CGroup::CalculateCenter(), move to CUnitSet maybe
-		float3 pos(0.0f, 0.0f, 0.0f);
+		float3 pos;
 		CUnitSet::const_iterator ui;
 		for (ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
 			pos += (*ui)->midPos;

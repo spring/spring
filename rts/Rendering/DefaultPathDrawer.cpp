@@ -92,7 +92,7 @@ void DefaultPathDrawer::DrawInMiniMap()
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
-		glTranslatef(0.0f, 1.0f, 0.0f);
+		glTranslatef3(UpVector);
 		glScalef(1.0f / gs->mapx, -1.0f / gs->mapy, 1.0f);
 
 	glDisable(GL_TEXTURE_2D);
