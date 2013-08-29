@@ -199,8 +199,6 @@ CR_REG_METADATA(CGame, (
 	CR_MEMBER(totalGameTime),
 	CR_MEMBER(userInputPrefix),
 	CR_IGNORED(chatSound),
-	CR_IGNORED(camMove),
-	CR_IGNORED(camRot),
 	CR_MEMBER(hideInterface),
 	CR_MEMBER(gameOver),
 	CR_IGNORED(gameDrawMode),
@@ -342,9 +340,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	game = this;
 
 	memset(gameID, 0, sizeof(gameID));
-
-	for (int a = 0; a < 8; ++a) { camMove[a] = false; }
-	for (int a = 0; a < 4; ++a) { camRot[a] = false; }
 
 	// set "Headless" in config overlay (not persisted)
 	configHandler->Set("Headless", (SpringVersion::IsHeadless()) ? 1 : 0, true);
@@ -1534,7 +1529,7 @@ void CGame::SimFrame() {
 			grouphandlers[a]->Update();
 		}
 
-		(playerHandler->Player(gu->myPlayerNum)->fpsController).SendStateUpdate(camMove);
+		(playerHandler->Player(gu->myPlayerNum)->fpsController).SendStateUpdate(camera->GetMovState());
 
 		CTeamHighlight::Update(gs->frameNum);
 	}
@@ -1600,17 +1595,30 @@ void CGame::UpdateUI(bool updateCam)
 	}
 
 	if (!gu->fpsMode) {
-		float cameraSpeed = 1.0f;
+		const bool* camMoveState = camera->GetMovState();
 
-		if (camMove[7]) { cameraSpeed *=  0.1f; }
-		if (camMove[6]) { cameraSpeed *= 10.0f; }
+		// NOTE:
+		//   lastFrameTime is MUCH smaller when map edge is in view
+		//   timer is not accurate enough to return non-zero values
+		//   for the majority of the time this condition holds, and
+		//   so the camera will barely react to key input since most
+		//   frames will effectively be 'skipped' (looks like lag)
+		float camDeltaTime = std::max(0.001f, globalRendering->lastFrameTime);
+		float cameraSpeed = 1.0f;
+		cameraSpeed *= (1.0f - camMoveState[CCamera::MOVE_STATE_SLW] * 0.9f);
+		cameraSpeed *= (1.0f + camMoveState[CCamera::MOVE_STATE_FST] * 9.0f);
+
 		float3 movement = ZeroVector;
+		movement.y += (camDeltaTime * camMoveState[CCamera::MOVE_STATE_FWD]);
+		movement.y -= (camDeltaTime * camMoveState[CCamera::MOVE_STATE_BCK]);
+		movement.x += (camDeltaTime * camMoveState[CCamera::MOVE_STATE_RGT]);
+		movement.x -= (camDeltaTime * camMoveState[CCamera::MOVE_STATE_LFT]);
 
 		bool disableTracker = false;
-		if (camMove[0]) { movement.y += globalRendering->lastFrameTime; disableTracker = true; }
-		if (camMove[1]) { movement.y -= globalRendering->lastFrameTime; disableTracker = true; }
-		if (camMove[3]) { movement.x += globalRendering->lastFrameTime; disableTracker = true; }
-		if (camMove[2]) { movement.x -= globalRendering->lastFrameTime; disableTracker = true; }
+		disableTracker |= camMoveState[CCamera::MOVE_STATE_FWD];
+		disableTracker |= camMoveState[CCamera::MOVE_STATE_BCK];
+		disableTracker |= camMoveState[CCamera::MOVE_STATE_RGT];
+		disableTracker |= camMoveState[CCamera::MOVE_STATE_LFT];
 
 		if (!updateCam) {
 			if (disableTracker && camHandler->GetCurrentController().DisableTrackingByKey()) {
@@ -1629,10 +1637,10 @@ void CGame::UpdateUI(bool updateCam)
 			const int screenW = globalRendering->dualScreenMode ? (globalRendering->viewSizeX << 1): globalRendering->viewSizeX;
 			disableTracker = false;
 
-			if (mouse->lasty <                  2 ) { movement.y += globalRendering->lastFrameTime; disableTracker = true; }
-			if (mouse->lasty > (globalRendering->viewSizeY - 2)) { movement.y -= globalRendering->lastFrameTime; disableTracker = true; }
-			if (mouse->lastx >       (screenW - 2)) { movement.x += globalRendering->lastFrameTime; disableTracker = true; }
-			if (mouse->lastx <                  2 ) { movement.x -= globalRendering->lastFrameTime; disableTracker = true; }
+			if (mouse->lasty <                               2 ) { movement.y += camDeltaTime; disableTracker = true; }
+			if (mouse->lasty > (globalRendering->viewSizeY - 2)) { movement.y -= camDeltaTime; disableTracker = true; }
+			if (mouse->lastx >                    (screenW - 2)) { movement.x += camDeltaTime; disableTracker = true; }
+			if (mouse->lastx <                               2 ) { movement.x -= camDeltaTime; disableTracker = true; }
 
 			if (!updateCam && disableTracker) {
 				unitTracker.Disable();
@@ -1642,8 +1650,8 @@ void CGame::UpdateUI(bool updateCam)
 			movement.z = cameraSpeed;
 			camHandler->GetCurrentController().ScreenEdgeMove(movement);
 
-			if (camMove[4]) { camHandler->GetCurrentController().MouseWheelMove( globalRendering->lastFrameTime * 200 * cameraSpeed); }
-			if (camMove[5]) { camHandler->GetCurrentController().MouseWheelMove(-globalRendering->lastFrameTime * 200 * cameraSpeed); }
+			if (camMoveState[CCamera::MOVE_STATE_UP ]) { camHandler->GetCurrentController().MouseWheelMove( camDeltaTime * 200 * cameraSpeed); }
+			if (camMoveState[CCamera::MOVE_STATE_DWN]) { camHandler->GetCurrentController().MouseWheelMove(-camDeltaTime * 200 * cameraSpeed); }
 		}
 	}
 
@@ -1652,6 +1660,7 @@ void CGame::UpdateUI(bool updateCam)
 
 		if (chatting && !userWriting) {
 			consoleHistory->AddLine(userInput);
+
 			string msg = userInput;
 			string pfx = "";
 
