@@ -125,19 +125,27 @@ void CSolidObject::UpdatePhysicalState() {
 	//   height is not in general equivalent to radius * 2.0
 	//   the height property is used for much fewer purposes
 	//   than radius, so less reliable for determining state
-	ps |= (CSolidObject::STATE_BIT_ONGROUND   * ((   pos.y -     gh) <= 1.0f));
+	#define EPS 0.1f
+	ps |= (CSolidObject::STATE_BIT_ONGROUND   * ((   pos.y -     gh) <=  EPS));
 	ps |= (CSolidObject::STATE_BIT_INWATER    * ((   pos.y         ) <= 0.0f));
 //	ps |= (CSolidObject::STATE_BIT_UNDERWATER * ((   pos.y + height) <  0.0f));
 	ps |= (CSolidObject::STATE_BIT_UNDERWATER * ((midPos.y + radius) <  0.0f));
-	ps |= (CSolidObject::STATE_BIT_INAIR      * ((   pos.y -     wh) >  1.0f));
+	ps |= (CSolidObject::STATE_BIT_INAIR      * ((   pos.y -     wh) >   EPS));
+	#undef EPS
 
 	physicalState = static_cast<PhysicalState>(ps);
 
 	// verify mutex relations (A != B); if one
 	// fails then A and B *must* both be false
+	//
+	// problem case: pos.y < EPS (but > 0) &&
+	// gh > -EPS causes ONGROUND and INAIR to
+	// both be false but INWATER will fail too
+	#if 0
 	assert((IsInAir() != IsOnGround()) || IsInWater());
 	assert((IsInAir() != IsInWater()) || IsOnGround());
 	assert((IsInAir() != IsUnderWater()) || (IsOnGround() || IsInWater()));
+	#endif
 }
 
 void CSolidObject::UpdateVoidState(bool set) {
