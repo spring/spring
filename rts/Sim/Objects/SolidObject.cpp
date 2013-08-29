@@ -116,22 +116,28 @@ void CSolidObject::UpdatePhysicalState() {
 
 	unsigned int ps = physicalState;
 
-	ps &= (~CSolidObject::STATE_BIT_ONGROUND);
-	ps &= (~CSolidObject::STATE_BIT_INWATER);
-	ps &= (~CSolidObject::STATE_BIT_UNDERWATER);
-	ps &= (~CSolidObject::STATE_BIT_INAIR);
+	ps &= (~STATE_BIT_ONGROUND);
+	ps &= (~STATE_BIT_INWATER);
+	ps &= (~STATE_BIT_UNDERWATER);
+	ps &= (~STATE_BIT_UNDERGROUND);
+	ps &= (~STATE_BIT_INAIR);
 
 	// NOTE:
 	//   height is not in general equivalent to radius * 2.0
 	//   the height property is used for much fewer purposes
 	//   than radius, so less reliable for determining state
+	#define MASK_NOAIR (STATE_BIT_ONGROUND | STATE_BIT_INWATER | STATE_BIT_UNDERWATER | STATE_BIT_UNDERGROUND)
 	#define EPS 0.1f
-	ps |= (CSolidObject::STATE_BIT_ONGROUND   * ((   pos.y -     gh) <=  EPS));
-	ps |= (CSolidObject::STATE_BIT_INWATER    * ((   pos.y         ) <= 0.0f));
-//	ps |= (CSolidObject::STATE_BIT_UNDERWATER * ((   pos.y + height) <  0.0f));
-	ps |= (CSolidObject::STATE_BIT_UNDERWATER * ((midPos.y + radius) <  0.0f));
-	ps |= (CSolidObject::STATE_BIT_INAIR      * ((   pos.y -     wh) >   EPS));
+	ps |= (STATE_BIT_ONGROUND    * ((   pos.y -         gh) <=  EPS));
+	ps |= (STATE_BIT_INWATER     * ((   pos.y             ) <= 0.0f));
+//	ps |= (STATE_BIT_UNDERWATER  * ((   pos.y +     height) <  0.0f));
+//	ps |= (STATE_BIT_UNDERGROUND * ((   pos.y +     height) <    gh));
+	ps |= (STATE_BIT_UNDERWATER  * ((midPos.y +     radius) <  0.0f));
+	ps |= (STATE_BIT_UNDERGROUND * ((midPos.y +     radius) <    gh));
+	ps |= (STATE_BIT_INAIR       * ((   pos.y -         wh) >   EPS));
+	ps |= (STATE_BIT_INAIR       * ((    ps   & MASK_NOAIR) ==    0));
 	#undef EPS
+	#undef MASK_NOAIR
 
 	physicalState = static_cast<PhysicalState>(ps);
 
