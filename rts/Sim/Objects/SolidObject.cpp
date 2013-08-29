@@ -139,7 +139,7 @@ void CSolidObject::UpdatePhysicalState() {
 	// fails then A and B *must* both be false
 	//
 	// problem case: pos.y < EPS (but > 0) &&
-	// gh > -EPS causes ONGROUND and INAIR to
+	// gh < -EPS causes ONGROUND and INAIR to
 	// both be false but INWATER will fail too
 	#if 0
 	assert((IsInAir() != IsOnGround()) || IsInWater());
