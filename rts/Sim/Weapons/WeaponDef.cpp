@@ -568,16 +568,22 @@ void WeaponDef::LoadSound(
 	if (name.empty())
 		return;
 
-	if ((id = CommonDefHandler::LoadSoundFile(name)) > 0) {
-		soundData[soundIdx] = GuiSoundSet::Data(name, id, volume);
-	}
+	if ((id = CommonDefHandler::LoadSoundFile(name)) <= 0)
+		return;
+
+	soundData[soundIdx] = GuiSoundSet::Data(name, id, volume);
 }
 
 
 S3DModel* WeaponDef::LoadModel()
 {
-	if ((visuals.model == NULL) && !visuals.modelName.empty()) {
-		visuals.model = modelParser->Load3DModel(visuals.modelName);
+	if (visuals.model == NULL) {
+		if (!visuals.modelName.empty()) {
+			visuals.model = modelParser->Load3DModel(visuals.modelName);
+		} else {
+			// not useful, too much spam
+			// LOG_L(L_WARNING, "[WeaponDef::%s] weapon \"%s\" has no model defined", __FUNCTION__, name.c_str());
+		}
 	} else {
 		eventHandler.LoadedModelRequested();
 	}
