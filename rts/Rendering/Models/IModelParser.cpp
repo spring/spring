@@ -27,24 +27,29 @@ static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
 	if (type == MODELTYPE_3DO) { return (new S3DOPiece()); }
 	if (type == MODELTYPE_S3O) { return (new SS3OPiece()); }
 	if (type == MODELTYPE_OBJ) { return (new SOBJPiece()); }
-	// FIXME: SAssPiece is not yet fully implemented
-	// if (type == MODELTYPE_ASS) { return (new SAssPiece()); }
+	// NOTE: SAssPiece is not yet fully implemented
+	if (type == MODELTYPE_ASS) { return (new SAssPiece()); }
 	return NULL;
 }
 
 static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
+	std::set<std::string> whitelist;
 	std::string extension;
 	std::string extensions;
-	Assimp::Importer importer;
 
+	whitelist.insert("3ds"  ); // 3DSMax
+	whitelist.insert("dae"  ); // Collada
+	whitelist.insert("lwo"  ); // LightWave
+	whitelist.insert("blend"); // Blender
+
+	Assimp::Importer importer;
 	// get a ";" separated list of format extensions ("*.3ds;*.lwo;*.mesh.xml;...")
 	importer.GetExtensionList(extensions);
 
 	// do not ignore the last extension
 	extensions += ";";
 
-	LOG("[%s] supported Assimp model formats: %s",
-			__FUNCTION__, extensions.c_str());
+	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, extensions.c_str());
 
 	size_t curIdx = 0;
 	size_t nxtIdx = 0;
@@ -55,11 +60,14 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 		extension = extension.substr(extension.find("*.") + 2);
 		extension = StringToLower(extension);
 
-		if (formats.find(extension) == formats.end()) {
-			formats[extension] = MODELTYPE_ASS;
-		}
-
 		curIdx = nxtIdx + 1;
+
+		if (whitelist.find(extension) == whitelist.end())
+			continue;
+		if (formats.find(extension) != formats.end())
+			continue;
+
+		formats[extension] = MODELTYPE_ASS;
 	}
 }
 
