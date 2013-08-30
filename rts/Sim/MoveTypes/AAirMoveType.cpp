@@ -150,12 +150,11 @@ bool AAirMoveType::Update() {
 	// forces it to false, TransportUnit::{Attach,Detach}Unit manipulate it
 	// specifically for HoverAirMoveType's)
 	if (useHeading) {
-		useHeading = false;
 		SetState(AIRCRAFT_TAKEOFF);
 	}
 
 	// this return value is never used
-	return false;
+	return (useHeading = false);
 }
 
 void AAirMoveType::UpdateLanded()
@@ -200,12 +199,23 @@ void AAirMoveType::UpdateLanded()
 }
 
 void AAirMoveType::UpdateFuel() {
-	if (owner->unitDef->maxFuel > 0.0f) {
-		if (aircraftState != AIRCRAFT_LANDED)
-			owner->currentFuel = std::max(0.0f, owner->currentFuel - (float(gs->frameNum - lastFuelUpdateFrame) / GAME_SPEED));
+	if (owner->unitDef->maxFuel <= 0.0f)
+		return;
 
+	// lastFuelUpdateFrame must be updated even when early-outing
+	// otherwise fuel level will jump after a period of not using
+	// any (eg. when on a pad)
+	if (aircraftState == AIRCRAFT_LANDED) {
 		lastFuelUpdateFrame = gs->frameNum;
+		return;
 	}
+	if (padStatus == PAD_STATUS_ARRIVED) {
+		lastFuelUpdateFrame = gs->frameNum;
+		return;
+	}
+
+	owner->currentFuel = std::max(0.0f, owner->currentFuel - (float(gs->frameNum - lastFuelUpdateFrame) / GAME_SPEED));
+	lastFuelUpdateFrame = gs->frameNum;
 }
 
 
@@ -292,14 +302,55 @@ bool AAirMoveType::CanLandOnPad(const float3& padPos) const {
 	if (padPos.SqDistance2D(owner->pos) > std::max(brakingDistSq, descendDistSq))
 		return false;
 
-	// horizontal guide
-	if (flatFrontDir.dot((padPos - owner->pos).SafeNormalize2D()) < 0.925f)
-		return false;
-	// vertical guide
-	if (flatFrontDir.dot((padPos - owner->pos).SafeNormalize()) < 0.707f)
-		return false;
+	if (owner->unitDef->IsStrafingAirUnit()) {
+		// horizontal guide
+		if (flatFrontDir.dot((padPos - owner->pos).SafeNormalize2D()) < 0.985f)
+			return false;
+		// vertical guide
+		if (flatFrontDir.dot((padPos - owner->pos).SafeNormalize()) < 0.707f)
+			return false;
+	}
 
 	return true;
+}
+
+bool AAirMoveType::HaveLandedOnPad(const float3& padPos) {
+	const AircraftState landingState = GetLandingState();
+	const float landingPadHeight = ground->GetHeightAboveWater(padPos.x, padPos.z);
+
+	reservedLandingPos = padPos;
+	wantedHeight = padPos.y - landingPadHeight;
+
+	const float3 padVector = (padPos - owner->pos).SafeNormalize2D();
+	const float curOwnerAltitude = (owner->pos.y - landingPadHeight);
+	const float minOwnerAltitude = (wantedHeight + 1.0f);
+
+	if (aircraftState != landingState)
+		SetState(landingState);
+	if (aircraftState == AIRCRAFT_LANDED)
+		return true;
+
+	if (curOwnerAltitude <= minOwnerAltitude) {
+		// deal with overshooting aircraft: "tractor" them in
+		// once they descend down to the landing pad altitude
+		// this is a no-op for HAMT planes which do not apply
+		// speed updates at this point
+		owner->speed += (padVector * accRate);
+		owner->speed.y = 0.0f;
+	}
+
+	if (Square(owner->rightdir.y) < 0.01f && owner->frontdir.dot(padVector) > 0.01f) {
+		owner->frontdir = padVector;
+		owner->rightdir = owner->frontdir.cross(UpVector);
+		owner->updir    = owner->rightdir.cross(owner->frontdir);
+
+		owner->SetHeadingFromDirection();
+	}
+
+	if (curOwnerAltitude > minOwnerAltitude)
+		return false;
+
+	return ((owner->pos.SqDistance2D(padPos) <= 1.0f || owner->unitDef->IsHoveringAirUnit()));
 }
 
 bool AAirMoveType::MoveToRepairPad() {
@@ -329,39 +380,18 @@ bool AAirMoveType::MoveToRepairPad() {
 			} break;
 
 			case PAD_STATUS_LANDING: {
-				// preparing to land on pad
-				const AircraftState landingState = GetLandingState();
-
-				if (aircraftState != landingState)
-					SetState(landingState);
-
-				goalPos = absPadPos;
-				reservedLandingPos = absPadPos;
-
-				const float landingPadHeight = ground->GetHeightAboveWater(absPadPos.x, absPadPos.z);
-				const float curPadDistanceSq = owner->midPos.SqDistance(absPadPos);
-				const float minPadDistanceSq = Square(owner->radius + owner->relMidPos.y);
-
-				wantedHeight = absPadPos.y - landingPadHeight;
-
-				if (curPadDistanceSq < minPadDistanceSq || aircraftState == AIRCRAFT_LANDED) {
+				// landing on pad
+				if (HaveLandedOnPad(goalPos = absPadPos)) {
 					padStatus = PAD_STATUS_ARRIVED;
-				} else {
-					if ((owner->pos.y - landingPadHeight) <= (wantedHeight + owner->radius + owner->relMidPos.y)) {
-						// deal with overshooting aircraft, "tractor" them in
-						owner->speed += ((absPadPos - owner->pos).SafeNormalize() * accRate);
-					}
 				}
 			} break;
 
 			case PAD_STATUS_ARRIVED: {
-				owner->speed = ZeroVector;
-
 				if (aircraftState != AIRCRAFT_LANDED) {
 					SetState(AIRCRAFT_LANDED);
 				}
 
-				owner->Move(absPadPos, false);
+				owner->Move(absPadPos + (owner->speed = ZeroVector), false);
 				owner->UpdateMidAndAimPos(); // needed here?
 				owner->AddBuildPower(airBase->unitDef->buildSpeed / GAME_SPEED, airBase);
 
