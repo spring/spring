@@ -8,6 +8,7 @@
 --  Copyright (C) 2007.
 --  Licensed under the terms of the GNU GPL, v2 or later.
 --
+--  functions listed here are not allowed to be RegisterGlobal'ed
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
@@ -31,6 +32,9 @@ CallInsList = {
 	"GameStart",
 	"GameOver",
 	"GameID",
+	"GameFrame",
+	"GameProgress",
+
 	"TeamDied",
 	"TeamChanged",
 
@@ -81,10 +85,11 @@ CallInsList = {
 	"Explosion",
 	"ShockFront",
 
-	"GameFrame",
 	"CobCallback",
-	"AllowCommand",
+
 	"CommandFallback",
+	"AllowCommand",
+	"AllowStartPosition",
 	"AllowUnitCreation",
 	"AllowUnitTransfer",
 	"AllowUnitBuildStep",
@@ -98,8 +103,6 @@ CallInsList = {
 	"AllowWeaponTarget",
 
 	"RecvSkirmishAIMessage",
-
-	"GameProgress",
 }
 
 
