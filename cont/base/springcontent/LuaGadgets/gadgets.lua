@@ -85,6 +85,7 @@ gadgetHandler = {
 
 -- these call-ins are set to 'nil' if not used
 -- they are setup in UpdateCallIns()
+-- FIXME: why not use callInsList from callins.lua??
 local callInLists = {
 	"Shutdown",
 
@@ -150,6 +151,7 @@ local callInLists = {
 	-- LuaRules CallIns (note: the *PreDamaged calls belong here too)
 	"CommandFallback",
 	"AllowCommand",
+	"AllowStartPosition",
 	"AllowUnitCreation",
 	"AllowUnitTransfer",
 	"AllowUnitBuildStep",
@@ -1176,6 +1178,14 @@ function gadgetHandler:AllowCommand(unitID, unitDefID, unitTeam,
   return true
 end
 
+function gadgetHandler:AllowStartPosition(cx, cy, cz, playerID, readyState, rx, ry, rz)
+  for _,g in ipairs(self.AllowStartPositionList) do
+    if (not g:AllowStartPosition(cx, cy, cz, playerID, readyState, rx, ry, rz)) then
+      return false
+    end
+  end
+  return true
+end
 
 function gadgetHandler:AllowUnitCreation(unitDefID, builderID, builderTeam, x, y, z, facing)
   for _,g in ipairs(self.AllowUnitCreationList) do
