@@ -101,6 +101,7 @@ struct TestProcessor {
 		int64_t lastTick = Clock::Get();
 		int64_t maxTick = 0;
 		int64_t minTick = 1e9;
+		int64_t lowTick = 1e9;
 		float avgTick = 0;
 
 		for (int i=0; i < testRuns; ++i) {
@@ -109,13 +110,15 @@ struct TestProcessor {
 			maxTick = std::max<int64_t>(tick, maxTick);
 			minTick = std::min<int64_t>(tick, minTick);
 			avgTick = float(i * avgTick + tick) / (i + 1);
+			if (tick > 0) lowTick = std::min<int64_t>(tick, lowTick);
 			lastTick = curTick;
 		}
 
 		float maxMsTick = maxTick * Clock::ToMs();
 		float minMsTick = std::max<int64_t>(minTick, 1LL) * Clock::ToMs();
 		float avgMsTick = std::max<int64_t>(avgTick, 1.0f) * Clock::ToMs();
-		LOG("[%17s] maxTick: %3.6fms minTick: %3.6fms avgTick: %3.6fms", Clock::GetName().c_str(), maxMsTick, minMsTick, avgMsTick);
+		float minNonNullMsTick = lowTick * Clock::ToMs();
+		LOG("[%17s] maxTick: %3.6fms minTick: %3.6fms avgTick: %3.6fms minNonNullTick: %3.6fms", Clock::GetName().c_str(), maxMsTick, minMsTick, avgMsTick, minNonNullMsTick);
 		return avgMsTick;
 	}
 };
