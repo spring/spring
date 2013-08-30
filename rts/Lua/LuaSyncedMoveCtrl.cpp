@@ -141,9 +141,10 @@ static inline MoveType* ParseMoveType(lua_State* L,
 int LuaSyncedMoveCtrl::IsEnabled(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
+
 	lua_pushboolean(L, unit->usingScriptMoveType);
 	return 1;
 }
@@ -152,9 +153,10 @@ int LuaSyncedMoveCtrl::IsEnabled(lua_State* L)
 int LuaSyncedMoveCtrl::Enable(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
+
 	unit->EnableScriptMoveType();
 	return 0;
 }
@@ -163,9 +165,10 @@ int LuaSyncedMoveCtrl::Enable(lua_State* L)
 int LuaSyncedMoveCtrl::Disable(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
+
 	unit->DisableScriptMoveType();
 	return 0;
 }
@@ -845,13 +848,18 @@ int LuaSyncedMoveCtrl::SetMoveDef(lua_State* L)
 		return 1;
 	}
 
+	// PFS might have cached data by path-type which must be cleared
+	if (unit->prevMoveType != NULL) {
+		unit->prevMoveType->StopMoving();
+	} else {
+		unit->moveType->StopMoving();
+	}
+
 	// the case where moveDef->pathType == unit->moveDef->pathType does no harm
 	// note: if a unit (ID) is available, then its current MoveDef should always
 	// be taken over the MoveDef corresponding to its UnitDef::pathType wherever
 	// MoveDef properties are used in decision logic
-	unit->moveDef = moveDef;
-
-	lua_pushboolean(L, true);
+	lua_pushboolean(L, (unit->moveDef = moveDef) != NULL);
 	return 1;
 }
 
