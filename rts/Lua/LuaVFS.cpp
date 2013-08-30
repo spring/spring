@@ -101,22 +101,12 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 
 const string LuaVFS::GetModes(lua_State* L, int index, bool synced)
 {
-	const int args = lua_gettop(L);
-	if (index < 0) {
-		index = (args + index + 1);
-	}
-	if ((index < 1) || (index > args)) {
-		if (synced && !CLuaHandle::GetDevMode()) {
-			return SPRING_VFS_ZIP;
-		}
-		return SPRING_VFS_RAW_FIRST;
+	const char* defMode = SPRING_VFS_RAW_FIRST;
+	if (synced && !CLuaHandle::GetDevMode()) {
+		defMode = SPRING_VFS_ZIP;
 	}
 
-	if (!lua_israwstring(L, index)) {
-		luaL_error(L, "Bad VFS access mode");
-	}
-
-	string modes = lua_tostring(L, index);
+	string modes = luaL_optstring(L, index, defMode);
 	if (synced && !CLuaHandle::GetDevMode()) {
 		modes = CFileHandler::ForbidModes(modes, SPRING_VFS_RAW);
 	}
@@ -147,13 +137,7 @@ static bool LoadFileWithModes(const string& filename, string& data,
 
 int LuaVFS::Include(lua_State* L, bool synced)
 {
-	const int args = lua_gettop(L);
-	if ((args < 1) || !lua_isstring(L, 1) ||
-	    ((args >= 2) && !lua_istable(L, 2) && !lua_isnil(L, 2))) {
-		luaL_error(L, "Incorrect arguments to Include()");
-	}
-
-	const string filename = lua_tostring(L, 1);
+	const string filename = luaL_checkstring(L, 1);
 	if (!LuaIO::IsSimplePath(filename)) {
 		// the path may point to a file or dir outside of any data-dir
 //FIXME		return 0;
@@ -165,7 +149,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	if (!LoadFileWithModes(filename, code, modes)) {
 		char buf[1024];
 		SNPRINTF(buf, sizeof(buf),
-		         "Include() could not load '%s'", filename.c_str());
+			 "Include() could not load '%s'", filename.c_str());
 		lua_pushstring(L, buf);
  		lua_error(L);
 	}
@@ -180,7 +164,8 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	}
 
 	// set the chunk's fenv to the current fenv, or a user table
-	if ((args >= 2) && lua_istable(L, 2)) {
+	if (!lua_isnil(L, 2)) {
+		luaL_checktype(L, 2, LUA_TTABLE);
 		lua_pushvalue(L, 2); // user fenv
 	} else {
 		LuaUtils::PushCurrentFuncEnv(L, __FUNCTION__);
@@ -225,12 +210,7 @@ int LuaVFS::UnsyncInclude(lua_State* L)
 
 int LuaVFS::LoadFile(lua_State* L, bool synced)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to LoadFile()");
-	}
-
-	const string filename = lua_tostring(L, 1);
+	const string filename = luaL_checkstring(L, 1);
 	if (!LuaIO::IsSimplePath(filename)) {
 		// the path may point to a file or dir outside of any data-dir
 //FIXME		return 0;
@@ -263,12 +243,7 @@ int LuaVFS::UnsyncLoadFile(lua_State* L)
 
 int LuaVFS::FileExists(lua_State* L, bool synced)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to FileExists()");
-	}
-
-	const string filename = lua_tostring(L, 1);
+	const string filename = luaL_checkstring(L, 1);
 	if (!LuaIO::IsSimplePath(filename)) {
 		// the path may point to a file or dir outside of any data-dir
 //FIXME		return 0;
@@ -300,13 +275,7 @@ int LuaVFS::UnsyncFileExists(lua_State* L)
 
 int LuaVFS::DirList(lua_State* L, bool synced)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1) ||
-	    ((args >= 2) && !lua_isstring(L, 2))) {
-		luaL_error(L, "Incorrect arguments to DirList()");
-	}
-
-	const string dir = lua_tostring(L, 1);
+	const string dir = luaL_checkstring(L, 1);
 	// keep searches within the Spring directory
 	if (!LuaIO::IsSimplePath(dir)) {
 		// the path may point to a file or dir outside of any data-dir
@@ -336,14 +305,7 @@ int LuaVFS::UnsyncDirList(lua_State* L)
 
 int LuaVFS::SubDirs(lua_State* L, bool synced)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1) ||
-	    ((args >= 2) && !lua_isstring(L, 2)) ||
-	    ((args >= 4) && !lua_isstring(L, 4))) {
-		luaL_error(L, "Incorrect arguments to SubDirs()");
-	}
-
-	const string dir = lua_tostring(L, 1);
+	const string dir = luaL_checkstring(L, 1);
 	// keep searches within the Spring directory
 	if (!LuaIO::IsSimplePath(dir)) {
 		// the path may point to a file or dir outside of any data-dir
@@ -471,7 +433,7 @@ int LuaVFS::MapArchive(lua_State* L)
 int LuaVFS::CompressFolder(lua_State* L)
 {
 	const string folderPath = luaL_checkstring(L, 1);
-	
+
 	const string archiveType = luaL_optstring(L, 2, "zip");
 	if (archiveType != "zip" && archiveType != "7z") { //TODO: add 7z support
 		luaL_error(L, ("Unsupported archive type " + archiveType).c_str());
