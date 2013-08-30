@@ -34,8 +34,8 @@ namespace Cpp11Clock {
 	#define i1e6 1000000LL
 	#define i1e9 1000000000LL
 
-	template<typename T> static inline T ToSecs(const boost::int64_t x) { return double(x * 1e-9); }
-	template<typename T> static inline T ToMs(const boost::int64_t x)   { return double(x * 1e-6); }
+	template<typename T> static inline T ToSecs(const boost::int64_t x) { return x * double(1e-9); }
+	template<typename T> static inline T ToMs(const boost::int64_t x)   { return x * double(1e-6); }
 	template<typename T> static inline T ToNs(const boost::int64_t x)   { return x; }
 	template<> inline boost::int64_t ToSecs<boost::int64_t>(const boost::int64_t x) { return x / i1e9; }
 	template<> inline boost::int64_t ToMs<boost::int64_t>(const boost::int64_t x)   { return x / i1e6; }
@@ -88,11 +88,12 @@ public:
 	inline bool isTime() const { return (x > 0); }
 	inline void sleep() const {
 		//FIXME for very short time intervals use a yielding loop instead? (precision of yield is like 5x better than sleep, see the UT)
+		//assert(toNanoSecs() > spring_msecs(1).toNanoSecs());
 
 	#if defined(SPRINGTIME_USING_STDCHRONO)
 		this_thread::sleep_for(chrono::nanoseconds( toNanoSecs() ));
 	#else
-		boost::this_thread::sleep(boost::posix_time::milliseconds(toMilliSecs()));
+		boost::this_thread::sleep(boost::posix_time::microseconds(std::ceil(toNanoSecsf() * 1e-3)));
 	#endif
 	}
 
