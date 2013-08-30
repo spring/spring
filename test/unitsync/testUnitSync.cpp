@@ -267,7 +267,8 @@ BOOST_AUTO_TEST_CASE( UnitSync )
 
 	for (int i=0; i<gamecount; i++) {
 		const std::string game = GetGameName(i);
-		BOOST_CHECK_MESSAGE(us::GetPrimaryModIndex(game.c_str()) == i, game.c_str());
+		const int primaryModIndex = us::GetPrimaryModIndex(game.c_str());
+		BOOST_CHECK_MESSAGE(primaryModIndex == i, game << ": " << primaryModIndex << "!=" << i);
 		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 	}
 	for (int i=0; i<mapcount; i++) {
