@@ -74,6 +74,7 @@ public:
 protected:
 	void CheckForCollision();
 	bool CanLandOnPad(const float3& padPos) const;
+	bool HaveLandedOnPad(const float3& padPos);
 	bool MoveToRepairPad();
 	void UpdateFuel();
 
