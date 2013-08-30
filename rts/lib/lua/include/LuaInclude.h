@@ -18,6 +18,21 @@ static inline void lua_pushsstring(lua_State* L, const std::string& str)
 }
 
 
+static inline std::string luaL_checksstring(lua_State* L, int index)
+{
+	return std::string(luaL_checkstring(L, index), lua_strlen(L, index));
+}
+
+
+static inline std::string luaL_optsstring(lua_State* L, int index, const std::string& def)
+{
+	if (lua_isstring(L, index)) {
+		return std::string(lua_tostring(L, index), lua_strlen(L, index));
+	}
+	return def;
+}
+
+
 static inline bool lua_israwnumber(lua_State* L, int index)
 {
 	return (lua_type(L, index) == LUA_TNUMBER);
@@ -70,10 +85,21 @@ static inline float luaL_optfloat(lua_State* L, int idx, float def)
 	return (float)luaL_optnumber(L, idx, def);
 }
 
+
 static inline bool luaL_optboolean(lua_State* L, int idx, bool def)
 {
 	return lua_isboolean(L, idx) ? lua_toboolean(L, idx) : def;
 }
+
+
+static inline bool luaL_checkboolean(lua_State* L, int idx)
+{
+	if (!lua_isboolean(L, idx)) {
+		luaL_checktype(L, idx, LUA_TBOOLEAN);
+	}
+	return lua_toboolean(L, idx);
+}
+
 
 struct luaContextData;
 

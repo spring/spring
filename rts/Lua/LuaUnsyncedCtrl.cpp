@@ -437,23 +437,15 @@ static void PrintMessage(lua_State* L, const string& msg)
 
 int LuaUnsyncedCtrl::SendMessage(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SendMessage()");
-	}
-	PrintMessage(L, lua_tostring(L, 1));
+	PrintMessage(L, luaL_checksstring(L, 1));
 	return 0;
 }
 
 
 int LuaUnsyncedCtrl::SendMessageToSpectators(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SendMessageToSpectators()");
-	}
 	if (gu->spectating) {
-		PrintMessage(L, lua_tostring(L, 1));
+		PrintMessage(L, luaL_checksstring(L, 1));
 	}
 	return 0;
 }
@@ -461,13 +453,9 @@ int LuaUnsyncedCtrl::SendMessageToSpectators(lua_State* L)
 
 int LuaUnsyncedCtrl::SendMessageToPlayer(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SendMessageToPlayer()");
-	}
-	const int playerID = lua_toint(L, 1);
+	const int playerID = luaL_checkint(L, 1);
 	if (playerID == gu->myPlayerNum) {
-		PrintMessage(L, lua_tostring(L, 2));
+		PrintMessage(L, luaL_checksstring(L, 2));
 	}
 	return 0;
 }
@@ -475,13 +463,9 @@ int LuaUnsyncedCtrl::SendMessageToPlayer(lua_State* L)
 
 int LuaUnsyncedCtrl::SendMessageToTeam(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SendMessageToTeam()");
-	}
-	const int teamID = lua_toint(L, 1);
+	const int teamID = luaL_checkint(L, 1);
 	if (teamID == gu->myTeam) {
-		PrintMessage(L, lua_tostring(L, 2));
+		PrintMessage(L, luaL_checksstring(L, 2));
 	}
 	return 0;
 }
@@ -489,13 +473,9 @@ int LuaUnsyncedCtrl::SendMessageToTeam(lua_State* L)
 
 int LuaUnsyncedCtrl::SendMessageToAllyTeam(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SendMessageToAllyTeam()");
-	}
-	const int allyTeamID = lua_toint(L, 1);
+	const int allyTeamID = luaL_checkint(L, 1);
 	if (allyTeamID == gu->myAllyTeam) {
-		PrintMessage(L, lua_tostring(L, 2));
+		PrintMessage(L, luaL_checksstring(L, 2));
 	}
 	return 0;
 }
@@ -505,12 +485,7 @@ int LuaUnsyncedCtrl::SendMessageToAllyTeam(lua_State* L)
 
 int LuaUnsyncedCtrl::LoadSoundDef(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to LoadSoundDef()");
-	}
-
-	const string soundFile = lua_tostring(L, 1);
+	const string soundFile = luaL_checksstring(L, 1);
 	bool success = sound->LoadSoundDefs(soundFile);
 
 	if (!CLuaHandle::GetHandleSynced(L)) {
@@ -523,12 +498,9 @@ int LuaUnsyncedCtrl::LoadSoundDef(lua_State* L)
 
 int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to PlaySoundFile()");
-	}
+	const int args = lua_gettop(L);
 	bool success = false;
-	const string soundFile = lua_tostring(L, 1);
+	const string soundFile = luaL_checksstring(L, 1);
 	const unsigned int soundID = sound->GetSoundId(soundFile);
 	if (soundID > 0) {
 		float volume = luaL_optfloat(L, 2, 1.0f);
@@ -607,7 +579,7 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 {
 	const int args = lua_gettop(L);
 
-	const string soundFile = luaL_checkstring(L, 1);
+	const string soundFile = luaL_checksstring(L, 1);
 	const float volume = luaL_optnumber(L, 2, 1.0f);
 	bool enqueue = false;
 	if (args >= 3)
@@ -747,16 +719,10 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 
 int LuaUnsyncedCtrl::AddWorldIcon(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 4) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
-	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to AddWorldIcon(id, x, y, z");
-	}
-	const int cmdID = lua_toint(L, 1);
-	const float3 pos(lua_tofloat(L, 2),
-	                 lua_tofloat(L, 3),
-	                 lua_tofloat(L, 4));
+	const int cmdID = luaL_checkint(L, 1);
+	const float3 pos(luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3),
+	                 luaL_checkfloat(L, 4));
 	cursorIcons.AddIcon(cmdID, pos);
 	return 0;
 }
@@ -764,16 +730,10 @@ int LuaUnsyncedCtrl::AddWorldIcon(lua_State* L)
 
 int LuaUnsyncedCtrl::AddWorldText(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 4) ||
-	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) ||
-	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to AddWorldIcon(text, x, y, z");
-	}
-	const string text = lua_tostring(L, 1);
-	const float3 pos(lua_tofloat(L, 2),
-	                 lua_tofloat(L, 3),
-	                 lua_tofloat(L, 4));
+	const string text = luaL_checksstring(L, 1);
+	const float3 pos(luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3),
+	                 luaL_checkfloat(L, 4));
 	cursorIcons.AddIconText(text, pos);
 	return 0;
 }
@@ -781,26 +741,18 @@ int LuaUnsyncedCtrl::AddWorldText(lua_State* L)
 
 int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 6) ||
-	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) ||
-	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
-	    !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
-		luaL_error(L,
-			"Incorrect arguments to AddWorldUnit(unitDefID, x, y, z, team, facing)");
-	}
-	const int unitDefID = lua_toint(L, 1);
+	const int unitDefID = luaL_checkint(L, 1);
 	if (!unitDefHandler->IsValidUnitDefID(unitDefID)) {
 		return 0;
 	}
-	const float3 pos(lua_tofloat(L, 2),
-	                 lua_tofloat(L, 3),
-	                 lua_tofloat(L, 4));
-	const int teamId = lua_toint(L, 5);
+	const float3 pos(luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3),
+	                 luaL_checkfloat(L, 4));
+	const int teamId = luaL_checkint(L, 5);
 	if (!teamHandler->IsValidTeam(teamId)) {
 		return 0;
 	}
-	const int facing = lua_toint(L, 6);
+	const int facing = luaL_checkint(L, 6);
 	cursorIcons.AddBuildIcon(-unitDefID, pos, teamId, facing);
 	return 0;
 }
@@ -842,19 +794,11 @@ int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 		return 0;
 	}
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to SetCameraTarget(x, y, z)");
-	}
-	const float3 pos(lua_tofloat(L, 1),
-	                 lua_tofloat(L, 2),
-	                 lua_tofloat(L, 3));
+	const float3 pos(luaL_checkfloat(L, 1),
+	                 luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3));
 
-	float transTime = 0.5f;
-	if ((args >= 4) && lua_isnumber(L, 4)) {
-		transTime = lua_tofloat(L, 4);
-	}
+	const float transTime = luaL_optfloat(L, 4, 0.5f);
 
 	camHandler->CameraTransition(transTime);
 	camHandler->GetCurrentController().SetPos(pos);
@@ -983,24 +927,14 @@ int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
 
 int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to AssignMouseCursor()");
-	}
+	const string cmdName  = luaL_checksstring(L, 1);
+	const string fileName = luaL_checksstring(L, 2);
 
-	const string cmdName  = lua_tostring(L, 1);
-	const string fileName = lua_tostring(L, 2);
-
-	bool overwrite = true;
-	if ((args >= 3) && lua_isboolean(L, 3)) {
-		overwrite = lua_toboolean(L, 3);
-	}
+	const bool overwrite = luaL_optboolean(L, 3, true);
 
 	CMouseCursor::HotSpot hotSpot = CMouseCursor::Center;
-	if ((args >= 4) && lua_isboolean(L, 4)) {
-		if (lua_toboolean(L, 4)) {
-			hotSpot = CMouseCursor::TopLeft;
-		}
+	if (luaL_optboolean(L, 4, false)) {
+		hotSpot = CMouseCursor::TopLeft;
 	}
 
 	const bool worked = mouse->AssignMouseCursor(cmdName, fileName, hotSpot, overwrite);
@@ -1016,19 +950,12 @@ int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
 
 int LuaUnsyncedCtrl::ReplaceMouseCursor(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to ReplaceMouseCursor()");
-	}
-
-	const string oldName = lua_tostring(L, 1);
-	const string newName = lua_tostring(L, 2);
+	const string oldName = luaL_checksstring(L, 1);
+	const string newName = luaL_checksstring(L, 2);
 
 	CMouseCursor::HotSpot hotSpot = CMouseCursor::Center;
-	if ((args >= 3) && lua_isboolean(L, 3)) {
-		if (lua_toboolean(L, 3)) {
-			hotSpot = CMouseCursor::TopLeft;
-		}
+	if (luaL_optboolean(L, 3, false)) {
+		hotSpot = CMouseCursor::TopLeft;
 	}
 
 	const bool worked = mouse->ReplaceMouseCursor(oldName, newName, hotSpot);
@@ -1056,7 +983,7 @@ int LuaUnsyncedCtrl::SetCustomCommandDrawData(lua_State* L)
 		const string icon = lua_tostring(L, 2);
 		cursorIcons.SetCustomType(cmdID, icon);
 	}
-	else if (lua_isnil(L, 2)) {
+	else if (lua_isnoneornil(L, 2)) {
 		cursorIcons.SetCustomType(cmdID, "");
 		cmdColors.ClearCustomCmdData(cmdID);
 		return 0;
@@ -1557,12 +1484,7 @@ int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitNoDraw()");
-		return 0;
-	}
-	unit->noDraw = lua_toboolean(L, 2);
+	unit->noDraw = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -1576,12 +1498,7 @@ int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitNoMinimap()");
-		return 0;
-	}
-	unit->noMinimap = lua_toboolean(L, 2);
+	unit->noMinimap = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -1597,12 +1514,7 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitNoSelect()");
-		return 0;
-	}
-	unit->noSelect = lua_toboolean(L, 2);
+	unit->noSelect = luaL_checkboolean(L, 2);
 
 	// deselect the unit if it's selected and shouldn't be
 	if (unit->noSelect) {
@@ -1911,12 +1823,8 @@ int LuaUnsyncedCtrl::WarpMouse(lua_State* L)
 	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to WarpMouse()");
-	}
-	const int x = lua_toint(L, 1);
-	const int y = globalRendering->viewSizeY - lua_toint(L, 2) - 1;
+	const int x = luaL_checkint(L, 1);
+	const int y = globalRendering->viewSizeY - luaL_checkint(L, 2) - 1;
 	mouse->WarpMouse(x, y);
 	return 0;
 }
@@ -2096,11 +2004,6 @@ int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 
 int LuaUnsyncedCtrl::Restart(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to Restart(arguments, script)");
-	}
-
 	const std::string arguments = luaL_checkstring(L, 1);
 	const std::string script = luaL_checkstring(L, 2);
 
@@ -2143,12 +2046,7 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 
 int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetWMIcon(iconFileName)");
-	}
-
-	const std::string iconFileName = luaL_checkstring(L, 1);
+	const std::string iconFileName = luaL_checksstring(L, 1);
 
 	CBitmap iconTexture;
 	const bool loaded = iconTexture.Load(iconFileName);
@@ -2163,21 +2061,8 @@ int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 
 int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1)
-			|| (args > 2) || ((args >= 2) && !lua_isstring(L, 2)))
-	{
-		luaL_error(L, "Incorrect arguments to SetWMCaption(title[, titleShort])");
-	}
-
-	const std::string title = luaL_checkstring(L, 1);
-
-	std::string titleShort;
-	if (args >= 2) {
-		titleShort = luaL_checkstring(L, 2);
-	} else {
-		titleShort = title;
-	}
+	const std::string title = luaL_checksstring(L, 1);
+	const std::string titleShort = luaL_optsstring(L, 2, title);
 
 	WindowManagerHelper::SetCaption(title, titleShort);
 
@@ -2789,13 +2674,8 @@ int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 		return 0;
 	}
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 1 || !lua_isboolean(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetDrawSelectionInfo(bool)");
-	}
-
 	if (guihandler)
-		guihandler->SetDrawSelectionInfo(lua_toboolean(L, 1));
+		guihandler->SetDrawSelectionInfo(luaL_checkboolean(L, 1));
 
 	return 0;
 }
@@ -2810,13 +2690,8 @@ int LuaUnsyncedCtrl::SetBuildSpacing(lua_State* L)
 		return 0;
 	}
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 1 || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetBuildSpacing(int)");
-	}
-
 	if (guihandler)
-		guihandler->SetBuildSpacing(lua_tointeger(L, 1));
+		guihandler->SetBuildSpacing(luaL_checkinteger(L, 1));
 
 	return 0;
 }
@@ -2827,13 +2702,8 @@ int LuaUnsyncedCtrl::SetBuildFacing(lua_State* L)
 		return 0;
 	}
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 1 || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetBuildFacing(int)");
-	}
-
 	if (guihandler)
-		guihandler->SetBuildFacing(lua_tointeger(L, 1));
+		guihandler->SetBuildFacing(luaL_checkint(L, 1));
 
 	return 0;
 }
@@ -2849,16 +2719,9 @@ int LuaUnsyncedCtrl::SetSunParameters(lua_State* L)
 	if (dynSkyLight == NULL)
 		return 0;
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 6 ||
-		!lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) ||
-		!lua_isnumber(L, 4) || !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
-		luaL_error(L, "Incorrect arguments to SetSunParameters(float, float, float, float, float, float)");
-	}
-
-	const float4 sunDir(lua_tofloat(L, 1), lua_tofloat(L, 2), lua_tofloat(L, 3), lua_tofloat(L, 4));
-	const float startAngle = lua_tofloat(L, 5);
-	const float orbitTime = lua_tofloat(L, 6);
+	const float4 sunDir(luaL_checkfloat(L, 1), luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
+	const float startAngle = luaL_checkfloat(L, 5);
+	const float orbitTime = luaL_checkfloat(L, 6);
 
 	dynSkyLight->SetLightParams(sunDir, startAngle, orbitTime);
 	return 0;
@@ -2871,12 +2734,7 @@ int LuaUnsyncedCtrl::SetSunManualControl(lua_State* L)
 	if (dynSkyLight == NULL)
 		return 0;
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 1 || !lua_isboolean(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetSunManualControl(bool)");
-	}
-
-	dynSkyLight->SetLuaControl(lua_toboolean(L, 1));
+	dynSkyLight->SetLuaControl(luaL_checkboolean(L, 1));
 	return 0;
 }
 
@@ -2889,12 +2747,7 @@ int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
 	if (!dynSkyLight->GetLuaControl())
 		return 0;
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 3 || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to SetSunDirection(float, float, float)");
-	}
-
-	dynSkyLight->SetLightDir(float3(lua_tofloat(L, 1), lua_tofloat(L, 2), lua_tofloat(L, 3)));
+	dynSkyLight->SetLightDir(float3(luaL_checkfloat(L, 1), luaL_checkfloat(L, 2), luaL_checkfloat(L, 3)));
 	return 0;
 }
 
@@ -2905,9 +2758,6 @@ int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
 
 int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 	if (CLuaHandle::GetHandleSynced(L)) {
-		return 0;
-	}
-	if (lua_gettop(L) != 2) {
 		return 0;
 	}
 

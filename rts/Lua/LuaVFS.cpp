@@ -143,6 +143,15 @@ int LuaVFS::Include(lua_State* L, bool synced)
 //FIXME		return 0;
 	}
 
+	bool hasCustomEnv = false;
+	if (!lua_isnoneornil(L, 2)) {
+		//note this check must happen before luaL_loadbuffer gets called
+		// it pushes new values on the stack and if only index 1 was given
+		// to Include those by luaL_loadbuffer are pushed to index 2,3,...
+		luaL_checktype(L, 2, LUA_TTABLE);
+		hasCustomEnv = true;
+	}
+
 	const string modes = GetModes(L, 3, synced);
 
 	string code;
@@ -164,8 +173,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	}
 
 	// set the chunk's fenv to the current fenv, or a user table
-	if (!lua_isnil(L, 2)) {
-		luaL_checktype(L, 2, LUA_TTABLE);
+	if (hasCustomEnv) {
 		lua_pushvalue(L, 2); // user fenv
 	} else {
 		LuaUtils::PushCurrentFuncEnv(L, __FUNCTION__);
