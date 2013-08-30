@@ -1627,7 +1627,7 @@ int LuaSyncedCtrl::SetUnitCloak(lua_State* L)
 		unit->scriptCloak = lua_toboolean(L, 2) ? 1 : 0;
 	} else if (lua_isnumber(L, 2)) {
 		unit->scriptCloak = lua_toint(L, 2);
-	} else if (!lua_isnil(L, 2)) {
+	} else if (!lua_isnoneornil(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitCloak()");
 	}
 

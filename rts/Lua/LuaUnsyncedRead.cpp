@@ -1694,11 +1694,7 @@ int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 	if (guihandler == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to GetActiveCmdDesc()");
-	}
-	const int cmdIndex = lua_toint(L, 1) - CMD_INDEX_OFFSET;
+	const int cmdIndex = luaL_checkint(L, 1) - CMD_INDEX_OFFSET;
 
 	const vector<CommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
@@ -1829,11 +1825,7 @@ int LuaUnsyncedRead::GetMouseStartPosition(lua_State* L)
 
 int LuaUnsyncedRead::GetKeyState(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to GetKeyState(keycode)");
-	}
-	const int key = lua_toint(L, 1);
+	const int key = luaL_checkint(L, 1);
 	if ((key < 0) || (key >= SDLK_LAST)) {
 		lua_pushboolean(L, 0);
 	} else {
@@ -1920,9 +1912,6 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 	}
 
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
-		luaL_error(L, "Incorrect arguments to GetConsoleBuffer([count])");
-	}
 
 	std::deque<CInfoConsole::RawLine> lines;
 	ic->GetRawLines(lines);
@@ -1930,7 +1919,7 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 
 	int start = 0;
 	if (args >= 1) {
-		const int maxLines = lua_toint(L, 1);
+		const int maxLines = luaL_checkint(L, 1);
 		if (maxLines < lineCount) {
 			start = (lineCount - maxLines);
 		}
@@ -1970,11 +1959,7 @@ int LuaUnsyncedRead::GetCurrentTooltip(lua_State* L)
 
 int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to GetKeyCode(\"keysym\")");
-	}
-	const string keysym = lua_tostring(L, 1);
+	const string keysym = luaL_checksstring(L, 1);
 	lua_pushnumber(L, keyCodes->GetCode(keysym));
 	return 1;
 }
@@ -1982,11 +1967,7 @@ int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 
 int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to GetKeySymbol(keycode)");
-	}
-	const int keycode = lua_toint(L, 1);
+	const int keycode = luaL_checkint(L, 1);
 	lua_pushsstring(L, keyCodes->GetName(keycode));
 	lua_pushsstring(L, keyCodes->GetDefaultName(keycode));
 	return 2;
@@ -1995,16 +1976,12 @@ int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 
 int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to GetKeyBindings(\"keyset\")");
-	}
-	const string keysetStr = lua_tostring(L, 1);
+	const string keysetStr = luaL_checksstring(L, 1);
 	CKeySet ks;
 	if (!ks.Parse(keysetStr)) {
 		return 0;
 	}
-	const CKeyBindings::ActionList&	actions = keyBindings->GetActionList(ks);
+	const CKeyBindings::ActionList& actions = keyBindings->GetActionList(ks);
 	lua_newtable(L);
 	for (int i = 0; i < (int)actions.size(); i++) {
 		const Action& action = actions[i];
@@ -2021,12 +1998,8 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 
 int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to GetActionHotKeys(\"command\")");
-	}
-	const string command = lua_tostring(L, 1);
-	const CKeyBindings::HotkeyList&	hotkeys = keyBindings->GetHotkeys(command);
+	const string command = luaL_checksstring(L, 1);
+	const CKeyBindings::HotkeyList& hotkeys = keyBindings->GetHotkeys(command);
 	lua_newtable(L);
 	for (int i = 0; i < (int)hotkeys.size(); i++) {
 		const string& hotkey = hotkeys[i];
@@ -2335,11 +2308,6 @@ int LuaUnsyncedRead::GetPlayerStatistics(lua_State* L)
 
 int LuaUnsyncedRead::GetDrawSelectionInfo(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		luaL_error(L, "Incorrect arguments to GetDrawSelectionInfo()");
-	}
-
 	lua_pushboolean(L, guihandler ? guihandler->GetDrawSelectionInfo() : 0);
 	return 1;
 }

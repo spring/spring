@@ -3378,11 +3378,7 @@ int LuaOpenGL::DeleteTexture(lua_State* L)
 	if (lua_isnil(L, 1)) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to gl.DeleteTexture()");
-	}
-	const string texture = lua_tostring(L, 1);
+	const string texture = luaL_checksstring(L, 1);
 	if (texture[0] == LuaTextures::prefix) { // '!'
 		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 		lua_pushboolean(L, textures.Free(texture));
@@ -3401,7 +3397,7 @@ int LuaOpenGL::DeleteTextureFBO(lua_State* L)
 	}
 
 	LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
-	lua_pushboolean(L, textures.FreeFBO(luaL_checkstring(L, 1)));
+	lua_pushboolean(L, textures.FreeFBO(luaL_checksstring(L, 1)));
 	return 1;
 }
 
@@ -4293,11 +4289,7 @@ int LuaOpenGL::DeleteList(lua_State* L)
 	if (lua_isnil(L, 1)) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to gl.DeleteList(list)");
-	}
-	const unsigned int listIndex = (unsigned int)lua_tonumber(L, 1);
+	const unsigned int listIndex = (unsigned int)luaL_checkint(L, 1);
 	CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 	const unsigned int dlist = displayLists.GetDList(listIndex);
 	displayLists.FreeDList(listIndex);
@@ -4510,7 +4502,7 @@ int LuaOpenGL::CreateQuery(lua_State* L)
 
 int LuaOpenGL::DeleteQuery(lua_State* L)
 {
-	if (lua_isnil(L, 1)) {
+	if (lua_isnoneornil(L, 1)) {
 		return 0;
 	}
 	if (!lua_islightuserdata(L, 1)) {

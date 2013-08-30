@@ -722,7 +722,7 @@ int LuaUtils::Next(const ParamMap& paramMap, lua_State* L)
 	lua_settop(L, 2); // create a 2nd argument if there isn't one
 
 	// internal parameters first
-	if (lua_isnil(L, 2)) {
+	if (lua_isnoneornil(L, 2)) {
 		const string& nextKey = paramMap.begin()->first;
 		lua_pushsstring(L, nextKey); // push the key
 		lua_pushvalue(L, 3);         // copy the key

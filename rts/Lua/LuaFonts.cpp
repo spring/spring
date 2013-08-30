@@ -396,7 +396,7 @@ int LuaFonts::SetOutlineColor(lua_State* L)
 		color->y = luaL_checkfloat(L, 3);
 		color->z = luaL_checkfloat(L, 4);
 		color->w = luaL_optfloat(L, 5, 1.0f);
-	} else if (!lua_isnil(L, 2)) {
+	} else if (!lua_isnoneornil(L, 2)) {
 		luaL_error(L, "Incorrect arguments to font:SetOutlineColor([\"outlineColor\"])");
 	}
 

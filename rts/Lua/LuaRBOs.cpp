@@ -160,7 +160,7 @@ int LuaRBOs::CreateRBO(lua_State* L)
 
 	// allocate the memory
 	glRenderbufferStorageEXT(rbo.target, rbo.format, rbo.xsize, rbo.ysize);
-	
+
 	glBindRenderbufferEXT(rbo.target, 0);
 
 	RBO* rboPtr = static_cast<RBO*>(lua_newuserdata(L, sizeof(RBO)));
@@ -179,9 +179,6 @@ int LuaRBOs::CreateRBO(lua_State* L)
 
 int LuaRBOs::DeleteRBO(lua_State* L)
 {
-	if (lua_isnil(L, 1)) {
-		return 0;
-	}
 	RBO* rbo = static_cast<RBO*>(luaL_checkudata(L, 1, "RBO"));
 	rbo->Free(L);
 	return 0;

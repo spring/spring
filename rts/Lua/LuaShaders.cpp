@@ -188,7 +188,7 @@ static bool ParseUniformTable(lua_State* L, int index, GLuint progName)
 						}
 					}
 				}
-			}				
+			}
 		}
 	}
 	lua_pop(L, 1);
@@ -221,7 +221,7 @@ static bool ParseUniformIntTable(lua_State* L, int index, GLuint progName)
 						}
 					}
 				}
-			}				
+			}
 		}
 	}
 	lua_pop(L, 1);
@@ -293,12 +293,12 @@ static GLuint CompileObject(lua_State *L, const vector<string>& sources, GLenum 
 	}
 
 	const int count = (int)sources.size();
-	
+
 	const GLchar** texts = new const GLchar*[count];
 	for (int i = 0; i < count; i++) {
 		texts[i] = sources[i].c_str();
 	}
-	
+
 	glShaderSource(obj, count, texts, NULL);
 
 	delete[] texts;
@@ -311,7 +311,7 @@ static GLuint CompileObject(lua_State *L, const vector<string>& sources, GLenum 
 		GLchar log[4096];
 		GLsizei logSize = sizeof(log);
 		glGetShaderInfoLog(obj, logSize, &logSize, log);
-		
+
 		LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 		shaders.errorLog = log;
 		if (shaders.errorLog.empty()) {
@@ -319,7 +319,7 @@ static GLuint CompileObject(lua_State *L, const vector<string>& sources, GLenum 
 			                   + IntToString(result) + " (0x"
 			                   + IntToString(result, "%04X") + ")";
 		}
-		
+
 		glDeleteShader(obj);
 
 		success = false;
@@ -335,7 +335,7 @@ static bool ParseSources(lua_State* L, int table,
                          const char* type, vector<string>& srcs)
 {
 	lua_getfield(L, table, type);
-	
+
 	if (lua_israwstring(L, -1)) {
 		const string src = lua_tostring(L, -1);
 		if (!src.empty()) {
@@ -494,7 +494,7 @@ int LuaShaders::UseShader(lua_State* L)
 		lua_pushboolean(L, true);
 		return 1;
 	}
-		
+
 	LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 	const GLuint progName = shaders.GetProgramName(progID);
 	if (progName == 0) {
@@ -590,7 +590,7 @@ int LuaShaders::GetActiveUniforms(lua_State* L)
 	if (progName == 0) {
 		return 0;
 	}
-	
+
 	GLint uniformCount;
 	glGetProgramiv(progName, GL_ACTIVE_UNIFORMS, &uniformCount);
 
@@ -612,7 +612,7 @@ int LuaShaders::GetActiveUniforms(lua_State* L)
 		}
 		lua_rawset(L, -3);
 	}
-	
+
 	return 1;
 }
 
