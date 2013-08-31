@@ -105,12 +105,15 @@ void CTransportUnit::DependentDied(CObject* o)
 	std::list<TransportedUnit>::iterator ti;
 
 	for (ti = transportedUnits.begin(); ti != transportedUnits.end(); ++ti) {
-		if (ti->unit == o) {
-			transportCapacityUsed -= ti->size;
-			transportMassUsed -= ti->mass;
-			transportedUnits.erase(ti);
-			break;
-		}
+		if (ti->unit != o)
+			continue;
+
+		transportCapacityUsed -= ti->size;
+		transportMassUsed -= ti->mass;
+		mass = Clamp(mass - ti->mass, CSolidObject::MINIMUM_MASS, CSolidObject::MAXIMUM_MASS);
+
+		transportedUnits.erase(ti);
+		break;
 	}
 
 	CUnit::DependentDied(o);
@@ -222,19 +225,23 @@ bool CTransportUnit::CanTransport(const CUnit* unit) const
 		return false;
 	if (unit->unitDef->cantBeTransported)
 		return false;
-	if (unit->mass >= CSolidObject::DEFAULT_MASS || unit->beingBuilt)
-		return false;
+
 	// don't transport cloaked enemies
 	if (unit->isCloaked && !teamHandler->AlliedTeams(unit->team, team))
 		return false;
+
 	if (unit->xsize > (unitDef->transportSize * SPRING_FOOTPRINT_SCALE))
 		return false;
 	if (unit->xsize < (unitDef->minTransportSize * SPRING_FOOTPRINT_SCALE))
 		return false;
+
+	if (unit->mass >= CSolidObject::DEFAULT_MASS || unit->beingBuilt)
+		return false;
 	if (unit->mass < unitDef->minTransportMass)
 		return false;
-	if (unit->mass + transportMassUsed > unitDef->transportMass)
+	if ((unit->mass + transportMassUsed) > unitDef->transportMass)
 		return false;
+
 	if (!CanLoadUnloadAtPos(unit->pos, unit))
 		return false;
 
@@ -331,6 +338,8 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	transportCapacityUsed += tu.size;
 	transportMassUsed += tu.mass;
+	mass = Clamp(mass + tu.mass, CSolidObject::MINIMUM_MASS, CSolidObject::MAXIMUM_MASS);
+
 	transportedUnits.push_back(tu);
 
 	unit->moveType->StopMoving(true, true);
@@ -351,35 +360,38 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 	std::list<TransportedUnit>::iterator ti;
 
 	for (ti = transportedUnits.begin(); ti != transportedUnits.end(); ++ti) {
-		if (ti->unit == unit) {
-			this->DeleteDeathDependence(unit, DEPENDENCE_TRANSPORTEE);
-			unit->DeleteDeathDependence(this, DEPENDENCE_TRANSPORTER);
-			unit->SetTransporter(NULL);
+		if (ti->unit != unit)
+			continue;
 
-			if (dynamic_cast<CHoverAirMoveType*>(moveType)) {
-				unit->moveType->useHeading = true;
-			}
+		this->DeleteDeathDependence(unit, DEPENDENCE_TRANSPORTEE);
+		unit->DeleteDeathDependence(this, DEPENDENCE_TRANSPORTER);
+		unit->SetTransporter(NULL);
 
-			// de-stun detaching units in case we are not a fire-platform
-			unit->SetStunned(unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));
-
-			unit->moveType->SlowUpdate();
-			unit->moveType->LeaveTransport();
-
-			if (CBuilding* building = dynamic_cast<CBuilding*>(unit))
-				building->ForcedMove(building->pos);
-
-			transportCapacityUsed -= ti->size;
-			transportMassUsed -= ti->mass;
-			transportedUnits.erase(ti);
-
-			unit->UpdateVoidState(false);
-			unit->CalculateTerrainType();
-			unit->UpdateTerrainType();
-
-			eventHandler.UnitUnloaded(unit, this);
-			return true;
+		if (dynamic_cast<CHoverAirMoveType*>(moveType)) {
+			unit->moveType->useHeading = true;
 		}
+
+		// de-stun detaching units in case we are not a fire-platform
+		unit->SetStunned(unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));
+
+		unit->moveType->SlowUpdate();
+		unit->moveType->LeaveTransport();
+
+		if (CBuilding* building = dynamic_cast<CBuilding*>(unit))
+			building->ForcedMove(building->pos);
+
+		transportCapacityUsed -= ti->size;
+		transportMassUsed -= ti->mass;
+		mass = Clamp(mass - ti->mass, CSolidObject::MINIMUM_MASS, CSolidObject::MAXIMUM_MASS);
+
+		transportedUnits.erase(ti);
+
+		unit->UpdateVoidState(false);
+		unit->CalculateTerrainType();
+		unit->UpdateTerrainType();
+
+		eventHandler.UnitUnloaded(unit, this);
+		return true;
 	}
 
 	return false;

@@ -1258,6 +1258,12 @@ void CUnit::DoDamage(
 
 
 void CUnit::ApplyImpulse(const float3& impulse) {
+	if (GetTransporter() != NULL) {
+		// transfer impulse to unit transporting us
+		GetTransporter()->ApplyImpulse(impulse);
+		return;
+	}
+
 	const float3& groundNormal = ground->GetNormal(pos.x, pos.z);
 	const float groundImpulseScale = std::min(0.0f, impulse.dot(groundNormal));
 	const float3 modImpulse = impulse - (groundNormal * groundImpulseScale * IsOnGround());
