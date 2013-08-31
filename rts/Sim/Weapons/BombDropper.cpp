@@ -27,7 +27,7 @@ CR_REG_METADATA(CBombDropper,(
 CBombDropper::CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps)
 	: CWeapon(owner, def)
 	, dropTorpedoes(useTorps)
-	, bombMoveRange(def->range)
+	, bombMoveRange(def->range * useTorps)
 	, tracking((def->tracks)? def->turnrate: 0)
 {
 	onlyForward = true;
@@ -37,32 +37,39 @@ CBombDropper::CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps)
 void CBombDropper::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->pos
-				+ (owner->frontdir * relWeaponPos.z)
-				+ (owner->updir * relWeaponPos.y)
-				+ (owner->rightdir * relWeaponPos.x);
+		weaponPos = owner->pos +
+			(owner->frontdir * relWeaponPos.z) +
+			(owner->updir    * relWeaponPos.y) +
+			(owner->rightdir * relWeaponPos.x);
 		subClassReady = false;
+
 		if (targetType == Target_Unit) {
-			// aim at base of unit instead of middle and ignore uncertainity
+			// aim at base of unit instead of middle and ignore uncertainty
 			targetPos = targetUnit->pos;
 		}
+
 		if (weaponPos.y > targetPos.y) {
 			const float d = targetPos.y - weaponPos.y;
 			const float s = -owner->speed.y;
-			const float sq = (s - 2*d) / -((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity));
-			if (sq > 0) {
+
+			const float g = (weaponDef->myGravity == 0.0f)? mapInfo->map.gravity : -weaponDef->myGravity;
+			const float sq = (s - 2.0f * d) / -g;
+
+			if (sq > 0.0f) {
 				predict = s / ((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity)) + math::sqrt(sq);
 			} else {
 				predict = 0;
 			}
-			const float3 hitpos = owner->pos+owner->speed*predict;
-			const float speedf = owner->speed.Length();
-			if (hitpos.SqDistance2D(targetPos) < Square((std::max(1, (salvoSize - 1)) * speedf * salvoDelay * 0.5f) + bombMoveRange))
-			{
+
+			const float3 dropPos = owner->pos + owner->speed * predict;
+			const float dropDist = std::max(1, salvoSize - 1) * (owner->speed.Length() * salvoDelay * 0.5f);
+
+			if (dropPos.SqDistance2D(targetPos) < Square(dropDist + bombMoveRange)) {
 				subClassReady = true;
 			}
 		}
 	}
+
 	CWeapon::Update();
 }
 
