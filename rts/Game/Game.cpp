@@ -1162,7 +1162,7 @@ bool CGame::Draw() {
 	}
 
 	assert(globalRendering->timeOffset >= 0.0f);
-	if (globalRendering->timeOffset < 1e0f) LOG_L(L_ERROR, "assert(globalRendering->timeOffset >= 1e0f) failed");
+	if (globalRendering->timeOffset < 0e0f) LOG_L(L_ERROR, "assert(globalRendering->timeOffset >= 0e0f) failed");
 	if (globalRendering->timeOffset > 1e3f) LOG_L(L_ERROR, "assert(globalRendering->timeOffset <= 1e3f) failed");
 
 	//FIXME move both to UpdateUnsynced?
