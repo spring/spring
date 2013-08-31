@@ -588,7 +588,7 @@ float3 CUnit::GetErrorVector(int allyteam) const
 		// it's one of our own, or it's in LOS, so don't add an error
 		return ZeroVector;
 	}
-	if (gameSetup->ghostedBuildings && (losStatus[allyteam] & LOS_PREVLOS) && unitDef->IsBuildingUnit()) {
+	if (gameSetup->ghostedBuildings && (losStatus[allyteam] & LOS_PREVLOS) && unitDef->IsImmobileUnit()) {
 		// this is a ghosted building, so don't add an error
 		return ZeroVector;
 	}
