@@ -1259,8 +1259,9 @@ void CUnit::DoDamage(
 
 void CUnit::ApplyImpulse(const float3& impulse) {
 	if (GetTransporter() != NULL) {
-		// transfer impulse to unit transporting us
-		GetTransporter()->ApplyImpulse(impulse);
+		// transfer impulse to unit transporting us, scaled by its mass
+		// assume we came here straight from DoDamage, not LuaSyncedCtrl
+		GetTransporter()->ApplyImpulse((impulse * mass) / (GetTransporter()->mass));
 		return;
 	}
 
