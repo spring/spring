@@ -619,7 +619,7 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	// NOTE: ships must be able to receive impulse too (for collision handling)
 	if (owner->beingBuilt)
 		return false;
-	// TODO: or apply impulse to the transporter?
+	// will be applied to transporter instead
 	if (owner->GetTransporter() != NULL)
 		return false;
 	if (impulse.SqLength() <= 0.01f)
