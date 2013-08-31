@@ -57,7 +57,7 @@ void AMoveType::SlowUpdate()
 		const int newMapSquare = ground->GetSquare(owner->pos);
 		const float losHeight = owner->losHeight;
 		const float radarHeight = owner->radarHeight;
-		const bool isAirMoveType = !owner->usingScriptMoveType && owner->unitDef->canfly;
+		const bool isAirMoveType = !owner->UsingScriptMoveType() && owner->unitDef->canfly;
 
 		if (newMapSquare != owner->mapSquare) {
 			owner->mapSquare = newMapSquare;

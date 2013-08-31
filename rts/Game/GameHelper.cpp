@@ -807,7 +807,7 @@ void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool force
 				teamHandler->Ally(uAllyTeamId,  allyTeamId) ||
 				teamHandler->Ally(allyTeamId, uAllyTeamId));
 
-		if ((u != excludeUnit) && allied && ((!u->unitDef->pushResistant && !u->usingScriptMoveType) || forced)) {
+		if ((u != excludeUnit) && allied && ((!u->unitDef->pushResistant && !u->UsingScriptMoveType()) || forced)) {
 			u->commandAI->BuggerOff(pos, radius + SQUARE_SIZE);
 		}
 	}
