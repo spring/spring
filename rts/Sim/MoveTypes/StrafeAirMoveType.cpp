@@ -844,22 +844,28 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 
 
 
-float3 GetWantedLandingVelocity(const float3& curVelocity, float3 landingPosVec, float brakeRate, float descendRate) {
+float3 GetWantedLandingVelocity(
+	const float3& curVelocity,
+	const float3& curDirection,
+	float3 landingPosVec,
+	float brakeRate,
+	float descendRate
+) {
 	const float landPosDistXZ = landingPosVec.Length2D() + 0.1f;
 	const float landPosDistY = landingPosVec.y;
 	const float brakeDistXZ = 0.5f * curVelocity.SqLength2D() / brakeRate;
 
-	const float curSpeedXZ = curVelocity.Length2D();
-	const float newSpeedXZ = curSpeedXZ - brakeRate * (brakeDistXZ >= landPosDistXZ);
-
 	landingPosVec.Normalize2D();
+
+	const float curSpeedXZ = curVelocity.Length2D();
+	const float newSpeedXZ = curSpeedXZ - brakeRate * (brakeDistXZ >= landPosDistXZ || landingPosVec.dot(curDirection) < 0.0f);
 
 	// maxSpeed is set to 0 (when landing) before we are fully
 	// on the ground, so make sure to not get stuck in mid-air
 	// note: assume losing altitude is easier than gaining it?
 	float3 wantedVel;
-	wantedVel.x = landingPosVec.x * newSpeedXZ;
-	wantedVel.z = landingPosVec.z * newSpeedXZ;
+	wantedVel.x = landingPosVec.x * std::max(0.0f, newSpeedXZ);
+	wantedVel.z = landingPosVec.z * std::max(0.0f, newSpeedXZ);
 	wantedVel.y = -descendRate;
 
 	if (landPosDistXZ > 0.1f && curSpeedXZ > 0.1f) {
@@ -875,13 +881,17 @@ void CStrafeAirMoveType::UpdateLanding()
 	const float3& pos = owner->pos;
 	      float3& vel = owner->speed;
 
+	// if not landing on a pad, use higher brake-rate
+	// to overshoot less (see the fixme comment below)
+	const float modDecRate = decRate * (1 + (reservedPad == NULL));
+
 	SyncedFloat3& rightdir = owner->rightdir;
 	SyncedFloat3& frontdir = owner->frontdir;
 	SyncedFloat3& updir    = owner->updir;
 
 	// find a landing spot if we do not have one yet
 	if (reservedLandingPos.x < 0.0f) {
-		reservedLandingPos = FindLandingPos();
+		reservedLandingPos = FindLandingPos(modDecRate);
 
 		// if spot is valid, mark it on the blocking-map
 		// so other aircraft can not claim the same spot
@@ -909,19 +919,11 @@ void CStrafeAirMoveType::UpdateLanding()
 	// FIXME:
 	//   only gets called AFTER we have already passed our goal (see ::StopMoving)
 	//   this means we will always overshoot any landing position (or repair-pad)
+	//   FindLandingPos() picks the spot at (pos + dir * brakingDistance) for us
 	const float3 reservedLandingPosDir = reservedLandingPos - pos;
-	const float3 wantedVelocity = GetWantedLandingVelocity(vel, reservedLandingPosDir, decRate, altitudeRate);
-	const float3 deltaVelocity = wantedVelocity - vel;
-	const float deltaSpeedScale = deltaVelocity.Length();
+	const float3 wantedVelocity = GetWantedLandingVelocity(vel, owner->frontdir, reservedLandingPosDir, modDecRate, altitudeRate);
 
-	// update our speed, use decRate when landing (!)
-	if (deltaSpeedScale < decRate) {
-		vel = wantedVelocity;
-	} else {
-		assert(deltaSpeedScale > 0.0f);
-		assert(decRate > 0.0f);
-		vel += ((deltaVelocity / deltaSpeedScale) * decRate);
-	}
+	vel = wantedVelocity;
 
 	// make the aircraft right itself up and turn toward goal
 	     if (rightdir.y < -0.01f) { updir -= (rightdir * 0.02f); }
@@ -1131,12 +1133,12 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 
 
 
-float3 CStrafeAirMoveType::FindLandingPos() const
+float3 CStrafeAirMoveType::FindLandingPos(float brakeRate) const
 {
-	const float3 ret(-1.0f, -1.0f, -1.0f);
+	const float3 ret = -OnesVector;
 	const UnitDef* ud = owner->unitDef;
 
-	float3 tryPos = owner->pos + owner->speed * owner->speed.Length() / decRate;
+	float3 tryPos = owner->pos + ((owner->speed * owner->speed * 0.5f) / brakeRate);
 	tryPos.y = ground->GetHeightReal(tryPos.x, tryPos.z);
 
 	if ((tryPos.y < 0.0f) && !(ud->floatOnWater || ud->canSubmerge)) {
