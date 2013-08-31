@@ -1119,7 +1119,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 					const int oAllyTeam = owner->allyteam;
 					const bool allied = (teamHandler->Ally(uAllyTeam, oAllyTeam) || teamHandler->Ally(oAllyTeam, uAllyTeam));
 
-					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
+					if (!u->unitDef->pushResistant && !u->UsingScriptMoveType() && allied) {
 						u->Move((dif * part), true);
 						u->UpdateMidAndAimPos();
 					}
@@ -1197,7 +1197,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 					const int oAllyTeam = owner->allyteam;
 					const bool allied = (teamHandler->Ally(uAllyTeam, oAllyTeam) || teamHandler->Ally(oAllyTeam, uAllyTeam));
 
-					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
+					if (!u->unitDef->pushResistant && !u->UsingScriptMoveType() && allied) {
 						u->Move((dif * part), true);
 						u->UpdateMidAndAimPos();
 					}

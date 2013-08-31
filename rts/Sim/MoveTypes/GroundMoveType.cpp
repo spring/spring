@@ -1736,8 +1736,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		//   to the other as a static obstacle so the tags still have some effect
 		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
 		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
-		pushCollider &= (!collider->beingBuilt && !collider->usingScriptMoveType && !colliderUD->pushResistant);
-		pushCollidee &= (!collidee->beingBuilt && !collidee->usingScriptMoveType && !collideeUD->pushResistant);
+		pushCollider &= (!collider->beingBuilt && !collider->UsingScriptMoveType() && !colliderUD->pushResistant);
+		pushCollidee &= (!collidee->beingBuilt && !collidee->UsingScriptMoveType() && !collideeUD->pushResistant);
 
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
 		crushCollidee &= ((colliderSpeed * collider->mass) > (collideeSpeed * collidee->mass));

@@ -23,7 +23,7 @@
 #define AUTO_GENERATE_ATTACK_ORDERS 1
 
 static CStrafeAirMoveType* GetStrafeAirMoveType(const CUnit* owner) {
-	if (owner->usingScriptMoveType) {
+	if (owner->UsingScriptMoveType()) {
 		return static_cast<CStrafeAirMoveType*>(owner->prevMoveType);
 	}
 
@@ -205,17 +205,18 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 void CAirCAI::SlowUpdate()
 {
-	if (gs->paused) { // Commands issued may invoke SlowUpdate when paused
+	// Commands issued may invoke SlowUpdate when paused
+	if (gs->paused)
 		return;
-	}
+
 	if (!commandQue.empty() && (commandQue.front().timeOut < gs->frameNum)) {
 		FinishCommand();
 		return;
 	}
 
-	if (owner->usingScriptMoveType) {
-		return; // avoid the invalid (CStrafeAirMoveType*) cast
-	}
+	// avoid the invalid (CStrafeAirMoveType*) cast
+	if (owner->UsingScriptMoveType())
+		return;
 
 	const bool wantToRefuel = (LandRepairIfNeeded() || RefuelIfNeeded());
 
@@ -609,7 +610,7 @@ CStrafeAirMoveType* CAirCAI::GetOwnerMoveType()
 {
 	CStrafeAirMoveType* airMT;
 
-	if (owner->usingScriptMoveType) {
+	if (owner->UsingScriptMoveType()) {
 		airMT = static_cast<CStrafeAirMoveType*>(owner->prevMoveType);
 	} else {
 		airMT = static_cast<CStrafeAirMoveType*>(owner->moveType);

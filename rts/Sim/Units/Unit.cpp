@@ -86,8 +86,41 @@ float CUnit::expGrade       = 0.0f;
 
 CUnit::CUnit() : CSolidObject(),
 	unitDef(NULL),
+	soloBuilder(NULL),
+	lastAttacker(NULL),
+	attackTarget(NULL),
+	transporter(NULL),
+
+	moveType(NULL),
+	prevMoveType(NULL),
+
+	commandAI(NULL),
+	group(NULL),
+
+	shieldWeapon(NULL),
+	stockpileWeapon(NULL),
+
+	localModel(NULL),
+	script(NULL),
+	lastAttackedPiece(NULL),
+	los(NULL),
+
+	fpsControlPlayer(NULL),
+	myTrack(NULL),
+	myIcon(NULL),
+
+	losStatus(teamHandler->ActiveAllyTeams(), 0),
+
+	attackPos(ZeroVector),
+	deathSpeed(ZeroVector),
+	lastMuzzleFlameDir(UpVector),
+	flankingBonusDir(RgtVector),
+	posErrorVector(ZeroVector),
+	posErrorDelta(ZeroVector),
+
 	unitDefID(-1),
 	featureDefID(-1),
+
 	upright(true),
 	travel(0.0f),
 	travelPeriod(0.0f),
@@ -98,18 +131,16 @@ CUnit::CUnit() : CSolidObject(),
 	experience(0.0f),
 	limExperience(0.0f),
 	neutral(false),
-	soloBuilder(NULL),
 	beingBuilt(true),
 	lastNanoAdd(gs->frameNum),
 	repairAmount(0.0f),
-	transporter(NULL),
 	loadingTransportId(-1),
 	buildProgress(0.0f),
 	groundLevelled(true),
 	terraformLeft(0.0f),
 	realLosRadius(0),
 	realAirLosRadius(0),
-	losStatus(teamHandler->ActiveAllyTeams(), 0),
+
 	inBuildStance(false),
 	useHighTrajectory(false),
 	dontUseWeapons(false),
@@ -118,17 +149,13 @@ CUnit::CUnit() : CSolidObject(),
 	delayedWreckLevel(-1),
 	restTime(0),
 	outOfMapTime(0),
-	shieldWeapon(NULL),
-	stockpileWeapon(NULL),
 	reloadSpeed(1.0f),
 	maxRange(0.0f),
 	haveTarget(false),
 	haveManualFireRequest(false),
 	lastMuzzleFlameSize(0.0f),
-	lastMuzzleFlameDir(UpVector),
 	armorType(0),
 	category(0),
-	los(NULL),
 	tempNum(0),
 	mapSquare(-1),
 	losRadius(0),
@@ -147,14 +174,6 @@ CUnit::CUnit() : CSolidObject(),
 	hasRadarPos(false),
 	stealth(false),
 	sonarStealth(false),
-	moveType(NULL),
-	prevMoveType(NULL),
-	usingScriptMoveType(false),
-	fpsControlPlayer(NULL),
-	commandAI(NULL),
-	group(NULL),
-	localModel(NULL),
-	script(NULL),
 	condUseMetal(0.0f),
 	condUseEnergy(0.0f),
 	condMakeMetal(0.0f),
@@ -182,14 +201,10 @@ CUnit::CUnit() : CSolidObject(),
 	buildTime(100.0f),
 	metalStorage(0.0f),
 	energyStorage(0.0f),
-	lastAttacker(NULL),
-	lastAttackedPiece(NULL),
 	lastAttackedPieceFrame(-1),
 	lastAttackFrame(-200),
 	lastFireWeapon(0),
 	recentDamage(0.0f),
-	attackTarget(NULL),
-	attackPos(ZeroVector),
 	userAttackGround(false),
 	fireState(FIRESTATE_FIREATWILL),
 	moveState(MOVESTATE_MANEUVER),
@@ -197,7 +212,6 @@ CUnit::CUnit() : CSolidObject(),
 	isDead(false),
 	fallSpeed(0.2f),
 	flankingBonusMode(0),
-	flankingBonusDir(RgtVector),
 	flankingBonusMobility(10.0f),
 	flankingBonusMobilityAdd(0.01f),
 	flankingBonusAvgDamage(1.4f),
@@ -205,8 +219,6 @@ CUnit::CUnit() : CSolidObject(),
 	armoredState(false),
 	armoredMultiple(1.0f),
 	curArmorMultiple(1.0f),
-	posErrorVector(ZeroVector),
-	posErrorDelta(ZeroVector),
 	nextPosErrorUpdate(1),
 	wantCloak(false),
 	scriptCloak(0),
@@ -217,8 +229,6 @@ CUnit::CUnit() : CSolidObject(),
 	lastTerrainType(-1),
 	curTerrainType(0),
 	selfDCountdown(0),
-	myTrack(NULL),
-	myIcon(NULL),
 	lastFlareDrop(0),
 	currentFuel(0.0f),
 	alphaThreshold(0.1f),
@@ -633,24 +643,21 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 
 void CUnit::EnableScriptMoveType()
 {
-	if (usingScriptMoveType) {
+	if (UsingScriptMoveType())
 		return;
-	}
+
 	prevMoveType = moveType;
 	moveType = new CScriptMoveType(this);
-	usingScriptMoveType = true;
 }
 
 void CUnit::DisableScriptMoveType()
 {
-	if (!usingScriptMoveType) {
+	if (!UsingScriptMoveType())
 		return;
-	}
 
 	delete moveType;
 	moveType = prevMoveType;
 	prevMoveType = NULL;
-	usingScriptMoveType = false;
 
 	// ensure unit does not try to move back to the
 	// position it was at when MoveCtrl was enabled
@@ -2356,7 +2363,6 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(moveType),
 	CR_MEMBER(prevMoveType),
-	CR_MEMBER(usingScriptMoveType),
 
 	// CR_MEMBER(fpsControlPlayer),
 	CR_MEMBER(commandAI),

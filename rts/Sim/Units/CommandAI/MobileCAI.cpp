@@ -33,7 +33,7 @@
 /** helper function for CMobileCAI::GiveCommandReal */
 template <typename T> static T* GetAirMoveType(const CUnit* owner)
 {
-	if (owner->usingScriptMoveType) {
+	if (owner->UsingScriptMoveType()) {
 		return (dynamic_cast<T*>(owner->prevMoveType));
 	}
 
@@ -1016,9 +1016,9 @@ void CMobileCAI::BuggerOff(const float3& pos, float radius)
 
 void CMobileCAI::NonMoving()
 {
-	if (owner->usingScriptMoveType) {
+	if (owner->UsingScriptMoveType())
 		return;
-	}
+
 	if (lastBuggerOffTime > gs->frameNum - BUGGER_OFF_TTL) {
 		float3 dif = owner->pos-buggerOffPos;
 		dif.y = 0.0f;
@@ -1124,9 +1124,8 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 	}
 	#endif
 
-	if (owner->usingScriptMoveType) {
+	if (owner->UsingScriptMoveType())
 		return false;
-	}
 
 	lastIdleCheck = gs->frameNum;
 

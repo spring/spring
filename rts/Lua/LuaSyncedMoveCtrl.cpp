@@ -110,12 +110,12 @@ static inline CScriptMoveType* ParseMoveType(lua_State* L,
                                              const char* caller, int index)
 {
 	CUnit* unit = ParseUnit(L, caller, index);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return NULL;
-	}
-	if (!unit->usingScriptMoveType) {
+	if (!unit->UsingScriptMoveType())
 		return NULL;
-	}
+
 	return static_cast<CScriptMoveType*>(unit->moveType);
 }
 
@@ -145,7 +145,7 @@ int LuaSyncedMoveCtrl::IsEnabled(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	lua_pushboolean(L, unit->usingScriptMoveType);
+	lua_pushboolean(L, unit->UsingScriptMoveType());
 	return 1;
 }
 
@@ -849,7 +849,7 @@ int LuaSyncedMoveCtrl::SetMoveDef(lua_State* L)
 	}
 
 	// PFS might have cached data by path-type which must be cleared
-	if (unit->prevMoveType != NULL) {
+	if (unit->UsingScriptMoveType()) {
 		unit->prevMoveType->StopMoving();
 	} else {
 		unit->moveType->StopMoving();
