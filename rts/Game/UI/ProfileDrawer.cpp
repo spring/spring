@@ -137,6 +137,7 @@ void ProfileDrawer::Draw()
 		va->DrawArray0(GL_LINE_STRIP);
 	}
 
+#ifdef DEBUG
 	const float maxHist = 4.0f;
 	const auto curTime = spring_gettime();
 	const float r = std::fmod(curTime.toSecsf(), maxHist) / maxHist;
@@ -176,6 +177,7 @@ void ProfileDrawer::Draw()
 
 	glColor3f(1.0f,0.0f,0.0f);
 	va->DrawArray0(GL_QUADS);
+#endif
 
 	glEnable(GL_TEXTURE_2D);
 }
