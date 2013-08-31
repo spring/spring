@@ -31,7 +31,7 @@ public:
 	void SetState(AircraftState state);
 	void UpdateTakeOff(float wantedHeight);
 
-	float3 FindLandingPos() const;
+	float3 FindLandingPos(float brakeRate) const;
 
 	void SetMaxSpeed(float speed);
 

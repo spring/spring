@@ -188,8 +188,7 @@ void AAirMoveType::UpdateLanded()
 		owner->speed.y = 0.0f;
 	}
 
-	owner->speed.x = 0.0f;
-	owner->speed.z = 0.0f;
+	owner->speed += owner->GetDragAccelerationVec(float4(0.0f, 0.0f, 0.0f, 0.1f));
 
 	owner->Move(UpVector * (std::max(curHeight, minHeight) - owner->pos.y), true);
 	owner->Move(owner->speed, true);
