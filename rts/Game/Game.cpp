@@ -1160,6 +1160,9 @@ bool CGame::Draw() {
 		if ((currentTimePreDraw - lastDrawFrameTime).toSecs() < 30)
 			return true;
 	}
+	assert(globalRendering->timeOffset >= 0.0f);
+	if (globalRendering->timeOffset < 0.0f) LOG_L(L_ERROR, "assert(globalRendering->timeOffset >= 0.0f) failed");
+	if (globalRendering->timeOffset > 1.0f) LOG_L(L_ERROR, "assert(globalRendering->timeOffset <= 1.0f) failed");
 
 	//FIXME move both to UpdateUnsynced?
 	CTeamHighlight::Enable(spring_tomsecs(currentTimePreDraw));
