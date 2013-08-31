@@ -1161,9 +1161,23 @@ bool CGame::Draw() {
 			return true;
 	}
 
-	assert(globalRendering->timeOffset >= 0.0f);
-	if (globalRendering->timeOffset < 0e0f) LOG_L(L_ERROR, "assert(globalRendering->timeOffset >= 0e0f) failed");
-	if (globalRendering->timeOffset > 1e3f) LOG_L(L_ERROR, "assert(globalRendering->timeOffset <= 1e3f) failed");
+	if (globalRendering->drawdebug) {
+		const float currTimeOffset = globalRendering->timeOffset;
+		static float lastTimeOffset = globalRendering->timeOffset;
+
+		assert(currTimeOffset >= 0.0f);
+
+		if (currTimeOffset < 0.0f) LOG_L(L_ERROR, "assert(timeOffset >= 0.0f) failed (SF=%u : DF=%u : TO=%f)", gs->frameNum, globalRendering->drawFrame, currTimeOffset);
+		if (currTimeOffset > 1.0f) LOG_L(L_ERROR, "assert(timeOffset <= 1.0f) failed (SF=%u : DF=%u : TO=%f)", gs->frameNum, globalRendering->drawFrame, currTimeOffset);
+
+		// test for monotonicity, normally should only fail
+		// when SimFrame() advances time or if simframe rate
+		// changes
+		if (currTimeOffset < lastTimeOffset)
+			LOG_L(L_ERROR, "assert(timeOffset < lastTimeOffset) failed (SF=%u : DF=%u : CTO=%f LTO=%f)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, lastTimeOffset);
+
+		lastTimeOffset = currTimeOffset;
+	}
 
 	//FIXME move both to UpdateUnsynced?
 	CTeamHighlight::Enable(spring_tomsecs(currentTimePreDraw));
