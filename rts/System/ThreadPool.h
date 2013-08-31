@@ -14,6 +14,7 @@ namespace ThreadPool {
 	//-> std::shared_ptr<boost::unique_future<typename std::result_of<F(Args...)>::type>> {}
 
 	static inline void SetThreadCount(int num) {}
+	static inline void SetThreadSpinTime(int milliSeconds) {}
 	static inline int GetThreadNum() { return 0; }
 	static inline int GetMaxThreads() { return 1; }
 	static inline int GetNumThreads() { return 1; }
@@ -110,6 +111,7 @@ namespace ThreadPool {
 	inline void WaitForFinished(std::shared_ptr<T> taskgroup) { WaitForFinished(std::static_pointer_cast<ITaskGroup>(taskgroup)); }
 
 	void SetThreadCount(int num);
+	void SetThreadSpinTime(int milliSeconds);
 	int GetThreadNum();
 	int GetMaxThreads();
 	int GetNumThreads();

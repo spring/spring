@@ -30,6 +30,7 @@ static bool hasOGLthreads = false;
 static __thread int threadnum(0); //FIXME __thread is gcc only, thread_local is c++11 but doesn't work in <4.8, and is also slower
 static __thread bool exitThread(false);
 
+static int spinlockMs = 5;
 
 static struct do_once {
 	do_once() {
@@ -151,7 +152,7 @@ static void WorkerLoop(int id)
 	boost::unique_lock<boost::mutex> lk2(m);
 
 	while (!exitThread) {
-		const auto spinlockStart = boost::chrono::high_resolution_clock::now() + boost::chrono::milliseconds(5);
+		const auto spinlockStart = boost::chrono::high_resolution_clock::now() + boost::chrono::milliseconds(spinlockMs);
 
 		while (!DoTask(lk)) {
 			if (spinlockStart < boost::chrono::high_resolution_clock::now()) {
@@ -242,6 +243,11 @@ void SetThreadCount(int num)
 		}
 		if (num == 0) assert(thread_group.empty());
 	}
+}
+
+void SetThreadSpinTime(int milliSeconds)
+{
+	spinlockMs = milliSeconds;
 }
 
 };

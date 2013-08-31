@@ -37,6 +37,7 @@
 
 #ifndef UNIT_TEST
 CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1).description("Count of worker threads (including mainthread!) used in parallel sections.");
+CONFIG(int, WorkerThreadSpinTime).defaultValue(5).minimumValue(0).readOnly(true).description("The number of milliseconds worker threads will spin after no tasks to perform.");
 #endif
 
 
@@ -224,6 +225,7 @@ namespace Threading {
 			int workerCount = -1;
 #ifndef UNIT_TEST
 			workerCount = configHandler->GetUnsigned("WorkerThreadCount");
+			ThreadPool::SetThreadSpinTime(configHandler->GetUnsigned("WorkerThreadSpinTime"));
 #endif
 			// For latency reasons our worker threads yield rarely and so eat a lot cputime with idleing.
 			// So it's better we always leave 1 core free for our other threads, drivers & OS
