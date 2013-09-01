@@ -443,7 +443,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 
 	maxAcc = math::fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
-	maxDec = math::fabs(udTable.GetFloat("brakeRate", 3.0f * maxAcc)) * (canfly? 0.1f: 1.0f); // no negative values
+	maxDec = math::fabs(udTable.GetFloat("brakeRate", maxAcc)); // no negative values
 
 	turnRate    = udTable.GetFloat("turnRate", 0.0f);
 	turnInPlace = udTable.GetBool("turnInPlace", true);
