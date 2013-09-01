@@ -207,6 +207,9 @@ inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 
 void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 {
+	// must be here because water renderers also call us
+	if (!globalRendering->drawGround)
+		return;
 	// if entire map is under voidwater, no need to draw *ground*
 	if (readMap->HasOnlyVoidWater())
 		return;
@@ -328,6 +331,8 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 
 void CSMFGroundDrawer::DrawShadowPass()
 {
+	if (!globalRendering->drawGround)
+		return;
 	if (readMap->HasOnlyVoidWater())
 		return;
 
