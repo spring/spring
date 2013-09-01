@@ -79,6 +79,9 @@ Lua:
  - add new Game. constants: Game.gameName, Game.gameVersion, ...
  - allow to save strings in RulesParams
  - add 'parent' field to Spring.GetUnitPieceInfo
+ - LuaSyncedRead: added GetUnitExperienceScaling(unitID,key) -> number val to fetch experience coefficients per-unit
+ - LuaSyncedCtrl: added SetUnitExperienceScaling(unitID,key,val) -> nil to set experience coefficients per-unit
+ - LuaSyncedRead: added GetUnitWeaponTarget(unitID,weaponID) -> number targettype, bool isusertarget, target
 
 Rendering:
  - LoadingMT: add a runtime check that should detect incompatibilities
