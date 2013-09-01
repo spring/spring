@@ -37,7 +37,7 @@
 
 #ifndef UNIT_TEST
 CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1).description("Count of worker threads (including mainthread!) used in parallel sections.");
-CONFIG(int, WorkerThreadSpinTime).defaultValue(5).minimumValue(0).readOnly(true).description("The number of milliseconds worker threads will spin after no tasks to perform.");
+CONFIG(int, WorkerThreadSpinTime).defaultValue(5).minimumValue(0).description("The number of milliseconds worker threads will spin after no tasks to perform.");
 #endif
 
 
