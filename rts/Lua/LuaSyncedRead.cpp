@@ -227,6 +227,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitWeaponTestRange);
 	REGISTER_LUA_CFUNC(GetUnitWeaponHaveFreeLineOfFire);
 	REGISTER_LUA_CFUNC(GetUnitWeaponCanFire);
+	REGISTER_LUA_CFUNC(GetUnitWeaponTarget);
 	REGISTER_LUA_CFUNC(GetUnitTravel);
 	REGISTER_LUA_CFUNC(GetUnitFuel);
 	REGISTER_LUA_CFUNC(GetUnitEstimatedPath);
@@ -3480,6 +3481,49 @@ int LuaSyncedRead::GetUnitWeaponCanFire(lua_State* L)
 	return 1;
 }
 
+int LuaSyncedRead::GetUnitWeaponTarget(lua_State* L)
+{
+	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
+		return 0;
+
+	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
+
+	if (weaponNum >= unit->weapons.size())
+		return 0;
+
+	const CWeapon* weapon = unit->weapons[weaponNum];
+	lua_pushnumber(L,weapon->targetType);
+	switch(weapon->targetType) {
+		case Target_None:
+			return 1;
+			break;
+		case Target_Unit: {
+			lua_pushboolean(L,weapon->haveUserTarget);
+			CUnit* target = weapon->targetUnit;
+			assert(target);
+			if(target) lua_pushnumber(L,target->id);
+			break;
+		}
+		case Target_Pos: {
+			lua_pushboolean(L,weapon->haveUserTarget);
+			lua_createtable(L, 3, 0);
+			lua_pushnumber(L, weapon->targetPos.x); lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, weapon->targetPos.y); lua_rawseti(L, -2, 2);
+			lua_pushnumber(L, weapon->targetPos.z); lua_rawseti(L, -2, 3);
+			break;
+		}
+		case Target_Intercept: {
+			lua_pushboolean(L,weapon->haveUserTarget);
+			CProjectile* target = weapon->interceptTarget;
+			assert(target);
+			if(target) lua_pushnumber(L,target->id);
+			break;
+		}
+	}
+	return 3;
+}
 
 
 int LuaSyncedRead::GetUnitTravel(lua_State* L)
