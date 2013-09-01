@@ -3296,9 +3296,10 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 	}
 	else if (key == "salvoError") {
 		float3 salvoError =  weapon->SalvoErrorExperience();
-		lua_pushnumber(L,salvoError.x);
-		lua_pushnumber(L,salvoError.y);
-		lua_pushnumber(L,salvoError.z);
+		lua_createtable(L, 3, 0);
+		lua_pushnumber(L, salvoError.x); lua_rawseti(L, -2, 1);
+		lua_pushnumber(L, salvoError.y); lua_rawseti(L, -2, 2);
+		lua_pushnumber(L, salvoError.z); lua_rawseti(L, -2, 3);
 	}
 	else if (key == "targetMoveError") {
 		lua_pushnumber(L, weapon->MoveErrorExperience());
