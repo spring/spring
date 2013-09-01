@@ -113,6 +113,7 @@ namespace ThreadPool {
 	void SetThreadCount(int num);
 	void SetThreadSpinTime(int milliSeconds);
 	int GetThreadNum();
+	bool HasThreads();
 	int GetMaxThreads();
 	int GetNumThreads();
 	void NotifyWorkerThreads();
@@ -290,6 +291,13 @@ static inline void for_mt(int start, int end, int step, const std::function<void
 		if ((end - start) < step) {
 			// single iteration -> directly process
 			f(start);
+			return;
+		}
+
+		if (!ThreadPool::HasThreads()) {
+			for (int i = start; i < end; i+=step) {
+				f(i);
+			}
 			return;
 		}
 

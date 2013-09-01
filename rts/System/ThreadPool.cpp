@@ -65,10 +65,14 @@ int GetMaxThreads()
 
 int GetNumThreads()
 {
-	//return omp_get_num_threads();
-
 	//FIXME mutex/atomic?
 	return thread_group.size() + 1; // +1 cause we also count mainthread
+}
+
+
+bool HasThreads()
+{
+	return !thread_group.empty() + 1;
 }
 
 
