@@ -3494,20 +3494,23 @@ int LuaSyncedRead::GetUnitWeaponTarget(lua_State* L)
 		return 0;
 
 	const CWeapon* weapon = unit->weapons[weaponNum];
-	lua_pushnumber(L,weapon->targetType);
-	switch(weapon->targetType) {
+	const CWorldObject* target = NULL;
+
+	lua_pushnumber(L, weapon->targetType);
+
+	switch (weapon->targetType) {
 		case Target_None:
 			return 1;
 			break;
 		case Target_Unit: {
-			lua_pushboolean(L,weapon->haveUserTarget);
-			CUnit* target = weapon->targetUnit;
-			assert(target);
-			if(target) lua_pushnumber(L,target->id);
+			lua_pushboolean(L, weapon->haveUserTarget);
+			target = weapon->targetUnit;
+			assert(target != NULL);
+			lua_pushnumber(L, (target != NULL)? target->id: -1);
 			break;
 		}
 		case Target_Pos: {
-			lua_pushboolean(L,weapon->haveUserTarget);
+			lua_pushboolean(L, weapon->haveUserTarget);
 			lua_createtable(L, 3, 0);
 			lua_pushnumber(L, weapon->targetPos.x); lua_rawseti(L, -2, 1);
 			lua_pushnumber(L, weapon->targetPos.y); lua_rawseti(L, -2, 2);
@@ -3515,13 +3518,14 @@ int LuaSyncedRead::GetUnitWeaponTarget(lua_State* L)
 			break;
 		}
 		case Target_Intercept: {
-			lua_pushboolean(L,weapon->haveUserTarget);
-			CProjectile* target = weapon->interceptTarget;
-			assert(target);
-			if(target) lua_pushnumber(L,target->id);
+			lua_pushboolean(L, weapon->haveUserTarget);
+			target = weapon->interceptTarget;
+			assert(target != NULL);
+			lua_pushnumber(L, (target != NULL)? target->id: -1);
 			break;
 		}
 	}
+
 	return 3;
 }
 
