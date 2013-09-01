@@ -232,9 +232,17 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 	heatMapping = moveTable.GetBool("heatMapping", false);
 	flowMapping = moveTable.GetBool("flowMapping", true);
 
-	heatMod = moveTable.GetFloat("heatMod", 50.0f);
+	heatMod = moveTable.GetFloat("heatMod", (1.0f / (GAME_SPEED * 2)) * 0.25f);
 	flowMod = moveTable.GetFloat("flowMod", 1.0f);
 
+	// by default heat decays to zero after N=2 seconds
+	//
+	// the cost contribution to a square from heat must
+	// be on the same order as its normal movement cost
+	// PER FRAME, i.e. such that heatMod * heatProduced
+	// ~= O(1 / (GAME_SPEED * N)) because unit behavior
+	// in groups quickly becomes FUBAR if heatMod >>> 1
+	//
 	heatProduced = moveTable.GetInt("heatProduced", GAME_SPEED * 2);
 
 	//  <maxSlope> ranges from 0.0 to 60 * 1.5 degrees, ie. from 0.0 to
