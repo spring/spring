@@ -409,14 +409,7 @@ int LuaFonts::SetOutlineColor(lua_State* L)
 int LuaFonts::SetAutoOutlineColor(lua_State* L)
 {
 	CglFont* font = tofont(L, 1);
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args < 2 || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to font:SetAutoOutlineColor(enable)");
-	}
-
-	bool enable = lua_toboolean(L, 2);
-
+	bool enable = luaL_checkboolean(L, 2);
 	font->SetAutoOutlineColor(enable);
 	return 0;
 }

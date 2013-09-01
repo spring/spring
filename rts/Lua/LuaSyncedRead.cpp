@@ -3987,17 +3987,8 @@ int LuaSyncedRead::GetFactoryCommands(lua_State* L)
 	}
 	const CCommandQueue& commandQue = factoryCAI->commandQue;
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args >= 2) && !lua_isnumber(L, 2)) {
-		luaL_error(L,
-			"Incorrect arguments to GetFactoryCommands(unitID [, count])");
-	}
-
 	// get the desired number of commands to return
-	int count = -1;
-	if (args >= 2) {
- 		count = lua_toint(L, 2);
-	}
+	int count = luaL_optint(L, 2, -1);
 	if (count < 0) {
 		count = (int)commandQue.size();
 	}
@@ -4080,22 +4071,13 @@ int LuaSyncedRead::GetFactoryCounts(lua_State* L)
 	}
 	const CCommandQueue& commandQue = factoryCAI->commandQue;
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args >= 2) && !lua_isnumber(L, 2)) {
-		luaL_error(L,
-			"Incorrect arguments to GetFactoryCounts(unitID[, count[, addCmds]])");
-	}
-
 	// get the desired number of commands to return
-	int count = -1;
-	if (args >= 2) {
- 		count = lua_toint(L, 2);
-	}
+	int count = luaL_optint(L, 2, -1);
 	if (count < 0) {
 		count = (int)commandQue.size();
 	}
 
-	const bool noCmds = (args < 3) ? true : !lua_toboolean(L, 3);
+	const bool noCmds = !luaL_optboolean(L, 3, false);
 
 	PackFactoryCounts(L, commandQue, count, noCmds);
 
@@ -4108,11 +4090,6 @@ int LuaSyncedRead::GetCommandQueue(lua_State* L)
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args >= 2) && !lua_isnumber(L, 2)) {
-		luaL_error(L,
-			"Incorrect arguments to GetCommandQueue(unitID [, count])");
 	}
 
 	GML_STDMUTEX_LOCK(cai); // GetCommandQueue
@@ -4132,10 +4109,7 @@ int LuaSyncedRead::GetCommandQueue(lua_State* L)
 	}
 
 	// get the desired number of commands to return
-	int count = -1;
-	if (args >= 2) {
- 		count = lua_toint(L, 2);
-	}
+	int count = luaL_optint(L, 2, -1);
 	if (count < 0) {
 		count = (int)queue->size();
 	}

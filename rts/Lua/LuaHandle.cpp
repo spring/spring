@@ -2362,7 +2362,6 @@ bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
 	if (!RunCallInUnsynced(cmdStr, 5, 1))
 		return false;
 
-	// const int args = lua_gettop(L); unused
 	if (!lua_isboolean(L, -1)) {
 		lua_pop(L, 1);
 		return false;
@@ -3097,11 +3096,7 @@ int CLuaHandle::CallOutSyncedUpdateCallIn(lua_State* L)
 {
 	if (!Threading::IsSimThread())
 		return 0; // FIXME: If this can be called from a non-sim context, this code is insufficient
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
-	}
-	const string name = lua_tostring(L, 1);
+	const string name = luaL_checkstring(L, 1);
 	CLuaHandle* lh = GetHandle(L);
 	lh->SyncedUpdateCallIn(lh->GetActiveState(), name);
 	return 0;
@@ -3112,11 +3107,7 @@ int CLuaHandle::CallOutUnsyncedUpdateCallIn(lua_State* L)
 {
 	if (Threading::IsSimThread())
 		return 0; // FIXME: If this can be called from a sim context, this code is insufficient
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
-	}
-	const string name = lua_tostring(L, 1);
+	const string name = luaL_checkstring(L, 1);
 	CLuaHandle* lh = GetHandle(L);
 	lh->UnsyncedUpdateCallIn(lh->GetActiveState(), name);
 	return 0;

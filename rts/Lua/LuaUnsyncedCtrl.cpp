@@ -577,13 +577,9 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 
 int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 {
-	const int args = lua_gettop(L);
-
 	const string soundFile = luaL_checksstring(L, 1);
 	const float volume = luaL_optnumber(L, 2, 1.0f);
-	bool enqueue = false;
-	if (args >= 3)
-		enqueue = lua_toboolean(L, 3);
+	bool enqueue = luaL_optboolean(L, 3, false);
 
 	Channels::BGMusic.StreamPlay(soundFile, volume, enqueue);
 
@@ -1701,10 +1697,7 @@ static int SetActiveCommandByIndex(lua_State* L)
 	}
 	const int args = lua_gettop(L); // number of arguments
 	const int cmdIndex = lua_toint(L, 1) - CMD_INDEX_OFFSET;
-	int button = 1; // LMB
-	if ((args >= 2) && lua_isnumber(L, 2)) {
-		button = lua_toint(L, 2);
-	}
+	int button = luaL_optint(L, 2, 1); // LMB
 
 	if (args <= 2) {
 		const bool rmb = (button == SDL_BUTTON_LEFT) ? false : true;
@@ -1713,18 +1706,12 @@ static int SetActiveCommandByIndex(lua_State* L)
 		return 1;
 	}
 
-	// cmdIndex, button, lmb, rmb, alt, ctrl, meta, shift
-	if ((args < 8) ||
-	    !lua_isboolean(L, 3) || !lua_isboolean(L, 4) || !lua_isboolean(L, 5) ||
-	    !lua_isboolean(L, 6) || !lua_isboolean(L, 7) || !lua_isboolean(L, 8)) {
-		luaL_error(L, "Incorrect arguments to SetActiveCommand()");
-	}
-	const bool lmb   = lua_toboolean(L, 3);
-	const bool rmb   = lua_toboolean(L, 4);
-	const bool alt   = lua_toboolean(L, 5);
-	const bool ctrl  = lua_toboolean(L, 6);
-	const bool meta  = lua_toboolean(L, 7);
-	const bool shift = lua_toboolean(L, 8);
+	const bool lmb   = luaL_checkboolean(L, 3);
+	const bool rmb   = luaL_checkboolean(L, 4);
+	const bool alt   = luaL_checkboolean(L, 5);
+	const bool ctrl  = luaL_checkboolean(L, 6);
+	const bool meta  = luaL_checkboolean(L, 7);
+	const bool shift = luaL_checkboolean(L, 8);
 
 	const bool success = guihandler->SetActiveCommand(cmdIndex, button, lmb, rmb,
 	                                                  alt, ctrl, meta, shift);
@@ -2165,11 +2152,7 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L);
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitGroup()");
-	}
-	const int groupID = lua_toint(L, 2);
+	const int groupID = luaL_checkint(L, 2);
 
 	if (groupID == -1) {
 		unit->SetGroup(NULL);
@@ -2580,14 +2563,9 @@ int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 
 int LuaUnsyncedCtrl::SetLastMessagePosition(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to SetLastMessagePosition(x, y, z)");
-	}
-	const float3 pos(lua_tofloat(L, 1),
-	                 lua_tofloat(L, 2),
-	                 lua_tofloat(L, 3));
+	const float3 pos(luaL_checkfloat(L, 1),
+	                 luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3));
 
 	eventHandler.LastMessagePosition(pos);
 

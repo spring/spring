@@ -47,12 +47,8 @@ int LuaMetalMap::GetMetalMapSize(lua_State* L)
 
 int LuaMetalMap::GetMetalAmount(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2))
-		luaL_error(L, "Incorrect arguments to GetMetalAmount(int, int)");
-
-	const int x = lua_toint(L, 1);
-	const int z = lua_toint(L, 2);
+	const int x = luaL_checkint(L, 1);
+	const int z = luaL_checkint(L, 2);
 	// GetMetalAmount automatically clamps the value
 	lua_pushnumber(L, readMap->metalMap->GetMetalAmount(x, z));
 	return 1;
@@ -60,13 +56,9 @@ int LuaMetalMap::GetMetalAmount(lua_State* L)
 
 int LuaMetalMap::SetMetalAmount(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 2))
-		luaL_error(L, "Incorrect arguments to SetMetalAmount(int, int, num)");
-
-	const int x = lua_toint(L, 1);
-	const int z = lua_toint(L, 2);
-	const float m = lua_tonumber(L, 3);
+	const int x = luaL_checkint(L, 1);
+	const int z = luaL_checkint(L, 2);
+	const float m = luaL_checkfloat(L, 3);
 	// SetMetalAmount automatically clamps the value
 	readMap->metalMap->SetMetalAmount(x, z, m);
 	return 0;
@@ -74,12 +66,8 @@ int LuaMetalMap::SetMetalAmount(lua_State* L)
 
 int LuaMetalMap::GetMetalExtraction(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2))
-		luaL_error(L, "Incorrect arguments to GetMetalExtraction(int, int)");
-
-	const int x = lua_toint(L, 1);
-	const int z = lua_toint(L, 2);
+	const int x = luaL_checkint(L, 1);
+	const int z = luaL_checkint(L, 2);
 	// GetMetalExtraction automatically clamps the value
 	lua_pushnumber(L, readMap->metalMap->GetMetalExtraction(x, z));
 	return 1;
