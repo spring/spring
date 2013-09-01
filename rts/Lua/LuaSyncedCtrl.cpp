@@ -147,6 +147,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitStockpile);
 	REGISTER_LUA_CFUNC(SetUnitWeaponState);
 	REGISTER_LUA_CFUNC(SetUnitExperience);
+	REGISTER_LUA_CFUNC(SetUnitExperienceScaling);
 	REGISTER_LUA_CFUNC(SetUnitArmored);
 	REGISTER_LUA_CFUNC(SetUnitLosMask);
 	REGISTER_LUA_CFUNC(SetUnitLosState);
@@ -1514,6 +1515,45 @@ int LuaSyncedCtrl::SetUnitExperience(lua_State* L)
 	unit->AddExperience(experience - unit->experience);
 	return 0;
 }
+
+static void SetSingleUnitExperienceScaling(CUnit* unit, const string& key, float val)
+{
+	if (key == "expMultiplier") {
+		unit->SetExpMultiplier(val);
+	} else if (key == "expHealthScale") {
+		unit->SetExpHealthScale(val);
+	} else if (key == "expReloadScale") {
+		unit->SetExpReloadScale(val);
+	} else if (key == "expPowerScale") {
+		unit->SetExpPowerScale(val);
+	} else if (key == "expGrade") {
+		unit->SetExpGrade(val);
+	}
+}
+
+int LuaSyncedCtrl::SetUnitExperienceScaling(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	if (lua_istable(L, 2)) {
+		// {key1 = value1, ...}
+		for (lua_pushnil(L); lua_next(L, 2) != 0; lua_pop(L, 1)) {
+			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
+				SetSingleUnitExperienceScaling(unit,lua_tostring(L, -2), lua_tofloat(L, -1));
+			}
+		}
+	} else {
+		// key, value
+		if (lua_israwstring(L, 2) && lua_isnumber(L, 3)) {
+			SetSingleUnitExperienceScaling(unit,lua_tostring(L, 2), lua_tofloat(L, 3));
+		}
+	}
+
+	return 0;
+}
+
 
 
 int LuaSyncedCtrl::SetUnitArmored(lua_State* L)
@@ -3716,7 +3756,6 @@ int LuaSyncedCtrl::SetUnitToFeature(lua_State* L)
 	CUnit::SetSpawnFeature(lua_toboolean(L, 1));
 	return 0;
 }
-
 
 int LuaSyncedCtrl::SetExperienceGrade(lua_State* L)
 {
