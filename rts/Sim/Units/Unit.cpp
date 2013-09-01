@@ -1144,17 +1144,11 @@ void CUnit::DoDamage(
 		restTime = 0; // bleeding != resting
 	}
 
-	{
-		float3 hitDir = -impulse;
-		hitDir.y = 0.0f;
-
-		script->HitByWeapon(hitDir.SafeNormalize(), weaponDefID, /*inout*/ baseDamage);
-	}
-
 	if (luaRules != NULL) {
 		luaRules->UnitPreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer, &baseDamage, &impulseMult);
 	}
 
+	script->HitByWeapon(-(float3(impulse * impulseMult)).SafeNormalize2D(), weaponDefID, /*inout*/ baseDamage);
 	ApplyImpulse((impulse * impulseMult) / mass);
 
 	if (!isParalyzer) {
