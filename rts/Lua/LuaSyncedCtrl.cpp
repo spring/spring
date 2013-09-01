@@ -3075,8 +3075,6 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 {
 	CheckAllowGameChanges(L);
 
-	const int args = lua_gettop(L); // number of arguments
-
 	// units
 	vector<CUnit*> units;
 	ParseUnitArray(L, __FUNCTION__, 1, units);
@@ -3087,9 +3085,7 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	LuaUtils::ParseCommandArray(L, __FUNCTION__, 2, commands);
 	const int commandCount = (int)commands.size();
 
-	bool pairwise = false;
-	if (args >= 3)
-		pairwise = lua_toboolean(L, 3);
+	bool pairwise = luaL_optboolean(L, 3, false);
 
 	if ((unitCount <= 0) || (commandCount <= 0)) {
 		lua_pushnumber(L, 0);

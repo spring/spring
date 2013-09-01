@@ -182,11 +182,7 @@ int LuaSyncedMoveCtrl::SetTag(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetTag()");
-	}
-	moveType->tag = lua_toint(L, 2);
+	moveType->tag = luaL_checkint(L, 2);
 	return 0;
 }
 
@@ -250,11 +246,7 @@ int LuaSyncedMoveCtrl::SetExtrapolate(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetExtrapolate()");
-	}
-	moveType->extrapolate = lua_toboolean(L, 2);
+	moveType->extrapolate = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -387,11 +379,7 @@ int LuaSyncedMoveCtrl::SetTrackSlope(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetTrackSlope()");
-	}
-	moveType->trackSlope = lua_toboolean(L, 2);
+	moveType->trackSlope = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -402,11 +390,7 @@ int LuaSyncedMoveCtrl::SetTrackGround(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetTrackGround()");
-	}
-	moveType->trackGround = lua_toboolean(L, 2);
+	moveType->trackGround = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -481,14 +465,10 @@ int LuaSyncedMoveCtrl::SetNoBlocking(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetNoBlocking()");
-	}
 
 	// marks or unmarks the unit on the blocking-map, but
 	// does not change its blocking (collidable) state
-	moveType->SetNoBlocking(lua_toboolean(L, 2));
+	moveType->SetNoBlocking(luaL_checkboolean(L, 2));
 	return 0;
 }
 
@@ -499,11 +479,7 @@ int LuaSyncedMoveCtrl::SetShotStop(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetShotStop()");
-	}
-	moveType->shotStop = lua_toboolean(L, 2);
+	moveType->shotStop = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -514,11 +490,7 @@ int LuaSyncedMoveCtrl::SetSlopeStop(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetSlopeStop()");
-	}
-	moveType->slopeStop = lua_toboolean(L, 2);
+	moveType->slopeStop = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -529,11 +501,7 @@ int LuaSyncedMoveCtrl::SetCollideStop(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetCollideStop()");
-	}
-	moveType->gndStop = lua_toboolean(L, 2); // FIXME
+	moveType->gndStop = luaL_checkboolean(L, 2); // FIXME
 	moveType->collideStop = lua_toboolean(L, 2);
 	return 0;
 }

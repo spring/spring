@@ -1088,11 +1088,7 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 
 int CLuaHandleSynced::AddSyncedActionFallback(lua_State* L)
 {
-	const int args = lua_gettop(L);
-	if ((args != 2) || !lua_isstring(L, 1) ||  !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to AddActionFallback()");
-	}
-	string cmdRaw  = lua_tostring(L, 1);
+	string cmdRaw = luaL_checkstring(L, 1);
 	cmdRaw = "/" + cmdRaw;
 
 	string cmd = cmdRaw;
@@ -1107,7 +1103,7 @@ int CLuaHandleSynced::AddSyncedActionFallback(lua_State* L)
 	}
 
 	CLuaHandleSynced* lhs = GetSyncedHandle(L);
-	lhs->textCommands[cmd] = lua_tostring(L, 2);
+	lhs->textCommands[cmd] = luaL_checkstring(L, 2);
 	wordCompletion->AddWord(cmdRaw, true, false, false);
 	lua_pushboolean(L, true);
 	return 1;
@@ -1116,11 +1112,7 @@ int CLuaHandleSynced::AddSyncedActionFallback(lua_State* L)
 
 int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
 {
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to RemoveActionFallback()");
-	}
-	string cmdRaw  = lua_tostring(L, 1);
+	string cmdRaw  = luaL_checkstring(L, 1);
 	cmdRaw = "/" + cmdRaw;
 
 	string cmd = cmdRaw;

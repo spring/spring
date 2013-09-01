@@ -913,15 +913,10 @@ int LuaUtils::ZlibCompress(lua_State* L)
 
 int LuaUtils::ZlibDecompress(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args < 1)
-		return luaL_error(L, "ZlibCompress: missign data argument");
 	size_t inLen;
 	const char* inData = luaL_checklstring(L, 1, &inLen);
 
-	long unsigned bufsize = 65000;
-	if (args > 1 && lua_isnumber(L, 2))
-		bufsize = std::max(lua_toint(L, 2), 0);
+	long unsigned bufsize = std::max(luaL_optint(L, 2, 65000), 0);
 
 	std::vector<boost::uint8_t> uncompressed(bufsize, 0);
 	const int error = uncompress(&uncompressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
