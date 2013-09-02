@@ -195,7 +195,6 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitResources);
 	REGISTER_LUA_CFUNC(GetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(GetUnitExperience);
-	REGISTER_LUA_CFUNC(GetUnitExperienceScaling);
 	REGISTER_LUA_CFUNC(GetUnitStates);
 	REGISTER_LUA_CFUNC(GetUnitArmored);
 	REGISTER_LUA_CFUNC(GetUnitIsActive);
@@ -2866,33 +2865,6 @@ int LuaSyncedRead::GetUnitExperience(lua_State* L)
 	lua_pushnumber(L, unit->limExperience);
 	return 2;
 }
-
-
-int LuaSyncedRead::GetUnitExperienceScaling(lua_State* L)
-{
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	string key = luaL_optstring(L, 2, "");
-	if (key == "") {
-		return 0;
-	} else if (key == "expMultiplier") {
-		lua_pushnumber(L, unit->GetExpMultiplier());
-	} else if (key == "expHealthScale") {
-		lua_pushnumber(L, unit->GetExpHealthScale());
-	} else if (key == "expReloadScale") {
-		lua_pushnumber(L, unit->GetExpReloadScale());
-	} else if (key == "expPowerScale") {
-		lua_pushnumber(L, unit->GetExpPowerScale());
-	} else if (key == "expGrade") {
-		lua_pushnumber(L, unit->GetExpGrade());
-	} else {
-		return 0;
-	}
-	return 1;
-}
-
 
 
 int LuaSyncedRead::GetUnitHeight(lua_State* L)
