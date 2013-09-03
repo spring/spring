@@ -101,7 +101,7 @@ struct MoveDef {
 
 	unsigned int pathType;
 	/// number of UnitDef types that refer to this MoveDef class
-	unsigned int unitDefRefCount;
+	unsigned int udRefCount;
 
 	/// heatmap path-cost modifier
 	float heatMod;

@@ -809,7 +809,7 @@ int LuaSyncedMoveCtrl::SetMoveDef(lua_State* L)
 		return 1;
 	}
 
-	if (moveDef->unitDefRefCount == 0) {
+	if (moveDef->udRefCount == 0) {
 		// pathfinder contains optimizations that
 		// make unreferenced movedef's non-usable
 		lua_pushboolean(L, false);

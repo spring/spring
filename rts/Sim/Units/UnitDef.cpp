@@ -528,7 +528,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 				throw content_error(errMsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
 			}
 
-			moveDef->unitDefRefCount += 1;
+			moveDef->udRefCount += 1;
 			this->pathType = moveDef->pathType;
 		}
 
