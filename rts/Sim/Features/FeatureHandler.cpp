@@ -101,6 +101,10 @@ void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
 		featureDefsVector.push_back(fd);
 	}
 
+	// MUST be false for CollisionHandler (features have no LocalModel)
+	fd->collisionVolume->SetDefaultToPieceTree(false);
+	fd->collisionVolume->SetIgnoreHits(fd->geoThermal);
+
 	featureDefs[name] = fd;
 }
 
@@ -108,9 +112,9 @@ void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
 FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const std::string& mixedCase) const
 {
 	const std::string& name = StringToLower(mixedCase);
-	if (featureDefs.find(name) != featureDefs.end()) {
+
+	if (featureDefs.find(name) != featureDefs.end())
 		return NULL;
-	}
 
 	FeatureDef* fd = new FeatureDef();
 
@@ -211,7 +215,6 @@ FeatureDef* CFeatureHandler::CreateDefaultGeoFeatureDef(const std::string& name)
 	fd->mass = CSolidObject::DEFAULT_MASS;
 	// geothermal features have no physical map presence
 	fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector);
-	fd->collisionVolume->SetIgnoreHits(true);
 	return fd;
 }
 

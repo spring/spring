@@ -74,20 +74,15 @@ private:
 
 /**
  * Responsible for detecting hits between projectiles
- * and world objects (units, features), each WO has a
+ * and solid objects (units, features), each SO has a
  * collision volume.
  */
 class CCollisionHandler {
 	public:
-		CCollisionHandler() {}
-		~CCollisionHandler() {}
-
 		static void PrintStats();
 
-		static bool DetectHit(const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* cq = NULL, bool forceTrace = false);
-		static bool DetectHit(const CSolidObject* f, const float3 p0, const float3 p1, CollisionQuery* cq = NULL, bool forceTrace = false);
-		static bool DetectHit(const CollisionVolume* v, const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace = false);
-		static bool DetectHit(const CollisionVolume* v, const CSolidObject* f, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace = false);
+		static bool DetectHit(const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq = NULL, bool forceTrace = false);
+		static bool DetectHit(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace = false);
 		static bool MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* cq);
 
 	private:
