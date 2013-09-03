@@ -13,9 +13,9 @@
 #include "System/Matrix44f.h"
 #include "System/Log/ILog.h"
 
-
 unsigned int CCollisionHandler::numDiscTests = 0;
 unsigned int CCollisionHandler::numContTests = 0;
+
 
 
 void CCollisionHandler::PrintStats()
@@ -24,47 +24,36 @@ void CCollisionHandler::PrintStats()
 }
 
 
-bool CCollisionHandler::DetectHit(const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace)
-{
-	return DetectHit(u->collisionVolume, u, p0, p1, cq, forceTrace);
-}
-
 
 bool CCollisionHandler::DetectHit(const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace)
 {
-	return DetectHit(o->collisionVolume, o, p0, p1, cq, forceTrace);
+	return (DetectHit(o->collisionVolume, o, p0, p1, cq, forceTrace));
 }
-
-
-bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace)
-{
-	if (cq != NULL) {
-		cq->Reset();
-	}
-
-	// test *only* for ray intersections with the piece tree
-	// (whether or not the unit's regular volume is disabled)
-	//
-	// overrides forceTrace, which itself overrides testType
-	// FIXME make this available to SolidObjects too! (not worth it?)
-	if (v->DefaultToPieceTree())
-		return (CCollisionHandler::IntersectPieceTree(u, p0, p1, cq));
-
-	// explicitly cast to avoid recursion
-	return DetectHit(v, (const CSolidObject*) u, p0, p1, cq, forceTrace);
-}
-
 
 bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace)
 {
 	bool hit = false;
 
-	if (cq != NULL) {
+	if (cq != NULL)
 		cq->Reset();
-	}
 
+	if (o->IsInVoid())
+		return hit;
 	if (v->IgnoreHits())
-		return false;
+		return hit;
+
+	// test *only* for ray intersections with the piece tree
+	// (whether or not the unit's regular volume is disabled)
+	//
+	// overrides forceTrace, which itself overrides testType
+	// needs a unit because only units have a LocalModel atm
+	//
+	// NOTE:
+	//   usePieceCollisionVolumes is parsed in SolidObjectDef
+	//   so features *can* also set it, which will crash here
+	//   (prevented by FeatureHandler)
+	if (v->DefaultToPieceTree())
+		return (CCollisionHandler::IntersectPieceTree(static_cast<const CUnit*>(o), p0, p1, cq));
 
 	if (forceTrace)
 		return (CCollisionHandler::Intersect(v, o, p0, p1, cq));
@@ -80,15 +69,16 @@ bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CSolidObject* 
 }
 
 
+
 bool CCollisionHandler::Collision(const CollisionVolume* v, const CSolidObject* o, const float3 p, CollisionQuery* cq)
 {
+	bool hit = false;
+
 	// if <v> is a sphere, then the bounding radius is just its own radius -->
 	// we do not need to test the COLVOL_TYPE_SPHERE case again when this fails
 	if ((v->GetWorldSpacePos(o) - p).SqLength() > v->GetBoundingRadiusSq()) {
-		return false;
+		return hit;
 	}
-
-	bool hit = false;
 
 	if (v->DefaultToFootPrint()) {
 		hit = CCollisionHandler::CollisionFootPrint(o, p);
@@ -100,7 +90,7 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CSolidObject* 
 			default: {
 				// NOTE: we have to translate by relMidPos to get to midPos
 				// (which is where the collision volume gets drawn) because
-				// GetTransformMatrix() only uses pos
+				// GetTransformMatrix() only uses pos (UNITS AND FEATURES)
 				CMatrix44f m = o->GetTransformMatrix(true);
 				m.Translate(o->relMidPos * WORLD_TO_OBJECT_SPACE);
 				m.Translate(v->GetOffsets());
@@ -209,21 +199,22 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 
 bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* cq)
 {
-	bool hit = false;
-
-	if (!v->IgnoreHits()) {
+	if (!u->IsInVoid()) {
 		if (v->DefaultToPieceTree()) {
-			hit = CCollisionHandler::IntersectPieceTree(u, p0, p1, cq);
-		} else {
+			return (CCollisionHandler::IntersectPieceTree(u, p0, p1, cq));
+		}
+		if (!v->IgnoreHits()) {
+			// note: should mouse-rays care about
+			// IgnoreHits if unit is not in void?
 			CMatrix44f m = u->GetTransformMatrix(false, true);
 			m.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
 			m.Translate(v->GetOffsets());
 
-			hit = CCollisionHandler::Intersect(v, m, p0, p1, cq);
+			return (CCollisionHandler::Intersect(v, m, p0, p1, cq));
 		}
 	}
 
-	return hit;
+	return false;
 }
 
 
@@ -333,7 +324,7 @@ inline bool CCollisionHandler::Intersect(const CollisionVolume* v, const CSolidO
 	m.Translate(o->relMidPos * WORLD_TO_OBJECT_SPACE);
 	m.Translate(v->GetOffsets());
 
-	return CCollisionHandler::Intersect(v, m, p0, p1, cq);
+	return (CCollisionHandler::Intersect(v, m, p0, p1, cq));
 }
 
 /*
