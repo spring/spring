@@ -25,7 +25,7 @@ public:
 	};
 
 	void Update();
-	void AddPath(
+	bool AddPath(
 		const IPath::Path* path,
 		const IPath::SearchResult result,
 		const int2 startBlock,
@@ -44,9 +44,29 @@ public:
 private:
 	void RemoveFrontQueItem();
 
-	unsigned int GetHash(const int2 sb, const int2 gb, float goalRadius, int pathType) const {
-		const unsigned int index = ((gb.y * blocksX + gb.x) * blocksZ + sb.y) * blocksX;
-		const unsigned int offset = sb.x * (pathType + 1) * std::max(1.0f, goalRadius);
+	bool HashCollision(
+		const CacheItem* ci,
+		const int2 strtBlk,
+		const int2 goalBlk,
+		float goalRad,
+		int pathType
+	) const {
+		bool hashColl = false;
+
+		hashColl |= (ci->startBlock != strtBlk || ci->goalBlock != goalBlk);
+		hashColl |= (ci->pathType != pathType || ci->goalRadius != goalRad);
+
+		return hashColl;
+	}
+
+	unsigned int GetHash(
+		const int2 strtBlk,
+		const int2 goalBlk,
+		float goalRad,
+		int pathType
+	) const {
+		const unsigned int index = ((goalBlk.y * blocksX + goalBlk.x) * blocksZ + strtBlk.y) * blocksX;
+		const unsigned int offset = strtBlk.x * (pathType + 1) * std::max(1.0f, goalRad);
 		return (index + offset);
 	}
 
@@ -71,8 +91,9 @@ private:
 	int blocksX;
 	int blocksZ;
 
-	int numCacheHits;
-	int numCacheMisses;
+	unsigned int numCacheHits;
+	unsigned int numCacheMisses;
+	unsigned int numHashCollisions;
 };
 
 #endif

@@ -12,20 +12,23 @@
 CPathCache::CPathCache(int blocksX, int blocksZ):
 blocksX(blocksX),
 blocksZ(blocksZ),
+
 numCacheHits(0),
-numCacheMisses(0)
+numCacheMisses(0),
+numHashCollisions(0)
 {
 }
 
 CPathCache::~CPathCache()
 {
-	LOG("[%s] cache-hits=%i hit-percentage=%.0f%%", __FUNCTION__, numCacheHits, GetCacheHitPercentage());
+	LOG("[%s(%ix%i)] cache-hits=%i hit-percentage=%.0f%% collisions=%i",
+		__FUNCTION__, blocksX, blocksZ, numCacheHits, GetCacheHitPercentage(), numHashCollisions);
 
-	for (CachedPathConstIter ci = cachedPaths.begin(); ci != cachedPaths.end(); ++ci)
-		delete (ci->second);
+	for (CachedPathConstIter iter = cachedPaths.begin(); iter != cachedPaths.end(); ++iter)
+		delete (iter->second);
 }
 
-void CPathCache::AddPath(
+bool CPathCache::AddPath(
 	const IPath::Path* path,
 	const IPath::SearchResult result,
 	const int2 startBlock,
@@ -37,9 +40,13 @@ void CPathCache::AddPath(
 		RemoveFrontQueItem();
 
 	const unsigned int hash = GetHash(startBlock, goalBlock, goalRadius, pathType);
+	const unsigned int cols = numHashCollisions;
+	const CachedPathConstIter iter = cachedPaths.find(hash);
 
-	if (cachedPaths.find(hash) != cachedPaths.end())
-		return;
+	// register any hash collisions
+	if (iter != cachedPaths.end()) {
+		return ((numHashCollisions += HashCollision(iter->second, startBlock, goalBlock, goalRadius, pathType)) != cols);
+	}
 
 	CacheItem* ci = new CacheItem();
 	ci->path       = *path; // copy
@@ -56,6 +63,7 @@ void CPathCache::AddPath(
 	cq.timeout = gs->frameNum + GAME_SPEED * 7;
 
 	cacheQue.push_back(cq);
+	return false;
 }
 
 const CPathCache::CacheItem* CPathCache::GetCachedPath(
@@ -65,31 +73,23 @@ const CPathCache::CacheItem* CPathCache::GetCachedPath(
 	int pathType
 ) {
 	const unsigned int hash = GetHash(startBlock, goalBlock, goalRadius, pathType);
-	const CachedPathConstIter ci = cachedPaths.find(hash);
+	const CachedPathConstIter iter = cachedPaths.find(hash);
 
-	if (ci == cachedPaths.end()) {
+	if (iter == cachedPaths.end()) {
 		++numCacheMisses; return NULL;
 	}
-	if (ci->second->startBlock.x != startBlock.x) {
+	if (iter->second->startBlock != startBlock) {
 		++numCacheMisses; return NULL;
 	}
-	if (ci->second->startBlock.y != startBlock.y) {
+	if (iter->second->goalBlock != goalBlock) {
 		++numCacheMisses; return NULL;
 	}
-	if (ci->second->goalBlock.x != goalBlock.x) {
-		++numCacheMisses; return NULL;
-	}
-	#if 0
-	if (ci->second->goalBlock.y != goalBlock.y) {
-		++numCacheMisses; return NULL;
-	}
-	#endif
-	if (ci->second->pathType != pathType) {
+	if (iter->second->pathType != pathType) {
 		++numCacheMisses; return NULL;
 	}
 
 	++numCacheHits;
-	return (ci->second);
+	return (iter->second);
 }
 
 void CPathCache::Update()
