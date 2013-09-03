@@ -123,14 +123,14 @@ bool CPathCache::HashCollision(
 
 	if (hashColl) {
 		LOG_L(L_DEBUG,
-			"[%s][f=%d][hash=%u] Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)==Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)",
+			"[%s][f=%d][hash=%u] Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)==Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)\n",
 			__FUNCTION__, gs->frameNum,
-			GetHash(strtBlock, goalBlock, goalRadius, pathType);
+			GetHash(strtBlk, goalBlk, goalRadius, pathType),
 			ci->strtBlock.x, ci->strtBlock.y,
 			ci->goalBlock.x, ci->goalBlock.y,
 			ci->goalRadius, ci->pathType,
-			strtBlck.x, strtBlck.y,
-			goalBlck.x, goalBlck.y,
+			strtBlk.x, strtBlk.y,
+			goalBlk.x, goalBlk.y,
 			goalRadius, pathType
 		);
 	}
