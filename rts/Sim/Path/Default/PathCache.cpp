@@ -31,7 +31,7 @@ CPathCache::~CPathCache()
 bool CPathCache::AddPath(
 	const IPath::Path* path,
 	const IPath::SearchResult result,
-	const int2 startBlock,
+	const int2 strtBlock,
 	const int2 goalBlock,
 	float goalRadius,
 	int pathType
@@ -39,19 +39,19 @@ bool CPathCache::AddPath(
 	if (cacheQue.size() > MAX_CACHE_QUEUE_SIZE)
 		RemoveFrontQueItem();
 
-	const unsigned int hash = GetHash(startBlock, goalBlock, goalRadius, pathType);
+	const unsigned int hash = GetHash(strtBlock, goalBlock, goalRadius, pathType);
 	const unsigned int cols = numHashCollisions;
 	const CachedPathConstIter iter = cachedPaths.find(hash);
 
 	// register any hash collisions
 	if (iter != cachedPaths.end()) {
-		return ((numHashCollisions += HashCollision(iter->second, startBlock, goalBlock, goalRadius, pathType)) != cols);
+		return ((numHashCollisions += HashCollision(iter->second, strtBlock, goalBlock, goalRadius, pathType)) != cols);
 	}
 
 	CacheItem* ci = new CacheItem();
 	ci->path       = *path; // copy
 	ci->result     = result;
-	ci->startBlock = startBlock;
+	ci->strtBlock  = strtBlock;
 	ci->goalBlock  = goalBlock;
 	ci->goalRadius = goalRadius;
 	ci->pathType   = pathType;
@@ -67,18 +67,18 @@ bool CPathCache::AddPath(
 }
 
 const CPathCache::CacheItem* CPathCache::GetCachedPath(
-	const int2 startBlock,
+	const int2 strtBlock,
 	const int2 goalBlock,
 	float goalRadius,
 	int pathType
 ) {
-	const unsigned int hash = GetHash(startBlock, goalBlock, goalRadius, pathType);
+	const unsigned int hash = GetHash(strtBlock, goalBlock, goalRadius, pathType);
 	const CachedPathConstIter iter = cachedPaths.find(hash);
 
 	if (iter == cachedPaths.end()) {
 		++numCacheMisses; return NULL;
 	}
-	if (iter->second->startBlock != startBlock) {
+	if (iter->second->strtBlock != strtBlock) {
 		++numCacheMisses; return NULL;
 	}
 	if (iter->second->goalBlock != goalBlock) {
@@ -109,3 +109,31 @@ void CPathCache::RemoveFrontQueItem()
 	cacheQue.pop_front();
 }
 
+bool CPathCache::HashCollision(
+	const CacheItem* ci,
+	const int2 strtBlk,
+	const int2 goalBlk,
+	float goalRadius,
+	int pathType
+) const {
+	bool hashColl = false;
+
+	hashColl |= (ci->strtBlock != strtBlk || ci->goalBlock != goalBlk);
+	hashColl |= (ci->pathType != pathType || ci->goalRadius != goalRadius);
+
+	if (hashColl) {
+		LOG_L(L_DEBUG,
+			"[%s][f=%d][hash=%u] Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)==Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)",
+			__FUNCTION__, gs->frameNum,
+			GetHash(strtBlock, goalBlock, goalRadius, pathType);
+			ci->strtBlock.x, ci->strtBlock.y,
+			ci->goalBlock.x, ci->goalBlock.y,
+			ci->goalRadius, ci->pathType,
+			strtBlck.x, strtBlck.y,
+			goalBlck.x, goalBlck.y,
+			goalRadius, pathType
+		);
+	}
+
+	return hashColl;
+}
