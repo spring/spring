@@ -216,7 +216,7 @@ void CPathEstimator::CalculateBlockOffsets(unsigned int blockIdx, unsigned int t
 
 	for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
 		MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
-		if (md->unitDefRefCount > 0) {
+		if (md->udRefCount > 0) {
 			blockStates.peNodeOffsets[blockIdx][md->pathType] = FindOffset(*md, x, z);
 		}
 	}
@@ -238,7 +238,7 @@ void CPathEstimator::EstimatePathCosts(unsigned int blockIdx, unsigned int threa
 
 	for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
 		MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
-		if (md->unitDefRefCount > 0) {
+		if (md->udRefCount > 0) {
 			CalculateVertices(*md, x, z, threadNum);
 		}
 	}
@@ -417,7 +417,7 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 				for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
 					const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
-					if (md->unitDefRefCount > 0) {
+					if (md->udRefCount > 0) {
 						SingleBlock sb;
 							sb.blockPos.x = x;
 							sb.blockPos.y = z;
@@ -574,8 +574,9 @@ IPath::SearchResult CPathEstimator::GetPath(
 	mStartBlockIdx = startBlock.y * nbrOfBlocksX + startBlock.x;
 
 	if (synced) {
-		CPathCache::CacheItem* ci = pathCache->GetCachedPath(startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
-		if (ci) {
+		const CPathCache::CacheItem* ci = pathCache->GetCachedPath(startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
+
+		if (ci != NULL) {
 			// use a cached path if we have one (NOTE: only when in synced context)
 			path = ci->path;
 			return ci->result;

@@ -202,7 +202,7 @@ void QTPFS::PathManager::Load() {
 		pfsCheckSum = mapCheckSum ^ modCheckSum;
 
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-			if (moveDefHandler->GetMoveDefByPathType(layerNum)->unitDefRefCount == 0)
+			if (moveDefHandler->GetMoveDefByPathType(layerNum)->udRefCount == 0)
 				continue;
 
 			#ifndef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
@@ -353,7 +353,7 @@ void QTPFS::PathManager::InitNodeLayersThread(
 void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const SRectangle& r) {
 	nodeTrees[layerNum] = new QTPFS::QTNode(NULL,  0,  r.x1, r.z1,  r.x2, r.z2);
 
-	if (moveDefHandler->GetMoveDefByPathType(layerNum)->unitDefRefCount == 0)
+	if (moveDefHandler->GetMoveDefByPathType(layerNum)->udRefCount == 0)
 		return;
 
 	nodeLayers[layerNum].Init(layerNum);
@@ -402,7 +402,7 @@ void QTPFS::PathManager::UpdateNodeLayersThread(
 void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle& r) {
 	const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
 
-	if (md->unitDefRefCount == 0)
+	if (md->udRefCount == 0)
 		return;
 
 	// NOTE:
@@ -447,7 +447,7 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
 	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
 
-		if (md->unitDefRefCount == 0)
+		if (md->udRefCount == 0)
 			continue;
 
 		SRectangle mr;
@@ -542,7 +542,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 	for (unsigned int i = 0; i < nodeTrees.size(); i++) {
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
-		if (md->unitDefRefCount == 0)
+		if (md->udRefCount == 0)
 			continue;
 
 		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + md->name;

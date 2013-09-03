@@ -7,76 +7,105 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Log/ILog.h"
 
-using namespace std;
+#define MAX_CACHE_QUEUE_SIZE 100
 
-CPathCache::CPathCache(int blocksX,int blocksZ)
-: blocksX(blocksX),
-	blocksZ(blocksZ)
+CPathCache::CPathCache(int blocksX, int blocksZ):
+blocksX(blocksX),
+blocksZ(blocksZ),
+numCacheHits(0),
+numCacheMisses(0)
 {
-	numCacheHits=0;
-	numCacheMisses=0;
 }
 
 CPathCache::~CPathCache()
 {
-	LOG("Path cache hits %i %.0f%%",
-			numCacheHits, ((numCacheHits + numCacheMisses) != 0)
-			? (float(numCacheHits) / float(numCacheHits + numCacheMisses) * 100.0f)
-			: 0.0f);
-	for(std::map<unsigned int,CacheItem*>::iterator ci=cachedPaths.begin();ci!=cachedPaths.end();++ci)
-		delete ci->second;
+	LOG("[%s] cache-hits=%i hit-percentage=%.0f%%", __FUNCTION__, numCacheHits, GetCacheHitPercentage());
+
+	for (CachedPathConstIter ci = cachedPaths.begin(); ci != cachedPaths.end(); ++ci)
+		delete (ci->second);
 }
 
-void CPathCache::AddPath(IPath::Path* path, IPath::SearchResult result, int2 startBlock,int2 goalBlock,float goalRadius,int pathType)
-{
-	if(cacheQue.size()>100)
+void CPathCache::AddPath(
+	const IPath::Path* path,
+	const IPath::SearchResult result,
+	const int2 startBlock,
+	const int2 goalBlock,
+	float goalRadius,
+	int pathType
+) {
+	if (cacheQue.size() > MAX_CACHE_QUEUE_SIZE)
 		RemoveFrontQueItem();
 
-	unsigned int hash=(unsigned int)(((((goalBlock.y)*blocksX+goalBlock.x)*blocksZ+startBlock.y)*blocksX)+startBlock.x*(pathType+1)*max(1.0f,goalRadius));
+	const unsigned int hash = GetHash(startBlock, goalBlock, goalRadius, pathType);
 
-	if(cachedPaths.find(hash)!=cachedPaths.end()){
+	if (cachedPaths.find(hash) != cachedPaths.end())
 		return;
-	}
 
-	CacheItem* ci=new CacheItem;
-	ci->path=*path;
-	ci->result=result;
-	ci->startBlock=startBlock;
-	ci->goalBlock=goalBlock;
-	ci->goalRadius=goalRadius;
-	ci->pathType=pathType;
+	CacheItem* ci = new CacheItem();
+	ci->path       = *path; // copy
+	ci->result     = result;
+	ci->startBlock = startBlock;
+	ci->goalBlock  = goalBlock;
+	ci->goalRadius = goalRadius;
+	ci->pathType   = pathType;
 
-	cachedPaths[hash]=ci;
+	cachedPaths[hash] = ci;
 
 	CacheQue cq;
-	cq.hash=hash;
-	cq.timeout=gs->frameNum+200;
+	cq.hash = hash;
+	cq.timeout = gs->frameNum + GAME_SPEED * 7;
 
 	cacheQue.push_back(cq);
 }
 
-CPathCache::CacheItem* CPathCache::GetCachedPath(int2 startBlock,int2 goalBlock,float goalRadius,int pathType)
-{
-	unsigned int hash=(unsigned int)(((((goalBlock.y)*blocksX+goalBlock.x)*blocksZ+startBlock.y)*blocksX)+startBlock.x*(pathType+1)*max(1.0f,goalRadius));
+const CPathCache::CacheItem* CPathCache::GetCachedPath(
+	const int2 startBlock,
+	const int2 goalBlock,
+	float goalRadius,
+	int pathType
+) {
+	const unsigned int hash = GetHash(startBlock, goalBlock, goalRadius, pathType);
+	const CachedPathConstIter ci = cachedPaths.find(hash);
 
-	std::map<unsigned int,CacheItem*>::iterator ci=cachedPaths.find(hash);
-	if(ci!=cachedPaths.end() && ci->second->startBlock.x==startBlock.x && ci->second->startBlock.y==startBlock.y && ci->second->goalBlock.x==goalBlock.x && ci->second->pathType==pathType){
-		++numCacheHits;
-		return ci->second;
+	if (ci == cachedPaths.end()) {
+		++numCacheMisses; return NULL;
 	}
-	++numCacheMisses;
-	return 0;
+	if (ci->second->startBlock.x != startBlock.x) {
+		++numCacheMisses; return NULL;
+	}
+	if (ci->second->startBlock.y != startBlock.y) {
+		++numCacheMisses; return NULL;
+	}
+	if (ci->second->goalBlock.x != goalBlock.x) {
+		++numCacheMisses; return NULL;
+	}
+	#if 0
+	if (ci->second->goalBlock.y != goalBlock.y) {
+		++numCacheMisses; return NULL;
+	}
+	#endif
+	if (ci->second->pathType != pathType) {
+		++numCacheMisses; return NULL;
+	}
+
+	++numCacheHits;
+	return (ci->second);
 }
 
 void CPathCache::Update()
 {
-	while(!cacheQue.empty() && cacheQue.front().timeout<gs->frameNum)
+	while (!cacheQue.empty() && (cacheQue.front().timeout) < gs->frameNum)
 		RemoveFrontQueItem();
 }
 
 void CPathCache::RemoveFrontQueItem()
 {
-	delete cachedPaths[cacheQue.front().hash];
-	cachedPaths.erase(cacheQue.front().hash);
+	const CachedPathConstIter it = cachedPaths.find((cacheQue.front()).hash);
+
+	assert(it != cachedPaths.end());
+	delete (it->second);
+
+	cachedPaths.erase(it);
 	cacheQue.pop_front();
 }
+
