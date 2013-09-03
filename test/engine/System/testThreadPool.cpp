@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/ThreadPool.h"
+#include "System/UnsyncedRNG.h"
 #include <vector>
 
 #define BOOST_TEST_MODULE ThreadPool
@@ -105,3 +106,22 @@ BOOST_AUTO_TEST_CASE( testThreadPool6 )
 		throw std::exception();
 	});*/
 }
+
+BOOST_AUTO_TEST_CASE( testThreadPool7 )
+{
+	LOG_L(L_WARNING, "testThreadPool7");
+
+	std::vector<UnsyncedRNG> rngs(NUM_THREADS);
+
+	for (unsigned int n = 0; n < rngs.size(); n++)
+		rngs[n].Seed(n);
+
+	for_mt(0, 1000000, [&](const int i) {
+		const float r = rngs[ThreadPool::GetThreadNum()].RandFloat() * 1000.0f;
+		const float s = math::sqrt(r); // test SSE intrinsics (should be 100% reentrant)
+
+		SAFE_BOOST_CHECK(!std::isinf(s));
+		SAFE_BOOST_CHECK(!std::isnan(s));
+	});
+}
+
