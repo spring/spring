@@ -18,7 +18,7 @@ public:
 	struct CacheItem {
 		IPath::SearchResult result;
 		IPath::Path path;
-		int2 startBlock;
+		int2 strtBlock;
 		int2 goalBlock;
 		float goalRadius;
 		int pathType;
@@ -28,14 +28,14 @@ public:
 	bool AddPath(
 		const IPath::Path* path,
 		const IPath::SearchResult result,
-		const int2 startBlock,
+		const int2 strtBlock,
 		const int2 goalBlock,
 		float goalRadius,
 		int pathType
 	);
 
 	const CacheItem* GetCachedPath(
-		const int2 startBlock,
+		const int2 strtBlock,
 		const int2 goalBlock,
 		float goalRadius,
 		int pathType
@@ -48,25 +48,18 @@ private:
 		const CacheItem* ci,
 		const int2 strtBlk,
 		const int2 goalBlk,
-		float goalRad,
+		float goalRadius,
 		int pathType
-	) const {
-		bool hashColl = false;
-
-		hashColl |= (ci->startBlock != strtBlk || ci->goalBlock != goalBlk);
-		hashColl |= (ci->pathType != pathType || ci->goalRadius != goalRad);
-
-		return hashColl;
-	}
+	) const;
 
 	unsigned int GetHash(
 		const int2 strtBlk,
 		const int2 goalBlk,
-		float goalRad,
+		float goalRadius,
 		int pathType
 	) const {
 		const unsigned int index = ((goalBlk.y * blocksX + goalBlk.x) * blocksZ + strtBlk.y) * blocksX;
-		const unsigned int offset = strtBlk.x * (pathType + 1) * std::max(1.0f, goalRad);
+		const unsigned int offset = strtBlk.x * (pathType + 1) * std::max(1.0f, goalRadius);
 		return (index + offset);
 	}
 
