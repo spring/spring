@@ -63,9 +63,7 @@ namespace fastmath {
 #ifndef DEDICATED_NOSSE
 		__m128 vec = _mm_set_ss(x);
 		vec = _mm_rsqrt_ss(vec);
-		//_mm_store_ss(&x, vec);
-		const float* f = reinterpret_cast<float*>(&vec);
-		return f[0];
+		return _mm_cvtss_f32(vec);
 #else
 		return isqrt_nosse(x);
 #endif
@@ -81,9 +79,7 @@ namespace fastmath {
 #ifndef DEDICATED_NOSSE
 		__m128 vec = _mm_set_ss(x);
 		vec = _mm_sqrt_ss(vec);
-		//_mm_store_ss(&x, vec);
-		const float* f = reinterpret_cast<float*>(&vec);
-		return f[0];
+		return _mm_cvtss_f32(vec);
 #else
 		return sqrt(x);
 #endif
