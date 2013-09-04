@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------------
 --
 --  TODO:  - get rid of the ':'/self referencing, it's a waste of cycles
---         - (De)RegisterCOBCallback(data)
+--         - (De)RegisterCOBCallback(data) + callin?
 --
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -83,136 +83,9 @@ gadgetHandler = {
 }
 
 
--- these call-ins are set to 'nil' if not used
--- they are setup in UpdateCallIns()
--- FIXME: why not use callInsList from callins.lua??
-local callInLists = {
-	"Shutdown",
-
-	"GamePreload",
-	"GameStart",
-	"GameOver",
-	"GameID",
-	"TeamDied",
-
-	"GameFrame",
-
-	"ViewResize",  -- FIXME ?
-
-	"TextCommand",  -- FIXME ?
-	"GotChatMsg",
-	"RecvLuaMsg",
-
-	-- Unit CallIns
-	"UnitCreated",
-	"UnitFinished",
-	"UnitFromFactory",
-	"UnitDestroyed",
-	"UnitExperience",
-	"UnitIdle",
-	"UnitCmdDone",
-	"UnitPreDamaged",
-	"UnitDamaged",
-	"UnitTaken",
-	"UnitGiven",
-	"UnitEnteredRadar",
-	"UnitEnteredLos",
-	"UnitLeftRadar",
-	"UnitLeftLos",
-	"UnitSeismicPing",
-	"UnitLoaded",
-	"UnitUnloaded",
-	"UnitCloaked",
-	"UnitDecloaked",
-	-- optional
-	-- "UnitUnitCollision",
-	-- "UnitFeatureCollision",
-	-- "UnitMoveFailed",
-	"UnitMoved", -- not exposed to Lua yet (as of 95.0)
-	"StockpileChanged",
-
-	-- Feature CallIns
-	"FeatureCreated",
-	"FeatureDestroyed",
-	"FeatureDamaged",
-	"FeatureMoved", -- not exposed to Lua yet (as of 95.0)
-	"FeaturePreDamaged",
-
-	-- Projectile CallIns
-	"ProjectileCreated",
-	"ProjectileDestroyed",
-
-	-- Shield CallIns
-	"ShieldPreDamaged",
-
-	-- Misc Synced CallIns
-	"Explosion",
-
-	-- LuaRules CallIns (note: the *PreDamaged calls belong here too)
-	"CommandFallback",
-	"AllowCommand",
-	"AllowStartPosition",
-	"AllowUnitCreation",
-	"AllowUnitTransfer",
-	"AllowUnitBuildStep",
-	"AllowFeatureBuildStep",
-	"AllowFeatureCreation",
-	"AllowResourceLevel",
-	"AllowResourceTransfer",
-	"AllowDirectUnitControl",
-	"MoveCtrlNotify",
-	"TerraformComplete",
-	"AllowWeaponTargetCheck",
-	"AllowWeaponTarget",
-	-- unsynced
-	"DrawUnit",
-	"DrawFeature",
-	"DrawShield",
-	"DrawProjectile",
-	"RecvSkirmishAIMessage",
-
-	-- COB CallIn  (FIXME?)
-	"CobCallback",
-
-	-- Unsynced CallIns
-	"Update",
-	"DefaultCommand",
-	"DrawGenesis",
-	"DrawWorld",
-	"DrawWorldPreUnit",
-	"DrawWorldShadow",
-	"DrawWorldReflection",
-	"DrawWorldRefraction",
-	"DrawScreenEffects",
-	"DrawScreen",
-	"DrawInMiniMap",
-	"RecvFromSynced",
-
-	-- moved from LuaUI
-	"KeyPress",
-	"KeyRelease",
-	"MousePress",
-	"MouseRelease",
-	"MouseMove",
-	"MouseWheel",
-	"IsAbove",
-	"GetTooltip",
-
-	-- FIXME -- not implemented  (more of these?)
-	"WorldTooltip",
-	"MapDrawCmd",
-	"GameSetup",
-	"DefaultCommand",
-
-	-- Save/Load
-	"Save",
-	"Load",
-}
-
-
 -- initialize the call-in lists
 do
-  for _,listname in ipairs(callInLists) do
+  for _,listname in ipairs(CALLIN_LIST) do
     gadgetHandler[listname .. 'List'] = {}
   end
 end
@@ -543,7 +416,7 @@ local function SafeWrapGadget(gadget)
     end
   end
 
-  for _,ciName in ipairs(callInLists) do
+  for _,ciName in ipairs(CALLIN_LIST) do
     if (gadget[ciName]) then
       gadget[ciName] = SafeWrap(gadget[ciName], ciName)
     end
@@ -589,7 +462,7 @@ function gadgetHandler:InsertGadget(gadget)
   end
 
   ArrayInsert(self.gadgets, true, gadget)
-  for _,listname in ipairs(callInLists) do
+  for _,listname in ipairs(CALLIN_LIST) do
     local func = gadget[listname]
     if (type(func) == 'function') then
       ArrayInsert(self[listname..'List'], func, gadget)
@@ -618,7 +491,7 @@ function gadgetHandler:RemoveGadget(gadget)
   ArrayRemove(self.gadgets, gadget)
   self:RemoveGadgetGlobals(gadget)
   actionHandler.RemoveGadgetActions(gadget)
-  for _,listname in ipairs(callInLists) do
+  for _,listname in ipairs(CALLIN_LIST) do
     ArrayRemove(self[listname..'List'], gadget)
   end
 
@@ -680,7 +553,7 @@ end
 
 
 function gadgetHandler:UpdateCallIns()
-  for _,name in ipairs(callInLists) do
+  for _,name in ipairs(CALLIN_LIST) do
     self:UpdateCallIn(name)
   end
 end
@@ -781,7 +654,7 @@ function gadgetHandler:RaiseGadget(gadget)
     end
   end
   Raise(self.gadgets, true, gadget)
-  for _,listname in ipairs(callInLists) do
+  for _,listname in ipairs(CALLIN_LIST) do
     Raise(self[listname..'List'], gadget[listname], gadget)
   end
 end
@@ -813,7 +686,7 @@ function gadgetHandler:LowerGadget(gadget)
     end
   end
   Lower(self.gadgets, true, gadget)
-  for _,listname in ipairs(callInLists) do
+  for _,listname in ipairs(CALLIN_LIST) do
     Lower(self[listname..'List'], gadget[listname], gadget)
   end
 end
@@ -839,12 +712,11 @@ end
 --
 
 function gadgetHandler:RegisterGlobal(owner, name, value)
-  if ((name == nil)        or
-      (_G[name])           or
-      (self.globals[name]) or
-      (CallInsMap[name])) then
-    return false
-  end
+  if (name == nil) then return false end
+  if (_G[name] ~= nil) then return false end
+  if (self.globals[name] ~= nil) then return false end
+  if (CALLIN_MAP[name] ~= nil) then return false end
+
   _G[name] = value
   self.globals[name] = owner
   return true
