@@ -3,26 +3,25 @@
 #include <algorithm>
 
 #include "PathCache.h"
-
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Log/ILog.h"
 
 #define MAX_CACHE_QUEUE_SIZE 100
 
-CPathCache::CPathCache(int blocksX, int blocksZ):
-blocksX(blocksX),
-blocksZ(blocksZ),
+CPathCache::CPathCache(int blocksX, int blocksZ)
+	: numBlocksX(blocksX)
+	, numBlocksZ(blocksZ)
+	, numBlocks(numBlocksX * numBlocksZ)
 
-numCacheHits(0),
-numCacheMisses(0),
-numHashCollisions(0)
-{
-}
+	, numCacheHits(0)
+	, numCacheMisses(0)
+	, numHashCollisions(0)
+{}
 
 CPathCache::~CPathCache()
 {
 	LOG("[%s(%ix%i)] cache-hits=%i hit-percentage=%.0f%% collisions=%i",
-		__FUNCTION__, blocksX, blocksZ, numCacheHits, GetCacheHitPercentage(), numHashCollisions);
+		__FUNCTION__, numBlocksX, numBlocksZ, numCacheHits, GetCacheHitPercentage(), numHashCollisions);
 
 	for (CachedPathConstIter iter = cachedPaths.begin(); iter != cachedPaths.end(); ++iter)
 		delete (iter->second);
@@ -39,8 +38,8 @@ bool CPathCache::AddPath(
 	if (cacheQue.size() > MAX_CACHE_QUEUE_SIZE)
 		RemoveFrontQueItem();
 
-	const unsigned int hash = GetHash(strtBlock, goalBlock, goalRadius, pathType);
-	const unsigned int cols = numHashCollisions;
+	const boost::uint64_t hash = GetHash(strtBlock, goalBlock, goalRadius, pathType);
+	const boost::uint32_t cols = numHashCollisions;
 	const CachedPathConstIter iter = cachedPaths.find(hash);
 
 	// register any hash collisions
@@ -72,7 +71,7 @@ const CPathCache::CacheItem* CPathCache::GetCachedPath(
 	float goalRadius,
 	int pathType
 ) {
-	const unsigned int hash = GetHash(strtBlock, goalBlock, goalRadius, pathType);
+	const boost::uint64_t hash = GetHash(strtBlock, goalBlock, goalRadius, pathType);
 	const CachedPathConstIter iter = cachedPaths.find(hash);
 
 	if (iter == cachedPaths.end()) {
@@ -109,6 +108,44 @@ void CPathCache::RemoveFrontQueItem()
 	cacheQue.pop_front();
 }
 
+boost::uint64_t CPathCache::GetHash(
+	const int2 strtBlk,
+	const int2 goalBlk,
+	boost::uint32_t goalRadius,
+	boost::int32_t pathType
+) const {
+	#define N numBlocks
+	#define NX numBlocksX
+	#define NZ numBlocksZ
+
+	#if 0
+	// susceptible to collisions for given pathType and goalRadius:
+	//   Hash(sb=< 8,18> gb=<17, 2> ...)==Hash(sb=< 9,18> gb=<15, 2> ...)
+	//   Hash(sb=<11,10> gb=<17, 1> ...)==Hash(sb=<12,10> gb=<15, 1> ...)
+	//   Hash(sb=<12,10> gb=<17, 2> ...)==Hash(sb=<13,10> gb=<15, 2> ...)
+	//   Hash(sb=<13,10> gb=<15, 1> ...)==Hash(sb=<12,10> gb=<17, 1> ...)
+	//   Hash(sb=<13,10> gb=<15, 3> ...)==Hash(sb=<12,10> gb=<17, 3> ...)
+	//   Hash(sb=<12,18> gb=< 6,28> ...)==Hash(sb=<11,18> gb=< 8,28> ...)
+	//
+	const boost::uint32_t index = ((goalBlk.y * NX + goalBlk.x) * NZ + strtBlk.y) * NX;
+	const boost::uint32_t offset = strtBlk.x * (pathType + 1) * std::max(1.0f, goalRadius);
+	return (index + offset);
+	#else
+	// map into linear space, cannot collide unless given non-integer radii
+	const boost::uint64_t index =
+		(strtBlk.y * NX + strtBlk.x) +
+		(goalBlk.y * NX + goalBlk.x) * N;
+	const boost::uint64_t offset =
+		pathType * N*N +
+		goalRadius * N*N*N;
+	return (index + offset);
+	#endif
+
+	#undef NZ
+	#undef NX
+	#undef N
+}
+
 bool CPathCache::HashCollision(
 	const CacheItem* ci,
 	const int2 strtBlk,
@@ -123,7 +160,7 @@ bool CPathCache::HashCollision(
 
 	if (hashColl) {
 		LOG_L(L_DEBUG,
-			"[%s][f=%d][hash=%u] Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)==Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)\n",
+			"[%s][f=%d][hash=%lu] Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)==Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)",
 			__FUNCTION__, gs->frameNum,
 			GetHash(strtBlk, goalBlk, goalRadius, pathType),
 			ci->strtBlock.x, ci->strtBlock.y,

@@ -44,6 +44,13 @@ public:
 private:
 	void RemoveFrontQueItem();
 
+	boost::uint64_t GetHash(
+		const int2 strtBlk,
+		const int2 goalBlk,
+		boost::uint32_t goalRadius,
+		boost::int32_t pathType
+	) const;
+
 	bool HashCollision(
 		const CacheItem* ci,
 		const int2 strtBlk,
@@ -51,17 +58,6 @@ private:
 		float goalRadius,
 		int pathType
 	) const;
-
-	unsigned int GetHash(
-		const int2 strtBlk,
-		const int2 goalBlk,
-		float goalRadius,
-		int pathType
-	) const {
-		const unsigned int index = ((goalBlk.y * blocksX + goalBlk.x) * blocksZ + strtBlk.y) * blocksX;
-		const unsigned int offset = strtBlk.x * (pathType + 1) * std::max(1.0f, goalRadius);
-		return (index + offset);
-	}
 
 	float GetCacheHitPercentage() const {
 		if ((numCacheHits + numCacheMisses) == 0)
@@ -72,21 +68,22 @@ private:
 
 private:
 	struct CacheQue {
-		int timeout;
-		unsigned int hash;
+		boost::int32_t timeout;
+		boost::uint64_t hash;
 	};
 
 	std::list<CacheQue> cacheQue;
-	std::map<unsigned int, CacheItem*> cachedPaths;
+	std::map<boost::uint64_t, CacheItem*> cachedPaths;
 
-	typedef std::map<unsigned int, CacheItem*>::const_iterator CachedPathConstIter;
+	typedef std::map<boost::uint64_t, CacheItem*>::const_iterator CachedPathConstIter;
 
-	int blocksX;
-	int blocksZ;
+	boost::uint32_t numBlocksX;
+	boost::uint32_t numBlocksZ;
+	boost::uint64_t numBlocks;
 
-	unsigned int numCacheHits;
-	unsigned int numCacheMisses;
-	unsigned int numHashCollisions;
+	boost::uint32_t numCacheHits;
+	boost::uint32_t numCacheMisses;
+	boost::uint32_t numHashCollisions;
 };
 
 #endif
