@@ -509,7 +509,7 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 			// where we cannot live, adjust it and explode us now
 			// (if the projectile does not set deleteMe = true, it
 			// will keep hugging the terrain)
-			p->pos.y = belowGround? groundHeight: 0.0f;
+			p->pos.y = groundHeight * belowGround;
 			p->Collision();
 		}
 	}

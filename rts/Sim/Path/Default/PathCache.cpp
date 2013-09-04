@@ -6,13 +6,16 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Log/ILog.h"
 
-#define MAX_CACHE_QUEUE_SIZE 100
+#define MAX_CACHE_QUEUE_SIZE   200
+#define MAX_PATH_LIFETIME_SECS   7
+#define USE_NONCOLLIDABLE_HASH   1
 
 CPathCache::CPathCache(int blocksX, int blocksZ)
 	: numBlocksX(blocksX)
 	, numBlocksZ(blocksZ)
 	, numBlocks(numBlocksX * numBlocksZ)
 
+	, maxCacheSize(0)
 	, numCacheHits(0)
 	, numCacheMisses(0)
 	, numHashCollisions(0)
@@ -20,8 +23,8 @@ CPathCache::CPathCache(int blocksX, int blocksZ)
 
 CPathCache::~CPathCache()
 {
-	LOG("[%s(%ix%i)] cache-hits=%i hit-percentage=%.0f%% collisions=%i",
-		__FUNCTION__, numBlocksX, numBlocksZ, numCacheHits, GetCacheHitPercentage(), numHashCollisions);
+	LOG("[%s(%ux%u)] cacheHits=%u hitPercentage=%.0f%% numHashColls=%u maxCacheSize=%lu",
+		__FUNCTION__, numBlocksX, numBlocksZ, numCacheHits, GetCacheHitPercentage(), numHashCollisions, maxCacheSize);
 
 	for (CachedPathConstIter iter = cachedPaths.begin(); iter != cachedPaths.end(); ++iter)
 		delete (iter->second);
@@ -59,9 +62,10 @@ bool CPathCache::AddPath(
 
 	CacheQue cq;
 	cq.hash = hash;
-	cq.timeout = gs->frameNum + GAME_SPEED * 7;
+	cq.timeout = gs->frameNum + GAME_SPEED * MAX_PATH_LIFETIME_SECS;
 
 	cacheQue.push_back(cq);
+	maxCacheSize = std::max(maxCacheSize, cacheQue.size());
 	return false;
 }
 
@@ -118,7 +122,7 @@ boost::uint64_t CPathCache::GetHash(
 	#define NX numBlocksX
 	#define NZ numBlocksZ
 
-	#if 0
+	#ifndef USE_NONCOLLIDABLE_HASH
 	// susceptible to collisions for given pathType and goalRadius:
 	//   Hash(sb=< 8,18> gb=<17, 2> ...)==Hash(sb=< 9,18> gb=<15, 2> ...)
 	//   Hash(sb=<11,10> gb=<17, 1> ...)==Hash(sb=<12,10> gb=<15, 1> ...)

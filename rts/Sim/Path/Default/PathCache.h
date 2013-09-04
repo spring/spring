@@ -81,6 +81,7 @@ private:
 	boost::uint32_t numBlocksZ;
 	boost::uint64_t numBlocks;
 
+	boost::uint64_t maxCacheSize;
 	boost::uint32_t numCacheHits;
 	boost::uint32_t numCacheMisses;
 	boost::uint32_t numHashCollisions;
