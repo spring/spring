@@ -49,9 +49,9 @@ public:
 	 */
 	IPath::SearchResult GetPath(
 		const MoveDef& moveDef,
-		const float3& startPos,
 		const CPathFinderDef& pfDef,
 		const CSolidObject* owner,
+		const float3& startPos,
 		IPath::Path& path,
 		unsigned int maxNodes,
 		bool testMobile,

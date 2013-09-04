@@ -95,9 +95,9 @@ CPathFinder::~CPathFinder()
 
 IPath::SearchResult CPathFinder::GetPath(
 	const MoveDef& moveDef,
-	const float3& startPos,
 	const CPathFinderDef& pfDef,
 	const CSolidObject* owner,
+	const float3& startPos,
 	IPath::Path& path,
 	unsigned int maxNodes,
 	bool testMobile,
@@ -128,7 +128,7 @@ IPath::SearchResult CPathFinder::GetPath(
 	mStartSquareIdx = startxSqr + startzSqr * gs->mapx;
 
 	// Start up the search.
-	IPath::SearchResult result = InitSearch(moveDef, pfDef, owner, synced);
+	const IPath::SearchResult result = InitSearch(moveDef, pfDef, owner, synced);
 
 	// Respond to the success of the search.
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -148,6 +148,7 @@ IPath::SearchResult CPathFinder::GetPath(
 			LOG_L(L_DEBUG, "Open squares: %u", openSquareBuffer.GetSize());
 		}
 	}
+
 	return result;
 }
 
