@@ -191,7 +191,8 @@ class LuaSyncedRead {
 		static int GetPieceProjectileParams(lua_State* L);
 		static int GetProjectileTarget(lua_State* L);
 		static int GetProjectileType(lua_State* L);
-		static int GetProjectileName(lua_State* L);
+		static int GetProjectileWeaponDefID(lua_State* L);
+		static int GetProjectileName(lua_State* L); // DEPRECATE ME?
 
 		static int GetGroundHeight(lua_State* L);
 		static int GetGroundOrigHeight(lua_State* L);
