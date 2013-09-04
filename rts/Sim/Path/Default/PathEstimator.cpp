@@ -100,7 +100,8 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, const std::s
 
 CPathEstimator::~CPathEstimator()
 {
-	delete pathCache;
+	delete pathCache[0]; pathCache[0] = NULL;
+	delete pathCache[1]; pathCache[1] = NULL;
 }
 
 
@@ -160,7 +161,8 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		loadscreen->SetLoadMessage("PathCosts: written", true);
 	}
 
-	pathCache = new CPathCache(nbrOfBlocksX, nbrOfBlocksZ);
+	pathCache[0] = new CPathCache(nbrOfBlocksX, nbrOfBlocksZ);
+	pathCache[1] = new CPathCache(nbrOfBlocksX, nbrOfBlocksZ);
 }
 
 
@@ -367,7 +369,7 @@ void CPathEstimator::CalculateVertex(
 	// use this thread's "private" CPathFinder instance
 	// (rather than locking pathFinder->GetPath()) if we
 	// are in one
-	result = pathFinders[threadNum]->GetPath(moveDef, startPos, pfDef, NULL, path, MAX_SEARCHED_NODES_PF >> 2, false, true, false, true);
+	result = pathFinders[threadNum]->GetPath(moveDef, pfDef, NULL, startPos, path, MAX_SEARCHED_NODES_PF >> 2, false, true, false, true);
 
 	// store the result
 	if (result == IPath::Ok)
@@ -437,7 +439,8 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
  * Update some obsolete blocks using the FIFO-principle
  */
 void CPathEstimator::Update() {
-	pathCache->Update();
+	pathCache[0]->Update();
+	pathCache[1]->Update();
 
 	static const unsigned int MIN_BLOCKS_TO_UPDATE = std::max(BLOCKS_TO_UPDATE >> 1, 4U);
 	static const unsigned int MAX_BLOCKS_TO_UPDATE = std::min(BLOCKS_TO_UPDATE << 1, MIN_BLOCKS_TO_UPDATE);
@@ -548,8 +551,8 @@ void CPathEstimator::UpdateFull() {
  */
 IPath::SearchResult CPathEstimator::GetPath(
 	const MoveDef& moveDef,
-	float3 start,
 	const CPathFinderDef& peDef,
+	float3 start,
 	IPath::Path& path,
 	unsigned int maxSearchedBlocks,
 	bool synced
@@ -573,26 +576,24 @@ IPath::SearchResult CPathEstimator::GetPath(
 	mStartBlock = startBlock;
 	mStartBlockIdx = startBlock.y * nbrOfBlocksX + startBlock.x;
 
-	if (synced) {
-		const CPathCache::CacheItem* ci = pathCache->GetCachedPath(startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
+	const CPathCache::CacheItem* ci = pathCache[synced]->GetCachedPath(startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
 
-		if (ci != NULL) {
-			// use a cached path if we have one (NOTE: only when in synced context)
-			path = ci->path;
-			return ci->result;
-		}
+	if (ci != NULL) {
+		// use a cached path if we have one
+		path = ci->path;
+		return ci->result;
 	}
 
 	// oterhwise search
-	IPath::SearchResult result = InitSearch(moveDef, peDef, synced);
+	const IPath::SearchResult result = InitSearch(moveDef, peDef, synced);
 
 	// if search successful, generate new path
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 		FinishSearch(moveDef, path);
 
-		if (synced && result == IPath::Ok) {
-			// add succesful paths to the cache (NOTE: only when in synced context)
-			pathCache->AddPath(&path, result, startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
+		if (result == IPath::Ok) {
+			// add succesful paths to the cache
+			pathCache[synced]->AddPath(&path, result, startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
 		}
 
 		if (LOG_IS_ENABLED(L_DEBUG)) {
