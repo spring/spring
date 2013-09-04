@@ -37,7 +37,7 @@
 namespace fastmath {
 	float isqrt_nosse(float) _const;
 	float isqrt_sse(float x) _const;
-	float __ALIGN_ARG__ sqrt_sse(float x) _const;
+	float sqrt_sse(float x) _const;
 	float isqrt_nosse(float x) _const;
 	float isqrt2_nosse(float x) _const;
 	float sqrt(float x) _const;
@@ -61,11 +61,11 @@ namespace fastmath {
 	inline float isqrt_sse(float x)
 	{
 #ifndef DEDICATED_NOSSE
-		__m128 vec = _mm_load_ss(&x);
+		__m128 vec = _mm_set_ss(x);
 		vec = _mm_rsqrt_ss(vec);
-		_mm_store_ss(&x, vec);
-
-		return x;
+		//_mm_store_ss(&x, vec);
+		const float* f = reinterpret_cast<float*>(&vec);
+		return f[0];
 #else
 		return isqrt_nosse(x);
 #endif
@@ -74,16 +74,16 @@ namespace fastmath {
 	/**
 	* @brief Sync-safe. Calculates square root with using SSE instructions.
 	*
-	* Slower than std::sqrtf, faster than streflop
+	* Slower than std::sqrtf, much faster than streflop
 	*/
-	inline float __ALIGN_ARG__ sqrt_sse(float x)
+	inline float sqrt_sse(float x)
 	{
 #ifndef DEDICATED_NOSSE
-		__m128 vec = _mm_load_ss(&x);
+		__m128 vec = _mm_set_ss(x);
 		vec = _mm_sqrt_ss(vec);
-		_mm_store_ss(&x, vec);
-
-		return x;
+		//_mm_store_ss(&x, vec);
+		const float* f = reinterpret_cast<float*>(&vec);
+		return f[0];
 #else
 		return sqrt(x);
 #endif
