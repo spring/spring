@@ -4731,7 +4731,7 @@ int LuaSyncedRead::GetProjectileType(lua_State* L)
 	return 2;
 }
 
-int LuaSyncedRead::GetProjectileWeaponDefID(lua_State* L)
+int LuaSyncedRead::GetProjectileDefID(lua_State* L)
 {
 	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
 
