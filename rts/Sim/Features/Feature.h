@@ -44,7 +44,7 @@ public:
 	 * Negative amount = reclaim
 	 * @return true if reclaimed
 	 */
-	bool AddBuildPower(float amount, CUnit* builder);
+	bool AddBuildPower(CUnit* builder, float amount);
 	void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID);
 	void SetSpeed(const float3& v);
 	void ForcedMove(const float3& newPos);

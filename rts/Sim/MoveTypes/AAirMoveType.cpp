@@ -392,7 +392,7 @@ bool AAirMoveType::MoveToRepairPad() {
 
 				owner->Move(absPadPos + (owner->speed = ZeroVector), false);
 				owner->UpdateMidAndAimPos(); // needed here?
-				owner->AddBuildPower(airBase->unitDef->buildSpeed / GAME_SPEED, airBase);
+				owner->AddBuildPower(airBase, airBase->unitDef->buildSpeed / GAME_SPEED);
 
 				owner->currentFuel += (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime));
 				owner->currentFuel = std::min(owner->unitDef->maxFuel, owner->currentFuel);
