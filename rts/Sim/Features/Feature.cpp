@@ -230,7 +230,7 @@ void CFeature::CalculateTransform()
 }
 
 
-bool CFeature::AddBuildPower(float amount, CUnit* builder)
+bool CFeature::AddBuildPower(CUnit* builder, float amount)
 {
 	const float oldReclaimLeft = reclaimLeft;
 

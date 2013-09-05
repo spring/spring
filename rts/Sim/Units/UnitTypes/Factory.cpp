@@ -243,9 +243,9 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 	const CCommandQueue& queue = commandAI->commandQue;
 
 	if (!queue.empty() && (queue.front().GetID() == CMD_WAIT)) {
-		buildee->AddBuildPower(0, this);
+		buildee->AddBuildPower(this, 0.0f);
 	} else {
-		if (buildee->AddBuildPower(buildSpeed, this)) {
+		if (buildee->AddBuildPower(this, buildSpeed)) {
 			CreateNanoParticle();
 		}
 	}

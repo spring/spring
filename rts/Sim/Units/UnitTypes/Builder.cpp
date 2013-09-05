@@ -183,7 +183,7 @@ void CBuilder::Update()
 						terraformScale = std::min(terraformScale, 1.0f);
 
 						// prevent building from timing out while terraforming for it
-						curBuild->AddBuildPower(0.0f, this);
+						curBuild->AddBuildPower(this, 0.0f);
 
 						for (int z = tz1; z <= tz2; z++) {
 							for (int x = tx1; x <= tx2; x++) {
@@ -295,7 +295,7 @@ void CBuilder::Update()
 			if (fCommand.GetID() == CMD_WAIT) {
 				if (curBuild->buildProgress < 1.0f) {
 					// prevent buildee from decaying (we cannot call StopBuild here)
-					curBuild->AddBuildPower(0.0f, this);
+					curBuild->AddBuildPower(this, 0.0f);
 				} else {
 					// stop repairing (FIXME: should be much cleaner to let BuilderCAI
 					// call this instead when a wait command is given?)
@@ -335,7 +335,7 @@ void CBuilder::Update()
 							adjBuildSpeed = buildSpeed; // build
 						}
 
-						if (adjBuildSpeed > 0.0f && curBuild->AddBuildPower(adjBuildSpeed, this)) {
+						if (adjBuildSpeed > 0.0f && curBuild->AddBuildPower(this, adjBuildSpeed)) {
 							CreateNanoParticle(curBuild->midPos, curBuild->radius * 0.5f, false);
 						} else {
 							// check if buildee finished construction
@@ -353,7 +353,7 @@ void CBuilder::Update()
 			} else {
 				ScriptDecloak(true);
 
-				if (curReclaim->AddBuildPower(-reclaimSpeed, this)) {
+				if (curReclaim->AddBuildPower(this, -reclaimSpeed)) {
 					CreateNanoParticle(curReclaim->midPos, curReclaim->radius * 0.7f, true, (reclaimingUnit && curReclaim->team != team));
 				}
 			}
@@ -368,7 +368,7 @@ void CBuilder::Update()
 					if ((modInfo.reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
 						// This corpse has been reclaimed a little, need to restore the resources
 						// before we can let the player resurrect it.
-						curResurrect->AddBuildPower(repairSpeed, this);
+						curResurrect->AddBuildPower(this, repairSpeed);
 					} else {
 						// Corpse has been restored, begin resurrection
 						if (UseEnergy(ud->energy * resurrectSpeed / ud->buildTime * modInfo.resurrectEnergyCostFactor)) {

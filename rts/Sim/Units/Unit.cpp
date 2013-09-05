@@ -1757,7 +1757,7 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 }
 
 
-bool CUnit::AddBuildPower(float amount, CUnit* builder)
+bool CUnit::AddBuildPower(CUnit* builder, float amount)
 {
 	// stop decaying on building AND reclaim
 	lastNanoAdd = gs->frameNum;
