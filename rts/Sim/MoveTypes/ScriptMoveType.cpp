@@ -80,11 +80,6 @@ CScriptMoveType::~CScriptMoveType()
 	owner->UnBlock();
 }
 
-#if defined(USE_GML) && defined(__GNUC__) && (__GNUC__ == 4)
-// This is supposed to fix some GCC crashbug related to threading
-// The MOVAPS SSE instruction is otherwise getting misaligned data
-__attribute__ ((force_align_arg_pointer))
-#endif
 inline void CScriptMoveType::CalcDirections()
 {
 	CMatrix44f matrix;

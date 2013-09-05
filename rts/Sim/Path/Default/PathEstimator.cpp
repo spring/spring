@@ -178,6 +178,7 @@ void CPathEstimator::InitBlocks() {
 }
 
 
+__FORCE_ALIGN_STACK__
 void CPathEstimator::CalcOffsetsAndPathCosts(unsigned int threadNum) {
 	// reset FPU state for synced computations
 	streflop::streflop_init<streflop::Simple>();

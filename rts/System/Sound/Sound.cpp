@@ -265,6 +265,7 @@ void CSound::Iconified(bool state)
 	appIsIconified = state;
 }
 
+__FORCE_ALIGN_STACK__
 void CSound::StartThread(int maxSounds)
 {
 	{

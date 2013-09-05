@@ -312,6 +312,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 	streflop::streflop_init<streflop::Simple>();
 }
 
+__FORCE_ALIGN_STACK__
 void QTPFS::PathManager::InitNodeLayersThread(
 	unsigned int threadNum,
 	unsigned int numThreads,
@@ -380,6 +381,7 @@ void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
 	streflop::streflop_init<streflop::Simple>();
 }
 
+__FORCE_ALIGN_STACK__
 void QTPFS::PathManager::UpdateNodeLayersThread(
 	unsigned int threadNum,
 	unsigned int numThreads,
@@ -674,6 +676,7 @@ void QTPFS::PathManager::UpdateFull() {
 	#endif
 }
 
+__FORCE_ALIGN_STACK__
 void QTPFS::PathManager::ThreadUpdate() {
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	while (!nodeLayers.empty()) {

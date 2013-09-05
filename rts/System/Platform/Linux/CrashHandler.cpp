@@ -333,11 +333,13 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 }
 
 
+__FORCE_ALIGN_STACK__
 static void ForcedExitAfterFiveSecs() {
 	boost::this_thread::sleep(boost::posix_time::seconds(5));
 	exit(-1);
 }
 
+__FORCE_ALIGN_STACK__
 static void ForcedExitAfterTenSecs() {
 	boost::this_thread::sleep(boost::posix_time::seconds(10));
 	std::_Exit(-1);

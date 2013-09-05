@@ -147,11 +147,7 @@ static bool DoTask(std::shared_ptr<ITaskGroup> tg)
 }
 
 
-#if defined(__MINGW32__) && defined(__GNUC__) && (__GNUC__ == 4)
-//WORKAROUND (2013) a pthread stack alignment problem, else SSE code would crash
-// more info: http://www.peterstock.co.uk/games/mingw_sse/
-__attribute__ ((force_align_arg_pointer))
-#endif
+__FORCE_ALIGN_STACK__
 static void WorkerLoop(int id)
 {
 	SetThreadNum(id);

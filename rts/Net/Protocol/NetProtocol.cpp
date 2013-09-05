@@ -141,6 +141,7 @@ void CNetProtocol::Send(const netcode::RawPacket* pkt)
 	Send(ptr);
 }
 
+__FORCE_ALIGN_STACK__
 void CNetProtocol::UpdateLoop()
 {
 	Threading::SetThreadName("heartbeat");

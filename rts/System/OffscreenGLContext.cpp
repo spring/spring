@@ -287,6 +287,7 @@ void COffscreenGLThread::Join()
 }
 
 
+__FORCE_ALIGN_STACK__
 void COffscreenGLThread::WrapFunc(boost::function<void()> f)
 {
 	glOffscreenCtx.WorkerThreadPost();

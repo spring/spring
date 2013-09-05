@@ -287,11 +287,6 @@ void LocalModelPiece::SetLODCount(unsigned int count)
 }
 
 
-#if defined(USE_GML) && defined(__GNUC__) && (__GNUC__ == 4)
-// This is supposed to fix some GCC crashbug related to threading
-// The MOVAPS SSE instruction is otherwise getting misaligned data
-__attribute__ ((force_align_arg_pointer))
-#endif
 float3 LocalModelPiece::GetAbsolutePos() const
 {
 	// note: actually OBJECT_TO_WORLD but transform is the same
