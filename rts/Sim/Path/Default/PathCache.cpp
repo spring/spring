@@ -65,7 +65,7 @@ bool CPathCache::AddPath(
 	cq.timeout = gs->frameNum + GAME_SPEED * MAX_PATH_LIFETIME_SECS;
 
 	cacheQue.push_back(cq);
-	maxCacheSize = std::max(maxCacheSize, cacheQue.size());
+	maxCacheSize = std::max<boost::uint64_t>(maxCacheSize, cacheQue.size());
 	return false;
 }
 
