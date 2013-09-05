@@ -23,10 +23,10 @@ CMatrix44f::CMatrix44f(const CMatrix44f& mat)
 CMatrix44f::CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z)
 {
 	// column-major!
-	m[0]  = x.x;   m[4]  = y.x;   m[8]  = z.x;   m[12] = pos.x;
-	m[1]  = x.y;   m[5]  = y.y;   m[9]  = z.y;   m[13] = pos.y;
-	m[2]  = x.z;   m[6]  = y.z;   m[10] = z.z;   m[14] = pos.z;
-	m[3]  = 0.0f;  m[7]  = 0.0f;  m[11] = 0.0f;  m[15] = 1.0f;
+	m[0] = x.x;   m[4] = y.x;   m[ 8] = z.x;   m[12] = pos.x;
+	m[1] = x.y;   m[5] = y.y;   m[ 9] = z.y;   m[13] = pos.y;
+	m[2] = x.z;   m[6] = y.z;   m[10] = z.z;   m[14] = pos.z;
+	m[3] = 0.0f;  m[7] = 0.0f;  m[11] = 0.0f;  m[15] = 1.0f;
 }
 
 CMatrix44f::CMatrix44f(const float rotX, const float rotY, const float rotZ)
@@ -269,6 +269,7 @@ void CMatrix44f::SetPos(const float3& pos)
 }
 
 
+__FORCE_ALIGN_STACK__
 static inline void MatrixMatrixMultiplySSE(const CMatrix44f& m1, const CMatrix44f& m2, CMatrix44f* mout)
 {
 	//SCOPED_TIMER("CMatrix44f::MM-Mul");
@@ -349,7 +350,7 @@ CMatrix44f& CMatrix44f::operator<<= (const CMatrix44f& m2)
 	return (*this);
 }
 
-
+__FORCE_ALIGN_STACK__
 float3 CMatrix44f::operator* (const float3& v) const
 {
 	//SCOPED_TIMER("CMatrix44f::Mul");
@@ -369,7 +370,7 @@ float3 CMatrix44f::operator* (const float3& v) const
 	return float3(fout[0], fout[1], fout[2]);
 }
 
-
+__FORCE_ALIGN_STACK__
 float4 CMatrix44f::operator* (const float4& v) const
 {
 	__m128 out;
@@ -385,21 +386,23 @@ float4 CMatrix44f::operator* (const float4& v) const
 
 void CMatrix44f::SetUpVector(const float3& up)
 {
-	float3 zdir(m[8],m[9],m[10]);
+	float3 zdir(m[8], m[9], m[10]);
 	float3 xdir(zdir.cross(up));
+
 	xdir.Normalize();
-	zdir=up.cross(xdir);
-	m[0]=xdir.x;
-	m[1]=xdir.y;
-	m[2]=xdir.z;
+	zdir = up.cross(xdir);
 
-	m[4]=up.x;
-	m[5]=up.y;
-	m[6]=up.z;
+	m[ 0] = xdir.x;
+	m[ 1] = xdir.y;
+	m[ 2] = xdir.z;
 
-	m[8]=zdir.x;
-	m[9]=zdir.y;
-	m[10]=zdir.z;
+	m[ 4] = up.x;
+	m[ 5] = up.y;
+	m[ 6] = up.z;
+
+	m[ 8] = zdir.x;
+	m[ 9] = zdir.y;
+	m[10] = zdir.z;
 }
 
 

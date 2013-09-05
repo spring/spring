@@ -83,6 +83,7 @@ namespace Watchdog
 	}
 
 
+	__FORCE_ALIGN_STACK__
 	static void HangDetectorLoop()
 	{
 		Threading::SetThreadName("watchdog");

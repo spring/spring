@@ -58,6 +58,7 @@ namespace fastmath {
 	* This is much slower than isqrt_nosse (extremely slow on AMDs) and
 	* additionally gives different results on Intel and AMD processors.
 	*/
+	__FORCE_ALIGN_STACK__
 	inline float isqrt_sse(float x)
 	{
 #ifndef DEDICATED_NOSSE
@@ -74,6 +75,7 @@ namespace fastmath {
 	*
 	* Slower than std::sqrtf, much faster than streflop
 	*/
+	__FORCE_ALIGN_STACK__
 	inline float sqrt_sse(float x)
 	{
 #ifndef DEDICATED_NOSSE

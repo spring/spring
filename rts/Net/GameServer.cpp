@@ -2376,6 +2376,7 @@ std::string CGameServer::SpeedControlToString(int speedCtrl) {
 	return desc;
 }
 
+__FORCE_ALIGN_STACK__
 void CGameServer::UpdateLoop()
 {
 	try {

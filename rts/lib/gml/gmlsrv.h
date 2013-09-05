@@ -358,6 +358,7 @@ public:
 		++ClientsReady;	
 	}
 
+	__FORCE_ALIGN_STACK__
 	void gmlClient() {
 		long thr = ++threadcnt;
 		set_threadnum(thr + 2);
@@ -451,6 +452,7 @@ public:
 		auxworker=NULL;
 	}
 
+	__FORCE_ALIGN_STACK__
 	void gmlClientAux() {
 		Threading::SetThreadName("sim");
 		Watchdog::RegisterThread(WDT_SIM, true);

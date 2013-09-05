@@ -55,6 +55,7 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 
 volatile bool shutdownSucceeded = false;
 
+__FORCE_ALIGN_STACK__
 void ForcedExit(const std::string& msg, const std::string& caption, unsigned int flags) {
 
 	for (unsigned int n = 0; !shutdownSucceeded && (n < 10); ++n) {
