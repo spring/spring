@@ -39,8 +39,6 @@ bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CSolidObject* 
 
 	if (o->IsInVoid())
 		return hit;
-	if (v->IgnoreHits())
-		return hit;
 
 	// test *only* for ray intersections with the piece tree
 	// (whether or not the unit's regular volume is disabled)
@@ -54,15 +52,14 @@ bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CSolidObject* 
 	//   (prevented by FeatureHandler)
 	if (v->DefaultToPieceTree())
 		return (CCollisionHandler::IntersectPieceTree(static_cast<const CUnit*>(o), p0, p1, cq));
+	if (v->IgnoreHits())
+		return hit;
 
-	if (forceTrace)
-		return (CCollisionHandler::Intersect(v, o, p0, p1, cq));
-
-	switch (int(v->UseContHitTest())) {
-		// Collision() does not need p1
-		case CollisionVolume::COLVOL_HITTEST_DISC: { hit = CCollisionHandler::Collision(v, o, p0    , cq); } break;
-		case CollisionVolume::COLVOL_HITTEST_CONT: { hit = CCollisionHandler::Intersect(v, o, p0, p1, cq); } break;
-		default: assert(false);
+	if (forceTrace || v->UseContHitTest()) {
+		hit = CCollisionHandler::Intersect(v, o, p0, p1, cq);
+	} else {
+		// Collision() does not need p1 (no ray, no ray-endpoint)
+		hit = CCollisionHandler::Collision(v, o, p0,     cq);
 	}
 
 	return hit;
