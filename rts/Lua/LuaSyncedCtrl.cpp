@@ -2030,68 +2030,29 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 {
-	const int argc = lua_gettop(L);
-
-	// before 83 this function had additional arguments (that affect all units with the same unitdef)
-	// those arguments were removed, still the syntax is still supported. Only the values of the additional
-	// arguments are ignored!
-	if ((argc != 3) && (argc != 11) && (argc != 14)) {
-		luaL_error(L, "Incorrect arguments to SetUnitPieceCollisionVolumeData()");
-	}
-
-	// 1st argument: unitid
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 
 	if (unit == NULL)
 		return 0;
 
-	LocalModel* localModel = unit->localModel;
-
-	// 2nd argument: piece index
-	const unsigned int  pieceIndex = luaL_checkint(L, 2);
+	const LocalModel* localModel = unit->localModel;
+	const unsigned int pieceIndex = luaL_checkint(L, 2);
 
 	if (pieceIndex >= localModel->pieces.size())
 		luaL_argerror(L, 2, "invalid piece index");
 
 	LocalModelPiece* lmp = localModel->pieces[pieceIndex];
+	CollisionVolume* vol = lmp->GetCollisionVolume();
 
-	// 3rd/5th argument: enable/disable colvol
-	bool enable = lua_toboolean(L, 3);
-	int arg = 4;
+	const float3 scales(luaL_checkfloat(L, 4), luaL_checkfloat(L, 5), luaL_checkfloat(L, 6));
+	const float3 offset(luaL_checkfloat(L, 7), luaL_checkfloat(L, 8), luaL_checkfloat(L, 9));
 
-	if (argc == 14) {
-		// old syntax had 3 additional arguments that were dropped now
-		// so skip 3rd, 4th & 6th argument
-		enable = lua_toboolean(L, 5);
-		arg = 7;
-	}
-	if (!enable) {
-		lmp->GetCollisionVolume()->SetIgnoreHits(true);
-		return 0;
-	}
-
-	// n-th arguments: colvol data
-	if ((argc != 11) && (argc != 14)) {
-		luaL_error(L, "Incorrect arguments to %s()", __FUNCTION__);
-	}
-
-	const float xs  = luaL_checkfloat(L, arg++);
-	const float ys  = luaL_checkfloat(L, arg++);
-	const float zs  = luaL_checkfloat(L, arg++);
-	const float xo  = luaL_checkfloat(L, arg++);
-	const float yo  = luaL_checkfloat(L, arg++);
-	const float zo  = luaL_checkfloat(L, arg++);
-	const unsigned int vType = luaL_checkint(L, arg++);
-//	const unsigned int tType = luaL_checkint(L, arg++);
-	const unsigned int pAxis = luaL_checkint(L, arg++);
-
-	const float3 scales(xs, ys, zs);
-	const float3 offset(xo, yo, zo);
+	const unsigned int vType = luaL_optint(L, 10, vol->GetVolumeType());
+	const unsigned int pAxis = luaL_optint(L, 11, vol->GetPrimaryAxis());
 
 	// piece volumes are not allowed to use discrete hit-testing
-	lmp->GetCollisionVolume()->InitShape(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
-	lmp->GetCollisionVolume()->SetIgnoreHits(false);
-
+	vol->InitShape(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
+	vol->SetIgnoreHits(!luaL_checkboolean(L, 3));
 	return 0;
 }
 
