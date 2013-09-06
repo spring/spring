@@ -151,10 +151,15 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 
 	#if (SMF_WATER_ABSORPTION == 1)
 	{
-		float waterHeightAlpha = abs(vertexWorldPos.y) * SMF_SHALLOW_WATER_DEPTH_INV;
-		float waterShadeDecay  = 0.2 + (waterHeightAlpha * 0.1);
+		float waterShadeAlpha  = abs(vertexWorldPos.y) * SMF_SHALLOW_WATER_DEPTH_INV;
+		float waterShadeDecay  = 0.2 + (waterShadeAlpha * 0.1);
 		float vertexStepHeight = min(1023.0, -floor(vertexWorldPos.y));
 		float waterLightInt    = min((groundLightInt + 0.2) * 2.0, 1.0);
+
+		// vertex below shallow water depth --> alpha=1
+		// vertex above shallow water depth --> alpha=waterShadeAlpha
+		//
+		waterShadeAlpha = min(1.0, waterShadeAlpha + float(vertexWorldPos.y <= -SMF_SHALLOW_WATER_DEPTH));
 
 		waterShadeInt.rgb = waterBaseColor.rgb - (waterAbsorbColor.rgb * vertexStepHeight);
 		waterShadeInt.rgb = max(waterMinColor.rgb, waterShadeInt.rgb);
@@ -168,11 +173,10 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 		// make shadowed areas darker over deeper water
 		waterShadeInt.rgb -= (waterShadeInt.rgb * waterShadeDecay * (1.0 - groundShadowCoeff));
 
-		// "shallow" water, interpolate between groundShadeInt
-		// and waterShadeInt (both are already cosine-weighted)
-		if (vertexWorldPos.y > -SMF_SHALLOW_WATER_DEPTH) {
-			waterShadeInt.rgb = mix(groundShadeInt.rgb, waterShadeInt.rgb, waterHeightAlpha);
-		}
+		// if depth is greater than _SHALLOW_ depth, select waterShadeInt
+		// otherwise interpolate between groundShadeInt and waterShadeInt
+		// (both are already cosine-weighted)
+		waterShadeInt.rgb = mix(groundShadeInt.rgb, waterShadeInt.rgb, waterShadeAlpha);
 	}
 
 	return mix(groundShadeInt, waterShadeInt, float(vertexWorldPos.y < 0.0));
