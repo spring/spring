@@ -120,9 +120,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	lua_pushliteral(L, "waterCausticTextures");
 	lua_newtable(L);
 	for (int i = 0; i < (int)causticTexs.size(); i++) {
-		lua_pushnumber(L, i + 1);
 		lua_pushsstring(L, causticTexs[i]);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, i + 1);
 	}
 	lua_rawset(L, -3);
 
@@ -192,9 +191,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 			lua_pushsstring(L, typeList[i]);
 			lua_pushnumber(L, i);
 			lua_rawset(L, -3);
-			lua_pushnumber(L, i);
 			lua_pushsstring(L, typeList[i]);
-			lua_rawset(L, -3);
+			lua_rawseti(L, -2, i);
 		}
 	}
 	lua_rawset(L, -3);

@@ -243,9 +243,8 @@ static void PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& c
 	// push the params list
 	lua_newtable(L);
 	for (int p = 0; p < (int)cmd.params.size(); p++) {
-		lua_pushnumber(L, p + 1);
 		lua_pushnumber(L, cmd.params[p]);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, p + 1);
 	}
 
 	// push the options table
@@ -267,7 +266,7 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 		return true; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 9);
+	luaL_checkstack(L, 9, __FUNCTION__);
 	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
@@ -299,7 +298,7 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 		return true; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 10);
+	luaL_checkstack(L, 10, __FUNCTION__);
 	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
@@ -331,7 +330,7 @@ bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
 		return true; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 9);
+	luaL_checkstack(L, 9, __FUNCTION__);
 	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
@@ -370,7 +369,7 @@ bool CLuaRules::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 		return true; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 7);
+	luaL_checkstack(L, 7, __FUNCTION__);
 	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
@@ -405,7 +404,7 @@ bool CLuaRules::AllowUnitBuildStep(const CUnit* builder,
 		return true; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 7);
+	luaL_checkstack(L, 7, __FUNCTION__);
 	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
@@ -440,7 +439,7 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 		return true; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 7);
+	luaL_checkstack(L, 7, __FUNCTION__);
 	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
@@ -475,7 +474,7 @@ bool CLuaRules::AllowFeatureBuildStep(const CUnit* builder,
 		return true; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 7);
+	luaL_checkstack(L, 7, __FUNCTION__);
 	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
@@ -509,7 +508,7 @@ bool CLuaRules::AllowResourceLevel(int teamID, const string& type, float level)
 		return true; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
@@ -542,7 +541,7 @@ bool CLuaRules::AllowResourceTransfer(int oldTeam, int newTeam,
 		return true; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 6);
+	luaL_checkstack(L, 6, __FUNCTION__);
 	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
@@ -575,7 +574,7 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 		return true; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 6);
+	luaL_checkstack(L, 6, __FUNCTION__);
 	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
@@ -608,7 +607,7 @@ bool CLuaRules::AllowStartPosition(int playerID, unsigned char readyState, const
 		return true; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 13);
+	luaL_checkstack(L, 13, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
 
@@ -647,7 +646,7 @@ bool CLuaRules::MoveCtrlNotify(const CUnit* unit, int data)
 		return false; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 6);
+	luaL_checkstack(L, 6, __FUNCTION__);
 	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return false; // the call is not defined
@@ -682,7 +681,7 @@ bool CLuaRules::TerraformComplete(const CUnit* unit, const CUnit* build)
 		return false; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 8);
+	luaL_checkstack(L, 8, __FUNCTION__);
 	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return false; // the call is not defined
@@ -754,6 +753,7 @@ bool CLuaRules::UnitPreDamaged(
 	lua_pushnumber(L, unit->team);
 	lua_pushnumber(L, damage);
 	lua_pushboolean(L, paralyzer);
+	//FIXME pass impulse too?
 
 	if (GetHandleFullRead(L)) {
 		lua_pushnumber(L, weaponDefID); inArgCount += 1;
@@ -806,7 +806,7 @@ bool CLuaRules::FeaturePreDamaged(
 		return false;
 
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 9 + 4);
+	luaL_checkstack(L, 2 + 9 + 2, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
@@ -866,7 +866,7 @@ bool CLuaRules::ShieldPreDamaged(
 		return false;
 
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 5 + 3);
+	luaL_checkstack(L, 2 + 5 + 1, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
@@ -904,7 +904,7 @@ int CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int atta
 		return -1;
 
 	LUA_CALL_IN_CHECK(L, -1);
-	lua_checkstack(L, 3 + 1);
+	luaL_checkstack(L, 2 + 3 + 1, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
@@ -943,7 +943,7 @@ bool CLuaRules::AllowWeaponTarget(
 		return ret;
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 5 + 2);
+	luaL_checkstack(L, 2 + 5 + 2, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
@@ -983,7 +983,7 @@ bool CLuaRules::AllowWeaponInterceptTarget(
 		return ret;
 
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 3 + 1);
+	luaL_checkstack(L, 2 + 3 + 1, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
@@ -1013,7 +1013,7 @@ bool CLuaRules::DrawUnit(const CUnit* unit)
 		return false;
 
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
 
@@ -1049,7 +1049,7 @@ bool CLuaRules::DrawFeature(const CFeature* feature)
 		return false;
 
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
 
@@ -1085,7 +1085,7 @@ bool CLuaRules::DrawShield(const CUnit* unit, const CWeapon* weapon)
 		return false;
 
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
 
@@ -1124,7 +1124,7 @@ bool CLuaRules::DrawProjectile(const CProjectile* projectile)
 		return false;
 
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
 
@@ -1190,7 +1190,7 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 
 	const int top = lua_gettop(L);
 
-	if (!lua_checkstack(L, 1 + 3 + argsCount)) {
+	if (!luaL_checkstack(L, 1 + 3 + argsCount, __FUNCTION__);)) {
 		LOG_L(L_WARNING, "CLuaRules::Cob2Lua() lua_checkstack() error: %s",
 				name.GetString().c_str());
 		args[0] = 0; // failure

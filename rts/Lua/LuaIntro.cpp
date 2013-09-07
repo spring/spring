@@ -404,7 +404,7 @@ bool CLuaIntro::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 void CLuaIntro::Shutdown()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("Shutdown");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return;
@@ -418,7 +418,7 @@ void CLuaIntro::Shutdown()
 void CLuaIntro::DrawLoadScreen()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawLoadScreen");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		//LuaOpenGL::DisableCommon(LuaOpenGL::DRAW_SCREEN);
@@ -439,7 +439,7 @@ void CLuaIntro::DrawLoadScreen()
 void CLuaIntro::LoadProgress(const std::string& msg, const bool replace_lastline)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("LoadProgress");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return;

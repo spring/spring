@@ -603,14 +603,13 @@ int LuaShaders::GetActiveUniforms(lua_State* L)
 		GLchar name[1024];
 		glGetActiveUniform(progName, i, sizeof(name), &length, &size, &type, name);
 
-		lua_pushnumber(L, i + 1);
 		lua_newtable(L); {
 			HSTR_PUSH_STRING(L, "name",   name);
 			HSTR_PUSH_STRING(L, "type",   UniformTypeString(type));
 			HSTR_PUSH_NUMBER(L, "length", length);
 			HSTR_PUSH_NUMBER(L, "size",   size);
 		}
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, i + 1);
 	}
 
 	return 1;
