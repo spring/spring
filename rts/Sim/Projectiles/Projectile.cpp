@@ -142,13 +142,14 @@ void CProjectile::Init(const float3& offset, CUnit* owner)
 
 void CProjectile::Update()
 {
-	if (!luaMoveCtrl) {
-		speed.y += mygravity;
-		pos += speed;
-		// projectiles always point directly along their speed-vector
-		dir = speed;
-		dir = dir.SafeNormalize();
-	}
+	if (luaMoveCtrl)
+		return;
+
+	speed.y += mygravity;
+	pos += speed;
+	// projectiles always point directly along their speed-vector
+	dir = speed;
+	dir = dir.SafeNormalize();
 }
 
 

@@ -127,8 +127,11 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	for (size_t unitDefID = 1; unitDefID < unitDefHandler->unitDefs.size(); unitDefID++) {
 		UnitDef* ud = unitDefHandler->unitDefs[unitDefID];
 
-		for (std::vector<std::string>::const_iterator it = ud->modelCEGTags.begin(); it != ud->modelCEGTags.end(); ++it) {
-			ud->sfxExplGens.push_back(explGenHandler->LoadGenerator(*it));
+		for (unsigned int n = 0; n < ud->modelCEGTags.size(); n++) {
+			ud->SetModelExplosionGenerator(n, explGenHandler->LoadGenerator(ud->modelCEGTags[n]));
+		}
+		for (unsigned int n = 0; n < ud->pieceCEGTags.size(); n++) {
+			ud->SetPieceExplosionGenerator(n, explGenHandler->LoadGenerator("custom:" + ud->pieceCEGTags[n]));
 		}
 	}
 

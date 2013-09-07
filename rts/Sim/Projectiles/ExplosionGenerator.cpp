@@ -136,10 +136,13 @@ creg::Class* ClassAliasList::GetClass(const string& name)
 		}
 		n = i->second;
 	}
+
 	creg::Class* cls = creg::System::GetClass(n);
-	if (!cls) {
-		throw content_error("Unknown class: " + name);
+
+	if (cls == NULL) {
+		LOG_L(L_WARNING, "[%s] name \"%s\" does not match any class", __FUNCTION__, name.c_str());
 	}
+
 	return cls;
 }
 
@@ -215,7 +218,7 @@ void CExplosionGeneratorHandler::ParseExplosionTables() {
 IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag)
 {
 	string prefix = tag;
-	string postfix = "";
+	string postfix;
 	string::size_type seppos = tag.find(':');
 
 	if (seppos != string::npos) {
@@ -227,6 +230,9 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 
 	creg::Class* cls = generatorClasses.GetClass(prefix);
 
+	if (cls == NULL)
+		return NULL;
+
 	if (!cls->IsSubclassOf(IExplosionGenerator::StaticClass())) {
 		throw content_error(prefix + " is not a subclass of IExplosionGenerator");
 	}
@@ -237,7 +243,7 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 	assert(gCEG != explGen);
 	assert(gCEG->GetGeneratorID() == 0);
 
-	if (seppos != string::npos) {
+	if (!postfix.empty()) {
 		explGen->Load(this, postfix);
 	}
 
