@@ -738,7 +738,7 @@ bool CLuaRules::UnitPreDamaged(
 		return false;
 
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 9 + 4);
+	luaL_checkstack(L, 2 + 2 + 10, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
