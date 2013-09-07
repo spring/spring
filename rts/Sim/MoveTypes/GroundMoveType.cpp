@@ -2076,18 +2076,17 @@ const float3& CGroundMoveType::GetGroundNormal(const float3& p) const
 
 float CGroundMoveType::GetGroundHeight(const float3& p) const
 {
-	float h = 0.0f;
+	// in [minHeight, maxHeight]
+	const float gh = ground->GetHeightReal(p.x, p.z);
+	const float wh = -owner->unitDef->waterline * (gh <= 0.0f);
 
 	if (owner->unitDef->floatOnWater) {
-		// in [0, maxHeight]
-		h += ground->GetHeightAboveWater(p.x, p.z);
-		h -= (owner->unitDef->waterline * (h <= 0.0f));
-	} else {
-		// in [minHeight, maxHeight]
-		h = ground->GetHeightReal(p.x, p.z);
+		// in [-waterline, maxHeight], note that waterline
+		// can be much deeper than ground in shallow water
+		return (std::max(gh, wh));
 	}
 
-	return h;
+	return gh;
 }
 
 void CGroundMoveType::AdjustPosToWaterLine()
