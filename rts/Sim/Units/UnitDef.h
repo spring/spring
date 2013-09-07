@@ -72,10 +72,21 @@ public:
 	bool HasBomberWeapon() const;
 	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
 
-public:
-	std::string humanName;
-	std::string decoyName;
+	void SetModelExplosionGenerator(unsigned int idx, IExplosionGenerator* eg) { modelExplGens[idx] = eg; }
+	void SetPieceExplosionGenerator(unsigned int idx, IExplosionGenerator* eg) { pieceExplGens[idx] = eg; }
 
+	IExplosionGenerator* GetModelExplosionGenerator(unsigned int idx) const {
+		if (modelExplGens.empty())
+			return NULL;
+		return (modelExplGens[idx % modelExplGens.size()]);
+	}
+	IExplosionGenerator* GetPieceExplosionGenerator(unsigned int idx) const {
+		if (pieceExplGens.empty())
+			return NULL;
+		return (pieceExplGens[idx % pieceExplGens.size()]);
+	}
+
+public:
 	int cobID;              ///< associated with the COB \<GET COB_ID unitID\> call
 
 	const UnitDef* decoyDef;
@@ -170,6 +181,8 @@ public:
 	float  flankingBonusMin; ///< damage factor for the most protected direction
 	float  flankingBonusMobilityAdd; ///< how much the ability of the flanking bonus direction to move builds up each frame
 
+	std::string humanName;
+	std::string decoyName;
 	std::string scriptName;     ///< the name of the unit's script, e.g. "armjeth.cob"
 	std::string tooltip;
 	std::string wreckName;
@@ -177,12 +190,24 @@ public:
 	std::string buildPicName;
 
 	std::vector<UnitDefWeapon> weapons;
+
+	///< The unrotated yardmap for buildings
+	///< (only non-mobile ground units can have these)
+	std::vector<YardMapStatus> yardmap;
+
+	std::vector<std::string> modelCEGTags;
+	std::vector<std::string> pieceCEGTags;
+
+	// TODO: privatize
+	std::vector<IExplosionGenerator*> modelExplGens;
+	std::vector<IExplosionGenerator*> pieceExplGens;
+
+	std::map<int, std::string> buildOptions;
+
 	const WeaponDef* shieldWeaponDef;
 	const WeaponDef* stockpileWeaponDef;
 	float maxWeaponRange;
 	float maxCoverage;
-
-	std::map<int, std::string> buildOptions;
 
 	const WeaponDef* deathExpWeaponDef;
 	const WeaponDef* selfdExpWeaponDef;
@@ -253,10 +278,6 @@ public:
 	float maxElevator;
 	float maxRudder;
 	float crashDrag;
-
-	///< The unrotated yardmap for buildings
-	///< (only non-mobile ground units can have these)
-	std::vector<YardMapStatus> yardmap;
 
 	float loadingRadius;							///< for transports
 	float unloadSpread;
@@ -330,11 +351,7 @@ public:
 	float refuelTime;								///< time to fully refuel unit
 	float minAirBasePower;							///< min build power for airbases that this aircraft can land on
 
-	std::vector<std::string> pieceCEGTags;
-	std::vector<std::string> modelCEGTags;
-	std::vector<IExplosionGenerator*> sfxExplGens;	///< list of explosion generators for use in scripts
-
-	int maxThisUnit;								///< number of units of this type allowed simultaneously in the game
+	int maxThisUnit;                                ///< number of units of this type allowed simultaneously in the game
 
 private:
 	void ParseWeaponsTable(const LuaTable& weaponsTable);

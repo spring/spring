@@ -659,6 +659,10 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		pieceCEGTags.push_back(pieceCEGTable.GetString(pieceCEGKeys[n], ""));
 	}
 
+	// filled in later by UnitDrawer
+	modelExplGens.resize(modelCEGTags.size(), NULL);
+	pieceExplGens.resize(pieceCEGTags.size(), NULL);
+
 	// custom parameters table
 	udTable.SubTable("customParams").GetMap(customParams);
 }
@@ -672,9 +676,17 @@ UnitDef::~UnitDef()
 		buildPic = NULL;
 	}
 
-	for (std::vector<IExplosionGenerator*>::iterator it = sfxExplGens.begin(); it != sfxExplGens.end(); ++it) {
-		explGenHandler->UnloadGenerator(*it);
-		*it = NULL;
+	for (unsigned int n = 0; n < modelExplGens.size(); n++) {
+		if (modelExplGens[n] == NULL)
+			continue;
+
+		explGenHandler->UnloadGenerator(modelExplGens[n]);
+	}
+	for (unsigned int n = 0; n < pieceExplGens.size(); n++) {
+		if (pieceExplGens[n] == NULL)
+			continue;
+
+		explGenHandler->UnloadGenerator(pieceExplGens[n]);
 	}
 }
 

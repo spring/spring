@@ -16,17 +16,14 @@ const int PF_NONE       = (1 << 5); // 32
 const int PF_NoCEGTrail = (1 << 6); // 64
 const int PF_NoHeatCloud= (1 << 7); // 128
 
+class IExplosionGenerator;
 class CSmokeTrailProjectile;
 struct S3DModelPiece;
 struct LocalModelPiece;
-struct S3DOPiece;
-struct SS3OPiece;
 
 class CPieceProjectile: public CProjectile
 {
 	CR_DECLARE(CPieceProjectile);
-
-	void creg_Serialize(creg::ISerializer& s);
 
 public:
 	CPieceProjectile(
@@ -42,7 +39,7 @@ public:
 
 	void Update();
 	void Draw();
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	void Collision();
 	void Collision(CUnit* unit);
 
@@ -53,10 +50,21 @@ private:
 	float3 RandomVertexPos();
 
 public:
+	struct FireTrailPoint {
+		float3 pos;
+		float size;
+	};
+
+	int age;
+
 	unsigned int explFlags;
 	unsigned int dispList;
 
 	const S3DModelPiece* omp;
+
+	IExplosionGenerator* ceg;
+	CSmokeTrailProjectile* curCallback;
+	FireTrailPoint* fireTrailPoints[8];
 
 	float3 spinVec;
 	float spinSpeed;
@@ -66,16 +74,8 @@ public:
 
 	float3 oldSmokePos;
 	float3 oldSmokeDir;
+
 	bool drawTrail;
-
-	struct OldInfo {
-		float3 pos;
-		float size;
-	};
-	OldInfo* oldInfos[8];
-	CSmokeTrailProjectile* curCallback;
-
-	int age;
 };
 
 #endif /* PIECE_PROJECTILE_H */

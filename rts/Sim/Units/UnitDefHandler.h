@@ -45,7 +45,7 @@ public:
 	std::map<int, std::set<int> > decoyMap;
 	std::set<int> startUnitIDs;
 
-//protected: //FIXME UnitDef::sfxExplGens,buildingDecalType,trackType are initialized in UnitDrawer.cpp
+//protected: //FIXME UnitDef::*ExplGens,buildingDecalType,trackType are initialized in UnitDrawer.cpp
 	std::vector<UnitDef*> unitDefs;
 	std::map<std::string, int> unitDefIDsByName;
 

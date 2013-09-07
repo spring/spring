@@ -633,15 +633,15 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		}
 		default: {
 			if (sfxType & SFX_CEG) {
-				// emit defined explosiongenerator
-				const unsigned index = sfxType - SFX_CEG;
-				if (index >= unit->unitDef->sfxExplGens.size() || unit->unitDef->sfxExplGens[index] == NULL) {
+				// emit defined explosion-generator
+				IExplosionGenerator* eg = unit->unitDef->GetModelExplosionGenerator(sfxType - SFX_CEG);
+
+				if (eg == NULL) {
 					ShowScriptError("Invalid explosion generator index for emit-sfx");
 					break;
 				}
 
-				IExplosionGenerator* explGen = unit->unitDef->sfxExplGens[index];
-				explGen->Explosion(0, pos, unit->cegDamage, 1, unit, 0, 0, dir);
+				eg->Explosion(0, pos, unit->cegDamage, 1, unit, 0, 0, dir);
 			}
 			else if (sfxType & SFX_FIRE_WEAPON) {
 				// make a weapon fire from the piece
