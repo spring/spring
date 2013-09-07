@@ -1190,7 +1190,7 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 
 	const int top = lua_gettop(L);
 
-	if (!luaL_checkstack(L, 1 + 3 + argsCount, __FUNCTION__)) {
+	if (!lua_checkstack(L, 1 + 3 + argsCount)) {
 		LOG_L(L_WARNING, "CLuaRules::Cob2Lua() lua_checkstack() error: %s",
 				name.GetString().c_str());
 		args[0] = 0; // failure
