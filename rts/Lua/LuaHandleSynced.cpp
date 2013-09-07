@@ -662,7 +662,7 @@ bool CLuaHandleSynced::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 bool CLuaHandleSynced::Initialize(const string& syncData)
 {
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 3);
+	luaL_checkstack(L, 3, __FUNCTION__);
 	static const LuaHashString cmdStr("Initialize");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true;
@@ -693,7 +693,7 @@ string CLuaHandleSynced::GetSyncData()
 	string syncData;
 
 	LUA_CALL_IN_CHECK(L, syncData);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("GetSyncData");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return syncData;
@@ -740,7 +740,7 @@ bool CLuaHandleSynced::SyncedActionFallback(const string& msg, int playerID)
 bool CLuaHandleSynced::GotChatMsg(const string& msg, int playerID)
 {
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("GotChatMsg");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -1160,11 +1160,7 @@ int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
 		if (defID >= lhs->watch ## DefType ## Defs.size()) {          \
 			return 0;                                                 \
 		}                                                             \
-		if (!lua_isboolean(L, 2)) {                                   \
-			luaL_error(L, "Incorrect arguments to %s", __FUNCTION__); \
-			return 0;                                                 \
-		}                                                             \
-		lhs->watch ## DefType ## Defs[defID] = lua_toboolean(L, 2);   \
+		lhs->watch ## DefType ## Defs[defID] = luaL_checkboolean(L, 2);   \
 		return 0;                                                     \
 	}
 

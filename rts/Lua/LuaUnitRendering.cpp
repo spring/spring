@@ -104,7 +104,7 @@ int LuaUnitRendering::SetLODCount(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const unsigned int count = (unsigned int)luaL_checknumber(L, 2);
+	const unsigned int count = (unsigned int)luaL_checkint(L, 2);
 	if (count > 1024) {
 		luaL_error(L, "SetLODCount() ridiculous lod count");
 	}
@@ -485,9 +485,9 @@ int LuaUnitRendering::GetMaterial(lua_State* L)
 		luaL_error(L, "Incorrect arguments to GetMaterial");
 	}
 
-  LuaMatRef** matRef = (LuaMatRef**) lua_newuserdata(L, sizeof(LuaMatRef*));
-  luaL_getmetatable(L, "MatRef");
-  lua_setmetatable(L, -2);
+	LuaMatRef** matRef = (LuaMatRef**) lua_newuserdata(L, sizeof(LuaMatRef*));
+	luaL_getmetatable(L, "MatRef");
+	lua_setmetatable(L, -2);
 
 	*matRef = new LuaMatRef;
 

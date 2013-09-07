@@ -358,7 +358,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 void CLuaUI::Shutdown()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("Shutdown");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return;
@@ -374,7 +374,7 @@ void CLuaUI::Shutdown()
 bool CLuaUI::ConfigCommand(const string& command)
 {
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("ConfigureLayout");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -420,7 +420,7 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 	LUA_UI_BATCH_PUSH(, UIShockFrontEvent(pos, power, areaOfEffect, shockFrontDistMod))
 	LUA_CALL_IN_CHECK(L);
 
-	lua_checkstack(L, 6);
+	luaL_checkstack(L, 6, __FUNCTION__);
 	static const LuaHashString cmdStr("ShockFront");
 
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -493,7 +493,7 @@ bool CLuaUI::HasLayoutButtons()
 	SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // HasLayoutButtons
 
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 
 	static const LuaHashString cmdStr("LayoutButtons");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -530,7 +530,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 //	GML_THRMUTEX_LOCK(proj, GML_DRAW); // LayoutButtons
 
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 6);
+	luaL_checkstack(L, 6, __FUNCTION__);
 	const int top = lua_gettop(L);
 
 	static const LuaHashString cmdStr("LayoutButtons");
