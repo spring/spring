@@ -23,12 +23,12 @@ CALLIN_LIST = {
 	"Shutdown",
 
 	-- game callins
-	"GameSetup",
+	"GameSetup",               -- FIXME: not implemented by base GH
 	"GamePreload",
 	"GameStart",
 	"GameOver",
 	"GameFrame",
-	"GameProgress",
+	"GameProgress",            -- FIXME: not implemented by base GH
 	"GameID",
 
 	-- player callins
@@ -64,7 +64,12 @@ CALLIN_LIST = {
 	"UnitUnitCollision",
 	"UnitFeatureCollision",
 	"UnitMoveFailed",
-	"UnitMoved", -- not exposed to Lua yet (as of 95.0)
+	"UnitMoved",              -- FIXME: not exposed to Lua yet (as of 95.0)
+	"UnitEnteredAir",         -- FIXME: not implemented by base GH
+	"UnitLeftAir",            -- FIXME: not implemented by base GH
+	"UnitEnteredWater",       -- FIXME: not implemented by base GH
+	"UnitLeftWater",          -- FIXME: not implemented by base GH
+	"UnitCommand",            -- FIXME: not implemented by base GH
 
 	-- weapon callins
 	"StockpileChanged",
@@ -73,7 +78,7 @@ CALLIN_LIST = {
 	"FeatureCreated",
 	"FeatureDestroyed",
 	"FeatureDamaged",
-	"FeatureMoved", -- not exposed to Lua yet (as of 95.0)
+	"FeatureMoved",           -- FIXME: not exposed to Lua yet (as of 95.0)
 	"FeaturePreDamaged",
 
 	-- projectile callins
@@ -108,6 +113,8 @@ CALLIN_LIST = {
 
 	-- unsynced callins
 	"Update",
+	"UnsyncedHeightMapUpdate", -- FIXME: not implemented by base GH
+
 	"DrawGenesis",
 	"DrawWorld",
 	"DrawWorldPreUnit",
@@ -131,7 +138,6 @@ CALLIN_LIST = {
 	"CommandNotify",
 
 	"ViewResize", -- FIXME ?
-
 	"LayoutButtons",
 	"ConfigureLayout",
 
@@ -148,10 +154,10 @@ CALLIN_LIST = {
 
 	"IsAbove",
 	"GetTooltip",
-	-- FIXME -- not implemented by GH (more of these?)
-	"WorldTooltip",
-	"MapDrawCmd",
-	"ShockFront",
+
+	"WorldTooltip",            -- FIXME: not implemented by base GH
+	"MapDrawCmd",              -- FIXME: not implemented by base GH
+	"ShockFront",              -- FIXME: not implemented by base GH
 }
 
 for callinIdx, callinName in ipairs(CALLIN_LIST) do
