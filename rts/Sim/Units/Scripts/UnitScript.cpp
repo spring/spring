@@ -556,7 +556,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 	float alphaFalloff = 0.004f;
 	float fadeupTime = 4;
 
-	//const UnitDef* ud = unit->unitDef;
+	const UnitDef* ud = unit->unitDef;
 	const MoveDef* md = unit->moveDef;
 
 	// hovercraft need special care
@@ -633,15 +633,9 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		}
 		default: {
 			if (sfxType & SFX_CEG) {
-				// emit defined explosion-generator
-				IExplosionGenerator* eg = unit->unitDef->GetModelExplosionGenerator(sfxType - SFX_CEG);
-
-				if (eg == NULL) {
-					ShowScriptError("Invalid explosion generator index for emit-sfx");
-					break;
-				}
-
-				eg->Explosion(0, pos, unit->cegDamage, 1, unit, 0, 0, dir);
+				// emit defined explosion-generator (can only be custom, not standard)
+				// index is made valid by callee, an ID of -1 means CEG failed to load
+				globalCEG->Explosion(ud->GetModelExplosionGeneratorID(sfxType - SFX_CEG), pos, dir, unit->cegDamage, 1.0f, 0.0f, unit, NULL);
 			}
 			else if (sfxType & SFX_FIRE_WEAPON) {
 				// make a weapon fire from the piece

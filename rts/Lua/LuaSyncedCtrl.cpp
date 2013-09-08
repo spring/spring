@@ -408,7 +408,7 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 				if (key == "model") {
 					params.model = modelParser->Load3DModel(lua_tostring(L, -1));
 				} else if (key == "cegtag") {
-					params.cegID = gCEG->Load(explGenHandler, lua_tostring(L, -1));
+					params.cegID = IExplosionGenerator::LoadGlobal(lua_tostring(L, -1), true);
 				}
 
 				continue;
@@ -2833,15 +2833,11 @@ int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
 
 	if (proj->weapon) {
 		CWeaponProjectile* wproj = static_cast<CWeaponProjectile*>(proj);
-		if (wproj != NULL) {
-			wproj->SetCustomExplosionGeneratorID(gCEG->Load(explGenHandler, luaL_checkstring(L, 2)));
-		}
+		wproj->SetCustomExplosionGeneratorID(IExplosionGenerator::LoadGlobal(luaL_checkstring(L, 2), true));
 	}
 	if (proj->piece) {
 		CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);
-		if (pproj != NULL) {
-			pproj->SetCustomExplosionGeneratorID(gCEG->Load(explGenHandler, luaL_checkstring(L, 2)));
-		}
+		pproj->SetCustomExplosionGeneratorID(IExplosionGenerator::LoadGlobal(luaL_checkstring(L, 2), true));
 	}
 
 	return 0;
@@ -3633,15 +3629,15 @@ int LuaSyncedCtrl::SpawnProjectile(lua_State* L)
 
 int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 {
-	const string name = luaL_checkstring(L, 1);
 	const float3 pos(luaL_optfloat(L, 2, 0.0f), luaL_optfloat(L, 3, 0.0f), luaL_optfloat(L, 4, 0.0f));
 	const float3 dir(luaL_optfloat(L, 5, 0.0f), luaL_optfloat(L, 6, 0.0f), luaL_optfloat(L, 7, 0.0f));
+
 	const float rad = luaL_optfloat(L, 8, 0.0f);
 	const float dmg = luaL_optfloat(L, 9, 0.0f);
 	const float dmgMod = 1.0f;
 
-	const unsigned int cegID = gCEG->Load(explGenHandler, name);
-	const bool ret = gCEG->Explosion(cegID, pos, dmg, rad, NULL, dmgMod, NULL, dir);
+	const unsigned int cegID = IExplosionGenerator::LoadGlobal(luaL_checkstring(L, 1), true);
+	const bool ret = globalCEG->Explosion(cegID, pos, dir, dmg, rad, dmgMod, NULL, NULL);
 
 	lua_pushboolean(L, ret);
 	return 1;

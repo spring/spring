@@ -11,7 +11,6 @@
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Rendering/IconHandler.h"
@@ -660,8 +659,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	}
 
 	// filled in later by UnitDrawer
-	modelExplGens.resize(modelCEGTags.size(), NULL);
-	pieceExplGens.resize(pieceCEGTags.size(), NULL);
+	modelExplGenIDs.resize(modelCEGTags.size(), -1u);
+	pieceExplGenIDs.resize(pieceCEGTags.size(), -1u);
 
 	// custom parameters table
 	udTable.SubTable("customParams").GetMap(customParams);
@@ -674,19 +673,6 @@ UnitDef::~UnitDef()
 		buildPic->Free();
 		delete buildPic;
 		buildPic = NULL;
-	}
-
-	for (unsigned int n = 0; n < modelExplGens.size(); n++) {
-		if (modelExplGens[n] == NULL)
-			continue;
-
-		explGenHandler->UnloadGenerator(modelExplGens[n]);
-	}
-	for (unsigned int n = 0; n < pieceExplGens.size(); n++) {
-		if (pieceExplGens[n] == NULL)
-			continue;
-
-		explGenHandler->UnloadGenerator(pieceExplGens[n]);
 	}
 }
 

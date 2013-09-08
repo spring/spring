@@ -16,7 +16,6 @@ struct Command;
 struct WeaponDef;
 struct MoveDef;
 struct UnitDefImage;
-class IExplosionGenerator;
 class LuaTable;
 
 
@@ -72,18 +71,18 @@ public:
 	bool HasBomberWeapon() const;
 	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
 
-	void SetModelExplosionGenerator(unsigned int idx, IExplosionGenerator* eg) { modelExplGens[idx] = eg; }
-	void SetPieceExplosionGenerator(unsigned int idx, IExplosionGenerator* eg) { pieceExplGens[idx] = eg; }
+	void SetModelExplosionGeneratorID(unsigned int idx, unsigned int egID) { modelExplGenIDs[idx] = egID; }
+	void SetPieceExplosionGeneratorID(unsigned int idx, unsigned int egID) { pieceExplGenIDs[idx] = egID; }
 
-	IExplosionGenerator* GetModelExplosionGenerator(unsigned int idx) const {
-		if (modelExplGens.empty())
-			return NULL;
-		return (modelExplGens[idx % modelExplGens.size()]);
+	unsigned int GetModelExplosionGeneratorID(unsigned int idx) const {
+		if (modelExplGenIDs.empty())
+			return -1u;
+		return (modelExplGenIDs[idx % modelExplGenIDs.size()]);
 	}
-	IExplosionGenerator* GetPieceExplosionGenerator(unsigned int idx) const {
-		if (pieceExplGens.empty())
-			return NULL;
-		return (pieceExplGens[idx % pieceExplGens.size()]);
+	unsigned int GetPieceExplosionGeneratorID(unsigned int idx) const {
+		if (pieceExplGenIDs.empty())
+			return -1u;
+		return (pieceExplGenIDs[idx % pieceExplGenIDs.size()]);
 	}
 
 public:
@@ -199,8 +198,8 @@ public:
 	std::vector<std::string> pieceCEGTags;
 
 	// TODO: privatize
-	std::vector<IExplosionGenerator*> modelExplGens;
-	std::vector<IExplosionGenerator*> pieceExplGens;
+	std::vector<unsigned int> modelExplGenIDs;
+	std::vector<unsigned int> pieceExplGenIDs;
 
 	std::map<int, std::string> buildOptions;
 

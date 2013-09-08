@@ -9,7 +9,6 @@
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/DefinitionTag.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileTypes.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "System/EventHandler.h"
@@ -257,8 +256,10 @@ WeaponDef::WeaponDef()
 	projectileType = WEAPON_BASE_PROJECTILE;
 	collisionFlags = 0;
 
-	explosionGenerator = NULL;
-	bounceExplosionGenerator = NULL;
+	// set later by ProjectileDrawer
+	ptrailExplosionGeneratorID = -1u;
+	impactExplosionGeneratorID = -1u;
+	bounceExplosionGeneratorID = -1u;
 
 	isShield = false;
 	noAutoTarget = false;
@@ -270,11 +271,14 @@ WeaponDef::WeaponDef()
 
 WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	: name(name_)
+
+	, ptrailExplosionGeneratorID(-1u)
+	, impactExplosionGeneratorID(-1u)
+	, bounceExplosionGeneratorID(-1u)
+
 	, id(id_)
 	, projectileType(WEAPON_BASE_PROJECTILE)
 	, collisionFlags(0)
-	, explosionGenerator(NULL)
-	, bounceExplosionGenerator(NULL)
 {
 	WeaponDefs.Load(this, wdTable);
 
@@ -478,19 +482,6 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	isShield = (type == "Shield");
 	noAutoTarget = (manualfire || interceptor || isShield);
 	onlyForward = !turret && (type != "StarburstLauncher");
-}
-
-
-WeaponDef::~WeaponDef()
-{
-	if (explosionGenerator != NULL) {
-		explGenHandler->UnloadGenerator(explosionGenerator);
-		explosionGenerator = NULL;
-	}
-	if (bounceExplosionGenerator != NULL) {
-		explGenHandler->UnloadGenerator(bounceExplosionGenerator);
-		bounceExplosionGenerator = NULL;
-	}
 }
 
 

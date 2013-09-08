@@ -38,7 +38,6 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_MEMBER(dispList),
 	// NOTE: what about this?
 	// CR_MEMBER(omp),
-	// CR_MEMBER(ceg),
 	CR_MEMBER(curCallback),
 	CR_MEMBER(spinVec),
 	CR_MEMBER(spinSpeed),
@@ -67,7 +66,6 @@ CPieceProjectile::CPieceProjectile(
 	dispList((lmp != NULL)? lmp->dispListID: 0),
 
 	omp(NULL),
-	ceg(NULL),
 	curCallback(NULL),
 
 	spinSpeed(0.0f),
@@ -83,14 +81,14 @@ CPieceProjectile::CPieceProjectile(
 
 	if (owner != NULL) {
 		if ((explFlags & PF_NoCEGTrail) == 0) {
-			if ((ceg = owner->unitDef->GetPieceExplosionGenerator(gs->randInt())) != NULL) {
-				ceg->Explosion(0, pos, 100, 0.0f, NULL, 0.0f, NULL, speed);
+			if ((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gs->randInt())) != -1u) {
+				globalCEG->Explosion(cegID, pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
 			}
 		}
 
 		model = owner->model;
 		alphaThreshold = owner->alphaThreshold;
-		explFlags |= (PF_NoCEGTrail * (ceg == NULL));
+		explFlags |= (PF_NoCEGTrail * (cegID == -1u));
 	}
 
 	if (lmp) {
@@ -356,10 +354,8 @@ void CPieceProjectile::Update()
 			}
 		}
 	} else {
-		if (ceg != NULL) {
-			// TODO: pass a more sensible ttl to the CEG (age-related?)
-			ceg->Explosion(0, pos, 100, 0.0f, NULL, 0.0f, NULL, speed);
-		}
+		// TODO: pass a more sensible ttl to the CEG (age-related?)
+		globalCEG->Explosion(cegID, pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
 	}
 
 	checkCol |= (age > 10);

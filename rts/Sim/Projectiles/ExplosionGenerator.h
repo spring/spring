@@ -10,6 +10,8 @@
 
 #include "Sim/Objects/WorldObject.h"
 
+#define CEG_PREFIX_STRING "custom:"
+
 class LuaParser;
 class LuaTable;
 class float3;
@@ -23,13 +25,14 @@ class CExpGenSpawnable: public CWorldObject
 public:
 	CExpGenSpawnable();
 	CExpGenSpawnable(const float3& pos, const float3& spd);
+
 	virtual ~CExpGenSpawnable() {}
 	virtual void Init(const float3& pos, CUnit* owner) = 0;
 };
 
 
 
-//! Finds C++ classes with class aliases
+// Finds C++ classes with class aliases
 class ClassAliasList
 {
 public:
@@ -45,7 +48,7 @@ private:
 
 
 
-//! loads and stores a list of explosion generators
+// loads and stores a list of explosion generators
 class CExplosionGeneratorHandler
 {
 public:
@@ -67,7 +70,8 @@ protected:
 	LuaTable*  explTblRoot;
 
 	// number of times a CEG instance was requested via LoadGenerator()
-	// used to assign a unique ID to each CEG (zero is reserved for gCEG)
+	// used to assign a unique ID to each CEG (zero is reserved for the
+	// global generator)
 	unsigned int numLoadedGenerators;
 
 	std::map<unsigned int, IExplosionGenerator*> explosionGenerators;
@@ -76,18 +80,25 @@ protected:
 
 
 
-//! Base explosion generator class
+// Base explosion generator class
 class IExplosionGenerator
 {
 	CR_DECLARE(IExplosionGenerator);
 
+	enum {
+		EXPLOSION_ID_INVALID  = -1u,
+		EXPLOSION_ID_STANDARD = -2u,
+	};
+
 	IExplosionGenerator(): generatorID(0) {}
 	virtual ~IExplosionGenerator() {}
 
-	virtual unsigned int Load(CExplosionGeneratorHandler* handler, const std::string& tag) = 0;
+	static unsigned int LoadGlobal(const std::string& tag, bool luaCall);
+
+	virtual unsigned int Load(CExplosionGeneratorHandler* handler, const std::string& tag, bool luaCall) = 0;
 	virtual void Reload(CExplosionGeneratorHandler* handler, const std::string& tag) {}
 	virtual void Unload(CExplosionGeneratorHandler* handler) {}
-	virtual bool Explosion(unsigned int explosionID, const float3& pos, float damage, float radius, CUnit* owner, float gfxMod, CUnit* hit, const float3& dir) = 0;
+	virtual bool Explosion(unsigned int explosionID, const float3& pos, const float3& dir, float damage, float radius, float gfxMod, CUnit* owner, CUnit* hit) = 0;
 
 	unsigned int GetGeneratorID() const { return generatorID; }
 	void SetGeneratorID(unsigned int id) { generatorID = id; }
@@ -97,23 +108,22 @@ protected:
 };
 
 
-//! everything is calculated from damage and radius
+// spawns non-scriptable explosion effects with hardcoded rules
 class CStdExplosionGenerator: public IExplosionGenerator
 {
 	CR_DECLARE(CStdExplosionGenerator);
 
 public:
 	CStdExplosionGenerator(): IExplosionGenerator() {}
-	virtual ~CStdExplosionGenerator() {}
 
-	unsigned int Load(CExplosionGeneratorHandler* handler, const std::string& tag) { return -1U; }
-	bool Explosion(unsigned int explosionID, const float3& pos, float damage, float radius, CUnit* owner, float gfxMod, CUnit* hit, const float3& dir);
+	unsigned int Load(CExplosionGeneratorHandler* handler, const std::string& tag, bool luaCall) { return EXPLOSION_ID_STANDARD; }
+	bool Explosion(unsigned int explosionID, const float3& pos, const float3& dir, float damage, float radius, float gfxMod, CUnit* owner, CUnit* hit);
 };
 
 
-//! Uses explosion info from a script file; defines the
-//! result of an explosion as a series of new projectiles
-class CCustomExplosionGenerator: public CStdExplosionGenerator
+// Uses explosion info from a script file; defines the
+// result of an explosion as a series of new projectiles
+class CCustomExplosionGenerator: public IExplosionGenerator
 {
 	CR_DECLARE(CCustomExplosionGenerator);
 	CR_DECLARE_SUB(ProjectileSpawnInfo);
@@ -156,8 +166,8 @@ protected:
 			, circleGrowth(0.0f)
 			, circleAlpha(0.0f)
 			, ttl(0)
-			, color(ZeroVector)
 			, flags(0)
+			, color(ZeroVector)
 		{}
 
 		float flashSize;
@@ -165,8 +175,8 @@ protected:
 		float circleGrowth;
 		float circleAlpha;
 		int ttl;
-		float3 color;
 		unsigned int flags;
+		float3 color;
 	};
 
 	struct CEGData {
@@ -178,7 +188,7 @@ protected:
 	};
 
 public:
-	CCustomExplosionGenerator(): CStdExplosionGenerator() {}
+	CCustomExplosionGenerator(): IExplosionGenerator() {}
 	~CCustomExplosionGenerator() { ClearCache(); }
 
 	static bool OutputProjectileClassInfo();
@@ -186,10 +196,10 @@ public:
 	static unsigned int GetFlagsFromHeight(float height, float altitude);
 
 	/// @throws content_error/runtime_error on errors
-	unsigned int Load(CExplosionGeneratorHandler* handler, const std::string& tag);
+	unsigned int Load(CExplosionGeneratorHandler* handler, const std::string& tag, bool luaCall);
 	void Reload(CExplosionGeneratorHandler* handler, const std::string& tag);
 	void Unload(CExplosionGeneratorHandler* handler);
-	bool Explosion(unsigned int explosionID, const float3& pos, float damage, float radius, CUnit* owner, float gfxMod, CUnit* hit, const float3& dir);
+	bool Explosion(unsigned int explosionID, const float3& pos, const float3& dir, float damage, float radius, float gfxMod, CUnit* owner, CUnit* hit);
 
 	void ClearCache();
 
@@ -229,21 +239,21 @@ private:
 	void ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir);
 
 protected:
-	//! maps cegTags to explosion handles
+	// maps cegTags to explosion handles
 	std::map<std::string, unsigned int> explosionIDs;
-	//! indexed by explosion handles
+	// indexed by explosion handles
 	std::vector<CEGData> explosionData;
 
 	/**
 	 * Explosion generators used by explosionData.projectileSpawn.
 	 * We only need this for unloading them later.
-	 * @see #ClearCache
 	 */
 	std::vector<IExplosionGenerator*> spawnExplGens;
 };
 
 
 extern CExplosionGeneratorHandler* explGenHandler;
-extern CCustomExplosionGenerator* gCEG;
+extern CStdExplosionGenerator* globalSEG;
+extern CCustomExplosionGenerator* globalCEG;
 
 #endif // EXPLOSION_GENERATOR_H

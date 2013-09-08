@@ -387,17 +387,17 @@ void CProjectileDrawer::LoadWeaponTextures() {
 		if (wd.visuals.texNames[2] != "") { wd.visuals.texture3 = &textureAtlas->GetTexture(wd.visuals.texNames[2]); }
 		if (wd.visuals.texNames[3] != "") { wd.visuals.texture4 = &textureAtlas->GetTexture(wd.visuals.texNames[3]); }
 
-		// load weapon explosion generators
-		if (wd.visuals.expGenTag.empty()) {
-			wd.explosionGenerator = NULL;
-		} else {
-			wd.explosionGenerator = explGenHandler->LoadGenerator(wd.visuals.expGenTag);
+		if (!wd.cegTag.empty()) {
+			// these can only be custom EG's so prefix is not required game-side
+			wd.ptrailExplosionGeneratorID = IExplosionGenerator::LoadGlobal(CEG_PREFIX_STRING + wd.cegTag, false);
 		}
 
-		if (wd.visuals.bounceExpGenTag.empty()) {
-			wd.bounceExplosionGenerator = NULL;
-		} else {
-			wd.bounceExplosionGenerator = explGenHandler->LoadGenerator(wd.visuals.bounceExpGenTag);
+		if (!wd.visuals.expGenTag.empty()) {
+			wd.impactExplosionGeneratorID = IExplosionGenerator::LoadGlobal(wd.visuals.expGenTag, false);
+		}
+
+		if (!wd.visuals.bounceExpGenTag.empty()) {
+			wd.bounceExplosionGeneratorID = IExplosionGenerator::LoadGlobal(wd.visuals.bounceExpGenTag, false);
 		}
 	}
 }

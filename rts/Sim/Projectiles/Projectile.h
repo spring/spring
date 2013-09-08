@@ -46,6 +46,7 @@ public:
 	}
 
 	CUnit* owner() const;
+
 	unsigned int GetOwnerID() const { return ownerID; }
 	unsigned int GetTeamID() const { return teamID; }
 
