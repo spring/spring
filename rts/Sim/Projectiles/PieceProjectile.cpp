@@ -81,9 +81,7 @@ CPieceProjectile::CPieceProjectile(
 
 	if (owner != NULL) {
 		if ((explFlags & PF_NoCEGTrail) == 0) {
-			if ((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gs->randInt())) != -1u) {
-				globalCEG->Explosion(cegID, pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
-			}
+			explGenHandler->GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gs->randInt())), pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
 		}
 
 		model = owner->model;
@@ -355,7 +353,7 @@ void CPieceProjectile::Update()
 		}
 	} else {
 		// TODO: pass a more sensible ttl to the CEG (age-related?)
-		globalCEG->Explosion(cegID, pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
 	}
 
 	checkCol |= (age > 10);
