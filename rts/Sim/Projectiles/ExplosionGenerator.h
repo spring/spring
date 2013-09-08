@@ -88,6 +88,7 @@ class IExplosionGenerator
 	enum {
 		EXPLOSION_ID_INVALID  = -1u,
 		EXPLOSION_ID_STANDARD = -2u,
+		EXPLOSION_ID_SPAWNER  = -3u,
 	};
 
 	IExplosionGenerator(): generatorID(0) {}

@@ -356,7 +356,7 @@ bool CStdExplosionGenerator::Explosion(
 ) {
 	// SEG's spawned by CEG's are not equal to the global instance
 	// assert(this == globalSEG);
-	assert(explosionID == EXPLOSION_ID_STANDARD);
+	assert(explosionID == EXPLOSION_ID_STANDARD || explosionID == EXPLOSION_ID_SPAWNER);
 
 	const float groundHeight = ground->GetHeightReal(pos.x, pos.z);
 	const float altitude = pos.y - groundHeight;
@@ -1020,6 +1020,10 @@ bool CCustomExplosionGenerator::Explosion(
 	if (explosionID == EXPLOSION_ID_INVALID)
 		return false;
 
+	// spawner CEG instances can only execute one explosion
+	if (explosionID == EXPLOSION_ID_SPAWNER)
+		explosionID = explosionData.size() - 1;
+
 	// should never happen (all ID's are managed)
 	if (explosionID >= explosionData.size())
 		return false;
@@ -1044,10 +1048,9 @@ bool CCustomExplosionGenerator::Explosion(
 			continue;
 		}
 
-		// If we're saturated
-		if (projectileHandler->particleSaturation > 1) {
+		// no new projectiles if we're saturated
+		if (projectileHandler->particleSaturation > 1.0f)
 			continue;
-		}
 
 		for (int c = 0; c < psi.count; c++) {
 			CExpGenSpawnable* projectile = static_cast<CExpGenSpawnable*>((psi.projectileClass)->CreateInstance());
