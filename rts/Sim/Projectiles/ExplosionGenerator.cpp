@@ -324,7 +324,7 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 	explGen->SetGeneratorID(explosionGenerators.size());
 
 	// can still be a standard generator, but with non-zero ID
-	assert(expGen->GetGeneratorID() != EXPGEN_ID_STANDARD);
+	assert(explGen->GetGeneratorID() != EXPGEN_ID_STANDARD);
 
 	if (!postfix.empty()) {
 		explGen->Load(this, postfix);
