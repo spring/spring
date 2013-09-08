@@ -11,7 +11,6 @@
 
 struct AtlasedTexture;
 class CColorMap;
-class IExplosionGenerator;
 struct S3DModel;
 class LuaTable;
 
@@ -23,7 +22,6 @@ private:
 public:
 	WeaponDef();
 	WeaponDef(const LuaTable& wdTable, const std::string& name, int id);
-	~WeaponDef();
 
 	S3DModel* LoadModel();
 	S3DModel* LoadModel() const;
@@ -33,6 +31,10 @@ public:
 	std::string type;
 	std::string description;
 	std::string cegTag;        ///< tag of CEG that projectiles fired by this weapon should use
+
+	unsigned int ptrailExplosionGeneratorID; // must be custom, defined by cegTag
+	unsigned int impactExplosionGeneratorID; // can be NULL for default explosions
+	unsigned int bounceExplosionGeneratorID; // called when a projectile bounces
 
 	GuiSoundSet fireSound;
 	GuiSoundSet hitSound;
@@ -187,9 +189,6 @@ public:
 
 	unsigned int projectileType;
 	unsigned int collisionFlags;
-
-	IExplosionGenerator* explosionGenerator;        // can be NULL for default explosions
-	IExplosionGenerator* bounceExplosionGenerator;  // called when a projectile bounces
 
 	bool sweepFire;
 	bool canAttackGround;

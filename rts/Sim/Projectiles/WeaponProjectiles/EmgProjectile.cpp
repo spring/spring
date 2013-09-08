@@ -55,7 +55,7 @@ void CEmgProjectile::Update()
 		intensity -= 0.1f;
 		intensity = std::max(intensity, 0.0f);
 	} else {
-		gCEG->Explosion(cegID, pos, ttl, intensity, NULL, 0.0f, NULL, speed);
+		globalCEG->Explosion(cegID, pos, speed, ttl, intensity, 0.0f, NULL, NULL);
 	}
 
 	UpdateGroundBounce();

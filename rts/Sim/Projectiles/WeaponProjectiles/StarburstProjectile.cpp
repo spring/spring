@@ -268,7 +268,7 @@ void CStarburstProjectile::Update()
 	}
 
 	if (ttl > 0) {
-		gCEG->Explosion(cegID, pos, ttl, areaOfEffect, NULL, 0.0f, NULL, dir);
+		globalCEG->Explosion(cegID, pos, dir, ttl, areaOfEffect, 0.0f, NULL, NULL);
 	}
 
 

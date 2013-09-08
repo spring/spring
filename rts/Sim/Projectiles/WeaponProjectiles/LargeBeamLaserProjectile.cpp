@@ -78,7 +78,7 @@ void CLargeBeamLaserProjectile::Update()
 			edgeColStart[i] = (unsigned char) (edgeColStart[i] * decay);
 		}
 
-		gCEG->Explosion(cegID, startpos + ((targetPos - startpos) / ttl), 0.0f, flaresize, NULL, 0.0f, NULL, targetPos - startpos);
+		globalCEG->Explosion(cegID, startpos + ((targetPos - startpos) / ttl), (targetPos - startpos), 0.0f, flaresize, 0.0f, NULL, NULL);
 		ttl--;
 	}
 	else {

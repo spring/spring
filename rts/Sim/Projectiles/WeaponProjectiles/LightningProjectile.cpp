@@ -53,7 +53,7 @@ void CLightningProjectile::Update()
 	if (--ttl <= 0) {
 		deleteMe = true;
 	} else {
-		gCEG->Explosion(cegID, startpos + ((targetPos - startpos) / ttl), 0.0f, displacements[0], NULL, 0.0f, NULL, targetPos - startpos);
+		globalCEG->Explosion(cegID, startpos + ((targetPos - startpos) / ttl), (targetPos - startpos), 0.0f, displacements[0], 0.0f, NULL, NULL);
 	}
 
 	for (size_t d = 1; d < displacements_size; ++d) {

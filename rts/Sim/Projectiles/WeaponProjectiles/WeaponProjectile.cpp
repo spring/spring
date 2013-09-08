@@ -108,7 +108,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 	if (params.cegID != -1u) {
 		cegID = params.cegID;
 	} else {
-		cegID = gCEG->Load(explGenHandler, weaponDef->cegTag);
+		cegID = weaponDef->ptrailExplosionGeneratorID;
 	}
 
 	projectileHandler->AddProjectile(this);
@@ -283,10 +283,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 	speed += (normal * (math::fabs(dot))) * (1 + weaponDef->bounceRebound);
 	pos += speed;
 
-	if (weaponDef->bounceExplosionGenerator == NULL)
-		return;
-
-	weaponDef->bounceExplosionGenerator->Explosion(-1u, pos, speed.Length(), 1, owner(), 1, NULL, normal);
+	globalCEG->Explosion(weaponDef->bounceExplosionGeneratorID, pos, normal, speed.Length(), 1.0f, 1.0f, owner(), NULL);
 }
 
 

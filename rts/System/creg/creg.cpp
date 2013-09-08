@@ -133,9 +133,9 @@ Class::~Class()
 	members.clear();
 }
 
-bool Class::IsSubclassOf(Class* other)
+bool Class::IsSubclassOf(Class* other) const
 {
-	for (Class* c = this; c; c = c->base) {
+	for (const Class* c = this; c; c = c->base) {
 		if (c == other) {
 			return true;
 		}

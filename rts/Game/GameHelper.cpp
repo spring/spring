@@ -254,14 +254,9 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	}
 
 	if (!noGfx) {
-		// use CStdExplosionGenerator by default
-		IExplosionGenerator* explosionGenerator = stdExplosionGenerator;
-
-		if (weaponDef != NULL && weaponDef->explosionGenerator != NULL) {
-			explosionGenerator = weaponDef->explosionGenerator;
+		if (weaponDef != NULL) {
+			globalCEG->Explosion(weaponDef->impactExplosionGeneratorID, expPos, dir, damages.GetDefaultDamage(), damageAOE, gfxMod, owner, hitUnit);
 		}
-
-		explosionGenerator->Explosion(0, expPos, damages.GetDefaultDamage(), damageAOE, owner, gfxMod, hitUnit, dir);
 	}
 
 	CExplosionEvent explosionEvent(expPos, damages.GetDefaultDamage(), damageAOE, weaponDef);

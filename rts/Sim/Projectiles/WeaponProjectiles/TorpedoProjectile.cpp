@@ -129,7 +129,7 @@ void CTorpedoProjectile::Update()
 				speed = dir * curSpeed;
 			}
 
-			gCEG->Explosion(cegID, pos, ttl, areaOfEffect, NULL, 0.0f, NULL, speed);
+			globalCEG->Explosion(cegID, pos, speed, ttl, areaOfEffect, 0.0f, NULL, NULL);
 		} else {
 			if (!luaMoveCtrl) {
 				speed *= 0.98f;

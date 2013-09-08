@@ -36,6 +36,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(ownerID),
 	CR_MEMBER(teamID),
 	CR_MEMBER(cegID),
+
 	CR_MEMBER(projectileType),
 	CR_MEMBER(collisionFlags),
 

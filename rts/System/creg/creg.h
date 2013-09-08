@@ -153,7 +153,7 @@ namespace creg {
 		~Class();
 
 		/// Returns true if this class is equal to or derived from other
-		bool IsSubclassOf(Class* other);
+		bool IsSubclassOf(Class* other) const;
 		void DeleteInstance(void* inst);
 		/// Allocate an instance of the class
 		void* CreateInstance();

@@ -64,7 +64,7 @@ void CExplosiveProjectile::Update()
 		Collision();
 	} else {
 		if (ttl > 0) {
-			gCEG->Explosion(cegID, pos, ttl, areaOfEffect, NULL, 0.0f, NULL, speed);
+			globalCEG->Explosion(cegID, pos, speed, ttl, areaOfEffect, 0.0f, NULL, NULL);
 		}
 	}
 
