@@ -71,7 +71,7 @@ void CFlameProjectile::Update()
 		deleteMe = true;
 	}
 
-	globalCEG->Explosion(cegID, pos, speed, curTime, 0.0f, 0.0f, NULL, NULL);
+	explGenHandler->GenExplosion(cegID, pos, speed, curTime, 0.0f, 0.0f, NULL, NULL);
 }
 
 void CFlameProjectile::Draw()

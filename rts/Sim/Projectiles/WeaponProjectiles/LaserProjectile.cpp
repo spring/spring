@@ -84,7 +84,7 @@ void CLaserProjectile::Update()
 
 void CLaserProjectile::UpdateIntensity() {
 	if (ttl > 0) {
-		globalCEG->Explosion(cegID, pos, speed, ttl, intensity, 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, pos, speed, ttl, intensity, 0.0f, NULL, NULL);
 		return;
 	}
 

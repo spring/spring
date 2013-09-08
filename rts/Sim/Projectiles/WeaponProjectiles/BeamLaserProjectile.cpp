@@ -88,7 +88,7 @@ void CBeamLaserProjectile::Update()
 			edgeColEnd[i]   *= decay;
 		}
 
-		globalCEG->Explosion(cegID, startpos + ((targetPos - startpos) / ttl), (targetPos - startpos), 0.0f, flaresize, 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, startpos + ((targetPos - startpos) / ttl), (targetPos - startpos), 0.0f, flaresize, 0.0f, NULL, NULL);
 	}
 
 	UpdateInterception();

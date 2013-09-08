@@ -635,7 +635,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 			if (sfxType & SFX_CEG) {
 				// emit defined explosion-generator (can only be custom, not standard)
 				// index is made valid by callee, an ID of -1 means CEG failed to load
-				globalCEG->Explosion(ud->GetModelExplosionGeneratorID(sfxType - SFX_CEG), pos, dir, unit->cegDamage, 1.0f, 0.0f, unit, NULL);
+				explGenHandler->GenExplosion(ud->GetModelExplosionGeneratorID(sfxType - SFX_CEG), pos, dir, unit->cegDamage, 1.0f, 0.0f, unit, NULL);
 			}
 			else if (sfxType & SFX_FIRE_WEAPON) {
 				// make a weapon fire from the piece

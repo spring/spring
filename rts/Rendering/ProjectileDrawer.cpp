@@ -389,15 +389,15 @@ void CProjectileDrawer::LoadWeaponTextures() {
 
 		if (!wd.cegTag.empty()) {
 			// these can only be custom EG's so prefix is not required game-side
-			wd.ptrailExplosionGeneratorID = IExplosionGenerator::LoadGlobal(CEG_PREFIX_STRING + wd.cegTag, false);
+			wd.ptrailExplosionGeneratorID = explGenHandler->LoadGeneratorID(CEG_PREFIX_STRING + wd.cegTag);
 		}
 
 		if (!wd.visuals.expGenTag.empty()) {
-			wd.impactExplosionGeneratorID = IExplosionGenerator::LoadGlobal(wd.visuals.expGenTag, false);
+			wd.impactExplosionGeneratorID = explGenHandler->LoadGeneratorID(wd.visuals.expGenTag);
 		}
 
 		if (!wd.visuals.bounceExpGenTag.empty()) {
-			wd.bounceExplosionGeneratorID = IExplosionGenerator::LoadGlobal(wd.visuals.bounceExpGenTag, false);
+			wd.bounceExplosionGeneratorID = explGenHandler->LoadGeneratorID(wd.visuals.bounceExpGenTag);
 		}
 	}
 }

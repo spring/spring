@@ -247,7 +247,7 @@ void CMissileProjectile::Update()
 			speed = dir * curSpeed;
 		}
 
-		globalCEG->Explosion(cegID, pos, dir, ttl, areaOfEffect, 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, pos, dir, ttl, areaOfEffect, 0.0f, NULL, NULL);
 	} else {
 		if (weaponDef->selfExplode) {
 			Collision();

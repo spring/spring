@@ -283,7 +283,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 	speed += (normal * (math::fabs(dot))) * (1 + weaponDef->bounceRebound);
 	pos += speed;
 
-	globalCEG->Explosion(weaponDef->bounceExplosionGeneratorID, pos, normal, speed.Length(), 1.0f, 1.0f, owner(), NULL);
+	explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, pos, normal, speed.Length(), 1.0f, 1.0f, owner(), NULL);
 }
 
 

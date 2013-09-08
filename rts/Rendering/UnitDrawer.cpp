@@ -128,11 +128,11 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 		UnitDef* ud = unitDefHandler->unitDefs[unitDefID];
 
 		for (unsigned int n = 0; n < ud->modelCEGTags.size(); n++) {
-			ud->SetModelExplosionGeneratorID(n, IExplosionGenerator::LoadGlobal(ud->modelCEGTags[n], false));
+			ud->SetModelExplosionGeneratorID(n, explGenHandler->LoadGeneratorID(ud->modelCEGTags[n]));
 		}
 		for (unsigned int n = 0; n < ud->pieceCEGTags.size(); n++) {
 			// these can only be custom EG's so prefix is not required game-side
-			ud->SetPieceExplosionGeneratorID(n, IExplosionGenerator::LoadGlobal(CEG_PREFIX_STRING + ud->pieceCEGTags[n], false));
+			ud->SetPieceExplosionGeneratorID(n, explGenHandler->LoadGeneratorID(CEG_PREFIX_STRING + ud->pieceCEGTags[n]));
 		}
 	}
 
