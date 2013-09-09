@@ -1,5 +1,5 @@
-// ldd libboost_chrono.so.* --> must be linked against librt which must be present
-// g++  -Wall -Wextra -Wno-unused  -o tst TimerTest.cpp  -I ../../../rts/  -lboost_system -lboost_thread -lboost_chrono -lrt
+// ldd libboost_chrono.so.* --> must be linked against librt (for nanosecond-precision timer) which must be present
+// g++  -Wall -Wextra -Wno-unused -O2  -o tst TimerTest.cpp  -I ../../../rts/  -lboost_system -lboost_thread -lboost_chrono {-lrt}
 //
 #include <cstdio>
 #include <cstdlib>
