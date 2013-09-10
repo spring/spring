@@ -3634,13 +3634,21 @@ int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 
 	const float rad = luaL_optfloat(L, 8, 0.0f);
 	const float dmg = luaL_optfloat(L, 9, 0.0f);
-	const float dmgMod = 1.0f;
+	const float dmgMod = luaL_optfloat(L, 10, 1.0f);
 
-	const unsigned int cegID = explGenHandler->LoadGeneratorID(luaL_checkstring(L, 1));
-	const bool ret = explGenHandler->GenExplosion(cegID, pos, dir, dmg, rad, dmgMod, NULL, NULL);
+	unsigned int cegID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
 
-	lua_pushboolean(L, ret);
-	return 1;
+	if (lua_isstring(L, 1)) {
+		// args from Lua are assumed not to include the prefix
+		// (Spawn*C*EG implies only custom generators can fire)
+		cegID = explGenHandler->LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 1));
+	} else {
+		cegID = luaL_checknumber(L, 1);
+	}
+
+	lua_pushboolean(L, explGenHandler->GenExplosion(cegID, pos, dir, dmg, rad, dmgMod, NULL, NULL));
+	lua_pushnumber(L, cegID);
+	return 2;
 }
 
 /******************************************************************************/
