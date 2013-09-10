@@ -275,16 +275,6 @@ unsigned int CExplosionGeneratorHandler::LoadGeneratorID(const std::string& tag)
 	return (eg->GetGeneratorID());
 }
 
-IExplosionGenerator* CExplosionGeneratorHandler::GetGenerator(unsigned int expGenID)
-{
-	if (expGenID == EXPGEN_ID_INVALID)
-		return NULL;
-	if (expGenID >= explosionGenerators.size())
-		return NULL;
-
-	return explosionGenerators[expGenID];
-}
-
 // creates either a standard or a custom explosion generator instance
 IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag)
 {
@@ -337,6 +327,16 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 
 	explosionGenerators.push_back(explGen);
 	return explGen;
+}
+
+IExplosionGenerator* CExplosionGeneratorHandler::GetGenerator(unsigned int expGenID)
+{
+	if (expGenID == EXPGEN_ID_INVALID)
+		return NULL;
+	if (expGenID >= explosionGenerators.size())
+		return NULL;
+
+	return explosionGenerators[expGenID];
 }
 
 bool CExplosionGeneratorHandler::GenExplosion(
