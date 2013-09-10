@@ -509,16 +509,22 @@ end
 
 function gadgetHandler:UpdateCallIn(name)
   local listName = name .. 'List'
-  if ((#self[listName] > 0)       or
-      (name == 'GotChatMsg')      or
-      (name == 'RecvFromSynced')) then
+  local forceUpdate = (name == 'GotChatMsg' or name == 'RecvFromSynced') -- redundant?
+
+  _G[name] = nil
+
+  if (forceUpdate or #self[listName] > 0) then
     local selffunc = self[name]
-    _G[name] = function(...)
-      return selffunc(self, ...)
+
+    if (selffunc ~= nil) then
+      _G[name] = function(...)
+        return selffunc(self, ...)
+      end
+    else
+      Spring.Log(LOG_SECTION, LOG.ERROR, "UpdateCallIn: " .. name .. " is not implemented")
     end
-  else
-    _G[name] = nil
   end
+
   Script.UpdateCallIn(name)
 end
 
