@@ -227,9 +227,9 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 //   so we must adjust all such target positions in synced code
 //
 //   see also CommandAI::AdjustGroundAttackCommand
-void CWeapon::AdjustTargetPosToWater(float3& tgtPos) const
+void CWeapon::AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const
 {
-	if (targetType != Target_Pos)
+	if (!attackGround)
 		return;
 
 	if (weaponDef->waterweapon) {
@@ -321,7 +321,7 @@ void CWeapon::UpdateTargeting()
 	}
 
 	if (targetType != Target_None) {
-		AdjustTargetPosToWater(targetPos);
+		AdjustTargetPosToWater(targetPos, targetType == Target_Pos);
 
 		const float3 worldTargetDir = (targetPos - owner->pos).SafeNormalize();
 		const float3 worldMainDir =
@@ -576,15 +576,13 @@ void CWeapon::UpdateSalvo()
 
 bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 {
-	if (!isUserTarget && weaponDef->noAutoTarget) {
+	if (!isUserTarget && weaponDef->noAutoTarget)
 		return false;
-	}
-	if (weaponDef->interceptor || !weaponDef->canAttackGround) {
+	if (weaponDef->interceptor || !weaponDef->canAttackGround)
 		return false;
-	}
 
 	// keep target positions on the surface if this weapon hates water
-	AdjustTargetPosToWater(newTargetPos);
+	AdjustTargetPosToWater(newTargetPos, true);
 
 	weaponMuzzlePos =
 		owner->pos +
@@ -1246,14 +1244,12 @@ bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget) {
 }
 
 bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
-	if (!userTarget && weaponDef->noAutoTarget) {
+	if (!userTarget && weaponDef->noAutoTarget)
 		return false;
-	}
-	if (weaponDef->interceptor || !weaponDef->canAttackGround) {
+	if (weaponDef->interceptor || !weaponDef->canAttackGround)
 		return false;
-	}
 
-	AdjustTargetPosToWater(pos);
+	AdjustTargetPosToWater(pos, true);
 
 	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
 	const short enemyHeading = GetHeadingFromVector(
