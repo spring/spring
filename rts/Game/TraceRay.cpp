@@ -331,6 +331,8 @@ float GuiTraceRay(
 				continue;
 			if (!unit->collidable)
 				continue;
+			if (unit->noSelect)
+				continue;
 			if (!unitVisible)
 				continue;
 
