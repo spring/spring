@@ -93,9 +93,7 @@ public:
 	static std::string SpeedControlToString(int speedCtrl);
 
 	const boost::scoped_ptr<CDemoReader>& GetDemoReader() const { return demoReader; }
-	#ifdef DEDICATED
 	const boost::scoped_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
-	#endif
 
 private:
 	/**
@@ -139,6 +137,7 @@ private:
 	void GenerateAndSendGameID();
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
 
+	void WriteDemoData();
 	/// read data from demo and send it to clients
 	bool SendDemoData(int targetFrameNum);
 
@@ -252,10 +251,9 @@ private:
 
 	boost::scoped_ptr<netcode::UDPListener> UDPNet;
 	boost::scoped_ptr<CDemoReader> demoReader;
-#ifdef DEDICATED
 	boost::scoped_ptr<CDemoRecorder> demoRecorder;
-#endif
 	boost::scoped_ptr<AutohostInterface> hostif;
+
 	UnsyncedRNG rng;
 	boost::thread* thread;
 

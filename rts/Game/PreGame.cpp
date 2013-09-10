@@ -479,7 +479,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	if (net != NULL && wantDemo) {
 		assert(net->GetDemoRecorder() == NULL);
 
-		CDemoRecorder* recorder = new CDemoRecorder(gameSetup->mapName, gameSetup->modName);
+		CDemoRecorder* recorder = new CDemoRecorder(gameSetup->mapName, gameSetup->modName, false);
 		recorder->WriteSetupText(gameData->GetSetup());
 		recorder->SaveToDemo(packet->data, packet->length, net->GetPacketTime(gs->frameNum));
 		net->SetDemoRecorder(recorder);

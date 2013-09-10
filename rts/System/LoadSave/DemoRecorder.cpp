@@ -17,9 +17,10 @@
 #include <cstring>
 #include <fstream>
 
-CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName): demoStream(std::ios::binary | std::ios::out)
+CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName, bool serverDemo):
+demoStream(std::ios::binary | std::ios::out)
 {
-	SetName(mapName, modName);
+	SetName(mapName, modName, serverDemo);
 	SetFileHeader();
 }
 
@@ -87,7 +88,7 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, 
 	fileHeader.demoStreamSize += length + sizeof(chunkHeader);
 }
 
-void CDemoRecorder::SetName(const std::string& mapname, const std::string& modname)
+void CDemoRecorder::SetName(const std::string& mapName, const std::string& modName, bool serverDemo)
 {
 	// We want this folder to exist
 	if (!FileSystem::CreateDirectory("demos"))
@@ -95,15 +96,16 @@ void CDemoRecorder::SetName(const std::string& mapname, const std::string& modna
 
 	// Returns the current local time as "JJJJMMDD_HHmmSS", eg: "20091231_115959"
 	const std::string curTime = CTimeUtil::GetCurrentTimeStr();
+	const std::string demoDir = serverDemo? "demos-server/": "demos/";
 
 	std::ostringstream oss;
 	std::ostringstream buf;
 
-	oss << "demos/" << curTime << "_";
-	oss << FileSystem::GetBasename(mapname);
+	oss << demoDir << curTime << "_";
+	oss << FileSystem::GetBasename(mapName);
 	oss << "_";
 	// FIXME: why is this not included?
-	// oss << FileSystem::GetBasename(modname);
+	// oss << FileSystem::GetBasename(modName);
 	// oss << "_";
 	oss << SpringVersion::GetSync();
 	buf << oss.str() << ".sdf";
