@@ -4325,7 +4325,7 @@ int LuaOpenGL::CreateQuery(lua_State* L)
 
 int LuaOpenGL::DeleteQuery(lua_State* L)
 {
-	if (lua_isnoneornil(L, 1)) {
+	if (lua_isnil(L, 1)) {
 		return 0;
 	}
 	if (!lua_islightuserdata(L, 1)) {

@@ -121,6 +121,10 @@ static int ParseFloatArray(lua_State* L, int idx, float* array, int size)
 
 int LuaFonts::meta_gc(lua_State* L)
 {
+	if (lua_isnil(L, 1)) {
+		return 0;
+	}
+
 	CglFont** font = (CglFont**)luaL_checkudata(L, 1, "Font");
 	delete *font;
 	*font = NULL;

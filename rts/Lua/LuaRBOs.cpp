@@ -179,6 +179,9 @@ int LuaRBOs::CreateRBO(lua_State* L)
 
 int LuaRBOs::DeleteRBO(lua_State* L)
 {
+	if (lua_isnil(L, 1)) {
+		return 0;
+	}
 	RBO* rbo = static_cast<RBO*>(luaL_checkudata(L, 1, "RBO"));
 	rbo->Free(L);
 	return 0;
