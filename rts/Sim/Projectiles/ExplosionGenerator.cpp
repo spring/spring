@@ -138,7 +138,7 @@ creg::Class* ClassAliasList::GetClass(const string& name) const
 	creg::Class* cls = creg::System::GetClass(n);
 
 	if (cls == NULL) {
-		LOG_L(L_WARNING, "[%s] name \"%s\" does not match any class", __FUNCTION__, name.c_str());
+		LOG_L(L_WARNING, "[%s] name \"%s\" does not match any ExplosionGenerator class (forgot the \"%s\" prefix?)", __FUNCTION__, name.c_str(), CEG_PREFIX_STRING);
 	}
 
 	return cls;
