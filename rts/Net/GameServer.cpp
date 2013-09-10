@@ -31,53 +31,58 @@
 #include "Game/ChatMessage.h"
 #include "Game/CommandMessage.h"
 #include "Game/GlobalUnsynced.h" // for syncdebug
-#include "System/Util.h"
-#include "System/TdfParser.h"
-#include "Sim/Misc/GlobalConstants.h"
-
-#ifdef DEDICATED
-	#include "System/LoadSave/DemoRecorder.h"
-#else
-	#include "Sim/Misc/GlobalSynced.h"
-#endif
-
+#include "Game/IVideoCapturing.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
-#include "Game/IVideoCapturing.h"
+
+#include "Sim/Misc/GlobalConstants.h"
+
 // This undef is needed, as somewhere there is a type interface specified,
 // which we need not!
 // (would cause problems in ExternalAI/Interface/SAIInterfaceLibrary.h)
 #ifdef interface
 	#undef interface
 #endif
-#include "System/Config/ConfigHandler.h"
-#include "System/GlobalConfig.h"
-#include "System/Log/ILog.h"
 #include "System/CRC.h"
-#include "System/FileSystem/SimpleParser.h"
+#include "System/GlobalConfig.h"
 #include "System/MsgStrings.h"
 #include "System/myMath.h"
+#include "System/Util.h"
+#include "System/TdfParser.h"
+#include "System/Config/ConfigHandler.h"
+#include "System/FileSystem/SimpleParser.h"
 #include "System/Net/LocalConnection.h"
 #include "System/Net/UnpackPacket.h"
+#include "System/LoadSave/DemoRecorder.h"
 #include "System/LoadSave/DemoReader.h"
+#include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
+
 #ifndef DEDICATED
 #include "lib/luasocket/src/restrictions.h"
 #endif
-
 
 #define ALLOW_DEMO_GODMODE
 #define PKTCACHE_VECSIZE 1000
 
 using netcode::RawPacket;
 
+
+
+CONFIG(int, AutohostPort).defaultValue(0);
 CONFIG(int, SpeedControl).defaultValue(1).minimumValue(1).maximumValue(2)
 	.description("Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest");
 CONFIG(bool, BypassScriptPasswordCheck).defaultValue(false);
 CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
+#ifdef DEDICATED
+CONFIG(bool, ServerRecordDemos).defaultValue(true);
+#else
+CONFIG(bool, ServerRecordDemos).defaultValue(false);
+#endif
 CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
-CONFIG(int, AutohostPort).defaultValue(0);
+
+
 
 /// frames until a syncchech will time out and a warning is given out
 const unsigned SYNCCHECK_TIMEOUT = 300;
@@ -223,13 +228,13 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 
 	commandBlacklist = std::set<std::string>(commands, commands+numCommands);
 
-#ifdef DEDICATED
-	demoRecorder.reset(new CDemoRecorder(setup->mapName, setup->modName));
-	demoRecorder->WriteSetupText(gameData->GetSetup());
-	const netcode::RawPacket* ret = gameData->Pack();
-	demoRecorder->SaveToDemo(ret->data, ret->length, GetDemoTime());
-	delete ret;
-#endif
+	if (configHandler->GetBool("ServerRecordDemos")) {
+		demoRecorder.reset(new CDemoRecorder(setup->mapName, setup->modName, true));
+		demoRecorder->WriteSetupText(gameData->GetSetup());
+		const netcode::RawPacket* ret = gameData->Pack();
+		demoRecorder->SaveToDemo(ret->data, ret->length, GetDemoTime());
+		delete ret;
+	}
 
 	// AIs do not join in here, so just set their teams as active
 	for (std::map<unsigned char, GameSkirmishAI>::const_iterator ai = ais.begin(); ai != ais.end(); ++ai) {
@@ -262,7 +267,15 @@ CGameServer::~CGameServer()
 	thread->join();
 	delete thread;
 
-#ifdef DEDICATED
+	// after this, demoRecorder goes out of scope and its dtor is called
+	WriteDemoData();
+}
+
+void CGameServer::WriteDemoData()
+{
+	if (demoRecorder == NULL)
+		return;
+
 	// there is always at least one non-Gaia team (numTeams > 0)
 	// the Gaia team itself does not count toward the statistics
 	demoRecorder->SetTime(serverFrameNum / GAME_SPEED, spring_tomsecs(spring_gettime() - serverStartTime) / 1000);
@@ -274,8 +287,9 @@ CGameServer::~CGameServer()
 	for (size_t i = 0; i < players.size(); ++i) {
 		demoRecorder->SetPlayerStats(i, players[i].lastStats);
 	}
+
 	/*
-	// TODO add?
+	// TODO?
 	for (size_t i = 0; i < ais.size(); ++i) {
 		demoRecorder->SetSkirmishAIStats(i, ais[i].lastStats);
 	}
@@ -283,7 +297,6 @@ CGameServer::~CGameServer()
 		record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
 	}
 	*/
-#endif // DEDICATED
 }
 
 void CGameServer::StripGameSetupText(const GameData* const newGameData)
@@ -592,10 +605,10 @@ void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 		players[p].SendData(packet);
 	if (canReconnect || bypassScriptPasswordCheck || !gameHasStarted)
 		AddToPacketCache(packet);
-#ifdef DEDICATED
-	if (demoRecorder)
+
+	if (demoRecorder != NULL) {
 		demoRecorder->SaveToDemo(packet->data, packet->length, GetDemoTime());
-#endif
+	}
 }
 
 void CGameServer::Message(const std::string& message, bool broadcast)
@@ -1900,9 +1913,10 @@ void CGameServer::GenerateAndSendGameID()
 	}
 
 	Broadcast(CBaseNetProtocol::Get().SendGameID(gameID.charArray));
-#ifdef DEDICATED
-	demoRecorder->SetGameID(gameID.charArray);
-#endif
+
+	if (demoRecorder != NULL) {
+		demoRecorder->SetGameID(gameID.charArray);
+	}
 
 	generatedGameID = true;
 }
@@ -2022,14 +2036,18 @@ void CGameServer::StartGame(bool forced)
 	rng.Seed(gameID.intArray[0] ^ gameID.intArray[1] ^ gameID.intArray[2] ^ gameID.intArray[3]);
 	Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
 	Broadcast(CBaseNetProtocol::Get().SendStartPlaying(0));
-	if (hostif)
-#ifdef DEDICATED
-		hostif->SendStartPlaying(gameID.charArray, demoRecorder->GetName());
-#else
-		hostif->SendStartPlaying(gameID.charArray, "");
-#endif
-	timeLeft=0;
+
+	if (hostif != NULL) {
+		if (demoRecorder != NULL) {
+			hostif->SendStartPlaying(gameID.charArray, demoRecorder->GetName());
+		} else {
+			hostif->SendStartPlaying(gameID.charArray, "");
+		}
+	}
+
+	timeLeft = 0;
 	lastTick = spring_gettime() - spring_msecs(1);
+
 	CreateNewFrame(true, false);
 }
 

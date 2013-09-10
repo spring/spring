@@ -225,7 +225,7 @@ int main(int argc, char* argv[])
 		}
 
 		while (!server->HasFinished()) {
-			static bool printData = true;
+			static bool printData = (server->GetDemoRecorder() != NULL);
 
 			if (printData) {
 				printData = false;

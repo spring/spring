@@ -17,7 +17,7 @@
 class CDemoRecorder : public CDemo
 {
 public:
-	CDemoRecorder(const std::string& mapName, const std::string& modName);
+	CDemoRecorder(const std::string& mapName, const std::string& modName, bool serverDemo);
 	~CDemoRecorder();
 
 	void WriteSetupText(const std::string& text);
@@ -26,7 +26,7 @@ public:
 	/**
 	@brief assign a map name for the demo file
 	*/
-	void SetName(const std::string& mapname, const std::string& modname);
+	void SetName(const std::string& mapName, const std::string& modName, bool serverDemo);
 	const std::string& GetName() const { return demoName; }
 
 	void SetGameID(const unsigned char* buf);
