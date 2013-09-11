@@ -122,7 +122,7 @@ template<class Clock>
 struct TestProcessor {
 	static inline float Run()
 	{
-		ScopedOnceTimer timer(Clock::GetName());
+		ScopedOnceTimer timer(Clock::GetName() + " entire test runtime");
 		int64_t lastTick = Clock::Get();
 		int64_t maxTick = 0;
 		int64_t minTick = 1e9;
