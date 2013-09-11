@@ -166,8 +166,8 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	// Get the (root-level) model table
 	const LuaTable& modelTable = metaFileParser.GetRoot();
 
-	if (modelTable.IsValid()) {
-		LOG_S(LOG_SECTION_MODEL, "Found valid model metadata in '%s'", metaFileName.c_str());
+	if (!modelTable.IsValid()) {
+		LOG_S(LOG_SECTION_MODEL, "No valid model metadata in '%s' or no meta-file", metaFileName.c_str());
 	}
 
 
