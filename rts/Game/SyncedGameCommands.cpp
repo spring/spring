@@ -262,9 +262,11 @@ public:
 			" a chat message to Lua-rules") {}
 
 	bool Execute(const SyncedAction& action) const {
+		const std::string& arg = action.GetArgs();
+
 		if (gs->frameNum <= 1) {
 			// TODO still needed???
-			LOG_L(L_WARNING, "/%s: cannot be called before gameframe #1", GetCommand().c_str());
+			LOG_L(L_WARNING, "/%s %s: cannot execute before gameframe #2", GetCommand().c_str(), arg.c_str());
 			return false;
 		}
 
@@ -274,11 +276,11 @@ public:
 		//     but this is no longer the case so we now let any player execute them (for MP
 		//     it does not matter who does so since they are not meant to be used there ITFP
 		//     and no less sync-safe)
-		if (action.GetArgs() == "reload" || action.GetArgs() == "enable") {
+		if (arg == "reload" || arg == "enable") {
 			if (!gs->cheatEnabled) {
 				LOG_L(L_WARNING, "Cheating required to load synced scripts");
 			} else {
-				if (luaRules != NULL && action.GetArgs() == "enable") {
+				if (luaRules != NULL && arg == "enable") {
 					LOG_L(L_WARNING, "LuaRules is already loaded");
 				} else {
 					GML_MSTMUTEX_DOUNLOCK(sim); // temporarily unlock this mutex to prevent a deadlock
@@ -297,7 +299,7 @@ public:
 					}
 				}
 			}
-		} else if (action.GetArgs() == "disable") {
+		} else if (arg == "disable") {
 			if (!gs->cheatEnabled) {
 				LOG_L(L_WARNING, "Cheating required to disable synced scripts");
 			} else {
@@ -312,7 +314,7 @@ public:
 				LOG("LuaRules disabled");
 			}
 		} else if (luaRules) {
-			luaRules->GotChatMsg(action.GetArgs(), action.GetPlayerID());
+			luaRules->GotChatMsg(arg, action.GetPlayerID());
 		}
 
 		return true;
@@ -327,9 +329,11 @@ public:
 			" a chat message to Lua-Gaia") {}
 
 	bool Execute(const SyncedAction& action) const {
+		const std::string& arg = action.GetArgs();
+
 		if (gs->frameNum <= 1) {
 			// TODO still needed???
-			LOG_L(L_WARNING, "/%s: cannot be called before gameframe #1", GetCommand().c_str());
+			LOG_L(L_WARNING, "/%s %s: cannot execute before gameframe #2", GetCommand().c_str(), arg.c_str());
 			return false;
 		}
 
@@ -337,11 +341,11 @@ public:
 			return false;
 		}
 
-		if (action.GetArgs() == "reload" || action.GetArgs() == "enable") {
+		if (arg == "reload" || arg == "enable") {
 			if (!gs->cheatEnabled) {
 				LOG_L(L_WARNING, "Cheating required to load synced scripts");
 			} else {
-				if (luaGaia != NULL && action.GetArgs() == "enable") {
+				if (luaGaia != NULL && arg == "enable") {
 					LOG_L(L_WARNING, "LuaGaia is already loaded");
 				} else {
 					CLuaGaia::FreeHandler();
@@ -354,7 +358,7 @@ public:
 					}
 				}
 			}
-		} else if (action.GetArgs() == "disable") {
+		} else if (arg == "disable") {
 			if (!gs->cheatEnabled) {
 				LOG_L(L_WARNING, "Cheating required to disable synced scripts");
 			} else {
@@ -362,7 +366,7 @@ public:
 				LOG("LuaGaia disabled");
 			}
 		} else if (luaGaia) {
-			luaGaia->GotChatMsg(action.GetArgs(), action.GetPlayerID());
+			luaGaia->GotChatMsg(arg, action.GetPlayerID());
 		} else {
 			LOG("LuaGaia disabled");
 		}
