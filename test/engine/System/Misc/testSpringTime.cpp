@@ -253,11 +253,12 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 void sleep_boost_posix()  { boost::this_thread::sleep(boost::posix_time::milliseconds(1)); }
 void sleep_boost_posix2() { boost::this_thread::sleep(boost::posix_time::microseconds(1)); }
 #ifdef BOOST_THREAD_USES_CHRONO
-void sleep_boost() { boost::this_thread::sleep_for(boost::chrono::nanoseconds( 1 )); }
+void sleep_boost_chrono() { boost::this_thread::sleep_for(boost::chrono::nanoseconds( 1 )); }
 #endif
 void yield_boost() { boost::this_thread::yield(); }
 #if (__cplusplus > 199711L) && !defined(__MINGW32__) && defined(_GLIBCXX_USE_SCHED_YIELD) //last one is a gcc 4.7 bug
 #include <thread>
+void sleep_stdchrono() { std::this_thread::sleep_for(std::chrono::nanoseconds(1)); }
 void yield_chrono() { std::this_thread::yield(); }
 #endif
 void sleep_spring() { spring_sleep(spring_msecs(0)); }
@@ -287,10 +288,11 @@ BOOST_AUTO_TEST_CASE( ThreadSleepTime )
 	BenchmarkSleepFnc("sleep_boost_posixtime_milliseconds", &sleep_boost_posix, 1000);
 	BenchmarkSleepFnc("sleep_boost_posixtime_microseconds", &sleep_boost_posix2, 1000);
 #ifdef BOOST_THREAD_USES_CHRONO
-	BenchmarkSleepFnc("sleep_boost", &sleep_boost, 100000);
+	BenchmarkSleepFnc("sleep_boost_chrono", &sleep_boost_chrono, 100000);
 #endif
 	BenchmarkSleepFnc("yield_boost", &yield_boost, 1000000);
 #if (__cplusplus > 199711L) && !defined(__MINGW32__) && defined(_GLIBCXX_USE_SCHED_YIELD) //last one is a gcc 4.7 bug
+	BenchmarkSleepFnc("sleep_stdchrono", &sleep_stdchrono, 1000);
 	BenchmarkSleepFnc("yield_chrono", &yield_chrono, 1000000);
 #endif
 	BenchmarkSleepFnc("sleep_spring", &sleep_spring, 1000000);
