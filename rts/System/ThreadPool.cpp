@@ -159,9 +159,14 @@ static void WorkerLoop(int id)
 	while (!exitThread) {
 		const auto spinlockStart = boost::chrono::high_resolution_clock::now() + boost::chrono::milliseconds(spinlockMs);
 
-		while (!DoTask(lk)) {
+		while (!DoTask(lk) && !exitThread) {
 			if (spinlockStart < boost::chrono::high_resolution_clock::now()) {
-				newTasks.wait_for(lk2, boost::chrono::nanoseconds(1));
+			#ifndef BOOST_THREAD_USES_CHRONO
+				const boost::system_time timeout = boost::get_system_time() + boost::posix_time::microseconds(1);
+				newTasks.timed_wait(lk2, timeout);
+			#else
+				newTasks.wait_for(lk2, boost::chrono::nanoseconds(100));
+			#endif
 			}
 		}
 	}
