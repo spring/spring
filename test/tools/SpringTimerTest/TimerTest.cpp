@@ -8,6 +8,7 @@
 
 #define GAME_SPEED_HZ 30
 #define FRAME_TIME_MS (1000.0f / GAME_SPEED_HZ)
+// #define SLEEP_DRAW
 
 static unsigned int lastSimFrame                = 0;
 static unsigned int lastSimFrameRateUpdateFrame = 0;
@@ -52,11 +53,23 @@ static void GameUpdateUnsynced(unsigned int currSimFrame, unsigned int currDrawF
 static void GameDraw(unsigned int currSimFrame, unsigned int currDrawFrame) {
 	// do something useful that takes non-trivial time, eg. sleeping
 	// at ~5 milliseconds per draw-frame, rFPS would be at most ~200
-	boost::this_thread::sleep(boost::posix_time::milliseconds(1 + (random() % 5)));
+	// wake-up can vary and affects FPS too much, busy-loop instead
+	{
+	#ifdef SLEEP_DRAW
+		boost::this_thread::sleep(boost::posix_time::milliseconds(1 + (random() % 5)));
+	#else
+		const spring_time currentTime = spring_gettime();
+		const spring_time wakeUpTime = currentTime + spring_time(1 + (random() % 5)); // MILLIseconds
+
+		while (spring_gettime() < wakeUpTime) {
+		}
+	#endif
+	}
 
 	const float currTimeOffset = simFrameTimeOffset;
 	static float lastTimeOffset = simFrameTimeOffset;
 
+	// do nothing first 30 frames
 	if (currSimFrame < GAME_SPEED_HZ)
 		return;
 
