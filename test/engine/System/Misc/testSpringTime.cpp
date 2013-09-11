@@ -11,6 +11,8 @@
 #include <boost/chrono/include.hpp> // boost chrono
 #include <boost/thread.hpp>
 
+// #define BOOST_MONOTONIC_RAW_CLOCK
+
 static const int testRuns = 1000000;
 
 
@@ -66,14 +68,26 @@ struct Cpp11ChronoClock {
 #endif
 
 
+
+
 #if defined(__USE_GNU) && !defined(WIN32)
 #include <time.h>
-struct PosixClock {
+struct PosixClockMT {
 	static inline float ToMs() { return 1.0f / 1e6; }
-	static inline std::string GetName() { return "clock_gettime"; }
+	static inline std::string GetName() { return "clock_gettime(MT)"; }
 	static inline int64_t Get() {
 		timespec t1;
-	#ifdef CLOCK_MONOTONIC_RAW
+
+		// boost::chrono has a system_clock (CLOCK_REALTIME --> affected
+		// by NTP and can jump forward and backward) and a steady_clock
+		// (CLOCK_MONOTONIC --> can be slewed by NTP but will never jump)
+		//
+		// which of the two becomes a typedef for high_resolution_clock
+		// depends on BOOST_CHRONO_HAS_CLOCK_STEADY, note however there
+		// is also a CLOCK_MONOTONIC_RAW (never slews or jumps which is
+		// what we want, no NTP adjustments at all) but boost DOES *NOT*
+		// USE this even in the latest release (1.54)!
+	#if defined(CLOCK_MONOTONIC_RAW) && defined(BOOST_MONOTONIC_RAW_CLOCK)
 		clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
 	#else
 		clock_gettime(CLOCK_MONOTONIC, &t1);
@@ -81,7 +95,18 @@ struct PosixClock {
 		return t1.tv_nsec + int64_t(t1.tv_sec) * int64_t(1e9);
 	}
 };
+
+struct PosixClockRT {
+	static inline float ToMs() { return 1.0f / 1e6; }
+	static inline std::string GetName() { return "clock_gettime(RT)"; }
+	static inline int64_t Get() {
+		timespec t1;
+		clock_gettime(CLOCK_REALTIME, &t1);
+		return t1.tv_nsec + int64_t(t1.tv_sec) * int64_t(1e9);
+	}
+};
 #endif
+
 
 
 struct SpringClock {
@@ -126,7 +151,13 @@ struct TestProcessor {
 
 BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 {
-	BOOST_CHECK(boost::chrono::high_resolution_clock::is_steady);
+	#ifdef BOOST_CHRONO_HAS_CLOCK_STEADY
+	LOG("[%s] BOOST_CHRONO_HAS_CLOCK_STEADY defined --> CLOCK_MONOTONIC", __FUNCTION__);
+	#else
+	LOG("[%s] BOOST_CHRONO_HAS_CLOCK_STEADY undefined --> CLOCK_REALTIME", __FUNCTION__);
+	#endif
+
+	BOOST_CHECK(boost::chrono::high_resolution_clock::is_steady); // true if BOOST_CHRONO_HAS_CLOCK_STEADY
 #if __cplusplus > 199711L
 	BOOST_WARN(std::chrono::high_resolution_clock::is_steady);
 #endif
@@ -140,7 +171,8 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 	bestAvg = std::min(bestAvg, TestProcessor<BoostTimerClock>::Run());
 #endif
 #if defined(__USE_GNU) && !defined(WIN32)
-	bestAvg = std::min(bestAvg, TestProcessor<PosixClock>::Run());
+	bestAvg = std::min(bestAvg, TestProcessor<PosixClockMT>::Run());
+	bestAvg = std::min(bestAvg, TestProcessor<PosixClockRT>::Run());
 #endif
 #if __cplusplus > 199711L
 	bestAvg = std::min(bestAvg, TestProcessor<Cpp11ChronoClock>::Run());
