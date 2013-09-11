@@ -122,7 +122,8 @@ template<class Clock>
 struct TestProcessor {
 	static inline float Run()
 	{
-		ScopedOnceTimer timer(Clock::GetName() + " entire test runtime");
+		const auto startTestTime = spring_time::gettime();
+
 		int64_t lastTick = Clock::Get();
 		int64_t maxTick = 0;
 		int64_t minTick = 1e9;
@@ -143,7 +144,8 @@ struct TestProcessor {
 		float minMsTick = std::max<int64_t>(minTick, 1LL) * Clock::ToMs();
 		float avgMsTick = std::max<int64_t>(avgTick, 1.0f) * Clock::ToMs();
 		float minNonNullMsTick = lowTick * Clock::ToMs();
-		LOG("[%17s] maxTick: %3.6fms minTick: %3.6fms avgTick: %3.6fms minNonNullTick: %3.6fms", Clock::GetName().c_str(), maxMsTick, minMsTick, avgMsTick, minNonNullMsTick);
+
+		LOG("[%17s] maxTick: %3.6fms minTick: %3.6fms avgTick: %3.6fms minNonNullTick: %3.6fms totalTestRuntime: %4.0fms", Clock::GetName().c_str(), maxMsTick, minMsTick, avgMsTick, minNonNullMsTick, (spring_time::gettime() - startTestTime).toMilliSecsf());
 		return avgMsTick;
 	}
 };
@@ -248,7 +250,8 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 
 
 
-void sleep_posix()  { boost::this_thread::sleep(boost::posix_time::milliseconds(1)); }
+void sleep_boost_posix()  { boost::this_thread::sleep(boost::posix_time::milliseconds(1)); }
+void sleep_boost_posix2() { boost::this_thread::sleep(boost::posix_time::microseconds(1)); }
 #ifdef BOOST_THREAD_USES_CHRONO
 void sleep_boost() { boost::this_thread::sleep_for(boost::chrono::nanoseconds( 1 )); }
 #endif
@@ -276,12 +279,13 @@ void BenchmarkSleepFnc(const std::string& name, void (*sleep)(), const int runs)
 		t = spring_gettime();
 	}
 
-	LOG("[%12s] min: %.6fms avg: %.6fms max: %.6fms", name.c_str(), tmin.toMilliSecsf(), tavg * 1e-6, tmax.toMilliSecsf());
+	LOG("[%35s] min: %.6fms avg: %.6fms max: %.6fms", name.c_str(), tmin.toMilliSecsf(), tavg * 1e-6, tmax.toMilliSecsf());
 }
 
 BOOST_AUTO_TEST_CASE( ThreadSleepTime )
 {
-	BenchmarkSleepFnc("sleep_posix", &sleep_posix, 1000);
+	BenchmarkSleepFnc("sleep_boost_posixtime_milliseconds", &sleep_boost_posix, 1000);
+	BenchmarkSleepFnc("sleep_boost_posixtime_microseconds", &sleep_boost_posix2, 1000);
 #ifdef BOOST_THREAD_USES_CHRONO
 	BenchmarkSleepFnc("sleep_boost", &sleep_boost, 100000);
 #endif
