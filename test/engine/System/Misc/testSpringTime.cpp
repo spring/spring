@@ -153,6 +153,8 @@ struct TestProcessor {
 
 BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 {
+	LOG("Clock Precision Test");
+
 	#ifdef BOOST_CHRONO_HAS_CLOCK_STEADY
 	LOG("[%s] BOOST_CHRONO_HAS_CLOCK_STEADY defined --> CLOCK_MONOTONIC", __FUNCTION__);
 	#else
@@ -250,28 +252,34 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 
 
 
-void sleep_boost_posix()  { boost::this_thread::sleep(boost::posix_time::milliseconds(1)); }
-void sleep_boost_posix2() { boost::this_thread::sleep(boost::posix_time::microseconds(1)); }
+void sleep_boost_posix(int time)  { boost::this_thread::sleep(boost::posix_time::milliseconds(time)); }
+void sleep_boost_posix2(int time) { boost::this_thread::sleep(boost::posix_time::microseconds(time)); }
 #ifdef BOOST_THREAD_USES_CHRONO
-void sleep_boost_chrono() { boost::this_thread::sleep_for(boost::chrono::nanoseconds( 1 )); }
+void sleep_boost_chrono(int time) { boost::this_thread::sleep_for(boost::chrono::nanoseconds(time)); }
 #endif
-void yield_boost() { boost::this_thread::yield(); }
+void yield_boost(int time) { boost::this_thread::yield(); }
 #if (__cplusplus > 199711L) && !defined(__MINGW32__) && defined(_GLIBCXX_USE_SCHED_YIELD) //last one is a gcc 4.7 bug
 #include <thread>
-void sleep_stdchrono() { std::this_thread::sleep_for(std::chrono::nanoseconds(1)); }
-void yield_chrono() { std::this_thread::yield(); }
+void sleep_stdchrono(int time) { std::this_thread::sleep_for(std::chrono::nanoseconds(time)); }
+void yield_chrono(int time) { std::this_thread::yield(); }
 #endif
-void sleep_spring() { spring_sleep(spring_msecs(0)); }
+void sleep_spring(int time) { spring_sleep(spring_msecs(time)); }
+void sleep_spring2(int time) { spring_sleep(spring_time::fromNanoSecs(time)); }
 
 
-void BenchmarkSleepFnc(const std::string& name, void (*sleep)(), const int runs)
+void BenchmarkSleepFnc(const std::string& name, void (*sleep)(int time), const int runs, const float toMilliSecondsScale)
 {
+	// waste a few cycles to push the cpu to higher frequency states
+	for (auto spinStopTime = spring_gettime() + spring_secs(2); spring_gettime() < spinStopTime; ) {
+	}
+
 	spring_time t = spring_gettime();
 	spring_time tmin, tmax;
 	float tavg = 0;
 
+	// check lowest possible sleep tick
 	for (int i=0; i<runs; ++i) {
-		sleep();
+		sleep(1);
 
 		spring_time diff = spring_gettime() - t;
 		if ((diff > tmax) || !spring_istime(tmax)) tmax = diff;
@@ -280,20 +288,40 @@ void BenchmarkSleepFnc(const std::string& name, void (*sleep)(), const int runs)
 		t = spring_gettime();
 	}
 
-	LOG("[%35s] min: %.6fms avg: %.6fms max: %.6fms", name.c_str(), tmin.toMilliSecsf(), tavg * 1e-6, tmax.toMilliSecsf());
+	// check error in sleeping times
+	spring_time emin, emax;
+	float eavg = 0;
+	if (toMilliSecondsScale != 0) {
+		for (int i=0; i<1000; ++i) {
+			const auto sleepTime = (rand() % 100) * 0.1f;
+
+			t = spring_gettime();
+			sleep(sleepTime * toMilliSecondsScale);
+			spring_time diff = (spring_gettime() - t) - spring_msecs(sleepTime);
+
+			if ((diff > emax) || !spring_istime(emax)) emax = diff;
+			if ((diff < emin) || !spring_istime(emin)) emin = diff;
+			eavg = float(i * eavg + std::abs(diff.toNanoSecs())) / (i + 1);
+		}
+	}
+
+	LOG("[%35s] accuracy:={ err: %+.4fms %+.4fms erravg: %.4fms } min sleep time:={ min: %.6fms avg: %.6fms max: %.6fms }", name.c_str(), emin.toMilliSecsf(), emax.toMilliSecsf(), eavg * 1e-6, tmin.toMilliSecsf(), tavg * 1e-6, tmax.toMilliSecsf());
 }
 
 BOOST_AUTO_TEST_CASE( ThreadSleepTime )
 {
-	BenchmarkSleepFnc("sleep_boost_posixtime_milliseconds", &sleep_boost_posix, 1000);
-	BenchmarkSleepFnc("sleep_boost_posixtime_microseconds", &sleep_boost_posix2, 1000);
+	LOG("Sleep() Precision Test");
+
+	BenchmarkSleepFnc("sleep_boost_posixtime_milliseconds", &sleep_boost_posix, 500, 1e0);
+	BenchmarkSleepFnc("sleep_boost_posixtime_microseconds", &sleep_boost_posix2, 500, 1e3);
 #ifdef BOOST_THREAD_USES_CHRONO
-	BenchmarkSleepFnc("sleep_boost_chrono", &sleep_boost_chrono, 100000);
+	BenchmarkSleepFnc("sleep_boost_chrono", &sleep_boost_chrono, 50000, 1e6);
 #endif
-	BenchmarkSleepFnc("yield_boost", &yield_boost, 1000000);
+	BenchmarkSleepFnc("yield_boost", &yield_boost, 500000, 0);
 #if (__cplusplus > 199711L) && !defined(__MINGW32__) && defined(_GLIBCXX_USE_SCHED_YIELD) //last one is a gcc 4.7 bug
-	BenchmarkSleepFnc("sleep_stdchrono", &sleep_stdchrono, 1000);
-	BenchmarkSleepFnc("yield_chrono", &yield_chrono, 1000000);
+	BenchmarkSleepFnc("sleep_stdchrono", &sleep_stdchrono, 500, 1e6);
+	BenchmarkSleepFnc("yield_chrono", &yield_chrono, 500000, 0);
 #endif
-	BenchmarkSleepFnc("sleep_spring", &sleep_spring, 1000000);
+	BenchmarkSleepFnc("sleep_spring", &sleep_spring, 500, 1e0);
+	BenchmarkSleepFnc("sleep_spring2", &sleep_spring2, 500, 1e6);
 }
