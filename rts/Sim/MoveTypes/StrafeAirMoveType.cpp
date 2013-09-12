@@ -1138,12 +1138,11 @@ float3 CStrafeAirMoveType::FindLandingPos(float brakeRate) const
 	const float3 ret = -OnesVector;
 	const UnitDef* ud = owner->unitDef;
 
-	float3 tryPos = owner->pos + ((owner->speed * owner->speed * 0.5f) / brakeRate);
+	float3 tryPos = owner->pos + owner->frontdir * ((owner->speed.SqLength() * 0.5f) / brakeRate);
 	tryPos.y = ground->GetHeightReal(tryPos.x, tryPos.z);
 
-	if ((tryPos.y < 0.0f) && !(ud->floatOnWater || ud->canSubmerge)) {
+	if ((tryPos.y < 0.0f) && !(ud->floatOnWater || ud->canSubmerge))
 		return ret;
-	}
 
 	tryPos.ClampInBounds();
 
@@ -1157,9 +1156,9 @@ float3 CStrafeAirMoveType::FindLandingPos(float brakeRate) const
 		}
 	}
 
-	if (ground->GetSlope(tryPos.x, tryPos.z) > 0.03f) {
+	// FIXME: better use ud->maxHeightDif?
+	if (ground->GetSlope(tryPos.x, tryPos.z) > 0.03f)
 		return ret;
-	}
 
 	return tryPos;
 }
