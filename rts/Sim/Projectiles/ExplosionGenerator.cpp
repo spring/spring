@@ -6,6 +6,7 @@
 #include <boost/cstdint.hpp>
 
 #include "ExplosionGenerator.h"
+#include "ExpGenSpawner.h" //!!
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
@@ -68,7 +69,7 @@ CR_REG_METADATA_SUB(CCustomExplosionGenerator, GroundFlashInfo, (
 
 CR_BIND(CCustomExplosionGenerator::ExpGenParams, )
 CR_REG_METADATA_SUB(CCustomExplosionGenerator, ExpGenParams, (
-	CR_MEMBER(projectileSpawn),
+	CR_MEMBER(projectiles),
 	CR_MEMBER(groundFlash),
 	CR_MEMBER(useDefaultExplosions)
 ));
@@ -276,6 +277,10 @@ unsigned int CExplosionGeneratorHandler::LoadGeneratorID(const std::string& tag)
 }
 
 // creates either a standard or a custom explosion generator instance
+// NOTE:
+//   can be called recursively for custom instances (LoadGenerator ->
+//   Load -> ParseExplosionCode -> LoadGenerator -> ...), generators
+//   must NOT be overwritten
 IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag)
 {
 	const TagIdentMapConstIt it = expGenTagIdentMap.find(tag);
@@ -306,9 +311,8 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 	if (cls == NULL)
 		return NULL;
 
-	if (!cls->IsSubclassOf(IExplosionGenerator::StaticClass())) {
+	if (!cls->IsSubclassOf(IExplosionGenerator::StaticClass()))
 		throw content_error(prefix + " is not a subclass of IExplosionGenerator");
-	}
 
 	IExplosionGenerator* explGen = static_cast<IExplosionGenerator*>(cls->CreateInstance());
 	explGen->SetGeneratorID(explosionGenerators.size());
@@ -316,16 +320,18 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 	// can still be a standard generator, but with non-zero ID
 	assert(explGen->GetGeneratorID() != EXPGEN_ID_STANDARD);
 
-	if (!postfix.empty()) {
-		explGen->Load(this, postfix);
+	// save generator so ID is valid *before* possible recursion
+	explosionGenerators.push_back(explGen);
 
+	if (!postfix.empty()) {
 		// standard EG's have no postfix (nor always a prefix)
 		// custom EG's always have CEG_PREFIX_STRING in front
 		expGenTagIdentMap[tag] = explGen->GetGeneratorID();
 		expGenIdentTagMap[explGen->GetGeneratorID()] = tag;
+
+		explGen->Load(this, postfix);
 	}
 
-	explosionGenerators.push_back(explGen);
 	return explGen;
 }
 
@@ -874,28 +880,30 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 		return false;
 	}
 
-	expGenParams.projectileSpawn.clear();
+	expGenParams.projectiles.clear();
 	expGenParams.groundFlash = GroundFlashInfo();
 
 	vector<string> spawns;
 	expTable.GetKeys(spawns);
 
-	for (vector<string>::iterator si = spawns.begin(); si != spawns.end(); ++si) {
+	// FIXME: for some reason *every* CEG table contains a spawn called "filename" ??
+	for (unsigned int n = 0; n < spawns.size(); n++) {
 		ProjectileSpawnInfo psi;
 
-		const string& spawnName = *si;
-		const LuaTable spawnTable = expTable.SubTable(spawnName);
+		const string& spawnName = spawns[n];
+		const LuaTable& spawnTable = expTable.SubTable(spawnName);
 
-		if (!spawnTable.IsValid() || spawnName == "groundflash")
+		if (!spawnTable.IsValid() || spawnName == "groundflash") {
 			continue;
+		}
 
 		const string& className = spawnTable.GetString("class", spawnName);
 
-		try {
-			psi.projectileClass = (handler->GetProjectileClasses()).GetClass(className);
-			psi.flags = GetFlagsFromTable(spawnTable);
-			psi.count = spawnTable.GetInt("count", 1);
-		} catch(...) {
+		psi.projectileClass = (handler->GetProjectileClasses()).GetClass(className);
+		psi.flags = GetFlagsFromTable(spawnTable);
+		psi.count = std::max(0, spawnTable.GetInt("count", 1));
+
+		if (psi.projectileClass == NULL) {
 			LOG_L(L_WARNING, "[CCEG::%s] %s: Unknown class \"%s\"", __FUNCTION__, tag.c_str(), className.c_str());
 			continue;
 		}
@@ -908,6 +916,7 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 		string code;
 		map<string, string> props;
 		map<string, string>::const_iterator propIt;
+
 		spawnTable.SubTable("properties").GetMap(props);
 
 		for (propIt = props.begin(); propIt != props.end(); ++propIt) {
@@ -924,7 +933,7 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 		psi.code.resize(code.size());
 		copy(code.begin(), code.end(), psi.code.begin());
 
-		expGenParams.projectileSpawn.push_back(psi);
+		expGenParams.projectiles.push_back(psi);
 	}
 
 	const LuaTable gndTable = expTable.SubTable("groundflash");
@@ -974,7 +983,7 @@ bool CCustomExplosionGenerator::Explosion(
 	if (hit) flags |= SPW_UNIT;
 	else     flags |= SPW_NO_UNIT;
 
-	const std::vector<ProjectileSpawnInfo>& spawnInfo = expGenParams.projectileSpawn;
+	const std::vector<ProjectileSpawnInfo>& spawnInfo = expGenParams.projectiles;
 	const GroundFlashInfo& groundFlash = expGenParams.groundFlash;
 
 	for (int a = 0; a < spawnInfo.size(); a++) {
@@ -987,7 +996,7 @@ bool CCustomExplosionGenerator::Explosion(
 		if (projectileHandler->particleSaturation > 1.0f)
 			continue;
 
-		for (int c = 0; c < psi.count; c++) {
+		for (unsigned int c = 0; c < psi.count; c++) {
 			CExpGenSpawnable* projectile = static_cast<CExpGenSpawnable*>((psi.projectileClass)->CreateInstance());
 			ExecuteExplosionCode(&psi.code[0], damage, (char*) projectile, c, dir);
 			projectile->Init(pos, owner);
