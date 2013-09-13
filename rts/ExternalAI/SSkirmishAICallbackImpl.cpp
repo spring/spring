@@ -3853,12 +3853,12 @@ EXPORT(const char*) skirmishAiCallback_WeaponDef_getDescription(int skirmishAIId
 	return getWeaponDefById(skirmishAIId, weaponDefId)->description.c_str();
 }
 
+// WTF: AI's do not need to know about this crap AT ALL
 EXPORT(const char*) skirmishAiCallback_WeaponDef_getFileName(int skirmishAIId, int weaponDefId) {
 	return "$$deprecated$$";
 }
-
 EXPORT(const char*) skirmishAiCallback_WeaponDef_getCegTag(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->cegTag.c_str();
+	return "$$deprecated$$";
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getRange(int skirmishAIId, int weaponDefId) {

@@ -69,9 +69,7 @@ void CExplosiveProjectile::Update()
 	}
 
 	curTime += invttl;
-	if (curTime > 1) {
-		curTime = 1;
-	}
+	curTime = std::min(curTime, 1.0f);
 
 	if (weaponDef->noExplode && TraveledRange()) {
 		CProjectile::Collision();
