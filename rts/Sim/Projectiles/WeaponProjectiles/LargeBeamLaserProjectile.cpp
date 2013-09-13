@@ -37,9 +37,6 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const ProjectileParams& par
 {
 	projectileType = WEAPON_LARGEBEAMLASER_PROJECTILE;
 
-	checkCol = false;
-	useAirLos = true;
-
 	if (weaponDef != NULL) {
 		thickness     = weaponDef->visuals.thickness;
 		corethickness = weaponDef->visuals.corethickness;
@@ -64,8 +61,6 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const ProjectileParams& par
 		memset(&coreColStart[0], 0, sizeof(coreColStart));
 		memset(&edgeColStart[0], 0, sizeof(edgeColStart));
 	}
-
-	SetRadiusAndHeight(pos.distance(targetPos), 0.0f);
 }
 
 
@@ -78,7 +73,7 @@ void CLargeBeamLaserProjectile::Update()
 			edgeColStart[i] = (unsigned char) (edgeColStart[i] * decay);
 		}
 
-		explGenHandler->GenExplosion(cegID, startpos + ((targetPos - startpos) / ttl), (targetPos - startpos), 0.0f, flaresize, 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, startPos + ((targetPos - startPos) / ttl), (targetPos - startPos), 0.0f, flaresize, 0.0f, NULL, NULL);
 		ttl--;
 	}
 	else {
@@ -92,13 +87,14 @@ void CLargeBeamLaserProjectile::Draw()
 {
 	inArray = true;
 
-	const float3 cameraDir = (pos - camera->GetPos()).SafeANormalize();
+	const float3 midPos = (targetPos + startPos) * 0.5f;
+	const float3 cameraDir = (midPos - camera->GetPos()).SafeANormalize();
 	// beam's coor-system; degenerate if targetPos == startPos
-	const float3 zdir = (targetPos - startpos).SafeANormalize();
+	const float3 zdir = (targetPos - startPos).SafeANormalize();
 	const float3 xdir = (cameraDir.cross(zdir)).SafeANormalize();
 	const float3 ydir = (cameraDir.cross(xdir));
 
-	float3 pos1 = startpos;
+	float3 pos1 = startPos;
 	float3 pos2 = targetPos;
 
 	const float startTex = 1.0f - ((gu->modGameTime * scrollspeed) - int(gu->modGameTime * scrollspeed));
@@ -106,7 +102,7 @@ void CLargeBeamLaserProjectile::Draw()
 
 	const float beamEdgeSize = thickness;
 	const float beamCoreSize = beamEdgeSize * corethickness;
-	const float beamLength   = (targetPos - startpos).dot(zdir);
+	const float beamLength   = (targetPos - startPos).dot(zdir);
 	const float flareEdgeSize = thickness * flaresize;
 	const float flareCoreSize = flareEdgeSize * corethickness;
 
@@ -156,8 +152,8 @@ void CLargeBeamLaserProjectile::Draw()
 
 		for (float i = beamTileMinDst; i < beamTileMaxDst; i += tilelength) {
 			//! CAUTION: loop count must match EnlargeArrays above
-			pos1 = startpos + zdir * i;
-			pos2 = startpos + zdir * (i + tilelength);
+			pos1 = startPos + zdir * i;
+			pos2 = startPos + zdir * (i + tilelength);
 
 			va->AddVertexQTC(pos1 - (xdir * beamEdgeSize), tex.xstart, tex.ystart, edgeColStart);
 			va->AddVertexQTC(pos1 + (xdir * beamEdgeSize), tex.xstart, tex.yend,   edgeColStart);
@@ -170,7 +166,7 @@ void CLargeBeamLaserProjectile::Draw()
 		}
 
 		// draw laser end
-		pos1 = startpos + zdir * (beamTileMinDst + numBeamTiles * tilelength);
+		pos1 = startPos + zdir * (beamTileMinDst + numBeamTiles * tilelength);
 		pos2 = targetPos;
 		tex.xend = tex.xstart + (pos1.distance(pos2) / tilelength) * texSizeX;
 
@@ -207,7 +203,7 @@ void CLargeBeamLaserProjectile::Draw()
 
 	{
 		// draw muzzleflare
-		pos1 = startpos - zdir * (thickness * flaresize) * 0.02f;
+		pos1 = startPos - zdir * (thickness * flaresize) * 0.02f;
 
 		va->AddVertexQTC(pos1 + (ydir * muzzleEdgeSize),                           sidetex.xstart, sidetex.ystart, edgeColor);
 		va->AddVertexQTC(pos1 + (ydir * muzzleEdgeSize) + (zdir * muzzleEdgeSize), sidetex.xend,   sidetex.ystart, edgeColor);
@@ -244,7 +240,7 @@ void CLargeBeamLaserProjectile::Draw()
 
 	{
 		// draw flare (moved slightly along the camera direction)
-		pos1 = startpos - (camera->forward * 3.0f);
+		pos1 = startPos - (camera->forward * 3.0f);
 
 		va->AddVertexQTC(pos1 - (camera->right * flareEdgeSize) - (camera->up * flareEdgeSize), WT4->xstart, WT4->ystart, edgeColStart);
 		va->AddVertexQTC(pos1 + (camera->right * flareEdgeSize) - (camera->up * flareEdgeSize), WT4->xend,   WT4->ystart, edgeColStart);
@@ -265,6 +261,6 @@ void CLargeBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray&
 {
 	const unsigned char color[4] = {edgeColStart[0], edgeColStart[1], edgeColStart[2], 255};
 
-	lines.AddVertexQC(startpos,  color);
+	lines.AddVertexQC(startPos,  color);
 	lines.AddVertexQC(targetPos, color);
 }

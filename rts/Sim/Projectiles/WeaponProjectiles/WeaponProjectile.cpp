@@ -28,7 +28,7 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_IGNORED(weaponDef), //PostLoad
 	CR_MEMBER(target),
 	CR_MEMBER(targetPos),
-	CR_MEMBER(startpos),
+	CR_MEMBER(startPos),
 	CR_MEMBER(ttl),
 	CR_MEMBER(bounces),
 	CR_MEMBER(weaponDefID),
@@ -63,7 +63,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 
 	, targeted(false)
 
-	, startpos(params.pos)
+	, startPos(params.pos)
 	, targetPos(params.end)
 {
 	assert(weaponDef != NULL);
@@ -76,10 +76,27 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 	ignoreWater = weaponDef->waterweapon;
 
 	if (isRay) {
-		pos = (startpos + targetPos) * 0.5f;
-		//pos = startpos;
-		//speed = (targetPos - startpos) + weaponDef->collisionSize; //FIXME move to CProjectileHandler::Check...Collision?
-		drawRadius = startpos.distance(targetPos);
+		// ray projectiles must all set this to false because their collision
+		// detection is handled by the weapons firing them, ProjectileHandler
+		// will skip any tests for these
+		checkCol = false;
+		// type has not yet been set by derived ctor's at this point
+		// useAirLos = (projectileType != WEAPON_LIGHTNING_PROJECTILE);
+		useAirLos = true;
+
+		// NOTE:
+		//   {BeamLaser, Lightning}Projectile's do NOT actually move (their
+		//   speed is never added to pos) and never alter their speed either
+		//   they additionally override our ::Update (so CProjectile::Update
+		//   is also never called) which means assigning speed a non-zerovec
+		//   value should have no side-effects
+		pos = startPos;
+		speed = targetPos - startPos;
+
+		// ProjectileDrawer vis-culls by pos == startPos, but we
+		// want to see the beam even if camera is near targetPos
+		// --> use full distance for drawRadius
+		SetRadiusAndHeight((targetPos - startPos).Length(), 0.0f);
 	}
 
 	CSolidObject* so = NULL;
@@ -137,7 +154,7 @@ void CWeaponProjectile::Explode(
 		weaponDef->damages:
 		weaponDefHandler->DynamicDamages(
 			weaponDef->damages,
-			startpos,
+			startPos,
 			impactPos,
 			(weaponDef->dynDamageRange > 0.0f)?
 				weaponDef->dynDamageRange:
@@ -187,7 +204,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 	if (feature != NULL) {
 		if (IsHitScan()) {
 			impactPos = feature->pos;
-			impactDir = targetPos - startpos;
+			impactDir = targetPos - startPos;
 		}
 
 		if (gs->randFloat() < weaponDef->fireStarter) {
@@ -196,7 +213,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 	} else {
 		if (IsHitScan()) {
 			impactPos = targetPos;
-			impactDir = targetPos - startpos;
+			impactDir = targetPos - startPos;
 		}
 	}
 
@@ -211,7 +228,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 	if (unit != NULL) {
 		if (IsHitScan()) {
 			impactPos = unit->pos;
-			impactDir = targetPos - startpos;
+			impactDir = targetPos - startPos;
 		}
 	} else {
 		assert(false);
@@ -239,7 +256,7 @@ void CWeaponProjectile::UpdateInterception()
 		return;
 
 	if (IsHitScan()) {
-		if (ClosestPointOnLine(startpos, targetPos, po->pos).SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
+		if (ClosestPointOnLine(startPos, targetPos, po->pos).SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
 			po->Collision();
 			Collision();
 		}
@@ -290,7 +307,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 
 bool CWeaponProjectile::TraveledRange() const
 {
-	return ((pos - startpos).SqLength() > (weaponDef->range * weaponDef->range));
+	return ((pos - startPos).SqLength() > (weaponDef->range * weaponDef->range));
 }
 
 bool CWeaponProjectile::IsHitScan() const

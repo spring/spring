@@ -1825,6 +1825,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		// if pushCollider and pushCollidee are both false (eg. if each party
 		// is pushResistant), treat the collision as regular and push both to
 		// avoid deadlocks
+		// FIXME? mantis #3653 (build factory, give move order, order N units)
 		const float colliderSlideSign = Sign( separationVector.dot(collider->rightdir));
 		const float collideeSlideSign = Sign(-separationVector.dot(collidee->rightdir));
 
