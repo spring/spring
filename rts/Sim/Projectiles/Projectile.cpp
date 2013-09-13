@@ -99,6 +99,7 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	, projectileType(-1u)
 	, collisionFlags(0)
 {
+	SetRadiusAndHeight(1.7f, 0.0f);
 	Init(ZeroVector, owner);
 	GML::GetTicks(lastProjUpdate);
 }
@@ -136,8 +137,6 @@ void CProjectile::Init(const float3& offset, CUnit* owner)
 	}
 
 	pos += offset;
-
-	SetRadiusAndHeight(1.7f, 0.0f);
 }
 
 

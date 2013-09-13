@@ -468,12 +468,11 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc) {
 		if (p->checkCol && !p->deleteMe) {
 			const float3 ppos0 = p->pos;
 			const float3 ppos1 = p->pos + p->speed;
-			const float speedf = p->speed.Length();
 
 			CUnit** endUnit = &tempUnits[0];
 			CFeature** endFeature = &tempFeatures[0];
 
-			quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + speedf, endUnit, endFeature);
+			quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.Length(), endUnit, endFeature);
 
 			CheckUnitCollisions(p, tempUnits, endUnit, ppos0, ppos1);
 			CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);

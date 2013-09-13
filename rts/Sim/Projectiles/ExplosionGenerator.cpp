@@ -886,16 +886,19 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 	vector<string> spawns;
 	expTable.GetKeys(spawns);
 
-	// FIXME: for some reason *every* CEG table contains a spawn called "filename" ??
 	for (unsigned int n = 0; n < spawns.size(); n++) {
 		ProjectileSpawnInfo psi;
 
 		const string& spawnName = spawns[n];
 		const LuaTable& spawnTable = expTable.SubTable(spawnName);
 
-		if (!spawnTable.IsValid() || spawnName == "groundflash") {
+		// NOTE:
+		//   *every* CEG table contains a spawn called "filename"
+		//   see springcontent/gamedata/explosions.lua::LoadTDFs
+		if (!spawnTable.IsValid())
 			continue;
-		}
+		if (spawnName == "groundflash" || spawnName == "filename")
+			continue;
 
 		const string& className = spawnTable.GetString("class", spawnName);
 

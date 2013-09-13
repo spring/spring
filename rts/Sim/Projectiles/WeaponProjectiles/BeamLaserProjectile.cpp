@@ -33,10 +33,6 @@ CBeamLaserProjectile::CBeamLaserProjectile(const ProjectileParams& params): CWea
 	, midtexx(0.0f)
 {
 	projectileType = WEAPON_BEAMLASER_PROJECTILE;
-	checkCol = false;
-	useAirLos = true;
-
-	SetRadiusAndHeight(pos.distance(targetPos), 0.0f);
 
 	if (weaponDef != NULL) {
 		thickness = weaponDef->visuals.thickness;
@@ -88,7 +84,7 @@ void CBeamLaserProjectile::Update()
 			edgeColEnd[i]   *= decay;
 		}
 
-		explGenHandler->GenExplosion(cegID, startpos + ((targetPos - startpos) / ttl), (targetPos - startpos), 0.0f, flaresize, 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, startPos + ((targetPos - startPos) / ttl), (targetPos - startPos), 0.0f, flaresize, 0.0f, NULL, NULL);
 	}
 
 	UpdateInterception();
@@ -98,9 +94,10 @@ void CBeamLaserProjectile::Draw()
 {
 	inArray = true;
 
-	const float3 cameraDir = (pos - camera->GetPos()).SafeANormalize();
+	const float3 midPos = (targetPos + startPos) * 0.5f;
+	const float3 cameraDir = (midPos - camera->GetPos()).SafeANormalize();
 	// beam's coor-system; degenerate if targetPos == startPos
-	const float3 zdir = (targetPos - startpos).SafeANormalize();
+	const float3 zdir = (targetPos - startPos).SafeANormalize();
 	const float3 xdir = (cameraDir.cross(zdir)).SafeANormalize();
 	const float3 ydir = (cameraDir.cross(xdir));
 
@@ -109,7 +106,7 @@ void CBeamLaserProjectile::Draw()
 	const float flareEdgeSize = thickness * flaresize;
 	const float flareCoreSize = flareEdgeSize * corethickness;
 
-	const float3& pos1 = startpos;
+	const float3& pos1 = startPos;
 	const float3& pos2 = targetPos;
 
 	va->EnlargeArrays(32, 0, VA_SIZE_TC);
@@ -118,7 +115,7 @@ void CBeamLaserProjectile::Draw()
 	#define WT2 weaponDef->visuals.texture2
 	#define WT3 weaponDef->visuals.texture3
 
-	if ((pos - camera->GetPos()).SqLength() < (1000.0f * 1000.0f)) {
+	if ((midPos - camera->GetPos()).SqLength() < (1000.0f * 1000.0f)) {
 		va->AddVertexQTC(pos1 - xdir * beamEdgeSize,                       midtexx,   WT2->ystart, edgeColStart);
 		va->AddVertexQTC(pos1 + xdir * beamEdgeSize,                       midtexx,   WT2->yend,   edgeColStart);
 		va->AddVertexQTC(pos1 + xdir * beamEdgeSize - ydir * beamEdgeSize, WT2->xend, WT2->yend,   edgeColStart);
@@ -176,6 +173,6 @@ void CBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& poin
 {
 	const unsigned char color[4] = {edgeColStart[0], edgeColStart[1], edgeColStart[2], 255};
 
-	lines.AddVertexQC(startpos, color);
+	lines.AddVertexQC(startPos, color);
 	lines.AddVertexQC(targetPos, color);
 }
