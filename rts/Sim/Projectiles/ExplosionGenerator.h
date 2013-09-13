@@ -183,7 +183,7 @@ protected:
 		std::vector<char> code;
 
 		/// number of projectiles spawned of this type
-		int count;
+		unsigned int count;
 		unsigned int flags;
 	};
 
@@ -213,7 +213,7 @@ protected:
 	struct ExpGenParams {
 		CR_DECLARE_STRUCT(ExpGenParams);
 
-		std::vector<ProjectileSpawnInfo> projectileSpawn;
+		std::vector<ProjectileSpawnInfo> projectiles;
 
 		GroundFlashInfo groundFlash;
 
