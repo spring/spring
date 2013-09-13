@@ -85,6 +85,7 @@ public:
 	template<typename T> inline T toNanoSecs()  const { return Cpp11Clock::ToNs<T>(x); }
 
 
+	inline bool isDuration() const { return (x != 0); }
 	inline bool isTime() const { return (x > 0); }
 	inline void sleep() const {
 		//FIXME for very short time intervals use a yielding loop instead? (precision of yield is like 5x better than sleep, see the UT)
