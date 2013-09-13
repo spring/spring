@@ -266,6 +266,7 @@ void yield_boost(int time) { boost::this_thread::yield(); }
 void sleep_spring(int time) { spring_sleep(spring_msecs(time)); }
 void sleep_spring2(int time) { spring_sleep(spring_time::fromNanoSecs(time)); }
 #ifdef WIN32
+	#include <windows.h>
 	void sleep_windows(int time)  { Sleep(time); }
 #else
 	#include <time.h>
