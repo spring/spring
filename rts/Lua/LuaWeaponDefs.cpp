@@ -292,7 +292,6 @@ static int VisualsTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "color2G",        v.color2.y);
 	HSTR_PUSH_NUMBER(L, "color2B",        v.color2.z);
 	HSTR_PUSH_BOOL  (L, "smokeTrail",     v.smokeTrail);
-	HSTR_PUSH_BOOL  (L, "beamWeapon",     v.beamweapon);
 	HSTR_PUSH_NUMBER(L, "tileLength",     v.tilelength);
 	HSTR_PUSH_NUMBER(L, "scrollSpeed",    v.scrollspeed);
 	HSTR_PUSH_NUMBER(L, "pulseSpeed",     v.pulseSpeed);
@@ -305,8 +304,8 @@ static int VisualsTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "alphaDecay",     v.alphaDecay);
 	HSTR_PUSH_NUMBER(L, "separation",     v.separation);
 	HSTR_PUSH_BOOL  (L, "noGap",          v.noGap);
-
-	HSTR_PUSH_BOOL  (L, "alwaysVisible", v.alwaysVisible);
+	HSTR_PUSH_BOOL  (L, "alwaysVisible",  v.alwaysVisible);
+	HSTR_PUSH_BOOL  (L, "beamWeapon",     false); // DEPRECATED
 
 	return 1;
 //	CColorMap *colorMap;
@@ -458,7 +457,9 @@ static bool InitParamMap()
 
 	ADD_STRING("name",        wd.name);
 	ADD_STRING("description", wd.description);
-	ADD_STRING("cegTag",      wd.cegTag);
+
+	// FIXME: why is this expgen-tag exposed but not the other two?
+	ADD_STRING("cegTag", wd.visuals.ptrailExpGenTag);
 
 	ADD_STRING("type", wd.type);
 

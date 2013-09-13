@@ -27,7 +27,6 @@ static DefType WeaponDefs("WeaponDefs");
 // General
 WEAPONTAG(std::string, description).externalName("name").defaultValue("Weapon").description("The descriptive name of the weapon as listed in FPS mode.");
 WEAPONTAG(std::string, type).externalName("weaponType").defaultValue("Cannon");
-WEAPONTAG(std::string, cegTag).defaultValue("").description("The name, without prefixes, of a CEG to be emitted by the projectile each frame.");
 WEAPONTAG(int, tdfId).externalName("id").defaultValue(0);
 WEAPONDUMMYTAG(table, customParams);
 
@@ -237,16 +236,18 @@ WEAPONTAG(std::string, textures1, visuals.texNames[0]).externalName("textures.1"
 WEAPONTAG(std::string, textures2, visuals.texNames[1]).externalName("textures.2").fallbackName("texture2").defaultValue("");
 WEAPONTAG(std::string, textures3, visuals.texNames[2]).externalName("textures.3").fallbackName("texture3").defaultValue("");
 WEAPONTAG(std::string, textures4, visuals.texNames[3]).externalName("textures.4").fallbackName("texture4").defaultValue("");
-WEAPONTAG(std::string, explosionGenerator, visuals.expGenTag).defaultValue("");
+
+WEAPONTAG(std::string, cegTag,                   visuals.ptrailExpGenTag).defaultValue("").description("The name, without prefixes, of a CEG to be emitted by the projectile each frame.");
+WEAPONTAG(std::string, explosionGenerator,       visuals.impactExpGenTag).defaultValue("");
 WEAPONTAG(std::string, bounceExplosionGenerator, visuals.bounceExpGenTag).defaultValue("");
 
 // Sound
 WEAPONDUMMYTAG(bool, soundTrigger);
 WEAPONDUMMYTAG(std::string, soundStart).defaultValue("");
-WEAPONDUMMYTAG(float, soundStartVolume).defaultValue(-1.0f);
 WEAPONDUMMYTAG(std::string, soundHitDry).fallbackName("soundHit").defaultValue("");
-WEAPONDUMMYTAG(float, soundHitDryVolume).fallbackName("soundHitVolume").defaultValue(-1.0f);
 WEAPONDUMMYTAG(std::string, soundHitWet).fallbackName("soundHit").defaultValue("");
+WEAPONDUMMYTAG(float, soundStartVolume).defaultValue(-1.0f);
+WEAPONDUMMYTAG(float, soundHitDryVolume).fallbackName("soundHitVolume").defaultValue(-1.0f);
 WEAPONDUMMYTAG(float, soundHitWetVolume).fallbackName("soundHitVolume").defaultValue(-1.0f);
 
 
