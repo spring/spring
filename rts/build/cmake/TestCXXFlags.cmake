@@ -157,3 +157,28 @@ if   (NOT MSVC)
 		endif()
 	endif()
 endif()
+
+
+if   (CMAKE_COMPILER_IS_GNUCXX)
+	# check if default linker is ld.gold
+	execute_process(COMMAND ${CMAKE_LINKER} "-v" COMMAND "grep" "-iq" "gold" RESULT_VARIABLE hasGold)
+
+	if    (NOT hasGold EQUAL 0)
+		# since gcc 4.8 it is possible to switch the linker via that argument
+		CHECK_CXX_ACCEPTS_FLAG("-fuse-ld=gold" HAS_USE_LD)
+		IF    (HAS_USE_LD)
+			FIND_PROGRAM(LD_GOLD ld.gold)
+			if    (LD_GOLD)
+				set(hasGold 0)
+				set(LDGOLD_CXX_FLAGS "-fuse-ld=gold")
+			endif (LD_GOLD)
+		EndIf (HAS_USE_LD)
+	endif (NOT hasGold EQUAL 0)
+
+	if    (hasGold EQUAL 0)
+		set(LDGOLD_FOUND TRUE)
+		set(LDGOLD_LINKER_FLAGS " -Wl,--compress-debug-sections=zlib")
+	endif (hasGold EQUAL 0)
+
+	mark_as_advanced(LDGOLD_FOUND LDGOLD_LINKER_FLAGS LDGOLD_CXX_FLAGS)
+endif(CMAKE_COMPILER_IS_GNUCXX)

@@ -81,16 +81,6 @@ else  (APPLE)
 	set(MACOSX_BUNDLE FALSE)
 endif (APPLE)
 
-if    (UNIX AND NOT MINGW)
-	execute_process(COMMAND ${CMAKE_LINKER} "-v" COMMAND "grep" "-iq" "gold" RESULT_VARIABLE hasGold)
-	if    (hasGold EQUAL 0)
-		Message(STATUS "Found ld.gold, compressing debugsymbols")
-		set(CMAKE_EXE_LINKER_FLAGS " -Wl,--compress-debug-sections=zlib ${CMAKE_EXE_LINKER_FLAGS}")
-	else  (hasGold EQUAL 0)
-		Message(WARNING "You are using ld.bfd, it's much slower than ld.gold.")
-	endif (hasGold EQUAL 0)
-endif (UNIX AND NOT MINGW)
-
 
 ### Install paths (relative to CMAKE_INSTALL_PREFIX)
 if    (UNIX AND NOT MINGW)
@@ -313,6 +303,17 @@ Set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${LTO_FLAGS}")
 Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
 
 
+### ld.gold
+if    (LDGOLD_FOUND)
+	Message(STATUS "Found ld.gold, compressing debugsymbols")
+	set(CMAKE_LINKER LD_GOLD)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LDGOLD_CXX_FLAGS}")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LDGOLD_LINKER_FLAGS}")
+else  (LDGOLD_FOUND)
+	Message(WARNING "You are using ld.bfd, it's much slower than ld.gold.")
+endif (LDGOLD_FOUND)
+
+
 ### C++11
 option(USE_CXX11 "Enable c++11" TRUE)
 if    (USE_CXX11)
@@ -322,11 +323,12 @@ if    (USE_CXX11)
 	add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants
 endif (USE_CXX11)
 
-option(THREADPOOL "Enable ThreadPools" TRUE)
+
 ### our custom OpenMP replacement
-if(THREADPOOL)
+option(THREADPOOL "Enable ThreadPools" TRUE)
+if (THREADPOOL)
 	add_definitions(-DTHREADPOOL)
-endif()
+endif(THREADPOOL)
 
 
 if(NOT MSVC)
