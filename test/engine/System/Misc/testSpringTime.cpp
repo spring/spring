@@ -255,17 +255,24 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 void sleep_boost_posix(int time)  { boost::this_thread::sleep(boost::posix_time::milliseconds(time)); }
 void sleep_boost_posix2(int time) { boost::this_thread::sleep(boost::posix_time::microseconds(time)); }
 #ifdef BOOST_THREAD_USES_CHRONO
-void sleep_boost_chrono(int time) { boost::this_thread::sleep_for(boost::chrono::nanoseconds(time)); }
+	void sleep_boost_chrono(int time) { boost::this_thread::sleep_for(boost::chrono::nanoseconds(time)); }
 #endif
 void yield_boost(int time) { boost::this_thread::yield(); }
 #if (__cplusplus > 199711L) && !defined(__MINGW32__) && defined(_GLIBCXX_USE_SCHED_YIELD) //last one is a gcc 4.7 bug
-#include <thread>
-void sleep_stdchrono(int time) { std::this_thread::sleep_for(std::chrono::nanoseconds(time)); }
-void yield_chrono(int time) { std::this_thread::yield(); }
+	#include <thread>
+	void sleep_stdchrono(int time) { std::this_thread::sleep_for(std::chrono::nanoseconds(time)); }
+	void yield_chrono(int time) { std::this_thread::yield(); }
 #endif
 void sleep_spring(int time) { spring_sleep(spring_msecs(time)); }
 void sleep_spring2(int time) { spring_sleep(spring_time::fromNanoSecs(time)); }
-
+#ifdef WIN32
+	void sleep_windows(int time)  { Sleep(time); }
+#else
+	#include <time.h>
+	#include <unistd.h>
+	void sleep_posix_msec(int time)  { usleep(time); }
+	void sleep_posix_nanosec(int time)  { struct timespec tim, tim2; tim.tv_sec = 0; tim.tv_nsec = time; if (nanosleep(&tim, &tim2) != 0) nanosleep(&tim2, NULL); }
+#endif
 
 void BenchmarkSleepFnc(const std::string& name, void (*sleep)(int time), const int runs, const float toMilliSecondsScale)
 {
@@ -292,16 +299,16 @@ void BenchmarkSleepFnc(const std::string& name, void (*sleep)(int time), const i
 	spring_time emin, emax;
 	float eavg = 0;
 	if (toMilliSecondsScale != 0) {
-		for (int i=0; i<1000; ++i) {
-			const auto sleepTime = (rand() % 100) * 0.1f;
+		for (int i=0; i<100; ++i) {
+			const auto sleepTime = (rand() % 50) * 0.1f + 2; // 2..7ms
 
 			t = spring_gettime();
 			sleep(sleepTime * toMilliSecondsScale);
 			spring_time diff = (spring_gettime() - t) - spring_msecs(sleepTime);
 
-			if ((diff > emax) || !spring_istime(emax)) emax = diff;
-			if ((diff < emin) || !spring_istime(emin)) emin = diff;
-			eavg = float(i * eavg + std::abs(diff.toNanoSecs())) / (i + 1);
+			if ((diff > emax) || !emax.isDuration()) emax = diff;
+			if ((diff < emin) || !emin.isDuration()) emin = diff;
+			eavg = float(i * eavg + std::abs(diff.toNanoSecsf())) / (i + 1);
 		}
 	}
 
@@ -321,6 +328,12 @@ BOOST_AUTO_TEST_CASE( ThreadSleepTime )
 #if (__cplusplus > 199711L) && !defined(__MINGW32__) && defined(_GLIBCXX_USE_SCHED_YIELD) //last one is a gcc 4.7 bug
 	BenchmarkSleepFnc("sleep_stdchrono", &sleep_stdchrono, 500, 1e6);
 	BenchmarkSleepFnc("yield_chrono", &yield_chrono, 500000, 0);
+#endif
+#ifdef WIN32
+	BenchmarkSleepFnc("sleep_windows", &sleep_windows, 500, 1e0);
+#else
+	BenchmarkSleepFnc("sleep_posix_msec", &sleep_posix_msec, 500, 1e0);
+	BenchmarkSleepFnc("sleep_posix_nanosec", &sleep_posix_nanosec, 500, 1e6);
 #endif
 	BenchmarkSleepFnc("sleep_spring", &sleep_spring, 500, 1e0);
 	BenchmarkSleepFnc("sleep_spring2", &sleep_spring2, 500, 1e6);
