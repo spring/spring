@@ -731,7 +731,7 @@ static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string&
 	} else if (key == "airStrafe") {
 		mt->airStrafe = value; return true;
 	} else if (key == "dontLand") {
-		mt->dontLand = value; return true;
+		mt->SetAllowLanding(!value); return true;
 	}
 
 	return false;

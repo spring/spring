@@ -200,22 +200,23 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 			}
 
 			if (inLoadingRadius) {
-				if (am) { // handle air transports differently
+				if (am != NULL) {
+					// handle air transports differently
 					float3 wantedPos = unit->pos;
 					wantedPos.y = static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeight(wantedPos, unit);
 					SetGoal(wantedPos, owner->pos);
 
-					am->loadingUnits = true;
+					am->SetLoadingUnits(true);
 					am->ForceHeading(static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeading(unit));
 					am->SetWantedAltitude(wantedPos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z));
-					am->maxDrift = 1;
+					am->maxDrift = 1.0f;
 
 					if ((owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS)) &&
 						(abs(owner->heading-unit->heading) < AIRTRANSPORT_DOCKING_ANGLE) &&
 						(owner->updir.dot(UpVector) > 0.995f))
 					{
-						am->loadingUnits = false;
-						am->dontLand = true;
+						am->SetLoadingUnits(false);
+						am->SetAllowLanding(false);
 
 						owner->script->BeginTransport(unit);
 						SetTransportee(NULL);
@@ -674,8 +675,8 @@ void CTransportCAI::UnloadLand(Command& c)
 						}
 					} else {
 						transport->DetachUnit(unit);
-						if (transport->GetTransportedUnits().empty()) {
-							am->dontLand = false;
+						if ((transport->GetTransportedUnits()).empty()) {
+							am->SetAllowLanding(true);
 							owner->script->EndTransport();
 						}
 					}
@@ -724,11 +725,11 @@ void CTransportCAI::UnloadDrop(Command& c)
 
 		if (am != NULL) {
 			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
-			am->maxDrift = 1;
+			am->maxDrift = 1.0f;
 
-			// if near target or have past it accidentally- drop unit
+			// if near target or passed it accidentally, drop unit
 			if (owner->pos.SqDistance2D(pos) < 1600 || (((pos - owner->pos).Normalize()).SqDistance(owner->frontdir.Normalize()) > 0.25 && owner->pos.SqDistance2D(pos)< (205*205))) {
-				am->dontLand = true;
+				am->SetAllowLanding(false);
 
 				owner->script->EndTransport();
 				transport->DetachUnitFromAir(transportee, pos);
@@ -801,19 +802,17 @@ void CTransportCAI::UnloadLandFlood(Command& c)
 		}
 
 		if (startingDropPos.SqDistance2D(owner->pos) < Square(owner->unitDef->loadingRadius * 0.9f)) {
-			// create aircraft movetype instance
 			CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
 
 			if (am != NULL) {
 				// lower to ground
-
-				startingDropPos.y = ground->GetHeightAboveWater(startingDropPos.x,startingDropPos.z);
+				startingDropPos.y = ground->GetHeightAboveWater(startingDropPos.x, startingDropPos.z);
 				const float3 wantedPos = startingDropPos + UpVector * unit->model->height;
 				SetGoal(wantedPos, owner->pos);
 
-				am->SetWantedAltitude(1);
-				am->maxDrift = 1;
-				am->dontLand = false;
+				am->SetWantedAltitude(1.0f);
+				am->SetAllowLanding(true);
+				am->maxDrift = 1.0f;
 
 				// when on our way down start animations for unloading gear
 				if (isFirstIteration) {
@@ -822,18 +821,17 @@ void CTransportCAI::UnloadLandFlood(Command& c)
 				isFirstIteration = false;
 
 				// once at ground
-				if (owner->pos.y - ground->GetHeightAboveWater(wantedPos.x,wantedPos.z) < 8) {
-
+				if (owner->pos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z) < SQUARE_SIZE) {
 					// nail it to the ground before it tries jumping up, only to land again...
 					am->SetState(am->AIRCRAFT_LANDED);
 					// call this so that other animations such as opening doors may be started
 					owner->script->TransportDrop(transList.front().unit, pos);
-
-					transport->DetachUnitFromAir(unit,pos);
+					transport->DetachUnitFromAir(unit, pos);
 
 					FinishCommand();
+
 					if (transport->GetTransportedUnits().empty()) {
-						am->dontLand = false;
+						am->SetAllowLanding(true);
 						owner->script->EndTransport();
 						am->UpdateLanded();
 					}
@@ -921,16 +919,17 @@ int CTransportCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 void CTransportCAI::FinishCommand()
 {
 	CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
-	if (am) {
-		am->loadingUnits = false;
+
+	if (am != NULL) {
+		am->SetLoadingUnits(false);
 	}
 
 	SetTransportee(NULL);
 
 	CMobileCAI::FinishCommand();
 
-	if (am && commandQue.empty()) {
-		am->SetWantedAltitude(0);
+	if (am != NULL && commandQue.empty()) {
+		am->SetWantedAltitude(0.0f);
 		am->wantToStop = true;
 	}
 }

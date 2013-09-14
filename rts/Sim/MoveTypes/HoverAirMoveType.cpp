@@ -21,35 +21,34 @@
 CR_BIND_DERIVED(CHoverAirMoveType, AAirMoveType, (NULL));
 
 CR_REG_METADATA(CHoverAirMoveType, (
-	CR_MEMBER(loadingUnits),
 	CR_MEMBER(bankingAllowed),
 	CR_MEMBER(airStrafe),
-
-	CR_MEMBER(circlingPos),
-	CR_MEMBER(goalDistance),
-	CR_MEMBER(waitCounter),
 	CR_MEMBER(wantToStop),
 
-	CR_MEMBER(wantedHeading),
-
-	CR_MEMBER(wantedSpeed),
-	CR_MEMBER(deltaSpeed),
+	CR_MEMBER(goalDistance),
 
 	CR_MEMBER(currentBank),
 	CR_MEMBER(currentPitch),
 
 	CR_MEMBER(turnRate),
-
-	CR_MEMBER(dontLand),
-	CR_MEMBER(lastMoveRate),
-
-	CR_MEMBER(forceHeading),
-	CR_MEMBER(forceHeadingTo),
-
 	CR_MEMBER(maxDrift),
 	CR_MEMBER(maxTurnAngle),
 
+	CR_MEMBER(wantedSpeed),
+	CR_MEMBER(deltaSpeed),
+
+	CR_MEMBER(circlingPos),
 	CR_MEMBER(randomWind),
+
+	CR_MEMBER(forceHeading),
+	CR_MEMBER(dontLand),
+	CR_MEMBER(loadingUnits),
+
+	CR_MEMBER(wantedHeading),
+	CR_MEMBER(forceHeadingTo),
+
+	CR_MEMBER(waitCounter),
+	CR_MEMBER(lastMoveRate),
 
 	CR_RESERVED(32)
 ));
@@ -58,24 +57,33 @@ CR_REG_METADATA(CHoverAirMoveType, (
 CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	AAirMoveType(owner),
 	flyState(FLY_CRUISING),
-	loadingUnits(false),
+
 	bankingAllowed(true),
 	airStrafe(owner->unitDef->airStrafe),
 	wantToStop(false),
-	dontLand(false),
+
 	goalDistance(1),
+
 	// we want to take off in direction of factory facing
 	currentBank(0),
 	currentPitch(0),
+
 	turnRate(1),
 	maxDrift(1.0f),
 	maxTurnAngle(math::cos(owner->unitDef->turnInPlaceAngleLimit * (PI / 180.0f)) * -1.0f),
+
 	wantedSpeed(ZeroVector),
 	deltaSpeed(ZeroVector),
 	circlingPos(ZeroVector),
+	randomWind(ZeroVector),
+
 	forceHeading(false),
+	dontLand(false),
+	loadingUnits(false),
+
 	wantedHeading(GetHeadingFromFacing(owner->buildFacing)),
 	forceHeadingTo(wantedHeading),
+
 	waitCounter(0),
 	lastMoveRate(0)
 {
@@ -168,6 +176,19 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 
 	owner->UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, (aircraftState != AIRCRAFT_LANDED));
 	waitCounter = 0;
+}
+
+void CHoverAirMoveType::SetAllowLanding(bool allowLanding)
+{
+	dontLand = !allowLanding;
+
+	if (!dontLand && autoLand)
+		return;
+
+	if (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_LANDING)
+		return;
+
+	SetState(AIRCRAFT_HOVERING);
 }
 
 void CHoverAirMoveType::StartMoving(float3 pos, float goalRadius)
@@ -550,15 +571,6 @@ void CHoverAirMoveType::UpdateLanding()
 			owner->Deactivate();
 			owner->script->StopMoving();
 		} else {
-			if (dontLand || !autoLand) {
-				// NOTE:
-				//   we can get here if carrying a transportee (TCAI sets dontLand=true
-				//   on ExecuteLoad during which we are still in state AIRCRAFT_LANDING
-				//   but we should be in state AIRCRAFT_HOVERING)
-				SetState(AIRCRAFT_HOVERING);
-				return;
-			}
-
 			if (goalPos.SqDistance2D(pos) < (30.0f * 30.0f)) {
 				// randomly pick another landing spot and try again
 				goalPos += (gs->randVector() * 300.0f);
