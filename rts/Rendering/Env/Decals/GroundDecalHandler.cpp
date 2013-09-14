@@ -5,7 +5,7 @@
 
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"
-#include "Game/GameHelper.h"
+#include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
 #include "Map/BaseGroundDrawer.h"
@@ -14,7 +14,6 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -24,7 +23,6 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Config/ConfigHandler.h"
@@ -213,9 +211,9 @@ static inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, co
 
 inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 {
-	if (!camera->InView(decal->pos, decal->radius)) {
+	if (!camera->InView(decal->pos, decal->radius))
 		return;
-	}
+
 
 	const float* hm = readMap->GetCornerHeightMapUnsynced();
 	const int gsmx = gs->mapx;
@@ -407,64 +405,96 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 
 
 
+void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDecalType* decalType) {
+	decalsToDraw.clear();
+
+	set<SolidObjectGroundDecal*>::const_iterator bgdi = decalType->objectDecals.begin();
+
+	while (bgdi != decalType->objectDecals.end()) {
+		SolidObjectGroundDecal* decal = *bgdi;
+		CSolidObject* decalOwner = decal->owner;
+
+		const CUnit* decalOwnerUnit = NULL;
+		const CFeature* decalOwnerFeature = NULL;
+
+		// must use static_cast, not enough RTTI
+		if (decalOwner->GetBlockingMapID() < unitHandler->MaxUnits()) {
+			decalOwnerUnit = static_cast<const CUnit*>(decalOwner);
+		} else {
+			decalOwnerFeature = static_cast<const CFeature*>(decalOwner);
+		}
+
+		if (decalOwnerUnit != NULL) {
+			decal->alpha = std::max(0.0f, decalOwnerUnit->buildProgress);
+		} else if (decalOwner == NULL && decal->gbOwner == NULL) {
+			decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * gs->speedFactor);
+		}
+
+		if (decal->alpha < 0.0f) {
+			// make sure RemoveSolidObject() won't try to modify this decal
+			if (decalOwner != NULL) {
+				decalOwner->groundDecal = NULL;
+			}
+
+			bgdi = set_erase(decalType->objectDecals, bgdi);
+
+			delete decal;
+			continue;
+		}
+
+		++bgdi;
+
+		if (decalOwner == NULL) {
+			decalsToDraw.push_back(decal);
+			continue;
+		}
+		if (gu->spectatingFullView) {
+			decalsToDraw.push_back(decal);
+			continue;
+		}
+
+		if (decalOwnerUnit == NULL) {
+			assert(decalOwnerFeature != NULL);
+
+			if (decalOwnerFeature->IsInLosForAllyTeam(gu->myAllyTeam)) {
+				decalsToDraw.push_back(decal);
+			}
+		} else {
+			assert(decalOwnerFeature == NULL);
+
+			// if ghosted buildings are disabled, ground plates should not
+			// remain visible when object itself has been seen but is now
+			// out of LOS
+			if (!gameSetup->ghostedBuildings)
+				continue;
+			if ((decalOwnerUnit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS)) == 0)
+				continue;
+
+			decalsToDraw.push_back(decal);
+		}
+	}
+}
+
 void CGroundDecalHandler::DrawObjectDecals() {
 	// create and draw the quads for each building decal
-	for (std::vector<SolidObjectDecalType*>::iterator bdti = objectDecalTypes.begin(); bdti != objectDecalTypes.end(); ++bdti) {
-		SolidObjectDecalType* bdt = *bdti;
+	for (unsigned int n = 0; n < objectDecalTypes.size(); n++) {
+		SolidObjectDecalType* decalType = objectDecalTypes[n];
 
-		if (!bdt->objectDecals.empty()) {
+		if (decalType->objectDecals.empty())
+			continue;
 
-			glBindTexture(GL_TEXTURE_2D, bdt->texture);
+		glBindTexture(GL_TEXTURE_2D, decalType->texture);
 
-			decalsToDraw.clear();
-			{
-				GML_STDMUTEX_LOCK(decal); // Draw
-
-				set<SolidObjectGroundDecal*>::iterator bgdi = bdt->objectDecals.begin();
-
-				while (bgdi != bdt->objectDecals.end()) {
-					SolidObjectGroundDecal* decal = *bgdi;
-					CSolidObject* decalOwner = decal->owner;
-					CUnit* decalOwnerUnit = dynamic_cast<CUnit*>(decalOwner);
-					CFeature* decalOwnerFeature = (decalOwnerUnit != NULL) ? NULL : static_cast<CFeature *>(decalOwner); // can only be feature or unit
-
-					if (decalOwnerUnit != NULL) {
-						if (decalOwnerUnit->buildProgress >= 0.0f)
-							decal->alpha = decalOwnerUnit->buildProgress;
-					} else if (decalOwner == NULL && decal->gbOwner == NULL) {
-						decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * gs->speedFactor);
-					}
-
-					if (decal->alpha < 0.0f) {
-						// make sure RemoveSolidObject() won't try to modify this decal
-						if (decalOwner != NULL) {
-							decalOwner->groundDecal = NULL;
-						}
-
-						delete decal;
-
-						bgdi = set_erase(bdt->objectDecals, bgdi);
-
-						continue;
-					}
-
-					if (decalOwner == NULL ||
-						(decalOwnerUnit != NULL && (decalOwnerUnit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS))) ||
-						(decalOwnerFeature != NULL && decalOwnerFeature->IsInLosForAllyTeam(gu->myAllyTeam)) || // FIXME: Support "Prev Los" stuff for features?
-						gu->spectatingFullView) {
-						decalsToDraw.push_back(decal);
-					}
-
-					++bgdi;
-				}
-			}
-
-			for (std::vector<SolidObjectGroundDecal*>::iterator di = decalsToDraw.begin(); di != decalsToDraw.end(); ++di) {
-				DrawObjectDecal(*di);
-			}
-
-			// glBindTexture(GL_TEXTURE_2D, 0);
+		{
+			GML_STDMUTEX_LOCK(decal); // Draw
+			GatherDecalsForType(decalType);
 		}
+
+		for (unsigned int k = 0; k < decalsToDraw.size(); k++) {
+			DrawObjectDecal(decalsToDraw[k]);
+		}
+
+		// glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }
 
@@ -905,13 +935,12 @@ unsigned int CGroundDecalHandler::LoadTexture(const std::string& name)
 	    (fullName.find_first_of('/')  == string::npos)) {
 		fullName = string("bitmaps/tracks/") + fullName;
 	}
-	bool isBitmap = (FileSystem::GetExtension(fullName) == "bmp");
 
 	CBitmap bm;
 	if (!bm.Load(fullName)) {
 		throw content_error("Could not load ground decal from file " + fullName);
 	}
-	if (isBitmap) {
+	if (FileSystem::GetExtension(fullName) == "bmp") {
 		//! bitmaps don't have an alpha channel
 		//! so use: red := brightness & green := alpha
 		for (int y = 0; y < bm.ysize; ++y) {
@@ -993,8 +1022,8 @@ void CGroundDecalHandler::LoadScar(const std::string& file, unsigned char* buf,
 	if (!bm.Load(file)) {
 		throw content_error("Could not load scar from file " + file);
 	}
-	bool isBitmap = (FileSystem::GetExtension(file) == "bmp");
-	if (isBitmap) {
+
+	if (FileSystem::GetExtension(file) == "bmp") {
 		//! bitmaps don't have an alpha channel
 		//! so use: red := brightness & green := alpha
 		for (int y = 0; y < bm.ysize; ++y) {
