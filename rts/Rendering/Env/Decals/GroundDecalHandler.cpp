@@ -464,15 +464,19 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 		} else {
 			assert(decalOwnerFeature == NULL);
 
-			// if ghosted buildings are disabled, ground plates should not
-			// remain visible when object itself has been seen but is now
-			// out of LOS
-			if (!gameSetup->ghostedBuildings)
+			// unit is in LOS
+			if ((decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_INLOS) != 0) {
+				decalsToDraw.push_back(decal);
 				continue;
-			if ((decalOwnerUnit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS)) == 0)
-				continue;
+			}
 
-			decalsToDraw.push_back(decal);
+			// unit is out of LOS
+			// if ghosted buildings are disabled, ground plates should not
+			// remain visible even when object itself has been seen before
+			if (gameSetup->ghostedBuildings && (decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) != 0) {
+				decalsToDraw.push_back(decal);
+				continue;
+			}
 		}
 	}
 }
