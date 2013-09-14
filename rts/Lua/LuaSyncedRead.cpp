@@ -3862,7 +3862,7 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State* L)
 		HSTR_PUSH_NUMBER(L, "altitudeRate", hAMT->altitudeRate);
 
 		HSTR_PUSH_NUMBER(L, "brakeDistance", -1.0f); // DEPRECATED
-		HSTR_PUSH_BOOL(L, "dontLand", hAMT->dontLand);
+		HSTR_PUSH_BOOL(L, "dontLand", hAMT->GetAllowLanding());
 		HSTR_PUSH_NUMBER(L, "maxDrift", hAMT->maxDrift);
 
 		return 1;

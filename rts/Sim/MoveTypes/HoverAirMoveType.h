@@ -16,17 +16,10 @@ public:
 		FLY_LANDING
 	} flyState;
 
-	/**
-	 * needed to get transport close enough to what is going to be transported.
-	 * better way ?
-	 */
-	bool loadingUnits;
 	bool bankingAllowed;
 	bool airStrafe;
 	/// Set to true on StopMove, to be able to not stop if a new order comes directly after
 	bool wantToStop;
-	/// Set to true when transporting stuff
-	bool dontLand;
 
 	/// Used when circling something
 	float goalDistance;
@@ -53,6 +46,8 @@ public:
 	void ForceHeading(short h);
 	void SetGoal(const float3& pos, float distance = 0.0f);
 	void SetState(AircraftState newState);
+	void SetAllowLanding(bool b);
+	void SetLoadingUnits(bool b) { loadingUnits = b; }
 	AircraftState GetLandingState() const { return AIRCRAFT_FLYING; }
 	void SetWantedAltitude(float altitude);
 	void SetDefaultAltitude(float altitude);
@@ -64,6 +59,9 @@ public:
 	void UpdateFlying();
 	void UpdateCircling();
 	void UpdateHovering();
+
+	bool GetAllowLanding() const { return !dontLand; }
+	bool GetLoadingUnits() const { return loadingUnits; }
 
 private:
 	// Helpers for (multiple) state handlers
@@ -91,6 +89,13 @@ private:
 
 	/// force the aircraft to turn toward specific heading (for transports)
 	bool forceHeading;
+	/// Set to true when transporting stuff
+	bool dontLand;
+	/**
+	 * needed to get transport close enough to what is going to be transported.
+	 * better way ?
+	 */
+	bool loadingUnits;
 
 	/// TODO: Seems odd to use heading in unit, since we have toggled useHeading to false..
 	short wantedHeading;
