@@ -188,6 +188,10 @@ void CHoverAirMoveType::SetAllowLanding(bool allowLanding)
 	if (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_LANDING)
 		return;
 
+	// do not start hovering if still loading units
+	if (loadingUnits)
+		return;
+
 	SetState(AIRCRAFT_HOVERING);
 }
 
