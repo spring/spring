@@ -550,18 +550,30 @@ void CHoverAirMoveType::UpdateLanding()
 			owner->Deactivate();
 			owner->script->StopMoving();
 		} else {
-			if (goalPos.SqDistance2D(pos) < 900) {
-				goalPos = goalPos + gs->randVector() * 300;
+			if (dontLand || !autoLand) {
+				// NOTE:
+				//   we can get here if carrying a transportee (TCAI sets dontLand=true
+				//   on ExecuteLoad during which we are still in state AIRCRAFT_LANDING
+				//   but we should be in state AIRCRAFT_HOVERING)
+				SetState(AIRCRAFT_HOVERING);
+				return;
+			}
+
+			if (goalPos.SqDistance2D(pos) < (30.0f * 30.0f)) {
+				// randomly pick another landing spot and try again
+				goalPos += (gs->randVector() * 300.0f);
 				goalPos.ClampInBounds();
 
 				// exact landing pos failed, make sure finishcommand is called anyway
 				progressState = AMoveType::Failed;
 			}
+
 			flyState = FLY_LANDING;
 			UpdateFlying();
 			return;
 		}
 	}
+
 	// We should wait until we actually have stopped smoothly
 	if (speed.SqLength2D() > 1.0f) {
 		UpdateFlying();
