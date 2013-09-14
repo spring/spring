@@ -1756,30 +1756,17 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		eventHandler.UnitUnitCollision(collider, collidee);
 
-		if ((!collideeMobile && !collideeUD->IsAirUnit()) || (!pushCollider && !pushCollidee)) {
-			// building (always axis-aligned, possibly has a yardmap)
-			// or semi-static collidee that should be handled as such
-			HandleStaticObjectCollision(
-				collider,
-				collidee,
-				colliderMD,
-				colliderRadius,
-				collideeRadius,
-				separationVector,
-				true,
-				collideeUD->IsFactoryUnit(),
-				false);
-
-			continue;
-		}
-
-		if ((collider->moveType->goalPos - collidee->moveType->goalPos).SqLength2D() < 2.0f) {
-			// if collidee shares our goal position and is no longer
-			// moving along its path, trigger Arrived() to kill long
-			// pushing contests
-			// check the progress-states so collisions with units which
-			// failed to reach goalPos for whatever reason do not count
-			// (or those that still have orders)
+		// if collidee shares our goal position and is no longer
+		// moving along its path, trigger Arrived() to kill long
+		// pushing contests
+		//
+		// check the progress-states so collisions with units which
+		// failed to reach goalPos for whatever reason do not count
+		// (or those that still have orders)
+		//
+		// CFactory applies random jitter to otherwise equal goal
+		// positions of at most TWOPI elmos, use half as threshold
+		if ((collider->moveType->goalPos - collidee->moveType->goalPos).SqLength2D() < (PI * PI)) {
 			if (collider->IsMoving() && collider->moveType->progressState == AMoveType::Active) {
 				if (!collidee->IsMoving() && collidee->moveType->progressState == AMoveType::Done) {
 					if (UNIT_CMD_QUE_SIZE(collidee) == 0) {
@@ -1787,6 +1774,24 @@ void CGroundMoveType::HandleUnitCollisions(
 					}
 				}
 			}
+		}
+
+		if ((!collideeMobile && !collideeUD->IsAirUnit()) || (!pushCollider && !pushCollidee)) {
+			// building (always axis-aligned, possibly has a yardmap)
+			// or semi-static collidee that should be handled as such
+			// this also handles two mutually push-resistant parties!
+			HandleStaticObjectCollision(
+				collider,
+				collidee,
+				colliderMD,
+				colliderRadius,
+				collideeRadius,
+				separationVector,
+				(!atEndOfPath && !atGoal),
+				collideeUD->IsFactoryUnit(),
+				false);
+
+			continue;
 		}
 
 		const float colliderRelRadius = colliderRadius / (colliderRadius + collideeRadius);
@@ -1825,7 +1830,6 @@ void CGroundMoveType::HandleUnitCollisions(
 		// if pushCollider and pushCollidee are both false (eg. if each party
 		// is pushResistant), treat the collision as regular and push both to
 		// avoid deadlocks
-		// FIXME? mantis #3653 (build factory, give move order, order N units)
 		const float colliderSlideSign = Sign( separationVector.dot(collider->rightdir));
 		const float collideeSlideSign = Sign(-separationVector.dot(collidee->rightdir));
 
