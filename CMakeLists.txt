@@ -242,10 +242,10 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 # boost::chrono depends on clock_gettime which we need to link ourself when boost is static linked
 Set(Boost_CHRONO_LIBRARY_WITH_RT ${Boost_CHRONO_LIBRARY})
-IF    (UNIX AND NOT MINGW)
+IF    (UNIX AND NOT MINGW AND PREFER_STATIC_LIBS)
 	FIND_LIBRARY(REALTIME_LIBRARY rt)
 	LIST(APPEND Boost_CHRONO_LIBRARY_WITH_RT ${REALTIME_LIBRARY})
-ENDIF (UNIX AND NOT MINGW)
+ENDIF (UNIX AND NOT MINGW AND PREFER_STATIC_LIBS)
 
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.
