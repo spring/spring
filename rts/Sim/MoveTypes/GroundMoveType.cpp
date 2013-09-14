@@ -1909,7 +1909,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 				colliderRadius,
 				collideeRadius,
 				separationVector,
-				true,
+				(!atEndOfPath && !atGoal),
 				false,
 				false);
 
