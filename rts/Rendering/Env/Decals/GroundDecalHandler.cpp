@@ -418,10 +418,12 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 		const CFeature* decalOwnerFeature = NULL;
 
 		// must use static_cast, not enough RTTI
-		if (decalOwner->GetBlockingMapID() < unitHandler->MaxUnits()) {
-			decalOwnerUnit = static_cast<const CUnit*>(decalOwner);
-		} else {
-			decalOwnerFeature = static_cast<const CFeature*>(decalOwner);
+		if (decalOwner != NULL) {
+			if (decalOwner->GetBlockingMapID() < unitHandler->MaxUnits()) {
+				decalOwnerUnit = static_cast<const CUnit*>(decalOwner);
+			} else {
+				decalOwnerFeature = static_cast<const CFeature*>(decalOwner);
+			}
 		}
 
 		if (decalOwnerUnit != NULL) {
