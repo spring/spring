@@ -480,6 +480,25 @@ static int PushTerrainTypeData(lua_State* L, const CMapInfo::TerrainType* tt, bo
 	return (7 + int(groundInfo));
 }
 
+static int GetWorldObjectVelocity(lua_State* L, const CWorldObject* o, bool isFeature)
+{
+	if (o == NULL)
+		return 0;
+	if (isFeature && !IsFeatureVisible(L, static_cast<const CFeature*>(o)))
+		return 0;
+
+	lua_pushnumber(L, o->speed.x);
+	lua_pushnumber(L, o->speed.y);
+	lua_pushnumber(L, o->speed.z);
+
+	if (lua_isboolean(L, 2) && lua_toboolean(L, 2)) {
+		lua_pushnumber(L, o->speed.Length());
+		return 4;
+	}
+
+	return 3;
+}
+
 static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
 {
 	if (o == NULL)
@@ -3006,20 +3025,7 @@ int LuaSyncedRead::GetUnitHeading(lua_State* L)
 
 int LuaSyncedRead::GetUnitVelocity(lua_State* L)
 {
-	CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, unit->speed.x);
-	lua_pushnumber(L, unit->speed.y);
-	lua_pushnumber(L, unit->speed.z);
-
-	if (lua_isboolean(L, 2) && lua_toboolean(L, 2)) {
-		lua_pushnumber(L, unit->speed.Length());
-		return 4;
-	}
-
-	return 3;
+	return (GetWorldObjectVelocity(L, ParseInLosUnit(L, __FUNCTION__, 1), false));
 }
 
 
@@ -4527,14 +4533,22 @@ int LuaSyncedRead::GetFeaturePosition(lua_State* L)
 int LuaSyncedRead::GetFeatureDirection(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL || !IsFeatureVisible(L, feature)) {
+
+	if (feature == NULL || !IsFeatureVisible(L, feature))
 		return 0;
-	}
+
 	const CMatrix44f& mat = feature->GetTransformMatrixRef();
-	lua_pushnumber(L, mat[ 8]);
-	lua_pushnumber(L, mat[ 9]);
-	lua_pushnumber(L, mat[10]);
+	const float3& dir = mat.GetZ();
+
+	lua_pushnumber(L, dir.x);
+	lua_pushnumber(L, dir.y);
+	lua_pushnumber(L, dir.z);
 	return 3;
+}
+
+int LuaSyncedRead::GetFeatureVelocity(lua_State* L)
+{
+	return (GetWorldObjectVelocity(L, ParseFeature(L, __FUNCTION__, 1), true));
 }
 
 
@@ -4626,17 +4640,22 @@ int LuaSyncedRead::GetProjectilePosition(lua_State* L)
 	return 3;
 }
 
-int LuaSyncedRead::GetProjectileVelocity(lua_State* L)
+int LuaSyncedRead::GetProjectileDirection(lua_State* L)
 {
 	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
 
 	if (pro == NULL)
 		return 0;
 
-	lua_pushnumber(L, pro->speed.x);
-	lua_pushnumber(L, pro->speed.y);
-	lua_pushnumber(L, pro->speed.z);
+	lua_pushnumber(L, pro->dir.x);
+	lua_pushnumber(L, pro->dir.y);
+	lua_pushnumber(L, pro->dir.z);
 	return 3;
+}
+
+int LuaSyncedRead::GetProjectileVelocity(lua_State* L)
+{
+	return (GetWorldObjectVelocity(L, ParseProjectile(L, __FUNCTION__, 1), false));
 }
 
 
