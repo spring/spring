@@ -50,7 +50,7 @@ done
 # strip UnitTests (don't store their debugsymbols in spring_dbg.7z)
 for tostripfile in $(find test/ -name '*.exe'); do
 	if [ -f ${tostripfile} ]; then
-		${MINGW_HOST}strip --strip-debug --strip-unneeded ${tostripfile} && \
+		${MINGW_HOST}strip --strip-debug --strip-unneeded ${tostripfile} &
 	fi
 done
 
