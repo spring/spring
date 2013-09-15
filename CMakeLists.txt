@@ -243,15 +243,15 @@ Set(Boost_CHRONO_LIBRARY_WITH_RT ${Boost_CHRONO_LIBRARY})
 IF    (UNIX AND NOT MINGW)
 	FIND_LIBRARY(REALTIME_LIBRARY rt)
 
-	IF    (PREFER_STATIC_LIBS AND NOT EXISTS REALTIME_LIBRARY)
+	IF    (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
 		MESSAGE(FATAL_ERROR "librt.[so|a] not found! Needed by std/boost chrono when static linked!")
-	ENDIF (PREFER_STATIC_LIBS AND NOT EXISTS REALTIME_LIBRARY)
+	ENDIF (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
 
 	# zydox buildslave seems to have problems to autolink it from dynlinked boost libs
 	#  so always link it (won't hurt cause std/boost chrono need it never the less)
-	if    (EXISTS REALTIME_LIBRARY)
+	if    (EXISTS "${REALTIME_LIBRARY}")
 		LIST(APPEND Boost_CHRONO_LIBRARY_WITH_RT ${REALTIME_LIBRARY})
-	ENDIF (EXISTS REALTIME_LIBRARY)
+	ENDIF (EXISTS "${REALTIME_LIBRARY}")
 ENDIF (UNIX AND NOT MINGW)
 
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
