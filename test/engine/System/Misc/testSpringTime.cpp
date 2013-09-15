@@ -252,6 +252,7 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 
 
 
+void sleep_sdl(int time)  { SDL_Delay(time); }
 void sleep_boost_posix(int time)  { boost::this_thread::sleep(boost::posix_time::milliseconds(time)); }
 void sleep_boost_posix2(int time) { boost::this_thread::sleep(boost::posix_time::microseconds(time)); }
 #ifdef BOOST_THREAD_USES_CHRONO
@@ -287,7 +288,7 @@ void BenchmarkSleepFnc(const std::string& name, void (*sleep)(int time), const i
 
 	// check lowest possible sleep tick
 	for (int i=0; i<runs; ++i) {
-		sleep(1);
+		sleep(0);
 
 		spring_time diff = spring_gettime() - t;
 		if ((diff > tmax) || !spring_istime(tmax)) tmax = diff;
@@ -320,6 +321,7 @@ BOOST_AUTO_TEST_CASE( ThreadSleepTime )
 {
 	LOG("Sleep() Precision Test");
 
+	BenchmarkSleepFnc("sleep_sdl", &sleep_sdl, 500, 1e0);
 	BenchmarkSleepFnc("sleep_boost_posixtime_milliseconds", &sleep_boost_posix, 500, 1e0);
 	BenchmarkSleepFnc("sleep_boost_posixtime_microseconds", &sleep_boost_posix2, 500, 1e3);
 #ifdef BOOST_THREAD_USES_CHRONO
