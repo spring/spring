@@ -47,6 +47,13 @@ for tostripfile in ${EXECUTABLES}; do
 	fi
 done
 
+# strip UnitTests (don't store their debugsymbols in spring_dbg.7z)
+for tostripfile in $(find test/ -name '*.exe'); do
+	if [ -f ${tostripfile} ]; then
+		${MINGW_HOST}strip --strip-debug --strip-unneeded ${tostripfile} && \
+	fi
+done
+
 # wait for finished stripping
 wait
 
@@ -68,7 +75,10 @@ for file in spring-dedicated.exe spring-headless.exe; do
 	${SEVENZIP} ${TMP_PATH}/${VERSION}_${name}.7z ${file} &
 done
 
-#create archive for translate_stacktrace.py
+# compress UnitTests
+${SEVENZIP} ${TMP_PATH}/${VERSION}_UnitTests.7z $(find test/ -name '*.exe') &
+
+# create archive for translate_stacktrace.py
 ${SEVENZIP_NONSOLID} ${TMP_PATH}/${VERSION}_spring_dbg.7z ${DEBUGFILES} &
 
 # wait for 7zip
