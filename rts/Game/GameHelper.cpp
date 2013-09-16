@@ -1111,9 +1111,10 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(const float3& pos, c
 		return BUILDSQUARE_BLOCKED;
 	}
 
+	const int yardxpos = int(pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
+	const int yardypos = int(pos.z + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
+
 	BuildSquareStatus ret = BUILDSQUARE_OPEN;
-	const int yardxpos = int(pos.x + 4) / SQUARE_SIZE;
-	const int yardypos = int(pos.z + 4) / SQUARE_SIZE;
 	CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
 
 	if (s != NULL) {
@@ -1137,7 +1138,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(const float3& pos, c
 		}
 
 		if ((ret == BUILDSQUARE_BLOCKED) || (ret == BUILDSQUARE_OCCUPIED)) {
-			if (CMoveMath::IsNonBlocking(s, moveDef, pos, buildHeight)) {
+			if (CMoveMath::IsNonBlocking(*moveDef, s, NULL)) {
 				ret = BUILDSQUARE_OPEN;
 			}
 		}

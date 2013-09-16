@@ -116,6 +116,7 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 	const int xmin = xSquare - moveDef.xsizeh, xmax = xSquare + moveDef.xsizeh;
 	const int zmin = zSquare - moveDef.zsizeh, zmax = zSquare + moveDef.zsizeh;
 	const int xstep = 2, zstep = 2;
+
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int z = zmin; z <= zmax; z += zstep) {
 		for (int x = xmin; x <= xmax; x += xstep) {
@@ -133,6 +134,7 @@ bool CMoveMath::IsBlockedStructureXmax(const MoveDef& moveDef, int xSquare, int 
 	const int                                  xmax = xSquare + moveDef.xsizeh;
 	const int zmin = zSquare - moveDef.zsizeh, zmax = zSquare + moveDef.zsizeh;
 	const int zstep = 2;
+
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int z = zmin; z <= zmax; z += zstep) {
 		if (SquareIsBlocked(moveDef, xmax, z, collider) & BLOCK_STRUCTURE)
@@ -149,6 +151,7 @@ bool CMoveMath::IsBlockedStructureZmax(const MoveDef& moveDef, int xSquare, int 
 	const int xmin = xSquare - moveDef.xsizeh, xmax = xSquare + moveDef.xsizeh;
 	const int                                  zmax = zSquare + moveDef.zsizeh;
 	const int xstep = 2;
+
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int x = xmin; x <= xmax; x += xstep) {
 		if (SquareIsBlocked(moveDef, x, zmax, collider) & BLOCK_STRUCTURE)
@@ -158,11 +161,6 @@ bool CMoveMath::IsBlockedStructureZmax(const MoveDef& moveDef, int xSquare, int 
 	return false;
 }
 
-/*
- * check if an object is resistant to being
- * crushed by a unit (with given MoveDef)
- * NOTE: modify for selective blocking
- */
 bool CMoveMath::CrushResistant(const MoveDef& colliderMD, const CSolidObject* collidee)
 {
 	if (!collidee->collidable) { return false; }
@@ -171,17 +169,13 @@ bool CMoveMath::CrushResistant(const MoveDef& colliderMD, const CSolidObject* co
 	return (collidee->crushResistance > colliderMD.crushStrength);
 }
 
-/*
- * check if an object is NON-blocking for a given MoveDef
- * (ex. a submarine's moveDef vs. a surface ship object)
- */
 bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* collidee, const CSolidObject* collider)
 {
 	if (collider == collidee)
 		return true;
 
 	if (collider != NULL)
-		return IsNonBlocking(collidee, collider->moveDef, collider->pos, collider->height);
+		return (IsNonBlocking(collidee, collider));
 
 	if (!collidee->collidable)
 		return true;
@@ -193,51 +187,54 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 	// (code below is only reachable from stand-alone PE invocations)
 	// remaining conditions under which obstacle does NOT block unit
 	//   1.
-	//      unit is ground-following and obstacle's altitude
+	//      unit is ground-following and obstacle's center-pos
 	//      minus its model height leaves a gap between it and
-	//      the ground large enough for unit to pass
+	//      the ground
 	//   2.
 	//      unit is a submarine, obstacle sticks out above-water
 	//      (and not itself flagged as a submarine) *OR* unit is
 	//      not a submarine and obstacle is (fully under-water or
 	//      flagged as a submarine)
-	//      NOTE: causes stacking for submarines that are *not*
-	//      explicitly flagged as such
+	//
+	//      NOTE:
+	//        do we want to allow submarines to pass underneath
+	//        any obstacle even if it is 99% submerged already?
+	//
+	//        will cause stacking for submarines that are *not*
+	//        explicitly flagged as such in their MoveDefs
 	//
 	// note that these conditions can lead to a certain degree of
-	// clipping, for full 3D accuracy the height of the MoveDef
+	// clipping, for full 3D accuracy the height of the MoveDef's
 	// owner would need to be accessible (but the path-estimator
-	// defs aren't tied to any)
+	// defs aren't tied to any collider instances)
 	//
-
-	//const float colliderMdlHgt = 1e6;
-	const float collideeMdlHgt = math::fabs(collidee->height);
-	//const float colliderGndAlt = 1e6f;
-	const float collideeGndAlt = collidee->pos.y;
+	bool ret = false;
 
 	if (colliderMD.followGround) {
-		const float collideeMinHgt = collideeGndAlt - collideeMdlHgt;
-		const float colliderMaxHgt = ground->GetHeightReal(collidee->pos.x, collidee->pos.z) + (SQUARE_SIZE >> 1);
-		// FIXME: would be the correct way, but values are invalid here
-		// const float colliderMaxHgt = colliderGndAlt + colliderMdlHgt;
+		// would be the correct way, but collider == NULL here
+		// ret |= (collidee->pos.y > (collider->pos.y + collider->height));
+		// ret |= ((collidee->pos.y + collidee->height) < collider->pos.y));
 
-		return (collideeMinHgt > colliderMaxHgt);
+		// this is arbitrary (assume height ~= radius * 2, then
+		// obstacle must leave a gap equal to its own radius but
+		// nothing ever hovers in the air like that --> probably
+		// can just always return false)
+		ret = ((collidee->midPos.y - math::fabs(collidee->height)) > ground->GetHeightReal(collidee->pos.x, collidee->pos.z));
 	} else {
 		const bool colliderIsSub = colliderMD.subMarine;
 		const bool collideeIsSub = (collidee->moveDef != NULL && collidee->moveDef->subMarine);
 
 		if (colliderIsSub) {
-			return (((collideeGndAlt + collideeMdlHgt) >  0.0f) && !collideeIsSub);
+			ret = (!collidee->IsUnderWater() && !collideeIsSub);
 		} else {
-			return (((collideeGndAlt + collideeMdlHgt) <= 0.0f) ||  collideeIsSub);
+			ret = ( collidee->IsUnderWater() ||  collideeIsSub);
 		}
 	}
 
-	return false;
+	return ret;
 }
 
-
-bool CMoveMath::IsNonBlocking(const CSolidObject* collidee, const MoveDef* colliderMD, const float3 colliderPos, const float colliderHeight)
+bool CMoveMath::IsNonBlocking(const CSolidObject* collidee, const CSolidObject* collider)
 {
 	if (!collidee->collidable)
 		return true;
@@ -245,11 +242,6 @@ bool CMoveMath::IsNonBlocking(const CSolidObject* collidee, const MoveDef* colli
 	// if obstacle is out of map bounds, it cannot block us
 	if (!collidee->pos.IsInBounds())
 		return true;
-
-	const float colliderMdlHgt = colliderHeight;
-	const float collideeMdlHgt = math::fabs(collidee->height);
-	const float colliderGndAlt = colliderPos.y;
-	const float collideeGndAlt = collidee->pos.y;
 
 	// simple case: if unit and obstacle have non-zero
 	// vertical separation as measured by their (model)
@@ -261,9 +253,8 @@ bool CMoveMath::IsNonBlocking(const CSolidObject* collidee, const MoveDef* colli
 	// note: if unit and obstacle are on a steep slope,
 	// this can return true even when their horizontal
 	// separation points to a collision
-	if (math::fabs(colliderGndAlt - collideeGndAlt) <= 1.0f) return false;
-	if ((colliderGndAlt + colliderMdlHgt) < collideeGndAlt) return true;
-	if ((collideeGndAlt + collideeMdlHgt) < colliderGndAlt) return true;
+	if ((collider->pos.y + math::fabs(collider->height)) < collidee->pos.y) return true;
+	if ((collidee->pos.y + math::fabs(collidee->height)) < collider->pos.y) return true;
 
 	return false;
 }
@@ -283,9 +274,8 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 	for (BlockingMapCellIt it = c.begin(); it != c.end(); ++it) {
 		const CSolidObject* obstacle = it->second;
 
-		if (IsNonBlocking(moveDef, obstacle, collider)) {
+		if (IsNonBlocking(moveDef, obstacle, collider))
 			continue;
-		}
 
 		if (!obstacle->immobile) {
 			// mobile obstacle

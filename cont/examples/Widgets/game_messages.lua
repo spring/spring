@@ -55,13 +55,13 @@ local function tr(msg)
 
 end
 
-function widget:TeamDied(TeamID)
-	local teamID, playerid = Spring.GetTeamInfo(TeamID)
-	if playerid then
-		local name = Spring.GetPlayerInfo(playerid)
-		msg = string.format(tr("Team %i (lead by %s) is no more"), TeamID, name )
+function widget:TeamDied(teamID)
+	local _, leadPlayerID = Spring.GetTeamInfo(teamID)
+	if leadPlayerID then
+		local name = Spring.GetPlayerInfo(leadPlayerID)
+		msg = string.format(tr("Team %i (lead by %s) is no more"), teamID, name)
 	else
-		msg = string.format(tr("Team %i is no more"), TeamID)
+		msg = string.format(tr("Team %i is no more"), teamID)
 	end
 	Spring.Echo(msg)
 end
