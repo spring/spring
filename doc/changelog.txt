@@ -31,6 +31,8 @@ Misc:
  - show LuaMemUsage in /debug view
  ! load only image formats which work on all platforms, current supported image formats are:
      PNG, JPG, TGA, DDS, BMP
+ ! remove engine support for gamedata/messages.tdf,
+     see examples/Widgets/game_messages.lua for a possible replacement
  - more verbose CEG parsing (warns now about unknown tags)
  - switch to a high precision clock all over the engine (including Lua)
  - copied a lot config descriptions from wiki to the engine (thx for all the wiki'ers)
