@@ -36,7 +36,6 @@ SET(sources_engine_Game
 		"${CMAKE_CURRENT_SOURCE_DIR}/InMapDraw.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/InMapDrawModel.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LoadScreen.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Messages.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Players/Player.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Players/PlayerBase.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Players/PlayerHandler.cpp"

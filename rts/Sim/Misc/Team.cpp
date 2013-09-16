@@ -9,7 +9,6 @@
 #include "Game/Players/PlayerHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/Messages.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
 #include "Sim/Units/Unit.h"
@@ -233,14 +232,6 @@ void CTeam::Died(bool normalDeath)
 		return;
 
 	if (normalDeath) {
-		if (HasLeader()) {
-			const CPlayer* leadPlayer = playerHandler->Player(leader);
-			const char* leaderName = leadPlayer->name.c_str();
-			LOG(CMessages::Tr("Team %i (lead by %s) is no more").c_str(), teamNum, leaderName);
-		} else {
-			LOG(CMessages::Tr("Team %i is no more").c_str(), teamNum);
-		}
-
 		// this message is not relayed to clients, it's only for the server
 		net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
 	}
