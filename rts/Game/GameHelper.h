@@ -86,7 +86,15 @@ public:
 	static float3 Pos2BuildPos(const BuildInfo& buildInfo, bool synced);
 
 	///< test a single mapsquare for build possibility
-	static BuildSquareStatus TestBuildSquare(const float3& pos, const float buildHeight, const UnitDef* unitdef, const MoveDef* moveDef, CFeature *&feature, int allyteam, bool synced);
+	static BuildSquareStatus TestBuildSquare(
+		const float3& pos,
+		const float buildHeight,
+		const UnitDef* unitDef,
+		const MoveDef* moveDef,
+		CFeature *&feature,
+		int allyteam,
+		bool synced
+	);
 
 	///< test if a unit can be built at specified position
 	static BuildSquareStatus TestUnitBuildSquare(

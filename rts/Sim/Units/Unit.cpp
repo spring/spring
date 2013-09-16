@@ -1551,6 +1551,17 @@ void CUnit::ChangeTeamReset()
 }
 
 
+bool CUnit::IsIdle() const
+{
+	if (beingBuilt)
+		return false;
+
+	if (!commandAI->commandQue.empty())
+		return false;
+
+	return true;
+}
+
 
 bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire, bool fpsMode)
 {

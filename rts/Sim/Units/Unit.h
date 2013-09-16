@@ -159,6 +159,7 @@ public:
 
 	bool IsNeutral() const { return neutral; }
 	bool IsCloaked() const { return isCloaked; }
+	bool IsIdle() const;
 
 	void SetStunned(bool stun);
 	bool IsStunned() const { return stunned; }

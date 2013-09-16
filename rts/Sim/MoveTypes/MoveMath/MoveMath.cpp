@@ -44,9 +44,8 @@ float CMoveMath::yLevel(const MoveDef& moveDef, const float3& pos)
 /* calculate the local speed-modifier for this MoveDef */
 float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare)
 {
-	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
+	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy)
 		return 0.0f;
-	}
 
 	const int square = (xSquare >> 1) + ((zSquare >> 1) * gs->hmapx);
 	const int squareTerrType = readMap->GetTypeMapSynced()[square];
@@ -69,9 +68,8 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 
 float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare, const float3& moveDir)
 {
-	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
+	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy)
 		return 0.0f;
-	}
 
 	const int square = (xSquare >> 1) + ((zSquare >> 1) * gs->hmapx);
 	const int squareTerrType = readMap->GetTypeMapSynced()[square];
@@ -187,9 +185,10 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 	// (code below is only reachable from stand-alone PE invocations)
 	// remaining conditions under which obstacle does NOT block unit
 	//   1.
-	//      unit is ground-following and obstacle's center-pos
-	//      minus its model height leaves a gap between it and
-	//      the ground
+	//      unit is ground-following and obstacle is NOT on the
+	//      ground even if by just a millimeter (less arbitrary
+	//      than eg. "obstacle's center-position minus its model
+	//      height > magic value" although causes more clipping)
 	//   2.
 	//      unit is a submarine, obstacle sticks out above-water
 	//      (and not itself flagged as a submarine) *OR* unit is
@@ -204,34 +203,32 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 	//        explicitly flagged as such in their MoveDefs
 	//
 	// note that these conditions can lead to a certain degree of
-	// clipping, for full 3D accuracy the height of the MoveDef's
+	// clipping: for full 3D accuracy the height of the MoveDef's
 	// owner would need to be accessible (but the path-estimator
-	// defs aren't tied to any collider instances)
+	// defs aren't tied to any collider instances) --> add extra
+	// "clearance" parameter to MoveDef?
 	//
-	bool ret = false;
-
 	if (colliderMD.followGround) {
-		// would be the correct way, but collider == NULL here
+		// would be the correct way, but collider is NULL here
 		// ret |= (collidee->pos.y > (collider->pos.y + collider->height));
 		// ret |= ((collidee->pos.y + collidee->height) < collider->pos.y));
+		//
+		// ret = ((collidee->midPos.y - math::fabs(collidee->height)) > ground->GetHeightReal(collidee->pos.x, collidee->pos.z));
 
-		// this is arbitrary (assume height ~= radius * 2, then
-		// obstacle must leave a gap equal to its own radius but
-		// nothing ever hovers in the air like that --> probably
-		// can just always return false)
-		ret = ((collidee->midPos.y - math::fabs(collidee->height)) > ground->GetHeightReal(collidee->pos.x, collidee->pos.z));
+		return (!collidee->IsOnGround());
 	} else {
-		const bool colliderIsSub = colliderMD.subMarine;
-		const bool collideeIsSub = (collidee->moveDef != NULL && collidee->moveDef->subMarine);
+		#define IS_SUBMARINE(md) ((md) != NULL && (md)->subMarine)
 
-		if (colliderIsSub) {
-			ret = (!collidee->IsUnderWater() && !collideeIsSub);
+		if (IS_SUBMARINE(&colliderMD)) {
+			return (!collidee->IsUnderWater() && !IS_SUBMARINE(collidee->moveDef));
 		} else {
-			ret = ( collidee->IsUnderWater() ||  collideeIsSub);
+			return ( collidee->IsUnderWater() ||  IS_SUBMARINE(collidee->moveDef));
 		}
+
+		#undef IS_SUBMARINE
 	}
 
-	return ret;
+	return false;
 }
 
 bool CMoveMath::IsNonBlocking(const CSolidObject* collidee, const CSolidObject* collider)
@@ -260,40 +257,37 @@ bool CMoveMath::IsNonBlocking(const CSolidObject* collidee, const CSolidObject* 
 }
 
 
-/* Check if a single square is accessable (for any object which uses the given MoveDef). */
 CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
-	// bounds-check
-	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
+	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy)
 		return BLOCK_IMPASSABLE;
-	}
 
 	BlockType r = BLOCK_NONE;
+
 	const BlockingMapCell& c = groundBlockingObjectMap->GetCell(xSquare + zSquare * gs->mapx);
 
 	for (BlockingMapCellIt it = c.begin(); it != c.end(); ++it) {
-		const CSolidObject* obstacle = it->second;
+		const CSolidObject* collidee = it->second;
 
-		if (IsNonBlocking(moveDef, obstacle, collider))
+		if (IsNonBlocking(moveDef, collidee, collider))
 			continue;
 
-		if (!obstacle->immobile) {
-			// mobile obstacle
-			if (obstacle->IsMoving()) {
+		if (!collidee->immobile) {
+			// mobile obstacle (must be a unit) --> if
+			// moving, it is probably following a path
+			if (collidee->IsMoving()) {
 				r |= BLOCK_MOVING;
 			} else {
-				const CUnit* u = static_cast<const CUnit*>(obstacle);
-
-				if (!u->beingBuilt && u->commandAI->commandQue.empty()) {
-					// idling mobile unit
+				if ((static_cast<const CUnit*>(collidee))->IsIdle()) {
+					// idling (no orders) mobile unit
 					r |= BLOCK_MOBILE;
 				} else {
-					// busy mobile unit (but not following path)
+					// busy mobile unit
 					r |= BLOCK_MOBILE_BUSY;
 				}
 			}
 		} else {
-			if (CrushResistant(moveDef, obstacle)) {
+			if (CrushResistant(moveDef, collidee)) {
 				r |= BLOCK_STRUCTURE;
 			}
 		}
