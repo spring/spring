@@ -1015,7 +1015,7 @@ end
 
 function gadgetHandler:DrawProjectile(projectileID, drawMode)
   for _,g in ipairs(self.DrawProjectileList) do
-    if (g:DrawProjectile(projectile, drawMode)) then
+    if (g:DrawProjectile(projectileID, drawMode)) then
       return true
     end
   end
@@ -1306,6 +1306,7 @@ function gadgetHandler:UnitDamaged(
   damage,
   paralyzer,
   weaponDefID,
+  projectileID,
   attackerID,
   attackerDefID,
   attackerTeam
@@ -1461,14 +1462,15 @@ function gadgetHandler:FeatureDamaged(
   featureTeam,
   damage,
   weaponDefID,
+  projectileID,
   attackerID,
   attackerDefID,
   attackerTeam
 )
   for _,g in ipairs(self.FeatureDamagedList) do
     g:FeatureDamaged(featureID, featureDefID, featureTeam,
-                  damage, weaponDefID,
-                  attackerID, attackerDefID, attackerTeam)
+                    damage, weaponDefID, projectileID,
+                    attackerID, attackerDefID, attackerTeam)
   end
 end
 
