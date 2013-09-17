@@ -184,7 +184,7 @@ private:
 		int ysize;
 		int u,v;
 		int us,vs;
-	} glyphs[256];
+	} glyphs[SymbolsAmount+1];
 
 private:
 	std::list<int2> sortByHeight;
@@ -426,7 +426,7 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 
 	//! setup character range
 	charstart = 32;
-	charend   = 254; //! char 255 = colorcode
+	charend   = SymbolsAmount; //! char 255 = colorcode
 	chars     = (charend - charstart) + 1;
 
 #ifndef   HEADLESS
@@ -547,7 +547,7 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 		GlyphInfo& g = glyphs[i];
 		int unicode = WinLatinToUnicode(i);
 		FT_UInt left_glyph = FT_Get_Char_Index(face, unicode);
-		for (unsigned int j = 0; j <= 255; j++) {
+		for (unsigned int j = 0; j <= SymbolsAmount; j++) {
 			unicode = WinLatinToUnicode(j);
 			FT_UInt right_glyph = FT_Get_Char_Index(face, unicode);
 			FT_Vector kerning;
@@ -560,7 +560,7 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	//! initialize null char
 	GlyphInfo& g = glyphs[0];
 	g.height = g.descender = g.advance = 0.0f;
-	for (unsigned int j = 0; j <= 255; j++) {
+	for (unsigned int j = 0; j <= SymbolsAmount; j++) {
 		g.kerning[j] = 0.0f;
 	}
 
@@ -1681,6 +1681,31 @@ void CglFont::End()
 	glPopAttrib();
 }
 
+unsigned int GetUnicodeChar(const std::string& text,unsigned int *pos)
+{
+    const size_t length = text.length();
+    unsigned int u=0;
+
+    const unsigned int chr = (unsigned int)text[*pos];
+
+    // Latin latters
+    // 0xxx xxxx
+    if((chr&0x80)==0) // chr<0x80 WORKS!!!
+    {
+        u=chr;
+    }
+    // Other latters
+    // 110x xxxx
+    // So chr ^ 1110 0000 == 1100 0000 because the 3rd bit should be zero in chr
+    else if((chr&0xE0)==0xC0)
+    {
+        u|=(chr&0x1F)<<6; //(chr ^ 0001 1111)<<6 = 00 0xxx xx00 0000
+        pos[0]++;
+        u|=(((unsigned int)text[*pos])&0x3F); // 00 0xxx xxyy yyyy
+    }
+
+    return u;
+}
 
 void CglFont::RenderString(float x, float y, const float& scaleX, const float& scaleY, const std::string& str)
 {
@@ -1705,7 +1730,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 	int skippedLines;
 	bool endOfString, colorChanged;
 	const GlyphInfo* g = NULL;
-	const unsigned char* c;
+    unsigned int c;
 	float4 newColor; newColor[3] = 1.0f;
 	unsigned int i = 0;
 
@@ -1715,7 +1740,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 		if (endOfString)
 			return;
 
-		c  = reinterpret_cast<const unsigned char*>(&str[i]);
+		c  = GetUnicodeChar(str,&i);
 		++i;
 
 		if (colorChanged) {
@@ -1730,10 +1755,10 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 			x  = startx;
 			y -= skippedLines * lineHeight_;
 		} else if (g) {
-			x += scaleX * g->kerning[*c];
+			x += scaleX * g->kerning[c];
 		}
 
-		g = &glyphs[*c];
+		g = &glyphs[c];
 
 		va->AddVertex2dQT(x+scaleX*g->x0, y+scaleY*g->y1, g->u0, g->v1);
 		va->AddVertex2dQT(x+scaleX*g->x0, y+scaleY*g->y0, g->u0, g->v0);
@@ -1758,7 +1783,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	int skippedLines;
 	bool endOfString, colorChanged;
 	const GlyphInfo* g = NULL;
-	const unsigned char* c;
+	unsigned int c;
 	float4 newColor; newColor[3] = 1.0f;
 	unsigned int i = 0;
 
@@ -1768,7 +1793,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 		if (endOfString)
 			return;
 
-		c  = reinterpret_cast<const unsigned char*>(&str[i]);
+		c = GetUnicodeChar(str,&i);
 		++i;
 
 		if (colorChanged) {
@@ -1783,10 +1808,10 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 			x  = startx;
 			y -= skippedLines * lineHeight_;
 		} else if (g) {
-			x += scaleX * g->kerning[*c];
+			x += scaleX * g->kerning[c];
 		}
 
-		g = &glyphs[*c];
+		g = &glyphs[c];
 
 		const float dx0 = x + scaleX * g->x0, dy0 = y + scaleY * g->y0;
 		const float dx1 = x + scaleX * g->x1, dy1 = y + scaleY * g->y1;
@@ -1805,7 +1830,6 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	} while(true);
 }
 
-
 void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const float& scaleY, const std::string& str)
 {
 	const float shiftX = (scaleX/fontSize)*outlineWidth, shiftY = (scaleY/fontSize)*outlineWidth;
@@ -1820,7 +1844,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	int skippedLines;
 	bool endOfString, colorChanged;
 	const GlyphInfo* g = NULL;
-	const unsigned char* c;
+    unsigned int c;
 	float4 newColor; newColor[3] = 1.0f;
 	unsigned int i = 0;
 
@@ -1830,7 +1854,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 		if (endOfString)
 			return;
 
-		c  = reinterpret_cast<const unsigned char*>(&str[i]);
+		c = GetUnicodeChar(str,&i);
 		++i;
 
 		if (colorChanged) {
@@ -1845,10 +1869,10 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 			x  = startx;
 			y -= skippedLines * lineHeight_;
 		} else if (g) {
-			x += scaleX * g->kerning[*c];
+			x += scaleX * g->kerning[c];
 		}
 
-		g = &glyphs[*c];
+		g = &glyphs[c];
 
 		const float dx0 = x + scaleX * g->x0, dy0 = y + scaleY * g->y0;
 		const float dx1 = x + scaleX * g->x1, dy1 = y + scaleY * g->y1;

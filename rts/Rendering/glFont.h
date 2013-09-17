@@ -11,6 +11,7 @@
 
 #undef GetCharWidth // winapi.h
 
+#define SymbolsAmount 0x4FF
 
 static const int FONT_LEFT     = 1 << 0;
 static const int FONT_RIGHT    = 1 << 1;
@@ -105,7 +106,7 @@ public:
 			advance = height = 1.0f;
 			descender = 0.0f;
 
-			for (int i = 0; i <= 255; i++) {
+			for (int i = 0; i <= SymbolsAmount; i++) {
 				kerning[i] = 1.0f;
 			}
 		};
@@ -114,8 +115,8 @@ public:
 		float x0, y0, x1, y1;
 		float us0, vs0, us1, vs1; //! shadow texcoords
 		float advance, height, descender;
-		float kerning[256];
-	} glyphs[256];
+		float kerning[SymbolsAmount+1];
+	} glyphs[SymbolsAmount+1];
 
 private:
 	static const float4* ChooseOutlineColor(const float4& textColor);
