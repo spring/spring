@@ -925,7 +925,7 @@ void CGame::ClientReadNet()
 								}
 							}
 						}
-						LOG("Player %i (%s) resigned and is now spectating!",
+						LOG_L(L_DEBUG, "Player %i (%s) resigned and is now spectating!",
 								player,
 								playerHandler->Player(player)->name.c_str());
 						selectedUnitsHandler.ClearNetSelect(player);
