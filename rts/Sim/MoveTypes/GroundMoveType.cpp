@@ -647,9 +647,7 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	const bool startFlying = StartFlying(newSpeed, ground->GetNormal(owner->pos.x, owner->pos.z));
 
 	if (newSpeed.SqLength2D() >= 0.01f) {
-		skidDir = newSpeed;
-		skidDir.y = 0.0f;
-		skidDir.Normalize();
+		skidDir = newSpeed.Normalize2D();
 	}
 
 	skidRotVector = skidDir.cross(UpVector) * startSkidding;
@@ -658,7 +656,6 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING * (startSkidding | startFlying));
 	owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING * startFlying);
 
-	ASSERT_SANE_OWNER_SPEED(newSpeed);
 	// indicate we want to react to the impulse
 	return true;
 }
