@@ -902,27 +902,31 @@ void CGame::ClientReadNet()
 						break;
 					}
 					case TEAMMSG_RESIGN: {
+						if (!playing)
+							break;
+
 						playerHandler->Player(player)->StartSpectating();
 
 						// update all teams of which the player is leader
 						for (size_t t = 0; t < teamHandler->ActiveTeams(); ++t) {
 							CTeam* team = teamHandler->Team(t);
 
-							if (team->GetLeader() == player) {
-								const std::vector<int> &teamPlayers = playerHandler->ActivePlayersInTeam(t);
-								const std::vector<unsigned char> &teamAIs  = skirmishAIHandler.GetSkirmishAIsInTeam(t);
+							if (team->GetLeader() != player)
+								continue;
 
-								if ((teamPlayers.size() + teamAIs.size()) == 0) {
-									// no controllers left in team
-									//team.active = false;
-									team->SetLeader(-1);
-								} else if (teamPlayers.empty()) {
-									// no human player left in team
-									team->SetLeader(skirmishAIHandler.GetSkirmishAI(teamAIs[0])->hostPlayer);
-								} else {
-									// still human controllers left in team
-									team->SetLeader(teamPlayers[0]);
-								}
+							const std::vector<int> &teamPlayers = playerHandler->ActivePlayersInTeam(t);
+							const std::vector<unsigned char> &teamAIs  = skirmishAIHandler.GetSkirmishAIsInTeam(t);
+
+							if ((teamPlayers.size() + teamAIs.size()) == 0) {
+								// no controllers left in team
+								//team.active = false;
+								team->SetLeader(-1);
+							} else if (teamPlayers.empty()) {
+								// no human player left in team
+								team->SetLeader(skirmishAIHandler.GetSkirmishAI(teamAIs[0])->hostPlayer);
+							} else {
+								// still human controllers left in team
+								team->SetLeader(teamPlayers[0]);
 							}
 						}
 						LOG_L(L_DEBUG, "Player %i (%s) resigned and is now spectating!",
