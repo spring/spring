@@ -1164,6 +1164,7 @@ bool CGame::Draw() {
 	if (globalRendering->drawdebug) {
 		const float currTimeOffset = globalRendering->timeOffset;
 		static float lastTimeOffset = globalRendering->timeOffset;
+		static auto lastGameFrame = gs->frameNum;
 
 		assert(currTimeOffset >= 0.0f);
 
@@ -1173,12 +1174,12 @@ bool CGame::Draw() {
 		// test for monotonicity, normally should only fail
 		// when SimFrame() advances time or if simframe rate
 		// changes
-		if (currTimeOffset < lastTimeOffset)
+		if (lastGameFrame == gs->frameNum && currTimeOffset < lastTimeOffset)
 			LOG_L(L_ERROR, "assert(currTimeOffset >= lastTimeOffset) failed (SF=%u : DF=%u : CTO=%f LTO=%f)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, lastTimeOffset);
 
 		lastTimeOffset = currTimeOffset;
+		lastGameFrame = gs->frameNum;
 	}
-
 	//FIXME move both to UpdateUnsynced?
 	CTeamHighlight::Enable(spring_tomsecs(currentTimePreDraw));
 	if (unitTracker.Enabled()) {
