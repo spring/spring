@@ -310,7 +310,7 @@ void CAssParser::LoadPieceTransformations(
 	//   these rotations are "pre-scripting" but "post-modelling"
 	//   together with the (baked) aiRotateQuad they determine the
 	//   model's pose before any animations execute
-	//   
+	//
 	// spRotateVec   = pieceTable.GetFloat3("rotate", aiQuaternionToRadianAngles(aiRotateQuat) * RADTODEG);
 	spRotateVec   = pieceTable.GetFloat3("rotate", ZeroVector);
 	spRotateVec.x = pieceTable.GetFloat("rotatex", spRotateVec.x);
@@ -698,6 +698,39 @@ void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& model
 }
 
 
+static std::string FindTexture(std::string testTextureFile, const std::string& modelPath, const std::string& fallback)
+{
+	if (testTextureFile.empty())
+		return fallback;
+
+	// blender denotes relative paths with "//..", remove it
+	if (testTextureFile.find("//..") == 0)
+		testTextureFile = testTextureFile.substr(4);
+
+	if (CFileHandler::FileExists(testTextureFile, SPRING_VFS_ZIP_FIRST))
+		return testTextureFile;
+
+	if (CFileHandler::FileExists("unittextures/" + testTextureFile, SPRING_VFS_ZIP_FIRST))
+		return "unittextures/" + testTextureFile;
+
+	if (CFileHandler::FileExists(modelPath + testTextureFile, SPRING_VFS_ZIP_FIRST))
+		return modelPath + testTextureFile;
+
+	return fallback;
+}
+
+
+static std::string FindTextureByRegex(const std::string& regex_path, const std::string& regex)
+{
+	const std::vector<std::string>& files = CFileHandler::FindFiles(regex_path, regex);
+
+	if (!files.empty()) {
+		return FindTexture(FileSystem::GetFilename(files[0]), "", "");
+	}
+	return "";
+}
+
+
 void CAssParser::FindTextures(
 	S3DModel* model,
 	const aiScene* scene,
@@ -710,80 +743,48 @@ void CAssParser::FindTextures(
 	// The first contains diffuse color (RGB) and teamcolor (A)
 	// The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
 
-	const unsigned int texTypes[] = {
-		aiTextureType_DIFFUSE,
-		aiTextureType_UNKNOWN,
-		aiTextureType_SPECULAR,
-		/*
-		// TODO: support these too (we need to allow constructing tex1 & tex2 from several sources)
-		aiTextureType_EMISSIVE,
-		aiTextureType_HEIGHT,
-		aiTextureType_NORMALS,
-		aiTextureType_SHININESS,
-		aiTextureType_OPACITY,
-		*/
-	};
 
-	// gather model-defined textures (only check first material)
+	// 1. try to find by name (lowest prioriy)
+	if (model->tex1.empty()) model->tex1 = FindTextureByRegex("unittextures/", modelName + ".*");
+	if (model->tex1.empty()) model->tex1 = FindTextureByRegex("unittextures/", modelName + "1.*");
+	if (model->tex2.empty()) model->tex2 = FindTextureByRegex("unittextures/", modelName + "2.*");
+	if (model->tex1.empty()) model->tex1 = FindTextureByRegex(modelPath, "diffuse.*");
+	if (model->tex2.empty()) model->tex2 = FindTextureByRegex(modelPath, "glow.*");
+	if (model->tex1.empty()) model->tex1 = FindTextureByRegex(modelPath, "tex1.*");
+	if (model->tex2.empty()) model->tex2 = FindTextureByRegex(modelPath, "tex2.*");
+
+
+	// 2. gather model-defined textures (only check first material)
 	if (scene->mNumMaterials > 0) {
-		const aiMaterial* mat = scene->mMaterials[0];
-
+		const unsigned int texTypes[] = {
+			aiTextureType_SPECULAR,
+			aiTextureType_UNKNOWN,
+			aiTextureType_DIFFUSE,
+			/*
+			// TODO: support these too (we need to allow constructing tex1 & tex2 from several sources)
+			aiTextureType_EMISSIVE,
+			aiTextureType_HEIGHT,
+			aiTextureType_NORMALS,
+			aiTextureType_SHININESS,
+			aiTextureType_OPACITY,
+			*/
+		};
 		for (unsigned int n = 0; n < (sizeof(texTypes) / sizeof(texTypes[0])); n++) {
 			aiString textureFile;
 
-			if (mat->Get(AI_MATKEY_TEXTURE(texTypes[n], 0), textureFile) != aiReturn_SUCCESS)
+			if (scene->mMaterials[0]->Get(AI_MATKEY_TEXTURE(texTypes[n], 0), textureFile) != aiReturn_SUCCESS)
 				continue;
 
 			assert(textureFile.length > 0);
-			model->tex1 = std::string(textureFile.data);
-			break;
+			model->tex1 = FindTexture(textureFile.data, modelPath, model->tex1);
 		}
 	}
 
-	// try to load from metafile
-	model->tex1 = modelTable.GetString("tex1", model->tex1);
-	model->tex2 = modelTable.GetString("tex2", model->tex2);
 
-	// try to find by name
-	if (model->tex1.empty()) {
-		const std::vector<std::string>& files = CFileHandler::FindFiles("unittextures/", modelName + ".*");
+	// 3. try to load from metafile (highest priority)
+	model->tex1 = FindTexture(modelTable.GetString("tex1", ""), modelPath, model->tex1);
+	model->tex2 = FindTexture(modelTable.GetString("tex2", ""), modelPath, model->tex2);
 
-		if (!files.empty()) {
-			model->tex1 = FileSystem::GetFilename(files[0]);
-		}
-	}
-	if (model->tex2.empty()) {
-		const std::vector<std::string>& files = CFileHandler::FindFiles("unittextures/", modelName + "2.*");
-
-		if (!files.empty()) {
-			model->tex2 = FileSystem::GetFilename(files[0]);
-		}
-	}
-
-	// last chance for primary texture
-	if (model->tex1.empty()) {
-		const std::vector<std::string>& files = CFileHandler::FindFiles(modelPath, "diffuse.*");
-
-		if (!files.empty()) {
-			model->tex1 = FileSystem::GetFilename(files[0]);
-		}
-	}
-
-	// correct filepath?
-	if (!CFileHandler::FileExists(model->tex1, SPRING_VFS_ZIP)) {
-		if (CFileHandler::FileExists("unittextures/" + model->tex1, SPRING_VFS_ZIP)) {
-			model->tex1 = "unittextures/" + model->tex1;
-		} else if (CFileHandler::FileExists(modelPath + model->tex1, SPRING_VFS_ZIP)) {
-			model->tex1 = modelPath + model->tex1;
-		}
-	}
-	if (!CFileHandler::FileExists(model->tex2, SPRING_VFS_ZIP)) {
-		if (CFileHandler::FileExists("unittextures/" + model->tex2, SPRING_VFS_ZIP)) {
-			model->tex2 = "unittextures/" + model->tex2;
-		} else if (CFileHandler::FileExists(modelPath + model->tex2, SPRING_VFS_ZIP)) {
-			model->tex2 = modelPath + model->tex2;
-		}
-	}
 
 	model->flipTexY = modelTable.GetBool("fliptextures", true); // Flip texture upside down
 	model->invertTexAlpha = modelTable.GetBool("invertteamcolor", true); // Reverse teamcolor levels
