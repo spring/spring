@@ -433,6 +433,7 @@ int CLuaHandle::RunCallInTraceback(
 		)
 			: luaState(state)
 			, luaHandle(handle)
+
 			, nInArgs(_nInArgs)
 			, nOutArgs(_nOutArgs)
 			, errFuncIdx(_errFuncIdx)
@@ -493,7 +494,7 @@ int CLuaHandle::RunCallInTraceback(
 				lua_pop(luaState, 1);
 
 				// log only errors that lead to a crash
-				luaHandle->callinErrors += (GetError() == 2);
+				luaHandle->callinErrors += (GetError() == LUA_ERRRUN);
 			}
 		}
 
