@@ -381,9 +381,9 @@ bool CAssParser::SetModelRadiusAndHeight(
 	// if so, extract them and then remove the piece from the hierarchy entirely
 	//
 	if (piece->name == "SpringHeight") {
-		// set the model height to this node's Z-value (FIXME: 'z' is Blender-specific)
+		// set the model height to this node's Y-value (FIXME: 'y' is Assimp/Blender-specific)
 		if (!pieceTable.KeyExists("height")) {
-			model->height = piece->offset.z;
+			model->height = piece->offset.y;
 
 			LOG_S(LOG_SECTION_MODEL, "Model height of %f set by special node 'SpringHeight'", model->height);
 		}
@@ -685,11 +685,11 @@ void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& model
 	CalculateModelDimensions(model, model->rootPiece);
 
 	// note: overrides default midpos of the SpringRadius piece
-	model->relMidPos.y = (model->maxs.y - model->mins.y) * 0.5f;
+	model->relMidPos.y = (model->maxs.y + model->mins.y) * 0.5f;
 
 	// Simplified dimensions used for rough calculations
 	model->radius = modelTable.GetFloat("radius", std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length());
-	model->height = modelTable.GetFloat("height", model->maxs.z);
+	model->height = modelTable.GetFloat("height", model->maxs.y);
 	model->relMidPos = modelTable.GetFloat3("midpos", model->relMidPos);
 	model->mins = modelTable.GetFloat3("mins", model->mins);
 	model->maxs = modelTable.GetFloat3("maxs", model->maxs);
