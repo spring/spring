@@ -39,6 +39,6 @@ void spring_time::sleep() {
 	#endif
 	const float diffMs = (gettime() - expectedWakeUpTime).toMilliSecsf();
 	if (diffMs > 7.0f) {
-		LOG_L(L_WARNING, "SpringTime: used sleep() function is too inaccurate");
+	//	LOG_L(L_WARNING, "SpringTime: used sleep() function is too inaccurate");
 	}
 }
