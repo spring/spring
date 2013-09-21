@@ -996,15 +996,16 @@ int LuaSyncedRead::GetSideData(lua_State* L)
 int LuaSyncedRead::GetAllyTeamStartBox(lua_State* L)
 {
 	const std::vector<AllyTeam>& allyData = CGameSetup::GetAllyStartingData();
-	const int allyTeam = (int)luaL_checkint(L, 1);
+	const unsigned int allyTeam = luaL_checkint(L, 1);
 
-	if ((allyTeam < 0) || ((size_t)allyTeam >= allyData.size()))
+	if (allyTeam >= allyData.size())
 		return 0;
 
-	const float xmin = (gs->mapx * 8.0f) * allyData[allyTeam].startRectLeft;
-	const float zmin = (gs->mapy * 8.0f) * allyData[allyTeam].startRectTop;
-	const float xmax = (gs->mapx * 8.0f) * allyData[allyTeam].startRectRight;
-	const float zmax = (gs->mapy * 8.0f) * allyData[allyTeam].startRectBottom;
+	const float xmin = (gs->mapx * SQUARE_SIZE) * allyData[allyTeam].startRectLeft;
+	const float zmin = (gs->mapy * SQUARE_SIZE) * allyData[allyTeam].startRectTop;
+	const float xmax = (gs->mapx * SQUARE_SIZE) * allyData[allyTeam].startRectRight;
+	const float zmax = (gs->mapy * SQUARE_SIZE) * allyData[allyTeam].startRectBottom;
+
 	lua_pushnumber(L, xmin);
 	lua_pushnumber(L, zmin);
 	lua_pushnumber(L, xmax);
@@ -1016,18 +1017,18 @@ int LuaSyncedRead::GetAllyTeamStartBox(lua_State* L)
 int LuaSyncedRead::GetTeamStartPosition(lua_State* L)
 {
 	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
-		return 0;
-	}
-	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(L, teamID)) {
+	if (team == NULL)
 		return 0;
-	}
+	if (!IsAlliedTeam(L, team->teamNum))
+		return 0;
+
 	const float3& pos = team->GetStartPos();
+
 	lua_pushnumber(L, pos.x);
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
+	lua_pushboolean(L, team->HasValidStartPos());
 	return 3;
 }
 
