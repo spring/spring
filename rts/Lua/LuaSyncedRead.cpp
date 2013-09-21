@@ -2990,7 +2990,7 @@ int LuaSyncedRead::GetUnitRotation(lua_State* L)
 	const float yawAngle   = math::acosf(Clamp(math::fabs(zdir.dot(FwdVector)), -1.0f, 1.0f)); // y
 	const float rollAngle  = math::acosf(Clamp(math::fabs(xdir.dot(RgtVector)), -1.0f, 1.0f)); // z
 
-	assert(matrix.IsOrthoNormal());
+	assert(matrix.IsOrthoNormal() == 0);
 
 	// FIXME: inaccurate with chained rotations (output != input)
 	lua_pushnumber(L, -pitchAngle * Sign(ydir.dot(FwdVector))); // x
