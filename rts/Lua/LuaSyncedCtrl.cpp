@@ -2187,7 +2187,7 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 	matrix.RotateX(ClampRad(luaL_checkfloat(L, 2))); // .x := pitch
 	matrix.RotateY(ClampRad(luaL_checkfloat(L, 3))); // .y := yaw
 
-	assert(matrix.IsOrthoNormal());
+	assert(matrix.IsOrthoNormal() == 0);
 
 	unit->SetDirVectors(matrix);
 	unit->UpdateMidAndAimPos();

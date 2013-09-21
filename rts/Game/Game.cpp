@@ -1174,7 +1174,7 @@ bool CGame::Draw() {
 		// when SimFrame() advances time or if simframe rate
 		// changes
 		if (currTimeOffset < lastTimeOffset)
-			LOG_L(L_ERROR, "assert(timeOffset < lastTimeOffset) failed (SF=%u : DF=%u : CTO=%f LTO=%f)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, lastTimeOffset);
+			LOG_L(L_ERROR, "assert(currTimeOffset >= lastTimeOffset) failed (SF=%u : DF=%u : CTO=%f LTO=%f)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, lastTimeOffset);
 
 		lastTimeOffset = currTimeOffset;
 	}
