@@ -27,18 +27,64 @@ void spring_time::Serialize(creg::ISerializer& s)
 }
 
 
-void spring_time::sleep() {
-	//FIXME for very short time intervals use a yielding loop instead? (precision of yield is like 5x better than sleep, see the UT)
-	//assert(toNanoSecs() > spring_msecs(1).toNanoSecs());
+static float avgYieldMs = 0.0f;
+static float avgSleepErrMs = 0.0f;
+
+
+static void yield()
+{
+	const spring_time beforeYield = spring_time::gettime();
+
+	this_thread::yield();
+
+	const auto diffMs = (spring_time::gettime() - beforeYield).toMilliSecsf();
+	avgYieldMs = avgYieldMs * 0.9f + diffMs * 0.1f;
+}
+
+
+void spring_time::sleep()
+{
+	// for very short time intervals use a yielding loop (yield is ~5x more accurate than sleep(), check the UnitTest)
+	if (toMilliSecsf() < (avgSleepErrMs + avgYieldMs * 5.0f)) {
+		const spring_time s = gettime();
+		while ((gettime() - s) < *this) {
+			yield();
+		}
+		return;
+	}
 
 	const spring_time expectedWakeUpTime = gettime() + *this;
+
 	#if defined(SPRINGTIME_USING_STDCHRONO)
 		this_thread::sleep_for(chrono::nanoseconds( toNanoSecs() ));
 	#else
 		boost::this_thread::sleep(boost::posix_time::microseconds(std::ceil(toNanoSecsf() * 1e-3)));
 	#endif
+
 	const float diffMs = (gettime() - expectedWakeUpTime).toMilliSecsf();
-	if (diffMs > 7.0f) {
+	avgSleepErrMs = avgSleepErrMs * 0.9f + diffMs * 0.1f;
+
+	//if (diffMs > 7.0f) {
 	//	LOG_L(L_WARNING, "SpringTime: used sleep() function is too inaccurate");
+	//}
+}
+
+
+void spring_time::sleep_until()
+{
+#if defined(SPRINGTIME_USING_STDCHRONO)
+	this_thread::sleep_until(chrono::nanoseconds( toNanoSecs() ));
+#else
+	spring_time napTime = gettime() - *this;
+
+	if (napTime.toMilliSecsf() < avgYieldMs) {
+		while (napTime.isTime()) {
+			yield();
+			napTime = gettime() - *this;
+		}
+		return;
 	}
+
+	napTime.sleep();
+#endif
 }

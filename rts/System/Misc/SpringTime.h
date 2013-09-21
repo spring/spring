@@ -89,9 +89,7 @@ public:
 	inline bool isTime() const { return (x > 0); }
 
 	void sleep();
-	//inline void sleep_until() const {
-	//	this_thread::sleep_until(chrono::nanoseconds( toNanoSecs() ));
-	//}
+	void sleep_until();
 
 private:
 	inline static spring_time spring_time_native(const boost::int64_t n) { spring_time s; s.x = n; return s; }
