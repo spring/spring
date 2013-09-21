@@ -722,7 +722,8 @@ static std::string FindTexture(std::string testTextureFile, const std::string& m
 
 static std::string FindTextureByRegex(const std::string& regex_path, const std::string& regex)
 {
-	const std::vector<std::string>& files = CFileHandler::FindFiles(regex_path, regex);
+	//FIXME instead of ".*" only check imagetypes!
+	const std::vector<std::string>& files = CFileHandler::FindFiles(regex_path, regex + ".*");
 
 	if (!files.empty()) {
 		return FindTexture(FileSystem::GetFilename(files[0]), "", "");
@@ -745,16 +746,16 @@ void CAssParser::FindTextures(
 
 
 	// 1. try to find by name (lowest prioriy)
-	if (model->tex1.empty()) model->tex1 = FindTextureByRegex("unittextures/", modelName + ".*");
-	if (model->tex1.empty()) model->tex1 = FindTextureByRegex("unittextures/", modelName + "1.*");
-	if (model->tex2.empty()) model->tex2 = FindTextureByRegex("unittextures/", modelName + "2.*");
-	if (model->tex1.empty()) model->tex1 = FindTextureByRegex(modelPath, "diffuse.*");
-	if (model->tex2.empty()) model->tex2 = FindTextureByRegex(modelPath, "glow.*");
-	if (model->tex1.empty()) model->tex1 = FindTextureByRegex(modelPath, "tex1.*");
-	if (model->tex2.empty()) model->tex2 = FindTextureByRegex(modelPath, "tex2.*");
+	if (model->tex1.empty()) model->tex1 = FindTextureByRegex("unittextures/", modelName); // high priority
+	if (model->tex1.empty()) model->tex1 = FindTextureByRegex("unittextures/", modelName + "1");
+	if (model->tex2.empty()) model->tex2 = FindTextureByRegex("unittextures/", modelName + "2");
+	if (model->tex1.empty()) model->tex1 = FindTextureByRegex(modelPath, "tex1");
+	if (model->tex2.empty()) model->tex2 = FindTextureByRegex(modelPath, "tex2");
+	if (model->tex1.empty()) model->tex1 = FindTextureByRegex(modelPath, "diffuse");
+	if (model->tex2.empty()) model->tex2 = FindTextureByRegex(modelPath, "glow");          // low priority
 
 
-	// 2. gather model-defined textures (only check first material)
+	// 2. gather model-defined textures of first material (medium priority)
 	if (scene->mNumMaterials > 0) {
 		const unsigned int texTypes[] = {
 			aiTextureType_SPECULAR,
