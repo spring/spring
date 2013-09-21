@@ -1029,7 +1029,7 @@ int LuaSyncedRead::GetTeamStartPosition(lua_State* L)
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
 	lua_pushboolean(L, team->HasValidStartPos());
-	return 3;
+	return 4;
 }
 
 
