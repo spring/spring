@@ -300,7 +300,7 @@ class CLuaHandle : public CEventClient
 		bool AddEntriesToTable(lua_State* L, const char* name, bool (*entriesFunc)(lua_State*));
 
 		/// returns error code and sets traceback on error
-		int  RunCallInTraceback(const LuaHashString* hs, int inArgs, int outArgs, int errFuncIndex, std::string& traceback, bool popErrFunc);
+		int  RunCallInTraceback(const LuaHashString* hs, int inArgs, int outArgs, int errFuncIndex, std::string& tracebackMsg, bool popErrFunc);
 		/// returns false and prints message to log on error
 		bool RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errFuncIndex, bool popErrFunc = true);
 		/// returns error code and sets errormessage on error
@@ -420,7 +420,7 @@ class CLuaHandle : public CEventClient
 
 inline bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
 {
-	return RunCallInTraceback(hs, inArgs, outArgs, 0);
+	return RunCallInTraceback(hs, inArgs, outArgs, 0, false);
 }
 
 
