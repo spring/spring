@@ -658,69 +658,6 @@ bool CLuaHandleSynced::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 //  Call-ins (first two are unused)
 //
 
-#if 0
-bool CLuaHandleSynced::Initialize(const string& syncData)
-{
-	LUA_CALL_IN_CHECK(L, true);
-	luaL_checkstack(L, 3, __FUNCTION__);
-	static const LuaHashString cmdStr("Initialize");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return true;
-	}
-
-	int errfunc = LuaUtils::PushDebugTraceback(L) ? -2 : 0;
-	LOG("Initialize errfunc=%d", errfunc);
-
-	lua_pushsstring(L, syncData);
-
-	// call the routine
-	if (!RunCallInTraceback(cmdStr, 1, 1, errfunc)) {
-		return false;
-	}
-
-	// get the results
-	if (!lua_isboolean(L, -1)) {
-		lua_pop(L, 1);
-		return true;
-	}
-	const bool retval = !!lua_toboolean(L, -1);
-	lua_pop(L, 1);
-	return retval;
-}
-
-string CLuaHandleSynced::GetSyncData()
-{
-	string syncData;
-
-	LUA_CALL_IN_CHECK(L, syncData);
-	luaL_checkstack(L, 2, __FUNCTION__);
-	static const LuaHashString cmdStr("GetSyncData");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return syncData;
-	}
-
-	// call the routine
-	if (!RunCallIn(cmdStr, 0, 1)) {
-		return syncData;
-	}
-
-	// get the result
-	if (!lua_isstring(L, -1)) {
-		lua_pop(L, 1);
-		return syncData;
-	}
-	const int len = lua_strlen(L, -1);
-	const char* c = lua_tostring(L, -1);
-	syncData.resize(len);
-	for (int i = 0; i < len; i++) {
-		syncData[i] = c[i];
-	}
-	lua_pop(L, 1);
-
-	return syncData;
-}
-#endif
-
 
 bool CLuaHandleSynced::SyncedActionFallback(const string& msg, int playerID)
 {

@@ -63,9 +63,7 @@ class LuaUtils {
 
 		static void PushCurrentFuncEnv(lua_State* L, const char* caller);
 
-		// returns stack index of traceback function
-		static int PushDebugTraceback(lua_State* L);
-		static int PopDebugTraceback(lua_State* L, int idx);
+		static int PushDebugTraceback(lua_State* L); //< returns stack index of traceback function
 
 		// lower case all keys in the table, with recursion
 		static bool LowerKeys(lua_State* L, int tableIndex);

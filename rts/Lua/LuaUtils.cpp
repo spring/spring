@@ -1004,23 +1004,24 @@ int LuaUtils::isuserdata(lua_State* L)
 #define DEBUG_TABLE "debug"
 #define DEBUG_FUNC "traceback"
 
+/// this function always leaves one item on the stack
+/// and returns its index if valid and zero otherwise
 int LuaUtils::PushDebugTraceback(lua_State* L)
 {
 	lua_getglobal(L, DEBUG_TABLE);
 
 	if (lua_istable(L, -1)) {
 		lua_getfield(L, -1, DEBUG_FUNC);
+		lua_remove(L, -2); // remove DEBUG_TABLE from stack
 
 		if (!lua_isfunction(L, -1)) {
-			// leave two elements on stack
-			return 0;
+			return 0; // leave a stub on stack
 		}
-
-		lua_remove(L, -2);
 	} else {
 		lua_pop(L, 1);
 		static const LuaHashString traceback("traceback");
 		if (!traceback.GetRegistryFunc(L)) {
+			lua_pushnil(L); // leave a stub on stack
 			return 0;
 		}
 	}
@@ -1030,21 +1031,16 @@ int LuaUtils::PushDebugTraceback(lua_State* L)
 
 
 
-LuaUtils::ScopedDebugTraceBack::ScopedDebugTraceBack(lua_State* L) {
-	luaState = L;
-	errFuncIdx = PushDebugTraceback(L);
+LuaUtils::ScopedDebugTraceBack::ScopedDebugTraceBack(lua_State* L)
+	: luaState(L)
+	, errFuncIdx(PushDebugTraceback(L))
+{
 	assert(errFuncIdx >= 0);
 }
 
 LuaUtils::ScopedDebugTraceBack::~ScopedDebugTraceBack() {
-	if (errFuncIdx == -1)
-		return;
-
-	if (errFuncIdx == 0) {
-		lua_pop(luaState, 2);
-	} else {
-		lua_pop(luaState, 1);
-	}
+	//FIXME better use lua_remove(L, errFuncIdx) and solve zero case?
+	lua_pop(luaState, 1);
 }
 
 /******************************************************************************/
@@ -1054,9 +1050,8 @@ void LuaUtils::PushStringVector(lua_State* L, const vector<string>& vec)
 {
 	lua_createtable(L, vec.size(), 0);
 	for (size_t i = 0; i < vec.size(); i++) {
-		lua_pushnumber(L, (int) (i + 1));
 		lua_pushsstring(L, vec[i]);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, (int)(i + 1));
 	}
 }
 
