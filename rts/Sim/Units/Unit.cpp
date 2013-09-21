@@ -484,11 +484,11 @@ void CUnit::PostInit(const CUnit* builder)
 	UpdatePosErrorParams(true, true);
 
 	if (unitDef->floatOnWater && IsInWater()) {
-		Move(UpVector * (-unitDef->waterline - pos.y), true);
+		Move(UpVector * (std::max(ground->GetHeightReal(pos.x, pos.z), -unitDef->waterline) - pos.y), true);
 	}
 
 	if (unitDef->canmove || unitDef->builder) {
-		if (unitDef->moveState <= FIRESTATE_NONE) {
+		if (unitDef->moveState <= MOVESTATE_NONE) {
 			if (builder != NULL) {
 				// always inherit our builder's movestate
 				// if none, set CUnit's default (maneuver)
@@ -504,7 +504,7 @@ void CUnit::PostInit(const CUnit* builder)
 	}
 
 	if (commandAI->CanChangeFireState()) {
-		if (unitDef->fireState <= MOVESTATE_NONE) {
+		if (unitDef->fireState <= FIRESTATE_NONE) {
 			if (builder != NULL && dynamic_cast<CFactoryCAI*>(builder->commandAI) != NULL) {
 				// inherit our builder's firestate (if it is a factory)
 				// if no builder, CUnit's default (fire-at-will) is set
