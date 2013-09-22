@@ -62,7 +62,6 @@ namespace terrain {
 	{
 		w = W;
 		map = new TQuad*[w*w];
-		memset(map, 0, sizeof(TQuad*) * w*w);
 	}
 
 	void QuadMap::Fill(TQuad* q)
