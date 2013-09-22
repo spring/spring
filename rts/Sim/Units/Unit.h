@@ -110,7 +110,6 @@ public:
 	void EnableScriptMoveType();
 	void DisableScriptMoveType();
 
-	void ApplyTransformMatrix() const;
 	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const;
 
 	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const;
@@ -234,9 +233,9 @@ public:
 	/// if the unit is part of an group (hotkey group)
 	CGroup* group;
 
-	/// Our shield weapon, or NULL, if we have none
+	/// Our shield weapon, NULL if we have none
 	CWeapon* shieldWeapon;
-	/// Our weapon with stockpiled ammo, or NULL, if we have none
+	/// Our weapon with stockpiled ammo, NULL if we have none
 	CWeapon* stockpileWeapon;
 
 	LocalModel* localModel;
