@@ -536,7 +536,7 @@ bool CLuaHandle::RunCallInTraceback(const LuaHashString& hs, int inArgs, int out
 }
 
 
-int CLuaHandle::RunCallIn(int inArgs, int outArgs, std::string& errorMsg)
+bool CLuaHandle::RunCallIn(int inArgs, int outArgs, std::string& errorMsg)
 {
 	return RunCallInTraceback(NULL, inArgs, outArgs, 0, errorMsg, false);
 }
