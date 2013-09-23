@@ -288,38 +288,6 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 
 namespace { // prevents linking problems in case of duplicate symbols
 
-/* XXX
- * An alternative way of dealing with the commands.
- * Less overall code, but more ugly.
- * In an extension not shown in this code, this could also be used to
- * assemble a list of commands to register, by undefining and redefining a list
- * object.
- */
-/*
-#define ActExSpecial(CLS_NAME, command) \
-	class CLS_NAME##ActionExecutor : public IUnsyncedActionExecutor { \
-	public: \
-		CLS_NAME##ActionExecutor() : IUnsyncedActionExecutor(command) {} \
-		void Execute(const UnsyncedAction& action) const {
-
-#define ActEx(CLS_NAME) \
-	ActExSpecial(CLS_NAME, #CLS_NAME)
-
-#define ActExClose() \
-		} \
-	};
-
-
-ActEx(Select)
-		selectionKeys->DoSelection(action.GetArgs());
-ActExClose()
-
-ActExSpecial(SetOverlay, "TSet")
-		selectionKeys->DoSelection(action.GetArgs());
-ActExClose()
-*/
-
-
 /**
  * Special case executor which is used for creating aliases to other commands.
  * The inner executor will be delet'ed in this executors dtor.
