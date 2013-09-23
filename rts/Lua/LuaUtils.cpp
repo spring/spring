@@ -1040,6 +1040,7 @@ LuaUtils::ScopedDebugTraceBack::ScopedDebugTraceBack(lua_State* L)
 
 LuaUtils::ScopedDebugTraceBack::~ScopedDebugTraceBack() {
 	//FIXME better use lua_remove(L, errFuncIdx) and solve zero case?
+	assert(errFuncIdx == 0 || lua_gettop(luaState) == errFuncIdx);
 	lua_pop(luaState, 1);
 }
 
