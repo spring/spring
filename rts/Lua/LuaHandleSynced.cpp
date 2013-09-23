@@ -148,24 +148,34 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 		return;
 	}
 
-	SetAllowChanges(true, true);
+	// 1. setup functions/environment
+	const bool haveSynced   = (SingleState() || L == L_Sim) && SetupSynced(L);
+	const bool haveUnsynced = (SingleState() || L == L_Draw) && SetupUnsynced(L);
+
+	// 2. load code (main.lua & draw.lua)
+	if (SingleState() || L == L_Sim) {
+		lua_settop(L, 0);
+		SetSynced(true, true);
+		SetAllowChanges(true, true);
+		if (!LoadCode(L, syncedCode, syncedFile)) {
+			KillLua();
+			return;
+		}
+	}
+	if (SingleState() || L == L_Draw) {
+		lua_settop(L, 0);
+		SetSynced(false, true);
+		SetAllowChanges(false, true);
+		if (!LoadUnsyncedCode(L, unsyncedCode, unsyncedFile)) {
+			KillLua();
+			return;
+		}
+	}
+
 	SetSynced(true, true);
-
-	const bool haveSynced = (SingleState() || L == L_Sim) && SetupSynced(L, syncedCode, syncedFile);
-	if (!IsValid())
-		return;
-
-	SetAllowChanges(false, true);
-	SetSynced(false, true);
-
-	const bool haveUnsynced = (SingleState() || L == L_Draw) && SetupUnsynced(L, unsyncedCode, unsyncedFile);
-	if (!IsValid())
-		return;
-
-	SetSynced(true, true);
 	SetAllowChanges(true, true);
 
-	if (!haveSynced && !haveUnsynced) {
+	if (!IsValid() || (!haveSynced && !haveUnsynced)) {
 		KillLua();
 		return;
 	}
@@ -177,9 +187,9 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 }
 
 
-bool CLuaHandleSynced::SetupSynced(lua_State *L, const string& code, const string& filename)
+bool CLuaHandleSynced::SetupSynced(lua_State *L)
 {
-	if (!IsValid() || code.empty()) {
+	if (!IsValid()) {
 		return false;
 	}
 
@@ -242,19 +252,14 @@ bool CLuaHandleSynced::SetupSynced(lua_State *L, const string& code, const strin
 
 	lua_settop(L, 0);
 
-	if (!LoadCode(L, code, filename)) {
-		KillLua();
-		return false;
-	}
-
 	return true;
 }
 
 
-bool CLuaHandleSynced::SetupUnsynced(lua_State *L, const string& code, const string& filename)
+bool CLuaHandleSynced::SetupUnsynced(lua_State *L)
 {
-	if (!IsValid() || code.empty()) {
-		return false;
+	if (!IsValid()) {
+		return false;lua_settop(L, 0);
 	}
 
 	// make the UNSYNCED table
@@ -355,11 +360,6 @@ bool CLuaHandleSynced::SetupUnsynced(lua_State *L, const string& code, const str
 		return false;
 	}
 	lua_settop(L, 0);
-
-	if (!LoadUnsyncedCode(L, code, filename)) {
-		KillLua();
-		return false;
-	}
 
 	if (!SetupUnsyncedFunction(L, "RecvFromSynced")      ||
 	    !SetupUnsyncedFunction(L, "Update")              ||
