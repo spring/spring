@@ -133,7 +133,7 @@ void CheckModelNormals(const S3DModel* model) {
 		"It will either be rendered fully black or with black splotches!";
 
 	// Warn about models with null normals (they break lighting and appear black)
-	for (ModelPieceMap::const_iterator it = model->pieces.begin(); it != model->pieces.end(); ++it) {
+	for (ModelPieceMap::const_iterator it = model->pieceMap.begin(); it != model->pieceMap.end(); ++it) {
 		const S3DModelPiece* modelPiece = it->second;
 		const char* pieceName = it->first.c_str();
 
@@ -284,12 +284,13 @@ void C3DModelLoader::Update() {
 
 void C3DModelLoader::CreateLocalModel(LocalModel* localModel)
 {
-	const S3DModel* model = localModel->original;
-	const S3DModelPiece* root = model->GetRootPiece();
+	const LocalModelPiece* lmpRoot = localModel->GetRoot();
+	const S3DModelPiece* ompRoot = lmpRoot->original;
 
-	const bool dlistLoaded = (root->GetDisplayListID() != 0);
+	if (ompRoot->GetDisplayListID() != 0)
+		return;
 
-	if (!dlistLoaded && GML::SimEnabled() && !GML::ShareLists()) {
+	if (GML::SimEnabled() && !GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // CreateLocalModel
 
 		fixLocalModels.push_back(localModel);

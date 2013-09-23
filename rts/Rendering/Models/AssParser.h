@@ -27,7 +27,6 @@ struct SAssVertex {
 struct SAssPiece: public S3DModelPiece
 {
 	SAssPiece(): isRoot(false), extraUVs(false) {
-		type = MODELTYPE_ASS;
 	}
 
 	void DrawForList() const;

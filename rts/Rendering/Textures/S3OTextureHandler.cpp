@@ -61,7 +61,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 {
 	GML_RECMUTEX_LOCK(model); // LoadS3OTextureNow
 	LOG("Load S3O texture now (Flip Y Axis: %s, Invert Team Alpha: %s)",
-			model->flipTexY ? "yes" : "no",
+			model->invertTexYAxis ? "yes" : "no",
 			model->invertTexAlpha ? "yes" : "no");
 
 	const string totalName = model->tex1 + model->tex2;
@@ -109,7 +109,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 
 	if (model->invertTexAlpha)
 		tex1bm.InvertAlpha();
-	if (model->flipTexY) {
+	if (model->invertTexYAxis) {
 		tex1bm.ReverseYAxis();
 		tex2bm.ReverseYAxis();
 	}

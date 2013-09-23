@@ -40,7 +40,6 @@ CR_REG_METADATA(LocalModelPiece, (
 
 CR_BIND(LocalModel, (NULL));
 CR_REG_METADATA(LocalModel, (
-	CR_IGNORED(original),
 	CR_IGNORED(dirtyPieces),
 	CR_IGNORED(lodCount), //FIXME?
 	CR_MEMBER(pieces)
@@ -61,8 +60,9 @@ void S3DModel::DeletePieces(S3DModelPiece* piece)
 
 S3DModelPiece* S3DModel::FindPiece(const std::string& name) const
 {
-    const ModelPieceMap::const_iterator it = pieces.find(name);
-    if (it != pieces.end()) return it->second;
+    const ModelPieceMap::const_iterator it = pieceMap.find(name);
+    if (it != pieceMap.end())
+		return it->second;
     return NULL;
 }
 
@@ -74,13 +74,13 @@ S3DModelPiece* S3DModel::FindPiece(const std::string& name) const
 S3DModelPiece::S3DModelPiece()
 	: parent(NULL)
 	, colvol(NULL)
-	, type(MODELTYPE_OTHER)
-	, ramType(AXIS_MAPPING_XYZ)
-	, isEmpty(true)
-	, mIsIdentity(true)
+	, axisMapType(AXIS_MAPPING_XYZ)
+	, hasGeometryData(false)
+	, hasIdentityRot(true)
+	, scales(OnesVector)
 	, mins(DEF_MIN_SIZE)
 	, maxs(DEF_MAX_SIZE)
-	, raSigns(-OnesVector)
+	, rotAxisSigns(-OnesVector)
 	, dispListID(0)
 {
 }
@@ -104,27 +104,22 @@ unsigned int S3DModelPiece::CreateDrawForList() const
 
 void S3DModelPiece::DrawStatic() const
 {
-	const bool transform = (offset.SqLength() != 0.0f || !mIsIdentity);
+	CMatrix44f mat;
 
-	if (transform) {
-		glPushMatrix();
+	// get the static transform (sans script influences)
+	ComposeTransform(mat, offset, ZeroVector, scales);
 
-		if (!mIsIdentity)	
-			glMultMatrixf(scaleRotMatrix);
+	glPushMatrix();
+	glMultMatrixf(mat);
 
-		glTranslatef(offset.x, offset.y, offset.z);
+	if (hasGeometryData)
+		glCallList(dispListID);
+
+	for (unsigned int n = 0; n < children.size(); n++) {
+		children[n]->DrawStatic();
 	}
 
-		if (!isEmpty)
-			glCallList(dispListID);
-
-		for (std::vector<S3DModelPiece*>::const_iterator ci = children.begin(); ci != children.end(); ++ci) {
-			(*ci)->DrawStatic();
-		}
-
-	if (transform) {
-		glPopMatrix();
-	}
+	glPopMatrix();
 }
 
 
@@ -156,8 +151,8 @@ void LocalModel::SetLODCount(unsigned int count)
 
 void LocalModel::ReloadDisplayLists()
 {
-	for (std::vector<LocalModelPiece*>::iterator piece = pieces.begin(); piece != pieces.end(); ++piece) {
-		(*piece)->dispListID = (*piece)->original->GetDisplayListID();
+	for (unsigned int n = 0; n < pieces.size(); n++) {
+		pieces[n]->dispListID = pieces[n]->original->GetDisplayListID();
 	}
 }
 
@@ -196,7 +191,7 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	, numUpdatesSynced(1)
 	, lastMatrixUpdate(0)
 
-	, scriptSetVisible(!piece->isEmpty)
+	, scriptSetVisible(piece->HasGeometryData())
 	, identityTransform(true)
 
 	, lmodelPieceIndex(-1)
@@ -207,12 +202,13 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 {
 	assert(piece != NULL);
 
-	dispListID =  piece->GetDisplayListID();
 	pos        =  piece->offset;
 	dir        = (piece->GetVertexCount() >= 2)? (piece->GetVertexPos(0) - piece->GetVertexPos(1)): FwdVector;
 
-	children.reserve(piece->children.size());
 	identityTransform = UpdateMatrix();
+	dispListID = piece->GetDisplayListID();
+
+	children.reserve(piece->children.size());
 }
 
 LocalModelPiece::~LocalModelPiece() {
@@ -222,7 +218,7 @@ LocalModelPiece::~LocalModelPiece() {
 
 bool LocalModelPiece::UpdateMatrix()
 {
-	return (original->ComposeTransform((pieceSpaceMat = original->scaleRotMatrix), pos, rot));
+	return (original->ComposeTransform(pieceSpaceMat.LoadIdentity(), pos, rot, original->scales));
 }
 
 void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices)
@@ -274,12 +270,8 @@ void LocalModelPiece::DrawLOD(unsigned int lod) const
 
 void LocalModelPiece::SetLODCount(unsigned int count)
 {
-	const unsigned int oldCount = lodDispLists.size();
-
-	lodDispLists.resize(count);
-	for (unsigned int i = oldCount; i < count; i++) {
-		lodDispLists[i] = 0;
-	}
+	// any new LOD's get null-lists first
+	lodDispLists.resize(count, 0);
 
 	for (unsigned int i = 0; i < children.size(); i++) {
 		children[i]->SetLODCount(count);
@@ -296,25 +288,25 @@ float3 LocalModelPiece::GetAbsolutePos() const
 
 bool LocalModelPiece::GetEmitDirPos(float3& emitPos, float3& emitDir) const
 {
-	const S3DModelPiece* piece = original;
-
-	if (piece == NULL)
+	if (original == NULL)
 		return false;
 
-	const unsigned int count = piece->GetVertexCount();
+	switch (original->GetVertexCount()) {
+		case 0: {
+			emitPos = modelSpaceMat.GetPos();
+			emitDir = modelSpaceMat.Mul(FwdVector) - emitPos;
+		} break;
+		case 1: {
+			emitPos = modelSpaceMat.GetPos();
+			emitDir = modelSpaceMat.Mul(original->GetVertexPos(0)) - emitPos;
+		} break;
+		default: {
+			const float3 p1 = modelSpaceMat.Mul(original->GetVertexPos(0));
+			const float3 p2 = modelSpaceMat.Mul(original->GetVertexPos(1));
 
-	if (count == 0) {
-		emitPos = modelSpaceMat.GetPos();
-		emitDir = modelSpaceMat.Mul(FwdVector) - emitPos;
-	} else if (count == 1) {
-		emitPos = modelSpaceMat.GetPos();
-		emitDir = modelSpaceMat.Mul(piece->GetVertexPos(0)) - emitPos;
-	} else if (count >= 2) {
-		const float3 p1 = modelSpaceMat.Mul(piece->GetVertexPos(0));
-		const float3 p2 = modelSpaceMat.Mul(piece->GetVertexPos(1));
-
-		emitPos = p1;
-		emitDir = p2 - p1;
+			emitPos = p1;
+			emitDir = p2 - p1;
+		} break;
 	}
 
 	// note: actually OBJECT_TO_WORLD but transform is the same

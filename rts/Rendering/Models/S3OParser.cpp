@@ -101,9 +101,9 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	}
 
 
-	piece->isEmpty = (piece->GetVertexDrawIndexCount() == 0);
 	piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: ZeroVector);
 
+	piece->SetHasGeometryData(piece->GetVertexDrawIndexCount() != 0);
 	piece->SetVertexTangents();
 	piece->SetMinMaxExtends();
 
@@ -133,7 +133,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 
 void SS3OPiece::UploadGeometryVBOs()
 {
-	if (isEmpty)
+	if (!hasGeometryData)
 		return;
 
 	//FIXME share 1 VBO for ALL models
@@ -152,7 +152,7 @@ void SS3OPiece::UploadGeometryVBOs()
 
 void SS3OPiece::DrawForList() const
 {
-	if (isEmpty)
+	if (!hasGeometryData)
 		return;
 	
 	vboAttributes.Bind(GL_ARRAY_BUFFER);
@@ -233,7 +233,7 @@ void SS3OPiece::SetMinMaxExtends()
 
 void SS3OPiece::SetVertexTangents()
 {
-	if (isEmpty)
+	if (!hasGeometryData)
 		return;
 
 	if (primType == S3O_PRIMTYPE_QUADS)

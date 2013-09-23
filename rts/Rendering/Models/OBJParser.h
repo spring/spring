@@ -15,10 +15,6 @@ struct SOBJTriangle {
 
 struct SOBJPiece: public S3DModelPiece {
 public:
-	SOBJPiece() {
-		type = MODELTYPE_OBJ;
-	}
-
 	void UploadGeometryVBOs();
 	void DrawForList() const;
 	void SetMinMaxExtends(bool globalVertexOffsets);

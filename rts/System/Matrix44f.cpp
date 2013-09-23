@@ -72,7 +72,7 @@ int CMatrix44f::IsIdentity(float eps) const
 	return 0;
 }
 
-void CMatrix44f::LoadIdentity()
+CMatrix44f& CMatrix44f::LoadIdentity()
 {
 	m[ 0] = m[ 5] = m[10] = m[15] = 1.0f;
 
@@ -80,6 +80,8 @@ void CMatrix44f::LoadIdentity()
 	m[ 4] = m[ 6] = m[ 7] = 0.0f;
 	m[ 8] = m[ 9] = m[11] = 0.0f;
 	m[12] = m[13] = m[14] = 0.0f;
+
+	return *this;
 }
 
 
@@ -406,7 +408,7 @@ void CMatrix44f::SetUpVector(const float3& up)
 }
 
 
-void CMatrix44f::Transpose()
+CMatrix44f& CMatrix44f::Transpose()
 {
 	std::swap(md[0][1], md[1][0]);
 	std::swap(md[0][2], md[2][0]);
@@ -416,6 +418,7 @@ void CMatrix44f::Transpose()
 	std::swap(md[1][3], md[3][1]);
 
 	std::swap(md[2][3], md[3][2]);
+	return *this;
 }
 
 
