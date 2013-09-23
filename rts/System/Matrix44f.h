@@ -22,7 +22,7 @@ public:
 	int IsOrthoNormal(float eps = 0.01f) const;
 	int IsIdentity(float eps = 0.01f) const;
 
-	void LoadIdentity();
+	CMatrix44f& LoadIdentity();
 
 	void SetUpVector(const float3& up);
 	CMatrix44f& RotateX(float rad);
@@ -45,7 +45,7 @@ public:
 			m[i] *= a;
 	}
 
-	void Transpose();
+	CMatrix44f& Transpose();
 
 	/// general matrix inversion
 	bool InvertInPlace();

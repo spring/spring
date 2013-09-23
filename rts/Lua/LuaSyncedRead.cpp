@@ -5288,7 +5288,7 @@ static int GetUnitPieceInfo(lua_State* L, const ModelType& op)
 	lua_rawset(L, -3);
 
 	HSTR_PUSH(L, "isEmpty");
-	lua_pushboolean(L, op.isEmpty);
+	lua_pushboolean(L, !op.HasGeometryData());
 	lua_rawset(L, -3);
 
 	HSTR_PUSH(L, "min");
