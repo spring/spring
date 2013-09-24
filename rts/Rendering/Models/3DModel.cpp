@@ -60,10 +60,10 @@ void S3DModel::DeletePieces(S3DModelPiece* piece)
 
 S3DModelPiece* S3DModel::FindPiece(const std::string& name) const
 {
-    const ModelPieceMap::const_iterator it = pieceMap.find(name);
-    if (it != pieceMap.end())
+	const ModelPieceMap::const_iterator it = pieceMap.find(name);
+	if (it != pieceMap.end())
 		return it->second;
-    return NULL;
+	return NULL;
 }
 
 
