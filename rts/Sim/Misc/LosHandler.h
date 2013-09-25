@@ -119,10 +119,12 @@ public:
 	}
 
 	inline bool InLos(const CUnit* unit, int allyTeam) const {
-		// NOTE: units are treated differently than world objects in 2 ways:
-		//       1. they can be cloaked (has to be checked BEFORE all other cases)
-		//       2. when underwater, they only get LOS if they also have sonar
-		//          (when the requireSonarUnderWater variable is enabled)
+		// NOTE: units are treated differently than world objects in two ways:
+		//   1. they can be cloaked (has to be checked BEFORE all other cases)
+		//   2. when underwater, they are only considered to be in LOS if they
+		//      are also in radar ("sonar") coverage if requireSonarUnderWater
+		//      is enabled --> underwater units can NOT BE SEEN AT ALL without
+		//      active radar!
 		if (unit->isCloaked)
 			return false;
 		if (unit->alwaysVisible || gs->globalLOS[allyTeam])
@@ -130,8 +132,11 @@ public:
 		if (unit->useAirLos)
 			return (InAirLos(unit->pos, allyTeam));
 
-		if (unit->IsUnderWater() && requireSonarUnderWater)
-			return (radarHandler->InRadar(unit, allyTeam));
+		if (requireSonarUnderWater) {
+			if (unit->IsUnderWater() && !radarHandler->InRadar(unit, allyTeam)) {
+				return false;
+			}
+		}
 
 		return (InLos(unit->pos, allyTeam));
 	}
