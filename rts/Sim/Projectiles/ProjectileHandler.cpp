@@ -487,15 +487,13 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 	for (pci = pc.begin(); pci != pc.end(); ++pci) {
 		CProjectile* p = *pci;
 
-		if (!p->checkCol) {
+		if (!p->checkCol)
 			continue;
-		}
 
 		// NOTE: if <p> is a MissileProjectile and does not
 		// have selfExplode set, it will never be removed (!)
-		if (p->GetCollisionFlags() & Collision::NOGROUND) {
+		if (p->GetCollisionFlags() & Collision::NOGROUND)
 			continue;
-		}
 
 		// NOTE: don't add p->radius to groundHeight, or most
 		// projectiles will collide with the ground too early

@@ -12,7 +12,6 @@
 
 struct GuiSoundSet;
 class CSoundSource;
-class CUnit;
 class CWorldObject;
 
 /**
@@ -34,7 +33,7 @@ public:
 
 	void PlaySample(size_t id, const CWorldObject* obj, float volume = 1.0f);
 
-	void PlayRandomSample(const GuiSoundSet& soundSet, const CUnit* unit);
+	void PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj);
 	void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos);
 
 	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false);
