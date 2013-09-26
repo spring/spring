@@ -142,7 +142,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 bool CStrafeAirMoveType::Update()
 {
 	const float3 lastPos = owner->pos;
-	const float4 lastVel = owner->speed;
+	const float4 lastSpd = owner->speed;
 
 	AAirMoveType::Update();
 
@@ -210,7 +210,7 @@ bool CStrafeAirMoveType::Update()
 			const bool keepAttacking = ((owner->attackTarget != NULL && !owner->attackTarget->isDead) || owner->userAttackGround);
 
 			/*
-			const float brakeDistSq = Square(0.5f * lastVel.SqLength2D() / decRate);
+			const float brakeDistSq = Square(0.5f * lastSpd.SqLength2D() / decRate);
 			const float goalDistSq = (goalPos - lastPos).SqLength2D();
 
 			if (brakeDistSq >= goalDistSq && !owner->commandAI->HasMoreMoveCommands()) {
@@ -269,8 +269,8 @@ bool CStrafeAirMoveType::Update()
 			break;
 	}
 
-	if (lastVel == ZeroVector && owner->speed != ZeroVector) { owner->script->StartMoving(false); }
-	if (lastVel != ZeroVector && owner->speed == ZeroVector) { owner->script->StopMoving(); }
+	if (lastSpd == ZeroVector && owner->speed != ZeroVector) { owner->script->StartMoving(false); }
+	if (lastSpd != ZeroVector && owner->speed == ZeroVector) { owner->script->StopMoving(); }
 
 	return (HandleCollisions());
 }
