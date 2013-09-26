@@ -15,10 +15,9 @@ public:
 	void PlaySample(size_t id, const float3& p, float volume = 1.0f) {}
 	void PlaySample(size_t id, const float3& p, const float3& velocity, float volume = 1.0f) {}
 
-	void PlaySample(size_t id, const CUnit* u, float volume = 1.0f) {}
 	void PlaySample(size_t id, const CWorldObject* p, float volume = 1.0f) {}
 
-	void PlayRandomSample(const GuiSoundSet& soundSet, const CUnit* unit) {}
+	void PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj) {}
 	void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos) {}
 
 	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false) {}

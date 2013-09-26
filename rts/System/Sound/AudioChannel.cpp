@@ -9,7 +9,6 @@
 #include "SoundSource.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Objects/WorldObject.h"
-#include "Sim/Units/Unit.h"
 
 #include <climits>
 
@@ -154,9 +153,9 @@ void AudioChannel::PlaySample(size_t id, const CWorldObject* obj, float volume)
 }
 
 
-void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const CUnit* unit)
+void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj)
 {
-	PlayRandomSample(soundSet, unit->pos);
+	PlayRandomSample(soundSet, obj->pos);
 }
 
 void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos)

@@ -35,7 +35,6 @@ struct S3DModel;
 struct S3DModelPiece;
 struct LocalModel;
 struct LocalModelPiece;
-struct aiScene;
 
 typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
 
