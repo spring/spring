@@ -856,7 +856,7 @@ void CHoverAirMoveType::UpdateMoveRate()
 bool CHoverAirMoveType::Update()
 {
 	const float3 lastPos = owner->pos;
-	const float3 lastSpeed = owner->speed;
+	const float4 lastSpd = owner->speed;
 
 	AAirMoveType::Update();
 
@@ -944,11 +944,11 @@ bool CHoverAirMoveType::Update()
 		} break;
 	}
 
-	if (lastSpeed == ZeroVector && owner->speed != ZeroVector) { owner->script->StartMoving(false); }
-	if (lastSpeed != ZeroVector && owner->speed == ZeroVector) { owner->script->StopMoving(); }
+	if (lastSpd == ZeroVector && owner->speed != ZeroVector) { owner->script->StartMoving(false); }
+	if (lastSpd != ZeroVector && owner->speed == ZeroVector) { owner->script->StopMoving(); }
 
 	// Banking requires deltaSpeed.y = 0
-	deltaSpeed = owner->speed - lastSpeed;
+	deltaSpeed = owner->speed - lastSpd;
 	deltaSpeed.y = 0.0f;
 
 	// Turn and bank and move; update dirs
