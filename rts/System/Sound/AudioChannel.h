@@ -32,7 +32,6 @@ public:
 	void PlaySample(size_t id, const float3& pos, float volume = 1.0f);
 	void PlaySample(size_t id, const float3& pos, const float3& velocity, float volume = 1.0f);
 
-	void PlaySample(size_t id, const CUnit* unit, float volume = 1.0f);
 	void PlaySample(size_t id, const CWorldObject* obj, float volume = 1.0f);
 
 	void PlayRandomSample(const GuiSoundSet& soundSet, const CUnit* unit);

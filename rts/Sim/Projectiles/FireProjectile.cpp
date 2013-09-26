@@ -57,9 +57,17 @@ CR_REG_METADATA_SUB(CFireProjectile, SubParticle, (
 	));
 #endif
 
-CFireProjectile::CFireProjectile(const float3& pos, const float3& speed, CUnit* owner, int emitTtl, float emitRadius, int particleTtl, float particleSize):
-	//! these are synced, but neither weapon nor piece
-	//! (only burning features create instances of them)
+CFireProjectile::CFireProjectile(
+	const float3& pos,
+	const float3& spd,
+	CUnit* owner,
+	int emitTtl,
+	int particleTtl,
+	float emitRadius,
+	float particleSize
+):
+	// these are synced, but neither weapon nor piece
+	// (only burning features create instances of them)
 	CProjectile(pos, speed, owner, true, false, false),
 	ttl(emitTtl),
 	emitPos(pos),
@@ -67,17 +75,14 @@ CFireProjectile::CFireProjectile(const float3& pos, const float3& speed, CUnit* 
 	particleTime(particleTtl),
 	particleSize(particleSize)
 {
-	drawRadius = emitRadius + particleTime * speed.Length();
+	drawRadius = emitRadius + particleTime * speed.w;
 	checkCol = false;
-	this->pos.y += particleTime * speed.Length() * 0.5f;
 	ageSpeed = 1.0f / particleTime;
+
+	SetPosition(pos + (UpVector * particleTime * speed.w * 0.5f));
 
 	alwaysVisible = true;
 	castShadow = true;
-}
-
-CFireProjectile::~CFireProjectile()
-{
 }
 
 void CFireProjectile::StopFire()
@@ -90,7 +95,7 @@ void CFireProjectile::Update()
 	ttl--;
 	if (ttl > 0) {
 		if (projectileHandler->particleSaturation < 0.8f || (projectileHandler->particleSaturation < 1 && (gs->frameNum & 1))) {
-			//! unsynced code
+			// unsynced code
 			SubParticle sub;
 			sub.age = 0;
 			sub.maxSize = (0.7f + gu->RandFloat()*0.3f) * particleSize;
@@ -111,7 +116,7 @@ void CFireProjectile::Update()
 			subParticles2.push_front(sub);
 		}
 		if (!(ttl & 31)) {
-			//! synced code
+			// synced code
 			const std::vector<CFeature*>& features = quadField->GetFeaturesExact(emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
 			const std::vector<CUnit*>& units = quadField->GetUnitsExact(emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
 

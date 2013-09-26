@@ -62,7 +62,7 @@ void CBombDropper::Update()
 			}
 
 			const float3 dropPos = owner->pos + owner->speed * predict;
-			const float dropDist = std::max(1, salvoSize - 1) * (owner->speed.Length() * salvoDelay * 0.5f);
+			const float dropDist = std::max(1, salvoSize - 1) * (owner->speed.w * salvoDelay * 0.5f);
 
 			if (dropPos.SqDistance2D(targetPos) < Square(dropDist + bombMoveRange)) {
 				subClassReady = true;
@@ -96,11 +96,10 @@ void CBombDropper::FireImpl()
 	}
 
 	if (dropTorpedoes) {
-		float3 speed = owner->speed;
+		float3 launchSpeed = owner->speed;
 
 		if (dynamic_cast<CHoverAirMoveType*>(owner->moveType)) {
-			speed = (targetPos - weaponPos).Normalize();
-			speed *= 5.0f;
+			launchSpeed = (targetPos - weaponPos).Normalize() * 5.0f;
 		}
 
 		int ttl = weaponDef->flighttime;
@@ -111,7 +110,7 @@ void CBombDropper::FireImpl()
 
 		ProjectileParams params = GetProjectileParams();
 		params.pos = weaponPos;
-		params.speed = speed;
+		params.speed = launchSpeed;
 		params.ttl = ttl;
 		params.tracking = tracking;
 
@@ -119,19 +118,20 @@ void CBombDropper::FireImpl()
 		WeaponProjectileFactory::LoadProjectile(params);
 	} else {
 		// fudge a bit better lateral aim to compensate for imprecise aircraft steering
-		float3 dif = targetPos-weaponPos;
-		dif.y = 0;
+		float3 dif = (targetPos - weaponPos) * XZVector;
 		float3 dir = owner->speed;
-		dir.SafeNormalize();
+
+		dir = dir.SafeNormalize();
 		// add a random spray
-		dir += (gs->randVector() * SprayAngleExperience()+SalvoErrorExperience());
+		dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 		dir.y = std::min(0.0f, dir.y);
-		dir.SafeNormalize();
-		dif -= dir * dif.dot(dir);
-		dif /= std::max(0.01f,predict);
-		const float size = dif.Length();
-		if (size > 1.0f) {
-			dif /= size * 1.0f;
+		dir = dir.SafeNormalize();
+
+		dif -= (dir * dif.dot(dir));
+		dif /= std::max(0.01f, predict);
+
+		if (dif.SqLength() > 1.0f) {
+			dif /= dif.Length();
 		}
 
 		ProjectileParams params = GetProjectileParams();

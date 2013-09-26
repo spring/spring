@@ -1602,33 +1602,26 @@ int LuaOpenGL::DrawListAtUnit(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	// is visible to current read team
-	// is not an icon
-	//
+	// is visible to current read team, is not an icon
 	const CUnit* unit = ParseDrawUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
+
+	const CTransportUnit* trans = unit->GetTransporter();
+
+	if (trans != NULL)
+		unit = trans;
 
 	const unsigned int listIndex = (unsigned int)luaL_checkint(L, 2);
-	CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
+	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 	const unsigned int dlist = displayLists.GetDList(listIndex);
-	if (dlist == 0) {
+
+	if (dlist == 0)
 		return 0;
-	}
 
-	bool midPos = true;
-	if (lua_isboolean(L, 3)) {
-		midPos = lua_toboolean(L, 3);
-	}
-
-	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
-	CTransportUnit *trans=unit->GetTransporter();
-	if (trans == NULL) {
-		pos += (unit->speed * globalRendering->timeOffset);
-	} else {
-		pos += (trans->speed * globalRendering->timeOffset);
-	}
+	const bool useMidPos = luaL_optboolean(L, 3, true);
+	const float3 drawPos = (useMidPos)? unit->drawMidPos: unit->drawPos;
 
 	const float3 scale(luaL_optnumber(L, 4, 1.0f),
 	                   luaL_optnumber(L, 5, 1.0f),
@@ -1639,7 +1632,7 @@ int LuaOpenGL::DrawListAtUnit(lua_State* L)
 	                 luaL_optnumber(L, 10, 0.0f));
 
 	glPushMatrix();
-	glTranslatef(pos.x, pos.y, pos.z);
+	glTranslatef(drawPos.x, drawPos.y, drawPos.z);
 	glRotatef(degrees, rot.x, rot.y, rot.z);
 	glScalef(scale.x, scale.y, scale.z);
 	glCallList(dlist);
@@ -1653,43 +1646,33 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	// is visible to current read team
-	// is not an icon
-	//
+	// is visible to current read team, is not an icon
 	const CUnit* unit = ParseDrawUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
 
-	bool midPos = true;
-	if (lua_isboolean(L, 2)) {
-		midPos = lua_toboolean(L, 2);
-	}
+	if (unit == NULL)
+		return 0;
+
+	const CTransportUnit* trans = unit->GetTransporter();
+
+	if (trans != NULL)
+		unit = trans;
+
+	const bool useMidPos = luaL_checkboolean(L, 2);
+	const float3 drawPos = (useMidPos)? unit->drawMidPos: unit->drawPos;
 
 	if (!lua_isfunction(L, 3)) {
 		luaL_error(L, "Missing function parameter in DrawFuncAtUnit()\n");
 		return 0;
 	}
 
-	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
-	CTransportUnit *trans=unit->GetTransporter();
-	if (trans == NULL) {
-		pos += (unit->speed * globalRendering->timeOffset);
-	} else {
-		pos += (trans->speed * globalRendering->timeOffset);
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-
 	// call the function
 	glPushMatrix();
-	glTranslatef(pos.x, pos.y, pos.z);
-	const int error = lua_pcall(L, (args - 3), 0, 0);
+	glTranslatef(drawPos.x, drawPos.y, drawPos.z);
+	const int error = lua_pcall(L, (lua_gettop(L) - 3), 0, 0);
 	glPopMatrix();
 
 	if (error != 0) {
-		LOG_L(L_ERROR, "gl.DrawFuncAtUnit: error(%i) = %s",
-				error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.DrawFuncAtUnit: error(%i) = %s", error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 

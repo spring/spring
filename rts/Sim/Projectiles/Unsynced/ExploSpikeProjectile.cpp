@@ -35,24 +35,28 @@ CExploSpikeProjectile::CExploSpikeProjectile()
 {
 }
 
-CExploSpikeProjectile::CExploSpikeProjectile(const float3& pos, const float3& speed, float length, float width, float alpha, float alphaDecay, CUnit* owner):
-	CProjectile(pos, speed, owner, false, false, false),
+CExploSpikeProjectile::CExploSpikeProjectile(
+	const float3& pos,
+	const float3& spd,
+	float length,
+	float width,
+	float alpha,
+	float alphaDecay,
+	CUnit* owner
+):
+	CProjectile(pos, spd, owner, false, false, false),
 	length(length),
 	width(width),
 	alpha(alpha),
 	alphaDecay(alphaDecay),
 	color(1.0f, 0.8f, 0.5f)
 {
-	lengthGrowth = speed.Length() * (0.5f + gu->RandFloat() * 0.4f);
+	lengthGrowth = speed.w * (0.5f + gu->RandFloat() * 0.4f);
 
 	checkCol  = false;
 	useAirLos = true;
 
 	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
-}
-
-CExploSpikeProjectile::~CExploSpikeProjectile()
-{
 }
 
 void CExploSpikeProjectile::Update()

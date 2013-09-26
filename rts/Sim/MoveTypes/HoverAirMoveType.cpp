@@ -384,7 +384,7 @@ void CHoverAirMoveType::UpdateHovering()
 void CHoverAirMoveType::UpdateFlying()
 {
 	const float3& pos = owner->pos;
-	//const float3& speed = owner->speed;
+	// const float4& spd = owner->speed;
 
 	// Direction to where we would like to be
 	float3 goalVec = goalPos - pos;
@@ -554,7 +554,7 @@ void CHoverAirMoveType::UpdateFlying()
 void CHoverAirMoveType::UpdateLanding()
 {
 	const float3& pos = owner->pos;
-	const float3& speed = owner->speed;
+	const float4& spd = owner->speed;
 
 	// We want to land, and therefore cancel our speed first
 	wantedSpeed = ZeroVector;
@@ -591,7 +591,7 @@ void CHoverAirMoveType::UpdateLanding()
 	}
 
 	// We should wait until we actually have stopped smoothly
-	if (speed.SqLength2D() > 1.0f) {
+	if (spd.SqLength2D() > 1.0f) {
 		UpdateFlying();
 		UpdateAirPhysics();
 		return;
@@ -713,16 +713,19 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 void CHoverAirMoveType::UpdateAirPhysics()
 {
 	const float3& pos = owner->pos;
-	      float3& speed = owner->speed;
+	const float4& spd = owner->speed;
+
+	// copy vertical speed
+	const float yspeed = spd.y;
 
 	if (!((gs->frameNum + owner->id) & 3)) {
 		CheckForCollision();
 	}
 
-	const float yspeed = speed.y; speed.y = 0.0f;
+	owner->SetVelocity(spd * XZVector);
 
-	const float3 deltaSpeed = wantedSpeed - speed;
-	const float deltaDotSpeed = (speed != ZeroVector)? deltaSpeed.dot(speed): 1.0f;
+	const float3 deltaSpeed = wantedSpeed - spd;
+	const float deltaDotSpeed = (spd != ZeroVector)? deltaSpeed.dot(spd): 1.0f;
 
 	if (deltaDotSpeed == 0.0f) {
 		// we have the wanted speed
@@ -731,18 +734,18 @@ void CHoverAirMoveType::UpdateAirPhysics()
 		const float sqdl = deltaSpeed.SqLength();
 
 		if (sqdl < Square(accRate)) {
-			speed = wantedSpeed;
+			owner->SetVelocity(wantedSpeed);
 		} else {
-			speed += (deltaSpeed / math::sqrt(sqdl) * accRate);
+			owner->SetVelocity(spd + (deltaSpeed / math::sqrt(sqdl) * accRate));
 		}
 	} else {
 		// deccelerate
 		const float sqdl = deltaSpeed.SqLength();
 
 		if (sqdl < Square(decRate)) {
-			speed = wantedSpeed;
+			owner->SetVelocity(wantedSpeed);
 		} else {
-			speed += (deltaSpeed / math::sqrt(sqdl) * decRate);
+			owner->SetVelocity(spd + (deltaSpeed / math::sqrt(sqdl) * decRate));
 		}
 	}
 
@@ -778,14 +781,14 @@ void CHoverAirMoveType::UpdateAirPhysics()
 			smoothGround->GetHeightAboveWater(pos.x, pos.z);
 	}
 
-	speed.y = yspeed;
-	curRelHeight = pos.y - curAbsHeight;
+	// restore original vertical speed
+	owner->SetVelocity((spd * XZVector) + (UpVector * yspeed));
 
 	if (lastColWarningType == 2) {
 		const float3 dir = lastColWarning->midPos - owner->midPos;
-		const float3 sdir = lastColWarning->speed - speed;
+		const float3 sdir = lastColWarning->speed - spd;
 
-		if (speed.dot(dir + sdir * 20.0f) < 0.0f) {
+		if (spd.dot(dir + sdir * 20.0f) < 0.0f) {
 			if (lastColWarning->midPos.y > owner->pos.y) {
 				wh -= 30.0f;
 			} else {
@@ -794,38 +797,39 @@ void CHoverAirMoveType::UpdateAirPhysics()
 		}
 	}
 
-
+	curRelHeight = pos.y - curAbsHeight;
 
 	if (curRelHeight < wh) {
 		ws = altitudeRate;
 
-		if ((speed.y > 0.0001f) && (((wh - curRelHeight) / speed.y) * accRate * 1.5f) < speed.y) {
+		if ((spd.y > 0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 1.5f) < spd.y) {
 			ws = 0.0f;
 		}
 	} else {
 		ws = -altitudeRate;
 
-		if ((speed.y < -0.0001f) && (((wh - curRelHeight) / speed.y) * accRate * 0.7f) < -speed.y) {
+		if ((spd.y < -0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 0.7f) < -spd.y) {
 			ws = 0.0f;
 		}
 	}
 
 	if (!owner->beingBuilt) {
 		if (math::fabs(wh - curRelHeight) > 2.0f) {
-			if (speed.y > ws) {
-				speed.y = std::max(ws, speed.y - accRate * 1.5f);
+			if (spd.y > ws) {
+				owner->SetVelocity((spd * XZVector) + (UpVector * std::max(ws, spd.y - accRate * 1.5f)));
 			} else {
 				// accelerate upward faster if close to ground
-				speed.y = std::min(ws, speed.y + accRate * ((curRelHeight < 20.0f)? 2.0f: 0.7f));
+				owner->SetVelocity((spd * XZVector) + (UpVector * std::min(ws, spd.y + accRate * ((curRelHeight < 20.0f)? 2.0f: 0.7f))));
 			}
 		} else {
-			speed.y *= 0.95;
+			owner->SetVelocity((spd * XZVector) + (UpVector * spd.y * 0.95f));
 		}
 	}
 
+	owner->SetSpeed(spd);
 
-	if (modInfo.allowAircraftToLeaveMap || (pos + speed).IsInBounds()) {
-		owner->Move(speed, true);
+	if (modInfo.allowAircraftToLeaveMap || (pos + spd).IsInBounds()) {
+		owner->Move(spd, true);
 	}
 }
 
@@ -838,9 +842,7 @@ void CHoverAirMoveType::UpdateMoveRate()
 	if ((aircraftState == AIRCRAFT_LANDING) || (aircraftState == AIRCRAFT_TAKEOFF)) {
 		curRate = 1;
 	} else {
-		const float curSpeed = owner->speed.Length();
-
-		curRate = (curSpeed / maxSpeed) * 3;
+		curRate = (owner->speed.w / maxSpeed) * 3;
 		curRate = std::max(0, std::min(curRate, 2));
 	}
 
@@ -893,7 +895,7 @@ bool CHoverAirMoveType::Update()
 			wantedSpeed *= maxSpeed;
 
 			if (!nextPos.IsInBounds()) {
-				owner->speed = ZeroVector;
+				owner->SetVelocityAndSpeed(ZeroVector);
 			}
 
 			UpdateAirPhysics();
@@ -1073,7 +1075,7 @@ bool CHoverAirMoveType::HandleCollisions()
 
 				if (unit->mass >= CSolidObject::DEFAULT_MASS || unit->immobile) {
 					owner->Move(-dif * (dist - totRad), true);
-					owner->speed *= 0.99f;
+					owner->SetVelocity(owner->speed * 0.99f);
 
 					hitBuilding = true;
 				} else {
@@ -1084,10 +1086,12 @@ bool CHoverAirMoveType::HandleCollisions()
 
 					const float colSpeed = -owner->speed.dot(dif) + unit->speed.dot(dif);
 
-					owner->speed += (dif * colSpeed * (1.0f - part));
-					unit->speed -= (dif * colSpeed * (part));
+					owner->SetVelocity(owner->speed + (dif * colSpeed * (1.0f - part)));
+					unit->SetVelocityAndSpeed(unit->speed - (dif * colSpeed * (part)));
 				}
 			}
+
+			owner->SetSpeed(owner->speed);
 		}
 
 		if (hitBuilding && owner->IsCrashing()) {

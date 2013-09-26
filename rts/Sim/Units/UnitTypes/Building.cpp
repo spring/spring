@@ -45,10 +45,10 @@ void CBuilding::PostInit(const CUnit* builder)
 
 
 void CBuilding::ForcedMove(const float3& newPos) {
-	speed = ZeroVector;
 	heading = GetHeadingFromFacing(buildFacing);
 	frontdir = GetVectorFromHeading(heading);
 
+	SetVelocity(ZeroVector);
 	Move(CGameHelper::Pos2BuildPos(BuildInfo(unitDef, newPos, buildFacing), true), false);
 	UpdateMidAndAimPos();
 

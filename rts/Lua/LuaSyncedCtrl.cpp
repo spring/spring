@@ -513,7 +513,7 @@ static int SetWorldObjectVelocity(lua_State* L, CWorldObject* o)
 	speed.y = Clamp(luaL_checkfloat(L, 3), -MAX_UNIT_SPEED, MAX_UNIT_SPEED);
 	speed.z = Clamp(luaL_checkfloat(L, 4), -MAX_UNIT_SPEED, MAX_UNIT_SPEED);
 
-	o->SetSpeed(speed);
+	o->SetVelocityAndSpeed(speed);
 	return 0;
 }
 
@@ -553,7 +553,7 @@ static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
 	o->UpdateMidAndAimPos();
 	o->SetHeadingFromDirection();
 	o->ForcedMove(pos);
-	o->SetSpeed(speed);
+	o->SetVelocityAndSpeed(speed);
 	return 0;
 }
 

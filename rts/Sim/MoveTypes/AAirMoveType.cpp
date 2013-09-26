@@ -188,8 +188,7 @@ void AAirMoveType::UpdateLanded()
 		owner->speed.y = 0.0f;
 	}
 
-	owner->speed += owner->GetDragAccelerationVec(float4(0.0f, 0.0f, 0.0f, 0.1f));
-
+	owner->SetVelocityAndSpeed(owner->speed + owner->GetDragAccelerationVec(float4(0.0f, 0.0f, 0.0f, 0.1f)));
 	owner->Move(UpVector * (std::max(curHeight, minHeight) - owner->pos.y), true);
 	owner->Move(owner->speed, true);
 	// match the terrain normal
@@ -334,8 +333,7 @@ bool AAirMoveType::HaveLandedOnPad(const float3& padPos) {
 		// once they descend down to the landing pad altitude
 		// this is a no-op for HAMT planes which do not apply
 		// speed updates at this point
-		owner->speed += (padVector * accRate);
-		owner->speed.y = 0.0f;
+		owner->SetVelocityAndSpeed((owner->speed + (padVector * accRate)) * XZVector);
 	}
 
 	if (Square(owner->rightdir.y) < 0.01f && owner->frontdir.dot(padVector) > 0.01f) {
@@ -390,7 +388,8 @@ bool AAirMoveType::MoveToRepairPad() {
 					SetState(AIRCRAFT_LANDED);
 				}
 
-				owner->Move(absPadPos + (owner->speed = ZeroVector), false);
+				owner->SetVelocityAndSpeed(ZeroVector);
+				owner->Move(absPadPos, false);
 				owner->UpdateMidAndAimPos(); // needed here?
 				owner->AddBuildPower(airBase, airBase->unitDef->buildSpeed / GAME_SPEED);
 

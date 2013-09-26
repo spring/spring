@@ -369,7 +369,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	if (collisionVolume->DefaultToFootPrint())
 		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
 
-	speed = params.speed;
 	mapSquare = ground->GetSquare((params.pos).cClampInMap());
 
 	heading  = GetHeadingFromFacing(buildFacing);
@@ -378,6 +377,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	rightdir = frontdir.cross(updir);
 	upright  = unitDef->upright;
 
+	SetVelocity(params.speed);
 	Move((params.pos).cClampInMap(), false);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model);
@@ -680,7 +680,7 @@ void CUnit::Update()
 		return;
 
 	if (travelPeriod != 0.0f) {
-		travel += speed.Length();
+		travel += speed.w;
 		travel = math::fmod(travel, travelPeriod);
 	}
 
@@ -2005,8 +2005,9 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 
 	if (!deathScriptFinished) {
 		// put the unit in a pseudo-zombie state until Killed finishes
-		speed = ZeroVector;
+		SetVelocity(ZeroVector);
 		SetStunned(true);
+
 		paralyzeDamage = 100.0f * maxHealth;
 		health = std::max(health, 0.0f);
 	}
@@ -2224,7 +2225,7 @@ bool CUnit::GetNewCloakState(bool stunCheck) {
 
 	if (wantCloak || (scriptCloak >= 1)) {
 		const CUnit* closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(NULL, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
-		const float cloakCost = (speed.SqLength() > 0.2f)? unitDef->cloakCostMoving: unitDef->cloakCost;
+		const float cloakCost = (Square(speed.w) > 0.2f)? unitDef->cloakCostMoving: unitDef->cloakCost;
 
 		if (decloakDistance > 0.0f && closestEnemy != NULL) {
 			curCloakTimeout = gs->frameNum + cloakTimeout;

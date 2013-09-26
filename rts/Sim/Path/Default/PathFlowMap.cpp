@@ -171,7 +171,7 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 	}
 
 	// prevent self-obstruction if the unit is not moving
-	const float3& flowVec = (o->speed.SqLength() >= 1.0f)? o->speed: GetVectorFromHeading(o->heading);
+	const float3& flowVec = (Square(o->speed.w) >= 1.0f)? float3(o->speed): GetVectorFromHeading(o->heading);
 	const unsigned int cellIdx = GetCellIdx(o);
 
 	std::vector<FlowCell>& bCells = buffers[bBufferIdx];

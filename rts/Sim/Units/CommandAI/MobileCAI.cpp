@@ -761,7 +761,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		// FIXME? targetMidPosMaxDist is 3D, but compared with a 2D value
 		const float targetMidPosDist2D = targetMidPosVec.Length2D();
-		//const float targetMidPosMaxDist = owner->maxRange - (orderTarget->speed.SqLength() / owner->unitDef->maxAcc);
+		// const float targetMidPosMaxDist = owner->maxRange - (Square(orderTarget->speed.w) / owner->unitDef->maxAcc);
 
 		if (!owner->weapons.empty()) {
 			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
@@ -801,7 +801,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			const bool targetBehind = (targetMidPosVec.dot(orderTarget->speed) < 0.0f);
 
 			if (canChaseTarget && tryTargetHeading && targetBehind) {
-				SetGoal(owner->pos + (orderTarget->speed * 80), owner->pos, SQUARE_SIZE, orderTarget->speed.Length() * 1.1f);
+				SetGoal(owner->pos + (orderTarget->speed * 80), owner->pos, SQUARE_SIZE, orderTarget->speed.w * 1.1f);
 			} else {
 				StopMove();
 

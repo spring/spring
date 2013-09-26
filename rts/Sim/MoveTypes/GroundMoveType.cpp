@@ -211,7 +211,7 @@ bool CGroundMoveType::OwnerMoved(const short oldHeading, const float3& posDif, c
 		// evaluates to true the unit might still have an epsilon
 		// speed vector --> nullify it to prevent apparent visual
 		// micro-stuttering (speed is used to extrapolate drawPos)
-		owner->speed = ZeroVector;
+		owner->SetVelocityAndSpeed(ZeroVector);
 
 		// negative y-coordinates indicate temporary waypoints that
 		// only exist while we are still waiting for the pathfinder
@@ -240,10 +240,10 @@ bool CGroundMoveType::OwnerMoved(const short oldHeading, const float3& posDif, c
 	const float3 wpd = waypointDir * ((int(!reversing) * 2) - 1);
 
 	// too many false negatives: speed is unreliable if stuck behind an obstacle
-	//   idling = (owner->speed.SqLength() < (accRate * accRate));
+	//   idling = (Square(owner->speed.w) < (accRate * accRate));
 	//   idling &= (Square(currWayPointDist - prevWayPointDist) <= (accRate * accRate));
 	// too many false positives: waypoint-distance delta and speed vary too much
-	//   idling = (Square(currWayPointDist - prevWayPointDist) < owner->speed.SqLength());
+	//   idling = (Square(currWayPointDist - prevWayPointDist) < Square(owner->speed.w));
 	// too many false positives: many slow units cannot even manage 1 elmo/frame
 	//   idling = (Square(currWayPointDist - prevWayPointDist) < 1.0f);
 	idling = true;
@@ -665,17 +665,17 @@ void CGroundMoveType::UpdateSkid()
 	ASSERT_SYNCED(owner->midPos);
 
 	const float3& pos = owner->pos;
-	      float3& speed = owner->speed;
-
-	speed += owner->GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.01f));
+	const float4& spd = owner->speed;
 
 	const UnitDef* ud = owner->unitDef;
 	const float groundHeight = GetGroundHeight(pos);
 
+	owner->SetVelocity(spd + owner->GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.01f)));
+
 	if (owner->IsFlying()) {
 		const float impactSpeed = pos.IsInBounds()?
-			-speed.dot(ground->GetNormal(pos.x, pos.z)):
-			-speed.dot(UpVector);
+			-spd.dot(ground->GetNormal(pos.x, pos.z)):
+			-spd.dot(UpVector);
 		const float impactDamageMult = impactSpeed * owner->mass * COLLISION_DAMAGE_MULT;
 		const bool doColliderDamage = (modInfo.allowUnitCollisionDamage && impactSpeed > ud->minCollisionSpeed && ud->minCollisionSpeed >= 0.0f);
 
@@ -695,18 +695,17 @@ void CGroundMoveType::UpdateSkid()
 			skidRotSpeed = 0.0f;
 			// skidRotAccel = 0.0f;
 		} else {
-			speed.y += mapInfo->map.gravity;
+			owner->SetVelocity(spd + (UpVector * mapInfo->map.gravity));
 		}
 	} else {
 		// *assume* this means the unit is still on the ground
 		// (Lua gadgetry can interfere with our "physics" logic)
-		float speedf = speed.Length();
 		float skidRotSpd = 0.0f;
 
 		const bool onSlope = OnSlope(0.0f);
 		const float speedReduction = 0.35f;
 
-		if (!onSlope && StopSkidding(speed, owner->frontdir)) {
+		if (!onSlope && StopSkidding(spd, owner->frontdir)) {
 			useHeading = true;
 
 			skidRotSpd = math::floor(skidRotSpeed + skidRotAccel + 0.5f);
@@ -717,20 +716,21 @@ void CGroundMoveType::UpdateSkid()
 			// update wanted-heading after coming to a stop
 			ChangeHeading(owner->heading);
 		} else {
+			// number of frames until rotational speed would drop to 0
+			const float speedScale = owner->SetSpeed(spd);
+			const float remTime = std::max(1.0f, speedScale / speedReduction);
+
 			if (onSlope) {
 				const float3 normalVector = ground->GetNormal(pos.x, pos.z);
 				const float3 normalForce = normalVector * normalVector.dot(UpVector * mapInfo->map.gravity);
 				const float3 newForce = UpVector * mapInfo->map.gravity - normalForce;
 
-				speed += newForce;
-				speedf = speed.Length();
-				speed *= (1.0f - (0.1f * normalVector.y));
+				owner->SetVelocity(spd + newForce);
+				owner->SetVelocity(spd * (1.0f - (0.1f * normalVector.y)));
 			} else {
-				speed *= (1.0f - std::min(1.0f, speedReduction / speedf)); // clamped 0..1
+				// RHS is clamped to 0..1
+				owner->SetVelocity(spd * (1.0f - std::min(1.0f, speedReduction / speedScale)));
 			}
-
-			// number of frames until rotational speed would drop to 0
-			const float remTime = std::max(1.0f, speedf / speedReduction);
 
 			skidRotSpd = math::floor(skidRotSpeed + skidRotAccel * (remTime - 1.0f) + 0.5f);
 			skidRotAccel = (skidRotSpd - skidRotSpeed) / remTime;
@@ -742,33 +742,35 @@ void CGroundMoveType::UpdateSkid()
 			}
 		}
 
-		if ((groundHeight - pos.y) < (speed.y + mapInfo->map.gravity)) {
-			speed.y += mapInfo->map.gravity;
+		if ((groundHeight - pos.y) < (spd.y + mapInfo->map.gravity)) {
+			owner->SetVelocity(spd + (UpVector * mapInfo->map.gravity));
 
 			// flying requires skidding and relies on CalcSkidRot
 			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
 			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
 
 			useHeading = false;
-		} else if ((groundHeight - pos.y) > speed.y) {
+		} else if ((groundHeight - pos.y) > spd.y) {
 			// LHS is always negative, so this becomes true when the
 			// unit is falling back down and will impact the ground
 			// in one frame
 			const float3& normal = (pos.IsInBounds())? ground->GetNormal(pos.x, pos.z): UpVector;
-			const float dot = speed.dot(normal);
+			const float dot = spd.dot(normal);
 
 			if (dot > 0.0f) {
 				// not possible without lateral movement
-				speed *= 0.95f;
+				owner->SetVelocity(spd * 0.95f);
 			} else {
-				speed += (normal * (math::fabs(speed.dot(normal)) + 0.1f));
-				speed *= 0.8f;
+				owner->SetVelocity(spd + (normal * (math::fabs(spd.dot(normal)) + 0.1f)));
+				owner->SetVelocity(spd * 0.8f);
 			}
 		}
 	}
 
+	// finally update speed.w
+	owner->SetSpeed(spd);
 	// translate before rotate, match terrain normal if not in air
-	owner->Move(speed, true);
+	owner->Move(spd, true);
 	owner->UpdateDirVectors(!owner->upright);
 
 	if (owner->IsSkidding()) {
@@ -784,20 +786,21 @@ void CGroundMoveType::UpdateSkid()
 	// to non-skidding
 	oldPos = owner->pos;
 
-	ASSERT_SANE_OWNER_SPEED(speed);
+	ASSERT_SANE_OWNER_SPEED(spd);
 	ASSERT_SYNCED(owner->midPos);
 }
 
 void CGroundMoveType::UpdateControlledDrop()
 {
-	const float3&  pos = owner->pos;
-	const float3   acc = UpVector * std::min(mapInfo->map.gravity * owner->fallSpeed, 0.0f);
-	const float     gh = GetGroundHeight(pos);
+	const float3& pos = owner->pos;
+	const float4& spd = owner->speed;
+	const float3  acc = UpVector * std::min(mapInfo->map.gravity * owner->fallSpeed, 0.0f);
+	const float    gh = GetGroundHeight(pos);
 
-	owner->speed += acc;
-	owner->speed += owner->GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f));
-
-	owner->Move(owner->speed, true);
+	owner->SetVelocity(spd + acc);
+	owner->SetVelocity(spd + owner->GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f)));
+	owner->SetSpeed(spd);
+	owner->Move(spd, true);
 
 	if (gh > pos.y) {
 		// ground impact, stop parachute animation
@@ -816,6 +819,7 @@ void CGroundMoveType::CheckCollisionSkid()
 	//     but the quad(s) that objects are stored in are
 	//     derived from o->pos (!)
 	const float3& pos = collider->pos;
+
 	const UnitDef* colliderUD = collider->unitDef;
 	const vector<CUnit*>& nearUnits = quadField->GetUnitsExact(pos, collider->radius);
 	const vector<CFeature*>& nearFeatures = quadField->GetFeaturesExact(pos, collider->radius);
@@ -830,9 +834,8 @@ void CGroundMoveType::CheckCollisionSkid()
 		const float sqDist = (pos - collidee->pos).SqLength();
 		const float totRad = collider->radius + collidee->radius;
 
-		if ((sqDist >= totRad * totRad) || (sqDist <= 0.01f)) {
+		if ((sqDist >= totRad * totRad) || (sqDist <= 0.01f))
 			continue;
-		}
 
 		const float3 dif = (pos - collidee->pos).SafeNormalize();
 
@@ -846,9 +849,6 @@ void CGroundMoveType::CheckCollisionSkid()
 			if (impactSpeed <= 0.0f)
 				continue;
 
-			collider->Move(dif * impactSpeed, true);
-			collider->speed += ((dif * impactSpeed) * 1.8f);
-
 			// damage the collider, no added impulse
 			if (doColliderDamage) {
 				collider->DoDamage(DamageArray(impactDamageMult), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
@@ -857,6 +857,9 @@ void CGroundMoveType::CheckCollisionSkid()
 			if (doCollideeDamage) {
 				collidee->DoDamage(DamageArray(impactDamageMult), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 			}
+
+			collider->Move(dif * impactSpeed, true);
+			collider->SetVelocity(collider->speed + ((dif * impactSpeed) * 1.8f));
 		} else {
 			assert(collider->mass > 0.0f && collidee->mass > 0.0f);
 
@@ -880,9 +883,6 @@ void CGroundMoveType::CheckCollisionSkid()
 			if (impactSpeed <= 0.0f)
 				continue;
 
-			collider->Move( colliderImpactImpulse, true);
-			collidee->Move(-collideeImpactImpulse, true);
-
 			// damage the collider
 			if (doColliderDamage) {
 				collider->DoDamage(DamageArray(colliderImpactDmgMult), dif * colliderImpactDmgMult, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
@@ -892,24 +892,26 @@ void CGroundMoveType::CheckCollisionSkid()
 				collidee->DoDamage(DamageArray(collideeImpactDmgMult), dif * -collideeImpactDmgMult, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 			}
 
-			collider->speed += colliderImpactImpulse;
-			collidee->speed -= collideeImpactImpulse;
+			collider->Move( colliderImpactImpulse, true);
+			collidee->Move(-collideeImpactImpulse, true);
+			collider->SetVelocity        (collider->speed + colliderImpactImpulse);
+			collidee->SetVelocityAndSpeed(collidee->speed - collideeImpactImpulse);
 		}
 	}
 
 	for (fi = nearFeatures.begin(); fi != nearFeatures.end(); ++fi) {
-		CFeature* f = *fi;
+		CFeature* collidee = *fi;
 
-		if (!f->collidable)
+		if (!collidee->collidable)
 			continue;
 
-		const float sqDist = (pos - f->pos).SqLength();
-		const float totRad = collider->radius + f->radius;
+		const float sqDist = (pos - collidee->pos).SqLength();
+		const float totRad = collider->radius + collidee->radius;
 
 		if ((sqDist >= totRad * totRad) || (sqDist <= 0.01f))
 			continue;
 
-		const float3 dif = (pos - f->pos).SafeNormalize();
+		const float3 dif = (pos - collidee->pos).SafeNormalize();
 		const float impactSpeed = -collider->speed.dot(dif);
 		const float impactDamageMult = std::min(impactSpeed * collider->mass * COLLISION_DAMAGE_MULT, MAX_UNIT_SPEED);
 		const float3 impactImpulse = dif * impactSpeed;
@@ -918,17 +920,20 @@ void CGroundMoveType::CheckCollisionSkid()
 		if (impactSpeed <= 0.0f)
 			continue;
 
-		collider->Move(impactImpulse, true);
-		collider->speed += (impactImpulse * 1.8f);
-
 		// damage the collider, no added impulse (!)
 		if (doColliderDamage) {
 			collider->DoDamage(DamageArray(impactDamageMult), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 		}
 
 		// damage the collidee feature based on collider's mass
-		f->DoDamage(DamageArray(impactDamageMult), -impactImpulse, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+		collidee->DoDamage(DamageArray(impactDamageMult), -impactImpulse, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+
+		collider->Move(impactImpulse, true);
+		collider->SetVelocity(collider->speed + (impactImpulse * 1.8f));
 	}
+
+	// finally update speed.w
+	collider->SetSpeed(collider->speed);
 
 	ASSERT_SANE_OWNER_SPEED(collider->speed);
 }
@@ -1242,7 +1247,7 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 		// to prevent sine-like "snaking" trajectories
 		const int dirSign = Sign(int(!reversing));
 		const float turnFrames = SPRING_CIRCLE_DIVS / turnRate;
-		const float turnRadius = (owner->speed.Length() * turnFrames) / (PI + PI);
+		const float turnRadius = (owner->speed.w * turnFrames) / (PI + PI);
 		const float waypointDot = Clamp(waypointDir.dot(flatFrontDir * dirSign), -1.0f, 1.0f);
 
 		#if 1
@@ -1402,7 +1407,7 @@ void CGroundMoveType::StopEngine(bool callScript, bool hardStop) {
 		}
 	}
 
-	owner->speed *= (1 - hardStop);
+	owner->SetVelocityAndSpeed(owner->speed * (1 - hardStop));
 
 	currentSpeed *= (1 - hardStop);
 	wantedSpeed = 0.0f;
@@ -1488,7 +1493,7 @@ void CGroundMoveType::HandleObjectCollisions()
 		//   _maximally bounded_ by the footprint rather than a circle
 		//   _minimally bounding_ the footprint (assuming square shape)
 		//
-		const float colliderSpeed = collider->speed.Length();
+		const float colliderSpeed = collider->speed.w;
 		const float colliderRadius = FOOTPRINT_RADIUS(colliderMD->xsize, colliderMD->zsize, 0.75f);
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
@@ -1685,7 +1690,7 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		// use the collidee's MoveDef footprint as radius if it is mobile
 		// use the collidee's Unit (not UnitDef) footprint as radius otherwise
-		const float collideeSpeed = collidee->speed.Length();
+		const float collideeSpeed = collidee->speed.w;
 		const float collideeRadius = collideeMobile?
 			FOOTPRINT_RADIUS(collideeMD->xsize, collideeMD->zsize, 0.75f):
 			FOOTPRINT_RADIUS(collidee  ->xsize, collidee  ->zsize, 0.75f);
@@ -2188,7 +2193,7 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 		// need to calculate hSpeedScale from it (not from
 		// currentSpeed) directly
 		const int    speedSign  = Sign(int(!reversing));
-		const float  speedScale = owner->speed.Length() * speedSign + hAcc;
+		const float  speedScale = owner->speed.w * speedSign + hAcc;
 
 		speedVector = owner->frontdir * speedScale;
 	}
@@ -2211,7 +2216,8 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
 
 	if (newSpeedVector != ZeroVector) {
 		// use the simplest possible Euler integration
-		owner->Move(owner->speed = newSpeedVector, true);
+		owner->SetVelocityAndSpeed(newSpeedVector);
+		owner->Move(owner->speed, true);
 
 		// NOTE:
 		//   does not check for structure blockage, coldet handles that

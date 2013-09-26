@@ -25,7 +25,6 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
 	CR_MEMBER(maxSpeed),
-	CR_MEMBER(curSpeed),
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(nextBubble),
 	CR_MEMBER(texx),
@@ -35,7 +34,6 @@ CR_REG_METADATA(CTorpedoProjectile,(
 CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, tracking(0.0f)
 	, maxSpeed(0.0f)
-	, curSpeed(0.0f)
 	, areaOfEffect(0.0f)
 
 	, nextBubble(4)
@@ -45,8 +43,6 @@ CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponP
 	projectileType = WEAPON_TORPEDO_PROJECTILE;
 
 	tracking = params.tracking;
-	curSpeed = speed.Length();
-	dir = speed / curSpeed;
 
 	if (weaponDef != NULL) {
 		maxSpeed = weaponDef->projectilespeed;
@@ -66,34 +62,33 @@ CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponP
 
 void CTorpedoProjectile::Update()
 {
+	// tracking only works when we are underwater
 	if (!weaponDef->submissile && pos.y > -3.0f) {
-		// tracking etc only works when we are underwater
 		if (!luaMoveCtrl) {
-			speed.y += mygravity;
-			dir = speed;
-			dir.Normalize();
+			// must update dir and speed.w here
+			SetVelocityAndSpeed(speed + (UpVector * mygravity));
 		}
 	} else {
 		if (!weaponDef->submissile && pos.y-speed.y > -3.0f) {
-			// level out torpedo a bit when hitting water
+			// level out torpedo a bit when hitting water (changes
+			// dir but not speed.w, must keep speed-vector in sync)
 			if (!luaMoveCtrl) {
-				dir.y *= 0.5f;
-				dir.Normalize();
+				SetDirectionAndSpeed(((dir * XZVector) + (dir * UpVector * 0.5f)).Normalize(), speed.w);
 			}
 		}
 
 		if (--ttl > 0) {
 			if (!luaMoveCtrl) {
-				if (curSpeed < maxSpeed) {
-					curSpeed += std::max(0.2f, tracking);
-				}
+				if (speed.w < maxSpeed)
+					speed.w += std::max(0.2f, tracking);
 
 				if (target) {
 					CSolidObject* so = dynamic_cast<CSolidObject*>(target);
 					CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
 
 					targetPos = target->pos;
-					float3 targSpeed(ZeroVector);
+					float3 targSpeed;
+
 					if (so) {
 						targetPos = so->aimPos;
 						targSpeed = so->speed;
@@ -112,36 +107,32 @@ void CTorpedoProjectile::Update()
 						targetPos.y = 0;
 					}
 
-					const float dist = pos.distance(targetPos);
-					float3 dif = (targetPos + targSpeed * (dist / maxSpeed) * 0.7f - pos).Normalize();
+					float3 dif = (targetPos + targSpeed * (pos.distance(targetPos) / maxSpeed) * 0.7f - pos).Normalize();
 					float3 dif2 = dif - dir;
 
 					if (dif2.Length() < tracking) {
 						dir = dif;
 					} else {
-						dif2 -= dir * (dif2.dot(dir));
-						dif2.SafeNormalize();
-						dir += dif2 * tracking;
-						dir.SafeNormalize();
+						dif2 = (dif2 - (dir * (dif2.dot(dir)))).SafeNormalize();
+						dir = (dir + (dif2 * tracking)).SafeNormalize();
 					}
 				}
 
-				speed = dir * curSpeed;
+				// do not need to update dir or speed.w here
+				CWorldObject::SetVelocity(dir * speed.w);
 			}
 
 			explGenHandler->GenExplosion(cegID, pos, speed, ttl, areaOfEffect, 0.0f, NULL, NULL);
 		} else {
 			if (!luaMoveCtrl) {
-				speed *= 0.98f;
-				speed.y += mygravity;
-				dir = speed;
-				dir.SafeNormalize();
+				// must update dir and speed.w here
+				SetVelocityAndSpeed((speed * 0.98f) + (UpVector * mygravity));
 			}
 		}
 	}
 
 	if (!luaMoveCtrl) {
-		pos += speed;
+		SetPosition(pos + speed);
 	}
 
 	if (pos.y < -2.0f) {

@@ -20,9 +20,9 @@ CR_REG_METADATA(CLaserProjectile,(
 	CR_MEMBER(intensity),
 	CR_MEMBER(color),
 	CR_MEMBER(color2),
+	CR_MEMBER(speedf),
 	CR_MEMBER(maxLength),
 	CR_MEMBER(curLength),
-	CR_MEMBER(speedf),
 	CR_MEMBER(stayTime),
 	CR_MEMBER(intensityFalloff),
 	CR_MEMBER(midtexx)
@@ -30,7 +30,6 @@ CR_REG_METADATA(CLaserProjectile,(
 
 CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, speedf(0.0f)
-
 	, maxLength(0.0f)
 	, curLength(0.0f)
 	, intensity(0.0f)
@@ -41,8 +40,8 @@ CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProje
 {
 	projectileType = WEAPON_LASER_PROJECTILE;
 
-	speedf = speed.Length();
-	dir = speed / speedf;
+	// FIXME: constant, assumes |speed| never changes after creation
+	speedf = speed.w;
 
 	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
@@ -69,7 +68,7 @@ CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProje
 
 void CLaserProjectile::Update()
 {
-	const float3 oldSpeed = speed;
+	const float4 oldSpeed = speed;
 
 	UpdateIntensity();
 	UpdateLength();
@@ -94,7 +93,7 @@ void CLaserProjectile::UpdateIntensity() {
 			stayTime = 1 + int((maxLength - curLength) / speedf);
 		}
 
-		speed = ZeroVector;
+		SetVelocityAndSpeed(ZeroVector);
 	} else {
 		// fade out over the next 5 frames at most
 		intensity -= std::max(intensityFalloff * 0.2f, 0.2f);
@@ -120,18 +119,16 @@ void CLaserProjectile::UpdateLength() {
 	stayTime = std::max(stayTime - 1, 0);
 }
 
-void CLaserProjectile::UpdatePos(const float3& oldSpeed) {
+void CLaserProjectile::UpdatePos(const float4& oldSpeed) {
 	if (luaMoveCtrl)
 		return;
 
-	pos += speed;
-
+	SetPosition(pos + speed);
 	// note: this can change pos *and* speed
 	UpdateGroundBounce();
 
 	if (oldSpeed != speed) {
-		dir = speed;
-		dir.Normalize();
+		SetVelocityAndSpeed(speed);
 	}
 }
 
@@ -146,8 +143,8 @@ void CLaserProjectile::CollisionCommon(const float3& oldPos) {
 
 	checkCol = false;
 
-	pos = oldPos;
-	speed = ZeroVector;
+	SetPosition(oldPos);
+	SetVelocityAndSpeed(ZeroVector);
 
 	if (curLength < maxLength) {
 		stayTime = 1 + int((maxLength - curLength) / speedf);
@@ -275,15 +272,14 @@ void CLaserProjectile::Draw()
 
 int CLaserProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	if (!luaMoveCtrl) {
-		const float3 rdir = (pos - shieldPos).Normalize();
+	if (luaMoveCtrl)
+		return 0;
 
-		if (rdir.dot(speed) < 0.0f) {
-			speed -= (rdir * rdir.dot(speed) * 2.0f);
-			dir = speed;
-			dir.Normalize();
-			return 1;
-		}
+	const float3 rdir = (pos - shieldPos).Normalize();
+
+	if (rdir.dot(speed) < 0.0f) {
+		SetVelocityAndSpeed(speed - (rdir * rdir.dot(speed) * 2.0f));
+		return 1;
 	}
 
 	return 0;

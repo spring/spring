@@ -54,21 +54,22 @@ CFlareProjectile::~CFlareProjectile()
 void CFlareProjectile::Update()
 {
 	CUnit* owner = CProjectile::owner();
+
 	if (gs->frameNum == activateFrame) {
-		if (owner) {
-			pos    = owner->pos;
-			speed  = owner->speed;
-			speed += owner->rightdir * owner->unitDef->flareDropVector.x;
-			speed += owner->updir    * owner->unitDef->flareDropVector.y;
-			speed += owner->frontdir * owner->unitDef->flareDropVector.z;
+		if (owner != NULL) {
+			SetPosition(owner->pos);
+			CWorldObject::SetVelocity(owner->speed);
+			CWorldObject::SetVelocity(speed + (owner->rightdir * owner->unitDef->flareDropVector.x));
+			CWorldObject::SetVelocity(speed + (owner->updir    * owner->unitDef->flareDropVector.y));
+			CWorldObject::SetVelocity(speed + (owner->frontdir * owner->unitDef->flareDropVector.z));
+			SetVelocityAndSpeed(speed);
 		} else {
 			deleteMe = true;
 		}
 	}
 	if (gs->frameNum >= activateFrame) {
-		pos += speed;
-		speed *= 0.95f;
-		speed.y += mygravity;
+		SetPosition(pos + speed);
+		SetVelocityAndSpeed((speed * 0.95f) + (UpVector * mygravity));
 
 		//FIXME: just spawn new flares, if new missiles incoming?
 		if(owner && lastSub < (gs->frameNum - owner->unitDef->flareSalvoDelay) && numSub<owner->unitDef->flareSalvoSize) {

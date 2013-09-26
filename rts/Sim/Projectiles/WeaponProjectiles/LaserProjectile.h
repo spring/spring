@@ -22,7 +22,7 @@ public:
 private:
 	void UpdateIntensity();
 	void UpdateLength();
-	void UpdatePos(const float3& oldSpeed);
+	void UpdatePos(const float4& oldSpeed);
 	void CollisionCommon(const float3& oldPos);
 
 private:
