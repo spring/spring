@@ -136,7 +136,8 @@ void CProjectile::Init(const float3& offset, CUnit* owner)
 		quadField->AddProjectile(this);
 	}
 
-	pos += offset;
+	SetPosition(pos + offset);
+	SetVelocityAndSpeed(speed);
 }
 
 
@@ -145,11 +146,8 @@ void CProjectile::Update()
 	if (luaMoveCtrl)
 		return;
 
-	speed.y += mygravity;
-	pos += speed;
-	// projectiles always point directly along their speed-vector
-	dir = speed;
-	dir = dir.SafeNormalize();
+	SetPosition(pos + speed);
+	SetVelocityAndSpeed(speed + (UpVector * mygravity));
 }
 
 
@@ -191,8 +189,10 @@ int CProjectile::DrawArray()
 }
 
 CUnit* CProjectile::owner() const {
-	// Note: this death dependency optimization using "ownerID" is logically flawed,
-	//  since ids are being reused it could return a unit that is not the original owner
+	// NOTE:
+	//   this death dependency optimization using "ownerID" is logically flawed:
+	//   because ID's are reused it could return a unit that is not the original
+	//   owner (unlikely however unless ID's get recycled very rapidly)
 	CUnit* unit = unitHandler->GetUnit(ownerID);
 
 	// make volatile

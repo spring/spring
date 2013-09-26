@@ -52,8 +52,8 @@ class CScriptMoveType : public AMoveType
 
 		float drag;
 
-		/// velocity
-		float3 vel;
+		/// velocity vector
+		float3 velVec;
 		/// relative velocity (to current direction)
 		float3 relVel;
 
@@ -62,15 +62,15 @@ class CScriptMoveType : public AMoveType
 		/// angular velocity
 		float3 rotVel;
 
+		float3 mins;
+		float3 maxs;
+
 		bool trackSlope;
 		bool trackGround;
 		float groundOffset;
 
 		float gravityFactor;
 		float windFactor;
-
-		float3 mins;
-		float3 maxs;
 
 		bool noBlocking;
 

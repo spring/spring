@@ -495,7 +495,7 @@ void CQuadField::MovedProjectile(CProjectile* p)
 	newCellCoors.x = std::max(0, std::min(int(p->pos.x / QUAD_SIZE), numQuadsX - 1));
 	newCellCoors.y = std::max(0, std::min(int(p->pos.z / QUAD_SIZE), numQuadsZ - 1));
 
-	if (newCellCoors.x != oldCellCoors.x || newCellCoors.y != oldCellCoors.y) {
+	if (newCellCoors != oldCellCoors) {
 		RemoveProjectile(p);
 		AddProjectile(p);
 	}

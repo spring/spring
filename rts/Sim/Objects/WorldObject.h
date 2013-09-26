@@ -4,7 +4,7 @@
 #define WORLD_OBJECT_H
 
 #include "System/Object.h"
-#include "System/float3.h"
+#include "System/float4.h"
 
 #define WORLDOBJECT_DEFAULT_DRAWRADIUS 30.0f
 
@@ -31,17 +31,25 @@ public:
 	CWorldObject(const float3& pos, const float3& spd) {
 		*this = CWorldObject();
 
-		this->pos = pos;
-		this->speed = spd;
+		SetPosition(pos);
+		SetVelocity(spd);
 	}
 
 	virtual ~CWorldObject() {}
 
-	virtual void SetPos(const float3& p) { pos = p; }
-	virtual void SetSpeed(const float3& v) { speed = v; }
+	virtual void SetPosition(const float3& p) {   pos = p; }
+	virtual void SetVelocity(const float3& v) { speed = v; }
 
-	void SetRadiusAndHeight(float r, float h)
-	{
+	virtual void SetVelocityAndSpeed(const float3& v) {
+		SetSpeed(v);
+		SetVelocity(v);
+	}
+
+	// by default, SetVelocity does not set magnitude (for efficiency)
+	// so SetSpeed must be explicitly called to update the w-component
+	float SetSpeed(const float3& v) { return (speed.w = v.Length()); }
+
+	void SetRadiusAndHeight(float r, float h) {
 		radius = r;
 		height = h;
 		sqRadius = r * r;
@@ -54,7 +62,7 @@ public:
 	int id;
 
 	float3 pos;         ///< position of the very bottom of the object
-	float3 speed;       ///< current velocity vector (length in elmos/frame)
+	float4 speed;       ///< current velocity vector (elmos/frame), .w = |velocity|
 
 	float radius;       ///< used for collisions
 	float height;       ///< The height of this object

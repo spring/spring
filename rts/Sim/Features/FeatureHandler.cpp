@@ -376,7 +376,7 @@ bool CFeatureHandler::AddFeature(CFeature* feature)
 	}
 
 	InsertActiveFeature(feature);
-	SetFeatureUpdateable(feature);
+	SetFeatureUpdateable(feature, true);
 
 	eventHandler.FeatureCreated(feature);
 	return true;
@@ -475,9 +475,7 @@ void CFeatureHandler::Update()
 					activeFeatures.erase(feature);
 					features[feature->id] = NULL;
 
-					if (feature->inUpdateQue) {
-						updateFeatures.erase(feature);
-					}
+					SetFeatureUpdateable(feature, false);
 
 					CSolidObject::SetDeletingRefID(feature->id + unitHandler->MaxUnits());
 					delete feature;
@@ -490,26 +488,40 @@ void CFeatureHandler::Update()
 	}
 
 	CFeatureSet::iterator fi = updateFeatures.begin();
+
 	while (fi != updateFeatures.end()) {
 		CFeature* feature = *fi;
 		++fi;
 
+		assert(feature->inUpdateQue);
+
 		if (!feature->Update()) {
-			// remove it
-			feature->inUpdateQue = false;
-			updateFeatures.erase(feature);
+			// feature is done updating itself, remove from queue
+			SetFeatureUpdateable(feature, false);
 		}
 	}
 }
 
 
-void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
+void CFeatureHandler::SetFeatureUpdateable(CFeature* feature, bool updateable)
 {
-	if (feature->inUpdateQue)
-		return;
+	if (updateable) {
+		if (feature->inUpdateQue) {
+			assert(updateFeatures.find(feature) != updateFeatures.end());
+			return;
+		}
 
-	updateFeatures.insert(feature);
-	feature->inUpdateQue = true;
+		updateFeatures.insert(feature);
+	} else {
+		if (!feature->inUpdateQue) {
+			assert(updateFeatures.find(feature) == updateFeatures.end());
+			return;
+		}
+
+		updateFeatures.erase(feature);
+	}
+
+	feature->inUpdateQue = updateable;
 }
 
 
@@ -527,8 +539,9 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 		for (fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;
 			feature->UpdateFinalHeight(true);
+
 			// put this feature back in the update-queue
-			SetFeatureUpdateable(feature);
+			SetFeatureUpdateable(feature, true);
 		}
 	}
 }

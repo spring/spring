@@ -2481,7 +2481,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 
 		CUnit* unit;
 		CFeature* feature;
-		TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true, false, true);
+		TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
 
 		if (unit) {
 			other.def = unit->unitDef;
@@ -3589,7 +3589,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		if (minimapCoords) {
 			unit = minimap->GetSelectUnit(cameraPos);
 		} else {
-			// ignoring the returned distance
+			// ignore the returned distance, we don't care about it here
 			TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, false);
 		}
 

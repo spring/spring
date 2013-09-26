@@ -786,7 +786,7 @@ void CUnitScript::Explode(int piece, int flags)
 
 	// This means that we are going to do a full fledged piece explosion!
 	float3 baseSpeed = unit->speed;
-	float3 speed((0.5f - gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
+	float3 explSpeed((0.5f - gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
 
 	if (baseSpeed.SqLength() > 9) {
 		const float l  = baseSpeed.Length();
@@ -794,18 +794,18 @@ void CUnitScript::Explode(int piece, int flags)
 		baseSpeed *= (l2 / l);
 	}
 	if (unit->pos.y - ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 15) {
-		speed.y = (0.5f - gs->randFloat()) * 6.0f;
+		explSpeed.y = (0.5f - gs->randFloat()) * 6.0f;
 	}
 
-	speed += baseSpeed;
+	explSpeed += baseSpeed;
 
 	// limit projectile speed to 12 elmos/frame (why?)
-	if (speed.SqLength() > (12.0f*12.0f)) {
-		speed = (speed.Normalize() * 12.0f);
+	if (false && explSpeed.SqLength() > (12.0f*12.0f)) {
+		explSpeed = (explSpeed.Normalize() * 12.0f);
 	}
 
 	if (flags & PF_Shatter) {
-		Shatter(piece, absPos, speed);
+		Shatter(piece, absPos, explSpeed);
 		return;
 	}
 
@@ -821,7 +821,7 @@ void CUnitScript::Explode(int piece, int flags)
 	if ((flags & PF_Fire) && projectileHandler->particleSaturation < 0.95f) { newflags |= PF_Fire; }
 	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
 
-	new CPieceProjectile(absPos, speed, unit, pieces[piece], newflags, 0.5f);
+	new CPieceProjectile(absPos, explSpeed, unit, pieces[piece], newflags, 0.5f);
 #endif
 }
 
@@ -988,7 +988,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case VETERAN_LEVEL:
 		return int(100 * unit->experience);
 	case CURRENT_SPEED:
-		return int(unit->speed.Length() * COBSCALE);
+		return int(unit->speed.w * COBSCALE);
 	case ON_ROAD:
 		return 0;
 	case IN_WATER:

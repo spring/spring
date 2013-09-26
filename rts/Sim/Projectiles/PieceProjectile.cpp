@@ -140,8 +140,10 @@ CPieceProjectile::CPieceProjectile(
 void CPieceProjectile::Detach()
 {
 	// SYNCED
-	if (curCallback) // this is unsynced, but it prevents some callback crash on exit
-		curCallback->drawCallbacker = 0;
+	if (curCallback) {
+		// this is unsynced, but it prevents some callback crash on exit
+		curCallback->drawCallbacker = NULL;
+	}
 
 	CProjectile::Detach();
 }
@@ -160,8 +162,8 @@ void CPieceProjectile::Collision()
 	const float3& norm = ground->GetNormal(pos.x, pos.z);
 	const float ns = speed.dot(norm);
 
-	speed -= (norm * ns * 1.6f);
-	pos += (norm * 0.1f);
+	SetVelocityAndSpeed(speed - (norm * ns * 1.6f));
+	SetPosition(pos + (norm * 0.1f));
 
 	if (explFlags & PF_Explode) {
 		const DamageArray damageArray(50.0f);
@@ -292,10 +294,8 @@ void CPieceProjectile::Update()
 		if (explFlags & PF_Fall)
 			speed.y += mygravity;
 
-		speed *= 0.997f;
-		pos += speed;
-		dir = speed;
-		dir = dir.SafeNormalize();
+		SetVelocityAndSpeed(speed * 0.997f);
+		SetPosition(pos + speed);
 	}
 
 	spinAngle += spinSpeed;
@@ -319,8 +319,8 @@ void CPieceProjectile::Update()
 
 	if (explFlags & PF_NoCEGTrail) {
 		if ((age & (NUM_TRAIL_PARTS - 1)) == 0 && (explFlags & PF_Smoke)) {
-			if (curCallback) {
-				curCallback->drawCallbacker = 0;
+			if (curCallback != NULL) {
+				curCallback->drawCallbacker = NULL;
 			}
 
 			curCallback = new CSmokeTrailProjectile(

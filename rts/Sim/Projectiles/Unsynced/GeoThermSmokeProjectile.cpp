@@ -20,31 +20,30 @@ CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(const float3& pos, const floa
 
 void CGeoThermSmokeProjectile::Update()
 {
-	if (geo && geo->solidOnTop) {
-		CSolidObject* o = geo->solidOnTop;
+	if (geo != NULL && geo->solidOnTop != NULL) {
+		const CSolidObject* o = geo->solidOnTop;
 
-		float3 d = pos - o->pos;
-		float sql = d.SqLength();
+		float3 geoVector = pos - o->pos;
+		const float sql = geoVector.SqLength();
 
 		if ((sql > 0.0f) && (sql < (o->radius * o->radius)) && o->collidable) {
-			d *= o->radius * fastmath::isqrt(sql);
-			pos = pos * 0.3f + (o->pos + d) * 0.7f;
+			geoVector *= (o->radius * fastmath::isqrt(sql));
 
-			if (d.y < (o->radius * 0.4f)) {
-				const float speedlen = fastmath::apxsqrt(speed.SqLength());
-				float3 right(d.z, 0.0f, -d.x);
-				speed = d.cross(right);
-				speed.ANormalize();
-				speed *= speedlen;
+			SetPosition(pos * 0.3f + (o->pos + geoVector) * 0.7f);
+
+			if (geoVector.y < (o->radius * 0.4f)) {
+				const float3 orthoDir = float3(geoVector.z, 0.0f, -geoVector.x);
+				const float3 newDir = (geoVector.cross(orthoDir)).ANormalize();
+
+				SetVelocityAndSpeed(newDir * speed.w);
 			}
 		}
 	}
 
-	const float l = fastmath::apxsqrt(speed.SqLength());
-	speed.y += 1.0f;
-	speed.x += (wind.GetCurrentWind().x / GAME_SPEED);
-	speed.z += (wind.GetCurrentWind().z / GAME_SPEED);
-	speed *= (l * fastmath::isqrt(speed.SqLength()));
+	CWorldObject::SetVelocity(speed + UpVector);
+	CWorldObject::SetVelocity(speed + XZVector * (wind.GetCurrentWind() / GAME_SPEED));
+	// now update dir and speed.w
+	SetVelocityAndSpeed(speed);
 
 	CSmokeProjectile::Update();
 }

@@ -303,7 +303,7 @@ void CWeapon::UpdateTargeting()
 		}
 
 		const float3 errorPos = targetUnit->GetErrorPos(owner->allyteam, true);
-		const float errorScale = ( MoveErrorExperience() * GAME_SPEED * targetUnit->speed.Length() );
+		const float errorScale = (MoveErrorExperience() * GAME_SPEED * targetUnit->speed.w);
 
 		float3 tmpTargetPos = errorPos + lead + errorVector * errorScale;
 		float3 tmpTargetVec = tmpTargetPos - weaponMuzzlePos;
@@ -662,7 +662,7 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	#endif
 
 	const float3 errorPos = newTargetUnit->GetErrorPos(owner->allyteam, true);
-	const float errorScale = (MoveErrorExperience() * GAME_SPEED * newTargetUnit->speed.Length() );
+	const float errorScale = (MoveErrorExperience() * GAME_SPEED * newTargetUnit->speed.w);
 	const float3 newTargetPos = errorPos + errorVector * errorScale;
 
 	if (!TryTarget(newTargetPos, isUserTarget, newTargetUnit))
@@ -780,7 +780,7 @@ void CWeapon::AutoTarget() {
 		if (nextTargetUnit->IsNeutral() && (owner->fireState <= FIRESTATE_FIREATWILL))
 			continue;
 
-		const float weaponError = MoveErrorExperience() * GAME_SPEED * nextTargetUnit->speed.Length();
+		const float weaponError = MoveErrorExperience() * GAME_SPEED * nextTargetUnit->speed.w;
 
 		prevTargetUnit = nextTargetUnit;
 		nextTargetPos = nextTargetUnit->aimPos + (errorVector * weaponError);
@@ -903,7 +903,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		if (slavedTo->targetType == Target_Unit) {
 			const float3 tp =
 				slavedTo->targetUnit->GetErrorPos(owner->allyteam, true) +
-				errorVector * (MoveErrorExperience() * GAME_SPEED * slavedTo->targetUnit->speed.Length());
+				errorVector * (MoveErrorExperience() * GAME_SPEED * slavedTo->targetUnit->speed.w);
 
 			if (TryTarget(tp, false, slavedTo->targetUnit)) {
 				targetType = Target_Unit;
@@ -1222,7 +1222,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 
 bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
 	const float3 errorPos = unit->GetErrorPos(owner->allyteam, true);
-	const float errorScale = ( MoveErrorExperience() * GAME_SPEED * unit->speed.Length() );
+	const float errorScale = (MoveErrorExperience() * GAME_SPEED * unit->speed.w);
 
 	float3 tempTargetPos = errorPos + errorVector * errorScale;
 	tempTargetPos.y = std::max(tempTargetPos.y, ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f);
@@ -1232,7 +1232,7 @@ bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
 
 bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget) {
 	const float3 errorPos = unit->GetErrorPos(owner->allyteam, true);
-	const float errorScale = ( MoveErrorExperience() * GAME_SPEED * unit->speed.Length() );
+	const float errorScale = (MoveErrorExperience() * GAME_SPEED * unit->speed.w);
 
 	float3 tempTargetPos = errorPos + errorVector * errorScale;
 	tempTargetPos.y = std::max(tempTargetPos.y, ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f);
@@ -1262,6 +1262,8 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit
 	const float3 tempfrontdir(owner->frontdir);
 	const float3 temprightdir(owner->rightdir);
 	const short tempHeading = owner->heading;
+
+	AdjustTargetPosToWater(pos, unit == NULL);
 
 	owner->heading = heading;
 	owner->frontdir = GetVectorFromHeading(owner->heading);

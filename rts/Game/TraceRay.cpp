@@ -289,7 +289,7 @@ float GuiTraceRay(
 	if (dir == ZeroVector)
 		return -1.0f;
 
-	// ground intersection
+	// ground and water-plane intersection
 	const float guiRayLength = length;
 	const float groundRayLength = ground->LineGroundCol(start, start + dir * guiRayLength, false);
 	const float waterRayLength = math::floor(math::fabs(start.y / std::min(dir.y, -0.00001f)));
@@ -298,6 +298,8 @@ float GuiTraceRay(
 	float minIngressDist = length;
 	float minEgressDist = length;
 
+	// if ray cares about water, take minimum
+	// of distance to ground and water surface
 	if (!ignoreWater)
 		minRayLength = std::min(groundRayLength, waterRayLength);
 	if (groundOnly)

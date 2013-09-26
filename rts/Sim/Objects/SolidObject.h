@@ -88,7 +88,7 @@ public:
 	virtual bool AddBuildPower(CUnit* builder, float amount) { return false; }
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) {}
 
-	virtual void ApplyImpulse(const float3& impulse) { SetSpeed(speed + impulse); }
+	virtual void ApplyImpulse(const float3& impulse) { SetVelocity(speed + impulse); }
 
 	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual int GetBlockingMapID() const { return -1; }

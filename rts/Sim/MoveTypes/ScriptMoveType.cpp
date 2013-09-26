@@ -19,17 +19,18 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(useRelVel),
 	CR_MEMBER(useRotVel),
 	CR_MEMBER(drag),
-	CR_MEMBER(vel),
+	CR_MEMBER(velVec),
 	CR_MEMBER(relVel),
 	CR_MEMBER(rot),
 	CR_MEMBER(rotVel),
+	CR_MEMBER(mins),
+	CR_MEMBER(maxs),
+
 	CR_MEMBER(trackSlope),
 	CR_MEMBER(trackGround),
 	CR_MEMBER(groundOffset),
 	CR_MEMBER(gravityFactor),
 	CR_MEMBER(windFactor),
-	CR_MEMBER(mins),
-	CR_MEMBER(maxs),
 	CR_MEMBER(noBlocking), // copy of CSolidObject::STATE_BIT_BLOCKING
 	CR_MEMBER(gndStop),
 	CR_MEMBER(shotStop),
@@ -47,7 +48,7 @@ CScriptMoveType::CScriptMoveType(CUnit* owner):
 	useRelVel(false),
 	useRotVel(false),
 	drag(0.0f),
-	vel(ZeroVector),
+	velVec(ZeroVector),
 	relVel(ZeroVector),
 	rot(ZeroVector),
 	rotVel(ZeroVector),
@@ -125,15 +126,15 @@ bool CScriptMoveType::Update()
 			(owner->rightdir * -relVel.x):
 			ZeroVector;
 
-		owner->Move(gravVec + vel, true);
-		owner->Move(windVec,       true);
-		owner->Move(unitVec,       true);
+		owner->Move(gravVec + velVec, true);
+		owner->Move(windVec,          true);
+		owner->Move(unitVec,          true);
 
 		// quadratic drag does not work well here
-		vel += gravVec;
-		vel *= (1.0f - drag);
+		velVec += gravVec;
+		velVec *= (1.0f - drag);
 
-		owner->speed = vel;
+		owner->SetVelocityAndSpeed(velVec);
 	}
 
 	if (trackGround) {
@@ -144,7 +145,7 @@ bool CScriptMoveType::Update()
 			owner->speed.y = 0.0f;
 
 			if (gndStop) {
-				vel    = ZeroVector;
+				velVec = ZeroVector;
 				relVel = ZeroVector;
 				rotVel = ZeroVector;
 				scriptNotify = 1;
@@ -190,9 +191,7 @@ void CScriptMoveType::CheckLimits()
 }
 
 
-void CScriptMoveType::SetPhysics(const float3& _pos,
-                                 const float3& _vel,
-                                 const float3& _rot)
+void CScriptMoveType::SetPhysics(const float3& _pos, const float3& _vel, const float3& _rot)
 {
 	SetPosition(_pos);
 	SetVelocity(_vel);
@@ -200,8 +199,8 @@ void CScriptMoveType::SetPhysics(const float3& _pos,
 }
 
 
-void CScriptMoveType::SetPosition(const float3& pos) { owner->Move(pos, false); }
-void CScriptMoveType::SetVelocity(const float3& _vel) { owner->speed = (vel = _vel); }
+void CScriptMoveType::SetPosition(const float3& _pos) { owner->Move(_pos, false); }
+void CScriptMoveType::SetVelocity(const float3& _vel) { owner->SetVelocityAndSpeed(velVec = _vel); }
 
 
 
@@ -219,9 +218,9 @@ void CScriptMoveType::SetRotation(const float3& _rot)
 }
 
 
-void CScriptMoveType::SetRotationVelocity(const float3& rvel)
+void CScriptMoveType::SetRotationVelocity(const float3& _rotVel)
 {
-	rotVel = rvel;
+	rotVel = _rotVel;
 	useRotVel = ((rotVel.x != 0.0f) || (rotVel.y != 0.0f) || (rotVel.z != 0.0f));
 }
 

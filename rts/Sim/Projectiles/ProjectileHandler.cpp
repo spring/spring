@@ -410,9 +410,9 @@ void CProjectileHandler::CheckUnitCollisions(
 			}
 
 			if (!cq.InsideHit()) {
-				p->SetPos(cq.GetHitPos());
+				p->SetPosition(cq.GetHitPos());
 				p->Collision(unit);
-				p->SetPos(ppos0);
+				p->SetPosition(ppos0);
 			} else {
 				p->Collision(unit);
 			}
@@ -446,9 +446,9 @@ void CProjectileHandler::CheckFeatureCollisions(
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
 			if (!cq.InsideHit()) {
-				p->SetPos(cq.GetHitPos());
+				p->SetPosition(cq.GetHitPos());
 				p->Collision(feature);
-				p->SetPos(ppos0);
+				p->SetPosition(ppos0);
 			} else {
 				p->Collision(feature);
 			}
@@ -465,18 +465,19 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc) {
 	for (ProjectileContainer::iterator pci = pc.begin(); pci != pc.end(); ++pci) {
 		CProjectile* p = *pci;
 
-		if (p->checkCol && !p->deleteMe) {
-			const float3 ppos0 = p->pos;
-			const float3 ppos1 = p->pos + p->speed;
+		if (!p->checkCol) continue;
+		if ( p->deleteMe) continue;
 
-			CUnit** endUnit = &tempUnits[0];
-			CFeature** endFeature = &tempFeatures[0];
+		const float3 ppos0 = p->pos;
+		const float3 ppos1 = p->pos + p->speed;
 
-			quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.Length(), endUnit, endFeature);
+		CUnit** endUnit = &tempUnits[0];
+		CFeature** endFeature = &tempFeatures[0];
 
-			CheckUnitCollisions(p, tempUnits, endUnit, ppos0, ppos1);
-			CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);
-		}
+		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, endUnit, endFeature);
+
+		CheckUnitCollisions(p, tempUnits, endUnit, ppos0, ppos1);
+		CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);
 	}
 }
 

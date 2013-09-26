@@ -48,10 +48,10 @@ CGenericParticleProjectile::~CGenericParticleProjectile()
 
 void CGenericParticleProjectile::Update()
 {
-	pos += speed;
+	SetPosition(pos + speed);
+	SetVelocityAndSpeed((speed + gravity) * airdrag);
+
 	life += decayrate;
-	speed += gravity;
-	speed *= airdrag;
 	size = size * sizeMod + sizeGrowth;
 
 	if (life > 1.0f) {

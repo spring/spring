@@ -198,7 +198,7 @@ void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed
 				}
 
 				transportee->SetStunned(transportee->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? transportee->maxHealth: transportee->health));
-				transportee->speed = speed * (0.5f + 0.5f * gs->randFloat());
+				transportee->SetVelocityAndSpeed(speed * (0.5f + 0.5f * gs->randFloat()));
 
 				eventHandler.UnitUnloaded(transportee, this);
 			}

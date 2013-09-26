@@ -493,7 +493,7 @@ static int GetWorldObjectVelocity(lua_State* L, const CWorldObject* o, bool isFe
 	lua_pushnumber(L, o->speed.z);
 
 	if (lua_isboolean(L, 2) && lua_toboolean(L, 2)) {
-		lua_pushnumber(L, o->speed.Length());
+		lua_pushnumber(L, o->speed.w);
 		return 4;
 	}
 

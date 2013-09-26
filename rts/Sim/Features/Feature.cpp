@@ -79,9 +79,13 @@ CFeature::~CFeature()
 	UnBlock();
 	quadField->RemoveFeature(this);
 
-	if (myFire) {
+	if (featureHandler != NULL) {
+		featureHandler->SetFeatureUpdateable(this, false);
+	}
+
+	if (myFire != NULL) {
 		myFire->StopFire();
-		myFire = 0;
+		myFire = NULL;
 	}
 
 	if (def->geoThermal) {
@@ -156,8 +160,6 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	udef = params.unitDef;
 	objectDef = params.featureDef;
 
-	speed = params.speed;
-
 	team = params.teamID;
 	allyteam = params.allyTeamID;
 
@@ -178,10 +180,13 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	// set position before mid-position
 	Move((params.pos).cClampInMap(), false);
+	// use base-class version, AddFeature() below
+	// will already insert us in the update-queue
+	CWorldObject::SetVelocity(params.speed);
 
 	if (def->drawType == DRAWTYPE_MODEL) {
 		if ((model = def->LoadModel()) == NULL) {
-			LOG_L(L_ERROR, "Features: Couldn't load model for %s", def->name.c_str());
+			LOG_L(L_ERROR, "[%s] couldn't load model for %s", __FUNCTION__, def->name.c_str());
 		} else {
 			SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 			SetRadiusAndHeight(model);
@@ -215,7 +220,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 		finalHeight = ground->GetHeightReal(pos.x, pos.z);
 	}
 
-	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
+	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, ((SetSpeed(params.speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
 }
 
 
@@ -384,7 +389,7 @@ void CFeature::DoDamage(
 
 	// NOTE:
 	//   for trees, impulse is used to drive their falling animation
-	//   this also calls our SetSpeed() to put us in the update queue
+	//   this also calls our SetVel() to put us in the update queue
 	// if ((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()))
 	ApplyImpulse((impulse * impulseMult) / mass);
 
@@ -421,12 +426,13 @@ void CFeature::DependentDied(CObject *o)
 }
 
 
-void CFeature::SetSpeed(const float3& v)
+void CFeature::SetVelocity(const float3& v)
 {
-	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, ((speed = v) != ZeroVector));
+	CWorldObject::SetVelocity(v);
+	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, v != ZeroVector);
 
 	if (IsMoving()) {
-		featureHandler->SetFeatureUpdateable(this);
+		featureHandler->SetFeatureUpdateable(this, true);
 	}
 }
 
@@ -482,7 +488,11 @@ bool CFeature::UpdatePosition()
 			const bool reachedWater  = ( pos.y                     <= 0.1f);
 			const bool reachedGround = ((pos.y - realGroundHeight) <= 0.1f);
 
-			speed += GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f));
+			// NOTE:
+			//   all these calls use the base-class because FeatureHandler::Update
+			//   iterates over updateFeatures and our ::SetVelocity will insert us
+			//   into that
+			CWorldObject::SetVelocity(speed + GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f)));
 
 			if (speed.SqLength2D() > 0.01f) {
 				UnBlock();
@@ -495,22 +505,21 @@ bool CFeature::UpdatePosition()
 				quadField->AddFeature(this);
 				Block();
 			} else {
-				speed.x = 0.0f;
-				speed.z = 0.0f;
+				CWorldObject::SetVelocity(speed * UpVector);
 			}
 
 			if (!reachedGround) {
 				if (!reachedWater) {
 					// quadratic acceleration if not in water
-					speed.y += mapInfo->map.gravity;
+					CWorldObject::SetVelocity(speed + (UpVector * mapInfo->map.gravity));
 				} else {
 					// constant downward speed otherwise
-					speed.y = mapInfo->map.gravity;
+					CWorldObject::SetVelocity((speed * XZVector) + (UpVector * mapInfo->map.gravity));
 				}
 
 				Move(UpVector * speed.y, true);
 			} else {
-				speed.y = 0.0f;
+				CWorldObject::SetVelocity(speed * XZVector);
 
 				// last Update() may have sunk us into
 				// ground if pos.y was only marginally
@@ -524,7 +533,7 @@ bool CFeature::UpdatePosition()
 				// ensure that no more forward-speed updates are done
 				// (prevents wrecks floating in mid-air at edge of map
 				// due to gravity no longer being applied either)
-				speed = ZeroVector;
+				CWorldObject::SetVelocity(ZeroVector);
 			}
 
 			eventHandler.FeatureMoved(this, oldPos);
@@ -536,9 +545,9 @@ bool CFeature::UpdatePosition()
 		// is applied, only gravity affects them (FIXME: arbitrary..?)
 		if (pos.y > finalHeight) {
 			if (pos.y > 0.0f) {
-				speed.y += mapInfo->map.gravity;
+				CWorldObject::SetVelocity(speed + (UpVector * mapInfo->map.gravity));
 			} else {
-				speed.y = mapInfo->map.gravity;
+				CWorldObject::SetVelocity((speed * XZVector) + (UpVector * mapInfo->map.gravity));
 			}
 
 			// stop falling when we reach our finalHeight
@@ -547,7 +556,7 @@ bool CFeature::UpdatePosition()
 			eventHandler.FeatureMoved(this, oldPos);
 		} else if (pos.y < finalHeight) {
 			// stop vertical movement and teleport up
-			speed.y = 0.0f;
+			CWorldObject::SetVelocity(speed * XZVector);
 
 			Move(UpVector * (finalHeight - pos.y), true);
 			eventHandler.FeatureMoved(this, oldPos);
@@ -556,7 +565,7 @@ bool CFeature::UpdatePosition()
 		transMatrix[13] = pos.y;
 	}
 
-	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
+	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, ((SetSpeed(speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
 	UpdatePhysicalState();
 
 	return (IsMoving());
@@ -617,9 +626,9 @@ void CFeature::StartFire()
 		return;
 
 	fireTime = 200 + (int)(gs->randFloat() * GAME_SPEED);
-	featureHandler->SetFeatureUpdateable(this);
+	featureHandler->SetFeatureUpdateable(this, true);
 
-	myFire = new CFireProjectile(midPos, UpVector, 0, 300, radius * 0.8f, 70, 20);
+	myFire = new CFireProjectile(midPos, UpVector, 0, 300, 70, radius * 0.8f, 20.0f);
 }
 void CFeature::EmitGeoSmoke()
 {
