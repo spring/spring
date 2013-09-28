@@ -316,7 +316,7 @@ float3 CPathManager::NextWayPoint(
 ) {
 	SCOPED_TIMER("PathManager::NextWayPoint");
 
-	const float3 noPathPoint = float3(-1.0f, 0.0f, -1.0f);
+	const float3 noPathPoint = -XZVector;
 
 	// 0 indicates a no-path id
 	if (pathID == 0)

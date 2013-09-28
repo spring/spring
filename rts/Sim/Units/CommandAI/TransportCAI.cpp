@@ -58,9 +58,9 @@ CTransportCAI::CTransportCAI(CUnit* owner)
 	dropSpots.clear();
 	approachVector = ZeroVector;
 	unloadType = owner->unitDef->transportUnloadMethod;
-	startingDropPos = float3(-1.0f, -1.0f, -1.0f);
-	lastDropPos = float3(-1.0f, -1.0f, -1.0f);
-	endDropPos = float3(-1.0f, -1.0f, -1.0f);
+	startingDropPos = -OnesVector;
+	lastDropPos = -OnesVector;
+	endDropPos = -OnesVector;
 	//
 	CommandDescription c;
 	c.id = CMD_LOAD_UNITS;
@@ -267,7 +267,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 	}
 
 	isFirstIteration = true;
-	startingDropPos = float3(-1.0f, -1.0f, -1.0f);
+	startingDropPos = -OnesVector;
 }
 
 
@@ -557,7 +557,7 @@ void CTransportCAI::UnloadUnits_Drop(Command& c, CTransportUnit* transport)
 			dropSpots.pop_back();
 		}
 	} else {
-		startingDropPos = float3(-1.0f, -1.0f, -1.0f);
+		startingDropPos = -OnesVector;
 		isFirstIteration = true;
 		dropSpots.clear();
 		FinishCommand();
