@@ -203,8 +203,8 @@ inline static bool ClampInMapHeight(float3& from, float3& to)
 
 	if (dir.y >= 0.0f) {
 		// both `from` & `to` are above map's height
-		from = float3(-1.0f, -1.0f, -1.0f);
-		to   = float3(-1.0f, -1.0f, -1.0f);
+		from = -OnesVector;
+		to   = -OnesVector;
 		return true;
 	}
 

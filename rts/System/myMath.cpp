@@ -145,8 +145,8 @@ bool ClampLineInMap(float3& start, float3& end)
 
 	if (far < 0.0f) {
 		//! outside of map!
-		start = float3(-1.0f, -1.0f, -1.0f);
-		end   = float3(-1.0f, -1.0f, -1.0f);
+		start = -OnesVector;
+		end   = -OnesVector;
 		return true;
 	}
 
