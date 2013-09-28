@@ -13,7 +13,7 @@
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "System/float3.h"
 #include "System/float4.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 #if !defined(GL_VERSION_4_0) || HEADLESS
 	class CDecalsDrawerGL4: public IGroundDecalDrawer

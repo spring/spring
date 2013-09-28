@@ -5,7 +5,7 @@
 
 #include "Sim/Projectiles/Projectile.h"
 #include "System/float3.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 class CUnit;
 class CPlasmaRepulser;

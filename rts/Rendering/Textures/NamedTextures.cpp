@@ -12,7 +12,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/bitops.h"
 #include "System/TimeProfiler.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/Log/ILog.h"
 
 #ifdef _MSC_VER

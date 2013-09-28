@@ -5,7 +5,7 @@
 
 #include <map>
 #include "IModelParser.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 enum {
 	S3O_PRIMTYPE_TRIANGLES      = 0,

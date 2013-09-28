@@ -62,7 +62,7 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/TimeUtil.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UnsyncedRNG.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Util.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Vec2.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/type2.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/float3.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/float4.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/myMath.cpp"

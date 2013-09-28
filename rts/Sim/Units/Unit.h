@@ -17,7 +17,7 @@
 #include "Lua/LuaUnitMaterial.h"
 #include "Sim/Objects/SolidObject.h"
 #include "System/Matrix44f.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 class CPlayer;
 class CCommandAI;

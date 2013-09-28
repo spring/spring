@@ -34,7 +34,7 @@
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 

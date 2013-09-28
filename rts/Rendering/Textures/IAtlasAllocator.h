@@ -4,7 +4,7 @@
 #define IATLAS_ALLOC_H
 
 #include "System/float4.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include <string>
 #include <map>
 

@@ -5,7 +5,7 @@
 
 #include "WorldObject.h"
 #include "System/Matrix44f.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/Misc/BitwiseEnum.h"
 #include "System/Sync/SyncedFloat3.h"
 #include "System/Sync/SyncedPrimitive.h"

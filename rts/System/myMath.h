@@ -4,7 +4,7 @@
 #define MYMATH_H
 
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/float3.h"
 
 #ifdef __GNUC__
