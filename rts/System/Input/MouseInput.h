@@ -6,9 +6,7 @@
 #include <SDL_events.h>
 #include <boost/signals2/connection.hpp>
 
-#include "System/Vec2.h"
-
-struct int2;
+#include "System/type2.h"
 
 class IMouseInput
 {

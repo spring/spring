@@ -5,7 +5,7 @@
 
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/float3.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 struct MoveDef;
 class CPathFinderDef {

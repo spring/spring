@@ -6,7 +6,7 @@
 #include <string>
 
 //#include "LuaInclude.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 class CMatrix44f;
 class LuaMatTexture;

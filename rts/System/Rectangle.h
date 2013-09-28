@@ -3,7 +3,7 @@
 #ifndef RECTANGLE_H
 #define RECTANGLE_H
 
-#include "Vec2.h"
+#include "type2.h"
 #include "myMath.h"
 #include "System/creg/creg_cond.h"
 

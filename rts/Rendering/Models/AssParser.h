@@ -7,7 +7,7 @@
 #include <map>
 #include "IModelParser.h"
 #include "System/float3.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 struct aiNode;
 struct aiScene;

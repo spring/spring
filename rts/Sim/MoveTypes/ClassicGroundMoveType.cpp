@@ -65,7 +65,7 @@ void CClassicGroundMoveType::LeaveTransport() {}
 #include "System/Sound/SoundChannels.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 std::vector<int2> CClassicGroundMoveType::lineTable[LINETABLE_SIZE][LINETABLE_SIZE];
 

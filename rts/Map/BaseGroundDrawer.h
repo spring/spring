@@ -9,7 +9,7 @@
 #include "Rendering/GL/LightHandler.h"
 #include "Rendering/GL/PBO.h"
 #include "System/float3.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 class CMetalMap;
 class CHeightLinePalette;

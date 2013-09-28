@@ -7,7 +7,7 @@
 #include "Rendering/GL/FBO.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Util.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/creg/creg_cond.h"

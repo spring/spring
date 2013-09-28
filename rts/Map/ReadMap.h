@@ -8,7 +8,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/float3.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/RectangleOptimizer.h"
 
