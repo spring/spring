@@ -624,7 +624,7 @@ int LuaUnsyncedRead::GetUnitTransformMatrix(lua_State* L)
 
 	CMatrix44f m = unit->GetTransformMatrix(false, false);
 
-	if ((lua_isboolean(L, 2) && lua_toboolean(L, 2))) {
+	if (luaL_optboolean(L, 2, false)) {
 		m = m.InvertAffine();
 	}
 
@@ -644,7 +644,7 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const bool midPos = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
+	const bool midPos = luaL_optboolean(L, 2, false);
 
 	float3& pos = midPos ? unit->drawMidPos : unit->drawPos;
 	lua_pushnumber(L, pos.x);
@@ -745,7 +745,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	}
 
 	// arg 3 - noIcons
-	const bool noIcons = lua_isboolean(L, 3) && !lua_toboolean(L, 3);
+	const bool noIcons = !luaL_optboolean(L, 3, true);
 
 	vector<const CUnitSet*> unitSets;
 	static CUnitSet visQuadUnits;
@@ -834,9 +834,8 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 
 			//! add the unit
 			count++;
-			lua_pushnumber(L, count);
 			lua_pushnumber(L, unit.id);
-			lua_rawset(L, -3);
+			lua_rawseti(L, -2, count);
 		}
 	}
 
@@ -868,8 +867,8 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 		testRadius = std::max(testRadius, -testRadius);
 	}
 
-	const bool noIcons = lua_isboolean(L, 3) && !lua_toboolean(L, 3);
-	const bool noGeos = lua_isboolean(L, 4) && !lua_toboolean(L, 4);
+	const bool noIcons = !luaL_optboolean(L, 3, true);
+	const bool noGeos = !luaL_optboolean(L, 4, true);
 
 	bool scanAll = false;
 	static CFeatureSet visQuadFeatures;
@@ -929,9 +928,8 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 
 		// add the unit
 		count++;
-		lua_pushnumber(L, count);
 		lua_pushnumber(L, f.id);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, count);
 	}
 
 	return 1;
@@ -989,9 +987,8 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 	CUnitSet::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		count++;
-		lua_pushnumber(L, count);
 		lua_pushnumber(L, (*it)->id);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, count);
 	}
 	return 1;
 }
@@ -1014,17 +1011,15 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 	lua_newtable(L);
 	map<int, vector<CUnit*> >::const_iterator mit;
 	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); ++mit) {
-		lua_pushnumber(L, mit->first); // push the UnitDef index
 		lua_newtable(L); {
 			const vector<CUnit*>& v = mit->second;
 			for (int i = 0; i < (int)v.size(); i++) {
 				CUnit* unit = v[i];
-				lua_pushnumber(L, i + 1);
 				lua_pushnumber(L, unit->id);
-				lua_rawset(L, -3);
+				lua_rawseti(L, -2, i + 1);
 			}
 		}
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, mit->first); // push the UnitDef index
 	}
 
 	// UnitDef ID keys are not necessarily consecutive
@@ -1056,9 +1051,8 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 	lua_newtable(L);
 	map<int, int>::const_iterator mit;
 	for (mit = countMap.begin(); mit != countMap.end(); ++mit) {
-		lua_pushnumber(L, mit->first);  // push the UnitDef index
 		lua_pushnumber(L, mit->second); // push the UnitDef unit count
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, mit->first); // push the UnitDef index
 	}
 
 	// UnitDef ID keys are not necessarily consecutive
@@ -1303,10 +1297,10 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 	// window coordinates
 	const int mx = luaL_checkint(L, 1);
 	const int my = luaL_checkint(L, 2);
-	const bool onlyCoords  = (lua_isboolean(L, 3) && lua_toboolean(L, 3));
-	const bool useMiniMap  = (lua_isboolean(L, 4) && lua_toboolean(L, 4));
-	const bool includeSky  = (lua_isboolean(L, 5) && lua_toboolean(L, 5));
-	const bool ignoreWater = (lua_isboolean(L, 6) && lua_toboolean(L, 6));
+	const bool onlyCoords  = luaL_optboolean(L, 3, false);
+	const bool useMiniMap  = luaL_optboolean(L, 4, false);
+	const bool includeSky  = luaL_optboolean(L, 5, false);
+	const bool ignoreWater = luaL_optboolean(L, 6, false);
 
 	const int wx = mx + globalRendering->viewPosX;
 	const int wy = globalRendering->viewSizeY - 1 - my - globalRendering->viewPosY;
@@ -1410,8 +1404,7 @@ int LuaUnsyncedRead::GetPixelDir(lua_State* L)
 static void AddPlayerToRoster(lua_State* L, int playerID, bool includePathingFlag)
 {
 #define PUSH_ROSTER_ENTRY(type, val) \
-	lua_pushnumber(L, index); index++; \
-	lua_push ## type(L, val); lua_rawset(L, -3);
+	lua_push ## type(L, val); lua_rawseti(L, -3, index++);
 
 	const CPlayer* p = playerHandler->Player(playerID);
 	int index = 1;
@@ -1679,9 +1672,8 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 	lua_newtable(L);
 
 	for (int i = 0; i < cmdDescCount; i++) {
-		lua_pushnumber(L, i + CMD_INDEX_OFFSET);
 		LuaUtils::PushCommandDesc(L, cmdDescs[i]);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, i + CMD_INDEX_OFFSET);
 	}
 	return 1;
 }
@@ -1884,20 +1876,13 @@ int LuaUnsyncedRead::GetLastMessagePositions(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	for (int i=1; i<=ic->GetMsgPosCount(); i++) {
-		lua_pushnumber(L, i);
 		lua_newtable(L); {
 			const float3 msgpos = ic->GetMsgPos();
-			lua_pushnumber(L, 1);
-			lua_pushnumber(L, msgpos.x);
-			lua_rawset(L, -3);
-			lua_pushnumber(L, 2);
-			lua_pushnumber(L, msgpos.y);
-			lua_rawset(L, -3);
-			lua_pushnumber(L, 3);
-			lua_pushnumber(L, msgpos.z);
-			lua_rawset(L, -3);
+			lua_pushnumber(L, msgpos.x); lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, msgpos.y); lua_rawseti(L, -2, 2);
+			lua_pushnumber(L, msgpos.z); lua_rawseti(L, -2, 3);
 		}
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, i);
 	}
 	return 1;
 }
@@ -1985,12 +1970,11 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 	lua_newtable(L);
 	for (int i = 0; i < (int)actions.size(); i++) {
 		const Action& action = actions[i];
-		lua_pushnumber(L, i + 1);
 		lua_newtable(L);
 		lua_pushsstring(L, action.command);
 		lua_pushsstring(L, action.extra);
 		lua_rawset(L, -3);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, i + 1);
 	}
 	return 1;
 }
@@ -2003,9 +1987,8 @@ int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 	lua_newtable(L);
 	for (int i = 0; i < (int)hotkeys.size(); i++) {
 		const string& hotkey = hotkeys[i];
-		lua_pushnumber(L, i + 1);
 		lua_pushsstring(L, hotkey);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, i + 1);
 	}
 	return 1;
 }
@@ -2027,9 +2010,8 @@ int LuaUnsyncedRead::GetGroupList(lua_State* L)
 	for (git = groups.begin(); git != groups.end(); ++git) {
 		const CGroup* group = *git;
 		if ((group != NULL) && !group->units.empty()) {
-			lua_pushnumber(L, group->id);
 			lua_pushnumber(L, group->units.size());
-			lua_rawset(L, -3);
+			lua_rawseti(L, -2, group->id);
 			count++;
 		}
 	}
@@ -2079,9 +2061,8 @@ int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 	CUnitSet::const_iterator it;
 	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
 		count++;
-		lua_pushnumber(L, count);
 		lua_pushnumber(L, (*it)->id);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, count);
 	}
 
 	return 1;
@@ -2115,9 +2096,8 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 			const vector<CUnit*>& v = mit->second;
 			for (int i = 0; i < (int)v.size(); i++) {
 				CUnit* unit = v[i];
-				lua_pushnumber(L, i + 1);
 				lua_pushnumber(L, unit->id);
-				lua_rawset(L, -3);
+				lua_rawseti(L, -2, i + 1);
 			}
 		}
 		lua_rawset(L, -3);
@@ -2155,9 +2135,8 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 	lua_newtable(L);
 	map<int, int>::const_iterator mit;
 	for (mit = countMap.begin(); mit != countMap.end(); ++mit) {
-		lua_pushnumber(L, mit->first);  // push the UnitDef index
 		lua_pushnumber(L, mit->second); // push the UnitDef unit count
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, mit->first); // push the UnitDef index
 	}
 
 	return 1;
@@ -2211,18 +2190,13 @@ int LuaUnsyncedRead::GetMyAllyTeamID(lua_State* L)
 
 int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args > 2) || ((args == 1 && !lua_isnumber(L, 1))) || (args == 2 && !lua_isboolean(L, 2))) {
-		luaL_error(L, "Incorrect arguments to %s([ rosterSortType [, includePathingFlag] ])", __FUNCTION__);
-	}
-
 	const PlayerRoster::SortType oldSortType = playerRoster.GetSortType();
 
-	if (args >= 1) {
-		playerRoster.SetSortTypeByCode((PlayerRoster::SortType) lua_toint(L, 1));
+	if (!lua_isnone(L, 1)) {
+		playerRoster.SetSortTypeByCode((PlayerRoster::SortType) luaL_checkint(L, 1));
 	}
 
-	const bool includePathingFlag = (args == 2 && lua_toboolean(L, 2));
+	const bool includePathingFlag = luaL_optboolean(L, 2, false);
 
 	int count;
 	const std::vector<int>& players = playerRoster.GetIndices(&count, includePathingFlag);

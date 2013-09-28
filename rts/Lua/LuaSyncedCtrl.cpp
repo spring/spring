@@ -561,12 +561,7 @@ static int SetWorldObjectAlwaysVisible(lua_State* L, CWorldObject* o, const char
 {
 	if (o == NULL)
 		return 0;
-
-	if (!lua_isboolean(L, 2)) {
-		luaL_error(L, "[%s] incorrect arguments", caller);
-	}
-
-	o->alwaysVisible = lua_toboolean(L, 2);
+	o->alwaysVisible = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -891,7 +886,7 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			//! ignore if the value is false
-			if (lua_isboolean(L, -1) && !lua_toboolean(L, -1)) {
+			if (!luaL_optboolean(L, -1, true)) {
 				continue;
 			}
 
@@ -1104,14 +1099,10 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		luaL_checkfloat(L, 4)
 	);
 	const int facing = LuaUtils::ParseFacing(L, __FUNCTION__, 5);
-	const bool beingBuilt = (lua_isboolean(L, 7) && lua_toboolean(L, 7)); // default false
-	const bool flattenGround = (lua_isboolean(L, 8) && lua_toboolean(L, 8)) || lua_isnone(L, 8); // default true
+	const bool beingBuilt = luaL_optboolean(L, 7, false);
+	const bool flattenGround = luaL_optboolean(L, 8, true);
+	int teamID = luaL_optint(L, 6, CtrlTeam(L));
 
-	int teamID = CtrlTeam(L);
-
-	if (lua_israwnumber(L, 6)) {
-		teamID = lua_toint(L, 6);
-	}
 	if (!teamHandler->IsValidTeam(teamID)) {
 		luaL_error(L, "[%s()]: invalid team number (%d)", __FUNCTION__, teamID);
 		return 0;
@@ -1160,14 +1151,8 @@ int LuaSyncedCtrl::DestroyUnit(lua_State* L)
 	}
 	const int args = lua_gettop(L); // number of arguments
 
-	bool selfd = false;
-	if ((args >= 2) && lua_isboolean(L, 2)) {
-		selfd = lua_toboolean(L, 2);
-	}
-	bool reclaimed = false;
-	if ((args >= 3) && lua_isboolean(L, 3)) {
-		reclaimed = lua_toboolean(L, 3);
-	}
+	bool selfd = luaL_optboolean(L, 2, false);
+	bool reclaimed = luaL_optboolean(L, 3, false);
 
 	CUnit* attacker = NULL;
 	if (args >= 4) {
@@ -1653,10 +1638,7 @@ int LuaSyncedCtrl::SetUnitStealth(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (!lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitStealth()");
-	}
-	unit->stealth = lua_toboolean(L, 2);
+	unit->stealth = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -1667,10 +1649,7 @@ int LuaSyncedCtrl::SetUnitSonarStealth(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (!lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitSonarStealth()");
-	}
-	unit->sonarStealth = lua_toboolean(L, 2);
+	unit->sonarStealth = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -1805,7 +1784,7 @@ int LuaSyncedCtrl::SetUnitCrashing(lua_State* L) {
 	bool ret = false;
 
 	if (amt != NULL) {
-		const bool wantCrash = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
+		const bool wantCrash = luaL_optboolean(L, 2, false);
 		const AAirMoveType::AircraftState aircraftState = amt->aircraftState;
 
 		// for simplicity, this can only set a flying aircraft to
@@ -1850,7 +1829,7 @@ int LuaSyncedCtrl::SetUnitShieldState(lua_State* L)
 		return 0;
 	}
 
-	if (lua_isboolean(L, arg)) { shield->SetEnabled(lua_toboolean(L, arg));	arg++; }
+	if (lua_isboolean(L, arg)) { shield->SetEnabled(lua_toboolean(L, arg)); arg++; }
 	if (lua_isnumber(L, arg)) { shield->SetCurPower(lua_tofloat(L, arg)); }
 	return 0;
 }
@@ -1946,12 +1925,12 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		const float3 pos(luaL_checkfloat(L, 2),
 		                 luaL_checkfloat(L, 3),
 		                 luaL_checkfloat(L, 4));
-		const bool manualFire = lua_isboolean(L, 5) && lua_toboolean(L, 5);
+		const bool manualFire = luaL_optboolean(L, 5, false);
 		unit->AttackGround(pos, false, manualFire);
 	}
 	else if (args >= 2) {
 		CUnit* target = ParseRawUnit(L, __FUNCTION__, 2);
-		const bool manualFire = lua_isboolean(L, 3) && lua_toboolean(L, 3);
+		const bool manualFire = luaL_optboolean(L, 3, false);
 		unit->AttackUnit(target, false, manualFire);
 	}
 	return 0;
@@ -1974,7 +1953,7 @@ int LuaSyncedCtrl::SetUnitMidAndAimPos(lua_State* L)
 	const int argc = lua_gettop(L);
 	const float3 newMidPos = (argc >= 4)? FLOAT3(2, 3, 4): float3(unit->midPos);
 	const float3 newAimPos = (argc >= 7)? FLOAT3(5, 6, 7): float3(unit->aimPos);
-	const bool setRelative = (argc == 8 && lua_isboolean(L, 8) && lua_toboolean(L, 8));
+	const bool setRelative = luaL_optboolean(L, 8, false);
 	const bool updateQuads = (newMidPos != unit->midPos);
 
 	#undef FLOAT3
@@ -2163,7 +2142,7 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 		pos.x = luaL_checkfloat(L, 2);
 		pos.z = luaL_checkfloat(L, 3);
 
-		if (lua_isboolean(L, 4) && lua_toboolean(L, 4)) {
+		if (luaL_optboolean(L, 4, false)) {
 			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
 		} else {
 			pos.y = ground->GetHeightReal(pos.x, pos.z);
@@ -2591,10 +2570,7 @@ int LuaSyncedCtrl::SetFeatureNoSelect(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	if (!lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetFeatureNoSelect()");
-	}
-	feature->noSelect = !!lua_toboolean(L, 2);
+	feature->noSelect = !!luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -2615,7 +2591,7 @@ int LuaSyncedCtrl::SetFeatureMidAndAimPos(lua_State* L)
 	const int argc = lua_gettop(L);
 	const float3 newMidPos = (argc >= 4)? FLOAT3(2, 3, 4): float3(feature->midPos);
 	const float3 newAimPos = (argc >= 7)? FLOAT3(5, 6, 7): float3(feature->aimPos);
-	const bool setRelative = (argc == 8 && lua_isboolean(L, 8) && lua_toboolean(L, 8));
+	const bool setRelative = luaL_optboolean(L, 8, false);
 	const bool updateQuads = (newMidPos != feature->midPos);
 
 	#undef FLOAT3
@@ -2684,7 +2660,7 @@ int LuaSyncedCtrl::SetProjectileMoveControl(lua_State* L)
 	if (!proj->weapon && !proj->piece)
 		return 0;
 
-	proj->luaMoveCtrl = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
+	proj->luaMoveCtrl = luaL_optboolean(L, 2, false);
 	return 0;
 }
 
@@ -3659,12 +3635,9 @@ int LuaSyncedCtrl::SetNoPause(lua_State* L)
 	if (!FullCtrl(L)) {
 		return 0;
 	}
-	if (!lua_isboolean(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetNoPause()");
-	}
 	// Important: only works in server mode, has no effect in client mode
 	if (gameServer)
-		gameServer->SetGamePausable(!lua_toboolean(L, 1));
+		gameServer->SetGamePausable(!luaL_checkboolean(L, 1));
 
 	return 0;
 }
@@ -3675,10 +3648,7 @@ int LuaSyncedCtrl::SetUnitToFeature(lua_State* L)
 	if (!FullCtrl(L)) {
 		return 0;
 	}
-	if (!lua_isboolean(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetUnitToFeature()");
-	}
-	CUnit::SetSpawnFeature(lua_toboolean(L, 1));
+	CUnit::SetSpawnFeature(luaL_checkboolean(L, 1));
 	return 0;
 }
 

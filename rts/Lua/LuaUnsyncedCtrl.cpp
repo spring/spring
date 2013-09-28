@@ -759,7 +759,7 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 	GML_STDMUTEX_LOCK(dque); // DrawUnitCommands
 
 	if (lua_istable(L, 1)) {
-		const bool isMap = lua_isboolean(L, 2) && lua_toboolean(L, 2);
+		const bool isMap = luaL_optboolean(L, 2, false);
 		const int unitArg = isMap ? -2 : -1;
 		const int table = 1;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
@@ -846,14 +846,12 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 
 int LuaUnsyncedCtrl::SelectUnitArray(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_istable(L, 1) ||
-	    ((args >= 2) && !lua_isboolean(L, 2))) {
+	if (!lua_istable(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SelectUnitArray()");
 	}
 
 	// clear the current units, unless the append flag is present
-	if ((args < 2) || !lua_toboolean(L, 2)) {
+	if (!luaL_optboolean(L, 2, false)) {
 		selectedUnitsHandler.ClearSelected();
 	}
 
@@ -872,14 +870,12 @@ int LuaUnsyncedCtrl::SelectUnitArray(lua_State* L)
 
 int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_istable(L, 1) ||
-	    ((args >= 2) && !lua_isboolean(L, 2))) {
+	if (!lua_istable(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SelectUnitMap()");
 	}
 
 	// clear the current units, unless the append flag is present
-	if ((args < 2) || !lua_toboolean(L, 2)) {
+	if (!luaL_optboolean(L, 2, false)) {
 		selectedUnitsHandler.ClearSelected();
 	}
 
@@ -1007,10 +1003,7 @@ int LuaUnsyncedCtrl::SetDrawSky(lua_State* L)
 	if (game == NULL) {
 		return 0;
 	}
-	if (!lua_isboolean(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetDrawSky()");
-	}
-	globalRendering->drawSky = !!lua_toboolean(L, 1);
+	globalRendering->drawSky = !!luaL_checkboolean(L, 1);
 	return 0;
 }
 
@@ -1020,10 +1013,7 @@ int LuaUnsyncedCtrl::SetDrawWater(lua_State* L)
 	if (game == NULL) {
 		return 0;
 	}
-	if (!lua_isboolean(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetDrawWater()");
-	}
-	globalRendering->drawWater = !!lua_toboolean(L, 1);
+	globalRendering->drawWater = !!luaL_checkboolean(L, 1);
 	return 0;
 }
 
@@ -1033,10 +1023,7 @@ int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
 	if (game == NULL) {
 		return 0;
 	}
-	if (!lua_isboolean(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetDrawGround()");
-	}
-	globalRendering->drawGround = !!lua_toboolean(L, 1);
+	globalRendering->drawGround = !!luaL_checkboolean(L, 1);
 	return 0;
 }
 
@@ -1369,8 +1356,8 @@ int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L)
 	}
 
 	const unsigned int lightHandle = luaL_checkint(L, 1);
-	const bool trackEnable = lua_isboolean(L, 3)? lua_toboolean(L, 3): true;
-	const bool trackUnit = lua_isboolean(L, 4)? lua_toboolean(L, 4): true;
+	const bool trackEnable = luaL_optboolean(L, 3, true);
+	const bool trackUnit = luaL_optboolean(L, 4, true);
 
 	GL::LightHandler* lightHandler = readMap->GetGroundDrawer()->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
@@ -1397,8 +1384,8 @@ int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L)
 	}
 
 	const unsigned int lightHandle = luaL_checkint(L, 1);
-	const bool trackEnable = lua_isboolean(L, 3)? lua_toboolean(L, 3): true;
-	const bool trackUnit = lua_isboolean(L, 4)? lua_toboolean(L, 4): true;
+	const bool trackEnable = luaL_optboolean(L, 3, true);
+	const bool trackUnit = luaL_optboolean(L, 4, true);
 
 	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
@@ -1546,7 +1533,7 @@ int LuaUnsyncedCtrl::AddUnitIcon(lua_State* L)
 	const string texName   = luaL_checkstring(L, 2);
 	const float  size      = luaL_optnumber(L, 3, 1.0f);
 	const float  dist      = luaL_optnumber(L, 4, 1.0f);
-	const bool   radAdjust = (lua_isboolean(L, 5) && lua_toboolean(L, 5));
+	const bool   radAdjust = luaL_optboolean(L, 5, false);
 	lua_pushboolean(L, icon::iconHandler->AddIcon(iconName, texName,
 	                                        size, dist, radAdjust));
 	return 1;
@@ -1918,7 +1905,7 @@ int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 	}
 	const string name = luaL_checkstring(L, 1);
 	const int value   = luaL_checkint(L, 2);
-	const bool useOverlay = lua_isboolean(L, 3) ? lua_toboolean(L, 3) : false;
+	const bool useOverlay = luaL_optboolean(L, 3, false);
 	// don't allow to change a read-only variable
 	if (configHandler->IsReadOnly(name)) {
 		LOG_L(L_ERROR, "tried to set readonly (int) %s = %d", name.c_str(), value);
@@ -1953,7 +1940,7 @@ int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 	}
 	const string name  = luaL_checkstring(L, 1);
 	const string value = luaL_checkstring(L, 2);
-	const bool useOverlay = lua_isboolean(L, 3) ? lua_toboolean(L, 3) : false;
+	const bool useOverlay = luaL_optboolean(L, 3, false);
 	// don't allow to change a read-only variable
 	if (configHandler->IsReadOnly(name)) {
 		LOG_L(L_ERROR, "tried to set readonly (string) %s = %s", name.c_str(), value.c_str());
@@ -2063,18 +2050,14 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2)) {
-		luaL_error(L,
-			"Incorrect arguments to SetUnitDefIcon(unitDefID, \"icon\")");
-	}
-	const int unitDefID = lua_toint(L, 1);
+
+	const int unitDefID = luaL_checkint(L, 1);
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}
 
-	ud->iconType = icon::iconHandler->GetIcon(lua_tostring(L, 2));
+	ud->iconType = icon::iconHandler->GetIcon(luaL_checksstring(L, 2));
 
 	// set decoys to the same icon
 	std::map<int, std::set<int> >::const_iterator fit;
@@ -2410,13 +2393,7 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 
 static string GetRawMsg(lua_State* L, const char* caller, int index)
 {
-	if (!lua_israwstring(L, index)) {
-		luaL_error(L, "Incorrect arguments to %s", caller);
-	}
-	size_t len;
-	const char* str = lua_tolstring(L, index, &len);
-	const string tmpMsg(str, len);
-	return tmpMsg;
+	return luaL_checksstring(L, index);
 }
 
 
@@ -2493,13 +2470,8 @@ int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 		return 0;
 	}
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isstring(L, 1) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetShareLevel(\"type\", level");
-	}
-
-	const string shareType = lua_tostring(L, 1);
-	const float shareLevel = max(0.0f, min(1.0f, lua_tofloat(L, 2)));
+	const string shareType = luaL_checksstring(L, 1);
+	const float shareLevel = max(0.0f, min(1.0f, luaL_checkfloat(L, 2)));
 
 	if (shareType == "metal") {
 		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, teamHandler->Team(gu->myTeam)->energyShare));
@@ -2744,15 +2716,14 @@ int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 
 	std::vector<const char*> outData;
 
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	lua_pushboolean(L, eoh->SendLuaMessages(aiTeam, inData, outData));
 	lua_createtable(L, outData.size(), 0);
 
 	// push the AI response(s)
 	for (unsigned int n = 0; n < outData.size(); n++) {
-		lua_pushnumber(L, n + 1);
 		lua_pushstring(L, outData[n]);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, n + 1);
 	}
 
 	return 2;
