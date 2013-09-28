@@ -475,9 +475,8 @@ void CFeatureHandler::Update()
 					activeFeatures.erase(feature);
 					features[feature->id] = NULL;
 
-					SetFeatureUpdateable(feature, false);
-
 					CSolidObject::SetDeletingRefID(feature->id + unitHandler->MaxUnits());
+					// destructor removes feature from update-queue
 					delete feature;
 					CSolidObject::SetDeletingRefID(-1);
 				}
