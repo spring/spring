@@ -149,7 +149,11 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	}
 
 	// 1. setup functions/environment
+	SetSynced(true, true);
+	SetAllowChanges(true, true);
 	const bool haveSynced   = (SingleState() || L == L_Sim) && SetupSynced(L);
+	SetSynced(false, true);
+	SetAllowChanges(false, true);
 	const bool haveUnsynced = (SingleState() || L == L_Draw) && SetupUnsynced(L);
 
 	// 2. load code (main.lua & draw.lua)
@@ -251,7 +255,6 @@ bool CLuaHandleSynced::SetupSynced(lua_State *L)
 	}
 
 	lua_settop(L, 0);
-
 	return true;
 }
 
@@ -259,7 +262,7 @@ bool CLuaHandleSynced::SetupSynced(lua_State *L)
 bool CLuaHandleSynced::SetupUnsynced(lua_State *L)
 {
 	if (!IsValid()) {
-		return false;lua_settop(L, 0);
+		return false;
 	}
 
 	// make the UNSYNCED table
@@ -375,6 +378,7 @@ bool CLuaHandleSynced::SetupUnsynced(lua_State *L)
 		return false;
 	}
 
+	lua_settop(L, 0);
 	return true;
 }
 
