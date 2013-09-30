@@ -823,12 +823,12 @@ void CGroundDecalHandler::RenderUnitMoved(const CUnit* unit, const float3& newpo
 }
 
 
-void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newpos)
+void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newPos)
 {
 	SolidObjectDecalDef& decalDef = *const_cast<SolidObjectDecalDef*>(&unit->unitDef->decalDef);
 
 	if (decalDef.useGroundDecal)
-		MoveSolidObject(const_cast<CUnit *>(unit), newpos);
+		MoveSolidObject(const_cast<CUnit *>(unit), newPos);
 
 	if (!unit->leaveTracks)
 		return;
@@ -851,18 +851,23 @@ void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newpos)
 	if (!((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView))
 		return;
 
-	const int zp = (int(newpos.z) / SQUARE_SIZE * 2);
-	const int xp = (int(newpos.x) / SQUARE_SIZE * 2);
-	const int mp = Clamp(zp * gs->hmapx + xp, 0, (gs->mapSquares / 4) - 1);
+	// calculate typemap-index
+	const int tmz = newPos.z / (SQUARE_SIZE * 2);
+	const int tmx = newPos.x / (SQUARE_SIZE * 2);
+	const int tmi = Clamp(tmz * gs->hmapx + tmx, 0, gs->hmapx * gs->hmapy - 1);
 
-	if (!mapInfo->terrainTypes[readMap->GetTypeMapSynced()[mp]].receiveTracks)
+	const unsigned char* typeMap = readMap->GetTypeMapSynced();
+	const CMapInfo::TerrainType& terType = mapInfo->terrainTypes[ typeMap[tmi] ];
+
+	if (!terType.receiveTracks)
 		return;
 
 	const float trackLifeTime = GAME_SPEED * decalLevel * decalDef.trackDecalStrength;
-	if (trackLifeTime <= 0)
+
+	if (trackLifeTime <= 0.0f)
 		return;
 
-	const float3 pos = newpos + unit->frontdir * decalDef.trackDecalOffset;
+	const float3 pos = newPos + unit->frontdir * decalDef.trackDecalOffset;
 
 	TrackPart* tp = new TrackPart;
 	tp->pos1 = pos + unit->rightdir * decalDef.trackDecalWidth * 0.5f;

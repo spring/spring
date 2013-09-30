@@ -235,7 +235,7 @@ private:
 	void DrawScars();
 
 	void GatherDecalsForType(SolidObjectDecalType* decalType);
-	void AddDecalAndTrack(CUnit* unit, const float3& newpos);
+	void AddDecalAndTrack(CUnit* unit, const float3& newPos);
 
 private:
 	unsigned int scarTex;
