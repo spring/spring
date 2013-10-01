@@ -177,9 +177,9 @@ private:
 	struct ObjectCache {
 	public:
 		bool Empty() const { return (units.empty() || features.empty()); }
-		bool Init(unsigned int nu, unsigned int nf) {
-			units.resize(nu, NULL);
-			features.resize(nf, NULL);
+		bool Init(unsigned int maxUnits, unsigned int maxFeatures) {
+			units.resize(maxUnits, NULL);
+			features.resize(maxFeatures, NULL);
 
 			numUnits = 0;
 			numFeatures = 0;
@@ -187,6 +187,10 @@ private:
 		void Kill() {
 			units.clear();
 			features.clear();
+		}
+		void Reset(unsigned int _numUnits, unsigned int _numFeatures) {
+			numUnits = _numUnits;
+			numFeatures = _numFeatures;
 		}
 
 		std::vector<CUnit*>& GetUnits() { return units; }
@@ -203,12 +207,7 @@ private:
 		unsigned int numFeatures;
 	};
 
-	/**
-	 * probably a symptom of some other problems,
-	 * but im getting paranoid about putting whole classes
-	 * into high trafic STL containers instead of pointers to them
-	 */
-	std::list<WaitingDamage*> waitingDamages[128];
+	std::vector< std::list<WaitingDamage*> > waitingDamageLists;
 };
 
 extern CGameHelper* helper;

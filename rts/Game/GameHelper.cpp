@@ -41,6 +41,7 @@
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
+#define NUM_WAITING_DAMAGE_LISTS 128
 #define PLAY_SOUNDS 1
 
 //////////////////////////////////////////////////////////////////////
@@ -53,19 +54,22 @@ CGameHelper* helper;
 CGameHelper::CGameHelper()
 {
 	stdExplosionGenerator = new CStdExplosionGenerator();
+	waitingDamageLists.resize(NUM_WAITING_DAMAGE_LISTS);
 }
 
 CGameHelper::~CGameHelper()
 {
-	delete stdExplosionGenerator;
+	for (unsigned int n = 0; n < waitingDamageLists.size(); ++n) {
+		std::list<WaitingDamage*>& wd = waitingDamageLists[n];
 
-	for (int a = 0; a < 128; ++a) {
-		std::list<WaitingDamage*>* wd = &waitingDamages[a];
-		while (!wd->empty()) {
-			delete wd->back();
-			wd->pop_back();
+		while (!wd.empty()) {
+			delete wd.back();
+			wd.pop_back();
 		}
 	}
+
+	waitingDamageLists.clear();
+	delete stdExplosionGenerator;
 }
 
 
@@ -86,6 +90,8 @@ void CGameHelper::DoExplosionDamage(
 	const int weaponDefID,
 	const int projectileID
 ) {
+	assert(unit != NULL);
+
 	if (ignoreOwner && (unit == owner))
 		return;
 
@@ -140,7 +146,7 @@ void CGameHelper::DoExplosionDamage(
 	} else {
 		// damage later
 		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, expDamages, expImpulse, weaponDefID, projectileID);
-		waitingDamages[(gs->frameNum + int(expDist / expSpeed) - 3) & 127].push_front(wd);
+		waitingDamageLists[(gs->frameNum + int(expDist / expSpeed) - 3) & 127].push_front(wd);
 	}
 }
 
@@ -153,6 +159,8 @@ void CGameHelper::DoExplosionDamage(
 	const int weaponDefID,
 	const int projectileID
 ) {
+	assert(feature != NULL);
+
 	const CollisionVolume* vol = feature->GetCollisionVolume(NULL);
 	const float3& volPos = vol->GetWorldSpacePos(feature, ZeroVector);
 
@@ -201,23 +209,21 @@ void CGameHelper::DamageObjectsInExplosionRadius(
 	const unsigned int newNumFeatures = *(cache.GetNumFeaturesPtr());
 
 	// damage all units within the explosion radius
+	// NOTE:
+	//   this can recursively trigger ::Explosion() again
+	//   which would overwrite our object cache if we did
+	//   not keep track of end-markers --> certain objects
+	//   would not be damaged AT ALL (!)
 	for (unsigned int n = oldNumUnits; n < newNumUnits; n++) {
-		assert(units[n] != NULL);
-
-		// NOTE:
-		//   this can recursively trigger ::Explosion() again
-		//   which would overwrite our object cache if we did
-		//   not keep track of end-markers --> certain objects
-		//   would not be damaged AT ALL (!)
 		DoExplosionDamage(units[n], params.owner, expPos, expRad, params.explosionSpeed, params.edgeEffectiveness, params.ignoreOwner, params.damages, weaponDefID, params.projectileID);
 	}
 
 	// damage all features within the explosion radius
 	for (unsigned int n = oldNumFeatures; n < newNumFeatures; n++) {
-		assert(features[n] != NULL);
-
 		DoExplosionDamage(features[n], expPos, expRad, params.edgeEffectiveness, params.damages, weaponDefID, params.projectileID);
 	}
+
+	cache.Reset(oldNumUnits, oldNumFeatures);
 }
 
 void CGameHelper::Explosion(const ExplosionParams& params) {
@@ -1284,18 +1290,18 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 
 void CGameHelper::Update()
 {
-	std::list<WaitingDamage*>* wd = &waitingDamages[gs->frameNum & 127];
+	std::list<WaitingDamage*>& wdList = waitingDamageLists[gs->frameNum & 127];
 
-	while (!wd->empty()) {
-		WaitingDamage* w = wd->back();
-		wd->pop_back();
+	while (!wdList.empty()) {
+		WaitingDamage* wd = wdList.back();
+		wdList.pop_back();
 
-		CUnit* attackee = unitHandler->units[w->target];
-		CUnit* attacker = (w->attacker == -1)? NULL: unitHandler->units[w->attacker];
+		CUnit* attackee = unitHandler->units[wd->target];
+		CUnit* attacker = (wd->attacker == -1)? NULL: unitHandler->units[wd->attacker];
 
 		if (attackee != NULL)
-			attackee->DoDamage(w->damage, w->impulse, attacker, w->weaponID, w->projectileID);
+			attackee->DoDamage(wd->damage, wd->impulse, attacker, wd->weaponID, wd->projectileID);
 
-		delete w;
+		delete wd;
 	}
 }
