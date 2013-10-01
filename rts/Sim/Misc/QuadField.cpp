@@ -783,8 +783,8 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	int* begQuad = &tempQuads[0];
 	int* endQuad = &tempQuads[0];
 
-	assert(units[numUnits] == NULL);
-	assert(features[numFeatures] == NULL);
+	assert(numUnits == 0 || units[numUnits] == NULL);
+	assert(numFeatures == 0 || features[numFeatures] == NULL);
 
 	GetQuads(pos, radius, begQuad, endQuad);
 
