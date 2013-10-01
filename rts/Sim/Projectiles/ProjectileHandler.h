@@ -84,8 +84,8 @@ public:
 	ProjectileRenderMap& GetSyncedRenderProjectileIDs() { return syncedRenderProjectileIDs; }
 	ProjectileRenderMap& GetUnsyncedRenderProjectileIDs() { return unsyncedRenderProjectileIDs; }
 
-	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, CUnit**, const float3&, const float3&);
-	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, CFeature**, const float3&, const float3&);
+	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, const float3&, const float3&);
+	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, const float3&, const float3&);
 	void CheckUnitFeatureCollisions(ProjectileContainer&);
 	void CheckGroundCollisions(ProjectileContainer&);
 	void CheckCollisions();

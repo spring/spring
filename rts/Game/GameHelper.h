@@ -141,6 +141,7 @@ public:
 		const int projectileID
 	);
 
+	void DamageObjectsInExplosionRadius(const ExplosionParams& params, const float3& expPos, const float expRad, const int weaponDefID);
 	void Explosion(const ExplosionParams& params);
 
 private:
@@ -171,6 +172,35 @@ private:
 
 		DamageArray damage;
 		float3 impulse;
+	};
+
+	struct ObjectCache {
+	public:
+		bool Empty() const { return (units.empty() || features.empty()); }
+		bool Init(unsigned int nu, unsigned int nf) {
+			units.resize(nu, NULL);
+			features.resize(nf, NULL);
+
+			numUnits = 0;
+			numFeatures = 0;
+		}
+		void Kill() {
+			units.clear();
+			features.clear();
+		}
+
+		std::vector<CUnit*>& GetUnits() { return units; }
+		std::vector<CFeature*>& GetFeatures() { return features; }
+
+		unsigned int* GetNumUnitsPtr() { return &numUnits; }
+		unsigned int* GetNumFeaturesPtr() { return &numFeatures; }
+
+	private:
+		std::vector<CUnit*> units;
+		std::vector<CFeature*> features;
+
+		unsigned int numUnits;
+		unsigned int numFeatures;
 	};
 
 	/**

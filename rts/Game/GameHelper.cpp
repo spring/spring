@@ -86,9 +86,8 @@ void CGameHelper::DoExplosionDamage(
 	const int weaponDefID,
 	const int projectileID
 ) {
-	if (ignoreOwner && (unit == owner)) {
+	if (ignoreOwner && (unit == owner))
 		return;
-	}
 
 	const LocalModelPiece* lap = unit->GetLastAttackedPiece(gs->frameNum);
 	const CollisionVolume* vol = unit->GetCollisionVolume(lap);
@@ -179,69 +178,110 @@ void CGameHelper::DoExplosionDamage(
 
 
 
+void CGameHelper::DamageObjectsInExplosionRadius(
+	const ExplosionParams& params,
+	const float3& expPos,
+	const float expRad,
+	const int weaponDefID
+) {
+	static ObjectCache cache;
+
+	if (cache.Empty())
+		cache.Init(unitHandler->MaxUnits(), unitHandler->MaxUnits());
+
+	std::vector<CUnit*>& units = cache.GetUnits();
+	std::vector<CFeature*>& features = cache.GetFeatures();
+
+	const unsigned int oldNumUnits = *(cache.GetNumUnitsPtr());
+	const unsigned int oldNumFeatures = *(cache.GetNumFeaturesPtr());
+
+	quadField->GetUnitsAndFeaturesColVol(expPos, expRad, units, features, cache.GetNumUnitsPtr(), cache.GetNumFeaturesPtr());
+
+	const unsigned int newNumUnits = *(cache.GetNumUnitsPtr());
+	const unsigned int newNumFeatures = *(cache.GetNumFeaturesPtr());
+
+	// damage all units within the explosion radius
+	for (unsigned int n = oldNumUnits; n < newNumUnits; n++) {
+		assert(units[n] != NULL);
+
+		// NOTE:
+		//   this can recursively trigger ::Explosion() again
+		//   which would overwrite our object cache if we did
+		//   not keep track of end-markers --> certain objects
+		//   would not be damaged AT ALL (!)
+		DoExplosionDamage(units[n], params.owner, expPos, expRad, params.explosionSpeed, params.edgeEffectiveness, params.ignoreOwner, params.damages, weaponDefID, params.projectileID);
+	}
+
+	// damage all features within the explosion radius
+	for (unsigned int n = oldNumFeatures; n < newNumFeatures; n++) {
+		assert(features[n] != NULL);
+
+		DoExplosionDamage(features[n], expPos, expRad, params.edgeEffectiveness, params.damages, weaponDefID, params.projectileID);
+	}
+}
+
 void CGameHelper::Explosion(const ExplosionParams& params) {
-	const float3& dir = params.dir;
+	const float3 expDir = params.dir;
 	const float3 expPos = params.pos;
 	const DamageArray& damages = params.damages;
 
 	// if weaponDef is NULL, this is a piece-explosion
 	// (implicit damage-type -DAMAGE_EXPLOSION_DEBRIS)
 	const WeaponDef* weaponDef = params.weaponDef;
+
 	const int weaponDefID = (weaponDef != NULL)? weaponDef->id: -CSolidObject::DAMAGE_EXPLOSION_DEBRIS;
+	const int explosionID = (weaponDef != NULL)? weaponDef->impactExplosionGeneratorID: CExplosionGeneratorHandler::EXPGEN_ID_STANDARD;
 
-
-	CUnit* owner = params.owner;
-	CUnit* hitUnit = params.hitUnit;
-	CFeature* hitFeature = params.hitFeature;
 
 	const float craterAOE = std::max(1.0f, params.craterAreaOfEffect);
 	const float damageAOE = std::max(1.0f, params.damageAreaOfEffect);
-	const float expEdgeEffect = params.edgeEffectiveness;
-	const float expSpeed = params.explosionSpeed;
-	const float gfxMod = params.gfxMod;
+
 	const float realHeight = ground->GetHeightReal(expPos.x, expPos.z);
 	const float altitude = expPos.y - realHeight;
 
-	const bool impactOnly = params.impactOnly;
-	const bool ignoreOwner = params.ignoreOwner;
-	const bool damageGround = params.damageGround;
-	const bool noGfx = eventHandler.Explosion(weaponDefID, params.projectileID, expPos, owner);
+	// NOTE: event triggers before damage is applied to objects
+	const bool noGfx = eventHandler.Explosion(weaponDefID, params.projectileID, expPos, params.owner);
 
-	if (luaUI) {
+	if (luaUI != NULL) {
 		if (weaponDef != NULL && weaponDef->cameraShake > 0.0f) {
 			luaUI->ShockFront(expPos, weaponDef->cameraShake, damageAOE);
 		}
 	}
 
-	if (impactOnly) {
-		if (hitUnit) {
-			DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID, params.projectileID);
-		} else if (hitFeature) {
-			DoExplosionDamage(hitFeature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID, params.projectileID);
+	if (params.impactOnly) {
+		if (params.hitUnit != NULL) {
+			DoExplosionDamage(
+				params.hitUnit,
+				params.owner,
+				expPos,
+				damageAOE,
+				params.explosionSpeed,
+				params.edgeEffectiveness,
+				params.ignoreOwner,
+				params.damages,
+				weaponDefID,
+				params.projectileID
+			);
+		}
+
+		if (params.hitFeature != NULL) {
+			DoExplosionDamage(
+				params.hitFeature,
+				expPos,
+				damageAOE,
+				params.edgeEffectiveness,
+				params.damages,
+				weaponDefID,
+				params.projectileID
+			);
 		}
 	} else {
-		static std::vector<CUnit*> tempUnits(unitHandler->MaxUnits(), NULL);
-		static std::vector<CFeature*> tempFeatures(unitHandler->MaxUnits(), NULL);
-
-		CUnit** endUnit = &tempUnits[0];
-		CFeature** endFeature = &tempFeatures[0];
-
-		quadField->GetUnitsAndFeaturesColVol(expPos, damageAOE, endUnit, endFeature);
-
-		// damage all units within the explosion radius
-		for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
-			DoExplosionDamage(*ui, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID, params.projectileID);
-		}
-
-		// damage all features within the explosion radius
-		for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
-			DoExplosionDamage(*fi, expPos, damageAOE, expEdgeEffect, damages, weaponDefID, params.projectileID);
-		}
+		DamageObjectsInExplosionRadius(params, expPos, damageAOE, weaponDefID);
 
 		// deform the map if the explosion was above-ground
 		// (but had large enough radius to touch the ground)
 		if (altitude >= -1.0f) {
-			if (damageGround && !mapDamage->disabled && (craterAOE > altitude) && (damages.craterMult > 0.0f)) {
+			if (params.damageGround && !mapDamage->disabled && (craterAOE > altitude) && (damages.craterMult > 0.0f)) {
 				// limit the depth somewhat
 				const float craterDepth = damages.GetDefaultDamage() * (1.0f - (altitude / craterAOE));
 				const float damageDepth = std::min(craterAOE * 10.0f, craterDepth);
@@ -254,11 +294,16 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	}
 
 	if (!noGfx) {
-		if (weaponDef != NULL) {
-			explGenHandler->GenExplosion(weaponDef->impactExplosionGeneratorID, expPos, dir, damages.GetDefaultDamage(), damageAOE, gfxMod, owner, hitUnit);
-		} else {
-			explGenHandler->GenExplosion(CExplosionGeneratorHandler::EXPGEN_ID_STANDARD, expPos, dir, damages.GetDefaultDamage(), damageAOE, gfxMod, owner, hitUnit);
-		}
+		explGenHandler->GenExplosion(
+			explosionID,
+			expPos,
+			expDir,
+			damages.GetDefaultDamage(),
+			damageAOE,
+			params.gfxMod,
+			params.owner,
+			params.hitUnit
+		);
 	}
 
 	CExplosionEvent explosionEvent(expPos, damages.GetDefaultDamage(), damageAOE, weaponDef);
@@ -269,7 +314,9 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
 
 		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(expPos.y, altitude);
-		const int soundNum = ((soundFlags & (CCustomExplosionGenerator::SPW_WATER | CCustomExplosionGenerator::SPW_UNDERWATER)) != 0);
+		const unsigned int soundMask = CCustomExplosionGenerator::SPW_WATER | CCustomExplosionGenerator::SPW_UNDERWATER;
+
+		const int soundNum = ((soundFlags & soundMask) != 0);
 		const int soundID = soundSet.getID(soundNum);
 
 		if (soundID > 0) {
