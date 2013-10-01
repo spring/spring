@@ -174,6 +174,25 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 			KillLua();
 			return;
 		}
+
+		lua_settop(L, 0);
+		if (
+			!SetupUnsyncedFunction(L, "RecvFromSynced")      ||
+			!SetupUnsyncedFunction(L, "Update")              ||
+			!SetupUnsyncedFunction(L, "DrawGenesis")         ||
+			!SetupUnsyncedFunction(L, "DrawWorld")           ||
+			!SetupUnsyncedFunction(L, "DrawWorldPreUnit")    ||
+			!SetupUnsyncedFunction(L, "DrawWorldShadow")     ||
+			!SetupUnsyncedFunction(L, "DrawWorldReflection") ||
+			!SetupUnsyncedFunction(L, "DrawWorldRefraction") ||
+			!SetupUnsyncedFunction(L, "DrawScreenEffects")   ||
+			!SetupUnsyncedFunction(L, "DrawScreen")          ||
+			!SetupUnsyncedFunction(L, "DrawInMiniMap")
+		) {
+			KillLua();
+			return;
+		}
+		lua_settop(L, 0);
 	}
 
 	SetSynced(true, true);
@@ -362,22 +381,6 @@ bool CLuaHandleSynced::SetupUnsynced(lua_State *L)
 		KillLua();
 		return false;
 	}
-	lua_settop(L, 0);
-
-	if (!SetupUnsyncedFunction(L, "RecvFromSynced")      ||
-	    !SetupUnsyncedFunction(L, "Update")              ||
-	    !SetupUnsyncedFunction(L, "DrawGenesis")         ||
-	    !SetupUnsyncedFunction(L, "DrawWorld")           ||
-	    !SetupUnsyncedFunction(L, "DrawWorldPreUnit")    ||
-	    !SetupUnsyncedFunction(L, "DrawWorldShadow")     ||
-	    !SetupUnsyncedFunction(L, "DrawWorldReflection") ||
-	    !SetupUnsyncedFunction(L, "DrawWorldRefraction") ||
-	    !SetupUnsyncedFunction(L, "DrawScreenEffects")   ||
-	    !SetupUnsyncedFunction(L, "DrawScreen")          ||
-	    !SetupUnsyncedFunction(L, "DrawInMiniMap")) {
-		return false;
-	}
-
 	lua_settop(L, 0);
 	return true;
 }
