@@ -497,7 +497,6 @@ static int MoveDefTable(lua_State* L, const void* data)
 		case MoveDef::KBot:  { HSTR_PUSH_STRING(L, "family", "kbot");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
 		case MoveDef::Hover: { HSTR_PUSH_STRING(L, "family", "hover"); HSTR_PUSH_STRING(L, "type",  "hover"); break; }
 		case MoveDef::Ship:  { HSTR_PUSH_STRING(L, "family", "ship");  HSTR_PUSH_STRING(L, "type",   "ship"); break; }
-		default: { HSTR_PUSH_STRING(L, "family", "error"); HSTR_PUSH_STRING(L, "type",  "error"); break; }
 	}
 
 	HSTR_PUSH_NUMBER(L, "xsize",         md->xsize);

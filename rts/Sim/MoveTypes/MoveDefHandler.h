@@ -19,7 +19,7 @@ struct MoveDef {
 	CR_DECLARE_STRUCT(MoveDef);
 
 	MoveDef();
-	MoveDef(const LuaTable& moveTable, int moveDefID);
+	MoveDef(const LuaTable& moveDefTable, int moveDefID);
 
 	bool TestMoveSquare(
 		const CSolidObject* collider,
@@ -45,6 +45,8 @@ struct MoveDef {
 	float GetDepthMod(const float height) const;
 	unsigned int GetCheckSum() const;
 
+	/// determines which of the {tank,kbot,hover,ship}Speed
+	/// modifiers this MoveDef receives from a terrain-type
 	enum MoveFamily {
 		Tank  = 0,
 		KBot  = 1,
@@ -52,12 +54,9 @@ struct MoveDef {
 		Ship  = 3
 	};
 	enum TerrainClass {
-		/// we are restricted to "land" (terrain with height >= 0)
-		Land = 0,
-		/// we are restricted to "water" (terrain with height < 0)
-		Water = 1,
-		/// we can exist at heights both greater and smaller than 0
-		Mixed = 2
+		Land  = 0, /// we are restricted to "land" (terrain with height >= 0)
+		Water = 1, /// we are restricted to "water" (terrain with height < 0)
+		Mixed = 2, /// we can exist at heights both greater and smaller than 0
 	};
 	enum DepthModParams {
 		DEPTHMOD_MIN_HEIGHT = 0,
