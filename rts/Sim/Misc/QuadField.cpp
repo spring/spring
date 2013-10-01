@@ -783,6 +783,9 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	int* begQuad = &tempQuads[0];
 	int* endQuad = &tempQuads[0];
 
+	assert(units[numUnits] == NULL);
+	assert(features[numFeatures] == NULL);
+
 	GetQuads(pos, radius, begQuad, endQuad);
 
 	std::list<CUnit*>::const_iterator ui;
@@ -804,6 +807,8 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 			if (pos.SqDistance(colvol->GetWorldSpacePos(u)) >= (totRad * totRad))
 				continue;
 
+			assert(numUnits < units.size());
+
 			u->tempNum = tempNum;
 			units[numUnits++] = u;
 		}
@@ -820,6 +825,8 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 
 			if (pos.SqDistance(colvol->GetWorldSpacePos(f)) >= (totRad * totRad))
 				continue;
+
+			assert(numFeatures < features.size());
 
 			f->tempNum = tempNum;
 			features[numFeatures++] = f;
