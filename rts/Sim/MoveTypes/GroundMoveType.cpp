@@ -1548,11 +1548,13 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		const int xmid = (collider->pos.x + collider->speed.x) / SQUARE_SIZE;
 		const int zmid = (collider->pos.z + collider->speed.z) / SQUARE_SIZE;
 
-		#if 1
+		#if 0
 		// mantis3614
 		// we cannot nicely bounce off terrain when checking only the center square
 		// however, testing more squares means CD can (sometimes) disagree with PFS
 		// --> compromise and assume a 3x3 footprint
+		// still possible but must make sure to allow only lateral (non-obstructing)
+		// bounces
 		const int xmin = std::min(-1, -colliderMD->xsizeh * (1 - checkTerrain)), xmax = std::max(1, colliderMD->xsizeh * (1 - checkTerrain));
 		const int zmin = std::min(-1, -colliderMD->zsizeh * (1 - checkTerrain)), zmax = std::max(1, colliderMD->zsizeh * (1 - checkTerrain));
 		#else
@@ -1600,6 +1602,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 				const float3 squarePos = float3(xabs * SQUARE_SIZE + (SQUARE_SIZE >> 1), collider->pos.y, zabs * SQUARE_SIZE + (SQUARE_SIZE >> 1));
 				const float3 squareVec = collider->pos - squarePos;
 
+				// ignore squares behind us (relative to velocity vector)
 				if (squareVec.dot(collider->speed) > 0.0f)
 					continue;
 
@@ -1611,6 +1614,8 @@ void CGroundMoveType::HandleStaticObjectCollision(
 
 				// this tends to cancel out too much on average
 				// strafeVec += (collider->rightdir * sqColSlideSign);
+				//
+				// this tends to conflict with PFS [?]
 				bounceVec += (squareVec / sqSepDistance);
 
 				sqPenDistanceSum += sqPenDistance;
@@ -1629,8 +1634,8 @@ void CGroundMoveType::HandleStaticObjectCollision(
 			const float bounceScale = std::min(currentSpeed, std::max(0.1f, -sqPenDistanceSum       ));
 
 			strafeVec = collider->rightdir * strafeSign;
-			strafeVec.y = 0.0f; strafeVec.SafeNormalize();
-			bounceVec.y = 0.0f; bounceVec.SafeNormalize();
+			strafeVec = strafeVec.SafeNormalize2D();
+			bounceVec = bounceVec.SafeNormalize2D();
 
 			if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec * strafeScale)) { collider->Move(strafeVec * strafeScale, true); }
 			if (colliderMD->TestMoveSquare(collider, collider->pos + bounceVec * bounceScale)) { collider->Move(bounceVec * bounceScale, true); }

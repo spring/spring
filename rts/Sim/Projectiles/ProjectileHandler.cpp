@@ -377,14 +377,16 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 void CProjectileHandler::CheckUnitCollisions(
 	CProjectile* p,
 	std::vector<CUnit*>& tempUnits,
-	CUnit** endUnit,
 	const float3& ppos0,
 	const float3& ppos1)
 {
 	CollisionQuery cq;
 
-	for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
-		CUnit* unit = *ui;
+	for (unsigned int n = 0; n < tempUnits.size(); n++) {
+		CUnit* unit = tempUnits[n];
+
+		if (unit == NULL)
+			break;
 
 		const CUnit* attacker = p->owner();
 
@@ -425,7 +427,6 @@ void CProjectileHandler::CheckUnitCollisions(
 void CProjectileHandler::CheckFeatureCollisions(
 	CProjectile* p,
 	std::vector<CFeature*>& tempFeatures,
-	CFeature** endFeature,
 	const float3& ppos0,
 	const float3& ppos1)
 {
@@ -438,8 +439,11 @@ void CProjectileHandler::CheckFeatureCollisions(
 
 	CollisionQuery cq;
 
-	for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
-		CFeature* feature = *fi;
+	for (unsigned int n = 0; n < tempFeatures.size(); n++) {
+		CFeature* feature = tempFeatures[n];
+
+		if (feature == NULL)
+			break;
 
 		if (!feature->collidable)
 			continue;
@@ -471,13 +475,10 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc) {
 		const float3 ppos0 = p->pos;
 		const float3 ppos1 = p->pos + p->speed;
 
-		CUnit** endUnit = &tempUnits[0];
-		CFeature** endFeature = &tempFeatures[0];
+		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures);
 
-		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, endUnit, endFeature);
-
-		CheckUnitCollisions(p, tempUnits, endUnit, ppos0, ppos1);
-		CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);
+		CheckUnitCollisions(p, tempUnits, ppos0, ppos1);
+		CheckFeatureCollisions(p, tempFeatures, ppos0, ppos1);
 	}
 }
 

@@ -764,27 +764,39 @@ std::vector<int> CQuadField::GetQuadsRectangle(const float3& pos1, const float3&
 
 
 // optimization specifically for projectile collisions
-void CQuadField::GetUnitsAndFeaturesColVol(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature)
-{
+void CQuadField::GetUnitsAndFeaturesColVol(
+	const float3& pos,
+	const float radius,
+	std::vector<CUnit*>& units,
+	std::vector<CFeature*>& features,
+	unsigned int* numUnitsPtr,
+	unsigned int* numFeaturesPtr
+) {
 	GML_RECMUTEX_LOCK(qnum); // GetUnitsAndFeaturesColVol
 
 	const int tempNum = gs->tempNum++;
+
+	// start counting from the previous object-cache sizes
+	int numUnits = (numUnitsPtr == NULL)? 0: (*numUnitsPtr);
+	int numFeatures = (numFeaturesPtr == NULL)? 0: (*numFeaturesPtr);
 
 	int* begQuad = &tempQuads[0];
 	int* endQuad = &tempQuads[0];
 
 	GetQuads(pos, radius, begQuad, endQuad);
 
-	std::list<CUnit*>::iterator ui;
-	std::list<CFeature*>::iterator fi;
+	std::list<CUnit*>::const_iterator ui;
+	std::list<CFeature*>::const_iterator fi;
 
 	for (int* a = begQuad; a != endQuad; ++a) {
-		Quad& quad = baseQuads[*a];
+		const Quad& quad = baseQuads[*a];
 
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			CUnit* u = *ui;
+
+			// prevent double adding
 			if (u->tempNum == tempNum)
-				continue; // prevent double adding
+				continue;
 
 			const auto* colvol = u->collisionVolume;
 			const float totRad = radius + colvol->GetBoundingRadius();
@@ -793,14 +805,15 @@ void CQuadField::GetUnitsAndFeaturesColVol(const float3& pos, float radius, CUni
 				continue;
 
 			u->tempNum = tempNum;
-			*dstUnit = u;
-			++dstUnit;
+			units[numUnits++] = u;
 		}
 
 		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
 			CFeature* f = *fi;
+
+			// prevent double adding
 			if (f->tempNum == tempNum)
-				continue; // prevent double adding
+				continue;
 
 			const auto* colvol = f->collisionVolume;
 			const float totRad = radius + colvol->GetBoundingRadius();
@@ -809,8 +822,18 @@ void CQuadField::GetUnitsAndFeaturesColVol(const float3& pos, float radius, CUni
 				continue;
 
 			f->tempNum = tempNum;
-			*dstFeature = f;
-			++dstFeature;
+			features[numFeatures++] = f;
 		}
 	}
+
+	assert(numUnits < units.size());
+	assert(numFeatures < features.size());
+
+	// set end-of-list sentinels
+	units[numUnits] = NULL;
+	features[numFeatures] = NULL;
+
+	if (numUnitsPtr != NULL) { *numUnitsPtr = numUnits; }
+	if (numFeaturesPtr != NULL) { *numFeaturesPtr = numFeatures; }
 }
+
