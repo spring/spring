@@ -12,12 +12,13 @@
 
 namespace springLegacyAI {
 
+// FIXME: this is a million years behind the engine version now
 struct MoveData {
 	CR_DECLARE_STRUCT(MoveData);
 
 	MoveData()
 		: moveType(MoveData::Ground_Move)
-		, speedModClass(MoveData::Tank)
+		, moveFamily(MoveData::Tank)
 		, terrainClass(MoveData::Mixed)
 		, followGround(true)
 		, xsize(0)
@@ -45,7 +46,7 @@ struct MoveData {
 		Hover_Move  = 1,
 		Ship_Move   = 2
 	};
-	enum SpeedModClass {
+	enum MoveFamily {
 		Tank  = 0,
 		KBot  = 1,
 		Hover = 2,
@@ -62,7 +63,7 @@ struct MoveData {
 
 	/// NOTE: rename? (because of (AMoveType*) CUnit::moveType)
 	MoveType moveType;
-	SpeedModClass speedModClass;
+	MoveFamily moveFamily;
 	TerrainClass terrainClass;
 	/// do we stick to the ground when in water?
 	bool followGround;
