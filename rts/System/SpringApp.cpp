@@ -453,7 +453,7 @@ bool SpringApp::GetDisplayGeometry()
 	globalRendering->winSizeY = globalRendering->viewSizeY;
 	globalRendering->winPosX = 30;
 	globalRendering->winPosY = 30;
-	globalRendering->winState = 0;
+	globalRendering->winState = CGlobalRendering::WINSTATE_DEFAULT;
 
   #elif     defined(WIN32)
 	globalRendering->screenSizeX = GetSystemMetrics(SM_CXSCREEN);
@@ -487,14 +487,14 @@ bool SpringApp::GetDisplayGeometry()
 	if (GetWindowPlacement(info.window, &wp)) {
 		switch (wp.showCmd) {
 			case SW_SHOWMAXIMIZED:
-				globalRendering->winState = 1;
+				globalRendering->winState = CGlobalRendering::WINSTATE_MAXIMIZED;
 				break;
 			case SW_SHOWMINIMIZED:
 				//! minimized startup breaks SDL_init stuff, so don't store it
-				//globalRendering->winState = 2;
+				//globalRendering->winState = CGlobalRendering::WINSTATE_MINIMIZED;
 				//break;
 			default:
-				globalRendering->winState = 0;
+				globalRendering->winState = CGlobalRendering::WINSTATE_DEFAULT;
 		}
 	}
 
@@ -555,7 +555,7 @@ void SpringApp::RestoreWindowPosition()
   #if       defined(WIN32)
 			bool stateChanged = false;
 
-			if (globalRendering->winState > 0) {
+			if (globalRendering->winState != CGlobalRendering::WINSTATE_DEFAULT) {
 				WINDOWPLACEMENT wp;
 				memset(&wp,0,sizeof(WINDOWPLACEMENT));
 				wp.length = sizeof(WINDOWPLACEMENT);
@@ -604,10 +604,13 @@ void SpringApp::SaveWindowPosition()
 #ifndef HEADLESS
 	if (!globalRendering->fullScreen) {
 		GetDisplayGeometry();
-		configHandler->Set("WindowPosX",  globalRendering->winPosX);
-		configHandler->Set("WindowPosY",  globalRendering->winPosY);
-		configHandler->Set("WindowState", globalRendering->winState);
-
+		if (globalRendering->winState == CGlobalRendering::WINSTATE_DEFAULT) {
+			configHandler->Set("WindowPosX",  globalRendering->winPosX);
+			configHandler->Set("WindowPosY",  globalRendering->winPosY);
+			configHandler->Set("WindowState", globalRendering->winState);
+		} else {
+			configHandler->Set("WindowState", globalRendering->winState);
+		}
 	}
 #endif
 }

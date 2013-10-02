@@ -104,7 +104,7 @@ CGlobalRendering::CGlobalRendering()
 	, drawFrame(1)
 	, FPS(30.0f)
 
-	, winState(0)
+	, winState(WINSTATE_DEFAULT)
 	, screenSizeX(1)
 	, screenSizeY(1)
 
