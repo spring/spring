@@ -1099,7 +1099,7 @@ bool CSyncedLuaHandle::ShieldPreDamaged(
 
 	// pop the return-value; must be true or false
 	const bool ret = luaL_optboolean(L, -1, false);
-	lua_pop(L, -1);
+	lua_pop(L, 1);
 	return ret;
 }
 
@@ -1127,7 +1127,7 @@ int CSyncedLuaHandle::AllowWeaponTargetCheck(unsigned int attackerID, unsigned i
 		return ret;
 
 	ret = int(lua_isboolean(L, -1) && lua_toboolean(L, -1));
-	lua_pop(L, -1);
+	lua_pop(L, 1);
 	return ret;
 }
 

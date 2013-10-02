@@ -12,6 +12,14 @@
 #include "LuaUser.h"
 
 
+#undef lua_pop
+static inline void lua_pop(lua_State* L, const int args)
+{
+	assert(args > 0);
+	lua_settop(-(args)-1); // from lua.h!
+}
+
+
 static inline void lua_pushsstring(lua_State* L, const std::string& str)
 {
 	lua_pushlstring(L, str.data(), str.size());
