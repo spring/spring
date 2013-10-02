@@ -2405,7 +2405,7 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToHover(int skirmishAIId, int unit
 	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
 	const MoveDef* md = (ud->pathType != -1U)? moveDefHandler->GetMoveDefByPathType(ud->pathType): NULL;
 
-	return ((md != NULL)? (md->moveFamily == MoveDef::Hover): false);
+	return ((md != NULL)? (md->speedModClass == MoveDef::Hover): false);
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isFloater(int skirmishAIId, int unitDefId) {
@@ -3020,8 +3020,8 @@ EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getMoveType(int skirmishAIId, in
 	return -1;
 }
 
-EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getMoveFamily(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->moveFamily;
+EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getSpeedModClass(int skirmishAIId, int unitDefId) {
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->speedModClass;
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getTerrainClass(int skirmishAIId, int unitDefId) {
@@ -4825,7 +4825,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_MoveData_getPathType = &skirmishAiCallback_UnitDef_MoveData_getPathType;
 	callback->UnitDef_MoveData_getCrushStrength = &skirmishAiCallback_UnitDef_MoveData_getCrushStrength;
 	callback->UnitDef_MoveData_getMoveType = &skirmishAiCallback_UnitDef_MoveData_getMoveType;
-	callback->UnitDef_MoveData_getMoveFamily = &skirmishAiCallback_UnitDef_MoveData_getMoveFamily;
+	callback->UnitDef_MoveData_getSpeedModClass = &skirmishAiCallback_UnitDef_MoveData_getSpeedModClass;
 	callback->UnitDef_MoveData_getTerrainClass = &skirmishAiCallback_UnitDef_MoveData_getTerrainClass;
 	callback->UnitDef_MoveData_getFollowGround = &skirmishAiCallback_UnitDef_MoveData_getFollowGround;
 	callback->UnitDef_MoveData_isSubMarine = &skirmishAiCallback_UnitDef_MoveData_isSubMarine;

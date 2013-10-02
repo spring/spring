@@ -12,7 +12,7 @@ CR_BIND(MoveData, );
 
 CR_REG_METADATA(MoveData, (
 	CR_ENUM_MEMBER(moveType),
-	CR_ENUM_MEMBER(moveFamily),
+	CR_ENUM_MEMBER(speedModClass),
 	CR_ENUM_MEMBER(terrainClass),
 	CR_MEMBER(followGround),
 

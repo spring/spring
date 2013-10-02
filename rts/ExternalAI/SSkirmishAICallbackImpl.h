@@ -591,7 +591,7 @@ EXPORT(bool             ) skirmishAiCallback_UnitDef_isMoveDataAvailable(int ski
 
 EXPORT(int              ) skirmishAiCallback_UnitDef_MoveData_getMoveType(int skirmishAIId, int unitDefId);
 
-EXPORT(int              ) skirmishAiCallback_UnitDef_MoveData_getMoveFamily(int skirmishAIId, int unitDefId);
+EXPORT(int              ) skirmishAiCallback_UnitDef_MoveData_getSpeedModClass(int skirmishAIId, int unitDefId);
 
 EXPORT(int              ) skirmishAiCallback_UnitDef_MoveData_getXSize(int skirmishAIId, int unitDefId);
 

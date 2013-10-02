@@ -35,7 +35,7 @@ float GMTDefaultPathController::GetDeltaSpeed(
 
 	// no acceleration changes if not on ground
 	//
-	// note: not 100% correct, depends on MoveDef::moveFamily
+	// note: not 100% correct, depends on MoveDef::speedModClass
 	// ships should always use (1 - IsInWater()), hovercraft
 	// should use (1 - IsInWater()) but only when over water,
 	// tanks should also test if IsInWater() && !IsOnGround()

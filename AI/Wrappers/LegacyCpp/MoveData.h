@@ -17,7 +17,7 @@ struct MoveData {
 
 	MoveData()
 		: moveType(MoveData::Ground_Move)
-		, moveFamily(MoveData::Tank)
+		, speedModClass(MoveData::Tank)
 		, terrainClass(MoveData::Mixed)
 		, followGround(true)
 		, xsize(0)
@@ -45,7 +45,7 @@ struct MoveData {
 		Hover_Move  = 1,
 		Ship_Move   = 2
 	};
-	enum MoveFamily {
+	enum SpeedModClass {
 		Tank  = 0,
 		KBot  = 1,
 		Hover = 2,
@@ -62,7 +62,7 @@ struct MoveData {
 
 	/// NOTE: rename? (because of (AMoveType*) CUnit::moveType)
 	MoveType moveType;
-	MoveFamily moveFamily;
+	SpeedModClass speedModClass;
 	TerrainClass terrainClass;
 	/// do we stick to the ground when in water?
 	bool followGround;

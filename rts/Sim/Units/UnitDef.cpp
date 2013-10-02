@@ -538,21 +538,21 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 			// we have no MoveDef, so pathType == -1 and IsAirUnit() MIGHT be true
 			cantBeTransported |= (!modInfo.transportAir && canfly);
 		} else {
-			upright           |= (moveDef->moveFamily == MoveDef::Hover);
-			upright           |= (moveDef->moveFamily == MoveDef::Ship );
-			floatOnWater      |= (moveDef->moveFamily == MoveDef::Hover);
-			floatOnWater      |= (moveDef->moveFamily == MoveDef::Ship );
+			upright           |= (moveDef->speedModClass == MoveDef::Hover);
+			upright           |= (moveDef->speedModClass == MoveDef::Ship );
+			floatOnWater      |= (moveDef->speedModClass == MoveDef::Hover);
+			floatOnWater      |= (moveDef->speedModClass == MoveDef::Ship );
 
 			// we have a MoveDef, so pathType != -1 and IsGroundUnit() MUST be true
-			cantBeTransported |= (!modInfo.transportGround && moveDef->moveFamily == MoveDef::Tank );
-			cantBeTransported |= (!modInfo.transportGround && moveDef->moveFamily == MoveDef::KBot );
-			cantBeTransported |= (!modInfo.transportShip   && moveDef->moveFamily == MoveDef::Ship );
-			cantBeTransported |= (!modInfo.transportHover  && moveDef->moveFamily == MoveDef::Hover);
+			cantBeTransported |= (!modInfo.transportGround && moveDef->speedModClass == MoveDef::Tank );
+			cantBeTransported |= (!modInfo.transportGround && moveDef->speedModClass == MoveDef::KBot );
+			cantBeTransported |= (!modInfo.transportShip   && moveDef->speedModClass == MoveDef::Ship );
+			cantBeTransported |= (!modInfo.transportHover  && moveDef->speedModClass == MoveDef::Hover);
 		}
 
 		if (seismicSignature == -1.0f) {
-			const bool isTank = (moveDef != NULL && moveDef->moveFamily == MoveDef::Tank);
-			const bool isKBot = (moveDef != NULL && moveDef->moveFamily == MoveDef::KBot);
+			const bool isTank = (moveDef != NULL && moveDef->speedModClass == MoveDef::Tank);
+			const bool isKBot = (moveDef != NULL && moveDef->speedModClass == MoveDef::KBot);
 
 			// seismic signatures only make sense for certain mobile ground units
 			if (isTank || isKBot) {
@@ -851,7 +851,7 @@ bool UnitDef::IsAllowedTerrainHeight(const MoveDef* moveDef, float rawHeight, fl
 
 	if (moveDef != NULL) {
 		// we are a mobile ground-unit, use MoveDef limits
-		if (moveDef->moveFamily == MoveDef::Ship) {
+		if (moveDef->speedModClass == MoveDef::Ship) {
 			minDepth = moveDef->depth;
 		} else {
 			maxDepth = moveDef->depth;

@@ -47,7 +47,7 @@ struct MoveDef {
 
 	/// determines which of the {tank,kbot,hover,ship}Speed
 	/// modifiers this MoveDef receives from a terrain-type
-	enum MoveFamily {
+	enum SpeedModClass {
 		Tank  = 0,
 		KBot  = 1,
 		Hover = 2,
@@ -76,7 +76,7 @@ struct MoveDef {
 
 	std::string name;
 
-	MoveFamily moveFamily;
+	SpeedModClass speedModClass;
 	TerrainClass terrainClass;
 
 	/// of the footprint

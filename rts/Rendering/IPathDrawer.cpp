@@ -82,14 +82,14 @@ float IPathDrawer::GetSpeedModNoObstacles(const MoveDef* md, int sqx, int sqz) {
 	const float height = hm[hmIdx];
 	const float slope = 1.0f - cn[cnIdx].y;
 
-	if (md->moveFamily == MoveDef::Ship) {
+	if (md->speedModClass == MoveDef::Ship) {
 		// only check water depth
 		m = (height >= (-md->depth))? 0.0f: m;
 	} else {
 		// check depth and slope (if hover, only over land)
 		m = std::max(0.0f, 1.0f - (slope / (md->maxSlope + 0.1f)));
 		m = (height < (-md->depth))? 0.0f: m;
-		m = (height <= 0.0f && md->moveFamily == MoveDef::Hover)? 1.0f: m;
+		m = (height <= 0.0f && md->speedModClass == MoveDef::Hover)? 1.0f: m;
 	}
 
 	return m;

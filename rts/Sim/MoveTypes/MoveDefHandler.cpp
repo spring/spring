@@ -19,7 +19,7 @@ CR_BIND(MoveDefHandler, (NULL));
 CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(name),
 
-	CR_ENUM_MEMBER(moveFamily),
+	CR_ENUM_MEMBER(speedModClass),
 	CR_ENUM_MEMBER(terrainClass),
 
 	CR_MEMBER(xsize),
@@ -72,12 +72,12 @@ static float DegreesToMaxSlope(float degrees)
 	return (1.0f - math::cos(rad));
 }
 
-static MoveDef::MoveFamily ParseMoveFamily(const std::string& moveDefName, const LuaTable& moveDefTable)
+static MoveDef::SpeedModClass ParseSpeedModClass(const std::string& moveDefName, const LuaTable& moveDefTable)
 {
-	const MoveDef::MoveFamily moveFamily = MoveDef::MoveFamily(moveDefTable.GetInt("moveFamily", -1));
+	const MoveDef::SpeedModClass speedModClass = MoveDef::SpeedModClass(moveDefTable.GetInt("speedModClass", -1));
 
-	if (moveFamily != -1)
-		return Clamp(moveFamily, MoveDef::Tank, MoveDef::Ship);
+	if (speedModClass != -1)
+		return Clamp(speedModClass, MoveDef::Tank, MoveDef::Ship);
 
 	// name-based fallbacks
 	if (moveDefName.find( "boat") != string::npos)
@@ -159,7 +159,7 @@ MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name) const
 MoveDef::MoveDef()
 	: name("")
 
-	, moveFamily(MoveDef::Tank)
+	, speedModClass(MoveDef::Tank)
 	, terrainClass(MoveDef::Mixed)
 
 	, xsize(0)
@@ -215,7 +215,7 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 	const float minWaterDepth = moveDefTable.GetFloat("minWaterDepth", 10.0f);
 	const float maxWaterDepth = moveDefTable.GetFloat("maxWaterDepth",  0.0f);
 
-	switch ((moveFamily = ParseMoveFamily(name, moveDefTable))) {
+	switch ((speedModClass = ParseSpeedModClass(name, moveDefTable))) {
 		case MoveDef::Tank: {
 			// fall-through
 		}
@@ -281,7 +281,7 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 
 	// ground units hug the ocean floor when in water,
 	// ships stay at a "fixed" level (their waterline)
-	followGround = (moveFamily == MoveDef::Tank || moveFamily == MoveDef::KBot);
+	followGround = (speedModClass == MoveDef::Tank || speedModClass == MoveDef::KBot);
 
 	// TODO:
 	//   remove terrainClass, not used anywhere
@@ -290,15 +290,15 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 	// tank or bot that cannot get its threads / feet
 	// wet, or hovercraft (which doesn't touch ground
 	// or water)
-	if ((followGround && maxWaterDepth <= 0.0f) || moveFamily == MoveDef::Hover)
+	if ((followGround && maxWaterDepth <= 0.0f) || speedModClass == MoveDef::Hover)
 		terrainClass = MoveDef::Land;
 	// ship (or sub) that cannot crawl onto shore, OR tank
 	// or bot restricted to snorkling (strange but possible)
-	if ((moveFamily == MoveDef::Ship && minWaterDepth > 0.0f) || (followGround && minWaterDepth > 0.0f))
+	if ((speedModClass == MoveDef::Ship && minWaterDepth > 0.0f) || (followGround && minWaterDepth > 0.0f))
 		terrainClass = MoveDef::Water;
 	// tank or kbot that CAN go skinny-dipping (amph.),
 	// or ship that CAN sprout legs when at the beach
-	if ((followGround && maxWaterDepth > 0.0f) || (moveFamily == MoveDef::Ship && minWaterDepth < 0.0f))
+	if ((followGround && maxWaterDepth > 0.0f) || (speedModClass == MoveDef::Ship && minWaterDepth < 0.0f))
 		terrainClass = MoveDef::Mixed;
 
 	const int xsizeDef = std::max(1, moveDefTable.GetInt("footprintX",        1));
@@ -402,7 +402,7 @@ float MoveDef::GetDepthMod(const float height) const {
 unsigned int MoveDef::GetCheckSum() const {
 	unsigned int sum = 0;
 
-	const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&moveFamily);
+	const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&speedModClass);
 	const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&flowMapping) + sizeof(flowMapping);
 
 	assert(minByte < maxByte);
