@@ -1404,7 +1404,7 @@ int LuaUnsyncedRead::GetPixelDir(lua_State* L)
 static void AddPlayerToRoster(lua_State* L, int playerID, bool includePathingFlag)
 {
 #define PUSH_ROSTER_ENTRY(type, val) \
-	lua_push ## type(L, val); lua_rawseti(L, -3, index++);
+	lua_push ## type(L, val); lua_rawseti(L, -2, index++);
 
 	const CPlayer* p = playerHandler->Player(playerID);
 	int index = 1;
