@@ -346,7 +346,7 @@ void CAssParser::LoadPieceTransformations(
 	//   .blend: ????
 	piece->bakedRotMatrix = aiMatrixToMatrix(aiMatrix4x4t<float>(aiRotateQuat.GetMatrix()));
 
-	if (piece->isRoot) {
+	if (piece == model->GetRootPiece()) {
 		const float3 xaxis = pieceTable.GetFloat3("xaxis", piece->bakedRotMatrix.GetX());
 		const float3 yaxis = pieceTable.GetFloat3("yaxis", piece->bakedRotMatrix.GetY());
 		const float3 zaxis = pieceTable.GetFloat3("zaxis", piece->bakedRotMatrix.GetZ());
@@ -445,7 +445,7 @@ void CAssParser::SetPieceName(SAssPiece* piece, const S3DModel* model, const aiN
 	piece->name = std::string(pieceNode->mName.data);
 
 	if (piece->name.empty()) {
-		if (piece->isRoot) {
+		if (piece == model->GetRootPiece()) {
 			// root is always the first piece created, so safe to assign this
 			piece->name = "$$root$$";
 			return;
@@ -541,15 +541,15 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 				vertex.tTangent = aiVectorToFloat3(aiBitangent);
 			}
 
-			// vertex texcoords
-			if (mesh->HasTextureCoords(0)) {
-				vertex.texCoord.x = mesh->mTextureCoords[0][vertexIndex].x;
-				vertex.texCoord.y = mesh->mTextureCoords[0][vertexIndex].y;
-			}
-			if (mesh->HasTextureCoords(1)) {
-				piece->extraUVs = true,
-				vertex.texCoord2.x = mesh->mTextureCoords[1][vertexIndex].x;
-				vertex.texCoord2.y = mesh->mTextureCoords[1][vertexIndex].y;
+			// vertex tex-coords per channel
+			for (unsigned int uvChanIndex = 0; uvChanIndex < NUM_MODEL_UVCHANNS; uvChanIndex++) {
+				if (!mesh->HasTextureCoords(uvChanIndex))
+					break;
+
+				piece->SetNumTexCoorChannels(uvChanIndex + 1);
+
+				vertex.texCoords[uvChanIndex].x = mesh->mTextureCoords[uvChanIndex][vertexIndex].x;
+				vertex.texCoords[uvChanIndex].y = mesh->mTextureCoords[uvChanIndex][vertexIndex].y;
 			}
 
 			mesh_vertex_mapping.push_back(piece->vertices.size());
@@ -595,9 +595,10 @@ SAssPiece* CAssParser::LoadPiece(
 
 	SAssPiece* piece = new SAssPiece();
 
-	if ((piece->isRoot = (pieceNode->mParent == NULL))) {
-		// set the root piece ASAP, needed later
+	if (pieceNode->mParent == NULL) {
+		// set the model's root piece ASAP, needed later
 		assert(pieceNode == scene->mRootNode);
+		assert(model->GetRootPiece() == NULL);
 		model->SetRootPiece(piece);
 	}
 
@@ -643,7 +644,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model)
 	for (ModelPieceMap::const_iterator it = model->pieceMap.begin(); it != model->pieceMap.end(); ++it) {
 		SAssPiece* piece = static_cast<SAssPiece*>(it->second);
 
-		if (piece->isRoot) {
+		if (piece == model->GetRootPiece()) {
 			assert(piece->parent == NULL);
 			assert(model->GetRootPiece() == piece);
 			continue;
@@ -837,18 +838,19 @@ void SAssPiece::DrawForList() const
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glNormalPointer(GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, normal)));
 
-		glClientActiveTexture(GL_TEXTURE0);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, texCoord)));
-
-		glClientActiveTexture(GL_TEXTURE1);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, texCoord)));
-
-		if (extraUVs) {
-			glClientActiveTexture(GL_TEXTURE2);
+		// primary and secondary texture use first UV channel
+		for (unsigned int n = 0; n < NUM_MODEL_TEXTURES; n++) {
+			glClientActiveTexture(GL_TEXTURE0 + n);
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, texCoord2)));
+			glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, texCoords) + (0 * sizeof(float2))));
+		}
+
+		// extra UV channels (currently at most one)
+		for (unsigned int n = 1; n < GetNumTexCoorChannels(); n++) {
+			glClientActiveTexture(GL_TEXTURE0 + NUM_MODEL_TEXTURES + (n - 1));
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+			glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, texCoords) + (n * sizeof(float2))));
 		}
 
 		glClientActiveTexture(GL_TEXTURE5);
