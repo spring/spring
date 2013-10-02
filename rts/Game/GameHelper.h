@@ -191,6 +191,9 @@ private:
 		void Reset(unsigned int _numUnits, unsigned int _numFeatures) {
 			numUnits = _numUnits;
 			numFeatures = _numFeatures;
+
+			units[numUnits] = NULL;
+			features[numFeatures] = NULL;
 		}
 
 		std::vector<CUnit*>& GetUnits() { return units; }
