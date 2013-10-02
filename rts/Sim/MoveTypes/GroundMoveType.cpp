@@ -1527,7 +1527,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	// TODO:
 	//   increase cost of squares inside open factories so PFS is less likely to path through them
 	//
-	/*
+	#if 0
 	const int xext = ((collidee->xsize >> 1) + std::max(1, colliderMD->xsizeh));
 	const int zext = ((collidee->zsize >> 1) + std::max(1, colliderMD->zsizeh));
 
@@ -1536,7 +1536,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		(collider->pos.x <= (collidee->pos.x + xext * SQUARE_SIZE)) &&
 		(collider->pos.z >= (collidee->pos.z - zext * SQUARE_SIZE)) &&
 		(collider->pos.z <= (collidee->pos.z + zext * SQUARE_SIZE));
-	*/
+	#endif
 
 	const bool exitingYardMap =
 		((collider->frontdir.dot(separationVector) > 0.0f) &&
@@ -1552,9 +1552,8 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		// mantis3614
 		// we cannot nicely bounce off terrain when checking only the center square
 		// however, testing more squares means CD can (sometimes) disagree with PFS
-		// --> compromise and assume a 3x3 footprint
-		// still possible but must make sure to allow only lateral (non-obstructing)
-		// bounces
+		// --> compromise and assume a 3x3 footprint --> still possible but have to
+		// ensure we allow only lateral (non-obstructing) bounces
 		const int xmin = std::min(-1, -colliderMD->xsizeh * (1 - checkTerrain)), xmax = std::max(1, colliderMD->xsizeh * (1 - checkTerrain));
 		const int zmin = std::min(-1, -colliderMD->zsizeh * (1 - checkTerrain)), zmax = std::max(1, colliderMD->zsizeh * (1 - checkTerrain));
 		#else
@@ -1567,7 +1566,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		float3 sqCenterPosition;
 
 		float sqPenDistanceSum = 0.0f;
-		float sqPenDistanceCtr = 0.0f;
+		float sqPenDistanceCnt = 0.0f;
 
 		if (DEBUG_DRAWING_ENABLED) {
 			geometricObjects->AddLine(collider->pos + (UpVector * 25.0f), collider->pos + (UpVector * 100.0f), 3, 1, 4);
@@ -1614,34 +1613,35 @@ void CGroundMoveType::HandleStaticObjectCollision(
 
 				// this tends to cancel out too much on average
 				// strafeVec += (collider->rightdir * sqColSlideSign);
-				//
-				// this tends to conflict with PFS [?]
-				bounceVec += (squareVec / sqSepDistance);
+				bounceVec += (collider->rightdir * (collider->rightdir.dot(squareVec / sqSepDistance)));
 
 				sqPenDistanceSum += sqPenDistance;
-				sqPenDistanceCtr += 1.0f;
+				sqPenDistanceCnt += 1.0f;
 				sqCenterPosition += squarePos;
 			}
 		}
 
-		if (sqPenDistanceCtr > 0.0f) {
+		if (sqPenDistanceCnt > 0.0f) {
 			sqCenterPosition.y = 0.0f;
-			sqCenterPosition /= sqPenDistanceCtr;
-			sqPenDistanceSum /= sqPenDistanceCtr;
+			sqCenterPosition /= sqPenDistanceCnt;
+			sqPenDistanceSum /= sqPenDistanceCnt;
 
 			const float strafeSign = -Sign(sqCenterPosition.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir));
 			const float strafeScale = std::min(currentSpeed, std::max(0.1f, -sqPenDistanceSum * 0.5f));
 			// 94+.0
-			const float bounceScale = std::min(currentSpeed, std::max(0.1f, -sqPenDistanceSum       ));
+			// const float bounceScale = std::min(currentSpeed, std::max(0.1f, -sqPenDistanceSum * 0.5f));
 			// 94.0 (more pronounced lateral bouncing but units get stuck more easily)
-			// const float bounceScale = std::max(0.1f, -sqPenDistanceSum);
+			const float bounceScale = std::max(0.1f, -sqPenDistanceSum * 0.5f);
 
 			strafeVec = collider->rightdir * strafeSign;
-			strafeVec = strafeVec.SafeNormalize2D();
-			bounceVec = bounceVec.SafeNormalize2D();
+			strafeVec = strafeVec.SafeNormalize2D() * strafeScale;
+			bounceVec = bounceVec.SafeNormalize2D() * bounceScale;
 
-			if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec * strafeScale)) { collider->Move(strafeVec * strafeScale, true); }
-			if (colliderMD->TestMoveSquare(collider, collider->pos + bounceVec * bounceScale)) { collider->Move(bounceVec * bounceScale, true); }
+			// if checkTerrain is true, test only the center square
+			if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec, ZeroVector, checkTerrain, checkYardMap, checkTerrain))
+				collider->Move(strafeVec, true);
+			if (colliderMD->TestMoveSquare(collider, collider->pos + bounceVec, ZeroVector, checkTerrain, checkYardMap, checkTerrain))
+				collider->Move(bounceVec, true);
 		}
 
 		wantRequestPath = ((strafeVec + bounceVec) != ZeroVector);
@@ -1654,11 +1654,13 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		const float strafeScale = std::min(currentSpeed, std::max(0.0f, -penDistance * 0.5f)) * (1 -                exitingYardMap);
 		const float bounceScale = std::min(currentSpeed, std::max(0.0f, -penDistance       )) * (1 - checkYardMap * exitingYardMap);
 
-		// when exiting a lab, insideYardMap goes from true to false
-		// before we stop colliding and we get a slight unneeded push
-		// --> compensate for this
-		collider->Move((collider->rightdir * colSlideSign) * strafeScale, true);
-		collider->Move((separationVector / sepDistance) *  bounceScale, true);
+		const float3 strafeVec = (collider->rightdir * colSlideSign) * strafeScale;
+		const float3 bounceVec = (   separationVector / sepDistance) * bounceScale;
+
+		if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec, ZeroVector, true, true, true))
+			collider->Move(strafeVec, true);
+		if (colliderMD->TestMoveSquare(collider, collider->pos + bounceVec, ZeroVector, true, true, true))
+			collider->Move(bounceVec, true);
 
 		wantRequestPath = (penDistance < 0.0f);
 	}
