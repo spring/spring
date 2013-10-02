@@ -887,8 +887,7 @@ bool CLuaRules::ShieldPreDamaged(
 
 	// pop the return-value; must be true or false
 	const bool ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));
-
-	lua_pop(L, -1);
+	lua_pop(L, 1);
 	return ret;
 }
 
@@ -920,7 +919,7 @@ int CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int atta
 			return ret;
 
 		ret = int(lua_isboolean(L, -1) && lua_toboolean(L, -1));
-		lua_pop(L, -1);
+		lua_pop(L, 1);
 	}
 
 	return ret;
