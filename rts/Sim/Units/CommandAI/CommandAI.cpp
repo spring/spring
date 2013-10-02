@@ -9,7 +9,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/WaitCommandsAI.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Sim/Features/Feature.h"
@@ -596,7 +595,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 
 void CCommandAI::GiveCommand(const Command& c, bool fromSynced)
 {
-	if (luaRules && !luaRules->AllowCommand(owner, c, fromSynced)) {
+	if (!eventHandler.AllowCommand(owner, c, fromSynced)) {
 		return;
 	}
 	eventHandler.UnitCommand(owner, c);
@@ -1352,7 +1351,7 @@ void CCommandAI::SlowUpdate()
 		return;
 	}
 
-	if (luaRules && !luaRules->CommandFallback(owner, c)) {
+	if (!eventHandler.CommandFallback(owner, c)) {
 		return; // luaRules wants the command to stay at the front
 	}
 

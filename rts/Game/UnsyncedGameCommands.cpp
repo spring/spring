@@ -81,6 +81,7 @@
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/DumpState.h"
 #include "System/Util.h"
+#include "System/EventHandler.h"
 
 #include <SDL_events.h>
 
@@ -2239,8 +2240,7 @@ public:
 		bool showMTInfo = (game->showMTInfo != -1);
 		SetBoolArg(showMTInfo, action.GetArgs());
 		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
-		int mtl = globalConfig->GetMultiThreadLua();
-		game->showMTInfo = showMTInfo ? mtl : -1;
+		game->showMTInfo = -1;
 		GML::EnableCallChainWarnings(!!game->showMTInfo);
 		return true;
 	}
@@ -2558,13 +2558,63 @@ public:
 class LuaUIActionExecutor : public IUnsyncedActionExecutor {
 public:
 	LuaUIActionExecutor() : IUnsyncedActionExecutor("LuaUI",
-			"Allow/Disallow Lua to draw (GUI elements)") {}
+			"Allows one to reload or disable LuaUI, or alternatively to send"
+			" a chat message to LuaUI") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (!guihandler)
 			return false;
 
-		guihandler->PushLayoutCommand(action.GetArgs());
+		const std::string& command = action.GetArgs();
+
+		if (command == "reload" || command == "enable") {
+			if (luaUI && luaUI->IsRunning()) {
+				// NOTE: causes a SEGV through RunCallIn()
+				LOG_L(L_WARNING, "Can not reload from within LuaUI, yet");
+				return true;
+			}
+			if (luaUI == NULL) {
+				LOG("Loading: \"%s\"", "luaui.lua"); // FIXME duplicate of below
+				CLuaUI::LoadHandler();
+				if (luaUI == NULL) {
+					guihandler->LoadConfig("ctrlpanel.txt");
+					LOG_L(L_WARNING, "Loading failed");
+				}
+			} else {
+				if (command == "enable") {
+					LOG_L(L_WARNING, "LuaUI is already enabled");
+				} else {
+					LOG("Reloading: \"%s\"", "luaui.lua"); // FIXME
+					CLuaUI::FreeHandler();
+					CLuaUI::LoadHandler();
+					if (luaUI == NULL) {
+						guihandler->LoadConfig("ctrlpanel.txt");
+						LOG_L(L_WARNING, "Reloading failed");
+					}
+				}
+			}
+			guihandler->LayoutIcons(false);
+		}
+		else if (command == "disable") {
+			if (luaUI && luaUI->IsRunning()) {
+				// NOTE: might cause a SEGV through RunCallIn()
+				LOG_L(L_WARNING, "Can not disable from within LuaUI, yet");
+				return true;
+			}
+			if (luaUI != NULL) {
+				CLuaUI::FreeHandler();
+				LOG("Disabled LuaUI");
+			}
+			guihandler->LayoutIcons(false);
+		}
+		else {
+			if (luaUI != NULL) {
+				luaUI->ConfigCommand(command); //FIXME use GotChatMsg?
+			} else {
+				//LOG_L(L_DEBUG, "[%s] LuaUI is not loaded (command=\"%s\")", __FUNCTION__, command.c_str());
+			}
+		}
+
 		return true;
 	}
 };

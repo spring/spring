@@ -43,9 +43,7 @@ class CLuaUI : public CLuaHandle
 
 	public: // call-ins
 		bool HasCallIn(lua_State* L, const string& name);
-		bool UnsyncedUpdateCallIn(lua_State* L, const string& name);
-
-		void Shutdown();
+		virtual bool UpdateCallIn(lua_State* L, const string& name);
 
 		bool HasLayoutButtons();
 

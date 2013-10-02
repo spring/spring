@@ -22,9 +22,9 @@ class LuaCallInCheck {
 
 
 #if DEBUG_LUA
-#  define LUA_CALL_IN_CHECK(L, ...) SELECT_LUA_STATE(); LuaCallInCheck ciCheck((L), __FUNCTION__)
+#  define LUA_CALL_IN_CHECK(L, ...) LuaCallInCheck ciCheck((L), __FUNCTION__)
 #else
-#  define LUA_CALL_IN_CHECK(L, ...) SCOPED_TIMER("Lua"); SELECT_LUA_STATE()
+#  define LUA_CALL_IN_CHECK(L, ...) SCOPED_TIMER("Lua");
 #endif
 
 #ifdef USE_GML // hack to add some degree of thread safety to LUA
@@ -33,9 +33,9 @@ class LuaCallInCheck {
 #	if GML_ENABLE_SIM
 #		undef LUA_CALL_IN_CHECK
 #		if DEBUG_LUA
-#			define LUA_CALL_IN_CHECK(L, ...) SELECT_LUA_STATE(); GML_CHECK_CALL_CHAIN(L, __VA_ARGS__); GML_DRCMUTEX_LOCK(lua); GML_CALL_DEBUGGER(); LuaCallInCheck ciCheck((L), __FUNCTION__);
+#			define LUA_CALL_IN_CHECK(L, ...) GML_CHECK_CALL_CHAIN(L, __VA_ARGS__); GML_DRCMUTEX_LOCK(lua); GML_CALL_DEBUGGER(); LuaCallInCheck ciCheck((L), __FUNCTION__);
 #		else
-#			define LUA_CALL_IN_CHECK(L, ...) SELECT_LUA_STATE(); GML_CHECK_CALL_CHAIN(L, __VA_ARGS__); GML_DRCMUTEX_LOCK(lua); GML_CALL_DEBUGGER();
+#			define LUA_CALL_IN_CHECK(L, ...) GML_CHECK_CALL_CHAIN(L, __VA_ARGS__); GML_DRCMUTEX_LOCK(lua); GML_CALL_DEBUGGER();
 #		endif
 #	endif
 #endif

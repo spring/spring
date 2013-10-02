@@ -12,41 +12,24 @@
 ///////////////////////////////////////////////////////////////////////////
 // Custom Lua Mutexes
 
-static boost::recursive_mutex luaprimmutex, luasecmutex;
 static std::map<lua_State*, boost::recursive_mutex*> mutexes;
 static std::map<lua_State*, bool> isCoroutine;
-//static luaContextData baseLuaContextData;
 
-static boost::recursive_mutex* GetLuaMutex(bool userMode, bool primary)
+static boost::recursive_mutex* GetLuaMutex(lua_State* L)
 {
-#if (LUA_MT_OPT & LUA_MUTEX)
-	if (userMode)
-		return new boost::recursive_mutex();
-	else // LuaGaia & LuaRules will share mutexes to avoid deadlocks during XCalls etc.
-		return primary ? &luaprimmutex : &luasecmutex;
-#else
-	return &luaprimmutex; //FIXME all luaStates share the same mutex???
-#endif
+	assert(!mutexes[L]);
+	return new boost::recursive_mutex();
 }
 
 
 
 void LuaCreateMutex(lua_State* L)
 {
-	if (!GetLuaContextData(L)) return;
-
 	luaContextData* lcd = GetLuaContextData(L);
+	if (!lcd) return; // CLuaParser
+	assert(lcd);
 
-	//FIXME when using Lua's lua_lock system it might be a bit inefficient to do a null check each call,
-	//      so better link to a dummy one instead.
-	//      Problem is that luaContextData links a lot rendering related files (LuaTextures, LuaFBOs, ...)
-	//      which aren't linked in unitsync.
-	/*if (!lcd) {
-		G(L)->ud = &baseLuaContextData;
-		lcd = &baseLuaContextData;
-	}*/
-
-	boost::recursive_mutex* mutex = GetLuaMutex((lcd->owner) ? true : lcd->owner->GetUserMode(), lcd->primary);
+	boost::recursive_mutex* mutex = GetLuaMutex(L);
 	lcd->luamutex = mutex;
 	mutexes[L] = mutex;
 }
@@ -54,20 +37,19 @@ void LuaCreateMutex(lua_State* L)
 
 void LuaDestroyMutex(lua_State* L)
 {
-	if (!GetLuaContextData(L)) return;
-
-	if (!L)
-		return;
+	if (!GetLuaContextData(L)) return; // CLuaParser
+	assert(GetLuaContextData(L));
 
 	if (isCoroutine.find(L) != isCoroutine.end()) {
 		mutexes.erase(L);
 		isCoroutine.erase(L);
 	} else {
+		lua_unlock(L);
 		assert(isCoroutine.find(L) == isCoroutine.end());
 		assert(mutexes.find(L) != mutexes.end());
 		boost::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
-		if ((mutex != &luaprimmutex) && (mutex != &luasecmutex))
-			delete mutex;
+		assert(mutex);
+		delete mutex;
 		mutexes.erase(L);
 		//TODO erase all related coroutines too?
 	}
@@ -76,16 +58,23 @@ void LuaDestroyMutex(lua_State* L)
 
 void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
 {
-	if (!GetLuaContextData(L_parent)) return;
+	luaContextData* plcd = GetLuaContextData(L_parent);
+	assert(plcd);
+
+	luaContextData* clcd = GetLuaContextData(L_child);
+	assert(clcd);
+
+	assert(plcd == clcd);
 
 	isCoroutine[L_child] = true;
-	mutexes[L_child] = mutexes[L_parent];
+	mutexes[L_child] = plcd->luamutex;
 }
 
 
 void LuaMutexLock(lua_State* L)
 {
-	if (!GetLuaContextData(L)) return;
+	if (!GetLuaContextData(L)) return; // CLuaParser
+	assert(GetLuaContextData(L));
 	boost::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
 
 	if (mutex->try_lock()) return;
@@ -97,7 +86,8 @@ void LuaMutexLock(lua_State* L)
 
 void LuaMutexUnlock(lua_State* L)
 {
-	if (!GetLuaContextData(L)) return;
+	if (!GetLuaContextData(L)) return; // CLuaParser
+	assert(GetLuaContextData(L));
 	boost::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
 	mutex->unlock();
 }
@@ -105,7 +95,7 @@ void LuaMutexUnlock(lua_State* L)
 
 void LuaMutexYield(lua_State* L)
 {
-	if (!GetLuaContextData(L)) return;
+	assert(GetLuaContextData(L));
 	/*mutexes[L]->unlock();
 	if (!mutexes[L]->try_lock()) {
 		// only yield if another thread is waiting for the mutex
@@ -138,6 +128,7 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 	}
 
 	allocedCur += nsize - osize;
+	assert(allocedCur < 512*1024*1024);
 	return realloc(ptr, nsize);
 }
 

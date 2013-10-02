@@ -20,7 +20,30 @@ using std::vector;
 
 class LuaUtils {
 	public:
+		struct ScopedStackChecker {
+		public:
+			ScopedStackChecker(lua_State* L, int returnVars = 0);
+			~ScopedStackChecker();
+		private:
+			lua_State* luaState;
+			int prevTop;
+			int returnVars;
+		};
 
+		struct ScopedDebugTraceBack {
+		public:
+			ScopedDebugTraceBack(lua_State* L);
+			~ScopedDebugTraceBack();
+			void SetErrFuncIdx(int idx) { errFuncIdx = idx; }
+			int GetErrFuncIdx() const { return errFuncIdx; }
+
+		private:
+			lua_State* luaState;
+
+			int errFuncIdx;
+		};
+
+	public:
 		struct DataDump {
 			int type;
 			std::string str;
@@ -36,19 +59,8 @@ class LuaUtils {
 				bool bol;
 			} data;
 		};
-		struct ScopedDebugTraceBack {
-		public:
-			ScopedDebugTraceBack(lua_State* L);
-			~ScopedDebugTraceBack();
-			void SetErrFuncIdx(int idx) { errFuncIdx = idx; }
-			int GetErrFuncIdx() const { return errFuncIdx; }
 
-		private:
-			lua_State* luaState;
-
-			int errFuncIdx;
-		};
-
+	public:
 		static int exportedDataSize; //< performance stat
 
 		static int Backup(std::vector<DataDump> &backup, lua_State* src, int count);
@@ -93,19 +105,7 @@ class LuaUtils {
 		static int Log(lua_State* L);
 		static bool PushLogEntries(lua_State* L);
 
-		static int ZlibCompress(lua_State* L);
-		static int ZlibDecompress(lua_State* L);
-
 		static bool PushCustomBaseFunctions(lua_State* L);
-		static int tobool(lua_State* L);
-		static int isnil(lua_State* L);
-		static int isbool(lua_State* L);
-		static int isnumber(lua_State* L);
-		static int isstring(lua_State* L);
-		static int istable(lua_State* L);
-		static int isthread(lua_State* L);
-		static int isfunction(lua_State* L);
-		static int isuserdata(lua_State* L);
 
 		// not implemented (except for the first two)...
 		static int ParseIntArray(lua_State* L, int tableIndex,
@@ -126,6 +126,16 @@ class LuaUtils {
 
 		static void PushCommandDesc(lua_State* L, const CommandDescription& cd);
 };
+
+
+
+inline void LuaPushNamedNil(lua_State* L,
+                             const string& key)
+{
+	lua_pushsstring(L, key);
+	lua_pushnil(L);
+	lua_rawset(L, -3);
+}
 
 
 inline void LuaPushNamedBool(lua_State* L,

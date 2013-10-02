@@ -296,7 +296,7 @@ unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buil
 		return FACTORY_SKIP_BUILD_ORDER;
 	if (teamHandler->Team(team)->AtUnitLimit())
 		return FACTORY_KEEP_BUILD_ORDER;
-	if (luaRules && !luaRules->AllowUnitCreation(buildeeDef, this, NULL))
+	if (!eventHandler.AllowUnitCreation(buildeeDef, this, NULL))
 		return FACTORY_SKIP_BUILD_ORDER;
 
 	finishedBuildFunc = buildFunc;

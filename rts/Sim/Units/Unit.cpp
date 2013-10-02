@@ -1144,8 +1144,8 @@ void CUnit::DoDamage(
 		restTime = 0; // bleeding != resting
 	}
 
-	if (luaRules != NULL) {
-		luaRules->UnitPreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer, &baseDamage, &impulseMult);
+	if (eventHandler.UnitPreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer, &baseDamage, &impulseMult)) {
+		return;
 	}
 
 	script->HitByWeapon(-(float3(impulse * impulseMult)).SafeNormalize2D(), weaponDefID, /*inout*/ baseDamage);
@@ -1395,7 +1395,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	}
 
 	const bool capture = (type == ChangeCaptured);
-	if (luaRules && !luaRules->AllowUnitTransfer(this, newteam, capture)) {
+	if (!eventHandler.AllowUnitTransfer(this, newteam, capture)) {
 		return false;
 	}
 
@@ -1785,11 +1785,11 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 
 			if ((teamHandler->Team(builder->team)->metal  >= metalCostPart) &&
 			    (teamHandler->Team(builder->team)->energy >= energyCostPart) &&
-			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
+			    (eventHandler.AllowUnitBuildStep(builder, this, part))) {
 
 				if (builder->UseMetal(metalCostPart)) {
 					// just because we checked doesn't mean they were deducted since upkeep can prevent deduction
-					// FIXME luaRules->AllowUnitBuildStep() may have changed the storages!!! so the checks can be invalid!
+					// FIXME eventHandler.AllowUnitBuildStep() may have changed the storages!!! so the checks can be invalid!
 					// TODO add a builder->UseResources(SResources(metalCostPart, energyCostPart))
 					if (builder->UseEnergy(energyCostPart)) {
 						health += (maxHealth * part);
@@ -1839,7 +1839,7 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		const float metalRefundPartScaled = metalRefundPart * modInfo.reclaimUnitEfficiency;
 		const float energyRefundPartScaled = energyRefundPart * modInfo.reclaimUnitEnergyCostFactor;
 
-		if (luaRules && !luaRules->AllowUnitBuildStep(builder, this, part)) {
+		if (!eventHandler.AllowUnitBuildStep(builder, this, part)) {
 			return false;
 		}
 

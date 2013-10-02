@@ -160,8 +160,8 @@ public:
 struct luaContextData {
 	luaContextData()
 	: luamutex(NULL)
-	, primary(true)
 	, synced(false)
+	, allowChanges(false)
 	, owner(NULL)
 	, drawingEnabled(false)
 	, running(0)
@@ -173,8 +173,8 @@ struct luaContextData {
 	, selectTeam(CEventClient::NoAccessTeam) {}
 
 	boost::recursive_mutex* luamutex;
-	bool primary; //GML crap
 	bool synced;
+	bool allowChanges;
 	CLuaHandle* owner;
 	bool drawingEnabled;
 	int running; //< is currently running? (0: not running; >0: is running)

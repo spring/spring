@@ -13,83 +13,114 @@ using std::string;
 
 struct lua_State;
 class LuaSyncedCtrl;
+class CLuaHandleSynced;
+struct BuildInfo;
 
-class CLuaHandleSynced : public CLuaHandle
+
+class CUnsyncedLuaHandle : public CLuaHandle
 {
-	public:
-		static const LuaRulesParams::Params&  GetGameParams() {return gameParams;};
-		static const LuaRulesParams::HashMap& GetGameParamsMap() {return gameParamsMap;};
-
-	public:
-		bool Initialize(const string& syncData);
-		string GetSyncData();
-
-		void UpdateThreading();
-
-		inline bool GetAllowChanges() const { return IsDrawCallIn() ? allowChangesDraw : allowChanges; }
-		inline void SetAllowChanges(bool ac, bool all = false) { if (all) allowChangesDraw = allowChanges = ac; else if (IsDrawCallIn()) allowChangesDraw = ac; else allowChanges = ac; }
+	friend class CLuaHandleSynced;
 
 	public: // call-ins
-		bool HasCallIn(lua_State* L, const string& name);
-		virtual bool SyncedUpdateCallIn(lua_State* L, const string& name);
-		virtual bool UnsyncedUpdateCallIn(lua_State* L, const string& name);
+		bool DrawUnit(const CUnit* unit);
+		bool DrawFeature(const CFeature* feature);
+		bool DrawShield(const CUnit* unit, const CWeapon* weapon);
+		bool DrawProjectile(const CProjectile* projectile);
 
-		bool GotChatMsg(const string& msg, int playerID);
-		bool RecvLuaMsg(const string& msg, int playerID);
-		virtual void RecvFromSynced(lua_State* srcState, int args); // not an engine call-in
+	public: // all non-eventhandler callins
+		void RecvFromSynced(lua_State* srcState, int args); // not an engine call-in
+
+	protected:
+		CUnsyncedLuaHandle(CLuaHandleSynced* base, const string& name, int order);
+		virtual ~CUnsyncedLuaHandle();
+
+		bool Init(const string& code, const string& file);
+
+		static CUnsyncedLuaHandle* GetUnsyncedHandle(lua_State* L) {
+			assert(dynamic_cast<CUnsyncedLuaHandle*>(CLuaHandle::GetHandle(L)));
+			return static_cast<CUnsyncedLuaHandle*>(CLuaHandle::GetHandle(L));
+		}
+
+	protected:
+		CLuaHandleSynced& base;
+};
+
+
+
+class CSyncedLuaHandle : public CLuaHandle
+{
+	friend class CLuaHandleSynced;
+
+	public: // call-ins
+		bool CommandFallback(const CUnit* unit, const Command& cmd);
+		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
+
+		bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo);
+		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
+		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
+		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos);
+		bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part);
+		bool AllowResourceLevel(int teamID, const string& type, float level);
+		bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
+		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
+		bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
+
+		bool TerraformComplete(const CUnit* unit, const CUnit* build);
+		bool MoveCtrlNotify(const CUnit* unit, int data);
+
+		int AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID);
+		bool AllowWeaponTarget(
+			unsigned int attackerID,
+			unsigned int targetID,
+			unsigned int attackerWeaponNum,
+			unsigned int attackerWeaponDefID,
+			float* targetPriority
+		);
+		bool AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget);
+
+		bool UnitPreDamaged(
+			const CUnit* unit,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID,
+			bool paralyzer,
+			float* newDamage,
+			float* impulseMult);
+
+		bool FeaturePreDamaged(
+			const CFeature* feature,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID,
+			float* newDamage,
+			float* impulseMult);
+
+		bool ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool);
 
 		bool SyncedActionFallback(const string& line, int playerID);
 
-	public: // custom call-in
-		bool HasSyncedXCall(const string& funcName);
-		bool HasUnsyncedXCall(lua_State* srcState, const string& funcName);
-		int XCall(lua_State* L, lua_State* srcState, const string& funcName);
-		int SyncedXCall(lua_State* srcState, const string& funcName);
-		int UnsyncedXCall(lua_State* srcState, const string& funcName);
-
 	protected:
-		CLuaHandleSynced(const string& name, int order);
-		virtual ~CLuaHandleSynced();
-		void Init(const string& syncedFile,
-		          const string& unsyncedFile,
-		          const string& modes);
-		bool SetupSynced(lua_State* L);
-		bool SetupUnsynced(lua_State* L);
+		CSyncedLuaHandle(CLuaHandleSynced* base, const string& name, int order);
+		virtual ~CSyncedLuaHandle();
 
-		// hooks to add code during initialization
-		virtual bool AddSyncedCode(lua_State* L) = 0;
-		virtual bool AddUnsyncedCode(lua_State* L) = 0;
+		bool Init(const string& code, const string& file);
 
-		string LoadFile(const string& filename, const string& modes) const;
-
-		bool CopyGlobalToUnsynced(lua_State* L, const char* name);
-		bool SetupUnsyncedFunction(lua_State* L, const char* funcName);
-		bool LoadUnsyncedCode(lua_State* L, const string& code, const string& debug);
-		bool SyncifyRandomFuncs(lua_State* L);
-		bool CopyRealRandomFuncs(lua_State* L);
-		bool LightCopyTable(lua_State* L, int dstIndex, int srcIndex);
-
-	protected:
-		static CLuaHandleSynced* GetSyncedHandle(lua_State* L) {
-			assert(dynamic_cast<CLuaHandleSynced*>(CLuaHandle::GetHandle(L)));
-			return static_cast<CLuaHandleSynced*>(CLuaHandle::GetHandle(L));
+		static CSyncedLuaHandle* GetSyncedHandle(lua_State* L) {
+			assert(dynamic_cast<CSyncedLuaHandle*>(CLuaHandle::GetHandle(L)));
+			return static_cast<CSyncedLuaHandle*>(CLuaHandle::GetHandle(L));
 		}
 
-	private:
-		bool allowChanges; // sim thread
-		bool allowChangesDraw; // other threads (a non sim thread may load gadgets)
 	protected:
-		bool teamsLocked; // disables CallAsTeam()
+		CLuaHandleSynced& base;
+
 		map<string, string> textCommands; // name, help
 
 	private: // call-outs
 		static int SyncedRandom(lua_State* L);
 
-		static int LoadStringData(lua_State* L);
-
-		static int CallAsTeam(lua_State* L);
-
-		static int AllowUnsafeChanges(lua_State* L);
+		static int SendToUnsynced(lua_State* L);
 
 		static int AddSyncedActionFallback(lua_State* L);
 		static int RemoveSyncedActionFallback(lua_State* L);
@@ -100,6 +131,94 @@ class CLuaHandleSynced : public CLuaHandle
 		static int SetWatchFeatureDef(lua_State* L);
 		static int GetWatchWeaponDef(lua_State* L);
 		static int SetWatchWeaponDef(lua_State* L);
+};
+
+
+class CLuaHandleSynced
+{
+	public: // Non-eventhandler call-ins
+		bool GotChatMsg(const string& msg, int playerID) {
+			return syncedLuaHandle.GotChatMsg(msg, playerID) ||
+				unsyncedLuaHandle.GotChatMsg(msg, playerID);
+		}
+
+		bool RecvLuaMsg(const string& msg, int playerID) {
+			return syncedLuaHandle.RecvLuaMsg(msg, playerID);
+		}
+
+	public:
+		void CheckStack() {
+			syncedLuaHandle.CheckStack();
+			unsyncedLuaHandle.CheckStack();
+		}
+
+		static CUnsyncedLuaHandle* GetUnsyncedHandle(lua_State* L) {
+			if (CLuaHandle::GetHandleSynced(L)) {
+				auto slh = CSyncedLuaHandle::GetSyncedHandle(L);
+				return &slh->base.unsyncedLuaHandle;
+			} else {
+				return CUnsyncedLuaHandle::GetUnsyncedHandle(L);
+			}
+		}
+
+		static CSyncedLuaHandle* GetSyncedHandle(lua_State* L) {
+			if (CLuaHandle::GetHandleSynced(L)) {
+				return CSyncedLuaHandle::GetSyncedHandle(L);
+			} else {
+				auto ulh = CUnsyncedLuaHandle::GetUnsyncedHandle(L);
+				return &ulh->base.syncedLuaHandle;
+			}
+		}
+
+	protected:
+		CLuaHandleSynced(const string& name, int order);
+		virtual ~CLuaHandleSynced();
+
+		string LoadFile(const string& filename, const string& modes) const;
+		void Init(const string& syncedFile, const string& unsyncedFile, const string& modes);
+
+		bool IsValid() const {
+			return syncedLuaHandle.IsValid() && unsyncedLuaHandle.IsValid();
+		}
+		void KillLua() {
+			syncedLuaHandle.KillLua();
+			unsyncedLuaHandle.KillLua();
+		}
+
+	#define SET_PERMISSION(name, type) \
+		void Set ## name(const type arg) { \
+			syncedLuaHandle.Set ## name(arg); \
+			unsyncedLuaHandle.Set ## name(arg); \
+		}
+
+		SET_PERMISSION(FullCtrl, bool);
+		SET_PERMISSION(FullRead, bool);
+		SET_PERMISSION(CtrlTeam, int);
+		SET_PERMISSION(ReadTeam, int);
+		SET_PERMISSION(ReadAllyTeam, int);
+		SET_PERMISSION(SelectTeam, int);
+
+	#undef SET_PERMISSION
+
+	protected:
+		friend class CUnsyncedLuaHandle;
+		friend class CSyncedLuaHandle;
+
+		// hooks to add code during initialization
+		virtual bool AddSyncedCode(lua_State* L) = 0;
+		virtual bool AddUnsyncedCode(lua_State* L) = 0;
+
+		// call-outs
+		static int LoadStringData(lua_State* L);
+		static int CallAsTeam(lua_State* L);
+
+	public:
+		CSyncedLuaHandle syncedLuaHandle;
+		CUnsyncedLuaHandle unsyncedLuaHandle;
+
+	public:
+		static const LuaRulesParams::Params&  GetGameParams() { return gameParams; }
+		static const LuaRulesParams::HashMap& GetGameParamsMap() { return gameParamsMap; }
 
 	private:
 		//FIXME: add to CREG?

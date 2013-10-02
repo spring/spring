@@ -54,8 +54,13 @@ void CLuaGaia::LoadHandler()
 
 void CLuaGaia::FreeHandler()
 {
-	//FIXME GML: this needs a mutex!!!
-	delete luaGaia; luaGaia = NULL;
+	static bool inFree = false; //FIXME not threadsafe!!!
+	if (!inFree) {
+		inFree = true;
+		delete luaGaia;
+		luaGaia = NULL;
+		inFree = false;
+	}
 }
 
 
@@ -69,14 +74,12 @@ CLuaGaia::CLuaGaia()
 		return;
 	}
 
-	teamsLocked = true;
-
-	SetFullCtrl(true, true);
-	SetFullRead(true, true);
-	SetCtrlTeam(AllAccessTeam, true); //teamHandler->GaiaTeamID();
-	SetReadTeam(AllAccessTeam, true);
-	SetReadAllyTeam(AllAccessTeam, true);
-	SetSelectTeam(teamHandler->GaiaTeamID(), true);
+	SetFullCtrl(true);
+	SetFullRead(true);
+	SetCtrlTeam(CEventClient::AllAccessTeam);
+	SetReadTeam(CEventClient::AllAccessTeam);
+	SetReadAllyTeam(CEventClient::AllAccessTeam);
+	SetSelectTeam(teamHandler->GaiaTeamID());
 
 	Init(LuaGaiaSyncedFilename, LuaGaiaUnsyncedFilename, SPRING_VFS_MAP);
 }
@@ -84,8 +87,9 @@ CLuaGaia::CLuaGaia()
 
 CLuaGaia::~CLuaGaia()
 {
-	if (L_Sim != NULL || L_Draw != NULL) {
-		Shutdown();
+	const bool killMe = true; //syncedLuaHandle.killMe || unsyncedLuaHandle.killMe;
+
+	if (IsValid()) {
 		KillLua();
 	}
 
@@ -106,9 +110,6 @@ bool CLuaGaia::AddSyncedCode(lua_State *L)
 
 bool CLuaGaia::AddUnsyncedCode(lua_State *L)
 {
-	/*lua_pushliteral(L, "UNSYNCED");
-	lua_gettable(L, LUA_REGISTRYINDEX);*/
-
 	return true;
 }
 

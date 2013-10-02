@@ -99,8 +99,8 @@ public:
 	void SetBuildFacing(unsigned int facing);
 	void SetBuildSpacing(int spacing);
 
-	void PushLayoutCommand(const std::string& cmd, bool luaCmd = true);
-	void RunLayoutCommands();
+	void LayoutIcons(bool useSelectionPage);
+	bool LoadConfig(const std::string& cfg);
 
 public:
 	std::vector<CommandDescription> commands;
@@ -111,7 +111,6 @@ public:
 private:
 	void GiveCommand(Command& cmd, bool fromUser = true);
 	void GiveCommandsNow();
-	void LayoutIcons(bool useSelectionPage);
 	bool LayoutCustomIcons(bool useSelectionPage);
 	void ResizeIconArray(unsigned int size);
 	void AppendPrevAndNext(std::vector<CommandDescription>& cmds);
@@ -163,7 +162,6 @@ private:
 
 	void LoadDefaults();
 	void SanitizeConfig();
-	bool LoadConfig(const std::string& cfg);
 	void ParseFillOrder(const std::string& text);
 
 	bool ProcessLocalActions(const Action& action);

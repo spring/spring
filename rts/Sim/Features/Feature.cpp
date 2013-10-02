@@ -268,7 +268,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		const float energyUse = part * def->energy;
 		if ((teamHandler->Team(builder->team)->metal  >= metalUse)  &&
 		    (teamHandler->Team(builder->team)->energy >= energyUse) &&
-				(!luaRules || luaRules->AllowFeatureBuildStep(builder, this, part))) {
+				(eventHandler.AllowFeatureBuildStep(builder, this, part))) {
 			builder->UseMetal(metalUse);
 			builder->UseEnergy(energyUse);
 			reclaimLeft+=part;
@@ -306,7 +306,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 
 		const float part = (-amount) / def->reclaimTime;
 
-		if (luaRules && !luaRules->AllowFeatureBuildStep(builder, this, -part)) {
+		if (!eventHandler.AllowFeatureBuildStep(builder, this, -part)) {
 			return false;
 		}
 
@@ -383,13 +383,15 @@ void CFeature::DoDamage(
 	float baseDamage = damages.GetDefaultDamage();
 	float impulseMult = 1.0f;
 
-	if (luaRules != NULL) {
-		luaRules->FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult);
+	if (eventHandler.FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult)) {
+		return;
 	}
 
-	// NOTE:
-	//   for trees, impulse is used to drive their falling animation
-	//   this also calls our SetVel() to put us in the update queue
+	//FIXME apply impulse at all!
+	//if (IsUnderWater() || IsInWater()) {
+	//	impulse *= 0.25f;
+	//}
+
 	// if ((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()))
 	ApplyImpulse((impulse * impulseMult) / mass);
 

@@ -4,7 +4,6 @@
 
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
-#include "Lua/LuaRules.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
@@ -333,7 +332,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 
 	unitDrawer->SetTeamColour(feature->team, alpha);
 
-	if (!(feature->luaDraw && luaRules != NULL && luaRules->DrawFeature(feature))) {
+	if (!(feature->luaDraw && eventHandler.DrawFeature(feature))) {
 		feature->model->DrawStatic();
 	}
 

@@ -416,7 +416,7 @@ CFeature* CFeatureHandler::CreateWreckage(
 		}
 	}
 
-	if (luaRules && !luaRules->AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
+	if (!eventHandler.AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
 		return NULL;
 
 	if (!fd->modelName.empty()) {

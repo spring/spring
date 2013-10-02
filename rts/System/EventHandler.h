@@ -15,6 +15,7 @@
 
 class CWeapon;
 struct Command;
+struct BuildInfo;
 
 class CEventHandler
 {
@@ -146,6 +147,55 @@ class CEventHandler
 
 		void StockpileChanged(const CUnit* unit,
 		                      const CWeapon* weapon, int oldCount);
+
+		bool CommandFallback(const CUnit* unit, const Command& cmd);
+		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
+
+		bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo);
+		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
+		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
+		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos);
+		bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part);
+		bool AllowResourceLevel(int teamID, const string& type, float level);
+		bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
+		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
+		bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
+
+		bool TerraformComplete(const CUnit* unit, const CUnit* build);
+		bool MoveCtrlNotify(const CUnit* unit, int data);
+
+		int AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID);
+		bool AllowWeaponTarget(
+			unsigned int attackerID,
+			unsigned int targetID,
+			unsigned int attackerWeaponNum,
+			unsigned int attackerWeaponDefID,
+			float* targetPriority
+		);
+		bool AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget);
+
+		bool UnitPreDamaged(
+			const CUnit* unit,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID,
+			bool paralyzer,
+			float* newDamage,
+			float* impulseMult);
+
+		bool FeaturePreDamaged(
+			const CFeature* feature,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID,
+			float* newDamage,
+			float* impulseMult);
+
+		bool ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool);
+
+		bool SyncedActionFallback(const string& line, int playerID);
 		/// @}
 
 	public:
@@ -205,6 +255,11 @@ class CEventHandler
 		void DrawScreen();
 		void DrawInMiniMap();
 
+		bool DrawUnit(const CUnit* unit);
+		bool DrawFeature(const CFeature* feature);
+		bool DrawShield(const CUnit* unit, const CWeapon* weapon);
+		bool DrawProjectile(const CProjectile* projectile);
+
 		/// @brief this UNSYNCED event is generated every GameServer::gameProgressFrameInterval
 		/// it skips network queuing and caching and can be used to calculate the current catchup
 		/// percentage when reconnecting to a running game
@@ -258,125 +313,11 @@ class CEventHandler
 
 		EventClientList handles;
 
-		// synced
-		EventClientList listLoad;
-
-		EventClientList listGamePreload;
-		EventClientList listGameStart;
-		EventClientList listGameOver;
-		EventClientList listGamePaused;
-		EventClientList listGameFrame;
-		EventClientList listGameID;
-		EventClientList listTeamDied;
-		EventClientList listTeamChanged;
-		EventClientList listPlayerChanged;
-		EventClientList listPlayerAdded;
-		EventClientList listPlayerRemoved;
-
-		EventClientList listUnitCreated;
-		EventClientList listUnitFinished;
-		EventClientList listUnitFromFactory;
-		EventClientList listUnitDestroyed;
-		EventClientList listUnitTaken;
-		EventClientList listUnitGiven;
-
-		EventClientList listUnitIdle;
-		EventClientList listUnitCommand;
-		EventClientList listUnitCmdDone;
-		EventClientList listUnitDamaged;
-		EventClientList listUnitExperience;
-
-		EventClientList listUnitSeismicPing;
-		EventClientList listUnitEnteredRadar;
-		EventClientList listUnitEnteredLos;
-		EventClientList listUnitLeftRadar;
-		EventClientList listUnitLeftLos;
-
-		EventClientList listUnitEnteredWater;
-		EventClientList listUnitEnteredAir;
-		EventClientList listUnitLeftWater;
-		EventClientList listUnitLeftAir;
-
-		EventClientList listUnitLoaded;
-		EventClientList listUnitUnloaded;
-
-		EventClientList listUnitCloaked;
-		EventClientList listUnitDecloaked;
-
-		EventClientList listRenderUnitCreated;
-		EventClientList listRenderUnitDestroyed;
-		EventClientList listRenderUnitCloakChanged;
-		EventClientList listRenderUnitLOSChanged;
-
-		EventClientList listUnitUnitCollision;
-		EventClientList listUnitFeatureCollision;
-		EventClientList listUnitMoved;
-		EventClientList listUnitMoveFailed;
-
-		EventClientList listRenderUnitMoved;
-
-		EventClientList listFeatureCreated;
-		EventClientList listFeatureDestroyed;
-		EventClientList listFeatureDamaged;
-		EventClientList listFeatureMoved;
-
-		EventClientList listRenderFeatureCreated;
-		EventClientList listRenderFeatureDestroyed;
-		EventClientList listRenderFeatureMoved;
-
-		EventClientList listProjectileCreated;
-		EventClientList listProjectileDestroyed;
-
-		EventClientList listRenderProjectileCreated;
-		EventClientList listRenderProjectileDestroyed;
-
-		EventClientList listExplosion;
-
-		EventClientList listStockpileChanged;
-
-		// unsynced
-		EventClientList listSave;
-
-		EventClientList listUnsyncedHeightMapUpdate;
-		EventClientList listUpdate;
-
-		EventClientList listKeyPress;
-		EventClientList listKeyRelease;
-		EventClientList listMouseMove;
-		EventClientList listMousePress;
-		EventClientList listMouseRelease;
-		EventClientList listMouseWheel;
-		EventClientList listJoystickEvent;
-		EventClientList listIsAbove;
-		EventClientList listGetTooltip;
-
-		EventClientList listDefaultCommand;
-		EventClientList listConfigCommand;
-		EventClientList listCommandNotify;
-		EventClientList listAddConsoleLine;
-		EventClientList listLastMessagePosition;
-		EventClientList listGroupChanged;
-		EventClientList listGameSetup;
-		EventClientList listWorldTooltip;
-		EventClientList listMapDrawCmd;
-
-		EventClientList listSunChanged;
-
-		EventClientList listViewResize;
-
-		EventClientList listDrawGenesis;
-		EventClientList listDrawWorld;
-		EventClientList listDrawWorldPreUnit;
-		EventClientList listDrawWorldShadow;
-		EventClientList listDrawWorldReflection;
-		EventClientList listDrawWorldRefraction;
-		EventClientList listDrawScreenEffects;
-		EventClientList listDrawScreen;
-		EventClientList listDrawInMiniMap;
-
-		EventClientList listGameProgress;
-
-		EventClientList listCollectGarbage;
+	#define SETUP_EVENT(name, props) EventClientList list ##name;
+	#define SETUP_UNMANAGED_EVENT(name, props)
+		#include "Events.def"
+	#undef SETUP_EVENT
+	#undef SETUP_UNMANAGED_EVENT
 };
 
 

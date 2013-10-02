@@ -614,7 +614,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 				return;
 			}
 
-			if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build)) {
+			if (!eventHandler.AllowUnitCreation(build.def, owner, &build)) {
 				StopMove(); // cancel KeepPointingTo
 				FinishCommand();
 				return;

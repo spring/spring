@@ -62,6 +62,7 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/ObjectDependenceTypes.h"
 #include "System/Log/ILog.h"
@@ -97,12 +98,7 @@ static float smoothMeshAmountChanged;
 
 inline void LuaSyncedCtrl::CheckAllowGameChanges(lua_State* L)
 {
-	const CLuaHandleSynced* lhs = CLuaHandleSynced::GetSyncedHandle(L);
-
-	if (lhs == NULL) {
-		luaL_error(L, "Internal lua error, unsynced script using synced calls");
-	}
-	if (!lhs->GetAllowChanges()) {
+	if (!CLuaHandle::GetHandleAllowChanges(L)) {
 		luaL_error(L, "Unsafe attempt to change game state");
 	}
 }
@@ -807,7 +803,7 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 
 	if (type == "metal") {
 		amount = std::min(amount, (float)team1->metal);
-		if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "m", amount)) {
+		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "m", amount)) { //FIXME can cause an endless loop
 			team1->metal                       -= amount;
 			team1->metalSent                   += amount;
 			team1->currentStats->metalSent     += amount;
@@ -817,7 +813,7 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 		}
 	} else if (type == "energy") {
 		amount = std::min(amount, (float)team1->energy);
-		if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "e", amount)) {
+		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "e", amount)) { //FIXME can cause an endless loop
 			team1->energy                       -= amount;
 			team1->energySent                   += amount;
 			team1->currentStats->energySent     += amount;

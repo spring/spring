@@ -6,7 +6,6 @@
 #include "Building.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
@@ -199,7 +198,7 @@ void CBuilder::Update()
 							mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 							curBuild->groundLevelled = true;
 
-							if (luaRules && luaRules->TerraformComplete(this, curBuild)) {
+							if (eventHandler.TerraformComplete(this, curBuild)) {
 								StopBuild();
 							}
 						}

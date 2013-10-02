@@ -184,7 +184,7 @@ void CPlayer::StartControllingUnit()
 			return;
 		}
 
-		if (luaRules == NULL || luaRules->AllowDirectUnitControl(this->playerNum, newControlleeUnit)) {
+		if (eventHandler.AllowDirectUnitControl(this->playerNum, newControlleeUnit)) {
 			newControlleeUnit->fpsControlPlayer = this;
 			fpsController.SetControlleeUnit(newControlleeUnit);
 			selectedUnitsHandler.ClearNetSelect(this->playerNum);

@@ -13,7 +13,6 @@
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaMaterial.h"
 #include "Lua/LuaUnitMaterial.h"
-#include "Lua/LuaRules.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -1561,7 +1560,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 
 inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
-	if (unit->luaDraw && luaRules != NULL && luaRules->DrawUnit(unit)) {
+	if (unit->luaDraw && eventHandler.DrawUnit(unit)) {
 		return;
 	}
 

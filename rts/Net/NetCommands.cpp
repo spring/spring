@@ -354,7 +354,7 @@ void CGame::ClientReadNet()
 					CTeam* team = teamHandler->Team(teamID);
 					team->ClampStartPosInStartBox(&clampedPos);
 
-					if (!luaRules || luaRules->AllowStartPosition(playerID, rdyState, clampedPos, rawPickPos)) {
+					if (eventHandler.AllowStartPosition(playerID, rdyState, clampedPos, rawPickPos)) {
 						team->SetStartPos(clampedPos);
 
 						if (playerID != SERVER_PLAYER) {
@@ -699,13 +699,13 @@ void CGame::ClientReadNet()
 					pckt >> energyShare;
 
 					if (metalShare > 0.0f) {
-						if (!luaRules || luaRules->AllowResourceTransfer(srcTeam, dstTeam, "m", metalShare)) {
+						if (eventHandler.AllowResourceTransfer(srcTeam, dstTeam, "m", metalShare)) {
 							teamHandler->Team(srcTeam)->metal -= metalShare;
 							teamHandler->Team(dstTeam)->metal += metalShare;
 						}
 					}
 					if (energyShare > 0.0f) {
-						if (!luaRules || luaRules->AllowResourceTransfer(srcTeam, dstTeam, "e", energyShare)) {
+						if (eventHandler.AllowResourceTransfer(srcTeam, dstTeam, "e", energyShare)) {
 							teamHandler->Team(srcTeam)->energy -= energyShare;
 							teamHandler->Team(dstTeam)->energy += energyShare;
 						}
@@ -770,7 +770,7 @@ void CGame::ClientReadNet()
 				const float energyShare = Clamp(*(float*)&inbuf[8], 0.0f, (float)srcTeam->energy);
 
 				if (metalShare > 0.0f) {
-					if (!luaRules || luaRules->AllowResourceTransfer(srcTeamID, dstTeamID, "m", metalShare)) {
+					if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "m", metalShare)) {
 						srcTeam->metal                       -= metalShare;
 						srcTeam->metalSent                   += metalShare;
 						srcTeam->currentStats->metalSent     += metalShare;
@@ -780,7 +780,7 @@ void CGame::ClientReadNet()
 					}
 				}
 				if (energyShare > 0.0f) {
-					if (!luaRules || luaRules->AllowResourceTransfer(srcTeamID, dstTeamID, "e", energyShare)) {
+					if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "e", energyShare)) {
 						srcTeam->energy                       -= energyShare;
 						srcTeam->energySent                   += energyShare;
 						srcTeam->currentStats->energySent     += energyShare;
@@ -835,10 +835,10 @@ void CGame::ClientReadNet()
 				float metalShare=*(float*)&inbuf[3];
 				float energyShare=*(float*)&inbuf[7];
 
-				if (!luaRules || luaRules->AllowResourceLevel(team, "m", metalShare)) {
+				if (eventHandler.AllowResourceLevel(team, "m", metalShare)) {
 					teamHandler->Team(team)->metalShare = metalShare;
 				}
-				if (!luaRules || luaRules->AllowResourceLevel(team, "e", energyShare)) {
+				if (eventHandler.AllowResourceLevel(team, "e", energyShare)) {
 					teamHandler->Team(team)->energyShare = energyShare;
 				}
 				AddTraffic(player, packetCode, dataLength);

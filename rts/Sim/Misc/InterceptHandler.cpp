@@ -5,7 +5,6 @@
 
 #include "InterceptHandler.h"
 
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
@@ -13,6 +12,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "System/EventHandler.h"
 #include "System/float3.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
@@ -62,7 +62,7 @@ void CInterceptHandler::Update(bool forced) {
 				continue;
 
 			// note: will be called every Update so long as gadget does not return true
-			if (luaRules != NULL && !luaRules->AllowWeaponInterceptTarget(wOwner, w, p))
+			if (!eventHandler.AllowWeaponInterceptTarget(wOwner, w, p))
 				continue;
 
 			// there are four cases when an interceptor <w> should fire at a projectile <p>:

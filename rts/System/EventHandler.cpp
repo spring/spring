@@ -192,6 +192,186 @@ void CEventHandler::ListRemove(EventClientList& ecList, CEventClient* ec)
 /******************************************************************************/
 /******************************************************************************/
 
+#define CONTROL_ITERATE_DEF_TRUE(name, ...) \
+	bool result = true;                        \
+	for (int i = 0; i < list##name.size(); ) { \
+		CEventClient* ec = list##name[i];  \
+		result &= ec->name(__VA_ARGS__);   \
+		if (i < list##name.size() && ec == list##name[i]) \
+			++i; /* the call-in may remove itself from the list */ \
+	} \
+	return result;
+
+#define CONTROL_ITERATE_DEF_FALSE(name, ...) \
+	bool result = false;                        \
+	for (int i = 0; i < list##name.size(); ) { \
+		CEventClient* ec = list##name[i];  \
+		result |= ec->name(__VA_ARGS__);   \
+		if (i < list##name.size() && ec == list##name[i]) \
+			++i; /* the call-in may remove itself from the list */ \
+	} \
+	return result;
+
+
+bool CEventHandler::CommandFallback(const CUnit* unit, const Command& cmd)
+{
+	CONTROL_ITERATE_DEF_TRUE(CommandFallback, unit, cmd)
+}
+
+
+bool CEventHandler::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowCommand, unit, cmd, fromSynced)
+}
+
+
+bool CEventHandler::AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowUnitCreation, unitDef, builder, buildInfo)
+}
+
+
+bool CEventHandler::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowUnitTransfer, unit, newTeam, capture)
+}
+
+
+bool CEventHandler::AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowUnitBuildStep, builder, unit, part)
+}
+
+
+bool CEventHandler::AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowFeatureCreation, featureDef, allyTeamID, pos)
+}
+
+
+bool CEventHandler::AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowFeatureBuildStep, builder, feature, part)
+}
+
+
+bool CEventHandler::AllowResourceLevel(int teamID, const string& type, float level)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowResourceLevel, teamID, type, level)
+}
+
+
+bool CEventHandler::AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowResourceTransfer, oldTeam, newTeam, type, amount)
+}
+
+
+bool CEventHandler::AllowDirectUnitControl(int playerID, const CUnit* unit)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowDirectUnitControl, playerID, unit)
+}
+
+
+bool CEventHandler::AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowStartPosition, playerID, readyState, clampedPos, rawPickPos)
+}
+
+
+
+bool CEventHandler::TerraformComplete(const CUnit* unit, const CUnit* build)
+{
+	CONTROL_ITERATE_DEF_FALSE(TerraformComplete, unit, build)
+}
+
+
+bool CEventHandler::MoveCtrlNotify(const CUnit* unit, int data)
+{
+	CONTROL_ITERATE_DEF_FALSE(MoveCtrlNotify, unit, data)
+}
+
+
+int CEventHandler::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID)
+{
+	int result = -1;
+	for (int i = 0; i < listAllowWeaponTargetCheck.size(); ) {
+		CEventClient* ec = listAllowWeaponTargetCheck[i];
+		int result2 = ec->AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID);
+		if (result2 > result) result = result2;
+		if (i < listAllowWeaponTargetCheck.size() && ec == listAllowWeaponTargetCheck[i])
+			++i; /* the call-in may remove itself from the list */
+	}
+	return result;
+}
+
+
+bool CEventHandler::AllowWeaponTarget(
+	unsigned int attackerID,
+	unsigned int targetID,
+	unsigned int attackerWeaponNum,
+	unsigned int attackerWeaponDefID,
+	float* targetPriority
+) {
+	CONTROL_ITERATE_DEF_TRUE(AllowWeaponTarget, attackerID, targetID, attackerWeaponNum, attackerWeaponDefID, targetPriority)
+}
+
+
+bool CEventHandler::AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowWeaponInterceptTarget, interceptorUnit, interceptorWeapon, interceptorTarget)
+}
+
+
+bool CEventHandler::UnitPreDamaged(
+	const CUnit* unit,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID,
+	bool paralyzer,
+	float* newDamage,
+	float* impulseMult
+) {
+	CONTROL_ITERATE_DEF_FALSE(UnitPreDamaged, unit, attacker, damage, weaponDefID, projectileID, paralyzer, newDamage, impulseMult)
+}
+
+
+bool CEventHandler::FeaturePreDamaged(
+	const CFeature* feature,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID,
+	float* newDamage,
+	float* impulseMult
+) {
+	CONTROL_ITERATE_DEF_FALSE(FeaturePreDamaged, feature, attacker, damage, weaponDefID, projectileID, newDamage, impulseMult)
+}
+
+
+bool CEventHandler::ShieldPreDamaged(const CProjectile* proj, const CWeapon* w, const CUnit* u, bool repulsor)
+{
+	CONTROL_ITERATE_DEF_FALSE(ShieldPreDamaged, proj, w, u, repulsor)
+}
+
+
+bool CEventHandler::SyncedActionFallback(const string& line, int playerID)
+{
+	for (int i = 0; i < listSyncedActionFallback.size(); ) {
+		CEventClient* ec = listSyncedActionFallback[i];
+		if (ec->SyncedActionFallback(line, playerID))
+			return true;
+		if (i < listSyncedActionFallback.size() && ec == listSyncedActionFallback[i])
+			++i; /* the call-in may remove itself from the list */
+	}
+	return false;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
 #define ITERATE_EVENTCLIENTLIST(name, ...) \
 	for (int i = 0; i < list##name.size(); ) { \
 		CEventClient* ec = list##name[i]; \
@@ -420,6 +600,27 @@ DRAW_CALLIN(ScreenEffects)
 DRAW_CALLIN(Screen)
 DRAW_CALLIN(InMiniMap)
 
+
+#define DRAW_ENTITY_CALLIN(name, args, args2)     \
+  bool CEventHandler:: Draw ## name args        \
+  {                                               \
+    GML_DRAW_CALLIN_SELECTOR();                   \
+    EVENTHANDLER_CHECK(Draw ## name, false);      \
+                                                  \
+    bool skipEngineDrawing = false;               \
+    for (int i = 0; i < listDraw ## name.size(); ) { \
+      CEventClient* ec = listDraw ## name [i];    \
+      skipEngineDrawing |= ec-> Draw ## name args2 ; \
+      if (i < listDraw ## name.size() && ec == listDraw ## name [i]) \
+	    ++i;                                      \
+    } \
+    return skipEngineDrawing; \
+  }
+
+DRAW_ENTITY_CALLIN(Unit, (const CUnit* unit), (unit))
+DRAW_ENTITY_CALLIN(Feature, (const CFeature* feature), (feature))
+DRAW_ENTITY_CALLIN(Shield, (const CUnit* unit, const CWeapon* weapon), (unit, weapon))
+DRAW_ENTITY_CALLIN(Projectile, (const CProjectile* projectile), (projectile))
 
 /******************************************************************************/
 /******************************************************************************/
