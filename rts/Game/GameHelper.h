@@ -177,7 +177,7 @@ private:
 	struct ObjectCache {
 	public:
 		bool Empty() const { return (units.empty() || features.empty()); }
-		bool Init(unsigned int maxUnits, unsigned int maxFeatures) {
+		void Init(unsigned int maxUnits, unsigned int maxFeatures) {
 			units.resize(maxUnits, NULL);
 			features.resize(maxFeatures, NULL);
 
