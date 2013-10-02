@@ -336,7 +336,7 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	// if(f) the object is neither on the ground nor in water
 	// for whatever reason (GMT also prevents heading changes)
 	if (!IsInAir()) {
-		switch (moveDef->moveFamily) {
+		switch (moveDef->speedModClass) {
 			case MoveDef::Tank:  { return ((gn + wn) * IsOnGround() + updir * (1 - IsOnGround())); } break;
 			case MoveDef::KBot:  { return ((gn + wn) * IsOnGround() + updir * (1 - IsOnGround())); } break;
 

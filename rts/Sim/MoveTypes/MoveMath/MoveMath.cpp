@@ -17,7 +17,7 @@ float CMoveMath::waterDamageCost = 0.0f;
 
 float CMoveMath::yLevel(const MoveDef& moveDef, int xSqr, int zSqr)
 {
-	switch (moveDef.moveFamily) {
+	switch (moveDef.speedModClass) {
 		case MoveDef::Tank: // fall-through
 		case MoveDef::KBot:  { return (readMap->GetCenterHeightMapSynced()[xSqr + zSqr * gs->mapx]);                 } break; // NOTE: why not just GetHeightReal too?
 		case MoveDef::Hover: { return (ground->GetHeightAboveWater(xSqr * SQUARE_SIZE, zSqr * SQUARE_SIZE) + 10.0f); } break;
@@ -29,7 +29,7 @@ float CMoveMath::yLevel(const MoveDef& moveDef, int xSqr, int zSqr)
 
 float CMoveMath::yLevel(const MoveDef& moveDef, const float3& pos)
 {
-	switch (moveDef.moveFamily) {
+	switch (moveDef.speedModClass) {
 		case MoveDef::Tank: // fall-through
 		case MoveDef::KBot:  { return (ground->GetHeightReal      (pos.x, pos.z) + 10.0f); } break;
 		case MoveDef::Hover: { return (ground->GetHeightAboveWater(pos.x, pos.z) + 10.0f); } break;
@@ -55,7 +55,7 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
-	switch (moveDef.moveFamily) {
+	switch (moveDef.speedModClass) {
 		case MoveDef::Tank:  { return (GroundSpeedMod(moveDef, height, slope) * tt.tankSpeed ); } break;
 		case MoveDef::KBot:  { return (GroundSpeedMod(moveDef, height, slope) * tt.kbotSpeed ); } break;
 		case MoveDef::Hover: { return ( HoverSpeedMod(moveDef, height, slope) * tt.hoverSpeed); } break;
@@ -96,7 +96,7 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 	// faces --> fixed)
 	//   const float dirSlopeMod = -Sign(moveDir.dot(sqrNormal));
 
-	switch (moveDef.moveFamily) {
+	switch (moveDef.speedModClass) {
 		case MoveDef::Tank:  { return (GroundSpeedMod(moveDef, height, slope, dirSlopeMod) * tt.tankSpeed ); } break;
 		case MoveDef::KBot:  { return (GroundSpeedMod(moveDef, height, slope, dirSlopeMod) * tt.kbotSpeed ); } break;
 		case MoveDef::Hover: { return ( HoverSpeedMod(moveDef, height, slope, dirSlopeMod) * tt.hoverSpeed); } break;

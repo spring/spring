@@ -1631,7 +1631,10 @@ void CGroundMoveType::HandleStaticObjectCollision(
 
 			const float strafeSign = -Sign(sqCenterPosition.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir));
 			const float strafeScale = std::min(currentSpeed, std::max(0.1f, -sqPenDistanceSum * 0.5f));
+			// 94+.0
 			const float bounceScale = std::min(currentSpeed, std::max(0.1f, -sqPenDistanceSum       ));
+			// 94.0 (more pronounced lateral bouncing but units get stuck more easily)
+			// const float bounceScale = std::max(0.1f, -sqPenDistanceSum);
 
 			strafeVec = collider->rightdir * strafeSign;
 			strafeVec = strafeVec.SafeNormalize2D();
@@ -2169,7 +2172,7 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 		const float3 horSpeed = float3(owner->speed.x, 0.0f, owner->speed.z);
 		const float3 verSpeed = UpVector * owner->speed.y;
 
-		if (owner->moveDef->moveFamily != MoveDef::Hover || !modInfo.allowHoverUnitStrafing) {
+		if (owner->moveDef->speedModClass != MoveDef::Hover || !modInfo.allowHoverUnitStrafing) {
 			const float3 accelVec = (gndTangVec * hAcc) + (UpVector * vAcc);
 			const float3 speedVec = (horSpeed + verSpeed) + accelVec;
 

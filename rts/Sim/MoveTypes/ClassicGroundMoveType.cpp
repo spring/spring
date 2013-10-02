@@ -442,7 +442,7 @@ void CClassicGroundMoveType::ChangeHeading(short wantedHeading) {
 
 bool CClassicGroundMoveType::CanApplyImpulse(const float3& extImpulse)
 {
-	if (owner->beingBuilt || owner->moveDef->moveFamily == MoveDef::Ship)
+	if (owner->beingBuilt || owner->moveDef->speedModClass == MoveDef::Ship)
 		return false;
 
 	float3 impulse = extImpulse;
