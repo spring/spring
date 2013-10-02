@@ -1009,7 +1009,7 @@ bool CSyncedLuaHandle::UnitPreDamaged(
 	}
 
 	lua_pop(L, outArgCount);
-	return true; //FIXME use return value of lua to disable engine processing?
+	return (*newDamage == 0.f && *impulseMult == 0.f); // returns true to disable engine dmg handling
 }
 
 bool CSyncedLuaHandle::FeaturePreDamaged(
@@ -1069,7 +1069,7 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	}
 
 	lua_pop(L, outArgCount);
-	return true; //FIXME use return value of lua to disable engine processing?
+	return (*newDamage == 0.f && *impulseMult == 0.f); // returns true to disable engine dmg handling
 }
 
 bool CSyncedLuaHandle::ShieldPreDamaged(

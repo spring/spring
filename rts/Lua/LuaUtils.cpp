@@ -951,18 +951,18 @@ int LuaUtils::PushDebugTraceback(lua_State* L)
 
 
 
-LuaUtils::ScopedDebugTraceBack::ScopedDebugTraceBack(lua_State* L)
-	: luaState(L)
-	, errFuncIdx(PushDebugTraceback(L))
+LuaUtils::ScopedDebugTraceBack::ScopedDebugTraceBack(lua_State* _L)
+	: L(_L)
+	, errFuncIdx(PushDebugTraceback(_L))
 {
 	assert(errFuncIdx >= 0);
 }
 
 LuaUtils::ScopedDebugTraceBack::~ScopedDebugTraceBack() {
 	//FIXME better use lua_remove(L, errFuncIdx) and solve zero case?
-	const int curTop = lua_gettop(luaState);
+	const int curTop = lua_gettop(L);
 	assert(errFuncIdx == 0 || curTop == errFuncIdx);
-	lua_pop(luaState, 1);
+	lua_pop(L, 1);
 }
 
 /******************************************************************************/

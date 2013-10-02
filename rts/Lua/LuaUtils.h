@@ -38,8 +38,7 @@ class LuaUtils {
 			int GetErrFuncIdx() const { return errFuncIdx; }
 
 		private:
-			lua_State* luaState;
-
+			lua_State* L;
 			int errFuncIdx;
 		};
 

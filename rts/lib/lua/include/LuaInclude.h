@@ -4,6 +4,7 @@
 #define SPRING_LUA_INCLUDE
 
 #include <string>
+#include <assert.h>
 #include "lua.h"
 #include "lib/lua/src/lstate.h"
 #include "lualib.h"
@@ -15,8 +16,8 @@
 #undef lua_pop
 static inline void lua_pop(lua_State* L, const int args)
 {
-	assert(args > 0);
-	lua_settop(-(args)-1); // from lua.h!
+	assert(args > 0); // prevent lua_pop(L, -1) which is wrong, args is _count_ and not index (use lua_remove that)
+	lua_settop(L, -(args)-1); // from lua.h!
 }
 
 
