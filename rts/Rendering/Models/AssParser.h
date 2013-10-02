@@ -9,6 +9,9 @@
 #include "System/float3.h"
 #include "System/type2.h"
 
+#define NUM_MODEL_TEXTURES 2
+#define NUM_MODEL_UVCHANNS 2
+
 struct aiNode;
 struct aiScene;
 class LuaTable;
@@ -18,15 +21,19 @@ struct SAssVertex {
 
 	float3 pos;
 	float3 normal;
-	float2 texCoord;
-	float2 texCoord2; //< optional, still good to have. Also makes sure the struct is 64byte in size (ATi's prefers such VBOs)
 	float3 sTangent;
 	float3 tTangent;
+
+	//< Second channel is optional, still good to have. Also makes
+	//< sure the struct is 64bytes in size (ATi's prefers such VBOs)
+	//< supporting an arbitrary number of channels would be easy but
+	//< overkill (for now)
+	float2 texCoords[NUM_MODEL_UVCHANNS];
 };
 
 struct SAssPiece: public S3DModelPiece
 {
-	SAssPiece(): isRoot(false), extraUVs(false) {
+	SAssPiece(): numTexCoorChannels(0) {
 	}
 
 	void DrawForList() const;
@@ -40,13 +47,15 @@ struct SAssPiece: public S3DModelPiece
 
 	// FIXME implement
 	// void Shatter(float, int, int, const float3&, const float3&) const
-	
+
+	unsigned int GetNumTexCoorChannels() const { return numTexCoorChannels; }
+	void SetNumTexCoorChannels(unsigned int n) { numTexCoorChannels = n; }
+
 public:
 	std::vector<SAssVertex> vertices;
 	std::vector<unsigned int> vertexDrawIndices;
 
-	bool isRoot;
-	bool extraUVs;
+	unsigned int numTexCoorChannels;
 };
 
 
