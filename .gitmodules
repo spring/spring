@@ -3,7 +3,7 @@
 	url = git://github.com/Error323/E323AI.git
 [submodule "HughAI"]
 	path = AI/Skirmish/HughAI
-	url = git://github.com/hughperkins/HughAI.git
+	url = git://github.com/spring/HughAI.git
 [submodule "AI/Interfaces/Python"]
 	path = AI/Interfaces/Python
 	url = git://github.com/spring/Python.git
