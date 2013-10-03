@@ -929,12 +929,11 @@ bool CGame::Update()
 	JobDispatcher::Update();
 
 	const spring_time timeNow = spring_gettime();
-	const float diffsecs = spring_difftime(timeNow, lastUpdateTime).toSecsf();
 
-	if (diffsecs >= 1.0f) { // do once every second
+	if (spring_difftime(timeNow, lastUpdateTime).toMilliSecsf() >= 1000.0f) {
 		lastUpdateTime = timeNow;
 
-		// Some netcode stuff
+		// do this once every second
 		UpdateConsumeSpeed();
 	}
 
@@ -1002,10 +1001,11 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		static int lsf = gs->frameNum;
 		static spring_time lsft = currentTime;
 
-		const float diffsecs_ = (currentTime - lsft).toSecsf();
+		// toSecsf throws away too much precision
+		const float diffMilliSecs = (currentTime - lsft).toMilliSecsf();
 
-		if (diffsecs_ >= 1.0f) {
-			gu->simFPS = (gs->frameNum - lsf) / diffsecs_;
+		if (diffMilliSecs >= 1000.0f) {
+			gu->simFPS = (gs->frameNum - lsf) / (diffMilliSecs * 0.001f);
 			lsft = currentTime;
 			lsf = gs->frameNum;
 		}
