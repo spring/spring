@@ -108,7 +108,7 @@ private:
 	bool DrawMT();
 
 	static void DrawMTcb(void* c) { static_cast<CGame*>(c)->DrawMT(); }
-	bool UpdateUnsynced();
+	bool UpdateUnsynced(const spring_time currentTime);
 
 	void DrawSkip(bool blackscreen = true);
 	void DrawInputText();

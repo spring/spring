@@ -974,14 +974,14 @@ bool CGame::Update()
 }
 
 
-bool CGame::UpdateUnsynced()
+bool CGame::UpdateUnsynced(const spring_time currentTime)
 {
 	// timings and frame interpolation
-	const spring_time currentTime = spring_gettime();
-	const spring_time diffLastCall = (currentTime - lastDrawFrameTime);
 	lastDrawFrameTime = currentTime;
 
+	const spring_time diffLastCall = currentTime - lastDrawFrameTime;
 	const float modGameDeltaTime = skipping ? 0.01f : diffLastCall.toSecsf();
+
 	globalRendering->lastFrameTime = diffLastCall.toSecsf();
 	gu->avgFrameTime = mix(gu->avgFrameTime, diffLastCall.toMilliSecsf(), 0.05f);
 
@@ -998,7 +998,7 @@ bool CGame::UpdateUnsynced()
 	}
 
 	{
-		// update simFPS counter
+		// update simFPS counter (once per second)
 		static int lsf = gs->frameNum;
 		static spring_time lsft = currentTime;
 
@@ -1028,11 +1028,11 @@ bool CGame::UpdateUnsynced()
 	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 
 	// Update the interpolation coefficient (globalRendering->timeOffset)
-	if (!gs->paused && !HasLag() && gs->frameNum>1 && !videoCapturing->IsCapturing()) {
+	if (!gs->paused && !HasLag() && gs->frameNum > 1 && !videoCapturing->IsCapturing()) {
 		globalRendering->lastFrameStart = currentTime;
 		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
 		globalRendering->timeOffset = (currentTime - lastSimFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
-	} else  {
+	} else {
 		globalRendering->timeOffset = 0;
 		lastSimFrameTime = currentTime;
 	}
@@ -1143,7 +1143,9 @@ bool CGame::Draw() {
 #endif
 	GML_STDMUTEX_LOCK(draw); //Draw
 
-	if (UpdateUnsynced())
+	const spring_time currentTimePreUpdate = spring_gettime();
+
+	if (UpdateUnsynced(currentTimePreUpdate))
 		return true;
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
@@ -1162,20 +1164,23 @@ bool CGame::Draw() {
 	}
 
 	if (globalRendering->drawdebug) {
+		const float deltaFrameTime = (currentTimePreUpdate - lastSimFrameTime).toMilliSecsf();
 		const float currTimeOffset = globalRendering->timeOffset;
 		static float lastTimeOffset = globalRendering->timeOffset;
-		static auto lastGameFrame = gs->frameNum;
+		static int lastGameFrame = gs->frameNum;
 
+		// CTO = MILLISECSF(CT - LSFT) * WSF = MILLISECSF(CT - LSFT) * (SFPS * 0.001)
+		// AT 30Hz LHS (MILLISECSF(CT - LSFT)) SHOULD BE ~33ms, RHS SHOULD BE ~0.03
 		assert(currTimeOffset >= 0.0f);
 
-		if (currTimeOffset < 0.0f) LOG_L(L_ERROR, "assert(timeOffset >= 0.0f) failed (SF=%u : DF=%u : TO=%f)", gs->frameNum, globalRendering->drawFrame, currTimeOffset);
-		if (currTimeOffset > 1.0f) LOG_L(L_ERROR, "assert(timeOffset <= 1.0f) failed (SF=%u : DF=%u : TO=%f)", gs->frameNum, globalRendering->drawFrame, currTimeOffset);
+		if (currTimeOffset < 0.0f) LOG_L(L_ERROR, "assert(CTO >= 0.0f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime);
+		if (currTimeOffset > 1.0f) LOG_L(L_ERROR, "assert(CTO <= 1.0f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime);
 
 		// test for monotonicity, normally should only fail
 		// when SimFrame() advances time or if simframe rate
 		// changes
 		if (lastGameFrame == gs->frameNum && currTimeOffset < lastTimeOffset)
-			LOG_L(L_ERROR, "assert(currTimeOffset >= lastTimeOffset) failed (SF=%u : DF=%u : CTO=%f LTO=%f)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, lastTimeOffset);
+			LOG_L(L_ERROR, "assert(CTO >= LTO) failed (SF=%u : DF=%u : CTO=%f : LTO=%f : WSF=%f : DT=%fms)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, lastTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime);
 
 		lastTimeOffset = currTimeOffset;
 		lastGameFrame = gs->frameNum;
@@ -2088,11 +2093,7 @@ bool CGame::HasLag() const
 	const spring_time timeNow = spring_gettime();
 	const float diffTime = spring_tomsecs(timeNow - lastFrameTime);
 
-	if (!gs->paused && (diffTime > (500.0f / gs->speedFactor))) {
-		return true;
-	} else {
-		return false;
-	}
+	return (!gs->paused && (diffTime > (500.0f / gs->speedFactor)));
 }
 
 
