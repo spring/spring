@@ -381,7 +381,7 @@ void CFeature::DoDamage(
 
 	// features have no armor-type, so use default damage
 	float baseDamage = damages.GetDefaultDamage();
-	float impulseMult = 1.0f;
+	float impulseMult = float((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()));
 
 	if (luaRules != NULL) {
 		luaRules->FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult);
@@ -390,7 +390,6 @@ void CFeature::DoDamage(
 	// NOTE:
 	//   for trees, impulse is used to drive their falling animation
 	//   this also calls our SetVel() to put us in the update queue
-	// if ((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()))
 	ApplyImpulse((impulse * impulseMult) / mass);
 
 	// clamp in case Lua-modified damage is negative
