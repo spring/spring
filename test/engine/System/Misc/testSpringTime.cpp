@@ -113,7 +113,7 @@ struct SpringClock {
 	static inline float ToMs() { return 1.0f / 1e6; }
 	static inline std::string GetName() { return "SpringTime"; }
 	static inline int64_t Get() {
-		return spring_time::gettime().toNanoSecs();
+		return spring_time::gettime().toNanoSecsi();
 	}
 };
 
@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 	// check toSecs precision range
 	boost::int64_t i10ei = 10;
 	for (int i = 1; i<10; ++i) {
-		BOOST_CHECK( std::abs(spring_time::fromSecs(i10ei).toSecs() - i10ei) < 1.0f);
+		BOOST_CHECK( std::abs(spring_time::fromSecs(i10ei).toSecsi() - i10ei) < 1.0f);
 		i10ei *= 10LL;
 	}
 
@@ -293,7 +293,7 @@ void BenchmarkSleepFnc(const std::string& name, void (*sleep)(int time), const i
 		spring_time diff = spring_gettime() - t;
 		if ((diff > tmax) || !spring_istime(tmax)) tmax = diff;
 		if ((diff < tmin) || !spring_istime(tmin)) tmin = diff;
-		tavg = float(i * tavg + diff.toNanoSecs()) / (i + 1);
+		tavg = float(i * tavg + diff.toNanoSecsi()) / (i + 1);
 		t = spring_gettime();
 	}
 
