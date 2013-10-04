@@ -82,11 +82,11 @@ void GameSetupDrawer::Draw()
 	std::string startState = "Unknown state.";
 
 	if (readyCountdown > spring_nulltime) {
-		startState = "Starting in " + IntToString(readyCountdown.toSecs(), "%i");
+		startState = "Starting in " + IntToString(readyCountdown.toSecsi(), "%i");
 	} else if (!playerHandler->Player(gu->myPlayerNum)->spectator && !playerHandler->Player(gu->myPlayerNum)->IsReadyToStart()) {
 		startState = "Choose start pos";
 	} else if (gameServer) {
-		// we are the host and can get the show on the road
+		// we are the host and can get the show on the road by force
 		const CKeyBindings::HotkeyList fsKeys = keyBindings->GetHotkeys("forcestart");
 		const std::string& fsKey = fsKeys.empty() ? "<none>" : fsKeys.front();
 		startState = std::string("Waiting for players, press ") + fsKey + " to force start";

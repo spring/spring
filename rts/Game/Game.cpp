@@ -1159,7 +1159,7 @@ bool CGame::Draw() {
 		// return early if and only if less than 30K milliseconds have passed since last draw-frame
 		// so we force render two frames per minute when minimized to clear batches and free memory
 		// don't need to mess with globalRendering->active since only mouse-input code depends on it
-		if ((currentTimePreDraw - lastDrawFrameTime).toSecs() < 30)
+		if ((currentTimePreDraw - lastDrawFrameTime).toSecsi() < 30)
 			return true;
 	}
 
