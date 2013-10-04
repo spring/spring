@@ -84,7 +84,7 @@ public:
 	bool         operator<=(const spring_time v) const { return (x <= v.x); }
 	bool         operator>=(const spring_time v) const { return (x >= v.x); }
 
-	// short-hands
+	// short-hands (FIXME: int64 values forced into int32's??)
 	inline int toSecsi()        const { return (toSecs     <boost::int64_t>()); }
 	inline int toMilliSecsi()   const { return (toMilliSecs<boost::int64_t>()); }
 	inline int toMicroSecsi()   const { return (toMicroSecs<boost::int64_t>()); }
