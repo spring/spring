@@ -976,24 +976,24 @@ bool CGame::Update()
 bool CGame::UpdateUnsynced(const spring_time currentTime)
 {
 	// timings and frame interpolation
+	const spring_time deltaDrawFrameTime = currentTime - lastDrawFrameTime;
+	const float modGameDeltaTimeSecs = mix(deltaDrawFrameTime.toMilliSecsf() * 0.001f, 0.01f, skipping);
+
 	lastDrawFrameTime = currentTime;
 
-	const spring_time diffLastCall = currentTime - lastDrawFrameTime;
-	const float modGameDeltaTime = skipping ? 0.01f : diffLastCall.toSecsf();
-
-	globalRendering->lastFrameTime = diffLastCall.toSecsf();
-	gu->avgFrameTime = mix(gu->avgFrameTime, diffLastCall.toMilliSecsf(), 0.05f);
+	globalRendering->lastFrameTime = deltaDrawFrameTime.toMilliSecsf() * 0.001f;
+	gu->avgFrameTime = mix(gu->avgFrameTime, deltaDrawFrameTime.toMilliSecsf(), 0.05f);
 
 	{
 		// update game timings
-		gu->gameTime += modGameDeltaTime;
-		gu->modGameTime += (modGameDeltaTime * gs->speedFactor * (1 - gs->paused));
+		gu->gameTime += modGameDeltaTimeSecs;
+		gu->modGameTime += (modGameDeltaTimeSecs * gs->speedFactor * (1 - gs->paused));
 
 		if (playing && !gameOver) {
-			totalGameTime += modGameDeltaTime;
+			totalGameTime += modGameDeltaTimeSecs;
 		}
 
-		updateDeltaSeconds = modGameDeltaTime;
+		updateDeltaSeconds = modGameDeltaTimeSecs;
 	}
 
 	{
