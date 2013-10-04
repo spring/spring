@@ -22,6 +22,7 @@ CR_REG_METADATA(spring_time,(
 	namespace this_thread { using namespace boost::this_thread; };
 #else
 	#define SPRINGTIME_USING_STD_SLEEP
+	#define _GLIBCXX_USE_SCHED_YIELD // workaround a gcc <4.8 bug
 	#include <thread>
 	namespace this_thread { using namespace std::this_thread; };
 #endif
