@@ -6,6 +6,7 @@
 #include <cmath>
 #include <alc.h>
 #include <boost/cstdint.hpp>
+#include <boost/thread/thread.hpp>
 
 #include "SoundChannels.h"
 #include "SoundLog.h"
