@@ -12,6 +12,7 @@
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/thread.hpp>
 #include <deque>
 #if defined DEDICATED || defined DEBUG
 	#include <iostream>

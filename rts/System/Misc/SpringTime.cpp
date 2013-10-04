@@ -14,6 +14,19 @@ CR_REG_METADATA(spring_time,(
 ));
 #endif
 
+
+// mingw doesn't support std::this_thread (yet?)
+#if defined(__MINGW32__) || defined(SPRINGTIME_USING_BOOST)
+	#undef gt
+	#include <boost/thread/thread.hpp>
+	namespace this_thread { using namespace boost::this_thread; };
+#else
+	#define SPRINGTIME_USING_STD_SLEEP
+	#include <thread>
+	namespace this_thread { using namespace std::this_thread; };
+#endif
+
+
 void spring_time::Serialize(creg::ISerializer& s)
 {
 	if (s.IsWriting()) {
@@ -55,7 +68,7 @@ void spring_time::sleep()
 
 	const spring_time expectedWakeUpTime = gettime() + *this;
 
-	#if defined(SPRINGTIME_USING_STDCHRONO)
+	#if defined(SPRINGTIME_USING_STD_SLEEP)
 		this_thread::sleep_for(chrono::nanoseconds( toNanoSecs() ));
 	#else
 		boost::this_thread::sleep(boost::posix_time::microseconds(std::ceil(toNanoSecsf() * 1e-3)));
@@ -72,8 +85,9 @@ void spring_time::sleep()
 
 void spring_time::sleep_until()
 {
-#if defined(SPRINGTIME_USING_STDCHRONO)
-	this_thread::sleep_until(chrono::nanoseconds( toNanoSecs() ));
+#if defined(SPRINGTIME_USING_STD_SLEEP)
+	auto tp = chrono::time_point<chrono::high_resolution_clock, chrono::nanoseconds>(chrono::nanoseconds( toNanoSecs() ));
+	this_thread::sleep_until(tp);
 #else
 	spring_time napTime = gettime() - *this;
 

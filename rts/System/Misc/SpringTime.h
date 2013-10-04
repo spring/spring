@@ -10,24 +10,17 @@
 // glibc's chrono is non monotonic/not steady atm (it depends on set timezone and can change at runtime!)
 // we don't want to special handles all the problems caused by this, so just use boost one instead
 //#define FORCE_BOOST_CHRONO
-//#ifdef __MINGW32__
-//	#define FORCE_BOOST_CHRONO
-//#endif
 
-// mingw doesn't support std::thread (yet?)
 #if (__cplusplus > 199711L) && !defined(FORCE_BOOST_CHRONO)
 	#define SPRINGTIME_USING_STDCHRONO
+	#undef gt
 	#include <chrono>
-	#include <thread>
 	namespace chrono { using namespace std::chrono; };
-	namespace this_thread { using namespace std::this_thread; };
 #else
 	#define SPRINGTIME_USING_BOOST
 	#undef gt
 	#include <boost/chrono/include.hpp>
-	#include <boost/thread/thread.hpp>
 	namespace chrono { using namespace boost::chrono; };
-	namespace this_thread { using namespace boost::this_thread; };
 #endif
 
 

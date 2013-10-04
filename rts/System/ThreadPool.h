@@ -63,6 +63,7 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 
 // mingw is missing c++11 thread support atm, so for KISS always prefer boost atm
 #include <boost/thread/future.hpp>
+#undef gt
 #include <boost/chrono/include.hpp>
 #include <boost/utility.hpp>
 #include <memory>
