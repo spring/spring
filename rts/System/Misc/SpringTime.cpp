@@ -70,7 +70,7 @@ void spring_time::sleep()
 	const spring_time expectedWakeUpTime = gettime() + *this;
 
 	#if defined(SPRINGTIME_USING_STD_SLEEP)
-		this_thread::sleep_for(chrono::nanoseconds( toNanoSecs() ));
+		this_thread::sleep_for(chrono::nanoseconds( toNanoSecsi() ));
 	#else
 		boost::this_thread::sleep(boost::posix_time::microseconds(std::ceil(toNanoSecsf() * 1e-3)));
 	#endif
@@ -87,7 +87,7 @@ void spring_time::sleep()
 void spring_time::sleep_until()
 {
 #if defined(SPRINGTIME_USING_STD_SLEEP)
-	auto tp = chrono::time_point<chrono::high_resolution_clock, chrono::nanoseconds>(chrono::nanoseconds( toNanoSecs() ));
+	auto tp = chrono::time_point<chrono::high_resolution_clock, chrono::nanoseconds>(chrono::nanoseconds( toNanoSecsi() ));
 	this_thread::sleep_until(tp);
 #else
 	spring_time napTime = gettime() - *this;
