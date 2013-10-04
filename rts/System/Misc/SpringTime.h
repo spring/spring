@@ -9,10 +9,13 @@
 
 // glibc's chrono is non monotonic/not steady atm (it depends on set timezone and can change at runtime!)
 // we don't want to special handles all the problems caused by this, so just use boost one instead
-#define FORCE_BOOST_CHRONO
+//#define FORCE_BOOST_CHRONO
+//#ifdef __MINGW32__
+//	#define FORCE_BOOST_CHRONO
+//#endif
 
 // mingw doesn't support std::thread (yet?)
-#if (__cplusplus > 199711L) && !defined(__MINGW32__) && !defined(FORCE_BOOST_CHRONO)
+#if (__cplusplus > 199711L) && !defined(FORCE_BOOST_CHRONO)
 	#define SPRINGTIME_USING_STDCHRONO
 	#include <chrono>
 	#include <thread>
