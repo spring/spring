@@ -56,7 +56,7 @@ CR_REG_METADATA(CGlobalUnsynced, (
 
 CGlobalUnsynced::CGlobalUnsynced()
 {
-	unsigned seed = time(NULL) % ((spring_gettime().toNanoSecs() + 1) * 9007);
+	unsigned seed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
 	rng.Seed(seed);
 
 	simFPS = 0.0f;
