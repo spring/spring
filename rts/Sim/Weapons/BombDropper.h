@@ -16,15 +16,20 @@ public:
 	void SlowUpdate();
 
 private:
+	bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
+
 	bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
+	bool TestRange(const float3& pos, bool userTarget, const CUnit* unit) const;
 	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
 	void FireImpl();
+
+	float GetPredictedImpactTime(const float3& impactPos) const;
 
 private:
 	/// if we should drop torpedoes
 	bool dropTorpedoes;
 	/// range of bombs (torpedoes) after they hit ground/water
-	float bombMoveRange;
+	float torpMoveRange;
 	float tracking;
 };
 

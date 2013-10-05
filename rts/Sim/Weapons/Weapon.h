@@ -40,11 +40,12 @@ public:
 	/// test if the weapon is able to attack an enemy/mapspot just by its properties (no range check, no FreeLineOfFire check, ...)
 	virtual bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
 	/// test if the enemy/mapspot is in range/angle
-	bool TestRange(const float3& pos, bool userTarget, const CUnit* unit) const;
+	virtual bool TestRange(const float3& pos, bool userTarget, const CUnit* unit) const;
 	/// test if something is blocking our LineOfFire
 	virtual bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
 
-	bool CanFire() const;
+	virtual bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
+
 	bool TryTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
 	bool TryTarget(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(CUnit* unit, bool userTarget);
@@ -143,7 +144,6 @@ public:
 	bool hasTargetWeight;					// set when there's a TargetWeight() function for this weapon
 	bool angleGood;							// set when script indicated ready to fire
 	bool avoidTarget;						// set when the script wants the weapon to pick a new target, reset once one has been chosen
-	bool subClassReady;						// set to false if the subclassed weapon cant fire for some reason
 	bool onlyForward;						// can only fire in the forward direction of the unit (for aircrafts mostly?)
 
 	unsigned int badTargetCategory;			// targets in this category get a lot lower targetting priority
