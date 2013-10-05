@@ -648,19 +648,23 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 	lua_gettable(L, -2);
 	if (lua_istable(L, -1)) {
 		for (lua_pushnil(L); lua_next(L, -2) != 0; lua_pop(L, 1)) {
-			if (lua_israwstring(L, -2)) {
-				const string key = StringToLower(lua_tostring(L, -2));
-				std::map<std::string, ALuint>::iterator it = nameToALFilterParam.find(key);
-				if (it != nameToALFilterParam.end()) {
-					ALuint param = it->second;
-					if (lua_isnumber(L, -1)) {
-						if (alParamType[param] == EFXParamTypes::FLOAT) {
-							const float value = lua_tofloat(L, -1);
-							efxprops->filter_properties_f[param] = value;
-						}
-					}
-				}
-			}
+			if (!lua_israwstring(L, -2))
+				continue;
+
+			const string key = StringToLower(lua_tostring(L, -2));
+			std::map<std::string, ALuint>::iterator it = nameToALFilterParam.find(key);
+
+			if (it == nameToALFilterParam.end())
+				continue;
+
+			ALuint param = it->second;
+
+			if (!lua_isnumber(L, -1))
+				continue;
+			if (alParamType[param] != EFXParamTypes::FLOAT)
+				continue;
+
+			efxprops->filter_properties_f[param] = lua_tofloat(L, -1);
 		}
 	}
 	lua_pop(L, 1);
@@ -670,32 +674,33 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 	lua_gettable(L, -2);
 	if (lua_istable(L, -1)) {
 		for (lua_pushnil(L); lua_next(L, -2) != 0; lua_pop(L, 1)) {
-			if (lua_israwstring(L, -2)) {
-				const string key = StringToLower(lua_tostring(L, -2));
-				std::map<std::string, ALuint>::iterator it = nameToALParam.find(key);
-				if (it != nameToALParam.end()) {
-					ALuint param = it->second;
-					if (lua_istable(L, -1)) {
-						if (alParamType[param] == EFXParamTypes::VECTOR) {
-							float3 v;
-							const int size = LuaUtils::ParseFloatArray(L, -1, &v[0], 3);
-							if (size >= 3) {
-								efxprops->properties_v[param] = v;
-							}
-						}
+			if (!lua_israwstring(L, -2))
+				continue;
+
+			const string key = StringToLower(lua_tostring(L, -2));
+			std::map<std::string, ALuint>::iterator it = nameToALParam.find(key);
+
+			if (it == nameToALParam.end())
+				continue;
+
+			ALuint param = it->second;
+			if (lua_istable(L, -1)) {
+				if (alParamType[param] == EFXParamTypes::VECTOR) {
+					float3 v;
+
+					if (LuaUtils::ParseFloatArray(L, -1, &v[0], 3) >= 3) {
+						efxprops->properties_v[param] = v;
 					}
-					else if (lua_isnumber(L, -1)) {
-						if (alParamType[param] == EFXParamTypes::FLOAT) {
-							const float value = lua_tofloat(L, -1);
-							efxprops->properties_f[param] = value;
-						}
-					}
-					else if (lua_isboolean(L, -1)) {
-						if (alParamType[param] == EFXParamTypes::BOOL) {
-							const bool value = lua_toboolean(L, -1);
-							efxprops->properties_i[param] = value;
-						}
-					}
+				}
+			}
+			else if (lua_isnumber(L, -1)) {
+				if (alParamType[param] == EFXParamTypes::FLOAT) {
+					efxprops->properties_f[param] = lua_tofloat(L, -1);
+				}
+			}
+			else if (lua_isboolean(L, -1)) {
+				if (alParamType[param] == EFXParamTypes::BOOL) {
+					efxprops->properties_i[param] = lua_toboolean(L, -1);
 				}
 			}
 		}

@@ -568,20 +568,52 @@ int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
 	return size;
 }
 
-void LuaUtils::ParseCommandOptions(lua_State* L, const char* caller,
-                                   int index, Command& cmd)
-{
-	if (lua_isnumber(L, index)) {
-		cmd.options = (unsigned char)lua_tonumber(L, index);
+void LuaUtils::ParseCommandOptions(
+	lua_State* L,
+	Command& cmd,
+	const char* caller,
+	const int optionsArgIdx
+) {
+	if (lua_isnumber(L, optionsArgIdx)) {
+		cmd.options = (unsigned char)lua_tonumber(L, optionsArgIdx);
 	}
-	else if (lua_istable(L, index)) {
-		const int optionTable = index;
-		for (lua_pushnil(L); lua_next(L, optionTable) != 0; lua_pop(L, 1)) {
-			if (lua_israwnumber(L, -2)) { // avoid 'n'
-				if (!lua_isstring(L, -1)) {
-					luaL_error(L, "%s(): bad option table entry", caller);
+	else if (lua_istable(L, optionsArgIdx)) {
+		for (lua_pushnil(L); lua_next(L, optionsArgIdx) != 0; lua_pop(L, 1)) {
+			// "key" = value (table format of CommandNotify)
+			if (lua_israwstring(L, -2)) {
+				const std::string key = lua_tostring(L, -2);
+
+				if (!lua_isboolean(L, -1)) {
+					luaL_error(L, "%s(): expected <string key=%s, number value> in options-table", caller, key.c_str());
 				}
-				const string value = lua_tostring(L, -1);
+
+				const bool value = lua_toboolean(L, -1);
+
+				if (key == "right") {
+					cmd.options |= (RIGHT_MOUSE_KEY * value);
+				} else if (key == "alt") {
+					cmd.options |= (ALT_KEY * value);
+				} else if (key == "ctrl") {
+					cmd.options |= (CONTROL_KEY * value);
+				} else if (key == "shift") {
+					cmd.options |= (SHIFT_KEY * value);
+				} else if (key == "meta") {
+					cmd.options |= (META_KEY * value);
+				}
+
+				continue;
+			}
+
+			// [idx] = "value", avoid 'n'
+			if (lua_israwnumber(L, -2)) {
+				const int idx = lua_tonumber(L, -2);
+
+				if (!lua_isstring(L, -1)) {
+					luaL_error(L, "%s(): expected <number idx=%d, string value> in options-table", caller, idx);
+				}
+
+				const std::string value = lua_tostring(L, -1);
+
 				if (value == "right") {
 					cmd.options |= RIGHT_MOUSE_KEY;
 				} else if (value == "alt") {
@@ -608,29 +640,30 @@ Command LuaUtils::ParseCommand(lua_State* L, const char* caller, int idIndex)
 	if (!lua_isnumber(L, idIndex)) {
 		luaL_error(L, "%s(): bad command ID", caller);
 	}
-	const int id = lua_toint(L, idIndex);
-	Command cmd(id);
+
+	Command cmd(lua_toint(L, idIndex));
 
 	// params
-	const int paramTable = (idIndex + 1);
-	if (!lua_istable(L, paramTable)) {
+	const int paramTableIdx = (idIndex + 1);
+
+	if (!lua_istable(L, paramTableIdx)) {
 		luaL_error(L, "%s(): bad param table", caller);
 	}
-	for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
+
+	for (lua_pushnil(L); lua_next(L, paramTableIdx) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2)) { // avoid 'n'
 			if (!lua_isnumber(L, -1)) {
-				luaL_error(L, "%s(): bad param table entry", caller);
+				luaL_error(L, "%s(): expected <number idx=%d, number value> in params-table", caller, lua_tonumber(L, -2));
 			}
-			const float value = lua_tofloat(L, -1);
-			cmd.PushParam(value);
+
+			cmd.PushParam(lua_tofloat(L, -1));
 		}
 	}
 
 	// options
-	ParseCommandOptions(L, caller, (idIndex + 2), cmd);
+	ParseCommandOptions(L, cmd, caller, (idIndex + 2));
 
 	// XXX should do some sanity checking?
-
 	return cmd;
 }
 
@@ -665,7 +698,7 @@ Command LuaUtils::ParseCommandTable(lua_State* L, const char* caller, int table)
 
 	// options
 	lua_rawgeti(L, table, 3);
-	ParseCommandOptions(L, caller, lua_gettop(L), cmd);
+	ParseCommandOptions(L, cmd, caller, lua_gettop(L));
 	lua_pop(L, 1);
 
 	// XXX should do some sanity checking?
