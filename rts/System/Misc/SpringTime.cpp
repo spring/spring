@@ -89,7 +89,7 @@ void spring_time::sleep()
 	const spring_time expectedWakeUpTime = gettime() + *this;
 
 	#if defined(SPRINGTIME_USING_STD_SLEEP)
-		this_thread::sleep_for(chrono::nanoseconds( toNanoSecsi() ));
+		this_thread::sleep_for(chrono::nanoseconds(toNanoSecsi()));
 	#else
 		boost::this_thread::sleep(boost::posix_time::microseconds(std::ceil(toNanoSecsf() * 1e-3)));
 	#endif
