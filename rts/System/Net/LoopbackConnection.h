@@ -21,8 +21,8 @@ public:
 	void SendData(boost::shared_ptr<const RawPacket> data);
 	bool HasIncomingData() const;
 	boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
-	void DeleteBufferPacketAt(unsigned index);
 	boost::shared_ptr<const RawPacket> GetData();
+	void DeleteBufferPacketAt(unsigned index);
 	void Flush(const bool forced);
 	bool CheckTimeout(int seconds, bool initial) const;
 

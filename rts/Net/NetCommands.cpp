@@ -161,12 +161,11 @@ void CGame::ClientReadNet()
 
 		// get netpacket from the queue
 		boost::shared_ptr<const netcode::RawPacket> packet = net->GetData(gs->frameNum);
+
 		if (!packet) {
-			//LOG_SL(LOG_SECTION_NET, L_DEBUG, "Run out of netpackets!");
-			runOutOfNetPackets = true;
+			// LOG_SL(LOG_SECTION_NET, L_DEBUG, "Run out of netpackets!");
 			break;
 		}
-		runOutOfNetPackets = false;
 
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;
