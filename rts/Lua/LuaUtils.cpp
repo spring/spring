@@ -584,7 +584,7 @@ void LuaUtils::ParseCommandOptions(
 				const std::string key = lua_tostring(L, -2);
 
 				if (!lua_isboolean(L, -1)) {
-					luaL_error(L, "%s(): expected <string key=%s, number value> in options-table", caller, key.c_str());
+					luaL_error(L, "%s(): expected <string key=%s, boolean value> in options-table", caller, key.c_str());
 				}
 
 				const bool value = lua_toboolean(L, -1);
