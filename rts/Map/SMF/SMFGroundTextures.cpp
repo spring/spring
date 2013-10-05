@@ -41,16 +41,30 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SMF_GROUND_TEXTURES)
 
 CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 {
-	// TODO refactor: put reading code in CSMFFile and keep error-handling/progress reporting here
-	      CSMFMapFile& file = smfMap->GetFile();
+	LoadTiles(smfMap->GetFile());
+	LoadSquareTextures(3);
+	ConvolveHeightMap(gs->mapx, 1);
+}
+
+CSMFGroundTextures::~CSMFGroundTextures()
+{
+	for (int i = 0; i < smfMap->numBigTexX * smfMap->numBigTexY; ++i) {
+		if (!squares[i].luaTexture) {
+			glDeleteTextures(1, &squares[i].textureID);
+		}
+	}
+}
+
+void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
+{
+	loadscreen->SetLoadMessage("Loading Map Tiles");
+
+	CFileHandler* ifs = file.GetFileHandler();
 	const SMFHeader& header = file.GetHeader();
-	const std::string smfDir = FileSystem::GetDirectory(gameSetup->MapFile());
-	const CMapInfo::smf_t& smf = mapInfo->smf;
 
 	assert(gs->mapx == header.mapx);
 	assert(gs->mapy == header.mapy);
 
-	CFileHandler* ifs = file.GetFileHandler();
 	ifs->Seek(header.tilesPtr);
 
 	MapTileHeader tileHeader;
@@ -63,51 +77,46 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 	bool smtHeaderOverride = false;
 	int curTile = 0;
 
+	const std::string smfDir = FileSystem::GetDirectory(gameSetup->MapFile());
+	const CMapInfo::smf_t& smf = mapInfo->smf;
+
 	if (!smf.smtFileNames.empty()) {
 		if (smf.smtFileNames.size() != tileHeader.numTileFiles) {
 			LOG_L(L_WARNING,
-					"mismatched number of .smt file "
-					"references between the map's .smd (" _STPF_ ")"
-					" and header (%d); ignoring .smd overrides",
-					smf.smtFileNames.size(), tileHeader.numTileFiles);
+				"mismatched number of .smt file "
+				"references between the map's .smd (" _STPF_ ")"
+				" and header (%d); ignoring .smd overrides",
+				smf.smtFileNames.size(), tileHeader.numTileFiles);
 		} else {
 			smtHeaderOverride = true;
 		}
 	}
 
-
-	loadscreen->SetLoadMessage("Loading Tile Files");
-
 	for (int a = 0; a < tileHeader.numTileFiles; ++a) {
-		int numSmallTiles;
+		int numSmallTiles = 0;
+		char fileNameBuffer[256] = {0};
+
 		ifs->Read(&numSmallTiles, sizeof(int));
+		// works but would need to seek back
+		// ifs->Read(&fileNameBuffer[0], sizeof(char) * sizeof(fileNameBuffer));
+
 		swabDWordInPlace(numSmallTiles);
 
-
-		std::string smtFilePath, smtFileName;
-
-		//! eat the zero-terminated name
-		while (true) {
-			char ch = 0;
-			ifs->Read(&ch, sizeof(char));
-
-			if (ch == 0) {
+		for (unsigned int n = 0; n < sizeof(fileNameBuffer); n++) {
+			if (ifs->Read(&fileNameBuffer[n], sizeof(char)) != 1 || fileNameBuffer[n] == 0) {
 				break;
 			}
-
-			smtFileName += ch;
 		}
 
-		if (!smtHeaderOverride) {
-			smtFilePath = smfDir + smtFileName;
-		} else {
-			smtFilePath = smfDir + smf.smtFileNames[a];
-		}
+		std::string smtFileName = fileNameBuffer;
+		std::string smtFilePath = (!smtHeaderOverride)?
+			(smfDir + smtFileName):
+			(smfDir + smf.smtFileNames[a]);
 
 		CFileHandler tileFile(smtFilePath);
 
 		if (!tileFile.FileExists()) {
-			//! try absolute path
+			// try absolute path
 			if (!smtHeaderOverride) {
 				smtFilePath = smtFileName;
 			} else {
@@ -118,9 +127,10 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 
 		if (!tileFile.FileExists()) {
 			LOG_L(L_WARNING,
-					"could not find .smt tile-file "
-					"\"%s\" (all %d missing tiles will be colored red)",
-					smtFilePath.c_str(), numSmallTiles);
+				"could not find .smt tile-file \"%s\" "
+				"(ALL %d MISSING TILES WILL BE MADE RED)",
+				smtFilePath.c_str(), numSmallTiles);
+
 			memset(&tiles[curTile * SMALL_TILE_SIZE], 0xaa, numSmallTiles * SMALL_TILE_SIZE);
 			curTile += numSmallTiles;
 			continue;
@@ -141,43 +151,26 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 		}
 	}
 
-	loadscreen->SetLoadMessage("Reading Tile Map");
-	{
-		ifs->Read(&tileMap[0], smfMap->tileCount * sizeof(int));
+	ifs->Read(&tileMap[0], smfMap->tileCount * sizeof(int));
 
-		for (int i = 0; i < smfMap->tileCount; i++) {
-			swabDWordInPlace(tileMap[i]);
-		}
+	for (int i = 0; i < smfMap->tileCount; i++) {
+		swabDWordInPlace(tileMap[i]);
 	}
-
-	texformat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 
 #if defined(USE_LIBSQUISH) && !defined(HEADLESS) && defined(GLEW_ARB_ES3_compatibility)
-	// Not all FOSS drivers support S3TC, use ETC1 for those
-	const bool useETC1 = (!GLEW_EXT_texture_compression_s3tc) && GLEW_ARB_ES3_compatibility;
-	if (useETC1) {
-		// note 1: Mesa should support this
-		// note 2: Nvidia supports ETC but preprocesses the texture (on the CPU) each upload = slow -> makes no sense to add it as another map compression format
-		// note 3: for both DXT1 & ETC1/2 blocksize is 8 bytes per 4x4 pixel block -> perfect for us :)
-
-		loadscreen->SetLoadMessage("Recompress MapTiles with ETC1");
-
-		texformat = GL_COMPRESSED_RGB8_ETC2; // ETC2 is backward compatible with ETC1! GLEW doesn't have the ETC1 extension :<
-
-		const int numTiles = tiles.size() / 8;
-
-		rg_etc1::pack_etc1_block_init();
-		rg_etc1::etc1_pack_params pack_params;
-		pack_params.m_quality = rg_etc1::cLowQuality; // must be low, all others take _ages_ to process
-
-		for_mt(0, numTiles, [&](const int i) {
-			squish::u8 rgba[64]; // 4x4 pixels * 4 * 1byte channels = 64byte
-			squish::Decompress(rgba, &tiles[i * 8], squish::kDxt1);
-			rg_etc1::pack_etc1_block(&tiles[i * 8], (const unsigned int*)rgba, pack_params);
-		});
-	}
+	if (RecompressTiles(!GLEW_EXT_texture_compression_s3tc && GLEW_ARB_ES3_compatibility)) {
+		// Not all FOSS drivers support S3TC, use ETC1 for those if possible
+		// ETC2 is backward compatible with ETC1! GLEW doesn't have the ETC1 extension :<
+		tileTexFormat = GL_COMPRESSED_RGB8_ETC2;
+	} else
 #endif
+	{
+		tileTexFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+	}
+}
 
+void CSMFGroundTextures::LoadSquareTextures(const int mipLevel)
+{
 	loadscreen->SetLoadMessage("Loading Square Textures");
 
 	for (int y = 0; y < smfMap->numBigTexY; ++y) {
@@ -188,17 +181,22 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 			square->lastBoundFrame = 1;
 			square->luaTexture     = false;
 
-			LoadSquareTexture(x, y, 3);
+			// start at the lowest mip-level
+			LoadSquareTexture(x, y, mipLevel);
 		}
 	}
+}
 
-
+void CSMFGroundTextures::ConvolveHeightMap(const int mapWidth, const int mipLevel)
+{
 	ScopedOnceTimer timer("CSMFGroundTextures::ConvolveHeightMap");
 
-	const float* hdata = readMap->GetMIPHeightMapSynced(1);
-	const int mx = header.mapx / 2;
+	const float* hdata = readMap->GetMIPHeightMapSynced(mipLevel);
+	const int mx = mapWidth >> mipLevel;
+
 	const int nbx = smfMap->numBigTexX;
-	const int nb = smfMap->numBigTexX * smfMap->numBigTexY;
+	const int nby = smfMap->numBigTexY;
+	const int nb = nbx * nby;
 
 	// 64 is the heightmap square-size at MIP level 1 (bigSquareSize >> 1)
 	static const int mipSquareSize = 64;
@@ -207,8 +205,8 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 	heightMinima.resize(nb, readMap->GetCurrMaxHeight());
 	stretchFactors.resize(nb, 0.0f);
 
-	for (int y = 0; y < smfMap->numBigTexY; ++y) {
-		for (int x = 0; x < smfMap->numBigTexX; ++x) {
+	for (int y = 0; y < nby; ++y) {
+		for (int x = 0; x < nbx; ++x) {
 
 			// NOTE: we leave out the borders on sampling because it is easier to do the Sobel kernel convolution
 			for (int x2 = x * mipSquareSize + 1; x2 < (x + 1) * mipSquareSize - 1; x2++) {
@@ -253,13 +251,29 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 	}
 }
 
-CSMFGroundTextures::~CSMFGroundTextures()
+bool CSMFGroundTextures::RecompressTiles(bool canRecompress)
 {
-	for (int i = 0; i < smfMap->numBigTexX * smfMap->numBigTexY; ++i) {
-		if (!squares[i].luaTexture) {
-			glDeleteTextures(1, &squares[i].textureID);
-		}
-	}
+	// Not all FOSS drivers support S3TC, use ETC1 for those if possible
+	if (!canRecompress)
+		return false;
+
+	// note 1: Mesa should support this
+	// note 2: Nvidia supports ETC but preprocesses the texture (on the CPU) each upload = slow -> makes no sense to add it as another map compression format
+	// note 3: for both DXT1 & ETC1/2 blocksize is 8 bytes per 4x4 pixel block -> perfect for us :)
+
+	loadscreen->SetLoadMessage("Recompressing Map Tiles with ETC1");
+
+	rg_etc1::pack_etc1_block_init();
+	rg_etc1::etc1_pack_params pack_params;
+	pack_params.m_quality = rg_etc1::cLowQuality; // must be low, all others take _ages_ to process
+
+	for_mt(0, tiles.size() / 8, [&](const int i) {
+		squish::u8 rgba[64]; // 4x4 pixels * 4 * 1byte channels = 64byte
+		squish::Decompress(rgba, &tiles[i * 8], squish::kDxt1);
+		rg_etc1::pack_etc1_block(&tiles[i * 8], (const unsigned int*)rgba, pack_params);
+	});
+
+	return true;
 }
 
 
@@ -416,7 +430,7 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 	pbo.UnmapBuffer();
 
 	glBindTexture(ttarget, texID);
-	glCompressedTexImage2D(ttarget, 0, texformat, texSizeX, texSizeY, 0, numSqBytes, pbo.GetPtr());
+	glCompressedTexImage2D(ttarget, 0, tileTexFormat, texSizeX, texSizeY, 0, numSqBytes, pbo.GetPtr());
 	glBindTexture(ttarget, 0);
 
 	pbo.Unbind();
@@ -496,7 +510,7 @@ void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 		glTexParameterf(ttarget, GL_TEXTURE_PRIORITY, 0.5f);
 	}
 
-	glCompressedTexImage2D(ttarget, 0, texformat, mipSqSize, mipSqSize, 0, numSqBytes, pbo.GetPtr());
+	glCompressedTexImage2D(ttarget, 0, tileTexFormat, mipSqSize, mipSqSize, 0, numSqBytes, pbo.GetPtr());
 	pbo.Unbind();
 }
 
