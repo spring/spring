@@ -69,8 +69,12 @@ class LuaUtils {
 		static bool LowerKeys(lua_State* L, int tableIndex);
 
 		// from LuaUI.cpp / LuaSyncedCtrl.cpp (used to be duplicated)
-		static void ParseCommandOptions(lua_State* L, const char* caller,
-		                                int index, Command& cmd);
+		static void ParseCommandOptions(
+			lua_State* L,
+			Command& cmd,
+			const char* caller,
+			const int optionsArgIdx
+		);
 		static Command ParseCommand(lua_State* L, const char* caller,
 				int idIndex);
 		static Command ParseCommandTable(lua_State* L, const char* caller,
