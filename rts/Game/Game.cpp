@@ -1173,8 +1173,8 @@ bool CGame::Draw() {
 		// AT 30Hz LHS (MILLISECSF(CT - LSFT)) SHOULD BE ~33ms, RHS SHOULD BE ~0.03
 		assert(currTimeOffset >= 0.0f);
 
-		if (currTimeOffset < 0.0f) LOG_L(L_ERROR, "assert(CTO >= 0.0f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime);
-		if (currTimeOffset > 1.0f) LOG_L(L_ERROR, "assert(CTO <= 1.0f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime);
+		if (currTimeOffset < 0.0f) LOG_L(L_ERROR, "assert(CTO >= 0.0f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms : NP=%i)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, int(runOutOfNetPackets));
+		if (currTimeOffset > 1.0f) LOG_L(L_ERROR, "assert(CTO <= 1.0f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms : NP=%i)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, int(runOutOfNetPackets));
 
 		// test for monotonicity, normally should only fail
 		// when SimFrame() advances time or if simframe rate
