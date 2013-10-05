@@ -251,6 +251,7 @@ void CSMFGroundTextures::ConvolveHeightMap(const int mapWidth, const int mipLeve
 	}
 }
 
+#if defined(USE_LIBSQUISH) && !defined(HEADLESS) && defined(GLEW_ARB_ES3_compatibility)
 bool CSMFGroundTextures::RecompressTiles(bool canRecompress)
 {
 	// Not all FOSS drivers support S3TC, use ETC1 for those if possible
@@ -275,7 +276,7 @@ bool CSMFGroundTextures::RecompressTiles(bool canRecompress)
 
 	return true;
 }
-
+#endif
 
 inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 {
