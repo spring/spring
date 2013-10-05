@@ -1,14 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/Net/UDPConnection.h"
-
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
-
 // NOTE: these _must_ be included before NetProtocol.h due to some ambiguity in
 // Boost hash_float.hpp ("call of overloaded ‘ldexp(float&, int&)’ is ambiguous")
+#include "System/Net/UDPConnection.h"
 #include "System/Net/LocalConnection.h"
+
 #include "NetProtocol.h"
 
 #include "Game/GameData.h"
@@ -169,6 +168,8 @@ void CNetProtocol::Close(bool flush) {
 
 void CNetProtocol::SetDemoRecorder(CDemoRecorder* r) { demoRecorder.reset(r); }
 CDemoRecorder* CNetProtocol::GetDemoRecorder() const { return demoRecorder.get(); }
+
+unsigned int CNetProtocol::GetNumWaitingServerPackets() const { return (serverConn.get())->GetPacketQueueSize(); }
 
 CNetProtocol* net = NULL;
 

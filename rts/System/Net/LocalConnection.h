@@ -33,8 +33,8 @@ public:
 	void SendData(boost::shared_ptr<const RawPacket> data);
 	bool HasIncomingData() const;
 	boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
-	void DeleteBufferPacketAt(unsigned index);
 	boost::shared_ptr<const RawPacket> GetData();
+	void DeleteBufferPacketAt(unsigned index);
 	void Flush(const bool forced);
 	bool CheckTimeout(int seconds, bool initial) const;
 
@@ -45,6 +45,8 @@ public:
 	void Close(bool flush) {}
 	void SetLossFactor(int factor) {}
 
+	unsigned int GetPacketQueueSize() const;
+
 	std::string Statistics() const;
 	std::string GetFullAddress() const;
 
@@ -54,7 +56,7 @@ private:
 	static std::deque< boost::shared_ptr<const RawPacket> > Data[2];
 	static boost::mutex Mutex[2];
 
-	unsigned OtherInstance() const;
+	unsigned int OtherInstance() const;
 
 	/// we can have 2 instances, one in serverNet and one in net
 	static unsigned instances;
