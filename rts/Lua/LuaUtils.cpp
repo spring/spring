@@ -601,7 +601,7 @@ void LuaUtils::ParseCommandOptions(lua_State* L, const char* caller,
 	}
 }
 
-
+//EDOARDO : qua bisogna parsare il command in modo che abbia anche il firestate
 Command LuaUtils::ParseCommand(lua_State* L, const char* caller, int idIndex)
 {
 	// cmdID
@@ -612,6 +612,7 @@ Command LuaUtils::ParseCommand(lua_State* L, const char* caller, int idIndex)
 	Command cmd(id);
 
 	// params
+
 	const int paramTable = (idIndex + 1);
 	if (!lua_istable(L, paramTable)) {
 		luaL_error(L, "%s(): bad param table", caller);
