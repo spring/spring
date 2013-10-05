@@ -158,10 +158,10 @@ static void WorkerLoop(int id)
 	boost::unique_lock<boost::mutex> lk2(m);
 
 	while (!exitThread) {
-		const auto spinlockStart = boost::chrono::high_resolution_clock::now() + boost::chrono::milliseconds(spinlockMs);
+		const auto spinlockStart = spring_gettime() + spring_time(spinlockMs);
 
 		while (!DoTask(lk) && !exitThread) {
-			if (spinlockStart < boost::chrono::high_resolution_clock::now()) {
+			if (spinlockStart < spring_gettime()) {
 			#ifndef BOOST_THREAD_USES_CHRONO
 				const boost::system_time timeout = boost::get_system_time() + boost::posix_time::microseconds(1);
 				newTasks.timed_wait(lk2, timeout);

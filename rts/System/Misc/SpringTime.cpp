@@ -28,6 +28,25 @@ CR_REG_METADATA(spring_time,(
 #endif
 
 
+namespace Cpp11Clock {
+	#if (defined(WIN32) && !defined(FORCE_HIGHRES_TIMERS))
+	#include <SDL/SDL_timer.h>
+	#endif
+
+	boost::int64_t Get() {
+		#if (defined(WIN32) && !defined(FORCE_HIGHRES_TIMERS))
+		assert(SDL_WasInit(SDL_INIT_TIMER));
+		// upsample number of milliseconds since SDL library
+		// initialization to nanoseconds (it is better to be
+		// imprecise by six orders than totally broken...)
+		return (FromMilliSecs<boost::uint32_t>(SDL_GetTicks()));
+		#else
+		return (chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+		#endif
+	}
+}
+
+
 void spring_time::Serialize(creg::ISerializer& s)
 {
 	if (s.IsWriting()) {

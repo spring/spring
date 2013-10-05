@@ -9,8 +9,10 @@
 
 // glibc's chrono is non monotonic/not steady atm (it depends on set timezone and can change at runtime!)
 // we don't want to specially handle all the problems caused by this, so just use boost version instead
-// not possible either: boost chrono uses extremely broken HPE timers on Windows 7
-//#define FORCE_BOOST_CHRONO
+// not possible either: boost::chrono uses extremely broken HPE timers on Windows 7 (but so does std::)
+//
+// #define FORCE_HIGHRES_TIMERS
+// #define FORCE_BOOST_CHRONO
 
 #if (__cplusplus > 199711L) && !defined(FORCE_BOOST_CHRONO)
 	#define SPRINGTIME_USING_STDCHRONO
@@ -51,9 +53,7 @@ namespace Cpp11Clock {
 	template<typename T> static inline boost::int64_t FromNanoSecs (const T  nanos) { return ( nanos       ); }
 
 	// number of ticks since clock epoch
-	static inline boost::int64_t Get() {
-		return chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
-	}
+	boost::int64_t Get();
 };
 
 
