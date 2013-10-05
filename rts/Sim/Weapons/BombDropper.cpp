@@ -15,7 +15,7 @@ CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, NULL, false));
 
 CR_REG_METADATA(CBombDropper,(
 	CR_MEMBER(dropTorpedoes),
-	CR_MEMBER(bombMoveRange),
+	CR_MEMBER(torpMoveRange),
 	CR_MEMBER(tracking),
 	CR_RESERVED(16)
 ));
@@ -27,10 +27,16 @@ CR_REG_METADATA(CBombDropper,(
 CBombDropper::CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps)
 	: CWeapon(owner, def)
 	, dropTorpedoes(useTorps)
-	, bombMoveRange(def->range * useTorps)
+	, torpMoveRange(def->range * useTorps)
 	, tracking((def->tracks)? def->turnrate: 0)
 {
 	onlyForward = true;
+}
+
+void CBombDropper::Init()
+{
+	CWeapon::Init();
+	maxForwardAngleDif = -1.0f;
 }
 
 
@@ -41,33 +47,13 @@ void CBombDropper::Update()
 			(owner->frontdir * relWeaponPos.z) +
 			(owner->updir    * relWeaponPos.y) +
 			(owner->rightdir * relWeaponPos.x);
-		subClassReady = false;
 
 		if (targetType == Target_Unit) {
 			// aim at base of unit instead of middle and ignore uncertainty
 			targetPos = targetUnit->pos;
 		}
 
-		if (weaponPos.y > targetPos.y) {
-			const float d = targetPos.y - weaponPos.y;
-			const float s = -owner->speed.y;
-
-			const float g = (weaponDef->myGravity == 0.0f)? mapInfo->map.gravity : -weaponDef->myGravity;
-			const float sq = (s - 2.0f * d) / -g;
-
-			if (sq > 0.0f) {
-				predict = s / ((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity)) + math::sqrt(sq);
-			} else {
-				predict = 0;
-			}
-
-			const float3 dropPos = owner->pos + owner->speed * predict;
-			const float dropDist = std::max(1, salvoSize - 1) * (owner->speed.w * salvoDelay * 0.5f);
-
-			if (dropPos.SqDistance2D(targetPos) < Square(dropDist + bombMoveRange)) {
-				subClassReady = true;
-			}
-		}
+		predict = GetPredictedImpactTime(targetPos);
 	}
 
 	CWeapon::Update();
@@ -76,7 +62,7 @@ void CBombDropper::Update()
 bool CBombDropper::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const
 {
 	// assume we can still fire at partially submerged targets
-	if (!dropTorpedoes && TargetUnitOrPositionUnderWater(pos, unit))
+	if (!dropTorpedoes && TargetUnitOrPositionUnderWater(targetPos, unit))
 		return false;
 
 	return CWeapon::TestTarget(pos, userTarget, unit);
@@ -84,8 +70,54 @@ bool CBombDropper::TestTarget(const float3& pos, bool userTarget, const CUnit* u
 
 bool CBombDropper::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
 {
-	//TODO write me
+	// TODO: requires sampling parabola from weaponPos down to dropPos
 	return true;
+}
+
+#if 0
+bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const
+{
+	return (CWeapon::CanFire(true, ignoreTargetType, true));
+}
+
+bool CBombDropper::TestRange(const float3& pos, bool userTarget, const CUnit* unit) const
+{
+#else
+
+bool CBombDropper::TestRange(const float3& pos, bool userTarget, const CUnit* unit) const { return true; }
+bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const
+{
+	// we mostly ignore what AimWeapon has to say
+	if (!CWeapon::CanFire(true, ignoreTargetType, true))
+		return false;
+#endif
+
+	// bombs always fall down
+	if (weaponPos.y <= targetPos.y)
+		return false;
+
+	// "normal" range restrictions are not meaningful
+	// to check given dropped (ballistic) projectiles
+	if (false && (owner->speed.w * predict) > weaponDef->range)
+		return false;
+
+	// dropPos is guaranteed to be in range from owner's
+	// current position, now must make sure no bombs will
+	// under- (eg. if range is much larger than <v*t>) or
+	// overshoot (eg. if salvoDelay is long) their actual
+	// targetPos too much
+	// torpedoes especially should not be dropped if the
+	// target position is already behind owner's position
+	const float3 dropPos = owner->pos + owner->speed * predict;
+
+	// salvoSize * salvoDelay is time to drop entire salvo
+	// size*delay * speed is distance from dropPos of first
+	// bomb to dropPos of last (assuming no spread), we use
+	// half this distance as tolerance radius
+	const float dropDist = std::max(1, salvoSize) * (salvoDelay * owner->speed.w * 0.5f);
+	const float torpDist = torpMoveRange * (owner->frontdir.dot(targetPos - owner->pos) > 0.0f);
+
+	return (dropPos.SqDistance2D(targetPos) < Square(dropDist + torpDist));
 }
 
 void CBombDropper::FireImpl()
@@ -98,20 +130,15 @@ void CBombDropper::FireImpl()
 	if (dropTorpedoes) {
 		float3 launchSpeed = owner->speed;
 
+		// if owner is a hovercraft, use a fixed launching speed [?? WTF]
 		if (dynamic_cast<CHoverAirMoveType*>(owner->moveType)) {
 			launchSpeed = (targetPos - weaponPos).Normalize() * 5.0f;
-		}
-
-		int ttl = weaponDef->flighttime;
-
-		if (ttl == 0) {
-			ttl = int((range / projectileSpeed) + 15 + predict);
 		}
 
 		ProjectileParams params = GetProjectileParams();
 		params.pos = weaponPos;
 		params.speed = launchSpeed;
-		params.ttl = ttl;
+		params.ttl = (weaponDef->flighttime == 0)? ((range / projectileSpeed) + 15 + predict): weaponDef->flighttime;
 		params.tracking = tracking;
 
 		assert(weaponDef->projectileType == WEAPON_TORPEDO_PROJECTILE);
@@ -145,12 +172,6 @@ void CBombDropper::FireImpl()
 	}
 }
 
-void CBombDropper::Init()
-{
-	CWeapon::Init();
-	maxForwardAngleDif = -1.0f;
-}
-
 /**
  * pass true for noAutoTargetOverride to make sure this weapon
  * does not generate its own targets (to save CPU mostly), only
@@ -159,5 +180,26 @@ void CBombDropper::Init()
 void CBombDropper::SlowUpdate()
 {
 	CWeapon::SlowUpdate(true);
+}
+
+float CBombDropper::GetPredictedImpactTime(const float3& impactPos) const
+{
+	if (weaponPos.y <= impactPos.y)
+		return 0.0f;
+
+	// weapon needs <t> frames to drop a distance
+	// <d> (if it has zero vertical speed), where:
+	//   <d> = 0.5 * g * t*t = weaponPos.y - impactPos.y
+	//   <t> = sqrt(d / (0.5 * g))
+	// bombs will travel <v * t> elmos horizontally
+	// which must be less than weapon's range to be
+	// able to hit, otherwise will always overshoot
+	const float d = impactPos.y - weaponPos.y;
+	const float s = -owner->speed.y;
+
+	const float g = mix(mapInfo->map.gravity, -weaponDef->myGravity, (weaponDef->myGravity != 0.0f));
+	const float tt = (s - 2.0f * d) / -g;
+
+	return ((tt >= 0.0f)? ((s / g) + math::sqrt(tt)): 0.0f);
 }
 

@@ -154,8 +154,8 @@ void CMissileProjectile::Update()
 			float3 targSpeed;
 
 			if (weaponDef->tracks && target != NULL) {
-				const CSolidObject* so = dynamic_cast<CSolidObject*>(target);
-				const CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
+				const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
+				const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
 
 				targetPos = target->pos;
 

@@ -54,7 +54,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(angleGood),
 	CR_MEMBER(avoidTarget),
 	CR_MEMBER(haveUserTarget),
-	CR_MEMBER(subClassReady),
 	CR_MEMBER(onlyForward),
 	CR_MEMBER(muzzleFlareSize),
 	CR_MEMBER(craterAreaOfEffect),
@@ -143,7 +142,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	hasTargetWeight(false),
 	angleGood(false),
 	avoidTarget(false),
-	subClassReady(true),
 	onlyForward(false),
 	badTargetCategory(0),
 	onlyTargetCategory(0xffffffff),
@@ -377,27 +375,32 @@ void CWeapon::UpdateTargeting()
 }
 
 
-bool CWeapon::CanFire() const
+bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const
 {
 	// FIXME merge some of the checks with TryTarget/TestRange/TestTarget (!)
-	if (!angleGood)
+	if (!ignoreAngleGood && !angleGood)
 		return false;
-	if (!subClassReady)
-		return false;
+
 	if (salvoLeft != 0)
 		return false;
-	if (targetType == Target_None)
+
+	if (!ignoreTargetType && targetType == Target_None)
 		return false;
+
 	if (reloadStatus > gs->frameNum)
 		return false;
+
 	if (weaponDef->stockpile && numStockpiled == 0)
 		return false;
+
 	// muzzle is underwater but we cannot fire underwater
 	if (!weaponDef->fireSubmersed && weaponMuzzlePos.y <= 0.0f)
 		return false;
+
 	// ~20 degree sanity check to force new aim
-	if (wantedDir.dot(lastRequestedDir) <= 0.94f)
+	if (!ignoreRequestedDir && wantedDir.dot(lastRequestedDir) <= 0.94f)
 		return false;
+
 	if ((owner->unitDef->maxFuel != 0) && (owner->currentFuel <= 0.0f) && (fuelUsage != 0.0f))
 		return false;
 
@@ -416,7 +419,7 @@ bool CWeapon::CanFire() const
 
 void CWeapon::UpdateFire()
 {
-	if (!CanFire())
+	if (!CanFire(false, false, false))
 		return;
 
 	CTeam* ownerTeam = teamHandler->Team(owner->team);

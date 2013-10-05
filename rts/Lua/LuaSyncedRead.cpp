@@ -3454,7 +3454,11 @@ int LuaSyncedRead::GetUnitWeaponCanFire(lua_State* L)
 	if (weaponNum >= unit->weapons.size())
 		return 0;
 
-	lua_pushboolean(L, unit->weapons[weaponNum]->CanFire());
+	const bool ignoreAngleGood = luaL_optboolean(L, 3, false);
+	const bool ignoreTargetType = luaL_optboolean(L, 4, false);
+	const bool ignoreRequestedDir = luaL_optboolean(L, 5, false);
+
+	lua_pushboolean(L, unit->weapons[weaponNum]->CanFire(ignoreAngleGood, ignoreTargetType, ignoreRequestedDir));
 	return 1;
 }
 

@@ -69,12 +69,13 @@ void CTorpedoProjectile::Update()
 			SetVelocityAndSpeed(speed + (UpVector * mygravity));
 		}
 	} else {
-		if (!weaponDef->submissile && pos.y-speed.y > -3.0f) {
+		if (!luaMoveCtrl && !weaponDef->submissile && target == NULL) {
 			// level out torpedo a bit when hitting water (changes
 			// dir but not speed.w, must keep speed-vector in sync)
-			if (!luaMoveCtrl) {
-				SetDirectionAndSpeed(((dir * XZVector) + (dir * UpVector * 0.5f)).Normalize(), speed.w);
-			}
+			// FIXME:
+			//   might be too slow in shallow water to avoid colliding with ocean
+			//   floor and targetPos is always ZeroVector (!) so we will never hit
+			SetDirectionAndSpeed(((dir * 0.9f) + (dir * XZVector * 0.1f)).Normalize(), speed.w);
 		}
 
 		if (--ttl > 0) {
@@ -82,29 +83,31 @@ void CTorpedoProjectile::Update()
 				if (speed.w < maxSpeed)
 					speed.w += std::max(0.2f, tracking);
 
-				if (target) {
-					CSolidObject* so = dynamic_cast<CSolidObject*>(target);
-					CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
+				if (target != NULL) {
+					const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
+					const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
 
 					targetPos = target->pos;
 					float3 targSpeed;
 
-					if (so) {
+					if (so != NULL) {
 						targetPos = so->aimPos;
 						targSpeed = so->speed;
 
-						if (pos.SqDistance(so->aimPos) > 150 * 150 && owner()) {
-							CUnit* u = dynamic_cast<CUnit*>(so);
-							if (u) {
+						if (pos.SqDistance(so->aimPos) > 150 * 150 && owner() != NULL) {
+							const CUnit* u = dynamic_cast<const CUnit*>(so);
+
+							if (u != NULL) {
 								targetPos = u->GetErrorPos(owner()->allyteam, true);
 							}
 						}
-					} if (po) {
+					}
+					if (po != NULL) {
 						targSpeed = po->speed;
 					}
 
-					if (!weaponDef->submissile && targetPos.y > 0) {
-						targetPos.y = 0;
+					if (!weaponDef->submissile && targetPos.y > 0.0f) {
+						targetPos.y = 0.0f;
 					}
 
 					float3 dif = (targetPos + targSpeed * (pos.distance(targetPos) / maxSpeed) * 0.7f - pos).Normalize();
