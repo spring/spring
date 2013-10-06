@@ -282,8 +282,10 @@ bool SpringApp::InitWindow(const char* title)
 		return false;
 	}
 
-	PrintAvailableResolutions();
+	// set the Spring "epoch"
+	spring_time::setstarttime(spring_time::gettime());
 
+	PrintAvailableResolutions();
 	WindowManagerHelper::SetCaption(title);
 
 	if (!SetSDLVideoMode()) {
