@@ -91,6 +91,7 @@ CSolidObject::CSolidObject():
 	heading(0),
 
 	// objects start out non-blocking but fully collidable
+	// SolidObjectDef::collidable controls only the SO-bit
 	physicalState(PhysicalState(STATE_BIT_ONGROUND)),
 	collidableState(CollidableState(STATE_BIT_SOLIDOBJECTS | STATE_BIT_PROJECTILES | STATE_BIT_QUADMAPRAYS)),
 
@@ -169,19 +170,19 @@ void CSolidObject::UpdatePhysicalState() {
 
 void CSolidObject::UpdateVoidState(bool set) {
 	if (set) {
-		SetPhysicalStateBit(STATE_BIT_INVOID);
-		UnBlock();
-		collisionVolume->SetIgnoreHits(true);
-
 		// make us transparent to raycasts, quadfield queries, etc.
 		// TODO:
 		//   need to push/pop old state in case Lua has changed it
 		//   (otherwise gadgets must listen for Unit*Loaded events)
 		ClearCollidableStateBit((STATE_BIT_SOLIDOBJECTS * objectDef->collidable) | STATE_BIT_PROJECTILES | STATE_BIT_QUADMAPRAYS);
+		SetPhysicalStateBit(STATE_BIT_INVOID);
+
+		UnBlock();
+		collisionVolume->SetIgnoreHits(true);
 	} else {
 		SetCollidableStateBit((STATE_BIT_SOLIDOBJECTS * objectDef->collidable) | STATE_BIT_PROJECTILES | STATE_BIT_QUADMAPRAYS);
-
 		ClearPhysicalStateBit(STATE_BIT_INVOID);
+
 		Block();
 		collisionVolume->SetIgnoreHits(false);
 	}
