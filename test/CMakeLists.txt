@@ -59,6 +59,7 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/Game/GameVersion.cpp"
 			"${ENGINE_SOURCE_DIR}/Net/Protocol/BaseNetProtocol.cpp"
 			"${ENGINE_SOURCE_DIR}/System/CRC.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/NullGlobalConfig.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Nullerrorhandler.cpp"
 			${test_Log_sources}
