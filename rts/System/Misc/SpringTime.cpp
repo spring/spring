@@ -3,6 +3,7 @@
 #include "SpringTime.h"
 #include "System/Log/ILog.h"
 
+#ifndef UNIT_TEST
 #ifdef USING_CREG
 #include "System/creg/Serializer.h"
 
@@ -12,6 +13,7 @@ CR_REG_METADATA(spring_time,(
 	CR_IGNORED(x),
 	CR_SERIALIZER(Serialize)
 ));
+#endif
 #endif
 
 
@@ -47,6 +49,7 @@ namespace Cpp11Clock {
 }
 
 
+#ifndef UNIT_TEST
 void spring_time::Serialize(creg::ISerializer& s)
 {
 	if (s.IsWriting()) {
@@ -58,7 +61,7 @@ void spring_time::Serialize(creg::ISerializer& s)
 		*this = *this + spring_msecs(y);
 	}
 }
-
+#endif
 
 static float avgYieldMs = 0.0f;
 static float avgSleepErrMs = 0.0f;
