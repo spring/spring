@@ -49,6 +49,9 @@ namespace Cpp11Clock {
 }
 
 
+
+boost::int64_t spring_time::xs = 0;
+
 #ifndef UNIT_TEST
 void spring_time::Serialize(creg::ISerializer& s)
 {
@@ -63,17 +66,19 @@ void spring_time::Serialize(creg::ISerializer& s)
 }
 #endif
 
+
+
+// FIXME: NOT THREADSAFE
 static float avgYieldMs = 0.0f;
 static float avgSleepErrMs = 0.0f;
 
-
-static void yield()
+static void thread_yield()
 {
 	const spring_time beforeYield = spring_time::gettime();
 
 	this_thread::yield();
 
-	const auto diffMs = (spring_time::gettime() - beforeYield).toMilliSecsf();
+	const float diffMs = (spring_time::gettime() - beforeYield).toMilliSecsf();
 	avgYieldMs = avgYieldMs * 0.9f + diffMs * 0.1f;
 }
 
@@ -84,7 +89,7 @@ void spring_time::sleep()
 	if (toMilliSecsf() < (avgSleepErrMs + avgYieldMs * 5.0f)) {
 		const spring_time s = gettime();
 		while ((gettime() - s) < *this) {
-			yield();
+			thread_yield();
 		}
 		return;
 	}
@@ -105,18 +110,17 @@ void spring_time::sleep()
 	//}
 }
 
-
 void spring_time::sleep_until()
 {
 #if defined(SPRINGTIME_USING_STD_SLEEP)
-	auto tp = chrono::time_point<chrono::high_resolution_clock, chrono::nanoseconds>(chrono::nanoseconds( toNanoSecsi() ));
+	auto tp = chrono::time_point<chrono::high_resolution_clock, chrono::nanoseconds>(chrono::nanoseconds(toNanoSecsi()));
 	this_thread::sleep_until(tp);
 #else
 	spring_time napTime = gettime() - *this;
 
 	if (napTime.toMilliSecsf() < avgYieldMs) {
 		while (napTime.isTime()) {
-			yield();
+			thread_yield();
 			napTime = gettime() - *this;
 		}
 		return;
@@ -125,3 +129,4 @@ void spring_time::sleep_until()
 	napTime.sleep();
 #endif
 }
+
