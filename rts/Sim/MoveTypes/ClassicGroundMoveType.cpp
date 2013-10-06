@@ -633,6 +633,9 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 	for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 		CUnit* unit = *ui;
 
+		if (!unit->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
+			continue;
+
 		const float sqDist = (midPos - unit->midPos).SqLength();
 		const float totRad = owner->radius + unit->radius;
 
@@ -688,7 +691,7 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 	for (vector<CFeature*>::const_iterator fi = nearFeatures.begin(); fi != nearFeatures.end(); ++fi) {
 		CFeature* feature = *fi;
 
-		if (!feature->collidable)
+		if (!feature->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
 			continue;
 
 		const float sqDist = (midPos - feature->midPos).SqLength();

@@ -463,6 +463,7 @@ static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 	if (o == NULL)
 		return 0;
 
+	// update blocking-bit of physical state
 	if (lua_isboolean(L, 2)) {
 		if (lua_toboolean(L, 2)) {
 			o->Block();
@@ -471,16 +472,23 @@ static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 		}
 	}
 
+	// update SO-bit of collidable state
 	if (lua_isboolean(L, 3)) {
-		// change the collidable state
-		if (!(o->collidable = lua_toboolean(L, 3))) {
+		if (lua_toboolean(L, 3)) {
+			o->SetCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS);
+		} else {
+			o->ClearCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS);
+
 			// run this again so that object gets removed from
-			// the blocking map iff object->collidable was set
+			// the blocking map if(f) SO-collidability was set
 			// to false but second argument was true (no point
 			// still being registered on the map then)
 			o->UnBlock();
 		}
 	}
+
+	o->UpdateCollidableStateBit(CSolidObject::STATE_BIT_PROJECTILES, luaL_optboolean(L, 7, o->HasCollidableStateBit(CSolidObject::STATE_BIT_PROJECTILES)));
+	o->UpdateCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS, luaL_optboolean(L, 8, o->HasCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS)));
 
 	o->crushable = luaL_optboolean(L, 4, o->crushable);
 	o->blockEnemyPushing = luaL_optboolean(L, 5, o->blockEnemyPushing);

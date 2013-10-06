@@ -703,26 +703,37 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos, float r
 
 	std::vector<CSolidObject*> solids;
 	std::vector<int>::const_iterator qi;
+
 	std::list<CUnit*>::iterator ui;
+	std::list<CFeature*>::iterator fi;
 
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		for (ui = baseQuads[*qi].units.begin(); ui != baseQuads[*qi].units.end(); ++ui) {
-			if (!(*ui)->collidable) { continue; }
-			if ((*ui)->tempNum == tempNum) { continue; }
-			if ((pos - (*ui)->midPos).SqLength() >= Square(radius + (*ui)->radius)) { continue; }
+			CUnit* u = *ui;
 
-			(*ui)->tempNum = tempNum;
-			solids.push_back(*ui);
+			if (u->tempNum == tempNum)
+				continue;
+			if (!u->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
+				continue;
+			if ((pos - u->midPos).SqLength() >= Square(radius + u->radius))
+				continue;
+
+			u->tempNum = tempNum;
+			solids.push_back(u);
 		}
 
-		std::list<CFeature*>::iterator fi;
 		for (fi = baseQuads[*qi].features.begin(); fi != baseQuads[*qi].features.end(); ++fi) {
-			if (!(*fi)->collidable) { continue; }
-			if ((*fi)->tempNum == tempNum) { continue; }
-			if ((pos - (*fi)->midPos).SqLength() >= Square(radius + (*fi)->radius)) { continue; }
+			CFeature* f = *fi;
 
-			(*fi)->tempNum = tempNum;
-			solids.push_back(*fi);
+			if (f->tempNum == tempNum)
+				continue;
+			if (!f->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
+				continue;
+			if ((pos - f->midPos).SqLength() >= Square(radius + f->radius))
+				continue;
+
+			f->tempNum = tempNum;
+			solids.push_back(f);
 		}
 	}
 

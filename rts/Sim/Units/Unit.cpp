@@ -470,9 +470,8 @@ void CUnit::PostInit(const CUnit* builder)
 	// NOTE: this does mean that mines can be stacked indefinitely
 	// (an extra yardmap character would be needed to prevent this)
 	immobile = unitDef->IsImmobileUnit();
-	collidable = unitDef->collidable;
-	collidable &= !(immobile && unitDef->canKamikaze);
 
+	SetCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS * (unitDef->collidable & (!immobile || !unitDef->canKamikaze)));
 	Block();
 
 	if (unitDef->windGenerator > 0.0f) {

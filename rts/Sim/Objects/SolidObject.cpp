@@ -23,38 +23,49 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(health),
 	CR_MEMBER(mass),
 	CR_MEMBER(crushResistance),
-	CR_MEMBER(collidable),
+
 	CR_MEMBER(crushable),
 	CR_MEMBER(immobile),
 	CR_MEMBER(crushKilled),
 	CR_MEMBER(blockEnemyPushing),
 	CR_MEMBER(blockHeightChanges),
+
 	CR_MEMBER(luaDraw),
 	CR_MEMBER(noSelect),
+
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
  	CR_MEMBER(footprint),
 	CR_MEMBER(heading),
+
 	CR_ENUM_MEMBER(physicalState),
+	CR_ENUM_MEMBER(collidableState),
+
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
+
 	CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
 	CR_MEMBER(collisionVolume),
 	CR_IGNORED(groundDecal),
+
 	CR_MEMBER(frontdir),
 	CR_MEMBER(rightdir),
 	CR_MEMBER(updir),
+
 	CR_MEMBER(relMidPos),
  	CR_MEMBER(relAimPos),
 	CR_MEMBER(midPos),
 	CR_MEMBER(aimPos),
 	CR_MEMBER(mapPos),
 	CR_MEMBER(groundBlockPos),
+
 	CR_MEMBER(dragScales),
+
 	CR_MEMBER(drawPos),
 	CR_MEMBER(drawMidPos),
 	// CR_MEMBER(blockMap), //FIXME add bitwiseenum to creg
+
 	CR_MEMBER(buildFacing)
 ));
 
@@ -64,7 +75,6 @@ CSolidObject::CSolidObject():
 	mass(DEFAULT_MASS),
 	crushResistance(0.0f),
 
-	collidable(false),
 	crushable(false),
 	immobile(false),
 	crushKilled(false),
@@ -79,7 +89,10 @@ CSolidObject::CSolidObject():
 	footprint(1, 1),
 
 	heading(0),
-	physicalState(STATE_BIT_ONGROUND),
+
+	// objects start out non-blocking but fully collidable
+	physicalState(PhysicalState(STATE_BIT_ONGROUND)),
+	collidableState(CollidableState(STATE_BIT_SOLIDOBJECTS | STATE_BIT_PROJECTILES | STATE_BIT_QUADMAPRAYS)),
 
 	team(0),
 	allyteam(0),
@@ -104,7 +117,7 @@ CSolidObject::CSolidObject():
 }
 
 CSolidObject::~CSolidObject() {
-	collidable = false;
+	ClearCollidableStateBit(STATE_BIT_SOLIDOBJECTS | STATE_BIT_PROJECTILES | STATE_BIT_QUADMAPRAYS);
 
 	delete collisionVolume;
 	collisionVolume = NULL;
@@ -161,17 +174,19 @@ void CSolidObject::UpdateVoidState(bool set) {
 		collisionVolume->SetIgnoreHits(true);
 
 		// make us transparent to raycasts, quadfield queries, etc.
-		// TODO: not checked everywhere, push/pop old state? (MSB(ps))
-		collidable = false;
-		noSelect = true;
+		// TODO:
+		//   need to push/pop old state in case Lua has changed it
+		//   (otherwise gadgets must listen for Unit*Loaded events)
+		ClearCollidableStateBit((STATE_BIT_SOLIDOBJECTS * objectDef->collidable) | STATE_BIT_PROJECTILES | STATE_BIT_QUADMAPRAYS);
 	} else {
-		collidable = objectDef->collidable;
-		noSelect = !objectDef->selectable;
+		SetCollidableStateBit((STATE_BIT_SOLIDOBJECTS * objectDef->collidable) | STATE_BIT_PROJECTILES | STATE_BIT_QUADMAPRAYS);
 
 		ClearPhysicalStateBit(STATE_BIT_INVOID);
 		Block();
 		collisionVolume->SetIgnoreHits(false);
 	}
+
+	noSelect = (set || !objectDef->selectable);
 }
 
 
@@ -188,7 +203,7 @@ void CSolidObject::Block() {
 	// no point calling this if object is not
 	// collidable in principle, but simplifies
 	// external code to allow it
-	if (!collidable)
+	if (!HasCollidableStateBit(STATE_BIT_SOLIDOBJECTS))
 		return;
 
 	if (IsBlocking() && !BlockMapPosChanged())
