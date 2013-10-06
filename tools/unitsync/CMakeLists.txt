@@ -55,6 +55,7 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigVariable.cpp"
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
 	"${ENGINE_SRC_ROOT}/System/CRC.cpp"
+	"${ENGINE_SRC_ROOT}/System/Misc/SpringTime.cpp"
 	"${ENGINE_SRC_ROOT}/System/Platform/Misc.cpp"
 	"${ENGINE_SRC_ROOT}/System/Platform/ScopedFileLock.cpp"
 	"${ENGINE_SRC_ROOT}/System/Platform/Threading.cpp"
