@@ -1500,8 +1500,6 @@ void CGroundMoveType::HandleObjectCollisions()
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
 		HandleStaticObjectCollision(collider, collider, colliderMD, colliderRadius, 0.0f, ZeroVector, true, false, true);
 	}
-
-	collider->Block();
 }
 
 void CGroundMoveType::HandleStaticObjectCollision(
