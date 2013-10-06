@@ -31,12 +31,14 @@ CR_REG_METADATA(spring_time,(
 
 
 namespace Cpp11Clock {
-	#if (defined(WIN32) && !defined(FORCE_HIGHRES_TIMERS))
+	#define USE_SDL_CLOCK (defined(WIN32) && !defined(FORCE_HIGHRES_TIMERS))
+
+	#if USE_SDL_CLOCK
 	#include <SDL/SDL_timer.h>
 	#endif
 
 	boost::int64_t Get() {
-		#if (defined(WIN32) && !defined(FORCE_HIGHRES_TIMERS))
+		#if USE_SDL_CLOCK
 		assert(SDL_WasInit(SDL_INIT_TIMER));
 		// upsample number of milliseconds since SDL library
 		// initialization to nanoseconds (it is better to be
@@ -44,6 +46,21 @@ namespace Cpp11Clock {
 		return (FromMilliSecs<boost::uint32_t>(SDL_GetTicks()));
 		#else
 		return (chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+		#endif
+	}
+
+	const char* GetName() {
+		#if USE_SDL_CLOCK
+		return "SDL_GetTicks";
+		#else
+
+		#ifdef SPRINGTIME_USING_BOOST
+		return "boost::chrono::high_resolution_clock";
+		#endif
+		#ifdef SPRINGTIME_USING_STDCHRONO
+		return "std::chrono::high_resolution_clock";
+		#endif
+
 		#endif
 	}
 }

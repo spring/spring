@@ -185,7 +185,7 @@ bool SpringApp::Initialize()
 		// don't display a dialog box if gdb helpers aren't found
 		UINT olderrors = SetErrorMode(SEM_FAILCRITICALERRORS);
 		if (LoadLibrary("gdbmacros.dll")) {
-			LOG("QT Creator's gdbmacros.dll loaded");
+			LOG_L(L_DEBUG, "QT Creator's gdbmacros.dll loaded");
 		}
 		SetErrorMode(olderrors);
 	}
@@ -251,7 +251,9 @@ bool SpringApp::Initialize()
 
 	// Multithreading & Affinity
 	Threading::SetThreadName("unknown"); // set default threadname
-	LOG("CPU Cores: %d", Threading::GetAvailableCores());
+
+	LOG("[%s] CPU Clock: %s", __FUNCTION__, Cpp11Clock::GetName());
+	LOG("[%s] CPU Cores: %d", __FUNCTION__, Threading::GetAvailableCores());
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -415,10 +417,11 @@ bool SpringApp::SetSDLVideoMode()
 	int bits;
 	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
 	SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE,  &globalRendering->depthBufferBits);
+
 	if (globalRendering->fullScreen) {
-		LOG("Video mode set to %ix%i/%ibit", globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
+		LOG("[%s] video mode set to %ix%i/%ibit", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
 	} else {
-		LOG("Video mode set to %ix%i/%ibit (windowed)", globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
+		LOG("[%s] video mode set to %ix%i/%ibit (windowed)", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
 	}
 
 	return true;
@@ -810,7 +813,7 @@ void SpringApp::ParseCmdLine()
 		exit(0);
 	}
 
-	LOG("Run: %s", cmdline->GetCmdLine().c_str());
+	LOG("[%s] command-line args: \"%s\"", __FUNCTION__, cmdline->GetCmdLine().c_str());
 	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
 
 #ifdef _DEBUG
@@ -887,9 +890,9 @@ void SpringApp::Startup()
 		return;
 	}
 
-	std::string inputFile = cmdline->GetInputFile();
-	if (inputFile.empty())
-	{
+	const std::string inputFile = cmdline->GetInputFile();
+
+	if (inputFile.empty()) {
 #ifdef HEADLESS
 		LOG_L(L_FATAL,
 				"The headless version of the engine can not be run in interactive mode.\n"
@@ -902,9 +905,7 @@ void SpringApp::Startup()
 #endif
 		selectMenu = new SelectMenu(server);
 		activeController = selectMenu;
-	}
-	else if (inputFile.rfind("sdf") == inputFile.size() - 3)
-	{
+	} else if (inputFile.rfind("sdf") == inputFile.size() - 3) {
 		std::string demoFileName = inputFile;
 		std::string demoPlayerName = configHandler->GetString("name");
 
@@ -926,9 +927,7 @@ void SpringApp::Startup()
 
 		pregame = new CPreGame(startsetup);
 		pregame->LoadDemo(demoFileName);
-	}
-	else if (inputFile.rfind("ssf") == inputFile.size() - 3)
-	{
+	} else if (inputFile.rfind("ssf") == inputFile.size() - 3) {
 		std::string savefile = inputFile;
 		startsetup = new ClientSetup();
 		startsetup->isHost = true;
@@ -938,10 +937,8 @@ void SpringApp::Startup()
 #endif
 		pregame = new CPreGame(startsetup);
 		pregame->LoadSavefile(savefile);
-	}
-	else
-	{
-		LOG("Loading startscript from: %s", inputFile.c_str());
+	} else {
+		LOG("[%s] loading startscript from: %s", __FUNCTION__, inputFile.c_str());
 		CFileHandler fh(inputFile, SPRING_VFS_PWD_ALL);
 		if (!fh.FileExists())
 			throw content_error("Setup-script does not exist in given location: " + inputFile);
