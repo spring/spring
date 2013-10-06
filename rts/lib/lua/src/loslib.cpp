@@ -96,7 +96,7 @@ static int os_clock (lua_State *L) {
   //SPRING
 #ifndef BUILDING_AI
   //Lua's used clock() ran too fast on some linux systems, so rely on spring_time instead
-  lua_pushnumber(L, spring_getelapsedtime().toSecsf());
+  lua_pushnumber(L, spring_time::getelapsedtime().toSecsf());
 #else
   lua_pushnumber(L, (lua_Number)clock()/(lua_Number)CLOCKS_PER_SEC);
 #endif
