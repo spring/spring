@@ -147,6 +147,7 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			${test_Log_sources}
 		)
 
@@ -285,6 +286,7 @@ Else  (NOT Boost_FOUND)
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testThreadPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/ThreadPool.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			${test_Log_sources}
