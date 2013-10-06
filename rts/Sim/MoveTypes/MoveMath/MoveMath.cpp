@@ -171,16 +171,17 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 {
 	if (collider == collidee)
 		return true;
-
-	if (collider != NULL)
-		return (IsNonBlocking(collidee, collider));
-
 	if (!collidee->collidable)
 		return true;
-
 	// if obstacle is out of map bounds, it cannot block us
 	if (!collidee->pos.IsInBounds())
 		return true;
+	// same if obstacle is not currently marked on blocking-map
+	if (!collidee->IsBlocking())
+		return true;
+
+	if (collider != NULL)
+		return (IsNonBlocking(collidee, collider));
 
 	// (code below is only reachable from stand-alone PE invocations)
 	// remaining conditions under which obstacle does NOT block unit
@@ -233,13 +234,6 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 
 bool CMoveMath::IsNonBlocking(const CSolidObject* collidee, const CSolidObject* collider)
 {
-	if (!collidee->collidable)
-		return true;
-
-	// if obstacle is out of map bounds, it cannot block us
-	if (!collidee->pos.IsInBounds())
-		return true;
-
 	// simple case: if unit and obstacle have non-zero
 	// vertical separation as measured by their (model)
 	// heights, unit can always pass obstacle
