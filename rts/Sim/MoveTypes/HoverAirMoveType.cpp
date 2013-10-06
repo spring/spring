@@ -144,14 +144,14 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 
 	switch (aircraftState) {
 		case AIRCRAFT_CRASHING:
-			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_CRASHING);
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
 			break;
 		case AIRCRAFT_LANDED:
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
 
 			owner->Block();
-			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
+			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
 		case AIRCRAFT_LANDING:
 			owner->Deactivate();
@@ -163,7 +163,7 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 		default:
 			owner->Activate();
 			owner->UnBlock();
-			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 
 			reservedLandingPos.x = -1.0f;
 			break;
@@ -174,7 +174,7 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 		flyState = FLY_CRUISING;
 	}
 
-	owner->UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, (aircraftState != AIRCRAFT_LANDED));
+	owner->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, (aircraftState != AIRCRAFT_LANDED));
 	waitCounter = 0;
 }
 
@@ -201,7 +201,7 @@ void CHoverAirMoveType::StartMoving(float3 pos, float goalRadius)
 	wantToStop = false;
 	waitCounter = 0;
 
-	owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
+	owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING);
 
 	switch (aircraftState) {
 		case AIRCRAFT_LANDED:
@@ -305,7 +305,7 @@ void CHoverAirMoveType::StopMoving(bool callScript, bool hardStop)
 	wantToStop = true;
 	wantedHeight = orgWantedHeight;
 
-	owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
+	owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING);
 
 	if (progressState != AMoveType::Failed)
 		progressState = AMoveType::Done;
@@ -931,7 +931,7 @@ bool CHoverAirMoveType::Update()
 			UpdateAirPhysics();
 
 			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
-				owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_CRASHING);
+				owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
 				owner->KillUnit(NULL, true, false);
 			} else {
 				#define SPIN_DIR(o) ((o->id & 1) * 2 - 1)

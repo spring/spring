@@ -160,7 +160,7 @@ void PathFlowMap::Update() {
 void PathFlowMap::AddFlow(const CSolidObject* o) {
 	return;
 
-	if (!o->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS)) {
+	if (!o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS)) {
 		return;
 	}
 	if (!o->pos.IsInBounds()) {

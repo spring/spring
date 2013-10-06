@@ -31,7 +31,7 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(groundOffset),
 	CR_MEMBER(gravityFactor),
 	CR_MEMBER(windFactor),
-	CR_MEMBER(noBlocking), // copy of CSolidObject::STATE_BIT_BLOCKING
+	CR_MEMBER(noBlocking), // copy of CSolidObject::PSTATE_BIT_BLOCKING
 	CR_MEMBER(gndStop),
 	CR_MEMBER(shotStop),
 	CR_MEMBER(slopeStop),

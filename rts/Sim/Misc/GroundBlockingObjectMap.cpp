@@ -43,7 +43,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 
 	const int objID = GetObjectID(object);
 
-	object->SetPhysicalStateBit(CSolidObject::STATE_BIT_BLOCKING);
+	object->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING);
 	object->mapPos = object->GetMapPos();
 	object->groundBlockPos = object->pos;
 
@@ -78,7 +78,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 
 	const int objID = GetObjectID(object);
 
-	object->SetPhysicalStateBit(CSolidObject::STATE_BIT_BLOCKING);
+	object->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING);
 	object->mapPos = object->GetMapPos();
 	object->groundBlockPos = object->pos;
 
@@ -123,7 +123,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 	const int sx = object->xsize;
 	const int sz = object->zsize;
 
-	object->ClearPhysicalStateBit(CSolidObject::STATE_BIT_BLOCKING);
+	object->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING);
 
 	for (int z = bz; z < bz + sz; ++z) {
 		for (int x = bx; x < bx + sx; ++x) {

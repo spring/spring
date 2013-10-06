@@ -471,7 +471,7 @@ void CUnit::PostInit(const CUnit* builder)
 	// (an extra yardmap character would be needed to prevent this)
 	immobile = unitDef->IsImmobileUnit();
 
-	SetCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS * (unitDef->collidable & (!immobile || !unitDef->canKamikaze)));
+	SetCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS * (unitDef->collidable & (!immobile || !unitDef->canKamikaze)));
 	Block();
 
 	if (unitDef->windGenerator > 0.0f) {
@@ -633,7 +633,7 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 
 	Move(UpVector * ((parentPos.y - height) - pos.y), true);
 	UpdateMidAndAimPos();
-	SetPhysicalStateBit(CSolidObject::STATE_BIT_FALLING);
+	SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FALLING);
 
 	// start parachute animation
 	script->Falling();

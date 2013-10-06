@@ -83,7 +83,12 @@ public:
 	std::vector<CProjectile*> GetProjectilesExact(const float3& pos, float radius);
 	std::vector<CProjectile*> GetProjectilesExact(const float3& mins, const float3& maxs);
 
-	std::vector<CSolidObject*> GetSolidsExact(const float3& pos, float radius);
+	std::vector<CSolidObject*> GetSolidsExact(
+		const float3& pos,
+		const float radius,
+		const unsigned int physicalStateBits = 0xFFFFFFFF,
+		const unsigned int collisionStateBits = 0xFFFFFFFF
+	);
 
 	void MovedUnit(CUnit* unit);
 	void RemoveUnit(CUnit* unit);

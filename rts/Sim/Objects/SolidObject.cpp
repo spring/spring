@@ -92,8 +92,8 @@ CSolidObject::CSolidObject():
 
 	// objects start out non-blocking but fully collidable
 	// SolidObjectDef::collidable controls only the SO-bit
-	physicalState(PhysicalState(STATE_BIT_ONGROUND)),
-	collidableState(CollidableState(STATE_BIT_SOLIDOBJECTS | STATE_BIT_PROJECTILES | STATE_BIT_QUADMAPRAYS)),
+	physicalState(PhysicalState(PSTATE_BIT_ONGROUND)),
+	collidableState(CollidableState(CSTATE_BIT_SOLIDOBJECTS | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS)),
 
 	team(0),
 	allyteam(0),
@@ -118,7 +118,7 @@ CSolidObject::CSolidObject():
 }
 
 CSolidObject::~CSolidObject() {
-	ClearCollidableStateBit(STATE_BIT_SOLIDOBJECTS | STATE_BIT_PROJECTILES | STATE_BIT_QUADMAPRAYS);
+	ClearCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
 
 	delete collisionVolume;
 	collisionVolume = NULL;
@@ -130,26 +130,26 @@ void CSolidObject::UpdatePhysicalState() {
 
 	unsigned int ps = physicalState;
 
-	ps &= (~STATE_BIT_ONGROUND);
-	ps &= (~STATE_BIT_INWATER);
-	ps &= (~STATE_BIT_UNDERWATER);
-	ps &= (~STATE_BIT_UNDERGROUND);
-	ps &= (~STATE_BIT_INAIR);
+	ps &= (~PSTATE_BIT_ONGROUND);
+	ps &= (~PSTATE_BIT_INWATER);
+	ps &= (~PSTATE_BIT_UNDERWATER);
+	ps &= (~PSTATE_BIT_UNDERGROUND);
+	ps &= (~PSTATE_BIT_INAIR);
 
 	// NOTE:
 	//   height is not in general equivalent to radius * 2.0
 	//   the height property is used for much fewer purposes
 	//   than radius, so less reliable for determining state
-	#define MASK_NOAIR (STATE_BIT_ONGROUND | STATE_BIT_INWATER | STATE_BIT_UNDERWATER | STATE_BIT_UNDERGROUND)
+	#define MASK_NOAIR (PSTATE_BIT_ONGROUND | PSTATE_BIT_INWATER | PSTATE_BIT_UNDERWATER | PSTATE_BIT_UNDERGROUND)
 	#define EPS 0.1f
-	ps |= (STATE_BIT_ONGROUND    * ((   pos.y -         gh) <=  EPS));
-	ps |= (STATE_BIT_INWATER     * ((   pos.y             ) <= 0.0f));
-//	ps |= (STATE_BIT_UNDERWATER  * ((   pos.y +     height) <  0.0f));
-//	ps |= (STATE_BIT_UNDERGROUND * ((   pos.y +     height) <    gh));
-	ps |= (STATE_BIT_UNDERWATER  * ((midPos.y +     radius) <  0.0f));
-	ps |= (STATE_BIT_UNDERGROUND * ((midPos.y +     radius) <    gh));
-	ps |= (STATE_BIT_INAIR       * ((   pos.y -         wh) >   EPS));
-	ps |= (STATE_BIT_INAIR       * ((    ps   & MASK_NOAIR) ==    0));
+	ps |= (PSTATE_BIT_ONGROUND    * ((   pos.y -         gh) <=  EPS));
+	ps |= (PSTATE_BIT_INWATER     * ((   pos.y             ) <= 0.0f));
+//	ps |= (PSTATE_BIT_UNDERWATER  * ((   pos.y +     height) <  0.0f));
+//	ps |= (PSTATE_BIT_UNDERGROUND * ((   pos.y +     height) <    gh));
+	ps |= (PSTATE_BIT_UNDERWATER  * ((midPos.y +     radius) <  0.0f));
+	ps |= (PSTATE_BIT_UNDERGROUND * ((midPos.y +     radius) <    gh));
+	ps |= (PSTATE_BIT_INAIR       * ((   pos.y -         wh) >   EPS));
+	ps |= (PSTATE_BIT_INAIR       * ((    ps   & MASK_NOAIR) ==    0));
 	#undef EPS
 	#undef MASK_NOAIR
 
@@ -174,14 +174,14 @@ void CSolidObject::UpdateVoidState(bool set) {
 		// TODO:
 		//   need to push/pop old state in case Lua has changed it
 		//   (otherwise gadgets must listen for Unit*Loaded events)
-		ClearCollidableStateBit((STATE_BIT_SOLIDOBJECTS * objectDef->collidable) | STATE_BIT_PROJECTILES | STATE_BIT_QUADMAPRAYS);
-		SetPhysicalStateBit(STATE_BIT_INVOID);
+		ClearCollidableStateBit((CSTATE_BIT_SOLIDOBJECTS * objectDef->collidable) | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
+		SetPhysicalStateBit(PSTATE_BIT_INVOID);
 
 		UnBlock();
 		collisionVolume->SetIgnoreHits(true);
 	} else {
-		SetCollidableStateBit((STATE_BIT_SOLIDOBJECTS * objectDef->collidable) | STATE_BIT_PROJECTILES | STATE_BIT_QUADMAPRAYS);
-		ClearPhysicalStateBit(STATE_BIT_INVOID);
+		SetCollidableStateBit((CSTATE_BIT_SOLIDOBJECTS * objectDef->collidable) | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
+		ClearPhysicalStateBit(PSTATE_BIT_INVOID);
 
 		Block();
 		collisionVolume->SetIgnoreHits(false);
@@ -204,7 +204,7 @@ void CSolidObject::Block() {
 	// no point calling this if object is not
 	// collidable in principle, but simplifies
 	// external code to allow it
-	if (!HasCollidableStateBit(STATE_BIT_SOLIDOBJECTS))
+	if (!HasCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS))
 		return;
 
 	if (IsBlocking() && !BlockMapPosChanged())

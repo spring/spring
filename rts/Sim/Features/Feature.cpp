@@ -211,7 +211,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	quadField->AddFeature(this);
 
 	ChangeTeam(team);
-	SetCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS * (def->collidable));
+	SetCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS * (def->collidable));
 	Block();
 
 	if (def->floating) {
@@ -220,7 +220,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 		finalHeight = ground->GetHeightReal(pos.x, pos.z);
 	}
 
-	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, ((SetSpeed(params.speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
+	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(params.speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
 }
 
 
@@ -428,7 +428,7 @@ void CFeature::DependentDied(CObject *o)
 void CFeature::SetVelocity(const float3& v)
 {
 	CWorldObject::SetVelocity(v);
-	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, v != ZeroVector);
+	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, v != ZeroVector);
 
 	if (IsMoving()) {
 		featureHandler->SetFeatureUpdateable(this, true);
@@ -564,7 +564,7 @@ bool CFeature::UpdatePosition()
 		transMatrix[13] = pos.y;
 	}
 
-	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, ((SetSpeed(speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
+	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
 	UpdatePhysicalState();
 
 	return (IsMoving());
@@ -633,7 +633,7 @@ void CFeature::EmitGeoSmoke()
 {
 	if ((gs->frameNum + id % 5) % 5 == 0) {
 		// Find the unit closest to the geothermal
-		const vector<CSolidObject*>& objs = quadField->GetSolidsExact(pos, 0.0f);
+		const vector<CSolidObject*>& objs = quadField->GetSolidsExact(pos, 0.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 		float bestDist = std::numeric_limits<float>::max();
 
 		CSolidObject* so = NULL;

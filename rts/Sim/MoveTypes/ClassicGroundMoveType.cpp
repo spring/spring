@@ -149,7 +149,7 @@ bool CClassicGroundMoveType::Update()
 	if (OnSlope() &&
 		(!owner->unitDef->floatOnWater || ground->GetHeightAboveWater(owner->midPos.x, owner->midPos.z) > 0))
 	{
-		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
+		owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 	}
 
 	if (owner->IsSkidding()) {
@@ -471,11 +471,11 @@ bool CClassicGroundMoveType::CanApplyImpulse(const float3& extImpulse)
 		skidRotSpeed2 = 0;
 		skidRotVector = (skidDir.SafeNormalize2D()).cross(UpVector);
 
-		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
+		owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 		owner->moveType->useHeading = false;
 
 		if (spd.dot(groundNormal) > 0.2f) {
-			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			skidRotSpeed2 = (gs->randFloat() - 0.5f) * 0.04f;
 		}
 	}
@@ -507,7 +507,7 @@ void CClassicGroundMoveType::UpdateSkid()
 		if(wh>midPos.y-owner->relMidPos.y){
 			skidRotSpeed += (gs->randFloat()-0.5f)*1500;
 
-			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
+			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			owner->Move(UpVector * (wh + owner->relMidPos.y - spd.y * 0.5f - pos.y), true);
 
 			const float impactSpeed = -spd.dot(ground->GetNormal(midPos.x,midPos.z));
@@ -532,7 +532,7 @@ void CClassicGroundMoveType::UpdateSkid()
 			skidRotSpeed2 = (math::floor(skidRotPos2 + skidRotSpeed2 + 0.5f) - skidRotPos2) * 0.5f;
 
 			owner->moveType->useHeading = true;
-			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
+			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 			ChangeHeading(owner->heading);
 		} else {
 			if (onSlope) {
@@ -569,8 +569,8 @@ void CClassicGroundMoveType::UpdateSkid()
 		if (wh - pos.y < spd.y + mapInfo->map.gravity){
 			owner->SetVelocity(spd + (UpVector * mapInfo->map.gravity));
 
-			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
-			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 		} else if (wh - pos.y > spd.y) {
 			const float3& normal = ground->GetNormal(pos.x, pos.z);
 			const float dot = spd.dot(normal);
@@ -615,7 +615,7 @@ void CClassicGroundMoveType::UpdateControlledDrop()
 
 		if (wh > midPos.y - owner->relMidPos.y) {
 			owner->Move(UpVector * (wh + owner->relMidPos.y - spd.y * 0.8 - midPos.y), true);
-			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FALLING);
+			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FALLING);
 			owner->script->Landed();
 		}
 
@@ -633,7 +633,7 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 	for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 		CUnit* unit = *ui;
 
-		if (!unit->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
+		if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
 			continue;
 
 		const float sqDist = (midPos - unit->midPos).SqLength();
@@ -691,7 +691,7 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 	for (vector<CFeature*>::const_iterator fi = nearFeatures.begin(); fi != nearFeatures.end(); ++fi) {
 		CFeature* feature = *fi;
 
-		if (!feature->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
+		if (!feature->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
 			continue;
 
 		const float sqDist = (midPos - feature->midPos).SqLength();
@@ -808,7 +808,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 			MoveDef* moveDef = owner->moveDef;
 
-			vector<CSolidObject*> nearbyObjects = quadField->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
+			vector<CSolidObject*> nearbyObjects = quadField->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 			vector<CSolidObject*> objectsOnPath;
 			vector<CSolidObject*>::iterator oi;
 
@@ -996,7 +996,7 @@ void CClassicGroundMoveType::StartEngine() {
 			pathFailures = 0;
 			etaFailures = 0;
 
-			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING);
 			owner->script->StartMoving(false);
 		} else {
 			Fail();
@@ -1017,7 +1017,7 @@ void CClassicGroundMoveType::StopEngine() {
 		owner->script->StopMoving();
 	}
 
-	owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
+	owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING);
 	wantedSpeed = 0;
 }
 
@@ -1618,17 +1618,17 @@ bool CClassicGroundMoveType::UpdateDirectControl()
 	if (unitCon.forward) {
 		ChangeSpeed();
 
-		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
+		owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING);
 		owner->script->StartMoving(false);
 	} else if (unitCon.back) {
 		ChangeSpeed();
 
-		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
+		owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING);
 		owner->script->StartMoving(false);
 	} else {
 		ChangeSpeed();
 
-		owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_MOVING);
+		owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING);
 		owner->script->StopMoving();
 	}
 

@@ -176,15 +176,15 @@ void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed
 						if (!pos.IsInBounds())
 							continue;
 
-						if (quadField->GetSolidsExact(pos, transportee->radius + 2.0f).empty()) {
+						if (quadField->GetSolidsExact(pos, transportee->radius + 2.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS).empty()) {
 							transportee->Move(pos, false);
 							break;
 						}
 					}
 				} else {
 					if (transportee->unitDef->IsGroundUnit()) {
-						transportee->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
-						transportee->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
+						transportee->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
+						transportee->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 					}
 				}
 

@@ -51,7 +51,7 @@ void CGeoThermSmokeProjectile::UpdateDir()
 
 	if (obj == NULL)
 		return;
-	if (!obj->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
+	if (!obj->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
 		return;
 
 	float3 geoVector = pos - obj->pos;

@@ -256,7 +256,7 @@ bool CStrafeAirMoveType::Update()
 			UpdateAirPhysics(crashRudder, crashAileron, crashElevator, 0, owner->frontdir);
 
 			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
-				owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_CRASHING);
+				owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
 				owner->KillUnit(NULL, true, false);
 			}
 
@@ -1099,12 +1099,12 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 		aircraftState = newState;
 	}
 
-	owner->UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, (aircraftState != AIRCRAFT_LANDED));
+	owner->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, (aircraftState != AIRCRAFT_LANDED));
 	owner->useAirLos = true;
 
 	switch (aircraftState) {
 		case AIRCRAFT_CRASHING:
-			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_CRASHING);
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
 			break;
 
 		case AIRCRAFT_FLYING:
@@ -1115,7 +1115,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 			// should be in the STATE_FLYING case, but these aircraft
 			// take forever to reach it reducing factory cycle-times
 			owner->UnBlock();
-			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
 
 		case AIRCRAFT_LANDED:
@@ -1124,7 +1124,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
 			owner->Block();
-			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
+			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
 		default:
 			break;

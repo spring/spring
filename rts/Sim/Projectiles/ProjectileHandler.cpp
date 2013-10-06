@@ -393,7 +393,7 @@ void CProjectileHandler::CheckUnitCollisions(
 		// if this unit fired this projectile, always ignore
 		if (attacker == unit)
 			continue;
-		if (!unit->HasCollidableStateBit(CSolidObject::STATE_BIT_PROJECTILES))
+		if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
 
 		if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
@@ -445,7 +445,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 		if (feature == NULL)
 			break;
 
-		if (!feature->HasCollidableStateBit(CSolidObject::STATE_BIT_PROJECTILES))
+		if (!feature->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {

@@ -204,7 +204,7 @@ float TraceRay(
 					// NOTE:
 					//     if f is non-blocking, ProjectileHandler will not test
 					//     for collisions with projectiles so we can skip it here
-					if (!f->HasCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS))
+					if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 						continue;
 
 					if (CCollisionHandler::DetectHit(f, start, start + dir * length, &cq, true)) {
@@ -231,7 +231,7 @@ float TraceRay(
 
 					if (u == owner)
 						continue;
-					if (!u->HasCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS))
+					if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 						continue;
 					if (ignoreAllies && u->allyteam == owner->allyteam)
 						continue;
@@ -331,7 +331,7 @@ float GuiTraceRay(
 
 			if (unit == exclude)
 				continue;
-			if (!unit->HasCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS))
+			if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 				continue;
 			if (unit->noSelect)
 				continue;
@@ -378,7 +378,7 @@ float GuiTraceRay(
 			// FIXME add useradar?
 			if (!gu->spectatingFullView && !f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
-			if (!f->HasCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS))
+			if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 				continue;
 			if (f->noSelect)
 				continue;
@@ -446,7 +446,7 @@ bool TestCone(
 
 				if (u == owner)
 					continue;
-				if (!u->HasCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS))
+				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
 				if (TestConeHelper(from, dir, length, spread, u))
@@ -463,7 +463,7 @@ bool TestCone(
 
 				if (u == owner)
 					continue;
-				if (!u->HasCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS))
+				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 				if (!u->IsNeutral())
 					continue;
@@ -480,7 +480,7 @@ bool TestCone(
 			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 				const CFeature* f = *featuresIt;
 
-				if (!f->HasCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS))
+				if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
 				if (TestConeHelper(from, dir, length, spread, f))
@@ -532,7 +532,7 @@ bool TestTrajectoryCone(
 
 				if (u == owner)
 					continue;
-				if (!u->HasCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS))
+				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
 				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadii[u->immobile], u)) {
@@ -553,7 +553,7 @@ bool TestTrajectoryCone(
 					continue;
 				if (!u->IsNeutral())
 					continue;
-				if (!u->HasCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS))
+				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
 				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadii[u->immobile], u))
@@ -569,7 +569,7 @@ bool TestTrajectoryCone(
 			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 				const CFeature* f = *featuresIt;
 
-				if (!f->HasCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS))
+				if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
 				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, 0.0f, f))
