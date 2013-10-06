@@ -829,6 +829,10 @@ void CGroundMoveType::CheckCollisionSkid()
 
 	for (ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 		CUnit* collidee = *ui;
+
+		if (!collidee->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
+			continue;
+
 		const UnitDef* collideeUD = collider->unitDef;
 
 		const float sqDist = (pos - collidee->pos).SqLength();
@@ -902,7 +906,7 @@ void CGroundMoveType::CheckCollisionSkid()
 	for (fi = nearFeatures.begin(); fi != nearFeatures.end(); ++fi) {
 		CFeature* collidee = *fi;
 
-		if (!collidee->collidable)
+		if (!collidee->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
 			continue;
 
 		const float sqDist = (pos - collidee->pos).SqLength();

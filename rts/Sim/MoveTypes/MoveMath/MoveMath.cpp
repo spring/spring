@@ -161,8 +161,10 @@ bool CMoveMath::IsBlockedStructureZmax(const MoveDef& moveDef, int xSquare, int 
 
 bool CMoveMath::CrushResistant(const MoveDef& colliderMD, const CSolidObject* collidee)
 {
-	if (!collidee->collidable) { return false; }
-	if (!collidee->crushable) { return true; }
+	if (!collidee->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
+		return false;
+	if (!collidee->crushable)
+		return true;
 
 	return (collidee->crushResistance > colliderMD.crushStrength);
 }
@@ -171,7 +173,7 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 {
 	if (collider == collidee)
 		return true;
-	if (!collidee->collidable)
+	if (!collidee->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
 		return true;
 	// if obstacle is out of map bounds, it cannot block us
 	if (!collidee->pos.IsInBounds())

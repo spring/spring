@@ -72,6 +72,11 @@ public:
 		STATE_BIT_CRASHING = (1 << 10),
 		STATE_BIT_BLOCKING = (1 << 11),
 	};
+	enum CollidableState {
+		STATE_BIT_SOLIDOBJECTS = (1 << 0), // can be set while (physicalState & STATE_BIT_BLOCKING) == 0!
+		STATE_BIT_PROJECTILES  = (1 << 1),
+		STATE_BIT_QUADMAPRAYS  = (1 << 2),
+	};
 	enum DamageType {
 		DAMAGE_EXPLOSION_WEAPON = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
 		DAMAGE_EXPLOSION_DEBRIS = 1, // piece-projectile that triggered GameHelper::Explosion (weaponDefID < 0)
@@ -136,8 +141,9 @@ public:
 
 
 	/**
-	 * Adds this object to the GroundBlockingMap if and only
-	 * if its collidable property is set, else does nothing
+	 * adds this object to the GroundBlockingMap if and only
+	 * if HasCollidableStateBit(STATE_BIT_SOLIDOBJECTS), else
+	 * does nothing
 	 */
 	void Block();
 	/**
@@ -157,23 +163,23 @@ public:
 
 	bool BlockMapPosChanged() const { return (groundBlockPos != pos); }
 
-	bool IsOnGround() const { return (HasPhysicalStateBit(STATE_BIT_ONGROUND)); }
-	bool IsInAir() const { return (HasPhysicalStateBit(STATE_BIT_INAIR)); }
-	bool IsInWater() const { return (HasPhysicalStateBit(STATE_BIT_INWATER)); }
-	bool IsUnderWater() const { return (HasPhysicalStateBit(STATE_BIT_UNDERWATER)); }
+	bool IsOnGround   () const { return (HasPhysicalStateBit(STATE_BIT_ONGROUND   )); }
+	bool IsInAir      () const { return (HasPhysicalStateBit(STATE_BIT_INAIR      )); }
+	bool IsInWater    () const { return (HasPhysicalStateBit(STATE_BIT_INWATER    )); }
+	bool IsUnderWater () const { return (HasPhysicalStateBit(STATE_BIT_UNDERWATER )); }
 	bool IsUnderGround() const { return (HasPhysicalStateBit(STATE_BIT_UNDERGROUND)); }
-	bool IsInVoid() const { return (HasPhysicalStateBit(STATE_BIT_INVOID)); }
+	bool IsInVoid     () const { return (HasPhysicalStateBit(STATE_BIT_INVOID     )); }
 
-	bool IsMoving() const { return (HasPhysicalStateBit(STATE_BIT_MOVING)); }
-	bool IsFlying() const { return (HasPhysicalStateBit(STATE_BIT_FLYING)); }
-	bool IsFalling() const { return (HasPhysicalStateBit(STATE_BIT_FALLING)); }
+	bool IsMoving  () const { return (HasPhysicalStateBit(STATE_BIT_MOVING)); }
+	bool IsFlying  () const { return (HasPhysicalStateBit(STATE_BIT_FLYING)); }
+	bool IsFalling () const { return (HasPhysicalStateBit(STATE_BIT_FALLING)); }
 	bool IsSkidding() const { return (HasPhysicalStateBit(STATE_BIT_SKIDDING)); }
 	bool IsCrashing() const { return (HasPhysicalStateBit(STATE_BIT_CRASHING)); }
 	bool IsBlocking() const { return (HasPhysicalStateBit(STATE_BIT_BLOCKING)); }
 
-	bool HasPhysicalStateBit(unsigned int bit) const { return ((physicalState & bit) != 0); }
-	void SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= (bit); physicalState = static_cast<PhysicalState>(ps); }
-	void ClearPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps &= (~bit); physicalState = static_cast<PhysicalState>(ps); }
+	bool    HasPhysicalStateBit(unsigned int bit) const { return ((physicalState & bit) != 0); }
+	void    SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= ( bit); physicalState = static_cast<PhysicalState>(ps); }
+	void  ClearPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps &= (~bit); physicalState = static_cast<PhysicalState>(ps); }
 	bool UpdatePhysicalStateBit(unsigned int bit, bool set) {
 		if (set) {
 			SetPhysicalStateBit(bit);
@@ -181,6 +187,18 @@ public:
 			ClearPhysicalStateBit(bit);
 		}
 		return (HasPhysicalStateBit(bit));
+	}
+
+	bool    HasCollidableStateBit(unsigned int bit) const { return ((collidableState & bit) != 0); }
+	void    SetCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs |= ( bit); collidableState = static_cast<CollidableState>(cs); }
+	void  ClearCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs &= (~bit); collidableState = static_cast<CollidableState>(cs); } 
+	bool UpdateCollidableStateBit(unsigned int bit, bool set) {
+		if (set) {
+			SetCollidableStateBit(bit);
+		} else {
+			ClearCollidableStateBit(bit);
+		}
+		return (HasCollidableStateBit(bit));
 	}
 
 	void UpdateVoidState(bool set);
@@ -221,7 +239,6 @@ public:
 	float mass;                                 ///< the physical mass of this object (run-time constant)
 	float crushResistance;                      ///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
 
-	bool collidable;                            ///< if this object can be collided with at all (can be true while state&STATE_BIT_BLOCKING == 0), when false object is also skipped by ray-traces
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
 	bool immobile;                              ///< whether this object can be moved or not (except perhaps along y-axis, to make it stay on ground)
 	bool crushKilled;                           ///< true if this object died by being crushed during a collision
@@ -236,7 +253,8 @@ public:
 	int2 footprint;                             ///< The unrotated x-/z-size of this object, according to its footprint.
 
 	SyncedSshort heading;                       ///< Contains the same information as frontdir, but in a short signed integer.
-	PhysicalState physicalState;                ///< The current state of the object within the gameworld.
+	PhysicalState physicalState;                ///< bitmask indicating current state of this object within the game world
+	CollidableState collidableState;            ///< bitmask indicating which types of objects this object can collide with
 
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of

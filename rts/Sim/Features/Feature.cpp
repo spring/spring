@@ -171,7 +171,6 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	health = def->health;
 
 	crushResistance = def->crushResistance;
-	collidable = def->collidable;
 
 	xsize = ((buildFacing & 1) == 0) ? def->xsize : def->zsize;
 	zsize = ((buildFacing & 1) == 1) ? def->xsize : def->zsize;
@@ -212,6 +211,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	quadField->AddFeature(this);
 
 	ChangeTeam(team);
+	SetCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS * (def->collidable));
 	Block();
 
 	if (def->floating) {
