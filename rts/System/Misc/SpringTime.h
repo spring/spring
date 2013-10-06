@@ -54,6 +54,8 @@ namespace Cpp11Clock {
 
 	// number of ticks since clock epoch
 	boost::int64_t Get();
+
+	const char* GetName();
 };
 
 
