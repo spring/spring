@@ -362,7 +362,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 
 		testPos.y = ground->GetHeightAboveWater(testPos.x, testPos.z);
 
-		if (quadField->GetSolidsExact(testPos, unit->radius * 1.5f).empty()) {
+		if (quadField->GetSolidsExact(testPos, unit->radius * 1.5f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS).empty()) {
 			foundPos = testPos; break;
 		}
 	}

@@ -261,7 +261,7 @@ bool CGroundMoveType::Update()
 		return false;
 
 	if (owner->IsSkidding() || OnSlope(1.0f)) {
-		owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
+		owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 		UpdateSkid();
 		return false;
 	}
@@ -653,8 +653,8 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	skidRotVector = skidDir.cross(UpVector) * startSkidding;
 	skidRotAccel = ((gs->randFloat() - 0.5f) * 0.04f) * startFlying;
 
-	owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING * (startSkidding | startFlying));
-	owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING * startFlying);
+	owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING * (startSkidding | startFlying));
+	owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING * startFlying);
 
 	// indicate we want to react to the impulse
 	return true;
@@ -681,7 +681,7 @@ void CGroundMoveType::UpdateSkid()
 
 		if (groundHeight > pos.y) {
 			// ground impact, stop flying
-			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
+			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			owner->Move(UpVector * (groundHeight - pos.y), true);
 
 			// deal ground impact damage
@@ -712,7 +712,7 @@ void CGroundMoveType::UpdateSkid()
 			skidRotAccel = (skidRotSpd - skidRotSpeed) * 0.5f;
 			skidRotAccel *= (PI / 180.0f);
 
-			owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
+			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 			// update wanted-heading after coming to a stop
 			ChangeHeading(owner->heading);
 		} else {
@@ -746,8 +746,8 @@ void CGroundMoveType::UpdateSkid()
 			owner->SetVelocity(spd + (UpVector * mapInfo->map.gravity));
 
 			// flying requires skidding and relies on CalcSkidRot
-			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
-			owner->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 
 			useHeading = false;
 		} else if ((groundHeight - pos.y) > spd.y) {
@@ -805,7 +805,7 @@ void CGroundMoveType::UpdateControlledDrop()
 	if (gh > pos.y) {
 		// ground impact, stop parachute animation
 		owner->Move(UpVector * (gh - pos.y), true);
-		owner->ClearPhysicalStateBit(CSolidObject::STATE_BIT_FALLING);
+		owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FALLING);
 		owner->script->Landed();
 	}
 }
@@ -830,7 +830,7 @@ void CGroundMoveType::CheckCollisionSkid()
 	for (ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 		CUnit* collidee = *ui;
 
-		if (!collidee->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
+		if (!collidee->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
 			continue;
 
 		const UnitDef* collideeUD = collider->unitDef;
@@ -906,7 +906,7 @@ void CGroundMoveType::CheckCollisionSkid()
 	for (fi = nearFeatures.begin(); fi != nearFeatures.end(); ++fi) {
 		CFeature* collidee = *fi;
 
-		if (!collidee->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
+		if (!collidee->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
 			continue;
 
 		const float sqDist = (pos - collidee->pos).SqLength();
@@ -1019,7 +1019,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	const float avoidanceRadius = std::max(currentSpeed, 1.0f) * (avoider->radius * 2.0f);
 	const float avoiderRadius = FOOTPRINT_RADIUS(avoiderMD->xsize, avoiderMD->zsize, 1.0f);
 
-	const vector<CSolidObject*>& objects = quadField->GetSolidsExact(avoider->pos, avoidanceRadius);
+	const vector<CSolidObject*>& objects = quadField->GetSolidsExact(avoider->pos, avoidanceRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
 	for (vector<CSolidObject*>::const_iterator oi = objects.begin(); oi != objects.end(); ++oi) {
 		const CSolidObject* avoidee = *oi;
@@ -2217,7 +2217,7 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
 	const float oldSpeed = math::fabs(oldSpeedVector.dot(flatFrontDir));
 	const float newSpeed = math::fabs(newSpeedVector.dot(flatFrontDir));
 
-	owner->UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, newSpeed > 0.01f);
+	owner->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, newSpeed > 0.01f);
 
 	// if being built, the nanoframe might not be exactly on
 	// the ground and would jitter from gravity acting on it

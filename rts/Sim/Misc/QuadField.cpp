@@ -694,8 +694,12 @@ std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& mins, co
 
 
 
-std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos, float radius)
-{
+std::vector<CSolidObject*> CQuadField::GetSolidsExact(
+	const float3& pos,
+	const float radius,
+	const unsigned int physicalStateBits,
+	const unsigned int collisionStateBits
+) {
 	GML_RECMUTEX_LOCK(qnum); // GetSolidsExact
 
 	const std::vector<int>& quads = GetQuads(pos, radius);
@@ -713,7 +717,9 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos, float r
 
 			if (u->tempNum == tempNum)
 				continue;
-			if (!u->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
+			if (!u->HasPhysicalStateBit(physicalStateBits))
+				continue;
+			if (!u->HasCollidableStateBit(collisionStateBits))
 				continue;
 			if ((pos - u->midPos).SqLength() >= Square(radius + u->radius))
 				continue;
@@ -727,7 +733,9 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos, float r
 
 			if (f->tempNum == tempNum)
 				continue;
-			if (!f->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS))
+			if (!f->HasPhysicalStateBit(physicalStateBits))
+				continue;
+			if (!f->HasCollidableStateBit(collisionStateBits))
 				continue;
 			if ((pos - f->midPos).SqLength() >= Square(radius + f->radius))
 				continue;

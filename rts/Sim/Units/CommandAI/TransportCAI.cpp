@@ -360,7 +360,7 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 		if (moveDef != NULL && ground->GetSlope(pos.x, pos.z) > moveDef->maxSlope)
 			continue;
 
-		const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, spread);
+		const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, spread, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
 		if (isAirTrans && (units.size() > 1 || (units.size() == 1 && units[0] != owner))) continue;
 		if (!isAirTrans && !units.empty()) continue;
@@ -375,13 +375,14 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 
 bool CTransportCAI::SpotIsClear(float3 pos, CUnit* unitToUnload)
 {
-	if (!static_cast<CTransportUnit*>(owner)->CanLoadUnloadAtPos(pos, unitToUnload)) {
+	if (!static_cast<CTransportUnit*>(owner)->CanLoadUnloadAtPos(pos, unitToUnload))
 		return false;
-	}
-	if (unitToUnload->moveDef && ground->GetSlope(pos.x,pos.z) > unitToUnload->moveDef->maxSlope) {
+	if (unitToUnload->moveDef != NULL && ground->GetSlope(pos.x, pos.z) > unitToUnload->moveDef->maxSlope)
 		return false;
-	}
-	if (!quadField->GetSolidsExact(pos, std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE).empty()) {
+
+	const float radius = std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE;
+
+	if (!quadField->GetSolidsExact(pos, radius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS).empty()) {
 		return false;
 	}
 
@@ -391,16 +392,16 @@ bool CTransportCAI::SpotIsClear(float3 pos, CUnit* unitToUnload)
 
 bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload)
 {
-	if (!static_cast<CTransportUnit*>(owner)->CanLoadUnloadAtPos(pos, unitToUnload)) {
-		return false;
-	}
-
-	if (unitToUnload->moveDef && ground->GetSlope(pos.x,pos.z) > unitToUnload->moveDef->maxSlope) {
-		return false;
-	}
-
 	const CTransportUnit* me = static_cast<CTransportUnit*>(owner);
-	const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE);
+
+	if (!me->CanLoadUnloadAtPos(pos, unitToUnload))
+		return false;
+	if (unitToUnload->moveDef != NULL && ground->GetSlope(pos.x, pos.z) > unitToUnload->moveDef->maxSlope)
+		return false;
+
+	const float radius = std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE;
+
+	const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, radius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 	const std::list<CTransportUnit::TransportedUnit>& transportees = me->GetTransportedUnits();
 
 	for (std::vector<CSolidObject*>::const_iterator it = units.begin(); it != units.end(); ++it) {

@@ -30,7 +30,7 @@ enum TerrainChangeTypes {
 
 enum YardmapStates {
 	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
-	//YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
+//  YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
 	YARDMAP_YARD        = 1,    // walkable when yard is open
 	YARDMAP_YARDINV     = 2,    // walkable when yard is closed
 	YARDMAP_BLOCKED     = 0xFF & ~YARDMAP_YARDINV, // always block     (not walkable, not buildable)
@@ -53,29 +53,29 @@ public:
 		//   {ONGROUND,*WATER} and INAIR are mutually exclusive
 		//   {UNDERGROUND,UNDERWATER} are not (and are the only
 		//   bits to take radius into account)
-		STATE_BIT_ONGROUND    = (1 << 0),
-		STATE_BIT_INWATER     = (1 << 1),
-		STATE_BIT_UNDERWATER  = (1 << 2),
-		STATE_BIT_UNDERGROUND = (1 << 3),
-		STATE_BIT_INAIR       = (1 << 4),
-		STATE_BIT_INVOID      = (1 << 5),
+		PSTATE_BIT_ONGROUND    = (1 << 0),
+		PSTATE_BIT_INWATER     = (1 << 1),
+		PSTATE_BIT_UNDERWATER  = (1 << 2),
+		PSTATE_BIT_UNDERGROUND = (1 << 3),
+		PSTATE_BIT_INAIR       = (1 << 4),
+		PSTATE_BIT_INVOID      = (1 << 5),
 
 		// special bits for impulse-affected objects that do
 		// not get set automatically by UpdatePhysicalState;
 		// also used by aircraft to control block / unblock
 		// behavior
 		// NOTE: FLYING DOES NOT ALWAYS IMPLY INAIR!
-		STATE_BIT_MOVING   = (1 <<  6),
-		STATE_BIT_FLYING   = (1 <<  7),
-		STATE_BIT_FALLING  = (1 <<  8),
-		STATE_BIT_SKIDDING = (1 <<  9),
-		STATE_BIT_CRASHING = (1 << 10),
-		STATE_BIT_BLOCKING = (1 << 11),
+		PSTATE_BIT_MOVING   = (1 <<  6),
+		PSTATE_BIT_FLYING   = (1 <<  7),
+		PSTATE_BIT_FALLING  = (1 <<  8),
+		PSTATE_BIT_SKIDDING = (1 <<  9),
+		PSTATE_BIT_CRASHING = (1 << 10),
+		PSTATE_BIT_BLOCKING = (1 << 11),
 	};
 	enum CollidableState {
-		STATE_BIT_SOLIDOBJECTS = (1 << 0), // can be set while (physicalState & STATE_BIT_BLOCKING) == 0!
-		STATE_BIT_PROJECTILES  = (1 << 1),
-		STATE_BIT_QUADMAPRAYS  = (1 << 2),
+		CSTATE_BIT_SOLIDOBJECTS = (1 << 0), // can be set while (physicalState & PSTATE_BIT_BLOCKING) == 0!
+		CSTATE_BIT_PROJECTILES  = (1 << 1),
+		CSTATE_BIT_QUADMAPRAYS  = (1 << 2),
 	};
 	enum DamageType {
 		DAMAGE_EXPLOSION_WEAPON = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
@@ -142,7 +142,7 @@ public:
 
 	/**
 	 * adds this object to the GroundBlockingMap if and only
-	 * if HasCollidableStateBit(STATE_BIT_SOLIDOBJECTS), else
+	 * if HasCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS), else
 	 * does nothing
 	 */
 	void Block();
@@ -163,19 +163,19 @@ public:
 
 	bool BlockMapPosChanged() const { return (groundBlockPos != pos); }
 
-	bool IsOnGround   () const { return (HasPhysicalStateBit(STATE_BIT_ONGROUND   )); }
-	bool IsInAir      () const { return (HasPhysicalStateBit(STATE_BIT_INAIR      )); }
-	bool IsInWater    () const { return (HasPhysicalStateBit(STATE_BIT_INWATER    )); }
-	bool IsUnderWater () const { return (HasPhysicalStateBit(STATE_BIT_UNDERWATER )); }
-	bool IsUnderGround() const { return (HasPhysicalStateBit(STATE_BIT_UNDERGROUND)); }
-	bool IsInVoid     () const { return (HasPhysicalStateBit(STATE_BIT_INVOID     )); }
+	bool IsOnGround   () const { return (HasPhysicalStateBit(PSTATE_BIT_ONGROUND   )); }
+	bool IsInAir      () const { return (HasPhysicalStateBit(PSTATE_BIT_INAIR      )); }
+	bool IsInWater    () const { return (HasPhysicalStateBit(PSTATE_BIT_INWATER    )); }
+	bool IsUnderWater () const { return (HasPhysicalStateBit(PSTATE_BIT_UNDERWATER )); }
+	bool IsUnderGround() const { return (HasPhysicalStateBit(PSTATE_BIT_UNDERGROUND)); }
+	bool IsInVoid     () const { return (HasPhysicalStateBit(PSTATE_BIT_INVOID     )); }
 
-	bool IsMoving  () const { return (HasPhysicalStateBit(STATE_BIT_MOVING)); }
-	bool IsFlying  () const { return (HasPhysicalStateBit(STATE_BIT_FLYING)); }
-	bool IsFalling () const { return (HasPhysicalStateBit(STATE_BIT_FALLING)); }
-	bool IsSkidding() const { return (HasPhysicalStateBit(STATE_BIT_SKIDDING)); }
-	bool IsCrashing() const { return (HasPhysicalStateBit(STATE_BIT_CRASHING)); }
-	bool IsBlocking() const { return (HasPhysicalStateBit(STATE_BIT_BLOCKING)); }
+	bool IsMoving  () const { return (HasPhysicalStateBit(PSTATE_BIT_MOVING  )); }
+	bool IsFlying  () const { return (HasPhysicalStateBit(PSTATE_BIT_FLYING  )); }
+	bool IsFalling () const { return (HasPhysicalStateBit(PSTATE_BIT_FALLING )); }
+	bool IsSkidding() const { return (HasPhysicalStateBit(PSTATE_BIT_SKIDDING)); }
+	bool IsCrashing() const { return (HasPhysicalStateBit(PSTATE_BIT_CRASHING)); }
+	bool IsBlocking() const { return (HasPhysicalStateBit(PSTATE_BIT_BLOCKING)); }
 
 	bool    HasPhysicalStateBit(unsigned int bit) const { return ((physicalState & bit) != 0); }
 	void    SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= ( bit); physicalState = static_cast<PhysicalState>(ps); }

@@ -475,9 +475,9 @@ static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 	// update SO-bit of collidable state
 	if (lua_isboolean(L, 3)) {
 		if (lua_toboolean(L, 3)) {
-			o->SetCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS);
+			o->SetCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 		} else {
-			o->ClearCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS);
+			o->ClearCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
 			// run this again so that object gets removed from
 			// the blocking map if(f) SO-collidability was set
@@ -487,8 +487,8 @@ static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 		}
 	}
 
-	o->UpdateCollidableStateBit(CSolidObject::STATE_BIT_PROJECTILES, luaL_optboolean(L, 7, o->HasCollidableStateBit(CSolidObject::STATE_BIT_PROJECTILES)));
-	o->UpdateCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS, luaL_optboolean(L, 8, o->HasCollidableStateBit(CSolidObject::STATE_BIT_QUADMAPRAYS)));
+	o->UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES, luaL_optboolean(L, 7, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES)));
+	o->UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS, luaL_optboolean(L, 8, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS)));
 
 	o->crushable = luaL_optboolean(L, 4, o->crushable);
 	o->blockEnemyPushing = luaL_optboolean(L, 5, o->blockEnemyPushing);

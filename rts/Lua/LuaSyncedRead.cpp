@@ -505,7 +505,7 @@ static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
 	if (o == NULL)
 		return 0;
 
-	lua_pushboolean(L, o->HasCollidableStateBit(CSolidObject::STATE_BIT_SOLIDOBJECTS));
+	lua_pushboolean(L, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS));
 	lua_pushboolean(L, o->crushable);
 	lua_pushboolean(L, o->IsBlocking());
 	return 3;
