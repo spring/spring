@@ -6,6 +6,7 @@
 #include "System/creg/creg_cond.h"
 
 #include <boost/cstdint.hpp>
+#include <cassert>
 
 // glibc's chrono is non monotonic/not steady atm (it depends on set timezone and can change at runtime!)
 // we don't want to specially handle all the problems caused by this, so just use boost version instead
