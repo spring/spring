@@ -251,13 +251,14 @@ public:
 	};
 
 public:
-	static void AddJob(Job j) {
-		jobs[spring_gettime() + spring_time(j.startDirect ? 0 : 1000.0f/j.freq)] = j;
+	static void AddJob(Job j, const spring_time t) {
+		jobs[t + spring_time(j.startDirect ? 0 : (1000.0f / j.freq))] = j;
 	}
 
 	static void Update() {
 		const spring_time now = spring_gettime();
 		std::map<spring_time, Job>::iterator it = jobs.begin();
+
 		while (it != jobs.end() && it->first <= now) {
 			Job* j = &it->second;
 			if (j->f()) {
@@ -286,7 +287,8 @@ DO_ONCE_FNC(
 		return true;
 	};
 	j.freq = 30;
-	JobDispatcher::AddJob(j);
+	// static initialization is done BEFORE Spring's time-epoch is set
+	JobDispatcher::AddJob(j, spring_notime);
 );
 
 DO_ONCE_FNC(
@@ -296,7 +298,7 @@ DO_ONCE_FNC(
 		return true;
 	};
 	j.freq = 1;
-	JobDispatcher::AddJob(j);
+	JobDispatcher::AddJob(j, spring_notime);
 );
 
 
