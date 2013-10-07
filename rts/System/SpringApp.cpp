@@ -304,7 +304,7 @@ bool SpringApp::InitWindow(const char* title)
 
 	// set the Spring "epoch", do this a bit after SDL_Init in
 	// case SDL_GetTicks is our clock (so it does not become 0)
-	spring_time::setstarttime(spring_time::gettime());
+	spring_time::setstarttime(spring_time::gettime(true));
 
 	// anyone other thread spawned from the main-process should be `unknown`
 	Threading::SetThreadName("unknown");
