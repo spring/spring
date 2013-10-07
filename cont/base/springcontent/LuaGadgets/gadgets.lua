@@ -1287,9 +1287,11 @@ function gadgetHandler:UnitPreDamaged(
   local retImpulse = 1.0
 
   for _,g in ipairs(self.UnitPreDamagedList) do
-    dmg, imp = g:UnitPreDamaged(unitID, unitDefID, unitTeam,
-                  damage, paralyzer, weaponDefID, projectileID,
-                  attackerID, attackerDefID, attackerTeam)
+    dmg, imp = g:UnitPreDamaged(
+      unitID, unitDefID, unitTeam,
+      retDamage, paralyzer,
+      weaponDefID, projectileID,
+      attackerID, attackerDefID, attackerTeam)
 
     if (dmg ~= nil) then retDamage = dmg end
     if (imp ~= nil) then retImpulse = imp end
@@ -1489,9 +1491,11 @@ function gadgetHandler:FeaturePreDamaged(
   local retImpulse = 1.0
 
   for _,g in ipairs(self.FeaturePreDamagedList) do
-    dmg, imp = g:FeaturePreDamaged(featureID, featureDefID, featureTeam,
-                  damage, weaponDefID, projectileID,
-                  attackerID, attackerDefID, attackerTeam)
+    dmg, imp = g:FeaturePreDamaged(
+      featureID, featureDefID, featureTeam,
+      retDamage,
+      weaponDefID, projectileID,
+      attackerID, attackerDefID, attackerTeam)
 
     if (dmg ~= nil) then retDamage = dmg end
     if (imp ~= nil) then retImpulse = imp end
