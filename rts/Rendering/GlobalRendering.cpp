@@ -99,10 +99,10 @@ CR_REG_METADATA(CGlobalRendering, (
 CGlobalRendering::CGlobalRendering()
 	: timeOffset(0.0f)
 	, lastFrameTime(0.0f)
-	, lastFrameStart(spring_gettime())
+	, lastFrameStart(spring_notime)
 	, weightedSpeedFactor(0.0f)
 	, drawFrame(1)
-	, FPS(30.0f)
+	, FPS(GAME_SPEED)
 
 	, winState(WINSTATE_DEFAULT)
 	, screenSizeX(1)
