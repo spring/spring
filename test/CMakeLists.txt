@@ -69,6 +69,7 @@ Else  (NOT Boost_FOUND)
 			engineSystemNet
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
+			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${SDL_LIBRARY}
 			${WS2_32_LIBRARY}
