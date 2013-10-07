@@ -240,32 +240,47 @@ public:
 		//, inDraw(false)
 		, startDirect(true)
 		, catchUp(false)
+		, name("")
 		{}
 
 		std::function<bool()> f; // allows us to use lambdas
+
 		float freq;
 		//bool inSim;
 		//bool inDraw;
 		bool startDirect;
 		bool catchUp;
+
+		const char* name;
 	};
 
 public:
 	static void AddJob(Job j, const spring_time t) {
-		jobs[t + spring_time(j.startDirect ? 0 : (1000.0f / j.freq))] = j;
+		spring_time jobTime = t;
+
+		// never overwrite one job by another (!)
+		while (jobs.find(jobTime) != jobs.end())
+			jobTime += spring_time(1);
+
+		jobs[jobTime] = j;
 	}
 
 	static void Update() {
 		const spring_time now = spring_gettime();
+
 		std::map<spring_time, Job>::iterator it = jobs.begin();
 
-		while (it != jobs.end() && it->first <= now) {
-			Job* j = &it->second;
-			if (j->f()) {
-				spring_time nextCallTime = j->catchUp ? it->first : spring_gettime();
-				nextCallTime += spring_time(1000.0f / j->freq);
-				jobs[nextCallTime] = *j;
+		while (it != jobs.end()) {
+			if (it->first > now) {
+				++it; continue;
 			}
+
+			Job* j = &it->second;
+
+			if (j->f()) {
+				AddJob(*j, (j->catchUp ? it->first : spring_gettime()) + spring_time(1000.0f / j->freq));
+			}
+
 			jobs.erase(it); //FIXME remove by range? (faster!)
 			it = jobs.begin();
 		}
@@ -286,9 +301,10 @@ DO_ONCE_FNC(
 		CInputReceiver::CollectGarbage();
 		return true;
 	};
-	j.freq = 30;
+	j.freq = GAME_SPEED;
+	j.name = "EventHandler::CollectGarbage";
 	// static initialization is done BEFORE Spring's time-epoch is set
-	JobDispatcher::AddJob(j, spring_notime);
+	JobDispatcher::AddJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
 );
 
 DO_ONCE_FNC(
@@ -298,7 +314,8 @@ DO_ONCE_FNC(
 		return true;
 	};
 	j.freq = 1;
-	JobDispatcher::AddJob(j, spring_notime);
+	j.name = "Profiler::Update";
+	JobDispatcher::AddJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
 );
 
 
