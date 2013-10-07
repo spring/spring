@@ -828,8 +828,10 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 
 			assert(numUnits < units.size());
 
-			u->tempNum = tempNum;
-			units[numUnits++] = u;
+			if (numUnits < units.size()) {
+				u->tempNum = tempNum;
+				units[numUnits++] = u;
+			}
 		}
 
 		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
@@ -847,8 +849,10 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 
 			assert(numFeatures < features.size());
 
-			f->tempNum = tempNum;
-			features[numFeatures++] = f;
+			if (numFeatures < features.size()) {
+				f->tempNum = tempNum;
+				features[numFeatures++] = f;
+			}
 		}
 	}
 
@@ -856,8 +860,10 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	assert(numFeatures < features.size());
 
 	// set end-of-list sentinels
-	units[numUnits] = NULL;
-	features[numFeatures] = NULL;
+	if (numUnits < units.size())
+		units[numUnits] = NULL;
+	if (numFeatures < features.size())
+		features[numFeatures] = NULL;
 
 	if (numUnitsPtr != NULL) { *numUnitsPtr = numUnits; }
 	if (numFeaturesPtr != NULL) { *numFeaturesPtr = numFeatures; }
