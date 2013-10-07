@@ -408,7 +408,7 @@ void CProjectileDrawer::DrawProjectiles(int modelType, int numFlyingPieces, int*
 {
 	typedef std::set<CProjectile*> ProjectileSet;
 	typedef std::map<int, ProjectileSet> ProjectileBin;
-	typedef ProjectileSet::iterator ProjectileSetIt;
+	//typedef ProjectileSet::iterator ProjectileSetIt;
 	typedef ProjectileBin::iterator ProjectileBinIt;
 
 	ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
