@@ -197,11 +197,7 @@ bool SpringApp::Initialize()
 	// Initialize crash reporting
 	CrashHandler::Install();
 
-	good_fpu_control_registers("::Run");
-
-	// Install Watchdog
-	Watchdog::Install();
-	Watchdog::RegisterThread(WDT_MAIN, true);
+	good_fpu_control_registers(__FUNCTION__);
 
 	GlobalConfig::Instantiate();
 
@@ -210,6 +206,14 @@ bool SpringApp::Initialize()
 		SDL_Quit();
 		return false;
 	}
+
+	// set the Spring "epoch", do this a bit after SDL_Init in
+	// case SDL_GetTicks is our clock (so it does not become 0)
+	spring_time::setstarttime(spring_time::gettime(true));
+
+	// Install Watchdog (must happen after time epoch is set)
+	Watchdog::Install();
+	Watchdog::RegisterThread(WDT_MAIN, true);
 
 	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
 	FileSystemInitializer::Initialize();
@@ -301,10 +305,6 @@ bool SpringApp::InitWindow(const char* title)
 	glClearColor(0.0f,0.0f,0.0f,0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapBuffers();
-
-	// set the Spring "epoch", do this a bit after SDL_Init in
-	// case SDL_GetTicks is our clock (so it does not become 0)
-	spring_time::setstarttime(spring_time::gettime(true));
 
 	// anyone other thread spawned from the main-process should be `unknown`
 	Threading::SetThreadName("unknown");
