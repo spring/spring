@@ -256,6 +256,8 @@ bool CClassicGroundMoveType::Update()
 
 void CClassicGroundMoveType::SlowUpdate()
 {
+	AMoveType::SlowUpdate();
+
 	if (owner->transporter) {
 		if (progressState == Active)
 			StopEngine();
@@ -294,20 +296,6 @@ void CClassicGroundMoveType::SlowUpdate()
 			wh = ground->GetHeightReal(owner->pos.x, owner->pos.z);
 		}
 		owner->Move(UpVector * (wh - owner->pos.y), true);
-	}
-
-	if (owner->pos != oldSlowUpdatePos) {
-		oldSlowUpdatePos = owner->pos;
-
-		int newmapSquare = ground->GetSquare(owner->pos);
-		if (newmapSquare != owner->mapSquare) {
-			owner->mapSquare = newmapSquare;
-
-			losHandler->MoveUnit(owner, false);
-			radarHandler->MoveUnit(owner);
-		}
-
-		quadField->MovedUnit(owner);
 	}
 }
 
