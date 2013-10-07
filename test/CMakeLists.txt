@@ -155,6 +155,7 @@ Else  (NOT Boost_FOUND)
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
+			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${SDL_LIBRARY}
 		)
@@ -298,6 +299,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${Boost_SYSTEM_LIBRARY}
+			${SDL_LIBRARY}
 		)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
 
