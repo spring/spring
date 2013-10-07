@@ -104,7 +104,7 @@ public:
 	void sleep_until();
 
 
-	static spring_time gettime() { assert(xs != 0); return spring_time_native(Cpp11Clock::Get()); }
+	static spring_time gettime(bool init = false) { assert(xs != 0 || init); return spring_time_native(Cpp11Clock::Get()); }
 	static spring_time getstarttime() { assert(xs != 0); return spring_time_native(xs); }
 	static spring_time getelapsedtime() { return (gettime() - getstarttime()); }
 
