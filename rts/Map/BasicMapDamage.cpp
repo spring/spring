@@ -296,6 +296,7 @@ void CBasicMapDamage::UpdateLos()
 			continue;
 		}
 
+		// FIXME: why only losHandler and not also radarHandler?
 		losHandler->MoveUnit(unit, true);
 	}
 }
