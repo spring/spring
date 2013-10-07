@@ -377,7 +377,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 	}
 
-	showMTInfo = (showMTInfo != 0)? globalConfig->GetMultiThreadLua() : -1;
+	showMTInfo = -1;
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
