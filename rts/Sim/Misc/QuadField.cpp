@@ -796,11 +796,17 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	const int tempNum = gs->tempNum++;
 
 	// start counting from the previous object-cache sizes
-	int numUnits = (numUnitsPtr == NULL)? 0: (*numUnitsPtr);
-	int numFeatures = (numFeaturesPtr == NULL)? 0: (*numFeaturesPtr);
+	unsigned int numUnits = (numUnitsPtr == NULL)? 0: (*numUnitsPtr);
+	unsigned int numFeatures = (numFeaturesPtr == NULL)? 0: (*numFeaturesPtr);
 
 	int* begQuad = &tempQuads[0];
 	int* endQuad = &tempQuads[0];
+
+	// bail early if caches are already full
+	if (numUnits >= units.size())
+		return;
+	if (numFeatures >= features.size())
+		return;
 
 	assert(numUnits == 0 || units[numUnits] == NULL);
 	assert(numFeatures == 0 || features[numFeatures] == NULL);
