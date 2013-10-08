@@ -32,9 +32,8 @@ local function ShowStats()
 end
 
 function widget:GameOver()
-	Spring.Echo("GameOver called!")
-	ShowStats()
 	Spring.SendCommands("quit")
+	ShowStats()
 end
 
 function widget:Update()
