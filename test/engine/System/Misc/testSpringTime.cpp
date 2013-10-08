@@ -154,6 +154,7 @@ struct TestProcessor {
 BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 {
 	LOG("Clock Precision Test");
+	spring_time::setstarttime(spring_time::gettime(true));
 
 	#ifdef BOOST_CHRONO_HAS_CLOCK_STEADY
 	LOG("[%s] BOOST_CHRONO_HAS_CLOCK_STEADY defined --> CLOCK_MONOTONIC", __FUNCTION__);
