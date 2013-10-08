@@ -197,10 +197,12 @@ protected:
 
 struct LuaAddConsoleLineEvent: public LuaLogEventBase {
 public:
-	LuaAddConsoleLineEvent(const std::string& msg, const std::string& sec, int lvl): LuaLogEventBase(LOG_CONSOLE_LINE) {
-		message = msg;
-		section = sec;
-		level = lvl;
+	LuaAddConsoleLineEvent(const std::string& msg, const std::string& sec, int lvl):
+		LuaLogEventBase(LOG_CONSOLE_LINE),
+		message(msg),
+		section(sec),
+		level(lvl)
+	{
 	}
 	const std::string& GetMessage() const { return message; }
 	const std::string& GetSection() const { return section; }
