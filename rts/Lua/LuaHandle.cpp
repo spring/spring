@@ -249,13 +249,19 @@ int CLuaHandle::XCall(lua_State* srcState, const string& funcName)
 
 		LuaUtils::CopyData(L, srcState, srcCount);
 
+		const bool origDrawingState = LuaOpenGL::IsDrawingEnabled(L);
+		LuaOpenGL::SetDrawingEnabled(L, LuaOpenGL::IsDrawingEnabled(srcState));
+
 		// call the function
-		if (!RunCallIn(L, funcHash, srcCount, LUA_MULTRET)) {
+		const bool failed = !RunCallIn(L, funcHash, srcCount, LUA_MULTRET);
+
+		LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
+
+		if (failed)
 			return 0;
-		}
+
 		retCount = lua_gettop(L) - top;
 
-		//lua_settop(srcState, 0);
 		if (retCount > 0) {
 			LuaUtils::CopyData(srcState, L, retCount);
 		}
