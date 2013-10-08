@@ -64,6 +64,7 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/System/ThreadPool.cpp"
 	"${ENGINE_SRC_ROOT}/System/Info.cpp"
 	"${ENGINE_SRC_ROOT}/System/Option.cpp"
+	"${ENGINE_SRC_ROOT}/System/SafeVector.cpp"
 	"${ENGINE_SRC_ROOT}/System/SafeCStrings.c"
 	"${ENGINE_SRC_ROOT}/System/Util.cpp"
 	"${ENGINE_SRC_ROOT}/System/float4.cpp"
