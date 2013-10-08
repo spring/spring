@@ -146,13 +146,6 @@ IF    (MINGW)
 	TARGET_LINK_LIBRARIES (springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY})
 ENDIF (MINGW)
 
-ADD_LIBRARY(springserver SHARED
-		${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp
-		${sources_engine_System_Log_sinkFile}
-		${sources_engine_System_Log_sinkOutputDebugString}
-	)
-TARGET_LINK_LIBRARIES(springserver springserver-static)
-
 # Compile dedicated server executable
 ADD_EXECUTABLE(engine-dedicated
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp
@@ -164,8 +157,6 @@ ADD_EXECUTABLE(engine-dedicated
 	)
 TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
 
-### Install the executable
-INSTALL(TARGETS springserver     DESTINATION ${LIBDIR})
 INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
 
 # Only build & install spring-dedicated executable & dependencies

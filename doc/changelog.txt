@@ -104,6 +104,7 @@ Buildprocess:
      spring-dedicated, spring-headless, spring-legacy, spring-multithreaded
  - more unittests (extended FileSystem, timers, unitsync, SSE Matrix Math, ...)
  - fix some errors when running spring in-source (AI / Interfaces are still broken)
+ ! remove unused libspringserver
 
 Bugfixes:
  ! fix {Get,Set}UnitWeapon{Fire,HoldFire,TryTarget,TestTarget,TestRange,HaveFreeLineOfFire} WeaponID argument to use the same 1-starting indexes as rest of lua interface
