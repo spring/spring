@@ -12,4 +12,6 @@ add_library(engineSystemNet STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/UDPListener.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UnpackPacket.cpp"
 	)
+# -fPIC is required as we link engineSystemNet.a into libspringserver.so
+set_target_properties(engineSystemNet PROPERTIES COMPILE_FLAGS "${PIC_FLAG}")
 
