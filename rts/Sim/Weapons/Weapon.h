@@ -52,6 +52,8 @@ public:
 	bool TryTargetRotate(float3 pos, bool userTarget);
 	bool TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit* unit = 0);
 
+	float3 GetUnitPositionWithError( const CUnit* unit ) const;
+
 	bool CobBlockShot(const CUnit* unit);
 	float TargetWeight(const CUnit* unit) const;
 	void SlowUpdate(bool noAutoTargetOverride);

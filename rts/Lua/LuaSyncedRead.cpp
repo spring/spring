@@ -3340,24 +3340,23 @@ int LuaSyncedRead::GetUnitWeaponTryTarget(lua_State* L)
 
 	float3 pos;
 
-	//we cannot test calling TryTarget directly by passing a position that
-	//is not approximately the wanted checked position, because TryTarget
-	//checks for target using passed position for checking both free line of fire and range
+	//we cannot test calling TryTarget/TestTarget/HaveFreeLineOfFire directly
+	// by passing a position thatis not approximately the wanted checked position, because
+	//the checks for target using passed position for checking both free line of fire and range
 	//which would result in wrong test unless target was by chance near coords <0,0,0>
 	//while position alone works because NULL target omits target class validity checks
-	//for single unitID we need the special function which takes target pos and overlays
-	//the error vector
 
 	if (lua_gettop(L) >= 5) {
 		pos.x = luaL_optnumber(L, 3, 0.0f);
 		pos.y = luaL_optnumber(L, 4, 0.0f);
 		pos.z = luaL_optnumber(L, 5, 0.0f);
-		lua_pushboolean(L, weapon->TryTarget(pos, true, enemy));
+
 	} else {
 		enemy = ParseUnit(L, __FUNCTION__, 3);
-		lua_pushboolean(L, weapon->TryTarget(enemy, true));
+		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
+	lua_pushboolean(L, weapon->TryTarget(pos, true, enemy));
 	return 1;
 }
 
@@ -3385,6 +3384,7 @@ int LuaSyncedRead::GetUnitWeaponTestTarget(lua_State* L)
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 	} else {
 		enemy = ParseUnit(L, __FUNCTION__, 3);
+		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
 	lua_pushboolean(L, weapon->TestTarget(pos, true, enemy));
@@ -3415,6 +3415,7 @@ int LuaSyncedRead::GetUnitWeaponTestRange(lua_State* L)
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 	} else {
 		enemy = ParseUnit(L, __FUNCTION__, 3);
+		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
 	lua_pushboolean(L, weapon->TestRange(pos, true, enemy));
@@ -3445,6 +3446,7 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 	} else {
 		enemy = ParseUnit(L, __FUNCTION__, 3);
+		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
 	lua_pushboolean(L, weapon->HaveFreeLineOfFire(pos, true, enemy));
