@@ -1933,15 +1933,19 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		const float3 pos(luaL_checkfloat(L, 2),
 		                 luaL_checkfloat(L, 3),
 		                 luaL_checkfloat(L, 4));
-		const bool manualFire = luaL_optboolean(L, 5, false);
-		unit->AttackGround(pos, false, manualFire);
+		const bool manualFire = lua_isboolean(L, 5) && lua_toboolean(L, 5);
+		lua_pushboolean(L,unit->AttackGround(pos, false, manualFire));
+		return 1;
 	}
 	else if (args >= 2) {
 		CUnit* target = ParseRawUnit(L, __FUNCTION__, 2);
-		const bool manualFire = luaL_optboolean(L, 3, false);
-		unit->AttackUnit(target, false, manualFire);
+		const bool manualFire = lua_isboolean(L, 3) && lua_toboolean(L, 3);
+		lua_pushboolean(L,unit->AttackUnit(target, false, manualFire));
+		return 1;
 	}
-	return 0;
+	else {
+		return 0;
+	}
 }
 
 
