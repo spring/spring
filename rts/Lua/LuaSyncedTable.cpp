@@ -44,6 +44,8 @@ static int SyncTableIndex(lua_State* dstL)
 		return 0;
 
 	auto slh  = CLuaHandleSynced::GetSyncedHandle(dstL);
+	if (!slh->IsValid())
+		return 0;
 	auto srcL = slh->GetLuaState();
 
 	const int srcTop = lua_gettop(srcL);

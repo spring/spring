@@ -368,23 +368,30 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 	//LUA_OPEN_LIB(L, luaopen_package);
 	//LUA_OPEN_LIB(L, luaopen_debug);
 
-	// delete some dangerous functions
+	lua_getglobal(L, "next");
+	origNextRef = luaL_ref(L, LUA_REGISTRYINDEX);
+
+	// delete/replace some dangerous functions
 	lua_pushnil(L); lua_setglobal(L, "dofile");
 	lua_pushnil(L); lua_setglobal(L, "loadfile");
 	lua_pushnil(L); lua_setglobal(L, "loadlib");
-	lua_pushnil(L); lua_setglobal(L, "loadstring"); // replaced
 	lua_pushnil(L); lua_setglobal(L, "require");
-	lua_pushnil(L); lua_setglobal(L, "rawequal");
-	lua_pushnil(L); lua_setglobal(L, "rawget");
-	lua_pushnil(L); lua_setglobal(L, "rawset");
+	lua_pushnil(L); lua_setglobal(L, "rawequal"); //FIXME not unsafe anymore since split?
+	lua_pushnil(L); lua_setglobal(L, "rawget"); //FIXME not unsafe anymore since split?
+	lua_pushnil(L); lua_setglobal(L, "rawset"); //FIXME not unsafe anymore since split?
 //	lua_pushnil(L); lua_setglobal(L, "getfenv");
 //	lua_pushnil(L); lua_setglobal(L, "setfenv");
-	lua_pushnil(L); lua_setglobal(L, "newproxy");
+	lua_pushnil(L); lua_setglobal(L, "newproxy"); //FIXME unsafe how?
 	lua_pushnil(L); lua_setglobal(L, "gcinfo");
 	lua_pushnil(L); lua_setglobal(L, "collectgarbage");
-	//lua_pushnil(L); lua_setglobal(L, "pairs"); FIXME
 
-	// GML crap
+	lua_pushvalue(L, LUA_GLOBALSINDEX);
+	LuaPushNamedCFunc(L, "loadstring", CLuaHandleSynced::LoadStringData);
+	LuaPushNamedCFunc(L, "pairs", SyncedPairs);
+	LuaPushNamedCFunc(L, "next",  SyncedNext);
+	lua_pop(L, 1);
+
+	//FIXME GML crap
 	HSTR_PUSH(L, "EXPORT");
 	lua_newtable(L);
 	lua_rawset(L, -3);
@@ -396,7 +403,7 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 	// adjust the math.random() and math.randomseed() calls
 	lua_getglobal(L, "math");
 		LuaPushNamedCFunc(L, "random", SyncedRandom);
-		LuaPushNamedNil(L, "randomseed"); //FIXME
+		LuaPushNamedCFunc(L, "randomseed", SyncedRandomSeed);
 	lua_pop(L, 1); // pop the global math table
 
 	lua_getglobal(L, "Script");
@@ -412,7 +419,6 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 
 	// add the custom file loader
 	LuaPushNamedCFunc(L, "SendToUnsynced", SendToUnsynced);
-	LuaPushNamedCFunc(L, "loadstring",     CLuaHandleSynced::LoadStringData);
 	LuaPushNamedCFunc(L, "CallAsTeam",     CLuaHandleSynced::CallAsTeam);
 	LuaPushNamedNumber(L, "COBSCALE",      COBSCALE);
 
@@ -473,8 +479,8 @@ bool CSyncedLuaHandle::SyncedActionFallback(const string& msg, int playerID)
 	if (textCommands.find(cmd) == textCommands.end()) {
 		return false;
 	}
-	GotChatMsg(msg.substr(1), playerID); // strip the '.'
-	return true; //FIXME return true when processed by lua!
+	string msg_ = msg.substr(1); // strip the '/'
+	return GotChatMsg(msg_, playerID);
 }
 
 
@@ -1239,6 +1245,65 @@ int CSyncedLuaHandle::SyncedRandom(lua_State* L)
 		luaL_error(L, "Incorrect arguments to math.random() {synced}");
 	}
 	return 1;
+}
+
+
+int CSyncedLuaHandle::SyncedRandomSeed(lua_State* L)
+{
+	const int newseed = luaL_checkint(L, -1);
+	gs->SetRandSeed(newseed);
+	return 0;
+}
+
+
+int CSyncedLuaHandle::SyncedNext(lua_State* L)
+{
+	auto* slh = GetSyncedHandle(L);
+	assert(slh->origNextRef > 0);
+
+	const std::set<int> whiteList = {
+		LUA_TSTRING,
+		LUA_TNUMBER,
+		LUA_TBOOLEAN,
+		LUA_TNIL,
+		LUA_TTHREAD //FIXME LUA_TTHREAD is normally _not_ synced safe but LUS handler needs it atm (and uses it in a safe way)
+	};
+
+	const int oldTop = lua_gettop(L);
+
+	lua_rawgeti(L, LUA_REGISTRYINDEX, slh->origNextRef);
+	lua_pushvalue(L, 1);
+	if (oldTop >= 2) { lua_pushvalue(L, 2); } else { lua_pushnil(L); }
+	lua_call(L, 2, LUA_MULTRET);
+	const int retCount = lua_gettop(L) - oldTop;
+	assert(retCount == 1 || retCount == 2);
+
+	if (retCount >= 2) {
+		const int keyType = lua_type(L, -2);
+		if (whiteList.find(keyType) == whiteList.end()) {
+			if (LuaUtils::PushDebugTraceback(L) > 0) {
+				lua_pushfstring(L, "Iterating a table with keys of type \"%s\" in synced context!", lua_typename(L, keyType));
+				lua_call(L, 1, 1);
+
+				const auto* errMsg = lua_tostring(L, -1);
+				LOG_L(L_WARNING, "%s", errMsg);
+			}
+			lua_pop(L, 1); // either nil or the errMsg
+		}
+	}
+
+	return retCount;
+}
+
+
+int CSyncedLuaHandle::SyncedPairs(lua_State* L)
+{
+	/* copied from lbaselib.cpp */
+	luaL_checktype(L, 1, LUA_TTABLE);
+	lua_pushcfunction(L, SyncedNext);  /* return generator, */
+	lua_pushvalue(L, 1);  /* state, */
+	lua_pushnil(L);  /* and initial value */
+	return 3;
 }
 
 

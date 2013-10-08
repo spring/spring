@@ -117,8 +117,15 @@ class CSyncedLuaHandle : public CLuaHandle
 
 		map<string, string> textCommands; // name, help
 
+	private:
+		int origNextRef = -1;
+
 	private: // call-outs
 		static int SyncedRandom(lua_State* L);
+		static int SyncedRandomSeed(lua_State* L);
+
+		static int SyncedNext(lua_State* L);
+		static int SyncedPairs(lua_State* L);
 
 		static int SendToUnsynced(lua_State* L);
 
