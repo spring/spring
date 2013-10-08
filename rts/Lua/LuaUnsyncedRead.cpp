@@ -1472,15 +1472,24 @@ int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
 
 int LuaUnsyncedRead::GetTimer(lua_State* L)
 {
-	// use time since Spring's epoch in MILLIseconds
-	// because that is more likely to fit in a 32-bit
-	// pointer (on platforms where sizeof(void*) == 4)
+	// use time since Spring's epoch in MILLIseconds because that
+	// is more likely to fit in a 32-bit pointer (on any platforms
+	// where sizeof(void*) == 4) than time since ::chrono's epoch
+	// (which can be arbitrarily large) and can be represented by
+	// single-precision floats better
+	//
 	// 4e9millis == 4e6s == 46.3 days until overflow
 	const spring_time time = spring_now();
 	const boost::uint64_t millis = time.toMilliSecs<boost::uint64_t>();
 
 	ptrdiff_t p = 0;
-	*reinterpret_cast<boost::uint64_t*>(&p) = millis;
+
+	if (sizeof(void*) == 8) {
+		*reinterpret_cast<boost::uint64_t*>(&p) = millis;
+	} else {
+		*reinterpret_cast<boost::uint32_t*>(&p) = millis;
+	}
+
 	lua_pushlightuserdata(L, reinterpret_cast<void*>(p));
 	return 1;
 }
@@ -1495,8 +1504,12 @@ int LuaUnsyncedRead::DiffTimers(lua_State* L)
 	const void* p1 = lua_touserdata(L, 1);
 	const void* p2 = lua_touserdata(L, 2);
 
-	const boost::uint64_t t1 = *reinterpret_cast<boost::uint64_t*>(&p1);
-	const boost::uint64_t t2 = *reinterpret_cast<boost::uint64_t*>(&p2);
+	const boost::uint64_t t1 = (sizeof(void*) == 8)?
+		*reinterpret_cast<boost::uint64_t*>(&p1):
+		*reinterpret_cast<boost::uint32_t*>(&p1);
+	const boost::uint64_t t2 = (sizeof(void*) == 8)?
+		*reinterpret_cast<boost::uint64_t*>(&p2):
+		*reinterpret_cast<boost::uint32_t*>(&p2);
 
 	// t1 is supposed to be the most recent time-point
 	assert(t1 >= t2);
