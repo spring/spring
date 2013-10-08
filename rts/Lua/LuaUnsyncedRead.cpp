@@ -1472,10 +1472,16 @@ int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
 
 int LuaUnsyncedRead::GetTimer(lua_State* L)
 {
-	const float time = spring_gettime().toMilliSecsf();
+	// use time since Spring's epoch in MILLIseconds
+	// because that is more likely to fit in a 32-bit
+	// pointer (on platforms where sizeof(void*) == 4)
+	// 4e9millis == 4e6s == 46.3 days until overflow
+	const spring_time time = spring_now();
+	const boost::uint64_t millis = time.toMilliSecs<boost::uint64_t>();
+
 	ptrdiff_t p = 0;
-	*reinterpret_cast<float*>(&p) = time; // map 32bit float into 32/64bit pointer type
-	lua_pushlightuserdata(L, reinterpret_cast<void*>(p)); // hack, treat time as pointer
+	*reinterpret_cast<boost::uint64_t*>(&p) = millis;
+	lua_pushlightuserdata(L, reinterpret_cast<void*>(p));
 	return 1;
 }
 
@@ -1485,12 +1491,24 @@ int LuaUnsyncedRead::DiffTimers(lua_State* L)
 	if (!lua_islightuserdata(L, 1) || !lua_islightuserdata(L, 2)) {
 		luaL_error(L, "Incorrect arguments to DiffTimers()");
 	}
+
 	const void* p1 = lua_touserdata(L, 1);
 	const void* p2 = lua_touserdata(L, 2);
-	const float t1 = *reinterpret_cast<float*>(&p1);
-	const float t2 = *reinterpret_cast<float*>(&p2);
-	const float diffTime = (t1 - t2);
-	lua_pushnumber(L, diffTime * 0.001f); // return seconds
+
+	const boost::uint64_t t1 = *reinterpret_cast<boost::uint64_t*>(&p1);
+	const boost::uint64_t t2 = *reinterpret_cast<boost::uint64_t*>(&p2);
+
+	// t1 is supposed to be the most recent time-point
+	assert(t1 >= t2);
+
+	const spring_time dt = spring_time::fromMilliSecs(t1 - t2);
+
+	if (luaL_optboolean(L, 3, false)) {
+		lua_pushnumber(L, dt.toMilliSecsf());
+	} else {
+		lua_pushnumber(L, dt.toSecsf());
+	}
+
 	return 1;
 }
 
