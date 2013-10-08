@@ -381,7 +381,7 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 	lua_pushnil(L); lua_setglobal(L, "rawset"); //FIXME not unsafe anymore since split?
 //	lua_pushnil(L); lua_setglobal(L, "getfenv");
 //	lua_pushnil(L); lua_setglobal(L, "setfenv");
-	lua_pushnil(L); lua_setglobal(L, "newproxy"); //FIXME unsafe how?
+	lua_pushnil(L); lua_setglobal(L, "newproxy"); // sync unsafe cause of __gc
 	lua_pushnil(L); lua_setglobal(L, "gcinfo");
 	lua_pushnil(L); lua_setglobal(L, "collectgarbage");
 

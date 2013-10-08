@@ -53,15 +53,11 @@ class CLuaHandle : public CEventClient
 		void ResetCallinErrors() { callinErrors = 0; }
 
 	public:
-	#define GET_CONTEXT_DATA(v) GetLuaContextData(L ? L : GetActiveState())->v
-	#define GET_ACTIVE_CONTEXT_DATA(v) GetLuaContextData(GetActiveState())->v
-	#define GET_HANDLE_CONTEXT_DATA(v) GetLuaContextData(L)->v
-
 	#define PERMISSIONS_FUNCS(Name, type, dataArg) \
-		void Set ## Name(type _ ## dataArg) { GET_ACTIVE_CONTEXT_DATA(dataArg) = _ ## dataArg; } \
-		type Get ## Name() const { return GET_ACTIVE_CONTEXT_DATA(dataArg); } \
-		static void SetHandle ## Name(const lua_State* L, type _ ## dataArg) { GET_HANDLE_CONTEXT_DATA(dataArg) = _ ## dataArg;; } \
-		static type GetHandle ## Name(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(dataArg); }
+		void Set ## Name(type _ ## dataArg) { GetLuaContextData(L)->dataArg = _ ## dataArg; } \
+		type Get ## Name() const { return GetLuaContextData(L)->dataArg; } \
+		static void SetHandle ## Name(const lua_State* L, type _ ## dataArg) { GetLuaContextData(L)->dataArg = _ ## dataArg;; } \
+		static type GetHandle ## Name(const lua_State* L) { return GetLuaContextData(L)->dataArg; }
 
 		PERMISSIONS_FUNCS(FullRead,     bool, fullRead); // virtual function in CEventClient
 		PERMISSIONS_FUNCS(FullCtrl,     bool, fullCtrl);
@@ -72,24 +68,24 @@ class CLuaHandle : public CEventClient
 
 	#undef PERMISSIONS_FUNCS
 
-		bool GetSynced() const { return GET_ACTIVE_CONTEXT_DATA(synced); }
-		static bool GetHandleSynced(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(synced); }
+		bool GetSynced() const { return GetHandleSynced(L); }
+		static bool GetHandleSynced(const lua_State* L) { return GetLuaContextData(L)->synced; }
 
 		bool GetUserMode() const { return userMode; }
-		static bool GetHandleUserMode(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(owner->GetUserMode()); }
+		static bool GetHandleUserMode(const lua_State* L) { return GetLuaContextData(L)->owner->GetUserMode(); }
 
 		bool CheckModUICtrl() const { return GetModUICtrl() || GetUserMode(); }
 		static bool CheckModUICtrl(lua_State* L) { return GetModUICtrl() || GetHandleUserMode(L); }
 
 		static int GetHandleAllowChanges(const lua_State* L) { return GetLuaContextData(L)->allowChanges; }
 
-		static CLuaHandle* GetHandle(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(owner); }
+		static CLuaHandle* GetHandle(lua_State* L) { return GetLuaContextData(L)->owner; }
 
 		static void SetHandleRunning(lua_State* L, const bool _running) {
-			GET_HANDLE_CONTEXT_DATA(running) += (_running) ? +1 : -1;
-			assert( GET_HANDLE_CONTEXT_DATA(running) >= 0);
+			GetLuaContextData(L)->running += (_running) ? +1 : -1;
+			assert( GetLuaContextData(L)->running >= 0);
 		}
-		static bool IsHandleRunning(lua_State* L) { return (GET_HANDLE_CONTEXT_DATA(running) > 0); }
+		static bool IsHandleRunning(lua_State* L) { return (GetLuaContextData(L)->running > 0); }
 		bool IsRunning() const { return IsHandleRunning(L); }
 
 		bool IsValid() const { return (L != NULL); }
@@ -286,9 +282,6 @@ class CLuaHandle : public CEventClient
 		bool purgeCallsFromSyncedBatch;
 		bool PurgeCallsFromSyncedBatch() const { return (LUA_MT_OPT & LUA_STATE) && purgeCallsFromSyncedBatch; } // Automatically clean deleted objects/IDs from the SendToUnsynced/XCall batch
 
-		lua_State* GetActiveState() { return L; } //FIXME
-		const lua_State* GetActiveState() const { return L; } //FIXME
-
 	protected:
 		bool userMode;
 
@@ -340,11 +333,11 @@ class CLuaHandle : public CEventClient
 		static int CallOutUpdateCallIn(lua_State* L);
 
 	public: // static
-		static inline LuaShaders& GetActiveShaders(lua_State* L)  { return GET_HANDLE_CONTEXT_DATA(shaders); }
-		static inline LuaTextures& GetActiveTextures(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(textures); }
-		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(fbos); }
-		static inline LuaRBOs& GetActiveRBOs(lua_State* L)     { return GET_HANDLE_CONTEXT_DATA(rbos); }
-		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(displayLists); }
+		static inline LuaShaders& GetActiveShaders(lua_State* L)  { return GetLuaContextData(L)->shaders; }
+		static inline LuaTextures& GetActiveTextures(lua_State* L) { return GetLuaContextData(L)->textures; }
+		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return GetLuaContextData(L)->fbos; }
+		static inline LuaRBOs& GetActiveRBOs(lua_State* L)     { return GetLuaContextData(L)->rbos; }
+		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return GetLuaContextData(L)->displayLists; }
 
 		static void SetDevMode(bool value) { devMode = value; }
 		static bool GetDevMode() { return devMode; }
