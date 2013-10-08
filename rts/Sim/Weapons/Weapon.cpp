@@ -156,7 +156,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	lastTargetRetry(-100),
 	lastErrorVectorUpdate(0),
 
-	slavedTo(0),
+	slavedTo(NULL),
 	maxForwardAngleDif(0.0f),
 	maxMainDirAngleDif(-1.0f),
 	targetBorder(0.f),
@@ -895,7 +895,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		}
 	}
 
-	if (slavedTo) {
+	if (slavedTo != NULL) {
 		// use targets from the thing we are slaved to
 		if (targetUnit) {
 			DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
