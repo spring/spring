@@ -268,7 +268,7 @@ int LuaUtils::Backup(std::vector<LuaUtils::DataDump> &backup, lua_State* src, in
 int LuaUtils::Restore(const std::vector<LuaUtils::DataDump> &backup, lua_State* dst) {
 	const int dstTop = lua_gettop(dst);
 	int count = backup.size();
-	lua_checkstack(dst, count); // FIXME: not enough for table chains
+	lua_checkstack(dst, count + 3);
 
 	for (std::vector<DataDump>::const_iterator i = backup.begin(); i != backup.end(); ++i) {
 		RestoreData(*i, dst, 0);
@@ -959,9 +959,10 @@ LuaUtils::ScopedDebugTraceBack::ScopedDebugTraceBack(lua_State* _L)
 }
 
 LuaUtils::ScopedDebugTraceBack::~ScopedDebugTraceBack() {
-	//FIXME better use lua_remove(L, errFuncIdx) and solve zero case?
+	// make sure we are at same position on the stack
 	const int curTop = lua_gettop(L);
 	assert(errFuncIdx == 0 || curTop == errFuncIdx);
+
 	lua_pop(L, 1);
 }
 

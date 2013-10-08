@@ -92,13 +92,13 @@ class CLuaHandle : public CEventClient
 		static bool IsHandleRunning(lua_State* L) { return (GET_HANDLE_CONTEXT_DATA(running) > 0); }
 		bool IsRunning() const { return IsHandleRunning(L); }
 
+		bool IsValid() const { return (L != NULL); }
+
 		//FIXME needed by LuaSyncedTable (can be solved cleaner?)
 		lua_State* GetLuaState() const { return L; }
 
-//FIXME		LuaArrays& GetArrays(const lua_State* L = NULL) { return GET_CONTEXT_DATA(arrays); }
 		LuaShaders& GetShaders(const lua_State* L = NULL) { return GET_CONTEXT_DATA(shaders); }
 		LuaTextures& GetTextures(const lua_State* L = NULL) { return GET_CONTEXT_DATA(textures); }
-//FIXME		LuaVBOs& GetVBOs(const lua_State* L = NULL) { return GET_CONTEXT_DATA(vbos); }
 		LuaFBOs& GetFBOs(const lua_State* L = NULL) { return GET_CONTEXT_DATA(fbos); }
 		LuaRBOs& GetRBOs(const lua_State* L = NULL) { return GET_CONTEXT_DATA(rbos); }
 		CLuaDisplayLists& GetDisplayLists(const lua_State* L = NULL) { return GET_CONTEXT_DATA(displayLists); }
@@ -254,7 +254,6 @@ class CLuaHandle : public CEventClient
 		virtual ~CLuaHandle();
 
 		void KillLua();
-		bool IsValid() const { return (L != NULL); }
 
 		static void PushTracebackFuncToRegistry(lua_State* L);
 
@@ -344,10 +343,8 @@ class CLuaHandle : public CEventClient
 		static int CallOutUpdateCallIn(lua_State* L);
 
 	public: // static
-//FIXME		static LuaArrays& GetActiveArrays(lua_State* L)   { return GET_HANDLE_CONTEXT_DATA(arrays); }
 		static inline LuaShaders& GetActiveShaders(lua_State* L)  { return GET_HANDLE_CONTEXT_DATA(shaders); }
 		static inline LuaTextures& GetActiveTextures(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(textures); }
-//FIXME		static LuaVBOs& GetActiveVBOs(lua_State* L)     { return GET_HANDLE_CONTEXT_DATA(vbos); }
 		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(fbos); }
 		static inline LuaRBOs& GetActiveRBOs(lua_State* L)     { return GET_HANDLE_CONTEXT_DATA(rbos); }
 		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(displayLists); }

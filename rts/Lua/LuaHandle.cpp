@@ -15,7 +15,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
-#include "Net/Protocol/BaseNetProtocol.h" // FIXME: for MAPDRAW_*
+#include "Net/Protocol/BaseNetProtocol.h"
 #include "Game/UI/KeyCodes.h"
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
@@ -66,7 +66,7 @@ void CLuaHandle::PushTracebackFuncToRegistry(lua_State* L)
 
 
 CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
-	: CEventClient(_name, _order, false) // FIXME
+	: CEventClient(_name, _order, false)
 	, userMode   (_userMode)
 	, killMe     (false)
 	, callinErrors(0)
@@ -322,7 +322,7 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 #if (LUA_MT_OPT & LUA_STATE)
 		if (!ddp.xcall) {
 			if (CopyExportTable() && ddp.dump.size() > 0) {
-				//FIXME
+				//FIXME broken since synced split
 				HSTR_PUSH(L, "UNSYNCED");
 				lua_rawget(L, LUA_REGISTRYINDEX);
 
@@ -2649,8 +2649,7 @@ bool CLuaHandle::AddConsoleLine(const string& msg, const string& section, int le
 	}
 
 	lua_pushsstring(L, msg);
-	// FIXME: makes no sense now, but *gets might expect this
-	lua_pushnumber(L, 0); // priority XXX replace 0 with level?
+	lua_pushnumber(L, level);
 
 	// call the function
 	if (!RunCallIn(L, cmdStr, 2, 0))
@@ -2725,11 +2724,7 @@ string CLuaHandle::WorldTooltip(const CUnit* unit,
 	if (!RunCallInUnsynced(L, cmdStr, args, 1))
 		return "";
 
-	if (!lua_isstring(L, -1)) {
-		lua_pop(L, 1);
-		return "";
-	}
-	const string retval = lua_tostring(L, -1);
+	const string retval = luaL_optstring(L, -1, "");
 	lua_pop(L, 1);
 	return retval;
 }

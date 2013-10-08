@@ -187,10 +187,8 @@ struct luaContextData {
 	int  readAllyTeam;
 	int  selectTeam;
 
-	//FIXME		LuaArrays arrays;
 	LuaShaders shaders;
 	LuaTextures textures;
-	//FIXME		LuaVBOs vbos;
 	LuaFBOs fbos;
 	LuaRBOs rbos;
 	CLuaDisplayLists displayLists;
