@@ -183,8 +183,8 @@ int main(int argc, char* argv[])
 		GameData data;
 		UnsyncedRNG rng;
 
-		rng.Seed(gameSetup->gameSetupText.length());
-		rng.Seed(scriptName.length());
+		const unsigned seed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
+		rng.Seed(seed);
 		data.SetRandomSeed(rng.RandInt());
 
 		//  Use script provided hashes if they exist
