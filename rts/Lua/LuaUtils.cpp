@@ -645,7 +645,7 @@ void LuaUtils::ParseCommandOptions(
 
 			// [idx] = "value", avoid 'n'
 			if (lua_israwnumber(L, -2)) {
-				const int idx = lua_tonumber(L, -2);
+				//const int idx = lua_tonumber(L, -2);
 
 				if (!lua_isstring(L, -1))
 					continue;
