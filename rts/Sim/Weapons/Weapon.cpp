@@ -1224,13 +1224,16 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 
 
 bool CWeapon::TryTarget(const CUnit* unit, bool userTarget) const {
+	return TryTarget(GetUnitPositionWithError(unit), userTarget, unit);
+}
+
+float3 CWeapon::GetUnitPositionWithError(const CUnit* unit) const {
 	const float3 errorPos = unit->GetErrorPos(owner->allyteam, true);
 	const float errorScale = (MoveErrorExperience() * GAME_SPEED * unit->speed.w);
 
 	float3 tempTargetPos = errorPos + errorVector * errorScale;
 	tempTargetPos.y = std::max(tempTargetPos.y, ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f);
-
-	return TryTarget(tempTargetPos, userTarget, unit);
+	return tempTargetPos;
 }
 
 bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget) {
