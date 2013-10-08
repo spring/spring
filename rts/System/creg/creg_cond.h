@@ -27,6 +27,7 @@
 #define CR_BIND(TCls, ctor_args)
 #define CR_BIND_DERIVED_INTERFACE(TCls, TBase)
 #define CR_BIND_INTERFACE(TCls)
+#define CR_BIND_TEMPLATE(TCls, ctor_args)
 #define CR_REG_METADATA(TClass, Members)
 #define CR_REG_METADATA_SUB(TSuperClass, TSubClass, Members)
 #define CR_MEMBER(Member)
