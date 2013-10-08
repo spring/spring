@@ -3912,28 +3912,11 @@ static void PackCommand(lua_State* L, const Command& cmd)
 	lua_createtable(L, 0, 4);
 
 	HSTR_PUSH_NUMBER(L, "id", cmd.GetID());
-	HSTR_PUSH(L, "params");
-
-	lua_createtable(L, cmd.params.size(), 0);
-	for (size_t p = 0; p < cmd.params.size(); p++) {
-		lua_pushnumber(L, p + 1);
-		lua_pushnumber(L, cmd.params[p]);
-		lua_rawset(L, -3);
-	}
 
 	// t["params"] = {[1] = param1, ...}
-	lua_rawset(L, -3);
-
-	HSTR_PUSH(L, "options");
-	lua_createtable(L, 0, 7);
-	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
-	if (cmd.options & ALT_KEY)         { HSTR_PUSH_BOOL(L, "alt",      true); }
-	if (cmd.options & CONTROL_KEY)     { HSTR_PUSH_BOOL(L, "ctrl",     true); }
-	if (cmd.options & SHIFT_KEY)       { HSTR_PUSH_BOOL(L, "shift",    true); }
-	if (cmd.options & RIGHT_MOUSE_KEY) { HSTR_PUSH_BOOL(L, "right",    true); }
-	if (cmd.options & INTERNAL_ORDER)  { HSTR_PUSH_BOOL(L, "internal", true); }
-	if (cmd.options & META_KEY)        { HSTR_PUSH_BOOL(L, "meta",     true); }
-	lua_rawset(L, -3); // options table
+	LuaUtils::PushCommandParamsTable(L, cmd, true);
+	// t["options"] = {key1 = val1, ...}
+	LuaUtils::PushCommandOptionsTable(L, cmd, true);
 
 	HSTR_PUSH_NUMBER(L, "tag", cmd.tag);
 }

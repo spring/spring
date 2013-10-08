@@ -2598,20 +2598,9 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 	lua_pushnumber(L, cmd.GetID());
 
 	// push the params list
-	lua_createtable(L, cmd.params.size(), 0);
-	for (int p = 0; p < (int)cmd.params.size(); p++) {
-		lua_pushnumber(L, cmd.params[p]);
-		lua_rawseti(L, -2, p + 1);
-	}
-
+	LuaUtils::PushCommandParamsTable(L, cmd, false);
 	// push the options table
-	lua_createtable(L, 0, 6);
-	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
-	HSTR_PUSH_BOOL(L, "alt",   !!(cmd.options & ALT_KEY));
-	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
-	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
-	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
-	HSTR_PUSH_BOOL(L, "meta",  !!(cmd.options & META_KEY));
+	LuaUtils::PushCommandOptionsTable(L, cmd, false);
 
 	// call the function
 	if (!RunCallInUnsynced(cmdStr, 3, 1))

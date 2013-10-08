@@ -568,24 +568,63 @@ int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
 	return size;
 }
 
+
+
+void LuaUtils::PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable)
+{
+	if (subtable) {
+		HSTR_PUSH(L, "params");
+	}
+
+	lua_createtable(L, cmd.params.size(), 0);
+
+	for (unsigned int p = 0; p < cmd.params.size(); p++) {
+		lua_pushnumber(L, cmd.params[p]);
+		lua_rawseti(L, -2, p + 1);
+	}
+
+	if (subtable) {
+		lua_rawset(L, -3);
+	}
+}
+
+void LuaUtils::PushCommandOptionsTable(lua_State* L, const Command& cmd, bool subtable)
+{
+	if (subtable) {
+		HSTR_PUSH(L, "options");
+	}
+
+	lua_createtable(L, 0, 7);
+	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
+	HSTR_PUSH_BOOL(L, "alt",      !!(cmd.options & ALT_KEY        ));
+	HSTR_PUSH_BOOL(L, "ctrl",     !!(cmd.options & CONTROL_KEY    ));
+	HSTR_PUSH_BOOL(L, "shift",    !!(cmd.options & SHIFT_KEY      ));
+	HSTR_PUSH_BOOL(L, "right",    !!(cmd.options & RIGHT_MOUSE_KEY));
+	HSTR_PUSH_BOOL(L, "meta",     !!(cmd.options & META_KEY       ));
+	HSTR_PUSH_BOOL(L, "internal", !!(cmd.options & INTERNAL_ORDER ));
+
+	if (subtable) {
+		lua_rawset(L, -3);
+	}
+}
+
 void LuaUtils::ParseCommandOptions(
 	lua_State* L,
 	Command& cmd,
 	const char* caller,
-	const int optionsArgIdx
+	const int idx
 ) {
-	if (lua_isnumber(L, optionsArgIdx)) {
-		cmd.options = (unsigned char)lua_tonumber(L, optionsArgIdx);
-	}
-	else if (lua_istable(L, optionsArgIdx)) {
-		for (lua_pushnil(L); lua_next(L, optionsArgIdx) != 0; lua_pop(L, 1)) {
+	if (lua_isnumber(L, idx)) {
+		cmd.options = (unsigned char)lua_tonumber(L, idx);
+	} else if (lua_istable(L, idx)) {
+		for (lua_pushnil(L); lua_next(L, idx) != 0; lua_pop(L, 1)) {
 			// "key" = value (table format of CommandNotify)
 			if (lua_israwstring(L, -2)) {
 				const std::string key = lua_tostring(L, -2);
 
-				if (!lua_isboolean(L, -1)) {
-					luaL_error(L, "%s(): expected <string key=%s, boolean value> in options-table", caller, key.c_str());
-				}
+				// we do not care about the "coded" key (not a boolean value)
+				if (!lua_isboolean(L, -1))
+					continue;
 
 				const bool value = lua_toboolean(L, -1);
 
@@ -608,9 +647,8 @@ void LuaUtils::ParseCommandOptions(
 			if (lua_israwnumber(L, -2)) {
 				const int idx = lua_tonumber(L, -2);
 
-				if (!lua_isstring(L, -1)) {
-					luaL_error(L, "%s(): expected <number idx=%d, string value> in options-table", caller, idx);
-				}
+				if (!lua_isstring(L, -1))
+					continue;
 
 				const std::string value = lua_tostring(L, -1);
 
@@ -627,9 +665,8 @@ void LuaUtils::ParseCommandOptions(
 				}
 			}
 		}
-	}
-	else {
-		luaL_error(L, "%s(): bad options", caller);
+	} else {
+		luaL_error(L, "%s(): bad options-argument type", caller);
 	}
 }
 
