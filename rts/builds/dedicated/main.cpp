@@ -142,6 +142,9 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 int main(int argc, char* argv[])
 {
 	try {
+		//initialize start time
+		spring_time::setstarttime(spring_time::gettime(true));
+
 		CLogOutput::LogSystemInfo();
 
 		std::string scriptName;
