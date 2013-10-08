@@ -34,6 +34,7 @@ namespace math {
 	using std::ceil;
 	using std::floor;
 	using std::fmod;
+	using std::hypot;
 	using std::pow;
 	using std::log;
 	using std::log10;
@@ -45,6 +46,7 @@ namespace math {
 	using std::isnan;
 	using std::isinf;
 	using std::isfinite;
+
 #elif __cplusplus
 	template<typename T> inline bool isnan(T value) {
 		return value != value;
