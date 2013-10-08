@@ -87,14 +87,14 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	// force LOS recalculation
 	owner->mapSquare += 1;
 
-	isFighter = (owner->unitDef->IsFighterAirUnit());
+	isFighter = owner->unitDef->IsFighterAirUnit();
 	collide = owner->unitDef->collide;
 
 	wingAngle = owner->unitDef->wingAngle;
 	crashDrag = 1.0f - owner->unitDef->crashDrag;
 
-	if (accRate != 0.0f && owner->unitDef->speed != 0.0f) {
-		invDrag = (1.0f / (owner->unitDef->speed / GAME_SPEED * 1.1f / accRate)) - (wingAngle * wingAngle * wingDrag);
+	if (accRate != 0.0f && maxSpeedDef != 0.0f) {
+		invDrag = (1.0f / (maxSpeedDef * 1.1f / accRate)) - (wingAngle * wingAngle * wingDrag);
 		invDrag = 1.0f - Clamp(invDrag, 0.0f, 1.0f);
 	}
 
@@ -105,6 +105,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	maxBank = owner->unitDef->maxBank;
 	maxPitch = owner->unitDef->maxPitch;
 	turnRadius = owner->unitDef->turnRadius;
+
 	wantedHeight =
 		(owner->unitDef->wantedHeight * 1.5f) +
 		((gs->randFloat() - 0.3f) * 15.0f * (isFighter? 2.0f: 1.0f));
@@ -193,9 +194,9 @@ bool CStrafeAirMoveType::Update()
 				// base
 				//
 				// NOTE:
-				//     technically need to pass minAirBasePower as well,
-				//     otherwise aircraft might keep flying and never be
-				//     serviced
+				//   technically need to pass minAirBasePower as well,
+				//   otherwise aircraft might keep flying and never be
+				//   serviced
 				SetState(AIRCRAFT_FLYING);
 			}
 		}
@@ -222,9 +223,9 @@ bool CStrafeAirMoveType::Update()
 					inefficientAttackTime = std::min(inefficientAttackTime, float(gs->frameNum) - owner->lastFireWeapon);
 
 					if (owner->attackTarget != NULL) {
-						goalPos = owner->attackTarget->pos;
+						SetGoal(owner->attackTarget->pos);
 					} else {
-						goalPos = owner->attackPos;
+						SetGoal(owner->attackPos);
 					}
 
 					if (maneuver) {
@@ -477,23 +478,23 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 	const bool hasFired = (!owner->weapons.empty() && owner->weapons[0]->reloadStatus > gs->frameNum && owner->weapons[0]->salvoLeft == 0);
 
 	if (groundTarget) {
-		if (frontdir.dot(goalPos - pos) < 0 && (pos - goalPos).SqLength() < turnRadius * turnRadius * (loopbackAttack ? 4 : 1)) {
-			float3 dif = (pos - goalPos).Normalize2D();
-			goalPos = goalPos + dif * turnRadius * 4;
+		if (frontdir.dot(goalPos - pos) < 0 && (pos - goalPos).SqLength() < (turnRadius * turnRadius * (loopbackAttack ? 4.0f : 1.0f))) {
+			SetGoal(goalPos + (pos - goalPos).Normalize2D() * turnRadius * 4.0f);
 		} else if (loopbackAttack && !airTarget) {
 			if (frontdir.dot(goalPos - pos) < owner->maxRange * (hasFired ? 1.0f : 0.7f))
 				maneuver = 1;
 		} else if (frontdir.dot(goalPos - pos) < owner->maxRange * 0.7f) {
-			goalPos += exitVector * ((attackee != NULL) ? attackee->radius + owner->radius + 10 : owner->radius + 40);
+			SetGoal(goalPos + exitVector * ((attackee != NULL) ? attackee->radius + owner->radius + 10.0f : owner->radius + 40.0f));
 		}
 	}
-	const float3 tgp = goalPos + (goalPos - oldGoalPos) * 8;
+
+	const float3 difGoalPos = (goalPos - oldGoalPos) * SQUARE_SIZE;
+
 	oldGoalPos = goalPos;
-	goalPos = tgp;
+	goalPos += difGoalPos;
 
 	const float goalDist = pos.distance(goalPos);
-	const float3 goalDir =
-		(goalDist > 0.0f)?
+	const float3 goalDir = (goalDist > 0.0f)?
 		(goalPos - pos) / goalDist:
 		ZeroVector;
 
@@ -648,12 +649,28 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	SyncedFloat3& frontdir = owner->frontdir;
 	SyncedFloat3& updir    = owner->updir;
 
-	float3 goalDir = (goalPos - pos);
-	const float curSpeed = spd.w;
-	const float goalDist = std::max(0.001f, goalDir.Length2D());
-	goalDir /= goalDist;
+	// NOTE:
+	//   turnRadius is often way too small, but cannot calculate one
+	//   because we have no turnRate (and unitDef->turnRate can be 0)
+	//   --> would lead to infinite circling without adjusting goal
+	if (reservedPad != NULL) {
+		const float3& padPos = (reservedPad->GetUnit())->pos;
+		const float3  padVec = padPos - pos;
 
-	const float3 adjustedGoalDir = (goalPos - pos).SafeANormalize2D();
+		if (padVec.dot(frontdir) < -0.1f && padVec.SqLength2D() < Square(std::min(1000.0f, turnRadius * spd.w))) {
+			SetGoal(pos + frontdir * turnRadius * spd.w);
+		} else {
+			SetGoal(padPos);
+		}
+	}
+
+	const float3 goalVec = goalPos - pos;
+
+	const float goalDist2D = std::max(0.001f, goalVec.Length2D());
+	// const float goalDist3D = std::max(0.001f, goalVec.Length());
+
+	const float3 goalDir2D = goalVec / goalDist2D;
+	// const float3 goalDir3D = goalVec / goalDist3D;
 
 	float aileron = 0.0f;
 	float rudder = 0.0f;
@@ -673,42 +690,45 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	}
 
 	float otherThreat = 0.0f;
-	float3 otherDir; // only used if lastColWarning == true
-	if (lastColWarning) {
+	float3 otherDir; // only used if lastColWarning != NULL
+
+	if (lastColWarning != NULL) {
 		const float3 otherDif = lastColWarning->pos - pos;
 		const float otherLength = otherDif.Length();
 
-		otherDir =
-			(otherLength > 0.0f)?
+		otherDir = (otherLength > 0.0f)?
 			(otherDif / otherLength):
 			ZeroVector;
-		otherThreat =
-			(otherLength > 0.0f)?
-			std::max(1200.0f, goalDist) / otherLength * 0.036f:
+		otherThreat = (otherLength > 0.0f)?
+			std::max(1200.0f, goalDist2D) / otherLength * 0.036f:
 			0.0f;
 	}
 
-	float goalDotRight = rightdir.dot(adjustedGoalDir);
-	const float aGoalDotFront = adjustedGoalDir.dot(frontdir);
+	float goalDotRight = rightdir.dot(goalDir2D);
+	const float aGoalDotFront = goalDir2D.dot(frontdir);
 	const float goalDotFront = aGoalDotFront * 0.5f + 0.501f;
 
 	if (goalDotFront > 0.01f) {
 		goalDotRight /= goalDotFront;
 	}
 
-
-	if (adjustedGoalDir.dot(frontdir) < -0.1f && goalDist < turnRadius) {
+	// if goal-position is behind us and goal-distance
+	// is less than our turning radius, turn the other
+	// way --> often insufficient for small turn radii,
+	// also need to fly straight for some distance
+	if (goalDir2D.dot(frontdir) < -0.1f && goalDist2D < turnRadius) {
 		if (owner->fpsControlPlayer == NULL || owner->fpsControlPlayer->fpsController.mouse2)
 			goalDotRight = -goalDotRight;
 	}
-	if (lastColWarning) {
+
+	if (lastColWarning != NULL) {
 		goalDotRight -= otherDir.dot(rightdir) * otherThreat;
 	}
 
 	// roll
-	if (curSpeed > 1.5f && pos.y + spd.y * 10 > gHeight + wantedHeight * 0.6f) {
+	if (spd.w > 1.5f && ((pos.y + spd.y * 10.0f) > (gHeight + wantedHeight * 0.6f))) {
 		const float goalBankDif = goalDotRight + rightdir.y * 0.5f;
-		const float maxAileronSpeedf = maxAileron * curSpeed * 4.0f;
+		const float maxAileronSpeedf = maxAileron * spd.w * 4.0f;
 
 		if (goalBankDif > maxAileronSpeedf && rightdir.y > -maxBank) {
 			aileron = 1.0f;
@@ -735,7 +755,7 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 	// yaw
 	if (pos.y > gHeight + 15) {
-		const float maxRudderSpeedf = maxRudder * curSpeed * 2.0f;
+		const float maxRudderSpeedf = maxRudder * spd.w * 2.0f;
 
 		if (goalDotRight < -maxRudderSpeedf) {
 			rudder = -1.0f;
@@ -750,13 +770,13 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 					rudder = (goalDotRight < 0.0f) ? -0.01f : 0.01f;
 				}
 			} else {
-				rudder = 0;
+				rudder = 0.0f;
 			}
 		}
 	}
 
 	// pitch
-	if (curSpeed > 0.8f) {
+	if (spd.w > 0.8f) {
 		bool notColliding = true;
 
 		if (lastColWarningType == 2) {
@@ -770,9 +790,9 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 		}
 
 		if (notColliding) {
-			const float maxElevatorSpeedf = maxElevator * 20.0f * curSpeed * curSpeed;
+			const float maxElevatorSpeedf = maxElevator * 20.0f * spd.w * spd.w;
 			const float gHeightAW = ground->GetHeightAboveWater(pos.x + spd.x * 40.0f, pos.z + spd.z * 40.0f);
-			const float hdif = std::max(gHeight, gHeightAW) + wantedHeight - pos.y - frontdir.y * curSpeed * 20.0f;
+			const float hdif = std::max(gHeight, gHeightAW) + wantedHeight - pos.y - frontdir.y * spd.w * 20.0f;
 
 			if (hdif < -maxElevatorSpeedf && frontdir.y > -maxPitch) {
 				elevator = -1.0f;
