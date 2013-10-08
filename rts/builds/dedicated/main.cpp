@@ -142,9 +142,7 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 int main(int argc, char* argv[])
 {
 	try {
-		//initialize start time
-		spring_time::setstarttime(spring_time::gettime(true));
-
+		SDL_Init(SDL_INIT_TIMER);
 		CLogOutput::LogSystemInfo();
 
 		std::string scriptName;
@@ -159,7 +157,6 @@ int main(int argc, char* argv[])
 		// Initialize crash reporting
 		CrashHandler::Install();
 
-		SDL_Init(SDL_INIT_TIMER);
 		LOG("report any errors to Mantis or the forums.");
 		LOG("loading script from file: %s", scriptName.c_str());
 
@@ -185,6 +182,10 @@ int main(int argc, char* argv[])
 		// Create the server, it will run in a separate thread
 		GameData data;
 		UnsyncedRNG rng;
+
+		// initialize start time, must happen as late as possible after SDL_Init
+		// (if using SDL_GetTicks it could become 0 which is the "notime" value)
+		spring_time::setstarttime(spring_time::gettime(true));
 
 		const unsigned seed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
 		rng.Seed(seed);
