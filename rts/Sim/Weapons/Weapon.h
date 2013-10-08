@@ -47,7 +47,7 @@ public:
 	virtual bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
 
 	bool TryTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
-	bool TryTarget(CUnit* unit, bool userTarget);
+	bool TryTarget(const CUnit* unit, bool userTarget) const;
 	bool TryTargetRotate(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(float3 pos, bool userTarget);
 	bool TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit* unit = 0);
@@ -68,7 +68,7 @@ public:
 	void AimReady(int value);
 	void Fire();
 	void HoldFire();
-	
+
 	float ExperienceScale() const;
 	float AccuracyExperience() const { return (accuracy * ExperienceScale()); }
 	float SprayAngleExperience() const { return (sprayAngle * ExperienceScale()); }

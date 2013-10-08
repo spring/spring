@@ -1223,7 +1223,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 }
 
 
-bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
+bool CWeapon::TryTarget(const CUnit* unit, bool userTarget) const {
 	const float3 errorPos = unit->GetErrorPos(owner->allyteam, true);
 	const float errorScale = (MoveErrorExperience() * GAME_SPEED * unit->speed.w);
 
