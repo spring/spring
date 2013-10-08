@@ -120,6 +120,11 @@ static int math_sqrt (lua_State *L) {
   return 1;
 }
 
+static int math_hypot (lua_State *L) {
+  lua_pushnumber(L, math::hypot(luaL_checknumber_noassert(L, 1), luaL_checknumber_noassert(L, 2)));
+  return 1;
+}
+
 static int math_pow (lua_State *L) {
   lua_pushnumber(L, math::pow(luaL_checknumber_noassert(L, 1), luaL_checknumber_noassert(L, 2)));
   return 1;
@@ -257,6 +262,7 @@ static const luaL_Reg mathlib[] = {
   {"floor", math_floor},
   {"fmod",   math_fmod},
   {"frexp", math_frexp},
+  {"hypot", math_hypot},
   {"ldexp", math_ldexp},
   {"log10", math_log10},
   {"log",   math_log},
