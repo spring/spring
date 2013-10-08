@@ -413,7 +413,7 @@ static int WeaponsTable(lua_State* L, const void* data)
 		lua_pushnumber(L, i + LUA_WEAPON_BASE_INDEX);
 		lua_newtable(L); {
 			HSTR_PUSH_NUMBER(L, "weaponDef",   weapon->id);
-			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo+LUA_WEAPON_BASE_INDEX);
+			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo-1+LUA_WEAPON_BASE_INDEX);
 			HSTR_PUSH_NUMBER(L, "fuelUsage",   udw.fuelUsage);
 			HSTR_PUSH_NUMBER(L, "maxAngleDif", udw.maxMainDirAngleDif);
 			HSTR_PUSH_NUMBER(L, "mainDirX",    udw.mainDir.x);
