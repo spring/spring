@@ -9,7 +9,6 @@
 #include "LuaTextures.h"
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
-//FIXME#include "LuaVBOs.h"
 #include "LuaDisplayLists.h"
 #include "System/EventClient.h"
 #include "System/Log/ILog.h"
