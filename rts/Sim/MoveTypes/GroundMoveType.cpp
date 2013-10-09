@@ -1538,11 +1538,10 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		(collider->pos.x <= (collidee->pos.x + xext * SQUARE_SIZE)) &&
 		(collider->pos.z >= (collidee->pos.z - zext * SQUARE_SIZE)) &&
 		(collider->pos.z <= (collidee->pos.z + zext * SQUARE_SIZE));
-	#endif
-
 	const bool exitingYardMap =
 		((collider->frontdir.dot(separationVector) > 0.0f) &&
 		 (collider->   speed.dot(separationVector) > 0.0f));
+	#endif
 
 	bool wantRequestPath = false;
 
@@ -1640,10 +1639,11 @@ void CGroundMoveType::HandleStaticObjectCollision(
 			bounceVec = bounceVec.SafeNormalize2D() * bounceScale;
 
 			// if checkTerrain is true, test only the center square
-			if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec, ZeroVector, checkTerrain, checkYardMap, checkTerrain))
-				collider->Move(strafeVec, true);
-			if (colliderMD->TestMoveSquare(collider, collider->pos + bounceVec, ZeroVector, checkTerrain, checkYardMap, checkTerrain))
-				collider->Move(bounceVec, true);
+			if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, ZeroVector, checkTerrain, checkYardMap, checkTerrain)) {
+				collider->Move(strafeVec + bounceVec, true);
+			} else {
+				collider->Move(oldPos, false);
+			}
 		}
 
 		wantRequestPath = ((strafeVec + bounceVec) != ZeroVector);
@@ -1653,16 +1653,23 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		const float   penDistance = std::min(sepDistance - colRadiusSum, 0.0f);
 		const float  colSlideSign = -Sign(collidee->pos.dot(collider->rightdir) - collider->pos.dot(collider->rightdir));
 
-		const float strafeScale = std::min(currentSpeed, std::max(0.0f, -penDistance * 0.5f)) * (1 -                exitingYardMap);
-		const float bounceScale = std::min(currentSpeed, std::max(0.0f, -penDistance       )) * (1 - checkYardMap * exitingYardMap);
+		const float strafeScale = std::min(currentSpeed, std::max(0.0f, -penDistance * 0.5f)) * (1 - checkYardMap * false);
+		const float bounceScale = std::min(currentSpeed, std::max(0.0f, -penDistance       )) * (1 - checkYardMap *  true);
 
 		const float3 strafeVec = (collider->rightdir * colSlideSign) * strafeScale;
 		const float3 bounceVec = (   separationVector / sepDistance) * bounceScale;
 
-		if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec, ZeroVector, true, true, true))
-			collider->Move(strafeVec, true);
-		if (colliderMD->TestMoveSquare(collider, collider->pos + bounceVec, ZeroVector, true, true, true))
-			collider->Move(bounceVec, true);
+		if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, ZeroVector, true, true, true)) {
+			collider->Move(strafeVec + bounceVec, true);
+		} else {
+			// move back to previous-frame position
+			// ChangeSpeed calculates speedMod without checking squares for *structure* blockage
+			// (so that a unit can free itself if it ends up within the footprint of a structure)
+			// this means deltaSpeed will be non-zero if stuck on an impassable square and hence
+			// the new speedvector which is constructed from deltaSpeed --> we would simply keep
+			// moving forward through obstacles if not counteracted by this
+			collider->Move(oldPos, false);
+		}
 
 		wantRequestPath = (penDistance < 0.0f);
 	}
@@ -1853,22 +1860,14 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float3 collideeSlideVec = collidee->rightdir * collideeSlideSign * (1.0f / penDistance) * r1;
 
 		if ((pushCollider || !pushCollidee) && colliderMobile) {
-			if (colliderMD->TestMoveSquare(collider, collider->pos + colliderPushVec)) {
-				collider->Move(collider->pos + colliderPushVec, false);
-			}
-			// also push collider laterally
-			if (colliderMD->TestMoveSquare(collider, collider->pos + colliderSlideVec)) {
-				collider->Move(collider->pos + colliderSlideVec, false);
+			if (colliderMD->TestMoveSquare(collider, collider->pos + colliderPushVec + colliderSlideVec)) {
+				collider->Move(colliderPushVec + colliderSlideVec, true);
 			}
 		}
 
 		if ((pushCollidee || !pushCollider) && collideeMobile) {
-			if (collideeMD->TestMoveSquare(collidee, collidee->pos + collideePushVec)) {
-				collidee->Move(collidee->pos + collideePushVec, false);
-			}
-			// also push collidee laterally
-			if (collideeMD->TestMoveSquare(collidee, collidee->pos + collideeSlideVec)) {
-				collidee->Move(collidee->pos + collideeSlideVec, false);
+			if (collideeMD->TestMoveSquare(collidee, collidee->pos + collideePushVec + collideeSlideVec)) {
+				collidee->Move(collideePushVec + collideeSlideVec, true);
 			}
 		}
 	}
