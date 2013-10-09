@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "streflop_cond.h"
+#include "lib/streflop/streflop_cond.h"
 #include "LuaMathExtra.h"
 #include "LuaInclude.h"
 #include "LuaUtils.h"
