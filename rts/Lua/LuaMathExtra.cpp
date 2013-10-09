@@ -19,6 +19,7 @@ bool LuaMathExtra::PushEntries(lua_State* L)
 	LuaPushNamedCFunc(L, "sgn",    sgn);
 	LuaPushNamedCFunc(L, "mix",    mix);
 	LuaPushNamedCFunc(L, "round",  round);
+	LuaPushNamedCFunc(L, "erf",    erf);
 	return true;
 }
 
@@ -90,6 +91,11 @@ int LuaMathExtra::round (lua_State *L) {
     }
   }
   lua_pushnumber(L, math::floor(x+0.5f));
+  return 1;
+}
+
+int LuaMathExtra::erf (lua_State *L) {
+  lua_pushnumber(L, math::erf(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
