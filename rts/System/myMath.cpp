@@ -196,7 +196,6 @@ float smoothstep(const float edge0, const float edge1, const float value)
 	return t * t * (3.0f - 2.0f * t);
 }
 
-
 float3 smoothstep(const float edge0, const float edge1, float3 vec)
 {
 	vec.x = smoothstep(edge0, edge1, vec.x);
