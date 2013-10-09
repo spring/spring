@@ -10,6 +10,7 @@
 #include "LuaHashString.h"
 #include "LuaOpenGL.h"
 #include "LuaBitOps.h"
+#include "LuaMathExtra.h"
 #include "LuaUtils.h"
 #include "LuaZip.h"
 #include "Game/GlobalUnsynced.h"
@@ -2920,6 +2921,7 @@ bool CLuaHandle::AddBasicCalls(lua_State *L)
 	// extra math utilities
 	lua_getglobal(L, "math");
 	LuaBitOps::PushEntries(L);
+	LuaMathExtra::PushEntries(L);
 	lua_pop(L, 1);
 
 	return true;
