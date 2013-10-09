@@ -13,6 +13,11 @@ class LuaMathExtra {
 		static int hypot(lua_State* L);
 		static int diag(lua_State* L);
 		static int clamp(lua_State* L);
+		static int sgn(lua_State* L);
+		static int mix(lua_State* L);
+		static int round(lua_State* L);
+		static int erf(lua_State* L);
 };
 
 #endif /* LUA_MATH_EXTRA_H */
+
