@@ -154,6 +154,7 @@ struct TestProcessor {
 BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 {
 	LOG("Clock Precision Test");
+	spring_clock::PushTickRate();
 	spring_time::setstarttime(spring_time::gettime(true));
 
 	#ifdef BOOST_CHRONO_HAS_CLOCK_STEADY
@@ -249,6 +250,8 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 	BOOST_CHECK( std::abs(spring_time(1e3).toSecsf() - 1e0) < 0.1f);
 	BOOST_CHECK( std::abs(spring_time(1e6).toSecsf() - 1e3) < 0.1f);
 	BOOST_CHECK( std::abs(spring_time(1e9).toSecsf() - 1e6) < 0.1f);
+
+	spring_clock::PopTickRate();
 }
 
 

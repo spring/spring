@@ -145,6 +145,12 @@ static bool MultisampleVerify()
 SpringApp::SpringApp()
 	: cmdline(NULL)
 {
+	spring_clock::PushTickRate();
+	// set the Spring "epoch" to be whatever value the first
+	// call to gettime() returns, should not be 0 (can safely
+	// be done before SDL_Init, we are not using SDL_GetTicks
+	// as our clock anymore)
+	spring_time::setstarttime(spring_time::gettime(true));
 }
 
 /**
@@ -154,6 +160,7 @@ SpringApp::~SpringApp()
 {
 	delete cmdline;
 	creg::System::FreeClasses();
+	spring_clock::PopTickRate();
 }
 
 /**
@@ -207,10 +214,6 @@ bool SpringApp::Initialize()
 		return false;
 	}
 
-	// set the Spring "epoch", do this a bit after SDL_Init in
-	// case SDL_GetTicks is our clock (so it does not become 0)
-	spring_time::setstarttime(spring_time::gettime(true));
-
 	// Install Watchdog (must happen after time epoch is set)
 	Watchdog::Install();
 	Watchdog::RegisterThread(WDT_MAIN, true);
@@ -256,7 +259,7 @@ bool SpringApp::Initialize()
 	// Multithreading & Affinity
 	Threading::SetThreadName("unknown"); // set default threadname
 
-	LOG("[%s] CPU Clock: %s", __FUNCTION__, Cpp11Clock::GetName());
+	LOG("[%s] CPU Clock: %s", __FUNCTION__, spring_clock::GetName());
 	LOG("[%s] CPU Cores: %d", __FUNCTION__, Threading::GetAvailableCores());
 
 	// Create CGameSetup and CPreGame objects

@@ -143,6 +143,12 @@ int main(int argc, char* argv[])
 {
 	try {
 		SDL_Init(SDL_INIT_TIMER);
+
+		spring_clock::PushTickRate();
+		// initialize start time (can safely be done before SDL_Init
+		// since we are not using SDL_GetTicks as our clock anymore)
+		spring_time::setstarttime(spring_time::gettime(true));
+
 		CLogOutput::LogSystemInfo();
 
 		std::string scriptName;
@@ -182,10 +188,6 @@ int main(int argc, char* argv[])
 		// Create the server, it will run in a separate thread
 		GameData data;
 		UnsyncedRNG rng;
-
-		// initialize start time, must happen as late as possible after SDL_Init
-		// (if using SDL_GetTicks it could become 0 which is the "notime" value)
-		spring_time::setstarttime(spring_time::gettime(true));
 
 		const unsigned seed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
 		rng.Seed(seed);
@@ -254,6 +256,7 @@ int main(int argc, char* argv[])
 		FileSystemInitializer::Cleanup();
 		GlobalConfig::Deallocate();
 
+		spring_clock::PopTickRate();
 		LOG("exited");
 	}
 	CATCH_SPRING_ERRORS

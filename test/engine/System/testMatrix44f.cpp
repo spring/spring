@@ -257,7 +257,9 @@ _noinline static int TestSSE()
 
 BOOST_AUTO_TEST_CASE( Matrix44VectorMultiply )
 {
+	spring_clock::PushTickRate();
 	spring_time::setstarttime(spring_time::gettime(true));
+
 	for (int i = 0; i < 16; ++i) {
 		if ((i != 7) && (i != 3)) {
 			m[i] = float(i + 1) / 31.5f;
@@ -269,6 +271,8 @@ BOOST_AUTO_TEST_CASE( Matrix44VectorMultiply )
 	BOOST_CHECK(TestFPU1() == correctHash);
 	BOOST_CHECK(TestFPU2() == correctHash);
 	BOOST_CHECK(TestSSE()  == correctHash);
+
+	spring_clock::PopTickRate();
 }
 
 BOOST_AUTO_TEST_CASE( Matrix44MatrixMultiply )
