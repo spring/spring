@@ -3,6 +3,7 @@
 #include "SpringTime.h"
 #include "System/Log/ILog.h"
 
+
 #ifndef UNIT_TEST
 #ifdef USING_CREG
 #include "System/creg/Serializer.h"
@@ -32,29 +33,70 @@ CR_REG_METADATA(spring_time,(
 	namespace this_thread { using namespace std::this_thread; };
 #endif
 
+#define USE_NATIVE_WINDOWS_CLOCK (defined(WIN32) && !defined(FORCE_HIGHRES_TIMERS))
+#if (USE_NATIVE_WINDOWS_CLOCK)
+#include <windows.h>
+#endif
 
-namespace Cpp11Clock {
-	#define USE_SDL_CLOCK (defined(WIN32) && !defined(FORCE_HIGHRES_TIMERS))
 
-	#if USE_SDL_CLOCK
-	#include <SDL/SDL_timer.h>
-	#endif
 
-	boost::int64_t Get() {
-		#if USE_SDL_CLOCK
-		assert(SDL_WasInit(SDL_INIT_TIMER));
-		// upsample number of milliseconds since SDL library
-		// initialization to nanoseconds (it is better to be
-		// imprecise by six orders than totally broken...)
-		return (FromMilliSecs<boost::uint32_t>(SDL_GetTicks()));
+namespace spring_clock {
+	void PushTickRate() {
+		#if USE_NATIVE_WINDOWS_CLOCK
+		// set the number of milliseconds between interrupts
+		// NOTE: THIS IS A GLOBAL OS SETTING, NOT PER PROCESS
+		timeBeginPeriod(1);
+		#endif
+	}
+	void PopTickRate() {
+		#if USE_NATIVE_WINDOWS_CLOCK
+		timeEndPeriod(1);
+		#endif
+	}
+
+	boost::int64_t GetTicks() {
+		#if USE_NATIVE_WINDOWS_CLOCK
+		#if 0
+		{
+			// QueryPerformanceCounter has microsecond-resolution but
+			// *many* issues and SDL 1.2 by default actually does not
+			// use it (!)
+			LARGE_INTEGER tickFreq = {0, 0, 0};
+			LARGE_INTEGER currTick = {0, 0, 0};
+
+			if (!QueryPerformanceFrequency(&tickFreq))
+				return (FromMilliSecs<boost::uint32_t>(0));
+
+			QueryPerformanceCounter(&currTick);
+
+			currTick.QuadPart *= 1000;
+			currTick.QuadPart /= tickFreq.QuadPart;
+
+			return (FromMilliSecs<boost::uint32_t>(currTick.QuadPart));
+		}
+		#else
+		{
+			// timeGetTime is affected by time{Begin,End}Period whereas
+			// GetTickCount is not ---> resolution of the former can be
+			// configured but not for a specific process (they both read
+			// from a shared counter that is updated by the system timer
+			// interrupt)
+			// it returns "the time elapsed since Windows was started"
+			// (which is usually not a large value so there is little
+			// risk of overflowing)
+			//
+			// note: there is a GetTickCount64 but no timeGetTime64
+			return (FromMilliSeconds<boost::uint32_t>(timeGetTime()));
+		}
+		#endif
 		#else
 		return (chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 		#endif
 	}
 
 	const char* GetName() {
-		#if USE_SDL_CLOCK
-		return "SDL_GetTicks";
+		#if USE_NATIVE_WINDOWS_CLOCK
+		return "win32::timeGetTime";
 		#else
 
 		#ifdef SPRINGTIME_USING_BOOST
