@@ -1668,7 +1668,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 			// this means deltaSpeed will be non-zero if stuck on an impassable square and hence
 			// the new speedvector which is constructed from deltaSpeed --> we would simply keep
 			// moving forward through obstacles if not counteracted by this
-			if (collider->frontdir.dot(separationVector) > 0.25f) {
+			if (collider->frontdir.dot(separationVector) < 0.25f) {
 				collider->Move(oldPos, false);
 			}
 		}

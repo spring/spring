@@ -16,6 +16,11 @@ namespace math {
 }
 #else
 #include <cmath>
+
+#ifdef __APPLE__
+	#include <math.h> // cmath doesn't include std::hypot under macosx (tested 2013)
+#endif
+
 namespace math {
 	using std::fabs;
 	// We are using fastmath::sqrt_sse instead!
