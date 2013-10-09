@@ -86,7 +86,7 @@ namespace spring_clock {
 			// risk of overflowing)
 			//
 			// note: there is a GetTickCount64 but no timeGetTime64
-			return (FromMilliSeconds<boost::uint32_t>(timeGetTime()));
+			return (FromMilliSecs<boost::uint32_t>(timeGetTime()));
 		}
 		#endif
 		#else
