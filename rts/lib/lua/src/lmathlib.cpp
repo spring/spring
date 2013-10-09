@@ -125,6 +125,18 @@ static int math_hypot (lua_State *L) {
   return 1;
 }
 
+static int math_diag (lua_State *L) {
+  int n = lua_gettop(L);  /* number of arguments */
+  lua_Number res = 0.0f;
+  int i;
+  for (i=1; i<=n; i++) {
+    lua_Number d = luaL_checknumber_noassert(L, i);
+    res += d*d;
+  }
+  lua_pushnumber(L, math::sqrt(res));
+  return 1;
+}
+
 static int math_pow (lua_State *L) {
   lua_pushnumber(L, math::pow(luaL_checknumber_noassert(L, 1), luaL_checknumber_noassert(L, 2)));
   return 1;
@@ -196,6 +208,20 @@ static int math_max (lua_State *L) {
   return 1;
 }
 
+
+static int math_clamp (lua_State *L) {
+  lua_Number clamp = luaL_checknumber_noassert(L, 1);
+  lua_Number lbound = luaL_checknumber_noassert(L, 2);
+  lua_Number ubound = luaL_checknumber_noassert(L, 3);
+  if (clamp < lbound)
+    clamp = lbound;
+  else if (clamp > ubound)
+    clamp = ubound;
+  lua_pushnumber(L, clamp);
+  return 1;
+}
+
+
 static int lua_streflop_random_seed = 0;
 
 static int math_random (lua_State *L) {
@@ -255,9 +281,11 @@ static const luaL_Reg mathlib[] = {
   {"atan2", math_atan2},
   {"atan",  math_atan},
   {"ceil",  math_ceil},
+  {"clamp", math_clamp},
   {"cosh",   math_cosh},
   {"cos",   math_cos},
   {"deg",   math_deg},
+  {"diag",  math_diag},
   {"exp",   math_exp},
   {"floor", math_floor},
   {"fmod",   math_fmod},
