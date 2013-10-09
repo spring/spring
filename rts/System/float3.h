@@ -731,10 +731,10 @@ const float3 XZVector(1.0f, 0.0f, 1.0f);
 const float3 YZVector(0.0f, 1.0f, 1.0f);
 
 namespace std {
-	float3 min(float3 v1, float3 v2);
-	float3 max(float3 v1, float3 v2);
+	float3 min(const float3 v1, const float3 v2);
+	float3 max(const float3 v1, const float3 v2);
 
-	float3 fabs(float3 v);
+	float3 fabs(const float3 v);
 };
 
 

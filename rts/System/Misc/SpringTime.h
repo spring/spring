@@ -78,11 +78,11 @@ public:
 	bool         operator<=(const spring_time st) const { return (x <= st.x); }
 	bool         operator>=(const spring_time st) const { return (x >= st.x); }
 
-	// short-hands (FIXME: int64 values forced into int32's??)
-	int toSecsi()        const { return (toSecs     <boost::int64_t>()); }
-	int toMilliSecsi()   const { return (toMilliSecs<boost::int64_t>()); }
-	int toMicroSecsi()   const { return (toMicroSecs<boost::int64_t>()); }
-	int toNanoSecsi()    const { return (toNanoSecs <boost::int64_t>()); }
+	// short-hands
+	boost::int64_t toSecsi()        const { return (toSecs     <boost::int64_t>()); }
+	boost::int64_t toMilliSecsi()   const { return (toMilliSecs<boost::int64_t>()); }
+	boost::int64_t toMicroSecsi()   const { return (toMicroSecs<boost::int64_t>()); }
+	boost::int64_t toNanoSecsi()    const { return (toNanoSecs <boost::int64_t>()); }
 
 	float toSecsf()      const { return (toSecs     <float>()); }
 	float toMilliSecsf() const { return (toMilliSecs<float>()); }
