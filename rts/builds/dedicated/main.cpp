@@ -6,8 +6,6 @@
 #include <windows.h>
 #endif
 
-#include <SDL.h>
-
 #include "Game/GameSetup.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameData.h"
@@ -48,12 +46,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DEDICATED_SERVER)
 extern "C"
 {
 #endif
-
-#ifdef __APPLE__
-//FIXME: hack for SDL because of sdl-stubs
-#undef main
-#endif
-
 
 void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 {
@@ -142,8 +134,6 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 int main(int argc, char* argv[])
 {
 	try {
-		SDL_Init(SDL_INIT_TIMER);
-
 		spring_clock::PushTickRate();
 		// initialize start time (can safely be done before SDL_Init
 		// since we are not using SDL_GetTicks as our clock anymore)

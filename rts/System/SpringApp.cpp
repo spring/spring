@@ -280,13 +280,12 @@ bool SpringApp::InitWindow(const char* title)
 	// SDL will cause a creation of gpu-driver thread that will clone its name from the starting threads (= this one = mainthread)
 	Threading::SetThreadName("gpu-driver");
 
-	unsigned int sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
-#ifdef WIN32
-	// the crash reporter should be catching the errors
-	sdlInitFlags |= SDL_INIT_NOPARACHUTE;
-#endif
-
-	if ((SDL_Init(sdlInitFlags) == -1)) {
+	#ifdef WIN32
+	// the crash reporter should be catching errors, not SDL
+	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) == -1)) {
+	#else
+	if ((SDL_Init(SDL_INIT_VIDEO) == -1)) {
+	#endif
 		LOG_L(L_FATAL, "Could not initialize SDL: %s", SDL_GetError());
 		return false;
 	}
