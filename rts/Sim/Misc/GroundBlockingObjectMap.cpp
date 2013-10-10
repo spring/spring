@@ -48,8 +48,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 	object->groundBlockPos = object->pos;
 
 	if (object->immobile) {
-		// align position to even-numbered squares (because
-		// the default pathfinder does not explore odd ones!)
+		// align position to even-numbered squares
 		object->mapPos.x &= 0xfffffe;
 		object->mapPos.y &= 0xfffffe;
 	}
