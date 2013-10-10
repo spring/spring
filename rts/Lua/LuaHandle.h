@@ -156,7 +156,7 @@ class CLuaHandle : public CEventClient
 
 		void UnitIdle(const CUnit* unit);
 		void UnitCommand(const CUnit* unit, const Command& command);
-		void UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag);
+		void UnitCmdDone(const CUnit* unit, const Command& command);
 		void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,

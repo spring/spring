@@ -98,7 +98,7 @@ class CEventClient
 
 		virtual void UnitIdle(const CUnit* unit) {}
 		virtual void UnitCommand(const CUnit* unit, const Command& command) {}
-		virtual void UnitCmdDone(const CUnit* unit, int cmdType, int cmdTag) {}
+		virtual void UnitCmdDone(const CUnit* unit, const Command& command) {}
 		virtual void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,

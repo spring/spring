@@ -980,23 +980,23 @@ void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 	lua_pushnumber(L, unit->team);
 
 	lua_pushnumber(L, command.GetID());
+
+	//FIXME: perhaps we should push the table version rather than the bitfield directly
+	// push the params list
+	//LuaUtils::PushCommandParamsTable(L, command, false);
 	lua_pushnumber(L, command.options);
 
-	const vector<float> &params = command.params;
-	lua_createtable(L, params.size(), 0);
-	for (unsigned int i = 0; i < params.size(); i++) {
-		lua_pushnumber(L, params[i]);
-		lua_rawseti(L, -2, i + 1);
-	}
+	// push the params list
+	LuaUtils::PushCommandParamsTable(L, command, false);
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 6, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
-void CLuaHandle::UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag)
+void CLuaHandle::UnitCmdDone(const CUnit* unit, const Command& command)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitCommandDoneEvent(unit, cmdID, cmdTag))
+	LUA_UNIT_BATCH_PUSH(, LuaUnitCommandDoneEvent(unit, command))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 8, __FUNCTION__);
 
@@ -1010,11 +1010,15 @@ void CLuaHandle::UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag)
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
-	lua_pushnumber(L, cmdID);
-	lua_pushnumber(L, cmdTag);
+	lua_pushnumber(L, command.GetID());
+	lua_pushnumber(L, command.tag);
+	// push the params list
+	LuaUtils::PushCommandParamsTable(L, command, false);
+	// push the options table
+	LuaUtils::PushCommandOptionsTable(L, command, false);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 5, 0, traceBack.GetErrFuncIdx(), false);
+	RunCallInTraceback(cmdStr, 7, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
