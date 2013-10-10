@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 int stub_sdl_getSystemMilliSeconds() {
-
+	// FIXME: YET ANOTHER TIMER
 	boost::xtime t;
 	boost::xtime_get(&t, SPRING_UTCTIME);
 	const int milliSeconds = t.sec * 1000 + (t.nsec / 1000000);   
@@ -27,7 +27,6 @@ int stub_sdl_getSystemMilliSeconds() {
 }
 
 void stub_sdl_sleepMilliSeconds(int milliSeconds) {
-
 	boost::xtime t;
 	boost::xtime_get(&t, SPRING_UTCTIME);
 	t.nsec += 1000000 * milliSeconds;

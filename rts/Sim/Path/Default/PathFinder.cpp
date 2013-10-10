@@ -38,13 +38,10 @@ CPathFinder::CPathFinder()
 	, testedNodes(0)
 	, squareStates(int2(gs->mapx, gs->mapy), int2(gs->mapx, gs->mapy))
 {
-	static const int   dirScale = 2;
-	static const float dirCost  = math::sqrt(2.0f);
-
-	directionVectors2D[PATHOPT_LEFT                ] = int2(+1 * dirScale,  0           );
-	directionVectors2D[PATHOPT_RIGHT               ] = int2(-1 * dirScale,  0           );
-	directionVectors2D[PATHOPT_UP                  ] = int2( 0,            +1 * dirScale);
-	directionVectors2D[PATHOPT_DOWN                ] = int2( 0,            -1 * dirScale);
+	directionVectors2D[PATHOPT_LEFT                ] = int2(+1 * PATH_NODE_SPACING,  0                    );
+	directionVectors2D[PATHOPT_RIGHT               ] = int2(-1 * PATH_NODE_SPACING,  0                    );
+	directionVectors2D[PATHOPT_UP                  ] = int2( 0,                     +1 * PATH_NODE_SPACING);
+	directionVectors2D[PATHOPT_DOWN                ] = int2( 0,                     -1 * PATH_NODE_SPACING);
 	directionVectors2D[PATHOPT_LEFT  | PATHOPT_UP  ] = int2(directionVectors2D[PATHOPT_LEFT ].x, directionVectors2D[PATHOPT_UP   ].y);
 	directionVectors2D[PATHOPT_RIGHT | PATHOPT_UP  ] = int2(directionVectors2D[PATHOPT_RIGHT].x, directionVectors2D[PATHOPT_UP   ].y);
 	directionVectors2D[PATHOPT_RIGHT | PATHOPT_DOWN] = int2(directionVectors2D[PATHOPT_RIGHT].x, directionVectors2D[PATHOPT_DOWN ].y);
@@ -76,14 +73,14 @@ CPathFinder::CPathFinder()
 	directionVectors3D[PATHOPT_RIGHT | PATHOPT_DOWN].ANormalize();
 	directionVectors3D[PATHOPT_LEFT  | PATHOPT_DOWN].ANormalize();
 
-	directionCosts[PATHOPT_LEFT                ] =    1.0f; // * dirScale;
-	directionCosts[PATHOPT_RIGHT               ] =    1.0f; // * dirScale;
-	directionCosts[PATHOPT_UP                  ] =    1.0f; // * dirScale;
-	directionCosts[PATHOPT_DOWN                ] =    1.0f; // * dirScale;
-	directionCosts[PATHOPT_LEFT  | PATHOPT_UP  ] = dirCost; // * dirScale;
-	directionCosts[PATHOPT_RIGHT | PATHOPT_UP  ] = dirCost; // * dirScale;
-	directionCosts[PATHOPT_RIGHT | PATHOPT_DOWN] = dirCost; // * dirScale;
-	directionCosts[PATHOPT_LEFT  | PATHOPT_DOWN] = dirCost; // * dirScale;
+	directionCosts[PATHOPT_LEFT                ] =    1.0f; // * PATH_NODE_SPACING;
+	directionCosts[PATHOPT_RIGHT               ] =    1.0f; // * PATH_NODE_SPACING;
+	directionCosts[PATHOPT_UP                  ] =    1.0f; // * PATH_NODE_SPACING;
+	directionCosts[PATHOPT_DOWN                ] =    1.0f; // * PATH_NODE_SPACING;
+	directionCosts[PATHOPT_LEFT  | PATHOPT_UP  ] = 1.4142f; // * PATH_NODE_SPACING;
+	directionCosts[PATHOPT_RIGHT | PATHOPT_UP  ] = 1.4142f; // * PATH_NODE_SPACING;
+	directionCosts[PATHOPT_RIGHT | PATHOPT_DOWN] = 1.4142f; // * PATH_NODE_SPACING;
+	directionCosts[PATHOPT_LEFT  | PATHOPT_DOWN] = 1.4142f; // * PATH_NODE_SPACING;
 }
 
 CPathFinder::~CPathFinder()
@@ -174,11 +171,12 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 		}
 	}
 
-	// Clamp the start position
-	if (startxSqr >= gs->mapx) { startxSqr = gs->mapxm1; }
-	if (startzSqr >= gs->mapy) { startzSqr = gs->mapym1; }
-
+	// start-position is clamped by caller
+	// NOTE:
+	//   if search starts on  odd-numbered square, only  odd-numbered nodes are explored
+	//   if search starts on even-numbered square, only even-numbered nodes are explored
 	const bool isStartGoal = pfDef.IsGoal(startxSqr, startzSqr);
+
 	// although our starting square may be inside the goal radius, the starting coordinate may be outside.
 	// in this case we do not want to return CantGetCloser, but instead a path to our starting square.
 	if (isStartGoal && pfDef.startInGoalRadius)
@@ -235,8 +233,10 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveDef& moveDef, const CPathFin
 		if (squareStates.fCost[os->nodeNum] != os->fCost)
 			continue;
 
+		const int2 nodePos = os->nodePos;
+
 		// Check if the goal is reached.
-		if (pfDef.IsGoal(os->nodePos.x, os->nodePos.y)) {
+		if (pfDef.IsGoal(nodePos.x, nodePos.y)) {
 			mGoalSquareIdx = os->nodeNum;
 			mGoalHeuristic = 0.0f;
 			foundGoal = true;
@@ -244,21 +244,32 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveDef& moveDef, const CPathFin
 		}
 
 		// Test the 8 surrounding squares.
-		const bool right = TestSquare(moveDef, pfDef, os, owner, PATHOPT_RIGHT, synced);
-		const bool left  = TestSquare(moveDef, pfDef, os, owner, PATHOPT_LEFT,  synced);
-		const bool up    = TestSquare(moveDef, pfDef, os, owner, PATHOPT_UP,    synced);
-		const bool down  = TestSquare(moveDef, pfDef, os, owner, PATHOPT_DOWN,  synced);
+		// note: because the spacing between nodes is 2 (not 1) we
+		// must also make sure not to skip across any intermediate
+		// impassable squares (!) but without reducing the spacing
+		// factor which would drop performance four-fold
+		assert(PATH_NODE_SPACING == 2);
+
+		#define CAN_SKIP_SQUARE(md, x, y, o) ((CMoveMath::IsBlocked(md, x, y, o) & CMoveMath::BLOCK_STRUCTURE) == 0)
+		#define DO_SQUARE_CHECK(md, x, y, o, pfd, sqr, opt, sync) (CAN_SKIP_SQUARE(md, x, y, o) && TestSquare(md, pfd, sqr, o, opt, sync))
+
+		const bool    up = DO_SQUARE_CHECK(moveDef, nodePos.x,     nodePos.y - 1, owner, pfDef, os, PATHOPT_UP,    synced);
+		const bool  down = DO_SQUARE_CHECK(moveDef, nodePos.x,     nodePos.y + 1, owner, pfDef, os, PATHOPT_DOWN,  synced);
+		const bool right = DO_SQUARE_CHECK(moveDef, nodePos.x + 1, nodePos.y,     owner, pfDef, os, PATHOPT_RIGHT, synced);
+		const bool  left = DO_SQUARE_CHECK(moveDef, nodePos.x - 1, nodePos.y,     owner, pfDef, os, PATHOPT_LEFT,  synced);
 
 		if (up) {
-			// we dont want to search diagonally if there is a blocking object
+			// don't search diagonally if there is a blocking object
 			// (not blocking terrain) in one of the two side squares
-			if (right) { TestSquare(moveDef, pfDef, os, owner, (PATHOPT_RIGHT | PATHOPT_UP), synced); }
-			if (left) { TestSquare(moveDef, pfDef, os, owner, (PATHOPT_LEFT | PATHOPT_UP), synced); }
+			if (right) { DO_SQUARE_CHECK(moveDef, nodePos.x + 1, nodePos.y - 1, owner, pfDef, os, PATHOPT_RIGHT | PATHOPT_UP, synced); }
+			if ( left) { DO_SQUARE_CHECK(moveDef, nodePos.x - 1, nodePos.y - 1, owner, pfDef, os, PATHOPT_LEFT  | PATHOPT_UP, synced); }
 		}
 		if (down) {
-			if (right) { TestSquare(moveDef, pfDef, os, owner, (PATHOPT_RIGHT | PATHOPT_DOWN), synced); }
-			if (left) { TestSquare(moveDef, pfDef, os, owner, (PATHOPT_LEFT | PATHOPT_DOWN), synced); }
+			if (right) { DO_SQUARE_CHECK(moveDef, nodePos.x + 1, nodePos.y + 1, owner, pfDef, os, PATHOPT_RIGHT | PATHOPT_DOWN, synced); }
+			if ( left) { DO_SQUARE_CHECK(moveDef, nodePos.x - 1, nodePos.y + 1, owner, pfDef, os, PATHOPT_LEFT  | PATHOPT_DOWN, synced); }
 		}
+		#undef DO_SQUARE_CHECK
+		#undef CAN_SKIP_SQUARE
 
 		// Mark this square as closed.
 		squareStates.nodeMask[os->nodeNum] |= PATHOPT_CLOSED;
