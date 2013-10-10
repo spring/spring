@@ -20,3 +20,4 @@ class LuaMathExtra {
 };
 
 #endif /* LUA_MATH_EXTRA_H */
+
