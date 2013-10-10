@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/EventHandler.h"
+#include "System/EventBatchHandler.h"
 
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
@@ -852,6 +853,26 @@ bool CEventHandler::MapDrawCmd(int playerID, int type,
 	}
 	return false;
 }
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CEventHandler::UnsyncedProjectileCreated(const CProjectile* proj) {
+	//FIXME no real event
+	(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).insert(proj);
+}
+
+void CEventHandler::UnsyncedProjectileDestroyed(const CProjectile* proj) {
+	//FIXME no real event
+	(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).erase_delete(proj);
+}
+
+void CEventHandler::LoadedModelRequested() {
+	//FIXME no real event
+	eventBatchHandler->LoadedModelRequested();
+}
+
 
 /******************************************************************************/
 /******************************************************************************/

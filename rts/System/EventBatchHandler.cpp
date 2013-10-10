@@ -16,6 +16,57 @@
 
 boost::int64_t EventBatchHandler::eventSequenceNumber = 0;
 
+
+EventBatchHandler::EventBatchHandler()
+	: CEventClient("[EventBatchHandler]", 0, true)
+{
+	autoLinkEvents = true;
+	RegisterLinkedEvents(this);
+	eventHandler.AddClient(this);
+}
+
+
+EventBatchHandler* EventBatchHandler::GetInstance()
+{
+	static EventBatchHandler ebh;
+	return &ebh;
+}
+
+void EventBatchHandler::UnitCreated(const CUnit* unit) { /*GetUnitCreatedDestroyedBatch().enqueue(UD(unit, unit->isCloaked));*/ }
+void EventBatchHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker) { /*GetUnitCreatedDestroyedBatch().dequeue_synced(unit);*/ }
+
+void EventBatchHandler::UnitMoved(const CUnit* unit) { EnqueueUnitMovedEvent(unit, unit->pos); }
+void EventBatchHandler::UnitEnteredRadar(const CUnit* unit, int at) { EnqueueUnitLOSStateChangeEvent(unit, at, unit->losStatus[at]); }
+void EventBatchHandler::UnitEnteredLos(const CUnit* unit, int at) { EnqueueUnitLOSStateChangeEvent(unit, at, unit->losStatus[at]); }
+void EventBatchHandler::UnitLeftRadar(const CUnit* unit, int at) { EnqueueUnitLOSStateChangeEvent(unit, at, unit->losStatus[at]); }
+void EventBatchHandler::UnitLeftLos(const CUnit* unit, int at) { EnqueueUnitLOSStateChangeEvent(unit, at, unit->losStatus[at]); }
+void EventBatchHandler::UnitCloaked(const CUnit* unit) { EnqueueUnitCloakStateChangeEvent(unit, 1); }
+void EventBatchHandler::UnitDecloaked(const CUnit* unit) { EnqueueUnitCloakStateChangeEvent(unit, 0); }
+
+void EventBatchHandler::FeatureCreated(const CFeature* feature) { GetFeatureCreatedDestroyedEventBatch().enqueue(feature); }
+void EventBatchHandler::FeatureDestroyed(const CFeature* feature) { GetFeatureCreatedDestroyedEventBatch().dequeue(feature); }
+void EventBatchHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) { EnqueueFeatureMovedEvent(feature, oldpos, feature->pos); }
+void EventBatchHandler::ProjectileCreated(const CProjectile* proj, int allyTeam)
+{
+	if (proj->synced) {
+		GetSyncedProjectileCreatedDestroyedBatch().insert(proj);
+	} else {
+		GetUnsyncedProjectileCreatedDestroyedBatch().insert(proj);
+	}
+}
+void EventBatchHandler::ProjectileDestroyed(const CProjectile* proj, int allyTeam)
+{
+	if (proj->synced) {
+		GetSyncedProjectileCreatedDestroyedBatch().erase_delete(proj);
+	} else {
+		GetUnsyncedProjectileCreatedDestroyedBatch().erase_delete(proj);
+	}
+}
+
+
+
+
+
 void EventBatchHandler::ProjectileCreatedDestroyedEvent::Add(const CProjectile* p) { eventHandler.RenderProjectileCreated(p); }
 void EventBatchHandler::ProjectileCreatedDestroyedEvent::Remove(const CProjectile* p) { eventHandler.RenderProjectileDestroyed(p); }
 void EventBatchHandler::ProjectileCreatedDestroyedEvent::Delete(const CProjectile* p) { delete p; }
@@ -37,10 +88,7 @@ void EventBatchHandler::FeatureCreatedDestroyedEvent::Add(const CFeature* f) { e
 void EventBatchHandler::FeatureCreatedDestroyedEvent::Remove(const CFeature* f) { eventHandler.RenderFeatureDestroyed(f); }
 void EventBatchHandler::FeatureMovedEvent::Add(const FAP& f) { eventHandler.RenderFeatureMoved(f.feat, f.oldpos, f.newpos); }
 
-EventBatchHandler* EventBatchHandler::GetInstance() {
-	static EventBatchHandler ebh;
-	return &ebh;
-}
+
 
 void EventBatchHandler::UpdateUnits() {
 	unitCreatedDestroyedEventBatch.delay();
@@ -112,7 +160,7 @@ void EventBatchHandler::DeleteSyncedProjectiles() {
 }
 
 void EventBatchHandler::UpdateObjects() {
-	{ 
+	{
 		GML_STDMUTEX_LOCK(runit); // UpdateObjects
 
 		UpdateUnits();
@@ -131,6 +179,6 @@ void EventBatchHandler::UpdateObjects() {
 
 void EventBatchHandler::LoadedModelRequested() {
 	// Make sure the requested model is available to the calling thread
-	if (GML::SimEnabled() && GML::ShareLists() && !GML::IsSimThread()) 
+	if (GML::SimEnabled() && GML::ShareLists() && !GML::IsSimThread())
 		texturehandlerS3O->UpdateDraw();
 }

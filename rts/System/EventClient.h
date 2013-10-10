@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <typeinfo>
 
 #ifdef __APPLE__
 // defined in X11/X.h
@@ -53,7 +54,7 @@ class CEventClient
 		 * Used by the eventHandler to register
 		 * call-ins when an EventClient is being added.
 		 */
-		virtual bool WantsEvent(const std::string& eventName) = 0;
+		virtual bool WantsEvent(const std::string& eventName);
 
 		// used by the eventHandler to route certain event types
 		virtual int  GetReadAllyTeam() const { return NoAccessTeam; }
@@ -62,10 +63,33 @@ class CEventClient
 			return (GetFullRead() || (GetReadAllyTeam() == allyTeam));
 		}
 
+	public:
+		friend class CEventHandler;
+
+		typedef void (*eventFuncPtr)(void*);
+
+		std::map<std::string, eventFuncPtr> linkedEvents;
+		std::map<std::string, std::string> linkedEventsTypeInfo;
+
+		#pragma GCC diagnostic ignored "-Wpmf-conversions"
+		template <class T>
+		void RegisterLinkedEvents(T* foo) {
+			#define SETUP_EVENT(eventname, props) \
+				linkedEvents[#eventname] = (eventFuncPtr)&T::eventname; \
+				linkedEventsTypeInfo[#eventname] = typeid(&T::eventname).name();
+
+				#include "Events.def"
+			#undef SETUP_EVENT
+		}
+		#pragma GCC diagnostic warning "-Wpmf-conversions"
+
 	private:
 		const std::string name;
 		const int         order;
 		const bool        synced_;
+
+	protected:
+		      bool        autoLinkEvents;
 
 	protected:
 		CEventClient(const std::string& name, int order, bool synced);
