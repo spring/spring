@@ -981,7 +981,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 		SetOrderTarget(NULL);
 		const Command& cmd = queue->front();
 		eoh->CommandFinished(*owner, cmd);
-		eventHandler.UnitCmdDone(owner, cmd.GetID(), cmd.tag);
+		eventHandler.UnitCmdDone(owner, cmd);
 		ClearTargetLock(cmd);
 	}
 
@@ -1430,6 +1430,7 @@ void CCommandAI::FinishCommand()
 	const Command cmd = commandQue.front();
 	const int cmdID  = cmd.GetID();
 	const int cmdTag = cmd.tag;
+	const unsigned char cmdOpts = cmd.options;
 	const bool dontRepeat = (cmd.options & INTERNAL_ORDER);
 
 	if (repeatOrders
@@ -1446,7 +1447,7 @@ void CCommandAI::FinishCommand()
 	unimportantMove = false;
 	SetOrderTarget(NULL);
 	eoh->CommandFinished(*owner, cmd);
-	eventHandler.UnitCmdDone(owner, cmdID, cmdTag);
+	eventHandler.UnitCmdDone(owner, cmd);
 	ClearTargetLock(cmd);
 
 	if (commandQue.empty()) {
