@@ -16,14 +16,19 @@
 static const int testRuns = 1000000;
 
 
+#if 0
 #include <SDL_timer.h>
 struct SDLClock {
 	static inline float ToMs() { return 1.0f; }
 	static inline std::string GetName() { return "SDL_GetTicks"; }
 	static inline int64_t Get() {
+		// on Linux, same as clock_gettime(MT) with SDL 1.2
+		// on Windows, same as GetTickCount or timeGetTime
+		assert(SDL_WasInit(SDL_INIT_TIMER));
 		return SDL_GetTicks();
 	}
 };
+#endif
 
 
 #ifdef Boost_TIMER_FOUND
@@ -170,7 +175,7 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 
 	float bestAvg = 1e9;
 
-	bestAvg = std::min(bestAvg, TestProcessor<SDLClock>::Run());
+	// bestAvg = std::min(bestAvg, TestProcessor<SDLClock>::Run());
 	bestAvg = std::min(bestAvg, TestProcessor<BoostChronoClock>::Run());
 	bestAvg = std::min(bestAvg, TestProcessor<BoostChronoMicroClock>::Run());
 #ifdef Boost_TIMER_FOUND
