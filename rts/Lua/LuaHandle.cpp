@@ -987,8 +987,10 @@ void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 	// push the params list
 	LuaUtils::PushCommandParamsTable(L, command, false);
 
+	lua_pushnumber(L, command.tag);
+
 	// call the routine
-	RunCallInTraceback(cmdStr, 6, 0, traceBack.GetErrFuncIdx(), false);
+	RunCallInTraceback(cmdStr, 7, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
