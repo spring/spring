@@ -60,7 +60,7 @@ namespace spring_clock {
 		{
 			// QueryPerformanceCounter has microsecond-resolution but
 			// *many* issues and SDL 1.2 by default actually does not
-			// use it (!)
+			// use it (!) but SDL 2.0 does --> test that?
 			LARGE_INTEGER tickFreq = {0, 0, 0};
 			LARGE_INTEGER currTick = {0, 0, 0};
 
