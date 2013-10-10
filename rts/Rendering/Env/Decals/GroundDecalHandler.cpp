@@ -211,6 +211,7 @@ static inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, co
 
 inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 {
+	// TODO: do we want LOS-checks for decals?
 	if (!camera->InView(decal->pos, decal->radius))
 		return;
 
@@ -320,9 +321,9 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 
 inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade)
 {
-	if (!camera->InView(scar->pos, scar->radius + 16)) {
+	// TODO: do we want LOS-checks for decals?
+	if (!camera->InView(scar->pos, scar->radius + 16))
 		return;
-	}
 
 	const float* hm = readMap->GetCornerHeightMapUnsynced();
 
@@ -331,7 +332,7 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 
 	unsigned char color[4] = {255, 255, 255, 255};
 
-	if (!scar->va) {
+	if (scar->va == NULL) {
 		scar->va = new CVertexArray();
 		scar->va->Initialize();
 
@@ -377,13 +378,12 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 		}
 	} else {
 		if (fade) {
-			if (scar->creationTime + 10 > gs->frameNum) {
+			if ((scar->creationTime + 10) > gs->frameNum) {
 				color[3] = (int) (scar->startAlpha * (gs->frameNum - scar->creationTime) * 0.1f);
 			} else {
 				color[3] = (int) (scar->startAlpha - (gs->frameNum - scar->creationTime) * scar->alphaFalloff);
 			}
 
-			const float c = *((float*) (color));
 			const int start = 0;
 			const int stride = 6;
 			const int sdi = scar->va->drawIndex();
@@ -391,11 +391,10 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 			for (int i = start; i < sdi; i += stride) {
 				const int x = int(scar->va->drawArray[i + 0]) >> 3;
 				const int z = int(scar->va->drawArray[i + 2]) >> 3;
-				const float h = hm[z * gsmx1 + x];
 
 				// update the height and alpha
-				scar->va->drawArray[i + 1] = h;
-				scar->va->drawArray[i + 5] = c;
+				scar->va->drawArray[i + 1] = hm[z * gsmx1 + x];
+				scar->va->drawArray[i + 5] = *reinterpret_cast<float*>(color);
 			}
 		}
 
@@ -583,24 +582,34 @@ void CGroundDecalHandler::DrawTracks() {
 					tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
 				}
 
-				if (camera->InView((track->parts.front()->pos1 + track->parts.back()->pos1) * 0.5f, track->parts.front()->pos1.distance(track->parts.back()->pos1) + 500)) {
-					list<TrackPart *>::iterator ppi = track->parts.begin();
-					color2[3] = std::max(0, track->trackAlpha - (int) ((gs->frameNum - (*ppi)->creationTime) * track->alphaFalloff));
-
-					va->EnlargeArrays(track->parts.size()*4,0,VA_SIZE_TC);
-					for (list<TrackPart *>::iterator pi = ++track->parts.begin(); pi != track->parts.end(); ++pi) {
-						color[3] = std::max(0, track->trackAlpha - (int) ((gs->frameNum - (*ppi)->creationTime) * track->alphaFalloff));
-						if ((*pi)->connected) {
-							va->AddVertexQTC((*ppi)->pos1, (*ppi)->texPos, 0, color2);
-							va->AddVertexQTC((*ppi)->pos2, (*ppi)->texPos, 1, color2);
-							va->AddVertexQTC((*pi)->pos2, (*pi)->texPos, 1, color);
-							va->AddVertexQTC((*pi)->pos1, (*pi)->texPos, 0, color);
-						}
-						color2[3] = color[3];
-						ppi = pi;
-					}
-				}
 				++utsi;
+
+				const auto frontPart = track->parts.front();
+				const auto backPart = track->parts.back();
+
+				if (!camera->InView((frontPart->pos1 + backPart->pos1) * 0.5f, frontPart->pos1.distance(backPart->pos1) + 500.0f))
+					continue;
+
+				list<TrackPart*>::const_iterator curPart =    track->parts.begin();
+				list<TrackPart*>::const_iterator nxtPart = ++(track->parts.begin());
+
+				color2[3] = std::max(0, track->trackAlpha - (int) ((gs->frameNum - (*curPart)->creationTime) * track->alphaFalloff));
+
+				va->EnlargeArrays(track->parts.size()*4,0,VA_SIZE_TC);
+
+				for (; nxtPart != track->parts.end(); ++nxtPart) {
+					color[3] = std::max(0, track->trackAlpha - (int) ((gs->frameNum - (*curPart)->creationTime) * track->alphaFalloff));
+
+					if ((*nxtPart)->connected) {
+						va->AddVertexQTC((*curPart)->pos1, (*curPart)->texPos, 0, color2);
+						va->AddVertexQTC((*curPart)->pos2, (*curPart)->texPos, 1, color2);
+						va->AddVertexQTC((*nxtPart)->pos2, (*nxtPart)->texPos, 1, color);
+						va->AddVertexQTC((*nxtPart)->pos1, (*nxtPart)->texPos, 0, color);
+					}
+
+					color2[3] = color[3];
+					curPart = nxtPart;
+				}
 			}
 			va->DrawArrayTC(GL_QUADS);
 		}
@@ -975,12 +984,13 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 	if (decalLevel == 0 || !addScar)
 		return;
 
-	const float lifeTime = decalLevel * damage * 3.0f;
 	const float altitude = pos.y - ground->GetHeightReal(pos.x, pos.z, false);
 
 	// no decals for below-ground explosions
-	if (altitude <= -1.0f) { return; }
-	if (altitude >= radius) { return; }
+	if (altitude <= -1.0f)
+		return;
+	if (altitude >= radius)
+		return;
 
 	pos.y -= altitude;
 	radius -= altitude;
@@ -988,33 +998,30 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 	if (radius < 5.0f)
 		return;
 
-	if (damage > radius * 30)
-		damage = radius * 30;
+	damage = std::min(damage, radius * 30.0f);
+	damage *= (radius / (radius + altitude));
+	radius = std::min(radius, damage * 0.25f);
 
-	damage *= (radius) / (radius + altitude);
-	if (radius > damage * 0.25f)
-		radius = damage * 0.25f;
+	if (damage > 400.0f)
+		damage = 400.0f + math::sqrt(damage - 399.0f);
 
-	if (damage > 400)
-		damage = 400 + math::sqrt(damage - 399);
+	const int ttl = decalLevel * damage * 3.0f;
 
-	pos.ClampInBounds();
-
-	Scar* s = new Scar;
-	s->pos = pos;
+	Scar* s = new Scar();
+	s->pos = pos.cClampInBounds();
 	s->radius = radius * 1.4f;
 	s->creationTime = gs->frameNum;
-	s->startAlpha = max(50.f, min(255.f, damage));
-	s->alphaFalloff = s->startAlpha / (lifeTime);
-	s->lifeTime = (int) (gs->frameNum + lifeTime);
+	s->startAlpha = std::max(50.0f, std::min(255.0f, damage));
+	s->lifeTime = int(gs->frameNum + ttl);
+	s->alphaFalloff = s->startAlpha / ttl;
 	// atlas contains 2x2 textures, pick one of them
 	s->texOffsetX = (gu->RandInt() & 128)? 0: 0.5f;
 	s->texOffsetY = (gu->RandInt() & 128)? 0: 0.5f;
 
-	s->x1 = (int) max(0.f,                  (pos.x - radius) / 16.0f    );
-	s->x2 = (int) min(float(gs->hmapx - 1), (pos.x + radius) / 16.0f + 1);
-	s->y1 = (int) max(0.f,                  (pos.z - radius) / 16.0f    );
-	s->y2 = (int) min(float(gs->hmapy - 1), (pos.z + radius) / 16.0f + 1);
+	s->x1 = int(std::max(0.f,                  (s->pos.x - radius) / (SQUARE_SIZE * 2)    ));
+	s->x2 = int(std::min(float(gs->hmapx - 1), (s->pos.x + radius) / (SQUARE_SIZE * 2) + 1));
+	s->y1 = int(std::max(0.f,                  (s->pos.z - radius) / (SQUARE_SIZE * 2)    ));
+	s->y2 = int(std::min(float(gs->hmapy - 1), (s->pos.z + radius) / (SQUARE_SIZE * 2) + 1));
 
 	s->basesize = (s->x2 - s->x1) * (s->y2 - s->y1);
 	s->overdrawn = 0;
