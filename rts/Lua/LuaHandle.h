@@ -267,6 +267,7 @@ class CLuaHandle : public CEventClient
 		void LosCallIn(const LuaHashString& hs, const CUnit* unit, int allyTeam);
 		void UnitCallIn(const LuaHashString& hs, const CUnit* unit);
 
+		void RunDrawCallIn(const LuaHashString& hs);
 
 	protected:
 		bool userMode;

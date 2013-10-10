@@ -1460,7 +1460,7 @@ bool CLuaHandle::RecvLuaMsg(const string& msg, int playerID)
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
-	lua_pushsstring(L, msg); // allow embedded 0's
+	lua_pushsstring(L, msg); // allows embedded 0's
 	lua_pushnumber(L, playerID);
 
 	// call the routine
@@ -1664,113 +1664,62 @@ bool CLuaHandle::DefaultCommand(const CUnit* unit,
 }
 
 
-
-
-void CLuaHandle::DrawGenesis()
+void CLuaHandle::RunDrawCallIn(const LuaHashString& hs)
 {
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2, __FUNCTION__);
-	static const LuaHashString cmdStr("DrawGenesis");
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!hs.GetGlobalFunc(L)) {
 		return;
 	}
 
 	LuaOpenGL::SetDrawingEnabled(L, true);
 
 	// call the routine
-	RunCallInUnsynced(L, cmdStr, 0, 0);
+	RunCallInUnsynced(L, hs, 0, 0);
 
 	LuaOpenGL::SetDrawingEnabled(L, false);
+}
+
+
+void CLuaHandle::DrawGenesis()
+{
+	static const LuaHashString cmdStr("DrawGenesis");
+	RunDrawCallIn(cmdStr);
 }
 
 
 void CLuaHandle::DrawWorld()
 {
-	LUA_CALL_IN_CHECK(L);
-	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawWorld");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return;
-	}
-
-	LuaOpenGL::SetDrawingEnabled(L, true);
-
-	// call the routine
-	RunCallInUnsynced(L, cmdStr, 0, 0);
-
-	LuaOpenGL::SetDrawingEnabled(L, false);
+	RunDrawCallIn(cmdStr);
 }
 
 
 void CLuaHandle::DrawWorldPreUnit()
 {
-	LUA_CALL_IN_CHECK(L);
-	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawWorldPreUnit");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return;
-	}
-
-	LuaOpenGL::SetDrawingEnabled(L, true);
-
-	// call the routine
-	RunCallInUnsynced(L, cmdStr, 0, 0);
-
-	LuaOpenGL::SetDrawingEnabled(L, false);
+	RunDrawCallIn(cmdStr);
 }
 
 
 void CLuaHandle::DrawWorldShadow()
 {
-	LUA_CALL_IN_CHECK(L);
-	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawWorldShadow");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return;
-	}
-
-	LuaOpenGL::SetDrawingEnabled(L, true);
-
-	// call the routine
-	RunCallInUnsynced(L, cmdStr, 0, 0);
-
-	LuaOpenGL::SetDrawingEnabled(L, false);
+	RunDrawCallIn(cmdStr);
 }
 
 
 void CLuaHandle::DrawWorldReflection()
 {
-	LUA_CALL_IN_CHECK(L);
-	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawWorldReflection");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return;
-	}
-
-	LuaOpenGL::SetDrawingEnabled(L, true);
-
-	// call the routine
-	RunCallInUnsynced(L, cmdStr, 0, 0);
-
-	LuaOpenGL::SetDrawingEnabled(L, false);
+	RunDrawCallIn(cmdStr);
 }
 
 
 void CLuaHandle::DrawWorldRefraction()
 {
-	LUA_CALL_IN_CHECK(L);
-	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawWorldRefraction");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return;
-	}
-
-	LuaOpenGL::SetDrawingEnabled(L, true);
-
-	// call the routine
-	RunCallInUnsynced(L, cmdStr, 0, 0);
-
-	LuaOpenGL::SetDrawingEnabled(L, false);
+	RunDrawCallIn(cmdStr);
 }
 
 
