@@ -4,7 +4,6 @@
 
 #include "myX11.h"
 
-#include <string.h>
 #include <string>
 #include <map>
 

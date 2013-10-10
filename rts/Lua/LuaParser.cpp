@@ -112,8 +112,10 @@ void LuaParser::SetupEnv()
 	lua_pushnil(L); lua_setglobal(L, "require");
 	lua_pushnil(L); lua_setglobal(L, "gcinfo");
 	lua_pushnil(L); lua_setglobal(L, "collectgarbage");
+	lua_pushnil(L); lua_setglobal(L, "newproxy"); // not sync-safe cause of __gc
 
-	// FIXME: replace "random" as in LuaHandleSynced (can write your own for now)
+	// FIXME: replace "random" _as in_ LuaHandleSynced (can write your own for now), we cannot use the LHS one cause gs-> is not valid in LuaParser
+	//        using streflop's RNG is possible
 	lua_getglobal(L, "math");
 	lua_pushliteral(L, "random");     lua_pushnil(L); lua_rawset(L, -3);
 	lua_pushliteral(L, "randomseed"); lua_pushnil(L); lua_rawset(L, -3);

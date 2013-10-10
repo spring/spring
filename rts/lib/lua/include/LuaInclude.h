@@ -103,9 +103,7 @@ static inline bool luaL_optboolean(lua_State* L, int idx, bool def)
 
 static inline bool luaL_checkboolean(lua_State* L, int idx)
 {
-	if (!lua_isboolean(L, idx)) {
-		luaL_checktype(L, idx, LUA_TBOOLEAN);
-	}
+	luaL_checktype(L, idx, LUA_TBOOLEAN);
 	return lua_toboolean(L, idx);
 }
 
