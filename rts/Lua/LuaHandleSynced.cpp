@@ -158,13 +158,6 @@ void CUnsyncedLuaHandle::RecvFromSynced(lua_State* srcState, int args)
 	if (!IsValid())
 		return;
 
-#if ((LUA_MT_OPT & LUA_STATE) && (LUA_MT_OPT & LUA_MUTEX))
-	//FIXME make non-GML
-	if (/*GML::Enabled() &&*/ !SingleState() && srcState != L) {
-		DelayRecvFromSynced(srcState, args);
-		return;
-	}
-#endif
 
 	//GML_DRCMUTEX_LOCK(lua);
 	LUA_CALL_IN_CHECK(L);
@@ -390,11 +383,6 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 	LuaPushNamedCFunc(L, "pairs", SyncedPairs);
 	LuaPushNamedCFunc(L, "next",  SyncedNext);
 	lua_pop(L, 1);
-
-	//FIXME GML crap
-	HSTR_PUSH(L, "EXPORT");
-	lua_newtable(L);
-	lua_rawset(L, -3);
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 

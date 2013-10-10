@@ -84,12 +84,6 @@ class CLuaUI : public CLuaHandle
 
 	private: // call-outs
 		static int SetShockFrontFactors(lua_State* L);
-
-	public: // custom call-in
-		void ExecuteUIEventBatch();
-
-	private:
-		std::vector<UIEventBase> luaUIEventBatch;
 };
 
 

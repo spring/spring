@@ -267,20 +267,6 @@ class CLuaHandle : public CEventClient
 		void LosCallIn(const LuaHashString& hs, const CUnit* unit, int allyTeam);
 		void UnitCallIn(const LuaHashString& hs, const CUnit* unit);
 
-	public:
-		/// @return true if any calls were processed, false otherwise
-		bool ExecuteCallsFromSynced(bool forced = true);
-		void RecvFromSim(int args);
-		void DelayRecvFromSynced(lua_State* srcState, int args);
-
-		// MT stuff
-		//FIXME
-		bool copyExportTable;
-		bool CopyExportTable() const { return (LUA_MT_OPT & LUA_STATE) && copyExportTable; } // Copy the table _G.EXPORT --> SYNCED.EXPORT between dual states?
-		bool useEventBatch;
-		bool UseEventBatch() const { return (LUA_MT_OPT & LUA_BATCH) && useEventBatch; } // Use event batch to forward "synced" luaui events into draw thread?
-		bool purgeCallsFromSyncedBatch;
-		bool PurgeCallsFromSyncedBatch() const { return (LUA_MT_OPT & LUA_STATE) && purgeCallsFromSyncedBatch; } // Automatically clean deleted objects/IDs from the SendToUnsynced/XCall batch
 
 	protected:
 		bool userMode;
@@ -296,26 +282,6 @@ class CLuaHandle : public CEventClient
 		vector<bool> watchWeaponDefs; // for the Explosion call-in
 
 		int callinErrors;
-
-	public: // EventBatch
-		void ExecuteUnitEventBatch();
-		void ExecuteFeatEventBatch();
-		void ExecuteProjEventBatch();
-		void ExecuteFrameEventBatch();
-		void ExecuteLogEventBatch();
-
-	protected:
-		struct DelayDataDump {
-			std::vector<LuaUtils::ShallowDataDump> data;
-			std::vector<LuaUtils::DataDump> dump;
-			bool xcall;
-		};
-		std::vector<DelayDataDump> delayedCallsFromSynced;
-		std::vector<LuaUnitEventBase> luaUnitEventBatch;
-		std::vector<LuaFeatEventBase> luaFeatEventBatch;
-		std::vector<LuaProjEventBase> luaProjEventBatch;
-		std::vector<LuaLogEventBase> luaLogEventBatch;
-		std::vector<int> luaFrameEventBatch;
 
 	private: // call-outs
 		static int KillActiveHandle(lua_State* L);

@@ -401,41 +401,6 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 }
 
 
-void CLuaUI::ExecuteUIEventBatch() {
-	if (!UseEventBatch())
-		return;
-
-	std::vector<UIEventBase> lleb;
-	{
-		GML_STDMUTEX_LOCK(llbatch); // ExecuteUIEventBatch
-
-		if (luaUIEventBatch.empty())
-			return;
-
-		luaUIEventBatch.swap(lleb);
-	}
-
-	GML_DRCMUTEX_LOCK(lua); // ExecuteUIEventBatch
-
-	if (Threading::IsSimThread())
-		Threading::SetBatchThread(false);
-
-	for (std::vector<UIEventBase>::iterator i = lleb.begin(); i != lleb.end(); ++i) {
-		const UIEventBase& e = *i;
-		switch (e.GetID()) {
-			case SHOCK_FRONT: {
-				LUA_EVENT_CAST(UIShockFrontEvent, e); ShockFront(ee.GetPos(), ee.GetPower(), ee.GetAreaOfEffect(), ee.GetDistMod());
-			} break;
-			default: {
-				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.GetID());
-			} break;
-		}
-	}
-
-	if (Threading::IsSimThread())
-		Threading::SetBatchThread(true);
-}
-
 /******************************************************************************/
 
 bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
