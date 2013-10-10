@@ -982,8 +982,6 @@ void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 	lua_pushnumber(L, command.GetID());
 
 	//FIXME: perhaps we should push the table version rather than the bitfield directly
-	// push the params list
-	//LuaUtils::PushCommandParamsTable(L, command, false);
 	lua_pushnumber(L, command.options);
 
 	// push the params list
