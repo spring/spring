@@ -322,7 +322,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-bool CLuaUI::ConfigCommand(const string& command)
+bool CLuaUI::ConfigCommand(const string& command) //FIXME rename to fit event name
 {
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 2, __FUNCTION__);
@@ -331,7 +331,7 @@ bool CLuaUI::ConfigCommand(const string& command)
 		return true; // the call is not defined
 	}
 
-	lua_pushstring(L, command.c_str());
+	lua_pushsstring(L, command);
 
 	// call the routine
 	if (!RunCallIn(L, cmdStr, 1, 0)) {

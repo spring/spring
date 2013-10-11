@@ -195,8 +195,6 @@ class CLuaHandle : public CEventClient
 
 		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
-		bool ConfigCommand(const string& command);
-
 		bool CommandNotify(const Command& cmd);
 
 		bool AddConsoleLine(const string& msg, const string& section, int level);
@@ -262,7 +260,6 @@ class CLuaHandle : public CEventClient
 		bool RunCallIn(lua_State* L, int inArgs, int outArgs, std::string& errormessage);
 		/// returns false and prints message to log on error
 		bool RunCallIn(lua_State* L, const LuaHashString& hs, int inArgs, int outArgs);
-		bool RunCallInUnsynced(lua_State* L, const LuaHashString& hs, int inArgs, int outArgs);
 
 		void LosCallIn(const LuaHashString& hs, const CUnit* unit, int allyTeam);
 		void UnitCallIn(const LuaHashString& hs, const CUnit* unit);
@@ -333,12 +330,6 @@ class CLuaHandle : public CEventClient
 inline bool CLuaHandle::RunCallIn(lua_State* L, const LuaHashString& hs, int inArgs, int outArgs)
 {
 	return RunCallInTraceback(L, hs, inArgs, outArgs, 0, false);
-}
-
-
-inline bool CLuaHandle::RunCallInUnsynced(lua_State* L, const LuaHashString& hs, int inArgs, int outArgs)
-{
-	return RunCallIn(L, hs, inArgs, outArgs);
 }
 
 

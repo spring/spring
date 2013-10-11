@@ -1547,7 +1547,7 @@ void CLuaHandle::Save(zipFile archive)
 	LuaZipFileWriter::PushNew(L, "", archive);
 
 	// call the routine
-	RunCallInUnsynced(L, cmdStr, 1, 0);
+	RunCallIn(L, cmdStr, 1, 0);
 }
 
 
@@ -1566,7 +1566,7 @@ void CLuaHandle::UnsyncedHeightMapUpdate(const SRectangle& rect)
 	lua_pushnumber(L, rect.z2);
 
 	// call the routine
-	RunCallInUnsynced(L, cmdStr, 4, 0);
+	RunCallIn(L, cmdStr, 4, 0);
 }
 
 
@@ -1580,7 +1580,7 @@ void CLuaHandle::Update()
 	}
 
 	// call the routine
-	RunCallInUnsynced(L, cmdStr, 0, 0);
+	RunCallIn(L, cmdStr, 0, 0);
 }
 
 
@@ -1610,7 +1610,7 @@ void CLuaHandle::ViewResize()
 	LuaPushNamedNumber(L, "viewPosY",    globalRendering->viewPosY);
 
 	// call the routine
-	RunCallInUnsynced(L, cmdStr, 1, 0);
+	RunCallIn(L, cmdStr, 1, 0);
 }
 
 
@@ -1650,7 +1650,7 @@ bool CLuaHandle::DefaultCommand(const CUnit* unit,
 */
 
 	// call the routine
-	if (!RunCallInUnsynced(L, cmdStr, args, 1))
+	if (!RunCallIn(L, cmdStr, args, 1))
 		return false;
 
 	if (!lua_isnumber(L, 1)) {
@@ -1675,7 +1675,7 @@ void CLuaHandle::RunDrawCallIn(const LuaHashString& hs)
 	LuaOpenGL::SetDrawingEnabled(L, true);
 
 	// call the routine
-	RunCallInUnsynced(L, hs, 0, 0);
+	RunCallIn(L, hs, 0, 0);
 
 	LuaOpenGL::SetDrawingEnabled(L, false);
 }
@@ -1738,7 +1738,7 @@ void CLuaHandle::DrawScreen()
 	LuaOpenGL::SetDrawingEnabled(L, true);
 
 	// call the routine
-	RunCallInUnsynced(L, cmdStr, 2, 0);
+	RunCallIn(L, cmdStr, 2, 0);
 
 	LuaOpenGL::SetDrawingEnabled(L, false);
 }
@@ -1759,7 +1759,7 @@ void CLuaHandle::DrawScreenEffects()
 	LuaOpenGL::SetDrawingEnabled(L, true);
 
 	// call the routine
-	RunCallInUnsynced(L, cmdStr, 2, 0);
+	RunCallIn(L, cmdStr, 2, 0);
 
 	LuaOpenGL::SetDrawingEnabled(L, false);
 }
@@ -1789,7 +1789,7 @@ void CLuaHandle::DrawInMiniMap()
 	LuaOpenGL::SetDrawingEnabled(L, true);
 
 	// call the routine
-	RunCallInUnsynced(L, cmdStr, 2, 0);
+	RunCallIn(L, cmdStr, 2, 0);
 
 	LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
 }
@@ -1807,7 +1807,7 @@ void CLuaHandle::GameProgress(int frameNum )
 	lua_pushnumber(L, frameNum);
 
 	// call the routine
-	RunCallInUnsynced(L, cmdStr, 1, 0);
+	RunCallIn(L, cmdStr, 1, 0);
 }
 
 
@@ -1843,10 +1843,10 @@ bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
 	lua_pushnumber(L, keyInput->GetCurrentKeyUnicodeChar());
 
 	// call the function
-	if (!RunCallInUnsynced(L, cmdStr, 5, 1))
+	if (!RunCallIn(L, cmdStr, 5, 1))
 		return false;
 
-	if (!lua_isboolean(L, -1)) {
+	if (!lua_isboolean(L, -1)) { //FIXME optbool
 		lua_pop(L, 1);
 		return false;
 	}
@@ -1882,7 +1882,7 @@ bool CLuaHandle::KeyRelease(unsigned short key)
 	lua_pushnumber(L, keyInput->GetCurrentKeyUnicodeChar());
 
 	// call the function
-	if (!RunCallInUnsynced(L, cmdStr, 4, 1))
+	if (!RunCallIn(L, cmdStr, 4, 1))
 		return false;
 
 	if (!lua_isboolean(L, -1)) {
@@ -1912,7 +1912,7 @@ bool CLuaHandle::MousePress(int x, int y, int button)
 	lua_pushnumber(L, button);
 
 	// call the function
-	if (!RunCallInUnsynced(L, cmdStr, 3, 1))
+	if (!RunCallIn(L, cmdStr, 3, 1))
 		return false;
 
 	if (!lua_isboolean(L, -1)) {
@@ -1942,7 +1942,7 @@ int CLuaHandle::MouseRelease(int x, int y, int button)
 	lua_pushnumber(L, button);
 
 	// call the function
-	if (!RunCallInUnsynced(L, cmdStr, 3, 1))
+	if (!RunCallIn(L, cmdStr, 3, 1))
 		return false;
 
 	if (!lua_isnumber(L, -1)) {
@@ -1974,7 +1974,7 @@ bool CLuaHandle::MouseMove(int x, int y, int dx, int dy, int button)
 	lua_pushnumber(L, button);
 
 	// call the function
-	if (!RunCallInUnsynced(L, cmdStr, 5, 1))
+	if (!RunCallIn(L, cmdStr, 5, 1))
 		return false;
 
 	if (!lua_isboolean(L, -1)) {
@@ -2003,7 +2003,7 @@ bool CLuaHandle::MouseWheel(bool up, float value)
 	lua_pushnumber(L, value);
 
 	// call the function
-	if (!RunCallInUnsynced(L, cmdStr, 2, 1))
+	if (!RunCallIn(L, cmdStr, 2, 1))
 		return false;
 
 	if (!lua_isboolean(L, -1)) {
@@ -2031,7 +2031,7 @@ bool CLuaHandle::JoystickEvent(const std::string& event, int val1, int val2)
 	lua_pushnumber(L, val2);
 
 	// call the function
-	if (!RunCallInUnsynced(L, cmdStr, 2, 1))
+	if (!RunCallIn(L, cmdStr, 2, 1))
 		return false;
 
 	if (!lua_isboolean(L, -1)) {
@@ -2059,7 +2059,7 @@ bool CLuaHandle::IsAbove(int x, int y)
 	lua_pushnumber(L, globalRendering->viewSizeY - y - 1);
 
 	// call the function
-	if (!RunCallInUnsynced(L, cmdStr, 2, 1))
+	if (!RunCallIn(L, cmdStr, 2, 1))
 		return false;
 
 	if (!lua_isboolean(L, -1)) {
@@ -2088,7 +2088,7 @@ string CLuaHandle::GetTooltip(int x, int y)
 	lua_pushnumber(L, globalRendering->viewSizeY - y - 1);
 
 	// call the function
-	if (!RunCallInUnsynced(L, cmdStr, 2, 1))
+	if (!RunCallIn(L, cmdStr, 2, 1))
 		return "";
 
 	if (!lua_isstring(L, -1)) {
@@ -2098,28 +2098,6 @@ string CLuaHandle::GetTooltip(int x, int y)
 	const string retval = lua_tostring(L, -1);
 	lua_pop(L, 1);
 	return retval;
-}
-
-
-bool CLuaHandle::ConfigCommand(const string& command)
-{
-	if (!CheckModUICtrl()) {
-		return true; // FIXME ?
-	}
-	LUA_CALL_IN_CHECK(L, true);
-	luaL_checkstack(L, 2, __FUNCTION__);
-	static const LuaHashString cmdStr("ConfigureLayout");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return true; // the call is not defined
-	}
-
-	lua_pushsstring(L, command);
-
-	// call the routine
-	if (!RunCallInUnsynced(L, cmdStr, 1, 0))
-		return false;
-
-	return true;
 }
 
 
@@ -2155,7 +2133,7 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 	HSTR_PUSH_BOOL(L, "meta",  !!(cmd.options & META_KEY));
 
 	// call the function
-	if (!RunCallInUnsynced(L, cmdStr, 3, 1))
+	if (!RunCallIn(L, cmdStr, 3, 1))
 		return false;
 
 	// get the results
@@ -2211,7 +2189,7 @@ bool CLuaHandle::GroupChanged(int groupID)
 	lua_pushnumber(L, groupID);
 
 	// call the routine
-	if (!RunCallInUnsynced(L, cmdStr, 1, 0))
+	if (!RunCallIn(L, cmdStr, 1, 0))
 		return false;
 
 	return true;
@@ -2257,7 +2235,7 @@ string CLuaHandle::WorldTooltip(const CUnit* unit,
 	}
 
 	// call the routine
-	if (!RunCallInUnsynced(L, cmdStr, args, 1))
+	if (!RunCallIn(L, cmdStr, args, 1))
 		return "";
 
 	const string retval = luaL_optstring(L, -1, "");
@@ -2318,7 +2296,7 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 	}
 
 	// call the routine
-	if (!RunCallInUnsynced(L, cmdStr, args, 1))
+	if (!RunCallIn(L, cmdStr, args, 1))
 		return false;
 
 	// take the event?
@@ -2357,7 +2335,7 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 	}
 
 	// call the routine
-	if (!RunCallInUnsynced(L, cmdStr, 3, 2))
+	if (!RunCallIn(L, cmdStr, 3, 2))
 		return false;
 
 	if (lua_isboolean(L, -2)) {
