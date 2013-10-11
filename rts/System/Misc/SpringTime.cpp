@@ -63,7 +63,7 @@ namespace spring_clock {
 	#ifdef USE_NATIVE_WINDOWS_CLOCK
 	// QPC wants the LARGE_INTEGER's to be qword-aligned
 	__FORCE_ALIGN_STACK__
-	boost::int64t_GetTicksNative(bool hres) {
+	boost::int64_t GetTicksNative(bool hres) {
 		if (hres) {
 			// NOTE:
 			//   SDL 1.2 by default does not use QueryPerformanceCounter
