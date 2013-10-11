@@ -16,7 +16,7 @@
 static const int testRuns = 1000000;
 
 
-#if 0
+#ifdef TEST_SDL
 #include <SDL_timer.h>
 struct SDLClock {
 	static inline float ToMs() { return 1.0f; }
@@ -175,7 +175,9 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 
 	float bestAvg = 1e9;
 
-	// bestAvg = std::min(bestAvg, TestProcessor<SDLClock>::Run());
+	#ifdef TEST_SDL
+	bestAvg = std::min(bestAvg, TestProcessor<SDLClock>::Run());
+	#endif
 	bestAvg = std::min(bestAvg, TestProcessor<BoostChronoClock>::Run());
 	bestAvg = std::min(bestAvg, TestProcessor<BoostChronoMicroClock>::Run());
 #ifdef Boost_TIMER_FOUND
@@ -261,7 +263,10 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 
 
 
+#ifdef TEST_SDL
 void sleep_sdl(int time)  { SDL_Delay(time); }
+#endif
+
 void sleep_boost_posix(int time)  { boost::this_thread::sleep(boost::posix_time::milliseconds(time)); }
 void sleep_boost_posix2(int time) { boost::this_thread::sleep(boost::posix_time::microseconds(time)); }
 #ifdef BOOST_THREAD_USES_CHRONO
@@ -330,7 +335,9 @@ BOOST_AUTO_TEST_CASE( ThreadSleepTime )
 {
 	LOG("Sleep() Precision Test");
 
+	#ifdef TEST_SDL
 	BenchmarkSleepFnc("sleep_sdl", &sleep_sdl, 500, 1e0);
+	#endif
 	BenchmarkSleepFnc("sleep_boost_posixtime_milliseconds", &sleep_boost_posix, 500, 1e0);
 	BenchmarkSleepFnc("sleep_boost_posixtime_microseconds", &sleep_boost_posix2, 500, 1e3);
 #ifdef BOOST_THREAD_USES_CHRONO
