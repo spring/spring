@@ -69,6 +69,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_SYSTEM_LIBRARY}
 			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${WINMM_LIBRARY}
 			${WS2_32_LIBRARY}
 			7zip
 		)
@@ -155,6 +156,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_SYSTEM_LIBRARY}
 			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${WINMM_LIBRARY}
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
