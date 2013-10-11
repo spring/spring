@@ -46,7 +46,7 @@ void EventBatchHandler::UnitDecloaked(const CUnit* unit) { EnqueueUnitCloakState
 void EventBatchHandler::FeatureCreated(const CFeature* feature) { GetFeatureCreatedDestroyedEventBatch().enqueue(feature); }
 void EventBatchHandler::FeatureDestroyed(const CFeature* feature) { GetFeatureCreatedDestroyedEventBatch().dequeue(feature); }
 void EventBatchHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) { EnqueueFeatureMovedEvent(feature, oldpos, feature->pos); }
-void EventBatchHandler::ProjectileCreated(const CProjectile* proj, int allyTeam)
+void EventBatchHandler::ProjectileCreated(const CProjectile* proj)
 {
 	if (proj->synced) {
 		GetSyncedProjectileCreatedDestroyedBatch().insert(proj);
@@ -54,7 +54,7 @@ void EventBatchHandler::ProjectileCreated(const CProjectile* proj, int allyTeam)
 		GetUnsyncedProjectileCreatedDestroyedBatch().insert(proj);
 	}
 }
-void EventBatchHandler::ProjectileDestroyed(const CProjectile* proj, int allyTeam)
+void EventBatchHandler::ProjectileDestroyed(const CProjectile* proj)
 {
 	if (proj->synced) {
 		GetSyncedProjectileCreatedDestroyedBatch().erase_delete(proj);

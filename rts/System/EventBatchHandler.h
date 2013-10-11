@@ -30,8 +30,8 @@ public: // EventClient
 	void FeatureCreated(const CFeature* feature);
 	void FeatureDestroyed(const CFeature* feature);
 	void FeatureMoved(const CFeature* feature, const float3& oldpos);
-	void ProjectileCreated(const CProjectile* proj, int allyTeam);
-	void ProjectileDestroyed(const CProjectile* proj, int allyTeam);
+	void ProjectileCreated(const CProjectile* proj);
+	void ProjectileDestroyed(const CProjectile* proj);
 
 	//FIXME check them in EventHandler to see what needs to be fixed
 	//void UnsyncedProjectileCreated(const CProjectile* proj)

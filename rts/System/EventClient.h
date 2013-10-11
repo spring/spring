@@ -71,6 +71,7 @@ class CEventClient
 		std::map<std::string, eventFuncPtr> linkedEvents;
 		std::map<std::string, std::string> linkedEventsTypeInfo;
 
+		#pragma GCC diagnostic push
 		#pragma GCC diagnostic ignored "-Wpmf-conversions"
 		template <class T>
 		void RegisterLinkedEvents(T* foo) {
@@ -81,7 +82,7 @@ class CEventClient
 				#include "Events.def"
 			#undef SETUP_EVENT
 		}
-		#pragma GCC diagnostic warning "-Wpmf-conversions"
+		#pragma GCC diagnostic pop
 
 	private:
 		const std::string name;

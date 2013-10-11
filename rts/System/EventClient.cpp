@@ -38,12 +38,15 @@ bool CEventClient::WantsEvent(const std::string& eventName)
 	std::map<std::string, eventFuncPtr> virtEventPtrs;
 	std::map<std::string, std::string> virtEventPtrsTypeInfo;
 
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wpmf-conversions"
 	#define SETUP_EVENT(eventname, props) \
 		virtEventPtrs[#eventname] = (eventFuncPtr)&CEventClient::eventname; \
 		virtEventPtrsTypeInfo[#eventname] = typeid(&CEventClient::eventname).name();
 
 		#include "Events.def"
 	#undef SETUP_EVENT
+	#pragma GCC diagnostic pop
 
 	if (virtEventPtrs[eventName] != this->linkedEvents[eventName]) {
 		return true;
