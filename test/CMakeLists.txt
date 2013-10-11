@@ -176,6 +176,11 @@ Else  (NOT Boost_FOUND)
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${Boost_THREAD_LIBRARY}
 		)
+
+	IF (WIN32)
+		LIST(APPEND test_libs ${WIN32_LIBRARIES})
+	ENDIF (WIN32)
+
 	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 	if (Boost_TIMER_FOUND)
 		LIST(APPEND test_libs ${Boost_TIMER_LIBRARY})
