@@ -35,7 +35,7 @@ CR_REG_METADATA(spring_time,(
 #endif
 
 #define USE_NATIVE_WINDOWS_CLOCK (defined(WIN32) && !defined(FORCE_CHRONO_TIMERS))
-#ifdef USE_NATIVE_WINDOWS_CLOCK
+#if USE_NATIVE_WINDOWS_CLOCK
 #include <windows.h>
 #endif
 
@@ -43,7 +43,7 @@ CR_REG_METADATA(spring_time,(
 
 namespace spring_clock {
 	void PushTickRate(bool hres) {
-		#ifdef USE_NATIVE_WINDOWS_CLOCK
+		#if USE_NATIVE_WINDOWS_CLOCK
 		// set the number of milliseconds between interrupts
 		// NOTE: THIS IS A GLOBAL OS SETTING, NOT PER PROCESS
 		// (should not matter for users, SDL 1.2 also sets it)
@@ -53,14 +53,14 @@ namespace spring_clock {
 		#endif
 	}
 	void PopTickRate(bool hres) {
-		#ifdef USE_NATIVE_WINDOWS_CLOCK
+		#if USE_NATIVE_WINDOWS_CLOCK
 		if (!hres) {
 			timeEndPeriod(1);
 		}
 		#endif
 	}
 
-	#ifdef USE_NATIVE_WINDOWS_CLOCK
+	#if USE_NATIVE_WINDOWS_CLOCK
 	// QPC wants the LARGE_INTEGER's to be qword-aligned
 	__FORCE_ALIGN_STACK__
 	boost::int64_t GetTicksNative(bool hres) {
@@ -125,7 +125,7 @@ namespace spring_clock {
 	#endif
 
 	boost::int64_t GetTicks(bool hres) {
-		#ifdef USE_NATIVE_WINDOWS_CLOCK
+		#if USE_NATIVE_WINDOWS_CLOCK
 		return (GetTicksNative(hres));
 		#else
 		return (chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
@@ -133,7 +133,7 @@ namespace spring_clock {
 	}
 
 	const char* GetName(bool hres) {
-		#ifdef USE_NATIVE_WINDOWS_CLOCK
+		#if USE_NATIVE_WINDOWS_CLOCK
 
 		if (hres) {
 			return "win32::QueryPerformanceCounter";
