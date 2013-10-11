@@ -1094,7 +1094,7 @@ bool CGame::UpdateUnsynced()
 
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
 
-	if (luaUI)    { luaUI->CheckStack(); luaUI->ExecuteUIEventBatch(); }
+	if (luaUI)    { luaUI->CheckStack(); }
 	if (luaGaia)  { luaGaia->CheckStack(); }
 	if (luaRules) { luaRules->CheckStack(); }
 
