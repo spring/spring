@@ -250,7 +250,7 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveDef& moveDef, const CPathFin
 		// factor which would drop performance four-fold
 		assert(PATH_NODE_SPACING == 2);
 
-		#define CAN_SKIP_SQUARE(md, x, y, o) ((CMoveMath::IsBlocked(md, x, y, o) & CMoveMath::BLOCK_STRUCTURE) == 0)
+		#define CAN_SKIP_SQUARE(md, x, y, o) (true || (CMoveMath::IsBlocked(md, x, y, o) & CMoveMath::BLOCK_STRUCTURE) == 0)
 		#define DO_SQUARE_CHECK(md, x, y, o, pfd, sqr, opt, sync) (CAN_SKIP_SQUARE(md, x, y, o) && TestSquare(md, pfd, sqr, o, opt, sync))
 
 		const bool    up = DO_SQUARE_CHECK(moveDef, nodePos.x,     nodePos.y - 1, owner, pfDef, os, PATHOPT_UP,    synced);
