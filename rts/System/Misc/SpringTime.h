@@ -12,7 +12,7 @@
 // we don't want to specially handle all the problems caused by this, so just use boost version instead
 // not possible either: boost::chrono uses extremely broken HPE timers on Windows 7 (but so does std::)
 //
-// #define FORCE_HIGHRES_TIMERS
+// #define FORCE_CHRONO_TIMERS
 // #define FORCE_BOOST_CHRONO
 
 #if (__cplusplus > 199711L) && !defined(FORCE_BOOST_CHRONO)
@@ -49,13 +49,13 @@ namespace spring_clock {
 	template<typename T> static boost::int64_t FromMicroSecs(const T micros) { return (micros *       1000LL); }
 	template<typename T> static boost::int64_t FromNanoSecs (const T  nanos) { return ( nanos               ); }
 
-	void PushTickRate();
-	void PopTickRate();
+	void PushTickRate(bool hres = false);
+	void PopTickRate(bool hres = false);
 
 	// number of ticks since clock epoch
-	boost::int64_t GetTicks();
+	boost::int64_t GetTicks(bool hres = false);
 
-	const char* GetName();
+	const char* GetName(bool hres = false);
 };
 
 
@@ -103,7 +103,7 @@ public:
 	void sleep_until();
 
 
-	static spring_time gettime(bool init = false) { assert(xs != 0 || init); return spring_time_native(spring_clock::GetTicks()); }
+	static spring_time gettime(bool init = false, bool hres = false) { assert(xs != 0 || init); return spring_time_native(spring_clock::GetTicks(hres)); }
 	static spring_time getstarttime() { assert(xs != 0); return spring_time_native(xs); }
 	static spring_time getelapsedtime() { return (gettime() - getstarttime()); }
 
