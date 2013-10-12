@@ -18,8 +18,12 @@ namespace math {
 #include <cmath>
 
 #ifdef __APPLE__
-	#include <math.h> // cmath doesn't include std::hypot under macosx (tested 2013)
+// macosx's cmath doesn't include c++11's std::hypot yet (tested 2013)
+namespace std {
+	template<typename T> T hypot(T x, T y);
+}
 #endif
+
 
 namespace math {
 	using std::fabs;
@@ -66,6 +70,23 @@ namespace math {
 	}
 #endif
 }
+
+
+#ifdef __APPLE__
+// see above
+namespace std {
+	template<typename T>
+	T hypot(T x, T y) {
+		x = math::abs(x);
+		y = math::abs(y);
+		auto t = math::min(x,y);
+		     x = math::max(x,y);
+		t = t / x;
+		return x * math::sqrtf(1.f + t*t);
+	}
+}
+#endif
+
 #endif
 
 #endif // STREFLOP_COND_H
