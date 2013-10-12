@@ -42,7 +42,7 @@ class CLuaRules : public CLuaHandleSynced
 
 	private:
 		CLuaRules();
-		~CLuaRules();
+		virtual ~CLuaRules();
 
 	protected:
 		bool AddSyncedCode(lua_State *L);

@@ -77,21 +77,7 @@ CLuaRules::CLuaRules()
 
 CLuaRules::~CLuaRules()
 {
-	const bool killMe = true; //syncedLuaHandle.killMe || unsyncedLuaHandle.killMe;
-
-	if (IsValid()) {
-		KillLua();
-	}
-
-	assert(this == luaRules);
-	assert(!IsValid());
-
-	// make sure to really get rid of the LuaRules environment if we were
-	// called from outside FreeHandler (see LuaHandle::KillActiveHandle())
-	// note that ctor is only ever reached from LoadHandler
-	if (killMe) {
-		luaRules = NULL;
-	}
+	luaRules = NULL;
 }
 
 

@@ -312,7 +312,7 @@ class CLuaHandle : public CEventClient
 		static void HandleLuaMsg(int playerID, int script, int mode,
 			const std::vector<boost::uint8_t>& msg);
 		static bool IsDrawCallIn() {
-			return (LUA_MT_OPT & LUA_MUTEX) && !Threading::IsSimThread();
+			return true; //FIXME (LUA_MT_OPT & LUA_MUTEX) && !Threading::IsSimThread();
 		}
 
 	protected: // static

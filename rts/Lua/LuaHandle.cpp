@@ -83,21 +83,22 @@ CLuaHandle::~CLuaHandle()
 {
 	eventHandler.RemoveClient(this);
 
-	// free the lua state
-	KillLua();
+	// KillLua() must be called before dtor!!!
+	assert(!IsValid());
 }
 
 
 void CLuaHandle::KillLua()
 {
-	//FIXME not threadsafe, should be:
-	// 1. null luaUI/luaRules/...
-	// 2. then unlink from eventhandler
-	// 3. wait for all ongoing events to finish
-	// 4. _then_ delete the state
 	if (IsValid()) {
+		// 1. unlink from eventHandler, so no new events are getting triggered
+		eventHandler.RemoveClient(this);
+		//FIXME when multithreaded lua is enabled, wait for all running events to finish
+
+		// 2. shutdown
 		Shutdown();
 
+		// 3. delete the lua_State
 		SetHandleRunning(L, true);
 		LUA_CLOSE(L);
 		//SetHandleRunning(L, false); --nope, the state is deleted
@@ -156,8 +157,6 @@ bool CLuaHandle::AddEntriesToTable(lua_State* L, const char* name,
 
 bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 {
-	GML_DRCMUTEX_LOCK(lua); // LoadCode
-
 	lua_settop(L, 0);
 
 	// do not signal floating point exceptions in user Lua code
@@ -566,7 +565,6 @@ void CLuaHandle::GameFrame(int frameNum)
 		return;
 	}
 
-	LUA_FRAME_BATCH_PUSH(, frameNum);
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 4, __FUNCTION__);
 
@@ -720,7 +718,6 @@ inline void CLuaHandle::UnitCallIn(const LuaHashString& hs, const CUnit* unit)
 
 void CLuaHandle::UnitCreated(const CUnit* unit, const CUnit* builder)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitCreatedEvent(unit, builder));
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 7, __FUNCTION__);
 
@@ -746,7 +743,6 @@ void CLuaHandle::UnitCreated(const CUnit* unit, const CUnit* builder)
 
 void CLuaHandle::UnitFinished(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitFinishedEvent(unit));
 	static const LuaHashString cmdStr("UnitFinished");
 	UnitCallIn(cmdStr, unit);
 }
@@ -755,7 +751,6 @@ void CLuaHandle::UnitFinished(const CUnit* unit)
 void CLuaHandle::UnitFromFactory(const CUnit* unit,
                                  const CUnit* factory, bool userOrders)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitFromFactoryEvent(unit, factory, userOrders))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 9, __FUNCTION__);
 
@@ -780,7 +775,6 @@ void CLuaHandle::UnitFromFactory(const CUnit* unit,
 
 void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitDestroyedEvent(unit, attacker))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 9, __FUNCTION__);
 
@@ -809,7 +803,6 @@ void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 
 void CLuaHandle::UnitTaken(const CUnit* unit, int oldTeam, int newTeam)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitTakenEvent(unit, oldTeam, newTeam))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 7, __FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
@@ -831,7 +824,6 @@ void CLuaHandle::UnitTaken(const CUnit* unit, int oldTeam, int newTeam)
 
 void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam, int newTeam)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitGivenEvent(unit, oldTeam, newTeam))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 7, __FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
@@ -853,7 +845,6 @@ void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam, int newTeam)
 
 void CLuaHandle::UnitIdle(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitIdleEvent(unit))
 	static const LuaHashString cmdStr("UnitIdle");
 	UnitCallIn(cmdStr, unit);
 }
@@ -861,7 +852,6 @@ void CLuaHandle::UnitIdle(const CUnit* unit)
 
 void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitCommandEvent(unit, command))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 11, __FUNCTION__);
 
@@ -893,7 +883,6 @@ void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 
 void CLuaHandle::UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitCommandDoneEvent(unit, cmdID, cmdTag))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 8, __FUNCTION__);
 
@@ -923,7 +912,6 @@ void CLuaHandle::UnitDamaged(
 	int projectileID,
 	bool paralyzer)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitDamagedEvent(unit, attacker, damage, weaponDefID, projectileID, paralyzer))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 11, __FUNCTION__);
 
@@ -961,7 +949,6 @@ void CLuaHandle::UnitDamaged(
 
 void CLuaHandle::UnitExperience(const CUnit* unit, float oldExperience)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitExperienceEvent(unit, oldExperience))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 8, __FUNCTION__);
 
@@ -988,7 +975,6 @@ void CLuaHandle::UnitExperience(const CUnit* unit, float oldExperience)
 void CLuaHandle::UnitSeismicPing(const CUnit* unit, int allyTeam,
                                  const float3& pos, float strength)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitSeismicPingEvent(unit, allyTeam, pos, strength))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 9, __FUNCTION__);
 	int readAllyTeam = GetHandleReadAllyTeam(L);
@@ -1039,7 +1025,6 @@ void CLuaHandle::LosCallIn(const LuaHashString& hs,
 
 void CLuaHandle::UnitEnteredRadar(const CUnit* unit, int allyTeam)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitEnteredRadarEvent(unit, allyTeam))
 	static const LuaHashString hs("UnitEnteredRadar");
 	LosCallIn(hs, unit, allyTeam);
 }
@@ -1047,7 +1032,6 @@ void CLuaHandle::UnitEnteredRadar(const CUnit* unit, int allyTeam)
 
 void CLuaHandle::UnitEnteredLos(const CUnit* unit, int allyTeam)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitEnteredLosEvent(unit, allyTeam))
 	static const LuaHashString hs("UnitEnteredLos");
 	LosCallIn(hs, unit, allyTeam);
 }
@@ -1055,7 +1039,6 @@ void CLuaHandle::UnitEnteredLos(const CUnit* unit, int allyTeam)
 
 void CLuaHandle::UnitLeftRadar(const CUnit* unit, int allyTeam)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitLeftRadarEvent(unit, allyTeam))
 	static const LuaHashString hs("UnitLeftRadar");
 	LosCallIn(hs, unit, allyTeam);
 }
@@ -1063,7 +1046,6 @@ void CLuaHandle::UnitLeftRadar(const CUnit* unit, int allyTeam)
 
 void CLuaHandle::UnitLeftLos(const CUnit* unit, int allyTeam)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitLeftLosEvent(unit, allyTeam))
 	static const LuaHashString hs("UnitLeftLos");
 	LosCallIn(hs, unit, allyTeam);
 }
@@ -1073,7 +1055,6 @@ void CLuaHandle::UnitLeftLos(const CUnit* unit, int allyTeam)
 
 void CLuaHandle::UnitLoaded(const CUnit* unit, const CUnit* transport)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitLoadedEvent(unit, transport))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 8, __FUNCTION__);
 
@@ -1097,7 +1078,6 @@ void CLuaHandle::UnitLoaded(const CUnit* unit, const CUnit* transport)
 
 void CLuaHandle::UnitUnloaded(const CUnit* unit, const CUnit* transport)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitUnloadedEvent(unit, transport))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 8, __FUNCTION__);
 
@@ -1123,7 +1103,6 @@ void CLuaHandle::UnitUnloaded(const CUnit* unit, const CUnit* transport)
 
 void CLuaHandle::UnitEnteredWater(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitEnteredWaterEvent(unit))
 	static const LuaHashString cmdStr("UnitEnteredWater");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1131,7 +1110,6 @@ void CLuaHandle::UnitEnteredWater(const CUnit* unit)
 
 void CLuaHandle::UnitEnteredAir(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitEnteredAirEvent(unit))
 	static const LuaHashString cmdStr("UnitEnteredAir");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1139,7 +1117,6 @@ void CLuaHandle::UnitEnteredAir(const CUnit* unit)
 
 void CLuaHandle::UnitLeftWater(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitLeftWaterEvent(unit))
 	static const LuaHashString cmdStr("UnitLeftWater");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1147,7 +1124,6 @@ void CLuaHandle::UnitLeftWater(const CUnit* unit)
 
 void CLuaHandle::UnitLeftAir(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitLeftAirEvent(unit))
 	static const LuaHashString cmdStr("UnitLeftAir");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1157,7 +1133,6 @@ void CLuaHandle::UnitLeftAir(const CUnit* unit)
 
 void CLuaHandle::UnitCloaked(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitCloakedEvent(unit))
 	static const LuaHashString cmdStr("UnitCloaked");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1165,7 +1140,6 @@ void CLuaHandle::UnitCloaked(const CUnit* unit)
 
 void CLuaHandle::UnitDecloaked(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitDecloakedEvent(unit))
 	static const LuaHashString cmdStr("UnitDecloaked");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1179,7 +1153,6 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 	if (!watchUnitDefs[collider->unitDef->id]) return;
 	if (!watchUnitDefs[collidee->unitDef->id]) return;
 
-	LUA_UNIT_BATCH_PUSH(, LuaUnitUnitCollisionEvent(collider, collidee))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 5, __FUNCTION__);
 
@@ -1205,7 +1178,6 @@ void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 	if (!watchUnitDefs[collider->unitDef->id]) return;
 	if (!watchFeatureDefs[collidee->def->id]) return;
 
-	LUA_UNIT_BATCH_PUSH(, LuaUnitFeatureCollisionEvent(collider, collidee))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 5, __FUNCTION__);
 
@@ -1229,7 +1201,6 @@ void CLuaHandle::UnitMoveFailed(const CUnit* unit)
 	if (watchUnitDefs.empty()) return;
 	if (!watchUnitDefs[unit->unitDef->id]) return;
 
-	LUA_UNIT_BATCH_PUSH(, LuaUnitMoveFailedEvent(unit))
 	static const LuaHashString cmdStr("UnitMoveFailed");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1239,7 +1210,6 @@ void CLuaHandle::UnitMoveFailed(const CUnit* unit)
 
 void CLuaHandle::FeatureCreated(const CFeature* feature)
 {
-	LUA_FEAT_BATCH_PUSH(, LuaFeatureCreatedEvent(feature))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 5, __FUNCTION__);
 
@@ -1259,7 +1229,6 @@ void CLuaHandle::FeatureCreated(const CFeature* feature)
 
 void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 {
-	LUA_FEAT_BATCH_PUSH(, LuaFeatureDestroyedEvent(feature))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 5, __FUNCTION__);
 
@@ -1284,7 +1253,6 @@ void CLuaHandle::FeatureDamaged(
 	int weaponDefID,
 	int projectileID)
 {
-	LUA_FEAT_BATCH_PUSH(, LuaFeatureDamagedEvent(feature, attacker, damage, weaponDefID, projectileID))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 11, __FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
@@ -1335,7 +1303,6 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 	if (p->weapon && (wd == NULL || !watchWeaponDefs[wd->id]))
 		return;
 
-	LUA_PROJ_BATCH_PUSH(, LuaProjCreatedEvent(p))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 5, __FUNCTION__);
 
@@ -1368,7 +1335,6 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 		if (wd == NULL || !watchWeaponDefs[wd->id]) return;
 	}
 
-	LUA_PROJ_BATCH_PUSH(, LuaProjDestroyedEvent(p))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 4, __FUNCTION__);
 
@@ -1395,7 +1361,6 @@ bool CLuaHandle::Explosion(int weaponDefID, int projectileID, const float3& pos,
 	if (watchWeaponDefs.empty()) return false;
 	if (!watchWeaponDefs[weaponDefID]) return false;
 
-	LUA_UNIT_BATCH_PUSH(false, LuaUnitExplosionEvent(weaponDefID, projectileID, pos, owner))
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 7, __FUNCTION__);
 
@@ -1431,7 +1396,6 @@ bool CLuaHandle::Explosion(int weaponDefID, int projectileID, const float3& pos,
 void CLuaHandle::StockpileChanged(const CUnit* unit,
                                   const CWeapon* weapon, int oldCount)
 {
-	LUA_UNIT_BATCH_PUSH(, LuaUnitStockpileChangedEvent(unit, weapon, oldCount))
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 8, __FUNCTION__);
 
@@ -2154,7 +2118,7 @@ bool CLuaHandle::AddConsoleLine(const string& msg, const string& section, int le
 	if (!CheckModUICtrl()) {
 		return true; // FIXME?
 	}
-	LUA_LOG_BATCH_PUSH(true, LuaAddConsoleLineEvent(msg, section, level))
+
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("AddConsoleLine");

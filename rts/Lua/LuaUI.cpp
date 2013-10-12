@@ -98,21 +98,23 @@ void CLuaUI::LoadHandler()
 	new CLuaUI();
 
 	if (!luaUI->IsValid()) {
-		delete luaUI;
+		FreeHandler();
 	}
 }
 
 
 void CLuaUI::FreeHandler()
 {
-	static bool inFree = false; //FIXME not threadsafe!!!
+	static bool inFree = false; //FIXME static not threadsafe!!! use mutex/atomic!
 	if (!inFree) {
 		inFree = true;
-		delete luaUI;
+		auto* inst = luaUI;
 		luaUI = NULL;
-		if (guihandler) guihandler->LoadConfig("ctrlpanel.txt");
+		inst->KillLua();
+		delete inst;
 		inFree = false;
 	}
+	if (guihandler) guihandler->LoadConfig("ctrlpanel.txt");
 }
 
 
@@ -230,9 +232,6 @@ CLuaUI::CLuaUI()
 
 CLuaUI::~CLuaUI()
 {
-	if (IsValid()) {
-		KillLua();
-	}
 	luaUI = NULL;
 	GML::SetLuaUIState(NULL);
 }
@@ -368,7 +367,6 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 	if ((power /= (dist * dist)) < shockFrontMinPower && distMod == NULL)
 		return;
 
-	LUA_UI_BATCH_PUSH(, UIShockFrontEvent(pos, power, areaOfEffect, shockFrontDistMod))
 	LUA_CALL_IN_CHECK(L);
 
 	luaL_checkstack(L, 6, __FUNCTION__);

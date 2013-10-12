@@ -62,7 +62,7 @@ class CLuaUI : public CLuaHandle
 
 	protected:
 		CLuaUI();
-		~CLuaUI();
+		virtual ~CLuaUI();
 
 		string LoadFile(const string& filename) const;
 

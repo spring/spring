@@ -45,18 +45,20 @@ void CLuaIntro::LoadHandler()
 	new CLuaIntro();
 
 	if (!LuaIntro->IsValid()) {
-		delete LuaIntro;
+		FreeHandler();
 	}
 }
 
 
 void CLuaIntro::FreeHandler()
 {
-	static bool inFree = false;
+	static bool inFree = false; //FIXME static not threadsafe!!! use mutex/atomic!
 	if (!inFree) {
 		inFree = true;
-		delete LuaIntro;
+		auto* inst = LuaIntro;
 		LuaIntro = NULL;
+		inst->KillLua();
+		delete inst;
 		inFree = false;
 	}
 }
@@ -156,10 +158,6 @@ CLuaIntro::CLuaIntro()
 
 CLuaIntro::~CLuaIntro()
 {
-	if (IsValid()) {
-		Shutdown();
-		KillLua();
-	}
 	LuaIntro = NULL;
 }
 

@@ -87,18 +87,7 @@ CLuaGaia::CLuaGaia()
 
 CLuaGaia::~CLuaGaia()
 {
-	const bool killMe = true; //syncedLuaHandle.killMe || unsyncedLuaHandle.killMe;
-
-	if (IsValid()) {
-		KillLua();
-	}
-
-	assert(this == luaGaia);
-	assert(!IsValid());
-
-	if (killMe) {
-		luaGaia = NULL;
-	}
+	luaGaia = NULL;
 }
 
 

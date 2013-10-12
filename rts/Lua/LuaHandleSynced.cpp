@@ -159,7 +159,6 @@ void CUnsyncedLuaHandle::RecvFromSynced(lua_State* srcState, int args)
 		return;
 
 
-	//GML_DRCMUTEX_LOCK(lua);
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2 + args, __FUNCTION__);
 
@@ -457,8 +456,7 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 
 bool CSyncedLuaHandle::SyncedActionFallback(const string& msg, int playerID)
 {
-	GML_DRCMUTEX_LOCK(lua);
-
+	//FIXME needs mutex?
 	string cmd = msg;
 	const string::size_type pos = cmd.find_first_of(" \t");
 	if (pos != string::npos) {
@@ -1429,6 +1427,9 @@ CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order)
 
 CLuaHandleSynced::~CLuaHandleSynced()
 {
+	// must be called before their dtors!!!
+	syncedLuaHandle.KillLua();
+	unsyncedLuaHandle.KillLua();
 }
 
 
