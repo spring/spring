@@ -85,8 +85,7 @@ CGuiHandler::CGuiHandler():
 	curIconCommand(-1),
 	actionOffset(0),
 	drawSelectionInfo(true),
-	gatherMode(false),
-	hasLuaUILayoutCommands(false)
+	gatherMode(false)
 {
 	icons = new IconInfo[16];
 	iconsSize = 16;

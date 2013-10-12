@@ -10,7 +10,6 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Sim/Features/Feature.h"

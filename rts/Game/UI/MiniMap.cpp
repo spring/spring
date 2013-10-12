@@ -22,7 +22,6 @@
 #include "Game/Players/Player.h"
 #include "Game/UI/UnitTracker.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Lua/LuaUI.h" // FIXME: for GML
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"

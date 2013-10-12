@@ -1384,13 +1384,7 @@ bool CLuaHandle::Explosion(int weaponDefID, int projectileID, const float3& pos,
 		return false;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return false;
-	}
-
-	const bool retval = !!lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -1434,11 +1428,7 @@ bool CLuaHandle::RecvLuaMsg(const string& msg, int playerID)
 	if (!RunCallIn(L, cmdStr, 2, 1))
 		return false;
 
-	if (!lua_isboolean(L, -1)) {
-		lua_pop(L, 1);
-		return false;
-	}
-	const bool retval = !!lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -1813,11 +1803,7 @@ bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
 	if (!RunCallIn(L, cmdStr, 5, 1))
 		return false;
 
-	if (!lua_isboolean(L, -1)) { //FIXME optbool
-		lua_pop(L, 1);
-		return false;
-	}
-	const bool retval = !!lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -1852,11 +1838,7 @@ bool CLuaHandle::KeyRelease(unsigned short key)
 	if (!RunCallIn(L, cmdStr, 4, 1))
 		return false;
 
-	if (!lua_isboolean(L, -1)) {
-		lua_pop(L, 1);
-		return false;
-	}
-	const bool retval = !!lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -1882,11 +1864,7 @@ bool CLuaHandle::MousePress(int x, int y, int button)
 	if (!RunCallIn(L, cmdStr, 3, 1))
 		return false;
 
-	if (!lua_isboolean(L, -1)) {
-		lua_pop(L, 1);
-		return false;
-	}
-	const bool retval = !!lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -1912,11 +1890,7 @@ int CLuaHandle::MouseRelease(int x, int y, int button)
 	if (!RunCallIn(L, cmdStr, 3, 1))
 		return false;
 
-	if (!lua_isnumber(L, -1)) {
-		lua_pop(L, 1);
-		return -1;
-	}
-	const int retval = lua_toint(L, -1) - 1;
+	const int retval = luaL_optint(L, -1, 0) - 1;
 	lua_pop(L, 1);
 	return retval;
 }
@@ -1944,11 +1918,7 @@ bool CLuaHandle::MouseMove(int x, int y, int dx, int dy, int button)
 	if (!RunCallIn(L, cmdStr, 5, 1))
 		return false;
 
-	if (!lua_isboolean(L, -1)) {
-		lua_pop(L, 1);
-		return false;
-	}
-	const bool retval = !!lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -1973,11 +1943,7 @@ bool CLuaHandle::MouseWheel(bool up, float value)
 	if (!RunCallIn(L, cmdStr, 2, 1))
 		return false;
 
-	if (!lua_isboolean(L, -1)) {
-		lua_pop(L, 1);
-		return false;
-	}
-	const bool retval = !!lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -2001,11 +1967,7 @@ bool CLuaHandle::JoystickEvent(const std::string& event, int val1, int val2)
 	if (!RunCallIn(L, cmdStr, 2, 1))
 		return false;
 
-	if (!lua_isboolean(L, -1)) {
-		lua_pop(L, 1);
-		return false;
-	}
-	const bool retval = !!lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -2029,11 +1991,7 @@ bool CLuaHandle::IsAbove(int x, int y)
 	if (!RunCallIn(L, cmdStr, 2, 1))
 		return false;
 
-	if (!lua_isboolean(L, -1)) {
-		lua_pop(L, 1);
-		return false;
-	}
-	const bool retval = !!lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -2058,11 +2016,7 @@ string CLuaHandle::GetTooltip(int x, int y)
 	if (!RunCallIn(L, cmdStr, 2, 1))
 		return "";
 
-	if (!lua_isstring(L, -1)) {
-		lua_pop(L, 1);
-		return "";
-	}
-	const string retval = lua_tostring(L, -1);
+	const string retval = luaL_optsstring(L, -1, "");
 	lua_pop(L, 1);
 	return retval;
 }
@@ -2104,13 +2058,7 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 		return false;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return false;
-	}
-
-	const bool retval = !!lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -2267,11 +2215,7 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 		return false;
 
 	// take the event?
-	if (!lua_isboolean(L, -1)) {
-		lua_pop(L, 1);
-		return false;
-	}
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }

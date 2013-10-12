@@ -3,6 +3,8 @@
 #ifndef LUA_HELPER_H
 #define LUA_HELPER_H
 
+#include "Sim/Features/Feature.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/EventClient.h"
 #include "LuaHandle.h"

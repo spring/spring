@@ -3,7 +3,6 @@
 #include "FeatureHandler.h"
 
 #include "Lua/LuaParser.h"
-#include "Lua/LuaRules.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"

@@ -4,7 +4,6 @@
 #include "Feature.h"
 #include "FeatureHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"

@@ -21,7 +21,7 @@
 #include "Game/Players/PlayerHandler.h"
 #include "Game/UI/GameSetupDrawer.h"
 #include "Game/UI/MouseHandler.h"
-#include "Lua/LuaRules.h"
+#include "Lua/LuaHandle.h"
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"

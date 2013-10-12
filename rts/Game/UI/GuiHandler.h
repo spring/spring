@@ -242,7 +242,6 @@ private:
 	int failedSound;
 
 	std::vector<std::string> layoutCommands;
-	bool hasLuaUILayoutCommands;
 	std::vector< std::pair<Command, bool> > commandsToGive;
 };
 

@@ -2608,12 +2608,11 @@ public:
 			}
 			guihandler->LayoutIcons(false);
 		}
-		else {
-			if (luaUI != NULL) {
-				luaUI->ConfigCommand(command); //FIXME use GotChatMsg?
-			} else {
-				//LOG_L(L_DEBUG, "[%s] LuaUI is not loaded (command=\"%s\")", __FUNCTION__, command.c_str());
-			}
+		else if (luaUI) {
+			luaUI->ConfigCommand(command); //FIXME deprecated
+			luaUI->GotChatMsg(command, 0);
+		} else {
+			LOG_L(L_DEBUG, "LuaUI is not loaded");
 		}
 
 		return true;

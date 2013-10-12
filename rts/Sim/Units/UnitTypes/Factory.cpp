@@ -4,7 +4,6 @@
 #include "Factory.h"
 #include "Game/GameHelper.h"
 #include "Game/WaitCommandsAI.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"

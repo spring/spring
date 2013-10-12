@@ -9,8 +9,6 @@
 #include "Game/Players/PlayerHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
-#include "Lua/LuaRules.h"
-#include "Lua/LuaUI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
