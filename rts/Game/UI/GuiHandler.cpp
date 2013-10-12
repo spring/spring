@@ -539,7 +539,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 		forceLayoutUpdate = false;
 	}
 
-	if (luaUI && luaUI->WantsEvent("HasLayoutButtons")) {
+	if (luaUI && luaUI->WantsEvent("LayoutButtons")) {
 		if (LayoutCustomIcons(useSelectionPage)) {
 			if (validInCommand) {
 				RevertToCmdDesc(cmdDesc, defCmd, samePage);
