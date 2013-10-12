@@ -301,7 +301,10 @@ void CHoverAirMoveType::ExecuteStop()
 
 void CHoverAirMoveType::StopMoving(bool callScript, bool hardStop)
 {
-	forceHeading = false;
+	// transports switch to landed state (via SetState which calls
+	// us) during pickup but must *not* be allowed to change their
+	// heading while "landed" (see TransportCAI)
+	forceHeading &= (aircraftState == AIRCRAFT_LANDED);
 	wantToStop = true;
 	wantedHeight = orgWantedHeight;
 
@@ -864,7 +867,7 @@ bool CHoverAirMoveType::Update()
 		wantedSpeed = ZeroVector;
 
 		UpdateAirPhysics();
-		return (HandleCollisions());
+		return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
 	}
 
 	// allow us to stop if wanted (changes aircraft state)
@@ -955,7 +958,7 @@ bool CHoverAirMoveType::Update()
 	UpdateHeading();
 	UpdateBanking(aircraftState == AIRCRAFT_HOVERING);
 
-	return (HandleCollisions());
+	return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
 }
 
 void CHoverAirMoveType::SlowUpdate()
@@ -981,9 +984,14 @@ void CHoverAirMoveType::SlowUpdate()
 /// Returns true if indicated position is a suitable landing spot
 bool CHoverAirMoveType::CanLandAt(const float3& pos) const
 {
-	if (dontLand) { return false; }
-	if (!autoLand) { return false; }
-	if (!pos.IsInBounds()) { return false; }
+	if (loadingUnits)
+		return true;
+	if (dontLand)
+		return false;
+	if (!autoLand)
+		return false;
+	if (!pos.IsInBounds())
+		return false;
 
 	const UnitDef* ud = owner->unitDef;
 	const float gah = ground->GetApproximateHeight(pos.x, pos.z);
@@ -1043,18 +1051,17 @@ void CHoverAirMoveType::Land()
 	}
 }
 
-bool CHoverAirMoveType::HandleCollisions()
+bool CHoverAirMoveType::HandleCollisions(bool checkCollisions)
 {
 	const float3& pos = owner->pos;
 
 	if (pos != oldPos) {
 		oldPos = pos;
 
-		// check for collisions if not on a pad, not being built, or not taking off
-		// includes an extra condition for transports, which are exempt while loading
-		const bool checkCollisions = collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF);
 		bool hitBuilding = false;
 
+		// check for collisions if not on a pad, not being built, or not taking off
+		// includes an extra condition for transports, which are exempt while loading
 		if (!loadingUnits && checkCollisions) {
 			const vector<CUnit*>& nearUnits = quadField->GetUnitsExact(pos, owner->radius + 6);
 
