@@ -96,18 +96,27 @@ namespace spring_clock {
 			LARGE_INTEGER currTick;
 
 			if (!QueryPerformanceFrequency(&tickFreq))
-				return (FromMilliSecs<boost::uint32_t>(0));
+				return (FromMilliSecs<boost::int64_t>(0));
 
 			QueryPerformanceCounter(&currTick);
 
 			// we want the raw tick (uncorrected for frequency)
+			// if clock ticks <freq> times per second, then the
+			// total number of {milli,micro,nano}seconds elapsed
+			// for any given tick is <tick> / <freq / resolution>
+			// eg. if freq = 15000Hz and tick = 5000, then
+			//        secs = 5000 / (15000 /          1) =                    0.3333333
+			//   millisecs = 5000 / (15000 /       1000) = 5000 / 15.000000 =       333
+			//   microsecs = 5000 / (15000 /    1000000) = 5000 /  0.015000 =    333333
+			//   nanosecs  = 5000 / (15000 / 1000000000) = 5000 /  0.000015 = 333333333
+			//
 			// currTick.QuadPart /= tickFreq.QuadPart;
 
-			if (tickFreq.QuadPart > 100000000000LL) return (FromNanoSecs <boost::uint64_t>(std::max(0LL, currTick.QuadPart)));
-			if (tickFreq.QuadPart >     10000000LL) return (FromMicroSecs<boost::uint64_t>(std::max(0LL, currTick.QuadPart)));
-			if (tickFreq.QuadPart >         1000LL) return (FromMilliSecs<boost::uint64_t>(std::max(0LL, currTick.QuadPart)));
+			if (tickFreq.QuadPart >= boost::int64_t(1e9)) return (FromNanoSecs <boost::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-9))));
+			if (tickFreq.QuadPart >= boost::int64_t(1e6)) return (FromMicroSecs<boost::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-6))));
+			if (tickFreq.QuadPart >= boost::int64_t(1e3)) return (FromMilliSecs<boost::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-3))));
 
-			return (FromSecs<boost::uint64_t>(std::max(0LL, currTick.QuadPart)));
+			return (FromSecs<boost::int64_t>(std::max(0LL, currTick.QuadPart)));
 		} else {
 			// timeGetTime is affected by time{Begin,End}Period whereas
 			// GetTickCount is not ---> resolution of the former can be

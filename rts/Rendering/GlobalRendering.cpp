@@ -294,7 +294,27 @@ void CGlobalRendering::PostInit() {
 	teamNanospray = configHandler->GetBool("TeamNanoSpray");
 }
 
+void CGlobalRendering::SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen)
+{
+#ifdef _DEBUG
+	fullScreen = false;
+#else
+	fullScreen = configFullScreen;
+#endif
 
+	// flags
+	if (cmdLineWindowed) {
+		fullScreen = false;
+	} else if (cmdLineFullScreen) {
+		fullScreen = true;
+	}
+}
+
+void CGlobalRendering::SetViewSize(int vsx, int vsy)
+{
+	viewSizeX = vsx;
+	viewSizeY = vsy;
+}
 
 void CGlobalRendering::SetDualScreenParams() {
 	dualScreenMode = configHandler->GetBool("DualScreenMode");
