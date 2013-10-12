@@ -51,6 +51,7 @@
 #include "System/Util.h"
 #include "lib/luasocket/src/luasocket.h"
 
+#include <mutex>
 #include <stdio.h>
 #include <set>
 #include <cctype>
@@ -88,14 +89,17 @@ static const char* GetVFSMode()
 /******************************************************************************/
 /******************************************************************************/
 
+static std::mutex m_singleton;
+
 
 void CLuaUI::LoadHandler()
 {
-	if (luaUI) {
-		return;
-	}
+	{
+		std::lock_guard<std::mutex> lk(m_singleton);
+		if (luaUI) return;
 
-	new CLuaUI();
+		luaUI = new CLuaUI();
+	}
 
 	if (!luaUI->IsValid()) {
 		FreeHandler();
@@ -105,15 +109,14 @@ void CLuaUI::LoadHandler()
 
 void CLuaUI::FreeHandler()
 {
-	static bool inFree = false; //FIXME static not threadsafe!!! use mutex/atomic!
-	if (!inFree) {
-		inFree = true;
-		auto* inst = luaUI;
-		luaUI = NULL;
-		inst->KillLua();
-		delete inst;
-		inFree = false;
-	}
+	std::lock_guard<std::mutex> lk(m_singleton);
+	if (!luaUI) return;
+
+	auto* inst = luaUI;
+	luaUI = NULL;
+	inst->KillLua();
+	delete inst;
+
 	if (guihandler) guihandler->LoadConfig("ctrlpanel.txt");
 }
 

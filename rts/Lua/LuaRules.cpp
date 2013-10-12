@@ -7,11 +7,15 @@
 #include "LuaUtils.h"
 #include "LuaUnitRendering.h"
 
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Scripts/CobInstance.h" // for UNPACK{X,Z}
 #include "System/Log/ILog.h"
 #include "System/FileSystem/VFSModes.h" // for SPRING_VFS_*
 
 #include <assert.h>
+#include <mutex>
 
 CLuaRules* luaRules = NULL;
 
@@ -24,14 +28,17 @@ const int* CLuaRules::currentCobArgs = NULL;
 /******************************************************************************/
 /******************************************************************************/
 
+static std::mutex m_singleton;
+
+
 void CLuaRules::LoadHandler()
 {
-	//FIXME GML: this needs a mutex!!!
-	if (luaRules != NULL) {
-		return;
-	}
+	{
+		std::lock_guard<std::mutex> lk(m_singleton);
+		if (luaRules) return;
 
-	luaRules = new CLuaRules();
+		luaRules = new CLuaRules();
+	}
 
 	if (!luaRules->IsValid()) {
 		FreeHandler();
@@ -41,13 +48,13 @@ void CLuaRules::LoadHandler()
 
 void CLuaRules::FreeHandler()
 {
-	static bool inFree = false; //FIXME not threadsafe!!!
-	if (!inFree) {
-		inFree = true;
-		delete luaRules;
-		luaRules = NULL;
-		inFree = false;
-	}
+	std::lock_guard<std::mutex> lk(m_singleton);
+	if (!luaRules) return;
+
+	auto* inst = luaRules;
+	luaRules = NULL;
+	inst->KillLua();
+	delete inst;
 }
 
 

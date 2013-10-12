@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <mutex>
 
 #include "LuaIntro.h"
 
@@ -35,14 +36,17 @@ CLuaIntro* LuaIntro = NULL;
 /******************************************************************************/
 /******************************************************************************/
 
+static std::mutex m_singleton;
+
 
 void CLuaIntro::LoadHandler()
 {
-	if (LuaIntro) {
-		return;
-	}
+	{
+		std::lock_guard<std::mutex> lk(m_singleton);
+		if (LuaIntro) return;
 
-	new CLuaIntro();
+		LuaIntro = new CLuaIntro();
+	}
 
 	if (!LuaIntro->IsValid()) {
 		FreeHandler();
@@ -52,15 +56,13 @@ void CLuaIntro::LoadHandler()
 
 void CLuaIntro::FreeHandler()
 {
-	static bool inFree = false; //FIXME static not threadsafe!!! use mutex/atomic!
-	if (!inFree) {
-		inFree = true;
-		auto* inst = LuaIntro;
-		LuaIntro = NULL;
-		inst->KillLua();
-		delete inst;
-		inFree = false;
-	}
+	std::lock_guard<std::mutex> lk(m_singleton);
+	if (!LuaIntro) return;
+
+	auto* inst = LuaIntro;
+	LuaIntro = NULL;
+	inst->KillLua();
+	delete inst;
 }
 
 

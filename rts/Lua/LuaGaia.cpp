@@ -2,8 +2,7 @@
 
 
 #include <set>
-#include <cctype>
-
+#include <mutex>
 
 #include "LuaGaia.h"
 
@@ -36,15 +35,17 @@ static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
 /******************************************************************************/
 /******************************************************************************/
 
+static std::mutex m_singleton;
+
+
 void CLuaGaia::LoadHandler()
 {
-	//FIXME GML: this needs a mutex!!!
+	{
+		std::lock_guard<std::mutex> lk(m_singleton);
+		if (luaGaia) return;
 
-	if (luaGaia != NULL) {
-		return;
+		luaGaia = new CLuaGaia();
 	}
-
-	luaGaia = new CLuaGaia();
 
 	if (!luaGaia->IsValid()) {
 		FreeHandler();
@@ -54,15 +55,14 @@ void CLuaGaia::LoadHandler()
 
 void CLuaGaia::FreeHandler()
 {
-	static bool inFree = false; //FIXME not threadsafe!!!
-	if (!inFree) {
-		inFree = true;
-		delete luaGaia;
-		luaGaia = NULL;
-		inFree = false;
-	}
-}
+	std::lock_guard<std::mutex> lk(m_singleton);
+	if (!luaGaia) return;
 
+	auto* inst = luaGaia;
+	luaGaia = NULL;
+	inst->KillLua();
+	delete inst;
+}
 
 /******************************************************************************/
 /******************************************************************************/
