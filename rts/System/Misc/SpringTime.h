@@ -34,20 +34,20 @@ namespace spring_clock {
 	//   1e-x are double-precision literals but T can be float
 	//   floats only provide ~6 decimal digits of precision so
 	//   ToSecs is inaccurate in that case
-	template<typename T> static T ToSecs     (const boost::int64_t x) { return (x * 1e-9); }
-	template<typename T> static T ToMilliSecs(const boost::int64_t x) { return (x * 1e-6); }
-	template<typename T> static T ToMicroSecs(const boost::int64_t x) { return (x * 1e-3); }
-	template<typename T> static T ToNanoSecs (const boost::int64_t x) { return (x       ); }
+	template<typename T> static T ToSecs     (const boost::int64_t ns) { return (ns * 1e-9); }
+	template<typename T> static T ToMilliSecs(const boost::int64_t ns) { return (ns * 1e-6); }
+	template<typename T> static T ToMicroSecs(const boost::int64_t ns) { return (ns * 1e-3); }
+	template<typename T> static T ToNanoSecs (const boost::int64_t ns) { return (ns       ); }
 
 	// specializations
-	template<> boost::int64_t ToSecs     <boost::int64_t>(const boost::int64_t x) { return (x / 1000000000LL); }
-	template<> boost::int64_t ToMilliSecs<boost::int64_t>(const boost::int64_t x) { return (x /    1000000LL); }
-	template<> boost::int64_t ToMicroSecs<boost::int64_t>(const boost::int64_t x) { return (x /       1000LL); }
+	template<> boost::int64_t ToSecs     <boost::int64_t>(const boost::int64_t ns) { return (ns * 1e-9); }
+	template<> boost::int64_t ToMilliSecs<boost::int64_t>(const boost::int64_t ns) { return (ns * 1e-6); }
+	template<> boost::int64_t ToMicroSecs<boost::int64_t>(const boost::int64_t ns) { return (ns * 1e-3); }
 
-	template<typename T> static boost::int64_t FromSecs     (const T      s) { return (     s * 1000000000LL); }
-	template<typename T> static boost::int64_t FromMilliSecs(const T millis) { return (millis *    1000000LL); }
-	template<typename T> static boost::int64_t FromMicroSecs(const T micros) { return (micros *       1000LL); }
-	template<typename T> static boost::int64_t FromNanoSecs (const T  nanos) { return ( nanos               ); }
+	template<typename T> static boost::int64_t FromSecs     (const T  s) { return ( s * 1e9); }
+	template<typename T> static boost::int64_t FromMilliSecs(const T ms) { return (ms * 1e6); }
+	template<typename T> static boost::int64_t FromMicroSecs(const T us) { return (us * 1e3); }
+	template<typename T> static boost::int64_t FromNanoSecs (const T ns) { return (ns      ); }
 
 	void PushTickRate(bool hres = false);
 	void PopTickRate(bool hres = false);

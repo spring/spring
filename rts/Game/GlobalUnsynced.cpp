@@ -51,6 +51,7 @@ CR_REG_METADATA(CGlobalUnsynced, (
 	CR_MEMBER(spectatingFullView),
 	CR_MEMBER(spectatingFullSelect),
 	CR_IGNORED(fpsMode),
+	CR_IGNORED(useHighResTimer),
 	CR_IGNORED(globalQuit)
 ));
 
@@ -78,10 +79,12 @@ CGlobalUnsynced::CGlobalUnsynced()
 	spectating           = false;
 	spectatingFullView   = false;
 	spectatingFullSelect = false;
+
 	fpsMode = false;
 
 	playerHandler = new CPlayerHandler();
 
+	useHighResTimer = false;
 	globalQuit = false;
 }
 

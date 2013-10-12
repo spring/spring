@@ -18,15 +18,15 @@ union SDL_Event;
 class SpringApp
 {
 public:
-	SpringApp();
+	SpringApp(int argc, char** argv);
 	~SpringApp();
 
-	int Run(int argc, char *argv[]);                //!< Run game loop
+	int Run();                                      //!< Run game loop
 	static void Shutdown();                         //!< Shuts down application
 
 protected:
 	bool Initialize();                              //!< Initialize app
-	void ParseCmdLine();                            //!< Parse command line
+	void ParseCmdLine(const std::string&);          //!< Parse command line
 	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
 	bool InitWindow(const char* title);             //!< Initializes window
 	static void InitOpenGL();                       //!< Initializes OpenGL
@@ -50,9 +50,6 @@ protected:
 private:
 	bool MainEventHandler(const SDL_Event& ev);
 	void RunScript(const std::string& buf);
-
-private:
-	std::string binaryName;
 };
 
 /**

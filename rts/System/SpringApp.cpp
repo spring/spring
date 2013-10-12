@@ -141,10 +141,15 @@ static bool MultisampleVerify()
 
 /**
  * Initializes SpringApp variables
+ *
+ * @param argc argument count
+ * @param argv array of argument strings
  */
-SpringApp::SpringApp()
-	: cmdline(NULL)
+SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, argv))
 {
+	// initializes configHandler which we need
+	ParseCmdLine(argv[0]);
+
 	spring_clock::PushTickRate();
 	// set the Spring "epoch" to be whatever value the first
 	// call to gettime() returns, should not be 0 (can safely
@@ -169,13 +174,19 @@ SpringApp::~SpringApp()
  */
 bool SpringApp::Initialize()
 {
-	globalRendering = new CGlobalRendering();
-
-	ParseCmdLine();
+	assert(cmdline != NULL);
+	assert(configHandler != NULL);
 
 	FileSystemInitializer::InitializeLogOutput();
 	CLogOutput::LogSystemInfo();
 	CMyMath::Init();
+
+	globalRendering = new CGlobalRendering();
+	globalRendering->SetFullScreen(configHandler->GetBool("Fullscreen"), cmdline->IsSet("window"), cmdline->IsSet("fullscreen"));
+	globalRendering->SetViewSize(
+		cmdline->IsSet("xresolution")? std::max(cmdline->GetInt("xresolution"), 640): configHandler->GetInt("XResolution"),
+		cmdline->IsSet("yresolution")? std::max(cmdline->GetInt("yresolution"), 480): configHandler->GetInt("YResolution")
+	);
 
 #if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
 	// this MUST run before any other X11 call (esp. those by SDL!)
@@ -693,7 +704,7 @@ void SpringApp::LoadFonts()
  *
  * Parse command line arguments
  */
-void SpringApp::ParseCmdLine()
+void SpringApp::ParseCmdLine(const std::string& binaryName)
 {
 	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdf]");
 	cmdline->AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
@@ -818,18 +829,6 @@ void SpringApp::ParseCmdLine()
 	LOG("[%s] command-line args: \"%s\"", __FUNCTION__, cmdline->GetCmdLine().c_str());
 	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
 
-#ifdef _DEBUG
-	globalRendering->fullScreen = false;
-#else
-	globalRendering->fullScreen = configHandler->GetBool("Fullscreen");
-#endif
-	// flags
-	if (cmdline->IsSet("window")) {
-		globalRendering->fullScreen = false;
-	} else if (cmdline->IsSet("fullscreen")) {
-		globalRendering->fullScreen = true;
-	}
-
 	if (cmdline->IsSet("textureatlas")) {
 		CTextureAtlas::SetDebug(true);
 	}
@@ -841,15 +840,6 @@ void SpringApp::ParseCmdLine()
 		}
 	}
 
-	globalRendering->viewSizeX = configHandler->GetInt("XResolution");
-	if (cmdline->IsSet("xresolution"))
-		globalRendering->viewSizeX = std::max(cmdline->GetInt("xresolution"), 640);
-
-	globalRendering->viewSizeY = configHandler->GetInt("YResolution");
-	if (cmdline->IsSet("yresolution"))
-		globalRendering->viewSizeY = std::max(cmdline->GetInt("yresolution"), 480);
-
-
 	if (cmdline->IsSet("benchmark")) {
 		CBenchmark::enabled = true;
 		if (cmdline->IsSet("benchmarkstart")) {
@@ -857,6 +847,11 @@ void SpringApp::ParseCmdLine()
 		}
 		CBenchmark::endFrame = CBenchmark::startFrame + cmdline->GetInt("benchmark") * 60 * GAME_SPEED;
 	}
+
+	#ifdef WIN32
+	// TODO (must be passed to all gettime() calls transparently)
+	// gu->useHighResTimer = (configHandler->GetBool("useHighResTimer") || cmdline->IsSet("useHighResTimer"));
+	#endif
 }
 
 
@@ -1027,17 +1022,11 @@ static void ResetScreenSaverTimeout()
 
 
 /**
- * @param argc argument count
- * @param argv array of argument strings
- *
  * Executes the application
  * (contains main game loop)
  */
-int SpringApp::Run(int argc, char *argv[])
+int SpringApp::Run()
 {
-	cmdline = new CmdLineParams(argc, argv);
-	binaryName = argv[0];
-
 	try {
 		if (!Initialize())
 			return -1;
@@ -1062,9 +1051,9 @@ int SpringApp::Run(int argc, char *argv[])
 	}
 
 	SaveWindowPosition();
-
 	// Shutdown
 	Shutdown();
+
 	return GetExitCode();
 }
 

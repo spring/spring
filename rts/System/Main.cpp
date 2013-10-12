@@ -60,8 +60,8 @@ int Run(int argc, char* argv[])
 
 	// run
 	try {
-		SpringApp app;
-		ret = app.Run(argc, argv);
+		SpringApp app(argc, argv);
+		ret = app.Run();
 	} CATCH_SPRING_ERRORS
 
 	// check if Spring crashed, if so display an error message
