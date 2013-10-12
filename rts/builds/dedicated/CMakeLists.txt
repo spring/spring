@@ -25,7 +25,7 @@ LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY}
 LIST(APPEND engineDedicatedLibraries headlessStubs engineSystemNet)
 
 IF (WIN32)
-	LIST(APPEND engineDedicatedLibraries ${WIN32_LIBRARIES})
+	LIST(APPEND engineDedicatedLibraries ${WINMM_LIBRARY})
 ENDIF (WIN32)
 
 IF    (UNIX AND NOT MINGW)

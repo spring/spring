@@ -18,7 +18,7 @@ LIST(APPEND unitsync_libs ${ZLIB_LIBRARY})
 LIST(APPEND unitsync_libs ${SPRING_MINIZIP_LIBRARY})
 
 IF (WIN32)
-	LIST(APPEND unitsync_libs ${WIN32_LIBRARIES})
+	LIST(APPEND unitsync_libs ${WINMM_LIBRARY})
 ENDIF (WIN32)
 
 IF    (MINGW)
