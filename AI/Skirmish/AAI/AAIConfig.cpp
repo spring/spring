@@ -307,7 +307,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 			{
 				fscanf(file, "%f", &fval);
 				SECTOR_SIZE = fval;
-				printf("SECTOR_SIZE set to %f", SECTOR_SIZE);
+				ai->Log("SECTOR_SIZE set to %f", SECTOR_SIZE);
 			}
 			else if(!strcmp(keyword,"MIN_ENERGY"))
 			{
