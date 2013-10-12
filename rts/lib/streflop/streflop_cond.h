@@ -41,9 +41,6 @@ namespace math {
 	using std::atan;
 	using std::atan2;
 
-	using std::abs;
-	using std::min;
-	using std::max;
 	using std::ceil;
 	using std::floor;
 	using std::fmod;
@@ -78,13 +75,16 @@ namespace math {
 
 #ifdef __APPLE__
 // see above
+
+#include <algorithm>
+
 namespace std {
 	template<typename T>
 	T hypot(T x, T y) {
-		x = math::abs(x);
-		y = math::abs(y);
-		auto t = math::min(x,y);
-		     x = math::max(x,y);
+		x = std::abs(x);
+		y = std::abs(y);
+		auto t = std::min(x,y);
+		     x = std::max(x,y);
 		t = t / x;
 		return x * math::sqrt(1.f + t*t);
 	}
