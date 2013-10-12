@@ -40,6 +40,10 @@ namespace math {
 	using std::acos;
 	using std::atan;
 	using std::atan2;
+
+	using std::abs;
+	using std::min;
+	using std::max;
 	using std::ceil;
 	using std::floor;
 	using std::fmod;
