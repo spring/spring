@@ -155,10 +155,11 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 		// load single unit
 		CUnit* unit = unitHandler->GetUnit(c.params[0]);
 
-		if (!unit) {
+		if (unit == NULL) {
 			FinishCommand();
 			return;
 		}
+
 		if (c.options & INTERNAL_ORDER) {
 			if (unit->commandAI->commandQue.empty()) {
 				if (!LoadStillValid(unit)) {
@@ -167,6 +168,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 				}
 			} else {
 				Command& currentUnitCommand = unit->commandAI->commandQue[0];
+
 				if ((currentUnitCommand.GetID() == CMD_LOAD_ONTO) && (currentUnitCommand.params.size() == 1) && (int(currentUnitCommand.params[0]) == owner->id)) {
 					if ((unit->moveType->progressState == AMoveType::Failed) && (owner->moveType->progressState == AMoveType::Failed)) {
 						unit->commandAI->FinishCommand();
@@ -179,13 +181,14 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 				}
 			}
 		}
+
 		if (inCommand) {
 			if (!owner->script->IsBusy()) {
 				FinishCommand();
 			}
 			return;
 		}
-		if (unit && CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))) {
+		if (unit != NULL && CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))) {
 			SetTransportee(unit);
 
 			const float sqDist = unit->pos.SqDistance2D(owner->pos);
@@ -204,6 +207,11 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 					// handle air transports differently
 					float3 wantedPos = unit->pos;
 					wantedPos.y = static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeight(wantedPos, unit);
+
+					// calls am->StartMoving() which sets forceHeading to false
+					// we do not want this at point of pickup because am->UpdateHeading()
+					// will suddenly see a large deltaHeading and break the DOCKING_ANGLE
+					// constraint, so call am->ForceHeading() next
 					SetGoal(wantedPos, owner->pos);
 
 					am->SetLoadingUnits(true);
@@ -211,10 +219,11 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 					am->SetWantedAltitude(wantedPos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z));
 					am->maxDrift = 1.0f;
 
-					if ((owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS)) &&
-						(abs(owner->heading-unit->heading) < AIRTRANSPORT_DOCKING_ANGLE) &&
-						(owner->updir.dot(UpVector) > 0.995f))
-					{
+					const bool b1 = (owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS));
+					const bool b2 = (std::abs(owner->heading - unit->heading) < AIRTRANSPORT_DOCKING_ANGLE);
+					const bool b3 = (owner->updir.dot(UpVector) > 0.995f);
+
+					if (b1 && b2 && b3) {
 						am->SetLoadingUnits(false);
 						am->SetAllowLanding(false);
 
@@ -339,8 +348,8 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 		for (int b = 0; b < bmax; ++b) {
 			// FIXME: using a deterministic technique might be better, since it would allow an unload command to be tested for validity from unsynced (with predictable results)
 			const float ang = 2.0f * PI * (fromSynced ? gs->randFloat() : gu->RandFloat());
-			float len = amax * math::sqrt(fromSynced ? gs->randFloat() : gu->RandFloat());
-			len /= amax;
+			const float len = math::sqrt(fromSynced ? gs->randFloat() : gu->RandFloat());
+
 			delta.x = len * math::sin(ang);
 			delta.z = len * math::cos(ang);
 			pos = center + delta * radius;
@@ -655,16 +664,22 @@ void CTransportCAI::UnloadLand(Command& c)
 		if (pos.SqDistance2D(owner->pos) < Square(owner->unitDef->loadingRadius * 0.9f)) {
 			CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
 			pos.y = static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeight(pos, unit);
+
 			if (am != NULL) {
 				// handle air transports differently
 				SetGoal(pos, owner->pos);
 				am->SetWantedAltitude(pos.y - ground->GetHeightAboveWater(pos.x, pos.z));
-				float unloadHeading = static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeading(unit);
-				am->ForceHeading(unloadHeading);
-				am->maxDrift = 1;
-				if ((owner->pos.SqDistance(pos) < 64) &&
-						(owner->updir.dot(UpVector) > 0.99f) && math::fabs(owner->heading - unloadHeading) < AIRTRANSPORT_DOCKING_ANGLE) {
+				am->ForceHeading(static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeading(unit));
+
+				am->maxDrift = 1.0f;
+
+				const bool b1 = (owner->pos.SqDistance(pos) < 64.0f);
+				const bool b2 = (std::abs(owner->heading - am->GetForcedHeading()) < AIRTRANSPORT_DOCKING_ANGLE);
+				const bool b3 = (owner->updir.dot(UpVector) > 0.99f);
+
+				if (b1 && b2 && b3) {
 					pos.y -= unit->radius;
+
 					if (!SpotIsClearIgnoreSelf(pos, unit)) {
 						// chosen spot is no longer clear to land, choose a new one
 						// if a new spot cannot be found, don't unload at all
