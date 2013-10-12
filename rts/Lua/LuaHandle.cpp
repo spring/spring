@@ -418,9 +418,12 @@ bool CLuaHandle::GotChatMsg(const string& msg, int playerID)
 	lua_pushnumber(L, playerID);
 
 	// call the routine
-	RunCallIn(L, cmdStr, 2, 0);
+	if (!RunCallIn(L, cmdStr, 2, 1))
+		return false;
 
-	return true; //FIXME return true when processed by lua!
+	const bool processed = luaL_optboolean(L, -1, false);
+	lua_pop(L, 1);
+	return processed;
 }
 
 
