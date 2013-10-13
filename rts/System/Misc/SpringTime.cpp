@@ -46,12 +46,12 @@ namespace spring_clock {
 	static bool timerInited = false;
 
 	void PushTickRate(bool b) {
-		#if USE_NATIVE_WINDOWS_CLOCK
 		assert(!timerInited);
 
 		highResMode = b;
 		timerInited = true;
 
+		#if USE_NATIVE_WINDOWS_CLOCK
 		// set the number of milliseconds between interrupts
 		// NOTE: THIS IS A GLOBAL OS SETTING, NOT PER PROCESS
 		// (should not matter for users, SDL 1.2 also sets it)
