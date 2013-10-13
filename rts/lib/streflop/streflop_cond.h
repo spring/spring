@@ -86,7 +86,7 @@ namespace std {
 		auto t = std::min(x,y);
 		     x = std::max(x,y);
 		t = t / x;
-		return x * math::sqrt(1.f + t*t);
+		return x * std::sqrtf(1.f + t*t);
 	}
 }
 #endif
