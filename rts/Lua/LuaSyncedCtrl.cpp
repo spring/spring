@@ -9,6 +9,7 @@
 
 #include "LuaInclude.h"
 
+#include "LuaConfig.h"
 #include "LuaRules.h" // for MAX_LUA_COB_ARGS
 #include "LuaHandleSynced.h"
 #include "LuaHashString.h"
@@ -67,7 +68,6 @@
 #include "System/ObjectDependenceTypes.h"
 #include "System/Log/ILog.h"
 #include "System/Sync/HsiehHash.h"
-#include "LuaHelper.h"
 
 using std::max;
 using std::min;

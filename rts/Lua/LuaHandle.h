@@ -6,10 +6,9 @@
 
 #include "System/EventClient.h"
 //FIXME#include "LuaArrays.h"
-#include "LuaCallInCheck.h"
 #include "LuaContextData.h"
-#include "LuaUtils.h"
-#include "System/Platform/Threading.h"
+#include "LuaHashString.h"
+#include "lib/lua/include/LuaInclude.h" //FIXME needed for GetLuaContextData
 
 #include <string>
 #include <vector>
@@ -311,9 +310,6 @@ class CLuaHandle : public CEventClient
 
 		static void HandleLuaMsg(int playerID, int script, int mode,
 			const std::vector<boost::uint8_t>& msg);
-		static bool IsDrawCallIn() {
-			return true; //FIXME (LUA_MT_OPT & LUA_MUTEX) && !Threading::IsSimThread();
-		}
 
 	protected: // static
 		static bool devMode; // allows real file access

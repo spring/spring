@@ -5,6 +5,7 @@
 #include "LuaInclude.h"
 
 #include "LuaUtils.h"
+#include "LuaCallInCheck.h"
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
 #include "LuaConstCMDTYPE.h"

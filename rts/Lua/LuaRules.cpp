@@ -6,6 +6,7 @@
 
 #include "LuaUtils.h"
 #include "LuaUnitRendering.h"
+#include "LuaCallInCheck.h"
 
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/Unit.h"

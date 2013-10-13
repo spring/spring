@@ -12,10 +12,10 @@
 #include "Lua/LuaConfig.h"
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaHandleSynced.h"
+#include "Lua/LuaUtils.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
-#include "Lua/LuaHelper.h"
 
 
 using std::map;

@@ -7,6 +7,7 @@
 #include "LuaUI.h"
 
 #include "LuaCallInCheck.h"
+#include "LuaEventBatch.h"
 #include "LuaHashString.h"
 #include "LuaOpenGL.h"
 #include "LuaBitOps.h"

@@ -10,8 +10,13 @@ using std::vector;
 
 #include "LuaHashString.h"
 #include "LuaInclude.h"
+#include "LuaHandle.h"
 #include "LuaDefs.h"
 #include "Sim/Units/CommandAI/Command.h"
+#include "Sim/Features/Feature.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "System/EventClient.h"
 
 // is defined as macro on FreeBSD (wtf)
 #ifdef isnumber
@@ -60,35 +65,29 @@ class LuaUtils {
 		};
 
 	public:
+		// Backups lua data into a c++ vector and restores it from it
 		static int exportedDataSize; //< performance stat
-
 		static int Backup(std::vector<DataDump> &backup, lua_State* src, int count);
-
 		static int Restore(const std::vector<DataDump> &backup, lua_State* dst);
 
-		static int ShallowBackup(std::vector<ShallowDataDump> &backup, lua_State* src, int count);
-
-		static int ShallowRestore(const std::vector<ShallowDataDump> &backup, lua_State* dst);
-
+		// Copies lua data between 2 lua_States
 		static int CopyData(lua_State* dst, lua_State* src, int count);
 
-		static void PushCurrentFuncEnv(lua_State* L, const char* caller);
-
-		static int PushDebugTraceback(lua_State* L); //< returns stack index of traceback function
+		// returns stack index of traceback function
+		static int PushDebugTraceback(lua_State* L);
 
 		// lower case all keys in the table, with recursion
 		static bool LowerKeys(lua_State* L, int tableIndex);
 
 		// from LuaUI.cpp / LuaSyncedCtrl.cpp (used to be duplicated)
-		static void ParseCommandOptions(lua_State* L, const char* caller,
-		                                int index, Command& cmd);
-		static Command ParseCommand(lua_State* L, const char* caller,
-				int idIndex);
-		static Command ParseCommandTable(lua_State* L, const char* caller,
-				int table);
-		static void ParseCommandArray(lua_State* L, const char* caller,
-		                              int table, vector<Command>& commands);
+		static void ParseCommandOptions(lua_State* L, const char* caller, int index, Command& cmd);
+		static Command ParseCommand(lua_State* L, const char* caller, int idIndex);
+		static Command ParseCommandTable(lua_State* L, const char* caller, int table);
+		static void ParseCommandArray(lua_State* L, const char* caller, int table, vector<Command>& commands);
+
 		static int ParseFacing(lua_State* L, const char* caller, int index);
+
+		static void PushCurrentFuncEnv(lua_State* L, const char* caller);
 
 		static void* GetUserData(lua_State* L, int index, const string& type);
 
@@ -128,7 +127,7 @@ class LuaUtils {
 
 
 
-inline void LuaPushNamedNil(lua_State* L,
+static inline void LuaPushNamedNil(lua_State* L,
                              const string& key)
 {
 	lua_pushsstring(L, key);
@@ -137,7 +136,7 @@ inline void LuaPushNamedNil(lua_State* L,
 }
 
 
-inline void LuaPushNamedBool(lua_State* L,
+static inline void LuaPushNamedBool(lua_State* L,
                              const string& key, bool value)
 {
 	lua_pushsstring(L, key);
@@ -146,7 +145,7 @@ inline void LuaPushNamedBool(lua_State* L,
 }
 
 
-inline void LuaPushNamedNumber(lua_State* L,
+static inline void LuaPushNamedNumber(lua_State* L,
                                const string& key, lua_Number value)
 {
 	lua_pushsstring(L, key);
@@ -155,7 +154,7 @@ inline void LuaPushNamedNumber(lua_State* L,
 }
 
 
-inline void LuaPushNamedString(lua_State* L,
+static inline void LuaPushNamedString(lua_State* L,
                                const string& key, const string& value)
 {
 	lua_pushsstring(L, key);
@@ -164,7 +163,7 @@ inline void LuaPushNamedString(lua_State* L,
 }
 
 
-inline void LuaPushNamedCFunc(lua_State* L,
+static inline void LuaPushNamedCFunc(lua_State* L,
                               const string& key, int (*func)(lua_State*))
 {
 	lua_pushsstring(L, key);
@@ -173,7 +172,7 @@ inline void LuaPushNamedCFunc(lua_State* L,
 }
 
 
-inline void LuaInsertDualMapPair(lua_State* L, const string& name, int number)
+static inline void LuaInsertDualMapPair(lua_State* L, const string& name, int number)
 {
 	lua_pushsstring(L, name);
 	lua_pushnumber(L, number);
@@ -181,6 +180,90 @@ inline void LuaInsertDualMapPair(lua_State* L, const string& name, int number)
 	lua_pushnumber(L, number);
 	lua_pushsstring(L, name);
 	lua_rawset(L, -3);
+}
+
+
+static inline bool FullCtrl(const lua_State *L)
+{
+	return CLuaHandle::GetHandleFullCtrl(L);
+}
+
+
+static inline int CtrlTeam(const lua_State *L)
+{
+	return CLuaHandle::GetHandleCtrlTeam(L);
+}
+
+
+static inline int CtrlAllyTeam(const lua_State *L)
+{
+	const int ctrlTeam = CtrlTeam(L);
+	if (ctrlTeam < 0) {
+		return ctrlTeam;
+	}
+	return teamHandler->AllyTeam(ctrlTeam);
+}
+
+
+static inline bool CanControlTeam(const lua_State *L, int teamID)
+{
+	const int ctrlTeam = CtrlTeam(L);
+	if (ctrlTeam < 0) {
+		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
+	}
+	return (ctrlTeam == teamID);
+}
+
+
+static inline bool CanControlAllyTeam(const lua_State *L, int allyTeamID)
+{
+	const int ctrlTeam = CtrlTeam(L);
+	if (ctrlTeam < 0) {
+		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
+	}
+	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
+}
+
+
+static inline bool CanControlUnit(const lua_State *L, const CUnit* unit)
+{
+	const int ctrlTeam = CtrlTeam(L);
+	if (ctrlTeam < 0) {
+		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
+	}
+	return (ctrlTeam == unit->team);
+}
+
+
+static inline bool CanControlFeatureAllyTeam(const lua_State *L, int allyTeamID)
+{
+	const int ctrlTeam = CtrlTeam(L);
+	if (ctrlTeam < 0) {
+		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
+	}
+	if (allyTeamID < 0) {
+		return (ctrlTeam == teamHandler->GaiaTeamID());
+	}
+	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
+}
+
+
+static inline bool CanControlFeature(const lua_State *L, const CFeature* feature)
+{
+	return CanControlFeatureAllyTeam(L, feature->allyteam);
+}
+
+
+static inline bool CanControlProjectileAllyTeam(const lua_State *L, int allyTeamID)
+{
+	const int ctrlTeam = CtrlTeam(L);
+	if (ctrlTeam < 0) {
+		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
+	}
+	if (allyTeamID < 0) {
+		return false;
+	}
+	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 #endif // LUA_UTILS_H

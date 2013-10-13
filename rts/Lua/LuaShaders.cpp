@@ -9,6 +9,7 @@
 #include "LuaHandle.h"
 #include "LuaOpenGL.h"
 #include "LuaOpenGLUtils.h"
+#include "LuaUtils.h"
 
 #include "Game/Camera.h"
 #include "Rendering/ShadowHandler.h"
