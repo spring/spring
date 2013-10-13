@@ -194,13 +194,7 @@ bool CUnsyncedLuaHandle::DrawUnit(const CUnit* unit)
 	if (!success)
 		return false;
 
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", __FUNCTION__, lua_typename(L, lua_type(L, -1)));
-		lua_pop(L, 1);
-		return false;
-	}
-
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -226,14 +220,8 @@ bool CUnsyncedLuaHandle::DrawFeature(const CFeature* feature)
 
 	if (!success)
 		return false;
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", __FUNCTION__, lua_typename(L, lua_type(L, -1)));
-		lua_pop(L, 1);
-		return false;
-	}
 
-	const bool retval = lua_toboolean(L, -1);
-
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -261,14 +249,8 @@ bool CUnsyncedLuaHandle::DrawShield(const CUnit* unit, const CWeapon* weapon)
 
 	if (!success)
 		return false;
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", __FUNCTION__, lua_typename(L, lua_type(L, -1)));
-		lua_pop(L, 1);
-		return false;
-	}
 
-	const bool retval = lua_toboolean(L, -1);
-
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -297,14 +279,8 @@ bool CUnsyncedLuaHandle::DrawProjectile(const CProjectile* projectile)
 
 	if (!success)
 		return false;
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", __FUNCTION__, lua_typename(L, lua_type(L, -1)));
-		lua_pop(L, 1);
-		return false;
-	}
 
-	const bool retval = lua_toboolean(L, -1);
-
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -516,18 +492,9 @@ bool CSyncedLuaHandle::CommandFallback(const CUnit* unit, const Command& cmd)
 	if (!RunCallIn(L, cmdStr, 7, 1))
 		return true;
 
-	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return true;
-	}
-
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-
-	// return 'true' to remove the command
-	return retval;
+	return retval; // return 'true' to remove the command
 }
 
 
@@ -549,12 +516,7 @@ bool CSyncedLuaHandle::AllowCommand(const CUnit* unit, const Command& cmd, bool 
 		return true;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return true;
-	}
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -586,12 +548,7 @@ bool CSyncedLuaHandle::AllowUnitCreation(const UnitDef* unitDef,
 		return true;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return true;
-	}
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -618,13 +575,7 @@ bool CSyncedLuaHandle::AllowUnitTransfer(const CUnit* unit, int newTeam, bool ca
 		return true;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return true;
-	}
-
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -651,13 +602,7 @@ bool CSyncedLuaHandle::AllowUnitBuildStep(const CUnit* builder,
 		return true;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return true;
-	}
-
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -684,13 +629,7 @@ bool CSyncedLuaHandle::AllowFeatureCreation(const FeatureDef* featureDef,
 		return true;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return true;
-	}
-
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -717,13 +656,7 @@ bool CSyncedLuaHandle::AllowFeatureBuildStep(const CUnit* builder,
 		return true;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return true;
-	}
-
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -747,13 +680,7 @@ bool CSyncedLuaHandle::AllowResourceLevel(int teamID, const string& type, float 
 		return true;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return true;
-	}
-
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -779,13 +706,7 @@ bool CSyncedLuaHandle::AllowResourceTransfer(int oldTeam, int newTeam,
 		return true;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return true;
-	}
-
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -810,13 +731,7 @@ bool CSyncedLuaHandle::AllowDirectUnitControl(int playerID, const CUnit* unit)
 		return true;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return true;
-	}
-
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -846,12 +761,7 @@ bool CSyncedLuaHandle::AllowStartPosition(int playerID, unsigned char readyState
 		return true;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return true;
-	}
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -877,15 +787,8 @@ bool CSyncedLuaHandle::MoveCtrlNotify(const CUnit* unit, int data)
 		return false;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return false;
-	}
-
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
-
 	return retval;
 }
 
@@ -915,16 +818,8 @@ bool CSyncedLuaHandle::TerraformComplete(const CUnit* unit, const CUnit* build)
 		return false;
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
-		return false;
-	}
-
-	const bool retval = lua_toboolean(L, -1);
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
-
-	// return 'true' to remove the command
 	return retval;
 }
 
@@ -1118,7 +1013,7 @@ int CSyncedLuaHandle::AllowWeaponTargetCheck(unsigned int attackerID, unsigned i
 	if (!RunCallInTraceback(L, cmdStr, 3, 1, traceBack.GetErrFuncIdx(), false))
 		return ret;
 
-	ret = int(lua_isboolean(L, -1) && lua_toboolean(L, -1));
+	ret = int(luaL_optboolean(L, -1, false)); //FIXME int????
 	lua_pop(L, 1);
 	return ret;
 }
@@ -1155,7 +1050,7 @@ bool CSyncedLuaHandle::AllowWeaponTarget(
 	if (!RunCallInTraceback(L, cmdStr, 5, 2, traceBack.GetErrFuncIdx(), false))
 		return ret;
 
-	ret = (lua_isboolean(L, -2) && lua_toboolean(L, -2));
+	ret = luaL_optboolean(L, -2, false);
 
 	if (lua_isnumber(L, -1)) {
 		*targetPriority = lua_tonumber(L, -1);
@@ -1192,7 +1087,7 @@ bool CSyncedLuaHandle::AllowWeaponInterceptTarget(
 	if (!RunCallInTraceback(L, cmdStr, 3, 1, traceBack.GetErrFuncIdx(), false))
 		return ret;
 
-	ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));
+	ret = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return ret;
 }
