@@ -117,10 +117,10 @@ namespace spring_clock {
 			// total number of {milli,micro,nano}seconds elapsed
 			// for any given tick is <tick> / <freq / resolution>
 			// eg. if freq = 15000Hz and tick = 5000, then
-			//        secs = 5000 / (15000 /          1) =                    0.3333333
-			//   millisecs = 5000 / (15000 /       1000) = 5000 / 15.000000 =       333
-			//   microsecs = 5000 / (15000 /    1000000) = 5000 /  0.015000 =    333333
-			//   nanosecs  = 5000 / (15000 / 1000000000) = 5000 /  0.000015 = 333333333
+			//        secs = 5000 / (15000 / 1e0) =                    0.3333333
+			//   millisecs = 5000 / (15000 / 1e3) = 5000 / 15.000000 =       333
+			//   microsecs = 5000 / (15000 / 1e6) = 5000 /  0.015000 =    333333
+			//    nanosecs = 5000 / (15000 / 1e9) = 5000 /  0.000015 = 333333333
 			//
 			// currTick.QuadPart /= tickFreq.QuadPart;
 
