@@ -2320,7 +2320,7 @@ void CLuaHandle::CollectGarbage()
 	assert(!IsRunning());
 	SetHandleRunning(L, true);
 		do {
-			if (lua_gc(L, LUA_GCSTEP, 2)) {
+			if (lua_gc(L, LUA_GCSTEP, 10)) {
 				SetHandleRunning(L, false);
 				return;
 			}
