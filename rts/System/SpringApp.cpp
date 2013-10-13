@@ -150,9 +150,7 @@ SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, arg
 	// initializes configHandler which we need
 	ParseCmdLine(argv[0]);
 
-	spring_clock::SetHighResMode(configHandler->GetBool("UseHighResTimer") || cmdline->IsSet("useHighResTimer"));
-	spring_clock::PushTickRate();
-
+	spring_clock::PushTickRate(configHandler->GetBool("UseHighResTimer") || cmdline->IsSet("useHighResTimer"));
 	// set the Spring "epoch" to be whatever value the first
 	// call to gettime() returns, should not be 0 (can safely
 	// be done before SDL_Init, we are not using SDL_GetTicks
