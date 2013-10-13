@@ -497,41 +497,20 @@ void CEventHandler::Update()
 
 void CEventHandler::UpdateUnits() { eventBatchHandler->UpdateUnits(); }
 void CEventHandler::UpdateDrawUnits() { eventBatchHandler->UpdateDrawUnits(); }
-void CEventHandler::DeleteSyncedUnits() {
-	eventBatchHandler->DeleteSyncedUnits();
-
-}
+void CEventHandler::DeleteSyncedUnits() { eventBatchHandler->DeleteSyncedUnits(); }
 
 void CEventHandler::UpdateFeatures() { eventBatchHandler->UpdateFeatures(); }
 void CEventHandler::UpdateDrawFeatures() { eventBatchHandler->UpdateDrawFeatures(); }
-void CEventHandler::DeleteSyncedFeatures() {
-	eventBatchHandler->DeleteSyncedFeatures();
-
-}
+void CEventHandler::DeleteSyncedFeatures() { eventBatchHandler->DeleteSyncedFeatures(); }
 
 void CEventHandler::UpdateProjectiles() { eventBatchHandler->UpdateProjectiles(); }
 void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProjectiles(); }
 
-inline void ExecuteAllCallsFromSynced() {
-#if (LUA_MT_OPT & LUA_MUTEX)
-	bool exec;
-	do { // these calls can be chained, need to purge them all
-		exec = false;
-		if (luaRules && luaRules->ExecuteCallsFromSynced())
-			exec = true;
-		if (luaGaia && luaGaia->ExecuteCallsFromSynced())
-			exec = true;
-
-		if (luaUI && luaUI->ExecuteCallsFromSynced())
-			exec = true;
-	} while (exec);
-#endif
-}
+inline void ExecuteAllCallsFromSynced() { } //FIXME delete
 
 void CEventHandler::DeleteSyncedProjectiles() {
 	ExecuteAllCallsFromSynced();
 	eventBatchHandler->DeleteSyncedProjectiles();
-
 }
 
 void CEventHandler::UpdateObjects() {

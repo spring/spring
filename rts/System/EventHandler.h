@@ -325,33 +325,59 @@ extern CEventHandler eventHandler;
 // Inlined call-in loops
 //
 
+#define ITERATE_EVENTCLIENTLIST(name, ...) \
+	for (int i = 0; i < list##name.size(); ) { \
+		CEventClient* ec = list##name[i]; \
+		ec->name(__VA_ARGS__); \
+		if (i < list##name.size() && ec == list##name[i]) \
+			++i; /* the call-in may remove itself from the list */ \
+	}
+
+#define ITERATE_ALLYTEAM_EVENTCLIENTLIST(name, allyTeam, ...) \
+	for (int i = 0; i < list##name.size(); ) { \
+		CEventClient* ec = list##name[i]; \
+		if (ec->CanReadAllyTeam(allyTeam)) { \
+			ec->name(__VA_ARGS__); \
+		} \
+		if (i < list##name.size() && ec == list##name[i]) \
+			++i; /* the call-in may remove itself from the list */ \
+	}
+
+#define ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(name, unit, ...) \
+	const auto unitAllyTeam = unit->allyteam; \
+	for (int i = 0; i < list##name.size(); ) { \
+		CEventClient* ec = list##name[i]; \
+		if (ec->CanReadAllyTeam(unitAllyTeam)) { \
+			ec->name(unit, __VA_ARGS__); \
+		} \
+		if (i < list##name.size() && ec == list##name[i]) \
+			++i; /* the call-in may remove itself from the list */ \
+	}
+
 inline void CEventHandler::UnitCreated(const CUnit* unit, const CUnit* builder)
 {
-
-	const int unitAllyTeam = unit->allyteam;
-	const int count = listUnitCreated.size();
-
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listUnitCreated[i];
-		if (ec->CanReadAllyTeam(unitAllyTeam)) {
-			ec->UnitCreated(unit, builder);
-		}
-	}
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitCreated, unit, builder)
 }
 
 
+inline void CEventHandler::UnitDestroyed(const CUnit* unit,
+                                             const CUnit* attacker)
+{
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitDestroyed, unit, attacker)
+}
 
 #define UNIT_CALLIN_NO_PARAM(name)                                 \
 	inline void CEventHandler:: name (const CUnit* unit)           \
 	{                                                              \
-		const int unitAllyTeam = unit->allyteam;                   \
-		const int count = list ## name.size();                     \
-		for (int i = 0; i < count; i++) {                          \
-			CEventClient* ec = list ## name [i];                   \
-			if (ec->CanReadAllyTeam(unitAllyTeam)) {               \
-				ec-> name (unit);                                  \
-			}                                                      \
-		}                                                          \
+		const auto unitAllyTeam = unit->allyteam; \
+		for (int i = 0; i < list##name.size(); ) { \
+			CEventClient* ec = list##name[i]; \
+			if (ec->CanReadAllyTeam(unitAllyTeam)) { \
+				ec->name(unit); \
+			} \
+			if (i < list##name.size() && ec == list##name[i]) \
+				++i; /* the call-in may remove itself from the list */ \
+		} \
 	}
 
 UNIT_CALLIN_NO_PARAM(UnitFinished)
@@ -366,31 +392,17 @@ UNIT_CALLIN_NO_PARAM(UnitMoved)
 #define UNIT_CALLIN_INT_PARAMS(name)                                       \
 	inline void CEventHandler:: Unit ## name (const CUnit* unit, int p1, int p2)   \
 	{                                                                     \
-		const int unitAllyTeam = unit->allyteam;                          \
-		const int count = listUnit ## name.size();                        \
-		for (int i = 0; i < count; i++) {                                 \
-			CEventClient* ec = listUnit ## name [i];                      \
-			if (ec->CanReadAllyTeam(unitAllyTeam)) {                      \
-				ec-> Unit ## name (unit, p1, p2);                              \
-			}                                                             \
-		}                                                                 \
+		ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(Unit ## name, unit, p1, p2) \
 	}
 
 UNIT_CALLIN_INT_PARAMS(Taken)
 UNIT_CALLIN_INT_PARAMS(Given)
 
 
-
 #define UNIT_CALLIN_LOS_PARAM(name)                                        \
 	inline void CEventHandler:: Unit ## name (const CUnit* unit, int at)   \
 	{                                                                      \
-		const int count = listUnit ## name.size();                         \
-		for (int i = 0; i < count; i++) {                                  \
-			CEventClient* ec = listUnit ## name [i];                       \
-			if (ec->CanReadAllyTeam(at)) {                                 \
-				ec-> Unit ## name (unit, at);                              \
-			}                                                              \
-		}                                                                  \
+		ITERATE_ALLYTEAM_EVENTCLIENTLIST(Unit ## name, at, unit, at) \
 	}
 
 UNIT_CALLIN_LOS_PARAM(EnteredRadar)
@@ -404,63 +416,7 @@ inline void CEventHandler::UnitFromFactory(const CUnit* unit,
                                                const CUnit* factory,
                                                bool userOrders)
 {
-	const int unitAllyTeam = unit->allyteam;
-	const int count = listUnitFromFactory.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listUnitFromFactory[i];
-		if (ec->CanReadAllyTeam(unitAllyTeam)) {
-			ec->UnitFromFactory(unit, factory, userOrders);
-		}
-	}
-}
-
-
-inline void CEventHandler::UnitDestroyed(const CUnit* unit,
-                                             const CUnit* attacker)
-{
-	const int unitAllyTeam = unit->allyteam;
-	const int count = listUnitDestroyed.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listUnitDestroyed[i];
-		if (ec->CanReadAllyTeam(unitAllyTeam)) {
-			ec->UnitDestroyed(unit, attacker);
-		}
-	}
-}
-
-inline void CEventHandler::RenderUnitCreated(const CUnit* unit, int cloaked)
-{
-	const int count = listRenderUnitCreated.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listRenderUnitCreated[i];
-		if (ec->CanReadAllyTeam(unit->allyteam)) {
-			ec->RenderUnitCreated(unit, cloaked);
-		}
-	}
-}
-
-UNIT_CALLIN_NO_PARAM(RenderUnitDestroyed)
-
-inline void CEventHandler::RenderUnitCloakChanged(const CUnit* unit, int cloaked)
-{
-	const int count = listRenderUnitCloakChanged.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listRenderUnitCloakChanged[i];
-		if (ec->CanReadAllyTeam(unit->allyteam)) {
-			ec->RenderUnitCloakChanged(unit, cloaked);
-		}
-	}
-}
-
-inline void CEventHandler::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus)
-{
-	const int count = listRenderUnitLOSChanged.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listRenderUnitLOSChanged[i];
-		if (ec->CanReadAllyTeam(unit->allyteam)) {
-			ec->RenderUnitLOSChanged(unit, allyTeam, newStatus);
-		}
-	}
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitFromFactory, unit, factory, userOrders)
 }
 
 
@@ -470,28 +426,12 @@ UNIT_CALLIN_NO_PARAM(UnitDecloaked)
 
 inline void CEventHandler::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 {
-	const int colliderAllyTeam = collider->allyteam;
-	const int clientCount = listUnitUnitCollision.size();
-
-	for (int i = 0; i < clientCount; i++) {
-		CEventClient* ec = listUnitUnitCollision[i];
-		if (ec->CanReadAllyTeam(colliderAllyTeam)) {
-			ec->UnitUnitCollision(collider, collidee);
-		}
-	}
+	ITERATE_EVENTCLIENTLIST(UnitUnitCollision, collider, collidee)
 }
 
 inline void CEventHandler::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
 {
-	const int colliderAllyTeam = collider->allyteam;
-	const int clientCount = listUnitFeatureCollision.size();
-
-	for (int i = 0; i < clientCount; i++) {
-		CEventClient* ec = listUnitFeatureCollision[i];
-		if (ec->CanReadAllyTeam(colliderAllyTeam)) {
-			ec->UnitFeatureCollision(collider, collidee);
-		}
-	}
+	ITERATE_EVENTCLIENTLIST(UnitFeatureCollision, collider, collidee)
 }
 
 
@@ -499,28 +439,14 @@ inline void CEventHandler::UnitFeatureCollision(const CUnit* collider, const CFe
 inline void CEventHandler::UnitCommand(const CUnit* unit,
                                            const Command& command)
 {
-	const int unitAllyTeam = unit->allyteam;
-	const int count = listUnitCommand.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listUnitCommand[i];
-		if (ec->CanReadAllyTeam(unitAllyTeam)) {
-			ec->UnitCommand(unit, command);
-		}
-	}
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitCommand, unit, command)
 }
 
 
 inline void CEventHandler::UnitCmdDone(const CUnit* unit,
                                            int cmdID, int cmdTag)
 {
-	const int unitAllyTeam = unit->allyteam;
-	const int count = listUnitCmdDone.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listUnitCmdDone[i];
-		if (ec->CanReadAllyTeam(unitAllyTeam)) {
-			ec->UnitCmdDone(unit, cmdID, cmdTag);
-		}
-	}
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitCmdDone, unit, cmdID, cmdTag)
 }
 
 
@@ -532,29 +458,14 @@ inline void CEventHandler::UnitDamaged(
 	int projectileID,
 	bool paralyzer)
 {
-	const int unitAllyTeam = unit->allyteam;
-	const int count = listUnitDamaged.size();
-
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listUnitDamaged[i];
-		if (ec->CanReadAllyTeam(unitAllyTeam)) {
-			ec->UnitDamaged(unit, attacker, damage, weaponDefID, projectileID, paralyzer);
-		}
-	}
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitDamaged, unit, attacker, damage, weaponDefID, projectileID, paralyzer)
 }
 
 
 inline void CEventHandler::UnitExperience(const CUnit* unit,
                                               float oldExperience)
 {
-	const int unitAllyTeam = unit->allyteam;
-	const int count = listUnitExperience.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listUnitExperience[i];
-		if (ec->CanReadAllyTeam(unitAllyTeam)) {
-			ec->UnitExperience(unit, oldExperience);
-		}
-	}
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitExperience, unit, oldExperience)
 }
 
 
@@ -563,13 +474,7 @@ inline void  CEventHandler::UnitSeismicPing(const CUnit* unit,
                                                 const float3& pos,
                                                 float strength)
 {
-	const int count = listUnitSeismicPing.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listUnitSeismicPing[i];
-		if (ec->CanReadAllyTeam(allyTeam)) {
-			ec->UnitSeismicPing(unit, allyTeam, pos, strength);
-		}
-	}
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitSeismicPing, unit, allyTeam, pos, strength)
 }
 
 
@@ -601,16 +506,6 @@ inline void CEventHandler::UnitUnloaded(const CUnit* unit,
 		    (ecAllyTeam == transport->allyteam)) {
 			ec->UnitUnloaded(unit, transport);
 		}
-	}
-}
-
-
-inline void CEventHandler::RenderUnitMoved(const CUnit* unit, const float3& newpos)
-{
-	const int count = listRenderUnitMoved.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listRenderUnitMoved[i];
-		ec->RenderUnitMoved(unit, newpos);
 	}
 }
 
@@ -669,36 +564,6 @@ inline void CEventHandler::FeatureMoved(const CFeature* feature, const float3& o
 }
 
 
-
-inline void CEventHandler::RenderFeatureCreated(const CFeature* feature)
-{
-	const int count = listRenderFeatureCreated.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listRenderFeatureCreated[i];
-		ec->RenderFeatureCreated(feature);
-	}
-}
-
-inline void CEventHandler::RenderFeatureDestroyed(const CFeature* feature)
-{
-	const int count = listRenderFeatureDestroyed.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listRenderFeatureDestroyed[i];
-		ec->RenderFeatureDestroyed(feature);
-	}
-}
-
-inline void CEventHandler::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos)
-{
-	const int count = listRenderFeatureMoved.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listRenderFeatureMoved[i];
-		ec->RenderFeatureMoved(feature, oldpos, newpos);
-	}
-}
-
-
-
 inline void CEventHandler::ProjectileCreated(const CProjectile* proj, int allyTeam)
 {
 	const int count = listProjectileCreated.size();
@@ -725,32 +590,9 @@ inline void CEventHandler::ProjectileDestroyed(const CProjectile* proj, int ally
 }
 
 
-inline void CEventHandler::RenderProjectileCreated(const CProjectile* proj)
-{
-	const int count = listRenderProjectileCreated.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listRenderProjectileCreated[i];
-		ec->RenderProjectileCreated(proj);
-	}
-}
-
-inline void CEventHandler::RenderProjectileDestroyed(const CProjectile* proj)
-{
-	const int count = listRenderProjectileDestroyed.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listRenderProjectileDestroyed[i];
-		ec->RenderProjectileDestroyed(proj);
-	}
-}
-
-
 inline void CEventHandler::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
-	const int count = listUnsyncedHeightMapUpdate.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listUnsyncedHeightMapUpdate[i];
-		ec->UnsyncedHeightMapUpdate(rect);
-	}
+	ITERATE_EVENTCLIENTLIST(UnsyncedHeightMapUpdate, rect)
 }
 
 
@@ -774,14 +616,7 @@ inline void CEventHandler::StockpileChanged(const CUnit* unit,
                                                 const CWeapon* weapon,
                                                 int oldCount)
 {
-	const int unitAllyTeam = unit->allyteam;
-	const int count = listStockpileChanged.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listStockpileChanged[i];
-		if (ec->CanReadAllyTeam(unitAllyTeam)) {
-			ec->StockpileChanged(unit, weapon, oldCount);
-		}
-	}
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(StockpileChanged, unit, weapon, oldCount)
 }
 
 
@@ -799,6 +634,66 @@ inline bool CEventHandler::DefaultCommand(const CUnit* unit,
 	}
 	return false;
 }
+
+
+
+inline void CEventHandler::RenderUnitCreated(const CUnit* unit, int cloaked)
+{
+	ITERATE_EVENTCLIENTLIST(RenderUnitCreated, unit, cloaked)
+}
+
+inline void CEventHandler::RenderUnitDestroyed(const CUnit* unit)
+{
+	ITERATE_EVENTCLIENTLIST(RenderUnitDestroyed, unit)
+}
+
+inline void CEventHandler::RenderUnitCloakChanged(const CUnit* unit, int cloaked)
+{
+	ITERATE_EVENTCLIENTLIST(RenderUnitCloakChanged, unit, cloaked)
+}
+
+inline void CEventHandler::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus)
+{
+	ITERATE_EVENTCLIENTLIST(RenderUnitLOSChanged, unit, allyTeam, newStatus)
+}
+
+inline void CEventHandler::RenderUnitMoved(const CUnit* unit, const float3& newpos)
+{
+	ITERATE_EVENTCLIENTLIST(RenderUnitMoved, unit, newpos)
+}
+
+inline void CEventHandler::RenderFeatureCreated(const CFeature* feature)
+{
+	ITERATE_EVENTCLIENTLIST(RenderFeatureCreated, feature)
+}
+
+inline void CEventHandler::RenderFeatureDestroyed(const CFeature* feature)
+{
+	ITERATE_EVENTCLIENTLIST(RenderFeatureDestroyed, feature)
+}
+
+inline void CEventHandler::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos)
+{
+	ITERATE_EVENTCLIENTLIST(RenderFeatureMoved, feature, oldpos, newpos)
+}
+
+inline void CEventHandler::RenderProjectileCreated(const CProjectile* proj)
+{
+	ITERATE_EVENTCLIENTLIST(RenderProjectileCreated, proj)
+}
+
+inline void CEventHandler::RenderProjectileDestroyed(const CProjectile* proj)
+{
+	ITERATE_EVENTCLIENTLIST(RenderProjectileDestroyed, proj)
+}
+
+
+#undef ITERATE_EVENTCLIENTLIST
+#undef ITERATE_ALLYTEAM_EVENTCLIENTLIST
+#undef ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST
+#undef UNIT_CALLIN_NO_PARAM
+#undef UNIT_CALLIN_INT_PARAMS
+#undef UNIT_CALLIN_LOS_PARAM
 
 #endif /* EVENT_HANDLER_H */
 
