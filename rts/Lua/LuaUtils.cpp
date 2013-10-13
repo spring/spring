@@ -9,6 +9,7 @@
 #include "LuaUtils.h"
 
 #include "System/Log/ILog.h"
+#include "System/TimeProfiler.h"
 #include "System/Util.h"
 #include "LuaConfig.h"
 #include <boost/thread/recursive_mutex.hpp>
@@ -22,8 +23,8 @@ int LuaUtils::exportedDataSize = 0;
 /******************************************************************************/
 
 
-static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, std::map<int, int>& alreadyCopied);
-static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, std::map<int, int>& alreadyCopied);
+static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied);
+static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied);
 
 
 static inline int PosAbsLuaIndex(lua_State* src, int index)
@@ -36,7 +37,7 @@ static inline int PosAbsLuaIndex(lua_State* src, int index)
 }
 
 
-static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, std::map<int, int>& alreadyCopied)
+static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied)
 {
 	const int type = lua_type(src, index);
 	switch (type) {
@@ -49,10 +50,24 @@ static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, s
 			break;
 		}
 		case LUA_TSTRING: {
-			//TODO add to alreadyCopied? (for performance reasons)
+			// get string (pointer)
 			size_t len;
 			const char* data = lua_tolstring(src, index, &len);
+
+			// check cache
+			auto it = alreadyCopied.find(data);
+			if (it != alreadyCopied.end()) {
+				lua_rawgeti(dst, LUA_REGISTRYINDEX, it->second);
+				break;
+			}
+
+			// copy string
 			lua_pushlstring(dst, data, len);
+
+			// cache it
+			lua_pushvalue(dst, -1);
+			const int dstRef = luaL_ref(dst, LUA_REGISTRYINDEX);
+			alreadyCopied[data] = dstRef;
 			break;
 		}
 		case LUA_TTABLE: {
@@ -68,39 +83,35 @@ static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, s
 }
 
 
-static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, std::map<int, int>& alreadyCopied)
+static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied)
 {
-	// first check if we already copied it
-	for (auto& pair: alreadyCopied) {
-		lua_rawgeti(src, LUA_REGISTRYINDEX, pair.first);
-		const bool found = lua_equal(src, -1, -2);
-		lua_pop(src, 1);
+	const int table = PosAbsLuaIndex(src, index);
 
-		if (found) {
-			lua_rawgeti(dst, LUA_REGISTRYINDEX, pair.second);
-			return true;
-		}
+	// check cache
+	const void* p = lua_topointer(src, table);
+	auto it = alreadyCopied.find(p);
+	if (it != alreadyCopied.end()) {
+		lua_rawgeti(dst, LUA_REGISTRYINDEX, it->second);
+		return true;
 	}
 
+	// check table depth
 	if (depth++ > maxDepth) {
 		LOG("CopyTable: reached max table depth '%i'", depth);
 		lua_pushnil(dst); // push something
 		return false;
 	}
 
-	lua_newtable(dst);
-	const int table = PosAbsLuaIndex(src, index);
+	// create new table
+	const auto array_len = lua_objlen(src, table);
+	lua_createtable(dst, array_len, 5);
 
-	{
-		lua_pushvalue(src, table);
-		const int srcRef = luaL_ref(src, LUA_REGISTRYINDEX);
+	// cache it
+	lua_pushvalue(dst, -1);
+	const int dstRef = luaL_ref(dst, LUA_REGISTRYINDEX);
+	alreadyCopied[p] = dstRef;
 
-		lua_pushvalue(dst, -1);
-		const int dstRef = luaL_ref(dst, LUA_REGISTRYINDEX);
-
-		alreadyCopied[srcRef] = dstRef;
-	}
-
+	// copy table entries
 	for (lua_pushnil(src); lua_next(src, table) != 0; lua_pop(src, 1)) {
 		CopyPushData(dst, src, -2, depth, alreadyCopied); // copy the key
 		CopyPushData(dst, src, -1, depth, alreadyCopied); // copy the value
@@ -113,6 +124,8 @@ static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, 
 
 int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 {
+	SCOPED_TIMER("::CopyData");
+
 	const int srcTop = lua_gettop(src);
 	const int dstTop = lua_gettop(dst);
 	if (srcTop < count) {
@@ -124,7 +137,7 @@ int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 
 	// hold a map of all already copied tables in the lua's registry table
 	// needed for recursive tables, i.e. "local t = {}; t[t] = t"
-	std::map<int, int> alreadyCopied;
+	std::map<const void*, int> alreadyCopied;
 
 	const int startIndex = (srcTop - count + 1);
 	const int endIndex   = srcTop;
@@ -134,7 +147,6 @@ int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 
 	// clear map
 	for (auto& pair: alreadyCopied) {
-		luaL_unref(src, LUA_REGISTRYINDEX, pair.first);
 		luaL_unref(dst, LUA_REGISTRYINDEX, pair.second);
 	}
 
