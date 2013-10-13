@@ -166,13 +166,6 @@ public:
 	bool fpsMode;
 
 	/**
-	 * @brief useHighResTimer
-	 *
-	 * if true, force use of native high-resolution timer on Windows
-	 */
-	bool useHighResTimer;
-
-	/**
 	* @brief global quit
 	*
 	* Global boolean indicating whether the user

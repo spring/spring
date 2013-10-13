@@ -52,12 +52,11 @@ namespace spring_clock {
 	template<typename T> static boost::int64_t FromNanoSecs (const T ns) { return (ns                      ); }
 
 	void PushTickRate(bool hres = false);
-	void PopTickRate(bool hres = false);
+	void PopTickRate();
 
 	// number of ticks since clock epoch
-	boost::int64_t GetTicks(bool hres = false);
-
-	const char* GetName(bool hres = false);
+	boost::int64_t GetTicks();
+	const char* GetName();
 };
 
 
@@ -105,7 +104,7 @@ public:
 	void sleep_until();
 
 
-	static spring_time gettime(bool init = false, bool hres = false) { assert(xs != 0 || init); return spring_time_native(spring_clock::GetTicks(hres)); }
+	static spring_time gettime(bool init = false) { assert(xs != 0 || init); return spring_time_native(spring_clock::GetTicks()); }
 	static spring_time getstarttime() { assert(xs != 0); return spring_time_native(xs); }
 	static spring_time getelapsedtime() { return (gettime() - getstarttime()); }
 

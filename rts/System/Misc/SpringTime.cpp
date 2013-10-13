@@ -42,19 +42,27 @@ CR_REG_METADATA(spring_time,(
 
 
 namespace spring_clock {
-	void PushTickRate(bool hres) {
+	static bool highResMode = false;
+	static bool timerInited = false;
+
+	void PushTickRate(bool b) {
 		#if USE_NATIVE_WINDOWS_CLOCK
+		assert(!timerInited);
+
+		highResMode = b;
+		timerInited = true;
+
 		// set the number of milliseconds between interrupts
 		// NOTE: THIS IS A GLOBAL OS SETTING, NOT PER PROCESS
 		// (should not matter for users, SDL 1.2 also sets it)
-		if (!hres) {
+		if (!highResMode) {
 			timeBeginPeriod(1);
 		}
 		#endif
 	}
-	void PopTickRate(bool hres) {
+	void PopTickRate() {
 		#if USE_NATIVE_WINDOWS_CLOCK
-		if (!hres) {
+		if (!highResMode) {
 			timeEndPeriod(1);
 		}
 		#endif
@@ -63,8 +71,8 @@ namespace spring_clock {
 	#if USE_NATIVE_WINDOWS_CLOCK
 	// QPC wants the LARGE_INTEGER's to be qword-aligned
 	__FORCE_ALIGN_STACK__
-	boost::int64_t GetTicksNative(bool hres) {
-		if (hres) {
+	boost::int64_t GetTicksNative() {
+		if (highResMode) {
 			// NOTE:
 			//   SDL 1.2 by default does not use QueryPerformanceCounter
 			//   SDL 2.0 does (but code does not seem aware of the issues)
@@ -133,18 +141,18 @@ namespace spring_clock {
 	}
 	#endif
 
-	boost::int64_t GetTicks(bool hres) {
+	boost::int64_t GetTicks() {
 		#if USE_NATIVE_WINDOWS_CLOCK
-		return (GetTicksNative(hres));
+		return (GetTicksNative());
 		#else
 		return (chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 		#endif
 	}
 
-	const char* GetName(bool hres) {
+	const char* GetName() {
 		#if USE_NATIVE_WINDOWS_CLOCK
 
-		if (hres) {
+		if (highResMode) {
 			return "win32::QueryPerformanceCounter";
 		} else {
 			return "win32::TimeGetTime";
