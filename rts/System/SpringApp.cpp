@@ -100,6 +100,7 @@ CONFIG(float, FontOutlineWeight).defaultValue(25.0f).description("Sets the opaci
 CONFIG(int, SmallFontOutlineWidth).defaultValue(2).description("see FontOutlineWidth");
 CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f).description("see FontOutlineWeight");
 CONFIG(bool, Fullscreen).defaultValue(true).description("Sets whether the game will run in fullscreen, as opposed to a window. For Windowed Fullscreen of Borderless Window, set this to 0, WindowBorderless to 1, and WindowPosX and WindowPosY to 0.");
+CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
 CONFIG(int, XResolution).defaultValue(0).minimumValue(0).description("Sets the width of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
 CONFIG(int, YResolution).defaultValue(0).minimumValue(0).description("Sets the height of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
 CONFIG(int, WindowPosX).defaultValue(32).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");

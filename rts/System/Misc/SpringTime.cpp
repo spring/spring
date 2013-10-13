@@ -61,6 +61,8 @@ namespace spring_clock {
 		#endif
 	}
 	void PopTickRate() {
+		assert(timerInited);
+
 		#if USE_NATIVE_WINDOWS_CLOCK
 		if (!highResMode) {
 			timeEndPeriod(1);
@@ -72,6 +74,8 @@ namespace spring_clock {
 	// QPC wants the LARGE_INTEGER's to be qword-aligned
 	__FORCE_ALIGN_STACK__
 	boost::int64_t GetTicksNative() {
+		assert(timerInited);
+
 		if (highResMode) {
 			// NOTE:
 			//   SDL 1.2 by default does not use QueryPerformanceCounter
@@ -142,6 +146,8 @@ namespace spring_clock {
 	#endif
 
 	boost::int64_t GetTicks() {
+		assert(timerInited);
+
 		#if USE_NATIVE_WINDOWS_CLOCK
 		return (GetTicksNative());
 		#else
@@ -150,6 +156,8 @@ namespace spring_clock {
 	}
 
 	const char* GetName() {
+		assert(timerInited);
+
 		#if USE_NATIVE_WINDOWS_CLOCK
 
 		if (highResMode) {
