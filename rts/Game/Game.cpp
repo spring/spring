@@ -81,6 +81,7 @@
 #include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUI.h"
 #include "Lua/LuaUnsyncedCtrl.h"
+#include "Lua/LuaUtils.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
