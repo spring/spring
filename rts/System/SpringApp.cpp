@@ -150,7 +150,9 @@ SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, arg
 	// initializes configHandler which we need
 	ParseCmdLine(argv[0]);
 
+	spring_clock::SetHighResMode(configHandler->GetBool("UseHighResTimer") || cmdline->IsSet("useHighResTimer"));
 	spring_clock::PushTickRate();
+
 	// set the Spring "epoch" to be whatever value the first
 	// call to gettime() returns, should not be 0 (can safely
 	// be done before SDL_Init, we are not using SDL_GetTicks
@@ -163,9 +165,9 @@ SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, arg
  */
 SpringApp::~SpringApp()
 {
-	delete cmdline;
-	creg::System::FreeClasses();
 	spring_clock::PopTickRate();
+	creg::System::FreeClasses();
+	delete cmdline;
 }
 
 /**
@@ -847,11 +849,6 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 		}
 		CBenchmark::endFrame = CBenchmark::startFrame + cmdline->GetInt("benchmark") * 60 * GAME_SPEED;
 	}
-
-	#ifdef WIN32
-	// TODO (must be passed to all gettime() calls transparently)
-	// gu->useHighResTimer = (configHandler->GetBool("useHighResTimer") || cmdline->IsSet("useHighResTimer"));
-	#endif
 }
 
 
