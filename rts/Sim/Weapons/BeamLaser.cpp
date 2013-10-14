@@ -60,8 +60,7 @@ void CBeamLaser::SweepFireState::Init(const float3& newTargetPos, const float3& 
 	sweepGoalDir = (sweepGoalPos - muzzlePos).SafeNormalize();
 
 	sweepStartAngle = math::acosf(Clamp(sweepInitDir.dot(sweepGoalDir), -1.0f, 1.0f));
-
-	sweepFiring = false;
+	sweepFiring = true;
 }
 
 float CBeamLaser::SweepFireState::GetTargetDist2D() const {
