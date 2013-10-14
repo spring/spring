@@ -1005,7 +1005,7 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 	if (damage > 400.0f)
 		damage = 400.0f + math::sqrt(damage - 399.0f);
 
-	const int ttl = decalLevel * damage * 3.0f;
+	const int ttl = std::max(1.0f, decalLevel * damage * 3.0f);
 
 	Scar* s = new Scar();
 	s->pos = pos.cClampInBounds();
