@@ -7,6 +7,7 @@
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "System/float3.h"
+#include "System/type2.h"
 #include "System/MemPool.h"
 
 #include <list>
@@ -88,7 +89,8 @@ public:
 	///< test a single mapsquare for build possibility
 	static BuildSquareStatus TestBuildSquare(
 		const float3& pos,
-		const float buildHeight,
+		const int2& xrange,
+		const int2& zrange,
 		const UnitDef* unitDef,
 		const MoveDef* moveDef,
 		CFeature *&feature,
