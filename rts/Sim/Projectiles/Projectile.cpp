@@ -89,7 +89,7 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	, deleteMe(false)
 	, castShadow(false)
 
-	, dir((spd == ZeroVector) ? ZeroVector : spd / spd.Length())
+	, dir(ZeroVector) // set via Init()
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
 
 	, ownerID(-1u)
