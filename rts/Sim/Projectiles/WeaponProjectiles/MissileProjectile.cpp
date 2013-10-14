@@ -148,10 +148,10 @@ void CMissileProjectile::Update()
 {
 	if (--ttl > 0) {
 		if (!luaMoveCtrl) {
+			float3 targSpeed;
+
 			if (speed.w < maxSpeed)
 				speed.w += weaponDef->weaponacceleration;
-
-			float3 targSpeed;
 
 			if (weaponDef->tracks && target != NULL) {
 				const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
@@ -163,7 +163,7 @@ void CMissileProjectile::Update()
 					targetPos = so->aimPos;
 					targSpeed = so->speed;
 
-					if (owner() != NULL) {
+					if (owner() != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
 						// if we have an owner and our target is a unit,
 						// set target-position to its error-position for
 						// our owner's allyteam
@@ -181,8 +181,7 @@ void CMissileProjectile::Update()
 
 
 			if (isWobbling) {
-				--wobbleTime;
-				if (wobbleTime == 0) {
+				if ((--wobbleTime) == 0) {
 					float3 newWob = gs->randVector();
 					wobbleDif = (newWob - wobbleDir) * (1.0f / 16);
 					wobbleTime = 16;
@@ -193,8 +192,7 @@ void CMissileProjectile::Update()
 			}
 
 			if (isDancing) {
-				--danceTime;
-				if (danceTime <= 0) {
+				if ((--danceTime) <= 0) {
 					danceMove = gs->randVector() * weaponDef->dance - danceCenter;
 					danceCenter += danceMove;
 					danceTime = 8;
@@ -391,23 +389,24 @@ void CMissileProjectile::Draw()
 
 int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	if (!luaMoveCtrl) {
-		if (ttl > 0) {
-			const float3 sdir = (pos - shieldPos).SafeNormalize();
-			// steer away twice as fast as we can steer toward target
-			float3 dif2 = sdir - dir;
+	if (luaMoveCtrl)
+		return 0;
 
-			float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2);
+	if (ttl > 0) {
+		const float3 sdir = (pos - shieldPos).SafeNormalize();
+		// steer away twice as fast as we can steer toward target
+		float3 dif2 = sdir - dir;
 
-			if (dif2.SqLength() < Square(tracking)) {
-				dir = sdir;
-			} else {
-				dif2 = (dif2 - (dir * (dif2.dot(dir)))).SafeNormalize();
-				dir = (dir + (dif2 * tracking)).SafeNormalize();
-			}
+		const float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2);
 
-			return 2;
+		if (dif2.SqLength() < Square(tracking)) {
+			dir = sdir;
+		} else {
+			dif2 = (dif2 - (dir * (dif2.dot(dir)))).SafeNormalize();
+			dir = (dir + (dif2 * tracking)).SafeNormalize();
 		}
+
+		return 2;
 	}
 
 	return 0;
