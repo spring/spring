@@ -67,17 +67,15 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const ProjectileParams& par
 
 void CLargeBeamLaserProjectile::Update()
 {
-	if (ttl > 0) {
+	if ((--ttl) <= 0) {
+		deleteMe = true;
+	} else {
 		for (int i = 0; i < 3; i++) {
 			coreColStart[i] = (unsigned char) (coreColStart[i] * decay);
 			edgeColStart[i] = (unsigned char) (edgeColStart[i] * decay);
 		}
 
 		explGenHandler->GenExplosion(cegID, startPos + ((targetPos - startPos) / ttl), (targetPos - startPos), 0.0f, flaresize, 0.0f, NULL, NULL);
-		ttl--;
-	}
-	else {
-		deleteMe = true;
 	}
 
 	UpdateInterception();
