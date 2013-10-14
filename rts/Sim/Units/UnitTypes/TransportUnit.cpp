@@ -259,7 +259,7 @@ bool CTransportUnit::CanTransport(const CUnit* unit) const
 }
 
 
-void CTransportUnit::AttachUnit(CUnit* unit, int piece)
+bool CTransportUnit::AttachUnit(CUnit* unit, int piece)
 {
 	assert(unit != this);
 
@@ -280,7 +280,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 		}
 
 		unit->UpdateVoidState(piece < 0);
-		return;
+		return false;
 	} else {
 		// handle transfers from another transport to us
 		// (can still fail depending on CanTransport())
@@ -291,7 +291,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	// covers the case where unit->transporter != NULL
 	if (!CanTransport(unit)) {
-		return;
+		return false;
 	}
 
 	AddDeathDependence(unit, DEPENDENCE_TRANSPORTEE);
@@ -348,6 +348,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	eventHandler.UnitLoaded(unit, this);
 	commandAI->BuggerOff(pos, -1.0f);
+	return true;
 }
 
 
@@ -515,7 +516,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 
 
 
-float CTransportUnit::GetLoadUnloadHeading(const CUnit* unit) const {
+short CTransportUnit::GetLoadUnloadHeading(const CUnit* unit) const {
 	if (unit->GetTransporter() == NULL) { return unit->heading; }
 	if (dynamic_cast<CHoverAirMoveType*>(moveType) == NULL) { return unit->heading; }
 	if (dynamic_cast<const CBuilding*>(unit) == NULL) { return unit->heading; }

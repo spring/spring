@@ -80,6 +80,8 @@ void CTorpedoProjectile::Update()
 
 		if (--ttl > 0) {
 			if (!luaMoveCtrl) {
+				float3 targSpeed;
+
 				if (speed.w < maxSpeed)
 					speed.w += std::max(0.2f, tracking);
 
@@ -88,13 +90,12 @@ void CTorpedoProjectile::Update()
 					const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
 
 					targetPos = target->pos;
-					float3 targSpeed;
 
 					if (so != NULL) {
 						targetPos = so->aimPos;
 						targSpeed = so->speed;
 
-						if (pos.SqDistance(so->aimPos) > 150 * 150 && owner() != NULL) {
+						if (owner() != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
 							const CUnit* u = dynamic_cast<const CUnit*>(so);
 
 							if (u != NULL) {
@@ -105,20 +106,20 @@ void CTorpedoProjectile::Update()
 					if (po != NULL) {
 						targSpeed = po->speed;
 					}
+				}
 
-					if (!weaponDef->submissile && targetPos.y > 0.0f) {
-						targetPos.y = 0.0f;
-					}
+				if (!weaponDef->submissile && targetPos.y > 0.0f) {
+					targetPos.y = 0.0f;
+				}
 
-					float3 dif = (targetPos + targSpeed * (pos.distance(targetPos) / maxSpeed) * 0.7f - pos).Normalize();
-					float3 dif2 = dif - dir;
+				float3 dif = (targetPos + targSpeed * (pos.distance(targetPos) / maxSpeed) * 0.7f - pos).Normalize();
+				float3 dif2 = dif - dir;
 
-					if (dif2.Length() < tracking) {
-						dir = dif;
-					} else {
-						dif2 = (dif2 - (dir * (dif2.dot(dir)))).SafeNormalize();
-						dir = (dir + (dif2 * tracking)).SafeNormalize();
-					}
+				if (dif2.Length() < tracking) {
+					dir = dif;
+				} else {
+					dif2 = (dif2 - (dir * (dif2.dot(dir)))).SafeNormalize();
+					dir = (dir + (dif2 * tracking)).SafeNormalize();
 				}
 
 				// do not need to update dir or speed.w here

@@ -12,7 +12,7 @@
 // we don't want to specially handle all the problems caused by this, so just use boost version instead
 // not possible either: boost::chrono uses extremely broken HPE timers on Windows 7 (but so does std::)
 //
-// #define FORCE_HIGHRES_TIMERS
+// #define FORCE_CHRONO_TIMERS
 // #define FORCE_BOOST_CHRONO
 
 #if (__cplusplus > 199711L) && !defined(FORCE_BOOST_CHRONO)
@@ -34,27 +34,28 @@ namespace spring_clock {
 	//   1e-x are double-precision literals but T can be float
 	//   floats only provide ~6 decimal digits of precision so
 	//   ToSecs is inaccurate in that case
-	template<typename T> static T ToSecs     (const boost::int64_t x) { return (x * 1e-9); }
-	template<typename T> static T ToMilliSecs(const boost::int64_t x) { return (x * 1e-6); }
-	template<typename T> static T ToMicroSecs(const boost::int64_t x) { return (x * 1e-3); }
-	template<typename T> static T ToNanoSecs (const boost::int64_t x) { return (x       ); }
+	//   these cannot be written as integer divisions or tests
+	//   will fail because of intermediate conversions to FP32
+	template<typename T> static T ToSecs     (const boost::int64_t ns) { return (ns * 1e-9); }
+	template<typename T> static T ToMilliSecs(const boost::int64_t ns) { return (ns * 1e-6); }
+	template<typename T> static T ToMicroSecs(const boost::int64_t ns) { return (ns * 1e-3); }
+	template<typename T> static T ToNanoSecs (const boost::int64_t ns) { return (ns       ); }
 
 	// specializations
-	template<> boost::int64_t ToSecs     <boost::int64_t>(const boost::int64_t x) { return (x / 1000000000LL); }
-	template<> boost::int64_t ToMilliSecs<boost::int64_t>(const boost::int64_t x) { return (x /    1000000LL); }
-	template<> boost::int64_t ToMicroSecs<boost::int64_t>(const boost::int64_t x) { return (x /       1000LL); }
+	template<> boost::int64_t ToSecs     <boost::int64_t>(const boost::int64_t ns) { return (ns / boost::int64_t(1e9)); }
+	template<> boost::int64_t ToMilliSecs<boost::int64_t>(const boost::int64_t ns) { return (ns / boost::int64_t(1e6)); }
+	template<> boost::int64_t ToMicroSecs<boost::int64_t>(const boost::int64_t ns) { return (ns / boost::int64_t(1e3)); }
 
-	template<typename T> static boost::int64_t FromSecs     (const T      s) { return (     s * 1000000000LL); }
-	template<typename T> static boost::int64_t FromMilliSecs(const T millis) { return (millis *    1000000LL); }
-	template<typename T> static boost::int64_t FromMicroSecs(const T micros) { return (micros *       1000LL); }
-	template<typename T> static boost::int64_t FromNanoSecs (const T  nanos) { return ( nanos               ); }
+	template<typename T> static boost::int64_t FromSecs     (const T  s) { return ( s * boost::int64_t(1e9)); }
+	template<typename T> static boost::int64_t FromMilliSecs(const T ms) { return (ms * boost::int64_t(1e6)); }
+	template<typename T> static boost::int64_t FromMicroSecs(const T us) { return (us * boost::int64_t(1e3)); }
+	template<typename T> static boost::int64_t FromNanoSecs (const T ns) { return (ns                      ); }
 
-	void PushTickRate();
+	void PushTickRate(bool hres = false);
 	void PopTickRate();
 
 	// number of ticks since clock epoch
 	boost::int64_t GetTicks();
-
 	const char* GetName();
 };
 
@@ -109,10 +110,10 @@ public:
 
 	static void setstarttime(const spring_time t) { assert(xs == 0); xs = t.x; assert(xs != 0); }
 
-	static spring_time fromNanoSecs (const boost::int64_t  nanos) { return spring_time_native(spring_clock::FromNanoSecs(  nanos)); }
-	static spring_time fromMicroSecs(const boost::int64_t micros) { return spring_time_native(spring_clock::FromMicroSecs(micros)); }
-	static spring_time fromMilliSecs(const boost::int64_t millis) { return spring_time_native(spring_clock::FromMilliSecs(millis)); }
-	static spring_time fromSecs     (const boost::int64_t      s) { return spring_time_native(spring_clock::FromSecs     (     s)); }
+	static spring_time fromNanoSecs (const boost::int64_t ns) { return spring_time_native(spring_clock::FromNanoSecs( ns)); }
+	static spring_time fromMicroSecs(const boost::int64_t us) { return spring_time_native(spring_clock::FromMicroSecs(us)); }
+	static spring_time fromMilliSecs(const boost::int64_t ms) { return spring_time_native(spring_clock::FromMilliSecs(ms)); }
+	static spring_time fromSecs     (const boost::int64_t  s) { return spring_time_native(spring_clock::FromSecs     ( s)); }
 
 private:
 	// convert integer to spring_time (n is interpreted as number of nanoseconds)

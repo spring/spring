@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Platform/Win/win32.h"
-#include "lib/gml/gml.h" // FIXME: linux for some reason does not compile without this
 
 #include "PathEstimator.h"
 
@@ -876,7 +875,9 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 {
 	const unsigned int hash = Hash();
 	char hashString[50];
+
 	sprintf(hashString, "%u", hash);
+	LOG("[PathEstimator::%s] hash=%s\n", __FUNCTION__, hashString);
 
 	std::string filename = GetPathCacheDir() + map + hashString + "." + cacheFileName + ".zip";
 	if (!FileSystem::FileExists(filename))
@@ -949,51 +950,44 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 	char hashString[64] = {0};
 
 	sprintf(hashString, "%u", hash);
-	printf("[PathEstimator::%s] %s\n", __FUNCTION__, hashString);
+	LOG("[PathEstimator::%s] hash=%s\n", __FUNCTION__, hashString);
 
 	const std::string filename = GetPathCacheDir() + map + hashString + "." + cacheFileName + ".zip";
-	zipFile file;
 
 	// open file for writing in a suitable location
-	file = zipOpen(dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE).c_str(), APPEND_STATUS_CREATE);
+	zipFile file = zipOpen(dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE).c_str(), APPEND_STATUS_CREATE);
 
-	if (file) {
-		zipOpenNewFileInZip(file, "pathinfo", NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);
+	if (file == NULL)
+		return;
 
-		// Write hash. (NOTE: this also affects the CRC!)
-		zipWriteInFileInZip(file, (void*) &hash, 4);
+	zipOpenNewFileInZip(file, "pathinfo", NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);
 
-		// Write block-center-offsets.
-		for (int blocknr = 0; blocknr < blockStates.GetSize(); blocknr++)
-			zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[blocknr][0], moveDefHandler->GetNumMoveDefs() * sizeof(int2));
+	// Write hash. (NOTE: this also affects the CRC!)
+	zipWriteInFileInZip(file, (void*) &hash, 4);
 
-		// Write vertices.
-		zipWriteInFileInZip(file, &vertexCosts[0], vertexCosts.size() * sizeof(float));
+	// Write block-center-offsets.
+	for (int blocknr = 0; blocknr < blockStates.GetSize(); blocknr++)
+		zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[blocknr][0], moveDefHandler->GetNumMoveDefs() * sizeof(int2));
 
-		zipCloseFileInZip(file);
-		zipClose(file, NULL);
+	// Write vertices.
+	zipWriteInFileInZip(file, &vertexCosts[0], vertexCosts.size() * sizeof(float));
+
+	zipCloseFileInZip(file);
+	zipClose(file, NULL);
 
 
-		// get the CRC over the written path data
-		IArchive* pfile = archiveLoader.OpenArchive(dataDirsAccess.LocateFile(filename), "sdz");
+	// get the CRC over the written path data
+	IArchive* pfile = archiveLoader.OpenArchive(dataDirsAccess.LocateFile(filename), "sdz");
 
-		if (!pfile || !pfile->IsOpen()) {
-			delete pfile;
-			return;
-		}
+	if (pfile == NULL)
+		return;
 
-//std::auto_ptr is deprecated in c++0x
-#if __cplusplus >= 201103L
-		std::unique_ptr<IArchive> auto_pfile(pfile);
-#else
-		std::auto_ptr<IArchive> auto_pfile(pfile);
-#endif
-		IArchive& file(*pfile);
-
-		const unsigned fid = file.FindFile("pathinfo");
-		assert(fid < file.NumFiles());
-		pathChecksum = file.GetCrc32(fid);
+	if (pfile->IsOpen()) {
+		assert(pfile->FindFile("pathinfo") < pfile->NumFiles());
+		pathChecksum = pfile->GetCrc32(pfile->FindFile("pathinfo"));
 	}
+
+	delete pfile;
 }
 
 

@@ -17,6 +17,10 @@ LIST(APPEND unitsync_libs 7zip lua headlessStubs archives)
 LIST(APPEND unitsync_libs ${ZLIB_LIBRARY})
 LIST(APPEND unitsync_libs ${SPRING_MINIZIP_LIBRARY})
 
+IF (WIN32)
+	LIST(APPEND unitsync_libs ${WINMM_LIBRARY})
+ENDIF (WIN32)
+
 IF    (MINGW)
 	# We still need these header files,
 	# even if we are not going to link with SDL.

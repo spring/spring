@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "SpringTime.h"
+#include "System/maindefines.h"
 #include "System/Log/ILog.h"
 
 
@@ -33,49 +34,102 @@ CR_REG_METADATA(spring_time,(
 	namespace this_thread { using namespace std::this_thread; };
 #endif
 
-#define USE_NATIVE_WINDOWS_CLOCK (defined(WIN32) && !defined(FORCE_HIGHRES_TIMERS))
-#if (USE_NATIVE_WINDOWS_CLOCK)
+#define USE_NATIVE_WINDOWS_CLOCK (defined(WIN32) && !defined(FORCE_CHRONO_TIMERS))
+#if USE_NATIVE_WINDOWS_CLOCK
 #include <windows.h>
 #endif
 
 
 
 namespace spring_clock {
-	void PushTickRate() {
+	static bool highResMode = false;
+	static bool timerInited = false;
+
+	void PushTickRate(bool b) {
+		assert(!timerInited);
+
+		highResMode = b;
+		timerInited = true;
+
 		#if USE_NATIVE_WINDOWS_CLOCK
 		// set the number of milliseconds between interrupts
 		// NOTE: THIS IS A GLOBAL OS SETTING, NOT PER PROCESS
-		timeBeginPeriod(1);
+		// (should not matter for users, SDL 1.2 also sets it)
+		if (!highResMode) {
+			timeBeginPeriod(1);
+		}
 		#endif
 	}
 	void PopTickRate() {
+		assert(timerInited);
+
 		#if USE_NATIVE_WINDOWS_CLOCK
-		timeEndPeriod(1);
+		if (!highResMode) {
+			timeEndPeriod(1);
+		}
 		#endif
 	}
 
-	boost::int64_t GetTicks() {
-		#if USE_NATIVE_WINDOWS_CLOCK
-		#if 0
-		{
-			// QueryPerformanceCounter has microsecond-resolution but
-			// *many* issues and SDL 1.2 by default actually does not
-			// use it (!) but SDL 2.0 does --> test that?
-			LARGE_INTEGER tickFreq = {0, 0, 0};
-			LARGE_INTEGER currTick = {0, 0, 0};
+	#if USE_NATIVE_WINDOWS_CLOCK
+	// QPC wants the LARGE_INTEGER's to be qword-aligned
+	__FORCE_ALIGN_STACK__
+	boost::int64_t GetTicksNative() {
+		assert(timerInited);
+
+		if (highResMode) {
+			// NOTE:
+			//   SDL 1.2 by default does not use QueryPerformanceCounter
+			//   SDL 2.0 does (but code does not seem aware of the issues)
+			//
+			//   QPC is an interrupt-independent (unlike timeGetTime & co)
+			//   virtual timer that runs at a "fixed" frequency which is
+			//   derived from hardware, but can be *severely* affected by
+			//   thermal drift (heavy CPU load will change the precision!)
+			//
+			//   QPC is an *interface* to either the TSC or the HPET or the
+			//   ACPI timer, MS claims "it should not matter which processor
+			//   is called" and setting thread affinity is only necessary in
+			//   case QPC picks TSC (can happen if ACPI BIOS code is broken!)
+			//
+			//      const DWORD_PTR oldMask = SetThreadAffinityMask(::GetCurrentThread(), 0);
+			//      QueryPerformanceCounter(...);
+			//      SetThreadAffinityMask(::GetCurrentThread(), oldMask);
+			//
+			//   TSC is not invariant and completely unreliable on multi-core
+			//   systems, but there exists an enhanced TSC on modern hardware
+			//   which IS invariant (check CPUID 80000007H:EDX[8]) --> useful
+			//   because reading TSC is much faster than an API call like QPC
+			//
+			//   the range of possible frequencies is *HUGE* (KHz - GHz) and
+			//   the hardware counter might only have a 32-bit register while
+			//   QuadPart is a 64-bit integer --> no monotonicity guarantees!
+			//   (especially in combination with TSC if thread switches cores)
+			LARGE_INTEGER tickFreq;
+			LARGE_INTEGER currTick;
 
 			if (!QueryPerformanceFrequency(&tickFreq))
-				return (FromMilliSecs<boost::uint32_t>(0));
+				return (FromMilliSecs<boost::int64_t>(0));
 
 			QueryPerformanceCounter(&currTick);
 
-			currTick.QuadPart *= 1000;
-			currTick.QuadPart /= tickFreq.QuadPart;
+			// we want the raw tick (uncorrected for frequency)
+			// if clock ticks <freq> times per second, then the
+			// total number of {milli,micro,nano}seconds elapsed
+			// for any given tick is <tick> / <freq / resolution>
+			// eg. if freq = 15000Hz and tick = 5000, then
+			//        secs = 5000 / (15000 / 1e0) =                    0.3333333
+			//   millisecs = 5000 / (15000 / 1e3) = 5000 / 15.000000 =       333
+			//   microsecs = 5000 / (15000 / 1e6) = 5000 /  0.015000 =    333333
+			//    nanosecs = 5000 / (15000 / 1e9) = 5000 /  0.000015 = 333333333
+			//
+			// currTick.QuadPart /= tickFreq.QuadPart;
 
-			return (FromMilliSecs<boost::uint32_t>(currTick.QuadPart));
-		}
-		#else
-		{
+			if (tickFreq.QuadPart >= boost::int64_t(1e9)) return (FromNanoSecs <boost::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-9))));
+			if (tickFreq.QuadPart >= boost::int64_t(1e6)) return (FromMicroSecs<boost::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-6))));
+			if (tickFreq.QuadPart >= boost::int64_t(1e3)) return (FromMilliSecs<boost::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-3))));
+
+			return (FromSecs<boost::int64_t>(std::max(0LL, currTick.QuadPart)));
+		} else {
 			// timeGetTime is affected by time{Begin,End}Period whereas
 			// GetTickCount is not ---> resolution of the former can be
 			// configured but not for a specific process (they both read
@@ -88,15 +142,30 @@ namespace spring_clock {
 			// note: there is a GetTickCount64 but no timeGetTime64
 			return (FromMilliSecs<boost::uint32_t>(timeGetTime()));
 		}
-		#endif
+	}
+	#endif
+
+	boost::int64_t GetTicks() {
+		assert(timerInited);
+
+		#if USE_NATIVE_WINDOWS_CLOCK
+		return (GetTicksNative());
 		#else
 		return (chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 		#endif
 	}
 
 	const char* GetName() {
+		assert(timerInited);
+
 		#if USE_NATIVE_WINDOWS_CLOCK
-		return "win32::timeGetTime";
+
+		if (highResMode) {
+			return "win32::QueryPerformanceCounter";
+		} else {
+			return "win32::TimeGetTime";
+		}
+
 		#else
 
 		#ifdef SPRINGTIME_USING_BOOST

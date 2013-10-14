@@ -152,7 +152,7 @@ bool CStrafeAirMoveType::Update()
 	// (the kill-on-impact code is not reached in that case)
 	if ((owner->IsStunned() && !owner->IsCrashing()) || owner->beingBuilt) {
 		UpdateAirPhysics(0.0f * lastRudderPos, lastAileronPos, lastElevatorPos, 0, ZeroVector);
-		return (HandleCollisions());
+		return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
 	}
 
 	// somewhat hackish, but planes that have attack orders
@@ -180,7 +180,7 @@ bool CStrafeAirMoveType::Update()
 				UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
 				maneuver = 0;
 
-				return (HandleCollisions());
+				return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
 			}
 		}
 
@@ -273,13 +273,13 @@ bool CStrafeAirMoveType::Update()
 	if (lastSpd == ZeroVector && owner->speed != ZeroVector) { owner->script->StartMoving(false); }
 	if (lastSpd != ZeroVector && owner->speed == ZeroVector) { owner->script->StopMoving(); }
 
-	return (HandleCollisions());
+	return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
 }
 
 
 
 
-bool CStrafeAirMoveType::HandleCollisions() {
+bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 	const float3& pos = owner->pos;
 
 #ifdef DEBUG_AIRCRAFT
@@ -299,10 +299,9 @@ bool CStrafeAirMoveType::HandleCollisions() {
 	if (pos != oldPos) {
 		oldPos = pos;
 
-		// check for collisions if not on a pad, not being built, or not taking off
-		const bool checkCollisions = collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF);
 		bool hitBuilding = false;
 
+		// check for collisions if not on a pad, not being built, or not taking off
 		if (checkCollisions) {
 			const vector<CUnit*>& nearUnits = quadField->GetUnitsExact(pos, owner->radius + 6);
 

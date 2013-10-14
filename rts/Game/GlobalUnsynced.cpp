@@ -78,6 +78,7 @@ CGlobalUnsynced::CGlobalUnsynced()
 	spectating           = false;
 	spectatingFullView   = false;
 	spectatingFullSelect = false;
+
 	fpsMode = false;
 
 	playerHandler = new CPlayerHandler();

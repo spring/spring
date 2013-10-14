@@ -27,11 +27,11 @@ public:
 	void Update();
 	void DependentDied(CObject* object);
 	void KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSeq = false);
-	void AttachUnit(CUnit* unit, int piece);
+	bool AttachUnit(CUnit* unit, int piece);
 	bool CanTransport(const CUnit* unit) const;
 	float GetLoadUnloadHeight(const float3& wantedPos, const CUnit* unit, bool* ok = NULL) const;
 	bool CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* loadingHeight = NULL) const;
-	float GetLoadUnloadHeading(const CUnit* unit) const;
+	short GetLoadUnloadHeading(const CUnit* unit) const;
 
 	bool DetachUnit(CUnit* unit);
 	bool DetachUnitFromAir(CUnit* unit, const float3& pos); ///< moves to position after

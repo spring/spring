@@ -60,6 +60,9 @@ public:
 	void UpdateCircling();
 	void UpdateHovering();
 
+	short GetWantedHeading() const { return wantedHeading; }
+	short GetForcedHeading() const { return forceHeadingTo; }
+
 	bool GetAllowLanding() const { return !dontLand; }
 	bool GetLoadingUnits() const { return loadingUnits; }
 
@@ -76,7 +79,7 @@ private:
 	void Takeoff();
 	void Land();
 
-	bool HandleCollisions();
+	bool HandleCollisions(bool checkCollisions);
 
 private:
 	float3 wantedSpeed;

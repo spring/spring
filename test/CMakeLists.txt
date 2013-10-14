@@ -69,6 +69,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_SYSTEM_LIBRARY}
 			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${WINMM_LIBRARY}
 			${WS2_32_LIBRARY}
 			7zip
 		)
@@ -155,6 +156,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_SYSTEM_LIBRARY}
 			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${WINMM_LIBRARY}
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
@@ -176,6 +178,11 @@ Else  (NOT Boost_FOUND)
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${Boost_THREAD_LIBRARY}
 		)
+
+	IF (WIN32)
+		LIST(APPEND test_libs ${WINMM_LIBRARY})
+	ENDIF (WIN32)
+
 	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 	if (Boost_TIMER_FOUND)
 		LIST(APPEND test_libs ${Boost_TIMER_LIBRARY})
@@ -295,6 +302,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${Boost_SYSTEM_LIBRARY}
+			${WINMM_LIBRARY}
 		)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
 
