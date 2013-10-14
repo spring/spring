@@ -374,7 +374,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 			ProjectileParams params = GetProjectileParams();
 			params.pos = curPos;
 			params.end = hitPos;
-			params.ttl = std::max(1, weaponDef->beamLaserTTL);
+			params.ttl = weaponDef->beamLaserTTL;
 			params.startAlpha = Clamp(startAlpha * baseAlpha, 0.0f, 255.0f);
 			params.endAlpha = Clamp(endAlpha * baseAlpha, 0.0f, 255.0f);
 
