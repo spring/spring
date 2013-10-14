@@ -52,7 +52,7 @@ void CLightningCannon::Init()
 	CWeapon::Init();
 }
 
-void CLightningCannon::FireImpl()
+void CLightningCannon::FireImpl(bool scriptCall)
 {
 	float3 curPos = weaponMuzzlePos;
 	float3 curDir = (targetPos - curPos).Normalize();

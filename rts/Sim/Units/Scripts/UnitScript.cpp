@@ -652,7 +652,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 
 				weapon->targetPos = pos + dir;
 				weapon->weaponMuzzlePos = pos;
-				weapon->Fire();
+				weapon->Fire(true);
 				weapon->weaponMuzzlePos = weaponMuzzlePos;
 				weapon->targetPos = targetPos;
 			}

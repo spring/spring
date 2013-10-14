@@ -45,7 +45,7 @@ void CRifle::Update()
 }
 
 
-void CRifle::FireImpl()
+void CRifle::FireImpl(bool scriptCall)
 {
 	float3 dir = (targetPos - weaponMuzzlePos).Normalize();
 	dir +=

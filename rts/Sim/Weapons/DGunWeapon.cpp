@@ -40,7 +40,7 @@ void CDGunWeapon::Update()
 	CWeapon::Update();
 }
 
-void CDGunWeapon::FireImpl()
+void CDGunWeapon::FireImpl(bool scriptCall)
 {
 	float3 dir = owner->frontdir;
 

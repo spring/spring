@@ -68,7 +68,7 @@ public:
 
 	void AutoTarget();
 	void AimReady(int value);
-	void Fire();
+	void Fire(bool scriptCall);
 	void HoldFire();
 
 	float ExperienceScale() const;
@@ -81,7 +81,7 @@ public:
 	void UpdateInterceptTarget();
 
 protected:
-	virtual void FireImpl() {}
+	virtual void FireImpl(bool scriptCall) {}
 
 	void UpdateTargeting();
 	void UpdateFire();
