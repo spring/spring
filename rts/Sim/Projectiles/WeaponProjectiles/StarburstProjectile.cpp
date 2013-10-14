@@ -251,7 +251,7 @@ void CStarburstProjectile::Update()
 	} else {
 		if (!luaMoveCtrl) {
 			// changes dir and speed.w, must keep speed-vector in sync
-			SetDirectionAndSpeed(((dir * XZVector) + (UpVector * mygravity)).Normalize(), speed.w - mygravity);
+			SetDirectionAndSpeed((dir + (UpVector * mygravity)).Normalize(), speed.w - mygravity);
 		}
 	}
 
