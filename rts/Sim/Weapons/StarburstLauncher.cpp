@@ -41,7 +41,7 @@ void CStarburstLauncher::Update(void)
 	CWeapon::Update();
 }
 
-void CStarburstLauncher::FireImpl()
+void CStarburstLauncher::FireImpl(bool scriptCall)
 {
 	float3 speed(0.0f, weaponDef->startvelocity, 0.0f);
 

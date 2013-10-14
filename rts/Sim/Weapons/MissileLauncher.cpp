@@ -4,9 +4,9 @@
 #include "WeaponDef.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
-#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 
 CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL, NULL));
 
@@ -38,7 +38,7 @@ void CMissileLauncher::Update()
 	CWeapon::Update();
 }
 
-void CMissileLauncher::FireImpl()
+void CMissileLauncher::FireImpl(bool scriptCall)
 {
 	float3 dir = targetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();
@@ -58,7 +58,7 @@ void CMissileLauncher::FireImpl()
 	float3 startSpeed = dir * weaponDef->startvelocity;
 
 	// NOTE: why only for SAMT units?
-	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType))
+	if (onlyForward && owner->unitDef->IsStrafingAirUnit())
 		startSpeed += owner->speed;
 
 	ProjectileParams params = GetProjectileParams();

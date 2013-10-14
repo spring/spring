@@ -5,9 +5,9 @@
 #include "Game/TraceRay.h"
 #include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
-#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "System/Sync/SyncTracer.h"
 
 CR_BIND_DERIVED(CEmgCannon, CWeapon, (NULL, NULL));
@@ -51,13 +51,13 @@ void CEmgCannon::Init()
 	CWeapon::Init();
 }
 
-void CEmgCannon::FireImpl()
+void CEmgCannon::FireImpl(bool scriptCall)
 {
 	float3 dir = targetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();
 
-	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
-		// HoverAirMoveType canot align itself properly, change back when that is fixed
+	if (onlyForward && owner->unitDef->IsStrafingAirUnit()) {
+		// [?] StrafeAirMoveType cannot align itself properly, change back when that is fixed
 		dir = owner->frontdir;
 	}
 

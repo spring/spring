@@ -558,7 +558,7 @@ void CWeapon::UpdateSalvo()
 				owner->curCloakTimeout = gs->frameNum + owner->cloakTimeout;
 			}
 
-			Fire();
+			Fire(false);
 		}
 
 		//Rock the unit in the direction of fire
@@ -1334,14 +1334,14 @@ void CWeapon::Init()
 	}
 }
 
-void CWeapon::Fire()
+void CWeapon::Fire(bool scriptCall)
 {
 #ifdef TRACE_SYNC
 	tracefile << weaponDef->name.c_str() << " fire: ";
 	tracefile << owner->pos.x << " " << owner->frontdir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z;
 	tracefile << sprayAngle << " " <<  " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
 #endif
-	FireImpl();
+	FireImpl(scriptCall);
 
 	if (fireSoundId > 0 && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1)) {
 		Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);

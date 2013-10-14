@@ -16,7 +16,7 @@ public:
 	void Init();
 
 private:
-	void FireImpl();
+	void FireImpl(bool scriptCall);
 };
 
 #endif // _DGUN_WEAPON_H

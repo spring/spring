@@ -61,7 +61,7 @@ bool CTorpedoLauncher::TestTarget(const float3& pos, bool userTarget, const CUni
 	return (CWeapon::TestTarget(pos, userTarget, unit));
 }
 
-void CTorpedoLauncher::FireImpl()
+void CTorpedoLauncher::FireImpl(bool scriptCall)
 {
 	float3 dir = targetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();

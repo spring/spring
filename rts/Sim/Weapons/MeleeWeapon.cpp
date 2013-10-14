@@ -45,7 +45,7 @@ bool CMeleeWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const 
 	return true;
 }
 
-void CMeleeWeapon::FireImpl()
+void CMeleeWeapon::FireImpl(bool scriptCall)
 {
 	if (targetType == Target_Unit) {
 		const float3 impulseDir = (targetUnit->pos - weaponMuzzlePos).Normalize();

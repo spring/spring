@@ -17,7 +17,7 @@ public:
 	float3 color2;
 
 private:
-	void FireImpl();
+	void FireImpl(bool scriptCall);
 };
 
 #endif // _FLAME_THROWER_H
