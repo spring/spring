@@ -1078,17 +1078,20 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 
 	const int xsize = buildInfo.GetXSize();
 	const int zsize = buildInfo.GetZSize();
+
 	const float3 pos = buildInfo.pos;
 
-	const int x1 = (pos.x - (xsize * 0.5f * SQUARE_SIZE));
-	const int z1 = (pos.z - (zsize * 0.5f * SQUARE_SIZE));
-	const int z2 = z1 + zsize * SQUARE_SIZE;
-	const int x2 = x1 + xsize * SQUARE_SIZE;
-	const float bh = GetBuildHeight(pos, buildInfo.def, synced);
+	const int x1 = int(pos.x / SQUARE_SIZE) - (xsize >> 1), x2 = x1 + xsize;
+	const int z1 = int(pos.z / SQUARE_SIZE) - (zsize >> 1), z2 = z1 + zsize;
+
+	const int2 xrange = int2(x1, x2);
+	const int2 zrange = int2(z1, z2);
 
 	const MoveDef* moveDef = (buildInfo.def->pathType != -1U) ? moveDefHandler->GetMoveDefByPathType(buildInfo.def->pathType) : NULL;
 	const S3DModel* model = buildInfo.def->LoadModel();
-	const float buildHeight = (model != NULL) ? math::fabs(model->height) : 10.0f;
+
+	const float buildHeight = GetBuildHeight(pos, buildInfo.def, synced);
+	// const float modelHeight = (model != NULL) ? math::fabs(model->height) : 10.0f;
 
 	BuildSquareStatus canBuild = BUILDSQUARE_OPEN;
 
@@ -1097,11 +1100,18 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 
 		const std::vector<CFeature*>& features = quadField->GetFeaturesExact(pos, std::max(xsize, zsize) * 6);
 
+		const int mindx = xsize * (SQUARE_SIZE >> 1) - (SQUARE_SIZE >> 1);
+		const int mindz = zsize * (SQUARE_SIZE >> 1) - (SQUARE_SIZE >> 1);
+
 		// look for a nearby geothermal feature if we need one
 		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
-			if ((*fi)->def->geoThermal
-				&& math::fabs((*fi)->pos.x - pos.x) < (xsize * 4 - 4)
-				&& math::fabs((*fi)->pos.z - pos.z) < (zsize * 4 - 4)) {
+			if (!(*fi)->def->geoThermal)
+				continue;
+
+			const float dx = math::fabs((*fi)->pos.x - pos.x);
+			const float dz = math::fabs((*fi)->pos.z - pos.z);
+
+			if (dx < mindx && dz < mindz) {
 				canBuild = BUILDSQUARE_OPEN;
 				break;
 			}
@@ -1112,16 +1122,16 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 		// this is only called in unsynced context (ShowUnitBuildSquare)
 		assert(!synced);
 
-		for (int x = x1; x < x2; x += SQUARE_SIZE) {
-			for (int z = z1; z < z2; z += SQUARE_SIZE) {
-				BuildSquareStatus tbs = TestBuildSquare(float3(x, bh, z), buildHeight, buildInfo.def, moveDef, feature, gu->myAllyTeam, synced);
+		for (int z = z1; z < z2; z++) {
+			for (int x = x1; x < x2; x++) {
+				BuildSquareStatus tbs = TestBuildSquare(float3(x * SQUARE_SIZE, buildHeight, z * SQUARE_SIZE), xrange, zrange, buildInfo.def, moveDef, feature, gu->myAllyTeam, synced);
 
 				if (tbs != BUILDSQUARE_BLOCKED) {
 					// test if build-position overlaps a queued command
 					for (std::vector<Command>::const_iterator ci = commands->begin(); ci != commands->end(); ++ci) {
 						BuildInfo bc(*ci);
-						if (std::max(bc.pos.x - x - SQUARE_SIZE, x - bc.pos.x) * 2 < bc.GetXSize() * SQUARE_SIZE &&
-							std::max(bc.pos.z - z - SQUARE_SIZE, z - bc.pos.z) * 2 < bc.GetZSize() * SQUARE_SIZE) {
+						if (std::max(bc.pos.x - x * SQUARE_SIZE - SQUARE_SIZE, x * SQUARE_SIZE - bc.pos.x) * 2 < bc.GetXSize() * SQUARE_SIZE &&
+							std::max(bc.pos.z - z * SQUARE_SIZE - SQUARE_SIZE, z * SQUARE_SIZE - bc.pos.z) * 2 < bc.GetZSize() * SQUARE_SIZE) {
 							tbs = BUILDSQUARE_BLOCKED;
 							break;
 						}
@@ -1130,14 +1140,14 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 
 				switch (tbs) {
 					case BUILDSQUARE_OPEN:
-						canbuildpos->push_back(float3(x, bh, z));
+						canbuildpos->push_back(float3(x * SQUARE_SIZE, buildHeight, z * SQUARE_SIZE));
 						break;
 					case BUILDSQUARE_RECLAIMABLE:
 					case BUILDSQUARE_OCCUPIED:
-						featurepos->push_back(float3(x, bh, z));
+						featurepos->push_back(float3(x * SQUARE_SIZE, buildHeight, z * SQUARE_SIZE));
 						break;
 					case BUILDSQUARE_BLOCKED:
-						nobuildpos->push_back(float3(x, bh, z));
+						nobuildpos->push_back(float3(x * SQUARE_SIZE, buildHeight, z * SQUARE_SIZE));
 						break;
 				}
 
@@ -1146,9 +1156,9 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 		}
 	} else {
 		// this can be called in either context
-		for (int x = x1; x < x2; x += SQUARE_SIZE) {
-			for (int z = z1; z < z2; z += SQUARE_SIZE) {
-				canBuild = std::min(canBuild, TestBuildSquare(float3(x, bh, z), buildHeight, buildInfo.def, moveDef, feature, allyteam, synced));
+		for (int z = z1; z < z2; z++) {
+			for (int x = x1; x < x2; x++) {
+				canBuild = std::min(canBuild, TestBuildSquare(float3(x * SQUARE_SIZE, buildHeight, z * SQUARE_SIZE), xrange, zrange, buildInfo.def, moveDef, feature, allyteam, synced));
 
 				if (canBuild == BUILDSQUARE_BLOCKED) {
 					return BUILDSQUARE_BLOCKED;
@@ -1162,7 +1172,8 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 
 CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	const float3& pos,
-	const float buildHeight,
+	const int2& xrange,
+	const int2& zrange,
 	const UnitDef* unitDef,
 	const MoveDef* moveDef,
 	CFeature*& feature,
@@ -1183,6 +1194,10 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	if (so != NULL) {
 		CFeature* f = dynamic_cast<CFeature*>(so);
 		CUnit* u = dynamic_cast<CUnit*>(so);
+
+		// blocking-map can lag behind because it is not updated every frame
+		assert(true || (so->pos.x >= xrange.x && so->pos.x <= xrange.y));
+		assert(true || (so->pos.z >= zrange.x && so->pos.z <= zrange.y));
 
 		if (f != NULL) {
 			if ((allyteam < 0) || f->IsInLosForAllyTeam(allyteam)) {
@@ -1228,6 +1243,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 
 		const int sqx = pos.x / SQUARE_SIZE;
 		const int sqz = pos.z / SQUARE_SIZE;
+
 		const float orgHgt = orgHeightMap[sqz * gs->mapxp1 + sqx];
 		const float curHgt = curHeightMap[sqz * gs->mapxp1 + sqx];
 		const float difHgt = unitDef->maxHeightDif;

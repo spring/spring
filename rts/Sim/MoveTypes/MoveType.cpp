@@ -77,6 +77,11 @@ void AMoveType::SlowUpdate()
 					owner->losHeight -= agh;
 					owner->radarHeight -= agh;
 				}
+				if (owner->IsOnGround() && owner->unitDef->IsGroundUnit()) {
+					// always (re-)add us to occupation map if we moved
+					// (since our last SlowUpdate) and are on the ground
+					owner->Block();
+				}
 			}
 
 			losHandler->MoveUnit(owner, false);
