@@ -80,6 +80,7 @@ private:
 	void Land();
 
 	bool HandleCollisions(bool checkCollisions);
+	bool CanLand() const { return ((!dontLand && autoLand) || (reservedPad != NULL)); }
 
 private:
 	float3 wantedSpeed;
