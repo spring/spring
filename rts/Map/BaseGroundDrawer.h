@@ -35,6 +35,12 @@ public:
 		drawPathFlow,
 		drawPathCost,
 	};
+	enum {
+		GBUFFER_ATTACHMENT_NORMALS = 0, // shading (not geometric) normals
+		GBUFFER_ATTACHMENT_DIFFTEX = 1, // diffuse texture fragments
+		GBUFFER_ATTACHMENT_SPECTEX = 2, // specular texture fragments
+		GBUFFER_ATTACHMENT_COUNT   = 3,
+	};
 
 	CBaseGroundDrawer();
 	virtual ~CBaseGroundDrawer();
@@ -54,7 +60,11 @@ public:
 	virtual int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const = 0;
 
 	virtual void SetDrawMode(BaseGroundDrawMode dm) { drawMode = dm; }
+	virtual void SetDeferredDrawMode(bool b) { drawDeferred = b; }
+	virtual bool ToggleMapBorder() { drawMapEdges = !drawMapEdges; return drawMapEdges; }
+
 	virtual GL::LightHandler* GetLightHandler() { return NULL; }
+	virtual GLuint GetGeomBufferTexture(unsigned int idx) { return 0; }
 
 	void DrawTrees(bool drawReflection = false) const;
 
@@ -69,6 +79,9 @@ public:
 	bool DrawExtraTex() const { return drawMode != drawNormal; }
 
 	CBaseGroundTextures* GetGroundTextures() { return groundTextures; }
+
+	int2 GetGeomBufferSize() const;
+	int2 GetInfoTexSize() const;
 
 	void UpdateCamRestraints(CCamera* camera);
 
@@ -88,8 +101,8 @@ public:
 	int updateTextureState;
 
 	GLuint infoTex;
-	int2 GetInfoTexSize() const;
 	PBO extraTexPBO;
+
 	bool highResInfoTex;
 	bool highResInfoTexWanted;
 
@@ -115,6 +128,10 @@ public:
 
 	CHeightLinePalette* heightLinePal;
 	CBaseGroundTextures* groundTextures;
+
+protected:
+	bool drawMapEdges;
+	bool drawDeferred;
 };
 
 #endif // _BASE_GROUND_DRAWER_H
