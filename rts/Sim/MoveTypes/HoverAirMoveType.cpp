@@ -182,7 +182,7 @@ void CHoverAirMoveType::SetAllowLanding(bool allowLanding)
 {
 	dontLand = !allowLanding;
 
-	if (!dontLand && autoLand)
+	if (CanLand())
 		return;
 
 	if (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_LANDING)
@@ -270,7 +270,7 @@ void CHoverAirMoveType::ExecuteStop()
 
 	switch (aircraftState) {
 		case AIRCRAFT_TAKEOFF: {
-			if (!dontLand && autoLand) {
+			if (CanLand()) {
 				SetState(AIRCRAFT_LANDING);
 				// trick to land directly
 				waitCounter = GAME_SPEED;
@@ -280,17 +280,19 @@ void CHoverAirMoveType::ExecuteStop()
 		case AIRCRAFT_FLYING: {
 			goalPos = owner->pos;
 
-			if (dontLand || !autoLand) {
-				SetState(AIRCRAFT_HOVERING);
-			} else {
+			if (CanLand()) {
 				SetState(AIRCRAFT_LANDING);
+			} else {
+				SetState(AIRCRAFT_HOVERING);
 			}
 		} break;
+
 		case AIRCRAFT_LANDING: {} break;
 		case AIRCRAFT_LANDED: {} break;
 		case AIRCRAFT_CRASHING: {} break;
+
 		case AIRCRAFT_HOVERING: {
-			if (!dontLand && autoLand) {
+			if (CanLand()) {
 				// land immediately
 				SetState(AIRCRAFT_LANDING);
 				waitCounter = GAME_SPEED;
@@ -416,7 +418,7 @@ void CHoverAirMoveType::UpdateFlying()
 		switch (flyState) {
 			case FLY_CRUISING: {
 				const bool hasMoreMoveCmds = owner->commandAI->HasMoreMoveCommands();
-				const bool blockLanding = dontLand || !autoLand || hasMoreMoveCmds;
+				const bool blockLanding = (!CanLand() || hasMoreMoveCmds);
 
 				// NOTE: should CMD_LOAD_ONTO be here?
 				const bool isTransporter = (dynamic_cast<CTransportUnit*>(owner) != NULL);
@@ -522,7 +524,7 @@ void CHoverAirMoveType::UpdateFlying()
 		wantedHeading = GetHeadingFromVector(goalVec.x, goalVec.z);
 		wantedSpeed = (goalVec / goalDist) * goalSpeed;
 	} else {
-		// switch to hovering (if dontLand or !autoLand)
+		// switch to hovering (if !CanLand()))
 		if (flyState != FLY_ATTACKING) {
 			ExecuteStop();
 		}
@@ -986,9 +988,7 @@ bool CHoverAirMoveType::CanLandAt(const float3& pos) const
 {
 	if (loadingUnits)
 		return true;
-	if (dontLand)
-		return false;
-	if (!autoLand)
+	if (!CanLand())
 		return false;
 	if (!pos.IsInBounds())
 		return false;
