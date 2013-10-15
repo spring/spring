@@ -73,14 +73,14 @@ private:
 	void UpdateAirPhysics();
 	void UpdateMoveRate();
 
+	bool CanLand() const { return ((!dontLand && autoLand) || (reservedPad != NULL)); }
 	bool CanLandAt(const float3& pos) const;
-	void ExecuteStop();
 
+	void ExecuteStop();
 	void Takeoff();
 	void Land();
 
 	bool HandleCollisions(bool checkCollisions);
-	bool CanLand() const { return ((!dontLand && autoLand) || (reservedPad != NULL)); }
 
 private:
 	float3 wantedSpeed;
