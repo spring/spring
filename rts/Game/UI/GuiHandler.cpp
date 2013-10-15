@@ -1070,12 +1070,14 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 		return true;
 
 	// get mouse-hovered map pos
-	CUnit* unit = NULL;
-	CFeature* feature = NULL;
+	CUnit* targetUnit = NULL;
+	CFeature* targetFeature = NULL;
 
 	const float viewRange = globalRendering->viewRange * 1.4f;
-	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, NULL, unit, feature, true);
+	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, NULL, targetUnit, targetFeature, true);
 	const float3 groundPos = camera->GetPos() + mouse->dir * dist;
+
+	float3 modGroundPos;
 
 	if (dist <= 0.0f)
 		return false;
@@ -1089,7 +1091,9 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 			return (u->unitDef->canKamikaze || !u->weapons.empty());
 
 		for (unsigned int n = 0; n < u->weapons.size(); n++) {
-			if (u->weapons[n]->TryTarget(groundPos, false, unit)) {
+			u->weapons[n]->AdjustTargetPosToWater(modGroundPos = groundPos, targetUnit == NULL);
+
+			if (u->weapons[n]->TryTarget(modGroundPos, false, targetUnit)) {
 				return true;
 			}
 		}
