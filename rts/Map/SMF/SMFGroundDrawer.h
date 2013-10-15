@@ -62,6 +62,9 @@ public:
 	IMeshDrawer* SwitchMeshDrawer(int mode = -1);
 
 private:
+	void SelectRenderState(bool shaderPath) {
+		smfRenderState = shaderPath? smfRenderStateSSP: smfRenderStateFFP;
+	}
 	void DrawDeferredPass(const DrawPass::e& drawPass);
 
 	void CreateWaterPlanes(bool camOufOfMap);

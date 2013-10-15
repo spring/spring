@@ -53,7 +53,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 
 	// also set in ::Draw, but UpdateSunDir can be called
 	// first if DynamicSun is enabled --> must be non-NULL
-	smfRenderState = smfRenderStateFFP;
+	SelectRenderState(false);
 
 	// LH must be initialized before render-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
@@ -299,11 +299,12 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	if (readMap->HasOnlyVoidWater())
 		return;
 
-	smfRenderState = smfRenderStateSSP->CanEnable(this)?
-		smfRenderStateSSP:
-		smfRenderStateFFP;
-
+	SelectRenderState(smfRenderStateSSP->CanEnable(this));
 	UpdateCamRestraints(cam2);
+
+	glDisable(GL_BLEND);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 
 	if (drawDeferred) {
 		// do the deferred pass first, will allow us to re-use
@@ -311,10 +312,6 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		// the entire map deferred
 		DrawDeferredPass(drawPass);
 	}
-
-	glDisable(GL_BLEND);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
 
 	{
 		smfRenderState->Enable(this, drawPass);
@@ -359,8 +356,8 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
-	smfRenderState = smfRenderStateFFP;
-	//smfRenderState->Enable(this, drawPass);
+	SelectRenderState(false);
+	// smfRenderState->Enable(this, drawPass);
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 

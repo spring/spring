@@ -159,6 +159,10 @@ private:
 	/// Returns true if the given unit should be drawn as icon in the current frame.
 	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
 
+	void SelectRenderState(bool shaderPath) {
+		unitDrawerState = shaderPath? unitDrawerStateSSP: unitDrawerStateFFP;
+	}
+
 public:
 	static void SetBasicTeamColour(int team, float alpha = 1.0f);
 	static void SetupBasicS3OTexture0();

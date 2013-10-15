@@ -164,7 +164,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 
 	// also set in ::SetupForUnitDrawing, but SunChanged can be
 	// called first if DynamicSun is enabled --> must be non-NULL
-	unitDrawerState = unitDrawerStateFFP;
+	SelectRenderState(false);
 
 	// NOTE:
 	//     advShading can NOT change at runtime if initially false***
@@ -1165,10 +1165,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
 
-	unitDrawerState = unitDrawerStateSSP->CanEnable(this)?
-		unitDrawerStateSSP:
-		unitDrawerStateFFP;
-
+	SelectRenderState(unitDrawerStateSSP->CanEnable(this));
 	unitDrawerState->Enable(this);
 }
 
