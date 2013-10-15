@@ -471,7 +471,7 @@ void CUnit::PostInit(const CUnit* builder)
 	// (an extra yardmap character would be needed to prevent this)
 	immobile = unitDef->IsImmobileUnit();
 
-	SetCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS * (unitDef->collidable & (!immobile || !unitDef->canKamikaze)));
+	UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS, unitDef->collidable && (!immobile || !unitDef->canKamikaze));
 	Block();
 
 	if (unitDef->windGenerator > 0.0f) {
