@@ -529,8 +529,7 @@ void SMFRenderStateARB::SetCurrentShader(const DrawPass::e& drawPass) {
 		case DrawPass::Normal:          { arbShaders[ARB_SHADER_CURRENT] = arbShaders[ARB_SHADER_DEFAULT]; } break;
 		case DrawPass::WaterReflection: { arbShaders[ARB_SHADER_CURRENT] = arbShaders[ARB_SHADER_REFLECT]; } break;
 		case DrawPass::WaterRefraction: { arbShaders[ARB_SHADER_CURRENT] = arbShaders[ARB_SHADER_REFRACT]; } break;
-		case DrawPass::Shadow:
-		case DrawPass::UnitReflection: break;
+		default:                        {                                                                  } break;
 	}
 }
 
