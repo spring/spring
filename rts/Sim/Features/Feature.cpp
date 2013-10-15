@@ -211,7 +211,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	quadField->AddFeature(this);
 
 	ChangeTeam(team);
-	SetCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS * (def->collidable));
+	UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS, def->collidable);
 	Block();
 
 	if (def->floating) {
