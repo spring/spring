@@ -494,30 +494,30 @@ int2 LuaMatTexture::GetSize() const
 	#define sqint2(x) int2(x, x)
 	switch (type) {
 		case LUATEX_NAMED: {
-			auto namedTex = reinterpret_cast<const CNamedTextures::TexInfo*>(data);
+			const auto namedTex = reinterpret_cast<const CNamedTextures::TexInfo*>(data);
 			return int2(namedTex->xsize, namedTex->ysize);
 		} break;
 		case LUATEX_LUATEXTURE: {
-			auto luaTex = reinterpret_cast<const LuaTextures::Texture*>(data);
+			const auto luaTex = reinterpret_cast<const LuaTextures::Texture*>(data);
 			return int2(luaTex->xsize, luaTex->ysize);
 		} break;
 		case LUATEX_UNITTEXTURE1: {
-			auto stex = reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data);
+			const auto stex = reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data);
 			return int2(stex->tex1SizeX, stex->tex1SizeY);
 		} break;
 		case LUATEX_UNITTEXTURE2: {
-			auto stex = reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data);
+			const auto stex = reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data);
 			return int2(stex->tex2SizeX, stex->tex2SizeY);
 		} break;
 		case LUATEX_3DOTEXTURE:
 			return int2(texturehandler3DO->GetAtlasTexSizeX(), texturehandler3DO->GetAtlasTexSizeY());
 		case LUATEX_UNITBUILDPIC: {
-			auto ud = reinterpret_cast<const UnitDef*>(data);
+			const auto ud = reinterpret_cast<const UnitDef*>(data);
 			unitDefHandler->GetUnitDefImage(ud); // forced existance
 			return int2(ud->buildPic->imageSizeX, ud->buildPic->imageSizeY);
 		} break;
 		case LUATEX_UNITRADARICON: {
-			auto ud = reinterpret_cast<const UnitDef*>(data);
+			const auto ud = reinterpret_cast<const UnitDef*>(data);
 			return int2(ud->iconType->GetSizeX(), ud->iconType->GetSizeY());
 		} break;
 		case LUATEX_SHADOWMAP:
@@ -542,8 +542,9 @@ int2 LuaMatTexture::GetSize() const
 
 		case LUATEX_MAP_GBUFFER_NORMALS:
 		case LUATEX_MAP_GBUFFER_DIFFTEX:
-		case LUATEX_MAP_GBUFFER_SPECTEX:
-			return (readMap->GetGroundDrawer()->GetGeomBufferSize());
+		case LUATEX_MAP_GBUFFER_SPECTEX: {
+			return (readMap->GetGroundDrawer()->GetGeomBufferSize(readMap->GetGroundDrawer()->DrawDeferred()));
+		}
 
 		case LUATEX_HEIGHTMAP:
 			if (heightMapTexture)

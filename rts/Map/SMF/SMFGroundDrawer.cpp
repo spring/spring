@@ -59,7 +59,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
 
 	drawMapEdges = configHandler->GetBool("MapBorder");
-	drawDeferred = configHandler->GetInt("AllowDeferredMapRendering");
+	drawDeferred = configHandler->GetBool("AllowDeferredMapRendering");
 
 	// NOTE:
 	//     advShading can NOT change at runtime if initially false
@@ -245,7 +245,7 @@ void DrawDeferredDebug(unsigned int texID)
 	glPopMatrix();
 }
 
-void CSMFGroundDrawer::DrawDeferred(const DrawPass::e& drawPass)
+void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 {
 	if (!geomBuffer.IsValid())
 		return;
@@ -309,7 +309,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		// do the deferred pass first, will allow us to re-use
 		// its output at some future point and eventually draw
 		// the entire map deferred
-		DrawDeferred(drawPass);
+		DrawDeferredPass(drawPass);
 	}
 
 	glDisable(GL_BLEND);
@@ -481,8 +481,14 @@ void CSMFGroundDrawer::UpdateSunDir() {
 
 bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 {
-	static int2 prevBufferSize = GetGeomBufferSize();
-	 const int2 currBufferSize = GetGeomBufferSize();
+	assert(drawDeferred);
+
+	// NOTE:
+	//   Lua can toggle drawDeferred and might be the
+	//   first to call us --> initial buffer size must
+	//   be (0, 0) so prevSize != currSize (when !init)
+	static int2 prevBufferSize = GetGeomBufferSize(false);
+	 const int2 currBufferSize = GetGeomBufferSize(true);
 
 	bool ret = false;
 
@@ -494,9 +500,12 @@ bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 
 		geomBuffer.DetachAll();
 		glDeleteTextures(GBUFFER_ATTACHMENT_COUNT, &geomBufferTextureIDs[0]);
-
-		prevBufferSize = currBufferSize;
 	}
+
+	// do not need to update buffer until these
+	// become non-equal again by a window resize
+	// event
+	prevBufferSize = currBufferSize;
 
 	geomBuffer.Bind();
 
