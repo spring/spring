@@ -87,7 +87,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	}
 
 	if (drawDeferred) {
-		UpdateGeometryBuffer(true);
+		drawDeferred &= UpdateGeometryBuffer(true);
 	}
 }
 
@@ -465,7 +465,7 @@ void CSMFGroundDrawer::Update()
 	meshDrawer->Update();
 
 	if (drawDeferred) {
-		UpdateGeometryBuffer(false);
+		drawDeferred &= UpdateGeometryBuffer(false);
 	}
 }
 
@@ -479,16 +479,18 @@ void CSMFGroundDrawer::UpdateSunDir() {
 	smfRenderState->UpdateCurrentShader(sky->GetLight());
 }
 
-void CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
+bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 {
 	static int2 prevBufferSize = GetGeomBufferSize();
 	 const int2 currBufferSize = GetGeomBufferSize();
 
+	bool ret = false;
+
 	if (!init) {
 		if (prevBufferSize == currBufferSize)
-			return;
+			return !ret;
 		if (!geomBuffer.IsValid())
-			return;
+			return ret;
 
 		geomBuffer.DetachAll();
 		glDeleteTextures(GBUFFER_ATTACHMENT_COUNT, &geomBufferTextureIDs[0]);
@@ -514,10 +516,12 @@ void CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 	glDrawBuffers(GBUFFER_ATTACHMENT_COUNT, &geomBufferAttachments[0]);
 
 	// sanity-check the FBO
-	assert(geomBuffer.IsValid());
-	assert(geomBuffer.CheckStatus("SMF-GBUFFER"));
+	if (geomBuffer.IsValid()) {
+		ret = geomBuffer.CheckStatus("SMF-GBUFFER");
+	}
 
 	geomBuffer.Unbind();
+	return ret;
 }
 
 

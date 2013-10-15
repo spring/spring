@@ -34,7 +34,7 @@ public:
 
 	void Update();
 	void UpdateSunDir();
-	void UpdateGeometryBuffer(bool init);
+	bool UpdateGeometryBuffer(bool init);
 	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 
 	// for ARB-only clients
