@@ -42,6 +42,12 @@ public:
 	void SetupReflDrawPass();
 	void SetupRefrDrawPass();
 
+	void SetDeferredDrawMode(bool b) {
+		if ((drawDeferred = b)) {
+			UpdateGeometryBuffer(false);
+		}
+	}
+
 	void IncreaseDetail();
 	void DecreaseDetail();
 	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
@@ -56,7 +62,7 @@ public:
 	IMeshDrawer* SwitchMeshDrawer(int mode = -1);
 
 private:
-	void DrawDeferred(const DrawPass::e& drawPass);
+	void DrawDeferredPass(const DrawPass::e& drawPass);
 
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);

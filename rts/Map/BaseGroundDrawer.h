@@ -60,7 +60,7 @@ public:
 	virtual int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const = 0;
 
 	virtual void SetDrawMode(BaseGroundDrawMode dm) { drawMode = dm; }
-	virtual void SetDeferredDrawMode(bool b) { drawDeferred = b; }
+	virtual void SetDeferredDrawMode(bool) {}
 	virtual bool ToggleMapBorder() { drawMapEdges = !drawMapEdges; return drawMapEdges; }
 
 	virtual GL::LightHandler* GetLightHandler() { return NULL; }
@@ -76,11 +76,13 @@ public:
 	void ToggleLosTexture();
 	void ToggleRadarAndJammer();
 	bool UpdateExtraTexture();
+
 	bool DrawExtraTex() const { return drawMode != drawNormal; }
+	bool DrawDeferred() const { return drawDeferred; }
 
 	CBaseGroundTextures* GetGroundTextures() { return groundTextures; }
 
-	int2 GetGeomBufferSize() const;
+	int2 GetGeomBufferSize(bool allowed) const;
 	int2 GetInfoTexSize() const;
 
 	void UpdateCamRestraints(CCamera* camera);
