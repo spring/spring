@@ -495,12 +495,20 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 }
 
 
+int2 CBaseGroundDrawer::GetGeomBufferSize() const
+{
+	if (drawDeferred)
+		return (int2(globalRendering->viewSizeX, globalRendering->viewSizeY));
+
+	return (int2(0, 0));
+}
+
 int2 CBaseGroundDrawer::GetInfoTexSize() const
 {
 	if (highResInfoTex)
-		return int2(gs->pwr2mapx, gs->pwr2mapy);
-	else
-		return int2(gs->pwr2mapx>>1, gs->pwr2mapy>>1);
+		return (int2(gs->pwr2mapx, gs->pwr2mapy));
+
+	return (int2(gs->pwr2mapx >> 1, gs->pwr2mapy >> 1));
 }
 
 

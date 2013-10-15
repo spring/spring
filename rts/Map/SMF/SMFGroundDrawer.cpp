@@ -23,7 +23,7 @@
 
 
 CONFIG(int, GroundDetail).defaultValue(60).minimumValue(0).maximumValue(200).description("Controls how detailed the map geometry will be. On lowered settings, cliffs may appear to be jagged or \"melting\".");
-CONFIG(bool, MapBorder).defaultValue(true).description("Draws a border around the map.");
+CONFIG(bool, MapBorder).defaultValue(true).description("Draws a solid border at the edges of the map.");
 
 
 CONFIG(int, MaxDynamicMapLights)
@@ -31,6 +31,7 @@ CONFIG(int, MaxDynamicMapLights)
 	.minimumValue(0);
 
 CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false).description("Enable shaders for terrain rendering and enable so more effects.");
+CONFIG(bool, AllowDeferredMapRendering).defaultValue(true).safemodeValue(false);
 
 CONFIG(int, ROAM)
 	.defaultValue(Patch::VBO)
@@ -57,17 +58,21 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	// LH must be initialized before render-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
 
+	drawMapEdges = configHandler->GetBool("MapBorder");
+	drawDeferred = configHandler->GetInt("AllowDeferredMapRendering");
+
 	// NOTE:
 	//     advShading can NOT change at runtime if initially false
 	//     (see AdvMapShadingActionExecutor), so we will always use
 	//     smfRenderStateFFP (in ::Draw) in that special case and it
 	//     does not matter if smfRenderStateSSP is initialized
-	mapborder    = configHandler->GetBool("MapBorder");
 	groundDetail = configHandler->GetInt("GroundDetail");
 	advShading = smfRenderStateSSP->Init(this);
 
 	waterPlaneCamInDispList  = 0;
 	waterPlaneCamOutDispList = 0;
+
+	memset(&geomBufferTextureIDs[0], 0, sizeof(geomBufferTextureIDs));
 
 	if (mapInfo->water.hasWaterPlane) {
 		waterPlaneCamInDispList = glGenLists(1);
@@ -80,11 +85,20 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 		CreateWaterPlanes(true);
 		glEndList();
 	}
+
+	if (drawDeferred) {
+		UpdateGeometryBuffer(true);
+	}
 }
 
 
 CSMFGroundDrawer::~CSMFGroundDrawer()
 {
+	if (geomBuffer.IsValid()) {
+		geomBuffer.DetachAll();
+		glDeleteTextures(GBUFFER_ATTACHMENT_COUNT, &geomBufferTextureIDs[0]);
+	}
+
 	// if ROAM _was_ enabled, the configvar is written in CRoamMeshDrawer's dtor
 	if (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) == NULL)
 		configHandler->Set("ROAM", 0);
@@ -205,6 +219,77 @@ inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 }
 
 
+void DrawDeferredDebug(unsigned int texID)
+{
+	glPushMatrix();
+	glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texID);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 0.0f); glNormal3f(0.0f, 1.0f, 0.0f); glVertex2f(0.0f, 0.0f);
+	glTexCoord2f(1.0f, 0.0f); glNormal3f(0.0f, 1.0f, 0.0f); glVertex2f(1.0f, 0.0f);
+	glTexCoord2f(1.0f, 1.0f); glNormal3f(0.0f, 1.0f, 0.0f); glVertex2f(1.0f, 1.0f);
+	glTexCoord2f(0.0f, 1.0f); glNormal3f(0.0f, 1.0f, 0.0f); glVertex2f(0.0f, 1.0f);
+
+	glEnd();
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
+
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+}
+
+void CSMFGroundDrawer::DrawDeferred(const DrawPass::e& drawPass)
+{
+	if (!geomBuffer.IsValid())
+		return;
+
+	// water renderers use FBO's for the reflection pass
+	if (drawPass == DrawPass::WaterReflection)
+		return;
+	// deferred pass must be executed with GLSL shaders
+	if (!smfRenderState->CanDrawDeferred())
+		return;
+
+	geomBuffer.Bind();
+
+	// clear color buffer so it contains only null-normals
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	{
+		// switch current SSP shader to deferred version
+		smfRenderState->SetCurrentShader(DrawPass::TerrainDeferred);
+		smfRenderState->Enable(this, drawPass);
+
+		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
+			glEnable(GL_ALPHA_TEST);
+			glAlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
+		}
+
+		meshDrawer->DrawMesh(drawPass);
+
+		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
+			glDisable(GL_ALPHA_TEST);
+		}
+
+		smfRenderState->Disable(this, drawPass);
+		smfRenderState->SetCurrentShader(drawPass);
+	}
+
+	geomBuffer.Unbind();
+
+	#if 0
+	DrawDeferredDebug(geomBufferTextureIDs[GBUFFER_ATTACHMENT_NORMALS]);
+	#endif
+}
+
 void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 {
 	// must be here because water renderers also call us
@@ -218,14 +303,22 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		smfRenderStateSSP:
 		smfRenderStateFFP;
 
+	UpdateCamRestraints(cam2);
+
+	if (drawDeferred) {
+		// do the deferred pass first, will allow us to re-use
+		// its output at some future point and eventually draw
+		// the entire map deferred
+		DrawDeferred(drawPass);
+	}
+
 	glDisable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
-	UpdateCamRestraints(cam2);
-	smfRenderState->Enable(this, drawPass);
-
 	{
+		smfRenderState->Enable(this, drawPass);
+
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
@@ -242,9 +335,10 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
+
+		smfRenderState->Disable(this, drawPass);
 	}
 
-	smfRenderState->Disable(this, drawPass);
 	glDisable(GL_CULL_FACE);
 
 	if (drawPass == DrawPass::Normal) {
@@ -252,7 +346,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 			DrawWaterPlane(false);
 		}
 
-		if (mapborder) {
+		if (drawMapEdges) {
 			SCOPED_TIMER("CSMFGroundDrawer::DrawBorder");
 			DrawBorder(drawPass);
 		}
@@ -369,6 +463,10 @@ void CSMFGroundDrawer::Update()
 
 	groundTextures->DrawUpdate();
 	meshDrawer->Update();
+
+	if (drawDeferred) {
+		UpdateGeometryBuffer(false);
+	}
 }
 
 void CSMFGroundDrawer::UpdateSunDir() {
@@ -380,6 +478,49 @@ void CSMFGroundDrawer::UpdateSunDir() {
 
 	smfRenderState->UpdateCurrentShader(sky->GetLight());
 }
+
+void CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
+{
+	static int2 prevBufferSize = GetGeomBufferSize();
+	 const int2 currBufferSize = GetGeomBufferSize();
+
+	if (!init) {
+		if (prevBufferSize == currBufferSize)
+			return;
+		if (!geomBuffer.IsValid())
+			return;
+
+		geomBuffer.DetachAll();
+		glDeleteTextures(GBUFFER_ATTACHMENT_COUNT, &geomBufferTextureIDs[0]);
+
+		prevBufferSize = currBufferSize;
+	}
+
+	geomBuffer.Bind();
+
+	for (unsigned int n = 0; n < GBUFFER_ATTACHMENT_COUNT; n++) {
+		glGenTextures(1, &geomBufferTextureIDs[n]);
+		glBindTexture(GL_TEXTURE_2D, geomBufferTextureIDs[n]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, currBufferSize.x, currBufferSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		geomBuffer.AttachTexture(geomBufferTextureIDs[n], GL_TEXTURE_2D, (geomBufferAttachments[n] = GL_COLOR_ATTACHMENT0_EXT + n));
+	}
+
+	// define the attachments we are going to draw into
+	glDrawBuffers(GBUFFER_ATTACHMENT_COUNT, &geomBufferAttachments[0]);
+
+	// sanity-check the FBO
+	assert(geomBuffer.IsValid());
+	assert(geomBuffer.CheckStatus("SMF-GBUFFER"));
+
+	geomBuffer.Unbind();
+}
+
+
 
 void CSMFGroundDrawer::IncreaseDetail()
 {

@@ -149,6 +149,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetDrawSky);
 	REGISTER_LUA_CFUNC(SetDrawWater);
 	REGISTER_LUA_CFUNC(SetDrawGround);
+	REGISTER_LUA_CFUNC(SetDrawGroundDeferred);
 
 	REGISTER_LUA_CFUNC(SetWaterParams);
 
@@ -1029,6 +1030,12 @@ int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
 		return 0;
 	}
 	globalRendering->drawGround = !!luaL_checkboolean(L, 1);
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SetDrawGroundDeferred(lua_State* L)
+{
+	readMap->GetGroundDrawer()->SetDeferredDrawMode(luaL_checkboolean(L, 1));
 	return 0;
 }
 

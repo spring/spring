@@ -12,6 +12,7 @@
 #include "Map/HeightMapTexture.h"
 #include "Map/ReadMap.h"
 #include "Rendering/glFont.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/CubeMapHandler.h"
@@ -263,8 +264,8 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 		}
 		else if (image == "$heightmap") {
 			texUnit.type = LuaMatTexture::LUATEX_HEIGHTMAP;
-			const GLuint texID = heightMapTexture->GetTextureID();
-			if (texID == 0) {
+
+			if (heightMapTexture->GetTextureID() == 0) {
 				// it's optional, return false when not available
 				return false;
 			}
@@ -281,6 +282,17 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 		else if (image == "$info" || image == "$extra") {
 			texUnit.type = LuaMatTexture::LUATEX_INFOTEX;
 		}
+
+		else if (image == "$map_gb_fn" || image == "$map_gbuffer_normals") {
+			texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_NORMALS;
+		}
+		else if (image == "$map_gb_dt" || image == "$map_gbuffer_difftex") {
+			texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_DIFFTEX;
+		}
+		else if (image == "$map_gb_st" || image == "$map_gbuffer_spectex") {
+			texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_SPECTEX;
+		}
+
 		else if (image == "$font") {
 			texUnit.type = LuaMatTexture::LUATEX_FONT;
 		}
@@ -367,12 +379,23 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_FONTSMALL: {
 			texID = smallFont->GetTexture();
 		} break;
-		case LUATEX_MINIMAP: if (readMap) {
+		case LUATEX_MINIMAP:
 			texID = readMap->GetMiniMapTexture();
-		} break;
+		break;
 		case LUATEX_INFOTEX: {
 			texID = readMap->GetGroundDrawer()->infoTex;
 		} break;
+
+		case LUATEX_MAP_GBUFFER_NORMALS: {
+			texID = readMap->GetGroundDrawer()->GetGeomBufferTexture(CBaseGroundDrawer::GBUFFER_ATTACHMENT_NORMALS);
+		} break;
+		case LUATEX_MAP_GBUFFER_DIFFTEX: {
+			texID = readMap->GetGroundDrawer()->GetGeomBufferTexture(CBaseGroundDrawer::GBUFFER_ATTACHMENT_DIFFTEX);
+		} break;
+		case LUATEX_MAP_GBUFFER_SPECTEX: {
+			texID = readMap->GetGroundDrawer()->GetGeomBufferTexture(CBaseGroundDrawer::GBUFFER_ATTACHMENT_SPECTEX);
+		} break;
+
 		default:
 			assert(false);
 	}
@@ -409,7 +432,12 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_FONT:
 		case LUATEX_FONTSMALL:
 		case LUATEX_MINIMAP:
-		case LUATEX_INFOTEX: {
+		case LUATEX_INFOTEX:
+
+		case LUATEX_MAP_GBUFFER_NORMALS:
+		case LUATEX_MAP_GBUFFER_DIFFTEX:
+		case LUATEX_MAP_GBUFFER_SPECTEX:
+		{
 			texType = GL_TEXTURE_2D;
 		} break;
 		default:
@@ -506,11 +534,17 @@ int2 LuaMatTexture::GetSize() const
 			return int2(font->GetTexWidth(), font->GetTexHeight());
 		case LUATEX_FONTSMALL:
 			return int2(smallFont->GetTexWidth(), smallFont->GetTexHeight());
-		case LUATEX_MINIMAP: if (readMap) {
-			 return readMap->GetMiniMapTextureSize();
-		} break;
+		case LUATEX_MINIMAP:
+			return readMap->GetMiniMapTextureSize();
+		break;
 		case LUATEX_INFOTEX:
-			return readMap->GetGroundDrawer()->GetInfoTexSize();
+			return (readMap->GetGroundDrawer()->GetInfoTexSize());
+
+		case LUATEX_MAP_GBUFFER_NORMALS:
+		case LUATEX_MAP_GBUFFER_DIFFTEX:
+		case LUATEX_MAP_GBUFFER_SPECTEX:
+			return (readMap->GetGroundDrawer()->GetGeomBufferSize());
+
 		case LUATEX_HEIGHTMAP:
 			if (heightMapTexture)
 				return int2(heightMapTexture->GetSizeX(), heightMapTexture->GetSizeY());
@@ -555,6 +589,7 @@ int LuaMatTexture::Compare(const LuaMatTexture& a, const LuaMatTexture& b)
 void LuaMatTexture::Print(const string& indent) const
 {
 	const char* typeName = "Unknown";
+
 	switch (type) {
 		#define STRING_CASE(ptr, x) case x: ptr = #x; break;
 		STRING_CASE(typeName, LUATEX_NONE);
@@ -575,9 +610,14 @@ void LuaMatTexture::Print(const string& indent) const
 		STRING_CASE(typeName, LUATEX_FONTSMALL);
 		STRING_CASE(typeName, LUATEX_MINIMAP);
 		STRING_CASE(typeName, LUATEX_INFOTEX);
+
+		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_NORMALS);
+		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_DIFFTEX);
+		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_SPECTEX);
+		#undef STRING_CASE
 	}
-	LOG("%s%s %i %s", indent.c_str(),
-			typeName, *reinterpret_cast<const GLuint*>(&data), (enable ? "true" : "false"));
+
+	LOG("%s%s %i %s", indent.c_str(), typeName, *reinterpret_cast<const GLuint*>(&data), (enable ? "true" : "false"));
 }
 
 

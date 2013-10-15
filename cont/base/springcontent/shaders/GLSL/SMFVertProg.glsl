@@ -28,11 +28,17 @@ void main() {
 	// transform vertex pos
 	gl_Position = gl_ModelViewMatrix * gl_Vertex;
 	gl_ClipVertex = gl_Position;
+
+	#if (DEFERRED_MODE == 0)
 	float fogCoord = length(gl_Position.xyz);
+	#endif
+
 	gl_Position = gl_ProjectionMatrix * gl_Position;
 
+	#if (DEFERRED_MODE == 0)
 	// emulate linear fog
 	fogFactor = (gl_Fog.end - fogCoord) * gl_Fog.scale; // gl_Fog.scale == 1.0 / (gl_Fog.end - gl_Fog.start)
 	fogFactor = clamp(fogFactor, 0.0, 1.0);
+	#endif
 }
 

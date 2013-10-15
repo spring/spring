@@ -4,6 +4,7 @@
 #define _SMF_GROUND_DRAWER_H_
 
 #include "Map/BaseGroundDrawer.h"
+#include "Rendering/GL/FBO.h"
 
 
 class CSMFReadMap;
@@ -33,6 +34,7 @@ public:
 
 	void Update();
 	void UpdateSunDir();
+	void UpdateGeometryBuffer(bool init);
 	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 
 	// for ARB-only clients
@@ -43,16 +45,19 @@ public:
 	void IncreaseDetail();
 	void DecreaseDetail();
 	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
-	bool ToggleMapBorder() { mapborder = !mapborder; return mapborder; }
 
 	const CSMFReadMap* GetReadMap() const { return smfMap; }
 	      CSMFReadMap* GetReadMap()       { return smfMap; }
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
 
+	GLuint GetGeomBufferTexture(unsigned int idx) { return geomBufferTextureIDs[idx]; }
+
 	IMeshDrawer* SwitchMeshDrawer(int mode = -1);
 
 private:
+	void DrawDeferred(const DrawPass::e& drawPass);
+
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 	inline void DrawBorder(const DrawPass::e drawPass);
@@ -62,16 +67,20 @@ protected:
 	IMeshDrawer* meshDrawer;
 
 	int groundDetail;
-	bool mapborder;
 
 	GLuint waterPlaneCamOutDispList;
 	GLuint waterPlaneCamInDispList;
+
+	GLuint geomBufferTextureIDs[GBUFFER_ATTACHMENT_COUNT];
+	GLenum geomBufferAttachments[GBUFFER_ATTACHMENT_COUNT];
 
 	ISMFRenderState* smfRenderStateSSP; // default shader-driven rendering path
 	ISMFRenderState* smfRenderStateFFP; // fallback shader-less rendering path
 	ISMFRenderState* smfRenderState;
 
 	GL::LightHandler lightHandler;
+
+	FBO geomBuffer;
 };
 
 #endif // _SMF_GROUND_DRAWER_H_

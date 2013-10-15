@@ -25,7 +25,7 @@ class LuaOpenGLUtils {
 class LuaMatTexture {
 	public:
 		enum Type {
-			LUATEX_NONE       = 0,
+			LUATEX_NONE = 0,
 			LUATEX_NAMED,
 			LUATEX_LUATEXTURE,
 			LUATEX_UNITTEXTURE1,
@@ -42,7 +42,11 @@ class LuaMatTexture {
 			LUATEX_FONT,
 			LUATEX_FONTSMALL,
 			LUATEX_MINIMAP,
-			LUATEX_INFOTEX
+			LUATEX_INFOTEX,
+
+			LUATEX_MAP_GBUFFER_NORMALS,
+			LUATEX_MAP_GBUFFER_DIFFTEX,
+			LUATEX_MAP_GBUFFER_SPECTEX,
 		};
 
 	public:
