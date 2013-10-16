@@ -359,6 +359,9 @@ void main() {
 	gl_FragData[0] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
 	gl_FragData[1] = diffuseCol;
 	gl_FragData[2] = specularCol;
+
+	// linearly transform the eye-space depths, might be more useful?
+	// gl_FragDepth = gl_FragCoord.z / gl_FragCoord.w;
 	#else
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor);
 	#endif

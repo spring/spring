@@ -292,6 +292,9 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 		else if (image == "$map_gb_st" || image == "$map_gbuffer_spectex") {
 			texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_SPECTEX;
 		}
+		else if (image == "$map_gb_zt" || image == "$map_gbuffer_zvaltex") {
+			texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_ZVALTEX;
+		}
 
 		else if (image == "$font") {
 			texUnit.type = LuaMatTexture::LUATEX_FONT;
@@ -395,6 +398,9 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_MAP_GBUFFER_SPECTEX: {
 			texID = readMap->GetGroundDrawer()->GetGeomBufferTexture(CBaseGroundDrawer::GBUFFER_ATTACHMENT_SPECTEX);
 		} break;
+		case LUATEX_MAP_GBUFFER_ZVALTEX: {
+			texID = readMap->GetGroundDrawer()->GetGeomBufferTexture(CBaseGroundDrawer::GBUFFER_ATTACHMENT_ZVALTEX);
+		} break;
 
 		default:
 			assert(false);
@@ -437,7 +443,7 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_MAP_GBUFFER_NORMALS:
 		case LUATEX_MAP_GBUFFER_DIFFTEX:
 		case LUATEX_MAP_GBUFFER_SPECTEX:
-		{
+		case LUATEX_MAP_GBUFFER_ZVALTEX: {
 			texType = GL_TEXTURE_2D;
 		} break;
 		default:
@@ -542,7 +548,8 @@ int2 LuaMatTexture::GetSize() const
 
 		case LUATEX_MAP_GBUFFER_NORMALS:
 		case LUATEX_MAP_GBUFFER_DIFFTEX:
-		case LUATEX_MAP_GBUFFER_SPECTEX: {
+		case LUATEX_MAP_GBUFFER_SPECTEX:
+		case LUATEX_MAP_GBUFFER_ZVALTEX: {
 			return (readMap->GetGroundDrawer()->GetGeomBufferSize(readMap->GetGroundDrawer()->DrawDeferred()));
 		}
 
@@ -615,6 +622,7 @@ void LuaMatTexture::Print(const string& indent) const
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_NORMALS);
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_DIFFTEX);
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_SPECTEX);
+		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_ZVALTEX);
 		#undef STRING_CASE
 	}
 

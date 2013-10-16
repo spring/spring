@@ -73,6 +73,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	waterPlaneCamOutDispList = 0;
 
 	memset(&geomBufferTextureIDs[0], 0, sizeof(geomBufferTextureIDs));
+	memset(&geomBufferAttachments[0], 0, sizeof(geomBufferAttachments));
 
 	if (mapInfo->water.hasWaterPlane) {
 		waterPlaneCamInDispList = glGenLists(1);
@@ -261,7 +262,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 
 	// clear color buffer so it contains only null-normals
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	{
 		// switch current SSP shader to deferred version
@@ -509,17 +510,29 @@ bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 	for (unsigned int n = 0; n < GBUFFER_ATTACHMENT_COUNT; n++) {
 		glGenTextures(1, &geomBufferTextureIDs[n]);
 		glBindTexture(GL_TEXTURE_2D, geomBufferTextureIDs[n]);
+
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, currBufferSize.x, currBufferSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		geomBuffer.AttachTexture(geomBufferTextureIDs[n], GL_TEXTURE_2D, (geomBufferAttachments[n] = GL_COLOR_ATTACHMENT0_EXT + n));
+
+		if (n == GBUFFER_ATTACHMENT_ZVALTEX) {
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, currBufferSize.x, currBufferSize.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			geomBufferAttachments[n] = GL_DEPTH_ATTACHMENT_EXT;
+		} else {
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, currBufferSize.x, currBufferSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			geomBufferAttachments[n] = GL_COLOR_ATTACHMENT0_EXT + n;
+		}
+
+		geomBuffer.AttachTexture(geomBufferTextureIDs[n], GL_TEXTURE_2D, geomBufferAttachments[n]);
 	}
 
+	glBindTexture(GL_TEXTURE_2D, 0);
 	// define the attachments we are going to draw into
-	glDrawBuffers(GBUFFER_ATTACHMENT_COUNT, &geomBufferAttachments[0]);
+	// note: the depth-texture attachment does not count
+	// here and will be GL_NONE implicitly!
+	glDrawBuffers(GBUFFER_ATTACHMENT_COUNT - 1, &geomBufferAttachments[0]);
 
 	// sanity-check the FBO
 	if (geomBuffer.IsValid()) {
