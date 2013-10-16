@@ -43,8 +43,6 @@ private:
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
 	}
 
-	CStrafeAirMoveType* GetOwnerMoveType();
-
 	float3 basePos;
 	float3 baseDir;
 

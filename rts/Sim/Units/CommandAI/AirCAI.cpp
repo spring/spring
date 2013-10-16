@@ -22,7 +22,10 @@
 #include <cassert>
 #define AUTO_GENERATE_ATTACK_ORDERS 1
 
+// AirCAI is always assigned to StrafeAirMoveType aircraft
 static CStrafeAirMoveType* GetStrafeAirMoveType(const CUnit* owner) {
+	assert(owner->unitDef->IsAirUnit());
+
 	if (owner->UsingScriptMoveType()) {
 		return static_cast<CStrafeAirMoveType*>(owner->prevMoveType);
 	}
@@ -106,84 +109,78 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	}
 
 	if (c.GetID() == CMD_SET_WANTED_MAX_SPEED) {
-	  return;
-	}
-
-	if (c.GetID() == CMD_AUTOREPAIRLEVEL) {
-		if (c.params.empty()) {
-			return;
-		}
-
-		CStrafeAirMoveType* airMT = GetStrafeAirMoveType(owner);
-
-		switch ((int)c.params[0]) {
-			case 0: { airMT->SetRepairBelowHealth(0.0f); break; }
-			case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
-			case 2: { airMT->SetRepairBelowHealth(0.5f); break; }
-			case 3: { airMT->SetRepairBelowHealth(0.8f); break; }
-		}
-		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
-				cdi != possibleCommands.end(); ++cdi)
-		{
-			if (cdi->id == CMD_AUTOREPAIRLEVEL) {
-				char t[10];
-				SNPRINTF(t,10,"%d", (int)c.params[0]);
-				cdi->params[0]=t;
-				break;
-			}
-		}
-		selectedUnitsHandler.PossibleCommandChange(owner);
 		return;
 	}
 
-	if (c.GetID() == CMD_IDLEMODE) {
-		if (c.params.empty()) {
+	{
+		CStrafeAirMoveType* airMT = GetStrafeAirMoveType(owner);
+
+		if (c.GetID() == CMD_AUTOREPAIRLEVEL) {
+			if (c.params.empty())
+				return;
+
+			switch ((int) c.params[0]) {
+				case 0: { airMT->SetRepairBelowHealth(0.0f); break; }
+				case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
+				case 2: { airMT->SetRepairBelowHealth(0.5f); break; }
+				case 3: { airMT->SetRepairBelowHealth(0.8f); break; }
+			}
+
+			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
+				if (possibleCommands[n].id != CMD_AUTOREPAIRLEVEL)
+					continue;
+
+				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
+				break;
+			}
+
+			selectedUnitsHandler.PossibleCommandChange(owner);
 			return;
 		}
 
-		CStrafeAirMoveType* airMT = GetStrafeAirMoveType(owner);
+		if (c.GetID() == CMD_IDLEMODE) {
+			if (c.params.empty()) {
+				return;
+			}
 
-		switch ((int)c.params[0]){
-			case 0: { airMT->autoLand = false; break; }
-			case 1: { airMT->autoLand = true;  break; }
-		}
-		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
-				cdi != possibleCommands.end(); ++cdi)
-		{
-			if (cdi->id == CMD_IDLEMODE){
-				char t[10];
-				SNPRINTF(t, 10, "%d", (int)c.params[0]);
-				cdi->params[0] = t;
+			switch ((int) c.params[0]) {
+				case 0: { airMT->autoLand = false; break; }
+				case 1: { airMT->autoLand = true;  break; }
+			}
+
+			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
+				if (possibleCommands[n].id != CMD_IDLEMODE)
+					continue;
+
+				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
 				break;
 			}
-		}
-		selectedUnitsHandler.PossibleCommandChange(owner);
-		return;
-	}
 
-	if (c.GetID() == CMD_LOOPBACKATTACK) {
-		if (c.params.empty()) {
+			selectedUnitsHandler.PossibleCommandChange(owner);
 			return;
 		}
 
-		CStrafeAirMoveType* airMT = GetStrafeAirMoveType(owner);
+		if (c.GetID() == CMD_LOOPBACKATTACK) {
+			if (c.params.empty()) {
+				return;
+			}
 
-		switch ((int)c.params[0]) {
-			case 0: { airMT->loopbackAttack = false; break; }
-			case 1: { airMT->loopbackAttack = true;  break; }
-		}
-		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
-				cdi != possibleCommands.end(); ++cdi)
-		{
-			if (cdi->id == CMD_LOOPBACKATTACK){
-				char t[10];
-				SNPRINTF(t, 10, "%d", (int)c.params[0]);
-				cdi->params[0] = t;
+			switch ((int) c.params[0]) {
+				case 0: { airMT->loopbackAttack = false; break; }
+				case 1: { airMT->loopbackAttack = true;  break; }
+			}
+
+			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
+				if (possibleCommands[n].id != CMD_LOOPBACKATTACK)
+					continue;
+
+				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
 				break;
 			}
+
+			selectedUnitsHandler.PossibleCommandChange(owner);
+			return;
 		}
-		selectedUnitsHandler.PossibleCommandChange(owner);
-		return;
 	}
 
 	if (!(c.options & SHIFT_KEY)
@@ -579,7 +576,7 @@ int CAirCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 bool CAirCAI::IsValidTarget(const CUnit* enemy) const {
 	if (!CMobileCAI::IsValidTarget(enemy)) return false;
 	if (enemy->IsCrashing()) return false;
-	return (static_cast<CStrafeAirMoveType*>(owner->moveType)->isFighter || !enemy->unitDef->canfly);
+	return (GetStrafeAirMoveType(owner)->isFighter || !enemy->unitDef->canfly);
 }
 
 
@@ -604,19 +601,6 @@ void CAirCAI::SetGoal(const float3& pos, const float3& curPos, float goalRadius)
 {
 	owner->moveType->SetGoal(pos);
 	CMobileCAI::SetGoal(pos, curPos, goalRadius);
-}
-
-CStrafeAirMoveType* CAirCAI::GetOwnerMoveType()
-{
-	CStrafeAirMoveType* airMT;
-
-	if (owner->UsingScriptMoveType()) {
-		airMT = static_cast<CStrafeAirMoveType*>(owner->prevMoveType);
-	} else {
-		airMT = static_cast<CStrafeAirMoveType*>(owner->moveType);
-	}
-
-	return airMT;
 }
 
 void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
