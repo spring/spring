@@ -30,6 +30,17 @@
 #define MAX_CLOSE_IN_RETRY_TICKS 30
 #define MAX_USERGOAL_TOLERANCE_DIST 100.0f
 
+// MobileCAI is not always assigned to aircraft
+static AAirMoveType* GetAirMoveType(const CUnit* owner) {
+	assert(owner->unitDef->IsAirUnit());
+
+	if (owner->UsingScriptMoveType()) {
+		return static_cast<AAirMoveType*>(owner->prevMoveType);
+	}
+
+	return static_cast<AAirMoveType*>(owner->moveType);
+}
+
 
 
 CR_BIND_DERIVED(CMobileCAI ,CCommandAI , );
@@ -197,10 +208,8 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	if (!AllowedCommand(c, fromSynced))
 		return;
 
-	if (owner->unitDef->canfly) {
-		assert(owner->unitDef->IsAirUnit());
-
-		AAirMoveType* airMT = static_cast<AAirMoveType*>(owner->moveType);
+	if (owner->unitDef->IsAirUnit()) {
+		AAirMoveType* airMT = GetAirMoveType(owner);
 
 		if (c.GetID() == CMD_AUTOREPAIRLEVEL) {
 			if (c.params.empty())
@@ -352,7 +361,7 @@ void CMobileCAI::SlowUpdate()
 	if (gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
 
-	if (owner->unitDef->IsAirUnit()) {
+	if (!owner->UsingScriptMoveType() && owner->unitDef->IsAirUnit()) {
 		LandRepairIfNeeded() || RefuelIfNeeded();
 	}
 
