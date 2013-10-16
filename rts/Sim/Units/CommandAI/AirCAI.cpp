@@ -139,9 +139,8 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		}
 
 		if (c.GetID() == CMD_IDLEMODE) {
-			if (c.params.empty()) {
+			if (c.params.empty())
 				return;
-			}
 
 			switch ((int) c.params[0]) {
 				case 0: { airMT->autoLand = false; break; }
@@ -161,9 +160,8 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		}
 
 		if (c.GetID() == CMD_LOOPBACKATTACK) {
-			if (c.params.empty()) {
+			if (c.params.empty())
 				return;
-			}
 
 			switch ((int) c.params[0]) {
 				case 0: { airMT->loopbackAttack = false; break; }
@@ -219,14 +217,15 @@ void CAirCAI::SlowUpdate()
 
 	#if (AUTO_GENERATE_ATTACK_ORDERS == 1)
 	if (commandQue.empty()) {
-		if (!AirAutoGenerateTarget(static_cast<AAirMoveType*>(owner->moveType))) {
+		if (!AirAutoGenerateTarget(GetStrafeAirMoveType(owner))) {
 			// if no target found, queue is still empty so bail now
 			return;
 		}
 	}
 	#endif
 
-	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
+	// FIXME: check owner->UsingScriptMoveType() and skip rest if true?
+	AAirMoveType* myPlane = GetStrafeAirMoveType(owner);
 	Command& c = commandQue.front();
 
 	if (c.GetID() == CMD_WAIT) {
@@ -311,7 +310,9 @@ bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 void CAirCAI::ExecuteFight(Command& c)
 {
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
-	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
+
+	// FIXME: check owner->UsingScriptMoveType() and skip rest if true?
+	AAirMoveType* myPlane = GetStrafeAirMoveType(owner);
 
 	assert(owner == myPlane->owner);
 
@@ -320,10 +321,8 @@ void CAirCAI::ExecuteFight(Command& c)
 		inCommand = true;
 	}
 
-	if (c.params.size() < 3) { // this shouldn't happen but anyway ...
-		LOG_L(L_ERROR,
-				"Received a Fight command with less than 3 params on %s in AirCAI",
-				owner->unitDef->humanName.c_str());
+	if (c.params.size() < 3) {
+		LOG_L(L_ERROR, "[ACAI::%s][f=%d][id=%d] CMD_FIGHT #params < 3", __FUNCTION__, gs->frameNum, owner->id);
 		return;
 	}
 
@@ -416,7 +415,7 @@ void CAirCAI::ExecuteFight(Command& c)
 
 	myPlane->goalPos = goalPos;
 
-	const CStrafeAirMoveType* airMT = dynamic_cast<const CStrafeAirMoveType*>(myPlane);
+	const CStrafeAirMoveType* airMT = (!owner->UsingScriptMoveType())? static_cast<const CStrafeAirMoveType*>(myPlane): NULL;
 	const float radius = (airMT != NULL)? std::max(airMT->turnRadius + 2*SQUARE_SIZE, 128.f) : 127.f;
 
 	// we're either circling or will get to the target in 8 frames
@@ -446,7 +445,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 			FinishCommand();
 			return;
 		}
-		if (orderTarget) {
+		if (orderTarget != NULL) {
 			if (orderTarget->unitDef->canfly && orderTarget->IsCrashing()) {
 				owner->AttackUnit(NULL, false, false);
 				FinishCommand();
@@ -482,14 +481,14 @@ void CAirCAI::ExecuteAttack(Command& c)
 			inCommand = true;
 		}
 	}
-
-	return;
 }
 
 void CAirCAI::ExecuteAreaAttack(Command& c)
 {
 	assert(owner->unitDef->canAttack);
-	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
+
+	// FIXME: check owner->UsingScriptMoveType() and skip rest if true?
+	AAirMoveType* myPlane = GetStrafeAirMoveType(owner);
 
 	if (targetDied) {
 		targetDied = false;
@@ -589,9 +588,8 @@ void CAirCAI::FinishCommand()
 
 void CAirCAI::BuggerOff(const float3& pos, float radius)
 {
-	AAirMoveType* myPlane = dynamic_cast<AAirMoveType*>(owner->moveType);
-	if (myPlane) {
-		myPlane->Takeoff();
+	if (!owner->UsingScriptMoveType()) {
+		static_cast<AAirMoveType*>(owner->moveType)->Takeoff();
 	} else {
 		CMobileCAI::BuggerOff(pos, radius);
 	}
@@ -603,12 +601,12 @@ void CAirCAI::SetGoal(const float3& pos, const float3& curPos, float goalRadius)
 	CMobileCAI::SetGoal(pos, curPos, goalRadius);
 }
 
-void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
+bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
 	assert(ac.GetID() == CMD_AREA_ATTACK || (ac.GetID() == CMD_ATTACK && ac.GetParamsCount() >= 3));
 
 	if (ac.GetID() == CMD_ATTACK) {
 		FinishCommand();
-		return;
+		return false;
 	}
 
 	const float3& pos = ac.GetPos(0);
@@ -634,5 +632,7 @@ void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
 		owner->AttackUnit(targetUnit, (ac.options & INTERNAL_ORDER) == 0, false);
 		SetGoal(targetUnit->pos, owner->pos);
 	}
+
+	return true;
 }
 

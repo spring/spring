@@ -119,7 +119,7 @@ public:
 	bool unimportantMove;
 
 protected:
-	virtual void SelectNewAreaAttackTargetOrPos(const Command& ac) {}
+	virtual bool SelectNewAreaAttackTargetOrPos(const Command& ac) {}
 
 	bool IsAttackCapable() const;
 	bool SkipParalyzeTarget(const CUnit* target);

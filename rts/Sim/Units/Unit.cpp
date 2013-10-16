@@ -997,9 +997,8 @@ void CUnit::SlowUpdate()
 }
 
 void CUnit::SlowUpdateWeapons() {
-	if (weapons.empty()) {
+	if (weapons.empty())
 		return;
-	}
 
 	haveTarget = false;
 

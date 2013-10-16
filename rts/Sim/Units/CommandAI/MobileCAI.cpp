@@ -136,7 +136,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.params.clear();
 	}
 
-	if(owner->unitDef->canPatrol){
+	if (owner->unitDef->canPatrol) {
 		c.id=CMD_PATROL;
 		c.action="patrol";
 		c.type=CMDTYPE_ICON_MAP;
@@ -157,7 +157,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		possibleCommands.push_back(c);
 	}
 
-	if(owner->unitDef->canGuard){
+	if (owner->unitDef->canGuard) {
 		c.id=CMD_GUARD;
 		c.action="guard";
 		c.type=CMDTYPE_ICON_UNIT;
@@ -167,7 +167,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		possibleCommands.push_back(c);
 	}
 
-	if(owner->unitDef->canfly){
+	if (owner->unitDef->canfly) {
 		c.params.clear();
 		c.id=CMD_AUTOREPAIRLEVEL;
 		c.action="autorepairlevel";
@@ -480,9 +480,7 @@ void CMobileCAI::ExecutePatrol(Command &c)
 {
 	assert(owner->unitDef->canPatrol);
 	if (c.params.size() < 3) {
-		LOG_L(L_ERROR,
-				"Received a Patrol command with less than 3 params on %s in MobileCAI",
-				owner->unitDef->humanName.c_str());
+		LOG_L(L_ERROR, "[MCAI::%s][f=%d][id=%d] CMD_FIGHT #params < 3", __FUNCTION__, gs->frameNum, owner->id);
 		return;
 	}
 	Command temp(CMD_FIGHT, c.options | INTERNAL_ORDER, c.GetPos(0));
@@ -527,9 +525,7 @@ void CMobileCAI::ExecuteFight(Command& c)
 		tempOrder = false;
 	}
 	if (c.params.size() < 3) {
-		LOG_L(L_ERROR,
-				"Received a Fight command with less than 3 params on %s in MobileCAI",
-				owner->unitDef->humanName.c_str());
+		LOG_L(L_ERROR, "[MCAI::%s][f=%d][id=%d] CMD_FIGHT #params < 3", __FUNCTION__, gs->frameNum, owner->id);
 		return;
 	}
 	if (c.params.size() >= 6) {
