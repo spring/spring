@@ -36,7 +36,7 @@ public:
 		drawPathCost,
 	};
 	enum {
-		GBUFFER_ATTACHMENT_NORMALS = 0, // shading (not geometric) normals
+		GBUFFER_ATTACHMENT_NORMTEX = 0, // shading (not geometric) normals
 		GBUFFER_ATTACHMENT_DIFFTEX = 1, // diffuse texture fragments
 		GBUFFER_ATTACHMENT_SPECTEX = 2, // specular texture fragments
 		GBUFFER_ATTACHMENT_ZVALTEX = 3,

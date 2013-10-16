@@ -283,8 +283,8 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 			texUnit.type = LuaMatTexture::LUATEX_INFOTEX;
 		}
 
-		else if (image == "$map_gb_fn" || image == "$map_gbuffer_normals") {
-			texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_NORMALS;
+		else if (image == "$map_gb_nt" || image == "$map_gbuffer_normtex") {
+			texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_NORMTEX;
 		}
 		else if (image == "$map_gb_dt" || image == "$map_gbuffer_difftex") {
 			texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_DIFFTEX;
@@ -389,8 +389,8 @@ GLuint LuaMatTexture::GetTextureID() const
 			texID = readMap->GetGroundDrawer()->infoTex;
 		} break;
 
-		case LUATEX_MAP_GBUFFER_NORMALS: {
-			texID = readMap->GetGroundDrawer()->GetGeomBufferTexture(CBaseGroundDrawer::GBUFFER_ATTACHMENT_NORMALS);
+		case LUATEX_MAP_GBUFFER_NORMTEX: {
+			texID = readMap->GetGroundDrawer()->GetGeomBufferTexture(CBaseGroundDrawer::GBUFFER_ATTACHMENT_NORMTEX);
 		} break;
 		case LUATEX_MAP_GBUFFER_DIFFTEX: {
 			texID = readMap->GetGroundDrawer()->GetGeomBufferTexture(CBaseGroundDrawer::GBUFFER_ATTACHMENT_DIFFTEX);
@@ -440,7 +440,7 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_MINIMAP:
 		case LUATEX_INFOTEX:
 
-		case LUATEX_MAP_GBUFFER_NORMALS:
+		case LUATEX_MAP_GBUFFER_NORMTEX:
 		case LUATEX_MAP_GBUFFER_DIFFTEX:
 		case LUATEX_MAP_GBUFFER_SPECTEX:
 		case LUATEX_MAP_GBUFFER_ZVALTEX: {
@@ -546,7 +546,7 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_INFOTEX:
 			return (readMap->GetGroundDrawer()->GetInfoTexSize());
 
-		case LUATEX_MAP_GBUFFER_NORMALS:
+		case LUATEX_MAP_GBUFFER_NORMTEX:
 		case LUATEX_MAP_GBUFFER_DIFFTEX:
 		case LUATEX_MAP_GBUFFER_SPECTEX:
 		case LUATEX_MAP_GBUFFER_ZVALTEX: {
@@ -619,7 +619,7 @@ void LuaMatTexture::Print(const string& indent) const
 		STRING_CASE(typeName, LUATEX_MINIMAP);
 		STRING_CASE(typeName, LUATEX_INFOTEX);
 
-		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_NORMALS);
+		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_NORMTEX);
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_DIFFTEX);
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_SPECTEX);
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_ZVALTEX);
