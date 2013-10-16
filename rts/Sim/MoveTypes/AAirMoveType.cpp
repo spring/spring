@@ -153,6 +153,14 @@ bool AAirMoveType::Update() {
 		SetState(AIRCRAFT_TAKEOFF);
 	}
 
+	if (owner->beingBuilt) {
+		// while being built, MoveType::SlowUpdate is not
+		// called so UpdateFuel will not be either --> do
+		// it here to prevent a drop in fuel level as soon
+		// as unit finishes construction
+		UpdateFuel(false);
+	}
+
 	// this return value is never used
 	return (useHeading = false);
 }
@@ -196,13 +204,17 @@ void AAirMoveType::UpdateLanded()
 	owner->UpdateMidAndAimPos();
 }
 
-void AAirMoveType::UpdateFuel() {
+void AAirMoveType::UpdateFuel(bool slowUpdate) {
 	if (owner->unitDef->maxFuel <= 0.0f)
 		return;
 
 	// lastFuelUpdateFrame must be updated even when early-outing
 	// otherwise fuel level will jump after a period of not using
-	// any (eg. when on a pad)
+	// any (eg. when on a pad or after being built)
+	if (!slowUpdate) {
+		lastFuelUpdateFrame = gs->frameNum;
+		return;
+	}
 	if (aircraftState == AIRCRAFT_LANDED) {
 		lastFuelUpdateFrame = gs->frameNum;
 		return;
