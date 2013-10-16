@@ -981,14 +981,17 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 	GML_RECMUTEX_LOCK(sel); // GetSelectedUnits
 
 	CheckNoArgs(L, __FUNCTION__);
-	lua_newtable(L);
+
 	int count = 0;
 	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
+
+	// { [1] = number unitID, ... }
+	lua_createtable(L, selUnits.size(), 0);
+
 	CUnitSet::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
-		count++;
 		lua_pushnumber(L, (*it)->id);
-		lua_rawseti(L, -2, count);
+		lua_rawseti(L, -2, ++count);
 	}
 	return 1;
 }
@@ -1001,25 +1004,34 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 
 	map<int, vector<CUnit*> > unitDefMap;
+	map<int, vector<CUnit*> >::const_iterator mit;
+
 	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 	CUnitSet::const_iterator it;
+
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		CUnit* unit = *it;
 		unitDefMap[unit->unitDef->id].push_back(unit);
 	}
 
-	lua_newtable(L);
-	map<int, vector<CUnit*> >::const_iterator mit;
+	// { [number unitDefID] = { [1] = [number unitID], ...}, ... }
+	lua_createtable(L, 0, unitDefMap.size());
+
 	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); ++mit) {
-		lua_newtable(L); {
-			const vector<CUnit*>& v = mit->second;
-			for (int i = 0; i < (int)v.size(); i++) {
-				CUnit* unit = v[i];
-				lua_pushnumber(L, unit->id);
+		const vector<CUnit*>& v = mit->second;
+
+		// inner array-table
+		lua_createtable(L, v.size(), 0);
+
+		{
+			for (unsigned int i = 0; i < v.size(); i++) {
+				lua_pushnumber(L, v[i]->id);
 				lua_rawseti(L, -2, i + 1);
 			}
 		}
-		lua_rawseti(L, -2, mit->first); // push the UnitDef index
+
+		// push the UnitDef index
+		lua_rawseti(L, -2, mit->first);
 	}
 
 	// UnitDef ID keys are not necessarily consecutive
@@ -1034,13 +1046,17 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 
 	CheckNoArgs(L, __FUNCTION__);
 
-	// tally the types
 	map<int, int> countMap;
+	map<int, int>::const_iterator mit;
+
 	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 	CUnitSet::const_iterator it;
+
+	// tally the types
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		CUnit* unit = *it;
 		map<int, int>::iterator mit = countMap.find(unit->unitDef->id);
+
 		if (mit == countMap.end()) {
 			countMap[unit->unitDef->id] = 1;
 		} else {
@@ -1048,11 +1064,12 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 		}
 	}
 
-	lua_newtable(L);
-	map<int, int>::const_iterator mit;
+	// { [number unitDefID] = number count, ... }
+	lua_createtable(L, 0, countMap.size());
+
 	for (mit = countMap.begin(); mit != countMap.end(); ++mit) {
-		lua_pushnumber(L, mit->second); // push the UnitDef unit count
-		lua_rawseti(L, -2, mit->first); // push the UnitDef index
+		lua_pushnumber(L, mit->second); // push the UnitDef unit count (value)
+		lua_rawseti(L, -2, mit->first); // push the UnitDef index (key)
 	}
 
 	// UnitDef ID keys are not necessarily consecutive
