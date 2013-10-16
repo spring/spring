@@ -287,7 +287,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 	geomBuffer.Unbind();
 
 	#if 0
-	DrawDeferredDebug(geomBufferTextureIDs[GBUFFER_ATTACHMENT_NORMALS]);
+	DrawDeferredDebug(geomBufferTextureIDs[GBUFFER_ATTACHMENT_NORMTEX]);
 	#endif
 }
 
