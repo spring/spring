@@ -34,7 +34,7 @@ public:
 
 	void Update();
 	void UpdateSunDir();
-	bool UpdateGeometryBuffer(bool init);
+
 	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 
 	// for ARB-only clients
@@ -57,9 +57,9 @@ public:
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
 
-	GLuint GetGeomBufferTexture(unsigned int idx) { return geomBufferTextureIDs[idx]; }
-
 	IMeshDrawer* SwitchMeshDrawer(int mode = -1);
+
+	GLuint GetGeomBufferTexture(unsigned int idx) { return geomBufferTextureIDs[idx]; }
 
 private:
 	void SelectRenderState(bool shaderPath) {
@@ -70,6 +70,9 @@ private:
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 	inline void DrawBorder(const DrawPass::e drawPass);
+
+	bool CreateGeometryBuffer(const int2 size);
+	bool UpdateGeometryBuffer(bool init);
 
 protected:
 	CSMFReadMap* smfMap;

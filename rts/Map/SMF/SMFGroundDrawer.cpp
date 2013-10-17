@@ -477,34 +477,10 @@ void CSMFGroundDrawer::UpdateSunDir() {
 	smfRenderState->UpdateCurrentShader(sky->GetLight());
 }
 
-bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
+
+
+bool CSMFGroundDrawer::CreateGeometryBuffer(const int2 size)
 {
-	assert(drawDeferred);
-
-	// NOTE:
-	//   Lua can toggle drawDeferred and might be the
-	//   first to call us --> initial buffer size must
-	//   be (0, 0) so prevSize != currSize (when !init)
-	static int2 prevBufferSize = GetGeomBufferSize(false);
-	 const int2 currBufferSize = GetGeomBufferSize(true);
-
-	bool ret = false;
-
-	if (!init) {
-		if (prevBufferSize == currBufferSize)
-			return !ret;
-		if (!geomBuffer.IsValid())
-			return ret;
-
-		geomBuffer.DetachAll();
-		glDeleteTextures(GBUFFER_ATTACHMENT_COUNT, &geomBufferTextureIDs[0]);
-	}
-
-	// do not need to update buffer until these
-	// become non-equal again by a window resize
-	// event
-	prevBufferSize = currBufferSize;
-
 	geomBuffer.Bind();
 
 	for (unsigned int n = 0; n < GBUFFER_ATTACHMENT_COUNT; n++) {
@@ -518,10 +494,10 @@ bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 
 		if (n == GBUFFER_ATTACHMENT_ZVALTEX) {
 			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, currBufferSize.x, currBufferSize.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 			geomBufferAttachments[n] = GL_DEPTH_ATTACHMENT_EXT;
 		} else {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, currBufferSize.x, currBufferSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 			geomBufferAttachments[n] = GL_COLOR_ATTACHMENT0_EXT + n;
 		}
 
@@ -534,13 +510,48 @@ bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 	// here and will be GL_NONE implicitly!
 	glDrawBuffers(GBUFFER_ATTACHMENT_COUNT - 1, &geomBufferAttachments[0]);
 
-	// sanity-check the FBO
-	if (geomBuffer.IsValid()) {
-		ret = geomBuffer.CheckStatus("SMF-GBUFFER");
-	}
+	// FBO must have been valid from point of construction
+	// if we reached CreateGeometryBuffer, but CheckStatus
+	// can still invalidate it
+	assert(geomBuffer.IsValid());
+
+	const bool ret = geomBuffer.CheckStatus("SMF-GBUFFER");
 
 	geomBuffer.Unbind();
 	return ret;
+}
+
+bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
+{
+	assert(drawDeferred);
+
+	// NOTE:
+	//   Lua can toggle drawDeferred and might be the
+	//   first to call us --> initial buffer size must
+	//   be (0, 0) so prevSize != currSize (when !init)
+	static int2 prevBufferSize = GetGeomBufferSize(false);
+	 const int2 currBufferSize = GetGeomBufferSize(true);
+
+	// FBO must be valid from point of construction
+	if (!geomBuffer.IsValid())
+		return false;
+
+	if (geomBuffer.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT) {
+		// FBO cannot be complete yet during init!
+		assert(!init);
+
+		// FBO was already initialized (during init
+		// or from Lua) so it will have attachments
+		// --> check if they need to be regenerated
+		// (eg. if a window resize event happened)
+		if (prevBufferSize == currBufferSize)
+			return true;
+
+		geomBuffer.DetachAll();
+		glDeleteTextures(GBUFFER_ATTACHMENT_COUNT, &geomBufferTextureIDs[0]);
+	}
+
+	return (CreateGeometryBuffer(prevBufferSize = currBufferSize));
 }
 
 
