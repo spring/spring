@@ -251,7 +251,7 @@ void SMFRenderStateFFP::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 		glBindTexture(GL_TEXTURE_2D, smfMap->GetShadingTexture());
 		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f, 1.0f, 1.0f, 1.0f); // fix nvidia bug with gltexgen
 
-		if (smfGroundDrawer->drawMode == CBaseGroundDrawer::drawMetal) {
+		if (smfGroundDrawer->GetDrawMode() == CBaseGroundDrawer::drawMetal) {
 			// increase brightness for metal spots
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
@@ -444,7 +444,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3fv(11, &camera->GetPos()[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4fv(13, false, shadowHandler->shadowMatrix);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform1f(31, float(smfGroundDrawer->drawMode == CBaseGroundDrawer::drawMetal) + 1.0f);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform1f(31, float(smfGroundDrawer->GetDrawMode() == CBaseGroundDrawer::drawMetal) + 1.0f);
 
 	// already on the MV stack at this point
 	glLoadIdentity();

@@ -44,7 +44,7 @@ public:
 
 	void SetDeferredDrawMode(bool b) {
 		if ((drawDeferred = b)) {
-			UpdateGeometryBuffer(false);
+			drawDeferred &= UpdateGeometryBuffer(false);
 		}
 	}
 

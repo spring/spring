@@ -81,6 +81,7 @@ public:
 	bool DrawExtraTex() const { return drawMode != drawNormal; }
 	bool DrawDeferred() const { return drawDeferred; }
 
+	BaseGroundDrawMode GetDrawMode() const { return drawMode; }
 	CBaseGroundTextures* GetGroundTextures() { return groundTextures; }
 
 	int2 GetGeomBufferSize(bool allowed) const;
@@ -92,22 +93,19 @@ public:
 	bool wireframe;
 	bool advShading;
 
+	bool drawRadarAndJammer;
+	bool drawLineOfSight;
+
+	bool highResLosTex;
+	bool highResInfoTex;
+	bool highResInfoTexWanted;
+
 	float LODScaleReflection;
 	float LODScaleRefraction;
 	float LODScaleUnitReflection;
 
-	BaseGroundDrawMode drawMode;
-
-	bool drawRadarAndJammer;
-	bool drawLineOfSight;
-
-	int updateTextureState;
-
 	GLuint infoTex;
 	PBO extraTexPBO;
-
-	bool highResInfoTex;
-	bool highResInfoTexWanted;
 
 	const unsigned char* extraTex;
 	const unsigned char* extraTexPal;
@@ -119,9 +117,10 @@ public:
 	int losColor[3];
 	int radarColor[3];
 	int alwaysColor[3];
+
 	static const int losColorScale = 10000;
 
-	bool highResLosTex;
+	int updateTextureState;
 	int extraTextureUpdateRate;
 
 #ifdef USE_GML
@@ -133,6 +132,8 @@ public:
 	CBaseGroundTextures* groundTextures;
 
 protected:
+	BaseGroundDrawMode drawMode;
+
 	bool drawMapEdges;
 	bool drawDeferred;
 };

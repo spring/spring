@@ -59,7 +59,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
 
 	drawMapEdges = configHandler->GetBool("MapBorder");
-	drawDeferred = configHandler->GetBool("AllowDeferredMapRendering");
+	drawDeferred = geomBuffer.IsValid();
 
 	// NOTE:
 	//     advShading can NOT change at runtime if initially false
@@ -523,7 +523,7 @@ bool CSMFGroundDrawer::CreateGeometryBuffer(const int2 size)
 
 bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 {
-	assert(drawDeferred);
+	static const bool drawDeferredAllowed = configHandler->GetBool("AllowDeferredMapRendering");
 
 	// NOTE:
 	//   Lua can toggle drawDeferred and might be the
@@ -531,6 +531,11 @@ bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 	//   be (0, 0) so prevSize != currSize (when !init)
 	static int2 prevBufferSize = GetGeomBufferSize(false);
 	 const int2 currBufferSize = GetGeomBufferSize(true);
+
+	assert(drawDeferred);
+
+	if (!drawDeferredAllowed)
+		return false;
 
 	// FBO must be valid from point of construction
 	if (!geomBuffer.IsValid())

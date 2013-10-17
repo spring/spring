@@ -1141,8 +1141,8 @@ int LuaUnsyncedRead::GetWaterMode(lua_State* L)
 int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-	switch (gd->drawMode) {
+
+	switch (readMap->GetGroundDrawer()->GetDrawMode()) {
 		case CBaseGroundDrawer::drawNormal:             { HSTR_PUSH(L, "normal"            ); break; }
 		case CBaseGroundDrawer::drawHeight:             { HSTR_PUSH(L, "height"            ); break; }
 		case CBaseGroundDrawer::drawMetal:              { HSTR_PUSH(L, "metal"             ); break; }
