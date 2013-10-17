@@ -1080,15 +1080,10 @@ void CUnit::DoWaterDamage()
 		return;
 	if (!pos.IsInBounds())
 		return;
-	if (pos.y > 0.0f)
-		return;
-
-	const int  px            = pos.x / (SQUARE_SIZE * 2);
-	const int  pz            = pos.z / (SQUARE_SIZE * 2);
-	const bool isWaterSquare = (readMap->GetMIPHeightMapSynced(1)[pz * gs->hmapx + px] <= 0.0f);
-
-	if (!isWaterSquare)
-		return;
+	// note: hovercraft could also use a negative waterline
+	// ("hoverline"?) to avoid being damaged but that would
+	// confuse GMTPathController --> damage must be removed
+	// via UnitPreDamaged if not wanted
 	if (!IsInWater())
 		return;
 
