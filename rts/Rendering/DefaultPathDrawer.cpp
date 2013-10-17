@@ -78,9 +78,9 @@ void DefaultPathDrawer::DrawInMiniMap()
 	if (md == NULL)
 		return;
 
-	if (gd->drawMode < CBaseGroundDrawer::drawPathTraversability)
+	if (gd->GetDrawMode() < CBaseGroundDrawer::drawPathTraversability)
 		return;
-	if (gd->drawMode > CBaseGroundDrawer::drawPathCost)
+	if (gd->GetDrawMode() > CBaseGroundDrawer::drawPathCost)
 		return;
 
 	glMatrixMode(GL_PROJECTION);

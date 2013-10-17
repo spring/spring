@@ -943,7 +943,7 @@ void CGuiHandler::SetShowingMetal(bool show)
 		}
 	} else {
 		if (autoShowMetal) {
-			if (gd->drawMode != CBaseGroundDrawer::drawMetal) {
+			if (gd->GetDrawMode() != CBaseGroundDrawer::drawMetal) {
 				gd->SetMetalTexture(readMap->metalMap);
 				showingMetal = true;
 			}
