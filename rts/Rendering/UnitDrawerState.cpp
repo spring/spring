@@ -322,13 +322,11 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 	#define sh shaderHandler
 
 	const GL::LightHandler* lightHandler = ud->GetLightHandler();
-	const std::string shaderNames[2] = {
-		"S3OShaderDefGLSL",
-		"S3OShaderAdvGLSL",
-	};
-	const std::string shaderDefs[2] = {
-		"// #define use_shadows\n",
-		"#define use_shadows\n",
+	const std::string shaderNames[MODEL_SHADER_COUNT - 1] = {
+		"ModelShaderGLSL-NoShadowStandard",
+		"ModelShaderGLSL-ShadowedStandard",
+		"ModelShaderGLSL-NoShadowDeferred",
+		"ModelShaderGLSL-ShadowedDeferred",
 	};
 	const std::string extraDefs =
 		("#define BASE_DYNAMIC_MODEL_LIGHT " + IntToString(lightHandler->GetBaseLight()) + "\n") +
@@ -336,9 +334,10 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
 		modelShaders[n] = sh->CreateProgramObject("[UnitDrawer]", shaderNames[n], false);
-		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", shaderDefs[n] + extraDefs, GL_VERTEX_SHADER));
-		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", shaderDefs[n] + extraDefs, GL_FRAGMENT_SHADER));
+		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", extraDefs, GL_VERTEX_SHADER));
+		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", extraDefs, GL_FRAGMENT_SHADER));
 
+		modelShaders[n]->SetFlag("USE_SHADOWS", int((n & 1) == 1));
 		modelShaders[n]->SetFlag("DEFERRED_MODE", int(n >= MODEL_SHADER_NOSHADOW_DEFERRED));
 
 		modelShaders[n]->Link();

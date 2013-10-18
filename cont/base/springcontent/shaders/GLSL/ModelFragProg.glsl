@@ -1,6 +1,5 @@
 // #define use_normalmapping
 // #define flip_normalmap
-// #define use_shadows
 
 #define textureS3o1 diffuseTex
 #define textureS3o2 shadingTex
@@ -13,7 +12,7 @@
   uniform vec3 sunDiffuse;
   uniform vec3 sunAmbient;
 
-#ifdef use_shadows
+#if (USE_SHADOWS == 1)
   uniform sampler2DShadow shadowTex;
   uniform float shadowDensity;
 #endif
@@ -55,7 +54,7 @@ void main(void)
 	vec3 specular   = textureCube(specularTex, reflectDir).rgb * extraColor.g * 4.0;
 	vec3 reflection = textureCube(reflectTex,  reflectDir).rgb;
 
-#ifdef use_shadows
+#if (USE_SHADOWS == 1)
 	float shadow = shadow2DProj(shadowTex, gl_TexCoord[1]).r;
 	shadow      = 1.0 - (1.0 - shadow) * shadowDensity;
 	vec3 shade  = mix(sunAmbient, light, shadow);

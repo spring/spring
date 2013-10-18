@@ -94,10 +94,9 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 	const GL::LightHandler* lightHandler = smfGroundDrawer->GetLightHandler();
 
-	const std::string names[GLSL_SHADER_COUNT] = {
+	const std::string names[GLSL_SHADER_COUNT - 1] = {
 		"SMFShaderGLSL-Standard",
 		"SMFShaderGLSL-Deferred",
-		""
 	};
 	const std::string defs =
 		("#define SMF_TEXSQUARE_SIZE " + FloatToString(                  SMF_TEXSQUARE_SIZE) + "\n") +

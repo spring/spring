@@ -15,12 +15,11 @@
 
 // #define use_normalmapping
 // #define flip_normalmap
-// #define use_shadows
 
   //uniform mat4 cameraMat;
   //uniform mat4 cameraInv;
   uniform vec3 cameraPos;
-#ifdef use_shadows
+#if (USE_SHADOWS == 1)
   uniform mat4 shadowMatrix;
   uniform vec4 shadowParams;
 #endif
@@ -52,7 +51,7 @@ void main(void)
 	gl_Position    = gl_ProjectionMatrix * vertexWorldPos;
 	cameraDir      = vertexWorldPos.xyz - cameraPos;
 
-#ifdef use_shadows
+#if (USE_SHADOWS == 1)
 	gl_TexCoord[1] = shadowMatrix * vertexWorldPos;
 	gl_TexCoord[1].st = gl_TexCoord[1].st * (inversesqrt( abs(gl_TexCoord[1].st) + shadowParams.z) + shadowParams.w) + shadowParams.xy;
 #endif
