@@ -89,7 +89,6 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	}
 }
 
-
 CSMFGroundDrawer::~CSMFGroundDrawer()
 {
 	// if ROAM _was_ enabled, the configvar is written in CRoamMeshDrawer's dtor
@@ -107,10 +106,8 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 		glDeleteLists(waterPlaneCamInDispList, 1);
 		glDeleteLists(waterPlaneCamOutDispList, 1);
 	}
-
-	lightHandler.Kill();
-	geomBuffer.Kill();
 }
+
 
 
 IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int mode)

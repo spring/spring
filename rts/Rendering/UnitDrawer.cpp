@@ -217,9 +217,6 @@ CUnitDrawer::~CUnitDrawer()
 
 	unitRadarIcons.clear();
 	unsortedUnits.clear();
-
-	lightHandler.Kill();
-	geomBuffer.Kill();
 }
 
 

@@ -18,6 +18,7 @@ namespace GL {
 		};
 
 		GeometryBuffer() { Init(); }
+		~GeometryBuffer() { Kill(); }
 
 		void Init();
 		void Kill();
