@@ -23,6 +23,7 @@ public:
 	virtual void Kill() {}
 
 	virtual bool CanEnable(const CUnitDrawer*) const { return false; }
+	virtual bool CanDrawDeferred() const { return false; }
 
 	virtual void Enable(const CUnitDrawer*, bool) {}
 	virtual void Disable(const CUnitDrawer*, bool) {}
@@ -106,6 +107,7 @@ public:
 	void Kill();
 
 	bool CanEnable(const CUnitDrawer*) const;
+	bool CanDrawDeferred() const { return true; }
 
 	void Enable(const CUnitDrawer*, bool);
 	void Disable(const CUnitDrawer*, bool);

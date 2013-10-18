@@ -432,6 +432,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 	CleanUpUnitDrawing(false);
 	DrawOpaqueShaderUnits((water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE, false);
+
 	farTextureHandler->Draw();
 	DrawUnitIcons(drawReflection);
 
@@ -453,7 +454,12 @@ void CUnitDrawer::DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection
 		return;
 
 	// deferred pass must be executed with GLSL shaders
+	// bail early if the FFP state *is going to be* selected by
+	// SetupForUnitDrawing and if our shader-path happens to be
+	// ARB instead
 	if (!unitDrawerStateSSP->CanEnable(this))
+		return;
+	if (!unitDrawerStateSSP->CanDrawDeferred())
 		return;
 
 	geomBuffer.Bind();
