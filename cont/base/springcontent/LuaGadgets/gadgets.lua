@@ -79,6 +79,7 @@ gadgetHandler = {
   xViewSizeOld = 1,
   yViewSizeOld = 1,
 
+  actionHandler = actionHandler,
   mouseOwner = nil,
 }
 
