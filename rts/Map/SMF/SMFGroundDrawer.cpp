@@ -223,6 +223,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 	if (drawPass == DrawPass::WaterReflection)
 		return;
 	// deferred pass must be executed with GLSL shaders
+	// if the FFP or ARB state was selected, bail early
 	if (!smfRenderState->CanDrawDeferred())
 		return;
 
@@ -267,6 +268,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	if (readMap->HasOnlyVoidWater())
 		return;
 
+	// note: shared by deferred pass
 	SelectRenderState(smfRenderStateSSP->CanEnable(this));
 	UpdateCamRestraints(cam2);
 
