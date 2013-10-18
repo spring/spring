@@ -105,11 +105,11 @@ void main(void)
 	#endif
 
 	#if (DEFERRED_MODE == 1)
-	gl_FragData[0] = vec4(normal, 1.0);
-	gl_FragData[1] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a), extraColor.a * teamColor.a);
+	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4(normal, 1.0);
+	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a), extraColor.a * teamColor.a);
 	// do not premultiply reflection, leave it to the deferred lighting pass
-	// gl_FragData[1] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, extraColor.a * teamColor.a);
-	gl_FragData[2] = vec4(specular, 1.0);
+	// gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, extraColor.a * teamColor.a);
+	gl_FragData[GBUFFER_SPECTEX_IDX] = vec4(specular, 1.0);
 	#else
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor); // fog
 	gl_FragColor.a   = extraColor.a * teamColor.a;
