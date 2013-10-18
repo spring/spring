@@ -356,9 +356,9 @@ void main() {
 	#endif
 
 	#if (DEFERRED_MODE == 1)
-	gl_FragData[0] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
-	gl_FragData[1] = diffuseCol + detailCol;
-	gl_FragData[2] = specularCol;
+	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
+	gl_FragData[GBUFFER_DIFFTEX_IDX] = diffuseCol + detailCol;
+	gl_FragData[GBUFFER_SPECTEX_IDX] = specularCol;
 
 	// linearly transform the eye-space depths, might be more useful?
 	// gl_FragDepth = gl_FragCoord.z / gl_FragCoord.w;

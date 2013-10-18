@@ -124,8 +124,13 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		// both are runtime set, but ATI drivers need them set from the beginning
 		glslShaders[n]->SetFlag("HAVE_SHADOWS", 0);
 		glslShaders[n]->SetFlag("HAVE_INFOTEX", 0);
+
 		// used to strip down the shader for the deferred pass
 		glslShaders[n]->SetFlag("DEFERRED_MODE", int(n != GLSL_SHADER_STANDARD));
+		glslShaders[n]->SetFlag("GBUFFER_NORMTEX_IDX", GL::GeometryBuffer::ATTACHMENT_NORMTEX);
+		glslShaders[n]->SetFlag("GBUFFER_DIFFTEX_IDX", GL::GeometryBuffer::ATTACHMENT_DIFFTEX);
+		glslShaders[n]->SetFlag("GBUFFER_SPECTEX_IDX", GL::GeometryBuffer::ATTACHMENT_SPECTEX);
+		glslShaders[n]->SetFlag("GBUFFER_ZVALTEX_IDX", GL::GeometryBuffer::ATTACHMENT_ZVALTEX);
 
 		glslShaders[n]->Link();
 		glslShaders[n]->SetUniformLocation("diffuseTex");          // idx  0
