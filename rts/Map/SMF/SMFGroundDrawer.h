@@ -4,7 +4,7 @@
 #define _SMF_GROUND_DRAWER_H_
 
 #include "Map/BaseGroundDrawer.h"
-#include "Rendering/GL/FBO.h"
+#include "Rendering/GL/GeometryBuffer.h"
 
 
 class CSMFReadMap;
@@ -31,6 +31,7 @@ public:
 
 	void Draw(const DrawPass::e& drawPass);
 	void DrawShadowPass();
+	void DrawDeferredPass(const DrawPass::e& drawPass);
 
 	void Update();
 	void UpdateSunDir();
@@ -42,7 +43,7 @@ public:
 	void SetupReflDrawPass();
 	void SetupRefrDrawPass();
 
-	void SetDeferredDrawMode(bool b) {
+	void SetDrawDeferredPass(bool b) {
 		if ((drawDeferred = b)) {
 			drawDeferred &= UpdateGeometryBuffer(false);
 		}
@@ -57,21 +58,20 @@ public:
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
 
-	IMeshDrawer* SwitchMeshDrawer(int mode = -1);
+	const GL::GeometryBuffer* GetGeometryBuffer() const { return &geomBuffer; }
+	      GL::GeometryBuffer* GetGeometryBuffer()       { return &geomBuffer; }
 
-	GLuint GetGeomBufferTexture(unsigned int idx) { return geomBufferTextureIDs[idx]; }
+	IMeshDrawer* SwitchMeshDrawer(int mode = -1);
 
 private:
 	void SelectRenderState(bool shaderPath) {
 		smfRenderState = shaderPath? smfRenderStateSSP: smfRenderStateFFP;
 	}
-	void DrawDeferredPass(const DrawPass::e& drawPass);
 
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 	inline void DrawBorder(const DrawPass::e drawPass);
 
-	bool CreateGeometryBuffer(const int2 size);
 	bool UpdateGeometryBuffer(bool init);
 
 protected:
@@ -83,16 +83,12 @@ protected:
 	GLuint waterPlaneCamOutDispList;
 	GLuint waterPlaneCamInDispList;
 
-	GLuint geomBufferTextureIDs[GBUFFER_ATTACHMENT_COUNT];
-	GLenum geomBufferAttachments[GBUFFER_ATTACHMENT_COUNT];
-
 	ISMFRenderState* smfRenderStateSSP; // default shader-driven rendering path
 	ISMFRenderState* smfRenderStateFFP; // fallback shader-less rendering path
 	ISMFRenderState* smfRenderState;
 
 	GL::LightHandler lightHandler;
-
-	FBO geomBuffer;
+	GL::GeometryBuffer geomBuffer;
 };
 
 #endif // _SMF_GROUND_DRAWER_H_

@@ -212,7 +212,7 @@ void SMFRenderStateGLSL::Kill() {
 
 
 bool SMFRenderStateFFP::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const {
-	return (!smfGroundDrawer->advShading || smfGroundDrawer->DrawExtraTex());
+	return (!smfGroundDrawer->UseAdvShading() || smfGroundDrawer->DrawExtraTex());
 }
 
 bool SMFRenderStateARB::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const {
@@ -220,11 +220,11 @@ bool SMFRenderStateARB::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const
 	//     the ARB shaders assume shadows are always on, so
 	//     SMFRenderStateARB can be used only when they are
 	//     in fact enabled (see Init)
-	return (smfGroundDrawer->advShading && !smfGroundDrawer->DrawExtraTex() && shadowHandler->shadowsLoaded);
+	return (smfGroundDrawer->UseAdvShading() && !smfGroundDrawer->DrawExtraTex() && shadowHandler->shadowsLoaded);
 }
 
 bool SMFRenderStateGLSL::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const {
-	return (smfGroundDrawer->advShading);
+	return (smfGroundDrawer->UseAdvShading());
 }
 
 

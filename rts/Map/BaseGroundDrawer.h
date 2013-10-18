@@ -16,6 +16,10 @@ class CHeightLinePalette;
 class CBaseGroundTextures;
 class CCamera;
 
+namespace GL {
+	struct GeometryBuffer;
+};
+
 class CBaseGroundDrawer
 {
 public:
@@ -34,13 +38,6 @@ public:
 		drawPathHeat,
 		drawPathFlow,
 		drawPathCost,
-	};
-	enum {
-		GBUFFER_ATTACHMENT_NORMTEX = 0, // shading (not geometric) normals
-		GBUFFER_ATTACHMENT_DIFFTEX = 1, // diffuse texture fragments
-		GBUFFER_ATTACHMENT_SPECTEX = 2, // specular texture fragments
-		GBUFFER_ATTACHMENT_ZVALTEX = 3,
-		GBUFFER_ATTACHMENT_COUNT   = 4,
 	};
 
 	CBaseGroundDrawer();
@@ -61,11 +58,13 @@ public:
 	virtual int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const = 0;
 
 	virtual void SetDrawMode(BaseGroundDrawMode dm) { drawMode = dm; }
-	virtual void SetDeferredDrawMode(bool) {}
+	virtual void SetDrawDeferredPass(bool) {}
 	virtual bool ToggleMapBorder() { drawMapEdges = !drawMapEdges; return drawMapEdges; }
 
-	virtual GL::LightHandler* GetLightHandler() { return NULL; }
-	virtual GLuint GetGeomBufferTexture(unsigned int idx) { return 0; }
+	virtual const GL::LightHandler* GetLightHandler() const { return NULL; }
+	virtual       GL::LightHandler* GetLightHandler()       { return NULL; }
+	virtual const GL::GeometryBuffer* GetGeometryBuffer() const { return NULL; }
+	virtual       GL::GeometryBuffer* GetGeometryBuffer()       { return NULL; }
 
 	void DrawTrees(bool drawReflection = false) const;
 
@@ -81,18 +80,21 @@ public:
 	bool DrawExtraTex() const { return drawMode != drawNormal; }
 	bool DrawDeferred() const { return drawDeferred; }
 
+	bool UseAdvShading() const { return advShading; }
+	bool WireFrameMode() const { return wireframe; }
+
+	bool& UseAdvShadingRef() { return advShading; }
+	bool& WireFrameModeRef() { return wireframe; }
+
+
 	BaseGroundDrawMode GetDrawMode() const { return drawMode; }
 	CBaseGroundTextures* GetGroundTextures() { return groundTextures; }
 
-	int2 GetGeomBufferSize(bool allowed) const;
 	int2 GetInfoTexSize() const;
 
 	void UpdateCamRestraints(CCamera* camera);
 
 public:
-	bool wireframe;
-	bool advShading;
-
 	bool drawRadarAndJammer;
 	bool drawLineOfSight;
 
@@ -136,6 +138,9 @@ protected:
 
 	bool drawMapEdges;
 	bool drawDeferred;
+
+	bool wireframe;
+	bool advShading;
 };
 
 #endif // _BASE_GROUND_DRAWER_H

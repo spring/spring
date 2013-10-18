@@ -509,13 +509,13 @@ public:
 			"Set or toggle advanced model shading mode") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		static bool canUseShaders = unitDrawer->UseAdvShading();
 
-		static bool canUseShaders = unitDrawer->advShading;
 		if (!canUseShaders)
 			return false;
 
-		SetBoolArg(unitDrawer->advShading, action.GetArgs());
-		LogSystemStatus("model shaders", unitDrawer->advShading);
+		SetBoolArg(unitDrawer->UseAdvShadingRef(), action.GetArgs());
+		LogSystemStatus("model shaders", unitDrawer->UseAdvShading());
 		return true;
 	}
 };
@@ -530,12 +530,13 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		static bool canUseShaders = gd->advShading;
+		static bool canUseShaders = gd->UseAdvShading();
+
 		if (!canUseShaders)
 			return false;
 
-		SetBoolArg(gd->advShading, action.GetArgs());
-		LogSystemStatus("map shaders", gd->advShading);
+		SetBoolArg(gd->UseAdvShadingRef(), action.GetArgs());
+		LogSystemStatus("map shaders", gd->UseAdvShading());
 		return true;
 	}
 };
@@ -2831,11 +2832,11 @@ public:
 			"Enable/Disable drawing of the map as wire-frame (no textures) (Graphic setting)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
 		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		SetBoolArg(gd->wireframe, action.GetArgs());
-		sky->wireframe = gd->wireframe;
-		LogSystemStatus("wireframe map-drawing mode", gd->wireframe);
+		SetBoolArg(gd->WireFrameModeRef(), action.GetArgs());
+		// TODO: make this a separate action
+		// sky->wireframe = gd->WireFrameMode();
+		LogSystemStatus("wireframe map-drawing mode", gd->WireFrameMode());
 		return true;
 	}
 };

@@ -59,7 +59,9 @@ void main(void)
 
 	gl_TexCoord[0].st = gl_MultiTexCoord0.st;
 
+	#if (DEFERRED_MODE == 0)
 	float fogCoord = length(cameraDir.xyz);
 	fogFactor = (gl_Fog.end - fogCoord) * gl_Fog.scale; //gl_Fog.scale := 1.0 / (gl_Fog.end - gl_Fog.start)
 	fogFactor = clamp(fogFactor, 0.0, 1.0);
+	#endif
 }

@@ -79,6 +79,8 @@ CONFIG(int, MaxDynamicModelLights)
 	.minimumValue(0);
 
 CONFIG(bool, AdvUnitShading).defaultValue(true).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
+CONFIG(bool, AllowDeferredModelRendering).defaultValue(true).safemodeValue(false);
+
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
 CONFIG(float, LODScaleReflection).defaultValue(1.0f);
@@ -172,8 +174,13 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	//     unitDrawerStateFFP (in ::Draw) in that special case and it
 	//     does not matter if unitDrawerStateSSP is initialized
 	//     *** except for DrawCloakedUnits
-	advFade = GLEW_NV_vertex_program2;
+	advFading = GLEW_NV_vertex_program2;
 	advShading = (unitDrawerStateSSP->Init(this) && cubeMapHandler->Init());
+	drawDeferred = geomBuffer.Valid();
+
+	if (drawDeferred) {
+		drawDeferred &= UpdateGeometryBuffer(true);
+	}
 }
 
 CUnitDrawer::~CUnitDrawer()
@@ -212,6 +219,7 @@ CUnitDrawer::~CUnitDrawer()
 	unsortedUnits.clear();
 
 	lightHandler.Kill();
+	geomBuffer.Kill();
 }
 
 
@@ -227,6 +235,8 @@ void CUnitDrawer::SetUnitIconDist(float dist)
 	unitIconDist = dist;
 	iconLength = 750 * unitIconDist * unitIconDist;
 }
+
+
 
 void CUnitDrawer::Update()
 {
@@ -270,6 +280,20 @@ void CUnitDrawer::Update()
 
 		sqCamDistToGroundForIcons = overGround * overGround;
 	}
+
+	if (drawDeferred) {
+		drawDeferred &= UpdateGeometryBuffer(false);
+	}
+}
+
+bool CUnitDrawer::UpdateGeometryBuffer(bool init)
+{
+	static const bool drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
+
+	if (!drawDeferredAllowed)
+		return false;
+
+	return (geomBuffer.Update(init, "UNITDRAWER-GBUFFER"));
 }
 
 
@@ -383,31 +407,84 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	const CPlayer* myPlayer = gu->GetMyPlayer();
 	const CUnit* excludeUnit = drawReflection? NULL: myPlayer->fpsController.GetControllee();
 
-	SetupForUnitDrawing();
-
-	// lock on the bins
-	GML_RECMUTEX_LOCK(unit); // Draw
-
-#ifdef USE_GML
-	mt_drawReflection = drawReflection; // these member vars will be accessed by DrawOpaqueUnitMT
-	mt_drawRefraction = drawRefraction;
-	mt_excludeUnit = excludeUnit;
-#endif
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		opaqueModelRenderers[modelType]->PushRenderState();
-		DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
-		opaqueModelRenderers[modelType]->PopRenderState();
+	if (drawDeferred) {
+		DrawDeferredPass(excludeUnit, drawReflection, drawRefraction);
 	}
 
-	CleanUpUnitDrawing();
+	SetupForUnitDrawing(false);
 
-	DrawOpaqueShaderUnits();
+	{
+		GML_RECMUTEX_LOCK(unit); // Draw (lock on the bins)
+
+		#ifdef USE_GML
+		// these member vars will be accessed by DrawOpaqueUnitMT
+		mtDrawReflection = drawReflection;
+		mtDrawRefraction = drawRefraction;
+		mtExcludeUnit = excludeUnit;
+		#endif
+
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			opaqueModelRenderers[modelType]->PushRenderState();
+			DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
+			opaqueModelRenderers[modelType]->PopRenderState();
+		}
+	}
+
+	CleanUpUnitDrawing(false);
+	DrawOpaqueShaderUnits((water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE, false);
 	farTextureHandler->Draw();
 	DrawUnitIcons(drawReflection);
 
 	glDisable(GL_FOG);
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
+}
+
+void CUnitDrawer::DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
+{
+	if (!geomBuffer.Valid())
+		return;
+
+	// water renderers use FBO's for the reflection pass
+	if (drawReflection)
+		return;
+	// water renderers use FBO's for the refraction pass
+	if (drawRefraction)
+		return;
+
+	// deferred pass must be executed with GLSL shaders
+	if (!unitDrawerStateSSP->CanEnable(this))
+		return;
+
+	geomBuffer.Bind();
+
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// this selects the render-state (FFP, SSP); needs to be
+	// enabled and disabled by us (as well as ::Draw) because
+	// custom-shader models do not use it and we want to draw
+	// those deferred as well
+	SetupForUnitDrawing(true);
+
+	{
+		GML_RECMUTEX_LOCK(unit); // Draw (lock on the bins)
+
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			opaqueModelRenderers[modelType]->PushRenderState();
+			DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
+			opaqueModelRenderers[modelType]->PopRenderState();
+		}
+	}
+
+	CleanUpUnitDrawing(true);
+	DrawOpaqueShaderUnits((water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE, true);
+
+	geomBuffer.UnBind();
+
+	#if 0
+	geomBuffer.DrawDebug(geomBuffer.GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));
+	#endif
 }
 
 
@@ -428,10 +505,14 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 		}
 
 		const UnitSet& unitSet = unitBinIt->second;
+
 #ifdef USE_GML
-		bool mt = GML_PROFILER(multiThreadDrawUnit) //FIXME DAMN CRAPPY MACRO!!!
-		if (mt && unitSet.size() >= GML::ThreadCount() * 4) { // small unitSets will add a significant overhead
-			gmlProcessor->Work( // Profiler results, 4 threads, one single large unitSet: Approximately 20% faster with multiThreadDrawUnit
+		const bool mt = GML_PROFILER(multiThreadDrawUnit) //FIXME DAMN CRAPPY MACRO!!!
+
+		// small unitSets will add a significant overhead
+		// Profiler results, 4 threads, one single large unitSet: Approximately 20% faster with multiThreadDrawUnit
+		if (mt && unitSet.size() >= GML::ThreadCount() * 4) {
+			gmlProcessor->Work(
 				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitMT, this, GML::ThreadCount(),
 				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
 			);
@@ -505,7 +586,7 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 /******************************************************************************/
 /******************************************************************************/
 
-static void DrawLuaMatBins(LuaMatType type)
+static void DrawLuaMatBins(LuaMatType type, bool deferredPass)
 {
 	const LuaMatBinSet& bins = luaMatHandler.GetBins(type);
 	if (bins.empty()) {
@@ -530,7 +611,7 @@ static void DrawLuaMatBins(LuaMatType type)
 	LuaMatBinSet::const_iterator it;
 	for (it = bins.begin(); it != bins.end(); ++it) {
 		LuaMatBin* bin = *it;
-		bin->Execute(*currMat);
+		bin->Execute(*currMat, deferredPass);
 		currMat = bin;
 
 		const GML_VECTOR<CUnit*>& units = bin->GetUnits();
@@ -553,7 +634,7 @@ static void DrawLuaMatBins(LuaMatType type)
 		}
 	}
 
-	LuaMaterial::defMat.Execute(*currMat);
+	LuaMaterial::defMat.Execute(*currMat, deferredPass);
 	luaMatHandler.ClearBins(type);
 
 	glPopAttrib();
@@ -593,87 +674,83 @@ static void CleanUpShadowDrawing()
 /******************************************************************************/
 
 #define ud unitDrawer
-static void SetupOpaque3DO() {
-	ud->SetupForUnitDrawing();
+static void SetupOpaque3DO(bool deferredPass) {
+	ud->SetupForUnitDrawing(deferredPass);
 	ud->GetOpaqueModelRenderer(MODELTYPE_3DO)->PushRenderState();
 }
-static void ResetOpaque3DO() {
+static void ResetOpaque3DO(bool deferredPass) {
 	ud->GetOpaqueModelRenderer(MODELTYPE_3DO)->PopRenderState();
-	ud->CleanUpUnitDrawing();
+	ud->CleanUpUnitDrawing(deferredPass);
 }
-static void SetupOpaqueS3O() {
-	ud->SetupForUnitDrawing();
+static void SetupOpaqueS3O(bool deferredPass) {
+	ud->SetupForUnitDrawing(deferredPass);
 	ud->GetOpaqueModelRenderer(MODELTYPE_S3O)->PushRenderState();
 }
-static void ResetOpaqueS3O() {
+static void ResetOpaqueS3O(bool deferredPass) {
 	ud->GetOpaqueModelRenderer(MODELTYPE_S3O)->PopRenderState();
-	ud->CleanUpUnitDrawing();
+	ud->CleanUpUnitDrawing(deferredPass);
 }
 
-static void SetupAlpha3DO() {
+static void SetupAlpha3DO(bool) {
 	ud->SetupForGhostDrawing();
 	ud->GetCloakedModelRenderer(MODELTYPE_3DO)->PushRenderState();
 }
-static void ResetAlpha3DO() {
+static void ResetAlpha3DO(bool) {
 	ud->GetCloakedModelRenderer(MODELTYPE_3DO)->PopRenderState();
 	ud->CleanUpGhostDrawing();
 }
-static void SetupAlphaS3O() {
+static void SetupAlphaS3O(bool) {
 	ud->SetupForGhostDrawing();
 	ud->GetCloakedModelRenderer(MODELTYPE_S3O)->PushRenderState();
 }
-static void ResetAlphaS3O() {
+static void ResetAlphaS3O(bool) {
 	ud->GetCloakedModelRenderer(MODELTYPE_S3O)->PopRenderState();
 	ud->CleanUpGhostDrawing();
 }
 #undef ud
 
-static void SetupShadow3DO() { SetupShadowDrawing();   }
-static void ResetShadow3DO() { CleanUpShadowDrawing(); }
-static void SetupShadowS3O() { SetupShadowDrawing();   }
-static void ResetShadowS3O() { CleanUpShadowDrawing(); }
+static void SetupShadow3DO(bool) { SetupShadowDrawing();   }
+static void ResetShadow3DO(bool) { CleanUpShadowDrawing(); }
+static void SetupShadowS3O(bool) { SetupShadowDrawing();   }
+static void ResetShadowS3O(bool) { CleanUpShadowDrawing(); }
+
 
 
 /******************************************************************************/
 
-void CUnitDrawer::DrawOpaqueShaderUnits()
+void CUnitDrawer::DrawOpaqueShaderUnits(unsigned int matType, bool deferredPass)
 {
 	luaMatHandler.setup3doShader = SetupOpaque3DO;
 	luaMatHandler.reset3doShader = ResetOpaque3DO;
 	luaMatHandler.setupS3oShader = SetupOpaqueS3O;
 	luaMatHandler.resetS3oShader = ResetOpaqueS3O;
 
-	const LuaMatType matType = (water->DrawReflectionPass())?
-		LUAMAT_OPAQUE_REFLECT:
-		LUAMAT_OPAQUE;
-
-	DrawLuaMatBins(matType);
+	DrawLuaMatBins(LuaMatType(matType), deferredPass);
 }
 
 
-void CUnitDrawer::DrawCloakedShaderUnits()
+void CUnitDrawer::DrawCloakedShaderUnits(unsigned int matType)
 {
 	luaMatHandler.setup3doShader = SetupAlpha3DO;
 	luaMatHandler.reset3doShader = ResetAlpha3DO;
 	luaMatHandler.setupS3oShader = SetupAlphaS3O;
 	luaMatHandler.resetS3oShader = ResetAlphaS3O;
 
-	const LuaMatType matType = (water->DrawReflectionPass())?
-		LUAMAT_ALPHA_REFLECT:
-		LUAMAT_ALPHA;
-
-	DrawLuaMatBins(matType);
+	// FIXME: deferred shading and transparency is a PITA
+	DrawLuaMatBins(LuaMatType(matType), false);
 }
 
 
-void CUnitDrawer::DrawShadowShaderUnits()
+void CUnitDrawer::DrawShadowShaderUnits(unsigned int matType)
 {
 	luaMatHandler.setup3doShader = SetupShadow3DO;
 	luaMatHandler.reset3doShader = ResetShadow3DO;
 	luaMatHandler.setupS3oShader = SetupShadowS3O;
 	luaMatHandler.resetS3oShader = ResetShadowS3O;
 
-	DrawLuaMatBins(LUAMAT_SHADOW);
+	// we neither want nor need a deferred shadow
+	// pass for custom- or default-shader models!
+	DrawLuaMatBins(LuaMatType(matType), false);
 }
 
 
@@ -820,7 +897,7 @@ void CUnitDrawer::DrawShadowPass()
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
-	DrawShadowShaderUnits();
+	DrawShadowShaderUnits(LUAMAT_SHADOW);
 }
 
 
@@ -945,7 +1022,7 @@ void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 	advShading = advShading && !disableAdvShading;
 
 	if (advShading) {
-		SetupForUnitDrawing();
+		SetupForUnitDrawing(false);
 		glDisable(GL_ALPHA_TEST);
 	} else {
 		SetupForGhostDrawing();
@@ -963,7 +1040,7 @@ void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 		}
 
 		if (advShading) {
-			CleanUpUnitDrawing();
+			CleanUpUnitDrawing(false);
 			glEnable(GL_ALPHA_TEST);
 		} else {
 			CleanUpGhostDrawing();
@@ -972,7 +1049,7 @@ void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 		advShading = oldAdvShading;
 
 		// shader rendering
-		DrawCloakedShaderUnits();
+		DrawCloakedShaderUnits((water->DrawReflectionPass())? LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA);
 	}
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1157,7 +1234,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 
 
-void CUnitDrawer::SetupForUnitDrawing()
+void CUnitDrawer::SetupForUnitDrawing(bool deferredPass)
 {
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
@@ -1166,15 +1243,21 @@ void CUnitDrawer::SetupForUnitDrawing()
 	glEnable(GL_ALPHA_TEST);
 
 	SelectRenderState(unitDrawerStateSSP->CanEnable(this));
-	unitDrawerState->Enable(this);
+	unitDrawerState->Enable(this, deferredPass);
+
+	// NOTE:
+	//   when deferredPass is true we MUST be able to use unitDrawerStateSSP
+	//   all calling code (reached from DrawDeferredPass) should ensure this
+	//   is the case
+	assert(!deferredPass || unitDrawerState == unitDrawerStateSSP);
 }
 
-void CUnitDrawer::CleanUpUnitDrawing() const
+void CUnitDrawer::CleanUpUnitDrawing(bool deferredPass) const
 {
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_ALPHA_TEST);
 
-	unitDrawerState->Disable(this);
+	unitDrawerState->Disable(this, deferredPass);
 }
 
 
@@ -1308,16 +1391,17 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 
 		const LuaMaterial& mat = (LuaMaterial&) *lodMat->matref.GetBin();
 
-		mat.Execute(LuaMaterial::defMat);
+		// NOTE: doesn't make sense to supported deferred mode for this?
+		mat.Execute(LuaMaterial::defMat, false);
 
 		lodMat->uniforms.Execute(unit);
 
 		SetTeamColour(unit->team);
 		DrawUnitRawWithLists(unit, lodMat->preDisplayList, lodMat->postDisplayList);
 
-		LuaMaterial::defMat.Execute(mat);
+		LuaMaterial::defMat.Execute(mat, false);
 	} else {
-		SetupForUnitDrawing();
+		SetupForUnitDrawing(false);
 		opaqueModelRenderers[MDL_TYPE(unit)]->PushRenderState();
 
 		if (MDL_TYPE(unit) != MODELTYPE_3DO) {
@@ -1328,7 +1412,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 		DrawUnitRaw(unit);
 
 		opaqueModelRenderers[MDL_TYPE(unit)]->PopRenderState();
-		CleanUpUnitDrawing();
+		CleanUpUnitDrawing(false);
 	}
 
 	globalRendering->drawdebug = origDebug;
