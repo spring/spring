@@ -495,13 +495,6 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 }
 
 
-int2 CBaseGroundDrawer::GetGeomBufferSize(bool allowed) const
-{
-	if (allowed)
-		return (int2(globalRendering->viewSizeX, globalRendering->viewSizeY));
-
-	return (int2(0, 0));
-}
 
 int2 CBaseGroundDrawer::GetInfoTexSize() const
 {

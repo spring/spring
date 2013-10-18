@@ -126,9 +126,8 @@ void CubeMapHandler::Free() {
 
 void CubeMapHandler::UpdateReflectionTexture()
 {
-	if (!unitDrawer->advShading) {
+	if (!unitDrawer->UseAdvShading())
 		return;
-	}
 
 	switch (currReflectionFace++) {
 		case 0: {
@@ -225,10 +224,10 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 }
 
 
-void CubeMapHandler::UpdateSpecularTexture() {
-	if (!unitDrawer->advShading) {
+void CubeMapHandler::UpdateSpecularTexture()
+{
+	if (!unitDrawer->UseAdvShading())
 		return;
-	}
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTexID);
 

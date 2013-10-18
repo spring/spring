@@ -41,7 +41,7 @@ class LuaMatShader {
 
 		void Finalize();
 
-		void Execute(const LuaMatShader& prev) const;
+		void Execute(const LuaMatShader& prev, bool deferredPass) const;
 
 		void Print(const string& indent) const;
 
@@ -91,7 +91,7 @@ class LuaMaterial {
 
 		void Finalize();
 
-		void Execute(const LuaMaterial& prev) const;
+		void Execute(const LuaMaterial& prev, bool deferredPass) const;
 
 		void Print(const string& indent) const;
 
@@ -109,7 +109,10 @@ class LuaMaterial {
 	public:
 		LuaMatType type;
 		int order; // for manually adjusting rendering order
-		LuaMatShader shader;
+
+		LuaMatShader standardShader;
+		LuaMatShader deferredShader;
+
 		int texCount;
 		LuaMatTexture textures[LuaMatTexture::maxTexUnits];
 
@@ -190,10 +193,10 @@ class LuaMatHandler {
 		void PrintAllBins(const string& indent) const;
 
 	public:
-		void (*setup3doShader)(void);
-		void (*reset3doShader)(void);
-		void (*setupS3oShader)(void);
-		void (*resetS3oShader)(void);
+		void (*setup3doShader)(bool);
+		void (*reset3doShader)(bool);
+		void (*setupS3oShader)(bool);
+		void (*resetS3oShader)(bool);
 
 	private:
 		LuaMatHandler();

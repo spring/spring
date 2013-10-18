@@ -1117,7 +1117,7 @@ int LuaUnsyncedRead::HaveAdvShading(lua_State* L)
 	if (unitDrawer == NULL) {
 		return 0;
 	}
-	lua_pushboolean(L, unitDrawer->advShading);
+	lua_pushboolean(L, unitDrawer->UseAdvShading());
 	return 1;
 }
 

@@ -157,27 +157,27 @@ int LuaMatShader::Compare(const LuaMatShader& a, const LuaMatShader& b)
 }
 
 
-void LuaMatShader::Execute(const LuaMatShader& prev) const
+void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 {
 	if (type != prev.type) {
 		if (prev.type == LUASHADER_GL) {
 			glUseProgram(0);
 		}
 		else if (prev.type == LUASHADER_3DO) {
-			if (luaMatHandler.reset3doShader) { luaMatHandler.reset3doShader(); }
+			if (luaMatHandler.reset3doShader) { luaMatHandler.reset3doShader(deferredPass); }
 		}
 		else if (prev.type == LUASHADER_S3O) {
-			if (luaMatHandler.resetS3oShader) { luaMatHandler.resetS3oShader(); }
+			if (luaMatHandler.resetS3oShader) { luaMatHandler.resetS3oShader(deferredPass); }
 		}
 
 		if (type == LUASHADER_GL) {
 			glUseProgram(openglID);
 		}
 		else if (type == LUASHADER_3DO) {
-			if (luaMatHandler.setup3doShader) { luaMatHandler.setup3doShader(); }
+			if (luaMatHandler.setup3doShader) { luaMatHandler.setup3doShader(deferredPass); }
 		}
 		else if (type == LUASHADER_S3O) {
-			if (luaMatHandler.setupS3oShader) { luaMatHandler.setupS3oShader(); }
+			if (luaMatHandler.setupS3oShader) { luaMatHandler.setupS3oShader(deferredPass); }
 		}
 	}
 	else if (type == LUASHADER_GL) {
@@ -212,7 +212,8 @@ const LuaMaterial LuaMaterial::defMat;
 
 void LuaMaterial::Finalize()
 {
-	shader.Finalize();
+	standardShader.Finalize();
+	deferredShader.Finalize();
 
 	texCount = 0;
 	for (int t = 0; t < LuaMatTexture::maxTexUnits; t++) {
@@ -226,7 +227,7 @@ void LuaMaterial::Finalize()
 }
 
 
-void LuaMaterial::Execute(const LuaMaterial& prev) const
+void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 {
 	if (prev.postList != 0) {
 		glCallList(prev.postList);
@@ -235,7 +236,11 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 		glCallList(preList);
 	}
 
-	shader.Execute(prev.shader);
+	if (deferredPass) {
+		deferredShader.Execute(prev.deferredShader, true);
+	} else {
+		standardShader.Execute(prev.standardShader, false);
+	}
 
 	//FIXME add projection matrices!!!
 	if (cameraLoc >= 0) {
@@ -303,10 +308,15 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 		return (a.order < b.order) ? -1 : +1;
 	}
 
-	cmp = LuaMatShader::Compare(a.shader, b.shader);
-	if (cmp != 0) {
+	cmp = LuaMatShader::Compare(a.standardShader, b.standardShader);
+
+	if (cmp != 0)
 		return cmp;
-	}
+
+	cmp = LuaMatShader::Compare(a.deferredShader, b.deferredShader);
+
+	if (cmp != 0)
+		return cmp;
 
 	const int maxTex = std::min(a.texCount, b.texCount);
 	for (int t = 0; t < maxTex; t++) {
@@ -384,7 +394,8 @@ void LuaMaterial::Print(const string& indent) const
 
 	LOG("%s%s", indent.c_str(), GetMatTypeName(type));
 	LOG("%sorder = %i", indent.c_str(), order);
-	shader.Print(indent);
+	standardShader.Print(indent);
+	deferredShader.Print(indent);
 	LOG("%stexCount = %i", indent.c_str(), texCount);
 	for (int t = 0; t < texCount; t++) {
 		char buf[32];
