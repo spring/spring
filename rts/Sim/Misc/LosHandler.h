@@ -109,13 +109,17 @@ public:
 	void MoveUnit(CUnit* unit, bool redoCurrent);
 	void FreeInstance(LosInstance* instance);
 
-	inline bool InLos(const CWorldObject* object, int allyTeam) const {
-		if (object->alwaysVisible || gs->globalLOS[allyTeam])
+	inline bool InLos(const CWorldObject* obj, int allyTeam) const {
+		if (obj->alwaysVisible || gs->globalLOS[allyTeam])
 			return true;
-		if (object->useAirLos)
-			return (InAirLos(object->pos, allyTeam));
+		if (obj->useAirLos)
+			return (InAirLos(obj->pos, allyTeam) || InAirLos(obj->pos + obj->speed, allyTeam));
 
-		return (InLos(object->pos, allyTeam));
+		// #4060
+		// test visibility at two positions, mostly for long beam-projectiles
+		//   slow-moving objects will be visible no earlier or later than before on average
+		//   fast-moving objects will be visible at most one SU before they otherwise would
+		return (InLos(obj->pos, allyTeam) || InLos(obj->pos + obj->speed, allyTeam));
 	}
 
 	inline bool InLos(const CUnit* unit, int allyTeam) const {
@@ -130,7 +134,7 @@ public:
 		if (unit->alwaysVisible || gs->globalLOS[allyTeam])
 			return true;
 		if (unit->useAirLos)
-			return (InAirLos(unit->pos, allyTeam));
+			return (InAirLos(unit->pos, allyTeam) || InAirLos(unit->pos + unit->speed, allyTeam));
 
 		if (requireSonarUnderWater) {
 			if (unit->IsUnderWater() && !radarHandler->InRadar(unit, allyTeam)) {
@@ -138,18 +142,20 @@ public:
 			}
 		}
 
-		return (InLos(unit->pos, allyTeam));
+		return (InLos(unit->pos, allyTeam) || InLos(unit->pos + unit->speed, allyTeam));
 	}
 
 	inline bool InLos(const float3& pos, int allyTeam) const {
-		if (gs->globalLOS[allyTeam]) { return true; }
+		if (gs->globalLOS[allyTeam])
+			return true;
 		const int gx = pos.x * invLosDiv;
 		const int gz = pos.z * invLosDiv;
 		return (losMaps[allyTeam].At(gx, gz) != 0);
 	}
 
 	inline bool InAirLos(const float3& pos, int allyTeam) const {
-		if (gs->globalLOS[allyTeam]) { return true; }
+		if (gs->globalLOS[allyTeam])
+			return true;
 		const int gx = pos.x * invAirDiv;
 		const int gz = pos.z * invAirDiv;
 		return (airLosMaps[allyTeam].At(gx, gz) != 0);
@@ -157,13 +163,15 @@ public:
 
 
 	inline bool InLos(int hmx, int hmz, int allyTeam) const {
-		if (gs->globalLOS[allyTeam]) { return true; }
+		if (gs->globalLOS[allyTeam])
+			return true;
 		const int gx = hmx * SQUARE_SIZE * invLosDiv;
 		const int gz = hmz * SQUARE_SIZE * invLosDiv;
 		return (losMaps[allyTeam].At(gx, gz) != 0);
 	}
 	inline bool InAirLos(int hmx, int hmz, int allyTeam) const {
-		if (gs->globalLOS[allyTeam]) { return true; }
+		if (gs->globalLOS[allyTeam])
+			return true;
 		const int gx = hmx * SQUARE_SIZE * invAirDiv;
 		const int gz = hmz * SQUARE_SIZE * invAirDiv;
 		return (airLosMaps[allyTeam].At(gx, gz) != 0);
