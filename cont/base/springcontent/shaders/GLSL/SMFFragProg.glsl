@@ -298,7 +298,7 @@ void main() {
 		// apply self-illumination aka. glow, not masked by shadows
 		emissionCol = texture2D(lightEmissionTex, specTexCoords);
 
-		#if (DEFERRED_MODE == 0
+		#if (DEFERRED_MODE == 0)
 		gl_FragColor.rgb = gl_FragColor.rgb * (1.0 - emissionCol.a) + emissionCol.rgb;
 		#endif
 	}
