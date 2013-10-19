@@ -244,6 +244,7 @@ void main() {
 	vec4 diffuseCol = texture2D(diffuseTex, diffTexCoords);
 	vec4 detailCol = GetDetailTextureColor(specTexCoords);
 	vec4 specularCol = vec4(0.5, 0.5, 0.5, 1.0);
+	vec4 emissionCol = vec4(0.0, 0.0, 0.0, 0.0);
 
 	#if (DEFERRED_MODE == 0 && SMF_SKY_REFLECTIONS == 1)
 	{
@@ -292,12 +293,14 @@ void main() {
 	}
 	#endif
 
-	#if (DEFERRED_MODE == 0 && SMF_LIGHT_EMISSION == 1)
+	#if (SMF_LIGHT_EMISSION == 1)
 	{
-		vec4 lightEmissionCol = texture2D(lightEmissionTex, specTexCoords);
-		vec3 scaledFragmentCol = gl_FragColor.rgb * (1.0 - lightEmissionCol.a);
+		// apply self-illumination aka. glow, not masked by shadows
+		emissionCol = texture2D(lightEmissionTex, specTexCoords);
 
-		gl_FragColor.rgb = scaledFragmentCol + lightEmissionCol.rgb;
+		#if (DEFERRED_MODE == 0
+		gl_FragColor.rgb = gl_FragColor.rgb * (1.0 - emissionCol.a) + emissionCol.rgb;
+		#endif
 	}
 	#endif
 
@@ -359,6 +362,7 @@ void main() {
 	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
 	gl_FragData[GBUFFER_DIFFTEX_IDX] = diffuseCol + detailCol;
 	gl_FragData[GBUFFER_SPECTEX_IDX] = specularCol;
+	gl_FragData[GBUFFER_EMITTEX_IDX] = emissionCol;
 
 	// linearly transform the eye-space depths, might be more useful?
 	// gl_FragDepth = gl_FragCoord.z / gl_FragCoord.w;
