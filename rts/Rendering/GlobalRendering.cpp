@@ -338,7 +338,7 @@ void CGlobalRendering::UpdateWindowGeometry() {
 	winPosY = 0;
 }
 
-void CGlobalRendering::UpdateViewPortGeometry() {
+void CGlobalRendering::UpdateViewPortGeometry(bool windowExposed) {
 	// NOTE: viewPosY is not currently used (always 0)
 	if (!dualScreenMode) {
 		viewSizeX = winSizeX;
@@ -346,6 +346,12 @@ void CGlobalRendering::UpdateViewPortGeometry() {
 		viewPosX = 0;
 		viewPosY = 0;
 	} else {
+		// if window was exposed in full-screen mode then
+		// this would divide its size in half (cyclically)
+		// --> keep the old params
+		if (fullScreen && windowExposed)
+			return;
+
 		viewSizeX = winSizeX / 2;
 		viewSizeY = winSizeY;
 

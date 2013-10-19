@@ -23,7 +23,7 @@ public:
 	void SetViewSize(int vsx, int vsy);
 	void SetDualScreenParams();
 	void UpdateWindowGeometry();
-	void UpdateViewPortGeometry();
+	void UpdateViewPortGeometry(bool windowExposed);
 	void UpdatePixelGeometry();
 
 

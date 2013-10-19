@@ -448,12 +448,7 @@ bool SpringApp::GetDisplayGeometry()
 #ifndef HEADLESS
 	//! not really needed, but makes it safer against unknown windowmanager behaviours
 	if (globalRendering->fullScreen) {
-		globalRendering->screenSizeX = globalRendering->viewSizeX;
-		globalRendering->screenSizeY = globalRendering->viewSizeY;
-		globalRendering->winSizeX = globalRendering->screenSizeX;
-		globalRendering->winSizeY = globalRendering->screenSizeY;
-		globalRendering->winPosX = 0;
-		globalRendering->winPosY = 0;
+		globalRendering->UpdateWindowGeometry();
 		return true;
 	}
 
@@ -636,21 +631,22 @@ void SpringApp::SaveWindowPosition()
 }
 
 
-void SpringApp::SetupViewportGeometry()
+void SpringApp::SetupViewportGeometry(bool windowExposed)
 {
 	if (!GetDisplayGeometry()) {
+		// note: if GDG returns false this might not have been called
+		// guaranteed in fullscreen-mode when it returns (true) early
 		globalRendering->UpdateWindowGeometry();
 	}
 
 	globalRendering->SetDualScreenParams();
-	globalRendering->UpdateViewPortGeometry();
+	globalRendering->UpdateViewPortGeometry(windowExposed);
 	globalRendering->UpdatePixelGeometry();
 
-	agui::gui->UpdateScreenGeometry(
-			globalRendering->viewSizeX,
-			globalRendering->viewSizeY,
-			globalRendering->viewPosX,
-			(globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY) );
+	const int vpx = globalRendering->viewPosX;
+	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
+
+	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
 }
 
 
@@ -661,7 +657,7 @@ void SpringApp::InitOpenGL()
 {
 	VSync.Init();
 
-	SetupViewportGeometry();
+	SetupViewportGeometry(false);
 	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	gluPerspective(45.0f,  globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
 
@@ -1130,7 +1126,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			glClearStencil(0);
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
-			SetupViewportGeometry();
+			SetupViewportGeometry(true);
 
 			break;
 		}

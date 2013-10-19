@@ -36,7 +36,7 @@ protected:
 	bool UpdateSim(CGameController *ac);
 
 	static bool GetDisplayGeometry();
-	static void SetupViewportGeometry();
+	static void SetupViewportGeometry(bool windowExposed);
 	static void RestoreWindowPosition();
 	static void SaveWindowPosition();
 
