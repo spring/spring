@@ -296,6 +296,9 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 		else if (image == "$map_gb_st" || image == "$map_gbuffer_spectex") {
 			texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_SPECTEX;
 		}
+		else if (image == "$map_gb_et" || image == "$map_gbuffer_emittex") {
+			texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_EMITTEX;
+		}
 		else if (image == "$map_gb_zt" || image == "$map_gbuffer_zvaltex") {
 			texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_ZVALTEX;
 		}
@@ -308,6 +311,9 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 		}
 		else if (image == "$mdl_gb_st" || image == "$model_gbuffer_spectex") {
 			texUnit.type = LuaMatTexture::LUATEX_MODEL_GBUFFER_SPECTEX;
+		}
+		else if (image == "$mdl_gb_et" || image == "$model_gbuffer_emittex") {
+			texUnit.type = LuaMatTexture::LUATEX_MODEL_GBUFFER_EMITTEX;
 		}
 		else if (image == "$mdl_gb_zt" || image == "$model_gbuffer_zvaltex") {
 			texUnit.type = LuaMatTexture::LUATEX_MODEL_GBUFFER_ZVALTEX;
@@ -418,6 +424,9 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_MAP_GBUFFER_SPECTEX: {
 			texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_SPECTEX);
 		} break;
+		case LUATEX_MAP_GBUFFER_EMITTEX: {
+			texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_EMITTEX);
+		} break;
 		case LUATEX_MAP_GBUFFER_ZVALTEX: {
 			texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_ZVALTEX);
 		} break;
@@ -430,6 +439,9 @@ GLuint LuaMatTexture::GetTextureID() const
 		} break;
 		case LUATEX_MODEL_GBUFFER_SPECTEX: {
 			texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_SPECTEX);
+		} break;
+		case LUATEX_MODEL_GBUFFER_EMITTEX: {
+			texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_EMITTEX);
 		} break;
 		case LUATEX_MODEL_GBUFFER_ZVALTEX: {
 			texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_ZVALTEX);
@@ -482,6 +494,7 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_MAP_GBUFFER_NORMTEX:
 		case LUATEX_MAP_GBUFFER_DIFFTEX:
 		case LUATEX_MAP_GBUFFER_SPECTEX:
+		case LUATEX_MAP_GBUFFER_EMITTEX:
 		case LUATEX_MAP_GBUFFER_ZVALTEX: {
 			texType = GL_TEXTURE_2D;
 		} break;
@@ -489,6 +502,7 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_MODEL_GBUFFER_NORMTEX:
 		case LUATEX_MODEL_GBUFFER_DIFFTEX:
 		case LUATEX_MODEL_GBUFFER_SPECTEX:
+		case LUATEX_MODEL_GBUFFER_EMITTEX:
 		case LUATEX_MODEL_GBUFFER_ZVALTEX: {
 			texType = GL_TEXTURE_2D;
 		} break;
@@ -596,6 +610,7 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_MAP_GBUFFER_NORMTEX:
 		case LUATEX_MAP_GBUFFER_DIFFTEX:
 		case LUATEX_MAP_GBUFFER_SPECTEX:
+		case LUATEX_MAP_GBUFFER_EMITTEX:
 		case LUATEX_MAP_GBUFFER_ZVALTEX: {
 			return (readMap->GetGroundDrawer()->GetGeometryBuffer()->GetWantedSize(readMap->GetGroundDrawer()->DrawDeferred()));
 		}
@@ -603,6 +618,7 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_MODEL_GBUFFER_NORMTEX:
 		case LUATEX_MODEL_GBUFFER_DIFFTEX:
 		case LUATEX_MODEL_GBUFFER_SPECTEX:
+		case LUATEX_MODEL_GBUFFER_EMITTEX:
 		case LUATEX_MODEL_GBUFFER_ZVALTEX: {
 			return (unitDrawer->GetGeometryBuffer()->GetWantedSize(unitDrawer->DrawDeferred()));
 		}
@@ -676,11 +692,13 @@ void LuaMatTexture::Print(const string& indent) const
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_NORMTEX);
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_DIFFTEX);
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_SPECTEX);
+		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_EMITTEX);
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_ZVALTEX);
 
 		STRING_CASE(typeName, LUATEX_MODEL_GBUFFER_NORMTEX);
 		STRING_CASE(typeName, LUATEX_MODEL_GBUFFER_DIFFTEX);
 		STRING_CASE(typeName, LUATEX_MODEL_GBUFFER_SPECTEX);
+		STRING_CASE(typeName, LUATEX_MODEL_GBUFFER_EMITTEX);
 		STRING_CASE(typeName, LUATEX_MODEL_GBUFFER_ZVALTEX);
 		#undef STRING_CASE
 	}

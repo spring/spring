@@ -110,6 +110,7 @@ void main(void)
 	// do not premultiply reflection, leave it to the deferred lighting pass
 	// gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, extraColor.a * teamColor.a);
 	gl_FragData[GBUFFER_SPECTEX_IDX] = vec4(specular, 1.0);
+	gl_FragData[GBUFFER_EMITTEX_IDX] = vec4(extraColor.r, extraColor.r, extraColor.r, 1.0);
 	#else
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor); // fog
 	gl_FragColor.a   = extraColor.a * teamColor.a;

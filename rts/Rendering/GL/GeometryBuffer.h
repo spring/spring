@@ -13,8 +13,9 @@ namespace GL {
 			ATTACHMENT_NORMTEX = 0, // shading (not geometric) normals
 			ATTACHMENT_DIFFTEX = 1, // diffuse texture fragments
 			ATTACHMENT_SPECTEX = 2, // specular texture fragments
-			ATTACHMENT_ZVALTEX = 3, // depth-values
-			ATTACHMENT_COUNT   = 4,
+			ATTACHMENT_EMITTEX = 3, // emissive texture fragments (RESERVED)
+			ATTACHMENT_ZVALTEX = 4, // fragment depth-values (must be last)
+			ATTACHMENT_COUNT   = 5,
 		};
 
 		GeometryBuffer() { Init(); }
