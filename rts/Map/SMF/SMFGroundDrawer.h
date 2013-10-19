@@ -5,6 +5,7 @@
 
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GL/GeometryBuffer.h"
+#include "Rendering/GL/LightHandler.h"
 
 
 class CSMFReadMap;

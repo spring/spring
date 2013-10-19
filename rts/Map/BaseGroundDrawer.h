@@ -6,7 +6,6 @@
 #include <map>
 #include "MapDrawPassTypes.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/LightHandler.h"
 #include "Rendering/GL/PBO.h"
 #include "System/float3.h"
 #include "System/type2.h"
@@ -18,6 +17,7 @@ class CCamera;
 
 namespace GL {
 	struct GeometryBuffer;
+	struct LightHandler;
 };
 
 class CBaseGroundDrawer
