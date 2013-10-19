@@ -115,7 +115,6 @@ public:
 		if (obj->useAirLos)
 			return (InAirLos(obj->pos, allyTeam) || InAirLos(obj->pos + obj->speed, allyTeam));
 
-		// #4060
 		// test visibility at two positions, mostly for long beam-projectiles
 		//   slow-moving objects will be visible no earlier or later than before on average
 		//   fast-moving objects will be visible at most one SU before they otherwise would
