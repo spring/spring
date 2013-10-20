@@ -5322,18 +5322,13 @@ int LuaSyncedRead::GetUnitPiecePosDir(lua_State* L)
 	float3 pos;
 	localModel->GetRawEmitDirPos(piece, pos, dir);
 
-	pos =
-		(unit->frontdir * pos.z) +
-		(unit->updir    * pos.y) +
-		(unit->rightdir * pos.x);
-	dir =
-		(unit->frontdir * dir.z) +
-		(unit->updir    * dir.y) +
-		(unit->rightdir * dir.x);
+	// transform
+	pos = unit->GetObjectSpacePos(pos);
+	dir = unit->GetObjectSpaceVec(dir);
 
-	lua_pushnumber(L, unit->pos.x + pos.x);
-	lua_pushnumber(L, unit->pos.y + pos.y);
-	lua_pushnumber(L, unit->pos.z + pos.z);
+	lua_pushnumber(L, pos.x);
+	lua_pushnumber(L, pos.y);
+	lua_pushnumber(L, pos.z);
 	lua_pushnumber(L, dir.x);
 	lua_pushnumber(L, dir.y);
 	lua_pushnumber(L, dir.z);

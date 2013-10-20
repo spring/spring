@@ -371,10 +371,7 @@ bool AAirMoveType::MoveToRepairPad() {
 		return false;
 	} else {
 		const float3& relPadPos = airBase->script->GetPiecePos(reservedPad->GetPiece());
-		const float3 absPadPos = airBase->pos +
-			(airBase->frontdir * relPadPos.z) +
-			(airBase->updir    * relPadPos.y) +
-			(airBase->rightdir * relPadPos.x);
+		const float3 absPadPos = airBase->GetObjectSpacePos(relPadPos);
 
 		switch (padStatus) {
 			case PAD_STATUS_FLYING: {

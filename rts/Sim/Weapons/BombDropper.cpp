@@ -43,10 +43,7 @@ void CBombDropper::Init()
 void CBombDropper::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->pos +
-			(owner->frontdir * relWeaponPos.z) +
-			(owner->updir    * relWeaponPos.y) +
-			(owner->rightdir * relWeaponPos.x);
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
 
 		if (targetType == Target_Unit) {
 			// aim at base of unit instead of middle and ignore uncertainty
