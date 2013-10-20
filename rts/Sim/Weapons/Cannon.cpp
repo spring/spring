@@ -68,16 +68,8 @@ void CCannon::UpdateRange(float val)
 void CCannon::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos =
-			owner->pos +
-			owner->frontdir * relWeaponPos.z +
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;
-		weaponMuzzlePos =
-			owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		const float3 targetVec = targetPos - weaponPos;
 		const float speed2D = (wantedDir = GetWantedDir(targetVec)).Length2D() * projectileSpeed;

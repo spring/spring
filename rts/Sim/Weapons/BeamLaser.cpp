@@ -111,36 +111,17 @@ void CBeamLaser::UpdatePosAndMuzzlePos()
 		const CMatrix44f weaponMat = owner->script->GetPieceMatrix(weaponPiece);
 
 		const float3 relWeaponPos = weaponMat.GetPos();
-		const float3 newWeaponDir =
-			owner->frontdir * weaponMat[10] +
-			owner->updir    * weaponMat[ 6] +
-			owner->rightdir * weaponMat[ 2];
+		const float3 newWeaponDir = owner->GetObjectSpaceVec(float3(weaponMat[2], weaponMat[6], weaponMat[10]));
 
 		relWeaponMuzzlePos = owner->script->GetPiecePos(weaponPiece);
 
-		weaponPos =
-			owner->pos +
-			owner->frontdir * -relWeaponPos.z +
-			owner->updir    *  relWeaponPos.y +
-			owner->rightdir * -relWeaponPos.x;
-		weaponMuzzlePos =
-			owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos * float3(-1.0f, 1.0f, -1.0f)); // ??
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		sweepFireState.SetSweepTempDir(newWeaponDir);
 	} else {
-		weaponPos =
-			owner->pos +
-			owner->frontdir * relWeaponPos.z + // [?] no '-'
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;  // [?] no '-'
-		weaponMuzzlePos =
-			owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		if (weaponDef->sweepFire) {
 			// needed for first call to GetFireDir() when new sweep starts after inactivity

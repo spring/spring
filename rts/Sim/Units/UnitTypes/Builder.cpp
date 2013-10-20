@@ -817,11 +817,7 @@ void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse
 		return;
 
 	const float3 relNanoFirePos = localModel->GetRawPiecePos(modelNanoPiece);
-
-	const float3 nanoPos = pos
-		+ (frontdir * relNanoFirePos.z)
-		+ (updir    * relNanoFirePos.y)
-		+ (rightdir * relNanoFirePos.x);
+	const float3 nanoPos = this->GetObjectSpacePos(relNanoFirePos);
 
 	// unsynced
 	projectileHandler->AddNanoParticle(nanoPos, goal, unitDef, team, radius, inverse, highPriority);

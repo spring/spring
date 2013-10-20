@@ -25,14 +25,8 @@ CStarburstLauncher::CStarburstLauncher(CUnit* owner, const WeaponDef* def): CWea
 void CStarburstLauncher::Update(void)
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->pos +
-			owner->frontdir * relWeaponPos.z +
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;
-		weaponMuzzlePos = owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		// the aiming upward is apperently implicid so aim toward target
 		wantedDir = (targetPos - weaponPos).Normalize();
