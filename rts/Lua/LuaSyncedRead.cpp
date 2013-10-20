@@ -491,13 +491,8 @@ static int GetWorldObjectVelocity(lua_State* L, const CWorldObject* o, bool isFe
 	lua_pushnumber(L, o->speed.x);
 	lua_pushnumber(L, o->speed.y);
 	lua_pushnumber(L, o->speed.z);
-
-	if (lua_isboolean(L, 2) && lua_toboolean(L, 2)) {
-		lua_pushnumber(L, o->speed.w);
-		return 4;
-	}
-
-	return 3;
+	lua_pushnumber(L, o->speed.w);
+	return 4;
 }
 
 static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
