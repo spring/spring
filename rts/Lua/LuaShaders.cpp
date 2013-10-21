@@ -277,9 +277,13 @@ static bool ParseUniformSetupTables(lua_State* L, int index, GLuint progName)
 /******************************************************************************/
 /******************************************************************************/
 
-static GLuint CompileObject(lua_State *L, const vector<string>& sources, GLenum type,
-                            bool& success)
-{
+static GLuint CompileObject(
+	lua_State* L,
+	const vector<string>& defs,
+	const vector<string>& sources,
+	const GLenum type,
+	bool& success
+) {
 	if (sources.empty()) {
 		success = true;
 		return 0;
@@ -292,17 +296,14 @@ static GLuint CompileObject(lua_State *L, const vector<string>& sources, GLenum 
 		return 0;
 	}
 
-	const int count = (int)sources.size();
+	std::vector<const GLchar*> text(defs.size() + sources.size());
 
-	const GLchar** texts = new const GLchar*[count];
-	for (int i = 0; i < count; i++) {
-		texts[i] = sources[i].c_str();
-	}
+	for (unsigned int i = 0; i < defs.size(); i++)
+		text[i] = defs[i].c_str();
+	for (unsigned int i = 0; i < sources.size(); i++)
+		text[defs.size() + i] = sources[i].c_str();
 
-	glShaderSource(obj, count, texts, NULL);
-
-	delete[] texts;
-
+	glShaderSource(obj, text.size(), &text[0], NULL);
 	glCompileShader(obj);
 
 	GLint result;
@@ -331,32 +332,35 @@ static GLuint CompileObject(lua_State *L, const vector<string>& sources, GLenum 
 }
 
 
-static bool ParseSources(lua_State* L, int table,
-                         const char* type, vector<string>& srcs)
-{
-	lua_getfield(L, table, type);
+static bool ParseShaderTable(
+	lua_State* L,
+	const int table,
+	const char* key,
+	vector<string>& data
+) {
+	lua_getfield(L, table, key);
 
 	if (lua_israwstring(L, -1)) {
-		const string src = lua_tostring(L, -1);
-		if (!src.empty()) {
-			srcs.push_back(src);
+		const string txt = lua_tostring(L, -1);
+		if (!txt.empty()) {
+			data.push_back(txt);
 		}
 	}
 	else if (lua_istable(L, -1)) {
-		const int table2 = lua_gettop(L);
-		for (lua_pushnil(L); lua_next(L, table2) != 0; lua_pop(L, 1)) {
+		const int subtable = lua_gettop(L);
+		for (lua_pushnil(L); lua_next(L, subtable) != 0; lua_pop(L, 1)) {
 			if (!lua_israwnumber(L, -2) || !lua_israwstring(L, -1)) {
 				continue;
 			}
-			const string src = lua_tostring(L, -1);
-			if (!src.empty()) {
-				srcs.push_back(src);
+			const string txt = lua_tostring(L, -1);
+			if (!txt.empty()) {
+				data.push_back(txt);
 			}
 		}
 	}
 	else if (!lua_isnil(L, -1)) {
 		LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
-		shaders.errorLog = "Invalid " + string(type) + " shader source";
+		shaders.errorLog = "\"" + string(key) + "\" must be a string or a table value!";
 		lua_pop(L, 1);
 		return false;
 	}
@@ -393,33 +397,42 @@ static void ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
 int LuaShaders::CreateShader(lua_State* L)
 {
 	const int args = lua_gettop(L);
+
 	if ((args != 1) || !lua_istable(L, 1)) {
 		luaL_error(L, "Incorrect arguments to gl.CreateShader()");
 	}
 
+	vector<string> shdrDefs;
 	vector<string> vertSrcs;
 	vector<string> geomSrcs;
 	vector<string> fragSrcs;
-	if (!ParseSources(L, 1, "vertex",   vertSrcs) ||
-	    !ParseSources(L, 1, "geometry", geomSrcs) ||
-	    !ParseSources(L, 1, "fragment", fragSrcs)) {
-		return 0;
-	}
-	if (vertSrcs.empty() && fragSrcs.empty() && geomSrcs.empty()) {
+
+	ParseShaderTable(L, 1, "definitions", shdrDefs);
+
+	if (!ParseShaderTable(L, 1, "vertex",   vertSrcs) ||
+	    !ParseShaderTable(L, 1, "geometry", geomSrcs) ||
+	    !ParseShaderTable(L, 1, "fragment", fragSrcs)) {
 		return 0;
 	}
 
-	bool success;
-	const GLuint vertObj = CompileObject(L, vertSrcs, GL_VERTEX_SHADER, success);
-	if (!success) {
+	if (vertSrcs.empty() && fragSrcs.empty() && geomSrcs.empty())
 		return 0;
-	}
-	const GLuint geomObj = CompileObject(L, geomSrcs, GL_GEOMETRY_SHADER_EXT, success);
+
+	bool success;
+	const GLuint vertObj = CompileObject(L, shdrDefs, vertSrcs, GL_VERTEX_SHADER, success);
+
+	if (!success)
+		return 0;
+
+	const GLuint geomObj = CompileObject(L, shdrDefs, geomSrcs, GL_GEOMETRY_SHADER_EXT, success);
+
 	if (!success) {
 		glDeleteShader(vertObj);
 		return 0;
 	}
-	const GLuint fragObj = CompileObject(L, fragSrcs, GL_FRAGMENT_SHADER, success);
+
+	const GLuint fragObj = CompileObject(L, shdrDefs, fragSrcs, GL_FRAGMENT_SHADER, success);
+
 	if (!success) {
 		glDeleteShader(vertObj);
 		glDeleteShader(geomObj);
@@ -451,6 +464,7 @@ int LuaShaders::CreateShader(lua_State* L)
 
 	GLint result;
 	glGetProgramiv(prog, GL_LINK_STATUS, &result);
+
 	if (result != GL_TRUE) {
 		GLchar log[4096];
 		GLsizei logSize = sizeof(log);
@@ -466,8 +480,7 @@ int LuaShaders::CreateShader(lua_State* L)
 	//  configuration values)
 	ParseUniformSetupTables(L, 1, prog);
 
-	const unsigned int progID = shaders.AddProgram(p);
-	lua_pushnumber(L, progID);
+	lua_pushnumber(L, shaders.AddProgram(p));
 	return 1;
 }
 
