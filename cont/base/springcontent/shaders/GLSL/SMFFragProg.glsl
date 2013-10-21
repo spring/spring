@@ -243,6 +243,7 @@ void main() {
 
 	vec4 diffuseCol = texture2D(diffuseTex, diffTexCoords);
 	vec4 detailCol = GetDetailTextureColor(specTexCoords);
+	// non-zero default specularity on non-SSMF maps (for DL)
 	vec4 specularCol = vec4(0.5, 0.5, 0.5, 1.0);
 	vec4 emissionCol = vec4(0.0, 0.0, 0.0, 0.0);
 

@@ -47,7 +47,7 @@ void GL::GeometryBuffer::DrawDebug(unsigned int texID) {
 	glPopMatrix();
 }
 
-bool GL::GeometryBuffer::Create(const int2 size, const char* name) {
+bool GL::GeometryBuffer::Create(const int2 size) {
 	buffer.Bind();
 
 	for (unsigned int n = 0; n < ATTACHMENT_COUNT; n++) {
@@ -82,13 +82,13 @@ bool GL::GeometryBuffer::Create(const int2 size, const char* name) {
 	// can still invalidate it
 	assert(buffer.IsValid());
 
-	const bool ret = buffer.CheckStatus(name);
+	const bool ret = buffer.CheckStatus(bufferName);
 
 	buffer.Unbind();
 	return ret;
 }
 
-bool GL::GeometryBuffer::Update(const bool init, const char* name) {
+bool GL::GeometryBuffer::Update(const bool init) {
 	currBufferSize = GetWantedSize(true);
 
 	// FBO must be valid from point of construction
@@ -97,7 +97,11 @@ bool GL::GeometryBuffer::Update(const bool init, const char* name) {
 
 	if (buffer.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT) {
 		// FBO cannot be complete yet during init!
-		assert(!init);
+		//
+		// however GL spec says that FBO's with only
+		// empty attachments are complete by default
+		// --> extend FBO class to test for this?
+		// assert(!init);
 
 		// FBO was already initialized (during init
 		// or from Lua) so it will have attachments
@@ -110,7 +114,7 @@ bool GL::GeometryBuffer::Update(const bool init, const char* name) {
 		glDeleteTextures(ATTACHMENT_COUNT, &bufferTextureIDs[0]);
 	}
 
-	return (Create(prevBufferSize = currBufferSize, name));
+	return (Create(prevBufferSize = currBufferSize));
 }
 
 int2 GL::GeometryBuffer::GetWantedSize(bool allowed) const {
