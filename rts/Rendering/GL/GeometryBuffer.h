@@ -13,7 +13,7 @@ namespace GL {
 			ATTACHMENT_NORMTEX = 0, // shading (not geometric) normals
 			ATTACHMENT_DIFFTEX = 1, // diffuse texture fragments
 			ATTACHMENT_SPECTEX = 2, // specular texture fragments
-			ATTACHMENT_EMITTEX = 3, // emissive texture fragments (RESERVED)
+			ATTACHMENT_EMITTEX = 3, // emissive texture fragments
 			ATTACHMENT_ZVALTEX = 4, // fragment depth-values (must be last)
 			ATTACHMENT_COUNT   = 5,
 		};
@@ -24,10 +24,11 @@ namespace GL {
 		void Init();
 		void Kill();
 		void DrawDebug(unsigned int texID);
+		void SetName(const char* name) { bufferName = name; }
 
 		bool Valid() const { return (buffer.IsValid()); }
-		bool Create(const int2 size, const char* name);
-		bool Update(const bool init, const char* name);
+		bool Create(const int2 size);
+		bool Update(const bool init);
 
 		GLuint GetBufferTexture(unsigned int idx) const { return bufferTextureIDs[idx]; }
 		GLuint GetBufferAttachment(unsigned int idx) const { return bufferAttachments[idx]; }
@@ -51,6 +52,8 @@ namespace GL {
 
 		int2 prevBufferSize;
 		int2 currBufferSize;
+
+		const char* bufferName;
 	};
 };
 

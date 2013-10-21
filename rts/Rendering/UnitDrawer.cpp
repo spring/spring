@@ -160,6 +160,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 
 	// LH must be initialized before drawer-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
+	geomBuffer.SetName("UNITDRAWER-GBUFFER");
 
 	unitDrawerStateSSP = IUnitDrawerState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
 	unitDrawerStateFFP = IUnitDrawerState::GetInstance(                   false,                     false);
@@ -290,7 +291,7 @@ bool CUnitDrawer::UpdateGeometryBuffer(bool init)
 	if (!drawDeferredAllowed)
 		return false;
 
-	return (geomBuffer.Update(init, "UNITDRAWER-GBUFFER"));
+	return (geomBuffer.Update(init));
 }
 
 

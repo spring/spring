@@ -57,6 +57,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 
 	// LH must be initialized before render-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
+	geomBuffer.SetName("GROUNDDRAWER-GBUFFER");
 
 	drawMapEdges = configHandler->GetBool("MapBorder");
 	drawDeferred = geomBuffer.Valid();
@@ -452,7 +453,7 @@ bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 	if (!drawDeferredAllowed)
 		return false;
 
-	return (geomBuffer.Update(init, "GROUNDDRAWER-GBUFFER"));
+	return (geomBuffer.Update(init));
 }
 
 
