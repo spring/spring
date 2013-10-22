@@ -14,8 +14,9 @@ namespace GL {
 			ATTACHMENT_DIFFTEX = 1, // diffuse texture fragments
 			ATTACHMENT_SPECTEX = 2, // specular texture fragments
 			ATTACHMENT_EMITTEX = 3, // emissive texture fragments
-			ATTACHMENT_ZVALTEX = 4, // fragment depth-values (must be last)
-			ATTACHMENT_COUNT   = 5,
+			ATTACHMENT_MISCTEX = 4, // custom data for Lua UnitRendering shaders
+			ATTACHMENT_ZVALTEX = 5, // fragment depth-values (must be last)
+			ATTACHMENT_COUNT   = 6,
 		};
 
 		GeometryBuffer() { Init(); }
