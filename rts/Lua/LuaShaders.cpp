@@ -163,95 +163,87 @@ int LuaShaders::GetShaderLog(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static bool ParseUniformTable(lua_State* L, int index, GLuint progName)
+enum {
+	UNIFORM_TYPE_INT          = 0, // includes arrays
+	UNIFORM_TYPE_FLOAT        = 1, // includes arrays
+	UNIFORM_TYPE_FLOAT_MATRIX = 2,
+};
+
+static void ParseUniformType(lua_State* L, int loc, int type)
 {
-	lua_getfield(L, index, "uniform");
-	if (lua_istable(L, -1)) {
-		const int table = lua_gettop(L);
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_israwstring(L, -2)) {
-				const string name = lua_tostring(L, -2);
-				const GLint loc = glGetUniformLocation(progName, name.c_str());
-				if (loc >= 0) {
-					if (lua_israwnumber(L, -1)) {
-						const float value = lua_tofloat(L, -1);
-						glUniform1f(loc, value);
-					}
-					else if (lua_istable(L, -1)) {
-						float a[4];
-						const int count = LuaUtils::ParseFloatArray(L, -1, a, 4);
-						switch (count) {
-							case 1: { glUniform1f(loc, a[0]);                   break; }
-							case 2: { glUniform2f(loc, a[0], a[1]);             break; }
-							case 3: { glUniform3f(loc, a[0], a[1], a[2]);       break; }
-							case 4: { glUniform4f(loc, a[0], a[1], a[2], a[3]); break; }
-						}
-					}
+	switch (type) {
+		case UNIFORM_TYPE_FLOAT: {
+			if (lua_israwnumber(L, -1)) {
+				glUniform1f(loc, lua_tofloat(L, -1));
+			}
+			else if (lua_istable(L, -1)) {
+				float array[32] = {0.0f};
+				const int count = LuaUtils::ParseFloatArray(L, -1, array, sizeof(array) / sizeof(float));
+
+				switch (count) {
+					case 1: { glUniform1f(loc, array[0]                              ); break; }
+					case 2: { glUniform2f(loc, array[0], array[1]                    ); break; }
+					case 3: { glUniform3f(loc, array[0], array[1], array[2]          ); break; }
+					case 4: { glUniform4f(loc, array[0], array[1], array[2], array[3]); break; }
+					default: { glUniform1fv(loc, count, &array[0]); } break;
 				}
 			}
+
+			return;
 		}
+		case UNIFORM_TYPE_INT: {
+			if (lua_israwnumber(L, -1)) {
+				glUniform1i(loc, lua_toint(L, -1));
+			}
+			else if (lua_istable(L, -1)) {
+				int array[32] = {0};
+				const int count = LuaUtils::ParseIntArray(L, -1, array, sizeof(array) / sizeof(int));
+
+				switch (count) {
+					case 1: { glUniform1i(loc, array[0]                              ); break; }
+					case 2: { glUniform2i(loc, array[0], array[1]                    ); break; }
+					case 3: { glUniform3i(loc, array[0], array[1], array[2]          ); break; }
+					case 4: { glUniform4i(loc, array[0], array[1], array[2], array[3]); break; }
+					default: { glUniform1iv(loc, count, &array[0]); } break;
+				}
+			}
+		} break;
+		case UNIFORM_TYPE_FLOAT_MATRIX: {
+			if (lua_istable(L, -1)) {
+				float array[16] = {0.0f};
+				const int count = LuaUtils::ParseFloatArray(L, -1, array, 16);
+
+				switch (count) {
+					case (2 * 2): { glUniformMatrix2fv(loc, 1, GL_FALSE, array); break; }
+					case (3 * 3): { glUniformMatrix3fv(loc, 1, GL_FALSE, array); break; }
+					case (4 * 4): { glUniformMatrix4fv(loc, 1, GL_FALSE, array); break; }
+				}
+			}
+		} break;
 	}
-	lua_pop(L, 1);
-	return true;
 }
 
-
-static bool ParseUniformIntTable(lua_State* L, int index, GLuint progName)
+static bool ParseUniformsTable(lua_State* L, const char* fieldName, int index, int type, GLuint progName)
 {
-	lua_getfield(L, index, "uniformInt");
+	lua_getfield(L, index, fieldName);
+
 	if (lua_istable(L, -1)) {
 		const int table = lua_gettop(L);
+
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_israwstring(L, -2)) {
-				const string name = lua_tostring(L, -2);
-				const GLint loc = glGetUniformLocation(progName, name.c_str());
-				if (loc >= 0) {
-					if (lua_israwnumber(L, -1)) {
-						const int value = lua_toint(L, -1);
-						glUniform1i(loc, value);
-					}
-					else if (lua_istable(L, -1)) {
-						int a[4];
-						const int count = LuaUtils::ParseIntArray(L, -1, a, 4);
-						switch (count) {
-							case 1: { glUniform1i(loc, a[0]);                   break; }
-							case 2: { glUniform2i(loc, a[0], a[1]);             break; }
-							case 3: { glUniform3i(loc, a[0], a[1], a[2]);       break; }
-							case 4: { glUniform4i(loc, a[0], a[1], a[2], a[3]); break; }
-						}
-					}
-				}
-			}
+			if (!lua_israwstring(L, -2))
+				continue;
+
+			const string name = lua_tostring(L, -2);
+			const GLint loc = glGetUniformLocation(progName, name.c_str());
+
+			if (loc < 0)
+				continue;
+
+			ParseUniformType(L, loc, type);
 		}
 	}
-	lua_pop(L, 1);
-	return true;
-}
 
-
-static bool ParseUniformMatrixTable(lua_State* L, int index, GLuint progName)
-{
-	lua_getfield(L, index, "uniformMatrix");
-	if (lua_istable(L, -1)) {
-		const int table = lua_gettop(L);
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_israwstring(L, -2)) {
-				const string name = lua_tostring(L, -2);
-				const GLint loc = glGetUniformLocation(progName, name.c_str());
-				if (loc >= 0) {
-					if (lua_istable(L, -1)) {
-						float a[16];
-						const int count = LuaUtils::ParseFloatArray(L, -1, a, 16);
-						switch (count) {
-							case (2 * 2): { glUniformMatrix2fv(loc, 1, GL_FALSE, a); break; }
-							case (3 * 3): { glUniformMatrix3fv(loc, 1, GL_FALSE, a); break; }
-							case (4 * 4): { glUniformMatrix4fv(loc, 1, GL_FALSE, a); break; }
-						}
-					}
-				}
-			}
-		}
-	}
 	lua_pop(L, 1);
 	return true;
 }
@@ -264,9 +256,11 @@ static bool ParseUniformSetupTables(lua_State* L, int index, GLuint progName)
 
 	glUseProgram(progName);
 
-	const bool success = ParseUniformTable(L, index, progName)    &&
-	                     ParseUniformIntTable(L, index, progName) &&
-	                     ParseUniformMatrixTable(L, index, progName);
+	const bool success =
+		ParseUniformsTable(L, "uniform",       index, UNIFORM_TYPE_FLOAT,        progName) &&
+		ParseUniformsTable(L, "uniformFloat",  index, UNIFORM_TYPE_FLOAT,        progName) &&
+		ParseUniformsTable(L, "uniformInt",    index, UNIFORM_TYPE_INT,          progName) &&
+		ParseUniformsTable(L, "uniformMatrix", index, UNIFORM_TYPE_FLOAT_MATRIX, progName);
 
 	glUseProgram(currentProgram);
 
