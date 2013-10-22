@@ -737,6 +737,8 @@ int LuaShaders::UniformArray(lua_State* L)
 		default: {
 		} break;
 	}
+
+	return 0;
 }
 
 int LuaShaders::UniformMatrix(lua_State* L)
