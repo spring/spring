@@ -43,6 +43,7 @@ bool LuaShaders::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUniformLocation);
 	REGISTER_LUA_CFUNC(Uniform);
 	REGISTER_LUA_CFUNC(UniformInt);
+	REGISTER_LUA_CFUNC(UniformArray);
 	REGISTER_LUA_CFUNC(UniformMatrix);
 
 	REGISTER_LUA_CFUNC(SetShaderParameter);
@@ -643,103 +644,115 @@ int LuaShaders::GetUniformLocation(lua_State* L)
 
 int LuaShaders::Uniform(lua_State* L)
 {
-	if (activeShaderDepth <= 0) {
+	if (activeShaderDepth <= 0)
 		CheckDrawingEnabled(L, __FUNCTION__);
-	}
-	const GLuint location = (GLuint)luaL_checknumber(L, 1);
 
-	const int values = lua_gettop(L) - 1;
-	switch (values) {
+	const GLuint location = (GLuint) luaL_checknumber(L, 1);
+	const int numValues = lua_gettop(L) - 1;
+
+	switch (numValues) {
 		case 1: {
-			glUniform1f(location,
-									luaL_checkfloat(L, 2));
+			glUniform1f(location, luaL_checkfloat(L, 2));
 			break;
 		}
 		case 2: {
-			glUniform2f(location,
-									luaL_checkfloat(L, 2),
-									luaL_checkfloat(L, 3));
+			glUniform2f(location, luaL_checkfloat(L, 2), luaL_checkfloat(L, 3));
 			break;
 		}
 		case 3: {
-			glUniform3f(location,
-									luaL_checkfloat(L, 2),
-									luaL_checkfloat(L, 3),
-									luaL_checkfloat(L, 4));
+			glUniform3f(location, luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
 			break;
 		}
 		case 4: {
-			glUniform4f(location,
-									luaL_checkfloat(L, 2),
-									luaL_checkfloat(L, 3),
-									luaL_checkfloat(L, 4),
-									luaL_checkfloat(L, 5));
+			glUniform4f(location, luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4), luaL_checkfloat(L, 5));
 			break;
 		}
 		default: {
 			luaL_error(L, "Incorrect arguments to gl.Uniform()");
 		}
 	}
+
 	return 0;
 }
 
 
 int LuaShaders::UniformInt(lua_State* L)
 {
-	if (activeShaderDepth <= 0) {
+	if (activeShaderDepth <= 0)
 		CheckDrawingEnabled(L, __FUNCTION__);
-	}
-	const GLuint location = (GLuint)luaL_checknumber(L, 1);
 
-	const int values = lua_gettop(L) - 1;
-	switch (values) {
+	const GLuint location = (GLuint) luaL_checknumber(L, 1);
+	const int numValues = lua_gettop(L) - 1;
+
+	switch (numValues) {
 		case 1: {
-			glUniform1i(location,
-									luaL_checkint(L, 2));
+			glUniform1i(location, luaL_checkint(L, 2));
 			break;
 		}
 		case 2: {
-			glUniform2i(location,
-									luaL_checkint(L, 2),
-									luaL_checkint(L, 3));
+			glUniform2i(location, luaL_checkint(L, 2), luaL_checkint(L, 3));
 			break;
 		}
 		case 3: {
-			glUniform3i(location,
-									luaL_checkint(L, 2),
-									luaL_checkint(L, 3),
-									luaL_checkint(L, 4));
+			glUniform3i(location, luaL_checkint(L, 2), luaL_checkint(L, 3), luaL_checkint(L, 4));
 			break;
 		}
 		case 4: {
-			glUniform4i(location,
-									luaL_checkint(L, 2),
-									luaL_checkint(L, 3),
-									luaL_checkint(L, 4),
-									luaL_checkint(L, 5));
+			glUniform4i(location, luaL_checkint(L, 2), luaL_checkint(L, 3), luaL_checkint(L, 4), luaL_checkint(L, 5));
 			break;
 		}
 		default: {
 			luaL_error(L, "Incorrect arguments to gl.UniformInt()");
 		}
 	}
+
 	return 0;
 }
 
+int LuaShaders::UniformArray(lua_State* L)
+{
+	if (activeShaderDepth <= 0)
+		CheckDrawingEnabled(L, __FUNCTION__);
+
+	if (!lua_istable(L, 3))
+		return 0;
+
+	const GLuint location = (GLuint) luaL_checknumber(L, 1);
+
+	switch (luaL_checkint(L, 2)) {
+		case UNIFORM_TYPE_INT: {
+			int array[32] = {0};
+			const int count = LuaUtils::ParseIntArray(L, 2, array, sizeof(array) / sizeof(int));
+
+			glUniform1iv(location, count, &array[0]);
+		} break;
+
+		case UNIFORM_TYPE_FLOAT: {
+			float array[32] = {0.0f};
+			const int count = LuaUtils::ParseFloatArray(L, 2, array, sizeof(array) / sizeof(float));
+
+			glUniform1fv(location, count, &array[0]);
+		} break;
+
+		default: {
+		} break;
+	}
+}
 
 int LuaShaders::UniformMatrix(lua_State* L)
 {
-	if (activeShaderDepth <= 0) {
+	if (activeShaderDepth <= 0)
 		CheckDrawingEnabled(L, __FUNCTION__);
-	}
-	const GLuint location = (GLuint)luaL_checknumber(L, 1);
 
-	const int values = lua_gettop(L) - 1;
-	switch (values) {
+	const GLuint location = (GLuint)luaL_checknumber(L, 1);
+	const int numValues = lua_gettop(L) - 1;
+
+	switch (numValues) {
 		case 1: {
 			if (!lua_isstring(L, 2)) {
 				luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");
 			}
+
 			const string matName = lua_tostring(L, 2);
 			const CMatrix44f* mat = LuaOpenGLUtils::GetNamedMatrix(matName);
 
@@ -752,25 +765,31 @@ int LuaShaders::UniformMatrix(lua_State* L)
 		}
 		case (2 * 2): {
 			float array[2 * 2];
+
 			for (int i = 0; i < (2 * 2); i++) {
 				array[i] = luaL_checkfloat(L, i + 2);
 			}
+
 			glUniformMatrix2fv(location, 1, GL_FALSE, array);
 			break;
 		}
 		case (3 * 3): {
 			float array[3 * 3];
+
 			for (int i = 0; i < (3 * 3); i++) {
 				array[i] = luaL_checkfloat(L, i + 2);
 			}
+
 			glUniformMatrix3fv(location, 1, GL_FALSE, array);
 			break;
 		}
 		case (4 * 4): {
 			float array[4 * 4];
+
 			for (int i = 0; i < (4 * 4); i++) {
 				array[i] = luaL_checkfloat(L, i + 2);
 			}
+
 			glUniformMatrix4fv(location, 1, GL_FALSE, array);
 			break;
 		}
@@ -778,6 +797,7 @@ int LuaShaders::UniformMatrix(lua_State* L)
 			luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");
 		}
 	}
+
 	return 0;
 }
 
