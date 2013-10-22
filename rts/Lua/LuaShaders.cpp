@@ -722,14 +722,14 @@ int LuaShaders::UniformArray(lua_State* L)
 	switch (luaL_checkint(L, 2)) {
 		case UNIFORM_TYPE_INT: {
 			int array[32] = {0};
-			const int count = LuaUtils::ParseIntArray(L, 2, array, sizeof(array) / sizeof(int));
+			const int count = LuaUtils::ParseIntArray(L, 3, array, sizeof(array) / sizeof(int));
 
 			glUniform1iv(location, count, &array[0]);
 		} break;
 
 		case UNIFORM_TYPE_FLOAT: {
 			float array[32] = {0.0f};
-			const int count = LuaUtils::ParseFloatArray(L, 2, array, sizeof(array) / sizeof(float));
+			const int count = LuaUtils::ParseFloatArray(L, 3, array, sizeof(array) / sizeof(float));
 
 			glUniform1fv(location, count, &array[0]);
 		} break;
