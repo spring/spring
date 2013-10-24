@@ -371,18 +371,24 @@ void CBuilder::Update()
 						curResurrect->AddBuildPower(this, repairSpeed);
 					} else {
 						// Corpse has been restored, begin resurrection
+						//
 						if (UseEnergy(ud->energy * resurrectSpeed / ud->buildTime * modInfo.resurrectEnergyCostFactor)) {
 							curResurrect->resurrectProgress += (resurrectSpeed / ud->buildTime);
+							curResurrect->resurrectProgress = std::min(curResurrect->resurrectProgress, 1.0f);
+
 							CreateNanoParticle(curResurrect->midPos, curResurrect->radius * 0.7f, (gs->randInt() & 1));
 						}
-						if (curResurrect->resurrectProgress > 1) {
+
+						if (curResurrect->resurrectProgress >= 1.0f && curResurrect->tempNum != (gs->tempNum - 1)) {
 							// resurrect finished
 							curResurrect->UnBlock();
 
 							UnitLoadParams resurrecteeParams = {ud, this, curResurrect->pos, ZeroVector, -1, team, curResurrect->buildFacing, false, false};
 							CUnit* resurrectee = unitLoader->LoadUnit(resurrecteeParams);
 
-							if (!this->unitDef->canBeAssisted) {
+							assert(ud == resurrectee->unitDef);
+
+							if (!ud->canBeAssisted) {
 								resurrectee->soloBuilder = this;
 								resurrectee->AddDeathDependence(this, DEPENDENCE_BUILDER);
 							}
@@ -402,15 +408,27 @@ void CBuilder::Update()
 								if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
 									continue;
 
-								const int cmdFeatureId = c.params[0];
+								if ((c.params[0] - unitHandler->MaxUnits()) != curResurrect->id)
+									continue;
 
-								if (cmdFeatureId - unitHandler->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam)) {
-									bld->lastResurrected = resurrectee->id; // all units that were rezzing shall assist the repair too
-									c.params[0] = INT_MAX / 2; // prevent FinishCommand from removing this command when the feature is deleted, since it is needed to start the repair
-								}
+								if (!teamHandler->Ally(allyteam, bld->allyteam))
+									continue;
+
+								// all units that were rezzing shall assist the repair too
+								bld->lastResurrected = resurrectee->id;
+								// prevent FinishCommand from removing this command when the
+								// feature is deleted, since it is needed to start the repair
+								// (WTF!)
+								c.params[0] = INT_MAX / 2;
 							}
 
-							curResurrect->resurrectProgress = 0;
+							// prevent double/triple/... resurrection if more than one
+							// builder is resurrecting (such that resurrectProgress can
+							// possibly become >= 1 again *this* simframe)
+							curResurrect->resurrectProgress = 0.0f;
+							curResurrect->tempNum = gs->tempNum++;
+
+							// this takes one simframe to do the deletion
 							featureHandler->DeleteFeature(curResurrect);
 							StopBuild(true);
 						}
