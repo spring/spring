@@ -379,57 +379,60 @@ void CBuilder::Update()
 							CreateNanoParticle(curResurrect->midPos, curResurrect->radius * 0.7f, (gs->randInt() & 1));
 						}
 
-						if (curResurrect->resurrectProgress >= 1.0f && curResurrect->tempNum != (gs->tempNum - 1)) {
-							// resurrect finished
-							curResurrect->UnBlock();
+						if (curResurrect->resurrectProgress >= 1.0f) {
+							if (curResurrect->tempNum != (gs->tempNum - 1)) {
+								// resurrect finished and we are the first
+								curResurrect->UnBlock();
 
-							UnitLoadParams resurrecteeParams = {ud, this, curResurrect->pos, ZeroVector, -1, team, curResurrect->buildFacing, false, false};
-							CUnit* resurrectee = unitLoader->LoadUnit(resurrecteeParams);
+								UnitLoadParams resurrecteeParams = {ud, this, curResurrect->pos, ZeroVector, -1, team, curResurrect->buildFacing, false, false};
+								CUnit* resurrectee = unitLoader->LoadUnit(resurrecteeParams);
 
-							assert(ud == resurrectee->unitDef);
+								assert(ud == resurrectee->unitDef);
 
-							if (!ud->canBeAssisted) {
-								resurrectee->soloBuilder = this;
-								resurrectee->AddDeathDependence(this, DEPENDENCE_BUILDER);
+								if (!ud->canBeAssisted) {
+									resurrectee->soloBuilder = this;
+									resurrectee->AddDeathDependence(this, DEPENDENCE_BUILDER);
+								}
+
+								// TODO: make configurable if this should happen
+								resurrectee->health *= 0.05f;
+
+								for (CUnitSet::iterator it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
+									CBuilder* bld = static_cast<CBuilder*>(*it);
+									CCommandAI* bldCAI = bld->commandAI;
+
+									if (bldCAI->commandQue.empty())
+										continue;
+
+									Command& c = bldCAI->commandQue.front();
+
+									if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
+										continue;
+
+									if ((c.params[0] - unitHandler->MaxUnits()) != curResurrect->id)
+										continue;
+
+									if (!teamHandler->Ally(allyteam, bld->allyteam))
+										continue;
+
+									// all units that were rezzing shall assist the repair too
+									bld->lastResurrected = resurrectee->id;
+									// prevent FinishCommand from removing this command when the
+									// feature is deleted, since it is needed to start the repair
+									// (WTF!)
+									c.params[0] = INT_MAX / 2;
+								}
+
+								// prevent double/triple/... resurrection if more than one
+								// builder is resurrecting (such that resurrectProgress can
+								// possibly become >= 1 again *this* simframe)
+								curResurrect->resurrectProgress = 0.0f;
+								curResurrect->tempNum = gs->tempNum++;
+
+								// this takes one simframe to do the deletion
+								featureHandler->DeleteFeature(curResurrect);
 							}
 
-							// TODO: make configurable if this should happen
-							resurrectee->health *= 0.05f;
-
-							for (CUnitSet::iterator it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
-								CBuilder* bld = (CBuilder*) *it;
-								CCommandAI* bldCAI = bld->commandAI;
-
-								if (bldCAI->commandQue.empty())
-									continue;
-
-								Command& c = bldCAI->commandQue.front();
-
-								if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
-									continue;
-
-								if ((c.params[0] - unitHandler->MaxUnits()) != curResurrect->id)
-									continue;
-
-								if (!teamHandler->Ally(allyteam, bld->allyteam))
-									continue;
-
-								// all units that were rezzing shall assist the repair too
-								bld->lastResurrected = resurrectee->id;
-								// prevent FinishCommand from removing this command when the
-								// feature is deleted, since it is needed to start the repair
-								// (WTF!)
-								c.params[0] = INT_MAX / 2;
-							}
-
-							// prevent double/triple/... resurrection if more than one
-							// builder is resurrecting (such that resurrectProgress can
-							// possibly become >= 1 again *this* simframe)
-							curResurrect->resurrectProgress = 0.0f;
-							curResurrect->tempNum = gs->tempNum++;
-
-							// this takes one simframe to do the deletion
-							featureHandler->DeleteFeature(curResurrect);
 							StopBuild(true);
 						}
 					}
