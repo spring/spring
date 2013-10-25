@@ -245,7 +245,7 @@ void SMFRenderStateFFP::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 	if (smfGroundDrawer->DrawExtraTex()) {
 		glActiveTexture(GL_TEXTURE1);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, smfGroundDrawer->infoTex);
+		glBindTexture(GL_TEXTURE_2D, smfGroundDrawer->GetActiveInfoTexture());
 		glMultiTexCoord4f(GL_TEXTURE1_ARB, 1.0f, 1.0f, 1.0f, 1.0f); // fix nvidia bug with gltexgen
 		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
@@ -478,7 +478,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailNormalTexture());
 	glActiveTexture(GL_TEXTURE12); glBindTexture(GL_TEXTURE_2D, smfMap->GetLightEmissionTexture());
 	glActiveTexture(GL_TEXTURE13); glBindTexture(GL_TEXTURE_2D, smfMap->GetParallaxHeightTexture());
-	glActiveTexture(GL_TEXTURE14); glBindTexture(GL_TEXTURE_2D, smfGroundDrawer->infoTex);
+	glActiveTexture(GL_TEXTURE14); glBindTexture(GL_TEXTURE_2D, smfGroundDrawer->GetActiveInfoTexture());
 
 	glActiveTexture(GL_TEXTURE0);
 }

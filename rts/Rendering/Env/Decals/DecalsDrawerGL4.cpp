@@ -600,7 +600,7 @@ void CDecalsDrawerGL4::Draw()
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 
 	glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, gd->DrawExtraTex() ? gd->infoTex : 0);
+		glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
 
 	glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_2D, depthTex);

@@ -283,9 +283,12 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 		else if (image == "$minimap") {
 			texUnit.type = LuaMatTexture::LUATEX_MINIMAP;
 		}
-		else if (image == "$info" || image == "$extra") {
-			texUnit.type = LuaMatTexture::LUATEX_INFOTEX;
-		}
+
+		else if (image == "$info"        || image == "$extra"       ) { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_ACTIVE; }
+		else if (image == "$info_losmap" || image == "$extra_losmap") { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_LOSMAP; }
+		else if (image == "$info_mtlmap" || image == "$extra_mtlmap") { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_MTLMAP; }
+		else if (image == "$info_hgtmap" || image == "$extra_hgtmap") { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_HGTMAP; }
+		else if (image == "$info_blkmap" || image == "$extra_blkmap") { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_BLKMAP; }
 
 		else if (image == "$map_gb_nt" || image == "$map_gbuffer_normtex") { texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_NORMTEX; }
 		else if (image == "$map_gb_dt" || image == "$map_gbuffer_difftex") { texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_DIFFTEX; }
@@ -393,9 +396,12 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_MINIMAP:
 			texID = readMap->GetMiniMapTexture();
 		break;
-		case LUATEX_INFOTEX: {
-			texID = readMap->GetGroundDrawer()->infoTex;
-		} break;
+
+		case LUATEX_INFOTEX_ACTIVE: { texID = readMap->GetGroundDrawer()->GetActiveInfoTexture();                          } break;
+		case LUATEX_INFOTEX_LOSMAP: { texID = readMap->GetGroundDrawer()->GetInfoTexture(CBaseGroundDrawer::drawLos     ); } break;
+		case LUATEX_INFOTEX_MTLMAP: { texID = readMap->GetGroundDrawer()->GetInfoTexture(CBaseGroundDrawer::drawMetal   ); } break;
+		case LUATEX_INFOTEX_HGTMAP: { texID = readMap->GetGroundDrawer()->GetInfoTexture(CBaseGroundDrawer::drawHeight  ); } break;
+		case LUATEX_INFOTEX_BLKMAP: { texID = readMap->GetGroundDrawer()->GetInfoTexture(CBaseGroundDrawer::drawPathTrav); } break;
 
 		case LUATEX_MAP_GBUFFER_NORMTEX: { texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX); } break;
 		case LUATEX_MAP_GBUFFER_DIFFTEX: { texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_DIFFTEX); } break;
@@ -451,7 +457,12 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_FONT:
 		case LUATEX_FONTSMALL:
 		case LUATEX_MINIMAP:
-		case LUATEX_INFOTEX: {
+
+		case LUATEX_INFOTEX_ACTIVE:
+		case LUATEX_INFOTEX_LOSMAP:
+		case LUATEX_INFOTEX_MTLMAP:
+		case LUATEX_INFOTEX_HGTMAP:
+		case LUATEX_INFOTEX_BLKMAP: {
 			texType = GL_TEXTURE_2D;
 		} break;
 
@@ -570,8 +581,14 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_MINIMAP:
 			return readMap->GetMiniMapTextureSize();
 		break;
-		case LUATEX_INFOTEX:
+
+		case LUATEX_INFOTEX_ACTIVE:
+		case LUATEX_INFOTEX_LOSMAP:
+		case LUATEX_INFOTEX_MTLMAP:
+		case LUATEX_INFOTEX_HGTMAP:
+		case LUATEX_INFOTEX_BLKMAP: {
 			return (readMap->GetGroundDrawer()->GetInfoTexSize());
+		}
 
 		case LUATEX_MAP_GBUFFER_NORMTEX:
 		case LUATEX_MAP_GBUFFER_DIFFTEX:
@@ -655,7 +672,12 @@ void LuaMatTexture::Print(const string& indent) const
 		STRING_CASE(typeName, LUATEX_FONT);
 		STRING_CASE(typeName, LUATEX_FONTSMALL);
 		STRING_CASE(typeName, LUATEX_MINIMAP);
-		STRING_CASE(typeName, LUATEX_INFOTEX);
+
+		STRING_CASE(typeName, LUATEX_INFOTEX_ACTIVE);
+		STRING_CASE(typeName, LUATEX_INFOTEX_LOSMAP);
+		STRING_CASE(typeName, LUATEX_INFOTEX_MTLMAP);
+		STRING_CASE(typeName, LUATEX_INFOTEX_HGTMAP);
+		STRING_CASE(typeName, LUATEX_INFOTEX_BLKMAP);
 
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_NORMTEX);
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_DIFFTEX);

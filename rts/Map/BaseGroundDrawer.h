@@ -10,6 +10,8 @@
 #include "System/float3.h"
 #include "System/type2.h"
 
+#define NUM_INFOTEXTURES (1 + 4 + 3)
+
 class CMetalMap;
 class CHeightLinePalette;
 class CBaseGroundTextures;
@@ -30,14 +32,14 @@ public:
 		COLOR_A = 3,
 	};
 	enum BaseGroundDrawMode {
-		drawNormal,
-		drawLos,
-		drawMetal,
-		drawHeight,
-		drawPathTraversability,
-		drawPathHeat,
-		drawPathFlow,
-		drawPathCost,
+		drawNormal   = 0,
+		drawLos      = 1, // L (';' does not toggle it)
+		drawMetal    = 2, // F4
+		drawHeight   = 3, // F1
+		drawPathTrav = 4, // F2
+		drawPathHeat = 5, // not hotkeyed, command-only
+		drawPathFlow = 6, // not hotkeyed, command-only
+		drawPathCost = 7, // not hotkeyed, command-only
 	};
 
 	CBaseGroundDrawer();
@@ -90,6 +92,9 @@ public:
 	BaseGroundDrawMode GetDrawMode() const { return drawMode; }
 	CBaseGroundTextures* GetGroundTextures() { return groundTextures; }
 
+	GLuint GetInfoTexture(unsigned int idx) const { return infoTextureIDs[idx]; }
+	GLuint GetActiveInfoTexture() const { return infoTextureIDs[drawMode]; }
+
 	int2 GetInfoTexSize() const;
 
 	void UpdateCamRestraints(CCamera* camera);
@@ -106,14 +111,9 @@ public:
 	float LODScaleRefraction;
 	float LODScaleUnitReflection;
 
-	GLuint infoTex;
-	PBO extraTexPBO;
-
 	const unsigned char* extraTex;
 	const unsigned char* extraTexPal;
 	const float* extractDepthMap;
-
-	float infoTexAlpha;
 
 	int jamColor[3];
 	int losColor[3];
@@ -130,11 +130,16 @@ public:
 	bool multiThreadDrawGroundShadow;
 #endif
 
-	CHeightLinePalette* heightLinePal;
-	CBaseGroundTextures* groundTextures;
-
 protected:
 	BaseGroundDrawMode drawMode;
+
+	// note: first texture ID is always 0!
+	GLuint infoTextureIDs[NUM_INFOTEXTURES];
+
+	PBO infoTexPBO;
+
+	CHeightLinePalette* heightLinePal;
+	CBaseGroundTextures* groundTextures;
 
 	bool drawMapEdges;
 	bool drawDeferred;
