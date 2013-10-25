@@ -108,6 +108,7 @@ class LuaUnsyncedCtrl {
 		static int LoadCtrlPanelConfig(lua_State* L);
 		static int ForceLayoutUpdate(lua_State* L);
 
+		static int UpdateInfoTexture(lua_State* L);
 		static int SetLosViewColors(lua_State* L);
 
 		static int WarpMouse(lua_State* L);

@@ -1102,7 +1102,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 		{
 			SCOPED_TIMER("GroundDrawer::UpdateExtraTex");
-			gd->UpdateExtraTexture();
+			gd->UpdateExtraTexture(gd->GetDrawMode());
 		}
 
 		// TODO call only when camera changed
