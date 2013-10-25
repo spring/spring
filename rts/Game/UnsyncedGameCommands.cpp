@@ -1939,13 +1939,13 @@ public:
 
 
 
-class ShowPathTraversabilityActionExecutor : public IUnsyncedActionExecutor {
+class ShowPathTravActionExecutor : public IUnsyncedActionExecutor {
 public:
-	ShowPathTraversabilityActionExecutor() : IUnsyncedActionExecutor("ShowPathTraversability",
+	ShowPathTravActionExecutor() : IUnsyncedActionExecutor("ShowPathTraversability",
 			"Enable rendering of the path traversability-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathTraversability);
+		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathTrav);
 		return true;
 	}
 };
@@ -3393,7 +3393,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ShowElevationActionExecutor());
 	AddActionExecutor(new ToggleRadarAndJammerActionExecutor());
 	AddActionExecutor(new ShowMetalMapActionExecutor());
-	AddActionExecutor(new ShowPathTraversabilityActionExecutor());
+	AddActionExecutor(new ShowPathTravActionExecutor());
 	AddActionExecutor(new ShowPathHeatActionExecutor());
 	AddActionExecutor(new ShowPathFlowActionExecutor());
 	AddActionExecutor(new ShowPathCostActionExecutor());

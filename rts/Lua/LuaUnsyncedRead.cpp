@@ -1143,14 +1143,14 @@ int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 
 	switch (readMap->GetGroundDrawer()->GetDrawMode()) {
-		case CBaseGroundDrawer::drawNormal:             { HSTR_PUSH(L, "normal"            ); break; }
-		case CBaseGroundDrawer::drawHeight:             { HSTR_PUSH(L, "height"            ); break; }
-		case CBaseGroundDrawer::drawMetal:              { HSTR_PUSH(L, "metal"             ); break; }
-		case CBaseGroundDrawer::drawLos:                { HSTR_PUSH(L, "los"               ); break; }
-		case CBaseGroundDrawer::drawPathTraversability: { HSTR_PUSH(L, "pathTraversability"); break; }
-		case CBaseGroundDrawer::drawPathHeat:           { HSTR_PUSH(L, "pathHeat"          ); break; }
-		case CBaseGroundDrawer::drawPathFlow:           { HSTR_PUSH(L, "pathFlow"          ); break; }
-		case CBaseGroundDrawer::drawPathCost:           { HSTR_PUSH(L, "pathCost"          ); break; }
+		case CBaseGroundDrawer::drawNormal:   { HSTR_PUSH(L, "normal"            ); break; }
+		case CBaseGroundDrawer::drawHeight:   { HSTR_PUSH(L, "height"            ); break; }
+		case CBaseGroundDrawer::drawMetal:    { HSTR_PUSH(L, "metal"             ); break; }
+		case CBaseGroundDrawer::drawLos:      { HSTR_PUSH(L, "los"               ); break; }
+		case CBaseGroundDrawer::drawPathTrav: { HSTR_PUSH(L, "pathTraversability"); break; }
+		case CBaseGroundDrawer::drawPathHeat: { HSTR_PUSH(L, "pathHeat"          ); break; }
+		case CBaseGroundDrawer::drawPathFlow: { HSTR_PUSH(L, "pathFlow"          ); break; }
+		case CBaseGroundDrawer::drawPathCost: { HSTR_PUSH(L, "pathCost"          ); break; }
 	}
 	return 1;
 }

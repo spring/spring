@@ -736,7 +736,7 @@ void CGroundDecalHandler::Draw()
 		glMultiTexCoord4f(GL_TEXTURE3_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 
-		glBindTexture(GL_TEXTURE_2D, gd->infoTex);
+		glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
 	}
 
 	if (shadowHandler->shadowsLoaded) {
