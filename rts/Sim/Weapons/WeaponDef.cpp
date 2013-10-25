@@ -122,7 +122,7 @@ WEAPONTAG(float, duration).defaultValue(0.05f);
 WEAPONTAG(float, beamtime).defaultValue(1.0f);
 WEAPONTAG(bool, beamburst).defaultValue(false);
 WEAPONTAG(int, beamLaserTTL).externalName("beamTTL").defaultValue(0);
-WEAPONTAG(bool, sweepFire).defaultValue(true).description("Makes BeamLasers continue firing while aiming for a new target, 'sweeping' across the terrain.");
+WEAPONTAG(bool, sweepFire).defaultValue(false).description("Makes BeamLasers continue firing while aiming for a new target, 'sweeping' across the terrain.");
 WEAPONTAG(bool, largeBeamLaser).defaultValue(false);
 
 // FLAMETHROWER

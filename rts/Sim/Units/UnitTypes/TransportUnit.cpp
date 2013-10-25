@@ -64,10 +64,7 @@ void CTransportUnit::Update()
 
 		if (ti->piece >= 0) {
 			relPiecePos = script->GetPiecePos(ti->piece);
-			absPiecePos = pos +
-				(frontdir * relPiecePos.z) +
-				(updir    * relPiecePos.y) +
-				(rightdir * relPiecePos.x);
+			absPiecePos = this->GetObjectSpacePos(relPiecePos);
 		}
 
 		if (unitDef->holdSteady) {

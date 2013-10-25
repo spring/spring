@@ -149,6 +149,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetDrawSky);
 	REGISTER_LUA_CFUNC(SetDrawWater);
 	REGISTER_LUA_CFUNC(SetDrawGround);
+	REGISTER_LUA_CFUNC(SetDrawGroundDeferred);
+	REGISTER_LUA_CFUNC(SetDrawModelsDeferred);
 
 	REGISTER_LUA_CFUNC(SetWaterParams);
 
@@ -204,6 +206,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetCameraOffset);
 
+	REGISTER_LUA_CFUNC(UpdateInfoTexture);
 	REGISTER_LUA_CFUNC(SetLosViewColors);
 
 	REGISTER_LUA_CFUNC(Restart);
@@ -1033,6 +1036,21 @@ int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
 }
 
 
+int LuaUnsyncedCtrl::SetDrawGroundDeferred(lua_State* L)
+{
+	readMap->GetGroundDrawer()->SetDrawDeferredPass(luaL_checkboolean(L, 1));
+	lua_pushboolean(L, readMap->GetGroundDrawer()->DrawDeferred());
+	return 1;
+}
+
+int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
+{
+	unitDrawer->SetDrawDeferredPass(luaL_checkboolean(L, 1));
+	lua_pushboolean(L, unitDrawer->DrawDeferred());
+	return 1;
+}
+
+
 /******************************************************************************/
 
 int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
@@ -1261,6 +1279,7 @@ int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L)
 
 	GL::LightHandler* lightHandler = readMap->GetGroundDrawer()->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
+
 	bool ret = false;
 
 	if (light != NULL) {
@@ -1366,6 +1385,7 @@ int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L)
 
 	GL::LightHandler* lightHandler = readMap->GetGroundDrawer()->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
+
 	bool ret = false;
 
 	if (light != NULL) {
@@ -1834,19 +1854,28 @@ int LuaUnsyncedCtrl::SetCameraOffset(lua_State* L)
 	if (camera == NULL) {
 		return 0;
 	}
-	const float px = luaL_optfloat(L, 1, 0.0f);
-	const float py = luaL_optfloat(L, 2, 0.0f);
-	const float pz = luaL_optfloat(L, 3, 0.0f);
-	const float tx = luaL_optfloat(L, 4, 0.0f);
-	const float ty = luaL_optfloat(L, 5, 0.0f);
-	const float tz = luaL_optfloat(L, 6, 0.0f);
-	camera->posOffset = float3(px, py, pz);
-	camera->tiltOffset = float3(tx, ty, tz);
+
+	camera->posOffset.x = luaL_optfloat(L, 1, 0.0f);
+	camera->posOffset.y = luaL_optfloat(L, 2, 0.0f);
+	camera->posOffset.z = luaL_optfloat(L, 3, 0.0f);
+	camera->tiltOffset.x = luaL_optfloat(L, 4, 0.0f);
+	camera->tiltOffset.y = luaL_optfloat(L, 5, 0.0f);
+	camera->tiltOffset.z = luaL_optfloat(L, 6, 0.0f);
+
 	return 0;
 }
 
 
 /******************************************************************************/
+
+int LuaUnsyncedCtrl::UpdateInfoTexture(lua_State* L)
+{
+	const int rawMode = CBaseGroundDrawer::BaseGroundDrawMode(luaL_checkint(L, 1));
+	const int texMode = Clamp(rawMode, int(CBaseGroundDrawer::drawLos), int(CBaseGroundDrawer::drawPathCost));
+
+	lua_pushboolean(L, readMap->GetGroundDrawer()->UpdateExtraTexture(texMode));
+	return 1;
+}
 
 int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 {
@@ -1859,6 +1888,7 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetLosViewColors()");
 	}
 	const int scale = CBaseGroundDrawer::losColorScale;
+
 	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	gd->alwaysColor[0] = (int)(scale *   red[0]);
 	gd->alwaysColor[1] = (int)(scale * green[0]);

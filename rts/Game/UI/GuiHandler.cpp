@@ -943,7 +943,7 @@ void CGuiHandler::SetShowingMetal(bool show)
 		}
 	} else {
 		if (autoShowMetal) {
-			if (gd->drawMode != CBaseGroundDrawer::drawMetal) {
+			if (gd->GetDrawMode() != CBaseGroundDrawer::drawMetal) {
 				gd->SetMetalTexture(readMap->metalMap);
 				showingMetal = true;
 			}
@@ -1070,12 +1070,14 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 		return true;
 
 	// get mouse-hovered map pos
-	CUnit* unit = NULL;
-	CFeature* feature = NULL;
+	CUnit* targetUnit = NULL;
+	CFeature* targetFeature = NULL;
 
 	const float viewRange = globalRendering->viewRange * 1.4f;
-	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, NULL, unit, feature, true);
+	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, NULL, targetUnit, targetFeature, true);
 	const float3 groundPos = camera->GetPos() + mouse->dir * dist;
+
+	float3 modGroundPos;
 
 	if (dist <= 0.0f)
 		return false;
@@ -1089,7 +1091,9 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 			return (u->unitDef->canKamikaze || !u->weapons.empty());
 
 		for (unsigned int n = 0; n < u->weapons.size(); n++) {
-			if (u->weapons[n]->TryTarget(groundPos, false, unit)) {
+			u->weapons[n]->AdjustTargetPosToWater(modGroundPos = groundPos, targetUnit == NULL);
+
+			if (u->weapons[n]->TryTarget(modGroundPos, false, targetUnit)) {
 				return true;
 			}
 		}
@@ -2878,11 +2882,11 @@ void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text,
 
 	const float yShrink = offsetForLEDs ? (0.125f * yIconSize) : 0.0f;
 
-	const float tWidth  = font->GetSize() * font->GetTextWidth(text) * globalRendering->pixelX;  // FIXME
-	const float tHeight = font->GetSize() * font->GetTextHeight(text) * globalRendering->pixelY; // FIXME merge in 1 function?
+	const float tWidth  = std::max(0.01f, font->GetSize() * font->GetTextWidth(text) * globalRendering->pixelX);  // FIXME
+	const float tHeight = std::max(0.01f, font->GetSize() * font->GetTextHeight(text) * globalRendering->pixelY); // FIXME merge in 1 function?
 	const float textBorder2 = (2.0f * textBorder);
-	float xScale = (xIconSize - textBorder2) / tWidth;
-	float yScale = (yIconSize - textBorder2 - yShrink) / tHeight;
+	const float xScale = (xIconSize - textBorder2          ) / tWidth;
+	const float yScale = (yIconSize - textBorder2 - yShrink) / tHeight;
 	const float fontScale = std::min(xScale, yScale);
 
 	const float xCenter = 0.5f * (b.x1 + b.x2);

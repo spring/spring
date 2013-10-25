@@ -42,11 +42,7 @@ FPSUnitController::FPSUnitController()
 void FPSUnitController::Update() {
 	const int piece = controllee->script->AimFromWeapon(0);
 	const float3 relPos = controllee->script->GetPiecePos(piece);
-	const float3 pos = controllee->pos +
-		controllee->frontdir * relPos.z +
-		controllee->updir    * relPos.y +
-		controllee->rightdir * relPos.x +
-		UpVector             * 7.0f;
+	const float3 pos = controllee->GetObjectSpacePos(relPos) + (UpVector * 7.0f);
 
 	oldDCpos = pos;
 

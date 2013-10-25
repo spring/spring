@@ -14,7 +14,7 @@ public:
 	void Update();
 
 private:
-	void FireImpl();
+	void FireImpl(bool scriptCall);
 };
 
 #endif /* RIFLE_H */

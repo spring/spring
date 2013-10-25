@@ -209,11 +209,11 @@ void CFeatureDrawer::Draw()
 		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0.0f, 0.0f);
 
-		glBindTexture(GL_TEXTURE_2D, gd->infoTex);
+		glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-	unitDrawer->SetupForUnitDrawing();
+	unitDrawer->SetupForUnitDrawing(false);
 	GetVisibleFeatures(0, true);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
@@ -222,7 +222,7 @@ void CFeatureDrawer::Draw()
 		opaqueModelRenderers[modelType]->PopRenderState();
 	}
 
-	unitDrawer->CleanUpUnitDrawing();
+	unitDrawer->CleanUpUnitDrawing(false);
 
 	farTextureHandler->Draw();
 
@@ -349,13 +349,13 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 
 void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 {
-	const bool oldAdvShading = unitDrawer->advShading;
+	const bool oldAdvShading = unitDrawer->UseAdvShading();
 
 	{
-		unitDrawer->advShading = unitDrawer->advShading && !noAdvShading;
+		unitDrawer->SetUseAdvShading(unitDrawer->UseAdvShading() && !noAdvShading);
 
-		if (unitDrawer->advShading) {
-			unitDrawer->SetupForUnitDrawing();
+		if (unitDrawer->UseAdvShading()) {
+			unitDrawer->SetupForUnitDrawing(false);
 		} else {
 			unitDrawer->SetupForGhostDrawing();
 		}
@@ -381,13 +381,13 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 
 		glPopAttrib();
 
-		if (unitDrawer->advShading) {
-			unitDrawer->CleanUpUnitDrawing();
+		if (unitDrawer->UseAdvShading()) {
+			unitDrawer->CleanUpUnitDrawing(false);
 		} else {
 			unitDrawer->CleanUpGhostDrawing();
 		}
 
-		unitDrawer->advShading = oldAdvShading;
+		unitDrawer->SetUseAdvShading(oldAdvShading);
 	}
 }
 

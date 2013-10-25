@@ -37,6 +37,8 @@ public:
 	bool SetTargetBorderPos(CUnit*, float3&, float3&, float3&);
 	bool GetTargetBorderPos(const CUnit*, const float3&, float3&, float3&) const;
 
+	void AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const;
+
 	/// test if the weapon is able to attack an enemy/mapspot just by its properties (no range check, no FreeLineOfFire check, ...)
 	virtual bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
 	/// test if the enemy/mapspot is in range/angle
@@ -68,7 +70,7 @@ public:
 
 	void AutoTarget();
 	void AimReady(int value);
-	void Fire();
+	void Fire(bool scriptCall);
 	void HoldFire();
 
 	float ExperienceScale() const;
@@ -81,7 +83,7 @@ public:
 	void UpdateInterceptTarget();
 
 protected:
-	virtual void FireImpl() {}
+	virtual void FireImpl(bool scriptCall) {}
 
 	void UpdateTargeting();
 	void UpdateFire();
@@ -96,7 +98,7 @@ protected:
 
 private:
 	inline bool AllowWeaponTargetCheck();
-	void AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const;
+
 	void UpdateRelWeaponPos();
 
 public:

@@ -6,9 +6,9 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Team.h"
 #include "Map/MapInfo.h"
-#include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "System/myMath.h"
 
 CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, NULL, false));
@@ -43,10 +43,7 @@ void CBombDropper::Init()
 void CBombDropper::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->pos +
-			(owner->frontdir * relWeaponPos.z) +
-			(owner->updir    * relWeaponPos.y) +
-			(owner->rightdir * relWeaponPos.x);
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
 
 		if (targetType == Target_Unit) {
 			// aim at base of unit instead of middle and ignore uncertainty
@@ -120,7 +117,7 @@ bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ign
 	return (dropPos.SqDistance2D(targetPos) < Square(dropDist + torpDist));
 }
 
-void CBombDropper::FireImpl()
+void CBombDropper::FireImpl(bool scriptCall)
 {
 	if (targetType == Target_Unit) {
 		// aim at base of unit instead of middle and ignore uncertainity
@@ -130,8 +127,8 @@ void CBombDropper::FireImpl()
 	if (dropTorpedoes) {
 		float3 launchSpeed = owner->speed;
 
-		// if owner is a hovercraft, use a fixed launching speed [?? WTF]
-		if (dynamic_cast<CHoverAirMoveType*>(owner->moveType)) {
+		// if owner is a hovering aircraft, use a fixed launching speed [?? WTF]
+		if (owner->unitDef->IsHoveringAirUnit()) {
 			launchSpeed = (targetPos - weaponPos).Normalize() * 5.0f;
 		}
 

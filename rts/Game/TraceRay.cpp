@@ -292,11 +292,13 @@ float GuiTraceRay(
 	// ground and water-plane intersection
 	const float guiRayLength = length;
 	const float groundRayLength = ground->LineGroundCol(start, start + dir * guiRayLength, false);
-	const float waterRayLength = math::floor(math::fabs(start.y / std::min(dir.y, -0.00001f)));
+	const float waterRayLength = math::floorf(math::fabs(start.y / std::min(dir.y, -0.00001f)));
 
 	float minRayLength = groundRayLength;
 	float minIngressDist = length;
 	float minEgressDist = length;
+
+	bool hitFactory = false;
 
 	// if ray cares about water, take minimum
 	// of distance to ground and water surface
@@ -309,13 +311,13 @@ float GuiTraceRay(
 
 	int* begQuad = NULL;
 	int* endQuad = NULL;
-	bool hitFactory = false;
-	CollisionQuery cq;
 
 	quadField->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
 
 	std::list<CUnit*>::const_iterator ui;
 	std::list<CFeature*>::const_iterator fi;
+
+	CollisionQuery cq;
 
 	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
 		const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
@@ -353,13 +355,13 @@ float GuiTraceRay(
 				const float ingressDist = cq.GetIngressPosDist(start, dir);
 				const float  egressDist = cq.GetEgressPosDist(start, dir);
 
-				const bool isFactory = unit->unitDef->IsFactoryUnit();
+				const bool factoryUnderCursor = unit->unitDef->IsFactoryUnit();
 				const bool factoryHitBeforeUnit = ((hitFactory && ingressDist < minIngressDist) || (!hitFactory &&  egressDist < minIngressDist));
 				const bool unitHitInsideFactory = ((hitFactory && ingressDist <  minEgressDist) || (!hitFactory && ingressDist < minIngressDist));
 
 				// give units in a factory higher priority than the factory itself
-				if (hitUnit == NULL || (isFactory && factoryHitBeforeUnit) || (!isFactory && unitHitInsideFactory)) {
-					hitFactory = isFactory;
+				if (hitUnit == NULL || (factoryUnderCursor && factoryHitBeforeUnit) || (!factoryUnderCursor && unitHitInsideFactory)) {
+					hitFactory = factoryUnderCursor;
 					minIngressDist = ingressDist;
 					minEgressDist = egressDist;
 
@@ -370,8 +372,6 @@ float GuiTraceRay(
 		}
 
 		// Feature Intersection
-		// NOTE: switch this to custom volumes fully?
-		// (not used for any LOF checks, maybe wasteful)
 		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
 			CFeature* f = *fi;
 

@@ -1131,7 +1131,7 @@ void CBumpWater::Draw()
 	glActiveTexture(GL_TEXTURE7); glBindTexture(target,        depthTexture);
 	glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, waveRandTexture);
 	//glActiveTexture(GL_TEXTURE9); see above
-	glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, gd->DrawExtraTex() ? gd->infoTex : 0);
+	glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, normalTexture);
 
 	if (useUniforms) {

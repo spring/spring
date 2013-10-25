@@ -213,11 +213,12 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 {
 	const bool inShadowPass = (drawPass == DrawPass::Shadow);
 
-	//FIXME this just updates the visibilty.
-	//  It doesn't update the tessellation, neither does it send the indices to the GPU.
-	//  So it patches that weren't updated the last tessellation, just uses the last
-	//  tessellation which may created with a totally different camera.
+	// FIXME: this only updates the *visibilty* of patches
+	//  It doesn't update the *tessellation*, neither are indices sent to the GPU.
+	//  It just re-uses the last tessellation pattern which may have been created
+	//  with a totally different camera.
 	CCamera* cam = (inShadowPass)? camera: cam2;
+
 	Patch::UpdateVisibility(cam, roamPatches, numPatchesX);
 
 	for (std::vector<Patch>::iterator it = roamPatches.begin(); it != roamPatches.end(); ++it) {

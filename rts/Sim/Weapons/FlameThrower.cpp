@@ -20,7 +20,7 @@ CFlameThrower::CFlameThrower(CUnit* owner, const WeaponDef* def): CWeapon(owner,
 }
 
 
-void CFlameThrower::FireImpl()
+void CFlameThrower::FireImpl(bool scriptCall)
 {
 	float3 dir = targetPos - weaponMuzzlePos;
 
@@ -41,17 +41,11 @@ void CFlameThrower::FireImpl()
 
 void CFlameThrower::Update()
 {
-	if(targetType != Target_None){
-		weaponPos = owner->pos +
-			owner->frontdir * relWeaponPos.z +
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;
-		weaponMuzzlePos = owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
-		wantedDir = targetPos - weaponPos;
-		wantedDir.Normalize();
+	if (targetType != Target_None) {
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+		wantedDir = (targetPos - weaponPos).Normalize();
 	}
+
 	CWeapon::Update();
 }

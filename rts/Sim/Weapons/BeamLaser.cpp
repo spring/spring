@@ -60,7 +60,6 @@ void CBeamLaser::SweepFireState::Init(const float3& newTargetPos, const float3& 
 	sweepGoalDir = (sweepGoalPos - muzzlePos).SafeNormalize();
 
 	sweepStartAngle = math::acosf(Clamp(sweepInitDir.dot(sweepGoalDir), -1.0f, 1.0f));
-
 	sweepFiring = true;
 }
 
@@ -112,36 +111,17 @@ void CBeamLaser::UpdatePosAndMuzzlePos()
 		const CMatrix44f weaponMat = owner->script->GetPieceMatrix(weaponPiece);
 
 		const float3 relWeaponPos = weaponMat.GetPos();
-		const float3 newWeaponDir =
-			owner->frontdir * weaponMat[10] +
-			owner->updir    * weaponMat[ 6] +
-			owner->rightdir * weaponMat[ 2];
+		const float3 newWeaponDir = owner->GetObjectSpaceVec(float3(weaponMat[2], weaponMat[6], weaponMat[10]));
 
 		relWeaponMuzzlePos = owner->script->GetPiecePos(weaponPiece);
 
-		weaponPos =
-			owner->pos +
-			owner->frontdir * -relWeaponPos.z +
-			owner->updir    *  relWeaponPos.y +
-			owner->rightdir * -relWeaponPos.x;
-		weaponMuzzlePos =
-			owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos * float3(-1.0f, 1.0f, -1.0f)); // ??
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		sweepFireState.SetSweepTempDir(newWeaponDir);
 	} else {
-		weaponPos =
-			owner->pos +
-			owner->frontdir * relWeaponPos.z + // [?] no '-'
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;  // [?] no '-'
-		weaponMuzzlePos =
-			owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		if (weaponDef->sweepFire) {
 			// needed for first call to GetFireDir() when new sweep starts after inactivity
@@ -186,7 +166,7 @@ void CBeamLaser::UpdateSweep()
 		sweepFireState.Init(targetPos, weaponMuzzlePos);
 
 	if (sweepFireState.IsSweepFiring())
-		sweepFireState.Update(GetFireDir(true));
+		sweepFireState.Update(GetFireDir(true, false));
 
 	// TODO:
 	//   also stop sweep if angle no longer changes, spawn
@@ -222,34 +202,37 @@ void CBeamLaser::Update()
 	UpdateSweep();
 }
 
-float3 CBeamLaser::GetFireDir(bool sweepFire)
+float3 CBeamLaser::GetFireDir(bool sweepFire, bool scriptCall)
 {
-	float3 dir;
+	float3 dir = targetPos - weaponMuzzlePos;
 
 	if (!sweepFire) {
-		if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType) != NULL) {
-			// [?] StrafeAirMovetype cannot align itself properly, change back when that is fixed
-			dir = owner->frontdir;
+		if (scriptCall) {
+			dir = dir.SafeNormalize();
 		} else {
-			if (salvoLeft == salvoSize - 1) {
-				dir = (targetPos - weaponMuzzlePos).SafeNormalize();
-				oldDir = dir;
-			} else if (weaponDef->beamburst) {
-				dir = (targetPos - weaponMuzzlePos).SafeNormalize();
+			if (onlyForward && owner->unitDef->IsStrafingAirUnit()) {
+				// [?] StrafeAirMovetype cannot align itself properly, change back when that is fixed
+				dir = owner->frontdir;
 			} else {
-				dir = oldDir;
+				if (salvoLeft == salvoSize - 1) {
+					oldDir = (dir = dir.SafeNormalize());
+				} else if (weaponDef->beamburst) {
+					dir = dir.SafeNormalize();
+				} else {
+					dir = oldDir;
+				}
 			}
-		}
 
-		dir += SalvoErrorExperience();
-		dir.SafeNormalize();
+			dir += SalvoErrorExperience();
+			dir.SafeNormalize();
 
-		// NOTE:
-		//  on units with (extremely) long weapon barrels the muzzle
-		//  can be on the far side of the target unit such that <dir>
-		//  would point away from it
-		if ((targetPos - weaponMuzzlePos).dot(targetPos - owner->aimPos) < 0.0f) {
-			dir = -dir;
+			// NOTE:
+			//  on units with (extremely) long weapon barrels the muzzle
+			//  can be on the far side of the target unit such that <dir>
+			//  would point away from it
+			if ((targetPos - weaponMuzzlePos).dot(targetPos - owner->aimPos) < 0.0f) {
+				dir = -dir;
+			}
 		}
 	} else {
 		// need to emit the sweeping beams from the right place
@@ -274,13 +257,13 @@ float3 CBeamLaser::GetFireDir(bool sweepFire)
 	return dir;
 }
 
-void CBeamLaser::FireImpl()
+void CBeamLaser::FireImpl(bool scriptCall)
 {
 	// sweepfire must exclude regular fire (!)
 	if (sweepFireState.IsSweepFiring())
 		return;
 
-	FireInternal(GetFireDir(false));
+	FireInternal(GetFireDir(false, scriptCall));
 }
 
 void CBeamLaser::FireInternal(float3 curDir)

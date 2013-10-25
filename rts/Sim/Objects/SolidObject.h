@@ -152,6 +152,10 @@ public:
 	 */
 	void UnBlock();
 
+	// these transform a point or vector to object-space
+	float3 GetObjectSpaceVec(const float3& v) const { return (      (frontdir * v.z) + (rightdir * v.x) + (updir * v.y)); }
+	float3 GetObjectSpacePos(const float3& p) const { return (pos + (frontdir * p.z) + (rightdir * p.x) + (updir * p.y)); }
+	float3 GetObjectSpacePosUnsynced(const float3& p) const { return (drawPos + GetObjectSpaceVec(p)); }
 
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
@@ -219,20 +223,8 @@ private:
 		}
 	}
 
-	float3 GetMidPos() const {
-		const float3 dz = (frontdir * relMidPos.z);
-		const float3 dy = (updir    * relMidPos.y);
-		const float3 dx = (rightdir * relMidPos.x);
-
-		return (pos + dz + dy + dx);
-	}
-	float3 GetAimPos() const {
-		const float3 dz = (frontdir * relAimPos.z);
-		const float3 dy = (updir    * relAimPos.y);
-		const float3 dx = (rightdir * relAimPos.x);
-
-		return (pos + dz + dy + dx);
-	}
+	float3 GetMidPos() const { return (GetObjectSpacePos(relMidPos)); }
+	float3 GetAimPos() const { return (GetObjectSpacePos(relAimPos)); }
 
 public:
 	float health;

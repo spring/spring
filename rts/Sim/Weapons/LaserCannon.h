@@ -15,7 +15,7 @@ public:
 	void Init();
 
 private:
-	void FireImpl();
+	void FireImpl(bool scriptCall);
 
 private:
 	float3 color;

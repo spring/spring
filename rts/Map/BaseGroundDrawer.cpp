@@ -32,8 +32,7 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 	LODScaleRefraction = configHandler->GetFloat("GroundLODScaleRefraction");
 	LODScaleUnitReflection = configHandler->GetFloat("GroundLODScaleUnitReflection");
 
-	infoTexAlpha = 0.25f;
-	infoTex = 0;
+	memset(&infoTextureIDs[0], 0, sizeof(infoTextureIDs));
 
 	drawMode = drawNormal;
 	drawLineOfSight = false;
@@ -52,9 +51,9 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 	multiThreadDrawGround = false;
 #endif
 
-	extraTexPBO.Bind();
-	extraTexPBO.Resize(gs->pwr2mapx * gs->pwr2mapy * 4);
-	extraTexPBO.Unbind(false);
+	infoTexPBO.Bind();
+	infoTexPBO.Resize(gs->pwr2mapx * gs->pwr2mapy * 4);
+	infoTexPBO.Unbind(false);
 
 	highResInfoTexWanted = false;
 
@@ -84,8 +83,8 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 
 CBaseGroundDrawer::~CBaseGroundDrawer()
 {
-	if (infoTex!=0) {
-		glDeleteTextures(1, &infoTex);
+	for (unsigned int n = 0; n < NUM_INFOTEXTURES; n++) {
+		glDeleteTextures(1, &infoTextureIDs[n]);
 	}
 
 	delete heightLinePal;
@@ -114,7 +113,7 @@ void CBaseGroundDrawer::DrawTrees(bool drawReflection) const
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, GL_TEXTURE);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-			glBindTexture(GL_TEXTURE_2D, infoTex);
+			glBindTexture(GL_TEXTURE_2D, infoTextureIDs[drawMode]);
 			SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 			glActiveTextureARB(GL_TEXTURE0_ARB);
 		}
@@ -149,11 +148,11 @@ void CBaseGroundDrawer::DisableExtraTexture()
 		SetDrawMode(drawNormal);
 	}
 
-	extraTex = 0;
+	extraTex = NULL;
 	highResInfoTexWanted = false;
 	updateTextureState = 0;
 
-	while (!UpdateExtraTexture());
+	while (!UpdateExtraTexture(drawMode));
 }
 
 
@@ -165,10 +164,10 @@ void CBaseGroundDrawer::SetHeightTexture()
 		SetDrawMode(drawHeight);
 
 		highResInfoTexWanted = true;
-		extraTex = 0;
+		extraTex = NULL;
 		updateTextureState = 0;
 
-		while (!UpdateExtraTexture());
+		while (!UpdateExtraTexture(drawMode));
 	}
 }
 
@@ -187,7 +186,7 @@ void CBaseGroundDrawer::SetMetalTexture(const CMetalMap* map)
 		extractDepthMap = &map->extractionMap[0];
 		updateTextureState = 0;
 
-		while (!UpdateExtraTexture());
+		while (!UpdateExtraTexture(drawMode));
 	}
 }
 
@@ -195,7 +194,7 @@ void CBaseGroundDrawer::SetMetalTexture(const CMetalMap* map)
 void CBaseGroundDrawer::TogglePathTexture(BaseGroundDrawMode mode)
 {
 	switch (mode) {
-		case drawPathTraversability:
+		case drawPathTrav:
 		case drawPathHeat:
 		case drawPathFlow:
 		case drawPathCost: {
@@ -204,11 +203,11 @@ void CBaseGroundDrawer::TogglePathTexture(BaseGroundDrawMode mode)
 			} else {
 				SetDrawMode(mode);
 
-				extraTex = 0;
+				extraTex = NULL;
 				highResInfoTexWanted = false;
 				updateTextureState = 0;
 
-				while (!UpdateExtraTexture());
+				while (!UpdateExtraTexture(drawMode));
 			}
 		} break;
 
@@ -227,11 +226,11 @@ void CBaseGroundDrawer::ToggleLosTexture()
 		drawLineOfSight = true;
 
 		SetDrawMode(drawLos);
-		extraTex = 0;
+		extraTex = NULL;
 		highResInfoTexWanted = highResLosTex;
 		updateTextureState = 0;
 
-		while (!UpdateExtraTexture());
+		while (!UpdateExtraTexture(drawMode));
 	}
 }
 
@@ -239,9 +238,10 @@ void CBaseGroundDrawer::ToggleLosTexture()
 void CBaseGroundDrawer::ToggleRadarAndJammer()
 {
 	drawRadarAndJammer = !drawRadarAndJammer;
+
 	if (drawMode == drawLos) {
 		updateTextureState = 0;
-		while (!UpdateExtraTexture());
+		while (!UpdateExtraTexture(drawMode));
 	}
 }
 
@@ -273,13 +273,23 @@ static inline int InterpolateLos(const unsigned short* p, int xsize, int ysize,
 
 
 // Gradually calculate the extra texture based on updateTextureState:
-//   updateTextureState < extraTextureUpdateRate:   Calculate the texture color values and copy them in a buffer
+//   updateTextureState < extraTextureUpdateRate:   Calculate the texture color values and copy them into buffer
 //   updateTextureState = extraTextureUpdateRate:   Copy the buffer into a texture
-bool CBaseGroundDrawer::UpdateExtraTexture()
+// NOTE:
+//   when switching TO an info-texture drawing mode
+//   the texture is calculated in its entirety, not
+//   over multiple frames
+bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 {
 	if (mapInfo->map.voidWater && readMap->IsUnderWater())
 		return true;
-	if (drawMode == drawNormal)
+
+	// normally texDrawMode == drawMode but this
+	// can differ when Lua executes a background
+	// update (if so drawMode must be drawNormal)
+	if (drawMode == drawNormal && texDrawMode == drawMode)
+		return true;
+	if (drawMode != drawNormal && texDrawMode != drawMode)
 		return true;
 
 	const unsigned short* myLos         = &losHandler->losMaps[gu->myAllyTeam].front();
@@ -297,30 +307,32 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 		int starty;
 		int endy;
 		int offset;
-		GLbyte* infoTexMem;
 
-		extraTexPBO.Bind();
+		// pointer to GPU-memory mapped into our address space
+		GLbyte* infoTexMem = NULL;
+
+		infoTexPBO.Bind();
 
 		if (highResInfoTexWanted) {
 			starty = updateTextureState * gs->mapy / extraTextureUpdateRate;
 			endy = (updateTextureState + 1) * gs->mapy / extraTextureUpdateRate;
 
 			offset = starty * gs->pwr2mapx * 4;
-			infoTexMem = (GLbyte*)extraTexPBO.MapBuffer(offset, (endy - starty) * gs->pwr2mapx * 4);
+			infoTexMem = reinterpret_cast<GLbyte*>(infoTexPBO.MapBuffer(offset, (endy - starty) * gs->pwr2mapx * 4));
 		} else {
 			starty = updateTextureState * gs->hmapy / extraTextureUpdateRate;
 			endy = (updateTextureState + 1) * gs->hmapy / extraTextureUpdateRate;
 
 			offset = starty * pwr2mapx_half * 4;
-			infoTexMem = (GLbyte*)extraTexPBO.MapBuffer(offset, (endy - starty) * pwr2mapx_half * 4);
+			infoTexMem = reinterpret_cast<GLbyte*>(infoTexPBO.MapBuffer(offset, (endy - starty) * pwr2mapx_half * 4));
 		}
 
-		switch (drawMode) {
-			case drawPathTraversability:
+		switch (texDrawMode) {
+			case drawPathTrav:
 			case drawPathHeat:
 			case drawPathFlow:
 			case drawPathCost: {
-				pathDrawer->UpdateExtraTexture(drawMode, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));
+				pathDrawer->UpdateExtraTexture(texDrawMode, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));
 			} break;
 
 			case drawMetal: {
@@ -333,11 +345,13 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 						const int a   = (y_pwr2mapx_half + x) * 4 - offset;
 						const int alx = ((x*2) >> losHandler->airMipLevel);
 						const int aly = ((y_2) >> losHandler->airMipLevel);
+
 						if (myAirLos[alx + (aly * losHandler->airSizeX)]) {
 							infoTexMem[a + COLOR_R] = (unsigned char)std::min(255.0f, 900.0f * fastmath::apxsqrt(fastmath::apxsqrt(extractDepthMap[y_hmapx + x])));
 						} else {
 							infoTexMem[a + COLOR_R] = 0;
 						}
+
 						infoTexMem[a + COLOR_G] = (extraTexPal[extraTex[y_hmapx + x]*3 + 1]);
 						infoTexMem[a + COLOR_B] = (extraTexPal[extraTex[y_hmapx + x]*3 + 2]);
 						infoTexMem[a + COLOR_A] = 255;
@@ -364,6 +378,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 						const float height = heightMap[y_mapx + x];
 						const unsigned int value = (((unsigned int)(height * 8.0f)) % 255) * 3;
 						const int i = (y_pwr2mapx + x) * 4 - offset;
+
 						infoTexMem[i + COLOR_R] = 64 + (extraTexPal[value    ] >> 1);
 						infoTexMem[i + COLOR_G] = 64 + (extraTexPal[value + 1] >> 1);
 						infoTexMem[i + COLOR_B] = 64 + (extraTexPal[value + 2] >> 1);
@@ -390,6 +405,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 					for (int y = starty; y < endy; ++y) {
 						for (int x = 0; x < endx; ++x) {
 							int totalLos = 255;
+
 							if (!gs->globalLOS[gu->myAllyTeam]) {
 								const int inLos = InterpolateLos(myLos,    losSizeX, losSizeY, losMipLevel, 128, x, y);
 								const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel, 128, x, y);
@@ -417,8 +433,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							infoTexMem[a + COLOR_A] = 255;
 						}
 					}
-				}
-				else {
+				} else {
 					for (int y = starty; y < endy; ++y) {
 						const int y_pwr2mapx = y * pwr2mapx;
 						for (int x = 0; x < endx; ++x) {
@@ -426,6 +441,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel, 32, x, y);
 							const int value = 64 + inLos + inAir;
 							const int a = (y_pwr2mapx + x) * 4 - offset;
+
 							infoTexMem[a + COLOR_R] = value;
 							infoTexMem[a + COLOR_G] = value;
 							infoTexMem[a + COLOR_B] = value;
@@ -436,57 +452,71 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				break;
 			}
 
-			case drawNormal:
-				break;
-		} // switch (drawMode)
+			case drawNormal: {
+				assert(false);
+			} break;
+		}
 
-		extraTexPBO.UnmapBuffer();
+		infoTexPBO.UnmapBuffer();
 		/*
-		glBindTexture(GL_TEXTURE_2D, infoTex);
-		if(highResInfoTex)
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, starty, gs->pwr2mapx, (endy-starty), GL_BGRA, GL_UNSIGNED_BYTE, extraTexPBO.GetPtr(offset));
-		else
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, starty, gs->pwr2mapx>>1, (endy-starty), GL_BGRA, GL_UNSIGNED_BYTE, extraTexPBO.GetPtr(offset));
-		*/
-		extraTexPBO.Unbind(false);
+		glBindTexture(GL_TEXTURE_2D, infoTextureIDs[texDrawMode]);
 
-	} // if (updateTextureState < extraTextureUpdateRate)
+		if (highResInfoTex) {
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, starty, gs->pwr2mapx, (endy-starty), GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr(offset));
+		} else {
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, starty, gs->pwr2mapx>>1, (endy-starty), GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr(offset));
+		}
+		*/
+
+		infoTexPBO.Unbind(false);
+	}
+
 
 	if (updateTextureState == extraTextureUpdateRate) {
-		if (infoTex != 0 && highResInfoTexWanted != highResInfoTex) {
-			glDeleteTextures(1,&infoTex);
-			infoTex=0;
+		// entire texture has been updated
+		if (infoTextureIDs[texDrawMode] != 0 && highResInfoTexWanted != highResInfoTex) {
+			// this happens when switching to or from F1-
+			// or LOS-mode (if highResLosTex is enabled)
+			glDeleteTextures(1, &infoTextureIDs[texDrawMode]);
+			infoTextureIDs[texDrawMode] = 0;
 		}
-		if (infoTex == 0) {
-			extraTexPBO.Bind();
-			glGenTextures(1,&infoTex);
-			glBindTexture(GL_TEXTURE_2D, infoTex);
+
+		if (infoTextureIDs[texDrawMode] == 0) {
+			// generate new texture
+			infoTexPBO.Bind();
+			glGenTextures(1, &infoTextureIDs[texDrawMode]);
+			glBindTexture(GL_TEXTURE_2D, infoTextureIDs[texDrawMode]);
 
 			// XXX maybe use GL_RGB5 as internalformat?
-			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-			if(highResInfoTexWanted)
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_BGRA, GL_UNSIGNED_BYTE, extraTexPBO.GetPtr());
-			else
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx>>1, gs->pwr2mapy>>1, 0, GL_BGRA, GL_UNSIGNED_BYTE, extraTexPBO.GetPtr());
-			extraTexPBO.Unbind(false);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+			if (highResInfoTexWanted) {
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
+			} else {
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx>>1, gs->pwr2mapy>>1, 0, GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
+			}
+
+			infoTexPBO.Unbind(false);
 
 			highResInfoTex = highResInfoTexWanted;
 			updateTextureState = 0;
 			return true;
 		}
 
-		extraTexPBO.Bind();
-			glBindTexture(GL_TEXTURE_2D, infoTex);
-			if(highResInfoTex)
-				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, gs->pwr2mapx, gs->pwr2mapy, GL_BGRA, GL_UNSIGNED_BYTE, extraTexPBO.GetPtr());
-			else
-				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, gs->pwr2mapx>>1, gs->pwr2mapy>>1, GL_BGRA, GL_UNSIGNED_BYTE, extraTexPBO.GetPtr());
-		extraTexPBO.Unbind(false);
+		infoTexPBO.Bind();
+			glBindTexture(GL_TEXTURE_2D, infoTextureIDs[texDrawMode]);
 
-		updateTextureState=0;
+			if (highResInfoTex) {
+				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, gs->pwr2mapx, gs->pwr2mapy, GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
+			} else {
+				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, gs->pwr2mapx>>1, gs->pwr2mapy>>1, GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
+			}
+		infoTexPBO.Unbind(false);
+
+		updateTextureState = 0;
 		return true;
 	}
 
@@ -495,12 +525,13 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 }
 
 
+
 int2 CBaseGroundDrawer::GetInfoTexSize() const
 {
 	if (highResInfoTex)
-		return int2(gs->pwr2mapx, gs->pwr2mapy);
-	else
-		return int2(gs->pwr2mapx>>1, gs->pwr2mapy>>1);
+		return (int2(gs->pwr2mapx, gs->pwr2mapy));
+
+	return (int2(gs->pwr2mapx >> 1, gs->pwr2mapy >> 1));
 }
 
 

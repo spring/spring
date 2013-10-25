@@ -21,7 +21,7 @@ private:
 	bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
 	bool TestRange(const float3& pos, bool userTarget, const CUnit* unit) const;
 	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
-	void FireImpl();
+	void FireImpl(bool scriptCall);
 
 	float GetPredictedImpactTime(const float3& impactPos) const;
 

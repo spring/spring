@@ -97,7 +97,7 @@ void CFactory::PreInit(const UnitLoadParams& params)
 float3 CFactory::CalcBuildPos(int buildPiece)
 {
 	const float3 relBuildPos = script->GetPiecePos((buildPiece < 0)? script->QueryBuildInfo() : buildPiece);
-	const float3 absBuildPos = pos + frontdir * relBuildPos.z + updir * relBuildPos.y + rightdir * relBuildPos.x;
+	const float3 absBuildPos = this->GetObjectSpacePos(relBuildPos);
 	return absBuildPos;
 }
 
@@ -499,11 +499,7 @@ void CFactory::CreateNanoParticle(bool highPriority)
 		return;
 
 	const float3 relNanoFirePos = localModel->GetRawPiecePos(modelNanoPiece);
-
-	const float3 nanoPos = pos
-		+ (frontdir * relNanoFirePos.z)
-		+ (updir    * relNanoFirePos.y)
-		+ (rightdir * relNanoFirePos.x);
+	const float3 nanoPos = this->GetObjectSpacePos(relNanoFirePos);
 
 	// unsynced
 	projectileHandler->AddNanoParticle(nanoPos, curBuild->midPos, unitDef, team, highPriority);

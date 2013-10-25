@@ -339,7 +339,7 @@ void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS:
 
 void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
-		case CBaseGroundDrawer::drawPathTraversability: {
+		case CBaseGroundDrawer::drawPathTrav: {
 			const MoveDef* md = GetSelectedMoveDef();
 
 			if (md != NULL) {

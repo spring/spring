@@ -1088,7 +1088,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 	const int2 zrange = int2(z1, z2);
 
 	const MoveDef* moveDef = (buildInfo.def->pathType != -1U) ? moveDefHandler->GetMoveDefByPathType(buildInfo.def->pathType) : NULL;
-	const S3DModel* model = buildInfo.def->LoadModel();
+	/*const S3DModel* model =*/ buildInfo.def->LoadModel();
 
 	const float buildHeight = GetBuildHeight(pos, buildInfo.def, synced);
 	// const float modelHeight = (model != NULL) ? math::fabs(model->height) : 10.0f;

@@ -106,6 +106,11 @@ void CTorpedoProjectile::Update()
 					if (po != NULL) {
 						targSpeed = po->speed;
 					}
+				} else {
+					// assigning this does not matter because targetPos
+					// is always a ZeroVector in the target == NULL case
+					// (for TorpedoProjectile's)
+					targetPos = pos + dir * speed.w;
 				}
 
 				if (!weaponDef->submissile && targetPos.y > 0.0f) {

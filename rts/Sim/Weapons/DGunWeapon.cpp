@@ -20,14 +20,8 @@ CDGunWeapon::CDGunWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def
 void CDGunWeapon::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->pos +
-			owner->frontdir * relWeaponPos.z +
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;
-		weaponMuzzlePos = owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		if (!onlyForward) {
 			wantedDir = (targetPos - weaponPos).Normalize();
@@ -40,7 +34,7 @@ void CDGunWeapon::Update()
 	CWeapon::Update();
 }
 
-void CDGunWeapon::FireImpl()
+void CDGunWeapon::FireImpl(bool scriptCall)
 {
 	float3 dir = owner->frontdir;
 

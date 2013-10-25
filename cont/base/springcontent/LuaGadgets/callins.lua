@@ -156,7 +156,7 @@ CALLIN_LIST = {
 	"GetTooltip",
 
 	"WorldTooltip",            -- FIXME: not implemented by base GH
-	"MapDrawCmd",              -- FIXME: not implemented by base GH
+	"MapDrawCmd",
 	"ShockFront",              -- FIXME: not implemented by base GH
 }
 

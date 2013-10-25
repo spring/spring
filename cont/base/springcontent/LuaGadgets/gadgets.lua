@@ -79,6 +79,7 @@ gadgetHandler = {
   xViewSizeOld = 1,
   yViewSizeOld = 1,
 
+  actionHandler = actionHandler,
   mouseOwner = nil,
 }
 
@@ -1581,6 +1582,15 @@ function gadgetHandler:DefaultCommand(type, id)
   return
 end
 
+function gadgetHandler:CommandNotify(id, params, options)
+  for _,g in ipairs(self.CommandNotifyList) do
+    if (g:CommandNotify(id, params, options)) then
+      return true
+    end
+  end
+  return false
+end
+
 
 function gadgetHandler:DrawGenesis()
   for _,g in ipairs(self.DrawGenesisList) do
@@ -1744,6 +1754,16 @@ function gadgetHandler:GetTooltip(x, y)
     end
   end
   return ''
+end
+
+
+function gadgetHandler:MapDrawCmd(playerID, cmdType, px, py, pz, labelText)
+  for _,g in ipairs(self.MapDrawCmdList) do
+    if (g:MapDrawCmd(playerID, cmdType, px, py, pz, labelText)) then
+      return true
+    end
+  end
+  return false
 end
 
 --------------------------------------------------------------------------------

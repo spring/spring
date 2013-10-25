@@ -4,9 +4,9 @@
 #include "WeaponDef.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
-#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 
 CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL));
 
@@ -25,14 +25,8 @@ CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, d
 void CLaserCannon::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->pos +
-			owner->frontdir * relWeaponPos.z +
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;
-		weaponMuzzlePos = owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		float3 wantedDirTemp = targetPos - weaponPos;
 		const float targetDist = wantedDirTemp.LengthNormalize();
@@ -53,12 +47,12 @@ void CLaserCannon::Init()
 	CWeapon::Init();
 }
 
-void CLaserCannon::FireImpl()
+void CLaserCannon::FireImpl(bool scriptCall)
 {
 	float3 dir = targetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();
 
-	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType) != NULL) {
+	if (onlyForward && owner->unitDef->IsStrafingAirUnit()) {
 		// [?] StrafeAirMovetype cannot align itself properly, change back when that is fixed
 		dir = owner->frontdir;
 	}

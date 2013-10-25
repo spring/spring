@@ -542,15 +542,8 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 
 	relDir.SafeNormalize();
 
-	const float3 pos =
-		unit->pos +
-		unit->frontdir * relPos.z +
-		unit->updir    * relPos.y +
-		unit->rightdir * relPos.x;
-	const float3 dir =
-		unit->frontdir * relDir.z +
-		unit->updir    * relDir.y +
-		unit->rightdir * relDir.x;
+	const float3 pos = unit->GetObjectSpacePos(relPos);
+	const float3 dir = unit->GetObjectSpaceVec(relDir);
 
 	float alpha = 0.3f + gu->RandFloat() * 0.2f;
 	float alphaFalloff = 0.004f;
@@ -652,7 +645,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 
 				weapon->targetPos = pos + dir;
 				weapon->weaponMuzzlePos = pos;
-				weapon->Fire();
+				weapon->Fire(true);
 				weapon->weaponMuzzlePos = weaponMuzzlePos;
 				weapon->targetPos = targetPos;
 			}
@@ -764,11 +757,7 @@ void CUnitScript::Explode(int piece, int flags)
 
 #ifndef _CONSOLE
 	const float3 relPos = GetPiecePos(piece);
-	const float3 absPos =
-		unit->pos +
-		unit->frontdir * relPos.z +
-		unit->updir    * relPos.y +
-		unit->rightdir * relPos.x;
+	const float3 absPos = unit->GetObjectSpacePos(relPos);
 
 #ifdef TRACE_SYNC
 	tracefile << "Cob explosion: ";
@@ -846,11 +835,7 @@ void CUnitScript::ShowFlare(int piece)
 	}
 #ifndef _CONSOLE
 	const float3 relPos = GetPiecePos(piece);
-	const float3 absPos =
-		unit->pos +
-		unit->frontdir * relPos.z +
-		unit->updir    * relPos.y +
-		unit->rightdir * relPos.x;
+	const float3 absPos = unit->GetObjectSpacePos(relPos);
 	const float3 dir = unit->lastMuzzleFlameDir;
 	const float size = unit->lastMuzzleFlameSize;
 
@@ -913,7 +898,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			break;
 		}
 		const float3 relPos = GetPiecePos(p1);
-		const float3 absPos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
+		const float3 absPos = unit->GetObjectSpacePos(relPos);
 		return PACKXZ(absPos.x, absPos.z);
 	}
 	case PIECE_Y: {
@@ -922,7 +907,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			break;
 		}
 		const float3 relPos = GetPiecePos(p1);
-		const float3 absPos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
+		const float3 absPos = unit->GetObjectSpacePos(relPos);
 		return int(absPos.y * COBSCALE);
 	}
 	case UNIT_XZ: {
