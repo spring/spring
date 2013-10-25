@@ -77,7 +77,7 @@ public:
 	void TogglePathTexture(BaseGroundDrawMode);
 	void ToggleLosTexture();
 	void ToggleRadarAndJammer();
-	bool UpdateExtraTexture();
+	bool UpdateExtraTexture(unsigned int texDrawMode);
 
 	bool DrawExtraTex() const { return drawMode != drawNormal; }
 	bool DrawDeferred() const { return drawDeferred; }

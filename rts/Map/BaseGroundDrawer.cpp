@@ -152,7 +152,7 @@ void CBaseGroundDrawer::DisableExtraTexture()
 	highResInfoTexWanted = false;
 	updateTextureState = 0;
 
-	while (!UpdateExtraTexture());
+	while (!UpdateExtraTexture(drawMode));
 }
 
 
@@ -167,7 +167,7 @@ void CBaseGroundDrawer::SetHeightTexture()
 		extraTex = NULL;
 		updateTextureState = 0;
 
-		while (!UpdateExtraTexture());
+		while (!UpdateExtraTexture(drawMode));
 	}
 }
 
@@ -186,7 +186,7 @@ void CBaseGroundDrawer::SetMetalTexture(const CMetalMap* map)
 		extractDepthMap = &map->extractionMap[0];
 		updateTextureState = 0;
 
-		while (!UpdateExtraTexture());
+		while (!UpdateExtraTexture(drawMode));
 	}
 }
 
@@ -207,7 +207,7 @@ void CBaseGroundDrawer::TogglePathTexture(BaseGroundDrawMode mode)
 				highResInfoTexWanted = false;
 				updateTextureState = 0;
 
-				while (!UpdateExtraTexture());
+				while (!UpdateExtraTexture(drawMode));
 			}
 		} break;
 
@@ -230,7 +230,7 @@ void CBaseGroundDrawer::ToggleLosTexture()
 		highResInfoTexWanted = highResLosTex;
 		updateTextureState = 0;
 
-		while (!UpdateExtraTexture());
+		while (!UpdateExtraTexture(drawMode));
 	}
 }
 
@@ -241,7 +241,7 @@ void CBaseGroundDrawer::ToggleRadarAndJammer()
 
 	if (drawMode == drawLos) {
 		updateTextureState = 0;
-		while (!UpdateExtraTexture());
+		while (!UpdateExtraTexture(drawMode));
 	}
 }
 
@@ -273,13 +273,23 @@ static inline int InterpolateLos(const unsigned short* p, int xsize, int ysize,
 
 
 // Gradually calculate the extra texture based on updateTextureState:
-//   updateTextureState < extraTextureUpdateRate:   Calculate the texture color values and copy them in a buffer
+//   updateTextureState < extraTextureUpdateRate:   Calculate the texture color values and copy them into buffer
 //   updateTextureState = extraTextureUpdateRate:   Copy the buffer into a texture
-bool CBaseGroundDrawer::UpdateExtraTexture()
+// NOTE:
+//   when switching TO an info-texture drawing mode
+//   the texture is calculated in its entirety, not
+//   over multiple frames
+bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 {
 	if (mapInfo->map.voidWater && readMap->IsUnderWater())
 		return true;
-	if (drawMode == drawNormal)
+
+	// normally texDrawMode == drawMode but this
+	// can differ when Lua executes a background
+	// update (if so drawMode must be drawNormal)
+	if (drawMode == drawNormal && texDrawMode == drawMode)
+		return true;
+	if (drawMode != drawNormal && texDrawMode != drawMode)
 		return true;
 
 	const unsigned short* myLos         = &losHandler->losMaps[gu->myAllyTeam].front();
@@ -317,12 +327,12 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 			infoTexMem = reinterpret_cast<GLbyte*>(infoTexPBO.MapBuffer(offset, (endy - starty) * pwr2mapx_half * 4));
 		}
 
-		switch (drawMode) {
+		switch (texDrawMode) {
 			case drawPathTrav:
 			case drawPathHeat:
 			case drawPathFlow:
 			case drawPathCost: {
-				pathDrawer->UpdateExtraTexture(drawMode, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));
+				pathDrawer->UpdateExtraTexture(texDrawMode, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));
 			} break;
 
 			case drawMetal: {
@@ -449,7 +459,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 		infoTexPBO.UnmapBuffer();
 		/*
-		glBindTexture(GL_TEXTURE_2D, infoTextureIDs[drawMode]);
+		glBindTexture(GL_TEXTURE_2D, infoTextureIDs[texDrawMode]);
 
 		if (highResInfoTex) {
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, starty, gs->pwr2mapx, (endy-starty), GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr(offset));
@@ -464,18 +474,18 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 	if (updateTextureState == extraTextureUpdateRate) {
 		// entire texture has been updated
-		if (infoTextureIDs[drawMode] != 0 && highResInfoTexWanted != highResInfoTex) {
+		if (infoTextureIDs[texDrawMode] != 0 && highResInfoTexWanted != highResInfoTex) {
 			// this happens when switching to or from F1-
 			// or LOS-mode (if highResLosTex is enabled)
-			glDeleteTextures(1, &infoTextureIDs[drawMode]);
-			infoTextureIDs[drawMode] = 0;
+			glDeleteTextures(1, &infoTextureIDs[texDrawMode]);
+			infoTextureIDs[texDrawMode] = 0;
 		}
 
-		if (infoTextureIDs[drawMode] == 0) {
+		if (infoTextureIDs[texDrawMode] == 0) {
 			// generate new texture
 			infoTexPBO.Bind();
-			glGenTextures(1, &infoTextureIDs[drawMode]);
-			glBindTexture(GL_TEXTURE_2D, infoTextureIDs[drawMode]);
+			glGenTextures(1, &infoTextureIDs[texDrawMode]);
+			glBindTexture(GL_TEXTURE_2D, infoTextureIDs[texDrawMode]);
 
 			// XXX maybe use GL_RGB5 as internalformat?
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -497,7 +507,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 		}
 
 		infoTexPBO.Bind();
-			glBindTexture(GL_TEXTURE_2D, infoTextureIDs[drawMode]);
+			glBindTexture(GL_TEXTURE_2D, infoTextureIDs[texDrawMode]);
 
 			if (highResInfoTex) {
 				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, gs->pwr2mapx, gs->pwr2mapy, GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
