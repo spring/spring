@@ -309,7 +309,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 		int offset;
 
 		// pointer to GPU-memory mapped into our address space
-		GLbyte* infoTexMem = NULL;
+		unsigned char* infoTexMem = NULL;
 
 		infoTexPBO.Bind();
 
@@ -318,13 +318,13 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 			endy = (updateTextureState + 1) * gs->mapy / extraTextureUpdateRate;
 
 			offset = starty * gs->pwr2mapx * 4;
-			infoTexMem = reinterpret_cast<GLbyte*>(infoTexPBO.MapBuffer(offset, (endy - starty) * gs->pwr2mapx * 4));
+			infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer(offset, (endy - starty) * gs->pwr2mapx * 4));
 		} else {
 			starty = updateTextureState * gs->hmapy / extraTextureUpdateRate;
 			endy = (updateTextureState + 1) * gs->hmapy / extraTextureUpdateRate;
 
 			offset = starty * pwr2mapx_half * 4;
-			infoTexMem = reinterpret_cast<GLbyte*>(infoTexPBO.MapBuffer(offset, (endy - starty) * pwr2mapx_half * 4));
+			infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer(offset, (endy - starty) * pwr2mapx_half * 4));
 		}
 
 		switch (texDrawMode) {
