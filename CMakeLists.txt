@@ -334,6 +334,10 @@ endif (USE_CXX11)
 
 ### our custom OpenMP replacement
 option(THREADPOOL "Enable ThreadPools" TRUE)
+if(MSVC)
+	message(WARNING "MSVC doesn't support THREADPOOL, disabled!")
+	set(THREADPOOL FALSE CACHE BOOL "" FORCE)
+endif()
 if (THREADPOOL)
 	add_definitions(-DTHREADPOOL)
 endif(THREADPOOL)

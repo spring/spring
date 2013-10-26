@@ -18,7 +18,7 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 
-#define SWEEPFIRE_ENABLED true
+#define SWEEPFIRE_ENABLED 1
 
 CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL, NULL));
 
