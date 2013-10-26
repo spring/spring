@@ -1,7 +1,3 @@
-#if (DEFERRED_MODE == 1 || SMF_PARALLAX_MAPPING == 1)
-#version 120
-#endif
-
 #define SSMF_UNCOMPRESSED_NORMALS 0
 #define SMF_SHALLOW_WATER_DEPTH     (10.0                          )
 #define SMF_SHALLOW_WATER_DEPTH_INV ( 1.0 / SMF_SHALLOW_WATER_DEPTH)

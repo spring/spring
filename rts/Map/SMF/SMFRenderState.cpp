@@ -105,8 +105,8 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 	#define sh shaderHandler
 	for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
 		glslShaders[n] = sh->CreateProgramObject("[SMFGroundDrawer]", names[n], false);
-		glslShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", defs, GL_VERTEX_SHADER));
-		glslShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", defs, GL_FRAGMENT_SHADER));
+		glslShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", "#version 120\n" + defs, GL_VERTEX_SHADER));
+		glslShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", "#version 120\n" + defs, GL_FRAGMENT_SHADER));
 
 		glslShaders[n]->SetFlag("SMF_VOID_WATER",               int(mapInfo->map.voidWater));
 		glslShaders[n]->SetFlag("SMF_VOID_GROUND",              int(mapInfo->map.voidGround));
