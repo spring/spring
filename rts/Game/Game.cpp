@@ -1100,7 +1100,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	if (newSimFrame || unsyncedUpdateDeltaTime >= (1.0f / GAME_SPEED)) {
 		lastUnsyncedUpdateTime = currentTime;
 
-		{
+		if (gd->GetDrawMode() != CBaseGroundDrawer::drawNormal) {
 			SCOPED_TIMER("GroundDrawer::UpdateExtraTex");
 			gd->UpdateExtraTexture(gd->GetDrawMode());
 		}

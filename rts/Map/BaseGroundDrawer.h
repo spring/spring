@@ -46,7 +46,7 @@ public:
 	virtual ~CBaseGroundDrawer();
 
 	virtual void Draw(const DrawPass::e& drawPass) = 0;
-	virtual void DrawShadowPass();
+	virtual void DrawShadowPass() {}
 
 	virtual void SetupBaseDrawPass() {}
 	virtual void SetupReflDrawPass() {}

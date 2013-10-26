@@ -91,9 +91,6 @@ CBaseGroundDrawer::~CBaseGroundDrawer()
 }
 
 
-void CBaseGroundDrawer::DrawShadowPass()
-{}
-
 
 void CBaseGroundDrawer::DrawTrees(bool drawReflection) const
 {
@@ -142,25 +139,26 @@ void CBaseGroundDrawer::DrawTrees(bool drawReflection) const
 // XXX this part of extra textures is a mess really ...
 void CBaseGroundDrawer::DisableExtraTexture()
 {
-	if (drawLineOfSight) {
-		SetDrawMode(drawLos);
-	} else {
-		SetDrawMode(drawNormal);
-	}
-
 	extraTex = NULL;
 	highResInfoTexWanted = false;
 	updateTextureState = 0;
 
-	while (!UpdateExtraTexture(drawMode));
+	if (drawLineOfSight) {
+		// return to LOS-mode if it was active before
+		SetDrawMode(drawLos);
+
+		while (!UpdateExtraTexture(drawMode));
+	} else {
+		SetDrawMode(drawNormal);
+	}
 }
 
 
 void CBaseGroundDrawer::SetHeightTexture()
 {
-	if (drawMode == drawHeight)
+	if (drawMode == drawHeight) {
 		DisableExtraTexture();
-	else {
+	} else {
 		SetDrawMode(drawHeight);
 
 		highResInfoTexWanted = true;
@@ -175,9 +173,9 @@ void CBaseGroundDrawer::SetHeightTexture()
 
 void CBaseGroundDrawer::SetMetalTexture(const CMetalMap* map)
 {
-	if (drawMode == drawMetal)
+	if (drawMode == drawMetal) {
 		DisableExtraTexture();
-	else {
+	} else {
 		SetDrawMode(drawMetal);
 
 		highResInfoTexWanted = false;
@@ -239,10 +237,11 @@ void CBaseGroundDrawer::ToggleRadarAndJammer()
 {
 	drawRadarAndJammer = !drawRadarAndJammer;
 
-	if (drawMode == drawLos) {
-		updateTextureState = 0;
-		while (!UpdateExtraTexture(drawMode));
-	}
+	if (drawMode != drawLos)
+		return;
+
+	updateTextureState = 0;
+	while (!UpdateExtraTexture(drawMode));
 }
 
 
@@ -281,15 +280,9 @@ static inline int InterpolateLos(const unsigned short* p, int xsize, int ysize,
 //   over multiple frames
 bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 {
-	if (mapInfo->map.voidWater && readMap->IsUnderWater())
-		return true;
+	assert(texDrawMode != drawNormal);
 
-	// normally texDrawMode == drawMode but this
-	// can differ when Lua executes a background
-	// update (if so drawMode must be drawNormal)
-	if (drawMode == drawNormal && texDrawMode == drawMode)
-		return true;
-	if (drawMode != drawNormal && texDrawMode != drawMode)
+	if (mapInfo->map.voidWater && readMap->IsUnderWater())
 		return true;
 
 	const unsigned short* myLos         = &losHandler->losMaps[gu->myAllyTeam].front();
@@ -332,19 +325,18 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 			case drawPathHeat:
 			case drawPathFlow:
 			case drawPathCost: {
-				pathDrawer->UpdateExtraTexture(texDrawMode, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));
+				pathDrawer->UpdateExtraTexture(texDrawMode, starty, endy, offset, infoTexMem);
 			} break;
 
 			case drawMetal: {
 				for (int y = starty; y < endy; ++y) {
 					const int y_pwr2mapx_half = y*pwr2mapx_half;
-					const int y_2 = y*2;
 					const int y_hmapx = y * gs->hmapx;
 
 					for (int x = 0; x < gs->hmapx; ++x) {
 						const int a   = (y_pwr2mapx_half + x) * 4 - offset;
 						const int alx = ((x*2) >> losHandler->airMipLevel);
-						const int aly = ((y_2) >> losHandler->airMipLevel);
+						const int aly = ((y*2) >> losHandler->airMipLevel);
 
 						if (myAirLos[alx + (aly * losHandler->airSizeX)]) {
 							infoTexMem[a + COLOR_R] = (unsigned char)std::min(255.0f, 900.0f * fastmath::apxsqrt(fastmath::apxsqrt(extractDepthMap[y_hmapx + x])));
