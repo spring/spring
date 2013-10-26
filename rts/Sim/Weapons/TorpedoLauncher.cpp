@@ -71,7 +71,7 @@ void CTorpedoLauncher::FireImpl(bool scriptCall)
 		vel = weaponDir * weaponDef->startvelocity;
 	} else {
 		dir += (UpVector * std::max(0.0f, weaponDef->trajectoryHeight));
-		vel = (dir.Normalize()) * weaponDef->startvelocity;
+		vel = dir.Normalize() * weaponDef->startvelocity;
 	}
 
 	ProjectileParams params = GetProjectileParams();
