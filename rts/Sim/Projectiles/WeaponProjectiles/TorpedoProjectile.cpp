@@ -69,18 +69,9 @@ void CTorpedoProjectile::Update()
 			SetVelocityAndSpeed(speed + (UpVector * mygravity));
 		}
 	} else {
-		if (!luaMoveCtrl && !weaponDef->submissile && target == NULL) {
-			// level out torpedo a bit when hitting water (changes
-			// dir but not speed.w, must keep speed-vector in sync)
-			// FIXME:
-			//   might be too slow in shallow water to avoid colliding with ocean
-			//   floor and targetPos is always ZeroVector (!) so we will never hit
-			SetDirectionAndSpeed(((dir * 0.9f) + (dir * XZVector * 0.1f)).Normalize(), speed.w);
-		}
-
 		if (--ttl > 0) {
 			if (!luaMoveCtrl) {
-				float3 targSpeed;
+				float3 targetVel;
 
 				if (speed.w < maxSpeed)
 					speed.w += std::max(0.2f, tracking);
@@ -93,7 +84,7 @@ void CTorpedoProjectile::Update()
 
 					if (so != NULL) {
 						targetPos = so->aimPos;
-						targSpeed = so->speed;
+						targetVel = so->speed;
 
 						if (owner() != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
 							const CUnit* u = dynamic_cast<const CUnit*>(so);
@@ -104,20 +95,15 @@ void CTorpedoProjectile::Update()
 						}
 					}
 					if (po != NULL) {
-						targSpeed = po->speed;
+						targetVel = po->speed;
 					}
-				} else {
-					// assigning this does not matter because targetPos
-					// is always a ZeroVector in the target == NULL case
-					// (for TorpedoProjectile's)
-					targetPos = pos + dir * speed.w;
 				}
 
 				if (!weaponDef->submissile && targetPos.y > 0.0f) {
 					targetPos.y = 0.0f;
 				}
 
-				float3 dif = (targetPos + targSpeed * (pos.distance(targetPos) / maxSpeed) * 0.7f - pos).Normalize();
+				float3 dif = (targetPos + (targetVel * (pos.distance(targetPos) / maxSpeed) * 0.7f) - pos).Normalize();
 				float3 dif2 = dif - dir;
 
 				if (dif2.Length() < tracking) {

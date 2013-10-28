@@ -148,7 +148,7 @@ void CMissileProjectile::Update()
 {
 	if (--ttl > 0) {
 		if (!luaMoveCtrl) {
-			float3 targSpeed;
+			float3 targetVel;
 
 			if (speed.w < maxSpeed)
 				speed.w += weaponDef->weaponacceleration;
@@ -161,7 +161,7 @@ void CMissileProjectile::Update()
 
 				if (so != NULL) {
 					targetPos = so->aimPos;
-					targSpeed = so->speed;
+					targetVel = so->speed;
 
 					if (owner() != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
 						// if we have an owner and our target is a unit,
@@ -175,7 +175,7 @@ void CMissileProjectile::Update()
 					}
 				}
 				if (po != NULL) {
-					targSpeed = po->speed;
+					targetVel = po->speed;
 				}
 			}
 
@@ -228,7 +228,7 @@ void CMissileProjectile::Update()
 			}
 
 
-			float3 dif = (targetPos + targSpeed * (dist / maxSpeed) * 0.7f - pos).SafeNormalize();
+			float3 dif = (targetPos + targetVel * (dist / maxSpeed) * 0.7f - pos).SafeNormalize();
 			float3 dif2 = dif - dir;
 
 			if (dif2.SqLength() < Square(weaponDef->turnrate)) {

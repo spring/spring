@@ -134,6 +134,7 @@ void CBombDropper::FireImpl(bool scriptCall)
 
 		ProjectileParams params = GetProjectileParams();
 		params.pos = weaponPos;
+		params.end = targetPos;
 		params.speed = launchSpeed;
 		params.ttl = (weaponDef->flighttime == 0)? ((range / projectileSpeed) + 15 + predict): weaponDef->flighttime;
 		params.tracking = tracking;
