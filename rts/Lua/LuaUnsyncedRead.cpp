@@ -1029,8 +1029,16 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 				if (!camera->InView(pro->pos, pro->drawRadius))
 					continue;
 
+				#if 1
+				// filter out unsynced projectiles, the SyncedRead
+				// projecile Get* functions accept only synced ID's
+				// (specifically they interpret all ID's as synced)
+				if (!pro->synced)
+					continue;
+				#else
 				if (!addSyncedProjectiles && pro->synced)
 					continue;
+				#endif
 				if (!addWeaponProjectiles && pro->weapon)
 					continue;
 				if (!addPieceProjectiles && pro->piece)
