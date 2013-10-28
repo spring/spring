@@ -324,7 +324,7 @@ void CPieceProjectile::Update()
 		return;
 	}
 
-	if ((explFlags & PF_NoCEGTrail) != 0 && (explFlags & PF_Smoke) != 0) {
+	if ((explFlags & PF_Smoke) != 0) {
 		if ((age & (NUM_TRAIL_PARTS - 1)) == 0) {
 			if (curCallback != NULL) {
 				curCallback->drawCallbacker = NULL;
@@ -365,7 +365,10 @@ void CPieceProjectile::Update()
 
 void CPieceProjectile::Draw()
 {
-	if ((explFlags & PF_NoCEGTrail) != 0 && (explFlags & PF_Smoke) != 0) {
+	if ((explFlags & PF_NoCEGTrail) == 0)
+		return;
+
+	if ((explFlags & PF_Smoke) != 0) {
 		// this piece leaves a default (non-CEG) smoketrail
 		inArray = true;
 
