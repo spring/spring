@@ -705,7 +705,7 @@ protected:
 };
 
 
-class CUnitQuadDrawer: public CWorldObjectQuadDrawer<CUnit> {
+class CVisUnitQuadDrawer: public CWorldObjectQuadDrawer<CUnit> {
 public:
 	void DrawQuad(int x, int y) {
 		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
@@ -715,7 +715,7 @@ public:
 	}
 };
 
-class CFeatureQuadDrawer: public CWorldObjectQuadDrawer<CFeature> {
+class CVisFeatureQuadDrawer: public CWorldObjectQuadDrawer<CFeature> {
 public:
 	void DrawQuad(int x, int y) {
 		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
@@ -725,7 +725,7 @@ public:
 	}
 };
 
-class CProjectileQuadDrawer: public CWorldObjectQuadDrawer<CProjectile> {
+class CVisProjectileQuadDrawer: public CWorldObjectQuadDrawer<CProjectile> {
 public:
 	void DrawQuad(int x, int y) {
 		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
@@ -784,7 +784,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	vector<const CUnitSet*>::const_iterator setIt;
 
 	static CUnitSet visQuadUnits;
-	static CUnitQuadDrawer unitQuadIter;
+	static CVisUnitQuadDrawer unitQuadIter;
 
 	unsigned int count = 0;
 
@@ -820,10 +820,10 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 			// objects can exist in multiple quads, so we still need to do a duplication check
 			visQuadUnits.clear();
 
-			const CUnitQuadDrawer::ObjectVector& visUnits = unitQuadIter.GetObjectLists();
+			const CVisUnitQuadDrawer::ObjectVector& visUnits = unitQuadIter.GetObjectLists();
 
-			CUnitQuadDrawer::ObjectVector::const_iterator visUnitLists;
-			CUnitQuadDrawer::ObjectList::const_iterator unitIt;
+			CVisUnitQuadDrawer::ObjectVector::const_iterator visUnitLists;
+			CVisUnitQuadDrawer::ObjectList::const_iterator unitIt;
 
 			for (visUnitLists = visUnits.begin(); visUnitLists != visUnits.end(); ++visUnitLists) {
 				for (unitIt = (*visUnitLists)->begin(); unitIt != (*visUnitLists)->end(); ++unitIt) {
@@ -912,7 +912,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	const bool noGeos = !luaL_optboolean(L, 4, true);
 
 	static CFeatureSet visQuadFeatures;
-	static CFeatureQuadDrawer featureQuadIter;
+	static CVisFeatureQuadDrawer featureQuadIter;
 
 	unsigned int count = 0;
 
@@ -934,10 +934,10 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 		if (!(scanAll = (featureQuadIter.GetObjectCount() > featureHandler->GetActiveFeatures().size() / 3))) {
 			visQuadFeatures.clear();
 
-			const CFeatureQuadDrawer::ObjectVector& visFeatures = featureQuadIter.GetObjectLists();
+			const CVisFeatureQuadDrawer::ObjectVector& visFeatures = featureQuadIter.GetObjectLists();
 
-			CFeatureQuadDrawer::ObjectVector::const_iterator featureListIt;
-			CFeatureQuadDrawer::ObjectList::const_iterator featureIt;
+			CVisFeatureQuadDrawer::ObjectVector::const_iterator featureListIt;
+			CVisFeatureQuadDrawer::ObjectList::const_iterator featureIt;
 
 			// features can exist in multiple quads, so we need to do a duplication check
 			for (featureListIt = visFeatures.begin(); featureListIt != visFeatures.end(); ++featureListIt) {
@@ -996,7 +996,7 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 		}
 	}
 
-	static CProjectileQuadDrawer projQuadIter;
+	static CVisProjectileQuadDrawer projQuadIter;
 
 	const bool addSyncedProjectiles = luaL_optboolean(L, 2, true);
 	const bool addWeaponProjectiles = luaL_optboolean(L, 3, true);
@@ -1012,10 +1012,10 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 
 		lua_createtable(L, projQuadIter.GetObjectCount(), 0);
 
-		const CProjectileQuadDrawer::ObjectVector& visProjectiles = projQuadIter.GetObjectLists();
-		const CProjectileQuadDrawer::ObjectList* quadProjectiles = NULL;
+		const CVisProjectileQuadDrawer::ObjectVector& visProjectiles = projQuadIter.GetObjectLists();
+		const CVisProjectileQuadDrawer::ObjectList* quadProjectiles = NULL;
 
-		CProjectileQuadDrawer::ObjectList::const_iterator it;
+		CVisProjectileQuadDrawer::ObjectList::const_iterator it;
 
 		for (unsigned int n = 0; n < visProjectiles.size(); n++) {
 			quadProjectiles = visProjectiles[n];
