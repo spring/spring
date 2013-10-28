@@ -204,14 +204,6 @@ void CGameInfo::Draw()
 		default:               { values.push_back("UNKNOWN"); } break; // not reachable
 	}
 
-	labels.push_back("GML:");
-	values.push_back(GML::Enabled() ? "true" : "false");
-
-	if (GML::Enabled()) {
-		labels.push_back("MT Threads:");
-		values.push_back(IntToString(GML::ThreadCount()));
-	}
-
 	if (gs->cheatEnabled) {
 		labels.push_back("CHEATS:");
 		values.push_back("ENABLED");
