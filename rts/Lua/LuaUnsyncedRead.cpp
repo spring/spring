@@ -117,6 +117,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetVisibleUnits);
 	REGISTER_LUA_CFUNC(GetVisibleFeatures);
+	REGISTER_LUA_CFUNC(GetVisibleProjectiles);
 
 	REGISTER_LUA_CFUNC(GetTeamColor);
 	REGISTER_LUA_CFUNC(GetTeamOrigColor);
@@ -331,7 +332,10 @@ int LuaUnsyncedRead::GetViewGeometry(lua_State* L)
 int LuaUnsyncedRead::GetWindowGeometry(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	const int winPosY_bl = globalRendering->screenSizeY - globalRendering->winSizeY - globalRendering->winPosY; //! origin BOTTOMLEFT
+
+	// origin BOTTOMLEFT
+	const int winPosY_bl = globalRendering->screenSizeY - globalRendering->winSizeY - globalRendering->winPosY;
+
 	lua_pushnumber(L, globalRendering->winSizeX);
 	lua_pushnumber(L, globalRendering->winSizeY);
 	lua_pushnumber(L, globalRendering->winPosX);
@@ -666,45 +670,72 @@ enum UnitAllegiance {
 };
 
 
-class CUnitQuads : public CReadMap::IQuadDrawer
-{
+// never instantiated directly
+template<class T> class CWorldObjectQuadDrawer: public CReadMap::IQuadDrawer {
 public:
-	unsigned int GetCount() const { return (visUnits.size()); }
+	typedef std::list<T*> ObjectList;
+	typedef std::vector< const ObjectList* > ObjectVector;
 
-	void Reset() { visUnits.clear(); }
-	void DrawQuad(int x, int y) {
-		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
+	void Reset() {
+		objectLists.clear();
+		objectLists.reserve(64);
 
-		if (!q.units.empty()) {
-			visUnits.push_back(&q.units);
-		}
+		objectCount = 0;
 	}
 
-	std::vector<const std::list<CUnit*>*>& GetVisUnits() { return visUnits; }
+	unsigned int GetQuadCount() const { return (objectLists.size()); }
+	unsigned int GetObjectCount() const { return objectCount; }
 
-private:
-	std::vector<const std::list<CUnit*>*> visUnits;
-};
+	const ObjectVector& GetObjectLists() { return objectLists; }
 
-class CFeatureQuads : public CReadMap::IQuadDrawer
-{
-public:
-	unsigned int GetCount() const { return (visFeatures.size()); }
+	void AddObjectList(const ObjectList* objects) {
+		if (objects->empty())
+			return;
 
-	void Reset() { visFeatures.clear(); }
-	void DrawQuad(int x, int y) {
-		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
-
-		if (!q.features.empty()) {
-			visFeatures.push_back(&q.features);
-		}
+		objectLists.push_back(objects);
+		objectCount += objects->size();
 	}
 
-	std::vector<const std::list<CFeature*>*>& GetVisFeatures() { return visFeatures; }
+protected:
+	// note: stores pointers to lists, not copies
+	// its size equals the number of visible quads
+	ObjectVector objectLists;
 
-private:
-	std::vector<const std::list<CFeature*>*> visFeatures;
+	unsigned int objectCount;
 };
+
+
+class CUnitQuadDrawer: public CWorldObjectQuadDrawer<CUnit> {
+public:
+	void DrawQuad(int x, int y) {
+		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
+		const ObjectList* o = &q.units;
+
+		AddObjectList(o);
+	}
+};
+
+class CFeatureQuadDrawer: public CWorldObjectQuadDrawer<CFeature> {
+public:
+	void DrawQuad(int x, int y) {
+		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
+		const ObjectList* o = &q.features;
+
+		AddObjectList(o);
+	}
+};
+
+class CProjectileQuadDrawer: public CWorldObjectQuadDrawer<CProjectile> {
+public:
+	void DrawQuad(int x, int y) {
+		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
+		const ObjectList* o = &q.projectiles;
+
+		AddObjectList(o);
+	}
+};
+
+
 
 
 int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
@@ -715,6 +746,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 
 	if (teamID == MyUnits) {
 		const int scriptTeamID = CLuaHandle::GetHandleReadTeam(L);
+
 		if (scriptTeamID >= 0) {
 			teamID = scriptTeamID;
 		} else {
@@ -736,7 +768,11 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 
 	// arg 2 - unit radius
 	bool fixedRadius = false;
+	// arg 3 - noIcons
+	const bool noIcons = !luaL_optboolean(L, 3, true);
+
 	float testRadius = WORLDOBJECT_DEFAULT_DRAWRADIUS;
+	const float iconLength = unitDrawer->iconLength;
 
 	if (lua_israwnumber(L, 2)) {
 		testRadius = lua_tofloat(L, 2);
@@ -744,14 +780,13 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 		testRadius = std::max(testRadius, -testRadius);
 	}
 
-	// arg 3 - noIcons
-	const bool noIcons = !luaL_optboolean(L, 3, true);
-
 	vector<const CUnitSet*> unitSets;
-	static CUnitSet visQuadUnits;
-	static CUnitQuads unitQuadIter;
+	vector<const CUnitSet*>::const_iterator setIt;
 
-	int count = 0;
+	static CUnitSet visQuadUnits;
+	static CUnitQuadDrawer unitQuadIter;
+
+	unsigned int count = 0;
 
 	{
 		GML_RECMUTEX_LOCK(quad); // GetVisibleUnits
@@ -759,13 +794,16 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 		unitQuadIter.Reset();
 		readMap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
 
-		lua_createtable(L, unitQuadIter.GetCount(), 0);
+		lua_createtable(L, unitQuadIter.GetObjectCount(), 0);
 
 		// setup the list of unit sets
-		if (unitQuadIter.GetCount() > unitHandler->activeUnits.size()/3) {
-			// if we see nearly all features, it is just faster to
-			// check them all, instead of doing slow duplication checks
-			// FIXME? 1/3 != "nearly all"
+		//
+		// if we see nearly all features, it is just faster to
+		// check them all, instead of doing slow duplication checks
+		//
+		// FIXME? one-third != "nearly all"
+		//
+		if (unitQuadIter.GetObjectCount() > unitHandler->activeUnits.size() / 3) {
 			if (teamID >= 0) {
 				unitSets.push_back(&teamHandler->Team(teamID)->units);
 			} else {
@@ -781,11 +819,16 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 		} else {
 			// objects can exist in multiple quads, so we still need to do a duplication check
 			visQuadUnits.clear();
-			std::vector<const std::list<CUnit*>*>::iterator sit;
-			for (sit = unitQuadIter.GetVisUnits().begin(); sit != unitQuadIter.GetVisUnits().end(); ++sit) {
-				std::list<CUnit*>::const_iterator unitIt;
-				for (unitIt = (*sit)->begin(); unitIt != (*sit)->end(); ++unitIt) {
+
+			const CUnitQuadDrawer::ObjectVector& visUnits = unitQuadIter.GetObjectLists();
+
+			CUnitQuadDrawer::ObjectVector::const_iterator visUnitLists;
+			CUnitQuadDrawer::ObjectList::const_iterator unitIt;
+
+			for (visUnitLists = visUnits.begin(); visUnitLists != visUnits.end(); ++visUnitLists) {
+				for (unitIt = (*visUnitLists)->begin(); unitIt != (*visUnitLists)->end(); ++unitIt) {
 					CUnit* unit = *unitIt;
+
 					if ((teamID == AllUnits) ||
 						((teamID >= 0) && (teamID == unit->team)) ||
 						((teamID == AllyUnits)  && (allyTeamID == unit->allyteam)) ||
@@ -799,42 +842,35 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 		}
 	}
 
-	const float iconLength = unitDrawer->iconLength;
-
-	vector<const CUnitSet*>::const_iterator setIt;
 	for (setIt = unitSets.begin(); setIt != unitSets.end(); ++setIt) {
 		const CUnitSet* unitSet = *setIt;
 
 		CUnitSet::const_iterator unitIt;
+
 		for (unitIt = unitSet->begin(); unitIt != unitSet->end(); ++unitIt) {
-			const CUnit& unit = **unitIt;
+			const CUnit* unit = *unitIt;
 
-			if (unit.noDraw) {
+			if (unit->noDraw)
 				continue;
-			}
 
-			if (allyTeamID >= 0) {
-				if (!(unit.losStatus[allyTeamID] & LOS_INLOS)) {
-					continue;
-				}
-			}
+			if (allyTeamID >= 0 && !(unit->losStatus[allyTeamID] & LOS_INLOS))
+				continue;
 
 			if (noIcons) {
-				const float sqDist = (unit.pos - camera->GetPos()).SqLength();
-				const float iconDistSqrMult = unit.unitDef->iconType->GetDistanceSqr();
+				const float sqDist = (unit->pos - camera->GetPos()).SqLength();
+				const float iconDistSqrMult = unit->unitDef->iconType->GetDistanceSqr();
 				const float realIconLength = iconLength * iconDistSqrMult;
-				if (sqDist > realIconLength) {
+
+				if (sqDist > realIconLength)
 					continue;
-				}
 			}
 
-			if (!camera->InView(unit.midPos, testRadius + (unit.drawRadius * !fixedRadius))) {
+			if (!camera->InView(unit->midPos, testRadius + (unit->drawRadius * !fixedRadius)))
 				continue;
-			}
 
-			//! add the unit
+			// add the unit
 			count++;
-			lua_pushnumber(L, unit.id);
+			lua_pushnumber(L, unit->id);
 			lua_rawseti(L, -2, count);
 		}
 	}
@@ -847,11 +883,14 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 {
 	// arg 1 - allyTeamID
 	int allyTeamID = luaL_optint(L, 1, -1);
-	if (allyTeamID >= 0 && !teamHandler->ValidAllyTeam(allyTeamID)) {
-		return 0;
-	}
-	if (allyTeamID < 0) {
+
+	if (allyTeamID >= 0) {
+		if (!teamHandler->ValidAllyTeam(allyTeamID)) {
+			return 0;
+		}
+	} else {
 		allyTeamID = -1;
+
 		if (!CLuaHandle::GetHandleFullRead(L)) {
 			allyTeamID = CLuaHandle::GetHandleReadAllyTeam(L);
 		}
@@ -859,6 +898,8 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 
 	// arg 2 - feature radius
 	bool fixedRadius = false;
+	bool scanAll = false;
+
 	float testRadius = WORLDOBJECT_DEFAULT_DRAWRADIUS;
 
 	if (lua_israwnumber(L, 2)) {
@@ -870,10 +911,10 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	const bool noIcons = !luaL_optboolean(L, 3, true);
 	const bool noGeos = !luaL_optboolean(L, 4, true);
 
-	bool scanAll = false;
 	static CFeatureSet visQuadFeatures;
-	static CFeatureQuads featureQuadIter;
-	int count = 0;
+	static CFeatureQuadDrawer featureQuadIter;
+
+	unsigned int count = 0;
 
 	{
 		GML_RECMUTEX_LOCK(quad); // GetVisibleFeatures
@@ -881,21 +922,26 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 		featureQuadIter.Reset();
 		readMap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
 
-		lua_createtable(L, featureQuadIter.GetCount(), 0);
+		lua_createtable(L, featureQuadIter.GetObjectCount(), 0);
 
 		// setup the list of features
-		if (featureQuadIter.GetCount() > featureHandler->GetActiveFeatures().size()/3) {
-			// if we see nearly all features, it is just faster to
-			// check them all, instead of doing slow duplication checks
-			// FIXME? 1/3 != "nearly all"
-			scanAll = true;
-		} else {
-			// features can exist in multiple quads, so we need to do a duplication check
+		//
+		// if we see nearly all features, it is just faster to
+		// check them all, instead of doing slow duplication checks
+		//
+		// FIXME? one-third != "nearly all"
+		//
+		if (!(scanAll = (featureQuadIter.GetObjectCount() > featureHandler->GetActiveFeatures().size() / 3))) {
 			visQuadFeatures.clear();
-			std::vector<const std::list<CFeature*>*>::iterator it;
-			for (it = featureQuadIter.GetVisFeatures().begin(); it != featureQuadIter.GetVisFeatures().end(); ++it) {
-				std::list<CFeature*>::const_iterator featureIt;
-				for (featureIt = (*it)->begin(); featureIt != (*it)->end(); ++featureIt) {
+
+			const CFeatureQuadDrawer::ObjectVector& visFeatures = featureQuadIter.GetObjectLists();
+
+			CFeatureQuadDrawer::ObjectVector::const_iterator featureListIt;
+			CFeatureQuadDrawer::ObjectList::const_iterator featureIt;
+
+			// features can exist in multiple quads, so we need to do a duplication check
+			for (featureListIt = visFeatures.begin(); featureListIt != visFeatures.end(); ++featureListIt) {
+				for (featureIt = (*featureListIt)->begin(); featureIt != (*featureListIt)->end(); ++featureIt) {
 					visQuadFeatures.insert(*featureIt);
 				}
 			}
@@ -911,25 +957,90 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 			continue;
 
 		if (noIcons) {
-			float sqDist = (f.pos - camera->GetPos()).SqLength2D();
-			float farLength = f.sqRadius * unitDrawer->unitDrawDist * unitDrawer->unitDrawDist;
+			const float sqDist = (f.pos - camera->GetPos()).SqLength2D();
+			const float farLength = f.sqRadius * unitDrawer->unitDrawDist * unitDrawer->unitDrawDist;
+
 			if (sqDist >= farLength) {
 				continue;
 			}
 		}
 
-		if (!gu->spectatingFullView && !f.IsInLosForAllyTeam(allyTeamID)) {
+		if (!gu->spectatingFullView && !f.IsInLosForAllyTeam(allyTeamID))
 			continue;
-		}
 
-		if (!camera->InView(f.midPos, testRadius + (f.drawRadius * !fixedRadius))) {
+		if (!camera->InView(f.midPos, testRadius + (f.drawRadius * !fixedRadius)))
 			continue;
-		}
 
 		// add the unit
 		count++;
 		lua_pushnumber(L, f.id);
 		lua_rawseti(L, -2, count);
+	}
+
+	return 1;
+}
+
+int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
+{
+	int allyTeamID = luaL_optint(L, 1, -1);
+
+	if (allyTeamID >= 0) {
+		if (!teamHandler->ValidAllyTeam(allyTeamID)) {
+			return 0;
+		}
+	} else {
+		allyTeamID = -1;
+
+		if (!CLuaHandle::GetHandleFullRead(L)) {
+			allyTeamID = CLuaHandle::GetHandleReadAllyTeam(L);
+		}
+	}
+
+	static CProjectileQuadDrawer projQuadIter;
+
+	const bool addSyncedProjectiles = luaL_optboolean(L, 2, true);
+	const bool addWeaponProjectiles = luaL_optboolean(L, 3, true);
+	const bool addPieceProjectiles = luaL_optboolean(L, 4, true);
+
+	unsigned int count = 0;
+
+	{
+		GML_RECMUTEX_LOCK(quad); // GetVisibleProjectiles
+
+		projQuadIter.Reset();
+		readMap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &projQuadIter, INT_MAX);
+
+		lua_createtable(L, projQuadIter.GetObjectCount(), 0);
+
+		const CProjectileQuadDrawer::ObjectVector& visProjectiles = projQuadIter.GetObjectLists();
+		const CProjectileQuadDrawer::ObjectList* quadProjectiles = NULL;
+
+		CProjectileQuadDrawer::ObjectList::const_iterator it;
+
+		for (unsigned int n = 0; n < visProjectiles.size(); n++) {
+			quadProjectiles = visProjectiles[n];
+
+			for (it = quadProjectiles->begin(); it != quadProjectiles->end(); ++it) {
+				const CProjectile* pro = *it;
+
+				if (allyTeamID >= 0 && !losHandler->InLos(pro, allyTeamID))
+					continue;
+
+				if (!camera->InView(pro->pos, pro->drawRadius))
+					continue;
+
+				if (!addSyncedProjectiles && pro->synced)
+					continue;
+				if (!addWeaponProjectiles && pro->weapon)
+					continue;
+				if (!addPieceProjectiles && pro->piece)
+					continue;
+
+				count++;
+				lua_pushnumber(L, pro->id);
+				lua_rawseti(L, -2, count);
+			}
+		}
 	}
 
 	return 1;
@@ -982,7 +1093,7 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 
 	CheckNoArgs(L, __FUNCTION__);
 
-	int count = 0;
+	unsigned int count = 0;
 	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 
 	// { [1] = number unitID, ... }
@@ -1629,7 +1740,7 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 	}
 
 	return 1;
-#endif //! defined(HEADLESS) || defined(NO_SOUND)
+#endif // defined(HEADLESS) || defined(NO_SOUND)
 }
 
 
@@ -1890,7 +2001,9 @@ int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
-	int count = 0;
+
+	unsigned int count = 0;
+
 	for (int i = 0; i < SDLK_LAST; i++) {
 		if (keyInput->GetKeyState(i)) {
 			lua_pushboolean(L, 1);
@@ -1960,7 +2073,9 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 
 	// table = { [1] = { text = string, zone = number}, etc... }
 	lua_newtable(L);
-	int count = 0;
+
+	unsigned int count = 0;
+
 	for (int i = start; i < lineCount; i++) {
 		count++;
 		lua_pushnumber(L, count);
@@ -2052,7 +2167,9 @@ int LuaUnsyncedRead::GetGroupList(lua_State* L)
 		return 0;
 	}
 	lua_newtable(L);
-	int count = 0;
+
+	unsigned int count = 0;
+
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	vector<CGroup*>::const_iterator git;
 	for (git = groups.begin(); git != groups.end(); ++git) {
@@ -2104,7 +2221,9 @@ int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 	}
 
 	lua_newtable(L);
-	int count = 0;
+
+	unsigned int count = 0;
+
 	const CUnitSet& groupUnits = groups[groupID]->units;
 	CUnitSet::const_iterator it;
 	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
