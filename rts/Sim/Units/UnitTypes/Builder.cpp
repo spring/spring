@@ -347,7 +347,7 @@ void CBuilder::Update()
 				}
 			}
 		}
-		else if (curReclaim != NULL && f3SqDist(curReclaim->pos, pos)<Square(buildDistance+curReclaim->radius) && inBuildStance) {
+		else if (curReclaim != NULL && f3SqDist(curReclaim->pos, pos) < Square(buildDistance + curReclaim->radius) && inBuildStance) {
 			if (fCommand.GetID() == CMD_WAIT) {
 				StopBuild();
 			} else {
@@ -358,7 +358,7 @@ void CBuilder::Update()
 				}
 			}
 		}
-		else if (curResurrect != NULL && f3SqDist(curResurrect->pos, pos)<Square(buildDistance+curResurrect->radius) && inBuildStance) {
+		else if (curResurrect != NULL && f3SqDist(curResurrect->pos, pos) < Square(buildDistance + curResurrect->radius) && inBuildStance) {
 			const UnitDef* ud = curResurrect->udef;
 
 			if (fCommand.GetID() == CMD_WAIT) {
@@ -366,14 +366,18 @@ void CBuilder::Update()
 			} else {
 				if (ud != NULL) {
 					if ((modInfo.reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
-						// This corpse has been reclaimed a little, need to restore the resources
-						// before we can let the player resurrect it.
+						// This corpse has been reclaimed a little, need to restore
+						// the resources before we can let the player resurrect it.
 						curResurrect->AddBuildPower(this, repairSpeed);
 					} else {
 						// Corpse has been restored, begin resurrection
-						//
-						if (UseEnergy(ud->energy * resurrectSpeed / ud->buildTime * modInfo.resurrectEnergyCostFactor)) {
-							curResurrect->resurrectProgress += (resurrectSpeed / ud->buildTime);
+						const float step = resurrectSpeed / ud->buildTime;
+
+						const bool resurrectAllowed = (luaRules == NULL || luaRules->AllowFeatureBuildStep(this, curResurrect, step));
+						const bool canExecResurrect = (resurrectAllowed && UseEnergy(ud->energy * step * modInfo.resurrectEnergyCostFactor));
+
+						if (canExecResurrect) {
+							curResurrect->resurrectProgress += step;
 							curResurrect->resurrectProgress = std::min(curResurrect->resurrectProgress, 1.0f);
 
 							CreateNanoParticle(curResurrect->midPos, curResurrect->radius * 0.7f, (gs->randInt() & 1));
@@ -441,21 +445,25 @@ void CBuilder::Update()
 				}
 			}
 		}
-		else if (curCapture != NULL && f3SqDist(curCapture->pos, pos)<Square(buildDistance+curCapture->radius) && inBuildStance) {
+		else if (curCapture != NULL && f3SqDist(curCapture->pos, pos) < Square(buildDistance + curCapture->radius) && inBuildStance) {
 			if (fCommand.GetID() == CMD_WAIT) {
 				StopBuild();
 			} else {
 				if (curCapture->team != team) {
-					const float captureMagicNumber = (150 + curCapture->buildTime / captureSpeed * (curCapture->health + curCapture->maxHealth) / curCapture->maxHealth * 0.4f);
-					const float captureProgressTemp = std::min(curCapture->captureProgress + 1.0f / captureMagicNumber, 1.0f);
+					const float captureMagicNumber = (150.0f + (curCapture->buildTime / captureSpeed) * (curCapture->health + curCapture->maxHealth) / curCapture->maxHealth * 0.4f);
+					const float captureProgressStep = 1.0f / captureMagicNumber;
+					const float captureProgressTemp = std::min(curCapture->captureProgress + captureProgressStep, 1.0f);
 
 					const float captureFraction = captureProgressTemp - curCapture->captureProgress;
 					const float energyUseScaled = curCapture->energyCost * captureFraction * modInfo.captureEnergyCostFactor;
 
-					if (!UseEnergy(energyUseScaled)) {
-						teamHandler->Team(team)->energyPull += energyUseScaled;
-					} else {
-						curCapture->captureProgress = captureProgressTemp;
+					const bool captureAllowed = (luaRules == NULL || luaRules->AllowUnitBuildStep(this, curCapture, captureProgressStep));
+					const bool canExecCapture = (captureAllowed && UseEnergy(energyUseScaled));
+
+					if (canExecCapture) {
+						curCapture->captureProgress += captureProgressStep;
+						curCapture->captureProgress = std::min(curCapture->captureProgress, 1.0f);
+
 						CreateNanoParticle(curCapture->midPos, curCapture->radius * 0.7f, false, true);
 
 						if (curCapture->captureProgress >= 1.0f) {
@@ -466,6 +474,7 @@ void CBuilder::Update()
 									eventHandler.LastMessagePosition(pos);
 								}
 							}
+
 							curCapture->captureProgress = 0.0f;
 							StopBuild(true);
 						}
