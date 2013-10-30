@@ -171,7 +171,7 @@ void CBaseGroundDrawer::SetHeightTexture()
 
 
 
-void CBaseGroundDrawer::SetMetalTexture(const CMetalMap* map)
+void CBaseGroundDrawer::SetMetalTexture()
 {
 	if (drawMode == drawMetal) {
 		DisableExtraTexture();
@@ -179,9 +179,6 @@ void CBaseGroundDrawer::SetMetalTexture(const CMetalMap* map)
 		SetDrawMode(drawMetal);
 
 		highResInfoTexWanted = false;
-		extraTex = &map->metalMap[0];
-		extraTexPal = map->metalPal;
-		extractDepthMap = &map->extractionMap[0];
 		updateTextureState = 0;
 
 		while (!UpdateExtraTexture(drawMode));
@@ -329,6 +326,12 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 			} break;
 
 			case drawMetal: {
+				const CMetalMap* metalMap = readMap->metalMap;
+
+				extraTex = metalMap->GetResourceMap();
+				extraTexPal = metalMap->GetTexturePalette();
+				extractDepthMap = metalMap->GetExtractionMap();
+
 				for (int y = starty; y < endy; ++y) {
 					const int y_pwr2mapx_half = y*pwr2mapx_half;
 					const int y_hmapx = y * gs->hmapx;
@@ -349,6 +352,10 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 						infoTexMem[a + COLOR_A] = 255;
 					}
 				}
+
+				extraTex = NULL;
+				extraTexPal = NULL;
+				extractDepthMap = NULL;
 				break;
 			}
 
