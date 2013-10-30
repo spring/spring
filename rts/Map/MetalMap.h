@@ -47,9 +47,9 @@ public:
 	int GetSizeX() const { return sizeX; }
 	int GetSizeZ() const { return sizeZ; }
 
-	const unsigned char* GetTexturePalette() const { return      &metalPal[0]; }
-	const unsigned char* GetResourceMap   () const { return   &resourceMap[0]; }
-	const         float* GetExtractionMap () const { return &extractionMap[0]; }
+	const unsigned char* GetTexturePalette () const { return        &metalPal[0]; }
+	const unsigned char* GetDistributionMap() const { return &distributionMap[0]; }
+	const         float* GetExtractionMap  () const { return   &extractionMap[0]; }
 
 protected:
 	float metalScale;
@@ -59,8 +59,8 @@ protected:
 private:
 	unsigned char metalPal[768];
 
-	std::vector<unsigned char> resourceMap;
-	std::vector<float> extractionMap;
+	std::vector<unsigned char> distributionMap;
+	std::vector<        float> extractionMap;
 };
 
 #endif /* METAL_MAP_H */

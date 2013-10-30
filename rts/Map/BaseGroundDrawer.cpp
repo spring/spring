@@ -320,7 +320,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 			case drawMetal: {
 				const CMetalMap* metalMap = readMap->metalMap;
 
-				const unsigned char* extraTex        = metalMap->GetResourceMap();
+				const unsigned char* extraTex        = metalMap->GetDistributionMap();
 				const unsigned char* extraTexPal     = metalMap->GetTexturePalette();
 				const         float* extractDepthMap = metalMap->GetExtractionMap();
 
