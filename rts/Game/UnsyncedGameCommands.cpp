@@ -1932,7 +1932,7 @@ public:
 			"Enable rendering of the auxiliary metal-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->SetMetalTexture(readMap->metalMap);
+		readMap->GetGroundDrawer()->SetMetalTexture();
 		return true;
 	}
 };

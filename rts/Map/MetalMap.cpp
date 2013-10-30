@@ -15,7 +15,7 @@ CR_REG_METADATA(CMetalMap,(
 	CR_MEMBER(sizeX),
 	CR_MEMBER(sizeZ),
 	CR_MEMBER(metalPal),
-	CR_MEMBER(metalMap),
+	CR_MEMBER(resourceMap),
 	CR_MEMBER(extractionMap)
 ));
 
@@ -25,10 +25,10 @@ CMetalMap::CMetalMap(const unsigned char* map, int _sizeX, int _sizeZ, float _me
 	, sizeZ(_sizeZ)
 {
 	extractionMap.resize(sizeX * sizeZ, 0.0f);
-	metalMap.resize(sizeX * sizeZ, 0);
+	resourceMap.resize(sizeX * sizeZ, 0);
 
 	if (map != NULL) {
-		memcpy(&metalMap[0], map, sizeX * sizeZ);
+		memcpy(&resourceMap[0], map, sizeX * sizeZ);
 	} else {
 		metalScale = 1.0f;
 	}
@@ -53,10 +53,6 @@ CMetalMap::CMetalMap(const unsigned char* map, int _sizeX, int _sizeZ, float _me
 }
 
 
-CMetalMap::~CMetalMap()
-{
-}
-
 
 static inline void ClampInt(int& var, int min, int maxPlusOne)
 {
@@ -76,13 +72,14 @@ float CMetalMap::GetMetalAmount(int x1, int z1, int x2, int z2)
 	ClampInt(z2, 0, sizeZ);
 
 	float metal = 0.0f;
-	int x, z;
-	for (x = x1; x < x2; x++) {
-		for (z = z1; z < z2; z++) {
-			metal += metalMap[(z * sizeX) + x];
+
+	for (int x = x1; x < x2; x++) {
+		for (int z = z1; z < z2; z++) {
+			metal += resourceMap[(z * sizeX) + x];
 		}
 	}
-	return metal * metalScale;
+
+	return (metal * metalScale);
 }
 
 
@@ -91,7 +88,7 @@ float CMetalMap::GetMetalAmount(int x, int z)
 	ClampInt(x, 0, sizeX);
 	ClampInt(z, 0, sizeZ);
 
-	return metalMap[(z * sizeX) + x] * metalScale;
+	return resourceMap[(z * sizeX) + x] * metalScale;
 }
 
 
@@ -100,7 +97,7 @@ void CMetalMap::SetMetalAmount(int x, int z, float m)
 	ClampInt(x, 0, sizeX);
 	ClampInt(z, 0, sizeZ);
 
-	metalMap[(z * sizeX) + x] = (metalScale == 0.0f) ? 0 : Clamp((int)(m / metalScale), 0, 255);
+	resourceMap[(z * sizeX) + x] = (metalScale == 0.0f) ? 0 : Clamp((int)(m / metalScale), 0, 255);
 }
 
 
