@@ -367,7 +367,7 @@ void CAssParser::LoadPieceTransformations(
 	//
 	// note: for all non-AssImp models this is identity!
 	//
-	piece->ApplyRotation(piece->bakedRotMatrix, pieceRotAngles);
+	piece->ComposeRotation(piece->bakedRotMatrix, pieceRotAngles);
 	piece->SetHasIdentityRotation(piece->bakedRotMatrix.IsIdentity() == 0);
 
 	assert(piece->bakedRotMatrix.IsOrthoNormal() == 0);
