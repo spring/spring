@@ -730,27 +730,26 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	owner->SetVelocity(spd * XZVector);
 
 	const float3 deltaSpeed = wantedSpeed - spd;
-	const float deltaDotSpeed = (spd != ZeroVector)? deltaSpeed.dot(spd): 1.0f;
+	const float deltaDotSpeed = deltaSpeed.dot(spd);
+	const float deltaSpeedSq = deltaSpeed.SqLength();
 
-	if (deltaDotSpeed == 0.0f) {
-		// we have the wanted speed
-	} else if (deltaDotSpeed > 0.0f) {
+	if (deltaDotSpeed >= 0.0f) {
 		// accelerate
-		const float sqdl = deltaSpeed.SqLength();
-
-		if (sqdl < Square(accRate)) {
+		if (deltaSpeedSq < Square(accRate)) {
 			owner->SetVelocity(wantedSpeed);
 		} else {
-			owner->SetVelocity(spd + (deltaSpeed / math::sqrt(sqdl) * accRate));
+			if (deltaSpeedSq > 0.0f) {
+				owner->SetVelocity(spd + (deltaSpeed / math::sqrt(deltaSpeedSq) * accRate));
+			}
 		}
 	} else {
 		// deccelerate
-		const float sqdl = deltaSpeed.SqLength();
-
-		if (sqdl < Square(decRate)) {
+		if (deltaSpeedSq < Square(decRate)) {
 			owner->SetVelocity(wantedSpeed);
 		} else {
-			owner->SetVelocity(spd + (deltaSpeed / math::sqrt(sqdl) * decRate));
+			if (deltaSpeedSq > 0.0f) {
+				owner->SetVelocity(spd + (deltaSpeed / math::sqrt(deltaSpeedSq) * decRate));
+			}
 		}
 	}
 
