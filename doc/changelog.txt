@@ -11,6 +11,7 @@ Major:
  - add map border rendering (+ /mapborder command)
  - bugfixes & speedups
  ! remove support for SM3 maps
+   (but fix #3942 so SM3 is left in a slightly less broken state for whoever wants to mess with it in the future)
 
 Performance:
  - use SSE in some matrix math
@@ -18,10 +19,20 @@ Performance:
  - reduce PFS update rate by 10%
  - little speedup in Grass rendering (it's still slow on some maps)
  - use 32bit shadowmap. ~7% faster than 24bit one, cause of better alignment
- - move Lua GC to its own callin and fix so a bug when GC was too slow to catch up and so eating >>100MB ram
+ - move Lua GC to its own callin; fixes bug where GC was too slow to catch up and ate >>100MB ram
  - nihiliate MiniMap usage by rendering it to a texture
+ - PathEstimator: add unsynced caches (*might* help in big AI games)
+ - ExplosionGenerator:
+     pre-load all static (weapon/model/piece) CEG's and
+     never do lazy script-parsing anymore where possible
+
+     (only CEG's delay-spawned by other CEG's are still
+     loaded this way, rest can be dynamically reloaded)
+ - PFS: prevent special-case search expansion when unit is close to goal but goal is blocked
+ - make FeatureHandler::AllocateNewFeatureIDs more efficient in case of feature spam
 
 Misc:
+ - force-align all thread entry points so SSE functions don't crash (on win32)
  - allow Lua AI's to be selected from the menu
  ! removed "mods" from archive scandirs
  ! converted RotateLogFiles to a bool var (defaults to false)
@@ -35,6 +46,7 @@ Misc:
      see examples/Widgets/game_messages.lua for a possible replacement
  - more verbose CEG parsing (warns now about unknown tags)
  - switch to a high precision clock all over the engine (including Lua)
+   NOTE THAT THIS IS DISABLED BY DEFAULT ON WINDOWS BUILDS (cf. UseHighResTimer)
  - copied a lot config descriptions from wiki to the engine (thx for all the wiki'ers)
  - http://springrts.com/wiki/Springsettings.cfg is now automatically updated with each release
  ! disable build of spring-multithreaded (unmaintained / doesn't compile)
@@ -44,6 +56,35 @@ Misc:
  - add config "MenuArchive" to allow background image to be set which is read from the archive in the path bitmaps/ui/background/
  - fix /keydebug for release builds
  - updated game_end example gadget to handle quit/resigns better, reacts faster, and better code
+ - GuiTraceRay does not stop at water surface anymore by default
+   (all ground-attack positions are adjusted in synced code now)
+   --> torpedo launchers cannot overshoot, etc.
+ - GuiTraceRay now ignores noSelect units
+ - SmoothCameraController: add SMOOTHing to alt+mousewheel zoom
+ - change WorldObject::speed to a float4, store magnitude in .w
+   (saves a number of unnecessary .Length() calls here and there)
+ - PathCache: track maximum size + double initial capacity, register hash collisions and switch hash function
+ - GameServer: add config-option ServerRecordDemos
+     non-dedicated servers (eg. headless builds used as "dedicated" standin) can now record games if desired
+     ACHTUNG: server demos are now stored in a separate directory "demos-server/" to prevent name conflicts!
+ - AssParser:
+     generalize logic for multiple UV channels
+     fix major issue with baked transforms
+     restrict support to well-known & -maintained formats (.3DS, .DAE, .LWO, .BLEND)
+     allow modellers to work around #3552 by recognizing a number of new piece-table keys
+       for the root piece:
+         "xaxis" = float3, "yaxis" = float3, "zaxis" = float3 (determine global orientation of model)
+       for all pieces:
+         "rotAxisSigns" = float3 (determines direction of script-applied rotations around each axis)
+         "rotAxisMap" = number (currently can only be 0=XYZ or 3=XZY, determines coordinate conversion)
+
+ - SpringApp:
+     fix old bug in fullscreen&&dualscreen mode cutting window-size in half on each SDL_VIDEOEXPOSE event
+     refactor to allow choice of (win32) timer via cmdline&config
+ - SpringTime:
+     switch to native win32 clock (same as used by SDL) on windows
+     select win32 clock based on config&cmdline-parameter 'useHighResTimer'
+     remove the last SDL_GetTicks dependencies
 
 Sim:
  - reduce target-lost CAI timeout from 8 to 2 seconds
@@ -60,34 +101,274 @@ Sim:
      and only removed themselves (deleteMe=true) when intensity or
      length reached 0, so without disabling coldet (checkCol=false)
      range-exploits were possible
- - block impulses from applying to 'static' features
- - remove impulse "capacitance" from ground units
+ - remove impulse "capacitance" from ground units (SolidObject::residualImpulse and ::StoreImpulse())
  - apply UnitDef::myGravity to ground units (if non-zero)
      NOTE: myGravity acts as a map-gravity MULTIPLIER for aircraft; it REPLACES map gravity for land-based units
  - steering/avoidance: actively avoid only mobile units, let PFS/CD handle statics
 
+ - SolidObject:
+     cleanup internal physical/collision state management
+
+     model physical drag, use it for features and skidding units
+
+     related to the change above: Spring.Set*Physics now takes three extra number
+     arguments (Set*Physics(..., number drag.x, number drag.y, number drag.z))
+     to control how much an object is affected by drag forces
+
+ - Feature: set default impulseMult to 0 for 'immobile' / static wreckage (cf. new FeaturePreDamaged)
+ - Unit: transfer impulse to transporter if being transported
+ - Unit: swap order of UnitPreDamaged and HitByWeapon callins (viewtopic.php?f=23&t=30879)
+
+ - *Weapon: fix minor targeting issues due to new SolidObject underwater state definition
+ - LaserCannon: calculate projectile ttl from weapon range, not weapondef range
+ - BombDropper:
+     *always* drop bombs/torpedoes in time to hit target
+     (even if the distance from weapon to target still exceeds static
+     range, range is not meaningful for these weapons anyway since it
+     depends on launching unit's velocity, altitude and gravity)
+
+ - BeamLaser: fully reimplement the sweepfire logic
+   still has no script interaction so use with care
+   (respects reloadtime constraint but not much else)
+
+  ! UnitDef:
+      read brakeRate for aircraft without scaling by 0.1 and make brakeRate
+      default to maxAcc, not maxAcc * 3.0 (--> open up your unitdef_post's)
+ - WeaponDef: silently ignore bad slavedTo indices
+ - MoveDef:
+     remove old naming-scheme restrictions (which required names to contain "tank", etc)
+     instead parse key "speedModClass" with accepted values 0=Tank, 1=KBot, 2=Hover, 3=Ship
+
+     fix insane default value for heatMod parameter (since 7bef7760f4)
+
+ - MoveType: fix LOS emit-heights for floating units being relative to ocean floor
+ - AAirMoveType: do not use fuel while being refueled (yo dawg...)
+ - StrafeAirMoveType: overshoot less when landing
+ - HoverAirMoveType:
+     remove support for reading (and assigning to) key "brakeDistance"
+     via MoveCtrl; this quantity is now calculated dynamically based
+     on speed
+ - GroundMoveType:
+     add missing TestMoveSquare checks in places where units are repositioned by coldet
+     fix minor bug in GetGroundHeight (caused hovercraft to vibrate in shallow water)
+
+ - remove ancient "move transportee 1000 elmos under the map to hide it when attaching to piece -1" hack
+   there is now a "void" state for such purposes; objects (units and features) in this state will never
+      1) take damage, even from Lua (but can be killed by Lua)
+      2) be rendered through any engine path (nor their icons)
+      3) be intersectable by either synced or unsynced rays
+      4) block any other objects from existing on top of them
+      5) be selectable
+    
+ - hovercraft now take water damage by default
+
 Lua:
+ ! LuaUnitDefs: deprecate the "drag" key, was an internal variable
+ - LuaUnitDefs:
+     add more is* functions for all unit-types known to Spring
+     the complete function list as of 95.0 is:
+       isTransport
+       isImmobile
+       isBuilding
+       isBuilder
+       isMobileBuilder
+       isStaticBuilder
+       isFactory
+       isExtractor
+       isGroundUnit
+       isAirUnit
+       isStrafingAirUnit
+       isHoveringAirUnit
+       isFighterAirUnit
+       isBomberAirUnit
+     fully deprecate the following UnitDef keys:
+     after 95.0 these will all become nil, beware
+       .builder
+       .floater
+       .canDGun
+       .canCrash
+       .isCommander
+       .moveData
+       .type
+       .maxSlope
+
  ! LuaUnitDefs: deprecate canHover (check moveDef.family instead to determine if a unit is a hovercraft)
  - LuaUnitDefs: log error when explodeAs & selfDestructAs are missing
- - LuaRules: setup "proper" (transformation) state for the DrawProjectile callin
- - LuaRules: add AllowWeaponInterceptTarget(number interceptorUnitID, number interceptorWeaponID, number targetProjectileID) --> boolean
  - LuaUnitScript: optionally make Turn and Move insta-update piece matrices (pass "true" as the fifth argument)
+ - LuaRules:
+     setup "proper" (transformation) state for the DrawProjectile callin
+
+     add callin AllowWeaponInterceptTarget(number interceptorUnitID, number interceptorWeaponID, number targetProjectileID) --> boolean
+     add callins FeatureDamaged and FeaturePreDamaged
+       FeatureDamaged(
+         number featureID, number featureDefID, number featureTeam,
+         number damage
+         [, number weaponDefID, number projectileID
+         [, number attackerID, number attackerDefID, number attackerTeam ]]
+       )
+       FeaturePreDamaged(
+         number featureID, number featureDefID, number featureTeam,
+         number damage
+         [, number weaponDefID, number projectileID
+         [, number attackerID, number attackerDefID, number attackerTeam ]]
+       )
+
  ! LuaSynced*: make sure ALL weapon API functions are 1-based
      UPDATE YOUR GAME'S UNIT_SCRIPT.LUA IF IT HAS LUA-SCRIPTED
      UNITS AND YOU ARE NOT USING SPRING'S (BASECONTENT) VERSION
- - LuaUnsyncedRead: add Spring.GetPixelDir(int x, int y) -> number dirx, number diry, number dirz
+
+ ! LuaSynced*: slightly change {Get,Set}ProjectileTarget signatures
+     GetProjectileTarget now returns a number instead of a string to indicate target-type
+     GetProjectileTarget now always returns two arguments (if given projectileID is valid)
+     GetProjectileTarget now always returns a target position if projectile has no target object
+     SetProjectileTarget now takes a number instead of a string to indicate target-type
+    
+     GetProjectileTarget(number projectileID) --> nil | [number targetType, number targetID | table targetPos = {[1] = x, ...}]
+     SetProjectileTarget(number projectileID, [number targetID [, number targetType]]  |  [number x, number y, number z]) --> nil | boolean
+    
+   where targetType is one of {string.byte('g') = GROUND, string.byte('u') = UNIT, string.byte('f') = FEATURE, string.byte('p') = PROJECTILE}
+
+ - LuaSynced*:
+     add callout Spring.GetRadarErrorParams(number allyTeamID) --> nil | number allyteamErrorSize, number baseErrorSize, number baseErrorMult
+     add callout Spring.SetRadarErrorParams(number allyTeamID, number allyteamErrorSize [, number baseErrorSize [, number baseErrorMult ]]) --> nil
+
+     add callout Spring.SetUnitPosErrorParams(number unitID,
+       number posErrorVector.x, number posErrorVector.y, number posErrorVector.z,
+       number posErrorDelta.x, number posErrorDelta.y, number posErrorDelta.z
+       [ , number nextPosErrorUpdate]) --> nil
+     add callout Spring.GetUnitPosErrorParams(number unitID) --> nil |
+       number posErrorVector.x, number posErrorVector.y, number posErrorVector.z,
+       number posErrorDelta.x, number posErrorDelta.y, number posErrorDelta.z,
+       number nextPosErrorUpdate
+
+     add callout Spring.SetFeatureBlocking(number featureID, boolean blocking, boolean collidable) --> boolean
+     add callout Spring.SetPieceProjectileParams(number projectileID,
+       [ number explosionFlags, [ number spinAngle, [ number spinSpeed,
+       [ number spinVector.x, [ number spinVector.y, [ number spinVector.z ]]]]]]) --> nil
+     deprecate the Spring.SetProjectileSpin* functions
+     add callout Spring.GetFeatureBlocking(number featureID) --> boolean collidable, boolean crushable, boolean blocking
+     add third return-value to Spring.GetUnitBlocking (signature is the same as that of GetFeatureBlocking)
+
+ - LuaSyncedCtrl:
+     add callout SetProjectileAlwaysVisible(number projectileID, boolean alwaysVisible) --> nil
+     add callouts SetFeatureVelocity and SetFeaturePhysics (these work like their SetUnit* counterparts, reference the wiki docs)
+
+     cleanup arg-parsing of Spring.SetUnitPieceCollisionVolumeData callout
+       new signature: SetUnitPieceCollisionVolumeData(
+         number unitID,
+         number pieceIdx,
+         boolean enable,
+         number scales.x, number scales.y, number scales.z,
+         number offset.x, number offset.y, number offset.z
+         [, number volumeType [, number primaryAxis]]
+       )
+
+ ! LuaSyncedRead: deprecate the Spring.GetProjectileSpin* functions
+ - LuaSyncedRead:
+     add Spring.GetPieceProjectileParams(number projectileID) -->
+       number explosionFlags, number spinAngle, number spinSpeed,
+       number spinVector.x, number spinVector.y, number spinVector.z
+     add callout Spring.GetUnitWeaponCanFire(number unitID, number weaponNum) --> boolean
+     add callout Spring.GetFeatureVelocity(number featureID[, boolean norm]) --> nil | number vel.x, number vel.y, number vel.z[, number |vel|]   and   Spring.GetProjectileDirection(number projectileID) --> nil | number dir.x, number dir.y, number dir.z
+     add callout Spring.GetProjectileDefID(number projectileID) --> nil | number weaponDefID
+       using this to get a weaponDefID is HIGHLY preferred to indexing WeaponDefNames via GetProjectileName
+     add callout Spring.GetUnitRotation(number unitID) --> nil | number pitch, number yaw, number roll (WIP)
+     extend arguments to Spring.TestMoveOrder
+       old signature: TestMoveOrder(
+         number unitDefID,
+         number pos.x, number pos.y, number pos.z
+       ) --> boolean
+       new signature: TestMoveOrder(
+         number unitDefID,
+         number pos.x, number pos.y, number pos.z
+         [, number dir.x
+         [, number dir.y
+         [, number dir.z
+         [, boolean testTerrain
+         [, boolean testObjects
+         [, boolean centerOnly
+         ]]]]]]
+       ) --> boolean
+
+     added GetUnitWeaponTarget(unitID, weaponID) ->
+       nil | number targetType [, bool isUserTarget, table targetPos = {x, y, z} | number targetID]
+     (returned number of args is always 3 if targetType != None)
+
+ - LuaUnsyncedRead:
+     add callout Spring.GetPixelDir(int x, int y) -> number dirx, number diry, number dirz
+     add callout Spring.GetVisibleProjectiles(
+       [   number allyTeamID = -1
+       [ , boolean addSyncedProjectiles = true
+       [ , boolean addWeaponProjectiles = true
+       [ , boolean addPieceProjectiles  = true ]]]]
+     ) --> nil | {[1] = projectileID, ...}
+
+
  ! Spring.GetUnitNearestEnemy doesn't return neutral units anymore
+ - Spring.GetProjectileVelocity now returns (targetPos - startPos) for BeamLasers and other hitscan weapons
+ - Spring.Get{}Velocity: always return speed.w (it's free now)
+ - Spring.SpawnCEG: allow number (cegID) as first arg + return a second value (number cegID)
  - add Spring.GetLogSections() & Spring.SetLogSectionFilterLevel(string sectionName, string|number logLevel)
  - add new Game. constants: Game.gameName, Game.gameVersion, ...
  - allow to save strings in RulesParams
  - add 'parent' field to Spring.GetUnitPieceInfo
- - LuaSyncedRead: added GetUnitWeaponTarget(unitID,weaponID) -> number targettype, bool isusertarget, target
+ - GadgetHandler:
+     add several missing callins (AllowStartPosition, ...)
+     expose actionHandler through gadgetHandler table (seems to be a common enough mod)
+     log if callin is not implemented
+     unify callin lists (now all in callins.lua)
+     add missing projectileID argument to UnitDamaged
+
+ - LuaOpenGL::Draw{List,Func}AtUnit: just use drawPos or drawMidPos
+
+ - gl: add callout UniformArray(number location, number type, table uniforms) -> nil
+     (type can be one of {0 = int, 1 = float})
+ - gl.CreateShader: support uniform arrays (table values with more than 4 and up to 32 elements)
+ - gl.CreateShader: make 'definitions' a recognized key (whose value should be a subtable or string of shader #define's)
+
+ - Spring.{Get,Diff}Timer(s): save some precision (important with new high-resolution timers)
+ - Spring.DiffTimers: accept optional third argument (boolean) to return dt in milliseconds
+
+ - TODO: document dnw's LuaMathExtra functions
 
 Rendering:
  - LoadingMT: add a runtime check that should detect incompatibilities
  - disable ARB shaders with Intel/Mesa drivers (can be overridden by setting ForceEnableIntelShaderSupport=1)
  - reduce used varyings in SMF GLSL shader in the hope it will fix advmapshading on some lowend GPUs
  - render MiniMap to a texture and update it async from screen (new configtags: MiniMapRenderToTexture & MiniMapRefreshRate)
+ - do not draw ground reflections in water if drawGround=false
+ - 3DModel: do not set tex1 to 'default.png' (it breaks assimp's auto-texturing ability)
+ - SMFFragProg: fix '#version must occur before any other statement' and eliminate dynamic branching
+
+ - implement Lua-bindable map and model normal/depth/material buffers
+     note: this is *FULLY* compatible with custom Lua UnitRendering
+     shaders (even easier if some minor framework changes are made)
+     so the vast majority of deferred rendering operations is now
+     within Lua's abilities
+
+     new configuration-keys to enable/disable G-buffer draw-passes:
+       AllowDeferredMapRendering (default true)
+       AllowDeferredModelRendering (default true)
+
+    new LuaUnsyncedCtrl callouts to enable/disable G-buffer updates:
+      Spring.SetDrawGroundDeferred(boolean) -> nil
+      Spring.SetDrawModelsDeferred(boolean) -> nil
+
+    new Lua texture names:
+      "$map_gb_nt" or "$map_gbuffer_normtex"
+      "$map_gb_dt" or "$map_gbuffer_difftex"
+      "$map_gb_st" or "$map_gbuffer_spectex"
+      "$map_gb_et" or "$map_gbuffer_emittex" // for emissive materials (bloom would be the canonical use)
+      "$map_gb_mt" or "$map_gbuffer_misctex" // for arbitrary shader data
+      "$map_gb_zt" or "$map_gbuffer_zvaltex"
+
+      "$mdl_gb_nt" or "$model_gbuffer_normtex"
+      "$mdl_gb_dt" or "$model_gbuffer_difftex"
+      "$mdl_gb_st" or "$model_gbuffer_spectex"
+      "$mdl_gb_et" or "$model_gbuffer_emittex"
+      "$mdl_gb_mt" or "$model_gbuffer_misctex"
+      "$mdl_gb_zt" or "$model_gbuffer_zvaltex"
+
 
 Buildprocess:
  ! updated gentoo overlay url to https://github.com/springlobby/overlay
@@ -98,7 +379,7 @@ Buildprocess:
     use cmake -G "Visual Studio 11" to generate project files
     dropped support for Visual Studio 8, 9 & 10
     see http://springrts.com/wiki/Building_Spring_on_Windows
- ! compile Spring as c++11
+ ! compile Spring using c++11 standard
  - fix clang compile errors + some bugs detected by clang
  ! slightly refactored build system, now every target can be disabled:
      spring-dedicated, spring-headless, spring-legacy, spring-multithreaded
@@ -108,31 +389,107 @@ Buildprocess:
 
 Bugfixes:
  ! fix {Get,Set}UnitWeapon{Fire,HoldFire,TryTarget,TestTarget,TestRange,HaveFreeLineOfFire} WeaponID argument to use the same 1-starting indexes as rest of lua interface
- - fix #3785 Construction aircraft getting stuck
- - fix #3783 add FailedCommand sound to default sounds.lua
- - fix #3675 wrong loglevel in unit_script.lua
- - fix #3752 (safeguard execution of SimFrame() against garbage keyframe messages)
- - fix #3641 (fix several issues with units using per-piece collision volumes)
- - fix #3739 (apply impulse to aircraft)
- - fix #3614 (units stuck on narrow terrain passages)
- - fix #3736 (TextureAtlas crash)
- - fix #3643 (get PFS and CD to agree regarding factories)
- - fix #3655 (UnitDef::canMove misinterpreted by factory CAI code)
- - fix #3662
- - fix #3633 (non-3DO projectile models not being rendered fully)
- - fix #3714 (minimap icons of enemy units visible after /spectator plus /specfullview 0)
- - fix #3598 ("vibrating" ground units due to gravity)
- - fix #3637 (desyncs due to not versioning cache-data, also #3692)
- - fix #3617 (ship transports can't load units)
- - fix #3686 (free flying ground units follow terrain slope)
- - fix #3697 Spring.GetPositionLosState now returns a 4th argument which indicates
-     if a position is actively being radar- or sonar-jammed by any allyteam
- - fix #3683 (minimap textures not freed on exit)
- - fix #3660 (memory leak in Spring.GetVisibleFeatures)
- - fix #3718 (units moving in circles near obstacles)
- - fix #3743 (partially: make non-hovering aircraft start turning to goal during takeoff)
- - fix #3681 (make widgetHandler:LoadConfigData() more robust)
+ - fix #4092 (empty pieces Explode()'d with PF_FIRE flag leave behind small stationary fire FX)
+ - fix #4079 (resurrecting could lead to multiple units created by one wreck)
+ - fix #4078 (float-->int conversion overflow)
+ - fix #4073 (fuel-level of unit is lowered upon completion)
+ - fix #4070 (units can skip attack orders in their queue)
+ - fix #4068 (the "wrong cursor for certain attack commands" part)
+ - fix #4057 (double BeamLaser visualisation)
+ - fix #4054 (homing missiles miss radar dots of flying units)
+ - fix #4047 (ground decals don't fade away)
+ - fix #4043 (constructors can build large units ontop of themselves & walk through 'gaps')
+ - fix #4023 (allow 'key'=value options-table format in Spring.GiveOrderTo*)
+ - fix #4019 (receiveTracks not working reliably)
+ - fix #4011 (GetTeamStartPosition cannot determine whether start position was placed by player)
+ - fix #4010 (disable /spectator before gamestart)
+ - fix #4007 (large-radius air transports failing to load transportees)
+ - fix #3980 (air transports set to 'Land' wander around while idling if loaded)
+ - fix #3979 (unhelpful error message)
+ - fix #3974 (out-of-fuel bombers set to 'Land' fly all over the map)
+ - fix #3973 (aircraft taking off in wrong direction on attack orders)
+ - fix #3961 (expect ArmorDef subtables in array-format, show warning if armordefs contains old-style subtable entries)
+ - fix #3959 ("flying" ground-units colliding with aircraft looks unrealistic)
+ - fix #3957 (Unit icons of underwater units are drawn at water level instead of actual depth)
+ - fix #3951
+     submissile was being checked in the base-class for all
+     weapons despite being a TorpedoLauncher-only property
+ - fix #3948 (broken voidwater shading)
+ - fix #3941 (CBitmapMuzzleFlame doesn't render when dir is <0 -1 0>)
+ - fix #3937 (transport unloading on top of non-blocking objects)
+ - fix #3924 (add callout Spring.UpdateInfoTexture(number texMode) --> boolean)
  - fix #3890 (Unloaded units fly across the map)
+ - fix #3873 (lag while loading model-less features)
+ - fix #3862 (aircraft overshooting/flailing around repair pads, also #3834)
+ - fix #3861 (BeamLaser does not hit if it starts within hitvolume)
+ - fix #3855 (LosHandler bug that made provided full LOS on underwater units in radar coverage)
+ - fix #3835 (try to avoid clash between Weapon::AutoTarget and MobileCAI::AutoGenerateTarget)
+ - fix #3785 (Construction aircraft getting stuck)
+ - fix #3783 (add FailedCommand sound to default sounds.lua)
+ - fix #3765 (make Gaia the default feature team, not -1/0)
+ - fix #3752 (safeguard execution of SimFrame() against garbage keyframe messages)
+ - fix #3743 (partially: make non-hovering aircraft start turning to goal during takeoff)
+ - fix #3739 (apply impulse to aircraft)
+ - fix #3737
+     gadget:AllowStartPosition() now receives the raw
+     unclamped start position as three extra arguments
+ - fix #3736 (TextureAtlas crash)
+ - fix #3720 (unit pushed through impassable part of factory)
+ - fix #3718 (units moving in circles near obstacles)
+ - fix #3715: make all info-textures individually queryable by Lua (gl.Texture)
+     "$info" and "$extra" still map to the active info-texture as before
+     "$info_losmap" or "$extra_losmap" map to the  L-view texture
+     "$info_mtlmap" or "$extra_mtlmap" map to the F4-view texture
+     "$info_hgtmap" or "$extra_hgtmap" map to the F1-view texture
+     "$info_blkmap" or "$extra_blkmap" map to the F2-view texture
+
+     textures contain no data until user switches to their respective modes
+     non-active textures are not updated in the background, so will go stale
+
+ - fix #3714 (minimap icons of enemy units visible after /spectator plus /specfullview 0)
+ - fix #3697
+     Spring.GetPositionLosState now returns a 4th argument which indicates
+     if a position is actively being radar- or sonar-jammed by any allyteam
+ - fix #3686 (free flying ground units follow terrain slope)
+ - fix #3683 (minimap textures not freed on exit)
+ - fix #3681 (make widgetHandler:LoadConfigData() more robust)
+ - fix #3675 wrong loglevel in unit_script.lua
+ - fix #3665
+     AllowStartPosition now receives the ready-state of
+     each player as an argument too, making its complete
+     signature as of 95.0:
+
+     AllowStartPosition(
+       number clampedPos.x, number clampedPos.y, number clampedPos.z,
+       number playerID,
+       number readyState,
+       number rawPickPos.x, number rawPickPos.y, number rawPickPos.z
+     )
+
+     where readyState can be one of:
+       PLAYER_RDYSTATE_UPDATED = 0 -- player picked a position
+       PLAYER_RDYSTATE_READIED = 1 -- player clicked ready
+       PLAYER_RDYSTATE_FORCED  = 2 -- game was force-started (player did not click ready)
+       PLAYER_RDYSTATE_FAILED  = 3
+
+     ! the default 'failed to choose' start-position is now just (0,0,0), not (0,-500,0)
+
+ - fix #3662 (secret)
+ - fix #3660 (memory leak in Spring.GetVisibleFeatures)
+ - fix #3655 (UnitDef::canMove misinterpreted by factory CAI code)
+ - fix #3653 (clash between mutually push-resistant units moving to same spot)
+ - fix #3643 (get PFS and CD to agree regarding factories)
+ - fix #3641 (fix several issues with units using per-piece collision volumes)
+ - fix #3640 (Groundplates don't disappear when out of LOS)
+ - fix #3637 (desyncs due to not versioning cache-data, also #3692)
+ - fix #3633 (non-3DO projectile models not being rendered fully)
+ - fix #3623 (broken PPCV offsets for DAE models)
+ - fix #3617 (ship transports can't load units)
+ - fix #3614 (units stuck on narrow terrain passages)
+ - fix #3598 ("vibrating" ground units due to gravity)
+ - fix #3373 (crash when exiting before countdown finished)
+ - fix #1368 (AllowBuildStep only called for building)
+
  - fix ground units not moving in FPS mode
  - fix (non-hovering) aircraft jittering at high altitude
  - fix submarines being considered "underwater" even when pos.y + height > 0
@@ -148,6 +505,8 @@ Bugfixes:
  - fix logLevel of WatchDog stacktraces
  - fix decals were rendered twice
  - fix spike CEGs
+ - fix units with PPCV's ignoring mouse-rays; run PPCV test before CV test
+ - fix possible bug in MoveCtrl.SetMoveDef
 
 Sound:
  - don't automaticly set "MaxSounds"
@@ -158,6 +517,7 @@ AI:
 
 UnitSync:
  - add DeleteSpringConfigKey(const char* name)
+
 
 
 -- 94.1 ---------------------------------------------------------
