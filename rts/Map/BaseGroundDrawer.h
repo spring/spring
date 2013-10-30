@@ -73,7 +73,7 @@ public:
 	// Everything that deals with drawing extra textures on top
 	void DisableExtraTexture();
 	void SetHeightTexture();
-	void SetMetalTexture(const CMetalMap*);
+	void SetMetalTexture();
 	void TogglePathTexture(BaseGroundDrawMode);
 	void ToggleLosTexture();
 	void ToggleRadarAndJammer();
