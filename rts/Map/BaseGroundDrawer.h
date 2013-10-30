@@ -111,10 +111,6 @@ public:
 	float LODScaleRefraction;
 	float LODScaleUnitReflection;
 
-	const unsigned char* extraTex;
-	const unsigned char* extraTexPal;
-	const float* extractDepthMap;
-
 	int jamColor[3];
 	int losColor[3];
 	int radarColor[3];
