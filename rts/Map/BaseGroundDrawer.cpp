@@ -42,10 +42,6 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 	highResInfoTex = false;
 	updateTextureState = 0;
 
-	extraTex = NULL;
-	extraTexPal = NULL;
-	extractDepthMap = NULL;
-
 #ifdef USE_GML
 	multiThreadDrawGroundShadow = false;
 	multiThreadDrawGround = false;
@@ -139,7 +135,6 @@ void CBaseGroundDrawer::DrawTrees(bool drawReflection) const
 // XXX this part of extra textures is a mess really ...
 void CBaseGroundDrawer::DisableExtraTexture()
 {
-	extraTex = NULL;
 	highResInfoTexWanted = false;
 	updateTextureState = 0;
 
@@ -162,7 +157,6 @@ void CBaseGroundDrawer::SetHeightTexture()
 		SetDrawMode(drawHeight);
 
 		highResInfoTexWanted = true;
-		extraTex = NULL;
 		updateTextureState = 0;
 
 		while (!UpdateExtraTexture(drawMode));
@@ -198,7 +192,6 @@ void CBaseGroundDrawer::TogglePathTexture(BaseGroundDrawMode mode)
 			} else {
 				SetDrawMode(mode);
 
-				extraTex = NULL;
 				highResInfoTexWanted = false;
 				updateTextureState = 0;
 
@@ -221,7 +214,6 @@ void CBaseGroundDrawer::ToggleLosTexture()
 		drawLineOfSight = true;
 
 		SetDrawMode(drawLos);
-		extraTex = NULL;
 		highResInfoTexWanted = highResLosTex;
 		updateTextureState = 0;
 
@@ -328,9 +320,9 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 			case drawMetal: {
 				const CMetalMap* metalMap = readMap->metalMap;
 
-				extraTex = metalMap->GetResourceMap();
-				extraTexPal = metalMap->GetTexturePalette();
-				extractDepthMap = metalMap->GetExtractionMap();
+				const unsigned char* extraTex        = metalMap->GetResourceMap();
+				const unsigned char* extraTexPal     = metalMap->GetTexturePalette();
+				const         float* extractDepthMap = metalMap->GetExtractionMap();
 
 				for (int y = starty; y < endy; ++y) {
 					const int y_pwr2mapx_half = y*pwr2mapx_half;
@@ -353,14 +345,11 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 					}
 				}
 
-				extraTex = NULL;
-				extraTexPal = NULL;
-				extractDepthMap = NULL;
 				break;
 			}
 
 			case drawHeight: {
-				extraTexPal = heightLinePal->GetData();
+				const unsigned char* extraTexPal = heightLinePal->GetData();
 
 				//NOTE: the resolution of our PBO/ExtraTexture is gs->pwr2mapx * gs->pwr2mapy (we don't use it fully)
 				//      while the corner heightmap has (gs->mapx + 1) * (gs->mapy + 1).
@@ -384,6 +373,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 						infoTexMem[i + COLOR_A] = 255;
 					}
 				}
+
 				break;
 			}
 			case drawLos: {
