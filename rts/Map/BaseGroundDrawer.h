@@ -73,7 +73,7 @@ public:
 	// Everything that deals with drawing extra textures on top
 	void DisableExtraTexture();
 	void SetHeightTexture();
-	void SetMetalTexture(const CMetalMap*);
+	void SetMetalTexture();
 	void TogglePathTexture(BaseGroundDrawMode);
 	void ToggleLosTexture();
 	void ToggleRadarAndJammer();
@@ -110,10 +110,6 @@ public:
 	float LODScaleReflection;
 	float LODScaleRefraction;
 	float LODScaleUnitReflection;
-
-	const unsigned char* extraTex;
-	const unsigned char* extraTexPal;
-	const float* extractDepthMap;
 
 	int jamColor[3];
 	int losColor[3];
