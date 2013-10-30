@@ -333,7 +333,8 @@ GLuint LuaMatTexture::GetTextureID() const
 {
 	GLuint texID = 0;
 
-	#define gdGeomBuff ((readMap->GetGroundDrawer())->GetGeometryBuffer())
+	#define groundDrawer (readMap->GetGroundDrawer())
+	#define gdGeomBuff (groundDrawer->GetGeometryBuffer())
 	#define udGeomBuff (unitDrawer->GetGeometryBuffer())
 
 	switch (type) {
@@ -382,10 +383,10 @@ GLuint LuaMatTexture::GetTextureID() const
 				texID = heightMapTexture->GetTextureID();
 		} break;
 		case LUATEX_SHADING: {
-			texID = readMap->GetShadingTexture();
+			texID = (readMap != NULL)? readMap->GetShadingTexture(): 0;
 		} break;
 		case LUATEX_GRASS: {
-			texID = readMap->GetGrassShadingTexture();
+			texID = (readMap != NULL)? readMap->GetGrassShadingTexture(): 0;
 		} break;
 		case LUATEX_FONT: {
 			texID = font->GetTexture();
@@ -394,14 +395,14 @@ GLuint LuaMatTexture::GetTextureID() const
 			texID = smallFont->GetTexture();
 		} break;
 		case LUATEX_MINIMAP:
-			texID = readMap->GetMiniMapTexture();
+			texID = (readMap != NULL)? readMap->GetMiniMapTexture(): 0;
 		break;
 
-		case LUATEX_INFOTEX_ACTIVE: { texID = readMap->GetGroundDrawer()->GetActiveInfoTexture();                          } break;
-		case LUATEX_INFOTEX_LOSMAP: { texID = readMap->GetGroundDrawer()->GetInfoTexture(CBaseGroundDrawer::drawLos     ); } break;
-		case LUATEX_INFOTEX_MTLMAP: { texID = readMap->GetGroundDrawer()->GetInfoTexture(CBaseGroundDrawer::drawMetal   ); } break;
-		case LUATEX_INFOTEX_HGTMAP: { texID = readMap->GetGroundDrawer()->GetInfoTexture(CBaseGroundDrawer::drawHeight  ); } break;
-		case LUATEX_INFOTEX_BLKMAP: { texID = readMap->GetGroundDrawer()->GetInfoTexture(CBaseGroundDrawer::drawPathTrav); } break;
+		case LUATEX_INFOTEX_ACTIVE: { texID = (readMap != NULL)? groundDrawer->GetActiveInfoTexture()                         : 0; } break;
+		case LUATEX_INFOTEX_LOSMAP: { texID = (readMap != NULL)? groundDrawer->GetInfoTexture(CBaseGroundDrawer::drawLos     ): 0; } break;
+		case LUATEX_INFOTEX_MTLMAP: { texID = (readMap != NULL)? groundDrawer->GetInfoTexture(CBaseGroundDrawer::drawMetal   ): 0; } break;
+		case LUATEX_INFOTEX_HGTMAP: { texID = (readMap != NULL)? groundDrawer->GetInfoTexture(CBaseGroundDrawer::drawHeight  ): 0; } break;
+		case LUATEX_INFOTEX_BLKMAP: { texID = (readMap != NULL)? groundDrawer->GetInfoTexture(CBaseGroundDrawer::drawPathTrav): 0; } break;
 
 		case LUATEX_MAP_GBUFFER_NORMTEX: { texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX); } break;
 		case LUATEX_MAP_GBUFFER_DIFFTEX: { texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_DIFFTEX); } break;
@@ -423,6 +424,7 @@ GLuint LuaMatTexture::GetTextureID() const
 
 	#undef udGeomBuff
 	#undef gdGeomBuff
+	#undef groundDrawer
 
 	return texID;
 }
@@ -579,7 +581,9 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_FONTSMALL:
 			return int2(smallFont->GetTexWidth(), smallFont->GetTexHeight());
 		case LUATEX_MINIMAP:
-			return readMap->GetMiniMapTextureSize();
+			if (readMap != NULL) { 
+				return readMap->GetMiniMapTextureSize();
+			}
 		break;
 
 		case LUATEX_INFOTEX_ACTIVE:
@@ -587,7 +591,9 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_INFOTEX_MTLMAP:
 		case LUATEX_INFOTEX_HGTMAP:
 		case LUATEX_INFOTEX_BLKMAP: {
-			return (readMap->GetGroundDrawer()->GetInfoTexSize());
+			if (readMap != NULL) { 
+				return (readMap->GetGroundDrawer()->GetInfoTexSize());
+			}
 		}
 
 		case LUATEX_MAP_GBUFFER_NORMTEX:
@@ -596,7 +602,9 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_MAP_GBUFFER_EMITTEX:
 		case LUATEX_MAP_GBUFFER_MISCTEX:
 		case LUATEX_MAP_GBUFFER_ZVALTEX: {
-			return (readMap->GetGroundDrawer()->GetGeometryBuffer()->GetWantedSize(readMap->GetGroundDrawer()->DrawDeferred()));
+			if (readMap != NULL) { 
+				return (readMap->GetGroundDrawer()->GetGeometryBuffer()->GetWantedSize(readMap->GetGroundDrawer()->DrawDeferred()));
+			}
 		}
 
 		case LUATEX_MODEL_GBUFFER_NORMTEX:
@@ -605,17 +613,21 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_MODEL_GBUFFER_EMITTEX:
 		case LUATEX_MODEL_GBUFFER_MISCTEX:
 		case LUATEX_MODEL_GBUFFER_ZVALTEX: {
-			return (unitDrawer->GetGeometryBuffer()->GetWantedSize(unitDrawer->DrawDeferred()));
+			if (unitDrawer != NULL) {
+				return (unitDrawer->GetGeometryBuffer()->GetWantedSize(unitDrawer->DrawDeferred()));
+			}
 		}
 
 		case LUATEX_HEIGHTMAP:
-			if (heightMapTexture)
+			if (heightMapTexture != NULL) {
 				return int2(heightMapTexture->GetSizeX(), heightMapTexture->GetSizeY());
+			}
+
 		case LUATEX_NONE:
-		default:
-			break;
+		default: break;
 	}
-	return int2(0,0);
+
+	return int2(0, 0);
 }
 
 
