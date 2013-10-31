@@ -275,7 +275,7 @@ namespace DebugColVolDrawer
 			glDepthMask(GL_TRUE);
 
 			static CDebugColVolQuadDrawer drawer;
-			readMap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &drawer);
+			readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &drawer);
 
 			glLineWidth(1.0f);
 		glPopAttrib();
