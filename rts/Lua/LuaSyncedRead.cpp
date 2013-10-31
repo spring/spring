@@ -500,10 +500,16 @@ static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
 	if (o == NULL)
 		return 0;
 
+	lua_pushboolean(L, o->HasPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING));
 	lua_pushboolean(L, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS));
+	lua_pushboolean(L, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES ));
+	lua_pushboolean(L, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS ));
+
 	lua_pushboolean(L, o->crushable);
-	lua_pushboolean(L, o->IsBlocking());
-	return 3;
+	lua_pushboolean(L, o->blockEnemyPushing);
+	lua_pushboolean(L, o->blockHeightChanges);
+
+	return 7;
 }
 
 
