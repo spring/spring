@@ -506,6 +506,7 @@ Bugfixes:
  - fix #3623 (broken PPCV offsets for DAE models)
  - fix #3617 (ship transports can't load units)
  - fix #3614 (units stuck on narrow terrain passages)
+ - fix #3606 (TorpedoLauncher force-attack aims at water surface)
  - fix #3598 ("vibrating" ground units due to gravity)
  - fix #3373 (crash when exiting before countdown finished)
  - fix #1368 (AllowBuildStep only called for building)
