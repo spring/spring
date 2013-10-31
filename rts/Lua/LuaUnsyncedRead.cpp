@@ -792,7 +792,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 		GML_RECMUTEX_LOCK(quad); // GetVisibleUnits
 
 		unitQuadIter.Reset();
-		readMap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
+		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
 
 		lua_createtable(L, unitQuadIter.GetObjectCount(), 0);
 
@@ -920,7 +920,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 		GML_RECMUTEX_LOCK(quad); // GetVisibleFeatures
 
 		featureQuadIter.Reset();
-		readMap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
+		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
 
 		lua_createtable(L, featureQuadIter.GetObjectCount(), 0);
 
@@ -1008,7 +1008,7 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 		GML_RECMUTEX_LOCK(quad); // GetVisibleProjectiles
 
 		projQuadIter.Reset();
-		readMap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &projQuadIter, INT_MAX);
+		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &projQuadIter, INT_MAX);
 
 		lua_createtable(L, projQuadIter.GetObjectCount(), 0);
 

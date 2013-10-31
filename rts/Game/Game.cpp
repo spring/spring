@@ -627,7 +627,7 @@ void CGame::PreLoadSimulation()
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
 	moveDefHandler = new MoveDefHandler(defsParser);
-	quadField = new CQuadField();
+	quadField = new CQuadField((gs->mapx * SQUARE_SIZE) / CQuadField::BASE_QUAD_SIZE, (gs->mapy * SQUARE_SIZE) / CQuadField::BASE_QUAD_SIZE);
 	damageArrayHandler = new CDamageArrayHandler(defsParser);
 	explGenHandler = new CExplosionGeneratorHandler();
 }

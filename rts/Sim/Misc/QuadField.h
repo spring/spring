@@ -22,7 +22,9 @@ class CQuadField : boost::noncopyable
 	CR_DECLARE_SUB(Quad);
 
 public:
-	CQuadField();
+	static void Resize(unsigned int nqx, unsigned int nqz);
+
+	CQuadField(unsigned int nqx, unsigned int nqz);
 	~CQuadField();
 
 	std::vector<int> GetQuads(float3 pos, float radius) const;
@@ -121,14 +123,21 @@ public:
 	int GetNumQuadsX() const { return numQuadsX; }
 	int GetNumQuadsZ() const { return numQuadsZ; }
 
-	const static int QUAD_SIZE = 256;
-	const static int NUM_TEMP_QUADS = 1024;
+	int GetQuadSizeX() const { return quadSizeX; }
+	int GetQuadSizeZ() const { return quadSizeZ; }
+
+	const static unsigned int BASE_QUAD_SIZE =  256;
+	const static unsigned int NUM_TEMP_QUADS = 1024;
 
 private:
 	std::vector<Quad> baseQuads;
 	std::vector<int> tempQuads;
+
 	int numQuadsX;
 	int numQuadsZ;
+
+	int quadSizeX;
+	int quadSizeZ;
 };
 
 extern CQuadField* quadField;
