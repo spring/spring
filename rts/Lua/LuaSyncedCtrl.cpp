@@ -487,12 +487,12 @@ static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 		}
 	}
 
-	o->UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES, luaL_optboolean(L, 7, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES)));
-	o->UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS, luaL_optboolean(L, 8, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS)));
+	o->UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES, luaL_optboolean(L, 4, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES)));
+	o->UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS, luaL_optboolean(L, 5, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS)));
 
-	o->crushable = luaL_optboolean(L, 4, o->crushable);
-	o->blockEnemyPushing = luaL_optboolean(L, 5, o->blockEnemyPushing);
-	o->blockHeightChanges = luaL_optboolean(L, 6, o->blockHeightChanges);
+	o->crushable = luaL_optboolean(L, 6, o->crushable);
+	o->blockEnemyPushing = luaL_optboolean(L, 7, o->blockEnemyPushing);
+	o->blockHeightChanges = luaL_optboolean(L, 8, o->blockHeightChanges);
 
 	lua_pushboolean(L, o->IsBlocking());
 	return 1;
