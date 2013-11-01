@@ -126,7 +126,7 @@ public:
 	int GetQuadSizeX() const { return quadSizeX; }
 	int GetQuadSizeZ() const { return quadSizeZ; }
 
-	const static unsigned int BASE_QUAD_SIZE =  256;
+	const static unsigned int BASE_QUAD_SIZE =  128;
 	const static unsigned int NUM_TEMP_QUADS = 1024;
 
 private:
