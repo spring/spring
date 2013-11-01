@@ -94,7 +94,7 @@ void CLuaHandle::KillLua()
 	if (IsValid()) {
 		// 1. unlink from eventHandler, so no new events are getting triggered
 		eventHandler.RemoveClient(this);
-		//FIXME when multithreaded lua is enabled, wait for all running events to finish
+		//FIXME when multithreaded lua is enabled, wait for all running events to finish (possible via a mutex?)
 
 		// 2. shutdown
 		Shutdown();
@@ -319,30 +319,33 @@ int CLuaHandle::RunCallInTraceback(
 
 		void CheckFixStack(std::string& trace) {
 			// note: assumes error-handler has not been popped yet (!)
+			const int outArgs = (lua_gettop(luaState) - (GetTop() - 1)) + nInArgs;
+
 			if (GetError() == 0) {
 				if (nOutArgs != LUA_MULTRET) {
-					const int retdiff = (lua_gettop(luaState) - (GetTop() - 1)) - (nOutArgs - nInArgs);
-
-					if (retdiff != 0) {
-						LOG_L(L_ERROR, "Internal Lua error: %d return values, %d expected", nOutArgs + retdiff, nOutArgs);
-						lua_pop(luaState, retdiff);
+					if (outArgs != nOutArgs) {
+						LOG_L(L_ERROR, "Internal Lua error: %d return values, %d expected", outArgs, nOutArgs);
+						if (outArgs > nOutArgs)
+							lua_pop(luaState, outArgs - nOutArgs);
 					}
 				} else {
-					const int retdiff = (lua_gettop(luaState) - (GetTop() - 1)) + nInArgs;
-
-					if (retdiff < 0) {
-						LOG_L(L_ERROR, "Internal Lua error: %d return values", retdiff);
-						lua_pop(luaState, retdiff);
+					if (outArgs < 0) {
+						LOG_L(L_ERROR, "Internal Lua error: stack corrupted");
 					}
 				}
 			} else {
-				const int retdiff = (lua_gettop(luaState) - (GetTop() - 1)) - (1 - nInArgs);
+				const int dbgOutArgs = 1; // the traceback string
 
-				// BUG? only the traceback shall be returned, but occasionally something goes wrong
-				lua_pop(luaState, retdiff);
-				trace += std::string((retdiff != 0)? "[Internal Lua error: Traceback failure] " : "");
-				trace += (lua_isstring(luaState, -1) ? lua_tostring(luaState, -1) : "[No traceback returned]");
-				lua_pop(luaState, 1);
+				if (outArgs > dbgOutArgs) {
+					LOG_L(L_ERROR, "Internal Lua error: %i too many elements on the stack", outArgs - dbgOutArgs);
+					lua_pop(luaState, outArgs - dbgOutArgs); // only leave traceback str on the stack
+				} else if (outArgs < dbgOutArgs) {
+					LOG_L(L_ERROR, "Internal Lua error: stack corrupted");
+				}
+
+				trace += "[Internal Lua error: Traceback failure] ";
+				trace += luaL_optstring(luaState, -1, "[No traceback returned]");
+				lua_pop(luaState, 1); // pop traceback string
 
 				// log only errors that lead to a crash
 				luaHandle->callinErrors += (GetError() == LUA_ERRRUN);
