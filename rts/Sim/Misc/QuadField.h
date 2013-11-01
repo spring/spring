@@ -121,7 +121,7 @@ public:
 	int GetNumQuadsX() const { return numQuadsX; }
 	int GetNumQuadsZ() const { return numQuadsZ; }
 
-	const static int QUAD_SIZE = 256;
+	const static int QUAD_SIZE = 128;
 	const static int NUM_TEMP_QUADS = 1024;
 
 private:
