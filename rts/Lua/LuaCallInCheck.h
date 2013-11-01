@@ -4,8 +4,7 @@
 #define LUA_CALL_IN_CHECK_H
 
 #include "System/TimeProfiler.h"
-
-//FIXME duplicate with LuaUtils
+#include "LuaUtils.h"
 
 #if DEBUG_LUA
 #  define LUA_CALL_IN_CHECK(L, ...) LuaUtils::ScopedStackChecker ciCheck((L)); SCOPED_TIMER("Lua");
