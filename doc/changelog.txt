@@ -374,6 +374,14 @@ Rendering:
       Spring.SetDrawGroundDeferred(boolean) -> nil
       Spring.SetDrawModelsDeferred(boolean) -> nil
 
+    new LuaUnitRendering Material keys:
+      "standard_shader" (same as "shader")
+      "deferred_shader" = {vertex = ..., ...}
+      "deferred" (same as "deferred_shader")
+
+      deferred fragment shaders must *ONLY* write to gl_FragData[i] where
+      i = {0 = normals, 1 = diffuse, 2 = specular, 3 = emission, 4 = misc}
+
     new Lua texture names:
       "$map_gb_nt" or "$map_gbuffer_normtex"
       "$map_gb_dt" or "$map_gbuffer_difftex"
