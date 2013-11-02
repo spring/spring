@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "BaseGroundDrawer.h"
 
 #include "Game/Camera.h"
@@ -135,7 +134,7 @@ void CBaseGroundDrawer::DrawTrees(bool drawReflection) const
 // XXX this part of extra textures is a mess really ...
 void CBaseGroundDrawer::DisableExtraTexture()
 {
-	highResInfoTexWanted = false;
+	highResInfoTexWanted = (drawLineOfSight && highResLosTex);
 	updateTextureState = 0;
 
 	if (drawLineOfSight) {
@@ -235,9 +234,15 @@ void CBaseGroundDrawer::ToggleRadarAndJammer()
 
 
 
-static inline int InterpolateLos(const unsigned short* p, int xsize, int ysize,
-                                 int mip, int factor, int x, int y)
-{
+static inline int InterpolateLos(
+	const unsigned short* p,
+	int xsize,
+	int ysize,
+	int mip,
+	int factor,
+	int x,
+	int y
+) {
 	const int x1 = x >> mip;
 	const int y1 = y >> mip;
 	const int s1 = (p[(y1 * xsize) + x1] != 0); // top left
@@ -273,15 +278,6 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 
 	if (mapInfo->map.voidWater && readMap->IsUnderWater())
 		return true;
-
-	const unsigned short* myLos         = &losHandler->losMaps[gu->myAllyTeam].front();
-	const unsigned short* myAirLos      = &losHandler->airLosMaps[gu->myAllyTeam].front();
-	const unsigned short* myRadar       = &radarHandler->radarMaps[gu->myAllyTeam].front();
-	const unsigned short* myJammer      = &radarHandler->jammerMaps[gu->myAllyTeam].front();
-#ifdef SONAR_JAMMER_MAPS
-	const unsigned short* mySonar       = &radarHandler->sonarMaps[gu->myAllyTeam].front();
-	const unsigned short* mySonarJammer = &radarHandler->sonarJammerMaps[gu->myAllyTeam].front();
-#endif
 
 	if (updateTextureState < extraTextureUpdateRate) {
 		const int pwr2mapx_half = gs->pwr2mapx >> 1;
@@ -320,9 +316,10 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 			case drawMetal: {
 				const CMetalMap* metalMap = readMap->metalMap;
 
-				const unsigned char* extraTex        = metalMap->GetDistributionMap();
-				const unsigned char* extraTexPal     = metalMap->GetTexturePalette();
-				const         float* extractDepthMap = metalMap->GetExtractionMap();
+				const unsigned short* myAirLos        = &losHandler->airLosMaps[gu->myAllyTeam].front();
+				const unsigned  char* extraTex        = metalMap->GetDistributionMap();
+				const unsigned  char* extraTexPal     = metalMap->GetTexturePalette();
+				const          float* extractDepthMap = metalMap->GetExtractionMap();
 
 				for (int y = starty; y < endy; ++y) {
 					const int y_pwr2mapx_half = y*pwr2mapx_half;
@@ -351,11 +348,13 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 			case drawHeight: {
 				const unsigned char* extraTexPal = heightLinePal->GetData();
 
-				//NOTE: the resolution of our PBO/ExtraTexture is gs->pwr2mapx * gs->pwr2mapy (we don't use it fully)
-				//      while the corner heightmap has (gs->mapx + 1) * (gs->mapy + 1).
-				//      So for the case POT(gs->mapx) == gs->mapx we would get a buffer overrun in our PBO
-				//      when iterating (gs->mapx + 1) * (gs->mapy + 1). So we just skip +1, it may give
-				//      semi incorrect results, but it is the easiest solution.
+				// NOTE:
+				//   PBO/ExtraTexture resolution is always gs->pwr2mapx * gs->pwr2mapy
+				//   (we don't use it fully) while the CORNER heightmap has dimensions
+				//   (gs->mapx + 1) * (gs->mapy + 1). In case POT(gs->mapx) == gs->mapx
+				//   we would therefore get a buffer overrun in our PBO when iterating
+				//   over column (gs->mapx + 1) or row (gs->mapy + 1) so we select the
+				//   easiest solution and just skip those squares.
 				const float* heightMap = readMap->GetCornerHeightMapUnsynced();
 
 				for (int y = starty; y < endy; ++y) {
@@ -376,7 +375,17 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 
 				break;
 			}
+
 			case drawLos: {
+				const unsigned short* myLos         = &losHandler->losMaps[gu->myAllyTeam].front();
+				const unsigned short* myAirLos      = &losHandler->airLosMaps[gu->myAllyTeam].front();
+				const unsigned short* myRadar       = &radarHandler->radarMaps[gu->myAllyTeam].front();
+				const unsigned short* myJammer      = &radarHandler->jammerMaps[gu->myAllyTeam].front();
+			#ifdef SONAR_JAMMER_MAPS
+				const unsigned short* mySonar       = &radarHandler->sonarMaps[gu->myAllyTeam].front();
+				const unsigned short* mySonarJammer = &radarHandler->sonarJammerMaps[gu->myAllyTeam].front();
+			#endif
+
 				const int lowRes = highResInfoTexWanted ? 0 : -1;
 				const int endx = highResInfoTexWanted ? gs->mapx : gs->hmapx;
 				const int pwr2mapx = gs->pwr2mapx >> (-lowRes);
@@ -412,6 +421,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 							const int inJam   = InterpolateLos(jammerMap, rxsize, rzsize, 3 + lowRes, 255, x, y);
 
 							const int a = ((y * pwr2mapx) + x) * 4 - offset;
+
 							for (int c = 0; c < 3; c++) {
 								int val = alwaysColor[c] * 255;
 								val += (jamColor[c]   * inJam);
@@ -419,6 +429,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 								val += (radarColor[c] * inRadar);
 								infoTexMem[a + (2 - c)] = (val / losColorScale);
 							}
+
 							infoTexMem[a + COLOR_A] = 255;
 						}
 					}
@@ -462,10 +473,11 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 
 
 	if (updateTextureState == extraTextureUpdateRate) {
-		// entire texture has been updated
+		// entire texture has been updated, now check if it
+		// needs to be regenerated as well (eg. if switching
+		// between textures of different resolutions)
+		//
 		if (infoTextureIDs[texDrawMode] != 0 && highResInfoTexWanted != highResInfoTex) {
-			// this happens when switching to or from F1-
-			// or LOS-mode (if highResLosTex is enabled)
 			glDeleteTextures(1, &infoTextureIDs[texDrawMode]);
 			infoTextureIDs[texDrawMode] = 0;
 		}
