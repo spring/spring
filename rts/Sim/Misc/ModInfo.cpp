@@ -73,10 +73,10 @@ void CModInfo::Init(const char* modArchive)
 		}
 
 		if (numThreads == 0) {
-			if (Threading::GetAvailableCores() <= 1     ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_NONE        ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_SINGLE      ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_SINGLE_BATCH) disableGML = true;
+			disableGML |= (Threading::GetAvailableCores() <= 1     );
+			disableGML |= (luaThreadingModel == MT_LUA_NONE        );
+			disableGML |= (luaThreadingModel == MT_LUA_SINGLE      );
+			disableGML |= (luaThreadingModel == MT_LUA_SINGLE_BATCH);
 		}
 
 		if (disableGML) {
