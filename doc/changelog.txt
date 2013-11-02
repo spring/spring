@@ -349,7 +349,7 @@ Lua:
  - Spring.{Get,Diff}Timer(s): save some precision (important with new high-resolution timers)
  - Spring.DiffTimers: accept optional third argument (boolean) to return dt in milliseconds
 
- - TODO: document dnw's LuaMathExtra functions
+ - add some utility functions to the math table, see http://springrts.com/wiki/Lua_MathExtra
 
 Rendering:
  - LoadingMT: add a runtime check that should detect incompatibilities
@@ -455,6 +455,7 @@ Bugfixes:
  - fix #3785 (Construction aircraft getting stuck)
  - fix #3783 (add FailedCommand sound to default sounds.lua)
  - fix #3765 (make Gaia the default feature team, not -1/0)
+ - fix #3754 (unit tracks drawn twice due to alpha-wraparound)
  - fix #3752 (safeguard execution of SimFrame() against garbage keyframe messages)
  - fix #3743 (partially: make non-hovering aircraft start turning to goal during takeoff)
  - fix #3739 (apply impulse to aircraft)
