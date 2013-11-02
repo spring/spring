@@ -507,18 +507,23 @@ void CGroundDecalHandler::DrawObjectDecals() {
 
 void CGroundDecalHandler::AddTracks() {
 	{
-		GML_STDMUTEX_LOCK(track); // Draw
+		GML_STDMUTEX_LOCK(track); // AddTracks
+
 		// Delayed addition of new tracks
 		for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
-			TrackToAdd *tta = &(*ti);
+			const TrackToAdd* tta = &(*ti);
+
 			if (tta->ts->owner == NULL) {
 				delete tta->tp;
+
 				if (tta->unit == NULL)
 					tracksToBeDeleted.push_back(tta->ts);
+
 				continue; // unit removed
 			}
 
-			CUnit* unit = tta->unit;
+			const CUnit* unit = tta->unit;
+
 			if (unit == NULL) {
 				unit = tta->ts->owner;
 				trackTypes[unit->unitDef->decalDef.trackDecalType]->tracks.insert(tta->ts);
@@ -533,8 +538,7 @@ void CGroundDecalHandler::AddTracks() {
 				list<TrackPart *>::iterator pi = --unit->myTrack->parts.end();
 				list<TrackPart *>::iterator pi2 = pi--;
 
-				if (((tp->pos1 + (*pi)->pos1) * 0.5f).SqDistance((*pi2)->pos1) < 1.0f)
-					replace = true;
+				replace = (((tp->pos1 + (*pi)->pos1) * 0.5f).SqDistance((*pi2)->pos1) < 1.0f);
 			}
 
 			if (replace) {
@@ -544,6 +548,7 @@ void CGroundDecalHandler::AddTracks() {
 				unit->myTrack->parts.push_back(tp);
 			}
 		}
+
 		tracksToBeAdded.clear();
 	}
 
@@ -556,77 +561,82 @@ void CGroundDecalHandler::AddTracks() {
 }
 
 void CGroundDecalHandler::DrawTracks() {
-	unsigned char color[4] = {255, 255, 255, 255};
-	unsigned char color2[4] = {255, 255, 255, 255};
+	unsigned char curPartColor[4] = {255, 255, 255, 255};
+	unsigned char nxtPartColor[4] = {255, 255, 255, 255};
 
 	// create and draw the unit footprint quads
 	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
 		TrackType* tt = *tti;
 
-		if (!tt->tracks.empty()) {
-			set<UnitTrackStruct*>::iterator utsi = tt->tracks.begin();
+		if (tt->tracks.empty())
+			continue;
 
-			CVertexArray* va = GetVertexArray();
-			va->Initialize();
-			glBindTexture(GL_TEXTURE_2D, tt->texture);
+		set<UnitTrackStruct*>::iterator utsi = tt->tracks.begin();
 
-			while (utsi != tt->tracks.end()) {
-				UnitTrackStruct* track = *utsi;
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		glBindTexture(GL_TEXTURE_2D, tt->texture);
 
-				if (track->parts.empty()) {
-					tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
-					continue;
-				}
+		while (utsi != tt->tracks.end()) {
+			UnitTrackStruct* track = *utsi;
+			++utsi;
 
-				if (gs->frameNum > (track->parts.front()->creationTime + track->lifeTime)) {
-					tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
-				}
-
-				++utsi;
-
-				const auto frontPart = track->parts.front();
-				const auto backPart = track->parts.back();
-
-				if (!camera->InView((frontPart->pos1 + backPart->pos1) * 0.5f, frontPart->pos1.distance(backPart->pos1) + 500.0f))
-					continue;
-
-				list<TrackPart*>::const_iterator curPart =    track->parts.begin();
-				list<TrackPart*>::const_iterator nxtPart = ++(track->parts.begin());
-
-				color2[3] = std::max(0, track->trackAlpha - (int) ((gs->frameNum - (*curPart)->creationTime) * track->alphaFalloff));
-
-				va->EnlargeArrays(track->parts.size()*4,0,VA_SIZE_TC);
-
-				for (; nxtPart != track->parts.end(); ++nxtPart) {
-					color[3] = std::max(0, track->trackAlpha - (int) ((gs->frameNum - (*curPart)->creationTime) * track->alphaFalloff));
-
-					if ((*nxtPart)->connected) {
-						va->AddVertexQTC((*curPart)->pos1, (*curPart)->texPos, 0, color2);
-						va->AddVertexQTC((*curPart)->pos2, (*curPart)->texPos, 1, color2);
-						va->AddVertexQTC((*nxtPart)->pos2, (*nxtPart)->texPos, 1, color);
-						va->AddVertexQTC((*nxtPart)->pos1, (*nxtPart)->texPos, 0, color);
-					}
-
-					color2[3] = color[3];
-					curPart = nxtPart;
-				}
+			if (track->parts.empty()) {
+				tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
+				continue;
 			}
-			va->DrawArrayTC(GL_QUADS);
+
+			if (gs->frameNum > (track->parts.front()->creationTime + track->lifeTime)) {
+				tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
+				// still draw the track to avoid flicker
+				// continue;
+			}
+
+			const auto frontPart = track->parts.front();
+			const auto backPart = track->parts.back();
+
+			if (!camera->InView((frontPart->pos1 + backPart->pos1) * 0.5f, frontPart->pos1.distance(backPart->pos1) + 500.0f))
+				continue;
+
+			// walk across the track parts from front (oldest) to back (newest) and draw
+			// a quad between "connected" parts (ie. parts differing 8 sim-frames in age)
+			list<TrackPart*>::const_iterator curPart =   (track->parts.begin());
+			list<TrackPart*>::const_iterator nxtPart = ++(track->parts.begin());
+
+			curPartColor[3] = std::max(0.0f, (1.0f - (gs->frameNum - (*curPart)->creationTime) * track->alphaFalloff) * 255.0f);
+
+			va->EnlargeArrays(track->parts.size() * 4, 0, VA_SIZE_TC);
+
+			for (; nxtPart != track->parts.end(); ++nxtPart) {
+				nxtPartColor[3] = std::max(0.0f, (1.0f - (gs->frameNum - (*nxtPart)->creationTime) * track->alphaFalloff) * 255.0f);
+
+				if ((*nxtPart)->connected) {
+					va->AddVertexQTC((*curPart)->pos1, (*curPart)->texPos, 0, curPartColor);
+					va->AddVertexQTC((*curPart)->pos2, (*curPart)->texPos, 1, curPartColor);
+					va->AddVertexQTC((*nxtPart)->pos2, (*nxtPart)->texPos, 1, nxtPartColor);
+					va->AddVertexQTC((*nxtPart)->pos1, (*nxtPart)->texPos, 0, nxtPartColor);
+				}
+
+				curPartColor[3] = nxtPartColor[3];
+				curPart = nxtPart;
+			}
 		}
+
+		va->DrawArrayTC(GL_QUADS);
 	}
 }
 
 void CGroundDecalHandler::CleanTracks() {
-	GML_STDMUTEX_LOCK(track); // Draw
+	GML_STDMUTEX_LOCK(track); // CleanTracks
 
 	// Cleanup old tracks
 	for (std::vector<TrackToClean>::iterator ti = tracksToBeCleaned.begin(); ti != tracksToBeCleaned.end(); ++ti) {
-		TrackToClean *ttc = &(*ti);
-		UnitTrackStruct *track = ttc->track;
+		TrackToClean* ttc = &(*ti);
+		UnitTrackStruct* track = ttc->track;
 
 		while (!track->parts.empty()) {
 			// stop at the first part that is still too young for deletion
-			if (gs->frameNum <= (track->parts.front()->creationTime + track->lifeTime))
+			if (gs->frameNum < (track->parts.front()->creationTime + track->lifeTime))
 				break;
 
 			delete track->parts.front();
@@ -650,7 +660,7 @@ void CGroundDecalHandler::AddScars() {
 	scarsToBeChecked.clear();
 
 	{
-		GML_STDMUTEX_LOCK(scar); // Draw
+		GML_STDMUTEX_LOCK(scar); // AddScars
 
 		for (std::vector<Scar*>::iterator si = scarsToBeAdded.begin(); si != scarsToBeAdded.end(); ++si)
 			scarsToBeChecked.push_back(*si);
@@ -878,7 +888,7 @@ void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newPos)
 
 	const float3 pos = newPos + unit->frontdir * decalDef.trackDecalOffset;
 
-	TrackPart* tp = new TrackPart;
+	TrackPart* tp = new TrackPart();
 	tp->pos1 = pos + unit->rightdir * decalDef.trackDecalWidth * 0.5f;
 	tp->pos2 = pos - unit->rightdir * decalDef.trackDecalWidth * 0.5f;
 	tp->pos1.y = ground->GetHeightReal(tp->pos1.x, tp->pos1.z, false);
@@ -889,13 +899,12 @@ void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newPos)
 	tta.tp = tp;
 	tta.unit = unit;
 
-	GML_STDMUTEX_LOCK(track); // Update
+	GML_STDMUTEX_LOCK(track); // AddDecalAndTrack
 
 	if (unit->myTrack == NULL) {
 		unit->myTrack = new UnitTrackStruct(unit);
 		unit->myTrack->lifeTime = trackLifeTime;
-		unit->myTrack->trackAlpha = (decalDef.trackDecalStrength * 25);
-		unit->myTrack->alphaFalloff = unit->myTrack->trackAlpha / trackLifeTime;
+		unit->myTrack->alphaFalloff = 1.0f / trackLifeTime;
 
 		tta.unit = NULL; // signal new trackstruct
 
@@ -941,7 +950,7 @@ int CGroundDecalHandler::GetTrackType(const std::string& name)
 
 	trackTypes.push_back(tt);
 
-	return trackTypes.size() - 1;
+	return (trackTypes.size() - 1);
 }
 
 
