@@ -270,8 +270,10 @@ void CPreGame::UpdateClientNet()
 					// the global broadcast will overwrite the user with the
 					// same values as here
 					playerHandler->AddPlayer(player);
+
+					LOG("[PG::%s] added new player %s with number %d to team %d", __FUNCTION__, name.c_str(), player.playerNum, player.team);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "Got invalid New player message: %s", ex.what());
+					LOG_L(L_ERROR, "[PG::%s] got invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
 				}
 				break;
 			}
@@ -289,17 +291,19 @@ void CPreGame::UpdateClientNet()
 
 			case NETMSG_SETPLAYERNUM: {
 				// this is sent after NETMSG_GAMEDATA, to let us know which
-				// playernum we have
+				// player number we have (server assigns them based on order
+				// of connection)
 				if (gameSetup == NULL)
 					throw content_error("No game data received from server");
 
-				unsigned char playerNum = packet->data[1];
+				const unsigned char playerNum = packet->data[1];
+
 				if (!playerHandler->IsValidPlayer(playerNum))
 					throw content_error("Invalid player number received from server");
 
 				gu->SetMyPlayer(playerNum);
-				LOG("User number %i (team %i, allyteam %i)",
-						gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
+
+				LOG("[PG::%s] user number %i (team %i, allyteam %i)", __FUNCTION__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 
 				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
 

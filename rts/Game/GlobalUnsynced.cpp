@@ -80,10 +80,9 @@ CGlobalUnsynced::CGlobalUnsynced()
 	spectatingFullSelect = false;
 
 	fpsMode = false;
+	globalQuit = false;
 
 	playerHandler = new CPlayerHandler();
-
-	globalQuit = false;
 }
 
 CGlobalUnsynced::~CGlobalUnsynced()
@@ -97,8 +96,6 @@ void CGlobalUnsynced::LoadFromSetup(const CGameSetup* setup)
 {
 	playerHandler->LoadFromSetup(setup);
 }
-
-
 
 void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 {
