@@ -804,6 +804,13 @@ end
 --
 --  The call-in distribution routines
 --
+function gadgetHandler:GameSetup(state, ready, playerStates)
+  local success, newReady = false, ready
+  for _,g in ipairs(self.GameSetupList) do
+    success, newReady = g:GameSetup(state, ready, playerStates)
+  end
+  return success, newReady
+end
 
 function gadgetHandler:GamePreload()
   for _,g in ipairs(self.GamePreloadList) do
