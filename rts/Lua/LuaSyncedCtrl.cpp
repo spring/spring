@@ -463,26 +463,21 @@ static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 	if (o == NULL)
 		return 0;
 
-	// update blocking-bit of physical state
-	if (lua_isboolean(L, 2)) {
-		if (lua_toboolean(L, 2)) {
-			o->Block();
-		} else {
-			o->UnBlock();
-		}
-	}
-
 	// update SO-bit of collidable state
 	if (lua_isboolean(L, 3)) {
 		if (lua_toboolean(L, 3)) {
 			o->SetCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 		} else {
 			o->ClearCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+		}
+	}
 
-			// run this again so that object gets removed from
-			// the blocking map if(f) SO-collidability was set
-			// to false but second argument was true (no point
-			// still being registered on the map then)
+	// update blocking-bit of physical state (do this
+	// after changing the SO-bit so it is reversable)
+	if (lua_isboolean(L, 2)) {
+		if (lua_toboolean(L, 2)) {
+			o->Block();
+		} else {
 			o->UnBlock();
 		}
 	}
