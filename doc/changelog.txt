@@ -217,7 +217,7 @@ Lua:
      UPDATE YOUR GAME'S UNIT_SCRIPT.LUA IF IT HAS LUA-SCRIPTED
      UNITS AND YOU ARE NOT USING SPRING'S (BASECONTENT) VERSION
 
- ! LuaSynced*: make {S,G}etUnitBlocking signatures match
+ ! LuaSynced*: make {S,G}et{Unit,Feature}Blocking signatures match
      Get{Unit,Feature}Blocking(number objectID) -->
        boolean isBlocking,
        boolean isSolidObjectCollidable,
@@ -262,7 +262,7 @@ Lua:
        number posErrorDelta.x, number posErrorDelta.y, number posErrorDelta.z,
        number nextPosErrorUpdate
 
-     add callout Spring.SetFeatureBlocking(number featureID, boolean blocking, boolean collidable) --> boolean
+     add callout Spring.SetFeatureBlocking(args = see SetUnitBlocking) --> boolean
      add callout Spring.SetPieceProjectileParams(number projectileID,
        [ number explosionFlags, [ number spinAngle, [ number spinSpeed,
        [ number spinVector.x, [ number spinVector.y, [ number spinVector.z ]]]]]]) --> nil
@@ -455,7 +455,7 @@ Bugfixes:
  - fix #3785 (Construction aircraft getting stuck)
  - fix #3783 (add FailedCommand sound to default sounds.lua)
  - fix #3765 (make Gaia the default feature team, not -1/0)
- - fix #3754 (unit tracks drawn twice due to alpha-wraparound)
+ - fix #3754 (high decal-strength unit tracks drawn twice due to alpha-wraparound)
  - fix #3752 (safeguard execution of SimFrame() against garbage keyframe messages)
  - fix #3743 (partially: make non-hovering aircraft start turning to goal during takeoff)
  - fix #3739 (apply impulse to aircraft)
