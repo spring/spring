@@ -207,12 +207,12 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	if (collisionVolume->DefaultToFootPrint())
 		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
 
-	featureHandler->AddFeature(this);
-	quadField->AddFeature(this);
-
 	ChangeTeam(team);
 	UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS, def->collidable);
 	Block();
+
+	featureHandler->AddFeature(this);
+	quadField->AddFeature(this);
 
 	if (def->floating) {
 		finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
