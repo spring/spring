@@ -17,7 +17,6 @@ class CPlayerHandler
 public:
 	CR_DECLARE_STRUCT(CPlayerHandler);
 
-	CPlayerHandler();
 	~CPlayerHandler();
 
 	void LoadFromSetup(const CGameSetup* setup);
