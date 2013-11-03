@@ -20,12 +20,6 @@ CR_REG_METADATA(CPlayerHandler, (
 
 CPlayerHandler* playerHandler;
 
-
-CPlayerHandler::CPlayerHandler()
-{
-}
-
-
 CPlayerHandler::~CPlayerHandler()
 {
 	for (playerVec::iterator pi = players.begin(); pi != players.end(); ++pi) {
