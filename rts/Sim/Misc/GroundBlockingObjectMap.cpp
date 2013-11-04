@@ -66,7 +66,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (object->moveDef == NULL && pathManager) {
+	if (object->moveDef == NULL && pathManager != NULL) {
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr, TERRAINCHANGE_OBJECT_INSERTED);
 	}
 }
@@ -105,7 +105,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (object->moveDef == NULL && pathManager) {
+	if (object->moveDef == NULL && pathManager != NULL) {
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr, TERRAINCHANGE_OBJECT_INSERTED_YM);
 	}
 }
@@ -134,7 +134,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (object->moveDef == NULL && pathManager) {
+	if (object->moveDef == NULL && pathManager != NULL) {
 		pathManager->TerrainChange(bx, bz, bx + sx, bz + sz, TERRAINCHANGE_OBJECT_DELETED);
 	}
 }
