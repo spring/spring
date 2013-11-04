@@ -833,7 +833,7 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	}
 
 	float3 rightDir2D = rightdir;
-	float3 yprMults = OnesVector * (1.0f + float(goalDist2D < (turnRadius * spd.w)));
+	float3 yprMults = OnesVector * (1.0f + 0.0f * float(goalDist2D < (turnRadius * spd.w)));
 
 	float otherThreat = 0.0f;
 	float goalDotRight = goalDir2D.dot(rightDir2D.Normalize2D());
@@ -849,13 +849,13 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	// is less than our turning radius, turn the other
 	// way --> often insufficient for small turn radii,
 	// also need to fly straight for some distance
-	/*
+	#if 1
 	if (goalDir2D.dot(frontdir) < -0.1f && goalDist2D < turnRadius) {
 		if (owner->fpsControlPlayer == NULL || owner->fpsControlPlayer->fpsController.mouse2) {
 			goalDotRight *= -1.0f;
 		}
 	}
-	*/
+	#endif
 
 	if (lastColWarning != NULL) {
 		const float3 otherDif = lastColWarning->pos - pos;
