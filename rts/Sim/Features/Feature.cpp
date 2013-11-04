@@ -207,12 +207,17 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	if (collisionVolume->DefaultToFootPrint())
 		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
 
+	// feature does not have an assigned ID yet
+	// this MUST be done before the Block() call
+	featureHandler->AddFeature(this);
+	quadField->AddFeature(this);
+
 	ChangeTeam(team);
 	UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS, def->collidable);
 	Block();
 
-	featureHandler->AddFeature(this);
-	quadField->AddFeature(this);
+	// allow Spring.SetFeatureBlocking to be called from gadget:FeatureCreated
+	eventHandler.FeatureCreated(this);
 
 	if (def->floating) {
 		finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);

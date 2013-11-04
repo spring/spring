@@ -662,6 +662,7 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 		currentPitch = currentPitch * 0.95f + wantedPitch * 0.05f;
 	}
 
+	// always positive
 	const float bankLimit = std::min(1.0f, goalPos.SqDistance2D(owner->pos) * Square(0.15f));
 	float wantedBank = 0.0f;
 
@@ -679,12 +680,8 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 
 	if (!noBanking && bankingAllowed)
 		wantedBank = rightDir2D.dot(deltaSpeed) / accRate * 0.5f;
-
-	if (Square(wantedBank) > bankLimit) {
-		wantedBank =  math::sqrt(bankLimit);
-	} else if (Square(wantedBank) < -bankLimit) {
-		wantedBank = -math::sqrt(bankLimit);
-	}
+	if (Square(wantedBank) > bankLimit)
+		wantedBank = math::sqrt(bankLimit);
 
 	// Adjust our banking to the desired value
 	if (currentBank > wantedBank) {
@@ -696,6 +693,7 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 
 	upDir = rightDir2D.cross(frontDir);
 	upDir = upDir * math::cos(currentBank) + rightDir2D * math::sin(currentBank);
+	upDir = upDir.Normalize();
 	rightDir3D = frontDir.cross(upDir);
 
 	// NOTE:

@@ -24,6 +24,8 @@ namespace GL {
 
 		void Init();
 		void Kill();
+
+		void DetachTextures(const bool init);
 		void DrawDebug(unsigned int texID);
 		void SetName(const char* name) { bufferName = name; }
 
