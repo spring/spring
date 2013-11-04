@@ -59,10 +59,10 @@ void CBombDropper::Update()
 bool CBombDropper::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const
 {
 	// assume we can still drop bombs on *partially* submerged targets
-	if (!dropTorpedoes && TargetUnitOrPositionUnderWater(targetPos, unit))
+	if (!dropTorpedoes && TargetUnitOrPositionUnderWater(pos, unit))
 		return false;
 	// assume we can drop torpedoes on any partially or fully submerged target
-	if (dropTorpedoes && !TargetUnitOrPositionInWater(targetPos, unit))
+	if (dropTorpedoes && !TargetUnitOrPositionInWater(pos, unit))
 		return false;
 
 	return CWeapon::TestTarget(pos, userTarget, unit);
