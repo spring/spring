@@ -17,9 +17,23 @@ void GL::GeometryBuffer::Init() {
 
 void GL::GeometryBuffer::Kill() {
 	if (buffer.IsValid()) {
-		buffer.DetachAll();
-		glDeleteTextures(ATTACHMENT_COUNT, &bufferTextureIDs[0]);
+		DetachTextures(false);
 	}
+}
+
+void GL::GeometryBuffer::DetachTextures(const bool init) {
+	if (init) {
+		// nothing to detach yet during init
+		return;
+	}
+
+	// ATI drivers crash when detaching non-attached textures (?)
+	for (unsigned int i = 0; i < (ATTACHMENT_COUNT - 1); ++i) {
+		buffer.Detach(GL_COLOR_ATTACHMENT0_EXT + i);
+	}
+
+	buffer.Detach(GL_DEPTH_ATTACHMENT_EXT);
+	glDeleteTextures(ATTACHMENT_COUNT, &bufferTextureIDs[0]);
 }
 
 void GL::GeometryBuffer::DrawDebug(unsigned int texID) {
@@ -110,8 +124,7 @@ bool GL::GeometryBuffer::Update(const bool init) {
 		if (prevBufferSize == currBufferSize)
 			return true;
 
-		buffer.DetachAll();
-		glDeleteTextures(ATTACHMENT_COUNT, &bufferTextureIDs[0]);
+		DetachTextures(init);
 	}
 
 	return (Create(prevBufferSize = currBufferSize));
