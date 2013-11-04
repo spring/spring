@@ -721,7 +721,7 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	// copy vertical speed
 	const float yspeed = spd.y;
 
-	if (!((gs->frameNum + owner->id) & 3)) {
+	if (((gs->frameNum + owner->id) & 3) == 0) {
 		CheckForCollision();
 	}
 
