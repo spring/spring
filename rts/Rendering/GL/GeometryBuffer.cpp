@@ -27,12 +27,16 @@ void GL::GeometryBuffer::DetachTextures(const bool init) {
 		return;
 	}
 
+	buffer.Bind();
+
 	// ATI drivers crash when detaching non-attached textures (?)
 	for (unsigned int i = 0; i < (ATTACHMENT_COUNT - 1); ++i) {
 		buffer.Detach(GL_COLOR_ATTACHMENT0_EXT + i);
 	}
 
 	buffer.Detach(GL_DEPTH_ATTACHMENT_EXT);
+	buffer.Unbind();
+
 	glDeleteTextures(ATTACHMENT_COUNT, &bufferTextureIDs[0]);
 }
 
