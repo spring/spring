@@ -377,8 +377,6 @@ bool CFeatureHandler::AddFeature(CFeature* feature)
 
 	InsertActiveFeature(feature);
 	SetFeatureUpdateable(feature, true);
-
-	eventHandler.FeatureCreated(feature);
 	return true;
 }
 
