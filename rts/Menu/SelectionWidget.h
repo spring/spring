@@ -43,7 +43,7 @@ public:
 		GeometryChange();
 	}
 
-	boost::signal<void (std::string)> Selected;
+	boost::signals2::signal<void (std::string)> Selected;
 	agui::List* list;
 
 private:
@@ -64,6 +64,7 @@ public:
 	static const std::string NoModSelect;
 	static const std::string NoMapSelect;
 	static const std::string NoScriptSelect;
+	static const std::string SandboxAI;
 
 	SelectionWidget(agui::GuiElement* parent);
 	~SelectionWidget();

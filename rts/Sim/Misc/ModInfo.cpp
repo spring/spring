@@ -17,16 +17,20 @@
 #include "System/myMath.h"
 #include "lib/gml/gml_base.h"
 
+
+CONFIG(bool, EnableUnsafeAndBrokenMT).defaultValue(false).description("Enable unsafe MT modes (very likely to cause crashes / hangs / graphical errors)");
+
 CModInfo modInfo;
 
 
 void CModInfo::Init(const char* modArchive)
 {
 	filename = modArchive;
-	humanName = archiveScanner->NameFromArchive(modArchive);
+	humanNameVersioned = archiveScanner->NameFromArchive(modArchive);
 
-	const CArchiveScanner::ArchiveData md = archiveScanner->GetArchiveData(humanName);
+	const CArchiveScanner::ArchiveData md = archiveScanner->GetArchiveData(humanNameVersioned);
 
+	humanName   = md.GetName();
 	shortName   = md.GetShortName();
 	version     = md.GetVersion();
 	mutator     = md.GetMutator();
@@ -57,11 +61,22 @@ void CModInfo::Init(const char* modArchive)
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 		luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
 
+		//FIXME: remove unsave modes
+		if (luaThreadingModel > 2) {
+			LOG_L(L_WARNING, "Experimental luaThreadingModel %d selected! This is currently unmaintained and may be deprecated and/or removed in the future!", luaThreadingModel);
+			LOG_L(L_WARNING, "Automaticly disabled to prevent desyncs / crashes / hangs / graphical errors!");
+			if (!configHandler->GetBool("EnableUnsafeAndBrokenMT")) {
+				luaThreadingModel = 2;
+			} else {
+				LOG_L(L_WARNING, "MT enforced: expect desyncs / crashes / hangs / graphical errors!");
+			}
+		}
+
 		if (numThreads == 0) {
-			if (Threading::GetAvailableCores() <= 1     ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_NONE        ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_SINGLE      ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_SINGLE_BATCH) disableGML = true;
+			disableGML |= (Threading::GetAvailableCores() <= 1     );
+			disableGML |= (luaThreadingModel == MT_LUA_NONE        );
+			disableGML |= (luaThreadingModel == MT_LUA_SINGLE      );
+			disableGML |= (luaThreadingModel == MT_LUA_SINGLE_BATCH);
 		}
 
 		if (disableGML) {
@@ -85,7 +100,7 @@ void CModInfo::Init(const char* modArchive)
 		allowUnitCollisionOverlap = movementTbl.GetBool("allowUnitCollisionOverlap", true);
 		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", true);
 		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", (pathFinderSystem == PFS_TYPE_QTPFS));
-		useClassicGroundMoveType = movementTbl.GetBool("useClassicGroundMoveType", (gameSetup->modName.find("Balanced Annihilation") != std::string::npos));
+		useClassicGroundMoveType = movementTbl.GetBool("useClassicGroundMoveType", false);
 	}
 
 	{
@@ -93,7 +108,7 @@ void CModInfo::Init(const char* modArchive)
 		const LuaTable& constructionTbl = root.SubTable("construction");
 
 		constructionDecay = constructionTbl.GetBool("constructionDecay", true);
-		constructionDecayTime = (int)(constructionTbl.GetFloat("constructionDecayTime", 6.66) * 30);
+		constructionDecayTime = (int)(constructionTbl.GetFloat("constructionDecayTime", 6.66) * GAME_SPEED);
 		constructionDecaySpeed = std::max(constructionTbl.GetFloat("constructionDecaySpeed", 0.03), 0.01f);
 	}
 
@@ -186,7 +201,7 @@ void CModInfo::Init(const char* modArchive)
 
 		requireSonarUnderWater = sensors.GetBool("requireSonarUnderWater", true);
 
-		// losMipLevel is used as index to readmap->mipHeightmaps,
+		// losMipLevel is used as index to readMap->mipHeightmaps,
 		// so the max value is CReadMap::numHeightMipMaps - 1
 		losMipLevel = los.GetInt("losMipLevel", 1);
 		losMul = los.GetFloat("losMul", 1.0f);

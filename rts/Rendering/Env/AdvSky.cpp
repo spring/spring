@@ -199,11 +199,11 @@ void CAdvSky::Draw()
 	glEnable(GL_BLEND);
 
 	glPushMatrix();
-//	glTranslatef(camera->pos.x,camera->pos.y,camera->pos.z);
-	CMatrix44f m(camera->pos,skydir1,UpVector,skydir2);
+//	glTranslatef(camera->GetPos().x,camera->GetPos().y,camera->GetPos().z);
+	CMatrix44f m(camera->GetPos(),skydir1,UpVector,skydir2);
 	glMultMatrixf(m.m);
 
-	float3 modCamera=skydir1*camera->pos.x+skydir2*camera->pos.z;
+	float3 modCamera=skydir1*camera->GetPos().x+skydir2*camera->GetPos().z;
 
 	glMatrixMode(GL_TEXTURE);
 	  glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -544,19 +544,19 @@ void CAdvSky::CreateTransformVectors()
 
 void CAdvSky::DrawSun()
 {
-	if (!SunVisible(camera->pos))
+	if (!SunVisible(camera->GetPos()))
 		return;
 
 	const float3 xzSunCameraPos =
-		sundir1 * camera->pos.x +
-		sundir2 * camera->pos.z;
+		sundir1 * camera->GetPos().x +
+		sundir2 * camera->GetPos().z;
 	const float3 modSunColor = sunColor * skyLight->GetLightIntensity();
 
 	// sun-disc vertices might be clipped against the
 	// near-plane (which is variable) without scaling
 	glPushMatrix();
-	glTranslatef3(camera->pos);
-	glScalef(globalRendering->zNear + 0.1f, globalRendering->zNear + 0.1f, globalRendering->zNear + 0.1f);
+	glTranslatef3(camera->GetPos());
+	glScalef(globalRendering->zNear + 1.0f, globalRendering->zNear + 1.0f, globalRendering->zNear + 1.0f);
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_ALPHA_TEST);
@@ -789,10 +789,10 @@ void CAdvSky::CreateDetailTex()
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->CheckInitSize(4*VA_SIZE_T);
-		va->AddVertexQT(ZeroVector,0,0);
-		va->AddVertexQT(float3(1,0,0),tSize,0);
-		va->AddVertexQT(float3(1,1,0),tSize,tSize);
-		va->AddVertexQT(UpVector,0,tSize);
+		va->AddVertexQT(ZeroVector,    0,     0);
+		va->AddVertexQT(RgtVector, tSize,     0);
+		va->AddVertexQT(XYVector,  tSize, tSize);
+		va->AddVertexQT(UpVector,      0, tSize);
 
 		float ifade = fade*fade*(3-2*fade);
 

@@ -12,8 +12,8 @@
 #include "lib/gml/ThreadSafeContainers.h"
 
 #include "Sim/Projectiles/ProjectileFunctors.h"
-#include "System/MemPool.h"
 #include "System/float3.h"
+#include "System/Platform/Threading.h"
 
 // bypass id and event handling for unsynced projectiles (faster)
 #define UNSYNCED_PROJ_NOEVENT 1
@@ -81,8 +81,11 @@ public:
 		return &(it->second);
 	}
 
-	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, CUnit**, const float3&, const float3&);
-	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, CFeature**, const float3&, const float3&);
+	ProjectileRenderMap& GetSyncedRenderProjectileIDs() { return syncedRenderProjectileIDs; }
+	ProjectileRenderMap& GetUnsyncedRenderProjectileIDs() { return unsyncedRenderProjectileIDs; }
+
+	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, const float3&, const float3&);
+	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, const float3&, const float3&);
 	void CheckUnitFeatureCollisions(ProjectileContainer&);
 	void CheckGroundCollisions(ProjectileContainer&);
 	void CheckCollisions();
@@ -91,10 +94,8 @@ public:
 	void SetMaxNanoParticles(int value) { maxNanoParticles = value; }
 
 	void Update();
-	void UpdateProjectileContainer(ProjectileContainer&, bool);
 	void UpdateParticleSaturation() {
-		particleSaturation     = (maxParticles     > 0)? (currentParticles     / float(maxParticles    )): 1.0f;
-		nanoParticleSaturation = (maxNanoParticles > 0)? (currentNanoParticles / float(maxNanoParticles)): 1.0f;
+		particleSaturation = (maxParticles > 0)? (currentParticles / float(maxParticles)): 1.0f;
 	}
 
 	void AddProjectile(CProjectile* p);
@@ -117,12 +118,13 @@ public:
 	int currentParticles;          // number of particles weighted by how complex they are
 	int currentNanoParticles;
 	float particleSaturation;      // currentParticles / maxParticles ratio
-	float nanoParticleSaturation;
+
+private:
+	void UpdateProjectileContainer(ProjectileContainer&, bool);
 
 	ProjectileRenderMap syncedRenderProjectileIDs;        // same as syncedProjectileIDs, used by render thread
 	ProjectileRenderMap unsyncedRenderProjectileIDs;      // same as unsyncedProjectileIDs, used by render thread
 
-private:
 	int maxUsedSyncedID;
 	int maxUsedUnsyncedID;
 	std::list<int> freeSyncedIDs;             // available synced (weapon, piece) projectile ID's

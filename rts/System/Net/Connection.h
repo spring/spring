@@ -18,7 +18,7 @@ class CConnection
 {
 public:
 	CConnection();
-	virtual ~CConnection();
+	virtual ~CConnection() {}
 
 	/**
 	 * @brief Send packet to other instance
@@ -38,19 +38,19 @@ public:
 	virtual boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const = 0;
 
 	/**
+	 * @brief use this to recieve ready data
+	 * @return a network message encapsulated in a RawPacket,
+	 *   or NULL if there are no more messages available.
+	 */
+	virtual boost::shared_ptr<const RawPacket> GetData() = 0;
+
+	/**
 	 * @brief Deletes a packet from the buffer
 	 * @param index queue index number
 	 * Useful for messages that skip queuing and need to be processed
 	 * immediately.
 	 */
 	virtual void DeleteBufferPacketAt(unsigned index) = 0;
-
-	/**
-	 * @brief use this to recieve ready data
-	 * @return a network message encapsulated in a RawPacket,
-	 *   or NULL if there are no more messages available.
-	 */
-	virtual boost::shared_ptr<const RawPacket> GetData() = 0;
 
 	/**
 	 * Flushes the underlying buffer (to the network), if there is a buffer.
@@ -62,7 +62,8 @@ public:
 	virtual bool CanReconnect() const = 0;
 	virtual bool NeedsReconnect() = 0;
 
-	unsigned GetDataReceived() const;
+	unsigned int GetDataReceived() const { return dataRecv; }
+	virtual unsigned int GetPacketQueueSize() const { return 0; }
 
 	virtual std::string Statistics() const = 0;
 	virtual std::string GetFullAddress() const = 0;

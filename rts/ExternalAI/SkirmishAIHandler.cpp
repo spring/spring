@@ -9,7 +9,7 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/Option.h"
 
 #include "System/creg/STL_Map.h"
@@ -47,9 +47,8 @@ CSkirmishAIHandler::~CSkirmishAIHandler()
 
 void CSkirmishAIHandler::LoadFromSetup(const CGameSetup& setup) {
 
-	for (size_t a = 0; a < setup.GetSkirmishAIs().size(); ++a) {
-		const SkirmishAIData& sai = setup.GetSkirmishAIs()[a];
-		AddSkirmishAI(sai, a);
+	for (size_t a = 0; a < setup.GetAIStartingDataCont().size(); ++a) {
+		AddSkirmishAI(setup.GetAIStartingDataCont()[a], a);
 	}
 }
 

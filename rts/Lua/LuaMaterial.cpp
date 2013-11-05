@@ -157,27 +157,27 @@ int LuaMatShader::Compare(const LuaMatShader& a, const LuaMatShader& b)
 }
 
 
-void LuaMatShader::Execute(const LuaMatShader& prev) const
+void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 {
 	if (type != prev.type) {
 		if (prev.type == LUASHADER_GL) {
 			glUseProgram(0);
 		}
 		else if (prev.type == LUASHADER_3DO) {
-			if (luaMatHandler.reset3doShader) { luaMatHandler.reset3doShader(); }
+			if (luaMatHandler.reset3doShader) { luaMatHandler.reset3doShader(deferredPass); }
 		}
 		else if (prev.type == LUASHADER_S3O) {
-			if (luaMatHandler.resetS3oShader) { luaMatHandler.resetS3oShader(); }
+			if (luaMatHandler.resetS3oShader) { luaMatHandler.resetS3oShader(deferredPass); }
 		}
 
 		if (type == LUASHADER_GL) {
 			glUseProgram(openglID);
 		}
 		else if (type == LUASHADER_3DO) {
-			if (luaMatHandler.setup3doShader) { luaMatHandler.setup3doShader(); }
+			if (luaMatHandler.setup3doShader) { luaMatHandler.setup3doShader(deferredPass); }
 		}
 		else if (type == LUASHADER_S3O) {
-			if (luaMatHandler.setupS3oShader) { luaMatHandler.setupS3oShader(); }
+			if (luaMatHandler.setupS3oShader) { luaMatHandler.setupS3oShader(deferredPass); }
 		}
 	}
 	else if (type == LUASHADER_GL) {
@@ -200,116 +200,6 @@ void LuaMatShader::Print(const string& indent) const
 	LOG("%s%s %i", indent.c_str(), typeName, openglID);
 }
 
-/******************************************************************************/
-/******************************************************************************/
-//
-//  LuaMatTexture
-//
-
-void LuaMatTexture::Finalize()
-{
-	for (int t = 0; t < maxTexUnits; t++) {
-		if ((type == LUATEX_GL) && (openglID == 0)) {
-			type = LUATEX_NONE;
-		}
-		if (type == LUATEX_NONE) {
-			enable = false;
-		}
-		if (type != LUATEX_GL) {
-			openglID = 0;
-		}
-	}
-}
-
-
-int LuaMatTexture::Compare(const LuaMatTexture& a, const LuaMatTexture& b)
-{
-	if (a.type != b.type) {
-		return (a.type < b.type) ? -1 : +1;
-	}
-	if (a.type == LUATEX_GL) {
-		if (a.openglID != b.openglID) {
-			return (a.openglID < b.openglID) ? -1 : +1;
-		}
-	}
-	if (a.enable != b.enable) {
-		return a.enable ? -1 : +1;
-	}
-	return 0; // LUATEX_NONE and LUATEX_SHADOWMAP ignore openglID
-}
-
-
-void LuaMatTexture::Bind(const LuaMatTexture& prev) const
-{
-	// blunt force -- poor form
-	prev.Unbind();
-
-	if (type == LUATEX_GL) {
-		glBindTexture(GL_TEXTURE_2D, openglID);
-		if (enable) {
-			glEnable(GL_TEXTURE_2D);
-		}
-	}
-	else if (type == LUATEX_SHADOWMAP) {
-		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-		if (enable) {
-			glEnable(GL_TEXTURE_2D);
-		}
-	}
-	else if (type == LUATEX_REFLECTION) {
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetEnvReflectionTextureID());
-		if (enable) {
-			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		}
-	}
-	else if (type == LUATEX_SPECULAR) {
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
-		if (enable) {
-			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		}
-	}
-}
-
-
-void LuaMatTexture::Unbind() const
-{
-	if (type == LUATEX_NONE || (!enable && (type != LUATEX_SHADOWMAP)))
-        return;
-
-	if (type == LUATEX_GL) {
-		glDisable(GL_TEXTURE_2D);
-	}
-	else if (type == LUATEX_SHADOWMAP) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-		glDisable(GL_TEXTURE_2D);
-	}
-	else if (type == LUATEX_REFLECTION) {
-		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-	}
-	else if (type == LUATEX_SPECULAR) {
-		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-	}
-}
-
-
-void LuaMatTexture::Print(const string& indent) const
-{
-	const char* typeName = "Unknown";
-	switch (type) {
-		STRING_CASE(typeName, LUATEX_NONE);
-		STRING_CASE(typeName, LUATEX_GL);
-		STRING_CASE(typeName, LUATEX_SHADOWMAP);
-		STRING_CASE(typeName, LUATEX_REFLECTION);
-		STRING_CASE(typeName, LUATEX_SPECULAR);
-	}
-	LOG("%s%s %i %s", indent.c_str(),
-			typeName, openglID, (enable ? "true" : "false"));
-}
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -322,12 +212,14 @@ const LuaMaterial LuaMaterial::defMat;
 
 void LuaMaterial::Finalize()
 {
-	shader.Finalize();
+	standardShader.Finalize();
+	deferredShader.Finalize();
 
 	texCount = 0;
 	for (int t = 0; t < LuaMatTexture::maxTexUnits; t++) {
 		LuaMatTexture& tex = textures[t];
 		tex.Finalize();
+		tex.enableTexParams = true;
 		if (tex.type != LuaMatTexture::LUATEX_NONE) {
 			texCount = (t + 1);
 		}
@@ -335,7 +227,7 @@ void LuaMaterial::Finalize()
 }
 
 
-void LuaMaterial::Execute(const LuaMaterial& prev) const
+void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 {
 	if (prev.postList != 0) {
 		glCallList(prev.postList);
@@ -344,7 +236,11 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 		glCallList(preList);
 	}
 
-	shader.Execute(prev.shader);
+	if (deferredPass) {
+		deferredShader.Execute(prev.deferredShader, true);
+	} else {
+		standardShader.Execute(prev.standardShader, false);
+	}
 
 	//FIXME add projection matrices!!!
 	if (cameraLoc >= 0) {
@@ -357,7 +253,7 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 	}
 
 	if (cameraPosLoc >= 0) {
-		glUniformf3(cameraPosLoc, camera->pos);
+		glUniformf3(cameraPosLoc, camera->GetPos());
 	}
 
 	if (sunPosLoc >= 0) {
@@ -375,7 +271,8 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 	const int maxTex = std::max(texCount, prev.texCount);
 	for (int t = (maxTex - 1); t >= 0; t--) {
 		glActiveTexture(GL_TEXTURE0 + t);
-		textures[t].Bind(prev.textures[t]);
+		prev.textures[t].Unbind();
+		textures[t].Bind();
 	}
 
 	if (useCamera != prev.useCamera) {
@@ -411,10 +308,15 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 		return (a.order < b.order) ? -1 : +1;
 	}
 
-	cmp = LuaMatShader::Compare(a.shader, b.shader);
-	if (cmp != 0) {
+	cmp = LuaMatShader::Compare(a.standardShader, b.standardShader);
+
+	if (cmp != 0)
 		return cmp;
-	}
+
+	cmp = LuaMatShader::Compare(a.deferredShader, b.deferredShader);
+
+	if (cmp != 0)
+		return cmp;
 
 	const int maxTex = std::min(a.texCount, b.texCount);
 	for (int t = 0; t < maxTex; t++) {
@@ -492,7 +394,8 @@ void LuaMaterial::Print(const string& indent) const
 
 	LOG("%s%s", indent.c_str(), GetMatTypeName(type));
 	LOG("%sorder = %i", indent.c_str(), order);
-	shader.Print(indent);
+	standardShader.Print(indent);
+	deferredShader.Print(indent);
 	LOG("%stexCount = %i", indent.c_str(), texCount);
 	for (int t = 0; t < texCount; t++) {
 		char buf[32];
@@ -694,7 +597,7 @@ void LuaMatHandler::PrintBins(const string& indent, LuaMatType type) const
 	const LuaMatBinSet& binSet = binTypes[type];
 	LuaMatBinSet::const_iterator it;
 	int num = 0;
-	LOG("%sBINCOUNT = "_STPF_, indent.c_str(), binSet.size());
+	LOG("%sBINCOUNT = " _STPF_, indent.c_str(), binSet.size());
 	for (it = binSet.begin(); it != binSet.end(); ++it) {
 		LuaMatBin* bin = *it;
 		LOG("%sBIN %i:", indent.c_str(), num);

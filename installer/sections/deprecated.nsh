@@ -1,4 +1,8 @@
 !ifdef INSTALL
+	; 95.0
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT (safemode).lnk"
+
 	; Old DLLs, not needed anymore
 	; (python upgraded to 25)
 	Delete "$INSTDIR\python24.dll"
@@ -25,6 +29,9 @@
 	Delete "$INSTDIR\springfiles.url"
 	Delete "$INSTDIR\ArchiveCacheV7.lua"
 
+	; zero-k lobby icon
+	Delete "$INSTDIR\Zero-K.ico"
+
 	RmDir "$INSTDIR\mods"
 
 	; deprecated Shortcuts
@@ -36,6 +43,7 @@
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Update CA.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\rapid-GUI.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk"
+
 
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\SpringDownloader.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk"

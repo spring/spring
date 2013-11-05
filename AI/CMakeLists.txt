@@ -14,7 +14,7 @@ add_definitions(-DBUILDING_AI)
 
 ### User-definable build options
 set (AI_EXCLUDE_REGEX "XXXXXXXX" CACHE STRING "Which Skirmish AIs not to build (none by default, example: \"NTai|Null.*AI\", see also: AI_TYPES")
-set (AI_FIND_QUIETLY  FALSE      CACHE BOOL   "Whether to find AI Interfaces and Skirmish AIs quietly")
+option(AI_FIND_QUIETLY  "Whether to find AI Interfaces and Skirmish AIs quietly" FALSE)
 
 set(rts             "${CMAKE_SOURCE_DIR}/rts")
 

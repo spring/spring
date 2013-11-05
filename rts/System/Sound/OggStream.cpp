@@ -2,8 +2,6 @@
 
 #include "OggStream.h"
 
-#include <SDL.h>
-
 #include "System/FileSystem/FileHandler.h"
 #include "SoundLog.h"
 #include "ALShared.h"
@@ -59,8 +57,6 @@ COggStream::COggStream(ALuint _source)
 	, format(AL_FORMAT_MONO16)
 	, stopped(true)
 	, paused(false)
-	, msecsPlayed(0)
-	, lastTick(0)
 {
 	for (unsigned i = 0; i < NUM_BUFFERS; ++i) {
 		buffers[i] = 0;
@@ -134,7 +130,7 @@ void COggStream::Play(const std::string& path, float volume)
 
 float COggStream::GetPlayTime() const
 {
-	return (msecsPlayed / 1000.0f);
+	return msecsPlayed.toSecsf();
 }
 
 float COggStream::GetTotalTime()
@@ -195,8 +191,8 @@ void COggStream::ReleaseBuffers()
 // filled with data from the stream
 bool COggStream::StartPlaying()
 {
-	msecsPlayed = 0;
-	lastTick = SDL_GetTicks();
+	msecsPlayed = spring_nulltime;
+	lastTick = spring_gettime();
 
 	if (!DecodeStream(buffers[0])) { return false; }
 	if (!DecodeStream(buffers[1])) { return false; }
@@ -225,9 +221,9 @@ void COggStream::Stop()
 	}
 
 	ReleaseBuffers();
-	msecsPlayed = 0;
+	msecsPlayed = spring_nulltime;
 	vorbisInfo = NULL;
-	lastTick = SDL_GetTicks();
+	lastTick = spring_gettime();
 }
 
 bool COggStream::TogglePause()
@@ -270,7 +266,7 @@ void COggStream::Update()
 		return;
 	}
 
-	unsigned tick = SDL_GetTicks();
+	spring_time tick = spring_gettime();
 
 	if (!paused) {
 		if (UpdateBuffers()) {

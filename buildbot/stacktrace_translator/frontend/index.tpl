@@ -14,7 +14,7 @@ At max 100.000 Bytes are downloaded!<br>
 <b>Note: only windows-versions can be translated.</b>
 </p>
 
-<form method="post" action="%ACTION%"><p>Url of <b>raw</b> infolog.txt
+<form method="post" action="%ACTION%"><p>Url of <b>unformatted raw plaintext</b> infolog.txt
 <input type="text" name="url" size="40">
 or copy and paste here:
 <br>

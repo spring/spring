@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <algorithm> // std::min/max
-
 //                  F(N=2) = H(-32768 / 32767)
 //
 //                         ^
@@ -111,53 +109,33 @@ inline shortint2 GetHAndPFromVector(const float3 vec)
 inline float2 GetHAndPFromVectorF(const float3 vec)
 {
 	float2 ret;
-
-	ret.y = math::asin(vec.y);
 	ret.x = GetHeadingFromVectorF(vec.x, vec.z);
+	ret.y = math::asin(vec.y);
 	return ret;
 }
 
 inline float3 GetVectorFromHeading(const short int heading)
 {
-	float2 v = CMyMath::headingToVectorTable[heading / ((SHORTINT_MAXVALUE/NUM_HEADINGS) * 2) + NUM_HEADINGS/2];
-	return float3(v.x, 0.0f, v.y);
+	const int idx = heading / ((SHORTINT_MAXVALUE/NUM_HEADINGS) * 2) + NUM_HEADINGS/2;
+	const float2 vec = CMyMath::headingToVectorTable[idx];
+	return float3(vec.x, 0.0f, vec.y);
 }
 
 inline float3 CalcBeizer(const float i, const float3 p1, const float3 p2, const float3 p3, const float3 p4)
 {
-	float ni = 1 - i;
+	const float ni = 1.0f - i;
+	const float  a =        ni * ni * ni;
+	const float  b = 3.0f *  i * ni * ni;
+	const float  c = 3.0f *  i *  i * ni;
+	const float  d =         i  * i *  i;
 
-	float3 res((p1 * ni * ni * ni) + (p2 * 3 * i * ni * ni) + (p3 * 3 * i * i * ni) + (p4 * i * i * i));
-	return res;
+	return float3((p1 * a) + (p2 * b) + (p3 * c) + (p4 * d));
 }
 
-
-inline float mix(const float v1, const float v2, const float a)
-{
-	//return v1 * (1.0f - a) + v2 * a;
-	return v1 + (v2 - v1) * a;
-}
-
-template<class T>
-inline T mix(const T v1, const T v2, const float a)
-{
-	return v1 * (1.0f - a) + v2 * a;
-}
-
-inline float Square(const float x)
-{
-	return x * x;
-}
 
 inline int Round(const float f)
 {
 	return math::floor(f + 0.5f);
-}
-
-template<class T>
-inline T Clamp(const T v, const T min, const T max)
-{
-	return std::min(max, std::max(min, v));
 }
 
 inline float ClampRad(float f)

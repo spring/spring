@@ -148,7 +148,7 @@ CStandardGroundFlash::CStandardGroundFlash(const float3& p, float circleAlpha, f
 
 	size = flashSize; // flashSize is just backward compability
 
-	side1 = normal.cross(float3(1.0f, 0.0f, 0.0f));
+	side1 = normal.cross(RgtVector);
 	side1.ANormalize();
 	side2 = side1.cross(normal);
 
@@ -255,7 +255,7 @@ void CSimpleGroundFlash::Init(const float3& explosionPos, CUnit* owner)
 	const float3 n2 = ((p4 - p2).cross(p3 - p2)).ANormalize();
 	const float3 normal = (n1 + n2).ANormalize();
 
-	side1 = normal.cross(float3(1.0f, 0.0f, 0.0f));
+	side1 = normal.cross(RgtVector);
 	side1.ANormalize();
 	side2 = side1.cross(normal);
 
@@ -325,7 +325,7 @@ CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, int ttl, int fade, flo
 	const float3 n2 = ((p4 - p2).cross(p3 - p2)).SafeANormalize();
 	const float3 normal = (n1 + n2).SafeANormalize();
 
-	side1 = normal.cross(float3(1.0f, 0.0f, 0.0f));
+	side1 = normal.cross(RgtVector);
 	side1.SafeANormalize();
 	side2 = side1.cross(normal);
 

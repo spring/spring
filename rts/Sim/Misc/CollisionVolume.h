@@ -7,8 +7,10 @@
 #include "System/creg/creg_cond.h"
 #include "System/Util.h"
 
-const float COLLISION_VOLUME_EPS = 0.0000000001f;
+// the positive x-axis points to the "left" in object-space and to the "right" in world-space
+// converting between them means flipping the sign of x-components of positions and directions
 const float3 WORLD_TO_OBJECT_SPACE = float3(-1.0f, 1.0f, 1.0f);
+const float COLLISION_VOLUME_EPS = 0.0000000001f;
 
 struct LocalModelPiece;
 class CMatrix44f;
@@ -102,8 +104,6 @@ public:
 
 	float GetPointSurfaceDistance(const CUnit* u, const LocalModelPiece* lmp, const float3& p) const;
 	float GetPointSurfaceDistance(const CFeature* u, const LocalModelPiece* lmp, const float3& p) const;
-
-	static const CollisionVolume* GetVolume(const CSolidObject* o, const LocalModelPiece* lmp);
 
 private:
 	float GetPointSurfaceDistance(const CMatrix44f& m, const float3& p) const;

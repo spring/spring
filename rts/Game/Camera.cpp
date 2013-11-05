@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "Camera.h"
+#include "UI/MouseHandler.h"
 #include "Map/ReadMap.h"
 #include "System/myMath.h"
 #include "System/float3.h"
@@ -18,27 +19,13 @@ CCamera* camera;
 CCamera* cam2;
 
 
-
-inline void GetGLdoubleMatrix(const CMatrix44f& m, GLdouble* dm)
-{
-	for (int i = 0; i < 16; i += 4) {
-		dm[i+0] = m[i+0];
-		dm[i+1] = m[i+1];
-		dm[i+2] = m[i+2];
-		dm[i+3] = m[i+3];
-	}
-}
-
-
 CCamera::CCamera()
-	: pos(0.0f, 0.0f, 0.0f)
-	, rot(0.0f, 0.0f, 0.0f)
-	, forward(1.0f, 0.0f, 0.0f)
+	: rot(ZeroVector)
+	, forward(RgtVector)
 	, up(UpVector)
 	, posOffset(ZeroVector)
 	, tiltOffset(ZeroVector)
-	, viewMatrixD(16, 0.0)
-	, projectionMatrixD(16, 0.0)
+	, pos(ZeroVector)
 	, fov(0.0f)
 	, halfFov(0.0f)
 	, tanHalfFov(0.0f)
@@ -50,6 +37,8 @@ CCamera::CCamera()
 	}
 
 	memset(viewport, 0, 4 * sizeof(int));
+	memset(movState, 0, sizeof(movState));
+	memset(rotState, 0, sizeof(rotState));
 
 	// stuff that will not change can be initialised here,
 	// so it does not need to be reinitialised every update
@@ -75,12 +64,10 @@ void CCamera::CopyState(const CCamera* cam) {
 	lppScale  = cam->lppScale;
 }
 
-
-void CCamera::Update(bool resetUp)
+void CCamera::Update()
 {
-	if (resetUp) {
+	if (forward.cross(UpVector) != ZeroVector)
 		up = UpVector;
-	}
 
 	right = forward.cross(up);
 	right.UnsafeANormalize();
@@ -128,14 +115,10 @@ void CCamera::Update(bool resetUp)
 	myGluLookAt(camPos, center, up);
 
 	// create extra matrices
-	viewProjectionMatrix = viewMatrix * projectionMatrix;
+	viewProjectionMatrix = projectionMatrix * viewMatrix;
 	viewMatrixInverse = viewMatrix.InvertAffine();
 	projectionMatrixInverse = projectionMatrix.Invert();
 	viewProjectionMatrixInverse = viewProjectionMatrix.Invert();
-
-	// GLdouble versions
-	GetGLdoubleMatrix(viewMatrix, &viewMatrixD[0]);
-	GetGLdoubleMatrix(projectionMatrix, &projectionMatrixD[0]);
 
 	// Billboard Matrix
 	billboardMatrix = viewMatrix;
@@ -161,7 +144,7 @@ void CCamera::ComputeViewRange()
 	const float minViewRange     = (1.0f - azimuthCos) * math::sqrt(Square(maxDistToBorderX) + Square(maxDistToBorderZ));
 
 	// Camera-height dependent (i.e. TAB-view)
-	wantedViewRange = std::max(wantedViewRange, (pos.y - std::max(0.0f, readmap->currMinHeight)) * 2.4f);
+	wantedViewRange = std::max(wantedViewRange, (pos.y - std::max(0.0f, readMap->GetCurrMinHeight())) * 2.4f);
 	// View-angle dependent (i.e. FPS-view)
 	wantedViewRange = std::max(wantedViewRange, minViewRange);
 
@@ -197,17 +180,17 @@ bool CCamera::InView(const float3& mins, const float3& maxs) const
 
 bool CCamera::InView(const float3& p, float radius) const
 {
-	const float3 t   = (p - pos);
-	const float  lsq = t.SqLength();
-
-	if (lsq > Square(globalRendering->viewRange)) {
-		return false;
-	}
+	const float3 t(p - pos);
 
 	if ((t.dot(rgtFrustumSideDir) > radius) ||
 	    (t.dot(lftFrustumSideDir) > radius) ||
 	    (t.dot(botFrustumSideDir) > radius) ||
 	    (t.dot(topFrustumSideDir) > radius)) {
+		return false;
+	}
+
+	const float lsq = t.SqLength();
+	if (lsq > Square(globalRendering->viewRange)) {
 		return false;
 	}
 
@@ -251,11 +234,13 @@ float3 CCamera::CalcPixelDir(int x, int y) const
 
 float3 CCamera::CalcWindowCoordinates(const float3& objPos) const
 {
-	double winPos[3];
-	gluProject((GLdouble)objPos.x, (GLdouble)objPos.y, (GLdouble)objPos.z,
-	           &viewMatrixD[0], &projectionMatrixD[0], viewport,
-	           &winPos[0], &winPos[1], &winPos[2]);
-	return float3((float)winPos[0], (float)winPos[1], (float)winPos[2]);
+	// does same as gluProject()
+	const float4 v = viewProjectionMatrix * float4(objPos, 1.0f);
+	float3 winPos;
+	winPos.x = viewport[0] + viewport[2] * (v.x / v.w + 1.0f) * 0.5f;
+	winPos.y = viewport[1] + viewport[3] * (v.y / v.w + 1.0f) * 0.5f;
+	winPos.z =                             (v.z / v.w + 1.0f) * 0.5f;
+	return winPos;
 }
 
 
@@ -308,6 +293,8 @@ inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const 
 
 
 void CCamera::GetFrustumSides(float miny, float maxy, float scale, bool negSide) {
+	GML_RECMUTEX_LOCK(cam); // GetFrustumSides
+
 	ClearFrustumSides();
 	// note: order does not matter
 	GetFrustumSide(topFrustumSideDir, ZeroVector,  miny, maxy, scale,  (topFrustumSideDir.y > 0.0f), negSide);
@@ -325,6 +312,7 @@ void CCamera::GetFrustumSide(
 	bool upwardDir,
 	bool negSide)
 {
+	GML_RECMUTEX_LOCK(cam); // GetFrustumSide
 	// compose an orthonormal axis-system around <zdir>
 	float3 xdir = (zdir.cross(UpVector)).UnsafeANormalize();
 	float3 ydir = (zdir.cross(xdir)).UnsafeANormalize();
@@ -368,6 +356,8 @@ void CCamera::GetFrustumSide(
 }
 
 void CCamera::ClipFrustumLines(bool neg, const float zmin, const float zmax) {
+	GML_RECMUTEX_LOCK(cam); // ClipFrustumLines
+
 	std::vector<FrustumLine>& lines = neg? negFrustumSides: posFrustumSides;
 	std::vector<FrustumLine>::iterator fli, fli2;
 
@@ -394,3 +384,65 @@ void CCamera::ClipFrustumLines(bool neg, const float zmin, const float zmax) {
 		}
 	}
 }
+
+
+
+float CCamera::GetMoveDistance(float* time, float* speed, int idx) const
+{
+	// NOTE:
+	//   lastFrameTime is MUCH smaller when map edge is in view
+	//   timer is not accurate enough to return non-zero values
+	//   for the majority of the time this condition holds, and
+	//   so the camera will barely react to key input since most
+	//   frames will effectively be 'skipped' (looks like lag)
+	float camDeltaTime = std::max(0.001f, globalRendering->lastFrameTime);
+	float camMoveSpeed = 1.0f;
+
+	camMoveSpeed *= (1.0f - movState[MOVE_STATE_SLW] * 0.9f);
+	camMoveSpeed *= (1.0f + movState[MOVE_STATE_FST] * 9.0f);
+
+	if (time != NULL) { *time = camDeltaTime; }
+	if (speed != NULL) { *speed = camMoveSpeed; }
+
+	switch (idx) {
+		case MOVE_STATE_UP:  { camMoveSpeed *= ( 1.0f * movState[idx]); } break;
+		case MOVE_STATE_DWN: { camMoveSpeed *= (-1.0f * movState[idx]); } break;
+
+		default: {
+		} break;
+	}
+
+	return (camDeltaTime * 200.0f * camMoveSpeed);
+}
+
+float3 CCamera::GetMoveVectorFromState(bool fromKeyState, bool* disableTracker)
+{
+	float camDeltaTime = 1.0f;
+	float camMoveSpeed = 1.0f;
+
+	(void) GetMoveDistance(&camDeltaTime, &camMoveSpeed, -1);
+
+	float3 v = FwdVector * camMoveSpeed;
+
+	if (fromKeyState) {
+		v.y += (camDeltaTime * movState[MOVE_STATE_FWD]);
+		v.y -= (camDeltaTime * movState[MOVE_STATE_BCK]);
+		v.x += (camDeltaTime * movState[MOVE_STATE_RGT]);
+		v.x -= (camDeltaTime * movState[MOVE_STATE_LFT]);
+	} else {
+		const int screenW = globalRendering->dualScreenMode?
+			(globalRendering->viewSizeX << 1):
+			(globalRendering->viewSizeX     );
+
+		v.y += (camDeltaTime * (mouse->lasty <                               2));
+		v.y -= (camDeltaTime * (mouse->lasty > (globalRendering->viewSizeY - 2)));
+		v.x += (camDeltaTime * (mouse->lastx >                    (screenW - 2)));
+		v.x -= (camDeltaTime * (mouse->lastx <                               2));
+	}
+
+	(*disableTracker) |= (v.x != 0.0f);
+	(*disableTracker) |= (v.y != 0.0f);
+
+	return v;
+}
+

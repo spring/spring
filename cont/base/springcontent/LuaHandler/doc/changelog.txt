@@ -1,0 +1,18 @@
+addon handler 1.0 (widget part)
+
+changelog
+ * addons := { widget, gadget }
+ * new '/luaui callins' command !!!
+ * auto linking of _all_ engine supported callins
+ * new handler:AddNewCallIn() to add new custom callins at runtime
+ * new require() to loads modules from "Lua*/Utilities/*.lua"
+ * new addon rev2 format (much safer and bit faster)
+ * new AddonLoaded callin
+ * new AddonRemoved callin
+ * new BlockAddon callin
+ * handler now got a config.lua
+ * addons can now be loaded from multiple dirs
+ * step into unified handler between widgets & gadgets
+ * widgetHandler: is now available via handler: too (unification)
+ * new handler:SearchForNew()
+ * safer removing of addons during callins

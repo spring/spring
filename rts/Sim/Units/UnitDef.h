@@ -16,7 +16,6 @@ struct Command;
 struct WeaponDef;
 struct MoveDef;
 struct UnitDefImage;
-class IExplosionGenerator;
 class LuaTable;
 
 
@@ -53,48 +52,40 @@ public:
 	void SetNoCost(bool noCost);
 	bool IsAllowedTerrainHeight(const MoveDef* moveDef, float rawHeight, float* clampedHeight = NULL) const;
 
-	bool IsTransportUnit()      const { return (transportCapacity > 0 && transportMass > 0.0f); }
-	bool IsImmobileUnit()       const { return (pathType == -1U && !canfly && speed <= 0.0f); }
-	bool IsBuildingUnit()       const { return (IsImmobileUnit() && !yardmap.empty()); }
-	bool IsMobileBuilderUnit()  const { return (builder && !IsImmobileUnit()); }
-	bool IsStaticBuilderUnit()  const { return (builder &&  IsImmobileUnit()); }
-	bool IsFactoryUnit()        const { return (builder &&  IsBuildingUnit()); }
-	bool IsExtractorUnit()      const { return (extractsMetal > 0.0f && extractRange > 0.0f); }
-	bool IsGroundUnit()         const { return (pathType != -1U && !canfly); }
-	bool IsAirUnit()            const { return (pathType == -1U &&  canfly); }
-	bool IsNonHoveringAirUnit() const { return (IsAirUnit() && !hoverAttack); }
-	bool IsFighterUnit()        const { return (IsNonHoveringAirUnit() && !HasBomberWeapon()); }
-	bool IsBomberUnit()         const { return (IsNonHoveringAirUnit() &&  HasBomberWeapon()); }
+	bool IsTransportUnit()     const { return (transportCapacity > 0 && transportMass > 0.0f); }
+	bool IsImmobileUnit()      const { return (pathType == -1U && !canfly && speed <= 0.0f); }
+	bool IsBuildingUnit()      const { return (IsImmobileUnit() && !yardmap.empty()); }
+	bool IsBuilderUnit()       const { return (builder && buildSpeed > 0.0f && buildDistance > 0.0f); }
+	bool IsMobileBuilderUnit() const { return (IsBuilderUnit() && !IsImmobileUnit()); }
+	bool IsStaticBuilderUnit() const { return (IsBuilderUnit() &&  IsImmobileUnit()); }
+	bool IsFactoryUnit()       const { return (IsBuilderUnit() &&  IsBuildingUnit()); }
+	bool IsExtractorUnit()     const { return (extractsMetal > 0.0f && extractRange > 0.0f); }
+	bool IsGroundUnit()        const { return (pathType != -1U && !canfly); }
+	bool IsAirUnit()           const { return (pathType == -1U &&  canfly); }
+	bool IsStrafingAirUnit()   const { return (IsAirUnit() && !hoverAttack); }
+	bool IsHoveringAirUnit()   const { return (IsAirUnit() &&  hoverAttack); }
+	bool IsFighterAirUnit()    const { return (IsStrafingAirUnit() && !weapons.empty() && !HasBomberWeapon()); }
+	bool IsBomberAirUnit()     const { return (IsStrafingAirUnit() && !weapons.empty() &&  HasBomberWeapon()); }
 
 	bool RequireMoveDef() const { return (canmove && speed > 0.0f && !canfly); }
 	bool HasBomberWeapon() const;
 	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
 
-	// NOTE: deprecated, only used by LuaUnitDefs.cpp
-	const char* GetTypeString() const {
-		if (IsTransportUnit()) { return "Transport"; }
+	void SetModelExplosionGeneratorID(unsigned int idx, unsigned int egID) { modelExplGenIDs[idx] = egID; }
+	void SetPieceExplosionGeneratorID(unsigned int idx, unsigned int egID) { pieceExplGenIDs[idx] = egID; }
 
-		if (IsBuildingUnit()) {
-			if (IsFactoryUnit()) { return "Factory"; }
-			if (IsExtractorUnit()) { return "MetalExtractor"; }
-			return "Building";
-		}
-
-		if (IsMobileBuilderUnit() || IsStaticBuilderUnit()) { return "Builder"; }
-
-		if (IsGroundUnit()) { return "GroundUnit"; }
-		if (IsAirUnit()) {
-			if (IsFighterUnit()) { return "Fighter"; }
-			if (IsBomberUnit()) { return "Bomber"; }
-			return "Aircraft";
-		}
-
-		return "Unknown";
+	unsigned int GetModelExplosionGeneratorID(unsigned int idx) const {
+		if (modelExplGenIDs.empty())
+			return -1u;
+		return (modelExplGenIDs[idx % modelExplGenIDs.size()]);
+	}
+	unsigned int GetPieceExplosionGeneratorID(unsigned int idx) const {
+		if (pieceExplGenIDs.empty())
+			return -1u;
+		return (pieceExplGenIDs[idx % pieceExplGenIDs.size()]);
 	}
 
-	std::string humanName;
-	std::string decoyName;
-
+public:
 	int cobID;              ///< associated with the COB \<GET COB_ID unitID\> call
 
 	const UnitDef* decoyDef;
@@ -189,27 +180,38 @@ public:
 	float  flankingBonusMin; ///< damage factor for the most protected direction
 	float  flankingBonusMobilityAdd; ///< how much the ability of the flanking bonus direction to move builds up each frame
 
+	std::string humanName;
+	std::string decoyName;
 	std::string scriptName;     ///< the name of the unit's script, e.g. "armjeth.cob"
+	std::string tooltip;
+	std::string wreckName;
+	std::string categoryString;
+	std::string buildPicName;
 
 	std::vector<UnitDefWeapon> weapons;
+
+	///< The unrotated yardmap for buildings
+	///< (only non-mobile ground units can have these)
+	std::vector<YardMapStatus> yardmap;
+
+	std::vector<std::string> modelCEGTags;
+	std::vector<std::string> pieceCEGTags;
+
+	// TODO: privatize
+	std::vector<unsigned int> modelExplGenIDs;
+	std::vector<unsigned int> pieceExplGenIDs;
+
+	std::map<int, std::string> buildOptions;
+
 	const WeaponDef* shieldWeaponDef;
 	const WeaponDef* stockpileWeaponDef;
 	float maxWeaponRange;
 	float maxCoverage;
 
-	std::map<int, std::string> buildOptions;
-
-	std::string tooltip;
-	std::string wreckName;
-
 	const WeaponDef* deathExpWeaponDef;
 	const WeaponDef* selfdExpWeaponDef;
 
-	std::string categoryString;
-
-	std::string buildPicName;
 	mutable UnitDefImage* buildPic;
-
 	mutable icon::CIcon iconType;
 
 	int selfDCountdown;
@@ -225,7 +227,6 @@ public:
 
 	// order-capabilities for CommandAI
 	bool canmove;
-	bool canHover;
 	bool canAttack;
 	bool canFight;
 	bool canPatrol;
@@ -254,7 +255,6 @@ public:
 	//aircraft stuff
 	float wingDrag;
 	float wingAngle;
-	float drag;
 	float frontToSpeed;
 	float speedToFront;
 	float myGravity;
@@ -277,10 +277,6 @@ public:
 	float maxElevator;
 	float maxRudder;
 	float crashDrag;
-
-	///< The unrotated yardmap for buildings
-	///< (only non-mobile ground units can have these)
-	std::vector<YardMapStatus> yardmap;
 
 	float loadingRadius;							///< for transports
 	float unloadSpread;
@@ -343,8 +339,8 @@ public:
 	int flareSalvoSize;
 	int flareSalvoDelay;
 
-	bool canLoopbackAttack;  ///< only matters for fighter aircraft
-	bool levelGround;        ///< only matters for buildings
+	bool canLoopbackAttack;                         ///< only matters for fighter aircraft
+	bool levelGround;                               ///< only matters for buildings
 
 	bool showNanoFrame;								///< Does the nano frame animation get shown during construction?
 	bool showNanoSpray;								///< Does nano spray get shown at all?
@@ -354,11 +350,7 @@ public:
 	float refuelTime;								///< time to fully refuel unit
 	float minAirBasePower;							///< min build power for airbases that this aircraft can land on
 
-	std::vector<std::string> pieceCEGTags;
-	std::vector<std::string> modelCEGTags;
-	std::vector<IExplosionGenerator*> sfxExplGens;	///< list of explosion generators for use in scripts
-
-	int maxThisUnit;								///< number of units of this type allowed simultaneously in the game
+	int maxThisUnit;                                ///< number of units of this type allowed simultaneously in the game
 
 private:
 	void ParseWeaponsTable(const LuaTable& weaponsTable);

@@ -37,12 +37,12 @@ public:
 
 	virtual bool Update();
 	virtual void UpdateLanded();
-	virtual bool IsFighter() const = 0;
 	virtual void Takeoff() {}
 	virtual void Land() {}
 	virtual void SetState(AircraftState state) {}
 	virtual AircraftState GetLandingState() const { return AIRCRAFT_LANDING; }
 
+	bool CanApplyImpulse(const float3&) { return true; }
 	bool UseSmoothMesh() const;
 	int GetPadStatus() const { return padStatus; }
 
@@ -61,6 +61,10 @@ public:
 	/// to reset altitude back
 	float orgWantedHeight;
 
+	float accRate;
+	float decRate;
+	float altitudeRate;
+
 	/// mods can use this to disable plane collisions
 	bool collide;
 	/// controls use of smoothGround for determining altitude
@@ -69,8 +73,10 @@ public:
 
 protected:
 	void CheckForCollision();
+	bool CanLandOnPad(const float3& padPos) const;
+	bool HaveLandedOnPad(const float3& padPos);
 	bool MoveToRepairPad();
-	void UpdateFuel();
+	void UpdateFuel(bool slowUpdate = true);
 
 	/// unit found to be dangerously close to our path
 	CUnit* lastColWarning;

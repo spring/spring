@@ -2,11 +2,11 @@
 
 #include "SelectedUnitsAI.h"
 
-#include "SelectedUnits.h"
+#include "SelectedUnitsHandler.h"
 #include "GlobalUnsynced.h"
-#include "Player.h"
-#include "PlayerHandler.h"
 #include "WaitCommandsAI.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
@@ -16,7 +16,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 
 const int CMDPARAM_MOVE_X = 0;
 const int CMDPARAM_MOVE_Y = 1;
@@ -24,9 +24,9 @@ const int CMDPARAM_MOVE_Z = 2;
 
 
 // Global object
-CSelectedUnitsAI selectedUnitsAI;
+CSelectedUnitsHandlerAI selectedUnitsAI;
 
-CSelectedUnitsAI::CSelectedUnitsAI()
+CSelectedUnitsHandlerAI::CSelectedUnitsHandlerAI()
 	: centerPos(ZeroVector)
 	, rightPos(ZeroVector)
 	, sumLength(0)
@@ -41,13 +41,12 @@ CSelectedUnitsAI::CSelectedUnitsAI()
 	, frontDir(ZeroVector)
 	, sideDir(ZeroVector)
 	, columnDist(64.0f)
-	, lineDist(64.0f)
 	, numColumns(0)
 {
 }
 
 
-inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
+inline void CSelectedUnitsHandlerAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
                                                         unsigned char options)
 {
 	// this sets the WANTED maximum speed of <unit>
@@ -64,7 +63,7 @@ inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
 	}
 }
 
-inline void CSelectedUnitsAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
+inline void CSelectedUnitsHandlerAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
                                                          unsigned char options)
 {
 	// sets the wanted speed of this unit to that of
@@ -98,9 +97,9 @@ static inline bool MayRequireSetMaxSpeedCommand(const Command &c)
 }
 
 
-void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
+void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 {
-	const std::vector<int>& netSelected = selectedUnits.netSelected[player];
+	const std::vector<int>& netSelected = selectedUnitsHandler.netSelected[player];
 	std::vector<int>::const_iterator ui;
 
 	const int nbrOfSelectedUnits = netSelected.size();
@@ -249,14 +248,14 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 //
 // Calculate the outer limits and the center of the group coordinates.
 //
-void CSelectedUnitsAI::CalculateGroupData(int player, bool queueing) {
+void CSelectedUnitsHandlerAI::CalculateGroupData(int player, bool queueing) {
 	//Finding the highest, lowest and weighted central positional coordinates among the selected units.
-	float3 sumCoor = minCoor = maxCoor = float3(0, 0, 0);
+	float3 sumCoor, minCoor, maxCoor;
 	float3 mobileSumCoor = sumCoor;
 	sumLength = 0; ///
 	int mobileUnits = 0;
 	minMaxSpeed = 1e9f;
-	for(std::vector<int>::iterator ui = selectedUnits.netSelected[player].begin(); ui != selectedUnits.netSelected[player].end(); ++ui) {
+	for(std::vector<int>::iterator ui = selectedUnitsHandler.netSelected[player].begin(); ui != selectedUnitsHandler.netSelected[player].end(); ++ui) {
 		CUnit* unit=unitHandler->units[*ui];
 		if(unit){
 			const UnitDef* ud = unit->unitDef;
@@ -294,16 +293,16 @@ void CSelectedUnitsAI::CalculateGroupData(int player, bool queueing) {
 			}
 		}
 	}
-	avgLength = sumLength/selectedUnits.netSelected[player].size();
+	avgLength = sumLength/selectedUnitsHandler.netSelected[player].size();
 	//Weighted center
 	if(mobileUnits > 0)
 		centerCoor = mobileSumCoor / mobileUnits;
 	else
-		centerCoor = sumCoor / selectedUnits.netSelected[player].size();
+		centerCoor = sumCoor / selectedUnitsHandler.netSelected[player].size();
 }
 
 
-void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
+void CSelectedUnitsHandlerAI::MakeFrontMove(Command* c,int player)
 {
 	centerPos.x=c->params[0];
 	centerPos.y=c->params[1];
@@ -312,10 +311,11 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 	rightPos.y=c->params[4];
 	rightPos.z=c->params[5];
 
-	float3 nextPos(0.0f, 0.0f, 0.0f);//it's in "front" coordinates (rotated to real, moved by rightPos)
+	// in "front" coordinates (rotated to real, moved by rightPos)
+	float3 nextPos;
 
-	if(centerPos.distance(rightPos)<selectedUnits.netSelected[player].size()+33){	//Strange line! treat this as a standard move if the front isnt long enough
-		for(std::vector<int>::iterator ui = selectedUnits.netSelected[player].begin(); ui != selectedUnits.netSelected[player].end(); ++ui) {
+	if(centerPos.distance(rightPos)<selectedUnitsHandler.netSelected[player].size()+33){	//Strange line! treat this as a standard move if the front isnt long enough
+		for(std::vector<int>::iterator ui = selectedUnitsHandler.netSelected[player].begin(); ui != selectedUnitsHandler.netSelected[player].end(); ++ui) {
 			CUnit* unit=unitHandler->units[*ui];
 			if(unit){
 				unit->commandAI->GiveCommand(*c, false);
@@ -327,14 +327,14 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 	frontLength=centerPos.distance(rightPos)*2;
 	addSpace = 0;
 	if (frontLength > sumLength*2*8) {
-		addSpace = (frontLength - sumLength*2*8)/(selectedUnits.netSelected[player].size() - 1);
+		addSpace = (frontLength - sumLength*2*8)/(selectedUnitsHandler.netSelected[player].size() - 1);
 	}
 	sideDir=centerPos-rightPos;
 	sideDir.y=0;
 	float3 sd = sideDir;
 	sd.y=frontLength/2;
 	sideDir.ANormalize();
-	frontDir=sideDir.cross(float3(0,1,0));
+	frontDir=sideDir.cross(UpVector);
 
 	numColumns=(int)(frontLength/columnDist);
 	if(numColumns==0)
@@ -397,9 +397,9 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 }
 
 
-void CSelectedUnitsAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
+void CSelectedUnitsHandlerAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
 {
-	const vector<int>& netUnits = selectedUnits.netSelected[player];
+	const vector<int>& netUnits = selectedUnitsHandler.netSelected[player];
 	for (vector<int>::const_iterator ui = netUnits.begin(); ui != netUnits.end(); ++ui) {
 		const CUnit* unit = unitHandler->units[*ui];
 		if (unit) {
@@ -416,7 +416,7 @@ void CSelectedUnitsAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
 }
 
 
-float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, Command* command, std::vector<std::pair<int,Command> >* frontcmds, bool* newline)
+float3 CSelectedUnitsHandlerAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, Command* command, std::vector<std::pair<int,Command> >* frontcmds, bool* newline)
 {
 	//int lineNum=posNum/numColumns;
 	//int colNum=posNum-lineNum*numColumns;
@@ -461,7 +461,7 @@ struct DistInfo {
 };
 
 
-void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
+void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 {
 	std::vector<int> targets;
 	const float3& pos0 = cmd.GetPos(0);
@@ -476,7 +476,7 @@ void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 	}
 	const int targetsCount = (int)targets.size();
 
-	const std::vector<int>& selected = selectedUnits.netSelected[player];
+	const std::vector<int>& selected = selectedUnitsHandler.netSelected[player];
 	const int selectedCount = (int)selected.size();
 	if (selectedCount <= 0) {
 		return;
@@ -562,7 +562,7 @@ void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 }
 
 
-void CSelectedUnitsAI::SelectCircleUnits(const float3& pos, float radius,
+void CSelectedUnitsHandlerAI::SelectCircleUnits(const float3& pos, float radius,
                                          std::vector<int>& units, int player)
 {
 	units.clear();
@@ -595,7 +595,7 @@ void CSelectedUnitsAI::SelectCircleUnits(const float3& pos, float radius,
 }
 
 
-void CSelectedUnitsAI::SelectRectangleUnits(const float3& pos0,
+void CSelectedUnitsHandlerAI::SelectRectangleUnits(const float3& pos0,
                                             const float3& pos1,
                                             vector<int>& units, int player)
 {
@@ -627,7 +627,7 @@ void CSelectedUnitsAI::SelectRectangleUnits(const float3& pos0,
 }
 
 
-float3 CSelectedUnitsAI::LastQueuePosition(const CUnit* unit)
+float3 CSelectedUnitsHandlerAI::LastQueuePosition(const CUnit* unit)
 {
 	const CCommandQueue& queue = unit->commandAI->commandQue;
 	CCommandQueue::const_reverse_iterator it;

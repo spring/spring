@@ -17,14 +17,16 @@
 #include <cstring>
 #include <fstream>
 
-CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName): demoStream(std::ios::binary | std::ios::out)
+CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName, bool serverDemo):
+demoStream(std::ios::binary | std::ios::out)
 {
-	SetName(mapName, modName);
+	SetName(mapName, modName, serverDemo);
 	SetFileHeader();
 }
 
 CDemoRecorder::~CDemoRecorder()
 {
+	LOG("Writing demo: %s", GetName().c_str());
 	WriteWinnerList();
 	WritePlayerStats();
 	WriteTeamStats();
@@ -86,23 +88,24 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, 
 	fileHeader.demoStreamSize += length + sizeof(chunkHeader);
 }
 
-void CDemoRecorder::SetName(const std::string& mapname, const std::string& modname)
+void CDemoRecorder::SetName(const std::string& mapName, const std::string& modName, bool serverDemo)
 {
-	// We want this folder to exist
-	if (!FileSystem::CreateDirectory("demos"))
-		return;
-
 	// Returns the current local time as "JJJJMMDD_HHmmSS", eg: "20091231_115959"
 	const std::string curTime = CTimeUtil::GetCurrentTimeStr();
+	const std::string demoDir = serverDemo? "demos-server/": "demos/";
+
+	// We want this folder to exist
+	if (!FileSystem::CreateDirectory(demoDir))
+		return;
 
 	std::ostringstream oss;
 	std::ostringstream buf;
 
-	oss << "demos/" << curTime << "_";
-	oss << FileSystem::GetBasename(mapname);
+	oss << demoDir << curTime << "_";
+	oss << FileSystem::GetBasename(mapName);
 	oss << "_";
 	// FIXME: why is this not included?
-	// oss << FileSystem::GetBasename(modname);
+	// oss << FileSystem::GetBasename(modName);
 	// oss << "_";
 	oss << SpringVersion::GetSync();
 	buf << oss.str() << ".sdf";
@@ -171,7 +174,12 @@ Write the DemoFileHeader at the start of the file and restores the original
 position in the file afterwards. */
 unsigned int CDemoRecorder::WriteFileHeader(bool updateStreamLength)
 {
+#ifdef _MSC_VER // MSVC8 behaves strange if tell/seek is called before anything has been written
+	const bool empty = (demoStream.str() == "");
+	const unsigned int pos = empty? 0 : demoStream.tellp();
+#else
 	const unsigned int pos = demoStream.tellp();
+#endif
 
 	DemoFileHeader tmpHeader;
 	memcpy(&tmpHeader, &fileHeader, sizeof(fileHeader));
@@ -179,7 +187,14 @@ unsigned int CDemoRecorder::WriteFileHeader(bool updateStreamLength)
 		tmpHeader.demoStreamSize = 0;
 	tmpHeader.swab(); // to little endian
 
-	demoStream.seekp(0);
+#ifdef _MSC_VER
+	if (!empty)
+#endif
+	{
+		demoStream.seekp(0);
+	}
+
+
 	demoStream.write((char*) &tmpHeader, sizeof(tmpHeader));
 	demoStream.seekp(pos);
 
@@ -197,7 +212,7 @@ void CDemoRecorder::WritePlayerStats()
 	for (std::vector< PlayerStatistics >::iterator it = playerStats.begin(); it != playerStats.end(); ++it) {
 		PlayerStatistics& stats = *it;
 		stats.swab();
-		demoStream.write((char*) &stats, sizeof(PlayerStatistics));
+		demoStream.write(reinterpret_cast<char*>(&stats), sizeof(PlayerStatistics));
 	}
 	playerStats.clear();
 
@@ -243,7 +258,7 @@ void CDemoRecorder::WriteTeamStats()
 		for (std::vector< TeamStatistics >::iterator it2 = it->begin(); it2 != it->end(); ++it2) {
 			TeamStatistics& stats = *it2;
 			stats.swab();
-			demoStream.write((char*)&stats, sizeof(TeamStatistics));
+			demoStream.write(reinterpret_cast<char*>(&stats), sizeof(TeamStatistics));
 		}
 	}
 	teamStats.clear();

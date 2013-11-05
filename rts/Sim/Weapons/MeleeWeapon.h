@@ -5,17 +5,17 @@
 
 #include "Weapon.h"
 
-class CMeleeWeapon : public CWeapon
+class CMeleeWeapon: public CWeapon
 {
 	CR_DECLARE(CMeleeWeapon);
 public:
-	CMeleeWeapon(CUnit* owner);
+	CMeleeWeapon(CUnit* owner, const WeaponDef* def);
 
 	void Update();
 
 private:
 	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
-	void FireImpl();
+	void FireImpl(bool scriptCall);
 };
 
 #endif /* MELEEWEAPON_H */

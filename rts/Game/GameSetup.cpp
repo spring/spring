@@ -17,43 +17,121 @@
 #include <cstring>
 #include <boost/format.hpp>
 
-
 CR_BIND(CGameSetup,);
 CR_REG_METADATA(CGameSetup, (
 	CR_MEMBER(gameSetupText),
 	CR_POSTLOAD(PostLoad)
 ));
 
-void CGameSetup::PostLoad()
+CGameSetup* gameSetup = NULL;
+
+
+
+void CGameSetup::LoadSavedScript(const std::string& file, const std::string& script)
 {
-	const std::string buf = gameSetupText;
-	Init(buf);
+	if (script.empty())
+		return;
+	if (gameSetup != NULL)
+		return;
+
+	CGameSetup* temp = new CGameSetup();
+
+	if (!temp->Init(script)) {
+		delete temp; temp = NULL;
+	} else {
+		temp->saveName = file;
+		// set the global instance
+		gameSetup = temp;
+	}
 }
 
 
-CGameSetup* gameSetup = NULL;
+const std::map<std::string, std::string>& CGameSetup::GetMapOptions()
+{
+	static std::map<std::string, std::string> dummyOptions;
+
+	if (gameSetup != NULL) {
+		return gameSetup->GetMapOptionsCont();
+	}
+
+	return dummyOptions;
+}
+
+const std::map<std::string, std::string>& CGameSetup::GetModOptions()
+{
+	static std::map<std::string, std::string> dummyOptions;
+
+	if (gameSetup != NULL) {
+		return gameSetup->GetModOptionsCont();
+	}
+
+	return dummyOptions;
+}
+
+
+const std::vector<PlayerBase>& CGameSetup::GetPlayerStartingData()
+{
+	static std::vector<PlayerBase> dummyData;
+
+	if (gameSetup != NULL) {
+		return gameSetup->GetPlayerStartingDataCont();
+	}
+
+	return dummyData;
+}
+
+const std::vector<TeamBase>& CGameSetup::GetTeamStartingData()
+{
+	static std::vector<TeamBase> dummyData;
+
+	if (gameSetup != NULL) {
+		return gameSetup->GetTeamStartingDataCont();
+	}
+
+	return dummyData;
+}
+
+const std::vector<AllyTeam>& CGameSetup::GetAllyStartingData()
+{
+	static std::vector<AllyTeam> dummyData;
+
+	if (gameSetup != NULL) {
+		return gameSetup->GetAllyStartingDataCont();
+	}
+
+	return dummyData;
+}
+
+
 
 CGameSetup::CGameSetup()
 	: fixedAllies(true)
+	, useLuaGaia(true)
+	, noHelperAIs(false)
+
+	, ghostedBuildings(true)
+	, disableMapDamage(false)
+
+	, onlyLocal(false)
+	, hostDemo(false)
+
 	, mapHash(0)
 	, modHash(0)
 	, mapSeed(0)
-	, useLuaGaia(true)
-	, startPosType(StartPos_Fixed)
+
+	, gameStartDelay(0)
+	, numDemoPlayers(0)
 	, maxUnitsPerTeam(1500)
-	, ghostedBuildings(true)
-	, disableMapDamage(false)
+
 	, maxSpeed(0.0f)
 	, minSpeed(0.0f)
-	, onlyLocal(false)
-	, hostDemo(false)
-	, numDemoPlayers(0)
-	, gameStartDelay(0)
-	, noHelperAIs(false)
+
+	, startPosType(StartPos_Fixed)
 {}
 
-CGameSetup::~CGameSetup()
+void CGameSetup::PostLoad()
 {
+	Init(gameSetupText);
 }
 
 void CGameSetup::LoadUnitRestrictions(const TdfParser& file)
@@ -80,11 +158,17 @@ void CGameSetup::LoadStartPositionsFromMap()
 		throw content_error("MapInfo: " + mapParser.GetErrorLog());
 	}
 
-	for(size_t a = 0; a < teamStartingData.size(); ++a) {
-		float3 pos(1000.0f, 100.0f, 1000.0f);
-		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos)) // don't fail when playing with more players than startpositions and we didn't use them anyway
+	for (size_t a = 0; a < teamStartingData.size(); ++a) {
+		float3 pos;
+
+		// don't fail when playing with more players than
+		// start positions and we didn't use them anyway
+		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos))
 			throw content_error(mapParser.GetErrorLog());
-		teamStartingData[a].startPos = float3(pos.x, pos.y, pos.z);
+
+		// map should ensure positions are valid
+		// (but clients will always do clamping)
+		teamStartingData[a].SetStartPos(pos);
 	}
 }
 
@@ -99,33 +183,23 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 		rng.Seed(gameSetupText.length());
 		rng.Seed((size_t)gameSetupText.c_str());
 		std::vector<int> teamStartNum(teamStartingData.size());
+
 		for (size_t i = 0; i < teamStartingData.size(); ++i)
 			teamStartNum[i] = i;
+
 		std::random_shuffle(teamStartNum.begin(), teamStartNum.end(), rng);
+
 		for (size_t i = 0; i < teamStartingData.size(); ++i)
 			teamStartingData[i].teamStartNum = teamStartNum[i];
-	}
-	else
-	{
+	} else {
 		for (size_t a = 0; a < teamStartingData.size(); ++a) {
 			teamStartingData[a].teamStartNum = (int)a;
 		}
 	}
 
-	if (startPosType == StartPos_Fixed || startPosType == StartPos_Random)
+	if (startPosType == StartPos_Fixed || startPosType == StartPos_Random) {
 		LoadStartPositionsFromMap();
-
-	// Show that we havent selected start pos yet
-	if (startPosType == StartPos_ChooseInGame) {
-		for (size_t a = 0; a < teamStartingData.size(); ++a) {
-			teamStartingData[a].startPos.y = -500;
-		}
 	}
-}
-
-std::string CGameSetup::MapFile() const
-{
-	return archiveScanner->MapNameToMapFile(mapName);
 }
 
 void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameList)
@@ -167,15 +241,14 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 	unsigned playerCount = 0;
 	if (file.GetValue(playerCount, "GAME\\NumPlayers") && playerStartingData.size() != playerCount) {
 		LOG_L(L_WARNING,
-				_STPF_" players in GameSetup script (NumPlayers says %i)",
-				playerStartingData.size(), playerCount);
+			_STPF_ " players in GameSetup script (NumPlayers says %i)",
+			playerStartingData.size(), playerCount);
 	}
 }
 
 void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& nameList)
 {
 	// i = AI index in game (no gaps), a = AI index in script
-//	int i = 0;
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
 		char section[50];
 		sprintf(section, "GAME\\AI%i\\", a);
@@ -225,10 +298,6 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 	}
 }
 
-const std::vector<SkirmishAIData>& CGameSetup::GetSkirmishAIs() const {
-	return skirmishAIStartingData;
-}
-
 void CGameSetup::LoadTeams(const TdfParser& file)
 {
 	// i = team index in game (no gaps), a = team index in script
@@ -245,13 +314,13 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		TeamBase data;
 
 		// Get default color from palette (based on "color" tag)
-		for (size_t num = 0; num < 3; ++num)
-		{
+		for (size_t num = 0; num < 3; ++num) {
 			data.color[num] = TeamBase::teamDefaultColor[a][num];
 		}
 		data.color[3] = 255;
 
-		std::map<std::string, std::string> setup = file.GetAllValues(s);
+		const std::map<std::string, std::string>& setup = file.GetAllValues(s);
+
 		for (std::map<std::string, std::string>::const_iterator it = setup.begin(); it != setup.end(); ++it)
 			data.SetValue(it->first, it->second);
 
@@ -264,7 +333,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 	unsigned teamCount = 0;
 	if (file.GetValue(teamCount, "Game\\NumTeams") && teamStartingData.size() != teamCount) {
 		LOG_L(L_WARNING,
-				_STPF_" teams in GameSetup script (NumTeams: %i)",
+				_STPF_ " teams in GameSetup script (NumTeams: %i)",
 				teamStartingData.size(), teamCount);
 	}
 }
@@ -280,8 +349,10 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 
 		if (!file.SectionExist(s))
 			continue;
+
 		AllyTeam data;
 		std::map<std::string, std::string> setup = file.GetAllValues(s);
+
 		for (std::map<std::string, std::string>::const_iterator it = setup.begin(); it != setup.end(); ++it)
 			data.SetValue(it->first, it->second);
 
@@ -293,27 +364,26 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 
 	{
 		const size_t numAllyTeams = allyStartingData.size();
-		for (size_t a = 0; a < numAllyTeams; ++a)
-		{
+		for (size_t a = 0; a < numAllyTeams; ++a) {
 			allyStartingData[a].allies.resize(numAllyTeams, false);
 			allyStartingData[a].allies[a] = true; // each team is allied with itself
 
 			std::ostringstream section;
 			section << "GAME\\ALLYTEAM" << a << "\\";
-			size_t numAllies = atoi(file.SGetValueDef("0", section.str() + "NumAllies").c_str());
+
+			const size_t numAllies = atoi(file.SGetValueDef("0", section.str() + "NumAllies").c_str());
+
 			for (size_t b = 0; b < numAllies; ++b) {
 				std::ostringstream key;
 				key << "GAME\\ALLYTEAM" << a << "\\Ally" << b;
-				int other = atoi(file.SGetValueDef("0",key.str()).c_str());
+				const int other = atoi(file.SGetValueDef("0",key.str()).c_str());
 				allyStartingData[a].allies[allyteamRemap[other]] = true;
 			}
 		}
 	}
 
 	unsigned allyCount = 0;
-	if (file.GetValue(allyCount, "GAME\\NumAllyTeams")
-			&& (allyStartingData.size() != allyCount))
-	{
+	if (file.GetValue(allyCount, "GAME\\NumAllyTeams") && (allyStartingData.size() != allyCount)) {
 		LOG_L(L_WARNING, "Incorrect number of ally teams in GameSetup script");
 	}
 }
@@ -322,12 +392,12 @@ void CGameSetup::RemapPlayers()
 {
 	// relocate Team.TeamLeader field
 	for (size_t a = 0; a < teamStartingData.size(); ++a) {
-		if (playerRemap.find(teamStartingData[a].leader) == playerRemap.end()) {
+		if (playerRemap.find(teamStartingData[a].GetLeader()) == playerRemap.end()) {
 			std::ostringstream buf;
-			buf << "GameSetup: Team " << a << " has invalid leader: " << teamStartingData[a].leader;
+			buf << "GameSetup: Team " << a << " has invalid leader: " << teamStartingData[a].GetLeader();
 			throw content_error(buf.str());
 		}
-		teamStartingData[a].leader = playerRemap[teamStartingData[a].leader];
+		teamStartingData[a].SetLeader(playerRemap[teamStartingData[a].GetLeader()]);
 	}
 	// relocate AI.hostPlayer field
 	for (size_t a = 0; a < skirmishAIStartingData.size(); ++a) {
@@ -342,12 +412,13 @@ void CGameSetup::RemapTeams()
 {
 	// relocate Player.team field
 	for (size_t a = 0; a < playerStartingData.size(); ++a) {
-		if (playerStartingData[a].spectator)
-			playerStartingData[a].team = 0; // start speccing on team 0
-		else
-		{
+		if (playerStartingData[a].spectator) {
+			// start spectating the first team (0)
+			playerStartingData[a].team = 0;
+		} else {
 			if (teamRemap.find(playerStartingData[a].team) == teamRemap.end())
 				throw content_error( str(boost::format("GameSetup: Player %i belong to wrong team: %i") %a %playerStartingData[a].team) );
+
 			playerStartingData[a].team = teamRemap[playerStartingData[a].team];
 		}
 	}
@@ -355,6 +426,7 @@ void CGameSetup::RemapTeams()
 	for (size_t a = 0; a < skirmishAIStartingData.size(); ++a) {
 		if (teamRemap.find(skirmishAIStartingData[a].team) == teamRemap.end())
 			throw content_error("invalid AI.Team in GameSetup script");
+
 		skirmishAIStartingData[a].team = teamRemap[skirmishAIStartingData[a].team];
 		team_skirmishAI[skirmishAIStartingData[a].team] = &(skirmishAIStartingData[a]);
 	}
@@ -372,19 +444,16 @@ void CGameSetup::RemapAllyteams()
 }
 
 // TODO: RemapSkirmishAIs()
-
 bool CGameSetup::Init(const std::string& buf)
 {
 	// Copy buffer contents
 	gameSetupText = buf;
 
-	// Parse
+	// Parse game parameters
 	TdfParser file(buf.c_str(),buf.size());
 
 	if (!file.SectionExist("GAME"))
 		return false;
-
-	// Game parameters
 
 	// Used by dedicated server only
 	file.GetTDef(mapHash, unsigned(0), "GAME\\MapHash");
@@ -403,7 +472,7 @@ bool CGameSetup::Init(const std::string& buf)
 	file.GetDef(onlyLocal,           "0", "GAME\\OnlyLocal");
 	file.GetDef(useLuaGaia,          "1", "GAME\\ModOptions\\LuaGaia");
 	file.GetDef(noHelperAIs,         "0", "GAME\\ModOptions\\NoHelperAIs");
-	file.GetDef(maxUnitsPerTeam,  "1500", "GAME\\ModOptions\\MaxUnits");
+	file.GetDef(maxUnitsPerTeam, "32000", "GAME\\ModOptions\\MaxUnits");
 	file.GetDef(disableMapDamage,    "0", "GAME\\ModOptions\\DisableMapDamage");
 	file.GetDef(ghostedBuildings,    "1", "GAME\\ModOptions\\GhostedBuildings");
 
@@ -413,12 +482,8 @@ bool CGameSetup::Init(const std::string& buf)
 	file.GetDef(fixedAllies, "1", "GAME\\ModOptions\\FixedAllies");
 
 	// Read the map & mod options
-	if (file.SectionExist("GAME\\MapOptions")) {
-		mapOptions = file.GetAllValues("GAME\\MapOptions");
-	}
-	if (file.SectionExist("GAME\\ModOptions")) {
-		modOptions = file.GetAllValues("GAME\\ModOptions");
-	}
+	if (file.SectionExist("GAME\\MapOptions")) { mapOptions = file.GetAllValues("GAME\\MapOptions"); }
+	if (file.SectionExist("GAME\\ModOptions")) { modOptions = file.GetAllValues("GAME\\ModOptions"); }
 
 	// Read startPosType (with clamping)
 	int startPosTypeInt;
@@ -446,3 +511,9 @@ bool CGameSetup::Init(const std::string& buf)
 
 	return true;
 }
+
+const std::string CGameSetup::MapFile() const
+{
+	return (archiveScanner->MapNameToMapFile(mapName));
+}
+

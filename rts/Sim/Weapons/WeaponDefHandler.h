@@ -12,12 +12,13 @@
 #include "WeaponDef.h"
 #include "System/float3.h"
 
+class LuaParser;
 class LuaTable;
 
 class CWeaponDefHandler : CommonDefHandler
 {
 public:
-	CWeaponDefHandler();
+	CWeaponDefHandler(LuaParser* defsParser);
 	~CWeaponDefHandler();
 
 	const WeaponDef* GetWeaponDef(std::string weaponname) const;

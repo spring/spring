@@ -1,6 +1,6 @@
 
 SET(rgetc1Sources
-		"rg_etc1"
+		rg_etc1.cpp
 	)
 
 ADD_LIBRARY(rgetc1 STATIC EXCLUDE_FROM_ALL ${rgetc1Sources})

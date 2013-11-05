@@ -336,11 +336,11 @@ public:
 	std::map<std::string, std::string> customParams;
 
 private:
-	float realMetalCost;
-	float realEnergyCost;
-	float realMetalUpkeep;
-	float realEnergyUpkeep;
-	float realBuildTime;
+//	float realMetalCost;
+//	float realEnergyCost;
+//	float realMetalUpkeep;
+//	float realEnergyUpkeep;
+//	float realBuildTime;
 };
 
 } // namespace springLegacyAI

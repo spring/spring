@@ -119,9 +119,8 @@ void CAdvWater::Draw()
 
 void CAdvWater::Draw(bool useBlending)
 {
-	if (!mapInfo->water.forceRendering && (readmap->currMinHeight > 1.0f)) {
+	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
 		return;
-	}
 
 	float3 base = camera->CalcPixelDir(globalRendering->viewPosX, globalRendering->viewSizeY);
 	float3 dv   = camera->CalcPixelDir(globalRendering->viewPosX, 0) - camera->CalcPixelDir(globalRendering->viewPosX, globalRendering->viewSizeY);
@@ -153,7 +152,7 @@ void CAdvWater::Draw(bool useBlending)
 		glTexGeni(GL_S,GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
 		glTexGenfv(GL_S,GL_EYE_PLANE, plan);
 		glEnable(GL_TEXTURE_GEN_S);
-			
+
 		GLfloat plan2[] = {0, 0, 0.02f, 0};
 		glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
 		glTexGenfv(GL_T, GL_EYE_PLANE, plan2);
@@ -190,14 +189,14 @@ void CAdvWater::Draw(bool useBlending)
 			for (int x = 0; x < numDivs + 1; ++x) { //! CAUTION: loop count must match EnlargeArrays above
 				dir = xbase + dv;
 				dir.ANormalize();
-				zpos = camera->pos + dir*(camera->pos.y / -dir.y);
+				zpos = camera->GetPos() + dir*(camera->GetPos().y / -dir.y);
 				zpos.y = math::sin(zpos.z*0.1f + gs->frameNum*0.06f)*0.06f + 0.05f;
 				col[3] = (unsigned char)((0.8f + 0.7f*dir.y)*255);
 				va->AddVertexQTC(zpos, x*(1.0f/numDivs), screenY - yInc, col);
 
 				dir = xbase;
 				dir.ANormalize();
-				zpos = camera->pos + dir*(camera->pos.y / -dir.y);
+				zpos = camera->GetPos() + dir*(camera->GetPos().y / -dir.y);
 				zpos.y = math::sin(zpos.z*0.1f + gs->frameNum*0.06f)*0.06f + 0.05f;
 				col[3] = (unsigned char)((0.8f + 0.7f*dir.y)*255);
 				va->AddVertexQTC(zpos, x*(1.0f/numDivs), screenY, col);
@@ -231,9 +230,8 @@ void CAdvWater::Draw(bool useBlending)
 
 void CAdvWater::UpdateWater(CGame* game)
 {
-	if ((!mapInfo->water.forceRendering && (readmap->currMinHeight > 0.0f)) || mapInfo->map.voidWater) {
+	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
 		return;
-	}
 
 	glPushAttrib(GL_FOG_BIT);
 	glPushAttrib(GL_COLOR_BUFFER_BIT);
@@ -261,40 +259,40 @@ void CAdvWater::UpdateWater(CGame* game)
 
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[0]);
 
-	va->AddVertexQT(float3(0, 0, 0), 0, 0 + gs->frameNum*0.0046f);
-	va->AddVertexQT(float3(0, 1, 0), 0, 2 + gs->frameNum*0.0046f);
-	va->AddVertexQT(float3(1, 1, 0), 2, 2 + gs->frameNum*0.0046f);
-	va->AddVertexQT(float3(1, 0, 0), 2, 0 + gs->frameNum*0.0046f);
+	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0046f);
+	va->AddVertexQT(  UpVector, 0, 2 + gs->frameNum*0.0046f);
+	va->AddVertexQT(  XYVector, 2, 2 + gs->frameNum*0.0046f);
+	va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0046f);
 
-	va->AddVertexQT(float3(0, 0, 0), 0, 0 + gs->frameNum*0.0026f);
-	va->AddVertexQT(float3(0, 1, 0), 0, 4 + gs->frameNum*0.0026f);
-	va->AddVertexQT(float3(1, 1, 0), 2, 4 + gs->frameNum*0.0026f);
-	va->AddVertexQT(float3(1, 0, 0), 2, 0 + gs->frameNum*0.0026f);
+	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0026f);
+	va->AddVertexQT(  UpVector, 0, 4 + gs->frameNum*0.0026f);
+	va->AddVertexQT(  XYVector, 2, 4 + gs->frameNum*0.0026f);
+	va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0026f);
 
-	va->AddVertexQT(float3(0, 0, 0), 0, 0 + gs->frameNum*0.0012f);
-	va->AddVertexQT(float3(0, 1, 0), 0, 8 + gs->frameNum*0.0012f);
-	va->AddVertexQT(float3(1, 1, 0), 2, 8 + gs->frameNum*0.0012f);
-	va->AddVertexQT(float3(1, 0, 0), 2, 0 + gs->frameNum*0.0012f);
+	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0012f);
+	va->AddVertexQT(  UpVector, 0, 8 + gs->frameNum*0.0012f);
+	va->AddVertexQT(  XYVector, 2, 8 + gs->frameNum*0.0012f);
+	va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0012f);
 
 	va->DrawArrayT(GL_QUADS);
 
 	va->Initialize();
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
 
-	va->AddVertexQT(float3(0, 0, 0), 0, 0 + gs->frameNum*0.0036f);
-	va->AddVertexQT(float3(0, 1, 0), 0, 1 + gs->frameNum*0.0036f);
-	va->AddVertexQT(float3(1, 1, 0), 1, 1 + gs->frameNum*0.0036f);
-	va->AddVertexQT(float3(1, 0, 0), 1, 0 + gs->frameNum*0.0036f);
+	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0036f);
+	va->AddVertexQT(  UpVector, 0, 1 + gs->frameNum*0.0036f);
+	va->AddVertexQT(  XYVector, 1, 1 + gs->frameNum*0.0036f);
+	va->AddVertexQT( RgtVector, 1, 0 + gs->frameNum*0.0036f);
 
 	va->DrawArrayT(GL_QUADS);
 
 	va->Initialize();
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
 
-	va->AddVertexQT(float3(0, 0, 0), 0, 0 + gs->frameNum*0.0082f);
-	va->AddVertexQT(float3(0, 1, 0), 0, 1 + gs->frameNum*0.0082f);
-	va->AddVertexQT(float3(1, 1, 0), 1, 1 + gs->frameNum*0.0082f);
-	va->AddVertexQT(float3(1, 0, 0), 1, 0 + gs->frameNum*0.0082f);
+	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0082f);
+	va->AddVertexQT(  UpVector, 0, 1 + gs->frameNum*0.0082f);
+	va->AddVertexQT(  XYVector, 1, 1 + gs->frameNum*0.0082f);
+	va->AddVertexQT( RgtVector, 1, 0 + gs->frameNum*0.0082f);
 
 	va->DrawArrayT(GL_QUADS);
 
@@ -309,7 +307,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
 	camera->forward.y *= -1.0f;
-	camera->pos.y *= -1.0f;
+	camera->SetPos().y *= -1.0f;
 	camera->Update();
 
 	reflectFBO.Bind();
@@ -325,7 +323,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	glClipPlane(GL_CLIP_PLANE2, plane);
 	drawReflection = true;
 
-	readmap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
+	readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 	unitDrawer->Draw(true);
 	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(true);

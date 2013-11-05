@@ -32,7 +32,7 @@ struct TestObj {
 		embeddedPtr = &embedded;
 
 	}
-	~TestObj() {
+	virtual ~TestObj() {
 		if (children[0]) delete children[0];
 	}
 

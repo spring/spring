@@ -14,7 +14,7 @@
 
 enum {
 	LUAFN_Destroy,              // ( ) -> nil
-	LUAFN_StartMoving,          // ( ) -> nil
+	LUAFN_StartMoving,          // ( reversing ) -> nil
 	LUAFN_StopMoving,           // ( ) -> nil
 	LUAFN_Activate,             // ( ) -> nil
 	LUAFN_Killed,               // ( recentDamage, maxHealth ) -> number delayedWreckLevel | nil

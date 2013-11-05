@@ -5,10 +5,16 @@
  */
 #include "FileSystem.h"
 
+#include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
+#include "System/Platform/Win/win32.h"
 #include "System/Util.h"
 
 #include <boost/regex.hpp>
+
+#ifdef _WIN32
+#include <io.h>
+#endif
 
 ////////////////////////////////////////
 ////////// FileSystem
@@ -95,10 +101,18 @@ std::string FileSystem::ConvertGlobToRegex(const std::string& glob)
 	return regex;
 }
 
+
+bool FileSystem::ComparePaths(std::string path1, std::string path2)
+{
+	path1 = FileSystem::EnsureNoPathSepAtEnd(FileSystem::GetNormalizedPath(path1));
+	path2 = FileSystem::EnsureNoPathSepAtEnd(FileSystem::GetNormalizedPath(path2));
+	return FileSystemAbstraction::ComparePaths(path1, path2);
+}
+
+
 bool FileSystem::FileExists(std::string file)
 {
-	FixSlashes(file);
-	return FileSystemAbstraction::FileExists(file);
+	return FileSystemAbstraction::FileExists(FileSystem::GetNormalizedPath(file));
 }
 
 size_t FileSystem::GetFileSize(std::string file)
@@ -106,8 +120,8 @@ size_t FileSystem::GetFileSize(std::string file)
 	if (!CheckFile(file)) {
 		return 0;
 	}
-	FixSlashes(file);
-	return FileSystemAbstraction::GetFileSize(file);
+
+	return FileSystemAbstraction::GetFileSize(FileSystem::GetNormalizedPath(file));
 }
 
 bool FileSystem::CreateDirectory(std::string dir)
@@ -126,6 +140,23 @@ bool FileSystem::CreateDirectory(std::string dir)
 		prev_slash = slash;
 	}
 	return FileSystemAbstraction::MkDir(dir);
+}
+
+
+bool FileSystem::TouchFile(std::string filePath)
+{
+	if (!CheckFile(filePath)) {
+		return false;
+	}
+
+	if (access(filePath.c_str(), R_OK) == 0) { // check for read access
+		return true;
+	}
+
+	FILE* f = fopen(filePath.c_str(), "a+b");
+	if (!f) return false;
+	fclose(f);
+	return (access(filePath.c_str(), R_OK) == 0); // check for read access
 }
 
 
@@ -197,7 +228,7 @@ std::string FileSystem::GetNormalizedPath(const std::string& path) {
 
 std::string& FileSystem::FixSlashes(std::string& path)
 {
-	int sep = FileSystem::GetNativePathSeparator();
+	const char sep = GetNativePathSeparator();
 	for (size_t i = 0; i < path.size(); ++i) {
 		if (path[i] == '/' || path[i] == '\\') {
 			path[i] = sep;
@@ -224,19 +255,33 @@ bool FileSystem::CheckFile(const std::string& file)
 	// Don't allow code to escape from the data directories.
 	// Note: this does NOT mean this is a SAFE fopen function:
 	// symlink-, hardlink-, you name it-attacks are all very well possible.
-	// The check is just ment to "enforce" certain coding behaviour.
-	bool hasParentRef = (file.find("..") != std::string::npos);
-
-	return !hasParentRef;
+	// The check is just meant to "enforce" certain coding behaviour.
+	//
+	return (file.find("..") == std::string::npos);
 }
-// bool FileSystem::CheckDir(const std::string& dir) const {
-// 	return CheckFile(dir);
-// }
+
 bool FileSystem::Remove(std::string file)
 {
 	if (!CheckFile(file)) {
 		return false;
 	}
-	FixSlashes(file);
-	return FileSystem::DeleteFile(file);
+
+	return FileSystem::DeleteFile(FileSystem::GetNormalizedPath(file));
 }
+
+const std::string& FileSystem::GetCacheDir()
+{
+	// cache-dir versioning must not be too finegrained,
+	// we do want to regenerate cache after every commit
+	//
+	// release builds must however also *never* use the
+	// same directory as any previous development build
+	// (regardless of branch), so keep caches separate
+	static const std::string cacheType[2] = {"dev-", "rel-"};
+	static const std::string cacheBaseDir = "cache";
+	static const std::string cacheVersion = SpringVersion::GetMajor() + cacheType[SpringVersion::IsRelease()] + SpringVersion::GetBranch();
+	static const std::string cacheDir = cacheBaseDir + GetNativePathSeparator() + cacheVersion;
+
+	return cacheDir;
+}
+

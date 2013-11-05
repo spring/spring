@@ -45,12 +45,7 @@ namespace Watchdog
 		{}
 		volatile Threading::NativeThreadHandle thread;
 		volatile Threading::NativeThreadId threadid;
-	#ifdef STATIC_SPRING_TIME
-		// spring_time is a class here, those can't be volatile
 		spring_time timer;
-	#else
-		volatile spring_time timer;
-	#endif
 		volatile unsigned int numreg;
 	};
 	static WatchDogThreadInfo registeredThreadsData[WDT_SIZE];
@@ -88,6 +83,7 @@ namespace Watchdog
 	}
 
 
+	__FORCE_ALIGN_STACK__
 	static void HangDetectorLoop()
 	{
 		Threading::SetThreadName("watchdog");
@@ -103,7 +99,7 @@ namespace Watchdog
 				WatchDogThreadInfo* th_info = registeredThreads[i];
 				spring_time curwdt = th_info->timer;
 
-				if (spring_istime(curwdt) && curtime > curwdt && (curtime - curwdt) > hangTimeout) {
+				if (spring_istime(curwdt) && (curtime - curwdt) > hangTimeout) {
 					if (!hangDetected) {
 						LOG_L(L_WARNING, "[Watchdog] Hang detection triggered for Spring %s.", SpringVersion::GetFull().c_str());
 						if (GML::Enabled())
@@ -117,17 +113,17 @@ namespace Watchdog
 			}
 
 			if (hangDetected) {
-				CrashHandler::PrepareStacktrace();
+				CrashHandler::PrepareStacktrace(LOG_LEVEL_WARNING);
 
 				for (unsigned int i = 0; i < WDT_LAST; ++i) {
 					if (!threadSlots[i].active)
 						continue;
 
 					WatchDogThreadInfo* th_info = registeredThreads[i];
-					CrashHandler::Stacktrace(th_info->thread, threadNames[i]);
+					CrashHandler::Stacktrace(th_info->thread, threadNames[i], LOG_LEVEL_WARNING);
 				}
 
-				CrashHandler::CleanupStacktrace();
+				CrashHandler::CleanupStacktrace(LOG_LEVEL_WARNING);
 			}
 
 			boost::this_thread::sleep(boost::posix_time::seconds(1));

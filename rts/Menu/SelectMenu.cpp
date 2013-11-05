@@ -3,7 +3,6 @@
 #include "SelectMenu.h"
 
 #include <SDL_keysym.h>
-#include <SDL_timer.h>
 #include <boost/bind.hpp>
 #include <sstream>
 #include <stack>
@@ -41,9 +40,9 @@ using std::string;
 using agui::Button;
 using agui::HorizontalLayout;
 
-CONFIG(std::string, address).defaultValue("");
-CONFIG(bool, NoHelperAIs).defaultValue(false);
-CONFIG(std::string, LastSelectedSetting).defaultValue("");
+CONFIG(std::string, address).defaultValue("").description("Last Ip/hostname used as direct connect in the menu.");
+CONFIG(std::string, LastSelectedSetting).defaultValue("").description("Stores the previously selected setting, when editing settings within the Spring main menu.");
+CONFIG(std::string, MenuArchive).defaultValue("Spring Bitmaps").description("Archive name for the default Menu.");
 
 class ConnectWindow : public agui::Window
 {
@@ -69,7 +68,7 @@ public:
 		GeometryChange();
 	}
 
-	boost::signal<void (std::string)> Connect;
+	boost::signals2::signal<void (std::string)> Connect;
 	agui::LineEdit* address;
 
 private:
@@ -107,7 +106,7 @@ public:
 		GeometryChange();
 	}
 
-	boost::signal<void (std::string)> OK;
+	boost::signals2::signal<void (std::string)> OK;
 	agui::LineEdit* value;
 
 private:
@@ -138,10 +137,14 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), setting
 	{ // GUI stuff
 		agui::Picture* background = new agui::Picture(this);;
 		{
-			std::string archive = archiveScanner->ArchiveFromName("Spring Bitmaps");
-			std::string archivePath = archiveScanner->GetArchivePath(archive)+archive;
+			const std::string archive = archiveScanner->ArchiveFromName(configHandler->GetString("MenuArchive"));
+			const std::string archivePath = archiveScanner->GetArchivePath(archive)+archive;
 			vfsHandler->AddArchive(archivePath, false);
-			background->Load("bitmaps/ui/background.jpg");
+			const std::vector<std::string> files = CFileHandler::FindFiles("bitmaps/ui/background/", "*");
+			if (!files.empty()) {
+				//TODO: select by resolution / aspect ratio with fallback image
+				background->Load(files[gu->RandInt() % files.size()]);
+			}
 			vfsHandler->RemoveArchive(archivePath);
 		}
 		selw = new SelectionWidget(this);
@@ -181,7 +184,7 @@ SelectMenu::~SelectMenu()
 
 bool SelectMenu::Draw()
 {
-	SDL_Delay(10); // milliseconds
+	spring_msecs(10).sleep();
 	ClearScreen();
 	agui::gui->Draw();
 
@@ -205,6 +208,10 @@ void SelectMenu::Single()
 	}
 	else if (!once) // in case of double-click
 	{
+
+		if (selw->userScript == SelectionWidget::SandboxAI) {
+			selw->userScript.clear();
+		}
 		once = true;
 		mySettings->isHost = true;
 		pregame = new CPreGame(mySettings);
@@ -251,7 +258,7 @@ void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 	{
 		agui::gui->RmElement(settingsWindow);
 		settingsWindow = NULL;
-		int p = name.find(" = ");
+		size_t p = name.find(" = ");
 		if(p != std::string::npos) {
 			configHandler->SetString(name.substr(0,p), name.substr(p + 3));
 			ShowSettingsList();
@@ -278,7 +285,7 @@ void SelectMenu::ShowSettingsList()
 }
 
 void SelectMenu::SelectSetting(std::string setting) {
-	int p = setting.find(" = ");
+	size_t p = setting.find(" = ");
 	if(p != std::string::npos)
 		setting = setting.substr(0, p);
 	userSetting = setting;

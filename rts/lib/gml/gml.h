@@ -3,8 +3,8 @@
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
 // Ware Zerver Tech. licenses this library
-// to be used, distributed and modified 
-// freely for any purpose, as long as 
+// to be used, distributed and modified
+// freely for any purpose, as long as
 // this notice remains unchanged
 
 #ifndef GML_H
@@ -190,10 +190,12 @@ EXTERN inline GLuint GML_GLAPIENTRY gmlGenLists(GLsizei items) {
 	}
 #define GML_CALL_DEBUGGER() gmlCallDebugger gmlCDBG(L);
 #define GML_LOCK_TIME() (gmlCallDebugger::getLockTime())
+#define GML_RESET_LOCK_TIME() (gmlCallDebugger::resetLockTime())
 #else
 #define GML_EXPGEN_CHECK()
 #define GML_CALL_DEBUGGER()
 #define GML_LOCK_TIME() 0
+#define GML_RESET_LOCK_TIME()
 #endif
 
 #else
@@ -201,6 +203,7 @@ EXTERN inline GLuint GML_GLAPIENTRY gmlGenLists(GLsizei items) {
 #define GML_EXPGEN_CHECK()
 #define GML_CALL_DEBUGGER()
 #define GML_LOCK_TIME() 0
+#define GML_RESET_LOCK_TIME()
 
 #endif
 
@@ -214,13 +217,14 @@ EXTERN inline GLuint GML_GLAPIENTRY gmlGenLists(GLsizei items) {
 #define GML_THRMUTEX_LOCK(name,thr)
 #define GML_OBJMUTEX_LOCK(name,thr,...)
 #define GML_STDMUTEX_LOCK_NOPROF(name)
-#define GML_MSTMUTEX_LOCK(name)
+#define GML_MSTMUTEX_LOCK(name,...)
 #define GML_MSTMUTEX_DOLOCK(name)
 #define GML_MSTMUTEX_DOUNLOCK(name)
 
 #define GML_EXPGEN_CHECK()
 #define GML_CALL_DEBUGGER()
 #define GML_LOCK_TIME() 0
+#define GML_RESET_LOCK_TIME()
 
 #endif // USE_GML
 

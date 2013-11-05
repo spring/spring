@@ -5,6 +5,8 @@
 #include "gml_base.h"
 #include "gmlsrv.h"
 
+#include "Game/UI/KeyBindings.h"
+#include "Lua/LuaConfig.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/OffscreenGLContext.h"
@@ -14,7 +16,8 @@
 #include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
 
-CONFIG(bool, MultiThreadShareLists).defaultValue(true);
+//GPU debug tools report calls to gl functions from different threads as errors -> disable in safemode
+CONFIG(bool, MultiThreadShareLists).defaultValue(true).safemodeValue(false).description("render-helper threads");
 CONFIG(bool, MultiThreadSim).defaultValue(true);
 
 
@@ -53,7 +56,7 @@ static void gmlSimLoop(void*)
 
 				//FIXME activeController could change while processing this branch. Better make it safe with a mutex?
 				if (activeController) {
-					Watchdog::ClearTimer(WDT_SIM); 
+					Watchdog::ClearTimer(WDT_SIM);
 					gmlProcessor->ExpandAuxQueue();
 
 					if (!Threading::UpdateGameController(activeController))
@@ -147,6 +150,35 @@ namespace GML {
 	#else
 		return false;
 	#endif
+	}
+
+	void PrintStartupMessage(int showMTInfo) {
+		if (showMTInfo == -1)
+			return;
+		if (showMTInfo != MT_LUA_NONE) {
+			if (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT) {
+				LOG("[Threading] Multithreading is enabled but currently running in compatibility mode %d", showMTInfo);
+			} else {
+				LOG("[Threading] Multithreading is enabled and currently running in mode %d", showMTInfo);
+			}
+			if (showMTInfo == MT_LUA_SINGLE) {
+				CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
+				std::string lskey = lslist.empty() ? "" : " (press " + lslist.front() + ")";
+				LOG("[Threading] Games that use lua based rendering may run very slow in this mode, "
+					"indicated by a high LUA-SYNC-CPU(MT) value displayed in the upper right corner");
+				LOG("[Threading] Consider MultiThreadLua = %d in the settings to improve performance, "
+					"or try to disable LuaShaders and all rendering widgets%s", (int)MT_LUA_SINGLE_BATCH, lskey.c_str());
+			} else if (showMTInfo == MT_LUA_SINGLE_BATCH) {
+				LOG("[Threading] Games that use lua gadget based rendering may run very slow in this mode, "
+					"indicated by a high LUA-SYNC-CPU(MT) value displayed in the upper right corner");
+			} else if (showMTInfo == MT_LUA_DUAL_EXPORT) {
+				LOG("[Threading] Games that use lua gadgets which export data may run very slow in this mode, "
+					"indicated by a high LUA-EXP-SIZE(MT) value displayed in the upper right corner");
+			}
+		}  else if (configHandler->GetBool("EnableUnsafeAndBrokenMT"))  {
+			LOG("[Threading] Multithreading is disabled because the game or system appears incompatible");
+			LOG("[Threading] MultiThreadCount > 1 in the settings will forcefully enable multithreading");
+		}
 	}
 };
 

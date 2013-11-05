@@ -39,16 +39,14 @@ enum UnitEvent {
 	UNIT_MOVE_FAILED,
 	UNIT_EXPLOSION,
 	UNIT_UNIT_COLLISION,
+	UNIT_FEAT_COLLISION,
 	UNIT_STOCKPILE_CHANGED
 };
 
 enum FeatEvent {
 	FEAT_CREATED,
-	FEAT_DESTROYED
-};
-
-enum ObjEvent {
-	UNIT_FEAT_COLLISION
+	FEAT_DESTROYED,
+	FEAT_DAMAGED
 };
 
 enum ProjEvent {
@@ -57,46 +55,202 @@ enum ProjEvent {
 };
 
 enum LogEvent {
-	ADD_CONSOLE_LINE
+	LOG_CONSOLE_LINE
 };
 
 enum UIEvent {
 	SHOCK_FRONT
 };
 
+
+struct LuaUnitEventBase {
+public:
+	LuaUnitEventBase(UnitEvent eventID): id(eventID) {}
+	UnitEvent GetID() const { return id; }
+protected:
+	UnitEvent id;
+};
+
+// TODO: FINISH ME
+struct LuaUnitCreatedEvent: public LuaUnitEventBase { LuaUnitCreatedEvent(): LuaUnitEventBase(UNIT_CREATED) {} };
+struct LuaUnitFinishedEvent: public LuaUnitEventBase { LuaUnitFinishedEvent(): LuaUnitEventBase(UNIT_FINISHED) {} };
+struct LuaUnitFromFactoryEvent: public LuaUnitEventBase { LuaUnitFromFactoryEvent(): LuaUnitEventBase(UNIT_FROM_FACTORY) {} };
+struct LuaUnitDestroyedEvent: public LuaUnitEventBase { LuaUnitDestroyedEvent(): LuaUnitEventBase(UNIT_DESTROYED) {} };
+struct LuaUnitTakenEvent: public LuaUnitEventBase { LuaUnitTakenEvent(): LuaUnitEventBase(UNIT_TAKEN) {} };
+struct LuaUnitGivenEvent: public LuaUnitEventBase { LuaUnitGivenEvent(): LuaUnitEventBase(UNIT_GIVEN) {} };
+struct LuaUnitIdleEvent: public LuaUnitEventBase { LuaUnitIdleEvent(): LuaUnitEventBase(UNIT_IDLE) {} };
+struct LuaUnitCommandEvent: public LuaUnitEventBase { LuaUnitCommandEvent(): LuaUnitEventBase(UNIT_COMMAND) {} };
+struct LuaUnitCommandDoneEvent: public LuaUnitEventBase { LuaUnitCommandDoneEvent(): LuaUnitEventBase(UNIT_CMD_DONE) {} };
+struct LuaUnitDamagedEvent: public LuaUnitEventBase { LuaUnitDamagedEvent(): LuaUnitEventBase(UNIT_DAMAGED) {} };
+struct LuaUnitExperienceEvent: public LuaUnitEventBase { LuaUnitExperienceEvent(): LuaUnitEventBase(UNIT_EXPERIENCE) {} };
+struct LuaUnitSeismicPingEvent: public LuaUnitEventBase { LuaUnitSeismicPingEvent(): LuaUnitEventBase(UNIT_SEISMIC_PING) {} };
+struct LuaUnitEnteredRadarEvent: public LuaUnitEventBase { LuaUnitEnteredRadarEvent(): LuaUnitEventBase(UNIT_ENTERED_RADAR) {} };
+struct LuaUnitEnteredLosEvent: public LuaUnitEventBase { LuaUnitEnteredLosEvent(): LuaUnitEventBase(UNIT_ENTERED_LOS) {} };
+struct LuaUnitLeftRadarEvent: public LuaUnitEventBase { LuaUnitLeftRadarEvent(): LuaUnitEventBase(UNIT_LEFT_RADAR) {} };
+struct LuaUnitLeftLosEvent: public LuaUnitEventBase { LuaUnitLeftLosEvent(): LuaUnitEventBase(UNIT_LEFT_LOS) {} };
+struct LuaUnitLoadedEvent: public LuaUnitEventBase { LuaUnitLoadedEvent(): LuaUnitEventBase(UNIT_LOADED) {} };
+struct LuaUnitUnloadedEvent: public LuaUnitEventBase { LuaUnitUnloadedEvent(): LuaUnitEventBase(UNIT_UNLOADED) {} };
+struct LuaUnitEnteredWaterEvent: public LuaUnitEventBase { LuaUnitEnteredWaterEvent(): LuaUnitEventBase(UNIT_ENTERED_WATER) {} };
+struct LuaUnitEnteredAirEvent: public LuaUnitEventBase { LuaUnitEnteredAirEvent(): LuaUnitEventBase(UNIT_ENTERED_AIR) {} };
+struct LuaUnitLeftWaterEvent: public LuaUnitEventBase { LuaUnitLeftWaterEvent(): LuaUnitEventBase(UNIT_LEFT_WATER) {} };
+struct LuaUnitLeftAirEvent: public LuaUnitEventBase { LuaUnitLeftAirEvent(): LuaUnitEventBase(UNIT_LEFT_AIR) {} };
+struct LuaUnitCloakedEvent: public LuaUnitEventBase { LuaUnitCloakedEvent(): LuaUnitEventBase(UNIT_CLOAKED) {} };
+struct LuaUnitDecloakedEvent: public LuaUnitEventBase { LuaUnitDecloakedEvent(): LuaUnitEventBase(UNIT_DECLOAKED) {} };
+struct LuaUnitUnitCollisionEvent: public LuaUnitEventBase { LuaUnitUnitCollisionEvent(): LuaUnitEventBase(UNIT_UNIT_COLLISION) {} };
+struct LuaUnitFeatureCollisionEvent: public LuaUnitEventBase { LuaUnitFeatureCollisionEvent(): LuaUnitEventBase(UNIT_FEAT_COLLISION) {} };
+struct LuaUnitMoveFailedEvent: public LuaUnitEventBase { LuaUnitMoveFailedEvent(): LuaUnitEventBase(UNIT_MOVE_FAILED) {} };
+struct LuaUnitExplosionEvent: public LuaUnitEventBase { LuaUnitExplosionEvent(): LuaUnitEventBase(UNIT_EXPLOSION) {} }; // ?
+struct LuaUnitStockpileChangedEvent: public LuaUnitEventBase { LuaUnitStockpileChangedEvent(): LuaUnitEventBase(UNIT_STOCKPILE_CHANGED) {} };
+
+
+
+struct LuaFeatEventBase {
+public:
+	LuaFeatEventBase(FeatEvent eventID): id(eventID) {}
+	FeatEvent GetID() const { return id; }
+protected:
+	FeatEvent id;
+};
+
+struct LuaFeatureCreatedEvent: public LuaFeatEventBase {
+public:
+	LuaFeatureCreatedEvent(const CFeature* f): LuaFeatEventBase(FEAT_CREATED) {
+		feature = f;
+	}
+	const CFeature* GetFeature() const { return feature; }
+private:
+	const CFeature* feature;
+};
+
+struct LuaFeatureDestroyedEvent: public LuaFeatEventBase {
+public:
+	LuaFeatureDestroyedEvent(const CFeature* f): LuaFeatEventBase(FEAT_DESTROYED) {
+		feature = f;
+	}
+	const CFeature* GetFeature() const { return feature; }
+private:
+	const CFeature* feature;
+};
+
+struct LuaFeatureDamagedEvent: public LuaFeatEventBase {
+public:
+	LuaFeatureDamagedEvent(const CFeature* f, const CUnit* a, float d, int wdID, int pID): LuaFeatEventBase(FEAT_DAMAGED) {
+		feature = f;
+		attacker = a;
+		damage = d;
+		weaponDefID = wdID;
+		projectileID = pID;
+	}
+
+	const CFeature* GetFeature() const { return feature; }
+	const CUnit* GetAttacker() const { return attacker; }
+	float GetDamage() const { return damage; }
+	int GetWeaponDefID() const { return weaponDefID; }
+	int GetProjectileID() const { return projectileID; }
+private:
+	const CFeature* feature;
+	const CUnit* attacker;
+	float damage;
+	int weaponDefID;
+	int projectileID;
+};
+
+
+
+struct LuaProjEventBase {
+public:
+	LuaProjEventBase(ProjEvent eventID): id(eventID) {}
+	ProjEvent GetID() const { return id; }
+protected:
+	ProjEvent id;
+};
+
+struct LuaProjCreatedEvent: public LuaProjEventBase {
+public:
+	LuaProjCreatedEvent(const CProjectile* p): LuaProjEventBase(PROJ_CREATED) {
+		projectile = p;
+	}
+	const CProjectile* GetProjectile() const { return projectile; }
+private:
+	const CProjectile* projectile;
+};
+
+struct LuaProjDestroyedEvent: public LuaProjEventBase {
+public:
+	LuaProjDestroyedEvent(const CProjectile* p): LuaProjEventBase(PROJ_DESTROYED) {
+		projectile = p;
+	}
+	const CProjectile* GetProjectile() const { return projectile; }
+private:
+	const CProjectile* projectile;
+};
+
+
+
+struct LuaLogEventBase {
+public:
+	LuaLogEventBase(LogEvent eventID): id(eventID) {}
+	LogEvent GetID() const { return id; }
+protected:
+	LogEvent id;
+};
+
+struct LuaAddConsoleLineEvent: public LuaLogEventBase {
+public:
+	LuaAddConsoleLineEvent(const std::string& msg, const std::string& sec, int lvl):
+		LuaLogEventBase(LOG_CONSOLE_LINE),
+		message(msg),
+		section(sec),
+		level(lvl)
+	{
+	}
+	const std::string& GetMessage() const { return message; }
+	const std::string& GetSection() const { return section; }
+	int GetLevel() const { return level; }
+private:
+	std::string message;
+	std::string section;
+	int level;
+};
+
+
+
+struct UIEventBase {
+public:
+	UIEventBase(UIEvent eventID): id(eventID) {}
+	UIEvent GetID() const { return id; }
+protected: UIEvent id;
+};
+
+struct UIShockFrontEvent: public UIEventBase {
+public:
+	UIShockFrontEvent(const float3& p, float pwr, float r, float d): UIEventBase(SHOCK_FRONT) {
+		pos = p;
+		power = pwr;
+		aoe = r;
+		dist = d;
+	}
+	const float3& GetPos() const { return pos; }
+	float GetPower() const { return power; }
+	float GetAreaOfEffect() const { return aoe; }
+	const float* GetDistMod() const { return &dist; }
+private:
+	float3 pos;
+	float power;
+	float aoe;
+	float dist;
+};
+
+
+
+
+
+
+// FIXME:
+//   THIS A FUCKING RETARDED WAY OF DOING IT, UNMAINTAINABLE AND UNEXTENDIBLE
+//   CREATE SIMPLE DEDICATED EVENT STRUCTURES OR THROW BATCHING THE FUCK OUT
+/*
 struct LuaUnitEvent {
-	LuaUnitEvent(UnitEvent i, const CUnit* u1)
-		: id(i)
-		, unit1(u1)
-		, bool1(false)
-		, int1(0)
-		, float1(0.0f)
-		, unit2(NULL)
-	{}
-	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CUnit* u2)
-		: id(i)
-		, unit1(u1)
-		, bool1(false)
-		, int1(0)
-		, float1(0.0f)
-		, unit2(u2)
-	{}
-	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CUnit* u2, bool b1)
-		: id(i)
-		, unit1(u1)
-		, bool1(b1)
-		, int1(0)
-		, float1(0.0f)
-		, unit2(u2)
-	{}
-	LuaUnitEvent(UnitEvent i, const CUnit* u1, int i1)
-		: id(i)
-		, unit1(u1)
-		, bool1(false)
-		, int1(i1)
-		, float1(0.0f)
-		, unit2(NULL)
-	{}
 	LuaUnitEvent(UnitEvent i, const CUnit* u1, const Command& c1)
 		: id(i)
 		, unit1(u1)
@@ -104,31 +258,7 @@ struct LuaUnitEvent {
 		, int1(0)
 		, float1(0.0f)
 		, unit2(NULL)
-	{cmd1.reset(new Command(c1));}
-	LuaUnitEvent(UnitEvent i, const CUnit* u1, int i1, int i2)
-		: id(i)
-		, unit1(u1)
-		, bool1(false)
-		, int1(i1)
-		, float1(0.0f)
-		, int2(i2)
-	{}
-	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CUnit* u2, float f1, int i1, bool b1)
-		: id(i)
-		, unit1(u1)
-		, bool1(b1)
-		, int1(i1)
-		, float1(f1)
-		, unit2(u2)
-	{}
-	LuaUnitEvent(UnitEvent i, const CUnit* u1, float f1)
-		: id(i)
-		, unit1(u1)
-		, bool1(false)
-		, int1(0)
-		, float1(f1)
-		, unit2(NULL)
-	{}
+	{ cmd1.reset(new Command(c1)); }
 	LuaUnitEvent(UnitEvent i, const CUnit* u1, int i1, const float3& p1, float f1)
 		: id(i)
 		, unit1(u1)
@@ -145,14 +275,6 @@ struct LuaUnitEvent {
 		, float1(0.0f)
 		, unit2(NULL)
 	{ cmd1.reset(new Command(p1)); } // store the vector as a command to save some memory
-	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CWeapon* w2, int i1)
-		: id(i)
-		, unit1(u1)
-		, bool1(false)
-		, int1(i1)
-		, float1(0.0f)
-		, weapon2(w2)
-	{}
 
 	UnitEvent id;
 	const CUnit* unit1;
@@ -166,127 +288,62 @@ struct LuaUnitEvent {
 	};
 	boost::shared_ptr<Command> cmd1; // using a shared pointer instead of an actual object saves some memory
 };
+*/
 
-struct LuaFeatEvent {
-	LuaFeatEvent(FeatEvent i, const CFeature* f1)
-		: id(i)
-		, feat1(f1)
-	{}
-
-	FeatEvent id;
-	const CFeature* feat1;
-};
-
-struct LuaObjEvent {
-	LuaObjEvent(ObjEvent i, const CUnit* u, const CFeature* f)
-		: id(i)
-		, unit(u)
-		, feat(f)
-	{}
-
-	ObjEvent id;
-	const CUnit* unit;
-	const CFeature* feat;
-};
-
-struct LuaProjEvent {
-	LuaProjEvent(ProjEvent i, const CProjectile* p1)
-		: id(i)
-		, proj1(p1)
-	{}
-
-	ProjEvent id;
-	const CProjectile* proj1;
-};
-
-struct LuaLogEvent {
-	LuaLogEvent(LogEvent id, const std::string& msg, int level, const std::string& section)
-		: id(id)
-		, msg(msg)
-		, level(level)
-		, section(section)
-	{}
-
-	LogEvent id;
-	std::string msg;
-	int level;
-	std::string section;
-};
-
-struct LuaUIEvent {
-	LuaUIEvent(UIEvent i, const float f1, const float3& p1, const float f2, const float f3)
-		: id(i)
-		, flt1(f1)
-		, flt2(f2)
-		, flt3(f3)
-		, pos1(p1)
-	{}
-
-	UIEvent id;
-	float flt1;
-	float flt2;
-	float flt3;
-	float3 pos1;
-};
+#define LUA_EVENT_CAST(type, event) const type& ee = static_cast<const type&>(event)
 
 #if (LUA_MT_OPT & LUA_BATCH)
-	#define LUA_UNIT_BATCH_PUSH(r,...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(ulbatch);\
-			luaUnitEventBatch.push_back(LuaUnitEvent(__VA_ARGS__));\
-			return r;\
+	#define LUA_UNIT_BATCH_PUSH(r, unitEvent)                \
+		if (UseEventBatch() && Threading::IsBatchThread()) { \
+			GML_STDMUTEX_LOCK(ulbatch);                      \
+			luaUnitEventBatch.push_back(unitEvent);          \
+			return r;                                        \
 		}
-	#define LUA_FEAT_BATCH_PUSH(...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(flbatch);\
-			luaFeatEventBatch.push_back(LuaFeatEvent(__VA_ARGS__));\
-			return;\
+	#define LUA_FEAT_BATCH_PUSH(r, featEvent)                \
+		if (UseEventBatch() && Threading::IsBatchThread()) { \
+			GML_STDMUTEX_LOCK(flbatch);                      \
+			luaFeatEventBatch.push_back(featEvent);          \
+			return r;                                        \
 		}
-	#define LUA_OBJ_BATCH_PUSH(...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(olbatch);\
-			luaObjEventBatch.push_back(LuaObjEvent(__VA_ARGS__));\
-			return;\
+	#define LUA_PROJ_BATCH_PUSH(r, projEvent)                \
+		if (UseEventBatch() && Threading::IsBatchThread()) { \
+			GML_STDMUTEX_LOCK(plbatch);                      \
+			luaProjEventBatch.push_back(projEvent);          \
+			return r;                                        \
 		}
-	#define LUA_PROJ_BATCH_PUSH(...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(plbatch);\
-			luaProjEventBatch.push_back(LuaProjEvent(__VA_ARGS__));\
-			return;\
+	#define LUA_FRAME_BATCH_PUSH(r, frameEvent)              \
+		if (UseEventBatch() && Threading::IsBatchThread()) { \
+			GML_STDMUTEX_LOCK(glbatch);                      \
+			luaFrameEventBatch.push_back(frameEvent);        \
+			return r;                                        \
 		}
-	#define LUA_FRAME_BATCH_PUSH(...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(glbatch);\
-			luaFrameEventBatch.push_back(__VA_ARGS__);\
-			return;\
+	#define LUA_LOG_BATCH_PUSH(r, logEvent)                  \
+		if (UseEventBatch() && Threading::IsBatchThread()) { \
+			GML_STDMUTEX_LOCK(mlbatch);                      \
+			luaLogEventBatch.push_back(logEvent);            \
+			return r;                                        \
 		}
-	#define LUA_LOG_BATCH_PUSH(r,...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(mlbatch);\
-			luaLogEventBatch.push_back(LuaLogEvent(__VA_ARGS__));\
-			return r;\
-		}
-	#define LUA_UI_BATCH_PUSH(...)\
-		if(UseEventBatch() && Threading::IsBatchThread()) {\
-			GML_STDMUTEX_LOCK(llbatch);\
-			luaUIEventBatch.push_back(LuaUIEvent(__VA_ARGS__));\
-			return;\
+	#define LUA_UI_BATCH_PUSH(r, uiEvent)                    \
+		if (UseEventBatch() && Threading::IsBatchThread()) { \
+			GML_STDMUTEX_LOCK(llbatch);                      \
+			luaUIEventBatch.push_back(uiEvent);              \
+			return r;                                        \
 		}
 #else
-	#define LUA_UNIT_BATCH_PUSH(r,...)
-	#define LUA_FEAT_BATCH_PUSH(...)
-	#define LUA_OBJ_BATCH_PUSH(...)
-	#define LUA_PROJ_BATCH_PUSH(...)
-	#define LUA_FRAME_BATCH_PUSH(...)
-	#define LUA_LOG_BATCH_PUSH(r,...)
-	#define LUA_UI_BATCH_PUSH(...)
+	#define LUA_UNIT_BATCH_PUSH(r, unitEvent)
+	#define LUA_FEAT_BATCH_PUSH(r, featEvent)
+	#define LUA_PROJ_BATCH_PUSH(r, projEvent)
+	#define LUA_FRAME_BATCH_PUSH(r, frameEvent)
+	#define LUA_LOG_BATCH_PUSH(r, logEvent)
+	#define LUA_UI_BATCH_PUSH(r, uiEvent)
 #endif
 
 #if defined(USE_GML) && GML_ENABLE_SIM && GML_CALL_DEBUG
-	#define GML_MEASURE_LOCK_TIME(lock) unsigned luatime = SDL_GetTicks(); lock; luatime = SDL_GetTicks() - luatime; if(luatime >= 1) gmlLockTime += luatime
+	#define GML_MEASURE_LOCK_TIME(lock) spring_time luatime = spring_gettime(); lock; luatime = spring_gettime() - luatime; gmlLockTime += luatime.toMilliSecsf()
 #else
 	#define GML_MEASURE_LOCK_TIME(lock) lock
 #endif
+
 
 #if (LUA_MT_OPT & LUA_STATE)
 	#define BEGIN_ITERATE_LUA_STATES() lua_State* L_Cur = L_Sim; do { lua_State * const L = L_Cur
@@ -299,13 +356,7 @@ struct LuaUIEvent {
 		#define SELECT_UNSYNCED_LUA_STATE()
 	#endif
 	#if defined(USE_GML) && GML_ENABLE_SIM
-		#if GML_DEBUG_MUTEX
-			#define GML_LOCK_TEST(nme) { std::map<std::string, int>::iterator locki = lockmaps[GML::ThreadNumber()].find(#nme); if((lockmi==lockmmaps[GML::ThreadNumber()].end() || (*lockmi).second == 0) && locki!=lockmaps[GML::ThreadNumber()].end() && (*locki).second>0) while(1); }
-			#define GML_DEBUG_LOCK(name) { GML_STDMUTEX_LOCK(lm); std::map<boost::recursive_mutex*, int>::iterator lockmi = lockmmaps[GML::ThreadNumber()].find(L->##name##mutex); GML_LOCK_TEST(sel); GML_LOCK_TEST(group); GML_LOCK_TEST(grpsel); GML_LOCK_TEST(gui); GML_LOCK_TEST(quad); GML_LOCK_TEST(qnum); }
-		#else
-			#define GML_DEBUG_LOCK(name)
-		#endif
-		#define GML_DRCMUTEX_LOCK(name) GML_DEBUG_LOCK(name); GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
+		#define GML_DRCMUTEX_LOCK(name) GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(name, GML_DRAW|GML_SIM, *GetLuaContextData(L)->))
 	#else
 		#define GML_DRCMUTEX_LOCK(name)
 	#endif
@@ -319,7 +370,7 @@ struct LuaUIEvent {
 		#define SELECT_LUA_STATE()
 		#define SELECT_UNSYNCED_LUA_STATE()
 	#endif
-	#define GML_DRCMUTEX_LOCK(name) GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
+	#define GML_DRCMUTEX_LOCK(name) GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(name, GML_DRAW|GML_SIM, *GetLuaContextData(L)->))
 #endif
 
 #if defined(USE_GML) && GML_ENABLE_SIM

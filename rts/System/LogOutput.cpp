@@ -11,6 +11,7 @@
 #include "System/Log/FileSink.h"
 #include "System/Log/ILog.h"
 #include "System/Log/Level.h"
+#include "System/Platform/Misc.h"
 
 #include <string>
 #include <set>
@@ -28,16 +29,17 @@
 /******************************************************************************/
 /******************************************************************************/
 
-CONFIG(std::string, RotateLogFiles).defaultValue("auto")
-		.description("rotate logfiles, valid values are \"always\" (default in debug builds) and \"never\" (default in release builds).");
+CONFIG(bool, RotateLogFiles).defaultValue(false)
+		.description("rotate logfiles, old logfiles will be moved into the subfolder \"log\".");
+
 CONFIG(std::string, LogSections).defaultValue("")
 		.description("Comma seperated list of enabled logsections, see infolog.txt / console output for possible values");
 
 /*
 LogFlush defaults to true, because there should be pretty low performance gains as most
-fwrite implementations cache on their own. Also cut-off logs often caused stack-traces
-to be cut off. BEFORE letting it default to false again, verify that it really increases
-performance as the drawbacks really suck
+fwrite implementations cache on their own. Also disabling this causes stack-traces to
+be cut off. BEFORE letting it default to false again, verify that it really increases
+performance as the drawbacks really suck.
 */
 CONFIG(bool, LogFlush).defaultValue(true)
 		.description("Instantly write to the logfile, use only for debugging as it will cause a slowdown");
@@ -60,38 +62,14 @@ CLogOutput::CLogOutput()
 
 	SetFileName("infolog.txt");
 
-	bool doRotateLogFiles = false;
-	std::string rotatePolicy = "auto";
-	if (configHandler != NULL) {
-		rotatePolicy = configHandler->GetString("RotateLogFiles");
-	}
-	if (rotatePolicy == "always") {
-		doRotateLogFiles = true;
-	} else if (rotatePolicy == "never") {
-		doRotateLogFiles = false;
-	} else { // auto
-#ifdef DEBUG
-		doRotateLogFiles = true;
-#else
-		doRotateLogFiles = false;
-#endif
-	}
-	SetLogFileRotating(doRotateLogFiles);
 }
 
 
 CLogOutput::~CLogOutput()
 {
-	End();
-}
-
-
-void CLogOutput::End()
-{
 	GML_STDMUTEX_LOCK_NOPROF(log); // End
 
 	SafeDelete(filelog);
-	//log_file_removeLogFile(filePath.c_str());
 }
 
 const std::string& CLogOutput::GetFileName() const
@@ -113,72 +91,61 @@ void CLogOutput::SetFileName(std::string fname)
 
 std::string CLogOutput::CreateFilePath(const std::string& fileName)
 {
-	return FileSystem::GetCwd() + (char)FileSystem::GetNativePathSeparator() + fileName;
+	return FileSystem::EnsurePathSepAtEnd(FileSystem::GetCwd()) + fileName;
 }
 
-
-void CLogOutput::SetLogFileRotating(bool enabled)
-{
-	assert(!initialized);
-	rotateLogFiles = enabled;
-}
-bool CLogOutput::IsLogFileRotating() const
-{
-	return rotateLogFiles;
-}
 
 void CLogOutput::RotateLogFile() const
 {
-	if (IsLogFileRotating()) {
-		if (FileSystem::FileExists(filePath)) {
-			// logArchiveDir: /absolute/writeable/data/dir/log/
-			std::string logArchiveDir = filePath.substr(0, filePath.find_last_of("/\\") + 1);
-			logArchiveDir = logArchiveDir + "log" + (char)FileSystem::GetNativePathSeparator();
+	if (FileSystem::FileExists(filePath)) {
+		// logArchiveDir: /absolute/writeable/data/dir/log/
+		std::string logArchiveDir = filePath.substr(0, filePath.find_last_of("/\\") + 1);
+		logArchiveDir = logArchiveDir + "log" + FileSystem::GetNativePathSeparator();
 
-			const std::string archivedLogFile = logArchiveDir + FileSystem::GetFileModificationDate(filePath) + "_" + fileName;
+		const std::string archivedLogFile = logArchiveDir + FileSystem::GetFileModificationDate(filePath) + "_" + fileName;
 
-			// create the log archive dir if it does not exist yet
-			if (!FileSystem::DirExists(logArchiveDir)) {
-				FileSystem::CreateDirectory(logArchiveDir);
-			}
+		// create the log archive dir if it does not exist yet
+		if (!FileSystem::DirExists(logArchiveDir)) {
+			FileSystem::CreateDirectory(logArchiveDir);
+		}
 
-			// move the old log to the archive dir
-			const int moveError = rename(filePath.c_str(), archivedLogFile.c_str());
-			if (moveError != 0) {
-				// no log here yet
-				std::cerr << "Failed rotating the log file" << std::endl;
-			}
+		// move the old log to the archive dir
+		const int moveError = rename(filePath.c_str(), archivedLogFile.c_str());
+		if (moveError != 0) {
+			// no log here yet
+			std::cerr << "Failed rotating the log file" << std::endl;
 		}
 	}
 }
 
+
+bool CLogOutput::IsInitialized()
+{
+	return initialized;
+}
+
+
 void CLogOutput::Initialize()
 {
+	assert(configHandler!=NULL);
+
 	if (initialized) return;
 
-	filePath = CreateFilePath(fileName);
-	RotateLogFile();
 
-	/*filelog = new std::ofstream(filePath.c_str());
-	if (filelog->bad())
-		SafeDelete(filelog);*/
+	filePath = CreateFilePath(fileName);
+
+	const bool rotateLogFiles = configHandler->GetBool("RotateLogFiles");
+	if (rotateLogFiles) {
+		RotateLogFile();
+	}
+
 	const bool flush = configHandler->GetBool("LogFlush");
 	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, flush);
 
 	initialized = true;
 	InitializeSections();
 
-	/*std::vector<std::string>::iterator pili;
-	for (pili = preInitLog().begin(); pili != preInitLog().end(); ++pili) {
-		ToFile(*pili);
-	}
-	preInitLog().clear();*/
-
 	LOG("LogOutput initialized.");
-	LOG("Spring %s", SpringVersion::GetFull().c_str());
-	LOG("Build date/time: %s", SpringVersion::GetBuildTime().c_str());
-	LOG("Build environment: %s", SpringVersion::GetBuildEnvironment().c_str());
-	LOG("Compiler: %s", SpringVersion::GetCompiler().c_str());
 }
 
 void CLogOutput::InitializeSections()
@@ -270,5 +237,21 @@ void CLogOutput::InitializeSections()
 	LOG("Enable or disable log sections using the LogSections configuration key");
 	LOG("  or the SPRING_LOG_SECTIONS environment variable (both comma separated).");
 	LOG("  Use \"none\" to disable the default log sections.");
+}
+
+
+void CLogOutput::LogSystemInfo()
+{
+	LOG("Spring %s", SpringVersion::GetFull().c_str());
+	LOG("Build date/time: %s", SpringVersion::GetBuildTime().c_str());
+	LOG("Build environment: %s", SpringVersion::GetBuildEnvironment().c_str());
+	LOG("Compiler: %s", SpringVersion::GetCompiler().c_str());
+	LOG("OS: %s", Platform::GetOS().c_str());
+	if (Platform::Is64Bit())
+		LOG("OS: 64bit native mode");
+	else if (Platform::Is32BitEmulation())
+		LOG("OS: emulated 32bit mode");
+	else
+		LOG("OS: 32bit native mode");
 }
 

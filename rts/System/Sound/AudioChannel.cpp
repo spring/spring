@@ -9,7 +9,6 @@
 #include "SoundSource.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Objects/WorldObject.h"
-#include "Sim/Units/Unit.h"
 
 #include <climits>
 
@@ -134,7 +133,7 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 
 void AudioChannel::PlaySample(size_t id, float volume)
 {
-	FindSourceAndPlay(id, float3(0.0f, 0.0f, -1.0f), ZeroVector, volume, true);
+	FindSourceAndPlay(id, -FwdVector, ZeroVector, volume, true);
 }
 
 void AudioChannel::PlaySample(size_t id, const float3& pos, float volume)
@@ -148,20 +147,15 @@ void AudioChannel::PlaySample(size_t id, const float3& pos, const float3& veloci
 }
 
 
-void AudioChannel::PlaySample(size_t id, const CUnit* unit, float volume)
-{
-	FindSourceAndPlay(id, unit->pos, unit->speed, volume, false);
-}
-
 void AudioChannel::PlaySample(size_t id, const CWorldObject* obj, float volume)
 {
-	FindSourceAndPlay(id, obj->pos, ZeroVector, volume, false);
+	FindSourceAndPlay(id, obj->pos, obj->speed, volume, false);
 }
 
 
-void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const CUnit* unit)
+void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj)
 {
-	PlayRandomSample(soundSet, unit->pos);
+	PlayRandomSample(soundSet, obj->pos);
 }
 
 void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos)

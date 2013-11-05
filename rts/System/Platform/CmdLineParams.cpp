@@ -7,6 +7,7 @@
 #include <cstdio>
 
 #include "Game/GameVersion.h"
+#include "System/Util.h"
 
 namespace po = boost::program_options;
 
@@ -62,8 +63,13 @@ void CmdLineParams::Parse()
 	po::positional_options_description p;
 	p.add("input-file", 1);
 
-	po::store(po::command_line_parser(argc, argv).options(all).positional(p).run(), vm);
+	po::parsed_options parsed = po::command_line_parser(argc, argv).options(all).positional(p).allow_unregistered().run();
+	po::store(parsed, vm);
 	po::notify(vm);
+
+	std::vector<std::string> unrecognized = po::collect_unrecognized(parsed.options, po::exclude_positional);
+	if (!unrecognized.empty())
+		throw unrecognized_option("unrecognized option '" + unrecognized[0] + "'");
 }
 
 void CmdLineParams::PrintUsage() const
@@ -71,11 +77,21 @@ void CmdLineParams::PrintUsage() const
 	if (!usage_desc.empty()) {
 		std::cout << usage_desc << std::endl;
 	}
-	
+
 	std::cout << desc << std::endl;
 
 	std::cout << "Spring" << " " << SpringVersion::GetFull() << std::endl;
 	std::cout << "This program is licensed under the GNU General Public License" << std::endl;
+}
+
+std::string CmdLineParams::GetCmdLine() const
+{
+	std::string cmdLine = (argc > 0) ? UnQuote(argv[0]) : "unknown";
+	for (int i = 1; i < argc; ++i) {
+		cmdLine += " ";
+		cmdLine += argv[i];
+	}
+	return cmdLine;
 }
 
 bool CmdLineParams::IsSet(const std::string& var) const

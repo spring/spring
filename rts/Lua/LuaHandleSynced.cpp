@@ -45,6 +45,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
+#include "System/ScopedFPUSettings.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -147,24 +148,57 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 		return;
 	}
 
-	SetAllowChanges(true, true);
+	// 1. setup functions/environment
 	SetSynced(true, true);
-
-	const bool haveSynced = (SingleState() || L == L_Sim) && SetupSynced(L, syncedCode, syncedFile);
-	if (!IsValid())
-		return;
-
-	SetAllowChanges(false, true);
+	SetAllowChanges(true, true);
+	const bool haveSynced   = (SingleState() || L == L_Sim) && SetupSynced(L);
 	SetSynced(false, true);
+	SetAllowChanges(false, true);
+	const bool haveUnsynced = (SingleState() || L == L_Draw) && SetupUnsynced(L);
 
-	const bool haveUnsynced = (SingleState() || L == L_Draw) && SetupUnsynced(L, unsyncedCode, unsyncedFile);
-	if (!IsValid())
-		return;
+	// 2. load code (main.lua & draw.lua)
+	if (SingleState() || L == L_Sim) {
+		lua_settop(L, 0);
+		SetSynced(true, true);
+		SetAllowChanges(true, true);
+		if (!LoadCode(L, syncedCode, syncedFile)) {
+			KillLua();
+			return;
+		}
+	}
+	if (SingleState() || L == L_Draw) {
+		lua_settop(L, 0);
+		SetSynced(false, true);
+		SetAllowChanges(false, true);
+		if (!LoadUnsyncedCode(L, unsyncedCode, unsyncedFile)) {
+			KillLua();
+			return;
+		}
+
+		lua_settop(L, 0);
+		if (
+			!SetupUnsyncedFunction(L, "RecvFromSynced")      ||
+			!SetupUnsyncedFunction(L, "Update")              ||
+			!SetupUnsyncedFunction(L, "DrawGenesis")         ||
+			!SetupUnsyncedFunction(L, "DrawWorld")           ||
+			!SetupUnsyncedFunction(L, "DrawWorldPreUnit")    ||
+			!SetupUnsyncedFunction(L, "DrawWorldShadow")     ||
+			!SetupUnsyncedFunction(L, "DrawWorldReflection") ||
+			!SetupUnsyncedFunction(L, "DrawWorldRefraction") ||
+			!SetupUnsyncedFunction(L, "DrawScreenEffects")   ||
+			!SetupUnsyncedFunction(L, "DrawScreen")          ||
+			!SetupUnsyncedFunction(L, "DrawInMiniMap")
+		) {
+			KillLua();
+			return;
+		}
+		lua_settop(L, 0);
+	}
 
 	SetSynced(true, true);
 	SetAllowChanges(true, true);
 
-	if (!haveSynced && !haveUnsynced) {
+	if (!IsValid() || (!haveSynced && !haveUnsynced)) {
 		KillLua();
 		return;
 	}
@@ -176,9 +210,9 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 }
 
 
-bool CLuaHandleSynced::SetupSynced(lua_State *L, const string& code, const string& filename)
+bool CLuaHandleSynced::SetupSynced(lua_State *L)
 {
-	if (!IsValid() || code.empty()) {
+	if (!IsValid()) {
 		return false;
 	}
 
@@ -240,19 +274,13 @@ bool CLuaHandleSynced::SetupSynced(lua_State *L, const string& code, const strin
 	}
 
 	lua_settop(L, 0);
-
-	if (!LoadCode(L, code, filename)) {
-		KillLua();
-		return false;
-	}
-
 	return true;
 }
 
 
-bool CLuaHandleSynced::SetupUnsynced(lua_State *L, const string& code, const string& filename)
+bool CLuaHandleSynced::SetupUnsynced(lua_State *L)
 {
-	if (!IsValid() || code.empty()) {
+	if (!IsValid()) {
 		return false;
 	}
 
@@ -354,26 +382,6 @@ bool CLuaHandleSynced::SetupUnsynced(lua_State *L, const string& code, const str
 		return false;
 	}
 	lua_settop(L, 0);
-
-	if (!LoadUnsyncedCode(L, code, filename)) {
-		KillLua();
-		return false;
-	}
-
-	if (!SetupUnsyncedFunction(L, "RecvFromSynced")      ||
-	    !SetupUnsyncedFunction(L, "Update")              ||
-	    !SetupUnsyncedFunction(L, "DrawGenesis")         ||
-	    !SetupUnsyncedFunction(L, "DrawWorld")           ||
-	    !SetupUnsyncedFunction(L, "DrawWorldPreUnit")    ||
-	    !SetupUnsyncedFunction(L, "DrawWorldShadow")     ||
-	    !SetupUnsyncedFunction(L, "DrawWorldReflection") ||
-	    !SetupUnsyncedFunction(L, "DrawWorldRefraction") ||
-	    !SetupUnsyncedFunction(L, "DrawScreenEffects")   ||
-	    !SetupUnsyncedFunction(L, "DrawScreen")          ||
-	    !SetupUnsyncedFunction(L, "DrawInMiniMap")) {
-		return false;
-	}
-
 	return true;
 }
 
@@ -519,6 +527,9 @@ bool CLuaHandleSynced::LightCopyTable(lua_State *L, int dstIndex, int srcIndex)
 
 bool CLuaHandleSynced::LoadUnsyncedCode(lua_State *L, const string& code, const string& debug)
 {
+	// do not signal floating point exceptions in user Lua code
+	ScopedDisableFpuExceptions fe;
+
 	lua_settop(L, 0);
 
 	int error;
@@ -576,6 +587,9 @@ bool CLuaHandleSynced::HasCallIn(lua_State *L, const string& name)
 	if (!IsValid()) {
 		return false;
 	}
+
+	if (name == "CollectGarbage")
+		return true;
 
 	static const std::string unsyncedNames[] = {
 		"DrawUnit",
@@ -651,69 +665,6 @@ bool CLuaHandleSynced::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 //  Call-ins (first two are unused)
 //
 
-#if 0
-bool CLuaHandleSynced::Initialize(const string& syncData)
-{
-	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 3);
-	static const LuaHashString cmdStr("Initialize");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return true;
-	}
-
-	int errfunc = SetupTraceback(L) ? -2 : 0;
-	LOG("Initialize errfunc=%d", errfunc);
-
-	lua_pushsstring(L, syncData);
-
-	// call the routine
-	if (!RunCallInTraceback(cmdStr, 1, 1, errfunc)) {
-		return false;
-	}
-
-	// get the results
-	if (!lua_isboolean(L, -1)) {
-		lua_pop(L, 1);
-		return true;
-	}
-	const bool retval = !!lua_toboolean(L, -1);
-	lua_pop(L, 1);
-	return retval;
-}
-
-string CLuaHandleSynced::GetSyncData()
-{
-	string syncData;
-
-	LUA_CALL_IN_CHECK(L, syncData);
-	lua_checkstack(L, 2);
-	static const LuaHashString cmdStr("GetSyncData");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return syncData;
-	}
-
-	// call the routine
-	if (!RunCallIn(cmdStr, 0, 1)) {
-		return syncData;
-	}
-
-	// get the result
-	if (!lua_isstring(L, -1)) {
-		lua_pop(L, 1);
-		return syncData;
-	}
-	const int len = lua_strlen(L, -1);
-	const char* c = lua_tostring(L, -1);
-	syncData.resize(len);
-	for (int i = 0; i < len; i++) {
-		syncData[i] = c[i];
-	}
-	lua_pop(L, 1);
-
-	return syncData;
-}
-#endif
-
 
 bool CLuaHandleSynced::SyncedActionFallback(const string& msg, int playerID)
 {
@@ -733,7 +684,7 @@ bool CLuaHandleSynced::SyncedActionFallback(const string& msg, int playerID)
 bool CLuaHandleSynced::GotChatMsg(const string& msg, int playerID)
 {
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("GotChatMsg");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -758,7 +709,7 @@ void CLuaHandleSynced::RecvFromSynced(lua_State *srcState, int args)
 	SELECT_UNSYNCED_LUA_STATE();
 
 #if ((LUA_MT_OPT & LUA_STATE) && (LUA_MT_OPT & LUA_MUTEX))
-	if (!SingleState() && srcState != L) { // Sim thread sends to unsynced --> delay it
+	if (/*GML::Enabled() &&*/ !SingleState() && srcState != L) { // Sim thread sends to unsynced --> delay it
 		DelayRecvFromSynced(srcState, args);
 		return;
 	}
@@ -1081,11 +1032,7 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 
 int CLuaHandleSynced::AddSyncedActionFallback(lua_State* L)
 {
-	const int args = lua_gettop(L);
-	if ((args != 2) || !lua_isstring(L, 1) ||  !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to AddActionFallback()");
-	}
-	string cmdRaw  = lua_tostring(L, 1);
+	string cmdRaw = luaL_checkstring(L, 1);
 	cmdRaw = "/" + cmdRaw;
 
 	string cmd = cmdRaw;
@@ -1100,7 +1047,7 @@ int CLuaHandleSynced::AddSyncedActionFallback(lua_State* L)
 	}
 
 	CLuaHandleSynced* lhs = GetSyncedHandle(L);
-	lhs->textCommands[cmd] = lua_tostring(L, 2);
+	lhs->textCommands[cmd] = luaL_checkstring(L, 2);
 	wordCompletion->AddWord(cmdRaw, true, false, false);
 	lua_pushboolean(L, true);
 	return 1;
@@ -1109,11 +1056,7 @@ int CLuaHandleSynced::AddSyncedActionFallback(lua_State* L)
 
 int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
 {
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to RemoveActionFallback()");
-	}
-	string cmdRaw  = lua_tostring(L, 1);
+	string cmdRaw  = luaL_checkstring(L, 1);
 	cmdRaw = "/" + cmdRaw;
 
 	string cmd = cmdRaw;
@@ -1161,11 +1104,7 @@ int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
 		if (defID >= lhs->watch ## DefType ## Defs.size()) {          \
 			return 0;                                                 \
 		}                                                             \
-		if (!lua_isboolean(L, 2)) {                                   \
-			luaL_error(L, "Incorrect arguments to %s", __FUNCTION__); \
-			return 0;                                                 \
-		}                                                             \
-		lhs->watch ## DefType ## Defs[defID] = lua_toboolean(L, 2);   \
+		lhs->watch ## DefType ## Defs[defID] = luaL_checkboolean(L, 2);   \
 		return 0;                                                     \
 	}
 

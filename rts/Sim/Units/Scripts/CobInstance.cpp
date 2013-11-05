@@ -140,12 +140,11 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 		} else {
 			pieces.push_back(NULL);
 
-			const char* fmtString = "[%s] could not find piece named \"%s\" in model \"%s\" (referenced by script \"%s\")";
+			const char* fmtString = "[%s] could not find piece named \"%s\" (referenced by COB script \"%s\")";
 			const char* pieceName = pieceNames[scriptPieceNum].c_str();
-			const char* modelName = lmodel->original->name.c_str();
 			const char* scriptName = script.name.c_str();
 
-			LOG_L(L_WARNING, fmtString, __FUNCTION__, pieceName, modelName, scriptName);
+			LOG_L(L_WARNING, fmtString, __FUNCTION__, pieceName, scriptName);
 		}
 	}
 }
@@ -176,24 +175,29 @@ bool CCobInstance::HasTargetWeight(int weaponNum) const
 void CCobInstance::Create()
 {
 	// Calculate the max() of the available weapon reloadtimes
-	int relMax = 0;
+	int maxReloadTime = 0;
+
 	for (vector<CWeapon*>::iterator i = unit->weapons.begin(); i != unit->weapons.end(); ++i) {
-		if ((*i)->reloadTime > relMax)
-			relMax = (*i)->reloadTime;
+		maxReloadTime = std::max(maxReloadTime, (*i)->reloadTime);
+
+		#if 0
 		if (dynamic_cast<CBeamLaser*>(*i))
-			relMax = 150;
+			maxReloadTime = 150; // ???
+		#endif
 	}
 
 	// convert ticks to milliseconds
-	relMax *= 30;
+	maxReloadTime *= GAME_SPEED;
 
-	// TA does some special handling depending on weapon count
+	#if 0
+	// TA does some special handling depending on weapon count, Spring != TA
 	if (unit->weapons.size() > 1) {
-		relMax = std::max(relMax, 3000);
+		maxReloadTime = std::max(maxReloadTime, 3000);
 	}
+	#endif
 
 	Call(COBFN_Create);
-	Call(COBFN_SetMaxReloadTime, relMax);
+	Call(COBFN_SetMaxReloadTime, maxReloadTime);
 }
 
 
@@ -384,7 +388,7 @@ void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
 // Called when unit's AimWeapon script finished executing (for shield weapon)
 static void ShieldScriptCallback(int retCode, void* p1, void* p2)
 {
-	static_cast<CPlasmaRepulser*>(p1)->isEnabled = !!retCode;
+	static_cast<CPlasmaRepulser*>(p1)->SetEnabled(!!retCode);
 }
 
 void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
@@ -446,20 +450,20 @@ float CCobInstance::TargetWeight(int weaponNum, const CUnit* targetUnit)
 }
 
 
-void CCobInstance::Destroy()       { Call(COBFN_Destroy); }
-void CCobInstance::StartMoving()   { Call(COBFN_StartMoving); }
-void CCobInstance::StopMoving()    { Call(COBFN_StopMoving); }
-void CCobInstance::StartUnload()   { Call(COBFN_StartUnload); }
-void CCobInstance::EndTransport()  { Call(COBFN_EndTransport); }
+void CCobInstance::Destroy() { Call(COBFN_Destroy); }
+void CCobInstance::StartMoving(bool reversing) { Call(COBFN_StartMoving, reversing); }
+void CCobInstance::StopMoving() { Call(COBFN_StopMoving); }
+void CCobInstance::StartUnload() { Call(COBFN_StartUnload); }
+void CCobInstance::EndTransport() { Call(COBFN_EndTransport); }
 void CCobInstance::StartBuilding() { Call(COBFN_StartBuilding); }
-void CCobInstance::StopBuilding()  { Call(COBFN_StopBuilding); }
-void CCobInstance::Falling()       { Call(COBFN_Falling); }
-void CCobInstance::Landed()        { Call(COBFN_Landed); }
-void CCobInstance::Activate()      { Call(COBFN_Activate); }
-void CCobInstance::Deactivate()    { Call(COBFN_Deactivate); }
-void CCobInstance::MoveRate(int curRate)     { Call(COBFN_MoveRate0 + curRate); }
+void CCobInstance::StopBuilding() { Call(COBFN_StopBuilding); }
+void CCobInstance::Falling() { Call(COBFN_Falling); }
+void CCobInstance::Landed() { Call(COBFN_Landed); }
+void CCobInstance::Activate() { Call(COBFN_Activate); }
+void CCobInstance::Deactivate() { Call(COBFN_Deactivate); }
+void CCobInstance::MoveRate(int curRate) { Call(COBFN_MoveRate0 + curRate); }
 void CCobInstance::FireWeapon(int weaponNum) { Call(COBFN_FirePrimary + COBFN_Weapon_Funcs * weaponNum); }
-void CCobInstance::EndBurst(int weaponNum)   { Call(COBFN_EndBurst + COBFN_Weapon_Funcs * weaponNum); }
+void CCobInstance::EndBurst(int weaponNum) { Call(COBFN_EndBurst + COBFN_Weapon_Funcs * weaponNum); }
 
 
 /******************************************************************************/
@@ -475,7 +479,7 @@ void CCobInstance::EndBurst(int weaponNum)   { Call(COBFN_EndBurst + COBFN_Weapo
  * @return 0 if the call terminated. If the caller provides a callback and the thread does not terminate,
  *  it will continue to run. Otherwise it will be killed. Returns 1 in this case.
  */
-int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
+int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish cb, void* p1, void* p2)
 {
 	if (functionId < 0 || size_t(functionId) >= script.scriptNames.size()) {
 		if (cb) {
@@ -497,19 +501,29 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 		thread->SetCallback(cb, p1, p2);
 
 	if (!res) {
-		unsigned int i = 0, argc = thread->CheckStack(args.size());
+		// thread died already after one tick
+		// NOTE:
+		//   the StartMoving callin now takes an argument which means
+		//   there will be a mismatch between the number of arguments
+		//   passed in (1) and the number returned (0) as of 95.0 -->
+		//   prevent error-spam
+		unsigned int i = 0, argc = thread->CheckStack(args.size(), functionId != script.scriptIndex[COBFN_StartMoving]);
+
 		// Retrieve parameter values from stack
 		for (; i < argc; ++i)
 			args[i] = thread->GetStackVal(i);
+
 		// Set erroneous parameters to 0
 		for (; i < args.size(); ++i)
 			args[i] = 0;
+
 		delete thread;
 		return 0;
-	} else {
-		// It has already added itself to the correct scheduler (global for sleep, or local for anim)
-		return 1;
 	}
+
+	// thread has already added itself to the correct
+	// scheduler (global for sleep, or local for anim)
+	return 1;
 }
 
 
@@ -522,12 +536,10 @@ int CCobInstance::Call(const std::string& fname)
 	return Call(fname, x, NULL, NULL, NULL);
 }
 
-
 int CCobInstance::Call(const std::string& fname, std::vector<int>& args)
 {
 	return Call(fname, args, NULL, NULL, NULL);
 }
-
 
 int CCobInstance::Call(const std::string& fname, int p1)
 {
@@ -537,14 +549,12 @@ int CCobInstance::Call(const std::string& fname, int p1)
 	return Call(fname, x, NULL, NULL, NULL);
 }
 
-
 int CCobInstance::Call(const std::string& fname, std::vector<int>& args, CBCobThreadFinish cb, void* p1, void* p2)
 {
-	int fn = GetFunctionId(fname);
 	//TODO: Check that new behaviour of actually calling cb when the function is not defined is right?
 	//      (the callback has always been called [when the function is not defined]
 	//       in the id-based Call()s, but never in the string based calls.)
-	return RealCall(fn, args, cb, p1, p2);
+	return RealCall(GetFunctionId(fname), args, cb, p1, p2);
 }
 
 
@@ -554,7 +564,6 @@ int CCobInstance::Call(int id)
 	return Call(id, x, NULL, NULL, NULL);
 }
 
-
 int CCobInstance::Call(int id, int p1)
 {
 	vector<int> x;
@@ -563,12 +572,10 @@ int CCobInstance::Call(int id, int p1)
 	return Call(id, x, NULL, NULL, NULL);
 }
 
-
 int CCobInstance::Call(int id, std::vector<int>& args)
 {
 	return Call(id, args, NULL, NULL, NULL);
 }
-
 
 int CCobInstance::Call(int id, std::vector<int>& args, CBCobThreadFinish cb, void* p1, void* p2)
 {
@@ -581,7 +588,6 @@ void CCobInstance::RawCall(int fn)
 	vector<int> x;
 	RealCall(fn, x, NULL, NULL, NULL);
 }
-
 
 int CCobInstance::RawCall(int fn, std::vector<int> &args)
 {

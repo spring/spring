@@ -37,14 +37,16 @@ public:
 	 * This will add this to the FeatureHandler.
 	 */
 	void Initialize(const FeatureLoadParams& params);
+
 	int GetBlockingMapID() const { return id + (10 * unitHandler->MaxUnits()); }
 
 	/**
 	 * Negative amount = reclaim
 	 * @return true if reclaimed
 	 */
-	bool AddBuildPower(float amount, CUnit* builder);
+	bool AddBuildPower(CUnit* builder, float amount);
 	void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID);
+	void SetVelocity(const float3& v);
 	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
 	bool Update();
@@ -60,25 +62,7 @@ public:
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
 
-	bool IsInLosForAllyTeam(int argAllyTeam) const
-	{
-		if (alwaysVisible)
-			return true;
-
-		const bool inLOS = (argAllyTeam == -1 || loshandler->InLos(this->pos, argAllyTeam));
-
-		switch (modInfo.featureVisibility) {
-			case CModInfo::FEATURELOS_NONE:
-			default:
-				return inLOS;
-			case CModInfo::FEATURELOS_GAIAONLY:
-				return (this->allyteam == -1 || inLOS);
-			case CModInfo::FEATURELOS_GAIAALLIED:
-				return (this->allyteam == -1 || this->allyteam == argAllyTeam || inLOS);
-			case CModInfo::FEATURELOS_ALL:
-				return true;
-		}
-	}
+	bool IsInLosForAllyTeam(int argAllyTeam) const;
 
 	// NOTE:
 	//   unlike CUnit which recalculates the matrix on each call
@@ -99,7 +83,6 @@ public:
 	 */
 	bool isRepairingBeforeResurrect;
 	bool isAtFinalHeight;
-	bool isMoving;
 	bool inUpdateQue;
 
 	float resurrectProgress;

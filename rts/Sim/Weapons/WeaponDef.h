@@ -11,7 +11,6 @@
 
 struct AtlasedTexture;
 class CColorMap;
-class IExplosionGenerator;
 struct S3DModel;
 class LuaTable;
 
@@ -23,7 +22,6 @@ private:
 public:
 	WeaponDef();
 	WeaponDef(const LuaTable& wdTable, const std::string& name, int id);
-	~WeaponDef();
 
 	S3DModel* LoadModel();
 	S3DModel* LoadModel() const;
@@ -32,7 +30,10 @@ public:
 	std::string name;
 	std::string type;
 	std::string description;
-	std::string cegTag;        ///< tag of CEG that projectiles fired by this weapon should use
+
+	unsigned int ptrailExplosionGeneratorID; // must be custom, defined by ptrailExpGenTag
+	unsigned int impactExplosionGeneratorID; // can be NULL for default explosions
+	unsigned int bounceExplosionGeneratorID; // called when a projectile bounces
 
 	GuiSoundSet fireSound;
 	GuiSoundSet hitSound;
@@ -86,8 +87,8 @@ public:
 	bool turret;
 	bool onlyForward;
 	bool fixedLauncher;
-	bool waterweapon;
-	bool fireSubmersed;
+	bool waterweapon;           ///< can target underwater objects/positions if true
+	bool fireSubmersed;         ///< can fire even when underwater if true
 	bool submissile;            ///< Lets a torpedo travel above water like it does below water
 	bool tracks;
 	bool paralyzer;             ///< weapon will only paralyze not do real damage
@@ -188,9 +189,6 @@ public:
 	unsigned int projectileType;
 	unsigned int collisionFlags;
 
-	IExplosionGenerator* explosionGenerator;        // can be NULL for default explosions
-	IExplosionGenerator* bounceExplosionGenerator;  // called when a projectile bounces
-
 	bool sweepFire;
 	bool canAttackGround;
 
@@ -211,7 +209,6 @@ public:
 			, colorMap(NULL)
 			, explosionScar(true)
 			, smokeTrail(false)
-			, beamweapon(false)
 			, texture1(NULL)
 			, texture2(NULL)
 			, texture3(NULL)
@@ -238,14 +235,14 @@ public:
 		S3DModel* model;
 		std::string modelName;
 		std::string texNames[4];
-		std::string expGenTag;
-		std::string bounceExpGenTag;
+		std::string ptrailExpGenTag; ///< tag of CEG that projectiles fired by this weapon should use during flight
+		std::string impactExpGenTag; ///< tag of CEG that projectiles fired by this weapon should use on impact
+		std::string bounceExpGenTag; ///< tag of CEG that projectiles fired by this weapon should use when bouncing
 		CColorMap* colorMap;
 
 		/// TODO: make the scar-type configurable
 		bool explosionScar;
 		bool smokeTrail;
-		bool beamweapon;
 
 		AtlasedTexture* texture1;
 		AtlasedTexture* texture2;

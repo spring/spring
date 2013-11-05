@@ -402,6 +402,7 @@ bool CAVIGenerator::readOpenglPixelDataThreaded() {
 }
 
 
+__FORCE_ALIGN_STACK__
 void CAVIGenerator::AVIGeneratorThreadProc() {
 
 	Threading::SetThreadName("avi-recorder");

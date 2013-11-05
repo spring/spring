@@ -7,7 +7,6 @@
 #include <stdexcept>
 #include "WeaponDefHandler.h"
 
-#include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "System/Exceptions.h"
@@ -18,9 +17,9 @@
 CWeaponDefHandler* weaponDefHandler = NULL;
 
 
-CWeaponDefHandler::CWeaponDefHandler()
+CWeaponDefHandler::CWeaponDefHandler(LuaParser* defsParser)
 {
-	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("WeaponDefs");
+	const LuaTable rootTable = defsParser->GetRoot().SubTable("WeaponDefs");
 	if (!rootTable.IsValid()) {
 		throw content_error("Error loading WeaponDefs");
 	}

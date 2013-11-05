@@ -12,7 +12,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "System/MemPool.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include <assert.h>
 
 /**
@@ -109,59 +109,71 @@ public:
 	void MoveUnit(CUnit* unit, bool redoCurrent);
 	void FreeInstance(LosInstance* instance);
 
-	inline bool InLos(const CWorldObject* object, int allyTeam) const {
-		if (object->alwaysVisible || gs->globalLOS[allyTeam])
+	inline bool InLos(const CWorldObject* obj, int allyTeam) const {
+		if (obj->alwaysVisible || gs->globalLOS[allyTeam])
 			return true;
-		if (object->useAirLos)
-			return (InAirLos(object->pos, allyTeam));
+		if (obj->useAirLos)
+			return (InAirLos(obj->pos, allyTeam) || InAirLos(obj->pos + obj->speed, allyTeam));
 
-		return (InLos(object->pos, allyTeam));
+		// test visibility at two positions, mostly for long beam-projectiles
+		//   slow-moving objects will be visible no earlier or later than before on average
+		//   fast-moving objects will be visible at most one SU before they otherwise would
+		return (InLos(obj->pos, allyTeam) || InLos(obj->pos + obj->speed, allyTeam));
 	}
 
 	inline bool InLos(const CUnit* unit, int allyTeam) const {
-		// NOTE: units are treated differently than world objects in 2 ways:
-		//       1. they can be cloaked (has to be checked BEFORE all other cases)
-		//       2. when underwater, they only get LOS if they also have sonar
-		//          (when the requireSonarUnderWater variable is enabled)
+		// NOTE: units are treated differently than world objects in two ways:
+		//   1. they can be cloaked (has to be checked BEFORE all other cases)
+		//   2. when underwater, they are only considered to be in LOS if they
+		//      are also in radar ("sonar") coverage if requireSonarUnderWater
+		//      is enabled --> underwater units can NOT BE SEEN AT ALL without
+		//      active radar!
 		if (unit->isCloaked)
 			return false;
 		if (unit->alwaysVisible || gs->globalLOS[allyTeam])
 			return true;
 		if (unit->useAirLos)
-			return (InAirLos(unit->pos, allyTeam));
+			return (InAirLos(unit->pos, allyTeam) || InAirLos(unit->pos + unit->speed, allyTeam));
 
-		if (unit->isUnderWater && requireSonarUnderWater)
-			return (radarhandler->InRadar(unit, allyTeam));
+		if (requireSonarUnderWater) {
+			if (unit->IsUnderWater() && !radarHandler->InRadar(unit, allyTeam)) {
+				return false;
+			}
+		}
 
-		return (InLos(unit->pos, allyTeam));
+		return (InLos(unit->pos, allyTeam) || InLos(unit->pos + unit->speed, allyTeam));
 	}
 
 	inline bool InLos(const float3& pos, int allyTeam) const {
-		if (gs->globalLOS[allyTeam]) { return true; }
+		if (gs->globalLOS[allyTeam])
+			return true;
 		const int gx = pos.x * invLosDiv;
 		const int gz = pos.z * invLosDiv;
-		return !!losMaps[allyTeam].At(gx, gz);
+		return (losMaps[allyTeam].At(gx, gz) != 0);
 	}
 
 	inline bool InAirLos(const float3& pos, int allyTeam) const {
-		if (gs->globalLOS[allyTeam]) { return true; }
+		if (gs->globalLOS[allyTeam])
+			return true;
 		const int gx = pos.x * invAirDiv;
 		const int gz = pos.z * invAirDiv;
-		return !!airLosMaps[allyTeam].At(gx, gz);
+		return (airLosMaps[allyTeam].At(gx, gz) != 0);
 	}
 
 
 	inline bool InLos(int hmx, int hmz, int allyTeam) const {
-		if (gs->globalLOS[allyTeam]) { return true; }
+		if (gs->globalLOS[allyTeam])
+			return true;
 		const int gx = hmx * SQUARE_SIZE * invLosDiv;
 		const int gz = hmz * SQUARE_SIZE * invLosDiv;
-		return !!losMaps[allyTeam].At(gx, gz);
+		return (losMaps[allyTeam].At(gx, gz) != 0);
 	}
 	inline bool InAirLos(int hmx, int hmz, int allyTeam) const {
-		if (gs->globalLOS[allyTeam]) { return true; }
+		if (gs->globalLOS[allyTeam])
+			return true;
 		const int gx = hmx * SQUARE_SIZE * invAirDiv;
 		const int gz = hmz * SQUARE_SIZE * invAirDiv;
-		return !!airLosMaps[allyTeam].At(gx, gz);
+		return (airLosMaps[allyTeam].At(gx, gz) != 0);
 	}
 
 	CLosHandler();
@@ -211,6 +223,6 @@ public:
 	void DelayedFreeInstance(LosInstance* instance);
 };
 
-extern CLosHandler* loshandler;
+extern CLosHandler* losHandler;
 
 #endif /* LOS_HANDLER_H */

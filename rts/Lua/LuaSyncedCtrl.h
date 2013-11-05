@@ -85,12 +85,13 @@ class LuaSyncedCtrl
 		static int SetUnitCollisionVolumeData(lua_State* L);
 		static int SetUnitPieceCollisionVolumeData(lua_State* L);
 		static int SetUnitSensorRadius(lua_State* L);
+		static int SetUnitPosErrorParams(lua_State* L);
 
 		static int SetUnitPhysics(lua_State* L);
 		static int SetUnitPosition(lua_State* L);
 		static int SetUnitRotation(lua_State* L);
-		static int SetUnitVelocity(lua_State* L);
 		static int SetUnitDirection(lua_State* L);
+		static int SetUnitVelocity(lua_State* L);
 
 		static int AddUnitDamage(lua_State* L);
 		static int AddUnitImpulse(lua_State* L);
@@ -107,13 +108,17 @@ class LuaSyncedCtrl
 		static int SetFeatureHealth(lua_State* L);
 		static int SetFeatureReclaim(lua_State* L);
 		static int SetFeatureResurrect(lua_State* L);
+		static int SetFeaturePhysics(lua_State* L);
 		static int SetFeaturePosition(lua_State* L);
 		static int SetFeatureDirection(lua_State* L);
+		static int SetFeatureVelocity(lua_State* L);
+		static int SetFeatureBlocking(lua_State* L);
 		static int SetFeatureNoSelect(lua_State* L);
 		static int SetFeatureMidAndAimPos(lua_State* L);
 		static int SetFeatureRadiusAndHeight(lua_State* L);
 		static int SetFeatureCollisionVolumeData(lua_State* L);
 
+		static int SetProjectileAlwaysVisible(lua_State* L);
 		static int SetProjectileMoveControl(lua_State* L);
 		static int SetProjectilePosition(lua_State* L);
 		static int SetProjectileVelocity(lua_State* L);
@@ -121,9 +126,10 @@ class LuaSyncedCtrl
 		static int SetProjectileTarget(lua_State* L);
 
 		static int SetProjectileGravity(lua_State* L);
-		static int SetProjectileSpinAngle(lua_State* L);
-		static int SetProjectileSpinSpeed(lua_State* L);
-		static int SetProjectileSpinVec(lua_State* L);
+		static int SetProjectileSpinAngle(lua_State* L); // DEPRECATED
+		static int SetProjectileSpinSpeed(lua_State* L); // DEPRECATED
+		static int SetProjectileSpinVec(lua_State* L); // DEPRECATED
+		static int SetPieceProjectileParams(lua_State* L);
 		static int SetProjectileCEG(lua_State* L);
 
 		static int LevelHeightMap(lua_State* L);
@@ -159,6 +165,8 @@ class LuaSyncedCtrl
 		static int SetNoPause(lua_State* L);
 		static int SetUnitToFeature(lua_State* L);
 		static int SetExperienceGrade(lua_State* L);
+
+		static int SetRadarErrorParams(lua_State* L);
 };
 
 

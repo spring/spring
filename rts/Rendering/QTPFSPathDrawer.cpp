@@ -295,7 +295,7 @@ void QTPFSPathDrawer::DrawNode(
 		}
 	}
 
-	if (showCost && camera->pos.SqDistance(verts[4]) < (2000.0f * 2000.0f)) {
+	if (showCost && camera->GetPos().SqDistance(verts[4]) < (2000.0f * 2000.0f)) {
 		font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);
 		font->glWorldPrint(verts[4], 4.0f, FloatToString(node->GetMoveCost(), "%8.2f"));
 	}
@@ -339,7 +339,7 @@ void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS:
 
 void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
-		case CBaseGroundDrawer::drawPathTraversability: {
+		case CBaseGroundDrawer::drawPathTrav: {
 			const MoveDef* md = GetSelectedMoveDef();
 
 			if (md != NULL) {
@@ -353,7 +353,7 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 						const int sqx = (tx << 1);
 						const int sqz = (ty << 1);
 						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
-						const bool losSqr = loshandler->InLos(sqx, sqz, gu->myAllyTeam);
+						const bool losSqr = losHandler->InLos(sqx, sqz, gu->myAllyTeam);
 
 						#if 1
 						// use node-modifiers as baseline so visualisation is in sync with alt+B

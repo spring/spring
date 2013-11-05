@@ -11,14 +11,14 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/Player.h"
-#include "Game/PlayerHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
@@ -27,7 +27,7 @@
 #include "System/creg/STL_Map.h"
 
 CONFIG(int, CatchAIExceptions).defaultValue(1);
-CONFIG(bool, AI_UnpauseAfterInit).defaultValue(true);
+//CONFIG(bool, AI_UnpauseAfterInit).defaultValue(true);
 
 CR_BIND_DERIVED(CEngineOutHandler, CObject, )
 CR_REG_METADATA(CEngineOutHandler, (
@@ -411,7 +411,7 @@ void CEngineOutHandler::UnitDamaged(
 		float3 attackDir_damagedsView = ZeroVector;
 		if (attacker) {
 			attackDir_damagedsView =
-					CGameHelper::GetUnitErrorPos(attacker, damaged.allyteam)
+					attacker->GetErrorPos(damaged.allyteam)
 					- damaged.pos;
 			attackDir_damagedsView.ANormalize();
 		}
@@ -435,7 +435,7 @@ void CEngineOutHandler::UnitDamaged(
 				&& (team_skirmishAIs.find(at) != team_skirmishAIs.end())) {
 			// direction from the attacker's view
 			const float3 attackDir = (attacker->pos
-						- CGameHelper::GetUnitErrorPos(&damaged, attacker->allyteam))
+						- damaged.GetErrorPos(attacker->allyteam))
 						.ANormalize();
 			const bool damagedInLosOrRadar = IsUnitInLosOrRadarOfAllyTeam(damaged, attacker->allyteam);
 			for (ids_t::iterator ai = team_skirmishAIs[at].begin(); ai != team_skirmishAIs[at].end(); ++ai)
@@ -618,6 +618,11 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 
 void CEngineOutHandler::SetSkirmishAIDieing(const size_t skirmishAIId) {
 	SCOPED_TIMER("AI Total");
+
+	// if exiting before start, AI's have not been loaded yet
+	// and std::map<>::operator[] would insert a NULL instance
+	if (id_skirmishAI.find(skirmishAIId) == id_skirmishAI.end())
+		return;
 
 	try {
 		assert(id_skirmishAI[skirmishAIId] != NULL);

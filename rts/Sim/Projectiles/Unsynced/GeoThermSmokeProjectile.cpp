@@ -13,51 +13,79 @@ CR_REG_METADATA(CGeoThermSmokeProjectile, (
 	CR_RESERVED(8)
 ));
 
-CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(const float3& pos, const float3& speed, int ttl, CFeature* geo)
-	: CSmokeProjectile(pos, speed, ttl, 6, 0.35f, NULL, 0.8f)
+CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(
+	const float3& pos,
+	const float3& spd,
+	int ttl,
+	const CFeature* geo
+)
+	: CSmokeProjectile(pos, spd, ttl, 6, 0.35f, NULL, 0.8f)
 	, geo(geo)
 {}
 
 void CGeoThermSmokeProjectile::Update()
 {
-	if (geo && geo->solidOnTop) {
-		CSolidObject* o = geo->solidOnTop;
+	UpdateDir();
 
-		float3 d = pos - o->pos;
-		float sql = d.SqLength();
+	// NOTE:
+	//   speed.w is never changed from its initial value (!), otherwise the
+	//   particles would just keep accelerating even when wind == ZeroVector
+	//   due to UpVector being added each frame --> if |speed| grows LARGER
+	//   than speed.w then newSpeed will be adjusted downward and vice versa
+	CWorldObject::SetVelocity(speed + UpVector);
+	CWorldObject::SetVelocity(speed + XZVector * (wind.GetCurrentWind() / GAME_SPEED));
 
-		if ((sql > 0.0f) && (sql < (o->radius * o->radius)) && o->blocking) {
-			d *= o->radius * fastmath::isqrt(sql);
-			pos = pos * 0.3f + (o->pos + d) * 0.7f;
+	const float curSpeed = fastmath::sqrt(speed.SqLength());
+	const float newSpeed = speed.w * (speed.w / curSpeed);
 
-			if (d.y < (o->radius * 0.4f)) {
-				const float speedlen = fastmath::apxsqrt(speed.SqLength());
-				float3 right(d.z, 0.0f, -d.x);
-				speed = d.cross(right);
-				speed.ANormalize();
-				speed *= speedlen;
-			}
-		}
-	}
-
-	const float l = fastmath::apxsqrt(speed.SqLength());
-	speed.y += 1.0f;
-	speed.x += (wind.GetCurrentWind().x / GAME_SPEED);
-	speed.z += (wind.GetCurrentWind().z / GAME_SPEED);
-	speed *= (l * fastmath::isqrt(speed.SqLength()));
-
+	CWorldObject::SetVelocity((dir = (speed / curSpeed)) * newSpeed);
 	CSmokeProjectile::Update();
 }
 
+void CGeoThermSmokeProjectile::UpdateDir()
+{
+	if (geo == NULL)
+		return;
+
+	const CSolidObject* obj = geo->solidOnTop;
+
+	if (obj == NULL)
+		return;
+	if (!obj->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
+		return;
+
+	float3 geoVector = pos - obj->pos;
+
+	if (geoVector.SqLength() == 0.0f)
+		return;
+	if (geoVector.SqLength() >= (obj->radius * obj->radius))
+		return;
+
+	geoVector *= (obj->radius * fastmath::isqrt(geoVector.SqLength()));
+
+	SetPosition(pos * 0.3f + (obj->pos + geoVector) * 0.7f);
+
+	if (geoVector.y >= (obj->radius * 0.4f))
+		return;
+
+	// escape sideways if covered by geothermal object (unreliable)
+	const float3 orthoDir = float3(geoVector.z, 0.0f, -geoVector.x);
+	const float3 newDir = (geoVector.cross(orthoDir)).ANormalize();
+
+	SetVelocityAndSpeed(newDir * speed.w);
+}
 
 void CGeoThermSmokeProjectile::GeoThermDestroyed(const CFeature* geo)
 {
 	for (ProjectileContainer::iterator it = projectileHandler->unsyncedProjectiles.begin(); it != projectileHandler->unsyncedProjectiles.end(); ++it) {
 		CGeoThermSmokeProjectile* geoPuff = dynamic_cast<CGeoThermSmokeProjectile*>(*it);
-		if (geoPuff) {
-			if (geoPuff->geo == geo) {
-				geoPuff->geo = NULL;
-			}
-		}
+
+		if (geoPuff == NULL)
+			continue;
+		if (geoPuff->geo != geo)
+			continue;
+
+		geoPuff->geo = NULL;
 	}
 }
+

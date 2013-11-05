@@ -10,10 +10,22 @@
 
 #include "System/maindefines.h"
 
+/*
+ * Pre-processor trickery, useful to create unique identifiers.
+ * see http://stackoverflow.com/questions/461062/c-anonymous-variables
+ */
+#define _UTIL_CONCAT_SUB(start, end) \
+	start##end
+#define _UTIL_CONCAT(start, end) \
+	_UTIL_CONCAT_SUB(start, end)
+
 
 
 #define DO_ONCE(func) \
 	struct do_once##func { do_once##func() {func();} }; static do_once##func do_once_var##func;
+
+#define DO_ONCE_FNC(code) \
+	struct _UTIL_CONCAT(doOnce, __LINE__) { _UTIL_CONCAT(doOnce, __LINE__)() { code; } }; static _UTIL_CONCAT(doOnce, __LINE__) _UTIL_CONCAT(doOnceVar, __LINE__);
 
 
 static inline void StringToLowerInPlace(std::string& s)
@@ -45,7 +57,7 @@ static inline std::string Quote(std::string esc)
 		}
 		pos += 2;
 	}
-	
+
 	std::ostringstream buf;
 	buf << "\"" << esc << "\"";
 	return buf.str();

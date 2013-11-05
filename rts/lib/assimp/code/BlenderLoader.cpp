@@ -103,6 +103,7 @@ bool BlenderImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, b
 {
 	const std::string& extension = GetExtension(pFile);
 	if (extension == "blend") {
+		// SPRING: extract version (char[3]) from header at offset 9, check if >= 262
 		return true;
 	}
 

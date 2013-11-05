@@ -30,6 +30,7 @@ then
 	XSL_DOCBOOK=${4}
 else
 	XSL_DOCBOOK=/usr/share/xml/docbook/stylesheet/nwalsh/manpages/docbook.xsl
+	if [ ! -f ${XSL_DOCBOOK} ]; then XSL_DOCBOOK=/usr/share/sgml/docbook/xsl-stylesheets/manpages/docbook.xsl; fi
 fi
 
 if [ $# -ge 5 ]
@@ -76,7 +77,7 @@ cd ${BUILD_DIR}
 cp ${SRC_DIR}/*.6.txt ${BUILD_DIR}
 
 MANPAGES[0]="spring";               MANPAGES_ATTRIBUTES[0]="-a DEFAULT"
-MANPAGES[1]="spring-multithreaded"; MANPAGES_ATTRIBUTES[1]="-a MULTITHREADED"
+MANPAGES[1]="spring-legacy";        MANPAGES_ATTRIBUTES[1]="-a LEGACY"
 MANPAGES[2]="spring-headless";      MANPAGES_ATTRIBUTES[2]="-a HEADLESS -a GUILESS"
 MANPAGES[3]="spring-dedicated";     MANPAGES_ATTRIBUTES[3]="-a DEDICATED -a GUILESS"
 
@@ -91,11 +92,13 @@ do
 	# strip off the extension
 	manFile="${BUILD_DIR}/${binary}.6"
 	manFile_xml=${manFile}.xml
+	manFile_htm=${manFile}.html
 	manFile_man=${manFile}
 	manFile_cmp=${manFile}.gz
 
 	# compile
 	${EXEC_ASCIIDOC} -a "BINARY=${binary}" ${attributes} --doctype=manpage --backend=docbook --out-file="${manFile_xml}" - < "${manFile_src}" > /dev/null
+	${EXEC_ASCIIDOC} -a "BINARY=${binary}" ${attributes} --doctype=manpage --backend=html5 --out-file="${manFile_htm}" - < "${manFile_src}" > /dev/null
 
 	# format
 	# workaround: xsltproc ignores `--output` for xml/manpages, instead it reads refname from the xml file itself and uses that.

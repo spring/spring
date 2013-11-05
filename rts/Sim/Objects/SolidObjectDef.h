@@ -39,7 +39,7 @@ public:
 
 struct SolidObjectDef {
 public:
-	CR_DECLARE(SolidObjectDef)
+	CR_DECLARE_STRUCT(SolidObjectDef)
 
 	SolidObjectDef();
 	virtual ~SolidObjectDef();
@@ -62,7 +62,10 @@ public:
 	float mass;
 	float crushResistance;
 
-	bool blocking;
+	///< if false, object can NOT be collided with by SolidObject's
+	///< (but projectiles and raytraces will still interact with it)
+	bool collidable;
+	bool selectable;
 	bool upright;
 	bool reclaimable;
 

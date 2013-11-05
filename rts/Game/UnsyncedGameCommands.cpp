@@ -10,14 +10,10 @@
 #include "Action.h"
 #include "CameraHandler.h"
 #include "ConsoleHistory.h"
-#include "GameServer.h"
 #include "CommandMessage.h"
 #include "GameSetup.h"
 #include "GlobalUnsynced.h"
-#include "SelectedUnits.h"
-#include "Player.h"
-#include "PlayerHandler.h"
-#include "PlayerRoster.h"
+#include "SelectedUnitsHandler.h"
 #include "System/TimeProfiler.h"
 #include "IVideoCapturing.h"
 #include "WordCompletion.h"
@@ -28,6 +24,10 @@
 #endif
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "Game/GUI/PlayerRoster.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
+#include "Net/GameServer.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
@@ -74,11 +74,12 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/GlobalConfig.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
+#include "System/Sync/DumpState.h"
 #include "System/Util.h"
 
 #include <SDL_events.h>
@@ -287,38 +288,6 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 
 namespace { // prevents linking problems in case of duplicate symbols
 
-/* XXX
- * An alternative way of dealing with the commands.
- * Less overall code, but more ugly.
- * In an extension not shown in this code, this could also be used to
- * assemble a list of commands to register, by undefining and redefining a list
- * object.
- */
-/*
-#define ActExSpecial(CLS_NAME, command) \
-	class CLS_NAME##ActionExecutor : public IUnsyncedActionExecutor { \
-	public: \
-		CLS_NAME##ActionExecutor() : IUnsyncedActionExecutor(command) {} \
-		void Execute(const UnsyncedAction& action) const {
-
-#define ActEx(CLS_NAME) \
-	ActExSpecial(CLS_NAME, #CLS_NAME)
-
-#define ActExClose() \
-		} \
-	};
-
-
-ActEx(Select)
-		selectionKeys->DoSelection(action.GetArgs());
-ActExClose()
-
-ActExSpecial(SetOverlay, "TSet")
-		selectionKeys->DoSelection(action.GetArgs());
-ActExClose()
-*/
-
-
 /**
  * Special case executor which is used for creating aliases to other commands.
  * The inner executor will be delet'ed in this executors dtor.
@@ -429,7 +398,7 @@ public:
 			"Deselects all currently selected units") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		selectedUnits.ClearSelected();
+		selectedUnitsHandler.ClearSelected();
 		return true;
 	}
 };
@@ -442,7 +411,7 @@ public:
 			"Disables/Enables ROAM mesh rendering: 0=off, 1=on") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readmap->GetGroundDrawer());
+		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readMap->GetGroundDrawer());
 		if (!smfGD)
 			return false;
 
@@ -463,6 +432,29 @@ public:
 };
 
 
+class MapBorderActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MapBorderActionExecutor() : IUnsyncedActionExecutor("MapBorder",
+			"Set or toggle map border rendering") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readMap->GetGroundDrawer());
+		if (!smfGD)
+			return false;
+
+		if (!action.GetArgs().empty()) {
+			bool enable = true;
+			SetBoolArg(enable, action.GetArgs());
+
+			if (enable != smfGD->ToggleMapBorder())
+				smfGD->ToggleMapBorder();
+
+		} else {
+			smfGD->ToggleMapBorder();
+		}
+		return true;
+	}
+};
 
 
 class ShadowsActionExecutor : public IUnsyncedActionExecutor {
@@ -517,13 +509,13 @@ public:
 			"Set or toggle advanced model shading mode") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		static bool canUseShaders = unitDrawer->UseAdvShading();
 
-		static bool canUseShaders = unitDrawer->advShading;
 		if (!canUseShaders)
 			return false;
 
-		SetBoolArg(unitDrawer->advShading, action.GetArgs());
-		LogSystemStatus("model shaders", unitDrawer->advShading);
+		SetBoolArg(unitDrawer->UseAdvShadingRef(), action.GetArgs());
+		LogSystemStatus("model shaders", unitDrawer->UseAdvShading());
 		return true;
 	}
 };
@@ -537,13 +529,14 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		static bool canUseShaders = gd->advShading;
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+		static bool canUseShaders = gd->UseAdvShading();
+
 		if (!canUseShaders)
 			return false;
 
-		SetBoolArg(gd->advShading, action.GetArgs());
-		LogSystemStatus("map shaders", gd->advShading);
+		SetBoolArg(gd->UseAdvShadingRef(), action.GetArgs());
+		LogSystemStatus("map shaders", gd->UseAdvShading());
 		return true;
 	}
 };
@@ -728,12 +721,12 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		GML_RECMUTEX_LOCK(sel); // ActionPressed
 
-		const CUnitSet& selUnits = selectedUnits.selectedUnits;
+		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 		if (selUnits.empty())
 			return false;
 
 		// XXX this code is duplicated in CGroup::CalculateCenter(), move to CUnitSet maybe
-		float3 pos(0.0f, 0.0f, 0.0f);
+		float3 pos;
 		CUnitSet::const_iterator ui;
 		for (ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
 			pos += (*ui)->midPos;
@@ -749,19 +742,18 @@ public:
 
 class CameraMoveActionExecutor : public IUnsyncedActionExecutor {
 public:
-	CameraMoveActionExecutor(int dimension, const std::string& commandPostfix)
-		: IUnsyncedActionExecutor("Move" + commandPostfix,
-			"Moves the camera " + commandPostfix + " a bit")
-		, dimension(dimension)
+	CameraMoveActionExecutor(int moveStateIdx, const std::string& commandPostfix)
+		: IUnsyncedActionExecutor("Move" + commandPostfix, "Moves the camera " + commandPostfix + " a bit")
+		, moveStateIdx(moveStateIdx)
 	{}
 
 	bool Execute(const UnsyncedAction& action) const {
-		game->camMove[dimension] = true;
+		camera->SetMovState(moveStateIdx, true);
 		return true;
 	}
 
 private:
-	int dimension;
+	int moveStateIdx;
 };
 
 
@@ -830,7 +822,8 @@ public:
 			if (!badArgs) {
 				const bool weAreAllied  = teamHandler->AlliedTeams(fromTeamId, teamToKillId);
 				const bool weAreAIHost  = (skirmishAIHandler.GetSkirmishAI(skirmishAIId)->hostPlayer == gu->myPlayerNum);
-				const bool weAreLeader  = (teamToKill->leader == gu->myPlayerNum);
+				const bool weAreLeader  = (teamToKill->GetLeader() == gu->myPlayerNum);
+
 				if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
 					LOG_L(L_WARNING, "Team to %s: player %s is not allowed to %s Skirmish AI controlling team %i (try with /cheat)",
 							actionName.c_str(), fromPlayer->name.c_str(), actionName.c_str(), teamToKillId);
@@ -903,17 +896,22 @@ public:
 
 		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
 		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
+
 		const bool cheating           = gs->cheatEnabled;
 		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
+
 		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
 
 		if (!args.empty()) {
-			std::string aiShortName     = "";
-			std::string aiVersion       = "";
-			std::string aiName          = "";
+			std::string aiShortName;
+			std::string aiVersion;
+			std::string aiName;
 			std::map<std::string, std::string> aiOptions;
 
-			int teamToControlId = atoi(args[0].c_str());
+			const int teamToControlId = atoi(args[0].c_str());
+			const CTeam* teamToControl = teamHandler->IsActiveTeam(teamToControlId) ?
+				teamHandler->Team(teamToControlId) : NULL;
+
 			if (args.size() >= 2) {
 				aiShortName = args[1];
 			} else {
@@ -926,17 +924,15 @@ public:
 				aiName = args[3];
 			}
 
-			CTeam* teamToControl = teamHandler->IsActiveTeam(teamToControlId) ?
-			                             teamHandler->Team(teamToControlId) : NULL;
-
 			if (teamToControl == NULL) {
 				LOG_L(L_WARNING, "Team to control: not a valid team number: \"%s\"", args[0].c_str());
 				badArgs = true;
 			}
 			if (!badArgs) {
 				const bool weAreAllied  = teamHandler->AlliedTeams(fromTeamId, teamToControlId);
-				const bool weAreLeader  = (teamToControl->leader == gu->myPlayerNum);
-				const bool noLeader     = (teamToControl->leader == -1);
+				const bool weAreLeader  = (teamToControl->GetLeader() == gu->myPlayerNum);
+				const bool noLeader     = (!teamToControl->HasLeader());
+
 				if (!(weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader)))) {
 					LOG_L(L_WARNING, "Team to control: player %s is not allowed to let a Skirmish AI take over control of team %i (try with /cheat)",
 							fromPlayer->name.c_str(), teamToControlId);
@@ -948,7 +944,7 @@ public:
 				badArgs = true;
 			}
 			// TODO remove this, if support for multiple Skirmish AIs per team is in place
-			if (!badArgs && (skirmishAIHandler.GetSkirmishAIsInTeam(teamToControlId).size() > 0)) {
+			if (!badArgs && (!skirmishAIHandler.GetSkirmishAIsInTeam(teamToControlId).empty())) {
 				LOG_L(L_WARNING, "Team to control: there is already an AI controlling this team: %i", teamToControlId);
 				badArgs = true;
 			}
@@ -967,6 +963,7 @@ public:
 			if (!badArgs) {
 				SkirmishAIKey aiKey(aiShortName, aiVersion);
 				aiKey = aiLibManager->ResolveSkirmishAIKey(aiKey);
+
 				if (aiKey.IsUnspecified()) {
 					LOG_L(L_WARNING, "Skirmish AI: not a valid Skirmish AI: %s %s",
 							aiShortName.c_str(), aiVersion.c_str());
@@ -1013,9 +1010,10 @@ public:
 			"Prints a list of all currently active Skirmish AIs") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		const CSkirmishAIHandler::id_ai_t& ais  = skirmishAIHandler.GetAllSkirmishAIs();
+		const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
+		CSkirmishAIHandler::id_ai_t::const_iterator ai;
+
 		if (!ais.empty()) {
-			CSkirmishAIHandler::id_ai_t::const_iterator ai;
 			LOG("%s | %s | %s | %s | %s | %s",
 					"ID",
 					"Team",
@@ -1023,14 +1021,17 @@ public:
 					"Lua",
 					"Name",
 					"(Hosting player name) or (Short name & Version)");
+
 			for (ai = ais.begin(); ai != ais.end(); ++ai) {
 				const bool isLocal = (ai->second.hostPlayer == gu->myPlayerNum);
 				std::string lastPart;
+
 				if (isLocal) {
 					lastPart = "(Key:)  " + ai->second.shortName + " " + ai->second.version;
 				} else {
 					lastPart = "(Host:) " + playerHandler->Player(gu->myPlayerNum)->name;
 				}
+
 				LOG("%i | %i | %s | %s | %s | %s",
 						ai->first,
 						ai->second.team,
@@ -1124,6 +1125,8 @@ public:
 			gu->spectatingFullSelect = gu->spectatingFullView;
 		}
 		CLuaUI::UpdateTeams();
+		// NOTE: unsynced, so do not inform via eventHandler
+		unitDrawer->PlayerChanged(gu->myPlayerNum);
 		return true;
 	}
 };
@@ -1510,7 +1513,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		if (!GML::Enabled())
 			return false;
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		SetBoolArg(gd->multiThreadDrawGround, action.GetArgs());
 		configHandler->Set("MultiThreadDrawGround", gd->multiThreadDrawGround ? 1 : 0);
 		LogSystemStatus("Multi threaded ground rendering", gd->multiThreadDrawGround);
@@ -1528,7 +1531,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		if (!GML::Enabled())
 			return false;
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		SetBoolArg(gd->multiThreadDrawGroundShadow, action.GetArgs());
 		configHandler->Set("MultiThreadDrawGroundShadow", gd->multiThreadDrawGroundShadow ? 1 : 0);
 		LogSystemStatus("Multi threaded ground shadow rendering", gd->multiThreadDrawGroundShadow);
@@ -1580,7 +1583,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		if (!GML::Enabled())
 			return false;
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		bool mtEnabled = IsMTEnabled();
 		SetBoolArg(mtEnabled, action.GetArgs());
 		gd->multiThreadDrawGround = mtEnabled;
@@ -1594,7 +1597,7 @@ public:
 	}
 
 	static bool IsMTEnabled() {
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		// find out if most of the MT stuff is on or off so we can toggle based on that
 		return
 				((gd->multiThreadDrawGround ? 1 : 0)
@@ -1644,7 +1647,7 @@ public:
 class SpeedControlActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SpeedControlActionExecutor() : IUnsyncedActionExecutor("SpeedControl",
-			"Sets how server adjusts speed according to player's load (CPU), 0: use highest, 1: use average") {}
+			"Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest,") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (!gameServer) {
@@ -1653,15 +1656,15 @@ public:
 		if (action.GetArgs().empty()) {
 			// switch to next value
 			++game->speedControl;
-			if (game->speedControl > 1) {
-				game->speedControl = 0;
+			if (game->speedControl > 2) {
+				game->speedControl = 1;
 			}
 		} else {
 			// set value
 			game->speedControl = atoi(action.GetArgs().c_str());
 		}
 		// constrain to bounds
-		game->speedControl = std::max(0, std::min(game->speedControl, 1));
+		game->speedControl = std::max(1, std::min(game->speedControl, 2));
 		gameServer->UpdateSpeedControl(game->speedControl);
 		return true;
 	}
@@ -1723,7 +1726,7 @@ public:
 			"Increase the view radius (lower performance, nicer view)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->IncreaseDetail();
+		readMap->GetGroundDrawer()->IncreaseDetail();
 		return true;
 	}
 };
@@ -1736,7 +1739,7 @@ public:
 			"Decrease the view radius (higher performance, uglier view)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->DecreaseDetail();
+		readMap->GetGroundDrawer()->DecreaseDetail();
 		return true;
 	}
 };
@@ -1876,7 +1879,7 @@ public:
 
 		// we must cause the to-be-controllee to be put in
 		// netSelected[myPlayerNum] by giving it an order
-		selectedUnits.SendCommand(Command(CMD_STOP));
+		selectedUnitsHandler.SendCommand(Command(CMD_STOP));
 		net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
 		return true;
 	}
@@ -1890,7 +1893,7 @@ public:
 			"Disable rendering of all auxiliary map overlays") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->DisableExtraTexture();
+		readMap->GetGroundDrawer()->DisableExtraTexture();
 		return true;
 	}
 };
@@ -1903,7 +1906,7 @@ public:
 			"Enable rendering of the auxiliary height-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->SetHeightTexture();
+		readMap->GetGroundDrawer()->SetHeightTexture();
 		return true;
 	}
 };
@@ -1916,7 +1919,7 @@ public:
 			"Enable/Disable rendering of the auxiliary radar- & jammer-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->ToggleRadarAndJammer();
+		readMap->GetGroundDrawer()->ToggleRadarAndJammer();
 		return true;
 	}
 };
@@ -1929,20 +1932,20 @@ public:
 			"Enable rendering of the auxiliary metal-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->SetMetalTexture(readmap->metalMap);
+		readMap->GetGroundDrawer()->SetMetalTexture();
 		return true;
 	}
 };
 
 
 
-class ShowPathTraversabilityActionExecutor : public IUnsyncedActionExecutor {
+class ShowPathTravActionExecutor : public IUnsyncedActionExecutor {
 public:
-	ShowPathTraversabilityActionExecutor() : IUnsyncedActionExecutor("ShowPathTraversability",
+	ShowPathTravActionExecutor() : IUnsyncedActionExecutor("ShowPathTraversability",
 			"Enable rendering of the path traversability-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathTraversability);
+		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathTrav);
 		return true;
 	}
 };
@@ -1953,7 +1956,7 @@ public:
 			"Enable/Disable rendering of the path heat-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathHeat);
+		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathHeat);
 		return true;
 	}
 };
@@ -1964,7 +1967,7 @@ public:
 			"Enable/Disable rendering of the path flow-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathFlow);
+		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathFlow);
 		return true;
 	}
 };
@@ -1975,7 +1978,7 @@ public:
 			"Enable rendering of the path cost-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathCost);
+		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathCost);
 		return true;
 	}
 };
@@ -1988,7 +1991,7 @@ public:
 			"Enable rendering of the auxiliary LOS-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->ToggleLosTexture();
+		readMap->GetGroundDrawer()->ToggleLosTexture();
 		return true;
 	}
 };
@@ -2829,11 +2832,11 @@ public:
 			"Enable/Disable drawing of the map as wire-frame (no textures) (Graphic setting)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		SetBoolArg(gd->wireframe, action.GetArgs());
-		sky->wireframe = gd->wireframe;
-		LogSystemStatus("wireframe map-drawing mode", gd->wireframe);
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+		SetBoolArg(gd->WireFrameModeRef(), action.GetArgs());
+		// TODO: make this a separate action
+		// sky->wireframe = gd->WireFrameMode();
+		LogSystemStatus("wireframe map-drawing mode", gd->WireFrameMode());
 		return true;
 	}
 };
@@ -2934,7 +2937,7 @@ public:
 			"Invoke an artificial crash by performing a division-by-Zero", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		float a = 0;
+		float a = 0.0f;
 		LOG("Result: %f", 1.0f/a);
 		return true;
 	}
@@ -2959,7 +2962,7 @@ public:
 			if (ir == minimap) {
 				givePos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
 			} else {
-				const float3& pos = camera->pos;
+				const float3& pos = camera->GetPos();
 				const float3& dir = mouse->dir;
 				const float dist = ground->LineGroundCol(pos, pos + (dir * 30000.0f));
 				givePos = pos + (dir * dist);
@@ -2990,14 +2993,14 @@ public:
 			"Destroys one or multiple units by unit-ID, instantly", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (selectedUnits.selectedUnits.empty())
+		if (selectedUnitsHandler.selectedUnits.empty())
 			return false;
 
 		// kill selected units
 		std::stringstream ss;
 		ss << GetCommand();
-		for (CUnitSet::iterator it = selectedUnits.selectedUnits.begin();
-				it != selectedUnits.selectedUnits.end(); ++it)
+		for (CUnitSet::iterator it = selectedUnitsHandler.selectedUnits.begin();
+				it != selectedUnitsHandler.selectedUnits.end(); ++it)
 		{
 			ss << " " << (*it)->id;
 		}
@@ -3044,8 +3047,8 @@ public:
 		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
 
 		switch (args.size()) {
-			case 2: { game->DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()),                     1); } break;
-			case 3: { game->DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()), atoi(args[2].c_str())); } break;
+			case 2: { DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()),                     1); } break;
+			case 3: { DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()), atoi(args[2].c_str())); } break;
 			default: { LOG_L(L_WARNING, "/DumpState: wrong syntax");  } break;
 		}
 
@@ -3115,20 +3118,6 @@ public:
 		} else {
 			LOG_L(L_WARNING, "Give either of these as argument: sound, profiling");
 		}
-		return true;
-	}
-};
-
-
-
-class BenchmarkScriptActionExecutor : public IUnsyncedActionExecutor {
-public:
-	// XXX '-' in command name is inconsistent with the rest of the commands, which only use "[a-zA-Z]" -> remove it
-	BenchmarkScriptActionExecutor() : IUnsyncedActionExecutor("Benchmark-Script",
-			"Runs the benchmark-script for a given unit-type") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		CUnitScript::BenchmarkScript(action.GetArgs());
 		return true;
 	}
 };
@@ -3253,28 +3242,28 @@ bool CGame::ActionReleased(const Action& action)
 		inMapDrawer->SetDrawMode(false);
 	}
 	else if (cmd == "moveforward") {
-		camMove[0] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_FWD, false);
 	}
 	else if (cmd == "moveback") {
-		camMove[1] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_BCK, false);
 	}
 	else if (cmd == "moveleft") {
-		camMove[2] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_LFT, false);
 	}
 	else if (cmd == "moveright") {
-		camMove[3] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_RGT, false);
 	}
 	else if (cmd == "moveup") {
-		camMove[4] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_UP, false);
 	}
 	else if (cmd == "movedown") {
-		camMove[5] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_DWN, false);
 	}
 	else if (cmd == "movefast") {
-		camMove[6] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_FST, false);
 	}
 	else if (cmd == "moveslow") {
-		camMove[7] = false;
+		camera->SetMovState(CCamera::MOVE_STATE_SLW, false);
 	}
 	else if (cmd == "mouse1") {
 		mouse->MouseRelease(mouse->lastx, mouse->lasty, 1);
@@ -3314,6 +3303,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DeselectActionExecutor());
 	AddActionExecutor(new ShadowsActionExecutor());
 	AddActionExecutor(new RoamActionExecutor());
+	AddActionExecutor(new MapBorderActionExecutor());
 	AddActionExecutor(new WaterActionExecutor());
 	AddActionExecutor(new AdvModelShadingActionExecutor());
 	AddActionExecutor(new AdvMapShadingActionExecutor());
@@ -3403,7 +3393,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ShowElevationActionExecutor());
 	AddActionExecutor(new ToggleRadarAndJammerActionExecutor());
 	AddActionExecutor(new ShowMetalMapActionExecutor());
-	AddActionExecutor(new ShowPathTraversabilityActionExecutor());
+	AddActionExecutor(new ShowPathTravActionExecutor());
 	AddActionExecutor(new ShowPathHeatActionExecutor());
 	AddActionExecutor(new ShowPathFlowActionExecutor());
 	AddActionExecutor(new ShowPathCostActionExecutor());
@@ -3466,7 +3456,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ReloadGameActionExecutor());
 	AddActionExecutor(new ReloadShadersActionExecutor());
 	AddActionExecutor(new DebugInfoActionExecutor());
-	AddActionExecutor(new BenchmarkScriptActionExecutor());
+
 	// XXX are these redirects really required?
 	AddActionExecutor(new RedirectToSyncedActionExecutor("ATM"));
 #ifdef DEBUG

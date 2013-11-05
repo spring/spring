@@ -84,6 +84,7 @@ public:
 
 	/** settings read from "MAP\ATMOSPHERE" section */
 	struct atmosphere_t {
+		float  fluidDensity; ///< in kg/m^3
 		float  cloudDensity;
 		float  fogStart;
 		float  fogEnd;
@@ -132,8 +133,9 @@ public:
 	/** settings read from "MAP\WATER" section
 	    prefix their name with "Water" to get the TDF variable */
 	struct water_t {
-		float  repeatX; ///< (calculated default is in IWater)
-		float  repeatY; ///< (calculated default is in IWater)
+		float  fluidDensity;      ///< in kg/m^3
+		float  repeatX;           ///< (calculated default is in IWater)
+		float  repeatY;           ///< (calculated default is in IWater)
 		float  damage;
 		float3 absorb;
 		float3 baseColor;
@@ -158,8 +160,8 @@ public:
 		float  perlinAmplitude;
 		float  windSpeed;
 		bool   shoreWaves;
-		bool   forceRendering; ///< if false the renderers will render it only if currentMinMapHeight<0
-		bool   hasWaterPlane;  ///< true if "MAP\WATER\WaterPlaneColor" is set
+		bool   forceRendering;    ///< if false the renderers will render it only if currentMinMapHeight<0
+		bool   hasWaterPlane;     ///< true if "MAP\WATER\WaterPlaneColor" is set
 		unsigned char numTiles;
 		std::string texture;
 		std::string foamTexture;

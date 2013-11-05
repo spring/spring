@@ -188,7 +188,7 @@ void CGameInfo::Draw()
 	values.push_back(wind.GetMaxWind());
 
 	labels.push_back("Map Size:");
-	sprintf(buf, "%ix%i", readmap->width / 64, readmap->height / 64);
+	sprintf(buf, "%ix%i", gs->mapx / 64, gs->mapy / 64);
 	values.push_back(buf);
 
 	labels.push_back("Map Name:");
@@ -202,14 +202,6 @@ void CGameInfo::Draw()
 		case PFS_TYPE_DEFAULT: { values.push_back("Default"); } break;
 		case PFS_TYPE_QTPFS:   { values.push_back("QTPFS"  ); } break;
 		default:               { values.push_back("UNKNOWN"); } break; // not reachable
-	}
-
-	labels.push_back("GML:");
-	values.push_back(GML::Enabled() ? "true" : "false");
-
-	if (GML::Enabled()) {
-		labels.push_back("MT Threads:");
-		values.push_back(IntToString(GML::ThreadCount()));
 	}
 
 	if (gs->cheatEnabled) {

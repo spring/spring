@@ -5,14 +5,15 @@
 
 #include <string.h>
 #include "Threading.h"
+#include "System/Log/Level.h"
 
 namespace CrashHandler {
 	void Install();
 	void Remove();
 
-	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName);
-	void PrepareStacktrace();
-	void CleanupStacktrace();
+	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel = LOG_LEVEL_ERROR);
+	void PrepareStacktrace(const int logLevel = LOG_LEVEL_ERROR);
+	void CleanupStacktrace(const int logLevel = LOG_LEVEL_ERROR);
 
 	void OutputStacktrace();
 };

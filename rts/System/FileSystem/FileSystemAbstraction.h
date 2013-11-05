@@ -26,6 +26,8 @@ public:
 	/// oddly, this is non-trivial on Windows
 	static bool DirIsWritable(const std::string& dir);
 
+	static bool ComparePaths(const std::string& path1, const std::string& path2);
+
 	static std::string GetCwd();
 	static void ChDir(const std::string& dir);
 
@@ -108,13 +110,10 @@ public:
 	 */
 	static std::string GetFileModificationDate(const std::string& file);
 
-	static int GetNativePathSeparator() { return nativePathSeparator; }
+	static char GetNativePathSeparator();
 	static bool IsAbsolutePath(const std::string& path);
 
 	static void FindFiles(std::vector<std::string>& matches, const std::string& dataDir, const std::string& dir, const std::string& regex, int flags);
-
-private:
-	static const int nativePathSeparator;
 };
 
 #endif // !FILE_SYSTEM_ABSTACTION_H

@@ -5,9 +5,9 @@
 #endif
 
 #include "System/myMath.h"
+#include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
 #include "System/Log/ILog.h"
-#include "System/Platform/errorhandler.h"
 #include "Sim/Units/Scripts/CobInstance.h" // for TAANG2RAD (ugh)
 
 float2 CMyMath::headingToVectorTable[NUM_HEADINGS];
@@ -41,11 +41,10 @@ void CMyMath::Init()
 
 #ifdef STREFLOP_H
 	if (checksum != HEADING_CHECKSUM) {
-		handleerror(0,
+		throw unsupported_error(
 			"Invalid headingToVectorTable checksum. Most likely"
 			" your streflop library was not compiled with the correct"
-			" options, or you are not using streflop at all.",
-			"Sync Error", 0);
+			" options, or you are not using streflop at all.");
 	}
 #endif
 }
@@ -146,8 +145,8 @@ bool ClampLineInMap(float3& start, float3& end)
 
 	if (far < 0.0f) {
 		//! outside of map!
-		start = float3(-1.0f, -1.0f, -1.0f);
-		end   = float3(-1.0f, -1.0f, -1.0f);
+		start = -OnesVector;
+		end   = -OnesVector;
 		return true;
 	}
 
@@ -196,7 +195,6 @@ float smoothstep(const float edge0, const float edge1, const float value)
 	t = std::min(1.0f,std::max(0.0f, t ));
 	return t * t * (3.0f - 2.0f * t);
 }
-
 
 float3 smoothstep(const float edge0, const float edge1, float3 vec)
 {

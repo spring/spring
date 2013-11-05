@@ -34,8 +34,8 @@
 
 using namespace std;
 
-CONFIG(int, MaxParticles).defaultValue(1000);
-CONFIG(int, MaxNanoParticles).defaultValue(2500);
+CONFIG(int, MaxParticles).defaultValue(3000);
+CONFIG(int, MaxNanoParticles).defaultValue(2000);
 
 CProjectileHandler* projectileHandler = NULL;
 
@@ -64,7 +64,6 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(currentParticles),
 	CR_MEMBER(currentNanoParticles),
 	CR_MEMBER(particleSaturation),
-	CR_MEMBER(nanoParticleSaturation),
 
 	CR_MEMBER(maxUsedSyncedID),
 	CR_MEMBER(maxUsedUnsyncedID),
@@ -95,7 +94,6 @@ CProjectileHandler::CProjectileHandler()
 	currentParticles       = 0;
 	currentNanoParticles   = 0;
 	particleSaturation     = 0.0f;
-	nanoParticleSaturation = 0.0f;
 
 	// preload some IDs
 	for (int i = 0; i < 16384; i++) {
@@ -172,10 +170,6 @@ void CProjectileHandler::PostLoad()
 void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool synced) {
 	ProjectileContainer::iterator pci = pc.begin();
 
-	#define VECTOR_SANITY_CHECK(v)                              \
-		assert(!math::isnan(v.x) && !math::isinf(v.x)); \
-		assert(!math::isnan(v.y) && !math::isinf(v.y)); \
-		assert(!math::isnan(v.z) && !math::isinf(v.z));
 	#define MAPPOS_SANITY_CHECK(v)                 \
 		assert(v.x >= -(float3::maxxpos * 16.0f)); \
 		assert(v.x <=  (float3::maxxpos * 16.0f)); \
@@ -184,16 +178,18 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		assert(v.y >= -MAX_PROJECTILE_HEIGHT);     \
 		assert(v.y <=  MAX_PROJECTILE_HEIGHT);
 	#define PROJECTILE_SANITY_CHECK(p) \
-		VECTOR_SANITY_CHECK(p->pos);   \
+		p->pos.AssertNaNs();   \
 		MAPPOS_SANITY_CHECK(p->pos);
 
 	while (pci != pc.end()) {
 		CProjectile* p = *pci;
+		assert(p->synced == synced);
+		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
 
 		if (p->deleteMe) {
 			ProjectileMap::iterator pIt;
 
-			if (p->synced) {
+			if (synced) {
 				//! iterator is always valid
 				pIt = syncedProjectileIDs.find(p->id);
 
@@ -381,21 +377,24 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 void CProjectileHandler::CheckUnitCollisions(
 	CProjectile* p,
 	std::vector<CUnit*>& tempUnits,
-	CUnit** endUnit,
 	const float3& ppos0,
 	const float3& ppos1)
 {
 	CollisionQuery cq;
 
-	for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
-		CUnit* unit = *ui;
+	for (unsigned int n = 0; n < tempUnits.size(); n++) {
+		CUnit* unit = tempUnits[n];
+
+		if (unit == NULL)
+			break;
 
 		const CUnit* attacker = p->owner();
 
 		// if this unit fired this projectile, always ignore
-		if (attacker == unit) {
+		if (attacker == unit)
 			continue;
-		}
+		if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
+			continue;
 
 		if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
 			if (attacker != NULL && (unit->allyteam == attacker->allyteam)) { continue; }
@@ -413,9 +412,9 @@ void CProjectileHandler::CheckUnitCollisions(
 			}
 
 			if (!cq.InsideHit()) {
-				p->SetPos(cq.GetHitPos());
+				p->SetPosition(cq.GetHitPos());
 				p->Collision(unit);
-				p->SetPos(ppos0);
+				p->SetPosition(ppos0);
 			} else {
 				p->Collision(unit);
 			}
@@ -428,7 +427,6 @@ void CProjectileHandler::CheckUnitCollisions(
 void CProjectileHandler::CheckFeatureCollisions(
 	CProjectile* p,
 	std::vector<CFeature*>& tempFeatures,
-	CFeature** endFeature,
 	const float3& ppos0,
 	const float3& ppos1)
 {
@@ -441,18 +439,20 @@ void CProjectileHandler::CheckFeatureCollisions(
 
 	CollisionQuery cq;
 
-	for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
-		CFeature* feature = *fi;
+	for (unsigned int n = 0; n < tempFeatures.size(); n++) {
+		CFeature* feature = tempFeatures[n];
 
-		if (!feature->blocking) {
+		if (feature == NULL)
+			break;
+
+		if (!feature->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
-		}
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
 			if (!cq.InsideHit()) {
-				p->SetPos(cq.GetHitPos());
+				p->SetPosition(cq.GetHitPos());
 				p->Collision(feature);
-				p->SetPos(ppos0);
+				p->SetPosition(ppos0);
 			} else {
 				p->Collision(feature);
 			}
@@ -469,19 +469,16 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc) {
 	for (ProjectileContainer::iterator pci = pc.begin(); pci != pc.end(); ++pci) {
 		CProjectile* p = *pci;
 
-		if (p->checkCol && !p->deleteMe) {
-			const float3 ppos0 = p->pos;
-			const float3 ppos1 = p->pos + p->speed;
-			const float speedf = p->speed.Length();
+		if (!p->checkCol) continue;
+		if ( p->deleteMe) continue;
 
-			CUnit** endUnit = &tempUnits[0];
-			CFeature** endFeature = &tempFeatures[0];
+		const float3 ppos0 = p->pos;
+		const float3 ppos1 = p->pos + p->speed;
 
-			quadField->GetUnitsAndFeaturesExact(p->pos, p->radius + speedf, endUnit, endFeature);
+		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures);
 
-			CheckUnitCollisions(p, tempUnits, endUnit, ppos0, ppos1);
-			CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);
-		}
+		CheckUnitCollisions(p, tempUnits, ppos0, ppos1);
+		CheckFeatureCollisions(p, tempFeatures, ppos0, ppos1);
 	}
 }
 
@@ -491,15 +488,13 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 	for (pci = pc.begin(); pci != pc.end(); ++pci) {
 		CProjectile* p = *pci;
 
-		if (!p->checkCol) {
+		if (!p->checkCol)
 			continue;
-		}
 
 		// NOTE: if <p> is a MissileProjectile and does not
 		// have selfExplode set, it will never be removed (!)
-		if (p->GetCollisionFlags() & Collision::NOGROUND) {
+		if (p->GetCollisionFlags() & Collision::NOGROUND)
 			continue;
-		}
 
 		// NOTE: don't add p->radius to groundHeight, or most
 		// projectiles will collide with the ground too early
@@ -513,7 +508,7 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 			// where we cannot live, adjust it and explode us now
 			// (if the projectile does not set deleteMe = true, it
 			// will keep hugging the terrain)
-			p->pos.y = belowGround? groundHeight: 0.0f;
+			p->pos.y = groundHeight * belowGround;
 			p->Collision();
 		}
 	}

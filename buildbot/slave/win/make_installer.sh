@@ -25,7 +25,7 @@ if [ -z "$MINGW_HOST" ]; then
 fi
 
 cd ${BUILDDIR}
-DESTDIR=${DEST} ninja install
+DESTDIR=${DEST} ${MAKE} install
 
 #strip symbols and archive them
 cd ${INSTALLDIR}
@@ -37,15 +37,25 @@ for tostripfile in ${EXECUTABLES}; do
 		if ! ${MINGW_HOST}objdump -h ${tostripfile} | grep -q .gnu_debuglink; then
 			echo "stripping ${tostripfile}"
 			debugfile=${tostripfile%.*}.dbg
-			${MINGW_HOST}objcopy --only-keep-debug ${tostripfile} ${debugfile}
-			${MINGW_HOST}strip --strip-debug --strip-unneeded ${tostripfile}
-			${MINGW_HOST}objcopy --add-gnu-debuglink=${debugfile} ${tostripfile}
+			(${MINGW_HOST}objcopy --only-keep-debug ${tostripfile} ${debugfile} && \
+			${MINGW_HOST}strip --strip-debug --strip-unneeded ${tostripfile} && \
+			${MINGW_HOST}objcopy --add-gnu-debuglink=${debugfile} ${tostripfile}) &
 			DEBUGFILES="${DEBUGFILES} ${debugfile}"
 		else
 			echo "not stripping ${tostripfile}"
 		fi
 	fi
 done
+
+# strip UnitTests (don't store their debugsymbols in spring_dbg.7z)
+for tostripfile in "${BUILDDIR}"/test/*.exe; do
+	if [ -f ${tostripfile} ]; then
+		${MINGW_HOST}strip --strip-debug --strip-unneeded ${tostripfile} &
+	fi
+done
+
+# wait for finished stripping
+wait
 
 mkdir -p ${TMP_PATH}
 
@@ -55,18 +65,24 @@ MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portab
 
 #create portable spring excluding shard (ask AF why its excluded)
 touch ${INSTALLDIR}/springsettings.cfg
-${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -xr!*.dbg
+${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -xr!*.dbg &
 #for ZKL
-(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe \*.dbg)
+(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe \*.dbg) &
 
 # compress files excluded from portable archive
 for file in spring-dedicated.exe spring-headless.exe; do
 	name=${file%.*}
-	${SEVENZIP} ${TMP_PATH}/${VERSION}_${name}.7z ${file}
+	${SEVENZIP} ${TMP_PATH}/${VERSION}_${name}.7z ${file} &
 done
 
-#create archive for translate_stacktrace.py
-${SEVENZIP_NONSOLID} ${TMP_PATH}/${VERSION}_spring_dbg.7z ${DEBUGFILES}
+# compress UnitTests
+${SEVENZIP} ${TMP_PATH}/${VERSION}_UnitTests.7z "${BUILDDIR}"/test/*.exe &
+
+# create archive for translate_stacktrace.py
+${SEVENZIP_NONSOLID} ${TMP_PATH}/${VERSION}_spring_dbg.7z ${DEBUGFILES} &
+
+# wait for 7zip
+wait
 
 cd ${SOURCEDIR}
 

@@ -75,16 +75,45 @@ EndIf (NOT DEFINED SSE_FLAGS)
 If    (NOT DEFINED IEEE_FP_FLAG)
 	If   (MSVC)
 		Set(IEEE_FP_FLAG "/fp:strict")
+	elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+		Message(WARNING "Clang detected, disabled IEEE-FP")
 	Else (MSVC)
-	CHECK_CXX_ACCEPTS_FLAG("-mieee-fp" HAS_IEEE_FP_FLAG)
-	If    (HAS_IEEE_FP_FLAG)
-		Set(IEEE_FP_FLAG "-mieee-fp")
-	Else  (HAS_IEEE_FP_FLAG)
-		Message(WARNING "IEEE-FP support is missing, online play is highly discouraged with this build")
-		Set(IEEE_FP_FLAG "")
-	EndIf (HAS_IEEE_FP_FLAG)
+		CHECK_CXX_ACCEPTS_FLAG("-mieee-fp" HAS_IEEE_FP_FLAG)
+		If    (HAS_IEEE_FP_FLAG)
+			Set(IEEE_FP_FLAG "-mieee-fp")
+		Else  (HAS_IEEE_FP_FLAG)
+			Message(WARNING "IEEE-FP support is missing, online play is highly discouraged with this build")
+			Set(IEEE_FP_FLAG "")
+		EndIf (HAS_IEEE_FP_FLAG)
 	Endif(MSVC)
 EndIf (NOT DEFINED IEEE_FP_FLAG)
+
+
+If    (NOT DEFINED CXX11_FLAGS)
+	If   (MSVC)
+		# Nothing needed
+		Set(CXX11_FLAGS "")
+	ElseIf ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+		CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=c++11")
+	Else (MSVC)
+		CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=gnu++11")
+		If    (NOT CXX11_FLAGS)
+			CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=gnu++0x")
+		EndIf (NOT CXX11_FLAGS)
+		If    (NOT CXX11_FLAGS)
+			# xcode
+			CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=c++11")
+		EndIf (NOT CXX11_FLAGS)
+		If    (NOT CXX11_FLAGS)
+			# xcode 2
+			CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=c++0x")
+		EndIf (NOT CXX11_FLAGS)
+
+		If    (NOT CXX11_FLAGS)
+			Message(WARNING "C++11 support missing")
+		EndIf (NOT CXX11_FLAGS)
+	Endif(MSVC)
+EndIf (NOT DEFINED CXX11_FLAGS)
 
 
 If    (NOT MSVC AND NOT DEFINED LTO_FLAGS)
@@ -98,6 +127,7 @@ If    (NOT MSVC AND NOT DEFINED LTO_FLAGS)
 		endif (NOT LTO_FLAGS)
 	EndIf (LTO)
 EndIf (NOT MSVC AND NOT DEFINED LTO_FLAGS)
+
 
 
 IF    (NOT MSVC AND NOT DEFINED MARCH)
@@ -118,3 +148,37 @@ IF    (NOT MSVC AND NOT DEFINED MARCH)
 		EndIf (HAS_X86_64_FLAG_)
 	endif ((CMAKE_SIZEOF_VOID_P EQUAL 8) AND (NOT MARCH))
 EndIf (NOT MSVC AND NOT DEFINED MARCH)
+
+if   (NOT MSVC)
+	if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+		CHECK_CXX_ACCEPTS_FLAG("-mno-tls-direct-seg-refs" HAS_NO_TLS_DIRECT_SEG_REFS_FLAG)
+		if (HAS_NO_TLS_DIRECT_SEG_REFS_FLAG)
+			set(NO_TLS_DIRECT_SEG_REFS -mno-tls-direct-seg-refs)
+		endif()
+	endif()
+endif()
+
+
+if   (CMAKE_COMPILER_IS_GNUCXX)
+	# check if default linker is ld.gold
+	execute_process(COMMAND ${CMAKE_LINKER} "-v" COMMAND "grep" "-iq" "gold" RESULT_VARIABLE hasGold)
+
+	if    (NOT hasGold EQUAL 0)
+		# since gcc 4.8 it is possible to switch the linker via that argument
+		CHECK_CXX_ACCEPTS_FLAG("-fuse-ld=gold" HAS_USE_LD)
+		IF    (HAS_USE_LD)
+			FIND_PROGRAM(LD_GOLD ld.gold)
+			if    (LD_GOLD)
+				set(hasGold 0)
+				set(LDGOLD_CXX_FLAGS "-fuse-ld=gold")
+			endif (LD_GOLD)
+		EndIf (HAS_USE_LD)
+	endif (NOT hasGold EQUAL 0)
+
+	if    (hasGold EQUAL 0)
+		set(LDGOLD_FOUND TRUE)
+		set(LDGOLD_LINKER_FLAGS " -Wl,--compress-debug-sections=zlib")
+	endif (hasGold EQUAL 0)
+
+	mark_as_advanced(LDGOLD_FOUND LDGOLD_LINKER_FLAGS LDGOLD_CXX_FLAGS)
+endif(CMAKE_COMPILER_IS_GNUCXX)

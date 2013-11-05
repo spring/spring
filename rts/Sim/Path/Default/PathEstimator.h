@@ -78,8 +78,8 @@ public:
 	 */
 	IPath::SearchResult GetPath(
 		const MoveDef& moveDef,
-		float3 start,
 		const CPathFinderDef& peDef,
+		float3 start,
 		IPath::Path& path,
 		unsigned int maxSearchedBlocks,
 		bool synced = true
@@ -137,6 +137,7 @@ private:
 
 private:
 	friend class CPathManager;
+	friend class CDefaultPathDrawer;
 
 	struct SingleBlock {
 		int2 blockPos;
@@ -164,7 +165,7 @@ private:
 	boost::barrier* pathBarrier;
 
 	CPathFinder* pathFinder;
-	CPathCache* pathCache;
+	CPathCache* pathCache[2];                   /// [0] = !synced, [1] = synced
 
 	PathNodeBuffer openBlockBuffer;
 	PathNodeStateBuffer blockStates;
@@ -185,6 +186,7 @@ private:
 	unsigned int mStartBlockIdx;
 	float mGoalHeuristic;
 
+	int blockUpdatePenalty;
 };
 
 #endif

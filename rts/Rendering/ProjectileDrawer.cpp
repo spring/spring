@@ -46,8 +46,8 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 
 	loadscreen->SetLoadMessage("Creating Projectile Textures");
 
-	textureAtlas = new CTextureAtlas(2048, 2048);
-	groundFXAtlas = new CTextureAtlas(2048, 2048);
+	textureAtlas = new CTextureAtlas(); textureAtlas->SetName("ProjectileTextureAtlas");
+	groundFXAtlas = new CTextureAtlas(); groundFXAtlas->SetName("ProjectileEffectsAtlas");
 
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	LuaParser mapResParser("gamedata/resources_map.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
@@ -237,7 +237,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		perlinFB.reloadOnAltTab = true;
 
 		perlinFB.Bind();
-		perlinFB.AttachTexture(textureAtlas->gltex);
+		perlinFB.AttachTexture(textureAtlas->GetTexID());
 		drawPerlinTex = perlinFB.CheckStatus("PERLIN");
 		perlinFB.Unbind();
 	}
@@ -387,17 +387,17 @@ void CProjectileDrawer::LoadWeaponTextures() {
 		if (wd.visuals.texNames[2] != "") { wd.visuals.texture3 = &textureAtlas->GetTexture(wd.visuals.texNames[2]); }
 		if (wd.visuals.texNames[3] != "") { wd.visuals.texture4 = &textureAtlas->GetTexture(wd.visuals.texNames[3]); }
 
-		// load weapon explosion generators
-		if (wd.visuals.expGenTag.empty()) {
-			wd.explosionGenerator = NULL;
-		} else {
-			wd.explosionGenerator = explGenHandler->LoadGenerator(wd.visuals.expGenTag);
+		if (!wd.visuals.ptrailExpGenTag.empty()) {
+			// these can only be custom EG's so prefix is not required game-side
+			wd.ptrailExplosionGeneratorID = explGenHandler->LoadGeneratorID(CEG_PREFIX_STRING + wd.visuals.ptrailExpGenTag);
 		}
 
-		if (wd.visuals.bounceExpGenTag.empty()) {
-			wd.bounceExplosionGenerator = NULL;
-		} else {
-			wd.bounceExplosionGenerator = explGenHandler->LoadGenerator(wd.visuals.bounceExpGenTag);
+		if (!wd.visuals.impactExpGenTag.empty()) {
+			wd.impactExplosionGeneratorID = explGenHandler->LoadGeneratorID(wd.visuals.impactExpGenTag);
+		}
+
+		if (!wd.visuals.bounceExpGenTag.empty()) {
+			wd.bounceExplosionGeneratorID = explGenHandler->LoadGeneratorID(wd.visuals.bounceExpGenTag);
 		}
 	}
 }
@@ -408,7 +408,7 @@ void CProjectileDrawer::DrawProjectiles(int modelType, int numFlyingPieces, int*
 {
 	typedef std::set<CProjectile*> ProjectileSet;
 	typedef std::map<int, ProjectileSet> ProjectileBin;
-	typedef ProjectileSet::iterator ProjectileSetIt;
+	//typedef ProjectileSet::iterator ProjectileSetIt;
 	typedef ProjectileBin::iterator ProjectileBinIt;
 
 	ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
@@ -435,10 +435,13 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 {
 	const CUnit* owner = pro->owner();
 
-	const float time = !GML::SimEnabled() ? globalRendering->timeOffset :
-		((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)pro->lastProjUpdate) * globalRendering->weightedSpeedFactor;
-		pro->drawPos = pro->pos + (pro->speed * time);
-	const bool visible = (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)));
+	if (GML::SimEnabled()) {
+		pro->drawPos = pro->pos + (pro->speed * (spring_tomsecs(globalRendering->lastFrameStart)*1.0f - pro->lastProjUpdate*1.0f) * globalRendering->weightedSpeedFactor);
+	} else {
+		pro->drawPos = pro->pos + (pro->speed * globalRendering->timeOffset);
+	}
+
+	const bool visible = (gu->spectatingFullView || losHandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)));
 
 	if (!visible)
 		return;
@@ -450,8 +453,8 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 			return;
 		}
 
-		const float dif = pro->pos.y - camera->pos.y;
-		const float3 zeroPos = camera->pos * (pro->pos.y / dif) + pro->pos * (-camera->pos.y / dif);
+		const float dif = pro->pos.y - camera->GetPos().y;
+		const float3 zeroPos = camera->GetPos() * (pro->pos.y / dif) + pro->pos * (-camera->GetPos().y / dif);
 
 		if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z, false) > 3 + 0.5f * pro->drawRadius) {
 			return;
@@ -493,7 +496,7 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 {
 	const CUnit* owner = p->owner();
 
-	if ((gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam) ||
+	if ((gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam) ||
 		(owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)))) {
 
 		// if this returns false, then projectile is
@@ -540,7 +543,7 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 					CUnit *owner = p->owner();
 					if ((owner && (owner->allyteam == gu->myAllyTeam)) ||
-						gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
+						gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam)) {
 							p->DrawOnMinimap(*lines, *points);
 					}
 				}
@@ -567,7 +570,7 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 			const CUnit* owner = p->owner();
 			if ((owner && (owner->allyteam == gu->myAllyTeam)) ||
-				gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
+				gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam)) {
 				p->DrawOnMinimap(*lines, *points);
 			}
 		}
@@ -638,7 +641,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	{
 		GML_RECMUTEX_LOCK(proj); // Draw
 
-		unitDrawer->SetupForUnitDrawing();
+		unitDrawer->SetupForUnitDrawing(false);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			modelRenderers[modelType]->PushRenderState();
@@ -646,7 +649,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 			modelRenderers[modelType]->PopRenderState();
 		}
 
-		unitDrawer->CleanUpUnitDrawing();
+		unitDrawer->CleanUpUnitDrawing(false);
 
 		// z-sort the model-less projectiles
 		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
@@ -741,8 +744,6 @@ void CProjectileDrawer::DrawShadowPass()
 
 
 bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPass) {
-	if (luaRules && luaRules->DrawProjectile(p))
-		return true;
 	if (!(p->weapon || p->piece) || (p->model == NULL))
 		return false;
 
@@ -750,72 +751,17 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		// weapon-projectile
 		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 
-		#define SET_TRANSFORM_VECTORS(dir)           \
-			float3 rightdir, updir;                  \
-                                                     \
-			if (math::fabs(dir.y) < 0.95f) {         \
-				rightdir = dir.cross(UpVector);      \
-				rightdir.SafeANormalize();           \
-			} else {                                 \
-				rightdir = float3(1.0f, 0.0f, 0.0f); \
-			}                                        \
-                                                     \
-			updir = rightdir.cross(dir);
-
-		#define TRANSFORM_DRAW(mat)                                        \
-			glPushMatrix();                                                \
-				glMultMatrixf(mat);                                        \
-				glCallList(wp->model->GetRootPiece()->GetDisplayListID()); \
-			glPopMatrix();
-
-		switch (wp->GetProjectileType()) {
-			case WEAPON_BASE_PROJECTILE:
-			case WEAPON_EXPLOSIVE_PROJECTILE: 
-			case WEAPON_LASER_PROJECTILE:
-			case WEAPON_TORPEDO_PROJECTILE: {
-				if (!shadowPass) {
-					unitDrawer->SetTeamColour(wp->GetTeamID());
-				}
-
-				float3 dir(wp->speed);
-				dir.SafeANormalize();
-				SET_TRANSFORM_VECTORS(dir);
-
-				CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, dir);
-
-				TRANSFORM_DRAW(transMatrix);
-			} break;
-
-			case WEAPON_MISSILE_PROJECTILE: {
-				if (!shadowPass) {
-					unitDrawer->SetTeamColour(wp->GetTeamID());
-				}
-
-				SET_TRANSFORM_VECTORS(wp->dir);
-
-				CMatrix44f transMatrix(wp->drawPos + wp->dir * wp->radius * 0.9f, -rightdir, updir, wp->dir);
-
-				TRANSFORM_DRAW(transMatrix);
-			} break;
-
-			case WEAPON_STARBURST_PROJECTILE: {
-				if (!shadowPass) {
-					unitDrawer->SetTeamColour(wp->GetTeamID());
-				}
-
-				SET_TRANSFORM_VECTORS(wp->dir);
-
-				CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, wp->dir);
-
-				TRANSFORM_DRAW(transMatrix);
-			} break;
-
-			default: {
-			} break;
+		if (!shadowPass) {
+			unitDrawer->SetTeamColour(wp->GetTeamID());
 		}
 
-		#undef SET_TRANSFORM_VECTORS
-		#undef TRANSFORM_DRAW
+		glPushMatrix();
+			glMultMatrixf(wp->GetTransformMatrix(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE));
+
+			if (!(/*p->luaDraw &&*/ luaRules != NULL && luaRules->DrawProjectile(p))) {
+				wp->model->DrawStatic();
+			}
+		glPopMatrix();
 	} else {
 		// piece-projectile
 		const CPieceProjectile* pp = static_cast<const CPieceProjectile*>(p);
@@ -832,7 +778,10 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		glPushMatrix();
 			glTranslatef3(pp->pos);
 			glRotatef(pp->spinAngle, pp->spinVec.x, pp->spinVec.y, pp->spinVec.z);
-			glCallList(pp->dispList);
+
+			if (!(/*p->luaDraw &&*/ luaRules != NULL && luaRules->DrawProjectile(p))) {
+				glCallList(pp->dispList);
+			}
 		glPopMatrix();
 
 		if (pp->alphaThreshold != 0.1f) {
@@ -879,7 +828,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 	for (gfi = gfc.render_begin(); gfi != gfc.render_end(); ++gfi) {
 		CGroundFlash* gf = *gfi;
 
-		const bool los = gu->spectatingFullView || loshandler->InAirLos(gf->pos, gu->myAllyTeam);
+		const bool los = gu->spectatingFullView || losHandler->InAirLos(gf->pos, gu->myAllyTeam);
 		const bool vis = camera->InView(gf->pos, gf->size);
 
 		if (depthTest != gf->depthTest) {
@@ -928,7 +877,7 @@ void CProjectileDrawer::UpdateTextures() {
 
 void CProjectileDrawer::UpdatePerlin() {
 	perlinFB.Bind();
-	glViewport(perlintex->xstart * textureAtlas->xsize, perlintex->ystart * textureAtlas->ysize, 128, 128);
+	glViewport(perlintex->xstart * (textureAtlas->GetSize()).x, perlintex->ystart * (textureAtlas->GetSize()).y, 128, 128);
 
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
@@ -975,10 +924,10 @@ void CProjectileDrawer::UpdatePerlin() {
 			col[b] = int((1.0f - perlinBlend[a]) * 16 * size);
 
 		glBindTexture(GL_TEXTURE_2D, perlinTex[a * 2]);
-		va->AddVertexQTC(float3(0, 0, 0), 0,         0, col);
-		va->AddVertexQTC(float3(0, 1, 0), 0,     tsize, col);
-		va->AddVertexQTC(float3(1, 1, 0), tsize, tsize, col);
-		va->AddVertexQTC(float3(1, 0, 0), tsize,     0, col);
+		va->AddVertexQTC(ZeroVector, 0,         0, col);
+		va->AddVertexQTC(  UpVector, 0,     tsize, col);
+		va->AddVertexQTC(  XYVector, tsize, tsize, col);
+		va->AddVertexQTC( RgtVector, tsize,     0, col);
 		va->DrawArrayTC(GL_QUADS);
 
 		if (a == 0)
@@ -992,10 +941,10 @@ void CProjectileDrawer::UpdatePerlin() {
 			col[b] = int(perlinBlend[a] * 16 * size);
 
 		glBindTexture(GL_TEXTURE_2D, perlinTex[a * 2 + 1]);
-		va->AddVertexQTC(float3(0, 0, 0),     0,     0, col);
-		va->AddVertexQTC(float3(0, 1, 0),     0, tsize, col);
-		va->AddVertexQTC(float3(1, 1, 0), tsize, tsize, col);
-		va->AddVertexQTC(float3(1, 0, 0), tsize,     0, col);
+		va->AddVertexQTC(ZeroVector,     0,     0, col);
+		va->AddVertexQTC(  UpVector,     0, tsize, col);
+		va->AddVertexQTC(  XYVector, tsize, tsize, col);
+		va->AddVertexQTC( RgtVector, tsize,     0, col);
 		va->DrawArrayTC(GL_QUADS);
 
 		speed *= 0.6f;

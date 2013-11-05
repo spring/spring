@@ -19,7 +19,6 @@ CR_REG_METADATA(CExploSpikeProjectile,
 		CR_MEMBER(alpha),
 		CR_MEMBER(alphaDecay),
 		CR_MEMBER(lengthGrowth),
-		CR_MEMBER(dir),
 		CR_MEMBER(color),
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_RESERVED(8)
@@ -32,31 +31,32 @@ CExploSpikeProjectile::CExploSpikeProjectile()
 	, alpha(0.0f)
 	, alphaDecay(0.0f)
 	, lengthGrowth(0.0f)
-	, dir(ZeroVector)
 	, color(1.0f, 0.8f, 0.5f)
 {
 }
 
-CExploSpikeProjectile::CExploSpikeProjectile(const float3& pos, const float3& speed, float length, float width, float alpha, float alphaDecay, CUnit* owner):
-	CProjectile(pos, speed, owner, false, false, false),
+CExploSpikeProjectile::CExploSpikeProjectile(
+	const float3& pos,
+	const float3& spd,
+	float length,
+	float width,
+	float alpha,
+	float alphaDecay,
+	CUnit* owner
+):
+	CProjectile(pos, spd, owner, false, false, false),
 	length(length),
 	width(width),
 	alpha(alpha),
 	alphaDecay(alphaDecay),
-	dir(speed),
 	color(1.0f, 0.8f, 0.5f)
 {
-	lengthGrowth = dir.Length() * (0.5f + gu->RandFloat() * 0.4f);
-	dir /= lengthGrowth;
+	lengthGrowth = speed.w * (0.5f + gu->RandFloat() * 0.4f);
 
 	checkCol  = false;
 	useAirLos = true;
 
 	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
-}
-
-CExploSpikeProjectile::~CExploSpikeProjectile()
-{
 }
 
 void CExploSpikeProjectile::Update()
@@ -75,7 +75,7 @@ void CExploSpikeProjectile::Draw()
 {
 	inArray = true;
 
-	const float3 dif = (pos - camera->pos).ANormalize();
+	const float3 dif = (pos - camera->GetPos()).ANormalize();
 	const float3 dir2 = (dif.cross(dir)).ANormalize();
 
 	unsigned char col[4];

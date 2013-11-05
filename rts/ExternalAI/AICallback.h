@@ -44,7 +44,6 @@ private:
 
 public:
 	CAICallback(int teamId);
-	~CAICallback();
 
 	void SendStartPos(bool ready, float3 pos);
 	void SendTextMsg(const char* text, int zone);

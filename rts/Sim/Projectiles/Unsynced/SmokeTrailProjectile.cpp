@@ -34,7 +34,7 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(drawCallbacker),
 	CR_MEMBER(texture),
 	CR_RESERVED(4)
-	));
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -112,8 +112,8 @@ void CSmokeTrailProjectile::Draw()
 	va->EnlargeArrays(8 * 4, 0, VA_SIZE_TC);
 
 	if (drawTrail) {
-		const float3 dif1  = (pos1 - camera->pos).ANormalize();
-		const float3 dif2  = (pos2 - camera->pos).ANormalize();
+		const float3 dif1  = (pos1 - camera->GetPos()).ANormalize();
+		const float3 dif2  = (pos2 - camera->GetPos()).ANormalize();
 		const float3 odir1 = (dif1.cross(dir1)).ANormalize();
 		const float3 odir2 = (dif2.cross(dir2)).ANormalize();
 
@@ -145,7 +145,7 @@ void CSmokeTrailProjectile::Draw()
 		float size2 = 1 + ((age + 8) * (1.0f / lifeTime)) * orgSize;
 
 		if (drawSegmented) {
-			const float3 dif3 = (midpos - camera->pos).ANormalize();
+			const float3 dif3 = (midpos - camera->GetPos()).ANormalize();
 			const float3 odir3 = (dif3.cross(middir)).ANormalize();
 			float size3 = 0.2f + ((age + 4) * (1.0f / lifeTime)) * orgSize;
 
@@ -175,18 +175,19 @@ void CSmokeTrailProjectile::Draw()
 			va->AddVertexQTC(pos2 + (odir2 * size2),   texture->xend,   texture->yend,   col2);
 			va->AddVertexQTC(pos2 - (odir2 * size2),   texture->xend,   texture->ystart, col2);
 		}
-	} else {	//draw as particles
+	} else {
+		// draw as particles
 		unsigned char col[4];
+
 		for (int a = 0; a < 8; ++a) {
 			const float a1 = 1 - (float)(age + a) / lifeTime;
 			const float alpha = std::min(255.0f, std::max(0.0f, a1 * 255));
+			const float size = ((0.2f + (age + a) * (1.0f / lifeTime)) * orgSize) * 1.2f;
+
 			col[0] = (unsigned char) (color * alpha);
 			col[1] = (unsigned char) (color * alpha);
 			col[2] = (unsigned char) (color * alpha);
 			col[3] = (unsigned char) alpha;
-			float size = ((0.2f + (age + a) * (1.0f / lifeTime)) * orgSize) * 1.2f;
-
-//			const float3 pos = CalcBeizer(a / 8.0f, pos1, dirpos1, dirpos2, pos2);
 
 			#define st projectileDrawer->smoketex[0]
 			va->AddVertexQTC(pos1 + ( camera->up + camera->right) * size, st->xstart, st->ystart, col);
@@ -196,15 +197,15 @@ void CSmokeTrailProjectile::Draw()
 			#undef st
 		}
 	}
-	CProjectile* callbacker = GML::SimEnabled() ? *(CProjectile * volatile *)&drawCallbacker : drawCallbacker;
-	if (callbacker) {
+
+	CProjectile* callbacker = GML::SimEnabled()? *(CProjectile* volatile*) &drawCallbacker: drawCallbacker;
+
+	if (callbacker != NULL) {
 		callbacker->DrawCallback();
 	}
 }
 
 void CSmokeTrailProjectile::Update()
 {
-	if (gs->frameNum>=creationTime + lifeTime) {
-		deleteMe = true;
-	}
+	deleteMe |= (gs->frameNum >= (creationTime + lifeTime));
 }

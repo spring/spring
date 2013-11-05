@@ -83,6 +83,8 @@ class CKeyBindings : public CommandReceiver
 
 		int fakeMetaKey;
 		bool userCommand;
+	private:
+		bool debugEnabled;
 };
 
 

@@ -5,17 +5,17 @@
 
 #include "Weapon.h"
 
-class CEmgCannon : public CWeapon
+class CEmgCannon: public CWeapon
 {
 	CR_DECLARE(CEmgCannon);
 public:
-	CEmgCannon(CUnit* owner);
+	CEmgCannon(CUnit* owner, const WeaponDef* def);
 
 	void Update();
 	void Init();
 
 private:
-	virtual void FireImpl();
+	void FireImpl(bool scriptCall);
 };
 
 #endif // _EMG_CANNON_H

@@ -47,9 +47,8 @@ CRefractWater::~CRefractWater()
 
 void CRefractWater::Draw()
 {
-	if (!mapInfo->water.forceRendering && (readmap->currMinHeight > 1.0f)) {
+	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
 		return;
-	}
 
 	glActiveTextureARB(GL_TEXTURE2_ARB);
 	glBindTexture(target, subSurfaceTex);
@@ -87,7 +86,7 @@ void CRefractWater::SetupWaterDepthTex()
 {
 	glActiveTextureARB(GL_TEXTURE3_ARB);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture()); // the shading texture has water depth encoded in alpha
+	glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture()); // the shading texture has water depth encoded in alpha
 	glEnable(GL_TEXTURE_GEN_S);
 	float splane[] = { 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 0.0f, 0.0f, 0.0f }; 
 	glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);

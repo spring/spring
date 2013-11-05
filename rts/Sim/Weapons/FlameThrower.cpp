@@ -7,7 +7,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CFlameThrower, CWeapon, (NULL));
+CR_BIND_DERIVED(CFlameThrower, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CFlameThrower,(
 	CR_MEMBER(color),
@@ -15,24 +15,25 @@ CR_REG_METADATA(CFlameThrower,(
 	CR_RESERVED(8)
 ));
 
-CFlameThrower::CFlameThrower(CUnit* owner): CWeapon(owner)
+CFlameThrower::CFlameThrower(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 }
 
 
-void CFlameThrower::FireImpl()
+void CFlameThrower::FireImpl(bool scriptCall)
 {
-	const float3 dir = (targetPos - weaponMuzzlePos).Normalize();
+	float3 dir = targetPos - weaponMuzzlePos;
+
+	const float dist = dir.LengthNormalize();
 	const float3 spread =
-		((gs->randVector() * sprayAngle + salvoError) *
-		weaponDef->ownerExpAccWeight) -
+		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience()) -
 		(dir * 0.001f);
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
 	params.spread = spread;
-	params.ttl = (int) (range / projectileSpeed * weaponDef->duration);
+	params.ttl = std::ceil(std::max(dist, range) / projectileSpeed * weaponDef->duration);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }
@@ -40,17 +41,11 @@ void CFlameThrower::FireImpl()
 
 void CFlameThrower::Update()
 {
-	if(targetType != Target_None){
-		weaponPos = owner->pos +
-			owner->frontdir * relWeaponPos.z +
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;
-		weaponMuzzlePos = owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
-		wantedDir = targetPos - weaponPos;
-		wantedDir.Normalize();
+	if (targetType != Target_None) {
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+		wantedDir = (targetPos - weaponPos).Normalize();
 	}
+
 	CWeapon::Update();
 }

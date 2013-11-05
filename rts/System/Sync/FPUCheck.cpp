@@ -7,37 +7,44 @@
 #include "FPUCheck.h"
 #include <cstddef>
 #include "lib/streflop/streflop_cond.h"
-#include "lib/gml/gml_base.h"
-#include "System/OpenMP_cond.h"
+#include "System/Exceptions.h"
+#include "System/ThreadPool.h"
 #include "System/Log/ILog.h"
-#include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
+
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
 
+#ifdef STREFLOP_H
+	#ifdef STREFLOP_SSE
+	#elif STREFLOP_X87
+	#else
+		#error "streflop FP-math mode must be either SSE or X87"
+	#endif
+#endif
+
 /**
 	@brief checks FPU control registers.
-	@return true if everything is fine, false otherwise
+	Checks the FPU control registers MXCSR and FPUCW,
 
-	Can be used in an assert() to check the FPU control registers MXCSR and FPUCW,
-	e.g. `assert(good_fpu_control_registers());'
+For reference, the layout of the MXCSR register:
+            FZ:RC:RC:PM:UM:OM:ZM:DM:IM: Rsvd:PE:UE:OE:ZE:DE:IE
+            15 14 13 12 11 10  9  8  7|   6   5  4  3  2  1  0
+Spring1:     0  0  0  1  1  1  0  1  0|   0   0  0  0  0  0  0 = 0x1D00 = 7424
+Spring2:     0  0  0  1  1  1  1  1  1|   0   0  0  0  0  0  0 = 0x1F80 = 8064
+Spring3:     0  0  0  1  1  0  0  1  0|   0   0  0  0  0  0  0 = 0x1900 = 6400  (signan)
+Default:     0  0  0  1  1  1  1  1  1|   0   0  0  0  0  0  0 = 0x1F80 = 8064
+MaskRsvd:    1  1  1  1  1  1  1  1  1|   0   0  0  0  0  0  0 = 0xFF80
 
-	For reference, the layout of the MXCSR register:
-        FZ:RC:RC:PM:UM:OM:ZM:DM:IM:Rsvd:PE:UE:OE:ZE:DE:IE
-        15 14 13 12 11 10  9  8  7   6   5  4  3  2  1  0
-Spring1: 0  0  0  1  1  1  0  1  0   0   0  0  0  0  0  0 = 0x1D00 = 7424
-Spring2: 0  0  0  1  1  1  1  1  1   0   0  0  0  0  0  0 = 0x1F80 = 8064
-Default: 0  0  0  1  1  1  1  1  1   0   0  0  0  0  0  0 = 0x1F80 = 8064
-MaskRsvd:1  1  1  1  1  1  1  1  1   0   0  0  0  0  0  0 = 0xFF80
-
-	And the layout of the 387 FPU control word register:
-        Rsvd:Rsvd:Rsvd:X:RC:RC:PC:PC:Rsvd:Rsvd:PM:UM:OM:ZM:DM:IM
-         15   14   13 12 11 10  9  8   7    6   5  4  3  2  1  0
-Spring1:  0    0    0  0  0  0  0  0   0    0   1  1  1  0  1  0 = 0x003A = 58
-Spring2:  0    0    0  0  0  0  0  0   0    0   1  1  1  1  1  1 = 0x003F = 63
-Default:  0    0    0  0  0  0  1  1   0    0   1  1  1  1  1  1 = 0x033F = 831
-MaskRsvd: 0    0    0  1  1  1  1  1   0    0   1  1  1  1  1  1 = 0x1F3F
+And the layout of the 387 FPU control word register:
+           Rsvd:Rsvd:Rsvd:X:RC:RC:PC:PC: Rsvd:Rsvd:PM:UM:OM:ZM:DM:IM
+            15   14   13 12 11 10  9  8|   7    6   5  4  3  2  1  0
+Spring1:     0    0    0  0  0  0  0  0|   0    0   1  1  1  0  1  0 = 0x003A = 58
+Spring2:     0    0    0  0  0  0  0  0|   0    0   1  1  1  1  1  1 = 0x003F = 63
+Spring3:     0    0    0  0  0  0  0  0|   0    0   1  1  0  0  1  0 = 0x0032 = 50   (signan)
+Default:     0    0    0  0  0  0  1  1|   0    0   1  1  1  1  1  1 = 0x033F = 831
+MaskRsvd:    0    0    0  1  1  1  1  1|   0    0   1  1  1  1  1  1 = 0x1F3F
 
 	Where:
 		Rsvd - Reserved
@@ -75,24 +82,15 @@ void good_fpu_control_registers(const char* text)
 	}
 #endif
 
-	// We are paranoid.
-	// We don't trust the enumeration constants from streflop / (g)libc.
-
 	// accepted/syncsafe FPU states:
-	int sse_a, sse_b, x87_a, x87_b;
-#if defined(__SUPPORT_SNAN__)	// -fsignaling-nans
-	if (!GML::Enabled() || Threading::IsSimThread()) {
-		sse_a = (0x1937 & 0xFF80);
-		sse_b = (0x1925 & 0xFF80);
-		x87_a = (0x0072 & 0x1F3F);
-		x87_b = 0x003F;
-	} else
-#endif
+	int sse_a, sse_b, sse_c, x87_a, x87_b, x87_c;
 	{
 		sse_a = 0x1D00;
 		sse_b = 0x1F80;
+		sse_c = 0x1900; // signan
 		x87_a = 0x003A;
 		x87_b = 0x003F;
+		x87_c = 0x0032; // signan
 	}
 
 #if defined(STREFLOP_SSE)
@@ -100,18 +98,20 @@ void good_fpu_control_registers(const char* text)
 	streflop::fpenv_t fenv;
 	streflop::fegetenv(&fenv);
 
-	bool ret = ((fenv.sse_mode & 0xFF80) == sse_a || (fenv.sse_mode & 0xFF80) == sse_b) &&
-	           ((fenv.x87_mode & 0x1F3F) == x87_a || (fenv.x87_mode & 0x1F3F) == x87_b);
+	const int fsse = fenv.sse_mode & 0xFF80;
+	const int fx87 = fenv.x87_mode & 0x1F3F;
+
+	bool ret = ((fsse == sse_a) || (fsse == sse_b) || (fsse == sse_c)) &&
+	           ((fx87 == x87_a) || (fx87 == x87_b) || (fx87 == x87_c));
 
 	if (!ret) {
-		LOG_L(L_WARNING, "[%s] Sync warning: (env.sse_mode) MXCSR 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __FUNCTION__, fenv.sse_mode, sse_a, sse_b, text);
-		LOG_L(L_WARNING, "[%s] Sync warning: (env.x87_mode) FPUCW 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __FUNCTION__, fenv.x87_mode, x87_a, x87_b, text);
+		LOG_L(L_WARNING, "[%s] Sync warning: (env.sse_mode) MXCSR 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __FUNCTION__, fsse, sse_a, sse_b, text);
+		LOG_L(L_WARNING, "[%s] Sync warning: (env.x87_mode) FPUCW 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __FUNCTION__, fx87, x87_a, x87_b, text);
 
 		// Set single precision floating point math.
 		streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
-		if (!GML::Enabled() || Threading::IsSimThread())
-			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 	}
 
@@ -120,7 +120,7 @@ void good_fpu_control_registers(const char* text)
 	streflop::fpenv_t fenv;
 	streflop::fegetenv(&fenv);
 
-	bool ret = (fenv & 0x1F3F) == x87_a || (fenv & 0x1F3F) == x87_b;
+	bool ret = (fenv & 0x1F3F) == x87_a || (fenv & 0x1F3F) == x87_b || (fenv & 0x1F3F) == x87_c;
 
 	if (!ret) {
 		LOG_L(L_WARNING, "[%s] Sync warning: FPUCW 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __FUNCTION__, fenv, x87_a, x87_b, text);
@@ -128,8 +128,7 @@ void good_fpu_control_registers(const char* text)
 		// Set single precision floating point math.
 		streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
-		if (!GML::Enabled() || Threading::IsSimThread())
-			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 	}
 #endif
@@ -137,7 +136,7 @@ void good_fpu_control_registers(const char* text)
 
 void good_fpu_init()
 {
-	const unsigned int sseBits = proc::GetProcSSEBits();
+	const unsigned int sseBits = springproc::GetProcSSEBits();
 		LOG("[CMyMath::Init] CPU SSE mask: %u, flags:", sseBits);
 		LOG("\tSSE 1.0:  %d,  SSE 2.0:  %d", (sseBits >> 5) & 1, (sseBits >> 4) & 1);
 		LOG("\tSSE 3.0:  %d, SSSE 3.0:  %d", (sseBits >> 3) & 1, (sseBits >> 2) & 1);
@@ -145,34 +144,30 @@ void good_fpu_init()
 		LOG("\tSSE 4.0A: %d,  SSE 5.0A: %d", (sseBits >> 8) & 1, (sseBits >> 7) & 1);
 
 #ifdef STREFLOP_H
-	// SSE 1.0 is mandatory in synced context
-	if (((sseBits >> 5) & 1) == 0) {
+	const bool hasSSE1 = (sseBits >> 5) & 1;
+
 	#ifdef STREFLOP_SSE
-		handleerror(0, "CPU is missing SSE instruction support", "Sync Error", 0);
-	#elif STREFLOP_X87
-		LOG_L(L_WARNING, "\tStreflop floating-point math is not SSE-enabled");
-		LOG_L(L_WARNING, "\tThis may cause desyncs during multi-player games");
-		LOG_L(L_WARNING, "\tThis CPU is not SSE-capable; it can only use X87 mode");
-	#else
-		handleerror(0, "streflop FP-math mode must be either SSE or X87", "Sync Error", 0);
-	#endif
-	} else {
-	#ifdef STREFLOP_SSE
+	if (hasSSE1) {
 		LOG("\tusing streflop SSE FP-math mode, CPU supports SSE instructions");
-	#elif STREFLOP_X87
+	} else {
+		throw unsupported_error("CPU is missing SSE instruction support");
+	}
+	#else
+	if (hasSSE1) {
 		LOG_L(L_WARNING, "\tStreflop floating-point math is set to X87 mode");
 		LOG_L(L_WARNING, "\tThis may cause desyncs during multi-player games");
 		LOG_L(L_WARNING, "\tThis CPU is SSE-capable; consider recompiling");
-	#else
-		handleerror(0, "streflop FP-math mode must be either SSE or X87", "Sync Error", 0);
-	#endif
+	} else {
+		LOG_L(L_WARNING, "\tStreflop floating-point math is not SSE-enabled");
+		LOG_L(L_WARNING, "\tThis may cause desyncs during multi-player games");
+		LOG_L(L_WARNING, "\tThis CPU is not SSE-capable; it can only use X87 mode");
 	}
+	#endif
 
 	// Set single precision floating point math.
 	streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
-		if (!GML::Enabled() || Threading::IsSimThread())
-			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 
 #else
@@ -185,76 +180,67 @@ void good_fpu_init()
 }
 
 void streflop_init_omp() {
-#ifndef DEDICATED
-	// Initialize FPU in all OpenMP threads, too
-	// Note: Tested on Linux it seems it's not needed to do this.
-	//       Either OMP threads copy the FPU state of the mainthread
-	//       or the FPU state per-process on Linux.
-	//       Still it hurts nobody to call these functions ;-)
-#ifdef _OPENMP
-	Threading::OMPCheck();
-	#pragma omp parallel
-	{
-		//good_fpu_control_registers("OMP-Init");
+	// Initialize FPU in all worker threads, too
+	// Note: It's not needed for sync'ness cause all precision relevant
+	//       mode flags are shared across the process!
+	//       But the exception ones aren't (but are copied from the calling thread).
+	parallel([&]{
 		streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
-		if (!GML::Enabled() || Threading::IsSimThread())
-			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
-	}
-#endif
-#endif
+	});
 }
 
-namespace proc {
+namespace springproc {
 	#if defined(__GNUC__)
-	// function inlining breaks this
-	__attribute__((__noinline__))
-	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
-	{
-	#ifndef __APPLE__
-		__asm__ __volatile__(
-			"cpuid"
-			: "=a" (*a), "=b" (*b), "=c" (*c), "=d" (*d)
-			: "0" (*a)
-		);
-	#else
-		#ifdef __x86_64__
+		// function inlining breaks this
+		__attribute__((__noinline__))
+		void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
+		{
+		#ifndef __APPLE__
 			__asm__ __volatile__(
-				"pushq %%rbx\n\t"
-				"cpuid\n\t"
-				"movl %%ebx, %1\n\t"
-				"popq %%rbx"
-				: "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
+				"cpuid"
+				: "=a" (*a), "=b" (*b), "=c" (*c), "=d" (*d)
 				: "0" (*a)
 			);
 		#else
-			__asm__ __volatile__(
-				"pushl %%ebx\n\t"
-				"cpuid\n\t"
-				"movl %%ebx, %1\n\t"
-				"popl %%ebx"
-				: "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
-				: "0" (*a)
-			);
+			#ifdef __x86_64__
+				__asm__ __volatile__(
+					"pushq %%rbx\n\t"
+					"cpuid\n\t"
+					"movl %%ebx, %1\n\t"
+					"popq %%rbx"
+					: "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
+					: "0" (*a)
+				);
+			#else
+				__asm__ __volatile__(
+					"pushl %%ebx\n\t"
+					"cpuid\n\t"
+					"movl %%ebx, %1\n\t"
+					"popl %%ebx"
+					: "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
+					: "0" (*a)
+				);
+			#endif
 		#endif
-	#endif
-	}
+		}
 	#elif defined(_MSC_VER) && (_MSC_VER >= 1310)
-	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
-	{
-		int features[4];
-		__cpuid(features, *a);
-		*a=features[0];
-		*b=features[1];
-		*c=features[2];
-		*d=features[3];
-	}
+		void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
+		{
+			int features[4];
+			__cpuid(features, *a);
+			*a=features[0];
+			*b=features[1];
+			*c=features[2];
+			*d=features[3];
+		}
 	#else
-	// no-op on other compilers
-	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
-	{
-	}
+		// no-op on other compilers
+		void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
+		{
+		}
 	#endif
 
 	unsigned int GetProcMaxStandardLevel()
@@ -268,6 +254,7 @@ namespace proc {
 
 		return rEAX;
 	}
+
 	unsigned int GetProcMaxExtendedLevel()
 	{
 		unsigned int rEAX = 0x80000000;

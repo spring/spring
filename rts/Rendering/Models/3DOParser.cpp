@@ -29,11 +29,7 @@ using std::list;
 using std::map;
 
 
-static const float  scaleFactor = 1 / (65536.0f);
-static const float3 DownVector  = -UpVector;
-
-static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
-static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
+#define SCALE_FACTOR_3DO (1.0f / 65536.0f)
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -119,7 +115,6 @@ C3DOParser::C3DOParser()
 	}
 
 	curOffset = 0;
-	fileBuf = NULL;
 }
 
 
@@ -130,15 +125,10 @@ S3DModel* C3DOParser::Load(const std::string& name)
 		throw content_error("[3DOParser] could not find model-file " + name);
 	}
 
-	fileBuf = new unsigned char[file.FileSize()];
-	assert(fileBuf);
+	fileBuf.resize(file.FileSize(), 0);
 
-	const int readn = file.Read(fileBuf, file.FileSize());
-
-	if (readn == 0) {
-		delete[] fileBuf;
-		fileBuf = NULL;
-		throw content_error("[3DOParser] Failed to read file " + name);
+	if (file.Read(&fileBuf[0], file.FileSize()) == 0) {
+		throw content_error("[3DOParser] failed to read model-file " + name);
 	}
 
 	S3DModel* model = new S3DModel;
@@ -157,12 +147,9 @@ S3DModel* C3DOParser::Load(const std::string& name)
 	model->radius = ((model->maxs - model->mins) * 0.5f).Length();
 	model->height = model->maxs.y - model->mins.y;
 	model->drawRadius = std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length();
-	model->relMidPos = (model->maxs - model->mins) * 0.5f;
-	model->relMidPos.x = 0.0f; // ?
-	model->relMidPos.z = 0.0f; // ?
+	model->relMidPos = (model->maxs + model->mins) * 0.5f;
 
-	delete[] fileBuf;
-	fileBuf = NULL;
+	fileBuf.clear();
 	return model;
 }
 
@@ -176,10 +163,12 @@ void C3DOParser::GetVertexes(_3DObject* o, S3DOPiece* object)
 		float3 v;
 		READ_VERTEX(v);
 
-		S3DOVertex vertex;
-		v *= scaleFactor;
+		v *= SCALE_FACTOR_3DO;
 		v.z = -v.z;
+
+		S3DOVertex vertex;
 		vertex.pos = v;
+
 		object->vertices.push_back(vertex);
 	}
 }
@@ -255,7 +244,7 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 		sp.vnormals.insert(sp.vnormals.begin(), sp.numVertex, n);
 
 		// sometimes there are more than one selection primitive (??)
-		if (n.dot(DownVector) > 0.99f) {
+		if (n.dot(-UpVector) > 0.99f) {
 			bool ignore=true;
 
 			if(sp.numVertex!=4) {
@@ -289,7 +278,6 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 		} else {
 			prevHashes[vertHash]=obj->prims.size();
 			obj->prims.push_back(sp);
-			obj->isEmpty = false;
 		}
 		curOffset = p.OffsetToVertexIndexArray;
 
@@ -361,13 +349,13 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 	S3DOPiece* piece = new S3DOPiece();
 		piece->name = s;
 		piece->parent = parent;
-		piece->type = MODELTYPE_3DO;
+		if (parent != NULL) {
+			piece->parentName = parent->name;
+		}
 
-		piece->mins = DEF_MIN_SIZE;
-		piece->maxs = DEF_MAX_SIZE;
-		piece->offset.x =  me.XFromParent * scaleFactor;
-		piece->offset.y =  me.YFromParent * scaleFactor;
-		piece->offset.z = -me.ZFromParent * scaleFactor;
+		piece->offset.x =  me.XFromParent * SCALE_FACTOR_3DO;
+		piece->offset.y =  me.YFromParent * SCALE_FACTOR_3DO;
+		piece->offset.z = -me.ZFromParent * SCALE_FACTOR_3DO;
 		piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: ZeroVector);
 
 	GetVertexes(&me, piece);
@@ -375,24 +363,19 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 	CalcNormals(piece);
 	piece->SetMinMaxExtends();
 
-	model->mins = std::min(piece->mins, model->mins);
-	model->maxs = std::max(piece->maxs, model->maxs);
+	model->mins = std::min(piece->goffset + piece->mins, model->mins);
+	model->maxs = std::max(piece->goffset + piece->maxs, model->maxs);
 
-	const float3 cvScales = piece->maxs - piece->mins;
-	const float3 cvOffset =
-		(piece->maxs - piece->goffset) +
-		(piece->mins - piece->goffset);
-	const float radiusSq = (cvScales * 0.5f).SqLength();
-	piece->radius = math::sqrt(radiusSq);
-	piece->relMidPos = cvOffset * 0.5f;
-	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f));
+	piece->SetCollisionVolume(new CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
+	piece->radius = (piece->GetCollisionVolume())->GetBoundingRadius();
+	piece->relMidPos = (piece->GetCollisionVolume())->GetOffsets();
 
 	if (me.OffsetToChildObject > 0) {
 		piece->children.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj));
 	}
 
-	piece->isEmpty = (piece->prims.size() < 1);
+	piece->SetHasGeometryData(!piece->prims.empty());
 
 	if (me.OffsetToSiblingObject > 0) {
 		parent->children.push_back(LoadPiece(model, me.OffsetToSiblingObject, parent, numobj));
@@ -416,9 +399,8 @@ void C3DOParser::SimStreamRead(void* buf, int length)
 
 void S3DOPiece::DrawForList() const
 {
-	if (isEmpty) {
+	if (!hasGeometryData)
 		return;
-	}
 
 	// note: do not use more than two VA's
 	// via GetVertexArray(), it wraps around
@@ -475,8 +457,8 @@ void S3DOPiece::DrawForList() const
 void S3DOPiece::SetMinMaxExtends()
 {
 	for (std::vector<S3DOVertex>::const_iterator vi = vertices.begin(); vi != vertices.end(); ++vi) {
-		mins = std::min(mins, (goffset + vi->pos));
-		maxs = std::max(maxs, (goffset + vi->pos));
+		mins = std::min(mins, vi->pos);
+		maxs = std::max(maxs, vi->pos);
 	}
 }
 

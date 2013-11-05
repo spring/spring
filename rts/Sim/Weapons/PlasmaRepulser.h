@@ -10,13 +10,13 @@
 class ShieldProjectile;
 class CRepulseGfx;
 
-class CPlasmaRepulser :
-	public CWeapon
+class CPlasmaRepulser: public CWeapon
 {
 	CR_DECLARE(CPlasmaRepulser);
 public:
-	CPlasmaRepulser(CUnit* owner);
+	CPlasmaRepulser(CUnit* owner, const WeaponDef* def);
 	~CPlasmaRepulser();
+
 	void Init();
 	void DependentDied(CObject* o);
 	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
@@ -28,7 +28,21 @@ public:
 	float NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir);
 	bool BeamIntercepted(CWeapon* emitter, float damageMultiplier = 1.0f); // returns true if we are a repulsing shield
 
-public:
+	void SetEnabled(bool b) { isEnabled = b; }
+	void SetCurPower(float p) { curPower = p; }
+
+	bool IsEnabled() const { return isEnabled; }
+	float GetCurPower() const { return curPower; }
+	int GetHitFrames() const { return hitFrames; }
+
+private:
+	void FireImpl(bool scriptCall) {}
+
+private:
+	// these are strictly unsynced
+	ShieldProjectile* shieldProjectile;
+	std::set<CWeaponProjectile*> repulsedProjectiles;
+
 	float curPower;
 
 	float radius;
@@ -38,14 +52,6 @@ public:
 	int rechargeDelay;
 
 	bool isEnabled;
-
-private:
-	void FireImpl() {}
-
-private:
-	// these are strictly unsynced
-	ShieldProjectile* shieldProjectile;
-	std::set<CWeaponProjectile*> hasGfx;
 };
 
 #endif

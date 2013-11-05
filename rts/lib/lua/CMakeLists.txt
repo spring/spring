@@ -4,6 +4,8 @@
 RemoveFlag("-fsignaling-nans")
 
 INCLUDE_DIRECTORIES(BEFORE ../streflop include)
+FIND_PACKAGE_STATIC(GLEW 1.5.1 REQUIRED) #FIXME: LuaUser.cpp requires glew...
+INCLUDE_DIRECTORIES(${GLEW_INCLUDE_DIR})
 
 SET(luaSources
 		"src/lapi.cpp"
@@ -36,6 +38,7 @@ SET(luaSources
 		"src/lvm.cpp"
 		"src/lzio.cpp"
 		"src/print.cpp"
+		"include/LuaUser.cpp"
 	)
 
 ADD_LIBRARY(lua STATIC EXCLUDE_FROM_ALL ${luaSources})

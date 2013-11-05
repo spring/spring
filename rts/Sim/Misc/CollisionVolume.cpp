@@ -25,26 +25,23 @@ CR_REG_METADATA(CollisionVolume, (
 ));
 
 // base ctor (CREG-only)
-CollisionVolume::CollisionVolume()
+CollisionVolume::CollisionVolume():
+	fAxisScales(OnesVector * 2.0f),
+	hAxisScales(OnesVector),
+	hsqAxisScales(OnesVector),
+	hiAxisScales(OnesVector),
+	axisOffsets(ZeroVector),
+	volumeBoundingRadius(1.0f),
+	volumeBoundingRadiusSq(1.0f),
+	volumeType(COLVOL_TYPE_SPHERE),
+	ignoreHits(false),
+	useContHitTest(COLVOL_HITTEST_CONT),
+	defaultToFootPrint(false),
+	defaultToPieceTree(false)
 {
-	fAxisScales            = float3(2.0f, 2.0f, 2.0f);
-	hAxisScales            = float3(1.0f, 1.0f, 1.0f);
-	hsqAxisScales          = float3(1.0f, 1.0f, 1.0f);
-	hiAxisScales           = float3(1.0f, 1.0f, 1.0f);
-	axisOffsets            = ZeroVector;
-
-	volumeBoundingRadius   = 1.0f;
-	volumeBoundingRadiusSq = 1.0f;
-
-	volumeType             = COLVOL_TYPE_SPHERE;
-	volumeAxes[0]          = COLVOL_AXIS_Z;
-	volumeAxes[1]          = COLVOL_AXIS_X;
-	volumeAxes[2]          = COLVOL_AXIS_Y;
-
-	ignoreHits             = false;
-	useContHitTest         = COLVOL_HITTEST_CONT;
-	defaultToFootPrint     = false;
-	defaultToPieceTree     = false;
+	volumeAxes[0] = COLVOL_AXIS_Z;
+	volumeAxes[1] = COLVOL_AXIS_X;
+	volumeAxes[2] = COLVOL_AXIS_Y;
 }
 
 CollisionVolume& CollisionVolume::operator = (const CollisionVolume& v) {
@@ -110,7 +107,7 @@ void CollisionVolume::InitSphere(float radius)
 {
 	// <r> is the object's default RADIUS (not its diameter),
 	// so we need to double it to get the full-length scales
-	InitShape(float3(1.0f, 1.0f, 1.0f) * radius * 2.0f, ZeroVector, COLVOL_TYPE_SPHERE, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
+	InitShape(OnesVector * radius * 2.0f, ZeroVector, COLVOL_TYPE_SPHERE, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
 }
 
 void CollisionVolume::InitBox(const float3& scales)
@@ -120,7 +117,7 @@ void CollisionVolume::InitBox(const float3& scales)
 
 void CollisionVolume::InitShape(
 	const float3& scales,
-	const float3& offsets,	
+	const float3& offsets,
 	const int vType,
 	const int tType,
 	const int pAxis)
@@ -259,23 +256,7 @@ void CollisionVolume::FixTypeAndScale(float3& scales) {
 
 
 float3 CollisionVolume::GetWorldSpacePos(const CSolidObject* o, const float3& extOffsets) const {
-	float3 pos = o->midPos;
-	pos += (o->rightdir * (axisOffsets.x + extOffsets.x));
-	pos += (o->updir    * (axisOffsets.y + extOffsets.y));
-	pos += (o->frontdir * (axisOffsets.z + extOffsets.z));
-	return pos;
-}
-
-
-
-const CollisionVolume* CollisionVolume::GetVolume(const CSolidObject* o, const LocalModelPiece* lmp) {
-	const CollisionVolume* vol = o->collisionVolume;
-
-	if (vol->DefaultToPieceTree() && lmp != NULL) {
-		vol = lmp->GetCollisionVolume();
-	}
-
-	return vol;
+	return (o->midPos + o->GetObjectSpaceVec(axisOffsets + extOffsets));
 }
 
 
@@ -284,22 +265,20 @@ float CollisionVolume::GetPointSurfaceDistance(const CUnit* u, const LocalModelP
 	const CollisionVolume* vol = u->collisionVolume;
 
 	CMatrix44f mat = u->GetTransformMatrix(true);
-	float3 off = GetOffsets();
-
-	// Unit::GetTransformMatrix does not include this
-	// (its translation component is pos, not midPos)
-	mat.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
 
 	if (vol->DefaultToPieceTree() && lmp != NULL) {
-		// NOTE: if we get here, then <this> is the piece-volume
+		// NOTE: if we get here, <this> is the piece-volume
 		assert(this == lmp->GetCollisionVolume());
 
-		// need to transform into piece-space
-		mat = mat * lmp->GetModelSpaceMatrix();
-		off = -off;
+		// transform into piece-space relative to pos
+		mat <<= lmp->GetModelSpaceMatrix();
+	} else {
+		// Unit::GetTransformMatrix does not include this
+		// (its translation component is pos, not midPos)
+		mat.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
 	}
 
-	mat.Translate(off);
+	mat.Translate(GetOffsets());
 	mat.InvertAffineInPlace();
 
 	return (GetPointSurfaceDistance(mat, p));

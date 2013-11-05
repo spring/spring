@@ -5,7 +5,7 @@
 
 #include "Rendering/GL/myGL.h"
 #include "System/Rectangle.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include <vector>
 
 
@@ -60,7 +60,7 @@ struct TriTreeNode
 /**
  * CTriNodePool class
  * Allocs a pool of TriTreeNodes, so we can reconstruct the whole tree w/o to dealloc the old nodes.
- * InitPools() creates for each OpenMP thread its own pool to avoid locking.
+ * InitPools() creates for each worker thread its own pool to avoid locking.
  */
 class CTriNodePool
 {
@@ -113,7 +113,7 @@ public:
 	friend class CPatchInViewChecker;
 
 	void Reset();
-	
+
 	TriTreeNode* GetBaseLeft()  { return &m_BaseLeft;  }
 	TriTreeNode* GetBaseRight() { return &m_BaseRight; }
 	char IsDirty()     const { return m_isDirty; }
@@ -122,13 +122,13 @@ public:
 
 	void UpdateHeightMap(const SRectangle& rect = SRectangle(0,0,PATCH_SIZE,PATCH_SIZE));
 
-	void Tessellate(const float3& campos, int viewradius);
+	bool Tessellate(const float3& campos, int viewradius);
 	void ComputeVariance();
 
 	void GenerateIndices();
 	void Upload();
 	void Draw();
-
+	void DrawBorder();
 	void SetSquareTexture() const;
 
 public:
@@ -147,6 +147,8 @@ private:
 	void RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex);
 	float RecursComputeVariance(const int leftX, const int leftY, const float leftZ, const int rightX, const int rightY, const float rightZ, const int apexX, const int apexY, const float apexZ, const int node);
 
+	void RecursBorderRender(CVertexArray* va, TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, int i, bool left_);
+	void GenerateBorderIndices(CVertexArray* va);
 protected:
 	static RenderMode renderMode;
 

@@ -7,6 +7,7 @@
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "System/float3.h"
+#include "System/type2.h"
 #include "System/MemPool.h"
 
 #include <list>
@@ -82,14 +83,20 @@ public:
 	static CUnit* GetClosestFriendlyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
 	static CUnit* GetClosestEnemyAircraft(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
 
-	// get the mid- or aim-position of a unit, offset by an error vector if not in LOS for <allyteam>
-	static float3 GetUnitErrorPos(const CUnit* unit, int allyteam, bool aiming = false);
-
 	static void BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* exclude);
 	static float3 Pos2BuildPos(const BuildInfo& buildInfo, bool synced);
 
 	///< test a single mapsquare for build possibility
-	static BuildSquareStatus TestBuildSquare(const float3& pos, const float buildHeight, const UnitDef* unitdef, const MoveDef* moveDef, CFeature *&feature, int allyteam, bool synced);
+	static BuildSquareStatus TestBuildSquare(
+		const float3& pos,
+		const int2& xrange,
+		const int2& zrange,
+		const UnitDef* unitDef,
+		const MoveDef* moveDef,
+		CFeature *&feature,
+		int allyteam,
+		bool synced
+	);
 
 	///< test if a unit can be built at specified position
 	static BuildSquareStatus TestUnitBuildSquare(
@@ -136,6 +143,7 @@ public:
 		const int projectileID
 	);
 
+	void DamageObjectsInExplosionRadius(const ExplosionParams& params, const float3& expPos, const float expRad, const int weaponDefID);
 	void Explosion(const ExplosionParams& params);
 
 private:
@@ -168,12 +176,43 @@ private:
 		float3 impulse;
 	};
 
-	/**
-	 * probably a symptom of some other problems,
-	 * but im getting paranoid about putting whole classes
-	 * into high trafic STL containers instead of pointers to them
-	 */
-	std::list<WaitingDamage*> waitingDamages[128];
+	struct ObjectCache {
+	public:
+		bool Empty() const { return (units.empty() || features.empty()); }
+		void Init(unsigned int maxUnits, unsigned int maxFeatures) {
+			units.resize(maxUnits, NULL);
+			features.resize(maxFeatures, NULL);
+
+			numUnits = 0;
+			numFeatures = 0;
+		}
+		void Kill() {
+			units.clear();
+			features.clear();
+		}
+		void Reset(unsigned int _numUnits, unsigned int _numFeatures) {
+			numUnits = _numUnits;
+			numFeatures = _numFeatures;
+
+			units[numUnits] = NULL;
+			features[numFeatures] = NULL;
+		}
+
+		std::vector<CUnit*>& GetUnits() { return units; }
+		std::vector<CFeature*>& GetFeatures() { return features; }
+
+		unsigned int* GetNumUnitsPtr() { return &numUnits; }
+		unsigned int* GetNumFeaturesPtr() { return &numFeatures; }
+
+	private:
+		std::vector<CUnit*> units;
+		std::vector<CFeature*> features;
+
+		unsigned int numUnits;
+		unsigned int numFeatures;
+	};
+
+	std::vector< std::list<WaitingDamage*> > waitingDamageLists;
 };
 
 extern CGameHelper* helper;

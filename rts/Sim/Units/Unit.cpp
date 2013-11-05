@@ -26,8 +26,8 @@
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/Player.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
+#include "Game/Players/Player.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -86,8 +86,41 @@ float CUnit::expGrade       = 0.0f;
 
 CUnit::CUnit() : CSolidObject(),
 	unitDef(NULL),
+	soloBuilder(NULL),
+	lastAttacker(NULL),
+	attackTarget(NULL),
+	transporter(NULL),
+
+	moveType(NULL),
+	prevMoveType(NULL),
+
+	commandAI(NULL),
+	group(NULL),
+
+	shieldWeapon(NULL),
+	stockpileWeapon(NULL),
+
+	localModel(NULL),
+	script(NULL),
+	lastAttackedPiece(NULL),
+	los(NULL),
+
+	fpsControlPlayer(NULL),
+	myTrack(NULL),
+	myIcon(NULL),
+
+	losStatus(teamHandler->ActiveAllyTeams(), 0),
+
+	attackPos(ZeroVector),
+	deathSpeed(ZeroVector),
+	lastMuzzleFlameDir(UpVector),
+	flankingBonusDir(RgtVector),
+	posErrorVector(ZeroVector),
+	posErrorDelta(ZeroVector),
+
 	unitDefID(-1),
 	featureDefID(-1),
+
 	upright(true),
 	travel(0.0f),
 	travelPeriod(0.0f),
@@ -98,18 +131,17 @@ CUnit::CUnit() : CSolidObject(),
 	experience(0.0f),
 	limExperience(0.0f),
 	neutral(false),
-	soloBuilder(NULL),
 	beingBuilt(true),
 	lastNanoAdd(gs->frameNum),
+	lastFlareDrop(0),
 	repairAmount(0.0f),
-	transporter(NULL),
 	loadingTransportId(-1),
 	buildProgress(0.0f),
 	groundLevelled(true),
 	terraformLeft(0.0f),
 	realLosRadius(0),
 	realAirLosRadius(0),
-	losStatus(teamHandler->ActiveAllyTeams(), 0),
+
 	inBuildStance(false),
 	useHighTrajectory(false),
 	dontUseWeapons(false),
@@ -118,17 +150,13 @@ CUnit::CUnit() : CSolidObject(),
 	delayedWreckLevel(-1),
 	restTime(0),
 	outOfMapTime(0),
-	shieldWeapon(NULL),
-	stockpileWeapon(NULL),
 	reloadSpeed(1.0f),
 	maxRange(0.0f),
 	haveTarget(false),
 	haveManualFireRequest(false),
 	lastMuzzleFlameSize(0.0f),
-	lastMuzzleFlameDir(0.0f, 1.0f, 0.0f),
 	armorType(0),
 	category(0),
-	los(NULL),
 	tempNum(0),
 	mapSquare(-1),
 	losRadius(0),
@@ -147,14 +175,6 @@ CUnit::CUnit() : CSolidObject(),
 	hasRadarPos(false),
 	stealth(false),
 	sonarStealth(false),
-	moveType(NULL),
-	prevMoveType(NULL),
-	usingScriptMoveType(false),
-	fpsControlPlayer(NULL),
-	commandAI(NULL),
-	group(NULL),
-	localModel(NULL),
-	script(NULL),
 	condUseMetal(0.0f),
 	condUseEnergy(0.0f),
 	condMakeMetal(0.0f),
@@ -182,26 +202,17 @@ CUnit::CUnit() : CSolidObject(),
 	buildTime(100.0f),
 	metalStorage(0.0f),
 	energyStorage(0.0f),
-	lastAttacker(NULL),
-	lastAttackedPiece(NULL),
 	lastAttackedPieceFrame(-1),
 	lastAttackFrame(-200),
 	lastFireWeapon(0),
 	recentDamage(0.0f),
-	attackTarget(NULL),
-	attackPos(ZeroVector),
 	userAttackGround(false),
 	fireState(FIRESTATE_FIREATWILL),
 	moveState(MOVESTATE_MANEUVER),
 	activated(false),
-	crashing(false),
 	isDead(false),
-	falling(false),
 	fallSpeed(0.2f),
-	inAir(false),
-	inWater(false),
 	flankingBonusMode(0),
-	flankingBonusDir(1.0f, 0.0f, 0.0f),
 	flankingBonusMobility(10.0f),
 	flankingBonusMobilityAdd(0.01f),
 	flankingBonusAvgDamage(1.4f),
@@ -209,8 +220,6 @@ CUnit::CUnit() : CSolidObject(),
 	armoredState(false),
 	armoredMultiple(1.0f),
 	curArmorMultiple(1.0f),
-	posErrorVector(ZeroVector),
-	posErrorDelta(ZeroVector),
 	nextPosErrorUpdate(1),
 	wantCloak(false),
 	scriptCloak(0),
@@ -221,9 +230,6 @@ CUnit::CUnit() : CSolidObject(),
 	lastTerrainType(-1),
 	curTerrainType(0),
 	selfDCountdown(0),
-	myTrack(NULL),
-	myIcon(NULL),
-	lastFlareDrop(0),
 	currentFuel(0.0f),
 	alphaThreshold(0.1f),
 	cegDamage(1),
@@ -274,7 +280,7 @@ CUnit::~CUnit()
 	}
 
 	if (activated && unitDef->targfac) {
-		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
+		radarHandler->IncreaseAllyTeamRadarErrorSize(allyteam);
 	}
 
 	SetMetalStorage(0);
@@ -301,9 +307,9 @@ CUnit::~CUnit()
 	}
 
 	quadField->RemoveUnit(this);
-	loshandler->DelayedFreeInstance(los);
+	losHandler->DelayedFreeInstance(los);
 	los = NULL;
-	radarhandler->RemoveUnit(this);
+	radarHandler->RemoveUnit(this);
 
 	modelParser->DeleteLocalModel(localModel);
 }
@@ -363,7 +369,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	if (collisionVolume->DefaultToFootPrint())
 		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
 
-	speed = params.speed;
 	mapSquare = ground->GetSquare((params.pos).cClampInMap());
 
 	heading  = GetHeadingFromFacing(buildFacing);
@@ -372,7 +377,8 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	rightdir = frontdir.cross(updir);
 	upright  = unitDef->upright;
 
-	Move3D((params.pos).cClampInMap(), false);
+	SetVelocity(params.speed);
+	Move((params.pos).cClampInMap(), false);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model);
 	UpdateDirVectors(!upright);
@@ -383,15 +389,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 	hasRadarPos = false;
 
-	losStatus[allyteam] =
-		LOS_ALL_MASK_BITS |
-		LOS_INLOS         |
-		LOS_INRADAR       |
-		LOS_PREVLOS       |
-		LOS_CONTRADAR;
-
-	posErrorVector = gs->randVector();
-	posErrorVector.y *= 0.2f;
+	losStatus[allyteam] = LOS_ALL_MASK_BITS | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
 #ifdef TRACE_SYNC
 	tracefile << "[" << __FUNCTION__ << "] id: " << id << ", name: " << unitDef->name << " ";
@@ -442,11 +440,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	decloakDistance = unitDef->decloakDistance;
 	cloakTimeout = unitDef->cloakTimeout;
 
-	// <inWater> and friends are still false at this point
-	if (unitDef->floatOnWater && (pos.y <= 0.0f)) {
-		Move1D(-unitDef->waterline, 1, false);
-	}
-
 	flankingBonusMode        = unitDef->flankingBonusMode;
 	flankingBonusDir         = unitDef->flankingBonusDir;
 	flankingBonusMobility    = unitDef->flankingBonusMobilityAdd * 1000;
@@ -471,45 +464,30 @@ void CUnit::PostInit(const CUnit* builder)
 	// Call initializing script functions
 	script->Create();
 
-	if (moveDef != NULL) {
-		switch (moveDef->moveFamily) {
-			case MoveDef::Hover: {
-				physicalState = CSolidObject::Hovering;
-			} break;
-			case MoveDef::Ship: {
-				physicalState = CSolidObject::Floating;
-			} break;
-			default: {
-				physicalState = CSolidObject::OnGround;
-			} break;
-		}
-	} else {
-		physicalState = (unitDef->floatOnWater)?
-			CSolidObject::Floating:
-			CSolidObject::OnGround;
-	}
-
 	// all units are blocking (ie. register on the blocking-map
 	// when not flying) except mines, since their position would
 	// be given away otherwise by the PF, etc.
 	// NOTE: this does mean that mines can be stacked indefinitely
 	// (an extra yardmap character would be needed to prevent this)
 	immobile = unitDef->IsImmobileUnit();
-	blocking = unitDef->blocking;
-	blocking &= !(immobile && unitDef->canKamikaze);
 
-	if (blocking) {
-		Block();
-	}
+	UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS, unitDef->collidable && (!immobile || !unitDef->canKamikaze));
+	Block();
 
 	if (unitDef->windGenerator > 0.0f) {
 		wind.AddUnit(this);
 	}
 
 	UpdateTerrainType();
+	UpdatePhysicalState();
+	UpdatePosErrorParams(true, true);
+
+	if (unitDef->floatOnWater && IsInWater()) {
+		Move(UpVector * (std::max(ground->GetHeightReal(pos.x, pos.z), -unitDef->waterline) - pos.y), true);
+	}
 
 	if (unitDef->canmove || unitDef->builder) {
-		if (unitDef->moveState <= FIRESTATE_NONE) {
+		if (unitDef->moveState <= MOVESTATE_NONE) {
 			if (builder != NULL) {
 				// always inherit our builder's movestate
 				// if none, set CUnit's default (maneuver)
@@ -525,7 +503,7 @@ void CUnit::PostInit(const CUnit* builder)
 	}
 
 	if (commandAI->CanChangeFireState()) {
-		if (unitDef->fireState <= MOVESTATE_NONE) {
+		if (unitDef->fireState <= FIRESTATE_NONE) {
 			if (builder != NULL && dynamic_cast<CFactoryCAI*>(builder->commandAI) != NULL) {
 				// inherit our builder's firestate (if it is a factory)
 				// if no builder, CUnit's default (fire-at-will) is set
@@ -559,21 +537,15 @@ void CUnit::PostInit(const CUnit* builder)
 
 void CUnit::ForcedMove(const float3& newPos)
 {
-	if (blocking) {
-		UnBlock();
-	}
-
-	Move3D(newPos - pos, true);
+	UnBlock();
+	Move(newPos - pos, true);
+	Block();
 
 	eventHandler.UnitMoved(this);
 
-	if (blocking) {
-		Block();
-	}
-
 	quadField->MovedUnit(this);
-	loshandler->MoveUnit(this, false);
-	radarhandler->MoveUnit(this);
+	losHandler->MoveUnit(this, false);
+	radarHandler->MoveUnit(this);
 }
 
 
@@ -597,30 +569,11 @@ void CUnit::ForcedSpin(const float3& newDir)
 }
 
 
-void CUnit::SetHeadingFromDirection()
-{
-	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
-}
-
-void CUnit::SetDirVectors(const CMatrix44f& matrix) {
-	rightdir.x = -matrix[ 0];
-	rightdir.y = -matrix[ 1];
-	rightdir.z = -matrix[ 2];
-	updir.x    =  matrix[ 4];
-	updir.y    =  matrix[ 5];
-	updir.z    =  matrix[ 6];
-	frontdir.x =  matrix[ 8];
-	frontdir.y =  matrix[ 9];
-	frontdir.z =  matrix[10];
-}
 
 // NOTE: movetypes call this directly
-void CUnit::UpdateDirVectors(bool useGroundNormal, bool isGroundUnit)
+void CUnit::UpdateDirVectors(bool useGroundNormal)
 {
-	if (isGroundUnit && inAir)
-		return;
-
-	updir    = useGroundNormal? ground->GetSmoothNormal(pos.x, pos.z): UpVector;
+	updir    = GetWantedUpDir(useGroundNormal);
 	frontdir = GetVectorFromHeading(heading);
 	rightdir = (frontdir.cross(updir)).Normalize();
 	frontdir = updir.cross(rightdir);
@@ -628,18 +581,60 @@ void CUnit::UpdateDirVectors(bool useGroundNormal, bool isGroundUnit)
 
 
 
+float3 CUnit::GetErrorVector(int allyteam) const
+{
+	if (teamHandler->Ally(allyteam, this->allyteam) || (losStatus[allyteam] & LOS_INLOS)) {
+		// it's one of our own, or it's in LOS, so don't add an error
+		return ZeroVector;
+	}
+	if (gameSetup->ghostedBuildings && (losStatus[allyteam] & LOS_PREVLOS) && unitDef->IsImmobileUnit()) {
+		// this is a ghosted building, so don't add an error
+		return ZeroVector;
+	}
+
+	if ((losStatus[allyteam] & LOS_INRADAR) != 0) {
+		return (posErrorVector * radarHandler->GetAllyTeamRadarErrorSize(allyteam));
+	} else {
+		return (posErrorVector * radarHandler->GetBaseRadarErrorSize() * 2.0f);
+	}
+}
+
+void CUnit::UpdatePosErrorParams(bool updateError, bool updateDelta)
+{
+	if (updateError) {
+		// every frame, magnitude of error increases
+		// error-direction is fixed until next delta
+		posErrorVector += posErrorDelta;
+	}
+
+	if (updateDelta) {
+		if ((--nextPosErrorUpdate) <= 0) {
+			float3 newPosError = gs->randVector();
+			newPosError.y *= 0.2f;
+
+			if (posErrorVector.dot(newPosError) < 0.0f) {
+				newPosError = -newPosError;
+			}
+
+			posErrorDelta = (newPosError - posErrorVector) * (1.0f / 256.0f);
+			nextPosErrorUpdate = UNIT_SLOWUPDATE_RATE;
+		}
+	}
+}
+
 void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent)
 {
 	// drop unit from position
 	fallSpeed = unitDef->unitFallSpeed > 0 ? unitDef->unitFallSpeed : parent->unitDef->fallSpeed;
-	falling = true;
 
 	speed.y = 0.0f;
 	frontdir = parentDir;
 	frontdir.y = 0.0f;
 
-	Move1D(parentPos.y - height, 1, false);
+	Move(UpVector * ((parentPos.y - height) - pos.y), true);
 	UpdateMidAndAimPos();
+	SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FALLING);
+
 	// start parachute animation
 	script->Falling();
 }
@@ -647,29 +642,27 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 
 void CUnit::EnableScriptMoveType()
 {
-	if (usingScriptMoveType) {
+	if (UsingScriptMoveType())
 		return;
-	}
+
 	prevMoveType = moveType;
 	moveType = new CScriptMoveType(this);
-	usingScriptMoveType = true;
 }
 
 void CUnit::DisableScriptMoveType()
 {
-	if (!usingScriptMoveType) {
+	if (!UsingScriptMoveType())
 		return;
-	}
 
 	delete moveType;
 	moveType = prevMoveType;
 	prevMoveType = NULL;
-	usingScriptMoveType = false;
 
-	// FIXME: prevent the issuing of extra commands ?
-	if (moveType) {
-		moveType->oldPos = pos;
-		moveType->SetGoal(pos);
+	// ensure unit does not try to move back to the
+	// position it was at when MoveCtrl was enabled
+	// FIXME: prevent the issuing of extra commands?
+	if (moveType != NULL) {
+		moveType->SetGoal(moveType->oldPos = pos);
 		moveType->StopMoving();
 	}
 }
@@ -679,44 +672,14 @@ void CUnit::Update()
 {
 	ASSERT_SYNCED(pos);
 
-	// UnitScript only applies piece-space transforms so
-	// we apply the forward kinematics update separately
-	// (only if we have any dirty pieces)
-	// TODO: move this to UnitScript::Tick?
-	localModel->UpdatePieceMatrices();
-
-	{
-		const bool oldInAir   = inAir;
-		const bool oldInWater = inWater;
-
-		inWater = (pos.y <= 0.0f);
-		inAir   = (!inWater) && ((pos.y - ground->GetHeightAboveWater(pos.x, pos.z)) > 1.0f);
-		isUnderWater = ((pos.y + ((moveDef == NULL || !moveDef->subMarine) * model->height)) < 0.0f);
-
-		if (inAir != oldInAir) {
-			if (inAir) {
-				eventHandler.UnitEnteredAir(this);
-			} else {
-				eventHandler.UnitLeftAir(this);
-			}
-		}
-		if (inWater != oldInWater) {
-			if (inWater) {
-				eventHandler.UnitEnteredWater(this);
-			} else {
-				eventHandler.UnitLeftWater(this);
-			}
-		}
-	}
-
-	residualImpulse *= impulseDecayRate;
-	posErrorVector += posErrorDelta;
+	UpdatePhysicalState();
+	UpdatePosErrorParams(true, false);
 
 	if (beingBuilt)
 		return;
 
 	if (travelPeriod != 0.0f) {
-		travel += speed.Length();
+		travel += speed.w;
 		travel = math::fmod(travel, travelPeriod);
 	}
 
@@ -743,7 +706,6 @@ void CUnit::Update()
 		}
 	}
 }
-
 
 void CUnit::UpdateResources()
 {
@@ -813,7 +775,7 @@ unsigned short CUnit::CalcLosStatus(int at)
 	unsigned short newStatus = currStatus;
 	unsigned short mask = ~(currStatus >> 8);
 
-	if (loshandler->InLos(this, at)) {
+	if (losHandler->InLos(this, at)) {
 		if (!beingBuilt) {
 			newStatus |= (mask & (LOS_INLOS   | LOS_INRADAR |
 			                      LOS_PREVLOS | LOS_CONTRADAR));
@@ -824,7 +786,7 @@ unsigned short CUnit::CalcLosStatus(int at)
 			newStatus &= ~(mask & (LOS_PREVLOS | LOS_CONTRADAR));
 		}
 	}
-	else if (radarhandler->InRadar(this, at)) {
+	else if (radarHandler->InRadar(this, at)) {
 		newStatus |=  (mask & LOS_INRADAR);
 		newStatus &= ~(mask & LOS_INLOS);
 	}
@@ -853,7 +815,7 @@ void CUnit::SetStunned(bool stun) {
 		if (stunned) {
 			script->StopMoving();
 		} else {
-			script->StartMoving();
+			script->StartMoving(moveType->IsReversing());
 		}
 	}
 }
@@ -861,16 +823,7 @@ void CUnit::SetStunned(bool stun) {
 
 void CUnit::SlowUpdate()
 {
-	--nextPosErrorUpdate;
-	if (nextPosErrorUpdate == 0) {
-		float3 newPosError(gs->randVector());
-		newPosError.y *= 0.2f;
-		if (posErrorVector.dot(newPosError) < 0.0f) {
-			newPosError = -newPosError;
-		}
-		posErrorDelta = (newPosError - posErrorVector) * (1.0f / 256.0f);
-		nextPosErrorUpdate = 16;
-	}
+	UpdatePosErrorParams(false, true);
 
 	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
 		UpdateLosStatus(at);
@@ -1044,9 +997,8 @@ void CUnit::SlowUpdate()
 }
 
 void CUnit::SlowUpdateWeapons() {
-	if (weapons.empty()) {
+	if (weapons.empty())
 		return;
-	}
 
 	haveTarget = false;
 
@@ -1063,7 +1015,7 @@ void CUnit::SlowUpdateWeapons() {
 			//     target-unit which the CAI did *not* auto-select, or
 			//     2) ::AttackGround was called with any user-selected
 			//     position and all checks succeeded
-			if ((haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire))) {
+			if (haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire)) {
 				if (attackTarget != NULL) {
 					w->AttackUnit(attackTarget, w->haveUserTarget);
 				} else if (userAttackGround) {
@@ -1128,75 +1080,80 @@ void CUnit::DoWaterDamage()
 		return;
 	if (!pos.IsInBounds())
 		return;
-	if (pos.y > 0.0f)
-		return;
-
-	const int  px            = pos.x / (SQUARE_SIZE * 2);
-	const int  pz            = pos.z / (SQUARE_SIZE * 2);
-	const bool isFloating    = (physicalState == CSolidObject::Floating);
-	const bool onGround      = (physicalState == CSolidObject::OnGround);
-	const bool isWaterSquare = (readmap->GetMIPHeightMapSynced(1)[pz * gs->hmapx + px] <= 0.0f);
-
-	if (!isWaterSquare)
-		return;
-	if (!isFloating && !onGround)
+	// note: hovercraft could also use a negative waterline
+	// ("hoverline"?) to avoid being damaged but that would
+	// confuse GMTPathController --> damage must be removed
+	// via UnitPreDamaged if not wanted
+	if (!IsInWater())
 		return;
 
 	DoDamage(DamageArray(mapInfo->water.damage), ZeroVector, NULL, -DAMAGE_EXTSOURCE_WATER, -1);
 }
 
-void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID)
+
+
+static void AddUnitDamageStats(CUnit* unit, float damage, bool dealt)
 {
-	if (isDead || crashing) {
+	if (unit == NULL)
 		return;
+
+	CTeam* team = teamHandler->Team(unit->team);
+	TeamStatistics* stats = team->currentStats;
+
+	if (dealt) {
+		stats->damageDealt += damage;
+	} else {
+		stats->damageReceived += damage;
 	}
+}
 
-	float damage = damages[armorType];
+void CUnit::DoDamage(
+	const DamageArray& damages,
+	const float3& impulse,
+	CUnit* attacker,
+	int weaponDefID,
+	int projectileID
+) {
+	if (isDead)
+		return;
+	if (IsCrashing() || IsInVoid())
+		return;
 
-	if (damage > 0.0f) {
-		if (attacker) {
+	float baseDamage = damages[armorType];
+	float experienceMod = expMultiplier;
+	float impulseMult = 1.0f;
+
+	const bool isParalyzer = (damages.paralyzeDamageTime != 0);
+
+	if (baseDamage > 0.0f) {
+		if (attacker != NULL) {
 			SetLastAttacker(attacker);
 
 			// FIXME -- not the impulse direction?
-			damage *= GetFlankingDamageBonus((attacker->pos - pos).SafeNormalize());
+			baseDamage *= GetFlankingDamageBonus((attacker->pos - pos).SafeNormalize());
 		}
 
-		damage *= curArmorMultiple;
+		baseDamage *= curArmorMultiple;
 		restTime = 0; // bleeding != resting
 	}
 
-	{
-		float3 hitDir = -impulse;
-		hitDir.y = 0.0f;
-		hitDir.SafeNormalize();
-
-		script->HitByWeapon(hitDir, weaponDefID, /*inout*/ damage);
+	if (luaRules != NULL) {
+		luaRules->UnitPreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer, &baseDamage, &impulseMult);
 	}
 
-	float experienceMod = expMultiplier;
-	float newDamage = damage;
-	float impulseMult = 1.0f;
+	script->HitByWeapon(-(float3(impulse * impulseMult)).SafeNormalize2D(), weaponDefID, /*inout*/ baseDamage);
+	ApplyImpulse((impulse * impulseMult) / mass);
 
-	const int paralyzeTime = damages.paralyzeDamageTime;
-	const bool isParalyzer = (paralyzeTime != 0);
+	if (!isParalyzer) {
+		// real damage
+		if (baseDamage > 0.0f) {
+			// do not log overkill damage (so nukes etc do not inflate values)
+			AddUnitDamageStats(attacker, Clamp(maxHealth - health, 0.0f, baseDamage), true);
+			AddUnitDamageStats(this, Clamp(maxHealth - health, 0.0f, baseDamage), false);
 
-	if (luaRules && luaRules->UnitPreDamaged(this, attacker, damage, weaponDefID, projectileID, isParalyzer, &newDamage, &impulseMult)) {
-		damage = newDamage;
-	}
-
-	StoreImpulse((impulse * impulseMult) / mass);
-
-	if (!isParalyzer) { // real damage
-		if (damage > 0.0f) {
-			// Do not log overkill damage (so nukes etc do not inflate values)
-			const float statsdamage = std::max(0.0f, std::min(maxHealth - health, damage));
-			if (attacker) {
-				teamHandler->Team(attacker->team)->currentStats->damageDealt += statsdamage;
-			}
-			teamHandler->Team(team)->currentStats->damageReceived += statsdamage;
-			health -= damage;
+			health -= baseDamage;
 		} else { // healing
-			health -= damage;
+			health -= baseDamage;
 			health = std::min(health, maxHealth);
 
 			if (health > paralyzeDamage && !modInfo.paralyzeOnMaxHealth) {
@@ -1215,12 +1172,12 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 		// maximum health to ensure stun-time is always equal to <paralyzeTime>
 		const float baseHealth = (modInfo.paralyzeOnMaxHealth? maxHealth: health);
 		const float paralysisDecayRate = baseHealth * CUnit::empDecline;
-		const float sumParalysisDamage = paralysisDecayRate * paralyzeTime;
+		const float sumParalysisDamage = paralysisDecayRate * damages.paralyzeDamageTime;
 		const float maxParalysisDamage = baseHealth + sumParalysisDamage - paralyzeDamage;
 
-		if (damage > 0.0f) {
+		if (baseDamage > 0.0f) {
 			// clamp the dealt paralysis-damage to [0, maxParalysisDamage]
-			damage = std::min(damage, std::max(0.0f, maxParalysisDamage));
+			baseDamage = Clamp(baseDamage, 0.0f, maxParalysisDamage);
 
 			if (IsStunned()) {
 				// no attacker gains experience from a stunned target
@@ -1228,7 +1185,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 			}
 
 			// increase the current level of paralysis-damage
-			paralyzeDamage += damage;
+			paralyzeDamage += baseDamage;
 
 			if (paralyzeDamage >= baseHealth) {
 				SetStunned(true);
@@ -1240,7 +1197,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 			}
 
 			// decrease ("heal") the current level of paralysis-damage
-			paralyzeDamage += damage;
+			paralyzeDamage += baseDamage;
 			paralyzeDamage = std::max(paralyzeDamage, 0.0f);
 
 			if (paralyzeDamage <= baseHealth) {
@@ -1249,20 +1206,20 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 		}
 	}
 
-	recentDamage += damage;
+	recentDamage += baseDamage;
 
-	eventHandler.UnitDamaged(this, attacker, damage, weaponDefID, projectileID, isParalyzer);
-	eoh->UnitDamaged(*this, attacker, damage, weaponDefID, projectileID, isParalyzer);
+	eventHandler.UnitDamaged(this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer);
+	eoh->UnitDamaged(*this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer);
 
 #ifdef TRACE_SYNC
 	tracefile << "Damage: ";
-	tracefile << id << " " << damage << "\n";
+	tracefile << id << " " << baseDamage << "\n";
 #endif
 
-	if (damage > 0.0f) {
+	if (baseDamage > 0.0f) {
 		if ((attacker != NULL) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
 			const float scaledExpMod = 0.1f * experienceMod * (power / attacker->power);
-			const float scaledDamage = std::max(0.0f, (damage + std::min(0.0f, health))) / maxHealth;
+			const float scaledDamage = std::max(0.0f, (baseDamage + std::min(0.0f, health))) / maxHealth;
 			// alternative
 			// scaledDamage = (max(healthPreDamage, 0) - max(health, 0)) / maxHealth
 
@@ -1287,18 +1244,20 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 
 
 
-void CUnit::StoreImpulse(const float3& impulse, float newImpulseDecayRate) {
-	CSolidObject::StoreImpulse(impulse, newImpulseDecayRate);
-}
+void CUnit::ApplyImpulse(const float3& impulse) {
+	if (GetTransporter() != NULL) {
+		// transfer impulse to unit transporting us, scaled by its mass
+		// assume we came here straight from DoDamage, not LuaSyncedCtrl
+		GetTransporter()->ApplyImpulse((impulse * mass) / (GetTransporter()->mass));
+		return;
+	}
 
-void CUnit::StoreImpulse(const float3& impulse) {
 	const float3& groundNormal = ground->GetNormal(pos.x, pos.z);
-	const float groundImpulseScale = std::min(0.0f, residualImpulse.dot(groundNormal));
+	const float groundImpulseScale = std::min(0.0f, impulse.dot(groundNormal));
+	const float3 modImpulse = impulse - (groundNormal * groundImpulseScale * IsOnGround());
 
-	CSolidObject::StoreImpulse(impulse - (groundNormal * groundImpulseScale * (1 - inAir)));
-
-	if (moveType->CanApplyImpulse(impulse)) {
-		CSolidObject::ApplyImpulse();
+	if (moveType->CanApplyImpulse(modImpulse)) {
+		CSolidObject::ApplyImpulse(modImpulse);
 	}
 }
 
@@ -1312,10 +1271,19 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 	float3 interPos = synced ? pos : drawPos;
 
 	if (error && !synced && !gu->spectatingFullView) {
-		interPos += CGameHelper::GetUnitErrorPos(this, gu->myAllyTeam) - midPos;
+		interPos += GetErrorVector(gu->myAllyTeam);
 	}
 
 	return CMatrix44f(interPos, -rightdir, updir, frontdir);
+}
+
+const CollisionVolume* CUnit::GetCollisionVolume(const LocalModelPiece* lmp) const {
+	if (lmp == NULL)
+		return collisionVolume;
+	if (!collisionVolume->DefaultToPieceTree())
+		return collisionVolume;
+
+	return (lmp->GetCollisionVolume());
 }
 
 
@@ -1325,7 +1293,7 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 
 void CUnit::ChangeSensorRadius(int* valuePtr, int newValue)
 {
-	radarhandler->RemoveUnit(this);
+	radarHandler->RemoveUnit(this);
 
 	*valuePtr = newValue;
 
@@ -1337,7 +1305,7 @@ void CUnit::ChangeSensorRadius(int* valuePtr, int newValue)
 		                   (seismicRadius > 0.0f);
 	}
 
-	radarhandler->MoveUnit(this);
+	radarHandler->MoveUnit(this);
 }
 
 
@@ -1377,18 +1345,18 @@ void CUnit::DoSeismicPing(float pingSize)
 	float rx = gs->randFloat();
 	float rz = gs->randFloat();
 
-	const float* errorScale = &radarhandler->radarErrorSize[0];
 	if (!(losStatus[gu->myAllyTeam] & LOS_INLOS) &&
-	    radarhandler->InSeismicDistance(this, gu->myAllyTeam)) {
-		const float3 err(errorScale[gu->myAllyTeam] * (0.5f - rx), 0.0f,
-		                 errorScale[gu->myAllyTeam] * (0.5f - rz));
+	    radarHandler->InSeismicDistance(this, gu->myAllyTeam)) {
+
+		const float3 err(radarHandler->GetAllyTeamRadarErrorSize(gu->myAllyTeam) * (0.5f - rx), 0.0f,
+		                 radarHandler->GetAllyTeamRadarErrorSize(gu->myAllyTeam) * (0.5f - rz));
 
 		new CSeismicGroundFlash(pos + err, 30, 15, 0, pingSize, 1, float3(0.8f, 0.0f, 0.0f));
 	}
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		if (radarhandler->InSeismicDistance(this, a)) {
-			const float3 err(errorScale[a] * (0.5f - rx), 0.0f,
-			                 errorScale[a] * (0.5f - rz));
+		if (radarHandler->InSeismicDistance(this, a)) {
+			const float3 err(radarHandler->GetAllyTeamRadarErrorSize(a) * (0.5f - rx), 0.0f,
+			                 radarHandler->GetAllyTeamRadarErrorSize(a) * (0.5f - rz));
 			const float3 pingPos = (pos + err);
 			eventHandler.UnitSeismicPing(this, a, pingPos, pingSize);
 			eoh->SeismicPing(a, *this, pingPos, pingSize);
@@ -1399,30 +1367,26 @@ void CUnit::DoSeismicPing(float pingSize)
 
 void CUnit::ChangeLos(int losRad, int airRad)
 {
-	loshandler->FreeInstance(los);
+	losHandler->FreeInstance(los);
 	los = NULL;
 	losRadius = losRad;
 	airLosRadius = airRad;
-	loshandler->MoveUnit(this, false);
+	losHandler->MoveUnit(this, false);
 }
 
 
 bool CUnit::ChangeTeam(int newteam, ChangeType type)
 {
-	if (isDead) {
+	if (isDead)
 		return false;
-	}
 
 	// do not allow unit count violations due to team swapping
 	// (this includes unit captures)
-	if (unitHandler->unitsByDefs[newteam][unitDef->id].size() >= unitDef->maxThisUnit) {
+	if (unitHandler->unitsByDefs[newteam][unitDef->id].size() >= unitDef->maxThisUnit)
 		return false;
-	}
 
-	const bool capture = (type == ChangeCaptured);
-	if (luaRules && !luaRules->AllowUnitTransfer(this, newteam, capture)) {
+	if (luaRules && !luaRules->AllowUnitTransfer(this, newteam, type == ChangeCaptured))
 		return false;
-	}
 
 	// do not allow old player to keep controlling the unit
 	if (fpsControlPlayer != NULL) {
@@ -1432,7 +1396,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	const int oldteam = team;
 
-	selectedUnits.RemoveUnit(this);
+	selectedUnitsHandler.RemoveUnit(this);
 	SetGroup(NULL);
 
 	eventHandler.UnitTaken(this, oldteam, newteam);
@@ -1440,10 +1404,9 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	quadField->RemoveUnit(this);
 	quads.clear();
-	loshandler->FreeInstance(los);
+	losHandler->FreeInstance(los);
 	los = 0;
-	losStatus[allyteam] = 0;
-	radarhandler->RemoveUnit(this);
+	radarHandler->RemoveUnit(this);
 
 	if (unitDef->isAirBase) {
 		airBaseHandler->DeregisterAirBase(this);
@@ -1474,12 +1437,18 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	unitHandler->unitsByDefs[newteam][unitDef->id].insert(this);
 
 	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
-		UpdateLosStatus(at);
+		if (teamHandler->Ally(at, allyteam)) {
+			SetLosStatus(at, LOS_ALL_MASK_BITS | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR);
+		} else {
+			// re-calc LOS status
+			losStatus[at] = 0;
+			UpdateLosStatus(at);
+		}
 	}
 
-	loshandler->MoveUnit(this, false);
+	losHandler->MoveUnit(this, false);
 	quadField->MovedUnit(this);
-	radarhandler->MoveUnit(this);
+	radarHandler->MoveUnit(this);
 
 	if (unitDef->isAirBase) {
 		airBaseHandler->RegisterAirBase(this);
@@ -1570,6 +1539,17 @@ void CUnit::ChangeTeamReset()
 	}
 }
 
+
+bool CUnit::IsIdle() const
+{
+	if (beingBuilt)
+		return false;
+
+	if (!commandAI->commandQue.empty())
+		return false;
+
+	return true;
+}
 
 
 bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire, bool fpsMode)
@@ -1674,6 +1654,29 @@ void CUnit::DependentDied(CObject* o)
 
 
 
+void CUnit::UpdatePhysicalState()
+{
+	const bool inAir   = IsInAir();
+	const bool inWater = IsInWater();
+
+	CSolidObject::UpdatePhysicalState();
+
+	if (IsInAir() != inAir) {
+		if (IsInAir()) {
+			eventHandler.UnitEnteredAir(this);
+		} else {
+			eventHandler.UnitLeftAir(this);
+		}
+	}
+	if (IsInWater() != inWater) {
+		if (IsInWater()) {
+			eventHandler.UnitEnteredWater(this);
+		} else {
+			eventHandler.UnitLeftWater(this);
+		}
+	}
+}
+
 void CUnit::UpdateTerrainType()
 {
 	if (curTerrainType != lastTerrainType) {
@@ -1727,7 +1730,7 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 	GML_RECMUTEX_LOCK(grpsel); // SetGroup
 
 	// factory is not necessarily selected
-	if (fromFactory && !selectedUnits.AutoAddBuiltUnitsToFactoryGroup())
+	if (fromFactory && !selectedUnitsHandler.AutoAddBuiltUnitsToFactoryGroup())
 		return false;
 
 	if (group != NULL) {
@@ -1744,8 +1747,8 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 		} else {
 			// add unit to the set of selected units iff its new group is already selected
 			// and (user wants the unit to be auto-selected or the unit is not newly built)
-			if (selectedUnits.IsGroupSelected(group->id) && (selectedUnits.AutoAddBuiltUnitsToSelectedGroup() || !fromFactory)) {
-				selectedUnits.AddUnit(this);
+			if (selectedUnitsHandler.IsGroupSelected(group->id) && (selectedUnitsHandler.AutoAddBuiltUnitsToSelectedGroup() || !fromFactory)) {
+				selectedUnitsHandler.AddUnit(this);
 			}
 		}
 	}
@@ -1754,85 +1757,89 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 }
 
 
-#if defined(USE_GML) && defined(__GNUC__) && (__GNUC__ == 4)
-// This is supposed to fix some GCC crashbug related to threading
-// The MOVAPS SSE instruction is otherwise getting misaligned data
-__attribute__ ((force_align_arg_pointer))
-#endif
-bool CUnit::AddBuildPower(float amount, CUnit* builder)
+bool CUnit::AddBuildPower(CUnit* builder, float amount)
 {
 	// stop decaying on building AND reclaim
 	lastNanoAdd = gs->frameNum;
 
-	if (amount >= 0.0f) { //  build / repair
-		if (!beingBuilt && (health >= maxHealth)) {
+	CTeam* builderTeam = teamHandler->Team(builder->team);
+
+	if (amount >= 0.0f) {
+		// build or repair
+		if (!beingBuilt && (health >= maxHealth))
 			return false;
-		}
 
-		if (beingBuilt) { //build
-			const float part = std::min(amount / buildTime, 1.0f - buildProgress);
-			const float metalCostPart  = metalCost  * part;
-			const float energyCostPart = energyCost * part;
+		if (beingBuilt) {
+			// build
+			const float step = std::min(amount / buildTime, 1.0f - buildProgress);
+			const float metalCostStep  = metalCost  * step;
+			const float energyCostStep = energyCost * step;
 
-			if ((teamHandler->Team(builder->team)->metal  >= metalCostPart) &&
-			    (teamHandler->Team(builder->team)->energy >= energyCostPart) &&
-			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
+			const bool buildAllowed = (luaRules == NULL || luaRules->AllowUnitBuildStep(builder, this, step));
+			const bool canExecBuild = (builderTeam->metal >= metalCostStep && builderTeam->energy >= energyCostStep);
 
-				if (builder->UseMetal(metalCostPart)) {
-					// just because we checked doesn't mean they were deducted since upkeep can prevent deduction
-					// FIXME luaRules->AllowUnitBuildStep() may have changed the storages!!! so the checks can be invalid!
-					// TODO add a builder->UseResources(SResources(metalCostPart, energyCostPart))
-					if (builder->UseEnergy(energyCostPart)) {
-						health += (maxHealth * part);
+			if (buildAllowed && canExecBuild) {
+				if (builder->UseMetal(metalCostStep)) {
+					// FIXME AllowUnitBuildStep may have changed the storages!!! so the checks can be invalid!
+					// TODO add a builder->UseResources(SResources(metalCostStep, energyCostStep))
+					//
+					if (builder->UseEnergy(energyCostStep)) {
+						health += (maxHealth * step);
 						health = std::min(health, maxHealth);
-						buildProgress += part;
+						buildProgress += step;
 
 						if (buildProgress >= 1.0f) {
 							FinishedBuilding(false);
 						}
 					} else {
-						// refund the metal if the energy cannot be deducted
-						builder->UseMetal(-metalCostPart);
+						// refund already-deducted metal if *energy* cost cannot be
+						builder->UseMetal(-metalCostStep);
 					}
 				}
+
 				return true;
 			} else {
 				// update the energy and metal required counts
-				teamHandler->Team(builder->team)->metalPull  += metalCostPart;
-				teamHandler->Team(builder->team)->energyPull += energyCostPart;
+				builderTeam->metalPull  += metalCostStep;
+				builderTeam->energyPull += energyCostStep;
 			}
+
 			return false;
 		}
-		else if (health < maxHealth) { //repair
-			const float part = std::min(amount / buildTime, 1.0f - (health / maxHealth));
-			const float energyUse = (energyCost * part);
+		else if (health < maxHealth) {
+			// repair
+			const float step = std::min(amount / buildTime, 1.0f - (health / maxHealth));
+			const float energyUse = (energyCost * step);
 			const float energyUseScaled = energyUse * modInfo.repairEnergyCostFactor;
 
+			if (luaRules != NULL && !luaRules->AllowUnitBuildStep(builder, this, step))
+				return false;
+
 	  		if (!builder->UseEnergy(energyUseScaled)) {
-				teamHandler->Team(builder->team)->energyPull += energyUseScaled;
+				// UseEnergy already increases the team's pull when it returns false!
+				// builderTeam->energyPull += energyUseScaled;
 				return false;
 			}
 
 			repairAmount += amount;
-			health += (maxHealth * part);
+			health += (maxHealth * step);
 			health = std::min(health, maxHealth);
 
 			return true;
 		}
-	} else { // reclaim
-		if (isDead || crashing) {
+	} else {
+		// reclaim
+		if (isDead || IsCrashing())
 			return false;
-		}
 
-		const float part = std::max(amount / buildTime, -buildProgress);
-		const float energyRefundPart = energyCost * part;
-		const float metalRefundPart = metalCost * part;
-		const float metalRefundPartScaled = metalRefundPart * modInfo.reclaimUnitEfficiency;
-		const float energyRefundPartScaled = energyRefundPart * modInfo.reclaimUnitEnergyCostFactor;
+		const float step = std::max(amount / buildTime, -buildProgress);
+		const float energyRefundStep = energyCost * step;
+		const float metalRefundStep = metalCost * step;
+		const float metalRefundStepScaled = metalRefundStep * modInfo.reclaimUnitEfficiency;
+		const float energyRefundStepScaled = energyRefundStep * modInfo.reclaimUnitEnergyCostFactor;
 
-		if (luaRules && !luaRules->AllowUnitBuildStep(builder, this, part)) {
+		if (luaRules != NULL && !luaRules->AllowUnitBuildStep(builder, this, step))
 			return false;
-		}
 
 		restTime = 0;
 
@@ -1841,17 +1848,18 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			return false;
 		}
 
-		if (!builder->UseEnergy(-energyRefundPartScaled)) {
-			teamHandler->Team(builder->team)->energyPull += energyRefundPartScaled;
+		if (!builder->UseEnergy(-energyRefundStepScaled)) {
+			// UseEnergy already increases the team's pull when it returns false!
+			// builderTeam->energyPull += energyRefundStepScaled;
 			return false;
 		}
 
-		health += (maxHealth * part);
-		buildProgress += (part * int(beingBuilt) * int(modInfo.reclaimUnitMethod == 0));
+		health += (maxHealth * step);
+		buildProgress += (step * int(beingBuilt) * int(modInfo.reclaimUnitMethod == 0));
 
 		if (modInfo.reclaimUnitMethod == 0) {
 			// gradual reclamation of invested metal
-			builder->AddMetal(-metalRefundPartScaled, false);
+			builder->AddMetal(-metalRefundStepScaled, false);
 			// turn reclaimee into nanoframe (even living units)
 			beingBuilt = true;
 		} else {
@@ -1881,8 +1889,10 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 				return false;
 			}
 		}
+
 		return true;
 	}
+
 	return false;
 }
 
@@ -1929,7 +1939,7 @@ void CUnit::FinishedBuilding(bool postInit)
 		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
 		CFeature* f = featureHandler->CreateWreckage(p, 0, false);
 
-		if (f) {
+		if (f != NULL) {
 			f->blockHeightChanges = true;
 		}
 
@@ -1942,7 +1952,7 @@ void CUnit::FinishedBuilding(bool postInit)
 void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
 {
 	if (isDead) { return; }
-	if (crashing && !beingBuilt) { return; }
+	if (IsCrashing() && !beingBuilt) { return; }
 
 	isDead = true;
 	deathSpeed = speed;
@@ -1996,8 +2006,9 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 
 	if (!deathScriptFinished) {
 		// put the unit in a pseudo-zombie state until Killed finishes
-		speed = ZeroVector;
+		SetVelocity(ZeroVector);
 		SetStunned(true);
+
 		paralyzeDamage = 100.0f * maxHealth;
 		health = std::max(health, 0.0f);
 	}
@@ -2019,24 +2030,29 @@ bool CUnit::AllowedReclaim(CUnit* builder) const
 
 bool CUnit::UseMetal(float metal)
 {
-	if (metal < 0) {
+	if (metal < 0.0f) {
 		AddMetal(-metal);
 		return true;
 	}
-	teamHandler->Team(team)->metalPull += metal;
-	bool canUse = teamHandler->Team(team)->UseMetal(metal);
-	if (canUse)
-		metalUseI += metal;
-	return canUse;
-}
 
+	CTeam* myTeam = teamHandler->Team(team);
+	myTeam->metalPull += metal;
+
+	if (myTeam->UseMetal(metal)) {
+		metalUseI += metal;
+		return true;
+	}
+
+	return false;
+}
 
 void CUnit::AddMetal(float metal, bool useIncomeMultiplier)
 {
-	if (metal < 0) {
+	if (metal < 0.0f) {
 		UseMetal(-metal);
 		return;
 	}
+
 	metalMakeI += metal;
 	teamHandler->Team(team)->AddMetal(metal, useIncomeMultiplier);
 }
@@ -2044,21 +2060,25 @@ void CUnit::AddMetal(float metal, bool useIncomeMultiplier)
 
 bool CUnit::UseEnergy(float energy)
 {
-	if (energy < 0) {
+	if (energy < 0.0f) {
 		AddEnergy(-energy);
 		return true;
 	}
-	teamHandler->Team(team)->energyPull += energy;
-	bool canUse = teamHandler->Team(team)->UseEnergy(energy);
-	if (canUse)
-		energyUseI += energy;
-	return canUse;
-}
 
+	CTeam* myTeam = teamHandler->Team(team);
+	myTeam->energyPull += energy;
+
+	if (myTeam->UseEnergy(energy)) {
+		energyUseI += energy;
+		return true;
+	}
+
+	return false;
+}
 
 void CUnit::AddEnergy(float energy, bool useIncomeMultiplier)
 {
-	if (energy < 0) {
+	if (energy < 0.0f) {
 		UseEnergy(-energy);
 		return;
 	}
@@ -2077,10 +2097,10 @@ void CUnit::Activate()
 	script->Activate();
 
 	if (unitDef->targfac) {
-		radarhandler->radarErrorSize[allyteam] /= radarhandler->targFacEffect;
+		radarHandler->DecreaseAllyTeamRadarErrorSize(allyteam);
 	}
 
-	radarhandler->MoveUnit(this);
+	radarHandler->MoveUnit(this);
 
 	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
@@ -2098,10 +2118,10 @@ void CUnit::Deactivate()
 	script->Deactivate();
 
 	if (unitDef->targfac) {
-		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
+		radarHandler->IncreaseAllyTeamRadarErrorSize(allyteam);
 	}
 
-	radarhandler->RemoveUnit(this);
+	radarHandler->RemoveUnit(this);
 
 	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
@@ -2215,7 +2235,7 @@ bool CUnit::GetNewCloakState(bool stunCheck) {
 
 	if (wantCloak || (scriptCloak >= 1)) {
 		const CUnit* closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(NULL, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
-		const float cloakCost = (speed.SqLength() > 0.2f)? unitDef->cloakCostMoving: unitDef->cloakCost;
+		const float cloakCost = (Square(speed.w) > 0.2f)? unitDef->cloakCostMoving: unitDef->cloakCost;
 
 		if (decloakDistance > 0.0f && closestEnemy != NULL) {
 			curCloakTimeout = gs->frameNum + cloakTimeout;
@@ -2361,7 +2381,6 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(moveType),
 	CR_MEMBER(prevMoveType),
-	CR_MEMBER(usingScriptMoveType),
 
 	// CR_MEMBER(fpsControlPlayer),
 	CR_MEMBER(commandAI),
@@ -2421,13 +2440,8 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(activated),
 
-	CR_MEMBER(crashing),
 	CR_MEMBER(isDead),
-	CR_MEMBER(falling),
 	CR_MEMBER(fallSpeed),
-
-	CR_MEMBER(inAir),
-	CR_MEMBER(inWater),
 
 	CR_MEMBER(flankingBonusMode),
 	CR_MEMBER(flankingBonusDir),

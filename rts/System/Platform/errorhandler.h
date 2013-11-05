@@ -57,6 +57,9 @@ int GetExitCode();
 	}                                                                                        \
 	catch (const user_error& e) {                                                            \
 		ErrorMessageBox(e.what(), "Spring: Fatal Error (user)", MBF_OK | MBF_EXCL);          \
+	}                                                                                        \
+	catch (const unsupported_error& e) {                                                         \
+		ErrorMessageBox(e.what(), "Spring: Hardware Problem: ", MBF_OK | MBF_CRASH); \
 	}
 
 /**

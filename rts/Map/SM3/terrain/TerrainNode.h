@@ -185,7 +185,7 @@ namespace terrain
 
 		void Alloc(int W, int H);
 		void LodScaleDown(Heightmap* dst);
-		void FindMinMax(int2 st, int2 size, float& minH, float& maxH);
+		void FindMinMax(int2 st, int2 size, float& minHgt, float& maxHgt, bool synced = true);
 		Heightmap* CreateLowDetailHM();
 		void GenerateNormals();
 		void UpdateLowerUnsynced(int sx, int sy, int w, int h);

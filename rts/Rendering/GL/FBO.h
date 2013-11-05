@@ -59,6 +59,11 @@ public:
 	GLenum GetStatus();
 
 	/**
+	 * @return GL_MAX_SAMPLES or 0 if multi-sampling not supported
+	 */
+	static GLsizei GetMaxSamples();
+
+	/**
 	 * @brief IsValid
 	 * @return whether a valid framebuffer exists
 	 */
@@ -89,6 +94,16 @@ public:
 	 * @param height
 	 */
 	void CreateRenderBuffer(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height);
+
+	/**
+	 * @brief Creates a multisampled RenderBufferObject and attachs it to the FBO (it is also auto destructed)
+	 * @param attachment
+	 * @param format
+	 * @param width
+	 * @param height
+	 * @param samples
+	 */
+	void CreateRenderBufferMultisample(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height, GLsizei samples);
 
 	/**
 	 * @brief Detach
@@ -144,6 +159,7 @@ private:
 	};
 	static std::map<GLuint,TexData*> texBuf;
 	static GLint maxAttachments;
+	static GLsizei maxSamples;
 
 	/**
 	 * @brief DownloadAttachment

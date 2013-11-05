@@ -16,29 +16,15 @@
 
 class CLuaHandle;
 
-struct luaContextData {
-	luaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
-		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false),
-		owner(NULL), drawingEnabled(false), running(0), listMode(false) {}
-	bool fullCtrl;
-	bool fullRead;
-	int  ctrlTeam;
-	int  readTeam;
-	int  readAllyTeam;
-	int  selectTeam;
-	//FIXME		LuaArrays arrays;
-	LuaShaders shaders;
-	LuaTextures textures;
-	//FIXME		LuaVBOs vbos;
-	LuaFBOs fbos;
-	LuaRBOs rbos;
-	CLuaDisplayLists displayLists;
-	bool synced;
-	CLuaHandle *owner;
-	bool drawingEnabled;
-	int running; //< is currently running? (0: not running; >0: is running)
+
+//FIXME move to diff file
+struct GLMatrixStateTracker {
+public:
 	MatrixStateData matrixData; // [>0] = stack depth for mode, [0] = matrix mode
 	bool listMode; // if creating display list
+
+public:
+	GLMatrixStateTracker() : listMode(false) {}
 
 	MatrixStateData PushMatrixState() {
 		MatrixStateData md;
@@ -60,13 +46,13 @@ struct luaContextData {
 		PopMatrixState(md);
 	}
 
-	unsigned int GetMode() {
-		MatrixStateData::iterator i = matrixData.find(0);
+	unsigned int GetMode() const {
+		MatrixStateData::const_iterator i = matrixData.find(0);
 		return (i == matrixData.end()) ? GL_MODELVIEW : i->second;
 	}
 
-	int GetDepth(unsigned int mode) {
-		MatrixStateData::iterator i = matrixData.find(mode);
+	int GetDepth(unsigned int mode) const {
+		MatrixStateData::const_iterator i = matrixData.find(mode);
 		return (i == matrixData.end()) ? 0 : i->second;
 	}
 
@@ -134,25 +120,31 @@ struct luaContextData {
 		return 0;
 	}
 
-	MatrixStateData GetMatrixState() {
+	const MatrixStateData& GetMatrixState() const {
 		return matrixData;
 	}
 
-	bool HasMatrixStateError() {
+	bool HasMatrixStateError() const {
 		return !matrixData.empty();
 	}
 
 	void HandleMatrixStateError(int error, const char* errsrc) {
 		unsigned int mode = GetMode();
+
 		// dont complain about stack/mode issues if some other error occurred
-		if (error == 0 && mode != GL_MODELVIEW) // check if the lua code did not restore the matrix mode
+		// check if the lua code did not restore the matrix mode
+		if (error == 0 && mode != GL_MODELVIEW)
 			LOG_L(L_ERROR, "%s: OpenGL state check error, matrix mode = %d, please restore mode to GL.MODELVIEW before end", errsrc, mode);
+
 		for (MatrixStateData::iterator i = matrixData.begin(); i != matrixData.end(); ++i) {
 			if (i->first == 0)
 				continue;
-			if (error == 0) // check if the lua code fucked up the stack for matrix mode X
+			// check if the lua code fucked up the stack for matrix mode X
+			if (error == 0)
 				LOG_L(L_ERROR, "%s: OpenGL stack check error, matrix mode = %d, depth = %d, please make sure to pop all matrices before end", errsrc, i->first, i->second);
+
 			glMatrixMode(i->first);
+
 			for (int p = 0; p < i->second; ++p) {
 				glPopMatrix();
 			}
@@ -161,5 +153,50 @@ struct luaContextData {
 		matrixData.clear();
 	}
 };
+
+
+
+
+struct luaContextData {
+	luaContextData()
+	: luamutex(NULL)
+	, primary(true)
+	, synced(false)
+	, owner(NULL)
+	, drawingEnabled(false)
+	, running(0)
+	, fullCtrl(false)
+	, fullRead(false)
+	, ctrlTeam(CEventClient::NoAccessTeam)
+	, readTeam(0)
+	, readAllyTeam(0)
+	, selectTeam(CEventClient::NoAccessTeam) {}
+
+	boost::recursive_mutex* luamutex;
+	bool primary; //GML crap
+	bool synced;
+	CLuaHandle* owner;
+	bool drawingEnabled;
+	int running; //< is currently running? (0: not running; >0: is running)
+
+	// permission rights
+	bool fullCtrl;
+	bool fullRead;
+	int  ctrlTeam;
+	int  readTeam;
+	int  readAllyTeam;
+	int  selectTeam;
+
+	//FIXME		LuaArrays arrays;
+	LuaShaders shaders;
+	LuaTextures textures;
+	//FIXME		LuaVBOs vbos;
+	LuaFBOs fbos;
+	LuaRBOs rbos;
+	CLuaDisplayLists displayLists;
+
+	GLMatrixStateTracker glMatrixTracker;
+};
+
 
 #endif // LUA_CONTEXT_DATA_H

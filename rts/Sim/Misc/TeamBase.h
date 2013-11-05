@@ -18,12 +18,36 @@ public:
 	typedef std::map<std::string, std::string> customOpts;
 
 	TeamBase();
-	virtual ~TeamBase();
+	virtual ~TeamBase() {}
 
 	void SetValue(const std::string& key, const std::string& value);
 	const customOpts& GetAllValues() const {
 		return customValues;
 	}
+
+	const std::string& GetSide() const { return side; }
+
+	void SetStartPos(const float3& pos) { startPos = pos; }
+	const float3& GetStartPos() const { return startPos; }
+
+	bool HasValidStartPos() const {
+		// if a player never chose (net-sent) a position
+		if (startPos == ZeroVector)
+			return false;
+		// start-positions that are sent across the net
+		// will always be clamped to a team's start-box
+		// (and hence the map) when clients receive them
+		// so this should be redundant
+		if (!startPos.IsInMap())
+			return false;
+
+		return true;
+	}
+
+	bool HasLeader() const { return (leader != -1); }
+	void SetLeader(int leadPlayer) { leader = leadPlayer; }
+	int GetLeader() const { return leader; }
+
 
 	/**
 	 * Sets the (dis-)advantage.
@@ -60,6 +84,12 @@ public:
 	 * The fourth channel (alpha) has to be 255, always.
 	 */
 	unsigned char color[4];
+
+	int teamStartNum;
+	int teamAllyteam;
+
+	static unsigned char teamDefaultColor[10][4];
+
 protected:
 	/**
 	 * All the teams resource income is multiplied by this factor.
@@ -68,16 +98,13 @@ protected:
 	 * @see #SetAdvantage()
 	 */
 	float incomeMultiplier;
-public:
+
 	/**
 	 * Side/Factions name, eg. "ARM" or "CORE".
 	 */
 	std::string side;
-	float3 startPos;
-	int teamStartNum;
-	int teamAllyteam;
 
-	static unsigned char teamDefaultColor[10][4];
+	float3 startPos;
 
 private:
 	customOpts customValues;

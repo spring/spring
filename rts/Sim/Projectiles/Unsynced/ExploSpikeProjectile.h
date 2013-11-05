@@ -13,8 +13,15 @@ class CExploSpikeProjectile : public CProjectile
 	CExploSpikeProjectile();
 
 public:
-	CExploSpikeProjectile(const float3& pos,const float3& speed, float length, float width, float alpha, float alphaDecay, CUnit* owner);
-	~CExploSpikeProjectile();
+	CExploSpikeProjectile(
+		const float3& pos,
+		const float3& spd,
+		float length,
+		float width,
+		float alpha,
+		float alphaDecay,
+		CUnit* owner
+	);
 
 	void Draw();
 	void Update();
@@ -27,7 +34,6 @@ private:
 	float alpha;
 	float alphaDecay;
 	float lengthGrowth;
-	float3 dir;
 	float3 color;
 };
 

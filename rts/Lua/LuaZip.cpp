@@ -123,7 +123,7 @@ static bool FileExists(string filename)
  */
 bool LuaZipFileWriter::PushNew(lua_State* L, const string& filename, zipFile zip)
 {
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 
 	ZipFileWriterUserdata* udata = static_cast<ZipFileWriterUserdata*>(lua_newuserdata(L, sizeof(ZipFileWriterUserdata)));
 	std::memset(udata, 0, sizeof(ZipFileWriterUserdata));
@@ -276,7 +276,7 @@ struct ZipFileReaderUserdata {
  */
 bool LuaZipFileReader::PushNew(lua_State* L, const string& filename, IArchive* archive)
 {
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 
 	ZipFileReaderUserdata* udata = static_cast<ZipFileReaderUserdata*>(lua_newuserdata(L, sizeof(ZipFileReaderUserdata)));
 	std::memset(udata, 0, sizeof(ZipFileReaderUserdata));

@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <string>
+#include <exception>
 #include <boost/program_options.hpp>
 
 /**
@@ -14,6 +15,8 @@
  */
 class CmdLineParams
 {
+public:
+	typedef std::runtime_error unrecognized_option;
 
 public:
 	/**
@@ -24,7 +27,7 @@ public:
 	~CmdLineParams();
 
 	/**
-	 * 
+	 *
 	 */
 	void SetUsageDescription(std::string usagedesc) {
 		usage_desc = usagedesc;
@@ -35,6 +38,11 @@ public:
 	 * options that have been set up for this command-line parser.
 	 */
 	void PrintUsage() const;
+
+	/**
+	 * @return The used cmdline to start the program.
+	 */
+	std::string GetCmdLine() const;
 
 	/**
 	 * @return the script or demofile given on the command-line,

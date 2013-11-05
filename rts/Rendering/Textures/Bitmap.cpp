@@ -19,7 +19,7 @@
 #include "System/bitops.h"
 #include "System/ScopedFPUSettings.h"
 #include "System/Log/ILog.h"
-#include "System/OpenMP_cond.h"
+#include "System/ThreadPool.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileHandler.h"
@@ -32,6 +32,26 @@ static const float blurkernel[9] = {
 	2.0f/16.0f, 4.0f/16.0f, 2.0f/16.0f,
 	1.0f/16.0f, 2.0f/16.0f, 1.0f/16.0f
 };
+// this is a minimal list of file formats that (should) be available at all platforms
+static const int formatList[] = {
+	IL_PNG, IL_JPG, IL_TGA, IL_DDS, IL_BMP,
+	IL_RGBA, IL_RGB, IL_BGRA, IL_BGR,
+	IL_COLOUR_INDEX, IL_LUMINANCE, IL_LUMINANCE_ALPHA
+};
+
+static bool IsValidImageFormat(int format) {
+	bool valid = false;
+
+	// check if format is in the allowed list
+	for (size_t i = 0; i < (sizeof(formatList) / sizeof(formatList[0])); i++) {
+		if (format == formatList[i]) {
+			valid = true;
+			break;
+		}
+	}
+
+	return valid;
+}
 
 
 //////////////////////////////////////////////////////////////////////
@@ -240,6 +260,14 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 		if (success == false) {
 			AllocDummy();
+			return false;
+		}
+	}
+
+	{
+		if (!IsValidImageFormat(ilGetInteger(IL_IMAGE_FORMAT))) {
+			LOG_L(L_ERROR, "Invalid image format for %s: %d", filename.c_str(), ilGetInteger(IL_IMAGE_FORMAT));
+			delete[] buffer;
 			return false;
 		}
 	}
@@ -615,17 +643,13 @@ void CBitmap::Blur(int iterations, float weight)
 
 	for (int i=0; i < iterations; ++i){
 		{
-			int j,y,x;
-//			Threading::OMPCheck();
-//			This is currently used too early, OMP is not initialized here
-//			#pragma omp parallel for private(j,x,y)
-			for (y=0; y < ysize; y++) {
-				for (x=0; x < xsize; x++) {
-					for (j=0; j < channels; j++) {
+			for_mt(0, ysize, [&](const int y) {
+				for (int x=0; x < xsize; x++) {
+					for (int j=0; j < channels; j++) {
 						kernelBlur(dst, src->mem, x, y, j, weight);
 					}
 				}
-			}
+			});
 		}
 		std::swap(src, dst);
 	}

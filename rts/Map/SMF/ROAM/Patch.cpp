@@ -16,11 +16,13 @@
 #include "Game/Camera.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
+#include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Log/ILog.h"
+#include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
-#include "System/OpenMP_cond.h"
 #include <cfloat>
+#include <limits.h>
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -34,23 +36,14 @@ static std::vector<CTriNodePool*> pools;
 void CTriNodePool::InitPools(const size_t newPoolSize)
 {
 	if (pools.empty()) {
-		Threading::OMPCheck();
-		#pragma omp parallel
-		{
-			#pragma omp master
-			{
-			#ifdef _OPENMP
-				int numThreads = omp_get_num_threads();
-			#else
-				int numThreads = 1;
-			#endif
-				poolSize = newPoolSize;
-				const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3);
-				pools.reserve(numThreads);
-				for (; numThreads > 0; --numThreads) {
-					pools.push_back(new CTriNodePool(allocPerThread));
-				}
-			}
+		//int numThreads = GetNumThreads();
+		int numThreads = ThreadPool::GetMaxThreads();
+
+		poolSize = newPoolSize;
+		const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3);
+		pools.reserve(numThreads);
+		for (; numThreads > 0; --numThreads) {
+			pools.push_back(new CTriNodePool(allocPerThread));
 		}
 	}
 }
@@ -90,12 +83,10 @@ void CTriNodePool::ResetAll()
 
 CTriNodePool* CTriNodePool::GetPool()
 {
-#ifdef _OPENMP
-	const size_t th_id = omp_get_thread_num();
+	const size_t th_id = ThreadPool::GetThreadNum();
+	assert(th_id<pools.size());
+	assert(th_id>=0);
 	return pools[th_id];
-#else
-	return pools[0];
-#endif
 }
 
 
@@ -159,7 +150,7 @@ Patch::Patch()
 void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ)
 {
 	smfGroundDrawer = _drawer;
-	heightData = readmap->GetCornerHeightMapUnsynced();;
+	heightData = readMap->GetCornerHeightMapUnsynced();;
 	m_WorldX = worldX;
 	m_WorldY = worldZ;
 
@@ -220,7 +211,7 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 		}
 	}
 
-	static const float* hMap = readmap->GetCornerHeightMapUnsynced();
+	static const float* hMap = readMap->GetCornerHeightMapUnsynced();
 	for (int z = rect.z1; z <= rect.z2; z++) {
 		for (int x = rect.x1; x <= rect.x2; x++) {
 			const float& h = hMap[(z + m_WorldY) * gs->mapxp1 + (x + m_WorldX)];
@@ -357,7 +348,7 @@ void Patch::RecursTessellate(TriTreeNode* const tri, const int2 left, const int2
 		const int sizeY = std::max(left.y - right.y, right.y - left.y);
 		const int size  = std::max(sizeX, sizeY);
 
-		// Take both distance and variance and patch size into consideration
+		// Take distance, variance and patch size into consideration
 		TriVariance = (myVariance * PATCH_SIZE * size) * camDistLODFactor;
 	} else {
 		TriVariance = 10.0f; // >1 -> When variance isn't saved issue further tessellation
@@ -380,10 +371,10 @@ void Patch::RecursTessellate(TriTreeNode* const tri, const int2 left, const int2
 	}
 }
 
+
 // ---------------------------------------------------------------------
 // Render the tree.
 //
-
 
 void Patch::RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex)
 {
@@ -401,6 +392,13 @@ void Patch::RecursRender(TriTreeNode* const tri, const int2 left, const int2 rig
 	}
 }
 
+
+void Patch::GenerateIndices()
+{
+	indices.clear();
+	RecursRender(&m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0)                  );
+	RecursRender(&m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE));
+}
 
 
 // ---------------------------------------------------------------------
@@ -427,7 +425,7 @@ float Patch::RecursComputeVariance(const int leftX, const int leftY, const float
 	// Variance of this triangle is the actual height at it's hypotenuse midpoint minus the interpolated height.
 	// Use values passed on the stack instead of re-accessing the Height Field.
 	float myVariance = math::fabs(centerZ - ((leftZ + rightZ) / 2));
-	
+
 	if (leftZ*rightZ<0 || leftZ*centerZ<0 || rightZ*centerZ<0)
 		myVariance = std::max(myVariance * 1.5f, 20.0f); //shore lines get more variance for higher accuracy
 
@@ -477,11 +475,11 @@ void Patch::ComputeVariance()
 // ---------------------------------------------------------------------
 // Create an approximate mesh.
 //
-void Patch::Tessellate(const float3& campos, int groundDetail)
+bool Patch::Tessellate(const float3& campos, int groundDetail)
 {
 	// Set/Update LOD params
 	const float myx = (m_WorldX + PATCH_SIZE / 2) * SQUARE_SIZE;
-	const float myy = (readmap->currMinHeight + readmap->currMaxHeight) * 0.5f;
+	const float myy = (readMap->GetCurrMinHeight() + readMap->GetCurrMaxHeight()) * 0.5f;
 	const float myz = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float3 myPos(myx,myy,myz);
 
@@ -509,7 +507,10 @@ void Patch::Tessellate(const float3& campos, int groundDetail)
 		int2(m_WorldX,              m_WorldY + PATCH_SIZE),
 		int2(m_WorldX + PATCH_SIZE, m_WorldY + PATCH_SIZE),
 		1);
+
+	return !CTriNodePool::GetPool()->RunOutOfNodes();
 }
+
 
 // ---------------------------------------------------------------------
 // Render the mesh.
@@ -551,11 +552,84 @@ void Patch::Draw()
 }
 
 
-void Patch::GenerateIndices()
+void Patch::DrawBorder()
 {
-	indices.clear();
-	RecursRender(&m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0)                  );
-	RecursRender(&m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE));
+	CVertexArray* va = GetVertexArray();
+	GenerateBorderIndices(va);
+	va->DrawArrayC(GL_TRIANGLES);
+}
+
+
+void Patch::RecursBorderRender(CVertexArray* va, TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, int i, bool left_)
+{
+	if ( tri->IsLeaf() ) {
+		const float3& v1 = *(float3*)&vertices[(apex.x  + apex.y  * (PATCH_SIZE + 1))*3];
+		const float3& v2 = *(float3*)&vertices[(left.x  + left.y  * (PATCH_SIZE + 1))*3];
+		const float3& v3 = *(float3*)&vertices[(right.x + right.y * (PATCH_SIZE + 1))*3];
+
+		const unsigned char white[] = {255,255,255,255};
+		const unsigned char trans[] = {255,255,255,0};
+
+		if (i % 2 == 0) {
+			va->AddVertexC(float3(v2.x, v2.y, v2.z),    white);
+			va->AddVertexC(float3(v2.x, -400.0f, v2.z), trans);
+			va->AddVertexC(float3(v3.x, v3.y, v3.z),    white);
+
+			va->AddVertexC(float3(v3.x, v3.y, v3.z),    white);
+			va->AddVertexC(float3(v2.x, -400.0f, v2.z), trans);
+			va->AddVertexC(float3(v3.x, -400.0f, v3.z), trans);
+		} else {
+			if (left_) {
+				va->AddVertexC(float3(v1.x, v1.y, v1.z),    white);
+				va->AddVertexC(float3(v1.x, -400.0f, v1.z), trans);
+				va->AddVertexC(float3(v2.x, v2.y, v2.z),    white);
+
+				va->AddVertexC(float3(v2.x, v2.y, v2.z),    white);
+				va->AddVertexC(float3(v1.x, -400.0f, v1.z), trans);
+				va->AddVertexC(float3(v2.x, -400.0f, v2.z), trans);
+			} else {
+				va->AddVertexC(float3(v3.x, v3.y, v3.z),    white);
+				va->AddVertexC(float3(v3.x, -400.0f, v3.z), trans);
+				va->AddVertexC(float3(v1.x, v1.y, v1.z),    white);
+
+				va->AddVertexC(float3(v1.x, v1.y, v1.z),    white);
+				va->AddVertexC(float3(v3.x, -400.0f, v3.z), trans);
+				va->AddVertexC(float3(v1.x, -400.0f, v1.z), trans);
+			}
+		}
+
+	} else {
+		const int2 center(
+			(left.x + right.x) >> 1, // Compute X coordinate of center of Hypotenuse
+			(left.y + right.y) >> 1  // Compute Y coord...
+		);
+
+		if (i % 2 == 0) {
+			RecursBorderRender(va, tri->LeftChild,  apex,  left, center, i + 1, !left_);
+			RecursBorderRender(va, tri->RightChild, right, apex, center, i + 1, left_);
+		} else {
+			if (left_) {
+				RecursBorderRender(va, tri->LeftChild,  apex,  left, center, i + 1, left_);
+			} else {
+				RecursBorderRender(va, tri->RightChild, right, apex, center, i + 1, !left_);
+			}
+		}
+	}
+}
+
+void Patch::GenerateBorderIndices(CVertexArray* va)
+{
+	va->Initialize();
+
+	const bool isLeftBorder   = !m_BaseLeft.LeftNeighbor;
+	const bool isBottomBorder = !m_BaseRight.RightNeighbor;
+	const bool isRightBorder  = !m_BaseLeft.RightNeighbor;
+	const bool isTopBorder    = !m_BaseRight.LeftNeighbor;
+
+	if (isLeftBorder)   RecursBorderRender(va, &m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0),                   1, true);
+	if (isBottomBorder) RecursBorderRender(va, &m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE), 1, false);
+	if (isRightBorder)  RecursBorderRender(va, &m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0),                   1, false);
+	if (isTopBorder)    RecursBorderRender(va, &m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE), 1, true);
 }
 
 
@@ -627,7 +701,7 @@ void Patch::SwitchRenderMode(int mode)
 			break;
 	}
 
-	CRoamMeshDrawer::forceRetessellate = true;
+	CRoamMeshDrawer::ForceTesselation();
 }
 
 
@@ -639,12 +713,12 @@ void Patch::SwitchRenderMode(int mode)
 {
 	const float3 mins(
 		m_WorldX * SQUARE_SIZE,
-		readmap->currMinHeight,
+		readMap->GetCurrMinHeight(),
 		m_WorldY * SQUARE_SIZE
 	);
 	const float3 maxs(
 		(m_WorldX + PATCH_SIZE) * SQUARE_SIZE,
-		readmap->currMaxHeight,
+		readMap->GetCurrMaxHeight(),
 		(m_WorldY + PATCH_SIZE) * SQUARE_SIZE
 	);
 	m_isVisible = cam->InView(mins, maxs);
@@ -678,5 +752,5 @@ void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const i
 	for (std::vector<Patch>::iterator it = patches.begin(); it != patches.end(); ++it) {
 		it->m_isVisible = false;
 	}
-	readmap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker, INT_MAX);
+	readMap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker, INT_MAX);
 }

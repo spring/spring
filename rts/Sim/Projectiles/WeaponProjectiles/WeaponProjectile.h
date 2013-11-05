@@ -98,10 +98,10 @@ public:
 
 	const WeaponDef* GetWeaponDef() const { return weaponDef; }
 
-	void SetStartPos(const float3& newStartPos) { startpos = newStartPos; }
+	void SetStartPos(const float3& newStartPos) { startPos = newStartPos; }
 	void SetTargetPos(const float3& newTargetPos) { targetPos = newTargetPos; }
 
-	const float3& GetStartPos() const { return startpos; }
+	const float3& GetStartPos() const { return startPos; }
 	const float3& GetTargetPos() const { return targetPos; }
 
 	void SetBeingIntercepted(bool b) { targeted = b; }
@@ -128,7 +128,7 @@ protected:
 	// and an interceptor projectile is on the way
 	bool targeted;
 
-	float3 startpos;
+	float3 startPos;
 	float3 targetPos;
 };
 

@@ -7,8 +7,8 @@
 #include "Game.h"
 #include "GameVersion.h"
 #include "GlobalUnsynced.h"
-#include "Player.h"
-#include "PlayerHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/UI/InputReceiver.h"
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -17,6 +17,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/Config/ConfigHandler.h"
@@ -24,7 +25,7 @@
 #include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
 #include "System/Log/ILog.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/Watchdog.h"
 #include "System/Sound/ISound.h"
@@ -92,13 +93,15 @@ void CLoadScreen::Init()
 	// old stuff
 	if (!LuaIntro) {
 		const CTeam* team = teamHandler->Team(gu->myTeam);
-		assert(team);
 		const std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
 
-		if (mapStartPic.empty())
-			RandomStartPicture(team->side);
-		else
+		assert(team != NULL);
+
+		if (mapStartPic.empty()) {
+			RandomStartPicture(team->GetSide());
+		} else {
 			LoadStartPicture(mapStartPic);
+		}
 
 		const std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
 		if (!mapStartMusic.empty())
@@ -133,19 +136,21 @@ CLoadScreen::~CLoadScreen()
 	delete gameLoadThread; gameLoadThread = NULL;
 
 	if (net)
-		net->loading = false;
+		net->SetLoading(false);
 	if (netHeartbeatThread)
 		netHeartbeatThread->join();
 	delete netHeartbeatThread; netHeartbeatThread = NULL;
 
 	if (!gu->globalQuit)
 		activeController = game;
-	
+
 	if (activeController == this)
 		activeController = NULL;
 
-	if (LuaIntro)
+	if (LuaIntro) {
+		Draw(); // one last frame
 		LuaIntro->Shutdown();
+	}
 	CLuaIntro::FreeHandler();
 
 	if (!gu->globalQuit) {
@@ -236,8 +241,10 @@ bool CLoadScreen::Update()
 
 	if (game->finishedLoading) {
 		CLoadScreen::DeleteInstance();
+		return true;
 	}
 
+	CNamedTextures::Update();
 	return true;
 }
 
@@ -259,6 +266,11 @@ bool CLoadScreen::Draw()
 
 	//! cause of `curLoadMessage`
 	boost::recursive_mutex::scoped_lock lck(mutex);
+
+	if (LuaIntro) {
+		LuaIntro->Update();
+		LuaIntro->DrawGenesis();
+	}
 
 	ClearScreen();
 
@@ -412,8 +424,10 @@ void CLoadScreen::RandomStartPicture(const std::string& sidePref)
 void CLoadScreen::LoadStartPicture(const std::string& name)
 {
 	CBitmap bm;
+
 	if (!bm.Load(name)) {
-		throw content_error("Could not load startpicture from file " + name);
+		LOG_L(L_WARNING, "[%s] could not load \"%s\" (wrong format?)", __FUNCTION__, name.c_str());
+		return;
 	}
 
 	aspectRatio = (float)bm.xsize / bm.ysize;
@@ -426,10 +440,11 @@ void CLoadScreen::LoadStartPicture(const std::string& name)
 		// The resulting resolution will make it fill one axis of the
 		// screen, and be smaller or equal to the screen on the other axis.
 		const float ratioComp = globalRendering->aspectRatio / aspectRatio;
+
 		if (ratioComp > 1.0f) {
-			newX = newX / ratioComp;
+			newX /= ratioComp;
 		} else {
-			newY = newY * ratioComp;
+			newY *= ratioComp;
 		}
 
 		bm = bm.CreateRescaled((int) newX, (int) newY);

@@ -39,6 +39,7 @@ namespace icon {
 			inline const bool         GetRadiusAdjust() const { return radiusAdjust; }
 			inline const int          GetSizeX()        const { return xsize;        }
 			inline const int          GetSizeY()        const { return ysize;        }
+			inline const unsigned int GetTextureID()    const { return texID;        }
 
 		private:
 			bool ownTexture;

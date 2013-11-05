@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SPRING_LUA_INCLUDE
 #define SPRING_LUA_INCLUDE
 
@@ -7,90 +9,116 @@
 #include "lualib.h"
 #include "lauxlib.h"
 #include "lib/streflop/streflop_cond.h"
-#include <boost/thread/recursive_mutex.hpp>
+#include "LuaUser.h"
 
 
-inline void lua_pushsstring(lua_State* L, const std::string& str)
+static inline void lua_pushsstring(lua_State* L, const std::string& str)
 {
 	lua_pushlstring(L, str.data(), str.size());
 }
 
 
-inline bool lua_israwnumber(lua_State* L, int index)
+static inline std::string luaL_checksstring(lua_State* L, int index)
 {
-  return (lua_type(L, index) == LUA_TNUMBER);
+	return std::string(luaL_checkstring(L, index), lua_strlen(L, index));
 }
 
 
-inline bool lua_israwstring(lua_State* L, int index)
+static inline std::string luaL_optsstring(lua_State* L, int index, const std::string& def)
 {
-  return (lua_type(L, index) == LUA_TSTRING);
+	if (lua_isstring(L, index)) {
+		return std::string(lua_tostring(L, index), lua_strlen(L, index));
+	}
+	return def;
 }
 
 
-inline int lua_checkgeti(lua_State* L, int idx, int n)
+static inline bool lua_israwnumber(lua_State* L, int index)
 {
-  lua_rawgeti(L, idx, n);
-  if (lua_isnoneornil(L, -1)) {
-    lua_pop(L, 1);
-    return 0;
-  }
-  return 1;
+	return (lua_type(L, index) == LUA_TNUMBER);
 }
 
 
-inline int lua_toint(lua_State* L, int idx)
+static inline bool lua_israwstring(lua_State* L, int index)
 {
-  return (int)lua_tointeger(L, idx);
+	return (lua_type(L, index) == LUA_TSTRING);
 }
 
 
-inline float lua_tofloat(lua_State* L, int idx)
+static inline int lua_checkgeti(lua_State* L, int idx, int n)
 {
-  const float n = lua_tonumber(L, idx);
+	lua_rawgeti(L, idx, n);
+	if (lua_isnoneornil(L, -1)) {
+		lua_pop(L, 1);
+		return 0;
+	}
+	return 1;
+}
+
+
+static inline int lua_toint(lua_State* L, int idx)
+{
+	return (int)lua_tointeger(L, idx);
+}
+
+
+static inline float lua_tofloat(lua_State* L, int idx)
+{
+	const float n = lua_tonumber(L, idx);
 #ifdef DEBUG
-  if (math::isinf(n) || math::isnan(n)) luaL_argerror(L, idx, "number expected, got NAN (check your code for div0)");
-  //assert(!math::isinf(d));
-  //assert(!math::isnan(d));
+	if (math::isinf(n) || math::isnan(n)) luaL_argerror(L, idx, "number expected, got NAN (check your code for div0)");
+	//assert(!math::isinf(d));
+	//assert(!math::isnan(d));
 #endif
-  return n;
+	return n;
 }
 
 
-inline float luaL_checkfloat(lua_State* L, int idx)
+static inline float luaL_checkfloat(lua_State* L, int idx)
 {
-  return (float)luaL_checknumber(L, idx);
+	return (float)luaL_checknumber(L, idx);
 }
 
 
-inline float luaL_optfloat(lua_State* L, int idx, float def)
+static inline float luaL_optfloat(lua_State* L, int idx, float def)
 {
-  return (float)luaL_optnumber(L, idx, def);
+	return (float)luaL_optnumber(L, idx, def);
 }
 
-inline bool luaL_optboolean(lua_State* L, int idx, bool def)
+
+static inline bool luaL_optboolean(lua_State* L, int idx, bool def)
 {
-  return lua_isboolean(L, idx) ? lua_toboolean(L, idx) : def;
+	return lua_isboolean(L, idx) ? lua_toboolean(L, idx) : def;
 }
+
+
+static inline bool luaL_checkboolean(lua_State* L, int idx)
+{
+	if (!lua_isboolean(L, idx)) {
+		luaL_checktype(L, idx, LUA_TBOOLEAN);
+	}
+	return lua_toboolean(L, idx);
+}
+
 
 struct luaContextData;
-extern boost::recursive_mutex* getLuaMutex(bool userMode, bool primary);
 
-inline lua_State *LUA_OPEN(luaContextData* lcd = NULL, bool userMode = true, bool primary = true) {
-	lua_State *L_New = lua_open();
-	L_New->lcd = lcd;
-	L_New->luamutex = getLuaMutex(userMode, primary);
-	return L_New;
+static inline luaContextData* GetLuaContextData(const lua_State* L)
+{
+	return reinterpret_cast<luaContextData*>(G(L)->ud);
 }
 
-inline void LUA_CLOSE(lua_State *L_Old) {
-	if(L_Old->luamutex != getLuaMutex(false, false) && L_Old->luamutex != getLuaMutex(false, true))
-		delete L_Old->luamutex;
+static inline lua_State* LUA_OPEN(luaContextData* lcd = NULL) {
+	lua_State* L = lua_newstate(spring_lua_alloc, lcd); // we want to use our own memory allocator
+	return L;
+}
+
+static inline void LUA_CLOSE(lua_State* L_Old) {
 	lua_close(L_Old);
 }
 
 
-inline void LUA_UNLOAD_LIB(lua_State* L, std::string libname) {
+static inline void LUA_UNLOAD_LIB(lua_State* L, std::string libname) {
 	luaL_findtable(L, LUA_REGISTRYINDEX, "_LOADED", 1);
 	lua_pushsstring(L, libname);
 	lua_pushnil(L);

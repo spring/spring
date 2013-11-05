@@ -4,20 +4,16 @@
 #define _THREADING_H_
 
 #include <string>
-#ifdef WIN32
-	#include <windows.h> // HANDLE & DWORD
-#else
+#ifndef WIN32
 	#include <pthread.h>
 #endif
 #ifdef __APPLE__
 	#include <libkern/OSAtomic.h> // OSAtomicIncrement64
 #endif
 
-#include "System/OpenMP_cond.h"
 #include "System/Platform/Win/win32.h"
-#include "lib/gml/gmlcnf.h"
 #include <boost/cstdint.hpp>
-#include "lib/gml/gml_base.h"
+
 
 class CGameController;
 
@@ -54,10 +50,7 @@ namespace Threading {
 	/**
 	 * OpenMP related stuff
 	 */
-	void InitOMP(bool useOMP);
-	void OMPError();
-	extern bool OMPInited;
-	inline void OMPCheck();
+	void InitOMP();
 
 	/**
 	 * Inform the OS kernel that we are a cpu-intensive task
@@ -114,22 +107,20 @@ namespace Threading {
 namespace Threading {
 	bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2)
 	{
-	#ifdef WIN32
-		return (thID1 == thID2);
-	#else
-		return pthread_equal(thID1, thID2);
+	#ifdef __APPLE__
+		// quote from the pthread_equal manpage:
+		// Implementations may choose to define a thread ID as a structure.
+		// This allows additional flexibility and robustness over using an int.
+		//
+		// -> Linux implementation seems always to be done as integer type.
+		//    Only Windows & MacOSX use structs afaik. But for Windows we use their native thread funcs.
+		//    So only MacOSX is left.
+		{
+			return pthread_equal(thID1, thID2);
+		}
 	#endif
-	}
 
-	void OMPCheck() {
-	#ifndef NDEBUG
-		if (!OMPInited)
-			OMPError();
-	#endif
-	#if !defined(DEDICATED) && defined(_OPENMP)
-		if (GML::Enabled()) // the only way to completely avoid OMP threads to be created
-			omp_set_num_threads(1); // is to call omp_set_num_threads before EVERY omp section
-	#endif
+		return (thID1 == thID2);
 	}
 
 
@@ -146,11 +137,36 @@ namespace Threading {
 			return __sync_fetch_and_add(&num, boost::int64_t(1));
 	#endif
 		}
+
+		boost::int64_t operator+=(int x) {
+	#ifdef _MSC_VER
+			return InterlockedExchangeAdd64(&num, boost::int64_t(x));
+	#elif defined(__APPLE__)
+			return OSAtomicAdd64(boost::int64_t(x), &num);
+	#else // assuming GCC (__sync_fetch_and_add is a builtin)
+			return __sync_fetch_and_add(&num, boost::int64_t(x));
+	#endif
+		}
+
+		boost::int64_t operator-=(int x) {
+	#ifdef _MSC_VER
+			return InterlockedExchangeAdd64(&num, boost::int64_t(-x));
+	#elif defined(__APPLE__)
+			return OSAtomicAdd64(boost::int64_t(-x), &num);
+	#else // assuming GCC (__sync_fetch_and_add is a builtin)
+			return __sync_fetch_and_add(&num, boost::int64_t(-x));
+	#endif
+		}
+
+		operator boost::int64_t() {
+			return num;
+		}
+
 	private:
 	#ifdef _MSC_VER
-		volatile __declspec(align(8)) boost::int64_t num;
+		__declspec(align(8)) boost::int64_t num;
 	#else
-		volatile __attribute__ ((aligned (8))) boost::int64_t num;
+		__attribute__ ((aligned (8))) boost::int64_t num;
 	#endif
 	};
 }

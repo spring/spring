@@ -79,9 +79,9 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	e->y2 = std::min((int) (pos.z + radius) / SQUARE_SIZE, gs->mapy - 3);
 	e->squares.reserve((e->y2 - e->y1 + 1) * (e->x2 - e->x1 + 1));
 
-	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
-	const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
-	const unsigned char* typeMap = readmap->GetTypeMapSynced();
+	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
+	const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
+	const unsigned char* typeMap = readMap->GetTypeMapSynced();
 	const float baseStrength = -math::pow(strength, 0.6f) * 3 / mapHardness;
 	const float invRadius = 1.0f / radius;
 
@@ -128,7 +128,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 		CUnit* unit = *ui;
 
 		if (!unit->blockHeightChanges) { continue; }
-		if (!unit->isMarkedOnBlockingMap) { continue; }
+		if (!unit->IsBlocking()) { continue; }
 
 		float totalDif = 0.0f;
 
@@ -173,19 +173,25 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 {
-	const int decy = std::max(                     0, (y1 * SQUARE_SIZE - CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
-	const int incy = std::min(quadField->GetNumQuadsZ() - 1, (y2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
-	const int decx = std::max(                     0, (x1 * SQUARE_SIZE - CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
-	const int incx = std::min(quadField->GetNumQuadsX() - 1, (x2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
+	const int
+		minQuadNumX = (x1 * SQUARE_SIZE - (quadField->GetQuadSizeX() / 2)) / quadField->GetQuadSizeX(),
+		maxQuadNumX = (x2 * SQUARE_SIZE + (quadField->GetQuadSizeX() / 2)) / quadField->GetQuadSizeX();
+	const int
+		minQuadNumZ = (y1 * SQUARE_SIZE - (quadField->GetQuadSizeZ() / 2)) / quadField->GetQuadSizeZ(),
+		maxQuadNumZ = (y2 * SQUARE_SIZE + (quadField->GetQuadSizeZ() / 2)) / quadField->GetQuadSizeZ();
+
+	const int decy = std::max(                            0, minQuadNumZ);
+	const int incy = std::min(quadField->GetNumQuadsZ() - 1, maxQuadNumZ);
+	const int decx = std::max(                            0, minQuadNumX);
+	const int incx = std::min(quadField->GetNumQuadsX() - 1, maxQuadNumX);
 
 	const int numQuadsX = quadField->GetNumQuadsX();
 	const int frameNum  = gs->frameNum;
 
 	for (int y = decy; y <= incy; y++) {
 		for (int x = decx; x <= incx; x++) {
-			if (inRelosQue[y * numQuadsX + x]) {
+			if (inRelosQue[y * numQuadsX + x])
 				continue;
-			}
 
 			RelosSquare rs;
 			rs.x = x;
@@ -198,7 +204,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 		}
 	}
 
-	readmap->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
+	readMap->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
 	pathManager->TerrainChange(x1, y1, x2, y2, TERRAINCHANGE_DAMAGE_RECALCULATION);
 	featureHandler->TerrainChanged(x1, y1, x2, y2);
 }
@@ -226,7 +232,7 @@ void CBasicMapDamage::Update()
 		for (int y = y1; y <= y2; ++y) {
 			for (int x = x1; x<= x2; ++x) {
 				const float dif = *(si++);
-				readmap->AddHeight(y * gs->mapxp1 + x, dif);
+				readMap->AddHeight(y * gs->mapxp1 + x, dif);
 			}
 		}
 		std::vector<ExploBuilding>::const_iterator bi;
@@ -239,13 +245,14 @@ void CBasicMapDamage::Update()
 
 			for (int z = tz1; z < tz2; z++) {
 				for (int x = tx1; x < tx2; x++) {
-					readmap->AddHeight(z * gs->mapxp1 + x, dif);
+					readMap->AddHeight(z * gs->mapxp1 + x, dif);
 				}
 			}
 
-			CUnit* unit = unitHandler->units[bi->id];
-			if (unit) {
-				unit->Move1D(dif, 1, true);
+			CUnit* unit = unitHandler->GetUnit(bi->id);
+
+			if (unit != NULL) {
+				unit->Move(UpVector * dif, true);
 			}
 		}
 		if (e->ttl == 0) {
@@ -295,6 +302,7 @@ void CBasicMapDamage::UpdateLos()
 			continue;
 		}
 
-		loshandler->MoveUnit(unit, true);
+		// FIXME: why only losHandler and not also radarHandler?
+		losHandler->MoveUnit(unit, true);
 	}
 }

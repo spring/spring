@@ -4,6 +4,7 @@
 
 #include "ShadowHandler.h"
 #include "Game/Camera.h"
+#include "Game/GameVersion.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -26,8 +27,8 @@
 
 #define SHADOWMATRIX_NONLINEAR      0
 
-CONFIG(int, Shadows).defaultValue(2);
-CONFIG(int, ShadowMapSize).defaultValue(CShadowHandler::DEF_SHADOWMAP_SIZE).minimumValue(1);
+CONFIG(int, Shadows).defaultValue(2).minimumValue(0).description("Sets whether shadows are rendered.\n0:=off, 1:=full, 2:=fast (skip terrain)"); //FIXME document bitmask
+CONFIG(int, ShadowMapSize).defaultValue(CShadowHandler::DEF_SHADOWMAP_SIZE).minimumValue(32).description("Sets the resolution of shadows. Higher numbers increase quality at the cost of performance.");
 CONFIG(int, ShadowProjectionMode).defaultValue(CShadowHandler::SHADOWPROMODE_CAM_CENTER);
 
 CShadowHandler* shadowHandler = NULL;
@@ -90,6 +91,9 @@ void CShadowHandler::Init()
 		shadowGenBits &= (~shadowConfig);
 	}
 
+	// no warnings when running headless
+	if (SpringVersion::IsHeadless())
+		return;
 
 	if (!globalRendering->haveARB && !globalRendering->haveGLSL) {
 		LOG_L(L_WARNING, "[%s] GPU does not support either ARB or GLSL shaders for shadow rendering", __FUNCTION__);
@@ -240,7 +244,7 @@ bool CShadowHandler::InitDepthTarget()
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shadowMapSize, shadowMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 		fb.AttachTexture(shadowTexture);
 	} else {
-		const GLint texFormat = globalRendering->support24bitDepthBuffers ? GL_DEPTH_COMPONENT24 : GL_DEPTH_COMPONENT16;
+		const GLint texFormat = GL_DEPTH_COMPONENT32;
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
@@ -343,7 +347,7 @@ void CShadowHandler::DrawShadowPasses()
 			// (could just disable culling of terrain faces, but we also want
 			// to prevent overdraw in such low-angle passes)
 			if ((shadowGenBits & SHADOWGEN_BIT_MAP) != 0)
-				readmap->GetGroundDrawer()->DrawShadowPass();
+				readMap->GetGroundDrawer()->DrawShadowPass();
 	glPopAttrib();
 
 	inShadowPass = false;
@@ -408,7 +412,7 @@ void CShadowHandler::CreateShadows()
 	const ISkyLight* L = sky->GetLight();
 
 	// sun direction is in world-space, invert it
-	sunDirZ = -L->GetLightDir();
+	sunDirZ = -float3(L->GetLightDir());
 	sunDirX = (sunDirZ.cross(UpVector)).ANormalize();
 	sunDirY = (sunDirX.cross(sunDirZ)).ANormalize();
 
@@ -589,7 +593,7 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& proje
 	cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
 	cam->ClipFrustumLines(true, -10000.0f, 400096.0f);
 
-	const std::vector<CCamera::FrustumLine>& sides = cam->negFrustumSides;
+	const std::vector<CCamera::FrustumLine> sides = cam->GetNegFrustumSides();
 
 	if (sides.empty())
 		return 0.0f;
@@ -671,8 +675,8 @@ void CShadowHandler::CalcMinMaxView()
 		maxSize *= 1.2f;
 	}
 
-	const std::vector<CCamera::FrustumLine>& negSides = cam2->negFrustumSides;
-	const std::vector<CCamera::FrustumLine>& posSides = cam2->posFrustumSides;
+	const std::vector<CCamera::FrustumLine> negSides = cam2->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine> posSides = cam2->GetPosFrustumSides();
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 	if (!negSides.empty()) {
@@ -681,8 +685,8 @@ void CShadowHandler::CalcMinMaxView()
 				float3 p[5];
 				p[0] = float3(fli->base + fli->dir * fli->minz, 0.0f, fli->minz);
 				p[1] = float3(fli->base + fli->dir * fli->maxz, 0.0f, fli->maxz);
-				p[2] = float3(fli->base + fli->dir * fli->minz, readmap->initMaxHeight + 200, fli->minz);
-				p[3] = float3(fli->base + fli->dir * fli->maxz, readmap->initMaxHeight + 200, fli->maxz);
+				p[2] = float3(fli->base + fli->dir * fli->minz, readMap->initMaxHeight + 200, fli->minz);
+				p[3] = float3(fli->base + fli->dir * fli->maxz, readMap->initMaxHeight + 200, fli->maxz);
 				p[4] = centerPos;
 
 				for (int a = 0; a < 5; ++a) {

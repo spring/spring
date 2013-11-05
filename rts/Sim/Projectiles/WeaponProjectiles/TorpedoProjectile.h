@@ -17,7 +17,6 @@ public:
 private:
 	float tracking;
 	float maxSpeed;
-	float curSpeed;
 	float areaOfEffect;
 	int nextBubble;
 	float texx;

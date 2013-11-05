@@ -55,11 +55,11 @@ void CGeoSquareProjectile::Draw()
 	col[2] = (unsigned char) (b * a * 255);
 	col[3] = (unsigned char) (    a * 255);
 
-	float3 dif(p1 - camera->pos);
+	float3 dif(p1 - camera->GetPos());
 	dif.ANormalize();
 	float3 dir1(dif.cross(v1));
 	dir1.ANormalize();
-	float3 dif2(p2 - camera->pos);
+	float3 dif2(p2 - camera->GetPos());
 	dif2.ANormalize();
 	float3 dir2(dif2.cross(v2));
 	dir2.ANormalize();

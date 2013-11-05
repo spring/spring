@@ -19,7 +19,7 @@ public:
 
 	void PreInit(const UnitLoadParams& params);
 	void PostInit(const CUnit* builder);
-	void ForcedMove(const float3& newPos, int facing);
+	void ForcedMove(const float3& newPos);
 };
 
 #endif // _BUILDING_H

@@ -26,9 +26,7 @@ CCobThread::CCobThread(CCobFile& script, CCobInstance* owner)
 	, state(Init)
 	, signalMask(42)
 {
-	for (int i = 0; i < MAX_LUA_COB_ARGS; i++) {
-		luaArgs[i] = 0;
-	}
+	memset(&luaArgs[0], 0, MAX_LUA_COB_ARGS * sizeof(luaArgs[0]));
 	owner->threads.push_back(this);
 	AddDeathDependence(owner, DEPENDENCE_COBTHREAD);
 }
@@ -63,16 +61,12 @@ void CCobThread::Start(int functionId, const vector<int>& args, bool schedule)
 	ci.returnAddr = -1;
 	ci.stackTop = 0;
 	callStack.push_back(ci);
-	paramCount = 0;
+	paramCount = args.size();
 	signalMask = 0;
 	callback = NULL;
 	retCode = -1;
-
-	stack.reserve(args.size());
-	for(vector<int>::const_iterator i = args.begin(); i != args.end(); ++i) {
-		stack.push_back(*i);
-		paramCount++;
-	}
+	// copy arguments
+	stack = args;
 
 	// Add to scheduler
 	if (schedule)
@@ -84,15 +78,22 @@ const string& CCobThread::GetName()
 	return script.scriptNames[callStack[0].functionId];
 }
 
-int CCobThread::CheckStack(int size)
+int CCobThread::CheckStack(unsigned int size, bool warn)
 {
 	if ((unsigned)size > stack.size()) {
-		std::stringstream s;
-		s << "stack not large enough, need: " << size << ", have: "
-			<< stack.size() << " (too few arguments passed to function?)";
-		ShowError(s.str());
+		static char msg[512];
+		static const char* fmt =
+			"stack-size mismatch: need %u but have %lu arguments "
+			"(too many passed to function or too few returned?)";
+
+		if (warn) {
+			SNPRINTF(msg, sizeof(msg), fmt, size, stack.size());
+			ShowError(msg);
+		}
+
 		return stack.size();
 	}
+
 	return size;
 }
 
@@ -201,7 +202,7 @@ const int DROP   = 0x10084000;
 
 // Handy macros
 #define GET_LONG_PC() (script.code[PC++])
-//#define POP() (stack.size() > 0) ? stack.back(), stack.pop_back(); : 0
+// #define POP() (stack.size() > 0) ? stack.back(), stack.pop_back(); : 0
 
 int CCobThread::POP()
 {
@@ -210,8 +211,8 @@ int CCobThread::POP()
 		stack.pop_back();
 		return r;
 	}
-	else
-		return 0;
+
+	return 0;
 }
 
 bool CCobThread::Tick()
@@ -219,18 +220,18 @@ bool CCobThread::Tick()
 	if (state == Sleep) {
 		LOG_L(L_ERROR, "sleeping thread ticked!");
 	}
-	if (state == Dead || !owner) {
+	if (state == Dead || owner == NULL) {
 		return false;
 	}
 
 	state = Run;
 
 	int r1, r2, r3, r4, r5, r6;
+
 	vector<int> args;
+	vector<int>::iterator ei;
 
 	execTrace.clear();
-	//list<int>::iterator ei;
-	vector<int>::iterator ei;
 
 	LOG_L(L_DEBUG, "Executing in %s (from %s)", script.scriptNames[callStack.back().functionId].c_str(), GetName().c_str());
 
@@ -329,7 +330,7 @@ bool CCobThread::Tick()
 				paramCount = r2;
 
 				PC = script.scriptOffsets[r1];
-				LOG_L(L_DEBUG, "Calling %s", script.scriptNames[r1].c_str());
+				//LOG_L(L_DEBUG, "Calling %s", script.scriptNames[r1].c_str());
 				break;
 			case LUA_CALL:
 				LuaCall();
@@ -369,8 +370,7 @@ bool CCobThread::Tick()
 			case CREATE_LOCAL_VAR:
 				if (paramCount == 0) {
 					stack.push_back(0);
-				}
-				else {
+				} else {
 					paramCount--;
 				}
 				break;

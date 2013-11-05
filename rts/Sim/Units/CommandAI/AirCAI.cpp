@@ -4,7 +4,7 @@
 #include "AirCAI.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -22,8 +22,11 @@
 #include <cassert>
 #define AUTO_GENERATE_ATTACK_ORDERS 1
 
+// AirCAI is always assigned to StrafeAirMoveType aircraft
 static CStrafeAirMoveType* GetStrafeAirMoveType(const CUnit* owner) {
-	if (owner->usingScriptMoveType) {
+	assert(owner->unitDef->IsAirUnit());
+
+	if (owner->UsingScriptMoveType()) {
 		return static_cast<CStrafeAirMoveType*>(owner->prevMoveType);
 	}
 
@@ -106,84 +109,76 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	}
 
 	if (c.GetID() == CMD_SET_WANTED_MAX_SPEED) {
-	  return;
-	}
-
-	if (c.GetID() == CMD_AUTOREPAIRLEVEL) {
-		if (c.params.empty()) {
-			return;
-		}
-
-		CStrafeAirMoveType* airMT = GetStrafeAirMoveType(owner);
-
-		switch ((int)c.params[0]) {
-			case 0: { airMT->SetRepairBelowHealth(0.0f); break; }
-			case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
-			case 2: { airMT->SetRepairBelowHealth(0.5f); break; }
-			case 3: { airMT->SetRepairBelowHealth(0.8f); break; }
-		}
-		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
-				cdi != possibleCommands.end(); ++cdi)
-		{
-			if (cdi->id == CMD_AUTOREPAIRLEVEL) {
-				char t[10];
-				SNPRINTF(t,10,"%d", (int)c.params[0]);
-				cdi->params[0]=t;
-				break;
-			}
-		}
-		selectedUnits.PossibleCommandChange(owner);
 		return;
 	}
 
-	if (c.GetID() == CMD_IDLEMODE) {
-		if (c.params.empty()) {
+	{
+		CStrafeAirMoveType* airMT = GetStrafeAirMoveType(owner);
+
+		if (c.GetID() == CMD_AUTOREPAIRLEVEL) {
+			if (c.params.empty())
+				return;
+
+			switch ((int) c.params[0]) {
+				case 0: { airMT->SetRepairBelowHealth(0.0f); break; }
+				case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
+				case 2: { airMT->SetRepairBelowHealth(0.5f); break; }
+				case 3: { airMT->SetRepairBelowHealth(0.8f); break; }
+			}
+
+			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
+				if (possibleCommands[n].id != CMD_AUTOREPAIRLEVEL)
+					continue;
+
+				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
+				break;
+			}
+
+			selectedUnitsHandler.PossibleCommandChange(owner);
 			return;
 		}
 
-		CStrafeAirMoveType* airMT = GetStrafeAirMoveType(owner);
+		if (c.GetID() == CMD_IDLEMODE) {
+			if (c.params.empty())
+				return;
 
-		switch ((int)c.params[0]){
-			case 0: { airMT->autoLand = false; break; }
-			case 1: { airMT->autoLand = true;  break; }
-		}
-		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
-				cdi != possibleCommands.end(); ++cdi)
-		{
-			if (cdi->id == CMD_IDLEMODE){
-				char t[10];
-				SNPRINTF(t, 10, "%d", (int)c.params[0]);
-				cdi->params[0] = t;
+			switch ((int) c.params[0]) {
+				case 0: { airMT->autoLand = false; break; }
+				case 1: { airMT->autoLand = true;  break; }
+			}
+
+			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
+				if (possibleCommands[n].id != CMD_IDLEMODE)
+					continue;
+
+				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
 				break;
 			}
-		}
-		selectedUnits.PossibleCommandChange(owner);
-		return;
-	}
 
-	if (c.GetID() == CMD_LOOPBACKATTACK) {
-		if (c.params.empty()) {
+			selectedUnitsHandler.PossibleCommandChange(owner);
 			return;
 		}
 
-		CStrafeAirMoveType* airMT = GetStrafeAirMoveType(owner);
+		if (c.GetID() == CMD_LOOPBACKATTACK) {
+			if (c.params.empty())
+				return;
 
-		switch ((int)c.params[0]) {
-			case 0: { airMT->loopbackAttack = false; break; }
-			case 1: { airMT->loopbackAttack = true;  break; }
-		}
-		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
-				cdi != possibleCommands.end(); ++cdi)
-		{
-			if (cdi->id == CMD_LOOPBACKATTACK){
-				char t[10];
-				SNPRINTF(t, 10, "%d", (int)c.params[0]);
-				cdi->params[0] = t;
+			switch ((int) c.params[0]) {
+				case 0: { airMT->loopbackAttack = false; break; }
+				case 1: { airMT->loopbackAttack = true;  break; }
+			}
+
+			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
+				if (possibleCommands[n].id != CMD_LOOPBACKATTACK)
+					continue;
+
+				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
 				break;
 			}
+
+			selectedUnitsHandler.PossibleCommandChange(owner);
+			return;
 		}
-		selectedUnits.PossibleCommandChange(owner);
-		return;
 	}
 
 	if (!(c.options & SHIFT_KEY)
@@ -205,30 +200,32 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 void CAirCAI::SlowUpdate()
 {
-	if (gs->paused) { // Commands issued may invoke SlowUpdate when paused
+	// Commands issued may invoke SlowUpdate when paused
+	if (gs->paused)
 		return;
-	}
+
 	if (!commandQue.empty() && (commandQue.front().timeOut < gs->frameNum)) {
 		FinishCommand();
 		return;
 	}
 
-	if (owner->usingScriptMoveType) {
-		return; // avoid the invalid (CStrafeAirMoveType*) cast
-	}
+	// avoid the invalid (CStrafeAirMoveType*) cast
+	if (owner->UsingScriptMoveType())
+		return;
 
 	const bool wantToRefuel = (LandRepairIfNeeded() || RefuelIfNeeded());
 
 	#if (AUTO_GENERATE_ATTACK_ORDERS == 1)
 	if (commandQue.empty()) {
-		if (!AirAutoGenerateTarget(static_cast<AAirMoveType*>(owner->moveType))) {
+		if (!AirAutoGenerateTarget(GetStrafeAirMoveType(owner))) {
 			// if no target found, queue is still empty so bail now
 			return;
 		}
 	}
 	#endif
 
-	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
+	// FIXME: check owner->UsingScriptMoveType() and skip rest if true?
+	AAirMoveType* myPlane = GetStrafeAirMoveType(owner);
 	Command& c = commandQue.front();
 
 	if (c.GetID() == CMD_WAIT) {
@@ -269,16 +266,18 @@ void CAirCAI::SlowUpdate()
 
 bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 	assert(commandQue.empty());
+	assert(myPlane->owner == owner);
 
-	const bool autoLand = !owner->unitDef->DontLand() && myPlane->autoLand;
+	const UnitDef* ownerDef = owner->unitDef;
+	const bool autoLand = !ownerDef->DontLand() && myPlane->autoLand;
 	const bool autoAttack = ((owner->fireState >= FIRESTATE_FIREATWILL) && (owner->moveState != MOVESTATE_HOLDPOS));
 
 	if (myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING && autoLand) {
 		StopMove();
 	}
 
-	if (owner->unitDef->canAttack && autoAttack && owner->maxRange > 0) {
-		if (myPlane->IsFighter()) {
+	if (ownerDef->canAttack && autoAttack && owner->maxRange > 0) {
+		if (ownerDef->IsFighterAirUnit()) {
 			const float3 P = owner->pos + (owner->speed * 10.0);
 			const float R = 1000.0f * owner->moveState;
 			const CUnit* enemy = CGameHelper::GetClosestEnemyAircraft(NULL, P, R, owner->allyteam);
@@ -311,17 +310,19 @@ bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 void CAirCAI::ExecuteFight(Command& c)
 {
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
-	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
+
+	// FIXME: check owner->UsingScriptMoveType() and skip rest if true?
+	AAirMoveType* myPlane = GetStrafeAirMoveType(owner);
+
+	assert(owner == myPlane->owner);
 
 	if (tempOrder) {
 		tempOrder = false;
 		inCommand = true;
 	}
 
-	if (c.params.size() < 3) { // this shouldn't happen but anyway ...
-		LOG_L(L_ERROR,
-				"Received a Fight command with less than 3 params on %s in AirCAI",
-				owner->unitDef->humanName.c_str());
+	if (c.params.size() < 3) {
+		LOG_L(L_ERROR, "[ACAI::%s][f=%d][id=%d] CMD_FIGHT #params < 3", __FUNCTION__, gs->frameNum, owner->id);
 		return;
 	}
 
@@ -358,7 +359,7 @@ void CAirCAI::ExecuteFight(Command& c)
 	{
 		CUnit* enemy = NULL;
 
-		if (myPlane->IsFighter()) {
+		if (owner->unitDef->IsFighterAirUnit()) {
 			const float3 P = ClosestPointOnLine(commandPos1, commandPos2, owner->pos + owner->speed*10);
 			const float R = 1000.0f * owner->moveState;
 
@@ -414,7 +415,7 @@ void CAirCAI::ExecuteFight(Command& c)
 
 	myPlane->goalPos = goalPos;
 
-	const CStrafeAirMoveType* airMT = dynamic_cast<const CStrafeAirMoveType*>(myPlane);
+	const CStrafeAirMoveType* airMT = (!owner->UsingScriptMoveType())? static_cast<const CStrafeAirMoveType*>(myPlane): NULL;
 	const float radius = (airMT != NULL)? std::max(airMT->turnRadius + 2*SQUARE_SIZE, 128.f) : 127.f;
 
 	// we're either circling or will get to the target in 8 frames
@@ -444,7 +445,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 			FinishCommand();
 			return;
 		}
-		if (orderTarget) {
+		if (orderTarget != NULL) {
 			if (orderTarget->unitDef->canfly && orderTarget->IsCrashing()) {
 				owner->AttackUnit(NULL, false, false);
 				FinishCommand();
@@ -474,19 +475,20 @@ void CAirCAI::ExecuteAttack(Command& c)
 
 			inCommand = true;
 		} else {
+			SetGoal(c.GetPos(0), owner->pos, cancelDistance);
 			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, false);
 
 			inCommand = true;
 		}
 	}
-
-	return;
 }
 
 void CAirCAI::ExecuteAreaAttack(Command& c)
 {
 	assert(owner->unitDef->canAttack);
-	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
+
+	// FIXME: check owner->UsingScriptMoveType() and skip rest if true?
+	AAirMoveType* myPlane = GetStrafeAirMoveType(owner);
 
 	if (targetDied) {
 		targetDied = false;
@@ -573,7 +575,7 @@ int CAirCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 bool CAirCAI::IsValidTarget(const CUnit* enemy) const {
 	if (!CMobileCAI::IsValidTarget(enemy)) return false;
 	if (enemy->IsCrashing()) return false;
-	return (static_cast<CStrafeAirMoveType*>(owner->moveType)->isFighter || !enemy->unitDef->canfly);
+	return (GetStrafeAirMoveType(owner)->isFighter || !enemy->unitDef->canfly);
 }
 
 
@@ -586,9 +588,8 @@ void CAirCAI::FinishCommand()
 
 void CAirCAI::BuggerOff(const float3& pos, float radius)
 {
-	AAirMoveType* myPlane = dynamic_cast<AAirMoveType*>(owner->moveType);
-	if (myPlane) {
-		myPlane->Takeoff();
+	if (!owner->UsingScriptMoveType()) {
+		static_cast<AAirMoveType*>(owner->moveType)->Takeoff();
 	} else {
 		CMobileCAI::BuggerOff(pos, radius);
 	}
@@ -600,25 +601,12 @@ void CAirCAI::SetGoal(const float3& pos, const float3& curPos, float goalRadius)
 	CMobileCAI::SetGoal(pos, curPos, goalRadius);
 }
 
-CStrafeAirMoveType* CAirCAI::GetOwnerMoveType()
-{
-	CStrafeAirMoveType* airMT;
-
-	if (owner->usingScriptMoveType) {
-		airMT = static_cast<CStrafeAirMoveType*>(owner->prevMoveType);
-	} else {
-		airMT = static_cast<CStrafeAirMoveType*>(owner->moveType);
-	}
-
-	return airMT;
-}
-
-void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
+bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
 	assert(ac.GetID() == CMD_AREA_ATTACK || (ac.GetID() == CMD_ATTACK && ac.GetParamsCount() >= 3));
 
 	if (ac.GetID() == CMD_ATTACK) {
 		FinishCommand();
-		return;
+		return false;
 	}
 
 	const float3& pos = ac.GetPos(0);
@@ -644,5 +632,7 @@ void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
 		owner->AttackUnit(targetUnit, (ac.options & INTERNAL_ORDER) == 0, false);
 		SetGoal(targetUnit->pos, owner->pos);
 	}
+
+	return true;
 }
 

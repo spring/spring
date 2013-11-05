@@ -13,7 +13,6 @@ public:
 	CTracerProjectile();
 	CTracerProjectile(const float3& pos, const float3& speed, const float range,
 			CUnit* owner);
-	virtual ~CTracerProjectile();
 
 	void Draw();
 	void Update();
@@ -23,7 +22,6 @@ private:
 	float speedf;
 	float length;
 	float drawLength;
-	float3 dir;
 };
 
 #endif /* TRACER_PROJECTILE_H */

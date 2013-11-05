@@ -11,7 +11,7 @@
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "seh.h"
 #include "System/Util.h"
 #include "System/SafeCStrings.h"
@@ -107,7 +107,7 @@ static DWORD __stdcall AllocTest(void *param) {
 }
 
 /** Print out a stacktrace. */
-static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE)
+inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR)
 {
 	PIMAGEHLP_SYMBOL pSym;
 	STACKFRAME sf;
@@ -119,10 +119,11 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 
 	process = GetCurrentProcess();
 
-	if(threadName)
-		LOG_L(L_ERROR, "Stacktrace (%s):", threadName);
-	else
-		LOG_L(L_ERROR, "Stacktrace:");
+	if (threadName) {
+		LOG_I(logLevel, "Stacktrace (%s):", threadName);
+	} else {
+		LOG_I(logLevel, "Stacktrace:");
+	}
 
 	bool suspended = false;
 	CONTEXT c;
@@ -144,7 +145,7 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 			CloseHandle(allocThread);
 			if (allocIter < 10)
 				continue;
-			LOG_L(L_ERROR, "Stacktrace failed, allocator deadlock");
+			LOG_I(logLevel, "Stacktrace failed, allocator deadlock");
 			return;
 		}
 
@@ -154,7 +155,7 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 
 		if (!GetThreadContext(hThread, &c)) {
 			ResumeThread(hThread);
-			LOG_L(L_ERROR, "Stacktrace failed, failed to get context");
+			LOG_I(logLevel, "Stacktrace failed, failed to get context");
 			return;
 		}
 		thread = hThread;
@@ -223,7 +224,7 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 			SymGetModuleBase,
 			NULL
 		);
-		if (!more || sf.AddrFrame.Offset == 0 || count > MAX_STACK_DEPTH) {
+		if (!more || /*sf.AddrFrame.Offset == 0 ||*/ count > MAX_STACK_DEPTH) {
 			break;
 		}
 
@@ -273,37 +274,41 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 	}
 
 	if (containsOglDll) {
-		LOG_L(L_ERROR, "This stack trace indicates a problem with your graphic card driver. "
+		LOG_I(logLevel, "This stack trace indicates a problem with your graphic card driver. "
 		      "Please try upgrading or downgrading it. "
 		      "Specifically recommended is the latest driver, and one that is as old as your graphic card. "
 		      "Make sure to use a driver removal utility, before installing other drivers.");
 	}
 
 	for (int i = 0; i < count; ++i) {
-		LOG_L(L_ERROR, "%s", printstrings + i * BUFFER_SIZE);
+		LOG_I(logLevel, "%s", printstrings + i * BUFFER_SIZE);
 	}
 
 	GlobalFree(printstrings);
 	GlobalFree(pSym);
 }
 
-
-void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName)
-{
-	Stacktrace(threadName.c_str(), NULL, thread);
+static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR) {
+	StacktraceInline(threadName, e, hThread, logLevel);
 }
 
-void PrepareStacktrace() {
+
+void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel)
+{
+	Stacktrace(threadName.c_str(), NULL, thread, logLevel);
+}
+
+void PrepareStacktrace(const int logLevel) {
 	EnterCriticalSection( &stackLock );
 
 	InitImageHlpDll();
 
 	// Record list of loaded DLLs.
-	LOG_L(L_ERROR, "DLL information:");
-	SymEnumerateModules(GetCurrentProcess(), EnumModules, NULL);
+	LOG_I(logLevel, "DLL information:");
+	SymEnumerateModules(GetCurrentProcess(), (PSYM_ENUMMODULES_CALLBACK)EnumModules, NULL);
 }
 
-void CleanupStacktrace() {
+void CleanupStacktrace(const int logLevel) {
 	LOG_CLEANUP();
 	// Unintialize IMAGEHLP.DLL
 	SymCleanup(GetCurrentProcess());
@@ -349,7 +354,7 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	LOG_L(L_ERROR, "Exception Address: 0x%08lx", (unsigned long int) (PVOID) e->ExceptionRecord->ExceptionAddress);
 
 	// Print stacktrace.
-	Stacktrace(NULL, e);
+	StacktraceInline(NULL, e); // inline: avoid modifying the stack, it might confuse StackWalk when using the context record passed to ExceptionHandler
 
 	CleanupStacktrace();
 

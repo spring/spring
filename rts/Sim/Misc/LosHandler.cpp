@@ -24,18 +24,18 @@ CR_BIND(CLosHandler, );
 CR_BIND(CLosHandler::DelayedInstance, );
 
 CR_REG_METADATA(LosInstance,(
-		CR_IGNORED(losSquares),
-		CR_MEMBER(losSize),
-		CR_MEMBER(airLosSize),
-		CR_MEMBER(refCount),
-		CR_MEMBER(allyteam),
-		CR_MEMBER(basePos),
-		CR_MEMBER(baseSquare),
-		CR_MEMBER(baseAirPos),
-		CR_MEMBER(hashNum),
-		CR_MEMBER(baseHeight),
-		CR_MEMBER(toBeDeleted)
-		));
+	CR_IGNORED(losSquares),
+	CR_MEMBER(losSize),
+	CR_MEMBER(airLosSize),
+	CR_MEMBER(refCount),
+	CR_MEMBER(allyteam),
+	CR_MEMBER(basePos),
+	CR_MEMBER(baseSquare),
+	CR_MEMBER(baseAirPos),
+	CR_MEMBER(hashNum),
+	CR_MEMBER(baseHeight),
+	CR_MEMBER(toBeDeleted)
+));
 
 void CLosHandler::PostLoad()
 {
@@ -49,16 +49,16 @@ void CLosHandler::PostLoad()
 }
 
 CR_REG_METADATA(CLosHandler,(
-		CR_MEMBER(instanceHash),
-		CR_MEMBER(toBeDeleted),
-		CR_MEMBER(delayQue),
-		CR_RESERVED(8),
-		CR_POSTLOAD(PostLoad)
-		));
+	CR_MEMBER(instanceHash),
+	CR_MEMBER(toBeDeleted),
+	CR_MEMBER(delayQue),
+	CR_RESERVED(8),
+	CR_POSTLOAD(PostLoad)
+));
 
-CR_REG_METADATA_SUB(CLosHandler,DelayedInstance,(
-		CR_MEMBER(instance),
-		CR_MEMBER(timeoutTime)));
+CR_REG_METADATA_SUB(CLosHandler,DelayedInstance, (
+	CR_MEMBER(instance),
+	CR_MEMBER(timeoutTime)));
 
 
 //////////////////////////////////////////////////////////////////////
@@ -66,13 +66,13 @@ CR_REG_METADATA_SUB(CLosHandler,DelayedInstance,(
 //////////////////////////////////////////////////////////////////////
 
 
-CLosHandler* loshandler;
+CLosHandler* losHandler;
 
 
 CLosHandler::CLosHandler() :
 	losMaps(teamHandler->ActiveAllyTeams()),
 	airLosMaps(teamHandler->ActiveAllyTeams()),
-	// airAlgo(int2(airSizeX, airSizeY), -1e6f, 15, readmap->GetMIPHeightMapSynced(airMipLevel)),
+	// airAlgo(int2(airSizeX, airSizeY), -1e6f, 15, readMap->GetMIPHeightMapSynced(airMipLevel)),
 	losMipLevel(modInfo.losMipLevel),
 	airMipLevel(modInfo.airMipLevel),
 	losDiv(SQUARE_SIZE * (1 << losMipLevel)),
@@ -84,7 +84,7 @@ CLosHandler::CLosHandler() :
 	losSizeX(std::max(1, gs->mapx >> losMipLevel)),
 	losSizeY(std::max(1, gs->mapy >> losMipLevel)),
 	requireSonarUnderWater(modInfo.requireSonarUnderWater),
-	losAlgo(int2(losSizeX, losSizeY), -1e6f, 15, readmap->GetMIPHeightMapSynced(losMipLevel))
+	losAlgo(int2(losSizeX, losSizeY), -1e6f, 15, readMap->GetMIPHeightMapSynced(losMipLevel))
 {
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
 		losMaps[a].SetSize(losSizeX, losSizeY, true);

@@ -62,16 +62,33 @@ void PathHeatMap::AddHeat(const CSolidObject* owner, const CPathManager* pm, uns
 	pm->GetDetailedPathSquares(pathID, points);
 
 	if (!points.empty()) {
+		// called every frame by PathManager::UpdatePath
+		//
+		// the i-th waypoint receives an amount of heat equal to
+		// ((N - i) / N) * heatProduced so the entire _remaining_
+		// path is constantly reserved (the default PFS consumes
+		// waypoints as they are passed by units) but far-future
+		// waypoints do not contribute much cost for other units
+		//
+		//   i=0   --> value=((N-0)/N)*heatProd
+		//   i=1   --> value=((N-1)/N)*heatProd
+		//   ...
+		//   i=N-1 --> value=((  1)/N)*heatProd
+		//
+		// NOTE:
+		//   only the max-resolution pathfinder reacts to heat!
+		//
+		//   waypoints are spaced SQUARE_SIZE*2 elmos apart so
+		//   the heatmapped paths look like "breadcrumb" trails
+		//   this does not matter only because the default PFS
+		//   uses the same spacing-factor between waypoints
 		const float scale = 1.0f / points.size();
-		const float heat = scale * owner->moveDef->heatProduced;
+		const float value = scale * owner->moveDef->heatProduced;
 
 		unsigned int i = points.size();
 
 		for (std::vector<int2>::const_iterator it = points.begin(); it != points.end(); ++it) {
-			UpdateHeatValue(it->x, it->y, i * heat, owner->id);
-
-			// decrease contribution from further-away points
-			i--;
+			UpdateHeatValue(it->x, it->y, (i--) * value, owner->id);
 		}
 	}
 }

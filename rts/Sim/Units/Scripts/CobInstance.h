@@ -131,7 +131,7 @@ public:
 	virtual int  QueryBuildInfo();
 
 	virtual void Destroy();
-	virtual void StartMoving();
+	virtual void StartMoving(bool reversing);
 	virtual void StopMoving();
 	virtual void StartUnload();
 	virtual void EndTransport();

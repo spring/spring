@@ -8,10 +8,9 @@
 
 #include <boost/scoped_array.hpp>
 
-#include "System/Util.h"
-
-#include "System/TdfParser.h"
 #include "tdf_grammar.h"
+#include "System/TdfParser.h"
+#include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Log/ILog.h"
 
@@ -67,15 +66,28 @@ TdfParser::TdfSection* TdfParser::TdfSection::construct_subsection(const std::st
 	}
 }
 
-bool TdfParser::TdfSection::remove(const std::string& key)
+bool TdfParser::TdfSection::remove(const std::string& key, bool caseSensitive)
 {
-	valueMap_t::iterator it = values.find(key);
-	if (it != values.end()) {
-		values.erase(it);
-		return true;
+	bool ret = false;
+
+	if (caseSensitive) {
+		valueMap_t::iterator it = values.find(key);
+		if ((ret = (it != values.end()))) {
+			values.erase(it);
+		}
 	} else {
-		return false;
+		// assume <key> is already in lowercase
+		for (valueMap_t::iterator it = values.begin(); it != values.end(); ) {
+			if (StringToLower(it->first) == key) {
+				it = set_erase(values, it);
+				ret = true;
+			} else {
+				++it;
+			}
+		}
 	}
+
+	return ret;
 }
 
 void TdfParser::TdfSection::add_name_value(const std::string& name, const std::string& value)

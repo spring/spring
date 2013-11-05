@@ -4,14 +4,14 @@
 
 #include "MouseHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
-#include "Game/Player.h"
-#include "Game/PlayerHandler.h"
+#include "Game/SelectedUnitsHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/MsgStrings.h"
 
 #include <SDL_keysym.h>
@@ -165,7 +165,7 @@ void CShareBox::Draw()
 	} else {
 		glColor4f(0.2f, 0.2f, 0.2f, alpha);
 	}
-	
+
 	DrawBox(box + unitBox);
 
 	glColor4f(0.8f, 0.8f, 0.9f, 0.7f);
@@ -230,15 +230,10 @@ void CShareBox::Draw()
 			actualTeam++;
 		}
 		const float alpha = (shareTeam == actualTeam) ? 0.8f : 0.4f;
-		std::string teamName;
 
-		if (teamHandler->Team(actualTeam)->leader >= 0) {
-			teamName = playerHandler->Player(teamHandler->Team(actualTeam)->leader)->name;
-		} else {
-			teamName = UncontrolledPlayerName;
-		}
-
+		std::string teamName = teamHandler->Team(actualTeam)->GetControllerName();
 		std::string ally, dead;
+
 		if (teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(actualTeam))) {
 			font->SetTextColor(0.5f, 1.0f, 0.5f, alpha);
 			ally = " <Ally>";
@@ -369,11 +364,11 @@ void CShareBox::MouseRelease(int x, int y, int button)
 		if (shareUnits) {
 			Command c(CMD_STOP);
 			// make sure the units are stopped and that the selection is transmitted
-			selectedUnits.GiveCommand(c, false);
+			selectedUnitsHandler.GiveCommand(c, false);
 		}
 		net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, shareTeam, shareUnits, metalShare * teamHandler->Team(gu->myTeam)->metal, energyShare * teamHandler->Team(gu->myTeam)->energy));
 		if (shareUnits) {
-			selectedUnits.ClearSelected();
+			selectedUnitsHandler.ClearSelected();
 		}
 		lastShareTeam = shareTeam;
 	}

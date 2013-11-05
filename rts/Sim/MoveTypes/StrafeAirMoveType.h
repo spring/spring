@@ -13,7 +13,6 @@ class CStrafeAirMoveType: public AAirMoveType
 {
 	CR_DECLARE(CStrafeAirMoveType);
 	CR_DECLARE_SUB(DrawLine);
-	CR_DECLARE_SUB(RudderInfo);
 
 public:
 	CStrafeAirMoveType(CUnit* owner);
@@ -32,17 +31,16 @@ public:
 	void SetState(AircraftState state);
 	void UpdateTakeOff(float wantedHeight);
 
-	float3 FindLandingPos() const;
+	float3 FindLandingPos(float brakeRate) const;
 
 	void SetMaxSpeed(float speed);
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive) {}
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
-	void StopMoving();
+	void StopMoving(bool callScript = false, bool hardStop = false);
 
 	void Takeoff();
-	bool IsFighter() const { return isFighter; }
 
 	int maneuver;
 	int maneuverSubState;
@@ -55,6 +53,7 @@ public:
 	float invDrag;
 	/// actually the invDrag of crashDrag
 	float crashDrag;
+
 	float frontToSpeed;
 	float speedToFront;
 	float myGravity;
@@ -63,7 +62,6 @@ public:
 	float maxPitch;
 	float turnRadius;
 
-	float maxAcc;
 	float maxAileron;
 	float maxElevator;
 	float maxRudder;
@@ -73,29 +71,17 @@ public:
 	float crashElevator;
 	float crashRudder;
 
-	struct RudderInfo{
-		CR_DECLARE_STRUCT(RudderInfo);
-		RudderInfo() : rotation(0.f) {}
-		float rotation;
-	};
-
-	RudderInfo rudder;
-	RudderInfo elevator;
-	RudderInfo aileronRight;
-	RudderInfo aileronLeft;
-	std::vector<RudderInfo*> rudders;
-
-	float lastRudderUpdate;
 	float lastRudderPos;
 	float lastElevatorPos;
 	float lastAileronPos;
 
 	float inefficientAttackTime;
+
 	/// used by fighters to turn away when closing in on ground targets
 	float3 exitVector;
 
 private:
-	bool HandleCollisions();
+	bool HandleCollisions(bool checkCollisions);
 };
 
 #endif // _AIR_MOVE_TYPE_H_

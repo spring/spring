@@ -84,7 +84,7 @@ public:
 	FOR_EACH_PRIMITIVE_TYPE
 #undef DO
 
-	operator T () const { return x; }
+	operator const T& () const { return x; }
 };
 
 typedef SyncedPrimitive<          bool  > SyncedBool;

@@ -2,7 +2,7 @@
 
 #include "Misc.h"
 
-#ifdef linux
+#ifdef __linux__
 #include <unistd.h>
 #include <dlfcn.h> // for dladdr(), dlopen()
 
@@ -114,6 +114,9 @@ std::string GetOrigCWD()
 
 void SetOrigCWD()
 {
+	if (!origCWD.empty())
+		return;
+
 	char *buf;
 #ifdef WIN32
 	buf = _getcwd(NULL, 0);
@@ -177,7 +180,7 @@ std::string GetProcessExecutableFile()
 	// error will only be used if procExeFilePath stays empty
 	const char* error = NULL;
 
-#ifdef linux
+#ifdef __linux__
 	char file[512];
 	const int ret = readlink("/proc/self/exe", file, sizeof(file)-1);
 	if (ret >= 0) {
@@ -248,8 +251,8 @@ std::string GetModuleFile(std::string moduleName)
 		// add extension if it is not in the file name
 		// it could also be "libXZY.so-1.2.3"
 		// -> does not have to be the end, my friend
-		if (moduleName.find("."SHARED_LIBRARY_EXTENSION) == std::string::npos) {
-			moduleName = moduleName + "."SHARED_LIBRARY_EXTENSION;
+		if (moduleName.find("." SHARED_LIBRARY_EXTENSION) == std::string::npos) {
+			moduleName = moduleName + "." SHARED_LIBRARY_EXTENSION;
 		}
 
 		// will not not try to load, but return the libs address

@@ -191,6 +191,7 @@ static int math_max (lua_State *L) {
   return 1;
 }
 
+
 static int lua_streflop_random_seed = 0;
 
 static int math_random (lua_State *L) {

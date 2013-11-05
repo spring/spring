@@ -304,13 +304,12 @@ void ConfigHandler::Instantiate(const std::string configSource, const bool safem
 	Deallocate();
 
 	vector<string> locations;
-
-	if (configSource.empty()) {
+	if (!configSource.empty()) {
+		locations.push_back(configSource);
+	} else {
 		ConfigLocater::GetDefaultLocations(locations);
 	}
-	else {
-		locations.push_back(configSource);
-	}
+	assert(!locations.empty());
 
 	// log here so unitsync shows configuration source(s), too
 	vector<string>::const_iterator loc = locations.begin();

@@ -11,18 +11,17 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CRifle, CWeapon, (NULL));
+CR_BIND_DERIVED(CRifle, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CRifle,(
 	CR_RESERVED(8)
-	));
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CRifle::CRifle(CUnit* owner)
-: CWeapon(owner)
+CRifle::CRifle(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 }
 
@@ -30,14 +29,8 @@ CRifle::CRifle(CUnit* owner)
 void CRifle::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->pos +
-			owner->frontdir * relWeaponPos.z +
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;
-		weaponMuzzlePos = owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		wantedDir = (targetPos - weaponPos).Normalize();
 	}
@@ -46,12 +39,11 @@ void CRifle::Update()
 }
 
 
-void CRifle::FireImpl()
+void CRifle::FireImpl(bool scriptCall)
 {
 	float3 dir = (targetPos - weaponMuzzlePos).Normalize();
 	dir +=
-		((gs->randVector() * sprayAngle + salvoError) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
+		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	CUnit* hitUnit;
@@ -64,5 +56,5 @@ void CRifle::FireImpl()
 	}
 
 	new CTracerProjectile(weaponMuzzlePos, dir*projectileSpeed, length, owner);
-	new CSmokeProjectile(weaponMuzzlePos, float3(0,0,0), 70, 0.1f, 0.02f, owner, 0.6f);
+	new CSmokeProjectile(weaponMuzzlePos, ZeroVector, 70, 0.1f, 0.02f, owner, 0.6f);
 }

@@ -3,9 +3,11 @@
 #include <assert.h>
 
 #include "ProfileDrawer.h"
+#include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalConstants.h" // for GAME_SPEED
 
@@ -65,7 +67,7 @@ void ProfileDrawer::Draw()
 #else
 		const float fStartY = start_y - y * 0.024f;
 #endif
-		const float s = ((float)pi->second.total) / 1000.0f;
+		const float s = pi->second.total.toSecsf();
 		const float p = pi->second.percent * 100;
 		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
 
@@ -78,9 +80,10 @@ void ProfileDrawer::Draw()
 		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", p);
 		fStartX += 0.04f;
 		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", pi->second.newpeak?1:255, pi->second.newpeak?1:255, pi->second.peak * 100);
+
 		// print timer name
 		fStartX += 0.01f;
-		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM, "%s", pi->first.c_str());
+		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM, pi->first);
 	}
 	font->End();
 
@@ -88,26 +91,29 @@ void ProfileDrawer::Draw()
 	glPushMatrix();
 	glTranslatef(start_x + 0.005f, start_y, 0);
 	glScalef(0.015f, 0.02f, 0.02f);
-	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi){
-		glColorf3((float3)pi->second.color);
 		glBegin(GL_QUADS);
-		glVertex3f(0,0,0);
-		glVertex3f(1,0,0);
-		glVertex3f(1,1,0);
-		glVertex3f(0,1,0);
+			int i = 0;
+			for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++i){
+				glColorf3((float3)pi->second.color);
+				glVertex3f(0, 0 - i * 1.2f, 0);
+				glVertex3f(1, 0 - i * 1.2f, 0);
+				glVertex3f(1, 1 - i * 1.2f, 0);
+				glVertex3f(0, 1 - i * 1.2f, 0);
+			}
 		glEnd();
 		// draw the 'graph view disabled' cross
-		if (!pi->second.showGraph) {
+		glBegin(GL_LINES);
+			i = 0;
 			glColor3f(1,0,0);
-			glBegin(GL_LINES);
-			glVertex3f(0,0,0);
-			glVertex3f(1,1,0);
-			glVertex3f(1,0,0);
-			glVertex3f(0,1,0);
-			glEnd();
-		}
-		glTranslatef(0,-1.2f,0);
-	}
+			for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++i){
+				if (!pi->second.showGraph) {
+					glVertex3f(0, 0 - i * 1.2f, 0);
+					glVertex3f(1, 1 - i * 1.2f, 0);
+					glVertex3f(1, 0 - i * 1.2f, 0);
+					glVertex3f(0, 1 - i * 1.2f, 0);
+				}
+			}
+		glEnd();
 	glPopMatrix();
 
 	// draw the graph
@@ -122,7 +128,7 @@ void ProfileDrawer::Draw()
 			// profile runtime; eg 0.5f means: uses 50% of a CPU (during that frame)
 			// This may be more then 1.0f, in case an operation
 			// which ran over many frames, ended in this one.
-			const float p = ((float)pi->second.frames[a]) / 1000.0f * GAME_SPEED;
+			const float p = pi->second.frames[a].toSecsf() * GAME_SPEED;
 			const float x = start_x + (a * steps_x);
 			const float y = 0.02f + (p * 0.4f);
 			va->AddVertex0(float3(x, y, 0.0f));
@@ -130,6 +136,49 @@ void ProfileDrawer::Draw()
 		glColorf3((float3)pi->second.color);
 		va->DrawArray0(GL_LINE_STRIP);
 	}
+
+#ifdef DEBUG
+	const float maxHist = 4.0f;
+	const auto curTime = spring_gettime();
+	const float r = std::fmod(curTime.toSecsf(), maxHist) / maxHist;
+
+	CVertexArray* va = GetVertexArray();
+	va->Initialize();
+	auto& coreProf = profiler.profileCore;
+	for (int i = 0; i < coreProf.size(); ++i) {
+		if (coreProf[i].empty())
+			continue;
+
+		const float y1 = 0.1f * i;
+		const float y2 = 0.1f * (i+1);
+
+		while (!coreProf[i].empty() && (curTime - coreProf[i].front().second) > spring_secs(maxHist))
+			coreProf[i].pop_front();
+
+		for (const auto& data: coreProf[i]) {
+			float x1 = std::fmod(data.first.toSecsf(), maxHist)  / maxHist;
+			float x2 = std::fmod(data.second.toSecsf(), maxHist) / maxHist;
+			x2 = std::max(x1 + globalRendering->pixelX, x2);
+
+			va->AddVertex0(float3(x1, y1, 0.0f));
+			va->AddVertex0(float3(x1, y2, 0.0f));
+
+			va->AddVertex0(float3(x2, y2, 0.0f));
+			va->AddVertex0(float3(x2, y1, 0.0f));
+		}
+	}
+
+	const float y1 = 0.0f;
+	const float y2 = 0.1f * (ThreadPool::GetNumThreads());
+	va->AddVertex0(float3(r, y1, 0.0f));
+	va->AddVertex0(float3(r, y2, 0.0f));
+	va->AddVertex0(float3(r + 10 * globalRendering->pixelX, y2, 0.0f));
+	va->AddVertex0(float3(r + 10 * globalRendering->pixelX, y1, 0.0f));
+
+	glColor3f(1.0f,0.0f,0.0f);
+	va->DrawArray0(GL_QUADS);
+#endif
+
 	glEnable(GL_TEXTURE_2D);
 }
 

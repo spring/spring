@@ -21,7 +21,7 @@ CCameraController::CCameraController()
 	pixelSize = 1.0f;
 	enabled = true;
 	pos = float3(gs->mapx * 0.5f * SQUARE_SIZE, 1000.f, gs->mapy * 0.5f * SQUARE_SIZE); // center map
-	dir = float3(0.0f,0.0f,1.0f);
+	dir = FwdVector;
 }
 
 

@@ -16,55 +16,23 @@ public:
 		FLY_LANDING
 	} flyState;
 
-	/**
-	 * needed to get transport close enough to what is going to be transported.
-	 * better way ?
-	 */
-	bool loadingUnits;
 	bool bankingAllowed;
 	bool airStrafe;
-
-	float3 circlingPos;
-	/// Used when circling something
-	float goalDistance;
-	/// need to pause between circling steps
-	int waitCounter;
 	/// Set to true on StopMove, to be able to not stop if a new order comes directly after
 	bool wantToStop;
 
-	/// TODO: Seems odd to use heading in unit, since we have toggled useHeading to false..
-	short wantedHeading;
-
-	float3 wantedSpeed;
-	/// Used to determine banking (since it is the current acceleration)
-	float3 deltaSpeed;
+	/// Used when circling something
+	float goalDistance;
 
 	float currentBank;
 	float currentPitch;
 
-	// Provided by the unitloader
 	float turnRate;
-	float accRate;
-	float decRate;
-	float altitudeRate;
-
-	/// Distance needed to come to a full stop when going at max speed
-	float brakeDistance;
-	/// Set to true when transporting stuff
-	bool dontLand;
-	/// Scripts expect moverate functions to be called
-	int lastMoveRate;
-
-	/// force the aircraft to turn toward specific heading (for transports)
-	bool forceHeading;
-	short forceHeadingTo;
 
 	float maxDrift;
+	float maxTurnAngle;
 
-	/// buffets the plane when idling
-	float3 randomWind;
-
-
+public:
 	CHoverAirMoveType(CUnit* owner);
 
 	// MoveType interface
@@ -73,12 +41,14 @@ public:
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
-	void StopMoving();
+	void StopMoving(bool callScript = false, bool hardStop = false);
 
 	void ForceHeading(short h);
-	void SetGoal(float3 newPos, float distance);
+	void SetGoal(const float3& pos, float distance = 0.0f);
 	void SetState(AircraftState newState);
-	virtual AircraftState GetLandingState() const { return AIRCRAFT_FLYING; }
+	void SetAllowLanding(bool b);
+	void SetLoadingUnits(bool b) { loadingUnits = b; }
+	AircraftState GetLandingState() const { return AIRCRAFT_FLYING; }
 	void SetWantedAltitude(float altitude);
 	void SetDefaultAltitude(float altitude);
 
@@ -90,6 +60,12 @@ public:
 	void UpdateCircling();
 	void UpdateHovering();
 
+	short GetWantedHeading() const { return wantedHeading; }
+	short GetForcedHeading() const { return forceHeadingTo; }
+
+	bool GetAllowLanding() const { return !dontLand; }
+	bool GetLoadingUnits() const { return loadingUnits; }
+
 private:
 	// Helpers for (multiple) state handlers
 	void UpdateHeading();
@@ -97,14 +73,42 @@ private:
 	void UpdateAirPhysics();
 	void UpdateMoveRate();
 
+	bool CanLand() const { return ((!dontLand && autoLand) || (reservedPad != NULL)); }
 	bool CanLandAt(const float3& pos) const;
-	void ExecuteStop();
 
+	void ExecuteStop();
 	void Takeoff();
 	void Land();
-	bool IsFighter() const { return false; }
 
-	bool HandleCollisions();
+	bool HandleCollisions(bool checkCollisions);
+
+private:
+	float3 wantedSpeed;
+	/// Used to determine banking (since it is the current acceleration)
+	float3 deltaSpeed;
+
+	float3 circlingPos;
+	/// buffets the plane when idling
+	float3 randomWind;
+
+	/// force the aircraft to turn toward specific heading (for transports)
+	bool forceHeading;
+	/// Set to true when transporting stuff
+	bool dontLand;
+	/**
+	 * needed to get transport close enough to what is going to be transported.
+	 * better way ?
+	 */
+	bool loadingUnits;
+
+	/// TODO: Seems odd to use heading in unit, since we have toggled useHeading to false..
+	short wantedHeading;
+	short forceHeadingTo;
+
+	/// need to pause between circling steps
+	int waitCounter;
+	/// Scripts expect moverate functions to be called
+	int lastMoveRate;
 };
 
 #endif // TA_AIR_MOVE_TYPE_H

@@ -15,10 +15,17 @@
 	// do not include <cmath> or <math.h> before this, it'll cause ambiguous call er
 	#include "lib/streflop/streflop_cond.h"
 
+	#ifdef HEADLESS
+		// workaround for mingw64 bug which leads to undefined reference to _imp__gl*
+		#define _GDI32_
+	#endif
+
 	#include <windows.h>
 
 		#undef  PlaySound
 		#define PlaySound  use_PlaySample_instead_of_PlaySound
+		#define W_OK 2
+		#define R_OK 4
 
 		#undef CreateDirectory
 		#undef DeleteFile

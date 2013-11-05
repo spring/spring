@@ -22,7 +22,9 @@ class CQuadField : boost::noncopyable
 	CR_DECLARE_SUB(Quad);
 
 public:
-	CQuadField();
+	static void Resize(unsigned int nqx, unsigned int nqz);
+
+	CQuadField(unsigned int nqx, unsigned int nqz);
 	~CQuadField();
 
 	std::vector<int> GetQuads(float3 pos, float radius) const;
@@ -37,7 +39,15 @@ public:
 	//
 	unsigned int GetQuads(float3 pos, float radius, int*& begQuad, int*& endQuad) const;
 	unsigned int GetQuadsOnRay(float3 start, float3 dir, float length, int*& begQuad, int*& endQuad);
-	void GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature);
+
+	void GetUnitsAndFeaturesColVol(
+		const float3& pos,
+		const float radius,
+		std::vector<CUnit*>& units,
+		std::vector<CFeature*>& features,
+		unsigned int* numUnitsPtr = NULL,
+		unsigned int* numFeaturesPtr = NULL
+	);
 
 	/**
 	 * Returns all units within @c radius of @c pos,
@@ -75,7 +85,12 @@ public:
 	std::vector<CProjectile*> GetProjectilesExact(const float3& pos, float radius);
 	std::vector<CProjectile*> GetProjectilesExact(const float3& mins, const float3& maxs);
 
-	std::vector<CSolidObject*> GetSolidsExact(const float3& pos, float radius);
+	std::vector<CSolidObject*> GetSolidsExact(
+		const float3& pos,
+		const float radius,
+		const unsigned int physicalStateBits = 0xFFFFFFFF,
+		const unsigned int collisionStateBits = 0xFFFFFFFF
+	);
 
 	void MovedUnit(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
@@ -108,14 +123,21 @@ public:
 	int GetNumQuadsX() const { return numQuadsX; }
 	int GetNumQuadsZ() const { return numQuadsZ; }
 
-	const static int QUAD_SIZE = 256;
-	const static int NUM_TEMP_QUADS = 1024;
+	int GetQuadSizeX() const { return quadSizeX; }
+	int GetQuadSizeZ() const { return quadSizeZ; }
+
+	const static unsigned int BASE_QUAD_SIZE =  128;
+	const static unsigned int NUM_TEMP_QUADS = 1024;
 
 private:
 	std::vector<Quad> baseQuads;
 	std::vector<int> tempQuads;
+
 	int numQuadsX;
 	int numQuadsZ;
+
+	int quadSizeX;
+	int quadSizeZ;
 };
 
 extern CQuadField* quadField;

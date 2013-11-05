@@ -6,8 +6,8 @@
 
 #include "StringSerializer.h"
 
+#include "Net/Protocol/BaseNetProtocol.h"
 #include "System/LoadSave/DemoReader.h"
-#include "System/BaseNetProtocol.h"
 #include "System/Net/RawPacket.h"
 #include "Sim/Units/CommandAI/Command.h"
 
@@ -85,7 +85,7 @@ int main (int argc, char* argv[])
 		unsigned team = vm["team"].as<unsigned>();
 		WriteTeamstatHistory(reader, team, outfile);
 	}
-	
+
 	if (vm.count("header") || printStats)
 	{
 		wstringstream buf;

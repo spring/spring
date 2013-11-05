@@ -111,12 +111,11 @@ bool CAIInterfaceLibraryInfo::IsLookupSupported() const {
 }
 const std::string& CAIInterfaceLibraryInfo::GetInfo(const std::string& key) const {
 
-	bool found = false;
 	std::map<std::string, std::string>::const_iterator strPair;
 
 	// get real key through lower case key
 	strPair = keyLower_key.find(StringToLower(key));
-	found = (strPair != keyLower_key.end());
+	bool found = (strPair != keyLower_key.end());
 
 	// get value
 	if (found) {

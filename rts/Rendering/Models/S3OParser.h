@@ -5,7 +5,13 @@
 
 #include <map>
 #include "IModelParser.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
+
+enum {
+	S3O_PRIMTYPE_TRIANGLES      = 0,
+	S3O_PRIMTYPE_TRIANGLE_STRIP = 1,
+	S3O_PRIMTYPE_QUADS          = 2,
+};
 
 struct SS3OVertex {
 	float3 pos;
@@ -17,7 +23,8 @@ struct SS3OVertex {
 };
 
 struct SS3OPiece: public S3DModelPiece {
-	SS3OPiece() { parent = NULL; primitiveType = 0; }
+	SS3OPiece(): primType(S3O_PRIMTYPE_TRIANGLES) {
+	}
 
 	void UploadGeometryVBOs();
 	void DrawForList() const;
@@ -38,7 +45,7 @@ struct SS3OPiece: public S3DModelPiece {
 	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
 	void Shatter(float pieceChance, int texType, int team, const float3& pos, const float3& speed) const;
 
-	int primitiveType;
+	int primType;
 
 private:
 	std::vector<SS3OVertex> vertices;
@@ -46,7 +53,6 @@ private:
 };
 
 
-enum {S3O_PRIMTYPE_TRIANGLES = 0, S3O_PRIMTYPE_TRIANGLE_STRIP = 1, S3O_PRIMTYPE_QUADS = 2};
 
 class CS3OParser: public IModelParser
 {

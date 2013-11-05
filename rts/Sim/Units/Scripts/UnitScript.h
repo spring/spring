@@ -200,7 +200,7 @@ public:
 	virtual int  QueryBuildInfo() = 0; // returns piece
 
 	virtual void Destroy() = 0;
-	virtual void StartMoving() = 0;
+	virtual void StartMoving(bool reversing) = 0;
 	virtual void StopMoving() = 0;
 	virtual void StartUnload() = 0;
 	virtual void EndTransport() = 0;
@@ -222,10 +222,6 @@ public:
 	virtual void  Shot(int weaponNum) = 0;
 	virtual bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget) = 0; // returns whether shot should be blocked
 	virtual float TargetWeight(int weaponNum, const CUnit* targetUnit) = 0; // returns target weight
-
-	// not necessary for normal operation, useful to measure callin speed
-	static void BenchmarkScript(CUnitScript* script);
-	static void BenchmarkScript(const std::string& unitname);
 };
 
 inline bool CUnitScript::HaveListeners() const {

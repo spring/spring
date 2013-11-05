@@ -13,7 +13,7 @@ void InputHandler::PushEvent(const SDL_Event& ev)
 	sig(ev);
 }
 
-boost::signals::connection InputHandler::AddHandler(SignalType::slot_function_type handler)
+boost::signals2::connection InputHandler::AddHandler(SignalType::slot_function_type handler)
 {
 	return sig.connect(handler);
 }

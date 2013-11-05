@@ -13,11 +13,11 @@ CR_BIND(TeamBase, );
 CR_REG_METADATA(TeamBase, (
 	CR_MEMBER(leader),
 	CR_MEMBER(color),
+	CR_MEMBER(teamStartNum),
+	CR_MEMBER(teamAllyteam),
 	CR_MEMBER(incomeMultiplier),
 	CR_MEMBER(side),
 	CR_MEMBER(startPos),
-	CR_MEMBER(teamStartNum),
-	CR_MEMBER(teamAllyteam),
 	CR_MEMBER(customValues)
 ));
 
@@ -38,20 +38,15 @@ unsigned char TeamBase::teamDefaultColor[10][4] =
 
 TeamBase::TeamBase() :
 	leader(-1),
-	incomeMultiplier(1.0f),
-	startPos(-100.0f, -100.0f, -100.0f),
 	teamStartNum(-1),
-	teamAllyteam(-1)
+	teamAllyteam(-1),
+	incomeMultiplier(1.0f)
 {
 	color[0] = 255;
 	color[1] = 255;
 	color[2] = 255;
 	color[3] = 255;
 }
-
-TeamBase::~TeamBase() {
-}
-
 
 void TeamBase::SetValue(const std::string& key, const std::string& value)
 {

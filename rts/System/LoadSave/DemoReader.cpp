@@ -2,9 +2,13 @@
 
 #include "DemoReader.h"
 
-
+#ifndef TOOLS
+#include "System/Config/ConfigHandler.h"
+CONFIG(bool, DisableDemoVersionCheck).defaultValue(false).description("Allow to play every replay file (may crash / cause undefined behaviour in replays)");
+#endif
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Log/ILog.h"
 #include "System/Net/RawPacket.h"
 #include "Game/GameVersion.h"
 
@@ -12,6 +16,7 @@
 #include <stdexcept>
 #include <cassert>
 #include <cstring>
+
 
 CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	: playbackDemo(NULL)
@@ -38,7 +43,12 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		|| (SpringVersion::IsRelease() && strcmp(fileHeader.versionString, SpringVersion::GetSync().c_str()))
 #endif
 		) {
-			throw std::runtime_error(std::string("Demofile corrupt or created by a different version of Spring: ")+filename);
+			const std::string demoMsg = std::string("Demofile ") + filename + " corrupt or created by a different version of Spring, expects version " + fileHeader.versionString + ".";
+#ifndef TOOLS
+			if (!configHandler->GetBool("DisableDemoVersionCheck"))
+				throw std::runtime_error(demoMsg);
+#endif
+			LOG_L(L_WARNING, "%s", demoMsg.c_str());
 	}
 
 	if (fileHeader.scriptSize != 0) {
@@ -151,7 +161,7 @@ void CDemoReader::LoadStats()
 
 	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum) {
 		PlayerStatistics buf;
-		playbackDemo->Read((char*) &buf, sizeof(buf));
+		playbackDemo->Read(reinterpret_cast<char*>(&buf), sizeof(PlayerStatistics));
 		buf.swab();
 		playerStats.push_back(buf);
 	}
@@ -165,7 +175,7 @@ void CDemoReader::LoadStats()
 		for (int teamNum = 0; teamNum < fileHeader.numTeams; ++teamNum) {
 			for (int i = 0; i < numStatsPerTeam[teamNum]; ++i) {
 				TeamStatistics buf;
-				playbackDemo->Read((char*) &buf, sizeof(buf));
+				playbackDemo->Read(reinterpret_cast<char*>(&buf), sizeof(TeamStatistics));
 				buf.swab();
 				teamStats[teamNum].push_back(buf);
 			}

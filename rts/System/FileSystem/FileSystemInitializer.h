@@ -3,8 +3,13 @@
 #ifndef FILE_SYSTEM_INITIALIZER_H
 #define FILE_SYSTEM_INITIALIZER_H
 
+#include <string>
+
 class FileSystemInitializer {
 public:
+	/// call in defined order!
+	static void PreInitializeConfigHandler(const std::string& configSource = "", const bool safemode = false);
+	static void InitializeLogOutput(const std::string& filename = "");
 	static void Initialize();
 	static void Cleanup();
 

@@ -39,26 +39,27 @@ CTeamHandler::~CTeamHandler()
 
 void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 {
-	assert(!setup->teamStartingData.empty());
-	assert(setup->teamStartingData.size() <= MAX_TEAMS);
-	assert(setup->allyStartingData.size() <= MAX_TEAMS);
+	assert(!setup->GetTeamStartingDataCont().empty());
+	assert(setup->GetTeamStartingDataCont().size() <= MAX_TEAMS);
+	assert(setup->GetAllyStartingDataCont().size() <= MAX_TEAMS);
 
-	teams.reserve(setup->teamStartingData.size() + 1); // +1 for Gaia
-	teams.resize(setup->teamStartingData.size());
-	allyTeams = setup->allyStartingData;
+	teams.reserve(setup->GetTeamStartingDataCont().size() + 1); // +1 for Gaia
+	teams.resize(setup->GetTeamStartingDataCont().size());
+	allyTeams = setup->GetAllyStartingDataCont();
+
+	const int numTeams = teams.size() + ((gs->useLuaGaia) ? 1 : 0);
+	const int maxUnitsPerTeam = std::min(setup->maxUnitsPerTeam, int(MAX_UNITS / numTeams));
 
 	for (size_t i = 0; i < teams.size(); ++i) {
-		// TODO: this loop body could use some more refactoring
-		CTeam* team = new CTeam(i);
-		teams[i] = team;
-		*team = setup->teamStartingData[i];
+		teams[i] = new CTeam(i);
+		*teams[i] = setup->GetTeamStartingDataCont()[i];
 
 		// all non-Gaia teams (within one allyteam) get and maintain the same unit-limit
 		// (because of this it would be better treated as a pool owned by class AllyTeam)
-		team->SetMaxUnits(std::min(setup->maxUnitsPerTeam, int(MAX_UNITS / teams.size())));
+		teams[i]->SetMaxUnits(maxUnitsPerTeam);
 
-		assert(team->teamAllyteam >=                0);
-		assert(team->teamAllyteam <  allyTeams.size());
+		assert(teams[i]->teamAllyteam >=                0);
+		assert(teams[i]->teamAllyteam <  allyTeams.size());
 	}
 
 	if (gs->useLuaGaia) {
@@ -74,7 +75,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		gaia->color[3] = 255;
 		gaia->gaia = true;
 		gaia->SetMaxUnits(MAX_UNITS - (teams.size() * teams[0]->GetMaxUnits()));
-		gaia->StartposMessage(ZeroVector);
+		gaia->SetStartPos(ZeroVector);
 		gaia->teamAllyteam = gaiaAllyTeamID;
 		teams.push_back(gaia);
 

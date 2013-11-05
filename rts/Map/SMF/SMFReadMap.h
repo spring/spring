@@ -6,7 +6,7 @@
 #include "SMFMapFile.h"
 #include "Map/ReadMap.h"
 #include "System/EventClient.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 
 class CSMFGroundDrawer;
@@ -33,6 +33,7 @@ public:
 
 	unsigned int GetDetailTexture() const { return detailTex; }
 	unsigned int GetMiniMapTexture() const { return minimapTex; }
+	int2 GetMiniMapTextureSize() const { return int2(1024, 1024); }
 	unsigned int GetShadingTexture() const { return shadingTex; }
 	unsigned int GetNormalsTexture() const { return normalsTex; }
 	unsigned int GetSpecularTexture() const { return specularTex; }
@@ -79,8 +80,8 @@ private:
 	void CreateShadingTex();
 	void CreateNormalTex();
 
-	void UpdateVertexNormals(const SRectangle& update);
-	void UpdateFaceNormals(const SRectangle& update);
+	void UpdateVertexNormalsUnsynced(const SRectangle& update);
+	void UpdateFaceNormalsUnsynced(const SRectangle& update);
 	void UpdateNormalTexture(const SRectangle& update);
 	void UpdateShadingTexture(const SRectangle& update);
 
@@ -137,9 +138,7 @@ protected:
 
 private:
 	std::vector<float> cornerHeightMapSynced;
-#ifdef USE_UNSYNCED_HEIGHTMAP
 	std::vector<float> cornerHeightMapUnsynced;
-#endif
 
 	std::vector<unsigned char> shadingTexBuffer;
 	bool shadingTexUpdateNeeded;

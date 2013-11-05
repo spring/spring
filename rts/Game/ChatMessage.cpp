@@ -3,9 +3,10 @@
 
 #include "ChatMessage.h"
 
-#include "System/BaseNetProtocol.h"
+#include "Net/Protocol/BaseNetProtocol.h"
 #include "System/Net/PackPacket.h"
 #include "System/Net/UnpackPacket.h"
+#include <boost/cstdint.hpp>
 
 using namespace netcode;
 
@@ -31,11 +32,19 @@ ChatMessage::ChatMessage(boost::shared_ptr<const netcode::RawPacket> data)
 
 const netcode::RawPacket* ChatMessage::Pack() const
 {
-	unsigned char size = (4 * sizeof(unsigned char)) + (msg.size() + 1);
+	unsigned size = (4 * sizeof(unsigned char)) + (msg.size() + 1);
+	boost::uint8_t csize = (size > UINT8_MAX) ? UINT8_MAX : size;
+
 	PackPacket* buffer = new PackPacket(size, NETMSG_CHAT);
-	*buffer << size;
+	*buffer << csize;
 	*buffer << (unsigned char)fromPlayer;
 	*buffer << (unsigned char)destination;
-	*buffer << msg;
+	if (size > UINT16_MAX) {
+		std::string msg_(msg);
+		msg_.resize(size - csize);
+		*buffer << msg_;
+	} else {
+		*buffer << msg;
+	}
 	return buffer;
 }

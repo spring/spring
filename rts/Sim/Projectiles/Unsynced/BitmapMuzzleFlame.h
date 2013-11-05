@@ -14,7 +14,6 @@ class CBitmapMuzzleFlame : public CProjectile
 
 public:
 	CBitmapMuzzleFlame();
-	~CBitmapMuzzleFlame();
 
 	void Draw();
 	void Update();
@@ -25,7 +24,6 @@ private:
 	AtlasedTexture* sideTexture;
 	AtlasedTexture* frontTexture;
 
-	float3 dir;
 	CColorMap* colorMap;
 
 	float size;

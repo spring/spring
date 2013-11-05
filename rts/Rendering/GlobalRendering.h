@@ -19,9 +19,11 @@ class CGlobalRendering {
 
 public:
 	void PostInit();
+	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
+	void SetViewSize(int vsx, int vsy);
 	void SetDualScreenParams();
 	void UpdateWindowGeometry();
-	void UpdateViewPortGeometry();
+	void UpdateViewPortGeometry(bool windowExposed);
 	void UpdatePixelGeometry();
 
 
@@ -53,6 +55,12 @@ public:
 	float FPS;
 
 	/// the window state (0=normal,1=maximized,2=minimized)
+	/// note don't change values without updating MyX11SetWindowState()!!!
+	enum {
+		WINSTATE_DEFAULT   = 0,
+		WINSTATE_MAXIMIZED = 1,
+		WINSTATE_MINIMIZED = 2
+	};
 	int winState;
 
 	/// the screen size in pixels

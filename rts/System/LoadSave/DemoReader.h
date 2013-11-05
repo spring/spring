@@ -8,7 +8,7 @@
 
 #include "Demo.h"
 
-#include "Game/PlayerStatistics.h"
+#include "Game/Players/PlayerStatistics.h"
 #include "Sim/Misc/TeamStatistics.h"
 
 namespace netcode { class RawPacket; }
@@ -47,7 +47,7 @@ public:
 	{
 		return setupScript;
 	};
-	
+
 	const std::vector<PlayerStatistics>& GetPlayerStats() const { return playerStats; }
 	const std::vector< std::vector<TeamStatistics> >& GetTeamStats() const { return teamStats; }
 	const std::vector< unsigned char >& GetWinningAllyTeams() const { return winningAllyTeams; }

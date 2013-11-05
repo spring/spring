@@ -1,7 +1,8 @@
-ADD_DEFINITIONS    (-DDEDICATED ${PIC_FLAG})
+ADD_DEFINITIONS    (-DDEDICATED ${PIC_FLAG} -DNOT_USING_CREG)
 ADD_DEFINITIONS    (-DHEADLESS -DNO_SOUND)
 REMOVE_DEFINITIONS (-DSTREFLOP_SSE -DAVI_CAPTURING)
 REMOVE_DEFINITIONS (-DTRACE_SYNC -DSYNCDEBUG)
+REMOVE_DEFINITIONS (-DTHREADPOOL)
 
 # deactivate signaling-NANs for this library
 RemoveFlag("-fsignaling-nans")
@@ -19,13 +20,22 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
 ### Assemble libraries
-LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
 LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
-LIST(APPEND engineDedicatedLibraries headlessStubs)
-IF    (UNIX)
+LIST(APPEND engineDedicatedLibraries headlessStubs engineSystemNet)
+
+IF (WIN32)
+	LIST(APPEND engineDedicatedLibraries ${WINMM_LIBRARY})
+ENDIF (WIN32)
+
+IF    (UNIX AND NOT MINGW)
+	IF    (PREFER_STATIC_LIBS)
+		LIST(APPEND engineDedicatedLibraries ${C_LIBRARY} ${MATH_LIBRARY} ${REALTIME_LIBRARY})
+	ENDIF (PREFER_STATIC_LIBS)
+
 	# Needed for dynamically loading shared libraries (on some OS)
 	LIST(APPEND engineDedicatedLibraries dl)
-ENDIF (UNIX)
+ENDIF (UNIX AND NOT MINGW)
 
 IF    (MINGW OR APPLE)
 	# Windows:
@@ -70,15 +80,13 @@ ENDIF	()
 SET(system_files
 	${sources_engine_System_FileSystem}
 	${sources_engine_System_Log}
-	${sources_engine_System_Net}
-	${sources_engine_System_creg}
 	${sources_engine_Platform_CrashHandler}
+	${ENGINE_SRC_ROOT_DIR}/Net/AutohostInterface.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigHandler.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigLocater.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigSource.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigVariable.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/CRC.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/EngineTypeHandler.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/CmdLineParams.cpp
@@ -89,16 +97,14 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Info.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LogOutput.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/TimeUtil.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/BaseNetProtocol.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/Demo.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoReader.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoRecorder.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/AutohostInterface.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings.c
+	${ENGINE_SRC_ROOT_DIR}/System/SafeVector.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/UnsyncedRNG.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Util.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/float4.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/float3.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/Backend.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/DefaultFilter.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/DefaultFormatter.cpp
@@ -114,16 +120,13 @@ ENDIF (WIN32)
 
 SET(engineDedicatedSources
 	${system_files}
-	${sources_engine_Game_Server}
+	${sources_engine_NetServer}
 	${sources_engine_System_Log}
-	${ENGINE_SRC_ROOT_DIR}/Game/GameServer.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/ClientSetup.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/GameSetup.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/GameData.cpp
-	${ENGINE_SRC_ROOT_DIR}/Game/PlayerBase.cpp
-	${ENGINE_SRC_ROOT_DIR}/Game/PlayerStatistics.cpp
-	${ENGINE_SRC_ROOT_DIR}/Game/TeamController.cpp
-	${ENGINE_SRC_ROOT_DIR}/ExternalAI/SkirmishAIData.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/Players/PlayerBase.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/Players/PlayerStatistics.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/GameVersion.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/IVideoCapturing.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/DummyVideoCapturing.cpp
@@ -148,28 +151,18 @@ IF    (MINGW)
 	TARGET_LINK_LIBRARIES (springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY})
 ENDIF (MINGW)
 
-ADD_LIBRARY(springserver SHARED
-		${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp
-		${sources_engine_System_Log_sinkFile}
-		${sources_engine_System_Log_sinkOutputDebugString}
-	)
-TARGET_LINK_LIBRARIES(springserver springserver-static)
-
 # Compile dedicated server executable
 ADD_EXECUTABLE(engine-dedicated
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp
 		${sources_engine_System_Log_sinkConsole}
 		${sources_engine_System_Log_sinkFile}
 		${sources_engine_System_Log_sinkOutputDebugString}
+		${ENGINE_ICON}
 		main
 	)
 TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
 
-### Install the executable
-INSTALL(TARGETS springserver     DESTINATION ${LIBDIR})
 INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
-SET_TARGET_PROPERTIES(engine-dedicated PROPERTIES OUTPUT_NAME "spring-dedicated")
-
 
 # Only build & install spring-dedicated executable & dependencies
 # use cases:
@@ -181,17 +174,10 @@ set(springDsDeps
 		gamedata
 		unitsync
 	)
-add_custom_target(spring-dedicated
-	WORKING_DIRECTORY
-		"${CMAKE_BINARY_DIR}"
-	COMMENT
-		"  spring-dedicated: Building all dependencies ..." VERBATIM
-	)
-add_dependencies(spring-dedicated ${springDsDeps}) # This also works for custom targets
-
 set(springDsInstallDirs
 		"rts/builds/dedicated"
 		"tools/unitsync"
 		"cont"
 	)
-CreateInstallTarget(spring-dedicated springDsDeps springDsInstallDirs)
+CreateEngineBuildAndInstallTarget(dedicated)
+add_dependencies(spring-dedicated springDsDeps springDsInstallDirs)

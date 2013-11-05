@@ -12,7 +12,7 @@
 #include "System/myMath.h"
 #include "System/Config/ConfigHandler.h"
 
-CONFIG(float, DynamicSunMinElevation).defaultValue(0.1f);
+CONFIG(float, DynamicSunMinElevation).defaultValue(0.1f).description("Sets the minimum elevation of the dynamic sun. If less than 0.0, the sun can disappear under the map completely as it moves.");
 
 
 StaticSkyLight::StaticSkyLight() {
@@ -61,7 +61,7 @@ void DynamicSkyLight::Update() {
 		updateNeeded = false;
 
 		sky->UpdateSunDir();
-		readmap->GetGroundDrawer()->UpdateSunDir();
+		readMap->GetGroundDrawer()->UpdateSunDir();
 		eventHandler.SunChanged(lightDir);
 	}
 }

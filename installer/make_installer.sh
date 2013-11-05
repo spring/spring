@@ -26,9 +26,9 @@ fi
 mkdir -p installer/downloads
 cd installer/downloads
 
-$WGET http://zero-k.info/lobby/setup.exe
-$WGET http://zero-k.info/lobby/setup_icon.ico
-$WGET http://www.springlobby.info/windows/latest.zip
+$WGET http://zero-k.info/lobby/Zero-K.exe
+#$WGET http://www.springlobby.info/windows/latest.zip
+$WGET http://springlobby.info/windows/springlobby-0.169-win32.zip
 if ! [ -s vcredist_x86.exe ]; then
 	$WGET http://download.microsoft.com/download/e/1/c/e1c773de-73ba-494a-a5ba-f24906ecf088/vcredist_x86.exe
 fi
@@ -42,7 +42,8 @@ cd ..
 rm -rf Springlobby
 mkdir -p Springlobby
 cd Springlobby
-unzip ../downloads/latest.zip -d SLArchive
+#unzip ../downloads/latest.zip -d SLArchive
+unzip ../downloads/springlobby-0.169-win32.zip -d SLArchive
 
 cd ../..
 

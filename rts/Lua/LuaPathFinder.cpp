@@ -48,7 +48,7 @@ bool LuaPathFinder::PushEntries(lua_State* L)
 	lua_pushstring(L, #x);      \
 	lua_pushcfunction(L, x);    \
 	lua_rawset(L, -3)
-                        
+
 	REGISTER_LUA_CFUNC(RequestPath);
 	REGISTER_LUA_CFUNC(InitPathNodeCostsArray);
 	REGISTER_LUA_CFUNC(FreePathNodeCostsArray);
@@ -78,14 +78,13 @@ int LuaPathFinder::PushPathNodes(lua_State* L, const int pathID)
 		lua_newtable(L);
 
 		for (int i = 0; i < pointCount; i++) {
-			lua_pushnumber(L, i + 1);
 			lua_newtable(L); {
 				const float3& p = points[i];
-				lua_pushnumber(L, 1); lua_pushnumber(L, p.x); lua_rawset(L, -3);
-				lua_pushnumber(L, 2); lua_pushnumber(L, p.y); lua_rawset(L, -3);
-				lua_pushnumber(L, 3); lua_pushnumber(L, p.z); lua_rawset(L, -3);
+				lua_pushnumber(L, p.x); lua_rawseti(L, -2, 1);
+				lua_pushnumber(L, p.y); lua_rawseti(L, -2, 2);
+				lua_pushnumber(L, p.z); lua_rawseti(L, -2, 3);
 			}
-			lua_rawset(L, -3);
+			lua_rawseti(L, -2, i + 1);
 		}
 	}
 
@@ -93,9 +92,8 @@ int LuaPathFinder::PushPathNodes(lua_State* L, const int pathID)
 		lua_newtable(L);
 
 		for (int i = 0; i < startCount; i++) {
-			lua_pushnumber(L, i + 1);
 			lua_pushnumber(L, starts[i] + 1);
-			lua_rawset(L, -3);
+			lua_rawseti(L, -2, i + 1);
 		}
 	}
 
@@ -186,7 +184,7 @@ static int path_gc(lua_State* L)
 }
 
 
-static void CreatePathMetatable(lua_State* L) 
+static void CreatePathMetatable(lua_State* L)
 {
 	luaL_newmetatable(L, "Path");
 	HSTR_PUSH_CFUNC(L, "__gc",       path_gc);
@@ -202,7 +200,7 @@ static void CreatePathMetatable(lua_State* L)
 int LuaPathFinder::RequestPath(lua_State* L)
 {
 	const MoveDef* moveDef = NULL;
-	
+
 	if (lua_israwstring(L, 1)) {
 		moveDef = moveDefHandler->GetMoveDefByName(lua_tostring(L, 1));
 	} else {
@@ -235,7 +233,7 @@ int LuaPathFinder::RequestPath(lua_State* L)
 	if (pathID == 0) {
 		return 0;
 	}
-	
+
 	int* idPtr = (int*)lua_newuserdata(L, sizeof(int));
 	luaL_getmetatable(L, "Path");
 	lua_setmetatable(L, -2);

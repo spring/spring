@@ -21,6 +21,7 @@ local postProcFile = 'gamedata/explosions_post.lua'
 local TDF = TDFparser or VFS.Include('gamedata/parse_tdf.lua')
 
 local system = VFS.Include('gamedata/system.lua')
+VFS.Include('gamedata/VFSUtils.lua')
 local section = 'explosions.lua'
 
 --------------------------------------------------------------------------------
@@ -73,7 +74,7 @@ local function FixGroundFlashColor(ed)
 end
 
 local function LoadTDFs(dir)
-  local tdfFiles = VFS.DirList(dir, '*.tdf')
+  local tdfFiles = RecursiveFileSearch(dir, '*.tdf')
 
   for _, filename in ipairs(tdfFiles) do
     local eds, err = TDF.Parse(filename)
@@ -95,7 +96,7 @@ local function LoadTDFs(dir)
 
 
 local function LoadLuas(dir)
-  local luaFiles = VFS.DirList(dir, '*.lua')
+  local luaFiles = RecursiveFileSearch(dir, '*.lua')
 
   for _, filename in ipairs(luaFiles) do
     local edEnv = {}

@@ -6,7 +6,7 @@
 #include "Projectile.h"
 #include "Sim/Misc/DamageArray.h"
 
-//! Piece Flags
+// Piece Explosion Flags
 const int PF_Shatter    = (1 << 0); // 1
 const int PF_Explode    = (1 << 1); // 2
 const int PF_Fall       = (1 << 2); // 4, if they dont fall they could live forever
@@ -19,23 +19,26 @@ const int PF_NoHeatCloud= (1 << 7); // 128
 class CSmokeTrailProjectile;
 struct S3DModelPiece;
 struct LocalModelPiece;
-struct S3DOPiece;
-struct SS3OPiece;
 
 class CPieceProjectile: public CProjectile
 {
 	CR_DECLARE(CPieceProjectile);
 
-	void creg_Serialize(creg::ISerializer& s);
-
 public:
-	CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int flags, CUnit* owner, float radius);
+	CPieceProjectile(
+		const float3& pos,
+		const float3& speed,
+		CUnit* owner,
+		LocalModelPiece* piece,
+		int flags,
+		float radius
+	);
 	virtual ~CPieceProjectile();
 	virtual void Detach();
 
 	void Update();
 	void Draw();
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	void Collision();
 	void Collision(CUnit* unit);
 
@@ -46,10 +49,20 @@ private:
 	float3 RandomVertexPos();
 
 public:
-	unsigned int flags;
+	struct FireTrailPoint {
+		float3 pos;
+		float size;
+	};
+
+	int age;
+
+	unsigned int explFlags;
 	unsigned int dispList;
 
 	const S3DModelPiece* omp;
+
+	CSmokeTrailProjectile* curCallback;
+	FireTrailPoint* fireTrailPoints[8];
 
 	float3 spinVec;
 	float spinSpeed;
@@ -59,16 +72,8 @@ public:
 
 	float3 oldSmokePos;
 	float3 oldSmokeDir;
+
 	bool drawTrail;
-
-	struct OldInfo {
-		float3 pos;
-		float size;
-	};
-	OldInfo* oldInfos[8];
-	CSmokeTrailProjectile* curCallback;
-
-	int age;
 };
 
 #endif /* PIECE_PROJECTILE_H */

@@ -7,10 +7,10 @@
 #include "Map/ReadMap.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
-#include "Game/GameServer.h"
 #include "Game/InMapDrawModel.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/WaitCommandsAI.h"
+#include "Net/GameServer.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/RadarHandler.h"
@@ -75,12 +75,12 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 	s.SerializeObjectInstance(gu, gu->GetClass());
 	s.SerializeObjectInstance(gameSetup, gameSetup->GetClass());
 	s.SerializeObjectInstance(game, game->GetClass());
-	s.SerializeObjectInstance(readmap, readmap->GetClass());
+	s.SerializeObjectInstance(readMap, readMap->GetClass());
 	s.SerializeObjectInstance(quadField, quadField->GetClass());
 	s.SerializeObjectInstance(unitHandler, unitHandler->GetClass());
 	s.SerializeObjectInstance(featureHandler, featureHandler->GetClass());
-	s.SerializeObjectInstance(loshandler, loshandler->GetClass());
-	s.SerializeObjectInstance(radarhandler, radarhandler->GetClass());
+	s.SerializeObjectInstance(losHandler, losHandler->GetClass());
+	s.SerializeObjectInstance(radarHandler, radarHandler->GetClass());
 	s.SerializeObjectInstance(airBaseHandler, airBaseHandler->GetClass());
 	s.SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());
 	s.SerializeObjectInstance(CCategoryHandler::Instance(), CCategoryHandler::Instance()->GetClass());
@@ -162,26 +162,16 @@ void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 	// eg: "AbcAbc" instead of "Abc"
 
 	//FIXME remove
-	/**/
 	scriptText = "";
 	modName = "";
 	mapName = "";
 
 	// read our own header.
 	ReadString(*ifs, scriptText);
-	if (!scriptText.empty() && !gameSetup) {
-		CGameSetup* temp = new CGameSetup();
-		if (!temp->Init(scriptText)) {
-			delete temp;
-			temp = NULL;
-		} else {
-			temp->saveName = file;
-			gameSetup = temp;
-		}
-	}
 	ReadString(*ifs, modName);
 	ReadString(*ifs, mapName);
-	/**/
+
+	CGameSetup::LoadSavedScript(file, scriptText);
 }
 
 /// this should be called on frame 0 when the game has started

@@ -14,8 +14,8 @@ namespace Shader {
 namespace GL {
 	struct LightHandler {
 	public:
-		LightHandler(): baseLight(0), maxLights(0), numLights(0), lightHandle(0) {
-		}
+		LightHandler(): baseLight(0), maxLights(0), numLights(0), lightHandle(0) {}
+		~LightHandler() { Kill(); }
 
 		void Init(unsigned int, unsigned int);
 		void Kill() { lights.clear(); }

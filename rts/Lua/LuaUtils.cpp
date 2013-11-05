@@ -17,21 +17,8 @@
 #include <boost/thread/recursive_mutex.hpp>
 
 static const int maxDepth = 256;
-int backupSize = 0;
+int LuaUtils::exportedDataSize = 0;
 
-
-boost::recursive_mutex luaprimmutex, luasecmutex;
-
-boost::recursive_mutex* getLuaMutex(bool userMode, bool primary) {
-#if (LUA_MT_OPT & LUA_MUTEX)
-	if(userMode)
-		return new boost::recursive_mutex();
-	else // LuaGaia & LuaRules will share mutexes to avoid deadlocks during XCalls etc.
-		return primary ? &luaprimmutex : &luasecmutex;
-#else
-		return &luaprimmutex;
-#endif
-}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -130,7 +117,7 @@ static bool RestoreTable(const LuaUtils::DataDump &d, lua_State* dst, int depth)
 
 
 static bool BackupData(LuaUtils::DataDump &d, lua_State* src, int index, int depth) {
-	++backupSize;
+	++LuaUtils::exportedDataSize;
 	const int type = lua_type(src, index);
 	d.type = type;
 	switch (type) {
@@ -165,6 +152,7 @@ static bool BackupData(LuaUtils::DataDump &d, lua_State* src, int index, int dep
 }
 
 static bool RestoreData(const LuaUtils::DataDump &d, lua_State* dst, int depth) {
+	--LuaUtils::exportedDataSize;
 	const int type = d.type;
 	switch (type) {
 		case LUA_TBOOLEAN: {
@@ -580,20 +568,90 @@ int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
 	return size;
 }
 
-void LuaUtils::ParseCommandOptions(lua_State* L, const char* caller,
-                                   int index, Command& cmd)
+
+
+void LuaUtils::PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable)
 {
-	if (lua_isnumber(L, index)) {
-		cmd.options = (unsigned char)lua_tonumber(L, index);
+	if (subtable) {
+		HSTR_PUSH(L, "params");
 	}
-	else if (lua_istable(L, index)) {
-		const int optionTable = index;
-		for (lua_pushnil(L); lua_next(L, optionTable) != 0; lua_pop(L, 1)) {
-			if (lua_israwnumber(L, -2)) { // avoid 'n'
-				if (!lua_isstring(L, -1)) {
-					luaL_error(L, "%s(): bad option table entry", caller);
+
+	lua_createtable(L, cmd.params.size(), 0);
+
+	for (unsigned int p = 0; p < cmd.params.size(); p++) {
+		lua_pushnumber(L, cmd.params[p]);
+		lua_rawseti(L, -2, p + 1);
+	}
+
+	if (subtable) {
+		lua_rawset(L, -3);
+	}
+}
+
+void LuaUtils::PushCommandOptionsTable(lua_State* L, const Command& cmd, bool subtable)
+{
+	if (subtable) {
+		HSTR_PUSH(L, "options");
+	}
+
+	lua_createtable(L, 0, 7);
+	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
+	HSTR_PUSH_BOOL(L, "alt",      !!(cmd.options & ALT_KEY        ));
+	HSTR_PUSH_BOOL(L, "ctrl",     !!(cmd.options & CONTROL_KEY    ));
+	HSTR_PUSH_BOOL(L, "shift",    !!(cmd.options & SHIFT_KEY      ));
+	HSTR_PUSH_BOOL(L, "right",    !!(cmd.options & RIGHT_MOUSE_KEY));
+	HSTR_PUSH_BOOL(L, "meta",     !!(cmd.options & META_KEY       ));
+	HSTR_PUSH_BOOL(L, "internal", !!(cmd.options & INTERNAL_ORDER ));
+
+	if (subtable) {
+		lua_rawset(L, -3);
+	}
+}
+
+void LuaUtils::ParseCommandOptions(
+	lua_State* L,
+	Command& cmd,
+	const char* caller,
+	const int idx
+) {
+	if (lua_isnumber(L, idx)) {
+		cmd.options = (unsigned char)lua_tonumber(L, idx);
+	} else if (lua_istable(L, idx)) {
+		for (lua_pushnil(L); lua_next(L, idx) != 0; lua_pop(L, 1)) {
+			// "key" = value (table format of CommandNotify)
+			if (lua_israwstring(L, -2)) {
+				const std::string key = lua_tostring(L, -2);
+
+				// we do not care about the "coded" key (not a boolean value)
+				if (!lua_isboolean(L, -1))
+					continue;
+
+				const bool value = lua_toboolean(L, -1);
+
+				if (key == "right") {
+					cmd.options |= (RIGHT_MOUSE_KEY * value);
+				} else if (key == "alt") {
+					cmd.options |= (ALT_KEY * value);
+				} else if (key == "ctrl") {
+					cmd.options |= (CONTROL_KEY * value);
+				} else if (key == "shift") {
+					cmd.options |= (SHIFT_KEY * value);
+				} else if (key == "meta") {
+					cmd.options |= (META_KEY * value);
 				}
-				const string value = lua_tostring(L, -1);
+
+				continue;
+			}
+
+			// [idx] = "value", avoid 'n'
+			if (lua_israwnumber(L, -2)) {
+				//const int idx = lua_tonumber(L, -2);
+
+				if (!lua_isstring(L, -1))
+					continue;
+
+				const std::string value = lua_tostring(L, -1);
+
 				if (value == "right") {
 					cmd.options |= RIGHT_MOUSE_KEY;
 				} else if (value == "alt") {
@@ -607,9 +665,8 @@ void LuaUtils::ParseCommandOptions(lua_State* L, const char* caller,
 				}
 			}
 		}
-	}
-	else {
-		luaL_error(L, "%s(): bad options", caller);
+	} else {
+		luaL_error(L, "%s(): bad options-argument type", caller);
 	}
 }
 
@@ -620,29 +677,30 @@ Command LuaUtils::ParseCommand(lua_State* L, const char* caller, int idIndex)
 	if (!lua_isnumber(L, idIndex)) {
 		luaL_error(L, "%s(): bad command ID", caller);
 	}
-	const int id = lua_toint(L, idIndex);
-	Command cmd(id);
+
+	Command cmd(lua_toint(L, idIndex));
 
 	// params
-	const int paramTable = (idIndex + 1);
-	if (!lua_istable(L, paramTable)) {
+	const int paramTableIdx = (idIndex + 1);
+
+	if (!lua_istable(L, paramTableIdx)) {
 		luaL_error(L, "%s(): bad param table", caller);
 	}
-	for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
+
+	for (lua_pushnil(L); lua_next(L, paramTableIdx) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2)) { // avoid 'n'
 			if (!lua_isnumber(L, -1)) {
-				luaL_error(L, "%s(): bad param table entry", caller);
+				luaL_error(L, "%s(): expected <number idx=%d, number value> in params-table", caller, lua_tonumber(L, -2));
 			}
-			const float value = lua_tofloat(L, -1);
-			cmd.PushParam(value);
+
+			cmd.PushParam(lua_tofloat(L, -1));
 		}
 	}
 
 	// options
-	ParseCommandOptions(L, caller, (idIndex + 2), cmd);
+	ParseCommandOptions(L, cmd, caller, (idIndex + 2));
 
 	// XXX should do some sanity checking?
-
 	return cmd;
 }
 
@@ -677,7 +735,7 @@ Command LuaUtils::ParseCommandTable(lua_State* L, const char* caller, int table)
 
 	// options
 	lua_rawgeti(L, table, 3);
-	ParseCommandOptions(L, caller, lua_gettop(L), cmd);
+	ParseCommandOptions(L, cmd, caller, lua_gettop(L));
 	lua_pop(L, 1);
 
 	// XXX should do some sanity checking?
@@ -734,7 +792,7 @@ int LuaUtils::Next(const ParamMap& paramMap, lua_State* L)
 	lua_settop(L, 2); // create a 2nd argument if there isn't one
 
 	// internal parameters first
-	if (lua_isnil(L, 2)) {
+	if (lua_isnoneornil(L, 2)) {
 		const string& nextKey = paramMap.begin()->first;
 		lua_pushsstring(L, nextKey); // push the key
 		lua_pushvalue(L, 3);         // copy the key
@@ -859,14 +917,12 @@ bool LuaUtils::PushLogEntries(lua_State* L)
 int LuaUtils::Log(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if (args < 2)
-		return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
 	if (args < 3)
-		return 0;
+		return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
 
 	const std::string section = luaL_checkstring(L, 1);
 
-	int loglevel;
+	int loglevel = 0;
 	if (lua_israwnumber(L, 2)) {
 		loglevel = lua_tonumber(L, 2);
 	}
@@ -927,15 +983,10 @@ int LuaUtils::ZlibCompress(lua_State* L)
 
 int LuaUtils::ZlibDecompress(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args < 1)
-		return luaL_error(L, "ZlibCompress: missign data argument");
 	size_t inLen;
 	const char* inData = luaL_checklstring(L, 1, &inLen);
 
-	long unsigned bufsize = 65000;
-	if (args > 1 && lua_isnumber(L, 2))
-		bufsize = std::max(lua_toint(L, 2), 0);
+	long unsigned bufsize = std::max(luaL_optint(L, 2, 65000), 0);
 
 	std::vector<boost::uint8_t> uncompressed(bufsize, 0);
 	const int error = uncompress(&uncompressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
@@ -1023,24 +1074,44 @@ int LuaUtils::isuserdata(lua_State* L)
 #define DEBUG_TABLE "debug"
 #define DEBUG_FUNC "traceback"
 
-int LuaUtils::PushDebugTraceback(lua_State *L)
+/// this function always leaves one item on the stack
+/// and returns its index if valid and zero otherwise
+int LuaUtils::PushDebugTraceback(lua_State* L)
 {
 	lua_getglobal(L, DEBUG_TABLE);
+
 	if (lua_istable(L, -1)) {
 		lua_getfield(L, -1, DEBUG_FUNC);
+		lua_remove(L, -2); // remove DEBUG_TABLE from stack
+
 		if (!lua_isfunction(L, -1)) {
-			return 0;
+			return 0; // leave a stub on stack
 		}
-		lua_remove(L, -2);
 	} else {
 		lua_pop(L, 1);
 		static const LuaHashString traceback("traceback");
 		if (!traceback.GetRegistryFunc(L)) {
+			lua_pushnil(L); // leave a stub on stack
 			return 0;
 		}
 	}
 
 	return lua_gettop(L);
+}
+
+
+
+LuaUtils::ScopedDebugTraceBack::ScopedDebugTraceBack(lua_State* L)
+	: luaState(L)
+	, errFuncIdx(PushDebugTraceback(L))
+{
+	assert(errFuncIdx >= 0);
+}
+
+LuaUtils::ScopedDebugTraceBack::~ScopedDebugTraceBack() {
+	//FIXME better use lua_remove(L, errFuncIdx) and solve zero case?
+	assert(errFuncIdx == 0 || lua_gettop(luaState) == errFuncIdx);
+	lua_pop(luaState, 1);
 }
 
 /******************************************************************************/
@@ -1050,9 +1121,8 @@ void LuaUtils::PushStringVector(lua_State* L, const vector<string>& vec)
 {
 	lua_createtable(L, vec.size(), 0);
 	for (size_t i = 0; i < vec.size(); i++) {
-		lua_pushnumber(L, (int) (i + 1));
 		lua_pushsstring(L, vec[i]);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, (int)(i + 1));
 	}
 }
 

@@ -53,6 +53,7 @@ protected:
 
 		float3 pos;
 		float3 speed;
+
 		float life;
 		float decayrate;
 		float size;

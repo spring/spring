@@ -38,7 +38,7 @@ EndIf ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
 # MSVC needs the default flags
 if(NOT MSVC)
 	### Strip C[XX]_FLAGS
-	set(CUSTOM_CFLAGS FALSE CACHE BOOL "If false all C[XX]_FLAGS are cleared (more reliable to sync/safer for online play).")
+	option(CUSTOM_CFLAGS "If false all C[XX]_FLAGS are cleared (more reliable to sync/safer for online play)." FALSE)
 	if    (CUSTOM_CFLAGS)
 		Message(WARNING "Using custom CXX_FLAGS! this build will very likely not sync in online mode!")
 	else  (CUSTOM_CFLAGS)
@@ -72,23 +72,14 @@ endif (WIN32)
 
 # XCode
 if    (APPLE)
-	set(MACOSX_BUNDLE TRUE CACHE BOOL "Compile spring to work as a Bundle.app")
+	option(MACOSX_BUNDLE "Compile spring to work as a Bundle.app" TRUE)
+	add_definitions(${PIC_FLAG})
 	if    (MACOSX_BUNDLE)
 		add_definitions(-DMACOSX_BUNDLE)
 	endif (MACOSX_BUNDLE)
 else  (APPLE)
 	set(MACOSX_BUNDLE FALSE)
 endif (APPLE)
-
-if    (UNIX AND NOT MINGW)
-	execute_process(COMMAND ${CMAKE_LINKER} "-v" COMMAND "grep" "-iq" "gold" RESULT_VARIABLE hasGold)
-	if    (hasGold EQUAL 0)
-		Message(STATUS "Found ld.gold, compressing debugsymbols")
-		set(CMAKE_EXE_LINKER_FLAGS " -Wl,--compress-debug-sections=zlib ${CMAKE_EXE_LINKER_FLAGS}")
-	else  (hasGold EQUAL 0)
-		Message(WARNING "You are using ld.bfd, it's much slower than ld.gold.")
-	endif (hasGold EQUAL 0)
-endif (UNIX AND NOT MINGW)
 
 
 ### Install paths (relative to CMAKE_INSTALL_PREFIX)
@@ -102,7 +93,6 @@ if    (UNIX AND NOT MINGW)
 	set(APPLICATIONS_DIR "share/applications" CACHE STRING "Where to install desktop files")
 	set(PIXMAPS_DIR      "share/pixmaps"      CACHE STRING "Where to install icons")
 	set(MIME_DIR         "share/mime"         CACHE STRING "Where MIME definitions are located")
-	set(STABS_DEBUG_SYMBOLS FALSE CACHE BOOL "Use stabs debug symbols (-stabs) instead of the GDB format (-gdb). This probably makes gdb and eg. addr2line work better with windows binaries (depends mainly on the tools version).")
 else  (UNIX AND NOT MINGW)
 	set(BINDIR  "." CACHE STRING "Where to install binaries")
 	set(LIBDIR  "." CACHE STRING "Where to install libraries")
@@ -117,7 +107,7 @@ else  (UNIX AND NOT MINGW)
 		endif(MSVC)
 	endif (NOT MINGWLIBS)
 	if    (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
-		MESSAGE(FATAL_ERROR "MINGWLIBS is not a valid directory")
+		MESSAGE(FATAL_ERROR "MINGWLIBS '${MINGWLIBS}' is not a valid directory")
 	endif (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
 
 	set(CMAKE_PREFIX_PATH ${MINGWLIBS})
@@ -154,12 +144,10 @@ else  (UNIX AND NOT MINGW)
 	else(MSVC)
 		include_directories(${MINGWLIBS}/include)
 		set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll)
-
-		set(STABS_DEBUG_SYMBOLS FALSE CACHE BOOL "Use stabs debug symbols (-stabs) instead of the GDB format (-gdb). This probably makes gdb and eg. addr2line work better with windows binaries (depends mainly on the tools version).")
 	endif(MSVC)
 endif (UNIX AND NOT MINGW)
 
-## Artificial Intelligence 
+## Artificial Intelligence
 # In theory, it should be possible to set this to LIBDIR instead
 # (next two are relative to CMAKE_INSTALL_PREFIX)
 set(AI_LIBS_DIR "${DATADIR}"     CACHE STRING "Where to install Skirmish AI libraries")
@@ -207,35 +195,35 @@ if    (NOT "${LOG_LEVEL}" STREQUAL "DEFAULT")
 	add_definitions(-D_LOG_LEVEL_MIN=LOG_LEVEL_${LOG_LEVEL})
 endif (NOT "${LOG_LEVEL}" STREQUAL "DEFAULT")
 
-set(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
+option(SYNCCHECK "Check sync during gameplay (Required for online play!)" TRUE)
 if    (SYNCCHECK)
 	add_definitions(-DSYNCCHECK)
 endif (SYNCCHECK)
 
-set(NO_SOUND FALSE CACHE BOOL "No sound output support")
+option(NO_SOUND "No sound output support" FALSE)
 
 if    (WIN32)
 	## internal AVI recorder (w/o sound atm)
-	set(NO_AVI FALSE CACHE BOOL "Disable in-game video recording")
+	option(NO_AVI "Disable in-game video recording" FALSE)
 	if    (NOT NO_AVI)
 		add_definitions(-DAVI_CAPTURING)
 	endif (NOT NO_AVI)
 
 	if   (NOT MSVC)
 		## stdout console
-		set(WINDOWS_CONSOLE FALSE CACHE BOOL "Show a visible cmd.exe with stdout when spring runs")
+		option(WINDOWS_CONSOLE "Show a visible cmd.exe with stdout when spring runs" FALSE)
 		if    (NOT WINDOWS_CONSOLE)
 			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows")
 		endif (NOT WINDOWS_CONSOLE)
 	endif(NOT MSVC)
 endif (WIN32)
 
-set(HEADLESS_SYSTEM FALSE CACHE BOOL "Compile for a headless system (default- and MT-spring will not be built!)")
+option(HEADLESS_SYSTEM "Compile a headless executable (other executables will not be built!)" FALSE)
 if    (HEADLESS_SYSTEM AND NOT NO_SOUND)
 	message(FATAL_ERROR "HEADLESS_SYSTEM requires NO_SOUND to be set!")
 endif (HEADLESS_SYSTEM AND NOT NO_SOUND)
 
-set(USE_LIBSQUISH TRUE CACHE BOOL "Enable libsquish for DXT decompressing. (needed for ETC1 support)")
+option(USE_LIBSQUISH "Enable libsquish for DXT decompressing. (needed for ETC1 support)" TRUE)
 if    (USE_LIBSQUISH)
 	add_definitions(-DUSE_LIBSQUISH)
 endif (USE_LIBSQUISH)
@@ -246,9 +234,25 @@ if    (MINGW)
 	set(SDL_INCLUDE_DIR "${MINGWLIBS}/include/SDL")
 endif (MINGW)
 
-FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex program_options system signals REQUIRED)
-FIND_PACKAGE(Boost 1.35.0 COMPONENTS chrono)
+FIND_PACKAGE(Boost 1.47.0 COMPONENTS thread regex program_options system chrono signals filesystem REQUIRED)
+FIND_PACKAGE(Boost 1.47.0 COMPONENTS timer)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+
+# boost::chrono depends on clock_gettime which we need to link ourself when boost is static linked
+Set(Boost_CHRONO_LIBRARY_WITH_RT ${Boost_CHRONO_LIBRARY})
+IF    (UNIX AND NOT MINGW)
+	FIND_LIBRARY(REALTIME_LIBRARY rt)
+
+	IF    (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
+		MESSAGE(FATAL_ERROR "librt.[so|a] not found! Needed by std/boost chrono when static linked!")
+	ENDIF (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
+
+	# zydox buildslave seems to have problems to autolink it from dynlinked boost libs
+	#  so always link it (won't hurt cause std/boost chrono need it never the less)
+	if    (EXISTS "${REALTIME_LIBRARY}")
+		LIST(APPEND Boost_CHRONO_LIBRARY_WITH_RT ${REALTIME_LIBRARY})
+	ENDIF (EXISTS "${REALTIME_LIBRARY}")
+ENDIF (UNIX AND NOT MINGW)
 
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.
@@ -264,7 +268,9 @@ ENDIF (PREFER_STATIC_LIBS)
 
 if    (WIN32)
 	FIND_PACKAGE(Windres)
+	SET(CMAKE_RC_COMPILER ${WINDRES_BIN})
 	FIND_PACKAGE(Win32Libs REQUIRED)
+	FIND_LIBRARY(WINMM_LIBRARY NAMES winmm)
 endif (WIN32)
 
 if     (WIN32)
@@ -304,23 +310,42 @@ Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${LTO_FLAGS}")
 Set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${LTO_FLAGS}")
 Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
 
-set(OPENMP TRUE CACHE BOOL "Enable local multithreading")
-if    (OPENMP)
-	include(FindOpenMP)
-	if(OPENMP_FOUND)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-		if(NOT MSVC)
-			# Currently FindOpenMP fails and doesn't give _any_ linker flags
-			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp -lgomp")
-			set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fopenmp -lgomp")
-			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fopenmp -lgomp")
-		endif(NOT MSVC)
-	endif(OPENMP_FOUND)
-endif (OPENMP)
+
+### ld.gold
+if    (LDGOLD_FOUND)
+	Message(STATUS "Found ld.gold, compressing debugsymbols")
+	set(CMAKE_LINKER LD_GOLD)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LDGOLD_CXX_FLAGS}")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LDGOLD_LINKER_FLAGS}")
+else  (LDGOLD_FOUND)
+	Message(WARNING "You are using ld.bfd, it's much slower than ld.gold.")
+endif (LDGOLD_FOUND)
+
+
+### C++11
+option(USE_CXX11 "Enable c++11" TRUE)
+if    (USE_CXX11)
+	Message(STATUS "Compiling with C++11")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS}")
+	add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # issue in std::chrono with gentoo and few other distros
+	add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants
+endif (USE_CXX11)
+
+
+### our custom OpenMP replacement
+option(THREADPOOL "Enable ThreadPools" TRUE)
+if(MSVC)
+	message(WARNING "MSVC doesn't support THREADPOOL, disabled!")
+	set(THREADPOOL FALSE CACHE BOOL "" FORCE)
+endif()
+if (THREADPOOL)
+	add_definitions(-DTHREADPOOL)
+endif(THREADPOOL)
+
 
 if(NOT MSVC)
-	set(SIGNAL_NANS ${DEBUG_BUILD} CACHE BOOL "Enable NaN-Signalling")
+	### SigNan
+	option(SIGNAL_NANS "Enable NaN-Signalling" ${DEBUG_BUILD})
 	if (SIGNAL_NANS)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsignaling-nans")
 	endif(SIGNAL_NANS)
@@ -364,7 +389,7 @@ elseif (CMAKE_COMPILER_IS_GNUCXX)
 elseif (MSVC)
 	# nothing to be done here
 else   (MSVC)
-	Message(FATAL_ERROR "unknown compiler")
+	Message(WARNING "unknown compiler")
 endif ($ENV{CXX} MATCHES "icpc")
 
 add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
@@ -372,7 +397,9 @@ add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in 
 if    (MSVC)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE")
 else  (MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math")
+	if (CMAKE_COMPILER_IS_GNUCXX)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math")
+	endif(CMAKE_COMPILER_IS_GNUCXX)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${IEEE_FP_FLAG} -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
 	if (UNIX)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
@@ -391,17 +418,11 @@ else  (MSVC)
 	set(CMAKE_CXX_FLAGS_PROFILE         "                              -O2 -pg ${DEBUG_WARNINGS}  -DNDEBUG -DPROFILE")
 	set(CMAKE_MODULE_LINKER_FLAGS_PROFILE "-pg")
 	set(CMAKE_SHARED_LINKER_FLAGS_PROFILE "-pg")
-	if (STABS_DEBUG_SYMBOLS)
-		set(CMAKE_CXX_FLAGS_DEBUG           "${CMAKE_CXX_FLAGS_DEBUG}  -gstabs")
-		set(CMAKE_CXX_FLAGS_DEBUG2          "${CMAKE_CXX_FLAGS_DEBUG2} -gstabs")
-		set(CMAKE_CXX_FLAGS_DEBUG3          "${CMAKE_CXX_FLAGS_DEBUG3} -gstabs")
-		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -gstabs")
-	else  (STABS_DEBUG_SYMBOLS)
-		set(CMAKE_CXX_FLAGS_DEBUG           "${CMAKE_CXX_FLAGS_DEBUG}  -ggdb1")
-		set(CMAKE_CXX_FLAGS_DEBUG2          "${CMAKE_CXX_FLAGS_DEBUG2} -ggdb2")
-		set(CMAKE_CXX_FLAGS_DEBUG3          "${CMAKE_CXX_FLAGS_DEBUG3} -ggdb3")
-		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
-	endif (STABS_DEBUG_SYMBOLS)
+
+	set(CMAKE_CXX_FLAGS_DEBUG           "${CMAKE_CXX_FLAGS_DEBUG}  -ggdb1")
+	set(CMAKE_CXX_FLAGS_DEBUG2          "${CMAKE_CXX_FLAGS_DEBUG2} -ggdb2")
+	set(CMAKE_CXX_FLAGS_DEBUG3          "${CMAKE_CXX_FLAGS_DEBUG3} -ggdb3")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
 
 	if     (MINGW)
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--enable-auto-import")

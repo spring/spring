@@ -8,61 +8,112 @@
 --  Copyright (C) 2007.
 --  Licensed under the terms of the GNU GPL, v2 or later.
 --
+--  functions listed here are reserved and not allowed to be RegisterGlobal()'ed
+--  they are set to 'nil' if not used by any gadget, see gadgetHandler:UpdateCallIn
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-CallInsList = {
+CALLIN_MAP = {}
+CALLIN_LIST = {
+	-- Save/Load
+	"Save",
+	"Load",
+
+	-- called when Lua is disabled or this client exits
 	"Shutdown",
-	"LayoutButtons",
-	"ConfigureLayout",
-	"CommandNotify",
 
-	"KeyPress",
-	"KeyRelease",
-	"MouseMove",
-	"MousePress",
-	"MouseRelease",
-	"IsAbove",
-	"GetTooltip",
-	"AddConsoleLine",
-	"GroupChanged",
-
+	-- game callins
+	"GameSetup",
 	"GamePreload",
 	"GameStart",
 	"GameOver",
+	"GameFrame",
+	"GameProgress",            -- FIXME: not implemented by base GH
 	"GameID",
-	"TeamDied",
-	"TeamChanged",
 
+	-- player callins
 	"PlayerChanged",
 	"PlayerAdded",
 	"PlayerRemoved",
 
+	-- team callins
+	"TeamDied",
+	"TeamChanged",
+
+	-- unit callins
 	"UnitCreated",
 	"UnitFinished",
 	"UnitFromFactory",
 	"UnitDestroyed",
+	"UnitExperience",
+	"UnitIdle",
+	"UnitCmdDone",
+	"UnitPreDamaged",
+	"UnitDamaged",
 	"UnitTaken",
 	"UnitGiven",
-	"UnitIdle",
-	"UnitSeismicPing",
 	"UnitEnteredRadar",
 	"UnitEnteredLos",
 	"UnitLeftRadar",
 	"UnitLeftLos",
+	"UnitSeismicPing",
 	"UnitLoaded",
 	"UnitUnloaded",
 	"UnitCloaked",
 	"UnitDecloaked",
-	-- "UnitUnitCollision",
-	-- "UnitFeatureCollision",
-	-- "UnitMoveFailed",
+	"UnitUnitCollision",
+	"UnitFeatureCollision",
+	"UnitMoveFailed",
+	"UnitMoved",               -- FIXME: not exposed to Lua yet (as of 95.0)
+	"UnitEnteredAir",          -- FIXME: not implemented by base GH
+	"UnitLeftAir",             -- FIXME: not implemented by base GH
+	"UnitEnteredWater",        -- FIXME: not implemented by base GH
+	"UnitLeftWater",           -- FIXME: not implemented by base GH
+	"UnitCommand",             -- FIXME: not implemented by base GH
 
+	-- weapon callins
+	"StockpileChanged",
+
+	-- feature callins
 	"FeatureCreated",
 	"FeatureDestroyed",
+	"FeatureDamaged",
+	"FeatureMoved",            -- FIXME: not exposed to Lua yet (as of 95.0)
+	"FeaturePreDamaged",
 
+	-- projectile callins
 	"ProjectileCreated",
 	"ProjectileDestroyed",
+
+	-- shield callins
+	"ShieldPreDamaged",
+
+	-- misc synced LuaRules callins
+	"AllowCommand",
+	"AllowStartPosition",
+	"AllowUnitCreation",
+	"AllowUnitTransfer",
+	"AllowUnitBuildStep",
+	"AllowFeatureBuildStep",
+	"AllowFeatureCreation",
+	"AllowResourceLevel",
+	"AllowResourceTransfer",
+	"AllowDirectUnitControl",
+	"AllowWeaponTargetCheck",
+	"AllowWeaponTarget",
+
+	"Explosion",
+	"CommandFallback",
+	"MoveCtrlNotify",
+	"TerraformComplete",
+
+	-- synced message callins
+	"GotChatMsg",
+	"RecvLuaMsg",
+
+	-- unsynced callins
+	"Update",
+	"UnsyncedHeightMapUpdate", -- FIXME: not implemented by base GH
 
 	"DrawGenesis",
 	"DrawWorld",
@@ -73,42 +124,45 @@ CallInsList = {
 	"DrawScreenEffects",
 	"DrawScreen",
 	"DrawInMiniMap",
+
 	"DrawUnit",
 	"DrawFeature",
 	"DrawShield",
 	"DrawProjectile",
 
-	"Explosion",
-	"ShockFront",
-
-	"GameFrame",
-	"CobCallback",
-	"AllowCommand",
-	"CommandFallback",
-	"AllowUnitCreation",
-	"AllowUnitTransfer",
-	"AllowUnitBuildStep",
-	"AllowFeatureCreation",
-	"AllowFeatureBuildStep",
-	"AllowResourceLevel",
-	"AllowResourceTransfer",
-	"MoveCtrlNotify",
-	"TerraformComplete",
-	"AllowWeaponTargetCheck",
-	"AllowWeaponTarget",
-
+	-- unsynced message callins
+	"RecvFromSynced",
 	"RecvSkirmishAIMessage",
 
-	"GameProgress",
+	"DefaultCommand",
+	"CommandNotify",
+
+	"ViewResize", -- FIXME ?
+	"LayoutButtons",
+	"ConfigureLayout",
+
+	"AddConsoleLine",
+	"GroupChanged",
+
+	-- moved from LuaUI
+	"KeyPress",
+	"KeyRelease",
+	"MousePress",
+	"MouseRelease",
+	"MouseMove",
+	"MouseWheel",
+
+	"IsAbove",
+	"GetTooltip",
+
+	"WorldTooltip",            -- FIXME: not implemented by base GH
+	"MapDrawCmd",
+	"ShockFront",              -- FIXME: not implemented by base GH
 }
 
-
--- make the map
-CallInsMap = {}
-for _, callin in ipairs(CallInsList) do
-	CallInsMap[callin] = true
+for callinIdx, callinName in ipairs(CALLIN_LIST) do
+	CALLIN_MAP[callinName] = callinIdx
 end
-
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

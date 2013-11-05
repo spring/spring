@@ -17,7 +17,7 @@
 #include "Lua/LuaUnitMaterial.h"
 #include "Sim/Objects/SolidObject.h"
 #include "System/Matrix44f.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 class CPlayer;
 class CCommandAI;
@@ -88,8 +88,7 @@ public:
 	virtual void DoWaterDamage();
 	virtual void FinishedBuilding(bool postInit);
 
-	void StoreImpulse(const float3& impulse, float newImpulseDecayRate);
-	void StoreImpulse(const float3& impulse);
+	void ApplyImpulse(const float3& impulse);
 
 	bool AttackUnit(CUnit* unit, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
 	bool AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
@@ -99,7 +98,7 @@ public:
 	void ChangeLos(int losRad, int airRad);
 	void ChangeSensorRadius(int* valuePtr, int newValue);
 	/// negative amount=reclaim, return= true -> build power was successfully applied
-	bool AddBuildPower(float amount, CUnit* builder);
+	bool AddBuildPower(CUnit* builder, float amount);
 	/// turn the unit on
 	void Activate();
 	/// turn the unit off
@@ -107,13 +106,13 @@ public:
 
 	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
-	void SetHeadingFromDirection();
 
 	void EnableScriptMoveType();
 	void DisableScriptMoveType();
 
-	void ApplyTransformMatrix() const;
 	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const;
+
+	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const;
 
 	void SetLastAttacker(CUnit* attacker);
 	void SetLastAttackedPiece(LocalModelPiece* p, int f) {
@@ -125,6 +124,7 @@ public:
 			return lastAttackedPiece;
 		return NULL;
 	}
+
 
 	void DependentDied(CObject* o);
 
@@ -146,18 +146,22 @@ public:
 
 	void CalculateTerrainType();
 	void UpdateTerrainType();
+	void UpdatePhysicalState();
+	void UpdateDirVectors(bool useGroundNormal);
 
-	void SetDirVectors(const CMatrix44f&);
-	void UpdateDirVectors(bool, bool = false);
+	float3 GetErrorVector(int allyteam) const;
+	float3 GetErrorPos(int allyteam, bool aiming = false) const { return (aiming? aimPos: midPos) + GetErrorVector(allyteam); }
+	float3 GetDrawErrorPos(int allyteam) const { return (drawMidPos + GetErrorVector(allyteam)); }
+	void UpdatePosErrorParams(bool updateError, bool updateDelta);
+
+	bool UsingScriptMoveType() const { return (prevMoveType != NULL); }
 
 	bool IsNeutral() const { return neutral; }
 	bool IsCloaked() const { return isCloaked; }
+	bool IsIdle() const;
 
 	void SetStunned(bool stun);
 	bool IsStunned() const { return stunned; }
-
-	void SetCrashing(bool crash) { crashing = crash; }
-	bool IsCrashing() const { return crashing; }
 
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
 	unsigned short CalcLosStatus(int allyTeam);
@@ -212,6 +216,70 @@ public:
 
 public:
 	const UnitDef* unitDef;
+
+	CUnit* soloBuilder;
+	/// last attacker
+	CUnit* lastAttacker;
+	/// current attackee
+	CUnit* attackTarget;
+
+	/// transport that the unit is currently in
+	CTransportUnit* transporter;
+
+	AMoveType* moveType;
+	AMoveType* prevMoveType;
+
+	CCommandAI* commandAI;
+	/// if the unit is part of an group (hotkey group)
+	CGroup* group;
+
+	/// Our shield weapon, NULL if we have none
+	CWeapon* shieldWeapon;
+	/// Our weapon with stockpiled ammo, NULL if we have none
+	CWeapon* stockpileWeapon;
+
+	LocalModel* localModel;
+	CUnitScript* script;
+
+	/// piece that was last hit by a projectile
+	LocalModelPiece* lastAttackedPiece;
+
+	/// which squares the unit can currently observe
+	LosInstance* los;
+
+	/// player who is currently FPS'ing this unit
+	CPlayer* fpsControlPlayer;
+
+	UnitTrackStruct* myTrack;
+	icon::CIconData* myIcon;
+
+
+	std::vector<CWeapon*> weapons;
+	/// quads the unit is part of
+	std::vector<int> quads;
+	std::vector<int> radarSquares;
+
+	/// indicate the los/radar status the allyteam has on this unit
+	std::vector<unsigned short> losStatus;
+
+	/// length-per-pixel (UNSYNCED)
+	std::vector<float> lodLengths;
+
+	std::list<CMissileProjectile*> incomingMissiles; //FIXME make std::set?
+
+
+	float3 attackPos;
+	float3 deathSpeed;
+	float3 lastMuzzleFlameDir;
+
+	/// units takes less damage when attacked from this dir (encourage flanking fire)
+	float3 flankingBonusDir;
+
+	/// used for innacuracy with radars etc
+	float3 posErrorVector;
+	float3 posErrorDelta;
+
+
 	int unitDefID;
 	int featureDefID; // FeatureDef id of the wreck we spawn on death
 
@@ -228,8 +296,6 @@ public:
 
 	/// if the updir is straight up or align to the ground vector
 	bool upright;
-
-	float3 deathSpeed;
 
 	/// total distance the unit has moved
 	float travel;
@@ -254,15 +320,15 @@ public:
 	 * FIRESTATE_FIREATWILL
 	 */
 	bool neutral;
-
-	CUnit* soloBuilder;
 	bool beingBuilt;
+
 	/// if we arent built on for a while start decaying
 	int lastNanoAdd;
+	int lastFlareDrop;
+
 	/// How much reapir power has been added to this recently
 	float repairAmount;
-	/// transport that the unit is currently in
-	CTransportUnit* transporter;
+
 	/// id of transport that the unit is about to be picked up by
 	int loadingTransportId;
 	/// 0.0-1.0
@@ -274,9 +340,6 @@ public:
 	/// set los to this when finished building
 	int realLosRadius;
 	int realAirLosRadius;
-
-	/// indicate the los/radar status the allyteam has on this unit
-	std::vector<unsigned short> losStatus;
 
 	/// used by constructing units
 	bool inBuildStance;
@@ -297,11 +360,6 @@ public:
 	unsigned int restTime;
 	unsigned int outOfMapTime;
 
-	std::vector<CWeapon*> weapons;
-	/// Our shield weapon, or NULL, if we have none
-	CWeapon* shieldWeapon;
-	/// Our weapon with stockpiled ammo, or NULL, if we have none
-	CWeapon* stockpileWeapon;
 	float reloadSpeed;
 	float maxRange;
 
@@ -311,16 +369,10 @@ public:
 
 	/// used to determine muzzle flare size
 	float lastMuzzleFlameSize;
-	float3 lastMuzzleFlameDir;
 
 	int armorType;
 	/// what categories the unit is part of (bitfield)
 	unsigned int category;
-
-	/// quads the unit is part of
-	std::vector<int> quads;
-	/// which squares the unit can currently observe
-	LosInstance* los;
 
 	/// used to see if something has operated on the unit before
 	int tempNum;
@@ -341,23 +393,10 @@ public:
 	int seismicRadius;
 	float seismicSignature;
 	bool hasRadarCapacity;
-	std::vector<int> radarSquares;
 	int2 oldRadarPos;
 	bool hasRadarPos;
 	bool stealth;
 	bool sonarStealth;
-
-	AMoveType* moveType;
-	AMoveType* prevMoveType;
-	bool usingScriptMoveType;
-
-	CPlayer* fpsControlPlayer;
-	CCommandAI* commandAI;
-	/// if the unit is part of an group (hotkey group)
-	CGroup* group;
-
-	LocalModel* localModel;
-	CUnitScript* script;
 
 	// only when the unit is active
 	float condUseMetal;
@@ -401,21 +440,15 @@ public:
 	float metalStorage;
 	float energyStorage;
 
-	/// last attacker
-	CUnit* lastAttacker;
-	/// piece that was last hit by a projectile
-	LocalModelPiece* lastAttackedPiece;
 	/// frame in which lastAttackedPiece was hit
 	int lastAttackedPieceFrame;
 	/// last frame unit was attacked by other unit
 	int lastAttackFrame;
 	/// last time this unit fired a weapon
 	int lastFireWeapon;
+
 	/// decaying value of how much damage the unit has taken recently (for severity of death)
 	float recentDamage;
-
-	CUnit* attackTarget;
-	float3 attackPos;
 
 	bool userAttackGround;
 
@@ -424,16 +457,11 @@ public:
 
 	/// if the unit is in it's 'on'-state
 	bool activated;
-
-	bool crashing;
 	/// prevent damage from hitting an already dead unit (causing multi wreck etc)
 	bool isDead;
-	/// for units being dropped from transports (parachute drops)
-	bool	falling;
-	float	fallSpeed;
 
-	bool inAir;
-	bool inWater;
+	/// for units being dropped from transports (parachute drops)
+	float fallSpeed;
 
 	/**
 	 * 0 = no flanking bonus
@@ -442,8 +470,6 @@ public:
 	 * 3 = unit coords, locked
 	 */
 	int flankingBonusMode;
-	/// units takes less damage when attacked from this dir (encourage flanking fire)
-	float3 flankingBonusDir;
 	/// how much the lowest damage direction of the flanking bonus can turn upon an attack (zeroed when attacked, slowly increases)
 	float  flankingBonusMobility;
 	/// how much ability of the flanking bonus direction to move builds up each frame
@@ -458,9 +484,6 @@ public:
 	/// multiply all damage the unit take with this
 	float curArmorMultiple;
 
-	/// used for innacuracy with radars etc
-	float3 posErrorVector;
-	float3 posErrorDelta;
 	int	nextPosErrorUpdate;
 
 	/// true if the unit currently wants to be cloaked
@@ -480,12 +503,6 @@ public:
 	int curTerrainType;
 
 	int selfDCountdown;
-
-	UnitTrackStruct* myTrack;
-	icon::CIconData* myIcon;
-
-	std::list<CMissileProjectile*> incomingMissiles; //FIXME make std::set?
-	int lastFlareDrop;
 
 	float currentFuel;
 
@@ -507,8 +524,6 @@ public:
 	unsigned int lodCount;
 	unsigned int currentLOD;
 
-	/// length-per-pixel
-	std::vector<float> lodLengths;
 	LuaUnitMaterial luaMats[LUAMAT_TYPE_COUNT];
 
 	int lastDrawFrame;

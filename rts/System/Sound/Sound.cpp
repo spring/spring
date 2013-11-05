@@ -6,6 +6,7 @@
 #include <cmath>
 #include <alc.h>
 #include <boost/cstdint.hpp>
+#include <boost/thread/thread.hpp>
 
 #include "SoundChannels.h"
 #include "SoundLog.h"
@@ -29,22 +30,22 @@
 
 #include "System/float3.h"
 
-CONFIG(int, MaxSounds).defaultValue(128);
-CONFIG(bool, PitchAdjust).defaultValue(false);
-CONFIG(int, snd_volmaster).defaultValue(60);
-CONFIG(int, snd_volgeneral).defaultValue(100);
-CONFIG(int, snd_volunitreply).defaultValue(100);
-CONFIG(int, snd_volbattle).defaultValue(100);
-CONFIG(int, snd_volui).defaultValue(100);
-CONFIG(int, snd_volmusic).defaultValue(100);
-CONFIG(std::string, snd_device).defaultValue("");
+CONFIG(int, MaxSounds).defaultValue(128).minimumValue(0).description("Maximum parallel played sounds.");
+CONFIG(bool, PitchAdjust).defaultValue(false).description("When enabled adjust sound speed/pitch to game speed.");
+CONFIG(int, snd_volmaster).defaultValue(60).minimumValue(0).maximumValue(200).description("Master sound volume.");
+CONFIG(int, snd_volgeneral).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"general\" sound channel.");
+CONFIG(int, snd_volunitreply).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"unit reply\" sound channel.");
+CONFIG(int, snd_volbattle).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"battle\" sound channel.");
+CONFIG(int, snd_volui).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"ui\" sound channel.");
+CONFIG(int, snd_volmusic).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"music\" sound channel.");
+CONFIG(std::string, snd_device).defaultValue("").description("Sets the used output device. See \"Available Devices\" section in infolog.txt.");
 
 boost::recursive_mutex soundMutex;
 
 
 CSound::CSound()
-	: myPos(0., 0., 0.)
-	, prevVelocity(0., 0., 0.)
+	: myPos(ZeroVector)
+	, prevVelocity(ZeroVector)
 	, soundThread(NULL)
 	, soundThreadQuit(false)
 {
@@ -265,6 +266,7 @@ void CSound::Iconified(bool state)
 	appIsIconified = state;
 }
 
+__FORCE_ALIGN_STACK__
 void CSound::StartThread(int maxSounds)
 {
 	{
@@ -319,6 +321,7 @@ void CSound::StartThread(int maxSounds)
 				return;
 			}
 		}
+		maxSounds = GetMaxMonoSources(device, maxSounds);
 
 		LOG("OpenAL info:");
 		if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
@@ -364,7 +367,6 @@ void CSound::StartThread(int maxSounds)
 
 		alListenerf(AL_GAIN, masterVolume);
 	}
-	configHandler->Set("MaxSounds", maxSounds);
 
 	Threading::SetThreadName("audio");
 	Watchdog::RegisterThread(WDT_AUDIO);
@@ -404,10 +406,10 @@ size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
 		return 0;
 
 	boost::shared_ptr<SoundBuffer> buffer = SoundBuffer::GetById(LoadSoundBuffer(it->second));
-	
+
 	if (!buffer)
 		return 0;
-		
+
 	SoundItem* buf = new SoundItem(buffer, itemDef);
 	sounds.push_back(buf);
 	soundMap[buf->Name()] = newid;
@@ -591,3 +593,25 @@ void CSound::NewFrame()
 	Channels::UnitReply.UpdateFrame();
 	Channels::UserInterface.UpdateFrame();
 }
+
+
+// try to get the maximum number of supported sounds, this is similar to code CSound::StartThread
+// but should be more safe
+int CSound::GetMaxMonoSources(ALCdevice* device, int maxSounds)
+{
+	ALCint size;
+	alcGetIntegerv(device, ALC_ATTRIBUTES_SIZE, 1, &size);
+	std::vector<ALCint> attrs(size);
+	alcGetIntegerv(device, ALC_ALL_ATTRIBUTES, size, &attrs[0] );
+	for (int i=0; i<attrs.size(); ++i){
+		if (attrs[i] == ALC_MONO_SOURCES) {
+			const int maxMonoSources = attrs.at(i + 1);
+			if (maxMonoSources < maxSounds) {
+				LOG_L(L_WARNING, "Hardware supports only %d Sound sources, MaxSounds=%d, using Hardware Limit", maxMonoSources, maxSounds);
+			}
+			return std::min(maxSounds, maxMonoSources);
+		}
+	}
+	return maxSounds;
+}
+

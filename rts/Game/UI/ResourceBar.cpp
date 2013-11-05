@@ -9,7 +9,7 @@
 #include "Rendering/glFont.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/TimeProfiler.h"
 
 CResourceBar* resourceBar = NULL;

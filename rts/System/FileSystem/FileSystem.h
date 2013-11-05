@@ -32,6 +32,12 @@ public:
 	 */
 	static bool Remove(std::string file);
 
+	/**
+	 * @brief Compares if 2 paths point to the same file/directory
+	 *
+	 */
+	static bool ComparePaths(std::string path1, std::string path2);
+
 	/// @name meta-data
 	///@{
 	/// Returns true if the file exists, and is not a directory
@@ -56,6 +62,9 @@ public:
 	 */
 	static bool CreateDirectory(std::string dir);
 	///@}
+
+
+	static bool TouchFile(std::string filePath);
 
 	/// @name convenience
 	///@{
@@ -115,6 +124,8 @@ public:
 	 */
 	static bool CheckFile(const std::string& file);
 //	static bool CheckDir(const std::string& dir) const;
+
+	static const std::string& GetCacheDir();
 };
 
 #endif // !FILE_SYSTEM_H

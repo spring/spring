@@ -40,6 +40,7 @@
 #include "System/Info.h"
 #include "System/Option.h"
 #include "System/SafeCStrings.h"
+#include "System/ThreadPool.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -64,7 +65,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_UNITSYNC)
 //   This is no problem in the current architecture.
 static CSyncer* syncer = NULL;
 
-static bool logOutputInitialised = false;
 // for we do not have to include global-stuff (Sim/Misc/GlobalConstants.h)
 #define SQUARE_SIZE 8
 
@@ -198,21 +198,6 @@ static std::string GetMapFile(const std::string& mapName)
 		return mapFile;
 	}
 
-	/*CFileHandler f(mapFile);
-	if (f.FileExists()) {
-		return mapFile;
-	}
-
-	CFileHandler f = CFileHandler(map);
-	if (f.FileExists()) {
-		return map;
-	}
-
-	f = CFileHandler("maps/" + map);
-	if (f.FileExists()) {
-		return "maps/" + map;
-	}*/
-
 	throw std::invalid_argument("Could not find a map named \"" + mapName + "\"");
 	return "";
 }
@@ -329,33 +314,29 @@ EXPORT(int) Init(bool isServer, int id)
 		// Cleanup data from previous Init() calls
 		_Cleanup();
 
-		// LogSystem 1
-		if (!logOutputInitialised) {
-			logOutput.SetFileName("unitsync.log");
-		}
+		CLogOutput::LogSystemInfo();
+
 #ifndef DEBUG
 		log_filter_section_setMinLevel(LOG_SECTION_UNITSYNC, LOG_LEVEL_INFO);
 #endif
 
 		// VFS
-		if (archiveScanner || vfsHandler){
-			FileSystemInitializer::Cleanup(); //reinitialize filesystem to detect new files
+		if (archiveScanner || vfsHandler) {
+			FileSystemInitializer::Cleanup(); // reinitialize filesystem to detect new files
 		}
-		if (!configHandler) {
-			ConfigHandler::Instantiate(); // use the default config file
-		}
+
+		ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
+		const std::string configSource = (configHandler) ? configHandler->GetConfigFile() : "";
 		dataDirLocater.UpdateIsolationModeByEnvVar();
+		FileSystemInitializer::PreInitializeConfigHandler(configSource);
+		FileSystemInitializer::InitializeLogOutput("unitsync.log");
 		FileSystemInitializer::Initialize();
 
-		// LogSystem 2
-		if (!logOutputInitialised) {
-			logOutput.Initialize();
-			logOutputInitialised = true;
-		}
 		LOG("loaded, %s", SpringVersion::GetFull().c_str());
 
 		// check if VFS is okay
 		CheckForImportantFilesInVFS();
+		ThreadPool::SetThreadCount(0);
 
 		// Finish
 		syncer = new CSyncer();
@@ -1092,6 +1073,10 @@ static unsigned short imgbuf[1024*1024];
 
 static unsigned short* GetMinimapSM3(std::string mapFileName, int mipLevel)
 {
+	throw content_error("SM3 maps are no longer supported as of Spring 95.0");
+	return NULL;
+
+	/*
 	MapParser mapParser(mapFileName);
 	const std::string minimapFile = mapParser.GetRoot().GetString("minimap", "");
 
@@ -1125,6 +1110,7 @@ static unsigned short* GetMinimapSM3(std::string mapFileName, int mipLevel)
 	}
 
 	return imgbuf;
+	*/
 }
 
 static unsigned short* GetMinimapSMF(std::string mapFileName, int mipLevel)
@@ -1338,7 +1324,7 @@ EXPORT(const char*) GetPrimaryModName(int index)
 		CheckInit();
 		CheckBounds(index, modData.size());
 
-		const std::string& x = modData[index].GetName();
+		const std::string& x = modData[index].GetNameVersioned();
 		return GetStr(x);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1482,7 +1468,7 @@ EXPORT(int) GetPrimaryModIndex(const char* name)
 
 		const std::string searchedName(name);
 		for (unsigned i = 0; i < modData.size(); ++i) {
-			if (modData[i].GetName() == searchedName)
+			if (modData[i].GetNameVersioned() == searchedName)
 				return i;
 		}
 	}
@@ -2628,16 +2614,12 @@ char strBuf[STRBUF_SIZE];
 const char* GetStr(std::string str)
 {
 	if (str.length() + 1 > STRBUF_SIZE) {
-		sprintf(strBuf, "Increase STRBUF_SIZE (needs "_STPF_" bytes)", str.length() + 1);
+		sprintf(strBuf, "Increase STRBUF_SIZE (needs " _STPF_ " bytes)", str.length() + 1);
 	} else {
 		STRCPY(strBuf, str.c_str());
 	}
 
 	return strBuf;
-}
-
-void PrintLoadMsg(const char* text)
-{
 }
 
 
@@ -2646,7 +2628,8 @@ void PrintLoadMsg(const char* text)
 
 EXPORT(void) SetSpringConfigFile(const char* fileNameAsAbsolutePath)
 {
-	ConfigHandler::Instantiate(fileNameAsAbsolutePath);
+	dataDirLocater.UpdateIsolationModeByEnvVar();
+	FileSystemInitializer::PreInitializeConfigHandler(fileNameAsAbsolutePath);
 }
 
 static void CheckConfigHandler()
@@ -2725,3 +2708,11 @@ EXPORT(void) SetSpringConfigFloat(const char* name, const float value)
 	UNITSYNC_CATCH_BLOCKS;
 }
 
+EXPORT(void) DeleteSpringConfigKey(const char* name)
+{
+	try {
+		CheckConfigHandler();
+		configHandler->Delete(name);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+}

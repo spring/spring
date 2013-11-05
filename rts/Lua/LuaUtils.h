@@ -36,6 +36,20 @@ class LuaUtils {
 				bool bol;
 			} data;
 		};
+		struct ScopedDebugTraceBack {
+		public:
+			ScopedDebugTraceBack(lua_State* L);
+			~ScopedDebugTraceBack();
+			void SetErrFuncIdx(int idx) { errFuncIdx = idx; }
+			int GetErrFuncIdx() const { return errFuncIdx; }
+
+		private:
+			lua_State* luaState;
+
+			int errFuncIdx;
+		};
+
+		static int exportedDataSize; //< performance stat
 
 		static int Backup(std::vector<DataDump> &backup, lua_State* src, int count);
 
@@ -49,14 +63,20 @@ class LuaUtils {
 
 		static void PushCurrentFuncEnv(lua_State* L, const char* caller);
 
-		static int PushDebugTraceback(lua_State *L);
+		static int PushDebugTraceback(lua_State* L); //< returns stack index of traceback function
 
 		// lower case all keys in the table, with recursion
 		static bool LowerKeys(lua_State* L, int tableIndex);
 
+		static void PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable);
+		static void PushCommandOptionsTable(lua_State* L, const Command& cmd, bool subtable);
 		// from LuaUI.cpp / LuaSyncedCtrl.cpp (used to be duplicated)
-		static void ParseCommandOptions(lua_State* L, const char* caller,
-		                                int index, Command& cmd);
+		static void ParseCommandOptions(
+			lua_State* L,
+			Command& cmd,
+			const char* caller,
+			const int idx
+		);
 		static Command ParseCommand(lua_State* L, const char* caller,
 				int idIndex);
 		static Command ParseCommandTable(lua_State* L, const char* caller,

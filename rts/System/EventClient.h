@@ -98,7 +98,7 @@ class CEventClient
 
 		virtual void UnitIdle(const CUnit* unit) {}
 		virtual void UnitCommand(const CUnit* unit, const Command& command) {}
-		virtual void UnitCmdDone(const CUnit* unit, int cmdType, int cmdTag) {}
+		virtual void UnitCmdDone(const CUnit* unit, const Command& command) {}
 		virtual void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,
@@ -139,10 +139,16 @@ class CEventClient
 
 		virtual void FeatureCreated(const CFeature* feature) {}
 		virtual void FeatureDestroyed(const CFeature* feature) {}
+		virtual void FeatureDamaged(
+			const CFeature* feature,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID) {}
 		virtual void FeatureMoved(const CFeature* feature) {}
 
 		virtual void RenderFeatureCreated(const CFeature* feature) {}
-		virtual void RenderFeatureDestroyed(const CFeature* feature, const float3& pos) {}
+		virtual void RenderFeatureDestroyed(const CFeature* feature) {}
 		virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {}
 
 		virtual void ProjectileCreated(const CProjectile* proj) {}
@@ -216,6 +222,8 @@ class CEventClient
 
 		virtual void DrawLoadScreen() {}
 		virtual void LoadProgress(const std::string& msg, const bool replace_lastline) {}
+
+		virtual void CollectGarbage() {}
 		/// @}
 };
 

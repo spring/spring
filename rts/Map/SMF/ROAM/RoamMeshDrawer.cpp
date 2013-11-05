@@ -19,8 +19,8 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/OpenMP_cond.h"
 #include "System/Rectangle.h"
+#include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
@@ -45,9 +45,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ROAM)
 #define LOG_SECTION_CURRENT LOG_SECTION_ROAM
 
 
-// ---------------------------------------------------------------------
-// Definition of the static member variables
-//
 bool CRoamMeshDrawer::forceRetessellate = false;
 
 
@@ -59,32 +56,23 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	, smfReadMap(rm)
 	, smfGroundDrawer(gd)
 	, lastGroundDetail(0)
-	, visibilitygrid(NULL)
 {
 	eventHandler.AddClient(this);
 
 	// Set ROAM upload mode (VA,DL,VBO)
-	const int mode = configHandler->GetInt("ROAM");
-	Patch::SwitchRenderMode(mode);
+	Patch::SwitchRenderMode(configHandler->GetInt("ROAM"));
 
 	numPatchesX = gs->mapx / PATCH_SIZE;
 	numPatchesY = gs->mapy / PATCH_SIZE;
-	//assert((numPatchesX == smfReadMap->numBigTexX) && (numPatchesY == smfReadMap->numBigTexY));
+	// assert((numPatchesX == smfReadMap->numBigTexX) && (numPatchesY == smfReadMap->numBigTexY));
 
-	//m_Patches.reserve(numPatchesX * numPatchesY);
-	m_Patches.resize(numPatchesX * numPatchesY);
+	roamPatches.resize(numPatchesX * numPatchesY);
+	patchVisGrid.resize(numPatchesX * numPatchesY, 0);
 
 	// Initialize all terrain patches
 	for (int Y = 0; Y < numPatchesY; ++Y) {
 		for (int X = 0; X < numPatchesX; ++X) {
-			/*Patch* patch = new Patch(
-				smfGroundDrawer,
-				X * PATCH_SIZE,
-				Y * PATCH_SIZE);
-			patch->ComputeVariance();
-			m_Patches.push_back(patch);*/
-
-			Patch& patch = m_Patches[Y * numPatchesX + X];
+			Patch& patch = roamPatches[Y * numPatchesX + X];
 			patch.Init(
 					smfGroundDrawer,
 					X * PATCH_SIZE,
@@ -93,19 +81,12 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 		}
 	}
 
-	visibilitygrid = new bool[numPatchesX * numPatchesY];
-	for (int i = 0; i < (numPatchesX * numPatchesY); ++i){
-		visibilitygrid[i] = false;
-	}
-
 	CTriNodePool::InitPools();
 }
 
 CRoamMeshDrawer::~CRoamMeshDrawer()
 {
 	configHandler->Set("ROAM", (int)Patch::renderMode);
-
-	delete[] visibilitygrid;
 
 	CTriNodePool::FreePools();
 }
@@ -118,22 +99,24 @@ void CRoamMeshDrawer::Update()
 {
 	//FIXME this retessellates with the current camera frustum, shadow pass and others don't have to see the same patches!
 
-	//const CCamera* cam = (inShadowPass)? camera: cam2;
+	// CCamera* cam = (inShadowPass)? camera: cam2;
 	CCamera* cam = cam2;
 
 	// Update Patch visibility
-	Patch::UpdateVisibility(cam, m_Patches, numPatchesX);
+	Patch::UpdateVisibility(cam, roamPatches, numPatchesX);
 
 	// Check if a retessellation is needed
 #define RETESSELLATE_MODE 1
 	bool retessellate = false;
-	{ //SCOPED_TIMER("ROAM::ComputeVariance");
-		for (int i = 0; i < (numPatchesX * numPatchesY); ++i) {
-			Patch& p = m_Patches[i];
+
+	{
+		SCOPED_TIMER("ROAM::ComputeVariance");
+		for (int i = 0; i < (numPatchesX * numPatchesY); ++i) { //FIXME multithread?
+			Patch& p = roamPatches[i];
 		#if (RETESSELLATE_MODE == 2)
 			if (p.IsVisible()) {
-				if (!visibilitygrid[i]) {
-					visibilitygrid[i] = true;
+				if (patchVisGrid[i] == 0) {
+					patchVisGrid[i] = 1;
 					retessellate = true;
 				}
 				if (p.IsDirty()) {
@@ -142,11 +125,11 @@ void CRoamMeshDrawer::Update()
 					retessellate = true;
 				}
 			} else {
-				visibilitygrid[i] = false;
+				patchVisGrid[i] = 0;
 			}
 		#else
-			if (p.IsVisible() != visibilitygrid[i]) {
-				visibilitygrid[i] = p.IsVisible();
+			if (char(p.IsVisible()) != patchVisGrid[i]) {
+				patchVisGrid[i] = char(p.IsVisible());
 				retessellate = true;
 			}
 			if (p.IsVisible() && p.IsDirty()) {
@@ -161,33 +144,33 @@ void CRoamMeshDrawer::Update()
 	// Further conditions that can cause a retessellation
 #if (RETESSELLATE_MODE == 2)
 	static const float maxCamDeltaDistSq = 500.0f * 500.0f;
-	retessellate |= ((cam->pos - lastCamPos).SqLength() > maxCamDeltaDistSq);
+	retessellate |= ((cam->GetPos() - lastCamPos).SqLength() > maxCamDeltaDistSq);
 #endif
 	retessellate |= forceRetessellate;
 	retessellate |= (lastGroundDetail != smfGroundDrawer->GetGroundDetail());
 
+	bool retessellateAgain = false;
+
 	// Retessellate
 	if (retessellate) {
-		{ //SCOPED_TIMER("ROAM::Tessellate");
+		{ SCOPED_TIMER("ROAM::Tessellate");
 			//FIXME this tessellates with current camera + viewRadius
 			//  so it doesn't retessellate patches that are e.g. only vis. in the shadow frustum
 			Reset();
-			Tessellate(cam->pos, smfGroundDrawer->GetGroundDetail());
+			retessellateAgain = Tessellate(cam->GetPos(), smfGroundDrawer->GetGroundDetail());
 		}
 
-		{ //SCOPED_TIMER("ROAM::GenerateIndexArray");
-			Threading::OMPCheck();
-			#pragma omp parallel for
-			for (int i = m_Patches.size() - 1; i >= 0; --i) {
-				Patch* it = &m_Patches[i];
+		{ SCOPED_TIMER("ROAM::GenerateIndexArray");
+			for_mt(0, roamPatches.size(), [&](const int i){
+				Patch* it = &roamPatches[i];
 				if (it->IsVisible()) {
 					it->GenerateIndices();
 				}
-			}
+			});
 		}
 
-		{ //SCOPED_TIMER("ROAM::Upload");
-			for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
+		{ SCOPED_TIMER("ROAM::Upload");
+			for (std::vector<Patch>::iterator it = roamPatches.begin(); it != roamPatches.end(); ++it) {
 				if (it->IsVisible()) {
 					it->Upload();
 				}
@@ -196,20 +179,20 @@ void CRoamMeshDrawer::Update()
 
 		/*{
 			int tricount = 0;
-			for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
+			for (std::vector<Patch>::iterator it = roamPatches.begin(); it != roamPatches.end(); it++) {
 				if (it->IsVisible()) {
 					tricount += it->GetTriCount();
 				}
 			}
-		
+
 			LOG_L(L_DEBUG, "ROAM dbg: Framechange, fram=%i tris=%i, viewrad=%i, cd=%f, camera=(%5.0f, %5.0f, %5.0f) camera2=  (%5.0f, %5.0f, %5.0f)",
 				globalRendering->drawFrame,
 				tricount,
 				smfGroundDrawer->viewRadius,
 				(cam->pos - lastCamPos).SqLength();,
-				camera->pos.x,
-				camera->pos.y,
-				camera->pos.z,
+				camera->GetPos().x,
+				camera->GetPos().y,
+				camera->GetPos().z,
 				cam2->pos.x,
 				cam2->pos.y,
 				cam2->pos.z
@@ -217,8 +200,8 @@ void CRoamMeshDrawer::Update()
 		}*/
 
 		lastGroundDetail = smfGroundDrawer->GetGroundDetail();
-		lastCamPos = cam->pos;
-		forceRetessellate = false;
+		lastCamPos = cam->GetPos();
+		forceRetessellate = retessellateAgain;
 	}
 }
 
@@ -230,14 +213,15 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 {
 	const bool inShadowPass = (drawPass == DrawPass::Shadow);
 
-	//FIXME this just updates the visibilty.
-	//  It doesn't update the tessellation, neither does it send the indices to the GPU.
-	//  So it patches that weren't updated the last tessellation, just uses the last
-	//  tessellation which may created with a totally different camera.
+	// FIXME: this only updates the *visibilty* of patches
+	//  It doesn't update the *tessellation*, neither are indices sent to the GPU.
+	//  It just re-uses the last tessellation pattern which may have been created
+	//  with a totally different camera.
 	CCamera* cam = (inShadowPass)? camera: cam2;
-	Patch::UpdateVisibility(cam, m_Patches, numPatchesX);
 
-	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
+	Patch::UpdateVisibility(cam, roamPatches, numPatchesX);
+
+	for (std::vector<Patch>::iterator it = roamPatches.begin(); it != roamPatches.end(); ++it) {
 		if (it->IsVisible()) {
 			if (!inShadowPass)
 				it->SetSquareTexture();
@@ -247,6 +231,27 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 	}
 }
 
+void CRoamMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass)
+{
+	const bool inShadowPass = (drawPass == DrawPass::Shadow);
+
+	for (int py = 0; py < numPatchesY; ++py) {
+		for (int px = 0; px < numPatchesX; ++px) {
+			if (IsInteriorPatch(px, py))
+				continue;
+
+			Patch& p = roamPatches[py * numPatchesX + px];
+
+			if (!p.IsVisible())
+				continue;
+
+			if (!inShadowPass)
+				p.SetSquareTexture();
+
+			p.DrawBorder();
+		}
+	}
+}
 
 #ifdef DRAW_DEBUG_IN_MINIMAP
 void CRoamMeshDrawer::DrawInMiniMap()
@@ -260,11 +265,11 @@ void CRoamMeshDrawer::DrawInMiniMap()
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
-		glTranslatef(0.0f, 1.0f, 0.0f);
+		glTranslatef3(UpVector);
 		glScalef(1.0f / gs->mapx, -1.0f / gs->mapy, 1.0f);
 
 	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
+	for (std::vector<Patch>::iterator it = roamPatches.begin(); it != roamPatches.end(); ++it) {
 		if (!it->IsVisible()) {
 			glRectf(it->m_WorldX, it->m_WorldY, it->m_WorldX + PATCH_SIZE, it->m_WorldY + PATCH_SIZE);
 		}
@@ -289,23 +294,23 @@ void CRoamMeshDrawer::Reset()
 	// Go through the patches performing resets, compute variances, and linking.
 	for (int Y = 0; Y < numPatchesY; ++Y) {
 		for (int X = 0; X < numPatchesX; ++X) {
-			Patch& patch = m_Patches[Y * numPatchesX + X];
+			Patch& patch = roamPatches[Y * numPatchesX + X];
 
 			// Reset the patch
 			patch.Reset();
 
 			// Link all the patches together. (leave borders NULL)
 			if (X > 0)
-				patch.GetBaseLeft()->LeftNeighbor = m_Patches[Y * numPatchesX + X - 1].GetBaseRight();
+				patch.GetBaseLeft()->LeftNeighbor = roamPatches[Y * numPatchesX + X - 1].GetBaseRight();
 
 			if (X < (numPatchesX - 1))
-				patch.GetBaseRight()->LeftNeighbor = m_Patches[Y * numPatchesX + X + 1].GetBaseLeft();
+				patch.GetBaseRight()->LeftNeighbor = roamPatches[Y * numPatchesX + X + 1].GetBaseLeft();
 
 			if (Y > 0)
-				patch.GetBaseLeft()->RightNeighbor = m_Patches[(Y - 1) * numPatchesX + X].GetBaseRight();
+				patch.GetBaseLeft()->RightNeighbor = roamPatches[(Y - 1) * numPatchesX + X].GetBaseRight();
 
 			if (Y < (numPatchesY - 1))
-				patch.GetBaseRight()->RightNeighbor = m_Patches[(Y + 1) * numPatchesX + X].GetBaseLeft();
+				patch.GetBaseRight()->RightNeighbor = roamPatches[(Y + 1) * numPatchesX + X].GetBaseLeft();
 		}
 	}
 }
@@ -313,11 +318,10 @@ void CRoamMeshDrawer::Reset()
 // ---------------------------------------------------------------------
 // Create an approximate mesh of the landscape.
 //
-void CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
+bool CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 {
 	// Perform Tessellation
-#ifdef _OPENMP
-	// hint: just helps a little with huge cpu usage in retessellation, still better than nothing
+	// hint: threading just helps a little with huge cpu usage in retessellation, still better than nothing
 
 	//  _____
 	// |0|_|_|..
@@ -329,28 +333,36 @@ void CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 	// not multi-thread the whole loop w/o mutexes (in ::Split).
 	// But instead we take a safety distance between the thread's working
 	// area (which is 2 patches), so they don't conflict with each other.
+	bool forceTess = false;
+
 	for (int idx = 0; idx < 9; ++idx) {
-		Threading::OMPCheck();
-		#pragma omp parallel for
-		for (int i = m_Patches.size() - 1; i >= 0; --i) {
-			Patch* it = &m_Patches[i];
+		for_mt(0, roamPatches.size(), [&](const int i){
+			Patch* it = &roamPatches[i];
 
 			const int X = it->m_WorldX;
 			const int Z = it->m_WorldY;
 			const int subindex = (X % 3) + (Z % 3) * 3;
 
 			if ((subindex == idx) && it->IsVisible()) {
-				it->Tessellate(campos, viewradius);
+				if (!it->Tessellate(campos, viewradius))
+					forceTess = true;
 			}
-		}
+		});
+
+		if (forceTess)
+			return true;
 	}
-#else
-	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
-		if (it->IsVisible())
-			it->Tessellate(campos, viewradius);
-	}
-#endif
+
+	return false;
 }
+
+bool CRoamMeshDrawer::IsInteriorPatch(int px, int py) const {
+	// using % will crash if numPatchesX == 1 or numPatchesY == 1
+	if ((px == 0) || (px == numPatchesX - 1)) return false;
+	if ((py == 0) || (py == numPatchesY - 1)) return false;
+	return true;
+}
+
 
 
 // ---------------------------------------------------------------------
@@ -369,7 +381,7 @@ void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 
 	for (int z = zstart; z < zend; ++z) {
 		for (int x = xstart; x < xend; ++x) {
-			Patch& p = m_Patches[z * numPatchesX + x];
+			Patch& p = roamPatches[z * numPatchesX + x];
 
 			// clamp the update rect to the patch constraints
 			SRectangle prect(
