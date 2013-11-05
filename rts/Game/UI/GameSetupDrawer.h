@@ -4,13 +4,15 @@
 #define GAME_SETUP_DRAWER
 
 #include "InputReceiver.h"
+#include "System/Misc/SpringTime.h"
+
 
 class GameSetupDrawer : public CInputReceiver
 {
 public:
 	static void Enable();
 	static void Disable();
-	
+
 	static void StartCountdown(unsigned time);
 
 private:
@@ -21,8 +23,8 @@ private:
 
 	static GameSetupDrawer* instance;
 	bool lctrl_pressed;
-	int readyCountdown;
-	unsigned lastTick;
+	spring_time readyCountdown;
+	spring_time lastTick;
 };
 
 

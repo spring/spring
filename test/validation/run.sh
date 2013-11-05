@@ -37,17 +37,19 @@ fi
 # limit to 1.5GB RAM
 ulimit -v 1500000
 # max 3 min cpu time
-ulimit -t 180
+ulimit -t 220
 
 # delete path cache
-rm -rf ~/.spring/cache/
+rm -rf ~/.config/spring/cache/
 
 # start up the client in background
-$RUNCLIENT $1 &
+$RUNCLIENT "$1 --nocolor" &
 PID_CLIENT=$!
 
+# start host
+echo "Starting Host"
 set +e #temp disable abort on error
-$@ &
+$@ --nocolor &
 PID_HOST=$!
 
 # auto kill host after 15mins
@@ -65,11 +67,6 @@ EXITCHILD=$?
 
 #reenable abbort on error
 set -e
-
-if [ -d ~/.spring/AI ]; then
-	echo Server and client exited, dumping log files in ~/.spring/AI
-	find ~/.spring/AI -regex '.*\.\(txt\|log\)' -type f -exec echo {} \; -exec cat {} \; -delete
-fi
 
 # exit with exit code of server/client if failed
 if [ $EXITCHILD -ne 0 ];

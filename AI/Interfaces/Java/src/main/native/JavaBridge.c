@@ -1275,22 +1275,18 @@ int java_skirmishAI_init(int skirmishAIId,
 
 int java_skirmishAI_release(int skirmishAIId) {
 
-	int res = -1;
-
-	res = 0;
+	int res = 0;
 
 	return res;
 }
 
 int java_skirmishAI_handleEvent(int skirmishAIId, int topic, const void* data) {
 
-	int res = -1;
-
 	java_establishJavaEnv();
 	JNIEnv* env = java_getJNIEnv();
 	const size_t sai   = skirmishAIId_skirmishAiImpl[skirmishAIId];
 	jobject aiInstance = skirmishAiImpl_instance[sai];
-	res = eventsJniBridge_handleEvent(env, aiInstance, skirmishAIId, topic, data);
+	int res = eventsJniBridge_handleEvent(env, aiInstance, skirmishAIId, topic, data);
 	java_establishSpringEnv();
 
 	return res;

@@ -5,13 +5,14 @@
 
 #include "WorldObject.h"
 #include "System/Matrix44f.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/Misc/BitwiseEnum.h"
 #include "System/Sync/SyncedFloat3.h"
 #include "System/Sync/SyncedPrimitive.h"
 
 struct MoveDef;
 struct CollisionVolume;
+struct LocalModelPiece;
 struct SolidObjectDef;
 struct SolidObjectGroundDecal;
 
@@ -29,7 +30,7 @@ enum TerrainChangeTypes {
 
 enum YardmapStates {
 	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
-	//YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
+//  YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
 	YARDMAP_YARD        = 1,    // walkable when yard is open
 	YARDMAP_YARDINV     = 2,    // walkable when yard is closed
 	YARDMAP_BLOCKED     = 0xFF & ~YARDMAP_YARDINV, // always block     (not walkable, not buildable)
@@ -48,10 +49,33 @@ public:
 	CR_DECLARE(CSolidObject)
 
 	enum PhysicalState {
-		OnGround,
-		Floating,
-		Hovering,
-		Flying,
+		// NOTE:
+		//   {ONGROUND,*WATER} and INAIR are mutually exclusive
+		//   {UNDERGROUND,UNDERWATER} are not (and are the only
+		//   bits to take radius into account)
+		PSTATE_BIT_ONGROUND    = (1 << 0),
+		PSTATE_BIT_INWATER     = (1 << 1),
+		PSTATE_BIT_UNDERWATER  = (1 << 2),
+		PSTATE_BIT_UNDERGROUND = (1 << 3),
+		PSTATE_BIT_INAIR       = (1 << 4),
+		PSTATE_BIT_INVOID      = (1 << 5),
+
+		// special bits for impulse-affected objects that do
+		// not get set automatically by UpdatePhysicalState;
+		// also used by aircraft to control block / unblock
+		// behavior
+		// NOTE: FLYING DOES NOT ALWAYS IMPLY INAIR!
+		PSTATE_BIT_MOVING   = (1 <<  6),
+		PSTATE_BIT_FLYING   = (1 <<  7),
+		PSTATE_BIT_FALLING  = (1 <<  8),
+		PSTATE_BIT_SKIDDING = (1 <<  9),
+		PSTATE_BIT_CRASHING = (1 << 10),
+		PSTATE_BIT_BLOCKING = (1 << 11),
+	};
+	enum CollidableState {
+		CSTATE_BIT_SOLIDOBJECTS = (1 << 0), // can be set while (physicalState & PSTATE_BIT_BLOCKING) == 0!
+		CSTATE_BIT_PROJECTILES  = (1 << 1),
+		CSTATE_BIT_QUADMAPRAYS  = (1 << 2),
 	};
 	enum DamageType {
 		DAMAGE_EXPLOSION_WEAPON = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
@@ -66,22 +90,10 @@ public:
 	CSolidObject();
 	virtual ~CSolidObject();
 
-	virtual bool AddBuildPower(float amount, CUnit* builder) { return false; }
+	virtual bool AddBuildPower(CUnit* builder, float amount) { return false; }
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) {}
 
-	virtual void StoreImpulse(const float3& impulse, float newImpulseDecayRate) {
-		if ((impulseDecayRate = std::min(std::max(newImpulseDecayRate, 0.0f), 1.0f)) > 0.0f) {
-			StoreImpulse(impulse);
-		}
-	}
-
-	virtual void StoreImpulse(const float3& impulse) {
-		residualImpulse += impulse;
-	}
-	virtual void ApplyImpulse() {
-		speed += residualImpulse;
-		residualImpulse = ZeroVector;
-	}
+	virtual void ApplyImpulse(const float3& impulse) { SetVelocity(speed + impulse); }
 
 	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual int GetBlockingMapID() const { return -1; }
@@ -89,20 +101,14 @@ public:
 	virtual void ForcedMove(const float3& newPos) {}
 	virtual void ForcedSpin(const float3& newDir) {}
 
-	void Move3D(const float3& v, bool relative) {
+	virtual void UpdatePhysicalState();
+
+	void Move(const float3& v, bool relative) {
 		const float3& dv = relative? v: (v - pos);
 
 		pos += dv;
 		midPos += dv;
 		aimPos += dv;
-	}
-
-	void Move1D(const float v, int d, bool relative) {
-		const float dv = relative? v: (v - pos[d]);
-
-		pos[d] += dv;
-		midPos[d] += dv;
-		aimPos[d] += dv;
 	}
 
 	// this should be called whenever the direction
@@ -117,27 +123,89 @@ public:
 		SetAimPos(ap, relative);
 	}
 
+
+	void SetHeadingFromDirection();
+	void SetDirVectors(const CMatrix44f& matrix) {
+		rightdir.x = -matrix[0]; updir.x = matrix[4]; frontdir.x = matrix[ 8];
+		rightdir.y = -matrix[1]; updir.y = matrix[5]; frontdir.y = matrix[ 9];
+		rightdir.z = -matrix[2]; updir.z = matrix[6]; frontdir.z = matrix[10];
+	}
+
 	virtual CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const {
 		// should never get called (should be pure virtual, but cause of CREG we cannot use it)
 		assert(false);
 		return CMatrix44f();
 	}
 
+	virtual const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const { return collisionVolume; }
+
+
 	/**
-	 * Adds this object to the GroundBlockingMap if and only if its collidable
-	 * property is set (blocking), else does nothing (except call UnBlock()).
+	 * adds this object to the GroundBlockingMap if and only
+	 * if HasCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS), else
+	 * does nothing
 	 */
 	void Block();
 	/**
-	 * Removes this object from the GroundBlockingMap if it is currently marked
-	 * on it, does nothing otherwise.
+	 * Removes this object from the GroundBlockingMap if it
+	 * is currently marked on it, does nothing otherwise.
 	 */
 	void UnBlock();
+
+	// these transform a point or vector to object-space
+	float3 GetObjectSpaceVec(const float3& v) const { return (      (frontdir * v.z) + (rightdir * v.x) + (updir * v.y)); }
+	float3 GetObjectSpacePos(const float3& p) const { return (pos + (frontdir * p.z) + (rightdir * p.x) + (updir * p.y)); }
+	float3 GetObjectSpacePosUnsynced(const float3& p) const { return (drawPos + GetObjectSpaceVec(p)); }
 
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
 
+	float3 GetDragAccelerationVec(const float4& params) const;
+	float3 GetWantedUpDir(bool useGroundNormal) const;
+
 	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
+
+	bool BlockMapPosChanged() const { return (groundBlockPos != pos); }
+
+	bool IsOnGround   () const { return (HasPhysicalStateBit(PSTATE_BIT_ONGROUND   )); }
+	bool IsInAir      () const { return (HasPhysicalStateBit(PSTATE_BIT_INAIR      )); }
+	bool IsInWater    () const { return (HasPhysicalStateBit(PSTATE_BIT_INWATER    )); }
+	bool IsUnderWater () const { return (HasPhysicalStateBit(PSTATE_BIT_UNDERWATER )); }
+	bool IsUnderGround() const { return (HasPhysicalStateBit(PSTATE_BIT_UNDERGROUND)); }
+	bool IsInVoid     () const { return (HasPhysicalStateBit(PSTATE_BIT_INVOID     )); }
+
+	bool IsMoving  () const { return (HasPhysicalStateBit(PSTATE_BIT_MOVING  )); }
+	bool IsFlying  () const { return (HasPhysicalStateBit(PSTATE_BIT_FLYING  )); }
+	bool IsFalling () const { return (HasPhysicalStateBit(PSTATE_BIT_FALLING )); }
+	bool IsSkidding() const { return (HasPhysicalStateBit(PSTATE_BIT_SKIDDING)); }
+	bool IsCrashing() const { return (HasPhysicalStateBit(PSTATE_BIT_CRASHING)); }
+	bool IsBlocking() const { return (HasPhysicalStateBit(PSTATE_BIT_BLOCKING)); }
+
+	bool    HasPhysicalStateBit(unsigned int bit) const { return ((physicalState & bit) != 0); }
+	void    SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= ( bit); physicalState = static_cast<PhysicalState>(ps); }
+	void  ClearPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps &= (~bit); physicalState = static_cast<PhysicalState>(ps); }
+	bool UpdatePhysicalStateBit(unsigned int bit, bool set) {
+		if (set) {
+			SetPhysicalStateBit(bit);
+		} else {
+			ClearPhysicalStateBit(bit);
+		}
+		return (HasPhysicalStateBit(bit));
+	}
+
+	bool    HasCollidableStateBit(unsigned int bit) const { return ((collidableState & bit) != 0); }
+	void    SetCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs |= ( bit); collidableState = static_cast<CollidableState>(cs); }
+	void  ClearCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs &= (~bit); collidableState = static_cast<CollidableState>(cs); } 
+	bool UpdateCollidableStateBit(unsigned int bit, bool set) {
+		if (set) {
+			SetCollidableStateBit(bit);
+		} else {
+			ClearCollidableStateBit(bit);
+		}
+		return (HasCollidableStateBit(bit));
+	}
+
+	void UpdateVoidState(bool set);
 
 private:
 	void SetMidPos(const float3& mp, bool relative) {
@@ -155,28 +223,14 @@ private:
 		}
 	}
 
-	float3 GetMidPos() const {
-		const float3 dz = (frontdir * relMidPos.z);
-		const float3 dy = (updir    * relMidPos.y);
-		const float3 dx = (rightdir * relMidPos.x);
-
-		return (pos + dz + dy + dx);
-	}
-	float3 GetAimPos() const {
-		const float3 dz = (frontdir * relAimPos.z);
-		const float3 dy = (updir    * relAimPos.y);
-		const float3 dx = (rightdir * relAimPos.x);
-
-		return (pos + dz + dy + dx);
-	}
+	float3 GetMidPos() const { return (GetObjectSpacePos(relMidPos)); }
+	float3 GetAimPos() const { return (GetObjectSpacePos(relAimPos)); }
 
 public:
 	float health;
 	float mass;                                 ///< the physical mass of this object (run-time constant)
 	float crushResistance;                      ///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
-	float impulseDecayRate;                     ///< multiplier decaying this object's (residual) impulse each frame
 
-	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
 	bool immobile;                              ///< whether this object can be moved or not (except perhaps along y-axis, to make it stay on ground)
 	bool crushKilled;                           ///< true if this object died by being crushed during a collision
@@ -191,15 +245,8 @@ public:
 	int2 footprint;                             ///< The unrotated x-/z-size of this object, according to its footprint.
 
 	SyncedSshort heading;                       ///< Contains the same information as frontdir, but in a short signed integer.
-	PhysicalState physicalState;                ///< The current state of the object within the gameworld. I.e Flying or OnGround.
-
-	bool isMoving;                              ///< = velocity.length() > 0.0
-	bool isUnderWater;                          ///< true if this object is completely submerged (pos + height < 0)
-	bool isMarkedOnBlockingMap;                 ///< true if this object is currently marked on the GroundBlockingMap
-	float3 groundBlockPos;
-
-	float3 speed;                               ///< current velocity vector (length in elmos/frame)
-	float3 residualImpulse;                     ///< Used to sum up external impulses. TODO: remove this, impulse is ALWAYS applied immediately now
+	PhysicalState physicalState;                ///< bitmask indicating current state of this object within the game world
+	CollidableState collidableState;            ///< bitmask indicating which types of objects this object can collide with
 
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of
@@ -218,7 +265,11 @@ public:
 	SyncedFloat3 relAimPos;                     ///< local-space vector from pos to aimPos (read from model, used to initialize aimPos)
 	SyncedFloat3 midPos;                        ///< mid-position of model in WS, used as center of mass (and many other things)
 	SyncedFloat3 aimPos;                        ///< used as aiming position by weapons
+
 	int2 mapPos;                                ///< current position on GroundBlockingObjectMap
+	float3 groundBlockPos;
+
+	float3 dragScales;
 
 	float3 drawPos;                             ///< = pos + speed * timeOffset (unsynced)
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
@@ -229,7 +280,6 @@ public:
 	static const float DEFAULT_MASS;
 	static const float MINIMUM_MASS;
 	static const float MAXIMUM_MASS;
-	static const float IMPULSE_RATE;
 
 	static int deletingRefID;
 	static void SetDeletingRefID(int id) { deletingRefID = id; }

@@ -18,6 +18,7 @@ CONFIG(bool, AtiSwapRBFix).defaultValue(false);
 std::vector<FBO*> FBO::fboList;
 std::map<GLuint,FBO::TexData*> FBO::texBuf;
 GLint FBO::maxAttachments = 0;
+GLsizei FBO::maxSamples = -1;
 
 
 /**
@@ -43,7 +44,7 @@ GLenum FBO::GetTextureTargetByID(const GLuint id, const unsigned int i)
 		return _targets[i];
 	} else if (i<3) {
 		return GetTextureTargetByID(id, i+1);
-	} else	return -1;
+	} else	return GL_INVALID_ENUM;
 }
 
 
@@ -70,7 +71,7 @@ void FBO::DownloadAttachment(const GLenum attachment)
 	if (target==GL_TEXTURE) {
 		target = GetTextureTargetByID(id);
 
-		if (target<0)
+		if (target == GL_INVALID_ENUM)
 			return;
 	}
 
@@ -214,6 +215,27 @@ FBO::FBO() : fboId(0), reloadOnAltTab(false)
 	if (!IsSupported()) return;
 
 	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS_EXT, &maxAttachments);
+
+	// set maxSamples once
+	if (maxSamples == -1) {
+		bool multisampleExtensionFound = false;
+
+	#ifdef GLEW_EXT_framebuffer_multisample
+		multisampleExtensionFound = multisampleExtensionFound || (GLEW_EXT_framebuffer_multisample && GLEW_EXT_framebuffer_blit);
+	#endif
+	#ifdef GLEW_ARB_framebuffer_object
+		multisampleExtensionFound = multisampleExtensionFound || GLEW_ARB_framebuffer_object;
+	#endif
+
+		if (multisampleExtensionFound) {
+			glGetIntegerv(GL_MAX_SAMPLES_EXT, &maxSamples);
+			maxSamples = std::max(0, maxSamples);
+		}
+		else {
+			maxSamples = 0;
+		}
+		LOG_L(L_INFO, "FBO::maxSamples: %d", maxSamples);
+	}
 
 	glGenFramebuffersEXT(1,&fboId);
 
@@ -420,4 +442,26 @@ void FBO::CreateRenderBuffer(const GLenum attachment, const GLenum format, const
 	glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, format, width, height);
 	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, rbo);
 	myRBOs.push_back(rbo);
+}
+
+
+/**
+ * Creates and attaches a multisampled RBO
+ */
+void FBO::CreateRenderBufferMultisample(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height, GLsizei samples)
+{
+	assert(maxSamples > 0);
+	samples = std::min(samples, maxSamples);
+
+	GLuint rbo;
+	glGenRenderbuffersEXT(1, &rbo);
+	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rbo);
+	glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, samples, format, width, height);
+	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, rbo);
+	myRBOs.push_back(rbo);
+}
+
+GLsizei FBO::GetMaxSamples()
+{
+	return maxSamples;
 }

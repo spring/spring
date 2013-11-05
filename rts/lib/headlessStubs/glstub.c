@@ -29,6 +29,8 @@ GLAPI void APIENTRY glBindFramebufferEXT(GLenum target, GLuint framebuffer) {}
 GLAPI void APIENTRY glFramebufferTexture2DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {}
 GLAPI void APIENTRY glFramebufferRenderbufferEXT(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer) {}
 
+GLAPI void APIENTRY glDrawBuffers(GLsizei n, const GLenum *bufs) {}
+
 GLAPI void APIENTRY glDrawBuffersARB(GLsizei n, const GLenum *bufs) {}
 GLAPI void APIENTRY glDeleteBuffersARB(GLsizei n, const GLuint *buffers) {}
 GLAPI void APIENTRY glGenBuffersARB(GLsizei n, GLuint *buffers) {}
@@ -94,6 +96,7 @@ GLAPI void APIENTRY glBindRenderbufferEXT(GLenum target, GLuint renderbuffer) {}
 GLAPI void APIENTRY glDeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers) {}
 GLAPI void APIENTRY glGenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers) {}
 GLAPI void APIENTRY glRenderbufferStorageEXT(GLenum target, GLenum internalformat, GLsizei width, GLsizei height) {}
+GLAPI void APIENTRY glRenderbufferStorageMultisampleEXT(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height) {}
 GLAPI void APIENTRY glBlendFuncSeparate(GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha) {}
 GLAPI GLboolean APIENTRY glIsRenderbufferEXT(GLuint renderbuffer) {
 	return GL_FALSE;
@@ -274,6 +277,7 @@ GLAPI void APIENTRY glClearAccum(GLfloat red, GLfloat green, GLfloat blue, GLflo
 GLAPI void APIENTRY glColor3fv(const GLfloat *v) {}
 GLAPI void APIENTRY glColor3ub(GLubyte red, GLubyte green, GLubyte blue) {}
 GLAPI void APIENTRY glColor3ubv(const GLubyte *v) {}
+GLAPI void APIENTRY glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha) {}
 GLAPI void APIENTRY glColor4ubv(const GLubyte *v) {}
 
 GLAPI void APIENTRY glCopyTexImage2D(GLenum target, GLint level,
@@ -281,12 +285,12 @@ GLAPI void APIENTRY glCopyTexImage2D(GLenum target, GLint level,
                                         GLint x, GLint y,
                                         GLsizei width, GLsizei height,
                                         GLint border) {}
-                                        
+
 GLAPI void APIENTRY glCopyTexSubImage2D(GLenum target, GLint level,
                                            GLint xoffset, GLint yoffset,
                                            GLint x, GLint y,
                                            GLsizei width, GLsizei height) {}
-                                           
+
 GLAPI void APIENTRY glDrawBuffer(GLenum mode) {}
 GLAPI void APIENTRY glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices) {}
 GLAPI void APIENTRY glEdgeFlag(GLboolean flag) {}

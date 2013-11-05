@@ -3,6 +3,7 @@
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/UI/GuiHandler.h"
+#include "Game/UI/MiniMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
@@ -48,7 +49,8 @@ static inline const SColor& GetBuildColor(const DefaultPathDrawer::BuildSquareSt
 
 
 
-DefaultPathDrawer::DefaultPathDrawer(): IPathDrawer() {
+DefaultPathDrawer::DefaultPathDrawer(): IPathDrawer()
+{
 	pm = dynamic_cast<CPathManager*>(pathManager);
 }
 
@@ -67,10 +69,55 @@ void DefaultPathDrawer::DrawAll() const {
 }
 
 
+void DefaultPathDrawer::DrawInMiniMap()
+{
+	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+	const auto pe = pm->medResPE;
+	const MoveDef* md = GetSelectedMoveDef();
+
+	if (md == NULL)
+		return;
+
+	if (gd->GetDrawMode() < CBaseGroundDrawer::drawPathTrav)
+		return;
+	if (gd->GetDrawMode() > CBaseGroundDrawer::drawPathCost)
+		return;
+
+	glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f);
+		glTranslatef((float)minimap->GetPosX() * globalRendering->pixelX, (float)minimap->GetPosY() * globalRendering->pixelY, 0.0f);
+		glScalef((float)minimap->GetSizeX() * globalRendering->pixelX, (float)minimap->GetSizeY() * globalRendering->pixelY, 1.0f);
+	glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+		glTranslatef3(UpVector);
+		glScalef(1.0f / gs->mapx, -1.0f / gs->mapy, 1.0f);
+
+	glDisable(GL_TEXTURE_2D);
+	glColor4f(1.0f, 1.0f, 0.0f, 0.7f);
+
+	for (const CPathEstimator::SingleBlock& sb: pe->updatedBlocks) {
+		if (sb.moveDef == md) {
+			const int blockIdxX = sb.blockPos.x * pe->GetBlockSize();
+			const int blockIdxY = sb.blockPos.y * pe->GetBlockSize();
+			glRectf(blockIdxX, blockIdxY, blockIdxX + pe->GetBlockSize(), blockIdxY + pe->GetBlockSize());
+		}
+	}
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glEnable(GL_TEXTURE_2D);
+
+	glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
+}
+
 
 void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
-		case CBaseGroundDrawer::drawPathTraversability: {
+		case CBaseGroundDrawer::drawPathTrav: {
 			bool useCurrentBuildOrder = true;
 
 			if (guihandler->inCommand <= 0) {
@@ -91,7 +138,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 						BuildSquareStatus status = FREE;
 
-						if (!loshandler->InLos(pos, gu->myAllyTeam)) {
+						if (!losHandler->InLos(pos, gu->myAllyTeam)) {
 							status = NOLOS;
 						} else {
 							const UnitDef* ud = unitDefHandler->GetUnitDefByID(-guihandler->commands[guihandler->inCommand].id);
@@ -128,7 +175,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 							const int sqx = (tx << 1);
 							const int sqy = (ty << 1);
 							const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
-							const bool losSqr = loshandler->InLos(sqx, sqy, gu->myAllyTeam);
+							const bool losSqr = losHandler->InLos(sqx, sqy, gu->myAllyTeam);
 
 							float scale = 1.0f;
 
@@ -326,16 +373,19 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		const unsigned int dir = pf->squareStates.nodeMask[square] & PATHOPT_AXIS_DIRS;
 		const unsigned int obx = sqr.x - pf->directionVectors2D[dir].x;
 		const unsigned int obz = sqr.y - pf->directionVectors2D[dir].y;
+		/*
 		const unsigned int obsquare =  obz * gs->mapx + obx;
 
+		// is always greater 0?
 		if (obsquare >= 0) {
+		*/
 			p2.x = obx * SQUARE_SIZE;
 			p2.z = obz * SQUARE_SIZE;
 			p2.y = ground->GetHeightAboveWater(p2.x, p2.z, false) + 15.0f;
 
 			glVertexf3(p1);
 			glVertexf3(p2);
-		}
+		//}
 	}
 
 	glEnd();
@@ -451,7 +501,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					if (!camera->InView(p2))
 						continue;
-					if (camera->pos.SqDistance(p2) >= (4000.0f * 4000.0f))
+					if (camera->GetPos().SqDistance(p2) >= (4000.0f * 4000.0f))
 						continue;
 
 					font->SetTextColor(1.0f, 1.0f / cost, peBlueValue, 1.0f);
@@ -516,7 +566,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 			if (!camera->InView(p1))
 				continue;
-			if (camera->pos.SqDistance(p1) >= (4000.0f * 4000.0f))
+			if (camera->GetPos().SqDistance(p1) >= (4000.0f * 4000.0f))
 				continue;
 
 			SNPRINTF(blockCostsStr, sizeof(blockCostsStr), "f(%.2f) g(%.2f)", ob->fCost, ob->gCost);

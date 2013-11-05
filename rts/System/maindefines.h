@@ -47,15 +47,6 @@
 // a shorter form
 #define _STPF_ __SIZE_T_PRINTF_FORMAT__
 
-// Define an abreviation for the alignment attribute.
-// This should only be used in case of a known misalignment problem,
-// as it adds a performance hit, even though it is very very small.
-#if defined(__GNUC__) && (__GNUC__ == 4) && !defined(__arch64__) && !defined(DEDICATED_NOSSE)
-#define __ALIGN_ARG__ __attribute__ ((force_align_arg_pointer))
-#else
-#define __ALIGN_ARG__
-#endif
-
 #ifdef _MSC_VER
 	// Microsoft Visual C++ 7.0: MSC_VER = 1300
 	// Microsoft Visual C++ 7.1: MSC_VER = 1310
@@ -147,5 +138,15 @@
 	#endif // _WIN32
 #endif // cPD
 
+// WORKAROUND (2013) a pthread stack alignment problem, else SSE code would crash
+// more info: http://www.peterstock.co.uk/games/mingw_sse/ (TLDR: mingw-32 aligns
+// thread stacks to 4 bytes but we want 16-byte alignment)
+//
+#if (defined(__MINGW32__) && defined(__GNUC__) && (__GNUC__ == 4))
+#define __FORCE_ALIGN_STACK__ __attribute__ ((force_align_arg_pointer))
+#else
+#define __FORCE_ALIGN_STACK__
+#endif
 
 #endif // MAIN_DEFINES_H
+

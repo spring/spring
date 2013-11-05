@@ -4,7 +4,7 @@
 set -e #abort on error
 
 if [ $# -ne 1 ]; then
-	echo "runs spring as client, waits until  ~/.spring/cache/paths/*.pe[1|2].zip exists"
+	echo "runs spring as client, waits until  ~/.config/spring/cache/paths/*.pe[1|2].zip exists"
 	echo "Usage: $0 /path/to/spring"
 	exit 1
 fi
@@ -14,7 +14,7 @@ MAXWAIT=60
 
 for (( i=0; $i<$MAXWAIT; i++ ));
 do
-	if [ -s ~/.spring/infolog.txt ] && [ -n "$(grep "Finalizing" ~/.spring/infolog.txt)" ];
+	if [ -s ~/.config/spring/infolog.txt ] && [ -n "$(grep "Finalizing" ~/.config/spring/infolog.txt)" ];
 	then
 		sync
 		sleep 1

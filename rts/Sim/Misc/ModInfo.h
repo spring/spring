@@ -67,6 +67,7 @@ public:
 	 * examples: "Supreme Annihilation U32 V1.0", "Balanced Annihilation V7.04", "Balanced Annihilation V7.11"
 	 */
 	std::string humanName;
+	std::string humanNameVersioned;
 	/**
 	 * The short name (not including version).
 	 * examples: "SA", "BA", "BA"

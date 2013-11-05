@@ -60,18 +60,17 @@ CDirtProjectile::~CDirtProjectile()
 
 void CDirtProjectile::Update()
 {
-	speed *= slowdown;
-	speed.y += mygravity;
-	pos += speed;
-	alpha -= alphaFalloff;
+	SetVelocityAndSpeed((speed * slowdown) + (UpVector * mygravity));
+	SetPosition(pos + speed);
+
+	alpha = std::max(alpha - alphaFalloff, 0.0f);
 	size += sizeExpansion;
 
-	if (ground->GetApproximateHeight(pos.x, pos.z, false) - 40 > pos.y) {
+	if (ground->GetApproximateHeight(pos.x, pos.z, false) - 40.0f > pos.y) {
 		deleteMe = true;
 	}
-	if (alpha <= 0) {
+	if (alpha <= 0.0f) {
 		deleteMe = true;
-		alpha = 0;
 	}
 }
 

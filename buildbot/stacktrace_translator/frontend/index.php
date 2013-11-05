@@ -2,7 +2,7 @@
 
 /*
 	Simple Frontend for the Stacktrace translator on http://springrts.com:8000/
-	
+
 	Note: the file lastrun has to be writable by the webserver
 
 */
@@ -25,21 +25,52 @@ function limit(){
 
 /**
 	returns the spring version of the string in filecontents
-	for example
-	echo getVersion("Spring 85.0\n")."\n";
-	echo getVersion("Spring 84.0.1-567-g3294e6c\n")."\n";
-	echo getVersion("Spring {roam}84.0.1-418-g1455ce1\n")."\n";
 */
 function getVersion($filecontents){
-	$res=preg_match('/Spring ([0-9]+.[0-9]+)(\n)/',$filecontents,$matches);
-	if (($res==1) && (strpos($matches[1],"g")===false)){
-		$pos=strpos($matches[1]," ");
-		if ($pos===false)
-			return $matches[1];
-		return substr($matches[1],0,$pos);
+	$res=preg_match('/(Spring ([0-9]+.[0-9]+)(.\d*-\d*-g([0-9a-f]{7})\s)?(\w*)\s?(\((.*)\))?)(\n)/',$filecontents,$matches);
+	if ($res==1) {
+		$wholeVersion=$matches[1];
+		$syncVersion=$matches[2];
+		$commit=$matches[4];
+		$branch=$matches[6];
+		$buildFlags=$matches[8];
+		return $wholeVersion;
+	}
+	return "";
+}
+
+/**
+	returns the spring commit of the string in filecontents
+*/
+function getCommit($filecontents) {
+	$res=preg_match('/(Spring ([0-9]+.[0-9]+)(.\d*-\d*-g([0-9a-f]{7})\s)?(\w*)\s?(\((.*)\))?)(\n)/',$filecontents,$matches);
+	if ($res==1) {
+		$wholeVersion=$matches[1];
+		$syncVersion=$matches[2];
+		$commit=$matches[4];
+		$branch=$matches[6];
+		$buildFlags=$matches[8];
+		return $commit;
+	}
+	return "";
+}
+
+/**
+	returns the spring branch of the string in filecontents
+*/
+function getBranch($filecontents) {
+	$res=preg_match('/(Spring ([0-9]+.[0-9]+)(.\d*-\d*-g([0-9a-f]{7})\s)?(\w*)\s?(\((.*)\))?)(\n)/',$filecontents,$matches);
+	if ($res==1) {
+		$wholeVersion=$matches[1];
+		$syncVersion=$matches[2];
+		$commit=$matches[4];
+		$branch=$matches[6];
+		$buildFlags=$matches[8];
+		return (!empty($branch)) ? $branch : "master";
 	}
 	return "develop";
 }
+
 /**
 	returns true if url is valid http:// url
 	has to return false if url is local file
@@ -110,8 +141,9 @@ function getinfolog(){
 		if (array_key_exists('request',$_REQUEST))
 			$infolog=$_REQUEST['request'];
 		else
-			return "";	
+			return "";
 	}
+	$infolog=addslashes($infolog);
 	$infolog=str_replace("\r\n","\n",$infolog); //windows linebreaks f'up some things here...
 	$infolog=str_replace("\n\n","\n",$infolog);
 	return stripslashes($infolog);
@@ -127,7 +159,7 @@ function parse_template($tpl, $vars){
 /**
 	parses the result of an xmlrequest and returns a string ready for html output
 */
-function parse_result($res,$ver){
+function parse_result($res,$ver,$commit,$branch){
 	$pastebin="";
 	$name="";
 	$textwithlinks="";
@@ -144,13 +176,24 @@ function parse_result($res,$ver){
 			$address = $res[$i][1];
 			$filename = $res[$i][2];
 			$line = $res[$i][3];
+			if (!empty($filename)) {
+				$regres=preg_match('/.*(rts\/.*)/', $filename, $matches);
+				if ($regres==1 && !empty($matches[1])) {
+					$filename=$matches[1];
+				}
+			}
 			if ($name=="")
 				$name=$filename.":".$line;
 			$textwithlinks.="<tr>\n";
 			$textwithlinks.= "<td>".$module . "</td><td> " . $address . "</td><td> " . $filename . "</td>\n";
 			$cleantext.= $module." ".$address." ".$filename.":".$line."\n";
-			if ((strlen($filename)>0) && ($filename[0]=='r')){
-				$textwithlinks.='<td><a target="_blank" href="http://github.com/spring/spring/tree/'.$ver.'/'.$filename.'#L'.$line.'">'.$line.'</a></td>';
+
+			if (!empty($filename) && ($filename[0]=='r')){
+				if (!empty($commit)){
+					$textwithlinks.='<td><a target="_blank" href="https://github.com/spring/spring/blob/'.$commit.'/'.$filename.'#L'.$line.'">'.$line.'</a></td>';
+				} else {
+					$textwithlinks.='<td><a target="_blank" href="http://github.com/spring/spring/tree/'.$branch.'/'.$filename.'#L'.$line.'">'.$line.'</a></td>';
+				}
 			}else {
 				$textwithlinks.="<td>$line</td>";
 			}
@@ -183,7 +226,7 @@ if ($res['TEXTAREA']!=""){
 		$res['TRANSLATOR']="http://abma.de:8000";
 		$tmp=xmlrpcrequest($res['TRANSLATOR'],$res['TEXTAREA']);
 	}*/
-	$res=array_merge($res,parse_result($tmp,getVersion($res['TEXTAREA'])));
+	$res=array_merge($res,parse_result($tmp,getVersion($res['TEXTAREA']),getCommit($res['TEXTAREA']),getBranch($res['TEXTAREA'])));
 }
 $res['ACTION']=$_SERVER['SCRIPT_NAME'];
 echo parse_template("index.tpl",$res);

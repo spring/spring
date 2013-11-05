@@ -10,8 +10,6 @@
 
 #ifndef _CONSOLE
 
-#include <SDL_timer.h>
-
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
@@ -320,7 +318,7 @@ void CUnitScript::RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator
 	if (animInfoIt != anims[type].end()) {
 		AnimInfo* ai = *animInfoIt;
 		anims[type].erase(animInfoIt);
- 
+
 		// If this was the last animation, remove from currently animating list
 		// FIXME: this could be done in a cleaner way
 		if (!HaveAnimations()) {
@@ -544,25 +542,18 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 
 	relDir.SafeNormalize();
 
-	const float3 pos =
-		unit->pos +
-		unit->frontdir * relPos.z +
-		unit->updir    * relPos.y +
-		unit->rightdir * relPos.x;
-	const float3 dir =
-		unit->frontdir * relDir.z +
-		unit->updir    * relDir.y +
-		unit->rightdir * relDir.x;
+	const float3 pos = unit->GetObjectSpacePos(relPos);
+	const float3 dir = unit->GetObjectSpaceVec(relDir);
 
 	float alpha = 0.3f + gu->RandFloat() * 0.2f;
 	float alphaFalloff = 0.004f;
 	float fadeupTime = 4;
 
-	//const UnitDef* ud = unit->unitDef;
+	const UnitDef* ud = unit->unitDef;
 	const MoveDef* md = unit->moveDef;
 
 	// hovercraft need special care
-	if (md != NULL && md->moveFamily == MoveDef::Hover) {
+	if (md != NULL && md->speedModClass == MoveDef::Hover) {
 		fadeupTime = 8.0f;
 		alpha = 0.15f + gu->RandFloat() * 0.2f;
 		alphaFalloff = 0.008f;
@@ -602,7 +593,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 			new CBubbleProjectile(
 				pos + gu->RandVector() * 2.0f,
 				pspeed,
-				40.0f + gu->RandFloat() * 30.0f,
+				40.0f + gu->RandFloat() * GAME_SPEED,
 				1.0f + gu->RandFloat() * 2.0f,
 				0.01f,
 				unit,
@@ -635,15 +626,9 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		}
 		default: {
 			if (sfxType & SFX_CEG) {
-				// emit defined explosiongenerator
-				const unsigned index = sfxType - SFX_CEG;
-				if (index >= unit->unitDef->sfxExplGens.size() || unit->unitDef->sfxExplGens[index] == NULL) {
-					ShowScriptError("Invalid explosion generator index for emit-sfx");
-					break;
-				}
-
-				IExplosionGenerator* explGen = unit->unitDef->sfxExplGens[index];
-				explGen->Explosion(0, pos, unit->cegDamage, 1, unit, 0, 0, dir);
+				// emit defined explosion-generator (can only be custom, not standard)
+				// index is made valid by callee, an ID of -1 means CEG failed to load
+				explGenHandler->GenExplosion(ud->GetModelExplosionGeneratorID(sfxType - SFX_CEG), pos, dir, unit->cegDamage, 1.0f, 0.0f, unit, NULL);
 			}
 			else if (sfxType & SFX_FIRE_WEAPON) {
 				// make a weapon fire from the piece
@@ -660,7 +645,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 
 				weapon->targetPos = pos + dir;
 				weapon->weaponMuzzlePos = pos;
-				weapon->Fire();
+				weapon->Fire(true);
 				weapon->weaponMuzzlePos = weaponMuzzlePos;
 				weapon->targetPos = targetPos;
 			}
@@ -772,11 +757,7 @@ void CUnitScript::Explode(int piece, int flags)
 
 #ifndef _CONSOLE
 	const float3 relPos = GetPiecePos(piece);
-	const float3 absPos =
-		unit->pos +
-		unit->frontdir * relPos.z +
-		unit->updir    * relPos.y +
-		unit->rightdir * relPos.x;
+	const float3 absPos = unit->GetObjectSpacePos(relPos);
 
 #ifdef TRACE_SYNC
 	tracefile << "Cob explosion: ";
@@ -785,51 +766,51 @@ void CUnitScript::Explode(int piece, int flags)
 
 	if (!(flags & PF_NoHeatCloud)) {
 		// Do an explosion at the location first
-		new CHeatCloudProjectile(absPos, float3(0, 0, 0), 30, 30, NULL);
+		new CHeatCloudProjectile(absPos, ZeroVector, 30, 30, NULL);
 	}
 
 	// If this is true, no stuff should fly off
-	if (flags & PF_NONE) return;
+	if (flags & PF_NONE)
+		return;
 
 	// This means that we are going to do a full fledged piece explosion!
-	float3 baseSpeed = unit->speed + unit->residualImpulse * 0.5f;
-	float sql = baseSpeed.SqLength();
+	float3 baseSpeed = unit->speed;
+	float3 explSpeed((0.5f - gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
 
-	if (sql > 9) {
-		const float l  = math::sqrt(sql);
+	if (baseSpeed.SqLength() > 9) {
+		const float l  = baseSpeed.Length();
 		const float l2 = 3 + math::sqrt(l - 3);
 		baseSpeed *= (l2 / l);
 	}
-	float3 speed((0.5f-gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
 	if (unit->pos.y - ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 15) {
-		speed.y = (0.5f - gs->randFloat()) * 6.0f;
-	}
-	speed += baseSpeed;
-	if (speed.SqLength() > 12*12) {
-		speed.Normalize();
-		speed *= 12;
+		explSpeed.y = (0.5f - gs->randFloat()) * 6.0f;
 	}
 
-	/* TODO Push this back. Don't forget to pass the team (color).  */
+	explSpeed += baseSpeed;
+
+	// limit projectile speed to 12 elmos/frame (why?)
+	if (false && explSpeed.SqLength() > (12.0f*12.0f)) {
+		explSpeed = (explSpeed.Normalize() * 12.0f);
+	}
 
 	if (flags & PF_Shatter) {
-		Shatter(piece, absPos, speed);
+		Shatter(piece, absPos, explSpeed);
+		return;
 	}
-	else {
-		LocalModelPiece* pieceData = pieces[piece];
 
-		if (pieceData->original != NULL) {
-			int newflags = PF_Fall; // if they don't fall they could live forever
-			if (flags & PF_Explode) { newflags |= PF_Explode; }
-			//if (flags & PF_Fall) { newflags |=  PF_Fall; }
-			if ((flags & PF_Smoke) && projectileHandler->particleSaturation < 1) { newflags |= PF_Smoke; }
-			if ((flags & PF_Fire) && projectileHandler->particleSaturation < 0.95f) { newflags |= PF_Fire; }
-			if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
+	if (pieces[piece]->original == NULL)
+		return;
 
-			//LOG_L(L_DEBUG, "Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
-			new CPieceProjectile(absPos, speed, pieceData, newflags,unit,0.5f);
-		}
-	}
+	// projectiles that don't fall could live forever
+	int newflags = PF_Fall;
+
+	if (flags & PF_Explode) { newflags |= PF_Explode; }
+	// if (flags & PF_Fall) { newflags |=  PF_Fall; }
+	if ((flags & PF_Smoke) && projectileHandler->particleSaturation < 1.0f) { newflags |= PF_Smoke; }
+	if ((flags & PF_Fire) && projectileHandler->particleSaturation < 0.95f) { newflags |= PF_Fire; }
+	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
+
+	new CPieceProjectile(absPos, explSpeed, unit, pieces[piece], newflags, 0.5f);
 #endif
 }
 
@@ -854,11 +835,7 @@ void CUnitScript::ShowFlare(int piece)
 	}
 #ifndef _CONSOLE
 	const float3 relPos = GetPiecePos(piece);
-	const float3 absPos =
-		unit->pos +
-		unit->frontdir * relPos.z +
-		unit->updir    * relPos.y +
-		unit->rightdir * relPos.x;
+	const float3 absPos = unit->GetObjectSpacePos(relPos);
 	const float3 dir = unit->lastMuzzleFlameDir;
 	const float size = unit->lastMuzzleFlameSize;
 
@@ -921,7 +898,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			break;
 		}
 		const float3 relPos = GetPiecePos(p1);
-		const float3 absPos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
+		const float3 absPos = unit->GetObjectSpacePos(relPos);
 		return PACKXZ(absPos.x, absPos.z);
 	}
 	case PIECE_Y: {
@@ -930,7 +907,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			break;
 		}
 		const float3 relPos = GetPiecePos(p1);
-		const float3 absPos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
+		const float3 absPos = unit->GetObjectSpacePos(relPos);
 		return int(absPos.y * COBSCALE);
 	}
 	case UNIT_XZ: {
@@ -996,11 +973,11 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case VETERAN_LEVEL:
 		return int(100 * unit->experience);
 	case CURRENT_SPEED:
-		return int(unit->speed.Length() * COBSCALE);
+		return int(unit->speed.w * COBSCALE);
 	case ON_ROAD:
 		return 0;
 	case IN_WATER:
-		return (unit->pos.y < 0.0f) ? 1 : 0;
+		return (unit->IsInWater());
 	case MAX_ID:
 		return unitHandler->MaxUnits()-1;
 	case MY_ID:
@@ -1109,11 +1086,12 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return unit->transporter?unit->transporter->id:-1;
 
 	case SHIELD_POWER: {
-		if (unit->shieldWeapon == NULL) {
+		const CWeapon* shield = unit->shieldWeapon;
+
+		if (shield == NULL)
 			return -1;
-		}
-		const CPlasmaRepulser* shield = static_cast<CPlasmaRepulser*>(unit->shieldWeapon);
-		return int(shield->curPower * float(COBSCALE));
+
+		return int(static_cast<const CPlasmaRepulser*>(shield)->GetCurPower() * float(COBSCALE));
 	}
 
 	case STEALTH: {
@@ -1153,13 +1131,13 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 		switch (p3) {	//who hears the sound
 			case 0:		//ALOS
-				if (!loshandler->InAirLos(unit->pos,gu->myAllyTeam)) { return 0; }
+				if (!losHandler->InAirLos(unit->pos,gu->myAllyTeam)) { return 0; }
 				break;
 			case 1:		//LOS
 				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS)) { return 0; }
 				break;
 			case 2:		//ALOS or radar
-				if (!(loshandler->InAirLos(unit->pos,gu->myAllyTeam) || unit->losStatus[gu->myAllyTeam] & (LOS_INRADAR))) { return 0; }
+				if (!(losHandler->InAirLos(unit->pos,gu->myAllyTeam) || unit->losStatus[gu->myAllyTeam] & (LOS_INRADAR))) { return 0; }
 				break;
 			case 3:		//LOS or radar
 				if (!(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR))) { return 0; }
@@ -1547,7 +1525,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		case HEADING: {
 			unit->heading = param % COBSCALE;
-			unit->UpdateDirVectors(!unit->upright && unit->moveType->GetMaxSpeed() > 0.0f);
+			unit->UpdateDirVectors(!unit->upright);
 			unit->UpdateMidAndAimPos();
 		} break;
 		case LOS_RADIUS: {
@@ -1587,7 +1565,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		case SHIELD_POWER: {
 			if (unit->shieldWeapon != NULL) {
 				CPlasmaRepulser* shield = static_cast<CPlasmaRepulser*>(unit->shieldWeapon);
-				shield->curPower = std::max(0.0f, float(param) / float(COBSCALE));
+				shield->SetCurPower(std::max(0.0f, float(param) / float(COBSCALE)));
 			}
 			break;
 		}
@@ -1663,47 +1641,6 @@ void CUnitScript::SetUnitVal(int val, int param)
 	}
 #endif
 }
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-#ifndef _CONSOLE
-
-void CUnitScript::BenchmarkScript(CUnitScript* script)
-{
-	const int duration = 10000; // millisecs
-
-	const unsigned start = SDL_GetTicks();
-	unsigned end = start;
-	int count = 0;
-
-	while ((end - start) < duration) {
-		for (int i = 0; i < 10000; ++i) {
-			script->QueryWeapon(0);
-		}
-		++count;
-		end = SDL_GetTicks();
-	}
-
-	LOG("%d0000 calls in %u ms -> %.0f calls/second",
-			count, end - start, float(count) * (10000 / (duration / 1000)));
-}
-
-
-void CUnitScript::BenchmarkScript(const std::string& unitname)
-{
-	std::list<CUnit*>::iterator ui = unitHandler->activeUnits.begin();
-	for (; ui != unitHandler->activeUnits.end(); ++ui) {
-		CUnit* unit = *ui;
-		if (unit->unitDef->name == unitname) {
-			BenchmarkScript(unit->script);
-			return;
-		}
-	}
-}
-
-#endif
 
 /******************************************************************************/
 /******************************************************************************/

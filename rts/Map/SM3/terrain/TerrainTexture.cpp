@@ -55,7 +55,7 @@ namespace terrain {
 				str="Pass_Replace";
 
 			std::string shaderstr = p.shaderSetup ? p.shaderSetup->GetDebugDesc() : std::string("none");
-			LOG_L(L_DEBUG, "Pass ("_STPF_"): %s, %s. Shader: %s",
+			LOG_L(L_DEBUG, "Pass (" _STPF_ "): %s, %s. Shader: %s",
 					a, str, (p.invertAlpha ? "invertalpha" : ""),
 					shaderstr.c_str());
 		}
@@ -77,20 +77,20 @@ namespace terrain {
 //-----------------------------------------------------------------------
 
 
-	TerrainTexture::TerrainTexture()
+	TerrainTexture::TerrainTexture():
+		debugShader(-1),
+		heightmapW(0),
+		blendmapLOD(0),
+		useBumpMaps(false),
+		optimizeEpsilon(0.0f),
+		currentRenderSetup(NULL),
+		shaderHandler(NULL),
+		maxPasses(0),
+		tdfParser(NULL),
+		lightmap(NULL),
+		flatBumpmap(NULL),
+		shadowMapParams(0)
 	{
-		tdfParser = 0;
-		heightmapW = 0;
-		blendmapLOD = 0;
-		debugShader = -1;
-		shaderHandler = 0;
-		maxPasses = 0;
-		currentRenderSetup = 0;
-		lightmap = 0;
-		flatBumpmap = 0;
-		shadowMapParams = 0;
-		optimizeEpsilon = 0.0f;
-		useBumpMaps = false;
 	}
 
 	TerrainTexture::~TerrainTexture()
@@ -260,7 +260,7 @@ namespace terrain {
 			// Save image
 			if (blendMaps[a]->generatorInfo) {
 				char fn[32];
-				SNPRINTF(fn,32, "blendmap"_STPF_".jpg", a);
+				SNPRINTF(fn,32, "blendmap" _STPF_ ".jpg", a);
 				remove(fn);
 				bm->Save(fn);
 			}
@@ -750,9 +750,9 @@ namespace terrain {
 	void ShaderDef::Output()
 	{
 		const char* opstr[] = { "add", "mul", "alpha" ,"blend" };
-		LOG("Shader: "_STPF_" stages.", stages.size());
+		LOG("Shader: " _STPF_ " stages.", stages.size());
 		for (size_t a = 0; a < stages.size(); a++){
-			LOG(_STPF_"\toperation=%s", a, opstr[(int)stages[a].operation]);
+			LOG(_STPF_ "\toperation=%s", a, opstr[(int)stages[a].operation]);
 			LOG("\tsource=%s", stages[a].sourceName.c_str());
 		}
 	}

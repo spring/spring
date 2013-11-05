@@ -37,7 +37,7 @@
 namespace fastmath {
 	float isqrt_nosse(float) _const;
 	float isqrt_sse(float x) _const;
-	float __ALIGN_ARG__ sqrt_sse(float x) _const;
+	float sqrt_sse(float x) _const;
 	float isqrt_nosse(float x) _const;
 	float isqrt2_nosse(float x) _const;
 	float sqrt(float x) _const;
@@ -58,14 +58,13 @@ namespace fastmath {
 	* This is much slower than isqrt_nosse (extremely slow on AMDs) and
 	* additionally gives different results on Intel and AMD processors.
 	*/
+	__FORCE_ALIGN_STACK__
 	inline float isqrt_sse(float x)
 	{
 #ifndef DEDICATED_NOSSE
-		__m128 vec = _mm_load_ss(&x);
+		__m128 vec = _mm_set_ss(x);
 		vec = _mm_rsqrt_ss(vec);
-		_mm_store_ss(&x, vec);
-		
-		return x;
+		return _mm_cvtss_f32(vec);
 #else
 		return isqrt_nosse(x);
 #endif
@@ -74,16 +73,15 @@ namespace fastmath {
 	/**
 	* @brief Sync-safe. Calculates square root with using SSE instructions.
 	*
-	* Slower than std::sqrtf, faster than streflop
+	* Slower than std::sqrtf, much faster than streflop
 	*/
-	inline float __ALIGN_ARG__ sqrt_sse(float x)
+	__FORCE_ALIGN_STACK__
+	inline float sqrt_sse(float x)
 	{
 #ifndef DEDICATED_NOSSE
-		__m128 vec = _mm_load_ss(&x);
+		__m128 vec = _mm_set_ss(x);
 		vec = _mm_sqrt_ss(vec);
-		_mm_store_ss(&x, vec);
-		
-		return x;
+		return _mm_cvtss_f32(vec);
 #else
 		return sqrt(x);
 #endif
@@ -278,8 +276,7 @@ namespace fastmath {
 	* @brief fast version of std::floor
 	*
 	* Like 2-3x faster than glibc ones.
-	* Note: It seems std::floor operates on FPU's 80bit while this custom solution always works on 32bit.
-	* So the results differ at the end of the 32bit precision range.
+	* Note: The results differ at the end of the 32bit precision range.
 	*/
 	template<typename T>
 	inline float floor(const T& f)
@@ -298,7 +295,7 @@ namespace math {
 
 	using fastmath::isqrt;
 	using fastmath::isqrt2;
-	
+
 	using fastmath::floor;
 }
 

@@ -19,20 +19,17 @@ public:
 
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
-	void StopMoving();
+	void StopMoving(bool callScript = false, bool hardStop = false);
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 
-	bool CanApplyImpulse();
+	bool CanApplyImpulse(const float3&);
 	void SetMaxSpeed(float speed);
 	void LeaveTransport();
 
 	static void CreateLineTable();
 	static void DeleteLineTable();
-
-	bool IsSkidding() const { return skidding; }
-	bool IsFlying() const { return flying; }
 
 private:
 	float BreakingDistance(float speed);
@@ -66,9 +63,6 @@ private:
 	bool CheckColH(int x, int y1, int y2, float xmove, int squareTestX);
 	bool CheckColV(int y, int x1, int x2, float zmove, int squareTestY);
 
-	void StartSkidding() { skidding = true; }
-	void StartFlying() { skidding = true; flying = true; }
-
 	float3 ObstacleAvoidance(float3 desiredDir);
 	float Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal = 0.0f);
 
@@ -85,16 +79,13 @@ private:
 	bool atGoal;
 	bool haveFinalWaypoint;
 
-	bool skidding;
-	bool flying;
-
 	float turnRate;
 	float accRate;
 	float decRate;
 
 	float skidRotSpeed;
-	float dropSpeed;
-	float dropHeight;
+	//float dropSpeed;
+	//float dropHeight;
 
 	float3 skidRotVector;
 	float skidRotSpeed2;
@@ -127,8 +118,6 @@ private:
 
 	int moveSquareX;
 	int moveSquareY;
-
-	CSolidObject::PhysicalState oldPhysState;
 
 	// number of grid-cells along each dimension; should be an odd number
 	static const int LINETABLE_SIZE = 11;

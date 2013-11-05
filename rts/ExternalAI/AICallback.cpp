@@ -10,9 +10,9 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/TraceRay.h"
 #include "Game/GameSetup.h"
-#include "Game/Player.h"
-#include "Game/PlayerHandler.h"
-#include "Game/SelectedUnits.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/InMapDraw.h"
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaRules.h"
@@ -52,7 +52,7 @@
 #include "ExternalAI/EngineOutHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
@@ -132,13 +132,13 @@ CAICallback::CAICallback(int teamId)
 	, gh(grouphandlers[teamId])
 {}
 
-CAICallback::~CAICallback()
-{}
-
 void CAICallback::SendStartPos(bool ready, float3 startPos)
 {
-	unsigned char readyness = ready? 1: 0;
-	net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, team, readyness, startPos.x, startPos.y, startPos.z));
+	if (ready) {
+		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, team, CPlayer::PLAYER_RDYSTATE_READIED, startPos.x, startPos.y, startPos.z));
+	} else {
+		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, team, CPlayer::PLAYER_RDYSTATE_UPDATED, startPos.x, startPos.y, startPos.z));
+	}
 }
 
 void CAICallback::SendTextMsg(const char* text, int zone)
@@ -147,8 +147,7 @@ void CAICallback::SendTextMsg(const char* text, int zone)
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*(teamAIs.begin())); // FIXME is there a better way?
 
 	if (!game->ProcessCommandText(-1, text)) {
-		LOG("<SkirmishAI: %s %s (team %d)>: %s",
-				aiData->shortName.c_str(), aiData->version.c_str(), team, text);
+		LOG("<SkirmishAI: %s %s (team %d)>: %s", aiData->shortName.c_str(), aiData->version.c_str(), team, text);
 	}
 }
 
@@ -281,10 +280,10 @@ int CAICallback::GetPlayerTeam(int playerId)
 const char* CAICallback::GetTeamSide(int teamId)
 {
 	if (teamHandler->IsValidTeam(teamId)) {
-		return (teamHandler->Team(teamId)->side.c_str());
-	} else {
-		return NULL;
+		return (teamHandler->Team(teamId)->GetSide().c_str());
 	}
+
+	return NULL;
 }
 
 void* CAICallback::CreateSharedMemArea(char* name, int size)
@@ -652,7 +651,7 @@ float3 CAICallback::GetUnitPos(int unitId)
 	verify();
 	const CUnit* unit = GetInLosAndRadarUnit(unitId);
 	if (unit) {
-		return CGameHelper::GetUnitErrorPos(unit, teamHandler->AllyTeam(team));
+		return unit->GetErrorPos(teamHandler->AllyTeam(team));
 	}
 	return ZeroVector;
 }
@@ -1018,47 +1017,40 @@ float CAICallback::GetGravity() const {
 
 const float* CAICallback::GetHeightMap()
 {
-	return &readmap->GetCenterHeightMapSynced()[0];
+	return &readMap->GetCenterHeightMapSynced()[0];
 }
 
 const float* CAICallback::GetCornersHeightMap()
 {
-	return readmap->GetCornerHeightMapSynced();
+	return readMap->GetCornerHeightMapSynced();
 }
 
-float CAICallback::GetMinHeight()
-{
-	return readmap->initMinHeight;
-}
-
-float CAICallback::GetMaxHeight()
-{
-	return readmap->initMaxHeight;
-}
+float CAICallback::GetMinHeight() { return readMap->GetInitMinHeight(); }
+float CAICallback::GetMaxHeight() { return readMap->GetInitMaxHeight(); }
 
 const float* CAICallback::GetSlopeMap()
 {
-	return readmap->GetSlopeMapSynced();
+	return readMap->GetSlopeMapSynced();
 }
 
 const unsigned short* CAICallback::GetLosMap()
 {
-	return &loshandler->losMaps[teamHandler->AllyTeam(team)].front();
+	return &losHandler->losMaps[teamHandler->AllyTeam(team)].front();
 }
 
 const unsigned short* CAICallback::GetRadarMap()
 {
-	return &radarhandler->radarMaps[teamHandler->AllyTeam(team)].front();
+	return &radarHandler->radarMaps[teamHandler->AllyTeam(team)].front();
 }
 
 const unsigned short* CAICallback::GetJammerMap()
 {
-	return &radarhandler->jammerMaps[teamHandler->AllyTeam(team)].front();
+	return &radarHandler->jammerMaps[teamHandler->AllyTeam(team)].front();
 }
 
 const unsigned char* CAICallback::GetMetalMap()
 {
-	return &readmap->metalMap->metalMap[0];
+	return (readMap->metalMap->GetDistributionMap());
 }
 
 float CAICallback::GetElevation(float x, float z)
@@ -1400,7 +1392,7 @@ bool CAICallback::GetValue(int id, void *data)
 			*(bool*)data = CEngineOutHandler::CatchExceptions();
 			return true;
 		}case AIVAL_MAP_CHECKSUM:{
-			*(unsigned int*)data = readmap->mapChecksum;
+			*(unsigned int*)data = readMap->GetMapChecksum();
 			return true;
 		}case AIVAL_DEBUG_MODE:{
 			*(bool*)data = globalRendering->drawdebug;
@@ -1783,8 +1775,8 @@ int CAICallback::GetSelectedUnits(int* unitIds, int unitIds_max)
 	// check if the allyteam of the player running
 	// the AI lib matches the AI's actual allyteam
 	if (gu->myAllyTeam == teamHandler->AllyTeam(team)) {
-		for (CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
-				(ui != selectedUnits.selectedUnits.end()) && (a < unitIds_max); ++ui) {
+		for (CUnitSet::iterator ui = selectedUnitsHandler.selectedUnits.begin();
+				(ui != selectedUnitsHandler.selectedUnits.end()) && (a < unitIds_max); ++ui) {
 			if (unitIds != NULL) {
 				unitIds[a] = (*ui)->id;
 			}
@@ -1883,7 +1875,7 @@ bool CAICallback::CanBuildUnit(int unitDefID)
 
 const float3* CAICallback::GetStartPos()
 {
-	return &teamHandler->Team(team)->startPos;
+	return &teamHandler->Team(team)->GetStartPos();
 }
 
 

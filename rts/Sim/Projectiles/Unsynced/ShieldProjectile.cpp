@@ -91,12 +91,8 @@ void ShieldProjectile::Update() {
 	if (shield->owner == NULL)
 		return;
 
-	const CUnit* owner = shield->owner;
-
-	pos = owner->drawPos +
-		owner->frontdir * shield->relWeaponPos.z +
-		owner->updir    * shield->relWeaponPos.y +
-		owner->rightdir * shield->relWeaponPos.x;
+	// interpolate shield position for drawing
+	pos = (shield->owner)->GetObjectSpacePosUnsynced(shield->relWeaponPos);
 }
 
 bool ShieldProjectile::AllowDrawing() {
@@ -114,21 +110,16 @@ bool ShieldProjectile::AllowDrawing() {
 
 	//FIXME if Lua wants to draw the shield itself, we should draw all GL_QUADS in the `va` vertexArray first.
 	// but doing so for each shield might reduce the performance.
-	// so might use a branch-prediciton? -> save last return value and if it is true draw `va` before calling luaRules->DrawShield()
+	// so might use a branch-prediction? -> save last return value and if it is true draw `va` before calling luaRules->DrawShield()
 	if (luaRules && luaRules->DrawShield(shield->owner, shield))
 		return allowDrawing;
 
-	// interpolate shield position for drawing
 	const CUnit* owner = shield->owner;
-	pos = owner->drawPos +
-		owner->frontdir * shield->relWeaponPos.z +
-		owner->updir    * shield->relWeaponPos.y +
-		owner->rightdir * shield->relWeaponPos.x;
 
 	// if the unit that emits this shield is stunned or not
 	// yet finished, prevent the shield segments from being
 	// drawn
-	if (shield->owner->IsStunned() || shield->owner->beingBuilt)
+	if (owner->IsStunned() || owner->beingBuilt)
 		return allowDrawing;
 	if (shieldSegments.empty())
 		return allowDrawing;
@@ -136,8 +127,7 @@ bool ShieldProjectile::AllowDrawing() {
 		return allowDrawing;
 
 	// signal the ShieldSegmentProjectile's they can draw
-	allowDrawing = true;
-	return allowDrawing;
+	return (allowDrawing = true);
 }
 
 
@@ -277,21 +267,21 @@ void ShieldSegmentProjectile::Draw() {
 	const CPlasmaRepulser* shield = shieldProjectile->GetShield();
 	if (shield == NULL)
 		return;
-	if (!shield->isEnabled)
+	if (!shield->IsEnabled())
 		return;
 	const WeaponDef* shieldDef = shield->weaponDef;
 
 	// lerp between badColor and goodColor based on shield's current power
-	const float colorMix = std::min(1.0f, shield->curPower / std::max(1.0f, shieldDef->shieldPower));
+	const float colorMix = std::min(1.0f, shield->GetCurPower() / std::max(1.0f, shieldDef->shieldPower));
 
 	segmentPos   = shieldProjectile->pos;
 	segmentColor = mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, colorMix);
 	segmentAlpha = shieldDef->visibleShield * shieldDef->shieldAlpha;
 
-	if (shield->hitFrames > 0 && shieldDef->visibleShieldHitFrames > 0) {
+	if (shield->GetHitFrames() > 0 && shieldDef->visibleShieldHitFrames > 0) {
 		// when a shield is hit, increase segment's opacity to
 		// min(1, def->alpha + k * def->alpha) with k in [1, 0]
-		segmentAlpha += (shield->hitFrames / float(shieldDef->visibleShieldHitFrames)) * shieldDef->shieldAlpha;
+		segmentAlpha += (shield->GetHitFrames() / float(shieldDef->visibleShieldHitFrames)) * shieldDef->shieldAlpha;
 		segmentAlpha = std::min(segmentAlpha, 1.0f);
 	}
 

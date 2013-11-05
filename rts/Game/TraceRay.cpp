@@ -52,7 +52,7 @@ inline static bool TestConeHelper(
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	}
 
-	if (globalRendering->drawdebugtraceray && (!GML::SimEnabled() || Threading::IsSimThread())) {
+	if (globalRendering->drawdebugtraceray && Threading::IsSimThread()) {
 		#define go geometricObjects
 
 		if (ret) {
@@ -127,7 +127,7 @@ inline static bool TestTrajectoryConeHelper(
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	}
 
-	if (globalRendering->drawdebugtraceray && (!GML::SimEnabled() || Threading::IsSimThread())) {
+	if (globalRendering->drawdebugtraceray && Threading::IsSimThread()) {
 		// FIXME? seems to under-estimate gravity near edge of range
 		// (Cannon and MissileLauncher both subtract 30 elmos from it
 		// in HaveFreeLineOfFire???)
@@ -161,7 +161,8 @@ float TraceRay(
 	int avoidFlags,
 	const CUnit* owner,
 	CUnit*& hitUnit,
-	CFeature*& hitFeature
+	CFeature*& hitFeature,
+	CollisionQuery* hitColQuery
 ) {
 	const bool ignoreEnemies  = ((avoidFlags & Collision::NOENEMIES   ) != 0);
 	const bool ignoreAllies   = ((avoidFlags & Collision::NOFRIENDLIES) != 0);
@@ -174,18 +175,23 @@ float TraceRay(
 	hitFeature = NULL;
 	hitUnit = NULL;
 
-	if (dir == ZeroVector) {
+	if (dir == ZeroVector)
 		return -1.0f;
-	}
 
 	if (!ignoreFeatures || !ignoreUnits) {
 		GML_RECMUTEX_LOCK(quad); // TraceRay
+
 		CollisionQuery cq;
 
 		int* begQuad = NULL;
 		int* endQuad = NULL;
 
 		quadField->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
+
+		// locally point somewhere non-NULL; we cannot pass hitColQuery
+		// to DetectHit directly because each call resets it internally
+		if (hitColQuery == NULL)
+			hitColQuery = &cq;
 
 		// feature intersection
 		if (!ignoreFeatures) {
@@ -198,7 +204,7 @@ float TraceRay(
 					// NOTE:
 					//     if f is non-blocking, ProjectileHandler will not test
 					//     for collisions with projectiles so we can skip it here
-					if (!f->blocking)
+					if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 						continue;
 
 					if (CCollisionHandler::DetectHit(f, start, start + dir * length, &cq, true)) {
@@ -208,6 +214,7 @@ float TraceRay(
 						if (len < length) {
 							length = len;
 							hitFeature = f;
+							*hitColQuery = cq;
 						}
 					}
 				}
@@ -224,6 +231,8 @@ float TraceRay(
 
 					if (u == owner)
 						continue;
+					if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
+						continue;
 					if (ignoreAllies && u->allyteam == owner->allyteam)
 						continue;
 					if (ignoreNeutrals && u->IsNeutral())
@@ -238,6 +247,7 @@ float TraceRay(
 						if (len < length) {
 							length = len;
 							hitUnit = u;
+							*hitColQuery = cq;
 						}
 					}
 				}
@@ -279,15 +289,19 @@ float GuiTraceRay(
 	if (dir == ZeroVector)
 		return -1.0f;
 
-	// ground intersection
+	// ground and water-plane intersection
 	const float guiRayLength = length;
 	const float groundRayLength = ground->LineGroundCol(start, start + dir * guiRayLength, false);
-	const float waterRayLength = math::floor(math::fabs(start.y / std::min(dir.y, -0.00001f)));
+	const float waterRayLength = math::floorf(math::fabs(start.y / std::min(dir.y, -0.00001f)));
 
 	float minRayLength = groundRayLength;
 	float minIngressDist = length;
 	float minEgressDist = length;
 
+	bool hitFactory = false;
+
+	// if ray cares about water, take minimum
+	// of distance to ground and water surface
 	if (!ignoreWater)
 		minRayLength = std::min(groundRayLength, waterRayLength);
 	if (groundOnly)
@@ -297,13 +311,13 @@ float GuiTraceRay(
 
 	int* begQuad = NULL;
 	int* endQuad = NULL;
-	bool hitFactory = false;
-	CollisionQuery cq;
 
 	quadField->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
 
 	std::list<CUnit*>::const_iterator ui;
 	std::list<CFeature*>::const_iterator fi;
+
+	CollisionQuery cq;
 
 	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
 		const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
@@ -313,11 +327,16 @@ float GuiTraceRay(
 			CUnit* unit = *ui;
 
 			const bool unitIsEnemy = !teamHandler->Ally(unit->allyteam, gu->myAllyTeam);
-			const bool unitOnRadar = (useRadar && radarhandler->InRadar(unit, gu->myAllyTeam));
+			const bool unitOnRadar = (useRadar && radarHandler->InRadar(unit, gu->myAllyTeam));
 			const bool unitInSight = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR));
 			const bool unitVisible = !unitIsEnemy || unitOnRadar || unitInSight || gu->spectatingFullView;
 
 			if (unit == exclude)
+				continue;
+			// test this bit only in synced traces, rely on noSelect here
+			if (false && !unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
+				continue;
+			if (unit->noSelect)
 				continue;
 			if (!unitVisible)
 				continue;
@@ -337,13 +356,13 @@ float GuiTraceRay(
 				const float ingressDist = cq.GetIngressPosDist(start, dir);
 				const float  egressDist = cq.GetEgressPosDist(start, dir);
 
-				const bool isFactory = unit->unitDef->IsFactoryUnit();
+				const bool factoryUnderCursor = unit->unitDef->IsFactoryUnit();
 				const bool factoryHitBeforeUnit = ((hitFactory && ingressDist < minIngressDist) || (!hitFactory &&  egressDist < minIngressDist));
 				const bool unitHitInsideFactory = ((hitFactory && ingressDist <  minEgressDist) || (!hitFactory && ingressDist < minIngressDist));
 
 				// give units in a factory higher priority than the factory itself
-				if (hitUnit == NULL || (isFactory && factoryHitBeforeUnit) || (!isFactory && unitHitInsideFactory)) {
-					hitFactory = isFactory;
+				if (hitUnit == NULL || (factoryUnderCursor && factoryHitBeforeUnit) || (!factoryUnderCursor && unitHitInsideFactory)) {
+					hitFactory = factoryUnderCursor;
 					minIngressDist = ingressDist;
 					minEgressDist = egressDist;
 
@@ -354,13 +373,13 @@ float GuiTraceRay(
 		}
 
 		// Feature Intersection
-		// NOTE: switch this to custom volumes fully?
-		// (not used for any LOF checks, maybe wasteful)
 		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
 			CFeature* f = *fi;
 
-			// FIXME add useradar?
 			if (!gu->spectatingFullView && !f->IsInLosForAllyTeam(gu->myAllyTeam))
+				continue;
+			// test this bit only in synced traces, rely on noSelect here
+			if (false && !f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 				continue;
 			if (f->noSelect)
 				continue;
@@ -428,6 +447,8 @@ bool TestCone(
 
 				if (u == owner)
 					continue;
+				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
+					continue;
 
 				if (TestConeHelper(from, dir, length, spread, u))
 					return true;
@@ -442,6 +463,8 @@ bool TestCone(
 				const CUnit* u = *unitsIt;
 
 				if (u == owner)
+					continue;
+				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 				if (!u->IsNeutral())
 					continue;
@@ -458,7 +481,7 @@ bool TestCone(
 			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 				const CFeature* f = *featuresIt;
 
-				if (!f->blocking)
+				if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
 				if (TestConeHelper(from, dir, length, spread, f))
@@ -510,6 +533,8 @@ bool TestTrajectoryCone(
 
 				if (u == owner)
 					continue;
+				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
+					continue;
 
 				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadii[u->immobile], u)) {
 					return true;
@@ -529,6 +554,8 @@ bool TestTrajectoryCone(
 					continue;
 				if (!u->IsNeutral())
 					continue;
+				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
+					continue;
 
 				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadii[u->immobile], u))
 					return true;
@@ -543,7 +570,7 @@ bool TestTrajectoryCone(
 			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 				const CFeature* f = *featuresIt;
 
-				if (!f->blocking)
+				if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
 				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, 0.0f, f))

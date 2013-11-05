@@ -4,7 +4,7 @@
 #include "WeaponDef.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CMeleeWeapon, CWeapon, (NULL));
+CR_BIND_DERIVED(CMeleeWeapon, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CMeleeWeapon,(
 	CR_RESERVED(8)
@@ -14,8 +14,7 @@ CR_REG_METADATA(CMeleeWeapon,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CMeleeWeapon::CMeleeWeapon(CUnit* owner)
-: CWeapon(owner)
+CMeleeWeapon::CMeleeWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 }
 
@@ -23,18 +22,11 @@ CMeleeWeapon::CMeleeWeapon(CUnit* owner)
 void CMeleeWeapon::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->pos +
-			owner->frontdir * relWeaponPos.z +
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;
-		weaponMuzzlePos = owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		if (!onlyForward) {
-			wantedDir = targetPos - weaponPos;
-			wantedDir.Normalize();
+			wantedDir = (targetPos - weaponPos).Normalize();
 		}
 	}
 
@@ -46,7 +38,7 @@ bool CMeleeWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const 
 	return true;
 }
 
-void CMeleeWeapon::FireImpl()
+void CMeleeWeapon::FireImpl(bool scriptCall)
 {
 	if (targetType == Target_Unit) {
 		const float3 impulseDir = (targetUnit->pos - weaponMuzzlePos).Normalize();

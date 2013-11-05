@@ -64,14 +64,12 @@ void CExplosiveProjectile::Update()
 		Collision();
 	} else {
 		if (ttl > 0) {
-			gCEG->Explosion(cegID, pos, ttl, areaOfEffect, NULL, 0.0f, NULL, speed);
+			explGenHandler->GenExplosion(cegID, pos, speed, ttl, areaOfEffect, 0.0f, NULL, NULL);
 		}
 	}
 
 	curTime += invttl;
-	if (curTime > 1) {
-		curTime = 1;
-	}
+	curTime = std::min(curTime, 1.0f);
 
 	if (weaponDef->noExplode && TraveledRange()) {
 		CProjectile::Collision();
@@ -137,13 +135,14 @@ void CExplosiveProjectile::Draw()
 
 int CExplosiveProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	if (!luaMoveCtrl) {
-		const float3 rdir = (pos - shieldPos).Normalize();
+	if (luaMoveCtrl)
+		return 0;
 
-		if (rdir.dot(speed) < shieldMaxSpeed) {
-			speed += (rdir * shieldForce);
-			return 2;
-		}
+	const float3 rdir = (pos - shieldPos).Normalize();
+
+	if (rdir.dot(speed) < shieldMaxSpeed) {
+		SetVelocityAndSpeed(speed + (rdir * shieldForce));
+		return 2;
 	}
 
 	return 0;

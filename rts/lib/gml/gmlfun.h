@@ -3,8 +3,8 @@
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
 // Ware Zerver Tech. licenses this library
-// to be used, distributed and modified 
-// freely for any purpose, as long as 
+// to be used, distributed and modified
+// freely for any purpose, as long as
 // this notice remains unchanged
 
 #ifndef _GML_FUN_H
@@ -319,13 +319,13 @@ EXTERN inline int gmlSizeOf(int datatype) {
 #if GML_CALL_DEBUG
 #include "lib/lua/include/lauxlib.h"
 extern void gmlPrintCallChainWarning(const char *func);
-extern unsigned gmlLockTime;
+extern float gmlLockTime;
 extern lua_State *gmlCurrentLuaStates[GML_MAX_NUM_THREADS];
 class gmlCallDebugger {
 public:
 	lua_State ** currentLuaState;
 	gmlCallDebugger(lua_State *L) {
-		currentLuaState = &gmlCurrentLuaStates[gmlThreadNumber]; 		
+		currentLuaState = &gmlCurrentLuaStates[gmlThreadNumber];
 		if(!*currentLuaState)
 			*currentLuaState = L;
 		else
@@ -336,12 +336,11 @@ public:
 			*currentLuaState = NULL;
 		}
 	}
-	static unsigned getLockTime() {
-		unsigned ret = 0;
-		if(gmlMultiThreadSim && gmlStartSim)
-			ret = gmlLockTime;
+	static float getLockTime() {
+		return (gmlMultiThreadSim && gmlStartSim) ? gmlLockTime : 0.0f;
+	}
+	static void resetLockTime() {
 		gmlLockTime = 0;
-		return ret;
 	}
 };
 #define GML_CURRENT_LUA(currentLuaState) (currentLuaState ? "LUA" : "Unknown")

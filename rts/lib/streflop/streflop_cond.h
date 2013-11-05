@@ -9,13 +9,22 @@
 #ifndef STREFLOP_COND_H
 #define STREFLOP_COND_H
 
-#if defined(STREFLOP_X87) || defined(STREFLOP_SSE) || defined(STREFLOP_SOFT)
+#if (defined(STREFLOP_X87) || defined(STREFLOP_SSE) || defined(STREFLOP_SOFT)) && (!defined(NOT_USING_STREFLOP))
 #include "streflop.h"
 namespace math {
 	using namespace streflop;
 }
 #else
 #include <cmath>
+
+#ifdef __APPLE__
+// macosx's cmath doesn't include c++11's std::hypot yet (tested 2013)
+namespace std {
+	template<typename T> T hypot(T x, T y);
+}
+#endif
+
+
 namespace math {
 	using std::fabs;
 	// We are using fastmath::sqrt_sse instead!
@@ -31,9 +40,11 @@ namespace math {
 	using std::acos;
 	using std::atan;
 	using std::atan2;
+
 	using std::ceil;
 	using std::floor;
 	using std::fmod;
+	using std::hypot;
 	using std::pow;
 	using std::log;
 	using std::log10;
@@ -45,6 +56,7 @@ namespace math {
 	using std::isnan;
 	using std::isinf;
 	using std::isfinite;
+
 #elif __cplusplus
 	template<typename T> inline bool isnan(T value) {
 		return value != value;
@@ -59,6 +71,26 @@ namespace math {
 	}
 #endif
 }
+
+
+#ifdef __APPLE__
+// see above
+
+#include <algorithm>
+
+namespace std {
+	template<typename T>
+	T hypot(T x, T y) {
+		x = std::abs(x);
+		y = std::abs(y);
+		auto t = std::min(x,y);
+		     x = std::max(x,y);
+		t = t / x;
+		return x * sqrtf(1.f + t*t);
+	}
+}
+#endif
+
 #endif
 
 #endif // STREFLOP_COND_H

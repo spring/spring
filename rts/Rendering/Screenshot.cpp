@@ -82,6 +82,7 @@ private:
 		}
 	}
 
+	__FORCE_ALIGN_STACK__
 	void SaveStuff()
 	{
 		Threading::SetThreadName("screenshot");

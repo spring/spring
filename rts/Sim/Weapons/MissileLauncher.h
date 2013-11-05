@@ -5,19 +5,17 @@
 
 #include "Weapon.h"
 
-class CMissileLauncher :
-	public CWeapon
+class CMissileLauncher: public CWeapon
 {
 	CR_DECLARE(CMissileLauncher);
 public:
-	CMissileLauncher(CUnit* owner);
+	CMissileLauncher(CUnit* owner, const WeaponDef* def);
 
 	void Update();
 
-
 private:
 	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
-	void FireImpl();
+	void FireImpl(bool scriptCall);
 };
 
 

@@ -49,7 +49,7 @@ bool gmlEnabled = true;
 
 
 const char *gmlProfMutex = "lua";
-unsigned gmlLockTime = 0;
+float gmlLockTime = 0;
 
 int gmlProcNumLoop = 25;
 int gmlProcInterval = 8;
@@ -61,6 +61,7 @@ volatile bool gmlMultiThreadSim = true;
 volatile bool gmlStartSim = false;
 volatile bool gmlKeepRunning = false;
 volatile bool gmlServerActive = false;
+volatile bool gmlMutexLockWait = false;
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
@@ -91,44 +92,6 @@ bool gmlCheckCallChain=false;
 int gmlCallChainWarning=0;
 
 std::set<Threading::NativeThreadId> threadnums;
-
-// gmlCPUCount returns the number of CPU cores
-// it was taken from the latest version of boost
-// boost::thread::hardware_concurrency()
-#ifdef _WIN32
-#	include <windows.h>
-#else
-#	ifdef __linux__
-#		include <sys/sysinfo.h>
-#	elif defined(__APPLE__) || defined(__FreeBSD__)
-#		include <sys/types.h>
-#		include <sys/sysctl.h>
-#	elif defined(__sun)
-#		include <unistd.h>
-#	endif
-#endif
-unsigned gmlCPUCount() {
-#ifdef _WIN32
-	SYSTEM_INFO info={0};
-	GetSystemInfo(&info);
-	return info.dwNumberOfProcessors;
-#else
-#	if defined(PTW32_VERSION) || defined(__hpux)
-	return pthread_num_processors_np();
-#	elif defined(__linux__)
-	return get_nprocs();
-#	elif defined(__APPLE__) || defined(__FreeBSD__)
-	int count;
-	size_t size=sizeof(count);
-	return sysctlbyname("hw.ncpu",&count,&size,NULL,0)?0:count;
-#	elif defined(__sun)
-	int const count=sysconf(_SC_NPROCESSORS_ONLN);
-	return (count>0)?count:0;
-#	else
-	return 0;
-#	endif
-#endif
-}
 
 #define GML_NOP 0
 const char *gmlFunctionNames[512];
@@ -282,6 +245,7 @@ boost::recursive_mutex &grpselmutex=selmutex;
 boost::recursive_mutex projmutex;
 boost::recursive_mutex objmutex;
 boost::recursive_mutex modelmutex;
+boost::recursive_mutex cammutex;
 
 gmlMutex simmutex;
 
@@ -290,35 +254,6 @@ boost::mutex lmmutex;
 std::map<std::string, int> lockmaps[GML_MAX_NUM_THREADS];
 std::map<boost::recursive_mutex *, int> lockmmaps[GML_MAX_NUM_THREADS];
 #endif
-
-void PrintMTStartupMessage(int showMTInfo) {
-	if (showMTInfo == -1)
-		return;
-	if (showMTInfo != MT_LUA_NONE) {
-		if (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT) {
-			LOG("[Threading] Multithreading is enabled but currently running in compatibility mode %d", showMTInfo);
-		} else {
-			LOG("[Threading] Multithreading is enabled and currently running in mode %d", showMTInfo);
-		}
-		if (showMTInfo == MT_LUA_SINGLE) {
-			CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
-			std::string lskey = lslist.empty() ? "" : " (press " + lslist.front() + ")";
-			LOG("[Threading] Games that use lua based rendering may run very slow in this mode, "
-				"indicated by a high LUA-SYNC-CPU(MT) value displayed in the upper right corner");
-			LOG("[Threading] Consider MultiThreadLua = %d in the settings to improve performance, "
-				"or try to disable LuaShaders and all rendering widgets%s", (int)MT_LUA_SINGLE_BATCH, lskey.c_str());
-		} else if (showMTInfo == MT_LUA_SINGLE_BATCH) {
-			LOG("[Threading] Games that use lua gadget based rendering may run very slow in this mode, "
-				"indicated by a high LUA-SYNC-CPU(MT) value displayed in the upper right corner");
-		} else if (showMTInfo == MT_LUA_DUAL_EXPORT) {
-			LOG("[Threading] Games that use lua gadgets which export data may run very slow in this mode, "
-				"indicated by a high LUA-EXP-SIZE(MT) value displayed in the upper right corner");
-		}
-	} else {
-		LOG("[Threading] Multithreading is disabled because the game or system appears incompatible");
-		LOG("[Threading] MultiThreadCount > 1 in the settings will forcefully enable multithreading");
-	}
-}
 
 void gmlPrintCallChainWarning(const char *func) {
 	LOG_SL("Threading", L_ERROR, "Invalid attempt (%d/%d) to invoke LuaUI (%s) from another Lua environment, "

@@ -19,7 +19,6 @@ CR_REG_METADATA(CBitmapMuzzleFlame,
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(sideTexture),
 		CR_MEMBER(frontTexture),
-		CR_MEMBER(dir),
 		CR_MEMBER(colorMap),
 		CR_MEMBER(size),
 		CR_MEMBER(length),
@@ -33,7 +32,6 @@ CBitmapMuzzleFlame::CBitmapMuzzleFlame()
 	: CProjectile()
 	, sideTexture(NULL)
 	, frontTexture(NULL)
-	, dir(ZeroVector)
 	, colorMap(NULL)
 	, size(0.0f)
 	, length(0.0f)
@@ -50,10 +48,6 @@ CBitmapMuzzleFlame::CBitmapMuzzleFlame()
 	deleteMe  = false;
 }
 
-CBitmapMuzzleFlame::~CBitmapMuzzleFlame()
-{
-}
-
 void CBitmapMuzzleFlame::Draw()
 {
 	inArray = true;
@@ -62,45 +56,44 @@ void CBitmapMuzzleFlame::Draw()
 	unsigned char col[4];
 	colorMap->GetColor(col, life);
 
-	float invlife = 1 - life;
-	float igrowth = sizeGrowth * (1 - invlife * invlife);
-	float isize = size + size * igrowth;
-	float ilength = length + length * igrowth;
+	const float igrowth = sizeGrowth * (1.0f - (1.0f - life) * (1.0f - life));
+	const float isize = size * (igrowth + 1.0f);
+	const float ilength = length * (igrowth + 1.0f);
 
-	float3 sidedir = dir.cross(float3(0, 1, 0)).SafeANormalize();
-	float3 updir = dir.cross(sidedir).SafeANormalize();
+	const float3 udir = (std::fabs(dir.dot(UpVector)) >= 0.99f)? FwdVector: UpVector;
+	const float3 xdir = (dir.cross(udir)).SafeANormalize();
+	const float3 ydir = (dir.cross(xdir)).SafeANormalize();
 
-	va->AddVertexTC(pos + updir * isize,                 sideTexture->xstart, sideTexture->ystart, col);
-	va->AddVertexTC(pos + updir * isize + dir * ilength, sideTexture->xend,   sideTexture->ystart, col);
-	va->AddVertexTC(pos - updir * isize + dir * ilength, sideTexture->xend,   sideTexture->yend,   col);
-	va->AddVertexTC(pos - updir * isize,                 sideTexture->xstart, sideTexture->yend,   col);
+	va->AddVertexTC(pos + ydir * isize,                 sideTexture->xstart, sideTexture->ystart, col);
+	va->AddVertexTC(pos + ydir * isize + dir * ilength, sideTexture->xend,   sideTexture->ystart, col);
+	va->AddVertexTC(pos - ydir * isize + dir * ilength, sideTexture->xend,   sideTexture->yend,   col);
+	va->AddVertexTC(pos - ydir * isize,                 sideTexture->xstart, sideTexture->yend,   col);
 
-	va->AddVertexTC(pos + sidedir * isize,                 sideTexture->xstart, sideTexture->ystart, col);
-	va->AddVertexTC(pos + sidedir * isize + dir * ilength, sideTexture->xend,   sideTexture->ystart, col);
-	va->AddVertexTC(pos - sidedir * isize + dir * ilength, sideTexture->xend,   sideTexture->yend,   col);
-	va->AddVertexTC(pos - sidedir * isize,                 sideTexture->xstart, sideTexture->yend,   col);
+	va->AddVertexTC(pos + xdir * isize,                 sideTexture->xstart, sideTexture->ystart, col);
+	va->AddVertexTC(pos + xdir * isize + dir * ilength, sideTexture->xend,   sideTexture->ystart, col);
+	va->AddVertexTC(pos - xdir * isize + dir * ilength, sideTexture->xend,   sideTexture->yend,   col);
+	va->AddVertexTC(pos - xdir * isize,                 sideTexture->xstart, sideTexture->yend,   col);
 
 	float3 frontpos = pos + dir * frontOffset * ilength;
 
-	va->AddVertexTC(frontpos - sidedir * isize + updir * isize, frontTexture->xstart, frontTexture->ystart, col);
-	va->AddVertexTC(frontpos + sidedir * isize + updir * isize, frontTexture->xend,   frontTexture->ystart, col);
-	va->AddVertexTC(frontpos + sidedir * isize - updir * isize, frontTexture->xend,   frontTexture->yend,   col);
-	va->AddVertexTC(frontpos - sidedir * isize - updir * isize, frontTexture->xstart, frontTexture->yend,   col);
+	va->AddVertexTC(frontpos - xdir * isize + ydir * isize, frontTexture->xstart, frontTexture->ystart, col);
+	va->AddVertexTC(frontpos + xdir * isize + ydir * isize, frontTexture->xend,   frontTexture->ystart, col);
+	va->AddVertexTC(frontpos + xdir * isize - ydir * isize, frontTexture->xend,   frontTexture->yend,   col);
+	va->AddVertexTC(frontpos - xdir * isize - ydir * isize, frontTexture->xstart, frontTexture->yend,   col);
 
 }
 
 void CBitmapMuzzleFlame::Update()
 {
-	ttl--;
-	if (ttl == 0) {
-		deleteMe = true;
-	}
+	deleteMe |= ((ttl--) == 0);
 }
 
 void CBitmapMuzzleFlame::Init(const float3& pos, CUnit* owner)
 {
 	CProjectile::Init(pos, owner);
+
 	life = 0.0f;
+	invttl = 1.0f / ttl;
+
 	createTime = gs->frameNum;
-	invttl = 1.0f / (float) ttl;
 }

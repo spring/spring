@@ -138,12 +138,11 @@ const std::string& CSkirmishAILibraryInfo::GetInterfaceVersion() const {
 }
 const std::string& CSkirmishAILibraryInfo::GetInfo(const std::string& key) const {
 
-	bool found = false;
 	std::map<std::string, std::string>::const_iterator strPair;
 
 	// get real key through lower case key
 	strPair = info_keyLower_key.find(StringToLower(key));
-	found = (strPair != info_keyLower_key.end());
+	bool found = (strPair != info_keyLower_key.end());
 
 	// get value
 	if (found) {

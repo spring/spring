@@ -8,7 +8,7 @@
 #include <list>
 
 #include "Demo.h"
-#include "Game/PlayerStatistics.h"
+#include "Game/Players/PlayerStatistics.h"
 #include "Sim/Misc/TeamStatistics.h"
 
 /**
@@ -17,16 +17,16 @@
 class CDemoRecorder : public CDemo
 {
 public:
-	CDemoRecorder(const std::string& mapName, const std::string& modName);
+	CDemoRecorder(const std::string& mapName, const std::string& modName, bool serverDemo);
 	~CDemoRecorder();
 
 	void WriteSetupText(const std::string& text);
 	void SaveToDemo(const unsigned char* buf, const unsigned length, const float modGameTime);
-	
+
 	/**
 	@brief assign a map name for the demo file
 	*/
-	void SetName(const std::string& mapname, const std::string& modname);
+	void SetName(const std::string& mapName, const std::string& modName, bool serverDemo);
 	const std::string& GetName() const { return demoName; }
 
 	void SetGameID(const unsigned char* buf);

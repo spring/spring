@@ -7,7 +7,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/WaitCommandsAI.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/BuildInfo.h"
@@ -38,6 +38,21 @@ CR_REG_METADATA_SUB(CFactoryCAI,BuildOption , (
 	CR_MEMBER(numQued)
 ));
 
+static std::string GetUnitDefBuildOptionToolTip(const UnitDef* ud, bool disabled) {
+	std::string tooltip;
+	tooltip += (disabled)?
+		"\xff\xff\x22\x22" "DISABLED: " "\xff\xff\xff\xff":
+		"Build: ";
+	tooltip += (ud->humanName + " - " + ud->tooltip);
+	tooltip += ("\nHealth "      + FloatToString(ud->health, "%.0f"));
+	tooltip += ("\nMetal cost "  + FloatToString(ud->metal, "%.0f"));
+	tooltip += ("\nEnergy cost " + FloatToString(ud->energy, "%.0f"));
+	tooltip += ("\nBuild time "  + FloatToString(ud->buildTime, "%.0f"));
+
+	return tooltip;
+}
+
+
 
 CFactoryCAI::CFactoryCAI(): CCommandAI()
 {}
@@ -50,43 +65,43 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 
 	CommandDescription c;
 
-	// can't check for canmove here because it should be possible to assign rallypoint
-	// with a non-moving factory.
-	c.id=CMD_MOVE;
-	c.action="move";
-	c.type=CMDTYPE_ICON_MAP;
-	c.name="Move";
-	c.mouseicon=c.name;
-	c.tooltip="Move: Order ready built units to move to a position";
-	possibleCommands.push_back(c);
+	if (owner->unitDef->canmove) {
+		c.id        = CMD_MOVE;
+		c.action    = "move";
+		c.type      = CMDTYPE_ICON_MAP;
+		c.name      = "Move";
+		c.mouseicon = c.name;
+		c.tooltip   = "Move: Order ready built units to move to a position";
+		possibleCommands.push_back(c);
+	}
 
 	if (owner->unitDef->canPatrol) {
-		c.id=CMD_PATROL;
-		c.action="patrol";
-		c.type=CMDTYPE_ICON_MAP;
-		c.name="Patrol";
-		c.mouseicon=c.name;
-		c.tooltip="Patrol: Order ready built units to patrol to one or more waypoints";
+		c.id        = CMD_PATROL;
+		c.action    = "patrol";
+		c.type      = CMDTYPE_ICON_MAP;
+		c.name      = "Patrol";
+		c.mouseicon = c.name;
+		c.tooltip   = "Patrol: Order ready built units to patrol to one or more waypoints";
 		possibleCommands.push_back(c);
 	}
 
 	if (owner->unitDef->canFight) {
-		c.id = CMD_FIGHT;
-		c.action="fight";
-		c.type = CMDTYPE_ICON_MAP;
-		c.name = "Fight";
-		c.mouseicon=c.name;
-		c.tooltip = "Fight: Order ready built units to take action while moving to a position";
+		c.id        = CMD_FIGHT;
+		c.action    = "fight";
+		c.type      = CMDTYPE_ICON_MAP;
+		c.name      = "Fight";
+		c.mouseicon = c.name;
+		c.tooltip   = "Fight: Order ready built units to take action while moving to a position";
 		possibleCommands.push_back(c);
 	}
 
 	if (owner->unitDef->canGuard) {
-		c.id=CMD_GUARD;
-		c.action="guard";
-		c.type=CMDTYPE_ICON_UNIT;
-		c.name="Guard";
-		c.mouseicon=c.name;
-		c.tooltip="Guard: Order ready built units to guard another unit and attack units attacking it";
+		c.id        = CMD_GUARD;
+		c.action    = "guard";
+		c.type      = CMDTYPE_ICON_UNIT;
+		c.name      = "Guard";
+		c.mouseicon = c.name;
+		c.tooltip   = "Guard: Order ready built units to guard another unit and attack units attacking it";
 		possibleCommands.push_back(c);
 	}
 
@@ -95,8 +110,8 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 	map<int, string>::const_iterator bi;
 	for (bi = fac->unitDef->buildOptions.begin(); bi != fac->unitDef->buildOptions.end(); ++bi) {
 		const string name = bi->second;
-
 		const UnitDef* ud = unitDefHandler->GetUnitDefByName(name);
+
 		if (ud == NULL) {
 		  string errmsg = "MOD ERROR: loading ";
 		  errmsg += name.c_str();
@@ -106,28 +121,21 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		}
 
 		CommandDescription c;
-		c.id = -ud->id; //build options are always negative
-		c.action = "buildunit_" + StringToLower(ud->name);
-		c.type = CMDTYPE_ICON;
-		c.name = name;
+		c.id        = -ud->id; // build-options are always negative
+		c.action    = "buildunit_" + StringToLower(ud->name);
+		c.type      = CMDTYPE_ICON;
+		c.name      = name;
 		c.mouseicon = c.name;
-		c.disabled = (ud->maxThisUnit <= 0);
-
-		char tmp[1024];
-		sprintf(tmp, "\nHealth %.0f\nMetal cost %.0f\nEnergy cost %.0f Build time %.0f",
-		        ud->health, ud->metal, ud->energy, ud->buildTime);
-		if (c.disabled) {
-			c.tooltip = "\xff\xff\x22\x22" "DISABLED: " "\xff\xff\xff\xff";
-		} else {
-			c.tooltip = "Build: ";
-		}
-		c.tooltip += ud->humanName + " - " + ud->tooltip + tmp;
+		c.disabled  = (ud->maxThisUnit <= 0);
+		c.tooltip   = GetUnitDefBuildOptionToolTip(ud, c.disabled);
 
 		possibleCommands.push_back(c);
+
 		BuildOption bo;
 		bo.name = name;
 		bo.fullName = name;
 		bo.numQued = 0;
+
 		buildOptions[c.id] = bo;
 	}
 }
@@ -436,5 +444,5 @@ void CFactoryCAI::UpdateIconName(int cmdID, const BuildOption& bo)
 		break;
 	}
 
-	selectedUnits.PossibleCommandChange(owner);
+	selectedUnitsHandler.PossibleCommandChange(owner);
 }

@@ -2,10 +2,6 @@
 
 #include "UDPConnection.h"
 
-#if defined(_WIN32)
-#	include <windows.h>
-#endif
-
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/cstdint.hpp>
@@ -14,7 +10,7 @@
 #include "Socket.h"
 #include "ProtocolDef.h"
 #include "Exception.h"
-#include "System/BaseNetProtocol.h"
+#include "Net/Protocol/BaseNetProtocol.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/CRC.h"
 #include "System/GlobalConfig.h"
@@ -50,7 +46,7 @@ void EMULATE_PACKET_CORRUPTION(uint8_t& crc) {
 #else
 static int dummyLossCounter = 0;
 inline bool EMULATE_PACKET_LOSS(int &lossCtr) { return false; }
-inline void EMULATE_PACKET_CORRUPTION(uint8_t& crc) {}
+inline void EMULATE_PACKET_CORRUPTION(boost::uint8_t& crc) {}
 #define LOSS_COUNTER dummyLossCounter
 #endif
 
@@ -89,7 +85,7 @@ unsigned Packet::GetSize() const {
 	return size;
 }
 
-uint8_t Packet::GetChecksum() const {
+boost::uint8_t Packet::GetChecksum() const {
 
 	CRC crc;
 	crc << lastContinuous;
@@ -101,7 +97,7 @@ uint8_t Packet::GetChecksum() const {
 	for (chk = chunks.begin(); chk != chunks.end(); ++chk) {
 		(*chk)->UpdateChecksum(crc);
 	}
-	return (uint8_t)crc.GetDigest();
+	return (boost::uint8_t)crc.GetDigest();
 }
 
 class Unpacker
@@ -121,7 +117,7 @@ public:
 		pos += sizeof(t);
 	}
 
-	void Unpack(std::vector<uint8_t>& t, unsigned unpackLength) {
+	void Unpack(std::vector<boost::uint8_t>& t, unsigned unpackLength) {
 		std::copy(data + pos, data + pos + unpackLength, std::back_inserter(t));
 		pos += unpackLength;
 	}
@@ -138,7 +134,7 @@ private:
 class Packer
 {
 public:
-	Packer(std::vector<uint8_t>& data)
+	Packer(std::vector<boost::uint8_t>& data)
 		: data(data)
 	{
 		assert(data.empty());
@@ -151,12 +147,12 @@ public:
 		*reinterpret_cast<T*>(&data[pos]) = t;
 	}
 
-	void Pack(std::vector<uint8_t>& _data) {
+	void Pack(std::vector<boost::uint8_t>& _data) {
 		std::copy(_data.begin(), _data.end(), std::back_inserter(data));
 	}
 
 private:
-	std::vector<uint8_t>& data;
+	std::vector<boost::uint8_t>& data;
 };
 
 Packet::Packet(const unsigned char* data, unsigned length)
@@ -200,7 +196,7 @@ Packet::Packet(int _lastContinuous, int _nak)
 {
 }
 
-void Packet::Serialize(std::vector<uint8_t>& data)
+void Packet::Serialize(std::vector<boost::uint8_t>& data)
 {
 	data.reserve(GetSize());
 	Packer buf(data);
@@ -275,11 +271,6 @@ void UDPConnection::SendData(boost::shared_ptr<const RawPacket> data)
 	outgoingData.push_back(data);
 }
 
-bool UDPConnection::HasIncomingData() const
-{
-	return !msgQueue.empty();
-}
-
 boost::shared_ptr<const RawPacket> UDPConnection::Peek(unsigned ahead) const
 {
 	if (ahead < msgQueue.size()) {
@@ -319,7 +310,7 @@ void UDPConnection::Update()
 		netservice.poll();
 		size_t bytes_avail = 0;
 		while ((bytes_avail = mySocket->available()) > 0) {
-			std::vector<uint8_t> buffer(bytes_avail);
+			std::vector<boost::uint8_t> buffer(bytes_avail);
 			ip::udp::endpoint sender_endpoint;
 			size_t bytesReceived;
 			ip::udp::socket::message_flags flags = 0;
@@ -364,7 +355,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 		return;
 	}
 
-	if (incoming.lastContinuous < 0 && lastInOrder >= 0 && 
+	if (incoming.lastContinuous < 0 && lastInOrder >= 0 &&
 		(unackedChunks.empty() || unackedChunks[0]->chunkNumber > 0)) {
 		LOG_L(L_WARNING, "Discarding superfluous reconnection attempt");
 		return;
@@ -688,9 +679,9 @@ void UDPConnection::SendIfNecessary(bool flushed)
 		int maxResend = resendRequested.size();
 		int unackPrevSize = unackedChunks.size();
 
-		std::map<int32_t, ChunkPtr>::iterator resIter = resendRequested.begin();
-		std::map<int32_t, ChunkPtr>::iterator resMidIter, resMidIterStart, resMidIterEnd;
-		std::map<int32_t, ChunkPtr>::reverse_iterator resRevIter;
+		std::map<boost::int32_t, ChunkPtr>::iterator resIter = resendRequested.begin();
+		std::map<boost::int32_t, ChunkPtr>::iterator resMidIter, resMidIterStart, resMidIterEnd;
+		std::map<boost::int32_t, ChunkPtr>::reverse_iterator resRevIter;
 
 		if (netLossFactor != MIN_LOSS_FACTOR) {
 			maxResend = std::min(maxResend, 20 * netLossFactor); // keep it reasonable, or it could cause a tremendous flood of packets
@@ -712,7 +703,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 
 			while (resMidIter != resendRequested.end() && resMidIter->first <= lastMidChunk)
 				++resMidIter;
-			if (resMidIter == resendRequested.end() || resMidIterEnd == resendRequested.end() || 
+			if (resMidIter == resendRequested.end() || resMidIterEnd == resendRequested.end() ||
 				resMidIter->first >= resMidIterEnd->first)
 				resMidIter = resMidIterStart;
 		}
@@ -795,7 +786,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 
 void UDPConnection::SendPacket(Packet& pkt)
 {
-	std::vector<uint8_t> data;
+	std::vector<boost::uint8_t> data;
 	pkt.Serialize(data);
 
 	outgoing.DataSent(data.size());

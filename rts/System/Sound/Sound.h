@@ -19,6 +19,8 @@
 class CSoundSource;
 class SoundBuffer;
 class SoundItem;
+struct ALCdevice_struct;
+typedef struct ALCdevice_struct ALCdevice;
 
 namespace boost {
 	class thread;
@@ -64,6 +66,7 @@ private:
 private:
 	void StartThread(int maxSounds);
 	void Update();
+	int GetMaxMonoSources(ALCdevice* device, int maxSounds);
 
 	size_t MakeItemFromDef(const soundItemDef& itemDef);
 

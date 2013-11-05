@@ -5,6 +5,7 @@
 
 #include "InterceptHandler.h"
 
+#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
@@ -60,6 +61,10 @@ void CInterceptHandler::Update(bool forced) {
 			if (pAllyTeam != -1 && teamHandler->Ally(wOwner->allyteam, pAllyTeam))
 				continue;
 
+			// note: will be called every Update so long as gadget does not return true
+			if (luaRules != NULL && !luaRules->AllowWeaponInterceptTarget(wOwner, w, p))
+				continue;
+
 			// there are four cases when an interceptor <w> should fire at a projectile <p>:
 			//     1. p's target position inside w's interception circle (w's owner can move!)
 			//     2. p's current position inside w's interception circle
@@ -86,7 +91,7 @@ void CInterceptHandler::Update(bool forced) {
 				// TARGETED within its current interception area; any projectiles
 				// CROSSING its interception area are fired at only if interceptor
 				// is >= 2
-				continue;
+				//// continue;
 			}
 
 			if ((pFlightPos - wPos).SqLength2D() < Square(wDef->coverageRange)) {

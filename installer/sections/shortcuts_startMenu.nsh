@@ -14,8 +14,6 @@
 
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring (safemode).lnk" "$INSTDIR\spring.exe" "--safemode"
-	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk" "$INSTDIR\spring-multithreaded.exe"
-	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT (safemode).lnk" "$INSTDIR\spring-multithreaded.exe" "--safemode"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk" "$INSTDIR\uninst.exe"
 
 	WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\Read Me First.URL" "InternetShortcut" "URL" "http://springrts.com/wiki/Read_Me_First"
@@ -27,8 +25,6 @@
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Zero-K Lobby.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring (safemode).lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT (safemode).lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk"
 
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Read Me First.URL"

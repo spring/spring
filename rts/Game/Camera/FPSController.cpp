@@ -55,7 +55,7 @@ void CFPSController::ScreenEdgeMove(float3 move)
 
 void CFPSController::MouseWheelMove(float move)
 {
-	pos += camera->up * move;
+	pos += (camera->up * move);
 	UpdateVectors();
 }
 

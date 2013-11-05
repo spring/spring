@@ -11,6 +11,17 @@
 class CCamera
 {
 public:
+	enum {
+		MOVE_STATE_FWD = 0, // forward
+		MOVE_STATE_BCK = 1, // back
+		MOVE_STATE_LFT = 2, // left
+		MOVE_STATE_RGT = 3, // right
+		MOVE_STATE_UP  = 4, // up
+		MOVE_STATE_DWN = 5, // down
+		MOVE_STATE_FST = 6, // fast
+		MOVE_STATE_SLW = 7, // slow
+	};
+
 	CCamera();
 
 	float3 CalcPixelDir(int x,int y) const;
@@ -19,7 +30,7 @@ public:
 	void UpdateForward();
 	bool InView(const float3& p, float radius = 0) const;
 	bool InView(const float3& mins, const float3& maxs) const;
-	void Update(bool resetUp = true);
+	void Update();
 
 	void GetFrustumSides(float miny, float maxy, float scale, bool negSide = false);
 	void GetFrustumSide(
@@ -31,6 +42,8 @@ public:
 		bool upwardDir,
 		bool negSide);
 	void ClearFrustumSides() {
+		GML_RECMUTEX_LOCK(cam); // ClearFrustumSides
+
 		posFrustumSides.clear();
 		negFrustumSides.clear();
 	}
@@ -44,16 +57,26 @@ public:
 	const CMatrix44f& GetViewProjectionMatrixInverse() const { return viewProjectionMatrixInverse; }
 	const CMatrix44f& GetBillBoardMatrix() const { return billboardMatrix; }
 
+	const float3& GetPos() const { return pos; }
 	float GetFov() const { return fov; }
 	float GetHalfFov() const { return halfFov; }
 	float GetTanHalfFov() const { return tanHalfFov; }
 	float GetLPPScale() const { return lppScale; }
 
 	/// @param fov in degree
+	float3& SetPos() { return pos; }
+	void SetPos(float3 p) { pos = p; }
 	void SetFov(float fov);
 
+	float GetMoveDistance(float* time, float* speed, int idx) const;
+	float3 GetMoveVectorFromState(bool fromKeyState, bool* disableTracker);
 
-	float3 pos;
+	void SetMovState(int idx, bool b) { movState[idx] = b; }
+	void SetRotState(int idx, bool b) { rotState[idx] = b; }
+	const bool* GetMovState() const { return movState; }
+	const bool* GetRotState() const { return rotState; }
+
+public:
 	float3 rot;        ///< warning is not always updated
 
 	float3 forward;    ///< local z-axis
@@ -78,8 +101,17 @@ public:
 		float minz;
 		float maxz;
 	};
-	std::vector<FrustumLine> posFrustumSides;
-	std::vector<FrustumLine> negFrustumSides;
+
+	const std::vector<FrustumLine> GetNegFrustumSides() const {
+		GML_RECMUTEX_LOCK(cam); // GetNegFrustumSides
+
+		return negFrustumSides;
+	}
+	const std::vector<FrustumLine> GetPosFrustumSides() const {
+		GML_RECMUTEX_LOCK(cam); // GetPosFrustumSides
+
+		return posFrustumSides;
+	}
 
 private:
 	void ComputeViewRange();
@@ -96,13 +128,17 @@ private:
 	CMatrix44f viewProjectionMatrixInverse;
 	CMatrix44f billboardMatrix;
 
-	std::vector<GLdouble> viewMatrixD;
-	std::vector<GLdouble> projectionMatrixD;
+	std::vector<FrustumLine> posFrustumSides;
+	std::vector<FrustumLine> negFrustumSides;
 
+	float3 pos;
 	float fov;         ///< in degrees
 	float halfFov;     ///< half the fov in radians
 	float tanHalfFov;  ///< math::tan(halfFov)
 	float lppScale;    ///< length-per-pixel scale
+
+	bool movState[8]; // fwd, back, left, right, up, down, fast, slow
+	bool rotState[4]; // unused
 };
 
 extern CCamera* camera;

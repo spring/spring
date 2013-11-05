@@ -532,7 +532,7 @@ bool QTPFS::PathSearch::SharedFinalize(const IPath* srcPath, IPath* dstPath) {
 	return false;
 }
 
-const boost::uint64_t QTPFS::PathSearch::GetHash(unsigned int N, unsigned int k) const {
+const boost::uint64_t QTPFS::PathSearch::GetHash(boost::uint64_t N, boost::uint32_t k) const {
 	return (srcNode->GetNodeNumber() + (tgtNode->GetNodeNumber() * N) + (k * N * N));
 }
 

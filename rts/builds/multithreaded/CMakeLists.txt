@@ -8,13 +8,74 @@ SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 
+### Assemble libraries
+FIND_PACKAGE(SDL REQUIRED)
+SET(engineIncludes ${SDL_INCLUDE_DIR})
+SET(engineLibraries ${SDL_LIBRARY})
+
+
+FIND_PACKAGE_STATIC(OpenGL REQUIRED)
+FIND_PACKAGE_STATIC(GLEW 1.5.1 REQUIRED)
+LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES})
+if   (MSVC)
+	LIST(APPEND engineIncludes ${GLEW_INCLUDE_DIR})
+endif(MSVC)
+
+FIND_PACKAGE_STATIC(Freetype REQUIRED)
+foreach(f ${FREETYPE_INCLUDE_DIRS})
+	LIST(APPEND engineIncludes ${f})
+endforeach(f)
+LIST(APPEND engineLibraries ${FREETYPE_LIBRARIES})
+
+IF    (PREFER_STATIC_LIBS)
+	# dependencies of FreeType
+	FIND_PACKAGE_STATIC(BZip2 REQUIRED)
+	LIST(APPEND engineLibraries ${BZIP2_LIBRARIES})
+ENDIF (PREFER_STATIC_LIBS)
+
+IF    (UNIX)
+	FIND_PACKAGE_STATIC(X11 REQUIRED)
+	LIST(APPEND engineLibraries ${X11_Xcursor_LIB} ${X11_X11_LIB})
+
+	IF    (PREFER_STATIC_LIBS)
+		# dependencies of X11/XCursor
+		FIND_PACKAGE_STATIC(XCB REQUIRED)
+		LIST(APPEND engineLibraries ${X11_Xrender_LIB} ${X11_Xfixes_LIB} ${XCB_LIBRARIES} ${X11_Xau_LIB} ${X11_Xdmcp_LIB})
+	ENDIF (PREFER_STATIC_LIBS)
+ENDIF (UNIX)
+
+IF (APPLE)
+	FIND_LIBRARY(COREFOUNDATION_LIBRARY Foundation)
+	LIST(APPEND engineLibraries ${COREFOUNDATION_LIBRARY})
+ENDIF (APPLE)
+
+if    (USE_LIBSQUISH)
+	LIST(APPEND engineLibraries squish rgetc1)
+endif (USE_LIBSQUISH)
+
+LIST(APPEND engineLibraries ${sound-impl})
+LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
+LIST(APPEND engineLibraries engineSystemNet)
+LIST(APPEND engineLibraries ${engineCommonLibraries})
+LIST(APPEND engineLibraries engineaGui)
+
+
+### Assemble external incude dirs
+LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
+
+INCLUDE_DIRECTORIES(${engineIncludes})
+
+if   (MSVC)
+	# set vmg flag to work around small pointer-to-member bug in spring
+	# and enable multi-processor compiling
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /MP")
+endif(MSVC)
+
 ### Assemble defines
 ADD_DEFINITIONS(-DUSE_GML)
 
-if   (NOT MSVC)
-	# USE_GML requires this
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-tls-direct-seg-refs")
-endif(NOT MSVC)
+# USE_GML requires this
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${NO_TLS_DIRECT_SEG_REFS}")
 
 # USE_GML_SIM requires USE_GML
 ADD_DEFINITIONS(-DUSE_GML_SIM)
@@ -23,34 +84,13 @@ if (USE_GML_DEBUG)
 	ADD_DEFINITIONS(-DUSE_GML_DEBUG)
 endif (USE_GML_DEBUG)
 
-
-### Add icon and manifest to exe using windres
-IF    (WIN32)
-	IF   (MINGW)
-		SET(ENGINE_ICON_GML_DIR "${ENGINE_SRC_ROOT_DIR}")
-		SET(ENGINE_ICON_GML_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-		SET(ENGINE_ICON_GML_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
-		CreateResourceCompileCommand(ENGINE_ICON_GML "${ENGINE_ICON_GML_DIR}" "${ENGINE_ICON_GML_RES}" "${ENGINE_ICON_GML_OBJ}")
-	ENDIF(MINGW)
-ELSE  (WIN32)
-	SET(ENGINE_ICON_GML "")
-ENDIF (WIN32)
-
-### Assemble external incude dirs (defined in ../default/CMakeLists.txt)
-INCLUDE_DIRECTORIES(${engineIncludes})
-
 ### Build the executable
-ADD_EXECUTABLE(engine-multithreaded ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON_GML} ${engineHeaders})
+ADD_EXECUTABLE(engine-multithreaded ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(engine-multithreaded gml ${engineLibraries})
-SET_TARGET_PROPERTIES(engine-multithreaded PROPERTIES OUTPUT_NAME "spring-multithreaded")
 
 
 ### Install the executable
 INSTALL(TARGETS engine-multithreaded DESTINATION ${BINDIR})
 
-# Only build & install spring-multithreaded executable & dependencies
-# use cases:
-# * make spring-multithreaded
-# * make install-spring-multithreaded
 CreateEngineBuildAndInstallTarget(multithreaded)
 

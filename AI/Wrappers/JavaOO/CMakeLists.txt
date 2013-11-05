@@ -303,7 +303,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		file(REMOVE "${mySrcArgFile}")
 	endif (EXISTS "${mySrcArgFile}")
 	foreach    (srcFile ${mySources} ${myGeneratedSources})
-		file(APPEND "${mySrcArgFile}" "${srcFile}\n")
+		file(APPEND "${mySrcArgFile}" "\"${srcFile}\"\n")
 	endforeach (srcFile)
 
 	# compile and pack library

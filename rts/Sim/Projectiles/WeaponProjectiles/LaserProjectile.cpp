@@ -20,9 +20,9 @@ CR_REG_METADATA(CLaserProjectile,(
 	CR_MEMBER(intensity),
 	CR_MEMBER(color),
 	CR_MEMBER(color2),
-	CR_MEMBER(length),
-	CR_MEMBER(curLength),
 	CR_MEMBER(speedf),
+	CR_MEMBER(maxLength),
+	CR_MEMBER(curLength),
 	CR_MEMBER(stayTime),
 	CR_MEMBER(intensityFalloff),
 	CR_MEMBER(midtexx)
@@ -30,8 +30,7 @@ CR_REG_METADATA(CLaserProjectile,(
 
 CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, speedf(0.0f)
-
-	, length(0.0f)
+	, maxLength(0.0f)
 	, curLength(0.0f)
 	, intensity(0.0f)
 	, intensityFalloff(0.0f)
@@ -41,13 +40,13 @@ CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProje
 {
 	projectileType = WEAPON_LASER_PROJECTILE;
 
-	speedf = speed.Length();
-	dir = speed / speedf;
+	// FIXME: constant, assumes |speed| never changes after creation
+	speedf = speed.w;
 
 	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 
-		length = weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED);
+		maxLength = weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED);
 		intensity = weaponDef->intensity;
 		intensityFalloff = intensity * weaponDef->falloffRate;
 
@@ -59,145 +58,121 @@ CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProje
 		color2 = weaponDef->visuals.color2;
 	}
 
-	drawRadius = length;
+	drawRadius = maxLength;
 
 #ifdef TRACE_SYNC
-	tracefile << "New laser: ";
+	tracefile << "[" << __FUNCTION__ << "] ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 }
 
 void CLaserProjectile::Update()
 {
-	if (!luaMoveCtrl) {
-		pos += speed;
-	}
+	const float4 oldSpeed = speed;
 
-	if (checkCol) {
-		// normal
-		curLength += speedf;
-		if (curLength > length)
-			curLength = length;
-	} else {
-		// fading out after hit
-		if (stayTime <= 0)
-			curLength -= speedf;
-		else
-			stayTime--;
+	UpdateIntensity();
+	UpdateLength();
+	UpdateInterception();
+	UpdatePos(oldSpeed);
 
-		if (curLength <= 0.0f) {
-			deleteMe = true;
-			curLength = 0.0f;
-		}
-	}
+	checkCol &= (ttl >= 0);
+	deleteMe |= ((curLength <= 0.01f) * ( weaponDef->laserHardStop));
+	deleteMe |= ((intensity <= 0.01f) * (!weaponDef->laserHardStop));
+	ttl -= 1;
+}
 
-
-	if (--ttl > 0 && checkCol) {
-		gCEG->Explosion(cegID, pos, ttl, intensity, NULL, 0.0f, NULL, speed);
+void CLaserProjectile::UpdateIntensity() {
+	if (ttl > 0) {
+		explGenHandler->GenExplosion(cegID, pos, speed, ttl, intensity, 0.0f, NULL, NULL);
+		return;
 	}
 
 	if (weaponDef->laserHardStop) {
-		if (ttl == 0 && checkCol) {
-			checkCol = false;
-			speed = ZeroVector;
-			if (curLength < length) {
-				// if the laser wasn't fully extended yet,
-				// remember how long until it would have been
-				// fully extended
-				stayTime = 1 + (length - curLength) / speedf;
-			}
+		if (curLength < maxLength && speed != ZeroVector) {
+			// bolt reached its max-range but wasn't fully extended yet
+			stayTime = 1 + int((maxLength - curLength) / speedf);
 		}
-	} else {
-		if (ttl < 5 && checkCol) {
-			intensity -= (intensityFalloff * 0.2f);
 
-			if (intensity <= 0.0f) {
-				intensity = 0.0f;
-				deleteMe = true;
-			}
+		SetVelocityAndSpeed(ZeroVector);
+	} else {
+		// fade out over the next 5 frames at most
+		intensity -= std::max(intensityFalloff * 0.2f, 0.2f);
+		intensity = std::max(intensity, 0.0f);
+	}
+}
+
+void CLaserProjectile::UpdateLength() {
+	if (speed != ZeroVector) {
+		// expand bolt to maximum length if not
+		// stopped / collided OR after hardstop
+		curLength += speedf;
+		curLength = std::min(maxLength, curLength);
+	} else {
+		if (stayTime == 0) {
+			// contract bolt to zero length after stayTime
+			// expires (can be immediately if not hardstop)
+			curLength -= speedf;
+			curLength = std::max(curLength, 0.0f);
 		}
 	}
 
+	stayTime = std::max(stayTime - 1, 0);
+}
+
+void CLaserProjectile::UpdatePos(const float4& oldSpeed) {
 	if (luaMoveCtrl)
 		return;
 
-	float3 tempSpeed = speed;
+	SetPosition(pos + speed);
+	// note: this can change pos *and* speed
 	UpdateGroundBounce();
-	UpdateInterception();
 
-	if (tempSpeed != speed) {
-		dir = speed;
-		dir.Normalize();
+	if (oldSpeed != speed) {
+		SetVelocityAndSpeed(speed);
 	}
 }
 
 
 
+void CLaserProjectile::CollisionCommon(const float3& oldPos) {
+	// we will fade out over some time
+	deleteMe = false;
+
+	if (weaponDef->noExplode)
+		return;
+
+	checkCol = false;
+
+	SetPosition(oldPos);
+	SetVelocityAndSpeed(ZeroVector);
+
+	if (curLength < maxLength) {
+		stayTime = 1 + int((maxLength - curLength) / speedf);
+	}
+}
+
 void CLaserProjectile::Collision(CUnit* unit)
 {
-	float3 oldPos = pos;
-	CWeaponProjectile::Collision(unit);
+	const float3 oldPos = pos;
 
-	deleteMe = false; // we will fade out over some time
-	if (!weaponDef->noExplode) {
-		checkCol = false;
-		speed = ZeroVector;
-		pos = oldPos;
-		if (curLength < length) {
-			// if the laser wasn't fully extended yet
-			// and was too short for some reason,
-			// remember how long until it would have
-			// been fully extended
-			curLength += speedf;
-			stayTime = 1 + (length - curLength) / speedf;
-		}
-	}
+	CWeaponProjectile::Collision(unit);
+	CollisionCommon(oldPos);
 }
 
 void CLaserProjectile::Collision(CFeature* feature)
 {
-	float3 oldPos = pos;
+	const float3 oldPos = pos;
+
 	CWeaponProjectile::Collision(feature);
-
-	// we will fade out over some time
-	deleteMe = false;
-
-	if (weaponDef->noExplode)
-		return;
-
-	checkCol = false;
-	speed = ZeroVector;
-	pos = oldPos;
-
-	if (curLength < length) {
-		// if the laser wasn't fully extended yet,
-		// remember how long until it would have been
-		// fully extended
-		stayTime = 1 + (length - curLength) / speedf;
-	}
+	CollisionCommon(oldPos);
 }
 
 void CLaserProjectile::Collision()
 {
-	float3 oldPos = pos;
+	const float3 oldPos = pos;
+
 	CWeaponProjectile::Collision();
-
-	// we will fade out over some time
-	deleteMe = false;
-
-	if (weaponDef->noExplode)
-		return;
-
-	checkCol = false;
-	speed = ZeroVector;
-	pos = oldPos;
-
-	if (curLength < length) {
-		// if the laser wasn't fully extended yet,
-		// remember how long until it would have been
-		// fully extended
-		stayTime = 1 + (length - curLength) / speedf;
-	}
+	CollisionCommon(oldPos);
 }
 
 
@@ -210,7 +185,7 @@ void CLaserProjectile::Draw()
 	}
 
 	inArray = true;
-	float3 dif(pos - camera->pos);
+	float3 dif(pos - camera->GetPos());
 	const float camDist = dif.Length();
 	dif /= camDist;
 	float3 dir1(dif.cross(dir));
@@ -238,10 +213,10 @@ void CLaserProjectile::Draw()
 		float texEndOffset;
 		if (checkCol) { // expanding or contracting?
 			texStartOffset = 0;
-			texEndOffset   = (1.0f - (curLength / length)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
+			texEndOffset   = (1.0f - (curLength / maxLength)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
 		} else {
-			texStartOffset = (-1.0f + (curLength / length) + ((float)stayTime * (speedf / length))) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
-			texEndOffset   = ((float)stayTime * (speedf / length)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
+			texStartOffset = (-1.0f + (curLength / maxLength) + ((float)stayTime * (speedf / maxLength))) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
+			texEndOffset   = ((float)stayTime * (speedf / maxLength)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
 		}
 
 		va->AddVertexQTC(drawPos - (dir1 * size),                       midtexx,                             weaponDef->visuals.texture2->ystart, col);
@@ -275,12 +250,13 @@ void CLaserProjectile::Draw()
 		const float3 pos2 = pos1 - (dir * (curLength + size));
 		float texStartOffset;
 		float texEndOffset;
+
 		if (checkCol) { // expanding or contracting?
 			texStartOffset = 0;
-			texEndOffset   = (1.0f - (curLength / length)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
+			texEndOffset   = (1.0f - (curLength / maxLength)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
 		} else {
-			texStartOffset = (-1.0f + (curLength / length) + ((float)stayTime * (speedf / length))) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
-			texEndOffset   = ((float)stayTime * (speedf / length)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
+			texStartOffset = (-1.0f + (curLength / maxLength) + ((float)stayTime * (speedf / maxLength))) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
+			texEndOffset   = ((float)stayTime * (speedf / maxLength)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
 		}
 
 		va->AddVertexQTC(pos1 - (dir1 * size),     weaponDef->visuals.texture1->xstart + texStartOffset, weaponDef->visuals.texture1->ystart, col);
@@ -296,15 +272,14 @@ void CLaserProjectile::Draw()
 
 int CLaserProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	if (!luaMoveCtrl) {
-		const float3 rdir = (pos - shieldPos).Normalize();
+	if (luaMoveCtrl)
+		return 0;
 
-		if (rdir.dot(speed) < 0.0f) {
-			speed -= (rdir * rdir.dot(speed) * 2.0f);
-			dir = speed;
-			dir.Normalize();
-			return 1;
-		}
+	const float3 rdir = (pos - shieldPos).Normalize();
+
+	if (rdir.dot(speed) < 0.0f) {
+		SetVelocityAndSpeed(speed - (rdir * rdir.dot(speed) * 2.0f));
+		return 1;
 	}
 
 	return 0;

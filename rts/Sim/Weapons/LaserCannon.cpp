@@ -4,43 +4,40 @@
 #include "WeaponDef.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
-#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 
-CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL));
+CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CLaserCannon,(
 	CR_MEMBER(color),
 	CR_RESERVED(8)
 ));
 
-CLaserCannon::CLaserCannon(CUnit* owner): CWeapon(owner)
+CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
+	color = def->visuals.color;
 }
 
 
 
 void CLaserCannon::Update()
 {
-	if(targetType != Target_None){
-		weaponPos = owner->pos +
-			owner->frontdir * relWeaponPos.z +
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;
-		weaponMuzzlePos = owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+	if (targetType != Target_None) {
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
-		float3 wantedDirTemp(targetPos - weaponPos);
-		float len = wantedDirTemp.Length();
-		if(!onlyForward && (len != 0.0f)) {
+		float3 wantedDirTemp = targetPos - weaponPos;
+		const float targetDist = wantedDirTemp.LengthNormalize();
+
+		if (!onlyForward && targetDist != 0.0f) {
 			wantedDir = wantedDirTemp;
-			wantedDir /= len;
 		}
-		predict=len/projectileSpeed;
+
+		predict = targetDist / projectileSpeed;
 	}
+
 	CWeapon::Update();
 }
 
@@ -50,30 +47,23 @@ void CLaserCannon::Init()
 	CWeapon::Init();
 }
 
-void CLaserCannon::FireImpl()
+void CLaserCannon::FireImpl(bool scriptCall)
 {
-	float3 dir;
-	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
-		// HoverAirMovetype cannot align itself properly, change back when that is fixed
+	float3 dir = targetPos - weaponMuzzlePos;
+	const float dist = dir.LengthNormalize();
+
+	if (onlyForward && owner->unitDef->IsStrafingAirUnit()) {
+		// [?] StrafeAirMovetype cannot align itself properly, change back when that is fixed
 		dir = owner->frontdir;
-	} else {
-		dir = targetPos - weaponMuzzlePos;
-		dir.Normalize();
 	}
 
-	dir +=
-		(gs->randVector() * sprayAngle + salvoError) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
+	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
-
-	// subtract a magic 24 elmos in FPS mode (helps against range-exploits)
-	const int fpsRangeSub = (owner->fpsControlPlayer != NULL)? (SQUARE_SIZE * 3): 0;
-	const int boltTTL = ((weaponDef->range - fpsRangeSub) / weaponDef->projectilespeed) - (fpsRangeSub >> 2);
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
-	params.ttl = boltTTL;
+	params.ttl = std::ceil(std::max(dist, range) / weaponDef->projectilespeed);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

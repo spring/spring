@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Platform/Win/win32.h"
-#include "lib/gml/gml.h" // FIXME: linux for some reason does not compile without this
 
 #include "PathEstimator.h"
 
@@ -23,7 +22,8 @@
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
+#include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/Archives/IArchive.h"
@@ -34,9 +34,11 @@
 #include "System/Platform/Watchdog.h"
 
 
-CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512 * 1024 * 1024);
+CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512).minimumValue(64).description("Maximum memusage (in MByte) of mutlithreaded pathcache generator at loading time.");
 
-static const std::string PATH_CACHE_DIR = "cache/paths/";
+static const std::string GetPathCacheDir() {
+	return (FileSystem::GetCacheDir() + "/paths/");
+}
 
 static size_t GetNumThreads() {
 	const size_t numThreads = std::max(0, configHandler->GetInt("PathingThreadCount"));
@@ -61,7 +63,11 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, const std::s
 	pathChecksum(0),
 	offsetBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
 	costBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
-	blockStates(int2(nbrOfBlocksX, nbrOfBlocksZ), int2(gs->mapx, gs->mapy))
+	blockStates(int2(nbrOfBlocksX, nbrOfBlocksZ), int2(gs->mapx, gs->mapy)),
+
+	mStartBlockIdx(0),
+	mGoalHeuristic(0.0f),
+	blockUpdatePenalty(0)
 {
  	pathFinder = pf;
 
@@ -93,7 +99,8 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, const std::s
 
 CPathEstimator::~CPathEstimator()
 {
-	delete pathCache;
+	delete pathCache[0]; pathCache[0] = NULL;
+	delete pathCache[1]; pathCache[1] = NULL;
 }
 
 
@@ -115,7 +122,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		// start extra threads if applicable, but always keep the total
 		// memory-footprint made by CPathFinder instances within bounds
 		const unsigned int minMemFootPrint = sizeof(CPathFinder) + pathFinder->GetMemFootPrint();
-		const unsigned int maxMemFootPrint = configHandler->GetInt("MaxPathCostsMemoryFootPrint");
+		const unsigned int maxMemFootPrint = configHandler->GetInt("MaxPathCostsMemoryFootPrint") * 1024 * 1024;
 		const unsigned int numExtraThreads = std::min(int(numThreads - 1), std::max(0, int(maxMemFootPrint / minMemFootPrint) - 1));
 		const unsigned int reqMemFootPrint = minMemFootPrint * (numExtraThreads + 1);
 
@@ -153,7 +160,8 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		loadscreen->SetLoadMessage("PathCosts: written", true);
 	}
 
-	pathCache = new CPathCache(nbrOfBlocksX, nbrOfBlocksZ);
+	pathCache[0] = new CPathCache(nbrOfBlocksX, nbrOfBlocksZ);
+	pathCache[1] = new CPathCache(nbrOfBlocksX, nbrOfBlocksZ);
 }
 
 
@@ -169,6 +177,7 @@ void CPathEstimator::InitBlocks() {
 }
 
 
+__FORCE_ALIGN_STACK__
 void CPathEstimator::CalcOffsetsAndPathCosts(unsigned int threadNum) {
 	// reset FPU state for synced computations
 	streflop::streflop_init<streflop::Simple>();
@@ -209,7 +218,7 @@ void CPathEstimator::CalculateBlockOffsets(unsigned int blockIdx, unsigned int t
 
 	for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
 		MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
-		if (md->unitDefRefCount > 0) {
+		if (md->udRefCount > 0) {
 			blockStates.peNodeOffsets[blockIdx][md->pathType] = FindOffset(*md, x, z);
 		}
 	}
@@ -231,7 +240,7 @@ void CPathEstimator::EstimatePathCosts(unsigned int blockIdx, unsigned int threa
 
 	for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
 		MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
-		if (md->unitDefRefCount > 0) {
+		if (md->udRefCount > 0) {
 			CalculateVertices(*md, x, z, threadNum);
 		}
 	}
@@ -360,7 +369,7 @@ void CPathEstimator::CalculateVertex(
 	// use this thread's "private" CPathFinder instance
 	// (rather than locking pathFinder->GetPath()) if we
 	// are in one
-	result = pathFinders[threadNum]->GetPath(moveDef, startPos, pfDef, NULL, path, MAX_SEARCHED_NODES_PF >> 2, false, true, false, true);
+	result = pathFinders[threadNum]->GetPath(moveDef, pfDef, NULL, startPos, path, MAX_SEARCHED_NODES_PF >> 2, false, true, false, true);
 
 	// store the result
 	if (result == IPath::Ok)
@@ -410,7 +419,7 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 				for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
 					const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
-					if (md->unitDefRefCount > 0) {
+					if (md->udRefCount > 0) {
 						SingleBlock sb;
 							sb.blockPos.x = x;
 							sb.blockPos.y = z;
@@ -430,13 +439,21 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
  * Update some obsolete blocks using the FIFO-principle
  */
 void CPathEstimator::Update() {
-	pathCache->Update();
+	pathCache[0]->Update();
+	pathCache[1]->Update();
+
+	static const unsigned int MIN_BLOCKS_TO_UPDATE = std::max(BLOCKS_TO_UPDATE >> 1, 4U);
+	static const unsigned int MAX_BLOCKS_TO_UPDATE = std::min(BLOCKS_TO_UPDATE << 1, MIN_BLOCKS_TO_UPDATE);
+	const unsigned int progressiveUpdates = updatedBlocks.size() * 0.007f * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f);
+	const unsigned int blocksToUpdate = Clamp(progressiveUpdates, MIN_BLOCKS_TO_UPDATE, MAX_BLOCKS_TO_UPDATE);
+
+	blockUpdatePenalty = std::max(0, blockUpdatePenalty - int(blocksToUpdate));
+
+	if (blockUpdatePenalty >= blocksToUpdate)
+		return;
 
 	if (updatedBlocks.empty())
 		return;
-
-	const unsigned int progressiveUpdates = updatedBlocks.size() * 0.01f * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f);
-	const unsigned int blocksToUpdate = std::max(BLOCKS_TO_UPDATE, progressiveUpdates);
 
 	std::vector<SingleBlock> v;
 	v.reserve(blocksToUpdate);
@@ -445,6 +462,7 @@ void CPathEstimator::Update() {
 	for (unsigned int n = 0; !updatedBlocks.empty() && n < blocksToUpdate; ) {
 		// copy the next block in line
 		const SingleBlock sb = updatedBlocks.front();
+		updatedBlocks.pop_front();
 
 		// check if it's not already updated
 		if (blockStates.nodeMask[sb.blockPos.y * nbrOfBlocksX + sb.blockPos.x] & PATHOPT_OBSOLETE) {
@@ -452,19 +470,30 @@ void CPathEstimator::Update() {
 			// and so even when we compute it multiple times the result will be the same
 			v.push_back(sb);
 
+			// always process all movedefs of a square in one rush
+			// needed cause blockStates.nodeMask saves PATHOPT_OBSOLETE just for the square and not the movedefs
+			// if we wouldn't process them in one rush, it could happen that square changes are missed for `lower` movdefs
+			for (auto it = updatedBlocks.begin(), E = updatedBlocks.end(); it != E; ++it) {
+				if ((it->blockPos.x == sb.blockPos.x) && (it->blockPos.y == sb.blockPos.y)) {
+					v.push_back(sb);
+					n++;
+				} else {
+					updatedBlocks.erase(updatedBlocks.begin(), ++it);
+					break;
+				}
+			}
+
 			// one stale SingleBlock consumed
 			n++;
 		}
-
-		updatedBlocks.pop_front();
 	}
+
+	blockUpdatePenalty += std::max(0, int(v.size()) - int(blocksToUpdate));
 
 	// FindOffset (threadsafe)
 	{
 		SCOPED_TIMER("CPathEstimator::FindOffset");
-		Threading::OMPCheck();
-		#pragma omp parallel for
-		for (unsigned int n = 0; n < v.size(); ++n) {
+		for_mt(0, v.size(), [&](const int n) {
 			// copy the next block in line
 			const SingleBlock sb = v[n];
 
@@ -475,7 +504,7 @@ void CPathEstimator::Update() {
 			const MoveDef* currBlockMD = sb.moveDef;
 
 			blockStates.peNodeOffsets[blockN][currBlockMD->pathType] = FindOffset(*currBlockMD, blockX, blockZ);
-		}
+		});
 	}
 
 	// CalculateVertices (not threadsafe)
@@ -490,7 +519,10 @@ void CPathEstimator::Update() {
 			const unsigned int blockN = blockZ * nbrOfBlocksX + blockX;
 
 			const MoveDef* currBlockMD = sb.moveDef;
-			const MoveDef* nextBlockMD = (updatedBlocks.empty())? NULL: (updatedBlocks.front()).moveDef;
+			const MoveDef* nextBlockMD = NULL;
+			if ((n + 1) < v.size()) {
+				nextBlockMD = v[n + 1].moveDef;
+			}
 
 			CalculateVertices(*currBlockMD, blockX, blockZ);
 
@@ -503,8 +535,6 @@ void CPathEstimator::Update() {
 			}
 		}
 	}
-
-	v.clear();
 }
 
 
@@ -521,8 +551,8 @@ void CPathEstimator::UpdateFull() {
  */
 IPath::SearchResult CPathEstimator::GetPath(
 	const MoveDef& moveDef,
-	float3 start,
 	const CPathFinderDef& peDef,
+	float3 start,
 	IPath::Path& path,
 	unsigned int maxSearchedBlocks,
 	bool synced
@@ -546,32 +576,31 @@ IPath::SearchResult CPathEstimator::GetPath(
 	mStartBlock = startBlock;
 	mStartBlockIdx = startBlock.y * nbrOfBlocksX + startBlock.x;
 
-	if (synced) {
-		CPathCache::CacheItem* ci = pathCache->GetCachedPath(startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
-		if (ci) {
-			// use a cached path if we have one (NOTE: only when in synced context)
-			path = ci->path;
-			return ci->result;
-		}
+	const CPathCache::CacheItem* ci = pathCache[synced]->GetCachedPath(startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
+
+	if (ci != NULL) {
+		// use a cached path if we have one
+		path = ci->path;
+		return ci->result;
 	}
 
 	// oterhwise search
-	IPath::SearchResult result = InitSearch(moveDef, peDef, synced);
+	const IPath::SearchResult result = InitSearch(moveDef, peDef, synced);
 
 	// if search successful, generate new path
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 		FinishSearch(moveDef, path);
 
-		if (synced && result == IPath::Ok) {
-			// add succesful paths to the cache (NOTE: only when in synced context)
-			pathCache->AddPath(&path, result, startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
+		if (result == IPath::Ok) {
+			// add succesful paths to the cache
+			pathCache[synced]->AddPath(&path, result, startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
 		}
 
 		if (LOG_IS_ENABLED(L_DEBUG)) {
 			LOG_L(L_DEBUG, "PE: Search completed.");
 			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
 			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
-			LOG_L(L_DEBUG, "Path length: "_STPF_, path.path.size());
+			LOG_L(L_DEBUG, "Path length: " _STPF_, path.path.size());
 			LOG_L(L_DEBUG, "Path cost: %f", path.pathCost);
 		}
 	} else {
@@ -846,9 +875,11 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 {
 	const unsigned int hash = Hash();
 	char hashString[50];
-	sprintf(hashString, "%u", hash);
 
-	std::string filename = std::string(PATH_CACHE_DIR) + map + hashString + "." + cacheFileName + ".zip";
+	sprintf(hashString, "%u", hash);
+	LOG("[PathEstimator::%s] hash=%s\n", __FUNCTION__, hashString);
+
+	std::string filename = GetPathCacheDir() + map + hashString + "." + cacheFileName + ".zip";
 	if (!FileSystem::FileExists(filename))
 		return false;
 	// open file for reading from a suitable location (where the file exists)
@@ -912,53 +943,51 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::string& map)
 {
 	// We need this directory to exist
-	if (!FileSystem::CreateDirectory(PATH_CACHE_DIR))
+	if (!FileSystem::CreateDirectory(GetPathCacheDir()))
 		return;
 
 	const unsigned int hash = Hash();
 	char hashString[64] = {0};
 
 	sprintf(hashString, "%u", hash);
-	printf("[PathEstimator::%s] %s\n", __FUNCTION__, hashString);
+	LOG("[PathEstimator::%s] hash=%s\n", __FUNCTION__, hashString);
 
-	const std::string filename = std::string(PATH_CACHE_DIR) + map + hashString + "." + cacheFileName + ".zip";
-	zipFile file;
+	const std::string filename = GetPathCacheDir() + map + hashString + "." + cacheFileName + ".zip";
 
 	// open file for writing in a suitable location
-	file = zipOpen(dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE).c_str(), APPEND_STATUS_CREATE);
+	zipFile file = zipOpen(dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE).c_str(), APPEND_STATUS_CREATE);
 
-	if (file) {
-		zipOpenNewFileInZip(file, "pathinfo", NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);
+	if (file == NULL)
+		return;
 
-		// Write hash. (NOTE: this also affects the CRC!)
-		zipWriteInFileInZip(file, (void*) &hash, 4);
+	zipOpenNewFileInZip(file, "pathinfo", NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);
 
-		// Write block-center-offsets.
-		for (int blocknr = 0; blocknr < blockStates.GetSize(); blocknr++)
-			zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[blocknr][0], moveDefHandler->GetNumMoveDefs() * sizeof(int2));
+	// Write hash. (NOTE: this also affects the CRC!)
+	zipWriteInFileInZip(file, (void*) &hash, 4);
 
-		// Write vertices.
-		zipWriteInFileInZip(file, &vertexCosts[0], vertexCosts.size() * sizeof(float));
+	// Write block-center-offsets.
+	for (int blocknr = 0; blocknr < blockStates.GetSize(); blocknr++)
+		zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[blocknr][0], moveDefHandler->GetNumMoveDefs() * sizeof(int2));
 
-		zipCloseFileInZip(file);
-		zipClose(file, NULL);
+	// Write vertices.
+	zipWriteInFileInZip(file, &vertexCosts[0], vertexCosts.size() * sizeof(float));
+
+	zipCloseFileInZip(file);
+	zipClose(file, NULL);
 
 
-		// get the CRC over the written path data
-		IArchive* pfile = archiveLoader.OpenArchive(dataDirsAccess.LocateFile(filename), "sdz");
+	// get the CRC over the written path data
+	IArchive* pfile = archiveLoader.OpenArchive(dataDirsAccess.LocateFile(filename), "sdz");
 
-		if (!pfile || !pfile->IsOpen()) {
-			delete pfile;
-			return;
-		}
+	if (pfile == NULL)
+		return;
 
-		std::auto_ptr<IArchive> auto_pfile(pfile);
-		IArchive& file(*pfile);
-
-		const unsigned fid = file.FindFile("pathinfo");
-		assert(fid < file.NumFiles());
-		pathChecksum = file.GetCrc32(fid);
+	if (pfile->IsOpen()) {
+		assert(pfile->FindFile("pathinfo") < pfile->NumFiles());
+		pathChecksum = pfile->GetCrc32(pfile->FindFile("pathinfo"));
 	}
+
+	delete pfile;
 }
 
 
@@ -967,5 +996,5 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
  */
 unsigned int CPathEstimator::Hash() const
 {
-	return (readmap->mapChecksum + moveDefHandler->GetCheckSum() + BLOCK_SIZE + PATHESTIMATOR_VERSION);
+	return (readMap->GetMapChecksum() + moveDefHandler->GetCheckSum() + BLOCK_SIZE + PATHESTIMATOR_VERSION);
 }

@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <SDL_keysym.h>
-#include <SDL_timer.h>
 #include <boost/cstdint.hpp>
 
 #include "SmoothController.h"
@@ -15,11 +14,15 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Input/KeyInput.h"
+#include "System/Misc/SpringTime.h"
+
 
 CONFIG(int, SmoothScrollSpeed).defaultValue(10);
 CONFIG(float, SmoothTiltSpeed).defaultValue(1.0f);
 CONFIG(bool, SmoothEnabled).defaultValue(true);
 CONFIG(float, SmoothFOV).defaultValue(45.0f);
+
+const float SmoothController::maxSpeedFactor = 300;
 
 SmoothController::SmoothController()
 	: flipped(false)
@@ -28,7 +31,7 @@ SmoothController::SmoothController()
 	, oldAltHeight(1500)
 	, changeAltHeight(true)
 	, maxHeight(10000)
-	, speedFactor(1)
+	, speedFactor(1.0f)
 {
 	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
 	scrollSpeed = configHandler->GetInt("SmoothScrollSpeed") * 0.1f;
@@ -58,18 +61,42 @@ void SmoothController::KeyMove(float3 move)
 
 	const float3 thisMove(move.x * pixelSize * 2.0f * scrollSpeed, 0.0f, -move.y * pixelSize * 2.0f * scrollSpeed);
 
-	static unsigned lastKeyMove = SDL_GetTicks();
-	const unsigned timeDiff = SDL_GetTicks() - lastKeyMove;
-
-	lastKeyMove = SDL_GetTicks();
+	static spring_time lastScreenMove = spring_gettime();
+	const spring_time timeDiff = spring_gettime() - lastScreenMove;
+	lastScreenMove = spring_gettime();
 
 	if (thisMove.x != 0 || thisMove.z != 0) {
 		// user want to move with keys
 		lastSource = Key;
-		Move(thisMove, timeDiff);
+		Move(thisMove, timeDiff.toMilliSecsf());
 	} else if (lastSource == Key) {
 		// last move order was given by keys, so call Move() to break
-		Move(thisMove, timeDiff);
+		Move(thisMove, timeDiff.toMilliSecsf());
+	}
+}
+
+
+void SmoothController::ScreenEdgeMove(float3 move)
+{
+	if (flipped) {
+		move.x = -move.x;
+		move.y = -move.y;
+	}
+	move *= math::sqrt(move.z) * 200.0f;
+
+	const float3 thisMove(move.x * pixelSize * 2.0f * scrollSpeed, 0.0f, -move.y * pixelSize * 2.0f * scrollSpeed);
+
+	static spring_time lastScreenMove = spring_gettime();
+	const spring_time timeDiff = spring_gettime() - lastScreenMove;
+	lastScreenMove = spring_gettime();
+
+	if (thisMove.x != 0 || thisMove.z != 0) {
+		// user want to move with mouse on screen edge
+		lastSource = ScreenEdge;
+		Move(thisMove, timeDiff.toMilliSecsf());
+	} else if (lastSource == ScreenEdge) {
+		// last move order was given by screen edge, so call Move() to break
+		Move(thisMove, timeDiff.toMilliSecsf());
 	}
 }
 
@@ -96,65 +123,55 @@ void SmoothController::MouseMove(float3 move)
 }
 
 
-void SmoothController::ScreenEdgeMove(float3 move)
-{
-	if (flipped) {
-		move.x = -move.x;
-		move.y = -move.y;
-	}
-	move *= math::sqrt(move.z) * 200.0f;
-
-	const float3 thisMove(move.x * pixelSize * 2.0f * scrollSpeed, 0.0f, -move.y * pixelSize * 2.0f * scrollSpeed);
-
-	static unsigned lastScreenMove = SDL_GetTicks();
-	const unsigned timeDiff = SDL_GetTicks() - lastScreenMove;
-
-	lastScreenMove = SDL_GetTicks();
-
-	if (thisMove.x != 0 || thisMove.z != 0) {
-		// user want to move with mouse on screen edge
-		lastSource = ScreenEdge;
-		Move(thisMove, timeDiff);
-	} else if (lastSource == ScreenEdge) {
-		// last move order was given by screen edge, so call Move() to break
-		Move(thisMove, timeDiff);
-	}
-}
-
-
 void SmoothController::MouseWheelMove(float move)
 {
+	if (move == 0.0f)
+		return;
+
+	camHandler->CameraTransition(0.05f);
+
+	const float shiftSpeed = (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3.0f : 1.0f);
+	const float altZoomDist = height * move * 0.007f * shiftSpeed;
+
 	// tilt the camera if LCTRL is pressed
+	//
+	// otherwise holding down LALT uses 'instant-zoom'
+	// from here to the end of the function (smoothed)
 	if (keyInput->IsKeyPressed(SDLK_LCTRL)) {
-		zscale *= (1.0f + (0.01f * move * tiltSpeed * (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3.0f : 1.0f)));
+		zscale *= (1.0f + (0.01f * move * tiltSpeed * shiftSpeed));
 		zscale = Clamp(zscale, 0.05f, 10.0f);
-	} else { // holding down LALT uses 'instant-zoom' from here to the end of the function
-		// ZOOM IN to mouse cursor instead of mid screen
-		if (move < 0) {
+	} else {
+		if (move < 0.0f) {
+			// ZOOM IN to mouse cursor instead of mid screen
 			float3 cpos = pos - dir * height;
-			float dif = -height * move * 0.007f * (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3:1);
+			float dif = -altZoomDist;
+
 			if ((height - dif) < 60.0f) {
 				dif = height - 60.0f;
 			}
-			if (keyInput->IsKeyPressed(SDLK_LALT)) { // instant-zoom: zoom in to standard view
+			if (keyInput->IsKeyPressed(SDLK_LALT)) {
+				// instazoom in to standard view
 				dif = (height - oldAltHeight) / mouse->dir.y * dir.y;
 			}
+
 			float3 wantedPos = cpos + mouse->dir * dif;
-			float newHeight = ground->LineGroundCol(wantedPos, wantedPos + dir * 15000);
-			if (newHeight < 0) {
-				newHeight = height * (1.0f + move * 0.007f * (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3:1));
+			float newHeight = ground->LineGroundCol(wantedPos, wantedPos + dir * 15000, false);
+
+			if (newHeight < 0.0f) {
+				newHeight = height * (1.0f + move * 0.007f * shiftSpeed);
 			}
-			if ((wantedPos.y + (dir.y * newHeight)) < 0) {
+			if ((wantedPos.y + (dir.y * newHeight)) < 0.0f) {
 				newHeight = -wantedPos.y / dir.y;
 			}
 			if (newHeight < maxHeight) {
 				height = newHeight;
 				pos = wantedPos + dir * height;
 			}
-		// ZOOM OUT from mid screen
 		} else {
-			if (keyInput->IsKeyPressed(SDLK_LALT)) { // instant-zoom: zoom out to the max
-				if(height < maxHeight*0.5f && changeAltHeight){
+			// ZOOM OUT from mid screen
+			if (keyInput->IsKeyPressed(SDLK_LALT)) {
+				// instazoom out to maximum height
+				if (height < maxHeight*0.5f && changeAltHeight) {
 					oldAltHeight = height;
 					changeAltHeight = false;
 				}
@@ -162,9 +179,10 @@ void SmoothController::MouseWheelMove(float move)
 				pos.x  = gs->mapx * 4;
 				pos.z  = gs->mapy * 4.8f; // somewhat longer toward bottom
 			} else {
-				height *= 1 + move * 0.007f * (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3:1);
+				height *= (1.0f + (altZoomDist / height));
 			}
 		}
+
 		// instant-zoom: turn on the smooth transition and reset the camera tilt
 		if (keyInput->IsKeyPressed(SDLK_LALT)) {
 			zscale = 0.5f;
@@ -173,6 +191,7 @@ void SmoothController::MouseWheelMove(float move)
 			changeAltHeight = true;
 		}
 	}
+
 	UpdateVectors();
 }
 
@@ -238,7 +257,7 @@ bool SmoothController::SetState(const StateMap& sm)
 }
 
 
-void SmoothController::Move(const float3& move, const unsigned timeDiff)
+void SmoothController::Move(const float3& move, const float timeDiff)
 {
 	if ((move.x != 0 || move.z != 0) && speedFactor < maxSpeedFactor)
 	{
@@ -247,16 +266,16 @@ void SmoothController::Move(const float3& move, const unsigned timeDiff)
 		if (speedFactor > maxSpeedFactor)
 			speedFactor = maxSpeedFactor; // don't know why, but std::min produces undefined references here
 		lastMove = move;
-		pos += move * float(speedFactor) / maxSpeedFactor;
+		pos += move * speedFactor / maxSpeedFactor;
 	}
 	else if ((move.x == 0 || move.z == 0) && speedFactor > 1)
 	{
 		// break
 		if (timeDiff > speedFactor)
-			speedFactor = 0;
+			speedFactor = 0.0f;
 		else
 			speedFactor -= timeDiff;
-		pos += lastMove * float(speedFactor) / maxSpeedFactor;
+		pos += lastMove * speedFactor / maxSpeedFactor;
 	}
 	else
 	{

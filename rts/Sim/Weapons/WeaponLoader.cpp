@@ -62,68 +62,45 @@ CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* defWeapon)
 	const std::string& weaponType = weaponDef->type;
 
 	if (weaponType == "Cannon") {
-		CCannon* cannon = new CCannon(owner);
-		cannon->selfExplode = weaponDef->selfExplode;
-		weapon = cannon;
+		weapon = new CCannon(owner, weaponDef);
 	} else if (weaponType == "Rifle") {
-		weapon = new CRifle(owner);
+		weapon = new CRifle(owner, weaponDef);
 	} else if (weaponType == "Melee") {
-		weapon = new CMeleeWeapon(owner);
-	} else if (weaponType == "AircraftBomb") {
-		weapon = new CBombDropper(owner, false);
+		weapon = new CMeleeWeapon(owner, weaponDef);
 	} else if (weaponType == "Shield") {
-		weapon = new CPlasmaRepulser(owner);
+		weapon = new CPlasmaRepulser(owner, weaponDef);
 	} else if (weaponType == "Flame") {
-		weapon = new CFlameThrower(owner);
+		weapon = new CFlameThrower(owner, weaponDef);
 	} else if (weaponType == "MissileLauncher") {
-		weapon = new CMissileLauncher(owner);
+		weapon = new CMissileLauncher(owner, weaponDef);
+	} else if (weaponType == "AircraftBomb") {
+		weapon = new CBombDropper(owner, weaponDef, false);
 	} else if (weaponType == "TorpedoLauncher") {
 		if (owner->unitDef->canfly && !weaponDef->submissile) {
-			CBombDropper* bombDropper = new CBombDropper(owner, true);
-
-			if (weaponDef->tracks)
-				bombDropper->tracking = weaponDef->turnrate;
-
-			bombDropper->bombMoveRange = weaponDef->range;
-			weapon = bombDropper;
+			weapon = new CBombDropper(owner, weaponDef, true);
 		} else {
-			CTorpedoLauncher* torpLauncher = new CTorpedoLauncher(owner);
-
-			if (weaponDef->tracks)
-				torpLauncher->tracking = weaponDef->turnrate;
-
-			weapon = torpLauncher;
+			weapon = new CTorpedoLauncher(owner, weaponDef);
 		}
 	} else if (weaponType == "LaserCannon") {
-		CLaserCannon* laserCannon = new CLaserCannon(owner);
-		laserCannon->color = weaponDef->visuals.color;
-		weapon = laserCannon;
+		weapon = new CLaserCannon(owner, weaponDef);
 	} else if (weaponType == "BeamLaser") {
-		CBeamLaser* beamLaser = new CBeamLaser(owner);
-		beamLaser->color = weaponDef->visuals.color;
-		weapon = beamLaser;
+		weapon = new CBeamLaser(owner, weaponDef);
 	} else if (weaponType == "LightningCannon") {
-		CLightningCannon* lightningCannon = new CLightningCannon(owner);
-		lightningCannon->color = weaponDef->visuals.color;
-		weapon = lightningCannon;
+		weapon = new CLightningCannon(owner, weaponDef);
 	} else if (weaponType == "EmgCannon") {
-		weapon = new CEmgCannon(owner);
+		weapon = new CEmgCannon(owner, weaponDef);
 	} else if (weaponType == "DGun") {
 		// NOTE: no special connection to UnitDef::canManualFire
 		// (any type of weapon may be slaved to the button which
 		// controls manual firing) or the CMD_MANUALFIRE command
-		weapon = new CDGunWeapon(owner);
+		weapon = new CDGunWeapon(owner, weaponDef);
 	} else if (weaponType == "StarburstLauncher") {
-		CStarburstLauncher* vLauncher = new CStarburstLauncher(owner);
-		vLauncher->tracking = weaponDef->tracks? weaponDef->turnrate: 0;
-		vLauncher->uptime = weaponDef->uptime * GAME_SPEED;
-		weapon = vLauncher;
+		weapon = new CStarburstLauncher(owner, weaponDef);
 	} else {
-		weapon = new CNoWeapon(owner);
+		weapon = new CNoWeapon(owner, weaponDef);
 		LOG_L(L_ERROR, "weapon-type %s unknown or NOWEAPON", weaponType.c_str());
 	}
 
-	weapon->weaponDef = weaponDef;
 	return weapon;
 }
 
@@ -161,15 +138,9 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->badTargetCategory = defWeapon->badTargetCat;
 	weapon->onlyTargetCategory = defWeapon->onlyTargetCat;
 
-	if (defWeapon->slavedTo) {
-		const int index = (defWeapon->slavedTo - 1);
-
-		// can only slave to an already-loaded weapon
-		if ((index < 0) || (static_cast<size_t>(index) >= owner->weapons.size())) {
-			throw content_error("Bad weapon slave in " + owner->unitDef->name);
-		}
-
-		weapon->slavedTo = owner->weapons[index];
+	// can only slave to an already-loaded weapon
+	if (defWeapon->slavedTo > 0 && defWeapon->slavedTo <= owner->weapons.size()) {
+		weapon->slavedTo = owner->weapons[defWeapon->slavedTo - 1];
 	}
 
 	weapon->fuelUsage = defWeapon->fuelUsage;

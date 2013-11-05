@@ -38,7 +38,7 @@ private:
 	std::string file;
 	std::string::size_type curPos;
 	int lineNumber;
-	bool inComment;
+//	bool inComment;
 };
 
 #endif // _SIMPLE_PARSER_H_

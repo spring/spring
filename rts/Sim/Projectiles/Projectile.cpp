@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "Projectile.h"
 #include "Map/MapInfo.h"
 #include "Rendering/Colors.h"
@@ -9,6 +8,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "System/Matrix44f.h"
 
 CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
 
@@ -24,24 +24,23 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(deleteMe),
 	CR_MEMBER(castShadow),
 
-	CR_MEMBER(lastProjUpdate),
-	CR_MEMBER(dir),
+	CR_MEMBER_BEGINFLAG(CM_Config),
+		CR_MEMBER(dir),
+	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_MEMBER(drawPos),
+
+	CR_MEMBER(lastProjUpdate),
+	CR_MEMBER(mygravity),
 	CR_IGNORED(tempdist),
 
 	CR_MEMBER(ownerID),
 	CR_MEMBER(teamID),
 	CR_MEMBER(cegID),
+
 	CR_MEMBER(projectileType),
 	CR_MEMBER(collisionFlags),
 
 	CR_MEMBER(quadFieldCellCoors),
-
-	CR_MEMBER(mygravity),
-	CR_MEMBER_BEGINFLAG(CM_Config),
-		CR_MEMBER(speed),
-	CR_MEMBER_ENDFLAG(CM_Config),
-
 	CR_IGNORED(quadFieldCellIter) // runtime. set in ctor
 ));
 
@@ -65,7 +64,6 @@ CProjectile::CProjectile()
 	, deleteMe(false)
 	, castShadow(false)
 
-	, speed(ZeroVector)
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
 
 	, ownerID(-1u)
@@ -79,7 +77,7 @@ CProjectile::CProjectile()
 }
 
 CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece)
-	: CExpGenSpawnable(pos)
+	: CExpGenSpawnable(pos, spd)
 
 	, synced(isSynced)
 	, weapon(isWeapon)
@@ -91,7 +89,7 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	, deleteMe(false)
 	, castShadow(false)
 
-	, speed(spd)
+	, dir(ZeroVector) // set via Init()
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
 
 	, ownerID(-1u)
@@ -101,6 +99,7 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	, projectileType(-1u)
 	, collisionFlags(0)
 {
+	SetRadiusAndHeight(1.7f, 0.0f);
 	Init(ZeroVector, owner);
 	GML::GetTicks(lastProjUpdate);
 }
@@ -137,19 +136,18 @@ void CProjectile::Init(const float3& offset, CUnit* owner)
 		quadField->AddProjectile(this);
 	}
 
-	pos += offset;
-
-	SetRadiusAndHeight(1.7f, 0.0f);
+	SetPosition(pos + offset);
+	SetVelocityAndSpeed(speed);
 }
 
 
 void CProjectile::Update()
 {
-	if (!luaMoveCtrl) {
-		speed.y += mygravity;
-		pos += speed;
-		dir = speed; dir.SafeNormalize();
-	}
+	if (luaMoveCtrl)
+		return;
+
+	SetPosition(pos + speed);
+	SetVelocityAndSpeed(speed + (UpVector * mygravity));
 }
 
 
@@ -191,8 +189,10 @@ int CProjectile::DrawArray()
 }
 
 CUnit* CProjectile::owner() const {
-	// Note: this death dependency optimization using "ownerID" is logically flawed,
-	//  since ids are being reused it could return a unit that is not the original owner
+	// NOTE:
+	//   this death dependency optimization using "ownerID" is logically flawed:
+	//   because ID's are reused it could return a unit that is not the original
+	//   owner (unlikely however unless ID's get recycled very rapidly)
 	CUnit* unit = unitHandler->GetUnit(ownerID);
 
 	// make volatile
@@ -200,5 +200,21 @@ CUnit* CProjectile::owner() const {
 		return (*(CUnit* volatile*) &unit);
 
 	return unit;
+}
+
+CMatrix44f CProjectile::GetTransformMatrix(bool offsetPos) const {
+	float3 xdir;
+	float3 ydir;
+
+	if (math::fabs(dir.y) < 0.95f) {
+		xdir = dir.cross(UpVector);
+		xdir.SafeANormalize();
+	} else {
+		xdir.x = 1.0f;
+	}
+
+	ydir = xdir.cross(dir);
+
+	return (CMatrix44f(drawPos + (dir * radius * 0.9f * offsetPos), -xdir, ydir, dir));
 }
 

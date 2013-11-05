@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <cstdlib>
-
+#include <stdarg.h>
 
 #include "CameraHandler.h"
 
@@ -112,6 +112,8 @@ CCameraHandler::CCameraHandler()
 
 	RegisterAction("viewsave");
 	RegisterAction("viewload");
+
+	SetCameraMode(modeIndex);
 }
 
 
@@ -126,42 +128,48 @@ CCameraHandler::~CCameraHandler()
 
 void CCameraHandler::UpdateCam()
 {
-	//??? a lot CameraControllers depend on the calling every frame the 1st part of the if-clause 
+	GML_RECMUTEX_LOCK(cam); // UpdateCam
+
+	//??? a lot CameraControllers depend on the calling every frame the 1st part of the if-clause
 	//if (cameraTimeEnd < 0.0f) {
 	//	return;
 	//}
-	
+
 	const float  wantedCamFOV = currCamCtrl->GetFOV();
 	const float3 wantedCamPos = currCamCtrl->GetPos();
 	const float3 wantedCamDir = currCamCtrl->GetDir();
 
-	const float curTime = spring_tomsecs(spring_gettime()) / 1000.0f;
+	const float curTime = spring_now().toSecsf();
+
 	if (curTime >= cameraTimeEnd) {
-		camera->pos     = wantedCamPos;
+		camera->SetPos(wantedCamPos);
 		camera->forward = wantedCamDir;
 		camera->SetFov(wantedCamFOV);
 		//cameraTimeEnd   = -1.0f;
-	}
-	else {
-		const float timeRatio = (cameraTimeEnd - curTime) / (cameraTimeEnd - cameraTimeStart);
-		const float tweenFact = 1.0f - (float)math::pow(timeRatio, cameraTimeExponent);
+	} else {
+		if ((cameraTimeEnd - cameraTimeStart) > 0.0f) {
+			const float timeRatio = (cameraTimeEnd - curTime) / (cameraTimeEnd - cameraTimeStart);
+			const float tweenFact = 1.0f - (float)math::pow(timeRatio, cameraTimeExponent);
 
-		camera->pos     = mix(startCam.pos, wantedCamPos, tweenFact);
-		camera->forward = mix(startCam.dir, wantedCamDir, tweenFact);
-		camera->SetFov(   mix(startCam.fov, wantedCamFOV, tweenFact));
-		camera->forward.Normalize();
+			camera->SetPos(   mix(startCam.pos, wantedCamPos, tweenFact));
+			camera->forward = mix(startCam.dir, wantedCamDir, tweenFact);
+			camera->SetFov(   mix(startCam.fov, wantedCamFOV, tweenFact));
+			camera->forward.Normalize();
+		}
 	}
 }
 
 
 void CCameraHandler::CameraTransition(float time)
 {
+	GML_RECMUTEX_LOCK(cam); // CameraTransition
+
 	UpdateCam(); // this prevents camera stutter when multithreading
 	time = std::max(time, 0.0f) * cameraTimeFactor;
 
-	cameraTimeStart = spring_tomsecs(spring_gettime()) / 1000.0f;
+	cameraTimeStart = spring_now().toSecsf();
 	cameraTimeEnd   = cameraTimeStart + time;
-	startCam.pos = camera->pos;
+	startCam.pos = camera->GetPos();
 	startCam.dir = camera->forward;
 	startCam.fov = camera->GetFov();
 }
@@ -169,6 +177,8 @@ void CCameraHandler::CameraTransition(float time)
 
 void CCameraHandler::SetCameraMode(unsigned int mode)
 {
+	GML_RECMUTEX_LOCK(cam); // SetCameraMode
+
 	if ((mode >= camControllers.size()) || (mode == static_cast<unsigned int>(currCamCtrlNum))) {
 		return;
 	}
@@ -186,6 +196,8 @@ void CCameraHandler::SetCameraMode(unsigned int mode)
 
 void CCameraHandler::SetCameraMode(const std::string& modeName)
 {
+	GML_RECMUTEX_LOCK(cam); // SetCameraMode
+
 	const int modeNum = GetModeIndex(modeName);
 	if (modeNum >= 0) {
 		SetCameraMode(modeNum);
@@ -196,6 +208,8 @@ void CCameraHandler::SetCameraMode(const std::string& modeName)
 
 int CCameraHandler::GetModeIndex(const std::string& name) const
 {
+	GML_RECMUTEX_LOCK(cam); // GetModeIndex
+
 	std::map<std::string, unsigned int>::const_iterator it = nameMap.find(name);
 	if (it != nameMap.end()) {
 		return it->second;
@@ -206,12 +220,16 @@ int CCameraHandler::GetModeIndex(const std::string& name) const
 
 void CCameraHandler::PushMode()
 {
+	GML_RECMUTEX_LOCK(cam); // PushMode
+
 	controllerStack.push(GetCurrentControllerNum());
 }
 
 
 void CCameraHandler::PopMode()
 {
+	GML_RECMUTEX_LOCK(cam); // PopMode
+
 	if (!controllerStack.empty()) {
 		SetCameraMode(controllerStack.top());
 		controllerStack.pop();
@@ -221,6 +239,8 @@ void CCameraHandler::PopMode()
 
 void CCameraHandler::ToggleState()
 {
+	GML_RECMUTEX_LOCK(cam); // ToggleState
+
 	CameraTransition(1.0f);
 
 	CCameraController* oldCamCtrl = currCamCtrl;
@@ -247,6 +267,8 @@ void CCameraHandler::ToggleState()
 
 void CCameraHandler::ToggleOverviewCamera()
 {
+	GML_RECMUTEX_LOCK(cam); // ToggleOverviewCamera
+
 	CameraTransition(1.0f);
 	if (controllerStack.empty()) {
 		PushMode();
@@ -260,6 +282,8 @@ void CCameraHandler::ToggleOverviewCamera()
 
 void CCameraHandler::SaveView(const std::string& name)
 {
+	GML_RECMUTEX_LOCK(cam); // SaveView
+
 	if (name.empty())
 		return;
 	ViewData vd;
@@ -272,6 +296,8 @@ void CCameraHandler::SaveView(const std::string& name)
 
 bool CCameraHandler::LoadView(const std::string& name)
 {
+	GML_RECMUTEX_LOCK(cam); // LoadView
+
 	if (name.empty()) {
 		return false;
 	}
@@ -302,6 +328,8 @@ bool CCameraHandler::LoadView(const std::string& name)
 
 void CCameraHandler::GetState(CCameraController::StateMap& sm) const
 {
+	GML_RECMUTEX_LOCK(cam); // GetState
+
 	sm.clear();
 	sm["mode"] = (float)currCamCtrlNum;
 
@@ -311,6 +339,8 @@ void CCameraHandler::GetState(CCameraController::StateMap& sm) const
 
 bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 {
+	GML_RECMUTEX_LOCK(cam); // SetState
+
 	CCameraController::StateMap::const_iterator it = sm.find("mode");
 	if (it != sm.end()) {
 		const unsigned int camMode = (unsigned int)it->second;
@@ -330,12 +360,16 @@ bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 
 const std::string CCameraHandler::GetCurrentControllerName() const
 {
+	GML_RECMUTEX_LOCK(cam); // GetCurrentControllerName
+
 	return currCamCtrl->GetName();
 }
 
 
 void CCameraHandler::PushAction(const Action& action)
 {
+	GML_RECMUTEX_LOCK(cam); // PushAction
+
 	const std::string cmd = action.command;
 
 	if (cmd == "viewfps") {
@@ -404,6 +438,8 @@ void CCameraHandler::PushAction(const Action& action)
 
 bool CCameraHandler::LoadViewData(const ViewData& vd)
 {
+	GML_RECMUTEX_LOCK(cam); // LoadViewData
+
 	if (vd.empty()) {
 		return false;
 	}

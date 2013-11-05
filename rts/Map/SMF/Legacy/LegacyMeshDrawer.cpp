@@ -62,7 +62,7 @@ void CLegacyMeshDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y)
 {
 	// don't send the normals as vertex attributes
 	// (DLOD'ed triangles mess with interpolation)
-	// const float3& n = readmap->vertexNormals[(y * smfReadMap->heightMapSizeX) + x];
+	// const float3& n = readMap->vertexNormals[(y * smfReadMap->heightMapSizeX) + x];
 
 	DrawVertexAQ(ma, x, y, GetVisibleVertexHeight(y * smfReadMap->heightMapSizeX + x));
 }
@@ -93,8 +93,8 @@ bool CLegacyMeshDrawer::BigTexSquareRowVisible(const CCamera* cam, int bty) cons
 {
 	const int minz =  bty * smfReadMap->bigTexSize;
 	const int maxz = minz + smfReadMap->bigTexSize;
-	const float miny = readmap->currMinHeight;
-	const float maxy = math::fabs(cam->pos.y);
+	const float miny = readMap->GetCurrMinHeight();
+	const float maxy = math::fabs(cam->GetPos().y);
 
 	const float3 mins(                   0, miny, minz);
 	const float3 maxs(smfReadMap->mapSizeX, maxy, maxz);
@@ -108,8 +108,8 @@ void CLegacyMeshDrawer::FindRange(const CCamera* cam, int& xs, int& xe, int y, i
 {
 	int xt0, xt1;
 
-	const std::vector<CCamera::FrustumLine>& negSides = cam->negFrustumSides;
-	const std::vector<CCamera::FrustumLine>& posSides = cam->posFrustumSides;
+	const std::vector<CCamera::FrustumLine> negSides = cam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine> posSides = cam->GetPosFrustumSides();
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
@@ -161,8 +161,8 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 	//! only process the necessary big squares in the x direction
 	const int bigSquareSizeY = bty * smfReadMap->bigSquareSize;
 
-	const std::vector<CCamera::FrustumLine>& negSides = cam->negFrustumSides;
-	const std::vector<CCamera::FrustumLine>& posSides = cam->posFrustumSides;
+	const std::vector<CCamera::FrustumLine> negSides = cam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine> posSides = cam->GetPosFrustumSides();
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
@@ -194,8 +194,8 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 	if (sx > ex)
 		return;
 
-	const float cx2 = cam2->pos.x / SQUARE_SIZE;
-	const float cy2 = cam2->pos.z / SQUARE_SIZE;
+	const float cx2 = cam2->GetPos().x / SQUARE_SIZE;
+	const float cy2 = cam2->GetPos().z / SQUARE_SIZE;
 
 	for (int btx = sx; btx < ex; ++btx) {
 		ma->Initialize();
@@ -618,7 +618,7 @@ void CLegacyMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 		} else
 #endif
 		{
-			int camBty = math::floor(cam2->pos.z / (smfReadMap->bigSquareSize * SQUARE_SIZE));
+			int camBty = math::floor(cam2->GetPos().z / (smfReadMap->bigSquareSize * SQUARE_SIZE));
 			camBty = std::max(0, std::min(smfReadMap->numBigTexY - 1, camBty));
 
 			//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
@@ -641,8 +641,8 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 	int x,y;
 	int lod = 1 << nlod;
 
-	float cx2 = camera->pos.x / SQUARE_SIZE;
-	float cy2 = camera->pos.z / SQUARE_SIZE;
+	float cx2 = camera->GetPos().x / SQUARE_SIZE;
+	float cy2 = camera->GetPos().z / SQUARE_SIZE;
 
 	float oldcamxpart = 0.0f;
 	float oldcamypart = 0.0f;

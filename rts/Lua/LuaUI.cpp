@@ -30,8 +30,7 @@
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/PlayerRoster.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Game/UI/GuiHandler.h"
@@ -57,7 +56,6 @@
 #include <cctype>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
-#include <SDL_timer.h>
 
 CONFIG(bool, LuaSocketEnabled)
 	.defaultValue(true)
@@ -287,6 +285,9 @@ bool CLuaUI::HasCallIn(lua_State *L, const string& name)
 		return false;
 	}
 
+	if (name == "CollectGarbage")
+		return true;
+
 	lua_getglobal(L, name.c_str());
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, 1);
@@ -357,7 +358,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 void CLuaUI::Shutdown()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("Shutdown");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return;
@@ -373,7 +374,7 @@ void CLuaUI::Shutdown()
 bool CLuaUI::ConfigCommand(const string& command)
 {
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("ConfigureLayout");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -396,40 +397,42 @@ static inline float fuzzRand(float fuzz)
 }
 
 
-void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect, float *distadj)
+void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, const float* distMod)
 {
-	if (!haveShockFront) {
+	if (!haveShockFront)
 		return;
-	}
-	if (areaOfEffect < shockFrontMinArea && !distadj) {
+	if (areaOfEffect < shockFrontMinArea && distMod == NULL)
 		return;
-	}
+
+	float3 gap = (camera->GetPos() - pos);
+
 #if defined(USE_GML) && GML_ENABLE_SIM
-	float shockFrontDistAdj = (GML::Enabled() && distadj) ? *distadj : this->shockFrontDistAdj;
+	// WTF?
+	const float shockFrontDistMod = (GML::Enabled() && distMod != NULL)? *distMod : this->shockFrontDistAdj;
+#else
+	const float shockFrontDistMod = this->shockFrontDistAdj;
 #endif
-	float3 gap = (camera->pos - pos);
-	float dist = gap.Length() + shockFrontDistAdj;
+	float dist = gap.Length() + shockFrontDistMod;
 
-	power = power / (dist * dist);
-	if (power < shockFrontMinPower && !distadj) {
+	if ((power /= (dist * dist)) < shockFrontMinPower && distMod == NULL)
 		return;
-	}
 
-	LUA_UI_BATCH_PUSH(SHOCK_FRONT, power, pos, areaOfEffect, shockFrontDistAdj);
+	LUA_UI_BATCH_PUSH(, UIShockFrontEvent(pos, power, areaOfEffect, shockFrontDistMod))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 6);
+
+	luaL_checkstack(L, 6, __FUNCTION__);
 	static const LuaHashString cmdStr("ShockFront");
+
 	if (!cmdStr.GetGlobalFunc(L)) {
 		haveShockFront = false;
 		return; // the call is not defined
 	}
 
-	if (!gu->spectatingFullView && !loshandler->InLos(pos, gu->myAllyTeam)) {
-		const float fuzz = 0.25f;
-		gap.x *= fuzzRand(fuzz);
-		gap.y *= fuzzRand(fuzz);
-		gap.z *= fuzzRand(fuzz);
-		dist = gap.Length() + shockFrontDistAdj;
+	if (!gu->spectatingFullView && !losHandler->InLos(pos, gu->myAllyTeam)) {
+		gap.x *= fuzzRand(0.25f);
+		gap.y *= fuzzRand(0.25f);
+		gap.z *= fuzzRand(0.25f);
+		dist = gap.Length() + shockFrontDistMod;
 	}
 	const float3 dir = (gap / dist); // normalize
 
@@ -448,13 +451,14 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect, floa
 
 
 void CLuaUI::ExecuteUIEventBatch() {
-	if(!UseEventBatch()) return;
+	if (!UseEventBatch())
+		return;
 
-	std::vector<LuaUIEvent> lleb;
+	std::vector<UIEventBase> lleb;
 	{
 		GML_STDMUTEX_LOCK(llbatch); // ExecuteUIEventBatch
 
-		if(luaUIEventBatch.empty())
+		if (luaUIEventBatch.empty())
 			return;
 
 		luaUIEventBatch.swap(lleb);
@@ -463,20 +467,22 @@ void CLuaUI::ExecuteUIEventBatch() {
 	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteUIEventBatch
 
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
-	for(std::vector<LuaUIEvent>::iterator i = lleb.begin(); i != lleb.end(); ++i) {
-		LuaUIEvent &e = *i;
-		switch(e.id) {
-			case SHOCK_FRONT:
-				ShockFront(e.flt1, e.pos1, e.flt2, &e.flt3);
-				break;
-			default:
-				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.id);
-				break;
+
+	for (std::vector<UIEventBase>::iterator i = lleb.begin(); i != lleb.end(); ++i) {
+		const UIEventBase& e = *i;
+		switch (e.GetID()) {
+			case SHOCK_FRONT: {
+				LUA_EVENT_CAST(UIShockFrontEvent, e); ShockFront(ee.GetPos(), ee.GetPower(), ee.GetAreaOfEffect(), ee.GetDistMod());
+			} break;
+			default: {
+				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.GetID());
+			} break;
 		}
 	}
-	if(Threading::IsSimThread())
+
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(true);
 }
 
@@ -487,7 +493,7 @@ bool CLuaUI::HasLayoutButtons()
 	SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // HasLayoutButtons
 
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 
 	static const LuaHashString cmdStr("LayoutButtons");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -524,7 +530,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 //	GML_THRMUTEX_LOCK(proj, GML_DRAW); // LayoutButtons
 
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 6);
+	luaL_checkstack(L, 6, __FUNCTION__);
 	const int top = lua_gettop(L);
 
 	static const LuaHashString cmdStr("LayoutButtons");
@@ -830,7 +836,7 @@ bool CLuaUI::HasUnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	SELECT_LUA_STATE();
 #if (LUA_MT_OPT & LUA_MUTEX)
-	if (srcState != L && SingleState()) {
+	if (GML::Enabled() && srcState != L && SingleState()) {
 		GML_STDMUTEX_LOCK(xcall); // HasUnsyncedXCall
 
 		return unsyncedXCalls.find(funcName) != unsyncedXCalls.end();
@@ -847,7 +853,7 @@ bool CLuaUI::HasUnsyncedXCall(lua_State* srcState, const string& funcName)
 int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 #if (LUA_MT_OPT & LUA_MUTEX)
-	{
+	if (GML::Enabled()) {
 		SELECT_UNSYNCED_LUA_STATE();
 		if (srcState != L) {
 			DelayDataDump ddmp;
@@ -950,7 +956,7 @@ int CLuaUI::SetShockFrontFactors(lua_State* L)
 int CLuaUI::UpdateUnsyncedXCalls(lua_State* L)
 {
 #if (LUA_MT_OPT & LUA_MUTEX)
-	if (!SingleState() || L != L_Sim)
+	if (!GML::Enabled() || !SingleState() || L != L_Sim)
 #endif
 		return 0;
 

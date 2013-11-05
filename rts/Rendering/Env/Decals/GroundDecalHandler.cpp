@@ -5,7 +5,7 @@
 
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"
-#include "Game/GameHelper.h"
+#include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
 #include "Map/BaseGroundDrawer.h"
@@ -14,7 +14,6 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -24,7 +23,6 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Config/ConfigHandler.h"
@@ -33,7 +31,6 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Util.h"
-#include "System/TimeProfiler.h"
 #include "System/FileSystem/FileSystem.h"
 
 using std::list;
@@ -144,7 +141,7 @@ void CGroundDecalHandler::LoadDecalShaders() {
 	decalShaders.resize(DECAL_SHADER_LAST, NULL);
 
 	// SM3 maps have no baked lighting, so decals blend differently
-	const bool haveShadingTexture = (readmap->GetShadingTexture() != 0);
+	const bool haveShadingTexture = (readMap->GetShadingTexture() != 0);
 	const char* fragmentProgramNameARB = haveShadingTexture?
 		"ARB/GroundDecalsSMF.fp":
 		"ARB/GroundDecalsSM3.fp";
@@ -214,11 +211,12 @@ static inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, co
 
 inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 {
-	if (!camera->InView(decal->pos, decal->radius)) {
+	// TODO: do we want LOS-checks for decals?
+	if (!camera->InView(decal->pos, decal->radius))
 		return;
-	}
 
-	const float* hm = readmap->GetCornerHeightMapUnsynced();
+
+	const float* hm = readMap->GetCornerHeightMapUnsynced();
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
 	const int gsmy = gs->mapy;
@@ -323,18 +321,18 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 
 inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade)
 {
-	if (!camera->InView(scar->pos, scar->radius + 16)) {
+	// TODO: do we want LOS-checks for decals?
+	if (!camera->InView(scar->pos, scar->radius + 16))
 		return;
-	}
 
-	const float* hm = readmap->GetCornerHeightMapUnsynced();
+	const float* hm = readMap->GetCornerHeightMapUnsynced();
 
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
 
 	unsigned char color[4] = {255, 255, 255, 255};
 
-	if (!scar->va) {
+	if (scar->va == NULL) {
 		scar->va = new CVertexArray();
 		scar->va->Initialize();
 
@@ -380,13 +378,12 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 		}
 	} else {
 		if (fade) {
-			if (scar->creationTime + 10 > gs->frameNum) {
+			if ((scar->creationTime + 10) > gs->frameNum) {
 				color[3] = (int) (scar->startAlpha * (gs->frameNum - scar->creationTime) * 0.1f);
 			} else {
 				color[3] = (int) (scar->startAlpha - (gs->frameNum - scar->creationTime) * scar->alphaFalloff);
 			}
 
-			const float c = *((float*) (color));
 			const int start = 0;
 			const int stride = 6;
 			const int sdi = scar->va->drawIndex();
@@ -394,11 +391,10 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 			for (int i = start; i < sdi; i += stride) {
 				const int x = int(scar->va->drawArray[i + 0]) >> 3;
 				const int z = int(scar->va->drawArray[i + 2]) >> 3;
-				const float h = hm[z * gsmx1 + x];
 
 				// update the height and alpha
-				scar->va->drawArray[i + 1] = h;
-				scar->va->drawArray[i + 5] = c;
+				scar->va->drawArray[i + 1] = hm[z * gsmx1 + x];
+				scar->va->drawArray[i + 5] = *reinterpret_cast<float*>(color);
 			}
 		}
 
@@ -408,64 +404,102 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 
 
 
+void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDecalType* decalType) {
+	decalsToDraw.clear();
+
+	set<SolidObjectGroundDecal*>::const_iterator bgdi = decalType->objectDecals.begin();
+
+	while (bgdi != decalType->objectDecals.end()) {
+		SolidObjectGroundDecal* decal = *bgdi;
+		CSolidObject* decalOwner = decal->owner;
+
+		const CUnit* decalOwnerUnit = NULL;
+		const CFeature* decalOwnerFeature = NULL;
+
+		// must use static_cast, not enough RTTI
+		if (decalOwner != NULL) {
+			if (decalOwner->GetBlockingMapID() < unitHandler->MaxUnits()) {
+				decalOwnerUnit = static_cast<const CUnit*>(decalOwner);
+			} else {
+				decalOwnerFeature = static_cast<const CFeature*>(decalOwner);
+			}
+		}
+
+		if (decalOwnerUnit != NULL) {
+			decal->alpha = std::max(0.0f, decalOwnerUnit->buildProgress);
+		} else if (decalOwner == NULL && decal->gbOwner == NULL) {
+			decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * gs->speedFactor);
+		}
+
+		if (decal->alpha < 0.0f) {
+			// make sure RemoveSolidObject() won't try to modify this decal
+			if (decalOwner != NULL) {
+				decalOwner->groundDecal = NULL;
+			}
+
+			bgdi = set_erase(decalType->objectDecals, bgdi);
+
+			delete decal;
+			continue;
+		}
+
+		++bgdi;
+
+		if (decalOwner == NULL) {
+			decalsToDraw.push_back(decal);
+			continue;
+		}
+		if (gu->spectatingFullView) {
+			decalsToDraw.push_back(decal);
+			continue;
+		}
+
+		if (decalOwnerUnit == NULL) {
+			assert(decalOwnerFeature != NULL);
+
+			if (decalOwnerFeature->IsInLosForAllyTeam(gu->myAllyTeam)) {
+				decalsToDraw.push_back(decal);
+			}
+		} else {
+			assert(decalOwnerFeature == NULL);
+
+			// unit is in LOS
+			if ((decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_INLOS) != 0) {
+				decalsToDraw.push_back(decal);
+				continue;
+			}
+
+			// unit is out of LOS
+			// if ghosted buildings are disabled, ground plates should not
+			// remain visible even when object itself has been seen before
+			if (gameSetup->ghostedBuildings && (decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) != 0) {
+				decalsToDraw.push_back(decal);
+				continue;
+			}
+		}
+	}
+}
+
 void CGroundDecalHandler::DrawObjectDecals() {
 	// create and draw the quads for each building decal
-	for (std::vector<SolidObjectDecalType*>::iterator bdti = objectDecalTypes.begin(); bdti != objectDecalTypes.end(); ++bdti) {
-		SolidObjectDecalType* bdt = *bdti;
+	for (unsigned int n = 0; n < objectDecalTypes.size(); n++) {
+		SolidObjectDecalType* decalType = objectDecalTypes[n];
 
-		if (!bdt->objectDecals.empty()) {
+		if (decalType->objectDecals.empty())
+			continue;
 
-			glBindTexture(GL_TEXTURE_2D, bdt->texture);
+		glBindTexture(GL_TEXTURE_2D, decalType->texture);
 
-			decalsToDraw.clear();
-			{
-				GML_STDMUTEX_LOCK(decal); // Draw
-
-				set<SolidObjectGroundDecal*>::iterator bgdi = bdt->objectDecals.begin();
-
-				while (bgdi != bdt->objectDecals.end()) {
-					SolidObjectGroundDecal* decal = *bgdi;
-					CSolidObject* decalOwner = decal->owner;
-					CUnit* decalOwnerUnit = dynamic_cast<CUnit*>(decalOwner);
-					CFeature* decalOwnerFeature = (decalOwnerUnit != NULL) ? NULL : static_cast<CFeature *>(decalOwner); // can only be feature or unit
-
-					if (decalOwnerUnit != NULL) {
-						if (decalOwnerUnit->buildProgress >= 0.0f)
-							decal->alpha = decalOwnerUnit->buildProgress;
-					} else if (decalOwner == NULL && decal->gbOwner == NULL) {
-						decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * gs->speedFactor);
-					}
-
-					if (decal->alpha < 0.0f) {
-						// make sure RemoveSolidObject() won't try to modify this decal
-						if (decalOwner != NULL) {
-							decalOwner->groundDecal = NULL;
-						}
-
-						delete decal;
-
-						bgdi = set_erase(bdt->objectDecals, bgdi);
-
-						continue;
-					}
-
-					if (decalOwner == NULL || 
-						(decalOwnerUnit != NULL && (decalOwnerUnit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS))) || 
-						(decalOwnerFeature != NULL && decalOwnerFeature->IsInLosForAllyTeam(gu->myAllyTeam)) || // FIXME: Support "Prev Los" stuff for features?
-						gu->spectatingFullView) {
-						decalsToDraw.push_back(decal);
-					}
-
-					++bgdi;
-				}
-			}
-
-			for (std::vector<SolidObjectGroundDecal*>::iterator di = decalsToDraw.begin(); di != decalsToDraw.end(); ++di) {
-				DrawObjectDecal(*di);
-			}
-
-			// glBindTexture(GL_TEXTURE_2D, 0);
+		{
+			GML_STDMUTEX_LOCK(decal); // Draw
+			GatherDecalsForType(decalType);
 		}
+
+		for (unsigned int k = 0; k < decalsToDraw.size(); k++) {
+			DrawObjectDecal(decalsToDraw[k]);
+		}
+
+		// glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }
 
@@ -473,18 +507,23 @@ void CGroundDecalHandler::DrawObjectDecals() {
 
 void CGroundDecalHandler::AddTracks() {
 	{
-		GML_STDMUTEX_LOCK(track); // Draw
+		GML_STDMUTEX_LOCK(track); // AddTracks
+
 		// Delayed addition of new tracks
 		for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
-			TrackToAdd *tta = &(*ti);
+			const TrackToAdd* tta = &(*ti);
+
 			if (tta->ts->owner == NULL) {
 				delete tta->tp;
+
 				if (tta->unit == NULL)
 					tracksToBeDeleted.push_back(tta->ts);
+
 				continue; // unit removed
 			}
 
-			CUnit* unit = tta->unit;
+			const CUnit* unit = tta->unit;
+
 			if (unit == NULL) {
 				unit = tta->ts->owner;
 				trackTypes[unit->unitDef->decalDef.trackDecalType]->tracks.insert(tta->ts);
@@ -499,8 +538,7 @@ void CGroundDecalHandler::AddTracks() {
 				list<TrackPart *>::iterator pi = --unit->myTrack->parts.end();
 				list<TrackPart *>::iterator pi2 = pi--;
 
-				if (((tp->pos1 + (*pi)->pos1) * 0.5f).SqDistance((*pi2)->pos1) < 1.0f)
-					replace = true;
+				replace = (((tp->pos1 + (*pi)->pos1) * 0.5f).SqDistance((*pi2)->pos1) < 1.0f);
 			}
 
 			if (replace) {
@@ -510,6 +548,7 @@ void CGroundDecalHandler::AddTracks() {
 				unit->myTrack->parts.push_back(tp);
 			}
 		}
+
 		tracksToBeAdded.clear();
 	}
 
@@ -522,67 +561,82 @@ void CGroundDecalHandler::AddTracks() {
 }
 
 void CGroundDecalHandler::DrawTracks() {
-	unsigned char color[4] = {255, 255, 255, 255};
-	unsigned char color2[4] = {255, 255, 255, 255};
+	unsigned char curPartColor[4] = {255, 255, 255, 255};
+	unsigned char nxtPartColor[4] = {255, 255, 255, 255};
 
 	// create and draw the unit footprint quads
 	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
 		TrackType* tt = *tti;
 
-		if (!tt->tracks.empty()) {
-			set<UnitTrackStruct*>::iterator utsi = tt->tracks.begin();
+		if (tt->tracks.empty())
+			continue;
 
-			CVertexArray* va = GetVertexArray();
-			va->Initialize();
-			glBindTexture(GL_TEXTURE_2D, tt->texture);
+		set<UnitTrackStruct*>::iterator utsi = tt->tracks.begin();
 
-			while (utsi != tt->tracks.end()) {
-				UnitTrackStruct* track = *utsi;
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		glBindTexture(GL_TEXTURE_2D, tt->texture);
 
-				if (track->parts.empty()) {
-					tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
-					continue;
-				}
+		while (utsi != tt->tracks.end()) {
+			UnitTrackStruct* track = *utsi;
+			++utsi;
 
-				if (gs->frameNum > (track->parts.front()->creationTime + track->lifeTime)) {
-					tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
-				}
-
-				if (camera->InView((track->parts.front()->pos1 + track->parts.back()->pos1) * 0.5f, track->parts.front()->pos1.distance(track->parts.back()->pos1) + 500)) {
-					list<TrackPart *>::iterator ppi = track->parts.begin();
-					color2[3] = std::max(0, track->trackAlpha - (int) ((gs->frameNum - (*ppi)->creationTime) * track->alphaFalloff));
-
-					va->EnlargeArrays(track->parts.size()*4,0,VA_SIZE_TC);
-					for (list<TrackPart *>::iterator pi = ++track->parts.begin(); pi != track->parts.end(); ++pi) {
-						color[3] = std::max(0, track->trackAlpha - (int) ((gs->frameNum - (*ppi)->creationTime) * track->alphaFalloff));
-						if ((*pi)->connected) {
-							va->AddVertexQTC((*ppi)->pos1, (*ppi)->texPos, 0, color2);
-							va->AddVertexQTC((*ppi)->pos2, (*ppi)->texPos, 1, color2);
-							va->AddVertexQTC((*pi)->pos2, (*pi)->texPos, 1, color);
-							va->AddVertexQTC((*pi)->pos1, (*pi)->texPos, 0, color);
-						}
-						color2[3] = color[3];
-						ppi = pi;
-					}
-				}
-				++utsi;
+			if (track->parts.empty()) {
+				tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
+				continue;
 			}
-			va->DrawArrayTC(GL_QUADS);
+
+			if (gs->frameNum > (track->parts.front()->creationTime + track->lifeTime)) {
+				tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
+				// still draw the track to avoid flicker
+				// continue;
+			}
+
+			const auto frontPart = track->parts.front();
+			const auto backPart = track->parts.back();
+
+			if (!camera->InView((frontPart->pos1 + backPart->pos1) * 0.5f, frontPart->pos1.distance(backPart->pos1) + 500.0f))
+				continue;
+
+			// walk across the track parts from front (oldest) to back (newest) and draw
+			// a quad between "connected" parts (ie. parts differing 8 sim-frames in age)
+			list<TrackPart*>::const_iterator curPart =   (track->parts.begin());
+			list<TrackPart*>::const_iterator nxtPart = ++(track->parts.begin());
+
+			curPartColor[3] = std::max(0.0f, (1.0f - (gs->frameNum - (*curPart)->creationTime) * track->alphaFalloff) * 255.0f);
+
+			va->EnlargeArrays(track->parts.size() * 4, 0, VA_SIZE_TC);
+
+			for (; nxtPart != track->parts.end(); ++nxtPart) {
+				nxtPartColor[3] = std::max(0.0f, (1.0f - (gs->frameNum - (*nxtPart)->creationTime) * track->alphaFalloff) * 255.0f);
+
+				if ((*nxtPart)->connected) {
+					va->AddVertexQTC((*curPart)->pos1, (*curPart)->texPos, 0, curPartColor);
+					va->AddVertexQTC((*curPart)->pos2, (*curPart)->texPos, 1, curPartColor);
+					va->AddVertexQTC((*nxtPart)->pos2, (*nxtPart)->texPos, 1, nxtPartColor);
+					va->AddVertexQTC((*nxtPart)->pos1, (*nxtPart)->texPos, 0, nxtPartColor);
+				}
+
+				curPartColor[3] = nxtPartColor[3];
+				curPart = nxtPart;
+			}
 		}
+
+		va->DrawArrayTC(GL_QUADS);
 	}
 }
 
 void CGroundDecalHandler::CleanTracks() {
-	GML_STDMUTEX_LOCK(track); // Draw
+	GML_STDMUTEX_LOCK(track); // CleanTracks
 
 	// Cleanup old tracks
 	for (std::vector<TrackToClean>::iterator ti = tracksToBeCleaned.begin(); ti != tracksToBeCleaned.end(); ++ti) {
-		TrackToClean *ttc = &(*ti);
-		UnitTrackStruct *track = ttc->track;
+		TrackToClean* ttc = &(*ti);
+		UnitTrackStruct* track = ttc->track;
 
 		while (!track->parts.empty()) {
 			// stop at the first part that is still too young for deletion
-			if (gs->frameNum <= (track->parts.front()->creationTime + track->lifeTime))
+			if (gs->frameNum < (track->parts.front()->creationTime + track->lifeTime))
 				break;
 
 			delete track->parts.front();
@@ -606,7 +660,7 @@ void CGroundDecalHandler::AddScars() {
 	scarsToBeChecked.clear();
 
 	{
-		GML_STDMUTEX_LOCK(scar); // Draw
+		GML_STDMUTEX_LOCK(scar); // AddScars
 
 		for (std::vector<Scar*>::iterator si = scarsToBeAdded.begin(); si != scarsToBeAdded.end(); ++si)
 			scarsToBeChecked.push_back(*si);
@@ -659,10 +713,8 @@ void CGroundDecalHandler::Draw()
 		return;
 	}
 
-	SCOPED_TIMER("GroundDecals");
-
 	const float3 ambientColor = mapInfo->light.groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
-	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -673,7 +725,7 @@ void CGroundDecalHandler::Draw()
 
 	glActiveTexture(GL_TEXTURE1);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
+		glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
 		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
 		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
@@ -694,7 +746,7 @@ void CGroundDecalHandler::Draw()
 		glMultiTexCoord4f(GL_TEXTURE3_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 
-		glBindTexture(GL_TEXTURE_2D, gd->infoTex);
+		glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
 	}
 
 	if (shadowHandler->shadowsLoaded) {
@@ -790,12 +842,12 @@ void CGroundDecalHandler::RenderUnitMoved(const CUnit* unit, const float3& newpo
 }
 
 
-void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newpos)
+void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newPos)
 {
 	SolidObjectDecalDef& decalDef = *const_cast<SolidObjectDecalDef*>(&unit->unitDef->decalDef);
 
 	if (decalDef.useGroundDecal)
-		MoveSolidObject(const_cast<CUnit *>(unit), newpos);
+		MoveSolidObject(const_cast<CUnit *>(unit), newPos);
 
 	if (!unit->leaveTracks)
 		return;
@@ -818,20 +870,25 @@ void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newpos)
 	if (!((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView))
 		return;
 
-	const int zp = (int(newpos.z) / SQUARE_SIZE * 2);
-	const int xp = (int(newpos.x) / SQUARE_SIZE * 2);
-	const int mp = Clamp(zp * gs->hmapx + xp, 0, (gs->mapSquares / 4) - 1);
+	// calculate typemap-index
+	const int tmz = newPos.z / (SQUARE_SIZE * 2);
+	const int tmx = newPos.x / (SQUARE_SIZE * 2);
+	const int tmi = Clamp(tmz * gs->hmapx + tmx, 0, gs->hmapx * gs->hmapy - 1);
 
-	if (!mapInfo->terrainTypes[readmap->GetTypeMapSynced()[mp]].receiveTracks)
+	const unsigned char* typeMap = readMap->GetTypeMapSynced();
+	const CMapInfo::TerrainType& terType = mapInfo->terrainTypes[ typeMap[tmi] ];
+
+	if (!terType.receiveTracks)
 		return;
 
 	const float trackLifeTime = GAME_SPEED * decalLevel * decalDef.trackDecalStrength;
-	if (trackLifeTime <= 0)
+
+	if (trackLifeTime <= 0.0f)
 		return;
 
-	const float3 pos = newpos + unit->frontdir * decalDef.trackDecalOffset;
+	const float3 pos = newPos + unit->frontdir * decalDef.trackDecalOffset;
 
-	TrackPart* tp = new TrackPart;
+	TrackPart* tp = new TrackPart();
 	tp->pos1 = pos + unit->rightdir * decalDef.trackDecalWidth * 0.5f;
 	tp->pos2 = pos - unit->rightdir * decalDef.trackDecalWidth * 0.5f;
 	tp->pos1.y = ground->GetHeightReal(tp->pos1.x, tp->pos1.z, false);
@@ -842,13 +899,12 @@ void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newpos)
 	tta.tp = tp;
 	tta.unit = unit;
 
-	GML_STDMUTEX_LOCK(track); // Update
+	GML_STDMUTEX_LOCK(track); // AddDecalAndTrack
 
 	if (unit->myTrack == NULL) {
 		unit->myTrack = new UnitTrackStruct(unit);
 		unit->myTrack->lifeTime = trackLifeTime;
-		unit->myTrack->trackAlpha = (decalDef.trackDecalStrength * 25);
-		unit->myTrack->alphaFalloff = unit->myTrack->trackAlpha / trackLifeTime;
+		unit->myTrack->alphaFalloff = 1.0f / trackLifeTime;
 
 		tta.unit = NULL; // signal new trackstruct
 
@@ -894,7 +950,7 @@ int CGroundDecalHandler::GetTrackType(const std::string& name)
 
 	trackTypes.push_back(tt);
 
-	return trackTypes.size() - 1;
+	return (trackTypes.size() - 1);
 }
 
 
@@ -908,13 +964,12 @@ unsigned int CGroundDecalHandler::LoadTexture(const std::string& name)
 	    (fullName.find_first_of('/')  == string::npos)) {
 		fullName = string("bitmaps/tracks/") + fullName;
 	}
-	bool isBitmap = (FileSystem::GetExtension(fullName) == "bmp");
 
 	CBitmap bm;
 	if (!bm.Load(fullName)) {
 		throw content_error("Could not load ground decal from file " + fullName);
 	}
-	if (isBitmap) {
+	if (FileSystem::GetExtension(fullName) == "bmp") {
 		//! bitmaps don't have an alpha channel
 		//! so use: red := brightness & green := alpha
 		for (int y = 0; y < bm.ysize; ++y) {
@@ -938,12 +993,13 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 	if (decalLevel == 0 || !addScar)
 		return;
 
-	const float lifeTime = decalLevel * damage * 3.0f;
 	const float altitude = pos.y - ground->GetHeightReal(pos.x, pos.z, false);
 
 	// no decals for below-ground explosions
-	if (altitude <= -1.0f) { return; }
-	if (altitude >= radius) { return; }
+	if (altitude <= -1.0f)
+		return;
+	if (altitude >= radius)
+		return;
 
 	pos.y -= altitude;
 	radius -= altitude;
@@ -951,33 +1007,30 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 	if (radius < 5.0f)
 		return;
 
-	if (damage > radius * 30)
-		damage = radius * 30;
+	damage = std::min(damage, radius * 30.0f);
+	damage *= (radius / (radius + altitude));
+	radius = std::min(radius, damage * 0.25f);
 
-	damage *= (radius) / (radius + altitude);
-	if (radius > damage * 0.25f)
-		radius = damage * 0.25f;
+	if (damage > 400.0f)
+		damage = 400.0f + math::sqrt(damage - 399.0f);
 
-	if (damage > 400)
-		damage = 400 + math::sqrt(damage - 399);
+	const int ttl = std::max(1.0f, decalLevel * damage * 3.0f);
 
-	pos.ClampInBounds();
-
-	Scar* s = new Scar;
-	s->pos = pos;
+	Scar* s = new Scar();
+	s->pos = pos.cClampInBounds();
 	s->radius = radius * 1.4f;
 	s->creationTime = gs->frameNum;
-	s->startAlpha = max(50.f, min(255.f, damage));
-	s->alphaFalloff = s->startAlpha / (lifeTime);
-	s->lifeTime = (int) (gs->frameNum + lifeTime);
+	s->startAlpha = std::max(50.0f, std::min(255.0f, damage));
+	s->lifeTime = int(gs->frameNum + ttl);
+	s->alphaFalloff = s->startAlpha / ttl;
 	// atlas contains 2x2 textures, pick one of them
 	s->texOffsetX = (gu->RandInt() & 128)? 0: 0.5f;
 	s->texOffsetY = (gu->RandInt() & 128)? 0: 0.5f;
 
-	s->x1 = (int) max(0.f,                  (pos.x - radius) / 16.0f    );
-	s->x2 = (int) min(float(gs->hmapx - 1), (pos.x + radius) / 16.0f + 1);
-	s->y1 = (int) max(0.f,                  (pos.z - radius) / 16.0f    );
-	s->y2 = (int) min(float(gs->hmapy - 1), (pos.z + radius) / 16.0f + 1);
+	s->x1 = int(std::max(0.f,                  (s->pos.x - radius) / (SQUARE_SIZE * 2)    ));
+	s->x2 = int(std::min(float(gs->hmapx - 1), (s->pos.x + radius) / (SQUARE_SIZE * 2) + 1));
+	s->y1 = int(std::max(0.f,                  (s->pos.z - radius) / (SQUARE_SIZE * 2)    ));
+	s->y2 = int(std::min(float(gs->hmapy - 1), (s->pos.z + radius) / (SQUARE_SIZE * 2) + 1));
 
 	s->basesize = (s->x2 - s->x1) * (s->y2 - s->y1);
 	s->overdrawn = 0;
@@ -996,8 +1049,8 @@ void CGroundDecalHandler::LoadScar(const std::string& file, unsigned char* buf,
 	if (!bm.Load(file)) {
 		throw content_error("Could not load scar from file " + file);
 	}
-	bool isBitmap = (FileSystem::GetExtension(file) == "bmp");
-	if (isBitmap) {
+
+	if (FileSystem::GetExtension(file) == "bmp") {
 		//! bitmaps don't have an alpha channel
 		//! so use: red := brightness & green := alpha
 		for (int y = 0; y < bm.ysize; ++y) {

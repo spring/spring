@@ -28,26 +28,53 @@ public:
 
 	virtual void ResetPos(const float3& pos) = 0;
 
-	virtual void AddTree(int type, const float3& pos, float size) = 0;
-	virtual void DeleteTree(const float3& pos) = 0;
+	virtual void AddTree(int treeID, int treeType, const float3& pos, float size) = 0;
+	virtual void DeleteTree(int treeID, const float3& pos) = 0;
 
-	virtual void AddFallingTree(const float3& pos, const float3& dir, int type) {}
+	virtual void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) {}
 	virtual void AddGrass(const float3& pos) {}
 	virtual void RemoveGrass(int x, int z) {}
 	virtual void DrawShadowPass();
 
 	bool WantsEvent(const std::string& eventName) {
 		return
+			(eventName == "RenderFeatureCreated") ||
 			(eventName == "RenderFeatureMoved") ||
 			(eventName == "RenderFeatureDestroyed");
 	}
+
+	void RenderFeatureCreated(const CFeature* feature);
 	void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
-	void RenderFeatureDestroyed(const CFeature* feature, const float3& pos);
+	void RenderFeatureDestroyed(const CFeature* feature);
 
 	std::vector<GLuint> delDispLists;
 
 	float baseTreeDistance;
 	bool drawTrees;
+
+	struct TreeStruct {
+		int id;
+		int type;
+
+		float3 pos;
+	};
+	struct TreeSquareStruct {
+		TreeSquareStruct()
+			: dispList(0)
+			, farDispList(0)
+			, lastSeen(0)
+			, lastSeenFar(0)
+		{}
+
+		unsigned int dispList;
+		unsigned int farDispList;
+
+		int lastSeen;
+		int lastSeenFar;
+
+		float3 viewVector;
+		std::map<int, TreeStruct> trees;
+	};
 
 private:
 	void AddTrees();
@@ -56,3 +83,4 @@ private:
 extern ITreeDrawer* treeDrawer;
 
 #endif // _I_TREE_DRAWER_H_
+

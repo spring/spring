@@ -3,17 +3,17 @@
 #include "QuitBox.h"
 
 #include "MouseHandler.h"
-#include "Game/Player.h"
-#include "Game/PlayerHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/Log/ILog.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/TimeUtil.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LoadSave/LoadSaveHandler.h"
@@ -189,19 +189,15 @@ void CQuitBox::Draw()
 			glColor4f(1,1,1,0.4f);
 		}
 
-		std::string teamName;
-		if (teamHandler->Team(actualTeam)->leader >= 0)
-			teamName = playerHandler->Player(teamHandler->Team(actualTeam)->leader)->name;
-		else
-			teamName = UncontrolledPlayerName;
-
+		std::string teamName = teamHandler->Team(actualTeam)->GetControllerName();
 		std::string ally, dead;
+
 		if (teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(actualTeam))) {
 			ally = " <Ally>)";
 		} else {
 			ally = " <Enemy>";
 		}
-		if(teamHandler->Team(actualTeam)->isDead) {
+		if (teamHandler->Team(actualTeam)->isDead) {
 			dead = " <Dead>";
 		}
 		if (actualTeam == teamHandler->GaiaTeamID()) {

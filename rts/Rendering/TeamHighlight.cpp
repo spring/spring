@@ -4,8 +4,8 @@
 
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/Player.h"
-#include "Game/PlayerHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -83,7 +83,7 @@ void CTeamHighlight::Update(int frameNum) {
 					minPing = std::min(ping, minPing);
 				}
 			}
-			if (!hasPlayers || t->leader < 0) {
+			if (!hasPlayers || !t->HasLeader()) {
 				teamhighlight = 1.0f;
 			} else if (minPing != INT_MAX && minPing > 1000) {
 				teamhighlight = std::max(0, std::min(minPing, maxhl)) / float(maxhl);

@@ -76,42 +76,56 @@ void COverheadController::ScreenEdgeMove(float3 move)
 	KeyMove(move);
 }
 
+// FIXME: 100% identical to SmoothController::MouseWheelMove
 void COverheadController::MouseWheelMove(float move)
 {
+	if (move == 0.0f)
+		return;
+
 	camHandler->CameraTransition(0.05f);
+
 	const float shiftSpeed = (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3.0f : 1.0f);
+	const float altZoomDist = height * move * 0.007f * shiftSpeed;
 	
 	// tilt the camera if LCTRL is pressed
+	//
+	// otherwise holding down LALT uses 'instant-zoom'
+	// from here to the end of the function (smoothed)
 	if (keyInput->IsKeyPressed(SDLK_LCTRL)) {
 		zscale *= (1.0f + (0.01f * move * tiltSpeed * shiftSpeed));
 		zscale = Clamp(zscale, 0.05f, 10.0f);
-	} else { // holding down LALT uses 'instant-zoom' from here to the end of the function
-		// ZOOM IN to mouse cursor instead of mid screen
-		if (move < 0) {
+	} else {
+		if (move < 0.0f) {
+			// ZOOM IN to mouse cursor instead of mid screen
 			float3 cpos = pos - dir * height;
-			float dif = -height * move * 0.007f * shiftSpeed;
+			float dif = -altZoomDist;
+
 			if ((height - dif) < 60.0f) {
 				dif = height - 60.0f;
 			}
-			if (keyInput->IsKeyPressed(SDLK_LALT)) { // instant-zoom: zoom in to standard view
+			if (keyInput->IsKeyPressed(SDLK_LALT)) {
+				// instazoom in to standard view
 				dif = (height - oldAltHeight) / mouse->dir.y * dir.y;
 			}
+
 			float3 wantedPos = cpos + mouse->dir * dif;
 			float newHeight = ground->LineGroundCol(wantedPos, wantedPos + dir * 15000, false);
-			if (newHeight < 0) {
+
+			if (newHeight < 0.0f) {
 				newHeight = height * (1.0f + move * 0.007f * shiftSpeed);
 			}
-			if ((wantedPos.y + (dir.y * newHeight)) < 0) {
+			if ((wantedPos.y + (dir.y * newHeight)) < 0.0f) {
 				newHeight = -wantedPos.y / dir.y;
 			}
 			if (newHeight < maxHeight) {
 				height = newHeight;
 				pos = wantedPos + dir * height;
 			}
-		// ZOOM OUT from mid screen
 		} else {
-			if (keyInput->IsKeyPressed(SDLK_LALT)) { // instant-zoom: zoom out to the max
-				if(height < maxHeight*0.5f && changeAltHeight) {
+			// ZOOM OUT from mid screen
+			if (keyInput->IsKeyPressed(SDLK_LALT)) {
+				// instazoom out to maximum height
+				if (height < maxHeight*0.5f && changeAltHeight) {
 					oldAltHeight = height;
 					changeAltHeight = false;
 				}
@@ -119,7 +133,7 @@ void COverheadController::MouseWheelMove(float move)
 				pos.x  = gs->mapx * 4;
 				pos.z  = gs->mapy * 4.8f; // somewhat longer toward bottom
 			} else {
-				height *= 1 + move * 0.007f * shiftSpeed;
+				height *= (1.0f + (altZoomDist / height));
 			}
 		}
 

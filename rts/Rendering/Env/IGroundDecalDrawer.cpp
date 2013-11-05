@@ -7,7 +7,7 @@
 #include "System/Log/ILog.h"
 
 
-CONFIG(int, GroundDecals).defaultValue(1);
+CONFIG(int, GroundDecals).defaultValue(1).minimumValue(0).description("Controls whether ground decals underneath buildings and ground scars from explosions will be rendered. Values >1 define how long such decals will stay.");
 
 bool IGroundDecalDrawer::drawDecals = 0;
 unsigned int IGroundDecalDrawer::decalLevel = 0;

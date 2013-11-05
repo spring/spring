@@ -241,6 +241,8 @@ bool CLuaIntro::LoadUnsyncedCtrlFunctions(lua_State *L)
 	REGISTER_LUA_CFUNC(SetWMIcon);
 	REGISTER_LUA_CFUNC(SetWMCaption);
 
+	REGISTER_LUA_CFUNC(SetLogSectionFilterLevel);
+
 	#undef REGISTER_LUA_CFUNC
 	return true;
 }
@@ -289,6 +291,8 @@ bool CLuaIntro::LoadUnsyncedReadFunctions(lua_State *L)
 
 	REGISTER_LUA_CFUNC(GetMyAllyTeamID);
 	REGISTER_LUA_CFUNC(GetMyTeamID);
+
+	REGISTER_LUA_CFUNC(GetLogSections);
 
 	#undef REGISTER_LUA_CFUNC
 	return true;
@@ -342,7 +346,7 @@ bool CLuaIntro::LoadSyncedReadFunctions(lua_State *L)
 
 string CLuaIntro::LoadFile(const string& filename) const
 {
-	CFileHandler f(filename, SPRING_VFS_RAW); //FIXME SPRING_VFS_MOD
+	CFileHandler f(filename, SPRING_VFS_RAW_FIRST);
 
 	string code;
 	if (!f.LoadStringData(code)) {
@@ -360,6 +364,10 @@ bool CLuaIntro::HasCallIn(lua_State *L, const string& name)
 
 	// never allow these calls
 	if (name == "Explosion") {
+		return false;
+	}
+
+	if (name == "CollectGarbage") {
 		return false;
 	}
 
@@ -396,7 +404,7 @@ bool CLuaIntro::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 void CLuaIntro::Shutdown()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("Shutdown");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return;
@@ -410,7 +418,7 @@ void CLuaIntro::Shutdown()
 void CLuaIntro::DrawLoadScreen()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawLoadScreen");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		//LuaOpenGL::DisableCommon(LuaOpenGL::DRAW_SCREEN);
@@ -422,7 +430,7 @@ void CLuaIntro::DrawLoadScreen()
 
 	// call the routine
 	RunCallIn(cmdStr, 0, 0);
-	
+
 	LuaOpenGL::DisableCommon(LuaOpenGL::DRAW_SCREEN);
 	LuaOpenGL::SetDrawingEnabled(L, false);
 }
@@ -431,7 +439,7 @@ void CLuaIntro::DrawLoadScreen()
 void CLuaIntro::LoadProgress(const std::string& msg, const bool replace_lastline)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("LoadProgress");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return;

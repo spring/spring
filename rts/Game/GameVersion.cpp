@@ -10,6 +10,7 @@
 #include <cstring>
 #include <boost/version.hpp>
 #include <boost/config.hpp>
+#include <stdio.h>
 
 /**
  * @brief Defines the current version string.
@@ -75,7 +76,7 @@ std::string GetAdditional()
 	#undef  GV_ADD_SPACE
 	#define GV_ADD_SPACE " "
 #endif
-	
+
 #if defined USE_GML_SIM
 	GV_ADD_SPACE "ASIM"
 	#undef  GV_ADD_SPACE
@@ -126,12 +127,6 @@ std::string GetAdditional()
 
 #if defined UNITSYNC
 	GV_ADD_SPACE "Unitsync"
-	#undef  GV_ADD_SPACE
-	#define GV_ADD_SPACE " "
-#endif
-
-#if defined _OPENMP
-	GV_ADD_SPACE "OMP"
 	#undef  GV_ADD_SPACE
 	#define GV_ADD_SPACE " "
 #endif
@@ -190,6 +185,15 @@ bool IsRelease()
 {
 	static const bool release = SPRING_VERSION_ENGINE_RELEASE;
 	return release;
+}
+
+bool IsHeadless()
+{
+#ifdef HEADLESS
+	return true;
+#else
+	return false;
+#endif
 }
 
 const std::string& Get()

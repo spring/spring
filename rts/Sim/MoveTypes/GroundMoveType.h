@@ -4,10 +4,11 @@
 #define GROUNDMOVETYPE_H
 
 #include "MoveType.h"
-#include "Sim/Objects/SolidObject.h"
+#include "System/Sync/SyncedFloat3.h"
 
 struct UnitDef;
 struct MoveDef;
+class CSolidObject;
 class IPathController;
 
 class CGroundMoveType : public AMoveType
@@ -24,8 +25,8 @@ public:
 	void SlowUpdate();
 
 	void StartMoving(float3 pos, float goalRadius);
-	void StartMoving(float3 pos, float goalRadius, float speed);
-	void StopMoving();
+	void StartMoving(float3 pos, float goalRadius, float speed) { StartMoving(pos, goalRadius); }
+	void StopMoving(bool callScript = false, bool hardStop = false);
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
@@ -34,35 +35,35 @@ public:
 	bool CanApplyImpulse(const float3&);
 	void LeaveTransport();
 
-	void StartSkidding() { skidding = true; }
-	void StartFlying() { skidding = true; flying = true; } // flying requires skidding
-
 	bool OnSlope(float minSlideTolerance);
-	bool IsSkidding() const { return skidding; }
-	bool IsFlying() const { return flying; }
 	bool IsReversing() const { return reversing; }
-
-	static void CreateLineTable();
-	static void DeleteLineTable();
 
 private:
 	float3 GetObstacleAvoidanceDir(const float3& desiredDir);
 	float3 GetNewSpeedVector(const float hAcc, const float vAcc) const;
+
+	#define SQUARE(x) ((x) * (x))
+	bool StartSkidding(const float3& vel, const float3& dir) const { return (SQUARE(vel.dot(dir)) < (vel.SqLength() * 0.95f)); }
+	bool StopSkidding(const float3& vel, const float3& dir) const { return (SQUARE(vel.dot(dir)) >= (vel.SqLength() * 0.95f)); }
+	bool StartFlying(const float3& vel, const float3& dir) const { return (vel.dot(dir) > 0.2f); }
+	bool StopFlying(const float3& vel, const float3& dir) const { return (vel.dot(dir) <= 0.2f); }
+	#undef SQUARE
 
 	float Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal = 0.0f);
 
 	void GetNewPath();
 	void GetNextWayPoint();
 	bool CanGetNextWayPoint();
+	bool ReRequestPath(bool callScript, bool forceRequest);
 
 	float BrakingDistance(float speed) const;
 	float3 Here();
 
-	void StartEngine();
-	void StopEngine();
+	void StartEngine(bool callScript);
+	void StopEngine(bool callScript, bool hardStop = false);
 
-	void Arrived();
-	void Fail();
+	void Arrived(bool callScript);
+	void Fail(bool callScript);
 
 	void HandleObjectCollisions();
 	void HandleStaticObjectCollision(
@@ -104,7 +105,9 @@ private:
 	float GetGroundHeight(const float3&) const;
 	void AdjustPosToWaterLine();
 	bool UpdateDirectControl();
-	void UpdateOwnerPos(bool);
+	void UpdateOwnerSpeedAndHeading();
+	void UpdateOwnerPos(const float3&, const float3&);
+	bool OwnerMoved(const short, const float3&, const float3&);
 	bool FollowPath();
 	bool WantReverse(const float3&) const;
 
@@ -115,6 +118,7 @@ public:
 	float turnRate;
 	float accRate;
 	float decRate;
+	float myGravity;
 
 	float maxReverseSpeed;
 	float wantedSpeed;
@@ -134,8 +138,6 @@ private:
 	float currWayPointDist;
 	float prevWayPointDist;
 
-	bool skidding;
-	bool flying;
 	bool reversing;
 	bool idling;
 	bool canReverse;
@@ -145,19 +147,13 @@ private:
 	float skidRotSpeed;    /// rotational speed when skidding (radians / (GAME_SPEED frames))
 	float skidRotAccel;    /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
 
-	CSolidObject::PhysicalState oldPhysState;
-
 	float3 waypointDir;
 	float3 flatFrontDir;
 	float3 lastAvoidanceDir;
 	float3 mainHeadingPos;
 
-	// number of grid-cells along each dimension; should be an odd number
-	static const int LINETABLE_SIZE = 11;
-	static std::vector<int2> lineTable[LINETABLE_SIZE][LINETABLE_SIZE];
-
-	unsigned int nextObstacleAvoidanceUpdate;
-	unsigned int pathRequestDelay;
+	unsigned int nextObstacleAvoidanceFrame;
+	unsigned int lastPathRequestFrame;
 
 	/// {in, de}creased every Update if idling is true/false and pathId != 0
 	unsigned int numIdlingUpdates;

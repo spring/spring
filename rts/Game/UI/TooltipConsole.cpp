@@ -4,7 +4,7 @@
 #include "TooltipConsole.h"
 #include "MouseHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/PlayerHandler.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
@@ -316,7 +316,7 @@ std::string CTooltipConsole::MakeGroundString(const float3& pos)
 	const int px = pos.x / 16;
 	const int pz = pos.z / 16;
 	const int typeMapIdx = std::min(gs->hmapx * gs->hmapy - 1, std::max(0, pz * gs->hmapx + px));
-	const unsigned char* typeMap = readmap->GetTypeMapSynced();
+	const unsigned char* typeMap = readMap->GetTypeMapSynced();
 	const CMapInfo::TerrainType* tt = &mapInfo->terrainTypes[typeMap[typeMapIdx]];
 
 	sprintf(tmp,
@@ -327,7 +327,7 @@ std::string CTooltipConsole::MakeGroundString(const float3& pos)
 		pos.x, pos.z, pos.y, tt->name.c_str(),
 		tt->tankSpeed, tt->kbotSpeed, tt->hoverSpeed, tt->shipSpeed,
 		tt->hardness * mapDamage->mapHardness,
-		readmap->metalMap->GetMetalAmount(px, pz)
+		readMap->metalMap->GetMetalAmount(px, pz)
 	);
 	return tmp;
 }

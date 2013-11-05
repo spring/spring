@@ -10,11 +10,13 @@
 #include "LuaHashString.h"
 #include "LuaOpenGL.h"
 #include "LuaBitOps.h"
+#include "LuaMathExtra.h"
 #include "LuaUtils.h"
 #include "LuaZip.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/Player.h"
-#include "Game/PlayerHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
+#include "Net/Protocol/BaseNetProtocol.h" // FIXME: for MAPDRAW_*
 #include "Game/UI/KeyCodes.h"
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
@@ -29,7 +31,6 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/BaseNetProtocol.h" // FIXME: for MAPDRAW_*
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
@@ -43,10 +44,8 @@
 
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
-#include <SDL_timer.h>
 
 #include <string>
-
 
 bool CLuaHandle::devMode = false;
 bool CLuaHandle::modUICtrl = true;
@@ -78,9 +77,11 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 
 	SetSynced(false, true);
 	D_Sim.owner = this;
-	L_Sim = LUA_OPEN(&D_Sim, GetUserMode(), true);
+	D_Sim.primary = true; //GML crap
+	L_Sim = LUA_OPEN(&D_Sim);
 	D_Draw.owner = this;
-	L_Draw = LUA_OPEN(&D_Draw, GetUserMode(), false);
+	D_Draw.primary = false; //GML crap
+	L_Draw = LUA_OPEN(&D_Draw);
 
 	// needed for engine traceback
 	PushTracebackFuncToRegistry(L_Sim);
@@ -95,11 +96,11 @@ CLuaHandle::~CLuaHandle()
 	// free the lua state
 	KillLua();
 
-	for(int i = 0; i < delayedCallsFromSynced.size(); ++i) {
+	for (int i = 0; i < delayedCallsFromSynced.size(); ++i) {
 		DelayDataDump& ddp = delayedCallsFromSynced[i];
-		for(int d = 0; d < ddp.data.size(); ++d) {
+		for (int d = 0; d < ddp.data.size(); ++d) {
 			LuaUtils::ShallowDataDump& sdd = ddp.data[d];
-			if(sdd.type == LUA_TSTRING)
+			if (sdd.type == LUA_TSTRING)
 				delete sdd.data.str;
 		}
 	}
@@ -224,17 +225,17 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 
 void CLuaHandle::CheckStack()
 {
-	// FIXME WTF this has NOTHING to do with the stack! esp. it should be called AFTER the stack was checked
+	// although Execute* have nothing to do with the stack, this happens to be a good place for it,
+	// and these calls must be located before the actual stack check to avoid a deadlock
 	ExecuteCallsFromSynced(false);
 	ExecuteUnitEventBatch();
 	ExecuteFeatEventBatch();
-	ExecuteObjEventBatch();
 	ExecuteProjEventBatch();
 	ExecuteFrameEventBatch();
 	ExecuteLogEventBatch();
 
 	SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // CheckStack - avoid bogus errors due to concurrency
+	GML_DRCMUTEX_LOCK(lua); // CheckStack
 
 	const int top = lua_gettop(L);
 	if (top != 0) {
@@ -248,7 +249,7 @@ void CLuaHandle::RecvFromSynced(lua_State *srcState, int args) {
 	SELECT_UNSYNCED_LUA_STATE();
 
 #if ((LUA_MT_OPT & LUA_STATE) && (LUA_MT_OPT & LUA_MUTEX))
-	if (!SingleState() && srcState != L) { // Sim thread sends to unsynced --> delay it
+	if (/*GML::Enabled() &&*/ !SingleState() && srcState != L) { // Sim thread sends to unsynced --> delay it
 		DelayRecvFromSynced(srcState, args);
 		return;
 	}
@@ -272,7 +273,7 @@ void CLuaHandle::RecvFromSynced(lua_State *srcState, int args) {
 void CLuaHandle::DelayRecvFromSynced(lua_State* srcState, int args) {
 	DelayDataDump ddmp;
 
-	if(CopyExportTable()) {
+	if (CopyExportTable()) {
 		HSTR_PUSH(srcState, "EXPORT");
 		lua_rawget(srcState, LUA_GLOBALSINDEX);
 
@@ -323,7 +324,7 @@ int CLuaHandle::SendToUnsynced(lua_State* L)
 
 bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 #if (LUA_MT_OPT & LUA_MUTEX)
-	if ((SingleState() && (this != luaUI)) || (forced && !PurgeCallsFromSyncedBatch()))
+	if (!GML::Enabled() || (SingleState() && (this != luaUI)) || (forced && !PurgeCallsFromSyncedBatch()))
 #endif
 		return false;
 
@@ -333,7 +334,7 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 	{
 		GML_STDMUTEX_LOCK(scall); // ExecuteCallsFromSynced
 
-		if(delayedCallsFromSynced.empty())
+		if (delayedCallsFromSynced.empty())
 			return false;
 
 		delayedCallsFromSynced.swap(drfs);
@@ -373,7 +374,7 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 			int ddsize = ddp.data.size();
 			if (ddsize > 0) {
 				LuaUtils::ShallowRestore(ddp.data, L);
-				lua_checkstack(L, 2);
+				luaL_checkstack(L, 2, __FUNCTION__);
 				RecvFromSynced(L, ddsize);
 			}
 		}
@@ -407,52 +408,125 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 /******************************************************************************/
 /******************************************************************************/
 
-int CLuaHandle::SetupTraceback(lua_State *L)
-{
-	return LuaUtils::PushDebugTraceback(L);
-}
-
-
-int CLuaHandle::RunCallInTraceback(const LuaHashString* hs, int inArgs, int outArgs, int errfuncIndex, std::string& traceback)
-{
+int CLuaHandle::RunCallInTraceback(
+	const LuaHashString* hs,
+	int inArgs,
+	int outArgs,
+	int errFuncIndex,
+	std::string& tracebackMsg,
+	bool popErrorFunc
+) {
 	// do not signal floating point exceptions in user Lua code
 	ScopedDisableFpuExceptions fe;
 
 	SELECT_LUA_STATE();
-	SetRunning(L, true);
-	// disable GC outside of this scope to prevent sync errors and similar
-	lua_gc(L, LUA_GCRESTART, 0);
-	MatrixStateData prevMSD = L->lcd->PushMatrixState();
-	LuaOpenGL::InitMatrixState(L, hs);
-	const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
-	LuaOpenGL::CheckMatrixState(L, hs, error);
-	L->lcd->PopMatrixState(prevMSD);
-	lua_gc(L, LUA_GCSTOP, 0);
 
-	SetRunning(L, false);
+	struct ScopedLuaCall {
+	public:
+		ScopedLuaCall(
+			CLuaHandle* handle,
+			lua_State* state,
+			const LuaHashString* func,
+			int _nInArgs,
+			int _nOutArgs,
+			int _errFuncIdx,
+			bool _popErrFunc
+		)
+			: luaState(state)
+			, luaHandle(handle)
 
-	if (error == 0) {
-		// pop the error handler
-		if (errfuncIndex != 0) {
-			lua_remove(L, errfuncIndex);
+			, nInArgs(_nInArgs)
+			, nOutArgs(_nOutArgs)
+			, errFuncIdx(_errFuncIdx)
+			, popErrFunc(_popErrFunc)
+		{
+			handle->SetRunning(state, true);
+
+			GLMatrixStateTracker& matTracker = GetLuaContextData(state)->glMatrixTracker;
+			MatrixStateData prevMatState = matTracker.PushMatrixState();
+			LuaOpenGL::InitMatrixState(state, func);
+
+			top = lua_gettop(state);
+			// note1: disable GC outside of this scope to prevent sync errors and similar
+			// note2: we collect garbage now in its own callin "CollectGarbage"
+			// lua_gc(L, LUA_GCRESTART, 0);
+			error = lua_pcall(state, nInArgs, nOutArgs, errFuncIdx);
+			// only run GC inside of "SetRunning(L, true) ... SetRunning(L, false)"!
+			lua_gc(state, LUA_GCSTOP, 0);
+
+			LuaOpenGL::CheckMatrixState(state, func, error);
+			matTracker.PopMatrixState(prevMatState);
+
+			handle->SetRunning(state, false);
 		}
-	} else {
-		traceback = lua_tostring(L, -1);
-		lua_pop(L, 1);
-		if (errfuncIndex != 0)
-			lua_remove(L, errfuncIndex);
-		// log only errors that lead to a crash
-		callinErrors += (error == 2);
-	}
 
-	return error;
+		~ScopedLuaCall() {
+			assert(!popErrFunc); // deprecated!
+			if (popErrFunc) {
+				lua_remove(luaState, errFuncIdx);
+			}
+		}
+
+		void CheckFixStack(std::string& trace) {
+			// note: assumes error-handler has not been popped yet (!)
+			if (GetError() == 0) {
+				if (nOutArgs != LUA_MULTRET) {
+					const int retdiff = (lua_gettop(luaState) - (GetTop() - 1)) - (nOutArgs - nInArgs);
+
+					if (retdiff != 0) {
+						LOG_L(L_ERROR, "Internal Lua error: %d return values, %d expected", nOutArgs + retdiff, nOutArgs);
+						lua_pop(luaState, retdiff);
+					}
+				} else {
+					const int retdiff = (lua_gettop(luaState) - (GetTop() - 1)) + nInArgs;
+
+					if (retdiff < 0) {
+						LOG_L(L_ERROR, "Internal Lua error: %d return values", retdiff);
+						lua_pop(luaState, retdiff);
+					}
+				}
+			} else {
+				const int retdiff = (lua_gettop(luaState) - (GetTop() - 1)) - (1 - nInArgs);
+
+				// BUG? only the traceback shall be returned, but occasionally something goes wrong
+				lua_pop(luaState, retdiff);
+				trace += std::string((retdiff != 0)? "[Internal Lua error: Traceback failure] " : "");
+				trace += (lua_isstring(luaState, -1) ? lua_tostring(luaState, -1) : "[No traceback returned]");
+				lua_pop(luaState, 1);
+
+				// log only errors that lead to a crash
+				luaHandle->callinErrors += (GetError() == LUA_ERRRUN);
+			}
+		}
+
+		int GetTop() const { return top; }
+		int GetError() const { return error; }
+
+	private:
+		lua_State* luaState;
+		CLuaHandle* luaHandle;
+
+		int nInArgs;
+		int nOutArgs;
+		int errFuncIdx;
+		bool popErrFunc;
+
+		int top;
+		int error;
+	};
+
+	// TODO: use closure so we do not need to copy args
+	ScopedLuaCall call(this, L, hs, inArgs, outArgs, errFuncIndex, popErrorFunc);
+	call.CheckFixStack(tracebackMsg);
+
+	return (call.GetError());
 }
 
 
-bool CLuaHandle::RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errfuncIndex)
+bool CLuaHandle::RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errFuncIndex, bool popErrFunc)
 {
 	std::string traceback;
-	const int error = RunCallInTraceback(&hs, inArgs, outArgs, errfuncIndex, traceback);
+	const int error = RunCallInTraceback(&hs, inArgs, outArgs, errFuncIndex, traceback, popErrFunc);
 
 	if (error != 0) {
 		LOG_L(L_ERROR, "%s::RunCallIn: error = %i, %s, %s", GetName().c_str(),
@@ -463,9 +537,9 @@ bool CLuaHandle::RunCallInTraceback(const LuaHashString& hs, int inArgs, int out
 }
 
 
-int CLuaHandle::RunCallIn(int inArgs, int outArgs, std::string& errormessage)
+bool CLuaHandle::RunCallIn(int inArgs, int outArgs, std::string& errorMsg)
 {
-	return RunCallInTraceback(NULL, inArgs, outArgs, 0, errormessage);
+	return RunCallInTraceback(NULL, inArgs, outArgs, 0, errorMsg, false);
 }
 
 /******************************************************************************/
@@ -473,32 +547,28 @@ int CLuaHandle::RunCallIn(int inArgs, int outArgs, std::string& errormessage)
 void CLuaHandle::Shutdown()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
+	luaL_checkstack(L, 3, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("Shutdown");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 0, 0, errfunc);
+	RunCallInTraceback(cmdStr, 0, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 void CLuaHandle::Load(IArchive* archive)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("Load");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -506,82 +576,73 @@ void CLuaHandle::Load(IArchive* archive)
 	LuaZipFileReader::PushNew(L, "", archive);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 1, 0, errfunc);
+	RunCallInTraceback(cmdStr, 1, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 void CLuaHandle::GamePreload()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
+	luaL_checkstack(L, 3, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("GamePreload");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 0, 0, errfunc);
+	RunCallInTraceback(cmdStr, 0, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 void CLuaHandle::GameStart()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
+	luaL_checkstack(L, 3, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("GameStart");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 0, 0, errfunc);
+	RunCallInTraceback(cmdStr, 0, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 void CLuaHandle::GameOver(const std::vector<unsigned char>& winningAllyTeams)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("GameOver");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	lua_createtable(L, winningAllyTeams.size(), 0);
 	for (unsigned int i = 0; i < winningAllyTeams.size(); i++) {
-		lua_pushnumber(L, i + 1);
 		lua_pushnumber(L, winningAllyTeams[i]);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, i + 1);
 	}
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 1, 0, errfunc);
+	RunCallInTraceback(cmdStr, 1, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::GamePaused(int playerID, bool paused)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("GamePaused");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -589,7 +650,7 @@ void CLuaHandle::GamePaused(int playerID, bool paused)
 	lua_pushboolean(L, paused);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 2, 0, errfunc);
+	RunCallInTraceback(cmdStr, 2, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
@@ -605,144 +666,129 @@ void CLuaHandle::GameFrame(int frameNum)
 		return;
 	}
 
-	LUA_FRAME_BATCH_PUSH(frameNum);
+	LUA_FRAME_BATCH_PUSH(, frameNum);
 	LUA_CALL_IN_CHECK(L);
 	if (CopyExportTable())
 		DelayRecvFromSynced(L, 0); // Copy _G.EXPORT --> SYNCED.EXPORT once a game frame
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("GameFrame");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	lua_pushnumber(L, frameNum);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 1, 0, errfunc);
+	RunCallInTraceback(cmdStr, 1, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::GameID(const unsigned char* gameID, unsigned int numBytes)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 
 	const LuaHashString cmdStr("GameID");
-	const int errFunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errFunc != 0) {
-			lua_pop(L, 1);
-		}
 		return;
 	}
 
 	lua_pushlstring(L, reinterpret_cast<const char*>(gameID), numBytes);
 
-	RunCallInTraceback(cmdStr, 1, 0, errFunc);
+	RunCallInTraceback(cmdStr, 1, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::TeamDied(int teamID)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("TeamDied");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	lua_pushnumber(L, teamID);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 1, 0, errfunc);
+	RunCallInTraceback(cmdStr, 1, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::TeamChanged(int teamID)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("TeamChanged");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	lua_pushnumber(L, teamID);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 1, 0, errfunc);
+	RunCallInTraceback(cmdStr, 1, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::PlayerChanged(int playerID)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("PlayerChanged");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	lua_pushnumber(L, playerID);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 1, 0, errfunc);
+	RunCallInTraceback(cmdStr, 1, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::PlayerAdded(int playerID)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("PlayerAdded");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	lua_pushnumber(L, playerID);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 1, 0, errfunc);
+	RunCallInTraceback(cmdStr, 1, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::PlayerRemoved(int playerID, int reason)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("PlayerRemoved");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -750,7 +796,7 @@ void CLuaHandle::PlayerRemoved(int playerID, int reason)
 	lua_pushnumber(L, reason);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 2, 0, errfunc);
+	RunCallInTraceback(cmdStr, 2, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
@@ -759,12 +805,10 @@ void CLuaHandle::PlayerRemoved(int playerID, int reason)
 inline void CLuaHandle::UnitCallIn(const LuaHashString& hs, const CUnit* unit)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 6);
-	int errfunc = SetupTraceback(L);
+	luaL_checkstack(L, 6, __FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (!hs.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -773,22 +817,20 @@ inline void CLuaHandle::UnitCallIn(const LuaHashString& hs, const CUnit* unit)
 	lua_pushnumber(L, unit->team);
 
 	// call the routine
-	RunCallInTraceback(hs, 3, 0, errfunc);
+	RunCallInTraceback(hs, 3, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::UnitCreated(const CUnit* unit, const CUnit* builder)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_CREATED, unit, builder);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitCreatedEvent(unit, builder));
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 7);
+	luaL_checkstack(L, 7, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("UnitCreated");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -801,13 +843,13 @@ void CLuaHandle::UnitCreated(const CUnit* unit, const CUnit* builder)
 
 	int args = (builder != NULL) ? 4 : 3;
 	// call the routine
-	RunCallInTraceback(cmdStr, args, 0, errfunc);
+	RunCallInTraceback(cmdStr, args, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::UnitFinished(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_FINISHED, unit);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitFinishedEvent(unit));
 	static const LuaHashString cmdStr("UnitFinished");
 	UnitCallIn(cmdStr, unit);
 }
@@ -816,16 +858,14 @@ void CLuaHandle::UnitFinished(const CUnit* unit)
 void CLuaHandle::UnitFromFactory(const CUnit* unit,
                                  const CUnit* factory, bool userOrders)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_FROM_FACTORY, unit, factory, userOrders);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitFromFactoryEvent(unit, factory, userOrders))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 9);
+	luaL_checkstack(L, 9, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("UnitFromFactory");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -837,22 +877,20 @@ void CLuaHandle::UnitFromFactory(const CUnit* unit,
 	lua_pushboolean(L, userOrders);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 6, 0, errfunc);
+	RunCallInTraceback(cmdStr, 6, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_DESTROYED, unit, attacker);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitDestroyedEvent(unit, attacker))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 9);
+	luaL_checkstack(L, 9, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("UnitDestroyed");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -868,21 +906,19 @@ void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 	}
 
 	// call the routine
-	RunCallInTraceback(cmdStr, argCount, 0, errfunc);
+	RunCallInTraceback(cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::UnitTaken(const CUnit* unit, int oldTeam, int newTeam)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_TAKEN, unit, oldTeam, newTeam);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitTakenEvent(unit, oldTeam, newTeam))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 7);
-	int errfunc = SetupTraceback(L);
+	luaL_checkstack(L, 7, __FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("UnitTaken");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -892,21 +928,19 @@ void CLuaHandle::UnitTaken(const CUnit* unit, int oldTeam, int newTeam)
 	lua_pushnumber(L, newTeam);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 4, 0, errfunc);
+	RunCallInTraceback(cmdStr, 4, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam, int newTeam)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_GIVEN, unit, oldTeam, newTeam);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitGivenEvent(unit, oldTeam, newTeam))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 7);
-	int errfunc = SetupTraceback(L);
+	luaL_checkstack(L, 7, __FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("UnitGiven");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -916,13 +950,13 @@ void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam, int newTeam)
 	lua_pushnumber(L, oldTeam);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 4, 0, errfunc);
+	RunCallInTraceback(cmdStr, 4, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::UnitIdle(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_IDLE, unit);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitIdleEvent(unit))
 	static const LuaHashString cmdStr("UnitIdle");
 	UnitCallIn(cmdStr, unit);
 }
@@ -930,16 +964,14 @@ void CLuaHandle::UnitIdle(const CUnit* unit)
 
 void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_COMMAND, unit, command);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitCommandEvent(unit, command))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 11);
+	luaL_checkstack(L, 11, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("UnitCommand");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -948,44 +980,45 @@ void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 	lua_pushnumber(L, unit->team);
 
 	lua_pushnumber(L, command.GetID());
+
+	//FIXME: perhaps we should push the table version rather than the bitfield directly
 	lua_pushnumber(L, command.options);
 
-	const vector<float> &params = command.params;
-	lua_createtable(L, params.size(), 0);
-	for (unsigned int i = 0; i < params.size(); i++) {
-		lua_pushnumber(L, i + 1);
-		lua_pushnumber(L, params[i]);
-		lua_rawset(L, -3);
-	}
+	// push the params list
+	LuaUtils::PushCommandParamsTable(L, command, false);
+
+	lua_pushnumber(L, command.tag);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 6, 0, errfunc);
+	RunCallInTraceback(cmdStr, 7, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
-void CLuaHandle::UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag)
+void CLuaHandle::UnitCmdDone(const CUnit* unit, const Command& command)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_CMD_DONE, unit, cmdID, cmdTag);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitCommandDoneEvent(unit, command))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 8);
+	luaL_checkstack(L, 8, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("UnitCmdDone");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
-	lua_pushnumber(L, cmdID);
-	lua_pushnumber(L, cmdTag);
+	lua_pushnumber(L, command.GetID());
+	lua_pushnumber(L, command.tag);
+	// push the params list
+	LuaUtils::PushCommandParamsTable(L, command, false);
+	// push the options table
+	LuaUtils::PushCommandOptionsTable(L, command, false);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 5, 0, errfunc);
+	RunCallInTraceback(cmdStr, 7, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
@@ -997,20 +1030,18 @@ void CLuaHandle::UnitDamaged(
 	int projectileID,
 	bool paralyzer)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_DAMAGED, unit, attacker, damage, weaponDefID, paralyzer);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitDamagedEvent(unit, attacker, damage, weaponDefID, projectileID, paralyzer))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 11);
+	luaL_checkstack(L, 11, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	static const LuaHashString cmdStr(__FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
-	static const LuaHashString cmdStr("UnitDamaged");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	int argCount = 5;
+
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
@@ -1018,9 +1049,9 @@ void CLuaHandle::UnitDamaged(
 	lua_pushboolean(L, paralyzer);
 
 	if (GetHandleFullRead(L)) {
-		lua_pushnumber(L, weaponDefID); argCount += 1;
-		// TODO: add to batch
-		// lua_pushnumber(L, projectileID); // argCount += 1;
+		lua_pushnumber(L, weaponDefID);
+		lua_pushnumber(L, projectileID);
+		argCount += 2;
 
 		if (attacker != NULL) {
 			lua_pushnumber(L, attacker->id);
@@ -1031,22 +1062,20 @@ void CLuaHandle::UnitDamaged(
 	}
 
 	// call the routine
-	RunCallInTraceback(cmdStr, argCount, 0, errfunc);
+	RunCallInTraceback(cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::UnitExperience(const CUnit* unit, float oldExperience)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_EXPERIENCE, unit, oldExperience);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitExperienceEvent(unit, oldExperience))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 8);
+	luaL_checkstack(L, 8, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("UnitExperience");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -1057,7 +1086,7 @@ void CLuaHandle::UnitExperience(const CUnit* unit, float oldExperience)
 	lua_pushnumber(L, oldExperience);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 5, 0, errfunc);
+	RunCallInTraceback(cmdStr, 5, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
@@ -1066,9 +1095,9 @@ void CLuaHandle::UnitExperience(const CUnit* unit, float oldExperience)
 void CLuaHandle::UnitSeismicPing(const CUnit* unit, int allyTeam,
                                  const float3& pos, float strength)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_SEISMIC_PING, unit, allyTeam, pos, strength);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitSeismicPingEvent(unit, allyTeam, pos, strength))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 9);
+	luaL_checkstack(L, 9, __FUNCTION__);
 	int readAllyTeam = GetHandleReadAllyTeam(L);
 	if ((readAllyTeam >= 0) && (unit->losStatus[readAllyTeam] & LOS_INLOS)) {
 		return; // don't need to see this ping
@@ -1099,7 +1128,7 @@ void CLuaHandle::LosCallIn(const LuaHashString& hs,
                            const CUnit* unit, int allyTeam)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 6);
+	luaL_checkstack(L, 6, __FUNCTION__);
 	if (!hs.GetGlobalFunc(L))
 		return; // the call is not defined
 
@@ -1117,7 +1146,7 @@ void CLuaHandle::LosCallIn(const LuaHashString& hs,
 
 void CLuaHandle::UnitEnteredRadar(const CUnit* unit, int allyTeam)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_ENTERED_RADAR, unit, allyTeam);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitEnteredRadarEvent(unit, allyTeam))
 	static const LuaHashString hs("UnitEnteredRadar");
 	LosCallIn(hs, unit, allyTeam);
 }
@@ -1125,7 +1154,7 @@ void CLuaHandle::UnitEnteredRadar(const CUnit* unit, int allyTeam)
 
 void CLuaHandle::UnitEnteredLos(const CUnit* unit, int allyTeam)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_ENTERED_LOS, unit, allyTeam);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitEnteredLosEvent(unit, allyTeam))
 	static const LuaHashString hs("UnitEnteredLos");
 	LosCallIn(hs, unit, allyTeam);
 }
@@ -1133,7 +1162,7 @@ void CLuaHandle::UnitEnteredLos(const CUnit* unit, int allyTeam)
 
 void CLuaHandle::UnitLeftRadar(const CUnit* unit, int allyTeam)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_LEFT_RADAR, unit, allyTeam);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitLeftRadarEvent(unit, allyTeam))
 	static const LuaHashString hs("UnitLeftRadar");
 	LosCallIn(hs, unit, allyTeam);
 }
@@ -1141,7 +1170,7 @@ void CLuaHandle::UnitLeftRadar(const CUnit* unit, int allyTeam)
 
 void CLuaHandle::UnitLeftLos(const CUnit* unit, int allyTeam)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_LEFT_LOS, unit, allyTeam);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitLeftLosEvent(unit, allyTeam))
 	static const LuaHashString hs("UnitLeftLos");
 	LosCallIn(hs, unit, allyTeam);
 }
@@ -1151,16 +1180,14 @@ void CLuaHandle::UnitLeftLos(const CUnit* unit, int allyTeam)
 
 void CLuaHandle::UnitLoaded(const CUnit* unit, const CUnit* transport)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_LOADED, unit, transport);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitLoadedEvent(unit, transport))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 8);
+	luaL_checkstack(L, 8, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("UnitLoaded");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -1171,22 +1198,20 @@ void CLuaHandle::UnitLoaded(const CUnit* unit, const CUnit* transport)
 	lua_pushnumber(L, transport->team);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 5, 0, errfunc);
+	RunCallInTraceback(cmdStr, 5, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
 void CLuaHandle::UnitUnloaded(const CUnit* unit, const CUnit* transport)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_UNLOADED, unit, transport);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitUnloadedEvent(unit, transport))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 8);
+	luaL_checkstack(L, 8, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("UnitUnloaded");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -1197,7 +1222,7 @@ void CLuaHandle::UnitUnloaded(const CUnit* unit, const CUnit* transport)
 	lua_pushnumber(L, transport->team);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 5, 0, errfunc);
+	RunCallInTraceback(cmdStr, 5, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
@@ -1205,7 +1230,7 @@ void CLuaHandle::UnitUnloaded(const CUnit* unit, const CUnit* transport)
 
 void CLuaHandle::UnitEnteredWater(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_ENTERED_WATER, unit);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitEnteredWaterEvent(unit))
 	static const LuaHashString cmdStr("UnitEnteredWater");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1213,7 +1238,7 @@ void CLuaHandle::UnitEnteredWater(const CUnit* unit)
 
 void CLuaHandle::UnitEnteredAir(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_ENTERED_AIR, unit);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitEnteredAirEvent(unit))
 	static const LuaHashString cmdStr("UnitEnteredAir");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1221,7 +1246,7 @@ void CLuaHandle::UnitEnteredAir(const CUnit* unit)
 
 void CLuaHandle::UnitLeftWater(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_LEFT_WATER, unit);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitLeftWaterEvent(unit))
 	static const LuaHashString cmdStr("UnitLeftWater");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1229,7 +1254,7 @@ void CLuaHandle::UnitLeftWater(const CUnit* unit)
 
 void CLuaHandle::UnitLeftAir(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_LEFT_AIR, unit);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitLeftAirEvent(unit))
 	static const LuaHashString cmdStr("UnitLeftAir");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1239,7 +1264,7 @@ void CLuaHandle::UnitLeftAir(const CUnit* unit)
 
 void CLuaHandle::UnitCloaked(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_CLOAKED, unit);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitCloakedEvent(unit))
 	static const LuaHashString cmdStr("UnitCloaked");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1247,7 +1272,7 @@ void CLuaHandle::UnitCloaked(const CUnit* unit)
 
 void CLuaHandle::UnitDecloaked(const CUnit* unit)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_DECLOAKED, unit);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitDecloakedEvent(unit))
 	static const LuaHashString cmdStr("UnitDecloaked");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1261,16 +1286,14 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 	if (!watchUnitDefs[collider->unitDef->id]) return;
 	if (!watchUnitDefs[collidee->unitDef->id]) return;
 
-	LUA_UNIT_BATCH_PUSH(,UNIT_UNIT_COLLISION, collider, collidee);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitUnitCollisionEvent(collider, collidee))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 
 	static const LuaHashString cmdStr("UnitUnitCollision");
-	const int errFunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errFunc != 0)
-			lua_pop(L, 1);
 		return;
 	}
 
@@ -1278,7 +1301,7 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 	lua_pushnumber(L, collidee->id);
 	lua_pushboolean(L, collidee->crushKilled);
 
-	RunCallInTraceback(cmdStr, 3, 0, errFunc);
+	RunCallInTraceback(cmdStr, 3, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
@@ -1289,16 +1312,14 @@ void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 	if (!watchUnitDefs[collider->unitDef->id]) return;
 	if (!watchFeatureDefs[collidee->def->id]) return;
 
-	LUA_OBJ_BATCH_PUSH(UNIT_FEAT_COLLISION, collider, collidee);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitFeatureCollisionEvent(collider, collidee))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 
 	static const LuaHashString cmdStr("UnitFeatureCollision");
-	const int errFunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errFunc != 0)
-			lua_pop(L, 1);
 		return;
 	}
 
@@ -1306,7 +1327,7 @@ void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 	lua_pushnumber(L, collidee->id);
 	lua_pushboolean(L, collidee->crushKilled);
 
-	RunCallInTraceback(cmdStr, 3, 0, errFunc);
+	RunCallInTraceback(cmdStr, 3, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 void CLuaHandle::UnitMoveFailed(const CUnit* unit)
@@ -1315,7 +1336,7 @@ void CLuaHandle::UnitMoveFailed(const CUnit* unit)
 	if (watchUnitDefs.empty()) return;
 	if (!watchUnitDefs[unit->unitDef->id]) return;
 
-	LUA_UNIT_BATCH_PUSH(,UNIT_MOVE_FAILED, unit);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitMoveFailedEvent(unit))
 	static const LuaHashString cmdStr("UnitMoveFailed");
 	UnitCallIn(cmdStr, unit);
 }
@@ -1325,16 +1346,14 @@ void CLuaHandle::UnitMoveFailed(const CUnit* unit)
 
 void CLuaHandle::FeatureCreated(const CFeature* feature)
 {
-	LUA_FEAT_BATCH_PUSH(FEAT_CREATED, feature);
+	LUA_FEAT_BATCH_PUSH(, LuaFeatureCreatedEvent(feature))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 
-	const int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 	static const LuaHashString cmdStr("FeatureCreated");
 
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -1342,22 +1361,19 @@ void CLuaHandle::FeatureCreated(const CFeature* feature)
 	lua_pushnumber(L, feature->allyteam);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 2, 0, errfunc);
+	RunCallInTraceback(cmdStr, 2, 0, traceBack.GetErrFuncIdx(), false);
 }
-
 
 void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 {
-	LUA_FEAT_BATCH_PUSH(FEAT_DESTROYED, feature);
+	LUA_FEAT_BATCH_PUSH(, LuaFeatureDestroyedEvent(feature))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 
-	int errfunc = SetupTraceback(L);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("FeatureDestroyed");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) // remove error handler
-			lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -1365,7 +1381,47 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 	lua_pushnumber(L, feature->allyteam);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 2, 0, errfunc);
+	RunCallInTraceback(cmdStr, 2, 0, traceBack.GetErrFuncIdx(), false);
+}
+
+void CLuaHandle::FeatureDamaged(
+	const CFeature* feature,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID)
+{
+	LUA_FEAT_BATCH_PUSH(, LuaFeatureDamagedEvent(feature, attacker, damage, weaponDefID, projectileID))
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 11, __FUNCTION__);
+
+	static const LuaHashString cmdStr(__FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
+
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
+
+	int argCount = 4;
+
+	lua_pushnumber(L, feature->id);
+	lua_pushnumber(L, feature->def->id);
+	lua_pushnumber(L, feature->team);
+	lua_pushnumber(L, damage);
+
+	if (GetHandleFullRead(L)) {
+		lua_pushnumber(L, weaponDefID); argCount += 1;
+		lua_pushnumber(L, projectileID); argCount += 1;
+
+		if (attacker != NULL) {
+			lua_pushnumber(L, attacker->id);
+			lua_pushnumber(L, attacker->unitDef->id);
+			lua_pushnumber(L, attacker->team);
+			argCount += 3;
+		}
+	}
+
+	// call the routine
+	RunCallInTraceback(cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
@@ -1387,9 +1443,9 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 	if (p->weapon && (wd == NULL || !watchWeaponDefs[wd->id]))
 		return;
 
-	LUA_PROJ_BATCH_PUSH(PROJ_CREATED, p);
+	LUA_PROJ_BATCH_PUSH(, LuaProjCreatedEvent(p))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 
 	static const LuaHashString cmdStr("ProjectileCreated");
 
@@ -1420,9 +1476,9 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 		if (wd == NULL || !watchWeaponDefs[wd->id]) return;
 	}
 
-	LUA_PROJ_BATCH_PUSH(PROJ_DESTROYED, p);
+	LUA_PROJ_BATCH_PUSH(, LuaProjDestroyedEvent(p))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 
 	static const LuaHashString cmdStr("ProjectileDestroyed");
 
@@ -1447,9 +1503,9 @@ bool CLuaHandle::Explosion(int weaponDefID, int projectileID, const float3& pos,
 	if (watchWeaponDefs.empty()) return false;
 	if (!watchWeaponDefs[weaponDefID]) return false;
 
-	LUA_UNIT_BATCH_PUSH(false, UNIT_EXPLOSION, weaponDefID, pos, owner);
+	LUA_UNIT_BATCH_PUSH(false, LuaUnitExplosionEvent(weaponDefID, projectileID, pos, owner))
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 7);
+	luaL_checkstack(L, 7, __FUNCTION__);
 	static const LuaHashString cmdStr("Explosion");
 	if (!cmdStr.GetGlobalFunc(L))
 		return false; // the call is not defined
@@ -1482,9 +1538,9 @@ bool CLuaHandle::Explosion(int weaponDefID, int projectileID, const float3& pos,
 void CLuaHandle::StockpileChanged(const CUnit* unit,
                                   const CWeapon* weapon, int oldCount)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_STOCKPILE_CHANGED, unit, weapon, oldCount);
+	LUA_UNIT_BATCH_PUSH(, LuaUnitStockpileChangedEvent(unit, weapon, oldCount))
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 8);
+	luaL_checkstack(L, 8, __FUNCTION__);
 	static const LuaHashString cmdStr("StockpileChanged");
 	if (!cmdStr.GetGlobalFunc(L))
 		return;
@@ -1502,15 +1558,16 @@ void CLuaHandle::StockpileChanged(const CUnit* unit,
 
 
 void CLuaHandle::ExecuteUnitEventBatch() {
-	if(!UseEventBatch()) return;
+	if (!UseEventBatch())
+		return;
 
 	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteUnitEventBatch
 
-	std::vector<LuaUnitEvent> lueb;
+	std::vector<LuaUnitEventBase> lueb;
 	{
 		GML_STDMUTEX_LOCK(ulbatch);
 
-		if(luaUnitEventBatch.empty())
+		if (luaUnitEventBatch.empty())
 			return;
 
 		luaUnitEventBatch.swap(lueb);
@@ -1525,113 +1582,122 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 
 	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
-	for (std::vector<LuaUnitEvent>::iterator i = lueb.begin(); i != lueb.end(); ++i) {
-		LuaUnitEvent &e = *i;
-		switch (e.id) {
-			case UNIT_FINISHED:
-				UnitFinished(e.unit1);
-				break;
-			case UNIT_CREATED:
-				UnitCreated(e.unit1, e.unit2);
-				break;
-			case UNIT_FROM_FACTORY:
-				UnitFromFactory(e.unit1, e.unit2, e.bool1);
-				break;
-			case UNIT_DESTROYED:
-				UnitDestroyed(e.unit1, e.unit2);
-				break;
-			case UNIT_TAKEN:
-				UnitTaken(e.unit1, e.int1, e.int2);
-				break;
-			case UNIT_GIVEN:
-				UnitGiven(e.unit1, e.int1, e.int2);
-				break;
-			case UNIT_IDLE:
-				UnitIdle(e.unit1);
-				break;
-			case UNIT_COMMAND:
-				UnitCommand(e.unit1, *e.cmd1);
-				break;
-			case UNIT_CMD_DONE:
-				UnitCmdDone(e.unit1, e.int1, e.int2);
-				break;
-			case UNIT_DAMAGED:
-				UnitDamaged(e.unit1, e.unit2, e.float1, e.int1, -1, e.bool1);
-				break;
-			case UNIT_EXPERIENCE:
-				UnitExperience(e.unit1, e.float1);
-				break;
-			case UNIT_SEISMIC_PING:
-				UnitSeismicPing(e.unit1, e.int1, e.cmd1->GetPos(0), e.float1);
-				break;
-			case UNIT_ENTERED_RADAR:
-				UnitEnteredRadar(e.unit1, e.int1);
-				break;
-			case UNIT_ENTERED_LOS:
-				UnitEnteredLos(e.unit1, e.int1);
-				break;
-			case UNIT_LEFT_RADAR:
-				UnitLeftRadar(e.unit1, e.int1);
-				break;
-			case UNIT_LEFT_LOS:
-				UnitLeftLos(e.unit1, e.int1);
-				break;
-			case UNIT_LOADED:
-				UnitLoaded(e.unit1, e.unit2);
-				break;
-			case UNIT_UNLOADED:
-				UnitUnloaded(e.unit1, e.unit2);
-				break;
-			case UNIT_ENTERED_WATER:
-				UnitEnteredWater(e.unit1);
-				break;
-			case UNIT_ENTERED_AIR:
-				UnitEnteredAir(e.unit1);
-				break;
-			case UNIT_LEFT_WATER:
-				UnitLeftWater(e.unit1);
-				break;
-			case UNIT_LEFT_AIR:
-				UnitLeftAir(e.unit1);
-				break;
-			case UNIT_CLOAKED:
-				UnitCloaked(e.unit1);
-				break;
-			case UNIT_DECLOAKED:
-				UnitDecloaked(e.unit1);
-				break;
-			case UNIT_MOVE_FAILED:
-				UnitMoveFailed(e.unit1);
-				break;
-			case UNIT_EXPLOSION:
-				Explosion(e.int1, -1, e.cmd1->GetPos(0), e.unit1);
-				break;
-			case UNIT_UNIT_COLLISION:
-				UnitUnitCollision(e.unit1, e.unit2);
-				break;
-			case UNIT_STOCKPILE_CHANGED:
-				StockpileChanged(e.unit1, e.weapon2, e.int1);
-				break;
-			default:
-				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.id);
-				break;
+
+	for (std::vector<LuaUnitEventBase>::iterator i = lueb.begin(); i != lueb.end(); ++i) {
+		#if 0
+		// TODO: FINISH ME
+		const LuaUnitEventBase& e = *i;
+		switch (e.GetID()) {
+			case UNIT_FINISHED: {
+				LUA_EVENT_CAST(LuaUnitFinishedEvent, e); UnitFinished(ee.GetUnit());
+			} break;
+			case UNIT_CREATED: {
+				LUA_EVENT_CAST(LuaUnitCreatedEvent, e); UnitCreated(ee.GetUnit(), ee.GetBuilder());
+			} break;
+			case UNIT_FROM_FACTORY: {
+				LUA_EVENT_CAST(LuaUnitFromFactoryEvent, e); UnitFromFactory(ee.GetUnit(), ee.GetFactory(), ee.GetUserOrders());
+			} break;
+			case UNIT_DESTROYED: {
+				LUA_EVENT_CAST(LuaUnitDestroyedEvent, e); UnitDestroyed(ee.GetUnit(), ee.GetAttacker());
+			} break;
+			case UNIT_TAKEN: {
+				LUA_EVENT_CAST(LuaUnitTakenEvent, e); UnitTaken(ee.GetUnit(), ee.GetOldTeam(), ee.GetNewTeam());
+			} break;
+			case UNIT_GIVEN: {
+				LUA_EVENT_CAST(LuaUnitGivenEvent, e); UnitGiven(ee.GetUnit(), ee.GetOldTeam(), ee.GetNewTeam());
+			} break;
+			case UNIT_IDLE: {
+				LUA_EVENT_CAST(LuaUnitIdleEvent, e); UnitIdle(ee.GetUnit());
+			} break;
+			case UNIT_COMMAND: {
+				LUA_EVENT_CAST(LuaUnitCommandEvent, e); UnitCommand(ee.GetUnit(), *ee.GetCommand());
+			} break;
+			case UNIT_CMD_DONE: {
+				LUA_EVENT_CAST(LuaUnitCommandDoneEvent, e); UnitCmdDone(ee.GetUnit(), ee.GetCommandID(), ee.GetCommandTag());
+			} break;
+			case UNIT_DAMAGED: {
+				LUA_EVENT_CAST(LuaUnitDamagedEvent, e); UnitDamaged(ee.GetUnit(), ee.GetAttacker(), ee.GetDamage(), ee.GetWeaponDefID(), ee.GetProjectileDefID(), ee.GetParalyzer());
+			} break;
+			case UNIT_EXPERIENCE: {
+				LUA_EVENT_CAST(LuaUnitExperienceEvent, e); UnitExperience(ee.GetUnit(), ee.GetOldExperience());
+			} break;
+			case UNIT_SEISMIC_PING: {
+				LUA_EVENT_CAST(LuaUnitSeismicPingEvent, e); UnitSeismicPing(ee.GetUnit(), ee.GetAllyTeam(), ee.GetPos() /*ee.cmd1->GetPos(0)*/, ee.GetStrength());
+			} break;
+			case UNIT_ENTERED_RADAR: {
+				LUA_EVENT_CAST(LuaUnitEnteredRadarEvent, e); UnitEnteredRadar(ee.GetUnit(), ee.GetAllyTeam());
+			} break;
+			case UNIT_ENTERED_LOS: {
+				LUA_EVENT_CAST(LuaUnitEnteredLosEvent, e); UnitEnteredLos(ee.GetUnit(), ee.GetAllyTeam());
+			} break;
+			case UNIT_LEFT_RADAR: {
+				LUA_EVENT_CAST(LuaUnitLeftRadarEvent, e); UnitLeftRadar(ee.GetUnit(), ee.GetAllyTeam());
+			} break;
+			case UNIT_LEFT_LOS: {
+				LUA_EVENT_CAST(LuaUnitLeftLosEvent, e); UnitLeftLos(ee.GetUnit(), ee.GetAllyTeam());
+			} break;
+			case UNIT_LOADED: {
+				LUA_EVENT_CAST(LuaUnitLoadedEvent, e); UnitLoaded(ee.GetUnit(), ee.GetTransporter());
+			} break;
+			case UNIT_UNLOADED: {
+				LUA_EVENT_CAST(LuaUnitUnloadedEvent, e); UnitUnloaded(ee.GetUnit(), ee.GetTransporter());
+			} break;
+			case UNIT_ENTERED_WATER: {
+				LUA_EVENT_CAST(LuaUnitEnteredWaterEvent, e); UnitEnteredWater(ee.GetUnit());
+			} break;
+			case UNIT_ENTERED_AIR: {
+				LUA_EVENT_CAST(LuaUnitEnteredAirEvent, e); UnitEnteredAir(ee.GetUnit());
+			} break;
+			case UNIT_LEFT_WATER: {
+				LUA_EVENT_CAST(LuaUnitLeftWaterEvent, e); UnitLeftWater(ee.GetUnit());
+			} break;
+			case UNIT_LEFT_AIR: {
+				LUA_EVENT_CAST(LuaUnitLeftAirEvent, e); UnitLeftAir(ee.GetUnit());
+			} break;
+			case UNIT_CLOAKED: {
+				LUA_EVENT_CAST(LuaUnitCloakedEvent, e); UnitCloaked(ee.GetUnit());
+			} break;
+			case UNIT_DECLOAKED: {
+				LUA_EVENT_CAST(LuaUnitDecloakedEvent, e); UnitDecloaked(ee.GetUnit());
+			} break;
+			case UNIT_MOVE_FAILED: {
+				LUA_EVENT_CAST(LuaUnitMoveFailedEvent, e); UnitMoveFailed(ee.GetUnit());
+			} break;
+			case UNIT_EXPLOSION: {
+				LUA_EVENT_CAST(LuaUnitExplosionEvent, e); Explosion(ee.GetWeaponDefID(), ee.GetProjectileID(), ee.GetPos() /*ee.cmd1->GetPos(0)*/, ee.GetOwner());
+			} break;
+			case UNIT_UNIT_COLLISION: {
+				LUA_EVENT_CAST(LuaUnitUnitCollisionEvent, e); UnitUnitCollision(ee.GetCollider(), ee.GetCollidee());
+			} break;
+			case UNIT_FEAT_COLLISION: {
+				LUA_EVENT_CAST(LuaUnitFeatureCollisionEvent, e); UnitFeatureCollision(ee.GetCollider(), ee.GetCollidee());
+			} break;
+			case UNIT_STOCKPILE_CHANGED: {
+				LUA_EVENT_CAST(LuaUnitStockpileChangedEvent, e); StockpileChanged(ee.GetUnit(), ee.GetWeapon(), ee.GetOldCount());
+			} break;
+			default: {
+				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.GetID());
+			} break;
 		}
+		#endif
 	}
+
 	if (Threading::IsSimThread())
 		Threading::SetBatchThread(true);
 }
 
 
 void CLuaHandle::ExecuteFeatEventBatch() {
-	if(!UseEventBatch()) return;
+	if (!UseEventBatch())
+		return;
 
 	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteFeatEventBatch
 
-	std::vector<LuaFeatEvent> lfeb;
+	std::vector<LuaFeatEventBase> lfeb;
 	{
 		GML_STDMUTEX_LOCK(flbatch);
 
-		if(luaFeatEventBatch.empty())
+		if (luaFeatEventBatch.empty())
 			return;
 
 		luaFeatEventBatch.swap(lfeb);
@@ -1644,79 +1710,45 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFeatEventBatch
 
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
-	for(std::vector<LuaFeatEvent>::iterator i = lfeb.begin(); i != lfeb.end(); ++i) {
-		LuaFeatEvent &e = *i;
-		switch(e.id) {
-			case FEAT_CREATED:
-				FeatureCreated(e.feat1);
-				break;
-			case FEAT_DESTROYED:
-				FeatureDestroyed(e.feat1);
-				break;
-			default:
-				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.id);
-				break;
+
+	for (std::vector<LuaFeatEventBase>::iterator i = lfeb.begin(); i != lfeb.end(); ++i) {
+		const LuaFeatEventBase& e = *i;
+		switch (e.GetID()) {
+			case FEAT_CREATED: {
+				LUA_EVENT_CAST(LuaFeatureCreatedEvent, e); FeatureCreated(ee.GetFeature());
+			} break;
+			case FEAT_DESTROYED: {
+				LUA_EVENT_CAST(LuaFeatureDestroyedEvent, e); FeatureDestroyed(ee.GetFeature());
+			} break;
+			case FEAT_DAMAGED: {
+				LUA_EVENT_CAST(LuaFeatureDamagedEvent, e); FeatureDamaged(ee.GetFeature(), ee.GetAttacker(), ee.GetDamage(), ee.GetWeaponDefID(), ee.GetProjectileID());
+			} break;
+			default: {
+				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.GetID());
+			} break;
 		}
 	}
-	if(Threading::IsSimThread())
-		Threading::SetBatchThread(true);
-}
 
-
-void CLuaHandle::ExecuteObjEventBatch() {
-	if(!UseEventBatch()) return;
-
-	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteObjEventBatch
-
-	std::vector<LuaObjEvent> loeb;
-	{
-		GML_STDMUTEX_LOCK(olbatch);
-
-		if(luaObjEventBatch.empty())
-			return;
-
-		luaObjEventBatch.swap(loeb);
-	}
-
-	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteObjEventBatch
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteObjEventBatch
-//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteObjEventBatch
-
-	GML_SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // ExecuteObjEventBatch
-
-	if(Threading::IsSimThread())
-		Threading::SetBatchThread(false);
-	for(std::vector<LuaObjEvent>::iterator i = loeb.begin(); i != loeb.end(); ++i) {
-		LuaObjEvent &e = *i;
-		switch(e.id) {
-			case UNIT_FEAT_COLLISION:
-				UnitFeatureCollision(e.unit, e.feat);
-				break;
-			default:
-				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.id);
-				break;
-		}
-	}
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(true);
 }
 
 
 void CLuaHandle::ExecuteProjEventBatch() {
-	if(!UseEventBatch()) return;
+	if (!UseEventBatch())
+		return;
 
 //	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteProjEventBatch
 //	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteProjEventBatch
 	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteProjEventBatch
 
-	std::vector<LuaProjEvent> lpeb;
+	std::vector<LuaProjEventBase> lpeb;
 	{
 		GML_STDMUTEX_LOCK(plbatch);
 
-		if(luaProjEventBatch.empty())
+		if (luaProjEventBatch.empty())
 			return;
 
 		luaProjEventBatch.swap(lpeb);
@@ -1725,35 +1757,38 @@ void CLuaHandle::ExecuteProjEventBatch() {
 	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteProjEventBatch
 
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
-	for(std::vector<LuaProjEvent>::iterator i = lpeb.begin(); i != lpeb.end(); ++i) {
-		LuaProjEvent &e = *i;
-		switch(e.id) {
-			case PROJ_CREATED:
-				ProjectileCreated(e.proj1);
-				break;
-			case PROJ_DESTROYED:
-				ProjectileDestroyed(e.proj1);
-				break;
-			default:
-				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.id);
-				break;
+
+	for (std::vector<LuaProjEventBase>::iterator i = lpeb.begin(); i != lpeb.end(); ++i) {
+		const LuaProjEventBase& e = *i;
+		switch (e.GetID()) {
+			case PROJ_CREATED: {
+				LUA_EVENT_CAST(LuaProjCreatedEvent, e); ProjectileCreated(ee.GetProjectile());
+			} break;
+			case PROJ_DESTROYED: {
+				LUA_EVENT_CAST(LuaProjDestroyedEvent, e); ProjectileDestroyed(ee.GetProjectile());
+			} break;
+			default: {
+				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.GetID());
+			} break;
 		}
 	}
-	if(Threading::IsSimThread())
+
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(true);
 }
 
 
 void CLuaHandle::ExecuteFrameEventBatch() {
-	if(!UseEventBatch()) return;
+	if (!UseEventBatch())
+		return;
 
 	std::vector<int> lgeb;
 	{
 		GML_STDMUTEX_LOCK(glbatch);
 
-		if(luaFrameEventBatch.empty())
+		if (luaFrameEventBatch.empty())
 			return;
 
 		luaFrameEventBatch.swap(lgeb);
@@ -1766,26 +1801,28 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFrameEventBatch
 
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
-	for(std::vector<int>::iterator i = lgeb.begin(); i != lgeb.end(); ++i) {
+
+	for (std::vector<int>::iterator i = lgeb.begin(); i != lgeb.end(); ++i) {
 		GameFrame(*i);
 	}
-	if(Threading::IsSimThread())
+
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(true);
 }
 
 
 void CLuaHandle::ExecuteLogEventBatch() {
-	if (!UseEventBatch()) return;
+	if (!UseEventBatch())
+		return;
 
-	std::vector<LuaLogEvent> lmeb;
+	std::vector<LuaLogEventBase> lmeb;
 	{
 		GML_STDMUTEX_LOCK(mlbatch);
 
-		if (luaLogEventBatch.empty()) {
+		if (luaLogEventBatch.empty())
 			return;
-		}
 
 		luaLogEventBatch.swap(lmeb);
 	}
@@ -1797,30 +1834,30 @@ void CLuaHandle::ExecuteLogEventBatch() {
 	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteLogEventBatch
 
-	if (Threading::IsSimThread()) {
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
-	}
-	for (std::vector<LuaLogEvent>::iterator i = lmeb.begin(); i != lmeb.end(); ++i) {
-		LuaLogEvent& e = *i;
-		switch (e.id) {
-			case ADD_CONSOLE_LINE:
-				AddConsoleLine(e.msg, e.section, e.level);
-				break;
-			default:
-				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.id);
-				break;
+
+	for (std::vector<LuaLogEventBase>::iterator i = lmeb.begin(); i != lmeb.end(); ++i) {
+		const LuaLogEventBase& e = *i;
+		switch (e.GetID()) {
+			case LOG_CONSOLE_LINE: {
+				LUA_EVENT_CAST(LuaAddConsoleLineEvent, e); AddConsoleLine(ee.GetMessage(), ee.GetSection(), ee.GetLevel());
+			} break;
+			default: {
+				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.GetID());
+			} break;
 		}
 	}
-	if (Threading::IsSimThread()) {
+
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(true);
-	}
 }
 
 
 bool CLuaHandle::RecvLuaMsg(const string& msg, int playerID)
 {
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 8);
+	luaL_checkstack(L, 8, __FUNCTION__);
 	static const LuaHashString cmdStr("RecvLuaMsg");
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
@@ -1913,7 +1950,7 @@ void CLuaHandle::Save(zipFile archive)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
+	luaL_checkstack(L, 3, __FUNCTION__);
 	static const LuaHashString cmdStr("Save");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -1930,7 +1967,7 @@ void CLuaHandle::Save(zipFile archive)
 void CLuaHandle::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 6);
+	luaL_checkstack(L, 6, __FUNCTION__);
 	static const LuaHashString cmdStr("UnsyncedHeightMapUpdate");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -1949,7 +1986,7 @@ void CLuaHandle::UnsyncedHeightMapUpdate(const SRectangle& rect)
 void CLuaHandle::Update()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("Update");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -1963,7 +2000,7 @@ void CLuaHandle::Update()
 void CLuaHandle::ViewResize()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 	static const LuaHashString cmdStr("ViewResize");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -1994,7 +2031,7 @@ bool CLuaHandle::DefaultCommand(const CUnit* unit,
                                 const CFeature* feature, int& cmd)
 {
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("DefaultCommand");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false;
@@ -2045,7 +2082,7 @@ bool CLuaHandle::DefaultCommand(const CUnit* unit,
 void CLuaHandle::DrawGenesis()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawGenesis");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -2063,7 +2100,7 @@ void CLuaHandle::DrawGenesis()
 void CLuaHandle::DrawWorld()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawWorld");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -2081,7 +2118,7 @@ void CLuaHandle::DrawWorld()
 void CLuaHandle::DrawWorldPreUnit()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawWorldPreUnit");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -2099,7 +2136,7 @@ void CLuaHandle::DrawWorldPreUnit()
 void CLuaHandle::DrawWorldShadow()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawWorldShadow");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -2117,7 +2154,7 @@ void CLuaHandle::DrawWorldShadow()
 void CLuaHandle::DrawWorldReflection()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawWorldReflection");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -2135,7 +2172,7 @@ void CLuaHandle::DrawWorldReflection()
 void CLuaHandle::DrawWorldRefraction()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawWorldRefraction");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -2153,7 +2190,7 @@ void CLuaHandle::DrawWorldRefraction()
 void CLuaHandle::DrawScreen()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawScreen");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -2174,7 +2211,7 @@ void CLuaHandle::DrawScreen()
 void CLuaHandle::DrawScreenEffects()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawScreenEffects");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -2195,7 +2232,7 @@ void CLuaHandle::DrawScreenEffects()
 void CLuaHandle::DrawInMiniMap()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("DrawInMiniMap");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -2225,7 +2262,7 @@ void CLuaHandle::DrawInMiniMap()
 void CLuaHandle::GameProgress(int frameNum )
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
+	luaL_checkstack(L, 3, __FUNCTION__);
 	static const LuaHashString cmdStr("GameProgress");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return;
@@ -2248,7 +2285,7 @@ bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 6);
+	luaL_checkstack(L, 6, __FUNCTION__);
 	static const LuaHashString cmdStr("KeyPress");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false; // the call is not defined, do not take the event
@@ -2273,7 +2310,6 @@ bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
 	if (!RunCallInUnsynced(cmdStr, 5, 1))
 		return false;
 
-	// const int args = lua_gettop(L); unused
 	if (!lua_isboolean(L, -1)) {
 		lua_pop(L, 1);
 		return false;
@@ -2290,7 +2326,7 @@ bool CLuaHandle::KeyRelease(unsigned short key)
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 	static const LuaHashString cmdStr("KeyRelease");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false; // the call is not defined, do not take the event
@@ -2329,7 +2365,7 @@ bool CLuaHandle::MousePress(int x, int y, int button)
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 	static const LuaHashString cmdStr("MousePress");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false; // the call is not defined, do not take the event
@@ -2359,7 +2395,7 @@ int CLuaHandle::MouseRelease(int x, int y, int button)
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 	static const LuaHashString cmdStr("MouseRelease");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false; // the call is not defined, do not take the event
@@ -2389,7 +2425,7 @@ bool CLuaHandle::MouseMove(int x, int y, int dx, int dy, int button)
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 7);
+	luaL_checkstack(L, 7, __FUNCTION__);
 	static const LuaHashString cmdStr("MouseMove");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false; // the call is not defined, do not take the event
@@ -2421,7 +2457,7 @@ bool CLuaHandle::MouseWheel(bool up, float value)
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("MouseWheel");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false; // the call is not defined, do not take the event
@@ -2449,7 +2485,7 @@ bool CLuaHandle::JoystickEvent(const std::string& event, int val1, int val2)
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 	const LuaHashString cmdStr(event);
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false; // the call is not defined, do not take the event
@@ -2477,7 +2513,7 @@ bool CLuaHandle::IsAbove(int x, int y)
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("IsAbove");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false; // the call is not defined
@@ -2506,7 +2542,7 @@ string CLuaHandle::GetTooltip(int x, int y)
 		return "";
 	}
 	LUA_CALL_IN_CHECK(L, "");
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("GetTooltip");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return ""; // the call is not defined
@@ -2535,7 +2571,7 @@ bool CLuaHandle::ConfigCommand(const string& command)
 		return true; // FIXME ?
 	}
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("ConfigureLayout");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return true; // the call is not defined
@@ -2557,7 +2593,7 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 	static const LuaHashString cmdStr("CommandNotify");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false; // the call is not defined
@@ -2567,20 +2603,9 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 	lua_pushnumber(L, cmd.GetID());
 
 	// push the params list
-	lua_createtable(L, cmd.params.size(), 0);
-	for (int p = 0; p < (int)cmd.params.size(); p++) {
-		lua_pushnumber(L, cmd.params[p]);
-		lua_rawseti(L, -2, p + 1);
-	}
-
+	LuaUtils::PushCommandParamsTable(L, cmd, false);
 	// push the options table
-	lua_createtable(L, 0, 6);
-	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
-	HSTR_PUSH_BOOL(L, "alt",   !!(cmd.options & ALT_KEY));
-	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
-	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
-	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
-	HSTR_PUSH_BOOL(L, "meta",  !!(cmd.options & META_KEY));
+	LuaUtils::PushCommandOptionsTable(L, cmd, false);
 
 	// call the function
 	if (!RunCallInUnsynced(cmdStr, 3, 1))
@@ -2604,9 +2629,9 @@ bool CLuaHandle::AddConsoleLine(const string& msg, const string& section, int le
 	if (!CheckModUICtrl()) {
 		return true; // FIXME?
 	}
-	LUA_LOG_BATCH_PUSH(true, ADD_CONSOLE_LINE, msg, level, section);
+	LUA_LOG_BATCH_PUSH(true, LuaAddConsoleLineEvent(msg, section, level))
 	LUA_CALL_IN_CHECK(L, true);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("AddConsoleLine");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return true; // the call is not defined
@@ -2631,7 +2656,7 @@ bool CLuaHandle::GroupChanged(int groupID)
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 3);
+	luaL_checkstack(L, 3, __FUNCTION__);
 	static const LuaHashString cmdStr("GroupChanged");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false; // the call is not defined
@@ -2656,7 +2681,7 @@ string CLuaHandle::WorldTooltip(const CUnit* unit,
 		return "";
 	}
 	LUA_CALL_IN_CHECK(L, "");
-	lua_checkstack(L, 6);
+	luaL_checkstack(L, 6, __FUNCTION__);
 	static const LuaHashString cmdStr("WorldTooltip");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return ""; // the call is not defined
@@ -2708,7 +2733,7 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 9);
+	luaL_checkstack(L, 9, __FUNCTION__);
 	static const LuaHashString cmdStr("MapDrawCmd");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false; // the call is not defined
@@ -2772,7 +2797,7 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L, false);
-	lua_checkstack(L, 5);
+	luaL_checkstack(L, 5, __FUNCTION__);
 	static const LuaHashString cmdStr("GameSetup");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false;
@@ -2785,9 +2810,8 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 	lua_newtable(L);
 	map<int, string>::const_iterator it;
 	for (it = playerStates.begin(); it != playerStates.end(); ++it) {
-		lua_pushnumber(L, it->first);
 		lua_pushsstring(L, it->second);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, it->first);
 	}
 
 	// call the routine
@@ -2812,7 +2836,7 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, int inSize)
 {
 	LUA_CALL_IN_CHECK(L, NULL);
-	lua_checkstack(L, 4);
+	luaL_checkstack(L, 4, __FUNCTION__);
 
 	static const LuaHashString cmdStr("RecvSkirmishAIMessage");
 
@@ -2845,6 +2869,32 @@ const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, in
 	return outData;
 }
 
+/******************************************************************************/
+/******************************************************************************/
+
+void CLuaHandle::CollectGarbage()
+{
+	SELECT_LUA_STATE();
+	lua_gc(L, LUA_GCSTOP, 0); // don't collect garbage outside of this function
+
+	//TODO make configureable?
+	const int memUsageInMB = lua_gc(L, LUA_GCCOUNT, 0) / 1024;
+	const float TIME_PER_MB = 0.02f + 0.08f * smoothstep(25, 100, memUsageInMB); // alloced Mem 25MB: 20microsec  100MB: 100microsec (30x per second)
+	const float maxRuntime = TIME_PER_MB * memUsageInMB;
+	const spring_time endTime = spring_gettime() + spring_msecs(maxRuntime);
+
+	// Collect Garbage till time runs out
+	SetRunning(L, true);
+		do {
+			if (lua_gc(L, LUA_GCSTEP, 2)) {
+				SetRunning(L, false);
+				return;
+			}
+		} while(spring_gettime() < endTime);
+	SetRunning(L, false);
+
+	//LOG("%s GC not finished in time %.3fms %iMB", GetName().c_str(), (spring_gettime() - endTime).toMilliSecsf() + maxRuntime, memUsageInMB);
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -2875,6 +2925,7 @@ bool CLuaHandle::AddBasicCalls(lua_State *L)
 	// extra math utilities
 	lua_getglobal(L, "math");
 	LuaBitOps::PushEntries(L);
+	LuaMathExtra::PushEntries(L);
 	lua_pop(L, 1);
 
 	return true;
@@ -2980,13 +3031,9 @@ int CLuaHandle::CallOutGetCallInList(lua_State* L)
 
 int CLuaHandle::CallOutSyncedUpdateCallIn(lua_State* L)
 {
-	if(!Threading::IsSimThread())
+	if (!Threading::IsSimThread())
 		return 0; // FIXME: If this can be called from a non-sim context, this code is insufficient
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
-	}
-	const string name = lua_tostring(L, 1);
+	const string name = luaL_checkstring(L, 1);
 	CLuaHandle* lh = GetHandle(L);
 	lh->SyncedUpdateCallIn(lh->GetActiveState(), name);
 	return 0;
@@ -2995,13 +3042,9 @@ int CLuaHandle::CallOutSyncedUpdateCallIn(lua_State* L)
 
 int CLuaHandle::CallOutUnsyncedUpdateCallIn(lua_State* L)
 {
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		return 0; // FIXME: If this can be called from a sim context, this code is insufficient
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
-	}
-	const string name = lua_tostring(L, 1);
+	const string name = luaL_checkstring(L, 1);
 	CLuaHandle* lh = GetHandle(L);
 	lh->UnsyncedUpdateCallIn(lh->GetActiveState(), name);
 	return 0;

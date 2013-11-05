@@ -16,15 +16,16 @@ MACRO(CreateBaseContentArchive outputdir filename files)
 		set(QUIET ">nul")
 	endif()
 	set(outputfile "${Spring_BINARY_DIR}/${outputdir}/${filename}")
-	### remove old file to force recreation from scratch
-	file(REMOVE "${outputfile}")
 	add_custom_command(
 		OUTPUT "${outputfile}"
 		COMMAND ${SEVENZIP_BIN} a -tzip ${outputfile} ${files} ${QUIET}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
-		COMMENT "Creating ${output}"
+		COMMENT "Creating ${outputfile}"
 		DEPENDS ${files}
 	)
+
+	### regenerate output file, when input changed
+	set_source_files_properties(${outputfile} PROPERTIES GENERATED TRUE)
 
 	### add target & dependencies to basecontent
 	add_custom_target(${filename} DEPENDS ${outputfile})

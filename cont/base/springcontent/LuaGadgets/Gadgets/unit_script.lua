@@ -126,6 +126,8 @@ local sp_WaitForTurn = Spring.UnitScript.WaitForTurn
 local sp_SetPieceVisibility = Spring.UnitScript.SetPieceVisibility
 local sp_SetDeathScriptFinished = Spring.UnitScript.SetDeathScriptFinished
 
+local LUA_WEAPON_MIN_INDEX = 1
+local LUA_WEAPON_MAX_INDEX = LUA_WEAPON_MIN_INDEX + 31
 
 local UNITSCRIPT_DIR = (UNITSCRIPT_DIR or "scripts/"):lower()
 local VFSMODE = VFS.ZIP_ONLY
@@ -369,10 +371,12 @@ end
 function Spring.UnitScript.StartThread(fun, ...)
 	local activeUnit = GetActiveUnit()
 	local co = co_create(fun)
+	-- signal_mask is inherited from current thread, if any
+	local thd = co_running() and activeUnit.threads[co_running()]
+	local sigmask = thd and thd.signal_mask or 0
 	local thread = {
 		thread = co,
-		-- signal_mask is inherited from current thread, if any
-		signal_mask = (co_running() and activeUnit.threads[co_running()].signal_mask or 0),
+		signal_mask = sigmask,
 		unitID = activeUnit.unitID,
 	}
 
@@ -441,7 +445,7 @@ end
 
 function Spring.UnitScript.GetLongestReloadTime(unitID)
 	local longest = 0
-	for i=0,31 do
+	for i = LUA_WEAPON_MIN_INDEX, LUA_WEAPON_MAX_INDEX do
 		local reloadTime = sp_GetUnitWeaponState(unitID, i, "reloadTime")
 		if (not reloadTime) then break end
 		if (reloadTime > longest) then longest = reloadTime end
@@ -512,7 +516,7 @@ end
 
 
 function gadget:Initialize()
-	Spring.Log(section, LOG.ERROR, string.format("Loading gadget: %-18s  <%s>", ghInfo.name, ghInfo.basename))
+	Spring.Log(section, LOG.INFO, string.format("Loading gadget: %-18s  <%s>", ghInfo.name, ghInfo.basename))
 
 	-- This initialization code has following properties:
 	--  * all used scripts are loaded => early syntax error detection
@@ -571,12 +575,19 @@ local function Wrap_AimWeapon(unitID, callins)
 
 	-- SetUnitShieldState wants true or false, while
 	-- SetUnitWeaponState wants 1.0 or 0.0, niiice =)
+	--
+	-- NOTE:
+	--   the LuaSynced* API functions all EXPECT 1-based arguments
+	--   the LuaUnitScript::*Weapon* callins all SUPPLY 1-based arguments
+	--
+	--   therefore on the Lua side all weapon indices are ASSUMED to be
+	--   1-based and if LuaConfig::LUA_WEAPON_BASE_INDEX is changed to 0
+	--   no Lua code should need to be updated
 	local function AimWeaponThread(weaponNum, heading, pitch)
 		local bAimReady = AimWeapon(weaponNum, heading, pitch) or false
 		local fAimReady = (bAimReady and 1.0) or 0.0
 
-		-- SetUnitWeaponState counts weapons from 0
-		return sp_SetUnitWeaponState(unitID, weaponNum - 1, "aimReady", fAimReady)
+		return sp_SetUnitWeaponState(unitID, weaponNum, "aimReady", fAimReady)
 	end
 
 	callins["AimWeapon"] = function(weaponNum, heading, pitch)
@@ -593,8 +604,8 @@ local function Wrap_AimShield(unitID, callins)
 	-- SetUnitWeaponState wants 1 or 0, niiice =)
 	local function AimShieldThread(weaponNum)
 		local enabled = AimShield(weaponNum) and true or false
-		-- SetUnitShieldState counts weapons from 0
-		return sp_SetUnitShieldState(unitID, weaponNum - 1, enabled)
+
+		return sp_SetUnitShieldState(unitID, weaponNum, enabled)
 	end
 
 	callins["AimShield"] = function(weaponNum)

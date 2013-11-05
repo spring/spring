@@ -7,6 +7,7 @@
 
 #include <al.h>
 #include <boost/noncopyable.hpp>
+#include "System/Misc/SpringTime.h"
 
 class IAudioChannel;
 class float3;
@@ -15,7 +16,7 @@ class COggStream;
 
 /**
  * @brief One soundsource wich can play some sounds
- * 
+ *
  * Construct some of them, and they can play SoundItems positioned anywhere in 3D-space for you.
  */
 class CSoundSource : boost::noncopyable
@@ -60,13 +61,13 @@ private:
 
 	//! reduce the rolloff when the camera is height above the ground (so we still hear something in tab mode or far zoom)
 	static float heightRolloffModifier;
-	
+
 	ALuint id;
 	SoundItem* curPlaying;
 	IAudioChannel* curChannel;
 	COggStream* curStream;
 	float curVolume;
-	unsigned loopStop;
+	spring_time loopStop;
 	bool in3D;
 	bool efxEnabled;
 	int efxUpdates;

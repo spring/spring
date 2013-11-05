@@ -2,7 +2,6 @@
 
 #include <map>
 #include <SDL_keysym.h>
-#include <SDL_timer.h>
 #include <set>
 #include <cfloat>
 
@@ -12,13 +11,13 @@
 #include "System/Sync/FPUCheck.h"
 #include "Game.h"
 #include "GameData.h"
-#include "GameServer.h"
 #include "GameSetup.h"
 #include "GameVersion.h"
 #include "GlobalUnsynced.h"
 #include "LoadScreen.h"
-#include "Player.h"
-#include "PlayerHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
+#include "Net/GameServer.h"
 #include "System/TimeProfiler.h"
 #include "UI/InfoConsole.h"
 #include "Map/Generation/SimpleMapGenerator.h"
@@ -32,7 +31,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/TdfParser.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -45,7 +44,6 @@
 #include "System/Log/ILog.h"
 #include "System/Net/RawPacket.h"
 #include "System/Net/UnpackPacket.h"
-#include "System/Platform/EngineTypeHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "lib/luasocket/src/restrictions.h"
 
@@ -60,7 +58,7 @@ extern SelectMenu* selectMenu;
 CPreGame::CPreGame(const ClientSetup* setup) :
 	settings(setup),
 	savefile(NULL),
-	timer(0),
+	timer(spring_gettime()),
 	wantDemo(true)
 {
 	net = new CNetProtocol();
@@ -70,7 +68,6 @@ CPreGame::CPreGame(const ClientSetup* setup) :
 		//don't allow luasocket to connect to the host
 		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, settings->hostIP, settings->hostPort, false);
 		net->InitClient(settings->hostIP.c_str(), settings->hostPort, settings->myPlayerName, settings->myPasswd, SpringVersion::GetFull());
-		timer = SDL_GetTicks();
 	} else {
 		net->InitLocalClient();
 	}
@@ -107,6 +104,7 @@ void CPreGame::LoadSavefile(const std::string& save)
 	assert(settings->isHost);
 	savefile = ILoadSaveHandler::Create();
 	savefile->LoadGameStartInfo(save.c_str());
+
 	StartServer(savefile->scriptText);
 }
 
@@ -126,23 +124,18 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 
 bool CPreGame::Draw()
 {
-	SDL_Delay(10); // milliseconds
+	spring_msecs(10).sleep();
 	ClearScreen();
 	agui::gui->Draw();
 
 	font->Begin();
 
-	if (!net->Connected())
-	{
+	if (!net->Connected()) {
 		if (settings->isHost)
 			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server to start");
 		else
-		{
-			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Connecting to server (%d s)", (SDL_GetTicks()-timer)/1000);
-		}
-	}
-	else
-	{
+			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Connecting to server (%ds)", (spring_gettime() - timer).toSecsi());
+	} else {
 		font->glPrint(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server response");
 	}
 
@@ -217,6 +210,8 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 void CPreGame::UpdateClientNet()
 {
+	//FIXME move this code to a external file and move that to rts/Net/
+
 	if (net->CheckTimeout(0, true)) {
 		LOG_L(L_WARNING, "Server not reachable");
 		SetExitCode(1);
@@ -225,13 +220,15 @@ void CPreGame::UpdateClientNet()
 	}
 
 	boost::shared_ptr<const RawPacket> packet;
-	while ((packet = net->GetData(gs->frameNum)))
-	{
+
+	while ((packet = net->GetData(gs->frameNum))) {
+		const unsigned char* inbuf = packet->data;
+
 		if (packet->length <= 0) {
-			LOG_L(L_WARNING, "Zero-length packet in CPreGame");
+			LOG_L(L_WARNING, "[CPreGame::%s] zero-length packet (header: %i)", __FUNCTION__, inbuf[0]);
 			continue;
 		}
-		const unsigned char* inbuf = packet->data;
+
 		switch (inbuf[0]) {
 			case NETMSG_QUIT: {
 				try {
@@ -239,42 +236,16 @@ void CPreGame::UpdateClientNet()
 					std::string message;
 					pckt >> message;
 					LOG("%s", message.c_str());
-					if (EngineTypeHandler::WillRestartEngine(message)) {
-						SetExitCode(1);
-						gu->globalQuit = true;
-						net->Close(true);
-						return;
-					}
 					handleerror(NULL, "Remote requested quit: " + message, "Quit message", MBF_OK | MBF_EXCL);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "Got invalid QuitMessage: %s", ex.what());
 				}
 				break;
 			}
-			case NETMSG_CUSTOM_DATA: {
-				// server can request client to launch another engine type
-				try {
-					netcode::UnpackPacket pckt(packet, 1);
-					unsigned char playernum, datatype;
-					int data;
-					pckt >> playernum;
-					pckt >> datatype;
-					pckt >> data;
-					switch (datatype) {
-						case CUSTOM_DATA_ENGINETYPE:
-							EngineTypeHandler::SetRequestedEngineType(data & 0xFFFF, data >> 16);
-							break;
-						default:
-							LOG_L(L_ERROR, "Got invalid CustomData type: %d", (int)datatype);
-					}
-				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "Got invalid CustomData message: %s", ex.what());
-				}
-				break;
-			}
+
 			case NETMSG_CREATE_NEWPLAYER: {
 				// server will send this first if we're using mid-game join
-				// feature, to let us know about ourself (we won't be in
+				// feature, to let us know about ourselves (we won't be in
 				// gamedata), otherwise skip to gamedata
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
@@ -299,11 +270,14 @@ void CPreGame::UpdateClientNet()
 					// the global broadcast will overwrite the user with the
 					// same values as here
 					playerHandler->AddPlayer(player);
+
+					LOG("[PG::%s] added new player %s with number %d to team %d", __FUNCTION__, name.c_str(), player.playerNum, player.team);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "Got invalid New player message: %s", ex.what());
+					LOG_L(L_ERROR, "[PG::%s] got invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
 				}
 				break;
 			}
+
 			case NETMSG_GAMEDATA: {
 				// server first sends this to let us know about teams, allyteams
 				// etc.
@@ -314,19 +288,22 @@ void CPreGame::UpdateClientNet()
 				GameDataReceived(packet);
 				break;
 			}
+
 			case NETMSG_SETPLAYERNUM: {
 				// this is sent after NETMSG_GAMEDATA, to let us know which
-				// playernum we have
-				if (!gameSetup)
+				// player number we have (server assigns them based on order
+				// of connection)
+				if (gameSetup == NULL)
 					throw content_error("No game data received from server");
 
-				unsigned char playerNum = packet->data[1];
+				const unsigned char playerNum = packet->data[1];
+
 				if (!playerHandler->IsValidPlayer(playerNum))
 					throw content_error("Invalid player number received from server");
 
 				gu->SetMyPlayer(playerNum);
-				LOG("User number %i (team %i, allyteam %i)",
-						gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
+
+				LOG("[PG::%s] user number %i (team %i, allyteam %i)", __FUNCTION__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 
 				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
 
@@ -334,9 +311,9 @@ void CPreGame::UpdateClientNet()
 				delete this;
 				return;
 			}
+
 			default: {
-				LOG_L(L_WARNING, "Unknown net-msg received from CPreGame: %i",
-						(int)(packet->data[0]));
+				LOG_L(L_WARNING, "[CPreGame::%s] unknown packet type (header: %i)", __FUNCTION__, inbuf[0]);
 				break;
 			}
 		}
@@ -350,11 +327,10 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	LOG("Pre-scanning demo file for game data...");
 	CDemoReader scanner(demoName, 0);
 
-	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(FLT_MAX )));
-	while ( buf )
-	{
-		if (buf->data[0] == NETMSG_GAMEDATA)
-		{
+	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(FLT_MAX)));
+
+	while (buf) {
+		if (buf->data[0] == NETMSG_GAMEDATA) {
 			GameData* data = NULL;
 			try {
 				data = new GameData(boost::shared_ptr<const RawPacket>(buf));
@@ -363,8 +339,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			}
 
 			CGameSetup* demoScript = new CGameSetup();
-			if (!demoScript->Init(data->GetSetup()))
-			{
+			if (!demoScript->Init(data->GetSetup())) {
 				throw content_error("Demo contains incorrect script");
 			}
 
@@ -377,10 +352,8 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			tgame->AddPair("Demofile", demoName);
 			tgame->AddPair("OnlyLocal", 1);
 
-			for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it)
-			{
-				if (it->first.size() > 6 && it->first.substr(0, 6) == "player")
-				{
+			for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it) {
+				if (it->first.size() > 6 && it->first.substr(0, 6) == "player") {
 					it->second->AddPair("isfromdemo", 1);
 				}
 			}
@@ -418,8 +391,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			data->SetSetup(buf.str());
 			CGameSetup* tempSetup = new CGameSetup();
 
-			if (!tempSetup->Init(buf.str()))
-			{
+			if (!tempSetup->Init(buf.str())) {
 				throw content_error("Demo contains incorrect script");
 			}
 			LOG("Starting GameServer");
@@ -434,8 +406,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			break;
 		}
 
-		if (scanner.ReachedEnd())
-		{
+		if (scanner.ReachedEnd()) {
 			throw content_error("End of demo reached and no game data found");
 		}
 		buf.reset(scanner.GetData(FLT_MAX));
@@ -464,6 +435,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 			setupTextFile.write(setupTextStr.c_str(), setupTextStr.size());
 			setupTextFile.close();
 		}
+		// set the global instance
 		gameSetup = temp;
 		gu->LoadFromSetup(gameSetup);
 		gs->LoadFromSetup(gameSetup);
@@ -511,7 +483,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	if (net != NULL && wantDemo) {
 		assert(net->GetDemoRecorder() == NULL);
 
-		CDemoRecorder* recorder = new CDemoRecorder(gameSetup->mapName, gameSetup->modName);
+		CDemoRecorder* recorder = new CDemoRecorder(gameSetup->mapName, gameSetup->modName, false);
 		recorder->WriteSetupText(gameData->GetSetup());
 		recorder->SaveToDemo(packet->data, packet->length, net->GetPacketTime(gs->frameNum));
 		net->SetDemoRecorder(recorder);

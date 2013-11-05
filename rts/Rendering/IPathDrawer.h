@@ -3,17 +3,24 @@
 #define IPATHDRAWER_HDR
 
 #include "System/Color.h"
+#include "System/EventClient.h"
 
 struct MoveDef;
 
-struct IPathDrawer {
+struct IPathDrawer: public CEventClient {
 public:
-	IPathDrawer(): enabled(false) {}
+	IPathDrawer();
 
-	virtual ~IPathDrawer() {}
+	virtual ~IPathDrawer();
 	virtual void DrawAll() const {}
+	virtual void DrawInMiniMap() {}
 
 	virtual void UpdateExtraTexture(int, int, int, int, unsigned char*) const {}
+
+	// CEventClient interface
+	bool WantsEvent(const std::string& eventName) {
+		return (eventName == "DrawInMiniMap");
+	}
 
 	bool ToggleEnabled() { enabled = !enabled; return enabled; }
 	bool IsEnabled() const { return enabled; }

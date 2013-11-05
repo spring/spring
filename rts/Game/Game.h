@@ -57,8 +57,9 @@ public:
 	void GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool timeout = false);
 
 private:
+	void LoadMap(const std::string& mapName);
 	void LoadDefs();
-	void PreLoadSimulation(const std::string& mapName);
+	void PreLoadSimulation();
 	void PostLoadSimulation();
 	void PreLoadRendering();
 	void PostLoadRendering();
@@ -96,7 +97,6 @@ public:
 
 	void ReloadGame();
 	void SaveGame(const std::string& filename, bool overwrite);
-	void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod);
 
 	void ResizeEvent();
 	void SetupRenderingParams();
@@ -108,7 +108,7 @@ private:
 	bool DrawMT();
 
 	static void DrawMTcb(void* c) { static_cast<CGame*>(c)->DrawMT(); }
-	bool UpdateUnsynced();
+	bool UpdateUnsynced(const spring_time currentTime);
 
 	void DrawSkip(bool blackscreen = true);
 	void DrawInputText();
@@ -129,7 +129,9 @@ private:
 
 	void ReColorTeams();
 
+	void SendClientProcUsage();
 	void ClientReadNet();
+	void UpdateConsumeSpeed();
 	void SimFrame();
 	void StartPlaying();
 	bool Update();
@@ -142,8 +144,6 @@ public:
 
 	unsigned char gameID[16];
 
-	LuaParser* defsParser;
-
 	unsigned int thisFps;
 
 	int lastSimFrame;
@@ -152,20 +152,15 @@ public:
 	spring_time lastUpdateTime;
 	spring_time lastSimFrameTime;
 	spring_time lastDrawFrameTime;
-	spring_time lastModGameTimeMeasure;
+	spring_time lastFrameTime;
 
 	float updateDeltaSeconds;
-
-	float lastCpuUsageTime;
 
 	/// Time in seconds, stops at game end
 	float totalGameTime;
 
-	int lastTick;
 	int chatSound;
 
-	bool camMove[8];
-	bool camRot[4];
 	bool windowedEdgeMove;
 	bool fullscreenEdgeMove;
 
@@ -190,13 +185,10 @@ public:
 	bool chatting;
 	std::string userInputPrefix;
 
-	spring_time lastFrameTime;
-
 	/// <playerID, <packetCode, total bytes> >
 	std::map<int, PlayerTrafficInfo> playerTraffic;
 
 	// to smooth out SimFrame calls
-	int unconsumedFrames;          ///< Lowest number of unconsumed frames in the past second.
 	float msgProcTimeLeft; ///< How many SimFrame() calls we still may do.
 	float consumeSpeed;    ///< How fast we should eat NETMSG_NEWFRAMEs.
 	spring_time lastframe; ///< time of previous ClientReadNet() call.
@@ -208,14 +200,14 @@ public:
 	bool skipSoundmute;
 	float skipOldSpeed;
 	float skipOldUserSpeed;
-	spring_time skipLastDraw;
+	spring_time skipLastDrawTime;
 
 	/**
 	 * @see CGameServer#speedControl
 	 */
 	int speedControl;
-	int luaLockTime;
-	int luaExportSize;
+
+	LuaParser* defsParser;
 
 	/// for reloading the savefile
 	ILoadSaveHandler* saveFile;

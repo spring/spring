@@ -5,6 +5,7 @@
 
 #undef GL_GLEXT_LEGACY
 #define GL_GLEXT_PROTOTYPES
+#define _GDI32_
 #include <GL/gl.h>
 #include <GL/glext.h> //gl.h may not include all extensions
 

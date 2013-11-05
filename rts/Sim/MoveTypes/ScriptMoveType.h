@@ -31,9 +31,9 @@ class CScriptMoveType : public AMoveType
 		void StartMoving(float3, float goalRadius, float speed) {}
 		void KeepPointingTo(float3, float distance, bool aggressive) {}
 		void KeepPointingTo(CUnit* unit, float distance, bool aggressive) {}
-		void StopMoving() {}
+		void StopMoving(bool callScript = false, bool hardStop = false) {}
 
-		void SetGoal(float3 pos) {}
+		void SetGoal(const float3& pos, float distance = 0.0f) {}
 		void SetMaxSpeed(float speed) {}
 		void SetWantedMaxSpeed(float speed) {}
 		void LeaveTransport() {}
@@ -52,8 +52,8 @@ class CScriptMoveType : public AMoveType
 
 		float drag;
 
-		/// velocity
-		float3 vel;
+		/// velocity vector
+		float3 velVec;
 		/// relative velocity (to current direction)
 		float3 relVel;
 
@@ -62,15 +62,15 @@ class CScriptMoveType : public AMoveType
 		/// angular velocity
 		float3 rotVel;
 
+		float3 mins;
+		float3 maxs;
+
 		bool trackSlope;
 		bool trackGround;
 		float groundOffset;
 
 		float gravityFactor;
 		float windFactor;
-
-		float3 mins;
-		float3 maxs;
 
 		bool noBlocking;
 

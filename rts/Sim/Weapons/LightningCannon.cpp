@@ -6,37 +6,32 @@
 #include "WeaponDefHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
-#include "Map/Ground.h"
 #include "Rendering/Models/3DModel.h"
-#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/CollisionHandler.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
 
-CR_BIND_DERIVED(CLightningCannon, CWeapon, (NULL));
+CR_BIND_DERIVED(CLightningCannon, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CLightningCannon,(
 	CR_MEMBER(color),
 	CR_RESERVED(8)
 ));
 
-CLightningCannon::CLightningCannon(CUnit* owner): CWeapon(owner)
+CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
+	color = def->visuals.color;
 }
 
 
 void CLightningCannon::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->pos +
-			owner->frontdir * relWeaponPos.z +
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;
-		weaponMuzzlePos = owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		if (!onlyForward) {
 			wantedDir = (targetPos - weaponPos).Normalize();
@@ -51,23 +46,22 @@ void CLightningCannon::Init()
 	CWeapon::Init();
 }
 
-void CLightningCannon::FireImpl()
+void CLightningCannon::FireImpl(bool scriptCall)
 {
 	float3 curPos = weaponMuzzlePos;
-	float3 hitPos;
 	float3 curDir = (targetPos - curPos).Normalize();
 	float3 newDir = curDir;
 
 	curDir +=
-		(gs->randVector() * sprayAngle + salvoError) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
+		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	curDir.Normalize();
 
 	CUnit* hitUnit = NULL;
 	CFeature* hitFeature = NULL;
 	CPlasmaRepulser* hitShield = NULL;
+	CollisionQuery hitColQuery;
 
-	float boltLength = TraceRay::TraceRay(curPos, curDir, range, collisionFlags, owner, hitUnit, hitFeature);
+	float boltLength = TraceRay::TraceRay(curPos, curDir, range, collisionFlags, owner, hitUnit, hitFeature, &hitColQuery);
 
 	if (!weaponDef->waterweapon) {
 		// terminate bolt at water surface if necessary
@@ -83,12 +77,9 @@ void CLightningCannon::FireImpl()
 		hitShield->BeamIntercepted(this);
 	}
 
-	hitPos = curPos + curDir * boltLength;
-
 	if (hitUnit != NULL) {
-		hitUnit->SetLastAttackedPiece(hitUnit->localModel->GetRoot(), gs->frameNum);
+		hitUnit->SetLastAttackedPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 	}
-
 
 	const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
 		weaponDef->damages:
@@ -105,7 +96,7 @@ void CLightningCannon::FireImpl()
 		);
 
 	const CGameHelper::ExplosionParams params = {
-		hitPos,
+		curPos + curDir * boltLength,                     // hitPos (same as hitColQuery.GetHitPos() if no water or shield in way)
 		curDir,
 		damageArray,
 		weaponDef,

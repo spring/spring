@@ -41,19 +41,27 @@ CEmgProjectile::CEmgProjectile(const ProjectileParams& params): CWeaponProjectil
 
 void CEmgProjectile::Update()
 {
+	// disable collisions when ttl reaches 0 since the
+	// projectile will travel far past its range while
+	// fading out
+	checkCol &= (ttl >= 0);
+	deleteMe |= (intensity <= 0.0f);
+
 	if (!luaMoveCtrl) {
 		pos += speed;
 	}
-
-	if (--ttl < 0) {
-		if ((intensity = std::max(intensity - 0.1f, 0.0f)) <= 0.0f) {
-			deleteMe = true;
-		}
+	if (ttl <= 0) {
+		// fade out over the next 10 frames at most
+		intensity -= 0.1f;
+		intensity = std::max(intensity, 0.0f);
 	} else {
-		gCEG->Explosion(cegID, pos, ttl, intensity, NULL, 0.0f, NULL, speed);
+		explGenHandler->GenExplosion(cegID, pos, speed, ttl, intensity, 0.0f, NULL, NULL);
 	}
+
 	UpdateGroundBounce();
 	UpdateInterception();
+
+	--ttl;
 }
 
 void CEmgProjectile::Draw()
@@ -63,7 +71,7 @@ void CEmgProjectile::Draw()
 	col[0] = (unsigned char) (color.x * intensity * 255);
 	col[1] = (unsigned char) (color.y * intensity * 255);
 	col[2] = (unsigned char) (color.z * intensity * 255);
-	col[3] = 5; //intensity*255;
+	col[3] = intensity * 255;
 	va->AddVertexTC(drawPos - camera->right * drawRadius-camera->up * drawRadius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
 	va->AddVertexTC(drawPos + camera->right * drawRadius-camera->up * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
 	va->AddVertexTC(drawPos + camera->right * drawRadius+camera->up * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
@@ -72,13 +80,14 @@ void CEmgProjectile::Draw()
 
 int CEmgProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	if (!luaMoveCtrl) {
-		const float3 rdir = (pos - shieldPos).Normalize();
+	if (luaMoveCtrl)
+		return 0;
 
-		if (rdir.dot(speed) < shieldMaxSpeed) {
-			speed += (rdir * shieldForce);
-			return 2;
-		}
+	const float3 rdir = (pos - shieldPos).Normalize();
+
+	if (rdir.dot(speed) < shieldMaxSpeed) {
+		SetVelocityAndSpeed(speed + (rdir * shieldForce));
+		return 2;
 	}
 
 	return 0;

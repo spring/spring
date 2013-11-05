@@ -64,7 +64,7 @@ void CTWController::ScreenEdgeMove(float3 move)
 
 void CTWController::MouseWheelMove(float move)
 {
-	camera->rot.x-=move*0.001f;
+	camera->rot.x -= (move * 0.001f);
 	UpdateVectors();
 }
 

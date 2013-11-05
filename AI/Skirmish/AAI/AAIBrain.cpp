@@ -499,12 +499,12 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 		// debug purposes:
 		if(sectorType == LAND_SECTOR)
 		{
-			ai->Log("\nAdding land sector %i,%i to base; base size: "_STPF_, best_sector->x, best_sector->y, sectors[0].size());
+			ai->Log("\nAdding land sector %i,%i to base; base size: " _STPF_, best_sector->x, best_sector->y, sectors[0].size());
 			ai->Log("\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
 		}
 		else
 		{
-			ai->Log("\nAdding water sector %i,%i to base; base size: "_STPF_, best_sector->x, best_sector->y, sectors[0].size());
+			ai->Log("\nAdding water sector %i,%i to base; base size: " _STPF_, best_sector->x, best_sector->y, sectors[0].size());
 			ai->Log("\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
 		}
 
@@ -984,14 +984,14 @@ void AAIBrain::BuildUnitOfMovementType(unsigned int allowed_move_type, float cos
 
 	if(rand()%cfg->HIGH_RANGE_UNITS_RATE == 1)
 	{
-		int t = rand()%1000;
+		const int t = rand()%1000;
 
 		if(t < 350)
 			range = 0.75;
 		else if(t == 700)
 			range = 1.3f;
 		else
-			t = 1.7f;
+			range = 1.7f;
 	}
 	else
 		range = 0.1f;

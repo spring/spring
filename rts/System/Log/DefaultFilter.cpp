@@ -11,6 +11,7 @@
 #include <cassert>
 #include <map>
 #include <set>
+#include <stack>
 
 
 #ifdef __cplusplus
@@ -120,6 +121,24 @@ void log_filter_section_setMinLevel(const char* section, int level) {
 	} else {
 		sectionMinLevels[section] = level;
 	}
+}
+
+
+void log_enable_and_disable(const bool enable)
+{
+	static std::stack<int> oldLevels;
+	int newLevel;
+
+	if (enable) {
+		assert(!oldLevels.empty());
+		newLevel = oldLevels.top();
+		oldLevels.pop();
+	} else {
+		oldLevels.push(log_filter_global_getMinLevel());
+		newLevel = LOG_LEVEL_FATAL;
+	}
+
+	log_filter_global_setMinLevel(newLevel);
 }
 
 int log_filter_section_getRegistered() {

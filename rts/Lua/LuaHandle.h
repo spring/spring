@@ -52,9 +52,9 @@ class CLuaHandle : public CEventClient
 		void ResetCallinErrors() { callinErrors = 0; }
 
 	public:
-#define GET_CONTEXT_DATA(v) ((L ? L : GetActiveState())->lcd->v)
-#define GET_ACTIVE_CONTEXT_DATA(v) (GetActiveState()->lcd->v)
-#define GET_HANDLE_CONTEXT_DATA(v) (L->lcd->v)
+#define GET_CONTEXT_DATA(v) (GetLuaContextData(L ? L : GetActiveState())->v)
+#define GET_ACTIVE_CONTEXT_DATA(v) (GetLuaContextData(GetActiveState())->v)
+#define GET_HANDLE_CONTEXT_DATA(v) (GetLuaContextData(L)->v)
 #define SET_ACTIVE_CONTEXT_DATA(v) if(all) { D_Sim.v = _##v; D_Draw.v = _##v; } else GET_ACTIVE_CONTEXT_DATA(v) = _##v
 #define SET_HANDLE_CONTEXT_DATA(v) GET_HANDLE_CONTEXT_DATA(v) = _##v
 
@@ -156,7 +156,7 @@ class CLuaHandle : public CEventClient
 
 		void UnitIdle(const CUnit* unit);
 		void UnitCommand(const CUnit* unit, const Command& command);
-		void UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag);
+		void UnitCmdDone(const CUnit* unit, const Command& command);
 		void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,
@@ -190,6 +190,12 @@ class CLuaHandle : public CEventClient
 
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
+		void FeatureDamaged(
+			const CFeature* feature,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID);
 
 		void ProjectileCreated(const CProjectile* p);
 		void ProjectileDestroyed(const CProjectile* p);
@@ -255,6 +261,8 @@ class CLuaHandle : public CEventClient
 
 		void GameProgress(int frameNum);
 
+		void CollectGarbage();
+
 	public: // custom call-in  (inter-script calls)
 		virtual bool HasSyncedXCall(const string& funcName) { return false; }
 		virtual bool HasUnsyncedXCall(lua_State* srcState, const string& funcName) { return false; }
@@ -291,14 +299,12 @@ class CLuaHandle : public CEventClient
 		bool LoadCode(lua_State* L, const string& code, const string& debug);
 		bool AddEntriesToTable(lua_State* L, const char* name, bool (*entriesFunc)(lua_State*));
 
-		/// returns stack index of traceback function
-		int SetupTraceback(lua_State* L);
 		/// returns error code and sets traceback on error
-		int  RunCallInTraceback(const LuaHashString* hs, int inArgs, int outArgs, int errfuncIndex, std::string& traceback);
+		int  RunCallInTraceback(const LuaHashString* hs, int inArgs, int outArgs, int errFuncIndex, std::string& tracebackMsg, bool popErrFunc);
 		/// returns false and prints message to log on error
-		bool RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errfuncIndex);
-		/// returns error code and sets errormessage on error
-		int  RunCallIn(int inArgs, int outArgs, std::string& errormessage);
+		bool RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errFuncIndex, bool popErrFunc = true);
+		/// returns false and and sets errormessage on error
+		bool RunCallIn(int inArgs, int outArgs, std::string& errormessage);
 		/// returns false and prints message to log on error
 		bool RunCallIn(const LuaHashString& hs, int inArgs, int outArgs);
 		bool RunCallInUnsynced(const LuaHashString& hs, int inArgs, int outArgs);
@@ -336,7 +342,7 @@ class CLuaHandle : public CEventClient
 
 	protected:
 		bool userMode;
-		
+
 		lua_State* L_Sim;
 		lua_State* L_Draw;
 
@@ -351,6 +357,20 @@ class CLuaHandle : public CEventClient
 		vector<bool> watchWeaponDefs; // for the Explosion call-in
 
 		int callinErrors;
+
+	public: // EventBatch
+		void ExecuteUnitEventBatch();
+		void ExecuteFeatEventBatch();
+		void ExecuteProjEventBatch();
+		void ExecuteFrameEventBatch();
+		void ExecuteLogEventBatch();
+
+	protected:
+		std::vector<LuaUnitEventBase> luaUnitEventBatch;
+		std::vector<LuaFeatEventBase> luaFeatEventBatch;
+		std::vector<LuaProjEventBase> luaProjEventBatch;
+		std::vector<LuaLogEventBase> luaLogEventBatch;
+		std::vector<int> luaFrameEventBatch;
 
 	protected: // call-outs
 		static int KillActiveHandle(lua_State* L);
@@ -388,23 +408,10 @@ class CLuaHandle : public CEventClient
 		static bool IsDrawCallIn() {
 			return (LUA_MT_OPT & LUA_MUTEX) && !Threading::IsSimThread();
 		}
-		void ExecuteUnitEventBatch();
-		void ExecuteFeatEventBatch();
-		void ExecuteObjEventBatch();
-		void ExecuteProjEventBatch();
-		void ExecuteFrameEventBatch();
-		void ExecuteLogEventBatch();
 
 	protected: // static
 		static bool devMode; // allows real file access
 		static bool modUICtrl; // allows non-user scripts to use UI controls
-
-		std::vector<LuaUnitEvent> luaUnitEventBatch;
-		std::vector<LuaFeatEvent> luaFeatEventBatch;
-		std::vector<LuaObjEvent> luaObjEventBatch;
-		std::vector<LuaProjEvent> luaProjEventBatch;
-		std::vector<int> luaFrameEventBatch;
-		std::vector<LuaLogEvent> luaLogEventBatch;
 
 		// FIXME: because CLuaUnitScript needs to access RunCallIn
 		friend class CLuaUnitScript;
@@ -413,7 +420,7 @@ class CLuaHandle : public CEventClient
 
 inline bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
 {
-	return RunCallInTraceback(hs, inArgs, outArgs, 0);
+	return RunCallInTraceback(hs, inArgs, outArgs, 0, false);
 }
 
 

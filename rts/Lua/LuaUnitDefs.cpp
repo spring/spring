@@ -405,17 +405,15 @@ static int WeaponsTable(lua_State* L, const void* data)
 	const vector<UnitDefWeapon>& weapons =
 		*((const vector<UnitDefWeapon>*)data);
 
-	const int weaponCount = (int)weapons.size();
-
 	lua_newtable(L);
 
-	for (int i = 0; i < weaponCount; i++) {
+	for (size_t i = 0; i < weapons.size(); i++) {
 		const UnitDefWeapon& udw = weapons[i];
 		const WeaponDef* weapon = udw.def;
-		lua_pushnumber(L, i + 1);
+		lua_pushnumber(L, i + LUA_WEAPON_BASE_INDEX);
 		lua_newtable(L); {
 			HSTR_PUSH_NUMBER(L, "weaponDef",   weapon->id);
-			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo);
+			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo-1+LUA_WEAPON_BASE_INDEX);
 			HSTR_PUSH_NUMBER(L, "fuelUsage",   udw.fuelUsage);
 			HSTR_PUSH_NUMBER(L, "maxAngleDif", udw.maxMainDirAngleDif);
 			HSTR_PUSH_NUMBER(L, "mainDirX",    udw.mainDir.x);
@@ -494,12 +492,11 @@ static int MoveDefTable(lua_State* L, const void* data)
 
 	HSTR_PUSH_NUMBER(L, "id", md->pathType);
 
-	switch (md->moveFamily) {
-		case 0:  { HSTR_PUSH_STRING(L, "family", "tank");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
-		case 1:  { HSTR_PUSH_STRING(L, "family", "kbot");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
-		case 2:  { HSTR_PUSH_STRING(L, "family", "hover"); HSTR_PUSH_STRING(L, "type",  "hover"); break; }
-		case 3:  { HSTR_PUSH_STRING(L, "family", "ship");  HSTR_PUSH_STRING(L, "type",   "ship"); break; }
-		default: { HSTR_PUSH_STRING(L, "family", "error"); HSTR_PUSH_STRING(L, "type",  "error"); break; }
+	switch (md->speedModClass) {
+		case MoveDef::Tank:  { HSTR_PUSH_STRING(L, "family", "tank");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
+		case MoveDef::KBot:  { HSTR_PUSH_STRING(L, "family", "kbot");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
+		case MoveDef::Hover: { HSTR_PUSH_STRING(L, "family", "hover"); HSTR_PUSH_STRING(L, "type",  "hover"); break; }
+		case MoveDef::Ship:  { HSTR_PUSH_STRING(L, "family", "ship");  HSTR_PUSH_STRING(L, "type",   "ship"); break; }
 	}
 
 	HSTR_PUSH_NUMBER(L, "xsize",         md->xsize);
@@ -554,31 +551,37 @@ static int ModelTable(lua_State* L, const void* data) {
 	return 1;
 }
 
-#define TYPE_FUNC(FuncName, LuaType)                    \
-	static int FuncName(lua_State* L, const void* data) \
-	{                                                   \
-		const UnitDef* ud = static_cast<const UnitDef*>(data);      \
-		lua_push ## LuaType(L, ud->FuncName());         \
-		return 1;                                       \
+#define TYPE_FUNC(FuncName, LuaType)                           \
+	static int FuncName(lua_State* L, const void* data)        \
+	{                                                          \
+		const UnitDef* ud = static_cast<const UnitDef*>(data); \
+		lua_push ## LuaType(L, ud->FuncName());                \
+		return 1;                                              \
 	}
 
-TYPE_FUNC(GetTypeString, string);
+#define TYPE_MODEL_FUNC(name, param)                           \
+	static int name(lua_State* L, const void* data)            \
+	{                                                          \
+		const UnitDef* ud = static_cast<const UnitDef*>(data); \
+		const S3DModel* model = ud->LoadModel();               \
+		lua_pushnumber(L, model->param);                       \
+		return 1;                                              \
+	}
+
+TYPE_FUNC(IsTransportUnit, boolean);
+TYPE_FUNC(IsImmobileUnit, boolean);
 TYPE_FUNC(IsBuildingUnit, boolean);
+TYPE_FUNC(IsBuilderUnit, boolean);
+TYPE_FUNC(IsMobileBuilderUnit, boolean);
+TYPE_FUNC(IsStaticBuilderUnit, boolean);
 TYPE_FUNC(IsFactoryUnit, boolean);
-TYPE_FUNC(IsFighterUnit, boolean);
-TYPE_FUNC(IsBomberUnit, boolean);
+TYPE_FUNC(IsExtractorUnit, boolean);
 TYPE_FUNC(IsGroundUnit, boolean);
-
-
-
-#define TYPE_MODEL_FUNC(name, param)                  \
-	static int name(lua_State* L, const void* data)   \
-	{                                                 \
-		const UnitDef* ud = static_cast<const UnitDef*>(data);    \
-		const S3DModel* model = ud->LoadModel();      \
-		lua_pushnumber(L, model->param);              \
-		return 1;                                     \
-	}
+TYPE_FUNC(IsAirUnit, boolean);
+TYPE_FUNC(IsStrafingAirUnit, boolean);
+TYPE_FUNC(IsHoveringAirUnit, boolean);
+TYPE_FUNC(IsFighterAirUnit, boolean);
+TYPE_FUNC(IsBomberAirUnit, boolean);
 
 TYPE_MODEL_FUNC(ModelHeight, height);
 TYPE_MODEL_FUNC(ModelRadius, radius);
@@ -594,12 +597,10 @@ TYPE_MODEL_FUNC(ModelMaxz,   maxs.z);
 
 
 
-static int ReturnFalse(lua_State* L, const void* data)
-{
-	lua_pushboolean(L, false);
-	return 1;
-}
-
+static int ReturnEmptyString(lua_State* L, const void* data) { LOG_L(L_WARNING, "[%s] deprecated field!", __FUNCTION__); lua_pushstring(L, ""); return 1; }
+static int ReturnFalse(lua_State* L, const void* data) { LOG_L(L_WARNING, "[%s] deprecated field!", __FUNCTION__); lua_pushboolean(L, false); return 1; }
+static int ReturnMinusOne(lua_State* L, const void* data) { LOG_L(L_WARNING, "[%s] deprecated field!", __FUNCTION__); lua_pushnumber(L, -1); return 1; }
+static int ReturnNil(lua_State* L, const void* data) { LOG_L(L_WARNING, "[%s] deprecated field!", __FUNCTION__); lua_pushnil(L); return 1; }
 
 /******************************************************************************/
 /******************************************************************************/
@@ -613,7 +614,6 @@ static bool InitParamMap()
 	const UnitDef& ud = *unitDefHandler->unitDefs[0];
 	const char* start = ADDRESS(ud);
 
-// ADD_INT("weaponCount", weaponCount); // CUSTOM
 /*
 ADD_FLOAT("maxRange",       maxRange);       // CUSTOM
 ADD_BOOL("hasShield",       hasShield);      // CUSTOM
@@ -622,6 +622,15 @@ ADD_BOOL("canStockpile",    canStockpile);   // CUSTOM
 ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 */
 // ADD_INT("buildOptionsCount", ud.buildOptions.size(")); // CUSTOM
+
+	ADD_FUNCTION("builder", ud, ReturnFalse); // DEPRECATED
+	ADD_FUNCTION("floater", ud, ReturnFalse); // DEPRECATED
+	ADD_FUNCTION("canDGun", ud, ReturnFalse); // DEPRECATED
+	ADD_FUNCTION("canCrash", ud, ReturnFalse); // DEPRECATED
+	ADD_FUNCTION("isCommander", ud, ReturnFalse); // DEPRECATED
+	ADD_FUNCTION("moveData", ud.pathType, ReturnNil); // DEPRECATED
+	ADD_FUNCTION("type", ud, ReturnEmptyString); // DEPRECATED
+	ADD_FUNCTION("maxSlope", ud, ReturnMinusOne); // DEPRECATED
 
 	ADD_FUNCTION("totalEnergyOut", ud, TotalEnergyOut);
 
@@ -635,18 +644,25 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("weapons",            ud.weapons,            WeaponsTable);
 	ADD_FUNCTION("sounds",             ud.sounds,             SoundsTable);
 	ADD_FUNCTION("model",              ud,                    ModelTable);
-	ADD_FUNCTION("moveData",           ud.pathType,           MoveDefTable); // backward compatibility
 	ADD_FUNCTION("moveDef",            ud.pathType,           MoveDefTable);
 	ADD_FUNCTION("shieldWeaponDef",    ud.shieldWeaponDef,    WeaponDefToID);
 	ADD_FUNCTION("stockpileWeaponDef", ud.stockpileWeaponDef, WeaponDefToID);
 	ADD_FUNCTION("iconType",           ud.iconType,           SafeIconType);
 
-	ADD_FUNCTION("type",         ud, GetTypeString); // backward compatibility (TODO: find a way to print a warning when used!)
-	ADD_FUNCTION("isBuilding",   ud, IsBuildingUnit);
-	ADD_FUNCTION("isFactory",    ud, IsFactoryUnit);
-	ADD_FUNCTION("isFighter",    ud, IsFighterUnit);
-	ADD_FUNCTION("isBomber",     ud, IsBomberUnit);
+	ADD_FUNCTION("isTransport", ud, IsTransportUnit);
+	ADD_FUNCTION("isImmobile", ud, IsImmobileUnit);
+	ADD_FUNCTION("isBuilding", ud, IsBuildingUnit);
+	ADD_FUNCTION("isBuilder", ud, IsBuilderUnit);
+	ADD_FUNCTION("isMobileBuilder", ud, IsMobileBuilderUnit);
+	ADD_FUNCTION("isStaticBuilder", ud, IsStaticBuilderUnit);
+	ADD_FUNCTION("isFactory", ud, IsFactoryUnit);
+	ADD_FUNCTION("isExtractor", ud, IsExtractorUnit);
 	ADD_FUNCTION("isGroundUnit", ud, IsGroundUnit);
+	ADD_FUNCTION("isAirUnit", ud, IsAirUnit);
+	ADD_FUNCTION("isStrafingAirUnit", ud, IsStrafingAirUnit);
+	ADD_FUNCTION("isHoveringAirUnit", ud, IsHoveringAirUnit);
+	ADD_FUNCTION("isFighterAirUnit", ud, IsFighterAirUnit);
+	ADD_FUNCTION("isBomberAirUnit", ud, IsBomberAirUnit);
 
 	ADD_FUNCTION("height",  ud, ModelHeight);
 	ADD_FUNCTION("radius",  ud, ModelRadius);
@@ -731,11 +747,10 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_FLOAT("mass", ud.mass);
 
-	ADD_FLOAT("maxSlope",      ud.maxHeightDif); // backward compability (TODO: find a way to print a warning when used!)
 	ADD_FLOAT("maxHeightDif",  ud.maxHeightDif);
 	ADD_FLOAT("minWaterDepth", ud.minWaterDepth);
-	ADD_FLOAT("waterline",     ud.waterline);
 	ADD_FLOAT("maxWaterDepth", ud.maxWaterDepth);
+	ADD_FLOAT("waterline",     ud.waterline);
 
 	ADD_INT("flankingBonusMode",   ud.flankingBonusMode);
 	ADD_FLOAT("flankingBonusMax",  ud.flankingBonusMax);
@@ -766,20 +781,17 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_BOOL("canSubmerge",       ud.canSubmerge);
 	ADD_BOOL("floatOnWater",      ud.floatOnWater);
-	ADD_BOOL("floater",           ud.floatOnWater);  // backward compability (TODO: find a way to print a warning when used!)
 	ADD_BOOL("canFly",            ud.canfly);
 	ADD_BOOL("canMove",           ud.canmove);
-	ADD_BOOL("canHover",          ud.canHover);
-	ADD_BOOL("isBuilder",         ud.builder);  // backward compability (TODO: find a way to print a warning when used!)
-	ADD_BOOL("builder",           ud.builder);
 	ADD_BOOL("onOffable",         ud.onoffable);
 	ADD_BOOL("activateWhenBuilt", ud.activateWhenBuilt);
+
+	ADD_DEPRECATED_LUADEF_KEY("canHover");
 
 	ADD_BOOL("reclaimable", ud.reclaimable);
 	ADD_BOOL("capturable",  ud.capturable);
 	ADD_BOOL("repairable",  ud.repairable);
 
-	ADD_BOOL("canDGun",               ud.canManualFire);  // backward compability (TODO: find a way to print a warning when used!)
 	ADD_BOOL("canManualFire",         ud.canManualFire);
 	ADD_BOOL("canCloak",              ud.canCloak);
 	ADD_BOOL("canRestore",            ud.canRestore);
@@ -796,7 +808,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canCapture",            ud.canCapture);
 	ADD_BOOL("canResurrect",          ud.canResurrect);
 	ADD_BOOL("canLoopbackAttack",     ud.canLoopbackAttack);
-	ADD_BOOL("canCrash",              ud.canLoopbackAttack);  // backward compability (TODO: find a way to print a warning when used!)
 	ADD_BOOL("canFireControl",        ud.canFireControl);
 	ADD_INT( "fireState",             ud.fireState);
 	ADD_INT( "moveState",             ud.moveState);
@@ -804,9 +815,9 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("factoryHeadingTakeoff", ud.factoryHeadingTakeoff);
 
 	//aircraft stuff
+	ADD_DEPRECATED_LUADEF_KEY("drag");
 	ADD_FLOAT("wingDrag",     ud.wingDrag);
 	ADD_FLOAT("wingAngle",    ud.wingAngle);
-	ADD_FLOAT("drag",         ud.drag);
 	ADD_FLOAT("crashDrag",    ud.crashDrag);
 	ADD_FLOAT("frontToSpeed", ud.frontToSpeed);
 	ADD_FLOAT("speedToFront", ud.speedToFront);
@@ -876,8 +887,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_BOOL("needGeo",   ud.needGeo);
 	ADD_BOOL("isFeature", ud.isFeature);
-
-	ADD_FUNCTION("isCommander", ud, ReturnFalse);  // backward compability (TODO: find a way to print a warning when used!)
 
 	ADD_BOOL("hideDamage",     ud.hideDamage);
 	ADD_BOOL("showPlayerName", ud.showPlayerName);

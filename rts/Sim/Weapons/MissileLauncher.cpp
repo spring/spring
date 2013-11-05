@@ -4,17 +4,17 @@
 #include "WeaponDef.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
-#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 
-CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL));
+CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CMissileLauncher,(
 	CR_RESERVED(8)
 ));
 
-CMissileLauncher::CMissileLauncher(CUnit* owner): CWeapon(owner)
+CMissileLauncher::CMissileLauncher(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 }
 
@@ -22,14 +22,12 @@ CMissileLauncher::CMissileLauncher(CUnit* owner): CWeapon(owner)
 void CMissileLauncher::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->pos + owner->frontdir * relWeaponPos.z + owner->updir * relWeaponPos.y + owner->rightdir * relWeaponPos.x;
-		weaponMuzzlePos = owner->pos + owner->frontdir * relWeaponMuzzlePos.z + owner->updir * relWeaponMuzzlePos.y + owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		if (!onlyForward) {
 			wantedDir = targetPos - weaponPos;
-			float dist = wantedDir.Length();
-			predict = dist / projectileSpeed;
-			wantedDir /= dist;
+			predict = wantedDir.LengthNormalize() / projectileSpeed;
 
 			if (weaponDef->trajectoryHeight > 0.0f) {
 				wantedDir.y += weaponDef->trajectoryHeight;
@@ -40,37 +38,34 @@ void CMissileLauncher::Update()
 	CWeapon::Update();
 }
 
-void CMissileLauncher::FireImpl()
+void CMissileLauncher::FireImpl(bool scriptCall)
 {
-	float3 dir;
+	float3 dir = targetPos - weaponMuzzlePos;
+	const float dist = dir.LengthNormalize();
+
 	if (onlyForward) {
 		dir = owner->frontdir;
 	} else if (weaponDef->fixedLauncher) {
 		dir = weaponDir;
-	} else {
-		dir = targetPos - weaponMuzzlePos;
+	} else if (weaponDef->trajectoryHeight > 0.0f) {
+		dir.y += weaponDef->trajectoryHeight;
 		dir.Normalize();
-
-		if (weaponDef->trajectoryHeight > 0.0f) {
-			dir.y += weaponDef->trajectoryHeight;
-			dir.Normalize();
-		}
 	}
 
-	dir +=
-		((gs->randVector() * sprayAngle + salvoError) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
+	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	float3 startSpeed = dir * weaponDef->startvelocity;
-	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType))
+
+	// NOTE: why only for SAMT units?
+	if (onlyForward && owner->unitDef->IsStrafingAirUnit())
 		startSpeed += owner->speed;
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.end = targetPos;
 	params.speed = startSpeed;
-	params.ttl = weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
+	params.ttl = weaponDef->flighttime == 0? std::ceil(std::max(dist, range) / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

@@ -36,7 +36,8 @@ struct S3DOPrimitive {
 };
 
 struct S3DOPiece: public S3DModelPiece {
-	S3DOPiece() { parent = NULL; radius = 0; }
+	S3DOPiece(): radius(0.0f) {
+	}
 
 	void DrawForList() const;
 	void SetMinMaxExtends();
@@ -117,11 +118,13 @@ private:
 	S3DOPiece* LoadPiece(S3DModel* model, int pos, S3DOPiece* parent,
 			int* numobj);
 
+	void SimStreamRead(void* buf, int length);
+
 	std::set<std::string> teamtex;
+	std::vector<unsigned char> fileBuf;
 
 	int curOffset;
-	unsigned char* fileBuf;
-	void SimStreamRead(void* buf, int length);
+
 };
 
 #endif // SPRING_3DOPARSER_H

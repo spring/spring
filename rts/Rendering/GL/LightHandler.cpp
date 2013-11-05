@@ -119,7 +119,7 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 		const float3* lightTrackDir       = light.GetTrackDirection();
 		const float4& lightPos            = (lightTrackPos != NULL)? float4(*lightTrackPos, 1.0f): light.GetPosition();
 		const float3& lightDir            = (lightTrackDir != NULL)? float3(*lightTrackDir      ): light.GetDirection();
-		const bool    lightVisible        = (gu->spectatingFullView || light.GetIgnoreLOS() || loshandler->InLos(lightPos, gu->myAllyTeam));
+		const bool    lightVisible        = (gu->spectatingFullView || light.GetIgnoreLOS() || losHandler->InLos(lightPos, gu->myAllyTeam));
 
 		++it;
 

@@ -5,19 +5,17 @@
 #include "TeamHandler.h"
 #include "GlobalSynced.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "Game/Player.h"
-#include "Game/PlayerHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/Messages.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
-#include "System/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/MsgStrings.h"
 #include "System/Rectangle.h"
 #include "System/creg/STL_List.h"
@@ -112,20 +110,40 @@ CTeam::CTeam(int _teamNum):
 	currentStats = &statHistory.back();
 }
 
+void CTeam::SetDefaultStartPos()
+{
+	const int allyTeam = teamHandler->AllyTeam(teamNum);
+	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
+
+	assert(!allyStartData.empty());
+	assert(allyTeam == teamAllyteam);
+
+	const AllyTeam& allyTeamData = allyStartData[allyTeam];
+	// pick a spot near the center of our startbox
+	const float xmin = (gs->mapx * SQUARE_SIZE) * allyTeamData.startRectLeft;
+	const float zmin = (gs->mapy * SQUARE_SIZE) * allyTeamData.startRectTop;
+	const float xmax = (gs->mapx * SQUARE_SIZE) * allyTeamData.startRectRight;
+	const float zmax = (gs->mapy * SQUARE_SIZE) * allyTeamData.startRectBottom;
+	const float xcenter = (xmin + xmax) * 0.5f;
+	const float zcenter = (zmin + zmax) * 0.5f;
+
+	assert(xcenter >= 0 && xcenter < gs->mapx * SQUARE_SIZE);
+	assert(zcenter >= 0 && zcenter < gs->mapy * SQUARE_SIZE);
+
+	startPos.x = (teamNum - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + xcenter;
+	startPos.z = (teamNum - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + zcenter;
+}
 
 void CTeam::ClampStartPosInStartBox(float3* pos) const
 {
 	const int allyTeam = teamHandler->AllyTeam(teamNum);
-	if (allyTeam < 0 || allyTeam >= gameSetup->allyStartingData.size()) {
-		LOG_L(L_ERROR, "%s: invalid AllyStartingData (team %d)", __FUNCTION__, teamNum);
-		return;
-	}
-	const AllyTeam& at = gameSetup->allyStartingData[allyTeam];
+	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
+	const AllyTeam& allyTeamData = allyStartData[allyTeam];
 	const SRectangle rect(
-		at.startRectLeft   * gs->mapx * SQUARE_SIZE,
-		at.startRectTop    * gs->mapy * SQUARE_SIZE,
-		at.startRectRight  * gs->mapx * SQUARE_SIZE,
-		at.startRectBottom * gs->mapy * SQUARE_SIZE
+		allyTeamData.startRectLeft   * gs->mapx * SQUARE_SIZE,
+		allyTeamData.startRectTop    * gs->mapy * SQUARE_SIZE,
+		allyTeamData.startRectRight  * gs->mapx * SQUARE_SIZE,
+		allyTeamData.startRectBottom * gs->mapy * SQUARE_SIZE
 	);
 
 	int2 ipos(pos->x, pos->z);
@@ -214,14 +232,6 @@ void CTeam::Died(bool normalDeath)
 		return;
 
 	if (normalDeath) {
-		if (leader >= 0) {
-			const CPlayer* leadPlayer = playerHandler->Player(leader);
-			const char* leaderName = leadPlayer->name.c_str();
-			LOG(CMessages::Tr("Team %i (lead by %s) is no more").c_str(), teamNum, leaderName);
-		} else {
-			LOG(CMessages::Tr("Team %i is no more").c_str(), teamNum);
-		}
-
 		// this message is not relayed to clients, it's only for the server
 		net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
 	}
@@ -251,8 +261,8 @@ void CTeam::AddPlayer(int playerNum)
 		teamHandler->UpdateTeamUnitLimitsPreSpawn(teamNum);
 	}
 
-	if (leader == -1) {
-		leader = playerNum;
+	if (!HasLeader()) {
+		SetLeader(playerNum);
 	}
 
 	playerHandler->Player(playerNum)->JoinTeam(teamNum);
@@ -421,15 +431,15 @@ std::string CTeam::GetControllerName() const {
 	std::string s;
 
 	// "Joe, AI: ABCAI 0.1 (nick: Killer), AI: DEFAI 1.2 (nick: Slayer), ..."
-	if (this->leader >= 0) {
-		const CPlayer* leadPlayer = playerHandler->Player(this->leader);
+	if (HasLeader()) {
+		const CPlayer* leadPlayer = playerHandler->Player(leader);
 
 		if (leadPlayer->team != this->teamNum) {
 			const CTeam*   realLeadPlayerTeam = teamHandler->Team(leadPlayer->team);
 			const CPlayer* realLeadPlayer     = NULL;
 
-			if (realLeadPlayerTeam->leader >= 0) {
-				realLeadPlayer = playerHandler->Player(realLeadPlayerTeam->leader);
+			if (realLeadPlayerTeam->HasLeader()) {
+				realLeadPlayer = playerHandler->Player(realLeadPlayerTeam->GetLeader());
 				s = realLeadPlayer->name;
 			} else {
 				s = "N/A"; // weird
@@ -439,9 +449,8 @@ std::string CTeam::GetControllerName() const {
 		}
 
 		const CSkirmishAIHandler::ids_t& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(this->teamNum);
-		const int numTeamAIs = teamAIs.size();
 
-		if (numTeamAIs > 0) {
+		if (!teamAIs.empty()) {
 			s += ", ";
 		}
 
@@ -454,7 +463,7 @@ std::string CTeam::GetControllerName() const {
 			s += (prefix + pstfix);
 			i += 1;
 
-			if (i < numTeamAIs) {
+			if (i < teamAIs.size()) {
 				s += ", ";
 			}
 		}

@@ -12,8 +12,10 @@ CR_REG_METADATA(SkirmishAIBase, (
 ));
 
 
-CR_BIND_DERIVED(SkirmishAIStatistics, TeamControllerStatistics, );
+CR_BIND(SkirmishAIStatistics, );
 CR_REG_METADATA(SkirmishAIStatistics, (
+	CR_MEMBER(numCommands),
+	CR_MEMBER(unitCommands),
 	CR_MEMBER(cpuTime)
 ));
 

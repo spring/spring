@@ -250,10 +250,11 @@ defaultBindings[] = {
 // CKeyBindings
 //
 
-CKeyBindings::CKeyBindings()
+CKeyBindings::CKeyBindings():
+	fakeMetaKey(1),
+	userCommand(true),
+	debugEnabled(false)
 {
-	fakeMetaKey = -1;
-	userCommand = true;
 
 	statefulCommands.insert("drawinmap");
 	statefulCommands.insert("moveforward");
@@ -323,24 +324,20 @@ const CKeyBindings::ActionList&
 			// combine the two lists (normal first)
 			static ActionList merged;
 			merged = nit->second;
-			const ActionList& aal = ait->second;
-			for (int i = 0; i < (int)aal.size(); ++i) {
-				merged.push_back(aal[i]);
-			}
+			merged.insert(merged.end(), ait->second.begin(), ait->second.end());
 			alPtr = &merged;
 		}
 	}
 
-	if (LOG_IS_ENABLED(L_DEBUG)) {
+	if (debugEnabled) {
 		const bool isEmpty = (alPtr == &empty);
-		LOG_L(L_DEBUG, "GetAction: %s (0x%03X)%s",
+		LOG("GetAction: %s (0x%03X)%s",
 				ks.GetString(false).c_str(), ks.Key(),
 				(isEmpty ? "  EMPTY" : ""));
 		if (!isEmpty) {
 			const ActionList& al = *alPtr;
 			for (size_t i = 0; i < al.size(); ++i) {
-				LOG_L(L_DEBUG, "  %s  \"%s\"",
-						al[i].command.c_str(), al[i].rawline.c_str());
+				LOG("  %s  \"%s\" %s", al[i].command.c_str(), al[i].rawline.c_str(), al[i].boundWith.c_str());
 			}
 		}
 	}
@@ -608,21 +605,13 @@ bool CKeyBindings::ExecuteCommand(const string& line)
 	const string command = StringToLower(words[0]);
 
 	if (command == "keydebug") {
-		const int curLogLevel = log_filter_section_getMinLevel(LOG_SECTION_KEY_BINDINGS);
-		bool debug = (curLogLevel == LOG_LEVEL_DEBUG);
 		if (words.size() == 1) {
 			// toggle
-			debug = !debug;
+			debugEnabled = !debugEnabled;
 		} else if (words.size() >= 2) {
 			// set
-			debug = atoi(words[1].c_str());
+			debugEnabled = atoi(words[1].c_str());
 		}
-		if (debug && !LOG_IS_ENABLED_STATIC(L_DEBUG)) {
-			LOG_L(L_WARNING,
-					"You have to run a DEBUG build to be able to log L_DEBUG messages");
-		}
-		log_filter_section_setMinLevel(LOG_SECTION_KEY_BINDINGS,
-				(debug ? LOG_LEVEL_DEBUG : LOG_LEVEL_INFO));
 	}
 	else if ((command == "fakemeta") && (words.size() > 1)) {
 		if (!SetFakeMetaKey(words[1])) { return false; }
@@ -864,3 +853,4 @@ bool CKeyBindings::FileSave(FILE* out) const
 
 
 /******************************************************************************/
+

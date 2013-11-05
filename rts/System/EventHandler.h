@@ -75,7 +75,7 @@ class CEventHandler
 
 		void UnitIdle(const CUnit* unit);
 		void UnitCommand(const CUnit* unit, const Command& command);
-		void UnitCmdDone(const CUnit* unit, int cmdType, int cmdTag);
+		void UnitCmdDone(const CUnit* unit, const Command& command);
 		void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,
@@ -110,10 +110,16 @@ class CEventHandler
 
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
+		void FeatureDamaged(
+			const CFeature* feature,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID);
 		void FeatureMoved(const CFeature* feature, const float3& oldpos);
 
 		void RenderFeatureCreated(const CFeature* feature);
-		void RenderFeatureDestroyed(const CFeature* feature, const float3& pos);
+		void RenderFeatureDestroyed(const CFeature* feature);
 		void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
 
 		void UpdateFeatures();
@@ -203,6 +209,8 @@ class CEventHandler
 		/// it skips network queuing and caching and can be used to calculate the current catchup
 		/// percentage when reconnecting to a running game
 		void GameProgress(int gameFrame);
+
+		void CollectGarbage();
 		/// @}
 
 		inline void LoadedModelRequested();
@@ -309,6 +317,7 @@ class CEventHandler
 
 		EventClientList listFeatureCreated;
 		EventClientList listFeatureDestroyed;
+		EventClientList listFeatureDamaged;
 		EventClientList listFeatureMoved;
 
 		EventClientList listRenderFeatureCreated;
@@ -366,6 +375,8 @@ class CEventHandler
 		EventClientList listDrawInMiniMap;
 
 		EventClientList listGameProgress;
+
+		EventClientList listCollectGarbage;
 };
 
 
@@ -616,14 +627,14 @@ inline void CEventHandler::UnitCommand(const CUnit* unit,
 
 
 inline void CEventHandler::UnitCmdDone(const CUnit* unit,
-                                           int cmdID, int cmdTag)
+                                           const Command& command)
 {
 	const int unitAllyTeam = unit->allyteam;
 	const int count = listUnitCmdDone.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listUnitCmdDone[i];
 		if (ec->CanReadAllyTeam(unitAllyTeam)) {
-			ec->UnitCmdDone(unit, cmdID, cmdTag);
+			ec->UnitCmdDone(unit, command);
 		}
 	}
 }
@@ -639,6 +650,7 @@ inline void CEventHandler::UnitDamaged(
 {
 	const int unitAllyTeam = unit->allyteam;
 	const int count = listUnitDamaged.size();
+
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listUnitDamaged[i];
 		if (ec->CanReadAllyTeam(unitAllyTeam)) {
@@ -720,14 +732,13 @@ inline void CEventHandler::RenderUnitMoved(const CUnit* unit, const float3& newp
 
 inline void CEventHandler::FeatureCreated(const CFeature* feature)
 {
-	eventBatchHandler->EnqueueFeatureCreatedEvent(feature, feature->pos);
+	(eventBatchHandler->GetFeatureCreatedDestroyedEventBatch()).enqueue(feature);
 
 	const int featureAllyTeam = feature->allyteam;
 	const int count = listFeatureCreated.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listFeatureCreated[i];
-		if ((featureAllyTeam < 0) || // global team
-		    ec->CanReadAllyTeam(featureAllyTeam)) {
+		if ((featureAllyTeam < 0) || ec->CanReadAllyTeam(featureAllyTeam)) {
 			ec->FeatureCreated(feature);
 		}
 	}
@@ -735,15 +746,32 @@ inline void CEventHandler::FeatureCreated(const CFeature* feature)
 
 inline void CEventHandler::FeatureDestroyed(const CFeature* feature)
 {
-	eventBatchHandler->EnqueueFeatureDestroyedEvent(feature, feature->pos);
+	(eventBatchHandler->GetFeatureCreatedDestroyedEventBatch()).dequeue(feature);
 
 	const int featureAllyTeam = feature->allyteam;
 	const int count = listFeatureDestroyed.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listFeatureDestroyed[i];
-		if ((featureAllyTeam < 0) || // global team
-		    ec->CanReadAllyTeam(featureAllyTeam)) {
+		if ((featureAllyTeam < 0) || ec->CanReadAllyTeam(featureAllyTeam)) {
 			ec->FeatureDestroyed(feature);
+		}
+	}
+}
+
+inline void CEventHandler::FeatureDamaged(
+	const CFeature* feature,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID)
+{
+	const int featureAllyTeam = feature->allyteam;
+	const int count = listFeatureDamaged.size();
+
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listFeatureDamaged[i];
+		if (featureAllyTeam < 0 || ec->CanReadAllyTeam(featureAllyTeam)) {
+			ec->FeatureDamaged(feature, attacker, damage, weaponDefID, projectileID);
 		}
 	}
 }
@@ -756,8 +784,7 @@ inline void CEventHandler::FeatureMoved(const CFeature* feature, const float3& o
 	const int count = listFeatureMoved.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listFeatureMoved[i];
-		if ((featureAllyTeam < 0) || // global team
-		    ec->CanReadAllyTeam(featureAllyTeam)) {
+		if ((featureAllyTeam < 0) || ec->CanReadAllyTeam(featureAllyTeam)) {
 			ec->FeatureMoved(feature);
 		}
 	}
@@ -774,12 +801,12 @@ inline void CEventHandler::RenderFeatureCreated(const CFeature* feature)
 	}
 }
 
-inline void CEventHandler::RenderFeatureDestroyed(const CFeature* feature, const float3& pos)
+inline void CEventHandler::RenderFeatureDestroyed(const CFeature* feature)
 {
 	const int count = listRenderFeatureDestroyed.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderFeatureDestroyed[i];
-		ec->RenderFeatureDestroyed(feature, pos);
+		ec->RenderFeatureDestroyed(feature);
 	}
 }
 

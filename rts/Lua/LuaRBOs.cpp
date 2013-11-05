@@ -160,7 +160,7 @@ int LuaRBOs::CreateRBO(lua_State* L)
 
 	// allocate the memory
 	glRenderbufferStorageEXT(rbo.target, rbo.format, rbo.xsize, rbo.ysize);
-	
+
 	glBindRenderbufferEXT(rbo.target, 0);
 
 	RBO* rboPtr = static_cast<RBO*>(lua_newuserdata(L, sizeof(RBO)));

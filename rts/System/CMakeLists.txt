@@ -4,8 +4,6 @@
 # Then Sound/ stuff was removed, because it is now a separate static lib.
 SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/AIScriptHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/AutohostInterface.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/BaseNetProtocol.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigLocater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigSource.cpp"
@@ -32,13 +30,11 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/MemPool.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/RectangleOptimizer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/SpringTime.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/NetProtocol.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Object.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/OffscreenGLContext.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Option.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Clipboard.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/CmdLineParams.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/EngineTypeHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/errorhandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Misc.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/SharedLib.cpp"
@@ -51,6 +47,7 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/SafeCStrings.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SpringApp.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/StartScriptGen.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/DumpState.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/FPUCheck.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/Logger.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncChecker.cpp"
@@ -60,11 +57,12 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/backtrace.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/get_executable_name.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TdfParser.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/ThreadPool.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TimeProfiler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TimeUtil.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UnsyncedRNG.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Util.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Vec2.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/type2.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/float3.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/float4.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/myMath.cpp"
@@ -109,18 +107,6 @@ SET(sources_engine_System_Log_sinkFile
 SET(sources_engine_System_Log_sinkOutputDebugString
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/OutputDebugStringSink.cpp"
 	)
-SET(sources_engine_System_Net
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/Connection.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/LocalConnection.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/LoopbackConnection.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/PackPacket.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/ProtocolDef.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/RawPacket.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/Socket.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/UDPConnection.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/UDPListener.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Net/UnpackPacket.cpp"
-	)
 SET(sources_engine_System_Platform_Linux
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/CrashHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/myX11.cpp"
@@ -152,7 +138,6 @@ IF     (APPLE)
 			${sources_engine_System_Log}
 			${sources_engine_System_Log_sinkConsole}
 			${sources_engine_System_Log_sinkFile}
-			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Mac}
 		)
 ELSEIF (UNIX)
@@ -163,7 +148,6 @@ ELSEIF (UNIX)
 			${sources_engine_System_Log}
 			${sources_engine_System_Log_sinkConsole}
 			${sources_engine_System_Log_sinkFile}
-			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Linux}
 		)
 ELSEIF (WIN32)
@@ -175,7 +159,6 @@ ELSEIF (WIN32)
 			${sources_engine_System_Log_sinkConsole}
 			${sources_engine_System_Log_sinkFile}
 			${sources_engine_System_Log_sinkOutputDebugString}
-			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Windows}
 		)
 ELSE   ()
@@ -186,7 +169,6 @@ ELSE   ()
 			${sources_engine_System_Log}
 			${sources_engine_System_Log_sinkConsole}
 			${sources_engine_System_Log_sinkFile}
-			${sources_engine_System_Net}
 		)
 ENDIF  ()
 
@@ -198,9 +180,9 @@ MakeGlobal(sources_engine_System_Log_sinkStream)
 MakeGlobal(sources_engine_System_Log_sinkConsole)
 MakeGlobal(sources_engine_System_Log_sinkFile)
 MakeGlobal(sources_engine_System_Log_sinkOutputDebugString)
-MakeGlobal(sources_engine_System_Net)
 MakeGlobal(sources_engine_System_Platform_Linux)
 MakeGlobal(sources_engine_System_Platform_Mac)
 MakeGlobal(sources_engine_System_Platform_Windows)
 MakeGlobal(sources_engine_System)
 Add_Subdirectory(FileSystem)
+Add_Subdirectory(Net)

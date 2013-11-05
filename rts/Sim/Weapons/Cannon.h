@@ -5,7 +5,7 @@
 
 #include "Weapon.h"
 
-class CCannon : public CWeapon
+class CCannon: public CWeapon
 {
 	CR_DECLARE(CCannon);
 protected:
@@ -17,20 +17,19 @@ protected:
 	float3 lastDir;
 
 public:
-	CCannon(CUnit* owner);
+	CCannon(CUnit* owner, const WeaponDef* def);
 
 	void Init();
 	void UpdateRange(float val);
 	void Update();
-	bool AttackGround(float3 pos, bool userTarget);
-	float GetRange2D(float yDiff) const;
 	void SlowUpdate();
 
+	bool AttackGround(float3 pos, bool userTarget);
 
-	/// unused?
-	float maxPredict;
-	/// unused?
-	float minPredict;
+	float GetRange2D(float yDiff, float rFact) const;
+	float GetRange2D(float yDiff) const;
+
+
 	/// indicates high trajectory on/off state
 	bool highTrajectory;
 	/// burnblow tag. defines flakker-like behaviour
@@ -44,7 +43,7 @@ private:
 	float3 GetWantedDir2(const float3& diff) const;
 
 	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
-	void FireImpl();
+	void FireImpl(bool scriptCall);
 };
 
 #endif // _CANNON_H

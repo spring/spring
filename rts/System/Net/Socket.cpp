@@ -69,12 +69,12 @@ boost::asio::ip::address WrapIP(const std::string& ip,
 	} else {
 		addr = boost::asio::ip::address::from_string(ip, *err);
 	}
-#ifdef STREFLOP_H
-	//! (date of note: 08/05/10)
-	//! something in from_string() is invalidating the FPU flags
-	//! tested on win2k and linux (not happening there)
+//#ifdef STREFLOP_H
+	// (date of note: 08/05/10)
+	// something in from_string() is invalidating the FPU flags
+	// tested on win2k and linux (not happening there)
 	streflop::streflop_init<streflop::Simple>();
-#endif
+//#endif
 
 	return addr;
 }
@@ -91,11 +91,11 @@ boost::asio::ip::tcp::resolver::iterator WrapResolve(
 	} else {
 		resolveIt = resolver.resolve(query, *err);
 	}
-#ifdef STREFLOP_H
-	//! (date of note: 08/22/10)
-	//! something in resolve() is invalidating the FPU flags
+//#ifdef STREFLOP_H
+	// (date of note: 08/22/10)
+	// something in resolve() is invalidating the FPU flags
 	streflop::streflop_init<streflop::Simple>();
-#endif
+//#endif
 
 	return resolveIt;
 }

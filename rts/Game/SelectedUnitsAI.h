@@ -12,7 +12,7 @@ class CUnit;
 
 
 /// Handling commands given to the currently  selected group of units.
-class CSelectedUnitsAI {
+class CSelectedUnitsHandlerAI {
 public:
 	/* set<int> selUnits;
 
@@ -20,7 +20,7 @@ public:
 	void RemoveUnit(int unit);
 	*/
 
-	CSelectedUnitsAI();
+	CSelectedUnitsHandlerAI();
 	void GiveCommandNet(Command& c, int player);
 
 	float3 centerPos;
@@ -48,10 +48,9 @@ private:
 	float3 frontDir;
 	float3 sideDir;
 	float columnDist;
-	float lineDist;
 	int numColumns;
 };
 
-extern CSelectedUnitsAI selectedUnitsAI;
+extern CSelectedUnitsHandlerAI selectedUnitsAI;
 
 #endif // SELECTED_UNITS_AI_H

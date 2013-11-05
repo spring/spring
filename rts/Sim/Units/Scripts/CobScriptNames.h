@@ -13,7 +13,7 @@
 enum {
 	COBFN_Create,               // -
 	COBFN_Destroy,              // -
-	COBFN_StartMoving,          // -
+	COBFN_StartMoving,          // in: reversing
 	COBFN_StopMoving,           // -
 	COBFN_Activate,             // -
 	COBFN_Killed,               // in: recentDamage / maxHealth * 100, out: delayedWreckLevel

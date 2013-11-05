@@ -167,8 +167,8 @@ void CAdvTreeGenerator::DrawTrunk(const float3& start, const float3& end, const 
 
 void CAdvTreeGenerator::MainTrunk(int numBranch,float height,float width)
 {
-	const float3 orto1(1, 0, 0);
-	const float3 orto2(0, 0, 1);
+	const float3 orto1 = RgtVector;
+	const float3 orto2 = FwdVector;
 	const float baseAngle = fRand(2 * PI);
 
 	DrawTrunk(ZeroVector, float3(0, height, 0), orto1, orto2, width);
@@ -202,7 +202,7 @@ void CAdvTreeGenerator::TrunkIterator(const float3& start, const float3& dir, fl
 	if (dir.dot(UpVector) < 0.9f)
 		orto1 = dir.cross(UpVector);
 	else
-		orto1 = dir.cross(float3(1, 0, 0));
+		orto1 = dir.cross(RgtVector);
 	orto1.ANormalize();
 
 	float3 orto2 = dir.cross(orto1);
@@ -498,7 +498,7 @@ void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& e
 	float3 dir=end-start;
 	float length=dir.Length();
 	dir.ANormalize();
-	float3 orto=dir.cross(float3(0,0,1));
+	float3 orto=dir.cross(FwdVector);
 
 	glBegin(GL_QUADS);
 		glColor3f(0.05f+fRand(0.02f),0.21f+fRand(0.05f),0.04f+fRand(0.01f));
@@ -532,8 +532,8 @@ void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& e
 void CAdvTreeGenerator::PineTree(int numBranch, float height)
 {
 	DrawPineTrunk(ZeroVector,float3(0,height,0),height*0.025f);
-	float3 orto1(1,0,0);
-	float3 orto2(0,0,1);
+	float3 orto1 = RgtVector;
+	float3 orto2 = FwdVector;
 	float baseAngle=fRand(2*PI);
 	for(int a=0;a<numBranch;++a){
 		float sh = 0.2f + fRand(0.2f);
@@ -558,8 +558,8 @@ void CAdvTreeGenerator::PineTree(int numBranch, float height)
 
 void CAdvTreeGenerator::DrawPineTrunk(const float3 &start, const float3 &end, float size)
 {
-	float3 orto1(1,0,0);
-	float3 orto2(0,0,1);
+	float3 orto1 = RgtVector;
+	float3 orto2 = FwdVector;
 
 	float3 flatSun = sky->GetLight()->GetLightDir();
 	flatSun.y = 0.0f;

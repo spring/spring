@@ -7,7 +7,7 @@
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/WaitCommandsAI.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
@@ -38,7 +38,7 @@
 // seconds (!) before eg. aircraft would stop tracking a
 // target that cloaked after flying over it --> obviously
 // unreasonable
-static const int TARGET_LOST_TIMER = 15;
+static const int TARGET_LOST_TIMER = 4;
 static const float COMMAND_CANCEL_DIST = 17.0f;
 
 CR_BIND(CCommandQueue, );
@@ -78,7 +78,7 @@ CCommandAI::CCommandAI():
 	lastUserCommand(-1000),
 	selfDCountdown(0),
 	lastFinishCommand(0),
-	owner(owner),
+	owner(NULL),
 	orderTarget(0),
 	targetDied(false),
 	inCommand(false),
@@ -375,6 +375,51 @@ static inline bool IsCommandInMap(const Command& c)
 	return true;
 }
 
+static inline bool AdjustGroundAttackCommand(const Command& c, bool fromSynced, bool aiOrder)
+{
+	if (c.params.size() < 3)
+		return false;
+	if (aiOrder)
+		return false;
+
+	const float3 cPos = c.GetPos(0);
+
+	#if 0
+	// check if attack-ground is really attack-ground
+	//
+	// NOTE:
+	//     problematic if command contains value from UHM
+	//     but is evaluated in synced context against SHM
+	//     after roundtrip (when UHM and SHM differ a lot)
+	//
+	//     instead just clamp the elevation, which creates
+	//     fewer issues overall (eg. artillery force-firing
+	//     at positions outside LOS where UHM and SHM do not
+	//     match will not be broken)
+	//
+	if (math::fabs(cPos.y - gHeight) > SQUARE_SIZE) {
+		return false;
+	}
+	#else
+	// FIXME: is fromSynced really sync-safe???
+	// NOTE:
+	//   uses gHeight = min(cPos.y, GetHeightAboveWater) instead
+	//   of gHeight = GetHeightReal because GuiTraceRay can stop
+	//   at water surface, so the attack-position would be moved
+	//   UNDERWATER and cause ground-attack orders to fail (this
+	//   SHOULD no longer happen, Weapon::AdjustTargetPosToWater
+	//   always forcibly adjusts positions to respect waterWeapon
+	//   now)
+	//
+	Command& cc = const_cast<Command&>(c);
+
+	cc.params[1] = std::min(cPos.y, ground->GetHeightAboveWater(cPos.x, cPos.z, true || fromSynced));
+	// cc.params[1] = ground->GetHeightReal(cPos.x, cPos.z, true || fromSynced);
+
+	return true;
+	#endif
+}
+
 
 
 bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
@@ -444,43 +489,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 				if (!attackee->pos.IsInBounds())
 					return false;
 			} else {
-				if (c.params.size() >= 3) {
-					const float3 cPos = c.GetPos(0);
-					// FIXME: is fromSynced really sync-safe???
-					// NOTE:
-					//   uses gHeight = min(cPos.y, GetHeightAboveWater) instead
-					//   of gHeight = GetHeightReal because GuiTraceRay can stop
-					//   at water surface, so the attack-position would be moved
-					//   UNDERWATER and cause ground-attack orders to fail
-					// const float gHeight = std::min(cPos.y, ground->GetHeightAboveWater(cPos.x, cPos.z, fromSynced));
-					const float gHeight = std::min(cPos.y, ground->GetHeightAboveWater(cPos.x, cPos.z, true));
-
-					#if 0
-					// check if attack-ground is really attack-ground
-					//
-					// NOTE:
-					//     problematic if command contains value from UHM
-					//     but is evaluated in synced context against SHM
-					//     after roundtrip (when UHM and SHM differ a lot)
-					//
-					//     instead just clamp the elevation, which creates
-					//     fewer issues overall (eg. artillery force-firing
-					//     at positions outside LOS where UHM and SHM do not
-					//     match will not be broken)
-					//
-
-					if (!aiOrder && math::fabs(cPos.y - gHeight) > SQUARE_SIZE) {
-						return false;
-					}
-					#else
-					if (!aiOrder) {
-						Command& cc = const_cast<Command&>(c);
-						cc.params[1] = gHeight;
-					}
-
-					return true;
-					#endif
-				}
+				AdjustGroundAttackCommand(c, fromSynced, aiOrder);
 			}
 			break;
 		}
@@ -607,14 +616,12 @@ void CCommandAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 inline void CCommandAI::SetCommandDescParam0(const Command& c)
 {
-	vector<CommandDescription>::iterator cdi;
-	for (cdi = possibleCommands.begin(); cdi != possibleCommands.end(); ++cdi) {
-		if (cdi->id == c.GetID()) {
-			char t[10];
-			SNPRINTF(t, 10, "%d", (int)c.params[0]);
-			cdi->params[0] = t;
-			return;
-		}
+	for (unsigned int n = 0; n < possibleCommands.size(); n++) {
+		if (possibleCommands[n].id != c.GetID())
+			continue;
+
+		possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
+		break;
 	}
 }
 
@@ -625,13 +632,13 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 		case CMD_FIRE_STATE: {
 			owner->fireState = (int)c.params[0];
 			SetCommandDescParam0(c);
-			selectedUnits.PossibleCommandChange(owner);
+			selectedUnitsHandler.PossibleCommandChange(owner);
 			return true;
 		}
 		case CMD_MOVE_STATE: {
 			owner->moveState = (int)c.params[0];
 			SetCommandDescParam0(c);
-			selectedUnits.PossibleCommandChange(owner);
+			selectedUnitsHandler.PossibleCommandChange(owner);
 			return true;
 		}
 		case CMD_REPEAT: {
@@ -645,13 +652,13 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 				return false;
 			}
 			SetCommandDescParam0(c);
-			selectedUnits.PossibleCommandChange(owner);
+			selectedUnitsHandler.PossibleCommandChange(owner);
 			return true;
 		}
 		case CMD_TRAJECTORY: {
 			owner->useHighTrajectory = !!c.params[0];
 			SetCommandDescParam0(c);
-			selectedUnits.PossibleCommandChange(owner);
+			selectedUnitsHandler.PossibleCommandChange(owner);
 			return true;
 		}
 		case CMD_ONOFF: {
@@ -665,7 +672,7 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 				return false;
 			}
 			SetCommandDescParam0(c);
-			selectedUnits.PossibleCommandChange(owner);
+			selectedUnitsHandler.PossibleCommandChange(owner);
 			return true;
 		}
 		case CMD_CLOAK: {
@@ -680,7 +687,7 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 				return false;
 			}
 			SetCommandDescParam0(c);
-			selectedUnits.PossibleCommandChange(owner);
+			selectedUnitsHandler.PossibleCommandChange(owner);
 			return true;
 		}
 		case CMD_STOCKPILE: {
@@ -972,7 +979,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 		SetOrderTarget(NULL);
 		const Command& cmd = queue->front();
 		eoh->CommandFinished(*owner, cmd);
-		eventHandler.UnitCmdDone(owner, cmd.GetID(), cmd.tag);
+		eventHandler.UnitCmdDone(owner, cmd);
 		ClearTargetLock(cmd);
 	}
 
@@ -1421,6 +1428,7 @@ void CCommandAI::FinishCommand()
 	const Command cmd = commandQue.front();
 	const int cmdID  = cmd.GetID();
 	const int cmdTag = cmd.tag;
+	const unsigned char cmdOpts = cmd.options;
 	const bool dontRepeat = (cmd.options & INTERNAL_ORDER);
 
 	if (repeatOrders
@@ -1428,7 +1436,7 @@ void CCommandAI::FinishCommand()
 	    && (cmdID != CMD_STOP)
 	    && (cmdID != CMD_PATROL)
 	    && (cmdID != CMD_SET_WANTED_MAX_SPEED)){
-		commandQue.push_back(commandQue.front());
+		commandQue.push_back(cmd);
 	}
 
 	commandQue.pop_front();
@@ -1437,7 +1445,7 @@ void CCommandAI::FinishCommand()
 	unimportantMove = false;
 	SetOrderTarget(NULL);
 	eoh->CommandFinished(*owner, cmd);
-	eventHandler.UnitCmdDone(owner, cmdID, cmdTag);
+	eventHandler.UnitCmdDone(owner, cmd);
 	ClearTargetLock(cmd);
 
 	if (commandQue.empty()) {
@@ -1476,40 +1484,63 @@ void CCommandAI::StockpileChanged(CWeapon* weapon)
 
 void CCommandAI::UpdateStockpileIcon()
 {
-	vector<CommandDescription>::iterator pci;
-	for(pci=possibleCommands.begin();pci!=possibleCommands.end();++pci){
-		if(pci->id==CMD_STOCKPILE){
-			char name[50];
-			sprintf(name, "%i/%i",
-			        stockpileWeapon->numStockpiled,
-			        stockpileWeapon->numStockpiled + stockpileWeapon->numStockpileQued);
-			pci->name = name;
-			selectedUnits.PossibleCommandChange(owner);
-		}
+	for (unsigned int n = 0; n < possibleCommands.size(); n++) {
+		if (possibleCommands[n].id != CMD_STOCKPILE)
+			continue;
+
+		possibleCommands[n].name =
+			IntToString(stockpileWeapon->numStockpiled                                    ) + "/" +
+			IntToString(stockpileWeapon->numStockpiled + stockpileWeapon->numStockpileQued);
+
+		selectedUnitsHandler.PossibleCommandChange(owner);
+		break;
 	}
 }
 
 void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
 {
-	const Command& c = commandQue.empty()? Command(CMD_STOP): commandQue.front();
+	// copy: SelectNewAreaAttackTargetOrPos can call
+	// FinishCommand which would invalidate a pointer
+	const Command c = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
 	const bool haveGroundAttackCmd = (c.GetID() == CMD_ATTACK && c.GetParamsCount() >= 3);
 	const bool haveAreaAttackCmd = (c.GetID() == CMD_AREA_ATTACK);
+
+	bool nextOrder = false;
+
 	if (mainWeapon && lastSalvo && (haveAreaAttackCmd || (haveGroundAttackCmd && HasMoreMoveCommands()))) {
 		// if we have an area-attack command (or a regular attack command
 		// followed by anything that requires movement) and this was the
 		// last salvo of our main weapon, assume we completed an attack
 		// (run) on one position and move to the next
-		SelectNewAreaAttackTargetOrPos(c);
+		//
+		// if we have >= 2 consecutive CMD_ATTACK's, then
+		//   SelectNAATP --> FinishCommand (inCommand=false) -->
+		//   SlowUpdate --> ExecuteAttack (inCommand=true) -->
+		//   queue has advanced
+		//
+		nextOrder = !SelectNewAreaAttackTargetOrPos(c);
 	}
 
-	if (!inCommand) { return; }
-	if (!weapon->weaponDef->manualfire || (c.options & META_KEY)) { return; }
+	if (!inCommand)
+		return;
+	if (!weapon->weaponDef->manualfire || (c.options & META_KEY))
+		return;
 
 	if (c.GetID() == CMD_ATTACK || c.GetID() == CMD_MANUALFIRE) {
-		owner->AttackUnit(NULL, (c.options & INTERNAL_ORDER) == 0, true);
+		if (c.GetParamsCount() < 3) {
+			// clear previous target
+			owner->AttackUnit(NULL, (c.options & INTERNAL_ORDER) == 0, true);
+		} else {
+			// not needed in this case
+			// owner->AttackGround(ZeroVector, (c.options & INTERNAL_ORDER) == 0, true);
+		}
+
 		eoh->WeaponFired(*owner, *(weapon->weaponDef));
-		FinishCommand();
+
+		if (!nextOrder) {
+			FinishCommand();
+		}
 	}
 }
 
@@ -1577,7 +1608,7 @@ bool CCommandAI::HasMoreMoveCommands()
 bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 {
 	// check to see if we are about to paralyze a unit that is already paralyzed
-	if ((target == NULL) || (owner->weapons.size() <= 0)) {
+	if ((target == NULL) || (owner->weapons.empty())) {
 		return false;
 	}
 	const CWeapon* w = owner->weapons.front();

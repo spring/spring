@@ -42,8 +42,8 @@ class CLuaUI : public CLuaHandle
 		};
 
 	public: // call-ins
-		bool HasCallIn(lua_State *L, const string& name);
-		bool UnsyncedUpdateCallIn(lua_State *L, const string& name);
+		bool HasCallIn(lua_State* L, const string& name);
+		bool UnsyncedUpdateCallIn(lua_State* L, const string& name);
 
 		void Shutdown();
 
@@ -63,7 +63,7 @@ class CLuaUI : public CLuaHandle
 
 		bool ConfigCommand(const string& command);
 
-		void ShockFront(float power, const float3& pos, float areaOfEffect, float *distadj = NULL);
+		void ShockFront(const float3& pos, float power, float areaOfEffect, const float* distMod = NULL);
 
 	public: // custom call-in
 		bool HasUnsyncedXCall(lua_State* srcState, const string& funcName);
@@ -108,8 +108,9 @@ class CLuaUI : public CLuaHandle
 		*	initialize luasocket
 		*/
 		void InitLuaSocket(lua_State* L);
+
 		std::set<std::string> unsyncedXCalls;
-		std::vector<LuaUIEvent> luaUIEventBatch;
+		std::vector<UIEventBase> luaUIEventBatch;
 };
 
 

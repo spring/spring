@@ -38,7 +38,6 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Util.h"
-#include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 
@@ -178,10 +177,10 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 	if (!GLEW_ARB_depth_clamp) //GL_DEPTH_CLAMP
 		throw opengl_error(LOG_SECTION_DECALS_GL4 ": missing GL_ARB_depth_clamp");
 
-	if (!dynamic_cast<CSMFReadMap*>(readmap))
+	if (!dynamic_cast<CSMFReadMap*>(readMap))
 		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": only SMF supported");
 
-	if (dynamic_cast<CSMFReadMap*>(readmap)->GetNormalsTexture() <= 0)
+	if (dynamic_cast<CSMFReadMap*>(readMap)->GetNormalsTexture() <= 0)
 		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": advanced map shading must be enabled");
 
 	CreateBoundingBoxVBOs();
@@ -412,7 +411,7 @@ void CDecalsDrawerGL4::CreateBoundingBoxVBOs()
 		float3(-1.0f,  1.0f, -1.0f),
 		float3( 1.0f, -1.0f, -1.0f),
 		float3( 1.0f,  1.0f, -1.0f),
-		
+
 		float3( 1.0f, -1.0f,  1.0f),
 		float3( 1.0f,  1.0f,  1.0f),
 		float3(-1.0f, -1.0f,  1.0f),
@@ -449,7 +448,7 @@ void CDecalsDrawerGL4::CreateBoundingBoxVBOs()
 
 	vboVertices.Resize(sizeof(boxverts) * sizeof(float3), GL_STATIC_DRAW, &boxverts[0]);
 	vboIndices.Resize(sizeof(indices) * sizeof(GLubyte), GL_STATIC_DRAW, &indices[0]);
-	
+
 	vboVertices.Unbind();
 	vboIndices.Unbind();
 }
@@ -551,8 +550,6 @@ void CDecalsDrawerGL4::Draw()
 	if (decals.empty())
 		return;
 
-	SCOPED_TIMER("GroundDecals2");
-
 	UpdateDecalsVBO();
 	//UpdateVisibilityVBO();
 
@@ -568,8 +565,8 @@ void CDecalsDrawerGL4::Draw()
 	}
 	glTimer.Start();*/
 
-	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-	const CSMFReadMap* smfrm = dynamic_cast<CSMFReadMap*>(readmap);
+	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+	const CSMFReadMap* smfrm = dynamic_cast<CSMFReadMap*>(readMap);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -582,7 +579,7 @@ void CDecalsDrawerGL4::Draw()
 
 	decalShader->Enable();
  		static GLint camPosLoc = glGetUniformLocation(decalShader->GetObjID(), "camPos");
-		glUniformf3(camPosLoc, camera->pos);
+		glUniformf3(camPosLoc, camera->GetPos());
 
 		static GLint shadowMatrixLoc = glGetUniformLocation(decalShader->GetObjID(), "shadowMatrix");
 		glUniformMatrix4fv(shadowMatrixLoc, 1, false, &shadowHandler->shadowMatrix.m[0]);
@@ -603,7 +600,7 @@ void CDecalsDrawerGL4::Draw()
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 
 	glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, gd->DrawExtraTex() ? gd->infoTex : 0);
+		glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
 
 	glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_2D, depthTex);

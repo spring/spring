@@ -5,21 +5,22 @@
 
 #include "Weapon.h"
 
-class CLightningCannon :
-	public CWeapon
+class CLightningCannon: public CWeapon
 {
 	CR_DECLARE(CLightningCannon);
 public:
-	CLightningCannon(CUnit* owner);
+	CLightningCannon(CUnit* owner, const WeaponDef* def);
 
 	void Update();
 	void Init();
 
-	float3 color;
 	void SlowUpdate();
 
 private:
-	virtual void FireImpl();
+	void FireImpl(bool scriptCall);
+
+private:
+	float3 color;
 };
 
 

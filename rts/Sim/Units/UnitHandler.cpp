@@ -8,6 +8,7 @@
 #include "Unit.h"
 #include "UnitDefHandler.h"
 #include "CommandAI/BuilderCAI.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
@@ -211,10 +212,6 @@ void CUnitHandler::Update()
 
 	GML::UpdateTicks();
 
-	#define VECTOR_SANITY_CHECK(v)                              \
-		assert(!math::isnan(v.x) && !math::isinf(v.x)); \
-		assert(!math::isnan(v.y) && !math::isinf(v.y)); \
-		assert(!math::isnan(v.z) && !math::isinf(v.z));
 	#define MAPPOS_SANITY_CHECK(unit)                          \
 		if (unit->unitDef->IsGroundUnit()) {                   \
 			assert(unit->pos.x >= -(float3::maxxpos * 16.0f)); \
@@ -222,16 +219,15 @@ void CUnitHandler::Update()
 			assert(unit->pos.z >= -(float3::maxzpos * 16.0f)); \
 			assert(unit->pos.z <=  (float3::maxzpos * 16.0f)); \
 		}
-	#define UNIT_SANITY_CHECK(unit)                 \
-		VECTOR_SANITY_CHECK(unit->pos);             \
-		VECTOR_SANITY_CHECK(unit->midPos);          \
-		VECTOR_SANITY_CHECK(unit->relMidPos);       \
-		VECTOR_SANITY_CHECK(unit->speed);           \
-		VECTOR_SANITY_CHECK(unit->deathSpeed);      \
-		VECTOR_SANITY_CHECK(unit->residualImpulse); \
-		VECTOR_SANITY_CHECK(unit->rightdir);        \
-		VECTOR_SANITY_CHECK(unit->updir);           \
-		VECTOR_SANITY_CHECK(unit->frontdir);        \
+	#define UNIT_SANITY_CHECK(unit)         \
+		unit->pos.AssertNaNs();             \
+		unit->midPos.AssertNaNs();          \
+		unit->relMidPos.AssertNaNs();       \
+		unit->speed.AssertNaNs();           \
+		unit->deathSpeed.AssertNaNs();      \
+		unit->rightdir.AssertNaNs();        \
+		unit->updir.AssertNaNs();           \
+		unit->frontdir.AssertNaNs();        \
 		MAPPOS_SANITY_CHECK(unit);
 
 	{
@@ -246,7 +242,7 @@ void CUnitHandler::Update()
 			if (moveType->Update()) {
 				eventHandler.UnitMoved(unit);
 			}
-			if (!unit->pos.IsInBounds() && (unit->speed.SqLength() > (MAX_UNIT_SPEED * MAX_UNIT_SPEED))) {
+			if (!unit->pos.IsInBounds() && (Square(unit->speed.w) > (MAX_UNIT_SPEED * MAX_UNIT_SPEED))) {
 				// this unit is not coming back, kill it now without any death
 				// sequence (so deathScriptFinished becomes true immediately)
 				unit->KillUnit(NULL, false, true, false);
@@ -258,25 +254,40 @@ void CUnitHandler::Update()
 	}
 
 	{
-		SCOPED_TIMER("Unit::Update");
+		// Delete dead units
 		std::list<CUnit*>::iterator usi;
 		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
-
-			UNIT_SANITY_CHECK(unit);
-
 			if (unit->deathScriptFinished) {
 				// there are many ways to fiddle with "deathScriptFinished", so a unit may
 				// arrive here without having been properly killed (and isDead still false),
 				// which can result in MT deadlocking -- FIXME verify this
 				// (KU returns early if isDead)
 				unit->KillUnit(NULL, false, true);
-
 				DeleteUnit(unit);
-			} else {
-				unit->Update();
 			}
+		}
+	}
 
+	{
+		SCOPED_TIMER("Unit::UpdatePieceMatrices");
+		std::list<CUnit*>::iterator usi;
+		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+			// UnitScript only applies piece-space transforms so
+			// we apply the forward kinematics update separately
+			// (only if we have any dirty pieces)
+			CUnit* unit = *usi;
+			unit->localModel->UpdatePieceMatrices();
+		}
+	}
+
+	{
+		SCOPED_TIMER("Unit::Update");
+		std::list<CUnit*>::iterator usi;
+		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+			CUnit* unit = *usi;
+			UNIT_SANITY_CHECK(unit);
+			unit->Update();
 			UNIT_SANITY_CHECK(unit);
 		}
 	}

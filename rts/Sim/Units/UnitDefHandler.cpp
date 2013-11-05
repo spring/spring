@@ -9,7 +9,6 @@
 #include "UnitDefHandler.h"
 #include "UnitDef.h"
 #include "UnitDefImage.h"
-#include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
@@ -32,9 +31,9 @@ bool isblank(int c) {
 #endif
 
 
-CUnitDefHandler::CUnitDefHandler() : noCost(false)
+CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
 {
-	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("UnitDefs");
+	const LuaTable rootTable = defsParser->GetRoot().SubTable("UnitDefs");
 	if (!rootTable.IsValid()) {
 		throw content_error("Error loading UnitDefs");
 	}

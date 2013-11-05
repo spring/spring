@@ -46,17 +46,18 @@ void CNullUnitScript::Shot(int weaponNum) {}
 bool CNullUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget) { return false; }
 float CNullUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit) { return 1.0f; }
 
-void CNullUnitScript::Destroy()       {}
-void CNullUnitScript::StartMoving()   {}
-void CNullUnitScript::StopMoving()    {}
-void CNullUnitScript::StartUnload()   {}
-void CNullUnitScript::EndTransport()  {}
+void CNullUnitScript::Destroy() {}
+void CNullUnitScript::StartMoving(bool reversing) {}
+void CNullUnitScript::StopMoving() {}
+void CNullUnitScript::StartUnload() {}
+void CNullUnitScript::EndTransport() {}
 void CNullUnitScript::StartBuilding() {}
-void CNullUnitScript::StopBuilding()  {}
-void CNullUnitScript::Falling()       {}
-void CNullUnitScript::Landed()        {}
-void CNullUnitScript::Activate()      {}
-void CNullUnitScript::Deactivate()    {}
-void CNullUnitScript::MoveRate(int curRate)     {}
+void CNullUnitScript::StopBuilding() {}
+void CNullUnitScript::Falling() {}
+void CNullUnitScript::Landed() {}
+void CNullUnitScript::Activate() {}
+void CNullUnitScript::Deactivate() {}
+void CNullUnitScript::MoveRate(int curRate) {}
 void CNullUnitScript::FireWeapon(int weaponNum) {}
-void CNullUnitScript::EndBurst(int weaponNum)   {}
+void CNullUnitScript::EndBurst(int weaponNum) {}
+

@@ -11,7 +11,6 @@
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Rendering/IconHandler.h"
@@ -30,7 +29,7 @@ UnitDefWeapon::UnitDefWeapon()
 , maxMainDirAngleDif(-1.0f)
 , badTargetCat(0)
 , onlyTargetCat(0)
-, mainDir(0.0f, 0.0f, 1.0f)
+, mainDir(FwdVector)
 {
 }
 
@@ -58,7 +57,7 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 	this->badTargetCat =                                   CCategoryHandler::Instance()->GetCategories(btcString);
 	this->onlyTargetCat = (otcString.empty())? 0xffffffff: CCategoryHandler::Instance()->GetCategories(otcString);
 
-	this->mainDir = weaponTable.GetFloat3("mainDir", float3(0.0f, 0.0f, 1.0f));
+	this->mainDir = weaponTable.GetFloat3("mainDir", FwdVector);
 	this->mainDir.SafeNormalize();
 }
 
@@ -152,7 +151,6 @@ UnitDef::UnitDef()
 	, repairable(false)
 
 	, canmove(false)
-	, canHover(false)
 	, canAttack(false)
 	, canFight(false)
 	, canPatrol(false)
@@ -179,7 +177,6 @@ UnitDef::UnitDef()
 	, moveState(MOVESTATE_HOLDPOS)
 	, wingDrag(0.0f)
 	, wingAngle(0.0f)
-	, drag(0.0f)
 	, frontToSpeed(0.0f)
 	, speedToFront(0.0f)
 	, myGravity(0.0f)
@@ -315,7 +312,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// to not overlap for a 1x1 constructor building a 1x1 structure
 	buildDistance = std::max(38.0f, buildDistance);
 	buildSpeed = udTable.GetFloat("workerTime", 0.0f);
-	builder = udTable.GetBool("builder", false) && (buildSpeed > 0.0f);
+	builder = udTable.GetBool("builder", false);
+	builder &= IsBuilderUnit();
 
 	repairSpeed    = udTable.GetFloat("repairSpeed",    buildSpeed);
 	maxRepairSpeed = udTable.GetFloat("maxRepairSpeed",      1e20f);
@@ -329,7 +327,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	repairable   = udTable.GetBool("repairable",   true);
 
 	canmove      = udTable.GetBool("canMove",         false);
-	canHover     = udTable.GetBool("canHover",        false);
 	canAttack    = udTable.GetBool("canAttack",       true);
 	canFight     = udTable.GetBool("canFight",        true);
 	canPatrol    = udTable.GetBool("canPatrol",       true);
@@ -360,7 +357,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	factoryHeadingTakeoff = udTable.GetBool("factoryHeadingTakeoff", true);
 
 	upright = udTable.GetBool("upright", false);
-	blocking = udTable.GetBool("blocking", true);
+	collidable = udTable.GetBool("blocking", true);
 	collide = udTable.GetBool("collide", true);
 
 	const float maxSlopeDeg = Clamp(udTable.GetFloat("maxSlope", 0.0f), 0.0f, 89.0f);
@@ -390,19 +387,22 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	flankingBonusMode = udTable.GetInt("flankingBonusMode", modInfo.flankingBonusModeDefault);
 	flankingBonusMax  = udTable.GetFloat("flankingBonusMax", 1.9f);
 	flankingBonusMin  = udTable.GetFloat("flankingBonusMin", 0.9);
-	flankingBonusDir  = udTable.GetFloat3("flankingBonusDir", float3(0.0f, 0.0f, 1.0f));
+	flankingBonusDir  = udTable.GetFloat3("flankingBonusDir", FwdVector);
 	flankingBonusMobilityAdd = udTable.GetFloat("flankingBonusMobilityAdd", 0.01f);
 
 	armoredMultiple = udTable.GetFloat("damageModifier", 1.0f);
 	armorType = damageArrayHandler->GetTypeFromName(name);
 
 	losHeight = udTable.GetFloat("losEmitHeight", 20.0f);
-	radarHeight = udTable.GetFloat("radarEmitHeight", 20.0f);
+	radarHeight = udTable.GetFloat("radarEmitHeight", losHeight);
 
 	radarRadius    = udTable.GetInt("radarDistance",    0);
 	sonarRadius    = udTable.GetInt("sonarDistance",    0);
 	jammerRadius   = udTable.GetInt("radarDistanceJam", 0);
 	sonarJamRadius = udTable.GetInt("sonarDistanceJam", 0);
+
+	seismicRadius    = udTable.GetInt("seismicDistance", 0);
+	seismicSignature = udTable.GetFloat("seismicSignature", -1.0f);
 
 	stealth        = udTable.GetBool("stealth",            false);
 	sonarStealth   = udTable.GetBool("sonarStealth",       false);
@@ -442,7 +442,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 
 	maxAcc = math::fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
-	maxDec = math::fabs(udTable.GetFloat("brakeRate", 3.0f * maxAcc)) * (canfly? 0.1f: 1.0f); // no negative values
+	maxDec = math::fabs(udTable.GetFloat("brakeRate", maxAcc)); // no negative values
 
 	turnRate    = udTable.GetFloat("turnRate", 0.0f);
 	turnInPlace = udTable.GetBool("turnInPlace", true);
@@ -513,92 +513,64 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	needGeo = false;
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
 
-	const bool canFloat = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
+	{
+		MoveDef* moveDef = NULL;
 
-	MoveDef* moveDef = NULL;
+		// aircraft have MoveTypes but no MoveDef;
+		// static structures have no use for either
+		// (but get StaticMoveType instances)
+		if (RequireMoveDef()) {
+			const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
+			const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
-	// aircraft have MoveTypes but no MoveDef;
-	// static structures have no use for either
-	// (but get StaticMoveType instances)
-	if (RequireMoveDef()) {
-		const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
-		const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
+			if ((moveDef = moveDefHandler->GetMoveDefByName(moveClass)) == NULL) {
+				throw content_error(errMsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
+			}
 
-		if ((moveDef = moveDefHandler->GetMoveDefByName(moveClass)) == NULL) {
-			throw content_error(errMsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
+			moveDef->udRefCount += 1;
+			this->pathType = moveDef->pathType;
 		}
 
-		moveDef->unitDefRefCount += 1;
-		this->pathType = moveDef->pathType;
+		if (moveDef == NULL) {
+			upright           |= !canfly;
+			floatOnWater      |= udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
-		if (LOG_IS_ENABLED(L_WARNING)) {
-			const char* typeStr = NULL;
-			const char* wantedTypeStr = NULL;
+			// we have no MoveDef, so pathType == -1 and IsAirUnit() MIGHT be true
+			cantBeTransported |= (!modInfo.transportAir && canfly);
+		} else {
+			upright           |= (moveDef->speedModClass == MoveDef::Hover);
+			upright           |= (moveDef->speedModClass == MoveDef::Ship );
+			floatOnWater      |= (moveDef->speedModClass == MoveDef::Hover);
+			floatOnWater      |= (moveDef->speedModClass == MoveDef::Ship );
 
-			if (canHover) {
-				if (moveDef->moveFamily != MoveDef::Hover) {
-					typeStr       = "canHover";
-					wantedTypeStr = "hover";
-				}
-			} else if (canFloat) {
-				if (moveDef->moveFamily != MoveDef::Ship) {
-					typeStr       = "canFloat";
-					wantedTypeStr = "ship";
-				}
+			// we have a MoveDef, so pathType != -1 and IsGroundUnit() MUST be true
+			cantBeTransported |= (!modInfo.transportGround && moveDef->speedModClass == MoveDef::Tank );
+			cantBeTransported |= (!modInfo.transportGround && moveDef->speedModClass == MoveDef::KBot );
+			cantBeTransported |= (!modInfo.transportShip   && moveDef->speedModClass == MoveDef::Ship );
+			cantBeTransported |= (!modInfo.transportHover  && moveDef->speedModClass == MoveDef::Hover);
+		}
+
+		if (seismicSignature == -1.0f) {
+			const bool isTank = (moveDef != NULL && moveDef->speedModClass == MoveDef::Tank);
+			const bool isKBot = (moveDef != NULL && moveDef->speedModClass == MoveDef::KBot);
+
+			// seismic signatures only make sense for certain mobile ground units
+			if (isTank || isKBot) {
+				seismicSignature = math::sqrt(mass / 100.0f);
 			} else {
-				if (moveDef->moveFamily != MoveDef::Tank && moveDef->moveFamily != MoveDef::KBot) {
-					typeStr       = "!(canHover || canFloat)";
-					wantedTypeStr = "ground";
-				}
-			}
-			if ((typeStr != NULL) && (wantedTypeStr != NULL)) {
-				LOG_L(L_WARNING,
-						"[%s] inconsistent path-type %i for \"%s\" "
-						"(move-class \"%s\"): %s, but not a %s-based movetype",
-						__FUNCTION__, moveDef->pathType, name.c_str(),
-						moveClass.c_str(), typeStr, wantedTypeStr);
+				seismicSignature = 0.0f;
 			}
 		}
-	}
-
-	if (moveDef == NULL) {
-		upright           |= !canfly;
-		floatOnWater      |= canFloat;
-
-		// we have no MoveDef, so pathType == -1 and IsAirUnit() MIGHT be true
-		cantBeTransported |= (!modInfo.transportAir && canfly);
-	} else {
-		upright           |= (moveDef->moveFamily == MoveDef::Hover);
-		upright           |= (moveDef->moveFamily == MoveDef::Ship );
-		floatOnWater      |= (moveDef->moveFamily == MoveDef::Hover);
-		floatOnWater      |= (moveDef->moveFamily == MoveDef::Ship );
-
-		// we have a MoveDef, so pathType != -1 and IsGroundUnit() MUST be true
-		cantBeTransported |= (!modInfo.transportGround && moveDef->moveFamily == MoveDef::Tank );
-		cantBeTransported |= (!modInfo.transportGround && moveDef->moveFamily == MoveDef::KBot );
-		cantBeTransported |= (!modInfo.transportShip   && moveDef->moveFamily == MoveDef::Ship );
-		cantBeTransported |= (!modInfo.transportHover  && moveDef->moveFamily == MoveDef::Hover);
 	}
 
 	if (IsAirUnit()) {
-		if (IsFighterUnit() || IsBomberUnit()) {
+		if (IsFighterAirUnit() || IsBomberAirUnit()) {
 			// double turn-radius for bombers if not set explicitly
-			if (IsBomberUnit() && turnRadius == 500.0f) {
+			if (IsBomberAirUnit() && turnRadius == 500.0f) {
 				turnRadius *= 2.0f;
 			}
 
 			maxAcc = udTable.GetFloat("maxAcc", 0.065f); // engine power
-		}
-
-		if ((maxAcc != 0) && (speed != 0)) {
-			//meant to set the drag such that the maxspeed becomes what it should be
-			drag = (1.0f / (speed / GAME_SPEED * 1.1f / maxAcc)) - (wingAngle * wingAngle * wingDrag);
-			drag = Clamp(drag, 0.0f, 1.0f);
-		} else {
-			//shouldn't be needed since drag is only used in CStrafeAirMoveType anyway,
-			//and aircraft without acceleration or speed aren't common :)
-			//initializing it anyway just for safety
-			drag = 0.005f;
 		}
 	}
 
@@ -607,11 +579,19 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	scriptName = udTable.GetString("script", unitName + ".cob");
 
 	deathExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("explodeAs", ""));
-	selfdExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("selfDestructAs", ""));
-	if (deathExpWeaponDef == NULL) { deathExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON"); }
-	if (selfdExpWeaponDef == NULL) { selfdExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON"); }
-	assert(deathExpWeaponDef);
-	assert(selfdExpWeaponDef);
+	selfdExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("selfDestructAs", udTable.GetString("explodeAs", "")));
+	if (deathExpWeaponDef == NULL) {
+		deathExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON");
+		if (deathExpWeaponDef == NULL) {
+			LOG_L(L_ERROR, "Couldn't find WeaponDef NOWEAPON and explodeAs for %s is missing!", unitName.c_str());
+		}
+	}
+	if (selfdExpWeaponDef == NULL) {
+		selfdExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON");
+		if (selfdExpWeaponDef == NULL) {
+			LOG_L(L_ERROR, "Couldn't find WeaponDef NOWEAPON and selfDestructAs for %s is missing!", unitName.c_str());
+		}
+	}
 
 	power = udTable.GetFloat("power", (metal + (energy / 60.0f)));
 
@@ -653,16 +633,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	ParseCollisionVolume(udTable);
 
 
-	seismicRadius    = udTable.GetInt("seismicDistance", 0);
-	seismicSignature = udTable.GetFloat("seismicSignature", -1.0f);
-	if (seismicSignature == -1.0f) {
-		if (!canFloat && !canHover && !canfly) {
-			seismicSignature = math::sqrt(mass / 100.0f);
-		} else {
-			seismicSignature = 0.0f;
-		}
-	}
-
 	LuaTable buildsTable = udTable.SubTable("buildOptions");
 	if (buildsTable.IsValid()) {
 		for (int bo = 1; true; bo++) {
@@ -688,6 +658,10 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		pieceCEGTags.push_back(pieceCEGTable.GetString(pieceCEGKeys[n], ""));
 	}
 
+	// filled in later by UnitDrawer
+	modelExplGenIDs.resize(modelCEGTags.size(), -1u);
+	pieceExplGenIDs.resize(pieceCEGTags.size(), -1u);
+
 	// custom parameters table
 	udTable.SubTable("customParams").GetMap(customParams);
 }
@@ -699,11 +673,6 @@ UnitDef::~UnitDef()
 		buildPic->Free();
 		delete buildPic;
 		buildPic = NULL;
-	}
-
-	for (std::vector<IExplosionGenerator*>::iterator it = sfxExplGens.begin(); it != sfxExplGens.end(); ++it) {
-		explGenHandler->UnloadGenerator(*it);
-		*it = NULL;
 	}
 }
 
@@ -826,10 +795,10 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 
 	// print warnings
 	if (ymCopyIdx > defYardMap.size())
-		LOG_L(L_WARNING, "%s: Given yardmap contains "_STPF_" excess char(s)!", name.c_str(), ymCopyIdx - defYardMap.size());
+		LOG_L(L_WARNING, "%s: Given yardmap contains " _STPF_ " excess char(s)!", name.c_str(), ymCopyIdx - defYardMap.size());
 
 	if (ymCopyIdx > 0 && ymCopyIdx < defYardMap.size())
-		LOG_L(L_WARNING, "%s: Given yardmap requires "_STPF_" extra char(s)!", name.c_str(), defYardMap.size() - ymCopyIdx);
+		LOG_L(L_WARNING, "%s: Given yardmap requires " _STPF_ " extra char(s)!", name.c_str(), defYardMap.size() - ymCopyIdx);
 
 	if (!unknownChars.empty())
 		LOG_L(L_WARNING, "%s: Given yardmap contains unknown char(s) \"%s\"!", name.c_str(), unknownChars.c_str());
@@ -882,7 +851,7 @@ bool UnitDef::IsAllowedTerrainHeight(const MoveDef* moveDef, float rawHeight, fl
 
 	if (moveDef != NULL) {
 		// we are a mobile ground-unit, use MoveDef limits
-		if (moveDef->moveFamily == MoveDef::Ship) {
+		if (moveDef->speedModClass == MoveDef::Ship) {
 			minDepth = moveDef->depth;
 		} else {
 			maxDepth = moveDef->depth;

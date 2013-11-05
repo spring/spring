@@ -8,6 +8,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "GameController.h"
+#include "System/Misc/SpringTime.h"
 
 class CInfoConsole;
 class ILoadSaveHandler;
@@ -19,14 +20,14 @@ namespace netcode {
 
 /**
  * @brief This controlls the game start
- * 
+ *
  * Before a game starts, this class does everything that needs to be done before.
  * It basically goes like this:
  * For servers:
  * 1. Find out which map, script and mod to use
  * 2. Start the server with this settings
  * 3. continue with "For clients"
- * 
+ *
  * ForClients:
  * 1. Connect to the server
  * 2. Receive GameData from server
@@ -37,7 +38,7 @@ class CPreGame : public CGameController
 public:
 	CPreGame(const ClientSetup* setup);
 	virtual ~CPreGame();
-	
+
 	void LoadSetupscript(const std::string& script);
 	void LoadDemo(const std::string& demo);
 	void LoadSavefile(const std::string& save);
@@ -48,7 +49,7 @@ public:
 
 private:
 	void StartServer(const std::string& setupscript);
-	
+
 	/// reads out map, mod and script from demos (with or without a gameSetupScript)
 	void ReadDataFromDemo(const std::string& demoName);
 
@@ -59,15 +60,15 @@ private:
 
 	/**
 	@brief GameData we received from server
-	
+
 	We won't start until we received this
 	*/
 	boost::scoped_ptr<const GameData> gameData;
 	const ClientSetup* settings;
 	std::string modArchive;
 	ILoadSaveHandler *savefile;
-	
-	unsigned timer;
+
+	spring_time timer;
 	bool wantDemo;
 };
 

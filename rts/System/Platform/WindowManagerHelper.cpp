@@ -7,11 +7,14 @@
 
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
+#include "Game/GameVersion.h"
 
 
 SDL_Surface* WindowManagerHelper::currentIcon = NULL;
 
 void WindowManagerHelper::SetIcon(const CBitmap* icon) {
+	if (SpringVersion::IsHeadless())
+		return;
 
 	if (icon != NULL) {
 		// 24bit RGB or 32bit RGBA

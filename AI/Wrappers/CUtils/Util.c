@@ -491,7 +491,12 @@ static const char* fileSelectorSuffix = NULL;
 static void util_initFileSelector(const char* suffix) {
 	fileSelectorSuffix = suffix;
 }
+
+#if defined(__APPLE__)
+static int util_fileSelector(struct dirent* fileDesc) {
+#else
 static int util_fileSelector(const struct dirent* fileDesc) {
+#endif
 	return util_endsWith(fileDesc->d_name, fileSelectorSuffix);
 }
 
@@ -618,12 +623,10 @@ static bool util_makeDirS(const char* dirPath) {
 
 bool util_makeDir(const char* dirPath, bool recursive) {
 
-	bool exists = false;
-
 	char* dirPath_cpy = util_allocStrCpy(dirPath);
 	util_removeTrailingSlash(dirPath_cpy);
 
-	exists = util_fileExists(dirPath_cpy);
+	bool exists = util_fileExists(dirPath_cpy);
 
 	if (!exists) {
 		char* parentDir = util_allocStrCpy(dirPath_cpy);

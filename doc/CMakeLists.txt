@@ -45,7 +45,7 @@ if    (UNIX)
 		Set(man_dst
 				"${MAN_BUILD_DIR}/spring-dedicated.6.gz"
 				"${MAN_BUILD_DIR}/spring-headless.6.gz"
-				"${MAN_BUILD_DIR}/spring-multithreaded.6.gz"
+				"${MAN_BUILD_DIR}/spring-legacy.6.gz"
 				"${MAN_BUILD_DIR}/spring.6.gz")
 		set_source_files_properties(${man_dst} PROPERTIES GENERATED TRUE)
 
@@ -70,17 +70,13 @@ if    (UNIX)
 	endif (CREATE_MAN_PAGES)
 endif (UNIX)
 
+option(USERDOCS_PLAIN "Install plain/text engine user-docs (README, LICENSE, etc.)" FALSE)
+option(USERDOCS_HTML "Install HTML engine user-docs (README.html, LICENSE.html, etc.)" FALSE)
 
 ### make and install the user-doc pages (README, LICENSE, ...)
 If     (WIN32)
-	# We do not need the plain text version of the docu under windows
-	Set(USERDOCS_PLAIN FALSE CACHE BOOL "Install plain/text engine user-docs (README, LICENSE, etc.)")
-	Set(USERDOCS_HTML  TRUE  CACHE BOOL "Install HTML engine user-docs (README.html, LICENSE.html, etc.)")
 	Set(DOC_DEST_DIR "${DOCDIR}")
 Else   (WIN32)
-	# TODO re-enable PLAIN on UNIX, once the correct version is set in ../CMakeLists.txt and make it a CACHE var then, also
-	Set(USERDOCS_PLAIN FALSE       BOOL "Install plain/text engine user-docs (README, LICENSE, etc.)")
-	Set(USERDOCS_HTML  FALSE CACHE BOOL "Install HTML engine user-docs (README.html, LICENSE.html, etc.)")
 	Set(DOC_DEST_DIR "${DOCDIR}/engine")
 EndIf  (WIN32)
 

@@ -113,13 +113,13 @@ private:
 
 	GLuint uniforms[20]; ///< see useUniforms
 
-	bool wasLastFrameVisible;
+	bool wasVisibleLastFrame;
 	GLuint occlusionQuery;
 	GLuint occlusionQueryResult;
 
 	float3 windVec;
 	float3 windndir;
-	float  windStrength;
+//	float  windStrength;
 };
 
 #endif // BUMP_WATER_H

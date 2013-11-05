@@ -43,10 +43,12 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 
 	const int objID = GetObjectID(object);
 
-	object->isMarkedOnBlockingMap = true;
+	object->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING);
 	object->mapPos = object->GetMapPos();
+	object->groundBlockPos = object->pos;
 
 	if (object->immobile) {
+		// align position to even-numbered squares
 		object->mapPos.x &= 0xfffffe;
 		object->mapPos.y &= 0xfffffe;
 	}
@@ -64,7 +66,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (object->moveDef == NULL && pathManager) {
+	if (object->moveDef == NULL && pathManager != NULL) {
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr, TERRAINCHANGE_OBJECT_INSERTED);
 	}
 }
@@ -75,8 +77,9 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 
 	const int objID = GetObjectID(object);
 
-	object->isMarkedOnBlockingMap = true;
+	object->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING);
 	object->mapPos = object->GetMapPos();
+	object->groundBlockPos = object->pos;
 
 	if (object->immobile) {
 		object->mapPos.x &= 0xfffffe;
@@ -102,7 +105,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (object->moveDef == NULL && pathManager) {
+	if (object->moveDef == NULL && pathManager != NULL) {
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr, TERRAINCHANGE_OBJECT_INSERTED_YM);
 	}
 }
@@ -119,7 +122,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 	const int sx = object->xsize;
 	const int sz = object->zsize;
 
-	object->isMarkedOnBlockingMap = false;
+	object->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING);
 
 	for (int z = bz; z < bz + sz; ++z) {
 		for (int x = bx; x < bx + sx; ++x) {
@@ -131,7 +134,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (object->moveDef == NULL && pathManager) {
+	if (object->moveDef == NULL && pathManager != NULL) {
 		pathManager->TerrainChange(bx, bz, bx + sx, bz + sz, TERRAINCHANGE_OBJECT_DELETED);
 	}
 }
@@ -147,11 +150,10 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare) const
 
 	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
 
-	if (cell.empty()) {
+	if (cell.empty())
 		return NULL;
-	}
 
-	return cell.begin()->second;
+	return ((cell.begin())->second);
 }
 
 
@@ -173,20 +175,20 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlocked(const float3& pos) const {
 bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, CSolidObject* ignoreObj) const
 {
 	if (x < 0 || x >= gs->mapx || z < 0 || z >= gs->mapy)
-		return NULL;
+		return false;
 
 	const int mapSquare = x + z * gs->mapx;
 
 	GML_STDMUTEX_LOCK(block); // GroundBlockedUnsafe
 
-	if (groundBlockingMap[mapSquare].empty()) {
+	if (groundBlockingMap[mapSquare].empty())
 		return false;
-	}
 
 	const int objID = GetObjectID(ignoreObj);
-
 	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
+
 	BlockingMapCellIt it = cell.begin();
+
 	if (it != cell.end()) {
 		if (it->first != objID) {
 			// there are other objects blocking the square

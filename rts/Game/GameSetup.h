@@ -8,7 +8,7 @@
 #include <vector>
 #include <set>
 
-#include "PlayerBase.h"
+#include "Players/PlayerBase.h"
 #include "Sim/Misc/TeamBase.h"
 #include "Sim/Misc/AllyTeam.h"
 #include "ExternalAI/SkirmishAIData.h"
@@ -19,12 +19,20 @@ class TdfParser;
 class CGameSetup
 {
 	CR_DECLARE_STRUCT(CGameSetup);
-	void PostLoad();
 
 public:
 	CGameSetup();
-	~CGameSetup();
 
+	static void LoadSavedScript(const std::string& file, const std::string& script);
+
+	// these return dummy containers if the global gameSetup instance is NULL
+	static const std::map<std::string, std::string>& GetMapOptions();
+	static const std::map<std::string, std::string>& GetModOptions();
+	static const std::vector<PlayerBase>& GetPlayerStartingData();
+	static const std::vector<TeamBase>& GetTeamStartingData();
+	static const std::vector<AllyTeam>& GetAllyStartingData();
+
+	void PostLoad();
 	bool Init(const std::string& script);
 	/**
 	 * @brief Load startpositions from map/script
@@ -44,57 +52,37 @@ public:
 		return (it->second);
 	}
 
-	enum StartPosType
-	{
-		StartPos_Fixed = 0,
-		StartPos_Random = 1,
-		StartPos_ChooseInGame = 2,
+	const std::map<std::string, std::string>& GetMapOptionsCont() const { return mapOptions; }
+	const std::map<std::string, std::string>& GetModOptionsCont() const { return modOptions; }
+	const std::vector<PlayerBase>& GetPlayerStartingDataCont() const { return playerStartingData; }
+	const std::vector<TeamBase>& GetTeamStartingDataCont() const { return teamStartingData; }
+	const std::vector<AllyTeam>& GetAllyStartingDataCont() const { return allyStartingData; }
+	const std::vector<SkirmishAIData>& GetAIStartingDataCont() const { return skirmishAIStartingData; }
+
+	const std::string MapFile() const;
+
+	enum StartPosType {
+		StartPos_Fixed            = 0,
+		StartPos_Random           = 1,
+		StartPos_ChooseInGame     = 2,
 		StartPos_ChooseBeforeGame = 3,
-		StartPos_Last = 3  // last entry in enum (for user input check)
+		StartPos_Last             = 3  // last entry in enum (for user input check)
 	};
 
 	bool fixedAllies;
-	unsigned int mapHash;
-	unsigned int modHash;
-	unsigned int mapSeed;
-	std::string MapFile() const;
-	std::string mapName;
-	std::string modName;
-	std::string gameID;
 	bool useLuaGaia;
-
-	std::string gameSetupText;
-
-	StartPosType startPosType;
-
-	std::vector<PlayerBase> playerStartingData;
-
-	const std::vector<SkirmishAIData>& GetSkirmishAIs() const;
-
-public:
-
-	std::vector<TeamBase> teamStartingData;
-	std::vector<AllyTeam> allyStartingData;
-
-	std::map<std::string, std::string> mapOptions;
-	std::map<std::string, std::string> modOptions;
-
-	int maxUnitsPerTeam;
+	bool noHelperAIs;
 
 	bool ghostedBuildings;
 	bool disableMapDamage;
 
-	float maxSpeed;
-	float minSpeed;
-
 	/** if true, this is a non-network game (one local client, eg. when watching a demo) */
 	bool onlyLocal;
-
 	bool hostDemo;
-	std::string demoName;
-	int numDemoPlayers;
 
-	std::string saveName;
+	unsigned int mapHash;
+	unsigned int modHash;
+	unsigned int mapSeed;
 
 	/**
 	 * The number of seconds till the game starts,
@@ -103,7 +91,21 @@ public:
 	 */
 	unsigned int gameStartDelay;
 
-	bool noHelperAIs;
+	int numDemoPlayers;
+	int maxUnitsPerTeam;
+
+	float maxSpeed;
+	float minSpeed;
+
+	StartPosType startPosType;
+
+	std::string mapName;
+	std::string modName;
+	std::string gameID;
+
+	std::string gameSetupText;
+	std::string demoName;
+	std::string saveName;
 
 private:
 	/**
@@ -146,14 +148,21 @@ private:
 	/** @brief Update all allyteam indices to refer to the right allyteams. (except allies) */
 	void RemapAllyteams();
 
+private:
 	std::map<int, int> playerRemap;
 	std::map<int, int> teamRemap;
 	std::map<int, int> allyteamRemap;
 
+	std::vector<PlayerBase> playerStartingData;
+	std::vector<TeamBase> teamStartingData;
+	std::vector<AllyTeam> allyStartingData;
 	std::vector<SkirmishAIData> skirmishAIStartingData;
-	std::map<int, const SkirmishAIData*> team_skirmishAI;
 
+	std::map<int, const SkirmishAIData*> team_skirmishAI;
 	std::map<std::string, int> restrictedUnits;
+
+	std::map<std::string, std::string> mapOptions;
+	std::map<std::string, std::string> modOptions;
 };
 
 extern CGameSetup* gameSetup;

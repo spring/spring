@@ -92,9 +92,8 @@ unsigned int CBasicWater::GenWaterQuadsList(unsigned int textureWidth, unsigned 
 
 void CBasicWater::Draw()
 {
-	if (!mapInfo->water.forceRendering && (readmap->currMinHeight > 1.0f)) {
+	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
 		return;
-	}
 
 	glPushAttrib(GL_FOG_BIT);
 	ISky::SetupFog();

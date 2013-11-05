@@ -4,6 +4,7 @@
 #include "FarTextureHandler.h"
 
 #include "Game/Camera.h"
+#include "Game/GameVersion.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/ISky.h"
@@ -48,6 +49,9 @@ CFarTextureHandler::CFarTextureHandler()
 	texSizeX = maxTexSize;
 	texSizeY = std::max(iconSizeY, 4 * numOrientations * iconSizeX * iconSizeY / texSizeX); // minimum space for 4 icons
 	texSizeY = next_power_of_2(texSizeY);
+
+	if (SpringVersion::IsHeadless())
+		return;
 
 	if (!fbo.IsValid()) {
 		LOG_L(L_WARNING, "framebuffer not valid!");
@@ -165,7 +169,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	glFogf(GL_FOG_END,    1e6);
 	glFogf(GL_FOG_DENSITY, 1.0f);
 
-	unitDrawer->SetupForUnitDrawing();
+	unitDrawer->SetupForUnitDrawing(false);
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PushRenderState();
 	unitDrawer->SetTeamColour(obj->team);
 
@@ -218,7 +222,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	glPopMatrix();
 
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();
-	unitDrawer->CleanUpUnitDrawing();
+	unitDrawer->CleanUpUnitDrawing(false);
 
 	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glPopAttrib();

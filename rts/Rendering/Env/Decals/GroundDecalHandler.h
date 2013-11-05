@@ -15,9 +15,9 @@
 
 class CSolidObject;
 class CUnit;
-class CBuilding;
 class CVertexArray;
 struct SolidObjectGroundDecal;
+struct SolidObjectDecalType;
 struct S3DModel;
 
 namespace Shader {
@@ -44,16 +44,17 @@ struct UnitTrackStruct {
 		: owner(owner)
 		, lastUpdate(0)
 		, lifeTime(0)
-		, trackAlpha(255)
 		, alphaFalloff(0.0f)
 		, lastAdded(NULL)
 	{}
 
 	CUnit* owner;
+
 	unsigned int lastUpdate;
 	unsigned int lifeTime;
-	int trackAlpha;
+
 	float alphaFalloff;
+
 	TrackPart* lastAdded;
 	std::list<TrackPart*> parts;
 };
@@ -168,22 +169,6 @@ public:
 	void ExplosionOccurred(const CExplosionEvent& event);
 
 private:
-	void LoadDecalShaders();
-	void DrawObjectDecals();
-
-	void AddTracks();
-	void DrawTracks();
-	void CleanTracks();
-
-	void AddScars();
-	void DrawScars();
-
-	void AddDecalAndTrack(CUnit* unit, const float3& newpos);
-
-private:
-	unsigned int scarTex;
-	bool groundScarAlphaFade;
-
 	struct TrackType {
 		TrackType()
 			: texture(0)
@@ -192,7 +177,6 @@ private:
 		std::set<UnitTrackStruct*> tracks;
 		unsigned int texture;
 	};
-	std::vector<TrackType*> trackTypes;
 
 	struct SolidObjectDecalType {
 		SolidObjectDecalType(): texture(0) {}
@@ -202,7 +186,6 @@ private:
 
 		unsigned int texture;
 	};
-	std::vector<SolidObjectDecalType*> objectDecalTypes;
 
 	struct Scar {
 		Scar()
@@ -214,10 +197,8 @@ private:
 			, startAlpha(1.0f)
 			, texOffsetX(0.0f)
 			, texOffsetY(0.0f)
-			, x1(0)
-			, x2(0)
-			, y1(0)
-			, y2(0)
+			, x1(0), x2(0)
+			, y1(0), y2(0)
 			, basesize(0.0f)
 			, overdrawn(0.0f)
 			, lastTest(0)
@@ -234,10 +215,8 @@ private:
 		float texOffsetX;
 		float texOffsetY;
 
-		int x1;
-		int x2;
-		int y1;
-		int y2;
+		int x1, x2;
+		int y1, y2;
 
 		float basesize;
 		float overdrawn;
@@ -245,6 +224,26 @@ private:
 		int lastTest;
 		CVertexArray* va;
 	};
+
+	void LoadDecalShaders();
+	void DrawObjectDecals();
+
+	void AddTracks();
+	void DrawTracks();
+	void CleanTracks();
+
+	void AddScars();
+	void DrawScars();
+
+	void GatherDecalsForType(SolidObjectDecalType* decalType);
+	void AddDecalAndTrack(CUnit* unit, const float3& newPos);
+
+private:
+	unsigned int scarTex;
+	bool groundScarAlphaFade;
+
+	std::vector<SolidObjectDecalType*> objectDecalTypes;
+	std::vector<TrackType*> trackTypes;
 
 	enum DecalShaderProgram {
 		DECAL_SHADER_ARB,

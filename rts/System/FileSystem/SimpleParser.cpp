@@ -10,7 +10,7 @@
 CSimpleParser::CSimpleParser(CFileHandler& fh)
 	: curPos(0)
 	, lineNumber(0)
-	, inComment(false) // /* text */ comments are not implemented
+//	, inComment(false) // /* text */ comments are not implemented
 {
 	fh.LoadStringData(file);
 }
@@ -19,7 +19,7 @@ CSimpleParser::CSimpleParser(const std::string& filecontent)
 	: file(filecontent)
 	, curPos(0)
 	, lineNumber(0)
-	, inComment(false) // /* text */ comments are not implemented
+//	, inComment(false) // /* text */ comments are not implemented
 {
 }
 

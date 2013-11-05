@@ -3,6 +3,7 @@
 #include "System/float3.h"
 #include "System/creg/creg_cond.h"
 #include "System/myMath.h"
+#include <cmath> // std::min, std::max, std::fabs
 
 CR_BIND(float3, );
 CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
@@ -11,9 +12,9 @@ CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
 float float3::maxxpos = -1.0f;
 float float3::maxzpos = -1.0f;
 
-#ifdef _MSC_VER
-	const float float3::CMP_EPS = 1e-4f;
-	const float float3::NORMALIZE_EPS = 1e-12f;
+#if (__cplusplus <= 199711L) && !defined(__GXX_EXPERIMENTAL_CXX0X__) && (!defined(__GNUC__) || defined (__clang__))
+const float float3::CMP_EPS = 1e-4f;
+const float float3::NORMALIZE_EPS = 1e-12f;
 #endif
 
 bool float3::IsInBounds() const
@@ -50,7 +51,7 @@ void float3::ClampInMap()
 }
 
 namespace std {
-	float3 min(float3 v1, float3 v2)
+	float3 min(const float3 v1, const float3 v2)
 	{
 		return float3(
 			std::min(v1.x, v2.x),
@@ -59,7 +60,7 @@ namespace std {
 		);
 	}
 
-	float3 max(float3 v1, float3 v2)
+	float3 max(const float3 v1, const float3 v2)
 	{
 		return float3(
 			std::max(v1.x, v2.x),
@@ -68,7 +69,7 @@ namespace std {
 		);
 	}
 
-	float3 fabs(float3 v)
+	float3 fabs(const float3 v)
 	{
 		return float3(
 			std::fabs(v.x),

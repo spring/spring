@@ -121,6 +121,10 @@ static int ParseFloatArray(lua_State* L, int idx, float* array, int size)
 
 int LuaFonts::meta_gc(lua_State* L)
 {
+	if (lua_isnil(L, 1)) {
+		return 0;
+	}
+
 	CglFont** font = (CglFont**)luaL_checkudata(L, 1, "Font");
 	delete *font;
 	*font = NULL;
@@ -396,7 +400,7 @@ int LuaFonts::SetOutlineColor(lua_State* L)
 		color->y = luaL_checkfloat(L, 3);
 		color->z = luaL_checkfloat(L, 4);
 		color->w = luaL_optfloat(L, 5, 1.0f);
-	} else if (!lua_isnil(L, 2)) {
+	} else if (!lua_isnoneornil(L, 2)) {
 		luaL_error(L, "Incorrect arguments to font:SetOutlineColor([\"outlineColor\"])");
 	}
 
@@ -409,14 +413,7 @@ int LuaFonts::SetOutlineColor(lua_State* L)
 int LuaFonts::SetAutoOutlineColor(lua_State* L)
 {
 	CglFont* font = tofont(L, 1);
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args < 2 || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to font:SetAutoOutlineColor(enable)");
-	}
-
-	bool enable = lua_toboolean(L, 2);
-
+	bool enable = luaL_checkboolean(L, 2);
 	font->SetAutoOutlineColor(enable);
 	return 0;
 }

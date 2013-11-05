@@ -5,26 +5,32 @@
 
 #include "Weapon.h"
 
-class CBombDropper : public CWeapon
+class CBombDropper: public CWeapon
 {
 	CR_DECLARE(CBombDropper);
 public:
-	CBombDropper(CUnit* owner, bool useTorps);
+	CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps);
 
 	void Init();
 	void Update();
 	void SlowUpdate();
 
+private:
+	bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
+
+	bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
+	bool TestRange(const float3& pos, bool userTarget, const CUnit* unit) const;
+	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
+	void FireImpl(bool scriptCall);
+
+	float GetPredictedImpactTime(const float3& impactPos) const;
+
+private:
 	/// if we should drop torpedoes
 	bool dropTorpedoes;
 	/// range of bombs (torpedoes) after they hit ground/water
-	float bombMoveRange;
+	float torpMoveRange;
 	float tracking;
-
-private:
-	bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
-	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
-	void FireImpl();
 };
 
 #endif /* BOMB_DROPPER_H */

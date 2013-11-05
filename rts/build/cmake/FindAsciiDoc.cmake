@@ -44,6 +44,10 @@ find_file(DOCBOOK_XSL
 	DOC "DocBook XSL Style-Sheet"
 	)
 
+IF    (NOT DOCBOOK_XSL)
+	file(GLOB DOCBOOK_XSL / /usr/share/xml/docbook/xsl-stylesheets-*/manpages/docbook.xsl)
+ENDIF (NOT DOCBOOK_XSL)
+
 # handle the QUIETLY and REQUIRED arguments and set ASCIIDOC_FOUND to TRUE if
 # all listed variables are TRUE
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(AsciiDoc DEFAULT_MSG ASCIIDOC_BIN)

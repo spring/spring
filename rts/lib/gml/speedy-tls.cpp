@@ -57,7 +57,7 @@ struct i386_descriptor {
 	unsigned int base_24_31:8;
 };
 
-#ifdef linux
+#ifdef __linux__
 
 #include <asm/ldt.h>
 #include <linux/unistd.h>
@@ -163,7 +163,7 @@ int modify_ldt(int func, void *ptr, unsigned long bytecount)
 
 //Worker function to search for the next available ldt
 int speedy_tls_get_next_avail_ldt(){
-#ifdef linux
+#ifdef __linux__
 	char temp[LDT_ENTRIES*LDT_ENTRY_SIZE];
 	int ret = modify_ldt(0, temp, sizeof(temp));
 	if (ret < 0){

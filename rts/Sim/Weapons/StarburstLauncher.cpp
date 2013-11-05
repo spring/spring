@@ -7,33 +7,26 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CStarburstLauncher, CWeapon, (NULL));
+CR_BIND_DERIVED(CStarburstLauncher, CWeapon, (NULL, NULL));
 
-CR_REG_METADATA(CStarburstLauncher,(
+CR_REG_METADATA(CStarburstLauncher, (
 	CR_MEMBER(uptime),
 	CR_MEMBER(tracking),
 	CR_RESERVED(8)
 ));
 
-CStarburstLauncher::CStarburstLauncher(CUnit* owner)
-: CWeapon(owner),
-	tracking(0),
-	uptime(3)
+CStarburstLauncher::CStarburstLauncher(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
+	tracking = ((def->tracks)? weaponDef->turnrate: 0);
+	uptime = (def->uptime * GAME_SPEED);
 }
 
 
 void CStarburstLauncher::Update(void)
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->pos +
-			owner->frontdir * relWeaponPos.z +
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;
-		weaponMuzzlePos = owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		// the aiming upward is apperently implicid so aim toward target
 		wantedDir = (targetPos - weaponPos).Normalize();
@@ -42,7 +35,7 @@ void CStarburstLauncher::Update(void)
 	CWeapon::Update();
 }
 
-void CStarburstLauncher::FireImpl()
+void CStarburstLauncher::FireImpl(bool scriptCall)
 {
 	float3 speed(0.0f, weaponDef->startvelocity, 0.0f);
 
@@ -51,8 +44,7 @@ void CStarburstLauncher::FireImpl()
 	}
 
 	const float3 aimError =
-		(gs->randVector() * sprayAngle + salvoError) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
+		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos + float3(0, 2, 0);

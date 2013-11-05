@@ -37,11 +37,13 @@ CONFIG(bool, ShowRezBars).defaultValue(true);
 
 CONFIG(float, FeatureDrawDistance)
 .defaultValue(6000.0f)
-.minimumValue(0.0f);
+.minimumValue(0.0f)
+.description("Maximum distance at which features will be drawn.");
 
 CONFIG(float, FeatureFadeDistance)
 .defaultValue(4500.0f)
-.minimumValue(0.0f);
+.minimumValue(0.0f)
+.description("Distance at which features will begin to fade from view.");
 
 CFeatureDrawer* featureDrawer = NULL;
 
@@ -111,7 +113,7 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 	}
 }
 
-void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature, const float3& pos)
+void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
 
@@ -196,7 +198,7 @@ void CFeatureDrawer::Draw()
 
 	GML_RECMUTEX_LOCK(feat); // Draw
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	if (gd->DrawExtraTex()) {
 		glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -207,11 +209,11 @@ void CFeatureDrawer::Draw()
 		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0.0f, 0.0f);
 
-		glBindTexture(GL_TEXTURE_2D, gd->infoTex);
+		glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-	unitDrawer->SetupForUnitDrawing();
+	unitDrawer->SetupForUnitDrawing(false);
 	GetVisibleFeatures(0, true);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
@@ -220,7 +222,7 @@ void CFeatureDrawer::Draw()
 		opaqueModelRenderers[modelType]->PopRenderState();
 	}
 
-	unitDrawer->CleanUpUnitDrawing();
+	unitDrawer->CleanUpUnitDrawing(false);
 
 	farTextureHandler->Draw();
 
@@ -268,7 +270,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 void CFeatureDrawer::DrawFeatureStats()
 {
 	if (!drawStat.empty()) {
-		if (!water->IsDrawReflection()) {
+		if (!water->DrawReflectionPass()) {
 			for (std::vector<CFeature *>::iterator fi = drawStat.begin(); fi != drawStat.end(); ++fi) {
 				DrawFeatureStatBars(*fi);
 			}
@@ -316,10 +318,11 @@ void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
 
 bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 {
+	if (feature->IsInVoid()) { return false; }
 	if (!camera->InView(feature->drawMidPos, feature->drawRadius)) { return false; }
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
 
-	const float sqDist = (feature->pos - camera->pos).SqLength();
+	const float sqDist = (feature->pos - camera->GetPos()).SqLength();
 	const float farLength = feature->sqRadius * unitDrawer->unitDrawDistSqr;
 	const float sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 
@@ -330,7 +333,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 
 	unitDrawer->SetTeamColour(feature->team, alpha);
 
-	if (!(feature->luaDraw && luaRules && luaRules->DrawFeature(feature))) {
+	if (!(feature->luaDraw && luaRules != NULL && luaRules->DrawFeature(feature))) {
 		feature->model->DrawStatic();
 	}
 
@@ -346,13 +349,13 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 
 void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 {
-	const bool oldAdvShading = unitDrawer->advShading;
+	const bool oldAdvShading = unitDrawer->UseAdvShading();
 
 	{
-		unitDrawer->advShading = unitDrawer->advShading && !noAdvShading;
+		unitDrawer->SetUseAdvShading(unitDrawer->UseAdvShading() && !noAdvShading);
 
-		if (unitDrawer->advShading) {
-			unitDrawer->SetupForUnitDrawing();
+		if (unitDrawer->UseAdvShading()) {
+			unitDrawer->SetupForUnitDrawing(false);
 		} else {
 			unitDrawer->SetupForGhostDrawing();
 		}
@@ -378,13 +381,13 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 
 		glPopAttrib();
 
-		if (unitDrawer->advShading) {
-			unitDrawer->CleanUpUnitDrawing();
+		if (unitDrawer->UseAdvShading()) {
+			unitDrawer->CleanUpUnitDrawing(false);
 		} else {
 			unitDrawer->CleanUpGhostDrawing();
 		}
 
-		unitDrawer->advShading = oldAdvShading;
+		unitDrawer->SetUseAdvShading(oldAdvShading);
 	}
 }
 
@@ -502,6 +505,9 @@ public:
 		for (std::set<CFeature*>::const_iterator fi = dq->features.begin(); fi != dq->features.end(); ++fi) {
 			CFeature* f = (*fi);
 
+			if (f->IsInVoid())
+				continue;
+
 			assert(f->def->drawType == DRAWTYPE_MODEL);
 
 			if (gu->spectatingFullView || f->IsInLosForAllyTeam(gu->myAllyTeam)) {
@@ -511,10 +517,10 @@ public:
 					if (f->midPos.y < 0.0f) {
 						zeroPos = f->midPos;
 					} else {
-						const float dif = f->midPos.y - camera->pos.y;
+						const float dif = f->midPos.y - camera->GetPos().y;
 						zeroPos =
-							camera->pos * (f->midPos.y / dif) +
-							f->midPos * (-camera->pos.y / dif);
+							camera->GetPos() * (f->midPos.y / dif) +
+							f->midPos * (-camera->GetPos().y / dif);
 					}
 					if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z, false) > f->drawRadius) {
 						continue;
@@ -525,7 +531,7 @@ public:
 						continue;
 				}
 
-				const float sqDist = (f->pos - camera->pos).SqLength();
+				const float sqDist = (f->pos - camera->GetPos()).SqLength();
 				const float farLength = f->sqRadius * unitDrawer->unitDrawDistSqr;
 #ifdef USE_GML
 				if (statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))
@@ -571,8 +577,8 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	CFeatureQuadDrawer drawer;
 	drawer.drawQuads = &drawQuads;
 	drawer.drawQuadsX = drawQuadsX;
-	drawer.drawReflection = water->IsDrawReflection();
-	drawer.drawRefraction = water->IsDrawRefraction();
+	drawer.drawReflection = water->DrawReflectionPass();
+	drawer.drawRefraction = water->DrawRefractionPass();
 	drawer.sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 	drawer.sqFadeDistBegin = featureFadeDistance * featureFadeDistance;
 	drawer.farFeatures = drawFar;
@@ -580,7 +586,7 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	drawer.statFeatures = showRezBars ? &drawStat : NULL;
 #endif
 
-	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
+	readMap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
 }
 
 void CFeatureDrawer::SwapFeatures() {

@@ -5,7 +5,7 @@
 #include <boost/thread/condition.hpp>
 #include <boost/cstdint.hpp>
 
-#include "System/OpenMP_cond.h"
+#include "System/ThreadPool.h"
 
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
@@ -26,6 +26,11 @@
 #include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
+
+#ifdef GetTempPath
+#undef GetTempPath
+#undef GetTempPathA
+#endif
 
 #define NUL_RECTANGLE SRectangle(0, 0,         0,        0)
 #define MAP_RECTANGLE SRectangle(0, 0,  gs->mapx, gs->mapy)
@@ -197,7 +202,7 @@ void QTPFS::PathManager::Load() {
 		pfsCheckSum = mapCheckSum ^ modCheckSum;
 
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-			if (moveDefHandler->GetMoveDefByPathType(layerNum)->unitDefRefCount == 0)
+			if (moveDefHandler->GetMoveDefByPathType(layerNum)->udRefCount == 0)
 				continue;
 
 			#ifndef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
@@ -262,29 +267,17 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
-		Threading::OMPCheck();
-		#pragma omp parallel
-		if (omp_get_thread_num() == 0) {
-			// "trust" OpenMP implementation to set a pool-size that
-			// matches the CPU threading capacity (eg. the number of
-			// active physical cores * number of threads per core);
-			// too many and esp. too few threads would be wasteful
-			//
-			// TODO: OpenMP needs project-global linking changes
-			sprintf(loadMsg, fmtString, __FUNCTION__, omp_get_num_threads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
-			pmLoadScreen.AddLoadMessage(loadMsg);
-		}
+		sprintf(loadMsg, fmtString, __FUNCTION__, ThreadPool::GetNumThreads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
+		pmLoadScreen.AddLoadMessage(loadMsg);
 
 		#ifndef NDEBUG
 		const char* preFmtStr = "  initializing node-layer %u (thread %u)";
 		const char* pstFmtStr = "  initialized node-layer %u (%u MB, %u leafs, ratio %f)";
 		#endif
 
-		Threading::OMPCheck();
-		#pragma omp parallel for private(loadMsg)
-		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+		for_mt(0, nodeLayers.size(), [&,loadMsg](const int layerNum){
 			#ifndef NDEBUG
-			sprintf(loadMsg, preFmtStr, layerNum, omp_get_thread_num());
+			sprintf(loadMsg, preFmtStr, layerNum, ThreadPool::GetThreadNum());
 			pmLoadScreen.AddLoadMessage(loadMsg);
 			#endif
 
@@ -305,7 +298,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 			sprintf(loadMsg, pstFmtStr, layerNum, mem, layer.GetNumLeafNodes(), layer.GetNodeRatio());
 			pmLoadScreen.AddLoadMessage(loadMsg);
 			#endif
-		}
+		});
 	}
 	#else
 	{
@@ -319,6 +312,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 	streflop::streflop_init<streflop::Simple>();
 }
 
+__FORCE_ALIGN_STACK__
 void QTPFS::PathManager::InitNodeLayersThread(
 	unsigned int threadNum,
 	unsigned int numThreads,
@@ -360,7 +354,7 @@ void QTPFS::PathManager::InitNodeLayersThread(
 void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const SRectangle& r) {
 	nodeTrees[layerNum] = new QTPFS::QTNode(NULL,  0,  r.x1, r.z1,  r.x2, r.z2);
 
-	if (moveDefHandler->GetMoveDefByPathType(layerNum)->unitDefRefCount == 0)
+	if (moveDefHandler->GetMoveDefByPathType(layerNum)->udRefCount == 0)
 		return;
 
 	nodeLayers[layerNum].Init(layerNum);
@@ -374,11 +368,9 @@ void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
 
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
-		Threading::OMPCheck();
-		#pragma omp parallel for
-		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+		for_mt(0, nodeLayers.size(), [&,rect](const int layerNum) {
 			UpdateNodeLayer(layerNum, rect);
-		}
+		});
 	}
 	#else
 	{
@@ -389,6 +381,7 @@ void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
 	streflop::streflop_init<streflop::Simple>();
 }
 
+__FORCE_ALIGN_STACK__
 void QTPFS::PathManager::UpdateNodeLayersThread(
 	unsigned int threadNum,
 	unsigned int numThreads,
@@ -411,7 +404,7 @@ void QTPFS::PathManager::UpdateNodeLayersThread(
 void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle& r) {
 	const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
 
-	if (md->unitDefRefCount == 0)
+	if (md->udRefCount == 0)
 		return;
 
 	// NOTE:
@@ -456,7 +449,7 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
 	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
 
-		if (md->unitDefRefCount == 0)
+		if (md->udRefCount == 0)
 			continue;
 
 		SRectangle mr;
@@ -519,7 +512,7 @@ void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool 
 
 std::string QTPFS::PathManager::GetCacheDirName(boost::uint32_t mapCheckSum, boost::uint32_t modCheckSum) const {
 	static const std::string ver = IntToString(QTPFS_CACHE_VERSION, "%04x");
-	static const std::string dir = QTPFS_CACHE_BASEDIR + ver + "/" +
+	static const std::string dir = FileSystem::GetCacheDir() + "/QTPFS/" + ver + "/" +
 		IntToString(mapCheckSum, "%08x") + "-" +
 		IntToString(modCheckSum, "%08x") + "/";
 
@@ -551,7 +544,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 	for (unsigned int i = 0; i < nodeTrees.size(); i++) {
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
-		if (md->unitDefRefCount == 0)
+		if (md->udRefCount == 0)
 			continue;
 
 		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + md->name;
@@ -683,6 +676,7 @@ void QTPFS::PathManager::UpdateFull() {
 	#endif
 }
 
+__FORCE_ALIGN_STACK__
 void QTPFS::PathManager::ThreadUpdate() {
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	while (!nodeLayers.empty()) {
@@ -1016,7 +1010,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 	SCOPED_TIMER("PathManager::NextWayPoint");
 
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
-	const float3 noPathPoint = float3(-1.0f, 0.0f, -1.0f);
+	const float3 noPathPoint = -XZVector;
 
 	if (!synced)
 		return noPathPoint;

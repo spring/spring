@@ -5,7 +5,7 @@
 
 #include <vector>
 #include "System/float3.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 namespace IPath {
 	enum SearchResult {

@@ -7,7 +7,7 @@
 #include "Rendering/GL/FBO.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Util.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/creg/creg_cond.h"
@@ -15,9 +15,10 @@
 #include <string>
 
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true); // in safemode enabled, cause it ways more likely the gpu runs out of memory than this extension cause crashes!
-CONFIG(int, AtiHacks).defaultValue(-1);
-CONFIG(bool, DualScreenMode).defaultValue(false);
-CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false);
+CONFIG(bool, ForceEnableIntelShaderSupport).defaultValue(false);
+CONFIG(int, AtiHacks).defaultValue(-1).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with ATI video cards.\n -1:=runtime detect, 0:=off, 1:=on");
+CONFIG(bool, DualScreenMode).defaultValue(false).description("Sets whether to split the screen in half, with one half for minimap and one for main screen. Right side is for minimap unless DualScreenMiniMapOnLeft is set.");
+CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false).description("When set, will make the left half of the screen the minimap when DualScreenMode is set.");
 CONFIG(bool, TeamNanoSpray).defaultValue(true);
 
 /**
@@ -98,12 +99,12 @@ CR_REG_METADATA(CGlobalRendering, (
 CGlobalRendering::CGlobalRendering()
 	: timeOffset(0.0f)
 	, lastFrameTime(0.0f)
-	, lastFrameStart(spring_gettime())
+	, lastFrameStart(spring_notime)
 	, weightedSpeedFactor(0.0f)
 	, drawFrame(1)
-	, FPS(30.0f)
+	, FPS(GAME_SPEED)
 
-	, winState(0)
+	, winState(WINSTATE_DEFAULT)
 	, screenSizeX(1)
 	, screenSizeY(1)
 
@@ -130,7 +131,7 @@ CGlobalRendering::CGlobalRendering()
 	, FSAA(0)
 	, depthBufferBits(0)
 
-	, maxTextureSize(1024)
+	, maxTextureSize(2048)
 
 	, drawSky(true)
 	, drawWater(true)
@@ -187,10 +188,21 @@ void CGlobalRendering::PostInit() {
 		haveIntel  = (vendor.find("intel") != std::string::npos);
 		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
 
-		//FIXME Neither Intel's nor Mesa's GLSL implementation seem to be in a workable state atm (date: Nov. 2011)
-		haveGLSL &= !haveIntel;
-		haveGLSL &= !haveMesa;
-		//FIXME add an user config to force enable it!
+		// FIXME:
+		//   neither Intel's nor Mesa's GLSL implementation seem to be
+		//   in a workable state atm (date: Nov. 2011), ARB support is
+		//   also still crap (April 2013)
+		if (configHandler->GetBool("ForceEnableIntelShaderSupport")) {
+			haveARB |= haveIntel;
+			haveARB |= haveMesa;
+			haveGLSL |= haveIntel;
+			haveGLSL |= haveMesa;
+		} else {
+			haveARB &= !haveIntel;
+			haveARB &= !haveMesa;
+			haveGLSL &= !haveIntel;
+			haveGLSL &= !haveMesa;
+		}
 
 		if (haveATI) {
 			// x-series doesn't support NPOTs (but hd-series does)
@@ -282,7 +294,27 @@ void CGlobalRendering::PostInit() {
 	teamNanospray = configHandler->GetBool("TeamNanoSpray");
 }
 
+void CGlobalRendering::SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen)
+{
+#ifdef _DEBUG
+	fullScreen = false;
+#else
+	fullScreen = configFullScreen;
+#endif
 
+	// flags
+	if (cmdLineWindowed) {
+		fullScreen = false;
+	} else if (cmdLineFullScreen) {
+		fullScreen = true;
+	}
+}
+
+void CGlobalRendering::SetViewSize(int vsx, int vsy)
+{
+	viewSizeX = vsx;
+	viewSizeY = vsy;
+}
 
 void CGlobalRendering::SetDualScreenParams() {
 	dualScreenMode = configHandler->GetBool("DualScreenMode");
@@ -306,7 +338,7 @@ void CGlobalRendering::UpdateWindowGeometry() {
 	winPosY = 0;
 }
 
-void CGlobalRendering::UpdateViewPortGeometry() {
+void CGlobalRendering::UpdateViewPortGeometry(bool windowExposed) {
 	// NOTE: viewPosY is not currently used (always 0)
 	if (!dualScreenMode) {
 		viewSizeX = winSizeX;
@@ -314,6 +346,12 @@ void CGlobalRendering::UpdateViewPortGeometry() {
 		viewPosX = 0;
 		viewPosY = 0;
 	} else {
+		// if window was exposed in full-screen mode then
+		// this would divide its size in half (cyclically)
+		// --> keep the old params
+		if (fullScreen && windowExposed)
+			return;
+
 		viewSizeX = winSizeX / 2;
 		viewSizeY = winSizeY;
 

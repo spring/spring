@@ -33,7 +33,7 @@ AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 		assert(ud->pathType == -1U);
 		assert(unit->moveDef == NULL);
 
-		if (!ud->builder && !ud->IsTransportUnit() && ud->IsNonHoveringAirUnit()) {
+		if (!ud->builder && !ud->IsTransportUnit() && ud->IsStrafingAirUnit()) {
 			return (new CStrafeAirMoveType(unit));
 		} else {
 			// flying builders, transports, gunships

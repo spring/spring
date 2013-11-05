@@ -6,14 +6,14 @@
 #include "Game.h"
 #include "GlobalUnsynced.h"
 #include "InMapDraw.h"
-#include "Player.h"
-#include "PlayerHandler.h"
-#include "SelectedUnits.h"
+#include "SelectedUnitsHandler.h"
 #include "SyncedActionExecutor.h"
 #ifdef _WIN32
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
 
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
@@ -56,7 +56,7 @@ public:
 
 	bool Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->noHelperAIs, action.GetArgs());
-		selectedUnits.PossibleCommandChange(NULL);
+		selectedUnitsHandler.PossibleCommandChange(NULL);
 		LogSystemStatus("LuaUI control", gs->noHelperAIs);
 		return true;
 	}
@@ -262,9 +262,11 @@ public:
 			" a chat message to Lua-rules") {}
 
 	bool Execute(const SyncedAction& action) const {
+		const std::string& arg = action.GetArgs();
+
 		if (gs->frameNum <= 1) {
 			// TODO still needed???
-			LOG_L(L_WARNING, "/%s: cannot be called before gameframe #1", GetCommand().c_str());
+			LOG_L(L_WARNING, "/%s %s: cannot execute before gameframe #2", GetCommand().c_str(), arg.c_str());
 			return false;
 		}
 
@@ -274,27 +276,30 @@ public:
 		//     but this is no longer the case so we now let any player execute them (for MP
 		//     it does not matter who does so since they are not meant to be used there ITFP
 		//     and no less sync-safe)
-		if (action.GetArgs() == "reload") {
+		if (arg == "reload" || arg == "enable") {
 			if (!gs->cheatEnabled) {
-				LOG_L(L_WARNING, "Cheating required to reload synced scripts");
+				LOG_L(L_WARNING, "Cheating required to load synced scripts");
 			} else {
-
-				GML_MSTMUTEX_DOUNLOCK(sim); // temporarily unlock this mutex to prevent a deadlock
-				{
-					GML_STDMUTEX_LOCK(draw); // the draw thread accesses luaRules in too many places, so we lock the entire draw thread
-
-					CLuaRules::FreeHandler();
-					CLuaRules::LoadHandler();
-				}
-				GML_MSTMUTEX_DOLOCK(sim); // restore unlocked mutex
-
-				if (luaRules) {
-					LOG("LuaRules reloaded");
+				if (luaRules != NULL && arg == "enable") {
+					LOG_L(L_WARNING, "LuaRules is already loaded");
 				} else {
-					LOG_L(L_ERROR, "LuaRules reload failed");
+					GML_MSTMUTEX_DOUNLOCK(sim); // temporarily unlock this mutex to prevent a deadlock
+					{
+						GML_STDMUTEX_LOCK(draw); // the draw thread accesses luaRules in too many places, so we lock the entire draw thread
+
+						CLuaRules::FreeHandler();
+						CLuaRules::LoadHandler();
+					}
+					GML_MSTMUTEX_DOLOCK(sim); // restore unlocked mutex
+
+					if (luaRules) {
+						LOG("LuaRules loaded");
+					} else {
+						LOG_L(L_ERROR, "LuaRules loading failed");
+					}
 				}
 			}
-		} else if (action.GetArgs() == "disable") {
+		} else if (arg == "disable") {
 			if (!gs->cheatEnabled) {
 				LOG_L(L_WARNING, "Cheating required to disable synced scripts");
 			} else {
@@ -309,7 +314,7 @@ public:
 				LOG("LuaRules disabled");
 			}
 		} else if (luaRules) {
-			luaRules->GotChatMsg(action.GetArgs(), action.GetPlayerID());
+			luaRules->GotChatMsg(arg, action.GetPlayerID());
 		}
 
 		return true;
@@ -324,9 +329,11 @@ public:
 			" a chat message to Lua-Gaia") {}
 
 	bool Execute(const SyncedAction& action) const {
+		const std::string& arg = action.GetArgs();
+
 		if (gs->frameNum <= 1) {
 			// TODO still needed???
-			LOG_L(L_WARNING, "/%s: cannot be called before gameframe #1", GetCommand().c_str());
+			LOG_L(L_WARNING, "/%s %s: cannot execute before gameframe #2", GetCommand().c_str(), arg.c_str());
 			return false;
 		}
 
@@ -334,20 +341,24 @@ public:
 			return false;
 		}
 
-		if (action.GetArgs() == "reload") {
+		if (arg == "reload" || arg == "enable") {
 			if (!gs->cheatEnabled) {
-				LOG_L(L_WARNING, "Cheating required to reload synced scripts");
+				LOG_L(L_WARNING, "Cheating required to load synced scripts");
 			} else {
-				CLuaGaia::FreeHandler();
-				CLuaGaia::LoadHandler();
-
-				if (luaGaia) {
-					LOG("LuaGaia reloaded");
+				if (luaGaia != NULL && arg == "enable") {
+					LOG_L(L_WARNING, "LuaGaia is already loaded");
 				} else {
-					LOG_L(L_ERROR, "LuaGaia reload failed");
+					CLuaGaia::FreeHandler();
+					CLuaGaia::LoadHandler();
+
+					if (luaGaia) {
+						LOG("LuaGaia loaded");
+					} else {
+						LOG_L(L_ERROR, "LuaGaia loading failed");
+					}
 				}
 			}
-		} else if (action.GetArgs() == "disable") {
+		} else if (arg == "disable") {
 			if (!gs->cheatEnabled) {
 				LOG_L(L_WARNING, "Cheating required to disable synced scripts");
 			} else {
@@ -355,7 +366,7 @@ public:
 				LOG("LuaGaia disabled");
 			}
 		} else if (luaGaia) {
-			luaGaia->GotChatMsg(action.GetArgs(), action.GetPlayerID());
+			luaGaia->GotChatMsg(arg, action.GetPlayerID());
 		} else {
 			LOG("LuaGaia disabled");
 		}
@@ -378,7 +389,7 @@ public:
 		ASSERT_SYNCED((short)(gu->myPlayerNum * 123 + 123));
 		//ASSERT_SYNCED(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
 
-		for (size_t i = unitHandler->MaxUnits() - 1; i >= 0; --i) {
+		for (int i = unitHandler->MaxUnits() - 1; i >= 0; --i) {
 			if (unitHandler->units[i]) {
 				if (action.GetPlayerID() == gu->myPlayerNum) {
 					++unitHandler->units[i]->midPos.x; // and desync...
@@ -486,7 +497,7 @@ public:
 
 
 void SyncedGameCommands::AddDefaultActionExecutors() {
-	
+
 	AddActionExecutor(new CheatActionExecutor());
 	AddActionExecutor(new NoHelpActionExecutor());
 	AddActionExecutor(new NoSpecDrawActionExecutor());

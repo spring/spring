@@ -33,7 +33,6 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Watchdog.h"
-#include "System/TimeProfiler.h"
 
 CUnitLoader* CUnitLoader::GetInstance()
 {
@@ -59,8 +58,6 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 {
 	CUnit* unit = NULL;
 	UnitLoadParams& params = const_cast<UnitLoadParams&>(cparams);
-
-	SCOPED_TIMER("UnitLoader::LoadUnit");
 
 	{
 		GML_RECMUTEX_LOCK(sel); // LoadUnit - for anti deadlock purposes.
@@ -111,7 +108,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 			new CFactoryCAI(unit);
 		} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
 			new CBuilderCAI(unit);
-		} else if (ud->IsNonHoveringAirUnit()) {
+		} else if (ud->IsStrafingAirUnit()) {
 			// non-hovering fighter or bomber aircraft; coupled to StrafeAirMoveType
 			new CAirCAI(unit);
 		} else if (ud->IsAirUnit()) {
@@ -224,7 +221,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 
 			const UnitLoadParams unitParams = {
 				unitDefHandler->GetUnitDefByID(a),
-				NULL, 
+				NULL,
 
 				float3(px, ground->GetHeightReal(px, pz), pz),
 				ZeroVector,
@@ -285,7 +282,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 
 					const UnitLoadParams unitParams = {
 						unitDef,
-						NULL, 
+						NULL,
 
 						float3(px, ground->GetHeightReal(px, pz), pz),
 						ZeroVector,
@@ -383,7 +380,7 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
-			readmap->SetHeight(z * gs->mapxp1 + x, bi.pos.y);
+			readMap->SetHeight(z * gs->mapxp1 + x, bi.pos.y);
 		}
 	}
 
@@ -409,13 +406,13 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 	const int tz2 = std::min(gs->mapy, tz1 + bi.GetZSize());
 
 
-	const float* heightmap = readmap->GetCornerHeightMapSynced();
+	const float* heightmap = readMap->GetCornerHeightMapSynced();
 	int num = 0;
 	float heightdiff = 0.0f;
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
 			int index = z * gs->mapxp1 + x;
-			heightdiff += heightmap[index] - readmap->GetOriginalHeightMapSynced()[index];
+			heightdiff += heightmap[index] - readMap->GetOriginalHeightMapSynced()[index];
 			++num;
 		}
 	}
@@ -425,7 +422,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
 			int index = z * gs->mapxp1 + x;
-			readmap->SetHeight(index, heightdiff + readmap->GetOriginalHeightMapSynced()[index]);
+			readMap->SetHeight(index, heightdiff + readMap->GetOriginalHeightMapSynced()[index]);
 		}
 	}
 	// but without affecting the build height
@@ -433,7 +430,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
 			int index = z * gs->mapxp1 + x;
-			readmap->SetHeight(index, heightdiff + heightmap[index]);
+			readMap->SetHeight(index, heightdiff + heightmap[index]);
 		}
 	}
 

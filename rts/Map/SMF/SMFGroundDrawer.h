@@ -4,6 +4,8 @@
 #define _SMF_GROUND_DRAWER_H_
 
 #include "Map/BaseGroundDrawer.h"
+#include "Rendering/GL/GeometryBuffer.h"
+#include "Rendering/GL/LightHandler.h"
 
 
 class CSMFReadMap;
@@ -30,15 +32,23 @@ public:
 
 	void Draw(const DrawPass::e& drawPass);
 	void DrawShadowPass();
+	void DrawDeferredPass(const DrawPass::e& drawPass);
 
 	void Update();
 	void UpdateSunDir();
+
 	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 
 	// for ARB-only clients
 	void SetupBaseDrawPass();
 	void SetupReflDrawPass();
 	void SetupRefrDrawPass();
+
+	void SetDrawDeferredPass(bool b) {
+		if ((drawDeferred = b)) {
+			drawDeferred &= UpdateGeometryBuffer(false);
+		}
+	}
 
 	void IncreaseDetail();
 	void DecreaseDetail();
@@ -49,15 +59,21 @@ public:
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
 
+	const GL::GeometryBuffer* GetGeometryBuffer() const { return &geomBuffer; }
+	      GL::GeometryBuffer* GetGeometryBuffer()       { return &geomBuffer; }
+
 	IMeshDrawer* SwitchMeshDrawer(int mode = -1);
 
 private:
-	bool LoadMapShaders();
+	void SelectRenderState(bool shaderPath) {
+		smfRenderState = shaderPath? smfRenderStateSSP: smfRenderStateFFP;
+	}
+
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
+	inline void DrawBorder(const DrawPass::e drawPass);
 
-	void SetupTextureUnits(bool drawReflection);
-	void ResetTextureUnits(bool drawReflection);
+	bool UpdateGeometryBuffer(bool init);
 
 protected:
 	CSMFReadMap* smfMap;
@@ -73,6 +89,7 @@ protected:
 	ISMFRenderState* smfRenderState;
 
 	GL::LightHandler lightHandler;
+	GL::GeometryBuffer geomBuffer;
 };
 
 #endif // _SMF_GROUND_DRAWER_H_

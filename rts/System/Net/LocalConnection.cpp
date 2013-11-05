@@ -4,9 +4,9 @@
 
 #include <boost/format.hpp>
 
+#include "Net/Protocol/BaseNetProtocol.h"
 #include "Exception.h"
 #include "ProtocolDef.h"
-#include "System/BaseNetProtocol.h"
 #include "System/Log/ILog.h"
 
 namespace netcode {
@@ -120,13 +120,15 @@ bool CLocalConnection::HasIncomingData() const
 	return (!Data[instance].empty());
 }
 
-unsigned CLocalConnection::OtherInstance() const
+unsigned int CLocalConnection::GetPacketQueueSize() const
 {
-	if (instance == 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
+	return (!Data[instance].size());
+}
+
+unsigned int CLocalConnection::OtherInstance() const
+{
+	return ((instance + 1) % 2);
 }
 
 } // namespace netcode

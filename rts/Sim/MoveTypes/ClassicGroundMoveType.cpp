@@ -29,7 +29,7 @@ bool CClassicGroundMoveType::Update() { return false; }
 void CClassicGroundMoveType::SlowUpdate() {}
 void CClassicGroundMoveType::StartMoving(float3, float) {}
 void CClassicGroundMoveType::StartMoving(float3, float, float) {}
-void CClassicGroundMoveType::StopMoving() {}
+void CClassicGroundMoveType::StopMoving(bool, bool) {}
 void CClassicGroundMoveType::KeepPointingTo(float3, float, bool) {}
 void CClassicGroundMoveType::KeepPointingTo(CUnit*, float, bool) {}
 bool CClassicGroundMoveType::CanApplyImpulse() { return false; }
@@ -43,8 +43,8 @@ void CClassicGroundMoveType::LeaveTransport() {}
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/Player.h"
-#include "Game/SelectedUnits.h"
+#include "Game/Players/Player.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "MoveMath/MoveMath.h"
@@ -65,15 +65,15 @@ void CClassicGroundMoveType::LeaveTransport() {}
 #include "System/Sound/SoundChannels.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 std::vector<int2> CClassicGroundMoveType::lineTable[LINETABLE_SIZE][LINETABLE_SIZE];
 
 CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 	AMoveType(owner),
 
-	waypoint(0.0f, 0.0f, 0.0f),
-	nextWaypoint(0.0f, 0.0f, 0.0f),
+	waypoint(ZeroVector),
+	nextWaypoint(ZeroVector),
 
 	pathId(0),
 	goalRadius(0),
@@ -81,24 +81,21 @@ CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 	atGoal(false),
 	haveFinalWaypoint(false),
 
-	skidding(false),
-	flying(false),
-
 	turnRate(0.1f),
 	accRate(0.01f),
 	decRate(0.01f),
 
 	skidRotSpeed(0.0f),
-	dropSpeed(0.0f),
-	dropHeight(0.0f),
+	//dropSpeed(0.0f),
+	//dropHeight(0.0f),
 
 	skidRotVector(UpVector),
 	skidRotSpeed2(0.0f),
 	skidRotPos2(0.0f),
-	
-	flatFrontDir(1, 0, 0),
-	mainHeadingPos(0.0f, 0.0f, 0.0f),
-	lastGetPathPos(0.0f, 0.0f, 0.0f),
+
+	flatFrontDir(FwdVector),
+	mainHeadingPos(ZeroVector),
+	lastGetPathPos(ZeroVector),
 
 	useMainHeading(false),
 	deltaHeading(0),
@@ -119,9 +116,7 @@ CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 
 	pathFailures(0),
 	etaFailures(0),
-	nonMovingFailures(0),
-
-	oldPhysState(CSolidObject::OnGround)
+	nonMovingFailures(0)
 {
 	assert(owner != NULL);
 	assert(owner->unitDef != NULL);
@@ -154,17 +149,17 @@ bool CClassicGroundMoveType::Update()
 	if (OnSlope() &&
 		(!owner->unitDef->floatOnWater || ground->GetHeightAboveWater(owner->midPos.x, owner->midPos.z) > 0))
 	{
-		skidding = true;
+		owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 	}
 
-	if (skidding) {
+	if (owner->IsSkidding()) {
 		UpdateSkid();
 		return false;
 	}
 
 	ASSERT_SYNCED(owner->pos);
 
-	if (owner->falling) {
+	if (owner->IsFalling()) {
 		UpdateControlledDrop();
 		return false;
 	}
@@ -175,7 +170,7 @@ bool CClassicGroundMoveType::Update()
 
 	if (owner->IsStunned() || owner->beingBuilt) {
 		owner->script->StopMoving();
-		owner->speed = ZeroVector;
+		owner->SetVelocityAndSpeed(ZeroVector);
 	} else {
 		if (owner->fpsControlPlayer != NULL) {
 			UpdateDirectControl();
@@ -246,14 +241,14 @@ bool CClassicGroundMoveType::Update()
 		CheckCollision();
 		AdjustPosToWaterLine();
 
-		owner->speed = owner->pos - oldPos;
+		owner->SetVelocityAndSpeed(owner->pos - oldPos);
 		owner->UpdateMidAndAimPos();
 
 		oldPos = owner->pos;
 
 		hasMoved = true;
 	} else {
-		owner->speed = ZeroVector;
+		owner->SetVelocityAndSpeed(ZeroVector);
 	}
 
 	return hasMoved;
@@ -261,6 +256,8 @@ bool CClassicGroundMoveType::Update()
 
 void CClassicGroundMoveType::SlowUpdate()
 {
+	AMoveType::SlowUpdate();
+
 	if (owner->transporter) {
 		if (progressState == Active)
 			StopEngine();
@@ -280,14 +277,14 @@ void CClassicGroundMoveType::SlowUpdate()
 		StartEngine();
 	}
 
-	if (!flying) {
+	if (!owner->IsFlying()) {
 		if (!owner->pos.IsInBounds()) {
 			owner->pos.ClampInBounds();
 			oldPos = owner->pos;
 		}
 	}
 
-	if (!(owner->falling || flying)) {
+	if (!(owner->IsFalling() || owner->IsFlying())) {
 		float wh = 0.0f;
 
 		if (owner->unitDef->floatOnWater) {
@@ -298,21 +295,7 @@ void CClassicGroundMoveType::SlowUpdate()
 		} else {
 			wh = ground->GetHeightReal(owner->pos.x, owner->pos.z);
 		}
-		owner->Move1D(wh, 1, false);
-	}
-
-	if (owner->pos != oldSlowUpdatePos) {
-		oldSlowUpdatePos = owner->pos;
-
-		int newmapSquare = ground->GetSquare(owner->pos);
-		if (newmapSquare != owner->mapSquare) {
-			owner->mapSquare = newmapSquare;
-
-			loshandler->MoveUnit(owner, false);
-			radarhandler->MoveUnit(owner);
-		}
-
-		quadField->MovedUnit(owner);
+		owner->Move(UpVector * (wh - owner->pos.y), true);
 	}
 }
 
@@ -342,7 +325,7 @@ void CClassicGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadiu
 	}
 }
 
-void CClassicGroundMoveType::StopMoving() {
+void CClassicGroundMoveType::StopMoving(bool callScript, bool hardStop) {
 	StopEngine();
 
 	useMainHeading = false;
@@ -445,20 +428,23 @@ void CClassicGroundMoveType::ChangeHeading(short wantedHeading) {
 	flatFrontDir.Normalize();
 }
 
-bool CClassicGroundMoveType::CanApplyImpulse()
+bool CClassicGroundMoveType::CanApplyImpulse(const float3& extImpulse)
 {
-	if (owner->beingBuilt || owner->moveDef->moveFamily == MoveDef::Ship)
+	if (owner->beingBuilt || owner->moveDef->speedModClass == MoveDef::Ship)
 		return false;
 
-	float3& impulse = owner->residualImpulse;
-	float3& speed = owner->speed;
+	float3 impulse = extImpulse;
 
-	if (skidding) {
-		speed += impulse;
+	const float3& pos = owner->pos;
+	const float4& spd = owner->speed;
+
+	if (owner->IsSkidding()) {
+		owner->SetVelocity(spd + impulse);
 		impulse = ZeroVector;
 	}
 
-	float3 groundNormal = ground->GetNormal(owner->pos.x, owner->pos.z);
+	float3 groundNormal = ground->GetNormal(pos.x, pos.z);
+	float3 skidDir = spd;
 
 	if (impulse.dot(groundNormal) < 0)
 		impulse -= groundNormal * impulse.dot(groundNormal);
@@ -466,151 +452,162 @@ bool CClassicGroundMoveType::CanApplyImpulse()
 	const float sqstrength = impulse.SqLength();
 
 	if (sqstrength > 9 || impulse.dot(groundNormal) > 0.3f) {
-		skidding = true;
-		speed += impulse;
-		impulse = ZeroVector;
+		owner->SetVelocity(spd + impulse);
 
 		skidRotSpeed += (gs->randFloat() - 0.5f) * 1500;
 		skidRotPos2 = 0;
 		skidRotSpeed2 = 0;
-		float3 skidDir(speed);
-			skidDir.y = 0;
-			skidDir.Normalize();
-		skidRotVector = skidDir.cross(UpVector);
-		oldPhysState = owner->physicalState;
-		owner->physicalState = CSolidObject::Flying;
+		skidRotVector = (skidDir.SafeNormalize2D()).cross(UpVector);
+
+		owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 		owner->moveType->useHeading = false;
 
-		if (speed.dot(groundNormal) > 0.2f) {
-			flying = true;
+		if (spd.dot(groundNormal) > 0.2f) {
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			skidRotSpeed2 = (gs->randFloat() - 0.5f) * 0.04f;
 		}
 	}
 
+	owner->SetSpeed(spd);
 	return true;
 }
 
 void CClassicGroundMoveType::UpdateSkid()
 {
-	float3& speed = owner->speed;
+	const float4& spd = owner->speed;
 
 	const float3& pos = owner->pos;
 	const SyncedFloat3& midPos = owner->midPos;
 
-	if (flying) {
-		speed.y += mapInfo->map.gravity;
-		if (midPos.y < 0)
-			speed *= 0.95f;
+	if (owner->IsFlying()) {
+		owner->SetVelocity(spd + (UpVector * mapInfo->map.gravity));
 
-		float wh;
+		if (midPos.y < 0.0f)
+			owner->SetVelocity(spd * 0.95f);
+
+		float wh = 0.0f;
+
 		if (owner->unitDef->floatOnWater)
 			wh = ground->GetHeightAboveWater(midPos.x, midPos.z);
 		else
 			wh = ground->GetHeightReal(midPos.x, midPos.z);
 
 		if(wh>midPos.y-owner->relMidPos.y){
-			flying=false;
-			skidRotSpeed+=(gs->randFloat()-0.5f)*1500;
-			owner->Move1D(wh+owner->relMidPos.y-speed.y*0.5f, 1, false);
-			float impactSpeed = -speed.dot(ground->GetNormal(midPos.x,midPos.z));
+			skidRotSpeed += (gs->randFloat()-0.5f)*1500;
+
+			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
+			owner->Move(UpVector * (wh + owner->relMidPos.y - spd.y * 0.5f - pos.y), true);
+
+			const float impactSpeed = -spd.dot(ground->GetNormal(midPos.x,midPos.z));
+
 			if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
-				owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), ZeroVector, NULL, -1, -1);
+				owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1, -1);
 			}
 		}
 	} else {
-		float speedf=speed.Length();
+		float speedf = spd.w;
 		float speedReduction=0.35f;
 
-		bool onSlope = (ground->GetSlope(owner->midPos.x, owner->midPos.z) >
-			owner->moveDef->maxSlope)
-			&& (!owner->unitDef->floatOnWater || ground->GetHeightAboveWater(midPos.x, midPos.z) > 0);
+		const bool onSlope =
+			(ground->GetSlope(owner->midPos.x, owner->midPos.z) > owner->moveDef->maxSlope) &&
+			(!owner->unitDef->floatOnWater || ground->GetHeightAboveWater(midPos.x, midPos.z) > 0.0f);
+
 		if (speedf < speedReduction && !onSlope) {
+			owner->SetVelocity(ZeroVector);
+
 			currentSpeed = 0.0f;
-			speed = ZeroVector;
-			skidding = false;
 			skidRotSpeed = 0.0f;
-			owner->physicalState = oldPhysState;
+			skidRotSpeed2 = (math::floor(skidRotPos2 + skidRotSpeed2 + 0.5f) - skidRotPos2) * 0.5f;
+
 			owner->moveType->useHeading = true;
-			float rp = math::floor(skidRotPos2 + skidRotSpeed2 + 0.5f);
-			skidRotSpeed2 = (rp - skidRotPos2) * 0.5f;
+			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 			ChangeHeading(owner->heading);
 		} else {
 			if (onSlope) {
-				float3 dir = ground->GetNormal(midPos.x, midPos.z);
-				float3 normalForce = dir*dir.dot(UpVector*mapInfo->map.gravity);
-				float3 newForce = UpVector*mapInfo->map.gravity - normalForce;
-				speed+=newForce;
-				speedf = speed.Length();
-				speed *= 1 - (.1*dir.y);
+				const float3 dir = ground->GetNormal(midPos.x, midPos.z);
+				const float3 normalForce = dir*dir.dot(UpVector*mapInfo->map.gravity);
+				const float3 newForce = UpVector*mapInfo->map.gravity - normalForce;
+
+				owner->SetVelocity(spd + newForce);
+				owner->SetVelocity(spd * (1.0f - (0.1f * dir.y)));
 			} else {
-				speed*=(speedf-speedReduction)/speedf;
+				owner->SetVelocity(spd * (speedf - speedReduction) / speedf);
 			}
 
-			float remTime=speedf/speedReduction-1;
-			float rp=math::floor(skidRotPos2+skidRotSpeed2*remTime+0.5f);
-			skidRotSpeed2=(remTime+1 == 0 ) ? 0 : (rp-skidRotPos2)/(remTime+1);
+			speedf = owner->SetSpeed(spd);
 
-			if(math::floor(skidRotPos2)!=math::floor(skidRotPos2+skidRotSpeed2)){
-				skidRotPos2=0;
-				skidRotSpeed2=0;
+			float remTime = speedf / speedReduction - 1.0f;
+			float rp = math::floor(skidRotPos2 + skidRotSpeed2 * remTime + 0.5f);
+
+			skidRotSpeed2 = (remTime + 1.0f == 0.0f)? 0.0f: (rp - skidRotPos2) / (remTime + 1);
+
+			if (math::floor(skidRotPos2) != math::floor(skidRotPos2+skidRotSpeed2)) {
+				skidRotPos2 = 0.0f;
+				skidRotSpeed2 = 0.0f;
 			}
 		}
 
-		float wh;
+		float wh = 0.0f;
+
 		if (owner->unitDef->floatOnWater)
 			wh = ground->GetHeightAboveWater(pos.x, pos.z);
 		else
 			wh = ground->GetHeightReal(pos.x, pos.z);
 
-		if(wh-pos.y < speed.y + mapInfo->map.gravity){
-			speed.y += mapInfo->map.gravity;
-			skidding = true;
-			flying = true;
-		} else if(wh-pos.y > speed.y){
+		if (wh - pos.y < spd.y + mapInfo->map.gravity){
+			owner->SetVelocity(spd + (UpVector * mapInfo->map.gravity));
+
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
+		} else if (wh - pos.y > spd.y) {
 			const float3& normal = ground->GetNormal(pos.x, pos.z);
-			float dot = speed.dot(normal);
-			if(dot > 0){
-				speed*=0.95f;
-			}
-			else {
-				speed += (normal*(math::fabs(speed.dot(normal)) + .1))*1.9f;
-				speed*=.8;
+			const float dot = spd.dot(normal);
+
+			if (dot > 0.0f) {
+				owner->SetVelocity(spd * 0.95f);
+			} else {
+				owner->SetVelocity(spd + (normal * (math::fabs(spd.dot(normal)) + 0.1f)) * 1.9f);
+				owner->SetVelocity(spd * 0.8f);
 			}
 		}
 	}
 
 	CalcSkidRot();
-	owner->Move3D(speed, true);
+	owner->SetSpeed(spd);
+	owner->Move(spd, true);
 	CheckCollisionSkid();
 }
 
 void CClassicGroundMoveType::UpdateControlledDrop()
 {
-	float3& speed = owner->speed;
+	const float4& spd = owner->speed;
 	const SyncedFloat3& midPos = owner->midPos;
 
-	if (owner->falling) {
-		speed.y += mapInfo->map.gravity * owner->fallSpeed;
+	if (owner->IsFalling()) {
+		owner->SetVelocity(spd + (UpVector * mapInfo->map.gravity * owner->fallSpeed));
 
-		if (owner->speed.y > 0)
-			owner->speed.y = 0;
+		if (spd.y > 0.0f)
+			owner->SetVelocity(spd * XZVector);
 
-		owner->Move3D(speed, true);
+		owner->Move(spd, true);
 
-		if(midPos.y < 0)
-			speed*=0.90;
+		if (midPos.y < 0.0f)
+			owner->SetVelocity(spd * 0.9f);
 
-		float wh;
+		float wh = 0.0f;
 
 		if (owner->unitDef->floatOnWater)
 			wh = ground->GetHeightAboveWater(midPos.x, midPos.z);
 		else
 			wh = ground->GetHeightReal(midPos.x, midPos.z);
 
-		if(wh > midPos.y-owner->relMidPos.y){
-			owner->Move1D(wh + owner->relMidPos.y - speed.y*0.8, 1, (owner->falling = false));
+		if (wh > midPos.y - owner->relMidPos.y) {
+			owner->Move(UpVector * (wh + owner->relMidPos.y - spd.y * 0.8 - midPos.y), true);
+			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FALLING);
 			owner->script->Landed();
 		}
+
+		owner->SetSpeed(spd);
 	}
 }
 
@@ -622,82 +619,92 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 	const vector<CFeature*>& nearFeatures = quadField->GetFeaturesExact(midPos, owner->radius);
 
 	for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
-		CUnit* u = (*ui);
-		float sqDist = (midPos - u->midPos).SqLength();
-		float totRad = owner->radius + u->radius;
+		CUnit* unit = *ui;
+
+		if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
+			continue;
+
+		const float sqDist = (midPos - unit->midPos).SqLength();
+		const float totRad = owner->radius + unit->radius;
 
 		if (sqDist < totRad * totRad && sqDist != 0) {
 			float dist = math::sqrt(sqDist);
-			float3 dif = midPos - u->midPos;
-			dif /= std::max(dist, 1.f);
+			float3 dif = midPos - unit->midPos;
+			dif /= std::max(dist, 1.0f);
 
-			if (u->moveDef == NULL) {
+			if (unit->moveDef == NULL) {
 				float impactSpeed = -owner->speed.dot(dif);
 
 				if (impactSpeed > 0) {
-					owner->Move3D(dif * impactSpeed, true);
-					owner->speed += dif * (impactSpeed * 1.8f);
+					owner->Move(dif * impactSpeed, true);
+					owner->SetVelocity(owner->speed + dif * (impactSpeed * 1.8f));
 
 					if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
 						owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1, -1);
 					}
-					if (impactSpeed > u->unitDef->minCollisionSpeed && u->unitDef->minCollisionSpeed >= 0) {
-						u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1, -1);
+					if (impactSpeed > unit->unitDef->minCollisionSpeed && unit->unitDef->minCollisionSpeed >= 0) {
+						unit->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1, -1);
 					}
 				}
 			} else {
-				float part = (owner->mass / (owner->mass + u->mass));
-				float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
+				float part = (owner->mass / (owner->mass + unit->mass));
+				float impactSpeed = (unit->speed - owner->speed).dot(dif) * 0.5f;
 
 				if (impactSpeed > 0) {
-					owner->Move3D(dif * (impactSpeed * (1 - part) * 2), true);
-					u->Move3D(dif * (impactSpeed * part * 2), true);
+					owner->Move(dif * (impactSpeed * (1 - part) * 2), true);
+					unit->Move(dif * (impactSpeed * part * 2), true);
 
-					owner->speed += dif * (impactSpeed * (1 - part) * 2);
-					u->speed -= dif * (impactSpeed * part * 2);
+					owner->SetVelocity(owner->speed + dif * (impactSpeed * (1 - part) * 2));
+					unit->SetVelocity(unit->speed - dif * (impactSpeed * part * 2));
 
-					if (CClassicGroundMoveType* mt = dynamic_cast<CClassicGroundMoveType*>(u->moveType)) {
-						mt->skidding = true;
-					}
 					if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
 						owner->DoDamage(
 							DamageArray(impactSpeed * owner->mass * 0.2f * (1 - part)),
 							dif * impactSpeed * (owner->mass * (1 - part)), NULL, -1, -1);
 					}
 
-					if (impactSpeed > u->unitDef->minCollisionSpeed && u->unitDef->minCollisionSpeed >= 0) {
-						u->DoDamage(
+					if (impactSpeed > unit->unitDef->minCollisionSpeed && unit->unitDef->minCollisionSpeed >= 0) {
+						unit->DoDamage(
 							DamageArray(impactSpeed * owner->mass * 0.2f * part),
-							dif * -impactSpeed * (u->mass * part), NULL, -1, -1);
+							dif * -impactSpeed * (unit->mass * part), NULL, -1, -1);
 					}
-					owner->speed *= 0.9f;
-					u->speed *= 0.9f;
+
+					owner->SetVelocity(owner->speed * 0.9f);
+					unit->SetVelocityAndSpeed(unit->speed * 0.9f);
 				}
 			}
 		}
 	}
 
 	for (vector<CFeature*>::const_iterator fi = nearFeatures.begin(); fi != nearFeatures.end(); ++fi) {
-		CFeature* u=(*fi);
-		if(!u->blocking)
+		CFeature* feature = *fi;
+
+		if (!feature->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
 			continue;
-		float sqDist=(midPos-u->midPos).SqLength();
-		float totRad=owner->radius+u->radius;
-		if(sqDist<totRad*totRad && sqDist!=0){
-			float dist=math::sqrt(sqDist);
-			float3 dif=midPos-u->midPos;
-			dif/=std::max(dist, 1.f);
+
+		const float sqDist = (midPos - feature->midPos).SqLength();
+		const float totRad = owner->radius + feature->radius;
+
+		if (sqDist<totRad*totRad && sqDist!=0) {
+			float dist = math::sqrt(sqDist);
+			float3 dif = midPos - feature->midPos;
+			dif /= std::max(dist, 1.0f);
 			float impactSpeed = -owner->speed.dot(dif);
-			if(impactSpeed > 0){
-				owner->Move3D(dif*(impactSpeed), true);
-				owner->speed+=dif*(impactSpeed*1.8f);
+
+			if (impactSpeed > 0.0f) {
+				owner->Move(dif * impactSpeed, true);
+				owner->SetVelocity(owner->speed + dif*(impactSpeed*1.8f));
+
 				if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
-					owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), ZeroVector, NULL, -1, -1);
+					owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1, -1);
 				}
-				u->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f), -dif*impactSpeed, NULL, -1, -1);
+
+				feature->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), -dif*impactSpeed, NULL, -1, -1);
 			}
 		}
 	}
+
+	owner->SetSpeed(owner->speed);
 }
 
 float CClassicGroundMoveType::GetFlyTime(float3 pos, float3 speed)
@@ -779,7 +786,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 			const float currentDistanceToGoal = owner->pos.distance2D(goalPos);
 			const float currentDistanceToGoalSq = currentDistanceToGoal * currentDistanceToGoal;
-			const float3 rightOfPath = desiredDir.cross(float3(0.0f, 1.0f, 0.0f));
+			const float3 rightOfPath = desiredDir.cross(UpVector);
 			const float speedf = owner->speed.Length2D();
 
 			float avoidLeft = 0.0f;
@@ -789,7 +796,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 			MoveDef* moveDef = owner->moveDef;
 
-			vector<CSolidObject*> nearbyObjects = quadField->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
+			vector<CSolidObject*> nearbyObjects = quadField->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 			vector<CSolidObject*> objectsOnPath;
 			vector<CSolidObject*>::iterator oi;
 
@@ -821,14 +828,14 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 									AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir += (rightOfAvoid * avoidRight);
 								avoidanceDir.Normalize();
-								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
+								rightOfAvoid = avoidanceDir.cross(UpVector);
 							} else {
 								avoidLeft +=
 									(radiusSum - math::fabs(objectDistToAvoidDirCenter)) *
 									AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir -= (rightOfAvoid * avoidLeft);
 								avoidanceDir.Normalize();
-								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
+								rightOfAvoid = avoidanceDir.cross(UpVector);
 							}
 							objectsOnPath.push_back(o);
 						}
@@ -976,8 +983,9 @@ void CClassicGroundMoveType::StartEngine() {
 		if (pathId != 0) {
 			pathFailures = 0;
 			etaFailures = 0;
-			owner->isMoving = true;
-			owner->script->StartMoving();
+
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING);
+			owner->script->StartMoving(false);
 		} else {
 			Fail();
 		}
@@ -997,7 +1005,7 @@ void CClassicGroundMoveType::StopEngine() {
 		owner->script->StopMoving();
 	}
 
-	owner->isMoving = false;
+	owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING);
 	wantedSpeed = 0;
 }
 
@@ -1126,8 +1134,8 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 					const int oAllyTeam = owner->allyteam;
 					const bool allied = (teamHandler->Ally(uAllyTeam, oAllyTeam) || teamHandler->Ally(oAllyTeam, uAllyTeam));
 
-					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
-						u->Move3D((dif * part), true);
+					if (!u->unitDef->pushResistant && !u->UsingScriptMoveType() && allied) {
+						u->Move((dif * part), true);
 						u->UpdateMidAndAimPos();
 					}
 				}
@@ -1150,8 +1158,8 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 				CGameHelper::BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
 			}
 
-			owner->Move3D(posDelta, true);
-			owner->Move1D(xmove, 0, false);
+			owner->Move(posDelta, true);
+			owner->Move(RgtVector * (xmove - owner->pos.x), true);
 
 			currentSpeed *= 0.97f;
 			ret = true;
@@ -1204,8 +1212,8 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 					const int oAllyTeam = owner->allyteam;
 					const bool allied = (teamHandler->Ally(uAllyTeam, oAllyTeam) || teamHandler->Ally(oAllyTeam, uAllyTeam));
 
-					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
-						u->Move3D((dif * part), true);
+					if (!u->unitDef->pushResistant && !u->UsingScriptMoveType() && allied) {
+						u->Move((dif * part), true);
 						u->UpdateMidAndAimPos();
 					}
 				}
@@ -1228,8 +1236,8 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 				CGameHelper::BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
 			}
 
-			owner->Move3D(posDelta, true);
-			owner->Move1D(zmove, 2, false);
+			owner->Move(posDelta, true);
+			owner->Move(FwdVector * (zmove - owner->pos.z), true);
 
 			currentSpeed *= 0.97f;
 			ret = true;
@@ -1389,7 +1397,7 @@ void CClassicGroundMoveType::TestNewTerrainSquare()
 			newMoveSquareX = (int) owner->pos.x / (SQUARE_SIZE * 2);
 			newMoveSquareY = (int) owner->pos.z / (SQUARE_SIZE * 2);
 		} else {
-			owner->Move3D(newpos, false);
+			owner->Move(newpos, false);
 		}
 
 		if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
@@ -1542,7 +1550,7 @@ void CClassicGroundMoveType::SetMainHeading() {
 			  && owner->heading != heading
 			  && !owner->weapons.front()->TryTarget(mainHeadingPos, true, 0)) {
 				progressState = Active;
-				owner->script->StartMoving();
+				owner->script->StartMoving(false);
 				ChangeHeading(heading);
 			}
 		}
@@ -1579,8 +1587,8 @@ void CClassicGroundMoveType::AdjustPosToWaterLine()
 		wh = ground->GetHeightReal(owner->pos.x, owner->pos.z);
 	}
 
-	if (!(owner->falling || flying)) {
-		owner->Move1D(wh, 1, false);
+	if (!(owner->IsFalling() || owner->IsFlying())) {
+		owner->Move(UpVector * (wh - owner->pos.y), true);
 	}
 }
 
@@ -1598,17 +1606,17 @@ bool CClassicGroundMoveType::UpdateDirectControl()
 	if (unitCon.forward) {
 		ChangeSpeed();
 
-		owner->isMoving = true;
-		owner->script->StartMoving();
+		owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING);
+		owner->script->StartMoving(false);
 	} else if (unitCon.back) {
 		ChangeSpeed();
 
-		owner->isMoving = true;
-		owner->script->StartMoving();
+		owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING);
+		owner->script->StartMoving(false);
 	} else {
 		ChangeSpeed();
 
-		owner->isMoving = false;
+		owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING);
 		owner->script->StopMoving();
 	}
 
@@ -1626,7 +1634,7 @@ void CClassicGroundMoveType::UpdateOwnerPos()
 {
 	if (wantedSpeed > 0.0f || currentSpeed != 0.0f) {
 		currentSpeed += deltaSpeed;
-		owner->Move3D(flatFrontDir * currentSpeed, true);
+		owner->Move(flatFrontDir * currentSpeed, true);
 
 		AdjustPosToWaterLine();
 	}

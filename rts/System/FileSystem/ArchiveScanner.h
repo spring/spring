@@ -47,7 +47,8 @@ public:
 		 * code, which could provoke runtime bugs when edited wrong.
 		 * There may well be other info-times supplied by the archive.
 		 */
-		std::string GetName() const { return GetInfoValueString("name"); }               /// ex:  Original Total Annihilation v2.3
+		std::string GetName() const { return GetInfoValueString("name_pure"); }          /// ex:  Original Total Annihilation
+		std::string GetNameVersioned() const { return GetInfoValueString("name"); }      /// ex:  Original Total Annihilation v2.3
 		std::string GetShortName() const { return GetInfoValueString("shortName"); }     /// ex:  OTA
 		std::string GetVersion() const { return GetInfoValueString("version"); }         /// ex:  v2.3
 		std::string GetMutator() const { return GetInfoValueString("mutator"); }         /// ex:  deployment
@@ -89,7 +90,7 @@ public:
 		InfoItem& EnsureInfoItem(const std::string& key);
 
 		std::map<std::string, InfoItem> info;
-		
+
 		std::vector<std::string> dependencies; /// Archives we depend on
 		std::vector<std::string> replaces;     /// This archive obsoletes these archives
 	};

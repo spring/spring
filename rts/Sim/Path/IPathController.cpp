@@ -22,8 +22,8 @@ float GMTDefaultPathController::GetDeltaSpeed(
 	bool wantReverse,
 	bool isReversing
 ) const {
-	const int targetSpeedSign = int(!wantReverse) * 2 - 1;
-	const int currentSpeedSign = int(!isReversing) * 2 - 1;
+	const int targetSpeedSign = Sign(int(!wantReverse));
+	const int currentSpeedSign = Sign(int(!isReversing));
 
 	const float rawSpeedDiff = (targetSpeed * targetSpeedSign) - (currentSpeed * currentSpeedSign);
 	const float absSpeedDiff = math::fabs(rawSpeedDiff);
@@ -34,7 +34,12 @@ float GMTDefaultPathController::GetDeltaSpeed(
 	const float deltaSpeed = (rawSpeedDiff < 0.0f)? -modDecRate: modAccRate;
 
 	// no acceleration changes if not on ground
-	return (deltaSpeed * (1 - int(owner->inAir)));
+	//
+	// note: not 100% correct, depends on MoveDef::speedModClass
+	// ships should always use (1 - IsInWater()), hovercraft
+	// should use (1 - IsInWater()) but only when over water,
+	// tanks should also test if IsInWater() && !IsOnGround()
+	return (deltaSpeed * (1 - owner->IsInAir()));
 }
 
 short GMTDefaultPathController::GetDeltaHeading(
@@ -52,6 +57,10 @@ short GMTDefaultPathController::GetDeltaHeading(
 	}
 
 	// no orientation changes if not on ground
-	return (deltaHeading * (1 - int(owner->inAir)));
+	return (deltaHeading * (1 - owner->IsInAir()));
+}
+
+bool GMTDefaultPathController::IgnoreTerrain(const MoveDef& md, const float3& pos) const {
+	return (owner->IsInAir());
 }
 

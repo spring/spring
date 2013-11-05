@@ -11,8 +11,7 @@
 #include <string>
 #include <sstream>
 #include <boost/bind.hpp>
-
-#include "Game/GameServer.h"
+#include <boost/thread.hpp>
 #include "Game/GlobalUnsynced.h"
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
@@ -26,7 +25,9 @@
 #if !defined(DEDICATED) && !defined(HEADLESS)
 	#include "System/Platform/MessageBox.h"
 #endif
-
+#ifdef DEDICATED
+	#include "Net/GameServer.h"
+#endif
 
 static void ExitMessage(const std::string& msg, const std::string& caption, unsigned int flags, bool forced)
 {
@@ -34,8 +35,8 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 	if (forced) {
 		LOG_L(L_ERROR, "failed to shutdown normally, exit forced");
 	}
-	LOG_L(L_ERROR, "%s %s", caption.c_str(), msg.c_str());
-	
+	LOG_L(L_FATAL, "%s\n%s", caption.c_str(), msg.c_str());
+
 	if (!forced) {
 	#if !defined(DEDICATED) && !defined(HEADLESS)
 		Platform::MsgBox(msg, caption, flags);
@@ -54,6 +55,7 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 
 volatile bool shutdownSucceeded = false;
 
+__FORCE_ALIGN_STACK__
 void ForcedExit(const std::string& msg, const std::string& caption, unsigned int flags) {
 
 	for (unsigned int n = 0; !shutdownSucceeded && (n < 10); ++n) {
@@ -72,7 +74,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	ExitMessage(msg, caption, flags, false);
 
 #else
-	//! SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any 
+	//! SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any
 	//! MT thread has crashed or deviated from its normal execution path by throwing an exception
 	boost::thread* forcedExitThread = new boost::thread(boost::bind(&ForcedExit, msg, caption, flags));
 
@@ -87,7 +89,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	}
 
 	Watchdog::ClearTimer();
-	
+
 	//! exiting any possibly threads
 	//! (else they would still run while the error messagebox is shown)
 	SpringApp::Shutdown();

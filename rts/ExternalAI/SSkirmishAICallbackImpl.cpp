@@ -12,7 +12,7 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "Game/GlobalUnsynced.h" // for myTeam
 #include "Game/GameVersion.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/UI/GuiHandler.h" //TODO: fix some switch for new gui
 #include "Map/ReadMap.h"
 #include "Map/MetalMap.h"
@@ -1316,24 +1316,20 @@ EXPORT(float) skirmishAiCallback_Gui_getScreenY(int skirmishAIId) {
 }
 
 EXPORT(void) skirmishAiCallback_Gui_Camera_getDirection(int skirmishAIId, float* return_posF3_out) {
-
 	float3 cameraDir;
 
-	const bool fetchOk = skirmishAIId_callback[skirmishAIId]->GetValue(AIVAL_GUI_CAMERA_DIR, &cameraDir);
-	if (!fetchOk) {
-		cameraDir = float3(1.0f, 0.0f, 0.0f);
+	if (!skirmishAIId_callback[skirmishAIId]->GetValue(AIVAL_GUI_CAMERA_DIR, &cameraDir)) {
+		cameraDir = RgtVector;
 	}
 
 	cameraDir.copyInto(return_posF3_out);
 }
 
 EXPORT(void) skirmishAiCallback_Gui_Camera_getPosition(int skirmishAIId, float* return_posF3_out) {
-
 	float3 cameraPosition;
 
-	const bool fetchOk = skirmishAIId_callback[skirmishAIId]->GetValue(AIVAL_GUI_CAMERA_POS, &cameraPosition);
-	if (!fetchOk) {
-		cameraPosition = float3(1.0f, 0.0f, 0.0f);
+	if (!skirmishAIId_callback[skirmishAIId]->GetValue(AIVAL_GUI_CAMERA_POS, &cameraPosition)) {
+		cameraPosition = RgtVector;
 	}
 
 	cameraPosition.copyInto(return_posF3_out);
@@ -1358,10 +1354,10 @@ EXPORT(const char*) skirmishAiCallback_Mod_getFileName(int skirmishAIId) {
 }
 
 EXPORT(int) skirmishAiCallback_Mod_getHash(int skirmishAIId) {
-	return archiveScanner->GetArchiveCompleteChecksum(modInfo.humanName);
+	return archiveScanner->GetArchiveCompleteChecksum(modInfo.humanNameVersioned);
 }
 EXPORT(const char*) skirmishAiCallback_Mod_getHumanName(int skirmishAIId) {
-	return modInfo.humanName.c_str();
+	return modInfo.humanNameVersioned.c_str();
 }
 
 EXPORT(const char*) skirmishAiCallback_Mod_getShortName(int skirmishAIId) {
@@ -1586,7 +1582,7 @@ EXPORT(int) skirmishAiCallback_Map_getSlopeMap(int skirmishAIId,
 EXPORT(int) skirmishAiCallback_Map_getLosMap(int skirmishAIId,
 		int* losValues, int losValues_sizeMax) {
 
-	static const int losValues_sizeReal = loshandler->losSizeX * loshandler->losSizeY;
+	static const int losValues_sizeReal = losHandler->losSizeX * losHandler->losSizeY;
 
 	int losValues_size = losValues_sizeReal;
 
@@ -1605,7 +1601,7 @@ EXPORT(int) skirmishAiCallback_Map_getLosMap(int skirmishAIId,
 EXPORT(int) skirmishAiCallback_Map_getRadarMap(int skirmishAIId,
 		int* radarValues, int radarValues_sizeMax) {
 
-	static const int radarValues_sizeReal = radarhandler->xsize * radarhandler->zsize;
+	static const int radarValues_sizeReal = radarHandler->xsize * radarHandler->zsize;
 
 	int radarValues_size = radarValues_sizeReal;
 
@@ -1625,7 +1621,7 @@ EXPORT(int) skirmishAiCallback_Map_getJammerMap(int skirmishAIId,
 		int* jammerValues, int jammerValues_sizeMax) {
 
 	// Yes, it is correct, jammer-map has the same size as the radar map
-	static const int jammerValues_sizeReal = radarhandler->xsize * radarhandler->zsize;
+	static const int jammerValues_sizeReal = radarHandler->xsize * radarHandler->zsize;
 
 	int jammerValues_size = jammerValues_sizeReal;
 
@@ -1646,7 +1642,7 @@ EXPORT(int) skirmishAiCallback_Map_getResourceMapRaw(
 
 	int resources_sizeReal = 0;
 	if (resourceId == resourceHandler->GetMetalId()) {
-		resources_sizeReal = readmap->metalMap->GetSizeX() * readmap->metalMap->GetSizeZ();
+		resources_sizeReal = readMap->metalMap->GetSizeX() * readMap->metalMap->GetSizeZ();
 	}
 
 	int resources_size = resources_sizeReal;
@@ -2408,8 +2404,8 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToMove(int skirmishAIId, int unitD
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToHover(int skirmishAIId, int unitDefId) {
 	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
 	const MoveDef* md = (ud->pathType != -1U)? moveDefHandler->GetMoveDefByPathType(ud->pathType): NULL;
- 
-	return ((md != NULL)? (md->moveFamily == MoveDef::Hover): false);
+
+	return ((md != NULL)? (md->speedModClass == MoveDef::Hover): false);
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isFloater(int skirmishAIId, int unitDefId) {
@@ -2508,8 +2504,9 @@ EXPORT(float) skirmishAiCallback_UnitDef_getWingAngle(int skirmishAIId, int unit
 	return getUnitDefById(skirmishAIId, unitDefId)->wingAngle;
 }
 
+// DEPRECATED
 EXPORT(float) skirmishAiCallback_UnitDef_getDrag(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->drag;
+	return 0.0f;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_getFrontToSpeed(int skirmishAIId, int unitDefId) {
@@ -2597,7 +2594,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int skirmishAIId, int unitDefI
 		int2 zdir(0,1);
 		int row_width = xsize;
 		int startidx = 0; // position of yardMapInternal[0] in the new destination array
-		
+
 		switch (facing) {
 			case FACING_SOUTH:
 				xdir = int2( 1, 0);
@@ -3023,8 +3020,8 @@ EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getMoveType(int skirmishAIId, in
 	return -1;
 }
 
-EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getMoveFamily(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->moveFamily;
+EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getSpeedModClass(int skirmishAIId, int unitDefId) {
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->speedModClass;
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getTerrainClass(int skirmishAIId, int unitDefId) {
@@ -3152,7 +3149,8 @@ EXPORT(float) skirmishAiCallback_Unit_ModParam_getValue(int skirmishAIId,
 
 	const CUnit* unit = getUnit(unitId);
 	if (unit && unitModParamIsVisible(skirmishAIId, *unit, modParamId)) {
-		value = unit->modParams[modParamId].value;
+		//FIXME add function to get string params, too!
+		value = unit->modParams[modParamId].valueInt;
 	}
 
 	return value;
@@ -3694,7 +3692,7 @@ EXPORT(bool) skirmishAiCallback_FeatureDef_isReclaimable(int skirmishAIId, int f
 }
 
 EXPORT(bool) skirmishAiCallback_FeatureDef_isBlocking(int skirmishAIId, int featureDefId) {
-	return getFeatureDefById(skirmishAIId, featureDefId)->blocking;
+	return getFeatureDefById(skirmishAIId, featureDefId)->collidable;
 }
 
 EXPORT(bool) skirmishAiCallback_FeatureDef_isBurnable(int skirmishAIId, int featureDefId) {
@@ -3706,7 +3704,7 @@ EXPORT(bool) skirmishAiCallback_FeatureDef_isFloating(int skirmishAIId, int feat
 }
 
 EXPORT(bool) skirmishAiCallback_FeatureDef_isNoSelect(int skirmishAIId, int featureDefId) {
-	return getFeatureDefById(skirmishAIId, featureDefId)->noSelect;
+	return !getFeatureDefById(skirmishAIId, featureDefId)->selectable;
 }
 
 EXPORT(bool) skirmishAiCallback_FeatureDef_isGeoThermal(int skirmishAIId, int featureDefId) {
@@ -3763,11 +3761,8 @@ EXPORT(int) skirmishAiCallback_getFeatures(int skirmishAIId, int* featureIds, in
 
 		return featureIds_size;
 	} else {
-		// non cheating
-		int featureIds_size = -1;
-
 		// if (featureIds == NULL), this will only return the number of features
-		featureIds_size = skirmishAIId_callback[skirmishAIId]->GetFeatures(featureIds, featureIds_sizeMax);
+		const int featureIds_size = skirmishAIId_callback[skirmishAIId]->GetFeatures(featureIds, featureIds_sizeMax);
 
 		return featureIds_size;
 	}
@@ -3795,11 +3790,8 @@ EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3,
 
 		return featureIds_size;
 	} else {
-		// non cheating
-		int featureIds_size = -1;
-
 		// if (featureIds == NULL), this will only return the number of features
-		featureIds_size = skirmishAIId_callback[skirmishAIId]->GetFeatures(featureIds, featureIds_sizeMax, pos_posF3, radius);
+		const int featureIds_size = skirmishAIId_callback[skirmishAIId]->GetFeatures(featureIds, featureIds_sizeMax, pos_posF3, radius);
 
 		return featureIds_size;
 	}
@@ -3861,12 +3853,12 @@ EXPORT(const char*) skirmishAiCallback_WeaponDef_getDescription(int skirmishAIId
 	return getWeaponDefById(skirmishAIId, weaponDefId)->description.c_str();
 }
 
+// WTF: AI's do not need to know about this crap AT ALL
 EXPORT(const char*) skirmishAiCallback_WeaponDef_getFileName(int skirmishAIId, int weaponDefId) {
 	return "$$deprecated$$";
 }
-
 EXPORT(const char*) skirmishAiCallback_WeaponDef_getCegTag(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->cegTag.c_str();
+	return "$$deprecated$$";
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getRange(int skirmishAIId, int weaponDefId) {
@@ -4532,7 +4524,7 @@ EXPORT(bool) skirmishAiCallback_Group_isSelected(int skirmishAIId, int groupId) 
 
 	if (!isControlledByLocalPlayer(skirmishAIId)) return false;
 
-	return (selectedUnits.IsGroupSelected(groupId));
+	return (selectedUnitsHandler.IsGroupSelected(groupId));
 }
 
 //##############################################################################
@@ -4833,7 +4825,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_MoveData_getPathType = &skirmishAiCallback_UnitDef_MoveData_getPathType;
 	callback->UnitDef_MoveData_getCrushStrength = &skirmishAiCallback_UnitDef_MoveData_getCrushStrength;
 	callback->UnitDef_MoveData_getMoveType = &skirmishAiCallback_UnitDef_MoveData_getMoveType;
-	callback->UnitDef_MoveData_getMoveFamily = &skirmishAiCallback_UnitDef_MoveData_getMoveFamily;
+	callback->UnitDef_MoveData_getSpeedModClass = &skirmishAiCallback_UnitDef_MoveData_getSpeedModClass;
 	callback->UnitDef_MoveData_getTerrainClass = &skirmishAiCallback_UnitDef_MoveData_getTerrainClass;
 	callback->UnitDef_MoveData_getFollowGround = &skirmishAiCallback_UnitDef_MoveData_getFollowGround;
 	callback->UnitDef_MoveData_isSubMarine = &skirmishAiCallback_UnitDef_MoveData_isSubMarine;

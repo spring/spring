@@ -32,22 +32,25 @@ local function ShowStats()
 end
 
 function widget:GameOver()
-	Spring.Echo("GameOver called!")
-	ShowStats()
 	Spring.SendCommands("quit")
+	ShowStats()
+end
+
+function widget:Update()
+	if (Spring.DiffTimers(Spring.GetTimer(), timer)) > maxruntime then
+		Spring.Log("test.lua", LOG.WARNING, string.format("Tests run longer than %i seconds, aborting!", maxruntime ))
+		Spring.SendCommands("pause 1", "quit")
+	end
+end
+
+function widget:Initialize()
+	timer = Spring.GetTimer()
+	Spring.SendCommands("setmaxspeed " .. 1000,
+		"setminspeed " .. initialspeed,
+		"setminspeed 1")
 end
 
 function widget:GameFrame(n)
-	if n==0 then -- set gamespeed at start of game
-		Spring.SendCommands("setmaxspeed " .. 1000,
-			"setminspeed " .. initialspeed,
-			"setminspeed 1")
-		timer = Spring.GetTimer()
-	end
-	if (Spring.DiffTimers(Spring.GetTimer(), timer)) > maxruntime then
-		Spring.Log("test.lua", LOG.ERROR, string.format("Tests run longer than %i seconds, aborting!", maxruntime ))
-		Spring.SendCommands("pause 1", "quit")
-	end
 	if n==maxframes then
 		ShowStats()
 		Spring.SendCommands("quit")

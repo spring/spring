@@ -109,11 +109,13 @@ class LuaSyncedRead {
 		static int GetUnitSelfDTime(lua_State* L);
 		static int GetUnitStockpile(lua_State* L);
 		static int GetUnitSensorRadius(lua_State* L);
+		static int GetUnitPosErrorParams(lua_State* L);
 		static int GetUnitHeight(lua_State* L);
 		static int GetUnitRadius(lua_State* L);
 		static int GetUnitPosition(lua_State* L);
 		static int GetUnitBasePosition(lua_State* L);
 		static int GetUnitVectors(lua_State* L);
+		static int GetUnitRotation(lua_State* L);
 		static int GetUnitDirection(lua_State* L);
 		static int GetUnitHeading(lua_State* L);
 		static int GetUnitVelocity(lua_State* L);
@@ -131,6 +133,8 @@ class LuaSyncedRead {
 		static int GetUnitWeaponTestTarget(lua_State* L);
 		static int GetUnitWeaponTestRange(lua_State* L);
 		static int GetUnitWeaponHaveFreeLineOfFire(lua_State* L);
+		static int GetUnitWeaponCanFire(lua_State* L);
+		static int GetUnitWeaponTarget(lua_State* L);
 		static int GetUnitTravel(lua_State* L);
 		static int GetUnitFuel(lua_State* L);
 		static int GetUnitEstimatedPath(lua_State* L);
@@ -171,21 +175,26 @@ class LuaSyncedRead {
 		static int GetFeatureRadius(lua_State* L);
 		static int GetFeaturePosition(lua_State* L);
 		static int GetFeatureDirection(lua_State* L);
+		static int GetFeatureVelocity(lua_State* L);
 		static int GetFeatureHeading(lua_State* L);
 		static int GetFeatureResources(lua_State* L);
+		static int GetFeatureBlocking(lua_State* L);
 		static int GetFeatureNoSelect(lua_State* L);
 		static int GetFeatureResurrect(lua_State* L);
 		static int GetFeatureCollisionVolumeData(lua_State* L);
 
 		static int GetProjectilePosition(lua_State* L);
+		static int GetProjectileDirection(lua_State* L);
 		static int GetProjectileVelocity(lua_State* L);
 		static int GetProjectileGravity(lua_State* L);
-		static int GetProjectileSpinAngle(lua_State* L);
-		static int GetProjectileSpinSpeed(lua_State* L);
-		static int GetProjectileSpinVec(lua_State* L);
+		static int GetProjectileSpinAngle(lua_State* L); // DEPRECATED
+		static int GetProjectileSpinSpeed(lua_State* L); // DEPRECATED
+		static int GetProjectileSpinVec(lua_State* L); // DEPRECATED
+		static int GetPieceProjectileParams(lua_State* L);
 		static int GetProjectileTarget(lua_State* L);
 		static int GetProjectileType(lua_State* L);
-		static int GetProjectileName(lua_State* L);
+		static int GetProjectileDefID(lua_State* L);
+		static int GetProjectileName(lua_State* L); // DEPRECATE ME?
 
 		static int GetGroundHeight(lua_State* L);
 		static int GetGroundOrigHeight(lua_State* L);
@@ -216,6 +225,8 @@ class LuaSyncedRead {
 		static int GetUnitPieceMatrix(lua_State* L);
 		static int GetUnitScriptPiece(lua_State* L);
 		static int GetUnitScriptNames(lua_State* L);
+
+		static int GetRadarErrorParams(lua_State* L);
 
 		static int TraceRay(lua_State* L);           // not implemented
 		static int TraceRayUnits(lua_State* L);      // not implemented

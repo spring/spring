@@ -88,10 +88,7 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
-	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "%s(): Bad unitID", caller);
-	}
-	const int unitID = lua_toint(L, index);
+	const int unitID = luaL_checkint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
@@ -110,12 +107,12 @@ static inline CScriptMoveType* ParseMoveType(lua_State* L,
                                              const char* caller, int index)
 {
 	CUnit* unit = ParseUnit(L, caller, index);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return NULL;
-	}
-	if (!unit->usingScriptMoveType) {
+	if (!unit->UsingScriptMoveType())
 		return NULL;
-	}
+
 	return static_cast<CScriptMoveType*>(unit->moveType);
 }
 
@@ -141,10 +138,11 @@ static inline MoveType* ParseMoveType(lua_State* L,
 int LuaSyncedMoveCtrl::IsEnabled(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
-	lua_pushboolean(L, unit->usingScriptMoveType);
+
+	lua_pushboolean(L, unit->UsingScriptMoveType());
 	return 1;
 }
 
@@ -152,9 +150,10 @@ int LuaSyncedMoveCtrl::IsEnabled(lua_State* L)
 int LuaSyncedMoveCtrl::Enable(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
+
 	unit->EnableScriptMoveType();
 	return 0;
 }
@@ -163,9 +162,10 @@ int LuaSyncedMoveCtrl::Enable(lua_State* L)
 int LuaSyncedMoveCtrl::Disable(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
+
 	unit->DisableScriptMoveType();
 	return 0;
 }
@@ -179,11 +179,7 @@ int LuaSyncedMoveCtrl::SetTag(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetTag()");
-	}
-	moveType->tag = lua_toint(L, 2);
+	moveType->tag = luaL_checkint(L, 2);
 	return 0;
 }
 
@@ -247,11 +243,7 @@ int LuaSyncedMoveCtrl::SetExtrapolate(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetExtrapolate()");
-	}
-	moveType->extrapolate = lua_toboolean(L, 2);
+	moveType->extrapolate = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -384,11 +376,7 @@ int LuaSyncedMoveCtrl::SetTrackSlope(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetTrackSlope()");
-	}
-	moveType->trackSlope = lua_toboolean(L, 2);
+	moveType->trackSlope = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -399,11 +387,7 @@ int LuaSyncedMoveCtrl::SetTrackGround(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetTrackGround()");
-	}
-	moveType->trackGround = lua_toboolean(L, 2);
+	moveType->trackGround = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -478,14 +462,10 @@ int LuaSyncedMoveCtrl::SetNoBlocking(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetNoBlocking()");
-	}
 
 	// marks or unmarks the unit on the blocking-map, but
 	// does not change its blocking (collidable) state
-	moveType->SetNoBlocking(lua_toboolean(L, 2));
+	moveType->SetNoBlocking(luaL_checkboolean(L, 2));
 	return 0;
 }
 
@@ -496,11 +476,7 @@ int LuaSyncedMoveCtrl::SetShotStop(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetShotStop()");
-	}
-	moveType->shotStop = lua_toboolean(L, 2);
+	moveType->shotStop = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -511,11 +487,7 @@ int LuaSyncedMoveCtrl::SetSlopeStop(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetSlopeStop()");
-	}
-	moveType->slopeStop = lua_toboolean(L, 2);
+	moveType->slopeStop = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -526,11 +498,7 @@ int LuaSyncedMoveCtrl::SetCollideStop(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetCollideStop()");
-	}
-	moveType->gndStop = lua_toboolean(L, 2); // FIXME
+	moveType->gndStop = luaL_checkboolean(L, 2); // FIXME
 	moveType->collideStop = lua_toboolean(L, 2);
 	return 0;
 }
@@ -575,7 +543,7 @@ static inline bool SetAirMoveTypeValue(CStrafeAirMoveType* mt, const string& key
 	} else if (key == "turnRadius") {
 		mt->turnRadius = value; return true;
 	} else if (key == "maxAcc") {
-		mt->maxAcc = value; return true;
+		mt->accRate = value; return true;
 	} else if (key == "maxAileron") {
 		mt->maxAileron = value; return true;
 	} else if (key == "maxElevator") {
@@ -722,9 +690,6 @@ int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State *L)
 static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string& key, float value)
 {
 	if (SetGenericMoveTypeValue(mt, key, value)) {
-		if (key == "maxSpeed") {
-			mt->brakeDistance = (mt->GetMaxSpeed() * mt->GetMaxSpeed()) / mt->decRate;
-		}
 		return true;
 	}
 
@@ -735,17 +700,13 @@ static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string&
 	} else if (key == "accRate") {
 		mt->accRate = value; return true;
 	} else if (key == "decRate") {
-		mt->decRate = value;
-		mt->brakeDistance = (mt->GetMaxSpeed() * mt->GetMaxSpeed()) / mt->decRate;
-		return true;
+		mt->decRate = value; return true;
 	} else if (key == "altitudeRate") {
 		mt->altitudeRate = value; return true;
 	} else if (key == "currentBank") {
 		mt->currentBank = value; return true;
 	} else if (key == "currentPitch") {
 		mt->currentPitch = value; return true;
-	} else if (key == "brakeDistance") {
-		mt->brakeDistance = value; return true;
 	} else if (key == "maxDrift") {
 		mt->maxDrift = value; return true;
 	}
@@ -767,7 +728,7 @@ static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string&
 	} else if (key == "airStrafe") {
 		mt->airStrafe = value; return true;
 	} else if (key == "dontLand") {
-		mt->dontLand = value; return true;
+		mt->SetAllowLanding(!value); return true;
 	}
 
 	return false;
@@ -845,20 +806,25 @@ int LuaSyncedMoveCtrl::SetMoveDef(lua_State* L)
 		return 1;
 	}
 
-	if (moveDef->unitDefRefCount == 0) {
+	if (moveDef->udRefCount == 0) {
 		// pathfinder contains optimizations that
 		// make unreferenced movedef's non-usable
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
+	// PFS might have cached data by path-type which must be cleared
+	if (unit->UsingScriptMoveType()) {
+		unit->prevMoveType->StopMoving();
+	} else {
+		unit->moveType->StopMoving();
+	}
+
 	// the case where moveDef->pathType == unit->moveDef->pathType does no harm
 	// note: if a unit (ID) is available, then its current MoveDef should always
 	// be taken over the MoveDef corresponding to its UnitDef::pathType wherever
 	// MoveDef properties are used in decision logic
-	unit->moveDef = moveDef;
-
-	lua_pushboolean(L, true);
+	lua_pushboolean(L, (unit->moveDef = moveDef) != NULL);
 	return 1;
 }
 

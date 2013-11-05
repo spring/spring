@@ -13,8 +13,15 @@ class CFireProjectile : public CProjectile
 	CR_DECLARE(CFireProjectile);
 	CR_DECLARE_SUB(SubParticle);
 public:
-	CFireProjectile(const float3& pos,const float3& speed,CUnit* owner,int emitTtl,float emitRadius,int particleTtl,float particleSize);
-	~CFireProjectile();
+	CFireProjectile(
+		const float3& pos,
+		const float3& spd,
+		CUnit* owner,
+		int emitTtl,
+		int particleTtl,
+		float emitRadius,
+		float particleSize
+	);
 
 	void Draw();
 	void Update();

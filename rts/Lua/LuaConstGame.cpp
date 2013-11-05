@@ -42,9 +42,11 @@ bool LuaConstGame::PushEntries(lua_State* L)
 {
 	assert(mapInfo);
 	assert(gameSetup);
-	
+
 	// FIXME  --  this is getting silly, convert to userdata?
 	LuaPushNamedString(L, "version", SpringVersion::GetSync());
+	LuaPushNamedString(L, "versionFull", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetFull(): "");
+	LuaPushNamedString(L, "versionPatchSet", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetPatchSet(): "");
 	LuaPushNamedString(L, "buildFlags", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetAdditional(): "");
 
 	if (unitHandler != NULL) {
@@ -72,12 +74,12 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	}
 
 
-	if (readmap) {
+	if (readMap) {
 		//FIXME make this available in LoadScreen already!
-		LuaPushNamedNumber(L, "mapX",                readmap->width  / 64);
-		LuaPushNamedNumber(L, "mapY",                readmap->height / 64);
-		LuaPushNamedNumber(L, "mapSizeX",            readmap->width  * SQUARE_SIZE);
-		LuaPushNamedNumber(L, "mapSizeZ",            readmap->height * SQUARE_SIZE);
+		LuaPushNamedNumber(L, "mapX",            gs->mapx / 64);
+		LuaPushNamedNumber(L, "mapY",            gs->mapy / 64);
+		LuaPushNamedNumber(L, "mapSizeX",        gs->mapx * SQUARE_SIZE);
+		LuaPushNamedNumber(L, "mapSizeZ",        gs->mapy * SQUARE_SIZE);
 	}
 	LuaPushNamedNumber(L, "extractorRadius",     mapInfo->map.extractorRadius);
 	LuaPushNamedNumber(L, "tidal",               mapInfo->map.tidalStrength);
@@ -118,15 +120,20 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	lua_pushliteral(L, "waterCausticTextures");
 	lua_newtable(L);
 	for (int i = 0; i < (int)causticTexs.size(); i++) {
-		lua_pushnumber(L, i + 1);
 		lua_pushsstring(L, causticTexs[i]);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, i + 1);
 	}
 	lua_rawset(L, -3);
 
 	LuaPushNamedBool(L,   "allowTeamColors", true);
 
-	LuaPushNamedString(L, "modName",         modInfo.humanName);
+	LuaPushNamedString(L, "gameName",         modInfo.humanName);
+	LuaPushNamedString(L, "gameShortName",    modInfo.shortName);
+	LuaPushNamedString(L, "gameVersion",      modInfo.version);
+	LuaPushNamedString(L, "gameMutator",      modInfo.mutator);
+	LuaPushNamedString(L, "gameDesc",         modInfo.description);
+
+	LuaPushNamedString(L, "modName",         modInfo.humanNameVersioned);
 	LuaPushNamedString(L, "modShortName",    modInfo.shortName);
 	LuaPushNamedString(L, "modVersion",      modInfo.version);
 	LuaPushNamedString(L, "modMutator",      modInfo.mutator);
@@ -184,9 +191,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 			lua_pushsstring(L, typeList[i]);
 			lua_pushnumber(L, i);
 			lua_rawset(L, -3);
-			lua_pushnumber(L, i);
 			lua_pushsstring(L, typeList[i]);
-			lua_rawset(L, -3);
+			lua_rawseti(L, -2, i);
 		}
 	}
 	lua_rawset(L, -3);

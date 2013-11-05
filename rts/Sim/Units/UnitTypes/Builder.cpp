@@ -91,7 +91,7 @@ CBuilder::CBuilder():
 	tx2(0),
 	tz1(0),
 	tz2(0),
-	terraformCenter(0,0,0),
+	terraformCenter(ZeroVector),
 	terraformRadius(0)
 {
 }
@@ -167,7 +167,7 @@ void CBuilder::Update()
 		if (terraforming && inBuildStance) {
 			assert(!mapDamage->disabled); // The map should not be deformed in the first place.
 
-			const float* heightmap = readmap->GetCornerHeightMapSynced();
+			const float* heightmap = readMap->GetCornerHeightMapSynced();
 			float terraformScale = 0.1;
 
 			switch (terraformType) {
@@ -183,14 +183,14 @@ void CBuilder::Update()
 						terraformScale = std::min(terraformScale, 1.0f);
 
 						// prevent building from timing out while terraforming for it
-						curBuild->AddBuildPower(0.0f, this);
+						curBuild->AddBuildPower(this, 0.0f);
 
 						for (int z = tz1; z <= tz2; z++) {
 							for (int x = tx1; x <= tx2; x++) {
 								int idx = z * gs->mapxp1 + x;
 								float ch = heightmap[idx];
 
-								readmap->AddHeight(idx, (curBuild->pos.y - ch) * terraformScale);
+								readMap->AddHeight(idx, (curBuild->pos.y - ch) * terraformScale);
 							}
 						}
 
@@ -219,9 +219,9 @@ void CBuilder::Update()
 						for (int x = tx1; x <= tx2; x++) {
 							int idx = z * gs->mapxp1 + x;
 							float ch = heightmap[idx];
-							float oh = readmap->GetOriginalHeightMapSynced()[idx];
+							float oh = readMap->GetOriginalHeightMapSynced()[idx];
 
-							readmap->AddHeight(idx, (oh - ch) * terraformScale);
+							readMap->AddHeight(idx, (oh - ch) * terraformScale);
 						}
 					}
 
@@ -245,7 +245,7 @@ void CBuilder::Update()
 						const float ch2 = heightmap[z * gs->mapxp1 + tx1 - 3];
 						const float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
 
-						readmap->AddHeight(z * gs->mapxp1 + tx1 - x, amount);
+						readMap->AddHeight(z * gs->mapxp1 + tx1 - x, amount);
 					}
 					if (tx2 + 3 < gs->mapx) {
 						const float ch3 = heightmap[z * gs->mapxp1 + tx2    ];
@@ -253,7 +253,7 @@ void CBuilder::Update()
 						const float ch2 = heightmap[z * gs->mapxp1 + tx2 + 3];
 						const float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
 
-						readmap->AddHeight(z * gs->mapxp1 + tx2 + x, amount);
+						readMap->AddHeight(z * gs->mapxp1 + tx2 + x, amount);
 					}
 				}
 			}
@@ -266,7 +266,7 @@ void CBuilder::Update()
 						const float ch2 = heightmap[(tz1 - 3) * gs->mapxp1 + x];
 						const float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
 
-						readmap->AddHeight((tz1 - z) * gs->mapxp1 + x, adjust);
+						readMap->AddHeight((tz1 - z) * gs->mapxp1 + x, adjust);
 					}
 					if (tz2 + 3 < gs->mapy) {
 						const float ch3 = heightmap[(tz2    ) * gs->mapxp1 + x];
@@ -274,7 +274,7 @@ void CBuilder::Update()
 						const float ch2 = heightmap[(tz2 + 3) * gs->mapxp1 + x];
 						const float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
 
-						readmap->AddHeight((tz2 + z) * gs->mapxp1 + x, adjust);
+						readMap->AddHeight((tz2 + z) * gs->mapxp1 + x, adjust);
 					}
 				}
 			}
@@ -295,7 +295,7 @@ void CBuilder::Update()
 			if (fCommand.GetID() == CMD_WAIT) {
 				if (curBuild->buildProgress < 1.0f) {
 					// prevent buildee from decaying (we cannot call StopBuild here)
-					curBuild->AddBuildPower(0.0f, this);
+					curBuild->AddBuildPower(this, 0.0f);
 				} else {
 					// stop repairing (FIXME: should be much cleaner to let BuilderCAI
 					// call this instead when a wait command is given?)
@@ -335,7 +335,7 @@ void CBuilder::Update()
 							adjBuildSpeed = buildSpeed; // build
 						}
 
-						if (adjBuildSpeed > 0.0f && curBuild->AddBuildPower(adjBuildSpeed, this)) {
+						if (adjBuildSpeed > 0.0f && curBuild->AddBuildPower(this, adjBuildSpeed)) {
 							CreateNanoParticle(curBuild->midPos, curBuild->radius * 0.5f, false);
 						} else {
 							// check if buildee finished construction
@@ -347,18 +347,18 @@ void CBuilder::Update()
 				}
 			}
 		}
-		else if (curReclaim != NULL && f3SqDist(curReclaim->pos, pos)<Square(buildDistance+curReclaim->radius) && inBuildStance) {
+		else if (curReclaim != NULL && f3SqDist(curReclaim->pos, pos) < Square(buildDistance + curReclaim->radius) && inBuildStance) {
 			if (fCommand.GetID() == CMD_WAIT) {
 				StopBuild();
 			} else {
 				ScriptDecloak(true);
 
-				if (curReclaim->AddBuildPower(-reclaimSpeed, this)) {
+				if (curReclaim->AddBuildPower(this, -reclaimSpeed)) {
 					CreateNanoParticle(curReclaim->midPos, curReclaim->radius * 0.7f, true, (reclaimingUnit && curReclaim->team != team));
 				}
 			}
 		}
-		else if (curResurrect != NULL && f3SqDist(curResurrect->pos, pos)<Square(buildDistance+curResurrect->radius) && inBuildStance) {
+		else if (curResurrect != NULL && f3SqDist(curResurrect->pos, pos) < Square(buildDistance + curResurrect->radius) && inBuildStance) {
 			const UnitDef* ud = curResurrect->udef;
 
 			if (fCommand.GetID() == CMD_WAIT) {
@@ -366,52 +366,77 @@ void CBuilder::Update()
 			} else {
 				if (ud != NULL) {
 					if ((modInfo.reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
-						// This corpse has been reclaimed a little, need to restore the resources
-						// before we can let the player resurrect it.
-						curResurrect->AddBuildPower(repairSpeed, this);
+						// This corpse has been reclaimed a little, need to restore
+						// the resources before we can let the player resurrect it.
+						curResurrect->AddBuildPower(this, repairSpeed);
 					} else {
 						// Corpse has been restored, begin resurrection
-						if (UseEnergy(ud->energy * resurrectSpeed / ud->buildTime * modInfo.resurrectEnergyCostFactor)) {
-							curResurrect->resurrectProgress += (resurrectSpeed / ud->buildTime);
+						const float step = resurrectSpeed / ud->buildTime;
+
+						const bool resurrectAllowed = (luaRules == NULL || luaRules->AllowFeatureBuildStep(this, curResurrect, step));
+						const bool canExecResurrect = (resurrectAllowed && UseEnergy(ud->energy * step * modInfo.resurrectEnergyCostFactor));
+
+						if (canExecResurrect) {
+							curResurrect->resurrectProgress += step;
+							curResurrect->resurrectProgress = std::min(curResurrect->resurrectProgress, 1.0f);
+
 							CreateNanoParticle(curResurrect->midPos, curResurrect->radius * 0.7f, (gs->randInt() & 1));
 						}
-						if (curResurrect->resurrectProgress > 1) {
-							// resurrect finished
-							curResurrect->UnBlock();
 
-							UnitLoadParams resurrecteeParams = {ud, this, curResurrect->pos, ZeroVector, -1, team, curResurrect->buildFacing, false, false};
-							CUnit* resurrectee = unitLoader->LoadUnit(resurrecteeParams);
+						if (curResurrect->resurrectProgress >= 1.0f) {
+							if (curResurrect->tempNum != (gs->tempNum - 1)) {
+								// resurrect finished and we are the first
+								curResurrect->UnBlock();
 
-							if (!this->unitDef->canBeAssisted) {
-								resurrectee->soloBuilder = this;
-								resurrectee->AddDeathDependence(this, DEPENDENCE_BUILDER);
-							}
+								UnitLoadParams resurrecteeParams = {ud, this, curResurrect->pos, ZeroVector, -1, team, curResurrect->buildFacing, false, false};
+								CUnit* resurrectee = unitLoader->LoadUnit(resurrecteeParams);
 
-							// TODO: make configurable if this should happen
-							resurrectee->health *= 0.05f;
+								assert(ud == resurrectee->unitDef);
 
-							for (CUnitSet::iterator it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
-								CBuilder* bld = (CBuilder*) *it;
-								CCommandAI* bldCAI = bld->commandAI;
-
-								if (bldCAI->commandQue.empty())
-									continue;
-
-								Command& c = bldCAI->commandQue.front();
-
-								if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
-									continue;
-
-								const int cmdFeatureId = c.params[0];
-
-								if (cmdFeatureId - unitHandler->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam)) {
-									bld->lastResurrected = resurrectee->id; // all units that were rezzing shall assist the repair too
-									c.params[0] = INT_MAX / 2; // prevent FinishCommand from removing this command when the feature is deleted, since it is needed to start the repair
+								if (!ud->canBeAssisted) {
+									resurrectee->soloBuilder = this;
+									resurrectee->AddDeathDependence(this, DEPENDENCE_BUILDER);
 								}
+
+								// TODO: make configurable if this should happen
+								resurrectee->health *= 0.05f;
+
+								for (CUnitSet::iterator it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
+									CBuilder* bld = static_cast<CBuilder*>(*it);
+									CCommandAI* bldCAI = bld->commandAI;
+
+									if (bldCAI->commandQue.empty())
+										continue;
+
+									Command& c = bldCAI->commandQue.front();
+
+									if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
+										continue;
+
+									if ((c.params[0] - unitHandler->MaxUnits()) != curResurrect->id)
+										continue;
+
+									if (!teamHandler->Ally(allyteam, bld->allyteam))
+										continue;
+
+									// all units that were rezzing shall assist the repair too
+									bld->lastResurrected = resurrectee->id;
+									// prevent FinishCommand from removing this command when the
+									// feature is deleted, since it is needed to start the repair
+									// (WTF!)
+									c.params[0] = INT_MAX / 2;
+								}
+
+								// prevent double/triple/... resurrection if more than one
+								// builder is resurrecting (such that resurrectProgress can
+								// possibly become >= 1 again *this* simframe)
+								curResurrect->resurrectProgress = 0.0f;
+								curResurrect->tempNum = gs->tempNum++;
+
+								// this takes one simframe to do the deletion
+								featureHandler->DeleteFeature(curResurrect);
 							}
 
-							curResurrect->resurrectProgress = 0;
-							featureHandler->DeleteFeature(curResurrect);
 							StopBuild(true);
 						}
 					}
@@ -420,21 +445,25 @@ void CBuilder::Update()
 				}
 			}
 		}
-		else if (curCapture != NULL && f3SqDist(curCapture->pos, pos)<Square(buildDistance+curCapture->radius) && inBuildStance) {
+		else if (curCapture != NULL && f3SqDist(curCapture->pos, pos) < Square(buildDistance + curCapture->radius) && inBuildStance) {
 			if (fCommand.GetID() == CMD_WAIT) {
 				StopBuild();
 			} else {
 				if (curCapture->team != team) {
-					const float captureMagicNumber = (150 + curCapture->buildTime / captureSpeed * (curCapture->health + curCapture->maxHealth) / curCapture->maxHealth * 0.4f);
-					const float captureProgressTemp = std::min(curCapture->captureProgress + 1.0f / captureMagicNumber, 1.0f);
+					const float captureMagicNumber = (150.0f + (curCapture->buildTime / captureSpeed) * (curCapture->health + curCapture->maxHealth) / curCapture->maxHealth * 0.4f);
+					const float captureProgressStep = 1.0f / captureMagicNumber;
+					const float captureProgressTemp = std::min(curCapture->captureProgress + captureProgressStep, 1.0f);
 
 					const float captureFraction = captureProgressTemp - curCapture->captureProgress;
 					const float energyUseScaled = curCapture->energyCost * captureFraction * modInfo.captureEnergyCostFactor;
 
-					if (!UseEnergy(energyUseScaled)) {
-						teamHandler->Team(team)->energyPull += energyUseScaled;
-					} else {
-						curCapture->captureProgress = captureProgressTemp;
+					const bool captureAllowed = (luaRules == NULL || luaRules->AllowUnitBuildStep(this, curCapture, captureProgressStep));
+					const bool canExecCapture = (captureAllowed && UseEnergy(energyUseScaled));
+
+					if (canExecCapture) {
+						curCapture->captureProgress += captureProgressStep;
+						curCapture->captureProgress = std::min(curCapture->captureProgress, 1.0f);
+
 						CreateNanoParticle(curCapture->midPos, curCapture->radius * 0.7f, false, true);
 
 						if (curCapture->captureProgress >= 1.0f) {
@@ -445,6 +474,7 @@ void CBuilder::Update()
 									eventHandler.LastMessagePosition(pos);
 								}
 							}
+
 							curCapture->captureProgress = 0.0f;
 							StopBuild(true);
 						}
@@ -569,8 +599,8 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 	tz2 = (int)min((float)gs->mapy,(centerPos.z+radius)/SQUARE_SIZE);
 
 	float tcost = 0.0f;
-	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
-	const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
+	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
+	const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
 
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
@@ -719,8 +749,8 @@ float CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 	float3& buildPos = buildInfo.pos;
 
 	float tcost = 0.0f;
-	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
-	const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
+	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
+	const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
 
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
@@ -817,11 +847,7 @@ void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse
 		return;
 
 	const float3 relNanoFirePos = localModel->GetRawPiecePos(modelNanoPiece);
-
-	const float3 nanoPos = pos
-		+ (frontdir * relNanoFirePos.z)
-		+ (updir    * relNanoFirePos.y)
-		+ (rightdir * relNanoFirePos.x);
+	const float3 nanoPos = this->GetObjectSpacePos(relNanoFirePos);
 
 	// unsynced
 	projectileHandler->AddNanoParticle(nanoPos, goal, unitDef, team, radius, inverse, highPriority);

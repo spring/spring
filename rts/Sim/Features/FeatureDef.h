@@ -37,7 +37,6 @@ struct FeatureDef: public SolidObjectDef
 	bool autoreclaim;
 	bool burnable;
 	bool floating;
-	bool noSelect;
 	bool geoThermal;
 };
 

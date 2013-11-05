@@ -12,12 +12,10 @@
 #include "lib/gml/gml_base.h"
 #include "lib/gml/gmlmut.h"
 #include "System/Exceptions.h"
-#include "System/Platform/EngineTypeHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Misc.h"
 #include "System/Log/ILog.h"
-
 
 #if !defined(__APPLE__) || !defined(HEADLESS)
 	// SDL_main.h contains a macro that replaces the main function on some OS, see SDL_main.h for details
@@ -62,8 +60,8 @@ int Run(int argc, char* argv[])
 
 	// run
 	try {
-		SpringApp app;
-		ret = app.Run(argc, argv);
+		SpringApp app(argc, argv);
+		ret = app.Run();
 	} CATCH_SPRING_ERRORS
 
 	// check if Spring crashed, if so display an error message
@@ -72,31 +70,6 @@ int Run(int argc, char* argv[])
 		ErrorMessageBox("Error in main(): " + err->message, err->caption, err->flags);
 
 	return ret;
-}
-
-
-/**
- * Set some performance relevant OpenMP EnvVars.
- * @return true when restart is required with new env vars
- */
-static bool SetOpenMpEnvVars(char* argv[])
-{
-	bool restart = false;
-	
-//FIXME GML creates additional threads that need `free` cores too, the problem is to detect if
-//      GML is used or not and to reduce the omp threads then (gomp doesn't give you an interface to kill threads once they are started!)
-#if !defined(USE_GML)
-	if (Threading::GetAvailableCores() >= 3) {
-		if (!getenv("OMP_WAIT_POLICY")) {
-			// omp threads will use a spinlock instead of yield'ing when waiting
-			// cause 100% cpu usage in the omp threads
-			setenv("OMP_WAIT_POLICY", "ACTIVE", 1);
-			restart = true;
-		}
-		// another envvar is "GOMP_SPINCOUNT", but it seems to be less predictable
-	}
-#endif
-	return restart;
 }
 
 
@@ -135,7 +108,6 @@ int main(int argc, char* argv[])
 #if !defined(PROFILE) && !defined(HEADLESS)
 	bool restart = false;
 	restart |= SetNvOptimusProfile(argv);
-	restart |= SetOpenMpEnvVars(argv);
 
   #ifndef WIN32
 	if (restart) {
@@ -148,17 +120,7 @@ int main(int argc, char* argv[])
 	}
   #endif
 #endif
-	int ret = Run(argc, argv);
-	std::string exe = EngineTypeHandler::GetRestartExecutable();
-	if (exe != "") {
-		std::vector<std::string> args;
-		for (int i=1; i<argc; i++)
-			args.push_back(argv[i]);
-		if (!EngineTypeHandler::RestartEngine(exe, args)) {
-			handleerror(NULL, EngineTypeHandler::GetRestartErrorMessage(), "Missing engine type", MBF_OK | MBF_EXCL);
-		}
-	}
-	return ret;
+	return Run(argc, argv);
 }
 
 

@@ -26,7 +26,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Game/Camera.h"
-#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnitsHandler.h"
 #include "Game/Game.h"
 #include "Game/LoadScreen.h"
 #include "Game/UI/UnitTracker.h"
@@ -45,7 +45,7 @@ CWorldDrawer::CWorldDrawer()
 	shadowHandler = new CShadowHandler();
 
 	loadscreen->SetLoadMessage("Creating GroundDrawer");
-	readmap->NewGroundDrawer();
+	readMap->NewGroundDrawer();
 
 	loadscreen->SetLoadMessage("Creating TreeDrawer");
 	treeDrawer = ITreeDrawer::GetTreeDrawer();
@@ -93,16 +93,17 @@ CWorldDrawer::~CWorldDrawer()
 
 void CWorldDrawer::Update()
 {
-	readmap->UpdateDraw();
+	readMap->UpdateDraw();
 	if (globalRendering->drawGround) {
 		SCOPED_TIMER("GroundDrawer::Update");
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		gd->Update();
 	}
+	//XXX: do in CGame, cause it needs to get updated even when doDrawWorld==false, cause it updates unitdrawpos which is used for maximized minimap too
+	//unitDrawer->Update();
+	//lineDrawer.UpdateLineStipple();
 	treeDrawer->Update();
-	unitDrawer->Update();
 	featureDrawer->Update();
-	lineDrawer.UpdateLineStipple();
 	IWater::ApplyPushedChanges(game);
 }
 
@@ -111,32 +112,41 @@ void CWorldDrawer::Draw()
 {
 	SCOPED_TIMER("WorldDrawer::Total");
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	if (globalRendering->drawSky) {
 		sky->Draw();
 	}
 
 	if (globalRendering->drawGround) {
-		SCOPED_TIMER("WorldDrawer::Terrain");
-		gd->Draw(DrawPass::Normal);
-		groundDecals->Draw();
+		{
+			SCOPED_TIMER("WorldDrawer::Terrain");
+			gd->Draw(DrawPass::Normal);
+		}
+		{
+			SCOPED_TIMER("WorldDrawer::GroundDecals");
+			groundDecals->Draw();
+			projectileDrawer->DrawGroundFlashes();
+		}
+		{
+			SCOPED_TIMER("WorldDrawer::Foliage");
+			treeDrawer->DrawGrass();
+			gd->DrawTrees();
+		}
 		smoothHeightMeshDrawer->Draw(1.0f);
-		treeDrawer->DrawGrass();
-		gd->DrawTrees();
 	}
 
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("WorldDrawer::Water");
 
 		water->OcclusionQuery();
-		if (water->IsDrawSolid()) {
+		if (water->DrawSolid()) {
 			water->UpdateWater(game);
 			water->Draw();
 		}
 	}
 
-	selectedUnits.Draw();
+	selectedUnitsHandler.Draw();
 	eventHandler.DrawWorldPreUnit();
 
 	{
@@ -153,8 +163,6 @@ void CWorldDrawer::Draw()
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 
-	const bool noAdvShading = shadowHandler->shadowsLoaded;
-
 	static const double plane_below[4] = {0.0f, -1.0f, 0.0f, 0.0f};
 	static const double plane_above[4] = {0.0f,  1.0f, 0.0f, 0.0f};
 
@@ -163,8 +171,8 @@ void CWorldDrawer::Draw()
 		glEnable(GL_CLIP_PLANE3);
 
 		//! draw cloaked objects below water surface
-		unitDrawer->DrawCloakedUnits(noAdvShading);
-		featureDrawer->DrawFadeFeatures(noAdvShading);
+		unitDrawer->DrawCloakedUnits(shadowHandler->shadowsLoaded);
+		featureDrawer->DrawFadeFeatures(shadowHandler->shadowsLoaded);
 
 		glDisable(GL_CLIP_PLANE3);
 	}
@@ -173,7 +181,7 @@ void CWorldDrawer::Draw()
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("WorldDrawer::Water");
 
-		if (!water->IsDrawSolid()) {
+		if (!water->DrawSolid()) {
 			//! Water rendering will overwrite features, so save them
 			featureDrawer->SwapFeatures();
 			water->UpdateWater(game);
@@ -187,8 +195,8 @@ void CWorldDrawer::Draw()
 		glEnable(GL_CLIP_PLANE3);
 
 		//! draw cloaked objects above water surface
-		unitDrawer->DrawCloakedUnits(noAdvShading);
-		featureDrawer->DrawFadeFeatures(noAdvShading);
+		unitDrawer->DrawCloakedUnits(shadowHandler->shadowsLoaded);
+		featureDrawer->DrawFadeFeatures(shadowHandler->shadowsLoaded);
 
 		glDisable(GL_CLIP_PLANE3);
 	}
@@ -206,7 +214,7 @@ void CWorldDrawer::Draw()
 
 	LuaUnsyncedCtrl::DrawUnitCommandQueues();
 	if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
-		selectedUnits.DrawCommands();
+		selectedUnitsHandler.DrawCommands();
 	}
 
 	lineDrawer.DrawAll();
@@ -223,9 +231,9 @@ void CWorldDrawer::Draw()
 
 
 	//! underwater overlay
-	if (camera->pos.y < 0.0f) {
+	if (camera->GetPos().y < 0.0f && globalRendering->drawWater && !mapInfo->map.voidWater) {
 		glEnableClientState(GL_VERTEX_ARRAY);
-		const float3& cpos = camera->pos;
+		const float3& cpos = camera->GetPos();
 		const float vr = globalRendering->viewRange * 0.5f;
 		glDepthMask(GL_FALSE);
 		glDisable(GL_TEXTURE_2D);
@@ -274,7 +282,7 @@ void CWorldDrawer::Draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// underwater overlay, part 2
-	if (camera->pos.y < 0.0f) {
+	if (camera->GetPos().y < 0.0f && globalRendering->drawWater && !mapInfo->map.voidWater) {
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(0.0f, 0.2f, 0.8f, 0.333f);

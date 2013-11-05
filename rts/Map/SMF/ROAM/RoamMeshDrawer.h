@@ -49,14 +49,15 @@ public:
 	void Update();
 
 	void DrawMesh(const DrawPass::e& drawPass);
+	void DrawBorderMesh(const DrawPass::e& drawPass);
+
+	static void ForceTesselation() { forceRetessellate = true; }
 
 private:
 	void Reset();
-	void Tessellate(const float3& campos, int viewradius);
+	bool Tessellate(const float3& campos, int viewradius);
+	bool IsInteriorPatch(int px, int py) const;
 	int Render(bool shadows);
-	
-public:
-	static bool forceRetessellate;
 
 private:
 	CSMFReadMap* smfReadMap;
@@ -68,8 +69,10 @@ private:
 	int numPatchesX;
 	int numPatchesY;
 
-	std::vector<Patch> m_Patches; //[NUM_PATCHES_PER_SIDE][NUM_PATCHES_PER_SIDE];  //< Array of patches
-	bool* visibilitygrid;
+	std::vector<Patch> roamPatches; //< array of patches, size [NUM_PATCHES_PER_SIDE][NUM_PATCHES_PER_SIDE]
+	std::vector<char> patchVisGrid; //< char instead of bool, accessors to different elements must be thread-safe
+
+	static bool forceRetessellate;
 };
 
 #endif // _ROAM_MESH_DRAWER_H_

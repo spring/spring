@@ -190,7 +190,7 @@ macro    (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 			endif (EXISTS "${mySrcArgFile}")
 			set(mySrcArgFile "${myBuildDir}/sourceFiles.txt")
 			foreach    (srcFile ${mySources})
-				file(APPEND "${mySrcArgFile}" "${srcFile}\n")
+				file(APPEND "${mySrcArgFile}" "\"${srcFile}\"\n")
 			endforeach (srcFile)
 
 			# Compile and pack the library
@@ -632,7 +632,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		file(REMOVE "${mySrcArgFile}")
 	endif (EXISTS "${mySrcArgFile}")
 	foreach    (srcFile ${myJavaSources} ${myJavaGeneratedSources})
-		file(APPEND "${mySrcArgFile}" "${srcFile}\n")
+		file(APPEND "${mySrcArgFile}" "\"${srcFile}\"\n")
 	endforeach (srcFile)
 
 	add_custom_command(

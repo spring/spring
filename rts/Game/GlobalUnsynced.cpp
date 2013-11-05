@@ -7,8 +7,8 @@
 
 #include "GlobalUnsynced.h"
 
-#include "Player.h"
-#include "PlayerHandler.h"
+#include "Game/Players/Player.h"
+#include "Game/Players/PlayerHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalConstants.h" // for RANDINT_MAX
 #include "Sim/Units/Unit.h" // required by CREG
@@ -16,9 +16,9 @@
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/creg/creg_cond.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Sync/SyncTracer.h"
 
-#include <SDL_timer.h>
 #include <time.h>
 
 
@@ -56,14 +56,14 @@ CR_REG_METADATA(CGlobalUnsynced, (
 
 CGlobalUnsynced::CGlobalUnsynced()
 {
-	unsigned seed = time(NULL) % ((SDL_GetTicks() + 1) * 9007);
+	unsigned seed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
 	rng.Seed(seed);
 
 	simFPS = 0.0f;
 
-	avgSimFrameTime = 0.0f;
-	avgDrawFrameTime = 0.0f;
-	avgFrameTime = 0.0f;
+	avgSimFrameTime = 0.001f;
+	avgDrawFrameTime = 0.001f;
+	avgFrameTime = 0.001f;
 
 	modGameTime = 0;
 	gameTime = 0;
@@ -78,11 +78,11 @@ CGlobalUnsynced::CGlobalUnsynced()
 	spectating           = false;
 	spectatingFullView   = false;
 	spectatingFullSelect = false;
+
 	fpsMode = false;
+	globalQuit = false;
 
 	playerHandler = new CPlayerHandler();
-
-	globalQuit = false;
 }
 
 CGlobalUnsynced::~CGlobalUnsynced()
@@ -96,8 +96,6 @@ void CGlobalUnsynced::LoadFromSetup(const CGameSetup* setup)
 {
 	playerHandler->LoadFromSetup(setup);
 }
-
-
 
 void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 {

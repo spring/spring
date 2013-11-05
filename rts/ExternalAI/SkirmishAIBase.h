@@ -3,7 +3,7 @@
 #ifndef SKIRMISH_AI_BASE_H
 #define SKIRMISH_AI_BASE_H
 
-#include "Game/TeamController.h"
+#include "Game/Players/TeamController.h"
 #include "System/creg/creg_cond.h"
 
 #include <string>
@@ -52,7 +52,7 @@ public:
  */
 class SkirmishAIStatistics : public TeamControllerStatistics
 {
-	CR_DECLARE(SkirmishAIStatistics);
+	CR_DECLARE_STRUCT(SkirmishAIStatistics);
 
 public:
 	/**

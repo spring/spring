@@ -477,11 +477,11 @@ static bool InitParamMap()
 	ADD_BOOL("destructable", fd.destructable);
 	ADD_BOOL("reclaimable",  fd.reclaimable);
 	ADD_BOOL("autoreclaim",  fd.autoreclaim);
-	ADD_BOOL("blocking",     fd.blocking);
+	ADD_BOOL("blocking",     fd.collidable);
 	ADD_BOOL("burnable",     fd.burnable);
 	ADD_BOOL("floating",     fd.floating);
 	ADD_BOOL("geoThermal",   fd.geoThermal);
-	ADD_BOOL("noSelect",     fd.noSelect);
+	ADD_BOOL("noSelect",     fd.selectable);
 	ADD_INT("resurrectable", fd.resurrectable);
 
 	ADD_INT("smokeTime",    fd.smokeTime);

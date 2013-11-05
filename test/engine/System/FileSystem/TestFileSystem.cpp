@@ -3,6 +3,8 @@
 
 #include <string>
 #include <cstdio>
+#include <sys/stat.h>
+#include "System/Log/ILog.h"
 
 #define BOOST_TEST_MODULE FileSystem
 #include <boost/test/unit_test.hpp>
@@ -49,8 +51,11 @@ namespace {
 				if (tmpDir != NULL) {
 					testCwd = oldDir + tmpDir;
 					FileSystem::CreateDirectory(testCwd);
+					if (!FileSystem::DirIsWritable(testCwd)) {
+						BOOST_FAIL("Failed to create temporary test dir");
+					}
 				} else {
-					BOOST_FAIL("Failed to create temporary test dir");
+					BOOST_FAIL("Failed to get temporary file name");
 				}
 			}
 			return testCwd;
@@ -63,7 +68,6 @@ namespace {
 }
 
 BOOST_FIXTURE_TEST_SUITE(everything, PrepareFileSystem)
-
 
 BOOST_AUTO_TEST_CASE(FileExists)
 {
@@ -82,12 +86,40 @@ BOOST_AUTO_TEST_CASE(GetFileSize)
 	BOOST_CHECK(FileSystem::GetFileSize("testDir99") == -1);
 }
 
+
+BOOST_AUTO_TEST_CASE(GetFileModificationDate)
+{
+	BOOST_CHECK(FileSystem::GetFileModificationDate("testDir") != "");
+	BOOST_CHECK(FileSystem::GetFileModificationDate("testFile.txt") != "");
+	BOOST_CHECK(FileSystem::GetFileModificationDate("not_there") == "");
+}
+
+
 BOOST_AUTO_TEST_CASE(CreateDirectory)
 {
+	// create & exists
+	BOOST_CHECK(FileSystem::DirIsWritable("./"));
+	BOOST_CHECK(FileSystem::DirExists("testDir"));
+	BOOST_CHECK(FileSystem::DirExists("testDir///"));
+	BOOST_CHECK(FileSystem::DirExists("testDir////./"));
+	BOOST_CHECK(FileSystem::ComparePaths("testDir", "testDir////./"));
+	BOOST_CHECK(!FileSystem::ComparePaths("testDir", "test Dir2"));
 	BOOST_CHECK(FileSystem::CreateDirectory("testDir")); // already exists
 	BOOST_CHECK(FileSystem::CreateDirectory("testDir1")); // should be created
-	FileSystem::DeleteFile("testDir1");
+	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // should be created
+
+	// check if exists & no overwrite
+	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // already exists
+	BOOST_CHECK(FileSystem::DirIsWritable("test Dir2"));
 	BOOST_CHECK(!FileSystem::CreateDirectory("testFile.txt")); // file with this name already exists
+
+	// delete temporaries
+	BOOST_CHECK(FileSystem::DeleteFile("testDir1"));
+	BOOST_CHECK(FileSystem::DeleteFile("test Dir2"));
+
+	// check if really deleted
+	BOOST_CHECK(!FileSystem::DirExists("testDir1"));
+	BOOST_CHECK(!FileSystem::DirExists("test Dir2"));
 }
 
 

@@ -13,7 +13,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Game/GameServer.h"
+#include "Net/GameServer.h"
 #include "Game/GameSetup.h"
 #include "System/myMath.h"
 
@@ -51,7 +51,7 @@ bool CAICheats::OnlyPassiveCheats()
 	// and the only client) if used by an AI
 	if (!gameServer) {
 		return true;
-	} else if (gameSetup && (gameSetup->playerStartingData.size() == 1)) {
+	} else if ((CGameSetup::GetPlayerStartingData()).size() == 1) {
 		// assumes AI's dont count toward numPlayers
 		return false;
 	} else {

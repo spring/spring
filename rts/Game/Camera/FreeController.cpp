@@ -37,12 +37,12 @@ CONFIG(float, CamFreeAngVelTime).defaultValue(1.0f);
 //
 
 CFreeController::CFreeController()
-: vel(0.0f, 0.0f, 0.0f),
-  avel(0.0f, 0.0f, 0.0f),
-  prevVel(0.0f, 0.0f, 0.0f),
-  prevAvel(0.0f, 0.0f, 0.0f),
+: vel(ZeroVector),
+  avel(ZeroVector),
+  prevVel(ZeroVector),
+  prevAvel(ZeroVector),
   tracking(false),
-  trackPos(0.0f, 0.0f, 0.0f),
+  trackPos(ZeroVector),
   trackRadius(0.0f),
   gndLock(false)
 {

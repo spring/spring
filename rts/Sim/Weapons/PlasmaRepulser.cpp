@@ -16,7 +16,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL));
+CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(radius),
@@ -26,15 +26,14 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(rechargeDelay),
 	CR_MEMBER(isEnabled),
 	CR_MEMBER(shieldProjectile),
-	CR_MEMBER(hasGfx)
+	CR_MEMBER(repulsedProjectiles)
 ));
 
 
-CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
-: CWeapon(owner),
-	curPower(0),
-	radius(0),
-	sqRadius(0),
+CPlasmaRepulser::CPlasmaRepulser(CUnit* owner, const WeaponDef* def): CWeapon(owner, def),
+	curPower(0.0f),
+	radius(0.0f),
+	sqRadius(0.0f),
 	hitFrames(0),
 	rechargeDelay(0),
 	isEnabled(true)
@@ -89,9 +88,7 @@ void CPlasmaRepulser::Update()
 	if (hitFrames > 0)
 		hitFrames--;
 
-	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z)
-	                       + (owner->updir    * relWeaponPos.y)
-	                       + (owner->rightdir * relWeaponPos.x);
+	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
 
 	if (!isEnabled) {
 		return;
@@ -154,9 +151,8 @@ void CPlasmaRepulser::Update()
 			}
 
 			if (weaponDef->visibleShieldRepulse) {
-				bool newlyAdded = hasGfx.insert(pro).second;
-
-				if (newlyAdded) {
+				if ((repulsedProjectiles.insert(pro)).second) {
+					// projectile was not added before
 					const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
 					const float3 color =
 						(weaponDef->shieldGoodColor * colorMix) +
@@ -191,11 +187,8 @@ void CPlasmaRepulser::Update()
 
 void CPlasmaRepulser::SlowUpdate()
 {
-	const int piece = owner->script->QueryWeapon(weaponNum);
-	relWeaponPos = owner->script->GetPiecePos(piece);
-	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z)
-	                       + (owner->updir    * relWeaponPos.y)
-	                       + (owner->rightdir * relWeaponPos.x);
+	relWeaponPos = owner->script->GetPiecePos(owner->script->QueryWeapon(weaponNum));
+	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
 	owner->script->AimShieldWeapon(this);
 }
 
@@ -208,7 +201,7 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 	// due to isShield being a separate tag (in 91.0)
 	assert(weaponDef->isShield);
 
-	if (weaponDef->smartShield && teamHandler->AlliedTeams(p->owner()->team, owner->team)) {
+	if (weaponDef->smartShield && p->owner() && teamHandler->AlliedTeams(p->owner()->team, owner->team)) {
 		return;
 	}
 
@@ -292,7 +285,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 
 void CPlasmaRepulser::DependentDied(CObject* o)
 {
-	hasGfx.erase(static_cast<CWeaponProjectile*>(o));
+	repulsedProjectiles.erase(static_cast<CWeaponProjectile*>(o));
 	CWeapon::DependentDied(o);
 }
 

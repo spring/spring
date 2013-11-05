@@ -27,24 +27,29 @@ static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
 	if (type == MODELTYPE_3DO) { return (new S3DOPiece()); }
 	if (type == MODELTYPE_S3O) { return (new SS3OPiece()); }
 	if (type == MODELTYPE_OBJ) { return (new SOBJPiece()); }
-	// FIXME: SAssPiece is not yet fully implemented
-	// if (type == MODELTYPE_ASS) { return (new SAssPiece()); }
+	// NOTE: SAssPiece is not yet fully implemented
+	if (type == MODELTYPE_ASS) { return (new SAssPiece()); }
 	return NULL;
 }
 
 static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
+	std::set<std::string> whitelist;
 	std::string extension;
 	std::string extensions;
-	Assimp::Importer importer;
 
+	whitelist.insert("3ds"  ); // 3DSMax
+	whitelist.insert("dae"  ); // Collada
+	whitelist.insert("lwo"  ); // LightWave
+	whitelist.insert("blend"); // Blender
+
+	Assimp::Importer importer;
 	// get a ";" separated list of format extensions ("*.3ds;*.lwo;*.mesh.xml;...")
 	importer.GetExtensionList(extensions);
 
 	// do not ignore the last extension
 	extensions += ";";
 
-	LOG("[%s] supported Assimp model formats: %s",
-			__FUNCTION__, extensions.c_str());
+	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, extensions.c_str());
 
 	size_t curIdx = 0;
 	size_t nxtIdx = 0;
@@ -55,11 +60,14 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 		extension = extension.substr(extension.find("*.") + 2);
 		extension = StringToLower(extension);
 
-		if (formats.find(extension) == formats.end()) {
-			formats[extension] = MODELTYPE_ASS;
-		}
-
 		curIdx = nxtIdx + 1;
+
+		if (whitelist.find(extension) == whitelist.end())
+			continue;
+		if (formats.find(extension) != formats.end())
+			continue;
+
+		formats[extension] = MODELTYPE_ASS;
 	}
 }
 
@@ -125,7 +133,7 @@ void CheckModelNormals(const S3DModel* model) {
 		"It will either be rendered fully black or with black splotches!";
 
 	// Warn about models with null normals (they break lighting and appear black)
-	for (ModelPieceMap::const_iterator it = model->pieces.begin(); it != model->pieces.end(); ++it) {
+	for (ModelPieceMap::const_iterator it = model->pieceMap.begin(); it != model->pieceMap.end(); ++it) {
 		const S3DModelPiece* modelPiece = it->second;
 		const char* pieceName = it->first.c_str();
 
@@ -147,21 +155,25 @@ void CheckModelNormals(const S3DModel* model) {
 
 std::string C3DModelLoader::FindModelPath(std::string name) const
 {
-	const std::string& fileExt = FileSystem::GetExtension(name);
+	// check for empty string because we can be called
+	// from Lua*Defs and certain features have no models
+	if (!name.empty()) {
+		const std::string& fileExt = FileSystem::GetExtension(name);
 
-	if (fileExt.empty()) {
-		for (FormatMap::const_iterator it = formats.begin(); it != formats.end(); ++it) {
-			const std::string& formatExt = it->first;
+		if (fileExt.empty()) {
+			for (FormatMap::const_iterator it = formats.begin(); it != formats.end(); ++it) {
+				const std::string& formatExt = it->first;
 
-			if (CFileHandler::FileExists(name + "." + formatExt, SPRING_VFS_ZIP)) {
-				name += ("." + formatExt); break;
+				if (CFileHandler::FileExists(name + "." + formatExt, SPRING_VFS_ZIP)) {
+					name += ("." + formatExt); break;
+				}
 			}
 		}
-	}
 
-	if (!CFileHandler::FileExists(name, SPRING_VFS_ZIP)) {
-		if (name.find("objects3d/") == std::string::npos) {
-			return FindModelPath("objects3d/" + name);
+		if (!CFileHandler::FileExists(name, SPRING_VFS_ZIP)) {
+			if (name.find("objects3d/") == std::string::npos) {
+				return FindModelPath("objects3d/" + name);
+			}
 		}
 	}
 
@@ -172,6 +184,10 @@ std::string C3DModelLoader::FindModelPath(std::string name) const
 S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 {
 	GML_RECMUTEX_LOCK(model); // Load3DModel
+
+	// cannot happen except through SpawnProjectile
+	if (modelName.empty())
+		return NULL;
 
 	StringToLowerInPlace(modelName);
 
@@ -268,12 +284,13 @@ void C3DModelLoader::Update() {
 
 void C3DModelLoader::CreateLocalModel(LocalModel* localModel)
 {
-	const S3DModel* model = localModel->original;
-	const S3DModelPiece* root = model->GetRootPiece();
+	const LocalModelPiece* lmpRoot = localModel->GetRoot();
+	const S3DModelPiece* ompRoot = lmpRoot->original;
 
-	const bool dlistLoaded = (root->GetDisplayListID() != 0);
+	if (ompRoot->GetDisplayListID() != 0)
+		return;
 
-	if (!dlistLoaded && GML::SimEnabled() && !GML::ShareLists()) {
+	if (GML::SimEnabled() && !GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // CreateLocalModel
 
 		fixLocalModels.push_back(localModel);

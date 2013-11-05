@@ -47,7 +47,7 @@ public:
 
 		TdfSection* construct_subsection(const std::string& name);
 		void print(std::ostream& out) const;
-		bool remove(const std::string& key);
+		bool remove(const std::string& key, bool caseSensitive = true);
 		void add_name_value(const std::string& name, const std::string& value);
 
 		template<typename T>

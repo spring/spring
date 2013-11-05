@@ -24,6 +24,10 @@ CR_REG_METADATA(AAirMoveType, (
 	CR_MEMBER(wantedHeight),
 	CR_MEMBER(orgWantedHeight),
 
+	CR_MEMBER(accRate),
+	CR_MEMBER(decRate),
+	CR_MEMBER(altitudeRate),
+
 	CR_MEMBER(collide),
 	CR_MEMBER(useSmoothMesh),
 	CR_MEMBER(autoLand),
@@ -40,11 +44,15 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 	aircraftState(AIRCRAFT_LANDED),
 	padStatus(PAD_STATUS_FLYING),
 
-	oldGoalPos(owner? owner->pos : ZeroVector),
+	oldGoalPos((unit != NULL)? unit->pos : ZeroVector),
 	reservedLandingPos(-1.0f, -1.0f, -1.0f),
 
 	wantedHeight(80.0f),
 	orgWantedHeight(0.0f),
+
+	accRate(1.0f),
+	decRate(1.0f),
+	altitudeRate(3.0f),
 
 	collide(true),
 	useSmoothMesh(false),
@@ -56,6 +64,11 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 	lastColWarningType(0),
 	lastFuelUpdateFrame(gs->frameNum)
 {
+	// same as {Ground, HoverAir}MoveType::accRate
+	accRate = std::max(0.01f, unit->unitDef->maxAcc);
+	decRate = std::max(0.01f, unit->unitDef->maxDec);
+	altitudeRate = std::max(0.01f, unit->unitDef->verticalSpeed);
+
 	useHeading = false;
 }
 
@@ -120,7 +133,8 @@ void AAirMoveType::DependentDied(CObject* o) {
 	}
 
 	if (o == reservedPad) {
-		if (aircraftState!=AIRCRAFT_CRASHING) { //don't change state when crashing
+		if (aircraftState != AIRCRAFT_CRASHING) {
+			// change state only if not crashing
 			SetState(AIRCRAFT_TAKEOFF);
 
 			goalPos = oldGoalPos;
@@ -136,12 +150,19 @@ bool AAirMoveType::Update() {
 	// forces it to false, TransportUnit::{Attach,Detach}Unit manipulate it
 	// specifically for HoverAirMoveType's)
 	if (useHeading) {
-		useHeading = false;
 		SetState(AIRCRAFT_TAKEOFF);
 	}
 
+	if (owner->beingBuilt) {
+		// while being built, MoveType::SlowUpdate is not
+		// called so UpdateFuel will not be either --> do
+		// it here to prevent a drop in fuel level as soon
+		// as unit finishes construction
+		UpdateFuel(false);
+	}
+
 	// this return value is never used
-	return false;
+	return (useHeading = false);
 }
 
 void AAirMoveType::UpdateLanded()
@@ -175,23 +196,36 @@ void AAirMoveType::UpdateLanded()
 		owner->speed.y = 0.0f;
 	}
 
-	owner->speed.x = 0.0f;
-	owner->speed.z = 0.0f;
-
-	owner->Move1D(std::max(curHeight, minHeight), 1, false);
-	owner->Move3D(owner->speed, true);
+	owner->SetVelocityAndSpeed(owner->speed + owner->GetDragAccelerationVec(float4(0.0f, 0.0f, 0.0f, 0.1f)));
+	owner->Move(UpVector * (std::max(curHeight, minHeight) - owner->pos.y), true);
+	owner->Move(owner->speed, true);
 	// match the terrain normal
-	owner->UpdateDirVectors(true);
+	owner->UpdateDirVectors(owner->IsOnGround());
 	owner->UpdateMidAndAimPos();
 }
 
-void AAirMoveType::UpdateFuel() {
-	if (owner->unitDef->maxFuel > 0.0f) {
-		if (aircraftState != AIRCRAFT_LANDED)
-			owner->currentFuel = std::max(0.0f, owner->currentFuel - (float(gs->frameNum - lastFuelUpdateFrame) / GAME_SPEED));
+void AAirMoveType::UpdateFuel(bool slowUpdate) {
+	if (owner->unitDef->maxFuel <= 0.0f)
+		return;
 
+	// lastFuelUpdateFrame must be updated even when early-outing
+	// otherwise fuel level will jump after a period of not using
+	// any (eg. when on a pad or after being built)
+	if (!slowUpdate) {
 		lastFuelUpdateFrame = gs->frameNum;
+		return;
 	}
+	if (aircraftState == AIRCRAFT_LANDED) {
+		lastFuelUpdateFrame = gs->frameNum;
+		return;
+	}
+	if (padStatus == PAD_STATUS_ARRIVED) {
+		lastFuelUpdateFrame = gs->frameNum;
+		return;
+	}
+
+	owner->currentFuel = std::max(0.0f, owner->currentFuel - (float(gs->frameNum - lastFuelUpdateFrame) / GAME_SPEED));
+	lastFuelUpdateFrame = gs->frameNum;
 }
 
 
@@ -262,6 +296,71 @@ void AAirMoveType::CheckForCollision()
 }
 
 
+bool AAirMoveType::CanLandOnPad(const float3& padPos) const {
+	// once distance to pad becomes smaller than current braking distance, switch states
+	// (but do not allow state-switch until the aircraft is heading ~directly toward pad)
+	// braking distance is 0.5*a*t*t where t is v/a --> 0.5*a*((v*v)/(a*a)) --> 0.5*v*v*(1/a)
+	// FIXME:
+	//   apply N-frame lookahead when deciding to switch state for strafing aircraft
+	//   (see comments in StrafeAirMoveType::UpdateLanding, overshooting prevention)
+	//   the lookahead is roughly based on the time to descend to pad-target altitude
+	const float3 flatFrontDir = (float3(owner->frontdir)).Normalize2D();
+
+	const float brakingDistSq = Square(0.5f * owner->speed.SqLength2D() / decRate);
+	const float descendDistSq = Square(maxSpeed * ((owner->pos.y - padPos.y) / altitudeRate)) * owner->unitDef->IsStrafingAirUnit();
+
+	if (padPos.SqDistance2D(owner->pos) > std::max(brakingDistSq, descendDistSq))
+		return false;
+
+	if (owner->unitDef->IsStrafingAirUnit()) {
+		// horizontal guide
+		if (flatFrontDir.dot((padPos - owner->pos).SafeNormalize2D()) < 0.985f)
+			return false;
+		// vertical guide
+		if (flatFrontDir.dot((padPos - owner->pos).SafeNormalize()) < 0.707f)
+			return false;
+	}
+
+	return true;
+}
+
+bool AAirMoveType::HaveLandedOnPad(const float3& padPos) {
+	const AircraftState landingState = GetLandingState();
+	const float landingPadHeight = ground->GetHeightAboveWater(padPos.x, padPos.z);
+
+	reservedLandingPos = padPos;
+	wantedHeight = padPos.y - landingPadHeight;
+
+	const float3 padVector = (padPos - owner->pos).SafeNormalize2D();
+	const float curOwnerAltitude = (owner->pos.y - landingPadHeight);
+	const float minOwnerAltitude = (wantedHeight + 1.0f);
+
+	if (aircraftState != landingState)
+		SetState(landingState);
+	if (aircraftState == AIRCRAFT_LANDED)
+		return true;
+
+	if (curOwnerAltitude <= minOwnerAltitude) {
+		// deal with overshooting aircraft: "tractor" them in
+		// once they descend down to the landing pad altitude
+		// this is a no-op for HAMT planes which do not apply
+		// speed updates at this point
+		owner->SetVelocityAndSpeed((owner->speed + (padVector * accRate)) * XZVector);
+	}
+
+	if (Square(owner->rightdir.y) < 0.01f && owner->frontdir.dot(padVector) > 0.01f) {
+		owner->frontdir = padVector;
+		owner->rightdir = owner->frontdir.cross(UpVector);
+		owner->updir    = owner->rightdir.cross(owner->frontdir);
+
+		owner->SetHeadingFromDirection();
+	}
+
+	if (curOwnerAltitude > minOwnerAltitude)
+		return false;
+
+	return ((owner->pos.SqDistance2D(padPos) <= 1.0f || owner->unitDef->IsHoveringAirUnit()));
+}
 
 bool AAirMoveType::MoveToRepairPad() {
 	CUnit* airBase = reservedPad->GetUnit();
@@ -272,56 +371,45 @@ bool AAirMoveType::MoveToRepairPad() {
 		return false;
 	} else {
 		const float3& relPadPos = airBase->script->GetPiecePos(reservedPad->GetPiece());
-		const float3 absPadPos = airBase->pos +
-			(airBase->frontdir * relPadPos.z) +
-			(airBase->updir    * relPadPos.y) +
-			(airBase->rightdir * relPadPos.x);
+		const float3 absPadPos = airBase->GetObjectSpacePos(relPadPos);
 
-		if (padStatus == PAD_STATUS_FLYING) {
-			if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_TAKEOFF) {
-				SetState(AIRCRAFT_FLYING);
-			}
+		switch (padStatus) {
+			case PAD_STATUS_FLYING: {
+				// flying toward pad
+				if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_TAKEOFF) {
+					SetState(AIRCRAFT_FLYING);
+				}
 
-			goalPos = absPadPos;
+				if (CanLandOnPad(goalPos = absPadPos)) {
+					padStatus = PAD_STATUS_LANDING;
+				}
+			} break;
 
-			if (absPadPos.SqDistance2D(owner->pos) < (400.0f * 400.0f)) {
-				padStatus = PAD_STATUS_LANDING;
-			}
-		} else if (padStatus == PAD_STATUS_LANDING) {
-			// landing on pad
-			const AircraftState landingState = GetLandingState();
-			if (aircraftState != landingState)
-				SetState(landingState);
+			case PAD_STATUS_LANDING: {
+				// landing on pad
+				if (HaveLandedOnPad(goalPos = absPadPos)) {
+					padStatus = PAD_STATUS_ARRIVED;
+				}
+			} break;
 
-			goalPos = absPadPos;
-			reservedLandingPos = absPadPos;
-			wantedHeight = absPadPos.y - ground->GetHeightAboveWater(absPadPos.x, absPadPos.z);
+			case PAD_STATUS_ARRIVED: {
+				if (aircraftState != AIRCRAFT_LANDED) {
+					SetState(AIRCRAFT_LANDED);
+				}
 
-			const float curPadDistanceSq = owner->midPos.SqDistance(absPadPos);
-			const float minPadDistanceSq = owner->radius * owner->radius;
+				owner->SetVelocityAndSpeed(ZeroVector);
+				owner->Move(absPadPos, false);
+				owner->UpdateMidAndAimPos(); // needed here?
+				owner->AddBuildPower(airBase, airBase->unitDef->buildSpeed / GAME_SPEED);
 
-			if (curPadDistanceSq < minPadDistanceSq || aircraftState == AIRCRAFT_LANDED) {
-				padStatus = PAD_STATUS_ARRIVED;
-				owner->speed = ZeroVector;
-			}
-		} else {
-			// taking off from pad
-			if (aircraftState != AIRCRAFT_LANDED) {
-				SetState(AIRCRAFT_LANDED);
-			}
+				owner->currentFuel += (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime));
+				owner->currentFuel = std::min(owner->unitDef->maxFuel, owner->currentFuel);
 
-			owner->pos = absPadPos;
-
-			owner->UpdateMidAndAimPos(); // needed here?
-			owner->AddBuildPower(airBase->unitDef->buildSpeed / GAME_SPEED, airBase);
-
-			owner->currentFuel += (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime));
-			owner->currentFuel = std::min(owner->unitDef->maxFuel, owner->currentFuel);
-
-			if (owner->health >= owner->maxHealth - 1.0f && owner->currentFuel >= owner->unitDef->maxFuel) {
-				// repaired and filled up, leave the pad
-				UnreservePad(reservedPad);
-			}
+				if (owner->health >= owner->maxHealth - 1.0f && owner->currentFuel >= owner->unitDef->maxFuel) {
+					// repaired and filled up, leave the pad
+					UnreservePad(reservedPad);
+				}
+			} break;
 		}
 	}
 

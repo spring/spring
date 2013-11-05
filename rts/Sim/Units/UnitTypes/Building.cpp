@@ -39,19 +39,17 @@ void CBuilding::PostInit(const CUnit* builder)
 {
 	if (unitDef->cantBeTransported)
 		mass = CSolidObject::DEFAULT_MASS;
-	physicalState = OnGround;
 
 	CUnit::PostInit(builder);
 }
 
 
-void CBuilding::ForcedMove(const float3& newPos, int facing) {
-	buildFacing = facing;
-	speed = ZeroVector;
+void CBuilding::ForcedMove(const float3& newPos) {
 	heading = GetHeadingFromFacing(buildFacing);
 	frontdir = GetVectorFromHeading(heading);
 
-	Move3D(CGameHelper::Pos2BuildPos(BuildInfo(unitDef, newPos, buildFacing), true), false);
+	SetVelocity(ZeroVector);
+	Move(CGameHelper::Pos2BuildPos(BuildInfo(unitDef, newPos, buildFacing), true), false);
 	UpdateMidAndAimPos();
 
 	CUnit::ForcedMove(pos);

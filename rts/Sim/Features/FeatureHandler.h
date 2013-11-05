@@ -14,7 +14,6 @@
 #include "Sim/Misc/SimObjectIDPool.h"
 
 
-struct S3DModel;
 struct UnitDef;
 class LuaTable;
 
@@ -35,12 +34,13 @@ struct FeatureLoadParams {
 	int smokeTime;
 };
 
+class LuaParser;
 class CFeatureHandler : public boost::noncopyable
 {
 	CR_DECLARE_STRUCT(CFeatureHandler);
 
 public:
-	CFeatureHandler();
+	CFeatureHandler(LuaParser* defsParser);
 	~CFeatureHandler();
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
@@ -56,7 +56,7 @@ public:
 	const FeatureDef* GetFeatureDef(std::string name, const bool showError = true);
 	const FeatureDef* GetFeatureDefByID(int id);
 
-	void SetFeatureUpdateable(CFeature* feature);
+	void SetFeatureUpdateable(CFeature* feature, bool updateable);
 	void TerrainChanged(int x1, int y1, int x2, int y2);
 
 	const std::map<std::string, const FeatureDef*>& GetFeatureDefs() const { return featureDefs; }

@@ -50,7 +50,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool AllowResourceTransfer(int oldTeam, int newTeam,
 		                           const string& type, float amount);
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
-		bool AllowStartPosition(int playerID, const float3& pos);
+		bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
 
 		bool TerraformComplete(const CUnit* unit, const CUnit* build);
 
@@ -62,13 +62,20 @@ class CLuaRules : public CLuaHandleSynced
 		int AllowWeaponTargetCheck(
 			unsigned int attackerID,
 			unsigned int attackerWeaponNum,
-			unsigned int attackerWeaponDefID);
+			unsigned int attackerWeaponDefID
+		);
 		bool AllowWeaponTarget(
 			unsigned int attackerID,
 			unsigned int targetID,
 			unsigned int attackerWeaponNum,
 			unsigned int attackerWeaponDefID,
-			float* targetPriority);
+			float* targetPriority
+		);
+		bool AllowWeaponInterceptTarget(
+			const CUnit* interceptorUnit,
+			const CWeapon* interceptorWeapon,
+			const CProjectile* interceptorTarget
+		);
 
 		bool UnitPreDamaged(
 			const CUnit* unit,
@@ -77,6 +84,15 @@ class CLuaRules : public CLuaHandleSynced
 			int weaponDefID,
 			int projectileID,
 			bool paralyzer,
+			float* newDamage,
+			float* impulseMult);
+
+		bool FeaturePreDamaged(
+			const CFeature* feature,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID,
 			float* newDamage,
 			float* impulseMult);
 
@@ -116,9 +132,11 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveMoveCtrlNotify;
 		bool haveTerraformComplete;
 		bool haveUnitPreDamaged;
+		bool haveFeaturePreDamaged;
 		bool haveShieldPreDamaged;
 		bool haveAllowWeaponTargetCheck;
 		bool haveAllowWeaponTarget;
+		bool haveAllowWeaponInterceptTarget;
 
 		bool haveDrawUnit;
 		bool haveDrawFeature;

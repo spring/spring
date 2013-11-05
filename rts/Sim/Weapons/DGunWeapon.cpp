@@ -6,13 +6,13 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL));
+CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CDGunWeapon,(
 	CR_RESERVED(8)
 ));
 
-CDGunWeapon::CDGunWeapon(CUnit* owner): CWeapon(owner)
+CDGunWeapon::CDGunWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 }
 
@@ -20,14 +20,8 @@ CDGunWeapon::CDGunWeapon(CUnit* owner): CWeapon(owner)
 void CDGunWeapon::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->pos +
-			owner->frontdir * relWeaponPos.z +
-			owner->updir    * relWeaponPos.y +
-			owner->rightdir * relWeaponPos.x;
-		weaponMuzzlePos = owner->pos +
-			owner->frontdir * relWeaponMuzzlePos.z +
-			owner->updir    * relWeaponMuzzlePos.y +
-			owner->rightdir * relWeaponMuzzlePos.x;
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		if (!onlyForward) {
 			wantedDir = (targetPos - weaponPos).Normalize();
@@ -40,18 +34,15 @@ void CDGunWeapon::Update()
 	CWeapon::Update();
 }
 
-void CDGunWeapon::FireImpl()
+void CDGunWeapon::FireImpl(bool scriptCall)
 {
-	float3 dir;
-	if (onlyForward) {
-		dir = owner->frontdir;
-	} else {
-		dir = (targetPos - weaponMuzzlePos).Normalize();
+	float3 dir = owner->frontdir;
+
+	if (!onlyForward) {
+		dir = (targetPos - weaponMuzzlePos).Normalize(); 
 	}
 
-	dir +=
-		((gs->randVector() * sprayAngle + salvoError) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
+	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	ProjectileParams params = GetProjectileParams();

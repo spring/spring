@@ -1057,8 +1057,8 @@ struct SSkirmishAICallback {
 	/** enum MoveType { Ground_Move=0, Hover_Move=1, Ship_Move=2 }; */
 	int               (CALLING_CONV *UnitDef_MoveData_getMoveType)(int skirmishAIId, int unitDefId);
 
-	/** enum MoveFamily { Tank=0, KBot=1, Hover=2, Ship=3 }; */
-	int               (CALLING_CONV *UnitDef_MoveData_getMoveFamily)(int skirmishAIId, int unitDefId);
+	/** enum SpeedModClass { Tank=0, KBot=1, Hover=2, Ship=3 }; */
+	int               (CALLING_CONV *UnitDef_MoveData_getSpeedModClass)(int skirmishAIId, int unitDefId);
 
 	int               (CALLING_CONV *UnitDef_MoveData_getTerrainClass)(int skirmishAIId, int unitDefId);
 

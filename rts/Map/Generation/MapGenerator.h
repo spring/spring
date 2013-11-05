@@ -4,7 +4,7 @@
 #define _MAP_GENERATOR_H_
 
 #include "Game/GameSetup.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "Map/SMF/SMFReadMap.h"
 
 class CVirtualFile;

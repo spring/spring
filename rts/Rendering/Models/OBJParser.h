@@ -5,7 +5,7 @@
 
 #include <map>
 #include "IModelParser.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 struct SOBJTriangle {
 	int vIndices[3]; ///< index of 1st/2nd/3rd vertex
@@ -15,18 +15,9 @@ struct SOBJTriangle {
 
 struct SOBJPiece: public S3DModelPiece {
 public:
-	SOBJPiece() {
-		parent      = NULL;
-		dispListID  = 0;
-		isEmpty     = true;
-		type        = MODELTYPE_OBJ;
-		mins        = ZeroVector;
-		maxs        = ZeroVector;
-	}
-
 	void UploadGeometryVBOs();
 	void DrawForList() const;
-	void SetMinMaxExtends();
+	void SetMinMaxExtends(bool globalVertexOffsets);
 	void SetVertexTangents();
 
 	void SetVertexCount(unsigned int n) { vertices.resize(n); }

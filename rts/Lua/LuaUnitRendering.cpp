@@ -104,7 +104,7 @@ int LuaUnitRendering::SetLODCount(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const unsigned int count = (unsigned int)luaL_checknumber(L, 2);
+	const unsigned int count = (unsigned int)luaL_checkint(L, 2);
 	if (count > 1024) {
 		luaL_error(L, "SetLODCount() ridiculous lod count");
 	}
@@ -261,7 +261,7 @@ static void ParseShader(lua_State* L, const char* caller, int index,
 	return;
 }
 
-
+/*
 static GLuint ParseUnitTexture(const string& texture)
 {
 	if (texture.length()<4) {
@@ -329,72 +329,7 @@ static GLuint ParseUnitTexture(const string& texture)
 
 	return 0;
 }
-
-
-static void ParseTextureImage(lua_State *L, LuaMatTexture& texUnit, const string& image)
-{
-	GLuint texID = 0;
-
-	if (image[0] == '%') {
-		texID = ParseUnitTexture(image);
-	}
-	else if (image[0] == '#') {
-		// unit build picture
-		char* endPtr;
-		const char* startPtr = image.c_str() + 1; // skip the '#'
-		const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
-		if (endPtr == startPtr) {
-			return;
-		}
-		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-		if (ud == NULL) {
-			return;
-		}
-		texID = unitDefHandler->GetUnitDefImage(ud);
-	}
-	else if (image[0] == LuaTextures::prefix) {
-		// dynamic texture
-		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
-		const LuaTextures::Texture* texInfo = textures.GetInfo(image);
-		if (texInfo != NULL) {
-			texID = texInfo->id;
-		}
-	}
-	else if (image[0] == '$') {
-		if (image == "$units" || image == "$units1") {
-			texUnit.type = LuaMatTexture::LUATEX_GL;
-			texUnit.openglID = texturehandler3DO->GetAtlasTex1ID();
-		}
-		if (image == "$units2") {
-			texUnit.type = LuaMatTexture::LUATEX_GL;
-			texUnit.openglID = texturehandler3DO->GetAtlasTex2ID();
-		}
-		else if (image == "$shadow") {
-			texUnit.type = LuaMatTexture::LUATEX_SHADOWMAP;
-		}
-		else if (image == "$specular") {
-			texUnit.type = LuaMatTexture::LUATEX_SPECULAR;
-		}
-		else if (image == "$reflection") {
-			texUnit.type = LuaMatTexture::LUATEX_REFLECTION;
-		}
-		return;
-	}
-	else {
-		const CNamedTextures::TexInfo* texInfo = CNamedTextures::GetInfo(image);
-		if (texInfo != NULL) {
-			texID = texInfo->id;
-		}
-	}
-
-	if (texID != 0) {
-		texUnit.type = LuaMatTexture::LUATEX_GL;
-		texUnit.openglID = texID;
-	}
-
-	return;
-}
-
+*/
 
 static void ParseTexture(lua_State* L, const char* caller, int index,
                         LuaMatTexture& texUnit)
@@ -405,7 +340,7 @@ static void ParseTexture(lua_State* L, const char* caller, int index,
 
 	if (lua_isstring(L, index)) {
 		const string texName = lua_tostring(L, index);
-		ParseTextureImage(L, texUnit, texName);
+		LuaOpenGLUtils::ParseTextureImage(L, texUnit, texName);
 		texUnit.enable = true;
 		return;
 	}
@@ -422,7 +357,7 @@ static void ParseTexture(lua_State* L, const char* caller, int index,
 		const string key = StringToLower(lua_tostring(L, -2));
 		if (key == "tex") {
 			const string texName = lua_tostring(L, -1);
-			ParseTextureImage(L, texUnit, texName);
+			LuaOpenGLUtils::ParseTextureImage(L, texUnit, texName);
 		}
 		else if (key == "enable") {
 			if (lua_isboolean(L, -1)) {
@@ -458,12 +393,18 @@ static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
 			continue;
 		}
 		const string key = StringToLower(lua_tostring(L, -2));
+
 		if (key == "order") {
 			mat.order = luaL_checkint(L, -1);
 		}
-		else if (key == "shader") {
-			ParseShader(L, caller, -1, mat.shader);
+
+		else if (key == "standard_shader" || key == "shader") {
+			ParseShader(L, caller, -1, mat.standardShader);
 		}
+		else if (key == "deferred_shader" || key == "deferred") {
+			ParseShader(L, caller, -1, mat.deferredShader);
+		}
+
 		else if (key == "texunits") {
 			if (lua_istable(L, -1)) {
 			  const int texTable = (int)lua_gettop(L);
@@ -550,9 +491,9 @@ int LuaUnitRendering::GetMaterial(lua_State* L)
 		luaL_error(L, "Incorrect arguments to GetMaterial");
 	}
 
-  LuaMatRef** matRef = (LuaMatRef**) lua_newuserdata(L, sizeof(LuaMatRef*));
-  luaL_getmetatable(L, "MatRef");
-  lua_setmetatable(L, -2);
+	LuaMatRef** matRef = (LuaMatRef**) lua_newuserdata(L, sizeof(LuaMatRef*));
+	luaL_getmetatable(L, "MatRef");
+	lua_setmetatable(L, -2);
 
 	*matRef = new LuaMatRef;
 
