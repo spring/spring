@@ -46,8 +46,8 @@ Release Time
 		git tag -a -m "dev version after the ${REL_VERS} release" ${REL_VERS}.1
 5) POINT OF NO RETURN: Push to the main repo (and delete the release branch):
 		git push --tags origin develop :release master
-6) Force build of the master branch on the windows and the OS-X buildbots.
-   The later will take long to complete, one hour or more!
+6) The Buildbot should automaticly start build the release on the buildslaves, wait for it until all builds are done,
+   the OS-X buildslave will take about one hour or more!
 7) Write the news post for the springrts.com frontpage, while waiting for the
    buildbot to compile the master branch.
 8) Check if everything went fine on http://buildbot.springrts.com/waterfall and fetch these archives:
