@@ -77,9 +77,11 @@ void AMoveType::SlowUpdate()
 					owner->losHeight -= agh;
 					owner->radarHeight -= agh;
 				}
-				if (owner->IsOnGround() && owner->unitDef->IsGroundUnit()) {
+
+				if ((owner->IsOnGround() || owner->IsInWater()) && owner->unitDef->IsGroundUnit()) {
 					// always (re-)add us to occupation map if we moved
 					// (since our last SlowUpdate) and are on the ground
+					// NOTE: ships are ground units but not on the ground
 					owner->Block();
 				}
 			}

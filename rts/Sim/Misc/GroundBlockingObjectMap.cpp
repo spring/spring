@@ -150,11 +150,10 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare) const
 
 	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
 
-	if (cell.empty()) {
+	if (cell.empty())
 		return NULL;
-	}
 
-	return cell.begin()->second;
+	return ((cell.begin())->second);
 }
 
 
@@ -182,14 +181,14 @@ bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, CSolidObject* ignoreO
 
 	GML_STDMUTEX_LOCK(block); // GroundBlockedUnsafe
 
-	if (groundBlockingMap[mapSquare].empty()) {
+	if (groundBlockingMap[mapSquare].empty())
 		return false;
-	}
 
 	const int objID = GetObjectID(ignoreObj);
-
 	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
+
 	BlockingMapCellIt it = cell.begin();
+
 	if (it != cell.end()) {
 		if (it->first != objID) {
 			// there are other objects blocking the square
