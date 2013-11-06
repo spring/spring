@@ -38,7 +38,7 @@ public:
 	/**
 	 * @brief last frame time
 	 *
-	 * How long the last draw cycle took in real time
+	 * How long the last draw cycle took in real time (MILLIseconds)
 	 */
 	float lastFrameTime;
 

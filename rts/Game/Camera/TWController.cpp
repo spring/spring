@@ -54,9 +54,9 @@ void CTWController::MouseMove(float3 move)
 
 void CTWController::ScreenEdgeMove(float3 move)
 {
-	if(mouse->lasty<globalRendering->viewSizeY/3){
-		camera->rot.y-=move.x*globalRendering->lastFrameTime*0.5f*200;
-		move.x=0;
+	if (mouse->lasty < globalRendering->viewSizeY / 3) {
+		camera->rot.y -= (move.x * globalRendering->lastFrameTime * 0.5f * 0.2f);
+		move.x = 0.0f;
 	}
 	KeyMove(move);
 }

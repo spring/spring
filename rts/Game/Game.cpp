@@ -1000,7 +1000,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	lastDrawFrameTime = currentTime;
 
-	globalRendering->lastFrameTime = deltaDrawFrameTime.toMilliSecsf() * 0.001f;
+	globalRendering->lastFrameTime = deltaDrawFrameTime.toMilliSecsf();
 	gu->avgFrameTime = mix(gu->avgFrameTime, deltaDrawFrameTime.toMilliSecsf(), 0.05f);
 
 	{
