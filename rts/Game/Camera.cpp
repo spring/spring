@@ -395,7 +395,7 @@ float CCamera::GetMoveDistance(float* time, float* speed, int idx) const
 	//   for the majority of the time this condition holds, and
 	//   so the camera will barely react to key input since most
 	//   frames will effectively be 'skipped' (looks like lag)
-	float camDeltaTime = std::max(0.001f, globalRendering->lastFrameTime);
+	float camDeltaTime = globalRendering->lastFrameTime;
 	float camMoveSpeed = 1.0f;
 
 	camMoveSpeed *= (1.0f - movState[MOVE_STATE_SLW] * 0.9f);
@@ -412,7 +412,7 @@ float CCamera::GetMoveDistance(float* time, float* speed, int idx) const
 		} break;
 	}
 
-	return (camDeltaTime * 200.0f * camMoveSpeed);
+	return (camDeltaTime * 0.2f * camMoveSpeed);
 }
 
 float3 CCamera::GetMoveVectorFromState(bool fromKeyState, bool* disableTracker)
@@ -425,19 +425,19 @@ float3 CCamera::GetMoveVectorFromState(bool fromKeyState, bool* disableTracker)
 	float3 v = FwdVector * camMoveSpeed;
 
 	if (fromKeyState) {
-		v.y += (camDeltaTime * movState[MOVE_STATE_FWD]);
-		v.y -= (camDeltaTime * movState[MOVE_STATE_BCK]);
-		v.x += (camDeltaTime * movState[MOVE_STATE_RGT]);
-		v.x -= (camDeltaTime * movState[MOVE_STATE_LFT]);
+		v.y += (camDeltaTime * 0.001f * movState[MOVE_STATE_FWD]);
+		v.y -= (camDeltaTime * 0.001f * movState[MOVE_STATE_BCK]);
+		v.x += (camDeltaTime * 0.001f * movState[MOVE_STATE_RGT]);
+		v.x -= (camDeltaTime * 0.001f * movState[MOVE_STATE_LFT]);
 	} else {
 		const int screenW = globalRendering->dualScreenMode?
 			(globalRendering->viewSizeX << 1):
 			(globalRendering->viewSizeX     );
 
-		v.y += (camDeltaTime * (mouse->lasty <                               2));
-		v.y -= (camDeltaTime * (mouse->lasty > (globalRendering->viewSizeY - 2)));
-		v.x += (camDeltaTime * (mouse->lastx >                    (screenW - 2)));
-		v.x -= (camDeltaTime * (mouse->lastx <                               2));
+		v.y += (camDeltaTime * 0.001f * (mouse->lasty <                               2));
+		v.y -= (camDeltaTime * 0.001f * (mouse->lasty > (globalRendering->viewSizeY - 2)));
+		v.x += (camDeltaTime * 0.001f * (mouse->lastx >                    (screenW - 2)));
+		v.x -= (camDeltaTime * 0.001f * (mouse->lastx <                               2));
 	}
 
 	(*disableTracker) |= (v.x != 0.0f);
