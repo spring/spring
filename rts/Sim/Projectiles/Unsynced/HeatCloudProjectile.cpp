@@ -31,6 +31,7 @@ CR_REG_METADATA(CHeatCloudProjectile,
 
 CHeatCloudProjectile::CHeatCloudProjectile()
 	: CProjectile()
+
 	, heat(0.0f)
 	, maxheat(0.0f)
 	, heatFalloff(0.0f)
@@ -44,8 +45,15 @@ CHeatCloudProjectile::CHeatCloudProjectile()
 	texture = projectileDrawer->heatcloudtex;
 }
 
-CHeatCloudProjectile::CHeatCloudProjectile(const float3& pos, const float3& speed, const  float temperature, const float size, CUnit* owner)
+CHeatCloudProjectile::CHeatCloudProjectile(
+	CUnit* owner,
+	const float3& pos,
+	const float3& speed,
+	const float temperature,
+	const float size
+)
 	: CProjectile(pos, speed, owner, false, false, false)
+
 	, heat(temperature)
 	, maxheat(temperature)
 	, heatFalloff(1.0f)

@@ -152,9 +152,9 @@ void CSimpleParticleSystem::Update()
 	}
 }
 
-void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit* owner)
+void CSimpleParticleSystem::Init(CUnit* owner, const float3& offset)
 {
-	CProjectile::Init(explosionPos, owner);
+	CProjectile::Init(owner, offset);
 
 	particles.resize(numParticles);
 
@@ -176,7 +176,7 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit* owner)
 		float az = gu->RandFloat() * 2 * PI;
 		float ay = (emitRot + (emitRotSpread * gu->RandFloat())) * (PI / 180.0);
 
-		particles[i].pos = pos;
+		particles[i].pos = offset;
 		particles[i].speed = ((up * emitMul.y) * math::cos(ay) - ((right * emitMul.x) * math::cos(az) - (forward * emitMul.z) * math::sin(az)) * math::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
 		particles[i].life = 0;
 		particles[i].decayrate = 1.0f / (particleLife + (gu->RandFloat() * particleLifeSpread));
@@ -204,7 +204,7 @@ CSphereParticleSpawner::CSphereParticleSpawner(): CSimpleParticleSystem()
 }
 
 
-void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
+void CSphereParticleSpawner::Init(CUnit* owner, const float3& offset)
 {
 	const float3 up = emitVector;
 	const float3 right = up.cross(float3(up.y, up.z, -up.x));
@@ -226,7 +226,7 @@ void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 
 		const float3 pspeed = ((up * emitMul.y) * math::cos(ay) - ((right * emitMul.x) * math::cos(az) - (forward * emitMul.z) * math::sin(az)) * math::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
 
-		CGenericParticleProjectile* particle = new CGenericParticleProjectile(pos + explosionPos, pspeed, owner);
+		CGenericParticleProjectile* particle = new CGenericParticleProjectile(owner, pos + offset, pspeed);
 
 		particle->decayrate = 1.0f / (particleLife + gu->RandFloat() * particleLifeSpread);
 		particle->life = 0;

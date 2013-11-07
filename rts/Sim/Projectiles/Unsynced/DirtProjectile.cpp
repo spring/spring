@@ -30,8 +30,18 @@ CR_REG_METADATA(CDirtProjectile,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CDirtProjectile::CDirtProjectile(const float3& pos, const float3& speed, const float ttl, const float size, const float expansion, float slowdown, CUnit* owner, const float3& color):
+CDirtProjectile::CDirtProjectile(
+	CUnit* owner,
+	const float3& pos,
+	const float3& speed,
+	const float ttl,
+	const float size,
+	const float expansion,
+	float slowdown,
+	const float3& color
+):
 	CProjectile(pos, speed, owner, false, false, false),
+
 	alpha(255),
 	size(size),
 	sizeExpansion(expansion),

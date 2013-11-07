@@ -18,7 +18,7 @@ public:
 	void Draw();
 	void Update();
 
-	virtual void Init(const float3& pos, CUnit* owner);
+	void Init(CUnit* owner, const float3& offset);
 
 private:
 	AtlasedTexture* sideTexture;

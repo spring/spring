@@ -11,7 +11,21 @@ class CSmokeTrailProjectile : public CProjectile
 {
 	CR_DECLARE(CSmokeTrailProjectile);
 public:
-	CSmokeTrailProjectile(const float3& pos1, const float3& pos2, const float3& dir1, const float3& dir2, CUnit* owner, bool firstSegment, bool lastSegment, float size = 1, int time = 80, float color = 0.7f, bool drawTrail = true, CProjectile* drawCallback = 0, AtlasedTexture* texture = 0);
+	CSmokeTrailProjectile(
+		CUnit* owner,
+		const float3& pos1,
+		const float3& pos2,
+		const float3& dir1,
+		const float3& dir2,
+		bool firstSegment,
+		bool lastSegment,
+		float size = 1,
+		int time = 80,
+		float color = 0.7f,
+		bool drawTrail = true,
+		CProjectile* drawCallback = 0,
+		AtlasedTexture* texture = 0
+	);
 	virtual ~CSmokeTrailProjectile();
 
 	void Update();

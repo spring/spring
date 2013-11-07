@@ -10,7 +10,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 
-CR_BIND_DERIVED(CWakeProjectile, CProjectile, (ZeroVector, ZeroVector, 0.0f, 0.0f, NULL, 0.0f, 0.0f, 0.0f));
+CR_BIND_DERIVED(CWakeProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
 
 CR_REG_METADATA(CWakeProjectile,(
 	CR_MEMBER(alpha),
@@ -28,8 +28,18 @@ CR_REG_METADATA(CWakeProjectile,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CWakeProjectile::CWakeProjectile(const float3& pos, const float3& speed, float startSize, float sizeExpansion, CUnit* owner, float alpha, float alphaFalloff, float fadeupTime):
+CWakeProjectile::CWakeProjectile(
+	CUnit* owner,
+	const float3& pos,
+	const float3& speed,
+	float startSize,
+	float sizeExpansion,
+	float alpha,
+	float alphaFalloff,
+	float fadeupTime
+):
 	CProjectile(pos, speed, owner, false, false, false),
+
 	alpha(0.0f),
 	alphaFalloff(alphaFalloff),
 	alphaAdd(alpha / fadeupTime),

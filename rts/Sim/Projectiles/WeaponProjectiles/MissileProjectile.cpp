@@ -117,7 +117,7 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 void CMissileProjectile::Collision()
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision();
@@ -127,7 +127,7 @@ void CMissileProjectile::Collision()
 void CMissileProjectile::Collision(CUnit* unit)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision(unit);
@@ -137,7 +137,7 @@ void CMissileProjectile::Collision(CUnit* unit)
 void CMissileProjectile::Collision(CFeature* feature)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision(feature);
@@ -266,8 +266,16 @@ void CMissileProjectile::Update()
 
 	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
 		CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
+			owner(),
 			pos, oldSmoke,
-			dir, oldDir, owner(), age == 8, false, 7, SMOKE_TIME, 0.6f, drawTrail, 0,
+			dir, oldDir,
+			age == 8,
+			false,
+			7,
+			SMOKE_TIME,
+			0.6f,
+			drawTrail,
+			NULL,
 			weaponDef->visuals.texture2
 		);
 

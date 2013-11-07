@@ -9,9 +9,16 @@ class CWakeProjectile : public CProjectile
 {
 	CR_DECLARE(CWakeProjectile);
 public:
-	CWakeProjectile(const float3& pos, const float3& speed, float startSize,
-			float sizeExpansion, CUnit* owner, float alpha, float alphaFalloff,
-			float fadeupTime);
+	CWakeProjectile(
+		CUnit* owner,
+		const float3& pos,
+		const float3& speed,
+		float startSize,
+		float sizeExpansion,
+		float alpha,
+		float alphaFalloff,
+		float fadeupTime
+	);
 	~CWakeProjectile() {}
 
 	void Update();

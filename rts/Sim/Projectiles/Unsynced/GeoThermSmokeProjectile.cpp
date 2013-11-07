@@ -19,7 +19,7 @@ CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(
 	int ttl,
 	const CFeature* geo
 )
-	: CSmokeProjectile(pos, spd, ttl, 6, 0.35f, NULL, 0.8f)
+	: CSmokeProjectile(NULL, pos, spd, ttl, 6, 0.35f, 0.8f)
 	, geo(geo)
 {}
 
