@@ -36,13 +36,13 @@ CExploSpikeProjectile::CExploSpikeProjectile()
 }
 
 CExploSpikeProjectile::CExploSpikeProjectile(
+	CUnit* owner,
 	const float3& pos,
 	const float3& spd,
 	float length,
 	float width,
 	float alpha,
-	float alphaDecay,
-	CUnit* owner
+	float alphaDecay
 ):
 	CProjectile(pos, spd, owner, false, false, false),
 	length(length),
@@ -96,9 +96,9 @@ void CExploSpikeProjectile::Draw()
 	#undef let
 }
 
-void CExploSpikeProjectile::Init(const float3& pos, CUnit* owner)
+void CExploSpikeProjectile::Init(CUnit* owner, const float3& offset)
 {
-	CProjectile::Init(pos, owner);
+	CProjectile::Init(owner, offset);
 
 	lengthGrowth = dir.Length() * (0.5f + gu->RandFloat() * 0.4f);
 	dir /= lengthGrowth;

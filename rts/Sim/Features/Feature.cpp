@@ -605,8 +605,8 @@ bool CFeature::Update()
 
 	if (smokeTime != 0) {
 		if (!((gs->frameNum + id) & 3) && projectileHandler->particleSaturation < 0.7f) {
-			new CSmokeProjectile(midPos + gu->RandVector() * radius * 0.3f,
-				gu->RandVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0, 0.5f);
+			new CSmokeProjectile(NULL, midPos + gu->RandVector() * radius * 0.3f,
+				gu->RandVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
 		}
 	}
 	if (fireTime == 1) {

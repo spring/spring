@@ -22,13 +22,15 @@ CR_REG_METADATA(CLightningProjectile,(
 	CR_MEMBER(displacements2)
 ));
 
-CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWeaponProjectile(params, true)
+CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 {
 	projectileType = WEAPON_LIGHTNING_PROJECTILE;
 	useAirLos = false;
 
-	if (weaponDef != NULL)
+	if (weaponDef != NULL) {
+		assert(weaponDef->IsHitScanWeapon());
 		color = weaponDef->visuals.color;
+	}
 
 	displacements[0] = 0.0f;
 	displacements2[0] = 0.0f;

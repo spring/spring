@@ -7,7 +7,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, (ZeroVector, ZeroVector, NULL));
+CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, (NULL, ZeroVector, ZeroVector));
 
 CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(gravity),
@@ -21,10 +21,11 @@ CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(sizeGrowth),
 	CR_MEMBER(sizeMod),
 	CR_RESERVED(8)
-	));
+));
 
-CGenericParticleProjectile::CGenericParticleProjectile(const float3& pos, const float3& speed, CUnit* owner)
+CGenericParticleProjectile::CGenericParticleProjectile(CUnit* owner, const float3& pos, const float3& speed)
 	: CProjectile(pos, speed, owner, false, false, false)
+
 	, gravity(ZeroVector)
 	, texture(NULL)
 	, colorMap(NULL)

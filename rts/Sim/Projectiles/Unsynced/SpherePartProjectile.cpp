@@ -10,7 +10,7 @@
 
 using std::min;
 
-CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, (ZeroVector, 0, 0, 0.0f, 0.0f, 0, NULL, ZeroVector));
+CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, (NULL, ZeroVector, 0, 0, 0.0f, 0.0f, 0, ZeroVector));
 
 CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(centerPos),
@@ -26,9 +26,18 @@ CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(texx),
 	CR_MEMBER(texy),
 	CR_RESERVED(16)
-	));
+));
 
-CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos, int xpart, int ypart, float expansionSpeed, float alpha, int ttl, CUnit* owner, const float3& color):
+CSpherePartProjectile::CSpherePartProjectile(
+	CUnit* owner,
+	const float3& centerPos,
+	int xpart,
+	int ypart,
+	float expansionSpeed,
+	float alpha,
+	int ttl,
+	const float3& color
+):
 	CProjectile(centerPos, ZeroVector, owner, false, false, false),
 	centerPos(centerPos),
 	color(color),
@@ -109,7 +118,7 @@ void CSpherePartProjectile::CreateSphere(float3 pos, float alpha, int ttl, float
 {
 	for (int y = 0; y < 16; y += 4) {
 		for (int x = 0; x < 32; x += 4) {
-			new CSpherePartProjectile(pos, x, y, expansionSpeed, alpha, ttl, owner, color);
+			new CSpherePartProjectile(owner, pos, x, y, expansionSpeed, alpha, ttl, color);
 		}
 	}
 }
@@ -139,9 +148,9 @@ CR_REG_METADATA(CSpherePartSpawner,
 	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
-void CSpherePartSpawner::Init(const float3& pos, CUnit* owner)
+void CSpherePartSpawner::Init(CUnit* owner, const float3& offset)
 {
-	CProjectile::Init(pos, owner);
+	CProjectile::Init(owner, offset);
 	deleteMe = true;
 	CSpherePartProjectile::CreateSphere(pos, alpha, ttl, expansionSpeed, owner, color);
 }

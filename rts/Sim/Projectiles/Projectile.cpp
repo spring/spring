@@ -17,6 +17,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(synced),
 	CR_MEMBER(weapon),
 	CR_MEMBER(piece),
+	CR_MEMBER(hitscan),
 
 	CR_MEMBER(luaMoveCtrl),
 	CR_MEMBER(checkCol),
@@ -40,9 +41,10 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(projectileType),
 	CR_MEMBER(collisionFlags),
 
-	CR_MEMBER(quadFieldCellCoors),
-	CR_IGNORED(quadFieldCellIter) // runtime. set in ctor
+	CR_MEMBER(qfCellData)
 ));
+
+CR_BIND(CProjectile::QuadFieldCellData, )
 
 
 
@@ -57,6 +59,7 @@ CProjectile::CProjectile()
 	: synced(false)
 	, weapon(false)
 	, piece(false)
+	, hitscan(false)
 
 	, luaMoveCtrl(false)
 	, checkCol(true)
@@ -76,12 +79,20 @@ CProjectile::CProjectile()
 	GML::GetTicks(lastProjUpdate);
 }
 
-CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece)
-	: CExpGenSpawnable(pos, spd)
+CProjectile::CProjectile(
+	const float3& pos,
+	const float3& spd,
+	CUnit* owner,
+	bool isSynced,
+	bool isWeapon,
+	bool isPiece,
+	bool isHitScan
+): CExpGenSpawnable(pos, spd)
 
 	, synced(isSynced)
 	, weapon(isWeapon)
 	, piece(isPiece)
+	, hitscan(isHitScan)
 
 	, luaMoveCtrl(false)
 	, checkCol(true)
@@ -100,7 +111,7 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	, collisionFlags(0)
 {
 	SetRadiusAndHeight(1.7f, 0.0f);
-	Init(ZeroVector, owner);
+	Init(owner, ZeroVector);
 	GML::GetTicks(lastProjUpdate);
 }
 
@@ -117,14 +128,18 @@ CProjectile::~CProjectile() {
 	assert(!synced || detached);
 }
 
-void CProjectile::Init(const float3& offset, CUnit* owner)
+void CProjectile::Init(CUnit* owner, const float3& offset)
 {
 	if (owner != NULL) {
 		// must be set before the AddProjectile call
 		ownerID = owner->id;
 		teamID = owner->team;
 	}
-	if (!(weapon || piece)) {
+	if (!hitscan) {
+		SetPosition(pos + offset);
+		SetVelocityAndSpeed(speed);
+	}
+	if (!weapon && !piece) {
 		// NOTE:
 		//   new CWeapon- and CPieceProjectile*'s add themselves
 		//   to CProjectileHandler (other code needs to be able
@@ -132,12 +147,9 @@ void CProjectile::Init(const float3& offset, CUnit* owner)
 		//   and adding them here would throw away too much RTTI)
 		projectileHandler->AddProjectile(this);
 	}
-	if (synced) {
+	if (synced && !weapon) {
 		quadField->AddProjectile(this);
 	}
-
-	SetPosition(pos + offset);
-	SetVelocityAndSpeed(speed);
 }
 
 
@@ -180,7 +192,8 @@ int CProjectile::DrawArray()
 	// draw-index gets divided by 24 because each element is
 	// 12 + 4 + 4 + 4 = 24 bytes in size (pos + u + v + color)
 	// for each type of "projectile"
-	int idx = (va->drawIndex() / 24);
+	const int idx = (va->drawIndex() / 24);
+
 	va = GetVertexArray();
 	va->Initialize();
 	inArray = false;

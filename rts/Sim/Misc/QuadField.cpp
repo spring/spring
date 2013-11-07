@@ -13,7 +13,8 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "System/creg/STL_List.h"
 
-#define REMOVE_PROJECTILE_FAST
+#define CELL_IDX_X(wpx) Clamp(int((wpx) / quadSizeX), 0, numQuadsX - 1)
+#define CELL_IDX_Z(wpz) Clamp(int((wpz) / quadSizeZ), 0, numQuadsZ - 1)
 
 CR_BIND(CQuadField, (1, 1));
 CR_REG_METADATA(CQuadField, (
@@ -543,11 +544,17 @@ void CQuadField::MovedProjectile(CProjectile* p)
 {
 	if (!p->synced)
 		return;
+	// hit-scan projectiles do NOT move!
+	if (p->hitscan)
+		return;
 
-	int2 oldCellCoors = p->GetQuadFieldCellCoors();
-	int2 newCellCoors;
-	newCellCoors.x = std::max(0, std::min(int(p->pos.x / quadSizeX), numQuadsX - 1));
-	newCellCoors.y = std::max(0, std::min(int(p->pos.z / quadSizeZ), numQuadsZ - 1));
+	const CProjectile::QuadFieldCellData& qfcd = p->GetQuadFieldCellData();
+
+	const int2 oldCellCoors = qfcd.GetCoor(0);
+	const int2 newCellCoors = {
+		std::max(0, std::min(int(p->pos.x / quadSizeX), numQuadsX - 1)),
+		std::max(0, std::min(int(p->pos.z / quadSizeZ), numQuadsZ - 1))
+	};
 
 	if (newCellCoors != oldCellCoors) {
 		RemoveProjectile(p);
@@ -559,53 +566,85 @@ void CQuadField::AddProjectile(CProjectile* p)
 {
 	assert(p->synced);
 
-	// projectiles are point-objects, so
-	// they exist in a single cell only
-	int2 cellCoors;
-	cellCoors.x = std::max(0, std::min(int(p->pos.x / quadSizeX), numQuadsX - 1));
-	cellCoors.y = std::max(0, std::min(int(p->pos.z / quadSizeZ), numQuadsZ - 1));
-
 	GML_RECMUTEX_LOCK(quad); // AddProjectile
 
-	Quad& q = baseQuads[numQuadsX * cellCoors.y + cellCoors.x];
-	std::list<CProjectile*>& projectiles = q.projectiles;
+	CProjectile::QuadFieldCellData qfcd;
 
-	p->SetQuadFieldCellCoors(cellCoors);
-	p->SetQuadFieldCellIter(projectiles.insert(projectiles.end(), p));
+	typedef CQuadField::Quad Cell;
+	typedef std::list<CProjectile*> List;
+
+	if (p->hitscan) {
+		// must be non-zero otherwise 1 != 0 and 2 != 1 but 2 == 0
+		assert(p->speed != ZeroVector);
+
+		// all coordinates always map to a valid quad
+		qfcd.SetCoor(0, int2(CELL_IDX_X((p->pos.x             )       ), CELL_IDX_Z((p->pos.z             )       )));
+		qfcd.SetCoor(1, int2(CELL_IDX_X((p->pos.x + p->speed.x) * 0.5f), CELL_IDX_Z((p->pos.z + p->speed.z) * 0.5f)));
+		qfcd.SetCoor(2, int2(CELL_IDX_X((p->pos.x + p->speed.x)       ), CELL_IDX_Z((p->pos.z + p->speed.z)       )));
+
+		Cell& cell = baseQuads[numQuadsX * qfcd.GetCoor(0).y + qfcd.GetCoor(0).x];
+		List& list = cell.projectiles;
+
+		// projectiles are point-objects so they exist
+		// only in a single cell EXCEPT hit-scan types
+		qfcd.SetIter(0, list.insert(list.end(), p));
+
+		for (unsigned int n = 1; n < 3; n++) {
+			Cell& ncell = baseQuads[numQuadsX * qfcd.GetCoor(n).y + qfcd.GetCoor(n).x];
+			List& nlist = ncell.projectiles;
+
+			// prevent possible double insertions (into the same quad-list)
+			if (qfcd.GetCoor(n) != qfcd.GetCoor(n - 1)) {
+				qfcd.SetIter(n, nlist.insert(nlist.end(), p));
+			} else {
+				qfcd.SetIter(n, nlist.end());
+			}
+		}
+	} else {
+		qfcd.SetCoor(0, int2(CELL_IDX_X(p->pos.x), CELL_IDX_Z(p->pos.z)));
+
+		Cell& cell = baseQuads[numQuadsX * qfcd.GetCoor(0).y + qfcd.GetCoor(0).x];
+		List& list = cell.projectiles;
+
+		qfcd.SetIter(0, list.insert(list.end(), p));
+	}
+
+	p->SetQuadFieldCellData(qfcd);
 }
 
 void CQuadField::RemoveProjectile(CProjectile* p)
 {
 	assert(p->synced);
 
-	const int2& cellCoors = p->GetQuadFieldCellCoors();
-	const int cellIdx = numQuadsX * cellCoors.y + cellCoors.x;
-
 	GML_RECMUTEX_LOCK(quad); // RemoveProjectile
 
-	Quad& q = baseQuads[cellIdx];
+	CProjectile::QuadFieldCellData& qfcd = p->GetQuadFieldCellData();
 
-	std::list<CProjectile*>& projectiles = q.projectiles;
-	std::list<CProjectile*>::iterator pi = p->GetQuadFieldCellIter();
+	typedef CQuadField::Quad Cell;
+	typedef std::list<CProjectile*> List;
 
-	#ifdef REMOVE_PROJECTILE_FAST
-	if (pi != projectiles.end()) {
-		// this is O(1) instead of O(n) and crucially
-		// important for projectiles, but less clean
-		projectiles.erase(pi);
-	} else {
-		assert(false);
-	}
-	#else
-	for (pi = projectiles.begin(); pi != projectiles.end(); ++pi) {
-		if ((*pi) == p) {
-			projectiles.erase(pi);
-			break;
+	if (p->hitscan) {
+		for (unsigned int n = 0; n < 3; n++) {
+			Cell& cell = baseQuads[numQuadsX * qfcd.GetCoor(n).y + qfcd.GetCoor(n).x];
+			List& list = cell.projectiles;
+
+			if (qfcd.GetIter(n) != list.end()) {
+				// this is O(1) instead of O(n) and crucially
+				// important for projectiles, but less clean
+				list.erase(qfcd.GetIter(n));
+			}
+
+			qfcd.SetIter(n, list.end());
 		}
-	}
-	#endif
+	} else {
+		Cell& cell = baseQuads[numQuadsX * qfcd.GetCoor(0).y + qfcd.GetCoor(0).x];
+		List& list = cell.projectiles;
 
-	p->SetQuadFieldCellIter(projectiles.end());
+		assert(qfcd.GetIter(0) != list.end());
+
+		list.erase(qfcd.GetIter(0));
+		qfcd.SetIter(0, list.end());
+	}
 }
 
 

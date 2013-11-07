@@ -52,9 +52,9 @@ void CRifle::FireImpl(bool scriptCall)
 
 	if (hitUnit) {
 		hitUnit->DoDamage(weaponDef->damages, ZeroVector, owner, weaponDef->id, -1);
-		new CHeatCloudProjectile(weaponMuzzlePos + dir*length, hitUnit->speed * 0.9f, 30, 1, owner);
+		new CHeatCloudProjectile(owner, weaponMuzzlePos + dir * length, hitUnit->speed * 0.9f, 30, 1);
 	}
 
-	new CTracerProjectile(weaponMuzzlePos, dir*projectileSpeed, length, owner);
-	new CSmokeProjectile(weaponMuzzlePos, ZeroVector, 70, 0.1f, 0.02f, owner, 0.6f);
+	new CTracerProjectile(owner, weaponMuzzlePos, dir * projectileSpeed, length);
+	new CSmokeProjectile(owner, weaponMuzzlePos, ZeroVector, 70, 0.1f, 0.02f, 0.6f);
 }

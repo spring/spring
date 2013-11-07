@@ -10,9 +10,16 @@ class CSpherePartProjectile : public CProjectile
 	CR_DECLARE(CSpherePartProjectile);
 
 public:
-	CSpherePartProjectile(const float3& centerPos, int xpart, int ypart,
-			float expansionSpeed, float alpha, int ttl, CUnit* owner,
-			const float3& color);
+	CSpherePartProjectile(
+		CUnit* owner,
+		const float3& centerPos,
+		int xpart,
+		int ypart,
+		float expansionSpeed,
+		float alpha,
+		int ttl,
+		const float3& color
+	);
 	~CSpherePartProjectile();
 
 	void Draw();
@@ -48,7 +55,7 @@ public:
 	CSpherePartSpawner();
 	~CSpherePartSpawner();
 
-	virtual void Init(const float3& pos, CUnit* owner);
+	void Init(CUnit* owner, const float3& offset);
 
 private:
 	float alpha;
