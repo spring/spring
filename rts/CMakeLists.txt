@@ -63,7 +63,7 @@ IF    (UNIX AND NOT MINGW)
 	ENDIF (PREFER_STATIC_LIBS)
 
 	# Needed for dynamically loading shared libraries (on some OS)
-	LIST(APPEND engineCommonLibraries dl)
+	LIST(APPEND engineCommonLibraries ${CMAKE_DL_LIBS})
 ENDIF (UNIX AND NOT MINGW)
 
 FIND_PACKAGE_STATIC(ZLIB REQUIRED)
