@@ -30,7 +30,7 @@ Release Time
 		git reset --hard origin/master
 		git merge release --no-ff
 2) Tag the release:
-		export REL_VERS=93.0
+		export REL_VERS=95.0
 		git tag -a -m "${REL_VERS} release [changed APIs: Lua, unitsync, AI]" ${REL_VERS}
    Make sure it looks correct:
 		gitk master develop release &
@@ -68,7 +68,7 @@ Release Time
 		rsync --progress -h spring_${REL_VERS}* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-${REL_VERS}/
 10) Post the news post.
 
-11) After 1 or 2 days, enforce it on the server, if it is a sync relevant change.
+11) After a week, enforce it on the server, if it is a sync relevant change.
 
 
 Enforcing on server
@@ -76,7 +76,7 @@ Enforcing on server
 
 This only needs to be done if it is a sync relevant change.
 
-1) Ask aegis or a lobby admin to enforce the new version.
+1) Ask a lobby admin to enforce the new version.
 2) Update download page by chaning the version templates on the Wiki.
 	http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Major&action=edit
 	http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Minor&action=edit
