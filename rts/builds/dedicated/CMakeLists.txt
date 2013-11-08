@@ -34,7 +34,7 @@ IF    (UNIX AND NOT MINGW)
 	ENDIF (PREFER_STATIC_LIBS)
 
 	# Needed for dynamically loading shared libraries (on some OS)
-	LIST(APPEND engineDedicatedLibraries dl)
+	LIST(APPEND engineDedicatedLibraries ${CMAKE_DL_LIBS})
 ENDIF (UNIX AND NOT MINGW)
 
 IF    (MINGW OR APPLE)
