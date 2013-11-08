@@ -185,7 +185,7 @@ namespace
 			((wantedValueStr.empty()) ? unit->modParams[unit->modParamsMap.find(param)->second].valueInt == wantedValue
 			: unit->modParams[unit->modParamsMap.find(param)->second].valueString == wantedValueStr),
 		std::string param;
-		float wantedValue;
+		double wantedValue;
 		std::string wantedValueStr;
 		void SetParam(int index, const std::string& value) {
 			switch (index) {
