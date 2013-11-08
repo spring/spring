@@ -78,7 +78,8 @@ void CLoadScreen::Init()
 	// user override
 	mtLoading = (mtCfg > 0);
 	// runtime detect. disable for intel/mesa drivers, they crash at multithreaded OpenGL (date: Nov. 2011)
-	mtLoading |= (mtCfg < 0) && !globalRendering->haveMesa && !globalRendering->haveIntel;
+	// some ATI drivers/cards crash as well (date: Nov. 2013)
+	mtLoading |= (mtCfg < 0) && !globalRendering->haveMesa && !globalRendering->haveIntel && !globalRendering->haveATI;
 	showMessages = configHandler->GetBool("ShowLoadMessages");
 #endif
 
