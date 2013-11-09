@@ -89,8 +89,11 @@ namespace Shader {
 	NullProgramObject* nullProgramObject = &nullProgramObject_;
 
 
-	ARBShaderObject::ARBShaderObject(int shType, const std::string& shSrc, const std::string& shDefinitions)
-		: IShaderObject(shType, shSrc)
+	ARBShaderObject::ARBShaderObject(
+		unsigned int shType,
+		const std::string& shSrc,
+		const std::string& shSrcDefs
+	): IShaderObject(shType, shSrc)
 	{
 		assert(globalRendering->haveARB); // non-debug check is done in ShaderHandler
 		glGenProgramsARB(1, &objID);
@@ -126,8 +129,11 @@ namespace Shader {
 
 
 
-	GLSLShaderObject::GLSLShaderObject(int shType, const std::string& shSrcFile, const std::string& shDefinitions)
-		: IShaderObject(shType, shSrcFile, shDefinitions)
+	GLSLShaderObject::GLSLShaderObject(
+		unsigned int shType,
+		const std::string& shSrcFile,
+		const std::string& shSrcDefs
+	): IShaderObject(shType, shSrcFile, shSrcDefs)
 	{
 		assert(globalRendering->haveGLSL); // non-debug check is done in ShaderHandler
 	}
@@ -135,39 +141,52 @@ namespace Shader {
 		if (reloadFromDisk)
 			curShaderSrc = GetShaderSource(srcFile);
 
-		std::string srcStr = curShaderSrc;
+		std::string sourceStr = curShaderSrc;
+		std::string versionStr;
 
-		// extract #version and put it in first line
-		std::string version;
-		if (StringStartsWith(srcStr, "#version ")) {
-			size_t nl = srcStr.find('\n');
-			version = srcStr.substr(0, nl);
-			srcStr  = "//" + srcStr; // comment out the #version pragma (it's only allowed in the first line)
+		// extract #version pragma and put it on the first line (only allowed there)
+		// version pragma in definitions overrides version pragma in source (if any)
+		const size_t foo = sourceStr.find("#version ");
+		const size_t bar = rawDefStrs.find("#version ");
+		const size_t eos = std::string::npos;
+
+		if (foo != eos) {
+			versionStr = sourceStr.substr(foo, sourceStr.find('\n', foo) + 1);
+			sourceStr = sourceStr.substr(0, foo) + sourceStr.substr(sourceStr.find('\n', foo) + 1, eos);
+		}
+		if (bar != eos) {
+			versionStr = rawDefStrs.substr(bar, rawDefStrs.find('\n', bar) + 1);
+			rawDefStrs = rawDefStrs.substr(0, bar) + rawDefStrs.substr(rawDefStrs.find('\n', bar) + 1, eos);
 		}
 
-		const GLchar* sources[7] = {
-			version.c_str(),
-			"// flags\n#line 0\n",
-			definitions2.c_str(),
-			"\n",
-			definitions.c_str(),
-			"\n// shader source code\n#line 0\n",
-			srcStr.c_str()
-		};
-		const GLint lengths[7] = {-1, -1, -1, -1, -1, -1, -1};
-		//LOG("shader source:\n%s%s%s%s%s%s", sources[0], sources[1], sources[2], sources[3], sources[4], sources[5], sources[6]);
+		if (!versionStr.empty() && versionStr[versionStr.size() - 1] != '\n') { versionStr += "\n"; }
+		if (!rawDefStrs.empty() && rawDefStrs[rawDefStrs.size() - 1] != '\n') { rawDefStrs += "\n"; }
+		if (!modDefStrs.empty() && modDefStrs[modDefStrs.size() - 1] != '\n') { modDefStrs += "\n"; }
 
-		if (!objID)
+		// NOTE: some drivers cannot handle "#line 0" (?!)
+		sourceStr = "#line 1\n" + sourceStr;
+
+		const GLchar* sources[6] = {
+			versionStr.c_str(),
+			"// SHADER FLAGS\n",
+			rawDefStrs.c_str(),
+			modDefStrs.c_str(),
+			"// SHADER SOURCE\n",
+			sourceStr.c_str()
+		};
+		const GLint lengths[6] = {-1, -1, -1, -1, -1, -1};
+
+		if (objID == 0)
 			objID = glCreateShader(type);
-		glShaderSource(objID, 7, sources, lengths);
+
+		glShaderSource(objID, 6, sources, lengths);
 		glCompileShader(objID);
 
 		valid = glslIsValid(objID);
 		log   = glslGetLog(objID);
 
 		if (!IsValid()) {
-			LOG_L(L_WARNING, "[%s]\n\tshader-object name: %s, compile-log:\n%s",
-				__FUNCTION__, srcFile.c_str(), GetLog().c_str());
+			LOG_L(L_WARNING, "[%s]\n\tshader-object name: %s, compile-log:\n%s", __FUNCTION__, srcFile.c_str(), log.c_str());
 		}
 	}
 
@@ -226,20 +245,26 @@ namespace Shader {
 
 		shaderObjs.clear();
 	}
+
 	bool IProgramObject::IsShaderAttached(const IShaderObject* so) const {
 		return (std::find(shaderObjs.begin(), shaderObjs.end(), so) != shaderObjs.end());
 	}
+
 	void IProgramObject::RecompileIfNeeded()
 	{
 		const unsigned int hash = GetHash();
-		if (hash != curHash) {
-			const std::string definitionFlags = GetString();
-			for (SOVecIt it = shaderObjs.begin(); it != shaderObjs.end(); ++it) {
-				(*it)->SetDefinitions(definitionFlags);
-			}
-			curHash = hash;
-			Reload(false);
+
+		if (hash == curHash)
+			return;
+
+		const std::string definitionFlags = GetString();
+
+		for (SOVecIt it = shaderObjs.begin(); it != shaderObjs.end(); ++it) {
+			(*it)->SetDefinitions(definitionFlags);
 		}
+
+		curHash = hash;
+		Reload(false);
 	}
 
 

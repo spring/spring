@@ -12,47 +12,49 @@
 namespace Shader {
 	struct IShaderObject {
 	public:
-		IShaderObject(int shType, const std::string& shSrcFile, const std::string& shDefinitions = ""):
-			objID(0), type(shType), valid(false), srcFile(shSrcFile), definitions2(shDefinitions) {
+		IShaderObject(unsigned int shType, const std::string& shSrcFile, const std::string& shSrcDefs = ""):
+			objID(0), type(shType), valid(false), srcFile(shSrcFile), rawDefStrs(shSrcDefs) {
 		}
-		virtual ~IShaderObject() {
-		}
+
+		virtual ~IShaderObject() {}
 
 		virtual void Compile(bool reloadFromDisk) {}
 		virtual void Release() {}
 		unsigned int GetObjID() const { return objID; }
-		int GetType() const { return type; }
+		unsigned int GetType() const { return type; }
 		bool IsValid() const { return valid; }
 		const std::string& GetLog() const { return log; }
-		void SetDefinitions(const std::string& defs) { definitions = defs; }
+
+		void SetDefinitions(const std::string& defs) { modDefStrs = defs; }
 
 	protected:
 		unsigned int objID;
-		int type;
+		unsigned int type;
+
 		bool valid;
 
 		std::string srcFile;
 		std::string curShaderSrc;
-		std::string definitions;
-		std::string definitions2;
+		std::string modDefStrs;
+		std::string rawDefStrs;
 		std::string log;
 	};
 
 	struct NullShaderObject: public Shader::IShaderObject {
 	public:
-		NullShaderObject(int shType, const std::string& shSrcFile) : IShaderObject(shType, shSrcFile) {}
+		NullShaderObject(unsigned int shType, const std::string& shSrcFile) : IShaderObject(shType, shSrcFile) {}
 	};
 	
 	struct ARBShaderObject: public Shader::IShaderObject {
 	public:
-		ARBShaderObject(int, const std::string&, const std::string& shDefinitions = "");
+		ARBShaderObject(unsigned int, const std::string&, const std::string& shSrcDefs = "");
 		void Compile(bool reloadFromDisk);
 		void Release();
 	};
 
 	struct GLSLShaderObject: public Shader::IShaderObject {
 	public:
-		GLSLShaderObject(int, const std::string&, const std::string& shDefinitions = "");
+		GLSLShaderObject(unsigned int, const std::string&, const std::string& shSrcDefs = "");
 		void Compile(bool reloadFromDisk);
 		void Release();
 	};
@@ -71,8 +73,6 @@ namespace Shader {
 		virtual void Validate() {}
 		virtual void Release() = 0;
 		virtual void Reload(bool reloadFromDisk) = 0;
-		void RecompileIfNeeded();
-		bool IsBound() const;
 
 		virtual void SetUniformTarget(int) {}
 		virtual void SetUniformLocation(const std::string&) {}
@@ -109,10 +109,15 @@ namespace Shader {
 
 		virtual void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
 		SOVec& GetAttachedShaderObjs() { return shaderObjs; }
+
+		void RecompileIfNeeded();
+
+		bool IsBound() const;
 		bool IsShaderAttached(const IShaderObject* so) const;
+		bool IsValid() const { return valid; }
 
 		unsigned int GetObjID() const { return objID; }
-		bool IsValid() const { return valid; }
+
 		const std::string& GetLog() const { return log; }
 
 	protected:
