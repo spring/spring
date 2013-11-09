@@ -28,7 +28,7 @@ static bool hasOGLthreads = false; // disable for now (not used atm)
 #else
 static bool hasOGLthreads = false;
 #endif
-#if defined(WIN32)
+#if defined(_MSC_VER)
 static __declspec(thread) int threadnum(0);
 static __declspec(thread) bool exitThread(false);
 #else
