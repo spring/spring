@@ -237,15 +237,12 @@ void CTimeProfiler::AddTime(const std::string& name, const spring_time time, con
 
 void CTimeProfiler::PrintProfilingInfo() const
 {
-	LOG("%35s|%18s|%s",
-			"Part",
-			"Total Time",
-			"Time of the last 0.5s");
-	std::map<std::string, CTimeProfiler::TimeRecord>::const_iterator pi;
-	for (pi = profile.begin(); pi != profile.end(); ++pi) {
-		LOG("%35s %16.2fs %5.2f%%",
-				pi->first.c_str(),
-				pi->second.total.toSecsf(),
-				pi->second.percent * 100);
+	LOG("%35s|%18s|%s", "Part", "Total Time", "Time of the last 0.5s");
+
+	for (auto pi = profile.begin(); pi != profile.end(); ++pi) {
+		const std::string& name = pi->first;
+		const TimeRecord& tr = pi->second;
+
+		LOG("%35s %16.2fms %5.2f%%", name.c_str(), tr.total.toMilliSecsf(), tr.percent * 100);
 	}
 }
