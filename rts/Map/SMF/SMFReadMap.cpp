@@ -701,7 +701,7 @@ void CSMFReadMap::DrawMinimap() const
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-		glBindTexture(GL_TEXTURE_2D, groundDrawer->infoTex);
+		glBindTexture(GL_TEXTURE_2D, groundDrawer->GetActiveInfoTexture());
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 

@@ -9,8 +9,6 @@ Else  (NOT Boost_FOUND)
 	INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/tools/CompileFailTest/CompileFailTest.cmake)
 
 
-	FIND_PACKAGE(SDL REQUIRED)
-	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
 	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 	INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/src-generated/engine)
 
@@ -59,6 +57,7 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/Game/GameVersion.cpp"
 			"${ENGINE_SOURCE_DIR}/Net/Protocol/BaseNetProtocol.cpp"
 			"${ENGINE_SOURCE_DIR}/System/CRC.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/NullGlobalConfig.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Nullerrorhandler.cpp"
 			${test_Log_sources}
@@ -68,7 +67,9 @@ Else  (NOT Boost_FOUND)
 			engineSystemNet
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
+			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${WINMM_LIBRARY}
 			${WS2_32_LIBRARY}
 			7zip
 		)
@@ -146,13 +147,16 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			${test_Log_sources}
 		)
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
+			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${WINMM_LIBRARY}
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
@@ -173,8 +177,12 @@ Else  (NOT Boost_FOUND)
 			${Boost_SYSTEM_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${Boost_THREAD_LIBRARY}
-			${SDL_LIBRARY}
 		)
+
+	IF (WIN32)
+		LIST(APPEND test_libs ${WINMM_LIBRARY})
+	ENDIF (WIN32)
+
 	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 	if (Boost_TIMER_FOUND)
 		LIST(APPEND test_libs ${Boost_TIMER_LIBRARY})
@@ -284,6 +292,7 @@ Else  (NOT Boost_FOUND)
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testThreadPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/ThreadPool.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			${test_Log_sources}
@@ -293,6 +302,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${Boost_SYSTEM_LIBRARY}
+			${WINMM_LIBRARY}
 		)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
 

@@ -23,11 +23,11 @@ CR_REG_METADATA(PlayerBase, (
 PlayerBase::PlayerBase() :
 	TeamController(),
 	rank(-1),
+	cpuUsage (0.0f),
 	spectator(false),
 	isFromDemo(false),
 	readyToStart(false),
-	desynced(false),
-	cpuUsage (0.0f)
+	desynced(false)
 {
 }
 

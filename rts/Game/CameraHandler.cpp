@@ -140,21 +140,22 @@ void CCameraHandler::UpdateCam()
 	const float3 wantedCamDir = currCamCtrl->GetDir();
 
 	const float curTime = spring_now().toSecsf();
+
 	if (curTime >= cameraTimeEnd) {
 		camera->SetPos(wantedCamPos);
 		camera->forward = wantedCamDir;
 		camera->SetFov(wantedCamFOV);
 		//cameraTimeEnd   = -1.0f;
-	}
-	else {
-		assert((cameraTimeEnd - cameraTimeStart) > 0.0f);
-		const float timeRatio = (cameraTimeEnd - curTime) / (cameraTimeEnd - cameraTimeStart);
-		const float tweenFact = 1.0f - (float)math::pow(timeRatio, cameraTimeExponent);
+	} else {
+		if ((cameraTimeEnd - cameraTimeStart) > 0.0f) {
+			const float timeRatio = (cameraTimeEnd - curTime) / (cameraTimeEnd - cameraTimeStart);
+			const float tweenFact = 1.0f - (float)math::pow(timeRatio, cameraTimeExponent);
 
-		camera->SetPos(   mix(startCam.pos, wantedCamPos, tweenFact));
-		camera->forward = mix(startCam.dir, wantedCamDir, tweenFact);
-		camera->SetFov(   mix(startCam.fov, wantedCamFOV, tweenFact));
-		camera->forward.Normalize();
+			camera->SetPos(   mix(startCam.pos, wantedCamPos, tweenFact));
+			camera->forward = mix(startCam.dir, wantedCamDir, tweenFact);
+			camera->SetFov(   mix(startCam.fov, wantedCamFOV, tweenFact));
+			camera->forward.Normalize();
+		}
 	}
 }
 

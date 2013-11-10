@@ -53,8 +53,8 @@ class CLuaHandleSynced : public CLuaHandle
 		void Init(const string& syncedFile,
 		          const string& unsyncedFile,
 		          const string& modes);
-		bool SetupSynced(lua_State* L, const string& code, const string& filename);
-		bool SetupUnsynced(lua_State* L, const string& code, const string& filename);
+		bool SetupSynced(lua_State* L);
+		bool SetupUnsynced(lua_State* L);
 
 		// hooks to add code during initialization
 		virtual bool AddSyncedCode(lua_State* L) = 0;

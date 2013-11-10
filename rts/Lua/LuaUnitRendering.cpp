@@ -393,12 +393,18 @@ static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
 			continue;
 		}
 		const string key = StringToLower(lua_tostring(L, -2));
+
 		if (key == "order") {
 			mat.order = luaL_checkint(L, -1);
 		}
-		else if (key == "shader") {
-			ParseShader(L, caller, -1, mat.shader);
+
+		else if (key == "standard_shader" || key == "shader") {
+			ParseShader(L, caller, -1, mat.standardShader);
 		}
+		else if (key == "deferred_shader" || key == "deferred") {
+			ParseShader(L, caller, -1, mat.deferredShader);
+		}
+
 		else if (key == "texunits") {
 			if (lua_istable(L, -1)) {
 			  const int texTable = (int)lua_gettop(L);

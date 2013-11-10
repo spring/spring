@@ -396,6 +396,7 @@ void CMapInfo::ReadTerrainTypes()
 		terrType.name          = terrain.GetString("name", "Default");
 		terrType.hardness      = terrain.GetFloat("hardness",   1.0f);
 		terrType.receiveTracks = terrain.GetBool("receiveTracks", true);
+
 		terrType.tankSpeed  = moveTable.GetFloat("tank",  1.0f);
 		terrType.kbotSpeed  = moveTable.GetFloat("kbot",  1.0f);
 		terrType.hoverSpeed = moveTable.GetFloat("hover", 1.0f);

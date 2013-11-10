@@ -6,7 +6,8 @@
 #include "gmlcls.h"
 
 #ifdef USE_GML
-#include <SDL_timer.h>
+#include "System/Misc/SpringTime.h"
+
 namespace GML {
 	void Init();
 	void Exit();
@@ -23,7 +24,7 @@ namespace GML {
 	inline void SetLuaUIState(lua_State *L) { gmlLuaUIState = L; }
 	inline void SetCheckCallChain(bool cc) { gmlCheckCallChain = cc; }
 	inline void EnableCallChainWarnings(bool cw) { gmlCallChainWarning = (cw ? 0 : GML_MAX_CALL_CHAIN_WARNINGS); }
-	inline unsigned int UpdateTicks() { gmlNextTickUpdate = 100; return gmlCurrentTicks = SDL_GetTicks(); }
+	inline unsigned int UpdateTicks() { gmlNextTickUpdate = 100; return gmlCurrentTicks = spring_clock::GetTicks(); }
 	inline void GetTicks(unsigned int &var) { var = (--gmlNextTickUpdate > 0) ? gmlCurrentTicks : UpdateTicks(); }
 	inline bool ServerActive() { return gmlServerActive; }
 };

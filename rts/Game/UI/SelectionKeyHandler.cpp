@@ -175,7 +175,7 @@ namespace
 		cat=0;
 	);
 //FIXME: std::strtof is in C99 which M$ doesn't bother to support.
-#ifdef __MSVC__
+#ifdef _MSC_VER
 	#define STRTOF strtod
 #else
 	#define STRTOF strtof

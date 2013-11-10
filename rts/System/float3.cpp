@@ -51,7 +51,7 @@ void float3::ClampInMap()
 }
 
 namespace std {
-	float3 min(float3 v1, float3 v2)
+	float3 min(const float3 v1, const float3 v2)
 	{
 		return float3(
 			std::min(v1.x, v2.x),
@@ -60,7 +60,7 @@ namespace std {
 		);
 	}
 
-	float3 max(float3 v1, float3 v2)
+	float3 max(const float3 v1, const float3 v2)
 	{
 		return float3(
 			std::max(v1.x, v2.x),
@@ -69,7 +69,7 @@ namespace std {
 		);
 	}
 
-	float3 fabs(float3 v)
+	float3 fabs(const float3 v)
 	{
 		return float3(
 			std::fabs(v.x),

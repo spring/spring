@@ -23,7 +23,7 @@ CALLIN_LIST = {
 	"Shutdown",
 
 	-- game callins
-	"GameSetup",               -- FIXME: not implemented by base GH
+	"GameSetup",
 	"GamePreload",
 	"GameStart",
 	"GameOver",
@@ -156,7 +156,7 @@ CALLIN_LIST = {
 	"GetTooltip",
 
 	"WorldTooltip",            -- FIXME: not implemented by base GH
-	"MapDrawCmd",              -- FIXME: not implemented by base GH
+	"MapDrawCmd",
 	"ShockFront",              -- FIXME: not implemented by base GH
 }
 

@@ -63,16 +63,20 @@ class LuaUtils {
 
 		static void PushCurrentFuncEnv(lua_State* L, const char* caller);
 
-		// returns stack index of traceback function
-		static int PushDebugTraceback(lua_State* L);
-		static int PopDebugTraceback(lua_State* L, int idx);
+		static int PushDebugTraceback(lua_State* L); //< returns stack index of traceback function
 
 		// lower case all keys in the table, with recursion
 		static bool LowerKeys(lua_State* L, int tableIndex);
 
+		static void PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable);
+		static void PushCommandOptionsTable(lua_State* L, const Command& cmd, bool subtable);
 		// from LuaUI.cpp / LuaSyncedCtrl.cpp (used to be duplicated)
-		static void ParseCommandOptions(lua_State* L, const char* caller,
-		                                int index, Command& cmd);
+		static void ParseCommandOptions(
+			lua_State* L,
+			Command& cmd,
+			const char* caller,
+			const int idx
+		);
 		static Command ParseCommand(lua_State* L, const char* caller,
 				int idIndex);
 		static Command ParseCommandTable(lua_State* L, const char* caller,

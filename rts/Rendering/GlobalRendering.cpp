@@ -7,7 +7,7 @@
 #include "Rendering/GL/FBO.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Util.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/creg/creg_cond.h"
@@ -99,12 +99,12 @@ CR_REG_METADATA(CGlobalRendering, (
 CGlobalRendering::CGlobalRendering()
 	: timeOffset(0.0f)
 	, lastFrameTime(0.0f)
-	, lastFrameStart(spring_gettime())
+	, lastFrameStart(spring_notime)
 	, weightedSpeedFactor(0.0f)
 	, drawFrame(1)
-	, FPS(30.0f)
+	, FPS(GAME_SPEED)
 
-	, winState(0)
+	, winState(WINSTATE_DEFAULT)
 	, screenSizeX(1)
 	, screenSizeY(1)
 
@@ -294,7 +294,27 @@ void CGlobalRendering::PostInit() {
 	teamNanospray = configHandler->GetBool("TeamNanoSpray");
 }
 
+void CGlobalRendering::SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen)
+{
+#ifdef _DEBUG
+	fullScreen = false;
+#else
+	fullScreen = configFullScreen;
+#endif
 
+	// flags
+	if (cmdLineWindowed) {
+		fullScreen = false;
+	} else if (cmdLineFullScreen) {
+		fullScreen = true;
+	}
+}
+
+void CGlobalRendering::SetViewSize(int vsx, int vsy)
+{
+	viewSizeX = vsx;
+	viewSizeY = vsy;
+}
 
 void CGlobalRendering::SetDualScreenParams() {
 	dualScreenMode = configHandler->GetBool("DualScreenMode");
@@ -318,7 +338,7 @@ void CGlobalRendering::UpdateWindowGeometry() {
 	winPosY = 0;
 }
 
-void CGlobalRendering::UpdateViewPortGeometry() {
+void CGlobalRendering::UpdateViewPortGeometry(bool windowExposed) {
 	// NOTE: viewPosY is not currently used (always 0)
 	if (!dualScreenMode) {
 		viewSizeX = winSizeX;
@@ -326,6 +346,12 @@ void CGlobalRendering::UpdateViewPortGeometry() {
 		viewPosX = 0;
 		viewPosY = 0;
 	} else {
+		// if window was exposed in full-screen mode then
+		// this would divide its size in half (cyclically)
+		// --> keep the old params
+		if (fullScreen && windowExposed)
+			return;
+
 		viewSizeX = winSizeX / 2;
 		viewSizeY = winSizeY;
 

@@ -413,7 +413,7 @@ static int WeaponsTable(lua_State* L, const void* data)
 		lua_pushnumber(L, i + LUA_WEAPON_BASE_INDEX);
 		lua_newtable(L); {
 			HSTR_PUSH_NUMBER(L, "weaponDef",   weapon->id);
-			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo+LUA_WEAPON_BASE_INDEX);
+			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo-1+LUA_WEAPON_BASE_INDEX);
 			HSTR_PUSH_NUMBER(L, "fuelUsage",   udw.fuelUsage);
 			HSTR_PUSH_NUMBER(L, "maxAngleDif", udw.maxMainDirAngleDif);
 			HSTR_PUSH_NUMBER(L, "mainDirX",    udw.mainDir.x);
@@ -492,12 +492,11 @@ static int MoveDefTable(lua_State* L, const void* data)
 
 	HSTR_PUSH_NUMBER(L, "id", md->pathType);
 
-	switch (md->moveFamily) {
+	switch (md->speedModClass) {
 		case MoveDef::Tank:  { HSTR_PUSH_STRING(L, "family", "tank");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
 		case MoveDef::KBot:  { HSTR_PUSH_STRING(L, "family", "kbot");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
 		case MoveDef::Hover: { HSTR_PUSH_STRING(L, "family", "hover"); HSTR_PUSH_STRING(L, "type",  "hover"); break; }
 		case MoveDef::Ship:  { HSTR_PUSH_STRING(L, "family", "ship");  HSTR_PUSH_STRING(L, "type",   "ship"); break; }
-		default: { HSTR_PUSH_STRING(L, "family", "error"); HSTR_PUSH_STRING(L, "type",  "error"); break; }
 	}
 
 	HSTR_PUSH_NUMBER(L, "xsize",         md->xsize);

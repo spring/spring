@@ -6,46 +6,57 @@
 #include "System/creg/creg_cond.h"
 
 #include <boost/cstdint.hpp>
+#include <cassert>
 
 // glibc's chrono is non monotonic/not steady atm (it depends on set timezone and can change at runtime!)
-// we don't want to special handles all the problems caused by this, so just use boost one instead
-#define FORCE_BOOST_CHRONO
+// we don't want to specially handle all the problems caused by this, so just use boost version instead
+// not possible either: boost::chrono uses extremely broken HPE timers on Windows 7 (but so does std::)
+//
+// #define FORCE_CHRONO_TIMERS
+// #define FORCE_BOOST_CHRONO
 
-// mingw doesn't support std::thread (yet?)
-#if (__cplusplus > 199711L) && !defined(__MINGW32__) && !defined(FORCE_BOOST_CHRONO)
+#if (__cplusplus > 199711L) && !defined(FORCE_BOOST_CHRONO)
 	#define SPRINGTIME_USING_STDCHRONO
+	#undef gt
 	#include <chrono>
-	#include <thread>
 	namespace chrono { using namespace std::chrono; };
-	namespace this_thread { using namespace std::this_thread; };
 #else
 	#define SPRINGTIME_USING_BOOST
 	#undef gt
 	#include <boost/chrono/include.hpp>
-	#include <boost/thread/thread.hpp>
 	namespace chrono { using namespace boost::chrono; };
-	namespace this_thread { using namespace boost::this_thread; };
 #endif
 
 
 
-namespace Cpp11Clock {
-	#define i1e3 1000LL
-	#define i1e6 1000000LL
-	#define i1e9 1000000000LL
+namespace spring_clock {
+	// NOTE:
+	//   1e-x are double-precision literals but T can be float
+	//   floats only provide ~6 decimal digits of precision so
+	//   ToSecs is inaccurate in that case
+	//   these cannot be written as integer divisions or tests
+	//   will fail because of intermediate conversions to FP32
+	template<typename T> static T ToSecs     (const boost::int64_t ns) { return (ns * 1e-9); }
+	template<typename T> static T ToMilliSecs(const boost::int64_t ns) { return (ns * 1e-6); }
+	template<typename T> static T ToMicroSecs(const boost::int64_t ns) { return (ns * 1e-3); }
+	template<typename T> static T ToNanoSecs (const boost::int64_t ns) { return (ns       ); }
 
-	template<typename T> static inline T ToSecs(const boost::int64_t x) { return x * double(1e-9); }
-	template<typename T> static inline T ToMs(const boost::int64_t x)   { return x * double(1e-6); }
-	template<typename T> static inline T ToNs(const boost::int64_t x)   { return x; }
-	template<> inline boost::int64_t ToSecs<boost::int64_t>(const boost::int64_t x) { return x / i1e9; }
-	template<> inline boost::int64_t ToMs<boost::int64_t>(const boost::int64_t x)   { return x / i1e6; }
+	// specializations
+	template<> boost::int64_t ToSecs     <boost::int64_t>(const boost::int64_t ns) { return (ns / boost::int64_t(1e9)); }
+	template<> boost::int64_t ToMilliSecs<boost::int64_t>(const boost::int64_t ns) { return (ns / boost::int64_t(1e6)); }
+	template<> boost::int64_t ToMicroSecs<boost::int64_t>(const boost::int64_t ns) { return (ns / boost::int64_t(1e3)); }
 
-	template<typename T> static inline boost::int64_t FromSecs(const T s) { return s * i1e9; }
-	template<typename T> static inline boost::int64_t FromMs(const T ms)  { return ms * i1e6; }
-	template<typename T> static inline boost::int64_t FromNs(const T ns)  { return ns; }
-	static inline boost::int64_t Get() {
-		return chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
-	}
+	template<typename T> static boost::int64_t FromSecs     (const T  s) { return ( s * boost::int64_t(1e9)); }
+	template<typename T> static boost::int64_t FromMilliSecs(const T ms) { return (ms * boost::int64_t(1e6)); }
+	template<typename T> static boost::int64_t FromMicroSecs(const T us) { return (us * boost::int64_t(1e3)); }
+	template<typename T> static boost::int64_t FromNanoSecs (const T ns) { return (ns                      ); }
+
+	void PushTickRate(bool hres = false);
+	void PopTickRate();
+
+	// number of ticks since clock epoch
+	boost::int64_t GetTicks();
+	const char* GetName();
 };
 
 
@@ -56,69 +67,79 @@ private:
 	CR_DECLARE_STRUCT(spring_time);
 
 public:
-	inline static spring_time gettime() { return spring_time_native(Cpp11Clock::Get()); }
-	inline static spring_time fromNanoSecs(const boost::int64_t ns) { return spring_time_native(Cpp11Clock::FromNs(ns)); }
-	inline static spring_time fromSecs(const boost::int64_t secs) { return spring_time_native(Cpp11Clock::FromSecs(secs)); }
+	spring_time(): x(0) {}
+	template<typename T> explicit spring_time(const T millis): x(spring_clock::FromMilliSecs(millis)) {}
 
-public:
-	spring_time() : x(0) {}
-	template<typename T> explicit spring_time(const T ms) : x(Cpp11Clock::FromMs(ms)) {}
+	spring_time& operator+=(const spring_time st)       { x += st.x; return *this; }
+	spring_time& operator-=(const spring_time st)       { x -= st.x; return *this; }
+	spring_time   operator-(const spring_time st) const { return spring_time_native(x - st.x); }
+	spring_time   operator+(const spring_time st) const { return spring_time_native(x + st.x); }
+	bool          operator<(const spring_time st) const { return (x <  st.x); }
+	bool          operator>(const spring_time st) const { return (x >  st.x); }
+	bool         operator<=(const spring_time st) const { return (x <= st.x); }
+	bool         operator>=(const spring_time st) const { return (x >= st.x); }
 
-	spring_time& operator+=(const spring_time v)       { x += v.x; return *this; }
-	spring_time& operator-=(const spring_time v)       { x -= v.x; return *this; }
-	spring_time   operator-(const spring_time v) const { return spring_time_native(x - v.x); }
-	spring_time   operator+(const spring_time v) const { return spring_time_native(x + v.x); }
-	bool          operator<(const spring_time v) const { return (x < v.x); }
-	bool          operator>(const spring_time v) const { return (x > v.x); }
-	bool         operator<=(const spring_time v) const { return (x <= v.x); }
-	bool         operator>=(const spring_time v) const { return (x >= v.x); }
+	// short-hands
+	boost::int64_t toSecsi()        const { return (toSecs     <boost::int64_t>()); }
+	boost::int64_t toMilliSecsi()   const { return (toMilliSecs<boost::int64_t>()); }
+	boost::int64_t toMicroSecsi()   const { return (toMicroSecs<boost::int64_t>()); }
+	boost::int64_t toNanoSecsi()    const { return (toNanoSecs <boost::int64_t>()); }
+
+	float toSecsf()      const { return (toSecs     <float>()); }
+	float toMilliSecsf() const { return (toMilliSecs<float>()); }
+	float toMicroSecsf() const { return (toMicroSecs<float>()); }
+	float toNanoSecsf()  const { return (toNanoSecs <float>()); }
+
+	// wrappers
+	template<typename T> T toSecs()      const { return spring_clock::ToSecs     <T>(x); }
+	template<typename T> T toMilliSecs() const { return spring_clock::ToMilliSecs<T>(x); }
+	template<typename T> T toMicroSecs() const { return spring_clock::ToMicroSecs<T>(x); }
+	template<typename T> T toNanoSecs()  const { return spring_clock::ToNanoSecs <T>(x); }
 
 
-	inline int toSecs()         const { return toSecs<boost::int64_t>(); }
-	inline int toMilliSecs()    const { return toMilliSecs<boost::int64_t>(); }
-	inline int toNanoSecs()     const { return toNanoSecs<boost::int64_t>(); }
-	inline float toSecsf()      const { return toSecs<float>(); }
-	inline float toMilliSecsf() const { return toMilliSecs<float>(); }
-	inline float toNanoSecsf()  const { return toNanoSecs<float>(); }
-	template<typename T> inline T toSecs()      const { return Cpp11Clock::ToSecs<T>(x); }
-	template<typename T> inline T toMilliSecs() const { return Cpp11Clock::ToMs<T>(x); }
-	template<typename T> inline T toNanoSecs()  const { return Cpp11Clock::ToNs<T>(x); }
+	bool isDuration() const { return (x != 0); }
+	bool isTime() const { return (x > 0); }
+
+	void sleep();
+	void sleep_until();
 
 
-	inline bool isDuration() const { return (x != 0); }
-	inline bool isTime() const { return (x > 0); }
-	inline void sleep() const {
-		//FIXME for very short time intervals use a yielding loop instead? (precision of yield is like 5x better than sleep, see the UT)
-		//assert(toNanoSecs() > spring_msecs(1).toNanoSecs());
+	static spring_time gettime(bool init = false) { assert(xs != 0 || init); return spring_time_native(spring_clock::GetTicks()); }
+	static spring_time getstarttime() { assert(xs != 0); return spring_time_native(xs); }
+	static spring_time getelapsedtime() { return (gettime() - getstarttime()); }
 
-	#if defined(SPRINGTIME_USING_STDCHRONO)
-		this_thread::sleep_for(chrono::nanoseconds( toNanoSecs() ));
-	#else
-		boost::this_thread::sleep(boost::posix_time::microseconds(std::ceil(toNanoSecsf() * 1e-3)));
-	#endif
-	}
+	static void setstarttime(const spring_time t) { assert(xs == 0); xs = t.x; assert(xs != 0); }
 
-	//inline void sleep_until() const {
-	//	this_thread::sleep_until(chrono::nanoseconds( toNanoSecs() ));
-	//}
+	static spring_time fromNanoSecs (const boost::int64_t ns) { return spring_time_native(spring_clock::FromNanoSecs( ns)); }
+	static spring_time fromMicroSecs(const boost::int64_t us) { return spring_time_native(spring_clock::FromMicroSecs(us)); }
+	static spring_time fromMilliSecs(const boost::int64_t ms) { return spring_time_native(spring_clock::FromMilliSecs(ms)); }
+	static spring_time fromSecs     (const boost::int64_t  s) { return spring_time_native(spring_clock::FromSecs     ( s)); }
 
 private:
-	inline static spring_time spring_time_native(const boost::int64_t n) { spring_time s; s.x = n; return s; }
+	// convert integer to spring_time (n is interpreted as number of nanoseconds)
+	static spring_time spring_time_native(const boost::int64_t n) { spring_time s; s.x = n; return s; }
 
 	void Serialize(creg::ISerializer& s);
+
+private:
 	boost::int64_t x;
+
+	// initial time (the "Spring epoch", program start)
+	// all other time-points *must* be larger than this
+	// if the clock is monotonically increasing
+	static boost::int64_t xs;
 };
 
 
 
 static const spring_time spring_notime(0);
 static const spring_time spring_nulltime(0);
-static const spring_time spring_starttime = spring_time::gettime();
 
-#define spring_now() (spring_time::gettime() - spring_starttime)
-#define spring_gettime() spring_time::gettime()
+#define spring_gettime()      spring_time::gettime()
+#define spring_getstarttime() spring_time::getstarttime()
+#define spring_now()          spring_time::getelapsedtime()
 
-#define spring_tomsecs(t) ((t).toMilliSecs())
+#define spring_tomsecs(t) ((t).toMilliSecsi())
 #define spring_istime(t) ((t).isTime())
 #define spring_sleep(t) ((t).sleep())
 

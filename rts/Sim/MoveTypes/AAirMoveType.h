@@ -76,7 +76,7 @@ protected:
 	bool CanLandOnPad(const float3& padPos) const;
 	bool HaveLandedOnPad(const float3& padPos);
 	bool MoveToRepairPad();
-	void UpdateFuel();
+	void UpdateFuel(bool slowUpdate = true);
 
 	/// unit found to be dangerously close to our path
 	CUnit* lastColWarning;

@@ -5,7 +5,7 @@
 
 #include <map>
 #include "IModelParser.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 enum {
 	S3O_PRIMTYPE_TRIANGLES      = 0,
@@ -24,7 +24,6 @@ struct SS3OVertex {
 
 struct SS3OPiece: public S3DModelPiece {
 	SS3OPiece(): primType(S3O_PRIMTYPE_TRIANGLES) {
-		type = MODELTYPE_S3O;
 	}
 
 	void UploadGeometryVBOs();

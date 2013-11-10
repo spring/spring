@@ -23,38 +23,49 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(health),
 	CR_MEMBER(mass),
 	CR_MEMBER(crushResistance),
-	CR_MEMBER(collidable),
+
 	CR_MEMBER(crushable),
 	CR_MEMBER(immobile),
 	CR_MEMBER(crushKilled),
 	CR_MEMBER(blockEnemyPushing),
 	CR_MEMBER(blockHeightChanges),
+
 	CR_MEMBER(luaDraw),
 	CR_MEMBER(noSelect),
+
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
  	CR_MEMBER(footprint),
 	CR_MEMBER(heading),
+
 	CR_ENUM_MEMBER(physicalState),
+	CR_ENUM_MEMBER(collidableState),
+
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
+
 	CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
 	CR_MEMBER(collisionVolume),
 	CR_IGNORED(groundDecal),
+
 	CR_MEMBER(frontdir),
 	CR_MEMBER(rightdir),
 	CR_MEMBER(updir),
+
 	CR_MEMBER(relMidPos),
  	CR_MEMBER(relAimPos),
 	CR_MEMBER(midPos),
 	CR_MEMBER(aimPos),
 	CR_MEMBER(mapPos),
 	CR_MEMBER(groundBlockPos),
+
 	CR_MEMBER(dragScales),
+
 	CR_MEMBER(drawPos),
 	CR_MEMBER(drawMidPos),
 	// CR_MEMBER(blockMap), //FIXME add bitwiseenum to creg
+
 	CR_MEMBER(buildFacing)
 ));
 
@@ -64,7 +75,6 @@ CSolidObject::CSolidObject():
 	mass(DEFAULT_MASS),
 	crushResistance(0.0f),
 
-	collidable(false),
 	crushable(false),
 	immobile(false),
 	crushKilled(false),
@@ -79,7 +89,11 @@ CSolidObject::CSolidObject():
 	footprint(1, 1),
 
 	heading(0),
-	physicalState(STATE_BIT_ONGROUND),
+
+	// objects start out non-blocking but fully collidable
+	// SolidObjectDef::collidable controls only the SO-bit
+	physicalState(PhysicalState(PSTATE_BIT_ONGROUND)),
+	collidableState(CollidableState(CSTATE_BIT_SOLIDOBJECTS | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS)),
 
 	team(0),
 	allyteam(0),
@@ -104,7 +118,7 @@ CSolidObject::CSolidObject():
 }
 
 CSolidObject::~CSolidObject() {
-	collidable = false;
+	ClearCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
 
 	delete collisionVolume;
 	collisionVolume = NULL;
@@ -116,26 +130,26 @@ void CSolidObject::UpdatePhysicalState() {
 
 	unsigned int ps = physicalState;
 
-	ps &= (~STATE_BIT_ONGROUND);
-	ps &= (~STATE_BIT_INWATER);
-	ps &= (~STATE_BIT_UNDERWATER);
-	ps &= (~STATE_BIT_UNDERGROUND);
-	ps &= (~STATE_BIT_INAIR);
+	ps &= (~PSTATE_BIT_ONGROUND);
+	ps &= (~PSTATE_BIT_INWATER);
+	ps &= (~PSTATE_BIT_UNDERWATER);
+	ps &= (~PSTATE_BIT_UNDERGROUND);
+	ps &= (~PSTATE_BIT_INAIR);
 
 	// NOTE:
 	//   height is not in general equivalent to radius * 2.0
 	//   the height property is used for much fewer purposes
 	//   than radius, so less reliable for determining state
-	#define MASK_NOAIR (STATE_BIT_ONGROUND | STATE_BIT_INWATER | STATE_BIT_UNDERWATER | STATE_BIT_UNDERGROUND)
+	#define MASK_NOAIR (PSTATE_BIT_ONGROUND | PSTATE_BIT_INWATER | PSTATE_BIT_UNDERWATER | PSTATE_BIT_UNDERGROUND)
 	#define EPS 0.1f
-	ps |= (STATE_BIT_ONGROUND    * ((   pos.y -         gh) <=  EPS));
-	ps |= (STATE_BIT_INWATER     * ((   pos.y             ) <= 0.0f));
-//	ps |= (STATE_BIT_UNDERWATER  * ((   pos.y +     height) <  0.0f));
-//	ps |= (STATE_BIT_UNDERGROUND * ((   pos.y +     height) <    gh));
-	ps |= (STATE_BIT_UNDERWATER  * ((midPos.y +     radius) <  0.0f));
-	ps |= (STATE_BIT_UNDERGROUND * ((midPos.y +     radius) <    gh));
-	ps |= (STATE_BIT_INAIR       * ((   pos.y -         wh) >   EPS));
-	ps |= (STATE_BIT_INAIR       * ((    ps   & MASK_NOAIR) ==    0));
+	ps |= (PSTATE_BIT_ONGROUND    * ((   pos.y -         gh) <=  EPS));
+	ps |= (PSTATE_BIT_INWATER     * ((   pos.y             ) <= 0.0f));
+//	ps |= (PSTATE_BIT_UNDERWATER  * ((   pos.y +     height) <  0.0f));
+//	ps |= (PSTATE_BIT_UNDERGROUND * ((   pos.y +     height) <    gh));
+	ps |= (PSTATE_BIT_UNDERWATER  * ((midPos.y +     radius) <  0.0f));
+	ps |= (PSTATE_BIT_UNDERGROUND * ((midPos.y +     radius) <    gh));
+	ps |= (PSTATE_BIT_INAIR       * ((   pos.y -         wh) >   EPS));
+	ps |= (PSTATE_BIT_INAIR       * ((    ps   & MASK_NOAIR) ==    0));
 	#undef EPS
 	#undef MASK_NOAIR
 
@@ -156,22 +170,24 @@ void CSolidObject::UpdatePhysicalState() {
 
 void CSolidObject::UpdateVoidState(bool set) {
 	if (set) {
-		SetPhysicalStateBit(STATE_BIT_INVOID);
+		// make us transparent to raycasts, quadfield queries, etc.
+		// TODO:
+		//   need to push/pop old state in case Lua has changed it
+		//   (otherwise gadgets must listen for Unit*Loaded events)
+		ClearCollidableStateBit((CSTATE_BIT_SOLIDOBJECTS * objectDef->collidable) | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
+		SetPhysicalStateBit(PSTATE_BIT_INVOID);
+
 		UnBlock();
 		collisionVolume->SetIgnoreHits(true);
-
-		// make us transparent to raycasts, quadfield queries, etc.
-		// TODO: not checked everywhere, push/pop old state? (MSB(ps))
-		collidable = false;
-		noSelect = true;
 	} else {
-		collidable = objectDef->collidable;
-		noSelect = !objectDef->selectable;
+		SetCollidableStateBit((CSTATE_BIT_SOLIDOBJECTS * objectDef->collidable) | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
+		ClearPhysicalStateBit(PSTATE_BIT_INVOID);
 
-		ClearPhysicalStateBit(STATE_BIT_INVOID);
 		Block();
 		collisionVolume->SetIgnoreHits(false);
 	}
+
+	noSelect = (set || !objectDef->selectable);
 }
 
 
@@ -188,7 +204,7 @@ void CSolidObject::Block() {
 	// no point calling this if object is not
 	// collidable in principle, but simplifies
 	// external code to allow it
-	if (!collidable)
+	if (!HasCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS))
 		return;
 
 	if (IsBlocking() && !BlockMapPosChanged())
@@ -336,7 +352,7 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	// if(f) the object is neither on the ground nor in water
 	// for whatever reason (GMT also prevents heading changes)
 	if (!IsInAir()) {
-		switch (moveDef->moveFamily) {
+		switch (moveDef->speedModClass) {
 			case MoveDef::Tank:  { return ((gn + wn) * IsOnGround() + updir * (1 - IsOnGround())); } break;
 			case MoveDef::KBot:  { return ((gn + wn) * IsOnGround() + updir * (1 - IsOnGround())); } break;
 

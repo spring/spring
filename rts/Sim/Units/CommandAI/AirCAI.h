@@ -38,12 +38,10 @@ public:
 
 private:
 	bool AirAutoGenerateTarget(AAirMoveType*);
-	void SelectNewAreaAttackTargetOrPos(const Command& ac);
+	bool SelectNewAreaAttackTargetOrPos(const Command& ac);
 	void PushOrUpdateReturnFight() {
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
 	}
-
-	CStrafeAirMoveType* GetOwnerMoveType();
 
 	float3 basePos;
 	float3 baseDir;

@@ -138,15 +138,9 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->badTargetCategory = defWeapon->badTargetCat;
 	weapon->onlyTargetCategory = defWeapon->onlyTargetCat;
 
-	if (defWeapon->slavedTo) {
-		const int index = (defWeapon->slavedTo - 1);
-
-		// can only slave to an already-loaded weapon
-		if ((index < 0) || (static_cast<size_t>(index) >= owner->weapons.size())) {
-			throw content_error("Bad weapon slave in " + owner->unitDef->name);
-		}
-
-		weapon->slavedTo = owner->weapons[index];
+	// can only slave to an already-loaded weapon
+	if (defWeapon->slavedTo > 0 && defWeapon->slavedTo <= owner->weapons.size()) {
+		weapon->slavedTo = owner->weapons[defWeapon->slavedTo - 1];
 	}
 
 	weapon->fuelUsage = defWeapon->fuelUsage;

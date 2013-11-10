@@ -408,7 +408,7 @@ void CProjectileDrawer::DrawProjectiles(int modelType, int numFlyingPieces, int*
 {
 	typedef std::set<CProjectile*> ProjectileSet;
 	typedef std::map<int, ProjectileSet> ProjectileBin;
-	typedef ProjectileSet::iterator ProjectileSetIt;
+	//typedef ProjectileSet::iterator ProjectileSetIt;
 	typedef ProjectileBin::iterator ProjectileBinIt;
 
 	ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
@@ -641,7 +641,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	{
 		GML_RECMUTEX_LOCK(proj); // Draw
 
-		unitDrawer->SetupForUnitDrawing();
+		unitDrawer->SetupForUnitDrawing(false);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			modelRenderers[modelType]->PushRenderState();
@@ -649,7 +649,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 			modelRenderers[modelType]->PopRenderState();
 		}
 
-		unitDrawer->CleanUpUnitDrawing();
+		unitDrawer->CleanUpUnitDrawing(false);
 
 		// z-sort the model-less projectiles
 		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);

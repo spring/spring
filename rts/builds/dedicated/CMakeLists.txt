@@ -23,6 +23,11 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
 LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
 LIST(APPEND engineDedicatedLibraries headlessStubs engineSystemNet)
+
+IF (WIN32)
+	LIST(APPEND engineDedicatedLibraries ${WINMM_LIBRARY})
+ENDIF (WIN32)
+
 IF    (UNIX AND NOT MINGW)
 	IF    (PREFER_STATIC_LIBS)
 		LIST(APPEND engineDedicatedLibraries ${C_LIBRARY} ${MATH_LIBRARY} ${REALTIME_LIBRARY})
@@ -96,6 +101,7 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoReader.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoRecorder.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings.c
+	${ENGINE_SRC_ROOT_DIR}/System/SafeVector.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/UnsyncedRNG.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Util.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/float4.cpp
@@ -145,13 +151,6 @@ IF    (MINGW)
 	TARGET_LINK_LIBRARIES (springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY})
 ENDIF (MINGW)
 
-ADD_LIBRARY(springserver SHARED
-		${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp
-		${sources_engine_System_Log_sinkFile}
-		${sources_engine_System_Log_sinkOutputDebugString}
-	)
-TARGET_LINK_LIBRARIES(springserver springserver-static)
-
 # Compile dedicated server executable
 ADD_EXECUTABLE(engine-dedicated
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp
@@ -163,8 +162,6 @@ ADD_EXECUTABLE(engine-dedicated
 	)
 TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
 
-### Install the executable
-INSTALL(TARGETS springserver     DESTINATION ${LIBDIR})
 INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
 
 # Only build & install spring-dedicated executable & dependencies

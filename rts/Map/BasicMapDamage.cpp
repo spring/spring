@@ -173,19 +173,25 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 {
-	const int decy = std::max(                     0, (y1 * SQUARE_SIZE - CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
-	const int incy = std::min(quadField->GetNumQuadsZ() - 1, (y2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
-	const int decx = std::max(                     0, (x1 * SQUARE_SIZE - CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
-	const int incx = std::min(quadField->GetNumQuadsX() - 1, (x2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
+	const int
+		minQuadNumX = (x1 * SQUARE_SIZE - (quadField->GetQuadSizeX() / 2)) / quadField->GetQuadSizeX(),
+		maxQuadNumX = (x2 * SQUARE_SIZE + (quadField->GetQuadSizeX() / 2)) / quadField->GetQuadSizeX();
+	const int
+		minQuadNumZ = (y1 * SQUARE_SIZE - (quadField->GetQuadSizeZ() / 2)) / quadField->GetQuadSizeZ(),
+		maxQuadNumZ = (y2 * SQUARE_SIZE + (quadField->GetQuadSizeZ() / 2)) / quadField->GetQuadSizeZ();
+
+	const int decy = std::max(                            0, minQuadNumZ);
+	const int incy = std::min(quadField->GetNumQuadsZ() - 1, maxQuadNumZ);
+	const int decx = std::max(                            0, minQuadNumX);
+	const int incx = std::min(quadField->GetNumQuadsX() - 1, maxQuadNumX);
 
 	const int numQuadsX = quadField->GetNumQuadsX();
 	const int frameNum  = gs->frameNum;
 
 	for (int y = decy; y <= incy; y++) {
 		for (int x = decx; x <= incx; x++) {
-			if (inRelosQue[y * numQuadsX + x]) {
+			if (inRelosQue[y * numQuadsX + x])
 				continue;
-			}
 
 			RelosSquare rs;
 			rs.x = x;
@@ -296,6 +302,7 @@ void CBasicMapDamage::UpdateLos()
 			continue;
 		}
 
+		// FIXME: why only losHandler and not also radarHandler?
 		losHandler->MoveUnit(unit, true);
 	}
 }

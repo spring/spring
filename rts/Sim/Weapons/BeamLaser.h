@@ -17,14 +17,14 @@ public:
 	void Init();
 
 private:
-	float3 GetFireDir(bool sweepFire);
+	float3 GetFireDir(bool sweepFire, bool scriptCall);
 
 	void UpdatePosAndMuzzlePos();
 	void UpdateWantedDir();
 	void UpdateSweep();
 
 	void FireInternal(float3 curDir);
-	void FireImpl();
+	void FireImpl(bool scriptCall);
 
 private:
 	float3 color;

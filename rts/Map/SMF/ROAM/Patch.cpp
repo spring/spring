@@ -701,7 +701,7 @@ void Patch::SwitchRenderMode(int mode)
 			break;
 	}
 
-	CRoamMeshDrawer::forceRetessellate = true;
+	CRoamMeshDrawer::ForceTesselation();
 }
 
 

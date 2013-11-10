@@ -41,7 +41,7 @@ namespace TraceRay {
 		CFeature*& hitFeature,
 		bool useRadar,
 		bool groundOnly = false,
-		bool ignoreWater = false
+		bool ignoreWater = true
 	);
 
 	/**

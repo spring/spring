@@ -36,6 +36,7 @@ static const unsigned int PATH_FLOWMAP_ZSCALE = 32; // wrt. gs->mapy
 
 static const unsigned int PATH_DIRECTIONS = 8;
 static const unsigned int PATH_DIRECTION_VERTICES = PATH_DIRECTIONS >> 1;
+static const unsigned int PATH_NODE_SPACING = 2;
 
 // PE-only flags
 static const unsigned int PATHDIR_LEFT       = 0; // +x

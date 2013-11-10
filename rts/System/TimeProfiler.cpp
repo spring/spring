@@ -17,7 +17,7 @@
 static boost::mutex m;
 static std::map<int, std::string> hashToName;
 static std::map<int, int> refs;
-CTimeProfiler profiler;
+
 
 
 static unsigned hash_(const std::string& s)
@@ -28,7 +28,6 @@ static unsigned hash_(const std::string& s)
 	}
 	return hash;
 }
-
 
 static unsigned hash_(const char* s)
 {
@@ -111,7 +110,7 @@ ScopedTimer::~ScopedTimer()
 
 ScopedOnceTimer::~ScopedOnceTimer()
 {
-	LOG("%s: %i ms", GetName().c_str(), spring_diffmsecs(spring_gettime(), starttime));
+	LOG("%s: %lli ms", GetName().c_str(), spring_diffmsecs(spring_gettime(), starttime));
 }
 
 
@@ -158,6 +157,12 @@ CTimeProfiler::~CTimeProfiler()
 {
 	boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
 	while (!ulk.try_lock()) {}
+}
+
+CTimeProfiler& CTimeProfiler::GetInstance()
+{
+	static CTimeProfiler tp;
+	return tp;
 }
 
 void CTimeProfiler::Update()

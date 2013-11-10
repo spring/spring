@@ -75,7 +75,7 @@ class CEventHandler
 
 		void UnitIdle(const CUnit* unit);
 		void UnitCommand(const CUnit* unit, const Command& command);
-		void UnitCmdDone(const CUnit* unit, int cmdType, int cmdTag);
+		void UnitCmdDone(const CUnit* unit, const Command& command);
 		void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,
@@ -627,14 +627,14 @@ inline void CEventHandler::UnitCommand(const CUnit* unit,
 
 
 inline void CEventHandler::UnitCmdDone(const CUnit* unit,
-                                           int cmdID, int cmdTag)
+                                           const Command& command)
 {
 	const int unitAllyTeam = unit->allyteam;
 	const int count = listUnitCmdDone.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listUnitCmdDone[i];
 		if (ec->CanReadAllyTeam(unitAllyTeam)) {
-			ec->UnitCmdDone(unit, cmdID, cmdTag);
+			ec->UnitCmdDone(unit, command);
 		}
 	}
 }

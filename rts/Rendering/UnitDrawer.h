@@ -9,6 +9,7 @@
 #include <string>
 #include <map>
 
+#include "Rendering/GL/GeometryBuffer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/LightHandler.h"
 #include "System/EventClient.h"
@@ -57,10 +58,17 @@ public:
 
 	void Update();
 
+	void SetDrawDeferredPass(bool b) {
+		if ((drawDeferred = b)) {
+			drawDeferred &= UpdateGeometryBuffer(false);
+		}
+	}
+
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	/// cloaked units must be drawn after all others
 	void DrawCloakedUnits(bool noAdvShading = false);
 	void DrawShadowPass();
+	void DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
 
 	void DrawUnitRaw(CUnit* unit);
 	void DrawUnitRawModel(CUnit* unit);
@@ -68,8 +76,8 @@ public:
 	void DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
 
 	void SetTeamColour(int team, float alpha = 1.0f) const;
-	void SetupForUnitDrawing();
-	void CleanUpUnitDrawing() const;
+	void SetupForUnitDrawing(bool deferredPass);
+	void CleanUpUnitDrawing(bool deferredPass) const;
 	void SetupForGhostDrawing() const;
 	void CleanUpGhostDrawing() const;
 
@@ -100,20 +108,34 @@ public:
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
 
+	const GL::GeometryBuffer* GetGeometryBuffer() const { return &geomBuffer; }
+	      GL::GeometryBuffer* GetGeometryBuffer()       { return &geomBuffer; }
+
+	bool DrawDeferred() const { return drawDeferred; }
+
+	bool UseAdvShading() const { return advShading; }
+	bool UseAdvFading() const { return advFading; }
+
+	bool& UseAdvShadingRef() { return advShading; }
+	bool& UseAdvFadingRef() { return advFading; }
+
+	void SetUseAdvShading(bool b) { advShading = b; }
+	void SetUseAdvFading(bool b) { advFading = b; }
+
 
 #ifdef USE_GML
 	bool multiThreadDrawUnit;
 	bool multiThreadDrawUnitShadow;
 
-	volatile bool mt_drawReflection;
-	volatile bool mt_drawRefraction;
-	const CUnit* volatile mt_excludeUnit;
+	volatile bool mtDrawReflection;
+	volatile bool mtDrawRefraction;
+	const CUnit* volatile mtExcludeUnit;
 
 	bool showHealthBars;
 
 	static void DrawOpaqueUnitMT(void* c, CUnit* unit) {
 		CUnitDrawer* const ud = reinterpret_cast<CUnitDrawer*>(c);
-		ud->DrawOpaqueUnit(unit, ud->mt_excludeUnit, ud->mt_drawReflection, ud->mt_drawRefraction);
+		ud->DrawOpaqueUnit(unit, ud->mtExcludeUnit, ud->mtDrawReflection, ud->mtDrawRefraction);
 	}
 
 	static void DrawOpaqueUnitShadowMT(void* c, CUnit* unit) {
@@ -132,9 +154,9 @@ private:
 	void DrawOpaqueUnitsShadow(int modelType);
 
 	void DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
-	void DrawOpaqueShaderUnits();
-	void DrawCloakedShaderUnits();
-	void DrawShadowShaderUnits();
+	void DrawOpaqueShaderUnits(unsigned int matType, bool deferredPass);
+	void DrawCloakedShaderUnits(unsigned int matType);
+	void DrawShadowShaderUnits(unsigned int matType);
 
 	void DrawOpaqueAIUnits();
 	void DrawCloakedAIUnits();
@@ -143,6 +165,8 @@ private:
 	void DrawUnitIcons(bool drawReflection);
 	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
 	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
+
+	bool UpdateGeometryBuffer(bool init);
 
 	// note: make these static?
 	void DrawUnitBeingBuilt(CUnit* unit);
@@ -159,6 +183,10 @@ private:
 	/// Returns true if the given unit should be drawn as icon in the current frame.
 	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
 
+	void SelectRenderState(bool shaderPath) {
+		unitDrawerState = shaderPath? unitDrawerStateSSP: unitDrawerStateFFP;
+	}
+
 public:
 	static void SetBasicTeamColour(int team, float alpha = 1.0f);
 	static void SetupBasicS3OTexture0();
@@ -168,9 +196,6 @@ public:
 
 
 public:
-	bool advShading;
-	bool advFade;
-
 	float LODScale;
 	float LODScaleShadow;
 	float LODScaleReflection;
@@ -198,6 +223,10 @@ public:
 	float3 camNorm; ///< used to draw far-textures
 
 private:
+	bool advShading;
+	bool advFading;
+	bool drawDeferred;
+
 	bool useDistToGroundForIcons;
 	float sqCamDistToGroundForIcons;
 
@@ -233,6 +262,7 @@ private:
 	IUnitDrawerState* unitDrawerState;
 
 	GL::LightHandler lightHandler;
+	GL::GeometryBuffer geomBuffer;
 };
 
 extern CUnitDrawer* unitDrawer;

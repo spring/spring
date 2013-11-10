@@ -81,7 +81,7 @@ public:
 	float3 exitVector;
 
 private:
-	bool HandleCollisions();
+	bool HandleCollisions(bool checkCollisions);
 };
 
 #endif // _AIR_MOVE_TYPE_H_

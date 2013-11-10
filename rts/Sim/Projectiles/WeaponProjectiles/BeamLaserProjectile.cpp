@@ -72,9 +72,7 @@ CBeamLaserProjectile::CBeamLaserProjectile(const ProjectileParams& params): CWea
 
 void CBeamLaserProjectile::Update()
 {
-	ttl--;
-
-	if (ttl <= 0) {
+	if ((--ttl) <= 0) {
 		deleteMe = true;
 	} else {
 		for (int i = 0; i < 3; i++) {

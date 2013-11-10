@@ -616,14 +616,12 @@ void CCommandAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 inline void CCommandAI::SetCommandDescParam0(const Command& c)
 {
-	vector<CommandDescription>::iterator cdi;
-	for (cdi = possibleCommands.begin(); cdi != possibleCommands.end(); ++cdi) {
-		if (cdi->id == c.GetID()) {
-			char t[10];
-			SNPRINTF(t, 10, "%d", (int)c.params[0]);
-			cdi->params[0] = t;
-			return;
-		}
+	for (unsigned int n = 0; n < possibleCommands.size(); n++) {
+		if (possibleCommands[n].id != c.GetID())
+			continue;
+
+		possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
+		break;
 	}
 }
 
@@ -981,7 +979,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 		SetOrderTarget(NULL);
 		const Command& cmd = queue->front();
 		eoh->CommandFinished(*owner, cmd);
-		eventHandler.UnitCmdDone(owner, cmd.GetID(), cmd.tag);
+		eventHandler.UnitCmdDone(owner, cmd);
 		ClearTargetLock(cmd);
 	}
 
@@ -1430,6 +1428,7 @@ void CCommandAI::FinishCommand()
 	const Command cmd = commandQue.front();
 	const int cmdID  = cmd.GetID();
 	const int cmdTag = cmd.tag;
+	const unsigned char cmdOpts = cmd.options;
 	const bool dontRepeat = (cmd.options & INTERNAL_ORDER);
 
 	if (repeatOrders
@@ -1446,7 +1445,7 @@ void CCommandAI::FinishCommand()
 	unimportantMove = false;
 	SetOrderTarget(NULL);
 	eoh->CommandFinished(*owner, cmd);
-	eventHandler.UnitCmdDone(owner, cmdID, cmdTag);
+	eventHandler.UnitCmdDone(owner, cmd);
 	ClearTargetLock(cmd);
 
 	if (commandQue.empty()) {
@@ -1485,40 +1484,63 @@ void CCommandAI::StockpileChanged(CWeapon* weapon)
 
 void CCommandAI::UpdateStockpileIcon()
 {
-	vector<CommandDescription>::iterator pci;
-	for(pci=possibleCommands.begin();pci!=possibleCommands.end();++pci){
-		if(pci->id==CMD_STOCKPILE){
-			char name[50];
-			sprintf(name, "%i/%i",
-			        stockpileWeapon->numStockpiled,
-			        stockpileWeapon->numStockpiled + stockpileWeapon->numStockpileQued);
-			pci->name = name;
-			selectedUnitsHandler.PossibleCommandChange(owner);
-		}
+	for (unsigned int n = 0; n < possibleCommands.size(); n++) {
+		if (possibleCommands[n].id != CMD_STOCKPILE)
+			continue;
+
+		possibleCommands[n].name =
+			IntToString(stockpileWeapon->numStockpiled                                    ) + "/" +
+			IntToString(stockpileWeapon->numStockpiled + stockpileWeapon->numStockpileQued);
+
+		selectedUnitsHandler.PossibleCommandChange(owner);
+		break;
 	}
 }
 
 void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
 {
-	const Command& c = commandQue.empty()? Command(CMD_STOP): commandQue.front();
+	// copy: SelectNewAreaAttackTargetOrPos can call
+	// FinishCommand which would invalidate a pointer
+	const Command c = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
 	const bool haveGroundAttackCmd = (c.GetID() == CMD_ATTACK && c.GetParamsCount() >= 3);
 	const bool haveAreaAttackCmd = (c.GetID() == CMD_AREA_ATTACK);
+
+	bool nextOrder = false;
+
 	if (mainWeapon && lastSalvo && (haveAreaAttackCmd || (haveGroundAttackCmd && HasMoreMoveCommands()))) {
 		// if we have an area-attack command (or a regular attack command
 		// followed by anything that requires movement) and this was the
 		// last salvo of our main weapon, assume we completed an attack
 		// (run) on one position and move to the next
-		SelectNewAreaAttackTargetOrPos(c);
+		//
+		// if we have >= 2 consecutive CMD_ATTACK's, then
+		//   SelectNAATP --> FinishCommand (inCommand=false) -->
+		//   SlowUpdate --> ExecuteAttack (inCommand=true) -->
+		//   queue has advanced
+		//
+		nextOrder = !SelectNewAreaAttackTargetOrPos(c);
 	}
 
-	if (!inCommand) { return; }
-	if (!weapon->weaponDef->manualfire || (c.options & META_KEY)) { return; }
+	if (!inCommand)
+		return;
+	if (!weapon->weaponDef->manualfire || (c.options & META_KEY))
+		return;
 
 	if (c.GetID() == CMD_ATTACK || c.GetID() == CMD_MANUALFIRE) {
-		owner->AttackUnit(NULL, (c.options & INTERNAL_ORDER) == 0, true);
+		if (c.GetParamsCount() < 3) {
+			// clear previous target
+			owner->AttackUnit(NULL, (c.options & INTERNAL_ORDER) == 0, true);
+		} else {
+			// not needed in this case
+			// owner->AttackGround(ZeroVector, (c.options & INTERNAL_ORDER) == 0, true);
+		}
+
 		eoh->WeaponFired(*owner, *(weapon->weaponDef));
-		FinishCommand();
+
+		if (!nextOrder) {
+			FinishCommand();
+		}
 	}
 }
 

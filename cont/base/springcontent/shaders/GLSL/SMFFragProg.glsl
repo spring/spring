@@ -1,7 +1,3 @@
-#if (SMF_PARALLAX_MAPPING == 1)
-#version 120
-#endif
-
 #define SSMF_UNCOMPRESSED_NORMALS 0
 #define SMF_SHALLOW_WATER_DEPTH     (10.0                          )
 #define SMF_SHALLOW_WATER_DEPTH_INV ( 1.0 / SMF_SHALLOW_WATER_DEPTH)
@@ -236,15 +232,18 @@ void main() {
 	}
 	#endif
 
-
+	#if (DEFERRED_MODE == 0)
 	float cosAngleDiffuse = clamp(dot(normalize(lightDir.xyz), normal), 0.0, 1.0);
 	float cosAngleSpecular = clamp(dot(normalize(halfDir), normal), 0.0, 1.0);
+	#endif
 
 	vec4 diffuseCol = texture2D(diffuseTex, diffTexCoords);
 	vec4 detailCol = GetDetailTextureColor(specTexCoords);
+	// non-zero default specularity on non-SSMF maps (for DL)
 	vec4 specularCol = vec4(0.5, 0.5, 0.5, 1.0);
+	vec4 emissionCol = vec4(0.0, 0.0, 0.0, 0.0);
 
-	#if (SMF_SKY_REFLECTIONS == 1)
+	#if (DEFERRED_MODE == 0 && SMF_SKY_REFLECTIONS == 1)
 	{
 		// cameraDir does not need to be normalized for reflect()
 		vec3 reflectDir = reflect(cameraDir, normal);
@@ -254,7 +253,7 @@ void main() {
 		diffuseCol.rgb = mix(diffuseCol.rgb, reflectCol, reflectMod);
 	}
 	#endif
-	#if (HAVE_INFOTEX == 1)
+	#if (DEFERRED_MODE == 0 && HAVE_INFOTEX == 1)
 		// increase contrast and brightness for the overlays
 		// TODO: make the multiplier configurable by users?
 		vec2 infoTexCoords = vertexWorldPos.xz * infoTexGen;
@@ -266,7 +265,7 @@ void main() {
 
 	float shadowCoeff = 1.0;
 
-	#if (HAVE_SHADOWS == 1)
+	#if (DEFERRED_MODE == 0 && HAVE_SHADOWS == 1)
 	{
 		vec2 p17 = vec2(shadowParams.z, shadowParams.z);
 		vec2 p18 = vec2(shadowParams.w, shadowParams.w);
@@ -281,6 +280,7 @@ void main() {
 	}
 	#endif
 
+	#if (DEFERRED_MODE == 0)
 	{
 		// GroundMaterialAmbientDiffuseColor * LightAmbientDiffuseColor
 		vec4 shadeInt = GetShadeInt(cosAngleDiffuse, shadowCoeff, diffuseCol.a);
@@ -288,19 +288,23 @@ void main() {
 		gl_FragColor.rgb = (diffuseCol.rgb + detailCol.rgb) * shadeInt.rgb;
 		gl_FragColor.a = shadeInt.a;
 	}
+	#endif
 
 	#if (SMF_LIGHT_EMISSION == 1)
 	{
-		vec4 lightEmissionCol = texture2D(lightEmissionTex, specTexCoords);
-		vec3 scaledFragmentCol = gl_FragColor.rgb * (1.0 - lightEmissionCol.a);
+		// apply self-illumination aka. glow, not masked by shadows
+		emissionCol = texture2D(lightEmissionTex, specTexCoords);
 
-		gl_FragColor.rgb = scaledFragmentCol + lightEmissionCol.rgb;
+		#if (DEFERRED_MODE == 0)
+		gl_FragColor.rgb = gl_FragColor.rgb * (1.0 - emissionCol.a) + emissionCol.rgb;
+		#endif
 	}
 	#endif
 
 	#if (SMF_ARB_LIGHTING == 0)
 		specularCol = texture2D(specularTex, specTexCoords);
 
+		#if (DEFERRED_MODE == 0)
 		// sun specular lighting contribution
 		float specularExp  = specularCol.a * 16.0;
 		float specularPow  = pow(cosAngleSpecular, specularExp);
@@ -310,16 +314,17 @@ void main() {
 
 		// no need to multiply by groundSpecularColor anymore
 		gl_FragColor.rgb += specularInt;
+		#endif
 	#endif
 
-	#if (MAX_DYNAMIC_MAP_LIGHTS > 0)
+	#if (DEFERRED_MODE == 0 && MAX_DYNAMIC_MAP_LIGHTS > 0)
 	for (int i = 0; i < MAX_DYNAMIC_MAP_LIGHTS; i++) {
 		vec3 lightVec = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].position.xyz - vertexWorldPos.xyz;
 		vec3 halfVec = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].halfVector.xyz;
 
 		float lightRadius = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].constantAttenuation;
 		float lightDistance = length(lightVec);
-		float lightScale = (lightDistance > lightRadius)? 0.0: 1.0;
+		float lightScale = float(lightDistance <= lightRadius);
 		float lightCosAngDiff = clamp(dot(normal, lightVec / lightDistance), 0.0, 1.0);
 		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.0, 1.0);
 		#ifdef OGL_SPEC_ATTENUATION
@@ -342,14 +347,25 @@ void main() {
 		float lightSpecularPow = 0.0;
 		#endif
 
-		lightScale *= ((vectorDot < cutoffDot)? 0.0: 1.0);
+		lightScale *= float(vectorDot >= cutoffDot);
 
 		gl_FragColor.rgb += (lightScale *                                       gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].ambient.rgb);
-		gl_FragColor.rgb += (lightScale * lightAttenuation * (diffuseCol.rgb  * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].diffuse.rgb * lightCosAngDiff));
+		gl_FragColor.rgb += (lightScale * lightAttenuation * (diffuseCol.rgb *  gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].diffuse.rgb * lightCosAngDiff));
 		gl_FragColor.rgb += (lightScale * lightAttenuation * (specularCol.rgb * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].specular.rgb * lightSpecularPow));
 	}
 	#endif
 
+	#if (DEFERRED_MODE == 1)
+	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
+	gl_FragData[GBUFFER_DIFFTEX_IDX] = diffuseCol + detailCol;
+	gl_FragData[GBUFFER_SPECTEX_IDX] = specularCol;
+	gl_FragData[GBUFFER_EMITTEX_IDX] = emissionCol;
+	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
+
+	// linearly transform the eye-space depths, might be more useful?
+	// gl_FragDepth = gl_FragCoord.z / gl_FragCoord.w;
+	#else
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor);
+	#endif
 }
 

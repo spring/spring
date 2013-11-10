@@ -27,7 +27,6 @@ public:
 
 private:
 	float maxSpeed;
-	float curSpeed;
 	float areaOfEffect;
 	float extraHeight;
 	float extraHeightDecay;

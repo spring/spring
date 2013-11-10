@@ -25,7 +25,6 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
 	CR_MEMBER(maxSpeed),
-	CR_MEMBER(curSpeed),
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(nextBubble),
 	CR_MEMBER(texx),
@@ -35,7 +34,6 @@ CR_REG_METADATA(CTorpedoProjectile,(
 CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, tracking(0.0f)
 	, maxSpeed(0.0f)
-	, curSpeed(0.0f)
 	, areaOfEffect(0.0f)
 
 	, nextBubble(4)
@@ -45,8 +43,6 @@ CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponP
 	projectileType = WEAPON_TORPEDO_PROJECTILE;
 
 	tracking = params.tracking;
-	curSpeed = speed.Length();
-	dir = speed / curSpeed;
 
 	if (weaponDef != NULL) {
 		maxSpeed = weaponDef->projectilespeed;
@@ -66,82 +62,72 @@ CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponP
 
 void CTorpedoProjectile::Update()
 {
+	// tracking only works when we are underwater
 	if (!weaponDef->submissile && pos.y > -3.0f) {
-		// tracking etc only works when we are underwater
 		if (!luaMoveCtrl) {
-			speed.y += mygravity;
-			dir = speed;
-			dir.Normalize();
+			// must update dir and speed.w here
+			SetVelocityAndSpeed(speed + (UpVector * mygravity));
 		}
 	} else {
-		if (!weaponDef->submissile && pos.y-speed.y > -3.0f) {
-			// level out torpedo a bit when hitting water
-			if (!luaMoveCtrl) {
-				dir.y *= 0.5f;
-				dir.Normalize();
-			}
-		}
-
 		if (--ttl > 0) {
 			if (!luaMoveCtrl) {
-				if (curSpeed < maxSpeed) {
-					curSpeed += std::max(0.2f, tracking);
-				}
+				float3 targetVel;
 
-				if (target) {
-					CSolidObject* so = dynamic_cast<CSolidObject*>(target);
-					CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
+				if (speed.w < maxSpeed)
+					speed.w += std::max(0.2f, tracking);
+
+				if (target != NULL) {
+					const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
+					const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
 
 					targetPos = target->pos;
-					float3 targSpeed(ZeroVector);
-					if (so) {
-						targetPos = so->aimPos;
-						targSpeed = so->speed;
 
-						if (pos.SqDistance(so->aimPos) > 150 * 150 && owner()) {
-							CUnit* u = dynamic_cast<CUnit*>(so);
-							if (u) {
+					if (so != NULL) {
+						targetPos = so->aimPos;
+						targetVel = so->speed;
+
+						if (owner() != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
+							const CUnit* u = dynamic_cast<const CUnit*>(so);
+
+							if (u != NULL) {
 								targetPos = u->GetErrorPos(owner()->allyteam, true);
 							}
 						}
-					} if (po) {
-						targSpeed = po->speed;
 					}
-
-					if (!weaponDef->submissile && targetPos.y > 0) {
-						targetPos.y = 0;
-					}
-
-					const float dist = pos.distance(targetPos);
-					float3 dif = (targetPos + targSpeed * (dist / maxSpeed) * 0.7f - pos).Normalize();
-					float3 dif2 = dif - dir;
-
-					if (dif2.Length() < tracking) {
-						dir = dif;
-					} else {
-						dif2 -= dir * (dif2.dot(dir));
-						dif2.SafeNormalize();
-						dir += dif2 * tracking;
-						dir.SafeNormalize();
+					if (po != NULL) {
+						targetVel = po->speed;
 					}
 				}
 
-				speed = dir * curSpeed;
+				if (!weaponDef->submissile && targetPos.y > 0.0f) {
+					targetPos.y = 0.0f;
+				}
+
+				float3 dif = (targetPos + (targetVel * (pos.distance(targetPos) / maxSpeed) * 0.7f) - pos).Normalize();
+				float3 dif2 = dif - dir;
+
+				if (dif2.Length() < tracking) {
+					dir = dif;
+				} else {
+					dif2 = (dif2 - (dir * (dif2.dot(dir)))).SafeNormalize();
+					dir = (dir + (dif2 * tracking)).SafeNormalize();
+				}
+
+				// do not need to update dir or speed.w here
+				CWorldObject::SetVelocity(dir * speed.w);
 			}
 
 			explGenHandler->GenExplosion(cegID, pos, speed, ttl, areaOfEffect, 0.0f, NULL, NULL);
 		} else {
 			if (!luaMoveCtrl) {
-				speed *= 0.98f;
-				speed.y += mygravity;
-				dir = speed;
-				dir.SafeNormalize();
+				// must update dir and speed.w here
+				SetVelocityAndSpeed((speed * 0.98f) + (UpVector * mygravity));
 			}
 		}
 	}
 
 	if (!luaMoveCtrl) {
-		pos += speed;
+		SetPosition(pos + speed);
 	}
 
 	if (pos.y < -2.0f) {

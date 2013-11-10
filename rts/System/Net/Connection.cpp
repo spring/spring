@@ -10,13 +10,4 @@ CConnection::CConnection()
 {
 }
 
-CConnection::~CConnection()
-{
-}
-
-unsigned CConnection::GetDataReceived() const
-{
-	return dataRecv;
-}
-
 } // namespace netcode

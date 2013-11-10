@@ -133,6 +133,7 @@ CUnit::CUnit() : CSolidObject(),
 	neutral(false),
 	beingBuilt(true),
 	lastNanoAdd(gs->frameNum),
+	lastFlareDrop(0),
 	repairAmount(0.0f),
 	loadingTransportId(-1),
 	buildProgress(0.0f),
@@ -229,7 +230,6 @@ CUnit::CUnit() : CSolidObject(),
 	lastTerrainType(-1),
 	curTerrainType(0),
 	selfDCountdown(0),
-	lastFlareDrop(0),
 	currentFuel(0.0f),
 	alphaThreshold(0.1f),
 	cegDamage(1),
@@ -369,7 +369,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	if (collisionVolume->DefaultToFootPrint())
 		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
 
-	speed = params.speed;
 	mapSquare = ground->GetSquare((params.pos).cClampInMap());
 
 	heading  = GetHeadingFromFacing(buildFacing);
@@ -378,6 +377,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	rightdir = frontdir.cross(updir);
 	upright  = unitDef->upright;
 
+	SetVelocity(params.speed);
 	Move((params.pos).cClampInMap(), false);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model);
@@ -470,9 +470,8 @@ void CUnit::PostInit(const CUnit* builder)
 	// NOTE: this does mean that mines can be stacked indefinitely
 	// (an extra yardmap character would be needed to prevent this)
 	immobile = unitDef->IsImmobileUnit();
-	collidable = unitDef->collidable;
-	collidable &= !(immobile && unitDef->canKamikaze);
 
+	UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS, unitDef->collidable && (!immobile || !unitDef->canKamikaze));
 	Block();
 
 	if (unitDef->windGenerator > 0.0f) {
@@ -484,11 +483,11 @@ void CUnit::PostInit(const CUnit* builder)
 	UpdatePosErrorParams(true, true);
 
 	if (unitDef->floatOnWater && IsInWater()) {
-		Move(UpVector * (-unitDef->waterline - pos.y), true);
+		Move(UpVector * (std::max(ground->GetHeightReal(pos.x, pos.z), -unitDef->waterline) - pos.y), true);
 	}
 
 	if (unitDef->canmove || unitDef->builder) {
-		if (unitDef->moveState <= FIRESTATE_NONE) {
+		if (unitDef->moveState <= MOVESTATE_NONE) {
 			if (builder != NULL) {
 				// always inherit our builder's movestate
 				// if none, set CUnit's default (maneuver)
@@ -504,7 +503,7 @@ void CUnit::PostInit(const CUnit* builder)
 	}
 
 	if (commandAI->CanChangeFireState()) {
-		if (unitDef->fireState <= MOVESTATE_NONE) {
+		if (unitDef->fireState <= FIRESTATE_NONE) {
 			if (builder != NULL && dynamic_cast<CFactoryCAI*>(builder->commandAI) != NULL) {
 				// inherit our builder's firestate (if it is a factory)
 				// if no builder, CUnit's default (fire-at-will) is set
@@ -634,7 +633,7 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 
 	Move(UpVector * ((parentPos.y - height) - pos.y), true);
 	UpdateMidAndAimPos();
-	SetPhysicalStateBit(CSolidObject::STATE_BIT_FALLING);
+	SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FALLING);
 
 	// start parachute animation
 	script->Falling();
@@ -680,7 +679,7 @@ void CUnit::Update()
 		return;
 
 	if (travelPeriod != 0.0f) {
-		travel += speed.Length();
+		travel += speed.w;
 		travel = math::fmod(travel, travelPeriod);
 	}
 
@@ -998,9 +997,8 @@ void CUnit::SlowUpdate()
 }
 
 void CUnit::SlowUpdateWeapons() {
-	if (weapons.empty()) {
+	if (weapons.empty())
 		return;
-	}
 
 	haveTarget = false;
 
@@ -1082,15 +1080,10 @@ void CUnit::DoWaterDamage()
 		return;
 	if (!pos.IsInBounds())
 		return;
-	if (pos.y > 0.0f)
-		return;
-
-	const int  px            = pos.x / (SQUARE_SIZE * 2);
-	const int  pz            = pos.z / (SQUARE_SIZE * 2);
-	const bool isWaterSquare = (readMap->GetMIPHeightMapSynced(1)[pz * gs->hmapx + px] <= 0.0f);
-
-	if (!isWaterSquare)
-		return;
+	// note: hovercraft could also use a negative waterline
+	// ("hoverline"?) to avoid being damaged but that would
+	// confuse GMTPathController --> damage must be removed
+	// via UnitPreDamaged if not wanted
 	if (!IsInWater())
 		return;
 
@@ -1384,20 +1377,16 @@ void CUnit::ChangeLos(int losRad, int airRad)
 
 bool CUnit::ChangeTeam(int newteam, ChangeType type)
 {
-	if (isDead) {
+	if (isDead)
 		return false;
-	}
 
 	// do not allow unit count violations due to team swapping
 	// (this includes unit captures)
-	if (unitHandler->unitsByDefs[newteam][unitDef->id].size() >= unitDef->maxThisUnit) {
+	if (unitHandler->unitsByDefs[newteam][unitDef->id].size() >= unitDef->maxThisUnit)
 		return false;
-	}
 
-	const bool capture = (type == ChangeCaptured);
-	if (luaRules && !luaRules->AllowUnitTransfer(this, newteam, capture)) {
+	if (luaRules && !luaRules->AllowUnitTransfer(this, newteam, type == ChangeCaptured))
 		return false;
-	}
 
 	// do not allow old player to keep controlling the unit
 	if (fpsControlPlayer != NULL) {
@@ -1550,6 +1539,17 @@ void CUnit::ChangeTeamReset()
 	}
 }
 
+
+bool CUnit::IsIdle() const
+{
+	if (beingBuilt)
+		return false;
+
+	if (!commandAI->commandQue.empty())
+		return false;
+
+	return true;
+}
 
 
 bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire, bool fpsMode)
@@ -1762,75 +1762,84 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 	// stop decaying on building AND reclaim
 	lastNanoAdd = gs->frameNum;
 
-	if (amount >= 0.0f) { //  build / repair
-		if (!beingBuilt && (health >= maxHealth)) {
+	CTeam* builderTeam = teamHandler->Team(builder->team);
+
+	if (amount >= 0.0f) {
+		// build or repair
+		if (!beingBuilt && (health >= maxHealth))
 			return false;
-		}
 
-		if (beingBuilt) { //build
-			const float part = std::min(amount / buildTime, 1.0f - buildProgress);
-			const float metalCostPart  = metalCost  * part;
-			const float energyCostPart = energyCost * part;
+		if (beingBuilt) {
+			// build
+			const float step = std::min(amount / buildTime, 1.0f - buildProgress);
+			const float metalCostStep  = metalCost  * step;
+			const float energyCostStep = energyCost * step;
 
-			if ((teamHandler->Team(builder->team)->metal  >= metalCostPart) &&
-			    (teamHandler->Team(builder->team)->energy >= energyCostPart) &&
-			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
+			const bool buildAllowed = (luaRules == NULL || luaRules->AllowUnitBuildStep(builder, this, step));
+			const bool canExecBuild = (builderTeam->metal >= metalCostStep && builderTeam->energy >= energyCostStep);
 
-				if (builder->UseMetal(metalCostPart)) {
-					// just because we checked doesn't mean they were deducted since upkeep can prevent deduction
-					// FIXME luaRules->AllowUnitBuildStep() may have changed the storages!!! so the checks can be invalid!
-					// TODO add a builder->UseResources(SResources(metalCostPart, energyCostPart))
-					if (builder->UseEnergy(energyCostPart)) {
-						health += (maxHealth * part);
+			if (buildAllowed && canExecBuild) {
+				if (builder->UseMetal(metalCostStep)) {
+					// FIXME AllowUnitBuildStep may have changed the storages!!! so the checks can be invalid!
+					// TODO add a builder->UseResources(SResources(metalCostStep, energyCostStep))
+					//
+					if (builder->UseEnergy(energyCostStep)) {
+						health += (maxHealth * step);
 						health = std::min(health, maxHealth);
-						buildProgress += part;
+						buildProgress += step;
 
 						if (buildProgress >= 1.0f) {
 							FinishedBuilding(false);
 						}
 					} else {
-						// refund the metal if the energy cannot be deducted
-						builder->UseMetal(-metalCostPart);
+						// refund already-deducted metal if *energy* cost cannot be
+						builder->UseMetal(-metalCostStep);
 					}
 				}
+
 				return true;
 			} else {
 				// update the energy and metal required counts
-				teamHandler->Team(builder->team)->metalPull  += metalCostPart;
-				teamHandler->Team(builder->team)->energyPull += energyCostPart;
+				builderTeam->metalPull  += metalCostStep;
+				builderTeam->energyPull += energyCostStep;
 			}
+
 			return false;
 		}
-		else if (health < maxHealth) { //repair
-			const float part = std::min(amount / buildTime, 1.0f - (health / maxHealth));
-			const float energyUse = (energyCost * part);
+		else if (health < maxHealth) {
+			// repair
+			const float step = std::min(amount / buildTime, 1.0f - (health / maxHealth));
+			const float energyUse = (energyCost * step);
 			const float energyUseScaled = energyUse * modInfo.repairEnergyCostFactor;
 
+			if (luaRules != NULL && !luaRules->AllowUnitBuildStep(builder, this, step))
+				return false;
+
 	  		if (!builder->UseEnergy(energyUseScaled)) {
-				teamHandler->Team(builder->team)->energyPull += energyUseScaled;
+				// UseEnergy already increases the team's pull when it returns false!
+				// builderTeam->energyPull += energyUseScaled;
 				return false;
 			}
 
 			repairAmount += amount;
-			health += (maxHealth * part);
+			health += (maxHealth * step);
 			health = std::min(health, maxHealth);
 
 			return true;
 		}
-	} else { // reclaim
-		if (isDead || IsCrashing()) {
+	} else {
+		// reclaim
+		if (isDead || IsCrashing())
 			return false;
-		}
 
-		const float part = std::max(amount / buildTime, -buildProgress);
-		const float energyRefundPart = energyCost * part;
-		const float metalRefundPart = metalCost * part;
-		const float metalRefundPartScaled = metalRefundPart * modInfo.reclaimUnitEfficiency;
-		const float energyRefundPartScaled = energyRefundPart * modInfo.reclaimUnitEnergyCostFactor;
+		const float step = std::max(amount / buildTime, -buildProgress);
+		const float energyRefundStep = energyCost * step;
+		const float metalRefundStep = metalCost * step;
+		const float metalRefundStepScaled = metalRefundStep * modInfo.reclaimUnitEfficiency;
+		const float energyRefundStepScaled = energyRefundStep * modInfo.reclaimUnitEnergyCostFactor;
 
-		if (luaRules && !luaRules->AllowUnitBuildStep(builder, this, part)) {
+		if (luaRules != NULL && !luaRules->AllowUnitBuildStep(builder, this, step))
 			return false;
-		}
 
 		restTime = 0;
 
@@ -1839,17 +1848,18 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 			return false;
 		}
 
-		if (!builder->UseEnergy(-energyRefundPartScaled)) {
-			teamHandler->Team(builder->team)->energyPull += energyRefundPartScaled;
+		if (!builder->UseEnergy(-energyRefundStepScaled)) {
+			// UseEnergy already increases the team's pull when it returns false!
+			// builderTeam->energyPull += energyRefundStepScaled;
 			return false;
 		}
 
-		health += (maxHealth * part);
-		buildProgress += (part * int(beingBuilt) * int(modInfo.reclaimUnitMethod == 0));
+		health += (maxHealth * step);
+		buildProgress += (step * int(beingBuilt) * int(modInfo.reclaimUnitMethod == 0));
 
 		if (modInfo.reclaimUnitMethod == 0) {
 			// gradual reclamation of invested metal
-			builder->AddMetal(-metalRefundPartScaled, false);
+			builder->AddMetal(-metalRefundStepScaled, false);
 			// turn reclaimee into nanoframe (even living units)
 			beingBuilt = true;
 		} else {
@@ -1879,8 +1889,10 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 				return false;
 			}
 		}
+
 		return true;
 	}
+
 	return false;
 }
 
@@ -1994,8 +2006,9 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 
 	if (!deathScriptFinished) {
 		// put the unit in a pseudo-zombie state until Killed finishes
-		speed = ZeroVector;
+		SetVelocity(ZeroVector);
 		SetStunned(true);
+
 		paralyzeDamage = 100.0f * maxHealth;
 		health = std::max(health, 0.0f);
 	}
@@ -2017,24 +2030,29 @@ bool CUnit::AllowedReclaim(CUnit* builder) const
 
 bool CUnit::UseMetal(float metal)
 {
-	if (metal < 0) {
+	if (metal < 0.0f) {
 		AddMetal(-metal);
 		return true;
 	}
-	teamHandler->Team(team)->metalPull += metal;
-	bool canUse = teamHandler->Team(team)->UseMetal(metal);
-	if (canUse)
-		metalUseI += metal;
-	return canUse;
-}
 
+	CTeam* myTeam = teamHandler->Team(team);
+	myTeam->metalPull += metal;
+
+	if (myTeam->UseMetal(metal)) {
+		metalUseI += metal;
+		return true;
+	}
+
+	return false;
+}
 
 void CUnit::AddMetal(float metal, bool useIncomeMultiplier)
 {
-	if (metal < 0) {
+	if (metal < 0.0f) {
 		UseMetal(-metal);
 		return;
 	}
+
 	metalMakeI += metal;
 	teamHandler->Team(team)->AddMetal(metal, useIncomeMultiplier);
 }
@@ -2042,21 +2060,25 @@ void CUnit::AddMetal(float metal, bool useIncomeMultiplier)
 
 bool CUnit::UseEnergy(float energy)
 {
-	if (energy < 0) {
+	if (energy < 0.0f) {
 		AddEnergy(-energy);
 		return true;
 	}
-	teamHandler->Team(team)->energyPull += energy;
-	bool canUse = teamHandler->Team(team)->UseEnergy(energy);
-	if (canUse)
-		energyUseI += energy;
-	return canUse;
-}
 
+	CTeam* myTeam = teamHandler->Team(team);
+	myTeam->energyPull += energy;
+
+	if (myTeam->UseEnergy(energy)) {
+		energyUseI += energy;
+		return true;
+	}
+
+	return false;
+}
 
 void CUnit::AddEnergy(float energy, bool useIncomeMultiplier)
 {
-	if (energy < 0) {
+	if (energy < 0.0f) {
 		UseEnergy(-energy);
 		return;
 	}
@@ -2213,7 +2235,7 @@ bool CUnit::GetNewCloakState(bool stunCheck) {
 
 	if (wantCloak || (scriptCloak >= 1)) {
 		const CUnit* closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(NULL, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
-		const float cloakCost = (speed.SqLength() > 0.2f)? unitDef->cloakCostMoving: unitDef->cloakCost;
+		const float cloakCost = (Square(speed.w) > 0.2f)? unitDef->cloakCostMoving: unitDef->cloakCost;
 
 		if (decloakDistance > 0.0f && closestEnemy != NULL) {
 			curCloakTimeout = gs->frameNum + cloakTimeout;

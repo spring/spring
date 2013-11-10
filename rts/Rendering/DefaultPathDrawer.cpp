@@ -78,9 +78,9 @@ void DefaultPathDrawer::DrawInMiniMap()
 	if (md == NULL)
 		return;
 
-	if (gd->drawMode < CBaseGroundDrawer::drawPathTraversability)
+	if (gd->GetDrawMode() < CBaseGroundDrawer::drawPathTrav)
 		return;
-	if (gd->drawMode > CBaseGroundDrawer::drawPathCost)
+	if (gd->GetDrawMode() > CBaseGroundDrawer::drawPathCost)
 		return;
 
 	glMatrixMode(GL_PROJECTION);
@@ -117,7 +117,7 @@ void DefaultPathDrawer::DrawInMiniMap()
 
 void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
-		case CBaseGroundDrawer::drawPathTraversability: {
+		case CBaseGroundDrawer::drawPathTrav: {
 			bool useCurrentBuildOrder = true;
 
 			if (guihandler->inCommand <= 0) {

@@ -56,7 +56,7 @@ CR_REG_METADATA(CGlobalUnsynced, (
 
 CGlobalUnsynced::CGlobalUnsynced()
 {
-	unsigned seed = time(NULL) % ((spring_gettime().toNanoSecs() + 1) * 9007);
+	unsigned seed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
 	rng.Seed(seed);
 
 	simFPS = 0.0f;
@@ -78,11 +78,11 @@ CGlobalUnsynced::CGlobalUnsynced()
 	spectating           = false;
 	spectatingFullView   = false;
 	spectatingFullSelect = false;
+
 	fpsMode = false;
+	globalQuit = false;
 
 	playerHandler = new CPlayerHandler();
-
-	globalQuit = false;
 }
 
 CGlobalUnsynced::~CGlobalUnsynced()
@@ -96,8 +96,6 @@ void CGlobalUnsynced::LoadFromSetup(const CGameSetup* setup)
 {
 	playerHandler->LoadFromSetup(setup);
 }
-
-
 
 void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 {

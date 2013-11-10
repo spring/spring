@@ -100,6 +100,7 @@ CONFIG(float, FontOutlineWeight).defaultValue(25.0f).description("Sets the opaci
 CONFIG(int, SmallFontOutlineWidth).defaultValue(2).description("see FontOutlineWidth");
 CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f).description("see FontOutlineWeight");
 CONFIG(bool, Fullscreen).defaultValue(true).description("Sets whether the game will run in fullscreen, as opposed to a window. For Windowed Fullscreen of Borderless Window, set this to 0, WindowBorderless to 1, and WindowPosX and WindowPosY to 0.");
+CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
 CONFIG(int, XResolution).defaultValue(0).minimumValue(0).description("Sets the width of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
 CONFIG(int, YResolution).defaultValue(0).minimumValue(0).description("Sets the height of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
 CONFIG(int, WindowPosX).defaultValue(32).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
@@ -141,10 +142,21 @@ static bool MultisampleVerify()
 
 /**
  * Initializes SpringApp variables
+ *
+ * @param argc argument count
+ * @param argv array of argument strings
  */
-SpringApp::SpringApp()
-	: cmdline(NULL)
+SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, argv))
 {
+	// initializes configHandler which we need
+	ParseCmdLine(argv[0]);
+
+	spring_clock::PushTickRate(configHandler->GetBool("UseHighResTimer") || cmdline->IsSet("useHighResTimer"));
+	// set the Spring "epoch" to be whatever value the first
+	// call to gettime() returns, should not be 0 (can safely
+	// be done before SDL_Init, we are not using SDL_GetTicks
+	// as our clock anymore)
+	spring_time::setstarttime(spring_time::gettime(true));
 }
 
 /**
@@ -152,8 +164,9 @@ SpringApp::SpringApp()
  */
 SpringApp::~SpringApp()
 {
-	delete cmdline;
+	spring_clock::PopTickRate();
 	creg::System::FreeClasses();
+	delete cmdline;
 }
 
 /**
@@ -162,13 +175,19 @@ SpringApp::~SpringApp()
  */
 bool SpringApp::Initialize()
 {
-	globalRendering = new CGlobalRendering();
-
-	ParseCmdLine();
+	assert(cmdline != NULL);
+	assert(configHandler != NULL);
 
 	FileSystemInitializer::InitializeLogOutput();
 	CLogOutput::LogSystemInfo();
 	CMyMath::Init();
+
+	globalRendering = new CGlobalRendering();
+	globalRendering->SetFullScreen(configHandler->GetBool("Fullscreen"), cmdline->IsSet("window"), cmdline->IsSet("fullscreen"));
+	globalRendering->SetViewSize(
+		cmdline->IsSet("xresolution")? std::max(cmdline->GetInt("xresolution"), 640): configHandler->GetInt("XResolution"),
+		cmdline->IsSet("yresolution")? std::max(cmdline->GetInt("yresolution"), 480): configHandler->GetInt("YResolution")
+	);
 
 #if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
 	// this MUST run before any other X11 call (esp. those by SDL!)
@@ -185,7 +204,7 @@ bool SpringApp::Initialize()
 		// don't display a dialog box if gdb helpers aren't found
 		UINT olderrors = SetErrorMode(SEM_FAILCRITICALERRORS);
 		if (LoadLibrary("gdbmacros.dll")) {
-			LOG("QT Creator's gdbmacros.dll loaded");
+			LOG_L(L_DEBUG, "QT Creator's gdbmacros.dll loaded");
 		}
 		SetErrorMode(olderrors);
 	}
@@ -197,11 +216,7 @@ bool SpringApp::Initialize()
 	// Initialize crash reporting
 	CrashHandler::Install();
 
-	good_fpu_control_registers("::Run");
-
-	// Install Watchdog
-	Watchdog::Install();
-	Watchdog::RegisterThread(WDT_MAIN, true);
+	good_fpu_control_registers(__FUNCTION__);
 
 	GlobalConfig::Instantiate();
 
@@ -210,6 +225,10 @@ bool SpringApp::Initialize()
 		SDL_Quit();
 		return false;
 	}
+
+	// Install Watchdog (must happen after time epoch is set)
+	Watchdog::Install();
+	Watchdog::RegisterThread(WDT_MAIN, true);
 
 	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
 	FileSystemInitializer::Initialize();
@@ -251,7 +270,9 @@ bool SpringApp::Initialize()
 
 	// Multithreading & Affinity
 	Threading::SetThreadName("unknown"); // set default threadname
-	LOG("CPU Cores: %d", Threading::GetAvailableCores());
+
+	LOG("[%s] CPU Clock: %s", __FUNCTION__, spring_clock::GetName());
+	LOG("[%s] CPU Cores: %d", __FUNCTION__, Threading::GetAvailableCores());
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -271,19 +292,17 @@ bool SpringApp::InitWindow(const char* title)
 	// SDL will cause a creation of gpu-driver thread that will clone its name from the starting threads (= this one = mainthread)
 	Threading::SetThreadName("gpu-driver");
 
-	unsigned int sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
-#ifdef WIN32
-	// the crash reporter should be catching the errors
-	sdlInitFlags |= SDL_INIT_NOPARACHUTE;
-#endif
-
-	if ((SDL_Init(sdlInitFlags) == -1)) {
+	#ifdef WIN32
+	// the crash reporter should be catching errors, not SDL
+	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) == -1)) {
+	#else
+	if ((SDL_Init(SDL_INIT_VIDEO) == -1)) {
+	#endif
 		LOG_L(L_FATAL, "Could not initialize SDL: %s", SDL_GetError());
 		return false;
 	}
 
 	PrintAvailableResolutions();
-
 	WindowManagerHelper::SetCaption(title);
 
 	if (!SetSDLVideoMode()) {
@@ -412,10 +431,11 @@ bool SpringApp::SetSDLVideoMode()
 	int bits;
 	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
 	SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE,  &globalRendering->depthBufferBits);
+
 	if (globalRendering->fullScreen) {
-		LOG("Video mode set to %ix%i/%ibit", globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
+		LOG("[%s] video mode set to %ix%i/%ibit", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
 	} else {
-		LOG("Video mode set to %ix%i/%ibit (windowed)", globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
+		LOG("[%s] video mode set to %ix%i/%ibit (windowed)", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
 	}
 
 	return true;
@@ -428,12 +448,7 @@ bool SpringApp::GetDisplayGeometry()
 #ifndef HEADLESS
 	//! not really needed, but makes it safer against unknown windowmanager behaviours
 	if (globalRendering->fullScreen) {
-		globalRendering->screenSizeX = globalRendering->viewSizeX;
-		globalRendering->screenSizeY = globalRendering->viewSizeY;
-		globalRendering->winSizeX = globalRendering->screenSizeX;
-		globalRendering->winSizeY = globalRendering->screenSizeY;
-		globalRendering->winPosX = 0;
-		globalRendering->winPosY = 0;
+		globalRendering->UpdateWindowGeometry();
 		return true;
 	}
 
@@ -453,7 +468,7 @@ bool SpringApp::GetDisplayGeometry()
 	globalRendering->winSizeY = globalRendering->viewSizeY;
 	globalRendering->winPosX = 30;
 	globalRendering->winPosY = 30;
-	globalRendering->winState = 0;
+	globalRendering->winState = CGlobalRendering::WINSTATE_DEFAULT;
 
   #elif     defined(WIN32)
 	globalRendering->screenSizeX = GetSystemMetrics(SM_CXSCREEN);
@@ -487,14 +502,14 @@ bool SpringApp::GetDisplayGeometry()
 	if (GetWindowPlacement(info.window, &wp)) {
 		switch (wp.showCmd) {
 			case SW_SHOWMAXIMIZED:
-				globalRendering->winState = 1;
+				globalRendering->winState = CGlobalRendering::WINSTATE_MAXIMIZED;
 				break;
 			case SW_SHOWMINIMIZED:
 				//! minimized startup breaks SDL_init stuff, so don't store it
-				//globalRendering->winState = 2;
+				//globalRendering->winState = CGlobalRendering::WINSTATE_MINIMIZED;
 				//break;
 			default:
-				globalRendering->winState = 0;
+				globalRendering->winState = CGlobalRendering::WINSTATE_DEFAULT;
 		}
 	}
 
@@ -555,7 +570,7 @@ void SpringApp::RestoreWindowPosition()
   #if       defined(WIN32)
 			bool stateChanged = false;
 
-			if (globalRendering->winState > 0) {
+			if (globalRendering->winState != CGlobalRendering::WINSTATE_DEFAULT) {
 				WINDOWPLACEMENT wp;
 				memset(&wp,0,sizeof(WINDOWPLACEMENT));
 				wp.length = sizeof(WINDOWPLACEMENT);
@@ -604,30 +619,34 @@ void SpringApp::SaveWindowPosition()
 #ifndef HEADLESS
 	if (!globalRendering->fullScreen) {
 		GetDisplayGeometry();
-		configHandler->Set("WindowPosX",  globalRendering->winPosX);
-		configHandler->Set("WindowPosY",  globalRendering->winPosY);
-		configHandler->Set("WindowState", globalRendering->winState);
-
+		if (globalRendering->winState == CGlobalRendering::WINSTATE_DEFAULT) {
+			configHandler->Set("WindowPosX",  globalRendering->winPosX);
+			configHandler->Set("WindowPosY",  globalRendering->winPosY);
+			configHandler->Set("WindowState", globalRendering->winState);
+		} else {
+			configHandler->Set("WindowState", globalRendering->winState);
+		}
 	}
 #endif
 }
 
 
-void SpringApp::SetupViewportGeometry()
+void SpringApp::SetupViewportGeometry(bool windowExposed)
 {
 	if (!GetDisplayGeometry()) {
+		// note: if GDG returns false this might not have been called
+		// guaranteed in fullscreen-mode when it returns (true) early
 		globalRendering->UpdateWindowGeometry();
 	}
 
 	globalRendering->SetDualScreenParams();
-	globalRendering->UpdateViewPortGeometry();
+	globalRendering->UpdateViewPortGeometry(windowExposed);
 	globalRendering->UpdatePixelGeometry();
 
-	agui::gui->UpdateScreenGeometry(
-			globalRendering->viewSizeX,
-			globalRendering->viewSizeY,
-			globalRendering->viewPosX,
-			(globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY) );
+	const int vpx = globalRendering->viewPosX;
+	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
+
+	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
 }
 
 
@@ -638,7 +657,7 @@ void SpringApp::InitOpenGL()
 {
 	VSync.Init();
 
-	SetupViewportGeometry();
+	SetupViewportGeometry(false);
 	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	gluPerspective(45.0f,  globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
 
@@ -682,7 +701,7 @@ void SpringApp::LoadFonts()
  *
  * Parse command line arguments
  */
-void SpringApp::ParseCmdLine()
+void SpringApp::ParseCmdLine(const std::string& binaryName)
 {
 	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdf]");
 	cmdline->AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
@@ -804,20 +823,8 @@ void SpringApp::ParseCmdLine()
 		exit(0);
 	}
 
-	LOG("Run: %s", cmdline->GetCmdLine().c_str());
+	LOG("[%s] command-line args: \"%s\"", __FUNCTION__, cmdline->GetCmdLine().c_str());
 	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
-
-#ifdef _DEBUG
-	globalRendering->fullScreen = false;
-#else
-	globalRendering->fullScreen = configHandler->GetBool("Fullscreen");
-#endif
-	// flags
-	if (cmdline->IsSet("window")) {
-		globalRendering->fullScreen = false;
-	} else if (cmdline->IsSet("fullscreen")) {
-		globalRendering->fullScreen = true;
-	}
 
 	if (cmdline->IsSet("textureatlas")) {
 		CTextureAtlas::SetDebug(true);
@@ -829,15 +836,6 @@ void SpringApp::ParseCmdLine()
 			configHandler->SetString("name", StringReplace(name, " ", "_"));
 		}
 	}
-
-	globalRendering->viewSizeX = configHandler->GetInt("XResolution");
-	if (cmdline->IsSet("xresolution"))
-		globalRendering->viewSizeX = std::max(cmdline->GetInt("xresolution"), 640);
-
-	globalRendering->viewSizeY = configHandler->GetInt("YResolution");
-	if (cmdline->IsSet("yresolution"))
-		globalRendering->viewSizeY = std::max(cmdline->GetInt("yresolution"), 480);
-
 
 	if (cmdline->IsSet("benchmark")) {
 		CBenchmark::enabled = true;
@@ -881,9 +879,9 @@ void SpringApp::Startup()
 		return;
 	}
 
-	std::string inputFile = cmdline->GetInputFile();
-	if (inputFile.empty())
-	{
+	const std::string inputFile = cmdline->GetInputFile();
+
+	if (inputFile.empty()) {
 #ifdef HEADLESS
 		LOG_L(L_FATAL,
 				"The headless version of the engine can not be run in interactive mode.\n"
@@ -896,9 +894,7 @@ void SpringApp::Startup()
 #endif
 		selectMenu = new SelectMenu(server);
 		activeController = selectMenu;
-	}
-	else if (inputFile.rfind("sdf") == inputFile.size() - 3)
-	{
+	} else if (inputFile.rfind("sdf") == inputFile.size() - 3) {
 		std::string demoFileName = inputFile;
 		std::string demoPlayerName = configHandler->GetString("name");
 
@@ -920,9 +916,7 @@ void SpringApp::Startup()
 
 		pregame = new CPreGame(startsetup);
 		pregame->LoadDemo(demoFileName);
-	}
-	else if (inputFile.rfind("ssf") == inputFile.size() - 3)
-	{
+	} else if (inputFile.rfind("ssf") == inputFile.size() - 3) {
 		std::string savefile = inputFile;
 		startsetup = new ClientSetup();
 		startsetup->isHost = true;
@@ -932,10 +926,8 @@ void SpringApp::Startup()
 #endif
 		pregame = new CPreGame(startsetup);
 		pregame->LoadSavefile(savefile);
-	}
-	else
-	{
-		LOG("Loading startscript from: %s", inputFile.c_str());
+	} else {
+		LOG("[%s] loading startscript from: %s", __FUNCTION__, inputFile.c_str());
 		CFileHandler fh(inputFile, SPRING_VFS_PWD_ALL);
 		if (!fh.FileExists())
 			throw content_error("Setup-script does not exist in given location: " + inputFile);
@@ -1022,17 +1014,11 @@ static void ResetScreenSaverTimeout()
 
 
 /**
- * @param argc argument count
- * @param argv array of argument strings
- *
  * Executes the application
  * (contains main game loop)
  */
-int SpringApp::Run(int argc, char *argv[])
+int SpringApp::Run()
 {
-	cmdline = new CmdLineParams(argc, argv);
-	binaryName = argv[0];
-
 	try {
 		if (!Initialize())
 			return -1;
@@ -1057,9 +1043,9 @@ int SpringApp::Run(int argc, char *argv[])
 	}
 
 	SaveWindowPosition();
-
 	// Shutdown
 	Shutdown();
+
 	return GetExitCode();
 }
 
@@ -1140,7 +1126,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			glClearStencil(0);
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
-			SetupViewportGeometry();
+			SetupViewportGeometry(true);
 
 			break;
 		}

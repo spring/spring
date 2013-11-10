@@ -7,7 +7,7 @@
 #include <map>
 #include <vector>
 
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/float3.h"
 
 class DebugDrawerAI {

@@ -27,7 +27,6 @@ CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ProjectileParams()));
 CR_REG_METADATA(CMissileProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(maxSpeed),
-	CR_MEMBER(curSpeed),
 	// CR_MEMBER(ttl),
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(age),
@@ -50,7 +49,6 @@ CR_REG_METADATA(CMissileProjectile,(
 
 CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, maxSpeed(0.0f)
-	, curSpeed(0.0f)
 	, areaOfEffect(0.0f)
 	, extraHeight(0.0f)
 	, extraHeightDecay(0.0f)
@@ -70,8 +68,6 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 {
 	projectileType = WEAPON_MISSILE_PROJECTILE;
 
-	curSpeed = speed.Length();
-	dir = (curSpeed > 0.0f) ? speed / curSpeed : ZeroVector;
 	oldDir = dir;
 
 	if (model != NULL) {
@@ -152,50 +148,51 @@ void CMissileProjectile::Update()
 {
 	if (--ttl > 0) {
 		if (!luaMoveCtrl) {
-			if (curSpeed < maxSpeed) {
-				curSpeed += weaponDef->weaponacceleration;
-			}
+			float3 targetVel;
 
-			float3 targSpeed(ZeroVector);
+			if (speed.w < maxSpeed)
+				speed.w += weaponDef->weaponacceleration;
 
-			if (weaponDef->tracks && target) {
-				CSolidObject* so = dynamic_cast<CSolidObject*>(target);
-				CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
+			if (weaponDef->tracks && target != NULL) {
+				const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
+				const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
 
 				targetPos = target->pos;
-				if (so) {
-					targetPos = so->aimPos;
-					targSpeed = so->speed;
 
-					if (owner()) {
-						CUnit* u = dynamic_cast<CUnit*>(so);
-						if (u) {
+				if (so != NULL) {
+					targetPos = so->aimPos;
+					targetVel = so->speed;
+
+					if (owner() != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
+						// if we have an owner and our target is a unit,
+						// set target-position to its error-position for
+						// our owner's allyteam
+						const CUnit* u = dynamic_cast<const CUnit*>(so);
+
+						if (u != NULL) {
 							targetPos = u->GetErrorPos(owner()->allyteam, true);
 						}
 					}
-				} if (po) {
-					targSpeed = po->speed;
+				}
+				if (po != NULL) {
+					targetVel = po->speed;
 				}
 			}
 
 
 			if (isWobbling) {
-				--wobbleTime;
-				if (wobbleTime == 0) {
+				if ((--wobbleTime) == 0) {
 					float3 newWob = gs->randVector();
 					wobbleDif = (newWob - wobbleDir) * (1.0f / 16);
 					wobbleTime = 16;
 				}
 
 				wobbleDir += wobbleDif;
-
-				dir += wobbleDir * weaponDef->wobble * (owner()? (1.0f - owner()->limExperience * 0.5f): 1);
-				dir.Normalize();
+				dir = (dir + wobbleDir * weaponDef->wobble * (owner()? (1.0f - owner()->limExperience * 0.5f): 1)).Normalize();
 			}
 
 			if (isDancing) {
-				--danceTime;
-				if (danceTime <= 0) {
+				if ((--danceTime) <= 0) {
 					danceMove = gs->randVector() * weaponDef->dance - danceCenter;
 					danceCenter += danceMove;
 					danceTime = 8;
@@ -231,20 +228,20 @@ void CMissileProjectile::Update()
 			}
 
 
-			float3 dif = (targetPos + targSpeed * (dist / maxSpeed) * 0.7f - pos).SafeNormalize();
+			float3 dif = (targetPos + targetVel * (dist / maxSpeed) * 0.7f - pos).SafeNormalize();
 			float3 dif2 = dif - dir;
 
 			if (dif2.SqLength() < Square(weaponDef->turnrate)) {
 				dir = dif;
 			} else {
-				dif2 -= (dir * (dif2.dot(dir)));
-				dif2.SafeNormalize();
-				dir += (dif2 * weaponDef->turnrate);
-				dir.SafeNormalize();
+				dif2 = (dif2 - (dir * (dif2.dot(dir)))).SafeNormalize();
+				dir = (dir + (dif2 * weaponDef->turnrate)).SafeNormalize();
 			}
 
 			targetPos = orgTargPos;
-			speed = dir * curSpeed;
+
+			// dir and speed.w have changed, keep speed-vector in sync
+			SetDirectionAndSpeed(dir, speed.w);
 		}
 
 		explGenHandler->GenExplosion(cegID, pos, dir, ttl, areaOfEffect, 0.0f, NULL, NULL);
@@ -255,20 +252,18 @@ void CMissileProjectile::Update()
 			// only when TTL <= 0 do we (missiles)
 			// get influenced by gravity and drag
 			if (!luaMoveCtrl) {
-				speed *= 0.98f;
-				speed.y += mygravity;
-				dir = speed;
-				dir.SafeNormalize();
+				SetVelocityAndSpeed((speed * 0.98f) + (UpVector * mygravity));
 			}
 		}
 	}
 
 	if (!luaMoveCtrl) {
-		pos += speed;
+		SetPosition(pos + speed);
 	}
 
 	age++;
 	numParts++;
+
 	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
 		CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
 			pos, oldSmoke,
@@ -295,17 +290,15 @@ void CMissileProjectile::Update()
 }
 
 void CMissileProjectile::UpdateGroundBounce() {
-	if (luaMoveCtrl) {
+	if (luaMoveCtrl)
 		return;
-	}
 
-	const float3 tempSpeed = speed;
+	const float4 oldSpeed = speed;
+
 	CWeaponProjectile::UpdateGroundBounce();
 
-	if (tempSpeed != speed) {
-		curSpeed = speed.Length();
-		dir = speed;
-		dir.SafeNormalize();
+	if (oldSpeed != speed) {
+		SetVelocityAndSpeed(speed);
 	}
 }
 
@@ -323,17 +316,12 @@ void CMissileProjectile::Draw()
 		const float color = 0.6f;
 		if (drawTrail) {
 			// draw the trail as a single quad
-			float3 dif(drawPos - camera->GetPos());
-			dif.ANormalize();
-			float3 dir1(dif.cross(dir));
-			dir1.ANormalize();
-			float3 dif2(oldSmoke - camera->GetPos());
-			dif2.ANormalize();
-			float3 dir2(dif2.cross(oldDir));
-			dir2.ANormalize();
+			const float3 dif = (drawPos - camera->GetPos()).ANormalize();
+			const float3 dir1 = (dif.cross(dir)).ANormalize();
+			const float3 dif2 = (oldSmoke - camera->GetPos()).ANormalize();
+			const float3 dir2 = (dif2.cross(oldDir)).ANormalize();
 
-			float a1 = (1.0f / (SMOKE_TIME)) * 255;
-			a1 *= 0.7f + math::fabs(dif.dot(dir));
+			const float a1 = ((1.0f / (SMOKE_TIME)) * 255) * (0.7f + math::fabs(dif.dot(dir)));
 			const float alpha1 = std::min(255.0f, std::max(0.0f, a1));
 			col[0] = (unsigned char) (color * alpha1);
 			col[1] = (unsigned char) (color * alpha1);
@@ -343,11 +331,10 @@ void CMissileProjectile::Draw()
 			unsigned char col2[4];
 			float a2 = (1 - float(age2) / (SMOKE_TIME)) * 255;
 
-			if (age < 8) {
-				a2 = 0;
-			}
+			if (age < 8)
+				a2 = 0.0f;
 
-			a2 *= 0.7f + math::fabs(dif2.dot(oldDir));
+			a2 *= (0.7f + math::fabs(dif2.dot(oldDir)));
 			const float alpha2 = std::min(255.0f, std::max(0.0f, a2));
 			col2[0] = (unsigned char) (color * alpha2);
 			col2[1] = (unsigned char) (color * alpha2);
@@ -402,24 +389,24 @@ void CMissileProjectile::Draw()
 
 int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	if (!luaMoveCtrl) {
-		if (ttl > 0) {
-			const float3 sdir = (pos - shieldPos).SafeNormalize();
-			// steer away twice as fast as we can steer toward target
-			float3 dif2 = sdir - dir;
-			float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2);
+	if (luaMoveCtrl)
+		return 0;
 
-			if (dif2.SqLength() < Square(tracking)) {
-				dir = sdir;
-			} else {
-				dif2 -= dir * (dif2.dot(dir));
-				dif2.SafeNormalize();
-				dir += dif2 * tracking;
-				dir.SafeNormalize();
-			}
+	if (ttl > 0) {
+		const float3 sdir = (pos - shieldPos).SafeNormalize();
+		// steer away twice as fast as we can steer toward target
+		float3 dif2 = sdir - dir;
 
-			return 2;
+		const float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2);
+
+		if (dif2.SqLength() < Square(tracking)) {
+			dir = sdir;
+		} else {
+			dif2 = (dif2 - (dir * (dif2.dot(dir)))).SafeNormalize();
+			dir = (dir + (dif2 * tracking)).SafeNormalize();
 		}
+
+		return 2;
 	}
 
 	return 0;

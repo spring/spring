@@ -6,8 +6,6 @@
 #include <windows.h>
 #endif
 
-#include <SDL.h>
-
 #include "Game/GameSetup.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameData.h"
@@ -48,12 +46,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DEDICATED_SERVER)
 extern "C"
 {
 #endif
-
-#ifdef __APPLE__
-//FIXME: hack for SDL because of sdl-stubs
-#undef main
-#endif
-
 
 void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 {
@@ -142,6 +134,11 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 int main(int argc, char* argv[])
 {
 	try {
+		spring_clock::PushTickRate();
+		// initialize start time (can safely be done before SDL_Init
+		// since we are not using SDL_GetTicks as our clock anymore)
+		spring_time::setstarttime(spring_time::gettime(true));
+
 		CLogOutput::LogSystemInfo();
 
 		std::string scriptName;
@@ -156,7 +153,6 @@ int main(int argc, char* argv[])
 		// Initialize crash reporting
 		CrashHandler::Install();
 
-		SDL_Init(SDL_INIT_TIMER);
 		LOG("report any errors to Mantis or the forums.");
 		LOG("loading script from file: %s", scriptName.c_str());
 
@@ -183,8 +179,8 @@ int main(int argc, char* argv[])
 		GameData data;
 		UnsyncedRNG rng;
 
-		rng.Seed(gameSetup->gameSetupText.length());
-		rng.Seed(scriptName.length());
+		const unsigned seed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
+		rng.Seed(seed);
 		data.SetRandomSeed(rng.RandInt());
 
 		//  Use script provided hashes if they exist
@@ -250,6 +246,7 @@ int main(int argc, char* argv[])
 		FileSystemInitializer::Cleanup();
 		GlobalConfig::Deallocate();
 
+		spring_clock::PopTickRate();
 		LOG("exited");
 	}
 	CATCH_SPRING_ERRORS

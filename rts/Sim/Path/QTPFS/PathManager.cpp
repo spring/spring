@@ -1010,7 +1010,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 	SCOPED_TIMER("PathManager::NextWayPoint");
 
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
-	const float3 noPathPoint = float3(-1.0f, 0.0f, -1.0f);
+	const float3 noPathPoint = -XZVector;
 
 	if (!synced)
 		return noPathPoint;

@@ -62,7 +62,6 @@ set(FILES
 	shaders/ARB/dwDetailNormal.fp
 	shaders/ARB/dwDetailNormal.vp
 	shaders/ARB/tree.vp
-	gamedata/messages.lua
 	gamedata/unitdefs.lua
 	gamedata/explosion_alias.lua
 	gamedata/unitdefs_post.lua

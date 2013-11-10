@@ -39,7 +39,6 @@
 #include "Game/GUI/PlayerRosterDrawer.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
-#include "Net/GameServer.h"
 #include "Game/UI/UnitTracker.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
@@ -136,6 +135,7 @@
 #include "System/Sync/FPUCheck.h"
 #include "System/GlobalConfig.h"
 #include "System/myMath.h"
+#include "Net/GameServer.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "System/SpringApp.h"
 #include "System/Util.h"
@@ -240,31 +240,47 @@ public:
 		//, inDraw(false)
 		, startDirect(true)
 		, catchUp(false)
+		, name("")
 		{}
 
 		std::function<bool()> f; // allows us to use lambdas
+
 		float freq;
 		//bool inSim;
 		//bool inDraw;
 		bool startDirect;
 		bool catchUp;
+
+		const char* name;
 	};
 
 public:
-	static void AddJob(Job j) {
-		jobs[spring_gettime() + spring_time(j.startDirect ? 0 : 1000.0f/j.freq)] = j;
+	static void AddJob(Job j, const spring_time t) {
+		spring_time jobTime = t;
+
+		// never overwrite one job by another (!)
+		while (jobs.find(jobTime) != jobs.end())
+			jobTime += spring_time(1);
+
+		jobs[jobTime] = j;
 	}
 
 	static void Update() {
 		const spring_time now = spring_gettime();
+
 		std::map<spring_time, Job>::iterator it = jobs.begin();
-		while (it != jobs.end() && it->first <= now) {
-			Job* j = &it->second;
-			if (j->f()) {
-				spring_time nextCallTime = j->catchUp ? it->first : spring_gettime();
-				nextCallTime += spring_time(1000.0f / j->freq);
-				jobs[nextCallTime] = *j;
+
+		while (it != jobs.end()) {
+			if (it->first > now) {
+				++it; continue;
 			}
+
+			Job* j = &it->second;
+
+			if (j->f()) {
+				AddJob(*j, (j->catchUp ? it->first : spring_gettime()) + spring_time(1000.0f / j->freq));
+			}
+
 			jobs.erase(it); //FIXME remove by range? (faster!)
 			it = jobs.begin();
 		}
@@ -285,8 +301,10 @@ DO_ONCE_FNC(
 		CInputReceiver::CollectGarbage();
 		return true;
 	};
-	j.freq = 30;
-	JobDispatcher::AddJob(j);
+	j.freq = GAME_SPEED;
+	j.name = "EventHandler::CollectGarbage";
+	// static initialization is done BEFORE Spring's time-epoch is set
+	JobDispatcher::AddJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
 );
 
 DO_ONCE_FNC(
@@ -296,7 +314,8 @@ DO_ONCE_FNC(
 		return true;
 	};
 	j.freq = 1;
-	JobDispatcher::AddJob(j);
+	j.name = "Profiler::Update";
+	JobDispatcher::AddJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
 );
 
 
@@ -608,7 +627,7 @@ void CGame::PreLoadSimulation()
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
 	moveDefHandler = new MoveDefHandler(defsParser);
-	quadField = new CQuadField();
+	quadField = new CQuadField((gs->mapx * SQUARE_SIZE) / CQuadField::BASE_QUAD_SIZE, (gs->mapy * SQUARE_SIZE) / CQuadField::BASE_QUAD_SIZE);
 	damageArrayHandler = new CDamageArrayHandler(defsParser);
 	explGenHandler = new CExplosionGeneratorHandler();
 }
@@ -929,12 +948,11 @@ bool CGame::Update()
 	JobDispatcher::Update();
 
 	const spring_time timeNow = spring_gettime();
-	const float diffsecs = spring_difftime(timeNow, lastUpdateTime).toSecsf();
 
-	if (diffsecs >= 1.0f) { // do once every second
+	if (spring_difftime(timeNow, lastUpdateTime).toMilliSecsf() >= 1000.0f) {
 		lastUpdateTime = timeNow;
 
-		// Some netcode stuff
+		// do this once every second
 		UpdateConsumeSpeed();
 	}
 
@@ -974,38 +992,39 @@ bool CGame::Update()
 }
 
 
-bool CGame::UpdateUnsynced()
+bool CGame::UpdateUnsynced(const spring_time currentTime)
 {
 	// timings and frame interpolation
-	const spring_time currentTime = spring_gettime();
-	const spring_time diffLastCall = (currentTime - lastDrawFrameTime);
+	const spring_time deltaDrawFrameTime = currentTime - lastDrawFrameTime;
+	const float modGameDeltaTimeSecs = mix(deltaDrawFrameTime.toMilliSecsf() * 0.001f, 0.01f, skipping);
+
 	lastDrawFrameTime = currentTime;
 
-	const float modGameDeltaTime = skipping ? 0.01f : diffLastCall.toSecsf();
-	globalRendering->lastFrameTime = diffLastCall.toSecsf();
-	gu->avgFrameTime = mix(gu->avgFrameTime, diffLastCall.toMilliSecsf(), 0.05f);
+	globalRendering->lastFrameTime = deltaDrawFrameTime.toMilliSecsf() * 0.001f;
+	gu->avgFrameTime = mix(gu->avgFrameTime, deltaDrawFrameTime.toMilliSecsf(), 0.05f);
 
 	{
 		// update game timings
-		gu->gameTime += modGameDeltaTime;
-		gu->modGameTime += (modGameDeltaTime * gs->speedFactor * (1 - gs->paused));
+		gu->gameTime += modGameDeltaTimeSecs;
+		gu->modGameTime += (modGameDeltaTimeSecs * gs->speedFactor * (1 - gs->paused));
 
 		if (playing && !gameOver) {
-			totalGameTime += modGameDeltaTime;
+			totalGameTime += modGameDeltaTimeSecs;
 		}
 
-		updateDeltaSeconds = modGameDeltaTime;
+		updateDeltaSeconds = modGameDeltaTimeSecs;
 	}
 
 	{
-		// update simFPS counter
+		// update simFPS counter (once per second)
 		static int lsf = gs->frameNum;
 		static spring_time lsft = currentTime;
 
-		const float diffsecs_ = (currentTime - lsft).toSecsf();
+		// toSecsf throws away too much precision
+		const float diffMilliSecs = (currentTime - lsft).toMilliSecsf();
 
-		if (diffsecs_ >= 1.0f) {
-			gu->simFPS = (gs->frameNum - lsf) / diffsecs_;
+		if (diffMilliSecs >= 1000.0f) {
+			gu->simFPS = (gs->frameNum - lsf) / (diffMilliSecs * 0.001f);
 			lsft = currentTime;
 			lsf = gs->frameNum;
 		}
@@ -1028,11 +1047,11 @@ bool CGame::UpdateUnsynced()
 	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 
 	// Update the interpolation coefficient (globalRendering->timeOffset)
-	if (!gs->paused && !HasLag() && gs->frameNum>1 && !videoCapturing->IsCapturing()) {
+	if (!gs->paused && !HasLag() && gs->frameNum > 1 && !videoCapturing->IsCapturing()) {
 		globalRendering->lastFrameStart = currentTime;
 		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
 		globalRendering->timeOffset = (currentTime - lastSimFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
-	} else  {
+	} else {
 		globalRendering->timeOffset = 0;
 		lastSimFrameTime = currentTime;
 	}
@@ -1081,9 +1100,9 @@ bool CGame::UpdateUnsynced()
 	if (newSimFrame || unsyncedUpdateDeltaTime >= (1.0f / GAME_SPEED)) {
 		lastUnsyncedUpdateTime = currentTime;
 
-		{
+		if (gd->GetDrawMode() != CBaseGroundDrawer::drawNormal) {
 			SCOPED_TIMER("GroundDrawer::UpdateExtraTex");
-			gd->UpdateExtraTexture();
+			gd->UpdateExtraTexture(gd->GetDrawMode());
 		}
 
 		// TODO call only when camera changed
@@ -1143,7 +1162,9 @@ bool CGame::Draw() {
 #endif
 	GML_STDMUTEX_LOCK(draw); //Draw
 
-	if (UpdateUnsynced())
+	const spring_time currentTimePreUpdate = spring_gettime();
+
+	if (UpdateUnsynced(currentTimePreUpdate))
 		return true;
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
@@ -1157,26 +1178,31 @@ bool CGame::Draw() {
 		// return early if and only if less than 30K milliseconds have passed since last draw-frame
 		// so we force render two frames per minute when minimized to clear batches and free memory
 		// don't need to mess with globalRendering->active since only mouse-input code depends on it
-		if ((currentTimePreDraw - lastDrawFrameTime).toSecs() < 30)
+		if ((currentTimePreDraw - lastDrawFrameTime).toSecsi() < 30)
 			return true;
 	}
 
 	if (globalRendering->drawdebug) {
+		const float deltaFrameTime = (currentTimePreUpdate - lastSimFrameTime).toMilliSecsf();
 		const float currTimeOffset = globalRendering->timeOffset;
 		static float lastTimeOffset = globalRendering->timeOffset;
+		static int lastGameFrame = gs->frameNum;
 
+		// CTO = MILLISECSF(CT - LSFT) * WSF = MILLISECSF(CT - LSFT) * (SFPS * 0.001)
+		// AT 30Hz LHS (MILLISECSF(CT - LSFT)) SHOULD BE ~33ms, RHS SHOULD BE ~0.03
 		assert(currTimeOffset >= 0.0f);
 
-		if (currTimeOffset < 0.0f) LOG_L(L_ERROR, "assert(timeOffset >= 0.0f) failed (SF=%u : DF=%u : TO=%f)", gs->frameNum, globalRendering->drawFrame, currTimeOffset);
-		if (currTimeOffset > 1.0f) LOG_L(L_ERROR, "assert(timeOffset <= 1.0f) failed (SF=%u : DF=%u : TO=%f)", gs->frameNum, globalRendering->drawFrame, currTimeOffset);
+		if (currTimeOffset < 0.0f) LOG_L(L_ERROR, "assert(CTO >= 0.0f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms : NP=%u)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, net->GetNumWaitingServerPackets());
+		if (currTimeOffset > 1.3f) LOG_L(L_ERROR, "assert(CTO <= 1.0f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms : NP=%u)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, net->GetNumWaitingServerPackets());
 
 		// test for monotonicity, normally should only fail
 		// when SimFrame() advances time or if simframe rate
 		// changes
-		if (currTimeOffset < lastTimeOffset)
-			LOG_L(L_ERROR, "assert(timeOffset < lastTimeOffset) failed (SF=%u : DF=%u : CTO=%f LTO=%f)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, lastTimeOffset);
+		if (lastGameFrame == gs->frameNum && currTimeOffset < lastTimeOffset)
+			LOG_L(L_ERROR, "assert(CTO >= LTO) failed (SF=%u : DF=%u : CTO=%f : LTO=%f : WSF=%f : DT=%fms)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, lastTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime);
 
 		lastTimeOffset = currTimeOffset;
+		lastGameFrame = gs->frameNum;
 	}
 
 	//FIXME move both to UpdateUnsynced?
@@ -2087,11 +2113,7 @@ bool CGame::HasLag() const
 	const spring_time timeNow = spring_gettime();
 	const float diffTime = spring_tomsecs(timeNow - lastFrameTime);
 
-	if (!gs->paused && (diffTime > (500.0f / gs->speedFactor))) {
-		return true;
-	} else {
-		return false;
-	}
+	return (!gs->paused && (diffTime > (500.0f / gs->speedFactor)));
 }
 
 

@@ -753,7 +753,7 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 			unitDef->movedata->pathType = sAICallback->UnitDef_MoveData_getPathType(skirmishAIId, unitDefId);
 			unitDef->movedata->crushStrength = sAICallback->UnitDef_MoveData_getCrushStrength(skirmishAIId, unitDefId);
 			unitDef->movedata->moveType = (enum MoveData::MoveType) sAICallback->UnitDef_MoveData_getMoveType(skirmishAIId, unitDefId);
-			unitDef->movedata->moveFamily = (enum MoveData::MoveFamily) sAICallback->UnitDef_MoveData_getMoveFamily(skirmishAIId, unitDefId);
+			unitDef->movedata->moveFamily = (enum MoveData::MoveFamily) sAICallback->UnitDef_MoveData_getSpeedModClass(skirmishAIId, unitDefId);
 			unitDef->movedata->terrainClass = (enum MoveData::TerrainClass) sAICallback->UnitDef_MoveData_getTerrainClass(skirmishAIId, unitDefId);
 
 			unitDef->movedata->followGround = sAICallback->UnitDef_MoveData_getFollowGround(skirmishAIId, unitDefId);

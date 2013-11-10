@@ -377,21 +377,23 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 void CProjectileHandler::CheckUnitCollisions(
 	CProjectile* p,
 	std::vector<CUnit*>& tempUnits,
-	CUnit** endUnit,
 	const float3& ppos0,
 	const float3& ppos1)
 {
 	CollisionQuery cq;
 
-	for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
-		CUnit* unit = *ui;
+	for (unsigned int n = 0; n < tempUnits.size(); n++) {
+		CUnit* unit = tempUnits[n];
+
+		if (unit == NULL)
+			break;
 
 		const CUnit* attacker = p->owner();
 
 		// if this unit fired this projectile, always ignore
 		if (attacker == unit)
 			continue;
-		if (!unit->collidable)
+		if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
 
 		if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
@@ -410,9 +412,9 @@ void CProjectileHandler::CheckUnitCollisions(
 			}
 
 			if (!cq.InsideHit()) {
-				p->SetPos(cq.GetHitPos());
+				p->SetPosition(cq.GetHitPos());
 				p->Collision(unit);
-				p->SetPos(ppos0);
+				p->SetPosition(ppos0);
 			} else {
 				p->Collision(unit);
 			}
@@ -425,7 +427,6 @@ void CProjectileHandler::CheckUnitCollisions(
 void CProjectileHandler::CheckFeatureCollisions(
 	CProjectile* p,
 	std::vector<CFeature*>& tempFeatures,
-	CFeature** endFeature,
 	const float3& ppos0,
 	const float3& ppos1)
 {
@@ -438,17 +439,20 @@ void CProjectileHandler::CheckFeatureCollisions(
 
 	CollisionQuery cq;
 
-	for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
-		CFeature* feature = *fi;
+	for (unsigned int n = 0; n < tempFeatures.size(); n++) {
+		CFeature* feature = tempFeatures[n];
 
-		if (!feature->collidable)
+		if (feature == NULL)
+			break;
+
+		if (!feature->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
 			if (!cq.InsideHit()) {
-				p->SetPos(cq.GetHitPos());
+				p->SetPosition(cq.GetHitPos());
 				p->Collision(feature);
-				p->SetPos(ppos0);
+				p->SetPosition(ppos0);
 			} else {
 				p->Collision(feature);
 			}
@@ -465,18 +469,16 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc) {
 	for (ProjectileContainer::iterator pci = pc.begin(); pci != pc.end(); ++pci) {
 		CProjectile* p = *pci;
 
-		if (p->checkCol && !p->deleteMe) {
-			const float3 ppos0 = p->pos;
-			const float3 ppos1 = p->pos + p->speed;
+		if (!p->checkCol) continue;
+		if ( p->deleteMe) continue;
 
-			CUnit** endUnit = &tempUnits[0];
-			CFeature** endFeature = &tempFeatures[0];
+		const float3 ppos0 = p->pos;
+		const float3 ppos1 = p->pos + p->speed;
 
-			quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.Length(), endUnit, endFeature);
+		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures);
 
-			CheckUnitCollisions(p, tempUnits, endUnit, ppos0, ppos1);
-			CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);
-		}
+		CheckUnitCollisions(p, tempUnits, ppos0, ppos1);
+		CheckFeatureCollisions(p, tempFeatures, ppos0, ppos1);
 	}
 }
 
@@ -486,15 +488,13 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 	for (pci = pc.begin(); pci != pc.end(); ++pci) {
 		CProjectile* p = *pci;
 
-		if (!p->checkCol) {
+		if (!p->checkCol)
 			continue;
-		}
 
 		// NOTE: if <p> is a MissileProjectile and does not
 		// have selfExplode set, it will never be removed (!)
-		if (p->GetCollisionFlags() & Collision::NOGROUND) {
+		if (p->GetCollisionFlags() & Collision::NOGROUND)
 			continue;
-		}
 
 		// NOTE: don't add p->radius to groundHeight, or most
 		// projectiles will collide with the ground too early

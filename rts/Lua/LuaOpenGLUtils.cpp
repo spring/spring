@@ -12,8 +12,11 @@
 #include "Map/HeightMapTexture.h"
 #include "Map/ReadMap.h"
 #include "Rendering/glFont.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitDrawer.h"
+#include "Rendering/GL/GeometryBuffer.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/NamedTextures.h"
@@ -81,7 +84,9 @@ const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const std::string& name)
 
 	switch (mat) {
 		case LUAMATRICES_SHADOW:
-			if (!shadowHandler) { break; }
+			if (shadowHandler == NULL) {
+				break;
+			}
 			return &shadowHandler->shadowMatrix;
 		case LUAMATRICES_VIEW:
 			return &camera->GetViewMatrix();
@@ -263,8 +268,8 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 		}
 		else if (image == "$heightmap") {
 			texUnit.type = LuaMatTexture::LUATEX_HEIGHTMAP;
-			const GLuint texID = heightMapTexture->GetTextureID();
-			if (texID == 0) {
+
+			if (heightMapTexture->GetTextureID() == 0) {
 				// it's optional, return false when not available
 				return false;
 			}
@@ -278,9 +283,27 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 		else if (image == "$minimap") {
 			texUnit.type = LuaMatTexture::LUATEX_MINIMAP;
 		}
-		else if (image == "$info" || image == "$extra") {
-			texUnit.type = LuaMatTexture::LUATEX_INFOTEX;
-		}
+
+		else if (image == "$info"        || image == "$extra"       ) { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_ACTIVE; }
+		else if (image == "$info_losmap" || image == "$extra_losmap") { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_LOSMAP; }
+		else if (image == "$info_mtlmap" || image == "$extra_mtlmap") { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_MTLMAP; }
+		else if (image == "$info_hgtmap" || image == "$extra_hgtmap") { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_HGTMAP; }
+		else if (image == "$info_blkmap" || image == "$extra_blkmap") { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_BLKMAP; }
+
+		else if (image == "$map_gb_nt" || image == "$map_gbuffer_normtex") { texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_NORMTEX; }
+		else if (image == "$map_gb_dt" || image == "$map_gbuffer_difftex") { texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_DIFFTEX; }
+		else if (image == "$map_gb_st" || image == "$map_gbuffer_spectex") { texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_SPECTEX; }
+		else if (image == "$map_gb_et" || image == "$map_gbuffer_emittex") { texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_EMITTEX; }
+		else if (image == "$map_gb_mt" || image == "$map_gbuffer_misctex") { texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_MISCTEX; }
+		else if (image == "$map_gb_zt" || image == "$map_gbuffer_zvaltex") { texUnit.type = LuaMatTexture::LUATEX_MAP_GBUFFER_ZVALTEX; }
+
+		else if (image == "$mdl_gb_nt" || image == "$model_gbuffer_normtex") { texUnit.type = LuaMatTexture::LUATEX_MODEL_GBUFFER_NORMTEX; }
+		else if (image == "$mdl_gb_dt" || image == "$model_gbuffer_difftex") { texUnit.type = LuaMatTexture::LUATEX_MODEL_GBUFFER_DIFFTEX; }
+		else if (image == "$mdl_gb_st" || image == "$model_gbuffer_spectex") { texUnit.type = LuaMatTexture::LUATEX_MODEL_GBUFFER_SPECTEX; }
+		else if (image == "$mdl_gb_et" || image == "$model_gbuffer_emittex") { texUnit.type = LuaMatTexture::LUATEX_MODEL_GBUFFER_EMITTEX; }
+		else if (image == "$mdl_gb_mt" || image == "$model_gbuffer_misctex") { texUnit.type = LuaMatTexture::LUATEX_MODEL_GBUFFER_MISCTEX; }
+		else if (image == "$mdl_gb_zt" || image == "$model_gbuffer_zvaltex") { texUnit.type = LuaMatTexture::LUATEX_MODEL_GBUFFER_ZVALTEX; }
+
 		else if (image == "$font") {
 			texUnit.type = LuaMatTexture::LUATEX_FONT;
 		}
@@ -309,6 +332,10 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 GLuint LuaMatTexture::GetTextureID() const
 {
 	GLuint texID = 0;
+
+	#define groundDrawer (readMap->GetGroundDrawer())
+	#define gdGeomBuff (groundDrawer->GetGeometryBuffer())
+	#define udGeomBuff (unitDrawer->GetGeometryBuffer())
 
 	switch (type) {
 		case LUATEX_NONE: {
@@ -356,10 +383,10 @@ GLuint LuaMatTexture::GetTextureID() const
 				texID = heightMapTexture->GetTextureID();
 		} break;
 		case LUATEX_SHADING: {
-			texID = readMap->GetShadingTexture();
+			texID = (readMap != NULL)? readMap->GetShadingTexture(): 0;
 		} break;
 		case LUATEX_GRASS: {
-			texID = readMap->GetGrassShadingTexture();
+			texID = (readMap != NULL)? readMap->GetGrassShadingTexture(): 0;
 		} break;
 		case LUATEX_FONT: {
 			texID = font->GetTexture();
@@ -367,15 +394,37 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_FONTSMALL: {
 			texID = smallFont->GetTexture();
 		} break;
-		case LUATEX_MINIMAP: if (readMap) {
-			texID = readMap->GetMiniMapTexture();
-		} break;
-		case LUATEX_INFOTEX: {
-			texID = readMap->GetGroundDrawer()->infoTex;
-		} break;
+		case LUATEX_MINIMAP:
+			texID = (readMap != NULL)? readMap->GetMiniMapTexture(): 0;
+		break;
+
+		case LUATEX_INFOTEX_ACTIVE: { texID = (readMap != NULL)? groundDrawer->GetActiveInfoTexture()                         : 0; } break;
+		case LUATEX_INFOTEX_LOSMAP: { texID = (readMap != NULL)? groundDrawer->GetInfoTexture(CBaseGroundDrawer::drawLos     ): 0; } break;
+		case LUATEX_INFOTEX_MTLMAP: { texID = (readMap != NULL)? groundDrawer->GetInfoTexture(CBaseGroundDrawer::drawMetal   ): 0; } break;
+		case LUATEX_INFOTEX_HGTMAP: { texID = (readMap != NULL)? groundDrawer->GetInfoTexture(CBaseGroundDrawer::drawHeight  ): 0; } break;
+		case LUATEX_INFOTEX_BLKMAP: { texID = (readMap != NULL)? groundDrawer->GetInfoTexture(CBaseGroundDrawer::drawPathTrav): 0; } break;
+
+		case LUATEX_MAP_GBUFFER_NORMTEX: { texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX); } break;
+		case LUATEX_MAP_GBUFFER_DIFFTEX: { texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_DIFFTEX); } break;
+		case LUATEX_MAP_GBUFFER_SPECTEX: { texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_SPECTEX); } break;
+		case LUATEX_MAP_GBUFFER_EMITTEX: { texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_EMITTEX); } break;
+		case LUATEX_MAP_GBUFFER_MISCTEX: { texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_MISCTEX); } break;
+		case LUATEX_MAP_GBUFFER_ZVALTEX: { texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_ZVALTEX); } break;
+
+		case LUATEX_MODEL_GBUFFER_NORMTEX: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX); } break;
+		case LUATEX_MODEL_GBUFFER_DIFFTEX: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_DIFFTEX); } break;
+		case LUATEX_MODEL_GBUFFER_SPECTEX: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_SPECTEX); } break;
+		case LUATEX_MODEL_GBUFFER_EMITTEX: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_EMITTEX); } break;
+		case LUATEX_MODEL_GBUFFER_MISCTEX: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_MISCTEX); } break;
+		case LUATEX_MODEL_GBUFFER_ZVALTEX: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_ZVALTEX); } break;
+
 		default:
 			assert(false);
 	}
+
+	#undef udGeomBuff
+	#undef gdGeomBuff
+	#undef groundDrawer
 
 	return texID;
 }
@@ -396,6 +445,7 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_SPECULAR: {
 			texType = GL_TEXTURE_CUBE_MAP_ARB;
 		} break;
+
 		case LUATEX_NONE:
 		case LUATEX_UNITTEXTURE1:
 		case LUATEX_UNITTEXTURE2:
@@ -409,9 +459,33 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_FONT:
 		case LUATEX_FONTSMALL:
 		case LUATEX_MINIMAP:
-		case LUATEX_INFOTEX: {
+
+		case LUATEX_INFOTEX_ACTIVE:
+		case LUATEX_INFOTEX_LOSMAP:
+		case LUATEX_INFOTEX_MTLMAP:
+		case LUATEX_INFOTEX_HGTMAP:
+		case LUATEX_INFOTEX_BLKMAP: {
 			texType = GL_TEXTURE_2D;
 		} break;
+
+		case LUATEX_MAP_GBUFFER_NORMTEX:
+		case LUATEX_MAP_GBUFFER_DIFFTEX:
+		case LUATEX_MAP_GBUFFER_SPECTEX:
+		case LUATEX_MAP_GBUFFER_EMITTEX:
+		case LUATEX_MAP_GBUFFER_MISCTEX:
+		case LUATEX_MAP_GBUFFER_ZVALTEX: {
+			texType = GL_TEXTURE_2D;
+		} break;
+
+		case LUATEX_MODEL_GBUFFER_NORMTEX:
+		case LUATEX_MODEL_GBUFFER_DIFFTEX:
+		case LUATEX_MODEL_GBUFFER_SPECTEX:
+		case LUATEX_MODEL_GBUFFER_EMITTEX:
+		case LUATEX_MODEL_GBUFFER_MISCTEX:
+		case LUATEX_MODEL_GBUFFER_ZVALTEX: {
+			texType = GL_TEXTURE_2D;
+		} break;
+
 		default:
 			assert(false);
 	}
@@ -466,30 +540,30 @@ int2 LuaMatTexture::GetSize() const
 	#define sqint2(x) int2(x, x)
 	switch (type) {
 		case LUATEX_NAMED: {
-			auto namedTex = reinterpret_cast<const CNamedTextures::TexInfo*>(data);
+			const auto namedTex = reinterpret_cast<const CNamedTextures::TexInfo*>(data);
 			return int2(namedTex->xsize, namedTex->ysize);
 		} break;
 		case LUATEX_LUATEXTURE: {
-			auto luaTex = reinterpret_cast<const LuaTextures::Texture*>(data);
+			const auto luaTex = reinterpret_cast<const LuaTextures::Texture*>(data);
 			return int2(luaTex->xsize, luaTex->ysize);
 		} break;
 		case LUATEX_UNITTEXTURE1: {
-			auto stex = reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data);
+			const auto stex = reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data);
 			return int2(stex->tex1SizeX, stex->tex1SizeY);
 		} break;
 		case LUATEX_UNITTEXTURE2: {
-			auto stex = reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data);
+			const auto stex = reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data);
 			return int2(stex->tex2SizeX, stex->tex2SizeY);
 		} break;
 		case LUATEX_3DOTEXTURE:
 			return int2(texturehandler3DO->GetAtlasTexSizeX(), texturehandler3DO->GetAtlasTexSizeY());
 		case LUATEX_UNITBUILDPIC: {
-			auto ud = reinterpret_cast<const UnitDef*>(data);
+			const auto ud = reinterpret_cast<const UnitDef*>(data);
 			unitDefHandler->GetUnitDefImage(ud); // forced existance
 			return int2(ud->buildPic->imageSizeX, ud->buildPic->imageSizeY);
 		} break;
 		case LUATEX_UNITRADARICON: {
-			auto ud = reinterpret_cast<const UnitDef*>(data);
+			const auto ud = reinterpret_cast<const UnitDef*>(data);
 			return int2(ud->iconType->GetSizeX(), ud->iconType->GetSizeY());
 		} break;
 		case LUATEX_SHADOWMAP:
@@ -506,19 +580,54 @@ int2 LuaMatTexture::GetSize() const
 			return int2(font->GetTexWidth(), font->GetTexHeight());
 		case LUATEX_FONTSMALL:
 			return int2(smallFont->GetTexWidth(), smallFont->GetTexHeight());
-		case LUATEX_MINIMAP: if (readMap) {
-			 return readMap->GetMiniMapTextureSize();
-		} break;
-		case LUATEX_INFOTEX:
-			return readMap->GetGroundDrawer()->GetInfoTexSize();
+		case LUATEX_MINIMAP:
+			if (readMap != NULL) { 
+				return readMap->GetMiniMapTextureSize();
+			}
+		break;
+
+		case LUATEX_INFOTEX_ACTIVE:
+		case LUATEX_INFOTEX_LOSMAP:
+		case LUATEX_INFOTEX_MTLMAP:
+		case LUATEX_INFOTEX_HGTMAP:
+		case LUATEX_INFOTEX_BLKMAP: {
+			if (readMap != NULL) { 
+				return (readMap->GetGroundDrawer()->GetInfoTexSize());
+			}
+		}
+
+		case LUATEX_MAP_GBUFFER_NORMTEX:
+		case LUATEX_MAP_GBUFFER_DIFFTEX:
+		case LUATEX_MAP_GBUFFER_SPECTEX:
+		case LUATEX_MAP_GBUFFER_EMITTEX:
+		case LUATEX_MAP_GBUFFER_MISCTEX:
+		case LUATEX_MAP_GBUFFER_ZVALTEX: {
+			if (readMap != NULL) { 
+				return (readMap->GetGroundDrawer()->GetGeometryBuffer()->GetWantedSize(readMap->GetGroundDrawer()->DrawDeferred()));
+			}
+		}
+
+		case LUATEX_MODEL_GBUFFER_NORMTEX:
+		case LUATEX_MODEL_GBUFFER_DIFFTEX:
+		case LUATEX_MODEL_GBUFFER_SPECTEX:
+		case LUATEX_MODEL_GBUFFER_EMITTEX:
+		case LUATEX_MODEL_GBUFFER_MISCTEX:
+		case LUATEX_MODEL_GBUFFER_ZVALTEX: {
+			if (unitDrawer != NULL) {
+				return (unitDrawer->GetGeometryBuffer()->GetWantedSize(unitDrawer->DrawDeferred()));
+			}
+		}
+
 		case LUATEX_HEIGHTMAP:
-			if (heightMapTexture)
+			if (heightMapTexture != NULL) {
 				return int2(heightMapTexture->GetSizeX(), heightMapTexture->GetSizeY());
+			}
+
 		case LUATEX_NONE:
-		default:
-			break;
+		default: break;
 	}
-	return int2(0,0);
+
+	return int2(0, 0);
 }
 
 
@@ -555,6 +664,7 @@ int LuaMatTexture::Compare(const LuaMatTexture& a, const LuaMatTexture& b)
 void LuaMatTexture::Print(const string& indent) const
 {
 	const char* typeName = "Unknown";
+
 	switch (type) {
 		#define STRING_CASE(ptr, x) case x: ptr = #x; break;
 		STRING_CASE(typeName, LUATEX_NONE);
@@ -574,10 +684,30 @@ void LuaMatTexture::Print(const string& indent) const
 		STRING_CASE(typeName, LUATEX_FONT);
 		STRING_CASE(typeName, LUATEX_FONTSMALL);
 		STRING_CASE(typeName, LUATEX_MINIMAP);
-		STRING_CASE(typeName, LUATEX_INFOTEX);
+
+		STRING_CASE(typeName, LUATEX_INFOTEX_ACTIVE);
+		STRING_CASE(typeName, LUATEX_INFOTEX_LOSMAP);
+		STRING_CASE(typeName, LUATEX_INFOTEX_MTLMAP);
+		STRING_CASE(typeName, LUATEX_INFOTEX_HGTMAP);
+		STRING_CASE(typeName, LUATEX_INFOTEX_BLKMAP);
+
+		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_NORMTEX);
+		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_DIFFTEX);
+		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_SPECTEX);
+		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_EMITTEX);
+		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_MISCTEX);
+		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_ZVALTEX);
+
+		STRING_CASE(typeName, LUATEX_MODEL_GBUFFER_NORMTEX);
+		STRING_CASE(typeName, LUATEX_MODEL_GBUFFER_DIFFTEX);
+		STRING_CASE(typeName, LUATEX_MODEL_GBUFFER_SPECTEX);
+		STRING_CASE(typeName, LUATEX_MODEL_GBUFFER_EMITTEX);
+		STRING_CASE(typeName, LUATEX_MODEL_GBUFFER_MISCTEX);
+		STRING_CASE(typeName, LUATEX_MODEL_GBUFFER_ZVALTEX);
+		#undef STRING_CASE
 	}
-	LOG("%s%s %i %s", indent.c_str(),
-			typeName, *reinterpret_cast<const GLuint*>(&data), (enable ? "true" : "false"));
+
+	LOG("%s%s %i %s", indent.c_str(), typeName, *reinterpret_cast<const GLuint*>(&data), (enable ? "true" : "false"));
 }
 
 

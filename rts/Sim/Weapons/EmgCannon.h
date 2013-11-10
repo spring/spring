@@ -15,7 +15,7 @@ public:
 	void Init();
 
 private:
-	void FireImpl();
+	void FireImpl(bool scriptCall);
 };
 
 #endif // _EMG_CANNON_H

@@ -35,15 +35,14 @@ struct S3DModel;
 struct S3DModelPiece;
 struct LocalModel;
 struct LocalModelPiece;
-struct aiScene;
 
 typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
 
 
 /**
  * S3DModel
- * A 3D model definition. Holds the vertices data, texture data, piece tree & default geometric data of those.
- * The S3DModel is static and shouldn't change once created, instead LocalModel is used by each agent.
+ * A 3D model definition. Holds geometry (vertices/normals) and texture data as well as the piece tree.
+ * The S3DModel is static and shouldn't change once created, instead a LocalModel is used by each agent.
  */
 
 struct S3DModelPiece {
@@ -62,35 +61,47 @@ struct S3DModelPiece {
 	virtual float3 GetPosOffset() const { return ZeroVector; }
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 
-	bool ComposeTransform(CMatrix44f& m, const float3& t, const float3& r) const {
-		bool ret = mIsIdentity;
-
+	CMatrix44f& ComposeRotation(CMatrix44f& m, const float3& r) const {
 		// execute rotations in YPR order by default
 		// note: translating + rotating is faster than
 		// matrix-multiplying (but the branching hurts)
-		switch (ramType) {
+		switch (axisMapType) {
 			case AXIS_MAPPING_XYZ: {
-				if (t.SqLength() != 0.0f) { m.Translate(t);             ret = false; }
-				if (r.y          != 0.0f) { m.RotateY(r.y * raSigns.y); ret = false; } // yaw
-				if (r.x          != 0.0f) { m.RotateX(r.x * raSigns.x); ret = false; } // pitch
-				if (r.z          != 0.0f) { m.RotateZ(r.z * raSigns.z); ret = false; } // roll
+				if (r.y != 0.0f) { m.RotateY(r.y * rotAxisSigns.y); } // yaw
+				if (r.x != 0.0f) { m.RotateX(r.x * rotAxisSigns.x); } // pitch
+				if (r.z != 0.0f) { m.RotateZ(r.z * rotAxisSigns.z); } // roll
 			} break;
+
 			case AXIS_MAPPING_XZY: {
-				if (t.SqLength() != 0.0f) { m.Translate(t);             ret = false; }
-				if (r.y          != 0.0f) { m.RotateZ(r.y * raSigns.y); ret = false; } // yaw
-				if (r.x          != 0.0f) { m.RotateX(r.x * raSigns.x); ret = false; } // pitch
-				if (r.z          != 0.0f) { m.RotateY(r.z * raSigns.z); ret = false; } // roll
+				if (r.y != 0.0f) { m.RotateZ(r.y * rotAxisSigns.y); } // yaw
+				if (r.x != 0.0f) { m.RotateX(r.x * rotAxisSigns.x); } // pitch
+				if (r.z != 0.0f) { m.RotateY(r.z * rotAxisSigns.z); } // roll
 			} break;
+
 			case AXIS_MAPPING_YXZ:
 			case AXIS_MAPPING_YZX:
 			case AXIS_MAPPING_ZXY:
-			case AXIS_MAPPING_ZYX: { //FIXME implement ?!
+			case AXIS_MAPPING_ZYX: {
+				// FIXME: implement
 			} break;
 		}
 
-		return ret;
+		return m;
 	}
 
+	bool ComposeTransform(CMatrix44f& m, const float3& t, const float3& r, const float3& s) const {
+		bool isIdentity = true;
+
+		// NOTE: ORDER MATTERS (T(baked + script) * R(baked) * R(script) * S(baked))
+		if (t != ZeroVector) { m = m.Translate(t);        isIdentity = false; }
+		if (!hasIdentityRot) { m *= bakedRotMatrix;       isIdentity = false; }
+		if (r != ZeroVector) { m = ComposeRotation(m, r); isIdentity = false; }
+		if (s != OnesVector) { m = m.Scale(s);            isIdentity = false; }
+
+		return isIdentity;
+	}
+
+	// draw piece and children statically (ie. without script-transforms)
 	void DrawStatic() const;
 
 	void SetCollisionVolume(CollisionVolume* cv) { colvol = cv; }
@@ -103,6 +114,12 @@ struct S3DModelPiece {
 	unsigned int GetDisplayListID() const { return dispListID; }
 	void SetDisplayListID(unsigned int id) { dispListID = id; }
 
+	bool HasGeometryData() const { return hasGeometryData; }
+	bool HasIdentityRotation() const { return hasIdentityRot; }
+
+	void SetHasGeometryData(bool b) { hasGeometryData = b; }
+	void SetHasIdentityRotation(bool b) { hasIdentityRot = b; }
+
 protected:
 	virtual void DrawForList() const = 0;
 
@@ -110,25 +127,24 @@ public:
 	std::string name;
 	std::string parentName;
 
+	std::vector<S3DModelPiece*> children;
+
 	S3DModelPiece* parent;
 	CollisionVolume* colvol;
 
-	ModelType type;
-	AxisMappingType ramType;
+	AxisMappingType axisMapType;
 
-	bool isEmpty;     /// if piece has no geometry
-	bool mIsIdentity; /// if scaleRotMatrix is identity
+	bool hasGeometryData;      /// if piece contains any geometry data
+	bool hasIdentityRot;       /// if bakedRotMatrix is identity
 
-	std::vector<S3DModelPiece*> children;
+	CMatrix44f bakedRotMatrix; /// baked local-space rotations (assimp-only)
 
-	/// pre-baked local-space transforms (assimp-only)
-	CMatrix44f scaleRotMatrix;
-
-	float3 offset;    /// local offset wrt. parent piece
-	float3 goffset;   /// global offset wrt. root piece
+	float3 offset;             /// local (piece-space) offset wrt. parent piece
+	float3 goffset;            /// global (model-space) offset wrt. root piece
+	float3 scales;             /// baked uniform scaling factors (assimp-only)
 	float3 mins;
 	float3 maxs;
-	float3 raSigns;
+	float3 rotAxisSigns;
 
 protected:
 	unsigned int dispListID;
@@ -148,7 +164,7 @@ struct S3DModel
 
 		, type(MODELTYPE_OTHER)
 
-		, flipTexY(false)
+		, invertTexYAxis(false)
 		, invertTexAlpha(false)
 
 		, radius(0.0f)
@@ -164,24 +180,25 @@ struct S3DModel
 	}
 
 	S3DModelPiece* GetRootPiece() const { return rootPiece; }
+	S3DModelPiece* FindPiece(const std::string& name) const;
+
 	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
 	void DrawStatic() const { rootPiece->DrawStatic(); }
 	void DeletePieces(S3DModelPiece* piece);
-	S3DModelPiece* FindPiece(const std::string& name) const;
 
 public:
 	std::string name;
 	std::string tex1;
 	std::string tex2;
 
-	int id;                 // unsynced ID, starting with 1
+	int id;                     /// unsynced ID, starting with 1
 	int numPieces;
-	int textureType;        // FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
+	int textureType;            /// FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
 
 	ModelType type;
 
-	bool flipTexY;          // Turn both textures upside down before use
-	bool invertTexAlpha;    // Invert teamcolor alpha channel in S3O texture 1
+	bool invertTexYAxis;        /// Turn both textures upside down before use
+	bool invertTexAlpha;        /// Invert teamcolor alpha channel in S3O texture 1
 
 	float radius;
 	float height;
@@ -191,8 +208,8 @@ public:
 	float3 maxs;
 	float3 relMidPos;
 
-	S3DModelPiece* rootPiece;   // The piece at the base of the model hierarchy
-	ModelPieceMap pieces;       // Lookup table for pieces by name
+	S3DModelPiece* rootPiece;   /// The piece at the base of the model hierarchy
+	ModelPieceMap pieceMap;     /// Lookup table for pieces by name
 };
 
 
@@ -242,7 +259,7 @@ struct LocalModelPiece
 	      CollisionVolume* GetCollisionVolume()       { return colvol; }
 
 private:
-	float3 pos; // translation relative to parent LMP
+	float3 pos; // translation relative to parent LMP, *INITIALLY* equal to original->offset
 	float3 rot; // orientation relative to parent LMP, in radians (updated by scripts)
 	float3 dir; // direction from vertex[0] to vertex[1] (constant!)
 
@@ -275,8 +292,7 @@ struct LocalModel
 	CR_DECLARE_STRUCT(LocalModel);
 
 	LocalModel(const S3DModel* model)
-		: original(model)
-		, dirtyPieces(model->numPieces)
+		: dirtyPieces(model->numPieces)
 		, lodCount(0)
 	{
 		assert(model->numPieces >= 1);
@@ -338,8 +354,6 @@ private:
 	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent);
 
 public:
-	const S3DModel* original;
-
 	// increased by UnitScript whenever a piece is transformed
 	unsigned int dirtyPieces;
 	unsigned int lodCount;

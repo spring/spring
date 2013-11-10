@@ -6,7 +6,7 @@
 #include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
 
 #include "PFSTypes.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/float3.h"
 
 struct MoveDef;

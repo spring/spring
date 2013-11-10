@@ -16,14 +16,19 @@
 static const int testRuns = 1000000;
 
 
+#ifdef TEST_SDL
 #include <SDL_timer.h>
 struct SDLClock {
 	static inline float ToMs() { return 1.0f; }
 	static inline std::string GetName() { return "SDL_GetTicks"; }
 	static inline int64_t Get() {
+		// on Linux, same as clock_gettime(MT) with SDL 1.2
+		// on Windows, same as GetTickCount or timeGetTime
+		assert(SDL_WasInit(SDL_INIT_TIMER));
 		return SDL_GetTicks();
 	}
 };
+#endif
 
 
 #ifdef Boost_TIMER_FOUND
@@ -113,7 +118,7 @@ struct SpringClock {
 	static inline float ToMs() { return 1.0f / 1e6; }
 	static inline std::string GetName() { return "SpringTime"; }
 	static inline int64_t Get() {
-		return spring_time::gettime().toNanoSecs();
+		return spring_time::gettime().toNanoSecsi();
 	}
 };
 
@@ -154,6 +159,8 @@ struct TestProcessor {
 BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 {
 	LOG("Clock Precision Test");
+	spring_clock::PushTickRate();
+	spring_time::setstarttime(spring_time::gettime(true));
 
 	#ifdef BOOST_CHRONO_HAS_CLOCK_STEADY
 	LOG("[%s] BOOST_CHRONO_HAS_CLOCK_STEADY defined --> CLOCK_MONOTONIC", __FUNCTION__);
@@ -168,7 +175,9 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 
 	float bestAvg = 1e9;
 
+	#ifdef TEST_SDL
 	bestAvg = std::min(bestAvg, TestProcessor<SDLClock>::Run());
+	#endif
 	bestAvg = std::min(bestAvg, TestProcessor<BoostChronoClock>::Run());
 	bestAvg = std::min(bestAvg, TestProcessor<BoostChronoMicroClock>::Run());
 #ifdef Boost_TIMER_FOUND
@@ -240,7 +249,7 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 	// check toSecs precision range
 	boost::int64_t i10ei = 10;
 	for (int i = 1; i<10; ++i) {
-		BOOST_CHECK( std::abs(spring_time::fromSecs(i10ei).toSecs() - i10ei) < 1.0f);
+		BOOST_CHECK( std::abs(spring_time::fromSecs(i10ei).toSecsi() - i10ei) < 1.0f);
 		i10ei *= 10LL;
 	}
 
@@ -248,9 +257,15 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 	BOOST_CHECK( std::abs(spring_time(1e3).toSecsf() - 1e0) < 0.1f);
 	BOOST_CHECK( std::abs(spring_time(1e6).toSecsf() - 1e3) < 0.1f);
 	BOOST_CHECK( std::abs(spring_time(1e9).toSecsf() - 1e6) < 0.1f);
+
+	spring_clock::PopTickRate();
 }
 
 
+
+#ifdef TEST_SDL
+void sleep_sdl(int time)  { SDL_Delay(time); }
+#endif
 
 void sleep_boost_posix(int time)  { boost::this_thread::sleep(boost::posix_time::milliseconds(time)); }
 void sleep_boost_posix2(int time) { boost::this_thread::sleep(boost::posix_time::microseconds(time)); }
@@ -287,12 +302,12 @@ void BenchmarkSleepFnc(const std::string& name, void (*sleep)(int time), const i
 
 	// check lowest possible sleep tick
 	for (int i=0; i<runs; ++i) {
-		sleep(1);
+		sleep(0);
 
 		spring_time diff = spring_gettime() - t;
 		if ((diff > tmax) || !spring_istime(tmax)) tmax = diff;
 		if ((diff < tmin) || !spring_istime(tmin)) tmin = diff;
-		tavg = float(i * tavg + diff.toNanoSecs()) / (i + 1);
+		tavg = float(i * tavg + diff.toNanoSecsi()) / (i + 1);
 		t = spring_gettime();
 	}
 
@@ -320,6 +335,9 @@ BOOST_AUTO_TEST_CASE( ThreadSleepTime )
 {
 	LOG("Sleep() Precision Test");
 
+	#ifdef TEST_SDL
+	BenchmarkSleepFnc("sleep_sdl", &sleep_sdl, 500, 1e0);
+	#endif
 	BenchmarkSleepFnc("sleep_boost_posixtime_milliseconds", &sleep_boost_posix, 500, 1e0);
 	BenchmarkSleepFnc("sleep_boost_posixtime_microseconds", &sleep_boost_posix2, 500, 1e3);
 #ifdef BOOST_THREAD_USES_CHRONO

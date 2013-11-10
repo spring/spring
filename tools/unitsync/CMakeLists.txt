@@ -17,6 +17,10 @@ LIST(APPEND unitsync_libs 7zip lua headlessStubs archives)
 LIST(APPEND unitsync_libs ${ZLIB_LIBRARY})
 LIST(APPEND unitsync_libs ${SPRING_MINIZIP_LIBRARY})
 
+IF (WIN32)
+	LIST(APPEND unitsync_libs ${WINMM_LIBRARY})
+ENDIF (WIN32)
+
 IF    (MINGW)
 	# We still need these header files,
 	# even if we are not going to link with SDL.
@@ -55,6 +59,7 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigVariable.cpp"
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
 	"${ENGINE_SRC_ROOT}/System/CRC.cpp"
+	"${ENGINE_SRC_ROOT}/System/Misc/SpringTime.cpp"
 	"${ENGINE_SRC_ROOT}/System/Platform/Misc.cpp"
 	"${ENGINE_SRC_ROOT}/System/Platform/ScopedFileLock.cpp"
 	"${ENGINE_SRC_ROOT}/System/Platform/Threading.cpp"
@@ -63,6 +68,7 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/System/ThreadPool.cpp"
 	"${ENGINE_SRC_ROOT}/System/Info.cpp"
 	"${ENGINE_SRC_ROOT}/System/Option.cpp"
+	"${ENGINE_SRC_ROOT}/System/SafeVector.cpp"
 	"${ENGINE_SRC_ROOT}/System/SafeCStrings.c"
 	"${ENGINE_SRC_ROOT}/System/Util.cpp"
 	"${ENGINE_SRC_ROOT}/System/float4.cpp"

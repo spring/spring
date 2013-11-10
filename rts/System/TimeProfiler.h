@@ -86,6 +86,8 @@ public:
 	CTimeProfiler();
 	~CTimeProfiler();
 
+	static CTimeProfiler& GetInstance();
+
 	float GetPercent(const char *name);
 	void Update();
 
@@ -119,6 +121,6 @@ private:
 	unsigned currentPosition;
 };
 
-extern CTimeProfiler profiler;
+#define profiler (CTimeProfiler::GetInstance())
 
 #endif // TIME_PROFILER_H
