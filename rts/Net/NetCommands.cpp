@@ -161,8 +161,9 @@ void CGame::ClientReadNet()
 
 		// get netpacket from the queue
 		boost::shared_ptr<const netcode::RawPacket> packet = net->GetData(gs->frameNum);
+
 		if (!packet) {
-			LOG_SL(LOG_SECTION_NET, L_DEBUG, "Run out of netpackets!");
+			// LOG_SL(LOG_SECTION_NET, L_DEBUG, "Run out of netpackets!");
 			break;
 		}
 
@@ -902,30 +903,34 @@ void CGame::ClientReadNet()
 						break;
 					}
 					case TEAMMSG_RESIGN: {
+						if (!playing)
+							break;
+
 						playerHandler->Player(player)->StartSpectating();
 
 						// update all teams of which the player is leader
 						for (size_t t = 0; t < teamHandler->ActiveTeams(); ++t) {
 							CTeam* team = teamHandler->Team(t);
 
-							if (team->GetLeader() == player) {
-								const std::vector<int> &teamPlayers = playerHandler->ActivePlayersInTeam(t);
-								const std::vector<unsigned char> &teamAIs  = skirmishAIHandler.GetSkirmishAIsInTeam(t);
+							if (team->GetLeader() != player)
+								continue;
 
-								if ((teamPlayers.size() + teamAIs.size()) == 0) {
-									// no controllers left in team
-									//team.active = false;
-									team->SetLeader(-1);
-								} else if (teamPlayers.empty()) {
-									// no human player left in team
-									team->SetLeader(skirmishAIHandler.GetSkirmishAI(teamAIs[0])->hostPlayer);
-								} else {
-									// still human controllers left in team
-									team->SetLeader(teamPlayers[0]);
-								}
+							const std::vector<int> &teamPlayers = playerHandler->ActivePlayersInTeam(t);
+							const std::vector<unsigned char> &teamAIs  = skirmishAIHandler.GetSkirmishAIsInTeam(t);
+
+							if ((teamPlayers.size() + teamAIs.size()) == 0) {
+								// no controllers left in team
+								//team.active = false;
+								team->SetLeader(-1);
+							} else if (teamPlayers.empty()) {
+								// no human player left in team
+								team->SetLeader(skirmishAIHandler.GetSkirmishAI(teamAIs[0])->hostPlayer);
+							} else {
+								// still human controllers left in team
+								team->SetLeader(teamPlayers[0]);
 							}
 						}
-						LOG("Player %i (%s) resigned and is now spectating!",
+						LOG_L(L_DEBUG, "Player %i (%s) resigned and is now spectating!",
 								player,
 								playerHandler->Player(player)->name.c_str());
 						selectedUnitsHandler.ClearNetSelect(player);
@@ -1173,12 +1178,14 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket pckt(packet, 3);
 					unsigned char spectator, team, playerNum;
 					std::string name;
+
 					// since the >> operator uses dest size to extract data from the packet, we need to use temp variables
 					// of the same size of the packet, then convert to dest variable
 					pckt >> playerNum;
 					pckt >> spectator;
 					pckt >> team;
 					pckt >> name;
+
 					CPlayer player;
 					player.name = name;
 					player.spectator = spectator;
@@ -1188,13 +1195,16 @@ void CGame::ClientReadNet()
 					// TODO NETMSG_CREATE_NEWPLAYER perhaps add a lua hook; hook should be able to reassign the player to a team and/or create a new team/allyteam
 					playerHandler->AddPlayer(player);
 					eventHandler.PlayerAdded(player.playerNum);
-					LOG("Added new player: %s", name.c_str());
+
+					LOG("[CRN::%s] added new player %s with number %d to team %d", __FUNCTION__, name.c_str(), player.playerNum, player.team);
+
 					if (!player.spectator) {
 						eventHandler.TeamChanged(player.team);
 					}
+
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "Got invalid New player message: %s", ex.what());
+					LOG_L(L_ERROR, "[CRN::%s] got invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
 				}
 				break;
 			}

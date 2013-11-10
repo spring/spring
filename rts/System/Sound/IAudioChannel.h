@@ -8,7 +8,6 @@
 
 struct GuiSoundSet;
 class CSoundSource;
-class CUnit;
 class CWorldObject;
 
 /**
@@ -45,10 +44,9 @@ public:
 	virtual void PlaySample(size_t id, const float3& p, float volume = 1.0f) = 0;
 	virtual void PlaySample(size_t id, const float3& p, const float3& velocity, float volume = 1.0f) = 0;
 
-	virtual void PlaySample(size_t id, const CUnit* u, float volume = 1.0f) = 0;
 	virtual void PlaySample(size_t id, const CWorldObject* p, float volume = 1.0f) = 0;
 
-	virtual void PlayRandomSample(const GuiSoundSet& soundSet, const CUnit* unit) = 0;
+	virtual void PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj) = 0;
 	virtual void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos) = 0;
 
 	/**

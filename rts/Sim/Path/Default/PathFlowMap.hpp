@@ -6,7 +6,7 @@
 #include <set>
 #include <vector>
 
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/float3.h"
 
 struct MoveDef;

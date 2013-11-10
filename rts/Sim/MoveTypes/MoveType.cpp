@@ -55,26 +55,43 @@ void AMoveType::SlowUpdate()
 		oldSlowUpdatePos = owner->pos;
 
 		const int newMapSquare = ground->GetSquare(owner->pos);
+
 		const float losHeight = owner->losHeight;
 		const float radarHeight = owner->radarHeight;
-		const bool isAirMoveType = !owner->UsingScriptMoveType() && owner->unitDef->canfly;
 
 		if (newMapSquare != owner->mapSquare) {
 			owner->mapSquare = newMapSquare;
 
-			if (isAirMoveType) {
-				// temporarily set LOS- and radar-height to current altitude for aircraft
-				owner->losHeight = (owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z)) + 5.0f;
-				owner->radarHeight = owner->losHeight;
+			// if owner is an aircraft, temporarily add current altitude to emit-heights
+			// otherwise leave them as-is unless owner floats on water and is over water
+			if (!owner->UsingScriptMoveType()) {
+				const float agh = ground->GetApproximateHeight(owner->pos.x, owner->pos.z);
+				const float alt = owner->pos.y - agh;
+
+				if (owner->IsInAir() && owner->unitDef->canfly) {
+					owner->losHeight += alt;
+					owner->radarHeight += alt;
+				}
+				if (owner->IsInWater() && owner->unitDef->floatOnWater) {
+					// agh is (should be) <= 0 here
+					owner->losHeight -= agh;
+					owner->radarHeight -= agh;
+				}
+
+				if ((owner->IsOnGround() || owner->IsInWater()) && owner->unitDef->IsGroundUnit()) {
+					// always (re-)add us to occupation map if we moved
+					// (since our last SlowUpdate) and are on the ground
+					// NOTE: ships are ground units but not on the ground
+					owner->Block();
+				}
 			}
 
 			losHandler->MoveUnit(owner, false);
 			radarHandler->MoveUnit(owner);
 
-			if (isAirMoveType) {
-				owner->losHeight = losHeight;
-				owner->radarHeight = radarHeight;
-			}
+			// restore emit-heights
+			owner->losHeight = losHeight;
+			owner->radarHeight = radarHeight;
 		}
 
 		quadField->MovedUnit(owner);

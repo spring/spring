@@ -20,18 +20,6 @@ CR_REG_METADATA(CTracerProjectile,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CTracerProjectile::CTracerProjectile(const float3& pos, const float3& speed, const float range, CUnit* owner):
-	CProjectile(pos, speed, owner, false, false, false)
-	, length(range)
-	, drawLength(0.0f)
-{
-	SetRadiusAndHeight(1.0f, 0.0f);
-	checkCol = false;
-
-	speedf = this->speed.Length();
-	dir = this->speed / speedf;
-}
-
 CTracerProjectile::CTracerProjectile()
 	: speedf(0.0f)
 	, length(0.0f)
@@ -40,21 +28,28 @@ CTracerProjectile::CTracerProjectile()
 	checkCol = false;
 }
 
+CTracerProjectile::CTracerProjectile(const float3& pos, const float3& spd, const float range, CUnit* owner)
+	: CProjectile(pos, spd, owner, false, false, false)
+	, length(range)
+	, drawLength(0.0f)
+{
+	SetRadiusAndHeight(1.0f, 0.0f);
+
+	checkCol = false;
+	// Projectile::Init has been called, so .w is defined
+	// FIXME: constant, assumes |speed| never changes after creation
+	speedf = this->speed.w;
+}
+
 void CTracerProjectile::Init(const float3& pos, CUnit* owner)
 {
-	speedf = speed.Length();
-	if (speedf == 0.0f) {
-		speed = RgtVector;
-	}
-	dir = speed / speedf;
-
 	CProjectile::Init(pos, owner);
+
+	// FIXME: constant,assumes |speed| never changes after creation
+	speedf = speed.w;
 }
 
-CTracerProjectile::~CTracerProjectile()
-{
 
-}
 
 void CTracerProjectile::Update()
 {

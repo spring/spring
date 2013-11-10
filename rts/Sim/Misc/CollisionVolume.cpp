@@ -256,11 +256,7 @@ void CollisionVolume::FixTypeAndScale(float3& scales) {
 
 
 float3 CollisionVolume::GetWorldSpacePos(const CSolidObject* o, const float3& extOffsets) const {
-	float3 pos = o->midPos;
-	pos += (o->rightdir * (axisOffsets.x + extOffsets.x));
-	pos += (o->updir    * (axisOffsets.y + extOffsets.y));
-	pos += (o->frontdir * (axisOffsets.z + extOffsets.z));
-	return pos;
+	return (o->midPos + o->GetObjectSpaceVec(axisOffsets + extOffsets));
 }
 
 

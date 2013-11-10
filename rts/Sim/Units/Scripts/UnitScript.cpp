@@ -542,15 +542,8 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 
 	relDir.SafeNormalize();
 
-	const float3 pos =
-		unit->pos +
-		unit->frontdir * relPos.z +
-		unit->updir    * relPos.y +
-		unit->rightdir * relPos.x;
-	const float3 dir =
-		unit->frontdir * relDir.z +
-		unit->updir    * relDir.y +
-		unit->rightdir * relDir.x;
+	const float3 pos = unit->GetObjectSpacePos(relPos);
+	const float3 dir = unit->GetObjectSpaceVec(relDir);
 
 	float alpha = 0.3f + gu->RandFloat() * 0.2f;
 	float alphaFalloff = 0.004f;
@@ -560,7 +553,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 	const MoveDef* md = unit->moveDef;
 
 	// hovercraft need special care
-	if (md != NULL && md->moveFamily == MoveDef::Hover) {
+	if (md != NULL && md->speedModClass == MoveDef::Hover) {
 		fadeupTime = 8.0f;
 		alpha = 0.15f + gu->RandFloat() * 0.2f;
 		alphaFalloff = 0.008f;
@@ -652,7 +645,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 
 				weapon->targetPos = pos + dir;
 				weapon->weaponMuzzlePos = pos;
-				weapon->Fire();
+				weapon->Fire(true);
 				weapon->weaponMuzzlePos = weaponMuzzlePos;
 				weapon->targetPos = targetPos;
 			}
@@ -764,11 +757,7 @@ void CUnitScript::Explode(int piece, int flags)
 
 #ifndef _CONSOLE
 	const float3 relPos = GetPiecePos(piece);
-	const float3 absPos =
-		unit->pos +
-		unit->frontdir * relPos.z +
-		unit->updir    * relPos.y +
-		unit->rightdir * relPos.x;
+	const float3 absPos = unit->GetObjectSpacePos(relPos);
 
 #ifdef TRACE_SYNC
 	tracefile << "Cob explosion: ";
@@ -786,7 +775,7 @@ void CUnitScript::Explode(int piece, int flags)
 
 	// This means that we are going to do a full fledged piece explosion!
 	float3 baseSpeed = unit->speed;
-	float3 speed((0.5f - gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
+	float3 explSpeed((0.5f - gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
 
 	if (baseSpeed.SqLength() > 9) {
 		const float l  = baseSpeed.Length();
@@ -794,18 +783,18 @@ void CUnitScript::Explode(int piece, int flags)
 		baseSpeed *= (l2 / l);
 	}
 	if (unit->pos.y - ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 15) {
-		speed.y = (0.5f - gs->randFloat()) * 6.0f;
+		explSpeed.y = (0.5f - gs->randFloat()) * 6.0f;
 	}
 
-	speed += baseSpeed;
+	explSpeed += baseSpeed;
 
 	// limit projectile speed to 12 elmos/frame (why?)
-	if (speed.SqLength() > (12.0f*12.0f)) {
-		speed = (speed.Normalize() * 12.0f);
+	if (false && explSpeed.SqLength() > (12.0f*12.0f)) {
+		explSpeed = (explSpeed.Normalize() * 12.0f);
 	}
 
 	if (flags & PF_Shatter) {
-		Shatter(piece, absPos, speed);
+		Shatter(piece, absPos, explSpeed);
 		return;
 	}
 
@@ -821,7 +810,7 @@ void CUnitScript::Explode(int piece, int flags)
 	if ((flags & PF_Fire) && projectileHandler->particleSaturation < 0.95f) { newflags |= PF_Fire; }
 	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
 
-	new CPieceProjectile(absPos, speed, unit, pieces[piece], newflags, 0.5f);
+	new CPieceProjectile(absPos, explSpeed, unit, pieces[piece], newflags, 0.5f);
 #endif
 }
 
@@ -846,11 +835,7 @@ void CUnitScript::ShowFlare(int piece)
 	}
 #ifndef _CONSOLE
 	const float3 relPos = GetPiecePos(piece);
-	const float3 absPos =
-		unit->pos +
-		unit->frontdir * relPos.z +
-		unit->updir    * relPos.y +
-		unit->rightdir * relPos.x;
+	const float3 absPos = unit->GetObjectSpacePos(relPos);
 	const float3 dir = unit->lastMuzzleFlameDir;
 	const float size = unit->lastMuzzleFlameSize;
 
@@ -913,7 +898,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			break;
 		}
 		const float3 relPos = GetPiecePos(p1);
-		const float3 absPos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
+		const float3 absPos = unit->GetObjectSpacePos(relPos);
 		return PACKXZ(absPos.x, absPos.z);
 	}
 	case PIECE_Y: {
@@ -922,7 +907,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			break;
 		}
 		const float3 relPos = GetPiecePos(p1);
-		const float3 absPos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
+		const float3 absPos = unit->GetObjectSpacePos(relPos);
 		return int(absPos.y * COBSCALE);
 	}
 	case UNIT_XZ: {
@@ -988,7 +973,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case VETERAN_LEVEL:
 		return int(100 * unit->experience);
 	case CURRENT_SPEED:
-		return int(unit->speed.Length() * COBSCALE);
+		return int(unit->speed.w * COBSCALE);
 	case ON_ROAD:
 		return 0;
 	case IN_WATER:

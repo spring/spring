@@ -81,7 +81,7 @@ void PathHeatMap::AddHeat(const CSolidObject* owner, const CPathManager* pm, uns
 		//   waypoints are spaced SQUARE_SIZE*2 elmos apart so
 		//   the heatmapped paths look like "breadcrumb" trails
 		//   this does not matter only because the default PFS
-		//   never explores odd-numbered squares
+		//   uses the same spacing-factor between waypoints
 		const float scale = 1.0f / points.size();
 		const float value = scale * owner->moveDef->heatProduced;
 

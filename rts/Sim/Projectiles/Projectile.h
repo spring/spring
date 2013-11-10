@@ -11,7 +11,7 @@
 
 #include "ExplosionGenerator.h"
 #include "System/float3.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 class CUnit;
 class CFeature;
@@ -41,8 +41,27 @@ public:
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	virtual void DrawCallback() {}
 
-	void SetSpeed(const float3& v) {
-		speed = dir = v; dir = dir.SafeNormalize();
+	// override WorldObject::SetVelocityAndSpeed so
+	// we can keep <dir> in sync with speed-vector
+	// (unlike other world objects, projectiles must
+	// always point directly along their speed-vector)
+	//
+	// should be called when speed-vector is changed
+	// s.t. both speed.w and dir need to be updated
+	void SetVelocityAndSpeed(const float3& vel) {
+		CWorldObject::SetVelocityAndSpeed(vel);
+
+		if (speed.w > 0.0f) {
+			dir = speed / speed.w;
+		}
+	}
+
+	void SetDirectionAndSpeed(const float3& _dir, float _spd) {
+		dir = _dir;
+		speed.w = _spd;
+
+		// keep speed-vector in sync with <dir>
+		CWorldObject::SetVelocity(dir * _spd);
 	}
 
 	CUnit* owner() const;
@@ -51,7 +70,7 @@ public:
 	unsigned int GetTeamID() const { return teamID; }
 
 	void SetQuadFieldCellCoors(const int2& cell) { quadFieldCellCoors = cell; }
-	int2 GetQuadFieldCellCoors() const { return quadFieldCellCoors; }
+	const int2& GetQuadFieldCellCoors() const { return quadFieldCellCoors; }
 
 	void SetQuadFieldCellIter(const std::list<CProjectile*>::iterator& it) { quadFieldCellIter = it; }
 	const std::list<CProjectile*>::iterator& GetQuadFieldCellIter() { return quadFieldCellIter; }

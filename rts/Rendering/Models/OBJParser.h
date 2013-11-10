@@ -5,7 +5,7 @@
 
 #include <map>
 #include "IModelParser.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 struct SOBJTriangle {
 	int vIndices[3]; ///< index of 1st/2nd/3rd vertex
@@ -15,10 +15,6 @@ struct SOBJTriangle {
 
 struct SOBJPiece: public S3DModelPiece {
 public:
-	SOBJPiece() {
-		type = MODELTYPE_OBJ;
-	}
-
 	void UploadGeometryVBOs();
 	void DrawForList() const;
 	void SetMinMaxExtends(bool globalVertexOffsets);

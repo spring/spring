@@ -6,6 +6,7 @@
 #include "Map/BaseGroundTextures.h"
 #include "Rendering/GL/PBO.h"
 
+class CSMFMapFile;
 class CSMFReadMap;
 
 class CSMFGroundTextures: public CBaseGroundTextures
@@ -20,11 +21,18 @@ public:
 	void BindSquareTexture(int texSquareX, int texSquareY);
 
 protected:
+	void LoadTiles(CSMFMapFile& file);
+	void LoadSquareTextures(const int mipLevel);
+	void ConvolveHeightMap(const int mapWidth, const int mipLevel);
+	bool RecompressTiles(bool canRecompress);
 	void ExtractSquareTiles(const int texSquareX, const int texSquareY, const int mipLevel, GLint* tileBuf) const;
 	void LoadSquareTexture(int x, int y, int level);
 
+	inline bool TexSquareInView(int, int) const;
+
 	CSMFReadMap* smfMap;
 
+private:
 	struct GroundSquare {
 		unsigned int texLevel;
 		unsigned int textureID;
@@ -37,16 +45,15 @@ protected:
 	std::vector<int> tileMap;
 	std::vector<char> tiles;
 
-	//! FIXME? these are not updated at runtime
+	// FIXME? these are not updated at runtime
 	std::vector<float> heightMaxima;
 	std::vector<float> heightMinima;
 	std::vector<float> stretchFactors;
 
-	//! use Pixel Buffer Objects for async. uploading (DMA)
+	// use Pixel Buffer Objects for async. uploading (DMA)
 	PBO pbo;
-	int texformat;
 
-	inline bool TexSquareInView(int, int) const;
+	int tileTexFormat;
 };
 
 #endif // _BF_GROUND_TEXTURES_H_

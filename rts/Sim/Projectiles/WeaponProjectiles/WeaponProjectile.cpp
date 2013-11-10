@@ -90,8 +90,8 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 		//   they additionally override our ::Update (so CProjectile::Update
 		//   is also never called) which means assigning speed a non-zerovec
 		//   value should have no side-effects
-		pos = startPos;
-		speed = targetPos - startPos;
+		SetPosition(startPos);
+		SetVelocityAndSpeed(targetPos - startPos);
 
 		// ProjectileDrawer vis-culls by pos == startPos, but we
 		// want to see the beam even if camera is near targetPos
@@ -295,12 +295,13 @@ void CWeaponProjectile::UpdateGroundBounce()
 	const float3& normal = ground->GetNormal(pos.x, pos.z);
 	const float dot = speed.dot(normal);
 
-	pos -= speed;
-	speed -= (speed + normal * math::fabs(dot)) * (1 - weaponDef->bounceSlip);
-	speed += (normal * (math::fabs(dot))) * (1 + weaponDef->bounceRebound);
-	pos += speed;
+	SetPosition(pos - speed);
+	CWorldObject::SetVelocity(speed - (speed + normal * math::fabs(dot)) * (1 - weaponDef->bounceSlip));
+	CWorldObject::SetVelocity(speed + (normal * (math::fabs(dot))) * (1 + weaponDef->bounceRebound));
+	SetPosition(pos + speed);
+	SetVelocityAndSpeed(speed);
 
-	explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, pos, normal, speed.Length(), 1.0f, 1.0f, owner(), NULL);
+	explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, pos, normal, speed.w, 1.0f, 1.0f, owner(), NULL);
 }
 
 

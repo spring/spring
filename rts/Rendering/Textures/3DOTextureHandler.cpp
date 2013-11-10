@@ -15,7 +15,7 @@
 #include "TAPalette.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/SimpleParser.h"

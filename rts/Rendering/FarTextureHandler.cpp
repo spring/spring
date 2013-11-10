@@ -169,7 +169,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	glFogf(GL_FOG_END,    1e6);
 	glFogf(GL_FOG_DENSITY, 1.0f);
 
-	unitDrawer->SetupForUnitDrawing();
+	unitDrawer->SetupForUnitDrawing(false);
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PushRenderState();
 	unitDrawer->SetTeamColour(obj->team);
 
@@ -222,7 +222,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	glPopMatrix();
 
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();
-	unitDrawer->CleanUpUnitDrawing();
+	unitDrawer->CleanUpUnitDrawing(false);
 
 	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glPopAttrib();

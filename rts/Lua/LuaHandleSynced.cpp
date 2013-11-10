@@ -148,24 +148,57 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 		return;
 	}
 
-	SetAllowChanges(true, true);
+	// 1. setup functions/environment
 	SetSynced(true, true);
-
-	const bool haveSynced = (SingleState() || L == L_Sim) && SetupSynced(L, syncedCode, syncedFile);
-	if (!IsValid())
-		return;
-
-	SetAllowChanges(false, true);
+	SetAllowChanges(true, true);
+	const bool haveSynced   = (SingleState() || L == L_Sim) && SetupSynced(L);
 	SetSynced(false, true);
+	SetAllowChanges(false, true);
+	const bool haveUnsynced = (SingleState() || L == L_Draw) && SetupUnsynced(L);
 
-	const bool haveUnsynced = (SingleState() || L == L_Draw) && SetupUnsynced(L, unsyncedCode, unsyncedFile);
-	if (!IsValid())
-		return;
+	// 2. load code (main.lua & draw.lua)
+	if (SingleState() || L == L_Sim) {
+		lua_settop(L, 0);
+		SetSynced(true, true);
+		SetAllowChanges(true, true);
+		if (!LoadCode(L, syncedCode, syncedFile)) {
+			KillLua();
+			return;
+		}
+	}
+	if (SingleState() || L == L_Draw) {
+		lua_settop(L, 0);
+		SetSynced(false, true);
+		SetAllowChanges(false, true);
+		if (!LoadUnsyncedCode(L, unsyncedCode, unsyncedFile)) {
+			KillLua();
+			return;
+		}
+
+		lua_settop(L, 0);
+		if (
+			!SetupUnsyncedFunction(L, "RecvFromSynced")      ||
+			!SetupUnsyncedFunction(L, "Update")              ||
+			!SetupUnsyncedFunction(L, "DrawGenesis")         ||
+			!SetupUnsyncedFunction(L, "DrawWorld")           ||
+			!SetupUnsyncedFunction(L, "DrawWorldPreUnit")    ||
+			!SetupUnsyncedFunction(L, "DrawWorldShadow")     ||
+			!SetupUnsyncedFunction(L, "DrawWorldReflection") ||
+			!SetupUnsyncedFunction(L, "DrawWorldRefraction") ||
+			!SetupUnsyncedFunction(L, "DrawScreenEffects")   ||
+			!SetupUnsyncedFunction(L, "DrawScreen")          ||
+			!SetupUnsyncedFunction(L, "DrawInMiniMap")
+		) {
+			KillLua();
+			return;
+		}
+		lua_settop(L, 0);
+	}
 
 	SetSynced(true, true);
 	SetAllowChanges(true, true);
 
-	if (!haveSynced && !haveUnsynced) {
+	if (!IsValid() || (!haveSynced && !haveUnsynced)) {
 		KillLua();
 		return;
 	}
@@ -177,9 +210,9 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 }
 
 
-bool CLuaHandleSynced::SetupSynced(lua_State *L, const string& code, const string& filename)
+bool CLuaHandleSynced::SetupSynced(lua_State *L)
 {
-	if (!IsValid() || code.empty()) {
+	if (!IsValid()) {
 		return false;
 	}
 
@@ -241,19 +274,13 @@ bool CLuaHandleSynced::SetupSynced(lua_State *L, const string& code, const strin
 	}
 
 	lua_settop(L, 0);
-
-	if (!LoadCode(L, code, filename)) {
-		KillLua();
-		return false;
-	}
-
 	return true;
 }
 
 
-bool CLuaHandleSynced::SetupUnsynced(lua_State *L, const string& code, const string& filename)
+bool CLuaHandleSynced::SetupUnsynced(lua_State *L)
 {
-	if (!IsValid() || code.empty()) {
+	if (!IsValid()) {
 		return false;
 	}
 
@@ -355,26 +382,6 @@ bool CLuaHandleSynced::SetupUnsynced(lua_State *L, const string& code, const str
 		return false;
 	}
 	lua_settop(L, 0);
-
-	if (!LoadUnsyncedCode(L, code, filename)) {
-		KillLua();
-		return false;
-	}
-
-	if (!SetupUnsyncedFunction(L, "RecvFromSynced")      ||
-	    !SetupUnsyncedFunction(L, "Update")              ||
-	    !SetupUnsyncedFunction(L, "DrawGenesis")         ||
-	    !SetupUnsyncedFunction(L, "DrawWorld")           ||
-	    !SetupUnsyncedFunction(L, "DrawWorldPreUnit")    ||
-	    !SetupUnsyncedFunction(L, "DrawWorldShadow")     ||
-	    !SetupUnsyncedFunction(L, "DrawWorldReflection") ||
-	    !SetupUnsyncedFunction(L, "DrawWorldRefraction") ||
-	    !SetupUnsyncedFunction(L, "DrawScreenEffects")   ||
-	    !SetupUnsyncedFunction(L, "DrawScreen")          ||
-	    !SetupUnsyncedFunction(L, "DrawInMiniMap")) {
-		return false;
-	}
-
 	return true;
 }
 
@@ -657,69 +664,6 @@ bool CLuaHandleSynced::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 //
 //  Call-ins (first two are unused)
 //
-
-#if 0
-bool CLuaHandleSynced::Initialize(const string& syncData)
-{
-	LUA_CALL_IN_CHECK(L, true);
-	luaL_checkstack(L, 3, __FUNCTION__);
-	static const LuaHashString cmdStr("Initialize");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return true;
-	}
-
-	int errfunc = LuaUtils::PushDebugTraceback(L) ? -2 : 0;
-	LOG("Initialize errfunc=%d", errfunc);
-
-	lua_pushsstring(L, syncData);
-
-	// call the routine
-	if (!RunCallInTraceback(cmdStr, 1, 1, errfunc)) {
-		return false;
-	}
-
-	// get the results
-	if (!lua_isboolean(L, -1)) {
-		lua_pop(L, 1);
-		return true;
-	}
-	const bool retval = !!lua_toboolean(L, -1);
-	lua_pop(L, 1);
-	return retval;
-}
-
-string CLuaHandleSynced::GetSyncData()
-{
-	string syncData;
-
-	LUA_CALL_IN_CHECK(L, syncData);
-	luaL_checkstack(L, 2, __FUNCTION__);
-	static const LuaHashString cmdStr("GetSyncData");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return syncData;
-	}
-
-	// call the routine
-	if (!RunCallIn(cmdStr, 0, 1)) {
-		return syncData;
-	}
-
-	// get the result
-	if (!lua_isstring(L, -1)) {
-		lua_pop(L, 1);
-		return syncData;
-	}
-	const int len = lua_strlen(L, -1);
-	const char* c = lua_tostring(L, -1);
-	syncData.resize(len);
-	for (int i = 0; i < len; i++) {
-		syncData[i] = c[i];
-	}
-	lua_pop(L, 1);
-
-	return syncData;
-}
-#endif
 
 
 bool CLuaHandleSynced::SyncedActionFallback(const string& msg, int playerID)

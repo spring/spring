@@ -14,6 +14,8 @@
 #include <vector>
 #include <utility>
 #include <boost/optional.hpp>
+#include <boost/thread.hpp>
+#include <boost/thread/shared_mutex.hpp>
 
 static std::deque<std::shared_ptr<ITaskGroup>> taskGroups;
 static std::deque<void*> thread_group;
@@ -263,3 +265,4 @@ void SetThreadSpinTime(int milliSeconds)
 };
 
 #endif
+

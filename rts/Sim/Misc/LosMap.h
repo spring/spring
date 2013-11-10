@@ -6,7 +6,7 @@
 #define LOS_MAP_H
 
 #include <vector>
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 /// map containing counts of how many units have Line Of Sight (LOS) to each square
 class CLosMap

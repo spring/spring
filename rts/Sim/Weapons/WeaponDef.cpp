@@ -122,7 +122,7 @@ WEAPONTAG(float, duration).defaultValue(0.05f);
 WEAPONTAG(float, beamtime).defaultValue(1.0f);
 WEAPONTAG(bool, beamburst).defaultValue(false);
 WEAPONTAG(int, beamLaserTTL).externalName("beamTTL").defaultValue(0);
-WEAPONTAG(bool, sweepFire).defaultValue(true).description("Makes BeamLasers continue firing while aiming for a new target, 'sweeping' across the terrain.");
+WEAPONTAG(bool, sweepFire).defaultValue(false).description("Makes BeamLasers continue firing while aiming for a new target, 'sweeping' across the terrain.");
 WEAPONTAG(bool, largeBeamLaser).defaultValue(false);
 
 // FLAMETHROWER
@@ -258,9 +258,9 @@ WeaponDef::WeaponDef()
 	collisionFlags = 0;
 
 	// set later by ProjectileDrawer
-	ptrailExplosionGeneratorID = -1u;
-	impactExplosionGeneratorID = -1u;
-	bounceExplosionGeneratorID = -1u;
+	ptrailExplosionGeneratorID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
+	impactExplosionGeneratorID = CExplosionGeneratorHandler::EXPGEN_ID_STANDARD;
+	bounceExplosionGeneratorID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
 
 	isShield = false;
 	noAutoTarget = false;
@@ -273,9 +273,9 @@ WeaponDef::WeaponDef()
 WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	: name(name_)
 
-	, ptrailExplosionGeneratorID(-1u)
-	, impactExplosionGeneratorID(-1u)
-	, bounceExplosionGeneratorID(-1u)
+	, ptrailExplosionGeneratorID(CExplosionGeneratorHandler::EXPGEN_ID_INVALID)
+	, impactExplosionGeneratorID(CExplosionGeneratorHandler::EXPGEN_ID_STANDARD)
+	, bounceExplosionGeneratorID(CExplosionGeneratorHandler::EXPGEN_ID_INVALID)
 
 	, id(id_)
 	, projectileType(WEAPON_BASE_PROJECTILE)

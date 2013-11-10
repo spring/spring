@@ -79,6 +79,7 @@ gadgetHandler = {
   xViewSizeOld = 1,
   yViewSizeOld = 1,
 
+  actionHandler = actionHandler,
   mouseOwner = nil,
 }
 
@@ -803,6 +804,13 @@ end
 --
 --  The call-in distribution routines
 --
+function gadgetHandler:GameSetup(state, ready, playerStates)
+  local success, newReady = false, ready
+  for _,g in ipairs(self.GameSetupList) do
+    success, newReady = g:GameSetup(state, ready, playerStates)
+  end
+  return success, newReady
+end
 
 function gadgetHandler:GamePreload()
   for _,g in ipairs(self.GamePreloadList) do
@@ -1015,7 +1023,7 @@ end
 
 function gadgetHandler:DrawProjectile(projectileID, drawMode)
   for _,g in ipairs(self.DrawProjectileList) do
-    if (g:DrawProjectile(projectile, drawMode)) then
+    if (g:DrawProjectile(projectileID, drawMode)) then
       return true
     end
   end
@@ -1263,9 +1271,9 @@ function gadgetHandler:UnitIdle(unitID, unitDefID, unitTeam)
 end
 
 
-function gadgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag)
+function gadgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag, cmdParams, cmdOpts)
   for _,g in ipairs(self.UnitCmdDoneList) do
-    g:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag)
+    g:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag, cmdParams, cmdOpts)
   end
   return
 end
@@ -1287,9 +1295,11 @@ function gadgetHandler:UnitPreDamaged(
   local retImpulse = 1.0
 
   for _,g in ipairs(self.UnitPreDamagedList) do
-    dmg, imp = g:UnitPreDamaged(unitID, unitDefID, unitTeam,
-                  damage, paralyzer, weaponDefID, projectileID,
-                  attackerID, attackerDefID, attackerTeam)
+    dmg, imp = g:UnitPreDamaged(
+      unitID, unitDefID, unitTeam,
+      retDamage, paralyzer,
+      weaponDefID, projectileID,
+      attackerID, attackerDefID, attackerTeam)
 
     if (dmg ~= nil) then retDamage = dmg end
     if (imp ~= nil) then retImpulse = imp end
@@ -1306,6 +1316,7 @@ function gadgetHandler:UnitDamaged(
   damage,
   paralyzer,
   weaponDefID,
+  projectileID,
   attackerID,
   attackerDefID,
   attackerTeam
@@ -1461,14 +1472,15 @@ function gadgetHandler:FeatureDamaged(
   featureTeam,
   damage,
   weaponDefID,
+  projectileID,
   attackerID,
   attackerDefID,
   attackerTeam
 )
   for _,g in ipairs(self.FeatureDamagedList) do
     g:FeatureDamaged(featureID, featureDefID, featureTeam,
-                  damage, weaponDefID,
-                  attackerID, attackerDefID, attackerTeam)
+                    damage, weaponDefID, projectileID,
+                    attackerID, attackerDefID, attackerTeam)
   end
 end
 
@@ -1487,9 +1499,11 @@ function gadgetHandler:FeaturePreDamaged(
   local retImpulse = 1.0
 
   for _,g in ipairs(self.FeaturePreDamagedList) do
-    dmg, imp = g:FeaturePreDamaged(featureID, featureDefID, featureTeam,
-                  damage, weaponDefID, projectileID,
-                  attackerID, attackerDefID, attackerTeam)
+    dmg, imp = g:FeaturePreDamaged(
+      featureID, featureDefID, featureTeam,
+      retDamage,
+      weaponDefID, projectileID,
+      attackerID, attackerDefID, attackerTeam)
 
     if (dmg ~= nil) then retDamage = dmg end
     if (imp ~= nil) then retImpulse = imp end
@@ -1573,6 +1587,15 @@ function gadgetHandler:DefaultCommand(type, id)
     end
   end
   return
+end
+
+function gadgetHandler:CommandNotify(id, params, options)
+  for _,g in ipairs(self.CommandNotifyList) do
+    if (g:CommandNotify(id, params, options)) then
+      return true
+    end
+  end
+  return false
 end
 
 
@@ -1738,6 +1761,16 @@ function gadgetHandler:GetTooltip(x, y)
     end
   end
   return ''
+end
+
+
+function gadgetHandler:MapDrawCmd(playerID, cmdType, px, py, pz, labelText)
+  for _,g in ipairs(self.MapDrawCmdList) do
+    if (g:MapDrawCmd(playerID, cmdType, px, py, pz, labelText)) then
+      return true
+    end
+  end
+  return false
 end
 
 --------------------------------------------------------------------------------

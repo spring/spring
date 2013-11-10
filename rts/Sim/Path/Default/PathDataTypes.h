@@ -8,7 +8,7 @@
 #include <cstring> // for memset
 
 #include "PathConstants.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include <boost/cstdint.hpp>
 
 /// represents either a single square (PF) or a block of squares (PE)

@@ -54,7 +54,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(angleGood),
 	CR_MEMBER(avoidTarget),
 	CR_MEMBER(haveUserTarget),
-	CR_MEMBER(subClassReady),
 	CR_MEMBER(onlyForward),
 	CR_MEMBER(muzzleFlareSize),
 	CR_MEMBER(craterAreaOfEffect),
@@ -143,7 +142,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	hasTargetWeight(false),
 	angleGood(false),
 	avoidTarget(false),
-	subClassReady(true),
 	onlyForward(false),
 	badTargetCategory(0),
 	onlyTargetCategory(0xffffffff),
@@ -158,7 +156,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	lastTargetRetry(-100),
 	lastErrorVectorUpdate(0),
 
-	slavedTo(0),
+	slavedTo(NULL),
 	maxForwardAngleDif(0.0f),
 	maxMainDirAngleDif(-1.0f),
 	targetBorder(0.f),
@@ -303,7 +301,7 @@ void CWeapon::UpdateTargeting()
 		}
 
 		const float3 errorPos = targetUnit->GetErrorPos(owner->allyteam, true);
-		const float errorScale = ( MoveErrorExperience() * GAME_SPEED * targetUnit->speed.Length() );
+		const float errorScale = (MoveErrorExperience() * GAME_SPEED * targetUnit->speed.w);
 
 		float3 tmpTargetPos = errorPos + lead + errorVector * errorScale;
 		float3 tmpTargetVec = tmpTargetPos - weaponMuzzlePos;
@@ -324,10 +322,7 @@ void CWeapon::UpdateTargeting()
 		AdjustTargetPosToWater(targetPos, targetType == Target_Pos);
 
 		const float3 worldTargetDir = (targetPos - owner->pos).SafeNormalize();
-		const float3 worldMainDir =
-			owner->frontdir * mainDir.z +
-			owner->rightdir * mainDir.x +
-			owner->updir    * mainDir.y;
+		const float3 worldMainDir = owner->GetObjectSpaceVec(mainDir);
 		const bool targetAngleConstraint = CheckTargetAngleConstraint(worldTargetDir, worldMainDir);
 
 		if (angleGood && !targetAngleConstraint) {
@@ -377,27 +372,32 @@ void CWeapon::UpdateTargeting()
 }
 
 
-bool CWeapon::CanFire() const
+bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const
 {
 	// FIXME merge some of the checks with TryTarget/TestRange/TestTarget (!)
-	if (!angleGood)
+	if (!ignoreAngleGood && !angleGood)
 		return false;
-	if (!subClassReady)
-		return false;
+
 	if (salvoLeft != 0)
 		return false;
-	if (targetType == Target_None)
+
+	if (!ignoreTargetType && targetType == Target_None)
 		return false;
+
 	if (reloadStatus > gs->frameNum)
 		return false;
+
 	if (weaponDef->stockpile && numStockpiled == 0)
 		return false;
+
 	// muzzle is underwater but we cannot fire underwater
 	if (!weaponDef->fireSubmersed && weaponMuzzlePos.y <= 0.0f)
 		return false;
+
 	// ~20 degree sanity check to force new aim
-	if (wantedDir.dot(lastRequestedDir) <= 0.94f)
+	if (!ignoreRequestedDir && wantedDir.dot(lastRequestedDir) <= 0.94f)
 		return false;
+
 	if ((owner->unitDef->maxFuel != 0) && (owner->currentFuel <= 0.0f) && (fuelUsage != 0.0f))
 		return false;
 
@@ -416,7 +416,7 @@ bool CWeapon::CanFire() const
 
 void CWeapon::UpdateFire()
 {
-	if (!CanFire())
+	if (!CanFire(false, false, false))
 		return;
 
 	CTeam* ownerTeam = teamHandler->Team(owner->team);
@@ -424,16 +424,10 @@ void CWeapon::UpdateFire()
 	if ((weaponDef->stockpile || (ownerTeam->metal >= metalFireCost && ownerTeam->energy >= energyFireCost))) {
 		owner->script->GetEmitDirPos(owner->script->QueryWeapon(weaponNum), relWeaponMuzzlePos, weaponDir);
 
-		weaponMuzzlePos = owner->pos +
-			(owner->frontdir * relWeaponMuzzlePos.z) +
-			(owner->updir    * relWeaponMuzzlePos.y) +
-			(owner->rightdir * relWeaponMuzzlePos.x);
-		weaponDir =
-			(owner->frontdir * weaponDir.z) +
-			(owner->updir    * weaponDir.y) +
-			(owner->rightdir * weaponDir.x);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+		weaponDir = owner->GetObjectSpaceVec(weaponDir);
 		weaponDir.SafeNormalize();
-		useWeaponPosForAim = reloadTime / 16 + 8;
+		useWeaponPosForAim = (reloadTime / UNIT_SLOWUPDATE_RATE) + 8;
 
 		if (TryTarget(targetPos, haveUserTarget, targetUnit) && !CobBlockShot(targetUnit)) {
 			if (weaponDef->stockpile) {
@@ -532,19 +526,9 @@ void CWeapon::UpdateSalvo()
 			piece = owner->script->QueryWeapon(weaponNum);
 			owner->script->GetEmitDirPos(piece, relWeaponMuzzlePos, weaponDir);
 
-			weaponPos = owner->pos +
-				owner->frontdir * relWeaponPos.z +
-				owner->updir    * relWeaponPos.y +
-				owner->rightdir * relWeaponPos.x;
-			weaponMuzzlePos = owner->pos +
-				owner->frontdir * relWeaponMuzzlePos.z +
-				owner->updir    * relWeaponMuzzlePos.y +
-				owner->rightdir * relWeaponMuzzlePos.x;
-
-			weaponDir =
-				owner->frontdir * weaponDir.z +
-				owner->updir    * weaponDir.y +
-				owner->rightdir * weaponDir.x;
+			weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+			weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+			weaponDir = owner->GetObjectSpaceVec(weaponDir);
 			weaponDir.SafeNormalize();
 
 			if (owner->unitDef->decloakOnFire && (owner->scriptCloak <= 2)) {
@@ -555,7 +539,7 @@ void CWeapon::UpdateSalvo()
 				owner->curCloakTimeout = gs->frameNum + owner->cloakTimeout;
 			}
 
-			Fire();
+			Fire(false);
 		}
 
 		//Rock the unit in the direction of fire
@@ -584,11 +568,7 @@ bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 	// keep target positions on the surface if this weapon hates water
 	AdjustTargetPosToWater(newTargetPos, true);
 
-	weaponMuzzlePos =
-		owner->pos +
-		owner->frontdir * relWeaponMuzzlePos.z +
-		owner->updir    * relWeaponMuzzlePos.y +
-		owner->rightdir * relWeaponMuzzlePos.x;
+	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 	if (weaponMuzzlePos.y < ground->GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
 		// hope that we are underground because we are a popup weapon and will come above ground later
@@ -618,16 +598,8 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	if (weaponDef->interceptor)
 		return false;
 
-	weaponPos =
-		owner->pos +
-		owner->frontdir * relWeaponPos.z +
-		owner->updir    * relWeaponPos.y +
-		owner->rightdir * relWeaponPos.x;
-	weaponMuzzlePos =
-		owner->pos +
-		owner->frontdir * relWeaponMuzzlePos.z +
-		owner->updir    * relWeaponMuzzlePos.y +
-		owner->rightdir * relWeaponMuzzlePos.x;
+	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 	if (weaponMuzzlePos.y < ground->GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
 		// hope that we are underground because we are a popup weapon and will come above ground later
@@ -662,7 +634,7 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	#endif
 
 	const float3 errorPos = newTargetUnit->GetErrorPos(owner->allyteam, true);
-	const float errorScale = (MoveErrorExperience() * GAME_SPEED * newTargetUnit->speed.Length() );
+	const float errorScale = (MoveErrorExperience() * GAME_SPEED * newTargetUnit->speed.w);
 	const float3 newTargetPos = errorPos + errorVector * errorScale;
 
 	if (!TryTarget(newTargetPos, isUserTarget, newTargetUnit))
@@ -780,7 +752,7 @@ void CWeapon::AutoTarget() {
 		if (nextTargetUnit->IsNeutral() && (owner->fireState <= FIRESTATE_FIREATWILL))
 			continue;
 
-		const float weaponError = MoveErrorExperience() * GAME_SPEED * nextTargetUnit->speed.Length();
+		const float weaponError = MoveErrorExperience() * GAME_SPEED * nextTargetUnit->speed.w;
 
 		prevTargetUnit = nextTargetUnit;
 		nextTargetPos = nextTargetUnit->aimPos + (errorVector * weaponError);
@@ -847,16 +819,8 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	UpdateRelWeaponPos();
 	useWeaponPosForAim = std::max(0, useWeaponPosForAim - 1);
 
-	weaponMuzzlePos =
-		owner->pos +
-		owner->frontdir * relWeaponMuzzlePos.z +
-		owner->updir    * relWeaponMuzzlePos.y +
-		owner->rightdir * relWeaponMuzzlePos.x;
-	weaponPos =
-		owner->pos +
-		owner->frontdir * relWeaponPos.z +
-		owner->updir    * relWeaponPos.y +
-		owner->rightdir * relWeaponPos.x;
+	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
 
 	if (weaponMuzzlePos.y < ground->GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
 		// hope that we are underground because we are a popup weapon and will come above ground later
@@ -892,7 +856,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		}
 	}
 
-	if (slavedTo) {
+	if (slavedTo != NULL) {
 		// use targets from the thing we are slaved to
 		if (targetUnit) {
 			DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
@@ -903,7 +867,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		if (slavedTo->targetType == Target_Unit) {
 			const float3 tp =
 				slavedTo->targetUnit->GetErrorPos(owner->allyteam, true) +
-				errorVector * (MoveErrorExperience() * GAME_SPEED * slavedTo->targetUnit->speed.Length());
+				errorVector * (MoveErrorExperience() * GAME_SPEED * slavedTo->targetUnit->speed.w);
 
 			if (TryTarget(tp, false, slavedTo->targetUnit)) {
 				targetType = Target_Unit;
@@ -1174,10 +1138,7 @@ bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, const CUnit* 
 
 	// NOTE: mainDir is in unit-space
 	const float3 targetNormDir = normalized? tmpTargetDir: tmpTargetDir.SafeNormalize();
-	const float3 worldMainDir =
-		owner->frontdir * mainDir.z +
-		owner->rightdir * mainDir.x +
-		owner->updir    * mainDir.y;
+	const float3 worldMainDir = owner->GetObjectSpaceVec(mainDir);
 
 	return (CheckTargetAngleConstraint(targetNormDir, worldMainDir));
 }
@@ -1220,19 +1181,22 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 }
 
 
-bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
+bool CWeapon::TryTarget(const CUnit* unit, bool userTarget) const {
+	return TryTarget(GetUnitPositionWithError(unit), userTarget, unit);
+}
+
+float3 CWeapon::GetUnitPositionWithError(const CUnit* unit) const {
 	const float3 errorPos = unit->GetErrorPos(owner->allyteam, true);
-	const float errorScale = ( MoveErrorExperience() * GAME_SPEED * unit->speed.Length() );
+	const float errorScale = (MoveErrorExperience() * GAME_SPEED * unit->speed.w);
 
 	float3 tempTargetPos = errorPos + errorVector * errorScale;
 	tempTargetPos.y = std::max(tempTargetPos.y, ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f);
-
-	return TryTarget(tempTargetPos, userTarget, unit);
+	return tempTargetPos;
 }
 
 bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget) {
 	const float3 errorPos = unit->GetErrorPos(owner->allyteam, true);
-	const float errorScale = ( MoveErrorExperience() * GAME_SPEED * unit->speed.Length() );
+	const float errorScale = (MoveErrorExperience() * GAME_SPEED * unit->speed.w);
 
 	float3 tempTargetPos = errorPos + errorVector * errorScale;
 	tempTargetPos.y = std::max(tempTargetPos.y, ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f);
@@ -1263,18 +1227,14 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit
 	const float3 temprightdir(owner->rightdir);
 	const short tempHeading = owner->heading;
 
+	AdjustTargetPosToWater(pos, unit == NULL);
+
 	owner->heading = heading;
 	owner->frontdir = GetVectorFromHeading(owner->heading);
 	owner->rightdir = owner->frontdir.cross(owner->updir);
 
-	weaponPos = owner->pos +
-		owner->frontdir * relWeaponPos.z +
-		owner->updir    * relWeaponPos.y +
-		owner->rightdir * relWeaponPos.x;
-	weaponMuzzlePos = owner->pos +
-		owner->frontdir * relWeaponMuzzlePos.z +
-		owner->updir    * relWeaponMuzzlePos.y +
-		owner->rightdir * relWeaponMuzzlePos.x;
+	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 	const bool val = TryTarget(pos, userTarget, unit);
 
@@ -1282,14 +1242,8 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit
 	owner->rightdir = temprightdir;
 	owner->heading = tempHeading;
 
-	weaponPos = owner->pos +
-		owner->frontdir * relWeaponPos.z +
-		owner->updir    * relWeaponPos.y +
-		owner->rightdir * relWeaponPos.x;
-	weaponMuzzlePos = owner->pos +
-		owner->frontdir * relWeaponMuzzlePos.z +
-		owner->updir    * relWeaponMuzzlePos.y +
-		owner->rightdir * relWeaponMuzzlePos.x;
+	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 	return val;
 
@@ -1299,10 +1253,10 @@ void CWeapon::Init()
 {
 	int piece = owner->script->AimFromWeapon(weaponNum);
 	relWeaponPos = owner->script->GetPiecePos(piece);
-	weaponPos = owner->pos + owner->frontdir * relWeaponPos.z + owner->updir * relWeaponPos.y + owner->rightdir * relWeaponPos.x;
+	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
 	piece = owner->script->QueryWeapon(weaponNum);
 	relWeaponMuzzlePos = owner->script->GetPiecePos(piece);
-	weaponMuzzlePos = owner->pos + owner->frontdir * relWeaponMuzzlePos.z + owner->updir * relWeaponMuzzlePos.y + owner->rightdir * relWeaponMuzzlePos.x;
+	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 	if (range > owner->maxRange) {
 		owner->maxRange = range;
@@ -1326,14 +1280,14 @@ void CWeapon::Init()
 	}
 }
 
-void CWeapon::Fire()
+void CWeapon::Fire(bool scriptCall)
 {
 #ifdef TRACE_SYNC
 	tracefile << weaponDef->name.c_str() << " fire: ";
 	tracefile << owner->pos.x << " " << owner->frontdir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z;
 	tracefile << sprayAngle << " " <<  " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
 #endif
-	FireImpl();
+	FireImpl(scriptCall);
 
 	if (fireSoundId > 0 && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1)) {
 		Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);
@@ -1397,7 +1351,7 @@ ProjectileParams CWeapon::GetProjectileParams()
 float CWeapon::GetRange2D(float yDiff) const
 {
 	const float root1 = range * range - yDiff * yDiff;
-	if (root1 < 0.0f) {
+	if (root1 <= 0.0f) {
 		return 0.0f;
 	}
 	return (math::sqrt(root1));

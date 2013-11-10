@@ -44,18 +44,20 @@ void CFlameProjectile::Collision()
 	const float3 norm = ground->GetNormal(pos.x, pos.z);
 	const float ns = speed.dot(norm);
 
-	speed -= (norm * ns);
-	pos.y += 0.05f;
+	SetVelocityAndSpeed(speed - (norm * ns));
+	SetPosition(pos + UpVector * 0.05f);
+
 	curTime += 0.05f;
 }
 
 void CFlameProjectile::Update()
 {
 	if (!luaMoveCtrl) {
-		pos += speed;
+		SetPosition(pos + speed);
 		UpdateGroundBounce();
-		speed += spread;
+		SetVelocityAndSpeed(speed + spread);
 	}
+
 	UpdateInterception();
 
 	radius = radius + weaponDef->sizeGrowth;
@@ -88,14 +90,16 @@ void CFlameProjectile::Draw()
 
 int CFlameProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	if (!luaMoveCtrl) {
-		const float3 rdir = (pos - shieldPos).Normalize();
+	if (luaMoveCtrl)
+		return 0;
 
-		if (rdir.dot(speed) < shieldMaxSpeed) {
-			speed += (rdir * shieldForce);
-			return 2;
-		}
+	const float3 rdir = (pos - shieldPos).Normalize();
+
+	if (rdir.dot(speed) < shieldMaxSpeed) {
+		SetVelocityAndSpeed(speed + (rdir * shieldForce));
+		return 2;
 	}
 
 	return 0;
 }
+

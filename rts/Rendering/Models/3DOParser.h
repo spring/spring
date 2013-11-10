@@ -37,7 +37,6 @@ struct S3DOPrimitive {
 
 struct S3DOPiece: public S3DModelPiece {
 	S3DOPiece(): radius(0.0f) {
-		type = MODELTYPE_3DO;
 	}
 
 	void DrawForList() const;

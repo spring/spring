@@ -34,7 +34,7 @@ IUnitDrawerState* IUnitDrawerState::GetInstance(bool haveARB, bool haveGLSL) {
 }
 
 
-void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud) {
+void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glMultMatrixf(camera->GetViewMatrix());
@@ -42,9 +42,7 @@ void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud) {
 	glPushMatrix();
 	glLoadIdentity();
 
-	modelShaders[MODEL_SHADER_ACTIVE] = (shadowHandler->shadowsLoaded)?
-		modelShaders[MODEL_SHADER_SHADOW]:
-		modelShaders[MODEL_SHADER_BASIC ];
+	SetActiveShader(shadowHandler->shadowsLoaded, deferredPass);
 	modelShaders[MODEL_SHADER_ACTIVE]->Enable();
 
 	// TODO: refactor to use EnableTexturesCommon
@@ -76,7 +74,9 @@ void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud) {
+void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool) {
+	SetActiveShader(shadowHandler->shadowsLoaded, false);
+
 	// TODO: refactor to use DisableTexturesCommon
 	glActiveTexture(GL_TEXTURE1);
 	glDisable(GL_TEXTURE_2D);
@@ -153,10 +153,10 @@ bool UnitDrawerStateFFP::CanEnable(const CUnitDrawer* ud) const {
 	//
 	//   ATI has issues with textures, clip planes and shader programs
 	//   at once - very low performance
-	return (!ud->advShading || water->DrawReflectionPass());
+	return (!ud->UseAdvShading() || water->DrawReflectionPass());
 }
 
-void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud) {
+void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool) {
 	glEnable(GL_LIGHTING);
 	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
 	glEnable(GL_LIGHT1);
@@ -171,7 +171,7 @@ void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud) {
 	glColor4fv(cols);
 }
 
-void UnitDrawerStateFFP::Disable(const CUnitDrawer* ud) {
+void UnitDrawerStateFFP::Disable(const CUnitDrawer* ud, bool) {
 	glDisable(GL_LIGHTING);
 	glDisable(GL_LIGHT1);
 
@@ -207,7 +207,7 @@ void UnitDrawerStateFFP::SetTeamColor(int team, float alpha) const {
 
 
 bool UnitDrawerStateARB::Init(const CUnitDrawer* ud) {
-	modelShaders.resize(MODEL_SHADER_LAST, NULL);
+	modelShaders.resize(MODEL_SHADER_COUNT, NULL);
 
 	if (!globalRendering->haveARB) {
 		// not possible to do (ARB) shader-based model rendering
@@ -218,29 +218,25 @@ bool UnitDrawerStateARB::Init(const CUnitDrawer* ud) {
 		return false;
 	}
 
-	// with advFade, submerged transparent objects are clipped against GL_CLIP_PLANE3
+	// with advFading, submerged transparent objects are clipped against GL_CLIP_PLANE3
 	const char* vertexProgNamesARB[2] = {
 		"ARB/units3o.vp",
 		"ARB/units3o2.vp",
 	};
 
 	#define sh shaderHandler
-	modelShaders[MODEL_SHADER_BASIC] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderDefARB", true);
-	modelShaders[MODEL_SHADER_BASIC]->AttachShaderObject(sh->CreateShaderObject(vertexProgNamesARB[ud->advFade], "", GL_VERTEX_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_BASIC]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_BASIC]->Link();
+	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderDefARB", true);
+	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->AttachShaderObject(sh->CreateShaderObject(vertexProgNamesARB[ud->UseAdvFading()], "", GL_VERTEX_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->Link();
 
-	modelShaders[MODEL_SHADER_SHADOW] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvARB", true);
-	modelShaders[MODEL_SHADER_SHADOW]->AttachShaderObject(sh->CreateShaderObject(vertexProgNamesARB[ud->advFade], "", GL_VERTEX_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_SHADOW]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o_shadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_SHADOW]->Link();
+	modelShaders[MODEL_SHADER_SHADOWED_STANDARD] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvARB", true);
+	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->AttachShaderObject(sh->CreateShaderObject(vertexProgNamesARB[ud->UseAdvFading()], "", GL_VERTEX_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o_shadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->Link();
 
 	// make the active shader non-NULL
-	if (shadowHandler->shadowsLoaded) {
-		modelShaders[MODEL_SHADER_ACTIVE] = modelShaders[MODEL_SHADER_SHADOW];
-	} else {
-		modelShaders[MODEL_SHADER_ACTIVE] = modelShaders[MODEL_SHADER_BASIC];
-	}
+	SetActiveShader(shadowHandler->shadowsLoaded, false);
 
 	#undef sh
 	return true;
@@ -252,11 +248,11 @@ void UnitDrawerStateARB::Kill() {
 }
 
 bool UnitDrawerStateARB::CanEnable(const CUnitDrawer* ud) const {
-	return (ud->advShading && !water->DrawReflectionPass());
+	return (ud->UseAdvShading() && !water->DrawReflectionPass());
 }
 
-void UnitDrawerStateARB::Enable(const CUnitDrawer* ud) {
-	EnableCommon(ud);
+void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool) {
+	EnableCommon(ud, false);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(10, &sky->GetLight()->GetLightDir().x);
@@ -272,9 +268,9 @@ void UnitDrawerStateARB::Enable(const CUnitDrawer* ud) {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void UnitDrawerStateARB::Disable(const CUnitDrawer* ud) {
+void UnitDrawerStateARB::Disable(const CUnitDrawer* ud, bool) {
 	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
-	DisableCommon(ud);
+	DisableCommon(ud, false);
 }
 
 
@@ -312,7 +308,7 @@ void UnitDrawerStateARB::SetTeamColor(int team, float alpha) const {
 
 
 bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
-	modelShaders.resize(MODEL_SHADER_LAST, NULL);
+	modelShaders.resize(MODEL_SHADER_COUNT, NULL);
 
 	if (!globalRendering->haveGLSL) {
 		// not possible to do (GLSL) shader-based model rendering
@@ -326,22 +322,30 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 	#define sh shaderHandler
 
 	const GL::LightHandler* lightHandler = ud->GetLightHandler();
-	const std::string shaderNames[2] = {
-		"S3OShaderDefGLSL",
-		"S3OShaderAdvGLSL",
-	};
-	const std::string shaderDefs[2] = {
-		"// #define use_shadows\n",
-		"#define use_shadows\n",
+	const std::string shaderNames[MODEL_SHADER_COUNT - 1] = {
+		"ModelShaderGLSL-NoShadowStandard",
+		"ModelShaderGLSL-ShadowedStandard",
+		"ModelShaderGLSL-NoShadowDeferred",
+		"ModelShaderGLSL-ShadowedDeferred",
 	};
 	const std::string extraDefs =
 		("#define BASE_DYNAMIC_MODEL_LIGHT " + IntToString(lightHandler->GetBaseLight()) + "\n") +
 		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(lightHandler->GetMaxLights()) + "\n");
 
-	for (unsigned int n = MODEL_SHADER_BASIC; n <= MODEL_SHADER_SHADOW; n++) {
+	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
 		modelShaders[n] = sh->CreateProgramObject("[UnitDrawer]", shaderNames[n], false);
-		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", shaderDefs[n] + extraDefs, GL_VERTEX_SHADER));
-		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", shaderDefs[n] + extraDefs, GL_FRAGMENT_SHADER));
+		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", extraDefs, GL_VERTEX_SHADER));
+		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", extraDefs, GL_FRAGMENT_SHADER));
+
+		modelShaders[n]->SetFlag("USE_SHADOWS", int((n & 1) == 1));
+		modelShaders[n]->SetFlag("DEFERRED_MODE", int(n >= MODEL_SHADER_NOSHADOW_DEFERRED));
+		modelShaders[n]->SetFlag("GBUFFER_NORMTEX_IDX", GL::GeometryBuffer::ATTACHMENT_NORMTEX);
+		modelShaders[n]->SetFlag("GBUFFER_DIFFTEX_IDX", GL::GeometryBuffer::ATTACHMENT_DIFFTEX);
+		modelShaders[n]->SetFlag("GBUFFER_SPECTEX_IDX", GL::GeometryBuffer::ATTACHMENT_SPECTEX);
+		modelShaders[n]->SetFlag("GBUFFER_EMITTEX_IDX", GL::GeometryBuffer::ATTACHMENT_EMITTEX);
+		modelShaders[n]->SetFlag("GBUFFER_MISCTEX_IDX", GL::GeometryBuffer::ATTACHMENT_MISCTEX);
+		modelShaders[n]->SetFlag("GBUFFER_ZVALTEX_IDX", GL::GeometryBuffer::ATTACHMENT_ZVALTEX);
+
 		modelShaders[n]->Link();
 		modelShaders[n]->SetUniformLocation("diffuseTex");        // idx  0 (t1: diffuse + team-color)
 		modelShaders[n]->SetUniformLocation("shadingTex");        // idx  1 (t2: spec/refl + self-illum)
@@ -376,11 +380,7 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 	}
 
 	// make the active shader non-NULL
-	if (shadowHandler->shadowsLoaded) {
-		modelShaders[MODEL_SHADER_ACTIVE] = modelShaders[MODEL_SHADER_SHADOW];
-	} else {
-		modelShaders[MODEL_SHADER_ACTIVE] = modelShaders[MODEL_SHADER_BASIC];
-	}
+	SetActiveShader(shadowHandler->shadowsLoaded, false);
 
 	#undef sh
 	return true;
@@ -392,11 +392,11 @@ void UnitDrawerStateGLSL::Kill() {
 }
 
 bool UnitDrawerStateGLSL::CanEnable(const CUnitDrawer* ud) const {
-	return (ud->advShading && !water->DrawReflectionPass());
+	return (ud->UseAdvShading() && !water->DrawReflectionPass());
 }
 
-void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud) {
-	EnableCommon(ud);
+void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass) {
+	EnableCommon(ud, deferredPass);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
@@ -407,9 +407,9 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud) {
 	const_cast<GL::LightHandler*>(ud->GetLightHandler())->Update(modelShaders[MODEL_SHADER_ACTIVE]);
 }
 
-void UnitDrawerStateGLSL::Disable(const CUnitDrawer* ud) {
+void UnitDrawerStateGLSL::Disable(const CUnitDrawer* ud, bool deferredPass) {
 	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
-	DisableCommon(ud);
+	DisableCommon(ud, deferredPass);
 }
 
 
@@ -424,11 +424,14 @@ void UnitDrawerStateGLSL::UpdateCurrentShader(const CUnitDrawer* ud, const ISkyL
 	const float3 modUnitSunColor = ud->unitSunColor * skyLight->GetLightIntensity();
 	const float3 sunDir = skyLight->GetLightDir();
 
-	modelShaders[MODEL_SHADER_SHADOW]->Enable();
-	modelShaders[MODEL_SHADER_SHADOW]->SetUniform3fv(5, &sunDir.x);
-	modelShaders[MODEL_SHADER_SHADOW]->SetUniform1f(12, skyLight->GetUnitShadowDensity());
-	modelShaders[MODEL_SHADER_SHADOW]->SetUniform3fv(11, &modUnitSunColor.x);
-	modelShaders[MODEL_SHADER_SHADOW]->Disable();
+	// note: the NOSHADOW shaders do not care about shadow-density
+	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
+		modelShaders[n]->Enable();
+		modelShaders[n]->SetUniform3fv(5, &sunDir.x);
+		modelShaders[n]->SetUniform1f(12, skyLight->GetUnitShadowDensity());
+		modelShaders[n]->SetUniform3fv(11, &modUnitSunColor.x);
+		modelShaders[n]->Disable();
+	}
 }
 
 void UnitDrawerStateGLSL::SetTeamColor(int team, float alpha) const {

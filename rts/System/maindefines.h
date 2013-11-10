@@ -140,7 +140,7 @@
 
 // WORKAROUND (2013) a pthread stack alignment problem, else SSE code would crash
 // more info: http://www.peterstock.co.uk/games/mingw_sse/ (TLDR: mingw-32 aligns
-// thread stacks to 4 bytes we want 16-byte alignment)
+// thread stacks to 4 bytes but we want 16-byte alignment)
 //
 #if (defined(__MINGW32__) && defined(__GNUC__) && (__GNUC__ == 4))
 #define __FORCE_ALIGN_STACK__ __attribute__ ((force_align_arg_pointer))

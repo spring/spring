@@ -408,7 +408,7 @@ bool CStdExplosionGenerator::Explosion(
 
 	const float3 npos = pos + camVect * moveLength;
 
-	new CHeatCloudProjectile(npos, float3(0.0f, 0.3f, 0.0f), 8 + sqrtDmg * 0.5f, 7 + damage * 2.8f, owner);
+	new CHeatCloudProjectile(npos, float3(0.0f, 0.3f, 0.0f), 8.0f + sqrtDmg * 0.5f, 7 + damage * 2.8f, owner);
 
 	if (projectileHandler->particleSaturation < 1.0f) {
 		// turn off lots of graphic only particles when we have more particles than we want
@@ -442,15 +442,15 @@ bool CStdExplosionGenerator::Explosion(
 
 		if (groundExplosion) {
 			const int numDirt = std::min(20.0f, damage * 0.8f);
+			const float explSpeedMod = 0.7f + std::min(30.0f, damage) / GAME_SPEED;
 			const float3 color(0.15f, 0.1f, 0.05f);
 
 			for (int a = 0; a < numDirt; ++a) {
-				float3 speed(
+				const float3 explSpeed = float3(
 					(0.5f - gu->RandFloat()) * 1.5f,
 					 1.7f + gu->RandFloat()  * 1.6f,
 					(0.5f - gu->RandFloat()) * 1.5f
 				);
-				speed *= (0.7f + std::min(30.0f, damage) / GAME_SPEED);
 
 				const float3 npos(
 					pos.x - (0.5f - gu->RandFloat()) * (radius * 0.6f),
@@ -458,7 +458,7 @@ bool CStdExplosionGenerator::Explosion(
 					pos.z - (0.5f - gu->RandFloat()) * (radius * 0.6f)
 				);
 
-				new CDirtProjectile(npos, speed, 90 + damage * 2, 2.0f + sqrtDmg * 1.5f, 0.4f, 0.999f, owner, color);
+				new CDirtProjectile(npos, explSpeed  * explSpeedMod, 90.0f + damage * 2.0f, 2.0f + sqrtDmg * 1.5f, 0.4f, 0.999f, owner, color);
 			}
 		}
 
@@ -478,97 +478,116 @@ bool CStdExplosionGenerator::Explosion(
 					pos.z - (0.5f - gu->RandFloat()) * (radius * 0.2f)
 				);
 
-				new CDirtProjectile(npos, speed * (0.7f + std::min(30.0f, damage) / GAME_SPEED), 90 + damage*2, 2.0f + sqrtDmg * 2.0f, 0.3f, 0.99f, owner, color);
+				new CDirtProjectile(
+					npos,
+					speed * (0.7f + std::min(30.0f, damage) / GAME_SPEED),
+					90.0f + damage * 2.0f,
+					2.0f + sqrtDmg * 2.0f,
+					0.3f,
+					0.99f,
+					owner,
+					color
+				);
 			}
 		}
 		if (damage >= 20.0f && !uwExplosion && !airExplosion) {
 			const int numDebris = (gu->RandInt() % 6) + 3 + int(damage * 0.04f);
+			const float explSpeedMod = (0.7f + std::min(30.0f, damage) / 23);
 
 			for (int a = 0; a < numDebris; ++a) {
-				float3 speed;
+				const float3 explSpeed = (altitude < 4.0f)?
+					float3((0.5f - gu->RandFloat()) * 2.0f, 1.8f + gu->RandFloat() * 1.8f, (0.5f - gu->RandFloat()) * 2.0f):
+					float3(gu->RandVector() * 2);
 
-				if (altitude < 4.0f) {
-					speed = float3((0.5f-gu->RandFloat())*2.0f,1.8f+gu->RandFloat()*1.8f,(0.5f-gu->RandFloat())*2.0f);
-				} else {
-					speed = float3(gu->RandVector() * 2);
-				}
+				const float3 npos(
+					pos.x - (0.5f - gu->RandFloat()) * (radius * 1),
+					pos.y,
+					pos.z - (0.5f - gu->RandFloat()) * (radius * 1)
+				);
 
-				float3 npos(pos.x - (0.5f - gu->RandFloat()) * (radius * 1), pos.y, pos.z - (0.5f - gu->RandFloat()) * (radius * 1));
-				new CWreckProjectile(npos, speed * (0.7f + std::min(30.0f, damage) / 23), 90 + damage*2, owner);
+				new CWreckProjectile(npos, explSpeed * explSpeedMod, 90.0f + damage * 2.0f, owner);
 			}
 		}
 		if (uwExplosion) {
 			const int numBubbles = (damage * 0.7f);
 
 			for (int a = 0; a < numBubbles; ++a) {
-				new CBubbleProjectile(pos + gu->RandVector()*radius*0.5f,
-						gu->RandVector()*0.2f + float3(0.0f, 0.2f, 0.0f),
-						damage*2 + gu->RandFloat()*damage,
-						1 + gu->RandFloat()*2,
-						0.02f,
-						owner,
-						0.5f + gu->RandFloat() * 0.3f);
+				new CBubbleProjectile(
+					pos + gu->RandVector() * radius * 0.5f,
+					gu->RandVector() * 0.2f + float3(0.0f, 0.2f, 0.0f),
+					damage * 2.0f + gu->RandFloat() * damage,
+					1.0f + gu->RandFloat() * 2.0f,
+					0.02f,
+					owner,
+					0.5f + gu->RandFloat() * 0.3f
+				);
 			}
 		}
 		if (waterExplosion && !uwExplosion && !airExplosion) {
 			const int numWake = (damage * 0.5f);
 
 			for (int a = 0; a < numWake; ++a) {
-				new CWakeProjectile(pos + gu->RandVector()*radius*0.2f,
-					gu->RandVector()*radius*0.003f,
-					sqrtDmg * 4,
+				new CWakeProjectile(
+					pos + gu->RandVector() * radius * 0.2f,
+					gu->RandVector() * radius * 0.003f,
+					sqrtDmg * 4.0f,
 					damage * 0.03f,
 					owner,
-					0.3f + gu->RandFloat()*0.2f,
-					0.8f / (sqrtDmg * 3 + 50 + gu->RandFloat()*90),
-					1);
+					0.3f + gu->RandFloat() * 0.2f,
+					0.8f / (sqrtDmg * 3 + 50 + gu->RandFloat() * 90.0f),
+					1
+				);
 			}
 		}
-		if (radius > 10 && damage > 4) {
+		if (radius > 10.0f && damage > 4.0f) {
 			const int numSpike = int(sqrtDmg) + 8;
+			const float explSpeedMod = (8 + damage * 3.0f) / (9 + sqrtDmg * 0.7f) * 0.35f;
 
 			for (int a = 0; a < numSpike; ++a) {
-				float3 speed = gu->RandVector();
-				speed.SafeNormalize();
-				speed *= (8 + damage * 3.0f) / (9 + sqrtDmg * 0.7f) * 0.35f;
+				float3 explSpeed = (gu->RandVector()).SafeNormalize() * explSpeedMod;
 
-				if (!airExplosion && !waterExplosion && (speed.y < 0)) {
-					speed.y = -speed.y;
+				if (!airExplosion && !waterExplosion && (explSpeed.y < 0.0f)) {
+					explSpeed.y = -explSpeed.y;
 				}
-				new CExploSpikeProjectile(pos + speed,
-					speed * (0.9f + gu->RandFloat()*0.4f),
+
+				new CExploSpikeProjectile(
+					pos + explSpeed,
+					explSpeed * (0.9f + gu->RandFloat() * 0.4f),
 					radius * 0.1f,
 					radius * 0.1f,
 					0.6f,
-					0.8f / (8 + sqrtDmg),
-					owner);
+					0.8f / (8.0f + sqrtDmg),
+					owner
+				);
 			}
 		}
 	}
 
-	if (radius > 20 && damage > 6 && altitude < (radius * 0.7f)) {
+	if (radius > 20.0f && damage > 6.0f && altitude < (radius * 0.7f)) {
 		const float flashSize = std::max(radius, damage * 2);
 		const float ttl = 8 + sqrtDmg * 0.8f;
+
 		if (flashSize > 5.f && ttl > 15.f) {
 			const float flashAlpha = std::min(0.8f, damage * 0.01f);
 
 			float circleAlpha = 0;
 			float circleGrowth = 0;
-			if (radius > 40 && damage > 12) {
+
+			if (radius > 40.0f && damage > 12.0f) {
 				circleAlpha = std::min(0.5f, damage * 0.01f);
-				circleGrowth = (8 + damage*2.5f) / (9 + sqrtDmg * 0.7f) * 0.55f;
+				circleGrowth = (8.0f + damage * 2.5f) / (9.0f + sqrtDmg * 0.7f) * 0.55f;
 			}
 
 			new CStandardGroundFlash(pos, circleAlpha, flashAlpha, flashSize, circleGrowth, ttl);
 		}
 	}
 
-	if (radius > 40 && damage > 12) {
+	if (radius > 40.0f && damage > 12.0f) {
 		CSpherePartProjectile::CreateSphere(
 			pos,
 			std::min(0.7f, damage * 0.02f),
-			5 + int(sqrtDmg * 0.7f),
-			(8 + damage * 2.5f) / (9 + sqrtDmg * 0.7f) * 0.5f,
+			5.0f + int(sqrtDmg * 0.7f),
+			(8.0f + damage * 2.5f) / (9.0f + sqrtDmg * 0.7f) * 0.5f,
 			owner
 		);
 	}

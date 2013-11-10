@@ -29,6 +29,8 @@ GLAPI void APIENTRY glBindFramebufferEXT(GLenum target, GLuint framebuffer) {}
 GLAPI void APIENTRY glFramebufferTexture2DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {}
 GLAPI void APIENTRY glFramebufferRenderbufferEXT(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer) {}
 
+GLAPI void APIENTRY glDrawBuffers(GLsizei n, const GLenum *bufs) {}
+
 GLAPI void APIENTRY glDrawBuffersARB(GLsizei n, const GLenum *bufs) {}
 GLAPI void APIENTRY glDeleteBuffersARB(GLsizei n, const GLuint *buffers) {}
 GLAPI void APIENTRY glGenBuffersARB(GLsizei n, GLuint *buffers) {}

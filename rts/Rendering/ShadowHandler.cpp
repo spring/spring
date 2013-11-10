@@ -412,7 +412,7 @@ void CShadowHandler::CreateShadows()
 	const ISkyLight* L = sky->GetLight();
 
 	// sun direction is in world-space, invert it
-	sunDirZ = -L->GetLightDir();
+	sunDirZ = -float3(L->GetLightDir());
 	sunDirX = (sunDirZ.cross(UpVector)).ANormalize();
 	sunDirY = (sunDirX.cross(sunDirZ)).ANormalize();
 

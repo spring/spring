@@ -6,7 +6,7 @@
 #include "SMFMapFile.h"
 #include "Map/ReadMap.h"
 #include "System/EventClient.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 
 class CSMFGroundDrawer;

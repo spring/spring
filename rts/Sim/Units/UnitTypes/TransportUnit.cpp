@@ -64,10 +64,7 @@ void CTransportUnit::Update()
 
 		if (ti->piece >= 0) {
 			relPiecePos = script->GetPiecePos(ti->piece);
-			absPiecePos = pos +
-				(frontdir * relPiecePos.z) +
-				(updir    * relPiecePos.y) +
-				(rightdir * relPiecePos.x);
+			absPiecePos = this->GetObjectSpacePos(relPiecePos);
 		}
 
 		if (unitDef->holdSteady) {
@@ -176,15 +173,15 @@ void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed
 						if (!pos.IsInBounds())
 							continue;
 
-						if (quadField->GetSolidsExact(pos, transportee->radius + 2.0f).empty()) {
+						if (quadField->GetSolidsExact(pos, transportee->radius + 2.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS).empty()) {
 							transportee->Move(pos, false);
 							break;
 						}
 					}
 				} else {
 					if (transportee->unitDef->IsGroundUnit()) {
-						transportee->SetPhysicalStateBit(CSolidObject::STATE_BIT_FLYING);
-						transportee->SetPhysicalStateBit(CSolidObject::STATE_BIT_SKIDDING);
+						transportee->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
+						transportee->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 					}
 				}
 
@@ -198,7 +195,7 @@ void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed
 				}
 
 				transportee->SetStunned(transportee->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? transportee->maxHealth: transportee->health));
-				transportee->speed = speed * (0.5f + 0.5f * gs->randFloat());
+				transportee->SetVelocityAndSpeed(speed * (0.5f + 0.5f * gs->randFloat()));
 
 				eventHandler.UnitUnloaded(transportee, this);
 			}
@@ -259,7 +256,7 @@ bool CTransportUnit::CanTransport(const CUnit* unit) const
 }
 
 
-void CTransportUnit::AttachUnit(CUnit* unit, int piece)
+bool CTransportUnit::AttachUnit(CUnit* unit, int piece)
 {
 	assert(unit != this);
 
@@ -280,7 +277,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 		}
 
 		unit->UpdateVoidState(piece < 0);
-		return;
+		return false;
 	} else {
 		// handle transfers from another transport to us
 		// (can still fail depending on CanTransport())
@@ -291,7 +288,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	// covers the case where unit->transporter != NULL
 	if (!CanTransport(unit)) {
-		return;
+		return false;
 	}
 
 	AddDeathDependence(unit, DEPENDENCE_TRANSPORTEE);
@@ -348,6 +345,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	eventHandler.UnitLoaded(unit, this);
 	commandAI->BuggerOff(pos, -1.0f);
+	return true;
 }
 
 
@@ -463,7 +461,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 
 		if (isAllowedHeight) {
 			if (transporteeMoveDef != NULL) {
-				switch (transporteeMoveDef->moveFamily) {
+				switch (transporteeMoveDef->speedModClass) {
 					case MoveDef::Ship: {
 						wantedHeight = std::max(-transporteeUnitDef->waterline, wantedHeight);
 						clampedHeight = wantedHeight;
@@ -515,7 +513,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 
 
 
-float CTransportUnit::GetLoadUnloadHeading(const CUnit* unit) const {
+short CTransportUnit::GetLoadUnloadHeading(const CUnit* unit) const {
 	if (unit->GetTransporter() == NULL) { return unit->heading; }
 	if (dynamic_cast<CHoverAirMoveType*>(moveType) == NULL) { return unit->heading; }
 	if (dynamic_cast<const CBuilding*>(unit) == NULL) { return unit->heading; }

@@ -79,9 +79,13 @@ CFeature::~CFeature()
 	UnBlock();
 	quadField->RemoveFeature(this);
 
-	if (myFire) {
+	if (featureHandler != NULL) {
+		featureHandler->SetFeatureUpdateable(this, false);
+	}
+
+	if (myFire != NULL) {
 		myFire->StopFire();
-		myFire = 0;
+		myFire = NULL;
 	}
 
 	if (def->geoThermal) {
@@ -156,8 +160,6 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	udef = params.unitDef;
 	objectDef = params.featureDef;
 
-	speed = params.speed;
-
 	team = params.teamID;
 	allyteam = params.allyTeamID;
 
@@ -169,7 +171,6 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	health = def->health;
 
 	crushResistance = def->crushResistance;
-	collidable = def->collidable;
 
 	xsize = ((buildFacing & 1) == 0) ? def->xsize : def->zsize;
 	zsize = ((buildFacing & 1) == 1) ? def->xsize : def->zsize;
@@ -178,10 +179,13 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	// set position before mid-position
 	Move((params.pos).cClampInMap(), false);
+	// use base-class version, AddFeature() below
+	// will already insert us in the update-queue
+	CWorldObject::SetVelocity(params.speed);
 
 	if (def->drawType == DRAWTYPE_MODEL) {
 		if ((model = def->LoadModel()) == NULL) {
-			LOG_L(L_ERROR, "Features: Couldn't load model for %s", def->name.c_str());
+			LOG_L(L_ERROR, "[%s] couldn't load model for %s", __FUNCTION__, def->name.c_str());
 		} else {
 			SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 			SetRadiusAndHeight(model);
@@ -203,11 +207,17 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	if (collisionVolume->DefaultToFootPrint())
 		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
 
+	// feature does not have an assigned ID yet
+	// this MUST be done before the Block() call
 	featureHandler->AddFeature(this);
 	quadField->AddFeature(this);
 
 	ChangeTeam(team);
+	UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS, def->collidable);
 	Block();
+
+	// allow Spring.SetFeatureBlocking to be called from gadget:FeatureCreated
+	eventHandler.FeatureCreated(this);
 
 	if (def->floating) {
 		finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
@@ -215,7 +225,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 		finalHeight = ground->GetHeightReal(pos.x, pos.z);
 	}
 
-	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
+	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(params.speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
 }
 
 
@@ -230,86 +240,85 @@ void CFeature::CalculateTransform()
 }
 
 
+
 bool CFeature::AddBuildPower(CUnit* builder, float amount)
 {
 	const float oldReclaimLeft = reclaimLeft;
 
 	if (amount > 0.0f) {
-		// Check they are trying to repair a feature that can be resurrected
-		if (udef == NULL) {
-			return false;
-		}
-
 		// 'Repairing' previously-sucked features prior to resurrection
 		// This is reclaim-option independant - repairing features should always
 		// be like other repairing - gradual and multi-unit
 		// Lots of this code is stolen from unit->AddBuildPower
+		//
+		// Check they are trying to repair a feature that can be resurrected
+		if (udef == NULL)
+			return false;
 
 		isRepairingBeforeResurrect = true; // Stop them exploiting chunk reclaiming
 
-		if (reclaimLeft >= 1) {
-			return false; // cant repair a 'fresh' feature
-		}
+		// cannot repair a 'fresh' feature
+		if (reclaimLeft >= 1.0f)
+			return false;
+		// feature most likely has been deleted
+		if (reclaimLeft <= 0.0f)
+			return false;
 
-		if (reclaimLeft <= 0) {
-			return false; // feature most likely has been deleted
-		}
+		const CTeam* builderTeam = teamHandler->Team(builder->team);
 
 		// Work out how much to try to put back, based on the speed this unit would reclaim at.
-		const float part = amount / def->reclaimTime;
+		const float step = amount / def->reclaimTime;
 
 		// Work out how much that will cost
-		const float metalUse  = part * def->metal;
-		const float energyUse = part * def->energy;
-		if ((teamHandler->Team(builder->team)->metal  >= metalUse)  &&
-		    (teamHandler->Team(builder->team)->energy >= energyUse) &&
-				(!luaRules || luaRules->AllowFeatureBuildStep(builder, this, part))) {
+		const float metalUse  = step * def->metal;
+		const float energyUse = step * def->energy;
+
+		const bool repairAllowed = (luaRules == NULL || luaRules->AllowFeatureBuildStep(builder, this, step));
+		const bool canExecRepair = (builderTeam->metal >= metalUse && builderTeam->energy >= energyUse);
+
+		if (repairAllowed && canExecRepair) {
 			builder->UseMetal(metalUse);
 			builder->UseEnergy(energyUse);
-			reclaimLeft+=part;
-			if (reclaimLeft >= 1) {
+
+			reclaimLeft += step;
+
+			if (reclaimLeft >= 1.0f) {
 				isRepairingBeforeResurrect = false; // They can start reclaiming it again if they so wish
 				reclaimLeft = 1;
-			} else if (reclaimLeft <= 0) {
+			} else if (reclaimLeft <= 0.0f) {
 				// this can happen when a mod tampers the feature in AllowFeatureBuildStep
 				featureHandler->DeleteFeature(this);
 				return false;
 			}
+
 			return true;
-		}
-		else {
+		} else {
 			// update the energy and metal required counts
 			teamHandler->Team(builder->team)->energyPull += energyUse;
 			teamHandler->Team(builder->team)->metalPull  += metalUse;
 		}
 		return false;
-	} else { // Reclaiming
+	} else {
+		// Reclaiming
 		// avoid multisuck when reclaim has already completed during this frame
-		if (reclaimLeft <= 0) {
+		if (reclaimLeft <= 0.0f)
 			return false;
-		}
 
 		// don't let them exploit chunk reclaim
-		if (isRepairingBeforeResurrect && (modInfo.reclaimMethod > 1)) {
+		if (isRepairingBeforeResurrect && (modInfo.reclaimMethod > 1))
 			return false;
-		}
 
 		// make sure several units cant reclaim at once on a single feature
-		if ((modInfo.multiReclaim == 0) && (lastReclaim == gs->frameNum)) {
+		if ((modInfo.multiReclaim == 0) && (lastReclaim == gs->frameNum))
 			return true;
-		}
 
-		const float part = (-amount) / def->reclaimTime;
+		const float step = (-amount) / def->reclaimTime;
 
-		if (luaRules && !luaRules->AllowFeatureBuildStep(builder, this, -part)) {
+		if (luaRules != NULL && !luaRules->AllowFeatureBuildStep(builder, this, -step))
 			return false;
-		}
 
-		float reclaimLeftTemp = reclaimLeft - part;
 		// stop the last bit giving too much resource
-		if (reclaimLeftTemp < 0) {
-			reclaimLeftTemp = 0;
-		}
+		const float reclaimLeftTemp = std::max(0.0f, reclaimLeft - step);
 
 		const float fractionReclaimed = oldReclaimLeft - reclaimLeftTemp;
 		const float metalFraction = def->metal * fractionReclaimed;
@@ -323,7 +332,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 
 		reclaimLeft = reclaimLeftTemp;
 
-		if ((modInfo.reclaimMethod == 1) && (reclaimLeft == 0)) {
+		if ((modInfo.reclaimMethod == 1) && (reclaimLeft == 0.0f)) {
 			// All-at-end method
 			builder->AddMetal(def->metal, false);
 			builder->AddEnergy(def->energy, false);
@@ -338,10 +347,11 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 			const float chunkSize = 1.0f / modInfo.reclaimMethod;
 			const int oldChunk = ChunkNumber(oldReclaimLeft);
 			const int newChunk = ChunkNumber(reclaimLeft);
+
 			if (oldChunk != newChunk) {
-				const float noChunks = (float)oldChunk - (float)newChunk;
-				builder->AddMetal(noChunks * def->metal * chunkSize, false);
-				builder->AddEnergy(noChunks * def->energy * chunkSize, false);
+				const float numChunks = (float)oldChunk - (float)newChunk;
+				builder->AddMetal(numChunks * def->metal * chunkSize, false);
+				builder->AddEnergy(numChunks * def->energy * chunkSize, false);
 			}
 		}
 
@@ -376,7 +386,7 @@ void CFeature::DoDamage(
 
 	// features have no armor-type, so use default damage
 	float baseDamage = damages.GetDefaultDamage();
-	float impulseMult = 1.0f;
+	float impulseMult = float((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()));
 
 	if (luaRules != NULL) {
 		luaRules->FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult);
@@ -384,8 +394,7 @@ void CFeature::DoDamage(
 
 	// NOTE:
 	//   for trees, impulse is used to drive their falling animation
-	//   this also calls our SetSpeed() to put us in the update queue
-	// if ((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()))
+	//   this also calls our SetVel() to put us in the update queue
 	ApplyImpulse((impulse * impulseMult) / mass);
 
 	// clamp in case Lua-modified damage is negative
@@ -421,12 +430,13 @@ void CFeature::DependentDied(CObject *o)
 }
 
 
-void CFeature::SetSpeed(const float3& v)
+void CFeature::SetVelocity(const float3& v)
 {
-	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, ((speed = v) != ZeroVector));
+	CWorldObject::SetVelocity(v);
+	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, v != ZeroVector);
 
 	if (IsMoving()) {
-		featureHandler->SetFeatureUpdateable(this);
+		featureHandler->SetFeatureUpdateable(this, true);
 	}
 }
 
@@ -482,7 +492,11 @@ bool CFeature::UpdatePosition()
 			const bool reachedWater  = ( pos.y                     <= 0.1f);
 			const bool reachedGround = ((pos.y - realGroundHeight) <= 0.1f);
 
-			speed += GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f));
+			// NOTE:
+			//   all these calls use the base-class because FeatureHandler::Update
+			//   iterates over updateFeatures and our ::SetVelocity will insert us
+			//   into that
+			CWorldObject::SetVelocity(speed + GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f)));
 
 			if (speed.SqLength2D() > 0.01f) {
 				UnBlock();
@@ -495,22 +509,21 @@ bool CFeature::UpdatePosition()
 				quadField->AddFeature(this);
 				Block();
 			} else {
-				speed.x = 0.0f;
-				speed.z = 0.0f;
+				CWorldObject::SetVelocity(speed * UpVector);
 			}
 
 			if (!reachedGround) {
 				if (!reachedWater) {
 					// quadratic acceleration if not in water
-					speed.y += mapInfo->map.gravity;
+					CWorldObject::SetVelocity(speed + (UpVector * mapInfo->map.gravity));
 				} else {
 					// constant downward speed otherwise
-					speed.y = mapInfo->map.gravity;
+					CWorldObject::SetVelocity((speed * XZVector) + (UpVector * mapInfo->map.gravity));
 				}
 
 				Move(UpVector * speed.y, true);
 			} else {
-				speed.y = 0.0f;
+				CWorldObject::SetVelocity(speed * XZVector);
 
 				// last Update() may have sunk us into
 				// ground if pos.y was only marginally
@@ -524,7 +537,7 @@ bool CFeature::UpdatePosition()
 				// ensure that no more forward-speed updates are done
 				// (prevents wrecks floating in mid-air at edge of map
 				// due to gravity no longer being applied either)
-				speed = ZeroVector;
+				CWorldObject::SetVelocity(ZeroVector);
 			}
 
 			eventHandler.FeatureMoved(this, oldPos);
@@ -536,9 +549,9 @@ bool CFeature::UpdatePosition()
 		// is applied, only gravity affects them (FIXME: arbitrary..?)
 		if (pos.y > finalHeight) {
 			if (pos.y > 0.0f) {
-				speed.y += mapInfo->map.gravity;
+				CWorldObject::SetVelocity(speed + (UpVector * mapInfo->map.gravity));
 			} else {
-				speed.y = mapInfo->map.gravity;
+				CWorldObject::SetVelocity((speed * XZVector) + (UpVector * mapInfo->map.gravity));
 			}
 
 			// stop falling when we reach our finalHeight
@@ -547,7 +560,7 @@ bool CFeature::UpdatePosition()
 			eventHandler.FeatureMoved(this, oldPos);
 		} else if (pos.y < finalHeight) {
 			// stop vertical movement and teleport up
-			speed.y = 0.0f;
+			CWorldObject::SetVelocity(speed * XZVector);
 
 			Move(UpVector * (finalHeight - pos.y), true);
 			eventHandler.FeatureMoved(this, oldPos);
@@ -556,7 +569,7 @@ bool CFeature::UpdatePosition()
 		transMatrix[13] = pos.y;
 	}
 
-	UpdatePhysicalStateBit(CSolidObject::STATE_BIT_MOVING, ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
+	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
 	UpdatePhysicalState();
 
 	return (IsMoving());
@@ -617,15 +630,15 @@ void CFeature::StartFire()
 		return;
 
 	fireTime = 200 + (int)(gs->randFloat() * GAME_SPEED);
-	featureHandler->SetFeatureUpdateable(this);
+	featureHandler->SetFeatureUpdateable(this, true);
 
-	myFire = new CFireProjectile(midPos, UpVector, 0, 300, radius * 0.8f, 70, 20);
+	myFire = new CFireProjectile(midPos, UpVector, 0, 300, 70, radius * 0.8f, 20.0f);
 }
 void CFeature::EmitGeoSmoke()
 {
 	if ((gs->frameNum + id % 5) % 5 == 0) {
 		// Find the unit closest to the geothermal
-		const vector<CSolidObject*>& objs = quadField->GetSolidsExact(pos, 0.0f);
+		const vector<CSolidObject*>& objs = quadField->GetSolidsExact(pos, 0.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 		float bestDist = std::numeric_limits<float>::max();
 
 		CSolidObject* so = NULL;

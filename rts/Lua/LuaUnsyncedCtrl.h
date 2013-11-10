@@ -59,6 +59,8 @@ class LuaUnsyncedCtrl {
 		static int SetDrawSky(lua_State* L);
 		static int SetDrawWater(lua_State* L);
 		static int SetDrawGround(lua_State* L);
+		static int SetDrawGroundDeferred(lua_State* L);
+		static int SetDrawModelsDeferred(lua_State* L);
 
 		static int SetWaterParams(lua_State* L);
 		static int SetSoundEffectParams(lua_State* L);
@@ -106,6 +108,7 @@ class LuaUnsyncedCtrl {
 		static int LoadCtrlPanelConfig(lua_State* L);
 		static int ForceLayoutUpdate(lua_State* L);
 
+		static int UpdateInfoTexture(lua_State* L);
 		static int SetLosViewColors(lua_State* L);
 
 		static int WarpMouse(lua_State* L);

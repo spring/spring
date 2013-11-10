@@ -9,7 +9,7 @@
 
 #include "System/creg/creg_cond.h"
 #include "System/float4.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 
 
 class IAtlasAllocator;

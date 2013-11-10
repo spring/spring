@@ -111,7 +111,6 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		const CUnit* u = *unitsIt;
 		const std::vector<CWeapon*>& weapons = u->weapons;
 		const LocalModel* lm = u->localModel;
-		const S3DModel* om = lm->original;
 		const std::vector<LocalModelPiece*>& pieces = lm->pieces;
 		const float3& pos = u->pos;
 		const float3& xdir = u->rightdir;
@@ -128,8 +127,6 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		file << "\t\t\tisDead: " << u->isDead << ", activated: " << u->activated << "\n";
 		file << "\t\t\tphysicalState: " << u->physicalState << "\n";
 		file << "\t\t\tfireState: " << u->fireState << ", moveState: " << u->moveState << "\n";
-		file << "\t\t\tmodelID: " << om->id << " (name: " << om->name << ")\n";
-		file << "\t\t\tmodelRadius: " << om->radius << ", modelHeight: " << om->height << "\n";
 		file << "\t\t\tpieces: " << pieces.size() << "\n";
 
 		#ifdef DUMP_UNIT_PIECE_DATA

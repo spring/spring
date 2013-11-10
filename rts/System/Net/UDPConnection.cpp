@@ -271,11 +271,6 @@ void UDPConnection::SendData(boost::shared_ptr<const RawPacket> data)
 	outgoingData.push_back(data);
 }
 
-bool UDPConnection::HasIncomingData() const
-{
-	return !msgQueue.empty();
-}
-
 boost::shared_ptr<const RawPacket> UDPConnection::Peek(unsigned ahead) const
 {
 	if (ahead < msgQueue.size()) {

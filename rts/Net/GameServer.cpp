@@ -12,6 +12,7 @@
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/thread.hpp>
 #include <deque>
 #if defined DEDICATED || defined DEBUG
 	#include <iostream>
@@ -1948,7 +1949,7 @@ void CGameServer::CheckForGameStart(bool forced)
 			readyTime = spring_gettime();
 
 			// we have to wait at least 1 msec during countdown, because 0 is a special case
-			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(std::max(1, spring_tomsecs(gameStartDelay))));
+			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(std::max(boost::int64_t(1), spring_tomsecs(gameStartDelay))));
 
 			// make seed more random
 			if (setup->gameID.empty())

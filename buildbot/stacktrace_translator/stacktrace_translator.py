@@ -11,7 +11,7 @@ from subprocess import Popen, PIPE
 
 
 # Paths to required helper programs.
-ADDR2LINE = r'/usr/bin/i586-mingw32msvc-addr2line'
+ADDR2LINE = r'/usr/bin/i686-w64-mingw32-addr2line'
 SEVENZIP = r'/usr/bin/7za'
 
 # Everything before the first occurence of this is stripped

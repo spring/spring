@@ -87,10 +87,10 @@ public:
 	// START overriding CConnection
 
 	void SendData(boost::shared_ptr<const RawPacket> data);
-	bool HasIncomingData() const;
+	bool HasIncomingData() const { return !msgQueue.empty(); }
 	boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
-	void DeleteBufferPacketAt(unsigned index);
 	boost::shared_ptr<const RawPacket> GetData();
+	void DeleteBufferPacketAt(unsigned index);
 	void Flush(const bool forced);
 	bool CheckTimeout(int seconds = 0, bool initial = false) const;
 
@@ -98,11 +98,12 @@ public:
 	bool CanReconnect() const;
 	bool NeedsReconnect();
 
+	unsigned int GetPacketQueueSize() const { return msgQueue.size(); }
+
 	std::string Statistics() const;
 	std::string GetFullAddress() const;
 
 	void Update();
-
 	// END overriding CConnection
 
 

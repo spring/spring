@@ -5,7 +5,7 @@
 
 #include "Rendering/GL/myGL.h"
 #include "System/Rectangle.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include <vector>
 
 

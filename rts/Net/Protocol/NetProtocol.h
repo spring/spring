@@ -87,9 +87,6 @@ public:
 	/// @overload
 	void Send(const netcode::RawPacket* pkt);
 
-	void SetDemoRecorder(CDemoRecorder* r);
-	CDemoRecorder* GetDemoRecorder() const;
-
 	/**
 	 * Updates our network while the game loads to prevent timeouts.
 	 * Runs until \a loading is false.
@@ -101,10 +98,17 @@ public:
 
 	void Close(bool flush = false);
 
+	void SetLoading(bool b) { loading = b; }
 
-	volatile bool loading;
+	void SetDemoRecorder(CDemoRecorder* r);
+	CDemoRecorder* GetDemoRecorder() const;
+
+	unsigned int GetNumWaitingServerPackets() const;
+
 
 private:
+	volatile bool loading;
+
 	boost::scoped_ptr<netcode::CConnection> serverConn;
 	boost::scoped_ptr<CDemoRecorder> demoRecorder;
 };

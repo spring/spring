@@ -34,7 +34,6 @@ private:
 	float tracking;
 	float maxGoodDif;
 	float maxSpeed;
-	float curSpeed;
 	float acceleration;
 	float areaOfEffect;
 	float distanceToTravel;

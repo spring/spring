@@ -88,10 +88,7 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
-	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "%s(): Bad unitID", caller);
-	}
-	const int unitID = lua_toint(L, index);
+	const int unitID = luaL_checkint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
@@ -731,7 +728,7 @@ static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string&
 	} else if (key == "airStrafe") {
 		mt->airStrafe = value; return true;
 	} else if (key == "dontLand") {
-		mt->dontLand = value; return true;
+		mt->SetAllowLanding(!value); return true;
 	}
 
 	return false;

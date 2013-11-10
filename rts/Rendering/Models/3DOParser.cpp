@@ -278,7 +278,6 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 		} else {
 			prevHashes[vertHash]=obj->prims.size();
 			obj->prims.push_back(sp);
-			obj->isEmpty = false;
 		}
 		curOffset = p.OffsetToVertexIndexArray;
 
@@ -376,7 +375,7 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 		piece->children.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj));
 	}
 
-	piece->isEmpty = (piece->prims.size() < 1);
+	piece->SetHasGeometryData(!piece->prims.empty());
 
 	if (me.OffsetToSiblingObject > 0) {
 		parent->children.push_back(LoadPiece(model, me.OffsetToSiblingObject, parent, numobj));
@@ -400,9 +399,8 @@ void C3DOParser::SimStreamRead(void* buf, int length)
 
 void S3DOPiece::DrawForList() const
 {
-	if (isEmpty) {
+	if (!hasGeometryData)
 		return;
-	}
 
 	// note: do not use more than two VA's
 	// via GetVertexArray(), it wraps around

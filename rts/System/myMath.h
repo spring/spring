@@ -4,8 +4,10 @@
 #define MYMATH_H
 
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/Vec2.h"
+#include "System/type2.h"
 #include "System/float3.h"
+
+#include <algorithm> // std::{min,max}
 
 #ifdef __GNUC__
 	#define _const __attribute__((const))
@@ -99,16 +101,14 @@ bool ClampRayInMap(const float3 start, float3& end);
 float smoothstep(const float edge0, const float edge1, const float value) _pure _warn_unused_result;
 float3 smoothstep(const float edge0, const float edge1, float3 vec) _pure _warn_unused_result;
 
-float mix(const float v1, const float v2, const float a) _pure _warn_unused_result;
-float Blend(const float v1, const float v2, const float a) _pure _warn_unused_result;
-inline float Blend(const float v1, const float v2, const float a) { return mix(v1, v2, a); }
-template<class T> T mix(const T v1, const T v2, const float a) _pure _warn_unused_result;
-template<class T> T Blend(const T v1, const T v2, const float a) _pure _warn_unused_result;
-template<class T> inline T Blend(const T v1, const T v2, const float a) { return mix(v1, v2, a); }
+// template<class T> T mix(const T v1, const T v2, const float a) { return (v1 * (1.0f - a) + v2 * a); }
+template<class T> T mix(const T v1, const T v2, const float a) { return (v1 + (v2 - v1) * a); }
+template<class T> T Blend(const T v1, const T v2, const float a) { return mix(v1, v2, a); }
 
 int Round(const float f) _const _warn_unused_result;
+
 template<class T> T Square(const T x) { return x*x; }
-template<class T> T Clamp(const T v, const T min, const T max) _pure _warn_unused_result;
+template<class T> T Clamp(const T v, const T vmin, const T vmax) { return std::min(vmax, std::max(vmin, v)); }
 // NOTE: '>' instead of '>=' s.t. Sign(int(true)) != Sign(int(false)) --> zero is negative!
 template<class T> T Sign(const T v) { return ((v > T(0)) * T(2) - T(1)); }
 

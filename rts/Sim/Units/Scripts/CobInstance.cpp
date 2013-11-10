@@ -140,12 +140,11 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 		} else {
 			pieces.push_back(NULL);
 
-			const char* fmtString = "[%s] could not find piece named \"%s\" in model \"%s\" (referenced by script \"%s\")";
+			const char* fmtString = "[%s] could not find piece named \"%s\" (referenced by COB script \"%s\")";
 			const char* pieceName = pieceNames[scriptPieceNum].c_str();
-			const char* modelName = lmodel->original->name.c_str();
 			const char* scriptName = script.name.c_str();
 
-			LOG_L(L_WARNING, fmtString, __FUNCTION__, pieceName, modelName, scriptName);
+			LOG_L(L_WARNING, fmtString, __FUNCTION__, pieceName, scriptName);
 		}
 	}
 }

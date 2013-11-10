@@ -88,9 +88,7 @@ void CPlasmaRepulser::Update()
 	if (hitFrames > 0)
 		hitFrames--;
 
-	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z)
-	                       + (owner->updir    * relWeaponPos.y)
-	                       + (owner->rightdir * relWeaponPos.x);
+	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
 
 	if (!isEnabled) {
 		return;
@@ -189,11 +187,8 @@ void CPlasmaRepulser::Update()
 
 void CPlasmaRepulser::SlowUpdate()
 {
-	const int piece = owner->script->QueryWeapon(weaponNum);
-	relWeaponPos = owner->script->GetPiecePos(piece);
-	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z)
-	                       + (owner->updir    * relWeaponPos.y)
-	                       + (owner->rightdir * relWeaponPos.x);
+	relWeaponPos = owner->script->GetPiecePos(owner->script->QueryWeapon(weaponNum));
+	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
 	owner->script->AimShieldWeapon(this);
 }
 

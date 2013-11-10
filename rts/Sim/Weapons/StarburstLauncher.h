@@ -16,7 +16,7 @@ public:
 
 private:
 	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
-	void FireImpl();
+	void FireImpl(bool scriptCall);
 
 private:
 	float tracking;

@@ -380,7 +380,7 @@ void COBJParser::BuildModelPieceTreeRec(
 	if (parentPiece != NULL) {
 		piece->parentName = parentPiece->name;
 	}
-	piece->isEmpty = (piece->GetVertexCount() == 0);
+	piece->SetHasGeometryData(piece->GetVertexCount() != 0);
 	piece->mins = pieceTable.GetFloat3("mins", DEF_MIN_SIZE);
 	piece->maxs = pieceTable.GetFloat3("maxs", DEF_MAX_SIZE);
 
@@ -464,7 +464,7 @@ void COBJParser::BuildModelPieceTreeRec(
 
 void SOBJPiece::UploadGeometryVBOs()
 {
-	if (isEmpty)
+	if (!hasGeometryData)
 		return;
 
 	vertexDrawIndices.reserve(GetTriangleCount() * 3);
@@ -518,7 +518,7 @@ void SOBJPiece::UploadGeometryVBOs()
 
 void SOBJPiece::DrawForList() const
 {
-	if (isEmpty)
+	if (!hasGeometryData)
 		return;
 
 	vbosTangents.Bind(GL_ARRAY_BUFFER);
@@ -609,9 +609,8 @@ void SOBJPiece::SetMinMaxExtends(bool globalVertexOffsets)
 
 void SOBJPiece::SetVertexTangents()
 {
-	if (isEmpty) {
+	if (!hasGeometryData)
 		return;
-	}
 
 	sTangents.resize(GetVertexCount(), ZeroVector);
 	tTangents.resize(GetVertexCount(), ZeroVector);

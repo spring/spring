@@ -7,13 +7,16 @@ Preparation
 
 1) Make sure to be on branch develop,
    on a commit that is on the main repo already.
-2) Create the release branch:
+2) check if all git submodules are up to date:
+	git submodule foreach git pull
+   commit if needed.
+3) Create the release branch:
 		git checkout -b release
 		git push origin release
    From now on, EVERYTHING that should to be in the release,
    has to be commited on this branch.
-3) Write & update the change-log (doc/changelog.txt)
-4) Possibly add fixes
+4) Write & update the change-log (doc/changelog.txt)
+5) Possibly add fixes
 ~) You may want to merge the release branch into develop from time to time:
 		git checkout develop
 		git merge release --no-ff

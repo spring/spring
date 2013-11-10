@@ -36,7 +36,7 @@ public:
 	int GetHitFrames() const { return hitFrames; }
 
 private:
-	void FireImpl() {}
+	void FireImpl(bool scriptCall) {}
 
 private:
 	// these are strictly unsynced

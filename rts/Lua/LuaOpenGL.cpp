@@ -1066,12 +1066,8 @@ int LuaOpenGL::SlaveMiniMap(lua_State* L)
 		return 0;
 	}
 //	CheckDrawingEnabled(L, __FUNCTION__);
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isboolean(L, 1)) {
-		luaL_error(L, "Incorrect arguments to gl.SlaveMiniMap()");
-	}
+	const bool mode = luaL_checkboolean(L, 1);
 	if (minimap) {
-		const bool mode = lua_toboolean(L, 1);
 		minimap->SetSlaveMode(mode);
 	}
 	return 0;
@@ -1107,10 +1103,7 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 			"gl.DrawMiniMap() can only be used if the minimap is in slave mode");
 	}
 
-	bool transform = true;
-	if (lua_isboolean(L, 1)) {
-		transform = lua_toboolean(L, 1);
-	}
+	bool transform = luaL_optboolean(L, 1, true);
 
 	if (transform) {
 		glPushMatrix();
@@ -1272,7 +1265,7 @@ int LuaOpenGL::Unit(lua_State* L)
 		return 0;
 	}
 
-	const bool rawDraw = lua_isboolean(L, 2) && lua_toboolean(L, 2);
+	const bool rawDraw = luaL_optboolean(L, 2, false);
 
 	GML_LODMUTEX_LOCK(unit); // Unit
 
@@ -1335,7 +1328,7 @@ int LuaOpenGL::UnitRaw(lua_State* L)
 		return 0;
 	}
 
-	const bool rawDraw = lua_isboolean(L, 2) && lua_toboolean(L, 2);
+	const bool rawDraw = luaL_optboolean(L, 2, false);
 
 	GML_LODMUTEX_LOCK(unit); // UnitRaw
 
@@ -1602,33 +1595,26 @@ int LuaOpenGL::DrawListAtUnit(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	// is visible to current read team
-	// is not an icon
-	//
+	// is visible to current read team, is not an icon
 	const CUnit* unit = ParseDrawUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
+
+	const CTransportUnit* trans = unit->GetTransporter();
+
+	if (trans != NULL)
+		unit = trans;
 
 	const unsigned int listIndex = (unsigned int)luaL_checkint(L, 2);
-	CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
+	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 	const unsigned int dlist = displayLists.GetDList(listIndex);
-	if (dlist == 0) {
+
+	if (dlist == 0)
 		return 0;
-	}
 
-	bool midPos = true;
-	if (lua_isboolean(L, 3)) {
-		midPos = lua_toboolean(L, 3);
-	}
-
-	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
-	CTransportUnit *trans=unit->GetTransporter();
-	if (trans == NULL) {
-		pos += (unit->speed * globalRendering->timeOffset);
-	} else {
-		pos += (trans->speed * globalRendering->timeOffset);
-	}
+	const bool useMidPos = luaL_optboolean(L, 3, true);
+	const float3 drawPos = (useMidPos)? unit->drawMidPos: unit->drawPos;
 
 	const float3 scale(luaL_optnumber(L, 4, 1.0f),
 	                   luaL_optnumber(L, 5, 1.0f),
@@ -1639,7 +1625,7 @@ int LuaOpenGL::DrawListAtUnit(lua_State* L)
 	                 luaL_optnumber(L, 10, 0.0f));
 
 	glPushMatrix();
-	glTranslatef(pos.x, pos.y, pos.z);
+	glTranslatef(drawPos.x, drawPos.y, drawPos.z);
 	glRotatef(degrees, rot.x, rot.y, rot.z);
 	glScalef(scale.x, scale.y, scale.z);
 	glCallList(dlist);
@@ -1653,43 +1639,33 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	// is visible to current read team
-	// is not an icon
-	//
+	// is visible to current read team, is not an icon
 	const CUnit* unit = ParseDrawUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
 
-	bool midPos = true;
-	if (lua_isboolean(L, 2)) {
-		midPos = lua_toboolean(L, 2);
-	}
+	if (unit == NULL)
+		return 0;
+
+	const CTransportUnit* trans = unit->GetTransporter();
+
+	if (trans != NULL)
+		unit = trans;
+
+	const bool useMidPos = luaL_checkboolean(L, 2);
+	const float3 drawPos = (useMidPos)? unit->drawMidPos: unit->drawPos;
 
 	if (!lua_isfunction(L, 3)) {
 		luaL_error(L, "Missing function parameter in DrawFuncAtUnit()\n");
 		return 0;
 	}
 
-	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
-	CTransportUnit *trans=unit->GetTransporter();
-	if (trans == NULL) {
-		pos += (unit->speed * globalRendering->timeOffset);
-	} else {
-		pos += (trans->speed * globalRendering->timeOffset);
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-
 	// call the function
 	glPushMatrix();
-	glTranslatef(pos.x, pos.y, pos.z);
-	const int error = lua_pcall(L, (args - 3), 0, 0);
+	glTranslatef(drawPos.x, drawPos.y, drawPos.z);
+	const int error = lua_pcall(L, (lua_gettop(L) - 3), 0, 0);
 	glPopMatrix();
 
 	if (error != 0) {
-		LOG_L(L_ERROR, "gl.DrawFuncAtUnit: error(%i) = %s",
-				error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.DrawFuncAtUnit: error(%i) = %s", error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -1899,12 +1875,11 @@ int LuaOpenGL::Shape(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_istable(L, 2)) {
+	if (!lua_istable(L, 2)) {
 		luaL_error(L, "Incorrect arguments to gl.Shape(type, elements[])");
 	}
 
-	const GLuint type = (GLuint)lua_tonumber(L, 1);
+	const GLuint type = (GLuint)luaL_checkint(L, 1);
 
 	glBegin(type);
 
@@ -1941,10 +1916,10 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 	CheckDrawingEnabled(L, __FUNCTION__);
 
 	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isfunction(L, 2)) {
+	if ((args < 2) || !lua_isfunction(L, 2)) {
 		luaL_error(L, "Incorrect arguments to gl.BeginEnd(type, func, ...)");
 	}
-	const GLuint primMode = (GLuint)lua_tonumber(L, 1);
+	const GLuint primMode = (GLuint)luaL_checkint(L, 1);
 
 	if (primMode == GL_POINTS) {
 		WorkaroundATIPointSizeBug();
@@ -2296,12 +2271,12 @@ int LuaOpenGL::TexRect(lua_State* L)
 		float t1 = 1.0f;
 		float s2 = 1.0f;
 		float t2 = 0.0f;
-		if ((args >= 5) && lua_isboolean(L, 5) && lua_toboolean(L, 5)) {
+		if ((args >= 5) && luaL_optboolean(L, 5, false)) {
 			// flip s-coords
 			s1 = 1.0f;
 			s2 = 0.0f;
 		}
-		if ((args >= 6) && lua_isboolean(L, 6) && lua_toboolean(L, 6)) {
+		if ((args >= 6) && luaL_optboolean(L, 6, false)) {
 			// flip t-coords
 			t1 = 0.0f;
 			t2 = 1.0f;
@@ -2444,14 +2419,7 @@ int LuaOpenGL::Material(lua_State* L)
 int LuaOpenGL::ResetState(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		luaL_error(L, "gl.ResetState takes no arguments");
-	}
-
 	glCallList(resetStateList);
-
 	return 0;
 }
 
@@ -2474,12 +2442,7 @@ int LuaOpenGL::ResetMatrices(lua_State* L)
 int LuaOpenGL::Lighting(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isboolean(L, 1)) {
-		luaL_error(L, "Incorrect arguments to gl.Lighting()");
-	}
-	if (lua_toboolean(L, 1)) {
+	if (luaL_checkboolean(L, 1)) {
 		glEnable(GL_LIGHTING);
 	} else {
 		glDisable(GL_LIGHTING);
@@ -2544,21 +2507,16 @@ int LuaOpenGL::ColorMask(lua_State* L)
 	CheckDrawingEnabled(L, __FUNCTION__);
 
 	const int args = lua_gettop(L); // number of arguments
-	if ((args == 1) && lua_isboolean(L, 1)) {
-		if (!lua_isboolean(L, 1)) {
-			luaL_error(L, "Incorrect arguments to gl.ColorMask()");
-		}
-		if (lua_toboolean(L, 1)) {
+	if (args == 1) {
+		if (luaL_checkboolean(L, 1)) {
 			glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		} else {
 			glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 		}
 	}
-	else if ((args == 4) &&
-	         lua_isboolean(L, 1) && lua_isboolean(L, 1) &&
-	         lua_isboolean(L, 3) && lua_isboolean(L, 4)) {
-		glColorMask(lua_toboolean(L, 1), lua_toboolean(L, 2),
-		            lua_toboolean(L, 3), lua_toboolean(L, 4));
+	else if (args == 4) {
+		glColorMask(luaL_checkboolean(L, 1), luaL_checkboolean(L, 2),
+		            luaL_checkboolean(L, 3), luaL_checkboolean(L, 4));
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to gl.ColorMask()");
@@ -2570,12 +2528,7 @@ int LuaOpenGL::ColorMask(lua_State* L)
 int LuaOpenGL::DepthMask(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isboolean(L, 1)) {
-		luaL_error(L, "Incorrect arguments to gl.DepthMask()");
-	}
-	if (lua_toboolean(L, 1)) {
+	if (luaL_checkboolean(L, 1)) {
 		glDepthMask(GL_TRUE);
 	} else {
 		glDepthMask(GL_FALSE);
@@ -2682,12 +2635,7 @@ int LuaOpenGL::Fog(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isboolean(L, 1)) {
-		luaL_error(L, "Incorrect arguments to gl.Fog()");
-	}
-
-	if (lua_toboolean(L, 1)) {
+	if (luaL_checkboolean(L, 1)) {
 		glEnable(GL_FOG);
 	} else {
 		glDisable(GL_FOG);
@@ -2841,10 +2789,7 @@ int LuaOpenGL::AlphaTest(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 1) {
-		if (!lua_isboolean(L, 1)) {
-			luaL_error(L, "Incorrect arguments to gl.AlphaTest()");
-		}
-		if (lua_toboolean(L, 1)) {
+		if (luaL_checkboolean(L, 1)) {
 			glEnable(GL_ALPHA_TEST);
 		} else {
 			glDisable(GL_ALPHA_TEST);
@@ -2877,10 +2822,7 @@ int LuaOpenGL::PolygonOffset(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 1) {
-		if (!lua_isboolean(L, 1)) {
-			luaL_error(L, "Incorrect arguments to gl.PolygonOffset()");
-		}
-		if (lua_toboolean(L, 1)) {
+		if (luaL_checkboolean(L, 1)) {
 			glEnable(GL_POLYGON_OFFSET_FILL);
 			glEnable(GL_POLYGON_OFFSET_LINE);
 			glEnable(GL_POLYGON_OFFSET_POINT);
@@ -4403,12 +4345,10 @@ int LuaOpenGL::GetGlobalTexNames(lua_State* L)
 		texturehandler3DO->GetAtlasTextures();
 
 	lua_createtable(L, textures.size(), 0);
-	int count = 0;
+	int count = 1;
 	for (it = textures.begin(); it != textures.end(); ++it) {
-		count++;
-		lua_pushnumber(L, count);
 		lua_pushsstring(L, it->first);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, count++);
 	}
 	return 1;
 }

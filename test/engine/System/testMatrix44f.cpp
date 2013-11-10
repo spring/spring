@@ -27,15 +27,31 @@ static m44 m_;
 // Performance: ~90 cycles/vector
 /*_noinline*/ static float4 MatrixMultiply1(const CMatrix44f& m, const float4& vin)
 {
-	float v0 =  m.md[0][0] * vin.x + m.md[1][0] * vin.y +
-			m.md[2][0] * vin.z + m.md[3][0] * vin.w;
-	float v1 =  m.md[0][1] * vin.x + m.md[1][1] * vin.y +
-			m.md[2][1] * vin.z + m.md[3][1] * vin.w;
-	float v2 =  m.md[0][2] * vin.x + m.md[1][2] * vin.y +
-			m.md[2][2] * vin.z + m.md[3][2] * vin.w;
-	//float v3 =  m.md[0][3] * vin.x + m.md[1][3] * vin.y +
-	//		m.md[2][3] * vin.z + m.md[3][3] * vin.w;
-	return float4(v0,v1,v2,0.0f);
+	const float v0 =
+		m.md[0][0] * vin.x +
+		m.md[1][0] * vin.y +
+		m.md[2][0] * vin.z +
+		m.md[3][0] * vin.w;
+	const float v1 =
+		m.md[0][1] * vin.x +
+		m.md[1][1] * vin.y +
+		m.md[2][1] * vin.z +
+		m.md[3][1] * vin.w;
+	const float v2 =
+		m.md[0][2] * vin.x +
+		m.md[1][2] * vin.y +
+		m.md[2][2] * vin.z +
+		m.md[3][2] * vin.w;
+	// w-component matters for float4::operator +=
+	// the comparison with MatrixMultiply2() would
+	// also not be fair otherwise
+	const float v3 =
+		m.md[0][3] * vin.x +
+		m.md[1][3] * vin.y +
+		m.md[2][3] * vin.z +
+		m.md[3][3] * vin.w;
+
+	return float4(v0, v1, v2, v3);
 }
 
 
@@ -45,14 +61,26 @@ static m44 m_;
 /*_noinline*/ static void MatrixMultiply2(const CMatrix44f& m, const float4& in, float4* vout)
 {
 	float4& out = *vout;
-	out.x =  m.md[0][0] * in.x + m.md[1][0] * in.y +
-			m.md[2][0] * in.z + m.md[3][0] * in.w;
-	out.y =  m.md[0][1] * in.x + m.md[1][1] * in.y +
-			m.md[2][1] * in.z + m.md[3][1] * in.w;
-	out.z =  m.md[0][2] * in.x + m.md[1][2] * in.y +
-			m.md[2][2] * in.z + m.md[3][2] * in.w;
-	out.w =  m.md[0][3] * in.x + m.md[1][3] * in.y +
-			m.md[2][3] * in.z + m.md[3][3] * in.w;
+	out.x =
+		m.md[0][0] * in.x +
+		m.md[1][0] * in.y +
+		m.md[2][0] * in.z +
+		m.md[3][0] * in.w;
+	out.y =
+		m.md[0][1] * in.x +
+		m.md[1][1] * in.y +
+		m.md[2][1] * in.z +
+		m.md[3][1] * in.w;
+	out.z =
+		m.md[0][2] * in.x +
+		m.md[1][2] * in.y +
+		m.md[2][2] * in.z +
+		m.md[3][2] * in.w;
+	out.w =
+		m.md[0][3] * in.x +
+		m.md[1][3] * in.y +
+		m.md[2][3] * in.z +
+		m.md[3][3] * in.w;
 }
 
 
@@ -126,7 +154,7 @@ _noinline static void MatrixMatrixMultiply(CMatrix44f* m1, const CMatrix44f& m2)
 
 _noinline static void MatrixMultSoft(CMatrix44f* m1, const CMatrix44f& m2)
 {
-	for(int i = 0; i < 4; ++i){
+	for (int i = 0; i < 4; ++i) {
 		const float m10 = m1->m[0+i];
 		const float m11 = m1->m[4+i];
 		const float m12 = m1->m[8+i];
@@ -143,7 +171,7 @@ _noinline static int TestMMSpring()
 {
 	ScopedOnceTimer timer("Matrix-Matrix-Mult: spring (m = m * m2)");
 	m44 m1(m_);
-	for (int i=0; i<testRuns; ++i) {
+	for (int i = 0; i < testRuns; ++i) {
 		m1 = m1 * m;
 	}
 	return HsiehHash(&m1, sizeof(m44), 0);
@@ -153,7 +181,7 @@ _noinline static int TestMMFpu()
 {
 	ScopedOnceTimer timer("Matrix-Matrix-Mult: fpu (m <<= m2)");
 	m44 m1(m_);
-	for (int i=0; i<testRuns; ++i) {
+	for (int i = 0; i < testRuns; ++i) {
 		MatrixMultSoft(&m1, m);
 	}
 	return HsiehHash(&m1, sizeof(m44), 0);
@@ -163,7 +191,7 @@ _noinline static int TestMMSpring2()
 {
 	ScopedOnceTimer timer("Matrix-Matrix-Mult: spring (m <<= m2)");
 	m44 m1(m_);
-	for (int i=0; i<testRuns; ++i) {
+	for (int i = 0; i < testRuns; ++i) {
 		m1 <<= m;
 	}
 	return HsiehHash(&m1, sizeof(m44), 0);
@@ -173,7 +201,7 @@ _noinline static int TestMMSSE()
 {
 	ScopedOnceTimer timer("Matrix-Matrix-Mult: sse");
 	m44 m1(m_);
-	for (int i=0; i<testRuns; ++i) {
+	for (int i = 0; i < testRuns; ++i) {
 		MatrixMatrixMultiply(&m1, m);
 	}
 	return HsiehHash(&m1, sizeof(m44), 0);
@@ -183,7 +211,7 @@ _noinline static int TestSpring()
 {
 	ScopedOnceTimer timer("Matrix-Vector-Mult: spring");
 	f4 v_in(1,2,3,1), v_f;
-	for (int i=0; i<testRuns; ++i) {
+	for (int i = 0; i < testRuns; ++i) {
 		v_f += m * v_in;
 		v_in+= v_f;
 	}
@@ -194,7 +222,7 @@ _noinline static int TestFPU1()
 {
 	ScopedOnceTimer timer("Matrix-Vector-Mult: fpu1");
 	f4 v_in(1,2,3,1), v_out, v_f;
-	for (int i=0; i<testRuns; ++i) {
+	for (int i = 0; i < testRuns; ++i) {
 		v_out = MatrixMultiply1(m, v_in);
 		v_f += v_out;
 		v_in+= v_f;
@@ -206,7 +234,7 @@ _noinline static int TestFPU2()
 {
 	ScopedOnceTimer timer("Matrix-Vector-Mult: fpu2");
 	f4 v_in(1,2,3,1), v_out, v_f;
-	for (int i=0; i<testRuns; ++i) {
+	for (int i = 0; i < testRuns; ++i) {
 		MatrixMultiply2(m, v_in, &v_out);
 		v_f += v_out;
 		v_in+= v_f;
@@ -218,7 +246,7 @@ _noinline static int TestSSE()
 {
 	ScopedOnceTimer timer("Matrix-Vector-Mult: sse");
 	f4 v_in(1,2,3,1), v_out, v_f;
-	for (int i=0; i<testRuns; ++i) {
+	for (int i = 0; i < testRuns; ++i) {
 		MatrixVectorSSE(m, v_in, &v_out);
 		v_f += v_out;
 		v_in+= v_f;
@@ -229,6 +257,9 @@ _noinline static int TestSSE()
 
 BOOST_AUTO_TEST_CASE( Matrix44VectorMultiply )
 {
+	spring_clock::PushTickRate();
+	spring_time::setstarttime(spring_time::gettime(true));
+
 	for (int i = 0; i < 16; ++i) {
 		if ((i != 7) && (i != 3)) {
 			m[i] = float(i + 1) / 31.5f;
@@ -240,6 +271,8 @@ BOOST_AUTO_TEST_CASE( Matrix44VectorMultiply )
 	BOOST_CHECK(TestFPU1() == correctHash);
 	BOOST_CHECK(TestFPU2() == correctHash);
 	BOOST_CHECK(TestSSE()  == correctHash);
+
+	spring_clock::PopTickRate();
 }
 
 BOOST_AUTO_TEST_CASE( Matrix44MatrixMultiply )
