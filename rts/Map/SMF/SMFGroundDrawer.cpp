@@ -31,7 +31,7 @@ CONFIG(int, MaxDynamicMapLights)
 	.minimumValue(0);
 
 CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false).description("Enable shaders for terrain rendering and enable so more effects.");
-CONFIG(bool, AllowDeferredMapRendering).defaultValue(true).safemodeValue(false);
+CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false);
 
 CONFIG(int, ROAM)
 	.defaultValue(Patch::VBO)
