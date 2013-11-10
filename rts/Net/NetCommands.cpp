@@ -62,7 +62,7 @@ void CGame::SendClientProcUsage()
 {
 	static spring_time lastProcUsageUpdateTime = spring_gettime();
 
-	if ((spring_gettime() - lastProcUsageUpdateTime).toSecsf() >= 1.0f) {
+	if ((spring_gettime() - lastProcUsageUpdateTime).toMilliSecsf() >= 1000.0f) {
 		lastProcUsageUpdateTime = spring_gettime();
 
 		if (playing) {
