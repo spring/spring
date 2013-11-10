@@ -28,7 +28,7 @@
 #define SMOKE_TIME 40
 #define NUM_TRAIL_PARTS (sizeof(fireTrailPoints) / sizeof(fireTrailPoints[0]))
 
-CR_BIND_DERIVED(CPieceProjectile, CProjectile, (ZeroVector, ZeroVector, NULL, NULL, 0, 0));
+CR_BIND_DERIVED(CPieceProjectile, CProjectile, (NULL, NULL, ZeroVector, ZeroVector, 0, 0));
 
 CR_REG_METADATA(CPieceProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -52,10 +52,10 @@ CR_REG_METADATA(CPieceProjectile,(
 ));
 
 CPieceProjectile::CPieceProjectile(
-	const float3& pos,
-	const float3& speed,
 	CUnit* owner,
 	LocalModelPiece* lmp,
+	const float3& pos,
+	const float3& speed,
 	int flags,
 	float radius
 ):
@@ -191,16 +191,16 @@ void CPieceProjectile::Collision()
 	if (explFlags & PF_Smoke) {
 		if (explFlags & PF_NoCEGTrail) {
 			CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
+				owner(),
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
-				owner(),
 				false,
 				true,
 				(NUM_TRAIL_PARTS - 1),
 				SMOKE_TIME,
 				0.5f,
 				drawTrail,
-				0,
+				NULL,
 				projectileDrawer->smoketrailtex);
 
 			tp->creationTime += (NUM_TRAIL_PARTS - (age & (NUM_TRAIL_PARTS - 1)));
@@ -246,16 +246,16 @@ void CPieceProjectile::Collision(CUnit* unit)
 	if (explFlags & PF_Smoke) {
 		if (explFlags & PF_NoCEGTrail) {
 			CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
+				owner(),
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
-				owner(),
 				false,
 				true,
 				NUM_TRAIL_PARTS - 1,
 				SMOKE_TIME,
 				0.5f,
 				drawTrail,
-				0,
+				NULL,
 				projectileDrawer->smoketrailtex
 			);
 
@@ -300,8 +300,9 @@ void CPieceProjectile::Update()
 
 	spinAngle += spinSpeed;
 	age += 1;
+	checkCol |= (age > 10);
 
-	if ((explFlags & PF_Fire) && HasVertices()) {
+	if ((explFlags & PF_Fire) != 0 && HasVertices()) {
 		FireTrailPoint* tempTrailPoint = fireTrailPoints[NUM_TRAIL_PARTS - 1];
 
 		for (int a = NUM_TRAIL_PARTS - 2; a >= 0; --a) {
@@ -317,16 +318,22 @@ void CPieceProjectile::Update()
 		fireTrailPoints[0]->size = gu->RandFloat() * 1 + 1;
 	}
 
-	if (explFlags & PF_NoCEGTrail) {
-		if ((age & (NUM_TRAIL_PARTS - 1)) == 0 && (explFlags & PF_Smoke)) {
+	if ((explFlags & PF_NoCEGTrail) == 0) {
+		// TODO: pass a more sensible ttl to the CEG (age-related?)
+		explGenHandler->GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
+		return;
+	}
+
+	if ((explFlags & PF_Smoke) != 0) {
+		if ((age & (NUM_TRAIL_PARTS - 1)) == 0) {
 			if (curCallback != NULL) {
 				curCallback->drawCallbacker = NULL;
 			}
 
 			curCallback = new CSmokeTrailProjectile(
+				owner(),
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
-				owner(),
 				age == (NUM_TRAIL_PARTS - 1),
 				false,
 				14,
@@ -351,91 +358,87 @@ void CPieceProjectile::Update()
 				drawTrail = ((camPieceDist + camAngleScale) >= 300.0f);
 			}
 		}
-	} else {
-		// TODO: pass a more sensible ttl to the CEG (age-related?)
-		explGenHandler->GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
 	}
-
-	checkCol |= (age > 10);
 }
 
 
 
 void CPieceProjectile::Draw()
 {
-	if (explFlags & PF_NoCEGTrail) {
-		if (explFlags & PF_Smoke) {
-			// this piece leaves a default (non-CEG) smoketrail
-			inArray = true;
+	if ((explFlags & PF_NoCEGTrail) == 0)
+		return;
 
-			const int numParts = age & (NUM_TRAIL_PARTS - 1);
-			float age2 = (age & (NUM_TRAIL_PARTS - 1)) + globalRendering->timeOffset;
-			float color = 0.5f;
-			unsigned char col[4];
+	if ((explFlags & PF_Smoke) != 0) {
+		// this piece leaves a default (non-CEG) smoketrail
+		inArray = true;
 
-			va->EnlargeArrays(4+4*numParts,0,VA_SIZE_TC);
+		const int numParts = age & (NUM_TRAIL_PARTS - 1);
+		float age2 = (age & (NUM_TRAIL_PARTS - 1)) + globalRendering->timeOffset;
+		float color = 0.5f;
+		unsigned char col[4];
 
-			if (drawTrail) {
-				// draw the trail as a single quad if camera close enough
-				const float3 dif  = (drawPos - camera->GetPos()).Normalize();
-				const float3 dir1 = (dif.cross(dir)).Normalize();
-				const float3 dif2 = (oldSmokePos - camera->GetPos()).Normalize();
-				const float3 dir2 = (dif2.cross(oldSmokeDir)).Normalize();
+		va->EnlargeArrays(4+4*numParts,0,VA_SIZE_TC);
 
-				float a1 = ((1 - 0.0f / SMOKE_TIME) * 255) * (0.7f + math::fabs(dif.dot(dir)));
-				float alpha = std::min(255.0f, std::max(0.f, a1));
+		if (drawTrail) {
+			// draw the trail as a single quad if camera close enough
+			const float3 dif  = (drawPos - camera->GetPos()).Normalize();
+			const float3 dir1 = (dif.cross(dir)).Normalize();
+			const float3 dif2 = (oldSmokePos - camera->GetPos()).Normalize();
+			const float3 dir2 = (dif2.cross(oldSmokeDir)).Normalize();
+
+			float a1 = ((1 - 0.0f / SMOKE_TIME) * 255) * (0.7f + math::fabs(dif.dot(dir)));
+			float alpha = std::min(255.0f, std::max(0.0f, a1));
+			col[0] = (unsigned char) (color * alpha);
+			col[1] = (unsigned char) (color * alpha);
+			col[2] = (unsigned char) (color * alpha);
+			col[3] = (unsigned char) (alpha);
+
+			unsigned char col2[4];
+			float a2 = ((1 - float(age2) / SMOKE_TIME) * 255) * (0.7f + math::fabs(dif2.dot(oldSmokeDir)));
+
+			if (age < NUM_TRAIL_PARTS)
+				a2 = 0.0f;
+
+			alpha = std::min(255.0f, std::max(0.0f, a2));
+			col2[0] = (unsigned char) (color * alpha);
+			col2[1] = (unsigned char) (color * alpha);
+			col2[2] = (unsigned char) (color * alpha);
+			col2[3] = (unsigned char) (alpha);
+
+			const float size = 1.0f;
+			const float size2 = 1 + (age2 * (1.0f / SMOKE_TIME)) * 14;
+			const float txs =
+				projectileDrawer->smoketrailtex->xstart -
+				(projectileDrawer->smoketrailtex->xend - projectileDrawer->smoketrailtex->xstart) *
+				(age2 / NUM_TRAIL_PARTS);
+
+			va->AddVertexQTC(drawPos - dir1 * size, txs, projectileDrawer->smoketrailtex->ystart, col);
+			va->AddVertexQTC(drawPos + dir1 * size, txs, projectileDrawer->smoketrailtex->yend,   col);
+			va->AddVertexQTC(oldSmokePos + dir2 * size2, projectileDrawer->smoketrailtex->xend, projectileDrawer->smoketrailtex->yend,   col2);
+			va->AddVertexQTC(oldSmokePos - dir2 * size2, projectileDrawer->smoketrailtex->xend, projectileDrawer->smoketrailtex->ystart, col2);
+		} else {
+			// draw the trail as particles
+			const float dist = pos.distance(oldSmokePos);
+			const float3 dirpos1 = pos - dir * dist * 0.33f;
+			const float3 dirpos2 = oldSmokePos + oldSmokeDir * dist * 0.33f;
+
+			// CAUTION: loop count must match EnlargeArrays above
+			for (int a = 0; a < numParts; ++a) {
+				float alpha = 255.0f;
 				col[0] = (unsigned char) (color * alpha);
 				col[1] = (unsigned char) (color * alpha);
 				col[2] = (unsigned char) (color * alpha);
 				col[3] = (unsigned char) (alpha);
 
-				unsigned char col2[4];
-				float a2 = ((1 - float(age2) / SMOKE_TIME) * 255) * (0.7f + math::fabs(dif2.dot(oldSmokeDir)));
+				const float size = 1.0f + ((a) * (1.0f / SMOKE_TIME)) * 14.0f;
+				const float3 pos1 = CalcBeizer(float(a) / (numParts), pos, dirpos1, dirpos2, oldSmokePos);
 
-				if (age < NUM_TRAIL_PARTS)
-					a2 = 0.0f;
-
-				alpha = std::min(255.0f, std::max(0.f, a2));
-				col2[0] = (unsigned char) (color * alpha);
-				col2[1] = (unsigned char) (color * alpha);
-				col2[2] = (unsigned char) (color * alpha);
-				col2[3] = (unsigned char) (alpha);
-
-				const float size = 1.0f;
-				const float size2 = 1 + (age2 * (1.0f / SMOKE_TIME)) * 14;
-				const float txs =
-					projectileDrawer->smoketrailtex->xstart -
-					(projectileDrawer->smoketrailtex->xend - projectileDrawer->smoketrailtex->xstart) *
-					(age2 / NUM_TRAIL_PARTS);
-
-				va->AddVertexQTC(drawPos - dir1 * size, txs, projectileDrawer->smoketrailtex->ystart, col);
-				va->AddVertexQTC(drawPos + dir1 * size, txs, projectileDrawer->smoketrailtex->yend,   col);
-				va->AddVertexQTC(oldSmokePos + dir2 * size2, projectileDrawer->smoketrailtex->xend, projectileDrawer->smoketrailtex->yend,   col2);
-				va->AddVertexQTC(oldSmokePos - dir2 * size2, projectileDrawer->smoketrailtex->xend, projectileDrawer->smoketrailtex->ystart, col2);
-			} else {
-				// draw the trail as particles
-				const float dist = pos.distance(oldSmokePos);
-				const float3 dirpos1 = pos - dir * dist * 0.33f;
-				const float3 dirpos2 = oldSmokePos + oldSmokeDir * dist * 0.33f;
-
-				// CAUTION: loop count must match EnlargeArrays above
-				for (int a = 0; a < numParts; ++a) {
-					float alpha = 255.0f;
-					col[0] = (unsigned char) (color * alpha);
-					col[1] = (unsigned char) (color * alpha);
-					col[2] = (unsigned char) (color * alpha);
-					col[3] = (unsigned char) (alpha);
-
-					const float size = 1.0f + ((a) * (1.0f / SMOKE_TIME)) * 14.0f;
-					const float3 pos1 = CalcBeizer(float(a) / (numParts), pos, dirpos1, dirpos2, oldSmokePos);
-
-					#define st projectileDrawer->smoketex[0]
-					va->AddVertexQTC(pos1 + ( camera->up+camera->right) * size, st->xstart, st->ystart, col);
-					va->AddVertexQTC(pos1 + ( camera->up-camera->right) * size, st->xend,   st->ystart, col);
-					va->AddVertexQTC(pos1 + (-camera->up-camera->right) * size, st->xend,   st->ystart, col);
-					va->AddVertexQTC(pos1 + (-camera->up+camera->right) * size, st->xstart, st->ystart, col);
-					#undef st
-				}
+				#define st projectileDrawer->smoketex[0]
+				va->AddVertexQTC(pos1 + ( camera->up+camera->right) * size, st->xstart, st->ystart, col);
+				va->AddVertexQTC(pos1 + ( camera->up-camera->right) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->up-camera->right) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->up+camera->right) * size, st->xstart, st->ystart, col);
+				#undef st
 			}
 		}
 	}
@@ -452,8 +455,10 @@ void CPieceProjectile::DrawCallback()
 {
 	inArray = true;
 
-	if (explFlags & PF_Fire) {
+	// fireTrailPoints contains nothing useful if piece is empty
+	if ((explFlags & PF_Fire) != 0 && HasVertices()) {
 		va->EnlargeArrays(NUM_TRAIL_PARTS * 4, 0, VA_SIZE_TC);
+
 		for (unsigned int age = 0; age < NUM_TRAIL_PARTS; ++age) {
 			const float3 interPos = fireTrailPoints[age]->pos;
 			const float size = fireTrailPoints[age]->size;

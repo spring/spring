@@ -61,7 +61,7 @@ struct S3DModelPiece {
 	virtual float3 GetPosOffset() const { return ZeroVector; }
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 
-	CMatrix44f& ApplyRotation(CMatrix44f& m, const float3& r) const {
+	CMatrix44f& ComposeRotation(CMatrix44f& m, const float3& r) const {
 		// execute rotations in YPR order by default
 		// note: translating + rotating is faster than
 		// matrix-multiplying (but the branching hurts)
@@ -93,10 +93,10 @@ struct S3DModelPiece {
 		bool isIdentity = true;
 
 		// NOTE: ORDER MATTERS (T(baked + script) * R(baked) * R(script) * S(baked))
-		if (t != ZeroVector) { m = m.Translate(t);      isIdentity = false; }
-		if (!hasIdentityRot) { m *= bakedRotMatrix;     isIdentity = false; }
-		if (r != ZeroVector) { m = ApplyRotation(m, r); isIdentity = false; }
-		if (s != OnesVector) { m = m.Scale(s);          isIdentity = false; }
+		if (t != ZeroVector) { m = m.Translate(t);        isIdentity = false; }
+		if (!hasIdentityRot) { m *= bakedRotMatrix;       isIdentity = false; }
+		if (r != ZeroVector) { m = ComposeRotation(m, r); isIdentity = false; }
+		if (s != OnesVector) { m = m.Scale(s);            isIdentity = false; }
 
 		return isIdentity;
 	}

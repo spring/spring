@@ -23,7 +23,7 @@ CALLIN_LIST = {
 	"Shutdown",
 
 	-- game callins
-	"GameSetup",               -- FIXME: not implemented by base GH
+	"GameSetup",
 	"GamePreload",
 	"GameStart",
 	"GameOver",

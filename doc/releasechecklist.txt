@@ -7,13 +7,16 @@ Preparation
 
 1) Make sure to be on branch develop,
    on a commit that is on the main repo already.
-2) Create the release branch:
+2) check if all git submodules are up to date:
+	git submodule foreach git pull
+   commit if needed.
+3) Create the release branch:
 		git checkout -b release
 		git push origin release
    From now on, EVERYTHING that should to be in the release,
    has to be commited on this branch.
-3) Write & update the change-log (doc/changelog.txt)
-4) Possibly add fixes
+4) Write & update the change-log (doc/changelog.txt)
+5) Possibly add fixes
 ~) You may want to merge the release branch into develop from time to time:
 		git checkout develop
 		git merge release --no-ff
@@ -27,7 +30,7 @@ Release Time
 		git reset --hard origin/master
 		git merge release --no-ff
 2) Tag the release:
-		export REL_VERS=93.0
+		export REL_VERS=95.0
 		git tag -a -m "${REL_VERS} release [changed APIs: Lua, unitsync, AI]" ${REL_VERS}
    Make sure it looks correct:
 		gitk master develop release &
@@ -43,8 +46,8 @@ Release Time
 		git tag -a -m "dev version after the ${REL_VERS} release" ${REL_VERS}.1
 5) POINT OF NO RETURN: Push to the main repo (and delete the release branch):
 		git push --tags origin develop :release master
-6) Force build of the master branch on the windows and the OS-X buildbots.
-   The later will take long to complete, one hour or more!
+6) The Buildbot should automaticly start build the release on the buildslaves, wait for it until all builds are done,
+   the OS-X buildslave will take about one hour or more!
 7) Write the news post for the springrts.com frontpage, while waiting for the
    buildbot to compile the master branch.
 8) Check if everything went fine on http://buildbot.springrts.com/waterfall and fetch these archives:
@@ -65,7 +68,7 @@ Release Time
 		rsync --progress -h spring_${REL_VERS}* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-${REL_VERS}/
 10) Post the news post.
 
-11) After 1 or 2 days, enforce it on the server, if it is a sync relevant change.
+11) After a week, enforce it on the server, if it is a sync relevant change.
 
 
 Enforcing on server
@@ -73,7 +76,7 @@ Enforcing on server
 
 This only needs to be done if it is a sync relevant change.
 
-1) Ask aegis or a lobby admin to enforce the new version.
+1) Ask a lobby admin to enforce the new version.
 2) Update download page by chaning the version templates on the Wiki.
 	http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Major&action=edit
 	http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Minor&action=edit

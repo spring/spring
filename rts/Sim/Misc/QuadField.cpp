@@ -13,21 +13,16 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "System/creg/STL_List.h"
 
-#define REMOVE_PROJECTILE_FAST
+#define CELL_IDX_X(wpx) Clamp(int((wpx) / quadSizeX), 0, numQuadsX - 1)
+#define CELL_IDX_Z(wpz) Clamp(int((wpz) / quadSizeZ), 0, numQuadsZ - 1)
 
-CR_BIND(CQuadField, );
+CR_BIND(CQuadField, (1, 1));
 CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(baseQuads),
 	CR_MEMBER(numQuadsX),
 	CR_MEMBER(numQuadsZ),
 	CR_MEMBER(tempQuads)
 ));
-
-
-CQuadField::Quad::Quad() : teamUnits(teamHandler->ActiveAllyTeams())
-{
-}
-
 
 CR_BIND(CQuadField::Quad, );
 CR_REG_METADATA_SUB(CQuadField, Quad, (
@@ -37,17 +32,72 @@ CR_REG_METADATA_SUB(CQuadField, Quad, (
 	CR_MEMBER(projectiles)
 ));
 
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
 CQuadField* quadField = NULL;
 
-CQuadField::CQuadField()
+
+
+void CQuadField::Resize(unsigned int nqx, unsigned int nqz)
 {
-	numQuadsX = gs->mapx * SQUARE_SIZE / QUAD_SIZE;
-	numQuadsZ = gs->mapy * SQUARE_SIZE / QUAD_SIZE;
+	CQuadField* oldQuadField = quadField;
+	CQuadField* newQuadField = new CQuadField(nqx, nqz);
+
+	quadField = NULL;
+
+	for (int zq = 0; zq < oldQuadField->GetNumQuadsZ(); zq++) {
+		for (int xq = 0; xq < oldQuadField->GetNumQuadsX(); xq++) {
+			const CQuadField::Quad& quad = oldQuadField->GetQuadAt(xq, zq);
+
+			// COPY the object lists because the Remove* functions modify them
+			// NOTE:
+			//   teamUnits is updated internally by RemoveUnit and MovedUnit
+			//
+			//   if a unit exists in multiple quads in the old field, it will
+			//   be removed from all of them and there is no danger of double
+			//   re-insertion (important if new grid has higher resolution)
+			const std::list<CUnit*      > units       = quad.units;
+			const std::list<CFeature*   > features    = quad.features;
+			const std::list<CProjectile*> projectiles = quad.projectiles;
+
+			for (std::list<CUnit*>::const_iterator it = units.begin(); it != units.end(); ++it) {
+				oldQuadField->RemoveUnit(*it);
+				newQuadField->MovedUnit(*it); // handles addition
+			}
+
+			for (std::list<CFeature*>::const_iterator it = features.begin(); it != features.end(); ++it) {
+				oldQuadField->RemoveFeature(*it);
+				newQuadField->AddFeature(*it);
+			}
+
+			for (std::list<CProjectile*>::const_iterator it = projectiles.begin(); it != projectiles.end(); ++it) {
+				oldQuadField->RemoveProjectile(*it);
+				newQuadField->AddProjectile(*it);
+			}
+		}
+	}
+
+	quadField = newQuadField;
+
+	// do this last so pointer is never dangling
+	delete oldQuadField;
+}
+
+
+
+CQuadField::Quad::Quad() : teamUnits(teamHandler->ActiveAllyTeams())
+{
+}
+
+CQuadField::CQuadField(unsigned int nqx, unsigned int nqz)
+{
+	numQuadsX = nqx;
+	numQuadsZ = nqz;
+	quadSizeX = (gs->mapx * SQUARE_SIZE) / numQuadsX;
+	quadSizeZ = (gs->mapy * SQUARE_SIZE) / numQuadsZ;
+
+	assert(numQuadsX >= 1);
+	assert(numQuadsZ >= 1);
+	// square cells only
+	assert(quadSizeX == quadSizeZ);
 
 	// Without the temporary, std::max takes address of NUM_TEMP_QUADS
 	// if it isn't inlined, forcing NUM_TEMP_QUADS to be defined.
@@ -71,13 +121,14 @@ std::vector<int> CQuadField::GetQuads(float3 pos, float radius) const
 
 	std::vector<int> ret;
 
-	const float maxSqLength = (radius + QUAD_SIZE * 0.72f) * (radius + QUAD_SIZE * 0.72f);
+	// qsx and qsz are always equal
+	const float maxSqLength = (radius + quadSizeX * 0.72f) * (radius + quadSizeZ * 0.72f);
 
-	const int maxx = std::min(((int)(pos.x + radius)) / QUAD_SIZE + 1, numQuadsX - 1);
-	const int maxz = std::min(((int)(pos.z + radius)) / QUAD_SIZE + 1, numQuadsZ - 1);
+	const int maxx = std::min((int(pos.x + radius)) / quadSizeX + 1, numQuadsX - 1);
+	const int maxz = std::min((int(pos.z + radius)) / quadSizeZ + 1, numQuadsZ - 1);
 
-	const int minx = std::max(((int)(pos.x - radius)) / QUAD_SIZE, 0);
-	const int minz = std::max(((int)(pos.z - radius)) / QUAD_SIZE, 0);
+	const int minx = std::max((int(pos.x - radius)) / quadSizeX, 0);
+	const int minz = std::max((int(pos.z - radius)) / quadSizeZ, 0);
 
 	if (maxz < minz || maxx < minx) {
 		return ret;
@@ -87,7 +138,7 @@ std::vector<int> CQuadField::GetQuads(float3 pos, float radius) const
 
 	for (int z = minz; z <= maxz; ++z) {
 		for (int x = minx; x <= maxx; ++x) {
-			if ((pos - float3(x * QUAD_SIZE + QUAD_SIZE * 0.5f, 0, z * QUAD_SIZE + QUAD_SIZE * 0.5f)).SqLength2D() < maxSqLength) {
+			if ((pos - float3(x * quadSizeX + quadSizeX * 0.5f, 0, z * quadSizeZ + quadSizeZ * 0.5f)).SqLength2D() < maxSqLength) {
 				ret.push_back(z * numQuadsX + x);
 			}
 		}
@@ -105,20 +156,22 @@ unsigned int CQuadField::GetQuads(float3 pos, float radius, int*& begQuad, int*&
 	assert(begQuad == &tempQuads[0]);
 	assert(endQuad == &tempQuads[0]);
 
-	const int maxx = std::min(((int)(pos.x + radius)) / QUAD_SIZE + 1, numQuadsX - 1);
-	const int maxz = std::min(((int)(pos.z + radius)) / QUAD_SIZE + 1, numQuadsZ - 1);
+	const int maxx = std::min((int(pos.x + radius)) / quadSizeX + 1, numQuadsX - 1);
+	const int maxz = std::min((int(pos.z + radius)) / quadSizeZ + 1, numQuadsZ - 1);
 
-	const int minx = std::max(((int)(pos.x - radius)) / QUAD_SIZE, 0);
-	const int minz = std::max(((int)(pos.z - radius)) / QUAD_SIZE, 0);
+	const int minx = std::max((int(pos.x - radius)) / quadSizeX, 0);
+	const int minz = std::max((int(pos.z - radius)) / quadSizeZ, 0);
 
 	if (maxz < minz || maxx < minx) {
 		return 0;
 	}
 
-	const float maxSqLength = (radius + QUAD_SIZE * 0.72f) * (radius + QUAD_SIZE * 0.72f);
+	// qsx and qsz are always equal
+	const float maxSqLength = (radius + quadSizeX * 0.72f) * (radius + quadSizeZ * 0.72f);
+
 	for (int z = minz; z <= maxz; ++z) {
 		for (int x = minx; x <= maxx; ++x) {
-			const float3 quadCenterPos = float3(x * QUAD_SIZE + QUAD_SIZE * 0.5f, 0, z * QUAD_SIZE + QUAD_SIZE * 0.5f);
+			const float3 quadCenterPos = float3(x * quadSizeX + quadSizeX * 0.5f, 0, z * quadSizeZ + quadSizeZ * 0.5f);
 
 			if ((pos - quadCenterPos).SqLength2D() < maxSqLength) {
 				*endQuad = z * numQuadsX + x; ++endQuad;
@@ -315,16 +368,18 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 	const float dz = to.z - start.z;
 	float xp = start.x;
 	float zp = start.z;
-	const float invQuadSize = 1.0f / QUAD_SIZE;
 
-	if ((math::floor(start.x * invQuadSize) == math::floor(to.x * invQuadSize)) &&
-		(math::floor(start.z * invQuadSize) == math::floor(to.z * invQuadSize)))
+	const float invQuadSizeX = 1.0f / quadSizeX;
+	const float invQuadSizeZ = 1.0f / quadSizeZ;
+
+	if ((math::floor(start.x * invQuadSizeX) == math::floor(to.x * invQuadSizeX)) &&
+		(math::floor(start.z * invQuadSizeZ) == math::floor(to.z * invQuadSizeZ)))
 	{
-		*endQuad = ((int(start.x * invQuadSize)) + (int(start.z * invQuadSize)) * numQuadsX);
+		*endQuad = ((int(start.x * invQuadSizeX)) + (int(start.z * invQuadSizeZ)) * numQuadsX);
 		++endQuad;
-	} else if (math::floor(start.x * invQuadSize) == math::floor(to.x * invQuadSize)) {
-		const int first = (int)(start.x * invQuadSize) + ((int)(start.z * invQuadSize) * numQuadsX);
-		const int last  = (int)(to.x    * invQuadSize) + ((int)(to.z    * invQuadSize) * numQuadsX);
+	} else if (math::floor(start.x * invQuadSizeX) == math::floor(to.x * invQuadSizeX)) {
+		const int first = (int)(start.x * invQuadSizeX) + ((int)(start.z * invQuadSizeZ) * numQuadsX);
+		const int last  = (int)(to.x    * invQuadSizeX) + ((int)(to.z    * invQuadSizeZ) * numQuadsX);
 
 		if (dz > 0) {
 			for (int a = first; a <= last; a += numQuadsX) {
@@ -335,9 +390,9 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 				*endQuad = a; ++endQuad;
 			}
 		}
-	} else if (math::floor(start.z * invQuadSize) == math::floor(to.z * invQuadSize)) {
-		const int first = (int)(start.x * invQuadSize) + ((int)(start.z * invQuadSize) * numQuadsX);
-		const int last  = (int)(to.x    * invQuadSize) + ((int)(to.z    * invQuadSize) * numQuadsX);
+	} else if (math::floor(start.z * invQuadSizeZ) == math::floor(to.z * invQuadSizeZ)) {
+		const int first = (int)(start.x * invQuadSizeX) + ((int)(start.z * invQuadSizeZ) * numQuadsX);
+		const int last  = (int)(to.x    * invQuadSizeX) + ((int)(to.z    * invQuadSizeZ) * numQuadsX);
 
 		if (dx > 0) {
 			for (int a = first; a <= last; a++) {
@@ -353,18 +408,18 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 		bool keepgoing = true;
 
 		for (int i = 0; i < NUM_TEMP_QUADS && keepgoing; i++) {
-			*endQuad = ((int)(zp * invQuadSize) * numQuadsX) + (int)(xp * invQuadSize);
+			*endQuad = ((int)(zp * invQuadSizeZ) * numQuadsX) + (int)(xp * invQuadSizeX);
 			++endQuad;
 
 			if (dx > 0) {
-				xn = (math::floor(xp * invQuadSize) * QUAD_SIZE + QUAD_SIZE - xp) / dx;
+				xn = (math::floor(xp * invQuadSizeX) * quadSizeX + quadSizeX - xp) / dx;
 			} else {
-				xn = (math::floor(xp * invQuadSize) * QUAD_SIZE - xp) / dx;
+				xn = (math::floor(xp * invQuadSizeX) * quadSizeX - xp) / dx;
 			}
 			if (dz > 0) {
-				zn = (math::floor(zp * invQuadSize) * QUAD_SIZE + QUAD_SIZE - zp) / dz;
+				zn = (math::floor(zp * invQuadSizeZ) * quadSizeZ + quadSizeZ - zp) / dz;
 			} else {
-				zn = (math::floor(zp * invQuadSize) * QUAD_SIZE - zp) / dz;
+				zn = (math::floor(zp * invQuadSizeZ) * quadSizeZ - zp) / dz;
 			}
 
 			if (xn < zn) {
@@ -489,11 +544,17 @@ void CQuadField::MovedProjectile(CProjectile* p)
 {
 	if (!p->synced)
 		return;
+	// hit-scan projectiles do NOT move!
+	if (p->hitscan)
+		return;
 
-	int2 oldCellCoors = p->GetQuadFieldCellCoors();
-	int2 newCellCoors;
-	newCellCoors.x = std::max(0, std::min(int(p->pos.x / QUAD_SIZE), numQuadsX - 1));
-	newCellCoors.y = std::max(0, std::min(int(p->pos.z / QUAD_SIZE), numQuadsZ - 1));
+	const CProjectile::QuadFieldCellData& qfcd = p->GetQuadFieldCellData();
+
+	const int2 oldCellCoors = qfcd.GetCoor(0);
+	const int2 newCellCoors = {
+		std::max(0, std::min(int(p->pos.x / quadSizeX), numQuadsX - 1)),
+		std::max(0, std::min(int(p->pos.z / quadSizeZ), numQuadsZ - 1))
+	};
 
 	if (newCellCoors != oldCellCoors) {
 		RemoveProjectile(p);
@@ -505,53 +566,85 @@ void CQuadField::AddProjectile(CProjectile* p)
 {
 	assert(p->synced);
 
-	// projectiles are point-objects, so
-	// they exist in a single cell only
-	int2 cellCoors;
-	cellCoors.x = std::max(0, std::min(int(p->pos.x / QUAD_SIZE), numQuadsX - 1));
-	cellCoors.y = std::max(0, std::min(int(p->pos.z / QUAD_SIZE), numQuadsZ - 1));
-
 	GML_RECMUTEX_LOCK(quad); // AddProjectile
 
-	Quad& q = baseQuads[numQuadsX * cellCoors.y + cellCoors.x];
-	std::list<CProjectile*>& projectiles = q.projectiles;
+	CProjectile::QuadFieldCellData qfcd;
 
-	p->SetQuadFieldCellCoors(cellCoors);
-	p->SetQuadFieldCellIter(projectiles.insert(projectiles.end(), p));
+	typedef CQuadField::Quad Cell;
+	typedef std::list<CProjectile*> List;
+
+	if (p->hitscan) {
+		// must be non-zero otherwise 1 != 0 and 2 != 1 but 2 == 0
+		assert(p->speed != ZeroVector);
+
+		// all coordinates always map to a valid quad
+		qfcd.SetCoor(0, int2(CELL_IDX_X((p->pos.x             )       ), CELL_IDX_Z((p->pos.z             )       )));
+		qfcd.SetCoor(1, int2(CELL_IDX_X((p->pos.x + p->speed.x) * 0.5f), CELL_IDX_Z((p->pos.z + p->speed.z) * 0.5f)));
+		qfcd.SetCoor(2, int2(CELL_IDX_X((p->pos.x + p->speed.x)       ), CELL_IDX_Z((p->pos.z + p->speed.z)       )));
+
+		Cell& cell = baseQuads[numQuadsX * qfcd.GetCoor(0).y + qfcd.GetCoor(0).x];
+		List& list = cell.projectiles;
+
+		// projectiles are point-objects so they exist
+		// only in a single cell EXCEPT hit-scan types
+		qfcd.SetIter(0, list.insert(list.end(), p));
+
+		for (unsigned int n = 1; n < 3; n++) {
+			Cell& ncell = baseQuads[numQuadsX * qfcd.GetCoor(n).y + qfcd.GetCoor(n).x];
+			List& nlist = ncell.projectiles;
+
+			// prevent possible double insertions (into the same quad-list)
+			if (qfcd.GetCoor(n) != qfcd.GetCoor(n - 1)) {
+				qfcd.SetIter(n, nlist.insert(nlist.end(), p));
+			} else {
+				qfcd.SetIter(n, nlist.end());
+			}
+		}
+	} else {
+		qfcd.SetCoor(0, int2(CELL_IDX_X(p->pos.x), CELL_IDX_Z(p->pos.z)));
+
+		Cell& cell = baseQuads[numQuadsX * qfcd.GetCoor(0).y + qfcd.GetCoor(0).x];
+		List& list = cell.projectiles;
+
+		qfcd.SetIter(0, list.insert(list.end(), p));
+	}
+
+	p->SetQuadFieldCellData(qfcd);
 }
 
 void CQuadField::RemoveProjectile(CProjectile* p)
 {
 	assert(p->synced);
 
-	const int2& cellCoors = p->GetQuadFieldCellCoors();
-	const int cellIdx = numQuadsX * cellCoors.y + cellCoors.x;
-
 	GML_RECMUTEX_LOCK(quad); // RemoveProjectile
 
-	Quad& q = baseQuads[cellIdx];
+	CProjectile::QuadFieldCellData& qfcd = p->GetQuadFieldCellData();
 
-	std::list<CProjectile*>& projectiles = q.projectiles;
-	std::list<CProjectile*>::iterator pi = p->GetQuadFieldCellIter();
+	typedef CQuadField::Quad Cell;
+	typedef std::list<CProjectile*> List;
 
-	#ifdef REMOVE_PROJECTILE_FAST
-	if (pi != projectiles.end()) {
-		// this is O(1) instead of O(n) and crucially
-		// important for projectiles, but less clean
-		projectiles.erase(pi);
-	} else {
-		assert(false);
-	}
-	#else
-	for (pi = projectiles.begin(); pi != projectiles.end(); ++pi) {
-		if ((*pi) == p) {
-			projectiles.erase(pi);
-			break;
+	if (p->hitscan) {
+		for (unsigned int n = 0; n < 3; n++) {
+			Cell& cell = baseQuads[numQuadsX * qfcd.GetCoor(n).y + qfcd.GetCoor(n).x];
+			List& list = cell.projectiles;
+
+			if (qfcd.GetIter(n) != list.end()) {
+				// this is O(1) instead of O(n) and crucially
+				// important for projectiles, but less clean
+				list.erase(qfcd.GetIter(n));
+			}
+
+			qfcd.SetIter(n, list.end());
 		}
-	}
-	#endif
+	} else {
+		Cell& cell = baseQuads[numQuadsX * qfcd.GetCoor(0).y + qfcd.GetCoor(0).x];
+		List& list = cell.projectiles;
 
-	p->SetQuadFieldCellIter(projectiles.end());
+		assert(qfcd.GetIter(0) != list.end());
+
+		list.erase(qfcd.GetIter(0));
+		qfcd.SetIter(0, list.end());
+	}
 }
 
 
@@ -761,11 +854,11 @@ std::vector<int> CQuadField::GetQuadsRectangle(const float3& pos1, const float3&
 
 	std::vector<int> ret;
 
-	const int maxx = std::max(0, std::min(((int)(pos2.x)) / QUAD_SIZE + 1, numQuadsX - 1));
-	const int maxz = std::max(0, std::min(((int)(pos2.z)) / QUAD_SIZE + 1, numQuadsZ - 1));
+	const int maxx = std::max(0, std::min((int(pos2.x)) / quadSizeX + 1, numQuadsX - 1));
+	const int maxz = std::max(0, std::min((int(pos2.z)) / quadSizeZ + 1, numQuadsZ - 1));
 
-	const int minx = std::max(0, std::min(((int)(pos1.x)) / QUAD_SIZE, numQuadsX - 1));
-	const int minz = std::max(0, std::min(((int)(pos1.z)) / QUAD_SIZE, numQuadsZ - 1));
+	const int minx = std::max(0, std::min((int(pos1.x)) / quadSizeX, numQuadsX - 1));
+	const int minz = std::max(0, std::min((int(pos1.z)) / quadSizeZ, numQuadsZ - 1));
 
 	if (maxz < minz || maxx < minx)
 		return ret;

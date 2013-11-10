@@ -1,4 +1,3 @@
-
 #ifdef THREADPOOL
 
 #include "ThreadPool.h"
@@ -29,8 +28,14 @@ static bool hasOGLthreads = false; // disable for now (not used atm)
 #else
 static bool hasOGLthreads = false;
 #endif
-static __thread int threadnum(0); //FIXME __thread is gcc only, thread_local is c++11 but doesn't work in <4.8, and is also slower
+#if defined(_MSC_VER)
+static __declspec(thread) int threadnum(0);
+static __declspec(thread) bool exitThread(false);
+#else
+static __thread int threadnum(0); 
 static __thread bool exitThread(false);
+#endif
+
 
 static int spinlockMs = 5;
 

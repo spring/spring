@@ -44,16 +44,17 @@ struct UnitTrackStruct {
 		: owner(owner)
 		, lastUpdate(0)
 		, lifeTime(0)
-		, trackAlpha(255)
 		, alphaFalloff(0.0f)
 		, lastAdded(NULL)
 	{}
 
 	CUnit* owner;
+
 	unsigned int lastUpdate;
 	unsigned int lifeTime;
-	int trackAlpha;
+
 	float alphaFalloff;
+
 	TrackPart* lastAdded;
 	std::list<TrackPart*> parts;
 };

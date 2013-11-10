@@ -500,10 +500,16 @@ static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
 	if (o == NULL)
 		return 0;
 
+	lua_pushboolean(L, o->HasPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING));
 	lua_pushboolean(L, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS));
+	lua_pushboolean(L, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES ));
+	lua_pushboolean(L, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS ));
+
 	lua_pushboolean(L, o->crushable);
-	lua_pushboolean(L, o->IsBlocking());
-	return 3;
+	lua_pushboolean(L, o->blockEnemyPushing);
+	lua_pushboolean(L, o->blockHeightChanges);
+
+	return 7;
 }
 
 
@@ -2468,7 +2474,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 	const float3 mins(xmin, 0.0f, zmin);
 	const float3 maxs(xmax, 0.0f, zmax);
 
-	bool renderAccess = !Threading::IsSimThread();
+	const bool renderAccess = !Threading::IsSimThread();
 
 	const vector<CProjectile*>& rectProjectiles = quadField->GetProjectilesExact(mins, maxs);
 	const unsigned int rectProjectileCount = rectProjectiles.size();
@@ -2480,11 +2486,20 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 		if (CLuaHandle::GetHandleFullRead(L)) {
 			for (unsigned int i = 0; i < rectProjectileCount; i++) {
 				const CProjectile* pro = rectProjectiles[i];
+
 				if (renderAccess && !projectileHandler->RenderAccess(pro))
 					continue;
 
-				if (pro->weapon && excludeWeaponProjectiles) { continue; }
-				if (pro->piece && excludePieceProjectiles) { continue; }
+				// filter out unsynced projectiles, the SyncedRead
+				// projecile Get* functions accept only synced ID's
+				// (specifically they interpret all ID's as synced)
+				if (!pro->synced)
+					continue;
+
+				if (pro->weapon && excludeWeaponProjectiles)
+					continue;
+				if (pro->piece && excludePieceProjectiles)
+					continue;
 
 				lua_pushnumber(L, pro->id);
 				lua_rawseti(L, -2, arrayIndex++);
@@ -2493,17 +2508,24 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 	} else {
 		for (unsigned int i = 0; i < rectProjectileCount; i++) {
 			const CProjectile* pro = rectProjectiles[i];
+
 			if (renderAccess && !projectileHandler->RenderAccess(pro))
 				continue;
+
 			const CUnit* unit = pro->owner();
 			const ProjectileMapValPair proPair(const_cast<CProjectile*>(pro), ((unit != NULL)? unit->allyteam: CLuaHandle::GetHandleReadAllyTeam(L)));
 
-			if (pro->weapon && excludeWeaponProjectiles) { continue; }
-			if (pro->piece && excludePieceProjectiles) { continue; }
-
-			if (!IsProjectileVisible(L, proPair)) {
+			// see above
+			if (!pro->synced)
 				continue;
-			}
+
+			if (pro->weapon && excludeWeaponProjectiles)
+				continue;
+			if (pro->piece && excludePieceProjectiles)
+				continue;
+
+			if (!IsProjectileVisible(L, proPair))
+				continue;
 
 			lua_pushnumber(L, pro->id);
 			lua_rawseti(L, -2, arrayIndex++);

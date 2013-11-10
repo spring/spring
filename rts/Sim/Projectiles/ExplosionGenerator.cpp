@@ -408,7 +408,7 @@ bool CStdExplosionGenerator::Explosion(
 
 	const float3 npos = pos + camVect * moveLength;
 
-	new CHeatCloudProjectile(npos, float3(0.0f, 0.3f, 0.0f), 8.0f + sqrtDmg * 0.5f, 7 + damage * 2.8f, owner);
+	new CHeatCloudProjectile(owner, npos, float3(0.0f, 0.3f, 0.0f), 8.0f + sqrtDmg * 0.5f, 7 + damage * 2.8f);
 
 	if (projectileHandler->particleSaturation < 1.0f) {
 		// turn off lots of graphic only particles when we have more particles than we want
@@ -437,7 +437,7 @@ bool CStdExplosionGenerator::Explosion(
 			float3 npos = pos + gu->RandVector() * smokeDamage;
 			npos.y = std::max(npos.y, h);
 
-			new CSmokeProjectile2(pos, npos, speed, time, smokeDamageSQRT * 4.0f, 0.4f, owner, 0.6f);
+			new CSmokeProjectile2(owner, pos, npos, speed, time, smokeDamageSQRT * 4.0f, 0.4f, 0.6f);
 		}
 
 		if (groundExplosion) {
@@ -458,7 +458,7 @@ bool CStdExplosionGenerator::Explosion(
 					pos.z - (0.5f - gu->RandFloat()) * (radius * 0.6f)
 				);
 
-				new CDirtProjectile(npos, explSpeed  * explSpeedMod, 90.0f + damage * 2.0f, 2.0f + sqrtDmg * 1.5f, 0.4f, 0.999f, owner, color);
+				new CDirtProjectile(owner, npos, explSpeed  * explSpeedMod, 90.0f + damage * 2.0f, 2.0f + sqrtDmg * 1.5f, 0.4f, 0.999f, color);
 			}
 		}
 
@@ -479,13 +479,13 @@ bool CStdExplosionGenerator::Explosion(
 				);
 
 				new CDirtProjectile(
+					owner,
 					npos,
 					speed * (0.7f + std::min(30.0f, damage) / GAME_SPEED),
 					90.0f + damage * 2.0f,
 					2.0f + sqrtDmg * 2.0f,
 					0.3f,
 					0.99f,
-					owner,
 					color
 				);
 			}
@@ -505,7 +505,7 @@ bool CStdExplosionGenerator::Explosion(
 					pos.z - (0.5f - gu->RandFloat()) * (radius * 1)
 				);
 
-				new CWreckProjectile(npos, explSpeed * explSpeedMod, 90.0f + damage * 2.0f, owner);
+				new CWreckProjectile(owner, npos, explSpeed * explSpeedMod, 90.0f + damage * 2.0f);
 			}
 		}
 		if (uwExplosion) {
@@ -513,12 +513,12 @@ bool CStdExplosionGenerator::Explosion(
 
 			for (int a = 0; a < numBubbles; ++a) {
 				new CBubbleProjectile(
+					owner,
 					pos + gu->RandVector() * radius * 0.5f,
 					gu->RandVector() * 0.2f + float3(0.0f, 0.2f, 0.0f),
 					damage * 2.0f + gu->RandFloat() * damage,
 					1.0f + gu->RandFloat() * 2.0f,
 					0.02f,
-					owner,
 					0.5f + gu->RandFloat() * 0.3f
 				);
 			}
@@ -528,11 +528,11 @@ bool CStdExplosionGenerator::Explosion(
 
 			for (int a = 0; a < numWake; ++a) {
 				new CWakeProjectile(
+					owner,
 					pos + gu->RandVector() * radius * 0.2f,
 					gu->RandVector() * radius * 0.003f,
 					sqrtDmg * 4.0f,
 					damage * 0.03f,
-					owner,
 					0.3f + gu->RandFloat() * 0.2f,
 					0.8f / (sqrtDmg * 3 + 50 + gu->RandFloat() * 90.0f),
 					1
@@ -551,13 +551,13 @@ bool CStdExplosionGenerator::Explosion(
 				}
 
 				new CExploSpikeProjectile(
+					owner,
 					pos + explSpeed,
 					explSpeed * (0.9f + gu->RandFloat() * 0.4f),
 					radius * 0.1f,
 					radius * 0.1f,
 					0.6f,
-					0.8f / (8.0f + sqrtDmg),
-					owner
+					0.8f / (8.0f + sqrtDmg)
 				);
 			}
 		}
@@ -1021,7 +1021,7 @@ bool CCustomExplosionGenerator::Explosion(
 		for (unsigned int c = 0; c < psi.count; c++) {
 			CExpGenSpawnable* projectile = static_cast<CExpGenSpawnable*>((psi.projectileClass)->CreateInstance());
 			ExecuteExplosionCode(&psi.code[0], damage, (char*) projectile, c, dir);
-			projectile->Init(pos, owner);
+			projectile->Init(owner, pos);
 		}
 	}
 

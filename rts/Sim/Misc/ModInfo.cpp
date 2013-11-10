@@ -73,10 +73,10 @@ void CModInfo::Init(const char* modArchive)
 		}
 
 		if (numThreads == 0) {
-			if (Threading::GetAvailableCores() <= 1     ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_NONE        ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_SINGLE      ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_SINGLE_BATCH) disableGML = true;
+			disableGML |= (Threading::GetAvailableCores() <= 1     );
+			disableGML |= (luaThreadingModel == MT_LUA_NONE        );
+			disableGML |= (luaThreadingModel == MT_LUA_SINGLE      );
+			disableGML |= (luaThreadingModel == MT_LUA_SINGLE_BATCH);
 		}
 
 		if (disableGML) {
@@ -100,7 +100,7 @@ void CModInfo::Init(const char* modArchive)
 		allowUnitCollisionOverlap = movementTbl.GetBool("allowUnitCollisionOverlap", true);
 		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", true);
 		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", (pathFinderSystem == PFS_TYPE_QTPFS));
-		useClassicGroundMoveType = movementTbl.GetBool("useClassicGroundMoveType", (gameSetup->modName.find("Balanced Annihilation") != std::string::npos));
+		useClassicGroundMoveType = movementTbl.GetBool("useClassicGroundMoveType", false);
 	}
 
 	{

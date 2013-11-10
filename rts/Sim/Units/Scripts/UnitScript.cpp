@@ -563,11 +563,11 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		case SFX_REVERSE_WAKE:
 		case SFX_REVERSE_WAKE_2: {  //reverse wake
 			new CWakeProjectile(
+				unit,
 				pos + gu->RandVector() * 2.0f,
 				dir * 0.4f,
 				6.0f + gu->RandFloat() * 4.0f,
 				0.15f + gu->RandFloat() * 0.3f,
-				unit,
 				alpha, alphaFalloff, fadeupTime
 			);
 			break;
@@ -576,11 +576,11 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		case SFX_WAKE_2:  //wake 2, in TA it lives longer..
 		case SFX_WAKE: {  //regular ship wake
 			new CWakeProjectile(
+				unit,
 				pos + gu->RandVector() * 2.0f,
 				dir * 0.4f,
 				6.0f + gu->RandFloat() * 4.0f,
 				0.15f + gu->RandFloat() * 0.3f,
-				unit,
 				alpha, alphaFalloff, fadeupTime
 			);
 			break;
@@ -591,21 +591,21 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				pspeed.y += 0.2f;
 
 			new CBubbleProjectile(
+				unit,
 				pos + gu->RandVector() * 2.0f,
 				pspeed,
 				40.0f + gu->RandFloat() * GAME_SPEED,
 				1.0f + gu->RandFloat() * 2.0f,
 				0.01f,
-				unit,
 				0.3f + gu->RandFloat() * 0.3f
 			);
 		} break;
 
 		case SFX_WHITE_SMOKE:  //damaged unit smoke
-			new CSmokeProjectile(pos, gu->RandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, unit, 0.5f);
+			new CSmokeProjectile(unit, pos, gu->RandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, 0.5f);
 			break;
 		case SFX_BLACK_SMOKE:  //damaged unit smoke
-			new CSmokeProjectile(pos, gu->RandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, unit, 0.6f);
+			new CSmokeProjectile(unit, pos, gu->RandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, 0.6f);
 			break;
 		case SFX_VTOL: {
 			const float3 speed =
@@ -615,11 +615,11 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				unit->rightdir * 0.5f *       relDir.x;
 
 			CHeatCloudProjectile* hc = new CHeatCloudProjectile(
+				unit,
 				pos,
 				speed,
 				10 + gu->RandFloat() * 5,
-				3 + gu->RandFloat() * 2,
-				unit
+				3 + gu->RandFloat() * 2
 			);
 			hc->size = 3;
 			break;
@@ -766,7 +766,7 @@ void CUnitScript::Explode(int piece, int flags)
 
 	if (!(flags & PF_NoHeatCloud)) {
 		// Do an explosion at the location first
-		new CHeatCloudProjectile(absPos, ZeroVector, 30, 30, NULL);
+		new CHeatCloudProjectile(NULL, absPos, ZeroVector, 30, 30);
 	}
 
 	// If this is true, no stuff should fly off
@@ -810,7 +810,7 @@ void CUnitScript::Explode(int piece, int flags)
 	if ((flags & PF_Fire) && projectileHandler->particleSaturation < 0.95f) { newflags |= PF_Fire; }
 	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
 
-	new CPieceProjectile(absPos, explSpeed, unit, pieces[piece], newflags, 0.5f);
+	new CPieceProjectile(unit, pieces[piece], absPos, explSpeed, newflags, 0.5f);
 #endif
 }
 

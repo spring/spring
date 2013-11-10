@@ -131,21 +131,19 @@ void CCameraHandler::UpdateCam()
 	GML_RECMUTEX_LOCK(cam); // UpdateCam
 
 	//??? a lot CameraControllers depend on the calling every frame the 1st part of the if-clause
-	//if (cameraTimeEnd < 0.0f) {
+	//if (cameraTimeEnd < 0.0f)
 	//	return;
-	//}
 
 	const float  wantedCamFOV = currCamCtrl->GetFOV();
 	const float3 wantedCamPos = currCamCtrl->GetPos();
 	const float3 wantedCamDir = currCamCtrl->GetDir();
 
-	const float curTime = spring_now().toSecsf();
+	const float curTime = spring_now().toMilliSecsf();
 
 	if (curTime >= cameraTimeEnd) {
 		camera->SetPos(wantedCamPos);
 		camera->forward = wantedCamDir;
 		camera->SetFov(wantedCamFOV);
-		//cameraTimeEnd   = -1.0f;
 	} else {
 		if ((cameraTimeEnd - cameraTimeStart) > 0.0f) {
 			const float timeRatio = (cameraTimeEnd - curTime) / (cameraTimeEnd - cameraTimeStart);
@@ -160,15 +158,18 @@ void CCameraHandler::UpdateCam()
 }
 
 
-void CCameraHandler::CameraTransition(float time)
+void CCameraHandler::CameraTransition(float nsecs)
 {
 	GML_RECMUTEX_LOCK(cam); // CameraTransition
 
-	UpdateCam(); // this prevents camera stutter when multithreading
-	time = std::max(time, 0.0f) * cameraTimeFactor;
+	UpdateCam(); // prevents camera stutter when multithreading
 
-	cameraTimeStart = spring_now().toSecsf();
-	cameraTimeEnd   = cameraTimeStart + time;
+	nsecs = std::max(nsecs, 0.0f) * cameraTimeFactor;
+
+	// calculate when transition should end based on duration in seconds
+	cameraTimeStart = spring_now().toMilliSecsf();
+	cameraTimeEnd   = cameraTimeStart + nsecs * 1000.0f;
+
 	startCam.pos = camera->GetPos();
 	startCam.dir = camera->forward;
 	startCam.fov = camera->GetFov();

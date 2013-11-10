@@ -114,8 +114,8 @@ void CFreeController::Update()
 	const float ctrlVelY = vel.y;
 	const float3 prevPos = pos;
 
-	// setup the time fractions
-	const float ft = globalRendering->lastFrameTime;
+	// setup the time fractions (seconds)
+	const float ft = globalRendering->lastFrameTime * 0.001f;
 	const float nt = (ft / velTime); // next time factor
 	const float pt = (1.0f - nt);    // prev time factor
 	const float ant = (ft / avelTime); // next time factor

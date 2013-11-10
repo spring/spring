@@ -627,7 +627,7 @@ void CGame::PreLoadSimulation()
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
 	moveDefHandler = new MoveDefHandler(defsParser);
-	quadField = new CQuadField();
+	quadField = new CQuadField((gs->mapx * SQUARE_SIZE) / CQuadField::BASE_QUAD_SIZE, (gs->mapy * SQUARE_SIZE) / CQuadField::BASE_QUAD_SIZE);
 	damageArrayHandler = new CDamageArrayHandler(defsParser);
 	explGenHandler = new CExplosionGeneratorHandler();
 }
@@ -1000,7 +1000,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	lastDrawFrameTime = currentTime;
 
-	globalRendering->lastFrameTime = deltaDrawFrameTime.toMilliSecsf() * 0.001f;
+	globalRendering->lastFrameTime = deltaDrawFrameTime.toMilliSecsf();
 	gu->avgFrameTime = mix(gu->avgFrameTime, deltaDrawFrameTime.toMilliSecsf(), 0.05f);
 
 	{
@@ -1100,7 +1100,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	if (newSimFrame || unsyncedUpdateDeltaTime >= (1.0f / GAME_SPEED)) {
 		lastUnsyncedUpdateTime = currentTime;
 
-		{
+		if (gd->GetDrawMode() != CBaseGroundDrawer::drawNormal) {
 			SCOPED_TIMER("GroundDrawer::UpdateExtraTex");
 			gd->UpdateExtraTexture(gd->GetDrawMode());
 		}

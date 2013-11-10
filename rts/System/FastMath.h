@@ -11,7 +11,7 @@
 #include "System/maindefines.h"
 
 #ifdef _MSC_VER
-#define __builtin_sqrtf math::sqrtf
+#define __builtin_sqrtf streflop::sqrtf
 #endif
 
 #ifdef __GNUC__

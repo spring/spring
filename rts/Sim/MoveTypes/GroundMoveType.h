@@ -43,8 +43,8 @@ private:
 	float3 GetNewSpeedVector(const float hAcc, const float vAcc) const;
 
 	#define SQUARE(x) ((x) * (x))
-	bool StartSkidding(const float3& vel, const float3& dir) const { return (SQUARE(vel.dot(dir)) < (vel.SqLength() * 0.95f)); }
-	bool StopSkidding(const float3& vel, const float3& dir) const { return (SQUARE(vel.dot(dir)) >= (vel.SqLength() * 0.95f)); }
+	bool StartSkidding(const float3& vel, const float3& dir) const { return ((SQUARE(vel.dot(dir)) + 0.01f) < (vel.SqLength() * 0.95f)); }
+	bool StopSkidding(const float3& vel, const float3& dir) const { return ((SQUARE(vel.dot(dir)) + 0.01f) >= (vel.SqLength() * 0.95f)); }
 	bool StartFlying(const float3& vel, const float3& dir) const { return (vel.dot(dir) > 0.2f); }
 	bool StopFlying(const float3& vel, const float3& dir) const { return (vel.dot(dir) <= 0.2f); }
 	#undef SQUARE

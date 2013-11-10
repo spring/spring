@@ -258,9 +258,9 @@ WeaponDef::WeaponDef()
 	collisionFlags = 0;
 
 	// set later by ProjectileDrawer
-	ptrailExplosionGeneratorID = -1u;
-	impactExplosionGeneratorID = -1u;
-	bounceExplosionGeneratorID = -1u;
+	ptrailExplosionGeneratorID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
+	impactExplosionGeneratorID = CExplosionGeneratorHandler::EXPGEN_ID_STANDARD;
+	bounceExplosionGeneratorID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
 
 	isShield = false;
 	noAutoTarget = false;
@@ -273,9 +273,9 @@ WeaponDef::WeaponDef()
 WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	: name(name_)
 
-	, ptrailExplosionGeneratorID(-1u)
-	, impactExplosionGeneratorID(-1u)
-	, bounceExplosionGeneratorID(-1u)
+	, ptrailExplosionGeneratorID(CExplosionGeneratorHandler::EXPGEN_ID_INVALID)
+	, impactExplosionGeneratorID(CExplosionGeneratorHandler::EXPGEN_ID_STANDARD)
+	, bounceExplosionGeneratorID(CExplosionGeneratorHandler::EXPGEN_ID_INVALID)
 
 	, id(id_)
 	, projectileType(WEAPON_BASE_PROJECTILE)

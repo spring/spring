@@ -18,7 +18,7 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 
-#define SWEEPFIRE_ENABLED true
+#define SWEEPFIRE_ENABLED 1
 
 CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL, NULL));
 
@@ -354,14 +354,14 @@ void CBeamLaser::FireInternal(float3 curDir)
 			const float startAlpha = (1.0f - (curLength             ) / maxLength);
 			const float endAlpha   = (1.0f - (curLength + beamLength) / maxLength);
 
-			ProjectileParams params = GetProjectileParams();
-			params.pos = curPos;
-			params.end = hitPos;
-			params.ttl = weaponDef->beamLaserTTL;
-			params.startAlpha = Clamp(startAlpha * baseAlpha, 0.0f, 255.0f);
-			params.endAlpha = Clamp(endAlpha * baseAlpha, 0.0f, 255.0f);
+			ProjectileParams pparams = GetProjectileParams();
+			pparams.pos = curPos;
+			pparams.end = hitPos;
+			pparams.ttl = weaponDef->beamLaserTTL;
+			pparams.startAlpha = Clamp(startAlpha * baseAlpha, 0.0f, 255.0f);
+			pparams.endAlpha = Clamp(endAlpha * baseAlpha, 0.0f, 255.0f);
 
-			WeaponProjectileFactory::LoadProjectile(params);
+			WeaponProjectileFactory::LoadProjectile(pparams);
 		}
 
 		curPos = hitPos;

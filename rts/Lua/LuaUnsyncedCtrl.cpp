@@ -1873,7 +1873,15 @@ int LuaUnsyncedCtrl::UpdateInfoTexture(lua_State* L)
 	const int rawMode = CBaseGroundDrawer::BaseGroundDrawMode(luaL_checkint(L, 1));
 	const int texMode = Clamp(rawMode, int(CBaseGroundDrawer::drawLos), int(CBaseGroundDrawer::drawPathCost));
 
-	lua_pushboolean(L, readMap->GetGroundDrawer()->UpdateExtraTexture(texMode));
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+
+	if (gd->GetDrawMode() == CBaseGroundDrawer::drawNormal) {
+		// allow background updates only when no infotex is active
+		lua_pushboolean(L, gd->UpdateExtraTexture(texMode));
+	} else {
+		lua_pushboolean(L, false);
+	}
+
 	return 1;
 }
 

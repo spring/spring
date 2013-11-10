@@ -1,22 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "Game/GameHelper.h"
+#include "Rendering/Colors.h"
+#include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/InterceptHandler.h"
-#include "Rendering/Colors.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Sim/Misc/QuadField.h"
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
-#include "System/myMath.h"
-#include "System/Sound/SoundChannels.h"
-#ifdef TRACE_SYNC
-	#include "System/Sync/SyncTracer.h"
-#endif
 
 
 
@@ -50,8 +45,8 @@ CWeaponProjectile::CWeaponProjectile(): CProjectile()
 {
 }
 
-CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool isRay)
-	: CProjectile(params.pos, params.speed, params.owner, true, true, false)
+CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
+	: CProjectile(params.pos, params.speed, params.owner, true, true, false, (params.weaponDef)->IsHitScanWeapon())
 
 	, weaponDef(params.weaponDef)
 	, target(params.target)
@@ -66,16 +61,11 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 	, startPos(params.pos)
 	, targetPos(params.end)
 {
-	assert(weaponDef != NULL);
-
 	projectileType = WEAPON_BASE_PROJECTILE;
 
-	collisionFlags = weaponDef->collisionFlags;
-	weaponDefID = params.weaponDef->id;
-	alwaysVisible = weaponDef->visuals.alwaysVisible;
-	ignoreWater = weaponDef->waterweapon;
-
-	if (isRay) {
+	if (weaponDef->IsHitScanWeapon()) {
+		// the else-case (default) is handled in CProjectile::Init
+		//
 		// ray projectiles must all set this to false because their collision
 		// detection is handled by the weapons firing them, ProjectileHandler
 		// will skip any tests for these
@@ -98,6 +88,11 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 		// --> use full distance for drawRadius
 		SetRadiusAndHeight((targetPos - startPos).Length(), 0.0f);
 	}
+
+	collisionFlags = weaponDef->collisionFlags;
+	weaponDefID = params.weaponDef->id;
+	alwaysVisible = weaponDef->visuals.alwaysVisible;
+	ignoreWater = weaponDef->waterweapon;
 
 	CSolidObject* so = NULL;
 	CWeaponProjectile* po = NULL;
@@ -128,7 +123,10 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 		cegID = weaponDef->ptrailExplosionGeneratorID;
 	}
 
+	// must happen after setting position and velocity
 	projectileHandler->AddProjectile(this);
+	quadField->AddProjectile(this);
+
 	ASSERT_SYNCED(id);
 
 	if (weaponDef->interceptedByShieldType) {
@@ -202,7 +200,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 	float3 impactDir = speed;
 
 	if (feature != NULL) {
-		if (IsHitScan()) {
+		if (hitscan) {
 			impactPos = feature->pos;
 			impactDir = targetPos - startPos;
 		}
@@ -211,7 +209,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 			feature->StartFire();
 		}
 	} else {
-		if (IsHitScan()) {
+		if (hitscan) {
 			impactPos = targetPos;
 			impactDir = targetPos - startPos;
 		}
@@ -226,7 +224,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 	float3 impactDir = speed;
 
 	if (unit != NULL) {
-		if (IsHitScan()) {
+		if (hitscan) {
 			impactPos = unit->pos;
 			impactDir = targetPos - startPos;
 		}
@@ -255,7 +253,7 @@ void CWeaponProjectile::UpdateInterception()
 	if (po == NULL)
 		return;
 
-	if (IsHitScan()) {
+	if (hitscan) {
 		if (ClosestPointOnLine(startPos, targetPos, po->pos).SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
 			po->Collision();
 			Collision();
@@ -309,17 +307,6 @@ void CWeaponProjectile::UpdateGroundBounce()
 bool CWeaponProjectile::TraveledRange() const
 {
 	return ((pos - startPos).SqLength() > (weaponDef->range * weaponDef->range));
-}
-
-bool CWeaponProjectile::IsHitScan() const
-{
-	switch (projectileType) {
-		case WEAPON_BEAMLASER_PROJECTILE:      { return true; } break;
-		case WEAPON_LARGEBEAMLASER_PROJECTILE: { return true; } break;
-		case WEAPON_LIGHTNING_PROJECTILE:      { return true; } break;
-	}
-
-	return false;
 }
 
 

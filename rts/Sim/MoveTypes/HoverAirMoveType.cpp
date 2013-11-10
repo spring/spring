@@ -662,6 +662,7 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 		currentPitch = currentPitch * 0.95f + wantedPitch * 0.05f;
 	}
 
+	// always positive
 	const float bankLimit = std::min(1.0f, goalPos.SqDistance2D(owner->pos) * Square(0.15f));
 	float wantedBank = 0.0f;
 
@@ -679,12 +680,8 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 
 	if (!noBanking && bankingAllowed)
 		wantedBank = rightDir2D.dot(deltaSpeed) / accRate * 0.5f;
-
-	if (Square(wantedBank) > bankLimit) {
-		wantedBank =  math::sqrt(bankLimit);
-	} else if (Square(wantedBank) < -bankLimit) {
-		wantedBank = -math::sqrt(bankLimit);
-	}
+	if (Square(wantedBank) > bankLimit)
+		wantedBank = math::sqrt(bankLimit);
 
 	// Adjust our banking to the desired value
 	if (currentBank > wantedBank) {
@@ -696,6 +693,7 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 
 	upDir = rightDir2D.cross(frontDir);
 	upDir = upDir * math::cos(currentBank) + rightDir2D * math::sin(currentBank);
+	upDir = upDir.Normalize();
 	rightDir3D = frontDir.cross(upDir);
 
 	// NOTE:
@@ -723,34 +721,33 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	// copy vertical speed
 	const float yspeed = spd.y;
 
-	if (!((gs->frameNum + owner->id) & 3)) {
+	if (((gs->frameNum + owner->id) & 3) == 0) {
 		CheckForCollision();
 	}
 
 	owner->SetVelocity(spd * XZVector);
 
 	const float3 deltaSpeed = wantedSpeed - spd;
-	const float deltaDotSpeed = (spd != ZeroVector)? deltaSpeed.dot(spd): 1.0f;
+	const float deltaDotSpeed = deltaSpeed.dot(spd);
+	const float deltaSpeedSq = deltaSpeed.SqLength();
 
-	if (deltaDotSpeed == 0.0f) {
-		// we have the wanted speed
-	} else if (deltaDotSpeed > 0.0f) {
+	if (deltaDotSpeed >= 0.0f) {
 		// accelerate
-		const float sqdl = deltaSpeed.SqLength();
-
-		if (sqdl < Square(accRate)) {
+		if (deltaSpeedSq < Square(accRate)) {
 			owner->SetVelocity(wantedSpeed);
 		} else {
-			owner->SetVelocity(spd + (deltaSpeed / math::sqrt(sqdl) * accRate));
+			if (deltaSpeedSq > 0.0f) {
+				owner->SetVelocity(spd + (deltaSpeed / math::sqrt(deltaSpeedSq) * accRate));
+			}
 		}
 	} else {
 		// deccelerate
-		const float sqdl = deltaSpeed.SqLength();
-
-		if (sqdl < Square(decRate)) {
+		if (deltaSpeedSq < Square(decRate)) {
 			owner->SetVelocity(wantedSpeed);
 		} else {
-			owner->SetVelocity(spd + (deltaSpeed / math::sqrt(sqdl) * decRate));
+			if (deltaSpeedSq > 0.0f) {
+				owner->SetVelocity(spd + (deltaSpeed / math::sqrt(deltaSpeedSq) * decRate));
+			}
 		}
 	}
 
@@ -769,11 +766,11 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	// always stay above the actual terrain (therefore either the value of
 	// <midPos.y - radius> or pos.y must never become smaller than the real
 	// ground height)
-	// note: unlike StrafeAirMoveType, UpdateTakeoff calls UpdateAirPhysics
-	// so we ignore terrain while we are in the takeoff state to avoid jumps
+	// note: unlike StrafeAirMoveType, UpdateTakeoff and UpdateLanding call
+	// UpdateAirPhysics() so we ignore terrain while we are in those states
 	if (modInfo.allowAircraftToHitGround) {
 		const bool groundContact = (curAbsHeight > (owner->midPos.y - owner->radius));
-		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF);
+		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF && padStatus == PAD_STATUS_FLYING);
 
 		if (groundContact && handleContact) {
 			owner->Move(UpVector * (curAbsHeight - (owner->midPos.y - owner->radius) + 0.01f), true);
@@ -945,7 +942,7 @@ bool CHoverAirMoveType::Update()
 				#undef SPIN_DIR
 			}
 
-			new CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
+			new CSmokeProjectile(owner, owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, 0.4f);
 		} break;
 	}
 

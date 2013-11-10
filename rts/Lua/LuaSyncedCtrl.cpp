@@ -463,7 +463,17 @@ static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 	if (o == NULL)
 		return 0;
 
-	// update blocking-bit of physical state
+	// update SO-bit of collidable state
+	if (lua_isboolean(L, 3)) {
+		if (lua_toboolean(L, 3)) {
+			o->SetCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+		} else {
+			o->ClearCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+		}
+	}
+
+	// update blocking-bit of physical state (do this
+	// after changing the SO-bit so it is reversable)
 	if (lua_isboolean(L, 2)) {
 		if (lua_toboolean(L, 2)) {
 			o->Block();
@@ -472,27 +482,12 @@ static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 		}
 	}
 
-	// update SO-bit of collidable state
-	if (lua_isboolean(L, 3)) {
-		if (lua_toboolean(L, 3)) {
-			o->SetCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
-		} else {
-			o->ClearCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+	o->UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES, luaL_optboolean(L, 4, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES)));
+	o->UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS, luaL_optboolean(L, 5, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS)));
 
-			// run this again so that object gets removed from
-			// the blocking map if(f) SO-collidability was set
-			// to false but second argument was true (no point
-			// still being registered on the map then)
-			o->UnBlock();
-		}
-	}
-
-	o->UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES, luaL_optboolean(L, 7, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES)));
-	o->UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS, luaL_optboolean(L, 8, o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS)));
-
-	o->crushable = luaL_optboolean(L, 4, o->crushable);
-	o->blockEnemyPushing = luaL_optboolean(L, 5, o->blockEnemyPushing);
-	o->blockHeightChanges = luaL_optboolean(L, 6, o->blockHeightChanges);
+	o->crushable = luaL_optboolean(L, 6, o->crushable);
+	o->blockEnemyPushing = luaL_optboolean(L, 7, o->blockEnemyPushing);
+	o->blockHeightChanges = luaL_optboolean(L, 8, o->blockHeightChanges);
 
 	lua_pushboolean(L, o->IsBlocking());
 	return 1;

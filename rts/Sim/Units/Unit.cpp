@@ -1377,20 +1377,16 @@ void CUnit::ChangeLos(int losRad, int airRad)
 
 bool CUnit::ChangeTeam(int newteam, ChangeType type)
 {
-	if (isDead) {
+	if (isDead)
 		return false;
-	}
 
 	// do not allow unit count violations due to team swapping
 	// (this includes unit captures)
-	if (unitHandler->unitsByDefs[newteam][unitDef->id].size() >= unitDef->maxThisUnit) {
+	if (unitHandler->unitsByDefs[newteam][unitDef->id].size() >= unitDef->maxThisUnit)
 		return false;
-	}
 
-	const bool capture = (type == ChangeCaptured);
-	if (luaRules && !luaRules->AllowUnitTransfer(this, newteam, capture)) {
+	if (luaRules && !luaRules->AllowUnitTransfer(this, newteam, type == ChangeCaptured))
 		return false;
-	}
 
 	// do not allow old player to keep controlling the unit
 	if (fpsControlPlayer != NULL) {
@@ -1766,75 +1762,84 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 	// stop decaying on building AND reclaim
 	lastNanoAdd = gs->frameNum;
 
-	if (amount >= 0.0f) { //  build / repair
-		if (!beingBuilt && (health >= maxHealth)) {
+	CTeam* builderTeam = teamHandler->Team(builder->team);
+
+	if (amount >= 0.0f) {
+		// build or repair
+		if (!beingBuilt && (health >= maxHealth))
 			return false;
-		}
 
-		if (beingBuilt) { //build
-			const float part = std::min(amount / buildTime, 1.0f - buildProgress);
-			const float metalCostPart  = metalCost  * part;
-			const float energyCostPart = energyCost * part;
+		if (beingBuilt) {
+			// build
+			const float step = std::min(amount / buildTime, 1.0f - buildProgress);
+			const float metalCostStep  = metalCost  * step;
+			const float energyCostStep = energyCost * step;
 
-			if ((teamHandler->Team(builder->team)->metal  >= metalCostPart) &&
-			    (teamHandler->Team(builder->team)->energy >= energyCostPart) &&
-			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
+			const bool buildAllowed = (luaRules == NULL || luaRules->AllowUnitBuildStep(builder, this, step));
+			const bool canExecBuild = (builderTeam->metal >= metalCostStep && builderTeam->energy >= energyCostStep);
 
-				if (builder->UseMetal(metalCostPart)) {
-					// just because we checked doesn't mean they were deducted since upkeep can prevent deduction
-					// FIXME luaRules->AllowUnitBuildStep() may have changed the storages!!! so the checks can be invalid!
-					// TODO add a builder->UseResources(SResources(metalCostPart, energyCostPart))
-					if (builder->UseEnergy(energyCostPart)) {
-						health += (maxHealth * part);
+			if (buildAllowed && canExecBuild) {
+				if (builder->UseMetal(metalCostStep)) {
+					// FIXME AllowUnitBuildStep may have changed the storages!!! so the checks can be invalid!
+					// TODO add a builder->UseResources(SResources(metalCostStep, energyCostStep))
+					//
+					if (builder->UseEnergy(energyCostStep)) {
+						health += (maxHealth * step);
 						health = std::min(health, maxHealth);
-						buildProgress += part;
+						buildProgress += step;
 
 						if (buildProgress >= 1.0f) {
 							FinishedBuilding(false);
 						}
 					} else {
-						// refund the metal if the energy cannot be deducted
-						builder->UseMetal(-metalCostPart);
+						// refund already-deducted metal if *energy* cost cannot be
+						builder->UseMetal(-metalCostStep);
 					}
 				}
+
 				return true;
 			} else {
 				// update the energy and metal required counts
-				teamHandler->Team(builder->team)->metalPull  += metalCostPart;
-				teamHandler->Team(builder->team)->energyPull += energyCostPart;
+				builderTeam->metalPull  += metalCostStep;
+				builderTeam->energyPull += energyCostStep;
 			}
+
 			return false;
 		}
-		else if (health < maxHealth) { //repair
-			const float part = std::min(amount / buildTime, 1.0f - (health / maxHealth));
-			const float energyUse = (energyCost * part);
+		else if (health < maxHealth) {
+			// repair
+			const float step = std::min(amount / buildTime, 1.0f - (health / maxHealth));
+			const float energyUse = (energyCost * step);
 			const float energyUseScaled = energyUse * modInfo.repairEnergyCostFactor;
 
+			if (luaRules != NULL && !luaRules->AllowUnitBuildStep(builder, this, step))
+				return false;
+
 	  		if (!builder->UseEnergy(energyUseScaled)) {
-				teamHandler->Team(builder->team)->energyPull += energyUseScaled;
+				// UseEnergy already increases the team's pull when it returns false!
+				// builderTeam->energyPull += energyUseScaled;
 				return false;
 			}
 
 			repairAmount += amount;
-			health += (maxHealth * part);
+			health += (maxHealth * step);
 			health = std::min(health, maxHealth);
 
 			return true;
 		}
-	} else { // reclaim
-		if (isDead || IsCrashing()) {
+	} else {
+		// reclaim
+		if (isDead || IsCrashing())
 			return false;
-		}
 
-		const float part = std::max(amount / buildTime, -buildProgress);
-		const float energyRefundPart = energyCost * part;
-		const float metalRefundPart = metalCost * part;
-		const float metalRefundPartScaled = metalRefundPart * modInfo.reclaimUnitEfficiency;
-		const float energyRefundPartScaled = energyRefundPart * modInfo.reclaimUnitEnergyCostFactor;
+		const float step = std::max(amount / buildTime, -buildProgress);
+		const float energyRefundStep = energyCost * step;
+		const float metalRefundStep = metalCost * step;
+		const float metalRefundStepScaled = metalRefundStep * modInfo.reclaimUnitEfficiency;
+		const float energyRefundStepScaled = energyRefundStep * modInfo.reclaimUnitEnergyCostFactor;
 
-		if (luaRules && !luaRules->AllowUnitBuildStep(builder, this, part)) {
+		if (luaRules != NULL && !luaRules->AllowUnitBuildStep(builder, this, step))
 			return false;
-		}
 
 		restTime = 0;
 
@@ -1843,17 +1848,18 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 			return false;
 		}
 
-		if (!builder->UseEnergy(-energyRefundPartScaled)) {
-			teamHandler->Team(builder->team)->energyPull += energyRefundPartScaled;
+		if (!builder->UseEnergy(-energyRefundStepScaled)) {
+			// UseEnergy already increases the team's pull when it returns false!
+			// builderTeam->energyPull += energyRefundStepScaled;
 			return false;
 		}
 
-		health += (maxHealth * part);
-		buildProgress += (part * int(beingBuilt) * int(modInfo.reclaimUnitMethod == 0));
+		health += (maxHealth * step);
+		buildProgress += (step * int(beingBuilt) * int(modInfo.reclaimUnitMethod == 0));
 
 		if (modInfo.reclaimUnitMethod == 0) {
 			// gradual reclamation of invested metal
-			builder->AddMetal(-metalRefundPartScaled, false);
+			builder->AddMetal(-metalRefundStepScaled, false);
 			// turn reclaimee into nanoframe (even living units)
 			beingBuilt = true;
 		} else {
@@ -1883,8 +1889,10 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 				return false;
 			}
 		}
+
 		return true;
 	}
+
 	return false;
 }
 
@@ -2022,24 +2030,29 @@ bool CUnit::AllowedReclaim(CUnit* builder) const
 
 bool CUnit::UseMetal(float metal)
 {
-	if (metal < 0) {
+	if (metal < 0.0f) {
 		AddMetal(-metal);
 		return true;
 	}
-	teamHandler->Team(team)->metalPull += metal;
-	bool canUse = teamHandler->Team(team)->UseMetal(metal);
-	if (canUse)
-		metalUseI += metal;
-	return canUse;
-}
 
+	CTeam* myTeam = teamHandler->Team(team);
+	myTeam->metalPull += metal;
+
+	if (myTeam->UseMetal(metal)) {
+		metalUseI += metal;
+		return true;
+	}
+
+	return false;
+}
 
 void CUnit::AddMetal(float metal, bool useIncomeMultiplier)
 {
-	if (metal < 0) {
+	if (metal < 0.0f) {
 		UseMetal(-metal);
 		return;
 	}
+
 	metalMakeI += metal;
 	teamHandler->Team(team)->AddMetal(metal, useIncomeMultiplier);
 }
@@ -2047,21 +2060,25 @@ void CUnit::AddMetal(float metal, bool useIncomeMultiplier)
 
 bool CUnit::UseEnergy(float energy)
 {
-	if (energy < 0) {
+	if (energy < 0.0f) {
 		AddEnergy(-energy);
 		return true;
 	}
-	teamHandler->Team(team)->energyPull += energy;
-	bool canUse = teamHandler->Team(team)->UseEnergy(energy);
-	if (canUse)
-		energyUseI += energy;
-	return canUse;
-}
 
+	CTeam* myTeam = teamHandler->Team(team);
+	myTeam->energyPull += energy;
+
+	if (myTeam->UseEnergy(energy)) {
+		energyUseI += energy;
+		return true;
+	}
+
+	return false;
+}
 
 void CUnit::AddEnergy(float energy, bool useIncomeMultiplier)
 {
-	if (energy < 0) {
+	if (energy < 0.0f) {
 		UseEnergy(-energy);
 		return;
 	}

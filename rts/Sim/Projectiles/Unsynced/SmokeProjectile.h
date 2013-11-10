@@ -14,12 +14,19 @@ class CSmokeProjectile : public CProjectile
 
 public:
 	CSmokeProjectile();
-	CSmokeProjectile(const float3& pos, const float3& speed, float ttl,
-			float startSize, float sizeExpansion, CUnit* owner, float color);
+	CSmokeProjectile(
+		CUnit* owner,
+		const float3& pos,
+		const float3& speed,
+		float ttl,
+		float startSize,
+		float sizeExpansion,
+		float color
+	);
 
 	void Update();
 	void Draw();
-	void Init(const float3& pos, CUnit* owner);
+	void Init(CUnit* owner, const float3& offset);
 
 private:
 	float color;

@@ -58,8 +58,11 @@ void CBombDropper::Update()
 
 bool CBombDropper::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const
 {
-	// assume we can still fire at partially submerged targets
-	if (!dropTorpedoes && TargetUnitOrPositionUnderWater(targetPos, unit))
+	// assume we can still drop bombs on *partially* submerged targets
+	if (!dropTorpedoes && TargetUnitOrPositionUnderWater(pos, unit))
+		return false;
+	// assume we can drop torpedoes on any partially or fully submerged target
+	if (dropTorpedoes && !TargetUnitOrPositionInWater(pos, unit))
 		return false;
 
 	return CWeapon::TestTarget(pos, userTarget, unit);
@@ -134,6 +137,7 @@ void CBombDropper::FireImpl(bool scriptCall)
 
 		ProjectileParams params = GetProjectileParams();
 		params.pos = weaponPos;
+		params.end = targetPos;
 		params.speed = launchSpeed;
 		params.ttl = (weaponDef->flighttime == 0)? ((range / projectileSpeed) + 15 + predict): weaponDef->flighttime;
 		params.tracking = tracking;

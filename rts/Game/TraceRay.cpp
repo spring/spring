@@ -333,7 +333,8 @@ float GuiTraceRay(
 
 			if (unit == exclude)
 				continue;
-			if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
+			// test this bit only in synced traces, rely on noSelect here
+			if (false && !unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 				continue;
 			if (unit->noSelect)
 				continue;
@@ -375,10 +376,10 @@ float GuiTraceRay(
 		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
 			CFeature* f = *fi;
 
-			// FIXME add useradar?
 			if (!gu->spectatingFullView && !f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
-			if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
+			// test this bit only in synced traces, rely on noSelect here
+			if (false && !f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 				continue;
 			if (f->noSelect)
 				continue;

@@ -27,7 +27,7 @@ public:
 	void SetCameraMode(const std::string& mode);
 	void PushMode();
 	void PopMode();
-	void CameraTransition(float time);
+	void CameraTransition(float nsecs);
 
 	void ToggleState();
 	void ToggleOverviewCamera();

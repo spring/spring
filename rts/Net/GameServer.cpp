@@ -2327,7 +2327,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		if (timeElapsed > spring_msecs(200))
 			timeElapsed = spring_msecs(200);
 
-		timeLeft += GAME_SPEED * internalSpeed * timeElapsed.toSecsf();
+		timeLeft += ((GAME_SPEED * 0.001f) * internalSpeed * timeElapsed.toMilliSecsf());
 		lastTick  = currentTick;
 		newFrames = (timeLeft > 0)? int(math::ceil(timeLeft)): 0;
 		timeLeft -= newFrames;

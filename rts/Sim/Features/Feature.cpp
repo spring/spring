@@ -207,12 +207,17 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	if (collisionVolume->DefaultToFootPrint())
 		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
 
+	// feature does not have an assigned ID yet
+	// this MUST be done before the Block() call
 	featureHandler->AddFeature(this);
 	quadField->AddFeature(this);
 
 	ChangeTeam(team);
 	UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS, def->collidable);
 	Block();
+
+	// allow Spring.SetFeatureBlocking to be called from gadget:FeatureCreated
+	eventHandler.FeatureCreated(this);
 
 	if (def->floating) {
 		finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
@@ -235,86 +240,85 @@ void CFeature::CalculateTransform()
 }
 
 
+
 bool CFeature::AddBuildPower(CUnit* builder, float amount)
 {
 	const float oldReclaimLeft = reclaimLeft;
 
 	if (amount > 0.0f) {
-		// Check they are trying to repair a feature that can be resurrected
-		if (udef == NULL) {
-			return false;
-		}
-
 		// 'Repairing' previously-sucked features prior to resurrection
 		// This is reclaim-option independant - repairing features should always
 		// be like other repairing - gradual and multi-unit
 		// Lots of this code is stolen from unit->AddBuildPower
+		//
+		// Check they are trying to repair a feature that can be resurrected
+		if (udef == NULL)
+			return false;
 
 		isRepairingBeforeResurrect = true; // Stop them exploiting chunk reclaiming
 
-		if (reclaimLeft >= 1) {
-			return false; // cant repair a 'fresh' feature
-		}
+		// cannot repair a 'fresh' feature
+		if (reclaimLeft >= 1.0f)
+			return false;
+		// feature most likely has been deleted
+		if (reclaimLeft <= 0.0f)
+			return false;
 
-		if (reclaimLeft <= 0) {
-			return false; // feature most likely has been deleted
-		}
+		const CTeam* builderTeam = teamHandler->Team(builder->team);
 
 		// Work out how much to try to put back, based on the speed this unit would reclaim at.
-		const float part = amount / def->reclaimTime;
+		const float step = amount / def->reclaimTime;
 
 		// Work out how much that will cost
-		const float metalUse  = part * def->metal;
-		const float energyUse = part * def->energy;
-		if ((teamHandler->Team(builder->team)->metal  >= metalUse)  &&
-		    (teamHandler->Team(builder->team)->energy >= energyUse) &&
-				(!luaRules || luaRules->AllowFeatureBuildStep(builder, this, part))) {
+		const float metalUse  = step * def->metal;
+		const float energyUse = step * def->energy;
+
+		const bool repairAllowed = (luaRules == NULL || luaRules->AllowFeatureBuildStep(builder, this, step));
+		const bool canExecRepair = (builderTeam->metal >= metalUse && builderTeam->energy >= energyUse);
+
+		if (repairAllowed && canExecRepair) {
 			builder->UseMetal(metalUse);
 			builder->UseEnergy(energyUse);
-			reclaimLeft+=part;
-			if (reclaimLeft >= 1) {
+
+			reclaimLeft += step;
+
+			if (reclaimLeft >= 1.0f) {
 				isRepairingBeforeResurrect = false; // They can start reclaiming it again if they so wish
 				reclaimLeft = 1;
-			} else if (reclaimLeft <= 0) {
+			} else if (reclaimLeft <= 0.0f) {
 				// this can happen when a mod tampers the feature in AllowFeatureBuildStep
 				featureHandler->DeleteFeature(this);
 				return false;
 			}
+
 			return true;
-		}
-		else {
+		} else {
 			// update the energy and metal required counts
 			teamHandler->Team(builder->team)->energyPull += energyUse;
 			teamHandler->Team(builder->team)->metalPull  += metalUse;
 		}
 		return false;
-	} else { // Reclaiming
+	} else {
+		// Reclaiming
 		// avoid multisuck when reclaim has already completed during this frame
-		if (reclaimLeft <= 0) {
+		if (reclaimLeft <= 0.0f)
 			return false;
-		}
 
 		// don't let them exploit chunk reclaim
-		if (isRepairingBeforeResurrect && (modInfo.reclaimMethod > 1)) {
+		if (isRepairingBeforeResurrect && (modInfo.reclaimMethod > 1))
 			return false;
-		}
 
 		// make sure several units cant reclaim at once on a single feature
-		if ((modInfo.multiReclaim == 0) && (lastReclaim == gs->frameNum)) {
+		if ((modInfo.multiReclaim == 0) && (lastReclaim == gs->frameNum))
 			return true;
-		}
 
-		const float part = (-amount) / def->reclaimTime;
+		const float step = (-amount) / def->reclaimTime;
 
-		if (luaRules && !luaRules->AllowFeatureBuildStep(builder, this, -part)) {
+		if (luaRules != NULL && !luaRules->AllowFeatureBuildStep(builder, this, -step))
 			return false;
-		}
 
-		float reclaimLeftTemp = reclaimLeft - part;
 		// stop the last bit giving too much resource
-		if (reclaimLeftTemp < 0) {
-			reclaimLeftTemp = 0;
-		}
+		const float reclaimLeftTemp = std::max(0.0f, reclaimLeft - step);
 
 		const float fractionReclaimed = oldReclaimLeft - reclaimLeftTemp;
 		const float metalFraction = def->metal * fractionReclaimed;
@@ -328,7 +332,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 
 		reclaimLeft = reclaimLeftTemp;
 
-		if ((modInfo.reclaimMethod == 1) && (reclaimLeft == 0)) {
+		if ((modInfo.reclaimMethod == 1) && (reclaimLeft == 0.0f)) {
 			// All-at-end method
 			builder->AddMetal(def->metal, false);
 			builder->AddEnergy(def->energy, false);
@@ -343,10 +347,11 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 			const float chunkSize = 1.0f / modInfo.reclaimMethod;
 			const int oldChunk = ChunkNumber(oldReclaimLeft);
 			const int newChunk = ChunkNumber(reclaimLeft);
+
 			if (oldChunk != newChunk) {
-				const float noChunks = (float)oldChunk - (float)newChunk;
-				builder->AddMetal(noChunks * def->metal * chunkSize, false);
-				builder->AddEnergy(noChunks * def->energy * chunkSize, false);
+				const float numChunks = (float)oldChunk - (float)newChunk;
+				builder->AddMetal(numChunks * def->metal * chunkSize, false);
+				builder->AddEnergy(numChunks * def->energy * chunkSize, false);
 			}
 		}
 
@@ -600,8 +605,8 @@ bool CFeature::Update()
 
 	if (smokeTime != 0) {
 		if (!((gs->frameNum + id) & 3) && projectileHandler->particleSaturation < 0.7f) {
-			new CSmokeProjectile(midPos + gu->RandVector() * radius * 0.3f,
-				gu->RandVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0, 0.5f);
+			new CSmokeProjectile(NULL, midPos + gu->RandVector() * radius * 0.3f,
+				gu->RandVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
 		}
 	}
 	if (fireTime == 1) {
