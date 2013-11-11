@@ -72,7 +72,7 @@ static std::string GetShaderSource(std::string fileName)
 		soSource.resize(soFile.FileSize());
 		soFile.Read(&soSource[0], soFile.FileSize());
 	} else {
-		LOG_L(L_ERROR, "File not found \"%s\"", soPath.c_str());
+		LOG_L(L_ERROR, "[%s] file not found \"%s\"", __FUNCTION__, soPath.c_str());
 	}
 
 	return soSource;
@@ -120,9 +120,9 @@ namespace Shader {
 		valid = (errorPos == -1 && isNative != 0);
 
 		glBindProgramARB(type, 0);
-
 		glDisable(type);
 	}
+
 	void ARBShaderObject::Release() {
 		glDeleteProgramsARB(1, &objID);
 	}
@@ -137,6 +137,7 @@ namespace Shader {
 	{
 		assert(globalRendering->haveGLSL); // non-debug check is done in ShaderHandler
 	}
+
 	void GLSLShaderObject::Compile(bool reloadFromDisk) {
 		if (reloadFromDisk)
 			curShaderSrc = GetShaderSource(srcFile);
@@ -166,7 +167,9 @@ namespace Shader {
 		// NOTE: some drivers cannot handle "#line 0" (?!)
 		sourceStr = "#line 1\n" + sourceStr;
 
-		const GLchar* sources[6] = {
+		// NOTE: many definition flags are not set until after shader is compiled
+		const GLchar* sources[7] = {
+			"// SHADER VERSION\n",
 			versionStr.c_str(),
 			"// SHADER FLAGS\n",
 			rawDefStrs.c_str(),
@@ -174,19 +177,20 @@ namespace Shader {
 			"// SHADER SOURCE\n",
 			sourceStr.c_str()
 		};
-		const GLint lengths[6] = {-1, -1, -1, -1, -1, -1};
+		const GLint lengths[7] = {-1, -1, -1, -1, -1, -1, -1};
 
 		if (objID == 0)
 			objID = glCreateShader(type);
 
-		glShaderSource(objID, 6, sources, lengths);
+		glShaderSource(objID, 7, sources, lengths);
 		glCompileShader(objID);
 
 		valid = glslIsValid(objID);
 		log   = glslGetLog(objID);
 
 		if (!IsValid()) {
-			LOG_L(L_WARNING, "[%s]\n\tshader-object name: %s, compile-log:\n%s", __FUNCTION__, srcFile.c_str(), log.c_str());
+			LOG_L(L_WARNING, "[GLSL-SO::%s] shader-object name: %s, compile-log:\n%s\n", __FUNCTION__, srcFile.c_str(), log.c_str());
+			LOG_L(L_WARNING, "\n%s%s%s%s%s%s%s", sources[0], sources[1], sources[2], sources[3], sources[4], sources[5], sources[6]);
 		}
 	}
 
@@ -257,6 +261,7 @@ namespace Shader {
 		if (hash == curHash)
 			return;
 
+		// NOTE: this does not preserve the #version pragma
 		const std::string definitionFlags = GetString();
 
 		for (SOVecIt it = shaderObjs.begin(); it != shaderObjs.end(); ++it) {
@@ -369,6 +374,7 @@ namespace Shader {
 
 	void GLSLProgramObject::Link() {
 		assert(glIsProgram(objID));
+
 		if (!glIsProgram(objID))
 			return;
 
@@ -378,8 +384,7 @@ namespace Shader {
 		log += glslGetLog(objID);
 
 		if (!IsValid()) {
-			LOG_L(L_WARNING, "[%s] linking-error-log in \"%s\":\n%s",
-				__FUNCTION__, name.c_str(), GetLog().c_str());
+			LOG_L(L_WARNING, "[GLSL-PO::%s] program-object name: %s, link-log:\n%s\n", __FUNCTION__, name.c_str(), log.c_str());
 		}
 	}
 
