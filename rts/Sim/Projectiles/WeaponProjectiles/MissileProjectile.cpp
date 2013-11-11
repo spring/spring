@@ -227,15 +227,16 @@ void CMissileProjectile::Update()
 				}
 			}
 
+			const float3 targetLeadVec = targetVel * (dist / maxSpeed) * 0.7f;
+			const float3 targetLeadDir = (targetPos + targetLeadVec - pos).Normalize();
 
-			float3 dif = (targetPos + targetVel * (dist / maxSpeed) * 0.7f - pos).SafeNormalize();
-			float3 dif2 = dif - dir;
+			float3 targetDirDif = targetLeadDir - dir;
 
-			if (dif2.SqLength() < Square(weaponDef->turnrate)) {
-				dir = dif;
+			if (targetDirDif.SqLength() < Square(weaponDef->turnrate)) {
+				dir = targetLeadDir;
 			} else {
-				dif2 = (dif2 - (dir * (dif2.dot(dir)))).SafeNormalize();
-				dir = (dir + (dif2 * weaponDef->turnrate)).SafeNormalize();
+				targetDirDif = (targetDirDif - (dir * (targetDirDif.dot(dir)))).SafeNormalize();
+				dir = (dir + (targetDirDif * weaponDef->turnrate)).SafeNormalize();
 			}
 
 			targetPos = orgTargPos;
