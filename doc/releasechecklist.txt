@@ -21,6 +21,8 @@ Preparation
 		git checkout develop
 		git merge release --no-ff
 
+For every month of development the release (and feature-freeze) branch should kept about one week.
+So if last release was 5 months ago, the release branch should stay for 5 weeks of feature-freeze / fixing bugs.
 
 Release Time
 ------------
