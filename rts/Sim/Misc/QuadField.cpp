@@ -574,13 +574,10 @@ void CQuadField::AddProjectile(CProjectile* p)
 	typedef std::list<CProjectile*> List;
 
 	if (p->hitscan) {
-		// must be non-zero otherwise 1 != 0 and 2 != 1 but 2 == 0
-		assert(p->speed != ZeroVector);
-
 		// all coordinates always map to a valid quad
-		qfcd.SetCoor(0, int2(CELL_IDX_X((p->pos.x             )       ), CELL_IDX_Z((p->pos.z             )       )));
-		qfcd.SetCoor(1, int2(CELL_IDX_X((p->pos.x + p->speed.x) * 0.5f), CELL_IDX_Z((p->pos.z + p->speed.z) * 0.5f)));
-		qfcd.SetCoor(2, int2(CELL_IDX_X((p->pos.x + p->speed.x)       ), CELL_IDX_Z((p->pos.z + p->speed.z)       )));
+		qfcd.SetCoor(0, int2(CELL_IDX_X(p->pos.x                    ), CELL_IDX_Z(p->pos.z                    )));
+		qfcd.SetCoor(1, int2(CELL_IDX_X(p->pos.x + p->speed.x * 0.5f), CELL_IDX_Z(p->pos.z + p->speed.z * 0.5f)));
+		qfcd.SetCoor(2, int2(CELL_IDX_X(p->pos.x + p->speed.x       ), CELL_IDX_Z(p->pos.z + p->speed.z       )));
 
 		Cell& cell = baseQuads[numQuadsX * qfcd.GetCoor(0).y + qfcd.GetCoor(0).x];
 		List& list = cell.projectiles;
@@ -594,6 +591,7 @@ void CQuadField::AddProjectile(CProjectile* p)
 			List& nlist = ncell.projectiles;
 
 			// prevent possible double insertions (into the same quad-list)
+			// if case p->speed is not large enough to reach adjacent quads
 			if (qfcd.GetCoor(n) != qfcd.GetCoor(n - 1)) {
 				qfcd.SetIter(n, nlist.insert(nlist.end(), p));
 			} else {
