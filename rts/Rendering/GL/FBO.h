@@ -150,16 +150,19 @@ private:
 	std::vector<GLuint> myRBOs;
 
 
-	static std::vector<FBO*> fboList;
-	struct TexData{
+	struct TexData {
 		GLuint id;
 		unsigned char* pixels;
 		GLsizei xsize,ysize,zsize;
 		GLenum target,format,type;
 	};
-	static std::map<GLuint,TexData*> texBuf;
+
+	static std::vector<FBO*> fboList;
+	static std::map<GLuint, TexData*> texBuf;
+
 	static GLint maxAttachments;
 	static GLsizei maxSamples;
+	static GLsizei numBuffers;
 
 	/**
 	 * @brief DownloadAttachment
