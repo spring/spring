@@ -199,7 +199,7 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::ve
 		if (oldLoc < 0) {
 			const std::string uname = name.substr(0, nameLength); // `name` contains garbage at the end, cut it
 			for (size_t j = 0; j < uniformStates.size(); ++j) {
-				if (uname == uniformStates[j].name) {
+				if (uname == uniformStates[j].uniformName) {
 					oldUniformState = &(uniformStates[j]);
 					newUniformLocs[j] = newLoc;
 					break;
