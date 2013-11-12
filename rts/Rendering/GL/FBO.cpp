@@ -17,8 +17,10 @@ CONFIG(bool, AtiSwapRBFix).defaultValue(false);
 
 std::vector<FBO*> FBO::fboList;
 std::map<GLuint,FBO::TexData*> FBO::texBuf;
+
 GLint FBO::maxAttachments = 0;
 GLsizei FBO::maxSamples = -1;
+GLsizei FBO::numBuffers = -1;
 
 
 /**
@@ -156,7 +158,7 @@ void FBO::GLContextLost()
 			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, (*fi)->fboId);
 			glGetIntegerv(GL_READ_BUFFER,&oldReadBuffer);
 
-			for(int i = 0; i < maxAttachments; ++i) {
+			for (int i = 0; i < maxAttachments; ++i) {
 				DownloadAttachment(GL_COLOR_ATTACHMENT0_EXT + i);
 			}
 			DownloadAttachment(GL_DEPTH_ATTACHMENT_EXT);
@@ -299,7 +301,9 @@ bool FBO::IsValid() const
  */
 void FBO::Bind()
 {
+	assert(numBuffers == 0);
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId);
+	numBuffers++;
 }
 
 
@@ -308,7 +312,9 @@ void FBO::Bind()
  */
 void FBO::Unbind()
 {
+	assert(numBuffers == 1);
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+	numBuffers--;
 }
 
 
@@ -423,7 +429,7 @@ void FBO::Detach(const GLenum attachment)
  */
 void FBO::DetachAll()
 {
-	for(int i = 0; i < maxAttachments; ++i) {
+	for (int i = 0; i < maxAttachments; ++i) {
 		Detach(GL_COLOR_ATTACHMENT0_EXT + i);
 	}
 	Detach(GL_DEPTH_ATTACHMENT_EXT);

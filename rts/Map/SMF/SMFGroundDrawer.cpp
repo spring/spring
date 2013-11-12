@@ -217,8 +217,11 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 	if (!geomBuffer.Valid())
 		return;
 
-	// water renderers use FBO's for the reflection pass
+	// some water renderers use FBO's for the reflection pass
 	if (drawPass == DrawPass::WaterReflection)
+		return;
+	// some water renderers use FBO's for the refraction pass
+	if (drawPass == DrawPass::WaterRefraction)
 		return;
 	// deferred pass must be executed with GLSL shaders
 	// if the FFP or ARB state was selected, bail early
