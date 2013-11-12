@@ -3,7 +3,6 @@
 # > find . -name "*.cpp"" | sort
 SET(sources_engine_Lua
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaBitOps.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/LuaCallInCheck.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaConstCMD.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaConstCMDTYPE.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaConstCOB.cpp"

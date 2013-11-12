@@ -116,8 +116,6 @@ void CLuaUI::FreeHandler()
 	luaUI = NULL;
 	inst->KillLua();
 	delete inst;
-
-	if (guihandler) guihandler->LoadConfig("ctrlpanel.txt");
 }
 
 
@@ -237,6 +235,7 @@ CLuaUI::~CLuaUI()
 {
 	luaUI = NULL;
 	GML::SetLuaUIState(NULL);
+	if (guihandler) guihandler->LoadConfig("ctrlpanel.txt");
 }
 
 void CLuaUI::InitLuaSocket(lua_State* L) {

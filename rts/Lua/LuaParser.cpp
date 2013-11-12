@@ -21,7 +21,6 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/BranchPrediction.h"
 #include "System/Misc/SpringTime.h"
 #include "System/ScopedFPUSettings.h"
 #include "System/Util.h"
