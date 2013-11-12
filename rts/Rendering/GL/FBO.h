@@ -160,9 +160,11 @@ private:
 	static std::vector<FBO*> fboList;
 	static std::map<GLuint, TexData*> texBuf;
 
+	// id of currently bound buffer
+	static GLuint boundBuffer;
+
 	static GLint maxAttachments;
 	static GLsizei maxSamples;
-	static GLsizei numBuffers;
 
 	/**
 	 * @brief DownloadAttachment

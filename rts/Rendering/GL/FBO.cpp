@@ -18,9 +18,9 @@ CONFIG(bool, AtiSwapRBFix).defaultValue(false);
 std::vector<FBO*> FBO::fboList;
 std::map<GLuint,FBO::TexData*> FBO::texBuf;
 
+GLuint FBO::boundBuffer = 0;
 GLint FBO::maxAttachments = 0;
 GLsizei FBO::maxSamples = -1;
-GLsizei FBO::numBuffers = -1;
 
 
 /**
@@ -292,7 +292,7 @@ FBO::~FBO()
  */
 bool FBO::IsValid() const
 {
-	return (fboId!=0 && valid);
+	return (fboId != 0 && valid);
 }
 
 
@@ -301,9 +301,8 @@ bool FBO::IsValid() const
  */
 void FBO::Bind()
 {
-	assert(numBuffers == 0);
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId);
-	numBuffers++;
+	assert(boundBuffer == 0);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, boundBuffer = fboId);
 }
 
 
@@ -312,9 +311,8 @@ void FBO::Bind()
  */
 void FBO::Unbind()
 {
-	assert(numBuffers == 1);
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-	numBuffers--;
+	assert(boundBuffer == fboId);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, boundBuffer = 0);
 }
 
 
@@ -325,7 +323,7 @@ void FBO::Unbind()
 bool FBO::CheckStatus(std::string name)
 {
 	GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-	switch(status) {
+	switch (status) {
 		case GL_FRAMEBUFFER_COMPLETE_EXT:
 			valid = true;
 			return true;
