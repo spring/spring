@@ -919,8 +919,12 @@ void CWeapon::DependentDied(CObject* o)
 bool CWeapon::TargetUnitOrPositionUnderWater(const float3& targetPos, const CUnit* targetUnit, float offset)
 {
 	// test if a target position or unit is strictly underwater
+	//
+	// previously this called targetUnit->IsUnderWater whose
+	// return value depends on the unit's base-position, but
+	// targetting cares more about its aim-position
 	if (targetUnit != NULL) {
-		return (targetUnit->IsUnderWater());
+		return (targetUnit->aimPos.y < 0.0f);
 	} else {
 		// consistent with CSolidObject::IsUnderWater (LT)
 		return ((targetPos.y + offset) < 0.0f);
@@ -930,8 +934,12 @@ bool CWeapon::TargetUnitOrPositionUnderWater(const float3& targetPos, const CUni
 bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit, float offset)
 {
 	// test if a target position or unit is in water (including underwater)
+	//
+	// previously this called targetUnit->IsInWater whose
+	// return value depends on the unit's base-position,
+	// but targetting cares more about its aim-position
 	if (targetUnit != NULL) {
-		return (targetUnit->IsInWater());
+		return (targetUnit->aimPos.y <= 0.0f);
 	} else {
 		// consistent with CSolidObject::IsInWater (LE)
 		return ((targetPos.y + offset) <= 0.0f);
