@@ -1321,11 +1321,6 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 		va->AddVertex2dQT(x+normScale * scaleX*g->size.x0(), y+normScale * scaleY*g->size.y0(), g->texCord.x0(), g->texCord.y0());
 		va->AddVertex2dQT(x+normScale * scaleX*g->size.x1(), y+normScale * scaleY*g->size.y0(), g->texCord.x1(), g->texCord.y0());
 		va->AddVertex2dQT(x+normScale * scaleX*g->size.x1(), y+normScale * scaleY*g->size.y1(), g->texCord.x1(), g->texCord.y1());
-		/*
-		va->AddVertex2dQT(x+scaleX*g->size.x0(), y+scaleY*g->size.y1(), g->texCord.x0(), g->texCord.y1());
-		va->AddVertex2dQT(x+scaleX*g->size.x0(), y+scaleY*g->size.y0(), g->texCord.x0(), g->texCord.y0());
-		va->AddVertex2dQT(x+scaleX*g->size.x1(), y+scaleY*g->size.y0(), g->texCord.x1(), g->texCord.y0());
-		va->AddVertex2dQT(x+scaleX*g->size.x1(), y+scaleY*g->size.y1(), g->texCord.x1(), g->texCord.y1());*/
 	} while(true);
 }
 
@@ -1379,12 +1374,12 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 		const float dx0 = x + normScale * scaleX * g->size.x0(), dy0 = y + normScale * scaleY * g->size.y0();
 		const float dx1 = x + normScale * scaleX * g->size.x1(), dy1 = y + normScale * scaleY * g->size.y1();
 
-		//! draw shadow
+	/*	//! draw shadow
 		va2->AddVertex2dQT(dx0+shiftX-ssX, dy1-shiftY-ssY, g->shadowTexCord.x0(), g->shadowTexCord.y1());
 		va2->AddVertex2dQT(dx0+shiftX-ssX, dy0-shiftY+ssY, g->shadowTexCord.x0(), g->shadowTexCord.y0());
 		va2->AddVertex2dQT(dx1+shiftX+ssX, dy0-shiftY+ssY, g->shadowTexCord.x1(), g->shadowTexCord.y0());
 		va2->AddVertex2dQT(dx1+shiftX+ssX, dy1-shiftY-ssY, g->shadowTexCord.x1(), g->shadowTexCord.y1());
-
+*/
 		//! draw the actual character
 		va->AddVertex2dQT(dx0, dy1, g->texCord.x0(), g->texCord.y1());
 		va->AddVertex2dQT(dx0, dy0, g->texCord.x0(), g->texCord.y0());
@@ -1442,11 +1437,11 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 		const float dx1 = x + normScale * scaleX * g->size.x1(), dy1 = y + normScale * scaleY * g->size.y1();
 
 		//! draw outline
-		va2->AddVertex2dQT(dx0-shiftX, dy1-shiftY, g->shadowTexCord.x0(), g->shadowTexCord.y1());
+	/*	va2->AddVertex2dQT(dx0-shiftX, dy1-shiftY, g->shadowTexCord.x0(), g->shadowTexCord.y1());
 		va2->AddVertex2dQT(dx0-shiftX, dy0+shiftY, g->shadowTexCord.x0(), g->shadowTexCord.y0());
 		va2->AddVertex2dQT(dx1+shiftX, dy0+shiftY, g->shadowTexCord.x1(), g->shadowTexCord.y0());
 		va2->AddVertex2dQT(dx1+shiftX, dy1-shiftY, g->shadowTexCord.x1(), g->shadowTexCord.y1());
-
+*/
 		//! draw the actual character
 		va->AddVertex2dQT(dx0, dy1, g->texCord.x0(), g->texCord.y1());
 		va->AddVertex2dQT(dx0, dy0, g->texCord.x0(), g->texCord.y0());
