@@ -425,11 +425,11 @@ float CglFont::GetTextHeight(const std::string& text, float* descender, int* num
 		}
 	}
 
-	if (multiLine>1) d -= (multiLine-1) * GetLineHeight();
+	if (multiLine>1) d -= normScale * (multiLine-1) * GetLineHeight();
 	if (descender) *descender = d;
 	if (numLines) *numLines = multiLine;
 
-	return h*normScale;
+	return h;
 }
 
 

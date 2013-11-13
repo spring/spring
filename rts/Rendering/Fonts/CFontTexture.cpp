@@ -342,7 +342,7 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
             {
                 for (int x = 0; x < width; ++x)
                 {
-                    // The color channels remain white, just fill the alpha channel
+                    // Flip the bitmap
                     std::size_t index = x + (height-1-y) * width;
                     pixels_buffer[index] = normal_pixels[x];
                 }
@@ -354,19 +354,26 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
                glyph.texCord.w-2*padding, glyph.texCord.h-2*padding);
 
         glyph.shadowTexCord=glyph.texCord;
-       /* int shadowW=width+2*outlineSize;
+        /*int shadowW=width+2*outlineSize;
         int shadowH=height+2*outlineSize;
-        glyph.shadowTexCord=AllocateGlyphRect(shadowW,shadowH);
+        glyph.shadowTexCord=AllocateGlyphRect(shadowW+padding*2,shadowH+padding*2);
+
+        CBitmap bmp;
+        bmp.channels=1;
+        bmp.mem=(unsigned char*)pixels_buffer;
+        bmp.xsize=width;
+        bmp.ysize=height;
 
         CBitmap blurbmp;
         blurbmp.channels = 1;
         blurbmp.Alloc(shadowW,shadowH);
-        blurbmp.CopySubImage(CBitmap((const unsigned char*)pixels_buffer,width,height),outlineSize,outlineSize);
+        blurbmp.CopySubImage(bmp,outlineSize,outlineSize);
         blurbmp.Blur(outlineSize,outlineWeight);
+        bmp.mem=0;
 
-        Update((const unsigned char*)blurbmp.mem,glyph.shadowTexCord.x, glyph.shadowTexCord.y,
-               glyph.shadowTexCord.w, glyph.shadowTexCord.h);
-*/
+        Update((const unsigned char*)blurbmp.mem,glyph.shadowTexCord.x+padding, glyph.shadowTexCord.y+padding,
+               glyph.shadowTexCord.w-padding*2, glyph.shadowTexCord.h-padding*2);
+        */
         delete[] pixels_buffer;
     }
 
@@ -434,8 +441,10 @@ void CFontTexture::CreateTexture(int w,int h)
     glBindTexture(GL_TEXTURE_2D, ntex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    // static const GLfloat borderColor[4] = {1.0f,1.0f,1.0f,0.0f};
    // glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, w, h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
