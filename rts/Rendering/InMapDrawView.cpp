@@ -3,7 +3,7 @@
 
 #include "InMapDrawView.h"
 #include "Rendering/Colors.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/GlobalRendering.h"
 

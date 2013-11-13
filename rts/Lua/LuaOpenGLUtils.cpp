@@ -11,7 +11,7 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/HeightMapTexture.h"
 #include "Map/ReadMap.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
@@ -581,7 +581,7 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_FONTSMALL:
 			return int2(smallFont->GetTexWidth(), smallFont->GetTexHeight());
 		case LUATEX_MINIMAP:
-			if (readMap != NULL) { 
+			if (readMap != NULL) {
 				return readMap->GetMiniMapTextureSize();
 			}
 		break;
@@ -591,7 +591,7 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_INFOTEX_MTLMAP:
 		case LUATEX_INFOTEX_HGTMAP:
 		case LUATEX_INFOTEX_BLKMAP: {
-			if (readMap != NULL) { 
+			if (readMap != NULL) {
 				return (readMap->GetGroundDrawer()->GetInfoTexSize());
 			}
 		}
@@ -602,7 +602,7 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_MAP_GBUFFER_EMITTEX:
 		case LUATEX_MAP_GBUFFER_MISCTEX:
 		case LUATEX_MAP_GBUFFER_ZVALTEX: {
-			if (readMap != NULL) { 
+			if (readMap != NULL) {
 				return (readMap->GetGroundDrawer()->GetGeometryBuffer()->GetWantedSize(readMap->GetGroundDrawer()->DrawDeferred()));
 			}
 		}
