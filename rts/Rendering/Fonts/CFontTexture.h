@@ -116,6 +116,9 @@ class CFontTexture
         };
         std::list<Row> imageRows;
         int nextRowPos;
+
+        Row* FindRow(unsigned int glyphWidth,unsigned int glyphHeight);
+        Row* AddRow(unsigned int glyphWidth,unsigned int glyphHeight);
         //! Try to find a place where can be placed a glyph with given size
         //! If it is imposible, resize the texture and try it again
         CFontTexture::IGlyphRect AllocateGlyphRect(unsigned int glyphWidth,unsigned int glyphHeight);
