@@ -301,17 +301,20 @@ bool FBO::IsValid() const
  */
 void FBO::Bind()
 {
-	assert(boundBuffer == 0);
+	// too much code actually expects to be able to re-bind
+	// this is bad style: don't want to accidentally rebind
+	// during eg. water reflection map-draw pass
+	// assert(boundBuffer == 0);
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, boundBuffer = fboId);
 }
-
 
 /**
  * Unbinds the framebuffer from the current context
  */
 void FBO::Unbind()
 {
-	assert(boundBuffer == fboId);
+	// Bind is instance whereas Unbind is static (!)
+	// assert(boundBuffer == fboId);
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, boundBuffer = 0);
 }
 
