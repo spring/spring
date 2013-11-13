@@ -12,7 +12,7 @@
 #include "LuaOpenGL.h"
 
 #include "Rendering/GL/myGL.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "System/Exceptions.h"
 
 

@@ -5,7 +5,7 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/GlobalUnsynced.h"
@@ -70,7 +70,7 @@ void List::AddItem(const std::string& name, const std::string& description)
 	items.push_back(name);
 
 	// calculate width of text and resize box if necessary
-	const float w = itemFontScale * font->GetSize() * font->GetTextWidth(name) * screensize[0] + 2 * itemSpacing;
+	float w = itemFontScale * font->GetSize() * font->GetTextWidth(name) * screensize[0] + 2 * itemSpacing;
 	if (w > (size[0]))
 	{
 		//box.x1 = 0.5f - 0.5f * w;
