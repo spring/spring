@@ -278,7 +278,7 @@ namespace Shader {
 	{
 		LOG_L(L_DEBUG, "Uniform States for program-object \"%s\":", name.c_str());
 		for (auto& p : uniformStates)
-			LOG_L(L_DEBUG, "\t%s: %f %f %i", (p.second.GetName()).c_str(), p.second.f[0], p.second.f[1], int(p.second.IsUninit()));
+			LOG_L(L_DEBUG, "\t%s: %f %f %i", (p.second.GetName()).c_str(), p.second.GetFltValues()[0], p.second.GetFltValues()[1], int(p.second.IsUninit()));
 	}
 
 
