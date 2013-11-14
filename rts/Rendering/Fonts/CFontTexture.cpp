@@ -197,7 +197,7 @@ float CFontTexture::GetOutilneWeight() const
     return outlineWeight;
 }
 
-int CFontTexture::GetLineHeight() const
+int CFontTexture::GetLineHeightA() const
 {
     return lineHeight;
 }
@@ -290,7 +290,7 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
     FT_UInt index = FT_Get_Char_Index(_face, ch);
     glyph.index=index;
 
-    error = FT_Load_Glyph(_face,index,FT_LOAD_RENDER);
+    error = FT_Load_Glyph(_face,index,FT_LOAD_RENDER|FT_LOAD_FORCE_AUTOHINT);
     if(error)
     {
         return glyph;
@@ -307,9 +307,9 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
 
     //! Get glyph bound box
     glyph.size = IGlyphRect(xbearing,                           // x0
-                            ybearing,                           // y0
+                            ybearing-fontDescender,                           // y0
                             slot->metrics.width,                // w
-                            slot->metrics.height);              // h
+                            -slot->metrics.height);              // h
 
 
     int width  = slot->bitmap.width;
@@ -319,7 +319,7 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
     {
         unsigned char* pixels_buffer=new unsigned char[width * height];
         glyph.texCord=AllocateGlyphRect(width+2*padding,height+2*padding);
-        const unsigned char* normal_pixels = slot->bitmap.buffer;
+        const unsigned char* source_pixels = slot->bitmap.buffer;
 
       /*  if(slot->bitmap.pixel_mode == FT_PIXEL_MODE_MONO)
         {
@@ -330,9 +330,9 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
                 {
                     // The color channels remain white, just fill the alpha channel
                     int index = x + y * width;
-                    pixels_buffer[index] = ((normal_pixels[x / 8]) & (1 << (7 - (x % 8)))) ? 255 : 0;
+                    pixels_buffer[index] = ((source_pixels[x / 8]) & (1 << (7 - (x % 8)))) ? 255 : 0;
                 }
-                normal_pixels += slot->bitmap.pitch;
+                source_pixels += slot->bitmap.pitch;
             }
         }
         else
@@ -340,19 +340,20 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
             // Pixels are 8 bits gray levels
             for(int y = 0; y < height; y++)
             {
-                //Flip y cords
-                const unsigned char* src = normal_pixels + (height - 1 - y) * slot->bitmap.pitch;
-                //const unsigned char* src = normal_pixels + y * slot->bitmap.pitch;
+                //!Flip y cords
+                //const unsigned char* src = source_pixels + (height - 1 - y) * slot->bitmap.pitch;
+                const unsigned char* src = source_pixels + y * slot->bitmap.pitch;
                 unsigned char* dst = pixels_buffer + y * width;
                 memcpy(dst,src,width);
             }
       //  }
-
+        Clear(glyph.texCord.x,glyph.texCord.y,glyph.texCord.w,glyph.texCord.h);
         Update(pixels_buffer, glyph.texCord.x+padding, glyph.texCord.y+padding,
                width, height);
 
-        glyph.shadowTexCord=glyph.texCord;
-        /*int shadowW=width+2*outlineSize;
+        //!Lets firstly fix issues with normal texture
+        //glyph.shadowTexCord=glyph.texCord;
+        int shadowW=width+2*outlineSize;
         int shadowH=height+2*outlineSize;
         glyph.shadowTexCord=AllocateGlyphRect(shadowW+padding*2,shadowH+padding*2);
 
@@ -369,13 +370,12 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
         blurbmp.Blur(outlineSize,outlineWeight);
         bmp.mem=0;
 
+        Clear(glyph.shadowTexCord.x,glyph.shadowTexCord.y,glyph.shadowTexCord.w,glyph.shadowTexCord.h);
         Update((const unsigned char*)blurbmp.mem,glyph.shadowTexCord.x+padding, glyph.shadowTexCord.y+padding,
                glyph.shadowTexCord.w-padding*2, glyph.shadowTexCord.h-padding*2);
-        */
+
         delete[] pixels_buffer;
     }
-
-    LOG("Glyph is loaded: %i", ch);
     return glyph;
     #else
     return glyphs[0];
@@ -404,10 +404,8 @@ CFontTexture::Row* CFontTexture::FindRow(unsigned int glyphWidth,unsigned int gl
 CFontTexture::Row* CFontTexture::AddRow(unsigned int glyphWidth,unsigned int glyphHeight)
 {
     int rowHeight = glyphHeight + (2*glyphHeight)/10;
-    LOG("Try to add row %i", rowHeight);
     while(nextRowPos+rowHeight>=texHeight)
     {
-        LOG("Row pos %i tex height %i", nextRowPos+rowHeight,texHeight);
         //! Resize texture
         CreateTexture(texWidth*2,texHeight*2); //! Make texture twice bigger
     }
@@ -420,7 +418,6 @@ CFontTexture::Row* CFontTexture::AddRow(unsigned int glyphWidth,unsigned int gly
 CFontTexture::IGlyphRect CFontTexture::AllocateGlyphRect(unsigned int glyphWidth,unsigned int glyphHeight)
 {
     #ifndef   HEADLESS
-    LOG("Look for place: %i x %i", glyphWidth,glyphHeight);
     Row* row=FindRow(glyphWidth,glyphHeight);
     if(!row)
         row=AddRow(glyphWidth,glyphHeight);
@@ -439,20 +436,22 @@ void CFontTexture::CreateTexture(int w,int h)
     if(w>2048 || h>2048)
         throw texture_size_exception();
 
+    glPushAttrib(GL_PIXEL_MODE_BIT);
     glEnable(GL_TEXTURE_2D);
     GLuint ntex;
     glGenTextures(1, &ntex);
     glBindTexture(GL_TEXTURE_2D, ntex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     static const GLfloat borderColor[4] = {1.0f,1.0f,1.0f,0.0f};
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, w, h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
-
+    glPopAttrib();
 
     if(texture)
     {
@@ -476,20 +475,24 @@ void CFontTexture::CreateTexture(int w,int h)
         texWidth=w;
         texHeight=h;
     }
-
-    LOG("Font texture (re)created %i x %i", texWidth,texHeight);
     #endif
 }
 
 void CFontTexture::Update(const unsigned char* pixels,int x,int y,int w,int h)
 {
     #ifndef   HEADLESS
-    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
+	glPushAttrib(GL_PIXEL_MODE_BIT);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, (unsigned int)w, (unsigned int)h, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
     glPopAttrib();
     #endif
+}
+
+void CFontTexture::Clear(int x,int y,int w,int h)
+{
+    unsigned char* wipe_buf=new unsigned char[w*h];
+    memset(wipe_buf,0,w*h);
+    Update(wipe_buf,x,y,w,h);
+    delete[] wipe_buf;
 }

@@ -78,7 +78,7 @@ public:
 	int   GetTextNumLines(const std::string& text) const;
 	static std::string StripColorCodes(const std::string& text);
 
-	//inline float GetLineHeight()     const { return lineHeight; }
+	inline float GetLineHeight()     const { return normScale * GetLineHeightA(); }
 	inline float GetSize()           const { return fontSize; }
 	inline int GetDescender()      const { return normScale * GetFontDescender(); }
 	inline int   GetOutlineWidth()   const { return GetOutlineSize(); }
