@@ -268,7 +268,6 @@ void CBeamLaser::FireImpl(bool scriptCall)
 
 void CBeamLaser::FireInternal(float3 curDir)
 {
-	// fix negative damage when hitting big spheres
 	float actualRange = range;
 	float rangeMod = 1.0f;
 

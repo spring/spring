@@ -309,8 +309,11 @@ void CWeapon::UpdateTargeting()
 
 		SetTargetBorderPos(targetUnit, tmpTargetPos, tmpTargetVec, tmpTargetDir);
 
+		// never target below terrain
+		// never target below water if not a water-weapon
 		targetPos = (targetBorder == 0.0f)? tmpTargetPos: targetBorderPos;
 		targetPos.y = std::max(targetPos.y, ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
+		targetPos.y = std::max(targetPos.y, targetPos.y * weaponDef->waterweapon);
 	}
 
 	if (weaponDef->interceptor) {
