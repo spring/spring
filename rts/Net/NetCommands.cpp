@@ -124,8 +124,8 @@ void CGame::ClientReadNet()
 		if (skipping) {
 			msgProcTimeLeft = 0.01f;
 		} else {
-			msgProcTimeLeft -= ((msgProcTimeLeft > 1.0f) * 1.0f);
-			msgProcTimeLeft += (consumeSpeed * (spring_tomsecs(currentFrame - lastframe) / 1000.0f));
+			msgProcTimeLeft -= float(msgProcTimeLeft > 1.0f);
+			msgProcTimeLeft += consumeSpeed * (currentFrame - lastframe).toSecsf();
 		}
 
 		lastframe = currentFrame;
@@ -136,8 +136,7 @@ void CGame::ClientReadNet()
 	}
 
 	// balance the time spent in simulation & drawing (esp. when reconnecting)
-	// always render at least 2FPS (will otherwise be highly unresponsive when catching up after a reconnection)
-	// else use the following algo: i.e. with gu->reconnectSimDrawBalance = 0.2f
+	// use the following algo: i.e. with gu->reconnectSimDrawBalance = 0.2f
 	//  -> try to spend minimum 20% of the time in drawing
 	//  -> use remaining 80% for reconnecting
 	// (maxSimFPS / minDrawFPS) is desired number of simframes per drawframe
@@ -147,16 +146,16 @@ void CGame::ClientReadNet()
 	const float msgProcTimeLimit = (GML::SimEnabled() && GML::MultiThreadSim()) ? (1000.0f / gu->minFPS) :
 		Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
 
-	const spring_time msgProcStartTime = spring_gettime();
+	const spring_time msgProcEndTime = spring_gettime() + spring_msecs(msgProcTimeLimit);
 
 	// really process the messages
 	while (true) {
-		const float msgProcTimeSpent = spring_tomsecs(spring_gettime() - msgProcStartTime);
-		const bool allowMsgProcessing =
-			(msgProcTimeLeft  >              0.0f) && // smooths simframes across the full second
-			(msgProcTimeSpent <= msgProcTimeLimit);   // balance the time spent in sim & drawing
+		// smooths simframes across the full second
+		if (msgProcTimeLeft <= 0.0f)
+			break;
 
-		if (!allowMsgProcessing)
+		// balance the time spent in sim & drawing
+		if (spring_gettime() > msgProcEndTime)
 			break;
 
 		// get netpacket from the queue

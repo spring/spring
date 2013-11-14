@@ -130,15 +130,15 @@ void S3DModelPiece::DrawStatic() const
 
 void LocalModel::DrawPieces() const
 {
-	for (unsigned int i = 0; i < pieces.size(); i++) {
-		pieces[i]->Draw();
+	for (const auto& p: pieces) {
+		p->Draw();
 	}
 }
 
 void LocalModel::DrawPiecesLOD(unsigned int lod) const
 {
-	for (unsigned int i = 0; i < pieces.size(); i++) {
-		pieces[i]->DrawLOD(lod);
+	for (const auto& p: pieces) {
+		p->DrawLOD(lod);
 	}
 }
 
