@@ -331,6 +331,8 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, lastSimFrameTime(spring_gettime())
 	, lastDrawFrameTime(spring_gettime())
 	, lastFrameTime(spring_gettime())
+	, lastReceivedNetPacketTime(spring_gettime())
+	, lastSimFrameNetPacketTime(spring_gettime())
 	, updateDeltaSeconds(0.0f)
 	, totalGameTime(0)
 	, hideInterface(false)
@@ -1184,16 +1186,22 @@ bool CGame::Draw() {
 
 	if (globalRendering->drawdebug) {
 		const float deltaFrameTime = (currentTimePreUpdate - lastSimFrameTime).toMilliSecsf();
+		const float deltaReceivedPacketTime = (currentTimePreUpdate - lastReceivedNetPacketTime).toMilliSecsf();
+		const float deltaSimFramePacketTime = (currentTimePreUpdate - lastSimFrameNetPacketTime).toMilliSecsf();
+
 		const float currTimeOffset = globalRendering->timeOffset;
 		static float lastTimeOffset = globalRendering->timeOffset;
 		static int lastGameFrame = gs->frameNum;
+
+		static const char* minFmtStr = "assert(CTO >= 0.0f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms : DLRPT=%fms / DSFPT=%fms : NP=%u)";
+		static const char* maxFmtStr = "assert(CTO <= 1.3f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms : DLRPT=%fms / DSFPT=%fms : NP=%u)";
 
 		// CTO = MILLISECSF(CT - LSFT) * WSF = MILLISECSF(CT - LSFT) * (SFPS * 0.001)
 		// AT 30Hz LHS (MILLISECSF(CT - LSFT)) SHOULD BE ~33ms, RHS SHOULD BE ~0.03
 		assert(currTimeOffset >= 0.0f);
 
-		if (currTimeOffset < 0.0f) LOG_L(L_ERROR, "assert(CTO >= 0.0f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms : NP=%u)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, net->GetNumWaitingServerPackets());
-		if (currTimeOffset > 1.3f) LOG_L(L_ERROR, "assert(CTO <= 1.0f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms : NP=%u)", gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, net->GetNumWaitingServerPackets());
+		if (currTimeOffset < 0.0f) LOG_L(L_ERROR, minFmtStr, gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, deltaReceivedPacketTime, deltaSimFramePacketTime, net->GetNumWaitingServerPackets());
+		if (currTimeOffset > 1.3f) LOG_L(L_ERROR, maxFmtStr, gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, deltaReceivedPacketTime, deltaSimFramePacketTime, net->GetNumWaitingServerPackets());
 
 		// test for monotonicity, normally should only fail
 		// when SimFrame() advances time or if simframe rate
