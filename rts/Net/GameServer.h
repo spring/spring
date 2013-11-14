@@ -18,6 +18,12 @@
 #include "System/Misc/SpringTime.h"
 #include "System/Platform/Synchro.h"
 
+/**
+ * "player" number for GameServer-generated messages
+ */
+#define SERVER_PLAYER 255
+
+
 
 namespace boost {
 	class thread;
@@ -39,20 +45,17 @@ class ChatMessage;
 class GameParticipant;
 class GameSkirmishAI;
 
-/**
- * When the Server generates a message,
- * this value is used as the sending player-number.
- */
-const unsigned SERVER_PLAYER = 255;
-const unsigned numCommands = 24;
-extern const std::string commands[numCommands];
-
 class GameTeam : public TeamBase
 {
 public:
 	GameTeam() : active(false) {}
-	bool active;
 	GameTeam& operator=(const TeamBase& base) { TeamBase::operator=(base); return *this; }
+
+	void SetActive(bool b) { active = b; }
+	bool IsActive() const { return active; }
+
+private:
+	bool active;
 };
 
 /**
@@ -91,6 +94,9 @@ public:
 
 	void UpdateSpeedControl(int speedCtrl);
 	static std::string SpeedControlToString(int speedCtrl);
+	static const std::set<std::string>& GetCommandBlackList() { return commandBlacklist; }
+
+	std::string GetPlayerNames(const std::vector<int>& indices) const;
 
 	const boost::scoped_ptr<CDemoReader>& GetDemoReader() const { return demoReader; }
 	const boost::scoped_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
@@ -135,7 +141,6 @@ private:
 
 	/** @brief Generate a unique game identifier and send it to all clients. */
 	void GenerateAndSendGameID();
-	std::string GetPlayerNames(const std::vector<int>& indices) const;
 
 	void WriteDemoData();
 	/// read data from demo and send it to clients
@@ -172,13 +177,14 @@ private:
 	spring_time readyTime;
 	spring_time gameStartTime;
 	spring_time gameEndTime;	///< Tick when game end was detected
-	spring_time lastTick;
-	float timeLeft;
+	spring_time lastNewFrameTick;
 	spring_time lastPlayerInfo;
 	spring_time lastUpdate;
+
 	float modGameTime;
 	float gameTime;
 	float startTime;
+	float frameTimeLeft;
 
 	bool isPaused;
 	float userSpeedFactor;
@@ -247,7 +253,7 @@ private:
 	unsigned localClientNumber;
 
 	/// If the server receives a command, it will forward it to clients if it is not in this set
-	std::set<std::string> commandBlacklist;
+	static std::set<std::string> commandBlacklist;
 
 	boost::scoped_ptr<netcode::UDPListener> UDPNet;
 	boost::scoped_ptr<CDemoReader> demoReader;

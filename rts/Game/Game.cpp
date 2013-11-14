@@ -2188,6 +2188,7 @@ void CGame::ActionReceived(const Action& action, int playerID)
 bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 {
 	const IUnsyncedActionExecutor* executor = unsyncedGameCommands->GetActionExecutor(action.command);
+
 	if (executor != NULL) {
 		// an executor for that action was found
 		UnsyncedAction unsyncedAction(action, key, isRepeat);
@@ -2196,7 +2197,8 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		}
 	}
 
-	static std::set<std::string> serverCommands = std::set<std::string>(commands, commands+numCommands);
+	const std::set<std::string>& serverCommands = CGameServer::GetCommandBlackList();
+
 	if (serverCommands.find(action.command) != serverCommands.end()) {
 		CommandMessage pckt(action, gu->myPlayerNum);
 		net->Send(pckt.Pack());
