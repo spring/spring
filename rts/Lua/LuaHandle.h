@@ -118,6 +118,7 @@ class CLuaHandle : public CEventClient
 			{
 				GML_DRCMUTEX_LOCK(lua); // WantsEvent
 
+				// ask our derived instance
 				if (HasCallIn(L, name))
 					return true;
 			}
@@ -125,6 +126,7 @@ class CLuaHandle : public CEventClient
 			return false;
 		}
 
+		// HasCallIn is only implemented by LuaHandleSynced/LuaIntro/LuaUI
 		virtual bool HasCallIn(lua_State* L, const string& name) { return false; } // FIXME
 		virtual bool SyncedUpdateCallIn(lua_State* L, const string& name) { return false; }
 		virtual bool UnsyncedUpdateCallIn(lua_State* L, const string& name) { return false; }
