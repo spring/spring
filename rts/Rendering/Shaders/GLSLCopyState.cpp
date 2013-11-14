@@ -205,7 +205,7 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::un
 			//oldUniformState = &(uniformStates->emplace(hash, name).first->second);
 			oldUniformState = &(uniformStates->insert(std::pair<size_t, Shader::UniformState>(hash, Shader::UniformState(name))).first->second);
 		}
-		oldUniformState->location = newLoc;
+		oldUniformState->SetLocation(newLoc);
 
 		// Check if we got data we can use to initialize the uniform
 		if (oldUniformState->IsUninit()) {
@@ -225,7 +225,7 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::un
 					if (oldLoc >= 0) { \
 						glGetUniform##ftype(oldProgID, oldLoc, &_value[0]); \
 					} else { \
-						memcpy(_value, oldUniformState->i, size * sizeof(internalTypeName)); \
+						memcpy(_value, oldUniformState->GetIntValues(), size * sizeof(internalTypeName)); \
 					} \
 					glUniform##size##ftype(newLoc, 1, &_value[0]); \
 				} break;
@@ -235,7 +235,7 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::un
 					if (oldLoc >= 0) { \
 						glGetUniform##ftype(oldProgID, oldLoc, &_value[0]); \
 					} else { \
-						memcpy(_value, oldUniformState->i, size*size * sizeof(internalTypeName)); \
+						memcpy(_value, oldUniformState->GetIntValues(), size*size * sizeof(internalTypeName)); \
 					} \
 					glUniformMatrix##size##ftype(newLoc, 1, false, &_value[0]); \
 				} break;

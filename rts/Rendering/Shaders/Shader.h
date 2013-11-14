@@ -94,7 +94,7 @@ namespace Shader {
 
 	public:
 		int GetUniformLocation(const std::string& name) {
-			return GetUniformState(name)->location;
+			return GetUniformState(name)->GetLocation();
 		}
 		UniformState* GetUniformState(const std::string& name) {
 			return GetUniformState(hashString(name.c_str()), name);
@@ -105,7 +105,7 @@ namespace Shader {
 				return &it->second;
 			//UniformState* us = &uniformStates.emplace(h, name).first->second;
 			UniformState* us = &uniformStates.insert(std::pair<size_t, Shader::UniformState>(hash, Shader::UniformState(name))).first->second;
-			us->location = GetUniformLoc(name);
+			us->SetLocation(GetUniformLoc(name));
 			return us;
 		}
 
@@ -127,25 +127,25 @@ namespace Shader {
 		template<typename TK, typename TV> inline void SetUniformMatrix4x4(const TK& name, bool transp, const TV* v) { SetUniformMatrix4x4(GetUniformState(hashString(name), name), transp, v); }
 
 
-		virtual void SetUniform(UniformState* uState, int   v0) { SetUniform1i(uState->location, v0); }
-		virtual void SetUniform(UniformState* uState, float v0) { SetUniform1f(uState->location, v0); }
-		virtual void SetUniform(UniformState* uState, int   v0, int   v1) { SetUniform2i(uState->location, v0, v1); }
-		virtual void SetUniform(UniformState* uState, float v0, float v1) { SetUniform2f(uState->location, v0, v1); }
-		virtual void SetUniform(UniformState* uState, int   v0, int   v1, int   v2) { SetUniform3i(uState->location, v0, v1, v2); }
-		virtual void SetUniform(UniformState* uState, float v0, float v1, float v2) { SetUniform3f(uState->location, v0, v1, v2); }
-		virtual void SetUniform(UniformState* uState, int   v0, int   v1, int   v2, int   v3) { SetUniform4i(uState->location, v0, v1, v2, v3); }
-		virtual void SetUniform(UniformState* uState, float v0, float v1, float v2, float v3) { SetUniform4f(uState->location, v0, v1, v2, v3); }
+		virtual void SetUniform(UniformState* uState, int   v0) { SetUniform1i(uState->GetLocation(), v0); }
+		virtual void SetUniform(UniformState* uState, float v0) { SetUniform1f(uState->GetLocation(), v0); }
+		virtual void SetUniform(UniformState* uState, int   v0, int   v1) { SetUniform2i(uState->GetLocation(), v0, v1); }
+		virtual void SetUniform(UniformState* uState, float v0, float v1) { SetUniform2f(uState->GetLocation(), v0, v1); }
+		virtual void SetUniform(UniformState* uState, int   v0, int   v1, int   v2) { SetUniform3i(uState->GetLocation(), v0, v1, v2); }
+		virtual void SetUniform(UniformState* uState, float v0, float v1, float v2) { SetUniform3f(uState->GetLocation(), v0, v1, v2); }
+		virtual void SetUniform(UniformState* uState, int   v0, int   v1, int   v2, int   v3) { SetUniform4i(uState->GetLocation(), v0, v1, v2, v3); }
+		virtual void SetUniform(UniformState* uState, float v0, float v1, float v2, float v3) { SetUniform4f(uState->GetLocation(), v0, v1, v2, v3); }
 
-		virtual void SetUniform2v(UniformState* uState, const int*   v) { SetUniform2iv(uState->location, v); }
-		virtual void SetUniform2v(UniformState* uState, const float* v) { SetUniform2fv(uState->location, v); }
-		virtual void SetUniform3v(UniformState* uState, const int*   v) { SetUniform3iv(uState->location, v); }
-		virtual void SetUniform3v(UniformState* uState, const float* v) { SetUniform3fv(uState->location, v); }
-		virtual void SetUniform4v(UniformState* uState, const int*   v) { SetUniform4iv(uState->location, v); }
-		virtual void SetUniform4v(UniformState* uState, const float* v) { SetUniform4fv(uState->location, v); }
+		virtual void SetUniform2v(UniformState* uState, const int*   v) { SetUniform2iv(uState->GetLocation(), v); }
+		virtual void SetUniform2v(UniformState* uState, const float* v) { SetUniform2fv(uState->GetLocation(), v); }
+		virtual void SetUniform3v(UniformState* uState, const int*   v) { SetUniform3iv(uState->GetLocation(), v); }
+		virtual void SetUniform3v(UniformState* uState, const float* v) { SetUniform3fv(uState->GetLocation(), v); }
+		virtual void SetUniform4v(UniformState* uState, const int*   v) { SetUniform4iv(uState->GetLocation(), v); }
+		virtual void SetUniform4v(UniformState* uState, const float* v) { SetUniform4fv(uState->GetLocation(), v); }
 
-		virtual void SetUniformMatrix2x2(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix2fv(uState->location, transp, m); }
-		virtual void SetUniformMatrix3x3(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix3fv(uState->location, transp, m); }
-		virtual void SetUniformMatrix4x4(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix4fv(uState->location, transp, m); }
+		virtual void SetUniformMatrix2x2(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix2fv(uState->GetLocation(), transp, m); }
+		virtual void SetUniformMatrix3x3(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix3fv(uState->GetLocation(), transp, m); }
+		virtual void SetUniformMatrix4x4(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix4fv(uState->GetLocation(), transp, m); }
 
 
 		virtual void SetUniformTarget(int) {}
