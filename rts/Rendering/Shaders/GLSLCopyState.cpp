@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "GLSLCopyState.h"
+#include "Shader.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
@@ -165,7 +166,7 @@ static void CreateBindingTypeMap()
 DO_ONCE(CreateBindingTypeMap)
 
 
-static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::vector<int>& uniformLocs, const std::vector<Shader::UniformState>& uniformStates)
+static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::unordered_map<std::size_t, Shader::UniformState, fast_hash>* uniformStates)
 {
 	GLsizei numUniforms, maxUniformNameLength;
 	glGetProgramiv(newProgID, GL_ACTIVE_UNIFORMS, &numUniforms);
@@ -174,7 +175,6 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::ve
 	if (maxUniformNameLength <= 0)
 		return;
 
-	std::vector<int> newUniformLocs(uniformLocs.size(), -1);
 	glUseProgram(newProgID);
 
 	std::string name(maxUniformNameLength, 0);
@@ -188,35 +188,36 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::ve
 		if (nameLength == 0)
 			continue;
 
-		const GLint oldLoc = glGetUniformLocation(oldProgID, &name[0]);
+		      GLint oldLoc = -1; // only use when we don't got data in our own state tracker
 		const GLint newLoc = glGetUniformLocation(newProgID, &name[0]);
 
 		if (newLoc < 0)
 			continue;
 
 		// Try to find old data for the uniform either in the old shader itself or in our own state tracker
-		const Shader::UniformState* oldUniformState = NULL;
-		if (oldLoc < 0) {
-			const std::string uname = name.substr(0, nameLength); // `name` contains garbage at the end, cut it
-			for (size_t j = 0; j < uniformStates.size(); ++j) {
-				if (uname == uniformStates[j].uniformName) {
-					oldUniformState = &(uniformStates[j]);
-					newUniformLocs[j] = newLoc;
-					break;
-				}
-			}
-			if (!oldUniformState) {
-				continue;
-			}
+		const size_t hash = hashString(&name[0]);
+		auto it = uniformStates->find(hash);
+		Shader::UniformState* oldUniformState = NULL;
+		if (it != uniformStates->end()) {
+			oldUniformState = &it->second;
 		} else {
-			for (size_t j = 0; j < uniformLocs.size(); ++j) {
-				if (uniformLocs[j] == oldLoc) {
-					newUniformLocs[j] = newLoc;
-					break;
-				}
-			}
+			// Uniform not found in state tracker, try to read it from old shader object
+			//oldUniformState = &(uniformStates->emplace(hash, name).first->second);
+			oldUniformState = &(uniformStates->insert(std::pair<size_t, Shader::UniformState>(hash, Shader::UniformState(name))).first->second);
+		}
+		oldUniformState->location = newLoc;
+
+		// Check if we got data we can use to initialize the uniform
+		if (oldUniformState->IsUninit()) {
+			oldLoc = glGetUniformLocation(oldProgID, &name[0]);
+
+			// No old data found, so we cannot initialize the uniform
+			if (oldLoc < 0)
+				continue;
+			//FIXME read data from old shader save data _in new uniformState_?
 		}
 
+		// Initialize the uniform with previous data
 		switch (bindingType[type]) {
 			#define HANDLE_TYPE(type, size, ftype, internalTypeName) \
 				case type##size: { \
@@ -268,7 +269,6 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::ve
 	}
 
 	glUseProgram(0);
-	uniformLocs.swap(newUniformLocs);
 }
 
 
@@ -392,10 +392,10 @@ static void CopyShaderState_Geometry(GLuint newProgID, GLuint oldProgID)
 #endif
 
 namespace Shader {
-	void GLSLCopyState(GLuint newProgID, GLuint oldProgID, std::vector<int>* uniformLocs, const std::vector<UniformState>& uniformStates)
+	void GLSLCopyState(GLuint newProgID, GLuint oldProgID, std::unordered_map<std::size_t, UniformState, fast_hash>* uniformStates)
 	{
 	#if !defined(HEADLESS)
-		CopyShaderState_Uniforms(newProgID, oldProgID, *uniformLocs, uniformStates);
+		CopyShaderState_Uniforms(newProgID, oldProgID, uniformStates);
 		CopyShaderState_UniformBlocks(newProgID, oldProgID);
 		CopyShaderState_Attributes(newProgID, oldProgID);
 		CopyShaderState_TransformFeedback(newProgID, oldProgID);
