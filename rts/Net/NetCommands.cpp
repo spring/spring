@@ -166,6 +166,8 @@ void CGame::ClientReadNet()
 			break;
 		}
 
+		lastReceivedNetPacketTime = spring_gettime();
+
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;
 		const unsigned char packetCode = inbuf[0];
@@ -428,9 +430,12 @@ void CGame::ClientReadNet()
 			}
 			case NETMSG_NEWFRAME: {
 				msgProcTimeLeft -= 1.0f;
+				lastSimFrameNetPacketTime = spring_gettime();
+
 				SimFrame();
-				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
+
 #ifdef SYNCCHECK
+				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
 				ASSERT_SYNCED(gs->frameNum);
 				ASSERT_SYNCED(CSyncChecker::GetChecksum());
 				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum()));
