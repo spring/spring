@@ -323,11 +323,11 @@ static inline void for_mt(int start, int end, const std::function<void(const int
 
 static inline void parallel(const std::function<void()>&& f)
 {
-	ThreadPool::NotifyWorkerThreads();
-	SCOPED_MT_TIMER("::ThreadWorkers (real)");
-
 	if (!ThreadPool::HasThreads())
 		return f();
+
+	ThreadPool::NotifyWorkerThreads();
+	SCOPED_MT_TIMER("::ThreadWorkers (real)");
 
 	auto taskgroup = std::make_shared<ParallelTaskGroup<const std::function<void()>>>();
 	for (int i = 0; i < ThreadPool::GetNumThreads(); ++i) {
@@ -341,11 +341,11 @@ static inline void parallel(const std::function<void()>&& f)
 template<class F, class G>
 static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>::type
 {
-	ThreadPool::NotifyWorkerThreads();
-	SCOPED_MT_TIMER("::ThreadWorkers (real)");
-
 	if (!ThreadPool::HasThreads())
 		return f();
+
+	ThreadPool::NotifyWorkerThreads();
+	SCOPED_MT_TIMER("::ThreadWorkers (real)");
 
 	auto taskgroup = std::make_shared<ParallelTaskGroup<F>>();
 	for (int i = 0; i < ThreadPool::GetNumThreads(); ++i) {
