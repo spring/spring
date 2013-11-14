@@ -18,7 +18,6 @@ CONFIG(bool, AtiSwapRBFix).defaultValue(false);
 std::vector<FBO*> FBO::fboList;
 std::map<GLuint,FBO::TexData*> FBO::texBuf;
 
-GLuint FBO::boundBuffer = 0; //FIXME breaks with multi-context rendering!
 GLint FBO::maxAttachments = 0;
 GLsizei FBO::maxSamples = -1;
 
@@ -30,6 +29,15 @@ bool FBO::IsSupported()
 {
 	return (GLEW_EXT_framebuffer_object);
 }
+
+
+static GLint GetCurrentBoundFBO()
+{
+	GLint curFBO;
+	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &curFBO);
+	return curFBO;
+}
+
 
 
 /**
@@ -301,8 +309,7 @@ bool FBO::IsValid() const
  */
 void FBO::Bind()
 {
-	boundBuffer = fboId;
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, boundBuffer);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId);
 }
 
 
@@ -321,8 +328,7 @@ void FBO::Unbind()
 	//   do stuff
 	// FBO::Unbind(); <- not redundant!
 	//   continue with screen FBO
-	boundBuffer = 0;
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, boundBuffer);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 }
 
 
@@ -332,7 +338,7 @@ void FBO::Unbind()
  */
 bool FBO::CheckStatus(std::string name)
 {
-	assert(boundBuffer == fboId);
+	assert(GetCurrentBoundFBO() == fboId);
 	GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	switch (status) {
 		case GL_FRAMEBUFFER_COMPLETE_EXT:
@@ -373,7 +379,7 @@ bool FBO::CheckStatus(std::string name)
  */
 GLenum FBO::GetStatus()
 {
-	assert(boundBuffer == fboId);
+	assert(GetCurrentBoundFBO() == fboId);
 	return glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 }
 
@@ -383,7 +389,7 @@ GLenum FBO::GetStatus()
  */
 void FBO::AttachTexture(const GLuint texId, const GLenum texTarget, const GLenum attachment, const int mipLevel, const int zSlice )
 {
-	assert(boundBuffer == fboId);
+	assert(GetCurrentBoundFBO() == fboId);
 	if (texTarget == GL_TEXTURE_1D) {
 		glFramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_1D, texId, mipLevel);
 	} else if (texTarget == GL_TEXTURE_3D) {
@@ -399,7 +405,7 @@ void FBO::AttachTexture(const GLuint texId, const GLenum texTarget, const GLenum
  */
 void FBO::AttachRenderBuffer(const GLuint rboId, const GLenum attachment)
 {
-	assert(boundBuffer == fboId);
+	assert(GetCurrentBoundFBO() == fboId);
 	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, rboId);
 }
 
@@ -409,7 +415,7 @@ void FBO::AttachRenderBuffer(const GLuint rboId, const GLenum attachment)
  */
 void FBO::Detach(const GLenum attachment)
 {
-	assert(boundBuffer == fboId);
+	assert(GetCurrentBoundFBO() == fboId);
 	GLuint target = 0;
 	glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment,
 		GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT,
@@ -442,7 +448,7 @@ void FBO::Detach(const GLenum attachment)
  */
 void FBO::DetachAll()
 {
-	assert(boundBuffer == fboId);
+	assert(GetCurrentBoundFBO() == fboId);
 	for (int i = 0; i < maxAttachments; ++i) {
 		Detach(GL_COLOR_ATTACHMENT0_EXT + i);
 	}
@@ -456,7 +462,7 @@ void FBO::DetachAll()
  */
 void FBO::CreateRenderBuffer(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height)
 {
-	assert(boundBuffer == fboId);
+	assert(GetCurrentBoundFBO() == fboId);
 	GLuint rbo;
 	glGenRenderbuffersEXT(1, &rbo);
 	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rbo);
@@ -471,7 +477,7 @@ void FBO::CreateRenderBuffer(const GLenum attachment, const GLenum format, const
  */
 void FBO::CreateRenderBufferMultisample(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height, GLsizei samples)
 {
-	assert(boundBuffer == fboId);
+	assert(GetCurrentBoundFBO() == fboId);
 	assert(maxSamples > 0);
 	samples = std::min(samples, maxSamples);
 
