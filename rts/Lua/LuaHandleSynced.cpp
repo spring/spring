@@ -176,6 +176,10 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 		}
 
 		lua_settop(L, 0);
+
+		// NOTE:
+		//   what makes these so special that failing
+		//   to set them up forces Lua to be killed??
 		if (
 			!SetupUnsyncedFunction(L, "RecvFromSynced")      ||
 			!SetupUnsyncedFunction(L, "Update")              ||
@@ -591,10 +595,14 @@ bool CLuaHandleSynced::HasCallIn(lua_State* L, const string& name)
 	if (name == "CollectGarbage")
 		return true;
 
+	// NOTE:
+	//   these are the only strictly unsynced LuaRULES callins
+	//   they are SetupUnsyncedFunction()'ed by CLuaRules ctor
 	static const std::string unsyncedNames[] = {
 		"DrawUnit",
 		"DrawFeature",
 		"DrawShield",
+		"DrawProjectile",
 		"RecvSkirmishAIMessage",
 		"RecvFromSynced",
 	};
