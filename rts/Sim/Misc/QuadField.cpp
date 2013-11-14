@@ -19,9 +19,11 @@
 CR_BIND(CQuadField, (1, 1));
 CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(baseQuads),
+	CR_MEMBER(tempQuads),
 	CR_MEMBER(numQuadsX),
 	CR_MEMBER(numQuadsZ),
-	CR_MEMBER(tempQuads)
+	CR_MEMBER(quadSizeX),
+	CR_MEMBER(quadSizeZ)
 ));
 
 CR_BIND(CQuadField::Quad, );
