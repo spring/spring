@@ -18,7 +18,7 @@ class CFontTexture
         int GetTextureHeight() const;
         int GetOutlineSize() const;
         float GetOutilneWeight() const;
-        int GetLineHeight() const;
+        int GetLineHeightA() const;
         int GetFontDescender() const;
 
         int GetTexture() const;
@@ -31,11 +31,11 @@ class CFontTexture
             {
             };
 
-            IGlyphRect(int x,int y,int w,int h):
-                x(x),
-                y(y),
-                w(w),
-                h(h)
+            IGlyphRect(int _x,int _y,int _w,int _h):
+                x(_x),
+                y(_y),
+                w(_w),
+                h(_h)
             {
             };
 
@@ -96,6 +96,8 @@ class CFontTexture
         void CreateTexture(int w,int h);
         //! Copy glyph pixels on the texture
         void Update(const unsigned char* pixels,int x,int y,int w,int h);
+
+        void Clear(int x,int y,int w,int h);
     private:
         std::map<unsigned int,GlyphInfo> glyphs;    //!UTF32 -> GlyphInfo
         CFontTexture::GlyphInfo& LoadGlyph(unsigned int ch);

@@ -93,7 +93,7 @@ unsigned int GetUnicodeChar(const std::string& text,unsigned int &pos)
 {
     unsigned int u;
 
-    const unsigned int chr = (unsigned int)text[pos];
+    const unsigned char chr = (unsigned char)text[pos];
 
     //based on UTF8_to_UNICODE from SDL_ttf (SDL_ttf.c)
     if(chr>=0xF0)
@@ -366,7 +366,7 @@ float CglFont::GetTextWidth(const std::string& text)
                 unsigned int u=GetUnicodeChar(text,pos);
                 cur_g=&GetGlyph(u);
                 if(prv_g)
-                    w += GetKerning(prv_g[0],cur_g[0]);
+                    w += normScale * GetKerning(prv_g[0],cur_g[0]);
                 //w+=prv_g->advance;
                 prv_g=cur_g;
 		}
@@ -375,7 +375,7 @@ float CglFont::GetTextWidth(const std::string& text)
 	if (w > maxw)
 		maxw = w;
 
-	return maxw*normScale;
+	return maxw;
 }
 
 
@@ -387,7 +387,7 @@ float CglFont::GetTextHeight(const std::string& text, float* descender, int* num
 		return 0.0f;
 	}
 
-	float h = 0.0f, d = normScale * GetLineHeight() + normScale * GetFontDescender();
+	float h = 0.0f, d = GetLineHeight() + normScale * GetFontDescender();
 	unsigned int multiLine = 1;
 
 	for (unsigned int pos = 0 ; pos < text.length(); pos++) {
@@ -413,19 +413,19 @@ float CglFont::GetTextHeight(const std::string& text, float* descender, int* num
 					pos++;
 			case '\x0a': //! LF
 				multiLine++;
-				d = normScale * GetLineHeight() + normScale * GetFontDescender();
+				d = GetLineHeight() + normScale * GetFontDescender();
 				break;
 
 			//! printable char
 			default:
                 unsigned int u=GetUnicodeChar(text,pos);
 				const GlyphInfo& g = GetGlyph(u);
-				if (g.descender < d) d = g.descender;
-				if (multiLine < 2 && g.height > h) h = g.height; //! only calc height for the first line
+				if (g.descender < d) d = normScale * g.descender;
+				if (multiLine < 2 && g.height > h) h = normScale * g.height; //! only calc height for the first line
 		}
 	}
 
-	if (multiLine>1) d -= normScale * (multiLine-1) * GetLineHeight();
+	if (multiLine>1) d -= (multiLine-1) * GetLineHeight();
 	if (descender) *descender = d;
 	if (numLines) *numLines = multiLine;
 
@@ -730,10 +730,10 @@ void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float 
 
 void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxHeight)
 {
-	if (words.empty() || (normScale * GetLineHeight()<=0.0f))
+	if (words.empty() || (GetLineHeight()<=0.0f))
 		return;
 	const bool splitAllWords = false;
-	const unsigned int maxLines = (unsigned int)math::floor(std::max(0.0f, maxHeight / normScale * GetLineHeight()));
+	const unsigned int maxLines = (unsigned int)math::floor(std::max(0.0f, maxHeight / GetLineHeight()));
 
 	line* currLine;
 	word linebreak;
@@ -1279,7 +1279,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 	 */
 
 	const float startx = x;
-	const float lineHeight_ = scaleY * normScale * GetLineHeight();
+	const float lineHeight_ = scaleY * GetLineHeight();
 	unsigned int length = (unsigned int)str.length();
 
 	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
@@ -1317,10 +1317,10 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 
 		g = c_g;
 
-		va->AddVertex2dQT(x+normScale * scaleX*g->size.x0(), y+normScale * scaleY*g->size.y1(), g->texCord.x0(), g->texCord.y1());
-		va->AddVertex2dQT(x+normScale * scaleX*g->size.x0(), y+normScale * scaleY*g->size.y0(), g->texCord.x0(), g->texCord.y0());
-		va->AddVertex2dQT(x+normScale * scaleX*g->size.x1(), y+normScale * scaleY*g->size.y0(), g->texCord.x1(), g->texCord.y0());
-		va->AddVertex2dQT(x+normScale * scaleX*g->size.x1(), y+normScale * scaleY*g->size.y1(), g->texCord.x1(), g->texCord.y1());
+		va->AddVertex2dQT(x+normScale * scaleX*(float)g->size.x0(), y+normScale * scaleY*(float)g->size.y1(), (float)g->texCord.x0(), (float)g->texCord.y1());
+		va->AddVertex2dQT(x+normScale * scaleX*(float)g->size.x0(), y+normScale * scaleY*(float)g->size.y0(), (float)g->texCord.x0(), (float)g->texCord.y0());
+		va->AddVertex2dQT(x+normScale * scaleX*(float)g->size.x1(), y+normScale * scaleY*(float)g->size.y0(), (float)g->texCord.x1(), (float)g->texCord.y0());
+		va->AddVertex2dQT(x+normScale * scaleX*(float)g->size.x1(), y+normScale * scaleY*(float)g->size.y1(), (float)g->texCord.x1(), (float)g->texCord.y1());
 	} while(true);
 }
 
@@ -1331,7 +1331,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	const float ssX = (scaleX/fontSize)*GetOutlineSize(), ssY = (scaleY/fontSize)*GetOutlineSize();
 
 	const float startx = x;
-	const float lineHeight_ = scaleY * normScale * GetLineHeight();
+	const float lineHeight_ = scaleY * GetLineHeight();
 	unsigned int length = (unsigned int)str.length();
 
 	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
@@ -1374,12 +1374,12 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 		const float dx0 = x + normScale * scaleX * g->size.x0(), dy0 = y + normScale * scaleY * g->size.y0();
 		const float dx1 = x + normScale * scaleX * g->size.x1(), dy1 = y + normScale * scaleY * g->size.y1();
 
-	/*	//! draw shadow
+		//! draw shadow
 		va2->AddVertex2dQT(dx0+shiftX-ssX, dy1-shiftY-ssY, g->shadowTexCord.x0(), g->shadowTexCord.y1());
 		va2->AddVertex2dQT(dx0+shiftX-ssX, dy0-shiftY+ssY, g->shadowTexCord.x0(), g->shadowTexCord.y0());
 		va2->AddVertex2dQT(dx1+shiftX+ssX, dy0-shiftY+ssY, g->shadowTexCord.x1(), g->shadowTexCord.y0());
 		va2->AddVertex2dQT(dx1+shiftX+ssX, dy1-shiftY-ssY, g->shadowTexCord.x1(), g->shadowTexCord.y1());
-*/
+
 		//! draw the actual character
 		va->AddVertex2dQT(dx0, dy1, g->texCord.x0(), g->texCord.y1());
 		va->AddVertex2dQT(dx0, dy0, g->texCord.x0(), g->texCord.y0());
@@ -1393,7 +1393,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	const float shiftX = (scaleX/fontSize)*GetOutlineSize(), shiftY = (scaleY/fontSize)*GetOutlineSize();
 
 	const float startx = x;
-	const float lineHeight_ = scaleY * normScale * GetLineHeight();
+	const float lineHeight_ = scaleY * GetLineHeight();
 	unsigned int length = (unsigned int)str.length();
 
 	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
@@ -1437,11 +1437,11 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 		const float dx1 = x + normScale * scaleX * g->size.x1(), dy1 = y + normScale * scaleY * g->size.y1();
 
 		//! draw outline
-	/*	va2->AddVertex2dQT(dx0-shiftX, dy1-shiftY, g->shadowTexCord.x0(), g->shadowTexCord.y1());
+		va2->AddVertex2dQT(dx0-shiftX, dy1-shiftY, g->shadowTexCord.x0(), g->shadowTexCord.y1());
 		va2->AddVertex2dQT(dx0-shiftX, dy0+shiftY, g->shadowTexCord.x0(), g->shadowTexCord.y0());
 		va2->AddVertex2dQT(dx1+shiftX, dy0+shiftY, g->shadowTexCord.x1(), g->shadowTexCord.y0());
 		va2->AddVertex2dQT(dx1+shiftX, dy1-shiftY, g->shadowTexCord.x1(), g->shadowTexCord.y1());
-*/
+
 		//! draw the actual character
 		va->AddVertex2dQT(dx0, dy1, g->texCord.x0(), g->texCord.y1());
 		va->AddVertex2dQT(dx0, dy0, g->texCord.x0(), g->texCord.y0());
