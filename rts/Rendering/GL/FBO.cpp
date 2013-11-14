@@ -18,7 +18,7 @@ CONFIG(bool, AtiSwapRBFix).defaultValue(false);
 std::vector<FBO*> FBO::fboList;
 std::map<GLuint,FBO::TexData*> FBO::texBuf;
 
-GLuint FBO::boundBuffer = 0;
+GLuint FBO::boundBuffer = 0; //FIXME breaks with multi-context rendering!
 GLint FBO::maxAttachments = 0;
 GLsizei FBO::maxSamples = -1;
 
