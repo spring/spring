@@ -456,9 +456,9 @@ void CGame::ClientReadNet()
 #if (defined(SYNCCHECK))
 				if (gameServer != NULL && gameServer->GetDemoReader() != NULL) {
 					// NOTE:
-					//     this packet is also sent during live games,
-					//     during which we should just ignore it (the
-					//     server does sync-checking for us)
+					//   this packet is also sent during live games,
+					//   during which we should just ignore it (the
+					//   server does sync-checking for us)
 					netcode::UnpackPacket pckt(packet, 1);
 
 					unsigned char playerNum; pckt >> playerNum;
