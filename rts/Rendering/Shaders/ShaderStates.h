@@ -13,25 +13,36 @@
 
 namespace Shader {
 	struct UniformState {
-	public:
+	private:
 		union {
 			boost::int32_t i[17];
 			float          f[17];
 		};
 
 		// TODO implement (should be either GL_FLOAT_VEC2, GL_INT_SAMPLER_CUBE, ... see GLSLCopyState.cpp)
-		// int uniformType;
+		// int type;
+		// current glGetUniformLocation
+		int location;
 
-		int location = -1; // current glGetUniformLocation
-		std::string uniformName;
+		std::string name;
 
 	public:
-		UniformState(const std::string& name): uniformName(name) {
+		UniformState(const std::string& _name): location(-1), name(_name) {
 			i[0] = -0xFFFFFF;
 			i[1] = -0xFFFFFF;
 			i[2] = -0xFFFFFF;
 			i[3] = -0xFFFFFF;
 		}
+
+		const int* GetIntValues() const { return &i[0]; }
+		const float* GetFltValues() const { return &f[0]; }
+
+		// int GetType() const { return type; }
+		int GetLocation() const { return location; }
+		const std::string& GetName() const { return name; }
+
+		// void SetType(int type) { type = type; }
+		void SetLocation(int loc) { location = loc; }
 
 		bool IsUninit() const {
 			return (i[0] == -0xFFFFFF) && (i[1] == -0xFFFFFF) && (i[2] == -0xFFFFFF) && (i[3] == -0xFFFFFF);
