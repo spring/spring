@@ -53,7 +53,6 @@ class CFontTexture
             GlyphInfo():
                 size(),
                 texCord(0,0,1,1),
-                shadowTexCord(0,0,1,1),
                 advance(1),
                 height(1),
                 descender(0),
@@ -63,7 +62,6 @@ class CFontTexture
 
             IGlyphRect size;
             IGlyphRect texCord;
-            IGlyphRect shadowTexCord;
             int advance, height, descender;
             unsigned int index;
         };
