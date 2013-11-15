@@ -11,8 +11,7 @@ class CGfxProjectile : public CProjectile
 
 public:
 	CGfxProjectile();
-	CGfxProjectile(const float3& pos, const float3& speed, int lifeTime,
-			const float3& color);
+	CGfxProjectile(const float3& pos, const float3& speed, int lifeTime, const float3& color);
 	virtual ~CGfxProjectile();
 
 	void Update();

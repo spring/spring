@@ -896,7 +896,7 @@ void CProjectileDrawer::UpdatePerlin() {
 	glDisable(GL_FOG);
 
 	unsigned char col[4];
-	float time = globalRendering->lastFrameTime * gs->speedFactor * 3;
+	float time = globalRendering->lastFrameTime * gs->speedFactor * 0.003f;
 	float speed = 1.0f;
 	float size = 1.0f;
 

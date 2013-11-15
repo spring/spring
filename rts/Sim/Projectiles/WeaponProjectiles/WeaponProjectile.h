@@ -8,6 +8,7 @@
 
 struct WeaponDef;
 struct S3DModel;
+class CVertexArray;
 class CPlasmaRepulser;
 class CWeaponProjectile;
 
@@ -69,7 +70,7 @@ class CWeaponProjectile : public CProjectile
 	CR_DECLARE(CWeaponProjectile);
 public:
 	CWeaponProjectile();
-	CWeaponProjectile(const ProjectileParams& params, const bool isRay = false);
+	CWeaponProjectile(const ProjectileParams& params);
 	virtual ~CWeaponProjectile() {}
 
 	virtual void Explode(CUnit* hitUnit, CFeature* hitFeature, float3 impactPos, float3 impactDir);
@@ -107,12 +108,11 @@ public:
 	void SetBeingIntercepted(bool b) { targeted = b; }
 	bool IsBeingIntercepted() const { return targeted; }
 
+	bool TraveledRange() const;
+
 protected:
 	void UpdateInterception();
 	virtual void UpdateGroundBounce();
-
-	bool TraveledRange() const;
-	bool IsHitScan() const;
 
 protected:
 	const WeaponDef* weaponDef;

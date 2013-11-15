@@ -90,7 +90,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
 	const int unitID = luaL_checkint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
+		luaL_error(L, "%s(): Bad unitID: %c\n", caller, unitID);
 	}
 	CUnit* unit = unitHandler->units[unitID];
 	if (unit == NULL) {
@@ -212,7 +212,7 @@ int LuaSyncedMoveCtrl::SetProgressState(lua_State* L)
 	if (lua_isnumber(L, 2)) {
 		const int state = lua_toint(L, 2);
 		if ((state < AMoveType::Done) || (state > AMoveType::Failed)) {
-			luaL_error(L, "SetProgressState(): bad state value (%i)", state);
+			luaL_error(L, "SetProgressState(): bad state value (%c)", state);
 		}
 		moveType->progressState = (AMoveType::ProgressState) state;
 	}

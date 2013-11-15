@@ -14,19 +14,19 @@ class CExploSpikeProjectile : public CProjectile
 
 public:
 	CExploSpikeProjectile(
+		CUnit* owner,
 		const float3& pos,
 		const float3& spd,
 		float length,
 		float width,
 		float alpha,
-		float alphaDecay,
-		CUnit* owner
+		float alphaDecay
 	);
 
 	void Draw();
 	void Update();
 
-	virtual void Init(const float3& pos, CUnit* owner);
+	void Init(CUnit* owner, const float3& offset);
 
 private:
 	float length;

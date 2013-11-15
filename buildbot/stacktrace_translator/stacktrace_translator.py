@@ -35,7 +35,8 @@ TESTFILE = os.path.join(WWWROOT, "default/release/93.2.1-56-gdca244e/win32/{rele
 
 # Match common pre- and suffix on infolog lines. This also allows
 # "empty" prefixes followed by any amount of trailing whitespace.
-RE_PREFIX = r'^(?:\[(?:f=)?\s*\d+\])?(?: Error:)?\s*'
+# the a-zA-Z class can be "Warning" or "Error"
+RE_PREFIX = r'^(?:\[(?:f=)?\s*\d+\])?(?: [a-zA-Z]+:)\s*'
 RE_SUFFIX = r'(?:[\r\n]+$)?'
 
 # Match stackframe lines, captures the module name and the address.
@@ -71,7 +72,7 @@ def test_version(string):
 RE_VERSION_LINES = [
 	x % (RE_PREFIX, RE_VERSION, RE_SUFFIX) for x in [
 		r'%s%s has crashed\.%s',
-		r'%sHang detection triggered for %s\.%s',
+		r'%s\[Watchdog\] Hang detection triggered for %s\.%s',
 		r'%sSegmentation fault \(SIGSEGV\) in %s%s',
 		r'%sAborted \(SIGABRT\) in %s%s',
 	]
@@ -186,7 +187,7 @@ def collect_stackframes(infolog):
 
 	frames = {}
 	frame_count = 0
-	for module, address in re.findall(RE_STACKFRAME,infolog,re.MULTILINE):
+	for module, address in re.findall(RE_STACKFRAME, infolog, re.MULTILINE):
 		frames.setdefault(module, []).append((frame_count, address))
 		frame_count += 1
 

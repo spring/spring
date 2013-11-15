@@ -31,8 +31,9 @@ CR_REG_METADATA(CSmokeProjectile,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CSmokeProjectile::CSmokeProjectile()
-:	CProjectile(),
+CSmokeProjectile::CSmokeProjectile():
+	CProjectile(),
+
 	color(0.5f),
 	age(0.0f),
 	ageSpeed(1.0f),
@@ -44,23 +45,17 @@ CSmokeProjectile::CSmokeProjectile()
 	checkCol = false;
 }
 
-void CSmokeProjectile::Init(const float3& pos, CUnit* owner)
-{
-	textureNum = (int) (gu->RandInt() % projectileDrawer->smoketex.size());
-
-	if (pos.y - ground->GetApproximateHeight(pos.x, pos.z, false) > 10.0f) {
-		useAirLos = true;
-	}
-
-	if (!owner) {
-		alwaysVisible = true;
-	}
-
-	CProjectile::Init(pos, owner);
-}
-
-CSmokeProjectile::CSmokeProjectile(const float3& pos, const float3& speed, float ttl, float startSize, float sizeExpansion, CUnit* owner, float color):
+CSmokeProjectile::CSmokeProjectile(
+	CUnit* owner,
+	const float3& pos,
+	const float3& speed,
+	float ttl,
+	float startSize,
+	float sizeExpansion,
+	float color
+):
 	CProjectile(pos, speed, owner, false, false, false),
+
 	color(color),
 	age(0),
 	size(0),
@@ -82,6 +77,21 @@ CSmokeProjectile::CSmokeProjectile(const float3& pos, const float3& speed, float
 }
 
 
+
+void CSmokeProjectile::Init(CUnit* owner, const float3& offset)
+{
+	textureNum = (int) (gu->RandInt() % projectileDrawer->smoketex.size());
+
+	if (offset.y - ground->GetApproximateHeight(offset.x, offset.z, false) > 10.0f) {
+		useAirLos = true;
+	}
+
+	if (!owner) {
+		alwaysVisible = true;
+	}
+
+	CProjectile::Init(owner, offset);
+}
 
 void CSmokeProjectile::Update()
 {

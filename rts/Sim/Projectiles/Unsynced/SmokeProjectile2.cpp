@@ -49,31 +49,14 @@ CSmokeProjectile2::CSmokeProjectile2():
 	checkCol = false;
 }
 
-void CSmokeProjectile2::Init(const float3& pos, CUnit* owner)
-{
-	textureNum = (int) (gu->RandInt() % projectileDrawer->smoketex.size());
-
-	if (pos.y - ground->GetApproximateHeight(pos.x, pos.z, false) > 10) {
-		useAirLos = true;
-	}
-
-	if (!owner) {
-		alwaysVisible = true;
-	}
-
-	wantedPos += pos;
-
-	CProjectile::Init(pos, owner);
-}
-
 CSmokeProjectile2::CSmokeProjectile2(
+	CUnit* owner,
 	const float3& pos,
 	const float3& wantedPos,
 	const float3& speed,
 	float ttl,
 	float startSize,
 	float sizeExpansion,
-	CUnit* owner,
 	float color)
 : CProjectile(pos, speed, owner, false, false, false),
 	color(color),
@@ -94,6 +77,23 @@ CSmokeProjectile2::CSmokeProjectile2(
 }
 
 
+
+void CSmokeProjectile2::Init(CUnit* owner, const float3& offset)
+{
+	textureNum = (int) (gu->RandInt() % projectileDrawer->smoketex.size());
+
+	if (offset.y - ground->GetApproximateHeight(offset.x, offset.z, false) > 10) {
+		useAirLos = true;
+	}
+
+	if (!owner) {
+		alwaysVisible = true;
+	}
+
+	wantedPos += offset;
+
+	CProjectile::Init(owner, offset);
+}
 
 void CSmokeProjectile2::Update()
 {

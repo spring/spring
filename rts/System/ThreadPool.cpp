@@ -1,4 +1,3 @@
-
 #ifdef THREADPOOL
 
 #include "ThreadPool.h"
@@ -25,12 +24,18 @@ static boost::condition_variable newTasks;
 static std::atomic<bool> waitForLock(false);
 
 #if !defined(UNITSYNC) && !defined(UNIT_TEST)
-static bool hasOGLthreads = false; // disable for now (not used atm)
+static bool hasOGLthreads = true; // disable for now (not used atm)
 #else
 static bool hasOGLthreads = false;
 #endif
-static __thread int threadnum(0); //FIXME __thread is gcc only, thread_local is c++11 but doesn't work in <4.8, and is also slower
+#if defined(_MSC_VER)
+static __declspec(thread) int threadnum(0);
+static __declspec(thread) bool exitThread(false);
+#else
+static __thread int threadnum(0); 
 static __thread bool exitThread(false);
+#endif
+
 
 static int spinlockMs = 5;
 
@@ -94,21 +99,23 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 		if (lk.try_lock()) {
 			bool foundEmpty = false;
 
-			for(auto tg: taskGroups) {
-				auto p = tg->GetTask();
-
-				if (p) {
-					lk.unlock();
-					SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
-					(*p)();
-					return true;
-				}
-
+			for (auto tg: taskGroups) {
 				if (tg->IsEmpty()) {
 					foundEmpty = true;
+					break;
+				} else {
+					lk.unlock();
+					auto p = tg->GetTask();
+					do {
+						if (p) {
+							SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
+							(*p)();
+						}
+					} while (bool(p = tg->GetTask()));
+					break;
 				}
 			}
-			lk.unlock();
+			if (lk.owns_lock()) lk.unlock();
 
 			if (foundEmpty) {
 				//FIXME this could be made lock-free too, but is it worth it?

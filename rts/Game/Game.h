@@ -153,6 +153,8 @@ public:
 	spring_time lastSimFrameTime;
 	spring_time lastDrawFrameTime;
 	spring_time lastFrameTime;
+	spring_time lastReceivedNetPacketTime;
+	spring_time lastSimFrameNetPacketTime;
 
 	float updateDeltaSeconds;
 

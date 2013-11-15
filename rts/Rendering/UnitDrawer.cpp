@@ -79,7 +79,7 @@ CONFIG(int, MaxDynamicModelLights)
 	.minimumValue(0);
 
 CONFIG(bool, AdvUnitShading).defaultValue(true).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
-CONFIG(bool, AllowDeferredModelRendering).defaultValue(true).safemodeValue(false);
+CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
@@ -444,10 +444,10 @@ void CUnitDrawer::DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection
 	if (!geomBuffer.Valid())
 		return;
 
-	// water renderers use FBO's for the reflection pass
+	// some water renderers use FBO's for the reflection pass
 	if (drawReflection)
 		return;
-	// water renderers use FBO's for the refraction pass
+	// some water renderers use FBO's for the refraction pass
 	if (drawRefraction)
 		return;
 

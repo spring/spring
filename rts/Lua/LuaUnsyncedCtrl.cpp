@@ -284,7 +284,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 
 	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
+		luaL_error(L, "%s(): Bad unitID: %c\n", caller, unitID);
 	}
 
 	return unitHandler->units[unitID];
@@ -418,11 +418,11 @@ static string ParseMessage(lua_State* L, const string& msg)
 	}
 
 	if (!playerHandler->IsValidPlayer(playerID)) {
-		luaL_error(L, "Invalid message playerID: %i", playerID);
+		luaL_error(L, "Invalid message playerID: %c", playerID); //FIXME
 	}
 	const CPlayer* player = playerHandler->Player(playerID);
 	if ((player == NULL) || !player->active || player->name.empty()) {
-		luaL_error(L, "Invalid message playerID: %i", playerID);
+		luaL_error(L, "Invalid message playerID: %c", playerID);
 	}
 
 	const string head = msg.substr(0, start);
@@ -1164,7 +1164,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 static bool ParseLight(lua_State* L, GL::Light& light, const int tblIdx, const char* caller)
 {
 	if (!lua_istable(L, tblIdx)) {
-		luaL_error(L, "[%s] argument %i must be a table!", caller, tblIdx);
+		luaL_error(L, "[%s] argument %c must be a table!", caller, tblIdx);
 		return false;
 	}
 

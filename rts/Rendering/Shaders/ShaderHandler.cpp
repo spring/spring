@@ -91,9 +91,9 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 
 	const std::string lowerSoName = StringToLower(soName);
 
-	bool arbShader = (lowerSoName.find("arb") != std::string::npos);
+	const bool arbShader = (lowerSoName.find("arb") != std::string::npos);
 /*
-	bool arbShader =
+	const bool arbShader =
 		lowerSoName.find(".glsl") == std::string::npos &&
 		lowerSoName.find(".vert") == std::string::npos &&
 		lowerSoName.find(".frag") == std::string::npos;
@@ -104,15 +104,16 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 		case GL_VERTEX_PROGRAM_ARB:
 		case GL_FRAGMENT_PROGRAM_ARB: {
 			assert(arbShader);
+
 			if (globalRendering->haveARB) {
 				so = new Shader::ARBShaderObject(soType, soName);
 			}
-
 		} break;
 
 		default: {
 			// assume GLSL shaders by default
 			assert(!arbShader);
+
 			if (globalRendering->haveGLSL) {
 				so = new Shader::GLSLShaderObject(soType, soName, soDefs);
 			}
@@ -120,8 +121,8 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 	}
 
 	if (so == Shader::nullShaderObject) {
-		LOG_L(L_ERROR, "[%s] Tried to create a %s shader (\"%s\") on a hardware that does not support them!",
-				__FUNCTION__, arbShader? "ARB": "GLSL", soName.c_str());
+		LOG_L(L_ERROR, "[%s] Tried to create a %s shader (\"%s\") on hardware that does not support them!",
+			__FUNCTION__, arbShader? "ARB": "GLSL", soName.c_str());
 		return so;
 	}
 

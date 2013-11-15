@@ -144,8 +144,11 @@ void CShadowHandler::Kill()
 }
 
 void CShadowHandler::FreeTextures() {
-	if (fb.IsValid())
+	if (fb.IsValid()) {
+		fb.Bind();
 		fb.DetachAll();
+		fb.Unbind();
+	}
 
 	glDeleteTextures(1, &shadowTexture    ); shadowTexture     = 0;
 	glDeleteTextures(1, &dummyColorTexture); dummyColorTexture = 0;
