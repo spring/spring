@@ -160,7 +160,10 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 		throw content_error(msg);
     }
     fontDescender = FT_MulFix(_face->descender, _face->size->metrics.y_scale);
-    lineHeight = _face->size->metrics.height; //! Originaly it was _face->size->metrics.height >> 6
+    lineHeight = FT_MulFix(_face->height, _face->size->metrics.y_scale);
+
+    if(lineHeight<=0)
+        lineHeight = 1.25 * (_face->bbox.yMax - _face->bbox.yMin);
 
     //! Create initial small texture
     CreateTexture(32,32);
@@ -240,7 +243,7 @@ int CFontTexture::GetKerning(unsigned int lchar,unsigned int rchar)
     #ifndef   HEADLESS
     FT_Face _face=(FT_FaceRec_*)face;
     const GlyphInfo& left=GetGlyph(lchar);
-    if(FT_HAS_KERNING(_face))
+   // if(FT_HAS_KERNING(_face))
     {
         //!get or load requred glyphs
         const GlyphInfo& right=GetGlyph(rchar);
@@ -250,8 +253,8 @@ int CFontTexture::GetKerning(unsigned int lchar,unsigned int rchar)
 
         return left.advance + kerning.x;
     }
-    else
-        return left.advance;//!This font does not contain kerning
+ //   else
+ //       return left.advance;//!This font does not contain kerning
     #else
     return 0;
     #endif
@@ -261,14 +264,14 @@ int CFontTexture::GetKerning(const GlyphInfo& lgl,const GlyphInfo& rgl)
 {
     #ifndef   HEADLESS
     FT_Face _face=(FT_FaceRec_*)face;
-    if(FT_HAS_KERNING(_face))
+   // if(FT_HAS_KERNING(_face))
     {
         FT_Vector kerning;
         FT_Get_Kerning(_face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
         return lgl.advance + kerning.x;
     }
-    else
-        return lgl.advance;
+  //  else
+  //      return lgl.advance;
 
     #else
     return 0;
@@ -317,8 +320,14 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
     static const int padding=1;
     if(width>0 && height>0)
     {
+        /*glyph.size.x-=padding;
+        glyph.size.y-=padding;
+        glyph.size.w+=2*padding;
+        glyph.size.h+=2*padding;
+*/
         unsigned char* pixels_buffer=new unsigned char[width * height];
         glyph.texCord=AllocateGlyphRect(width+2*padding,height+2*padding);
+
         const unsigned char* source_pixels = slot->bitmap.buffer;
 
       /*  if(slot->bitmap.pixel_mode == FT_PIXEL_MODE_MONO)
@@ -348,31 +357,13 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
             }
       //  }
         Clear(glyph.texCord.x,glyph.texCord.y,glyph.texCord.w,glyph.texCord.h);
-        Update(pixels_buffer, glyph.texCord.x+padding, glyph.texCord.y+padding,
+        glyph.texCord.x+=padding;
+        glyph.texCord.y+=padding;
+        glyph.texCord.w-=2*padding;
+        glyph.texCord.h-=2*padding;
+
+        Update(pixels_buffer, glyph.texCord.x, glyph.texCord.y,
                width, height);
-
-        //!Lets firstly fix issues with normal texture
-        //glyph.shadowTexCord=glyph.texCord;
-        int shadowW=width+2*outlineSize;
-        int shadowH=height+2*outlineSize;
-        glyph.shadowTexCord=AllocateGlyphRect(shadowW+padding*2,shadowH+padding*2);
-
-        CBitmap bmp;
-        bmp.channels=1;
-        bmp.mem=(unsigned char*)pixels_buffer;
-        bmp.xsize=width;
-        bmp.ysize=height;
-
-        CBitmap blurbmp;
-        blurbmp.channels = 1;
-        blurbmp.Alloc(shadowW,shadowH);
-        blurbmp.CopySubImage(bmp,outlineSize,outlineSize);
-        blurbmp.Blur(outlineSize,outlineWeight);
-        bmp.mem=0;
-
-        Clear(glyph.shadowTexCord.x,glyph.shadowTexCord.y,glyph.shadowTexCord.w,glyph.shadowTexCord.h);
-        Update((const unsigned char*)blurbmp.mem,glyph.shadowTexCord.x+padding, glyph.shadowTexCord.y+padding,
-               glyph.shadowTexCord.w-padding*2, glyph.shadowTexCord.h-padding*2);
 
         delete[] pixels_buffer;
     }

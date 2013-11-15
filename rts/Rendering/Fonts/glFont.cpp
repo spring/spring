@@ -319,7 +319,7 @@ std::string CglFont::StripColorCodes(const std::string& text)
 
 float CglFont::GetCharacterWidth(const unsigned int c)
 {
-    return GetGlyph(c).advance;
+    return normScale * GetGlyph(c).advance;
 }
 
 
@@ -355,6 +355,8 @@ float CglFont::GetTextWidth(const std::string& text)
 				if (pos+1 < text.length() && text[pos+1] == '\x0a')
 					pos++;
 			case '\x0a': //! LF
+                if(prv_g)
+                    w+=normScale * prv_g->advance;
 				if (w > maxw)
 					maxw = w;
 				w = 0.0f;
@@ -372,6 +374,8 @@ float CglFont::GetTextWidth(const std::string& text)
 		}
 	}
 
+    if(prv_g)
+        w+=normScale * prv_g->advance;
 	if (w > maxw)
 		maxw = w;
 
@@ -1328,7 +1332,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const float& scaleY, const std::string& str)
 {
 	const float shiftX = scaleX*0.1, shiftY = scaleY*0.1;
-	const float ssX = (scaleX/fontSize)*GetOutlineSize(), ssY = (scaleY/fontSize)*GetOutlineSize();
+	const float ssX = normScale * scaleX * GetOutlineSize(), ssY = normScale * scaleY * GetOutlineSize();
 
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
@@ -1375,10 +1379,10 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 		const float dx1 = x + normScale * scaleX * g->size.x1(), dy1 = y + normScale * scaleY * g->size.y1();
 
 		//! draw shadow
-		va2->AddVertex2dQT(dx0+shiftX-ssX, dy1-shiftY-ssY, g->shadowTexCord.x0(), g->shadowTexCord.y1());
-		va2->AddVertex2dQT(dx0+shiftX-ssX, dy0-shiftY+ssY, g->shadowTexCord.x0(), g->shadowTexCord.y0());
-		va2->AddVertex2dQT(dx1+shiftX+ssX, dy0-shiftY+ssY, g->shadowTexCord.x1(), g->shadowTexCord.y0());
-		va2->AddVertex2dQT(dx1+shiftX+ssX, dy1-shiftY-ssY, g->shadowTexCord.x1(), g->shadowTexCord.y1());
+		va2->AddVertex2dQT(dx0+shiftX-ssX, dy1-shiftY-ssY, g->texCord.x0(), g->texCord.y1());
+		va2->AddVertex2dQT(dx0+shiftX-ssX, dy0-shiftY+ssY, g->texCord.x0(), g->texCord.y0());
+		va2->AddVertex2dQT(dx1+shiftX+ssX, dy0-shiftY+ssY, g->texCord.x1(), g->texCord.y0());
+		va2->AddVertex2dQT(dx1+shiftX+ssX, dy1-shiftY-ssY, g->texCord.x1(), g->texCord.y1());
 
 		//! draw the actual character
 		va->AddVertex2dQT(dx0, dy1, g->texCord.x0(), g->texCord.y1());
@@ -1390,7 +1394,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 
 void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const float& scaleY, const std::string& str)
 {
-	const float shiftX = (scaleX/fontSize)*GetOutlineSize(), shiftY = (scaleY/fontSize)*GetOutlineSize();
+	const float shiftX = normScale * scaleX * GetOutlineSize(), shiftY = normScale * scaleY * GetOutlineSize();
 
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
@@ -1437,10 +1441,10 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 		const float dx1 = x + normScale * scaleX * g->size.x1(), dy1 = y + normScale * scaleY * g->size.y1();
 
 		//! draw outline
-		va2->AddVertex2dQT(dx0-shiftX, dy1-shiftY, g->shadowTexCord.x0(), g->shadowTexCord.y1());
-		va2->AddVertex2dQT(dx0-shiftX, dy0+shiftY, g->shadowTexCord.x0(), g->shadowTexCord.y0());
-		va2->AddVertex2dQT(dx1+shiftX, dy0+shiftY, g->shadowTexCord.x1(), g->shadowTexCord.y0());
-		va2->AddVertex2dQT(dx1+shiftX, dy1-shiftY, g->shadowTexCord.x1(), g->shadowTexCord.y1());
+		va2->AddVertex2dQT(dx0-shiftX, dy1-shiftY, g->texCord.x0(), g->texCord.y1());
+		va2->AddVertex2dQT(dx0-shiftX, dy0+shiftY, g->texCord.x0(), g->texCord.y0());
+		va2->AddVertex2dQT(dx1+shiftX, dy0+shiftY, g->texCord.x1(), g->texCord.y0());
+		va2->AddVertex2dQT(dx1+shiftX, dy1-shiftY, g->texCord.x1(), g->texCord.y1());
 
 		//! draw the actual character
 		va->AddVertex2dQT(dx0, dy1, g->texCord.x0(), g->texCord.y1());
