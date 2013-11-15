@@ -121,7 +121,7 @@ public:
 
 	void Update();
 
-	float ImpulseScaleCalc(const DamageArray& damages, const float expMod);
+	static float CalcImpulseScale(const DamageArray& damages, const float expDistanceMod);
 
 	void DoExplosionDamage(
 		CUnit* unit,

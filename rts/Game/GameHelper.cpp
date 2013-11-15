@@ -78,10 +78,8 @@ CGameHelper::~CGameHelper()
 // Explosions/Damage
 //////////////////////////////////////////////////////////////////////
 
-float CGameHelper::ImpulseScaleCalc(const DamageArray& damages, const float expMod)
+float CGameHelper::CalcImpulseScale(const DamageArray& damages, const float expDistanceMod)
 {
-	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
-
 	// limit the impulse to prevent later FP overflow
 	// (several weapons have _default_ damage values in the order of 1e4,
 	// which make the simulation highly unstable because they can impart
@@ -90,7 +88,9 @@ float CGameHelper::ImpulseScaleCalc(const DamageArray& damages, const float expM
 	// DamageArray::operator* scales damage multipliers,
 	// not the impulse factor --> need to scale manually
 	// by it for impulse
-	const float rawImpulseScale = damages.impulseFactor * expMod * dmgMult;
+	const float impulseDmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
+	const float rawImpulseScale = damages.impulseFactor * expDistanceMod * impulseDmgMult;
+
 	return Clamp(rawImpulseScale, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
 }
 
@@ -130,7 +130,8 @@ void CGameHelper::DoExplosionDamage(
 
 	// expMod will also be in [0, 1], no negatives
 	// TODO: damage attenuation for underwater units from surface explosions?
-	const float expMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float expDistanceMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float modImpulseScale = CalcImpulseScale(damages, expDistanceMod);
 
 	// NOTE: if an explosion occurs right underneath a
 	// unit's map footprint, it might cause damage even
@@ -139,11 +140,10 @@ void CGameHelper::DoExplosionDamage(
 	// on unit->radius, so the DoDamage() iteration will
 	// include units that should not be touched)
 
-	const float modImpulseScale = ImpulseScaleCalc(damages, expMod);
 	const float3 impulseDir = (volPos - expPos).SafeNormalize();
 	const float3 expImpulse = impulseDir * modImpulseScale;
 
-	const DamageArray expDamages = damages * expMod;
+	const DamageArray expDamages = damages * expDistanceMod;
 
 	if (expDist < (expSpeed * DIRECT_EXPLOSION_DAMAGE_SPEED_SCALE)) {
 		// damage directly
@@ -177,13 +177,13 @@ void CGameHelper::DoExplosionDamage(
 
 	assert(expRadius >= expRim);
 
-	const float expMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float expDistanceMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float modImpulseScale = CalcImpulseScale(damages, expDistanceMod);
 
-	const float modImpulseScale = ImpulseScaleCalc(damages, expMod);
 	const float3 impulseDir = (volPos - expPos).SafeNormalize();
 	const float3 expImpulse = impulseDir * modImpulseScale;
 
-	feature->DoDamage(damages * expMod, expImpulse, NULL, weaponDefID, projectileID);
+	feature->DoDamage(damages * expDistanceMod, expImpulse, NULL, weaponDefID, projectileID);
 }
 
 
