@@ -28,7 +28,7 @@ CTracerProjectile::CTracerProjectile()
 	checkCol = false;
 }
 
-CTracerProjectile::CTracerProjectile(const float3& pos, const float3& spd, const float range, CUnit* owner)
+CTracerProjectile::CTracerProjectile(CUnit* owner, const float3& pos, const float3& spd, const float range)
 	: CProjectile(pos, spd, owner, false, false, false)
 	, length(range)
 	, drawLength(0.0f)
@@ -41,9 +41,9 @@ CTracerProjectile::CTracerProjectile(const float3& pos, const float3& spd, const
 	speedf = this->speed.w;
 }
 
-void CTracerProjectile::Init(const float3& pos, CUnit* owner)
+void CTracerProjectile::Init(CUnit* owner, const float3& offset)
 {
-	CProjectile::Init(pos, owner);
+	CProjectile::Init(owner, offset);
 
 	// FIXME: constant,assumes |speed| never changes after creation
 	speedf = speed.w;
@@ -57,9 +57,8 @@ void CTracerProjectile::Update()
 
 	drawLength += speedf;
 	length -= speedf;
-	if (length < 0) {
-		deleteMe = true;
-	}
+
+	deleteMe |= (length < 0.0f);
 }
 
 void CTracerProjectile::Draw()

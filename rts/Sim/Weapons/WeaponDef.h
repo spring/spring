@@ -8,6 +8,7 @@
 #include "System/float3.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GuiSoundSet.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileTypes.h"
 
 struct AtlasedTexture;
 class CColorMap;
@@ -25,6 +26,16 @@ public:
 
 	S3DModel* LoadModel();
 	S3DModel* LoadModel() const;
+
+	bool IsHitScanWeapon() const {
+		switch (projectileType) {
+			case WEAPON_BEAMLASER_PROJECTILE:      { return true; } break;
+			case WEAPON_LARGEBEAMLASER_PROJECTILE: { return true; } break;
+			case WEAPON_LIGHTNING_PROJECTILE:      { return true; } break;
+		}
+
+		return false;
+	}
 
 public:
 	std::string name;

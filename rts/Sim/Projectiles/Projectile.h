@@ -27,7 +27,15 @@ class CProjectile: public CExpGenSpawnable
 	CProjectile();
 
 public:
-	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece);
+	CProjectile(
+		const float3& pos,
+		const float3& spd,
+		CUnit* owner,
+		bool isSynced,
+		bool isWeapon,
+		bool isPiece,
+		bool isHitScan = false
+	);
 	virtual ~CProjectile();
 	virtual void Detach();
 
@@ -35,16 +43,35 @@ public:
 	virtual void Collision(CUnit* unit);
 	virtual void Collision(CFeature* feature);
 	virtual void Update();
-	virtual void Init(const float3& pos, CUnit* owner);
+	virtual void Init(CUnit* owner, const float3& offset);
 
 	virtual void Draw() {}
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	virtual void DrawCallback() {}
 
+	struct QuadFieldCellData {
+		CR_DECLARE_STRUCT(QuadFieldCellData)
+
+		// must match typeof(QuadField::Quad::projectiles)
+		typedef std::list<CProjectile*>::iterator iter;
+
+		const int2& GetCoor(unsigned int idx) const { return coors[idx]; }
+		const iter& GetIter(unsigned int idx) const { return iters[idx]; }
+
+		void SetCoor(unsigned int idx, const int2& co) { coors[idx] = co; }
+		void SetIter(unsigned int idx, const iter& it) { iters[idx] = it; }
+
+	private:
+		// coordinates and iterators for pos, (pos+spd)*0.5, pos+spd
+		// non-hitscan projectiles *only* use coors[0] and iters[0]!
+		int2 coors[3];
+		iter iters[3];
+	};
+
 	// override WorldObject::SetVelocityAndSpeed so
 	// we can keep <dir> in sync with speed-vector
 	// (unlike other world objects, projectiles must
-	// always point directly along their speed-vector)
+	// always point directly along their vel-vector)
 	//
 	// should be called when speed-vector is changed
 	// s.t. both speed.w and dir need to be updated
@@ -69,11 +96,9 @@ public:
 	unsigned int GetOwnerID() const { return ownerID; }
 	unsigned int GetTeamID() const { return teamID; }
 
-	void SetQuadFieldCellCoors(const int2& cell) { quadFieldCellCoors = cell; }
-	const int2& GetQuadFieldCellCoors() const { return quadFieldCellCoors; }
-
-	void SetQuadFieldCellIter(const std::list<CProjectile*>::iterator& it) { quadFieldCellIter = it; }
-	const std::list<CProjectile*>::iterator& GetQuadFieldCellIter() { return quadFieldCellIter; }
+	void SetQuadFieldCellData(const QuadFieldCellData& qfcd) { qfCellData = qfcd; }
+	const QuadFieldCellData& GetQuadFieldCellData() const { return qfCellData; }
+	      QuadFieldCellData& GetQuadFieldCellData()       { return qfCellData; }
 
 	unsigned int GetProjectileType() const { return projectileType; }
 	unsigned int GetCollisionFlags() const { return collisionFlags; }
@@ -88,9 +113,10 @@ public:
 	static CVertexArray* va;
 	static int DrawArray();
 
-	bool synced; ///< is this projectile part of the simulation?
-	bool weapon; ///< is this a weapon projectile? (true implies synced true)
-	bool piece;  ///< is this a piece projectile? (true implies synced true)
+	bool synced;  ///< is this projectile part of the simulation?
+	bool weapon;  ///< is this a weapon projectile? (true implies synced true)
+	bool piece;   ///< is this a piece projectile? (true implies synced true)
+	bool hitscan; ///< is this a hit-scan projectile?
 
 	bool luaMoveCtrl;
 	bool checkCol;
@@ -114,8 +140,7 @@ protected:
 	unsigned int projectileType;
 	unsigned int collisionFlags;
 
-	int2 quadFieldCellCoors;
-	std::list<CProjectile*>::iterator quadFieldCellIter;
+	QuadFieldCellData qfCellData;
 };
 
 #endif /* PROJECTILE_H */

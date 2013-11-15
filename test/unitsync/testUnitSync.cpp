@@ -5,6 +5,7 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "System/Option.h"
 #include "System/Log/ILog.h"
+#include "System/VersionGenerated.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -242,6 +243,9 @@ BOOST_AUTO_TEST_CASE( UnitSync )
 	us::SetSpringConfigFile("/tmp/foo.cfg");
 	BOOST_CHECK(us::GetWritableDataDirectory() == NULL);
 	BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) != NULL, errmsg); // there's an error cause we called GetWritableDataDirectory() before Init()!
+
+	// Check if unitsync function IsSpringReleaseVersion matches VersionGenerated.h
+	BOOST_CHECK(us::IsSpringReleaseVersion() == (SPRING_VERSION_ENGINE_RELEASE == 1));
 
 	// Init Unitsync
 	/*LOG("ArchiveScanner: ");

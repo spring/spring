@@ -260,8 +260,9 @@ bool CGroundMoveType::Update()
 	if (owner->GetTransporter() != NULL)
 		return false;
 
-	if (owner->IsSkidding() || OnSlope(1.0f)) {
-		owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
+	owner->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING, owner->IsSkidding() || OnSlope(1.0f));
+
+	if (owner->IsSkidding()) {
 		UpdateSkid();
 		return false;
 	}

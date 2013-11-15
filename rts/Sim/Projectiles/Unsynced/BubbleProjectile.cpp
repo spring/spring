@@ -9,7 +9,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CBubbleProjectile, CProjectile, (ZeroVector, ZeroVector, 0.0f, 0.0f, 0.0f, NULL, 0.0f));
+CR_BIND_DERIVED(CBubbleProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f, 0.0f, 0.0f, 0.0f));
 
 CR_REG_METADATA(CBubbleProjectile, (
 	CR_MEMBER(ttl),
@@ -18,10 +18,18 @@ CR_REG_METADATA(CBubbleProjectile, (
 	CR_MEMBER(startSize),
 	CR_MEMBER(sizeExpansion),
 	CR_RESERVED(8)
-	));
+));
 
 
-CBubbleProjectile::CBubbleProjectile(float3 pos, float3 speed, float ttl, float startSize, float sizeExpansion, CUnit* owner, float alpha):
+CBubbleProjectile::CBubbleProjectile(
+	CUnit* owner,
+	float3 pos,
+	float3 speed,
+	float ttl,
+	float startSize,
+	float sizeExpansion,
+	float alpha
+):
 	CProjectile(pos, speed, owner, false, false, false),
 	ttl((int) ttl),
 	alpha(alpha),

@@ -63,7 +63,7 @@ CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponP
 void CTorpedoProjectile::Update()
 {
 	// tracking only works when we are underwater
-	if (!weaponDef->submissile && pos.y > -3.0f) {
+	if (!weaponDef->submissile && pos.y > 0.0f) {
 		if (!luaMoveCtrl) {
 			// must update dir and speed.w here
 			SetVelocityAndSpeed(speed + (UpVector * mygravity));
@@ -103,14 +103,17 @@ void CTorpedoProjectile::Update()
 					targetPos.y = 0.0f;
 				}
 
-				float3 dif = (targetPos + (targetVel * (pos.distance(targetPos) / maxSpeed) * 0.7f) - pos).Normalize();
-				float3 dif2 = dif - dir;
+				const float3 targetLeadVec = targetVel * (pos.distance(targetPos) / maxSpeed) * 0.7f;
+				const float3 targetLeadDir = (targetPos + targetLeadVec - pos).Normalize();
 
-				if (dif2.Length() < tracking) {
-					dir = dif;
+				float3 targetDirDif = targetLeadDir - dir;
+
+				if (targetDirDif.Length() < tracking) {
+					dir = targetLeadDir;
 				} else {
-					dif2 = (dif2 - (dir * (dif2.dot(dir)))).SafeNormalize();
-					dir = (dir + (dif2 * tracking)).SafeNormalize();
+					// <tracking> is the projectile's turn-rate
+					targetDirDif = (targetDirDif - (dir * targetDirDif.dot(dir))).SafeNormalize();
+					dir = (dir + (targetDirDif * tracking)).SafeNormalize();
 				}
 
 				// do not need to update dir or speed.w here
@@ -139,8 +142,9 @@ void CTorpedoProjectile::Update()
 			const float3 pspeed = (gs->randVector() * 0.1f) + float3(0.0f, 0.2f, 0.0f);
 
 			new CBubbleProjectile(
+				owner(),
 				pos + gs->randVector(), pspeed, 40 + gs->randFloat() * GAME_SPEED,
-				1 + gs->randFloat() * 2, 0.01f, owner(), 0.3f + gs->randFloat() * 0.3f
+				1 + gs->randFloat() * 2, 0.01f, 0.3f + gs->randFloat() * 0.3f
 			);
 		}
 	}

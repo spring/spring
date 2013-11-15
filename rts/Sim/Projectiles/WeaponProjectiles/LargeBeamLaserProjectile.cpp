@@ -26,7 +26,7 @@ CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_RESERVED(16)
 ));
 
-CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params, true)
+CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, thickness(0.0f)
 	, corethickness(0.0f)
 	, flaresize(0.0f)
@@ -38,6 +38,8 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const ProjectileParams& par
 	projectileType = WEAPON_LARGEBEAMLASER_PROJECTILE;
 
 	if (weaponDef != NULL) {
+		assert(weaponDef->IsHitScanWeapon());
+
 		thickness     = weaponDef->visuals.thickness;
 		corethickness = weaponDef->visuals.corethickness;
 		flaresize     = weaponDef->visuals.laserflaresize;

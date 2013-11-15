@@ -176,6 +176,10 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 		}
 
 		lua_settop(L, 0);
+
+		// NOTE:
+		//   what makes these so special that failing
+		//   to set them up forces Lua to be killed??
 		if (
 			!SetupUnsyncedFunction(L, "RecvFromSynced")      ||
 			!SetupUnsyncedFunction(L, "Update")              ||
@@ -210,7 +214,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 }
 
 
-bool CLuaHandleSynced::SetupSynced(lua_State *L)
+bool CLuaHandleSynced::SetupSynced(lua_State* L)
 {
 	if (!IsValid()) {
 		return false;
@@ -278,7 +282,7 @@ bool CLuaHandleSynced::SetupSynced(lua_State *L)
 }
 
 
-bool CLuaHandleSynced::SetupUnsynced(lua_State *L)
+bool CLuaHandleSynced::SetupUnsynced(lua_State* L)
 {
 	if (!IsValid()) {
 		return false;
@@ -386,7 +390,7 @@ bool CLuaHandleSynced::SetupUnsynced(lua_State *L)
 }
 
 
-bool CLuaHandleSynced::SyncifyRandomFuncs(lua_State *L)
+bool CLuaHandleSynced::SyncifyRandomFuncs(lua_State* L)
 {
 	// adjust the math.random() and math.randomseed() calls
 	lua_getglobal(L, "math");
@@ -423,7 +427,7 @@ bool CLuaHandleSynced::SyncifyRandomFuncs(lua_State *L)
 }
 
 
-bool CLuaHandleSynced::CopyRealRandomFuncs(lua_State *L)
+bool CLuaHandleSynced::CopyRealRandomFuncs(lua_State* L)
 {
 	lua_pushliteral(L, "math");
 	lua_rawget(L, -2);
@@ -444,7 +448,7 @@ bool CLuaHandleSynced::CopyRealRandomFuncs(lua_State *L)
 }
 
 
-bool CLuaHandleSynced::SetupUnsyncedFunction(lua_State *L, const char* funcName)
+bool CLuaHandleSynced::SetupUnsyncedFunction(lua_State* L, const char* funcName)
 {
 	// copy the function from UNSYNCED into
 	// the registry, and setfenv() it to UNSYNCED
@@ -482,7 +486,7 @@ bool CLuaHandleSynced::SetupUnsyncedFunction(lua_State *L, const char* funcName)
 }
 
 
-bool CLuaHandleSynced::CopyGlobalToUnsynced(lua_State *L, const char* name)
+bool CLuaHandleSynced::CopyGlobalToUnsynced(lua_State* L, const char* name)
 {
 	lua_settop(L, 0);
 	unsyncedStr.GetRegistry(L);
@@ -497,7 +501,7 @@ bool CLuaHandleSynced::CopyGlobalToUnsynced(lua_State *L, const char* name)
 }
 
 
-bool CLuaHandleSynced::LightCopyTable(lua_State *L, int dstIndex, int srcIndex)
+bool CLuaHandleSynced::LightCopyTable(lua_State* L, int dstIndex, int srcIndex)
 {
 	// use positive indices
 	if (dstIndex < 0) { dstIndex = lua_gettop(L) + dstIndex + 1; }
@@ -525,7 +529,7 @@ bool CLuaHandleSynced::LightCopyTable(lua_State *L, int dstIndex, int srcIndex)
 }
 
 
-bool CLuaHandleSynced::LoadUnsyncedCode(lua_State *L, const string& code, const string& debug)
+bool CLuaHandleSynced::LoadUnsyncedCode(lua_State* L, const string& code, const string& debug)
 {
 	// do not signal floating point exceptions in user Lua code
 	ScopedDisableFpuExceptions fe;
@@ -582,7 +586,7 @@ string CLuaHandleSynced::LoadFile(const string& filename,
 }
 
 
-bool CLuaHandleSynced::HasCallIn(lua_State *L, const string& name)
+bool CLuaHandleSynced::HasCallIn(lua_State* L, const string& name)
 {
 	if (!IsValid()) {
 		return false;
@@ -591,10 +595,14 @@ bool CLuaHandleSynced::HasCallIn(lua_State *L, const string& name)
 	if (name == "CollectGarbage")
 		return true;
 
+	// NOTE:
+	//   these are the only strictly unsynced LuaRULES callins
+	//   they are SetupUnsyncedFunction()'ed by CLuaRules ctor
 	static const std::string unsyncedNames[] = {
 		"DrawUnit",
 		"DrawFeature",
 		"DrawShield",
+		"DrawProjectile",
 		"RecvSkirmishAIMessage",
 		"RecvFromSynced",
 	};
@@ -626,7 +634,7 @@ bool CLuaHandleSynced::HasCallIn(lua_State *L, const string& name)
 }
 
 
-bool CLuaHandleSynced::SyncedUpdateCallIn(lua_State *L, const string& name)
+bool CLuaHandleSynced::SyncedUpdateCallIn(lua_State* L, const string& name)
 {
 	if ((name == "RecvFromSynced") ||
 	    eventHandler.IsUnsynced(name)) {
@@ -641,19 +649,19 @@ bool CLuaHandleSynced::SyncedUpdateCallIn(lua_State *L, const string& name)
 }
 
 
-bool CLuaHandleSynced::UnsyncedUpdateCallIn(lua_State *L, const string& name)
+bool CLuaHandleSynced::UnsyncedUpdateCallIn(lua_State* L, const string& name)
 {
-	if ((name != "RecvFromSynced") &&
-	    !eventHandler.IsUnsynced(name)) {
-		  return false;
-	}
 	if (name != "RecvFromSynced") {
+		if (!eventHandler.IsUnsynced(name))
+			return false;
+
 		if (HasCallIn(L, name)) {
 			eventHandler.InsertEvent(this, name);
 		} else {
 			eventHandler.RemoveEvent(this, name);
 		}
 	}
+
 	SetupUnsyncedFunction(L, name.c_str());
 	return true;
 }

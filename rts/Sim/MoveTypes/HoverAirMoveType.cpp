@@ -942,7 +942,7 @@ bool CHoverAirMoveType::Update()
 				#undef SPIN_DIR
 			}
 
-			new CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
+			new CSmokeProjectile(owner, owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, 0.4f);
 		} break;
 	}
 

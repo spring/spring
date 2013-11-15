@@ -397,15 +397,14 @@ CBumpWater::CBumpWater()
 			reflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthRBOFormat, reflTexSize, reflTexSize);
 			reflectFBO.AttachTexture(reflectTexture);
 		}
+		if (!reflectFBO.CheckStatus("BUMPWATER(reflection)")) {
+			reflection = 0;
+		}
 
 		if (refraction>0) {
 			refractFBO.Bind();
 			refractFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthRBOFormat, screenTextureX, screenTextureY);
 			refractFBO.AttachTexture(refractTexture,target);
-		}
-
-		if (!reflectFBO.CheckStatus("BUMPWATER(reflection)")) {
-			reflection = 0;
 		}
 		if (!refractFBO.CheckStatus("BUMPWATER(refraction)")) {
 			refraction = 0;

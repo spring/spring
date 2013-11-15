@@ -26,10 +26,10 @@ class CPieceProjectile: public CProjectile
 
 public:
 	CPieceProjectile(
-		const float3& pos,
-		const float3& speed,
 		CUnit* owner,
 		LocalModelPiece* piece,
+		const float3& pos,
+		const float3& speed,
 		int flags,
 		float radius
 	);

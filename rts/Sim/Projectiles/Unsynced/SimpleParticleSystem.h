@@ -21,7 +21,7 @@ public:
 
 	virtual void Draw();
 	virtual void Update();
-	virtual void Init(const float3& explosionPos, CUnit* owner);
+	virtual void Init(CUnit* owner, const float3& offset);
 
 protected:
 	float3 emitVector;
@@ -78,7 +78,7 @@ public:
 
 	void Draw() {}
 	void Update() {}
-	virtual void Init(const float3& explosionPos, CUnit* owner);
+	virtual void Init(CUnit* owner, const float3& offset);
 };
 
 #endif // SIMPLE_PARTICLE_SYSTEM_H

@@ -531,7 +531,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
 		if (caller != NULL) {
-			luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
+			luaL_error(L, "%s(): Bad unitID: %c\n", caller, unitID);
 		} else {
 			return NULL;
 		}
@@ -2024,9 +2024,9 @@ static int ParseAllegiance(lua_State* L, const char* caller, int index)
 		return AllUnits;
 	}
 	if (teamID < EnemyUnits) {
-		luaL_error(L, "Bad teamID in %s (%i)", caller, teamID);
+		luaL_error(L, "Bad teamID in %s (%c)", caller, teamID);
 	} else if (teamID >= teamHandler->ActiveTeams()) {
-		luaL_error(L, "Bad teamID in %s (%i)", caller, teamID);
+		luaL_error(L, "Bad teamID in %s (%c)", caller, teamID);
 	}
 	return teamID;
 }
@@ -3370,6 +3370,7 @@ int LuaSyncedRead::GetUnitWeaponTryTarget(lua_State* L)
 
 	} else {
 		enemy = ParseUnit(L, __FUNCTION__, 3);
+		if (!enemy) return 0;
 		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
@@ -3401,6 +3402,7 @@ int LuaSyncedRead::GetUnitWeaponTestTarget(lua_State* L)
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 	} else {
 		enemy = ParseUnit(L, __FUNCTION__, 3);
+		if (!enemy) return 0;
 		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
@@ -3432,6 +3434,7 @@ int LuaSyncedRead::GetUnitWeaponTestRange(lua_State* L)
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 	} else {
 		enemy = ParseUnit(L, __FUNCTION__, 3);
+		if (!enemy) return 0;
 		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
@@ -3463,6 +3466,7 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 	} else {
 		enemy = ParseUnit(L, __FUNCTION__, 3);
+		if (!enemy) return 0;
 		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 

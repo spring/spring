@@ -70,8 +70,8 @@ class CSyncChecker {
 			default:
 			{
 				unsigned i = 0;
-				for (; i < (size & ~3); i += 4) {
-					g_checksum += *(const unsigned int*)(const char*)p + i;
+				for (; i < (size & ~3) / 4; ++i) {
+					g_checksum += *(reinterpret_cast<const unsigned int*>(p) + i);
 					g_checksum ^= g_checksum << 16;
 					g_checksum += g_checksum >> 11;
 				}
