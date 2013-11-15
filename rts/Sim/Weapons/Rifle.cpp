@@ -3,11 +3,13 @@
 #include "Rifle.h"
 #include "WeaponDef.h"
 #include "Game/TraceRay.h"
+#include "Game/GameHelper.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Projectiles/Unsynced/TracerProjectile.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Features/Feature.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/myMath.h"
 
@@ -46,13 +48,19 @@ void CRifle::FireImpl(bool scriptCall)
 		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
+	const float modImpulseScale = helper->ImpulseScaleCalc(weaponDef->damages, 1.0f);
+	float3 impulseVec = dir * modImpulseScale;
+
 	CUnit* hitUnit;
 	CFeature* hitFeature;
 	const float length = TraceRay::TraceRay(weaponMuzzlePos, dir, range, 0, owner, hitUnit, hitFeature);
 
 	if (hitUnit) {
-		hitUnit->DoDamage(weaponDef->damages, ZeroVector, owner, weaponDef->id, -1);
-		new CHeatCloudProjectile(owner, weaponMuzzlePos + dir * length, hitUnit->speed * 0.9f, 30, 1);
+		hitUnit->DoDamage(weaponDef->damages, impulseVec, owner, weaponDef->id, -1);
+		new CHeatCloudProjectile(owner, weaponMuzzlePos + dir*length, hitUnit->speed * 0.9f, 30, 1);
+	}else if (hitFeature) {
+		hitFeature->DoDamage(weaponDef->damages, impulseVec, owner, weaponDef->id, -1);
+		new CHeatCloudProjectile(owner, weaponMuzzlePos + dir*length, hitFeature->speed * 0.9f, 30, 1);
 	}
 
 	new CTracerProjectile(owner, weaponMuzzlePos, dir * projectileSpeed, length);
