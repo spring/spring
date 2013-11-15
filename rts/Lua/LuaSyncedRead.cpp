@@ -3369,8 +3369,9 @@ int LuaSyncedRead::GetUnitWeaponTryTarget(lua_State* L)
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 
 	} else {
-		enemy = ParseUnit(L, __FUNCTION__, 3);
-		if (!enemy) return 0;
+		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
+			return 0;
+
 		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
@@ -3401,8 +3402,9 @@ int LuaSyncedRead::GetUnitWeaponTestTarget(lua_State* L)
 		pos.y = luaL_optnumber(L, 4, 0.0f);
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 	} else {
-		enemy = ParseUnit(L, __FUNCTION__, 3);
-		if (!enemy) return 0;
+		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
+			return 0;
+
 		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
@@ -3433,8 +3435,9 @@ int LuaSyncedRead::GetUnitWeaponTestRange(lua_State* L)
 		pos.y = luaL_optnumber(L, 4, 0.0f);
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 	} else {
-		enemy = ParseUnit(L, __FUNCTION__, 3);
-		if (!enemy) return 0;
+		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
+			return 0;
+
 		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
@@ -3465,8 +3468,9 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 		pos.y = luaL_optnumber(L, 4, 0.0f);
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 	} else {
-		enemy = ParseUnit(L, __FUNCTION__, 3);
-		if (!enemy) return 0;
+		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
+			return 0;
+
 		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
