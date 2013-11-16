@@ -75,6 +75,7 @@ RE_VERSION_LINES = [
 		r'%s\[Watchdog\] Hang detection triggered for %s\.%s',
 		r'%sSegmentation fault \(SIGSEGV\) in %s%s',
 		r'%sAborted \(SIGABRT\) in %s%s',
+		r'%sError handler invoked for %s%s',
 	]
 ]
 
