@@ -78,7 +78,7 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/UnitDrawerState.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/VerticalSync.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/WorldDrawer.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Fonts/CFontTexture.cpp"	
+		"${CMAKE_CURRENT_SOURCE_DIR}/Fonts/CFontTexture.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Fonts/glFont.cpp"
 	)
 
