@@ -20,7 +20,7 @@
 #undef protected
 #undef private
 
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/QTPFSPathDrawer.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
