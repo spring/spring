@@ -283,27 +283,27 @@ static inline std::string UnicodeToUtf8(unsigned int ch)
     //!<4096 = 2^(6 + 6)
     else if(ch<4096)
     {
-        str+=0x80|(char)(ch&0x3F);
-        str+=0x80|(char)(ch>>6)&0x3F;
+        str+=0x80|((char)(ch&0x3F));
+        str+=0x80|((char)(ch>>6)&0x3F);
     }
     //!0000 0000 0000 cccc ccbb bbbb bbaa aaaa
     //!110a aaaa 10bb bbbb 10cc cccc
     //!<131072 = 2^(5 + 6 + 6)
     else if(ch<131072)
     {
-        str+=0xC0|(char)(ch&0x1F);
-        str+=0x80|(char)(ch>>5)&0x3F;
-        str+=0x80|(char)(ch>>(5+6))&0x3F;
+        str+=0xC0|((char)(ch&0x1F));
+        str+=0x80|((char)(ch>>5)&0x3F);
+        str+=0x80|((char)(ch>>(5+6))&0x3F);
     }
     //!0000 00dd dddd cccc ccbb bbbb bbaa aaaa
     //!1110 aaaa 10bb bbbb 10cc cccc 10dd dddd
     //!<8388608 = 2^(5 + 6 + 6 + 6)
     else if(ch<8388608)
     {
-        str+=0xE0|(char)(ch&0x0F);
-        str+=0x80|(char)(ch>>5)&0x3F;
-        str+=0x80|(char)(ch>>(5+6))&0x3F;
-        str+=0x80|(char)(ch>>(5+6+6))&0x3F;
+        str+=0xE0|((char)(ch&0x0F));
+        str+=0x80|((char)(ch>>5)&0x3F);
+        str+=0x80|((char)(ch>>(5+6))&0x3F);
+        str+=0x80|((char)(ch>>(5+6+6))&0x3F);
     }
     return str;
 }
