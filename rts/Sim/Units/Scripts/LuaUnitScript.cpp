@@ -405,6 +405,33 @@ inline bool CLuaUnitScript::RunCallIn(int id, int inArgs, int outArgs)
 	return RawRunCallIn(scriptIndex[id], inArgs, outArgs);
 }
 
+bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
+{
+	CUnit* oldActiveUnit = activeUnit;
+	CUnitScript* oldActiveScript = activeScript;
+
+	activeUnit = unit;
+	activeScript = this;
+
+	std::string err;
+	const int error = handle->RunCallIn(inArgs, outArgs, err);
+
+	activeUnit = oldActiveUnit;
+	activeScript = oldActiveScript;
+
+	if (error != 0) {
+		const string& fname = GetScriptName(functionId);
+
+		LOG_L(L_ERROR, "%s::RunCallIn: error = %i, %s::%s, %s",
+				handle->GetName().c_str(), error, "CLuaUnitScript",
+				fname.c_str(), err.c_str());
+		RemoveCallIn(fname);
+
+		return false;
+	}
+	return true;
+}
+
 
 int CLuaUnitScript::RunQueryCallIn(int fn)
 {
@@ -852,33 +879,8 @@ string CLuaUnitScript::GetScriptName(int functionId) const
 }
 
 
-bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
-{
-	activeUnit = unit;
-	activeScript = this;
-
-	std::string err;
-	const int error = handle->RunCallIn(inArgs, outArgs, err);
-
-	activeUnit = NULL;
-	activeScript = NULL;
-
-	if (error != 0) {
-		const string& fname = GetScriptName(functionId);
-
-		LOG_L(L_ERROR, "%s::RunCallIn: error = %i, %s::%s, %s",
-				handle->GetName().c_str(), error, "CLuaUnitScript",
-				fname.c_str(), err.c_str());
-		RemoveCallIn(fname);
-
-		return false;
-	}
-	return true;
-}
-
-
 void CLuaUnitScript::Destroy() { Call(LUAFN_Destroy); }
-void CLuaUnitScript::StartMoving(bool reversing) { Call(LUAFN_StartMoving, reversing); }
+void CLuaUnitScript::StartMoving(bool reversing) { Call(LUAFN_StartMoving, reversing * 1.0f); }
 void CLuaUnitScript::StopMoving() { Call(LUAFN_StopMoving); }
 void CLuaUnitScript::StartUnload() { Call(LUAFN_StartUnload); }
 void CLuaUnitScript::EndTransport() { Call(LUAFN_EndTransport); }
