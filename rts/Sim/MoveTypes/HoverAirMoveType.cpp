@@ -725,6 +725,7 @@ void CHoverAirMoveType::UpdateAirPhysics()
 		CheckForCollision();
 	}
 
+	// cancel out vertical speed, acc and dec are applied in xz-plane
 	owner->SetVelocity(spd * XZVector);
 
 	const float3 deltaSpeed = wantedSpeed - spd;
@@ -801,21 +802,25 @@ void CHoverAirMoveType::UpdateAirPhysics()
 
 	curRelHeight = pos.y - curAbsHeight;
 
-	if (curRelHeight < wh) {
-		ws = altitudeRate;
+	{
+		if (curRelHeight < wh) {
+			ws = altitudeRate;
 
-		if ((spd.y > 0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 1.5f) < spd.y) {
-			ws = 0.0f;
+			if ((spd.y > 0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 1.5f) < spd.y) {
+				ws = 0.0f;
+			}
+		} else {
+			ws = -altitudeRate;
+
+			if ((spd.y < -0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 0.7f) < -spd.y) {
+				ws = 0.0f;
+			}
 		}
-	} else {
-		ws = -altitudeRate;
 
-		if ((spd.y < -0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 0.7f) < -spd.y) {
-			ws = 0.0f;
-		}
-	}
+		ws *= (1 - owner->beingBuilt);
+		// note: don't want this in case unit is built on some raised platform?
+		wh *= (1 - owner->beingBuilt);
 
-	if (!owner->beingBuilt) {
 		if (math::fabs(wh - curRelHeight) > 2.0f) {
 			if (spd.y > ws) {
 				owner->SetVelocity((spd * XZVector) + (UpVector * std::max(ws, spd.y - accRate * 1.5f)));
@@ -1018,7 +1023,7 @@ void CHoverAirMoveType::ForceHeading(short h)
 
 void CHoverAirMoveType::SetWantedAltitude(float altitude)
 {
-	if (altitude == 0) {
+	if (altitude == 0.0f) {
 		wantedHeight = orgWantedHeight;
 	} else {
 		wantedHeight = altitude;
@@ -1027,7 +1032,7 @@ void CHoverAirMoveType::SetWantedAltitude(float altitude)
 
 void CHoverAirMoveType::SetDefaultAltitude(float altitude)
 {
-	wantedHeight =  altitude;
+	wantedHeight = altitude;
 	orgWantedHeight = altitude;
 }
 
