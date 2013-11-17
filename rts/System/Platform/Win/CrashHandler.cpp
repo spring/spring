@@ -119,10 +119,10 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 
 	process = GetCurrentProcess();
 
-	if (threadName) {
-		LOG_I(logLevel, "Stacktrace (%s):", threadName);
+	if (threadName != NULL) {
+		LOG_I(logLevel, "Stacktrace (%s) for Spring %s:", threadName, (SpringVersion::GetFull()).c_str());
 	} else {
-		LOG_I(logLevel, "Stacktrace:");
+		LOG_I(logLevel, "Stacktrace for Spring %s:", (SpringVersion::GetFull()).c_str());
 	}
 
 	bool suspended = false;
@@ -317,7 +317,7 @@ void CleanupStacktrace(const int logLevel) {
 }
 
 void OutputStacktrace() {
-	LOG_L(L_ERROR, "Error handler invoked for Spring %s.", SpringVersion::GetFull().c_str());
+	LOG_L(L_ERROR, "Error handler invoked for Spring %s.", (SpringVersion::GetFull()).c_str());
 	if (GML::Enabled())
 		LOG_L(L_ERROR, "MT with %d threads.", GML::ThreadCount());
 
@@ -341,7 +341,7 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 {
 	// Prologue.
 	logSinkHandler.SetSinking(false);
-	LOG_L(L_ERROR, "Spring %s has crashed.", SpringVersion::GetFull().c_str());
+	LOG_L(L_ERROR, "Spring %s has crashed.", (SpringVersion::GetFull()).c_str());
 	if (GML::Enabled())
 		LOG_L(L_ERROR, "MT with %d threads.", GML::ThreadCount());
 
