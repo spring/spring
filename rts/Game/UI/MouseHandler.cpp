@@ -24,7 +24,7 @@
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Features/FeatureDef.h"

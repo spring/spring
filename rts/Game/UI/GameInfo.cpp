@@ -4,7 +4,7 @@
 #include "GameInfo.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Game/GameSetup.h"
 #include "Game/GameVersion.h"
 #include "Sim/Misc/Team.h"

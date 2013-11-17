@@ -32,7 +32,7 @@
 #include "Lua/LuaOpenGL.h"
 #include "Menu/SelectMenu.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GLContext.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Textures/NamedTextures.h"

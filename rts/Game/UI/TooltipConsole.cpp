@@ -11,7 +11,7 @@
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/LosHandler.h"
