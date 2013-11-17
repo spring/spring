@@ -85,13 +85,17 @@ FtLibraryHandler libraryHandler;///it will be automaticly createated and deleted
 
 
 CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesize, float  _outlineweight):
-    outlineSize(_outlinesize),
-    outlineWeight(_outlineweight),
     #ifndef   HEADLESS
     library(libraryHandler.GetLibrary()),
     #else
-    library(0),
+    library(NULL),
     #endif
+	face(NULL),
+	faceDataBuffer(NULL),
+	outlineSize(_outlinesize),
+	outlineWeight(_outlineweight),
+	lineHeight(0),
+	fontDescender(0),
     texWidth(0),
     texHeight(0),
     texture(0),
@@ -376,7 +380,7 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
 CFontTexture::Row* CFontTexture::FindRow(unsigned int glyphWidth,unsigned int glyphHeight)
 {
     std::list<Row>::iterator it;
-    for(it=imageRows.begin();it!=imageRows.end();it++)
+    for(it=imageRows.begin();it!=imageRows.end();++it)
     {
         float ratio=(float)it->height/(float)glyphHeight;
         //! Ignore too small or too big raws
