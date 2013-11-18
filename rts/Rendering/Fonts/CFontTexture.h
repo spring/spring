@@ -3,6 +3,14 @@
 #include <map>
 #include <list>
 #include <string>
+
+
+struct FT_FaceRec_;
+struct FT_LibraryRec_;
+typedef struct FT_FaceRec_* FT_Face;
+typedef struct FT_LibraryRec_* FT_Library;
+
+
 /**
 This class just store glyphs and load new glyphs if requred
 It works with image and don't care about rendering these glyphs
@@ -68,21 +76,16 @@ public:
 		int advance, height, descender;
 		unsigned int index;
 	};
-	//! Get or load a glyph
+	// Get or load a glyph
 	const CFontTexture::GlyphInfo& GetGlyph(unsigned int ch);
 
 protected:
-	void* GetLibrary() const;
-	void* GetFace() const;
+	const FT_Face& GetFace() const;
 
 protected:
 	int GetKerning(unsigned int lchar,unsigned int rchar);
 	int GetKerning(const CFontTexture::GlyphInfo& lgl,const CFontTexture::GlyphInfo& rgl);
 
-private:
-	void* library;
-	void* face;
-	unsigned char* faceDataBuffer;
 private:
 	int outlineSize;
 	float outlineWeight;
@@ -99,6 +102,12 @@ private:
 	void Update(const unsigned char* pixels,int x,int y,int w,int h);
 
 	void Clear(int x,int y,int w,int h);
+
+private:
+	FT_Library* library;
+	FT_Face* face;
+	unsigned char* faceDataBuffer;
+
 private:
 	std::map<unsigned int,GlyphInfo> glyphs;    //!UTF32 -> GlyphInfo
 	CFontTexture::GlyphInfo& LoadGlyph(unsigned int ch);

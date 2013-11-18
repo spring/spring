@@ -134,16 +134,12 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	va  = new CVertexArray();
 	va2 = new CVertexArray();
 
+	fontFamily = "unknown";
+	fontStyle  = "unknown";
 #ifndef   HEADLESS
-	//! get font information
-	fontFamily = "Who care?";//((FT_Face)face)->family_name;
-	fontStyle  = "Yes! Nobody!";//((FT_Face)face)->style_name;
-
-	//delete[] buf;
-#else  // HEADLESS
-	fontFamily = "NONE";
-	fontStyle  = "NONE";
-#endif // HEADLESS
+	fontFamily = GetFace()->family_name;
+	fontStyle  = GetFace()->family_name;
+#endif
 
 	textColor    = white;
 	outlineColor = darkOutline;

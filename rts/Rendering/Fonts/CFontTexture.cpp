@@ -53,9 +53,6 @@ class texture_size_exception : public std::exception
 #ifndef   HEADLESS
 class FtLibraryHandler
 {
-
-	FT_Library lib;
-
 public:
 	FtLibraryHandler() {
 		FT_Error error = FT_Init_FreeType(&lib);
@@ -70,17 +67,20 @@ public:
 		FT_Done_FreeType(lib);
 	};
 
-	FT_Library GetLibrary() {
-		return lib;
+	FT_Library* GetLibrary() {
+		return &lib;
 	};
+
+private:
+	FT_Library lib;
 };
 
-FtLibraryHandler libraryHandler;///it will be automaticly createated and deleted
+FtLibraryHandler libraryHandler; ///it will be automaticly createated and deleted
 #endif
 
 
 CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesize, float  _outlineweight):
-#ifndef   HEADLESS
+#ifndef HEADLESS
 	library(libraryHandler.GetLibrary()),
 #else
 	library(NULL),
@@ -122,9 +122,7 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	delete f;
 
 	FT_Error error;
-	FT_Face _face;
-	error = FT_New_Memory_Face((FT_Library)library, faceDataBuffer, filesize, 0, &_face);
-	face=(void*)_face;
+	error = FT_New_Memory_Face(*library, faceDataBuffer, filesize, 0, face);
 
 	if (error) {
 		delete[] faceDataBuffer;
@@ -134,9 +132,9 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	}
 
 	//! set render size
-	error = FT_Set_Pixel_Sizes(_face, 0, size);
+	error = FT_Set_Pixel_Sizes(*face, 0, size);
 	if (error) {
-		FT_Done_Face(_face);
+		FT_Done_Face(*face);
 		delete[] faceDataBuffer;
 		std::string msg = fontfile + ": FT_Set_Pixel_Sizes failed: ";
 		msg += GetFTError(error);
@@ -144,19 +142,19 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	}
 
 	//! select unicode charmap
-	error = FT_Select_Charmap(_face, FT_ENCODING_UNICODE);
+	error = FT_Select_Charmap(*face, FT_ENCODING_UNICODE);
 	if(error) { //Support unicode or GTFO
-		FT_Done_Face(_face);
+		FT_Done_Face(*face);
 		delete[] faceDataBuffer;
 		std::string msg = fontfile + ": FT_Select_Charmap failed: ";
 		msg += GetFTError(error);
 		throw content_error(msg);
 	}
-	fontDescender = FT_MulFix(_face->descender, _face->size->metrics.y_scale);
-	lineHeight = FT_MulFix(_face->height, _face->size->metrics.y_scale);
+	fontDescender = FT_MulFix((*face)->descender, (*face)->size->metrics.y_scale);
+	lineHeight = FT_MulFix((*face)->height, (*face)->size->metrics.y_scale);
 
 	if(lineHeight<=0)
-		lineHeight = 1.25 * (_face->bbox.yMax - _face->bbox.yMin);
+		lineHeight = 1.25 * ((*face)->bbox.yMax - (*face)->bbox.yMin);
 
 	//! Create initial small texture
 	CreateTexture(32,32);
@@ -166,8 +164,7 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 CFontTexture::~CFontTexture()
 {
 #ifndef   HEADLESS
-	FT_Face _face=(FT_Face)face;
-	FT_Done_Face(_face);
+	FT_Done_Face(*face);
 	delete[] faceDataBuffer;
 	glDeleteTextures(1, (const GLuint*)&texture);
 #endif
@@ -203,14 +200,9 @@ int CFontTexture::GetFontDescender() const
 	return fontDescender;
 }
 
-void* CFontTexture::GetLibrary() const
+const FT_Face& CFontTexture::GetFace() const
 {
-	return (void*)library;
-}
-
-void* CFontTexture::GetFace() const
-{
-	return (void*)face;
+	return *face;
 }
 
 int CFontTexture::GetTexture() const
@@ -232,41 +224,38 @@ const CFontTexture::GlyphInfo& CFontTexture::GetGlyph(unsigned int ch)
 #endif
 }
 
-int CFontTexture::GetKerning(unsigned int lchar,unsigned int rchar)
+int CFontTexture::GetKerning(unsigned int lchar, unsigned int rchar)
 {
-#ifndef   HEADLESS
-	FT_Face _face=(FT_FaceRec_*)face;
-	const GlyphInfo& left=GetGlyph(lchar);
-	// if(FT_HAS_KERNING(_face))
+#ifndef HEADLESS
+	//FIXME cache!
+	const GlyphInfo& left = GetGlyph(lchar);
+	// if(FT_HAS_KERNING(face))
 	{
-		//!get or load requred glyphs
-		const GlyphInfo& right=GetGlyph(rchar);
-
+		// get or load required glyphs
+		const GlyphInfo& right = GetGlyph(rchar);
 		FT_Vector kerning;
-		FT_Get_Kerning(_face, left.index, right.index, FT_KERNING_DEFAULT, &kerning);
-
+		FT_Get_Kerning(*face, left.index, right.index, FT_KERNING_DEFAULT, &kerning);
 		return left.advance + kerning.x;
 	}
 //   else
-//       return left.advance;//!This font does not contain kerning
+//       return left.advance; // This font does not contain kerning
 #else
 	return 0;
 #endif
 }
 
-int CFontTexture::GetKerning(const GlyphInfo& lgl,const GlyphInfo& rgl)
+int CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 {
-#ifndef   HEADLESS
-	FT_Face _face=(FT_FaceRec_*)face;
-	// if(FT_HAS_KERNING(_face))
+#ifndef HEADLESS
+	//FIXME cache!
+	// if(FT_HAS_KERNING(face))
 	{
 		FT_Vector kerning;
-		FT_Get_Kerning(_face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
+		FT_Get_Kerning(*face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
 		return lgl.advance + kerning.x;
 	}
 	//  else
 	//      return lgl.advance;
-
 #else
 	return 0;
 #endif
@@ -275,51 +264,49 @@ int CFontTexture::GetKerning(const GlyphInfo& lgl,const GlyphInfo& rgl)
 CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
 {
 #ifndef   HEADLESS
-	//! This code mainly base on SFML code
-	//! I actually do not have a clear idea how it works
+	// This code mainly base on SFML code
+	// I actually do not have a clear idea how it works
 	// I just pray
-	//  LOG("Try to get glyph: %i", ch);
 
 	FT_Error error;
-	FT_Face _face=(FT_FaceRec_*)face;
-	CFontTexture::GlyphInfo& glyph=glyphs[ch];
+	auto& glyph = glyphs[ch];
 
-	FT_UInt index = FT_Get_Char_Index(_face, ch);
-	glyph.index=index;
+	FT_UInt index = FT_Get_Char_Index(*face, ch);
+	glyph.index = index;
 
-	error = FT_Load_Glyph(_face,index,FT_LOAD_RENDER|FT_LOAD_FORCE_AUTOHINT);
-	if(error) {
+	error = FT_Load_Glyph(*face, index, FT_LOAD_RENDER|FT_LOAD_FORCE_AUTOHINT);
+	if (error) {
 		LOG_L(L_ERROR, "Couldn't load glyph %d", ch);
 		return glyph;
 	}
 
-	FT_GlyphSlot slot = _face->glyph;
+	FT_GlyphSlot slot = (*face)->glyph;
 
 	const float xbearing = slot->metrics.horiBearingX;
 	const float ybearing = slot->metrics.horiBearingY;
 
-	glyph.advance = slot->advance.x;
-	glyph.height = slot->metrics.height;
+	glyph.advance   = slot->advance.x;
+	glyph.height    = slot->metrics.height;
 	glyph.descender = ybearing - glyph.height;
 
 	//! Get glyph bound box
-	glyph.size = IGlyphRect(xbearing,                           // x0
-				ybearing-fontDescender,                           // y0
-				slot->metrics.width,                // w
-				-slot->metrics.height);              // h
-
+	glyph.size = IGlyphRect(xbearing,                    // x0
+				ybearing - fontDescender,    // y0
+				 slot->metrics.width,        // w
+				-slot->metrics.height);      // h
 
 	int width  = slot->bitmap.width;
 	int height = slot->bitmap.rows;
-	static const int padding=1;
-	if(width>0 && height>0) {
+	static const int padding = 1;
+	if (width>0 && height>0) {
+		//FIXME
 		/*glyph.size.x-=padding;
 		glyph.size.y-=padding;
 		glyph.size.w+=2*padding;
 		glyph.size.h+=2*padding;
 		*/
-		unsigned char* pixels_buffer=new unsigned char[width * height];
-		glyph.texCord=AllocateGlyphRect(width+2*padding,height+2*padding);
+		unsigned char* pixels_buffer = new unsigned char[width * height];
+		glyph.texCord = AllocateGlyphRect(width+2*padding,height+2*padding);
 
 		const unsigned char* source_pixels = slot->bitmap.buffer;
 
