@@ -79,16 +79,16 @@ public:
 		IGlyphRect size;
 		IGlyphRect texCord;
 		int advance, height, descender;
-		unsigned int index;
+		char32_t index;
 	};
 	// Get or load a glyph
-	const CFontTexture::GlyphInfo& GetGlyph(unsigned int ch);
+	const CFontTexture::GlyphInfo& GetGlyph(char32_t ch);
 
 protected:
 	const FT_Face& GetFace() const;
 
 protected:
-	int GetKerning(unsigned int lchar,unsigned int rchar);
+	int GetKerning(char32_t lchar, char32_t rchar);
 	int GetKerning(const CFontTexture::GlyphInfo& lgl,const CFontTexture::GlyphInfo& rgl);
 
 private:
@@ -114,8 +114,8 @@ private:
 	unsigned char* faceDataBuffer;
 
 private:
-	std::map<unsigned int,GlyphInfo> glyphs;    //!UTF32 -> GlyphInfo
-	CFontTexture::GlyphInfo& LoadGlyph(unsigned int ch);
+	std::map<char32_t,GlyphInfo> glyphs;    //!UTF32 -> GlyphInfo
+	CFontTexture::GlyphInfo& LoadGlyph(char32_t ch);
 
 private:
 	struct Row {
@@ -132,11 +132,11 @@ private:
 	std::list<Row> imageRows;
 	int nextRowPos;
 
-	Row* FindRow(unsigned int glyphWidth,unsigned int glyphHeight);
-	Row* AddRow(unsigned int glyphWidth,unsigned int glyphHeight);
+	Row* FindRow(int glyphWidth, int glyphHeight);
+	Row* AddRow(int glyphWidth, int glyphHeight);
 	//! Try to find a place where can be placed a glyph with given size
 	//! If it is imposible, resize the texture and try it again
-	CFontTexture::IGlyphRect AllocateGlyphRect(unsigned int glyphWidth,unsigned int glyphHeight);
+	CFontTexture::IGlyphRect AllocateGlyphRect(int glyphWidth, int glyphHeight);
 };
 
 #endif // CFONTTEXTURE_H

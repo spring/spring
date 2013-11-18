@@ -179,10 +179,10 @@ int LuaFonts::meta_index(lua_State* L)
 			lua_pushsstring(L, style);
 			return 1;
 		} else if (key == "texturewidth") {
-			lua_pushnumber(L, font->GetTexWidth());
+			lua_pushnumber(L, font->GetTextureWidth());
 			return 1;
 		} else if (key == "textureheight") {
-			lua_pushnumber(L, font->GetTexHeight());
+			lua_pushnumber(L, font->GetTextureHeight());
 			return 1;
 		}
 	}

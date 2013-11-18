@@ -89,27 +89,27 @@ static const char* GetFTError(FT_Error e)
 
 /*******************************************************************************/
 /*******************************************************************************/
-static unsigned int GetUnicodeChar(const std::string& text, int& pos)
+static char32_t GetUnicodeChar(const std::string& text, int& pos)
 {
-	unsigned int u;
+	char32_t u;
 	const unsigned char chr = (unsigned char)text[pos];
 
 	//based on UTF8_to_UNICODE from SDL_ttf (SDL_ttf.c)
 	if(chr>=0xF0) {
 		assert(text.length() >= pos + 3);
-		u  = ((unsigned int)(text[pos]&0x07))  <<18; //FIXME use post-incr?
-		u |= ((unsigned int)(text[++pos]&0x3F))<<12;
-		u |= ((unsigned int)(text[++pos]&0x3F))<<6;
-		u |= ((unsigned int)(text[++pos]&0x3F));
+		u  = ((char32_t)(text[pos]&0x07))  <<18; //FIXME use post-incr?
+		u |= ((char32_t)(text[++pos]&0x3F))<<12;
+		u |= ((char32_t)(text[++pos]&0x3F))<<6;
+		u |= ((char32_t)(text[++pos]&0x3F));
 	} else if(chr>=0xE0) {
 		assert(text.length() >= pos + 2);
-		u  = ((unsigned int)(text[pos]&0x0F))  <<12;
-		u |= ((unsigned int)(text[++pos]&0x3F))<<6;
-		u |= ((unsigned int)(text[++pos]&0x3F));
+		u  = ((char32_t)(text[pos]&0x0F))  <<12;
+		u |= ((char32_t)(text[++pos]&0x3F))<<6;
+		u |= ((char32_t)(text[++pos]&0x3F));
 	} else if(chr>=0xC0) {
 		assert(text.length() >= pos + 1);
-		u  = ((unsigned int)(text[pos]&0x1F))  <<6;
-		u |= ((unsigned int)(text[++pos]&0x3F));
+		u  = ((char32_t)(text[pos]&0x1F))  <<6;
+		u |= ((char32_t)(text[++pos]&0x3F));
 	} else {
 		u = chr;
 	}
@@ -303,7 +303,7 @@ std::string CglFont::StripColorCodes(const std::string& text)
 
 	std::string nocolor;
 	nocolor.reserve(len);
-	for (unsigned int i = 0; i < len; i++) {
+	for (int i = 0; i < len; i++) {
 		if (text[i] == ColorCodeIndicator) {
 			i += 3;
 		} else {
@@ -314,7 +314,7 @@ std::string CglFont::StripColorCodes(const std::string& text)
 }
 
 
-float CglFont::GetCharacterWidth(const unsigned int c)
+float CglFont::GetCharacterWidth(const char32_t c)
 {
 	return normScale * GetGlyph(c).advance;
 }
@@ -361,7 +361,7 @@ float CglFont::GetTextWidth(const std::string& text)
 
 			// printable char
 			default:
-				unsigned int u = GetUnicodeChar(text, pos);
+				char32_t u = GetUnicodeChar(text, pos);
 				cur_g = &GetGlyph(u);
 				if (prv_g) w += normScale * GetKerning(*prv_g, *cur_g); //FIXME cur_g->advance
 				prv_g = cur_g;
@@ -416,7 +416,7 @@ float CglFont::GetTextHeight(const std::string& text, float* descender, int* num
 
 			//! printable char
 			default:
-				unsigned int u = GetUnicodeChar(text,pos);
+				char32_t u = GetUnicodeChar(text,pos);
 				const GlyphInfo& g = GetGlyph(u);
 				if (g.descender < d) d = normScale * g.descender;
 				if (multiLine < 2 && g.height > h) h = normScale * g.height; //! only calc height for the first line
@@ -477,7 +477,7 @@ int CglFont::GetTextNumLines(const std::string& text) const
  * @brief IsUpperCase
  * @return true if the given uchar is an uppercase character (WinLatin charmap)
  */
-static inline bool IsUpperCase(const unsigned char& c)
+static inline bool IsUpperCase(const char32_t& c)
 {
 	//FIXME add unicode
 	return
@@ -490,7 +490,7 @@ static inline bool IsUpperCase(const unsigned char& c)
 		(c == 0x9F);
 }
 
-static inline bool IsLowerCase(const unsigned char& c)
+static inline bool IsLowerCase(const char32_t& c)
 {
 	//FIXME add unicode
 	return c >= 0x61 && c <= 0x7A; // only ascii (no latin-1!)
@@ -504,7 +504,7 @@ static inline bool IsLowerCase(const unsigned char& c)
  * @param strlen total length of the word
  * @return penalty (smaller is better) to split a word at that position
  */
-static inline float GetPenalty(const unsigned char& c, unsigned int strpos, unsigned int strlen)
+static inline float GetPenalty(const char32_t& c, unsigned int strpos, unsigned int strlen)
 {
 	const float dist = strlen - strpos;
 
@@ -551,7 +551,7 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 		if (!smart) {
 			float width = 0.0f;
 			int i = 0;
-			unsigned int c = GetUnicodeChar(w.text,i);
+			char32_t c = GetUnicodeChar(w.text,i);
 			do {
 				const GlyphInfo& g = GetGlyph(c);
 				++i;
@@ -586,10 +586,10 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 		int i = 0;
 		float min_penalty = 1e9;
 		unsigned int goodbreak = 0;
-		unsigned int c = GetUnicodeChar(w.text,i);
+		char32_t c = GetUnicodeChar(w.text,i);
 		do {
-			unsigned int co = c;
-			unsigned int io =0;// i;
+			char32_t co = c;
+			unsigned int io = 0;// i;
 			const GlyphInfo& g = GetGlyph(c);
 			++i;
 
@@ -1235,16 +1235,9 @@ void CglFont::End()
 	glBindTexture(GL_TEXTURE_2D, GetTexture());
 
 	//!Because texture size can be changed, texture cordinats are in pixels
-	//!So matrix must be used
-	GLfloat matrix[16] = {  1.f/(float)GetTextureWidth(),        0.f,                           0.f,    0.f,
-				0.f,                                1.f/(float)GetTextureHeight(),  0.f,    0.f,
-				0.f,                                0.f,                            1.f,    0.f,
-				0.f,                                0.f,                            0.f,    1.f
-			     };
-
-
 	glMatrixMode(GL_TEXTURE);
-	glLoadMatrixf(matrix);
+	glPushMatrix();
+	glScalef(1.f/(float)GetTextureWidth(), 1.f/(float)GetTextureHeight(), 1.f);
 	glMatrixMode(GL_MODELVIEW);
 
 	if (va2->drawIndex() > 0) {
@@ -1266,7 +1259,7 @@ void CglFont::End()
 	}
 
 	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();//Fix texture matrix
+	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 
 	glPopAttrib();
@@ -1296,9 +1289,9 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 	int skippedLines;
 	bool endOfString, colorChanged;
 	const GlyphInfo* g = NULL;
-	unsigned int c;
 	float4 newColor;
 	newColor[3] = 1.0f;
+	char32_t c;
 	int i = 0;
 
 	do {
@@ -1338,7 +1331,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const float& scaleY, const std::string& str)
 {
 	const float shiftX = scaleX*0.1, shiftY = scaleY*0.1;
-	const float ssX = normScale * scaleX * GetOutlineSize(), ssY = normScale * scaleY * GetOutlineSize();
+	const float ssX = normScale * scaleX * GetOutlineWidth(), ssY = normScale * scaleY * GetOutlineWidth();
 
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
@@ -1350,9 +1343,9 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	int skippedLines;
 	bool endOfString, colorChanged;
 	const GlyphInfo* g = NULL;
-	unsigned int c;
 	float4 newColor;
 	newColor[3] = 1.0f;
+	char32_t c;
 	int i = 0;
 
 	do {
@@ -1401,7 +1394,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 
 void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const float& scaleY, const std::string& str)
 {
-	const float shiftX = normScale * scaleX * GetOutlineSize(), shiftY = normScale * scaleY * GetOutlineSize();
+	const float shiftX = normScale * scaleX * GetOutlineWidth(), shiftY = normScale * scaleY * GetOutlineWidth();
 
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
@@ -1413,9 +1406,9 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	int skippedLines;
 	bool endOfString, colorChanged;
 	const GlyphInfo* g = NULL;
-	unsigned int c;
 	float4 newColor;
 	newColor[3] = 1.0f;
+	char32_t c;
 	int i = 0;
 
 	do {
