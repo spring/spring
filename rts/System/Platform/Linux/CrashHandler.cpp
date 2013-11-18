@@ -365,10 +365,10 @@ namespace CrashHandler
 #ifndef DEDICATED
 		Watchdog::ClearTimer();
 #endif
-		if (threadName) {
-			LOG_I(logLevel, "Stacktrace (%s):", threadName);
+		if (threadName != NULL) {
+			LOG_I(logLevel, "Stacktrace (%s) for Spring %s:", threadName, (SpringVersion::GetFull()).c_str());
 		} else {
-			LOG_I(logLevel, "Stacktrace:");
+			LOG_I(logLevel, "Stacktrace for Spring %s:", (SpringVersion::GetFull()).c_str());
 		}
 
 		bool containsOglSo = false; // OpenGL lib -> graphic problem
@@ -523,7 +523,7 @@ namespace CrashHandler
 		} else if (signal == SIGBUS) {
 			error += " (SIGBUS)";
 		}
-		LOG_L(L_ERROR, "%s in spring %s", error.c_str(), SpringVersion::GetFull().c_str());
+		LOG_L(L_ERROR, "%s in spring %s", error.c_str(), (SpringVersion::GetFull()).c_str());
 
 
 		const bool nonFatalSignal = false;
