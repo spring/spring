@@ -45,8 +45,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_FONT)
 CglFont* font;
 CglFont* smallFont;
 
-#define GLYPH_MARGIN 2 //! margin between glyphs in texture-atlas
-
 static const unsigned char nullChar = 0;
 static const float4        white(1.00f, 1.00f, 1.00f, 0.95f);
 static const float4  darkOutline(0.05f, 0.05f, 0.05f, 0.95f);
@@ -66,11 +64,11 @@ static const float darkLuminosity = 0.05 +
 #define FT_ERRORDEF( e, v, s )  { e, s },
 #define FT_ERROR_START_LIST     {
 #define FT_ERROR_END_LIST       { 0, 0 } };
-  struct ErrorString
-  {
+struct ErrorString
+{
 	int          err_code;
 	const char*  err_msg;
-  } static errorTable[] =
+} static errorTable[] =
 #include FT_ERRORS_H
 
 

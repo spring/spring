@@ -36,8 +36,7 @@ struct ErrorString {
 #include FT_ERRORS_H
 
 
-	static const char* GetFTError(FT_Error e)
-{
+static const char* GetFTError(FT_Error e) {
 	for (int a = 0; errorTable[a].err_msg; ++a) {
 		if (errorTable[a].err_code == e)
 			return errorTable[a].err_msg;
@@ -94,8 +93,7 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	texture(0),
 	nextRowPos(0)
 {
-	//Why not exception? It is caller problems if arguments are invalide
-	if (size<=0)
+	if (size <= 0)
 		size = 14;
 #ifndef   HEADLESS
 	std::string fontPath(fontfile);
@@ -230,7 +228,6 @@ int CFontTexture::GetKerning(char32_t lchar, char32_t rchar)
 	const GlyphInfo& left = GetGlyph(lchar);
 	// if(FT_HAS_KERNING(face))
 	{
-		// get or load required glyphs
 		const GlyphInfo& right = GetGlyph(rchar);
 		FT_Vector kerning;
 		FT_Get_Kerning(face, left.index, right.index, FT_KERNING_DEFAULT, &kerning);
@@ -357,12 +354,12 @@ CFontTexture::Row* CFontTexture::FindRow(int glyphWidth, int glyphHeight)
 {
 	for(auto& row: imageRows) {
 		float ratio=(float)row.height/(float)glyphHeight;
-		//! Ignore too small or too big raws
-		if(ratio < 1.0f || ratio > 1.3f)
+		// Ignore too small or too big raws
+		if (ratio < 1.0f || ratio > 1.3f)
 			continue;
 
-		//! Check if there is enought space in this row
-		if(texWidth - row.wight < glyphWidth)
+		// Check if there is enought space in this row
+		if (texWidth - row.wight < glyphWidth)
 			continue;
 
 		return &row;
@@ -373,9 +370,9 @@ CFontTexture::Row* CFontTexture::FindRow(int glyphWidth, int glyphHeight)
 CFontTexture::Row* CFontTexture::AddRow(int glyphWidth, int glyphHeight)
 {
 	int rowHeight = glyphHeight + (2*glyphHeight)/10;
-	while(nextRowPos+rowHeight>=texHeight) {
-		//! Resize texture
-		CreateTexture(texWidth*2,texHeight*2); //! Make texture twice bigger //FIXME
+	while(nextRowPos+rowHeight >= texHeight) {
+		// Resize texture
+		CreateTexture(texWidth*2,texHeight*2); //FIXME
 	}
 	Row newrow(nextRowPos,rowHeight);
 	nextRowPos += rowHeight;
