@@ -56,8 +56,9 @@ protected:
 	void PushUnit(const CUnit* targetUnit);
 
 	bool RunCallIn(int id, int inArgs, int outArgs);
-	std::string GetScriptName(int functionId) const;
 	bool RawRunCallIn(int functionId, int inArgs, int outArgs);
+
+	std::string GetScriptName(int functionId) const;
 
 public:
 

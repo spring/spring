@@ -16,7 +16,7 @@
 // line will allow the LOS display mode to differentiate between
 // radar and sonar coverage, and radar and sonar jammer coverage.
 
-//#define SONAR_JAMMER_MAPS
+// #define RADARHANDLER_SONAR_JAMMER_MAPS
 
 
 class CRadarHandler : public boost::noncopyable
@@ -106,7 +106,7 @@ public:
 		}
 		#else
 		if (pos.y < 0.0f) {
-			#ifdef SONAR_JAMMER_MAPS
+			#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
 			ret = (sonarJammerMaps[allyTeam][square] != 0);
 			#endif
 		} else {
@@ -148,7 +148,7 @@ public:
 	std::vector<CLosMap> airRadarMaps;
 	std::vector<CLosMap> sonarMaps;
 	std::vector<CLosMap> jammerMaps;
-#ifdef SONAR_JAMMER_MAPS
+#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
 	std::vector<CLosMap> sonarJammerMaps;
 #endif
 	std::vector<CLosMap> seismicMaps;

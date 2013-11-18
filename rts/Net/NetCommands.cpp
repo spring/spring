@@ -1085,14 +1085,16 @@ void CGame::ClientReadNet()
 			}
 			case NETMSG_ALLIANCE: {
 				const unsigned char player = inbuf[1];
+
 				if (!playerHandler->IsValidPlayer(player)) {
-					LOG_L(L_ERROR, "Got invalid player num %i in alliance msg", player);
+					LOG_L(L_ERROR, "[Game::%s] invalid player number %i in NETMSG_ALLIANCE", __FUNCTION__, player);
 					break;
 				}
 
-				const unsigned char whichAllyTeam = inbuf[2];
 				const bool allied = static_cast<bool>(inbuf[3]);
+				const unsigned char whichAllyTeam = inbuf[2];
 				const unsigned char fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(player)->team);
+
 				if (teamHandler->IsValidAllyTeam(whichAllyTeam) && fromAllyTeam != whichAllyTeam) {
 					// FIXME NETMSG_ALLIANCE need to reset unit allyTeams
 					// FIXME NETMSG_ALLIANCE need a call-in for AIs
@@ -1115,9 +1117,9 @@ void CGame::ClientReadNet()
 
 					// stop attacks against former foe
 					if (allied) {
-						for (std::list<CUnit*>::iterator it = unitHandler->activeUnits.begin();
-								it != unitHandler->activeUnits.end();
-								++it) {
+						const auto& units = unitHandler->activeUnits;
+
+						for (auto it = units.begin(); it != units.end(); ++it) {
 							if (teamHandler->Ally((*it)->allyteam, whichAllyTeam)) {
 								(*it)->StopAttackingAllyTeam(whichAllyTeam);
 							}
@@ -1200,7 +1202,7 @@ void CGame::ClientReadNet()
 					playerHandler->AddPlayer(player);
 					eventHandler.PlayerAdded(player.playerNum);
 
-					LOG("[CRN::%s] added new player %s with number %d to team %d", __FUNCTION__, name.c_str(), player.playerNum, player.team);
+					LOG("[Game::%s] added new player %s with number %d to team %d", __FUNCTION__, name.c_str(), player.playerNum, player.team);
 
 					if (!player.spectator) {
 						eventHandler.TeamChanged(player.team);
@@ -1208,7 +1210,7 @@ void CGame::ClientReadNet()
 
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[CRN::%s] got invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s] invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
 				}
 				break;
 			}

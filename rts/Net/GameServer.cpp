@@ -1020,12 +1020,6 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				if (!players[a].isLocal && players[a].spectator && demoReader == NULL) {
 					PrivateMessage(a, "Spectators cannot pause the game");
 				}
-				else if (curSpeedCtrl == 1 && !isPaused && !players[a].isLocal &&
-					(players[a].spectator || (curSpeedCtrl == 1 &&
-					(players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu)) ||
-					(serverFrameNum - players[a].lastFrameResponse) - medianPing > internalSpeed * GAME_SPEED / 2)))) {
-						PrivateMessage(a, "Pausing rejected (cpu load or ping is too high)");
-				}
 				else {
 					frameTimeLeft = 0.0f;
 
@@ -2692,16 +2686,6 @@ void CGameServer::InternalSpeedChange(float newSpeed)
 
 void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
-	if (curSpeedCtrl == 1 &&
-		player >= 0 && static_cast<unsigned int>(player) != SERVER_PLAYER &&
-		!players[player].isLocal && !isPaused &&
-		(players[player].spectator || (curSpeedCtrl == 1 &&
-		(players[player].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu)) ||
-		(serverFrameNum - players[player].lastFrameResponse) - medianPing > internalSpeed * GAME_SPEED / 2)))) {
-		PrivateMessage(player, "Speed change rejected (cpu load or ping is too high)");
-		return; // disallow speed change by players who cannot keep up gamespeed
-	}
-
 	newSpeed = std::min(maxUserSpeed, std::max(newSpeed, minUserSpeed));
 
 	if (userSpeedFactor != newSpeed) {
