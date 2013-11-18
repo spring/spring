@@ -2,7 +2,7 @@
 
 #include "HUDDrawer.h"
 
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Models/3DModel.h"

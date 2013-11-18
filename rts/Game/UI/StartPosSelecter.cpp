@@ -10,7 +10,7 @@
 #include "Game/Players/Player.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Net/Protocol/NetProtocol.h"
 
 

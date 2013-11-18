@@ -3,7 +3,7 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/DebugDrawerAI.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -213,7 +213,7 @@ void DebugDrawerAI::Graph::DelPoints(int lineNum, int numPoints) {
 
 	// recalculate the graph scales
 	for (lit = lines.begin(); lit != lines.end(); ++lit) {
-		minScale.x = std::min((lit->second).lineMin.x, minScale.x); 
+		minScale.x = std::min((lit->second).lineMin.x, minScale.x);
 		minScale.y = std::min((lit->second).lineMin.y, minScale.y);
 		maxScale.x = std::max((lit->second).lineMax.x, maxScale.x);
 		maxScale.y = std::max((lit->second).lineMax.y, maxScale.y);
