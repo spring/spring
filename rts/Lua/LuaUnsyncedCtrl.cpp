@@ -284,7 +284,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 
 	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %c\n", caller, unitID);
+		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
 	}
 
 	return unitHandler->units[unitID];
