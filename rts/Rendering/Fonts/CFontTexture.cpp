@@ -155,7 +155,7 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 		lineHeight = 1.25 * ((*face)->bbox.yMax - (*face)->bbox.yMin);
 
 	//! Create initial small texture
-	CreateTexture(32,32);
+	CreateTexture(32,32); //FIXME
 #endif
 }
 
@@ -178,12 +178,12 @@ int CFontTexture::GetTextureHeight() const
 	return texHeight;
 }
 
-int CFontTexture::GetOutlineSize() const
+int CFontTexture::GetOutlineWidth() const
 {
 	return outlineSize;
 }
 
-float CFontTexture::GetOutilneWeight() const
+float CFontTexture::GetOutlineWeight() const
 {
 	return outlineWeight;
 }
@@ -333,10 +333,10 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
 		}
 		//  }
 		Clear(glyph.texCord.x,glyph.texCord.y,glyph.texCord.w,glyph.texCord.h);
-		glyph.texCord.x+=padding;
-		glyph.texCord.y+=padding;
-		glyph.texCord.w-=2*padding;
-		glyph.texCord.h-=2*padding;
+		glyph.texCord.x += padding;
+		glyph.texCord.y += padding;
+		glyph.texCord.w -= 2 * padding;
+		glyph.texCord.h -= 2 * padding;
 
 		Update(pixels_buffer, glyph.texCord.x, glyph.texCord.y,
 		       width, height);
@@ -374,10 +374,10 @@ CFontTexture::Row* CFontTexture::AddRow(unsigned int glyphWidth,unsigned int gly
 	int rowHeight = glyphHeight + (2*glyphHeight)/10;
 	while(nextRowPos+rowHeight>=texHeight) {
 		//! Resize texture
-		CreateTexture(texWidth*2,texHeight*2); //! Make texture twice bigger
+		CreateTexture(texWidth*2,texHeight*2); //! Make texture twice bigger //FIXME
 	}
 	Row newrow(nextRowPos,rowHeight);
-	nextRowPos+=rowHeight;
+	nextRowPos += rowHeight;
 	imageRows.push_back(newrow);
 	return &imageRows.back();
 }
@@ -385,12 +385,12 @@ CFontTexture::Row* CFontTexture::AddRow(unsigned int glyphWidth,unsigned int gly
 CFontTexture::IGlyphRect CFontTexture::AllocateGlyphRect(unsigned int glyphWidth,unsigned int glyphHeight)
 {
 #ifndef   HEADLESS
-	Row* row=FindRow(glyphWidth,glyphHeight);
+	Row* row = FindRow(glyphWidth,glyphHeight);
 	if(!row)
-		row=AddRow(glyphWidth,glyphHeight);
+		row = AddRow(glyphWidth,glyphHeight);
 
-	IGlyphRect rect=IGlyphRect(row->wight,row->position,glyphWidth,glyphHeight);
-	row->wight+=glyphWidth;
+	IGlyphRect rect = IGlyphRect(row->wight,row->position,glyphWidth,glyphHeight);
+	row->wight += glyphWidth;
 	return rect;
 #else
 	return IGlyphRect();
@@ -421,7 +421,7 @@ void CFontTexture::CreateTexture(int w,int h)
 	glPopAttrib();
 
 	if(texture) {
-		unsigned char* pixels=new unsigned char[texWidth * texHeight ];
+		unsigned char* pixels = new unsigned char[texWidth * texHeight ];
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glGetTexImage(GL_TEXTURE_2D, 0, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
 		glDeleteTextures(1, (const GLuint*)&texture);
@@ -444,7 +444,8 @@ void CFontTexture::CreateTexture(int w,int h)
 
 void CFontTexture::Update(const unsigned char* pixels,int x,int y,int w,int h)
 {
-#ifndef   HEADLESS
+#ifndef HEADLESS
+	//FIXME readd shadow blur
 	glEnable(GL_TEXTURE_2D);
 	glPushAttrib(GL_PIXEL_MODE_BIT);
 	glBindTexture(GL_TEXTURE_2D, texture);

@@ -81,8 +81,8 @@ public:
 	inline float GetLineHeight()     const { return normScale * GetLineHeightA(); }
 	inline float GetSize()           const { return fontSize; }
 	inline int GetDescender()      const { return normScale * GetFontDescender(); }
-	inline int   GetOutlineWidth()   const { return GetOutlineSize(); }
-	inline float GetOutlineWeight()  const { return GetOutilneWeight(); }
+	//inline int GetOutlineWidth()     const { return GetOutlineWidth(); }
+	//inline float GetOutlineWeight()  const { return GetOutilneWeight(); }
 	inline std::string GetFilePath() const { return fontPath; }
 	inline std::string GetFamily()   const { return fontFamily; }
 	inline std::string GetStyle()    const { return fontStyle; }
