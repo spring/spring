@@ -155,8 +155,8 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	if (!weaponDef->avoidGround)   weapon->avoidFlags |= Collision::NOGROUND;
 
 	weapon->SetWeaponNum(owner->weapons.size());
-	weapon->Init();
 	weapon->UpdateRange(weaponDef->range);
+	weapon->Init();
 
 	return weapon;
 }

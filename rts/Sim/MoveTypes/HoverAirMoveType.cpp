@@ -170,9 +170,9 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 	}
 
 	// Cruise as default
-	if (aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_HOVERING) {
+	// FIXME: RHS overrides FLY_ATTACKING and FLY_CIRCLING (via UpdateFlying-->ExecuteStop)
+	if (aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_HOVERING)
 		flyState = FLY_CRUISING;
-	}
 
 	owner->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, (aircraftState != AIRCRAFT_LANDED));
 	waitCounter = 0;
@@ -211,8 +211,9 @@ void CHoverAirMoveType::StartMoving(float3 pos, float goalRadius)
 			SetState(AIRCRAFT_TAKEOFF);
 			break;
 		case AIRCRAFT_FLYING:
-			if (flyState != FLY_CRUISING)
+			if (flyState != FLY_CRUISING) {
 				flyState = FLY_CRUISING;
+			}
 			break;
 		case AIRCRAFT_LANDING:
 			SetState(AIRCRAFT_TAKEOFF);
@@ -242,13 +243,8 @@ void CHoverAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressi
 	distance -= 15;
 
 	// Ignore the exact same order
-	if ((aircraftState == AIRCRAFT_FLYING)
-			&& (flyState == FLY_CIRCLING || flyState == FLY_ATTACKING)
-			&& ((circlingPos - pos).SqLength2D() < 64)
-			&& (goalDistance == distance))
-	{
+	if ((aircraftState == AIRCRAFT_FLYING) && (flyState == FLY_CIRCLING || flyState == FLY_ATTACKING) && ((circlingPos - pos).SqLength2D() < 64) && (goalDistance == distance))
 		return;
-	}
 
 	circlingPos = pos;
 	goalDistance = distance;
@@ -256,6 +252,12 @@ void CHoverAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressi
 
 	SetState(AIRCRAFT_FLYING);
 
+	// FIXME:
+	//   the FLY_ATTACKING state is broken (unknown how long this has been
+	//   the case because <aggressive> was always false up until e7ae68df)
+	//   aircraft fly *right up* to their target without stopping
+	//   after fixing this, the "circling" behavior is now broken
+	//   (waitCounter is always 0)
 	if (aggressive) {
 		flyState = FLY_ATTACKING;
 	} else {
@@ -348,6 +350,7 @@ void CHoverAirMoveType::UpdateTakeoff()
 // Move the unit around a bit..
 void CHoverAirMoveType::UpdateHovering()
 {
+	#if 0
 	#define NOZERO(x) std::max(x, 0.0001f)
 
 	float3 deltaVec = goalPos - owner->pos;
@@ -383,6 +386,18 @@ void CHoverAirMoveType::UpdateHovering()
 	wantedSpeed += (randomWind * driftSpeed * 0.5f);
 
 	UpdateAirPhysics();
+	#endif
+
+	#if 1
+	randomWind.x = randomWind.x * 0.9f + (gs->randFloat() - 0.5f) * 0.5f;
+	randomWind.z = randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f;
+
+	// randomly drift (but not too far from goal-position)
+	wantedSpeed = (randomWind * math::fabs(owner->unitDef->dlHoverFactor) * 0.5f);
+	wantedSpeed += (smoothstep(0.0f, 20.0f * 20.0f, (goalPos - owner->pos)) * (goalPos - owner->pos));
+
+	UpdateAirPhysics();
+	#endif
 }
 
 
@@ -454,7 +469,6 @@ void CHoverAirMoveType::UpdateFlying()
 			} break;
 
 			case FLY_CIRCLING: {
-				// break;
 				if ((++waitCounter) > ((GAME_SPEED * 3) + 10)) {
 					if (airStrafe) {
 						float3 relPos = pos - circlingPos;
@@ -1125,3 +1139,4 @@ bool CHoverAirMoveType::HandleCollisions(bool checkCollisions)
 
 	return false;
 }
+
