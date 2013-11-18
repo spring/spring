@@ -11,6 +11,11 @@ typedef struct FT_FaceRec_* FT_Face;
 typedef struct FT_LibraryRec_* FT_Library;
 
 
+class texture_size_exception : public std::exception
+{
+};
+
+
 /**
 This class just store glyphs and load new glyphs if requred
 It works with image and don't care about rendering these glyphs

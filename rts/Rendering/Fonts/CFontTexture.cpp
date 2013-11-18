@@ -46,9 +46,7 @@ struct ErrorString {
 }
 #endif // HEADLESS
 
-class texture_size_exception : public std::exception
-{
-};
+
 
 #ifndef   HEADLESS
 class FtLibraryHandler
@@ -212,11 +210,10 @@ int CFontTexture::GetTexture() const
 
 const CFontTexture::GlyphInfo& CFontTexture::GetGlyph(unsigned int ch)
 {
-#ifndef   HEADLESS
-	std::map<unsigned int,GlyphInfo>::iterator it;
-	it=glyphs.find(ch);
-	if(it==glyphs.end())
-		return LoadGlyph(ch);
+#ifndef HEADLESS
+	auto it = glyphs.find(ch);
+	if (it == glyphs.end())
+		return LoadGlyph(ch); //FIXME can throw texture_size_exception
 	return it->second;
 #else
 	static CFontTexture::GlyphInfo g = GlyphInfo();
