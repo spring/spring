@@ -91,34 +91,27 @@ static const char* GetFTError(FT_Error e)
 /*******************************************************************************/
 unsigned int GetUnicodeChar(const std::string& text,unsigned int &pos)
 {
-    unsigned int u;
+	unsigned int u;
 
-    const unsigned char chr = (unsigned char)text[pos];
+	const unsigned char chr = (unsigned char)text[pos];
 
-    //based on UTF8_to_UNICODE from SDL_ttf (SDL_ttf.c)
-    if(chr>=0xF0)
-    {
-        u=((unsigned int)(text[pos]&0x07))<<18;
-        u|=((unsigned int)(text[++pos]&0x3F))<<12;
-        u|=((unsigned int)(text[++pos]&0x3F))<<6;
-        u|=((unsigned int)(text[++pos]&0x3F));
-    }
-    else if(chr>=0xE0)
-    {
-        u=((unsigned int)(text[pos]&0x0F))<<12;
-        u|=((unsigned int)(text[++pos]&0x3F))<<6;
-        u|=((unsigned int)(text[++pos]&0x3F));
-    }
-    else if(chr>=0xC0)
-    {
-        u=((unsigned int)(text[pos]&0x1F))<<6;
-        u|=((unsigned int)(text[++pos]&0x3F));
-    }
-    else
-    {
-        u=chr;
-    }
-    return u;
+	//based on UTF8_to_UNICODE from SDL_ttf (SDL_ttf.c)
+	if(chr>=0xF0) {
+		u=((unsigned int)(text[pos]&0x07))<<18;
+		u|=((unsigned int)(text[++pos]&0x3F))<<12;
+		u|=((unsigned int)(text[++pos]&0x3F))<<6;
+		u|=((unsigned int)(text[++pos]&0x3F));
+	} else if(chr>=0xE0) {
+		u=((unsigned int)(text[pos]&0x0F))<<12;
+		u|=((unsigned int)(text[++pos]&0x3F))<<6;
+		u|=((unsigned int)(text[++pos]&0x3F));
+	} else if(chr>=0xC0) {
+		u=((unsigned int)(text[pos]&0x1F))<<6;
+		u|=((unsigned int)(text[++pos]&0x3F));
+	} else {
+		u=chr;
+	}
+	return u;
 }
 
 /*******************************************************************************/
@@ -132,11 +125,11 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	autoOutlineColor(true),
 	setColor(false)
 {
-    if (size<=0)
+	if (size<=0)
 		size = 14;
 
-    invSize = 1.0f / size;
-    normScale = invSize / 64.0f;
+	invSize = 1.0f / size;
+	normScale = invSize / 64.0f;
 
 	va  = new CVertexArray();
 	va2 = new CVertexArray();
@@ -321,7 +314,7 @@ std::string CglFont::StripColorCodes(const std::string& text)
 
 float CglFont::GetCharacterWidth(const unsigned int c)
 {
-    return normScale * GetGlyph(c).advance;
+	return normScale * GetGlyph(c).advance;
 }
 
 
@@ -376,8 +369,8 @@ float CglFont::GetTextWidth(const std::string& text)
 		}
 	}
 
-    if(prv_g)
-        w+=normScale * prv_g->advance;
+	if(prv_g)
+		w+=normScale * prv_g->advance;
 	if (w > maxw)
 		maxw = w;
 
@@ -554,7 +547,7 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 		if (!smart) {
 			float width = 0.0f;
 			unsigned int i = 0;
-            unsigned int c = GetUnicodeChar(w.text,i);
+			unsigned int c = GetUnicodeChar(w.text,i);
 			do {
 				const GlyphInfo& g = GetGlyph(c);
 				++i;
@@ -578,8 +571,8 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 		}
 
 		if(
-		   (wantedWidth < 8 * spaceAdvance) ||
-		   (w.text.length() < 1)
+			(wantedWidth < 8 * spaceAdvance) ||
+			(w.text.length() < 1)
 		) {
 			w2.isSpace = true;
 			return w2;
@@ -589,9 +582,9 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 		unsigned int i = 0;
 //		float min_penalty = 1e9;
 		unsigned int goodbreak = 0;
-        unsigned int c = GetUnicodeChar(w.text,i);
+		unsigned int c = GetUnicodeChar(w.text,i);
 		do {
-            unsigned int co = c;
+			unsigned int co = c;
 			unsigned int io =0;// i;
 			const GlyphInfo& g = GetGlyph(c);
 			++i;
@@ -680,13 +673,14 @@ void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float 
 
 	//! sometimes words aren't hyphenated for visual aspects
 	//! but if we put an ellipsis in there, it is better to show as many as possible characters of those words
-	std::list<word>::iterator nextwi(l->end); ++nextwi;
+	std::list<word>::iterator nextwi(l->end);
+	++nextwi;
 	if (
-	    (!l->forceLineBreak) &&
-	    (nextwi != words.end()) &&
-	    (w.isSpace || w.isLineBreak) &&
-	    (l->width + ellipsisAdvance < maxWidth) &&
-	    !(nextwi->isSpace || nextwi->isLineBreak)
+		(!l->forceLineBreak) &&
+		(nextwi != words.end()) &&
+		(w.isSpace || w.isLineBreak) &&
+		(l->width + ellipsisAdvance < maxWidth) &&
+		!(nextwi->isSpace || nextwi->isLineBreak)
 	) {
 		float spaceLeft = maxWidth - (l->width + ellipsisAdvance);
 		l->end = words.insert( nextwi, SplitWord(*nextwi, spaceLeft, false) );
@@ -755,9 +749,9 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 
 //	std::list<word> splitWords;
 	std::list<line> lines;
-		lines.push_back(line());
-		currLine = &(lines.back());
-		currLine->start = words.begin();
+	lines.push_back(line());
+	currLine = &(lines.back());
+	currLine->start = words.begin();
 
 	for (; ;) {
 		currLineValid = true;
@@ -767,10 +761,10 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 
 			//! start a new line after the '\n'
 			lines.push_back(line());
-				currLineValid = false;
-				currLine = &(lines.back());
-				currLine->start = wi;
-				++currLine->start;
+			currLineValid = false;
+			currLine = &(lines.back());
+			currLine->start = wi;
+			++currLine->start;
 		} else {
 			currLine->width += wi->width;
 			currLine->end = wi;
@@ -815,10 +809,10 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 					wi = words.erase(wi);
 
 				lines.push_back(line());
-					currLineValid = false;
-					currLine = &(lines.back());
-					currLine->start = wi;
-					--wi; //! compensate the wi++ downwards
+				currLineValid = false;
+				currLine = &(lines.back());
+				currLine->start = wi;
+				--wi; //! compensate the wi++ downwards
 			}
 		}
 
@@ -846,7 +840,8 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 	if (addEllipsis)
 		AddEllipsis(lines, words, maxWidth);
 
-	wi = currLine->end; ++wi;
+	wi = currLine->end;
+	++wi;
 	wi = words.erase(wi, words.end());
 }
 
@@ -1175,9 +1170,9 @@ void CglFont::SetColors(const float4* _textColor, const float4* _outlineColor)
 const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 {
 	const float luminosity = 0.05 +
-		0.2126f * math::powf(textColor[0], 2.2) +
-		0.7152f * math::powf(textColor[1], 2.2) +
-		0.0722f * math::powf(textColor[2], 2.2);
+				 0.2126f * math::powf(textColor[0], 2.2) +
+				 0.7152f * math::powf(textColor[1], 2.2) +
+				 0.0722f * math::powf(textColor[2], 2.2);
 
 	const float lumdiff = std::max(luminosity,darkLuminosity) / std::min(luminosity,darkLuminosity);
 	if (lumdiff > 5.0f) {
@@ -1235,17 +1230,18 @@ void CglFont::End()
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, GetTexture());
 
-    //!Because texture size can be changed, texture cordinats are in pixels
-    //!So matrix must be used
-    GLfloat matrix[16] = {  1.f/(float)GetTextureWidth(),        0.f,                           0.f,    0.f,
-                            0.f,                                1.f/(float)GetTextureHeight(),  0.f,    0.f,
-                            0.f,                                0.f,                            1.f,    0.f,
-                            0.f,                                0.f,                            0.f,    1.f };
+	//!Because texture size can be changed, texture cordinats are in pixels
+	//!So matrix must be used
+	GLfloat matrix[16] = {  1.f/(float)GetTextureWidth(),        0.f,                           0.f,    0.f,
+				0.f,                                1.f/(float)GetTextureHeight(),  0.f,    0.f,
+				0.f,                                0.f,                            1.f,    0.f,
+				0.f,                                0.f,                            0.f,    1.f
+			     };
 
 
-    glMatrixMode(GL_TEXTURE);
-    glLoadMatrixf(matrix);
-    glMatrixMode(GL_MODELVIEW);
+	glMatrixMode(GL_TEXTURE);
+	glLoadMatrixf(matrix);
+	glMatrixMode(GL_MODELVIEW);
 
 	if (va2->drawIndex() > 0) {
 		if (stripOutlineColors.size() > 1) {
@@ -1265,9 +1261,9 @@ void CglFont::End()
 		va->DrawArray2dT(GL_QUADS);
 	}
 
-    glMatrixMode(GL_TEXTURE);
-    glLoadIdentity();//Fix texture matrix
-    glMatrixMode(GL_MODELVIEW);
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();//Fix texture matrix
+	glMatrixMode(GL_MODELVIEW);
 
 	glPopAttrib();
 }
@@ -1296,8 +1292,9 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 	int skippedLines;
 	bool endOfString, colorChanged;
 	const GlyphInfo* g = NULL;
-    unsigned int c;
-	float4 newColor; newColor[3] = 1.0f;
+	unsigned int c;
+	float4 newColor;
+	newColor[3] = 1.0f;
 	unsigned int i = 0;
 
 	do {
@@ -1316,7 +1313,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 				SetTextColor(&newColor);
 			}
 		}
-        const GlyphInfo* c_g=&GetGlyph(c);
+		const GlyphInfo* c_g=&GetGlyph(c);
 		if (skippedLines>0) {
 			x  = startx;
 			y -= skippedLines * lineHeight_;
@@ -1350,7 +1347,8 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	bool endOfString, colorChanged;
 	const GlyphInfo* g = NULL;
 	unsigned int c;
-	float4 newColor; newColor[3] = 1.0f;
+	float4 newColor;
+	newColor[3] = 1.0f;
 	unsigned int i = 0;
 
 	do {
@@ -1370,7 +1368,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 			}
 		}
 
-        const GlyphInfo* c_g=&GetGlyph(c);
+		const GlyphInfo* c_g=&GetGlyph(c);
 		if (skippedLines>0) {
 			x  = startx;
 			y -= skippedLines * lineHeight_;
@@ -1411,8 +1409,9 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	int skippedLines;
 	bool endOfString, colorChanged;
 	const GlyphInfo* g = NULL;
-    unsigned int c;
-	float4 newColor; newColor[3] = 1.0f;
+	unsigned int c;
+	float4 newColor;
+	newColor[3] = 1.0f;
 	unsigned int i = 0;
 
 	do {
@@ -1432,7 +1431,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 			}
 		}
 
-        const GlyphInfo* c_g=&GetGlyph(c);
+		const GlyphInfo* c_g=&GetGlyph(c);
 		if (skippedLines>0) {
 			x  = startx;
 			y -= skippedLines * lineHeight_;
@@ -1463,11 +1462,11 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 void CglFont::glWorldPrint(const float3& p, const float size, const std::string& str)
 {
 	glPushMatrix();
-		glTranslatef(p.x, p.y, p.z);
-		glMultMatrixf(camera->GetBillBoardMatrix());
-		Begin(false, false);
-			glPrint(0.0f, 0.0f, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE, str);
-		End();
+	glTranslatef(p.x, p.y, p.z);
+	glMultMatrixf(camera->GetBillBoardMatrix());
+	Begin(false, false);
+	glPrint(0.0f, 0.0f, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE, str);
+	End();
 	glPopMatrix();
 }
 
@@ -1551,7 +1550,8 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	SetColors(&baseTextColor,&baseOutlineColor);
 }
 
-void CglFont::glPrintTable(float x, float y, float s, const int options, const std::string& text) {
+void CglFont::glPrintTable(float x, float y, float s, const int options, const std::string& text)
+{
 	int col = 0;
 	int row = 0;
 	std::vector<std::string> coltext;
