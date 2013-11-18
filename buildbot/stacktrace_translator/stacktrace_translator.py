@@ -36,7 +36,7 @@ TESTFILE = os.path.join(WWWROOT, "default/release/93.2.1-56-gdca244e/win32/{rele
 # Match common pre- and suffix on infolog lines. This also allows
 # "empty" prefixes followed by any amount of trailing whitespace.
 # the a-zA-Z class can be "Warning" or "Error"
-RE_PREFIX = r'^(?:\[(?:f=)?\s*\d+\])?(?: [a-zA-Z]+:)\s*'
+RE_PREFIX = r'^(?:\[(?:f=)?\s*\d+\]\s*)?(?:[a-zA-Z]+:)\s*'
 RE_SUFFIX = r'(?:[\r\n]+$)?'
 
 # Match stackframe lines, captures the module name and the address.
@@ -50,24 +50,12 @@ RE_STACKFRAME = RE_PREFIX + r'\(\d+\)\s+(.*(?:\.exe|\.dll))(?:\([^)]*\))?\s+\[(0
 RE_VERSION_NAME_PREFIX = "(?:[sS]pring)"
 RE_VERSION_STRING_RC12 = "([0-9]+\.[0-9]+[\.0-9]*(?:-[0-9]+-g[0-9a-f]+)?)"
 RE_VERSION_BRANCH_NAME = "([a-zA-Z0-9\-]+)?"
-RE_VERSION_BUILD_FLAGS = "?(?: \((?:[a-zA-Z0-9\-]+\)))?"
+RE_VERSION_BUILD_FLAGS = "?(?:\s*\((?:[a-zA-Z0-9\-]+\)))?"
 RE_VERSION =                        \
 	RE_VERSION_NAME_PREFIX + " ?" + \
 	RE_VERSION_STRING_RC12 + " ?" + \
 	RE_VERSION_BRANCH_NAME + " ?" + \
 	RE_VERSION_BUILD_FLAGS
-
-
-def test_version(string):
-	'''
-		>>> test_version('Spring 91.0 (OMP)')
-		('91.0', None)
-
-		>>> test_version('spring 93.2.1-82-g863e91e release (Debug OMP)')
-		('93.2.1-82-g863e91e', 'release')
-	'''
-	log.debug('test_version():'+string)
-	return re.search(RE_VERSION, string, re.MULTILINE).groups()
 
 # Match complete line containing version string.
 # NOTE:
@@ -96,6 +84,19 @@ RE_VERSION_LINES = [
 
 # Match filename of file with debugging symbols, capture module name.
 RE_DEBUG_FILENAME = '.*_spring_dbg.7z'
+
+
+
+def test_version(string):
+	'''
+		>>> test_version('Spring 91.0 (OMP)')
+		('91.0', None)
+
+		>>> test_version('spring 93.2.1-82-g863e91e release (Debug OMP)')
+		('93.2.1-82-g863e91e', 'release')
+	'''
+	log.debug('test_version():'+string)
+	return re.search(RE_VERSION, string, re.MULTILINE).groups()
 
 # Set up application log.
 log = logging.getLogger('stacktrace_translator')
