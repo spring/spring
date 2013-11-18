@@ -125,9 +125,9 @@ unsigned int GetUnicodeChar(const std::string& text,unsigned int &pos)
 /*******************************************************************************/
 
 CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float _outlineweight):
-    CFontTexture(fontfile,size,_outlinewidth,_outlineweight),
-	fontSize(size),
+	CFontTexture(fontfile,size,_outlinewidth,_outlineweight),
 	fontPath(fontfile),
+	fontSize(size),
 	inBeginEnd(false),
 	autoOutlineColor(true),
 	setColor(false)
@@ -215,6 +215,7 @@ static inline int SkipColorCodes(const std::string& text, T* pos, float4* color)
  * @return <0 := end of string; returned value is: -(skippedLines + 1)
  *         else: number of skipped lines (can be zero)
  */
+/*
 template <typename T>
 static inline int SkipNewLine(const std::string& text, T* pos)
 {
@@ -243,6 +244,7 @@ static inline int SkipNewLine(const std::string& text, T* pos)
 	return -(1 + skippedLines);
 }
 
+*/
 
 template <typename T>
 static inline bool SkipColorCodesAndNewLines(const std::string& text, T* pos, float4* color, bool* colorChanged, int* skippedLines, float4* colorReset)
@@ -483,17 +485,19 @@ int CglFont::GetTextNumLines(const std::string& text) const
  * @brief IsUpperCase
  * @return true if the given uchar is an uppercase character (WinLatin charmap)
  */
-static inline bool IsUpperCase(const unsigned char& c)
+/*static inline bool IsUpperCase(const unsigned char& c)
 {
+*/
     //! I don't know how to found if unicode char is in uppecr case or not, so assume <c> is lower case
-	return 0;/*(c >= 0x41 && c <= 0x5A) ||
+//	return 0;
+/*(c >= 0x41 && c <= 0x5A) ||
 	       (c >= 0xC0 && c <= 0xD6) ||
 	       (c >= 0xD8 && c <= 0xDE) ||
 	       (c == 0x8A) ||
 	       (c == 0x8C) ||
 	       (c == 0x8E) ||
 	       (c == 0x9F);*/
-}
+//}
 
 
 /**
@@ -583,7 +587,7 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 
 		float width = 0.0f;
 		unsigned int i = 0;
-		float min_penalty = 1e9;
+//		float min_penalty = 1e9;
 		unsigned int goodbreak = 0;
         unsigned int c = GetUnicodeChar(w.text,i);
 		do {
@@ -607,12 +611,13 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 				w.pos   += goodbreak;
 				break;
 			}
-
+/*
 			float penalty = GetPenalty(co, io, w.text.length());
 			if (penalty < min_penalty) {
 				min_penalty = penalty;
 				goodbreak   = i;
 			}
+*/
 		} while(i < w.text.length());
 	}
 	return w2;
@@ -748,7 +753,7 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 
 	std::list<word>::iterator wi = words.begin();
 
-	std::list<word> splitWords;
+//	std::list<word> splitWords;
 	std::list<line> lines;
 		lines.push_back(line());
 		currLine = &(lines.back());
@@ -846,10 +851,10 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 }
 
 
-void CglFont::WrapTextKnuth(std::list<word>& words, float maxWidth, float maxHeight) const
-{
+//void CglFont::WrapTextKnuth(std::list<word>& words, float maxWidth, float maxHeight) const
+//{
 	// TODO FINISH ME!!! (Knuths algorithm would try to share deadspace between lines, with the smallest sum of (deadspace of line)^2)
-}
+//}
 
 
 void CglFont::SplitTextInWords(const std::string& text, std::list<word>* words, std::list<colorcode>* colorcodes)

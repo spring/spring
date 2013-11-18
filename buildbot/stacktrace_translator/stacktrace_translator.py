@@ -69,12 +69,17 @@ def test_version(string):
 	return re.search(RE_VERSION, string, re.MULTILINE).groups()
 
 # Match complete line containing version string.
+# NOTE:
+#   these are highly sensitive to changes in format
+#   strings passed to LOG(), perhaps define them in
+#   a header and parse that?
 RE_VERSION_LINES = [
 	x % (RE_PREFIX, RE_VERSION, RE_SUFFIX) for x in [
 		r'%s%s has crashed\.%s',
 		r'%s\[Watchdog\] Hang detection triggered for %s\.%s',
 		r'%sSegmentation fault \(SIGSEGV\) in %s%s',
 		r'%sAborted \(SIGABRT\) in %s%s',
+		r'%sError handler invoked for %s\.%s',
 	]
 ]
 

@@ -75,10 +75,11 @@ void CLaserProjectile::Update()
 	UpdateInterception();
 	UpdatePos(oldSpeed);
 
-	checkCol &= (ttl >= 0);
+	// pre-decrement ttl: if projectile has to live for N frames
+	// we want to check for collisions only N (not N + 1) times!
+	checkCol &= ((ttl -= 1) >= 0);
 	deleteMe |= ((curLength <= 0.01f) * ( weaponDef->laserHardStop));
 	deleteMe |= ((intensity <= 0.01f) * (!weaponDef->laserHardStop));
-	ttl -= 1;
 }
 
 void CLaserProjectile::UpdateIntensity() {
