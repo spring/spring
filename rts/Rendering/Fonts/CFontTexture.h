@@ -109,8 +109,8 @@ private:
 	void Clear(int x,int y,int w,int h);
 
 private:
-	FT_Library* library;
-	FT_Face* face;
+	FT_Library library;
+	FT_Face face;
 	unsigned char* faceDataBuffer;
 
 private:
