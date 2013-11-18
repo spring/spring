@@ -141,13 +141,13 @@ private:
 	void WrapTextConsole(std::list<word>& words, float maxWidth, float maxHeight);
 	void WrapTextKnuth(std::list<word>& words, float maxWidth, float maxHeight) const;
 private:
-    float invSize;
-    float normScale;
+	float invSize;
+	float normScale;
 
 	std::string fontPath;
 	std::string fontFamily;
 	std::string fontStyle;
-    int fontSize;
+	int fontSize;
 
 	ColorMap stripTextColors;
 	ColorMap stripOutlineColors;
