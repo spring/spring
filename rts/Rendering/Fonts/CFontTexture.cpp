@@ -80,10 +80,11 @@ FtLibraryHandler libraryHandler; ///it will be automaticly createated and delete
 CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesize, float  _outlineweight):
 #ifndef HEADLESS
 	library(libraryHandler.GetLibrary()),
+	face(new FT_Face()),
 #else
 	library(NULL),
-#endif
 	face(NULL),
+#endif
 	faceDataBuffer(NULL),
 	outlineSize(_outlinesize),
 	outlineWeight(_outlineweight),
@@ -141,7 +142,8 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 
 	//! select unicode charmap
 	error = FT_Select_Charmap(*face, FT_ENCODING_UNICODE);
-	if(error) { //Support unicode or GTFO
+	if(error) {
+		//Support unicode or GTFO
 		FT_Done_Face(*face);
 		delete[] faceDataBuffer;
 		std::string msg = fontfile + ": FT_Select_Charmap failed: ";
@@ -163,6 +165,7 @@ CFontTexture::~CFontTexture()
 {
 #ifndef   HEADLESS
 	FT_Done_Face(*face);
+	delete face; //FIXME find a cleaner w/o adding ft2 dependency to CFontTexture.h?
 	delete[] faceDataBuffer;
 	glDeleteTextures(1, (const GLuint*)&texture);
 #endif

@@ -1234,7 +1234,7 @@ void CglFont::End()
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, GetTexture());
 
-	//!Because texture size can be changed, texture cordinats are in pixels
+	// Because texture size can be changed, texture cordinats are in pixels
 	glMatrixMode(GL_TEXTURE);
 	glPushMatrix();
 	glScalef(1.f/(float)GetTextureWidth(), 1.f/(float)GetTextureHeight(), 1.f);
