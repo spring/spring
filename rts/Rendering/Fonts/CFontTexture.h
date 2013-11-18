@@ -27,16 +27,16 @@ public:
 	CFontTexture(const std::string& fontfile, int size, int outlinesize, float  outlineweight);
 	virtual ~CFontTexture();
 public:
-	int GetTextureWidth() const ;
+	int GetTextureWidth() const;
 	int GetTextureHeight() const;
-	int GetOutlineSize() const;
-	float GetOutilneWeight() const;
+	int   GetOutlineWidth() const;
+	float GetOutlineWeight() const;
 	int GetLineHeightA() const;
 	int GetFontDescender() const;
 
 	int GetTexture() const;
 
-	struct IGlyphRect {
+	struct IGlyphRect { //FIXME use SRect
 		IGlyphRect():
 			x(0),y(0),
 			w(0),h(0) {
