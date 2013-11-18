@@ -6,7 +6,7 @@
 #include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalConstants.h" // for GAME_SPEED

@@ -3,7 +3,7 @@
 #include "Button.h"
 
 #include "Gui.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Log/ILog.h"
 

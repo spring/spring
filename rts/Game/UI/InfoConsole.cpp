@@ -6,7 +6,7 @@
 #include "InfoConsole.h"
 #include "InputReceiver.h"
 #include "GuiHandler.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "System/EventHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/LogSinkHandler.h"
