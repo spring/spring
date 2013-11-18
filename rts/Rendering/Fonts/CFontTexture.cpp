@@ -208,7 +208,7 @@ int CFontTexture::GetTexture() const
 	return texture;
 }
 
-const CFontTexture::GlyphInfo& CFontTexture::GetGlyph(unsigned int ch)
+const CFontTexture::GlyphInfo& CFontTexture::GetGlyph(char32_t ch)
 {
 #ifndef HEADLESS
 	auto it = glyphs.find(ch);
@@ -221,7 +221,7 @@ const CFontTexture::GlyphInfo& CFontTexture::GetGlyph(unsigned int ch)
 #endif
 }
 
-int CFontTexture::GetKerning(unsigned int lchar, unsigned int rchar)
+int CFontTexture::GetKerning(char32_t lchar, char32_t rchar)
 {
 #ifndef HEADLESS
 	//FIXME cache!
@@ -258,7 +258,7 @@ int CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 #endif
 }
 
-CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
+CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(char32_t ch)
 {
 #ifndef   HEADLESS
 	// This code mainly base on SFML code
@@ -351,25 +351,24 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(unsigned int ch)
 #endif
 }
 
-CFontTexture::Row* CFontTexture::FindRow(unsigned int glyphWidth,unsigned int glyphHeight)
+CFontTexture::Row* CFontTexture::FindRow(int glyphWidth, int glyphHeight)
 {
-	std::list<Row>::iterator it;
-	for(it=imageRows.begin(); it!=imageRows.end(); ++it) {
-		float ratio=(float)it->height/(float)glyphHeight;
+	for(auto& row: imageRows) {
+		float ratio=(float)row.height/(float)glyphHeight;
 		//! Ignore too small or too big raws
 		if(ratio < 1.0f || ratio > 1.3f)
 			continue;
 
 		//! Check if there is enought space in this row
-		if(texWidth - it->wight < glyphWidth)
+		if(texWidth - row.wight < glyphWidth)
 			continue;
 
-		return &(*it);
+		return &row;
 	}
 	return 0;
 }
 
-CFontTexture::Row* CFontTexture::AddRow(unsigned int glyphWidth,unsigned int glyphHeight)
+CFontTexture::Row* CFontTexture::AddRow(int glyphWidth, int glyphHeight)
 {
 	int rowHeight = glyphHeight + (2*glyphHeight)/10;
 	while(nextRowPos+rowHeight>=texHeight) {
@@ -382,7 +381,7 @@ CFontTexture::Row* CFontTexture::AddRow(unsigned int glyphWidth,unsigned int gly
 	return &imageRows.back();
 }
 
-CFontTexture::IGlyphRect CFontTexture::AllocateGlyphRect(unsigned int glyphWidth,unsigned int glyphHeight)
+CFontTexture::IGlyphRect CFontTexture::AllocateGlyphRect(int glyphWidth,int glyphHeight)
 {
 #ifndef   HEADLESS
 	Row* row = FindRow(glyphWidth,glyphHeight);

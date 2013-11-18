@@ -577,9 +577,9 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_GRASS:
 			return int2(1024, 1024);
 		case LUATEX_FONT:
-			return int2(font->GetTexWidth(), font->GetTexHeight());
+			return int2(font->GetTextureWidth(), font->GetTextureHeight());
 		case LUATEX_FONTSMALL:
-			return int2(smallFont->GetTexWidth(), smallFont->GetTexHeight());
+			return int2(smallFont->GetTextureWidth(), smallFont->GetTextureHeight());
 		case LUATEX_MINIMAP:
 			if (readMap != NULL) {
 				return readMap->GetMiniMapTextureSize();

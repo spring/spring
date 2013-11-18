@@ -71,8 +71,8 @@ public:
 	int WrapInPlace(std::string& text, float fontSize,  float maxWidth, float maxHeight = 1e9);
 	std::list<std::string> Wrap(const std::string& text, float fontSize, float maxWidth, float maxHeight = 1e9);
 
-	//float GetKerning(unsigned int left_char, unsigned int right_char) const;
-	float GetCharacterWidth(const unsigned int c);
+	//float GetKerning(char32_t left_char, char32_t right_char) const;
+	float GetCharacterWidth(const char32_t c);
 	float GetTextWidth(const std::string& text);
 	float GetTextHeight(const std::string& text, float* descender = NULL, int* numLines = NULL);
 	int   GetTextNumLines(const std::string& text) const;
@@ -86,10 +86,6 @@ public:
 	inline std::string GetFilePath() const { return fontPath; }
 	inline std::string GetFamily()   const { return fontFamily; }
 	inline std::string GetStyle()    const { return fontStyle; }
-
-	//inline unsigned int GetTexture()   const { return fontTexture; }
-	inline unsigned int GetTexWidth()  const { return GetTextureWidth(); }
-	inline unsigned int GetTexHeight() const { return GetTextureHeight(); }
 
 	static const char ColorCodeIndicator = '\xFF'; //FIXME use a non-printable char? (<32)
 	static const char ColorResetIndicator = '\x08'; //! =: '\\b'
