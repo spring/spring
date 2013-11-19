@@ -21,7 +21,7 @@
 
 CONFIG(float, GroundLODScaleReflection).defaultValue(1.0f);
 CONFIG(float, GroundLODScaleRefraction).defaultValue(1.0f);
-CONFIG(float, GroundLODScaleUnitReflection).defaultValue(1.0f);
+CONFIG(float, GroundLODScaleTerrainReflection).defaultValue(1.0f);
 CONFIG(bool, HighResLos).defaultValue(false).description("Controls whether LOS (\"L view\") edges are rendered in high resolution. Resource heavy!");
 CONFIG(int, ExtraTextureUpdateRate).defaultValue(45);
 
@@ -29,7 +29,7 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 {
 	LODScaleReflection = configHandler->GetFloat("GroundLODScaleReflection");
 	LODScaleRefraction = configHandler->GetFloat("GroundLODScaleRefraction");
-	LODScaleUnitReflection = configHandler->GetFloat("GroundLODScaleUnitReflection");
+	LODScaleTerrainReflection = configHandler->GetFloat("GroundLODScaleTerrainReflection");
 
 	memset(&infoTextureIDs[0], 0, sizeof(infoTextureIDs));
 
