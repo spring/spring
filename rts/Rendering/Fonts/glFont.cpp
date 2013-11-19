@@ -1228,7 +1228,10 @@ void CglFont::End()
 		glPopAttrib();
 		return;
 	}
-
+#ifdef   HEADLESS
+	// GetTextureWidth/Height() always returns 0 in spring-headless, return here to avoid SIGFPE
+	return;
+#else
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, GetTexture());
 
@@ -1261,6 +1264,7 @@ void CglFont::End()
 	glMatrixMode(GL_MODELVIEW);
 
 	glPopAttrib();
+#endif
 }
 
 
