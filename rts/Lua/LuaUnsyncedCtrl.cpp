@@ -2051,7 +2051,7 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	const std::string execError = Platform::ExecuteProcess(springFullName, processArgs);
 
 	if (execError.empty()) {
-		LOG("[Spring.%s] the game should", __FUNCTION__);
+		LOG("[Spring.%s] the game should be restarting", __FUNCTION__);
 		lua_pushboolean(L, true);
 	} else {
 		LOG_L(L_ERROR, "[Spring.%s] error %s", __FUNCTION__, execError.c_str());
