@@ -103,6 +103,8 @@ private:
 	//! Create a new texture and copy all data from the old one
 	//! Throw texture_size_exception if image's width or height is bigger than 2048
 	void CreateTexture(int w,int h);
+	//! Create a new texture
+	void ResizeTexture(int w,int h);
 	//! Copy glyph pixels on the texture
 	void Update(const unsigned char* pixels,int x,int y,int w,int h);
 

@@ -162,7 +162,6 @@ CFontTexture::~CFontTexture()
 {
 #ifndef   HEADLESS
 	FT_Done_Face(face);
-	delete face; //FIXME find a cleaner w/o adding ft2 dependency to CFontTexture.h?
 	delete[] faceDataBuffer;
 	glDeleteTextures(1, (const GLuint*)&texture);
 #endif
@@ -372,7 +371,7 @@ CFontTexture::Row* CFontTexture::AddRow(int glyphWidth, int glyphHeight)
 	int rowHeight = glyphHeight + (2*glyphHeight)/10;
 	while(nextRowPos+rowHeight >= texHeight) {
 		// Resize texture
-		CreateTexture(texWidth*2,texHeight*2); //FIXME
+		ResizeTexture(texWidth*2,texHeight*2); //FIXME
 	}
 	Row newrow(nextRowPos,rowHeight);
 	nextRowPos += rowHeight;
@@ -401,42 +400,44 @@ void CFontTexture::CreateTexture(int w,int h)
 	if(w>2048 || h>2048)
 		throw texture_size_exception();
 
-	glPushAttrib(GL_PIXEL_MODE_BIT);
-	glEnable(GL_TEXTURE_2D);
-	GLuint ntex;
-	glGenTextures(1, &ntex);
-	glBindTexture(GL_TEXTURE_2D, ntex);
+	if(!texture)
+		glGenTextures(1, &texture);
+
+	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	static const GLfloat borderColor[4] = {1.0f,1.0f,1.0f,0.0f};
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, w, h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
-	glPopAttrib();
-
-	if(texture) {
-		unsigned char* pixels = new unsigned char[texWidth * texHeight ];
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
-		glDeleteTextures(1, (const GLuint*)&texture);
-
-		texture=ntex;
-		int oldsw=texWidth;
-		int oldsh=texHeight;
-		texWidth=w;
-		texHeight=h;
-
-		Update(pixels,0,0,oldsw,oldsh);
-		delete[] pixels;
+	if (GLEW_ARB_texture_border_clamp) {
+			static const GLfloat borderColor[4] = {1.0f,1.0f,1.0f,0.0f};
+			glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	} else {
-		texture=ntex;
-		texWidth=w;
-		texHeight=h;
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	}
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, w, h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
+
+	texWidth=w;
+	texHeight=h;
+#endif
+}
+
+void CFontTexture::ResizeTexture(int w,int h)
+{
+#ifndef   HEADLESS
+	glPushAttrib(GL_PIXEL_MODE_BIT);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+	unsigned char* pixels = new unsigned char[texWidth * texHeight];
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
+
+	int oldsw=texWidth;
+	int oldsh=texHeight;
+	CreateTexture(w,h);
+
+	Update(pixels,0,0,oldsw,oldsh);
+	delete[] pixels;
 #endif
 }
 
