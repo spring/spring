@@ -1249,11 +1249,11 @@ bool CGame::Draw() {
 					readMap->UpdateShadingTexture();
 				}
 			}
-
-
 		}
+
 		if (FBO::IsSupported())
 			FBO::Unbind();
+
 		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
