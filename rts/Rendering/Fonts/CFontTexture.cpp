@@ -24,6 +24,8 @@
 #include "System/float4.h"
 #include "System/bitops.h"
 
+#include "LanguageBlocksDefs.h"
+
 #ifndef   HEADLESS
 #undef __FTERRORS_H__
 #define FT_ERRORDEF( e, v, s )  { e, s },
@@ -44,7 +46,6 @@ static const char* GetFTError(FT_Error e) {
 	return "Unknown error";
 }
 #endif // HEADLESS
-
 
 
 #ifndef   HEADLESS
@@ -161,6 +162,9 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 CFontTexture::~CFontTexture()
 {
 #ifndef   HEADLESS
+	for(auto it=blocks.begin();it!=blocks.end();++it)
+		delete it->second;
+
 	FT_Done_Face(face);
 	delete[] faceDataBuffer;
 	glDeleteTextures(1, (const GLuint*)&texture);
@@ -207,15 +211,21 @@ int CFontTexture::GetTexture() const
 	return texture;
 }
 
-const CFontTexture::GlyphInfo& CFontTexture::GetGlyph(char32_t ch)
+const GlyphInfo& CFontTexture::GetGlyph(char32_t ch)
 {
 #ifndef HEADLESS
-	auto it = glyphs.find(ch);
-	if (it == glyphs.end())
-		return LoadGlyph(ch); //FIXME can throw texture_size_exception
-	return it->second;
+	char32_t end;
+	//Get block start pos
+	char32_t start=GetLanguageBlock(ch,end);
+	auto it = blocks.find(start);
+	if (it ==  blocks.end())
+	{
+		//Load an entire block
+		return LoadBlock(start,end)->Get(ch); //FIXME can throw texture_size_exception
+	}
+	return it->second->Get(ch);
 #else
-	static CFontTexture::GlyphInfo g = GlyphInfo();
+	static GlyphInfo g = GlyphInfo();
 	return g;
 #endif
 }
@@ -256,7 +266,18 @@ int CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 #endif
 }
 
-CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(char32_t ch)
+LanguageBlock* CFontTexture::LoadBlock(char32_t start,char32_t end)
+{
+#ifndef   HEADLESS
+	LanguageBlock* block=blocks.insert(std::pair<char32_t,LanguageBlock*>(start,new LanguageBlock(start,end))).first->second;
+	for(char32_t i=start;i<end;i++)
+		LoadGlyph(block,i);
+
+	return block;
+#endif
+}
+
+void CFontTexture::LoadGlyph(LanguageBlock* block,char32_t ch)
 {
 #ifndef   HEADLESS
 	// This code mainly base on SFML code
@@ -264,15 +285,14 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(char32_t ch)
 	// I just pray
 
 	FT_Error error;
-	auto& glyph = glyphs[ch];
-
+	auto& glyph = block->Get(ch);
+	glyph=GlyphInfo();// Make empty glyph in case of error
 	FT_UInt index = FT_Get_Char_Index(face, ch);
 	glyph.index = index;
 
 	error = FT_Load_Glyph(face, index, FT_LOAD_RENDER|FT_LOAD_FORCE_AUTOHINT);
 	if (error) {
 		LOG_L(L_ERROR, "Couldn't load glyph %d", ch);
-		return glyph;
 	}
 
 	FT_GlyphSlot slot = face->glyph;
@@ -343,9 +363,7 @@ CFontTexture::GlyphInfo& CFontTexture::LoadGlyph(char32_t ch)
 	} else {
 		LOG_L(L_ERROR, "invalid glyph size");
 	}
-	return glyph;
-#else
-	return glyphs[0];
+
 #endif
 }
 
@@ -379,7 +397,7 @@ CFontTexture::Row* CFontTexture::AddRow(int glyphWidth, int glyphHeight)
 	return &imageRows.back();
 }
 
-CFontTexture::IGlyphRect CFontTexture::AllocateGlyphRect(int glyphWidth,int glyphHeight)
+IGlyphRect CFontTexture::AllocateGlyphRect(int glyphWidth,int glyphHeight)
 {
 #ifndef   HEADLESS
 	Row* row = FindRow(glyphWidth,glyphHeight);
