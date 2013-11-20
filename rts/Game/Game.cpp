@@ -321,9 +321,7 @@ DO_ONCE_FNC(
 
 
 CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
-	: finishedLoading(false)
-	, gameOver(false)
-	, gameDrawMode(gameNotDrawing)
+	: gameDrawMode(gameNotDrawing)
 	, thisFps(0)
 	, lastSimFrame(-1)
 	, frameStartTime(spring_gettime())
@@ -357,6 +355,8 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, infoConsole(NULL)
 	, consoleHistory(NULL)
 	, worldDrawer(NULL)
+	, finishedLoading(false)
+	, gameOver(false)
 {
 	game = this;
 
