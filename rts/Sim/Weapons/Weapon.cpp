@@ -1254,23 +1254,18 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit
 
 void CWeapon::Init()
 {
-	int piece = owner->script->AimFromWeapon(weaponNum);
-	relWeaponPos = owner->script->GetPiecePos(piece);
+	relWeaponPos = owner->script->GetPiecePos(owner->script->AimFromWeapon(weaponNum));
 	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-	piece = owner->script->QueryWeapon(weaponNum);
-	relWeaponMuzzlePos = owner->script->GetPiecePos(piece);
-	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
-	if (range > owner->maxRange) {
-		owner->maxRange = range;
-	}
+	relWeaponMuzzlePos = owner->script->GetPiecePos(owner->script->QueryWeapon(weaponNum));
+	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 	muzzleFlareSize = std::min(damageAreaOfEffect * 0.2f, std::min(1500.f, weaponDef->damages[0]) * 0.003f);
 
 	if (weaponDef->interceptor)
 		interceptHandler.AddInterceptorWeapon(this);
 
-	if(weaponDef->stockpile){
+	if (weaponDef->stockpile) {
 		owner->stockpileWeapon = this;
 		owner->commandAI->AddStockpileWeapon(this);
 	}

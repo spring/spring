@@ -49,6 +49,7 @@ void CWeaponLoader::LoadWeapons(CUnit* unit)
 		CWeapon* weapon = LoadWeapon(unit, defWeapon);
 
 		weapons.push_back(InitWeapon(unit, weapon, defWeapon));
+		unit->maxRange = std::max(weapon->range, unit->maxRange);
 	}
 }
 
@@ -155,8 +156,8 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	if (!weaponDef->avoidGround)   weapon->avoidFlags |= Collision::NOGROUND;
 
 	weapon->SetWeaponNum(owner->weapons.size());
-	weapon->UpdateRange(weaponDef->range);
 	weapon->Init();
+	weapon->UpdateRange(weaponDef->range);
 
 	return weapon;
 }
