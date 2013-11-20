@@ -413,6 +413,7 @@ CGame::~CGame()
 #endif
 
 	ENTER_SYNCED_CODE();
+	LOG("[%s][1]", __FUNCTION__);
 
 	CEndGameBox::Destroy();
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
@@ -420,9 +421,13 @@ CGame::~CGame()
 
 	IVideoCapturing::FreeInstance();
 
+	LOG("[%s][2]", __FUNCTION__);
 	CLuaGaia::FreeHandler();
+	LOG("[%s][3]", __FUNCTION__);
 	CLuaRules::FreeHandler();
+	LOG("[%s][4]", __FUNCTION__);
 	LuaOpenGL::Free();
+	LOG("[%s][5]", __FUNCTION__);
 
 	// Kill all teams that are still alive, in
 	// case the game did not do so through Lua.
@@ -440,11 +445,11 @@ CGame::~CGame()
 	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
 	UnsyncedGameCommands::DestroyInstance();
 	SyncedGameCommands::DestroyInstance();
-
 	CWordCompletion::DestroyInstance();
 
+	LOG("[%s][6]", __FUNCTION__);
 	SafeDelete(worldDrawer);
-	SafeDelete(guihandler);
+	SafeDelete(guihandler); // frees LuaUI
 	SafeDelete(minimap);
 	SafeDelete(resourceBar);
 	SafeDelete(tooltip); // CTooltipConsole*
@@ -458,6 +463,7 @@ CGame::~CGame()
 	SafeDelete(inMapDrawerModel);
 	SafeDelete(inMapDrawer);
 
+	LOG("[%s][7]", __FUNCTION__);
 	SafeDelete(water);
 	SafeDelete(sky);
 	SafeDelete(camHandler);
@@ -468,13 +474,16 @@ CGame::~CGame()
 	SafeDelete(texturehandler3DO);
 	SafeDelete(texturehandlerS3O);
 
+	LOG("[%s][8]", __FUNCTION__);
 	SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
 	SafeDelete(unitHandler); // depends on modelParser (via ~CUnit)
 	SafeDelete(projectileHandler);
 
+	LOG("[%s][9]", __FUNCTION__);
 	SafeDelete(cubeMapHandler);
 	SafeDelete(modelParser);
 
+	LOG("[%s][10]", __FUNCTION__);
 	SafeDelete(pathManager);
 	SafeDelete(ground);
 	SafeDelete(smoothGround);
@@ -491,6 +500,7 @@ CGame::~CGame()
 	SafeDelete(helper);
 	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
+	LOG("[%s][11]", __FUNCTION__);
 	CClassicGroundMoveType::DeleteLineTable();
 	CCategoryHandler::RemoveInstance();
 
@@ -499,15 +509,18 @@ CGame::~CGame()
 	}
 	grouphandlers.clear();
 
+	LOG("[%s][12]", __FUNCTION__);
 	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
 	SafeDelete(vfsHandler);
 	SafeDelete(archiveScanner);
 
+	LOG("[%s][13]", __FUNCTION__);
 	SafeDelete(gameServer);
 	ISound::Shutdown();
 
 	game = NULL;
 
+	LOG("[%s][14]", __FUNCTION__);
 	LEAVE_SYNCED_CODE();
 }
 
