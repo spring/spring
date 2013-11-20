@@ -238,7 +238,7 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 	buttons[SDL_BUTTON_LEFT].movement  += movedPixels;
 	buttons[SDL_BUTTON_RIGHT].movement += movedPixels;
 
-	if (!game->gameOver) {
+	if (!game->IsGameOver()) {
 		playerHandler->Player(gu->myPlayerNum)->currentStats.mousePixels += movedPixels;
 	}
 
@@ -267,7 +267,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 	dir = hide ? camera->forward : camera->CalcPixelDir(x, y);
 
-	if (!game->gameOver)
+	if (!game->IsGameOver())
 		playerHandler->Player(gu->myPlayerNum)->currentStats.mouseClicks++;
 
 	ButtonPressEvt& bp = buttons[button];

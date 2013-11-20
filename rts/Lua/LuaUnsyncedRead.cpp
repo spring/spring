@@ -443,7 +443,7 @@ int LuaUnsyncedRead::GetLastUpdateSeconds(lua_State* L)
 int LuaUnsyncedRead::GetHasLag(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushboolean(L, game ? game->HasLag() : false);
+	lua_pushboolean(L, (game != NULL)? game->IsLagging(luaL_optfloat(L, 1, 500.0f)) : false);
 	return 1;
 }
 

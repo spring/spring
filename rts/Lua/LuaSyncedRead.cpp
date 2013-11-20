@@ -805,7 +805,7 @@ int LuaSyncedRead::FixedAllies(lua_State* L)
 int LuaSyncedRead::IsGameOver(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushboolean(L, game->gameOver);
+	lua_pushboolean(L, game->IsGameOver());
 	return 1;
 }
 
@@ -1201,7 +1201,7 @@ int LuaSyncedRead::GetTeamUnitStats(lua_State* L)
 	}
 	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(L, teamID) && !game->gameOver) {
+	if (!IsAlliedTeam(L, teamID) && !game->IsGameOver()) {
 		return 0;
 	}
 
@@ -1225,7 +1225,7 @@ int LuaSyncedRead::GetTeamResourceStats(lua_State* L)
 	}
 	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(L, teamID) && !game->gameOver) {
+	if (!IsAlliedTeam(L, teamID) && !game->IsGameOver()) {
 		return 0;
 	}
 
@@ -1262,7 +1262,7 @@ int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC;
 
-	if (IsAlliedTeam(L, team->teamNum) || game->gameOver) {
+	if (IsAlliedTeam(L, team->teamNum) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
 	else if (teamHandler->AlliedTeams(team->teamNum, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
@@ -1285,7 +1285,7 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC;
 
-	if (IsAlliedTeam(L, team->teamNum) || game->gameOver) {
+	if (IsAlliedTeam(L, team->teamNum) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
 	else if (teamHandler->AlliedTeams(team->teamNum, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
@@ -1307,7 +1307,7 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 	}
 	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(L, teamID) && !game->gameOver) {
+	if (!IsAlliedTeam(L, teamID) && !game->IsGameOver()) {
 		return 0;
 	}
 
@@ -4255,7 +4255,7 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
 
-	if (IsAllyUnit(L, unit) || game->gameOver) {
+	if (IsAllyUnit(L, unit) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
 	else if (teamHandler->AlliedTeams(unit->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
@@ -4287,7 +4287,7 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
 
-	if (IsAllyUnit(L, unit) || game->gameOver) {
+	if (IsAllyUnit(L, unit) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
 	else if (teamHandler->AlliedTeams(unit->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {

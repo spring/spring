@@ -111,7 +111,7 @@ void CLoadScreen::Init()
 	try {
 		//! Create the Game Loading Thread
 		if (mtLoading)
-			gameLoadThread = new COffscreenGLThread( boost::bind(&CGame::LoadGame, game, mapName) );
+			gameLoadThread = new COffscreenGLThread(boost::bind(&CGame::LoadGame, game, mapName, true));
 
 	} catch (const opengl_error& gle) {
 		LOG_L(L_WARNING, "Offscreen GL Context creation failed, "
@@ -122,7 +122,7 @@ void CLoadScreen::Init()
 
 	if (!mtLoading) {
 		LOG("LoadingScreen: single-threaded");
-		game->LoadGame(mapName);
+		game->LoadGame(mapName, false);
 	}
 }
 
@@ -239,7 +239,7 @@ bool CLoadScreen::Update()
 		good_fpu_control_registers(curLoadMessage.c_str());
 	}
 
-	if (game->finishedLoading) {
+	if (game->IsFinishedLoading()) {
 		CLoadScreen::DeleteInstance();
 		return true;
 	}
