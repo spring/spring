@@ -334,7 +334,7 @@ namespace Threading {
 
 	void SetGameLoadThread() {
 		if (!haveGameLoadThreadID) {
-			nativeGameLoadThreadID = true;
+			haveGameLoadThreadID = true;
 			// boostGameLoadThreadID = boost::this_thread::get_id();
 			nativeGameLoadThreadID = Threading::GetCurrentThreadId();
 		}
