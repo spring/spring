@@ -230,9 +230,11 @@ bool SpringApp::Initialize()
 	Watchdog::Install();
 	Watchdog::RegisterThread(WDT_MAIN, true);
 
+	// ArchiveScanner uses for_mt --> needs thread-count set
+	// FIXME: USELESS? InitThreadPool ALSO CALLS SetThreadCount!
 	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
 	FileSystemInitializer::Initialize();
-	Threading::InitOMP();
+	Threading::InitThreadPool();
 
 	mouseInput = IMouseInput::GetInstance();
 	keyInput = KeyInput::GetInstance();

@@ -383,15 +383,16 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	CInputReceiver::guiAlpha = configHandler->GetFloat("GuiOpacity");
 
-	const string inputTextGeo = configHandler->GetString("InputTextGeo");
 	ParseInputTextGeometry("default");
-	ParseInputTextGeometry(inputTextGeo);
+	ParseInputTextGeometry(configHandler->GetString("InputTextGeo"));
 
 	CLuaHandle::SetModUICtrl(configHandler->GetBool("LuaModUICtrl"));
 
 	modInfo.Init(modName.c_str());
 	GML::Init(); // modinfo plays key part in MT enable/disable
-	Threading::InitOMP();
+
+	// FIXME: THIS HAS ALREADY BEEN CALLED! (SpringApp::Initialize)
+	// Threading::InitThreadPool();
 	Threading::SetThreadScheduler();
 
 	if (!mapInfo) {
@@ -511,12 +512,16 @@ CGame::~CGame()
 }
 
 
-void CGame::LoadGame(const std::string& mapName)
+void CGame::LoadGame(const std::string& mapName, bool threaded)
 {
 	GML::ThreadNumber(GML_LOAD_THREAD_NUM);
-	Threading::SetThreadName("loading");
-
+	// NOTE:
+	//   this is needed for LuaHandle::CallOut*UpdateCallIn
+	//   the main-thread is NOT the same as the load-thread
+	//   when LoadingMT=1 (!!!)
+	Threading::SetGameLoadThread();
 	Watchdog::RegisterThread(WDT_LOAD);
+
 	if (!gu->globalQuit) LoadMap(mapName);
 	if (!gu->globalQuit) LoadDefs();
 	if (!gu->globalQuit) PreLoadSimulation();
@@ -532,7 +537,6 @@ void CGame::LoadGame(const std::string& mapName)
 		saveFile->LoadGame();
 	}
 
-	Threading::SetThreadName("unknown");
 	Watchdog::DeregisterThread(WDT_LOAD);
 }
 
@@ -1049,7 +1053,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 
 	// Update the interpolation coefficient (globalRendering->timeOffset)
-	if (!gs->paused && !HasLag() && gs->frameNum > 1 && !videoCapturing->IsCapturing()) {
+	if (!gs->paused && !IsLagging() && gs->frameNum > 1 && !videoCapturing->IsCapturing()) {
 		globalRendering->lastFrameStart = currentTime;
 		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
 		globalRendering->timeOffset = (currentTime - lastSimFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
@@ -2116,12 +2120,12 @@ void CGame::ReColorTeams()
 	}
 }
 
-bool CGame::HasLag() const
+bool CGame::IsLagging(float maxLatency) const
 {
 	const spring_time timeNow = spring_gettime();
 	const float diffTime = spring_tomsecs(timeNow - lastFrameTime);
 
-	return (!gs->paused && (diffTime > (500.0f / gs->speedFactor)));
+	return (!gs->paused && (diffTime > (maxLatency / gs->speedFactor)));
 }
 
 
