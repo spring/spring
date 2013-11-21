@@ -49,11 +49,10 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 	// do not ignore the last extension
 	extensions += ";";
 
-	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, extensions.c_str());
-
 	size_t curIdx = 0;
 	size_t nxtIdx = 0;
 
+	std::string enabledExtensions = "";
 	// split the list, strip off the "*." extension prefixes
 	while ((nxtIdx = extensions.find(";", curIdx)) != std::string::npos) {
 		extension = extensions.substr(curIdx, nxtIdx - curIdx);
@@ -68,7 +67,10 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 			continue;
 
 		formats[extension] = MODELTYPE_ASS;
+		enabledExtensions += "*." + extension + ";";
 	}
+
+	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, enabledExtensions.c_str());
 }
 
 
