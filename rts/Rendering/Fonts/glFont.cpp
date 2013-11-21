@@ -129,9 +129,6 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	if (size<=0)
 		size = 14;
 
-	invSize = 1.0f / size;
-	normScale = invSize / 64.0f;
-
 	va  = new CVertexArray();
 	va2 = new CVertexArray();
 
@@ -314,7 +311,7 @@ std::string CglFont::StripColorCodes(const std::string& text)
 
 float CglFont::GetCharacterWidth(const char32_t c)
 {
-	return normScale * GetGlyph(c).advance;
+	return GetGlyph(c).advance;
 }
 
 
@@ -350,7 +347,7 @@ float CglFont::GetTextWidth(const std::string& text)
 				if (pos+1 < text.length() && text[pos+1] == '\x0a')
 					pos++;
 			case '\x0a': //! LF
-				if (prv_g) w += normScale * prv_g->advance; //FIXME
+				if (prv_g) w += prv_g->advance; //FIXME
 				if (w > maxw)
 					maxw = w;
 				w = 0.0f;
@@ -361,13 +358,13 @@ float CglFont::GetTextWidth(const std::string& text)
 			default:
 				char32_t u = GetUnicodeChar(text, pos);
 				cur_g = &GetGlyph(u);
-				if (prv_g) w += normScale * GetKerning(*prv_g, *cur_g); //FIXME cur_g->advance
+				if (prv_g) w += GetKerning(*prv_g, *cur_g); //FIXME cur_g->advance
 				prv_g = cur_g;
 		}
 	}
 
-	if(prv_g)
-		w+=normScale * prv_g->advance; //FIXME
+	if (prv_g)
+		w += prv_g->advance; //FIXME
 	if (w > maxw)
 		maxw = w;
 
@@ -383,7 +380,7 @@ float CglFont::GetTextHeight(const std::string& text, float* descender, int* num
 		return 0.0f;
 	}
 
-	float h = 0.0f, d = GetLineHeight() + normScale * GetFontDescender();
+	float h = 0.0f, d = GetLineHeight() + GetDescender();
 	unsigned int multiLine = 1;
 
 	for (int pos = 0 ; pos < text.length(); pos++) {
@@ -409,15 +406,15 @@ float CglFont::GetTextHeight(const std::string& text, float* descender, int* num
 					pos++;
 			case '\x0a': //! LF
 				multiLine++;
-				d = GetLineHeight() + normScale * GetFontDescender();
+				d = GetLineHeight() + GetDescender();
 				break;
 
 			//! printable char
 			default:
 				char32_t u = GetUnicodeChar(text,pos);
 				const GlyphInfo& g = GetGlyph(u);
-				if (g.descender < d) d = normScale * g.descender;
-				if (multiLine < 2 && g.height > h) h = normScale * g.height; //! only calc height for the first line
+				if (g.descender < d) d = g.descender;
+				if (multiLine < 2 && g.height > h) h = g.height; //! only calc height for the first line
 		}
 	}
 
@@ -532,7 +529,7 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 	word w2;
 	w2.pos = w.pos;
 
-	const float spaceAdvance = normScale * GetGlyph(0x20).advance;
+	const float spaceAdvance = GetGlyph(0x20).advance;
 	if (w.isLineBreak) {
 		//! shouldn't happen
 		w2 = w;
@@ -556,9 +553,9 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 
 				if (i < w.text.length()) {
 					c = GetUnicodeChar(w.text,i);
-					width += normScale*GetKerning(g,GetGlyph(c));
+					width += GetKerning(g,GetGlyph(c));
 				} else {
-					width += normScale*GetKerning(g,GetGlyph(0x20));
+					width += GetKerning(g,GetGlyph(0x20));
 				}
 
 				if (width > wantedWidth) {
@@ -593,9 +590,9 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 
 			if (i < w.text.length()) {
 				c = GetUnicodeChar(w.text,i);
-				width += normScale * GetKerning(g,GetGlyph(c));
+				width += GetKerning(g,GetGlyph(c));
 			} else {
-				width += normScale * GetKerning(g,GetGlyph(0x20));
+				width += GetKerning(g,GetGlyph(0x20));
 			}
 
 			if (width > wantedWidth) {
@@ -621,8 +618,8 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 
 void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float maxWidth)
 {
-	const float ellipsisAdvance = normScale * GetGlyph(0x85).advance;
-	const float spaceAdvance = normScale * GetGlyph(0x20).advance;
+	const float ellipsisAdvance = GetGlyph(0x85).advance;
+	const float spaceAdvance = GetGlyph(0x20).advance;
 
 	if (ellipsisAdvance > maxWidth)
 		return;
@@ -857,7 +854,7 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 void CglFont::SplitTextInWords(const std::string& text, std::list<word>* words, std::list<colorcode>* colorcodes)
 {
 	const unsigned int length = (unsigned int)text.length();
-	const float spaceAdvance = normScale * GetGlyph(0x20).advance;
+	const float spaceAdvance = GetGlyph(0x20).advance;
 
 	words->push_back(word());
 	word* w = &(words->back());
@@ -1317,15 +1314,15 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 			x  = startx;
 			y -= skippedLines * lineHeight_;
 		} else if (g) {
-			x += scaleX * (normScale * GetKerning(*g, *c_g));
+			x += scaleX * GetKerning(*g, *c_g);
 		}
 
 		g = c_g;
 
-		va->AddVertex2dQT(x+normScale * scaleX*(float)g->size.x0(), y+normScale * scaleY*(float)g->size.y1(), (float)g->texCord.x0(), (float)g->texCord.y1());
-		va->AddVertex2dQT(x+normScale * scaleX*(float)g->size.x0(), y+normScale * scaleY*(float)g->size.y0(), (float)g->texCord.x0(), (float)g->texCord.y0());
-		va->AddVertex2dQT(x+normScale * scaleX*(float)g->size.x1(), y+normScale * scaleY*(float)g->size.y0(), (float)g->texCord.x1(), (float)g->texCord.y0());
-		va->AddVertex2dQT(x+normScale * scaleX*(float)g->size.x1(), y+normScale * scaleY*(float)g->size.y1(), (float)g->texCord.x1(), (float)g->texCord.y1());
+		va->AddVertex2dQT(x+scaleX*(float)g->size.x0(), y+scaleY*(float)g->size.y1(), (float)g->texCord.x0(), (float)g->texCord.y1());
+		va->AddVertex2dQT(x+scaleX*(float)g->size.x0(), y+scaleY*(float)g->size.y0(), (float)g->texCord.x0(), (float)g->texCord.y0());
+		va->AddVertex2dQT(x+scaleX*(float)g->size.x1(), y+scaleY*(float)g->size.y0(), (float)g->texCord.x1(), (float)g->texCord.y0());
+		va->AddVertex2dQT(x+scaleX*(float)g->size.x1(), y+scaleY*(float)g->size.y1(), (float)g->texCord.x1(), (float)g->texCord.y1());
 	} while(true);
 }
 
@@ -1333,7 +1330,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const float& scaleY, const std::string& str)
 {
 	const float shiftX = scaleX*0.1, shiftY = scaleY*0.1;
-	const float ssX = normScale * scaleX * GetOutlineWidth(), ssY = normScale * scaleY * GetOutlineWidth();
+	const float ssX = (scaleX/fontSize) * GetOutlineWidth(), ssY = (scaleY/fontSize) * GetOutlineWidth();
 
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
@@ -1372,13 +1369,13 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 			x  = startx;
 			y -= skippedLines * lineHeight_;
 		} else if (g) {
-			x += scaleX * normScale * GetKerning(*g, *c_g);
+			x += scaleX * GetKerning(*g, *c_g);
 		}
 
 		g = c_g;
 
-		const float dx0 = x + normScale * scaleX * g->size.x0(), dy0 = y + normScale * scaleY * g->size.y0();
-		const float dx1 = x + normScale * scaleX * g->size.x1(), dy1 = y + normScale * scaleY * g->size.y1();
+		const float dx0 = x + scaleX * g->size.x0(), dy0 = y + scaleY * g->size.y0();
+		const float dx1 = x + scaleX * g->size.x1(), dy1 = y + scaleY * g->size.y1();
 
 		//! draw shadow
 		va2->AddVertex2dQT(dx0+shiftX-ssX, dy1-shiftY-ssY, g->texCord.x0(), g->texCord.y1());
@@ -1396,7 +1393,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 
 void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const float& scaleY, const std::string& str)
 {
-	const float shiftX = normScale * scaleX * GetOutlineWidth(), shiftY = normScale * scaleY * GetOutlineWidth();
+	const float shiftX = (scaleX/fontSize) * GetOutlineWidth(), shiftY = (scaleY/fontSize) * GetOutlineWidth();
 
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
@@ -1435,13 +1432,13 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 			x  = startx;
 			y -= skippedLines * lineHeight_;
 		} else if (g) {
-			x += scaleX * normScale * GetKerning(*g, *c_g);
+			x += scaleX * GetKerning(*g, *c_g);
 		}
 
 		g = c_g;
 
-		const float dx0 = x + normScale * scaleX * g->size.x0(), dy0 = y + normScale * scaleY * g->size.y0();
-		const float dx1 = x + normScale * scaleX * g->size.x1(), dy1 = y + normScale * scaleY * g->size.y1();
+		const float dx0 = x + scaleX * g->size.x0(), dy0 = y + scaleY * g->size.y0();
+		const float dx1 = x + scaleX * g->size.x1(), dy1 = y + scaleY * g->size.y1();
 
 		//! draw outline
 		va2->AddVertex2dQT(dx0-shiftX, dy1-shiftY, g->texCord.x0(), g->texCord.y1());
@@ -1494,11 +1491,11 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 
 
 	//! vertical alignment
-	y += sizeY * normScale * GetFontDescender(); //! move to baseline (note: descender is negative)
+	y += sizeY * GetDescender(); //! move to baseline (note: descender is negative)
 	if (options & FONT_BASELINE) {
 		//! nothing
 	} else if (options & FONT_DESCENDER) {
-		y -= sizeY * normScale * GetFontDescender();
+		y -= sizeY * GetDescender();
 	} else if (options & FONT_VCENTER) {
 		float textDescender;
 		y -= sizeY * 0.5f * GetTextHeight(text,&textDescender);
@@ -1506,7 +1503,7 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	} else if (options & FONT_TOP) {
 		y -= sizeY * GetTextHeight(text);
 	} else if (options & FONT_ASCENDER) {
-		y -= sizeY * normScale * GetFontDescender();
+		y -= sizeY * GetDescender();
 		y -= sizeY;
 	} else if (options & FONT_BOTTOM) {
 		float textDescender;
@@ -1657,14 +1654,14 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 	if (options & FONT_BASELINE) {
 		//! nothing
 	} else if (options & FONT_DESCENDER) {
-		y -= sizeY * normScale * GetFontDescender();
+		y -= sizeY * GetDescender();
 	} else if (options & FONT_VCENTER) {
 		y -= sizeY * 0.5f * maxHeight;
 		y -= sizeY * 0.5f * minDescender;
 	} else if (options & FONT_TOP) {
 		y -= sizeY * maxHeight;
 	} else if (options & FONT_ASCENDER) {
-		y -= sizeY * normScale * GetFontDescender();
+		y -= sizeY * GetDescender();
 		y -= sizeY;
 	} else if (options & FONT_BOTTOM) {
 		y -= sizeY * minDescender;
