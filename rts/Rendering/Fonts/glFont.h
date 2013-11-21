@@ -78,9 +78,9 @@ public:
 	int   GetTextNumLines(const std::string& text) const;
 	static std::string StripColorCodes(const std::string& text);
 
-	inline float GetLineHeight()     const { return normScale * GetLineHeightA(); }
+	//inline float GetLineHeight() const;
 	inline float GetSize()           const { return fontSize; }
-	inline int GetDescender()      const { return normScale * GetFontDescender(); }
+	//inline int GetDescender()      const { return GetFontDescender(); }
 	//inline int GetOutlineWidth()     const { return GetOutlineWidth(); }
 	//inline float GetOutlineWeight()  const { return GetOutilneWeight(); }
 	inline std::string GetFilePath() const { return fontPath; }
@@ -137,9 +137,6 @@ private:
 	void WrapTextConsole(std::list<word>& words, float maxWidth, float maxHeight);
 	void WrapTextKnuth(std::list<word>& words, float maxWidth, float maxHeight) const;
 private:
-	float invSize;
-	float normScale;
-
 	std::string fontPath;
 	std::string fontFamily;
 	std::string fontStyle;
