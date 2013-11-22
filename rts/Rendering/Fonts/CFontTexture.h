@@ -2,7 +2,7 @@
 
 #ifndef _CFONTTEXTURE_H
 #define _CFONTTEXTURE_H
-#include <map>
+#include <unordered_map>
 #include <list>
 #include <string>
 
@@ -52,12 +52,14 @@ struct GlyphInfo {
 	, height(0)
 	, descender(0)
 	, index(0)
+	, utf16(0)
 	{ };
 
 	IGlyphRect size;
 	IGlyphRect texCord;
 	float advance, height, descender;
 	char32_t index;
+	char32_t utf16;
 };
 
 class LanguageBlock
@@ -105,7 +107,6 @@ protected:
 	const FT_Face& GetFace() const;
 
 protected:
-	float GetKerning(char32_t lchar, char32_t rchar);
 	float GetKerning(const GlyphInfo& lgl,const GlyphInfo& rgl);
 
 private:
@@ -135,7 +136,8 @@ private:
 	unsigned char* faceDataBuffer;
 
 private:
-	std::map<char32_t,LanguageBlock*> blocks;    //!UTF32 block start -> LanguageBlock
+	float kerningPrecached[128 * 128]; // contains ASCII kerning
+	std::unordered_map<uint32_t, float> kerningDynamic; // contains unicode kerning
 	//! Load all chars in block's range
 	LanguageBlock* LoadBlock(char32_t start,char32_t end);
 	void LoadGlyph(LanguageBlock* block, char32_t ch);
