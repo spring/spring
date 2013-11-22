@@ -378,10 +378,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Syncer.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\SyncServer.cpp"
 				>
 			</File>
@@ -1227,10 +1223,6 @@
 			</File>
 			<File
 				RelativePath="..\rts\SunParser.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Syncer.h"
 				>
 			</File>
 			<File

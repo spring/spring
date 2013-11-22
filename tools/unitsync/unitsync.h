@@ -63,6 +63,14 @@ enum BitmapType {
 /** @} */
 
 
+struct GameDataUnitDef {
+	std::string name;
+	std::string fullName;
+};
+
+
+
 const char* GetStr(std::string str);
 
 #endif // _UNITSYNC_H
+
