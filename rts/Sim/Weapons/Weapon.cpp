@@ -1334,13 +1334,15 @@ void CWeapon::UpdateInterceptTarget()
 ProjectileParams CWeapon::GetProjectileParams()
 {
 	ProjectileParams params;
-	params.target = targetUnit;
-	params.weaponDef = weaponDef;
-	params.owner = owner;
 
-	if (interceptTarget) {
+	if (interceptTarget != NULL) {
 		params.target = interceptTarget;
+	} else {
+		params.target = targetUnit;
 	}
+
+	params.owner = owner;
+	params.weaponDef = weaponDef;
 
 	return params;
 }
@@ -1349,9 +1351,10 @@ ProjectileParams CWeapon::GetProjectileParams()
 float CWeapon::GetRange2D(float yDiff) const
 {
 	const float root1 = range * range - yDiff * yDiff;
-	if (root1 <= 0.0f) {
+
+	if (root1 <= 0.0f)
 		return 0.0f;
-	}
+
 	return (math::sqrt(root1));
 }
 

@@ -20,10 +20,6 @@ CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, d
 	color = def->visuals.color;
 }
 
-void CLaserCannon::Init()
-{
-	CWeapon::Init();
-}
 
 
 void CLaserCannon::Update()

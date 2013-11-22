@@ -36,6 +36,7 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 	std::set<std::string> whitelist;
 	std::string extension;
 	std::string extensions;
+	std::string enabledExtensions;
 
 	whitelist.insert("3ds"  ); // 3DSMax
 	whitelist.insert("dae"  ); // Collada
@@ -52,7 +53,6 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 	size_t curIdx = 0;
 	size_t nxtIdx = 0;
 
-	std::string enabledExtensions = "";
 	// split the list, strip off the "*." extension prefixes
 	while ((nxtIdx = extensions.find(";", curIdx)) != std::string::npos) {
 		extension = extensions.substr(curIdx, nxtIdx - curIdx);
