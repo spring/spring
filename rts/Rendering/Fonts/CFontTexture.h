@@ -62,24 +62,7 @@ struct GlyphInfo {
 	char32_t utf16;
 };
 
-class LanguageBlock
-{
-public:
-	LanguageBlock(char32_t start,char32_t end):
-		start(start),
-		end(end)
-	{
-		glyphs=new GlyphInfo[end-start];// [start,end)
-	}
 
-	~LanguageBlock(){ delete[] glyphs; };
-
-	inline bool OnThisPlane(char32_t ch) const {return start<=ch && ch<end;}
-	GlyphInfo& Get(char32_t ch){return glyphs[ch-start];}
-private:
-	char32_t start,end;
-	GlyphInfo* glyphs;
-};
 
 /**
 This class just store glyphs and load new glyphs if requred
@@ -120,14 +103,12 @@ private:
 private:
 	unsigned int texWidth,texHeight;
 	unsigned int texture;
-	//! Create a new texture and copy all data from the old one
-	//! Throw texture_size_exception if image's width or height is bigger than 2048
-	void CreateTexture(int w,int h);
-	//! Create a new texture
-	void ResizeTexture(int w,int h);
-	//! Copy glyph pixels on the texture
+	// Create a new texture and copy all data from the old one
+	// Throw texture_size_exception if image's width or height is bigger than 2048
+	void ResizeTexture(int w, int h);
+	// Copy glyph pixels on the texture
 	void Update(const unsigned char* pixels,int x,int y,int w,int h);
-	//! Fill given rect by null bytes
+	// Fill given rect by null bytes
 	void Clear(int x,int y,int w,int h);
 
 private:
@@ -138,9 +119,12 @@ private:
 private:
 	float kerningPrecached[128 * 128]; // contains ASCII kerning
 	std::unordered_map<uint32_t, float> kerningDynamic; // contains unicode kerning
+
+	std::unordered_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo
+
 	//! Load all chars in block's range
-	LanguageBlock* LoadBlock(char32_t start,char32_t end);
-	void LoadGlyph(LanguageBlock* block, char32_t ch);
+	void LoadBlock(char32_t start, char32_t end);
+	void LoadGlyph(char32_t ch);
 
 private:
 	struct Row {

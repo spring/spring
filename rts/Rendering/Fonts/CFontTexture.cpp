@@ -165,12 +165,12 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	fontDescender = normScale * FT_MulFix(face->descender, face->size->metrics.y_scale);
 	//lineHeight = FT_MulFix(face->height, face->size->metrics.y_scale); // bad results
 	lineHeight = face->height / face->units_per_EM;
-
 	if (lineHeight <= 0)
 		lineHeight = 1.25 * (face->bbox.yMax - face->bbox.yMin);
 
-	//! Create initial small texture
-	CreateTexture(32,32); //FIXME
+	// Create initial small texture
+	ResizeTexture(32,32);
+
 	// precache ASCII kernings
 	memset(kerningPrecached, 0, 128*128*sizeof(float));
 	for (char32_t i=32; i<128; ++i) {
@@ -190,9 +190,6 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 CFontTexture::~CFontTexture()
 {
 #ifndef   HEADLESS
-	for(auto it=blocks.begin();it!=blocks.end();++it)
-		delete it->second;
-
 	FT_Done_Face(face);
 	delete[] faceDataBuffer;
 	glDeleteTextures(1, (const GLuint*)&texture);
@@ -239,24 +236,27 @@ int CFontTexture::GetTexture() const
 	return texture;
 }
 
+
 const GlyphInfo& CFontTexture::GetGlyph(char32_t ch)
 {
 #ifndef HEADLESS
-	char32_t end;
-	//Get block start pos
-	char32_t start=GetLanguageBlock(ch,end);
-	auto it = blocks.find(start);
-	if (it ==  blocks.end())
-	{
-		//Load an entire block
-		return LoadBlock(start,end)->Get(ch); //FIXME can throw texture_size_exception
-	}
-	return it->second->Get(ch);
+	const auto it = glyphs.find(ch);
+	if (it != glyphs.end())
+		return it->second;
+
+	// Get block start pos
+	char32_t start, end;
+	start = GetLanguageBlock(ch, end);
+
+	// Load an entire block
+	LoadBlock(start, end); ////FIXME can throw texture_size_exception
+	return GetGlyph(ch);
 #else
 	static GlyphInfo g = GlyphInfo();
 	return g;
 #endif
 }
+
 
 float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 {
@@ -282,28 +282,34 @@ float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 }
 
 
-LanguageBlock* CFontTexture::LoadBlock(char32_t start,char32_t end)
+void CFontTexture::LoadBlock(char32_t start, char32_t end)
 {
-#ifndef   HEADLESS
-	LanguageBlock* block=blocks.insert(std::pair<char32_t,LanguageBlock*>(start,new LanguageBlock(start,end))).first->second;
-	for(char32_t i=start;i<end;i++)
-		LoadGlyph(block,i);
-
-	return block;
-#endif
+	for(char32_t i=start; i<end; ++i)
+		LoadGlyph(i);
 }
 
-void CFontTexture::LoadGlyph(LanguageBlock* block,char32_t ch)
+void CFontTexture::LoadGlyph(char32_t ch)
 {
 #ifndef   HEADLESS
-	FT_Error error;
-	auto& glyph = block->Get(ch);
-	glyph = GlyphInfo();// Make empty glyph in case of error
+	// map unicode to font internal index
 	FT_UInt index = FT_Get_Char_Index(face, ch);
+
+	// check for duplicated glyphs
+	for (auto& it: glyphs) {
+		if (it.second.index == index) {
+			auto& glyph = glyphs[ch];
+			glyph = it.second;
+			glyph.utf16 = ch;
+			return;
+		}
+	}
+
+	auto& glyph = glyphs[ch];
 	glyph.index = index;
 	glyph.utf16 = ch;
 
-	error = FT_Load_Glyph(face, index, FT_LOAD_RENDER|FT_LOAD_FORCE_AUTOHINT);
+	// load glyph
+	FT_Error error = FT_Load_Glyph(face, index, FT_LOAD_RENDER|FT_LOAD_FORCE_AUTOHINT);
 	if (error) {
 		LOG_L(L_ERROR, "Couldn't load glyph %d", ch);
 	}
@@ -373,7 +379,7 @@ CFontTexture::Row* CFontTexture::AddRow(int glyphWidth, int glyphHeight)
 	int rowHeight = glyphHeight + (2*glyphHeight)/10;
 	while (nextRowPos+rowHeight >= texHeight) {
 		// Resize texture
-		ResizeTexture(texWidth*2,texHeight*2); //FIXME
+		ResizeTexture(texWidth*2, texHeight*2); //FIXME
 	}
 	Row newrow(nextRowPos, rowHeight);
 	nextRowPos += rowHeight;
@@ -397,14 +403,23 @@ IGlyphRect CFontTexture::AllocateGlyphRect(int glyphWidth,int glyphHeight)
 #endif
 }
 
-void CFontTexture::CreateTexture(int w,int h)
+void CFontTexture::ResizeTexture(int w, int h)
 {
 #ifndef   HEADLESS
-	if(w>2048 || h>2048)
+	if (w>2048 || h>2048)
 		throw texture_size_exception();
 
-	if(!texture)
+	glPushAttrib(GL_PIXEL_MODE_BIT);
+
+	unsigned char* pixels = NULL;
+	if (!texture) {
 		glGenTextures(1, &texture);
+	} else {
+		pixels = new unsigned char[texWidth * texHeight];
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
+	}
 
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -421,29 +436,19 @@ void CFontTexture::CreateTexture(int w,int h)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, w, h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
+	unsigned char empty[w*h];
+	memset(empty, 0, w*h);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, w, h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, empty);
 
-	texWidth=w;
-	texHeight=h;
-#endif
-}
+	if (pixels != NULL) {
+		// copy back old data
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texWidth, texHeight, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
+	}
 
-void CFontTexture::ResizeTexture(int w,int h)
-{
-#ifndef   HEADLESS
-	glPushAttrib(GL_PIXEL_MODE_BIT);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-	unsigned char* pixels = new unsigned char[texWidth * texHeight];
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
-
-	int oldsw=texWidth;
-	int oldsh=texHeight;
-	CreateTexture(w,h);
-
-	Update(pixels,0,0,oldsw,oldsh);
+	texWidth  = w;
+	texHeight = h;
 	delete[] pixels;
+	glPopAttrib();
 #endif
 }
 
