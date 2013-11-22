@@ -35,6 +35,7 @@
 #include "System/Log/Level.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/LogOutput.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Util.h"
 #include "System/exportdefines.h"
 #include "System/Info.h"
@@ -307,13 +308,18 @@ static void CheckForImportantFilesInVFS()
 }
 
 
-
 EXPORT(int) Init(bool isServer, int id)
 {
 	try {
 		// Cleanup data from previous Init() calls
 		_Cleanup();
 
+		static bool timeinitialized = false;
+		if (!timeinitialized) {
+			spring_clock::PushTickRate(false);
+			spring_time::setstarttime(spring_time::gettime(true));
+			timeinitialized = true;
+		}
 		CLogOutput::LogSystemInfo();
 
 #ifndef DEBUG
