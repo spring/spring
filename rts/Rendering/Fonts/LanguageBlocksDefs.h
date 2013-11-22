@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LANGUAGEBLOCKSDEFS_H_INCLUDED
 #define LANGUAGEBLOCKSDEFS_H_INCLUDED
 

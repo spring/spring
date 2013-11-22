@@ -5,8 +5,6 @@
 
 #include <string>
 #include <list>
-#include <map>
-#include <limits.h> // for INT_MAX
 
 #include "System/float4.h"
 #include "CFontTexture.h"

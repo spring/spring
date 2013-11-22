@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "CFontTexture.h"
 #include "Rendering/GlobalRendering.h"
 
@@ -104,7 +106,7 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	std::string fontPath(fontfile);
 	CFileHandler* f = new CFileHandler(fontPath);
 	if (!f->FileExists()) {
-		//! check in 'fonts/', too
+		// check in 'fonts/', too
 		if (fontPath.substr(0,6) != "fonts/") {
 			delete f;
 			fontPath = "fonts/" + fontPath;
@@ -132,7 +134,7 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 		throw content_error(msg);
 	}
 
-	//! set render size
+	// set render size
 	error = FT_Set_Pixel_Sizes(face, 0, size);
 	if (error) {
 		FT_Done_Face(face);
@@ -142,10 +144,9 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 		throw content_error(msg);
 	}
 
-	//! select unicode charmap
+	// select unicode charmap
 	error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-	if(error) {
-		//Support unicode or GTFO
+	if (error) {
 		FT_Done_Face(face);
 		delete[] faceDataBuffer;
 		std::string msg = fontfile + ": FT_Select_Charmap failed: ";
@@ -157,7 +158,7 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	//lineHeight = FT_MulFix(face->height, face->size->metrics.y_scale); // bad results
 	lineHeight = face->height / face->units_per_EM;
 
-	if(lineHeight<=0)
+	if (lineHeight <= 0)
 		lineHeight = 1.25 * (face->bbox.yMax - face->bbox.yMin);
 
 	//! Create initial small texture
@@ -286,10 +287,6 @@ LanguageBlock* CFontTexture::LoadBlock(char32_t start,char32_t end)
 void CFontTexture::LoadGlyph(LanguageBlock* block,char32_t ch)
 {
 #ifndef   HEADLESS
-	// This code mainly base on SFML code
-	// I actually do not have a clear idea how it works
-	// I just pray
-
 	FT_Error error;
 	auto& glyph = block->Get(ch);
 	glyph = GlyphInfo();// Make empty glyph in case of error
@@ -318,8 +315,7 @@ void CFontTexture::LoadGlyph(LanguageBlock* block,char32_t ch)
 	const int width  = slot->bitmap.width;
 	const int height = slot->bitmap.rows;
 
-	if (width<=0 || height<=0) { //FIXME
-		//LOG_L(L_ERROR, "invalid glyph size");
+	if (width<=0 || height<=0) {
 		return;
 	}
 
@@ -348,13 +344,13 @@ void CFontTexture::LoadGlyph(LanguageBlock* block,char32_t ch)
 CFontTexture::Row* CFontTexture::FindRow(int glyphWidth, int glyphHeight)
 {
 	for(auto& row: imageRows) {
-		float ratio=(float)row.height/(float)glyphHeight;
+		float ratio = (float)row.height/(float)glyphHeight;
 		// Ignore too small or too big raws
 		if (ratio < 1.0f || ratio > 1.3f)
 			continue;
 
-		// Check if there is enought space in this row
-		if (texWidth - row.wight < glyphWidth)
+		// Check if there is enough space in this row
+		if (texWidth - row.width < glyphWidth)
 			continue;
 
 		return &row;
@@ -365,11 +361,11 @@ CFontTexture::Row* CFontTexture::FindRow(int glyphWidth, int glyphHeight)
 CFontTexture::Row* CFontTexture::AddRow(int glyphWidth, int glyphHeight)
 {
 	int rowHeight = glyphHeight + (2*glyphHeight)/10;
-	while(nextRowPos+rowHeight >= texHeight) {
+	while (nextRowPos+rowHeight >= texHeight) {
 		// Resize texture
 		ResizeTexture(texWidth*2,texHeight*2); //FIXME
 	}
-	Row newrow(nextRowPos,rowHeight);
+	Row newrow(nextRowPos, rowHeight);
 	nextRowPos += rowHeight;
 	imageRows.push_back(newrow);
 	return &imageRows.back();
@@ -379,12 +375,12 @@ IGlyphRect CFontTexture::AllocateGlyphRect(int glyphWidth,int glyphHeight)
 {
 #ifndef   HEADLESS
 	//FIXME add padding
-	Row* row = FindRow(glyphWidth,glyphHeight);
-	if(!row)
-		row = AddRow(glyphWidth,glyphHeight);
+	Row* row = FindRow(glyphWidth, glyphHeight);
+	if (!row)
+		row = AddRow(glyphWidth, glyphHeight);
 
-	IGlyphRect rect = IGlyphRect(row->wight,row->position,glyphWidth,glyphHeight);
-	row->wight += glyphWidth;
+	IGlyphRect rect = IGlyphRect(row->width, row->position, glyphWidth, glyphHeight);
+	row->width += glyphWidth;
 	return rect;
 #else
 	return IGlyphRect();

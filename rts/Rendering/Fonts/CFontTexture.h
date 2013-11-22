@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef _CFONTTEXTURE_H
 #define _CFONTTEXTURE_H
 #include <map>

@@ -118,23 +118,20 @@ static char32_t GetUnicodeChar(const std::string& text, int& pos)
 /*******************************************************************************/
 /*******************************************************************************/
 
-CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float _outlineweight):
-	CFontTexture(fontfile,size,_outlinewidth,_outlineweight),
-	fontPath(fontfile),
-	fontSize(size),
-	inBeginEnd(false),
-	autoOutlineColor(true),
-	setColor(false)
+CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float _outlineweight)
+: CFontTexture(fontfile,size,_outlinewidth,_outlineweight)
+, fontPath(fontfile)
+, fontSize(size)
+, inBeginEnd(false)
+, autoOutlineColor(true)
+, setColor(false)
 {
-	if (size<=0)
-		size = 14;
-
 	va  = new CVertexArray();
 	va2 = new CVertexArray();
 
 	fontFamily = "unknown";
 	fontStyle  = "unknown";
-#ifndef   HEADLESS
+#ifndef HEADLESS
 	fontFamily = GetFace()->family_name;
 	fontStyle  = GetFace()->family_name;
 #endif
@@ -197,44 +194,6 @@ static inline int SkipColorCodes(const std::string& text, T* pos, float4* color)
 	return colorFound;
 }
 
-
-/**
- * @brief SkipNewLine
- * @param text
- * @param pos index in the string
- * @return <0 := end of string; returned value is: -(skippedLines + 1)
- *         else: number of skipped lines (can be zero)
- */
-/*
-template <typename T>
-static inline int SkipNewLine(const std::string& text, T* pos)
-{
-	const size_t length = text.length();
-	int skippedLines = 0;
-	while (*pos < length) {
-		const char& chr = text[*pos];
-		switch(chr) {
-			case '\x0d': //! CR
-				skippedLines++;
-				(*pos)++;
-				if (*pos < length && text[*pos] == '\x0a') { //! CR+LF
-					(*pos)++;
-				}
-				break;
-
-			case '\x0a': //! LF
-				skippedLines++;
-				(*pos)++;
-				break;
-
-			default:
-				return skippedLines;
-		}
-	}
-	return -(1 + skippedLines);
-}
-
-*/
 
 template <typename T>
 static inline bool SkipColorCodesAndNewLines(const std::string& text, T* pos, float4* color, bool* colorChanged, int* skippedLines, float4* colorReset)
@@ -322,8 +281,8 @@ float CglFont::GetTextWidth(const std::string& text)
 	float w = 0.0f;
 	float maxw = 0.0f;
 
-	const GlyphInfo* prv_g=NULL; //FIXME should point to firstchar in `text`
-	const GlyphInfo* cur_g; //FIXME should point to firstchar in `text`
+	const GlyphInfo* prv_g=NULL;
+	const GlyphInfo* cur_g;
 
 	for (int pos = 0; pos < text.length(); pos++) {
 		const char& c = text[pos];
@@ -347,7 +306,7 @@ float CglFont::GetTextWidth(const std::string& text)
 				if (pos+1 < text.length() && text[pos+1] == '\x0a')
 					pos++;
 			case '\x0a': //! LF
-				if (prv_g) w += prv_g->advance; //FIXME
+				if (prv_g) w += prv_g->advance;
 				if (w > maxw)
 					maxw = w;
 				w = 0.0f;
@@ -358,13 +317,13 @@ float CglFont::GetTextWidth(const std::string& text)
 			default:
 				char32_t u = GetUnicodeChar(text, pos);
 				cur_g = &GetGlyph(u);
-				if (prv_g) w += GetKerning(*prv_g, *cur_g); //FIXME cur_g->advance
+				if (prv_g) w += GetKerning(*prv_g, *cur_g);
 				prv_g = cur_g;
 		}
 	}
 
 	if (prv_g)
-		w += prv_g->advance; //FIXME
+		w += prv_g->advance;
 	if (w > maxw)
 		maxw = w;
 
@@ -474,7 +433,7 @@ int CglFont::GetTextNumLines(const std::string& text) const
  */
 static inline bool IsUpperCase(const char32_t& c)
 {
-	//FIXME add unicode
+	// overkill to add unicode
 	return
 		(c >= 0x41 && c <= 0x5A) ||
 		(c >= 0xC0 && c <= 0xD6) ||
@@ -487,7 +446,7 @@ static inline bool IsUpperCase(const char32_t& c)
 
 static inline bool IsLowerCase(const char32_t& c)
 {
-	//FIXME add unicode
+	// overkill to add unicode
 	return c >= 0x61 && c <= 0x7A; // only ascii (no latin-1!)
 }
 
@@ -553,9 +512,9 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 
 				if (i < w.text.length()) {
 					c = GetUnicodeChar(w.text,i);
-					width += GetKerning(g,GetGlyph(c));
+					width += GetKerning(g, GetGlyph(c));
 				} else {
-					width += GetKerning(g,GetGlyph(0x20));
+					width += GetKerning(g, GetGlyph(0x20));
 				}
 
 				if (width > wantedWidth) {
@@ -584,7 +543,7 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 		char32_t c = GetUnicodeChar(w.text,i);
 		do {
 			char32_t co = c;
-			unsigned int io = 0;// i;
+			unsigned int io = i;
 			const GlyphInfo& g = GetGlyph(c);
 			++i;
 
