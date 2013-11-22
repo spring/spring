@@ -87,29 +87,90 @@ static const char* GetFTError(FT_Error e)
 
 /*******************************************************************************/
 /*******************************************************************************/
+
+static inline unsigned count_leading_ones(uint8_t x)
+{
+	uint32_t i = ~x;
+	return __builtin_clz((i<<24) | 0x00FFFFFF);
+}
+
+
 static char32_t GetUnicodeChar(const std::string& text, int& pos)
 {
-	char32_t u;
-	const unsigned char chr = (unsigned char)text[pos];
+	// UTF8 looks like this
+	// 1Byte == ASCII:      0xxxxxxxxx
+	// 2Bytes encoded char: 110xxxxxxx 10xxxxxx
+	// 3Bytes encoded char: 1110xxxxxx 10xxxxxx 10xxxxxx
+	// 4Bytes encoded char: 11110xxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+	// Originaly there were 5&6 byte versions too, but they were dropped in RFC 3629.
+	// So UTF8 maps to UTF16 range only.
 
-	//based on UTF8_to_UNICODE from SDL_ttf (SDL_ttf.c)
-	if(chr>=0xF0) {
-		assert(text.length() >= pos + 3);
-		u  = ((char32_t)(text[pos]&0x07))  <<18; //FIXME use post-incr?
-		u |= ((char32_t)(text[++pos]&0x3F))<<12;
-		u |= ((char32_t)(text[++pos]&0x3F))<<6;
-		u |= ((char32_t)(text[++pos]&0x3F));
-	} else if(chr>=0xE0) {
-		assert(text.length() >= pos + 2);
-		u  = ((char32_t)(text[pos]&0x0F))  <<12;
-		u |= ((char32_t)(text[++pos]&0x3F))<<6;
-		u |= ((char32_t)(text[++pos]&0x3F));
-	} else if(chr>=0xC0) {
-		assert(text.length() >= pos + 1);
-		u  = ((char32_t)(text[pos]&0x1F))  <<6;
-		u |= ((char32_t)(text[++pos]&0x3F));
+	static const auto UTF8_CONT_MASK = 0xC0; // 11xxxxxx
+	static const auto UTF8_CONT_OKAY = 0x80; // 10xxxxxx
+
+	union UTF8_4Byte {
+		uint32_t i;
+		uint8_t  c[4];
+	};
+
+	// read next 4bytes and check if it is an utf8 sequence
+	UTF8_4Byte utf8 = { 0 };
+	const auto remainingChars = text.length() - pos;
+	if (remainingChars >= 3) {
+		utf8.i = *(uint32_t*)(&text[pos]);
 	} else {
-		u = chr;
+		// end of string reached only read till end
+		switch (remainingChars) {
+			case 3: utf8.c[2] = ((uint32_t)(text[pos + 2]));
+			case 2: utf8.c[1] = ((uint32_t)(text[pos + 1]));
+			case 1: utf8.c[0] = ((uint32_t)(text[pos    ]));
+				break;
+			default:
+				assert(false);
+		};
+	}
+
+	// how many bytes are requested for our multi-byte utf8 sequence
+	unsigned clo = count_leading_ones(utf8.c[0]);
+	if (clo>4) clo = 0; // ignore >=5 byte ones cause of RFC 3629
+
+	// how many healthy utf bytes are following
+	unsigned numValidUtf8Bytes = 1; // first char is always valid
+	numValidUtf8Bytes += int((utf8.c[1] & UTF8_CONT_MASK) == UTF8_CONT_OKAY);
+	numValidUtf8Bytes += int((utf8.c[2] & UTF8_CONT_MASK) == UTF8_CONT_OKAY);
+	numValidUtf8Bytes += int((utf8.c[3] & UTF8_CONT_MASK) == UTF8_CONT_OKAY);
+
+	// check if enough trailing utf8 bytes are healthy
+	// else ignore utf8 and parse it as 8bit Latin-1 char (extended ASCII)
+	// this adds backwardcompatibility with the old renderer
+	// which supported extended ASCII with umlauts etc.
+	const auto usedUtf8Bytes = (clo <= numValidUtf8Bytes) ? clo : 0;
+
+	char32_t u = 0;
+	switch (usedUtf8Bytes) {
+		case 0:
+		case 1: {
+			u  = utf8.c[0];
+		} break;
+		case 2: {
+			u  = ((char32_t)(utf8.c[0] & 0x1F)) << 6;
+			u |= ((char32_t)(utf8.c[1] & 0x3F));
+			pos += 1;
+		} break;
+		case 3: {
+			u  = ((char32_t)(utf8.c[0] & 0x0F)) << 12;
+			u |= ((char32_t)(utf8.c[1] & 0x3F)) << 6;
+			u |= ((char32_t)(utf8.c[2] & 0x3F));
+			pos += 2;
+		} break;
+		case 4: {
+			u  = ((char32_t)(utf8.c[0] & 0x07)) << 18;
+			u |= ((char32_t)(utf8.c[1] & 0x3F)) << 12;
+			u |= ((char32_t)(utf8.c[2] & 0x3F)) << 6;
+			u |= ((char32_t)(utf8.c[3] & 0x3F));
+			//TODO limit range to UTF16!
+			pos += 3;
+		} break;
 	}
 	return u;
 }
