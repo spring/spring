@@ -133,7 +133,7 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	fontStyle  = "unknown";
 #ifndef HEADLESS
 	fontFamily = GetFace()->family_name;
-	fontStyle  = GetFace()->family_name;
+	fontStyle  = GetFace()->style_name;
 #endif
 
 	textColor    = white;
