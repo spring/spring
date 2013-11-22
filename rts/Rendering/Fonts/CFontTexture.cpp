@@ -50,6 +50,14 @@ static const char* GetFTError(FT_Error e) {
 #endif // HEADLESS
 
 
+static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
+{
+	if (lchar < 128 && rchar < 128) {
+		return (lchar << 7) | rchar; // 14bit used
+	}
+	return (lchar << 16) | rchar; // 32bit used
+}
+
 #ifndef   HEADLESS
 class FtLibraryHandler
 {
@@ -163,6 +171,19 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 
 	//! Create initial small texture
 	CreateTexture(32,32); //FIXME
+	// precache ASCII kernings
+	memset(kerningPrecached, 0, 128*128*sizeof(float));
+	for (char32_t i=32; i<128; ++i) {
+		const auto& lgl = GetGlyph(i);
+		const float advance = lgl.advance;
+		for (char32_t j=32; j<128; ++j) {
+			const auto& rgl = GetGlyph(j);
+			const auto hash = GetKerningHash(i, j);
+			FT_Vector kerning;
+			FT_Get_Kerning(face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
+			kerningPrecached[hash] = advance + normScale * kerning.x;
+		}
+	}
 #endif
 }
 
@@ -237,41 +258,29 @@ const GlyphInfo& CFontTexture::GetGlyph(char32_t ch)
 #endif
 }
 
-float CFontTexture::GetKerning(char32_t lchar, char32_t rchar)
+float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 {
 #ifndef HEADLESS
-	//FIXME cache!
-	const GlyphInfo& left = GetGlyph(lchar);
-	// if(FT_HAS_KERNING(face))
-	{
-		const GlyphInfo& right = GetGlyph(rchar);
-		FT_Vector kerning;
-		FT_Get_Kerning(face, left.index, right.index, FT_KERNING_DEFAULT, &kerning);
-		return left.advance + normScale * kerning.x;
+	// first check caches
+	uint32_t hash = GetKerningHash(lgl.utf16, rgl.utf16);
+	if (hash < 128*128) {
+		return kerningPrecached[hash];
 	}
-//   else
-//       return left.advance; // This font does not contain kerning
+	const auto it = kerningDynamic.find(hash);
+	if (it != kerningDynamic.end()) {
+		return it->second;
+	}
+
+	// load & cache
+	FT_Vector kerning;
+	FT_Get_Kerning(face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
+	kerningDynamic[hash] = lgl.advance + normScale * kerning.x;
+	return kerningDynamic[hash];
 #else
 	return 0;
 #endif
 }
 
-float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
-{
-#ifndef HEADLESS
-	//FIXME cache!
-	// if(FT_HAS_KERNING(face))
-	{
-		FT_Vector kerning;
-		FT_Get_Kerning(face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
-		return lgl.advance + normScale * kerning.x;
-	}
-	//  else
-	//      return lgl.advance;
-#else
-	return 0;
-#endif
-}
 
 LanguageBlock* CFontTexture::LoadBlock(char32_t start,char32_t end)
 {
@@ -292,6 +301,7 @@ void CFontTexture::LoadGlyph(LanguageBlock* block,char32_t ch)
 	glyph = GlyphInfo();// Make empty glyph in case of error
 	FT_UInt index = FT_Get_Char_Index(face, ch);
 	glyph.index = index;
+	glyph.utf16 = ch;
 
 	error = FT_Load_Glyph(face, index, FT_LOAD_RENDER|FT_LOAD_FORCE_AUTOHINT);
 	if (error) {
