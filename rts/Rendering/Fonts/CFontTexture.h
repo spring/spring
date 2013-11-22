@@ -147,12 +147,12 @@ private:
 		Row(int _ypos,int _height):
 			position(_ypos),
 			height(_height),
-			wight(0) {
+			width(0) {
 		};
 
 		int position;
 		int height;
-		int wight;
+		int width;
 	};
 	std::list<Row> imageRows;
 	int nextRowPos;
