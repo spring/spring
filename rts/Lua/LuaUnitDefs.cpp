@@ -597,10 +597,29 @@ TYPE_MODEL_FUNC(ModelMaxz,   maxs.z);
 
 
 
-static int ReturnEmptyString(lua_State* L, const void* data) { LOG_L(L_WARNING, "[%s] deprecated field!", __FUNCTION__); lua_pushstring(L, ""); return 1; }
-static int ReturnFalse(lua_State* L, const void* data) { LOG_L(L_WARNING, "[%s] deprecated field!", __FUNCTION__); lua_pushboolean(L, false); return 1; }
-static int ReturnMinusOne(lua_State* L, const void* data) { LOG_L(L_WARNING, "[%s] deprecated field!", __FUNCTION__); lua_pushnumber(L, -1); return 1; }
-static int ReturnNil(lua_State* L, const void* data) { LOG_L(L_WARNING, "[%s] deprecated field!", __FUNCTION__); lua_pushnil(L); return 1; }
+static int ReturnEmptyString(lua_State* L, const void* data) {
+	const char* name = lua_tostring(L, 2);
+	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, name);
+	lua_pushstring(L, ""); return 1;
+}
+
+static int ReturnFalse(lua_State* L, const void* data) {
+	const char* name = lua_tostring(L, 2);
+	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, name);
+	lua_pushboolean(L, false); return 1;
+}
+
+static int ReturnMinusOne(lua_State* L, const void* data) {
+	const char* name = lua_tostring(L, 2);
+	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, name);
+	lua_pushnumber(L, -1); return 1;
+}
+
+static int ReturnNil(lua_State* L, const void* data) {
+	const char* name = lua_tostring(L, 2);
+	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, name);
+	lua_pushnil(L); return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/
