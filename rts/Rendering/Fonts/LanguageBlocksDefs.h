@@ -53,7 +53,8 @@ static char32_t GetLanguageBlock(char32_t ch, char32_t& end)
 			return blocks[i];
 		}
 	}
-	return GetUndefLanguageBlock(ch, end);
+	return 0;//This code will never ever ever be executed
+	//Because if ch<blocks[defBlocksAmount] ,so it 100% is blocks[i]<=ch<blovks[i+1] where i=[0;defBlocksAmount)
 }
 
 #endif // LANGUAGEBLOCKSDEFS_H_INCLUDED
