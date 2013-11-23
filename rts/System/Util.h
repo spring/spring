@@ -273,53 +273,72 @@ static inline std::string UnicodeToUtf8(char32_t ch)
 {
     std::string str;
 
-    //!0000 0000 0000 0000 0000 0000 0aaa aaaa
-    //!0aaa aaaa
-    //!<128 = 2^7
-    if(ch<128)
+	//0000 0000  0000 0000  0000 0000  0aaa aaaa
+    //0aaa aaaa
+	if(ch<(1<<7))
+	{
 		str+=(char)ch;
-    //!0000 0000 0000 0000 0000 bbbb bbaa aaaa
-    //!10aa aaaa 10bb bbbb
-    //!<4096 = 2^(6 + 6)
-    else if(ch<4096)
-    {
-        str+=0x80|((char)(ch&0x3F));
-        str+=0x80|((char)(ch>>6)&0x3F);
-    }
-    //!0000 0000 0000 cccc ccbb bbbb bbaa aaaa
-    //!110a aaaa 10bb bbbb 10cc cccc
-    //!<131072 = 2^(5 + 6 + 6)
-    else if(ch<131072)
-    {
-        str+=0xC0|((char)(ch&0x1F));
-        str+=0x80|((char)(ch>>5)&0x3F);
-        str+=0x80|((char)(ch>>(5+6))&0x3F);
-    }
-    //!0000 00dd dddd cccc ccbb bbbb bbaa aaaa
-    //!1110 aaaa 10bb bbbb 10cc cccc 10dd dddd
-    //!<8388608 = 2^(5 + 6 + 6 + 6)
-    else if(ch<8388608)
-    {
-		str+=0xE0|((char)(ch&0x0F));
-		str+=0x80|((char)(ch>>5)&0x3F);
-		str+=0x80|((char)(ch>>(5+6))&0x3F);
-		str+=0x80|((char)(ch>>(5+6+6))&0x3F);
 	}
+	//0000 0000  0000 0000  0000 0bbb  bbaa aaaa
+    //110b bbbb 10aa aaaa
+	else if(ch<(1<<11))
+	{
+		str+=0xC0|(char)(ch>>6);
+		str+=0x80|(char)(ch&0x3F);
+	}
+	//0000 0000  0000 0000  cccc bbbb  bbaa aaaa
+    //1110 cccc 10bb bbbb 10aa aaaa
+	else if(ch<(1<<11))
+	{
+		str+=0xE0|(char)(ch>>12);
+		str+=0x80|(char)((ch>>6)&0x3F);
+		str+=0x80|(char)(ch&0x3F);
+	}
+	//0000 0000  000d ddcc  cccc bbbb  bbaa aaaa
+    //1111 0ddd 10cc cccc 10bb bbbb 10aa aaaa
+	else if(ch<(1<<11))
+	{
+		str+=0xF0|(char)(ch>>18);
+		str+=0x80|(char)((ch>>12)&0x3F);
+		str+=0x80|(char)((ch>>6)&0x3F);
+		str+=0x80|(char)(ch&0x3F);
+	}
+
 	return str;
 }
 
-static inline unsigned int Utf8CharLen(std::string &str,int pos)
+static inline unsigned int Utf8CharLen(const std::string &str,int pos)
 {
 	const unsigned char chr = (unsigned char)str[pos];
 
-	if(chr>=0xF0)
+	if((chr&0xF8)==0xF0)
 		return 4;
-	else if(chr>=0xE0)
+	else if((chr&0xF0)==0xE0)
 		return 3;
-	else if(chr>=0xC0)
+	else if((chr&0xE0)==0xC0)
 		return 2;
 	else
 		return 1;
 }
 
+static inline unsigned int Utf8NextChar(const std::string &str,int pos)
+{
+	if(str.length()==pos)
+		return pos;
+	else
+		return pos+Utf8CharLen(str,pos);
+}
+
+static inline unsigned int Utf8PrevChar(const std::string &str,int pos)
+{
+	if(str.length()==0)
+		return pos;
+	else
+	{
+		int i;
+		for(i=pos-1;(str[i]&0xC0)==0x80 && i>0;i--)
+		{}
+		return i;
+	}
+}
 #endif // UTIL_H

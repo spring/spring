@@ -87,29 +87,90 @@ static const char* GetFTError(FT_Error e)
 
 /*******************************************************************************/
 /*******************************************************************************/
+
+static inline unsigned count_leading_ones(uint8_t x)
+{
+	uint32_t i = ~x;
+	return __builtin_clz((i<<24) | 0x00FFFFFF);
+}
+
+
 static char32_t GetUnicodeChar(const std::string& text, int& pos)
 {
-	char32_t u;
-	const unsigned char chr = (unsigned char)text[pos];
+	// UTF8 looks like this
+	// 1Byte == ASCII:      0xxxxxxxxx
+	// 2Bytes encoded char: 110xxxxxxx 10xxxxxx
+	// 3Bytes encoded char: 1110xxxxxx 10xxxxxx 10xxxxxx
+	// 4Bytes encoded char: 11110xxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+	// Originaly there were 5&6 byte versions too, but they were dropped in RFC 3629.
+	// So UTF8 maps to UTF16 range only.
 
-	//based on UTF8_to_UNICODE from SDL_ttf (SDL_ttf.c)
-	if(chr>=0xF0) {
-		assert(text.length() >= pos + 3);
-		u  = ((char32_t)(text[pos]&0x07))  <<18; //FIXME use post-incr?
-		u |= ((char32_t)(text[++pos]&0x3F))<<12;
-		u |= ((char32_t)(text[++pos]&0x3F))<<6;
-		u |= ((char32_t)(text[++pos]&0x3F));
-	} else if(chr>=0xE0) {
-		assert(text.length() >= pos + 2);
-		u  = ((char32_t)(text[pos]&0x0F))  <<12;
-		u |= ((char32_t)(text[++pos]&0x3F))<<6;
-		u |= ((char32_t)(text[++pos]&0x3F));
-	} else if(chr>=0xC0) {
-		assert(text.length() >= pos + 1);
-		u  = ((char32_t)(text[pos]&0x1F))  <<6;
-		u |= ((char32_t)(text[++pos]&0x3F));
+	static const auto UTF8_CONT_MASK = 0xC0; // 11xxxxxx
+	static const auto UTF8_CONT_OKAY = 0x80; // 10xxxxxx
+
+	union UTF8_4Byte {
+		uint32_t i;
+		uint8_t  c[4];
+	};
+
+	// read next 4bytes and check if it is an utf8 sequence
+	UTF8_4Byte utf8 = { 0 };
+	const auto remainingChars = text.length() - pos;
+	if (remainingChars >= 3) {
+		utf8.i = *(uint32_t*)(&text[pos]);
 	} else {
-		u = chr;
+		// end of string reached only read till end
+		switch (remainingChars) {
+			case 3: utf8.c[2] = ((uint32_t)(text[pos + 2]));
+			case 2: utf8.c[1] = ((uint32_t)(text[pos + 1]));
+			case 1: utf8.c[0] = ((uint32_t)(text[pos    ]));
+				break;
+			default:
+				assert(false);
+		};
+	}
+
+	// how many bytes are requested for our multi-byte utf8 sequence
+	unsigned clo = count_leading_ones(utf8.c[0]);
+	if (clo>4) clo = 0; // ignore >=5 byte ones cause of RFC 3629
+
+	// how many healthy utf bytes are following
+	unsigned numValidUtf8Bytes = 1; // first char is always valid
+	numValidUtf8Bytes += int((utf8.c[1] & UTF8_CONT_MASK) == UTF8_CONT_OKAY);
+	numValidUtf8Bytes += int((utf8.c[2] & UTF8_CONT_MASK) == UTF8_CONT_OKAY);
+	numValidUtf8Bytes += int((utf8.c[3] & UTF8_CONT_MASK) == UTF8_CONT_OKAY);
+
+	// check if enough trailing utf8 bytes are healthy
+	// else ignore utf8 and parse it as 8bit Latin-1 char (extended ASCII)
+	// this adds backwardcompatibility with the old renderer
+	// which supported extended ASCII with umlauts etc.
+	const auto usedUtf8Bytes = (clo <= numValidUtf8Bytes) ? clo : 0;
+
+	char32_t u = 0;
+	switch (usedUtf8Bytes) {
+		case 0:
+		case 1: {
+			u  = utf8.c[0];
+		} break;
+		case 2: {
+			u  = ((char32_t)(utf8.c[0] & 0x1F)) << 6;
+			u |= ((char32_t)(utf8.c[1] & 0x3F));
+			pos += 1;
+		} break;
+		case 3: {
+			u  = ((char32_t)(utf8.c[0] & 0x0F)) << 12;
+			u |= ((char32_t)(utf8.c[1] & 0x3F)) << 6;
+			u |= ((char32_t)(utf8.c[2] & 0x3F));
+			pos += 2;
+		} break;
+		case 4: {
+			u  = ((char32_t)(utf8.c[0] & 0x07)) << 18;
+			u |= ((char32_t)(utf8.c[1] & 0x3F)) << 12;
+			u |= ((char32_t)(utf8.c[2] & 0x3F)) << 6;
+			u |= ((char32_t)(utf8.c[3] & 0x3F));
+			//TODO limit range to UTF16!
+			pos += 3;
+		} break;
 	}
 	return u;
 }
@@ -118,28 +179,22 @@ static char32_t GetUnicodeChar(const std::string& text, int& pos)
 /*******************************************************************************/
 /*******************************************************************************/
 
-CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float _outlineweight):
-	CFontTexture(fontfile,size,_outlinewidth,_outlineweight),
-	fontPath(fontfile),
-	fontSize(size),
-	inBeginEnd(false),
-	autoOutlineColor(true),
-	setColor(false)
+CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float _outlineweight)
+: CFontTexture(fontfile,size,_outlinewidth,_outlineweight)
+, fontPath(fontfile)
+, fontSize(size)
+, inBeginEnd(false)
+, autoOutlineColor(true)
+, setColor(false)
 {
-	if (size<=0)
-		size = 14;
-
-	invSize = 1.0f / size;
-	normScale = invSize / 64.0f;
-
 	va  = new CVertexArray();
 	va2 = new CVertexArray();
 
 	fontFamily = "unknown";
 	fontStyle  = "unknown";
-#ifndef   HEADLESS
+#ifndef HEADLESS
 	fontFamily = GetFace()->family_name;
-	fontStyle  = GetFace()->family_name;
+	fontStyle  = GetFace()->style_name;
 #endif
 
 	textColor    = white;
@@ -200,44 +255,6 @@ static inline int SkipColorCodes(const std::string& text, T* pos, float4* color)
 	return colorFound;
 }
 
-
-/**
- * @brief SkipNewLine
- * @param text
- * @param pos index in the string
- * @return <0 := end of string; returned value is: -(skippedLines + 1)
- *         else: number of skipped lines (can be zero)
- */
-/*
-template <typename T>
-static inline int SkipNewLine(const std::string& text, T* pos)
-{
-	const size_t length = text.length();
-	int skippedLines = 0;
-	while (*pos < length) {
-		const char& chr = text[*pos];
-		switch(chr) {
-			case '\x0d': //! CR
-				skippedLines++;
-				(*pos)++;
-				if (*pos < length && text[*pos] == '\x0a') { //! CR+LF
-					(*pos)++;
-				}
-				break;
-
-			case '\x0a': //! LF
-				skippedLines++;
-				(*pos)++;
-				break;
-
-			default:
-				return skippedLines;
-		}
-	}
-	return -(1 + skippedLines);
-}
-
-*/
 
 template <typename T>
 static inline bool SkipColorCodesAndNewLines(const std::string& text, T* pos, float4* color, bool* colorChanged, int* skippedLines, float4* colorReset)
@@ -314,7 +331,7 @@ std::string CglFont::StripColorCodes(const std::string& text)
 
 float CglFont::GetCharacterWidth(const char32_t c)
 {
-	return normScale * GetGlyph(c).advance;
+	return GetGlyph(c).advance;
 }
 
 
@@ -325,8 +342,8 @@ float CglFont::GetTextWidth(const std::string& text)
 	float w = 0.0f;
 	float maxw = 0.0f;
 
-	const GlyphInfo* prv_g=NULL; //FIXME should point to firstchar in `text`
-	const GlyphInfo* cur_g; //FIXME should point to firstchar in `text`
+	const GlyphInfo* prv_g=NULL;
+	const GlyphInfo* cur_g;
 
 	for (int pos = 0; pos < text.length(); pos++) {
 		const char& c = text[pos];
@@ -350,7 +367,7 @@ float CglFont::GetTextWidth(const std::string& text)
 				if (pos+1 < text.length() && text[pos+1] == '\x0a')
 					pos++;
 			case '\x0a': //! LF
-				if (prv_g) w += normScale * prv_g->advance; //FIXME
+				if (prv_g) w += prv_g->advance;
 				if (w > maxw)
 					maxw = w;
 				w = 0.0f;
@@ -361,13 +378,13 @@ float CglFont::GetTextWidth(const std::string& text)
 			default:
 				char32_t u = GetUnicodeChar(text, pos);
 				cur_g = &GetGlyph(u);
-				if (prv_g) w += normScale * GetKerning(*prv_g, *cur_g); //FIXME cur_g->advance
+				if (prv_g) w += GetKerning(*prv_g, *cur_g);
 				prv_g = cur_g;
 		}
 	}
 
-	if(prv_g)
-		w+=normScale * prv_g->advance; //FIXME
+	if (prv_g)
+		w += prv_g->advance;
 	if (w > maxw)
 		maxw = w;
 
@@ -383,7 +400,7 @@ float CglFont::GetTextHeight(const std::string& text, float* descender, int* num
 		return 0.0f;
 	}
 
-	float h = 0.0f, d = GetLineHeight() + normScale * GetFontDescender();
+	float h = 0.0f, d = GetLineHeight() + GetDescender();
 	unsigned int multiLine = 1;
 
 	for (int pos = 0 ; pos < text.length(); pos++) {
@@ -409,15 +426,15 @@ float CglFont::GetTextHeight(const std::string& text, float* descender, int* num
 					pos++;
 			case '\x0a': //! LF
 				multiLine++;
-				d = GetLineHeight() + normScale * GetFontDescender();
+				d = GetLineHeight() + GetDescender();
 				break;
 
 			//! printable char
 			default:
 				char32_t u = GetUnicodeChar(text,pos);
 				const GlyphInfo& g = GetGlyph(u);
-				if (g.descender < d) d = normScale * g.descender;
-				if (multiLine < 2 && g.height > h) h = normScale * g.height; //! only calc height for the first line
+				if (g.descender < d) d = g.descender;
+				if (multiLine < 2 && g.height > h) h = g.height; //! only calc height for the first line
 		}
 	}
 
@@ -477,7 +494,7 @@ int CglFont::GetTextNumLines(const std::string& text) const
  */
 static inline bool IsUpperCase(const char32_t& c)
 {
-	//FIXME add unicode
+	// overkill to add unicode
 	return
 		(c >= 0x41 && c <= 0x5A) ||
 		(c >= 0xC0 && c <= 0xD6) ||
@@ -490,7 +507,7 @@ static inline bool IsUpperCase(const char32_t& c)
 
 static inline bool IsLowerCase(const char32_t& c)
 {
-	//FIXME add unicode
+	// overkill to add unicode
 	return c >= 0x61 && c <= 0x7A; // only ascii (no latin-1!)
 }
 
@@ -532,7 +549,7 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 	word w2;
 	w2.pos = w.pos;
 
-	const float spaceAdvance = normScale * GetGlyph(0x20).advance;
+	const float spaceAdvance = GetGlyph(0x20).advance;
 	if (w.isLineBreak) {
 		//! shouldn't happen
 		w2 = w;
@@ -556,9 +573,9 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 
 				if (i < w.text.length()) {
 					c = GetUnicodeChar(w.text,i);
-					width += normScale*GetKerning(g,GetGlyph(c));
+					width += GetKerning(g, GetGlyph(c));
 				} else {
-					width += normScale*GetKerning(g,GetGlyph(0x20));
+					width += GetKerning(g, GetGlyph(0x20));
 				}
 
 				if (width > wantedWidth) {
@@ -587,15 +604,15 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 		char32_t c = GetUnicodeChar(w.text,i);
 		do {
 			char32_t co = c;
-			unsigned int io = 0;// i;
+			unsigned int io = i;
 			const GlyphInfo& g = GetGlyph(c);
 			++i;
 
 			if (i < w.text.length()) {
 				c = GetUnicodeChar(w.text,i);
-				width += normScale * GetKerning(g,GetGlyph(c));
+				width += GetKerning(g,GetGlyph(c));
 			} else {
-				width += normScale * GetKerning(g,GetGlyph(0x20));
+				width += GetKerning(g,GetGlyph(0x20));
 			}
 
 			if (width > wantedWidth) {
@@ -621,8 +638,8 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 
 void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float maxWidth)
 {
-	const float ellipsisAdvance = normScale * GetGlyph(0x85).advance;
-	const float spaceAdvance = normScale * GetGlyph(0x20).advance;
+	const float ellipsisAdvance = GetGlyph(0x85).advance;
+	const float spaceAdvance = GetGlyph(0x20).advance;
 
 	if (ellipsisAdvance > maxWidth)
 		return;
@@ -857,7 +874,7 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 void CglFont::SplitTextInWords(const std::string& text, std::list<word>* words, std::list<colorcode>* colorcodes)
 {
 	const unsigned int length = (unsigned int)text.length();
-	const float spaceAdvance = normScale * GetGlyph(0x20).advance;
+	const float spaceAdvance = GetGlyph(0x20).advance;
 
 	words->push_back(word());
 	word* w = &(words->back());
@@ -1317,15 +1334,15 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 			x  = startx;
 			y -= skippedLines * lineHeight_;
 		} else if (g) {
-			x += scaleX * (normScale * GetKerning(*g, *c_g));
+			x += scaleX * GetKerning(*g, *c_g);
 		}
 
 		g = c_g;
 
-		va->AddVertex2dQT(x+normScale * scaleX*(float)g->size.x0(), y+normScale * scaleY*(float)g->size.y1(), (float)g->texCord.x0(), (float)g->texCord.y1());
-		va->AddVertex2dQT(x+normScale * scaleX*(float)g->size.x0(), y+normScale * scaleY*(float)g->size.y0(), (float)g->texCord.x0(), (float)g->texCord.y0());
-		va->AddVertex2dQT(x+normScale * scaleX*(float)g->size.x1(), y+normScale * scaleY*(float)g->size.y0(), (float)g->texCord.x1(), (float)g->texCord.y0());
-		va->AddVertex2dQT(x+normScale * scaleX*(float)g->size.x1(), y+normScale * scaleY*(float)g->size.y1(), (float)g->texCord.x1(), (float)g->texCord.y1());
+		va->AddVertex2dQT(x+scaleX*(float)g->size.x0(), y+scaleY*(float)g->size.y1(), (float)g->texCord.x0(), (float)g->texCord.y1());
+		va->AddVertex2dQT(x+scaleX*(float)g->size.x0(), y+scaleY*(float)g->size.y0(), (float)g->texCord.x0(), (float)g->texCord.y0());
+		va->AddVertex2dQT(x+scaleX*(float)g->size.x1(), y+scaleY*(float)g->size.y0(), (float)g->texCord.x1(), (float)g->texCord.y0());
+		va->AddVertex2dQT(x+scaleX*(float)g->size.x1(), y+scaleY*(float)g->size.y1(), (float)g->texCord.x1(), (float)g->texCord.y1());
 	} while(true);
 }
 
@@ -1333,7 +1350,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const float& scaleY, const std::string& str)
 {
 	const float shiftX = scaleX*0.1, shiftY = scaleY*0.1;
-	const float ssX = normScale * scaleX * GetOutlineWidth(), ssY = normScale * scaleY * GetOutlineWidth();
+	const float ssX = (scaleX/fontSize) * GetOutlineWidth(), ssY = (scaleY/fontSize) * GetOutlineWidth();
 
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
@@ -1372,13 +1389,13 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 			x  = startx;
 			y -= skippedLines * lineHeight_;
 		} else if (g) {
-			x += scaleX * normScale * GetKerning(*g, *c_g);
+			x += scaleX * GetKerning(*g, *c_g);
 		}
 
 		g = c_g;
 
-		const float dx0 = x + normScale * scaleX * g->size.x0(), dy0 = y + normScale * scaleY * g->size.y0();
-		const float dx1 = x + normScale * scaleX * g->size.x1(), dy1 = y + normScale * scaleY * g->size.y1();
+		const float dx0 = x + scaleX * g->size.x0(), dy0 = y + scaleY * g->size.y0();
+		const float dx1 = x + scaleX * g->size.x1(), dy1 = y + scaleY * g->size.y1();
 
 		//! draw shadow
 		va2->AddVertex2dQT(dx0+shiftX-ssX, dy1-shiftY-ssY, g->texCord.x0(), g->texCord.y1());
@@ -1396,7 +1413,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 
 void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const float& scaleY, const std::string& str)
 {
-	const float shiftX = normScale * scaleX * GetOutlineWidth(), shiftY = normScale * scaleY * GetOutlineWidth();
+	const float shiftX = (scaleX/fontSize) * GetOutlineWidth(), shiftY = (scaleY/fontSize) * GetOutlineWidth();
 
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
@@ -1435,13 +1452,13 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 			x  = startx;
 			y -= skippedLines * lineHeight_;
 		} else if (g) {
-			x += scaleX * normScale * GetKerning(*g, *c_g);
+			x += scaleX * GetKerning(*g, *c_g);
 		}
 
 		g = c_g;
 
-		const float dx0 = x + normScale * scaleX * g->size.x0(), dy0 = y + normScale * scaleY * g->size.y0();
-		const float dx1 = x + normScale * scaleX * g->size.x1(), dy1 = y + normScale * scaleY * g->size.y1();
+		const float dx0 = x + scaleX * g->size.x0(), dy0 = y + scaleY * g->size.y0();
+		const float dx1 = x + scaleX * g->size.x1(), dy1 = y + scaleY * g->size.y1();
 
 		//! draw outline
 		va2->AddVertex2dQT(dx0-shiftX, dy1-shiftY, g->texCord.x0(), g->texCord.y1());
@@ -1494,11 +1511,11 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 
 
 	//! vertical alignment
-	y += sizeY * normScale * GetFontDescender(); //! move to baseline (note: descender is negative)
+	y += sizeY * GetDescender(); //! move to baseline (note: descender is negative)
 	if (options & FONT_BASELINE) {
 		//! nothing
 	} else if (options & FONT_DESCENDER) {
-		y -= sizeY * normScale * GetFontDescender();
+		y -= sizeY * GetDescender();
 	} else if (options & FONT_VCENTER) {
 		float textDescender;
 		y -= sizeY * 0.5f * GetTextHeight(text,&textDescender);
@@ -1506,7 +1523,7 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	} else if (options & FONT_TOP) {
 		y -= sizeY * GetTextHeight(text);
 	} else if (options & FONT_ASCENDER) {
-		y -= sizeY * normScale * GetFontDescender();
+		y -= sizeY * GetDescender();
 		y -= sizeY;
 	} else if (options & FONT_BOTTOM) {
 		float textDescender;
@@ -1657,14 +1674,14 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 	if (options & FONT_BASELINE) {
 		//! nothing
 	} else if (options & FONT_DESCENDER) {
-		y -= sizeY * normScale * GetFontDescender();
+		y -= sizeY * GetDescender();
 	} else if (options & FONT_VCENTER) {
 		y -= sizeY * 0.5f * maxHeight;
 		y -= sizeY * 0.5f * minDescender;
 	} else if (options & FONT_TOP) {
 		y -= sizeY * maxHeight;
 	} else if (options & FONT_ASCENDER) {
-		y -= sizeY * normScale * GetFontDescender();
+		y -= sizeY * GetDescender();
 		y -= sizeY;
 	} else if (options & FONT_BOTTOM) {
 		y -= sizeY * minDescender;
