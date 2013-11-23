@@ -360,13 +360,13 @@ void CFontTexture::LoadGlyph(char32_t ch)
 CFontTexture::Row* CFontTexture::FindRow(int glyphWidth, int glyphHeight)
 {
 	for(auto& row: imageRows) {
-		float ratio = (float)row.height/(float)glyphHeight;
+		float ratio = (float)row.height/(float)(glyphHeight+2);
 		// Ignore too small or too big raws
 		if (ratio < 1.0f || ratio > 1.3f)
 			continue;
 
 		// Check if there is enough space in this row
-		if (texWidth - row.width < glyphWidth)
+		if (texWidth - row.width < glyphWidth+2)
 			continue;
 
 		return &row;
@@ -377,7 +377,7 @@ CFontTexture::Row* CFontTexture::FindRow(int glyphWidth, int glyphHeight)
 CFontTexture::Row* CFontTexture::AddRow(int glyphWidth, int glyphHeight)
 {
 	int rowHeight = glyphHeight + (2*glyphHeight)/10;
-	while (nextRowPos+rowHeight >= texHeight) {
+	while (nextRowPos+rowHeight+2 >= texHeight) {
 		// Resize texture
 		ResizeTexture(texWidth*2, texHeight*2); //FIXME
 	}
@@ -396,7 +396,7 @@ IGlyphRect CFontTexture::AllocateGlyphRect(int glyphWidth,int glyphHeight)
 		row = AddRow(glyphWidth, glyphHeight);
 
 	IGlyphRect rect = IGlyphRect(row->width, row->position, glyphWidth, glyphHeight);
-	row->width += glyphWidth;
+	row->width += glyphWidth+2;
 	return rect;
 #else
 	return IGlyphRect();
