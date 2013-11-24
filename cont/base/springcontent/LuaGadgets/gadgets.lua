@@ -1185,6 +1185,7 @@ function gadgetHandler:TerraformComplete(unitID, unitDefID, unitTeam,
 end
 
 
+
 function gadgetHandler:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID)
 	for _, g in ipairs(self.AllowWeaponTargetCheckList) do
 		if (not g:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID)) then
@@ -1210,6 +1211,16 @@ function gadgetHandler:AllowWeaponTarget(attackerID, targetID, attackerWeaponNum
 	end
 
 	return allowed, priority
+end
+
+function gadgetHandler:AllowWeaponInterceptTarget(interceptorUnitID, interceptorWeaponNum, interceptorTargetID)
+	for _, g in ipairs(self.AllowWeaponInterceptTargetList) do
+		if (not g:AllowWeaponInterceptTarget(interceptorUnitID, interceptorWeaponNum, interceptorTargetID)) then
+			return false
+		end
+	end
+
+	return true
 end
 
 
