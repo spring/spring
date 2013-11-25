@@ -130,7 +130,7 @@ namespace CNamedTextures {
 			return false;
 		}
 
-		if (bitmap.type == CBitmap::BitmapTypeDDS) {
+		if (bitmap.compressed) {
 			texID = bitmap.CreateDDSTexture(texID);
 		} else {
 			if (resize) {
@@ -206,7 +206,6 @@ namespace CNamedTextures {
 		}
 
 		texInfo.id    = texID;
-		texInfo.type  = bitmap.type;
 		texInfo.xsize = bitmap.xsize;
 		texInfo.ysize = bitmap.ysize;
 
