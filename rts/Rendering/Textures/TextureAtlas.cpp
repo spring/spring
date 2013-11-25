@@ -100,7 +100,7 @@ int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 		throw content_error("Could not load texture from file " + file);
 	}
 
-	if (bitmap.type != CBitmap::BitmapTypeStandardRGBA) {
+	if (bitmap.channels != 4 || bitmap.compressed) {
 		// only suport RGBA for now
 		throw content_error("Unsupported bitmap format in file " + file);
 	}
