@@ -29,6 +29,9 @@
 
 #include "LanguageBlocksDefs.h"
 
+static const int ATLAS_PADDING = 2;
+
+
 #ifndef   HEADLESS
 #undef __FTERRORS_H__
 #define FT_ERRORDEF( e, v, s )  { e, s },
@@ -409,8 +412,8 @@ CFontTexture::Row* CFontTexture::FindRow(int glyphWidth, int glyphHeight)
 
 CFontTexture::Row* CFontTexture::AddRow(int glyphWidth, int glyphHeight)
 {
-	int rowHeight = glyphHeight + (2*glyphHeight)/10;
-	while (nextRowPos+rowHeight >= wantedTexHeight) {
+	const int wantedRowHeight = glyphHeight * 1.2f;
+	while (nextRowPos+wantedRowHeight >= wantedTexHeight) {
 		if (wantedTexWidth>=2048 || wantedTexHeight>=2048)
 			throw texture_size_exception();
 
@@ -418,8 +421,8 @@ CFontTexture::Row* CFontTexture::AddRow(int glyphWidth, int glyphHeight)
 		wantedTexWidth  <<= 1;
 		wantedTexHeight <<= 1;
 	}
-	Row newrow(nextRowPos, rowHeight);
-	nextRowPos += rowHeight;
+	Row newrow(nextRowPos, wantedRowHeight);
+	nextRowPos += wantedRowHeight;
 	imageRows.push_back(newrow);
 	return &imageRows.back();
 }
@@ -428,10 +431,10 @@ IGlyphRect CFontTexture::AllocateGlyphRect(int glyphWidth,int glyphHeight)
 {
 #ifndef   HEADLESS
 	//FIXME add padding
-	Row* row = FindRow(glyphWidth, glyphHeight);
+	Row* row = FindRow(glyphWidth + ATLAS_PADDING, glyphHeight + ATLAS_PADDING);
 
 	IGlyphRect rect = IGlyphRect(row->width, row->position, glyphWidth, glyphHeight);
-	row->width += glyphWidth+2;
+	row->width += glyphWidth + ATLAS_PADDING;
 	return rect;
 #else
 	return IGlyphRect();
