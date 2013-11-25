@@ -61,15 +61,23 @@ struct SRectangle {
 		);
 	}
 
-	int x1;
+	union {
+		int x1;
+		int left;
+	};
 	union {
 		int z1;
 		int y1;
+		int top;
 	};
-	int x2;
+	union {
+		int x2;
+		int right;
+	};
 	union {
 		int z2;
 		int y2;
+		int bottom;
 	};
 };
 

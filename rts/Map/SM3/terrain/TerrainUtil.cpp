@@ -253,7 +253,7 @@ namespace terrain {
 
 	bool AlphaImage::CopyFromBitmap(CBitmap& bm)
 	{
-		if (bm.type != CBitmap::BitmapTypeStandardAlpha)
+		if (bm.channels != 1 || bitmap.compressed)
 			return false;
 
 		Alloc(bm.xsize, bm.ysize);
