@@ -206,9 +206,6 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 	try {
 		CglFont* newFont = new CglFont(fontFile, size, outlinewidth, outlineweight);
 		return newFont;
-	} catch (const texture_size_exception&) {
-		LOG_L(L_ERROR, "Failed creating font: Could not create GlyphAtlas! (try to reduce the font size/outline-width)");
-		return NULL;
 	} catch (const content_error& ex) {
 		LOG_L(L_ERROR, "Failed creating font: %s", ex.what());
 		return NULL;
@@ -1245,17 +1242,16 @@ void CglFont::End()
 		glPopAttrib();
 		return;
 	}
-#ifdef   HEADLESS
-	// GetTextureWidth/Height() always returns 0 in spring-headless, return here to avoid SIGFPE
-	return;
-#else
+
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, GetTexture());
 
-	// Because texture size can be changed, texture cordinats are in pixels
+	// Because texture size can change, texture coordinats are absolute in texels.
+	// We could use also just use GL_TEXTURE_RECTANGLE
+	// but then all shaders would need to detect so and use different funcs & types if supported -> more work
 	glMatrixMode(GL_TEXTURE);
 	glPushMatrix();
-	glScalef(1.f/(float)GetTextureWidth(), 1.f/(float)GetTextureHeight(), 1.f);
+	glCallList(textureSpaceMatrix);
 	glMatrixMode(GL_MODELVIEW);
 
 	if (va2->drawIndex() > 0) {
@@ -1276,12 +1272,12 @@ void CglFont::End()
 		va->DrawArray2dT(GL_QUADS);
 	}
 
+	// pop texture matrix
 	glMatrixMode(GL_TEXTURE);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 
 	glPopAttrib();
-#endif
 }
 
 
@@ -1339,10 +1335,14 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 
 		g = c_g;
 
-		va->AddVertex2dQT(x+scaleX*(float)g->size.x0(), y+scaleY*(float)g->size.y1(), (float)g->texCord.x0(), (float)g->texCord.y1());
-		va->AddVertex2dQT(x+scaleX*(float)g->size.x0(), y+scaleY*(float)g->size.y0(), (float)g->texCord.x0(), (float)g->texCord.y0());
-		va->AddVertex2dQT(x+scaleX*(float)g->size.x1(), y+scaleY*(float)g->size.y0(), (float)g->texCord.x1(), (float)g->texCord.y0());
-		va->AddVertex2dQT(x+scaleX*(float)g->size.x1(), y+scaleY*(float)g->size.y1(), (float)g->texCord.x1(), (float)g->texCord.y1());
+		const auto&  tc = g->texCord;
+		const float dx0 = scaleX * g->size.x0() + x, dy0 = scaleY * g->size.y0() + y;
+		const float dx1 = scaleX * g->size.x1() + x, dy1 = scaleY * g->size.y1() + y;
+
+		va->AddVertex2dQT(dx0, dy1, tc.x0(), tc.y1());
+		va->AddVertex2dQT(dx0, dy0, tc.x0(), tc.y0());
+		va->AddVertex2dQT(dx1, dy0, tc.x1(), tc.y0());
+		va->AddVertex2dQT(dx1, dy1, tc.x1(), tc.y1());
 	} while(true);
 }
 
@@ -1394,20 +1394,22 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 
 		g = c_g;
 
-		const float dx0 = x + scaleX * g->size.x0(), dy0 = y + scaleY * g->size.y0();
-		const float dx1 = x + scaleX * g->size.x1(), dy1 = y + scaleY * g->size.y1();
+		const auto&  tc = g->texCord;
+		const auto& stc = g->shadowTexCord;
+		const float dx0 = scaleX * g->size.x0() + x, dy0 = scaleY * g->size.y0() + y;
+		const float dx1 = scaleX * g->size.x1() + x, dy1 = scaleY * g->size.y1() + y;
 
 		//! draw shadow
-		va2->AddVertex2dQT(dx0+shiftX-ssX, dy1-shiftY-ssY, g->texCord.x0(), g->texCord.y1());
-		va2->AddVertex2dQT(dx0+shiftX-ssX, dy0-shiftY+ssY, g->texCord.x0(), g->texCord.y0());
-		va2->AddVertex2dQT(dx1+shiftX+ssX, dy0-shiftY+ssY, g->texCord.x1(), g->texCord.y0());
-		va2->AddVertex2dQT(dx1+shiftX+ssX, dy1-shiftY-ssY, g->texCord.x1(), g->texCord.y1());
+		va2->AddVertex2dQT(dx0+shiftX-ssX, dy1-shiftY-ssY, stc.x0(), stc.y1());
+		va2->AddVertex2dQT(dx0+shiftX-ssX, dy0-shiftY+ssY, stc.x0(), stc.y0());
+		va2->AddVertex2dQT(dx1+shiftX+ssX, dy0-shiftY+ssY, stc.x1(), stc.y0());
+		va2->AddVertex2dQT(dx1+shiftX+ssX, dy1-shiftY-ssY, stc.x1(), stc.y1());
 
 		//! draw the actual character
-		va->AddVertex2dQT(dx0, dy1, g->texCord.x0(), g->texCord.y1());
-		va->AddVertex2dQT(dx0, dy0, g->texCord.x0(), g->texCord.y0());
-		va->AddVertex2dQT(dx1, dy0, g->texCord.x1(), g->texCord.y0());
-		va->AddVertex2dQT(dx1, dy1, g->texCord.x1(), g->texCord.y1());
+		va->AddVertex2dQT(dx0, dy1, tc.x0(), tc.y1());
+		va->AddVertex2dQT(dx0, dy0, tc.x0(), tc.y0());
+		va->AddVertex2dQT(dx1, dy0, tc.x1(), tc.y0());
+		va->AddVertex2dQT(dx1, dy1, tc.x1(), tc.y1());
 	} while(true);
 }
 
@@ -1457,20 +1459,22 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 
 		g = c_g;
 
-		const float dx0 = x + scaleX * g->size.x0(), dy0 = y + scaleY * g->size.y0();
-		const float dx1 = x + scaleX * g->size.x1(), dy1 = y + scaleY * g->size.y1();
+		const auto&  tc = g->texCord;
+		const auto& stc = g->shadowTexCord;
+		const float dx0 = scaleX * g->size.x0() + x, dy0 = scaleY * g->size.y0() + y;
+		const float dx1 = scaleX * g->size.x1() + x, dy1 = scaleY * g->size.y1() + y;
 
 		//! draw outline
-		va2->AddVertex2dQT(dx0-shiftX, dy1-shiftY, g->texCord.x0(), g->texCord.y1());
-		va2->AddVertex2dQT(dx0-shiftX, dy0+shiftY, g->texCord.x0(), g->texCord.y0());
-		va2->AddVertex2dQT(dx1+shiftX, dy0+shiftY, g->texCord.x1(), g->texCord.y0());
-		va2->AddVertex2dQT(dx1+shiftX, dy1-shiftY, g->texCord.x1(), g->texCord.y1());
+		va2->AddVertex2dQT(dx0-shiftX, dy1-shiftY, stc.x0(), stc.y1());
+		va2->AddVertex2dQT(dx0-shiftX, dy0+shiftY, stc.x0(), stc.y0());
+		va2->AddVertex2dQT(dx1+shiftX, dy0+shiftY, stc.x1(), stc.y0());
+		va2->AddVertex2dQT(dx1+shiftX, dy1-shiftY, stc.x1(), stc.y1());
 
 		//! draw the actual character
-		va->AddVertex2dQT(dx0, dy1, g->texCord.x0(), g->texCord.y1());
-		va->AddVertex2dQT(dx0, dy0, g->texCord.x0(), g->texCord.y0());
-		va->AddVertex2dQT(dx1, dy0, g->texCord.x1(), g->texCord.y0());
-		va->AddVertex2dQT(dx1, dy1, g->texCord.x1(), g->texCord.y1());
+		va->AddVertex2dQT(dx0, dy1, tc.x0(), tc.y1());
+		va->AddVertex2dQT(dx0, dy0, tc.x0(), tc.y0());
+		va->AddVertex2dQT(dx1, dy0, tc.x1(), tc.y0());
+		va->AddVertex2dQT(dx1, dy1, tc.x1(), tc.y1());
 	} while(true);
 }
 

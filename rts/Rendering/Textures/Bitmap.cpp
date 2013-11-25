@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
+#include <utility>
 #include <ostream>
 #include <fstream>
 #include <string.h>
@@ -74,7 +74,7 @@ CBitmap::CBitmap()
 	, xsize(0)
 	, ysize(0)
 	, channels(4)
-	, type(BitmapTypeStandardRGBA)
+	, compressed(false)
 #ifndef BITMAP_NO_OPENGL
 	, textype(GL_TEXTURE_2D)
 	, ddsimage(NULL)
@@ -97,13 +97,13 @@ CBitmap::CBitmap(const CBitmap& old)
 	, xsize(old.xsize)
 	, ysize(old.ysize)
 	, channels(old.channels)
-	, type(old.type)
+	, compressed(false)
 #ifndef BITMAP_NO_OPENGL
 	, textype(old.textype)
 	, ddsimage(NULL)
 #endif // !BITMAP_NO_OPENGL
 {
-	assert(old.type != BitmapTypeDDS);
+	assert(!old.compressed);
 
 	const int size = xsize*ysize * channels;
 	mem = new unsigned char[size];
@@ -111,16 +111,30 @@ CBitmap::CBitmap(const CBitmap& old)
 }
 
 
-CBitmap::CBitmap(const unsigned char* data, int xsize, int ysize)
+CBitmap::CBitmap(CBitmap&& bm)
+	: mem(std::move(bm.mem))
+	, xsize(std::move(bm.xsize))
+	, ysize(std::move(bm.ysize))
+	, channels(std::move(bm.channels))
+	, compressed(std::move(bm.compressed))
+#ifndef BITMAP_NO_OPENGL
+	, textype(std::move(bm.textype))
+	, ddsimage(std::move(bm.ddsimage))
+#endif
+{
+}
+
+
+CBitmap::CBitmap(const unsigned char* data, int _xsize, int _ysize, int _channels)
 	: mem(NULL)
-	, xsize(xsize)
-	, ysize(ysize)
-	, channels(4)
-	, type(BitmapTypeStandardRGBA)
+	, xsize(_xsize)
+	, ysize(_ysize)
+	, channels(_channels)
+	, compressed(false)
 #ifndef BITMAP_NO_OPENGL
 	, textype(GL_TEXTURE_2D)
 	, ddsimage(NULL)
-#endif // !BITMAP_NO_OPENGL
+#endif
 {
 	const int size = xsize*ysize * channels;
 	mem = new unsigned char[size];
@@ -131,10 +145,10 @@ CBitmap::CBitmap(const unsigned char* data, int xsize, int ysize)
 CBitmap& CBitmap::operator=(const CBitmap& bm)
 {
 	if (this != &bm) {
-		type  = bm.type;
 		xsize = bm.xsize;
 		ysize = bm.ysize;
 		channels = bm.channels;
+		compressed = bm.compressed;
 
 		const int size = xsize*ysize * channels;
 		delete[] mem;
@@ -157,6 +171,25 @@ CBitmap& CBitmap::operator=(const CBitmap& bm)
 }
 
 
+CBitmap& CBitmap::operator=(CBitmap&& bm)
+{
+	xsize = bm.xsize;
+	ysize = bm.ysize;
+	channels = bm.channels;
+	compressed = bm.compressed;
+	mem = bm.mem;
+	bm.mem = NULL;
+
+#ifndef BITMAP_NO_OPENGL
+	textype = bm.textype;
+	ddsimage = bm.ddsimage;
+	bm.ddsimage = NULL;
+#endif // !BITMAP_NO_OPENGL
+
+	return *this;
+}
+
+
 void CBitmap::Alloc(int w, int h)
 {
 	delete[] mem;
@@ -171,6 +204,7 @@ void CBitmap::Alloc(int w, int h)
 
 void CBitmap::AllocDummy()
 {
+	compressed = false;
 	channels = 4;
 	Alloc(1, 1);
 	mem[0] = 255; // Red allows us to easily see textures that failed to load
@@ -196,7 +230,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 	if (filename.find(".dds") != std::string::npos) {
 #ifndef BITMAP_NO_OPENGL
-		type = BitmapTypeDDS;
+		compressed = true;
 		xsize = 0;
 		ysize = 0;
 		channels = 0;
@@ -230,7 +264,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 #endif // !BITMAP_NO_OPENGL
 	}
 
-	type = BitmapTypeStandardRGBA;
+	compressed = false;
 	channels = 4;
 
 	CFileHandler file(filename);
@@ -297,7 +331,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 bool CBitmap::LoadGrayscale(const std::string& filename)
 {
-	type = BitmapTypeStandardAlpha;
+	compressed = false;
 	channels = 1;
 
 	CFileHandler file(filename);
@@ -341,7 +375,7 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 
 bool CBitmap::Save(std::string const& filename, bool opaque) const
 {
-	if (type == BitmapTypeDDS) {
+	if (compressed) {
 #ifndef BITMAP_NO_OPENGL
 		return ddsimage->save(filename);
 #else
@@ -392,7 +426,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 #ifndef BITMAP_NO_OPENGL
 const unsigned int CBitmap::CreateTexture(bool mipmaps) const
 {
-	if (type == BitmapTypeDDS) {
+	if (compressed) {
 		return CreateDDSTexture(0, mipmaps);
 	}
 
@@ -551,7 +585,7 @@ void CBitmap::CreateAlpha(unsigned char red, unsigned char green, unsigned char 
 
 void CBitmap::SetTransparent(const SColor& c, const SColor& trans)
 {
-	if (type != BitmapTypeStandardRGBA) {
+	if (compressed) {
 		return;
 	}
 
@@ -632,7 +666,7 @@ inline static void kernelBlur(CBitmap* dst, const unsigned char* src, int x, int
 
 void CBitmap::Blur(int iterations, float weight)
 {
-	if (type == BitmapTypeDDS) {
+	if (compressed) {
 		return;
 	}
 
@@ -641,16 +675,14 @@ void CBitmap::Blur(int iterations, float weight)
 	dst->channels = src->channels;
 	dst->Alloc(xsize,ysize);
 
-	for (int i=0; i < iterations; ++i){
-		{
-			for_mt(0, ysize, [&](const int y) {
-				for (int x=0; x < xsize; x++) {
-					for (int j=0; j < channels; j++) {
-						kernelBlur(dst, src->mem, x, y, j, weight);
-					}
+	for (int i=0; i < iterations; ++i) {
+		for_mt(0, ysize, [&](const int y) {
+			for (int x=0; x < xsize; x++) {
+				for (int j=0; j < channels; j++) {
+					kernelBlur(dst, src->mem, x, y, j, weight);
 				}
-			});
-		}
+			}
+		});
 		std::swap(src, dst);
 	}
 
@@ -663,38 +695,15 @@ void CBitmap::Blur(int iterations, float weight)
 }
 
 
-// Unused
-CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height) const
-{
-	CBitmap bm;
-
-	delete[] bm.mem;
-	bm.mem = new unsigned char[width*height * channels];
-	bm.channels = channels;
-	bm.type = type;
-	bm.xsize = width;
-	bm.ysize = height;
-
-	for (int y=0; y < height; ++y) {
-		for (int x=0; x < width; ++x) {
-			for (int i=0; i < channels; ++i) {
-				bm.mem[(y*width + x)*channels + i] = mem[((starty + y)*xsize + startx + x)*channels + i];
-			}
-		}
-	}
-
-	return bm;
-}
-
-
 void CBitmap::CopySubImage(const CBitmap& src, int xpos, int ypos)
 {
 	if (xpos + src.xsize > xsize || ypos + src.ysize > ysize) {
-		LOG_L(L_WARNING, "CBitmap::CopySubImage src image does not fit into dst");
+		LOG_L(L_WARNING, "CBitmap::CopySubImage src image does not fit into dst!");
 		return;
 	}
 
-	if (src.type != BitmapTypeStandardRGBA || type != BitmapTypeStandardRGBA) {
+	if (compressed || src.compressed) {
+		LOG_L(L_WARNING, "CBitmap::CopySubImage can't copy compressed textures!");
 		return;
 	}
 
@@ -708,9 +717,35 @@ void CBitmap::CopySubImage(const CBitmap& src, int xpos, int ypos)
 }
 
 
+CBitmap CBitmap::CanvasResize(const int newx, const int newy, const bool center) const
+{
+	CBitmap bm;
+
+	if (xsize > newx || ysize > newy) {
+		LOG_L(L_WARNING, "CBitmap::CanvasResize can only upscale (tried to resize %ix%i to %ix%i)!", xsize,ysize,newx,newy);
+		bm.AllocDummy();
+		return bm;
+	}
+
+	const int borderLeft = (center) ? (newx - xsize) / 2 : 0;
+	const int borderTop  = (center) ? (newy - ysize) / 2 : 0;
+
+	bm.channels = channels;
+	bm.Alloc(newx, newy);
+	bm.CopySubImage(*this, borderLeft, borderTop);
+
+	return bm;
+}
+
+
 SDL_Surface* CBitmap::CreateSDLSurface(bool newPixelData) const
 {
 	SDL_Surface* surface = NULL;
+
+	if (channels < 3) {
+		LOG_L(L_WARNING, "CBitmap::CreateSDLSurface works only with 24bit RGB and 32bit RGBA pictures!");
+		return surface;
+	}
 
 	unsigned char* surfData = NULL;
 	if (newPixelData) {
@@ -738,6 +773,19 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy) const
 	newy = std::max(1, newy);
 
 	CBitmap bm;
+
+	if (compressed) {
+		LOG_L(L_WARNING, "CBitmap::CreateRescaled doesn't work with compressed textures!");
+		bm.AllocDummy();
+		return bm;
+	}
+
+	if (channels != 4) {
+		LOG_L(L_WARNING, "CBitmap::CreateRescaled only works with RGBA data!");
+		bm.AllocDummy();
+		return bm;
+	}
+
 	bm.Alloc(newx, newy);
 
 	const float dx = (float) xsize / newx;
@@ -786,7 +834,7 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy) const
 
 void CBitmap::InvertColors()
 {
-	if (type != BitmapTypeStandardRGBA) {
+	if (compressed) {
 		return;
 	}
 	for (int y = 0; y < ysize; ++y) {
@@ -803,7 +851,7 @@ void CBitmap::InvertColors()
 
 void CBitmap::InvertAlpha()
 {
-	if (type != BitmapTypeStandardRGBA) return; // Don't try to invert DDS
+	if (compressed) return; // Don't try to invert DDS
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
 			const int base = ((y * xsize) + x) * 4;
@@ -815,7 +863,7 @@ void CBitmap::InvertAlpha()
 
 void CBitmap::GrayScale()
 {
-	if (type != BitmapTypeStandardRGBA) {
+	if (compressed) {
 		return;
 	}
 	for (int y = 0; y < ysize; ++y) {
@@ -844,7 +892,7 @@ static ILubyte TintByte(ILubyte value, float tint)
 
 void CBitmap::Tint(const float tint[3])
 {
-	if (type != BitmapTypeStandardRGBA) {
+	if (compressed) {
 		return;
 	}
 	for (int y = 0; y < ysize; y++) {
@@ -861,7 +909,7 @@ void CBitmap::Tint(const float tint[3])
 
 void CBitmap::ReverseYAxis()
 {
-    if (type != BitmapTypeStandardRGBA) return; // don't try to flip DDS
+	if (compressed) return; // don't try to flip DDS
 	unsigned char* tmpLine = new unsigned char[channels * xsize];
 	for (int y=0; y < (ysize / 2); ++y) {
 		const int pixelLow  = (((y            ) * xsize) + 0) * channels;

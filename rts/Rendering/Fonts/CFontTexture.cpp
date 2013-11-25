@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdexcept>
+#include <unordered_set>
 #ifndef   HEADLESS
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -27,6 +28,9 @@
 #include "System/bitops.h"
 
 #include "LanguageBlocksDefs.h"
+
+static const int ATLAS_PADDING = 2;
+
 
 #ifndef   HEADLESS
 #undef __FTERRORS_H__
@@ -48,6 +52,11 @@ static const char* GetFTError(FT_Error e) {
 	return "Unknown error";
 }
 #endif // HEADLESS
+
+
+class texture_size_exception : public std::exception
+{
+};
 
 
 static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
@@ -86,6 +95,8 @@ private:
 FtLibraryHandler libraryHandler; ///it will be automaticly createated and deleted
 #endif
 
+static std::unordered_set<CFontTexture*> allFonts;
+
 
 CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesize, float  _outlineweight):
 #ifndef HEADLESS
@@ -101,7 +112,11 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	fontDescender(0),
 	texWidth(0),
 	texHeight(0),
+	wantedTexWidth(0),
+	wantedTexHeight(0),
 	texture(0),
+	textureSpaceMatrix(0),
+	atlasUpdate(NULL),
 	nextRowPos(0)
 {
 	if (size <= 0)
@@ -168,8 +183,8 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	if (lineHeight <= 0)
 		lineHeight = 1.25 * (face->bbox.yMax - face->bbox.yMin);
 
-	// Create initial small texture
-	ResizeTexture(32,32);
+	// has to be done before first GetGlyph() call!
+	CreateTexture(128, 128);
 
 	// precache ASCII kernings
 	memset(kerningPrecached, 0, 128*128*sizeof(float));
@@ -184,56 +199,29 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 			kerningPrecached[hash] = advance + normScale * kerning.x;
 		}
 	}
+
+	allFonts.insert(this);
 #endif
 }
 
 CFontTexture::~CFontTexture()
 {
 #ifndef   HEADLESS
+	allFonts.erase(this);
 	FT_Done_Face(face);
 	delete[] faceDataBuffer;
 	glDeleteTextures(1, (const GLuint*)&texture);
+	glDeleteLists(textureSpaceMatrix, 1);
 #endif
 }
 
-int CFontTexture::GetTextureWidth() const
-{
-	return texWidth;
-}
 
-int CFontTexture::GetTextureHeight() const
-{
-	return texHeight;
-}
-
-int CFontTexture::GetOutlineWidth() const
-{
-	return outlineSize;
-}
-
-float CFontTexture::GetOutlineWeight() const
-{
-	return outlineWeight;
-}
-
-float CFontTexture::GetLineHeight() const
-{
-	return lineHeight;
-}
-
-float CFontTexture::GetDescender() const
-{
-	return fontDescender;
-}
-
-const FT_Face& CFontTexture::GetFace() const
-{
-	return face;
-}
-
-int CFontTexture::GetTexture() const
-{
-	return texture;
+void CFontTexture::Update() {
+	for (auto& font: allFonts) {
+		if (font->texWidth != font->wantedTexWidth || font->texHeight != font->wantedTexHeight) {
+			font->ResizeTexture();
+		}
+	}
 }
 
 
@@ -249,7 +237,7 @@ const GlyphInfo& CFontTexture::GetGlyph(char32_t ch)
 	start = GetLanguageBlock(ch, end);
 
 	// Load an entire block
-	LoadBlock(start, end); ////FIXME can throw texture_size_exception
+	LoadBlock(start, end);
 	return GetGlyph(ch);
 #else
 	static GlyphInfo g = GlyphInfo();
@@ -286,6 +274,12 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 {
 	for(char32_t i=start; i<end; ++i)
 		LoadGlyph(i);
+
+	GLboolean inListCompile;
+	glGetBooleanv(GL_LIST_INDEX, &inListCompile);
+	if (!inListCompile) {
+		ResizeTexture();
+	}
 }
 
 void CFontTexture::LoadGlyph(char32_t ch)
@@ -340,49 +334,95 @@ void CFontTexture::LoadGlyph(char32_t ch)
 		return;
 	}
 
-	      unsigned char* dst_pixels = new unsigned char[width * height]; // alpha-only 8bit texture
-	const unsigned char* src_pixels = slot->bitmap.buffer;
-
-	// Pixels are 8 bits gray levels
-	for(int y = 0; y < height; y++) {
-		const unsigned char* src = src_pixels + y * slot->bitmap.pitch;
-		      unsigned char* dst = dst_pixels + y * width;
-		memcpy(dst, src, width);
+	try {
+		glyph.texCord = AllocateGlyphRect(width, height);
+		glyph.shadowTexCord = AllocateGlyphRect(width + 2 * outlineSize, height + 2 * outlineSize);
+	} catch(const texture_size_exception& e) {
+		LOG_L(L_WARNING, "Texture limit reached! (try to reduce the font size/outline-width)");
 	}
 
-	glyph.texCord = AllocateGlyphRect(width, height);
-	Update(dst_pixels, glyph.texCord.x, glyph.texCord.y, width, height);
+	if ((atlasUpdate->xsize != wantedTexWidth) || (atlasUpdate->ysize != wantedTexHeight)) {
+		(*atlasUpdate) = atlasUpdate->CanvasResize(wantedTexWidth, wantedTexHeight, false);
+	}
 
-	delete[] dst_pixels;
+	assert(slot->bitmap.pitch == 1);
+	CBitmap gbm(slot->bitmap.buffer, width, height, 1);
+	if (glyph.texCord.w != 0)
+		atlasUpdate->CopySubImage(gbm, int(glyph.texCord.x), int(glyph.texCord.y));
+	gbm = gbm.CanvasResize(width + 2 * outlineSize, height + 2 * outlineSize, true);
+	gbm.Blur(outlineSize, outlineWeight);
+	if (glyph.shadowTexCord.w != 0)
+		atlasUpdate->CopySubImage(gbm, int(glyph.shadowTexCord.x), int(glyph.shadowTexCord.y));
 #endif
 }
 
 CFontTexture::Row* CFontTexture::FindRow(int glyphWidth, int glyphHeight)
 {
+	float best_ratio = 10000.0f;
+	Row*  best_row   = nullptr;
+
+	// first try to find a row with similar height
 	for(auto& row: imageRows) {
-		float ratio = (float)row.height/(float)(glyphHeight+2);
-		// Ignore too small or too big raws
+		// Check if there is enough space in this row
+		if (wantedTexWidth - row.width < glyphWidth)
+			continue;
+
+		// cache suboptimum solution
+		const float ratio = float(row.height)/glyphHeight;
+		if (
+			   (best_ratio > ratio)
+			&& (ratio >= 1.0f)
+			&& (float(row.width) / wantedTexWidth < 0.85f)
+		) {
+			best_ratio = ratio;
+			best_row   = &row;
+		}
+
+		// Ignore too small or too big rows
 		if (ratio < 1.0f || ratio > 1.3f)
 			continue;
 
-		// Check if there is enough space in this row
-		if (texWidth - row.width < glyphWidth+2)
-			continue;
-
+		// found a good enough row (not optimal solution for that we would need to check all lines -> slower)
 		return &row;
 	}
-	return 0;
+
+	// none found, take any row that isn't full yet and is high enough to fit the glyph
+	if (best_row)
+		return best_row;
+
+	// try to resize last row when possible
+	if (!imageRows.empty()) {
+		const int freeHeightSpace = wantedTexHeight - nextRowPos;
+		if (freeHeightSpace > 0) {
+			Row& lastRow = imageRows.back();
+			const int moreHeightNeeded = glyphHeight - lastRow.height;
+			if (moreHeightNeeded > 0 && moreHeightNeeded < 4) {
+				if ((freeHeightSpace > moreHeightNeeded) && (wantedTexWidth - lastRow.width > glyphWidth)) {
+					lastRow.height += moreHeightNeeded;
+					nextRowPos     += moreHeightNeeded;
+					return &lastRow;
+				}
+			}
+		}
+	}
+
+	// still no row found create a new one
+	return AddRow(glyphWidth, glyphHeight);
 }
 
 CFontTexture::Row* CFontTexture::AddRow(int glyphWidth, int glyphHeight)
 {
-	int rowHeight = glyphHeight + (2*glyphHeight)/10;
-	while (nextRowPos+rowHeight+2 >= texHeight) {
+	const int wantedRowHeight = glyphHeight * 1.2f;
+	while (nextRowPos+wantedRowHeight >= wantedTexHeight) {
+		if (wantedTexWidth>=2048 || wantedTexHeight>=2048)
+			throw texture_size_exception();
+
 		// Resize texture
-		ResizeTexture(texWidth*2, texHeight*2); //FIXME
+		wantedTexWidth  <<= 1;
+		wantedTexHeight <<= 1;
 	}
-	Row newrow(nextRowPos, rowHeight);
-	nextRowPos += rowHeight;
+	Row newrow(nextRowPos, wantedRowHeight);
+	nextRowPos += wantedRowHeight;
 	imageRows.push_back(newrow);
 	return &imageRows.back();
 }
@@ -391,43 +431,30 @@ IGlyphRect CFontTexture::AllocateGlyphRect(int glyphWidth,int glyphHeight)
 {
 #ifndef   HEADLESS
 	//FIXME add padding
-	Row* row = FindRow(glyphWidth, glyphHeight);
-	if (!row)
-		row = AddRow(glyphWidth, glyphHeight);
+	Row* row = FindRow(glyphWidth + ATLAS_PADDING, glyphHeight + ATLAS_PADDING);
 
 	IGlyphRect rect = IGlyphRect(row->width, row->position, glyphWidth, glyphHeight);
-	row->width += glyphWidth+2;
+	row->width += glyphWidth + ATLAS_PADDING;
 	return rect;
 #else
 	return IGlyphRect();
 #endif
 }
 
-void CFontTexture::ResizeTexture(int w, int h)
+
+void CFontTexture::CreateTexture(const int width, const int height)
 {
 #ifndef   HEADLESS
-	if (w>2048 || h>2048)
-		throw texture_size_exception();
+	glPushAttrib(GL_TEXTURE_BIT);
 
-	glPushAttrib(GL_PIXEL_MODE_BIT);
-
-	unsigned char* pixels = NULL;
-	if (!texture) {
-		glGenTextures(1, &texture);
-	} else {
-		pixels = new unsigned char[texWidth * texHeight];
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
-	}
-
+	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	if (GLEW_ARB_texture_border_clamp) {
-		static const GLfloat borderColor[4] = {1.0f,1.0f,1.0f,0.0f};
+		const GLfloat borderColor[4] = { 1.0f,1.0f,1.0f,0.0f };
 		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
@@ -436,29 +463,41 @@ void CFontTexture::ResizeTexture(int w, int h)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	}
 
-	unsigned char empty[w*h];
-	memset(empty, 0, w*h);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, w, h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, empty);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 1, 1, 0, GL_ALPHA, GL_UNSIGNED_BYTE, NULL);
 
-	if (pixels != NULL) {
-		// copy back old data
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texWidth, texHeight, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
-	}
-
-	texWidth  = w;
-	texHeight = h;
-	delete[] pixels;
+	texWidth  = wantedTexWidth  = width;
+	texHeight = wantedTexHeight = height;
 	glPopAttrib();
+
+	atlasUpdate = new CBitmap();
+	atlasUpdate->channels = 1;
+	atlasUpdate->Alloc(width, height);
+
+	textureSpaceMatrix = glGenLists(1);
+	glNewList(textureSpaceMatrix, GL_COMPILE);
+	glEndList();
 #endif
 }
 
-void CFontTexture::Update(const unsigned char* pixels,int x,int y,int w,int h)
+
+void CFontTexture::ResizeTexture()
 {
-#ifndef HEADLESS
-	//FIXME readd shadow blur
-	glPushAttrib(GL_PIXEL_MODE_BIT);
+#ifndef   HEADLESS
+	glPushAttrib(GL_PIXEL_MODE_BIT | GL_TEXTURE_BIT);
+
+	const int width  = wantedTexWidth;
+	const int height = (globalRendering->supportNPOTs) ? nextRowPos : wantedTexHeight;
+
 	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, (unsigned int)w, (unsigned int)h, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->mem);
+
+	texWidth  = width;
+	texHeight = height;
+
+	glNewList(textureSpaceMatrix, GL_COMPILE);
+	glScalef(1.f/width, 1.f/height, 1.f);
+	glEndList();
+
 	glPopAttrib();
 #endif
 }

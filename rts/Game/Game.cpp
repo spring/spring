@@ -48,6 +48,7 @@
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
+#include "Rendering/Fonts/CFontTexture.h"
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/FeatureDrawer.h"
@@ -1085,6 +1086,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		worldDrawer->Update();
 		CNamedTextures::Update();
 		modelParser->Update();
+		CFontTexture::Update();
 
 		if (newSimFrame) {
 			projectileDrawer->UpdateTextures();
