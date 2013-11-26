@@ -138,7 +138,7 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 		return NULL;
 	}
 
-	#ifndef HEADLESS
+	#if (!defined(HEADLESS) && !defined(UNITSYNC))
 	const spring_time t0 = spring_gettime();
 	void* mem = realloc(ptr, nsize);
 	const spring_time t1 = spring_gettime();
