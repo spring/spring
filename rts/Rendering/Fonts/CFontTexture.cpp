@@ -99,13 +99,6 @@ static std::unordered_set<CFontTexture*> allFonts;
 
 
 CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesize, float  _outlineweight):
-#ifndef HEADLESS
-	library(libraryHandler.GetLibrary()),
-#else
-	library(NULL),
-#endif
-	face(NULL),
-	faceDataBuffer(NULL),
 	outlineSize(_outlinesize),
 	outlineWeight(_outlineweight),
 	lineHeight(0),
@@ -117,6 +110,13 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	texture(0),
 	textureSpaceMatrix(0),
 	atlasUpdate(NULL),
+#ifndef HEADLESS
+	library(libraryHandler.GetLibrary()),
+#else
+	library(NULL),
+#endif
+	face(NULL),
+	faceDataBuffer(NULL),
 	nextRowPos(0)
 {
 	if (size <= 0)
