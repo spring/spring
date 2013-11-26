@@ -48,9 +48,9 @@ namespace Threading {
 
 
 	/**
-	 * OpenMP related stuff
+	 * threadpool related stuff
 	 */
-	void InitOMP();
+	void InitThreadPool();
 
 	/**
 	 * Inform the OS kernel that we are a cpu-intensive task
@@ -64,21 +64,26 @@ namespace Threading {
 	bool IsMainThread();
 	bool IsMainThread(NativeThreadId threadID);
 
+	void SetGameLoadThread();
+	bool IsGameLoadThread();
+	bool IsGameLoadThread(NativeThreadId threadID);
 
 	/**
 	 * GML Functions
 	 */
 	void SetSimThread(bool set);
 	bool IsSimThread();
+
 	bool UpdateGameController(CGameController* ac);
-	void SetBatchThread(bool set);
-	bool IsBatchThread();
+
+	void SetLuaBatchThread(bool set);
+	bool IsLuaBatchThread();
 
 
 	/**
 	 * Give the current thread a name (posix-only)
 	 */
-	void SetThreadName(std::string newname);
+	void SetThreadName(const std::string& newname);
 
 	/**
 	 * Used to raise errors in the main-thread issued by worker-threads

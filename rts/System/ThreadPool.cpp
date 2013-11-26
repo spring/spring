@@ -24,7 +24,7 @@ static boost::condition_variable newTasks;
 static std::atomic<bool> waitForLock(false);
 
 #if !defined(UNITSYNC) && !defined(UNIT_TEST)
-static bool hasOGLthreads = true; // disable for now (not used atm)
+static bool hasOGLthreads = false; // disable for now (not used atm)
 #else
 static bool hasOGLthreads = false;
 #endif

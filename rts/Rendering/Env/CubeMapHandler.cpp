@@ -207,7 +207,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	sky->Draw();
 
 	if (!skyOnly) {
-		readMap->GetGroundDrawer()->Draw(DrawPass::UnitReflection);
+		readMap->GetGroundDrawer()->Draw(DrawPass::TerrainReflection);
 	}
 
 	// NOTE we do this later to save render context switches (this is one of the slowest OpenGL operations!)

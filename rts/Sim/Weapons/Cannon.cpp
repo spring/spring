@@ -44,13 +44,12 @@ void CCannon::Init()
 	highTrajectory = (weaponDef->highTrajectory == 1);
 
 	CWeapon::Init();
-	UpdateRange(range);
 }
 
 void CCannon::UpdateRange(float val)
 {
 	// clamp so as to not extend range if projectile
-	// speed is too low to reach the updated range
+	// speed is too low to reach the *updated* range
 	// note: new range can be zero (!) making range
 	// and height factors irrelevant
 	range = val;

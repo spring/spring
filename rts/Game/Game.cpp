@@ -322,9 +322,7 @@ DO_ONCE_FNC(
 
 
 CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
-	: finishedLoading(false)
-	, gameOver(false)
-	, gameDrawMode(gameNotDrawing)
+	: gameDrawMode(gameNotDrawing)
 	, thisFps(0)
 	, lastSimFrame(-1)
 	, frameStartTime(spring_gettime())
@@ -358,6 +356,8 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, infoConsole(NULL)
 	, consoleHistory(NULL)
 	, worldDrawer(NULL)
+	, finishedLoading(false)
+	, gameOver(false)
 {
 	game = this;
 
@@ -384,15 +384,16 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	CInputReceiver::guiAlpha = configHandler->GetFloat("GuiOpacity");
 
-	const string inputTextGeo = configHandler->GetString("InputTextGeo");
 	ParseInputTextGeometry("default");
-	ParseInputTextGeometry(inputTextGeo);
+	ParseInputTextGeometry(configHandler->GetString("InputTextGeo"));
 
 	CLuaHandle::SetModUICtrl(configHandler->GetBool("LuaModUICtrl"));
 
 	modInfo.Init(modName.c_str());
 	GML::Init(); // modinfo plays key part in MT enable/disable
-	Threading::InitOMP();
+
+	// FIXME: THIS HAS ALREADY BEEN CALLED! (SpringApp::Initialize)
+	// Threading::InitThreadPool();
 	Threading::SetThreadScheduler();
 
 	if (!mapInfo) {
@@ -413,6 +414,7 @@ CGame::~CGame()
 #endif
 
 	ENTER_SYNCED_CODE();
+	LOG("[%s][1]", __FUNCTION__);
 
 	CEndGameBox::Destroy();
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
@@ -420,9 +422,13 @@ CGame::~CGame()
 
 	IVideoCapturing::FreeInstance();
 
+	LOG("[%s][2]", __FUNCTION__);
 	CLuaGaia::FreeHandler();
+	LOG("[%s][3]", __FUNCTION__);
 	CLuaRules::FreeHandler();
+	LOG("[%s][4]", __FUNCTION__);
 	LuaOpenGL::Free();
+	LOG("[%s][5]", __FUNCTION__);
 
 	// Kill all teams that are still alive, in
 	// case the game did not do so through Lua.
@@ -440,11 +446,11 @@ CGame::~CGame()
 	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
 	UnsyncedGameCommands::DestroyInstance();
 	SyncedGameCommands::DestroyInstance();
-
 	CWordCompletion::DestroyInstance();
 
+	LOG("[%s][6]", __FUNCTION__);
 	SafeDelete(worldDrawer);
-	SafeDelete(guihandler);
+	SafeDelete(guihandler); // frees LuaUI
 	SafeDelete(minimap);
 	SafeDelete(resourceBar);
 	SafeDelete(tooltip); // CTooltipConsole*
@@ -458,6 +464,7 @@ CGame::~CGame()
 	SafeDelete(inMapDrawerModel);
 	SafeDelete(inMapDrawer);
 
+	LOG("[%s][7]", __FUNCTION__);
 	SafeDelete(water);
 	SafeDelete(sky);
 	SafeDelete(camHandler);
@@ -468,13 +475,16 @@ CGame::~CGame()
 	SafeDelete(texturehandler3DO);
 	SafeDelete(texturehandlerS3O);
 
+	LOG("[%s][8]", __FUNCTION__);
 	SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
 	SafeDelete(unitHandler); // depends on modelParser (via ~CUnit)
 	SafeDelete(projectileHandler);
 
+	LOG("[%s][9]", __FUNCTION__);
 	SafeDelete(cubeMapHandler);
 	SafeDelete(modelParser);
 
+	LOG("[%s][10]", __FUNCTION__);
 	SafeDelete(pathManager);
 	SafeDelete(ground);
 	SafeDelete(smoothGround);
@@ -491,6 +501,7 @@ CGame::~CGame()
 	SafeDelete(helper);
 	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
+	LOG("[%s][11]", __FUNCTION__);
 	CClassicGroundMoveType::DeleteLineTable();
 	CCategoryHandler::RemoveInstance();
 
@@ -499,25 +510,32 @@ CGame::~CGame()
 	}
 	grouphandlers.clear();
 
+	LOG("[%s][12]", __FUNCTION__);
 	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
 	SafeDelete(vfsHandler);
 	SafeDelete(archiveScanner);
 
+	LOG("[%s][13]", __FUNCTION__);
 	SafeDelete(gameServer);
 	ISound::Shutdown();
 
 	game = NULL;
 
+	LOG("[%s][14]", __FUNCTION__);
 	LEAVE_SYNCED_CODE();
 }
 
 
-void CGame::LoadGame(const std::string& mapName)
+void CGame::LoadGame(const std::string& mapName, bool threaded)
 {
 	GML::ThreadNumber(GML_LOAD_THREAD_NUM);
-	Threading::SetThreadName("loading");
-
+	// NOTE:
+	//   this is needed for LuaHandle::CallOut*UpdateCallIn
+	//   the main-thread is NOT the same as the load-thread
+	//   when LoadingMT=1 (!!!)
+	Threading::SetGameLoadThread();
 	Watchdog::RegisterThread(WDT_LOAD);
+
 	if (!gu->globalQuit) LoadMap(mapName);
 	if (!gu->globalQuit) LoadDefs();
 	if (!gu->globalQuit) PreLoadSimulation();
@@ -533,7 +551,6 @@ void CGame::LoadGame(const std::string& mapName)
 		saveFile->LoadGame();
 	}
 
-	Threading::SetThreadName("unknown");
 	Watchdog::DeregisterThread(WDT_LOAD);
 }
 
@@ -1050,7 +1067,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 
 	// Update the interpolation coefficient (globalRendering->timeOffset)
-	if (!gs->paused && !HasLag() && gs->frameNum > 1 && !videoCapturing->IsCapturing()) {
+	if (!gs->paused && !IsLagging() && gs->frameNum > 1 && !videoCapturing->IsCapturing()) {
 		globalRendering->lastFrameStart = currentTime;
 		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
 		globalRendering->timeOffset = (currentTime - lastSimFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
@@ -1251,11 +1268,11 @@ bool CGame::Draw() {
 					readMap->UpdateShadingTexture();
 				}
 			}
-
-
 		}
+
 		if (FBO::IsSupported())
 			FBO::Unbind();
+
 		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
@@ -2118,12 +2135,12 @@ void CGame::ReColorTeams()
 	}
 }
 
-bool CGame::HasLag() const
+bool CGame::IsLagging(float maxLatency) const
 {
 	const spring_time timeNow = spring_gettime();
 	const float diffTime = spring_tomsecs(timeNow - lastFrameTime);
 
-	return (!gs->paused && (diffTime > (500.0f / gs->speedFactor)));
+	return (!gs->paused && (diffTime > (maxLatency / gs->speedFactor)));
 }
 
 

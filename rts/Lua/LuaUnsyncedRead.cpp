@@ -233,7 +233,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 	}
 	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %c\n", caller, unitID);
+		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
 	}
 	CUnit* unit = unitHandler->units[unitID];
 	if (unit == NULL) {
@@ -443,7 +443,7 @@ int LuaUnsyncedRead::GetLastUpdateSeconds(lua_State* L)
 int LuaUnsyncedRead::GetHasLag(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushboolean(L, game ? game->HasLag() : false);
+	lua_pushboolean(L, (game != NULL)? game->IsLagging(luaL_optfloat(L, 1, 500.0f)) : false);
 	return 1;
 }
 

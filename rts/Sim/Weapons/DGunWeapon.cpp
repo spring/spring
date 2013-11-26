@@ -58,5 +58,5 @@ void CDGunWeapon::FireImpl(bool scriptCall)
 void CDGunWeapon::Init()
 {
 	CWeapon::Init();
-	muzzleFlareSize=1.5f;
+	muzzleFlareSize = 1.5f;
 }

@@ -284,7 +284,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 
 	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %c\n", caller, unitID);
+		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
 	}
 
 	return unitHandler->units[unitID];
@@ -2021,43 +2021,43 @@ int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 
 int LuaUnsyncedCtrl::Restart(lua_State* L)
 {
-	const std::string arguments = luaL_checkstring(L, 1);
-	const std::string script = luaL_checkstring(L, 2);
+	const std::string springArguments = luaL_checkstring(L, 1);
+	const std::string scriptContents = luaL_checkstring(L, 2);
 
-	const std::string springFullName = (Platform::GetProcessExecutableFile());
+	const std::string springFullName = Platform::GetProcessExecutableFile();
+	const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
 
 	std::vector<std::string> processArgs;
 
-	// Arguments given by Lua code, if any
-	if (!arguments.empty()) {
-		processArgs.push_back(arguments);
+	// arguments given by Lua code, if any
+	if (!springArguments.empty()) {
+		processArgs.push_back(springArguments);
 	}
 
-	// script.txt, if content for it is given by Lua code
-	const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
-	if (!script.empty()) {
-		std::ofstream scriptfile(scriptFullName.c_str());
-		scriptfile << script;
-		scriptfile.close();
+	if (!scriptContents.empty()) {
+		// create file 'script.txt' with contents given by Lua code
+		std::ofstream scriptFile(scriptFullName.c_str());
+		scriptFile.write(scriptContents.c_str(), scriptContents.size());
+		scriptFile.close();
 
 		processArgs.push_back(scriptFullName);
 	}
 
 #ifdef _WIN32
-		// else OpenAL soft crashes when using execvp
+		// else OpenAL crashes when using execvp
 		ISound::Shutdown();
 #endif
 
 	const std::string execError = Platform::ExecuteProcess(springFullName, processArgs);
-	const bool execOk = execError.empty();
 
-	if (execOk) {
-		LOG("The game should restart");
+	if (execError.empty()) {
+		LOG("[Spring.%s] the game should be restarting", __FUNCTION__);
+		lua_pushboolean(L, true);
 	} else {
-		LOG_L(L_ERROR, "Error in Restart: %s", execError.c_str());
+		LOG_L(L_ERROR, "[Spring.%s] error %s", __FUNCTION__, execError.c_str());
+		lua_pushboolean(L, false);
 	}
 
-	lua_pushboolean(L, execOk);
 	return 1;
 }
 

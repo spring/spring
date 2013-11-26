@@ -94,7 +94,6 @@ set(unitsync_files
 	${main_files}
 	${CMAKE_CURRENT_SOURCE_DIR}/unitsync.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/LuaParserAPI.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/Syncer.cpp
 	)
 
 # HACK unitsync should actually be MODULE (not SHARED),

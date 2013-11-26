@@ -1581,7 +1581,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 	GML_DRCMUTEX_LOCK(lua); // ExecuteUnitEventBatch
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(false);
+		Threading::SetLuaBatchThread(false);
 
 	for (std::vector<LuaUnitEventBase>::iterator i = lueb.begin(); i != lueb.end(); ++i) {
 		#if 0
@@ -1683,7 +1683,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 	}
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(true);
+		Threading::SetLuaBatchThread(true);
 }
 
 
@@ -1711,7 +1711,7 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFeatEventBatch
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(false);
+		Threading::SetLuaBatchThread(false);
 
 	for (std::vector<LuaFeatEventBase>::iterator i = lfeb.begin(); i != lfeb.end(); ++i) {
 		const LuaFeatEventBase& e = *i;
@@ -1732,7 +1732,7 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 	}
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(true);
+		Threading::SetLuaBatchThread(true);
 }
 
 
@@ -1758,7 +1758,7 @@ void CLuaHandle::ExecuteProjEventBatch() {
 	GML_DRCMUTEX_LOCK(lua); // ExecuteProjEventBatch
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(false);
+		Threading::SetLuaBatchThread(false);
 
 	for (std::vector<LuaProjEventBase>::iterator i = lpeb.begin(); i != lpeb.end(); ++i) {
 		const LuaProjEventBase& e = *i;
@@ -1776,7 +1776,7 @@ void CLuaHandle::ExecuteProjEventBatch() {
 	}
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(true);
+		Threading::SetLuaBatchThread(true);
 }
 
 
@@ -1802,14 +1802,14 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFrameEventBatch
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(false);
+		Threading::SetLuaBatchThread(false);
 
 	for (std::vector<int>::iterator i = lgeb.begin(); i != lgeb.end(); ++i) {
 		GameFrame(*i);
 	}
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(true);
+		Threading::SetLuaBatchThread(true);
 }
 
 
@@ -1835,7 +1835,7 @@ void CLuaHandle::ExecuteLogEventBatch() {
 	GML_DRCMUTEX_LOCK(lua); // ExecuteLogEventBatch
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(false);
+		Threading::SetLuaBatchThread(false);
 
 	for (std::vector<LuaLogEventBase>::iterator i = lmeb.begin(); i != lmeb.end(); ++i) {
 		const LuaLogEventBase& e = *i;
@@ -1850,7 +1850,7 @@ void CLuaHandle::ExecuteLogEventBatch() {
 	}
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(true);
+		Threading::SetLuaBatchThread(true);
 }
 
 
@@ -3031,22 +3031,28 @@ int CLuaHandle::CallOutGetCallInList(lua_State* L)
 
 int CLuaHandle::CallOutSyncedUpdateCallIn(lua_State* L)
 {
-	if (!Threading::IsSimThread())
-		return 0; // FIXME: If this can be called from a non-sim context, this code is insufficient
-	const string name = luaL_checkstring(L, 1);
+	if (!Threading::IsGameLoadThread() && !Threading::IsSimThread()) {
+		// FIXME:
+		//   if this can be called from a non-sim context, this code is insufficient
+		//   --> no shit, did *someone* perhaps forget to consider the LoadingMT case?
+		return 0;
+	}
+
 	CLuaHandle* lh = GetHandle(L);
-	lh->SyncedUpdateCallIn(lh->GetActiveState(), name);
+	lh->SyncedUpdateCallIn(lh->GetActiveState(), luaL_checkstring(L, 1));
 	return 0;
 }
 
 
 int CLuaHandle::CallOutUnsyncedUpdateCallIn(lua_State* L)
 {
-	if (Threading::IsSimThread())
-		return 0; // FIXME: If this can be called from a sim context, this code is insufficient
-	const string name = luaL_checkstring(L, 1);
+	if (!Threading::IsGameLoadThread() && Threading::IsSimThread()) {
+		// FIXME: see CallOutSyncedUpdateCallIn
+		return 0;
+	}
+
 	CLuaHandle* lh = GetHandle(L);
-	lh->UnsyncedUpdateCallIn(lh->GetActiveState(), name);
+	lh->UnsyncedUpdateCallIn(lh->GetActiveState(), luaL_checkstring(L, 1));
 	return 0;
 }
 
