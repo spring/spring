@@ -12,7 +12,6 @@ public:
 	CEmgCannon(CUnit* owner, const WeaponDef* def);
 
 	void Update();
-	void Init();
 
 private:
 	void FireImpl(bool scriptCall);

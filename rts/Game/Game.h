@@ -51,7 +51,7 @@ public:
 	};
 
 public:
-	void LoadGame(const std::string& mapName);
+	void LoadGame(const std::string& mapName, bool threaded);
 
 	/// show GameEnd-window, calculate mouse movement etc.
 	void GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool timeout = false);
@@ -69,7 +69,10 @@ private:
 	void PostLoad();
 
 public:
-	bool HasLag() const;
+	volatile bool IsFinishedLoading() const { return finishedLoading; }
+	bool IsGameOver() const { return gameOver; }
+	bool IsLagging(float maxLatency = 500.0f) const;
+
 	const std::map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
 		return playerTraffic;
 	}
@@ -137,9 +140,6 @@ private:
 	bool Update();
 
 public:
-	volatile bool finishedLoading;
-	bool gameOver;
-
 	GameDrawMode gameDrawMode;
 
 	unsigned char gameID[16];
@@ -219,6 +219,9 @@ public:
 
 private:
 	CWorldDrawer* worldDrawer;
+
+	volatile bool finishedLoading;
+	bool gameOver;
 };
 
 

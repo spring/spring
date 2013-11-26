@@ -49,6 +49,7 @@ void CWeaponLoader::LoadWeapons(CUnit* unit)
 		CWeapon* weapon = LoadWeapon(unit, defWeapon);
 
 		weapons.push_back(InitWeapon(unit, weapon, defWeapon));
+		unit->maxRange = std::max(weapon->range, unit->maxRange);
 	}
 }
 

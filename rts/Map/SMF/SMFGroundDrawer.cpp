@@ -223,6 +223,9 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 	// some water renderers use FBO's for the refraction pass
 	if (drawPass == DrawPass::WaterRefraction)
 		return;
+	// CubeMapHandler also uses an FBO for this pass
+	if (drawPass == DrawPass::TerrainReflection)
+		return;
 	// deferred pass must be executed with GLSL shaders
 	// if the FFP or ARB state was selected, bail early
 	if (!smfRenderState->CanDrawDeferred())
@@ -482,8 +485,8 @@ int CSMFGroundDrawer::GetGroundDetail(const DrawPass::e& drawPass) const
 	int detail = groundDetail;
 
 	switch (drawPass) {
-		case DrawPass::UnitReflection:
-			detail *= LODScaleUnitReflection;
+		case DrawPass::TerrainReflection:
+			detail *= LODScaleTerrainReflection;
 			break;
 		case DrawPass::WaterReflection:
 			detail *= LODScaleReflection;

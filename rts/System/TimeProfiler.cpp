@@ -173,29 +173,33 @@ void CTimeProfiler::Update()
 
 	++currentPosition;
 	currentPosition &= TimeRecord::frames_size-1;
-	std::map<std::string,TimeRecord>::iterator pi;
-	for (pi = profile.begin(); pi != profile.end(); ++pi)
-	{
-		pi->second.frames[currentPosition] = spring_notime;
+	for (auto& pi: profile) {
+		pi.second.frames[currentPosition] = spring_notime;
 	}
 
 	const spring_time curTime = spring_gettime();
 	const float timeDiff = spring_diffmsecs(curTime, lastBigUpdate);
 	if (timeDiff > 500.0f) // twice every second
 	{
-		for (std::map<std::string,TimeRecord>::iterator pi = profile.begin(); pi != profile.end(); ++pi)
-		{
-			pi->second.percent = spring_tomsecs(pi->second.current) / timeDiff;
-			pi->second.current = spring_notime;
-
-			if(pi->second.percent > pi->second.peak) {
-				pi->second.peak = pi->second.percent;
-				pi->second.newpeak = true;
+		for (auto& pi: profile) {
+			auto& p = pi.second;
+			p.percent = spring_tomsecs(p.current) / timeDiff;
+			p.current = spring_notime;
+			p.newLagPeak = false;
+			p.newPeak = false;
+			if(p.percent > p.peak) {
+				p.peak = p.percent;
+				p.newPeak = true;
 			}
-			else
-				pi->second.newpeak = false;
 		}
 		lastBigUpdate = curTime;
+	}
+
+	if (curTime.toSecsi() % 6 == 0) {
+		for (auto& pi: profile) {
+			auto& p = pi.second;
+			p.maxLag *= 0.5f;
+		}
 	}
 }
 
@@ -209,13 +213,18 @@ float CTimeProfiler::GetPercent(const char* name)
 
 void CTimeProfiler::AddTime(const std::string& name, const spring_time time, const bool showGraph)
 {
-	std::map<std::string, TimeRecord>::iterator pi;
-	if ( (pi = profile.find(name)) != profile.end() ) {
+	auto pi = profile.find(name);
+	if (pi != profile.end()) {
 		// profile already exists
 		//FIXME use atomic ints
-		pi->second.total   += time;
-		pi->second.current += time;
-		pi->second.frames[currentPosition] += time;
+		auto& p = pi->second;
+		p.total   += time;
+		p.current += time;
+		p.frames[currentPosition] += time;
+		if (p.maxLag < time.toMilliSecsf()) {
+			p.maxLag     = time.toMilliSecsf();
+			p.newLagPeak = true;
+		}
 	} else {
 		boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
 		while (!ulk.try_lock()) {}
@@ -224,6 +233,7 @@ void CTimeProfiler::AddTime(const std::string& name, const spring_time time, con
 		auto& p = profile[name];
 		p.total   = time;
 		p.current = time;
+		p.maxLag  = time.toMilliSecsf();
 		p.percent = 0;
 		memset(p.frames, 0, TimeRecord::frames_size * sizeof(unsigned));
 		static UnsyncedRNG rand;

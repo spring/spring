@@ -101,6 +101,7 @@ CALLIN_LIST = {
 	"AllowDirectUnitControl",
 	"AllowWeaponTargetCheck",
 	"AllowWeaponTarget",
+	"AllowWeaponInterceptTarget",
 
 	"Explosion",
 	"CommandFallback",

@@ -36,6 +36,7 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 	std::set<std::string> whitelist;
 	std::string extension;
 	std::string extensions;
+	std::string enabledExtensions;
 
 	whitelist.insert("3ds"  ); // 3DSMax
 	whitelist.insert("dae"  ); // Collada
@@ -48,8 +49,6 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 
 	// do not ignore the last extension
 	extensions += ";";
-
-	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, extensions.c_str());
 
 	size_t curIdx = 0;
 	size_t nxtIdx = 0;
@@ -68,7 +67,10 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 			continue;
 
 		formats[extension] = MODELTYPE_ASS;
+		enabledExtensions += "*." + extension + ";";
 	}
+
+	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, enabledExtensions.c_str());
 }
 
 
