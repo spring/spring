@@ -3978,20 +3978,21 @@ static void PackCommandQueue(lua_State* L, const CCommandQueue& commands, size_t
 int LuaSyncedRead::GetUnitCommands(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	GML_STDMUTEX_LOCK(cai); // GetUnitCommands
 
 	const CCommandAI* commandAI = unit->commandAI;
-	if (commandAI == NULL) {
+
+	if (commandAI == NULL)
 		return 0;
-	}
 
 	// send the new unit commands for factories, otherwise the normal commands
-	const CCommandQueue* queue;
+	const CCommandQueue* queue = NULL;
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
+
 	if (factoryCAI == NULL) {
 		queue = &commandAI->commandQue;
 	} else {
@@ -4000,12 +4001,12 @@ int LuaSyncedRead::GetUnitCommands(lua_State* L)
 
 	// get the desired number of commands to return
 	int count = luaL_optint(L, 2, -1);
+
 	if (count < 0) {
 		count = (int)queue->size();
 	}
 
 	PackCommandQueue(L, *queue, count);
-
 	return 1;
 }
 
@@ -4122,36 +4123,7 @@ int LuaSyncedRead::GetFactoryCounts(lua_State* L)
 
 int LuaSyncedRead::GetCommandQueue(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-
-	GML_STDMUTEX_LOCK(cai); // GetCommandQueue
-
-	const CCommandAI* commandAI = unit->commandAI;
-	if (commandAI == NULL) {
-		return 0;
-	}
-
-	// send the new unit commands for factories, otherwise the normal commands
-	const CCommandQueue* queue;
-	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
-	if (factoryCAI == NULL) {
-		queue = &commandAI->commandQue;
-	} else {
-		queue = &factoryCAI->newUnitCommands;
-	}
-
-	// get the desired number of commands to return
-	int count = luaL_optint(L, 2, -1);
-	if (count < 0) {
-		count = (int)queue->size();
-	}
-
-	PackCommandQueue(L, *queue, count);
-
-	return 1;
+	return (GetUnitCommands(L));
 }
 
 
