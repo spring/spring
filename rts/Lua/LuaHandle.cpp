@@ -2872,28 +2872,38 @@ const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, in
 /******************************************************************************/
 /******************************************************************************/
 
+CONFIG(float, MaxLuaGarbageCollectionTime ).defaultValue(1000.0f / GAME_SPEED).minimumValue(1.0f);
+CONFIG(  int, MaxLuaGarbageCollectionSteps).defaultValue(10000               ).minimumValue(1   );
+
 void CLuaHandle::CollectGarbage()
 {
 	SELECT_LUA_STATE();
 	lua_gc(L, LUA_GCSTOP, 0); // don't collect garbage outside of this function
 
-	//TODO make configureable?
-	const int memUsageInMB = lua_gc(L, LUA_GCCOUNT, 0) / 1024;
-	const float TIME_PER_MB = 0.02f + 0.08f * smoothstep(25, 100, memUsageInMB); // alloced Mem 25MB: 20microsec  100MB: 100microsec (30x per second)
-	const float maxRuntime = TIME_PER_MB * memUsageInMB;
-	const spring_time endTime = spring_gettime() + spring_msecs(maxRuntime);
+	static const float maxLuaGarbageCollectTime  = configHandler->GetFloat("MaxLuaGarbageCollectionTime" );
+	static const   int maxLuaGarbageCollectSteps = configHandler->GetInt  ("MaxLuaGarbageCollectionSteps");
 
-	// Collect Garbage till time runs out
+	// in megabytes
+	const int garbageCount = lua_gc(L, LUA_GCCOUNT, 0) / 1024;
+
+	// 25MB --> 20usecs, 100MB --> 100usecs (30x per second)
+	const float rawRunTime = garbageCount * (0.02f + 0.08f * smoothstep(25, 100, garbageCount));
+	const float maxRunTime = std::min(rawRunTime, maxLuaGarbageCollectTime);
+
+	const spring_time endTime = spring_gettime() + spring_msecs(maxRunTime);
+
+	// collect garbage until time runs out or the maximum
+	// number of steps is exceeded, whichever comes first
 	SetRunning(L, true);
-		do {
-			if (lua_gc(L, LUA_GCSTEP, 2)) {
-				SetRunning(L, false);
-				return;
-			}
-		} while(spring_gettime() < endTime);
-	SetRunning(L, false);
 
-	//LOG("%s GC not finished in time %.3fms %iMB", GetName().c_str(), (spring_gettime() - endTime).toMilliSecsf() + maxRuntime, memUsageInMB);
+	for (int n = 0; (n < maxLuaGarbageCollectSteps) && (spring_gettime() < endTime); n++) {
+		if (lua_gc(L, LUA_GCSTEP, 2)) {
+			// garbage-collection finished
+			break;
+		}
+	}
+
+	SetRunning(L, false);
 }
 
 /******************************************************************************/
