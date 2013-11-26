@@ -3963,14 +3963,19 @@ static void PackCommandQueue(lua_State* L, const CCommandQueue& commands, size_t
 	lua_createtable(L, commands.size(), 0);
 
 	size_t c = 0;
-	CCommandQueue::const_iterator ci;
-	for (ci = commands.begin(); ci != commands.end(); ++ci) {
-		if (c >= count) {
+
+	// get the desired number of commands to return
+	if (count == -1u) {
+		count = commands.size();
+	}
+
+	// {[1] = cq[0], [2] = cq[1], ...}
+	for (auto ci = commands.begin(); ci != commands.end(); ++ci) {
+		if (c >= count)
 			break;
-		}
-		c++;
+
 		PackCommand(L, *ci);
-		lua_rawseti(L, -2, c);
+		lua_rawseti(L, -2, ++c);
 	}
 }
 
@@ -3999,41 +4004,40 @@ int LuaSyncedRead::GetUnitCommands(lua_State* L)
 		queue = &factoryCAI->newUnitCommands;
 	}
 
-	// get the desired number of commands to return
-	int count = luaL_optint(L, 2, -1);
-
-	if (count < 0) {
-		count = (int)queue->size();
+	if (luaL_optboolean(L, 3, true)) {
+		// *get wants the actual commands
+		PackCommandQueue(L, *queue, luaL_optint(L, 2, -1));
+	} else {
+		// *get just wants the queue's size
+		lua_pushnumber(L, queue->size());
 	}
 
-	PackCommandQueue(L, *queue, count);
 	return 1;
 }
-
 
 int LuaSyncedRead::GetFactoryCommands(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	GML_STDMUTEX_LOCK(cai); // GetFactoryCommands
 
 	const CCommandAI* commandAI = unit->commandAI;
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
-	if (!factoryCAI) {
-		return 0; // not a factory, bail
-	}
+
+	// bail if not a factory
+	if (factoryCAI == NULL)
+		return 0;
+
 	const CCommandQueue& commandQue = factoryCAI->commandQue;
 
-	// get the desired number of commands to return
-	int count = luaL_optint(L, 2, -1);
-	if (count < 0) {
-		count = (int)commandQue.size();
+	if (luaL_optboolean(L, 3, true)) {
+		PackCommandQueue(L, commandQue, luaL_optint(L, 2, -1));
+	} else {
+		lua_pushnumber(L, commandQue.size());
 	}
-
-	PackCommandQueue(L, commandQue, count);
 
 	return 1;
 }
