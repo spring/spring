@@ -14,7 +14,7 @@
 
 static boost::recursive_mutex luaprimmutex, luasecmutex;
 static std::map<lua_State*, boost::recursive_mutex*> mutexes;
-static std::map<lua_State*, bool> isCoroutine;
+static std::map<lua_State*, bool> coroutines;
 //static luaContextData baseLuaContextData;
 
 static boost::recursive_mutex* GetLuaMutex(bool userMode, bool primary)
@@ -59,11 +59,11 @@ void LuaDestroyMutex(lua_State* L)
 	if (!L)
 		return;
 
-	if (isCoroutine.find(L) != isCoroutine.end()) {
+	if (coroutines.find(L) != coroutines.end()) {
 		mutexes.erase(L);
-		isCoroutine.erase(L);
+		coroutines.erase(L);
 	} else {
-		assert(isCoroutine.find(L) == isCoroutine.end());
+		assert(coroutines.find(L) == coroutines.end());
 		assert(mutexes.find(L) != mutexes.end());
 		boost::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
 		if ((mutex != &luaprimmutex) && (mutex != &luasecmutex))
@@ -78,7 +78,7 @@ void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
 {
 	if (!GetLuaContextData(L_parent)) return;
 
-	isCoroutine[L_child] = true;
+	coroutines[L_child] = true;
 	mutexes[L_child] = mutexes[L_parent];
 }
 
@@ -125,24 +125,41 @@ void LuaMutexYield(lua_State* L)
 ///////////////////////////////////////////////////////////////////////////
 // Custom Memory Allocator
 
-static Threading::AtomicCounterInt64 allocedCur = 0;
+static Threading::AtomicCounterInt64 bytesAlloced = 0;
+static Threading::AtomicCounterInt64 numLuaAllocs = 0;
+static Threading::AtomicCounterInt64 luaAllocTime = 0;
+static Threading::AtomicCounterInt64 allocerFrame = 0;
 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 {
-	//(luaContextData*)ud;
-
 	if (nsize == 0) {
-		allocedCur -= osize;
+		bytesAlloced -= osize;
 		free(ptr);
 		return NULL;
 	}
 
-	allocedCur += nsize - osize;
-	return realloc(ptr, nsize);
+	const spring_time t0 = spring_gettime();
+	void* mem = realloc(ptr, nsize);
+	const spring_time t1 = spring_gettime();
+
+	bytesAlloced += (nsize - osize);
+	numLuaAllocs += 1;
+	luaAllocTime += (t1 - t0).toMicroSecsi();
+
+	if (gs != NULL && gs->frameNum == (allocerFrame + GAME_SPEED)) {
+		numLuaAllocs = 0;
+		luaAllocTime = 0;
+
+		allocerFrame = gs->frameNum;
+	}
+
+	return mem;
 }
 
 void spring_lua_alloc_get_stats(SLuaInfo* info)
 {
-	info->allocedBytes = allocedCur;
-	info->numStates = mutexes.size() - isCoroutine.size();
+	info->allocedBytes = bytesAlloced;
+	info->numLuaAllocs = numLuaAllocs;
+	info->luaAllocTime = luaAllocTime;
+	info->numLuaStates = mutexes.size() - coroutines.size();
 }

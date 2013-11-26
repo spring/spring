@@ -1365,7 +1365,15 @@ bool CGame::Draw() {
 
 		SLuaInfo luaInfo;
 		spring_lua_alloc_get_stats(&luaInfo);
-		font->glFormat(0.03f, 0.15f, 0.7f, DBG_FONT_FLAGS, "Lua allocated memory: %.1fMB in %i LuaStates", luaInfo.allocedBytes/1024.f/1024.f, luaInfo.numStates);
+
+		font->glFormat(
+			0.03f, 0.15f, 0.7f, DBG_FONT_FLAGS,
+			"Lua-allocated memory: %.1fMB (%.5uK allocs : %.5u usecs : %.1u states)",
+			luaInfo.allocedBytes / 1024.0f / 1024.0f,
+			luaInfo.numLuaAllocs / 1000,
+			luaInfo.luaAllocTime,
+			luaInfo.numLuaStates
+		);
 
 		font->End();
 	}
