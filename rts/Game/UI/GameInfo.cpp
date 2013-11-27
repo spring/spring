@@ -16,8 +16,6 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 
-#include <string>
-#include <vector>
 #include <SDL_keysym.h>
 #include <cstdio>
 
@@ -25,50 +23,10 @@ using std::string;
 using std::vector;
 
 
-CGameInfo* CGameInfo::instance = NULL;
-
-
-void CGameInfo::Enable()
-{
-	if (instance == NULL) {
-		instance = new CGameInfo;
-	}
-}
-
-
-void CGameInfo::Disable()
-{
-	delete instance;
-}
-
-
-bool CGameInfo::IsActive()
-{
-	return (instance != NULL);
-}
-
-
-CGameInfo::CGameInfo()
-{
-	box.x1=0.5f;
-	box.y1=0.5f;
-	box.x2=0.5f;
-	box.y2=0.5f;
-}
-
-CGameInfo::~CGameInfo()
-{
-	instance = NULL;
-}
-
 
 static const char* boolString(bool value)
 {
-	if (value) {
-		return "True";
-	} else {
-		return "False";
-	}
+	return (value)? "True": "False";
 }
 
 static const char* floatString(float value)
@@ -78,38 +36,121 @@ static const char* floatString(float value)
 	return buf;
 }
 
-
-struct FontString {
-	FontString() : msg(""), width(0.0f), height(0.0f) {}
-	FontString(const char* c)	  : msg(c)      { CalcDimensions(); }
-	FontString(const string& s)	: msg(s)      { CalcDimensions(); }
-	FontString(bool b)	: msg(boolString(b))  { CalcDimensions(); }
-	FontString(float f)	: msg(floatString(f)) { CalcDimensions(); }
-	void CalcDimensions() {
-		width  = font->GetSize() * font->GetTextWidth(msg) * globalRendering->pixelX;
-		height = font->GetSize() * font->GetLineHeight() * globalRendering->pixelY;
-	}
-	string msg;
-	float width;
-	float height;
-};
-
-
-static void StringListStats(const vector<FontString>& list,
-                            float& maxWidth, float& maxHeight)
-{
+static void StringListStats(
+	const vector<CGameInfo::FontString>& list,
+	float& maxWidth,
+	float& maxHeight
+) {
 	maxWidth = 0.0f;
 	maxHeight = 0.0f;
+
 	for (int i = 0; i < (int)list.size(); i++) {
-		const FontString& fs = list[i];
-		if (fs.width > maxWidth) {
-			maxWidth = fs.width;
-		}
-		if (fs.height > maxHeight) {
-			maxHeight = fs.height;
-		}
+		const CGameInfo::FontString& fs = list[i];
+
+		maxWidth = std::max(maxWidth, fs.width);
+		maxHeight = std::max(maxHeight, fs.height);
 	}
 }
+
+
+
+void CGameInfo::Enable()
+{
+	if (instance == NULL) {
+		instance = new CGameInfo;
+	}
+}
+
+void CGameInfo::Disable()
+{
+	delete instance;
+}
+
+bool CGameInfo::IsActive()
+{
+	return (instance != NULL);
+}
+
+
+
+CGameInfo* CGameInfo::instance = NULL;
+
+CGameInfo::CGameInfo()
+{
+	box.x1 = 0.5f;
+	box.y1 = 0.5f;
+	box.x2 = 0.5f;
+	box.y2 = 0.5f;
+
+	labels.reserve(16);
+	values.reserve(16);
+
+	char buf[1024];
+
+	if (gameSetup != NULL && gameSetup->hostDemo) {
+		labels.push_back("Playback:");
+		values.push_back(FileSystem::GetBasename(gameSetup->demoName));
+	}
+
+	labels.push_back("Spring Version:");
+	values.push_back(SpringVersion::GetFull());
+
+	labels.push_back("Game Speed:");
+	values.push_back(gs->speedFactor);
+
+	labels.push_back("Map Gravity:");
+	sprintf(buf, "%.2f (%.2f e/f^2)", -(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED), -mapInfo->map.gravity);
+	values.push_back(buf);
+
+	labels.push_back("Map Hardness:");
+	sprintf(buf, "%.2f", mapInfo->map.hardness);
+	values.push_back(buf);
+
+	labels.push_back("Map Tidal:");
+	values.push_back(mapInfo->map.tidalStrength);
+
+	labels.push_back("Map Wind:");
+	sprintf(buf, "%.2f - %.2f (%.2f)", wind.GetMinWind(), wind.GetMaxWind(), (wind.GetMinWind() + wind.GetMaxWind()) * 0.5f);
+	values.push_back(buf);
+
+	labels.push_back("Map Size:");
+	sprintf(buf, "%ix%i", gs->mapx / 64, gs->mapy / 64);
+	values.push_back(buf);
+
+	labels.push_back("Map Name:");
+	values.push_back(gameSetup->mapName);
+
+	labels.push_back("Game Name:");
+	values.push_back(gameSetup->modName);
+
+	labels.push_back("PathFinder:");
+	switch (pathManager->GetPathFinderType()) {
+		case PFS_TYPE_DEFAULT: { values.push_back("Default"); } break;
+		case PFS_TYPE_QTPFS:   { values.push_back("QTPFS"  ); } break;
+		default:               { values.push_back("UNKNOWN"); } break; // not reachable
+	}
+
+	labels.push_back("CHEATS:");
+	values.push_back(""); // dynamic, set in Draw
+}
+
+CGameInfo::~CGameInfo()
+{
+	instance = NULL;
+}
+
+
+
+CGameInfo::FontString::FontString(const char* c): msg(c)        { CalcDimensions(); }
+CGameInfo::FontString::FontString(const std::string& s): msg(s) { CalcDimensions(); }
+CGameInfo::FontString::FontString(bool b): msg(boolString(b))   { CalcDimensions(); }
+CGameInfo::FontString::FontString(float f): msg(floatString(f)) { CalcDimensions(); }
+
+void CGameInfo::FontString::CalcDimensions() {
+	width  = font->GetSize() * font->GetTextWidth(msg) * globalRendering->pixelX;
+	height = font->GetSize() * font->GetLineHeight() * globalRendering->pixelY;
+}
+
 
 
 /******************************************************************************/
@@ -159,54 +200,10 @@ bool CGameInfo::KeyPressed(unsigned short key, bool isRepeat)
 
 void CGameInfo::Draw()
 {
-	vector<FontString> labels;
-	vector<FontString> values;
-	char buf[256];
-
-	if (gameSetup && gameSetup->hostDemo) {
-		labels.push_back("Playback:");
-		values.push_back(FileSystem::GetBasename(gameSetup->demoName));
-	}
-
-	labels.push_back("Spring Version:");
-	values.push_back(SpringVersion::GetFull());
-
-	labels.push_back("Game Speed:");
-	values.push_back(gs->speedFactor);
-
-	labels.push_back("Gravity:");
-	sprintf(buf, "%.2f (%.2f e/f^2)", -(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED), -mapInfo->map.gravity);
-	values.push_back(buf);
-
-	labels.push_back("Tidal:");
-	values.push_back(mapInfo->map.tidalStrength);
-
-	labels.push_back("Min Wind:");
-	values.push_back(wind.GetMinWind());
-
-	labels.push_back("Max Wind:");
-	values.push_back(wind.GetMaxWind());
-
-	labels.push_back("Map Size:");
-	sprintf(buf, "%ix%i", gs->mapx / 64, gs->mapy / 64);
-	values.push_back(buf);
-
-	labels.push_back("Map Name:");
-	values.push_back(gameSetup->mapName);
-
-	labels.push_back("Game Name:");
-	values.push_back(gameSetup->modName);
-
-	labels.push_back("PathFinder:");
-	switch (pathManager->GetPathFinderType()) {
-		case PFS_TYPE_DEFAULT: { values.push_back("Default"); } break;
-		case PFS_TYPE_QTPFS:   { values.push_back("QTPFS"  ); } break;
-		default:               { values.push_back("UNKNOWN"); } break; // not reachable
-	}
-
 	if (gs->cheatEnabled) {
-		labels.push_back("CHEATS:");
-		values.push_back("ENABLED");
+		values[values.size() - 1] = "ENABLED";
+	} else {
+		values[values.size() - 1] = "DISABLED";
 	}
 
 	// in screen fractions
