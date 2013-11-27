@@ -204,6 +204,7 @@ void CLogOutput::InitializeSections()
 			enabledSections += envSections + ",";
 		}
 	}
+
 	const std::string enabledSectionsLC = StringToLower(enabledSections);
 
 	{
@@ -212,22 +213,22 @@ void CLogOutput::InitializeSections()
 		int numSec = 0;
 
 		// new log sections
-		std::set<const char*>::const_iterator si;
-		for (si = sections.begin(); si != sections.end(); ++si) {
+		for (auto si = sections.begin(); si != sections.end(); ++si) {
 			const std::string name = StringToLower(*si);
-			const bool found = (enabledSectionsLC.find("," + name + ",") != std::string::npos);
 
-			if (found) {
+			if (enabledSectionsLC.find("," + name + ",") != std::string::npos) {
 				if (numSec > 0) {
 					enabledLogSectionsStr << ", ";
 				}
-#if       defined(DEBUG)
+
+				#if defined(DEBUG)
 				log_filter_section_setMinLevel(*si, LOG_LEVEL_DEBUG);
 				enabledLogSectionsStr << *si << "(LOG_LEVEL_DEBUG)";
-#else  // defined(DEBUG)
+				#else
 				log_filter_section_setMinLevel(*si, LOG_LEVEL_INFO);
 				enabledLogSectionsStr << *si << "(LOG_LEVEL_INFO)";
-#endif // defined(DEBUG)
+				#endif
+
 				numSec++;
 			}
 		}
