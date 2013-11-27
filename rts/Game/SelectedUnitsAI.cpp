@@ -466,9 +466,9 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 	std::vector<int> targets;
 
 	if (cmd.params.size() == 4) {
-		SelectCircleUnits(cmd.GetPos(0), cmd.params[3], targets, player);
+		SelectCircleUnits(cmd.GetPos(0), cmd.params[3], player, targets);
 	} else {
-		SelectRectangleUnits(cmd.GetPos(0), cmd.GetPos(3), targets, player);
+		SelectRectangleUnits(cmd.GetPos(0), cmd.GetPos(3), player, targets);
 	}
 
 	if (targets.empty())
@@ -576,66 +576,87 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 }
 
 
-void CSelectedUnitsHandlerAI::SelectCircleUnits(const float3& pos, float radius,
-                                         std::vector<int>& units, int player)
-{
+void CSelectedUnitsHandlerAI::SelectCircleUnits(
+	const float3& pos,
+	float radius,
+	int player,
+	std::vector<int>& units
+) {
 	units.clear();
 
-	if (!playerHandler->IsValidPlayer(player)) {
+	if (!playerHandler->IsValidPlayer(player))
 		return;
-	}
+
 	const CPlayer* p = playerHandler->Player(player);
-	if (p == NULL) {
+
+	if (p == NULL)
 		return;
-	}
+
+	const vector<CUnit*>& tmpUnits = quadField->GetUnits(pos, radius);
+
+	const float radiusSqr = radius * radius;
+	const unsigned int count = tmpUnits.size();
 	const int allyTeam = teamHandler->AllyTeam(p->team);
 
-	const vector<CUnit*> &tmpUnits = quadField->GetUnits(pos, radius);
+	units.reserve(count);
 
-	const float radiusSqr = (radius * radius);
-	const int count = (int)tmpUnits.size();
-	for (int i = 0; i < count; i++) {
+	for (unsigned int i = 0; i < count; i++) {
 		CUnit* unit = tmpUnits[i];
-		if ((unit == NULL) || (unit->allyteam == allyTeam) ||
-				!(unit->losStatus[allyTeam] & (LOS_INLOS | LOS_INRADAR))) {
+
+		if (unit == NULL)
 			continue;
-		}
+		if (unit->allyteam == allyTeam)
+			continue;
+		if (!(unit->losStatus[allyTeam] & (LOS_INLOS | LOS_INRADAR)))
+			continue;
+
 		const float dx = (pos.x - unit->midPos.x);
 		const float dz = (pos.z - unit->midPos.z);
-		if (((dx * dx) + (dz * dz)) <= radiusSqr) {
-			units.push_back(unit->id);
-		}
+
+		if (((dx * dx) + (dz * dz)) > radiusSqr)
+			continue;
+
+		units.push_back(unit->id);
 	}
 }
 
 
-void CSelectedUnitsHandlerAI::SelectRectangleUnits(const float3& pos0,
-                                            const float3& pos1,
-                                            vector<int>& units, int player)
-{
+void CSelectedUnitsHandlerAI::SelectRectangleUnits(
+	const float3& pos0,
+	const float3& pos1,
+	int player,
+	vector<int>& units
+) {
 	units.clear();
 
-	if (!playerHandler->IsValidPlayer(player)) {
+	if (!playerHandler->IsValidPlayer(player))
 		return;
-	}
+
 	const CPlayer* p = playerHandler->Player(player);
-	if (p == NULL) {
+
+	if (p == NULL)
 		return;
-	}
-	const int allyTeam = teamHandler->AllyTeam(p->team);
 
 	const float3 mins(std::min(pos0.x, pos1.x), 0.0f, std::min(pos0.z, pos1.z));
 	const float3 maxs(std::max(pos0.x, pos1.x), 0.0f, std::max(pos0.z, pos1.z));
 
-	const vector<CUnit*> &tmpUnits = quadField->GetUnitsExact(mins, maxs);
+	const vector<CUnit*>& tmpUnits = quadField->GetUnitsExact(mins, maxs);
 
-	const int count = (int)tmpUnits.size();
-	for (int i = 0; i < count; i++) {
+	const unsigned int count = tmpUnits.size();
+	const int allyTeam = teamHandler->AllyTeam(p->team);
+
+	units.reserve(count);
+
+	for (unsigned int i = 0; i < count; i++) {
 		const CUnit* unit = tmpUnits[i];
-		if ((unit == NULL) || (unit->allyteam == allyTeam) ||
-				!(unit->losStatus[allyTeam] & (LOS_INLOS | LOS_INRADAR))) {
+
+		if (unit == NULL)
 			continue;
-		}
+		if (unit->allyteam == allyTeam)
+			continue;
+		if (!(unit->losStatus[allyTeam] & (LOS_INLOS | LOS_INRADAR)))
+			continue;
+
 		units.push_back(unit->id);
 	}
 }
