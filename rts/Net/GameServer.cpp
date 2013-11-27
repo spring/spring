@@ -2401,8 +2401,8 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 			const float simFramesBehind = serverFrameNum - players[localClientNumber].lastFrameResponse;
 			const float simFrameMixRatio = std::min(simFramesBehind / GAME_SPEED, 1.0f);
 
-			const unsigned int curSimRate   = std::max(gu->simFPS, GAME_SPEED * 1.0f); // max advance 1sec in the future
-			const unsigned int maxNewFrames = mix(curSimRate, 0u, simFrameMixRatio); // (fps + (0 - fps) * a)
+			const unsigned int curSimRate   = std::max(gu->simFPS, GAME_SPEED * 1.0f); // advance at most 1s into the future
+			const unsigned int maxNewFrames = mix(curSimRate * 1.0f, 0.0f, simFrameMixRatio); // (fps + (0 - fps) * a)
 
 			numNewFrames = std::min(numNewFrames, maxNewFrames);
 
