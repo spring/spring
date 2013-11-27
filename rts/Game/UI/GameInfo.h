@@ -3,31 +3,52 @@
 #ifndef GAMEINFO_H
 #define GAMEINFO_H
 
+#include <vector>
+#include <string>
+
 #include "InputReceiver.h"
 
 class CGameInfo : public CInputReceiver
 {
-	public:
-		static void Enable();
-		static void Disable();
-		static bool IsActive();
+public:
+	static void Enable();
+	static void Disable();
+	static bool IsActive();
 
-	protected:
-		CGameInfo();
-		~CGameInfo();
+	struct FontString {
+		FontString(): msg(""), width(0.0f), height(0.0f) {}
 
-		bool MousePress(int x, int y, int button);
-		void MouseRelease(int x, int y, int button);
-		bool KeyPressed(unsigned short key, bool isRepeat);
-		bool IsAbove(int x, int y);
-		std::string GetTooltip(int x,int y);
-		void Draw();
+		FontString(const char* c);
+		FontString(const std::string& s);
+		FontString(bool b);
+		FontString(float f);
 
-	protected:
-		ContainerBox box;
+		void CalcDimensions();
 
-	protected:
-		static CGameInfo* instance;
+		std::string msg;
+
+		float width;
+		float height;
+	};
+
+private:
+	CGameInfo();
+	~CGameInfo();
+
+	bool MousePress(int x, int y, int button);
+	void MouseRelease(int x, int y, int button);
+	bool KeyPressed(unsigned short key, bool isRepeat);
+	bool IsAbove(int x, int y);
+	std::string GetTooltip(int x,int y);
+	void Draw();
+
+private:
+	ContainerBox box;
+
+	std::vector<FontString> labels;
+	std::vector<FontString> values;
+
+	static CGameInfo* instance;
 };
 
 #endif /* GAMEINFO_H */
