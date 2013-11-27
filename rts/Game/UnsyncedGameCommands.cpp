@@ -1359,10 +1359,11 @@ public:
 		if (!game->playing)
 			return false;
 
+		// do not need to update lastReadNetTime, gets
+		// done when NETMSG_PAUSE makes the round-trip
 		bool newPause = gs->paused;
 		SetBoolArg(newPause, action.GetArgs());
 		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
-		game->lastframe = spring_gettime(); // XXX this required here?
 		return true;
 
 	}

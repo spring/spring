@@ -195,6 +195,7 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(lastSimFrameTime),
 	CR_IGNORED(lastDrawFrameTime),
 	CR_IGNORED(lastFrameTime),
+	CR_IGNORED(lastReadNetTime),
 	CR_IGNORED(updateDeltaSeconds),
 	CR_MEMBER(totalGameTime),
 	CR_MEMBER(userInputPrefix),
@@ -223,7 +224,6 @@ CR_REG_METADATA(CGame, (
 	CR_MEMBER(playing),
 	CR_IGNORED(msgProcTimeLeft),
 	CR_IGNORED(consumeSpeed),
-	CR_IGNORED(lastframe),
 
 	CR_POSTLOAD(PostLoad)
 ));
@@ -329,6 +329,8 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, lastSimFrameTime(spring_gettime())
 	, lastDrawFrameTime(spring_gettime())
 	, lastFrameTime(spring_gettime())
+	, lastReadNetTime(spring_gettime())
+	, lastNetPacketProcessTime(spring_gettime())
 	, lastReceivedNetPacketTime(spring_gettime())
 	, lastSimFrameNetPacketTime(spring_gettime())
 	, updateDeltaSeconds(0.0f)
@@ -340,7 +342,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, chatting(false)
 	, msgProcTimeLeft(0.0f)
 	, consumeSpeed(1.0f)
-	, lastframe(spring_gettime())
 	, skipStartFrame(0)
 	, skipEndFrame(0)
 	, skipTotalFrames(0)
@@ -831,9 +832,9 @@ void CGame::LoadFinalize()
 		static CBenchmark benchmark;
 	}
 
-	lastframe = spring_gettime();
-	lastSimFrameTime = lastframe;
-	lastDrawFrameTime = lastframe;
+	lastReadNetTime = spring_gettime();
+	lastSimFrameTime = lastReadNetTime;
+	lastDrawFrameTime = lastReadNetTime;
 	updateDeltaSeconds = 0.0f;
 
 	finishedLoading = true;
@@ -1203,6 +1204,7 @@ bool CGame::Draw() {
 
 	if (globalRendering->drawdebug) {
 		const float deltaFrameTime = (currentTimePreUpdate - lastSimFrameTime).toMilliSecsf();
+		const float deltaNetPacketProcTime  = (currentTimePreUpdate - lastNetPacketProcessTime ).toMilliSecsf();
 		const float deltaReceivedPacketTime = (currentTimePreUpdate - lastReceivedNetPacketTime).toMilliSecsf();
 		const float deltaSimFramePacketTime = (currentTimePreUpdate - lastSimFrameNetPacketTime).toMilliSecsf();
 
@@ -1210,15 +1212,15 @@ bool CGame::Draw() {
 		static float lastTimeOffset = globalRendering->timeOffset;
 		static int lastGameFrame = gs->frameNum;
 
-		static const char* minFmtStr = "assert(CTO >= 0.0f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms : DLRPT=%fms / DSFPT=%fms : NP=%u)";
-		static const char* maxFmtStr = "assert(CTO <= 1.3f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms : DLRPT=%fms / DSFPT=%fms : NP=%u)";
+		static const char* minFmtStr = "assert(CTO >= 0.0f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms : DLNPPT=%fms | DLRPT=%fms | DSFPT=%fms : NP=%u)";
+		static const char* maxFmtStr = "assert(CTO <= 1.3f) failed (SF=%u : DF=%u : CTO=%f : WSF=%f : DT=%fms : DLNPPT=%fms | DLRPT=%fms | DSFPT=%fms : NP=%u)";
 
 		// CTO = MILLISECSF(CT - LSFT) * WSF = MILLISECSF(CT - LSFT) * (SFPS * 0.001)
 		// AT 30Hz LHS (MILLISECSF(CT - LSFT)) SHOULD BE ~33ms, RHS SHOULD BE ~0.03
 		assert(currTimeOffset >= 0.0f);
 
-		if (currTimeOffset < 0.0f) LOG_L(L_ERROR, minFmtStr, gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, deltaReceivedPacketTime, deltaSimFramePacketTime, net->GetNumWaitingServerPackets());
-		if (currTimeOffset > 1.3f) LOG_L(L_ERROR, maxFmtStr, gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, deltaReceivedPacketTime, deltaSimFramePacketTime, net->GetNumWaitingServerPackets());
+		if (currTimeOffset < 0.0f) LOG_L(L_ERROR, minFmtStr, gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, deltaNetPacketProcTime, deltaReceivedPacketTime, deltaSimFramePacketTime, net->GetNumWaitingServerPackets());
+		if (currTimeOffset > 1.3f) LOG_L(L_ERROR, maxFmtStr, gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, deltaNetPacketProcTime, deltaReceivedPacketTime, deltaSimFramePacketTime, net->GetNumWaitingServerPackets());
 
 		// test for monotonicity, normally should only fail
 		// when SimFrame() advances time or if simframe rate
@@ -1531,7 +1533,7 @@ void CGame::StartPlaying()
 	assert(!playing);
 	playing = true;
 	GameSetupDrawer::Disable();
-	lastframe = spring_gettime();
+	lastReadNetTime = spring_gettime();
 
 	gu->startTime = gu->gameTime;
 	gu->myTeam = playerHandler->Player(gu->myPlayerNum)->team;
