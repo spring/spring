@@ -1363,7 +1363,7 @@ bool CGame::Draw() {
 			} break;
 		}
 
-		SLuaInfo luaInfo;
+		SLuaInfo luaInfo = {0, 0, 0, 0};
 		spring_lua_alloc_get_stats(&luaInfo);
 
 		font->glFormat(
@@ -1589,7 +1589,10 @@ void CGame::SimFrame() {
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = spring_gettime();
 
-	gs->frameNum++;
+	// clear allocator statistics periodically
+	// note: allocator itself should do this (so that
+	// stats are reliable when paused) but see LuaUser
+	spring_lua_alloc_update_stats(((++gs->frameNum) % GAME_SPEED) == 0);
 
 #ifdef TRACE_SYNC
 	tracefile << "New frame:" << gs->frameNum << " " << gs->GetRandSeed() << "\n";
