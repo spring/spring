@@ -2392,18 +2392,19 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 			);
 		}
 
+		#ifndef DEDICATED
 		if (hasLocalClient) {
 			// Don't create new frames when localClient (:= host) isn't able to process them fast enough.
 			// Despite this still allow to create a few in advance to not lag other connected clients.
+			//
+			// DS never has a local client and isn't linked against GU
 			const float simFramesBehind = serverFrameNum - players[localClientNumber].lastFrameResponse;
 			const float simFrameMixRatio = std::min(simFramesBehind / GAME_SPEED, 1.0f);
 
 			const unsigned int curSimRate   = std::max(gu->simFPS, GAME_SPEED * 1.0f); // max advance 1sec in the future
 			const unsigned int maxNewFrames = mix(curSimRate, 0u, simFrameMixRatio); // (fps + (0 - fps) * a)
 
-			#ifndef DEDICATED
 			numNewFrames = std::min(numNewFrames, maxNewFrames);
-			#endif
 
 			if (logDebugMessages) {
 				LOG_L(
@@ -2413,6 +2414,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 				);
 			}
 		}
+		#endif
 	}
 
 	if (normalFrame || videoFrame || singleStep) {
