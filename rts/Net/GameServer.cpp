@@ -2288,13 +2288,14 @@ void CGameServer::PushAction(const Action& action)
 					participantIter->SetValue("password", pwd);
 
 					if (logInfoMessages) {
-						LOG("[%s] changed player/spectator password: \"%s\" \"%s\"", __FUNCTION__, name.c_str(), pwd.c_str());
+						LOG_L(L_INFO, "[%s] changed player/spectator password: \"%s\" \"%s\"", __FUNCTION__, name.c_str(), pwd.c_str());
 					}
 				} else {
 					AddAdditionalUser(name, pwd, false, spectator, team);
 
 					if (logInfoMessages) {
-						LOG(
+						LOG_L(
+							L_INFO,
 							"[%s] added client \"%s\" with password \"%s\" to team %d (as a %s)",
 							__FUNCTION__, name.c_str(), pwd.c_str(), team, (spectator? "spectator": "player")
 						);
@@ -2313,7 +2314,7 @@ void CGameServer::PushAction(const Action& action)
 	}
 	else if (action.command == "kill") {
 		if (logInfoMessages) {
-			LOG("[%s] server killed", __FUNCTION__);
+			LOG_L(L_INFO, "[%s] server killed", __FUNCTION__);
 		}
 
 		quitServer = true;
@@ -2364,9 +2365,10 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 	unsigned int numNewFrames = 1;
 
 	if (logDebugMessages) {
-		LOG(
-			"[%s][1] fromServerThread=%d fixedFrameTime=%d hasLocalClient=%d normalFrame=%d",
-			__FUNCTION__, fromServerThread, fixedFrameTime, hasLocalClient, normalFrame
+		LOG_L(
+			L_INFO, // L_DEBUG only works in DEBUG builds which are slow and affect timings
+			"[%s][1][sf=%d] fromServerThread=%d fixedFrameTime=%d hasLocalClient=%d normalFrame=%d",
+			__FUNCTION__, serverFrameNum, fromServerThread, fixedFrameTime, hasLocalClient, normalFrame
 		);
 	}
 
@@ -2383,7 +2385,11 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		frameTimeLeft -= numNewFrames;
 
 		if (logDebugMessages) {
-			LOG("\t[2] timeElapsed=%fms frameTimeLeft=%f internalSpeed=%f numNewFrames=%u", timeElapsed.toMilliSecsf(), frameTimeLeft, internalSpeed, numNewFrames);
+			LOG_L(
+				L_INFO,
+				"\t[2] timeElapsed=%fms frameTimeLeft=%f internalSpeed=%f numNewFrames=%u",
+				timeElapsed.toMilliSecsf(), frameTimeLeft, internalSpeed, numNewFrames
+			);
 		}
 
 		if (hasLocalClient) {
@@ -2392,7 +2398,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 			const float simFramesBehind = serverFrameNum - players[localClientNumber].lastFrameResponse;
 			const float simFrameMixRatio = std::min(simFramesBehind / GAME_SPEED, 1.0f);
 
-			const unsigned int curSimRate   = std::max((int)gu->simFPS, GAME_SPEED); // max advance 1sec in the future
+			const unsigned int curSimRate   = std::max(gu->simFPS, GAME_SPEED * 1.0f); // max advance 1sec in the future
 			const unsigned int maxNewFrames = mix(curSimRate, 0u, simFrameMixRatio); // (fps + (0 - fps) * a)
 
 			#ifndef DEDICATED
@@ -2400,7 +2406,8 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 			#endif
 
 			if (logDebugMessages) {
-				LOG(
+				LOG_L(
+					L_INFO,
 					"\t[3] simFramesBehind=%f simFrameMixRatio=%f curSimRate=%u maxNewFrames=%u numNewFrames=%u",
 					simFramesBehind, simFrameMixRatio, curSimRate, maxNewFrames, numNewFrames
 				);
