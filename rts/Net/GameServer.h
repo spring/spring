@@ -187,9 +187,11 @@ private:
 	float frameTimeLeft;
 
 	bool isPaused;
+	/// whether the game is pausable for others than the host
+	bool gamePausable;
+
 	float userSpeedFactor;
 	float internalSpeed;
-	bool cheating;
 
 	unsigned char ReserveNextAvailableSkirmishAIId();
 
@@ -208,20 +210,9 @@ private:
 	int medianPing;
 	int curSpeedCtrl;
 
-	/**
-	 * throttles speed based on:
-	 * 0 : players (max cpu)
-	 * 1 : players (median cpu)
-	 * 2 : (same as 0)
-	 * -x: same as x, but ignores votes from players that may change
-	 *     the speed-control mode
-	 */
-	int speedControl;
 	/////////////////// game settings ///////////////////
 	boost::scoped_ptr<const CGameSetup> setup;
 	boost::scoped_ptr<const GameData> gameData;
-	/// Wheter the game is pausable for others than the host
-	bool gamePausable;
 
 	/// The maximum speed users are allowed to set
 	float maxUserSpeed;
@@ -229,11 +220,18 @@ private:
 	/// The minimum speed users are allowed to set (actual speed can be lower due to high cpu usage)
 	float minUserSpeed;
 
+	bool cheating;
 	bool noHelperAIs;
 	bool canReconnect;
 	bool allowSpecDraw;
 	bool bypassScriptPasswordCheck;
 	bool whiteListAdditionalPlayers;
+
+	bool logInfoMessages;
+	bool logErrorMessages;
+	bool logDebugMessages;
+	bool logWarnMessages;
+
 	std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > > packetCache;
 
 	/////////////////// sync stuff ///////////////////

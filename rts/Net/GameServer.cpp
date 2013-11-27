@@ -81,6 +81,10 @@ CONFIG(bool, ServerRecordDemos).defaultValue(true);
 #else
 CONFIG(bool, ServerRecordDemos).defaultValue(false);
 #endif
+CONFIG(bool, ServerLogInfoMessages).defaultValue(false);
+CONFIG(bool, ServerLogErrorMessages).defaultValue(false);
+CONFIG(bool, ServerLogDebugMessages).defaultValue(false);
+CONFIG(bool, ServerLogWarnMessages).defaultValue(false);
 CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
 
 
@@ -126,10 +130,8 @@ namespace {
 	{
 		if (str.empty()) { // toggle
 			value = !value;
-		}
-		else { // set
-			const int num = atoi(str.c_str());
-			value = (num != 0);
+		} else { // set
+			value = (atoi(str.c_str()) != 0);
 		}
 	}
 }
@@ -155,13 +157,16 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	startTime = 0.0f;
 	frameTimeLeft = 0.0f;
 
-	quitServer=false;
+	quitServer = false;
 	hasLocalClient = false;
 	localClientNumber = 0;
+
 	isPaused = false;
+	gamePausable = true;
+
 	userSpeedFactor = 1.0f;
 	internalSpeed = 1.0f;
-	gamePausable = true;
+
 	noHelperAIs = false;
 	canReconnect = false;
 	allowSpecDraw = true;
@@ -180,21 +185,16 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	bypassScriptPasswordCheck = configHandler->GetBool("BypassScriptPasswordCheck");
 	whiteListAdditionalPlayers = configHandler->GetBool("WhiteListAdditionalPlayers");
 
+	logInfoMessages = configHandler->GetBool("ServerLogInfoMessages");
+	logErrorMessages = configHandler->GetBool("ServerLogErrorMessages");
+	logDebugMessages = configHandler->GetBool("ServerLogDebugMessages");
+	logWarnMessages = configHandler->GetBool("ServerLogWarnMessages");
+
 	if (!setup->onlyLocal) {
 		UDPNet.reset(new netcode::UDPListener(hostPort, hostIP));
 	}
 
-	std::string autohostip = configHandler->GetString("AutohostIP");
-	if (StringToLower(autohostip) == "localhost") {
-		// FIXME temporary hack: we do not support (host-)names.
-		// "localhost" was the only name supported in the past.
-		// added 7. January 2011, to be removed in ~ 1 year
-		autohostip = "127.0.0.1";
-	}
-	const int autohostport = configHandler->GetInt("AutohostPort");
-	if (autohostport > 0) {
-		AddAutohostInterface(autohostip, autohostport);
-	}
+	AddAutohostInterface(StringToLower(configHandler->GetString("AutohostIP")), configHandler->GetInt("AutohostPort"));
 
 	rng.Seed(newGameData->GetSetup().length());
 	Message(str(format(ServerStart) %hostPort), false);
@@ -350,10 +350,22 @@ void CGameServer::AddLocalClient(const std::string& myName, const std::string& m
 
 void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int autohostPort)
 {
+	if (autohostPort <= 0)
+		return;
+
+	if (autohostIP == "localhost") {
+		if (logErrorMessages) {
+			LOG_L(L_ERROR, "[%s] auto-host IP address not in x.y.z.w format!", __FUNCTION__);
+		}
+
+		return;
+	}
+
 #ifndef DEDICATED
-	//disallow luasockets access to autohost interface
+	// disallow luasockets access to autohost interface
 	luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, autohostIP.c_str(), autohostPort, false);
 #endif
+
 	if (!hostif) {
 		hostif.reset(new AutohostInterface(autohostIP, autohostPort));
 		if (hostif->IsInitialized()) {
@@ -361,8 +373,8 @@ void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int 
 			Message(str(format(ConnectAutohost) %autohostPort), false);
 		} else {
 			// Quit if we are instructed to communicate with an auto-host,
-			// but are unable to do so. As we do not want an auto-host running
-			// a spring game that he has no control over. If we get here,
+			// but are unable to do so: we do not want an auto-host running
+			// a spring game that it has no control over. If we get here,
 			// it suggests a configuration problem in the auto-host.
 			hostif.reset();
 			Message(str(format(ConnectAutohostFailed) %autohostIP %autohostPort), false);
@@ -764,12 +776,13 @@ void CGameServer::CheckSync()
 				// send spectator desyncs as private messages to reduce spam
 				for (std::map<int, unsigned>::const_iterator s = desyncSpecs.begin(); s != desyncSpecs.end(); ++s) {
 					int playerNum = s->first;
-#ifdef DEBUG
-					LOG_L(L_ERROR,"%s", str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum).c_str());
-					Message(str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
-#else
+
+					if (logErrorMessages) {
+						LOG_L(L_ERROR, "%s", str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum).c_str());
+						Message(str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
+					}
+
 					PrivateMessage(playerNum, str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
-#endif
 				}
 			}
 			SetExitCode(-1);
@@ -838,7 +851,7 @@ void CGameServer::Update()
 
 	if (!gameHasStarted)
 		CheckForGameStart();
-	else if (serverFrameNum > 0 || demoReader)
+	else if (serverFrameNum > 0 || demoReader != NULL)
 		CreateNewFrame(true, false);
 
 	if (hostif) {
@@ -942,9 +955,6 @@ void CGameServer::LagProtection()
 		const float maxSimFPS = (1000.0f / gu->avgSimFrameTime) * (1.0f - gu->reconnectSimDrawBalance);
 		newSpeed = Clamp(newSpeed, 0.1f, ((maxSimFPS / GAME_SPEED) + internalSpeed) * 0.5f);
 #endif
-
-		//float speedMod = 1.f + wantedCpuUsage - refCpuUsage;
-		//LOG_L(L_DEBUG, "Speed REF %f MED %f WANT %f SPEEDM %f NSPEED %f", refCpuUsage, medianCpu, wantedCpuUsage, speedMod, newSpeed);
 
 		if (newSpeed != internalSpeed)
 			InternalSpeedChange(newSpeed);
@@ -2087,26 +2097,31 @@ void CGameServer::PushAction(const Action& action)
 		}
 	}
 	else if (action.command == "mute") {
-
 		if (action.extra.empty()) {
-			LOG_L(L_WARNING,"failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
-		}
-		else {
-			const std::vector<std::string> &tokens = CSimpleParser::Tokenize(action.extra);
-			if ( tokens.empty() || tokens.size() > 3 ) {
-				LOG_L(L_WARNING,"failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
+			if (logWarnMessages) {
+				LOG_L(L_WARNING, "failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
 			}
-			else {
-				std::string name = tokens[0];
-				StringToLowerInPlace(name);
+		} else {
+			const std::vector<std::string>& tokens = CSimpleParser::Tokenize(action.extra);
+
+			if (tokens.empty() || tokens.size() > 3) {
+				if (logWarnMessages) {
+					LOG_L(L_WARNING, "failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
+				}
+			} else {
+				const std::string name = StringToLower(tokens[0]);
+
 				bool muteChat;
 				bool muteDraw;
-				if ( !tokens.empty() ) SetBoolArg(muteChat, tokens[1]);
-				if ( tokens.size() >= 2 ) SetBoolArg(muteDraw, tokens[2]);
-				for (size_t a=0; a < players.size();++a) {
-					std::string playerLower = StringToLower(players[a].name);
-					if (playerLower.find(name)==0) {	// can kick on substrings of name
-						MutePlayer(a,muteChat,muteDraw);
+
+				if (!tokens.empty()) SetBoolArg(muteChat, tokens[1]);
+				if (tokens.size() >= 2) SetBoolArg(muteDraw, tokens[2]);
+
+				for (size_t a = 0; a < players.size(); ++a) {
+					const std::string playerLower = StringToLower(players[a].name);
+
+					if (playerLower.find(name) == 0) {	// can kick on substrings of name
+						MutePlayer(a,muteChat, muteDraw);
 						break;
 					}
 				}
@@ -2116,20 +2131,25 @@ void CGameServer::PushAction(const Action& action)
 	else if (action.command == "mutebynum") {
 
 		if (action.extra.empty()) {
-			LOG_L(L_WARNING,"failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
-		}
-		else {
-			const std::vector<std::string> &tokens = CSimpleParser::Tokenize(action.extra);
-			if ( tokens.empty() || tokens.size() > 3 ) {
-				LOG_L(L_WARNING,"failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
+			if (logWarnMessages) {
+				LOG_L(L_WARNING, "failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
 			}
-			else {
-				int playerID = atoi(tokens[0].c_str());
+		} else {
+			const std::vector<std::string>& tokens = CSimpleParser::Tokenize(action.extra);
+
+			if (tokens.empty() || tokens.size() > 3) {
+				if (logWarnMessages) {
+					LOG_L(L_WARNING, "failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
+				}
+			} else {
+				const int playerID = atoi(tokens[0].c_str());
 				bool muteChat = true;
 				bool muteDraw = true;
-				if ( !tokens.empty() ) SetBoolArg(muteChat, tokens[1]);
-				if ( tokens.size() >= 2 ) SetBoolArg(muteDraw, tokens[2]);
-				MutePlayer(playerID,muteChat,muteDraw);
+
+				if (!tokens.empty()) SetBoolArg(muteChat, tokens[1]);
+				if (tokens.size() >= 2) SetBoolArg(muteDraw, tokens[2]);
+
+				MutePlayer(playerID, muteChat, muteDraw);
 			}
 		}
 	}
@@ -2227,7 +2247,7 @@ void CGameServer::PushAction(const Action& action)
 	}
 	else if (action.command == "singlestep") {
 		if (isPaused) {
-			if (demoReader) {
+			if (demoReader != NULL) {
 				// we only want to advance one frame at most, so
 				// the next time-index must be "close enough" not
 				// to move past more than 1 NETMSG_NEWFRAME
@@ -2266,26 +2286,36 @@ void CGameServer::PushAction(const Action& action)
 							participantIter->SetValue("origpass", it->second);
 					}
 					participantIter->SetValue("password", pwd);
-					LOG("[%s] changed player/spectator password: \"%s\" \"%s\"", __FUNCTION__, name.c_str(), pwd.c_str());
+
+					if (logInfoMessages) {
+						LOG("[%s] changed player/spectator password: \"%s\" \"%s\"", __FUNCTION__, name.c_str(), pwd.c_str());
+					}
 				} else {
 					AddAdditionalUser(name, pwd, false, spectator, team);
 
-					LOG(
-						"[%s] added client \"%s\" with password \"%s\" to team %d (as a %s)",
-						__FUNCTION__, name.c_str(), pwd.c_str(), team, (spectator? "spectator": "player")
-					);
+					if (logInfoMessages) {
+						LOG(
+							"[%s] added client \"%s\" with password \"%s\" to team %d (as a %s)",
+							__FUNCTION__, name.c_str(), pwd.c_str(), team, (spectator? "spectator": "player")
+						);
+					}
 				}
 			} else {
-				LOG_L(L_WARNING,
-					"[%s] failed to add player/spectator password. usage: "
-					"/adduser <player-name> <password> [spectator] [team]",
-					__FUNCTION__
-				);
+				if (logWarnMessages) {
+					LOG_L(L_WARNING,
+						"[%s] failed to add player/spectator password. usage: "
+						"/adduser <player-name> <password> [spectator] [team]",
+						__FUNCTION__
+					);
+				}
 			}
 		}
 	}
 	else if (action.command == "kill") {
-		LOG("[%s] server killed", __FUNCTION__);
+		if (logInfoMessages) {
+			LOG("[%s] server killed", __FUNCTION__);
+		}
+
 		quitServer = true;
 	}
 	else if (action.command == "pause") {
@@ -2317,17 +2347,28 @@ bool CGameServer::HasFinished() const
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
-	if (demoReader) {
+	if (demoReader != NULL) {
 		CheckSync();
 		SendDemoData(-1);
 		return;
 	}
 
 	Threading::RecursiveScopedLock(gameServerMutex, !fromServerThread);
-
 	CheckSync();
 
+	const bool vidRecording = videoCapturing->IsCapturing();
+	const bool normalFrame = !isPaused && !vidRecording;
+	const bool videoFrame = !isPaused && fixedFrameTime;
+	const bool singleStep = fixedFrameTime && !vidRecording;
+
 	unsigned int numNewFrames = 1;
+
+	if (logDebugMessages) {
+		LOG(
+			"[%s][1] fromServerThread=%d fixedFrameTime=%d hasLocalClient=%d normalFrame=%d",
+			__FUNCTION__, fromServerThread, fixedFrameTime, hasLocalClient, normalFrame
+		);
+	}
 
 	if (!fixedFrameTime) {
 		spring_time currentTick = spring_gettime();
@@ -2341,7 +2382,10 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		numNewFrames = (frameTimeLeft > 0.0f)? int(math::ceil(frameTimeLeft)): 0;
 		frameTimeLeft -= numNewFrames;
 
-#ifndef DEDICATED
+		if (logDebugMessages) {
+			LOG("\t[2] timeElapsed=%fms frameTimeLeft=%f internalSpeed=%f numNewFrames=%u", timeElapsed.toMilliSecsf(), frameTimeLeft, internalSpeed, numNewFrames);
+		}
+
 		if (hasLocalClient) {
 			// Don't create new frames when localClient (:= host) isn't able to process them fast enough.
 			// Despite this still allow to create a few in advance to not lag other connected clients.
@@ -2351,28 +2395,35 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 			const unsigned int curSimRate   = std::max((int)gu->simFPS, GAME_SPEED); // max advance 1sec in the future
 			const unsigned int maxNewFrames = mix(curSimRate, 0u, simFrameMixRatio); // (fps + (0 - fps) * a)
 
+			#ifndef DEDICATED
 			numNewFrames = std::min(numNewFrames, maxNewFrames);
+			#endif
+
+			if (logDebugMessages) {
+				LOG(
+					"\t[3] simFramesBehind=%f simFrameMixRatio=%f curSimRate=%u maxNewFrames=%u numNewFrames=%u",
+					simFramesBehind, simFrameMixRatio, curSimRate, maxNewFrames, numNewFrames
+				);
+			}
 		}
-#endif
 	}
 
-	const bool rec = videoCapturing->IsCapturing();
-	const bool normalFrame = !isPaused && !rec;
-	const bool videoFrame = !isPaused && fixedFrameTime;
-	const bool singleStep = fixedFrameTime && !rec;
-
 	if (normalFrame || videoFrame || singleStep) {
+		assert(demoReader == NULL);
+
 		for (unsigned int i = 0; i < numNewFrames; ++i) {
-			assert(demoReader == NULL);
 			++serverFrameNum;
 
 			// Send out new frame messages.
-			if ((serverFrameNum % serverKeyframeInterval) == 0)
+			if ((serverFrameNum % serverKeyframeInterval) == 0) {
 				Broadcast(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
-			else
+			} else {
 				Broadcast(CBaseNetProtocol::Get().SendNewFrame());
+			}
 
-			// every gameProgressFrameInterval, we broadcast current frame in a special message that doesn't get cached and skips normal queue, to let players know their loading %
+			// every gameProgressFrameInterval, we broadcast current frame in a
+			// special message (that doesn't get cached and skips normal queue)
+			// to let players know their loading %
 			if ((serverFrameNum % gameProgressFrameInterval) == 0) {
 				CBaseNetProtocol::PacketType progressPacket = CBaseNetProtocol::Get().SendCurrentFrameProgress(serverFrameNum);
 				// we cannot use broadcast here, since we want to skip caching
@@ -2459,8 +2510,10 @@ void CGameServer::KickPlayer(const int playerNum)
 
 void CGameServer::MutePlayer(const int playerNum, bool muteChat, bool muteDraw )
 {
-	if ( playerNum >= players.size() ) {
-		LOG_L(L_WARNING,"invalid playerNum");
+	if (playerNum >= players.size()) {
+		if (logWarnMessages) {
+			LOG_L(L_WARNING,"invalid playerNum");
+		}
 		return;
 	}
 	if ( playerNum < mutedPlayersChat.size() ) {
