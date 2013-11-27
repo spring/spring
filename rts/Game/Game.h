@@ -153,6 +153,8 @@ public:
 	spring_time lastSimFrameTime;
 	spring_time lastDrawFrameTime;
 	spring_time lastFrameTime;
+	spring_time lastReadNetTime; ///< time of previous ClientReadNet() call
+	spring_time lastNetPacketProcessTime;
 	spring_time lastReceivedNetPacketTime;
 	spring_time lastSimFrameNetPacketTime;
 
@@ -193,7 +195,6 @@ public:
 	// to smooth out SimFrame calls
 	float msgProcTimeLeft; ///< How many SimFrame() calls we still may do.
 	float consumeSpeed;    ///< How fast we should eat NETMSG_NEWFRAMEs.
-	spring_time lastframe; ///< time of previous ClientReadNet() call.
 
 	int skipStartFrame;
 	int skipEndFrame;

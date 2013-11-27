@@ -119,20 +119,20 @@ void CGame::ClientReadNet()
 {
 	// compute new msgProcTimeLeft to "smooth" out SimFrame() calls
 	if (gameServer == NULL) {
-		const spring_time currentFrame = spring_gettime();
+		const spring_time currentReadNetTime = spring_gettime();
 
 		if (skipping) {
-			msgProcTimeLeft = 0.01f;
+			msgProcTimeLeft = 10.0f;
 		} else {
-			msgProcTimeLeft -= float(msgProcTimeLeft > 1.0f);
-			msgProcTimeLeft += consumeSpeed * (currentFrame - lastframe).toSecsf();
+			msgProcTimeLeft -= (1000.0f * float(msgProcTimeLeft > 1000.0f));
+			msgProcTimeLeft += (consumeSpeed * (currentReadNetTime - lastReadNetTime).toMilliSecsf());
 		}
 
-		lastframe = currentFrame;
+		lastReadNetTime = currentReadNetTime;
 	} else {
 		// make sure ClientReadNet returns at least every 15 game frames
 		// so CGame can process keyboard input, and render etc.
-		msgProcTimeLeft = GAME_SPEED / float(gu->minFPS) * gs->wantedSpeedFactor;
+		msgProcTimeLeft = (GAME_SPEED / float(gu->minFPS) * gs->wantedSpeedFactor) * 1000.0f;
 	}
 
 	// balance the time spent in simulation & drawing (esp. when reconnecting)
@@ -153,10 +153,11 @@ void CGame::ClientReadNet()
 		// smooths simframes across the full second
 		if (msgProcTimeLeft <= 0.0f)
 			break;
-
 		// balance the time spent in sim & drawing
 		if (spring_gettime() > msgProcEndTime)
 			break;
+
+		lastNetPacketProcessTime = spring_gettime();
 
 		// get netpacket from the queue
 		boost::shared_ptr<const netcode::RawPacket> packet = net->GetData(gs->frameNum);
@@ -240,12 +241,12 @@ void CGame::ClientReadNet()
 					LOG_L(L_ERROR, "Got invalid player num %i in pause msg", player);
 					break;
 				}
-				gs->paused=!!inbuf[2];
+				gs->paused = !!inbuf[2];
 				LOG("%s %s the game",
 						playerHandler->Player(player)->name.c_str(),
 						(gs->paused ? "paused" : "unpaused"));
 				eventHandler.GamePaused(player, gs->paused);
-				lastframe = spring_gettime();
+				lastReadNetTime = spring_gettime();
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
@@ -429,7 +430,7 @@ void CGame::ClientReadNet()
 				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
 			}
 			case NETMSG_NEWFRAME: {
-				msgProcTimeLeft -= 1.0f;
+				msgProcTimeLeft -= 1000.0f;
 				lastSimFrameNetPacketTime = spring_gettime();
 
 				SimFrame();
