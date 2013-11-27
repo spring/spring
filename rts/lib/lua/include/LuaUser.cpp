@@ -128,7 +128,6 @@ void LuaMutexYield(lua_State* L)
 static Threading::AtomicCounterInt64 bytesAlloced = 0;
 static Threading::AtomicCounterInt64 numLuaAllocs = 0;
 static Threading::AtomicCounterInt64 luaAllocTime = 0;
-static Threading::AtomicCounterInt64 allocerFrame = 0;
 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 {
@@ -139,6 +138,10 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 	}
 
 	#if (!defined(HEADLESS) && !defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
+	// FIXME:
+	//   the Lua lib is compiled with its own makefile and does not inherit these definitions, yet
+	//   somehow unitsync compiles (despite not linking against GlobalSynced) but dedserv does not
+	//   if gs is referenced
 	const spring_time t0 = spring_gettime();
 	void* mem = realloc(ptr, nsize);
 	const spring_time t1 = spring_gettime();
@@ -146,13 +149,6 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 	bytesAlloced += (nsize - osize);
 	numLuaAllocs += 1;
 	luaAllocTime += (t1 - t0).toMicroSecsi();
-
-	if (gs != NULL && gs->frameNum == (allocerFrame + GAME_SPEED)) {
-		numLuaAllocs = 0;
-		luaAllocTime = 0;
-
-		allocerFrame = gs->frameNum;
-	}
 
 	return mem;
 	#else
@@ -167,3 +163,12 @@ void spring_lua_alloc_get_stats(SLuaInfo* info)
 	info->luaAllocTime = luaAllocTime;
 	info->numLuaStates = mutexes.size() - coroutines.size();
 }
+
+void spring_lua_alloc_update_stats(bool clear)
+{
+	if (clear) {
+		numLuaAllocs = 0;
+		luaAllocTime = 0;
+	}
+}
+
