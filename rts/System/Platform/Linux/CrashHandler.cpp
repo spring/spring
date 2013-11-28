@@ -365,13 +365,14 @@ namespace CrashHandler
 #ifndef DEDICATED
 		Watchdog::ClearTimer();
 #endif
+
 		if (threadName != NULL) {
 			LOG_I(logLevel, "Stacktrace (%s) for Spring %s:", threadName, (SpringVersion::GetFull()).c_str());
 		} else {
 			LOG_I(logLevel, "Stacktrace for Spring %s:", (SpringVersion::GetFull()).c_str());
 		}
 
-		bool containsOglSo = false; // OpenGL lib -> graphic problem
+		bool containsDriverSo = false; // OpenGL lib -> graphic problem
 		bool containedAIInterfaceSo = false;
 		bool containedSkirmishAISo  = false;
 
@@ -421,10 +422,10 @@ namespace CrashHandler
 				symbols.push_back(data);
 
 				// check if there are known sources of fail on the stack
-				containsOglSo = (containsOglSo || (path.find("libGLcore.so") != std::string::npos));
-				containsOglSo = (containsOglSo || (path.find("psb_dri.so") != std::string::npos));
-				containsOglSo = (containsOglSo || (path.find("i965_dri.so") != std::string::npos));
-				containsOglSo = (containsOglSo || (path.find("fglrx_dri.so") != std::string::npos));
+				containsDriverSo = (containsDriverSo || (path.find("libGLcore.so") != std::string::npos));
+				containsDriverSo = (containsDriverSo || (path.find("psb_dri.so") != std::string::npos));
+				containsDriverSo = (containsDriverSo || (path.find("i965_dri.so") != std::string::npos));
+				containsDriverSo = (containsDriverSo || (path.find("fglrx_dri.so") != std::string::npos));
 				if (!containedAIInterfaceSo && (absPath.find("Interfaces") != std::string::npos)) {
 					containedAIInterfaceSo = true;
 				}
@@ -434,7 +435,7 @@ namespace CrashHandler
 			}
 
 			// Linux Graphic drivers are known to fail with moderate OpenGL usage
-			if (containsOglSo) {
+			if (containsDriverSo) {
 				LOG_I(logLevel, "This stack trace indicates a problem with your graphic card driver. "
 						"Please try upgrading or downgrading it. "
 						"Specifically recommended is the latest driver, and one that is as old as your graphic card. "
