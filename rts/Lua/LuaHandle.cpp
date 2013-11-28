@@ -2885,11 +2885,11 @@ void CLuaHandle::CollectGarbage()
 	static const   int maxLuaGarbageCollectSteps = configHandler->GetInt  ("MaxLuaGarbageCollectionSteps");
 	static const   int maxLuaGarbageMemFootPrint = configHandler->GetInt  ("MaxLuaGarbageMemoryFootPrint");
 
-	// kilobytes --> megabytes
-	const int garbageCount = lua_gc(L, LUA_GCCOUNT, 0) / 1024;
+	// kilobytes --> megabytes (note: total footprint INCLUDING garbage)
+	const int luaMemFootPrint = lua_gc(L, LUA_GCCOUNT, 0) / 1024;
 
 	// 25MB --> 20usecs, 100MB --> 100usecs (30x per second)
-	const float rawRunTime = garbageCount * (0.02f + 0.08f * smoothstep(25, 100, garbageCount));
+	const float rawRunTime = luaMemFootPrint * (0.02f + 0.08f * smoothstep(25, 100, luaMemFootPrint));
 	const float maxRunTime = std::min(rawRunTime, maxLuaGarbageCollectTime);
 
 	const spring_time endTime = spring_gettime() + spring_msecs(maxRunTime);
