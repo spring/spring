@@ -2872,8 +2872,9 @@ const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, in
 /******************************************************************************/
 /******************************************************************************/
 
-CONFIG(float, MaxLuaGarbageCollectionTime ).defaultValue(1000.0f / GAME_SPEED).minimumValue(1.0f);
+CONFIG(float, MaxLuaGarbageCollectionTime ).defaultValue(1000.0f / GAME_SPEED).minimumValue(1.0f); // ms
 CONFIG(  int, MaxLuaGarbageCollectionSteps).defaultValue(10000               ).minimumValue(1   );
+CONFIG(  int, MaxLuaGarbageMemoryFootPrint).defaultValue(64                  ).minimumValue(  32); // MB
 
 void CLuaHandle::CollectGarbage()
 {
@@ -2882,8 +2883,9 @@ void CLuaHandle::CollectGarbage()
 
 	static const float maxLuaGarbageCollectTime  = configHandler->GetFloat("MaxLuaGarbageCollectionTime" );
 	static const   int maxLuaGarbageCollectSteps = configHandler->GetInt  ("MaxLuaGarbageCollectionSteps");
+	static const   int maxLuaGarbageMemFootPrint = configHandler->GetInt  ("MaxLuaGarbageMemoryFootPrint");
 
-	// in megabytes
+	// kilobytes --> megabytes
 	const int garbageCount = lua_gc(L, LUA_GCCOUNT, 0) / 1024;
 
 	// 25MB --> 20usecs, 100MB --> 100usecs (30x per second)
@@ -2902,6 +2904,10 @@ void CLuaHandle::CollectGarbage()
 			break;
 		}
 	}
+
+	// limit the size of the garbage pile even if time is already up
+	while ((lua_gc(L, LUA_GCCOUNT, 0) / 1024) >= maxLuaGarbageMemFootPrint)
+		lua_gc(L, LUA_GCSTEP, 2);
 
 	SetRunning(L, false);
 }
