@@ -6,10 +6,14 @@
 #include <string>
 #include "System/Platform/Threading.h"
 
+// Update Watchdog::threadNames also if adding threads
 enum WatchdogThreadnum {
-	WDT_MAIN = 0, WDT_SIM, WDT_LOAD, WDT_AUDIO, WDT_LAST //! Update WatchdogThreadnames also if adding threads
+	WDT_MAIN  = 0,
+	WDT_SIM   = 1,
+	WDT_LOAD  = 2,
+	WDT_AUDIO = 3,
+	WDT_COUNT = 4,
 };
-#define WDT_SIZE (WDT_LAST + 1)
 
 namespace Watchdog
 {

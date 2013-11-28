@@ -46,12 +46,15 @@ namespace Threading {
 
 	static bool haveMainThreadID = false;
 	static bool haveGameLoadThreadID = false;
+	static bool haveWatchDogThreadID = false;
 
 	// static boost::thread::id boostMainThreadID;
 	// static boost::thread::id boostGameLoadThreadID;
+	// static boost::thread::id boostWatchDogThreadID;
 
 	static NativeThreadId nativeMainThreadID;
 	static NativeThreadId nativeGameLoadThreadID;
+	static NativeThreadId nativeWatchDogThreadID;
 
 	static boost::optional<NativeThreadId> simThreadID;
 	static boost::optional<NativeThreadId> luaBatchThreadID;
@@ -345,6 +348,23 @@ namespace Threading {
 	}
 	bool IsGameLoadThread(NativeThreadId threadID) {
 		return NativeThreadIdsEqual(threadID, Threading::nativeGameLoadThreadID);
+	}
+
+
+
+	void SetWatchDogThread() {
+		if (!haveWatchDogThreadID) {
+			haveWatchDogThreadID = true;
+			// boostWatchDogThreadID = boost::this_thread::get_id();
+			nativeWatchDogThreadID = Threading::GetCurrentThreadId();
+		}
+	}
+
+	bool IsWatchDogThread() {
+		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), nativeWatchDogThreadID);
+	}
+	bool IsWatchDogThread(NativeThreadId threadID) {
+		return NativeThreadIdsEqual(threadID, Threading::nativeWatchDogThreadID);
 	}
 
 

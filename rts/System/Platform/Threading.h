@@ -30,6 +30,7 @@ namespace Threading {
 #endif
 	NativeThreadHandle GetCurrentThread();
 	NativeThreadId GetCurrentThreadId();
+
 	inline bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2);
 
 
@@ -67,6 +68,10 @@ namespace Threading {
 	void SetGameLoadThread();
 	bool IsGameLoadThread();
 	bool IsGameLoadThread(NativeThreadId threadID);
+
+	void SetWatchDogThread();
+	bool IsWatchDogThread();
+	bool IsWatchDogThread(NativeThreadId threadID);
 
 	/**
 	 * GML Functions
