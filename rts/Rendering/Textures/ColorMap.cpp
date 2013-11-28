@@ -59,7 +59,7 @@ CColorMap::CColorMap(const std::string& fileName)
 		throw content_error("Could not load texture from file " + fileName);
 	}
 
-	if ((bitmap.type != CBitmap::BitmapTypeStandardRGBA) || (bitmap.xsize < 2)) {
+	if (bitmap.compressed || (bitmap.channels != 4) || (bitmap.xsize < 2)) {
 		throw content_error("Unsupported bitmap format in file " + fileName);
 	}
 

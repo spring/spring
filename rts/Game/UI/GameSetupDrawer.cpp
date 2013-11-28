@@ -12,7 +12,7 @@
 #include "Net/GameServer.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
