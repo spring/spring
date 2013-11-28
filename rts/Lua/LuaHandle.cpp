@@ -2906,8 +2906,13 @@ void CLuaHandle::CollectGarbage()
 	}
 
 	// limit the size of the garbage pile even if time is already up
+	// lapi.cpp::lua_gc should return (g->totalbytes - g->estimate) if
+	// what == LUA_GCCOUNT and data != 0 for this to work without risk
+	// of infinite loop, but Lua VM hacks should be avoided
+	#if 0
 	while ((lua_gc(L, LUA_GCCOUNT, 0) / 1024) >= maxLuaGarbageMemFootPrint)
 		lua_gc(L, LUA_GCSTEP, 2);
+	#endif
 
 	SetRunning(L, false);
 }
