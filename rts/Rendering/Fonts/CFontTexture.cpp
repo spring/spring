@@ -89,14 +89,18 @@ public:
 			msg += GetFTError(error);
 			throw std::runtime_error(msg);
 		}
+	#ifdef USE_FONTCONFIG
 		if (!FcInit()) {
 			throw std::runtime_error("FontConfig failed");
 		}
+	#endif
 	};
 
 	~FtLibraryHandler() {
 		FT_Done_FreeType(lib);
+	#ifdef USE_FONTCONFIG
 		FcFini();
+	#endif
 	};
 
 	static FT_Library& GetLibrary() {
@@ -221,7 +225,7 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 
 static std::shared_ptr<FontFace> GetFontForCharacters(const char32_t character, const FT_Face origFace, const int origSize)
 {
-#ifndef HEADLESS
+#if !defined(HEADLESS) && defined(USE_FONTCONFIG)
 	//TODO ask for all missing glyphs in one rush? (fontconfig should be much faster than)
 	FcCharSet* cset = FcCharSetCreate();
 	FcCharSetAddChar(cset, character);
