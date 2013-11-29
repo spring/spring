@@ -128,12 +128,20 @@ void LuaMutexYield(lua_State* L)
 static Threading::AtomicCounterInt64 bytesAlloced = 0;
 static Threading::AtomicCounterInt64 numLuaAllocs = 0;
 static Threading::AtomicCounterInt64 luaAllocTime = 0;
+static const int maxAllocedBytes = 768 * 1024*1024;
 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 {
 	if (nsize == 0) {
 		bytesAlloced -= osize;
 		free(ptr);
+		return NULL;
+	}
+
+	if ((nsize > osize) && (bytesAlloced > maxAllocedBytes)) {
+		// better kill lua than whole engine
+		const auto lcd = (luaContextData*)ud;
+		LOG_L(L_FATAL, "%s: failed to allocate more memory!", lcd->owner->GetName().c_str());
 		return NULL;
 	}
 
