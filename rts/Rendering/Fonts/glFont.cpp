@@ -153,20 +153,12 @@ static char32_t GetUnicodeChar(const std::string& text, int& pos)
 CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float _outlineweight)
 : CFontTexture(fontfile,size,_outlinewidth,_outlineweight)
 , fontPath(fontfile)
-, fontSize(size)
 , inBeginEnd(false)
 , autoOutlineColor(true)
 , setColor(false)
 {
 	va  = new CVertexArray();
 	va2 = new CVertexArray();
-
-	fontFamily = "unknown";
-	fontStyle  = "unknown";
-#ifndef HEADLESS
-	fontFamily = GetFace()->family_name;
-	fontStyle  = GetFace()->style_name;
-#endif
 
 	textColor    = white;
 	outlineColor = darkOutline;
@@ -1212,6 +1204,12 @@ void CglFont::End()
 	if (va->drawIndex() == 0) {
 		glPopAttrib();
 		return;
+	}
+
+	GLboolean inListCompile;
+	glGetBooleanv(GL_LIST_INDEX, &inListCompile);
+	if (!inListCompile) {
+		UpdateTexture();
 	}
 
 	glEnable(GL_TEXTURE_2D);

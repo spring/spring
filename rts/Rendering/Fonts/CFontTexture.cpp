@@ -1,17 +1,20 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "CFontTexture.h"
+#include "LanguageBlocksDefs.h"
 #include "Rendering/GlobalRendering.h"
 
+#include <mutex>
 #include <string>
 #include <cstring> // for memset, memcpy
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdexcept>
-#include <unordered_set>
-#ifndef   HEADLESS
-#include <ft2build.h>
-#include FT_FREETYPE_H
+
+#ifndef HEADLESS
+	#include <ft2build.h>
+	#include FT_FREETYPE_H
+	#ifdef USE_FONTCONFIG
+		#include <fontconfig/fontconfig.h> //FIXME subdir or not?
+		//#include <fontconfig/fcfreetype.h>
+	#endif
 #endif // HEADLESS
 
 #include "Game/Camera.h"
@@ -27,47 +30,55 @@
 #include "System/float4.h"
 #include "System/bitops.h"
 
-#include "LanguageBlocksDefs.h"
 
-static const int ATLAS_PADDING = 2;
-
-
-#ifndef   HEADLESS
-#undef __FTERRORS_H__
-#define FT_ERRORDEF( e, v, s )  { e, s },
-#define FT_ERROR_START_LIST     {
-#define FT_ERROR_END_LIST       { 0, 0 } };
-struct ErrorString {
-	int          err_code;
-	const char*  err_msg;
-} static errorTable[] =
-#include FT_ERRORS_H
+#ifndef HEADLESS
+	#undef __FTERRORS_H__
+	#define FT_ERRORDEF( e, v, s )  { e, s },
+	#define FT_ERROR_START_LIST     {
+	#define FT_ERROR_END_LIST       { 0, 0 } };
+	struct ErrorString {
+		int          err_code;
+		const char*  err_msg;
+	} static errorTable[] =
+	#include FT_ERRORS_H
 
 
-static const char* GetFTError(FT_Error e) {
-	for (int a = 0; errorTable[a].err_msg; ++a) {
-		if (errorTable[a].err_code == e)
-			return errorTable[a].err_msg;
+	static const char* GetFTError(FT_Error e) {
+		for (int a = 0; errorTable[a].err_msg; ++a) {
+			if (errorTable[a].err_code == e)
+				return errorTable[a].err_msg;
+		}
+		return "Unknown error";
 	}
-	return "Unknown error";
-}
 #endif // HEADLESS
 
 
-class texture_size_exception : public std::exception
-{
-};
 
 
-static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
-{
-	if (lchar < 128 && rchar < 128) {
-		return (lchar << 7) | rchar; // 14bit used
+#ifdef HEADLESS
+typedef unsigned char FT_Byte;
+#endif
+
+struct FontFace {
+	FontFace(FT_Face f, std::shared_ptr<FT_Byte*>& mem) : face(f), memory(mem) { }
+	~FontFace() {
+	#ifndef HEADLESS
+		FT_Done_Face(face);
+	#endif
 	}
-	return (lchar << 16) | rchar; // 32bit used
-}
+	operator FT_Face() { return this->face; }
 
-#ifndef   HEADLESS
+	FT_Face face;
+	std::shared_ptr<FT_Byte*> memory;
+};
+static std::unordered_set<CFontTexture*> allFonts;
+static std::unordered_map<std::string, std::weak_ptr<FontFace>> fontCache;
+static std::unordered_map<std::string, std::weak_ptr<FT_Byte*>> fontMemCache;
+static std::recursive_mutex m;
+
+
+
+#ifndef HEADLESS
 class FtLibraryHandler
 {
 public:
@@ -78,38 +89,48 @@ public:
 			msg += GetFTError(error);
 			throw std::runtime_error(msg);
 		}
+		if (!FcInit()) {
+			throw std::runtime_error("FontConfig failed");
+		}
 	};
 
 	~FtLibraryHandler() {
 		FT_Done_FreeType(lib);
+		FcFini();
 	};
 
-	FT_Library& GetLibrary() {
-		return lib;
+	static FT_Library& GetLibrary() {
+		// singleton
+		std::call_once(flag, [](){
+			singleton.reset(new FtLibraryHandler());
+		});
+		return singleton->lib;
 	};
 
 private:
 	FT_Library lib;
+	static std::once_flag flag;
+	static std::unique_ptr<FtLibraryHandler> singleton;
+
 };
 
-FtLibraryHandler libraryHandler; ///it will be automaticly createated and deleted
+std::once_flag FtLibraryHandler::flag;
+std::unique_ptr<FtLibraryHandler> FtLibraryHandler::singleton = nullptr;
 #endif
 
-static std::unordered_set<CFontTexture*> allFonts;
 
 
-CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesize, float  _outlineweight):
-	outlineSize(_outlinesize),
-	outlineWeight(_outlineweight),
-	lineHeight(0),
-	fontDescender(0),
-	texWidth(0),
-	texHeight(0),
-	wantedTexWidth(0),
-	wantedTexHeight(0),
-	texture(0),
-	textureSpaceMatrix(0),
-	atlasUpdate(NULL),
+/*******************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
+
+
+static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 #ifndef HEADLESS
 	library(libraryHandler.GetLibrary()),
 #else
@@ -117,15 +138,26 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 #endif
 	face(NULL),
 	faceDataBuffer(NULL),
-	nextRowPos(0)
 {
-	if (size <= 0)
-		size = 14;
+	if (lchar < 128 && rchar < 128) {
+		return (lchar << 7) | rchar; // 14bit used
+	}
+	return (lchar << 16) | rchar; // 32bit used
+}
 
-	static const int FT_INTERNAL_DPI = 64;
-	normScale = 1.0f / (size * FT_INTERNAL_DPI);
 
-#ifndef   HEADLESS
+static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const int size)
+{
+#ifndef HEADLESS
+	std::lock_guard<std::recursive_mutex> lk(m);
+
+	//TODO add support to load fonts by name (needs fontconfig)
+
+	auto it = fontCache.find(fontfile + IntToString(size));
+	if (it != fontCache.end() && !it->second.expired())
+		return it->second.lock();
+
+	// get the file (no need to cache, takes too less time)
 	std::string fontPath(fontfile);
 	CFileHandler* f = new CFileHandler(fontPath);
 	if (!f->FileExists()) {
@@ -138,20 +170,26 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 
 		if (!f->FileExists()) {
 			delete f;
-			throw content_error("Couldn't find font '" + fontPath + "'.");
+			throw content_error("Couldn't find font '" + fontfile + "'.");
 		}
 	}
 
-	int filesize = f->FileSize();
-	faceDataBuffer = new FT_Byte[filesize];
-	f->Read(faceDataBuffer,filesize);
+	// we need to keep a copy of the memory
+	const int filesize = f->FileSize();
+	std::weak_ptr<FT_Byte*>& fontMemWeak = fontMemCache[fontPath];
+	std::shared_ptr<FT_Byte*> fontMem = fontMemWeak.lock();
+	if (fontMemWeak.expired()) {
+		fontMem = std::make_shared<FT_Byte*>(new FT_Byte[filesize]);
+		f->Read(*fontMem, filesize);
+		fontMemWeak = fontMem;
+	}
 	delete f;
 
-	FT_Error error;
-	error = FT_New_Memory_Face(library, faceDataBuffer, filesize, 0, &face);
-
+	// load the font
+	FT_Face face = NULL;
+	FT_Error error = FT_New_Memory_Face(FtLibraryHandler::GetLibrary(), *fontMem, filesize, 0, &face);
+	auto shFace = std::make_shared<FontFace>(face, fontMem);
 	if (error) {
-		delete[] faceDataBuffer;
 		std::string msg = fontfile + ": FT_New_Face failed: ";
 		msg += GetFTError(error);
 		throw content_error(msg);
@@ -160,8 +198,6 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	// set render size
 	error = FT_Set_Pixel_Sizes(face, 0, size);
 	if (error) {
-		FT_Done_Face(face);
-		delete[] faceDataBuffer;
 		std::string msg = fontfile + ": FT_Set_Pixel_Sizes failed: ";
 		msg += GetFTError(error);
 		throw content_error(msg);
@@ -170,12 +206,112 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	// select unicode charmap
 	error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 	if (error) {
-		FT_Done_Face(face);
-		delete[] faceDataBuffer;
 		std::string msg = fontfile + ": FT_Select_Charmap failed: ";
 		msg += GetFTError(error);
 		throw content_error(msg);
 	}
+
+	fontCache[fontfile + IntToString(size)] = shFace;
+	return shFace;
+#else
+	return NULL;
+#endif
+}
+
+
+static std::shared_ptr<FontFace> GetFontForCharacters(const char32_t character, const FT_Face origFace, const int origSize)
+{
+#ifndef HEADLESS
+	//TODO ask for all missing glyphs in one rush? (fontconfig should be much faster than)
+	FcCharSet* cset = FcCharSetCreate();
+	FcCharSetAddChar(cset, character);
+	FcPattern* pattern = FcPatternCreate();
+
+	//const FcChar8* ftname = reinterpret_cast<const FcChar8*>("foo.otf");
+	//FcBlanks* blanks = FcBlanksCreate();
+	//FcPattern* pattern = FcFreeTypeQueryFace(origFace, ftname, 0, blanks);
+
+	FcValue v;
+	v.type = FcTypeBool;
+	v.u.b = FcTrue;
+	FcPatternAddWeak(pattern, FC_ANTIALIAS, v, FcFalse);
+
+	FcPatternAddCharSet(pattern, FC_CHARSET, cset);
+	FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
+	//FcPatternAddInteger(pattern, FC_WEIGHT, (false)? FC_WEIGHT_BOLD : FC_WEIGHT_NORMAL);
+	//FcPatternAddInteger(pattern, FC_SLANT, (false)? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
+
+	FcConfigSubstitute(0, pattern, FcMatchPattern);
+	FcDefaultSubstitute(pattern);
+
+	FcResult result;
+	FcPattern* current = FcFontMatch(NULL, pattern, &result);
+	FcPatternDestroy(pattern);
+	FcCharSetDestroy(cset);
+
+	if (result != FcResultMatch)
+		return NULL;
+
+	FcChar8* cFilename = NULL;
+	FcResult r = FcPatternGetString(current, FC_FILE, 0, &cFilename);
+	const std::string filename = (cFilename != NULL) ? reinterpret_cast<char*>(cFilename) : "";
+	FcPatternDestroy(current);
+	if (r != FcResultMatch)
+		return NULL;
+
+	return GetFontFace(filename, origSize);
+#else
+	return NULL;
+#endif
+}
+
+
+/*******************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
+
+
+CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesize, float  _outlineweight)
+	: outlineSize(_outlinesize)
+	, outlineWeight(_outlineweight)
+	, lineHeight(0)
+	, fontDescender(0)
+	, fontSize(size)
+	, texWidth(0)
+	, texHeight(0)
+	, wantedTexWidth(0)
+	, wantedTexHeight(0)
+	, texture(0)
+	, textureSpaceMatrix(0)
+	, atlasUpdate(NULL)
+	, atlasUpdateShadow(NULL)
+	, lastTextureUpdate(0)
+	, curTextureUpdate(0)
+	, face(NULL)
+{
+	if (fontSize <= 0)
+		fontSize = 14;
+
+	static const int FT_INTERNAL_DPI = 64;
+	normScale = 1.0f / (fontSize * FT_INTERNAL_DPI);
+
+	fontFamily = "unknown";
+	fontStyle  = "unknown";
+
+#ifndef HEADLESS
+	shFace = GetFontFace(fontfile, fontSize);
+	face = *shFace;
+
+	if (!face)
+		return;
+
+	fontFamily = face->family_name;
+	fontStyle  = face->style_name;
 
 	fontDescender = normScale * FT_MulFix(face->descender, face->size->metrics.y_scale);
 	//lineHeight = FT_MulFix(face->height, face->size->metrics.y_scale); // bad results
@@ -186,12 +322,12 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	// has to be done before first GetGlyph() call!
 	CreateTexture(128, 128);
 
-	// precache ASCII kernings
+	// precache ASCII glyphs & kernings (save them in an array for better lvl2 cpu cache hitrate)
 	memset(kerningPrecached, 0, 128*128*sizeof(float));
-	for (char32_t i=32; i<128; ++i) {
+	for (char32_t i=32; i<127; ++i) {
 		const auto& lgl = GetGlyph(i);
 		const float advance = lgl.advance;
-		for (char32_t j=32; j<128; ++j) {
+		for (char32_t j=32; j<127; ++j) {
 			const auto& rgl = GetGlyph(j);
 			const auto hash = GetKerningHash(i, j);
 			FT_Vector kerning;
@@ -206,10 +342,8 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 
 CFontTexture::~CFontTexture()
 {
-#ifndef   HEADLESS
+#ifndef HEADLESS
 	allFonts.erase(this);
-	FT_Done_Face(face);
-	delete[] faceDataBuffer;
 	glDeleteTextures(1, (const GLuint*)&texture);
 	glDeleteLists(textureSpaceMatrix, 1);
 #endif
@@ -217,10 +351,9 @@ CFontTexture::~CFontTexture()
 
 
 void CFontTexture::Update() {
+	std::lock_guard<std::recursive_mutex> lk(m);
 	for (auto& font: allFonts) {
-		if (font->texWidth != font->wantedTexWidth || font->texHeight != font->wantedTexHeight) {
-			font->ResizeTexture();
-		}
+		font->UpdateTexture();
 	}
 }
 
@@ -259,11 +392,14 @@ float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 		return it->second;
 	}
 
+	if (lgl.face != rgl.face) {
+		return (kerningDynamic[hash] = lgl.advance);
+	}
+
 	// load & cache
 	FT_Vector kerning;
-	FT_Get_Kerning(face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
-	kerningDynamic[hash] = lgl.advance + normScale * kerning.x;
-	return kerningDynamic[hash];
+	FT_Get_Kerning(lgl.face, lgl.index, rgl.index, FT_KERNING_DEFAULT, &kerning);
+	return (kerningDynamic[hash] = lgl.advance + normScale * kerning.x);
 #else
 	return 0;
 #endif
@@ -272,15 +408,56 @@ float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 
 void CFontTexture::LoadBlock(char32_t start, char32_t end)
 {
+	std::lock_guard<std::recursive_mutex> lk(m);
+
 	for(char32_t i=start; i<end; ++i)
 		LoadGlyph(i);
 
-	GLboolean inListCompile;
-	glGetBooleanv(GL_LIST_INDEX, &inListCompile);
-	if (!inListCompile) {
-		ResizeTexture();
+	// readback textureatlas allocator data
+	{
+		atlasAlloc.SetNonPowerOfTwo(globalRendering->supportNPOTs);
+		const bool success = atlasAlloc.Allocate();
+		if (!success)
+			LOG_L(L_WARNING, "Texture limit reached! (try to reduce the font size and/or outlinewidth)");
+
+		wantedTexWidth  = atlasAlloc.GetAtlasSize().x;
+		wantedTexHeight = atlasAlloc.GetAtlasSize().y;
+		if ((atlasUpdate->xsize != wantedTexWidth) || (atlasUpdate->ysize != wantedTexHeight)) {
+			(*atlasUpdate) = atlasUpdate->CanvasResize(wantedTexWidth, wantedTexHeight, false);
+		}
+
+		if (!atlasUpdateShadow) {
+			atlasUpdateShadow = new CBitmap();
+			atlasUpdateShadow->channels = 1;
+			atlasUpdateShadow->Alloc(wantedTexWidth, wantedTexHeight);
+		}
+		if ((atlasUpdateShadow->xsize != wantedTexWidth) || (atlasUpdateShadow->ysize != wantedTexHeight)) {
+			(*atlasUpdateShadow) = atlasUpdateShadow->CanvasResize(wantedTexWidth, wantedTexHeight, false);
+		}
+
+		for(char32_t i=start; i<end; ++i) {
+			const std::string glyphName  = IntToString(i);
+			const std::string glyphName2 = glyphName + "sh";
+
+			if (!atlasAlloc.contains(glyphName))
+				continue;
+
+			auto texpos  = atlasAlloc.GetEntry(glyphName);
+			auto texpos2 = atlasAlloc.GetEntry(glyphName2);
+			glyphs[i].texCord       = IGlyphRect(texpos[0], texpos[1], texpos[2] - texpos[0], texpos[3] - texpos[1]);
+			glyphs[i].shadowTexCord = IGlyphRect(texpos2[0], texpos2[1], texpos2[2] - texpos2[0], texpos2[3] - texpos2[1]);
+
+			auto& glyphbm  = (CBitmap*&)atlasAlloc.GetEntryData(glyphName);
+			if (texpos[2] != 0)  atlasUpdate->CopySubImage(*glyphbm, texpos.x, texpos.y);
+			if (texpos2[2] != 0) atlasUpdateShadow->CopySubImage(*glyphbm, texpos2.x + outlineSize, texpos2.y + outlineSize);
+			delete glyphbm; glyphbm = NULL;
+		}
+		atlasAlloc.clear();
 	}
+
+	++curTextureUpdate;
 }
+
 
 void CFontTexture::LoadGlyph(char32_t ch)
 {
@@ -289,11 +466,20 @@ void CFontTexture::LoadGlyph(char32_t ch)
 		return;
 
 	// map unicode to font internal index
-	FT_UInt index = FT_Get_Char_Index(face, ch);
+	std::shared_ptr<FontFace> f = shFace;
+	FT_UInt index = FT_Get_Char_Index(*f, ch);
+	if (index == 0) {
+		auto f_ = GetFontForCharacters(ch, *f, fontSize);
+		if (f_) {
+			f = f_;
+			usedFallbackFonts.insert(f);
+			index = FT_Get_Char_Index(*f, ch);
+		}
+	}
 
 	// check for duplicated glyphs
 	for (auto& it: glyphs) {
-		if (it.second.index == index) {
+		if (it.second.index == index && it.second.face == f->face) {
 			auto& glyph = glyphs[ch];
 			glyph = it.second;
 			glyph.utf16 = ch;
@@ -302,16 +488,17 @@ void CFontTexture::LoadGlyph(char32_t ch)
 	}
 
 	auto& glyph = glyphs[ch];
+	glyph.face  = f->face;
 	glyph.index = index;
 	glyph.utf16 = ch;
 
 	// load glyph
-	FT_Error error = FT_Load_Glyph(face, index, FT_LOAD_RENDER|FT_LOAD_FORCE_AUTOHINT);
+	FT_Error error = FT_Load_Glyph(*f, index, FT_LOAD_RENDER);
 	if (error) {
 		LOG_L(L_ERROR, "Couldn't load glyph %d", ch);
 	}
 
-	FT_GlyphSlot slot = face->glyph;
+	FT_GlyphSlot slot = f->face->glyph;
 
 	const float xbearing = slot->metrics.horiBearingX * normScale;
 	const float ybearing = slot->metrics.horiBearingY * normScale;
@@ -325,6 +512,9 @@ void CFontTexture::LoadGlyph(char32_t ch)
 	glyph.height    = slot->metrics.height * normScale;
 	glyph.descender = ybearing - glyph.height;
 
+	// workaround bugs in FreeSansBold (in range 0x02B0 - 0x0300)
+	if (glyph.advance == 0 && glyph.size.w > 0) glyph.advance = glyph.size.w;
+
 	const int width  = slot->bitmap.width;
 	const int height = slot->bitmap.rows;
 
@@ -337,117 +527,21 @@ void CFontTexture::LoadGlyph(char32_t ch)
 		return;
 	}
 
-	try {
-		glyph.texCord = AllocateGlyphRect(width, height);
-		glyph.shadowTexCord = AllocateGlyphRect(width + 2 * outlineSize, height + 2 * outlineSize);
-	} catch(const texture_size_exception& e) {
-		LOG_L(L_WARNING, "Texture limit reached! (try to reduce the font size/outline-width)");
+	if (slot->bitmap.pitch != width) {
+		LOG_L(L_ERROR, "invalid pitch");
+		return;
 	}
 
-	if ((atlasUpdate->xsize != wantedTexWidth) || (atlasUpdate->ysize != wantedTexHeight)) {
-		(*atlasUpdate) = atlasUpdate->CanvasResize(wantedTexWidth, wantedTexHeight, false);
-	}
-
-	assert(slot->bitmap.pitch == 1);
-	CBitmap gbm(slot->bitmap.buffer, width, height, 1);
-	if (glyph.texCord.w != 0)
-		atlasUpdate->CopySubImage(gbm, int(glyph.texCord.x), int(glyph.texCord.y));
-	gbm = gbm.CanvasResize(width + 2 * outlineSize, height + 2 * outlineSize, true);
-	gbm.Blur(outlineSize, outlineWeight);
-	if (glyph.shadowTexCord.w != 0)
-		atlasUpdate->CopySubImage(gbm, int(glyph.shadowTexCord.x), int(glyph.shadowTexCord.y));
-#endif
-}
-
-CFontTexture::Row* CFontTexture::FindRow(int glyphWidth, int glyphHeight)
-{
-	float best_ratio = 10000.0f;
-	Row*  best_row   = nullptr;
-
-	// first try to find a row with similar height
-	for(auto& row: imageRows) {
-		// Check if there is enough space in this row
-		if (wantedTexWidth - row.width < glyphWidth)
-			continue;
-
-		// cache suboptimum solution
-		const float ratio = float(row.height)/glyphHeight;
-		if (
-			   (best_ratio > ratio)
-			&& (ratio >= 1.0f)
-			&& (float(row.width) / wantedTexWidth < 0.85f)
-		) {
-			best_ratio = ratio;
-			best_row   = &row;
-		}
-
-		// Ignore too small or too big rows
-		if (ratio < 1.0f || ratio > 1.3f)
-			continue;
-
-		// found a good enough row (not optimal solution for that we would need to check all lines -> slower)
-		return &row;
-	}
-
-	// none found, take any row that isn't full yet and is high enough to fit the glyph
-	if (best_row)
-		return best_row;
-
-	// try to resize last row when possible
-	if (!imageRows.empty()) {
-		const int freeHeightSpace = wantedTexHeight - nextRowPos;
-		if (freeHeightSpace > 0) {
-			Row& lastRow = imageRows.back();
-			const int moreHeightNeeded = glyphHeight - lastRow.height;
-			if (moreHeightNeeded > 0 && moreHeightNeeded < 4) {
-				if ((freeHeightSpace > moreHeightNeeded) && (wantedTexWidth - lastRow.width > glyphWidth)) {
-					lastRow.height += moreHeightNeeded;
-					nextRowPos     += moreHeightNeeded;
-					return &lastRow;
-				}
-			}
-		}
-	}
-
-	// still no row found create a new one
-	return AddRow(glyphWidth, glyphHeight);
-}
-
-CFontTexture::Row* CFontTexture::AddRow(int glyphWidth, int glyphHeight)
-{
-	const int wantedRowHeight = glyphHeight * 1.2f;
-	while (nextRowPos+wantedRowHeight >= wantedTexHeight) {
-		if (wantedTexWidth>=2048 || wantedTexHeight>=2048)
-			throw texture_size_exception();
-
-		// Resize texture
-		wantedTexWidth  <<= 1;
-		wantedTexHeight <<= 1;
-	}
-	Row newrow(nextRowPos, wantedRowHeight);
-	nextRowPos += wantedRowHeight;
-	imageRows.push_back(newrow);
-	return &imageRows.back();
-}
-
-IGlyphRect CFontTexture::AllocateGlyphRect(int glyphWidth,int glyphHeight)
-{
-#ifndef   HEADLESS
-	//FIXME add padding
-	Row* row = FindRow(glyphWidth + ATLAS_PADDING, glyphHeight + ATLAS_PADDING);
-
-	IGlyphRect rect = IGlyphRect(row->width, row->position, glyphWidth, glyphHeight);
-	row->width += glyphWidth + ATLAS_PADDING;
-	return rect;
-#else
-	return IGlyphRect();
+	CBitmap* gbm = new CBitmap(slot->bitmap.buffer, width, height, 1);
+	atlasAlloc.AddEntry(IntToString(ch), int2(width, height), (void*)gbm);
+	atlasAlloc.AddEntry(IntToString(ch) + "sh", int2(width + 2 * outlineSize, height + 2 * outlineSize));
 #endif
 }
 
 
 void CFontTexture::CreateTexture(const int width, const int height)
 {
-#ifndef   HEADLESS
+#ifndef HEADLESS
 	glPushAttrib(GL_TEXTURE_BIT);
 
 	glGenTextures(1, &texture);
@@ -474,7 +568,7 @@ void CFontTexture::CreateTexture(const int width, const int height)
 
 	atlasUpdate = new CBitmap();
 	atlasUpdate->channels = 1;
-	atlasUpdate->Alloc(width, height);
+	atlasUpdate->Alloc(texWidth, texHeight);
 
 	textureSpaceMatrix = glGenLists(1);
 	glNewList(textureSpaceMatrix, GL_COMPILE);
@@ -483,24 +577,35 @@ void CFontTexture::CreateTexture(const int width, const int height)
 }
 
 
-void CFontTexture::ResizeTexture()
+void CFontTexture::UpdateTexture()
 {
-#ifndef   HEADLESS
+#ifndef HEADLESS
+	std::lock_guard<std::recursive_mutex> lk(m);
+	if (curTextureUpdate == lastTextureUpdate) return;
+	lastTextureUpdate = curTextureUpdate;
+	texWidth  = wantedTexWidth;
+	texHeight = wantedTexHeight;
+
+	// merge shadowing
+	if (atlasUpdateShadow) {
+		atlasUpdateShadow->Blur(outlineSize, outlineWeight);
+		for (int i=0; i<(atlasUpdate->xsize * atlasUpdate->ysize); ++i) {
+			atlasUpdate->mem[i] |= atlasUpdateShadow->mem[i];
+		}
+		delete atlasUpdateShadow;
+		atlasUpdateShadow = NULL;
+	}
+
 	glPushAttrib(GL_PIXEL_MODE_BIT | GL_TEXTURE_BIT);
+		// update texture atlas
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->mem); //FIXME use PBO?
 
-	const int width  = wantedTexWidth;
-	const int height = (globalRendering->supportNPOTs) ? nextRowPos : wantedTexHeight;
-
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->mem);
-
-	texWidth  = width;
-	texHeight = height;
-
-	glNewList(textureSpaceMatrix, GL_COMPILE);
-	glScalef(1.f/width, 1.f/height, 1.f);
-	glEndList();
-
+		// update texture space dlist (this affects already compiled dlists too!)
+		glNewList(textureSpaceMatrix, GL_COMPILE);
+		glScalef(1.f/texWidth, 1.f/texHeight, 1.f);
+		glTranslatef(0.5f, 0.5f, 1.f);
+		glEndList();
 	glPopAttrib();
 #endif
 }
