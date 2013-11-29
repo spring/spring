@@ -69,21 +69,13 @@ public:
 	int WrapInPlace(std::string& text, float fontSize,  float maxWidth, float maxHeight = 1e9);
 	std::list<std::string> Wrap(const std::string& text, float fontSize, float maxWidth, float maxHeight = 1e9);
 
-	//float GetKerning(char32_t left_char, char32_t right_char) const;
 	float GetCharacterWidth(const char32_t c);
 	float GetTextWidth(const std::string& text);
 	float GetTextHeight(const std::string& text, float* descender = NULL, int* numLines = NULL);
 	int   GetTextNumLines(const std::string& text) const;
 	static std::string StripColorCodes(const std::string& text);
 
-	//inline float GetLineHeight() const;
-	inline float GetSize()           const { return fontSize; }
-	//inline int GetDescender()      const { return GetFontDescender(); }
-	//inline int GetOutlineWidth()     const { return GetOutlineWidth(); }
-	//inline float GetOutlineWeight()  const { return GetOutilneWeight(); }
-	inline std::string GetFilePath() const { return fontPath; }
-	inline std::string GetFamily()   const { return fontFamily; }
-	inline std::string GetStyle()    const { return fontStyle; }
+	const std::string& GetFilePath() const { return fontPath; }
 
 	static const char ColorCodeIndicator = '\xFF'; //FIXME use a non-printable char? (<32)
 	static const char ColorResetIndicator = '\x08'; //! =: '\\b'
@@ -136,9 +128,6 @@ private:
 	void WrapTextKnuth(std::list<word>& words, float maxWidth, float maxHeight) const;
 private:
 	std::string fontPath;
-	std::string fontFamily;
-	std::string fontStyle;
-	int fontSize;
 
 	ColorMap stripTextColors;
 	ColorMap stripOutlineColors;

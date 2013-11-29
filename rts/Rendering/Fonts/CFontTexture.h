@@ -3,16 +3,18 @@
 #ifndef _CFONTTEXTURE_H
 #define _CFONTTEXTURE_H
 #include <unordered_map>
+#include <unordered_set>
 #include <list>
 #include <string>
+#include <memory>
+#include "Rendering/Textures/IAtlasAllocator.h"
+#include "Rendering/Textures/RowAtlasAlloc.h"
 
 
 struct FT_FaceRec_;
-struct FT_LibraryRec_;
 typedef struct FT_FaceRec_* FT_Face;
-typedef struct FT_LibraryRec_* FT_Library;
-
 class CBitmap;
+struct FontFace;
 
 
 struct IGlyphRect { //FIXME use SRect
@@ -50,6 +52,7 @@ struct GlyphInfo {
 	, descender(0)
 	, index(0)
 	, utf16(0)
+	, face(NULL)
 	{ };
 
 	IGlyphRect size;
@@ -58,6 +61,7 @@ struct GlyphInfo {
 	float advance, height, descender;
 	char32_t index;
 	char32_t utf16;
+	FT_Face face;
 };
 
 
@@ -77,50 +81,30 @@ public:
 	virtual ~CFontTexture();
 
 public:
+	int GetSize() const { return fontSize; }
 	int GetTextureWidth() const { return texWidth; }
 	int GetTextureHeight() const { return texHeight; }
 	int   GetOutlineWidth() const { return outlineSize; }
 	float GetOutlineWeight() const { return outlineWeight; }
 	float GetLineHeight() const { return lineHeight; }
 	float GetDescender() const { return fontDescender; }
-
 	int GetTexture() const { return texture; }
+	const std::string& GetFamily()   const { return fontFamily; }
+	const std::string& GetStyle()    const { return fontStyle; }
 
 	const GlyphInfo& GetGlyph(char32_t ch); //< Get or load a glyph
 
 protected:
 	const FT_Face& GetFace() const { return face; }
-
 	float GetKerning(const GlyphInfo& lgl,const GlyphInfo& rgl);
+	void UpdateTexture();
 
 private:
-	struct Row {
-		Row(int _ypos,int _height):
-			position(_ypos),
-			height(_height),
-			width(0) {
-		};
-
-		int position;
-		int height;
-		int width;
-	};
-
-private:
-	// Create a new texture and copy all data from the old one
-	void ResizeTexture();
 	void CreateTexture(const int width, const int height);
 
 	// Load all chars in block's range
 	void LoadBlock(char32_t start, char32_t end);
 	void LoadGlyph(char32_t ch);
-
-	// Throw texture_size_exception if image's width or height is bigger than 2048
-	Row* FindRow(int glyphWidth, int glyphHeight);
-	Row* AddRow(int glyphWidth, int glyphHeight);
-	// Try to find a place where can be placed a glyph with given size
-	// If it is imposible, resize the texture and try it again
-	IGlyphRect AllocateGlyphRect(int glyphWidth, int glyphHeight);
 
 protected:
 	std::unordered_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo
@@ -133,6 +117,9 @@ protected:
 	float lineHeight;
 	float fontDescender;
 	float normScale;
+	int fontSize;
+	std::string fontFamily;
+	std::string fontStyle;
 	int texWidth, texHeight;
 	int wantedTexWidth, wantedTexHeight;
 	unsigned int texture;
@@ -142,13 +129,15 @@ public:
 
 private:
 	CBitmap* atlasUpdate;
+	CBitmap* atlasUpdateShadow;
+	int lastTextureUpdate;
+	int curTextureUpdate;
 
-	FT_Library library;
 	FT_Face face;
-	unsigned char* faceDataBuffer;
+	std::shared_ptr<FontFace> shFace;
+	std::unordered_set<std::shared_ptr<FontFace>> usedFallbackFonts;
 
-	std::list<Row> imageRows;
-	int nextRowPos;
+	CRowAtlasAlloc atlasAlloc;
 };
 
 #endif // CFONTTEXTURE_H
