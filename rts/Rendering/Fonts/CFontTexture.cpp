@@ -135,13 +135,6 @@ std::unique_ptr<FtLibraryHandler> FtLibraryHandler::singleton = nullptr;
 
 
 static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
-#ifndef HEADLESS
-	library(libraryHandler.GetLibrary()),
-#else
-	library(NULL),
-#endif
-	face(NULL),
-	faceDataBuffer(NULL),
 {
 	if (lchar < 128 && rchar < 128) {
 		return (lchar << 7) | rchar; // 14bit used
