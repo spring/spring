@@ -8,8 +8,8 @@
 #include <stdarg.h>
 #include <stdexcept>
 #ifndef   HEADLESS
-#include <ft2build.h>
-#include FT_FREETYPE_H
+	#include <ft2build.h>
+	#include FT_FREETYPE_H
 #endif // HEADLESS
 
 #include "Game/Camera.h"
@@ -55,35 +55,6 @@ static const float darkLuminosity = 0.05 +
 	0.7152f * math::powf(darkOutline[1], 2.2) +
 	0.0722f * math::powf(darkOutline[2], 2.2);
 
-/*******************************************************************************/
-/*******************************************************************************/
-
-
-#ifndef   HEADLESS
-#undef __FTERRORS_H__
-#define FT_ERRORDEF( e, v, s )  { e, s },
-#define FT_ERROR_START_LIST     {
-#define FT_ERROR_END_LIST       { 0, 0 } };
-struct ErrorString
-{
-	int          err_code;
-	const char*  err_msg;
-} static errorTable[] =
-#include FT_ERRORS_H
-
-
-static const char* GetFTError(FT_Error e)
-{
-	for (int a = 0; errorTable[a].err_msg; ++a) {
-		if (errorTable[a].err_code == e)
-			return errorTable[a].err_msg;
-	}
-	return "Unknown error";
-}
-#endif // HEADLESS
-
-/*******************************************************************************/
-/*******************************************************************************/
 
 /*******************************************************************************/
 /*******************************************************************************/
@@ -1336,8 +1307,8 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 		g = c_g;
 
 		const auto&  tc = g->texCord;
-		const float dx0 = scaleX * g->size.x0() + x, dy0 = scaleY * g->size.y0() + y;
-		const float dx1 = scaleX * g->size.x1() + x, dy1 = scaleY * g->size.y1() + y;
+		const float dx0 = (scaleX * g->size.x0()) + x, dy0 = (scaleY * g->size.y0()) + y;
+		const float dx1 = (scaleX * g->size.x1()) + x, dy1 = (scaleY * g->size.y1()) + y;
 
 		va->AddVertex2dQT(dx0, dy1, tc.x0(), tc.y1());
 		va->AddVertex2dQT(dx0, dy0, tc.x0(), tc.y0());
@@ -1396,8 +1367,8 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 
 		const auto&  tc = g->texCord;
 		const auto& stc = g->shadowTexCord;
-		const float dx0 = scaleX * g->size.x0() + x, dy0 = scaleY * g->size.y0() + y;
-		const float dx1 = scaleX * g->size.x1() + x, dy1 = scaleY * g->size.y1() + y;
+		const float dx0 = (scaleX * g->size.x0()) + x, dy0 = (scaleY * g->size.y0()) + y;
+		const float dx1 = (scaleX * g->size.x1()) + x, dy1 = (scaleY * g->size.y1()) + y;
 
 		//! draw shadow
 		va2->AddVertex2dQT(dx0+shiftX-ssX, dy1-shiftY-ssY, stc.x0(), stc.y1());
@@ -1461,8 +1432,8 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 
 		const auto&  tc = g->texCord;
 		const auto& stc = g->shadowTexCord;
-		const float dx0 = scaleX * g->size.x0() + x, dy0 = scaleY * g->size.y0() + y;
-		const float dx1 = scaleX * g->size.x1() + x, dy1 = scaleY * g->size.y1() + y;
+		const float dx0 = (scaleX * g->size.x0()) + x, dy0 = (scaleY * g->size.y0()) + y;
+		const float dx1 = (scaleX * g->size.x1()) + x, dy1 = (scaleY * g->size.y1()) + y;
 
 		//! draw outline
 		va2->AddVertex2dQT(dx0-shiftX, dy1-shiftY, stc.x0(), stc.y1());
