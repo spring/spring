@@ -33,7 +33,8 @@ static boost::recursive_mutex* GetLuaMutex(bool userMode, bool primary)
 
 void LuaCreateMutex(lua_State* L)
 {
-	if (!GetLuaContextData(L)) return;
+	if (!GetLuaContextData(L))
+		return;
 
 	luaContextData* lcd = GetLuaContextData(L);
 
@@ -46,7 +47,7 @@ void LuaCreateMutex(lua_State* L)
 		lcd = &baseLuaContextData;
 	}*/
 
-	boost::recursive_mutex* mutex = GetLuaMutex((lcd->owner) ? true : lcd->owner->GetUserMode(), lcd->primary);
+	boost::recursive_mutex* mutex = GetLuaMutex((lcd->owner == NULL) ? true : lcd->owner->GetUserMode(), lcd->primary);
 	lcd->luamutex = mutex;
 	mutexes[L] = mutex;
 }
@@ -54,7 +55,8 @@ void LuaCreateMutex(lua_State* L)
 
 void LuaDestroyMutex(lua_State* L)
 {
-	if (!GetLuaContextData(L)) return;
+	if (!GetLuaContextData(L))
+		return;
 
 	if (!L)
 		return;
@@ -76,7 +78,8 @@ void LuaDestroyMutex(lua_State* L)
 
 void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
 {
-	if (!GetLuaContextData(L_parent)) return;
+	if (!GetLuaContextData(L_parent))
+		return;
 
 	coroutines[L_child] = true;
 	mutexes[L_child] = mutexes[L_parent];
@@ -85,10 +88,14 @@ void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
 
 void LuaMutexLock(lua_State* L)
 {
-	if (!GetLuaContextData(L)) return;
+	if (!GetLuaContextData(L))
+		return;
+
 	boost::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
 
-	if (mutex->try_lock()) return;
+	if (mutex->try_lock())
+		return;
+
 	//static int failedLocks = 0;
 	//LOG("LuaMutexLock %i", ++failedLocks);
 	mutex->lock();
@@ -97,7 +104,9 @@ void LuaMutexLock(lua_State* L)
 
 void LuaMutexUnlock(lua_State* L)
 {
-	if (!GetLuaContextData(L)) return;
+	if (!GetLuaContextData(L))
+		return;
+
 	boost::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
 	mutex->unlock();
 }
@@ -105,7 +114,8 @@ void LuaMutexUnlock(lua_State* L)
 
 void LuaMutexYield(lua_State* L)
 {
-	if (!GetLuaContextData(L)) return;
+	if (!GetLuaContextData(L))
+		return;
 	/*mutexes[L]->unlock();
 	if (!mutexes[L]->try_lock()) {
 		// only yield if another thread is waiting for the mutex
@@ -114,35 +124,55 @@ void LuaMutexYield(lua_State* L)
 	}*/
 
 	static int count = 0;
-	bool y = false;
-	if (count-- <= 0) { y = true; count = 30; }
+	bool yield = false;
+
+	if ((yield = ((count--) <= 0)))
+		count = 30;
+
 	LuaMutexUnlock(L);
-	if (y) boost::this_thread::yield();
+
+	if (yield)
+		boost::this_thread::yield();
+
 	LuaMutexLock(L);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////
 // Custom Memory Allocator
+//
+// these track allocations across all states
+static Threading::AtomicCounterInt64 totalBytesAlloced = 0;
+static Threading::AtomicCounterInt64 totalNumLuaAllocs = 0;
+static Threading::AtomicCounterInt64 totalLuaAllocTime = 0;
 
-static Threading::AtomicCounterInt64 bytesAlloced = 0;
-static Threading::AtomicCounterInt64 numLuaAllocs = 0;
-static Threading::AtomicCounterInt64 luaAllocTime = 0;
-static const int maxAllocedBytes = 768 * 1024*1024;
+// 64-bit systems are less constrained
+static const unsigned int maxAllocedBytes = 768u * 1024u*1024u * (1u + (sizeof(void*) == 8));
+static const char* maxAllocFmtStr = "%s: cannot allocate more memory! (%u bytes already used, %u bytes maximum)";
 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 {
+	auto lcd = (luaContextData*) ud;
+
 	if (nsize == 0) {
-		bytesAlloced -= osize;
+		totalBytesAlloced -= osize;
 		free(ptr);
 		return NULL;
 	}
 
-	if ((nsize > osize) && (bytesAlloced > maxAllocedBytes)) {
-		// better kill lua than whole engine
-		const auto lcd = (luaContextData*)ud;
-		LOG_L(L_FATAL, "%s: failed to allocate more memory!", lcd->owner->GetName().c_str());
-		return NULL;
+	if (lcd != NULL) {
+		if ((nsize > osize) && (lcd->curAllocedBytes > lcd->maxAllocedBytes)) {
+			LOG_L(L_FATAL, maxAllocFmtStr, (lcd->owner->GetName()).c_str(), lcd->curAllocedBytes, lcd->maxAllocedBytes);
+
+			// better kill Lua than whole engine
+			return NULL;
+		}
+
+		// allow larger allocation limit per state if fewer states
+		// but do not allow one single state to soak up all memory
+		// TODO: give synced handles more room than unsynced ones?
+		lcd->maxAllocedBytes = maxAllocedBytes / std::max(size_t(1), (mutexes.size() - coroutines.size()));
+		lcd->curAllocedBytes += (nsize - osize);
 	}
 
 	#if (!defined(HEADLESS) && !defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
@@ -154,9 +184,9 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 	void* mem = realloc(ptr, nsize);
 	const spring_time t1 = spring_gettime();
 
-	bytesAlloced += (nsize - osize);
-	numLuaAllocs += 1;
-	luaAllocTime += (t1 - t0).toMicroSecsi();
+	totalBytesAlloced += (nsize - osize);
+	totalNumLuaAllocs += 1;
+	totalLuaAllocTime += (t1 - t0).toMicroSecsi();
 
 	return mem;
 	#else
@@ -166,17 +196,17 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 
 void spring_lua_alloc_get_stats(SLuaInfo* info)
 {
-	info->allocedBytes = bytesAlloced;
-	info->numLuaAllocs = numLuaAllocs;
-	info->luaAllocTime = luaAllocTime;
+	info->allocedBytes = totalBytesAlloced;
+	info->numLuaAllocs = totalNumLuaAllocs;
+	info->luaAllocTime = totalLuaAllocTime;
 	info->numLuaStates = mutexes.size() - coroutines.size();
 }
 
 void spring_lua_alloc_update_stats(bool clear)
 {
 	if (clear) {
-		numLuaAllocs = 0;
-		luaAllocTime = 0;
+		totalNumLuaAllocs = 0;
+		totalLuaAllocTime = 0;
 	}
 }
 
