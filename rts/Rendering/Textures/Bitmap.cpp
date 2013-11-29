@@ -652,7 +652,7 @@ inline static void kernelBlur(CBitmap* dst, const unsigned char* src, int x, int
 		if ((ty < 0) || (ty >= dst->ysize)) {
 			yoffset = 0;
 		}
-		int offset = (xoffset + yoffset * dst->xsize) * dst->channels;
+		int offset = (yoffset * dst->xsize + xoffset) * dst->channels;
 		if (i == 4) {
 			fragment += weight * blurkernel[i] * src[pos + offset];
 		} else {
