@@ -130,7 +130,7 @@ void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 
 		// delete the logFile, and try writing to it
 		FILE* file = NULL;
-		if (initOk && (logFileName != NULL)) {
+		if (initOk) {
 			if (append) {
 				file = FOPEN(logFileName, "a");
 			} else {
