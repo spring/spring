@@ -159,29 +159,41 @@ public:
 
 struct luaContextData {
 	luaContextData()
-	: luamutex(NULL)
+	: owner(NULL)
+	, luamutex(NULL)
+
 	, primary(true)
 	, synced(false)
-	, owner(NULL)
 	, drawingEnabled(false)
+
 	, running(0)
+	, curAllocedBytes(0)
+	, maxAllocedBytes(0)
+
 	, fullCtrl(false)
 	, fullRead(false)
+
 	, ctrlTeam(CEventClient::NoAccessTeam)
 	, readTeam(0)
 	, readAllyTeam(0)
 	, selectTeam(CEventClient::NoAccessTeam) {}
 
+	CLuaHandle* owner;
 	boost::recursive_mutex* luamutex;
+
 	bool primary; //GML crap
 	bool synced;
-	CLuaHandle* owner;
 	bool drawingEnabled;
+
 	int running; //< is currently running? (0: not running; >0: is running)
+
+	unsigned int curAllocedBytes;
+	unsigned int maxAllocedBytes;
 
 	// permission rights
 	bool fullCtrl;
 	bool fullRead;
+
 	int  ctrlTeam;
 	int  readTeam;
 	int  readAllyTeam;
