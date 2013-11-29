@@ -284,7 +284,10 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 
 void CFontTexture::LoadGlyph(char32_t ch)
 {
-#ifndef   HEADLESS
+#ifndef HEADLESS
+	if (glyphs.find(ch) != glyphs.end())
+		return;
+
 	// map unicode to font internal index
 	FT_UInt index = FT_Get_Char_Index(face, ch);
 
