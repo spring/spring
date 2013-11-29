@@ -3,58 +3,50 @@
 #ifndef LANGUAGEBLOCKSDEFS_H_INCLUDED
 #define LANGUAGEBLOCKSDEFS_H_INCLUDED
 
+#include <map>
+#include <tuple>
+#include <string>
+
 // Predefined blocks
-// It contains only the most widly used blocks (Latin and Cyrilic), blocks betwen them and some other blocks
-static const char32_t blocks[] = {
-	0x0000,	// Controls
-	0x0032, // Basic Latin
-	0x0080, // Controls and Latin-1 Supplement
-	0x0100, // Latin Extended-A
-	0x0180, // Latin Extended-B
-	0x0250, // IPA Extensions
-	0x02B0, // Spacing Modifier Letters
-	0x0300, // Combining Diacritical Marks
-	0x0370, // Greek and Coptic
-	0x0400, // Cyrillic
-	0x0500, // Cyrillic Supplement
-	0x0530, // Armenian
-	0x0590, // Hebrew
-	0x0600, // Arabic
-	0x0700, // Syriac
-	0x0750, // Arabic Supplement
-	0x0780, // Thaana
-	0x07C0, // N'Ko
-	0x0800, // Samaritan
-	0x0840, // Mandaic
-	0x08A0, // Arabic Extended-A
-	0x0900  // End
+// It contains only the most widly used blocks (Latin and Cyrilic)
+static const std::map<std::string, std::tuple<char32_t, char32_t>> blocks {
+	{"ASCII",    std::make_tuple(0x0020, 0x007F)},
+	{"Latin-1",  std::make_tuple(0x00A1, 0x0100)},
+	{"Latin-A",  std::make_tuple(0x0100, 0x0180)},
+	{"Latin-B",  std::make_tuple(0x0180, 0x0250)},
+	{"Greek",    std::make_tuple(0x0370, 0x0400)},
+	{"Cyrillic", std::make_tuple(0x0400, 0x0500)},
+	{"Hebrew",   std::make_tuple(0x0590, 0x0600)},
+	{"Arabic",   std::make_tuple(0x0600, 0x0700)},
 };
 
-static const unsigned int defBlocksAmount  = (sizeof(blocks)/sizeof(char32_t))-1;
-static const unsigned int undefBlocksStart = blocks[defBlocksAmount];
-static const unsigned int undefBlocksSize  = 32; // Any other blocks assumed to be 32 size
+static const unsigned int undefBlocksSize = 32; // Any other blocks assumed to be 32 size
+
+static bool IsInRange(char32_t ch, std::tuple<char32_t, char32_t>& range)
+{
+	const auto start = std::get<0>(range);
+	const auto end   = std::get<1>(range);
+	return (ch < end && ch >= start);
+}
 
 static char32_t GetUndefLanguageBlock(char32_t ch, char32_t& end)
 {
-	char32_t dif = ch-undefBlocksStart;
-	char32_t start = undefBlocksStart + (dif>>5)*undefBlocksSize;//It is like (dif/undefBlocksSize)*undefBlocksSize
+	char32_t start = (ch/undefBlocksSize)*undefBlocksSize;
 	end = start + undefBlocksSize;
 	return start;
 }
 
+
 static char32_t GetLanguageBlock(char32_t ch, char32_t& end)
 {
-	if (ch >= undefBlocksStart)
-		return GetUndefLanguageBlock(ch, end);
-
-	for (int i=0; i<defBlocksAmount; ++i) {
-		if (blocks[i]<=ch && ch<blocks[i+1]) {
-			end = blocks[i+1];
-			return blocks[i];
+	for (auto it: blocks) {
+		if (IsInRange(ch, it.second)) {
+			end = std::get<1>(it.second);
+			return std::get<0>(it.second);
 		}
 	}
-	return 0;//This code will never ever ever be executed
-	//Because if ch<blocks[defBlocksAmount] ,so it 100% is blocks[i]<=ch<blovks[i+1] where i=[0;defBlocksAmount)
+
+	return GetUndefLanguageBlock(ch, end);
 }
 
 #endif // LANGUAGEBLOCKSDEFS_H_INCLUDED
