@@ -298,7 +298,7 @@ static inline void for_mt(int start, int end, int step, const std::function<void
 	}
 
 	// do not use HasThreads because that counts main as a worker
-	if (thread_group.empty()) {
+	if (GetNumThreads() <= 1) {
 		for (int i = start; i < end; i += step) {
 			f(i);
 		}
@@ -324,7 +324,7 @@ static inline void for_mt(int start, int end, const std::function<void(const int
 
 static inline void parallel(const std::function<void()>&& f)
 {
-	if (thread_group.empty())
+	if (GetNumThreads() <= 1)
 		return f();
 
 	ThreadPool::NotifyWorkerThreads();
@@ -342,7 +342,7 @@ static inline void parallel(const std::function<void()>&& f)
 template<class F, class G>
 static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>::type
 {
-	if (thread_group.empty())
+	if (GetNumThreads() <= 1)
 		return f();
 
 	ThreadPool::NotifyWorkerThreads();
