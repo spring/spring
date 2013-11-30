@@ -72,14 +72,14 @@ int GetMaxThreads()
 
 int GetNumThreads()
 {
-	//FIXME mutex/atomic?
-	return thread_group.size() + 1; // +1 cause we also count mainthread
+	// FIXME: mutex/atomic?
+	// NOTE: +1 cause we also count mainthread
+	return (thread_group.size() + 1);
 }
-
 
 bool HasThreads()
 {
-	return !thread_group.empty() + 1;
+	return (!thread_group.empty() + 1);
 }
 
 
@@ -219,16 +219,19 @@ void SetThreadCount(int num)
 {
 	int curThreads = GetNumThreads();
 
+	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d\n", __FUNCTION__, num, curThreads);
+
 	if (curThreads < num) {
 #ifndef UNITSYNC
 		if (hasOGLthreads) {
 			try {
-				for (int i = curThreads; i<num; ++i) {
+				for (int i = curThreads; i < num; ++i) {
 					thread_group.push_back(new COffscreenGLThread(boost::bind(&WorkerLoop, i)));
 				}
 			} catch (const opengl_error& gle) {
 				// shared gl context creation failed :<
 				SetThreadCount(0);
+
 				hasOGLthreads = false;
 				curThreads = GetNumThreads();
 			}
@@ -240,7 +243,7 @@ void SetThreadCount(int num)
 			}
 		}
 	} else {
-		for (int i = curThreads; i>num && i>1; --i) {
+		for (int i = curThreads; i > num && i > 1; --i) {
 			assert(!thread_group.empty());
 
 			auto taskgroup = std::make_shared<ParallelTaskGroup<const std::function<void()>>>();
@@ -260,8 +263,12 @@ void SetThreadCount(int num)
 			}
 			thread_group.pop_back();
 		}
-		if (num == 0) assert(thread_group.empty());
+
+		if (num == 0)
+			assert(thread_group.empty());
 	}
+
+	LOG("[ThreadPool::%s][2] #threads=%lu", __FUNCTION__, thread_group.size());
 }
 
 void SetThreadSpinTime(int milliSeconds)
