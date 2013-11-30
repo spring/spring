@@ -150,12 +150,24 @@ static Threading::AtomicCounterInt64 totalLuaAllocTime = 0;
 static const unsigned int maxAllocedBytes = 768u * 1024u*1024u * (1u + (sizeof(void*) == 8));
 static const char* maxAllocFmtStr = "%s: cannot allocate more memory! (%u bytes already used, %u bytes maximum)";
 
+size_t spring_lua_states() { return (mutexes.size() - coroutines.size()); }
+
+void spring_lua_update_context(luaContextData* lcd, size_t osize, size_t nsize) {
+	if (lcd == NULL)
+		return;
+
+	lcd->maxAllocedBytes = maxAllocedBytes / std::max(size_t(1), spring_lua_states());
+	lcd->curAllocedBytes += (nsize - osize);
+}
+
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 {
 	auto lcd = (luaContextData*) ud;
 
 	if (nsize == 0) {
 		totalBytesAlloced -= osize;
+
+		spring_lua_update_context(lcd, osize, 0);
 		free(ptr);
 		return NULL;
 	}
@@ -170,9 +182,8 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 
 		// allow larger allocation limit per state if fewer states
 		// but do not allow one single state to soak up all memory
-		// TODO: give synced handles more room than unsynced ones?
-		lcd->maxAllocedBytes = maxAllocedBytes / std::max(size_t(1), (mutexes.size() - coroutines.size()));
-		lcd->curAllocedBytes += (nsize - osize);
+		// TODO: non-uniform distribution of limits per state
+		spring_lua_update_context(lcd, osize, nsize);
 	}
 
 	#if (!defined(HEADLESS) && !defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
