@@ -24,7 +24,7 @@ namespace ThreadPool {
 
 static inline void for_mt(int start, int end, int step, const std::function<void(const int i)>&& f)
 {
-	for (int i = start; i < end; i+=step) {
+	for (int i = start; i < end; i += step) {
 		f(i);
 	}
 }
@@ -297,8 +297,9 @@ static inline void for_mt(int start, int end, int step, const std::function<void
 		return;
 	}
 
-	if (!ThreadPool::HasThreads()) {
-		for (int i = start; i < end; i+=step) {
+	// do not use HasThreads because that counts main as a worker
+	if (thread_group.empty()) {
+		for (int i = start; i < end; i += step) {
 			f(i);
 		}
 		return;
@@ -307,7 +308,7 @@ static inline void for_mt(int start, int end, int step, const std::function<void
 	ThreadPool::NotifyWorkerThreads();
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
 	auto taskgroup = std::make_shared<TaskGroup<const std::function<void(const int)>, const int>>((end-start)/step);
-	for (int i = start; i < end; i+=step) { //FIXME optimize worksize (group tasks in bigger ones than 1-steps)
+	for (int i = start; i < end; i += step) { //FIXME optimize worksize (group tasks in bigger ones than 1-steps)
 		taskgroup->enqueue(f, i);
 	}
 	ThreadPool::PushTaskGroup(taskgroup);
@@ -323,7 +324,7 @@ static inline void for_mt(int start, int end, const std::function<void(const int
 
 static inline void parallel(const std::function<void()>&& f)
 {
-	if (!ThreadPool::HasThreads())
+	if (thread_group.empty())
 		return f();
 
 	ThreadPool::NotifyWorkerThreads();
@@ -341,7 +342,7 @@ static inline void parallel(const std::function<void()>&& f)
 template<class F, class G>
 static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>::type
 {
-	if (!ThreadPool::HasThreads())
+	if (thread_group.empty())
 		return f();
 
 	ThreadPool::NotifyWorkerThreads();
