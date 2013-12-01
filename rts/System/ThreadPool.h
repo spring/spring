@@ -298,7 +298,7 @@ static inline void for_mt(int start, int end, int step, const std::function<void
 	}
 
 	// do not use HasThreads because that counts main as a worker
-	if (ThreadPool::GetNumThreads() <= 1) {
+	if (!ThreadPool::HasThreads()) {
 		for (int i = start; i < end; i += step) {
 			f(i);
 		}
@@ -324,7 +324,7 @@ static inline void for_mt(int start, int end, const std::function<void(const int
 
 static inline void parallel(const std::function<void()>&& f)
 {
-	if (ThreadPool::GetNumThreads() <= 1)
+	if (!ThreadPool::HasThreads())
 		return f();
 
 	ThreadPool::NotifyWorkerThreads();
@@ -342,7 +342,7 @@ static inline void parallel(const std::function<void()>&& f)
 template<class F, class G>
 static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>::type
 {
-	if (ThreadPool::GetNumThreads() <= 1)
+	if (!ThreadPool::HasThreads())
 		return f();
 
 	ThreadPool::NotifyWorkerThreads();
@@ -366,7 +366,7 @@ namespace ThreadPool {
 	{
 		typedef typename std::result_of<F(Args...)>::type return_type;
 
-		if (ThreadPool::GetNumThreads() <= 1) {
+		if (!ThreadPool::HasThreads()) {
 			// directly process when there are no worker threads
 			auto task = std::make_shared< boost::packaged_task<return_type> >(std::bind(f, args ...));
 			auto fut = std::make_shared<boost::unique_future<return_type>>(task->get_future());

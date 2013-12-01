@@ -24,7 +24,7 @@ static boost::condition_variable newTasks;
 static std::atomic<bool> waitForLock(false);
 
 #if !defined(UNITSYNC) && !defined(UNIT_TEST)
-static bool hasOGLthreads = false; // disable for now (not used atm)
+static bool hasOGLthreads = true; // disable for now (not used atm)
 #else
 static bool hasOGLthreads = false;
 #endif
@@ -79,7 +79,7 @@ int GetNumThreads()
 
 bool HasThreads()
 {
-	return (!thread_group.empty() + 1);
+	return !thread_group.empty();
 }
 
 
@@ -217,9 +217,7 @@ void NotifyWorkerThreads()
 
 void SetThreadCount(int num)
 {
-	int curThreads = GetNumThreads();
-
-	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d\n", __FUNCTION__, num, curThreads);
+	int curThreads = ThreadPool::GetNumThreads();
 
 	if (curThreads < num) {
 #ifndef UNITSYNC
@@ -230,10 +228,10 @@ void SetThreadCount(int num)
 				}
 			} catch (const opengl_error& gle) {
 				// shared gl context creation failed :<
-				SetThreadCount(0);
+				ThreadPool::SetThreadCount(0);
 
 				hasOGLthreads = false;
-				curThreads = GetNumThreads();
+				curThreads = ThreadPool::GetNumThreads();
 			}
 		}
 #endif
@@ -267,8 +265,6 @@ void SetThreadCount(int num)
 		if (num == 0)
 			assert(thread_group.empty());
 	}
-
-	LOG("[ThreadPool::%s][2] #threads=%lu", __FUNCTION__, thread_group.size());
 }
 
 void SetThreadSpinTime(int milliSeconds)
