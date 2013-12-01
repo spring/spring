@@ -4,6 +4,7 @@
 #define _GAME_SERVER_H
 
 #include <boost/scoped_ptr.hpp>
+
 #include <string>
 #include <map>
 #include <deque>
@@ -16,7 +17,7 @@
 #include "System/UnsyncedRNG.h"
 #include "System/float3.h"
 #include "System/Misc/SpringTime.h"
-#include "System/Platform/Synchro.h"
+#include "System/Platform/RecursiveScopedLock.h"
 
 /**
  * "player" number for GameServer-generated messages

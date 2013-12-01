@@ -32,6 +32,8 @@
 #include <sys/utsname.h> // for uname()
 #include <sys/types.h> // for getpw
 #include <pwd.h> // for getpw
+
+#include <fstream>
 #endif
 
 #include <cstring>
@@ -387,6 +389,25 @@ bool Is32BitEmulation()
 	return false;
 }
 #endif
+
+bool IsRunningInGDB() {
+	#ifndef _WIN32
+	char buf[1024];
+
+	std::string fname = "/proc/" + IntToString(getppid(), "%d") + "/cmdline";
+	std::ifstream f(fname.c_str());
+
+	if (!f.good())
+		return false;
+
+	f.read(buf, sizeof(buf));
+	f.close();
+
+	return (strstr(buf, "gdb") != NULL);
+	#else
+	return false;
+	#endif
+}
 
 std::string ExecuteProcess(const std::string& file, std::vector<std::string> args)
 {

@@ -1060,29 +1060,31 @@ void SpringApp::Shutdown()
 {
 	if (gu) gu->globalQuit = true;
 
-	LOG("[%s][1]", __FUNCTION__);
+	LOG("[SpringApp::%s][1]", __FUNCTION__);
 	ThreadPool::SetThreadCount(0);
 	GML::Exit();
-	LOG("[%s][2]", __FUNCTION__);
+	LOG("[SpringApp::%s][2]", __FUNCTION__);
 
 	SafeDelete(pregame);
-	delete game; // don't use SafeDelete some stuff in it's dtor needs valid game ptr
+	// don't use SafeDelete: many components in ~CGame
+	// expect game-pointer to remain valid during call
+	delete game; game = NULL;
 
-	LOG("[%s][3]", __FUNCTION__);
+	LOG("[SpringApp::%s][3]", __FUNCTION__);
 	SafeDelete(selectMenu);
 	agui::FreeGui();
 
-	LOG("[%s][4]", __FUNCTION__);
+	LOG("[SpringApp::%s][4]", __FUNCTION__);
 	SafeDelete(net);
 	SafeDelete(gameServer);
 	SafeDelete(gameSetup);
 
-	LOG("[%s][5]", __FUNCTION__);
+	LOG("[SpringApp::%s][5]", __FUNCTION__);
 	CLoadScreen::DeleteInstance();
 	ISound::Shutdown();
 	FreeJoystick();
 
-	LOG("[%s][6]", __FUNCTION__);
+	LOG("[SpringApp::%s][6]", __FUNCTION__);
 	SafeDelete(font);
 	SafeDelete(smallFont);
 	CNamedTextures::Kill();
@@ -1090,11 +1092,11 @@ void SpringApp::Shutdown()
 	GlobalConfig::Deallocate();
 	UnloadExtensions();
 
-	LOG("[%s][7]", __FUNCTION__);
+	LOG("[SpringApp::%s][7]", __FUNCTION__);
 	IMouseInput::FreeInstance(mouseInput);
 	KeyInput::FreeInstance(keyInput);
 
-	LOG("[%s][8]", __FUNCTION__);
+	LOG("[SpringApp::%s][8]", __FUNCTION__);
 	SDL_WM_GrabInput(SDL_GRAB_OFF);
 	WindowManagerHelper::FreeIcon();
 #if !defined(HEADLESS)
@@ -1102,19 +1104,19 @@ void SpringApp::Shutdown()
 #endif
 	SDL_Quit();
 
-	LOG("[%s][9]", __FUNCTION__);
+	LOG("[SpringApp::%s][9]", __FUNCTION__);
 	SafeDelete(gs);
 	SafeDelete(gu);
 	SafeDelete(globalRendering);
 	SafeDelete(startsetup);
 	SafeDelete(luaSocketRestrictions);
 
-	LOG("[%s][10]", __FUNCTION__);
+	LOG("[SpringApp::%s][10]", __FUNCTION__);
 	FileSystemInitializer::Cleanup();
 
-	LOG("[%s][11]", __FUNCTION__);
+	LOG("[SpringApp::%s][11]", __FUNCTION__);
 	Watchdog::Uninstall();
-	LOG("[%s][12]", __FUNCTION__);
+	LOG("[SpringApp::%s][12]", __FUNCTION__);
 }
 
 bool SpringApp::MainEventHandler(const SDL_Event& event)
