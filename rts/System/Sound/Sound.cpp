@@ -82,7 +82,7 @@ CSound::~CSound()
 {
 	soundThreadQuit = true;
 
-	LOG_L(L_INFO, "[%s][1] soundThread=%p\n", __FUNCTION__, soundThread);
+	LOG_L(L_INFO, "[%s][1] soundThread=%p", __FUNCTION__, soundThread);
 
 	if (soundThread != NULL) {
 		soundThread->join();
@@ -90,7 +90,7 @@ CSound::~CSound()
 		soundThread = NULL;
 	}
 
-	LOG_L(L_INFO, "[%s][2]\n", __FUNCTION__);
+	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
 
 	for (soundVecT::iterator it = sounds.begin(); it != sounds.end(); ++it)
 		delete *it;
@@ -98,7 +98,7 @@ CSound::~CSound()
 	sounds.clear();
 	SoundBuffer::Deinitialise();
 
-	LOG_L(L_INFO, "[%s][3]\n", __FUNCTION__);
+	LOG_L(L_INFO, "[%s][3]", __FUNCTION__);
 }
 
 bool CSound::HasSoundItem(const std::string& name) const

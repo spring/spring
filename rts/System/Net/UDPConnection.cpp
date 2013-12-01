@@ -559,7 +559,7 @@ std::string UDPConnection::Statistics() const
 			%dataSent %sentPackets %(SafeDivide(dataSent, sentPackets)));
 	msg += str( boost::format("Relative protocol overhead: %1% up, %2% down\n")
 			%SafeDivide(sentOverhead, dataSent) %SafeDivide(recvOverhead, dataRecv) );
-	msg += str( boost::format("%1% incoming chunks had been dropped, %2% outgoing chunks had to be resent\n")
+	msg += str( boost::format("%1% incoming chunks dropped, %2% outgoing chunks resent\n")
 			%droppedChunks %resentChunks);
 	return msg;
 }

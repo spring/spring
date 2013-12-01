@@ -334,7 +334,7 @@ namespace Watchdog
 
 	void Uninstall()
 	{
-		LOG_L(L_INFO, "[WatchDog::%s][1] hangDetectorThread=%p\n", __FUNCTION__, hangDetectorThread);
+		LOG_L(L_INFO, "[WatchDog::%s][1] hangDetectorThread=%p", __FUNCTION__, hangDetectorThread);
 
 		if (hangDetectorThread == NULL)
 			return;
@@ -343,11 +343,11 @@ namespace Watchdog
 
 		hangDetectorThreadInterrupted = true;
 
-		LOG_L(L_INFO, "[WatchDog::%s][2]\n", __FUNCTION__);
+		LOG_L(L_INFO, "[WatchDog::%s][2]", __FUNCTION__);
 		hangDetectorThread->join();
 		delete hangDetectorThread;
 		hangDetectorThread = NULL;
-		LOG_L(L_INFO, "[WatchDog::%s][3]\n", __FUNCTION__);
+		LOG_L(L_INFO, "[WatchDog::%s][3]", __FUNCTION__);
 
 		memset(registeredThreadsData, 0, sizeof(registeredThreadsData));
 		for (unsigned int i = 0; i < WDT_COUNT; ++i)
