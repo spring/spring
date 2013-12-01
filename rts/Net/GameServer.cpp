@@ -70,7 +70,6 @@
 using netcode::RawPacket;
 
 
-
 CONFIG(int, AutohostPort).defaultValue(0);
 CONFIG(int, SpeedControl).defaultValue(1).minimumValue(1).maximumValue(2)
 	.description("Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest");
@@ -81,10 +80,6 @@ CONFIG(bool, ServerRecordDemos).defaultValue(true);
 #else
 CONFIG(bool, ServerRecordDemos).defaultValue(false);
 #endif
-CONFIG(bool, ServerLogInfoMessages).defaultValue(false);
-CONFIG(bool, ServerLogErrorMessages).defaultValue(false);
-CONFIG(bool, ServerLogDebugMessages).defaultValue(false);
-CONFIG(bool, ServerLogWarnMessages).defaultValue(false);
 CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
 
 
@@ -120,6 +115,15 @@ const std::string SERVER_COMMANDS[] = {
 	"skip", "reloadcob", "reloadcegs", "devlua", "editdefs",
 	"singlestep", "spec", "specbynum"
 };
+
+
+// use the specific section for all LOG*() calls in this source file
+#define LOG_SECTION_GAMESERVER "GameServer"
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_GAMESERVER
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GAMESERVER)
 
 
 
@@ -184,11 +188,6 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 
 	bypassScriptPasswordCheck = configHandler->GetBool("BypassScriptPasswordCheck");
 	whiteListAdditionalPlayers = configHandler->GetBool("WhiteListAdditionalPlayers");
-
-	logInfoMessages = configHandler->GetBool("ServerLogInfoMessages");
-	logErrorMessages = configHandler->GetBool("ServerLogErrorMessages");
-	logDebugMessages = configHandler->GetBool("ServerLogDebugMessages");
-	logWarnMessages = configHandler->GetBool("ServerLogWarnMessages");
 
 	if (!setup->onlyLocal) {
 		UDPNet.reset(new netcode::UDPListener(hostPort, hostIP));
@@ -354,10 +353,7 @@ void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int 
 		return;
 
 	if (autohostIP == "localhost") {
-		if (logErrorMessages) {
-			LOG_L(L_ERROR, "[%s] auto-host IP address not in x.y.z.w format!", __FUNCTION__);
-		}
-
+		LOG_L(L_ERROR, "[%s] auto-host IP address not in x.y.z.w format!", __FUNCTION__);
 		return;
 	}
 
@@ -777,10 +773,8 @@ void CGameServer::CheckSync()
 				for (std::map<int, unsigned>::const_iterator s = desyncSpecs.begin(); s != desyncSpecs.end(); ++s) {
 					int playerNum = s->first;
 
-					if (logErrorMessages) {
-						LOG_L(L_ERROR, "%s", str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum).c_str());
-						Message(str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
-					}
+					LOG_L(L_ERROR, "%s", str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum).c_str());
+					//Message(str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
 
 					PrivateMessage(playerNum, str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
 				}
@@ -2098,16 +2092,12 @@ void CGameServer::PushAction(const Action& action)
 	}
 	else if (action.command == "mute") {
 		if (action.extra.empty()) {
-			if (logWarnMessages) {
-				LOG_L(L_WARNING, "failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
-			}
+			LOG_L(L_WARNING, "failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
 		} else {
 			const std::vector<std::string>& tokens = CSimpleParser::Tokenize(action.extra);
 
 			if (tokens.empty() || tokens.size() > 3) {
-				if (logWarnMessages) {
-					LOG_L(L_WARNING, "failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
-				}
+				LOG_L(L_WARNING, "failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
 			} else {
 				const std::string name = StringToLower(tokens[0]);
 
@@ -2131,16 +2121,12 @@ void CGameServer::PushAction(const Action& action)
 	else if (action.command == "mutebynum") {
 
 		if (action.extra.empty()) {
-			if (logWarnMessages) {
-				LOG_L(L_WARNING, "failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
-			}
+			LOG_L(L_WARNING, "failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
 		} else {
 			const std::vector<std::string>& tokens = CSimpleParser::Tokenize(action.extra);
 
 			if (tokens.empty() || tokens.size() > 3) {
-				if (logWarnMessages) {
-					LOG_L(L_WARNING, "failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
-				}
+				LOG_L(L_WARNING, "failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
 			} else {
 				const int playerID = atoi(tokens[0].c_str());
 				bool muteChat = true;
@@ -2287,36 +2273,27 @@ void CGameServer::PushAction(const Action& action)
 					}
 					participantIter->SetValue("password", pwd);
 
-					if (logInfoMessages) {
-						LOG_L(L_INFO, "[%s] changed player/spectator password: \"%s\" \"%s\"", __FUNCTION__, name.c_str(), pwd.c_str());
-					}
+					LOG_L(L_INFO, "[%s] changed player/spectator password: \"%s\" \"%s\"", __FUNCTION__, name.c_str(), pwd.c_str());
 				} else {
 					AddAdditionalUser(name, pwd, false, spectator, team);
 
-					if (logInfoMessages) {
-						LOG_L(
-							L_INFO,
-							"[%s] added client \"%s\" with password \"%s\" to team %d (as a %s)",
-							__FUNCTION__, name.c_str(), pwd.c_str(), team, (spectator? "spectator": "player")
-						);
-					}
-				}
-			} else {
-				if (logWarnMessages) {
-					LOG_L(L_WARNING,
-						"[%s] failed to add player/spectator password. usage: "
-						"/adduser <player-name> <password> [spectator] [team]",
-						__FUNCTION__
+					LOG_L(
+						L_INFO,
+						"[%s] added client \"%s\" with password \"%s\" to team %d (as a %s)",
+						__FUNCTION__, name.c_str(), pwd.c_str(), team, (spectator? "spectator": "player")
 					);
 				}
+			} else {
+				LOG_L(L_WARNING,
+					"[%s] failed to add player/spectator password. usage: "
+					"/adduser <player-name> <password> [spectator] [team]",
+					__FUNCTION__
+				);
 			}
 		}
 	}
 	else if (action.command == "kill") {
-		if (logInfoMessages) {
-			LOG_L(L_INFO, "[%s] server killed", __FUNCTION__);
-		}
-
+		LOG_L(L_INFO, "[%s] server killed", __FUNCTION__);
 		quitServer = true;
 	}
 	else if (action.command == "pause") {
@@ -2364,13 +2341,11 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 
 	unsigned int numNewFrames = 1;
 
-	if (logDebugMessages) {
-		LOG_L(
-			L_INFO, // L_DEBUG only works in DEBUG builds which are slow and affect timings
-			"[%s][1][sf=%d] fromServerThread=%d fixedFrameTime=%d hasLocalClient=%d normalFrame=%d",
-			__FUNCTION__, serverFrameNum, fromServerThread, fixedFrameTime, hasLocalClient, normalFrame
-		);
-	}
+	LOG_L(
+		L_INFO, // L_DEBUG only works in DEBUG builds which are slow and affect timings
+		"[%s][1][sf=%d] fromServerThread=%d fixedFrameTime=%d hasLocalClient=%d normalFrame=%d",
+		__FUNCTION__, serverFrameNum, fromServerThread, fixedFrameTime, hasLocalClient, normalFrame
+	);
 
 	if (!fixedFrameTime) {
 		spring_time currentTick = spring_gettime();
@@ -2384,13 +2359,11 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		numNewFrames = (frameTimeLeft > 0.0f)? int(math::ceil(frameTimeLeft)): 0;
 		frameTimeLeft -= numNewFrames;
 
-		if (logDebugMessages) {
-			LOG_L(
-				L_INFO,
-				"\t[2] timeElapsed=%fms frameTimeLeft=%f internalSpeed=%f numNewFrames=%u",
-				timeElapsed.toMilliSecsf(), frameTimeLeft, internalSpeed, numNewFrames
-			);
-		}
+		LOG_L(
+			L_INFO,
+			"\t[2] timeElapsed=%fms frameTimeLeft=%f internalSpeed=%f numNewFrames=%u",
+			timeElapsed.toMilliSecsf(), frameTimeLeft, internalSpeed, numNewFrames
+		);
 
 		#ifndef DEDICATED
 		if (hasLocalClient) {
@@ -2406,13 +2379,11 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 
 			numNewFrames = std::min(numNewFrames, maxNewFrames);
 
-			if (logDebugMessages) {
-				LOG_L(
-					L_INFO,
-					"\t[3] simFramesBehind=%f simFrameMixRatio=%f curSimRate=%u maxNewFrames=%u numNewFrames=%u",
-					simFramesBehind, simFrameMixRatio, curSimRate, maxNewFrames, numNewFrames
-				);
-			}
+			LOG_L(
+				L_INFO,
+				"\t[3] simFramesBehind=%f simFrameMixRatio=%f curSimRate=%u maxNewFrames=%u numNewFrames=%u",
+				simFramesBehind, simFrameMixRatio, curSimRate, maxNewFrames, numNewFrames
+			);
 		}
 		#endif
 	}
@@ -2520,9 +2491,7 @@ void CGameServer::KickPlayer(const int playerNum)
 void CGameServer::MutePlayer(const int playerNum, bool muteChat, bool muteDraw )
 {
 	if (playerNum >= players.size()) {
-		if (logWarnMessages) {
-			LOG_L(L_WARNING,"invalid playerNum");
-		}
+		LOG_L(L_WARNING,"invalid playerNum");
 		return;
 	}
 	if ( playerNum < mutedPlayersChat.size() ) {
