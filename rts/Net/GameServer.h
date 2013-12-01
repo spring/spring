@@ -227,6 +227,11 @@ private:
 	bool bypassScriptPasswordCheck;
 	bool whiteListAdditionalPlayers;
 
+	bool logInfoMessages;
+	bool logErrorMessages;
+	bool logDebugMessages;
+	bool logWarnMessages;
+
 	std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > > packetCache;
 
 	/////////////////// sync stuff ///////////////////
