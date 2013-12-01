@@ -1114,6 +1114,7 @@ void SpringApp::Shutdown()
 
 	LOG("[%s][11]", __FUNCTION__);
 	Watchdog::Uninstall();
+	LOG("[%s][12]", __FUNCTION__);
 }
 
 bool SpringApp::MainEventHandler(const SDL_Event& event)
