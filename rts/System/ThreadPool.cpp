@@ -217,7 +217,7 @@ void SetThreadCount(int num)
 {
 	int curThreads = ThreadPool::GetNumThreads();
 
-	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d\n", __FUNCTION__, num, curThreads);
+	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d", __FUNCTION__, num, curThreads);
 
 	if (curThreads < num) {
 #ifndef UNITSYNC
