@@ -1478,20 +1478,23 @@ void CGame::DrawInputText()
 	const string tempstring = userPrompt + userInput;
 
 	// draw the caret
-	const int caretPos = userPrompt.length() + writingPos;
-	const string caretStr = tempstring.substr(0, caretPos);
-	const float caretWidth = fontSize * font->GetTextWidth(caretStr) * globalRendering->pixelX;
+	{
+		const int caretPosStr = userPrompt.length() + writingPos;
+		const string caretStr = tempstring.substr(0, caretPosStr);
+		const float caretPos    = fontSize * font->GetTextWidth(caretStr) * globalRendering->pixelX;
+		const float caretHeight = fontSize * font->GetLineHeight() * globalRendering->pixelY;
+		int cpos = writingPos;
+		char32_t c = GetUnicodeNextChar(userInput, cpos);
+		if (c == 0) c = ' '; // make caret always visible
+		const float cw = fontSize * font->GetCharacterWidth(c) * globalRendering->pixelX;
+		const float csx = inputTextPosX + caretPos;
 
-	char c = (writingPos >= userInput.size()) ? '\0' : userInput[writingPos];
-	if (c == 0) { c = ' '; }
-
-	const float cw = fontSize * font->GetCharacterWidth(c) * globalRendering->pixelX;
-	const float csx = inputTextPosX + caretWidth;
-	glDisable(GL_TEXTURE_2D);
-	const float f = 0.5f * (1.0f + fastmath::sin(spring_now().toMilliSecsf() * 0.015f));
-	glColor4f(f, f, f, 0.75f);
-	glRectf(csx, inputTextPosY, csx + cw, inputTextPosY + fontSize * font->GetLineHeight() * globalRendering->pixelY);
-	glEnable(GL_TEXTURE_2D);
+		glDisable(GL_TEXTURE_2D);
+		const float f = 0.5f * (1.0f + fastmath::sin(spring_now().toMilliSecsf() * 0.015f));
+		glColor4f(f, f, f, 0.75f);
+		glRectf(csx, inputTextPosY, csx + cw, inputTextPosY + caretHeight);
+		glEnable(GL_TEXTURE_2D);
+	}
 
 	// setup the color
 	static float4 const defColor(1.0f, 1.0f, 1.0f, 1.0f);

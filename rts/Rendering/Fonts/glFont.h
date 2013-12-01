@@ -7,7 +7,8 @@
 #include <list>
 
 #include "System/float4.h"
-#include "CFontTexture.h"
+#include "TextWrap.h"
+#include "ustring.h"
 
 #undef GetCharWidth // winapi.h
 
@@ -30,9 +31,9 @@ static const int FONT_NEAREST     = 1 << 13; //! round x,y render pos to nearest
 
 
 class CVertexArray;
-class CFontTextureRenderer;
 
-class CglFont: public CFontTexture
+
+class CglFont : public CTextWrap
 {
 public:
 	static CglFont* LoadFont(const std::string& fontFile, int size, int outlinewidth = 2, float outlineweight = 5.0f);
@@ -65,23 +66,17 @@ public:
 	void SetTextColor(const float& r, const float& g, const float& b, const float& a) { const float4 f = float4(r,g,b,a); SetTextColor(&f); };
 	void SetOutlineColor(const float& r, const float& g, const float& b, const float& a) { const float4 f = float4(r,g,b,a); SetOutlineColor(&f); };
 
-	//! Adds \n's (and '...' if it would be too high) until the text fits into maxWidth/maxHeight
-	int WrapInPlace(std::string& text, float fontSize,  float maxWidth, float maxHeight = 1e9);
-	std::list<std::string> Wrap(const std::string& text, float fontSize, float maxWidth, float maxHeight = 1e9);
-
 	float GetCharacterWidth(const char32_t c);
-	float GetTextWidth(const std::string& text);
-	float GetTextHeight(const std::string& text, float* descender = NULL, int* numLines = NULL);
-	int   GetTextNumLines(const std::string& text) const;
-	static std::string StripColorCodes(const std::string& text);
+	inline float GetTextWidth(const std::string& text) final;
+	inline float GetTextHeight(const std::string& text, float* descender = NULL, int* numLines = NULL);
+	inline static int GetTextNumLines(const std::string& text);
+	inline static std::string StripColorCodes(const std::string& text);
+	static std::list<std::string> SplitIntoLines(const std::u8string&);
 
 	const std::string& GetFilePath() const { return fontPath; }
 
-	static const char ColorCodeIndicator = '\xFF'; //FIXME use a non-printable char? (<32)
-	static const char ColorResetIndicator = '\x08'; //! =: '\\b'
-
-public:
-	typedef std::vector<float4> ColorMap;
+	static const char8_t ColorCodeIndicator  = 0xFF;
+	static const char8_t ColorResetIndicator = 0x08; //! =: '\\b'
 
 private:
 	static const float4* ChooseOutlineColor(const float4& textColor);
@@ -91,41 +86,14 @@ private:
 	void RenderStringOutlined(float x, float y, const float& scaleX, const float& scaleY, const std::string& str);
 
 private:
-	struct colorcode {
-		colorcode() : resetColor(false),pos(0) {};
-		bool resetColor;
-		float4 color;
-		unsigned int pos;
-	};
-	struct word {
-		word() : width(0.0f), text(""), isSpace(false), isLineBreak(false), isColorCode(false), numSpaces(0), pos(0) {};
+	float GetTextWidth_(const std::u8string& text);
+	float GetTextHeight_(const std::u8string& text, float* descender = NULL, int* numLines = NULL);
+	static int GetTextNumLines_(const std::u8string& text);
+	static std::string StripColorCodes_(const std::u8string& text);
 
-		float width;
-		std::string text;
-		bool isSpace;
-		bool isLineBreak;
-		bool isColorCode;
-		unsigned int numSpaces;
-		unsigned int pos; //! position in the original text (needed for remerging colorcodes after wrapping; in printable chars (linebreaks and space don't count))
-	};
-	struct line {
-		line() : width(0.0f), cost(0.0f), forceLineBreak(false) {};
+public:
+	typedef std::vector<float4> ColorMap;
 
-		std::list<word>::iterator start, end;
-		float width;
-		float cost;
-		bool forceLineBreak;
-	};
-
-	word SplitWord(word& w, float wantedWidth, bool smart = true);
-
-	void SplitTextInWords(const std::string& text, std::list<word>* words, std::list<colorcode>* colorcodes);
-	void RemergeColorCodes(std::list<word>* words, std::list<colorcode>& colorcodes) const;
-
-	void AddEllipsis(std::list<line>& lines, std::list<word>& words, float maxWidth);
-
-	void WrapTextConsole(std::list<word>& words, float maxWidth, float maxHeight);
-	void WrapTextKnuth(std::list<word>& words, float maxWidth, float maxHeight) const;
 private:
 	std::string fontPath;
 
@@ -148,7 +116,27 @@ private:
 	float4 baseOutlineColor;
 };
 
+
 extern CglFont* font;
 extern CglFont* smallFont;
+
+
+// wrappers
+float CglFont::GetTextWidth(const std::string& text)
+{
+	return GetTextWidth_(toustring(text));
+}
+float CglFont::GetTextHeight(const std::string& text, float* descender, int* numLines)
+{
+	return GetTextHeight_(toustring(text), descender, numLines);
+}
+int   CglFont::GetTextNumLines(const std::string& text)
+{
+	return GetTextNumLines_(toustring(text));
+}
+std::string CglFont::StripColorCodes(const std::string& text)
+{
+	return StripColorCodes_(toustring(text));
+}
 
 #endif /* _GLFONT_H */

@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "CFontTexture.h"
+#include "FontLogSection.h"
 #include "LanguageBlocksDefs.h"
-#include "Rendering/GlobalRendering.h"
 
 #include <mutex>
 #include <string>
@@ -12,21 +12,20 @@
 	#include <ft2build.h>
 	#include FT_FREETYPE_H
 	#ifdef USE_FONTCONFIG
-		#include <fontconfig/fontconfig.h> //FIXME subdir or not?
+		#include <fontconfig/fontconfig.h>
 		//#include <fontconfig/fcfreetype.h>
 	#endif
 #endif // HEADLESS
 
 #include "Game/Camera.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Util.h"
 #include "System/Exceptions.h"
+#include "System/Util.h"
 #include "System/float4.h"
 #include "System/bitops.h"
 
@@ -219,7 +218,7 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 static std::shared_ptr<FontFace> GetFontForCharacters(const char32_t character, const FT_Face origFace, const int origSize)
 {
 #if !defined(HEADLESS) && defined(USE_FONTCONFIG)
-	//TODO ask for all missing glyphs in one rush? (fontconfig should be much faster than)
+	//TODO ask for all missing glyphs in one rush? (fontconfig should be much faster then)
 	FcCharSet* cset = FcCharSetCreate();
 	FcCharSetAddChar(cset, character);
 	FcPattern* pattern = FcPatternCreate();
@@ -317,7 +316,7 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 		lineHeight = 1.25 * (face->bbox.yMax - face->bbox.yMin);
 
 	// has to be done before first GetGlyph() call!
-	CreateTexture(128, 128);
+	CreateTexture(32, 32);
 
 	// precache ASCII glyphs & kernings (save them in an array for better lvl2 cpu cache hitrate)
 	memset(kerningPrecached, 0, 128*128*sizeof(float));
