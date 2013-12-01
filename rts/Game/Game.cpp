@@ -517,11 +517,10 @@ CGame::~CGame()
 
 	LOG("[%s][13]", __FUNCTION__);
 	SafeDelete(gameServer);
+	LOG("[%s][14]", __FUNCTION__);
 	ISound::Shutdown();
 
-	game = NULL;
-
-	LOG("[%s][14]", __FUNCTION__);
+	LOG("[%s][15]", __FUNCTION__);
 	LEAVE_SYNCED_CODE();
 }
 

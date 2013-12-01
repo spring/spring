@@ -57,7 +57,6 @@ int GetThreadNum()
 	return threadnum;
 }
 
-
 static void SetThreadNum(const int idx)
 {
 	threadnum = idx;
@@ -68,7 +67,6 @@ int GetMaxThreads()
 {
 	return Threading::GetAvailableCores();
 }
-
 
 int GetNumThreads()
 {
@@ -219,6 +217,8 @@ void SetThreadCount(int num)
 {
 	int curThreads = ThreadPool::GetNumThreads();
 
+	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d\n", __FUNCTION__, num, curThreads);
+
 	if (curThreads < num) {
 #ifndef UNITSYNC
 		if (hasOGLthreads) {
@@ -265,6 +265,8 @@ void SetThreadCount(int num)
 		if (num == 0)
 			assert(thread_group.empty());
 	}
+
+	LOG("[ThreadPool::%s][2] #threads=%lu", __FUNCTION__, thread_group.size());
 }
 
 void SetThreadSpinTime(int milliSeconds)

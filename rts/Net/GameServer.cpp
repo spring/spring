@@ -88,6 +88,19 @@ CONFIG(bool, ServerLogWarnMessages).defaultValue(false);
 CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
 
 
+// use the specific section for all LOG*() calls in this source file
+// TODO: enable when #4171 is fixed
+#if 0
+#define LOG_SECTION_GAMESERVER "GameServer"
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_GAMESERVER
+
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GAMESERVER)
+#endif
+
+
 
 /// frames until a synccheck will time out and a warning is given out
 const unsigned SYNCCHECK_TIMEOUT = 300;
@@ -280,8 +293,10 @@ CGameServer::~CGameServer()
 {
 	quitServer = true;
 
+	LOG_L(L_INFO, "[%s][1]\n", __FUNCTION__);
 	thread->join();
 	delete thread;
+	LOG_L(L_INFO, "[%s][2]\n", __FUNCTION__);
 
 	// after this, demoRecorder goes out of scope and its dtor is called
 	WriteDemoData();
