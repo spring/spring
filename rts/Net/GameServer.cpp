@@ -293,10 +293,10 @@ CGameServer::~CGameServer()
 {
 	quitServer = true;
 
-	LOG_L(L_INFO, "[%s][1]\n", __FUNCTION__);
+	LOG_L(L_INFO, "[%s][1]", __FUNCTION__);
 	thread->join();
 	delete thread;
-	LOG_L(L_INFO, "[%s][2]\n", __FUNCTION__);
+	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
 
 	// after this, demoRecorder goes out of scope and its dtor is called
 	WriteDemoData();
