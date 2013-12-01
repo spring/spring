@@ -11,8 +11,9 @@ namespace std {
 	class u8string : public string {
 	public:
 		// copy ctors
-		using string::string;
+		//using string::string; // gcc4.8 and newer
 		u8string(const std::string& s) : string(s) {}
+		u8string(const char* c) : string(c) {}
 
 		//! this is an important difference, we return an unsigned value here!
 		//! std::string returns a _signed_ one and breaks this way:
