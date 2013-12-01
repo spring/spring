@@ -269,76 +269,34 @@ protected:
 	T value;
 };
 
-static inline std::string UnicodeToUtf8(char32_t ch)
+
+
+//FIXME rename GetNextUnicodeFromUtf8
+char32_t GetUnicodeNextChar(const std::string& text, int& pos);
+std::string UnicodeToUtf8(char32_t ch);
+
+
+static inline int Utf8CharLen(const std::string& str, int pos)
 {
-    std::string str;
-
-	//0000 0000  0000 0000  0000 0000  0aaa aaaa
-    //0aaa aaaa
-	if(ch<(1<<7))
-	{
-		str+=(char)ch;
-	}
-	//0000 0000  0000 0000  0000 0bbb  bbaa aaaa
-    //110b bbbb 10aa aaaa
-	else if(ch<(1<<11))
-	{
-		str+=0xC0|(char)(ch>>6);
-		str+=0x80|(char)(ch&0x3F);
-	}
-	//0000 0000  0000 0000  cccc bbbb  bbaa aaaa
-    //1110 cccc 10bb bbbb 10aa aaaa
-	else if(ch<(1<<11))
-	{
-		str+=0xE0|(char)(ch>>12);
-		str+=0x80|(char)((ch>>6)&0x3F);
-		str+=0x80|(char)(ch&0x3F);
-	}
-	//0000 0000  000d ddcc  cccc bbbb  bbaa aaaa
-    //1111 0ddd 10cc cccc 10bb bbbb 10aa aaaa
-	else if(ch<(1<<11))
-	{
-		str+=0xF0|(char)(ch>>18);
-		str+=0x80|(char)((ch>>12)&0x3F);
-		str+=0x80|(char)((ch>>6)&0x3F);
-		str+=0x80|(char)(ch&0x3F);
-	}
-
-	return str;
+	const auto oldPos = pos;
+	GetUnicodeNextChar(str, pos);
+	return pos - oldPos;
 }
 
-static inline unsigned int Utf8CharLen(const std::string &str,int pos)
+static inline int Utf8NextChar(const std::string& str, int pos)
 {
-	const unsigned char chr = (unsigned char)str[pos];
-
-	if((chr&0xF8)==0xF0)
-		return 4;
-	else if((chr&0xF0)==0xE0)
-		return 3;
-	else if((chr&0xE0)==0xC0)
-		return 2;
-	else
-		return 1;
+	GetUnicodeNextChar(str, pos);
+	return pos;
 }
 
-static inline unsigned int Utf8NextChar(const std::string &str,int pos)
+static inline int Utf8PrevChar(const std::string& str, int pos)
 {
-	if(str.length()==pos)
-		return pos;
-	else
-		return pos+Utf8CharLen(str,pos);
-}
-
-static inline unsigned int Utf8PrevChar(const std::string &str,int pos)
-{
-	if(str.length()==0)
-		return pos;
-	else
-	{
-		int i;
-		for(i=pos-1;(str[i]&0xC0)==0x80 && i>0;i--)
-		{}
-		return i;
+	auto startPos = std::max(pos - 4, 0);
+	auto oldPos   = startPos;
+	while (startPos < pos) {
+		oldPos = startPos;
+		GetUnicodeNextChar(str, startPos);
 	}
+	return oldPos;
 }
 #endif // UTIL_H

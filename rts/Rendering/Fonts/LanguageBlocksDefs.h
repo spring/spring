@@ -10,6 +10,7 @@
 // Predefined blocks
 // It contains only the most widly used blocks (Latin and Cyrilic)
 static const std::map<std::string, std::tuple<char32_t, char32_t>> blocks {
+	{"NULL",     std::make_tuple(0x0000, 0x0001)},
 	{"ASCII",    std::make_tuple(0x0020, 0x007F)},
 	{"Latin-1",  std::make_tuple(0x00A1, 0x0100)},
 	{"Latin-A",  std::make_tuple(0x0100, 0x0180)},

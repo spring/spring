@@ -1240,11 +1240,11 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 						} else {
 							if (!isColor && (!isRepeat || ac->userInput.length() > 0)) {
 								const int len = (int)ac->userInput.length();
-								std::string str=UnicodeToUtf8(usym);
+								std::string str = UnicodeToUtf8(usym);
 
 								ac->writingPos = std::max(0, std::min(len, ac->writingPos));
 								ac->userInput.insert(ac->writingPos, str);
-								ac->writingPos+=str.length();
+								ac->writingPos+= str.length();
 							}
 						}
 					}

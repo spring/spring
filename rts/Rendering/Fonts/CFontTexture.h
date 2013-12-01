@@ -17,7 +17,7 @@ class CBitmap;
 struct FontFace;
 
 
-struct IGlyphRect { //FIXME use SRect
+struct IGlyphRect { //FIXME use SRect or float4
 	IGlyphRect():
 		x(0),y(0),
 		w(0),h(0) {
@@ -95,7 +95,6 @@ public:
 	const GlyphInfo& GetGlyph(char32_t ch); //< Get or load a glyph
 
 protected:
-	const FT_Face& GetFace() const { return face; }
 	float GetKerning(const GlyphInfo& lgl,const GlyphInfo& rgl);
 	void UpdateTexture();
 

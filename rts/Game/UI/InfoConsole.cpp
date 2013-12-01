@@ -180,14 +180,14 @@ void CInfoConsole::RecordLogMessage(const std::string& section, int level,
 			? math::floor(maxHeight / (fontSize * smallFont->GetLineHeight()))
 			: 1; // this will likely be the case on HEADLESS only
 
-	std::list<std::string> lines = smallFont->Wrap(text, fontSize, maxWidth);
+	std::string wrappedText = smallFont->Wrap(text, fontSize, maxWidth);
+	std::list<std::string> lines = smallFont->SplitIntoLines(wrappedText);
 
-	std::list<std::string>::iterator il;
-	for (il = lines.begin(); il != lines.end(); ++il) {
+	for (auto& line: lines) {
 		// add the line to the console
 		InfoLine l;
 		data.push_back(l);
-		data.back().text = *il;
+		data.back().text = line;
 		data.back().time = lifetime - lastTime;
 		lastTime = lifetime;
 	}
