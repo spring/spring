@@ -83,6 +83,10 @@ int Run(int argc, char* argv[])
  */
 static bool SetNvOptimusProfile(char* argv[])
 {
+	// on Windows execvp breaks lobbies (new process: new PID)
+	// and SOP is win32-only --> the whole thing is redundant
+	return false;
+
 #ifdef WIN32
 	if (SOP_CheckProfile("Spring"))
 		return false;
