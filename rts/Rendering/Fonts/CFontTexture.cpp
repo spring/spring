@@ -132,7 +132,6 @@ std::unique_ptr<FtLibraryHandler> FtLibraryHandler::singleton = nullptr;
 /*******************************************************************************/
 /*******************************************************************************/
 
-
 static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 {
 	if (lchar < 128 && rchar < 128) {
@@ -600,7 +599,6 @@ void CFontTexture::UpdateTexture()
 		// update texture space dlist (this affects already compiled dlists too!)
 		glNewList(textureSpaceMatrix, GL_COMPILE);
 		glScalef(1.f/texWidth, 1.f/texHeight, 1.f);
-		glTranslatef(0.5f, 0.5f, 1.f);
 		glEndList();
 	glPopAttrib();
 #endif
