@@ -175,6 +175,11 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 		} break;
 	}
 	pos += usedUtf8Bytes;
+
+	// replace tabs with spaces
+	if (u == 0x9)
+		u = 0x2007;
+
 	return u;
 }
 
