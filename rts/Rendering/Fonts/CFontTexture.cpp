@@ -8,12 +8,13 @@
 #include <string>
 #include <cstring> // for memset, memcpy
 
+#include <boost/thread/recursive_mutex.hpp>
+
 #ifndef HEADLESS
 	#include <ft2build.h>
 	#include FT_FREETYPE_H
 	#ifdef USE_FONTCONFIG
 		#include <fontconfig/fontconfig.h>
-		//#include <fontconfig/fcfreetype.h>
 	#endif
 #endif // HEADLESS
 
@@ -73,7 +74,7 @@ struct FontFace {
 static std::unordered_set<CFontTexture*> allFonts;
 static std::unordered_map<std::string, std::weak_ptr<FontFace>> fontCache;
 static std::unordered_map<std::string, std::weak_ptr<FT_Byte*>> fontMemCache;
-static std::recursive_mutex m;
+static boost::recursive_mutex m;
 
 
 
@@ -104,20 +105,36 @@ public:
 
 	static FT_Library& GetLibrary() {
 		// singleton
+#ifndef WIN32
 		std::call_once(flag, [](){
 			singleton.reset(new FtLibraryHandler());
 		});
+#else
+		std::lock_guard<boost::recursive_mutex> lk(m);
+		if (flag) {
+			singleton.reset(new FtLibraryHandler());
+			flag = false;
+		}
+#endif
 		return singleton->lib;
 	};
 
 private:
 	FT_Library lib;
+#ifndef WIN32
 	static std::once_flag flag;
+#else
+	static bool flag;
+#endif
 	static std::unique_ptr<FtLibraryHandler> singleton;
 
 };
 
+#ifndef WIN32
 std::once_flag FtLibraryHandler::flag;
+#else
+bool FtLibraryHandler::flag = true;
+#endif
 std::unique_ptr<FtLibraryHandler> FtLibraryHandler::singleton = nullptr;
 #endif
 
@@ -144,7 +161,7 @@ static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const int size)
 {
 #ifndef HEADLESS
-	std::lock_guard<std::recursive_mutex> lk(m);
+	std::lock_guard<boost::recursive_mutex> lk(m);
 
 	//TODO add support to load fonts by name (needs fontconfig)
 
@@ -346,7 +363,7 @@ CFontTexture::~CFontTexture()
 
 
 void CFontTexture::Update() {
-	std::lock_guard<std::recursive_mutex> lk(m);
+	std::lock_guard<boost::recursive_mutex> lk(m);
 	for (auto& font: allFonts) {
 		font->UpdateTexture();
 	}
@@ -403,7 +420,7 @@ float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 
 void CFontTexture::LoadBlock(char32_t start, char32_t end)
 {
-	std::lock_guard<std::recursive_mutex> lk(m);
+	std::lock_guard<boost::recursive_mutex> lk(m);
 
 	for(char32_t i=start; i<end; ++i)
 		LoadGlyph(i);
@@ -575,7 +592,7 @@ void CFontTexture::CreateTexture(const int width, const int height)
 void CFontTexture::UpdateTexture()
 {
 #ifndef HEADLESS
-	std::lock_guard<std::recursive_mutex> lk(m);
+	std::lock_guard<boost::recursive_mutex> lk(m);
 	if (curTextureUpdate == lastTextureUpdate) return;
 	lastTextureUpdate = curTextureUpdate;
 	texWidth  = wantedTexWidth;
