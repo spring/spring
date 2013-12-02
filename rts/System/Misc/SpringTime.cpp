@@ -183,25 +183,8 @@ namespace spring_clock {
 
 boost::int64_t spring_time::xs = 0;
 
-#ifndef UNIT_TEST
-void spring_time::Serialize(creg::ISerializer& s)
-{
-	if (s.IsWriting()) {
-		int y = spring_tomsecs(*this - spring_gettime());
-		s.SerializeInt(&y, 4);
-	} else {
-		int y;
-		s.SerializeInt(&y, 4);
-		*this = *this + spring_msecs(y);
-	}
-}
-#endif
-
-
-
-// FIXME: NOT THREADSAFE
-static float avgThreadYieldTimeMillis = 0.0f;
-static float avgThreadSleepTimeMillis = 0.0f;
+static float avgThreadYieldTimeMilliSecs = 0.0f;
+static float avgThreadSleepTimeMilliSecs = 0.0f;
 
 static boost::mutex yieldTimeMutex;
 static boost::mutex sleepTimeMutex;
@@ -215,7 +198,7 @@ static void thread_yield()
 
 	if (t1 >= t0) {
 		boost::mutex::scoped_lock lock(yieldTimeMutex);
-		avgThreadYieldTimeMillis = mix(avgThreadYieldTimeMillis, dt.toMilliSecsf(), 0.1f);
+		avgThreadYieldTimeMilliSecs = mix(avgThreadYieldTimeMilliSecs, dt.toMilliSecsf(), 0.1f);
 	}
 }
 
@@ -223,7 +206,7 @@ static void thread_yield()
 void spring_time::sleep()
 {
 	// for very short time intervals use a yielding loop (yield is ~5x more accurate than sleep(), check the UnitTest)
-	if (toMilliSecsf() < (avgThreadSleepTimeMillis + avgThreadYieldTimeMillis * 5.0f)) {
+	if (toMilliSecsf() < (avgThreadSleepTimeMilliSecs + avgThreadYieldTimeMilliSecs * 5.0f)) {
 		const spring_time s = gettime();
 
 		while ((gettime() - s) < *this)
@@ -246,7 +229,7 @@ void spring_time::sleep()
 
 	if (t1 >= t0) {
 		boost::mutex::scoped_lock lock(sleepTimeMutex);
-		avgThreadSleepTimeMillis = mix(avgThreadSleepTimeMillis, dt.toMilliSecsf(), 0.1f);
+		avgThreadSleepTimeMilliSecs = mix(avgThreadSleepTimeMilliSecs, dt.toMilliSecsf(), 0.1f);
 	}
 }
 
@@ -258,7 +241,7 @@ void spring_time::sleep_until()
 #else
 	spring_time napTime = gettime() - *this;
 
-	if (napTime.toMilliSecsf() < avgThreadYieldTimeMillis) {
+	if (napTime.toMilliSecsf() < avgThreadYieldTimeMilliSecs) {
 		while (napTime.isTime()) {
 			thread_yield();
 			napTime = gettime() - *this;
@@ -269,4 +252,18 @@ void spring_time::sleep_until()
 	napTime.sleep();
 #endif
 }
+
+#ifndef UNIT_TEST
+void spring_time::Serialize(creg::ISerializer& s)
+{
+	if (s.IsWriting()) {
+		int y = spring_tomsecs(*this - spring_gettime());
+		s.SerializeInt(&y, 4);
+	} else {
+		int y;
+		s.SerializeInt(&y, 4);
+		*this = *this + spring_msecs(y);
+	}
+}
+#endif
 
