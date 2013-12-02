@@ -2,7 +2,7 @@
 
 #include "SpringTime.h"
 #include "System/maindefines.h"
-#include "System/Log/ILog.h"
+#include "System/myMath.h"
 
 
 #ifndef UNIT_TEST
@@ -200,32 +200,40 @@ void spring_time::Serialize(creg::ISerializer& s)
 
 
 // FIXME: NOT THREADSAFE
-static float avgYieldMs = 0.0f;
-static float avgSleepErrMs = 0.0f;
+static float avgThreadYieldTimeMillis = 0.0f;
+static float avgThreadSleepTimeMillis = 0.0f;
+
+static boost::mutex yieldTimeMutex;
+static boost::mutex sleepTimeMutex;
 
 static void thread_yield()
 {
-	const spring_time beforeYield = spring_time::gettime();
-
+	const spring_time t0 = spring_time::gettime();
 	this_thread::yield();
+	const spring_time t1 = spring_time::gettime();
+	const spring_time dt = t1 - t0;
 
-	const float diffMs = (spring_time::gettime() - beforeYield).toMilliSecsf();
-	avgYieldMs = avgYieldMs * 0.9f + diffMs * 0.1f;
+	if (t1 >= t0) {
+		boost::mutex::scoped_lock lock(yieldTimeMutex);
+		avgThreadYieldTimeMillis = mix(avgThreadYieldTimeMillis, dt.toMilliSecsf(), 0.1f);
+	}
 }
 
 
 void spring_time::sleep()
 {
 	// for very short time intervals use a yielding loop (yield is ~5x more accurate than sleep(), check the UnitTest)
-	if (toMilliSecsf() < (avgSleepErrMs + avgYieldMs * 5.0f)) {
+	if (toMilliSecsf() < (avgThreadSleepTimeMillis + avgThreadYieldTimeMillis * 5.0f)) {
 		const spring_time s = gettime();
-		while ((gettime() - s) < *this) {
+
+		while ((gettime() - s) < *this)
 			thread_yield();
-		}
+
 		return;
 	}
 
-	const spring_time expectedWakeUpTime = gettime() + *this;
+	// expected wakeup time
+	const spring_time t0 = gettime() + *this;
 
 	#if defined(SPRINGTIME_USING_STD_SLEEP)
 		this_thread::sleep_for(chrono::nanoseconds(toNanoSecsi()));
@@ -233,12 +241,13 @@ void spring_time::sleep()
 		boost::this_thread::sleep(boost::posix_time::microseconds(std::ceil(toNanoSecsf() * 1e-3)));
 	#endif
 
-	const float diffMs = (gettime() - expectedWakeUpTime).toMilliSecsf();
-	avgSleepErrMs = avgSleepErrMs * 0.9f + diffMs * 0.1f;
+	const spring_time t1 = gettime();
+	const spring_time dt = t1 - t0;
 
-	//if (diffMs > 7.0f) {
-	//	LOG_L(L_WARNING, "SpringTime: used sleep() function is too inaccurate");
-	//}
+	if (t1 >= t0) {
+		boost::mutex::scoped_lock lock(sleepTimeMutex);
+		avgThreadSleepTimeMillis = mix(avgThreadSleepTimeMillis, dt.toMilliSecsf(), 0.1f);
+	}
 }
 
 void spring_time::sleep_until()
@@ -249,7 +258,7 @@ void spring_time::sleep_until()
 #else
 	spring_time napTime = gettime() - *this;
 
-	if (napTime.toMilliSecsf() < avgYieldMs) {
+	if (napTime.toMilliSecsf() < avgThreadYieldTimeMillis) {
 		while (napTime.isTime()) {
 			thread_yield();
 			napTime = gettime() - *this;
