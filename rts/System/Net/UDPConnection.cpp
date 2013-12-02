@@ -17,8 +17,9 @@
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
-
+#ifndef UNIT_TEST
 CONFIG(bool, UDPConnectionLogDebugMessages).defaultValue(false);
+#endif
 
 
 namespace netcode {
@@ -302,7 +303,10 @@ void UDPConnection::Init()
 	muted = true;
 	closed = false;
 	resend = false;
+
+	#ifndef UNIT_TEST
 	logDebugMsgs = configHandler->GetBool("UDPConnectionLogDebugMessages");
+	#endif
 
 	netLossFactor = globalConfig->networkLossFactor;
 	lastMidChunk = -1;
