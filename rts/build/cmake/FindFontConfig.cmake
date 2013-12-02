@@ -16,7 +16,7 @@ EndIf  (FONTCONFIG_INCLUDE_DIR)
 
 Find_Path(FONTCONFIG_INCLUDE_DIR fontconfig/fontconfig.h)
 
-Set(FONTCONFIG_NAMES fontconfig)
+Set(FONTCONFIG_NAMES fontconfig fontconfig-1)
 Find_Library(FONTCONFIG_LIBRARY NAMES ${FONTCONFIG_NAMES})
 
 # handle the QUIETLY and REQUIRED arguments and set FONTCONFIG_FOUND to TRUE if
