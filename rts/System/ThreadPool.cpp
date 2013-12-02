@@ -39,15 +39,6 @@ static __thread bool exitThread(false);
 
 static int spinlockMs = 5;
 
-static struct do_once {
-	do_once() {
-		//ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
-	}
-	~do_once() {
-		ThreadPool::SetThreadCount(0);
-	}
-} doOnce;
-
 
 namespace ThreadPool {
 
