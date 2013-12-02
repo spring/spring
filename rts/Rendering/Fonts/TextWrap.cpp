@@ -114,7 +114,7 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 		w2 = w;
 		w.isSpace = true;
 	} else if (w.isSpace) {
-		int split = (int)math::floor(wantedWidth / spaceAdvance);
+		const int split = (int)math::floor(wantedWidth / spaceAdvance);
 		w2.isSpace   = true;
 		w2.numSpaces = split;
 		w2.width     = spaceAdvance * w2.numSpaces;
@@ -149,24 +149,25 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 			width += GetKerning(*curGlyph, *nextGlyph);
 
 			if (width > wantedWidth) {
-				w2.text  = w.text.substr(0,goodbreak);
-				w2.width = GetTextWidth(w2.text);
-				w.text.erase(0,goodbreak);
-				w.width  = GetTextWidth(w.text);
-				w.pos   += goodbreak;
-				return w2;
+				break;
 			}
 
 			if (smart) {
-				float penalty = GetPenalty(co, lastCharPos, w.text.length());
+				const float penalty = GetPenalty(co, lastCharPos, w.text.length());
 				if (penalty < min_penalty) {
 					min_penalty = penalty;
 					goodbreak   = lastCharPos;
 				}
 			} else {
-				goodbreak = lastCharPos;
+				goodbreak = i;
 			}
 		} while(i < w.text.length());
+
+		w2.text  = w.text.substr(0,goodbreak);
+		w2.width = GetTextWidth(w2.text);
+		w.text.erase(0,goodbreak);
+		w.width  = GetTextWidth(w.text);
+		w.pos   += goodbreak;
 	}
 	return w2;
 }
@@ -350,7 +351,7 @@ void CTextWrap::WrapTextConsole(std::list<word>& words, float maxWidth, float ma
 
 					// insert the L-part right before R
 					wi = words.insert(wi, wL);
-					if(restart)
+					if (restart)
 						currLine->start = wi;
 					++wi;
 				}
