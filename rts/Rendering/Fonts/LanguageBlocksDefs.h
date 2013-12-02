@@ -19,6 +19,7 @@ static const std::map<std::string, std::tuple<char32_t, char32_t>> blocks {
 	{"Cyrillic", std::make_tuple(0x0400, 0x0500)},
 	{"Hebrew",   std::make_tuple(0x0590, 0x0600)},
 	{"Arabic",   std::make_tuple(0x0600, 0x0700)},
+	{"Ellipsis", std::make_tuple(0x2026, 0x2027)},
 };
 
 static const unsigned int undefBlocksSize = 32; // Any other blocks assumed to be 32 size
