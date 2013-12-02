@@ -271,21 +271,21 @@ protected:
 
 
 
-//FIXME rename GetNextUnicodeFromUtf8
-char32_t GetUnicodeNextChar(const std::string& text, int& pos);
+
+char32_t Utf8GetNextChar(const std::string& text, int& pos);
 std::string UnicodeToUtf8(char32_t ch);
 
 
 static inline int Utf8CharLen(const std::string& str, int pos)
 {
 	const auto oldPos = pos;
-	GetUnicodeNextChar(str, pos);
+	Utf8GetNextChar(str, pos);
 	return pos - oldPos;
 }
 
 static inline int Utf8NextChar(const std::string& str, int pos)
 {
-	GetUnicodeNextChar(str, pos);
+	Utf8GetNextChar(str, pos);
 	return pos;
 }
 
@@ -295,7 +295,7 @@ static inline int Utf8PrevChar(const std::string& str, int pos)
 	auto oldPos   = startPos;
 	while (startPos < pos) {
 		oldPos = startPos;
-		GetUnicodeNextChar(str, startPos);
+		Utf8GetNextChar(str, startPos);
 	}
 	return oldPos;
 }

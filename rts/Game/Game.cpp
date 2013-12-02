@@ -1484,7 +1484,7 @@ void CGame::DrawInputText()
 		const float caretPos    = fontSize * font->GetTextWidth(caretStr) * globalRendering->pixelX;
 		const float caretHeight = fontSize * font->GetLineHeight() * globalRendering->pixelY;
 		int cpos = writingPos;
-		char32_t c = GetUnicodeNextChar(userInput, cpos);
+		char32_t c = Utf8GetNextChar(userInput, cpos);
 		if (c == 0) c = ' '; // make caret always visible
 		const float cw = fontSize * font->GetCharacterWidth(c) * globalRendering->pixelX;
 		const float csx = inputTextPosX + caretPos;
