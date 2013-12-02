@@ -114,7 +114,7 @@ public:
 	 */
 	void ProcessRawPacket(Packet& packet);
 
-	int GetReconnectSecs() const;
+	int GetReconnectSecs() const { return reconnectTime; }
 
 	/// Are we using this address?
 	bool IsUsingAddress(const boost::asio::ip::udp::endpoint& from) const;
@@ -144,9 +144,14 @@ private:
 	void RequestResend(ChunkPtr ptr);
 	void SendPacket(Packet& pkt);
 
-	spring_time lastChunkCreated;
+	spring_time lastChunkCreatedTime;
 	spring_time lastReceiveTime;
 	spring_time lastSendTime;
+
+	spring_time lastUnackResentTime;
+	spring_time lastNakTime;
+
+	spring_time framePacketRecvStartTime;
 
 	typedef boost::ptr_map<int,RawPacket> packetMap;
 	typedef std::list< boost::shared_ptr<const RawPacket> > packetList;
@@ -158,38 +163,39 @@ private:
 
 	bool muted;
 	bool closed;
-	int netLossFactor;
 	bool resend;
+	bool sharedSocket;
+	bool logDebugMsgs;
 
+	int netLossFactor;
 	int reconnectTime;
 
-	bool sharedSocket;
-
-	/// outgoing stuff (pure data without header) waiting to be sended
+	/// outgoing stuff (pure data without header) waiting to be sent
 	packetList outgoingData;
+	/// packets we have received but not yet read
+	packetMap waitingPackets;
 
 	/// Newly created and not yet sent
 	std::deque<ChunkPtr> newChunks;
 	/// packets the other side did not ack'ed until now
 	std::deque<ChunkPtr> unackedChunks;
-	spring_time lastUnackResent;
+
 	/// Packets the other side missed
 	std::map<boost::int32_t, ChunkPtr> resendRequested;
-	int currentNum;
+
+	/// complete packets we received but did not yet consume
+	std::deque< boost::shared_ptr<const RawPacket> > msgQueue;
 
 	boost::int32_t lastMidChunk;
+
 #if	NETWORK_TEST
 	/// Delayed packets, for testing purposes
 	std::map< spring_time, std::vector<boost::uint8_t> > delayed;
 	int lossCounter;
 #endif
 
-	/// packets we have received but not yet read
-	packetMap waitingPackets;
 	int lastInOrder;
 	int lastNak;
-	spring_time lastNakTime;
-	std::deque< boost::shared_ptr<const RawPacket> > msgQueue;
 
 	/// Our socket
 	boost::shared_ptr<boost::asio::ip::udp::socket> mySocket;
@@ -197,16 +203,17 @@ private:
 	RawPacket* fragmentBuffer;
 
 	// Traffic statistics and stuff
+	unsigned int currentPacketChunkNum;
+	unsigned int currentFramePacketCount;
 
 	/// packets that are resent
-	unsigned resentChunks;
-	unsigned droppedChunks;
+	unsigned int resentChunks;
+	unsigned int droppedChunks;
 
-	unsigned sentOverhead, recvOverhead;
-	unsigned sentPackets, recvPackets;
+	unsigned int sentOverhead, recvOverhead;
+	unsigned int sentPackets, recvPackets;
 
-	class BandwidthUsage
-	{
+	class BandwidthUsage {
 	public:
 		BandwidthUsage();
 		void UpdateTime(unsigned newTime);
@@ -221,6 +228,7 @@ private:
 
 		float average;
 	};
+
 	BandwidthUsage outgoing;
 };
 
