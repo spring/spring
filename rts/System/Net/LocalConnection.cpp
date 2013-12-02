@@ -1,9 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "LocalConnection.h"
-
 #include <boost/format.hpp>
 
+#include "LocalConnection.h"
 #include "Net/Protocol/BaseNetProtocol.h"
 #include "Exception.h"
 #include "ProtocolDef.h"
@@ -13,17 +12,21 @@ namespace netcode {
 
 // static stuff
 unsigned CLocalConnection::instances = 0;
-std::deque< boost::shared_ptr<const RawPacket> > CLocalConnection::Data[2];
-boost::mutex CLocalConnection::Mutex[2];
+
+std::deque< boost::shared_ptr<const RawPacket> > CLocalConnection::pqueues[2];
+boost::mutex CLocalConnection::mutexes[2];
 
 CLocalConnection::CLocalConnection()
 {
 	if (instances > 1) {
 		throw network_error("Opening a third local connection is not allowed");
 	}
+
 	instance = instances;
 	instances++;
-	CBaseNetProtocol::Get(); // make sure protocoldef is initialized
+
+	// make sure protocoldef is initialized
+	CBaseNetProtocol::Get();
 }
 
 CLocalConnection::~CLocalConnection()
@@ -31,75 +34,59 @@ CLocalConnection::~CLocalConnection()
 	instances--;
 }
 
-void CLocalConnection::SendData(boost::shared_ptr<const RawPacket> data)
+void CLocalConnection::SendData(boost::shared_ptr<const RawPacket> packet)
 {
-	if (!ProtocolDef::GetInstance()->IsValidPacket(data->data, data->length)) {
+	if (!ProtocolDef::GetInstance()->IsValidPacket(packet->data, packet->length)) {
 		// having this check here makes it easier to find networking bugs
 		// also when testing locally
-		LOG_L(L_ERROR, "Discarding invalid packet: ID %d, LEN %d",
-				(data->length > 0) ? (int)data->data[0] : -1, data->length);
+		LOG_L(L_ERROR, "[%s] discarding invalid packet: ID %d, LEN %d",
+			__FUNCTION__, (packet->length > 0) ? (int)packet->data[0] : -1, packet->length);
 		return;
 	}
 
-	dataSent += data->length;
-	boost::mutex::scoped_lock scoped_lock(Mutex[OtherInstance()]);
-	Data[OtherInstance()].push_back(data);
-}
+	dataSent += packet->length;
 
-boost::shared_ptr<const RawPacket> CLocalConnection::Peek(unsigned ahead) const
-{
-	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
-
-	if (ahead < Data[instance].size())
-		return Data[instance][ahead];
-	else
-	{
-		boost::shared_ptr<const RawPacket> empty;
-		return empty;
-	}
-}
-
-void CLocalConnection::DeleteBufferPacketAt(unsigned index)
-{
-	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
-
-	if (index < Data[instance].size())
-		Data[instance].erase(Data[instance].begin() + index);
+	// when sending from A to B we must lock B's queue
+	boost::mutex::scoped_lock scoped_lock(mutexes[OtherInstance()]);
+	pqueues[OtherInstance()].push_back(packet);
 }
 
 boost::shared_ptr<const RawPacket> CLocalConnection::GetData()
 {
-	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
+	boost::mutex::scoped_lock scoped_lock(mutexes[instance]);
 
-	if (!Data[instance].empty()) {
-		boost::shared_ptr<const RawPacket> next = Data[instance].front();
-		Data[instance].pop_front();
+	if (!pqueues[instance].empty()) {
+		boost::shared_ptr<const RawPacket> next = pqueues[instance].front();
+		pqueues[instance].pop_front();
 		dataRecv += next->length;
 		return next;
-	} else {
-		boost::shared_ptr<const RawPacket> empty;
-		return empty;
 	}
+
+	boost::shared_ptr<const RawPacket> empty;
+	return empty;
 }
 
-void CLocalConnection::Flush(const bool forced)
+boost::shared_ptr<const RawPacket> CLocalConnection::Peek(unsigned ahead) const
 {
+	boost::mutex::scoped_lock scoped_lock(mutexes[instance]);
+
+	if (ahead < pqueues[instance].size())
+		return pqueues[instance][ahead];
+
+	boost::shared_ptr<const RawPacket> empty;
+	return empty;
 }
 
-bool CLocalConnection::CheckTimeout(int seconds, bool initial) const
+void CLocalConnection::DeleteBufferPacketAt(unsigned index)
 {
-	return false;
+	boost::mutex::scoped_lock scoped_lock(mutexes[instance]);
+
+	if (index >= pqueues[instance].size())
+		return;
+
+	pqueues[instance].erase(pqueues[instance].begin() + index);
 }
 
-bool CLocalConnection::CanReconnect() const
-{
-	return false;
-}
-
-bool CLocalConnection::NeedsReconnect()
-{
-	return false;
-}
 
 std::string CLocalConnection::Statistics() const
 {
@@ -114,21 +101,17 @@ std::string CLocalConnection::GetFullAddress() const
 	return "shared memory";
 }
 
+
 bool CLocalConnection::HasIncomingData() const
 {
-	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
-	return (!Data[instance].empty());
+	boost::mutex::scoped_lock scoped_lock(mutexes[instance]);
+	return (!pqueues[instance].empty());
 }
 
 unsigned int CLocalConnection::GetPacketQueueSize() const
 {
-	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
-	return (!Data[instance].size());
-}
-
-unsigned int CLocalConnection::OtherInstance() const
-{
-	return ((instance + 1) % 2);
+	boost::mutex::scoped_lock scoped_lock(mutexes[instance]);
+	return (!pqueues[instance].size());
 }
 
 } // namespace netcode

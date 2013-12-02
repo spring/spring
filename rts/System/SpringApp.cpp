@@ -1045,10 +1045,10 @@ int SpringApp::Run()
 	}
 
 	SaveWindowPosition();
-	// Shutdown
-	Shutdown();
+	ShutDown();
 
-	return GetExitCode();
+	LOG("[SpringApp::%s] exitCode=%d", __FUNCTION__, GetExitCode());
+	return (GetExitCode());
 }
 
 
@@ -1056,9 +1056,17 @@ int SpringApp::Run()
 /**
  * Deallocates and shuts down game
  */
-void SpringApp::Shutdown()
+void SpringApp::ShutDown()
 {
-	if (gu) gu->globalQuit = true;
+	// if a thread crashes *during* first SA::Run-->SA::ShutDown
+	// then main::Run will call us again via ErrorMessageBox (not
+	// a good idea)
+	static unsigned int numCalls = 0;
+
+	if ((numCalls++) != 0)
+		return;
+	if (gu != NULL)
+		gu->globalQuit = true;
 
 	LOG("[SpringApp::%s][1]", __FUNCTION__);
 	ThreadPool::SetThreadCount(0);
