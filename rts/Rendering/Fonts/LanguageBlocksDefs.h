@@ -10,16 +10,17 @@
 // Predefined blocks
 // It contains only the most widly used blocks (Latin and Cyrilic)
 static const std::map<std::string, std::tuple<char32_t, char32_t>> blocks {
-	{"NULL",     std::make_tuple(0x0000, 0x0001)},
-	{"ASCII",    std::make_tuple(0x0020, 0x007F)},
-	{"Latin-1",  std::make_tuple(0x00A1, 0x0100)},
-	{"Latin-A",  std::make_tuple(0x0100, 0x0180)},
-	{"Latin-B",  std::make_tuple(0x0180, 0x0250)},
-	{"Greek",    std::make_tuple(0x0370, 0x0400)},
-	{"Cyrillic", std::make_tuple(0x0400, 0x0500)},
-	{"Hebrew",   std::make_tuple(0x0590, 0x0600)},
-	{"Arabic",   std::make_tuple(0x0600, 0x0700)},
-	{"Ellipsis", std::make_tuple(0x2026, 0x2027)},
+	{"NULL",        std::make_tuple(0x0000, 0x0001)},
+	{"ASCII",       std::make_tuple(0x0020, 0x007F)},
+	{"Latin-1",     std::make_tuple(0x00A1, 0x0100)},
+	{"Latin-A",     std::make_tuple(0x0100, 0x0180)},
+	{"Latin-B",     std::make_tuple(0x0180, 0x0250)},
+	{"Greek",       std::make_tuple(0x0370, 0x0400)},
+	{"Cyrillic",    std::make_tuple(0x0400, 0x0500)},
+	{"Hebrew",      std::make_tuple(0x0590, 0x0600)},
+	{"Arabic",      std::make_tuple(0x0600, 0x0700)},
+	{"FigureSpace", std::make_tuple(0x2007, 0x2008)}, // used by TextWrap
+	{"Ellipsis",    std::make_tuple(0x2026, 0x2027)}, // ''
 };
 
 static const unsigned int undefBlocksSize = 32; // Any other blocks assumed to be 32 size
