@@ -2413,6 +2413,12 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 			// Despite this still allow to create a few in advance to not lag other connected clients.
 			//
 			// DS never has a local client and isn't linked against GU
+			//
+			// simFramesBehind =  0 --> ratio = 0.00 --> maxNewFrames = 30
+			// simFramesBehind =  1 --> ratio = 0.03 --> maxNewFrames = 29
+			// simFramesBehind = 15 --> ratio = 0.5  --> maxNewFrames = 15
+			// simFramesBehind = 29 --> ratio = 0.97 --> maxNewFrames =  1
+			// simFramesBehind = 30 --> ratio = 1.00 --> maxNewFrames =  1
 			const float simFramesBehind = serverFrameNum - players[localClientNumber].lastFrameResponse;
 			const float simFrameMixRatio = std::min(simFramesBehind / GAME_SPEED, 1.0f);
 
@@ -2490,7 +2496,7 @@ void CGameServer::UpdateLoop()
 		Threading::SetAffinity(~0);
 
 		while (!quitServer) {
-			spring_sleep(spring_msecs(10));
+			spring_sleep(spring_msecs(1));
 
 			if (UDPNet)
 				UDPNet->Update();
@@ -2507,11 +2513,14 @@ void CGameServer::UpdateLoop()
 		// flush the quit messages to reduce ugly network error messages on the client side
 		// this is to make sure the Flush has any effect at all (we don't want a forced flush)
 		spring_sleep(spring_msecs(1000));
+
 		for (size_t i = 0; i < players.size(); ++i) {
 			if (players[i].link)
 				players[i].link->Flush();
 		}
-		spring_sleep(spring_msecs(3000)); // now let clients close their connections
+
+		// now let clients close their connections
+		spring_sleep(spring_msecs(3000));
 	} CATCH_SPRING_ERRORS
 }
 
