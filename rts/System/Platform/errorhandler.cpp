@@ -69,13 +69,13 @@ void ForcedExit(const std::string& msg, const std::string& caption, unsigned int
 
 void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags, bool fromMain)
 {
-	LOG_L(L_ERROR, "[%s][1] msg=\"%s\" IsMainThread()=%d fromMain=%d", __FUNCTION__, msg.c_str(), Threading::IsMainThread(), fromMain);
-
 #ifdef DEDICATED
 	SafeDelete(gameServer);
 	ExitMessage(msg, caption, flags, false);
 	return;
-#endif
+#else
+	LOG_L(L_ERROR, "[%s][1] msg=\"%s\" IsMainThread()=%d fromMain=%d", __FUNCTION__, msg.c_str(), Threading::IsMainThread(), fromMain);
+
 
 	// SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any
 	// MT thread has crashed or deviated from its normal execution path by throwing an exception
@@ -115,6 +115,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	LOG_L(L_ERROR, "[%s][4]", __FUNCTION__);
 
 	ExitMessage(msg, caption, flags, false);
+#endif
 }
 
 static int exitcode = 0;
