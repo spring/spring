@@ -99,7 +99,7 @@ static inline unsigned count_leading_ones(uint8_t x)
 }
 
 
-char32_t GetUnicodeNextChar(const std::string& text, int& pos)
+char32_t Utf8GetNextChar(const std::string& text, int& pos)
 {
 	// UTF8 looks like this
 	// 1Byte == ASCII:      0xxxxxxxxx

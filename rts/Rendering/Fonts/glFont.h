@@ -100,12 +100,11 @@ private:
 	ColorMap stripTextColors;
 	ColorMap stripOutlineColors;
 
-	bool inBeginEnd;
 	CVertexArray* va;
 	CVertexArray* va2;
 
+	bool inBeginEnd;
 	bool autoOutlineColor; //! auto select outline color for in-text-colorcodes
-
 	bool setColor; //! used for backward compability (so you can call glPrint (w/o BeginEnd and no shadow/outline!) and set the color yourself via glColor)
 
 	float4 textColor;
