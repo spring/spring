@@ -23,6 +23,7 @@ CR_REG_METADATA(spring_time,(
 #if defined(__MINGW32__) || defined(SPRINGTIME_USING_BOOST)
 	#undef gt
 	#include <boost/thread/thread.hpp>
+	#include <boost/thread/mutex.hpp>
 	namespace this_thread { using namespace boost::this_thread; };
 #else
 	#define SPRINGTIME_USING_STD_SLEEP
@@ -31,6 +32,7 @@ CR_REG_METADATA(spring_time,(
 	#endif
 	#define _GLIBCXX_USE_SCHED_YIELD // workaround a gcc <4.8 bug
 	#include <thread>
+	#include <mutex>
 	namespace this_thread { using namespace std::this_thread; };
 #endif
 
