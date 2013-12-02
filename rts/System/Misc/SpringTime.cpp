@@ -3,6 +3,7 @@
 #include "SpringTime.h"
 #include "System/maindefines.h"
 #include "System/myMath.h"
+#include <boost/thread/mutex.hpp>
 
 
 #ifndef UNIT_TEST
@@ -23,7 +24,6 @@ CR_REG_METADATA(spring_time,(
 #if defined(__MINGW32__) || defined(SPRINGTIME_USING_BOOST)
 	#undef gt
 	#include <boost/thread/thread.hpp>
-	#include <boost/thread/mutex.hpp>
 	namespace this_thread { using namespace boost::this_thread; };
 #else
 	#define SPRINGTIME_USING_STD_SLEEP
