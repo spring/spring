@@ -8,6 +8,11 @@
 #include "System/Util.h"
 
 
+static const char32_t ellipsisUTF16 = 0x2026;
+static const std::string ellipsisUTF8 = UnicodeToUtf8(ellipsisUTF16);
+static const char32_t spaceUTF16    = 0x20;
+
+
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -103,7 +108,7 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 	word w2;
 	w2.pos = w.pos;
 
-	const float spaceAdvance = GetGlyph(0x20).advance;
+	const float spaceAdvance = GetGlyph(spaceUTF16).advance;
 	if (w.isLineBreak) {
 		// shouldn't happen
 		w2 = w;
@@ -131,7 +136,7 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 		int i = 0;
 		float min_penalty = 1e9;
 		unsigned int goodbreak = 0;
-		char32_t c = GetUnicodeNextChar(w.text,i);
+		char32_t c = Utf8GetNextChar(w.text,i);
 		const GlyphInfo* curGlyph = &GetGlyph(c);
 		const GlyphInfo* nextGlyph = curGlyph;
 
@@ -139,7 +144,7 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 			const int lastCharPos = i;
 			const char32_t co     = c;
 			curGlyph = nextGlyph;
-			c = GetUnicodeNextChar(w.text,i);
+			c = Utf8GetNextChar(w.text,i);
 			nextGlyph = &GetGlyph(c);
 			width += GetKerning(*curGlyph, *nextGlyph);
 
@@ -169,8 +174,8 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 
 void CTextWrap::AddEllipsis(std::list<line>& lines, std::list<word>& words, float maxWidth)
 {
-	const float ellipsisAdvance = GetGlyph(0x85).advance;
-	const float spaceAdvance = GetGlyph(0x20).advance;
+	const float ellipsisAdvance = GetGlyph(ellipsisUTF16).advance;
+	const float spaceAdvance = GetGlyph(spaceUTF16).advance;
 
 	if (ellipsisAdvance > maxWidth)
 		return;
@@ -267,7 +272,7 @@ void CTextWrap::AddEllipsis(std::list<line>& lines, std::list<word>& words, floa
 
 	// add our ellipsis
 	word ellipsis;
-	ellipsis.text  = "\x85";
+	ellipsis.text  = ellipsisUTF8;
 	ellipsis.width = ellipsisAdvance;
 	std::list<word>::iterator wi(l->end);
 	++l->end;
@@ -396,17 +401,17 @@ void CTextWrap::WrapTextConsole(std::list<word>& words, float maxWidth, float ma
 void CTextWrap::SplitTextInWords(const std::u8string& text, std::list<word>* words, std::list<colorcode>* colorcodes)
 {
 	const unsigned int length = (unsigned int)text.length();
-	const float spaceAdvance = GetGlyph(0x20).advance;
+	const float spaceAdvance = GetGlyph(spaceUTF16).advance;
 
 	words->push_back(word());
 	word* w = &(words->back());
 
 	unsigned int numChar = 0;
 	for (int pos = 0; pos < length; pos++) {
-		const unsigned char& c = text[pos];
+		const char8_t& c = text[pos];
 		switch(c) {
 			// space
-			case 0x20:
+			case spaceUTF16:
 				if (!w->isSpace) {
 					if (!w->isLineBreak) {
 						w->width = GetTextWidth(w->text);
