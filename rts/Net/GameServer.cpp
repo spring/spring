@@ -2505,7 +2505,8 @@ void CGameServer::UpdateLoop()
 		Broadcast(CBaseNetProtocol::Get().SendQuit("Server shutdown"));
 
 		// flush the quit messages to reduce ugly network error messages on the client side
-		spring_sleep(spring_msecs(1000)); // this is to make sure the Flush has any effect at all (we don't want a forced flush)
+		// this is to make sure the Flush has any effect at all (we don't want a forced flush)
+		spring_sleep(spring_msecs(1000));
 		for (size_t i = 0; i < players.size(); ++i) {
 			if (players[i].link)
 				players[i].link->Flush();
