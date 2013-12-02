@@ -120,7 +120,7 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 	// read next 4bytes and check if it is an utf8 sequence
 	UTF8_4Byte utf8 = { 0 };
 	const int remainingChars = text.length() - pos;
-	if (remainingChars >= 3) {
+	if (remainingChars >= 4) {
 		utf8.i = *(uint32_t*)(&text[pos]);
 	} else {
 		// read ahead of end of string
