@@ -534,10 +534,15 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 		}
 	}
 
-	if (currentFramePacketCount >= 30 || (lastReceiveTime - framePacketRecvStartTime).toMilliSecsf() >= 1000.0f) {
+	const float recvDeltaTime = (lastReceiveTime - framePacketRecvStartTime).toMilliSecsf();
+	const float avgPacketRate = currentFramePacketCount / recvDeltaTime;
+
+	if (currentFramePacketCount >= 30 || recvDeltaTime >= 1000.0f) {
 		if (logDebugMsgs) {
-			LOG_L(L_INFO, "[UDPConnection::%s] %u NETMSG_*FRAME packets received (%fms)", __FUNCTION__,
-				currentFramePacketCount, (lastReceiveTime - framePacketRecvStartTime).toMilliSecsf());
+			LOG_L(L_INFO,
+				"[UDPConnection::%s] %u NETMSG_*FRAME packets received (%fms : %fp/ms)",
+				__FUNCTION__, currentFramePacketCount, recvDeltaTime, avgPacketRate
+			);
 		}
 
 		framePacketRecvStartTime = lastReceiveTime;
