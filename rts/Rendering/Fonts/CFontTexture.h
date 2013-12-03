@@ -59,7 +59,7 @@ struct GlyphInfo {
 	IGlyphRect texCord;
 	IGlyphRect shadowTexCord;
 	float advance, height, descender;
-	char32_t index;
+	unsigned index;
 	char32_t utf16;
 	FT_Face face;
 };
@@ -103,7 +103,7 @@ private:
 
 	// Load all chars in block's range
 	void LoadBlock(char32_t start, char32_t end);
-	void LoadGlyph(char32_t ch);
+	void LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned index);
 
 protected:
 	std::unordered_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo
