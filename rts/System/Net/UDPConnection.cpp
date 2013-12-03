@@ -378,10 +378,10 @@ void UDPConnection::Update()
 	if (!sharedSocket && !closed) {
 		// duplicated code with UDPListener
 		netservice.poll();
-		size_t bytes_avail = 0;
+		size_t bytesAvail = 0;
 
-		while ((bytes_avail = mySocket->available()) > 0) {
-			std::vector<boost::uint8_t> buffer(bytes_avail);
+		while ((bytesAvail = mySocket->available()) > 0) {
+			std::vector<boost::uint8_t> buffer(bytesAvail, 0);
 			ip::udp::endpoint sender_endpoint;
 			ip::udp::socket::message_flags flags = 0;
 			boost::system::error_code err;
@@ -534,7 +534,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 		}
 	}
 
-	if ((lastReceiveTime - framePacketRecvStartTime).toMilliSecsf() >= 1000.0f) {
+	if (currentFramePacketCount >= 30 || (lastReceiveTime - framePacketRecvStartTime).toMilliSecsf() >= 1000.0f) {
 		if (logDebugMsgs) {
 			LOG_L(L_INFO, "[UDPConnection::%s] %u NETMSG_*FRAME packets received (%fms)", __FUNCTION__,
 				currentFramePacketCount, (lastReceiveTime - framePacketRecvStartTime).toMilliSecsf());
