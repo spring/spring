@@ -231,12 +231,17 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 }
 
 
-static std::shared_ptr<FontFace> GetFontForCharacters(const char32_t character, const FT_Face origFace, const int origSize)
+static std::shared_ptr<FontFace> GetFontForCharacters(std::list<char32_t>& characters, const FT_Face origFace, const int origSize)
 {
 #if !defined(HEADLESS) && defined(USE_FONTCONFIG)
-	//TODO ask for all missing glyphs in one rush? (fontconfig should be much faster then)
+	if (characters.empty()) {
+		return nullptr;
+	}
+
 	FcCharSet* cset = FcCharSetCreate();
-	FcCharSetAddChar(cset, character);
+	for (auto c: characters) {
+		FcCharSetAddChar(cset, c);
+	}
 	FcPattern* pattern = FcPatternCreate();
 
 	//const FcChar8* ftname = reinterpret_cast<const FcChar8*>("foo.otf");
@@ -257,23 +262,23 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const char32_t character, 
 	FcDefaultSubstitute(pattern);
 
 	FcResult result;
-	FcPattern* current = FcFontMatch(NULL, pattern, &result);
+	FcPattern* current = FcFontMatch(nullptr, pattern, &result);
 	FcPatternDestroy(pattern);
 	FcCharSetDestroy(cset);
 
 	if (result != FcResultMatch)
-		return NULL;
+		return nullptr;
 
-	FcChar8* cFilename = NULL;
+	FcChar8* cFilename = nullptr;
 	FcResult r = FcPatternGetString(current, FC_FILE, 0, &cFilename);
-	const std::string filename = (cFilename != NULL) ? reinterpret_cast<char*>(cFilename) : "";
+	const std::string filename = (cFilename != nullptr) ? reinterpret_cast<char*>(cFilename) : "";
 	FcPatternDestroy(current);
 	if (r != FcResultMatch)
-		return NULL;
+		return nullptr;
 
 	return GetFontFace(filename, origSize);
 #else
-	return NULL;
+	return nullptr;
 #endif
 }
 
@@ -422,8 +427,31 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 {
 	std::lock_guard<boost::recursive_mutex> lk(m);
 
+	// generate list of wnated glyphs
+	std::list<char32_t> map;
 	for(char32_t i=start; i<end; ++i)
-		LoadGlyph(i);
+		map.push_back(i);
+
+	// load glyphs from different fonts (using fontconfig)
+	std::shared_ptr<FontFace> f = shFace;
+	do {
+		for (auto it = map.begin(); it != map.end(); ++it) {
+			FT_UInt index = FT_Get_Char_Index(*f, *it);
+			if (index != 0) {
+				LoadGlyph(f, *it, index);
+				it = map.erase(it);
+			}
+		}
+		f = GetFontForCharacters(map, *f, fontSize);
+		usedFallbackFonts.insert(f);
+	} while (!map.empty() && f);
+
+	// load fail glyph for all remaining ones (they will all share the same fail glyph)
+	for (auto c: map) {
+		FT_UInt index = FT_Get_Char_Index(*shFace, c);
+		LoadGlyph(shFace, c, index);
+	}
+
 
 	// readback textureatlas allocator data
 	{
@@ -471,23 +499,12 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 }
 
 
-void CFontTexture::LoadGlyph(char32_t ch)
+
+void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned index)
 {
 #ifndef HEADLESS
 	if (glyphs.find(ch) != glyphs.end())
 		return;
-
-	// map unicode to font internal index
-	std::shared_ptr<FontFace> f = shFace;
-	FT_UInt index = FT_Get_Char_Index(*f, ch);
-	if (index == 0) {
-		auto f_ = GetFontForCharacters(ch, *f, fontSize);
-		if (f_) {
-			f = f_;
-			usedFallbackFonts.insert(f);
-			index = FT_Get_Char_Index(*f, ch);
-		}
-	}
 
 	// check for duplicated glyphs
 	for (auto& it: glyphs) {
@@ -601,17 +618,22 @@ void CFontTexture::UpdateTexture()
 	// merge shadowing
 	if (atlasUpdateShadow) {
 		atlasUpdateShadow->Blur(outlineSize, outlineWeight);
-		for (int i=0; i<(atlasUpdate->xsize * atlasUpdate->ysize); ++i) {
-			atlasUpdate->mem[i] |= atlasUpdateShadow->mem[i];
+		assert((atlasUpdate->xsize * atlasUpdate->ysize) % 4 == 0);
+		auto src = reinterpret_cast<int*>(atlasUpdateShadow->mem);
+		auto dst = reinterpret_cast<int*>(atlasUpdate->mem);
+		auto size = (atlasUpdate->xsize * atlasUpdate->ysize) / 4;
+		for (int i=0; i<size; ++i) {
+			dst[i] |= src[i];
 		}
 		delete atlasUpdateShadow;
 		atlasUpdateShadow = NULL;
 	}
 
+
 	glPushAttrib(GL_PIXEL_MODE_BIT | GL_TEXTURE_BIT);
 		// update texture atlas
 		glBindTexture(GL_TEXTURE_2D, texture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->mem); //FIXME use PBO?
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->mem);
 
 		// update texture space dlist (this affects already compiled dlists too!)
 		glNewList(textureSpaceMatrix, GL_COMPILE);
