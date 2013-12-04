@@ -25,13 +25,12 @@ namespace netcode {
 #define SEVERE_PACKET_LOSS_MAX_COUNT 10       // max continuous number of packets to be lost
 #define PACKET_MIN_LATENCY 750                // in [milliseconds] minimum latency
 #define PACKET_MAX_LATENCY 1250               // in [milliseconds] maximum latency
+#define ENABLE_DEBUG_STATS
 
 class Chunk
 {
 public:
-	unsigned GetSize() const {
-		return data.size() + headerSize;
-	}
+	unsigned GetSize() const { return (data.size() + headerSize); }
 	void UpdateChecksum(CRC& crc) const;
 	static const unsigned maxSize = 254;
 	static const unsigned headerSize = 5;
@@ -145,13 +144,15 @@ private:
 	void SendPacket(Packet& pkt);
 
 	spring_time lastChunkCreatedTime;
-	spring_time lastReceiveTime;
-	spring_time lastSendTime;
+	spring_time lastPacketSendTime;
+	spring_time lastPacketRecvTime;
 
 	spring_time lastUnackResentTime;
 	spring_time lastNakTime;
-
-	spring_time framePacketRecvStartTime;
+	#ifdef ENABLE_DEBUG_STATS
+	spring_time lastDebugMessageTime;
+	spring_time lastFramePacketRecvTime;
+	#endif
 
 	typedef boost::ptr_map<int,RawPacket> packetMap;
 	typedef std::list< boost::shared_ptr<const RawPacket> > packetList;
@@ -165,7 +166,7 @@ private:
 	bool closed;
 	bool resend;
 	bool sharedSocket;
-	bool logDebugMsgs;
+	bool logMessages;
 
 	int netLossFactor;
 	int reconnectTime;
@@ -203,8 +204,17 @@ private:
 	RawPacket* fragmentBuffer;
 
 	// Traffic statistics and stuff
+	#ifdef ENABLE_DEBUG_STATS
+	float sumDeltaFramePacketRecvTime;
+	float minDeltaFramePacketRecvTime;
+	float maxDeltaFramePacketRecvTime;
+
+	unsigned int numReceivedFramePackets;
+	unsigned int numEnqueuedFramePackets;
+	unsigned int numEmptyGetDataCalls;
+	unsigned int numTotalGetDataCalls;
+	#endif
 	unsigned int currentPacketChunkNum;
-	unsigned int currentFramePacketCount;
 
 	/// packets that are resent
 	unsigned int resentChunks;
