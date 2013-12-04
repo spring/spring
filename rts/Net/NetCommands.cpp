@@ -80,40 +80,139 @@ void CGame::SendClientProcUsage()
 }
 
 
-void CGame::UpdateConsumeSpeed()
+void CGame::UpdateSimFrameConsumeSpeedMult()
 {
-	if (gameServer)
+	if (gameServer != NULL)
 		return;
 
-	// read ahead to calculate the number of NETMSG_XXXFRAMES we still have to process
+	static spring_time lastUpdateTime = spring_gettime();
+
+	const spring_time currTime = spring_gettime();
+	const spring_time deltaTime = currTime - lastUpdateTime;
+
+	// do this once every second
+	if (deltaTime.toMilliSecsf() < 1000.0f)
+		return;
+
+	#if 0
+	{
+		// read ahead to calculate the number of NETMSG_XXXFRAMES we still have to process
+		boost::shared_ptr<const netcode::RawPacket> packet;
+
+		unsigned int numQueuedFrames = 0;
+		unsigned int packetPeekIndex = 0;
+
+		while ((packet = net->Peek(packetPeekIndex))) {
+			switch (packet->data[0]) {
+				case NETMSG_GAME_FRAME_PROGRESS: {
+					// this special packet skips queue entirely, so gets processed here
+					// it's meant to indicate current game progress for clients fast-forwarding to current point the game
+					// NOTE: this event should be unsynced, since its time reference frame is not related to the current
+					// progress of the game from the client's point of view
+					//
+					// send the event to lua call-in
+					eventHandler.GameProgress(*(int*)(packet->data + 1));
+					// pop it out of the net buffer
+					net->DeleteBufferPacketAt(packetPeekIndex);
+				} break;
+
+				case NETMSG_NEWFRAME:
+				case NETMSG_KEYFRAME:
+					++numQueuedFrames;
+				default:
+					++packetPeekIndex;
+			}
+		}
+
+		// this uses no buffering which makes it too sensitive
+		// to jitter (especially on lower-quality connections)
+		consumeSpeedMult = GAME_SPEED * gs->speedFactor + (numQueuedFrames / 2);
+	}
+	#else
+	{
+		if (lastNumQueuedSimFrames < 0) {
+			consumeSpeedMult = GAME_SPEED * gs->speedFactor + 10000;
+		} else {
+			consumeSpeedMult = GAME_SPEED * gs->speedFactor + lastNumQueuedSimFrames - 2;
+		}
+
+		// reset (will cause peak at 1Hz but better than
+		// random jitter due to network unpredictability)
+		lastNumQueuedSimFrames = -1;
+	}
+	#endif
+
+	msgProcTimeLeft = 0.0f;
+	lastUpdateTime = currTime;
+}
+
+void CGame::UpdateNumQueuedSimFrames()
+{
+	// <lastNumQueuedSimFrames> is only used to calculate <consumeSpeedMult> once per second,
+	// so we should not waste much time here because there can be thousands of waiting packets
+	if (lastNumQueuedSimFrames >= GAME_SPEED)
+		return;
+
+	// read ahead to find number of NETMSG_XXXFRAMES we still have to process
+	// this number is effectively a measure of current user network conditions
 	boost::shared_ptr<const netcode::RawPacket> packet;
-	int numUnconsumedFrames = 0;
-	unsigned ahead = 0;
-	while ((packet = net->Peek(ahead))) {
+
+	unsigned int numQueuedFrames = 0;
+	unsigned int packetPeekIndex = 0;
+
+	while ((packet = net->Peek(packetPeekIndex))) {
 		switch (packet->data[0]) {
 			case NETMSG_GAME_FRAME_PROGRESS: {
 				// this special packet skips queue entirely, so gets processed here
 				// it's meant to indicate current game progress for clients fast-forwarding to current point the game
 				// NOTE: this event should be unsynced, since its time reference frame is not related to the current
 				// progress of the game from the client's point of view
-				const int serverframenum = *(int*)(packet->data+1);
+				//
 				// send the event to lua call-in
-				eventHandler.GameProgress(serverframenum);
+				eventHandler.GameProgress(*(int*)(packet->data + 1));
 				// pop it out of the net buffer
-				net->DeleteBufferPacketAt(ahead);
+				net->DeleteBufferPacketAt(packetPeekIndex);
 			} break;
+
 			case NETMSG_NEWFRAME:
 			case NETMSG_KEYFRAME:
-				++numUnconsumedFrames;
+				++numQueuedFrames;
 			default:
-				++ahead;
+				++packetPeekIndex;
 		}
 	}
 
-	consumeSpeed = GAME_SPEED * gs->speedFactor + (numUnconsumedFrames / 2);
-	msgProcTimeLeft = 0.0f;
+	// conservative policy: take minimum of current and previous queue size
+	// we *NEVER* want the queue to run completely dry (by not keeping a few
+	// messages buffered) because this leads to micro-stutter which is WORSE
+	// than trading latency for smoothness (by trailing some extra number of
+	// simframes behind the server)
+	if (lastNumQueuedSimFrames < 0 || numQueuedFrames < lastNumQueuedSimFrames) {
+		lastNumQueuedSimFrames = numQueuedFrames;
+	}
 }
 
+float CGame::GetNetMessageProcessingTimeLimit() const
+{
+	// balance the time spent in simulation & drawing (esp. when reconnecting)
+	// use the following algo: i.e. with gu->reconnectSimDrawBalance = 0.2f
+	//  -> try to spend minimum 20% of the time in drawing
+	//  -> use remaining 80% for reconnecting
+	// (maxSimFPS / minDrawFPS) is desired number of simframes per drawframe
+	const float maxSimFPS    = (1.0f - gu->reconnectSimDrawBalance) * 1000.0f / std::max(0.01f, gu->avgSimFrameTime);
+	const float minDrawFPS   =         gu->reconnectSimDrawBalance  * 1000.0f / std::max(0.01f, gu->avgDrawFrameTime);
+	const float simDrawRatio = maxSimFPS / minDrawFPS;
+
+	float limit = 0.0f;
+
+	if (GML::SimEnabled() && GML::MultiThreadSim()) {
+		limit = (1000.0f / gu->minFPS);
+	} else {
+		limit = Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
+	}
+
+	return limit;
+}
 
 void CGame::ClientReadNet()
 {
@@ -125,28 +224,20 @@ void CGame::ClientReadNet()
 			msgProcTimeLeft = 10.0f;
 		} else {
 			msgProcTimeLeft -= (1000.0f * float(msgProcTimeLeft > 1000.0f));
-			msgProcTimeLeft += (consumeSpeed * (currentReadNetTime - lastReadNetTime).toMilliSecsf());
+			msgProcTimeLeft += (consumeSpeedMult * (currentReadNetTime - lastReadNetTime).toMilliSecsf());
 		}
 
 		lastReadNetTime = currentReadNetTime;
+
+		// look ahead so we can adapt consumeSpeedMult to network fluctuations
+		UpdateNumQueuedSimFrames();
 	} else {
-		// make sure ClientReadNet returns at least every 15 game frames
+		// ensure ClientReadNet returns at least every 15 simframes
 		// so CGame can process keyboard input, and render etc.
 		msgProcTimeLeft = (GAME_SPEED / float(gu->minFPS) * gs->wantedSpeedFactor) * 1000.0f;
 	}
 
-	// balance the time spent in simulation & drawing (esp. when reconnecting)
-	// use the following algo: i.e. with gu->reconnectSimDrawBalance = 0.2f
-	//  -> try to spend minimum 20% of the time in drawing
-	//  -> use remaining 80% for reconnecting
-	// (maxSimFPS / minDrawFPS) is desired number of simframes per drawframe
-	const float maxSimFPS    = (1.0f - gu->reconnectSimDrawBalance) * 1000.0f / std::max(0.01f, gu->avgSimFrameTime);
-	const float minDrawFPS   =         gu->reconnectSimDrawBalance  * 1000.0f / std::max(0.01f, gu->avgDrawFrameTime);
-	const float simDrawRatio = maxSimFPS / minDrawFPS;
-	const float msgProcTimeLimit = (GML::SimEnabled() && GML::MultiThreadSim()) ? (1000.0f / gu->minFPS) :
-		Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
-
-	const spring_time msgProcEndTime = spring_gettime() + spring_msecs(msgProcTimeLimit);
+	const spring_time msgProcEndTime = spring_gettime() + spring_msecs(GetNetMessageProcessingTimeLimit());
 
 	// really process the messages
 	while (true) {

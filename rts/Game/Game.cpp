@@ -188,10 +188,10 @@ CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 
 CR_REG_METADATA(CGame, (
 	CR_IGNORED(finishedLoading),
-	CR_IGNORED(thisFps),
+	CR_IGNORED(numDrawFrames),
 	CR_MEMBER(lastSimFrame),
+	CR_IGNORED(lastNumQueuedSimFrames),
 	CR_IGNORED(frameStartTime),
-	CR_IGNORED(lastUpdateTime),
 	CR_IGNORED(lastSimFrameTime),
 	CR_IGNORED(lastDrawFrameTime),
 	CR_IGNORED(lastFrameTime),
@@ -223,7 +223,7 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(skipping),
 	CR_MEMBER(playing),
 	CR_IGNORED(msgProcTimeLeft),
-	CR_IGNORED(consumeSpeed),
+	CR_IGNORED(consumeSpeedMult),
 
 	CR_POSTLOAD(PostLoad)
 ));
@@ -322,10 +322,10 @@ DO_ONCE_FNC(
 
 CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
 	: gameDrawMode(gameNotDrawing)
-	, thisFps(0)
+	, numDrawFrames(0)
 	, lastSimFrame(-1)
+	, lastNumQueuedSimFrames(-1)
 	, frameStartTime(spring_gettime())
-	, lastUpdateTime(spring_gettime())
 	, lastSimFrameTime(spring_gettime())
 	, lastDrawFrameTime(spring_gettime())
 	, lastFrameTime(spring_gettime())
@@ -341,7 +341,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, playing(false)
 	, chatting(false)
 	, msgProcTimeLeft(0.0f)
-	, consumeSpeed(1.0f)
+	, consumeSpeedMult(1.0f)
 	, skipStartFrame(0)
 	, skipEndFrame(0)
 	, skipTotalFrames(0)
@@ -965,15 +965,7 @@ bool CGame::Update()
 	good_fpu_control_registers("CGame::Update");
 
 	JobDispatcher::Update();
-
-	const spring_time timeNow = spring_gettime();
-
-	if (spring_difftime(timeNow, lastUpdateTime).toMilliSecsf() >= 1000.0f) {
-		lastUpdateTime = timeNow;
-
-		// do this once every second
-		UpdateConsumeSpeed();
-	}
+	UpdateSimFrameConsumeSpeedMult();
 
 	//TODO: why? it already gets called with `true` in ::Draw()?
 	if (!skipping) {
@@ -983,7 +975,8 @@ bool CGame::Update()
 	net->Update();
 
 	// When video recording do step by step simulation, so each simframe gets a corresponding videoframe
-	if (videoCapturing->IsCapturing() && playing && gameServer) {
+	// FIXME: SERVER ALREADY DOES THIS BY ITSELF
+	if (videoCapturing->IsCapturing() && playing && gameServer != NULL) {
 		gameServer->CreateNewFrame(false, true);
 	}
 
@@ -1062,7 +1055,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		}
 	}
 
-	thisFps++;
+	numDrawFrames++;
 	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 
 	// Update the interpolation coefficient (globalRendering->timeOffset)
@@ -1075,14 +1068,12 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		lastSimFrameTime = currentTime;
 	}
 
-	const float frameDeltaTime = spring_diffsecs(currentTime, frameStartTime);
+	if ((currentTime - frameStartTime).toMilliSecsf() >= 1000.0f) {
+		globalRendering->FPS = (numDrawFrames * 1000.0f) / (currentTime - frameStartTime).toMilliSecsf();
 
-	if (frameDeltaTime >= 1.0f) {
 		// update FPS counter once every second
 		frameStartTime = currentTime;
-
-		globalRendering->FPS = thisFps / frameDeltaTime;
-		thisFps = 0;
+		numDrawFrames = 0;
 
 		if (GML::SimEnabled()) GML_RESET_LOCK_TIME(); //FIXME move to a GML update place?
 	}
