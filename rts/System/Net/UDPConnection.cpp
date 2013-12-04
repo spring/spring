@@ -591,7 +591,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 
 					if (logMessages) {
 						LOG_L(L_INFO,
-							"\t[%s] (received=%u enqueued=%u) packets (dt=%fms mindt=%f maxdt=%fms sumdt=%fms)",
+							"\t[%s] (received=%u enqueued=%u) packets (dt=%fms mindt=%fms maxdt=%fms sumdt=%fms)",
 							__FUNCTION__, numReceivedFramePackets, numEnqueuedFramePackets, dt.toMilliSecsf(),
 							minDeltaFramePacketRecvTime, maxDeltaFramePacketRecvTime, sumDeltaFramePacketRecvTime
 						);
