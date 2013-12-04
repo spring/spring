@@ -476,7 +476,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 {
 	#ifdef ENABLE_DEBUG_STATS
 	if (logMessages) {
-		LOG_L(L_INFO, "\t[%s] checksum=(%u : %u)", __FUNCTION__, incoming.GetChecksum(), incoming.checksum);
+		LOG_L(L_INFO, "\t[%s] checksum=(%u : %u) mtu=%u", __FUNCTION__, incoming.GetChecksum(), incoming.checksum, mtu);
 	}
 	#endif
 
