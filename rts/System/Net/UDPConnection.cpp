@@ -278,17 +278,30 @@ void UDPConnection::Init()
 	CBaseNetProtocol::Get();
 
 	lastNakTime = spring_gettime();
-	lastSendTime = spring_gettime();
 	lastUnackResentTime = spring_gettime();
-	lastReceiveTime = spring_gettime();
+	lastPacketSendTime = spring_gettime();
+	lastPacketRecvTime = spring_gettime();
 	lastChunkCreatedTime = spring_gettime();
-	framePacketRecvStartTime = spring_gettime();
+
+	#ifdef ENABLE_DEBUG_STATS
+	lastDebugMessageTime = spring_gettime();
+	lastFramePacketRecvTime = spring_gettime();
+	#endif
 
 	lastInOrder = -1;
 	waitingPackets.clear();
 
+	#ifdef ENABLE_DEBUG_STATS
+	sumDeltaFramePacketRecvTime = 0.0f;
+	minDeltaFramePacketRecvTime = 0.0f;
+	maxDeltaFramePacketRecvTime = 0.0f;
+
+	numReceivedFramePackets = 0;
+	numEnqueuedFramePackets = 0;
+	numEmptyGetDataCalls = 0;
+	numTotalGetDataCalls = 0;
+	#endif
 	currentPacketChunkNum = 0;
-	currentFramePacketCount = 0;
 
 	lastNak = -1;
 	sentOverhead = 0;
@@ -305,7 +318,7 @@ void UDPConnection::Init()
 	resend = false;
 
 	#ifndef UNIT_TEST
-	logDebugMsgs = configHandler->GetBool("UDPConnectionLogDebugMessages");
+	logMessages = configHandler->GetBool("UDPConnectionLogDebugMessages");
 	#endif
 
 	netLossFactor = globalConfig->networkLossFactor;
@@ -350,6 +363,27 @@ boost::shared_ptr<const RawPacket> UDPConnection::Peek(unsigned ahead) const
 	return empty;
 }
 
+#ifdef ENABLE_DEBUG_STATS
+boost::shared_ptr<const RawPacket> UDPConnection::GetData()
+{
+	numTotalGetDataCalls++;
+
+	if (!msgQueue.empty()) {
+		boost::shared_ptr<const RawPacket> msg = msgQueue.front();
+		msgQueue.pop_front();
+
+		numEnqueuedFramePackets -= (msg->data[0] == NETMSG_NEWFRAME);
+		numEnqueuedFramePackets -= (msg->data[0] == NETMSG_KEYFRAME);
+
+		return msg;
+	}
+
+	numEmptyGetDataCalls++;
+
+	boost::shared_ptr<const RawPacket> empty;
+	return empty;
+}
+#else
 boost::shared_ptr<const RawPacket> UDPConnection::GetData()
 {
 	if (!msgQueue.empty()) {
@@ -361,6 +395,7 @@ boost::shared_ptr<const RawPacket> UDPConnection::GetData()
 	boost::shared_ptr<const RawPacket> empty;
 	return empty;
 }
+#endif
 
 
 void UDPConnection::DeleteBufferPacketAt(unsigned index)
@@ -374,6 +409,34 @@ void UDPConnection::Update()
 {
 	spring_time curTime = spring_gettime();
 	outgoing.UpdateTime(spring_tomsecs(curTime));
+
+	#ifdef ENABLE_DEBUG_STATS
+	{
+		const float debugMssgDeltaTime = (curTime - lastDebugMessageTime).toMilliSecsf();
+		const float avgFramePacketRate = numReceivedFramePackets / debugMssgDeltaTime;
+
+		if (debugMssgDeltaTime >= 1000.0f) {
+			if (logMessages) {
+				LOG_L(L_INFO,
+					"[UDPConnection::%s] %u NETMSG_*FRAME packets received (%fms : %fp/ms) during (empty=%u : total=%u) GetData calls",
+					__FUNCTION__, numReceivedFramePackets, debugMssgDeltaTime, avgFramePacketRate, numEmptyGetDataCalls, numTotalGetDataCalls
+				);
+			}
+
+			lastDebugMessageTime = curTime;
+
+			sumDeltaFramePacketRecvTime = 0.0f;
+			minDeltaFramePacketRecvTime = 1e6f;
+			maxDeltaFramePacketRecvTime = 0.0f;
+
+			numReceivedFramePackets = 0;
+			// numEnqueuedFramePackets = 0;
+
+			numEmptyGetDataCalls = 0;
+			numTotalGetDataCalls = 0;
+		}
+	}
+	#endif
 
 	if (!sharedSocket && !closed) {
 		// duplicated code with UDPListener
@@ -411,7 +474,7 @@ void UDPConnection::Update()
 
 void UDPConnection::ProcessRawPacket(Packet& incoming)
 {
-	lastReceiveTime = spring_gettime();
+	lastPacketRecvTime = spring_gettime();
 	dataRecv += incoming.GetSize();
 	recvOverhead += Packet::headerSize;
 	++recvPackets;
@@ -420,9 +483,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 //		return;
 
 	if (incoming.GetChecksum() != incoming.checksum) {
-		LOG_L(L_ERROR,
-			"Discarding incoming corrupted packet: CRC %d, LEN %d",
-			incoming.checksum, incoming.GetSize());
+		LOG_L(L_ERROR, "Discarding incoming corrupted packet: CRC %d, LEN %d", incoming.checksum, incoming.GetSize());
 		return;
 	}
 
@@ -513,9 +574,30 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 			if (ProtocolDef::GetInstance()->IsValidLength(pktlength, msglength)) {
 				msgQueue.push_back(boost::shared_ptr<const RawPacket>(new RawPacket(bufp, pktlength)));
 
+				#ifdef ENABLE_DEBUG_STATS
 				// server sends both of these, clients send only keyframe messages
-				currentFramePacketCount += ((msgQueue.back())->data[0] == NETMSG_NEWFRAME);
-				currentFramePacketCount += ((msgQueue.back())->data[0] == NETMSG_KEYFRAME);
+				// TODO: would be easy to feed this data into a Q3A-style lagometer
+				//
+				if ((msgQueue.back())->data[0] == NETMSG_NEWFRAME || (msgQueue.back())->data[0] == NETMSG_KEYFRAME) {
+					const spring_time dt = spring_gettime() - lastFramePacketRecvTime;
+
+					sumDeltaFramePacketRecvTime += dt.toMilliSecsf();
+					minDeltaFramePacketRecvTime = std::min(dt.toMilliSecsf(), minDeltaFramePacketRecvTime);
+					maxDeltaFramePacketRecvTime = std::max(dt.toMilliSecsf(), maxDeltaFramePacketRecvTime);
+
+					numReceivedFramePackets += 1;
+					numEnqueuedFramePackets += 1;
+					lastFramePacketRecvTime = spring_gettime();
+
+					if (logMessages) {
+						LOG_L(L_INFO,
+							"\t[%s] (received=%u enqueued=%u) packets (dt=%fms mindt=%f maxdt=%fms sumdt=%fms)",
+							__FUNCTION__, numReceivedFramePackets, numEnqueuedFramePackets, dt.toMilliSecsf(),
+							minDeltaFramePacketRecvTime, maxDeltaFramePacketRecvTime, sumDeltaFramePacketRecvTime
+						);
+					}
+				}
+				#endif
 
 				pos += pktlength;
 			} else {
@@ -532,21 +614,6 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 				++pos;
 			}
 		}
-	}
-
-	const float recvDeltaTime = (lastReceiveTime - framePacketRecvStartTime).toMilliSecsf();
-	const float avgPacketRate = currentFramePacketCount / recvDeltaTime;
-
-	if (currentFramePacketCount >= 30 || recvDeltaTime >= 1000.0f) {
-		if (logDebugMsgs) {
-			LOG_L(L_INFO,
-				"[UDPConnection::%s] %u NETMSG_*FRAME packets received (%fms : %fp/ms)",
-				__FUNCTION__, currentFramePacketCount, recvDeltaTime, avgPacketRate
-			);
-		}
-
-		framePacketRecvStartTime = lastReceiveTime;
-		currentFramePacketCount = 0;
 	}
 }
 
@@ -580,19 +647,17 @@ void UDPConnection::Flush(const bool forced)
 		bool sendMore = true;
 
 		do {
-			sendMore = (outgoing.GetAverage(true) <= globalConfig->linkOutgoingBandwidth)
-					|| (globalConfig->linkOutgoingBandwidth <= 0)
-					|| partialPacket
-					|| forced;
+			sendMore  = (outgoing.GetAverage(true) <= globalConfig->linkOutgoingBandwidth);
+			sendMore |= ((globalConfig->linkOutgoingBandwidth <= 0) || partialPacket || forced);
 
 			if (!outgoingData.empty() && sendMore) {
 				boost::shared_ptr<const RawPacket>& packet = *(outgoingData.begin());
 
 				if (!partialPacket && !ProtocolDef::GetInstance()->IsValidPacket(packet->data, packet->length)) {
 					LOG_L(L_ERROR,
-							"Discarding outgoing invalid packet: ID %d, LEN %d",
-							((packet->length > 0) ? (int)packet->data[0] : -1),
-							packet->length);
+						"Discarding outgoing invalid packet: ID %d, LEN %d",
+						((packet->length > 0) ? (int)packet->data[0] : -1),
+						packet->length);
 					outgoingData.pop_front();
 				} else {
 					const unsigned numBytes = std::min((unsigned)maxChunkSize - pos, packet->length);
@@ -636,7 +701,7 @@ bool UDPConnection::CheckTimeout(int seconds, bool initial) const {
 		timeout = globalConfig->reconnectTimeout;
 	}
 
-	return (timeout > 0 && (spring_gettime() - lastReceiveTime) > spring_secs(timeout));
+	return (timeout > 0 && (spring_gettime() - lastPacketRecvTime) > spring_secs(timeout));
 }
 
 bool UDPConnection::NeedsReconnect() {
@@ -749,7 +814,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 		lastUnackResentTime = curTime;
 	}
 
-	if (flushed || !newChunks.empty() || (netLossFactor == MIN_LOSS_FACTOR && !resendRequested.empty()) || (nak > 0) || (curTime - lastSendTime) > spring_msecs(200 >> netLossFactor))
+	if (flushed || !newChunks.empty() || (netLossFactor == MIN_LOSS_FACTOR && !resendRequested.empty()) || (nak > 0) || (curTime - lastPacketSendTime) > spring_msecs(200 >> netLossFactor))
 	{
 		bool todo = true;
 
@@ -875,7 +940,7 @@ void UDPConnection::SendPacket(Packet& pkt)
 	pkt.Serialize(data);
 
 	outgoing.DataSent(data.size());
-	lastSendTime = spring_gettime();
+	lastPacketSendTime = spring_gettime();
 	ip::udp::socket::message_flags flags = 0;
 	boost::system::error_code err;
 
@@ -883,9 +948,8 @@ void UDPConnection::SendPacket(Packet& pkt)
 		mySocket->send_to(buffer(data), addr, flags, err);
 	}
 
-	if (CheckErrorCode(err)) {
+	if (CheckErrorCode(err))
 		return;
-	}
 
 	dataSent += data.size();
 	++sentPackets;
