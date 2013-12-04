@@ -418,7 +418,7 @@ void UDPConnection::Update()
 		if (debugMssgDeltaTime >= 1000.0f) {
 			if (logMessages) {
 				LOG_L(L_INFO,
-					"[UDPConnection::%s] %u NETMSG_*FRAME packets received (%fms : %fp/ms) during (empty=%u : total=%u) GetData calls",
+					"[UDPConnection::%s] %u NETMSG_*FRAME packets received (%fms : %fp/ms) during (empty=%u total=%u) GetData calls",
 					__FUNCTION__, numReceivedFramePackets, debugMssgDeltaTime, avgFramePacketRate, numEmptyGetDataCalls, numTotalGetDataCalls
 				);
 			}
@@ -474,6 +474,12 @@ void UDPConnection::Update()
 
 void UDPConnection::ProcessRawPacket(Packet& incoming)
 {
+	#ifdef ENABLE_DEBUG_STATS
+	if (logMessages) {
+		LOG_L(L_INFO, "\t[%s] checksum=(%u : %u)", __FUNCTION__, incoming.GetChecksum(), incoming.checksum);
+	}
+	#endif
+
 	lastPacketRecvTime = spring_gettime();
 	dataRecv += incoming.GetSize();
 	recvOverhead += Packet::headerSize;
