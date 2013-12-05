@@ -133,6 +133,7 @@ private:
 
 	void ReColorTeams();
 
+	unsigned int GetNumQueuedSimFrameMessages(unsigned int maxFrames) const;
 	float GetNetMessageProcessingTimeLimit() const;
 
 	void SendClientProcUsage();
