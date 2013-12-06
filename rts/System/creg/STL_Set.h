@@ -7,9 +7,12 @@
 
 #ifdef USING_CREG
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 	#include <hash_set>
 	#define SPRING_HASH_SET stdext::hash_set
+#elif defined(_LIBCPP_VERSION)
+	#include <unordered_set>
+	#define SPRING_HASH_SET std::unordered_set
 #elif __GNUG__
 	/* Test for GCC >= 4.3.2 or clang (and assume tr1 is present) */
 	#if __GNUC__ > 4 || \
