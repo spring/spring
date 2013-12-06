@@ -43,7 +43,7 @@ extern volatile bool gmlServerActive;
 extern bool ThreadRegistered();
 
 // memory barriers for different platforms
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__)
 #	include <libkern/OSAtomic.h>
 #	define GML_MEMBAR OSMemoryBarrier()
 #elif defined(__GNUC__)
