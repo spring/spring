@@ -24,6 +24,12 @@
 #include <dlfcn.h> // for dladdr(), dlopen()
 #include <climits> // for PATH_MAX
 
+#elif defined __FreeBSD__
+#include <unistd.h>
+#include <dlfcn.h> // for dladdr(), dlopen()
+#include <sys/types.h>
+#include <sys/sysctl.h>
+
 #else
 
 #endif
@@ -213,6 +219,18 @@ std::string GetProcessExecutableFile()
 	if (err == 0) {
 		procExeFilePath = GetRealPath(path);
 	}
+#elif defined(__FreeBSD__)
+	int mib[4];
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_PROC;
+	mib[2] = KERN_PROC_PATHNAME;
+	mib[3] = -1;
+	char buf[PATH_MAX];
+	size_t cb = sizeof(buf);
+	int err = sysctl(mib, 4, buf, &cb, NULL, 0);
+	if (err == 0) {
+		procExeFilePath = buf;
+	}
 #else
 	#error implement this
 #endif
@@ -235,7 +253,7 @@ std::string GetModuleFile(std::string moduleName)
 	// this will only be used if moduleFilePath stays empty
 	const char* error = NULL;
 
-#if defined(linux) || defined(__APPLE__)
+#if defined(linux) || defined(__APPLE__) || defined(__FreeBSD__)
 #ifdef __APPLE__
 	#define SHARED_LIBRARY_EXTENSION "dylib"
 #else
