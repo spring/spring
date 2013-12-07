@@ -1094,23 +1094,24 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool userTarget, const CUnit* targ
 bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, const CUnit* targetUnit) const
 {
 	if (targetUnit != NULL) {
-		if (targetUnit == owner) {
+		if (targetUnit == owner)
 			return false;
-		}
-		if ((targetUnit->category & onlyTargetCategory) == 0) {
+		if ((targetUnit->category & onlyTargetCategory) == 0)
 			return false;
-		}
-		if (targetUnit->isDead && modInfo.fireAtKilled == 0) {
+		if (targetUnit->isDead && modInfo.fireAtKilled == 0)
 			return false;
-		}
-		if (targetUnit->IsCrashing() && modInfo.fireAtCrashing == 0) {
+		if (targetUnit->IsCrashing() && modInfo.fireAtCrashing == 0)
 			return false;
-		}
 	}
 
-	// target is underwater but we cannot pick targets underwater
-	if (!weaponDef->waterweapon && TargetUnitOrPositionUnderWater(tgtPos, targetUnit))
-		return false;
+	if (!weaponDef->waterweapon) {
+		// we cannot pick targets underwater, check where target is in relation to us
+		if (!owner->IsUnderWater() && TargetUnitOrPositionUnderWater(tgtPos, targetUnit))
+			return false;
+		// if we are underwater but target is *not* in water, fireSubmersed gets checked
+		if (owner->IsUnderWater() && TargetUnitOrPositionInWater(tgtPos, targetUnit))
+			return false;
+	}
 
 	return true;
 }
