@@ -8,7 +8,6 @@
 #endif
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "Game/CameraHandler.h"
 #include "Game/CommandMessage.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
@@ -26,6 +25,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/EventHandler.h"
+#include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "Net/Protocol/NetProtocol.h"
@@ -118,9 +118,8 @@ unsigned int CGame::GetNumQueuedSimFrameMessages(unsigned int maxFrames) const
 	return numQueuedFrames;
 }
 
-void CGame::UpdateSimFrameConsumeSpeedMult()
+void CGame::UpdateNumQueuedSimFrames()
 {
-	#if (defined(SPRING94) || defined(SPRING95))
 	if (gameServer != NULL)
 		return;
 
@@ -129,67 +128,7 @@ void CGame::UpdateSimFrameConsumeSpeedMult()
 	const spring_time currTime = spring_gettime();
 	const spring_time deltaTime = currTime - lastUpdateTime;
 
-	// do this once every second
-	if (deltaTime.toMilliSecsf() < 1000.0f)
-		return;
-
-	#ifdef SPRING95
-	{
-		// this uses no buffering which makes it too sensitive
-		// to jitter (especially on lower-quality connections)
-		consumeSpeedMult = GAME_SPEED * gs->speedFactor + (GetNumQueuedSimFrameMessages(-1u) / 2);
-	}
-	#else
-	{
-		// SPRING94
-		if (lastNumQueuedSimFrames < 0) {
-			consumeSpeedMult = GAME_SPEED * gs->speedFactor + 10000;
-		} else {
-			consumeSpeedMult = GAME_SPEED * gs->speedFactor + lastNumQueuedSimFrames - 2;
-		}
-
-		// reset (will cause peak at 1Hz but better than
-		// random jitter due to network unpredictability)
-		lastNumQueuedSimFrames = -1;
-	}
-	#endif
-
-	msgProcTimeLeft = 0.0f;
-	lastUpdateTime = currTime;
-	#endif
-}
-
-void CGame::UpdateNumQueuedSimFrames()
-{
-	assert(gameServer == NULL);
-
-	#ifdef SPRING94
-	{
-		// <lastNumQueuedSimFrames> is only used to calculate <consumeSpeedMult> once per second,
-		// so we should not waste much time here because there can be thousands of waiting packets
-		// note: don't need to call this at higher frequency than UpdateSimFrameConsumeSpeedMult()
-		if (lastNumQueuedSimFrames >= GAME_SPEED)
-			return;
-
-		const unsigned int numQueuedFrames = GetNumQueuedSimFrameMessages(-1u);
-
-		// conservative policy: take minimum of current and previous queue size
-		// we *NEVER* want the queue to run completely dry (by not keeping a few
-		// messages buffered) because this leads to micro-stutter which is WORSE
-		// than trading latency for smoothness (by trailing some extra number of
-		// simframes behind the server)
-		if (lastNumQueuedSimFrames < 0 || numQueuedFrames < lastNumQueuedSimFrames) {
-			lastNumQueuedSimFrames = numQueuedFrames;
-		}
-	}
-	#else
-	#ifndef SPRING95
-	{
-		static spring_time lastUpdateTime = spring_gettime();
-
-		const spring_time currTime = spring_gettime();
-		const spring_time deltaTime = currTime - lastUpdateTime;
-
+	if (globalConfig->useNetMessageSmoothingBuffer) {
 		// update consumption-rate faster at higher game speeds
 		if (deltaTime.toMilliSecsf() < (1000.0f / gs->speedFactor))
 			return;
@@ -197,6 +136,11 @@ void CGame::UpdateNumQueuedSimFrames()
 		const unsigned int numQueuedFrames = GetNumQueuedSimFrameMessages(GAME_SPEED * gs->speedFactor * 5);
 
 		if (numQueuedFrames < lastNumQueuedSimFrames) {
+			// conservative policy: take minimum of current and previous queue size
+			// we *NEVER* want the queue to run completely dry (by not keeping a few
+			// messages buffered) because this leads to micro-stutter which is WORSE
+			// than trading latency for smoothness (by trailing some extra number of
+			// simframes behind the server)
 			lastNumQueuedSimFrames = numQueuedFrames;
 		} else {
 			// trust the past more than the future
@@ -208,9 +152,45 @@ void CGame::UpdateNumQueuedSimFrames()
 		// (because effect of network jitter is amplified)
 		consumeSpeedMult = GAME_SPEED * gs->speedFactor + lastNumQueuedSimFrames - (2 * gs->speedFactor);
 		lastUpdateTime = currTime;
+	} else {
+		if (deltaTime.toMilliSecsf() < 1000.0f)
+			return;
+
+		// SPRING95
+		// this uses no buffering which makes it too sensitive
+		// to jitter (especially on lower-quality connections)
+		consumeSpeedMult = GAME_SPEED * gs->speedFactor + (GetNumQueuedSimFrameMessages(-1u) / 2);
 	}
-	#endif
-	#endif
+}
+
+void CGame::UpdateNetMessageProcessingTimeLeft()
+{
+	// compute new msgProcTimeLeft to "smooth" out SimFrame() calls
+	if (gameServer == NULL) {
+		const spring_time currentReadNetTime = spring_gettime();
+		const spring_time deltaReadNetTime = currentReadNetTime - lastReadNetTime;
+
+		if (skipping) {
+			msgProcTimeLeft = 10.0f;
+		} else {
+			// at <N> Hz we should consume one simframe message every (1000/N) ms
+			//
+			// <dt> since last call will typically be some small fraction of this
+			// so we eat through the queue at a rate proportional to that fraction
+			// (the amount of processing time is weighted by dt and also increases
+			// when more messages are waiting)
+			//
+			// don't let the limit get over 1000ms
+			msgProcTimeLeft -= (1000.0f * float(msgProcTimeLeft > 1000.0f));
+			msgProcTimeLeft += (consumeSpeedMult * deltaReadNetTime.toMilliSecsf());
+		}
+
+		lastReadNetTime = currentReadNetTime;
+	} else {
+		// ensure ClientReadNet returns at least every 15 simframes
+		// so CGame can process keyboard input, and render etc.
+		msgProcTimeLeft = (GAME_SPEED / float(gu->minFPS) * gs->wantedSpeedFactor) * 1000.0f;
+	}
 }
 
 float CGame::GetNetMessageProcessingTimeLimit() const
@@ -237,26 +217,9 @@ float CGame::GetNetMessageProcessingTimeLimit() const
 
 void CGame::ClientReadNet()
 {
-	// compute new msgProcTimeLeft to "smooth" out SimFrame() calls
-	if (gameServer == NULL) {
-		const spring_time currentReadNetTime = spring_gettime();
-
-		if (skipping) {
-			msgProcTimeLeft = 10.0f;
-		} else {
-			msgProcTimeLeft -= (1000.0f * float(msgProcTimeLeft > 1000.0f));
-			msgProcTimeLeft += (consumeSpeedMult * (currentReadNetTime - lastReadNetTime).toMilliSecsf());
-		}
-
-		lastReadNetTime = currentReadNetTime;
-
-		// look ahead so we can adapt consumeSpeedMult to network fluctuations
-		UpdateNumQueuedSimFrames();
-	} else {
-		// ensure ClientReadNet returns at least every 15 simframes
-		// so CGame can process keyboard input, and render etc.
-		msgProcTimeLeft = (GAME_SPEED / float(gu->minFPS) * gs->wantedSpeedFactor) * 1000.0f;
-	}
+	UpdateNetMessageProcessingTimeLeft();
+	// look ahead so we can adapt consumeSpeedMult to network fluctuations
+	UpdateNumQueuedSimFrames();
 
 	const spring_time msgProcEndTime = spring_gettime() + spring_msecs(GetNetMessageProcessingTimeLimit());
 

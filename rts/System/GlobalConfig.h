@@ -51,14 +51,6 @@ public:
 	unsigned mtu;
 
 	/**
-	 * @brief teamHighlight
-	 *
-	 * Team highlighting for teams that are uncontrolled or have connection
-	 * problems.
-	 */
-	int teamHighlight;
-
-	/**
 	 * @brief linkBandwidth
 	 *
 	 * Maximum outgoing bandwidth from server in bytes, per user
@@ -94,6 +86,15 @@ public:
 	int linkIncomingMaxWaitingPackets;
 
 	/**
+	 * @brief useNetMessageSmoothingBuffer
+	 *
+	 * Whether client should try to keep a small buffer of unconsumed
+	 * messages for smoothing network jitter at the cost of increased
+	 * latency (running further behind the server)
+	 */
+	bool useNetMessageSmoothingBuffer;
+
+	/**
 	 * @brief luaWritableConfigFile
 	 *
 	 * Allows Lua to write to springsettings/springrc file
@@ -104,14 +105,22 @@ public:
 	/**
 	 * @brief multiThreadLua
 	 *
-	 * LuaHandle threading mode for Spring MT:
+	 * LuaHandle threading mode for Spring MT
 	 * 
 	 * See LuaConfig.h and ModInfo::luaThreadingModel
 	 */
 	int multiThreadLua;
 	bool enableDrawCallIns;
 #endif
+
 	int GetMultiThreadLua();
+	/**
+	 * @brief teamHighlight
+	 *
+	 * Team highlighting for teams that are uncontrolled or have connection
+	 * problems.
+	 */
+	int teamHighlight;
 };
 
 extern GlobalConfig* globalConfig;
