@@ -405,6 +405,11 @@ void CGroundMoveType::StopMoving(bool callScript, bool hardStop) {
 
 	LOG_L(L_DEBUG, "StopMoving: stopping engine for unit %i", owner->id);
 
+	if (!atGoal) {
+		currWayPoint = Here();
+		goalPos = currWayPoint;
+	}
+
 	// this gets called under a variety of conditions (see MobileCAI)
 	// the most common case is a CMD_STOP being issued which means no
 	// StartMoving-->StartEngine will follow
@@ -1403,10 +1408,6 @@ void CGroundMoveType::StopEngine(bool callScript, bool hardStop) {
 		pathManager->DeletePath(pathId);
 		pathId = 0;
 
-		if (!atGoal) {
-			currWayPoint = Here();
-		}
-
 		if (callScript) {
 			owner->script->StopMoving();
 		}
@@ -2009,6 +2010,13 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 	if (owner->heading == heading)
 		return;
 
+	// NOTE:
+	//   by changing the progress-state here (which seems redundant),
+	//   SlowUpdate can suddenly request a new path for us even after
+	//   StopMoving (which clears pathId; CAI often calls StopMoving
+	//   before unit is at goalPos!)
+	//   for this reason StopMoving always updates goalPos so internal
+	//   GetNewPath's are no-ops (while CAI does not call StartMoving)
 	if (!frontWeapon->TryTarget(mainHeadingPos, true, 0)) {
 		progressState = Active;
 	}
@@ -2049,19 +2057,17 @@ void CGroundMoveType::SetMainHeading() {
 	ASSERT_SYNCED(newHeading);
 
 	if (progressState == Active) {
-		if (owner->heading == newHeading) {
+		if (owner->heading != newHeading) {
+			// start or continue turning
+			ChangeHeading(newHeading);
+		} else {
 			// stop turning
 			progressState = Done;
-		} else {
-			ChangeHeading(newHeading);
 		}
 	} else {
 		if (owner->heading != newHeading) {
 			if (!frontWeapon->TryTarget(mainHeadingPos, true, 0)) {
-				// start turning
 				progressState = Active;
-
-				ChangeHeading(newHeading);
 			}
 		}
 	}
