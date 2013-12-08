@@ -880,7 +880,7 @@ void CGame::ClientReadNet()
 
 						if (unit == NULL)
 							continue;
-						if (unit->fpsControlPlayer != NULL)
+						if (unit->UnderFirstPersonControl())
 							continue;
 						// in godmode we can have units selected that are not ours
 						if (unit->team != srcTeamID)

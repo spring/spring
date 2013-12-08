@@ -893,7 +893,7 @@ bool CHoverAirMoveType::Update()
 		ExecuteStop();
 
 	if (aircraftState != AIRCRAFT_CRASHING) {
-		if (owner->fpsControlPlayer != NULL) {
+		if (owner->UnderFirstPersonControl()) {
 			SetState(AIRCRAFT_FLYING);
 
 			const FPSUnitController& con = owner->fpsControlPlayer->fpsController;

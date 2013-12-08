@@ -275,7 +275,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 		// help units fire while chasing
 		rangeMod = 1.3f;
 	}
-	if (owner->fpsControlPlayer != NULL) {
+	if (owner->UnderFirstPersonControl()) {
 		rangeMod = 0.95f;
 	}
 

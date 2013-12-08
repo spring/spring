@@ -155,6 +155,7 @@ public:
 	void UpdatePosErrorParams(bool updateError, bool updateDelta);
 
 	bool UsingScriptMoveType() const { return (prevMoveType != NULL); }
+	bool UnderFirstPersonControl() const { return (fpsControlPlayer != NULL); }
 
 	bool IsNeutral() const { return neutral; }
 	bool IsCloaked() const { return isCloaked; }
