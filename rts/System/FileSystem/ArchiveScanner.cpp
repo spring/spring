@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <boost/interprocess/smart_ptr/unique_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include "ArchiveScanner.h"
 #include "ArchiveLoader.h"
@@ -534,7 +534,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		return;
 	}
 
-	boost::unique_ptr<IArchive> ar(archiveLoader.OpenArchive(fullName));
+	boost::scoped_ptr<IArchive> ar(archiveLoader.OpenArchive(fullName));
 	if (!ar || !ar->IsOpen()) {
 		LOG("Unable to open archive: %s", fullName.c_str());
 
@@ -720,13 +720,13 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	std::list<std::string> files;
 
 	// Try to open an archive
-	boost::unique_ptr<IArchive> ar(archiveLoader.OpenArchive(arcName));
+	boost::scoped_ptr<IArchive> ar(archiveLoader.OpenArchive(arcName));
 	if (!ar) {
 		return 0; // It wasn't an archive
 	}
 
 	// Load ignore list.
-	boost::unique_ptr<IFileFilter> ignore(CreateIgnoreFilter(ar));
+	boost::scoped_ptr<IFileFilter> ignore(CreateIgnoreFilter(ar.get()));
 
 	// Insert all files to check in lowercase format
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
