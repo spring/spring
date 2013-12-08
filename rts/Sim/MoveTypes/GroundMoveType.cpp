@@ -303,7 +303,7 @@ void CGroundMoveType::UpdateOwnerSpeedAndHeading()
 
 	// either follow user control input or pathfinder
 	// waypoints; change speed and heading as required
-	if (owner->fpsControlPlayer != NULL) {
+	if (owner->UnderFirstPersonControl()) {
 		UpdateDirectControl();
 	} else {
 		FollowPath();
@@ -1629,15 +1629,18 @@ void CGroundMoveType::HandleStaticObjectCollision(
 			sqPenDistanceSum /= sqPenDistanceCnt;
 
 			const float strafeSign = -Sign(sqCenterPosition.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir));
-			const float strafeScale = std::min(currentSpeed, std::max(0.1f, -sqPenDistanceSum * 0.5f));
-			// 94+.0
-			// const float bounceScale = std::min(currentSpeed, std::max(0.1f, -sqPenDistanceSum * 0.5f));
-			// 94.0 (more pronounced lateral bouncing but units get stuck more easily)
-			const float bounceScale = std::max(0.1f, -sqPenDistanceSum * 0.5f);
+			const float strafeScale = std::min(std::max(currentSpeed*0.0f, maxSpeedDef), std::max(0.1f, -sqPenDistanceSum * 0.5f));
+			const float bounceScale = std::min(std::max(currentSpeed*0.0f, maxSpeedDef), std::max(0.1f, -sqPenDistanceSum * 0.5f));
+
+			// in FPS mode, normalize {strafe,bounce}Scale and multiply by maxSpeedDef
+			// (otherwise it would be possible to slide along map edges at above-normal
+			// speeds, etc.)
+			const float fpsStrafeScale = (strafeScale / (strafeScale + bounceScale)) * maxSpeedDef;
+			const float fpsBounceScale = (bounceScale / (strafeScale + bounceScale)) * maxSpeedDef;
 
 			strafeVec = collider->rightdir * strafeSign;
-			strafeVec = strafeVec.SafeNormalize2D() * strafeScale;
-			bounceVec = bounceVec.SafeNormalize2D() * bounceScale;
+			strafeVec = strafeVec.SafeNormalize2D() * mix(strafeScale, fpsStrafeScale, owner->UnderFirstPersonControl());
+			bounceVec = bounceVec.SafeNormalize2D() * mix(bounceScale, fpsBounceScale, owner->UnderFirstPersonControl());
 
 			// if checkTerrain is true, test only the center square
 			if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, ZeroVector, checkTerrain, checkYardMap, checkTerrain)) {
@@ -2151,6 +2154,7 @@ bool CGroundMoveType::UpdateDirectControl()
 	if (unitCon.right) { ChangeHeading(owner->heading - turnRate); turnSign = -1.0f; }
 
 	if (selfCon.GetControllee() == owner) {
+		// local client is controlling us
 		camera->rot.y += (turnRate * turnSign * TAANG2RAD);
 	}
 

@@ -172,7 +172,7 @@ void CCannon::SlowUpdate()
 
 bool CCannon::AttackGround(float3 pos, bool userTarget)
 {
-	if (owner->fpsControlPlayer != NULL) {
+	if (owner->UnderFirstPersonControl()) {
 		// mostly prevents firing longer than max range using fps mode
 		pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
 	}

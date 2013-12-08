@@ -172,7 +172,7 @@ bool CClassicGroundMoveType::Update()
 		owner->script->StopMoving();
 		owner->SetVelocityAndSpeed(ZeroVector);
 	} else {
-		if (owner->fpsControlPlayer != NULL) {
+		if (owner->UnderFirstPersonControl()) {
 			UpdateDirectControl();
 			ChangeHeading(owner->heading + deltaHeading);
 		} else {

@@ -418,7 +418,7 @@ bool CStrafeAirMoveType::Update()
 	const bool allowAttack = (reservedPad == NULL && !outOfFuel);
 
 	if (aircraftState != AIRCRAFT_CRASHING) {
-		if (owner->fpsControlPlayer != NULL) {
+		if (owner->UnderFirstPersonControl()) {
 			SetState(AIRCRAFT_FLYING);
 			inefficientAttackTime = 0;
 
@@ -851,7 +851,7 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	// also need to fly straight for some distance
 	#if 1
 	if (goalDir2D.dot(frontdir) < -0.1f && goalDist2D < turnRadius) {
-		if (owner->fpsControlPlayer == NULL || owner->fpsControlPlayer->fpsController.mouse2) {
+		if (!owner->UnderFirstPersonControl() || owner->fpsControlPlayer->fpsController.mouse2) {
 			goalDotRight *= -1.0f;
 		}
 	}
@@ -1070,7 +1070,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	const float speedf = spd.w;
 	const float3 speeddir = spd / (speedf + 0.1f);
 
-	if (owner->fpsControlPlayer != NULL) {
+	if (owner->UnderFirstPersonControl()) {
 		if ((pos.y - gHeight) > wantedHeight * 1.2f) {
 			engine = std::max(0.0f, std::min(engine, 1 - (pos.y - gHeight - wantedHeight * 1.2f) / wantedHeight));
 		}
