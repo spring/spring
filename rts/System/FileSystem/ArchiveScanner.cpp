@@ -403,7 +403,7 @@ void CArchiveScanner::Scan(const std::string& curPath, bool doChecksum)
 
 	while (!subDirs.empty()) {
 		FileSystem::EnsurePathSepAtEnd(subDirs.front());
-		const std::vector<std::string>& found = dataDirsAccess.FindFiles(FileSystem::EnsurePathSepAtEnd(subDirs.front(), "*", FileQueryFlags::INCLUDE_DIRS);
+		const std::vector<std::string>& found = dataDirsAccess.FindFiles(subDirs.front(), "*", FileQueryFlags::INCLUDE_DIRS);
 		subDirs.pop_front();
 
 		for (auto f: found) {
@@ -717,17 +717,16 @@ struct CRCPair {
 unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 {
 	CRC crc;
-	IArchive* ar;
 	std::list<std::string> files;
 
 	// Try to open an archive
-	ar = archiveLoader.OpenArchive(arcName);
+	boost::unique_ptr<IArchive> ar(archiveLoader.OpenArchive(arcName));
 	if (!ar) {
 		return 0; // It wasn't an archive
 	}
 
 	// Load ignore list.
-	IFileFilter* ignore = CreateIgnoreFilter(ar);
+	boost::unique_ptr<IFileFilter> ignore(CreateIgnoreFilter(ar));
 
 	// Insert all files to check in lowercase format
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
@@ -780,9 +779,6 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 		Watchdog::ClearTimer();
 	#endif
 	}
-
-	delete ignore;
-	delete ar;
 
 	unsigned int digest = crc.GetDigest();
 
