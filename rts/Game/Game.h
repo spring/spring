@@ -138,8 +138,8 @@ private:
 
 	void SendClientProcUsage();
 	void ClientReadNet();
-	void UpdateSimFrameConsumeSpeedMult();
 	void UpdateNumQueuedSimFrames();
+	void UpdateNetMessageProcessingTimeLeft();
 	void SimFrame();
 	void StartPlaying();
 	bool Update();
@@ -178,19 +178,18 @@ public:
 	bool showClock;
 	bool showSpeed;
 	int showMTInfo;
-	float mtInfoThreshold;
-	int mtInfoCtrl;
-
-	/// Prevents spectator msgs from being seen by players
-	bool noSpectatorChat;
 
 	float inputTextPosX;
 	float inputTextPosY;
 	float inputTextSizeX;
 	float inputTextSizeY;
+
 	bool skipping;
 	bool playing;
 	bool chatting;
+
+	/// Prevents spectator msgs from being seen by players
+	bool noSpectatorChat;
 
 	std::string hotBinding;
 	std::string userInputPrefix;

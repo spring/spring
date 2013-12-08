@@ -174,7 +174,6 @@ CONFIG(bool, ShowFPS).defaultValue(false).description("Displays current framerat
 CONFIG(bool, ShowClock).defaultValue(true).description("Displays a clock on the top-right corner of the screen showing the elapsed time of the current game.");
 CONFIG(bool, ShowSpeed).defaultValue(false).description("Displays current game speed.");
 CONFIG(bool, ShowMTInfo).defaultValue(true);
-CONFIG(float, MTInfoThreshold).defaultValue(1.0f);
 CONFIG(int, ShowPlayerInfo).defaultValue(1);
 CONFIG(float, GuiOpacity).defaultValue(0.8f).minimumValue(0.0f).maximumValue(1.0f).description("Sets the opacity of the built-in Spring UI. Generally has no effect on LuaUI widgets. Can be set in-game using shift+, to decrease and shift+. to increase.");
 CONFIG(std::string, InputTextGeo).defaultValue("");
@@ -209,8 +208,6 @@ CR_REG_METADATA(CGame, (
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
 	CR_MEMBER(showMTInfo),
-	CR_MEMBER(mtInfoThreshold),
-	CR_MEMBER(mtInfoCtrl),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(gameID),
 	//CR_MEMBER(infoConsole),
@@ -374,9 +371,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	showClock = configHandler->GetBool("ShowClock");
 	showSpeed = configHandler->GetBool("ShowSpeed");
 	showMTInfo = configHandler->GetBool("ShowMTInfo");
-	GML::EnableCallChainWarnings(!!showMTInfo);
-	mtInfoThreshold = configHandler->GetFloat("MTInfoThreshold");
-	mtInfoCtrl = 0;
 
 	speedControl = configHandler->GetInt("SpeedControl");
 
@@ -390,6 +384,8 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	CLuaHandle::SetModUICtrl(configHandler->GetBool("LuaModUICtrl"));
 
 	modInfo.Init(modName.c_str());
+
+	GML::EnableCallChainWarnings(!!showMTInfo);
 	GML::Init(); // modinfo plays key part in MT enable/disable
 
 	// FIXME: THIS HAS ALREADY BEEN CALLED! (SpringApp::Initialize)
@@ -512,15 +508,17 @@ CGame::~CGame()
 
 	LOG("[%s][12]", __FUNCTION__);
 	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
+	LOG("[%s][13]", __FUNCTION__);
 	SafeDelete(vfsHandler);
+	LOG("[%s][14]", __FUNCTION__);
 	SafeDelete(archiveScanner);
 
-	LOG("[%s][13]", __FUNCTION__);
+	LOG("[%s][15]", __FUNCTION__);
 	SafeDelete(gameServer);
-	LOG("[%s][14]", __FUNCTION__);
+	LOG("[%s][16]", __FUNCTION__);
 	ISound::Shutdown();
 
-	LOG("[%s][15]", __FUNCTION__);
+	LOG("[%s][17]", __FUNCTION__);
 	LEAVE_SYNCED_CODE();
 }
 
@@ -965,14 +963,12 @@ bool CGame::Update()
 	good_fpu_control_registers("CGame::Update");
 
 	JobDispatcher::Update();
-	UpdateSimFrameConsumeSpeedMult();
+	net->Update();
 
 	//TODO: why? it already gets called with `true` in ::Draw()?
 	if (!skipping) {
 		UpdateUI(false);
 	}
-
-	net->Update();
 
 	// When video recording do step by step simulation, so each simframe gets a corresponding videoframe
 	// FIXME: SERVER ALREADY DOES THIS BY ITSELF
