@@ -157,16 +157,23 @@ CBitmap& CBitmap::operator=(const CBitmap& bm)
 }
 
 
-void CBitmap::Alloc(int w, int h)
+void CBitmap::Alloc(int w, int h, int c)
 {
 	delete[] mem;
+
 	xsize = w;
 	ysize = h;
+	channels = c;
 
-	const int size = w * h * channels;
+	const int size = w * h * c;
 
 	mem = new unsigned char[size];
 	memset(mem, 0, size);
+}
+
+void CBitmap::Alloc(int w, int h)
+{
+	Alloc(w, h, channels);
 }
 
 void CBitmap::AllocDummy()
