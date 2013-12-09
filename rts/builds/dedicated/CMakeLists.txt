@@ -35,6 +35,11 @@ IF    (UNIX AND NOT MINGW)
 
 	# Needed for dynamically loading shared libraries (on some OS)
 	LIST(APPEND engineDedicatedLibraries ${CMAKE_DL_LIBS})
+
+	# Needed for backtrace* on some systems
+	IF(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+		LIST(APPEND engineDedicatedLibraries execinfo)
+	ENDIF(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
 ENDIF (UNIX AND NOT MINGW)
 
 IF    (MINGW OR APPLE)
