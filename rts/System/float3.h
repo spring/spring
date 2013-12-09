@@ -697,6 +697,10 @@ public:
 	float3 cClampInBounds() const { float3 f = *this; f.ClampInBounds(); return f; }
 	float3 cClampInMap() const { float3 f = *this; f.ClampInMap(); return f; }
 
+	static float3 min(const float3 v1, const float3 v2);
+	static float3 max(const float3 v1, const float3 v2);
+	static float3 fabs(const float3 v);
+
 public:
 	union {
 		struct { float x,y,z; };
@@ -730,12 +734,5 @@ const float3 XYVector(1.0f, 1.0f, 0.0f);
 const float3 XZVector(1.0f, 0.0f, 1.0f);
 const float3 YZVector(0.0f, 1.0f, 1.0f);
 
-namespace std {
-	float3 min(const float3 v1, const float3 v2);
-	float3 max(const float3 v1, const float3 v2);
-
-	float3 fabs(const float3 v);
-};
-
-
 #endif /* FLOAT3_H */
+

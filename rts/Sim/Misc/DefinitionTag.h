@@ -14,8 +14,10 @@
 #include <sstream>
 #include <string>
 #include <typeinfo>
+
 #include "Lua/LuaParser.h"
 #include "System/float3.h"
+#include "System/myMath.h"
 
 // table placeholder (used for LuaTables)
 // example usage: DUMMYTAG(Defs, DefClass, table, customParams)
@@ -129,10 +131,10 @@ public:
 			data = scale(data, scaleValue.Get());
 		}
 		if (minimumValue.IsSet()) {
-			data = std::max(data, minimumValue.Get());
+			data = argmax<T>(data, minimumValue.Get());
 		}
 		if (maximumValue.IsSet()) {
-			data = std::min(data, maximumValue.Get());
+			data = argmin<T>(data, maximumValue.Get());
 		}
 		if (tagFunctionPtr.IsSet()) {
 			data = tagFunctionPtr.Get()(data);
@@ -157,6 +159,8 @@ protected:
 
 	template<typename F> friend class DefTagBuilder;
 };
+
+
 
 
 /**

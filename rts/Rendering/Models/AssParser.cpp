@@ -518,8 +518,8 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 			vertex.pos = aiVectorToFloat3(aiVertex);
 
 			// update piece min/max extents
-			piece->mins = std::min(piece->mins, vertex.pos);
-			piece->maxs = std::max(piece->maxs, vertex.pos);
+			piece->mins = float3::min(piece->mins, vertex.pos);
+			piece->maxs = float3::max(piece->maxs, vertex.pos);
 
 			// vertex normal
 			LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "Fetching normal for vertex %d", vertexIndex);
@@ -683,8 +683,8 @@ void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
 	piece->goffset = scaleRotMat.Mul(piece->offset) + ((piece->parent != NULL)? piece->parent->goffset: ZeroVector);
 
 	// update model min/max extents
-	model->mins = std::min(piece->goffset + piece->mins, model->mins);
-	model->maxs = std::max(piece->goffset + piece->maxs, model->maxs);
+	model->mins = float3::min(piece->goffset + piece->mins, model->mins);
+	model->maxs = float3::max(piece->goffset + piece->maxs, model->maxs);
 
 	piece->SetCollisionVolume(new CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
@@ -703,7 +703,7 @@ void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& model
 	model->relMidPos.y = (model->maxs.y + model->mins.y) * 0.5f;
 
 	// Simplified dimensions used for rough calculations
-	model->radius = modelTable.GetFloat("radius", std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length());
+	model->radius = modelTable.GetFloat("radius", float3::max(float3::fabs(model->maxs), float3::fabs(model->mins)).Length());
 	model->height = modelTable.GetFloat("height", model->maxs.y);
 	model->relMidPos = modelTable.GetFloat3("midpos", model->relMidPos);
 	model->mins = modelTable.GetFloat3("mins", model->mins);
