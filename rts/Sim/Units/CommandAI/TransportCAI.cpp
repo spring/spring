@@ -196,9 +196,11 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 			
 			CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
 
-			// subtracting 1 square to account for pathfinder/groundmovetype inaccuracy
-			if (goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE) || 
-				(!inLoadingRadius && (!owner->IsMoving() || (am && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)))) {
+			// subtract 1 square to account for PFS/GMT inaccuracy
+			const bool outOfRange = (goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE));
+			const bool moveCloser = (!inLoadingRadius && (!owner->IsMoving() || (am != NULL && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)));
+
+			if (outOfRange || moveCloser) {
 				SetGoal(unit->pos, owner->pos, std::min(64.0f, owner->unitDef->loadingRadius));
 			}
 
@@ -208,11 +210,13 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 					float3 wantedPos = unit->pos;
 					wantedPos.y = static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeight(wantedPos, unit);
 
-					// calls am->StartMoving() which sets forceHeading to false
-					// we do not want this at point of pickup because am->UpdateHeading()
-					// will suddenly see a large deltaHeading and break the DOCKING_ANGLE
-					// constraint, so call am->ForceHeading() next
-					SetGoal(wantedPos, owner->pos);
+					// calls am->StartMoving() which sets forceHeading to false (and also
+					// changes aircraftState, possibly in mid-pickup) --> must check that
+					// wantedPos == goalPos using some epsilon tolerance
+					// we do not want the forceHeading change at point of pickup because
+					// am->UpdateHeading() will suddenly notice a large deltaHeading and
+					// break the DOCKING_ANGLE constraint so call am->ForceHeading() next
+					SetGoal(wantedPos, owner->pos, 1.0f);
 
 					am->SetLoadingUnits(true);
 					am->ForceHeading(static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeading(unit));

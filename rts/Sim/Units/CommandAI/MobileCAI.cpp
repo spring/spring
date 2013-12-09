@@ -953,8 +953,9 @@ int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius)
 {
-	if (pos == goalPos)
+	if (pos.SqDistance(goalPos) < goalRadius)
 		return;
+
 	goalPos = pos;
 	this->goalRadius = goalRadius;
 	owner->moveType->StartMoving(pos, goalRadius);
@@ -962,8 +963,9 @@ void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goal
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius, float speed)
 {
-	if (pos == goalPos)
+	if (pos.SqDistance(goalPos) < goalRadius)
 		return;
+
 	goalPos = pos;
 	this->goalRadius = goalRadius;
 	owner->moveType->StartMoving(pos, goalRadius, speed);
