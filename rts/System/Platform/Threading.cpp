@@ -20,7 +20,7 @@
 #include <boost/thread.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/optional.hpp>
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
 	#include <windows.h>
 #else
@@ -59,7 +59,7 @@ namespace Threading {
 	static boost::optional<NativeThreadId> simThreadID;
 	static boost::optional<NativeThreadId> luaBatchThreadID;
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
 	static DWORD cpusSystem = 0;
 #else
@@ -72,7 +72,7 @@ namespace Threading {
 		if (inited)
 			return;
 
-	#if defined(__APPLE__)
+	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
 
 	#elif defined(WIN32)
@@ -96,8 +96,9 @@ namespace Threading {
 			return ~0;
 		}
 
-	#if defined(__APPLE__)
+	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
+		return 0;
 
 	#elif defined(WIN32)
 		// Create mask
@@ -165,7 +166,7 @@ namespace Threading {
 	boost::uint32_t GetAvailableCoresMask()
 	{
 		boost::uint32_t systemCores = 0;
-	#if defined(__APPLE__)
+	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
 		systemCores = ~0;
 
@@ -265,7 +266,7 @@ namespace Threading {
 
 	void SetThreadScheduler()
 	{
-	#if defined(__APPLE__)
+	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
 
 	#elif defined(WIN32)
