@@ -45,7 +45,7 @@ S3DModel* CS3OParser::Load(const std::string& name)
 	model->SetRootPiece(rootPiece);
 	model->radius = (header.radius <= 0.01f)? (model->maxs.y - model->mins.y): header.radius;
 	model->height = (header.height <= 0.01f)? (model->radius + model->radius): header.height;
-	model->drawRadius = std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length();
+	model->drawRadius = float3::max(float3::fabs(model->maxs), float3::fabs(model->mins)).Length();
 	model->relMidPos = float3(header.midx, header.midy, header.midz);
 
 	delete[] fileBuf;
@@ -107,8 +107,8 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	piece->SetVertexTangents();
 	piece->SetMinMaxExtends();
 
-	model->mins = std::min(piece->goffset + piece->mins, model->mins);
-	model->maxs = std::max(piece->goffset + piece->maxs, model->maxs);
+	model->mins = float3::min(piece->goffset + piece->mins, model->mins);
+	model->maxs = float3::max(piece->goffset + piece->maxs, model->maxs);
 
 	piece->SetCollisionVolume(new CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
@@ -226,8 +226,8 @@ void SS3OPiece::DrawForList() const
 void SS3OPiece::SetMinMaxExtends()
 {
 	for (std::vector<SS3OVertex>::const_iterator vi = vertices.begin(); vi != vertices.end(); ++vi) {
-		mins = std::min(mins, vi->pos);
-		maxs = std::max(maxs, vi->pos);
+		mins = float3::min(mins, vi->pos);
+		maxs = float3::max(maxs, vi->pos);
 	}
 }
 

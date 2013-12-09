@@ -396,8 +396,8 @@ void COBJParser::BuildModelPieceTreeRec(
 	piece->SetVertexTangents();
 	piece->SetMinMaxExtends(globalVertexOffsets);
 
-	model->mins = std::min(piece->goffset + piece->mins, model->mins);
-	model->maxs = std::max(piece->goffset + piece->maxs, model->maxs);
+	model->mins = float3::min(piece->goffset + piece->mins, model->mins);
+	model->maxs = float3::max(piece->goffset + piece->maxs, model->maxs);
 
 	piece->SetCollisionVolume(new CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
@@ -599,8 +599,8 @@ void SOBJPiece::SetMinMaxExtends(bool globalVertexOffsets)
 		// recursively over its children since this makes little sense
 		// for (per-piece) coldet purposes; the model extends do bound
 		// all pieces
-		if (overrideMins) { mins = std::min(mins, vertexLocalPos); }
-		if (overrideMaxs) { maxs = std::max(maxs, vertexLocalPos); }
+		if (overrideMins) { mins = float3::min(mins, vertexLocalPos); }
+		if (overrideMaxs) { maxs = float3::max(maxs, vertexLocalPos); }
 
 		// we want vertices in piece-space
 		SetVertex(i, vertexLocalPos);
