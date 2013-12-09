@@ -437,8 +437,12 @@ void CUnit::PreInit(const UnitLoadParams& params)
 		(seismicRadius > 0.0f);
 	stealth = unitDef->stealth;
 	sonarStealth = unitDef->sonarStealth;
+
+	// can be overridden by cloak orders during construction
+	wantCloak |= unitDef->startCloaked;
 	decloakDistance = unitDef->decloakDistance;
 	cloakTimeout = unitDef->cloakTimeout;
+
 
 	flankingBonusMode        = unitDef->flankingBonusMode;
 	flankingBonusDir         = unitDef->flankingBonusDir;
@@ -1930,10 +1934,6 @@ void CUnit::FinishedBuilding(bool postInit)
 
 	eventHandler.UnitFinished(this);
 	eoh->UnitFinished(*this);
-
-	if (unitDef->startCloaked) {
-		wantCloak = true;
-	}
 
 	if (unitDef->isFeature && CUnit::spawnFeature) {
 		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
