@@ -536,11 +536,8 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 			return NULL;
 		}
 	}
-	CUnit* unit = unitHandler->units[unitID];
-	if (unit == NULL) {
-		return NULL;
-	}
-	return unit;
+
+	return (unitHandler->GetUnit(unitID));
 }
 
 
@@ -2541,8 +2538,8 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 
 int LuaSyncedRead::ValidUnitID(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, NULL, 1); // note the NULL
-	lua_pushboolean(L, unit != NULL);
+	// note the NULL 'caller' arg (so ParseUnit won't call luaL_error)
+	lua_pushboolean(L, ParseUnit(L, NULL, 1) != NULL);
 	return 1;
 }
 

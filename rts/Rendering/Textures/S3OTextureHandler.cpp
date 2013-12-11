@@ -97,7 +97,11 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 		if (model->invertTexYAxis)
 			texBitMaps[0].ReverseYAxis();
 
-		textureCache[model->tex1] = {texBitMaps[0].CreateTexture(true), (unsigned int)texBitMaps[0].xsize, (unsigned int)texBitMaps[0].ysize};
+		textureCache[model->tex1] = {
+			texBitMaps[0].CreateTexture(true),
+			static_cast<unsigned int>(texBitMaps[0].xsize),
+			static_cast<unsigned int>(texBitMaps[0].ysize)
+		};
 	}
 
 	if (texCacheIters[1] == textureCache.end()) {
@@ -114,7 +118,11 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 		if (model->invertTexYAxis)
 			texBitMaps[1].ReverseYAxis();
 
-		textureCache[model->tex2] = {texBitMaps[1].CreateTexture(true), (unsigned int)texBitMaps[1].xsize, (unsigned int)texBitMaps[1].ysize};
+		textureCache[model->tex2] = {
+			texBitMaps[1].CreateTexture(true),
+			static_cast<unsigned int>(texBitMaps[1].xsize),
+			static_cast<unsigned int>(texBitMaps[1].ysize)
+		};
 	}
 
 	if (texCacheIters[0] == textureCache.end() || texCacheIters[1] == textureCache.end()) {

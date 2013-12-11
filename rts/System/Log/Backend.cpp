@@ -26,10 +26,18 @@ namespace {
 }
 
 
+// LogSinkHandler::AddSink --> log_backend_registerSink
+// FileSinkRegistrator --> log_backend_registerSink
+// 
 void log_backend_registerSink(log_sink_ptr sink) {
 	log_formatter_getSinks().push_back(sink);
 }
 
+// NOTE: LogSinkHandler is statically deinited!
+//
+// ~LogSinkHandler --> log_backend_unregisterSink
+// LogSinkHandler::RemoveSink --> log_backend_unregisterSink
+// 
 void log_backend_unregisterSink(log_sink_ptr sink) {
 
 	std::vector<log_sink_ptr>& sinks = log_formatter_getSinks();
@@ -81,11 +89,10 @@ void log_backend_record(const char* section, int level, const char* fmt,
 		}
 	} else {
 		// format the record
-		char* record = log_formatter_format(section, level, fmt, arguments);
+		const char* record = log_formatter_format(section, level, fmt, arguments);
 
 		// sink the record
-		std::vector<log_sink_ptr>::const_iterator si;
-		for (si = sinks.begin(); si != sinks.end(); ++si) {
+		for (auto si = sinks.begin(); si != sinks.end(); ++si) {
 			(*si)(section, level, record);
 		}
 
@@ -97,8 +104,8 @@ void log_backend_record(const char* section, int level, const char* fmt,
 void log_backend_cleanup() {
 
 	const std::vector<log_cleanup_ptr>& cleanupFuncs = log_formatter_getCleanupFuncs();
-	std::vector<log_cleanup_ptr>::const_iterator si;
-	for (si = cleanupFuncs.begin(); si != cleanupFuncs.end(); ++si) {
+
+	for (auto si = cleanupFuncs.begin(); si != cleanupFuncs.end(); ++si) {
 		(*si)();
 	}
 }
