@@ -131,16 +131,13 @@ void CLogOutput::Initialize()
 
 	if (initialized) return;
 
-
 	filePath = CreateFilePath(fileName);
 
-	const bool rotateLogFiles = configHandler->GetBool("RotateLogFiles");
-	if (rotateLogFiles) {
+	if (configHandler->GetBool("RotateLogFiles")) {
 		RotateLogFile();
 	}
 
-	const bool flush = configHandler->GetBool("LogFlush");
-	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, flush);
+	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, configHandler->GetBool("LogFlush"));
 
 	initialized = true;
 	InitializeSections();
@@ -148,33 +145,18 @@ void CLogOutput::Initialize()
 	LOG("LogOutput initialized.");
 }
 
-void CLogOutput::InitializeSections()
-{
-	// the new systems (ILog.h) log-sub-systems are called sections:
-	const std::set<const char*> sections = log_filter_section_getRegisteredSet();
 
-	{
-		std::stringstream logSectionsStr;
-		logSectionsStr << "Available log sections: ";
-		int numSec = 0;
-		std::set<const char*>::const_iterator si;
-		for (si = sections.begin(); si != sections.end(); ++si) {
-			if (numSec > 0) {
-				logSectionsStr << ", ";
-			}
-			logSectionsStr << *si;
-			numSec++;
-		}
-		LOG("%s", logSectionsStr.str().c_str());
-	}
 
-	// enabled sections is a superset of the ones specified in the environment
-	// and the ones specified in the configuration file.
-	// configHandler cannot be accessed here in unitsync, as it may not exist.
+static std::map<std::string, int> GetEnabledSections() {
+	std::map<std::string, int> sectionLevelMap;
+
 	std::string enabledSections = ",";
+	std::string envSections = ",";
+
 #if defined(UNITSYNC)
 	#if defined(DEBUG)
 	// unitsync logging in debug mode always on
+	// configHandler cannot be accessed here in unitsync, as it may not exist.
 	enabledSections += "unitsync,ArchiveScanner,";
 	#endif
 #else
@@ -185,55 +167,102 @@ void CLogOutput::InitializeSections()
 	// Always show at least INFO level of these sections
 	enabledSections += "Sound,";
 	#endif
-	enabledSections += StringToLower(configHandler->GetString("LogSections")) + ",";
+	enabledSections += StringToLower(configHandler->GetString("LogSections"));
 #endif
 
-	const char* const envSec = getenv("SPRING_LOG_SECTIONS");
-	std::string env;
-	if (envSec != NULL) {
-		env += ",";
-		env += envSec;
-	}
+	if (getenv("SPRING_LOG_SECTIONS") != NULL) {
+		// allow disabling all sections from the env var by setting it to "none"
+		envSections += getenv("SPRING_LOG_SECTIONS");
+		envSections = StringToLower(envSections);
 
-	if (!env.empty()) {
-		// this allows to disable all sections from the env var
-		std::string envSections(StringToLower(env));
-		if (envSections == std::string("none")) {
+		if (envSections == "none") {
 			enabledSections = "";
 		} else {
-			enabledSections += envSections + ",";
+			enabledSections += envSections;
 		}
 	}
 
-	const std::string enabledSectionsLC = StringToLower(enabledSections);
+	enabledSections = StringToLower(enabledSections);
+	enabledSections = StringStrip(enabledSections, " \t\n\r");
 
-	{
-		std::stringstream enabledLogSectionsStr;
-		enabledLogSectionsStr << "Enabled log sections: ";
-		int numSec = 0;
+	// <enabledSections> always starts with a ','
+	for (size_t n = 1; n < enabledSections.size(); ) {
+		const size_t k = enabledSections.find(",", n);
 
-		// new log sections
-		for (auto si = sections.begin(); si != sections.end(); ++si) {
-			const std::string name = StringToLower(*si);
+		if (k != std::string::npos) {
+			const std::string& sub = enabledSections.substr(n, k - n);
+			const std::string& sec = sub.substr(0, std::min(sub.size(), sub.find(":")));
+			const std::string& lvl = sub.substr(std::min(sub.size(), sub.find(":") + 1), std::string::npos);
 
-			if (enabledSectionsLC.find("," + name + ",") != std::string::npos) {
-				if (numSec > 0) {
-					enabledLogSectionsStr << ", ";
-				}
-
+			if (!lvl.empty()) {
+				sectionLevelMap[sec] = StringToInt(lvl);
+			} else {
 				#if defined(DEBUG)
-				log_filter_section_setMinLevel(*si, LOG_LEVEL_DEBUG);
-				enabledLogSectionsStr << *si << "(LOG_LEVEL_DEBUG)";
+				sectionLevelMap[sec] = LOG_LEVEL_DEBUG;
 				#else
-				log_filter_section_setMinLevel(*si, LOG_LEVEL_INFO);
-				enabledLogSectionsStr << *si << "(LOG_LEVEL_INFO)";
+				sectionLevelMap[sec] = LOG_LEVEL_INFO;
 				#endif
 
-				numSec++;
 			}
+
+			n = k + 1;
+		} else {
+			n = k;
 		}
-		LOG("%s", enabledLogSectionsStr.str().c_str());
 	}
+
+	return sectionLevelMap;
+}
+
+void CLogOutput::InitializeSections()
+{
+	// the new systems (ILog.h) log-sub-systems are called sections
+	const std::set<const char*>& registeredSections = log_filter_section_getRegisteredSet();
+
+	// enabled sections is a superset of the ones specified in the
+	// environment and the ones specified in the configuration file.
+	const std::map<std::string, int>& enabledSections = GetEnabledSections();
+
+	std::stringstream availableLogSectionsStr;
+	std::stringstream enabledLogSectionsStr;
+
+	availableLogSectionsStr << "Available log sections: ";
+	enabledLogSectionsStr << "Enabled log sections: ";
+
+	for (auto si = registeredSections.begin(); si != registeredSections.end(); ++si) {
+		if (si != registeredSections.begin()) {
+			availableLogSectionsStr << ", ";
+		}
+
+		availableLogSectionsStr << *si;
+
+		{
+			const std::string sectionName = StringToLower(*si);
+			const auto sectionIter = enabledSections.find(sectionName);
+
+			// skip if section is registered but not enabled
+			if (sectionIter == enabledSections.end())
+				continue;
+
+			const int sectionLevel = sectionIter->second;
+
+			// TODO: convert sectionLevel to nearest lower LOG_LEVEL_*
+			#if defined(DEBUG)
+			log_filter_section_setMinLevel(*si, LOG_LEVEL_DEBUG);
+			enabledLogSectionsStr << *si << "(LOG_LEVEL_DEBUG)";
+			#else
+			log_filter_section_setMinLevel(*si, LOG_LEVEL_INFO);
+			enabledLogSectionsStr << *si << "(LOG_LEVEL_INFO)";
+			#endif
+		}
+
+		if (si != registeredSections.begin() && si != (--registeredSections.end())) {
+			enabledLogSectionsStr << ", ";
+		}
+	}
+
+	LOG("%s", (availableLogSectionsStr.str()).c_str());
+	LOG("%s", (enabledLogSectionsStr.str()).c_str());
 
 	LOG("Enable or disable log sections using the LogSections configuration key");
 	LOG("  or the SPRING_LOG_SECTIONS environment variable (both comma separated).");
