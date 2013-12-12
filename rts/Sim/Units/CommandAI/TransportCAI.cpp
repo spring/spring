@@ -208,7 +208,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 				if (am != NULL) {
 					// handle air transports differently
 					float3 wantedPos = unit->pos;
-					wantedPos.y = static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeight(wantedPos, unit);
+					wantedPos.y = static_cast<CTransportUnit*>(owner)->GetTransporteeWantedHeight(wantedPos, unit);
 
 					// calls am->StartMoving() which sets forceHeading to false (and also
 					// changes aircraftState, possibly in mid-pickup) --> must check that
@@ -219,7 +219,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 					SetGoal(wantedPos, owner->pos, 1.0f);
 
 					am->SetLoadingUnits(true);
-					am->ForceHeading(static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeading(unit));
+					am->ForceHeading(static_cast<CTransportUnit*>(owner)->GetTransporteeWantedHeading(unit));
 					am->SetWantedAltitude(wantedPos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z));
 					am->maxDrift = 1.0f;
 
@@ -641,18 +641,19 @@ void CTransportCAI::UnloadLand(Command& c)
 			return;
 		}
 
-		float3 pos = c.GetPos(0);
-		if (goalPos.SqDistance2D(pos) > 400) {
-			SetGoal(pos, owner->pos);
-		}
+		float3 wantedPos = c.GetPos(0);
+
+		if (goalPos.SqDistance2D(wantedPos) > Square(20.0f))
+			SetGoal(wantedPos, owner->pos);
 
 		CUnit* unit = NULL;
+
 		if (c.params.size() < 4) {
 			unit = transList.front().unit;
 		} else {
 			const int unitID = (int)c.params[3];
-			std::list<CTransportUnit::TransportedUnit>::const_iterator it;
-			for (it = transList.begin(); it != transList.end(); ++it) {
+
+			for (auto it = transList.begin(); it != transList.end(); ++it) {
 				CUnit* carried = it->unit;
 				if (unitID == carried->id) {
 					unit = carried;
@@ -665,32 +666,33 @@ void CTransportCAI::UnloadLand(Command& c)
 			}
 		}
 
-		if (pos.SqDistance2D(owner->pos) < Square(owner->unitDef->loadingRadius * 0.9f)) {
+		if (wantedPos.SqDistance2D(owner->pos) < Square(owner->unitDef->loadingRadius * 0.9f)) {
 			CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
-			pos.y = static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeight(pos, unit);
+			wantedPos.y = static_cast<CTransportUnit*>(owner)->GetTransporteeWantedHeight(wantedPos, unit);
 
 			if (am != NULL) {
 				// handle air transports differently
-				SetGoal(pos, owner->pos);
-				am->SetWantedAltitude(pos.y - ground->GetHeightAboveWater(pos.x, pos.z));
-				am->ForceHeading(static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeading(unit));
+				SetGoal(wantedPos, owner->pos);
+				am->SetWantedAltitude(wantedPos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z));
+				am->ForceHeading(static_cast<CTransportUnit*>(owner)->GetTransporteeWantedHeading(unit));
 
 				am->maxDrift = 1.0f;
 
-				const bool b1 = (owner->pos.SqDistance(pos) < 64.0f);
+				const bool b1 = (owner->pos.SqDistance(wantedPos) < 64.0f);
 				const bool b2 = (std::abs(owner->heading - am->GetForcedHeading()) < AIRTRANSPORT_DOCKING_ANGLE);
 				const bool b3 = (owner->updir.dot(UpVector) > 0.99f);
 
 				if (b1 && b2 && b3) {
-					pos.y -= unit->radius;
+					wantedPos.y -= unit->radius;
 
-					if (!SpotIsClearIgnoreSelf(pos, unit)) {
+					if (!SpotIsClearIgnoreSelf(wantedPos, unit)) {
 						// chosen spot is no longer clear to land, choose a new one
 						// if a new spot cannot be found, don't unload at all
-						float3 newpos;
-						if (FindEmptySpot(pos, std::max(16.0f * SQUARE_SIZE, unit->radius * 4.0f), unit->radius, newpos, unit)) {
-							c.SetPos(0, newpos);
-							SetGoal(newpos + UpVector * unit->model->height, owner->pos);
+						float3 newWantedPos;
+
+						if (FindEmptySpot(wantedPos, std::max(16.0f * SQUARE_SIZE, unit->radius * 4.0f), unit->radius, newWantedPos, unit)) {
+							c.SetPos(0, newWantedPos);
+							SetGoal(newWantedPos + UpVector * unit->model->height, owner->pos);
 							return;
 						}
 					} else {
@@ -707,7 +709,7 @@ void CTransportCAI::UnloadLand(Command& c)
 			} else {
 				inCommand = true;
 				StopMove();
-				owner->script->TransportDrop(unit, pos);
+				owner->script->TransportDrop(unit, wantedPos);
 			}
 		}
 	}

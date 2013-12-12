@@ -842,12 +842,12 @@ void UnitDef::SetNoCost(bool noCost)
 	}
 }
 
-bool UnitDef::IsAllowedTerrainHeight(const MoveDef* moveDef, float rawHeight, float* clampedHeight) const {
+bool UnitDef::CheckTerrainConstraints(const MoveDef* moveDef, float rawHeight, float* clampedHeight) const {
 	// can fail if LuaMoveCtrl has changed a unit's MoveDef (UnitDef::pathType is not updated)
 	// assert(pathType == -1u || moveDef == moveDefHandler->GetMoveDefByPathType(pathType));
 
-	float maxDepth = +1e6f;
-	float minDepth = -1e6f;
+	float minDepth = MoveDef::GetDefaultMinWaterDepth();
+	float maxDepth = MoveDef::GetDefaultMaxWaterDepth();
 
 	if (moveDef != NULL) {
 		// we are a mobile ground-unit, use MoveDef limits
