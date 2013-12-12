@@ -2899,7 +2899,7 @@ void CLuaHandle::CollectGarbage()
 	SetRunning(L, true);
 
 	for (int n = 0; (n < maxLuaGarbageCollectSteps) && (spring_gettime() < endTime); n++) {
-		if (lua_gc(L, LUA_GCSTEP, 2)) {
+		if (lua_gc(L, LUA_GCSTEP, 10)) {
 			// garbage-collection finished
 			break;
 		}
