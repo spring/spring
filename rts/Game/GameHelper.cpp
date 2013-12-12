@@ -1254,7 +1254,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 		if (pos.y < std::min(orgHgt - difHgt, curHgt - difHgt)) { return BUILDSQUARE_BLOCKED; }
 	}
 
-	if (!unitDef->IsAllowedTerrainHeight(moveDef, groundHeight))
+	if (!unitDef->CheckTerrainConstraints(moveDef, groundHeight))
 		ret = BUILDSQUARE_BLOCKED;
 
 	return ret;
