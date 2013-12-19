@@ -883,8 +883,18 @@ int CGame::KeyPressed(unsigned short key, bool isRepeat)
 			hotBinding.clear();
 			LOG("%s", cmd.c_str());
 		}
+		keyBindings->ResetMode();
 		return 0;
 	}
+
+	// If the *first and only* action in the list is a mode change, then change modes.
+  if (actionList.size() == 1) {
+    const Action& singleAction = actionList[0];
+    if (CKeyBindings::IsModeSwitchAction(singleAction.command)) {
+      keyBindings->SwitchMode(singleAction.command);
+      return 0;
+    }
+  }
 
 	if (userWriting) {
 		for (unsigned int actionIndex = 0; actionIndex < actionList.size(); actionIndex++) {
@@ -904,6 +914,7 @@ int CGame::KeyPressed(unsigned short key, bool isRepeat)
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 		CInputReceiver* recv = *ri;
 		if (recv && recv->KeyPressed(key, isRepeat)) {
+		  keyBindings->SustainOrResetMode();
 			return 0;
 		}
 	}
@@ -911,6 +922,7 @@ int CGame::KeyPressed(unsigned short key, bool isRepeat)
 	// try our list of actions
 	for (unsigned int i = 0; i < actionList.size(); ++i) {
 		if (ActionPressed(key, actionList[i], isRepeat)) {
+		  keyBindings->SustainOrResetMode();
 			return 0;
 		}
 	}
@@ -922,6 +934,7 @@ int CGame::KeyPressed(unsigned short key, bool isRepeat)
 		}
 	}
 
+  keyBindings->SustainOrResetMode();
 	return 0;
 }
 
