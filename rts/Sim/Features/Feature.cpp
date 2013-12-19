@@ -570,7 +570,7 @@ bool CFeature::UpdatePosition()
 	}
 
 	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
-	UpdatePhysicalState();
+	UpdatePhysicalState(0.1f);
 
 	return (IsMoving());
 }

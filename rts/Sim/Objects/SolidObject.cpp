@@ -124,33 +124,32 @@ CSolidObject::~CSolidObject() {
 	collisionVolume = NULL;
 }
 
-void CSolidObject::UpdatePhysicalState() {
+void CSolidObject::UpdatePhysicalState(float eps) {
 	const float gh = ground->GetHeightReal(pos.x, pos.z);
 	const float wh = std::max(gh, 0.0f);
 
 	unsigned int ps = physicalState;
 
-	ps &= (~PSTATE_BIT_ONGROUND);
-	ps &= (~PSTATE_BIT_INWATER);
-	ps &= (~PSTATE_BIT_UNDERWATER);
+	// clear all non-void non-special bits
+	ps &= (~PSTATE_BIT_ONGROUND   );
+	ps &= (~PSTATE_BIT_INWATER    );
+	ps &= (~PSTATE_BIT_UNDERWATER );
 	ps &= (~PSTATE_BIT_UNDERGROUND);
-	ps &= (~PSTATE_BIT_INAIR);
+	ps &= (~PSTATE_BIT_INAIR      );
 
 	// NOTE:
 	//   height is not in general equivalent to radius * 2.0
 	//   the height property is used for much fewer purposes
 	//   than radius, so less reliable for determining state
 	#define MASK_NOAIR (PSTATE_BIT_ONGROUND | PSTATE_BIT_INWATER | PSTATE_BIT_UNDERWATER | PSTATE_BIT_UNDERGROUND)
-	#define EPS 0.1f
-	ps |= (PSTATE_BIT_ONGROUND    * ((   pos.y -         gh) <=  EPS));
+	ps |= (PSTATE_BIT_ONGROUND    * ((   pos.y -         gh) <=  eps));
 	ps |= (PSTATE_BIT_INWATER     * ((   pos.y             ) <= 0.0f));
 //	ps |= (PSTATE_BIT_UNDERWATER  * ((   pos.y +     height) <  0.0f));
 //	ps |= (PSTATE_BIT_UNDERGROUND * ((   pos.y +     height) <    gh));
 	ps |= (PSTATE_BIT_UNDERWATER  * ((midPos.y +     radius) <  0.0f));
 	ps |= (PSTATE_BIT_UNDERGROUND * ((midPos.y +     radius) <    gh));
-	ps |= (PSTATE_BIT_INAIR       * ((   pos.y -         wh) >   EPS));
+	ps |= (PSTATE_BIT_INAIR       * ((   pos.y -         wh) >   eps));
 	ps |= (PSTATE_BIT_INAIR       * ((    ps   & MASK_NOAIR) ==    0));
-	#undef EPS
 	#undef MASK_NOAIR
 
 	physicalState = static_cast<PhysicalState>(ps);
@@ -158,8 +157,8 @@ void CSolidObject::UpdatePhysicalState() {
 	// verify mutex relations (A != B); if one
 	// fails then A and B *must* both be false
 	//
-	// problem case: pos.y < EPS (but > 0) &&
-	// gh < -EPS causes ONGROUND and INAIR to
+	// problem case: pos.y < eps (but > 0) &&
+	// gh < -eps causes ONGROUND and INAIR to
 	// both be false but INWATER will fail too
 	#if 0
 	assert((IsInAir() != IsOnGround()) || IsInWater());
