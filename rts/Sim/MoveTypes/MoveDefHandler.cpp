@@ -40,6 +40,8 @@ CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(subMarine),
 
 	CR_MEMBER(avoidMobilesOnPath),
+	CR_MEMBER(allowTerrainCollisions),
+
 	CR_MEMBER(heatMapping),
 	CR_MEMBER(flowMapping),
 	CR_MEMBER(heatMod),
@@ -185,6 +187,7 @@ MoveDef::MoveDef()
 	, subMarine(false)
 
 	, avoidMobilesOnPath(true)
+	, allowTerrainCollisions(true)
 
 	, heatMapping(true)
 	, flowMapping(true)
@@ -250,6 +253,7 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileMoveMult", 1.0f /*0.65f*/));
 
 	avoidMobilesOnPath = moveDefTable.GetBool("avoidMobilesOnPath", true);
+	allowTerrainCollisions = moveDefTable.GetBool("allowTerrainCollisions", true);
 
 	heatMapping = moveDefTable.GetBool("heatMapping", false);
 	flowMapping = moveDefTable.GetBool("flowMapping", true);
