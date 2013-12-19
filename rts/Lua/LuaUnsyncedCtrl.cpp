@@ -2776,36 +2776,35 @@ int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 /******************************************************************************/
 
 int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
-	const char* section = luaL_checkstring(L, 1);
+	int logLevel = LOG_LEVEL_INFO;
 
-	int loglevel = LOG_LEVEL_INFO;
 	if (lua_israwnumber(L, 2)) {
-		loglevel = lua_tonumber(L, 2);
-	} else {
-		std::string loglvlstr = lua_tostring(L, 2);
-		StringToLowerInPlace(loglvlstr);
+		logLevel = lua_tonumber(L, 2);
+	}
+	if (lua_isstring(L, 2)) {
+		const std::string& loglvlstr = StringToLower(lua_tostring(L, 2));
+
 		if (loglvlstr == "debug") {
-			loglevel = LOG_LEVEL_DEBUG;
+			logLevel = LOG_LEVEL_DEBUG;
 		}
 		else if (loglvlstr == "info") {
-			loglevel = LOG_LEVEL_INFO;
+			logLevel = LOG_LEVEL_INFO;
 		}
 		else if (loglvlstr == "warning") {
-			loglevel = LOG_LEVEL_WARNING;
+			logLevel = LOG_LEVEL_WARNING;
 		}
 		else if (loglvlstr == "error") {
-			loglevel = LOG_LEVEL_ERROR;
+			logLevel = LOG_LEVEL_ERROR;
 		}
 		else if (loglvlstr == "fatal") {
-			loglevel = LOG_LEVEL_FATAL;
+			logLevel = LOG_LEVEL_FATAL;
 		}
 		else {
 			return luaL_error(L, "Incorrect arguments to Spring.SetLogSectionFilterLevel(logsection, loglevel)");
 		}
 	}
 
-	//LOG();
-	log_filter_section_setMinLevel(section, loglevel);
+	log_filter_section_setMinLevel(luaL_checkstring(L, 1), logLevel);
 	return 0;
 }
 
