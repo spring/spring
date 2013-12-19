@@ -1551,25 +1551,22 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		const int xmid = (collider->pos.x + collider->speed.x) / SQUARE_SIZE;
 		const int zmid = (collider->pos.z + collider->speed.z) / SQUARE_SIZE;
 
-		#if 0
-		// mantis3614
-		// we cannot nicely bounce off terrain when checking only the center square
-		// however, testing more squares means CD can (sometimes) disagree with PFS
-		// --> compromise and assume a 3x3 footprint --> still possible but have to
-		// ensure we allow only lateral (non-obstructing) bounces
-		const int xmin = std::min(-1, -colliderMD->xsizeh * (1 - checkTerrain)), xmax = std::max(1, colliderMD->xsizeh * (1 - checkTerrain));
-		const int zmin = std::min(-1, -colliderMD->zsizeh * (1 - checkTerrain)), zmax = std::max(1, colliderMD->zsizeh * (1 - checkTerrain));
-		#else
-		const int xmin = std::min(-1, -colliderMD->xsizeh), xmax = std::max(1, colliderMD->xsizeh);
-		const int zmin = std::min(-1, -colliderMD->zsizeh), zmax = std::max(1, colliderMD->zsizeh);
-		#endif
+		// mantis{3614,4217}
+		//   we cannot nicely bounce off terrain when checking only the center square
+		//   however, testing more squares means CD can (sometimes) disagree with PFS
+		//   --> compromise and assume a 3x3 footprint --> still possible but have to
+		//   ensure we allow only lateral (non-obstructing) bounces
+		const int xsh = colliderMD->xsizeh * (checkYardMap || (checkTerrain * colliderMD->allowTerrainCollisions));
+		const int zsh = colliderMD->zsizeh * (checkYardMap || (checkTerrain * colliderMD->allowTerrainCollisions));
+
+		const int xmin = std::min(-1, -xsh), xmax = std::max(1, xsh);
+		const int zmin = std::min(-1, -zsh), zmax = std::max(1, zsh);
 
 		float3 strafeVec;
 		float3 bounceVec;
-		float3 sqCenterPosition;
 
-		float sqPenDistanceSum = 0.0f;
-		float sqPenDistanceCnt = 0.0f;
+		float3 sqrSumPosition; // .y is always 0
+		float2 sqrPenDistance; // .x = sum, .y = count
 
 		if (DEBUG_DRAWING_ENABLED) {
 			geometricObjects->AddLine(collider->pos + (UpVector * 25.0f), collider->pos + (UpVector * 100.0f), 3, 1, 4);
@@ -1609,29 +1606,28 @@ void CGroundMoveType::HandleStaticObjectCollision(
 					continue;
 
 				// RHS magic constant is the radius of a square (sqrt(2*(SQUARE_SIZE>>1)*(SQUARE_SIZE>>1)))
-				const float  sqColRadiusSum = colliderRadius + 5.656854249492381f;
-				const float   sqSepDistance = squareVec.Length2D() + 0.1f;
-				const float   sqPenDistance = std::min(sqSepDistance - sqColRadiusSum, 0.0f);
-				// const float  sqColSlideSign = -Sign(squarePos.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir));
+				const float  squareColRadiusSum = colliderRadius + 5.656854249492381f;
+				const float   squareSepDistance = squareVec.Length2D() + 0.1f;
+				const float   squarePenDistance = std::min(squareSepDistance - squareColRadiusSum, 0.0f);
+				// const float  squareColSlideSign = -Sign(squarePos.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir));
 
 				// this tends to cancel out too much on average
 				// strafeVec += (collider->rightdir * sqColSlideSign);
-				bounceVec += (collider->rightdir * (collider->rightdir.dot(squareVec / sqSepDistance)));
+				bounceVec += (collider->rightdir * (collider->rightdir.dot(squareVec / squareSepDistance)));
 
-				sqPenDistanceSum += sqPenDistance;
-				sqPenDistanceCnt += 1.0f;
-				sqCenterPosition += squarePos;
+				sqrPenDistance += float2(squarePenDistance, 1.0f);
+				sqrSumPosition += (squarePos * XZVector);
 			}
 		}
 
-		if (sqPenDistanceCnt > 0.0f) {
-			sqCenterPosition.y = 0.0f;
-			sqCenterPosition /= sqPenDistanceCnt;
-			sqPenDistanceSum /= sqPenDistanceCnt;
+		if (sqrPenDistance.y > 0.0f) {
+			sqrSumPosition.x /= sqrPenDistance.y;
+			sqrSumPosition.z /= sqrPenDistance.y;
+			sqrPenDistance.x /= sqrPenDistance.y;
 
-			const float strafeSign = -Sign(sqCenterPosition.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir));
-			const float strafeScale = std::min(std::max(currentSpeed*0.0f, maxSpeedDef), std::max(0.1f, -sqPenDistanceSum * 0.5f));
-			const float bounceScale = std::min(std::max(currentSpeed*0.0f, maxSpeedDef), std::max(0.1f, -sqPenDistanceSum * 0.5f));
+			const float strafeSign = -Sign(sqrSumPosition.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir));
+			const float strafeScale = std::min(std::max(currentSpeed*0.0f, maxSpeedDef), std::max(0.1f, -sqrPenDistance.x * 0.5f));
+			const float bounceScale = std::min(std::max(currentSpeed*0.0f, maxSpeedDef), std::max(0.1f, -sqrPenDistance.x * 0.5f));
 
 			// in FPS mode, normalize {strafe,bounce}Scale and multiply by maxSpeedDef
 			// (otherwise it would be possible to slide along map edges at above-normal

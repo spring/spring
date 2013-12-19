@@ -124,6 +124,7 @@ struct MoveDef {
 	/// does not insert it (GetCheckSum would need to skip such bytes
 	/// otherwise, since they are never initialized)
 	bool avoidMobilesOnPath;
+	bool allowTerrainCollisions;
 
 	/// do we leave heat and avoid any left by others?
 	bool heatMapping;
