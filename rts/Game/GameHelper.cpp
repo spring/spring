@@ -880,9 +880,7 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo, bool synced)
 	else
 		pos.z = math::floor((buildInfo.pos.z + SQUARE_SIZE) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
 
-	const UnitDef* ud = buildInfo.def;
-	pos.y = CGameHelper::GetBuildHeight(pos, ud, synced);
-
+	pos.y = CGameHelper::GetBuildHeight(pos, buildInfo.def, synced);
 	return pos;
 }
 
@@ -1218,11 +1216,27 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 			}
 		}
 
-		if ((ret == BUILDSQUARE_BLOCKED) || (ret == BUILDSQUARE_OCCUPIED)) {
+		if (ret == BUILDSQUARE_BLOCKED || ret == BUILDSQUARE_OCCUPIED) {
 			// if the to-be-buildee has a MoveDef, test if <so> would block it
+			// note:
+			//   <so> might be another new buildee and if that happens to be located
+			//   on sloped ground, then so->pos.y will equal Builder::StartBuild -->
+			//   ::Pos2BuildPos --> ::GetBuildHeight which can differ from the actual
+			//   ground height at so->pos (s.t. !so->IsOnGround() and the object will
+			//   be non-blocking)
+			if (synced) {
+				so->PushPhysicalStateBit(CSolidObject::PSTATE_BIT_ONGROUND);
+				so->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_ONGROUND, (math::fabs(so->pos.y - groundHeight) <= 0.5f));
+			}
+
 			if (moveDef != NULL && CMoveMath::IsNonBlocking(*moveDef, so, NULL)) {
 				ret = BUILDSQUARE_OPEN;
 			}
+
+			if (synced) {
+				so->PopPhysicalStateBit(CSolidObject::PSTATE_BIT_ONGROUND);
+			}
+
 		}
 
 		if (ret == BUILDSQUARE_BLOCKED) {

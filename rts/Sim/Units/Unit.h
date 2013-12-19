@@ -146,7 +146,7 @@ public:
 
 	void CalculateTerrainType();
 	void UpdateTerrainType();
-	void UpdatePhysicalState();
+	void UpdatePhysicalState(float eps);
 	void UpdateDirVectors(bool useGroundNormal);
 
 	float3 GetErrorVector(int allyteam) const;
