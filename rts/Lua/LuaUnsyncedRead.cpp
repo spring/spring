@@ -2533,12 +2533,13 @@ int LuaUnsyncedRead::GetConfigParams(lua_State* L)
 /******************************************************************************/
 
 int LuaUnsyncedRead::GetLogSections(lua_State* L) {
-	const int numLogSections = log_filter_section_getRegistered();
+	const int numLogSections = log_filter_section_getNumRegisteredSections();
 
 	lua_createtable(L, 0, numLogSections);
 	for (int i = 0; i < numLogSections; ++i) {
 		const char* sectionName = log_filter_section_getRegisteredIndex(i);
 		const int logLevel = log_filter_section_getMinLevel(sectionName);
+
 		lua_pushstring(L, sectionName);
 		lua_pushnumber(L, logLevel);
 		lua_rawset(L, -3);

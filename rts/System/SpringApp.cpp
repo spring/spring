@@ -1029,16 +1029,7 @@ int SpringApp::Run()
 
 	while (!gu->globalQuit) {
 		ResetScreenSaverTimeout();
-
-		{
-			SCOPED_TIMER("InputHandler::PushEvents");
-			SDL_Event event;
-
-			while (SDL_PollEvent(&event)) {
-				streflop::streflop_init<streflop::Simple>(); // SDL_PollEvent may modify FPU flags
-				input.PushEvent(event);
-			}
-		}
+		input.PushEvents();
 
 		if (!Update())
 			break;
