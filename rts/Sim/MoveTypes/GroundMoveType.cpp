@@ -1480,8 +1480,6 @@ void CGroundMoveType::HandleObjectCollisions()
 {
 	SCOPED_TIMER("Unit::MoveType::Update::Collisions");
 
-	static const float3 sepDirMask = float3(1.0f, 0.0f, 1.0f);
-
 	CUnit* collider = owner;
 
 	// handle collisions for even-numbered objects on even-numbered frames and vv.
@@ -1502,8 +1500,8 @@ void CGroundMoveType::HandleObjectCollisions()
 		const float colliderSpeed = collider->speed.w;
 		const float colliderRadius = FOOTPRINT_RADIUS(colliderMD->xsize, colliderMD->zsize, 0.75f);
 
-		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
-		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
+		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
+		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
 		HandleStaticObjectCollision(collider, collider, colliderMD, colliderRadius, 0.0f, ZeroVector, true, false, true);
 	}
 }
@@ -1688,7 +1686,6 @@ void CGroundMoveType::HandleUnitCollisions(
 	CUnit* collider,
 	const float colliderSpeed,
 	const float colliderRadius,
-	const float3& sepDirMask,
 	const UnitDef* colliderUD,
 	const MoveDef* colliderMD
 ) {
@@ -1829,7 +1826,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float  sepResponse = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
 
 		const float3 sepDirection   = (separationVector / sepDistance);
-		const float3 colResponseVec = sepDirection * sepDirMask * sepResponse;
+		const float3 colResponseVec = sepDirection * XZVector * sepResponse;
 
 		const float
 			m1 = collider->mass,
@@ -1880,7 +1877,6 @@ void CGroundMoveType::HandleFeatureCollisions(
 	CUnit* collider,
 	const float colliderSpeed,
 	const float colliderRadius,
-	const float3& sepDirMask,
 	const UnitDef* colliderUD,
 	const MoveDef* colliderMD
 ) {
@@ -1937,7 +1933,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 		const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
 
 		const float3 sepDirection   = (separationVector / sepDistance);
-		const float3 colResponseVec = sepDirection * sepDirMask * sepResponse;
+		const float3 colResponseVec = sepDirection * XZVector * sepResponse;
 
 		// multiply the collider's mass by a large constant (so that heavy
 		// features do not bounce light units away like jittering pinballs;
