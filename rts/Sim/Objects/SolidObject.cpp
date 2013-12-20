@@ -170,16 +170,20 @@ void CSolidObject::UpdatePhysicalState(float eps) {
 void CSolidObject::UpdateVoidState(bool set) {
 	if (set) {
 		// make us transparent to raycasts, quadfield queries, etc.
-		// TODO:
-		//   need to push/pop old state in case Lua has changed it
-		//   (otherwise gadgets must listen for Unit*Loaded events)
-		ClearCollidableStateBit((CSTATE_BIT_SOLIDOBJECTS * objectDef->collidable) | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
+		// need to push and pop state bits in case Lua changes them
+		// (otherwise gadgets must listen to all Unit*Loaded events)
+		PushCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS);
+		PushCollidableStateBit(CSTATE_BIT_PROJECTILES);
+		PushCollidableStateBit(CSTATE_BIT_QUADMAPRAYS);
+		ClearCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
 		SetPhysicalStateBit(PSTATE_BIT_INVOID);
 
 		UnBlock();
 		collisionVolume->SetIgnoreHits(true);
 	} else {
-		SetCollidableStateBit((CSTATE_BIT_SOLIDOBJECTS * objectDef->collidable) | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
+		PopCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS);
+		PopCollidableStateBit(CSTATE_BIT_PROJECTILES);
+		PopCollidableStateBit(CSTATE_BIT_QUADMAPRAYS);
 		ClearPhysicalStateBit(PSTATE_BIT_INVOID);
 
 		Block();
