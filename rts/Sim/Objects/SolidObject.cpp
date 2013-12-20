@@ -26,7 +26,6 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(crushable),
 	CR_MEMBER(immobile),
-	CR_MEMBER(crushKilled),
 	CR_MEMBER(blockEnemyPushing),
 	CR_MEMBER(blockHeightChanges),
 
@@ -77,7 +76,6 @@ CSolidObject::CSolidObject():
 
 	crushable(false),
 	immobile(false),
-	crushKilled(false),
 	blockEnemyPushing(true),
 	blockHeightChanges(false),
 
@@ -374,10 +372,13 @@ void CSolidObject::SetHeadingFromDirection() {
 
 
 
-void CSolidObject::Kill(const float3& impulse, bool crushKill) {
-	crushKilled = crushKill;
-
+void CSolidObject::Kill(CUnit* killer, const float3& impulse, bool crushed) {
 	UpdateVoidState(false);
-	DoDamage(DamageArray(health + 1.0f), impulse, NULL, -DAMAGE_EXTSOURCE_KILLED, -1);
+
+	if (crushed) {
+		DoDamage(DamageArray(health + 1.0f), impulse, killer, -DAMAGE_EXTSOURCE_CRUSHED, -1);
+	} else {
+		DoDamage(DamageArray(health + 1.0f), impulse, killer, -DAMAGE_EXTSOURCE_KILLED, -1);
+	}
 }
 

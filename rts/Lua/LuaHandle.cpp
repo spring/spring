@@ -1299,7 +1299,7 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 
 	lua_pushnumber(L, collider->id);
 	lua_pushnumber(L, collidee->id);
-	lua_pushboolean(L, collidee->crushKilled);
+	lua_pushboolean(L, false);
 
 	RunCallInTraceback(cmdStr, 3, 0, traceBack.GetErrFuncIdx(), false);
 }
@@ -1325,7 +1325,7 @@ void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 
 	lua_pushnumber(L, collider->id);
 	lua_pushnumber(L, collidee->id);
-	lua_pushboolean(L, collidee->crushKilled);
+	lua_pushboolean(L, false);
 
 	RunCallInTraceback(cmdStr, 3, 0, traceBack.GetErrFuncIdx(), false);
 }

@@ -1770,7 +1770,7 @@ void CGroundMoveType::HandleUnitCollisions(
 			continue;
 
 		if (crushCollidee && !CMoveMath::CrushResistant(*colliderMD, collidee))
-			collidee->Kill(crushImpulse, true);
+			collidee->Kill(collider, crushImpulse, true);
 
 		if (pathController->IgnoreCollision(collider, collidee))
 			continue;
@@ -1906,7 +1906,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 		if (CMoveMath::IsNonBlocking(*colliderMD, collidee, collider))
 			continue;
 		if (!CMoveMath::CrushResistant(*colliderMD, collidee))
-			collidee->Kill(crushImpulse, true);
+			collidee->Kill(collider, crushImpulse, true);
 
 		if (pathController->IgnoreCollision(collider, collidee))
 			continue;
