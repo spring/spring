@@ -3,6 +3,15 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 
+-- 96.0 ---------------------------------------------------------
+
+Misc:
+ - default disable grass for ATI cards (crashes for some people)
+ - improve Shard AI for BA
+ - fix some MSVC compile errors
+ - fix compile on FreeeBSD
+
+
 -- 95.0 ---------------------------------------------------------
 
 Major:
