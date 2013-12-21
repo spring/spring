@@ -7,7 +7,8 @@
 #ifndef LOG_SECTION_H
 #define LOG_SECTION_H
 
-#include <cstring>
+// logging should be C, use string.h
+#include <string.h>
 
 #define LOG_SECTION_DEFAULT ""
 
