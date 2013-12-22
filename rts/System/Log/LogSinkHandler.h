@@ -4,7 +4,7 @@
 #define LOG_SINK_HANDLER_H
 
 #include <string>
-#include <vector>
+#include <set>
 
 
 /**
@@ -55,7 +55,7 @@ public:
 			const std::string& text) const;
 
 private:
-	std::vector<ILogSink*> sinks;
+	std::set<ILogSink*> sinks;
 	/**
 	 * Whether log records are passed on to registered sinks, or dismissed.
 	 */

@@ -1,11 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "LogSinkHandler.h"
-
 #include "Backend.h"
 
 #include <string>
-#include <vector>
 #include <cassert>
 
 
@@ -26,18 +24,12 @@ void LogSinkHandler::AddSink(ILogSink* logSink) {
 		log_backend_registerSink(&log_sink_record_logSinkHandler);
 	}
 
-	sinks.push_back(logSink);
+	sinks.insert(logSink);
 }
 
 void LogSinkHandler::RemoveSink(ILogSink* logSink) {
 	assert(logSink != NULL);
-
-	for (auto lsi = sinks.begin(); lsi != sinks.end(); ++lsi) {
-		if (*lsi == logSink) {
-			sinks.erase(lsi);
-			break;
-		}
-	}
+	sinks.erase(logSink);
 
 	if (sinks.empty()) {
 		log_backend_unregisterSink(&log_sink_record_logSinkHandler);
