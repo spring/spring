@@ -92,7 +92,7 @@ void log_backend_record(const char* section, int level, const char* fmt, va_list
 		// format the record
 		const char* record = log_formatter_format(section, level, fmt, arguments);
 
-		// sink the record with each registered sink
+		// sink the record into each registered sink
 		for (auto si = sinks.begin(); si != sinks.end(); ++si) {
 			(*si)(section, level, record);
 		}
