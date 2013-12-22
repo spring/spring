@@ -12,6 +12,7 @@
 #include "lib/gml/gml_base.h"
 #include "lib/gml/gmlmut.h"
 #include "System/Exceptions.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Misc.h"
@@ -24,12 +25,11 @@
 
 #ifdef WIN32
 	#include "lib/SOP/SOP.hpp" // NvOptimus
-	#include "System/FileSystem/FileSystem.h"
+
 	#include <stdlib.h>
 	#include <process.h>
 	#define setenv(k,v,o) SetEnvironmentVariable(k,v)
 #endif
-
 
 
 
@@ -81,16 +81,16 @@ int Run(int argc, char* argv[])
  * Always run on dedicated GPU
  * @return true when restart is required with new env vars
  */
-static bool SetNvOptimusProfile(char* argv[])
+static bool SetNvOptimusProfile(const std::string& processFileName)
 {
 #ifdef WIN32
 	if (SOP_CheckProfile("Spring"))
 		return false;
 
-	const bool profileChanged = (SOP_SetProfile("Spring", FileSystem::GetFilename(argv[0])) == SOP_RESULT_CHANGE);
+	const bool profileChanged = (SOP_SetProfile("Spring", processFileName) == SOP_RESULT_CHANGE);
 
 	// on Windows execvp breaks lobbies (new process: new PID)
-	//return profileChanged;
+	return (false && profileChanged);
 #endif
 	return false;
 }
@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
 // PROFILE builds exit on execv ...
 // HEADLESS run mostly in parallel for testing purposes, 100% omp threads wouldn't help then
 #if !defined(PROFILE) && !defined(HEADLESS)
-	if (SetNvOptimusProfile(argv)) {
+	if (SetNvOptimusProfile(FileSystem::GetFilename(argv[0]))) {
 		// prepare for restart
 		std::vector<std::string> args(argc - 1);
 

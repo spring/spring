@@ -45,6 +45,9 @@ namespace {
 		OutputDebugStringSinkRegistrator() {
 			log_backend_registerSink(&log_sink_record_outputDebugString);
 		}
+		~OutputDebugStringSinkRegistrator() {
+			log_backend_unregisterSink(&log_sink_record_outputDebugString);
+		}
 	} outputDebugStringSinkRegistrator;
 }
 

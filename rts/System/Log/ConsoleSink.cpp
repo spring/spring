@@ -20,19 +20,6 @@ extern "C" {
 static bool colorizedOutput = false;
 
 
-/// Choose the out-stream for logging
-static inline FILE* log_chooseStream(int level) {
-
-	// - stdout: levels less severe then WARNING
-	// - stderr: WARNING and more severe
-	FILE* outStream = stdout;
-	if (level >= LOG_LEVEL_WARNING) {
-		outStream = stderr;
-	}
-
-	return outStream;
-}
-
 
 /**
  * @name logging_sink_console
@@ -53,7 +40,7 @@ static void log_sink_record_console(const char* section, int level,
 	char framePrefix[128] = {'\0'};
 	log_framePrefixer_createPrefix(framePrefix, sizeof(framePrefix));
 
-	FILE* outStream = log_chooseStream(level);
+	FILE* outStream = (level >= LOG_LEVEL_WARNING)? stderr: stdout;
 
 	const char* fstr = "%s%s\n";
 	if (colorizedOutput) {
@@ -81,6 +68,9 @@ namespace {
 	struct ConsoleSinkRegistrator {
 		ConsoleSinkRegistrator() {
 			log_backend_registerSink(&log_sink_record_console);
+		}
+		~ConsoleSinkRegistrator() {
+			log_backend_unregisterSink(&log_sink_record_console);
 		}
 	} consoleSinkRegistrator;
 }

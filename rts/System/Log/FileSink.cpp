@@ -128,11 +128,9 @@ namespace {
 			const char* record)
 	{
 		const logFiles_t& logFiles = log_file_getLogFiles();
-		logFiles_t::const_iterator lfi;
-		for (lfi = logFiles.begin(); lfi != logFiles.end(); ++lfi) {
-			if (lfi->second.IsLogging(section, level)
-					&& (lfi->second.GetOutStream() != NULL))
-			{
+
+		for (auto lfi = logFiles.begin(); lfi != logFiles.end(); ++lfi) {
+			if (lfi->second.IsLogging(section, level) && (lfi->second.GetOutStream() != NULL)) {
 				log_file_writeToFile(lfi->second.GetOutStream(), record, lfi->second.FlushOnWrite());
 			}
 		}
@@ -150,8 +148,8 @@ namespace {
 	 */
 	void log_file_flushFiles() {
 		const logFiles_t& logFiles = log_file_getLogFiles();
-		logFiles_t::const_iterator lfi;
-		for (lfi = logFiles.begin(); lfi != logFiles.end(); ++lfi) {
+
+		for (auto lfi = logFiles.begin(); lfi != logFiles.end(); ++lfi) {
 			if (lfi->second.GetOutStream() != NULL) {
 				log_file_flushFile(lfi->second.GetOutStream());
 			}
@@ -163,7 +161,6 @@ namespace {
 	 * files.
 	 */
 	void log_file_writeBufferToFiles() {
-
 		while (!log_file_getRecordBuffer().empty()) {
 			logRecords_t& logRecords = log_file_getRecordBuffer();
 			const logRecords_t::iterator lri = logRecords.begin();
@@ -186,7 +183,6 @@ extern "C" {
 #endif
 
 void log_file_addLogFile(const char* filePath, const char* sections, int minLevel, bool flush) {
-
 	assert(filePath != NULL);
 
 	logFiles_t& logFiles = log_file_getLogFiles();
@@ -210,7 +206,6 @@ void log_file_addLogFile(const char* filePath, const char* sections, int minLeve
 }
 
 void log_file_removeLogFile(const char* filePath) {
-
 	assert(filePath != NULL);
 
 	logFiles_t& logFiles = log_file_getLogFiles();
@@ -229,7 +224,6 @@ void log_file_removeLogFile(const char* filePath) {
 }
 
 void log_file_removeAllLogFiles() {
-
 	while (!log_file_getLogFiles().empty()) {
 		const logFiles_t::const_iterator lfi = log_file_getLogFiles().begin();
 		log_file_removeLogFile(lfi->first.c_str());
@@ -275,6 +269,10 @@ namespace {
 		FileSinkRegistrator() {
 			log_backend_registerSink(&log_sink_record_file);
 			log_backend_registerCleanup(&log_sink_cleanup_file);
+		}
+		~FileSinkRegistrator() {
+			log_backend_unregisterSink(&log_sink_record_file);
+			log_backend_unregisterCleanup(&log_sink_cleanup_file);
 		}
 	} fileSinkRegistrator;
 }
