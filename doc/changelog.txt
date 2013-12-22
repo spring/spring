@@ -5,11 +5,18 @@ Spring changelog
 
 -- 96.0 ---------------------------------------------------------
 
+Major:
+ - Bugfixes
+
 Misc:
  - default disable grass for ATI cards (crashes for some people)
  - improve Shard AI for BA
  - fix some MSVC compile errors
  - fix compile on FreeeBSD
+ - TimeProfiler (alt+b) shows now max `lag` of each item
+ - massively speedup caching with many sdd's
+ - fixed some FreeBSD compile issues (thx AMDmi3)
+ - fixed wreckage heaps could be resurrected
 
 
 -- 95.0 ---------------------------------------------------------
