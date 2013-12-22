@@ -17,7 +17,6 @@ Misc:
  - made stacktrace-translation script recognize more crash/hang patterns
  - improve Shard AI for BA
  - fix some MSVC compile errors
- - fix compilation on FreeeBSD
  - TimeProfiler (alt+b) shows now max `lag` of each item
  - massively speedup caching with many .sdd archives
  - fixed some FreeBSD compile issues (thx AMDmi3)
