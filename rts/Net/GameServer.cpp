@@ -911,7 +911,7 @@ void CGameServer::LagProtection()
 	cpu.reserve(players.size());
 	ping.reserve(players.size());
 
-	// detect reference cpu usage
+	// detect reference cpu usage ( highest )
 	float refCpuUsage = 0.0f;
 	for (size_t a = 0; a < players.size(); ++a) {
 		GameParticipant& player = players[a];
@@ -954,17 +954,23 @@ void CGameServer::LagProtection()
 
 	// adjust game speed
 	if (refCpuUsage > 0.0f && !isPaused) {
+		//userSpeedFactor holds the wanted speed adjusted manually by user ( normally 1)
+		//internalSpeed holds the current speed the sim is running
+		//refCpuUsage holds the highest cpu if curSpeedCtrl == 0 or median if curSpeedCtrl == 1
+
 		// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference
 		float wantedCpuUsage = (curSpeedCtrl == 1) ?  0.60f : 0.75f;
-		wantedCpuUsage += (1.0f - internalSpeed / userSpeedFactor) * 0.5f; //???
 
-		float newSpeed = internalSpeed * wantedCpuUsage / refCpuUsage;
-		newSpeed = (newSpeed + internalSpeed) * 0.5f;
+		//the following line can actually make it go faster than wanted normal speed ( userSpeedFactor )
+		//if the current cpu of the target is smaller than the aimed cpu target but the clamp will cap it
+		// the clamp will throttle it to the wanted one, otherwise it's a simple linear proportion aiming
+		// to keep cpu load constant
+		float newSpeed = internalSpeed/refCpuUsage*wantedCpuUsage;
 		newSpeed = Clamp(newSpeed, 0.1f, userSpeedFactor);
-		if (userSpeedFactor <= 2.f)
-			newSpeed = std::max(newSpeed, (curSpeedCtrl == 1) ? userSpeedFactor * 0.8f : userSpeedFactor * 0.5f);
-
+		//average to smooth the speed change over time to reduce the impact of cpu spikes in the players
+		newSpeed = (newSpeed + internalSpeed) * 0.5f;
 #ifndef DEDICATED
+		// in non-dedicated hosting, we'll add an additional safeguard to make sure the host can keep up with the game's speed
 		// adjust game speed to localclient's (:= host) maximum SimFrame rate
 		const float maxSimFPS = (1000.0f / gu->avgSimFrameTime) * (1.0f - gu->reconnectSimDrawBalance);
 		newSpeed = Clamp(newSpeed, 0.1f, ((maxSimFPS / GAME_SPEED) + internalSpeed) * 0.5f);
