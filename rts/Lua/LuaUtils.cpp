@@ -12,7 +12,6 @@
 #include "LuaUtils.h"
 
 #include "System/Log/ILog.h"
-#include "System/Log/DefaultFilter.h"
 #include "System/Util.h"
 #include "LuaConfig.h"
 #include <boost/thread/recursive_mutex.hpp>

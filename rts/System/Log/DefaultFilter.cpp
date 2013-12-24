@@ -9,11 +9,13 @@
 #include <cstdio>
 #include <cstdarg>
 #include <cassert>
+
 #include <map>
 #include <unordered_map>
 #include <memory>
 #include <set>
 #include <stack>
+#include <string>
 
 
 #ifdef __cplusplus
@@ -220,7 +222,7 @@ bool log_frontend_isEnabled(const char* section, int level) {
 }
 
 // see the LOG_REGISTER_SECTION_RAW macro in ILog.h
-void log_frontend_registerSection(const char* section) {
+void log_frontend_register_section(const char* section) {
 	if (!LOG_SECTION_IS_DEFAULT(section)) {
 		secSet_t& registeredSections = log_filter_getRegisteredSections();
 		secSet_t::const_iterator si = registeredSections.find(section);
@@ -229,6 +231,14 @@ void log_frontend_registerSection(const char* section) {
 			registeredSections.insert(section);
 		}
 	}
+}
+
+void log_frontend_register_runtime_section(const char* section_cstr_tmp, int level) {
+	const char* section_cstr = log_filter_section_getSectionCString(section_cstr_tmp);
+
+	log_frontend_register_section(section_cstr);
+	log_filter_section_setMinLevel(section_cstr, level);
+
 }
 
 void log_frontend_record(const char* section, int level, const char* fmt, ...)
@@ -262,19 +272,21 @@ std::set<const char*> log_filter_section_getRegisteredSet()
 	return outSet;
 }
 
-
-static std::unordered_map<std::string, std::unique_ptr<const char>> foo;
-
-
-const char* log_filter_section_getSectionCString(const std::string& section)
+const char* log_filter_section_getSectionCString(const char* section_cstr_tmp)
 {
-	auto it = foo.find(section);
-	if (it != foo.end())
-		return it->second.get();
+	static std::unordered_map<std::string, std::unique_ptr<const char>> cache;
 
-	auto cstr = new char[section.size() + 1];
-	std::copy(section.begin(), section.end(), cstr);
-	cstr[section.size()] = '\0';
-	foo[section].reset(cstr);
-	return cstr;
+	const auto str = std::string(section_cstr_tmp);
+	const auto it = cache.find(str);
+
+	if (it != cache.end())
+		return (it->second.get());
+
+	char* section_cstr = new char[str.size() + 1];
+
+	strcpy(&section_cstr[0], section_cstr_tmp);
+	section_cstr[str.size()] = '\0';
+
+	cache[str].reset(section_cstr);
+	return section_cstr;
 }
