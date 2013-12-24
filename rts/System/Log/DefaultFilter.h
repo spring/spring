@@ -96,7 +96,7 @@ void log_enable_and_disable(const bool enable);
 
 #ifdef __cplusplus
 #include <set>
-#include <string>
+
 
 /**
  * Returns the registered sections.
@@ -104,7 +104,7 @@ void log_enable_and_disable(const bool enable);
  */
 std::set<const char*> log_filter_section_getRegisteredSet();
 
-const char* log_filter_section_getSectionCString(const std::string& section);
+const char* log_filter_section_getSectionCString(const char* section_cstr_tmp);
 
 #endif
 
