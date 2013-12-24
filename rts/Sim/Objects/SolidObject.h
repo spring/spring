@@ -211,6 +211,8 @@ public:
 		return (HasCollidableStateBit(bit));
 	}
 
+	bool SetVoidState();
+	bool ClearVoidState();
 	void UpdateVoidState(bool set);
 
 private:
