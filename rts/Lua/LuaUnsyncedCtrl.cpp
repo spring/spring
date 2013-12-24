@@ -2778,6 +2778,8 @@ int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
 	int logLevel = LOG_LEVEL_INFO;
 
+	const std::string section = luaL_checksstring(L, 1);
+
 	if (lua_israwnumber(L, 2)) {
 		logLevel = lua_tonumber(L, 2);
 	}
@@ -2804,7 +2806,9 @@ int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
 		}
 	}
 
-	log_filter_section_setMinLevel(luaL_checkstring(L, 1), logLevel);
+	const char* sectionC = log_filter_section_getSectionCString(section);
+	log_frontend_registerSection(sectionC);
+	log_filter_section_setMinLevel(sectionC, logLevel);
 	return 0;
 }
 

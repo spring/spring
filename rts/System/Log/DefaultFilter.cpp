@@ -10,6 +10,8 @@
 #include <cstdarg>
 #include <cassert>
 #include <map>
+#include <unordered_map>
+#include <memory>
 #include <set>
 #include <stack>
 
@@ -253,16 +255,26 @@ void log_frontend_cleanup() {
 
 
 
-std::set<const char*> log_filter_section_getRegisteredSet() {
-
-	std::set<const char*> outSet;
-
-	const secSet_t& registeredSections = log_filter_getRegisteredSections();
-
-	for (auto si = registeredSections.begin(); si != registeredSections.end(); ++si) {
-		outSet.insert(*si);
-	}
-
+std::set<const char*> log_filter_section_getRegisteredSet()
+{
+	const auto& registeredSections = log_filter_getRegisteredSections();
+	std::set<const char*> outSet(registeredSections.begin(), registeredSections.end());
 	return outSet;
 }
 
+
+static std::unordered_map<std::string, std::unique_ptr<const char>> foo;
+
+
+const char* log_filter_section_getSectionCString(const std::string& section)
+{
+	auto it = foo.find(section);
+	if (it != foo.end())
+		return it->second.get();
+
+	auto cstr = new char[section.size() + 1];
+	std::copy(section.begin(), section.end(), cstr);
+	cstr[section.size()] = '\0';
+	foo[section].reset(cstr);
+	return cstr;
+}
