@@ -26,11 +26,14 @@ public:
 
 	float3 CalcPixelDir(int x,int y) const;
 	float3 CalcWindowCoordinates(const float3& objPos) const;
+
 	void CopyState(const CCamera*);
 	void UpdateForward();
+	void UpdateRightAndUp(bool terrainReflectionPass);
+
 	bool InView(const float3& p, float radius = 0) const;
 	bool InView(const float3& mins, const float3& maxs) const;
-	void Update();
+	void Update(bool terrainReflectionPass = false);
 
 	void GetFrustumSides(float miny, float maxy, float scale, bool negSide = false);
 	void GetFrustumSide(
@@ -64,8 +67,7 @@ public:
 	float GetLPPScale() const { return lppScale; }
 
 	/// @param fov in degree
-	float3& SetPos() { return pos; }
-	void SetPos(float3 p) { pos = p; }
+	void SetPos(const float3& p) { pos = p; }
 	void SetFov(float fov);
 
 	float GetMoveDistance(float* time, float* speed, int idx) const;
