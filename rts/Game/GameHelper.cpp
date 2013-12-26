@@ -1000,6 +1000,12 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 // against which to compare all footprint squares
 float CGameHelper::GetBuildHeight(const float3& pos, const UnitDef* unitdef, bool synced)
 {
+	// we are not going to terraform the ground for mobile units
+	// (so we do not care about maxHeightDif constraints either)
+	// TODO: maybe respect waterline if <pos> is in water
+	if (!unitdef->IsImmobileUnit())
+		return (std::max(pos.y, ground->GetHeightReal(pos.x, pos.z, synced)));
+
 	const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
 	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
 
@@ -1010,7 +1016,7 @@ float CGameHelper::GetBuildHeight(const float3& pos, const UnitDef* unitdef, boo
 	}
 	#endif
 
-	const float difHgt = unitdef->maxHeightDif;
+	const float maxDifHgt = unitdef->maxHeightDif;
 
 	float minHgt = readMap->GetCurrMinHeight();
 	float maxHgt = readMap->GetCurrMaxHeight();
@@ -1045,8 +1051,8 @@ float CGameHelper::GetBuildHeight(const float3& pos, const UnitDef* unitdef, boo
 			// restrict the range of [minH, maxH] to
 			// the minimum and maximum square height
 			// within the footprint
-			if (minHgt < (sqMinHgt - difHgt)) { minHgt = sqMinHgt - difHgt; }
-			if (maxHgt > (sqMaxHgt + difHgt)) { maxHgt = sqMaxHgt + difHgt; }
+			if (minHgt < (sqMinHgt - maxDifHgt)) { minHgt = sqMinHgt - maxDifHgt; }
+			if (maxHgt > (sqMaxHgt + maxDifHgt)) { maxHgt = sqMaxHgt + maxDifHgt; }
 		}
 	}
 
@@ -1224,19 +1230,23 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 			//   ::Pos2BuildPos --> ::GetBuildHeight which can differ from the actual
 			//   ground height at so->pos (s.t. !so->IsOnGround() and the object will
 			//   be non-blocking)
+			//   fixed: no longer true for mobile units
+			#if 0
 			if (synced) {
 				so->PushPhysicalStateBit(CSolidObject::PSTATE_BIT_ONGROUND);
 				so->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_ONGROUND, (math::fabs(so->pos.y - groundHeight) <= 0.5f));
 			}
+			#endif
 
 			if (moveDef != NULL && CMoveMath::IsNonBlocking(*moveDef, so, NULL)) {
 				ret = BUILDSQUARE_OPEN;
 			}
 
+			#if 0
 			if (synced) {
 				so->PopPhysicalStateBit(CSolidObject::PSTATE_BIT_ONGROUND);
 			}
-
+			#endif
 		}
 
 		if (ret == BUILDSQUARE_BLOCKED) {
