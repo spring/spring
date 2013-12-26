@@ -3798,10 +3798,9 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					}
 
 					if (!onMinimap) {
-						unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
+						CUnitDrawer::DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
 
-						glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
-												(GLenum)cmdColors.SelectedBlendDst());
+						glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
 					}
 				}
 			}

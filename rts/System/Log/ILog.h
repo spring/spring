@@ -57,7 +57,8 @@ extern bool log_frontend_isEnabled(const char* section, int level);
  * Allows the global filter to maintain a set of all setions used in the binary.
  * This will be called once per each LOG*() line in the source.
  */
-extern void log_frontend_registerSection(const char* section);
+extern void log_frontend_register_section(const char* section);
+extern void log_frontend_register_runtime_section(const char* section, int level);
 
 
 // format string error checking
@@ -109,7 +110,7 @@ extern void log_frontend_cleanup();
 	log_frontend_isEnabled(section, LOG_LEVE##level)
 
 #define _LOG_REGISTER_SECTION_RAW(section) \
-	log_frontend_registerSection(section);
+	log_frontend_register_section(section);
 
 /*
  * Pre-processor trickery, useful to create unique identifiers.

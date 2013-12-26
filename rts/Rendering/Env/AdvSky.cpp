@@ -623,8 +623,8 @@ void CAdvSky::UpdateSunFlare() {
 		glDeleteLists(sunFlareList, 1);
 
 	const float3 zdir = skyLight->GetLightDir();
-	const float3 xdir = zdir.cross(UpVector);
-	const float3 ydir = zdir.cross(xdir);
+	const float3 xdir = zdir.cross(UpVector).Normalize();
+	const float3 ydir = zdir.cross(xdir).Normalize();
 
 	sunFlareList = glGenLists(1);
 	glNewList(sunFlareList, GL_COMPILE);
@@ -638,8 +638,8 @@ void CAdvSky::UpdateSunFlare() {
 			const float dy = math::cos(x * 2.0f * PI / 256.0f);
 			const float dz = 5.0f;
 
-			glTexCoord2f(x / 256.0f, 0.25f); glVertexf3(zdir * dz + xdir * dx * 0.0014f + ydir * dy * 0.0014f);
-			glTexCoord2f(x / 256.0f, 0.75f); glVertexf3(zdir * dz + xdir * dx * 4.0000f + ydir * dy * 4.0000f);
+			glTexCoord2f(x / 256.0f, 0.125f); glVertexf3(zdir * dz + xdir * dx * 0.0014f + ydir * dy * 0.0014f);
+			glTexCoord2f(x / 256.0f, 0.875f); glVertexf3(zdir * dz + xdir * dx * 4.0000f + ydir * dy * 4.0000f);
 		}
 
 		glEnd();

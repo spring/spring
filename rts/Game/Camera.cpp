@@ -64,15 +64,9 @@ void CCamera::CopyState(const CCamera* cam) {
 	lppScale  = cam->lppScale;
 }
 
-void CCamera::Update()
+void CCamera::Update(bool terrainReflectionPass)
 {
-	if (forward.cross(UpVector) != ZeroVector)
-		up = UpVector;
-
-	right = forward.cross(up);
-	right.UnsafeANormalize();
-	up = right.cross(forward);
-	up.UnsafeANormalize();
+	UpdateRightAndUp(terrainReflectionPass);
 
 	const float aspect = globalRendering->aspectRatio;
 	const float viewx = math::tan(aspect * halfFov);
@@ -208,6 +202,23 @@ void CCamera::UpdateForward()
 	forward.x = math::sin(rot.y) * math::cos(rot.x);
 	forward.y = math::sin(rot.x);
 	forward.Normalize();
+}
+
+void CCamera::UpdateRightAndUp(bool terrainReflectionPass)
+{
+	// terrain (not water) cubemap reflection passes set forward
+	// to {+/-}UpVector which would cause vector degeneracy when
+	// calculating right and up
+	// FIXME: sign-inversion near poles in free-camera mode, etc
+	if (std::fabs(forward.y) >= 0.99f) {
+		up = FwdVector * Sign(forward.y);
+	} else {
+		// in the terrain reflection pass everything is upside-down!
+		up = UpVector * -Sign(int(terrainReflectionPass));
+	}
+
+	right = (forward.cross(up)).UnsafeANormalize();
+	up = (right.cross(forward)).UnsafeANormalize();
 }
 
 

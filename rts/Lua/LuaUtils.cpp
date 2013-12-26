@@ -920,7 +920,7 @@ int LuaUtils::Log(lua_State* L)
 	if (args < 3)
 		return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
 
-	const std::string section = luaL_checkstring(L, 1);
+	const char* section = luaL_checkstring(L, 1);
 
 	int loglevel = 0;
 	if (lua_israwnumber(L, 2)) {
@@ -953,7 +953,7 @@ int LuaUtils::Log(lua_State* L)
 	}
 
 	const std::string msg = getprintf_msg(L, 3);
-	LOG_SI(section.c_str(), loglevel, "%s", msg.c_str());
+	LOG_SI(section, loglevel, "%s", msg.c_str());
 	return 0;
 }
 
