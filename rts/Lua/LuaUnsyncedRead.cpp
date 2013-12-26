@@ -2107,16 +2107,14 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 int LuaUnsyncedRead::GetCurrentTooltip(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	const string tooltip = mouse->GetCurrentTooltip();
-	lua_pushsstring(L, tooltip);
+	lua_pushsstring(L, mouse->GetCurrentTooltip());
 	return 1;
 }
 
 
 int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 {
-	const string keysym = luaL_checksstring(L, 1);
-	lua_pushnumber(L, keyCodes->GetCode(keysym));
+	lua_pushnumber(L, (keyCodes != NULL)? keyCodes->GetCode(luaL_checksstring(L, 1)): -1);
 	return 1;
 }
 
@@ -2124,22 +2122,25 @@ int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 {
 	const int keycode = luaL_checkint(L, 1);
-	lua_pushsstring(L, keyCodes->GetName(keycode));
-	lua_pushsstring(L, keyCodes->GetDefaultName(keycode));
+	lua_pushsstring(L, (keyCodes != NULL)? keyCodes->GetName(keycode): "");
+	lua_pushsstring(L, (keyCodes != NULL)? keyCodes->GetDefaultName(keycode): "");
 	return 2;
 }
 
 
 int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 {
-	const string keysetStr = luaL_checksstring(L, 1);
 	CKeySet ks;
-	if (!ks.Parse(keysetStr)) {
+
+	if (!ks.Parse(luaL_checksstring(L, 1)))
 		return 0;
-	}
+	if (keyBindings == NULL)
+		return 0;
+
 	const CKeyBindings::ActionList& actions = keyBindings->GetActionList(ks);
+
 	lua_newtable(L);
-	for (int i = 0; i < (int)actions.size(); i++) {
+	for (unsigned int i = 0; i < actions.size(); i++) {
 		const Action& action = actions[i];
 		lua_newtable(L);
 		lua_pushsstring(L, action.command);
@@ -2153,10 +2154,13 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 
 int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 {
-	const string command = luaL_checksstring(L, 1);
-	const CKeyBindings::HotkeyList& hotkeys = keyBindings->GetHotkeys(command);
+	if (keyBindings == NULL)
+		return 0;
+
+	const CKeyBindings::HotkeyList& hotkeys = keyBindings->GetHotkeys(luaL_checksstring(L, 1));
+
 	lua_newtable(L);
-	for (int i = 0; i < (int)hotkeys.size(); i++) {
+	for (unsigned int i = 0; i < hotkeys.size(); i++) {
 		const string& hotkey = hotkeys[i];
 		lua_pushsstring(L, hotkey);
 		lua_rawseti(L, -2, i + 1);

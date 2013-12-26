@@ -194,15 +194,11 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 
 	game->SetDrawMode(CGame::gameReflectionDraw);
 
-	camera->SetFov(90.0f);
 	camera->forward = camDir;
-	camera->up = -UpVector;
-
-	if (camera->forward.y ==  1.0f) { camera->up =  FwdVector; }
-	if (camera->forward.y == -1.0f) { camera->up = -FwdVector; }
-
-	camera->SetPos().y = ground->GetHeightAboveWater(camera->GetPos().x, camera->GetPos().z, false) + 50.0f;
-	camera->Update();
+	camera->SetFov(90.0f);
+	camera->SetPos((camera->GetPos()) * XZVector + UpVector * (ground->GetHeightAboveWater(camera->GetPos().x, camera->GetPos().z, false) + 50.0f));
+	// calculate temporary new coor-system and matrices
+	camera->Update(true);
 
 	sky->Draw();
 
