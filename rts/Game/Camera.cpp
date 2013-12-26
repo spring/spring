@@ -209,7 +209,8 @@ void CCamera::UpdateRightAndUp(bool terrainReflectionPass)
 	// terrain (not water) cubemap reflection passes set forward
 	// to {+/-}UpVector which would cause vector degeneracy when
 	// calculating right and up
-	if (std::fabs(forward.y * UpVector.y) >= 0.99f) {
+	// FIXME: sign-inversion near poles in free-camera mode, etc
+	if (std::fabs(forward.y) >= 0.99f) {
 		up = FwdVector * Sign(forward.y);
 	} else {
 		// in the terrain reflection pass everything is upside-down!

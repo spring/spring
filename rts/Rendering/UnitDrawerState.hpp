@@ -34,7 +34,9 @@ public:
 	virtual void DisableShaders(const CUnitDrawer*) {}
 
 	virtual void UpdateCurrentShader(const CUnitDrawer*, const ISkyLight*) const {}
-	virtual void SetTeamColor(int team, float alpha = 1.0f) const {}
+	virtual void SetTeamColor(int team, float alpha) const {}
+
+	static void SetBasicTeamColor(int team, float alpha);
 
 	void SetActiveShader(bool shadowed, bool deferred) {
 		if (shadowed) {
@@ -78,7 +80,7 @@ public:
 	void EnableTextures(const CUnitDrawer*);
 	void DisableTextures(const CUnitDrawer*);
 
-	void SetTeamColor(int team, float alpha = 1.0f) const;
+	void SetTeamColor(int team, float alpha) const;
 };
 
 
@@ -97,7 +99,7 @@ public:
 	void EnableShaders(const CUnitDrawer*);
 	void DisableShaders(const CUnitDrawer*);
 
-	void SetTeamColor(int team, float alpha = 1.0f) const;
+	void SetTeamColor(int team, float alpha) const;
 };
 
 
@@ -118,7 +120,7 @@ public:
 	void DisableShaders(const CUnitDrawer*);
 
 	void UpdateCurrentShader(const CUnitDrawer*, const ISkyLight*) const;
-	void SetTeamColor(int team, float alpha = 1.0f) const;
+	void SetTeamColor(int team, float alpha) const;
 };
 
 #endif
