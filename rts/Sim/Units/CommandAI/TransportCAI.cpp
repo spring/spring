@@ -514,7 +514,7 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
 	for (auto it = transportees.begin(); it != transportees.end(); ++it) {
 		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
-		const float spread = transportee->radius * transport->unitDef->unloadSpread;
+		const float spread = (it->unit)->radius * transport->unitDef->unloadSpread;
 
 		if (FindEmptySpot(pos, radius, spread, unloadPos, it->unit)) {
 			transportee = it->unit; break;
