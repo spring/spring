@@ -203,7 +203,7 @@ void CStarburstProjectile::Update()
 		}
 	} else if (doturn && ttl > 0 && distanceToTravel > 0.0f) {
 		if (!luaMoveCtrl) {
-			float3 targetErrorVec = ((targetPos - pos) + aimError).Normalize();
+			float3 targetErrorVec = ((targetPos - pos).Normalize() + aimError).Normalize();
 
 			if (targetErrorVec.dot(dir) > 0.99f) {
 				dir = targetErrorVec;
