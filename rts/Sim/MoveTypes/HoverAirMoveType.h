@@ -73,7 +73,7 @@ private:
 	void UpdateAirPhysics();
 	void UpdateMoveRate();
 
-	bool CanLand() const { return ((!dontLand && autoLand) || (reservedPad != NULL)); }
+	bool CanLand(bool busy) const { return (!busy && ((!dontLand && autoLand) || (reservedPad != NULL))); }
 	bool CanLandAt(const float3& pos) const;
 
 	void ExecuteStop();
