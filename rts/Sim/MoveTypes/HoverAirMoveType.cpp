@@ -54,6 +54,12 @@ CR_REG_METADATA(CHoverAirMoveType, (
 ));
 
 
+
+static bool IsUnitBusy(const CUnit* u) {
+	// queued move-commands or an active build-command mean unit has to stay airborne
+	return (u->commandAI->HasMoreMoveCommands() || u->commandAI->HasBuildCommand());
+}
+
 CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	AAirMoveType(owner),
 	flyState(FLY_CRUISING),
@@ -182,7 +188,7 @@ void CHoverAirMoveType::SetAllowLanding(bool allowLanding)
 {
 	dontLand = !allowLanding;
 
-	if (CanLand())
+	if (CanLand(false))
 		return;
 
 	if (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_LANDING)
@@ -272,7 +278,7 @@ void CHoverAirMoveType::ExecuteStop()
 
 	switch (aircraftState) {
 		case AIRCRAFT_TAKEOFF: {
-			if (CanLand()) {
+			if (CanLand(IsUnitBusy(owner))) {
 				SetState(AIRCRAFT_LANDING);
 				// trick to land directly
 				waitCounter = GAME_SPEED;
@@ -282,7 +288,7 @@ void CHoverAirMoveType::ExecuteStop()
 		case AIRCRAFT_FLYING: {
 			goalPos = owner->pos;
 
-			if (CanLand()) {
+			if (CanLand(IsUnitBusy(owner))) {
 				SetState(AIRCRAFT_LANDING);
 			} else {
 				SetState(AIRCRAFT_HOVERING);
@@ -294,8 +300,8 @@ void CHoverAirMoveType::ExecuteStop()
 		case AIRCRAFT_CRASHING: {} break;
 
 		case AIRCRAFT_HOVERING: {
-			if (CanLand()) {
-				// land immediately
+			if (CanLand(IsUnitBusy(owner))) {
+				// land immediately, otherwise keep hovering
 				SetState(AIRCRAFT_LANDING);
 				waitCounter = GAME_SPEED;
 			}
@@ -432,9 +438,6 @@ void CHoverAirMoveType::UpdateFlying()
 	if (closeToGoal) {
 		switch (flyState) {
 			case FLY_CRUISING: {
-				const bool hasMoreMoveCmds = owner->commandAI->HasMoreMoveCommands();
-				const bool blockLanding = (!CanLand() || hasMoreMoveCmds);
-
 				// NOTE: should CMD_LOAD_ONTO be here?
 				const bool isTransporter = (dynamic_cast<CTransportUnit*>(owner) != NULL);
 				const bool hasLoadCmds = isTransporter &&
@@ -443,8 +446,9 @@ void CHoverAirMoveType::UpdateFlying()
 					 owner->commandAI->commandQue.front().GetID() == CMD_LOAD_UNITS);
 				// [?] transport aircraft need some time to detect that they can pickup
 				const bool canLoad = isTransporter && (++waitCounter < ((GAME_SPEED << 1) - 5));
+				const bool isBusy = IsUnitBusy(owner);
 
-				if (blockLanding || (canLoad && hasLoadCmds)) {
+				if (!CanLand(isBusy) || (canLoad && hasLoadCmds)) {
 					wantedSpeed = ZeroVector;
 
 					if (isTransporter) {
@@ -455,14 +459,20 @@ void CHoverAirMoveType::UpdateFlying()
 						SetState(AIRCRAFT_HOVERING);
 						return;
 					} else {
-						if (!hasMoreMoveCmds) {
+						if (!isBusy) {
 							wantToStop = true;
+
+							// NOTE:
+							//   this is not useful, next frame UpdateFlying()
+							//   will change it to _LANDING because wantToStop
+							//   is now true
 							SetState(AIRCRAFT_HOVERING);
 							return;
 						}
 					}
 				} else {
 					wantedHeight = orgWantedHeight;
+
 					SetState(AIRCRAFT_LANDING);
 					return;
 				}
@@ -645,6 +655,10 @@ void CHoverAirMoveType::UpdateHeading()
 {
 	if (aircraftState == AIRCRAFT_TAKEOFF && !owner->unitDef->factoryHeadingTakeoff)
 		return;
+	// UpdateDirVectors() resets our up-vector but we
+	// might have residual pitch angle from attacking
+	// if (aircraftState == AIRCRAFT_LANDING)
+	//     return;
 
 	SyncedSshort& heading = owner->heading;
 	const short deltaHeading = forceHeading?
@@ -673,7 +687,7 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 			wantedPitch = (circlingPos.y - owner->pos.y) / circlingPos.distance(owner->pos);
 		}
 
-		currentPitch = currentPitch * 0.95f + wantedPitch * 0.05f;
+		currentPitch = mix(currentPitch, wantedPitch, 0.05f);
 	}
 
 	// always positive
@@ -1004,7 +1018,7 @@ bool CHoverAirMoveType::CanLandAt(const float3& pos) const
 {
 	if (loadingUnits)
 		return true;
-	if (!CanLand())
+	if (!CanLand(false))
 		return false;
 	if (!pos.IsInBounds())
 		return false;

@@ -1560,13 +1560,21 @@ void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cm
 	}
 }
 
-bool CCommandAI::HasMoreMoveCommands()
+
+bool CCommandAI::HasBuildCommand() const {
+	if (commandQue.empty())
+		return false;
+
+	return ((commandQue.front()).IsBuildCommand());
+}
+
+bool CCommandAI::HasMoreMoveCommands() const
 {
 	if (commandQue.size() <= 1)
 		return false;
 
 	// skip the first command
-	for (CCommandQueue::iterator i = ++commandQue.begin(); i != commandQue.end(); ++i) {
+	for (CCommandQueue::const_iterator i = ++commandQue.begin(); i != commandQue.end(); ++i) {
 		switch (i->GetID()) {
 			case CMD_AREA_ATTACK:
 			case CMD_ATTACK:
@@ -1584,6 +1592,7 @@ bool CCommandAI::HasMoreMoveCommands()
 			case CMD_UNLOAD_UNIT:
 			case CMD_UNLOAD_UNITS:
 				return true;
+
 			case CMD_DEATHWAIT:
 			case CMD_GATHERWAIT:
 			case CMD_SELFD:
@@ -1592,6 +1601,7 @@ bool CCommandAI::HasMoreMoveCommands()
 			case CMD_TIMEWAIT:
 			case CMD_WAIT:
 				return false;
+
 			default:
 				// build commands are no different from reclaim or repair commands
 				// in that they can require a unit to move, so return true when we
