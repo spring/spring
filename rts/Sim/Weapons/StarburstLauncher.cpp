@@ -37,17 +37,11 @@ void CStarburstLauncher::Update(void)
 
 void CStarburstLauncher::FireImpl(bool scriptCall)
 {
-	float3 speed(0.0f, weaponDef->startvelocity, 0.0f);
-
-	if (weaponDef->fixedLauncher) {
-		speed = weaponDir * weaponDef->startvelocity;
-	}
-
-	const float3 aimError =
-		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	const float3 speed = ((weaponDef->fixedLauncher)? weaponDir: UpVector) * weaponDef->startvelocity;
+	const float3 aimError = (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 
 	ProjectileParams params = GetProjectileParams();
-	params.pos = weaponMuzzlePos + float3(0, 2, 0);
+	params.pos = weaponMuzzlePos + UpVector * 2.0f;
 	params.end = targetPos;
 	params.speed = speed;
 	params.error = aimError;
