@@ -1117,17 +1117,19 @@ bool CHoverAirMoveType::HandleCollisions(bool checkCollisions)
 					hitBuilding = true;
 				} else {
 					const float part = owner->mass / (owner->mass + unit->mass);
-
-					owner->Move(-dif * (dist - totRad) * (1.0f - part), true);
-					unit->Move(dif * (dist - totRad) * (part), true);
-
 					const float colSpeed = -owner->speed.dot(dif) + unit->speed.dot(dif);
 
+					owner->Move(-dif * (dist - totRad) * (1.0f - part), true);
 					owner->SetVelocity(owner->speed + (dif * colSpeed * (1.0f - part)));
-					unit->SetVelocityAndSpeed(unit->speed - (dif * colSpeed * (part)));
+
+					if (!unit->UsingScriptMoveType()) {
+						unit->SetVelocityAndSpeed(unit->speed - (dif * colSpeed * (part)));
+						unit->Move(dif * (dist - totRad) * (part), true);
+					}
 				}
 			}
 
+			// update speed.w
 			owner->SetSpeed(owner->speed);
 		}
 
