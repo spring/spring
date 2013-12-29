@@ -576,13 +576,13 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 				if (unit->immobile) {
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
+					owner->Move(-dif * (dist - totRad), true);
+					owner->SetVelocity(owner->speed * 0.99f);
+
 					if (modInfo.allowUnitCollisionDamage) {
 						owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 						unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 					}
-
-					owner->Move(-dif * (dist - totRad), true);
-					owner->SetVelocity(owner->speed * 0.99f);
 
 					hitBuilding = true;
 				} else {
@@ -590,17 +590,20 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
 					owner->Move(-dif * (dist - totRad) * (1 - part), true);
-					unit->Move(dif * (dist - totRad) * (part), true);
+					owner->SetVelocity(owner->speed * 0.99f);
+
+					if (!unit->UsingScriptMoveType()) {
+						unit->Move(dif * (dist - totRad) * (part), true);
+					}
 
 					if (modInfo.allowUnitCollisionDamage) {
 						owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 						unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 					}
-
-					owner->SetVelocity(owner->speed * 0.99f);
 				}
 			}
 
+			// update speed.w
 			owner->SetSpeed(owner->speed);
 		}
 
