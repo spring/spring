@@ -190,7 +190,8 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 		glEnable(GL_DEPTH_TEST);
 	}
 
-	new (cameraMemBuf) CCamera(*camera); // anti-crash workaround for multi-threading
+	// anti-crash workaround for multi-threading
+	new (cameraMemBuf) CCamera(*camera);
 
 	game->SetDrawMode(CGame::gameReflectionDraw);
 
@@ -216,6 +217,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	camera->~CCamera();
 	new (camera) CCamera(*reinterpret_cast<CCamera*>(cameraMemBuf));
 	reinterpret_cast<CCamera*>(cameraMemBuf)->~CCamera();
+
 	camera->Update();
 }
 
