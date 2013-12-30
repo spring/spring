@@ -209,7 +209,9 @@ void CStarburstProjectile::Update()
 				dir = targetErrorVec;
 				doturn = false;
 			} else {
-				targetErrorVec = ((targetErrorVec - dir) - dir * (targetErrorVec.dot(dir))).Normalize();
+				targetErrorVec = targetErrorVec - dir;
+				targetErrorVec -= dir * (targetErrorVec.dot(dir));
+				targetErrorVec.Normalize();
 
 				if (weaponDef->turnrate != 0) {
 					dir = (dir + (targetErrorVec * weaponDef->turnrate)).Normalize();
