@@ -202,6 +202,7 @@ CUnit::CUnit() : CSolidObject(),
 	buildTime(100.0f),
 	metalStorage(0.0f),
 	energyStorage(0.0f),
+	harvestStorage(0.0f),
 	lastAttackedPieceFrame(-1),
 	lastAttackFrame(-200),
 	lastFireWeapon(0),
@@ -1838,8 +1839,8 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 
 		const float step = std::max(amount / buildTime, -buildProgress);
 		const float energyRefundStep = energyCost * step;
-		const float metalRefundStep = metalCost * step;
-		const float metalRefundStepScaled = metalRefundStep * modInfo.reclaimUnitEfficiency;
+		const float metalRefundStep  =  metalCost * step;
+		const float metalRefundStepScaled  =  metalRefundStep * modInfo.reclaimUnitEfficiency;
 		const float energyRefundStepScaled = energyRefundStep * modInfo.reclaimUnitEnergyCostFactor;
 
 		if (luaRules != NULL && !luaRules->AllowUnitBuildStep(builder, this, step))
@@ -1863,7 +1864,10 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 
 		if (modInfo.reclaimUnitMethod == 0) {
 			// gradual reclamation of invested metal
-			builder->AddMetal(-metalRefundStepScaled, false);
+			if (!builder->AddHarvestedMetal(-metalRefundStepScaled)) {
+				eventHandler.UnitHarvestStorageFull(this);
+				return false;
+			}
 			// turn reclaimee into nanoframe (even living units)
 			beingBuilt = true;
 		} else {
@@ -1878,20 +1882,13 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 			//   is reduced since we need buildProgress to calculate a
 			//   proper refund
 			if (buildProgress <= 0.0f || health <= 0.0f) {
-				builder->AddMetal((metalCost * buildProgress) * modInfo.reclaimUnitEfficiency, false);
+				builder->AddHarvestedMetal((metalCost * buildProgress) * modInfo.reclaimUnitEfficiency);
 			}
 		}
 
-		if (beingBuilt) {
-			if (buildProgress <= 0.0f || health <= 0.0f) {
-				KillUnit(NULL, false, true);
-				return false;
-			}
-		} else {
-			if (health <= 0.0f) {
-				KillUnit(NULL, false, true);
-				return false;
-			}
+		if (buildProgress <= 0.0f || health <= 0.0f) {
+			KillUnit(NULL, false, true);
+			return false;
 		}
 
 		return true;
@@ -2084,6 +2081,22 @@ void CUnit::AddEnergy(float energy, bool useIncomeMultiplier)
 	}
 	energyMakeI += energy;
 	teamHandler->Team(team)->AddEnergy(energy, useIncomeMultiplier);
+}
+
+
+bool CUnit::AddHarvestedMetal(float metal)
+{
+	if (unitDef->harvestStorage <= 0.0f) {
+		AddMetal(metal, false);
+		return true;
+	}
+
+	if (harvestStorage >= unitDef->harvestStorage)
+		return false;
+
+	//FIXME what do with exceeding metal?
+	harvestStorage = std::min(harvestStorage + metal, unitDef->harvestStorage);
+	return true;
 }
 
 
@@ -2422,6 +2435,7 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(metalStorage),
 	CR_MEMBER(energyStorage),
+	CR_MEMBER(harvestStorage),
 
 	CR_MEMBER(lastAttacker),
 	CR_MEMBER(lastAttackedPiece),

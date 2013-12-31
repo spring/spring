@@ -84,6 +84,7 @@ class CEventHandler
 			int projectileID,
 			bool paralyzer);
 		void UnitExperience(const CUnit* unit, float oldExperience);
+		void UnitHarvestStorageFull(const CUnit* unit);
 
 		void UnitSeismicPing(const CUnit* unit, int allyTeam,
 		                     const float3& pos, float strength);
@@ -258,125 +259,11 @@ class CEventHandler
 
 		EventClientList handles;
 
-		// synced
-		EventClientList listLoad;
-
-		EventClientList listGamePreload;
-		EventClientList listGameStart;
-		EventClientList listGameOver;
-		EventClientList listGamePaused;
-		EventClientList listGameFrame;
-		EventClientList listGameID;
-		EventClientList listTeamDied;
-		EventClientList listTeamChanged;
-		EventClientList listPlayerChanged;
-		EventClientList listPlayerAdded;
-		EventClientList listPlayerRemoved;
-
-		EventClientList listUnitCreated;
-		EventClientList listUnitFinished;
-		EventClientList listUnitFromFactory;
-		EventClientList listUnitDestroyed;
-		EventClientList listUnitTaken;
-		EventClientList listUnitGiven;
-
-		EventClientList listUnitIdle;
-		EventClientList listUnitCommand;
-		EventClientList listUnitCmdDone;
-		EventClientList listUnitDamaged;
-		EventClientList listUnitExperience;
-
-		EventClientList listUnitSeismicPing;
-		EventClientList listUnitEnteredRadar;
-		EventClientList listUnitEnteredLos;
-		EventClientList listUnitLeftRadar;
-		EventClientList listUnitLeftLos;
-
-		EventClientList listUnitEnteredWater;
-		EventClientList listUnitEnteredAir;
-		EventClientList listUnitLeftWater;
-		EventClientList listUnitLeftAir;
-
-		EventClientList listUnitLoaded;
-		EventClientList listUnitUnloaded;
-
-		EventClientList listUnitCloaked;
-		EventClientList listUnitDecloaked;
-
-		EventClientList listRenderUnitCreated;
-		EventClientList listRenderUnitDestroyed;
-		EventClientList listRenderUnitCloakChanged;
-		EventClientList listRenderUnitLOSChanged;
-
-		EventClientList listUnitUnitCollision;
-		EventClientList listUnitFeatureCollision;
-		EventClientList listUnitMoved;
-		EventClientList listUnitMoveFailed;
-
-		EventClientList listRenderUnitMoved;
-
-		EventClientList listFeatureCreated;
-		EventClientList listFeatureDestroyed;
-		EventClientList listFeatureDamaged;
-		EventClientList listFeatureMoved;
-
-		EventClientList listRenderFeatureCreated;
-		EventClientList listRenderFeatureDestroyed;
-		EventClientList listRenderFeatureMoved;
-
-		EventClientList listProjectileCreated;
-		EventClientList listProjectileDestroyed;
-
-		EventClientList listRenderProjectileCreated;
-		EventClientList listRenderProjectileDestroyed;
-
-		EventClientList listExplosion;
-
-		EventClientList listStockpileChanged;
-
-		// unsynced
-		EventClientList listSave;
-
-		EventClientList listUnsyncedHeightMapUpdate;
-		EventClientList listUpdate;
-
-		EventClientList listKeyPress;
-		EventClientList listKeyRelease;
-		EventClientList listMouseMove;
-		EventClientList listMousePress;
-		EventClientList listMouseRelease;
-		EventClientList listMouseWheel;
-		EventClientList listJoystickEvent;
-		EventClientList listIsAbove;
-		EventClientList listGetTooltip;
-
-		EventClientList listDefaultCommand;
-		EventClientList listConfigCommand;
-		EventClientList listCommandNotify;
-		EventClientList listAddConsoleLine;
-		EventClientList listLastMessagePosition;
-		EventClientList listGroupChanged;
-		EventClientList listGameSetup;
-		EventClientList listWorldTooltip;
-		EventClientList listMapDrawCmd;
-
-		EventClientList listSunChanged;
-
-		EventClientList listViewResize;
-
-		EventClientList listDrawGenesis;
-		EventClientList listDrawWorld;
-		EventClientList listDrawWorldPreUnit;
-		EventClientList listDrawWorldShadow;
-		EventClientList listDrawWorldReflection;
-		EventClientList listDrawWorldRefraction;
-		EventClientList listDrawScreenEffects;
-		EventClientList listDrawScreen;
-		EventClientList listDrawInMiniMap;
-
-		EventClientList listGameProgress;
-
-		EventClientList listCollectGarbage;
+	#define SETUP_EVENT(name, props) EventClientList list ## name;
+	#define SETUP_UNMANAGED_EVENT(name, props)
+		#include "Events.def"
+	#undef SETUP_EVENT
+	#undef SETUP_UNMANAGED_EVENT
 };
 
 

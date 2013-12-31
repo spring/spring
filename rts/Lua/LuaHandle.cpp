@@ -1090,6 +1090,13 @@ void CLuaHandle::UnitExperience(const CUnit* unit, float oldExperience)
 }
 
 
+void CLuaHandle::UnitHarvestStorageFull(const CUnit* unit)
+{
+	static const LuaHashString cmdStr("UnitHarvestStorageFull");
+	UnitCallIn(cmdStr, unit);
+}
+
+
 /******************************************************************************/
 
 void CLuaHandle::UnitSeismicPing(const CUnit* unit, int allyTeam,

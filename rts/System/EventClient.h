@@ -107,6 +107,7 @@ class CEventClient
 			int projectileID,
 			bool paralyzer) {}
 		virtual void UnitExperience(const CUnit* unit, float oldExperience) {}
+		virtual void UnitHarvestStorageFull(const CUnit* unit) {}
 
 		virtual void UnitSeismicPing(const CUnit* unit, int allyTeam,
 		                             const float3& pos, float strength) {}
