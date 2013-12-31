@@ -48,6 +48,7 @@
 	SETUP_EVENT(UnitCmdDone,    MANAGED_BIT);
 	SETUP_EVENT(UnitDamaged,    MANAGED_BIT);
 	SETUP_EVENT(UnitExperience, MANAGED_BIT);
+	SETUP_EVENT(UnitHarvestStorageFull, MANAGED_BIT);
 
 	SETUP_EVENT(UnitSeismicPing,  MANAGED_BIT);
 	SETUP_EVENT(UnitEnteredRadar, MANAGED_BIT);

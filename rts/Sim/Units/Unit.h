@@ -135,6 +135,8 @@ public:
 	void AddMetal(float metal, bool useIncomeMultiplier = true);
 	bool UseEnergy(float energy);
 	void AddEnergy(float energy, bool useIncomeMultiplier = true);
+	bool AddHarvestedMetal(float metal);
+
 	/// push the new wind to the script
 	void UpdateWind(float x, float z, float strength);
 	void SetMetalStorage(float newStorage);
@@ -440,6 +442,8 @@ public:
 
 	float metalStorage;
 	float energyStorage;
+	/// per unit metal storage (gets filled on reclaim and needs then to be unloaded at some storage building -> 2nd part is lua's job)
+	float harvestStorage;
 
 	/// frame in which lastAttackedPiece was hit
 	int lastAttackedPieceFrame;

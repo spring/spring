@@ -275,6 +275,21 @@ void CEventHandler::PlayerRemoved(int playerID, int reason)
 /******************************************************************************/
 /******************************************************************************/
 
+void CEventHandler::UnitHarvestStorageFull(const CUnit* unit)
+{
+	const int unitAllyTeam = unit->allyteam;
+	const int count = listUnitHarvestStorageFull.size();
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listUnitHarvestStorageFull[i];
+		if (ec->CanReadAllyTeam(unitAllyTeam)) {
+			ec->UnitHarvestStorageFull(unit);
+		}
+	}
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 void CEventHandler::CollectGarbage()
 {
 	ITERATE_EVENTCLIENTLIST(CollectGarbage);

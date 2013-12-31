@@ -167,6 +167,7 @@ class CLuaHandle : public CEventClient
 			int projectileID,
 			bool paralyzer);
 		void UnitExperience(const CUnit* unit, float oldExperience);
+		void UnitHarvestStorageFull(const CUnit* unit);
 
 		void UnitSeismicPing(const CUnit* unit, int allyTeam,
 		                     const float3& pos, float strength);
