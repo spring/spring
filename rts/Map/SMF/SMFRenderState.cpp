@@ -122,8 +122,9 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		glslShaders[n]->SetFlag("MAX_DYNAMIC_MAP_LIGHTS",       lightHandler->GetMaxLights());
 
 		// both are runtime set, but ATI drivers need them set from the beginning
-		glslShaders[n]->SetFlag("HAVE_SHADOWS", 0);
-		glslShaders[n]->SetFlag("HAVE_INFOTEX", 0);
+		// pass -1 to force a recompilation on first draw-frame (workaround #4238)
+		glslShaders[n]->SetFlag("HAVE_SHADOWS", -1);
+		glslShaders[n]->SetFlag("HAVE_INFOTEX", -1);
 
 		// used to strip down the shader for the deferred pass
 		glslShaders[n]->SetFlag("DEFERRED_MODE", int(n != GLSL_SHADER_STANDARD));
