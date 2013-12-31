@@ -42,7 +42,6 @@ CR_REG_METADATA(CHoverAirMoveType, (
 
 	CR_MEMBER(forceHeading),
 	CR_MEMBER(dontLand),
-	CR_MEMBER(loadingUnits),
 
 	CR_MEMBER(wantedHeading),
 	CR_MEMBER(forceHeadingTo),
@@ -85,7 +84,6 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 
 	forceHeading(false),
 	dontLand(false),
-	loadingUnits(false),
 
 	wantedHeading(GetHeadingFromFacing(owner->buildFacing)),
 	forceHeadingTo(wantedHeading),
@@ -126,17 +124,15 @@ void CHoverAirMoveType::SetGoal(const float3& pos, float distance)
 void CHoverAirMoveType::SetState(AircraftState newState)
 {
 	// once in crashing, we should never change back into another state
-	if (aircraftState == AIRCRAFT_CRASHING && newState != AIRCRAFT_CRASHING) {
+	if (aircraftState == AIRCRAFT_CRASHING && newState != AIRCRAFT_CRASHING)
 		return;
-	}
 
-	if (newState == aircraftState) {
+	if (newState == aircraftState)
 		return;
-	}
 
-	if (aircraftState == AIRCRAFT_LANDED) {
-		assert(newState != AIRCRAFT_LANDING); // redundant SetState() call, we already landed and get command to switch into landing
-	}
+	// redundant SetState() call, we already landed and get command to switch into landing
+	if (aircraftState == AIRCRAFT_LANDED)
+		assert(newState != AIRCRAFT_LANDING);
 
 	if (newState == AIRCRAFT_LANDED) {
 		owner->dontUseWeapons = true;
@@ -162,10 +158,12 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 		case AIRCRAFT_LANDING:
 			owner->Deactivate();
 			break;
-		case AIRCRAFT_HOVERING:
-			wantedHeight = orgWantedHeight;
+		case AIRCRAFT_HOVERING: {
+			// when heading is forced by TCAI we are busy (un-)loading
+			// a unit and do not want wantedHeight to be tampered with
+			wantedHeight = mix(orgWantedHeight, wantedHeight, forceHeading);
 			wantedSpeed = ZeroVector;
-			// fall through
+		} // fall through
 		default:
 			owner->Activate();
 			owner->UnBlock();
@@ -194,8 +192,8 @@ void CHoverAirMoveType::SetAllowLanding(bool allowLanding)
 	if (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_LANDING)
 		return;
 
-	// do not start hovering if still loading units
-	if (loadingUnits)
+	// do not start hovering if still (un)loading a unit
+	if (forceHeading)
 		return;
 
 	SetState(AIRCRAFT_HOVERING);
@@ -245,6 +243,7 @@ void CHoverAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressi
 	wantToStop = false;
 	forceHeading = false;
 	wantedHeight = orgWantedHeight;
+
 	// close in a little to avoid the command AI to override the pos constantly
 	distance -= 15;
 
@@ -1016,7 +1015,7 @@ void CHoverAirMoveType::SlowUpdate()
 /// Returns true if indicated position is a suitable landing spot
 bool CHoverAirMoveType::CanLandAt(const float3& pos) const
 {
-	if (loadingUnits)
+	if (forceHeading)
 		return true;
 	if (!CanLand(false))
 		return false;
@@ -1092,7 +1091,7 @@ bool CHoverAirMoveType::HandleCollisions(bool checkCollisions)
 
 		// check for collisions if not on a pad, not being built, or not taking off
 		// includes an extra condition for transports, which are exempt while loading
-		if (!loadingUnits && checkCollisions) {
+		if (!forceHeading && checkCollisions) {
 			const vector<CUnit*>& nearUnits = quadField->GetUnitsExact(pos, owner->radius + 6);
 
 			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
