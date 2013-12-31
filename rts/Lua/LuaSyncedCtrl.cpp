@@ -155,6 +155,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitSonarStealth);
 	REGISTER_LUA_CFUNC(SetUnitAlwaysVisible);
 	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
+	REGISTER_LUA_CFUNC(SetUnitHarvestStorage);
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
 	REGISTER_LUA_CFUNC(SetUnitNanoPieces);
 	REGISTER_LUA_CFUNC(SetUnitBlocking);
@@ -1680,6 +1681,16 @@ int LuaSyncedCtrl::SetUnitMetalExtraction(lua_State* L)
 	return 0;
 }
 
+
+int LuaSyncedCtrl::SetUnitHarvestStorage(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	unit->harvestStorage = luaL_checkfloat(L, 2);
+	return 0;
+}
 
 int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 {
