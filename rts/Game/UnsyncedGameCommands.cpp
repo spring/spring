@@ -1720,6 +1720,35 @@ public:
 
 
 
+class FullscreenActionExecutor : public IUnsyncedActionExecutor {
+public:
+	FullscreenActionExecutor() : IUnsyncedActionExecutor("Fullscreen",
+			"Switches fullscreen mode") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		if (!action.GetArgs().empty()) {
+			globalRendering->fullScreen = (atoi(action.GetArgs().c_str()) != 0);
+		} else {
+			globalRendering->fullScreen = !globalRendering->fullScreen;
+		}
+
+		const bool borderless = configHandler->GetBool("WindowBorderless");
+		if (globalRendering->fullScreen) {
+			if (borderless) {
+				SDL_SetWindowFullscreen(globalRendering->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+			} else {
+				SDL_SetWindowFullscreen(globalRendering->window, SDL_WINDOW_FULLSCREEN);
+			}
+		} else {
+			SDL_SetWindowFullscreen(globalRendering->window, 0);
+			SDL_SetWindowBordered(globalRendering->window, borderless ? SDL_FALSE : SDL_TRUE);
+		}
+		return true;
+	}
+};
+
+
+
 class IncreaseViewRadiusActionExecutor : public IUnsyncedActionExecutor {
 public:
 	IncreaseViewRadiusActionExecutor() : IUnsyncedActionExecutor("IncreaseViewRadius",
@@ -3352,6 +3381,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new GameInfoActionExecutor());
 	AddActionExecutor(new HideInterfaceActionExecutor());
 	AddActionExecutor(new HardwareCursorActionExecutor());
+	AddActionExecutor(new FullscreenActionExecutor());
 	AddActionExecutor(new IncreaseViewRadiusActionExecutor());
 	AddActionExecutor(new DecreaseViewRadiusActionExecutor());
 	AddActionExecutor(new MoreTreesActionExecutor());
