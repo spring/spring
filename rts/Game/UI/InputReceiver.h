@@ -20,8 +20,8 @@ protected:
 	virtual ~CInputReceiver();
 
 public:
-	virtual bool KeyPressed(unsigned short key, bool isRepeat) { return false; }
-	virtual bool KeyReleased(unsigned short key) { return false; }
+	virtual bool KeyPressed(int key, bool isRepeat) { return false; }
+	virtual bool KeyReleased(int key) { return false; }
 
 	virtual bool MousePress(int x, int y, int button) { return false; }
 	virtual void MouseMove(int x, int y, int dx, int dy, int button) {}

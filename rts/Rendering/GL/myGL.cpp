@@ -69,24 +69,25 @@ CVertexArray* GetVertexArray()
 
 void PrintAvailableResolutions()
 {
+	char buffer[1024];
+	int n = 0;
+
 	// Get available fullscreen/hardware modes
-	SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL);
-	if (modes == (SDL_Rect**)0) {
-		LOG("Supported Video modes: No modes available!");
-	} else if (modes == (SDL_Rect**)-1) {
-		LOG("Supported Video modes: All modes available.");
-	} else {
-		char buffer[1024];
-		unsigned char n = 0;
-		for (int i = 0; modes[i]; ++i) {
-			n += SNPRINTF(&buffer[n], 1024-n, "%dx%d, ", modes[i]->w, modes[i]->h);
-		}
-		// remove last comma
-		if (n >= 2) {
-			buffer[n - 2] = '\0';
-		}
-		LOG("Supported Video modes: %s", buffer);
+	//FIXME this checks only the main screen
+	for (int i=SDL_GetNumDisplayModes(0) - 1; i>=0; --i) {
+		SDL_DisplayMode mode;
+		SDL_GetDisplayMode(0, i, &mode);
+		n += SNPRINTF(&buffer[n], 1024-n, "%dx%d, ", mode.w, mode.h);
 	}
+
+	// remove last comma
+	if (n >= 2) {
+		buffer[n - 2] = '\0';
+	}
+	if (n == 0) {
+		SNPRINTF(&buffer[n], 1024-n, "NONE");
+	}
+	LOG("Supported Video modes: %s", buffer);
 }
 
 #ifdef GL_ARB_debug_output
@@ -203,7 +204,7 @@ static bool GetAvailableVideoRAM(GLint* memory)
 	} else
 #endif
 	{
-		memory[0] = SDL_GetVideoInfo()->video_mem;
+		memory[0] = 0;
 		memory[1] = memory[0]; // not available
 	}
 
@@ -300,7 +301,11 @@ void LoadExtensions()
 {
 	glewInit();
 
-	const SDL_version* sdlVersion = SDL_Linked_Version();
+	SDL_version sdlVersionCompiled;
+	SDL_version sdlVersionLinked;
+
+	SDL_VERSION(&sdlVersionCompiled);
+	SDL_GetVersion(&sdlVersionLinked);
 	const char* glVersion = (const char*) glGetString(GL_VERSION);
 	const char* glVendor = (const char*) glGetString(GL_VENDOR);
 	const char* glRenderer = (const char*) glGetString(GL_RENDERER);
@@ -321,7 +326,7 @@ void LoadExtensions()
 	}
 
 	// log some useful version info
-	LOG("SDL version:  %d.%d.%d", sdlVersion->major, sdlVersion->minor, sdlVersion->patch);
+	LOG("SDL version:  linked %d.%d.%d; compiled %d.%d.%d", sdlVersionLinked.major, sdlVersionLinked.minor, sdlVersionLinked.patch, sdlVersionCompiled.major, sdlVersionCompiled.minor, sdlVersionCompiled.patch);
 	LOG("GL version:   %s", glVersion);
 	LOG("GL vendor:    %s", glVendor);
 	LOG("GL renderer:  %s", glRenderer);

@@ -12,9 +12,6 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <SDL_keysym.h>
-#include <SDL_mouse.h>
-
 
 #include "LuaOpenGL.h"
 #include "LuaInclude.h"

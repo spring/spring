@@ -66,7 +66,7 @@
 #include <list>
 #include <cctype>
 
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <SDL_mouse.h>
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
@@ -1985,38 +1985,28 @@ int LuaUnsyncedRead::GetMouseStartPosition(lua_State* L)
 int LuaUnsyncedRead::GetKeyState(lua_State* L)
 {
 	const int key = luaL_checkint(L, 1);
-	if ((key < 0) || (key >= SDLK_LAST)) {
-		lua_pushboolean(L, 0);
-	} else {
-		lua_pushboolean(L, keyInput->GetKeyState(key));
-	}
+	lua_pushboolean(L, KeyInput::IsKeyPressed(key));
 	return 1;
 }
 
 
 int LuaUnsyncedRead::GetModKeyState(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
-	lua_pushboolean(L, keyInput->GetKeyState(SDLK_LALT));
-	lua_pushboolean(L, keyInput->GetKeyState(SDLK_LCTRL));
-	lua_pushboolean(L, keyInput->GetKeyState(SDLK_LMETA));
-	lua_pushboolean(L, keyInput->GetKeyState(SDLK_LSHIFT));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_ALT));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_CTRL));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_GUI));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_SHIFT));
 	return 4;
 }
 
 
 int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
-
-	unsigned int count = 0;
-
-	for (int i = 0; i < SDLK_LAST; i++) {
-		if (keyInput->GetKeyState(i)) {
-			lua_pushboolean(L, 1);
-			lua_rawseti(L, -2, i);
-			count++;
+	for (auto key: KeyInput::GetPressedKeys()) {
+		if (key.second) {
+			lua_pushboolean(L, true);
+			lua_rawseti(L, -2, key.first);
 		}
 	}
 	return 1;

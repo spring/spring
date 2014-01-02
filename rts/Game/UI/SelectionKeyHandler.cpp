@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <fstream>
-#include <SDL_keysym.h>
 
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"

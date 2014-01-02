@@ -42,8 +42,10 @@
 
 #include "LuaInclude.h"
 
-#include <SDL_keysym.h>
+#include <SDL_keyboard.h>
+#include <SDL_keycode.h>
 #include <SDL_mouse.h>
+
 
 #include <string>
 
@@ -2285,8 +2287,7 @@ void CLuaHandle::GameProgress(int frameNum )
 /******************************************************************************/
 /******************************************************************************/
 
-
-bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
+bool CLuaHandle::KeyPress(int key, bool isRepeat)
 {
 	if (!CheckModUICtrl()) {
 		return false;
@@ -2298,20 +2299,19 @@ bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
 		return false; // the call is not defined, do not take the event
 	}
 
-	lua_pushnumber(L, key);
+	lua_pushnumber(L, key); //FIXME return scancode here?
 
 	lua_createtable(L, 0, 4);
-	HSTR_PUSH_BOOL(L, "alt",   !!keyInput->GetKeyState(SDLK_LALT));
-	HSTR_PUSH_BOOL(L, "ctrl",  !!keyInput->GetKeyState(SDLK_LCTRL));
-	HSTR_PUSH_BOOL(L, "meta",  !!keyInput->GetKeyState(SDLK_LMETA));
-	HSTR_PUSH_BOOL(L, "shift", !!keyInput->GetKeyState(SDLK_LSHIFT));
+	HSTR_PUSH_BOOL(L, "alt",   !!KeyInput::GetKeyModState(KMOD_ALT));
+	HSTR_PUSH_BOOL(L, "ctrl",  !!KeyInput::GetKeyModState(KMOD_CTRL));
+	HSTR_PUSH_BOOL(L, "meta",  !!KeyInput::GetKeyModState(KMOD_GUI));
+	HSTR_PUSH_BOOL(L, "shift", !!KeyInput::GetKeyModState(KMOD_SHIFT));
 
 	lua_pushboolean(L, isRepeat);
 
 	CKeySet ks(key, false);
 	lua_pushsstring(L, ks.GetString(true));
-
-	lua_pushnumber(L, keyInput->GetCurrentKeyUnicodeChar());
+	lua_pushnumber(L, 0); //FIXME remove, was deprecated utf32 char (now uses TextInput for that)
 
 	// call the function
 	if (!RunCallInUnsynced(cmdStr, 5, 1))
@@ -2327,7 +2327,7 @@ bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
 }
 
 
-bool CLuaHandle::KeyRelease(unsigned short key)
+bool CLuaHandle::KeyRelease(int key)
 {
 	if (!CheckModUICtrl()) {
 		return false;
@@ -2342,15 +2342,14 @@ bool CLuaHandle::KeyRelease(unsigned short key)
 	lua_pushnumber(L, key);
 
 	lua_createtable(L, 0, 4);
-	HSTR_PUSH_BOOL(L, "alt",   !!keyInput->GetKeyState(SDLK_LALT));
-	HSTR_PUSH_BOOL(L, "ctrl",  !!keyInput->GetKeyState(SDLK_LCTRL));
-	HSTR_PUSH_BOOL(L, "meta",  !!keyInput->GetKeyState(SDLK_LMETA));
-	HSTR_PUSH_BOOL(L, "shift", !!keyInput->GetKeyState(SDLK_LSHIFT));
+	HSTR_PUSH_BOOL(L, "alt",   !!KeyInput::GetKeyModState(KMOD_ALT));
+	HSTR_PUSH_BOOL(L, "ctrl",  !!KeyInput::GetKeyModState(KMOD_CTRL));
+	HSTR_PUSH_BOOL(L, "meta",  !!KeyInput::GetKeyModState(KMOD_GUI));
+	HSTR_PUSH_BOOL(L, "shift", !!KeyInput::GetKeyModState(KMOD_SHIFT));
 
 	CKeySet ks(key, false);
 	lua_pushsstring(L, ks.GetString(true));
-
-	lua_pushnumber(L, keyInput->GetCurrentKeyUnicodeChar());
+	lua_pushnumber(L, 0); //FIXME remove, was deprecated utf32 char (now uses TextInput for that)
 
 	// call the function
 	if (!RunCallInUnsynced(cmdStr, 4, 1))
@@ -2361,6 +2360,31 @@ bool CLuaHandle::KeyRelease(unsigned short key)
 		return false;
 	}
 	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+bool CLuaHandle::TextInput(const std::string& utf8)
+{
+	if (!CheckModUICtrl()) {
+		return false;
+	}
+	LUA_CALL_IN_CHECK(L, false);
+	luaL_checkstack(L, 3, __FUNCTION__);
+	static const LuaHashString cmdStr("TextInput");
+	if (!PushUnsyncedCallIn(L, cmdStr)) {
+		return false; // the call is not defined, do not take the event
+	}
+
+	lua_pushsstring(L, utf8);
+	//lua_pushnumber(L, UTF8toUTF32(utf8));
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 1, 1))
+		return false;
+
+	const bool retval = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
 	return retval;
 }

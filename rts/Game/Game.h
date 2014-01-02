@@ -122,9 +122,9 @@ private:
 	void HandleChatMsg(const ChatMessage& msg);
 
 	/// Called when a key is released by the user
-	int KeyReleased(unsigned short k);
+	int KeyReleased(int k);
 	/// Called when the key is pressed by the user (can be called several times due to key repeat)
-	int KeyPressed(unsigned short k, bool isRepeat);
+	int KeyPressed(int k, bool isRepeat);
 
 	bool ActionPressed(unsigned int key, const Action& action, bool isRepeat);
 	bool ActionReleased(const Action& action);

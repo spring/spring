@@ -173,8 +173,9 @@ class CEventClient
 		virtual void Update();
 		virtual void UnsyncedHeightMapUpdate(const SRectangle& rect);
 
-		virtual bool KeyPress(unsigned short key, bool isRepeat);
-		virtual bool KeyRelease(unsigned short key);
+		virtual bool KeyPress(int key, bool isRepeat);
+		virtual bool KeyRelease(int key);
+		virtual bool TextInput(const std::string& utf8);
 		virtual bool MouseMove(int x, int y, int dx, int dy, int button);
 		virtual bool MousePress(int x, int y, int button);
 		virtual int  MouseRelease(int x, int y, int button); // FIXME - bool / void?

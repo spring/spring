@@ -2,7 +2,7 @@
 
 #include "SelectMenu.h"
 
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <boost/bind.hpp>
 #include <sstream>
 #include <stack>
