@@ -590,6 +590,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 	if (!java_createClassPath(classPath, classPath_sizeMax)) {
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
 				"Failed creating Java class-path.");
+		FREE(classPath);
 		return false;
 	}
 	if (jvmProps != NULL) {
@@ -617,6 +618,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 	if (!java_createNativeLibsPath(libraryPath, libraryPath_sizeMax)) {
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
 				"Failed creating Java library-path.");
+		FREE(libraryPath);
 		return false;
 	}
 	if (jvmProps != NULL) {

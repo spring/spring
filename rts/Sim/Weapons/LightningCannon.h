@@ -12,8 +12,6 @@ public:
 	CLightningCannon(CUnit* owner, const WeaponDef* def);
 
 	void Update();
-	void Init();
-
 	void SlowUpdate();
 
 private:

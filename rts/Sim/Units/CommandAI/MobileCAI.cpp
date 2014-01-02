@@ -781,8 +781,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		// if w->AttackUnit() returned true then we are already
 		// in range with our biggest (?) weapon, so stop moving
-		// also make sure that we're not locked in close-in/in-range state loop
-		// due to rotates invoked by in-range or out-of-range states
+		// also make sure that we're not locked in close-in/in-range state
+		// loop due to rotates invoked by in-range or out-of-range states
 		if (tryTargetRotate) {
 			const bool canChaseTarget = (!tempOrder || owner->moveState != MOVESTATE_HOLDPOS);
 			const bool targetBehind = (targetMidPosVec.dot(orderTarget->speed) < 0.0f);
@@ -880,9 +880,11 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				if (attackVec.SqLength() >= (w->range * w->range))
 					continue;
 
-				StopMove();
+				// StopMoveAndKeepPointing calls StopMove before KeepPointingTo
+				// but we want to call it *after* KeepPointingTo to prevent 4131
 				owner->AttackGround(attackPos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
 				owner->moveType->KeepPointingTo(attackPos, owner->maxRange * 0.9f, true);
+				StopMove();
 
 				foundWeapon = true;
 			} else {
@@ -951,20 +953,18 @@ int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius)
 {
-	if (pos == goalPos)
+	if (pos.SqDistance(goalPos) < Square(goalRadius))
 		return;
-	goalPos = pos;
-	this->goalRadius = goalRadius;
-	owner->moveType->StartMoving(pos, goalRadius);
+
+	owner->moveType->StartMoving(goalPos = pos, this->goalRadius = goalRadius);
 }
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius, float speed)
 {
-	if (pos == goalPos)
+	if (pos.SqDistance(goalPos) < Square(goalRadius))
 		return;
-	goalPos = pos;
-	this->goalRadius = goalRadius;
-	owner->moveType->StartMoving(pos, goalRadius, speed);
+
+	owner->moveType->StartMoving(goalPos = pos, this->goalRadius = goalRadius, speed);
 }
 
 bool CMobileCAI::SetFrontMoveCommandPos(const float3& pos)
@@ -985,10 +985,10 @@ void CMobileCAI::StopMove()
 	goalRadius = 0.f;
 }
 
-void CMobileCAI::StopMoveAndKeepPointing(const float3& p, const float r)
+void CMobileCAI::StopMoveAndKeepPointing(const float3& p, const float r, bool b)
 {
 	StopMove();
-	owner->moveType->KeepPointingTo(p, r, false);
+	owner->moveType->KeepPointingTo(p, r, b);
 }
 
 void CMobileCAI::BuggerOff(const float3& pos, float radius)

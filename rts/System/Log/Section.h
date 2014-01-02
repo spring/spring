@@ -1,13 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef LOG_SECTION_H
-#define LOG_SECTION_H
-
-#include <string.h>
-
 /*
  * see ILog.h for documentation
  */
+
+#ifndef LOG_SECTION_H
+#define LOG_SECTION_H
+
+// logging should be C, use string.h
+#include <string.h>
 
 #define LOG_SECTION_DEFAULT ""
 
@@ -15,19 +16,27 @@
 /**
  * Helpers
  */
-// first do a fasth-path and check if both c-strings share the same memory location
+// first check if both c-strings share the same memory location
 // if not check if both c-strings have the same content
-#define LOG_SECTION_EQUAL(section1, section2) \
-	(((void*)section1 == (void*)section2) \
-	|| (((void*)section1 != NULL) && ((void*)section2 != NULL) \
-		&& (strcmp(section1, section2) == 0)))
+static int LOG_SECTION_EQUAL(const char* s1, const char* s2) {
+	if (s1 == s2)
+		return 1;
+	if (s1 == NULL || s2 == NULL)
+		return 0;
 
-#define LOG_SECTION_COMPARE(section1, section2) \
-	(((void*)section1 == NULL) \
-		|| (((void*)section2 != NULL) && (strcmp(section1, section2) > 0)))
+	return (strcmp(s1, s2) == 0);
+}
+static int LOG_SECTION_COMPARE(const char* s1, const char* s2) {
+	if (s1 == NULL)
+		return 1;
+	if (s2 == NULL)
+		return 0;
 
-#define LOG_SECTION_IS_DEFAULT(section) \
-	LOG_SECTION_EQUAL(section, LOG_SECTION_DEFAULT)
+	return (strcmp(s1, s2) > 0);
+}
+static int LOG_SECTION_IS_DEFAULT(const char* s) {
+	return (LOG_SECTION_EQUAL(s, LOG_SECTION_DEFAULT));
+}
 
 
 /**

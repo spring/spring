@@ -16,9 +16,11 @@ template<typename t> struct type2 {
 	bool operator == (const type2<t>& v) const { return (x == v.x) && (y == v.y); }
 	bool operator != (const type2<t>& v) const { return (x != v.x) || (y != v.y); }
 
-	type2& t3_to_t2_xz(const t* f3) { x = f3[0]; y = f3[2]; return *this; }
-	type2& t3_to_t2_xy(const t* f3) { x = f3[0]; y = f3[1]; return *this; }
-	type2& t3_to_t2_yz(const t* f3) { x = f3[1]; y = f3[2]; return *this; }
+	type2<t>& operator += (const type2<t>& v) {
+		x += v.x;
+		y += v.y;
+		return *this;
+	}
 
 	t distance(const type2<t>& f) const {
 		const t dx = x - f.x;

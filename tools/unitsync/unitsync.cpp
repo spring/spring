@@ -35,6 +35,7 @@
 #include "System/Log/Level.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/LogOutput.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Util.h"
 #include "System/exportdefines.h"
 #include "System/Info.h"
@@ -45,9 +46,6 @@
 #ifdef WIN32
 #include <windows.h>
 #endif
-
-// unitsync only:
-#include "Syncer.h"
 
 //////////////////////////
 //////////////////////////
@@ -61,10 +59,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_UNITSYNC)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_UNITSYNC
 
-// NOTE This means that the DLL can only support one instance.
-//   This is no problem in the current architecture.
-static CSyncer* syncer = NULL;
-
 // for we do not have to include global-stuff (Sim/Misc/GlobalConstants.h)
 #define SQUARE_SIZE 8
 
@@ -75,6 +69,7 @@ BOOL CALLING_CONV DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 	return TRUE;
 }
 #endif
+
 
 
 //////////////////////////
@@ -93,7 +88,6 @@ public:
 	}
 
 	void print() {
-
 		if (!alreadyDone) {
 			alreadyDone = true;
 			LOG_L(L_WARNING, "%s", message.c_str());
@@ -115,15 +109,23 @@ private:
 			+ std::string(__FUNCTION__))
 
 
+
 //////////////////////////
 //////////////////////////
 
 // function argument checking
 
-static void CheckInit()
+static bool CheckInit(bool throwException = true)
 {
-	if (!archiveScanner || !vfsHandler || !syncer)
-		throw std::logic_error("Unitsync not initialized. Call Init first.");
+	if (archiveScanner == NULL || vfsHandler == NULL) {
+		if (throwException) {
+			throw std::logic_error("UnitSync not initialized. Call Init first.");
+		}
+
+		return false;
+	}
+
+	return true;
 }
 
 static void _CheckNull(void* condition, const char* name)
@@ -159,6 +161,39 @@ static void _CheckPositive(int value, const char* name)
 static std::vector<InfoItem> info;
 static std::set<std::string> infoSet;
 
+
+
+static std::vector<GameDataUnitDef> unitDefs;
+
+void LoadGameDataUnitDefs() {
+	unitDefs.clear();
+
+	LuaParser luaParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+
+	if (!luaParser.Execute()) {
+		throw content_error("luaParser.Execute() failed: " + luaParser.GetErrorLog());
+	}
+
+	LuaTable rootTable = luaParser.GetRoot().SubTable("UnitDefs");
+
+	if (!rootTable.IsValid()) {
+		throw content_error("root unitdef table invalid");
+	}
+
+	std::vector<std::string> unitDefNames;
+	rootTable.GetKeys(unitDefNames);
+
+	for (unsigned int i = 0; i < unitDefNames.size(); ++i) {
+		const std::string& udName = unitDefNames[i];
+		const LuaTable udTable = rootTable.SubTable(udName);
+		const GameDataUnitDef ud = {udName, udTable.GetString("name", udName)};
+
+		unitDefs.push_back(ud);
+	}
+}
+
+
+
 //////////////////////////
 //////////////////////////
 
@@ -186,12 +221,34 @@ static void _SetLastError(const std::string& err)
 		SetLastError("an unknown exception was thrown"); \
 	}
 
+EXPORT(const char*) GetNextError()
+{
+	try {
+		// queue is only 1 element long now for simplicity :-)
+
+		if (lastError.empty()) return NULL;
+
+		std::string err = lastError;
+		lastError.clear();
+		return GetStr(err);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+
+	// Oops, can't even return errors anymore...
+	// Returning anything but NULL might cause infinite loop in lobby client...
+	//return __FUNCTION__ ": fatal error: an exception was thrown in GetNextError";
+	return NULL;
+}
+
+
+
+
 //////////////////////////
 //////////////////////////
 
 static std::string GetMapFile(const std::string& mapName)
 {
-	std::string mapFile = archiveScanner->MapNameToMapFile(mapName);
+	const std::string mapFile = archiveScanner->MapNameToMapFile(mapName);
 
 	if (mapFile != mapName) {
 		//! translation finished fine
@@ -235,27 +292,6 @@ class ScopedMapLoader {
 		CVFSHandler* oldHandler;
 };
 
-//////////////////////////
-//////////////////////////
-
-EXPORT(const char*) GetNextError()
-{
-	try {
-		// queue is only 1 element long now for simplicity :-)
-
-		if (lastError.empty()) return NULL;
-
-		std::string err = lastError;
-		lastError.clear();
-		return GetStr(err);
-	}
-	UNITSYNC_CATCH_BLOCKS;
-
-	// Oops, can't even return errors anymore...
-	// Returning anything but NULL might cause infinite loop in lobby client...
-	//return __FUNCTION__ ": fatal error: an exception was thrown in GetNextError";
-	return NULL;
-}
 
 
 EXPORT(const char*) GetSpringVersion()
@@ -283,11 +319,7 @@ static void _Cleanup()
 	internal_deleteMapInfos();
 
 	lpClose();
-
-	if (syncer) {
-		SafeDelete(syncer);
-		LOG("deinitialized");
-	}
+	LOG("deinitialized");
 }
 
 
@@ -307,45 +339,52 @@ static void CheckForImportantFilesInVFS()
 }
 
 
-
 EXPORT(int) Init(bool isServer, int id)
 {
+	static int numCalls = 0;
+	int ret = 0;
+
 	try {
+		if (numCalls == 0) {
+			// only ever do this once
+			spring_clock::PushTickRate(false);
+			spring_time::setstarttime(spring_time::gettime(true));
+		}
+
 		// Cleanup data from previous Init() calls
 		_Cleanup();
-
 		CLogOutput::LogSystemInfo();
 
 #ifndef DEBUG
 		log_filter_section_setMinLevel(LOG_SECTION_UNITSYNC, LOG_LEVEL_INFO);
 #endif
 
-		// VFS
-		if (archiveScanner || vfsHandler) {
-			FileSystemInitializer::Cleanup(); // reinitialize filesystem to detect new files
+		if (CheckInit(false)) {
+			// reinitialize filesystem to detect new files
+			FileSystemInitializer::Cleanup();
 		}
 
-		ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
-		const std::string configSource = (configHandler) ? configHandler->GetConfigFile() : "";
 		dataDirLocater.UpdateIsolationModeByEnvVar();
-		FileSystemInitializer::PreInitializeConfigHandler(configSource);
+
+		const std::string& configFile = (configHandler != NULL)? configHandler->GetConfigFile(): "";
+		const std::string& springFull = SpringVersion::GetFull();
+
+		ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
+		FileSystemInitializer::PreInitializeConfigHandler(configFile);
 		FileSystemInitializer::InitializeLogOutput("unitsync.log");
 		FileSystemInitializer::Initialize();
-
-		LOG("loaded, %s", SpringVersion::GetFull().c_str());
-
-		// check if VFS is okay
+		// check if VFS is okay (throws if not)
 		CheckForImportantFilesInVFS();
 		ThreadPool::SetThreadCount(0);
 
-		// Finish
-		syncer = new CSyncer();
-		LOG("initialized, %s", SpringVersion::GetFull().c_str());
-		LOG("%s", (isServer ? "hosting" : "joining"));
-		return 1;
+		ret = 1;
+		LOG("[UnitSync::%s] initialized %s (call %d) as %s", __FUNCTION__, springFull.c_str(), numCalls, (isServer? "server": "client"));
 	}
+
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	numCalls++;
+	return ret;
 }
 
 EXPORT(void) UnInit()
@@ -398,18 +437,15 @@ EXPORT(const char*) GetDataDirectory(int index)
 
 EXPORT(int) ProcessUnits()
 {
-	int leftToProcess = -1;
-
 	try {
 		CheckInit();
-		LOG_L(L_DEBUG, "syncer: process units");
-		leftToProcess = syncer->ProcessUnits();
+		LOG_L(L_DEBUG, "[%s] loaded=%d", __FUNCTION__, unitDefs.empty());
+		LoadGameDataUnitDefs();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
-	return leftToProcess;
+	return 0;
 }
-
 
 EXPORT(int) ProcessUnitsNoChecksum()
 {
@@ -423,8 +459,8 @@ EXPORT(int) GetUnitCount()
 
 	try {
 		CheckInit();
-		LOG_L(L_DEBUG, "syncer: get unit count");
-		count = syncer->GetUnitCount();
+		LOG_L(L_DEBUG, "[%s]", __FUNCTION__);
+		count = unitDefs.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
@@ -432,26 +468,24 @@ EXPORT(int) GetUnitCount()
 }
 
 
-EXPORT(const char*) GetUnitName(int unit)
+EXPORT(const char*) GetUnitName(int unitDefID)
 {
 	try {
 		CheckInit();
-		LOG_L(L_DEBUG, "syncer: get unit %d name", unit);
-		std::string tmp = syncer->GetUnitName(unit);
-		return GetStr(tmp);
+		LOG_L(L_DEBUG, "[%s(UnitDefID=%d)]", __FUNCTION__, unitDefID);
+		return GetStr(unitDefs[unitDefID].name);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
 }
 
 
-EXPORT(const char*) GetFullUnitName(int unit)
+EXPORT(const char*) GetFullUnitName(int unitDefID)
 {
 	try {
 		CheckInit();
-		LOG_L(L_DEBUG, "syncer: get full unit %d name", unit);
-		std::string tmp = syncer->GetFullUnitName(unit);
-		return GetStr(tmp);
+		LOG_L(L_DEBUG, "[%s(UnitDefID=%d)]", __FUNCTION__, unitDefID);
+		return GetStr(unitDefs[unitDefID].fullName);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
@@ -490,9 +524,7 @@ EXPORT(void) RemoveAllArchives()
 
 		LOG_L(L_DEBUG, "removing all archives");
 		SafeDelete(vfsHandler);
-		SafeDelete(syncer);
 		vfsHandler = new CVFSHandler();
-		syncer = new CSyncer();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
@@ -724,9 +756,9 @@ EXPORT(int) GetMapCount()
 	try {
 		CheckInit();
 
-		mapNames.clear();
-
 		const std::vector<std::string> scannedNames = archiveScanner->GetMaps();
+
+		mapNames.clear();
 		mapNames.insert(mapNames.begin(), scannedNames.begin(), scannedNames.end());
 
 		sort(mapNames.begin(), mapNames.end());

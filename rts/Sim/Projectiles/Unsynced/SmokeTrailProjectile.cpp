@@ -12,7 +12,7 @@
 #include "Sim/Misc/Wind.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (ZeroVector, ZeroVector, ZeroVector, ZeroVector, NULL, false, false, 0.0f, 0, 0.0f, false, NULL, NULL));
+CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, ZeroVector, ZeroVector, false, false, 0.0f, 0, 0.0f, false, NULL, NULL));
 
 CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(pos1),
@@ -41,11 +41,11 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 //////////////////////////////////////////////////////////////////////
 
 CSmokeTrailProjectile::CSmokeTrailProjectile(
+	CUnit* owner,
 	const float3& pos1,
 	const float3& pos2,
 	const float3& dir1,
 	const float3& dir2,
-	CUnit* owner,
 	bool firstSegment,
 	bool lastSegment,
 	float size,
@@ -53,9 +53,10 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	float color,
 	bool drawTrail,
 	CProjectile* drawCallback,
-	AtlasedTexture* texture):
-
+	AtlasedTexture* texture
+):
 	CProjectile((pos1 + pos2) * 0.5f, ZeroVector, owner, false, false, false),
+
 	pos1(pos1),
 	pos2(pos2),
 	orgSize(size),

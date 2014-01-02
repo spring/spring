@@ -110,10 +110,10 @@ private:
 	bool MoveInBuildRange(const CWorldObject* obj, const bool checkMoveTypeForFailed = false);
 	bool MoveInBuildRange(const float3& pos, float radius, const bool checkMoveTypeForFailed = false);
 
-	bool IsBuildPosBlocked(const BuildInfo& build, const CUnit* nanoFrame) const;
+	bool IsBuildPosBlocked(const BuildInfo& build, const CUnit** nanoFrame) const;
 	bool IsBuildPosBlocked(const BuildInfo& build) const {
 		const CUnit* u = NULL;
-		return IsBuildPosBlocked(build, u);
+		return IsBuildPosBlocked(build, &u);
 	}
 
 	void CancelRestrictedUnit(const std::string& buildOption);
@@ -149,7 +149,7 @@ private:
 	float GetBuildOptionRadius(const UnitDef* unitdef, int cmdId);
 
 private:
-	CBuilder* owner_builder;
+	CBuilder* ownerBuilder;
 
 	bool building;
 	BuildInfo build;

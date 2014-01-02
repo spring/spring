@@ -12,13 +12,13 @@
 #include "AAISector.h"
 #include "AAIGroup.h"
 
-AAIAttack::AAIAttack(AAI *ai)
+AAIAttack::AAIAttack(AAI *ai):
+	dest(NULL),
+	lastAttack(0),
+	land(false),
+	water(false)
 {
 	this->ai = ai;
-
-	lastAttack = 0;
-
-	dest = 0;
 }
 
 AAIAttack::~AAIAttack(void)

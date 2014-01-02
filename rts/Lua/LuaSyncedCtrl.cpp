@@ -354,7 +354,7 @@ static inline CProjectile* ParseProjectile(lua_State* L,
 static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const int tblIdx, const char* caller)
 {
 	if (!lua_istable(L, tblIdx)) {
-		luaL_error(L, "[%s] argument %i must be a table!", caller, tblIdx);
+		luaL_error(L, "[%s] argument %d must be a table!", caller, tblIdx);
 		return false;
 	}
 

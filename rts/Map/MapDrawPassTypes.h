@@ -7,7 +7,7 @@ struct DrawPass {
 		Shadow,
 		WaterReflection,
 		WaterRefraction,
-		UnitReflection,
+		TerrainReflection,
 		TerrainDeferred,
 	};
 };

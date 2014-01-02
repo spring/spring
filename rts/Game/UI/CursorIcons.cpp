@@ -155,10 +155,8 @@ void CCursorIcons::DrawBuilds()
 	glEnable(GL_DEPTH_TEST);
 	glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
 	
-	std::set<BuildIcon>::iterator it;
-	for (it = buildIcons.begin() ; it != buildIcons.end(); ++it) {
-		const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(-(it->cmd));
-		unitDrawer->DrawBuildingSample(unitDef, it->team, it->pos, it->facing);
+	for (auto it = buildIcons.begin() ; it != buildIcons.end(); ++it) {
+		CUnitDrawer::DrawBuildingSample(unitDefHandler->GetUnitDefByID(-(it->cmd)), it->team, it->pos, it->facing);
 	}
 
 	glDisable(GL_DEPTH_TEST);

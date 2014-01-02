@@ -40,6 +40,8 @@ CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(subMarine),
 
 	CR_MEMBER(avoidMobilesOnPath),
+	CR_MEMBER(allowTerrainCollisions),
+
 	CR_MEMBER(heatMapping),
 	CR_MEMBER(flowMapping),
 	CR_MEMBER(heatMod),
@@ -185,6 +187,7 @@ MoveDef::MoveDef()
 	, subMarine(false)
 
 	, avoidMobilesOnPath(true)
+	, allowTerrainCollisions(true)
 
 	, heatMapping(true)
 	, flowMapping(true)
@@ -212,8 +215,8 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 	const LuaTable& depthModTable = moveDefTable.SubTable("depthModParams");
 	const LuaTable& speedModMultsTable = moveDefTable.SubTable("speedModMults");
 
-	const float minWaterDepth = moveDefTable.GetFloat("minWaterDepth", 10.0f);
-	const float maxWaterDepth = moveDefTable.GetFloat("maxWaterDepth",  0.0f);
+	const float minWaterDepth = moveDefTable.GetFloat("minWaterDepth", GetDefaultMinWaterDepth());
+	const float maxWaterDepth = moveDefTable.GetFloat("maxWaterDepth", GetDefaultMaxWaterDepth());
 
 	switch ((speedModClass = ParseSpeedModClass(name, moveDefTable))) {
 		case MoveDef::Tank: {
@@ -235,6 +238,7 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 		} break;
 
 		case MoveDef::Hover: {
+			depth    = maxWaterDepth;
 			maxSlope = DegreesToMaxSlope(moveDefTable.GetFloat("maxSlope", 15.0f));
 		} break;
 
@@ -249,6 +253,7 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileMoveMult", 1.0f /*0.65f*/));
 
 	avoidMobilesOnPath = moveDefTable.GetBool("avoidMobilesOnPath", true);
+	allowTerrainCollisions = moveDefTable.GetBool("allowTerrainCollisions", true);
 
 	heatMapping = moveDefTable.GetBool("heatMapping", false);
 	flowMapping = moveDefTable.GetBool("flowMapping", true);

@@ -147,7 +147,7 @@ CStarburstProjectile::~CStarburstProjectile()
 void CStarburstProjectile::Collision()
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(), false, true, 7, SMOKE_TIME, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
 	oldSmokeDir = dir;
@@ -158,7 +158,7 @@ void CStarburstProjectile::Collision()
 void CStarburstProjectile::Collision(CUnit* unit)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(), false, true, 7, SMOKE_TIME, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
 	oldSmokeDir = dir;
@@ -169,7 +169,7 @@ void CStarburstProjectile::Collision(CUnit* unit)
 void CStarburstProjectile::Collision(CFeature* feature)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(), false, true, 7, SMOKE_TIME, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
 	oldSmokeDir = dir;
@@ -203,13 +203,15 @@ void CStarburstProjectile::Update()
 		}
 	} else if (doturn && ttl > 0 && distanceToTravel > 0.0f) {
 		if (!luaMoveCtrl) {
-			float3 targetErrorVec = ((targetPos - pos) + aimError).Normalize();
+			float3 targetErrorVec = ((targetPos - pos).Normalize() + aimError).Normalize();
 
 			if (targetErrorVec.dot(dir) > 0.99f) {
 				dir = targetErrorVec;
 				doturn = false;
 			} else {
-				targetErrorVec = ((targetErrorVec - dir) - dir * (targetErrorVec.dot(dir))).Normalize();
+				targetErrorVec = targetErrorVec - dir;
+				targetErrorVec -= dir * (targetErrorVec.dot(dir));
+				targetErrorVec.Normalize();
 
 				if (weaponDef->turnrate != 0) {
 					dir = (dir + (targetErrorVec * weaponDef->turnrate)).Normalize();
@@ -294,11 +296,11 @@ void CStarburstProjectile::Update()
 		}
 
 		curCallback = new CSmokeTrailProjectile(
+			owner(),
 			pos,
 			oldSmoke,
 			dir,
 			oldSmokeDir,
-			owner(),
 			age == 8,
 			false,
 			7,

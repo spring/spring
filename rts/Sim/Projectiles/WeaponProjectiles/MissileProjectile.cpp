@@ -117,7 +117,7 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 void CMissileProjectile::Collision()
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision();
@@ -127,7 +127,7 @@ void CMissileProjectile::Collision()
 void CMissileProjectile::Collision(CUnit* unit)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision(unit);
@@ -137,7 +137,7 @@ void CMissileProjectile::Collision(CUnit* unit)
 void CMissileProjectile::Collision(CFeature* feature)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision(feature);
@@ -227,15 +227,16 @@ void CMissileProjectile::Update()
 				}
 			}
 
+			const float3 targetLeadVec = targetVel * (dist / maxSpeed) * 0.7f;
+			const float3 targetLeadDir = (targetPos + targetLeadVec - pos).Normalize();
 
-			float3 dif = (targetPos + targetVel * (dist / maxSpeed) * 0.7f - pos).SafeNormalize();
-			float3 dif2 = dif - dir;
+			float3 targetDirDif = targetLeadDir - dir;
 
-			if (dif2.SqLength() < Square(weaponDef->turnrate)) {
-				dir = dif;
+			if (targetDirDif.SqLength() < Square(weaponDef->turnrate)) {
+				dir = targetLeadDir;
 			} else {
-				dif2 = (dif2 - (dir * (dif2.dot(dir)))).SafeNormalize();
-				dir = (dir + (dif2 * weaponDef->turnrate)).SafeNormalize();
+				targetDirDif = (targetDirDif - (dir * (targetDirDif.dot(dir)))).SafeNormalize();
+				dir = (dir + (targetDirDif * weaponDef->turnrate)).SafeNormalize();
 			}
 
 			targetPos = orgTargPos;
@@ -266,8 +267,16 @@ void CMissileProjectile::Update()
 
 	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
 		CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
+			owner(),
 			pos, oldSmoke,
-			dir, oldDir, owner(), age == 8, false, 7, SMOKE_TIME, 0.6f, drawTrail, 0,
+			dir, oldDir,
+			age == 8,
+			false,
+			7,
+			SMOKE_TIME,
+			0.6f,
+			drawTrail,
+			NULL,
 			weaponDef->visuals.texture2
 		);
 

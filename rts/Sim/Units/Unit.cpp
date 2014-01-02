@@ -437,8 +437,12 @@ void CUnit::PreInit(const UnitLoadParams& params)
 		(seismicRadius > 0.0f);
 	stealth = unitDef->stealth;
 	sonarStealth = unitDef->sonarStealth;
+
+	// can be overridden by cloak orders during construction
+	wantCloak |= unitDef->startCloaked;
 	decloakDistance = unitDef->decloakDistance;
 	cloakTimeout = unitDef->cloakTimeout;
+
 
 	flankingBonusMode        = unitDef->flankingBonusMode;
 	flankingBonusDir         = unitDef->flankingBonusDir;
@@ -479,7 +483,7 @@ void CUnit::PostInit(const CUnit* builder)
 	}
 
 	UpdateTerrainType();
-	UpdatePhysicalState();
+	UpdatePhysicalState(0.1f);
 	UpdatePosErrorParams(true, true);
 
 	if (unitDef->floatOnWater && IsInWater()) {
@@ -672,7 +676,7 @@ void CUnit::Update()
 {
 	ASSERT_SYNCED(pos);
 
-	UpdatePhysicalState();
+	UpdatePhysicalState(0.1f);
 	UpdatePosErrorParams(true, false);
 
 	if (beingBuilt)
@@ -1654,12 +1658,12 @@ void CUnit::DependentDied(CObject* o)
 
 
 
-void CUnit::UpdatePhysicalState()
+void CUnit::UpdatePhysicalState(float eps)
 {
 	const bool inAir   = IsInAir();
 	const bool inWater = IsInWater();
 
-	CSolidObject::UpdatePhysicalState();
+	CSolidObject::UpdatePhysicalState(eps);
 
 	if (IsInAir() != inAir) {
 		if (IsInAir()) {
@@ -1930,10 +1934,6 @@ void CUnit::FinishedBuilding(bool postInit)
 
 	eventHandler.UnitFinished(this);
 	eoh->UnitFinished(*this);
-
-	if (unitDef->startCloaked) {
-		wantCloak = true;
-	}
 
 	if (unitDef->isFeature && CUnit::spawnFeature) {
 		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};

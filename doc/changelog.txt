@@ -3,6 +3,96 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 
+-- 96.0 ---------------------------------------------------------
+
+Major:
+ - kill memory leaks crippling large games (#4152)
+ - kill micro-jitter in simulation framerate (#4171)
+ - kill unclean exits causing various forms of corruption (#4053)
+
+ - "nugget" is hereby officially promoted as the new umbrella term for widget or gadget
+
+Misc:
+ - default disable grass for ATI cards (crashes for some people)
+ - made stacktrace-translation script recognize more crash/hang patterns
+ - improve Shard AI for BA
+ - fix some MSVC compile errors
+ - TimeProfiler (alt+b) shows now max `lag` of each item
+ - massively speedup caching with many .sdd archives
+ - fixed some FreeBSD compile issues (thx AMDmi3)
+ - dump (engine) shaders to infolog when they fail to compile
+ - more extensive logging during shutdown
+ - fix a number of potential issues if a thread crashes on engine shutdown
+ - increase precision of several timer variables to preserve intermediate results
+ - Lua: track more memory-allocater statistics for display in debug-mode
+ - Lua: limit maximum amount of memory allocated globally and per handle
+ - GameServer: always echo back client sync-responses every 60 frames (see #4140)
+ - GameServer: removed code that blocks pause / speed change commands from players with high CPU-use in median speedctrl policy
+ - GameServer: sleep less between updates so it does not risk falling behind client message consumption rate
+ - LuaHandle: make time and steps spent on garbage collection configurable
+   CollectGarbage callin is restricted to run for at most
+     MaxLuaGarbageCollectionTime (user-configurable) millisecs
+     MaxLuaGarbageCollectionSteps (user-configurable) iterations
+ - GlobalConfig: add new config-option 'UseNetMessageSmoothingBuffer' (see #4053)
+ - LogOutput: make enabled 'section' log-levels configurable by users
+ - MoveDef: add key 'allowTerrainCollisions' for handling units with super-sized footprints (see #4217)
+ - SolidObject: make {Unit,Feature}{Pre}Damaged events receive the 'attacker' ID when object is crushed
+ - QuadField: add raytraced projectiles to three cells instead of one
+ - GameInfo: add map hardness label/value to 'i' overlay
+
+Sim:
+ - Rifle weapons can hit features too now and apply impulse to the target
+
+Lua:
+ - add gadgetHandler:AllowWeaponInterceptTarget
+ - LuaSyncedRead:
+     make Get{Unit,Factory}Commands (optionally) return just the queue's size
+     (ie. without copying the entire command queue into Lua VM memory, *VERY*
+     important for performance when a nugget is not interested in the commands
+     themselves)
+
+     "if #Spring.GetCommandQueue(unitID, -1 | nil       ) == 0 then return end" --> BAD, CREATES COPY OF QUEUE
+     "if  Spring.GetCommandQueue(unitID, -1 | nil, false) == 0 then return end" --> GOOD, DO THIS IF POSSIBLE
+
+Bugfixes:
+ - fix #4215 (stack-buildable units on non-flat terrain)
+ - fix #4209 (antinukes firing at nukes targeted outside their area)
+ - fix #4205 (air-transports unable to unload hovercraft on water)
+ - fix #4204 (float3.* clang compilation failure)
+ - fix #4203 (air-transport unable to load units floating on water)
+ - fix #4202 (S3O textures loaded multiple times instead of being cached)
+ - fix #4200 (secret)
+ - fix #4198 (amphibious units without waterweapons chasing hovercraft whilst underwater)
+ - fix #4197 (units moving right up to their target instead of attacking from range)
+ - fix #4186 (log-system crash on exit)
+ - fix #4173 ("Error: [Watchdog::ClearTimer] Invalid thread N")
+ - fix #4171 (see 'Major' section)
+ - fix #4163 (corrupted unit environment reflections)
+ - fix #4161 (Spring.Restart failing when path contains spaces)
+ - fix #4155 (reverse-built gunships maintain their vertical speed)
+ - fix #4154 (calling LUS 'AttachUnit(piece, unitID)' turns following 'Move(piece, ...)' calls  into no-ops)
+ - fix #4152 (see 'Major' section)
+ - fix #4149 (rendering corruption in DynamicWater mode)
+ - fix #4144 (partly submerged units not hittable by non-waterweapons)
+ - fix #4145 (depthcharges fired by ships having trouble to reach their targets)
+ - fix #4138 (same as #4171)
+ - fix #4137 (units randomly switching team-color, old bug with new cause)
+ - fix #4135 (ATI driver crash with *disabled* shadows)
+ - fix #4133 (cloaked units hidden even when set to alwaysVisible)
+ - fix #4131 (units moving to position of manualfire command if outside weapon range)
+ - fix #4129 (air-constructors flailing around construction targets)
+ - fix #4128 (units stuck in 'skidding' state: repeatedly bouncing on ground while unable to move)
+ - fix #4091 (gadget:MousePress() and other unsynced gadget functions not called with LoadingMT=0)
+ - fix #4053 (see 'Major' section)
+ - fix #3749 ('initCloaked' UnitDef tag overriding user cloak commands for being-built units)
+
+ - fixed wreckage heaps could be resurrected
+ - LaserCannon: (once again) fix range overshooting
+ - always clamp length of blended wind-vector to [map.minwind, map.maxwind]
+ - the 'AllowDeferred*Rendering' config options are now safe to enable
+
+
+
 -- 95.0 ---------------------------------------------------------
 
 Major:

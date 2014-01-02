@@ -9,8 +9,7 @@ class CWreckProjectile : public CProjectile
 {
 	CR_DECLARE(CWreckProjectile);
 public:
-	CWreckProjectile(float3 pos, float3 speed, float temperature, CUnit* owner);
-	virtual ~CWreckProjectile();
+	CWreckProjectile(CUnit* owner, float3 pos, float3 speed, float temperature);
 
 	void Update();
 	void Draw();

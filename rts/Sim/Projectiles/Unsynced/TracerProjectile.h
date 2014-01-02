@@ -11,12 +11,16 @@ public:
 	CR_DECLARE(CTracerProjectile);
 
 	CTracerProjectile();
-	CTracerProjectile(const float3& pos, const float3& speed, const float range,
-			CUnit* owner);
+	CTracerProjectile(
+		CUnit* owner,
+		const float3& pos,
+		const float3& speed,
+		const float range
+	);
 
 	void Draw();
 	void Update();
-	void Init(const float3& pos, CUnit *owner);
+	void Init(CUnit* owner, const float3& offset);
 
 private:
 	float speedf;

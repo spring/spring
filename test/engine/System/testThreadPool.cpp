@@ -125,3 +125,12 @@ BOOST_AUTO_TEST_CASE( testThreadPool7 )
 	});
 }
 
+struct do_once {
+	do_once()   {}
+	~do_once()  {
+		// workarround boost::condition_variable::~condition_variable(): Assertion `!ret' failed.
+		ThreadPool::SetThreadCount(1);
+	}
+};
+BOOST_GLOBAL_FIXTURE(do_once);
+

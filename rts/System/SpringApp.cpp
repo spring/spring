@@ -230,9 +230,11 @@ bool SpringApp::Initialize()
 	Watchdog::Install();
 	Watchdog::RegisterThread(WDT_MAIN, true);
 
+	// ArchiveScanner uses for_mt --> needs thread-count set
+	// FIXME: USELESS? InitThreadPool ALSO CALLS SetThreadCount!
 	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
 	FileSystemInitializer::Initialize();
-	Threading::InitOMP();
+	Threading::InitThreadPool();
 
 	mouseInput = IMouseInput::GetInstance();
 	keyInput = KeyInput::GetInstance();
@@ -1027,26 +1029,17 @@ int SpringApp::Run()
 
 	while (!gu->globalQuit) {
 		ResetScreenSaverTimeout();
-
-		{
-			SCOPED_TIMER("InputHandler::PushEvents");
-			SDL_Event event;
-
-			while (SDL_PollEvent(&event)) {
-				streflop::streflop_init<streflop::Simple>(); // SDL_PollEvent may modify FPU flags
-				input.PushEvent(event);
-			}
-		}
+		input.PushEvents();
 
 		if (!Update())
 			break;
 	}
 
 	SaveWindowPosition();
-	// Shutdown
-	Shutdown();
+	ShutDown();
 
-	return GetExitCode();
+	LOG("[SpringApp::%s] exitCode=%d", __FUNCTION__, GetExitCode());
+	return (GetExitCode());
 }
 
 
@@ -1054,23 +1047,43 @@ int SpringApp::Run()
 /**
  * Deallocates and shuts down game
  */
-void SpringApp::Shutdown()
+void SpringApp::ShutDown()
 {
-	if (gu) gu->globalQuit = true;
+	// if a thread crashes *during* first SA::Run-->SA::ShutDown
+	// then main::Run will call us again via ErrorMessageBox (not
+	// a good idea)
+	static unsigned int numCalls = 0;
 
+	if ((numCalls++) != 0)
+		return;
+	if (gu != NULL)
+		gu->globalQuit = true;
+
+	LOG("[SpringApp::%s][1]", __FUNCTION__);
 	ThreadPool::SetThreadCount(0);
-
 	GML::Exit();
+	LOG("[SpringApp::%s][2]", __FUNCTION__);
+
 	SafeDelete(pregame);
-	delete game; // don't use SafeDelete some stuff in it's dtor needs valid game ptr
+	// don't use SafeDelete: many components in ~CGame
+	// expect game-pointer to remain valid during call
+	delete game; game = NULL;
+
+	LOG("[SpringApp::%s][3]", __FUNCTION__);
 	SafeDelete(selectMenu);
 	agui::FreeGui();
+
+	LOG("[SpringApp::%s][4]", __FUNCTION__);
 	SafeDelete(net);
 	SafeDelete(gameServer);
 	SafeDelete(gameSetup);
+
+	LOG("[SpringApp::%s][5]", __FUNCTION__);
 	CLoadScreen::DeleteInstance();
 	ISound::Shutdown();
 	FreeJoystick();
+
+	LOG("[SpringApp::%s][6]", __FUNCTION__);
 	SafeDelete(font);
 	SafeDelete(smallFont);
 	CNamedTextures::Kill();
@@ -1078,25 +1091,31 @@ void SpringApp::Shutdown()
 	GlobalConfig::Deallocate();
 	UnloadExtensions();
 
+	LOG("[SpringApp::%s][7]", __FUNCTION__);
 	IMouseInput::FreeInstance(mouseInput);
 	KeyInput::FreeInstance(keyInput);
 
+	LOG("[SpringApp::%s][8]", __FUNCTION__);
 	SDL_WM_GrabInput(SDL_GRAB_OFF);
 	WindowManagerHelper::FreeIcon();
 #if !defined(HEADLESS)
-	SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_JOYSTICK);
+	SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 #endif
 	SDL_Quit();
 
+	LOG("[SpringApp::%s][9]", __FUNCTION__);
 	SafeDelete(gs);
 	SafeDelete(gu);
 	SafeDelete(globalRendering);
 	SafeDelete(startsetup);
 	SafeDelete(luaSocketRestrictions);
 
+	LOG("[SpringApp::%s][10]", __FUNCTION__);
 	FileSystemInitializer::Cleanup();
 
+	LOG("[SpringApp::%s][11]", __FUNCTION__);
 	Watchdog::Uninstall();
+	LOG("[SpringApp::%s][12]", __FUNCTION__);
 }
 
 bool SpringApp::MainEventHandler(const SDL_Event& event)

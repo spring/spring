@@ -4,6 +4,7 @@
 #define SOLID_OBJECT_H
 
 #include "WorldObject.h"
+#include "System/bitops.h"
 #include "System/Matrix44f.h"
 #include "System/type2.h"
 #include "System/Misc/BitwiseEnum.h"
@@ -78,13 +79,14 @@ public:
 		CSTATE_BIT_QUADMAPRAYS  = (1 << 2),
 	};
 	enum DamageType {
-		DAMAGE_EXPLOSION_WEAPON = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
-		DAMAGE_EXPLOSION_DEBRIS = 1, // piece-projectile that triggered GameHelper::Explosion (weaponDefID < 0)
-		DAMAGE_COLLISION_GROUND = 2, // ground collision
-		DAMAGE_COLLISION_OBJECT = 3, // object collision
-		DAMAGE_EXTSOURCE_FIRE   = 4,
-		DAMAGE_EXTSOURCE_WATER  = 5, // lava/acid/etc
-		DAMAGE_EXTSOURCE_KILLED = 6,
+		DAMAGE_EXPLOSION_WEAPON  = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
+		DAMAGE_EXPLOSION_DEBRIS  = 1, // piece-projectile that triggered GameHelper::Explosion (weaponDefID < 0)
+		DAMAGE_COLLISION_GROUND  = 2, // ground collision
+		DAMAGE_COLLISION_OBJECT  = 3, // object collision
+		DAMAGE_EXTSOURCE_FIRE    = 4,
+		DAMAGE_EXTSOURCE_WATER   = 5, // lava/acid/etc
+		DAMAGE_EXTSOURCE_KILLED  = 6,
+		DAMAGE_EXTSOURCE_CRUSHED = 7,
 	};
 
 	CSolidObject();
@@ -95,13 +97,13 @@ public:
 
 	virtual void ApplyImpulse(const float3& impulse) { SetVelocity(speed + impulse); }
 
-	virtual void Kill(const float3& impulse, bool crushKill);
+	virtual void Kill(CUnit* killer, const float3& impulse, bool crushed);
 	virtual int GetBlockingMapID() const { return -1; }
 
 	virtual void ForcedMove(const float3& newPos) {}
 	virtual void ForcedSpin(const float3& newDir) {}
 
-	virtual void UpdatePhysicalState();
+	virtual void UpdatePhysicalState(float eps);
 
 	void Move(const float3& v, bool relative) {
 		const float3& dv = relative? v: (v - pos);
@@ -184,6 +186,8 @@ public:
 	bool    HasPhysicalStateBit(unsigned int bit) const { return ((physicalState & bit) != 0); }
 	void    SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= ( bit); physicalState = static_cast<PhysicalState>(ps); }
 	void  ClearPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps &= (~bit); physicalState = static_cast<PhysicalState>(ps); }
+	void   PushPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(1u << (32u - (bits_ffs(bit) - 1u)), HasPhysicalStateBit(bit)); }
+	void    PopPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(bit, HasPhysicalStateBit(1u << (32u - (bits_ffs(bit) - 1u)))); }
 	bool UpdatePhysicalStateBit(unsigned int bit, bool set) {
 		if (set) {
 			SetPhysicalStateBit(bit);
@@ -196,6 +200,8 @@ public:
 	bool    HasCollidableStateBit(unsigned int bit) const { return ((collidableState & bit) != 0); }
 	void    SetCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs |= ( bit); collidableState = static_cast<CollidableState>(cs); }
 	void  ClearCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs &= (~bit); collidableState = static_cast<CollidableState>(cs); } 
+	void   PushCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(1u << (32u - (bits_ffs(bit) - 1u)), HasCollidableStateBit(bit)); }
+	void    PopCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(bit, HasCollidableStateBit(1u << (32u - (bits_ffs(bit) - 1u)))); }
 	bool UpdateCollidableStateBit(unsigned int bit, bool set) {
 		if (set) {
 			SetCollidableStateBit(bit);
@@ -205,6 +211,8 @@ public:
 		return (HasCollidableStateBit(bit));
 	}
 
+	bool SetVoidState();
+	bool ClearVoidState();
 	void UpdateVoidState(bool set);
 
 private:
@@ -233,7 +241,6 @@ public:
 
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
 	bool immobile;                              ///< whether this object can be moved or not (except perhaps along y-axis, to make it stay on ground)
-	bool crushKilled;                           ///< true if this object died by being crushed during a collision
 	bool blockEnemyPushing;                     ///< if false, object can be pushed during enemy collisions even when modrules forbid it
 	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
 

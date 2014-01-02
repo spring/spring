@@ -7,9 +7,12 @@
 
 #ifdef USING_CREG
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 	#define SPRING_HASH_MAP stdext::hash_map
 	#include <hash_map>
+#elif defined(_LIBCPP_VERSION)
+	#include <unordered_map>
+	#define SPRING_HASH_MAP std::unordered_map
 #elif __GNUG__
 /* Test for GCC >= 4.3.2 or clang (and assume tr1 is present) */
 	#if __GNUC__ > 4 || \

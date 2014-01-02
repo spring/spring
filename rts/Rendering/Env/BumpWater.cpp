@@ -397,15 +397,14 @@ CBumpWater::CBumpWater()
 			reflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthRBOFormat, reflTexSize, reflTexSize);
 			reflectFBO.AttachTexture(reflectTexture);
 		}
+		if (!reflectFBO.CheckStatus("BUMPWATER(reflection)")) {
+			reflection = 0;
+		}
 
 		if (refraction>0) {
 			refractFBO.Bind();
 			refractFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthRBOFormat, screenTextureX, screenTextureY);
 			refractFBO.AttachTexture(refractTexture,target);
-		}
-
-		if (!reflectFBO.CheckStatus("BUMPWATER(reflection)")) {
-			reflection = 0;
 		}
 		if (!refractFBO.CheckStatus("BUMPWATER(refraction)")) {
 			refraction = 0;
@@ -1222,7 +1221,7 @@ void CBumpWater::DrawReflection(CGame* game)
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
 	camera->forward.y *= -1.0f;
-	camera->SetPos().y *= -1.0f;
+	camera->SetPos(camera->GetPos() * float3(1.0f, -1.0f, 1.0f));
 	camera->Update();
 
 	game->SetDrawMode(CGame::gameReflectionDraw);

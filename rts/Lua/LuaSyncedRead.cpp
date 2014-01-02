@@ -531,16 +531,13 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
 		if (caller != NULL) {
-			luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
+			luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
 		} else {
 			return NULL;
 		}
 	}
-	CUnit* unit = unitHandler->units[unitID];
-	if (unit == NULL) {
-		return NULL;
-	}
-	return unit;
+
+	return (unitHandler->GetUnit(unitID));
 }
 
 
@@ -805,7 +802,7 @@ int LuaSyncedRead::FixedAllies(lua_State* L)
 int LuaSyncedRead::IsGameOver(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushboolean(L, game->gameOver);
+	lua_pushboolean(L, game->IsGameOver());
 	return 1;
 }
 
@@ -1201,7 +1198,7 @@ int LuaSyncedRead::GetTeamUnitStats(lua_State* L)
 	}
 	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(L, teamID) && !game->gameOver) {
+	if (!IsAlliedTeam(L, teamID) && !game->IsGameOver()) {
 		return 0;
 	}
 
@@ -1225,7 +1222,7 @@ int LuaSyncedRead::GetTeamResourceStats(lua_State* L)
 	}
 	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(L, teamID) && !game->gameOver) {
+	if (!IsAlliedTeam(L, teamID) && !game->IsGameOver()) {
 		return 0;
 	}
 
@@ -1262,7 +1259,7 @@ int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC;
 
-	if (IsAlliedTeam(L, team->teamNum) || game->gameOver) {
+	if (IsAlliedTeam(L, team->teamNum) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
 	else if (teamHandler->AlliedTeams(team->teamNum, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
@@ -1285,7 +1282,7 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC;
 
-	if (IsAlliedTeam(L, team->teamNum) || game->gameOver) {
+	if (IsAlliedTeam(L, team->teamNum) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
 	else if (teamHandler->AlliedTeams(team->teamNum, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
@@ -1307,7 +1304,7 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 	}
 	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(L, teamID) && !game->gameOver) {
+	if (!IsAlliedTeam(L, teamID) && !game->IsGameOver()) {
 		return 0;
 	}
 
@@ -2024,9 +2021,9 @@ static int ParseAllegiance(lua_State* L, const char* caller, int index)
 		return AllUnits;
 	}
 	if (teamID < EnemyUnits) {
-		luaL_error(L, "Bad teamID in %s (%i)", caller, teamID);
+		luaL_error(L, "Bad teamID in %s (%d)", caller, teamID);
 	} else if (teamID >= teamHandler->ActiveTeams()) {
-		luaL_error(L, "Bad teamID in %s (%i)", caller, teamID);
+		luaL_error(L, "Bad teamID in %s (%d)", caller, teamID);
 	}
 	return teamID;
 }
@@ -2541,8 +2538,8 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 
 int LuaSyncedRead::ValidUnitID(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, NULL, 1); // note the NULL
-	lua_pushboolean(L, unit != NULL);
+	// note the NULL 'caller' arg (so ParseUnit won't call luaL_error)
+	lua_pushboolean(L, ParseUnit(L, NULL, 1) != NULL);
 	return 1;
 }
 
@@ -3369,7 +3366,9 @@ int LuaSyncedRead::GetUnitWeaponTryTarget(lua_State* L)
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 
 	} else {
-		enemy = ParseUnit(L, __FUNCTION__, 3);
+		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
+			return 0;
+
 		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
@@ -3400,7 +3399,9 @@ int LuaSyncedRead::GetUnitWeaponTestTarget(lua_State* L)
 		pos.y = luaL_optnumber(L, 4, 0.0f);
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 	} else {
-		enemy = ParseUnit(L, __FUNCTION__, 3);
+		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
+			return 0;
+
 		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
@@ -3431,7 +3432,9 @@ int LuaSyncedRead::GetUnitWeaponTestRange(lua_State* L)
 		pos.y = luaL_optnumber(L, 4, 0.0f);
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 	} else {
-		enemy = ParseUnit(L, __FUNCTION__, 3);
+		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
+			return 0;
+
 		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
@@ -3462,7 +3465,9 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 		pos.y = luaL_optnumber(L, 4, 0.0f);
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 	} else {
-		enemy = ParseUnit(L, __FUNCTION__, 3);
+		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
+			return 0;
+
 		pos = weapon->GetUnitPositionWithError(enemy);
 	}
 
@@ -3955,14 +3960,19 @@ static void PackCommandQueue(lua_State* L, const CCommandQueue& commands, size_t
 	lua_createtable(L, commands.size(), 0);
 
 	size_t c = 0;
-	CCommandQueue::const_iterator ci;
-	for (ci = commands.begin(); ci != commands.end(); ++ci) {
-		if (c >= count) {
+
+	// get the desired number of commands to return
+	if (count == -1u) {
+		count = commands.size();
+	}
+
+	// {[1] = cq[0], [2] = cq[1], ...}
+	for (auto ci = commands.begin(); ci != commands.end(); ++ci) {
+		if (c >= count)
 			break;
-		}
-		c++;
+
 		PackCommand(L, *ci);
-		lua_rawseti(L, -2, c);
+		lua_rawseti(L, -2, ++c);
 	}
 }
 
@@ -3970,61 +3980,61 @@ static void PackCommandQueue(lua_State* L, const CCommandQueue& commands, size_t
 int LuaSyncedRead::GetUnitCommands(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	GML_STDMUTEX_LOCK(cai); // GetUnitCommands
 
 	const CCommandAI* commandAI = unit->commandAI;
-	if (commandAI == NULL) {
+
+	if (commandAI == NULL)
 		return 0;
-	}
 
 	// send the new unit commands for factories, otherwise the normal commands
-	const CCommandQueue* queue;
+	const CCommandQueue* queue = NULL;
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
+
 	if (factoryCAI == NULL) {
 		queue = &commandAI->commandQue;
 	} else {
 		queue = &factoryCAI->newUnitCommands;
 	}
 
-	// get the desired number of commands to return
-	int count = luaL_optint(L, 2, -1);
-	if (count < 0) {
-		count = (int)queue->size();
+	if (luaL_optboolean(L, 3, true)) {
+		// *get wants the actual commands
+		PackCommandQueue(L, *queue, luaL_optint(L, 2, -1));
+	} else {
+		// *get just wants the queue's size
+		lua_pushnumber(L, queue->size());
 	}
-
-	PackCommandQueue(L, *queue, count);
 
 	return 1;
 }
 
-
 int LuaSyncedRead::GetFactoryCommands(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	GML_STDMUTEX_LOCK(cai); // GetFactoryCommands
 
 	const CCommandAI* commandAI = unit->commandAI;
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
-	if (!factoryCAI) {
-		return 0; // not a factory, bail
-	}
+
+	// bail if not a factory
+	if (factoryCAI == NULL)
+		return 0;
+
 	const CCommandQueue& commandQue = factoryCAI->commandQue;
 
-	// get the desired number of commands to return
-	int count = luaL_optint(L, 2, -1);
-	if (count < 0) {
-		count = (int)commandQue.size();
+	if (luaL_optboolean(L, 3, true)) {
+		PackCommandQueue(L, commandQue, luaL_optint(L, 2, -1));
+	} else {
+		lua_pushnumber(L, commandQue.size());
 	}
-
-	PackCommandQueue(L, commandQue, count);
 
 	return 1;
 }
@@ -4114,36 +4124,7 @@ int LuaSyncedRead::GetFactoryCounts(lua_State* L)
 
 int LuaSyncedRead::GetCommandQueue(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-
-	GML_STDMUTEX_LOCK(cai); // GetCommandQueue
-
-	const CCommandAI* commandAI = unit->commandAI;
-	if (commandAI == NULL) {
-		return 0;
-	}
-
-	// send the new unit commands for factories, otherwise the normal commands
-	const CCommandQueue* queue;
-	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
-	if (factoryCAI == NULL) {
-		queue = &commandAI->commandQue;
-	} else {
-		queue = &factoryCAI->newUnitCommands;
-	}
-
-	// get the desired number of commands to return
-	int count = luaL_optint(L, 2, -1);
-	if (count < 0) {
-		count = (int)queue->size();
-	}
-
-	PackCommandQueue(L, *queue, count);
-
-	return 1;
+	return (GetUnitCommands(L));
 }
 
 
@@ -4247,7 +4228,7 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
 
-	if (IsAllyUnit(L, unit) || game->gameOver) {
+	if (IsAllyUnit(L, unit) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
 	else if (teamHandler->AlliedTeams(unit->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
@@ -4279,7 +4260,7 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
 
-	if (IsAllyUnit(L, unit) || game->gameOver) {
+	if (IsAllyUnit(L, unit) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
 	else if (teamHandler->AlliedTeams(unit->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {

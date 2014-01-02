@@ -59,13 +59,16 @@ CKeySet::CKeySet(int k, bool release)
 std::string CKeySet::GetString(bool useDefaultKeysym) const
 {
 	std::string name;
-	if (useDefaultKeysym) {
-		name = keyCodes->GetDefaultName(key);
-	} else {
-		name = keyCodes->GetName(key);
+	std::string modstr;
+
+	if (keyCodes != NULL) {
+		if (useDefaultKeysym) {
+			name = keyCodes->GetDefaultName(key);
+		} else {
+			name = keyCodes->GetName(key);
+		}
 	}
 	
-	std::string modstr;
 #ifndef DISALLOW_RELEASE_BINDINGS
 	if (modifiers & KS_RELEASE) { modstr += "Up+"; }
 #endif
@@ -136,17 +139,15 @@ bool CKeySet::Parse(const std::string& token)
 			LOG_L(L_ERROR, "KeySet: Hex value out of range: %s", s.c_str());
 			return false;
 		}
-	}
-	else {
-		key = keyCodes->GetCode(s);
-		if (key < 0) {
+	} else {
+		if ((keyCodes != NULL) && (key = keyCodes->GetCode(s)) < 0) {
 			Reset();
 			LOG_L(L_ERROR, "KeySet: Bad keysym: %s", s.c_str());
 			return false;
 		}
 	}
 	
-	if (keyCodes->IsModifier(key)) {
+	if (keyCodes != NULL && keyCodes->IsModifier(key)) {
 		modifiers |= KS_ANYMOD;
 	}
 

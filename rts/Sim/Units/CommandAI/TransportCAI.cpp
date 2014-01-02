@@ -193,12 +193,15 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 
 			const float sqDist = unit->pos.SqDistance2D(owner->pos);
 			const bool inLoadingRadius = (sqDist <= Square(owner->unitDef->loadingRadius));
-			
+
+			CTransportUnit* trans = static_cast<CTransportUnit*>(owner);
 			CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
 
-			// subtracting 1 square to account for pathfinder/groundmovetype inaccuracy
-			if (goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE) || 
-				(!inLoadingRadius && (!owner->IsMoving() || (am && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)))) {
+			// subtract 1 square to account for PFS/GMT inaccuracy
+			const bool outOfRange = (goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE));
+			const bool moveCloser = (!inLoadingRadius && (!owner->IsMoving() || (am != NULL && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)));
+
+			if (outOfRange || moveCloser) {
 				SetGoal(unit->pos, owner->pos, std::min(64.0f, owner->unitDef->loadingRadius));
 			}
 
@@ -206,31 +209,32 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 				if (am != NULL) {
 					// handle air transports differently
 					float3 wantedPos = unit->pos;
-					wantedPos.y = static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeight(wantedPos, unit);
+					wantedPos.y = trans->GetTransporteeWantedHeight(wantedPos, unit);
 
-					// calls am->StartMoving() which sets forceHeading to false
-					// we do not want this at point of pickup because am->UpdateHeading()
-					// will suddenly see a large deltaHeading and break the DOCKING_ANGLE
-					// constraint, so call am->ForceHeading() next
-					SetGoal(wantedPos, owner->pos);
+					// calls am->StartMoving() which sets forceHeading to false (and also
+					// changes aircraftState, possibly in mid-pickup) --> must check that
+					// wantedPos == goalPos using some epsilon tolerance
+					// we do not want the forceHeading change at point of pickup because
+					// am->UpdateHeading() will suddenly notice a large deltaHeading and
+					// break the DOCKING_ANGLE constraint so call am->ForceHeading() next
+					SetGoal(wantedPos, owner->pos, 1.0f);
 
-					am->SetLoadingUnits(true);
-					am->ForceHeading(static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeading(unit));
+					am->ForceHeading(trans->GetTransporteeWantedHeading(unit));
 					am->SetWantedAltitude(wantedPos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z));
 					am->maxDrift = 1.0f;
 
+					// FIXME: kill the hardcoded constants, use the command's radius
 					const bool b1 = (owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS));
 					const bool b2 = (std::abs(owner->heading - unit->heading) < AIRTRANSPORT_DOCKING_ANGLE);
 					const bool b3 = (owner->updir.dot(UpVector) > 0.995f);
 
 					if (b1 && b2 && b3) {
-						am->SetLoadingUnits(false);
 						am->SetAllowLanding(false);
+						am->SetWantedAltitude(0.0f);
 
 						owner->script->BeginTransport(unit);
 						SetTransportee(NULL);
 						transport->AttachUnit(unit, owner->script->QueryTransport(unit));
-						am->SetWantedAltitude(0);
 
 						FinishCommand();
 						return;
@@ -285,7 +289,9 @@ void CTransportCAI::ExecuteUnloadUnits(Command& c)
 	CTransportUnit* transport = static_cast<CTransportUnit*>(owner);
 
 	switch (unloadType) {
-		case UNLOAD_LAND: { UnloadUnits_Land(c, transport); } break;
+		case UNLOAD_LAND: {
+			UnloadUnits_Land(c, transport);
+		} break;
 		case UNLOAD_DROP: {
 			if (owner->unitDef->canfly) {
 				UnloadUnits_Drop(c, transport);
@@ -294,8 +300,12 @@ void CTransportCAI::ExecuteUnloadUnits(Command& c)
 			}
 		} break;
 
-		case UNLOAD_LANDFLOOD: { UnloadUnits_LandFlood(c, transport); } break;
-		default: { UnloadUnits_Land(c, transport); } break;
+		case UNLOAD_LANDFLOOD: {
+			UnloadUnits_LandFlood(c, transport);
+		} break;
+		default: {
+			UnloadUnits_Land(c, transport);
+		} break;
 	}
 }
 
@@ -323,9 +333,7 @@ void CTransportCAI::ExecuteUnloadUnit(Command& c)
 
 bool CTransportCAI::CanTransport(const CUnit* unit) const
 {
-	const CTransportUnit* transport = static_cast<CTransportUnit*>(owner);
-
-	return transport->CanTransport(unit);
+	return (static_cast<CTransportUnit*>(owner)->CanTransport(unit));
 }
 
 
@@ -333,13 +341,14 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 {
 	const CTransportUnit* ownerTrans = static_cast<CTransportUnit*>(owner);
 	const MoveDef* moveDef = unitToUnload->moveDef;
-	const bool isAirTrans = dynamic_cast<AAirMoveType*>(owner->moveType);
 
-	const float amax = std::max(100, std::min(1000, (int)(radius * radius / 100)));
+	const bool isAirTrans = (dynamic_cast<AAirMoveType*>(owner->moveType) != NULL);
+	const float amax = std::max(100.0f, std::min(1000.0f, (radius * radius / 100.0f)));
 
 	spread = std::max(1.0f, math::ceil(spread / SQUARE_SIZE)) * SQUARE_SIZE;
 
-	for (int a = 0; a < amax; ++a) { // more attempts for large unloading zone
+	// more attempts for large unloading zone
+	for (int a = 0; a < amax; ++a) {
 		float3 delta;
 		float3 pos;
 
@@ -360,10 +369,12 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 		if (!pos.IsInBounds())
 			continue;
 
-		if (!ownerTrans->CanLoadUnloadAtPos(pos, unitToUnload, &pos.y)) // returns loading height in pos.y
+		// returns loading height in pos.y
+		if (!ownerTrans->CanLoadUnloadAtPos(pos, unitToUnload, &pos.y))
 			continue;
 
-		pos.y -= unitToUnload->radius; // adjust to middle pos
+		// adjust to middle pos
+		pos.y -= unitToUnload->radius;
 
 		// don't unload unit on too-steep slopes
 		if (moveDef != NULL && ground->GetSlope(pos.x, pos.z) > moveDef->maxSlope)
@@ -371,8 +382,10 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 
 		const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, spread, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
-		if (isAirTrans && (units.size() > 1 || (units.size() == 1 && units[0] != owner))) continue;
-		if (!isAirTrans && !units.empty()) continue;
+		if (isAirTrans && (units.size() > 1 || (units.size() == 1 && units[0] != owner)))
+			continue;
+		if (!isAirTrans && !units.empty())
+			continue;
 
 		found = pos;
 		return true;
@@ -401,9 +414,9 @@ bool CTransportCAI::SpotIsClear(float3 pos, CUnit* unitToUnload)
 
 bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload)
 {
-	const CTransportUnit* me = static_cast<CTransportUnit*>(owner);
+	const CTransportUnit* ownerTrans = static_cast<CTransportUnit*>(owner);
 
-	if (!me->CanLoadUnloadAtPos(pos, unitToUnload))
+	if (!ownerTrans->CanLoadUnloadAtPos(pos, unitToUnload))
 		return false;
 	if (unitToUnload->moveDef != NULL && ground->GetSlope(pos.x, pos.z) > unitToUnload->moveDef->maxSlope)
 		return false;
@@ -411,19 +424,17 @@ bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload)
 	const float radius = std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE;
 
 	const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, radius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
-	const std::list<CTransportUnit::TransportedUnit>& transportees = me->GetTransportedUnits();
+	const std::list<CTransportUnit::TransportedUnit>& transportees = ownerTrans->GetTransportedUnits();
 
-	for (std::vector<CSolidObject*>::const_iterator it = units.begin(); it != units.end(); ++it) {
+	for (auto objectsIt = units.begin(); objectsIt != units.end(); ++objectsIt) {
 		// check if the units are in the transport
 		bool found = false;
 
-		std::list<CTransportUnit::TransportedUnit>::const_iterator transporteesIt;
-
-		for (transporteesIt = transportees.begin(); transporteesIt != transportees.end(); ++transporteesIt) {
-			if ((found |= (*it == transporteesIt->unit)))
+		for (auto transporteesIt = transportees.begin(); transporteesIt != transportees.end(); ++transporteesIt) {
+			if ((found |= (*objectsIt == transporteesIt->unit)))
 				break;
 		}
-		if (!found && (*it != owner)) {
+		if (!found && (*objectsIt != owner)) {
 			return false;
 		}
 	}
@@ -432,45 +443,43 @@ bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload)
 }
 
 
+// should only be used by air
 bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots)
 {
-	//should only be used by air
-
-	CTransportUnit* transport = static_cast<CTransportUnit*>(owner);
-	//dropSpots.clear();
-	float gap = 25.5; // TODO - set tag for this?
-	float3 dir = endpos - startpos;
-	dir.Normalize();
+	const float gap = 25.5f; // TODO - set tag for this?
+	const float3 dir = (endpos - startpos).Normalize();
 
 	float3 nextPos = startpos;
-	float3 pos;
 
-	std::list<CTransportUnit::TransportedUnit>::const_iterator ti = transport->GetTransportedUnits().begin();
 	dropSpots.push_front(nextPos);
 
+	if (dynamic_cast<CHoverAirMoveType*>(owner->moveType) == NULL)
+		return false;
+
+	const auto& transportees = static_cast<CTransportUnit*>(owner)->GetTransportedUnits();
+	auto ti = transportees.begin();
+
 	// first spot
-	if (ti != transport->GetTransportedUnits().end()) {
-		nextPos += dir * (gap + ti->unit->radius);
+	if (ti != transportees.end()) {
+		nextPos += (dir * (gap + ti->unit->radius));
 		++ti;
 	}
 
 	// remaining spots
-	if (dynamic_cast<CHoverAirMoveType*>(owner->moveType)) {
-		while (ti != transport->GetTransportedUnits().end() && startpos.SqDistance(nextPos) < startpos.SqDistance(endpos)) {
-			nextPos += dir * (ti->unit->radius);
-			nextPos.y = ground->GetHeightAboveWater(nextPos.x, nextPos.z);
+	while (ti != transportees.end() && startpos.SqDistance(nextPos) < startpos.SqDistance(endpos)) {
+		nextPos += (dir * (ti->unit->radius));
+		nextPos.y = ground->GetHeightAboveWater(nextPos.x, nextPos.z);
 
-			// check landing spot is ok for landing on
-			if (!SpotIsClear(nextPos,ti->unit))
-				continue;
+		// check landing spot is ok for landing on
+		if (!SpotIsClear(nextPos, ti->unit))
+			continue;
 
-			dropSpots.push_front(nextPos);
-			nextPos += dir * (gap + ti->unit->radius);
-			++ti;
-		}
-		return true;
+		dropSpots.push_front(nextPos);
+		nextPos += (dir * (gap + ti->unit->radius));
+		++ti;
 	}
-	return false;
+
+	return true;
 }
 
 
@@ -490,31 +499,29 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
 
 	lastCall = gs->frameNum;
 
-	if (static_cast<CTransportUnit*>(owner)->GetTransportedUnits().empty()) {
+	const std::list<CTransportUnit::TransportedUnit>& transportees = transport->GetTransportedUnits();
+
+	if (transportees.empty()) {
 		FinishCommand();
 		return;
 	}
 
-	bool canUnload = false;
+	CUnit* transportee = NULL;
 	float3 unloadPos;
-	CUnit* u = NULL;
-	const CTransportUnit* ownerTrans = static_cast<CTransportUnit*>(owner);
-	const std::list<CTransportUnit::TransportedUnit>& transpunits = ownerTrans->GetTransportedUnits();
 
-	for(std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it) {
-		u = it->unit;
+	for (auto it = transportees.begin(); it != transportees.end(); ++it) {
 		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
-		const float spread = u->radius * ownerTrans->unitDef->unloadSpread;
-		canUnload = FindEmptySpot(pos, radius, spread, unloadPos, u);
-		if (canUnload) {
-			break;
+		const float spread = (it->unit)->radius * transport->unitDef->unloadSpread;
+
+		if (FindEmptySpot(pos, radius, spread, unloadPos, it->unit)) {
+			transportee = it->unit; break;
 		}
 	}
 
-	if (canUnload) {
+	if (transportee != NULL) {
 		Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, unloadPos);
-		c2.PushParam(u->id);
+		c2.PushParam(transportee->id);
 		commandQue.push_front(c2);
 		SlowUpdate();
 	} else {
@@ -526,38 +533,40 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
 void CTransportCAI::UnloadUnits_Drop(Command& c, CTransportUnit* transport)
 {
 	// called repeatedly for each unit till units are unloaded
-	if (lastCall == gs->frameNum) { // avoid infinite loops
+	if (lastCall == gs->frameNum) {
+		// avoid infinite loops
 		return;
 	}
+
 	lastCall = gs->frameNum;
 
-	if (static_cast<CTransportUnit*>(owner)->GetTransportedUnits().empty()) {
+	const auto& transportees = transport->GetTransportedUnits();
+
+	if (transportees.empty()) {
 		FinishCommand();
 		return;
 	}
 
-	float3 pos = c.GetPos(0);
-	float radius = c.params[3];
 	bool canUnload = false;
 
 	// at the start of each user command
 	if (isFirstIteration)	{
 		dropSpots.clear();
-		startingDropPos = pos;
 
-		approachVector = startingDropPos - owner->pos;
-		approachVector.Normalize();
-		canUnload = FindEmptyDropSpots(pos, pos + approachVector * std::max(16.0f,radius), dropSpots);
+		startingDropPos = c.GetPos(0);
+		approachVector = (startingDropPos - owner->pos).Normalize();
+
+		canUnload = FindEmptyDropSpots(startingDropPos, startingDropPos + approachVector * std::max(16.0f, c.params[3]), dropSpots);
 	} else if (!dropSpots.empty() ) {
-		// make sure we check current spot infront of us each unload
-		pos = dropSpots.back(); // take last landing pos as new start spot
+		// make sure we check current spot in front of us each
+		// unload, take last landing pos as new start spot
+		// pos = dropSpots.back();
 		canUnload = !dropSpots.empty();
 	}
 
 	if (canUnload) {
-		if (SpotIsClear(dropSpots.back(), static_cast<CTransportUnit*>(owner)->GetTransportedUnits().front().unit)) {
-			const float3 pos = dropSpots.back();
-			Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, pos);
+		if (SpotIsClear(dropSpots.back(), (transportees.front()).unit)) {
+			Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, dropSpots.back());
 			commandQue.push_front(c2);
 
 			SlowUpdate();
@@ -584,11 +593,16 @@ void CTransportCAI::UnloadUnits_CrashFlood(Command& c, CTransportUnit* transport
 
 void CTransportCAI::UnloadUnits_LandFlood(Command& c, CTransportUnit* transport)
 {
-	if (lastCall == gs->frameNum) { // avoid infinite loops
+	if (lastCall == gs->frameNum) {
+		// avoid infinite loops
 		return;
 	}
+
 	lastCall = gs->frameNum;
-	if (static_cast<CTransportUnit*>(owner)->GetTransportedUnits().empty()) {
+
+	const auto& transportees = transport->GetTransportedUnits();
+
+	if (transportees.empty()) {
 		FinishCommand();
 		return;
 	}
@@ -596,11 +610,9 @@ void CTransportCAI::UnloadUnits_LandFlood(Command& c, CTransportUnit* transport)
 	float3 pos = c.GetPos(0);
 	float3 found;
 
-	const CTransportUnit* ownerTrans = static_cast<CTransportUnit*>(owner);
-	const std::list<CTransportUnit::TransportedUnit>& transportees = ownerTrans->GetTransportedUnits();
-	const CUnit* transportee = transportees.front().unit;
+	const CUnit* transportee = (transportees.front()).unit;
 	const float radius = c.params[3];
-	const float spread = transportee->radius * ownerTrans->unitDef->unloadSpread;
+	const float spread = transportee->radius * transport->unitDef->unloadSpread;
 	const bool canUnload = FindEmptySpot(pos, radius, spread, found, transportee);
 
 	if (canUnload) {
@@ -615,95 +627,104 @@ void CTransportCAI::UnloadUnits_LandFlood(Command& c, CTransportUnit* transport)
 
 		SlowUpdate();
 		return;
-	} else {
-		FinishCommand();
 	}
+
+	FinishCommand();
 }
 
 
 void CTransportCAI::UnloadLand(Command& c)
 {
-	//default unload
+	// default unload
 	CTransportUnit* transport = static_cast<CTransportUnit*>(owner);
+	CUnit* transportee = NULL;
+
+	float3 wantedPos = c.GetPos(0);
+
 	if (inCommand) {
 		if (!owner->script->IsBusy()) {
 			FinishCommand();
 		}
 	} else {
-		const std::list<CTransportUnit::TransportedUnit>& transList = transport->GetTransportedUnits();
+		const std::list<CTransportUnit::TransportedUnit>& transportees = transport->GetTransportedUnits();
 
-		if (transList.empty()) {
+		if (transportees.empty()) {
 			FinishCommand();
 			return;
 		}
 
-		float3 pos = c.GetPos(0);
-		if (goalPos.SqDistance2D(pos) > 400) {
-			SetGoal(pos, owner->pos);
-		}
+		SetGoal(wantedPos, owner->pos);
 
-		CUnit* unit = NULL;
 		if (c.params.size() < 4) {
-			unit = transList.front().unit;
+			// unload the first transportee
+			transportee = (transportees.front()).unit;
 		} else {
-			const int unitID = (int)c.params[3];
-			std::list<CTransportUnit::TransportedUnit>::const_iterator it;
-			for (it = transList.begin(); it != transList.end(); ++it) {
+			const int unitID = c.params[3];
+
+			// unload a specific transportee
+			for (auto it = transportees.begin(); it != transportees.end(); ++it) {
 				CUnit* carried = it->unit;
+
 				if (unitID == carried->id) {
-					unit = carried;
+					transportee = carried;
 					break;
 				}
 			}
-			if (unit == NULL) {
+			if (transportee == NULL) {
 				FinishCommand();
 				return;
 			}
 		}
 
-		if (pos.SqDistance2D(owner->pos) < Square(owner->unitDef->loadingRadius * 0.9f)) {
+		if (wantedPos.SqDistance2D(owner->pos) < Square(owner->unitDef->loadingRadius * 0.9f)) {
 			CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
-			pos.y = static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeight(pos, unit);
+			wantedPos.y = static_cast<CTransportUnit*>(owner)->GetTransporteeWantedHeight(wantedPos, transportee);
 
 			if (am != NULL) {
 				// handle air transports differently
-				SetGoal(pos, owner->pos);
-				am->SetWantedAltitude(pos.y - ground->GetHeightAboveWater(pos.x, pos.z));
-				am->ForceHeading(static_cast<CTransportUnit*>(owner)->GetLoadUnloadHeading(unit));
+				SetGoal(wantedPos, owner->pos);
+
+				am->SetWantedAltitude(wantedPos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z));
+				am->ForceHeading(static_cast<CTransportUnit*>(owner)->GetTransporteeWantedHeading(transportee));
 
 				am->maxDrift = 1.0f;
 
-				const bool b1 = (owner->pos.SqDistance(pos) < 64.0f);
+				// FIXME: kill the hardcoded constants, use the command's radius
+				// NOTE: 2D distance-check would mean units get dropped from air
+				const bool b1 = (owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS));
 				const bool b2 = (std::abs(owner->heading - am->GetForcedHeading()) < AIRTRANSPORT_DOCKING_ANGLE);
 				const bool b3 = (owner->updir.dot(UpVector) > 0.99f);
 
 				if (b1 && b2 && b3) {
-					pos.y -= unit->radius;
+					wantedPos.y -= transportee->radius;
 
-					if (!SpotIsClearIgnoreSelf(pos, unit)) {
+					if (!SpotIsClearIgnoreSelf(wantedPos, transportee)) {
 						// chosen spot is no longer clear to land, choose a new one
 						// if a new spot cannot be found, don't unload at all
-						float3 newpos;
-						if (FindEmptySpot(pos, std::max(16.0f * SQUARE_SIZE, unit->radius * 4.0f), unit->radius, newpos, unit)) {
-							c.SetPos(0, newpos);
-							SetGoal(newpos + UpVector * unit->model->height, owner->pos);
+						float3 newWantedPos;
+
+						if (FindEmptySpot(wantedPos, std::max(16.0f * SQUARE_SIZE, transportee->radius * 4.0f), transportee->radius, newWantedPos, transportee)) {
+							c.SetPos(0, newWantedPos);
+							SetGoal(newWantedPos + UpVector * transportee->model->height, owner->pos);
 							return;
 						}
 					} else {
-						transport->DetachUnit(unit);
-						if ((transport->GetTransportedUnits()).empty()) {
+						transport->DetachUnit(transportee);
+
+						if (transportees.empty()) {
 							am->SetAllowLanding(true);
 							owner->script->EndTransport();
 						}
 					}
-					const float3 fix = owner->pos + owner->frontdir * 20;
-					SetGoal(fix, owner->pos); // move the transport away slightly
+
+					// move the transport away slightly
+					SetGoal(owner->pos + owner->frontdir * 20.0f, owner->pos);
 					FinishCommand();
 				}
 			} else {
 				inCommand = true;
 				StopMove();
-				owner->script->TransportDrop(unit, pos);
+				owner->script->TransportDrop(transportee, wantedPos);
 			}
 		}
 	}
@@ -712,28 +733,27 @@ void CTransportCAI::UnloadLand(Command& c)
 
 void CTransportCAI::UnloadDrop(Command& c)
 {
-	CTransportUnit* transport = static_cast<CTransportUnit*>(owner);
-
 	// fly over and drop unit
 	if (inCommand) {
 		if (!owner->script->IsBusy()) {
 			FinishCommand();
 		}
 	} else {
-		const std::list<CTransportUnit::TransportedUnit>& transportees = transport->GetTransportedUnits();
+		auto transport = static_cast<CTransportUnit*>(owner);
+		const auto& transportees = transport->GetTransportedUnits();
 
 		if (transportees.empty() || dropSpots.empty()) {
 			FinishCommand();
 			return;
 		}
 
-		float3 pos = c.GetPos(0); // head towards goal
+		float3 pos = c.GetPos(0);
 
-		// note that HoverAirMoveType must be modified to allow non stop movement
-		// through goals for this to work well
-		if (goalPos.SqDistance2D(pos) > 400) {
-			SetGoal(pos, owner->pos);
-			lastDropPos = pos;
+		// head towards goal
+		// note that HoverAirMoveType must be modified to allow
+		// non-stop movement through goals for this to work well
+		if (goalPos.SqDistance2D(pos) > Square(20.0f)) {
+			SetGoal(lastDropPos = pos, owner->pos);
 		}
 
 		CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
@@ -744,7 +764,7 @@ void CTransportCAI::UnloadDrop(Command& c)
 			am->maxDrift = 1.0f;
 
 			// if near target or passed it accidentally, drop unit
-			if (owner->pos.SqDistance2D(pos) < 1600 || (((pos - owner->pos).Normalize()).SqDistance(owner->frontdir.Normalize()) > 0.25 && owner->pos.SqDistance2D(pos)< (205*205))) {
+			if (owner->pos.SqDistance2D(pos) < Square(40.0f) || (((pos - owner->pos).Normalize()).SqDistance(owner->frontdir) > 0.25 && owner->pos.SqDistance2D(pos)< (205*205))) {
 				am->SetAllowLanding(false);
 
 				owner->script->EndTransport();
@@ -753,7 +773,8 @@ void CTransportCAI::UnloadDrop(Command& c)
 				dropSpots.pop_back();
 
 				if (dropSpots.empty()) {
-					SetGoal(owner->pos + owner->frontdir * 200, owner->pos); // move the transport away after last drop
+					// move the transport away after last drop
+					SetGoal(owner->pos + owner->frontdir * 200, owner->pos);
 				}
 
 				FinishCommand();
@@ -777,33 +798,34 @@ void CTransportCAI::UnloadLandFlood(Command& c)
 {
 	//land, then release all units at once
 	CTransportUnit* transport = static_cast<CTransportUnit*>(owner);
+	CUnit* transportee = NULL;
+
 	if (inCommand) {
 		if (!owner->script->IsBusy()) {
 			FinishCommand();
 		}
 	} else {
-		const std::list<CTransportUnit::TransportedUnit>& transList = transport->GetTransportedUnits();
+		const std::list<CTransportUnit::TransportedUnit>& transportees = transport->GetTransportedUnits();
 
-		if (transList.empty()) {
+		if (transportees.empty()) {
 			FinishCommand();
 			return;
 		}
 
-		//check units are all carried
-		CUnit* unit = NULL;
 		if (c.params.size() < 4) {
-			unit = transList.front().unit;
+			transportee = (transportees.front()).unit;
 		} else {
-			const int unitID = (int)c.params[3];
-			std::list<CTransportUnit::TransportedUnit>::const_iterator it;
-			for (it = transList.begin(); it != transList.end(); ++it) {
+			const int unitID = c.params[3];
+
+			for (auto it = transportees.begin(); it != transportees.end(); ++it) {
 				CUnit* carried = it->unit;
+
 				if (unitID == carried->id) {
-					unit = carried;
+					transportee = carried;
 					break;
 				}
 			}
-			if (unit == NULL) {
+			if (transportee == NULL) {
 				FinishCommand();
 				return;
 			}
@@ -823,7 +845,7 @@ void CTransportCAI::UnloadLandFlood(Command& c)
 			if (am != NULL) {
 				// lower to ground
 				startingDropPos.y = ground->GetHeightAboveWater(startingDropPos.x, startingDropPos.z);
-				const float3 wantedPos = startingDropPos + UpVector * unit->model->height;
+				const float3 wantedPos = startingDropPos + UpVector * transportee->model->height;
 				SetGoal(wantedPos, owner->pos);
 
 				am->SetWantedAltitude(1.0f);
@@ -841,12 +863,12 @@ void CTransportCAI::UnloadLandFlood(Command& c)
 					// nail it to the ground before it tries jumping up, only to land again...
 					am->SetState(am->AIRCRAFT_LANDED);
 					// call this so that other animations such as opening doors may be started
-					owner->script->TransportDrop(transList.front().unit, pos);
-					transport->DetachUnitFromAir(unit, pos);
+					owner->script->TransportDrop((transportees.front()).unit, pos);
+					transport->DetachUnitFromAir(transportee, pos);
 
 					FinishCommand();
 
-					if (transport->GetTransportedUnits().empty()) {
+					if (transportees.empty()) {
 						am->SetAllowLanding(true);
 						owner->script->EndTransport();
 						am->UpdateLanded();
@@ -858,11 +880,11 @@ void CTransportCAI::UnloadLandFlood(Command& c)
 				isFirstIteration = false;
 
 				StopMove();
-				owner->script->TransportDrop(transList.front().unit, pos);
-				transport->DetachUnitFromAir(unit, pos);
+				owner->script->TransportDrop((transportees.front()).unit, pos);
+				transport->DetachUnitFromAir(transportee, pos);
 				FinishCommand();
 
-				if (transport->GetTransportedUnits().empty()) {
+				if (transportees.empty()) {
 					owner->script->EndTransport();
 				}
 			}
@@ -920,34 +942,28 @@ int CTransportCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 			}
 		}
 	}
-//	if(static_cast<CTransportUnit*>(owner)->transported.empty())
+
 	if (owner->unitDef->canmove) {
 		return CMD_MOVE;
-	} else {
-		return CMD_STOP;
 	}
-//	else
-//		return CMD_UNLOAD_UNITS;
+
+	return CMD_STOP;
 }
 
 
 
 void CTransportCAI::FinishCommand()
 {
-	CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
-
-	if (am != NULL) {
-		am->SetLoadingUnits(false);
-	}
-
 	SetTransportee(NULL);
-
 	CMobileCAI::FinishCommand();
 
-	if (am != NULL && commandQue.empty()) {
-		am->SetWantedAltitude(0.0f);
-		am->wantToStop = true;
-	}
+	CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
+
+	if (am == NULL || !commandQue.empty())
+		return;
+
+	am->SetWantedAltitude(0.0f);
+	am->wantToStop = true;
 }
 
 
@@ -1035,7 +1051,7 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 			if (c.GetParamsCount() == 5) {
 				if (fromSynced) {
 					// point transported buildings (...) in their wanted direction after unloading
-					for (std::list<CTransportUnit::TransportedUnit>::const_iterator it = transportees.begin(); it != transportees.end(); ++it) {
+					for (auto it = transportees.begin(); it != transportees.end(); ++it) {
 						CBuilding* building = dynamic_cast<CBuilding*>(it->unit);
 
 						if (building == NULL)
@@ -1048,7 +1064,7 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 
 			if (c.GetParamsCount() >= 4) {
 				// find unload positions for transportees (WHY can this run in unsynced context?)
-				for (std::list<CTransportUnit::TransportedUnit>::const_iterator it = transportees.begin(); it != transportees.end(); ++it) {
+				for (auto it = transportees.begin(); it != transportees.end(); ++it) {
 					CUnit* u = it->unit;
 
 					const float radius = (c.GetID() == CMD_UNLOAD_UNITS)? c.GetParam(3): 0.0f;

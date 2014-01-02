@@ -49,6 +49,7 @@ void CWeaponLoader::LoadWeapons(CUnit* unit)
 		CWeapon* weapon = LoadWeapon(unit, defWeapon);
 
 		weapons.push_back(InitWeapon(unit, weapon, defWeapon));
+		unit->maxRange = std::max(weapon->range, unit->maxRange);
 	}
 }
 
@@ -109,7 +110,6 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	const WeaponDef* weaponDef = defWeapon->def;
 
 	weapon->reloadTime = std::max(1, int(weaponDef->reload * GAME_SPEED));
-	weapon->range = weaponDef->range;
 	weapon->heightMod = weaponDef->heightmod;
 	weapon->projectileSpeed = weaponDef->projectilespeed;
 
@@ -157,6 +157,7 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 
 	weapon->SetWeaponNum(owner->weapons.size());
 	weapon->Init();
+	weapon->UpdateRange(weaponDef->range);
 
 	return weapon;
 }

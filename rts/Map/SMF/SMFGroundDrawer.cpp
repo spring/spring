@@ -31,7 +31,7 @@ CONFIG(int, MaxDynamicMapLights)
 	.minimumValue(0);
 
 CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false).description("Enable shaders for terrain rendering and enable so more effects.");
-CONFIG(bool, AllowDeferredMapRendering).defaultValue(true).safemodeValue(false);
+CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false);
 
 CONFIG(int, ROAM)
 	.defaultValue(Patch::VBO)
@@ -217,8 +217,14 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 	if (!geomBuffer.Valid())
 		return;
 
-	// water renderers use FBO's for the reflection pass
+	// some water renderers use FBO's for the reflection pass
 	if (drawPass == DrawPass::WaterReflection)
+		return;
+	// some water renderers use FBO's for the refraction pass
+	if (drawPass == DrawPass::WaterRefraction)
+		return;
+	// CubeMapHandler also uses an FBO for this pass
+	if (drawPass == DrawPass::TerrainReflection)
 		return;
 	// deferred pass must be executed with GLSL shaders
 	// if the FFP or ARB state was selected, bail early
@@ -479,8 +485,8 @@ int CSMFGroundDrawer::GetGroundDetail(const DrawPass::e& drawPass) const
 	int detail = groundDetail;
 
 	switch (drawPass) {
-		case DrawPass::UnitReflection:
-			detail *= LODScaleUnitReflection;
+		case DrawPass::TerrainReflection:
+			detail *= LODScaleTerrainReflection;
 			break;
 		case DrawPass::WaterReflection:
 			detail *= LODScaleReflection;

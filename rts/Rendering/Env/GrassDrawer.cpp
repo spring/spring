@@ -43,7 +43,8 @@ CGrassDrawer::CGrassDrawer()
 {
 	const int detail = configHandler->GetInt("GrassDetail");
 
-	if (detail == 0) {
+	// some ATI drivers crash with grass enabled, default to disabled
+	if ((detail == 0) || ((detail == 7) && globalRendering->haveATI)) {
 		grassOff = true;
 		return;
 	} else {

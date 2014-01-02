@@ -227,9 +227,9 @@ CSimpleGroundFlash::CSimpleGroundFlash()
 	sizeGrowth = 0.0f;
 }
 
-void CSimpleGroundFlash::Init(const float3& explosionPos, CUnit* owner)
+void CSimpleGroundFlash::Init(CUnit* owner, const float3& offset)
 {
-	pos += explosionPos;
+	pos += offset;
 	age = ttl ? 0.0f : 1.0f;
 	agerate = ttl ? 1.0f / ttl : 1.0f;
 

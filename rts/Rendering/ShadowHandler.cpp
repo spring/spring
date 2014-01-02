@@ -144,8 +144,11 @@ void CShadowHandler::Kill()
 }
 
 void CShadowHandler::FreeTextures() {
-	if (fb.IsValid())
+	if (fb.IsValid()) {
+		fb.Bind();
 		fb.DetachAll();
+		fb.Unbind();
+	}
 
 	glDeleteTextures(1, &shadowTexture    ); shadowTexture     = 0;
 	glDeleteTextures(1, &dummyColorTexture); dummyColorTexture = 0;
@@ -484,14 +487,16 @@ void CShadowHandler::CreateShadows()
 
 	if (L->GetLightIntensity() > 0.0f) {
 		// move view into sun-space
-		const float3 oldup = camera->up;
+		const float3 camUp = camera->up;
+		const float3 camRgt = camera->right;
 
 		camera->right = sunDirX;
 		camera->up = sunDirY;
 
 		DrawShadowPasses();
 
-		camera->up = oldup;
+		camera->right = camRgt;
+		camera->up = camUp;
 	}
 
 	glShadeModel(GL_SMOOTH);

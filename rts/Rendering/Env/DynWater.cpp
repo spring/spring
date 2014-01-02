@@ -452,7 +452,7 @@ void CDynWater::DrawReflection(CGame* game)
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
 	camera->forward.y *= -1.0f;
-	camera->SetPos().y *= -1.0f;
+	camera->SetPos(camera->GetPos() * float3(1.0f, -1.0f, 1.0f));
 	camera->Update();
 
 	reflectRight = camera->right;

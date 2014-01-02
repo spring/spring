@@ -146,7 +146,7 @@ S3DModel* C3DOParser::Load(const std::string& name)
 	model->SetRootPiece(rootPiece);
 	model->radius = ((model->maxs - model->mins) * 0.5f).Length();
 	model->height = model->maxs.y - model->mins.y;
-	model->drawRadius = std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length();
+	model->drawRadius = float3::max(float3::fabs(model->maxs), float3::fabs(model->mins)).Length();
 	model->relMidPos = (model->maxs + model->mins) * 0.5f;
 
 	fileBuf.clear();
@@ -363,8 +363,8 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 	CalcNormals(piece);
 	piece->SetMinMaxExtends();
 
-	model->mins = std::min(piece->goffset + piece->mins, model->mins);
-	model->maxs = std::max(piece->goffset + piece->maxs, model->maxs);
+	model->mins = float3::min(piece->goffset + piece->mins, model->mins);
+	model->maxs = float3::max(piece->goffset + piece->maxs, model->maxs);
 
 	piece->SetCollisionVolume(new CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
@@ -457,8 +457,8 @@ void S3DOPiece::DrawForList() const
 void S3DOPiece::SetMinMaxExtends()
 {
 	for (std::vector<S3DOVertex>::const_iterator vi = vertices.begin(); vi != vertices.end(); ++vi) {
-		mins = std::min(mins, vi->pos);
-		maxs = std::max(maxs, vi->pos);
+		mins = float3::min(mins, vi->pos);
+		maxs = float3::max(maxs, vi->pos);
 	}
 }
 

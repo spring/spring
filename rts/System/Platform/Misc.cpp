@@ -24,6 +24,12 @@
 #include <dlfcn.h> // for dladdr(), dlopen()
 #include <climits> // for PATH_MAX
 
+#elif defined __FreeBSD__
+#include <unistd.h>
+#include <dlfcn.h> // for dladdr(), dlopen()
+#include <sys/types.h>
+#include <sys/sysctl.h>
+
 #else
 
 #endif
@@ -32,6 +38,8 @@
 #include <sys/utsname.h> // for uname()
 #include <sys/types.h> // for getpw
 #include <pwd.h> // for getpw
+
+#include <fstream>
 #endif
 
 #include <cstring>
@@ -211,6 +219,18 @@ std::string GetProcessExecutableFile()
 	if (err == 0) {
 		procExeFilePath = GetRealPath(path);
 	}
+#elif defined(__FreeBSD__)
+	int mib[4];
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_PROC;
+	mib[2] = KERN_PROC_PATHNAME;
+	mib[3] = -1;
+	char buf[PATH_MAX];
+	size_t cb = sizeof(buf);
+	int err = sysctl(mib, 4, buf, &cb, NULL, 0);
+	if (err == 0) {
+		procExeFilePath = buf;
+	}
 #else
 	#error implement this
 #endif
@@ -233,7 +253,7 @@ std::string GetModuleFile(std::string moduleName)
 	// this will only be used if moduleFilePath stays empty
 	const char* error = NULL;
 
-#if defined(linux) || defined(__APPLE__)
+#if defined(linux) || defined(__APPLE__) || defined(__FreeBSD__)
 #ifdef __APPLE__
 	#define SHARED_LIBRARY_EXTENSION "dylib"
 #else
@@ -388,44 +408,56 @@ bool Is32BitEmulation()
 }
 #endif
 
+bool IsRunningInGDB() {
+	#ifndef _WIN32
+	char buf[1024];
+
+	std::string fname = "/proc/" + IntToString(getppid(), "%d") + "/cmdline";
+	std::ifstream f(fname.c_str());
+
+	if (!f.good())
+		return false;
+
+	f.read(buf, sizeof(buf));
+	f.close();
+
+	return (strstr(buf, "gdb") != NULL);
+	#else
+	return false;
+	#endif
+}
+
 std::string ExecuteProcess(const std::string& file, std::vector<std::string> args)
 {
-	std::string execError = "";
+	// "The array of pointers must be terminated by a NULL pointer."
+	// --> include one extra argument string and leave it NULL
+	std::vector<char*> processArgs(args.size() + 1, NULL);
+	std::string execError;
 
 	// "The first argument, by convention, should point to
 	// the filename associated with the file being executed."
 	args.insert(args.begin(), Quote(file));
 
-	char** processArgs = new char*[args.size() + 1];
-
 	for (size_t a = 0; a < args.size(); ++a) {
-		const std::string& arg = args.at(a);
-		const size_t arg_size = arg.length() + 1;
-		processArgs[a] = new char[arg_size];
-		STRCPY_T(processArgs[a], arg_size, arg.c_str());
+		const std::string& arg = args[a];
+		const size_t argSize = arg.length() + 1;
+
+		STRCPY_T(processArgs[a] = new char[argSize], argSize, arg.c_str());
 	}
 
-	// "The array of pointers must be terminated by a NULL pointer."
-	processArgs[args.size()] = NULL;
-
-	{
-		// Execute
 #ifdef WIN32
 	#define EXECVP _execvp
 #else
 	#define EXECVP execvp
 #endif
-		const int ret = EXECVP(file.c_str(), processArgs);
-
-		if (ret == -1) {
-			execError = strerror(errno);
-		}
+	if (EXECVP(args[0].c_str(), &processArgs[0]) == -1) {
+		execError = strerror(errno);
 	}
+	#undef EXECVP
 
 	for (size_t a = 0; a < args.size(); ++a) {
 		delete[] processArgs[a];
 	}
-	delete[] processArgs;
 
 	return execError;
 }

@@ -124,7 +124,7 @@ static bool TestCregClasses2()
 			fineClasses++;
 		}
 	}
-	return PostCregTest(fineClasses, brokenClasses, 14);
+	return PostCregTest(fineClasses, brokenClasses, 15);
 }
 
 static bool TestCregClasses3()

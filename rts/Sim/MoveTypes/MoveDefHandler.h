@@ -45,6 +45,9 @@ struct MoveDef {
 	float GetDepthMod(const float height) const;
 	unsigned int GetCheckSum() const;
 
+	static float GetDefaultMinWaterDepth() { return -1e6f; }
+	static float GetDefaultMaxWaterDepth() { return +1e6f; }
+
 	/// determines which of the {tank,kbot,hover,ship}Speed
 	/// modifiers this MoveDef receives from a terrain-type
 	enum SpeedModClass {
@@ -84,6 +87,7 @@ struct MoveDef {
 	int zsize, zsizeh;
 
 	/// minWaterDepth for ships, maxWaterDepth otherwise
+	/// controls movement and (un-)loading constraints
 	float depth;
 	float depthModParams[DEPTHMOD_NUM_PARAMS];
 	float maxSlope;
@@ -120,6 +124,7 @@ struct MoveDef {
 	/// does not insert it (GetCheckSum would need to skip such bytes
 	/// otherwise, since they are never initialized)
 	bool avoidMobilesOnPath;
+	bool allowTerrainCollisions;
 
 	/// do we leave heat and avoid any left by others?
 	bool heatMapping;

@@ -102,9 +102,10 @@ unsigned      simpleProfiler_getPartNames(const char** parts, const unsigned par
 char*         simpleProfiler_getSummaryString() {
 
 	const std::string& summaryStr = Profiler::GetDefault()->ToString();
+	const int length = summaryStr.length();
+	char* summary = util_allocStr(length);
 
-	char* summary = util_allocStr(summaryStr.length());
-	STRCPY_T(summary, sizeof(summary), summaryStr.c_str());
+	STRCPY_T(summary, length, summaryStr.c_str());
 
 	return summary;
 }

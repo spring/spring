@@ -80,8 +80,10 @@ std::string GetModuleFile(std::string moduleName = "");
 std::string GetModulePath(const std::string& moduleName = "");
 
 std::string GetOS();
+
 bool Is64Bit();
 bool Is32BitEmulation();
+bool IsRunningInGDB();
 
 /**
  * Executes a native binary, file and args have to be not escaped!

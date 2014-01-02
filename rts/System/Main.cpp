@@ -12,6 +12,7 @@
 #include "lib/gml/gml_base.h"
 #include "lib/gml/gmlmut.h"
 #include "System/Exceptions.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Misc.h"
@@ -24,12 +25,11 @@
 
 #ifdef WIN32
 	#include "lib/SOP/SOP.hpp" // NvOptimus
-	#include "System/FileSystem/FileSystem.h"
+
 	#include <stdlib.h>
 	#include <process.h>
 	#define setenv(k,v,o) SetEnvironmentVariable(k,v)
 #endif
-
 
 
 
@@ -52,7 +52,8 @@ int Run(int argc, char* argv[])
 #ifdef USE_GML
 	GML::ThreadNumber(GML_DRAW_THREAD_NUM);
   #if GML_ENABLE_TLS_CHECK
-	if (GML::ThreadNumber() != GML_DRAW_THREAD_NUM) { //XXX how does this check relate to TLS??? and how does it relate to the line above???
+	// XXX how does this check relate to TLS??? and how does it relate to the line above???
+	if (GML::ThreadNumber() != GML_DRAW_THREAD_NUM) {
 		ErrorMessageBox("Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
 	}
   #endif
@@ -64,10 +65,13 @@ int Run(int argc, char* argv[])
 		ret = app.Run();
 	} CATCH_SPRING_ERRORS
 
-	// check if Spring crashed, if so display an error message
+	// check if (a thread in) Spring crashed, if so display an error message
 	Threading::Error* err = Threading::GetThreadError();
-	if (err)
-		ErrorMessageBox("Error in main(): " + err->message, err->caption, err->flags);
+
+	if (err != NULL) {
+		LOG_L(L_ERROR, "[%s] ret=%d err=\"%s\"", __FUNCTION__, ret, err->message.c_str());
+		ErrorMessageBox("[" + std::string(__FUNCTION__) + "] error: " + err->message, err->caption, err->flags, true);
+	}
 
 	return ret;
 }
@@ -77,18 +81,18 @@ int Run(int argc, char* argv[])
  * Always run on dedicated GPU
  * @return true when restart is required with new env vars
  */
-static bool SetNvOptimusProfile(char* argv[])
+static bool SetNvOptimusProfile(const std::string& processFileName)
 {
 #ifdef WIN32
 	if (SOP_CheckProfile("Spring"))
 		return false;
 
-	const std::string exename = FileSystem::GetFilename(argv[0]);
-	const int res = SOP_SetProfile("Spring", exename);
-	return (res == SOP_RESULT_CHANGE);
-#else
-	return false;
+	const bool profileChanged = (SOP_SetProfile("Spring", processFileName) == SOP_RESULT_CHANGE);
+
+	// on Windows execvp breaks lobbies (new process: new PID)
+	return (false && profileChanged);
 #endif
+	return false;
 }
 
 
@@ -106,21 +110,19 @@ int main(int argc, char* argv[])
 // PROFILE builds exit on execv ...
 // HEADLESS run mostly in parallel for testing purposes, 100% omp threads wouldn't help then
 #if !defined(PROFILE) && !defined(HEADLESS)
-	bool restart = false;
-	restart |= SetNvOptimusProfile(argv);
+	if (SetNvOptimusProfile(FileSystem::GetFilename(argv[0]))) {
+		// prepare for restart
+		std::vector<std::string> args(argc - 1);
 
-  #ifndef WIN32
-	if (restart) {
-		std::vector<std::string> args(argc-1);
-		for (int i=1; i<argc; i++) {
-			args[i-1] = argv[i];
-		}
-		const std::string err = Platform::ExecuteProcess(argv[0], args);
-		ErrorMessageBox(err, "Execv error:", MBF_OK | MBF_EXCL);
+		for (int i = 1; i < argc; i++)
+			args[i - 1] = argv[i];
+
+		// ExecProc normally does not return; if it does the retval is an error-string
+		ErrorMessageBox(Platform::ExecuteProcess(argv[0], args), "Execv error:", MBF_OK | MBF_EXCL);
 	}
-  #endif
 #endif
-	return Run(argc, argv);
+
+	return (Run(argc, argv));
 }
 
 
@@ -131,3 +133,4 @@ int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	return main(__argc, __argv);
 }
 #endif
+

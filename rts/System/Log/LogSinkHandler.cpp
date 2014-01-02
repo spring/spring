@@ -9,7 +9,6 @@
 #include <cassert>
 
 
-LogSinkHandler logSinkHandler;
 
 /// Records a log entry
 static void log_sink_record_logSinkHandler(const char* section, int level,
@@ -19,33 +18,21 @@ static void log_sink_record_logSinkHandler(const char* section, int level,
 }
 
 
-LogSinkHandler::LogSinkHandler()
-	: sinking(true)
-{
-}
-
-LogSinkHandler::~LogSinkHandler() {
-
-	if (!sinks.empty()) {
-		log_backend_unregisterSink(&log_sink_record_logSinkHandler);
-	}
-}
 
 void LogSinkHandler::AddSink(ILogSink* logSink) {
-
 	assert(logSink != NULL);
-	sinks.push_back(logSink);
 
-	if (sinks.size() == 1) {
+	if (sinks.empty()) {
 		log_backend_registerSink(&log_sink_record_logSinkHandler);
 	}
+
+	sinks.push_back(logSink);
 }
 
 void LogSinkHandler::RemoveSink(ILogSink* logSink) {
-
 	assert(logSink != NULL);
-	std::vector<ILogSink*>::iterator lsi;
-	for (lsi = sinks.begin(); lsi != sinks.end(); ++lsi) {
+
+	for (auto lsi = sinks.begin(); lsi != sinks.end(); ++lsi) {
 		if (*lsi == logSink) {
 			sinks.erase(lsi);
 			break;
@@ -57,23 +44,13 @@ void LogSinkHandler::RemoveSink(ILogSink* logSink) {
 	}
 }
 
-void LogSinkHandler::SetSinking(bool enabled) {
-	this->sinking = enabled;
-}
-
-bool LogSinkHandler::IsSinking() const {
-	return sinking;
-}
-
 void LogSinkHandler::RecordLogMessage(const std::string& section, int level,
 			const std::string& text) const
 {
-	if (!sinking) {
+	if (!sinking)
 		return;
-	}
 
-	std::vector<ILogSink*>::const_iterator lsi;
-	for (lsi = sinks.begin(); lsi != sinks.end(); ++lsi) {
+	for (auto lsi = sinks.begin(); lsi != sinks.end(); ++lsi) {
 		(*lsi)->RecordLogMessage(section, level, text);
 	}
 }

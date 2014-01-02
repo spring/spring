@@ -418,7 +418,7 @@ bool CStrafeAirMoveType::Update()
 	const bool allowAttack = (reservedPad == NULL && !outOfFuel);
 
 	if (aircraftState != AIRCRAFT_CRASHING) {
-		if (owner->fpsControlPlayer != NULL) {
+		if (owner->UnderFirstPersonControl()) {
 			SetState(AIRCRAFT_FLYING);
 			inefficientAttackTime = 0;
 
@@ -517,7 +517,7 @@ bool CStrafeAirMoveType::Update()
 				owner->KillUnit(NULL, true, false);
 			}
 
-			new CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
+			new CSmokeProjectile(owner, owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, 0.4f);
 		} break;
 		case AIRCRAFT_TAKEOFF:
 			UpdateTakeOff(wantedHeight);
@@ -576,11 +576,13 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 				if (unit->immobile) {
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
-					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
-					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
-
 					owner->Move(-dif * (dist - totRad), true);
 					owner->SetVelocity(owner->speed * 0.99f);
+
+					if (modInfo.allowUnitCollisionDamage) {
+						owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+						unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+					}
 
 					hitBuilding = true;
 				} else {
@@ -588,15 +590,20 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
 					owner->Move(-dif * (dist - totRad) * (1 - part), true);
-					unit->Move(dif * (dist - totRad) * (part), true);
-
-					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
-					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
-
 					owner->SetVelocity(owner->speed * 0.99f);
+
+					if (!unit->UsingScriptMoveType()) {
+						unit->Move(dif * (dist - totRad) * (part), true);
+					}
+
+					if (modInfo.allowUnitCollisionDamage) {
+						owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+						unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+					}
 				}
 			}
 
+			// update speed.w
 			owner->SetSpeed(owner->speed);
 		}
 
@@ -851,7 +858,7 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	// also need to fly straight for some distance
 	#if 1
 	if (goalDir2D.dot(frontdir) < -0.1f && goalDist2D < turnRadius) {
-		if (owner->fpsControlPlayer == NULL || owner->fpsControlPlayer->fpsController.mouse2) {
+		if (!owner->UnderFirstPersonControl() || owner->fpsControlPlayer->fpsController.mouse2) {
 			goalDotRight *= -1.0f;
 		}
 	}
@@ -1070,7 +1077,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	const float speedf = spd.w;
 	const float3 speeddir = spd / (speedf + 0.1f);
 
-	if (owner->fpsControlPlayer != NULL) {
+	if (owner->UnderFirstPersonControl()) {
 		if ((pos.y - gHeight) > wantedHeight * 1.2f) {
 			engine = std::max(0.0f, std::min(engine, 1 - (pos.y - gHeight - wantedHeight * 1.2f) / wantedHeight));
 		}

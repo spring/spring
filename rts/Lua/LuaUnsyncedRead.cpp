@@ -233,7 +233,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 	}
 	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
+		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
 	}
 	CUnit* unit = unitHandler->units[unitID];
 	if (unit == NULL) {
@@ -443,7 +443,7 @@ int LuaUnsyncedRead::GetLastUpdateSeconds(lua_State* L)
 int LuaUnsyncedRead::GetHasLag(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushboolean(L, game ? game->HasLag() : false);
+	lua_pushboolean(L, (game != NULL)? game->IsLagging(luaL_optfloat(L, 1, 500.0f)) : false);
 	return 1;
 }
 
@@ -2107,16 +2107,14 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 int LuaUnsyncedRead::GetCurrentTooltip(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	const string tooltip = mouse->GetCurrentTooltip();
-	lua_pushsstring(L, tooltip);
+	lua_pushsstring(L, mouse->GetCurrentTooltip());
 	return 1;
 }
 
 
 int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 {
-	const string keysym = luaL_checksstring(L, 1);
-	lua_pushnumber(L, keyCodes->GetCode(keysym));
+	lua_pushnumber(L, (keyCodes != NULL)? keyCodes->GetCode(luaL_checksstring(L, 1)): -1);
 	return 1;
 }
 
@@ -2124,22 +2122,25 @@ int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 {
 	const int keycode = luaL_checkint(L, 1);
-	lua_pushsstring(L, keyCodes->GetName(keycode));
-	lua_pushsstring(L, keyCodes->GetDefaultName(keycode));
+	lua_pushsstring(L, (keyCodes != NULL)? keyCodes->GetName(keycode): "");
+	lua_pushsstring(L, (keyCodes != NULL)? keyCodes->GetDefaultName(keycode): "");
 	return 2;
 }
 
 
 int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 {
-	const string keysetStr = luaL_checksstring(L, 1);
 	CKeySet ks;
-	if (!ks.Parse(keysetStr)) {
+
+	if (!ks.Parse(luaL_checksstring(L, 1)))
 		return 0;
-	}
+	if (keyBindings == NULL)
+		return 0;
+
 	const CKeyBindings::ActionList& actions = keyBindings->GetActionList(ks);
+
 	lua_newtable(L);
-	for (int i = 0; i < (int)actions.size(); i++) {
+	for (unsigned int i = 0; i < actions.size(); i++) {
 		const Action& action = actions[i];
 		lua_newtable(L);
 		lua_pushsstring(L, action.command);
@@ -2153,10 +2154,13 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 
 int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 {
-	const string command = luaL_checksstring(L, 1);
-	const CKeyBindings::HotkeyList& hotkeys = keyBindings->GetHotkeys(command);
+	if (keyBindings == NULL)
+		return 0;
+
+	const CKeyBindings::HotkeyList& hotkeys = keyBindings->GetHotkeys(luaL_checksstring(L, 1));
+
 	lua_newtable(L);
-	for (int i = 0; i < (int)hotkeys.size(); i++) {
+	for (unsigned int i = 0; i < hotkeys.size(); i++) {
 		const string& hotkey = hotkeys[i];
 		lua_pushsstring(L, hotkey);
 		lua_rawseti(L, -2, i + 1);
@@ -2533,12 +2537,13 @@ int LuaUnsyncedRead::GetConfigParams(lua_State* L)
 /******************************************************************************/
 
 int LuaUnsyncedRead::GetLogSections(lua_State* L) {
-	const int numLogSections = log_filter_section_getRegistered();
+	const int numLogSections = log_filter_section_getNumRegisteredSections();
 
 	lua_createtable(L, 0, numLogSections);
 	for (int i = 0; i < numLogSections; ++i) {
 		const char* sectionName = log_filter_section_getRegisteredIndex(i);
 		const int logLevel = log_filter_section_getMinLevel(sectionName);
+
 		lua_pushstring(L, sectionName);
 		lua_pushnumber(L, logLevel);
 		lua_rawset(L, -3);

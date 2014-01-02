@@ -36,7 +36,6 @@ bool AviVideoCapturing::IsCapturing() const {
 
 
 void AviVideoCapturing::StopCapturing() {
-
 	if (IsCapturing()) {
 		capturing = false;
 		SafeDelete(aviGenerator);
@@ -96,9 +95,9 @@ void AviVideoCapturing::StartCapturing() {
 
 
 void AviVideoCapturing::RenderFrame() {
-
 	if (IsCapturing()) {
-		globalRendering->lastFrameTime = 1.0f / GAME_SPEED;
+		globalRendering->lastFrameTime = 1000.0f / GAME_SPEED;
+
 		if (!aviGenerator->readOpenglPixelDataThreaded()) {
 			StopCapturing();
 		}
