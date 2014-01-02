@@ -159,8 +159,9 @@ class CEventHandler
 		void UnsyncedHeightMapUpdate(const SRectangle& rect);
 		void Update();
 
-		bool KeyPress(unsigned short key, bool isRepeat);
-		bool KeyRelease(unsigned short key);
+		bool KeyPress(int key, bool isRepeat);
+		bool KeyRelease(int key);
+		bool TextInput(const std::string& utf8);
 		bool MouseMove(int x, int y, int dx, int dy, int button);
 		bool MousePress(int x, int y, int button);
 		int  MouseRelease(int x, int y, int button); // return a cmd index, or -1
@@ -511,6 +512,7 @@ inline void CEventHandler::UnitCommand(const CUnit* unit,
 		}
 	}
 }
+
 
 
 inline void CEventHandler::UnitCmdDone(const CUnit* unit,

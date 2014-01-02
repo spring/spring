@@ -19,7 +19,7 @@
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/MsgStrings.h"
 
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 
 
 #define MAX_QUIT_TEAMS (teamHandler->ActiveTeams() - 1)
@@ -365,7 +365,7 @@ void CQuitBox::MouseMove(int x, int y, int dx,int dy, int button)
 }
 
 
-bool CQuitBox::KeyPressed(unsigned short key, bool isRepeat)
+bool CQuitBox::KeyPressed(int key, bool isRepeat)
 {
 	if (key == SDLK_ESCAPE) {
 		delete this;

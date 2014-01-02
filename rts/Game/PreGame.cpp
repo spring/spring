@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <map>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <set>
 #include <cfloat>
 
@@ -108,10 +108,10 @@ void CPreGame::LoadSavefile(const std::string& save)
 	StartServer(savefile->scriptText);
 }
 
-int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
+int CPreGame::KeyPressed(int k, bool isRepeat)
 {
 	if (k == SDLK_ESCAPE) {
-		if (keyInput->IsKeyPressed(SDLK_LSHIFT)) {
+		if (KeyInput::GetKeyModState(KMOD_SHIFT)) {
 			LOG("User exited");
 			gu->globalQuit = true;
 		} else {

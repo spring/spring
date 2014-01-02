@@ -75,7 +75,6 @@
 #include "System/Log/ILog.h"
 #include "System/GlobalConfig.h"
 #include "Net/Protocol/NetProtocol.h"
-#include "System/Input/KeyInput.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
@@ -2125,23 +2124,18 @@ public:
 			"Prevents/Enables the mouse from leaving the game window (windowed mode only)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		SDL_GrabMode newMode;
-		if (action.GetArgs().empty()) {
-			const SDL_GrabMode curMode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
-			switch (curMode) {
-				default: // make compiler happy
-				case SDL_GRAB_OFF: newMode = SDL_GRAB_ON;  break;
-				case SDL_GRAB_ON:  newMode = SDL_GRAB_OFF; break;
-			}
+		SDL_bool newMode;
+		if (!action.GetArgs().empty()) {
+			newMode = (SDL_GetWindowGrab(globalRendering->window)) ? SDL_FALSE : SDL_TRUE;
 		} else {
 			if (atoi(action.GetArgs().c_str())) {
-				newMode = SDL_GRAB_ON;
+				newMode = SDL_TRUE;
 			} else {
-				newMode = SDL_GRAB_OFF;
+				newMode = SDL_FALSE;
 			}
 		}
-		SDL_WM_GrabInput(newMode);
-		LogSystemStatus("Input grabbing", (newMode == SDL_GRAB_ON));
+		SDL_SetWindowGrab(globalRendering->window, newMode);
+		LogSystemStatus("Input grabbing", (newMode == SDL_TRUE));
 		return true;
 	}
 };
@@ -2882,29 +2876,6 @@ public:
 
 
 
-class SetGammaActionExecutor : public IUnsyncedActionExecutor {
-public:
-	SetGammaActionExecutor() : IUnsyncedActionExecutor("SetGamma",
-			"Set the rendering gamma value(s) through SDL") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		float r, g, b;
-		const int count = sscanf(action.GetArgs().c_str(), "%f %f %f", &r, &g, &b);
-		if (count == 1) {
-			SDL_SetGamma(r, r, r);
-			LOG("Set gamma value");
-		} else if (count == 3) {
-			SDL_SetGamma(r, g, b);
-			LOG("Set gamma values");
-		} else {
-			LOG_L(L_WARNING, "Unknown gamma format");
-		}
-		return true;
-	}
-};
-
-
-
 class CrashActionExecutor : public IUnsyncedActionExecutor {
 public:
 	CrashActionExecutor() : IUnsyncedActionExecutor("Crash",
@@ -3444,7 +3415,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DistDrawActionExecutor());
 	AddActionExecutor(new LODScaleActionExecutor());
 	AddActionExecutor(new WireMapActionExecutor());
-	AddActionExecutor(new SetGammaActionExecutor());
 	AddActionExecutor(new CrashActionExecutor());
 	AddActionExecutor(new ExceptionActionExecutor());
 	AddActionExecutor(new DivByZeroActionExecutor());

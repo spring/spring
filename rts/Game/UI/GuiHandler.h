@@ -33,8 +33,8 @@ public:
 	void DrawCentroidCursor();
 
 	bool AboveGui(int x, int y);
-	bool KeyPressed(unsigned short key, bool isRepeat);
-	bool KeyReleased(unsigned short key);
+	bool KeyPressed(int key, bool isRepeat);
+	bool KeyReleased(int key);
 	bool MousePress(int x, int y, int button);
 	void MouseRelease(int x, int y, int button)
 	{

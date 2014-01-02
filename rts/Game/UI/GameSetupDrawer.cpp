@@ -17,8 +17,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 
-#include <SDL_keysym.h>
-
 #include <cassert>
 #include <string>
 #include <map>

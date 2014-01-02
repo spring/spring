@@ -54,8 +54,6 @@
 #include <stdio.h>
 #include <set>
 #include <cctype>
-#include <SDL_keysym.h>
-#include <SDL_mouse.h>
 
 CONFIG(bool, LuaSocketEnabled)
 	.defaultValue(true)

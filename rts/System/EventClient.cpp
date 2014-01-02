@@ -54,8 +54,9 @@ void CEventClient::DrawScreen() {}
 void CEventClient::DrawInMiniMap() {}
 
 // from LuaUI
-bool CEventClient::KeyPress(unsigned short key, bool isRepeat) { return false; }
-bool CEventClient::KeyRelease(unsigned short key) { return false; }
+bool CEventClient::KeyPress(int key, bool isRepeat) { return false; }
+bool CEventClient::KeyRelease(int key) { return false; }
+bool CEventClient::TextInput(const std::string& utf8) { return false; }
 bool CEventClient::MouseMove(int x, int y, int dx, int dy, int button) { return false; }
 bool CEventClient::MousePress(int x, int y, int button) { return false; }
 int  CEventClient::MouseRelease(int x, int y, int button) { return -1; } // FIXME - bool / void?

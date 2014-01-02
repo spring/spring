@@ -25,8 +25,8 @@ IF    (MINGW)
 	# We still need these header files,
 	# even if we are not going to link with SDL.
 	# We have them available anyway (mingwlibs).
-	FIND_PACKAGE(SDL REQUIRED)
-	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+	FIND_PACKAGE(SDL2 REQUIRED)
+	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
 ELSE  (MINGW)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.

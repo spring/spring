@@ -7,7 +7,6 @@
 
 #include "KeyBindings.h"
 #include "KeyBindingsLog.h"
-#include "SDL_keysym.h"
 #include "KeyCodes.h"
 #include "KeySet.h"
 #include "SelectionKeyHandler.h"
