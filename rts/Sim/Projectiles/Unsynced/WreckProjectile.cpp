@@ -11,7 +11,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CWreckProjectile, CProjectile, (ZeroVector, ZeroVector, 0.0f, NULL));
+CR_BIND_DERIVED(CWreckProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f));
 
 CR_REG_METADATA(CWreckProjectile,
 	CR_RESERVED(8)
@@ -21,16 +21,11 @@ CR_REG_METADATA(CWreckProjectile,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CWreckProjectile::CWreckProjectile(float3 pos, float3 speed, float temperature, CUnit* owner)
-	: CProjectile(pos,speed,owner, false, false, false)
+CWreckProjectile::CWreckProjectile(CUnit* owner, float3 pos, float3 speed, float temperature)
+	: CProjectile(pos, speed, owner, false, false, false)
 {
 	checkCol = false;
 	drawRadius = 2.0f;
-}
-
-CWreckProjectile::~CWreckProjectile()
-{
-
 }
 
 void CWreckProjectile::Update()
@@ -46,7 +41,7 @@ void CWreckProjectile::Update()
 	pos += speed;
 
 	if (!(gs->frameNum & (projectileHandler->particleSaturation < 0.5f? 1: 3))) {
-		CSmokeProjectile* hp = new CSmokeProjectile(pos, ZeroVector, 50, 4, 0.3f, owner(), 0.5f);
+		CSmokeProjectile* hp = new CSmokeProjectile(owner(), pos, ZeroVector, 50, 4, 0.3f, 0.5f);
 		hp->size += 0.1f;
 	}
 	if (pos.y + 0.3f < ground->GetApproximateHeight(pos.x, pos.z)) {

@@ -21,7 +21,7 @@
 
 CONFIG(float, GroundLODScaleReflection).defaultValue(1.0f);
 CONFIG(float, GroundLODScaleRefraction).defaultValue(1.0f);
-CONFIG(float, GroundLODScaleUnitReflection).defaultValue(1.0f);
+CONFIG(float, GroundLODScaleTerrainReflection).defaultValue(1.0f);
 CONFIG(bool, HighResLos).defaultValue(false).description("Controls whether LOS (\"L view\") edges are rendered in high resolution. Resource heavy!");
 CONFIG(int, ExtraTextureUpdateRate).defaultValue(45);
 
@@ -29,7 +29,7 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 {
 	LODScaleReflection = configHandler->GetFloat("GroundLODScaleReflection");
 	LODScaleRefraction = configHandler->GetFloat("GroundLODScaleRefraction");
-	LODScaleUnitReflection = configHandler->GetFloat("GroundLODScaleUnitReflection");
+	LODScaleTerrainReflection = configHandler->GetFloat("GroundLODScaleTerrainReflection");
 
 	memset(&infoTextureIDs[0], 0, sizeof(infoTextureIDs));
 
@@ -381,7 +381,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 				const unsigned short* myAirLos      = &losHandler->airLosMaps[gu->myAllyTeam].front();
 				const unsigned short* myRadar       = &radarHandler->radarMaps[gu->myAllyTeam].front();
 				const unsigned short* myJammer      = &radarHandler->jammerMaps[gu->myAllyTeam].front();
-			#ifdef SONAR_JAMMER_MAPS
+			#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
 				const unsigned short* mySonar       = &radarHandler->sonarMaps[gu->myAllyTeam].front();
 				const unsigned short* mySonarJammer = &radarHandler->sonarJammerMaps[gu->myAllyTeam].front();
 			#endif
@@ -409,14 +409,14 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 								const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel, 128, x, y);
 								totalLos = inLos + inAir;
 							}
-#ifdef SONAR_JAMMER_MAPS
+#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
 							const bool useRadar = (ground->GetHeightReal(xPos, zPos, false) >= 0.0f);
 							const unsigned short* radarMap  = useRadar ? myRadar  : mySonar;
 							const unsigned short* jammerMap = useRadar ? myJammer : mySonarJammer;
 #else
 							const unsigned short* radarMap  = myRadar;
 							const unsigned short* jammerMap = myJammer;
-#endif // SONAR_JAMMER_MAPS
+#endif
 							const int inRadar = InterpolateLos(radarMap,  rxsize, rzsize, 3 + lowRes, 255, x, y);
 							const int inJam   = InterpolateLos(jammerMap, rxsize, rzsize, 3 + lowRes, 255, x, y);
 

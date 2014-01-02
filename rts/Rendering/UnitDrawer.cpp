@@ -79,7 +79,7 @@ CONFIG(int, MaxDynamicModelLights)
 	.minimumValue(0);
 
 CONFIG(bool, AdvUnitShading).defaultValue(true).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
-CONFIG(bool, AllowDeferredModelRendering).defaultValue(true).safemodeValue(false);
+CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
@@ -444,10 +444,10 @@ void CUnitDrawer::DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection
 	if (!geomBuffer.Valid())
 		return;
 
-	// water renderers use FBO's for the reflection pass
+	// some water renderers use FBO's for the reflection pass
 	if (drawReflection)
 		return;
-	// water renderers use FBO's for the refraction pass
+	// some water renderers use FBO's for the refraction pass
 	if (drawRefraction)
 		return;
 
@@ -1268,18 +1268,10 @@ void CUnitDrawer::CleanUpUnitDrawing(bool deferredPass) const
 
 void CUnitDrawer::SetTeamColour(int team, float alpha) const
 {
-	unitDrawerState->SetTeamColor(team, alpha);
-}
-
-void CUnitDrawer::SetBasicTeamColour(int team, float alpha)
-{
-	const unsigned char* col = teamHandler->Team(team)->color;
-	const float texConstant[] = {col[0] / 255.0f, col[1] / 255.0f, col[2] / 255.0f, alpha};
-	const float matConstant[] = {1.0f, 1.0f, 1.0f, alpha};
-
-	glActiveTexture(GL_TEXTURE0);
-	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matConstant);
+	// need this because we can be called by no-team projectiles
+	if (teamHandler->IsValidTeam(team)) {
+		unitDrawerState->SetTeamColor(team, alpha);
+	}
 }
 
 
@@ -1433,14 +1425,15 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
  * Note: does all the GL state setting for that one unit, so you might want
  * something else for drawing many translucent units.
  */
-void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing)
+void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int team, float3 pos, int facing)
 {
 	const S3DModel* model = unitdef->LoadModel();
 
 	/* From SetupForGhostDrawing. */
 	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT);
 
-	SetBasicTeamColour(side);
+	assert(teamHandler->IsValidTeam(team));
+	IUnitDrawerState::SetBasicTeamColor(team, 1.0f);
 	SetupBasicS3OTexture0();
 
 	switch (model->type) {
@@ -1505,7 +1498,8 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 	glEnable(GL_TEXTURE_2D);
 
 	// get the team-coloured texture constructed by texunit 0
-	SetBasicTeamColour(team);
+	assert(teamHandler->IsValidTeam(team));
+	IUnitDrawerState::SetBasicTeamColor(team, 1.0f);
 	SetupBasicS3OTexture0();
 
 	switch (model->type) {

@@ -28,7 +28,7 @@
 #define SMOKE_TIME 40
 #define NUM_TRAIL_PARTS (sizeof(fireTrailPoints) / sizeof(fireTrailPoints[0]))
 
-CR_BIND_DERIVED(CPieceProjectile, CProjectile, (ZeroVector, ZeroVector, NULL, NULL, 0, 0));
+CR_BIND_DERIVED(CPieceProjectile, CProjectile, (NULL, NULL, ZeroVector, ZeroVector, 0, 0));
 
 CR_REG_METADATA(CPieceProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -52,10 +52,10 @@ CR_REG_METADATA(CPieceProjectile,(
 ));
 
 CPieceProjectile::CPieceProjectile(
-	const float3& pos,
-	const float3& speed,
 	CUnit* owner,
 	LocalModelPiece* lmp,
+	const float3& pos,
+	const float3& speed,
 	int flags,
 	float radius
 ):
@@ -191,16 +191,16 @@ void CPieceProjectile::Collision()
 	if (explFlags & PF_Smoke) {
 		if (explFlags & PF_NoCEGTrail) {
 			CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
+				owner(),
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
-				owner(),
 				false,
 				true,
 				(NUM_TRAIL_PARTS - 1),
 				SMOKE_TIME,
 				0.5f,
 				drawTrail,
-				0,
+				NULL,
 				projectileDrawer->smoketrailtex);
 
 			tp->creationTime += (NUM_TRAIL_PARTS - (age & (NUM_TRAIL_PARTS - 1)));
@@ -246,16 +246,16 @@ void CPieceProjectile::Collision(CUnit* unit)
 	if (explFlags & PF_Smoke) {
 		if (explFlags & PF_NoCEGTrail) {
 			CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
+				owner(),
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
-				owner(),
 				false,
 				true,
 				NUM_TRAIL_PARTS - 1,
 				SMOKE_TIME,
 				0.5f,
 				drawTrail,
-				0,
+				NULL,
 				projectileDrawer->smoketrailtex
 			);
 
@@ -331,9 +331,9 @@ void CPieceProjectile::Update()
 			}
 
 			curCallback = new CSmokeTrailProjectile(
+				owner(),
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
-				owner(),
 				age == (NUM_TRAIL_PARTS - 1),
 				false,
 				14,

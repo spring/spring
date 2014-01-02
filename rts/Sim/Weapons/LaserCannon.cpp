@@ -41,16 +41,24 @@ void CLaserCannon::Update()
 	CWeapon::Update();
 }
 
-
-void CLaserCannon::Init()
+void CLaserCannon::UpdateRange(float val)
 {
-	CWeapon::Init();
+	// round range *DOWN* to integer multiple of projectile speed
+	//
+	// (val / speed) is the total number of frames the projectile
+	// is allowed to do damage to objects, ttl decreases from N-1
+	// to 0 and collisions are checked at 0 inclusive
+	range = std::max(1.0f, std::floor(val / weaponDef->projectilespeed)) * weaponDef->projectilespeed;
 }
+
 
 void CLaserCannon::FireImpl(bool scriptCall)
 {
 	float3 dir = targetPos - weaponMuzzlePos;
+
 	const float dist = dir.LengthNormalize();
+	const int ttlreq = std::ceil(dist / weaponDef->projectilespeed);
+	const int ttlmax = std::floor(range / weaponDef->projectilespeed) - 1;
 
 	if (onlyForward && owner->unitDef->IsStrafingAirUnit()) {
 		// [?] StrafeAirMovetype cannot align itself properly, change back when that is fixed
@@ -63,7 +71,7 @@ void CLaserCannon::FireImpl(bool scriptCall)
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
-	params.ttl = std::ceil(std::max(dist, range) / weaponDef->projectilespeed);
+	params.ttl = std::min(ttlreq, ttlmax);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

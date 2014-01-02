@@ -1299,7 +1299,7 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 
 	lua_pushnumber(L, collider->id);
 	lua_pushnumber(L, collidee->id);
-	lua_pushboolean(L, collidee->crushKilled);
+	lua_pushboolean(L, false);
 
 	RunCallInTraceback(cmdStr, 3, 0, traceBack.GetErrFuncIdx(), false);
 }
@@ -1325,7 +1325,7 @@ void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 
 	lua_pushnumber(L, collider->id);
 	lua_pushnumber(L, collidee->id);
-	lua_pushboolean(L, collidee->crushKilled);
+	lua_pushboolean(L, false);
 
 	RunCallInTraceback(cmdStr, 3, 0, traceBack.GetErrFuncIdx(), false);
 }
@@ -1581,7 +1581,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 	GML_DRCMUTEX_LOCK(lua); // ExecuteUnitEventBatch
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(false);
+		Threading::SetLuaBatchThread(false);
 
 	for (std::vector<LuaUnitEventBase>::iterator i = lueb.begin(); i != lueb.end(); ++i) {
 		#if 0
@@ -1683,7 +1683,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 	}
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(true);
+		Threading::SetLuaBatchThread(true);
 }
 
 
@@ -1711,7 +1711,7 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFeatEventBatch
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(false);
+		Threading::SetLuaBatchThread(false);
 
 	for (std::vector<LuaFeatEventBase>::iterator i = lfeb.begin(); i != lfeb.end(); ++i) {
 		const LuaFeatEventBase& e = *i;
@@ -1732,7 +1732,7 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 	}
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(true);
+		Threading::SetLuaBatchThread(true);
 }
 
 
@@ -1758,7 +1758,7 @@ void CLuaHandle::ExecuteProjEventBatch() {
 	GML_DRCMUTEX_LOCK(lua); // ExecuteProjEventBatch
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(false);
+		Threading::SetLuaBatchThread(false);
 
 	for (std::vector<LuaProjEventBase>::iterator i = lpeb.begin(); i != lpeb.end(); ++i) {
 		const LuaProjEventBase& e = *i;
@@ -1776,7 +1776,7 @@ void CLuaHandle::ExecuteProjEventBatch() {
 	}
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(true);
+		Threading::SetLuaBatchThread(true);
 }
 
 
@@ -1802,14 +1802,14 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFrameEventBatch
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(false);
+		Threading::SetLuaBatchThread(false);
 
 	for (std::vector<int>::iterator i = lgeb.begin(); i != lgeb.end(); ++i) {
 		GameFrame(*i);
 	}
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(true);
+		Threading::SetLuaBatchThread(true);
 }
 
 
@@ -1835,7 +1835,7 @@ void CLuaHandle::ExecuteLogEventBatch() {
 	GML_DRCMUTEX_LOCK(lua); // ExecuteLogEventBatch
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(false);
+		Threading::SetLuaBatchThread(false);
 
 	for (std::vector<LuaLogEventBase>::iterator i = lmeb.begin(); i != lmeb.end(); ++i) {
 		const LuaLogEventBase& e = *i;
@@ -1850,7 +1850,7 @@ void CLuaHandle::ExecuteLogEventBatch() {
 	}
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(true);
+		Threading::SetLuaBatchThread(true);
 }
 
 
@@ -2872,28 +2872,49 @@ const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, in
 /******************************************************************************/
 /******************************************************************************/
 
+CONFIG(float, MaxLuaGarbageCollectionTime ).defaultValue(1000.0f / GAME_SPEED).minimumValue(1.0f); // ms
+CONFIG(  int, MaxLuaGarbageCollectionSteps).defaultValue(10000               ).minimumValue(1   );
+CONFIG(  int, MaxLuaGarbageMemoryFootPrint).defaultValue(64                  ).minimumValue(  32); // MB
+
 void CLuaHandle::CollectGarbage()
 {
 	SELECT_LUA_STATE();
 	lua_gc(L, LUA_GCSTOP, 0); // don't collect garbage outside of this function
 
-	//TODO make configureable?
-	const int memUsageInMB = lua_gc(L, LUA_GCCOUNT, 0) / 1024;
-	const float TIME_PER_MB = 0.02f + 0.08f * smoothstep(25, 100, memUsageInMB); // alloced Mem 25MB: 20microsec  100MB: 100microsec (30x per second)
-	const float maxRuntime = TIME_PER_MB * memUsageInMB;
-	const spring_time endTime = spring_gettime() + spring_msecs(maxRuntime);
+	static const float maxLuaGarbageCollectTime  = configHandler->GetFloat("MaxLuaGarbageCollectionTime" );
+	static const   int maxLuaGarbageCollectSteps = configHandler->GetInt  ("MaxLuaGarbageCollectionSteps");
+	static const   int maxLuaGarbageMemFootPrint = configHandler->GetInt  ("MaxLuaGarbageMemoryFootPrint");
 
-	// Collect Garbage till time runs out
+	// kilobytes --> megabytes (note: total footprint INCLUDING garbage)
+	const int luaMemFootPrint = lua_gc(L, LUA_GCCOUNT, 0) / 1024;
+
+	// 25MB --> 20usecs, 100MB --> 100usecs (30x per second)
+	const float rawRunTime = luaMemFootPrint * (0.02f + 0.08f * smoothstep(25, 100, luaMemFootPrint));
+	const float maxRunTime = std::min(rawRunTime, maxLuaGarbageCollectTime);
+
+	const spring_time endTime = spring_gettime() + spring_msecs(maxRunTime);
+
+	// collect garbage until time runs out or the maximum
+	// number of steps is exceeded, whichever comes first
 	SetRunning(L, true);
-		do {
-			if (lua_gc(L, LUA_GCSTEP, 2)) {
-				SetRunning(L, false);
-				return;
-			}
-		} while(spring_gettime() < endTime);
-	SetRunning(L, false);
 
-	//LOG("%s GC not finished in time %.3fms %iMB", GetName().c_str(), (spring_gettime() - endTime).toMilliSecsf() + maxRuntime, memUsageInMB);
+	for (int n = 0; (n < maxLuaGarbageCollectSteps) && (spring_gettime() < endTime); n++) {
+		if (lua_gc(L, LUA_GCSTEP, 10)) {
+			// garbage-collection finished
+			break;
+		}
+	}
+
+	// limit the size of the garbage pile even if time is already up
+	// lapi.cpp::lua_gc should return (g->totalbytes - g->estimate) if
+	// what == LUA_GCCOUNT and data != 0 for this to work without risk
+	// of infinite loop, but Lua VM hacks should be avoided
+	#if 0
+	while ((lua_gc(L, LUA_GCCOUNT, 0) / 1024) >= maxLuaGarbageMemFootPrint)
+		lua_gc(L, LUA_GCSTEP, 2);
+	#endif
+
+	SetRunning(L, false);
 }
 
 /******************************************************************************/
@@ -3031,22 +3052,28 @@ int CLuaHandle::CallOutGetCallInList(lua_State* L)
 
 int CLuaHandle::CallOutSyncedUpdateCallIn(lua_State* L)
 {
-	if (!Threading::IsSimThread())
-		return 0; // FIXME: If this can be called from a non-sim context, this code is insufficient
-	const string name = luaL_checkstring(L, 1);
+	if (!Threading::IsGameLoadThread() && !Threading::IsSimThread()) {
+		// FIXME:
+		//   if this can be called from a non-sim context, this code is insufficient
+		//   --> no shit, did *someone* perhaps forget to consider the LoadingMT case?
+		return 0;
+	}
+
 	CLuaHandle* lh = GetHandle(L);
-	lh->SyncedUpdateCallIn(lh->GetActiveState(), name);
+	lh->SyncedUpdateCallIn(lh->GetActiveState(), luaL_checkstring(L, 1));
 	return 0;
 }
 
 
 int CLuaHandle::CallOutUnsyncedUpdateCallIn(lua_State* L)
 {
-	if (Threading::IsSimThread())
-		return 0; // FIXME: If this can be called from a sim context, this code is insufficient
-	const string name = luaL_checkstring(L, 1);
+	if (!Threading::IsGameLoadThread() && Threading::IsSimThread()) {
+		// FIXME: see CallOutSyncedUpdateCallIn
+		return 0;
+	}
+
 	CLuaHandle* lh = GetHandle(L);
-	lh->UnsyncedUpdateCallIn(lh->GetActiveState(), name);
+	lh->UnsyncedUpdateCallIn(lh->GetActiveState(), luaL_checkstring(L, 1));
 	return 0;
 }
 

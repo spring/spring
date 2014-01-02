@@ -97,18 +97,30 @@ public:
 
 public:
 	struct TimeRecord {
-		TimeRecord() : total(0), current(0), percent(0), color(0,0,0), showGraph(false), peak(0), newpeak(false) {
+		TimeRecord()
+		: total(0)
+		, current(0)
+		, maxLag(0)
+		, percent(0)
+		, color(0,0,0)
+		, peak(0)
+		, newPeak(false)
+		, newLagPeak(false)
+		, showGraph(false)
+		{
 			memset(frames, 0, sizeof(frames));
 		}
 		spring_time total;
 		spring_time current;
+		float maxLag;
 		static const unsigned frames_size = 128;
 		spring_time frames[frames_size];
 		float percent;
 		float3 color;
-		bool showGraph;
 		float peak;
-		bool newpeak;
+		bool newPeak;
+		bool newLagPeak;
+		bool showGraph;
 	};
 
 	std::map<std::string,TimeRecord> profile;

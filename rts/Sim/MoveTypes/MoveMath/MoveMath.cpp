@@ -185,8 +185,8 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 	if (collider != NULL)
 		return (IsNonBlocking(collidee, collider));
 
-	// (code below is only reachable from stand-alone PE invocations)
 	// remaining conditions under which obstacle does NOT block unit
+	// only reachable from stand-alone PE invocations or GameHelper
 	//   1.
 	//      unit is ground-following and obstacle is NOT on the
 	//      ground even if by just a millimeter (less arbitrary

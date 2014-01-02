@@ -4,7 +4,6 @@
 #include "LuaIntro.h"
 
 #include "LuaInclude.h"
-
 #include "LuaUnsyncedCtrl.h"
 #include "LuaCallInCheck.h"
 #include "LuaConstGL.h"

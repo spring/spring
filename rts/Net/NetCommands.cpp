@@ -8,7 +8,6 @@
 #endif
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "Game/CameraHandler.h"
 #include "Game/CommandMessage.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
@@ -26,6 +25,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/EventHandler.h"
+#include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "Net/Protocol/NetProtocol.h"
@@ -62,7 +62,7 @@ void CGame::SendClientProcUsage()
 {
 	static spring_time lastProcUsageUpdateTime = spring_gettime();
 
-	if ((spring_gettime() - lastProcUsageUpdateTime).toSecsf() >= 1.0f) {
+	if ((spring_gettime() - lastProcUsageUpdateTime).toMilliSecsf() >= 1000.0f) {
 		lastProcUsageUpdateTime = spring_gettime();
 
 		if (playing) {
@@ -80,84 +80,159 @@ void CGame::SendClientProcUsage()
 }
 
 
-void CGame::UpdateConsumeSpeed()
+unsigned int CGame::GetNumQueuedSimFrameMessages(unsigned int maxFrames) const
 {
-	if (gameServer)
-		return;
-
-	// read ahead to calculate the number of NETMSG_XXXFRAMES we still have to process
+	// read ahead to find number of NETMSG_XXXFRAMES we still have to process
+	// this number is effectively a measure of current user network conditions
 	boost::shared_ptr<const netcode::RawPacket> packet;
-	int numUnconsumedFrames = 0;
-	unsigned ahead = 0;
-	while ((packet = net->Peek(ahead))) {
+
+	unsigned int numQueuedFrames = 0;
+	unsigned int packetPeekIndex = 0;
+
+	while ((packet = net->Peek(packetPeekIndex))) {
 		switch (packet->data[0]) {
 			case NETMSG_GAME_FRAME_PROGRESS: {
 				// this special packet skips queue entirely, so gets processed here
 				// it's meant to indicate current game progress for clients fast-forwarding to current point the game
 				// NOTE: this event should be unsynced, since its time reference frame is not related to the current
 				// progress of the game from the client's point of view
-				const int serverframenum = *(int*)(packet->data+1);
+				//
 				// send the event to lua call-in
-				eventHandler.GameProgress(serverframenum);
+				eventHandler.GameProgress(*(int*)(packet->data + 1));
 				// pop it out of the net buffer
-				net->DeleteBufferPacketAt(ahead);
+				net->DeleteBufferPacketAt(packetPeekIndex);
 			} break;
+
 			case NETMSG_NEWFRAME:
 			case NETMSG_KEYFRAME:
-				++numUnconsumedFrames;
+				++numQueuedFrames;
 			default:
-				++ahead;
+				++packetPeekIndex;
+		}
+
+		if (numQueuedFrames > maxFrames) {
+			break;
 		}
 	}
 
-	consumeSpeed = GAME_SPEED * gs->speedFactor + (numUnconsumedFrames / 2);
-	msgProcTimeLeft = 0.0f;
+	return numQueuedFrames;
 }
 
+void CGame::UpdateNumQueuedSimFrames()
+{
+	if (gameServer != NULL)
+		return;
 
-void CGame::ClientReadNet()
+	static spring_time lastUpdateTime = spring_gettime();
+
+	const spring_time currTime = spring_gettime();
+	const spring_time deltaTime = currTime - lastUpdateTime;
+
+	if (globalConfig->useNetMessageSmoothingBuffer) {
+		// update consumption-rate faster at higher game speeds
+		if (deltaTime.toMilliSecsf() < (1000.0f / gs->speedFactor))
+			return;
+
+		const unsigned int numQueuedFrames = GetNumQueuedSimFrameMessages(GAME_SPEED * gs->speedFactor * 5);
+
+		if (numQueuedFrames < lastNumQueuedSimFrames) {
+			// conservative policy: take minimum of current and previous queue size
+			// we *NEVER* want the queue to run completely dry (by not keeping a few
+			// messages buffered) because this leads to micro-stutter which is WORSE
+			// than trading latency for smoothness (by trailing some extra number of
+			// simframes behind the server)
+			lastNumQueuedSimFrames = numQueuedFrames;
+		} else {
+			// trust the past more than the future
+			lastNumQueuedSimFrames = mix(lastNumQueuedSimFrames * 1.0f, numQueuedFrames * 1.0f, 0.1f);
+		}
+
+		// always stay a bit behind the actual server time
+		// at higher speeds we need to keep more distance!
+		// (because effect of network jitter is amplified)
+		consumeSpeedMult = GAME_SPEED * gs->speedFactor + lastNumQueuedSimFrames - (2 * gs->speedFactor);
+		lastUpdateTime = currTime;
+	} else {
+		if (deltaTime.toMilliSecsf() < 1000.0f)
+			return;
+
+		// SPRING95
+		// this uses no buffering which makes it too sensitive
+		// to jitter (especially on lower-quality connections)
+		consumeSpeedMult = GAME_SPEED * gs->speedFactor + (GetNumQueuedSimFrameMessages(-1u) / 2);
+	}
+}
+
+void CGame::UpdateNetMessageProcessingTimeLeft()
 {
 	// compute new msgProcTimeLeft to "smooth" out SimFrame() calls
 	if (gameServer == NULL) {
-		const spring_time currentFrame = spring_gettime();
+		const spring_time currentReadNetTime = spring_gettime();
+		const spring_time deltaReadNetTime = currentReadNetTime - lastReadNetTime;
 
 		if (skipping) {
-			msgProcTimeLeft = 0.01f;
+			msgProcTimeLeft = 10.0f;
 		} else {
-			msgProcTimeLeft -= ((msgProcTimeLeft > 1.0f) * 1.0f);
-			msgProcTimeLeft += (consumeSpeed * (spring_tomsecs(currentFrame - lastframe) / 1000.0f));
+			// at <N> Hz we should consume one simframe message every (1000/N) ms
+			//
+			// <dt> since last call will typically be some small fraction of this
+			// so we eat through the queue at a rate proportional to that fraction
+			// (the amount of processing time is weighted by dt and also increases
+			// when more messages are waiting)
+			//
+			// don't let the limit get over 1000ms
+			msgProcTimeLeft -= (1000.0f * float(msgProcTimeLeft > 1000.0f));
+			msgProcTimeLeft += (consumeSpeedMult * deltaReadNetTime.toMilliSecsf());
 		}
 
-		lastframe = currentFrame;
+		lastReadNetTime = currentReadNetTime;
 	} else {
-		// make sure ClientReadNet returns at least every 15 game frames
+		// ensure ClientReadNet returns at least every 15 simframes
 		// so CGame can process keyboard input, and render etc.
-		msgProcTimeLeft = GAME_SPEED / float(gu->minFPS) * gs->wantedSpeedFactor;
+		msgProcTimeLeft = (GAME_SPEED / float(gu->minFPS) * gs->wantedSpeedFactor) * 1000.0f;
 	}
+}
 
+float CGame::GetNetMessageProcessingTimeLimit() const
+{
 	// balance the time spent in simulation & drawing (esp. when reconnecting)
-	// always render at least 2FPS (will otherwise be highly unresponsive when catching up after a reconnection)
-	// else use the following algo: i.e. with gu->reconnectSimDrawBalance = 0.2f
+	// use the following algo: i.e. with gu->reconnectSimDrawBalance = 0.2f
 	//  -> try to spend minimum 20% of the time in drawing
 	//  -> use remaining 80% for reconnecting
 	// (maxSimFPS / minDrawFPS) is desired number of simframes per drawframe
 	const float maxSimFPS    = (1.0f - gu->reconnectSimDrawBalance) * 1000.0f / std::max(0.01f, gu->avgSimFrameTime);
 	const float minDrawFPS   =         gu->reconnectSimDrawBalance  * 1000.0f / std::max(0.01f, gu->avgDrawFrameTime);
 	const float simDrawRatio = maxSimFPS / minDrawFPS;
-	const float msgProcTimeLimit = (GML::SimEnabled() && GML::MultiThreadSim()) ? (1000.0f / gu->minFPS) :
-		Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
 
-	const spring_time msgProcStartTime = spring_gettime();
+	float limit = 0.0f;
+
+	if (GML::SimEnabled() && GML::MultiThreadSim()) {
+		limit = (1000.0f / gu->minFPS);
+	} else {
+		limit = Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
+	}
+
+	return limit;
+}
+
+void CGame::ClientReadNet()
+{
+	UpdateNetMessageProcessingTimeLeft();
+	// look ahead so we can adapt consumeSpeedMult to network fluctuations
+	UpdateNumQueuedSimFrames();
+
+	const spring_time msgProcEndTime = spring_gettime() + spring_msecs(GetNetMessageProcessingTimeLimit());
 
 	// really process the messages
 	while (true) {
-		const float msgProcTimeSpent = spring_tomsecs(spring_gettime() - msgProcStartTime);
-		const bool allowMsgProcessing =
-			(msgProcTimeLeft  >              0.0f) && // smooths simframes across the full second
-			(msgProcTimeSpent <= msgProcTimeLimit);   // balance the time spent in sim & drawing
-
-		if (!allowMsgProcessing)
+		// smooths simframes across the full second
+		if (msgProcTimeLeft <= 0.0f)
 			break;
+		// balance the time spent in sim & drawing
+		if (spring_gettime() > msgProcEndTime)
+			break;
+
+		lastNetPacketProcessTime = spring_gettime();
 
 		// get netpacket from the queue
 		boost::shared_ptr<const netcode::RawPacket> packet = net->GetData(gs->frameNum);
@@ -166,6 +241,8 @@ void CGame::ClientReadNet()
 			// LOG_SL(LOG_SECTION_NET, L_DEBUG, "Run out of netpackets!");
 			break;
 		}
+
+		lastReceivedNetPacketTime = spring_gettime();
 
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;
@@ -239,12 +316,12 @@ void CGame::ClientReadNet()
 					LOG_L(L_ERROR, "Got invalid player num %i in pause msg", player);
 					break;
 				}
-				gs->paused=!!inbuf[2];
+				gs->paused = !!inbuf[2];
 				LOG("%s %s the game",
 						playerHandler->Player(player)->name.c_str(),
 						(gs->paused ? "paused" : "unpaused"));
 				eventHandler.GamePaused(player, gs->paused);
-				lastframe = spring_gettime();
+				lastReadNetTime = spring_gettime();
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
@@ -428,10 +505,13 @@ void CGame::ClientReadNet()
 				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
 			}
 			case NETMSG_NEWFRAME: {
-				msgProcTimeLeft -= 1.0f;
+				msgProcTimeLeft -= 1000.0f;
+				lastSimFrameNetPacketTime = spring_gettime();
+
 				SimFrame();
-				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
+
 #ifdef SYNCCHECK
+				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
 				ASSERT_SYNCED(gs->frameNum);
 				ASSERT_SYNCED(CSyncChecker::GetChecksum());
 				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum()));
@@ -452,9 +532,9 @@ void CGame::ClientReadNet()
 #if (defined(SYNCCHECK))
 				if (gameServer != NULL && gameServer->GetDemoReader() != NULL) {
 					// NOTE:
-					//     this packet is also sent during live games,
-					//     during which we should just ignore it (the
-					//     server does sync-checking for us)
+					//   this packet is also sent during live games,
+					//   during which we should just ignore it (the
+					//   server does sync-checking for us)
 					netcode::UnpackPacket pckt(packet, 1);
 
 					unsigned char playerNum; pckt >> playerNum;
@@ -800,7 +880,7 @@ void CGame::ClientReadNet()
 
 						if (unit == NULL)
 							continue;
-						if (unit->fpsControlPlayer != NULL)
+						if (unit->UnderFirstPersonControl())
 							continue;
 						// in godmode we can have units selected that are not ours
 						if (unit->team != srcTeamID)
@@ -1081,14 +1161,16 @@ void CGame::ClientReadNet()
 			}
 			case NETMSG_ALLIANCE: {
 				const unsigned char player = inbuf[1];
+
 				if (!playerHandler->IsValidPlayer(player)) {
-					LOG_L(L_ERROR, "Got invalid player num %i in alliance msg", player);
+					LOG_L(L_ERROR, "[Game::%s] invalid player number %i in NETMSG_ALLIANCE", __FUNCTION__, player);
 					break;
 				}
 
-				const unsigned char whichAllyTeam = inbuf[2];
 				const bool allied = static_cast<bool>(inbuf[3]);
+				const unsigned char whichAllyTeam = inbuf[2];
 				const unsigned char fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(player)->team);
+
 				if (teamHandler->IsValidAllyTeam(whichAllyTeam) && fromAllyTeam != whichAllyTeam) {
 					// FIXME NETMSG_ALLIANCE need to reset unit allyTeams
 					// FIXME NETMSG_ALLIANCE need a call-in for AIs
@@ -1111,9 +1193,9 @@ void CGame::ClientReadNet()
 
 					// stop attacks against former foe
 					if (allied) {
-						for (std::list<CUnit*>::iterator it = unitHandler->activeUnits.begin();
-								it != unitHandler->activeUnits.end();
-								++it) {
+						const auto& units = unitHandler->activeUnits;
+
+						for (auto it = units.begin(); it != units.end(); ++it) {
 							if (teamHandler->Ally((*it)->allyteam, whichAllyTeam)) {
 								(*it)->StopAttackingAllyTeam(whichAllyTeam);
 							}
@@ -1196,7 +1278,7 @@ void CGame::ClientReadNet()
 					playerHandler->AddPlayer(player);
 					eventHandler.PlayerAdded(player.playerNum);
 
-					LOG("[CRN::%s] added new player %s with number %d to team %d", __FUNCTION__, name.c_str(), player.playerNum, player.team);
+					LOG("[Game::%s] added new player %s with number %d to team %d", __FUNCTION__, name.c_str(), player.playerNum, player.team);
 
 					if (!player.spectator) {
 						eventHandler.TeamChanged(player.team);
@@ -1204,7 +1286,7 @@ void CGame::ClientReadNet()
 
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[CRN::%s] got invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s] invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
 				}
 				break;
 			}

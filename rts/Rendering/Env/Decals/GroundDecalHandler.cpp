@@ -428,7 +428,7 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 		if (decalOwnerUnit != NULL) {
 			decal->alpha = std::max(0.0f, decalOwnerUnit->buildProgress);
 		} else if (decalOwner == NULL && decal->gbOwner == NULL) {
-			decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * gs->speedFactor);
+			decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * 0.001f * gs->speedFactor);
 		}
 
 		if (decal->alpha < 0.0f) {

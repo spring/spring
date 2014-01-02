@@ -64,15 +64,9 @@ void CCamera::CopyState(const CCamera* cam) {
 	lppScale  = cam->lppScale;
 }
 
-void CCamera::Update()
+void CCamera::Update(bool terrainReflectionPass)
 {
-	if (forward.cross(UpVector) != ZeroVector)
-		up = UpVector;
-
-	right = forward.cross(up);
-	right.UnsafeANormalize();
-	up = right.cross(forward);
-	up.UnsafeANormalize();
+	UpdateRightAndUp(terrainReflectionPass);
 
 	const float aspect = globalRendering->aspectRatio;
 	const float viewx = math::tan(aspect * halfFov);
@@ -198,16 +192,25 @@ bool CCamera::InView(const float3& p, float radius) const
 }
 
 
-void CCamera::UpdateForward()
+void CCamera::UpdateRightAndUp(bool terrainReflectionPass)
 {
-	// NOTE:
-	//   only FreeController calls this, others just seem to manipulate
-	//   azimuth (.x) and zenith (.y) angles for their own (redundant?)
-	//   copy of Camera::forward (CameraController::dir)
-	forward.z = math::cos(rot.y) * math::cos(rot.x);
-	forward.x = math::sin(rot.y) * math::cos(rot.x);
-	forward.y = math::sin(rot.x);
-	forward.Normalize();
+	// terrain (not water) cubemap reflection passes set forward
+	// to {+/-}UpVector which would cause vector degeneracy when
+	// calculating right and up
+	//
+	if (std::fabs(forward.y) >= 0.99f) {
+		// make sure we can still yaw at limits of pitch
+		// (since CamHandler only updates forward, which
+		// is derived from rot)
+		right = float3(-std::cos(rot.y), 0.0f, std::sin(camera->rot.y));
+		up = (right.cross(forward)).UnsafeANormalize();
+	} else {
+		// in the terrain reflection pass everything is upside-down!
+		up = UpVector * -Sign(int(terrainReflectionPass));
+
+		right = (forward.cross(up)).UnsafeANormalize();
+		up = (right.cross(forward)).UnsafeANormalize();
+	}
 }
 
 
@@ -395,7 +398,7 @@ float CCamera::GetMoveDistance(float* time, float* speed, int idx) const
 	//   for the majority of the time this condition holds, and
 	//   so the camera will barely react to key input since most
 	//   frames will effectively be 'skipped' (looks like lag)
-	float camDeltaTime = std::max(0.001f, globalRendering->lastFrameTime);
+	float camDeltaTime = globalRendering->lastFrameTime;
 	float camMoveSpeed = 1.0f;
 
 	camMoveSpeed *= (1.0f - movState[MOVE_STATE_SLW] * 0.9f);
@@ -412,7 +415,7 @@ float CCamera::GetMoveDistance(float* time, float* speed, int idx) const
 		} break;
 	}
 
-	return (camDeltaTime * 200.0f * camMoveSpeed);
+	return (camDeltaTime * 0.2f * camMoveSpeed);
 }
 
 float3 CCamera::GetMoveVectorFromState(bool fromKeyState, bool* disableTracker)
@@ -425,19 +428,19 @@ float3 CCamera::GetMoveVectorFromState(bool fromKeyState, bool* disableTracker)
 	float3 v = FwdVector * camMoveSpeed;
 
 	if (fromKeyState) {
-		v.y += (camDeltaTime * movState[MOVE_STATE_FWD]);
-		v.y -= (camDeltaTime * movState[MOVE_STATE_BCK]);
-		v.x += (camDeltaTime * movState[MOVE_STATE_RGT]);
-		v.x -= (camDeltaTime * movState[MOVE_STATE_LFT]);
+		v.y += (camDeltaTime * 0.001f * movState[MOVE_STATE_FWD]);
+		v.y -= (camDeltaTime * 0.001f * movState[MOVE_STATE_BCK]);
+		v.x += (camDeltaTime * 0.001f * movState[MOVE_STATE_RGT]);
+		v.x -= (camDeltaTime * 0.001f * movState[MOVE_STATE_LFT]);
 	} else {
 		const int screenW = globalRendering->dualScreenMode?
 			(globalRendering->viewSizeX << 1):
 			(globalRendering->viewSizeX     );
 
-		v.y += (camDeltaTime * (mouse->lasty <                               2));
-		v.y -= (camDeltaTime * (mouse->lasty > (globalRendering->viewSizeY - 2)));
-		v.x += (camDeltaTime * (mouse->lastx >                    (screenW - 2)));
-		v.x -= (camDeltaTime * (mouse->lastx <                               2));
+		v.y += (camDeltaTime * 0.001f * (mouse->lasty <                               2));
+		v.y -= (camDeltaTime * 0.001f * (mouse->lasty > (globalRendering->viewSizeY - 2)));
+		v.x += (camDeltaTime * 0.001f * (mouse->lastx >                    (screenW - 2)));
+		v.x -= (camDeltaTime * 0.001f * (mouse->lastx <                               2));
 	}
 
 	(*disableTracker) |= (v.x != 0.0f);

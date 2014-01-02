@@ -21,7 +21,7 @@ public:
 	virtual void Draw() {}
 	/// @return false when it should be deleted
 	virtual bool Update() { return false; }
-	virtual void Init(const float3& pos, CUnit* owner) {}
+	virtual void Init(CUnit* owner, const float3& offset) {}
 
 	float size;
 	bool depthTest;
@@ -68,7 +68,7 @@ public:
 
 	CSimpleGroundFlash();
 
-	void Init(const float3& explosionPos, CUnit* owner);
+	void Init(CUnit* owner, const float3& offset);
 	void Draw();
 	/// @return false when it should be deleted
 	bool Update();

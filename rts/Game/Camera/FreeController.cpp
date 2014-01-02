@@ -46,12 +46,12 @@ CFreeController::CFreeController()
   trackRadius(0.0f),
   gndLock(false)
 {
-	dir = float3(0.0f, -2.0f, -1.0f);
-	dir.ANormalize();
+	dir = float3(0.0f, -2.0f, -1.0f).ANormalize();
+
 	if (camera) {
 		const float hDist = math::sqrt((dir.x * dir.x) + (dir.z * dir.z));
-		camera->rot.y = math::atan2(dir.x, dir.z);
-		camera->rot.x = math::atan2(dir.y, hDist);
+		camera->rot.y = math::atan2(dir.x, dir.z); // yaw
+		camera->rot.x = math::atan2(dir.y, hDist); // pitch
 	}
 	pos -= (dir * 1000.0f);
 
@@ -78,21 +78,22 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 {
 	tracking = true;
 	trackPos = target;
-	trackRadius = radius;;
+	trackRadius = radius;
 
 	// lock the view direction to the target
 	const float3 diff(trackPos - pos);
 	const float rads = math::atan2(diff.x, diff.z);
+	const float len2D = diff.Length2D();
+
 	camera->rot.y = rads;
 
-	const float len2D = diff.Length2D();
 	if (math::fabs(len2D) <= 0.001f) {
 		camera->rot.x = 0.0f;
 	} else {
 		camera->rot.x = math::atan2((trackPos.y - pos.y), len2D);
 	}
 
-	camera->UpdateForward();
+	camera->UpdateForward(GetDir());
 }
 
 
@@ -114,8 +115,8 @@ void CFreeController::Update()
 	const float ctrlVelY = vel.y;
 	const float3 prevPos = pos;
 
-	// setup the time fractions
-	const float ft = globalRendering->lastFrameTime;
+	// setup the time fractions (seconds)
+	const float ft = globalRendering->lastFrameTime * 0.001f;
 	const float nt = (ft / velTime); // next time factor
 	const float pt = (1.0f - nt);    // prev time factor
 	const float ant = (ft / avelTime); // next time factor
@@ -145,8 +146,7 @@ void CFreeController::Update()
 			                    (UpVector        * vel.y) +
 			                    (camera->right   * vel.z));
 			vel = tmpVel;
-		}
-		else {
+		} else {
 			float3 forwardNoY(camera->forward.x, 0.0f, camera->forward.z);
 			forwardNoY.ANormalize();
 			const float3 tmpVel((forwardNoY    * vel.x) +
@@ -181,8 +181,7 @@ void CFreeController::Update()
 		pos           += (vel         * ft);
 		camera->rot   += (avel        * ft);
 		camera->rot.x += (autoTiltVel * ft); // note that this is not smoothed
-	}
-	else {
+	} else {
 		// speed along the tracking direction varies with distance
 		const float3 diff = (pos - trackPos);
 		if (goForward) {
@@ -195,8 +194,7 @@ void CFreeController::Update()
 			const float scale = (newDist / dist);
 			pos = trackPos + (diff * scale);
 			pos.y += (vel.y * ft);
-		}
-		else {
+		} else {
 			const float dist = max(0.1f, diff.Length2D());
 			const float nomDist = 512.0f;
 			float speedScale = (dist / nomDist);
@@ -234,15 +232,14 @@ void CFreeController::Update()
 	if (gndOffset < 0.0f) {
 		pos.y = (gndHeight - gndOffset);
 		vel.y = 0.0f;
-	}
-	else if (gndLock && (gravity >= 0.0f)) {
+	} else if (gndLock && (gravity >= 0.0f)) {
 		pos.y = (gndHeight + gndOffset);
 		vel.y = 0.0f;
-	}
-	else if (gndOffset > 0.0f) {
+	} else if (gndOffset > 0.0f) {
 		const float minHeight = (gndHeight + gndOffset);
 		if (pos.y < minHeight) {
 			pos.y = minHeight;
+
 			if (gndLock) {
 				vel.y = min(math::fabs(scrollSpeed), ((minHeight - prevPos.y) / ft));
 			} else {
@@ -252,14 +249,14 @@ void CFreeController::Update()
 	}
 
 	// angular clamps
-	const float xRotLimit = (PI * 0.4999f);
-	if (camera->rot.x > xRotLimit) {
-		camera->rot.x = xRotLimit;
-		avel.x = 0.0f;
-	}
-	else if (camera->rot.x < -xRotLimit) {
-		camera->rot.x = -xRotLimit;
-		avel.x = 0.0f;
+	const float xRotLimit = PI * 0.499f;
+
+	if (camera->rot.x >= xRotLimit) {
+		// maximum upward pitch
+		camera->rot.x = xRotLimit; avel.x = 0.0f;
+	} else if (camera->rot.x <= -xRotLimit) {
+		// maximum downward pitch
+		camera->rot.x = -xRotLimit; avel.x = 0.0f;
 	}
 	camera->rot.y = math::fmod(camera->rot.y, PI * 2.0f);
 

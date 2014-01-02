@@ -468,7 +468,7 @@ void CLuaUI::ExecuteUIEventBatch() {
 	GML_DRCMUTEX_LOCK(lua); // ExecuteUIEventBatch
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(false);
+		Threading::SetLuaBatchThread(false);
 
 	for (std::vector<UIEventBase>::iterator i = lleb.begin(); i != lleb.end(); ++i) {
 		const UIEventBase& e = *i;
@@ -483,7 +483,7 @@ void CLuaUI::ExecuteUIEventBatch() {
 	}
 
 	if (Threading::IsSimThread())
-		Threading::SetBatchThread(true);
+		Threading::SetLuaBatchThread(true);
 }
 
 /******************************************************************************/

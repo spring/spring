@@ -24,6 +24,7 @@ public:
 
 	virtual ~CBitmap();
 
+	void Alloc(int w, int h, int c);
 	void Alloc(int w, int h);
 
 	/// Load data from a file on the VFS

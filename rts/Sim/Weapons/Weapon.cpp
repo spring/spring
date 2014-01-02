@@ -309,8 +309,11 @@ void CWeapon::UpdateTargeting()
 
 		SetTargetBorderPos(targetUnit, tmpTargetPos, tmpTargetVec, tmpTargetDir);
 
+		// never target below terrain
+		// never target below water if not a water-weapon
 		targetPos = (targetBorder == 0.0f)? tmpTargetPos: targetBorderPos;
 		targetPos.y = std::max(targetPos.y, ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
+		targetPos.y = std::max(targetPos.y, targetPos.y * weaponDef->waterweapon);
 	}
 
 	if (weaponDef->interceptor) {
@@ -1091,23 +1094,24 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool userTarget, const CUnit* targ
 bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, const CUnit* targetUnit) const
 {
 	if (targetUnit != NULL) {
-		if (targetUnit == owner) {
+		if (targetUnit == owner)
 			return false;
-		}
-		if ((targetUnit->category & onlyTargetCategory) == 0) {
+		if ((targetUnit->category & onlyTargetCategory) == 0)
 			return false;
-		}
-		if (targetUnit->isDead && modInfo.fireAtKilled == 0) {
+		if (targetUnit->isDead && modInfo.fireAtKilled == 0)
 			return false;
-		}
-		if (targetUnit->IsCrashing() && modInfo.fireAtCrashing == 0) {
+		if (targetUnit->IsCrashing() && modInfo.fireAtCrashing == 0)
 			return false;
-		}
 	}
 
-	// target is underwater but we cannot pick targets underwater
-	if (!weaponDef->waterweapon && TargetUnitOrPositionUnderWater(tgtPos, targetUnit))
-		return false;
+	if (!weaponDef->waterweapon) {
+		// we cannot pick targets underwater, check where target is in relation to us
+		if (!owner->IsUnderWater() && TargetUnitOrPositionUnderWater(tgtPos, targetUnit))
+			return false;
+		// if we are underwater but target is *not* in water, fireSubmersed gets checked
+		if (owner->IsUnderWater() && TargetUnitOrPositionInWater(tgtPos, targetUnit))
+			return false;
+	}
 
 	return true;
 }
@@ -1251,23 +1255,18 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit
 
 void CWeapon::Init()
 {
-	int piece = owner->script->AimFromWeapon(weaponNum);
-	relWeaponPos = owner->script->GetPiecePos(piece);
+	relWeaponPos = owner->script->GetPiecePos(owner->script->AimFromWeapon(weaponNum));
 	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-	piece = owner->script->QueryWeapon(weaponNum);
-	relWeaponMuzzlePos = owner->script->GetPiecePos(piece);
-	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
-	if (range > owner->maxRange) {
-		owner->maxRange = range;
-	}
+	relWeaponMuzzlePos = owner->script->GetPiecePos(owner->script->QueryWeapon(weaponNum));
+	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 	muzzleFlareSize = std::min(damageAreaOfEffect * 0.2f, std::min(1500.f, weaponDef->damages[0]) * 0.003f);
 
 	if (weaponDef->interceptor)
 		interceptHandler.AddInterceptorWeapon(this);
 
-	if(weaponDef->stockpile){
+	if (weaponDef->stockpile) {
 		owner->stockpileWeapon = this;
 		owner->commandAI->AddStockpileWeapon(this);
 	}
@@ -1336,13 +1335,15 @@ void CWeapon::UpdateInterceptTarget()
 ProjectileParams CWeapon::GetProjectileParams()
 {
 	ProjectileParams params;
-	params.target = targetUnit;
-	params.weaponDef = weaponDef;
-	params.owner = owner;
 
-	if (interceptTarget) {
+	if (interceptTarget != NULL) {
 		params.target = interceptTarget;
+	} else {
+		params.target = targetUnit;
 	}
+
+	params.owner = owner;
+	params.weaponDef = weaponDef;
 
 	return params;
 }
@@ -1351,9 +1352,10 @@ ProjectileParams CWeapon::GetProjectileParams()
 float CWeapon::GetRange2D(float yDiff) const
 {
 	const float root1 = range * range - yDiff * yDiff;
-	if (root1 <= 0.0f) {
+
+	if (root1 <= 0.0f)
 		return 0.0f;
-	}
+
 	return (math::sqrt(root1));
 }
 

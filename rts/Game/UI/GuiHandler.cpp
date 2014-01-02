@@ -3798,10 +3798,9 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					}
 
 					if (!onMinimap) {
-						unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
+						CUnitDrawer::DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
 
-						glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
-												(GLenum)cmdColors.SelectedBlendDst());
+						glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
 					}
 				}
 			}
@@ -3866,7 +3865,7 @@ void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 	const float groundLevel = ground->GetHeightAboveWater(cameraPos.x, cameraPos.z, false);
 
 	static float spinTime = 0.0f;
-	spinTime = math::fmod(spinTime + globalRendering->lastFrameTime, 60.0f);
+	spinTime = math::fmod(spinTime + globalRendering->lastFrameTime * 0.001f, 60.0f);
 
 	glPushMatrix();
 	glTranslatef(cameraPos.x, groundLevel, cameraPos.z);

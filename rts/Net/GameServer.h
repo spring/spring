@@ -4,6 +4,7 @@
 #define _GAME_SERVER_H
 
 #include <boost/scoped_ptr.hpp>
+
 #include <string>
 #include <map>
 #include <deque>
@@ -16,7 +17,13 @@
 #include "System/UnsyncedRNG.h"
 #include "System/float3.h"
 #include "System/Misc/SpringTime.h"
-#include "System/Platform/Synchro.h"
+#include "System/Platform/RecursiveScopedLock.h"
+
+/**
+ * "player" number for GameServer-generated messages
+ */
+#define SERVER_PLAYER 255
+
 
 
 namespace boost {
@@ -39,20 +46,17 @@ class ChatMessage;
 class GameParticipant;
 class GameSkirmishAI;
 
-/**
- * When the Server generates a message,
- * this value is used as the sending player-number.
- */
-const unsigned SERVER_PLAYER = 255;
-const unsigned numCommands = 24;
-extern const std::string commands[numCommands];
-
 class GameTeam : public TeamBase
 {
 public:
 	GameTeam() : active(false) {}
-	bool active;
 	GameTeam& operator=(const TeamBase& base) { TeamBase::operator=(base); return *this; }
+
+	void SetActive(bool b) { active = b; }
+	bool IsActive() const { return active; }
+
+private:
+	bool active;
 };
 
 /**
@@ -91,6 +95,9 @@ public:
 
 	void UpdateSpeedControl(int speedCtrl);
 	static std::string SpeedControlToString(int speedCtrl);
+	static const std::set<std::string>& GetCommandBlackList() { return commandBlacklist; }
+
+	std::string GetPlayerNames(const std::vector<int>& indices) const;
 
 	const boost::scoped_ptr<CDemoReader>& GetDemoReader() const { return demoReader; }
 	const boost::scoped_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
@@ -102,7 +109,7 @@ private:
 	void GotChatMessage(const ChatMessage& msg);
 
 	/// Execute textual messages received from clients
-	void PushAction(const Action& action);
+	void PushAction(const Action& action, bool fromAutoHost);
 
 	void StripGameSetupText(const GameData* const newGameData);
 
@@ -135,7 +142,6 @@ private:
 
 	/** @brief Generate a unique game identifier and send it to all clients. */
 	void GenerateAndSendGameID();
-	std::string GetPlayerNames(const std::vector<int>& indices) const;
 
 	void WriteDemoData();
 	/// read data from demo and send it to clients
@@ -172,18 +178,22 @@ private:
 	spring_time readyTime;
 	spring_time gameStartTime;
 	spring_time gameEndTime;	///< Tick when game end was detected
-	spring_time lastTick;
-	float timeLeft;
+	spring_time lastNewFrameTick;
 	spring_time lastPlayerInfo;
 	spring_time lastUpdate;
+	spring_time lastBandwidthUpdate;
+
 	float modGameTime;
 	float gameTime;
 	float startTime;
+	float frameTimeLeft;
 
 	bool isPaused;
+	/// whether the game is pausable for others than the host
+	bool gamePausable;
+
 	float userSpeedFactor;
 	float internalSpeed;
-	bool cheating;
 
 	unsigned char ReserveNextAvailableSkirmishAIId();
 
@@ -202,20 +212,9 @@ private:
 	int medianPing;
 	int curSpeedCtrl;
 
-	/**
-	 * throttles speed based on:
-	 * 0 : players (max cpu)
-	 * 1 : players (median cpu)
-	 * 2 : (same as 0)
-	 * -x: same as x, but ignores votes from players that may change
-	 *     the speed-control mode
-	 */
-	int speedControl;
 	/////////////////// game settings ///////////////////
 	boost::scoped_ptr<const CGameSetup> setup;
 	boost::scoped_ptr<const GameData> gameData;
-	/// Wheter the game is pausable for others than the host
-	bool gamePausable;
 
 	/// The maximum speed users are allowed to set
 	float maxUserSpeed;
@@ -223,11 +222,18 @@ private:
 	/// The minimum speed users are allowed to set (actual speed can be lower due to high cpu usage)
 	float minUserSpeed;
 
+	bool cheating;
 	bool noHelperAIs;
 	bool canReconnect;
 	bool allowSpecDraw;
 	bool bypassScriptPasswordCheck;
 	bool whiteListAdditionalPlayers;
+
+	bool logInfoMessages;
+	bool logErrorMessages;
+	bool logDebugMessages;
+	bool logWarnMessages;
+
 	std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > > packetCache;
 
 	/////////////////// sync stuff ///////////////////
@@ -247,7 +253,7 @@ private:
 	unsigned localClientNumber;
 
 	/// If the server receives a command, it will forward it to clients if it is not in this set
-	std::set<std::string> commandBlacklist;
+	static std::set<std::string> commandBlacklist;
 
 	boost::scoped_ptr<netcode::UDPListener> UDPNet;
 	boost::scoped_ptr<CDemoReader> demoReader;
@@ -262,7 +268,6 @@ private:
 	volatile bool gameHasStarted;
 	volatile bool generatedGameID;
 
-	spring_time lastBandwidthUpdate;
 	int linkMinPacketSize;
 
 	union {

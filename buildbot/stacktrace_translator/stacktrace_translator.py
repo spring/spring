@@ -35,25 +35,56 @@ TESTFILE = os.path.join(WWWROOT, "default/release/93.2.1-56-gdca244e/win32/{rele
 
 # Match common pre- and suffix on infolog lines. This also allows
 # "empty" prefixes followed by any amount of trailing whitespace.
-RE_PREFIX = r'^(?:\[(?:f=)?\s*\d+\])?(?: Error:)?\s*'
+# the a-zA-Z class can be "Warning" or "Error"
+RE_PREFIX = r'^(?:\[(?:f=)?\s*\d+\]\s*)?(?:[a-zA-Z]+:)\s*'
 RE_SUFFIX = r'(?:[\r\n]+$)?'
 
 # Match stackframe lines, captures the module name and the address.
-# Example: '[      0] (0) C:\Program Files\Spring\spring.exe [0x0080F268]'
+# Example: '[0] (0) C:\Program Files\Spring\spring.exe [0x0080F268]'
 #          -> ('C:\\Program Files\\Spring\\spring.exe', '0x0080F268')
+# NOTE: does not match format of stackframe lines on Linux
 RE_STACKFRAME = RE_PREFIX + r'\(\d+\)\s+(.*(?:\.exe|\.dll))(?:\([^)]*\))?\s+\[(0x[\dA-Fa-f]+)\]' + RE_SUFFIX
 
 ## regex for RC12 versions: first two parts are
 ## mandatory, last two form one optional group
 RE_VERSION_NAME_PREFIX = "(?:[sS]pring)"
-RE_VERSION_STRING = "([0-9]+\.[0-9]+[\.0-9]*(?:-[0-9]+-g[0-9a-f]+)?)"
+RE_VERSION_STRING_RC12 = "([0-9]+\.[0-9]+[\.0-9]*(?:-[0-9]+-g[0-9a-f]+)?)"
 RE_VERSION_BRANCH_NAME = "([a-zA-Z0-9\-]+)?"
-RE_VERSION_BUILD_FLAGS = "?(?: \((?:[a-zA-Z0-9\-]+\)))?"
-RE_VERSION =                          \
+RE_VERSION_BUILD_FLAGS = "?(?:\s*\((?:[a-zA-Z0-9\-]+\)))?"
+RE_VERSION =                        \
 	RE_VERSION_NAME_PREFIX + " ?" + \
-	RE_VERSION_STRING + " ?" + \
-	RE_VERSION_BRANCH_NAME + " ?" +\
+	RE_VERSION_STRING_RC12 + " ?" + \
+	RE_VERSION_BRANCH_NAME + " ?" + \
 	RE_VERSION_BUILD_FLAGS
+
+# Match complete line containing version string.
+# NOTE:
+#   these are highly sensitive to changes in format
+#   strings passed to LOG(), perhaps define them in
+#   a header and parse that?
+RE_VERSION_LINES = [
+	x % (RE_PREFIX, RE_VERSION, RE_SUFFIX) for x in [
+		r'%sStacktrace for %s:%s',
+		r'%sStacktrace \([a-zA-Z0-9 ]+\) for %s:%s',
+
+		## legacy version patterns
+		r'%s%s has crashed\.%s',
+		r'%s\[Watchdog\] Hang detection triggered for %s\.%s',
+		r'%sSegmentation fault \(SIGSEGV\) in %s%s',
+		r'%sAborted \(SIGABRT\) in %s%s',
+		r'%sError handler invoked for %s\.%s',
+	]
+]
+
+# Capture config, branch, rev from `Additional' version string.
+#RE_CONFIG = r'(?:\[(?P<config>[^\]]+)\])?'
+#RE_BRANCH = r'(?:\{(?P<branch>[^\}]+)\})?'
+#RE_REV = r'(?P<rev>[0-9.]+(?:-[0-9]+-g[0-9A-Fa-f]+)?)'
+#RE_VERSION_DETAILS = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'\s')
+
+# Match filename of file with debugging symbols, capture module name.
+RE_DEBUG_FILENAME = '.*_spring_dbg.7z'
+
 
 
 def test_version(string):
@@ -66,25 +97,6 @@ def test_version(string):
 	'''
 	log.debug('test_version():'+string)
 	return re.search(RE_VERSION, string, re.MULTILINE).groups()
-
-# Match complete line containing version string.
-RE_VERSION_LINES = [
-	x % (RE_PREFIX, RE_VERSION, RE_SUFFIX) for x in [
-		r'%s%s has crashed\.%s',
-		r'%sHang detection triggered for %s\.%s',
-		r'%sSegmentation fault \(SIGSEGV\) in %s%s',
-		r'%sAborted \(SIGABRT\) in %s%s',
-	]
-]
-
-# Capture config, branch, rev from `Additional' version string.
-#RE_CONFIG = r'(?:\[(?P<config>[^\]]+)\])?'
-#RE_BRANCH = r'(?:\{(?P<branch>[^\}]+)\})?'
-#RE_REV = r'(?P<rev>[0-9.]+(?:-[0-9]+-g[0-9A-Fa-f]+)?)'
-#RE_VERSION_DETAILS = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'\s')
-
-# Match filename of file with debugging symbols, capture module name.
-RE_DEBUG_FILENAME = '.*_spring_dbg.7z'
 
 # Set up application log.
 log = logging.getLogger('stacktrace_translator')
@@ -186,7 +198,7 @@ def collect_stackframes(infolog):
 
 	frames = {}
 	frame_count = 0
-	for module, address in re.findall(RE_STACKFRAME,infolog,re.MULTILINE):
+	for module, address in re.findall(RE_STACKFRAME, infolog, re.MULTILINE):
 		frames.setdefault(module, []).append((frame_count, address))
 		frame_count += 1
 

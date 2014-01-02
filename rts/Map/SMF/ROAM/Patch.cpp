@@ -274,7 +274,8 @@ void Patch::Split(TriTreeNode* tri)
 	if (!tri->IsBranch()) {
 		// make sure both nodes are NULL if just the right one failed
 		// special handling the cause that only one of them is NULL wouldn't make sense (only less performance)
-		tri->LeftChild = NULL;
+		tri->LeftChild  = NULL;
+		tri->RightChild = NULL;
 		return;
 	}
 

@@ -47,7 +47,7 @@ public:
 	void SetGoal(const float3& pos, float distance = 0.0f);
 	void SetState(AircraftState newState);
 	void SetAllowLanding(bool b);
-	void SetLoadingUnits(bool b) { loadingUnits = b; }
+
 	AircraftState GetLandingState() const { return AIRCRAFT_FLYING; }
 	void SetWantedAltitude(float altitude);
 	void SetDefaultAltitude(float altitude);
@@ -64,7 +64,6 @@ public:
 	short GetForcedHeading() const { return forceHeadingTo; }
 
 	bool GetAllowLanding() const { return !dontLand; }
-	bool GetLoadingUnits() const { return loadingUnits; }
 
 private:
 	// Helpers for (multiple) state handlers
@@ -73,7 +72,7 @@ private:
 	void UpdateAirPhysics();
 	void UpdateMoveRate();
 
-	bool CanLand() const { return ((!dontLand && autoLand) || (reservedPad != NULL)); }
+	bool CanLand(bool busy) const { return (!busy && ((!dontLand && autoLand) || (reservedPad != NULL))); }
 	bool CanLandAt(const float3& pos) const;
 
 	void ExecuteStop();

@@ -87,7 +87,7 @@ CDemoReader::~CDemoReader()
 }
 
 
-netcode::RawPacket* CDemoReader::GetData(float readTime)
+netcode::RawPacket* CDemoReader::GetData(const float readTime)
 {
 	if (ReachedEnd())
 		return NULL;
@@ -98,29 +98,22 @@ netcode::RawPacket* CDemoReader::GetData(float readTime)
 	if (readTime >= nextDemoReadTime) {
 		netcode::RawPacket* buf = new netcode::RawPacket(chunkHeader.length);
 		if (playbackDemo->Read((char*)(buf->data), chunkHeader.length) < chunkHeader.length) {
+			delete buf;
 			bytesRemaining = 0;
 			return NULL;
 		}
 		bytesRemaining -= chunkHeader.length;
 
-		if (bytesRemaining > 0 && !playbackDemo->Eof()) {
-			long curPos = playbackDemo->GetPos();
-			if (readTime == nextDemoReadTime) {
-				playbackDemo->Seek(0, std::ios::end);
-				if (playbackDemoSize != playbackDemo->GetPos())
-					readTime = -nextDemoReadTime;
-				playbackDemo->Seek(curPos);
+		if (!ReachedEnd()) {
+			// read next chunk header
+			if (playbackDemo->Read((char*)&chunkHeader, sizeof(chunkHeader)) < sizeof(chunkHeader)) {
+				delete buf;
+				bytesRemaining = 0;
+				return NULL;
 			}
-			if (curPos < playbackDemoSize) {
-				// read next chunk header
-				if (playbackDemo->Read((char*)&chunkHeader, sizeof(chunkHeader)) < sizeof(chunkHeader)) {
-					bytesRemaining = 0;
-					return NULL;
-				}
-				chunkHeader.swab();
-				nextDemoReadTime = chunkHeader.modGameTime + demoTimeOffset;
-				bytesRemaining -= sizeof(chunkHeader);
-			}
+			chunkHeader.swab();
+			nextDemoReadTime = chunkHeader.modGameTime + demoTimeOffset;
+			bytesRemaining -= sizeof(chunkHeader);
 		}
 
 		return (readTime < 0) ? NULL : buf;

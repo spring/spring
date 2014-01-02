@@ -12,6 +12,7 @@ CR_REG_METADATA(FeatureDef, (
 	CR_MEMBER(drawType),
 	CR_MEMBER(resurrectable),
 	CR_MEMBER(destructable),
+	CR_MEMBER(autoreclaim),
 	CR_MEMBER(burnable),
 	CR_MEMBER(floating),
 	CR_MEMBER(geoThermal),

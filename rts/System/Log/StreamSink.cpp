@@ -8,7 +8,7 @@
 #include <cstring>
 
 
-static std::ostream* logStreamInt;
+static std::ostream* logStreamInt = NULL;
 
 void log_sink_stream_setLogStream(std::ostream* logStream) {
 	logStreamInt = logStream;
@@ -41,8 +41,10 @@ namespace {
 	/// Auto-registers the sink defined in this file before main() is called
 	struct StreamSinkRegistrator {
 		StreamSinkRegistrator() {
-			logStreamInt = NULL;
 			log_backend_registerSink(&log_sink_record_stream);
+		}
+		~StreamSinkRegistrator() {
+			log_backend_unregisterSink(&log_sink_record_stream);
 		}
 	} streamSinkRegistrator;
 }

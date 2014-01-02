@@ -43,8 +43,8 @@ private:
 	float3 GetNewSpeedVector(const float hAcc, const float vAcc) const;
 
 	#define SQUARE(x) ((x) * (x))
-	bool StartSkidding(const float3& vel, const float3& dir) const { return (SQUARE(vel.dot(dir)) < (vel.SqLength() * 0.95f)); }
-	bool StopSkidding(const float3& vel, const float3& dir) const { return (SQUARE(vel.dot(dir)) >= (vel.SqLength() * 0.95f)); }
+	bool StartSkidding(const float3& vel, const float3& dir) const { return ((SQUARE(vel.dot(dir)) + 0.01f) < (vel.SqLength() * 0.95f)); }
+	bool StopSkidding(const float3& vel, const float3& dir) const { return ((SQUARE(vel.dot(dir)) + 0.01f) >= (vel.SqLength() * 0.95f)); }
 	bool StartFlying(const float3& vel, const float3& dir) const { return (vel.dot(dir) > 0.2f); }
 	bool StopFlying(const float3& vel, const float3& dir) const { return (vel.dot(dir) <= 0.2f); }
 	#undef SQUARE
@@ -81,14 +81,12 @@ private:
 		CUnit* collider,
 		const float colliderSpeed,
 		const float colliderRadius,
-		const float3& sepDirMask,
 		const UnitDef* colliderUD,
 		const MoveDef* colliderMD);
 	void HandleFeatureCollisions(
 		CUnit* collider,
 		const float colliderSpeed,
 		const float colliderRadius,
-		const float3& sepDirMask,
 		const UnitDef* colliderUD,
 		const MoveDef* colliderMD);
 

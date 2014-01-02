@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef SYNCHRO_H
-#define SYNCHRO_H
+#ifndef RECURSIVE_SCOPED_LOCK_H
+#define RECURSIVE_SCOPED_LOCK_H
 
 #include <boost/version.hpp>
 #include <boost/thread/locks.hpp>
@@ -16,8 +16,6 @@ class RecursiveScopedLock {
 	char sl_lock[sizeof(boost::recursive_mutex::scoped_lock)];
 public:
 	RecursiveScopedLock(boost::recursive_mutex& m, bool locked = true) {
-	// NOTE the "new (...) ..." syntax is called "placement new", and is
-	// described here: http://en.wikipedia.org/wiki/Placement_syntax
 #if (BOOST_VERSION >= 103500)
 		if (locked) {
 			new (sl_lock) boost::recursive_mutex::scoped_lock(m);
@@ -39,4 +37,4 @@ public:
 
 };
 
-#endif // SYNCHRO_H
+#endif // RECURSIVE_SCOPED_LOCK_H

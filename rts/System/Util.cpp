@@ -26,14 +26,30 @@ std::string StringReplace(const std::string& text,
 	return working;
 }
 
-/// @see http://www.codeproject.com/KB/stl/stdstringtrim.aspx
-void StringTrimInPlace(std::string& str)
+std::string StringStrip(const std::string& str, const std::string& chars)
 {
-	static const std::string whiteSpaces(" \t\n\r");
-	std::string::size_type pos = str.find_last_not_of(whiteSpaces);
+	std::string ret;
+	ret.reserve(str.size());
+
+	for (size_t n = 0; n < str.size(); n++) {
+		if (chars.find(str[n]) != std::string::npos)
+			continue;
+
+		ret.push_back(str[n]);
+	}
+
+	return ret;
+}
+
+
+
+/// @see http://www.codeproject.com/KB/stl/stdstringtrim.aspx
+void StringTrimInPlace(std::string& str, const std::string& ws)
+{
+	std::string::size_type pos = str.find_last_not_of(ws);
 	if (pos != std::string::npos) {
 		str.erase(pos + 1);
-		pos = str.find_first_not_of(whiteSpaces);
+		pos = str.find_first_not_of(ws);
 		if (pos != std::string::npos) {
 			str.erase(0, pos);
 		}
@@ -42,10 +58,10 @@ void StringTrimInPlace(std::string& str)
 	}
 }
 
-std::string StringTrim(const std::string& str)
+std::string StringTrim(const std::string& str, const std::string& ws)
 {
 	std::string copy(str);
-	StringTrimInPlace(copy);
+	StringTrimInPlace(copy, ws);
 	return copy;
 }
 

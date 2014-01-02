@@ -7,6 +7,9 @@
 #include <boost/cstdint.hpp>
 #include <vector>
 #include <string>
+#include <stdlib.h>
+#include "Game/GameVersion.h"
+
 
 namespace netcode
 {
@@ -14,7 +17,9 @@ namespace netcode
 }
 struct PlayerStatistics;
 
-const unsigned short NETWORK_VERSION = 6;
+
+const unsigned short NETWORK_VERSION = atoi(SpringVersion::GetMajor().c_str());
+
 
 /*
  * Comment behind NETMSG enumeration constant gives the extra data belonging to

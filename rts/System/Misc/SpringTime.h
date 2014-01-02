@@ -151,7 +151,7 @@ static const spring_time spring_nulltime(0);
 
 
 #define spring_difftime(now, before)  (now - before)
-#define spring_diffsecs(now, before)  (spring_tomsecs(now - before) * 0.001f)
-#define spring_diffmsecs(now, before) (spring_tomsecs(now - before))
+#define spring_diffsecs(now, before)  ((now - before).toSecsi())
+#define spring_diffmsecs(now, before) ((now - before).toMilliSecsi())
 
 #endif // SPRINGTIME_H

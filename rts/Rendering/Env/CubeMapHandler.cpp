@@ -190,24 +190,21 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 		glEnable(GL_DEPTH_TEST);
 	}
 
-	new (cameraMemBuf) CCamera(*camera); // anti-crash workaround for multi-threading
+	// anti-crash workaround for multi-threading
+	new (cameraMemBuf) CCamera(*camera);
 
 	game->SetDrawMode(CGame::gameReflectionDraw);
 
-	camera->SetFov(90.0f);
 	camera->forward = camDir;
-	camera->up = -UpVector;
-
-	if (camera->forward.y ==  1.0f) { camera->up =  FwdVector; }
-	if (camera->forward.y == -1.0f) { camera->up = -FwdVector; }
-
-	camera->SetPos().y = ground->GetHeightAboveWater(camera->GetPos().x, camera->GetPos().z, false) + 50.0f;
-	camera->Update();
+	camera->SetFov(90.0f);
+	camera->SetPos((camera->GetPos()) * XZVector + UpVector * (ground->GetHeightAboveWater(camera->GetPos().x, camera->GetPos().z, false) + 50.0f));
+	// calculate temporary new coor-system and matrices
+	camera->Update(true);
 
 	sky->Draw();
 
 	if (!skyOnly) {
-		readMap->GetGroundDrawer()->Draw(DrawPass::UnitReflection);
+		readMap->GetGroundDrawer()->Draw(DrawPass::TerrainReflection);
 	}
 
 	// NOTE we do this later to save render context switches (this is one of the slowest OpenGL operations!)
@@ -220,6 +217,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	camera->~CCamera();
 	new (camera) CCamera(*reinterpret_cast<CCamera*>(cameraMemBuf));
 	reinterpret_cast<CCamera*>(cameraMemBuf)->~CCamera();
+
 	camera->Update();
 }
 

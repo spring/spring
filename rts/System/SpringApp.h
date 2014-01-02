@@ -22,7 +22,7 @@ public:
 	~SpringApp();
 
 	int Run();                                      //!< Run game loop
-	static void Shutdown();                         //!< Shuts down application
+	static void ShutDown();                         //!< Shuts down application
 
 protected:
 	bool Initialize();                              //!< Initialize app
