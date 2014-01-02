@@ -879,8 +879,7 @@ void CGameServer::Update()
 				GotChatMessage(ChatMessage(SERVER_PLAYER, ChatMessage::TO_EVERYONE, msg.substr(1)));
 			}
 			else if (msg.size() > 1) { // command
-				Action buf(msg.substr(1));
-				PushAction(buf);
+				PushAction(Action(msg.substr(1)), true);
 			}
 		}
 	}
@@ -1695,7 +1694,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				if (static_cast<unsigned>(msg.GetPlayerID()) == a) {
 					if ((commandBlacklist.find(msg.GetAction().command) != commandBlacklist.end()) && players[a].isLocal) {
 						// command is restricted to server but player is allowed to execute it
-						PushAction(msg.GetAction());
+						PushAction(msg.GetAction(), false);
 					}
 					else if (commandBlacklist.find(msg.GetAction().command) == commandBlacklist.end()) {
 						// command is save
@@ -2089,7 +2088,7 @@ void CGameServer::SetGamePausable(const bool arg)
 	gamePausable = arg;
 }
 
-void CGameServer::PushAction(const Action& action)
+void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 {
 	if (action.command == "kickbynum") {
 		if (!action.extra.empty()) {
@@ -2334,16 +2333,20 @@ void CGameServer::PushAction(const Action& action)
 		quitServer = true;
 	}
 	else if (action.command == "pause") {
-		bool newPausedState = isPaused;
-		if (action.extra.empty()) {
-			// if no param is given, toggle paused state
-			newPausedState = !isPaused;
-		} else {
-			// if a param is given, interpret it as "bool setPaused"
-			SetBoolArg(newPausedState, action.extra);
-		}
-		if (newPausedState != isPaused) {
-			// the state changed
+		if (gameHasStarted) {
+			// action can originate from autohost prior to start
+			// (normal clients are blocked from sending any pause
+			// commands during this period)
+			bool newPausedState = isPaused;
+
+			if (action.extra.empty()) {
+				// if no param is given, toggle paused state
+				newPausedState = !isPaused;
+			} else {
+				// if a param is given, interpret it as "bool setPaused"
+				SetBoolArg(newPausedState, action.extra);
+			}
+
 			isPaused = newPausedState;
 		}
 	}
