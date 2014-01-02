@@ -109,7 +109,7 @@ private:
 	void GotChatMessage(const ChatMessage& msg);
 
 	/// Execute textual messages received from clients
-	void PushAction(const Action& action);
+	void PushAction(const Action& action, bool fromAutoHost);
 
 	void StripGameSetupText(const GameData* const newGameData);
 
@@ -181,6 +181,7 @@ private:
 	spring_time lastNewFrameTick;
 	spring_time lastPlayerInfo;
 	spring_time lastUpdate;
+	spring_time lastBandwidthUpdate;
 
 	float modGameTime;
 	float gameTime;
@@ -267,7 +268,6 @@ private:
 	volatile bool gameHasStarted;
 	volatile bool generatedGameID;
 
-	spring_time lastBandwidthUpdate;
 	int linkMinPacketSize;
 
 	union {
