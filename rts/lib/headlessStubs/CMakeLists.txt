@@ -16,7 +16,7 @@ ELSE  (WIN32)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
 	INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/include)
-	INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/include/SDL)
+	INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/include/SDL2)
 ENDIF (WIN32)
 
 ADD_LIBRARY(headlessStubs STATIC EXCLUDE_FROM_ALL ${headlessStubsSources})
