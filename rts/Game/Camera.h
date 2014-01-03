@@ -28,7 +28,14 @@ public:
 	float3 CalcWindowCoordinates(const float3& objPos) const;
 
 	void CopyState(const CCamera*);
-	void UpdateForward();
+	// NOTE:
+	//   only FreeController calls this, others just seem to manipulate
+	//   azimuth (.x) and zenith (.y) angles for their own (redundant?)
+	//   copy of Camera::forward (CameraController::dir)
+	//
+	//   <forward> is set by CameraHandler::UpdateCam via CamCon::GetDir
+	//   <right> and <up> are derived from this, never from <rot> directly
+	void UpdateForward(const float3& fwd) { forward = fwd; }
 	void UpdateRightAndUp(bool terrainReflectionPass);
 
 	bool InView(const float3& p, float radius = 0) const;

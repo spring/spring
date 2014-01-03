@@ -192,33 +192,25 @@ bool CCamera::InView(const float3& p, float radius) const
 }
 
 
-void CCamera::UpdateForward()
-{
-	// NOTE:
-	//   only FreeController calls this, others just seem to manipulate
-	//   azimuth (.x) and zenith (.y) angles for their own (redundant?)
-	//   copy of Camera::forward (CameraController::dir)
-	forward.z = math::cos(rot.y) * math::cos(rot.x);
-	forward.x = math::sin(rot.y) * math::cos(rot.x);
-	forward.y = math::sin(rot.x);
-	forward.Normalize();
-}
-
 void CCamera::UpdateRightAndUp(bool terrainReflectionPass)
 {
 	// terrain (not water) cubemap reflection passes set forward
 	// to {+/-}UpVector which would cause vector degeneracy when
 	// calculating right and up
-	// FIXME: sign-inversion near poles in free-camera mode, etc
+	//
 	if (std::fabs(forward.y) >= 0.99f) {
-		up = FwdVector * Sign(forward.y);
+		// make sure we can still yaw at limits of pitch
+		// (since CamHandler only updates forward, which
+		// is derived from rot)
+		right = float3(-std::cos(rot.y), 0.0f, std::sin(camera->rot.y));
+		up = (right.cross(forward)).UnsafeANormalize();
 	} else {
 		// in the terrain reflection pass everything is upside-down!
 		up = UpVector * -Sign(int(terrainReflectionPass));
-	}
 
-	right = (forward.cross(up)).UnsafeANormalize();
-	up = (right.cross(forward)).UnsafeANormalize();
+		right = (forward.cross(up)).UnsafeANormalize();
+		up = (right.cross(forward)).UnsafeANormalize();
+	}
 }
 
 

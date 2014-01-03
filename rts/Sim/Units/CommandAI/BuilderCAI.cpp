@@ -208,8 +208,7 @@ void CBuilderCAI::PostLoad()
 
 		Command& c = commandQue.front();
 
-		map<int, string>::iterator boi = buildOptions.find(c.GetID());
-		if (boi != buildOptions.end()) {
+		if (buildOptions.find(c.GetID()) != buildOptions.end()) {
 			build.Parse(c);
 			build.pos = CGameHelper::Pos2BuildPos(build, true);
 		}
@@ -301,18 +300,24 @@ bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& build, const CUnit** nanoFr
 		return false;
 	}
 
+	// status is blocked, check if there is a foreign object in the way
 	const int yardxpos = int(build.pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
 	const int yardypos = int(build.pos.z + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
 	const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
 
+	// just ourselves, does not count
 	if (s == owner)
 		return false;
 
 	const CUnit* u = dynamic_cast<const CUnit*>(s);
 
-	if (u == NULL /*|| u->pos != build.pos*/)
-		return false;
+	// if a *unit* object is not present, then either
+	// there is a feature or the terrain is unsuitable
+	// (in the former case feature must be reclaimable)
+	if (u == NULL)
+		return (feature == NULL || !feature->def->reclaimable);
 
+	// figure out if object is soft- or hard-blocking
 	if (u->beingBuilt) {
 		if (!ownerBuilder->CanAssistUnit(u, build.def)) {
 			if (u->immobile) {
@@ -409,20 +414,20 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		return;
 	}
 
-	// stop current build if the new command is a not queued and replaces the current buidcmd
+	// stop current build if the new command is not queued and replaces the current build-command
 	//FIXME should happen just before CMobileCAI::GiveCommandReal? (the new cmd can still be skipped!)
-	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()
-			&& c.GetID() != CMD_WAIT) {
-		building = false;
-		static_cast<CBuilder*>(owner)->StopBuild();
+	if (c.GetID() != CMD_WAIT && !(c.options & SHIFT_KEY)) {
+		if (nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()) {
+			building = false;
+			static_cast<CBuilder*>(owner)->StopBuild();
+		}
 	}
 
-	const map<int,string>::const_iterator boi = buildOptions.find(c.GetID());
+	const map<int, string>::const_iterator boi = buildOptions.find(c.GetID());
 
 	if (boi != buildOptions.end()) {
-		if (c.params.size() < 3) {
+		if (c.params.size() < 3)
 			return;
-		}
 
 		BuildInfo bi;
 		bi.pos = c.GetPos(0);
@@ -435,8 +440,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 		// We are a static building, check if the buildcmd is in range
 		if (!owner->unitDef->canmove) {
-			const float radius = GetBuildOptionRadius(bi.def, c.GetID());
-			if (!IsInBuildRange(bi.pos, radius)) {
+			if (!IsInBuildRange(bi.pos, GetBuildOptionRadius(bi.def, c.GetID()))) {
 				return;
 			}
 		}
