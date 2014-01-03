@@ -1054,22 +1054,18 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				break;
 			}
 
-			if (activeController->userWriting){
+			std::string utf8Text = event.text.text;
+
+			const bool catched = eventHandler.TextInput(utf8Text);
+
+			if (activeController->userWriting && !catched){
 				auto ac = activeController;
-				std::string utf8Text = event.text.text;
 				if (ac->ignoreNextChar && (ac->ignoreChar == utf8Text[0])) {
 					utf8Text = utf8Text.substr(1);
 				}
 				ac->writingPos = Clamp<int>(ac->writingPos, 0, ac->userInput.length());
 				ac->userInput.insert(ac->writingPos, utf8Text);
 				ac->writingPos += utf8Text.length();
-			} else {
-				//FIXME even call when activeController->userWriting?
-				std::string utf8Text = event.text.text;
-				//int pos = 0;
-				//const char32_t utf32 = Utf8GetNextChar(utf8Text, pos);
-				//eventHandler.KeyPress(utf32, false);
-				eventHandler.TextInput(utf8Text);
 			}
 			activeController->ignoreNextChar = false;
 		} break;
