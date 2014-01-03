@@ -90,7 +90,7 @@ namespace Shader {
 		virtual void Release() = 0;
 		virtual void Reload(bool reloadFromDisk) = 0;
 
-		void PrintInfo() const;
+		void PrintInfo();
 
 	public:
 		int GetUniformLocation(const std::string& name) {

@@ -269,16 +269,24 @@ namespace Shader {
 		}
 
 		curHash = hash;
-		Reload(false);
 
+		Reload(false);
 		PrintInfo();
 	}
 
-	void IProgramObject::PrintInfo() const
+	void IProgramObject::PrintInfo()
 	{
 		LOG_L(L_DEBUG, "Uniform States for program-object \"%s\":", name.c_str());
-		for (auto& p : uniformStates)
-			LOG_L(L_DEBUG, "\t%s: %f %f %i", (p.second.GetName()).c_str(), p.second.GetFltValues()[0], p.second.GetFltValues()[1], int(p.second.IsUninit()));
+		LOG_L(L_DEBUG, "Defs:\n %s", GetString().c_str());
+		LOG_L(L_DEBUG, "Uniforms:");
+		for (const auto& p : uniformStates) {
+			const bool curUsed = GetUniformLocation(p.second.GetName()) >= 0;
+			if (p.second.IsUninit()) {
+				LOG_L(L_DEBUG, "\t%s: uninitialized used=%i", (p.second.GetName()).c_str(), int(curUsed));
+			} else {
+				LOG_L(L_DEBUG, "\t%s: x=float:%f;int:%i y=%f z=%f used=%i", (p.second.GetName()).c_str(), p.second.GetFltValues()[0], p.second.GetIntValues()[0], p.second.GetFltValues()[1], p.second.GetFltValues()[2], int(curUsed));
+			}
+		}
 	}
 
 
@@ -386,6 +394,7 @@ namespace Shader {
 	void GLSLProgramObject::Disable() { glUseProgram(0); IProgramObject::Disable(); }
 
 	void GLSLProgramObject::Link() {
+		RecompileIfNeeded();
 		assert(glIsProgram(objID));
 
 		if (!glIsProgram(objID))
@@ -491,7 +500,6 @@ namespace Shader {
 	void GLSLProgramObject::SetUniformMatrix3x3(UniformState* uState, bool transp, const float* v) { assert(IsBound()); if (uState->Set3x3(v, transp)) glUniformMatrix3fv(uState->GetLocation(), 1, transp, v); }
 	void GLSLProgramObject::SetUniformMatrix4x4(UniformState* uState, bool transp, const float* v) { assert(IsBound()); if (uState->Set4x4(v, transp)) glUniformMatrix4fv(uState->GetLocation(), 1, transp, v); }
 
-	// FIXME: even in a hashmap find() is SLOW compared to direct array lookup, string-ops at runtime SUCK!
 	void GLSLProgramObject::SetUniform1i(int idx, int   v0                              ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0            )) glUniform1i(it->second.GetLocation(), v0            ); }
 	void GLSLProgramObject::SetUniform2i(int idx, int   v0, int   v1                    ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0, v1        )) glUniform2i(it->second.GetLocation(), v0, v1        ); }
 	void GLSLProgramObject::SetUniform3i(int idx, int   v0, int   v1, int   v2          ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0, v1, v2    )) glUniform3i(it->second.GetLocation(), v0, v1, v2    ); }

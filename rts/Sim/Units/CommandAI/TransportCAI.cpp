@@ -219,7 +219,6 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 					// break the DOCKING_ANGLE constraint so call am->ForceHeading() next
 					SetGoal(wantedPos, owner->pos, 1.0f);
 
-					am->SetLoadingUnits(true);
 					am->ForceHeading(trans->GetTransporteeWantedHeading(unit));
 					am->SetWantedAltitude(wantedPos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z));
 					am->maxDrift = 1.0f;
@@ -230,13 +229,12 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 					const bool b3 = (owner->updir.dot(UpVector) > 0.995f);
 
 					if (b1 && b2 && b3) {
-						am->SetLoadingUnits(false);
 						am->SetAllowLanding(false);
+						am->SetWantedAltitude(0.0f);
 
 						owner->script->BeginTransport(unit);
 						SetTransportee(NULL);
 						transport->AttachUnit(unit, owner->script->QueryTransport(unit));
-						am->SetWantedAltitude(0);
 
 						FinishCommand();
 						return;
@@ -514,7 +512,7 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
 	for (auto it = transportees.begin(); it != transportees.end(); ++it) {
 		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
-		const float spread = transportee->radius * transport->unitDef->unloadSpread;
+		const float spread = (it->unit)->radius * transport->unitDef->unloadSpread;
 
 		if (FindEmptySpot(pos, radius, spread, unloadPos, it->unit)) {
 			transportee = it->unit; break;
@@ -692,6 +690,7 @@ void CTransportCAI::UnloadLand(Command& c)
 				am->maxDrift = 1.0f;
 
 				// FIXME: kill the hardcoded constants, use the command's radius
+				// NOTE: 2D distance-check would mean units get dropped from air
 				const bool b1 = (owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS));
 				const bool b2 = (std::abs(owner->heading - am->GetForcedHeading()) < AIRTRANSPORT_DOCKING_ANGLE);
 				const bool b3 = (owner->updir.dot(UpVector) > 0.99f);
@@ -955,20 +954,16 @@ int CTransportCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 void CTransportCAI::FinishCommand()
 {
-	CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
-
-	if (am != NULL) {
-		am->SetLoadingUnits(false);
-	}
-
 	SetTransportee(NULL);
-
 	CMobileCAI::FinishCommand();
 
-	if (am != NULL && commandQue.empty()) {
-		am->SetWantedAltitude(0.0f);
-		am->wantToStop = true;
-	}
+	CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
+
+	if (am == NULL || !commandQue.empty())
+		return;
+
+	am->SetWantedAltitude(0.0f);
+	am->wantToStop = true;
 }
 
 

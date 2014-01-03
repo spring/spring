@@ -198,7 +198,7 @@ static bool GetAvailableVideoRAM(GLint* memory)
 	} else
 #ifdef GLX_MESA_query_renderer
 	if (GLXEW_MESA_query_renderer) {
-		glGetIntegerv(GLX_RENDERER_VIDEO_MEMORY_MESA, memory[0]);
+		glGetIntegerv(GLX_RENDERER_VIDEO_MEMORY_MESA, &memory[0]);
 		memory[1] = texMemInfo[0];
 	} else
 #endif
