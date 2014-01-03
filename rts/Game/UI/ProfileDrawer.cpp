@@ -134,8 +134,8 @@ void ProfileDrawer::Draw()
 	}
 
 #ifdef DEBUG
+	const spring_time curTime = spring_gettime();
 	const float maxHist = 4.0f;
-	const auto curTime = spring_gettime();
 	const float r = std::fmod(curTime.toSecsf(), maxHist) / maxHist;
 
 	CVertexArray* va = GetVertexArray();
