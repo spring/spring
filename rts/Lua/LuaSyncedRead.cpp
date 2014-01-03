@@ -4008,8 +4008,8 @@ int LuaSyncedRead::GetUnitCommands(lua_State* L)
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
 	const CCommandQueue* queue = (factoryCAI == NULL) ? &commandAI->commandQue : &factoryCAI->newUnitCommands;
 
-	const auto numCmds    = luaL_optint(L, 2, -1);
-	const bool cmdsTable  = luaL_optboolean(L, 3, true); // deprecated, prefer to set 2nd arg to 0
+	const int  numCmds   = luaL_optint(L, 2, -1);
+	const bool cmdsTable = luaL_optboolean(L, 3, true); // deprecated, prefer to set 2nd arg to 0
 
 	if (cmdsTable && (numCmds != 0)) {
 		// *get wants the actual commands
@@ -4040,8 +4040,8 @@ int LuaSyncedRead::GetFactoryCommands(lua_State* L)
 
 	const CCommandQueue& commandQue = factoryCAI->commandQue;
 
-	const auto numCmds    = luaL_optint(L, 2, -1);
-	const bool cmdsTable  = luaL_optboolean(L, 3, true); // deprecated, prefer to set 2nd arg to 0
+	const int  numCmds   = luaL_optint(L, 2, -1);
+	const bool cmdsTable = luaL_optboolean(L, 3, true); // deprecated, prefer to set 2nd arg to 0
 
 	if (cmdsTable && (numCmds != 0)) {
 		PackCommandQueue(L, commandQue, numCmds);
