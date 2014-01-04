@@ -14,7 +14,7 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Lua/LuaIntro.h"
 #include "Map/MapInfo.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"

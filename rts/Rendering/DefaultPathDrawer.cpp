@@ -26,7 +26,7 @@
 #include "Sim/Path/Default/PathFlowMap.hpp"
 #undef private
 
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/DefaultPathDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"

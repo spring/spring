@@ -38,7 +38,7 @@
 #include "Map/HeightMapTexture.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
