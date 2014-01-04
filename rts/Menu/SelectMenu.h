@@ -7,7 +7,6 @@
 #include "Game/GameController.h"
 
 class ClientSetup;
-union SDL_Event;
 class SelectionWidget;
 class ConnectWindow;
 class SettingsWindow;

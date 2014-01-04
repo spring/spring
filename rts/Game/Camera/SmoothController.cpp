@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <boost/cstdint.hpp>
 
 #include "SmoothController.h"
@@ -112,9 +112,9 @@ void SmoothController::MouseMove(float3 move)
 	// do little smoothing here (and because its little it won't hurt if it depends on framerate)
 	static float3 lastMove = ZeroVector;
 	const float3 thisMove(
-		move.x * pixelSize * (1 + keyInput->GetKeyState(SDLK_LSHIFT) * 3) * scrollSpeed,
+		move.x * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed,
 		0.0f,
-		move.y * pixelSize * (1 + keyInput->GetKeyState(SDLK_LSHIFT) * 3) * scrollSpeed
+		move.y * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed
 	);
 
 	pos += (thisMove + lastMove) / 2.0f;
@@ -130,14 +130,14 @@ void SmoothController::MouseWheelMove(float move)
 
 	camHandler->CameraTransition(0.05f);
 
-	const float shiftSpeed = (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3.0f : 1.0f);
+	const float shiftSpeed = (KeyInput::GetKeyModState(KMOD_SHIFT) ? 3.0f : 1.0f);
 	const float altZoomDist = height * move * 0.007f * shiftSpeed;
 
 	// tilt the camera if LCTRL is pressed
 	//
 	// otherwise holding down LALT uses 'instant-zoom'
 	// from here to the end of the function (smoothed)
-	if (keyInput->IsKeyPressed(SDLK_LCTRL)) {
+	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
 		zscale *= (1.0f + (0.01f * move * tiltSpeed * shiftSpeed));
 		zscale = Clamp(zscale, 0.05f, 10.0f);
 	} else {
@@ -149,7 +149,7 @@ void SmoothController::MouseWheelMove(float move)
 			if ((height - dif) < 60.0f) {
 				dif = height - 60.0f;
 			}
-			if (keyInput->IsKeyPressed(SDLK_LALT)) {
+			if (KeyInput::GetKeyModState(KMOD_ALT)) {
 				// instazoom in to standard view
 				dif = (height - oldAltHeight) / mouse->dir.y * dir.y;
 			}
@@ -169,7 +169,7 @@ void SmoothController::MouseWheelMove(float move)
 			}
 		} else {
 			// ZOOM OUT from mid screen
-			if (keyInput->IsKeyPressed(SDLK_LALT)) {
+			if (KeyInput::GetKeyModState(KMOD_ALT)) {
 				// instazoom out to maximum height
 				if (height < maxHeight*0.5f && changeAltHeight) {
 					oldAltHeight = height;
@@ -184,7 +184,7 @@ void SmoothController::MouseWheelMove(float move)
 		}
 
 		// instant-zoom: turn on the smooth transition and reset the camera tilt
-		if (keyInput->IsKeyPressed(SDLK_LALT)) {
+		if (KeyInput::GetKeyModState(KMOD_ALT)) {
 			zscale = 0.5f;
 			camHandler->CameraTransition(1.0f);
 		} else {

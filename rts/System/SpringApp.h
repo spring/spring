@@ -31,13 +31,12 @@ protected:
 	bool InitWindow(const char* title);             //!< Initializes window
 	static void InitOpenGL();                       //!< Initializes OpenGL
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
-	static bool SetSDLVideoMode();                  //!< Sets SDL video mode
+	static bool CreateWindow(const char* title);    //!< Creates a SDL window
 	int Update();                                   //!< Run simulation and draw
 	bool UpdateSim(CGameController *ac);
 
-	static bool GetDisplayGeometry();
-	static void SetupViewportGeometry(bool windowExposed);
-	static void RestoreWindowPosition();
+	static void GetDisplayGeometry();
+	static void SetupViewportGeometry();
 	static void SaveWindowPosition();
 
 	/**

@@ -39,7 +39,7 @@
 #include "System/Sound/SoundChannels.h"
 
 #include <SDL_mouse.h>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <map>
 
 
@@ -297,7 +297,7 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 			const float4 vec((*ui)->midPos, 1.0f);
 
 			if (vec.dot4(planeRight) < 0.0f && vec.dot4(planeLeft) < 0.0f && vec.dot4(planeTop) < 0.0f && vec.dot4(planeBottom) < 0.0f) {
-				if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selectedUnits.find(*ui) != selectedUnits.end())) {
+				if (KeyInput::GetKeyModState(KMOD_CTRL) && (selectedUnits.find(*ui) != selectedUnits.end())) {
 					RemoveUnit(*ui);
 				} else {
 					AddUnit(*ui);
@@ -332,7 +332,7 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 		return;
 
 	if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
-		if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
+		if (KeyInput::GetKeyModState(KMOD_CTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
 			RemoveUnit(unit);
 		} else {
 			AddUnit(unit);
@@ -353,7 +353,7 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 			CUnitSet& teamUnits = teamHandler->Team(team)->units;
 			for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
 				if ((*ui)->unitDef->id == unit->unitDef->id) {
-					if (!doInViewTest || keyInput->IsKeyPressed(SDLK_LCTRL) || camera->InView((*ui)->midPos)) {
+					if (!doInViewTest || KeyInput::GetKeyModState(KMOD_CTRL) || camera->InView((*ui)->midPos)) {
 						AddUnit(*ui);
 					}
 				}
@@ -534,7 +534,7 @@ void CSelectedUnitsHandler::Draw()
 	// (or old-style, whenever the shift key is being held down)
 	if (cmdColors.buildBox[3] > 0.0f) {
 		if (!selectedUnits.empty() &&
-				((cmdColors.BuildBoxesOnShift() && keyInput->IsKeyPressed(SDLK_LSHIFT)) ||
+				((cmdColors.BuildBoxesOnShift() && KeyInput::GetKeyModState(KMOD_SHIFT)) ||
 				 ((guihandler->inCommand >= 0) &&
 					(guihandler->inCommand < int(guihandler->commands.size())) &&
 					(guihandler->commands[guihandler->inCommand].id < 0)))) {

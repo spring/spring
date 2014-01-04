@@ -862,7 +862,7 @@ void CGame::ResizeEvent()
 }
 
 
-int CGame::KeyPressed(unsigned short key, bool isRepeat)
+int CGame::KeyPressed(int key, bool isRepeat)
 {
 	if (!gameOver && !isRepeat) {
 		playerHandler->Player(gu->myPlayerNum)->currentStats.keyPresses++;
@@ -927,7 +927,7 @@ int CGame::KeyPressed(unsigned short key, bool isRepeat)
 }
 
 
-int CGame::KeyReleased(unsigned short k)
+int CGame::KeyReleased(int k)
 {
 	if ((userWriting) && (((k>=' ') && (k<='Z')) || (k==8) || (k==190))) {
 		return 0;

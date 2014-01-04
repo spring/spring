@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <boost/cstdint.hpp>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 
 #include "lib/gml/gmlmut.h"
 #include "GroupHandler.h"
@@ -83,15 +83,15 @@ void CGroupHandler::GroupCommand(int num)
 
 	std::string cmd = "";
 
-	if (keyInput->IsKeyPressed(SDLK_LCTRL)) {
-		if (!keyInput->IsKeyPressed(SDLK_LSHIFT)) {
+	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
+		if (!KeyInput::GetKeyModState(KMOD_SHIFT)) {
 			cmd = "set";
 		} else {
 			cmd = "add";
 		}
-	} else if (keyInput->IsKeyPressed(SDLK_LSHIFT))  {
+	} else if (KeyInput::GetKeyModState(KMOD_SHIFT))  {
 		cmd = "selectadd";
-	} else if (keyInput->IsKeyPressed(SDLK_LALT)) {
+	} else if (KeyInput::GetKeyModState(KMOD_ALT)) {
 		cmd = "selecttoggle";
 	}
 

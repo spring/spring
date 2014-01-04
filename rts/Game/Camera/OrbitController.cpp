@@ -3,7 +3,7 @@
 #include <boost/cstdint.hpp>
 
 #include <SDL_mouse.h>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 
 #include "OrbitController.h"
 #include "Game/Camera.h"
@@ -61,7 +61,7 @@ void COrbitController::Init(const float3& p, const float3& tar)
 
 void COrbitController::Update()
 {
-	if (!keyInput->IsKeyPressed(SDLK_LMETA)) {
+	if (!KeyInput::GetKeyModState(KMOD_GUI)) {
 		return;
 	}
 
@@ -215,7 +215,7 @@ void COrbitController::MouseWheelMove(float move)
 
 void COrbitController::SetPos(const float3& newPos)
 {
-	if (keyInput->IsKeyPressed(SDLK_LMETA)) {
+	if (KeyInput::GetKeyModState(KMOD_GUI)) {
 		return;
 	}
 

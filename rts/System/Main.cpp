@@ -18,11 +18,6 @@
 #include "System/Platform/Misc.h"
 #include "System/Log/ILog.h"
 
-#if !defined(__APPLE__) || !defined(HEADLESS)
-	// SDL_main.h contains a macro that replaces the main function on some OS, see SDL_main.h for details
-	#include <SDL_main.h>
-#endif
-
 #ifdef WIN32
 	#include "lib/SOP/SOP.hpp" // NvOptimus
 

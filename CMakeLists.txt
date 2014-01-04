@@ -239,7 +239,7 @@ endif (USE_LIBSQUISH)
 
 ### external libs
 if    (MINGW)
-	set(SDL_INCLUDE_DIR "${MINGWLIBS}/include/SDL")
+	set(SDL2_INCLUDE_DIR "${MINGWLIBS}/include/SDL2")
 endif (MINGW)
 
 FIND_PACKAGE(Boost 1.47.0 COMPONENTS thread regex program_options system chrono signals filesystem REQUIRED)
@@ -264,7 +264,7 @@ ENDIF (UNIX AND NOT MINGW)
 
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.
-FIND_PACKAGE(SDL)
+FIND_PACKAGE(SDL2)
 FIND_PACKAGE_STATIC(DevIL)
 IF    (PREFER_STATIC_LIBS)
 	# dependencies of DevIL

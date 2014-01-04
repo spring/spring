@@ -454,7 +454,7 @@ bool CEventHandler::CommandNotify(const Command& cmd)
 }
 
 
-bool CEventHandler::KeyPress(unsigned short key, bool isRepeat)
+bool CEventHandler::KeyPress(int key, bool isRepeat)
 {
 	EVENTHANDLER_CHECK(KeyPress, false);
 
@@ -469,7 +469,7 @@ bool CEventHandler::KeyPress(unsigned short key, bool isRepeat)
 }
 
 
-bool CEventHandler::KeyRelease(unsigned short key)
+bool CEventHandler::KeyRelease(int key)
 {
 	EVENTHANDLER_CHECK(KeyRelease, false);
 
@@ -477,6 +477,21 @@ bool CEventHandler::KeyRelease(unsigned short key)
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listKeyRelease[i];
 		if (ec->KeyRelease(key)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
+bool CEventHandler::TextInput(const std::string& utf8)
+{
+	EVENTHANDLER_CHECK(TextInput, false);
+
+	// reverse order, user has the override
+	for (int i = (count - 1); i >= 0; i--) {
+		CEventClient* ec = listTextInput[i];
+		if (ec->TextInput(utf8)) {
 			return true;
 		}
 	}

@@ -6,6 +6,8 @@
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 
+struct SDL_Window;
+
 /**
  * @brief Globally accessible unsynced, rendering related data
  *
@@ -23,7 +25,7 @@ public:
 	void SetViewSize(int vsx, int vsy);
 	void SetDualScreenParams();
 	void UpdateWindowGeometry();
-	void UpdateViewPortGeometry(bool windowExposed);
+	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
 
 
@@ -109,13 +111,6 @@ public:
 	 * Level of full-screen anti-aliasing
 	 */
 	int FSAA;
-
-	/**
-	 * @brief Depthbuffer bits
-	 *
-	 * depthbuffer precision
-	 */
-	int depthBufferBits;
 
 	/**
 	 * @brief maxTextureSize
@@ -247,7 +242,7 @@ public:
 	 */
 	bool fullScreen;
 
-
+	SDL_Window* window;
 
 	/**
 	* @brief max view range in elmos

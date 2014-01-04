@@ -4,7 +4,7 @@
 
 
 #include "KeyCodes.h"
-#include "SDL_keysym.h"
+#include "SDL_keycode.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
@@ -85,12 +85,12 @@ bool CKeyCodes::IsValidLabel(const std::string& label)
 }
 
 
-bool CKeyCodes::IsModifier(int code) const
+bool CKeyCodes::IsModifier(int code) const //FIXME
 {
 	switch (code) {
 		case SDLK_LALT:
 		case SDLK_LCTRL:
-		case SDLK_LMETA:
+		case SDLK_LGUI:
 		case SDLK_LSHIFT:
 			return true;
 	}
@@ -141,16 +141,16 @@ void CKeyCodes::Reset()
 	nameToCode["\xA7"] = 220;
 
 	/* Numeric keypad */
-	AddPair("numpad0", SDLK_KP0);
-	AddPair("numpad1", SDLK_KP1);
-	AddPair("numpad2", SDLK_KP2);
-	AddPair("numpad3", SDLK_KP3);
-	AddPair("numpad4", SDLK_KP4);
-	AddPair("numpad5", SDLK_KP5);
-	AddPair("numpad6", SDLK_KP6);
-	AddPair("numpad7", SDLK_KP7);
-	AddPair("numpad8", SDLK_KP8);
-	AddPair("numpad9", SDLK_KP9);
+	AddPair("numpad0", SDLK_KP_0);
+	AddPair("numpad1", SDLK_KP_1);
+	AddPair("numpad2", SDLK_KP_2);
+	AddPair("numpad3", SDLK_KP_3);
+	AddPair("numpad4", SDLK_KP_4);
+	AddPair("numpad5", SDLK_KP_5);
+	AddPair("numpad6", SDLK_KP_6);
+	AddPair("numpad7", SDLK_KP_7);
+	AddPair("numpad8", SDLK_KP_8);
+	AddPair("numpad9", SDLK_KP_9);
 	AddPair("numpad.", SDLK_KP_PERIOD);
 	AddPair("numpad/", SDLK_KP_DIVIDE);
 	AddPair("numpad*", SDLK_KP_MULTIPLY);
@@ -194,7 +194,7 @@ void CKeyCodes::Reset()
 	AddPair("shift", SDLK_LSHIFT);
 	AddPair("ctrl",  SDLK_LCTRL);
 	AddPair("alt",   SDLK_LALT);
-	AddPair("meta",  SDLK_LMETA);
+	AddPair("meta",  SDLK_LGUI);
 	// I doubt these can be used correctly anyway (without special support in other parts of the spring code...)
 	//AddPair("super", SDLK_LSUPER);    /* Left "Windows" key */
 	//AddPair("mode", SDLK_MODE);       /* "Alt Gr" key */
@@ -202,7 +202,7 @@ void CKeyCodes::Reset()
 
 	/* Miscellaneous function keys */
 	//AddPair("help", SDLK_HELP);
-	AddPair("printscreen", SDLK_PRINT);
+	AddPair("printscreen", SDLK_PRINTSCREEN);
 	//AddPair("sysreq", SDLK_SYSREQ);
 	//AddPair("break", SDLK_BREAK);
 	//AddPair("menu", SDLK_MENU);

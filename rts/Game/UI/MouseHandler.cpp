@@ -50,7 +50,7 @@
 // can't be up there since those contain conflicting definitions
 #include <SDL_mouse.h>
 #include <SDL_events.h>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 
 
 CONFIG(bool, HardwareCursor).defaultValue(false).description("Sets hardware mouse cursor rendering. If you have a low framerate, your mouse cursor will seem \"laggy\". Setting hardware cursor will render the mouse cursor separately from spring and the mouse will behave normally. Note, not all GPU drivers support it in fullscreen mode!");
@@ -413,7 +413,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	if ((button == SDL_BUTTON_LEFT) && !buttons[button].chorded) {
 		ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
 
-		if (!keyInput->IsKeyPressed(SDLK_LSHIFT) && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
+		if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL)) {
 			selectedUnitsHandler.ClearSelected();
 		}
 

@@ -10,7 +10,7 @@
 
 #include <cstdlib>
 #include <boost/cstdint.hpp>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 
 #define DISALLOW_RELEASE_BINDINGS
 
@@ -45,10 +45,10 @@ CKeySet::CKeySet(int k, bool release)
 	key = k;
 	modifiers = 0;
 
-	if (keyInput->IsKeyPressed(SDLK_LALT))   { modifiers |= KS_ALT; }
-	if (keyInput->IsKeyPressed(SDLK_LCTRL))  { modifiers |= KS_CTRL; }
-	if (keyInput->IsKeyPressed(SDLK_LMETA))  { modifiers |= KS_META; }
-	if (keyInput->IsKeyPressed(SDLK_LSHIFT)) { modifiers |= KS_SHIFT; }
+	if (KeyInput::GetKeyModState(KMOD_ALT))   { modifiers |= KS_ALT; }
+	if (KeyInput::GetKeyModState(KMOD_CTRL))  { modifiers |= KS_CTRL; }
+	if (KeyInput::GetKeyModState(KMOD_GUI))   { modifiers |= KS_META; }
+	if (KeyInput::GetKeyModState(KMOD_SHIFT)) { modifiers |= KS_SHIFT; }
 
 #ifndef DISALLOW_RELEASE_BINDINGS
 	if (release) { modifiers |= KS_RELEASE; }
@@ -132,11 +132,6 @@ bool CKeySet::Parse(const std::string& token)
 		if (end == start) {
 			Reset();
 			LOG_L(L_ERROR, "KeySet: Bad hex value: %s", s.c_str());
-			return false;
-		}
-		if (key >= SDLK_LAST) {
-			Reset();
-			LOG_L(L_ERROR, "KeySet: Hex value out of range: %s", s.c_str());
 			return false;
 		}
 	} else {

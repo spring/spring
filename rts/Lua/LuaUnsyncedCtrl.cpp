@@ -82,7 +82,6 @@
 
 #include <fstream>
 
-#include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
 using std::min;
@@ -2079,10 +2078,7 @@ int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
 {
 	const std::string title = luaL_checksstring(L, 1);
-	const std::string titleShort = luaL_optsstring(L, 2, title);
-
-	WindowManagerHelper::SetCaption(title, titleShort);
-
+	WindowManagerHelper::SetCaption(title);
 	return 0;
 }
 
