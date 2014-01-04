@@ -2038,13 +2038,13 @@ int LuaUnsyncedRead::GetInvertQueueKey(lua_State* L)
 int LuaUnsyncedRead::GetLastMessagePositions(lua_State* L)
 {
 	CInfoConsole* ic = game->infoConsole;
-	if (ic == NULL) {
+
+	if (ic == NULL)
 		return 0;
-	}
 
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
-	for (int i=1; i<=ic->GetMsgPosCount(); i++) {
+	for (unsigned int i = 1; i <= ic->GetMsgPosCount(); i++) {
 		lua_newtable(L); {
 			const float3 msgpos = ic->GetMsgPos();
 			lua_pushnumber(L, msgpos.x); lua_rawseti(L, -2, 1);

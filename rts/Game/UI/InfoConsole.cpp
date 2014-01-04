@@ -27,12 +27,12 @@ const size_t CInfoConsole::maxLastMsgPos = 10;
 
 CInfoConsole::CInfoConsole()
 	: CEventClient("InfoConsole", 999, false)
-	, fontScale(1.0f)
 	, enabled(true)
 	, lastMsgIter(lastMsgPositions.begin())
 	, newLines(0)
 	, rawId(0)
 	, lastTime(0)
+	, fontScale(1.0f)
 {
 	data.clear();
 
@@ -214,11 +214,10 @@ void CInfoConsole::LastMessagePosition(const float3& pos)
 	lastMsgIter = lastMsgPositions.begin();
 }
 
-const float3& CInfoConsole::GetMsgPos()
+const float3& CInfoConsole::GetMsgPos(const float3& defaultPos)
 {
-	if (lastMsgPositions.empty()) {
-		return ZeroVector;
-	}
+	if (lastMsgPositions.empty())
+		return defaultPos;
 
 	// advance the position
 	const float3& p = *(lastMsgIter++);
