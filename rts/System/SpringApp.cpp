@@ -8,6 +8,7 @@
 
 #undef KeyPress
 #undef KeyRelease
+#undef CreateWindow
 
 #include "Rendering/GL/myGL.h"
 #include "System/SpringApp.h"
