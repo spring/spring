@@ -21,12 +21,6 @@ if   (MSVC)
 	LIST(APPEND engineIncludes ${GLEW_INCLUDE_DIR})
 endif(MSVC)
 
-FIND_PACKAGE_STATIC(Freetype REQUIRED)
-foreach(f ${FREETYPE_INCLUDE_DIRS})
-	LIST(APPEND engineIncludes ${f})
-endforeach(f)
-LIST(APPEND engineLibraries ${FREETYPE_LIBRARIES})
-
 FIND_PACKAGE_STATIC(FontConfig)
 IF    (FONTCONFIG_FOUND)
 	LIST(APPEND engineIncludes ${FONTCONFIG_INCLUDE_DIR})
@@ -39,6 +33,12 @@ IF    (FONTCONFIG_FOUND)
 		LIST(APPEND engineLibraries ${EXPAT_LIBRARY})
 	ENDIF (PREFER_STATIC_LIBS)
 ENDIF (FONTCONFIG_FOUND)
+
+FIND_PACKAGE_STATIC(Freetype REQUIRED)
+foreach(f ${FREETYPE_INCLUDE_DIRS})
+	LIST(APPEND engineIncludes ${f})
+endforeach(f)
+LIST(APPEND engineLibraries ${FREETYPE_LIBRARIES})
 
 IF    (PREFER_STATIC_LIBS)
 	# dependencies of FreeType
