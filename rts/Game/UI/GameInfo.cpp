@@ -16,7 +16,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <cstdio>
 
 using std::string;
@@ -188,7 +188,7 @@ void CGameInfo::MouseRelease(int x, int y, int button)
 }
 
 
-bool CGameInfo::KeyPressed(unsigned short key, bool isRepeat)
+bool CGameInfo::KeyPressed(int key, bool isRepeat)
 {
 	if (key == SDLK_ESCAPE) {
 		delete this;

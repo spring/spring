@@ -139,7 +139,7 @@ bool LineEdit::HandleEventSelf(const SDL_Event& ev)
 				}
 				default:
 				{
-					uint16_t currentUnicode = ev.key.keysym.unicode;
+					auto currentUnicode = ev.key.keysym.sym;
 					// only ASCII supported ATM
 					if ((currentUnicode >= 32) && (currentUnicode <= 126)) {
 						char buf[2] = { (const char)currentUnicode, 0 };

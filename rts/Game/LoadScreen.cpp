@@ -211,7 +211,7 @@ void CLoadScreen::ResizeEvent()
 }
 
 
-int CLoadScreen::KeyPressed(unsigned short k, bool isRepeat)
+int CLoadScreen::KeyPressed(int k, bool isRepeat)
 {
 	//FIXME add mouse events
 	if (LuaIntro)
@@ -221,7 +221,7 @@ int CLoadScreen::KeyPressed(unsigned short k, bool isRepeat)
 }
 
 
-int CLoadScreen::KeyReleased(unsigned short k)
+int CLoadScreen::KeyReleased(int k)
 {
 	if (LuaIntro)
 		LuaIntro->KeyRelease(k);
@@ -331,7 +331,7 @@ bool CLoadScreen::Draw()
 	font->End();
 
 	if (!mtLoading)
-		SDL_GL_SwapBuffers();
+		SDL_GL_SwapWindow(globalRendering->window);
 
 	return true;
 }
