@@ -436,7 +436,11 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 	std::shared_ptr<FontFace> f = shFace;
 	do {
 		for (auto it = map.begin(); it != map.end(); ++it) {
+#ifndef HEADLESS
 			FT_UInt index = FT_Get_Char_Index(*f, *it);
+#else
+			unsigned index = 0;
+#endif
 			if (index != 0) {
 				LoadGlyph(f, *it, index);
 				it = map.erase(it);
@@ -448,7 +452,11 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 
 	// load fail glyph for all remaining ones (they will all share the same fail glyph)
 	for (auto c: map) {
+#ifndef HEADLESS
 		FT_UInt index = FT_Get_Char_Index(*shFace, c);
+#else
+		unsigned index = 0;
+#endif
 		LoadGlyph(shFace, c, index);
 	}
 
