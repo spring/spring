@@ -6,12 +6,10 @@
 # + support for SOURCES attribute of add_custom_target() (not required anymore)
 # CMake 2.8
 # + works around command line length limited by using an @objectFilesList.txt parameter when linking
-if    (WIN32)
-	set(MIN_CMAKE_VERSION 2.8)
-else  (WIN32)
-	set(MIN_CMAKE_VERSION 2.6)
-endif (WIN32)
-cmake_minimum_required(VERSION ${MIN_CMAKE_VERSION})
+# CMake 2.8.10
+# + adds support for CMAKE_CXX_COMPILER_ID (which is ignored with older cmake)
+cmake_minimum_required(VERSION 2.8)
+
 
 SET(CMAKE_MODULES_SPRING "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULES_SPRING}")
@@ -27,6 +25,16 @@ INCLUDE(PreferStaticLibs)
 
 CheckMinCMakeVersion(CUSTOM_TARGET_SOURCES_SUPPORT 2 6 3)
 
+
+# check for minimal gcc version
+set(MIN_GCC_VER "4.6")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "${MIN_GCC_VER}")
+		message(FATAL_ERROR "gcc >=${MIN_GCC_VER} required")
+	else()
+		message(STATUS "gcc ${CMAKE_CXX_COMPILER_VERSION} detected")
+	endif()
+endif()
 
 # set some internal vars
 If    ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
