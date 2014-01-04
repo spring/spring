@@ -8,7 +8,6 @@
 #  FONTCONFIG_FOUND       - True if fontconfig was found.
 
 Include(FindPackageHandleStandardArgs)
-Include(FindPkgConfig)
 
 If     (FONTCONFIG_INCLUDE_DIR)
 	# Already in cache, be silent
@@ -26,10 +25,6 @@ Find_Package_Handle_Standard_Args(FONTCONFIG DEFAULT_MSG FONTCONFIG_LIBRARY FONT
 
 If     (FONTCONFIG_FOUND)
 	Set(FONTCONFIG_LIBRARIES ${FONTCONFIG_LIBRARY})
-	If     (PREFER_STATIC_LIBS)
-		pkg_check_modules(PKG_FC fontconfig)
-		Set(FONTCONFIG_LIBRARIES ${FONTCONFIG_LIBRARIES} ${PKG_FC_STATIC_LIBRARIES})
-	EndIf  (PREFER_STATIC_LIBS)
 Else   (FONTCONFIG_FOUND)
 	Set(FONTCONFIG_LIBRARIES)
 EndIf  (FONTCONFIG_FOUND)
