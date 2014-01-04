@@ -2130,8 +2130,8 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 			} else {
 				const std::string name = StringToLower(tokens[0]);
 
-				bool muteChat;
-				bool muteDraw;
+				bool muteChat = true;
+				bool muteDraw = true;
 
 				if (tokens.size() >= 2) SetBoolArg(muteChat, tokens[1]);
 				if (tokens.size() >= 3) SetBoolArg(muteDraw, tokens[2]);
