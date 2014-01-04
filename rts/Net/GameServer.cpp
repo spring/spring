@@ -2133,8 +2133,8 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 				bool muteChat;
 				bool muteDraw;
 
-				if (!tokens.empty()) SetBoolArg(muteChat, tokens[1]);
-				if (tokens.size() >= 2) SetBoolArg(muteDraw, tokens[2]);
+				if (tokens.size() >= 2) SetBoolArg(muteChat, tokens[1]);
+				if (tokens.size() >= 3) SetBoolArg(muteDraw, tokens[2]);
 
 				for (size_t a = 0; a < players.size(); ++a) {
 					const std::string playerLower = StringToLower(players[a].name);
@@ -2165,8 +2165,8 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 				bool muteChat = true;
 				bool muteDraw = true;
 
-				if (!tokens.empty()) SetBoolArg(muteChat, tokens[1]);
-				if (tokens.size() >= 2) SetBoolArg(muteDraw, tokens[2]);
+				if (tokens.size() >= 2) SetBoolArg(muteChat, tokens[1]);
+				if (tokens.size() >= 3) SetBoolArg(muteDraw, tokens[2]);
 
 				MutePlayer(playerID, muteChat, muteDraw);
 			}
@@ -2558,11 +2558,11 @@ void CGameServer::MutePlayer(const int playerNum, bool muteChat, bool muteDraw )
 		}
 		return;
 	}
-	if ( playerNum < mutedPlayersChat.size() ) {
-		mutedPlayersChat.resize(playerNum);
+	if ( playerNum >= mutedPlayersChat.size() ) {
+		mutedPlayersChat.resize(playerNum+1);
 	}
-	if ( playerNum < mutedPlayersDraw.size() ) {
-		mutedPlayersDraw.resize(playerNum);
+	if ( playerNum >= mutedPlayersDraw.size() ) {
+		mutedPlayersDraw.resize(playerNum+1);
 	}
 	mutedPlayersChat[playerNum] = muteChat;
 	mutedPlayersDraw[playerNum] = muteDraw;
