@@ -42,7 +42,7 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/FeatureDrawer.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/Screenshot.h"
@@ -226,14 +226,15 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 
 	else if (action.command == "edit_backspace") {
 		if (!userInput.empty() && (writingPos > 0)) {
-			userInput.erase(writingPos - 1, 1);
-			writingPos--;
+			int prev=Utf8PrevChar(userInput,writingPos);
+			userInput.erase(prev, writingPos-prev);
+			writingPos=prev;
 		}
 		return true;
 	}
 	else if (action.command == "edit_delete") {
 		if (!userInput.empty() && (writingPos < (int)userInput.size())) {
-			userInput.erase(writingPos, 1);
+			userInput.erase(writingPos, Utf8CharLen(userInput,writingPos));
 		}
 		return true;
 	}
@@ -246,14 +247,14 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 		return true;
 	}
 	else if (action.command == "edit_prev_char") {
-		writingPos = std::max(0, std::min((int)userInput.length(), writingPos - 1));
+		writingPos = Utf8PrevChar(userInput,writingPos);
 		return true;
 	}
 	else if (action.command == "edit_next_char") {
-		writingPos = std::max(0, std::min((int)userInput.length(), writingPos + 1));
+		writingPos = Utf8NextChar(userInput,writingPos);
 		return true;
 	}
-	else if (action.command == "edit_prev_word") {
+	else if (action.command == "edit_prev_word") { //TODO It don't seems to work correctly with utf-8
 		// prev word
 		const char* s = userInput.c_str();
 		int p = writingPos;
@@ -262,7 +263,7 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 		writingPos = p;
 		return true;
 	}
-	else if (action.command == "edit_next_word") {
+	else if (action.command == "edit_next_word") { //TODO It don't seems to work correctly with utf-8
 		const int len = (int)userInput.length();
 		const char* s = userInput.c_str();
 		int p = writingPos;
@@ -271,12 +272,12 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 		writingPos = p;
 		return true;
 	}
-	else if ((action.command == "edit_prev_line") && chatting) {
+	else if ((action.command == "edit_prev_line") && chatting) { //TODO It don't seems to work correctly with utf-8
 		userInput = consoleHistory->PrevLine(userInput);
 		writingPos = (int)userInput.length();
 		return true;
 	}
-	else if ((action.command == "edit_next_line") && chatting) {
+	else if ((action.command == "edit_next_line") && chatting) { //TODO It don't seems to work correctly with utf-8
 		userInput = consoleHistory->NextLine(userInput);
 		writingPos = (int)userInput.length();
 		return true;

@@ -32,7 +32,7 @@
 #include "Lua/LuaOpenGL.h"
 #include "Menu/SelectMenu.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GLContext.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Textures/NamedTextures.h"
@@ -1230,11 +1230,11 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					const bool isDelete = (usym == 127);
 					const bool isIllegalUnicode = (127 < usym) && (usym < 161);
 
-					//TODO spring doesn't support unicode/non-latin yet :<
-					const bool isLatin = (usym >= 32) && (usym <= 255);
+					//Spring supports unicode/non-latin!!!
+					const bool isNormalChar = (usym >= 32); //Filter control chars
 					const bool isColor = (usym == 255); // we use \255 for inlined colorcodes!
 
-					if (isLatin && !isDelete && !isIllegalUnicode) {
+					if (isNormalChar && !isDelete && !isIllegalUnicode) {
 						CGameController* ac = activeController;
 
 						if (ac->ignoreNextChar || (ac->ignoreChar == (char)usym)) {
@@ -1242,11 +1242,11 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 						} else {
 							if (!isColor && (!isRepeat || ac->userInput.length() > 0)) {
 								const int len = (int)ac->userInput.length();
-								const char str[2] = { (char)usym, 0 };
+								std::string str = UnicodeToUtf8(usym);
 
 								ac->writingPos = std::max(0, std::min(len, ac->writingPos));
 								ac->userInput.insert(ac->writingPos, str);
-								ac->writingPos++;
+								ac->writingPos+= str.length();
 							}
 						}
 					}

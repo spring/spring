@@ -5,12 +5,12 @@
 
 #include <string>
 #include <list>
-#include <limits.h> // for INT_MAX
 
 #include "System/float4.h"
+#include "TextWrap.h"
+#include "ustring.h"
 
 #undef GetCharWidth // winapi.h
-
 
 static const int FONT_LEFT     = 1 << 0;
 static const int FONT_RIGHT    = 1 << 1;
@@ -29,13 +29,16 @@ static const int FONT_SCALE       = 1 << 12; //! given size argument will be tre
 
 static const int FONT_NEAREST     = 1 << 13; //! round x,y render pos to nearest integer, so there is no interpolation blur for small fontsizes
 
+
 class CVertexArray;
-class CglFont
+
+
+class CglFont : public CTextWrap
 {
 public:
-	static CglFont* LoadFont(const std::string& fontFile, int size, int outlinewidth = 2, float outlineweight = 5.0f, int start = 32, int end = 254);
+	static CglFont* LoadFont(const std::string& fontFile, int size, int outlinewidth = 2, float outlineweight = 5.0f);
 	CglFont(const std::string& fontfile, int size, int outlinewidth, float  outlineweight);
-	~CglFont();
+	virtual ~CglFont();
 
 	//! The calling of Begin() .. End() is optional,
 	//! but can increase the performance of drawing multiple strings a lot (upto 10x)
@@ -63,59 +66,17 @@ public:
 	void SetTextColor(const float& r, const float& g, const float& b, const float& a) { const float4 f = float4(r,g,b,a); SetTextColor(&f); };
 	void SetOutlineColor(const float& r, const float& g, const float& b, const float& a) { const float4 f = float4(r,g,b,a); SetOutlineColor(&f); };
 
-	//! Adds \n's (and '...' if it would be too high) until the text fits into maxWidth/maxHeight
-	int WrapInPlace(std::string& text, float fontSize, const float maxWidth, const float maxHeight = 1e9) const;
-	std::list<std::string> Wrap(const std::string& text, float fontSize, const float maxWidth, const float maxHeight = 1e9) const;
+	float GetCharacterWidth(const char32_t c);
+	inline float GetTextWidth(const std::string& text) final;
+	inline float GetTextHeight(const std::string& text, float* descender = NULL, int* numLines = NULL);
+	inline static int GetTextNumLines(const std::string& text);
+	inline static std::string StripColorCodes(const std::string& text);
+	static std::list<std::string> SplitIntoLines(const std::u8string&);
 
-	float GetKerning(const unsigned int left_char, const unsigned int right_char) const;
-	float GetCharacterWidth(const unsigned char c) const;
-	float GetTextWidth(const std::string& text) const;
-	float GetTextHeight(const std::string& text, float* descender = NULL, int* numLines = NULL) const;
-	int   GetTextNumLines(const std::string& text) const;
-	static std::string StripColorCodes(const std::string& text);
+	const std::string& GetFilePath() const { return fontPath; }
 
-	inline float GetLineHeight()     const { return lineHeight; }
-	inline float GetSize()           const { return fontSize; }
-	inline float GetDescender()      const { return fontDescender; }
-	inline int   GetOutlineWidth()   const { return outlineWidth; }
-	inline float GetOutlineWeight()  const { return outlineWeight; }
-	inline std::string GetFilePath() const { return fontPath; }
-	inline std::string GetFamily()   const { return fontFamily; }
-	inline std::string GetStyle()    const { return fontStyle; }
-	int GetCharStart() const { return charstart; }
-	int GetCharEnd()   const { return charend; }
-
-	inline unsigned int GetTexture()   const { return fontTexture; }
-	inline unsigned int GetTexWidth()  const { return texWidth; }
-	inline unsigned int GetTexHeight() const { return texHeight; }
-
-	static const char ColorCodeIndicator = '\xFF'; //FIXME use a non-printable char? (<32)
-	static const char ColorResetIndicator = '\x08'; //! =: '\\b'
-
-public:
-	typedef std::vector<float4> ColorMap;
-
-	struct GlyphInfo
-	{
-		GlyphInfo()
-		{
-			u0  = v0  = u1  = v1  = 1.0f;
-			x0  = y0  = x1  = y1  = 0.0f;
-			us0 = vs0 = us1 = vs1 = 1.0f;
-			advance = height = 1.0f;
-			descender = 0.0f;
-
-			for (int i = 0; i <= 255; i++) {
-				kerning[i] = 1.0f;
-			}
-		};
-
-		float u0, v0, u1, v1;
-		float x0, y0, x1, y1;
-		float us0, vs0, us1, vs1; //! shadow texcoords
-		float advance, height, descender;
-		float kerning[256];
-	} glyphs[256];
+	static const char8_t ColorCodeIndicator  = 0xFF;
+	static const char8_t ColorResetIndicator = 0x08; //! =: '\\b'
 
 private:
 	static const float4* ChooseOutlineColor(const float4& textColor);
@@ -125,67 +86,25 @@ private:
 	void RenderStringOutlined(float x, float y, const float& scaleX, const float& scaleY, const std::string& str);
 
 private:
-	struct colorcode {
-		colorcode() : resetColor(false),pos(0) {};
-		bool resetColor;
-		float4 color;
-		unsigned int pos;
-	};
-	struct word {
-		word() : width(0.0f), text(""), isSpace(false), isLineBreak(false), isColorCode(false), numSpaces(0), pos(0) {};
+	float GetTextWidth_(const std::u8string& text);
+	float GetTextHeight_(const std::u8string& text, float* descender = NULL, int* numLines = NULL);
+	static int GetTextNumLines_(const std::u8string& text);
+	static std::string StripColorCodes_(const std::u8string& text);
 
-		float width;
-		std::string text;
-		bool isSpace;
-		bool isLineBreak;
-		bool isColorCode;
-		unsigned int numSpaces;
-		unsigned int pos; //! position in the original text (needed for remerging colorcodes after wrapping; in printable chars (linebreaks and space don't count))
-	};
-	struct line {
-		line() : width(0.0f), cost(0.0f), forceLineBreak(false) {};
-
-		std::list<word>::iterator start, end;
-		float width;
-		float cost;
-		bool forceLineBreak;
-	};
-
-	word SplitWord(word& w, float wantedWidth, bool smart = true) const;
-
-	void SplitTextInWords(const std::string& text, std::list<word>* words, std::list<colorcode>* colorcodes) const;
-	void RemergeColorCodes(std::list<word>* words, std::list<colorcode>& colorcodes) const;
-
-	void AddEllipsis(std::list<line>& lines, std::list<word>& words, float maxWidth) const;
-
-	void WrapTextConsole(std::list<word>& words, float maxWidth, float maxHeight) const;
-	void WrapTextKnuth(std::list<word>& words, float maxWidth, float maxHeight) const;
+public:
+	typedef std::vector<float4> ColorMap;
 
 private:
-	float fontSize;
-	float fontDescender;
-	float lineHeight;
 	std::string fontPath;
-	std::string fontFamily;
-	std::string fontStyle;
-	int outlineWidth;
-	float outlineWeight;
-	int chars;
-	unsigned int charstart;
-	unsigned int charend;
-
-	unsigned int fontTexture;
-	unsigned int texWidth,texHeight;
 
 	ColorMap stripTextColors;
 	ColorMap stripOutlineColors;
 
-	bool inBeginEnd;
 	CVertexArray* va;
 	CVertexArray* va2;
 
+	bool inBeginEnd;
 	bool autoOutlineColor; //! auto select outline color for in-text-colorcodes
-
 	bool setColor; //! used for backward compability (so you can call glPrint (w/o BeginEnd and no shadow/outline!) and set the color yourself via glColor)
 
 	float4 textColor;
@@ -196,7 +115,27 @@ private:
 	float4 baseOutlineColor;
 };
 
+
 extern CglFont* font;
 extern CglFont* smallFont;
+
+
+// wrappers
+float CglFont::GetTextWidth(const std::string& text)
+{
+	return GetTextWidth_(toustring(text));
+}
+float CglFont::GetTextHeight(const std::string& text, float* descender, int* numLines)
+{
+	return GetTextHeight_(toustring(text), descender, numLines);
+}
+int   CglFont::GetTextNumLines(const std::string& text)
+{
+	return GetTextNumLines_(toustring(text));
+}
+std::string CglFont::StripColorCodes(const std::string& text)
+{
+	return StripColorCodes_(toustring(text));
+}
 
 #endif /* _GLFONT_H */

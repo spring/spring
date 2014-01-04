@@ -3,7 +3,7 @@
 #include "Window.h"
 
 #include "Rendering/GL/myGL.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 
 namespace agui
 {

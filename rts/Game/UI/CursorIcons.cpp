@@ -10,7 +10,7 @@
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Units/UnitDef.h"
@@ -78,7 +78,7 @@ void CCursorIcons::DrawCursors()
 	if (icons.empty() || !cmdColors.UseQueueIcons()) {
 		return;
 	}
-	
+
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
@@ -86,12 +86,12 @@ void CCursorIcons::DrawCursors()
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
- 
+
 	glColor4f(1.0f, 1.0f, 1.0f, cmdColors.QueueIconAlpha());
-	
+
 	int currentCmd = (icons.begin()->cmd + 1); // force the first binding
 	const CMouseCursor* currentCursor = NULL;
-	
+
 	std::set<Icon>::iterator it;
 	for (it = icons.begin(); it != icons.end(); ++it) {
 		const int command = it->cmd;
@@ -109,7 +109,7 @@ void CCursorIcons::DrawCursors()
 			}
 		}
 	}
-	
+
 	DrawTexts(); // use the same transformation
 
 	glMatrixMode(GL_PROJECTION);
@@ -154,7 +154,7 @@ void CCursorIcons::DrawBuilds()
 
 	glEnable(GL_DEPTH_TEST);
 	glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
-	
+
 	for (auto it = buildIcons.begin() ; it != buildIcons.end(); ++it) {
 		CUnitDrawer::DrawBuildingSample(unitDefHandler->GetUnitDefByID(-(it->cmd)), it->team, it->pos, it->facing);
 	}

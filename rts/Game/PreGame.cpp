@@ -25,7 +25,7 @@
 #include "aGui/Gui.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Menu/SelectMenu.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/TeamHandler.h"
