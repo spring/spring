@@ -985,14 +985,14 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					// reactivate sounds and other
 					globalRendering->active = true;
 					if (ISound::IsInitialized()) {
-						sound->Iconified(globalRendering->active);
+						sound->Iconified(!globalRendering->active);
 					}
 				} break;
 				case SDL_WINDOWEVENT_HIDDEN: {
 					// deactivate sounds and other
 					globalRendering->active = false;
 					if (ISound::IsInitialized()) {
-						sound->Iconified(globalRendering->active);
+						sound->Iconified(!globalRendering->active);
 					}
 				} break;
 				case SDL_WINDOWEVENT_FOCUS_GAINED: {
