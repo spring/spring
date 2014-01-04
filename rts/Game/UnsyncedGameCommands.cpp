@@ -1219,6 +1219,9 @@ public:
 			"Moves the camera to show the position of the last message") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		if (game->infoConsole->GetMsgPosCount() == 0)
+			return false;
+
 		// cycle through the positions
 		camHandler->CameraTransition(0.6f);
 		camHandler->GetCurrentController().SetPos(game->infoConsole->GetMsgPos());
