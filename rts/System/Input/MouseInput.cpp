@@ -177,7 +177,7 @@ public:
 		if(!SDL_GetWindowWMInfo(globalRendering->window, &info))
 			return;
 
-		wnd = info.win.window;
+		wnd = info.info.win.window;
 		wsdl::Init(wnd);
 
 		InstallWndCallback();
