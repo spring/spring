@@ -89,7 +89,7 @@ public:
 
 	/**
 	 * Updates our network while the game loads to prevent timeouts.
-	 * Runs until \a loading is false.
+	 * Runs until \a keepUpdating is false.
 	 */
 	void UpdateLoop();
 
@@ -98,7 +98,7 @@ public:
 
 	void Close(bool flush = false);
 
-	void SetLoading(bool b) { loading = b; }
+	void KeepUpdating(bool b) { keepUpdating = b; }
 
 	void SetDemoRecorder(CDemoRecorder* r);
 	CDemoRecorder* GetDemoRecorder() const;
@@ -107,7 +107,7 @@ public:
 
 
 private:
-	volatile bool loading;
+	volatile bool keepUpdating;
 
 	boost::scoped_ptr<netcode::CConnection> serverConn;
 	boost::scoped_ptr<CDemoRecorder> demoRecorder;

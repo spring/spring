@@ -136,7 +136,7 @@ CLoadScreen::~CLoadScreen()
 	delete gameLoadThread; gameLoadThread = NULL;
 
 	if (net)
-		net->SetLoading(false);
+		net->KeepUpdating(false);
 	if (netHeartbeatThread)
 		netHeartbeatThread->join();
 	delete netHeartbeatThread; netHeartbeatThread = NULL;
