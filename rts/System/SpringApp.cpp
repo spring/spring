@@ -10,7 +10,6 @@
 //windows workarrounds
 #undef KeyPress
 #undef KeyRelease
-#undef CreateWindow
 #endif
 
 #include "Rendering/GL/myGL.h"
@@ -294,7 +293,7 @@ bool SpringApp::InitWindow(const char* title)
 	PrintAvailableResolutions();
 	SDL_DisableScreenSaver();
 
-	if (!CreateWindow(title)) {
+	if (!CreateSDLWindow(title)) {
 		LOG_L(L_FATAL, "Failed to set SDL video mode: %s", SDL_GetError());
 		return false;
 	}
@@ -313,7 +312,7 @@ bool SpringApp::InitWindow(const char* title)
  *
  * Sets SDL video mode options/settings
  */
-bool SpringApp::CreateWindow(const char* title)
+bool SpringApp::CreateSDLWindow(const char* title)
 {
 	int sdlflags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
