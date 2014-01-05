@@ -188,10 +188,10 @@ public:
 
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
-		if(!SDL_GetWMInfo(&info))
+		if(!SDL_GetWindowWMInfo(globalRendering->window, &info))
 			return;
 
-		wnd = info.window;
+		wnd = info.win.window;
 		wsdl::Init(wnd);
 
 		InstallWndCallback();
@@ -236,14 +236,14 @@ void IMouseInput::SetPos(int2 pos)
 		/*if (globalRendering->fullScreen) {
 			SDL_SysWMinfo info;
 			SDL_VERSION(&info.version);
-			if(SDL_GetWMInfo(&info)) {
-				info.info.x11.lock_func();
+			if(SDL_GetWindowWMInfo(globalRendering->window, &info)) {
+				//info.info.x11.lock_func();
 					Display* display = info.info.x11.display;
 					Window& window = info.info.x11.window;
 
 					if (display && window != None)
 						XWarpPointer(display, None, window, 0, 0, 0, 0, pos.x, pos.y);
-				info.info.x11.unlock_func();
+				//info.info.x11.unlock_func();
 			}
 		}*/
 	#endif

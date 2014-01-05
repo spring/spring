@@ -24,6 +24,8 @@
 #include "Rendering/GlobalRendering.h"
 #include <stdio.h>
 #include "wsdl.h"
+#include <SDL_events.h>
+#include <SDL_video.h>
 #include <queue>
 #include <algorithm>
 
@@ -248,7 +250,7 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 	if (!globalRendering->fullScreen) {
 		const POINT screen_pt = ScreenFromClient(client_x, client_y);
 
-		static SDL_GrabMode oldMode;
+		static SDL_bool oldMode;
 		static bool saveMode = false;
 		if(state == SDL_PRESSED) {
 			//! grab mouse to ensure we get up events
@@ -256,13 +258,13 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 			{
 				if (!saveMode)
 				{
-					oldMode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
+					oldMode = SDL_GetWindowGrab(globalRendering->window);
 					saveMode = true;
 				}
 
 				POINT pt;
-				GetCursorPos(&pt); //! SDL_WM_GrabInput sometimes moves the cursor, so we have to reset it afterwards
-				SDL_WM_GrabInput(SDL_GRAB_ON);
+				GetCursorPos(&pt); //! SDL_GetWindowGrab sometimes moves the cursor, so we have to reset it afterwards
+				SDL_GetWindowGrab(globalRendering->window, SDL_TRUE);
 				SetCursorPos(pt.x, pt.y);
 			}
 		} else {
@@ -272,8 +274,8 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 				if (saveMode)
 				{
 					POINT pt;
-					GetCursorPos(&pt); //! SDL_WM_GrabInput sometimes moves the cursor, so we have to reset it afterwards
-					SDL_WM_GrabInput(oldMode);
+					GetCursorPos(&pt); //! SDL_GetWindowGrab sometimes moves the cursor, so we have to reset it afterwards
+					SDL_GetWindowGrab(globalRendering->window, oldMode);
 					SetCursorPos(pt.x, pt.y);
 					saveMode = false;
 				}
@@ -300,10 +302,10 @@ LRESULT OnMouseWheel(HWND hWnd, int screen_x, int screen_y, int zDelta, UINT fwK
 	int x, y;
 	if(GetCoords(screen_x, screen_y, x, y))
 	{
-		int button = (zDelta < 0)? SDL_BUTTON_WHEELDOWN : SDL_BUTTON_WHEELUP;
-		// SDL says this sends a down message followed by up.
-		queue_button_event(button, SDL_PRESSED,  x, y);
-		queue_button_event(button, SDL_RELEASED, x, y);
+		SDL_Event ev;
+		ev.type = SDL_MOUSEWHEEL;
+		ev.wheel.y = zDelta;
+		queue_event(ev);
 	}
 
 	return 0;	// handled
