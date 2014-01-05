@@ -413,22 +413,22 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 	// bi-directional vertices
 	for (int z = upperZ; z >= lowerZ; z--) {
 		for (int x = upperX; x >= lowerX; x--) {
-			if (!(blockStates.nodeMask[z * nbrOfBlocksX + x] & PATHOPT_OBSOLETE)) {
-				std::vector<MoveDef*>::iterator mi;
+			if ((blockStates.nodeMask[z * nbrOfBlocksX + x] & PATHOPT_OBSOLETE) != 0)
+				continue;
 
-				for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
-					const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
+			for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
+				const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
-					if (md->udRefCount > 0) {
-						SingleBlock sb;
-							sb.blockPos.x = x;
-							sb.blockPos.y = z;
-							sb.moveDef = md;
+				if (md->udRefCount == 0)
+					continue;
 
-						updatedBlocks.push_back(sb);
-						blockStates.nodeMask[z * nbrOfBlocksX + x] |= PATHOPT_OBSOLETE;
-					}
-				}
+				SingleBlock sb;
+					sb.blockPos.x = x;
+					sb.blockPos.y = z;
+					sb.moveDef = md;
+
+				updatedBlocks.push_back(sb);
+				blockStates.nodeMask[z * nbrOfBlocksX + x] |= PATHOPT_OBSOLETE;
 			}
 		}
 	}
@@ -465,27 +465,35 @@ void CPathEstimator::Update() {
 		updatedBlocks.pop_front();
 
 		// check if it's not already updated
-		if (blockStates.nodeMask[sb.blockPos.y * nbrOfBlocksX + sb.blockPos.x] & PATHOPT_OBSOLETE) {
-			// no need to check for duplicates, cause FindOffset is deterministic
-			// and so even when we compute it multiple times the result will be the same
-			v.push_back(sb);
+		if ((blockStates.nodeMask[sb.blockPos.y * nbrOfBlocksX + sb.blockPos.x] & PATHOPT_OBSOLETE) == 0)
+			continue;
 
-			// always process all movedefs of a square in one rush
-			// needed cause blockStates.nodeMask saves PATHOPT_OBSOLETE just for the square and not the movedefs
-			// if we wouldn't process them in one rush, it could happen that square changes are missed for `lower` movdefs
-			for (auto it = updatedBlocks.begin(), E = updatedBlocks.end(); it != E; ++it) {
-				if ((it->blockPos.x == sb.blockPos.x) && (it->blockPos.y == sb.blockPos.y)) {
-					v.push_back(sb);
-					n++;
-				} else {
-					updatedBlocks.erase(updatedBlocks.begin(), ++it);
-					break;
-				}
+		// no need to check for duplicates, cause FindOffset is deterministic
+		// and so even when we compute it multiple times the result will be the same
+		v.push_back(sb);
+
+		// always process all MoveDefs of a block in one batch
+		//
+		// needed because blockStates.nodeMask saves PATHOPT_OBSOLETE
+		// for the block as a whole, not for every individual MoveDef
+		// (and terrain changes might affect only a subset of MoveDefs)
+		//
+		// if we didn't do this batching, block changes might be missed
+		// for MoveDefs lower in the (pathType) ordering
+		for (auto it = updatedBlocks.begin(); it != updatedBlocks.end(); ++it) {
+			if (it->blockPos == sb.blockPos) {
+				// same block coordinates but MoveDef will be different
+				// from sb --> add it to the FindOffset/CalcVerts batch
+				v.push_back(*it);
+				n++;
+			} else {
+				updatedBlocks.erase(updatedBlocks.begin(), ++it);
+				break;
 			}
-
-			// one stale SingleBlock consumed
-			n++;
 		}
+
+		// one stale SingleBlock consumed
+		n++;
 	}
 
 	blockUpdatePenalty += std::max(0, int(v.size()) - int(blocksToUpdate));
@@ -519,10 +527,7 @@ void CPathEstimator::Update() {
 			const unsigned int blockN = blockZ * nbrOfBlocksX + blockX;
 
 			const MoveDef* currBlockMD = sb.moveDef;
-			const MoveDef* nextBlockMD = NULL;
-			if ((n + 1) < v.size()) {
-				nextBlockMD = v[n + 1].moveDef;
-			}
+			const MoveDef* nextBlockMD = ((n + 1) < v.size())? v[n + 1].moveDef: NULL;
 
 			CalculateVertices(*currBlockMD, blockX, blockZ);
 
