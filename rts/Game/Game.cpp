@@ -820,11 +820,19 @@ void CGame::LoadLua()
 
 void CGame::LoadFinalize()
 {
-	loadscreen->SetLoadMessage("Initializing PathCache");
 	eventHandler.GamePreload();
-	pathManager->UpdateFull(); // mapfeatures are not in written pathcaches, so we need to repath those & other stuff done by Lua
 
-	loadscreen->SetLoadMessage("Finalizing");
+	// features loaded from the map (and any terrain changes
+	// made by Lua while loading) will have generated a queue
+	// of pending PFS updates that should be consumed so they
+	// do not block regular updates from being processed
+	//
+	// NOTE:
+	//   can stall the loading thread for *minutes* (worst-case)
+	//   better (but very hard) would be to create PFS after Lua
+	loadscreen->SetLoadMessage("Finalizing PathCache");
+	pathManager->UpdateFull();
+	loadscreen->SetLoadMessage("Finalizing Complete");
 
 	if (CBenchmark::enabled) {
 		static CBenchmark benchmark;
