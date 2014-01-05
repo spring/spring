@@ -6,6 +6,12 @@
 #include <string>
 #include <boost/cstdint.hpp>
 
+#ifdef _WIN32
+// workaround:
+// error: macro "CreateWindowA" requires 11 arguments, but only 1 given
+#undef CreateWindow
+#endif
+
 class CmdLineParams;
 class CGameController;
 union SDL_Event;
