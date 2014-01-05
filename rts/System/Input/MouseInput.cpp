@@ -91,7 +91,7 @@ bool IMouseInput::HandleSDLMouseEvent(const SDL_Event& event)
 
 //////////////////////////////////////////////////////////////////////
 
-#ifdef WIN32
+#if defined(WIN32) && !defined (HEADLESS)
 
 class CWin32MouseInput : public IMouseInput
 {
@@ -252,7 +252,7 @@ void IMouseInput::SetPos(int2 pos)
 IMouseInput* IMouseInput::GetInstance()
 {
 	if (mouseInput == NULL) {
-#ifdef WIN32
+#if defined(WIN32) && !defined(HEADLESS)
 		mouseInput = new CWin32MouseInput;
 #else
 		mouseInput = new IMouseInput;
