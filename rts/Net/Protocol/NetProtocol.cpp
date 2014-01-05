@@ -148,7 +148,7 @@ void CNetProtocol::UpdateLoop()
 
 	while (keepUpdating) {
 		Update();
-		spring_msecs(400).sleep();
+		spring_msecs(100).sleep();
 	}
 }
 
