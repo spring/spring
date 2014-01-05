@@ -435,7 +435,7 @@ void SpringApp::GetDisplayGeometry()
 	// happens on linux too!
   #ifdef __APPLE__
 	auto state = SDL_GetWindowFlags(window);
-  #elifdef WIN32
+  #elif defined(WIN32)
 	int state = 0;
 	WINDOWPLACEMENT wp;
 	wp.length = sizeof(WINDOWPLACEMENT);
