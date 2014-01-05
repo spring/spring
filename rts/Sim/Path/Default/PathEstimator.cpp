@@ -468,8 +468,8 @@ void CPathEstimator::Update() {
 		if ((blockStates.nodeMask[sb.blockPos.y * nbrOfBlocksX + sb.blockPos.x] & PATHOPT_OBSOLETE) == 0)
 			continue;
 
-		// no need to check for duplicates, cause FindOffset is deterministic
-		// and so even when we compute it multiple times the result will be the same
+		// no need to check for duplicates, because FindOffset is deterministic
+		// so even when we compute it multiple times the result will be the same
 		v.push_back(sb);
 
 		// always process all MoveDefs of a block in one batch
