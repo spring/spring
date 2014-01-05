@@ -28,8 +28,6 @@
 
 #include <windows.h>
 
-#include "SDL_events.h"
-
 namespace wsdl
 {
 void ResetMouseButtons();
