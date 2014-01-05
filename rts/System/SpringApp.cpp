@@ -6,9 +6,12 @@
 
 #include <iostream>
 
+#ifdef _WIN32
+//windows workarrounds
 #undef KeyPress
 #undef KeyRelease
 #undef CreateWindow
+#endif
 
 #include "Rendering/GL/myGL.h"
 #include "System/SpringApp.h"
