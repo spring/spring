@@ -6,11 +6,6 @@
 #include <string>
 #include <boost/cstdint.hpp>
 
-#ifdef _WIN32
-// workaround:
-// error: macro "CreateWindowA" requires 11 arguments, but only 1 given
-#undef CreateWindow
-#endif
 
 class CmdLineParams;
 class CGameController;
@@ -37,7 +32,7 @@ protected:
 	bool InitWindow(const char* title);             //!< Initializes window
 	static void InitOpenGL();                       //!< Initializes OpenGL
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
-	static bool CreateWindow(const char* title);    //!< Creates a SDL window
+	static bool CreateSDLWindow(const char* title);    //!< Creates a SDL window
 	int Update();                                   //!< Run simulation and draw
 	bool UpdateSim(CGameController *ac);
 
