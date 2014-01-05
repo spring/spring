@@ -23,7 +23,7 @@
 
 CONFIG(int, SourcePort).defaultValue(0);
 
-CNetProtocol::CNetProtocol() : loading(false)
+CNetProtocol::CNetProtocol() : keepUpdating(false)
 {
 	demoRecorder.reset(NULL);
 }
@@ -144,8 +144,9 @@ __FORCE_ALIGN_STACK__
 void CNetProtocol::UpdateLoop()
 {
 	Threading::SetThreadName("heartbeat");
-	loading = true;
-	while (loading) {
+	keepUpdating = true;
+
+	while (keepUpdating) {
 		Update();
 		spring_msecs(400).sleep();
 	}
