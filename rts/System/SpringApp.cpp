@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-#ifdef _WIN32
+#ifdef WIN32
 //windows workarrounds
 #undef KeyPress
 #undef KeyRelease
@@ -35,6 +35,7 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GLContext.h"
 #include "Rendering/VerticalSync.h"
+#include "Rendering/GL/FBO.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/DefinitionTag.h"
@@ -74,6 +75,7 @@
 
 #ifdef WIN32
 	#include "System/Platform/Win/WinVersion.h"
+	#include "System/Platform/Win/wsdl.h"
 #elif defined(__APPLE__)
 #elif defined(HEADLESS)
 #else
@@ -199,7 +201,7 @@ bool SpringApp::Initialize()
 	}
 #endif
 
-#if defined(_WIN32) && defined(__GNUC__)
+#if defined(WIN32) && defined(__GNUC__)
 	// load QTCreator's gdb helper dll; a variant of this should also work on other OSes
 	{
 		// don't display a dialog box if gdb helpers aren't found
@@ -989,12 +991,24 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					if (ISound::IsInitialized()) {
 						sound->Iconified(!globalRendering->active);
 					}
+				#ifdef WIN32
+					wsdl::ResetMouseButtons();
+				#endif
+					if (globalRendering->fullScreen) {
+						FBO::GLContextReinit();
+					}
 				} break;
 				case SDL_WINDOWEVENT_HIDDEN: {
 					// deactivate sounds and other
 					globalRendering->active = false;
 					if (ISound::IsInitialized()) {
 						sound->Iconified(!globalRendering->active);
+					}
+				#ifdef WIN32
+					wsdl::ResetMouseButtons();
+				#endif
+					if (globalRendering->fullScreen) {
+						FBO::GLContextLost();
 					}
 				} break;
 				case SDL_WINDOWEVENT_FOCUS_GAINED: {

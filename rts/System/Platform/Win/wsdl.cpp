@@ -45,76 +45,6 @@ static void queue_event(SDL_Event& ev)
 	::SDL_PushEvent(&ev);
 }
 
-//----------------------------------------------------------------------------
-// app activation
-
-enum SdlActivationType { LOSE = 0, GAIN = 1 };
-
-static inline void queue_active_event(SdlActivationType type, size_t changed_app_state)
-{
-	// SDL says this event is not generated when the window is created,
-	// but skipping the first event may confuse things.
-
-	SDL_Event ev;
-	ev.type = SDL_ACTIVEEVENT;
-	ev.active.state = (uint8_t)changed_app_state;
-	ev.active.gain  = (uint8_t)((type == GAIN)? 1 : 0);
-	queue_event(ev);
-}
-
-
-// SDL_APP* bitflags indicating whether we are active.
-// note: responsibility for yielding lies with SDL apps -
-// they control the main loop.
-static Uint8 app_state;
-
-void active_change_state(SdlActivationType type, Uint8 changed_app_state)
-{
-	Uint8 old_app_state = app_state;
-
-	if(type == GAIN)
-		app_state = Uint8(app_state | changed_app_state);
-	else
-		app_state = Uint8(app_state & ~changed_app_state);
-
-	// generate an event - but only if the given state flags actually changed.
-	if((old_app_state & changed_app_state) != (app_state & changed_app_state))
-		queue_active_event(type, changed_app_state);
-}
-
-LRESULT OnActivate(HWND hWnd, UINT state, HWND hWndActDeact, BOOL fMinimized)
-{
-	SdlActivationType type;
-	Uint8 changed_app_state;
-
-	// went active and not minimized
-	if(state != WA_INACTIVE && !fMinimized)
-	{
-		type = GAIN;
-		changed_app_state = SDL_APPINPUTFOCUS|SDL_APPACTIVE;
-
-	}
-	// deactivated (Alt+Tab out) or minimized
-	else
-	{
-		type = LOSE;
-		changed_app_state = SDL_APPINPUTFOCUS;
-		if(fMinimized)
-			changed_app_state |= SDL_APPACTIVE;
-	}
-
-	active_change_state(type, changed_app_state);
-	return 0;
-}
-
-
-Uint8 SDL_GetAppState()
-{
-	Uint8 sdl_app_state = ::SDL_GetAppState();
-	sdl_app_state &= ~(SDL_APPACTIVE | SDL_APPINPUTFOCUS); // we handle those ourself
-	return sdl_app_state | app_state;
-}
-
 
 //----------------------------------------------------------------------------
 // mouse
@@ -264,7 +194,7 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 
 				POINT pt;
 				GetCursorPos(&pt); //! SDL_GetWindowGrab sometimes moves the cursor, so we have to reset it afterwards
-				SDL_GetWindowGrab(globalRendering->window, SDL_TRUE);
+				SDL_SetWindowGrab(globalRendering->window, SDL_TRUE);
 				SetCursorPos(pt.x, pt.y);
 			}
 		} else {
@@ -275,7 +205,7 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 				{
 					POINT pt;
 					GetCursorPos(&pt); //! SDL_GetWindowGrab sometimes moves the cursor, so we have to reset it afterwards
-					SDL_GetWindowGrab(globalRendering->window, oldMode);
+					SDL_SetWindowGrab(globalRendering->window, oldMode);
 					SetCursorPos(pt.x, pt.y);
 					saveMode = false;
 				}
@@ -308,7 +238,7 @@ LRESULT OnMouseWheel(HWND hWnd, int screen_x, int screen_y, int zDelta, UINT fwK
 		queue_event(ev);
 	}
 
-	return 0;	// handled
+	return 0;
 }
 
 
