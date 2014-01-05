@@ -74,6 +74,8 @@
 #include "System/Sync/FPUCheck.h"
 
 #ifdef WIN32
+	#include <winuser.h> //GetWindowPlacement
+	#include <SDL_syswm.h>
 	#include "System/Platform/Win/WinVersion.h"
 	#include "System/Platform/Win/wsdl.h"
 #elif defined(__APPLE__)
@@ -439,7 +441,12 @@ void SpringApp::GetDisplayGeometry()
 	int state = 0;
 	WINDOWPLACEMENT wp;
 	wp.length = sizeof(WINDOWPLACEMENT);
-	if (GetWindowPlacement(info.window, &wp)) {
+
+	struct SDL_SysWMinfo info;
+	SDL_VERSION(&info.version);
+	SDL_GetWindowWMInfo(globalRendering->window, &info);
+
+	if (GetWindowPlacement(info.info.win.window, &wp)) {
 		if (wp.showCmd == SW_SHOWMAXIMIZED)
 			state = SDL_WINDOW_MAXIMIZED;
 		if (wp.showCmd == SW_SHOWMINIMIZED)
