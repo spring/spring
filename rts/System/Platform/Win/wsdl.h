@@ -33,7 +33,6 @@ namespace wsdl
 void ResetMouseButtons();
 void Init(HWND hWnd); // set on startup
 void SDL_WarpMouse(int x, int y);
-LRESULT OnActivate(HWND hWnd, UINT state, HWND hWndActDeact, BOOL fMinimized);
 LRESULT OnMouseMotion(HWND hWnd, int x, int y, UINT flags);
 LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT flags);
 LRESULT OnMouseWheel(HWND hWnd, int screen_x, int screen_y, int zDelta, UINT fwKeys);

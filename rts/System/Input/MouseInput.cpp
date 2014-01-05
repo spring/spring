@@ -149,20 +149,6 @@ public:
 					}
 				}
 			} break;
-
-			case WM_ACTIVATE:
-			{
-				wsdl::ResetMouseButtons();
-				// wsdl::OnActivate(wnd, LOWORD(wParam), NULL, HIWORD(lParam));
-				// FIXME: move to SpringApp somehow and use GLContext.h instead!
-				if (globalRendering->fullScreen) {
-					if (LOWORD(wParam) == WA_INACTIVE) {
-						FBO::GLContextLost();
-					} else if (LOWORD(wParam) == WA_ACTIVE) {
-						FBO::GLContextReinit();
-					}
-				}
-			} break;
 		}
 		return CallWindowProc((WNDPROC)inst->sdl_wndproc, wnd, msg, wParam, lParam);
 	}
