@@ -1254,28 +1254,33 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 		}
 	}
 
+	// check maxHeightDif constraint (structures only)
+	//
 	// if we are capable of floating, only test local
 	// height difference IF terrain is above sea-level
-	if (!unitDef->floatOnWater || groundHeight > 0.0f) {
-		const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
-		const float* curHeightMap = readMap->GetCornerHeightMapSynced();
+	if (unitDef->IsImmobileUnit()) {
+		if (!unitDef->floatOnWater || groundHeight > 0.0f) {
+			const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
+			const float* curHeightMap = readMap->GetCornerHeightMapSynced();
 
-		#ifdef USE_UNSYNCED_HEIGHTMAP
-		if (!synced) {
-			orgHeightMap = readMap->GetCornerHeightMapUnsynced();
-			curHeightMap = readMap->GetCornerHeightMapUnsynced();
+			#ifdef USE_UNSYNCED_HEIGHTMAP
+			if (!synced) {
+				orgHeightMap = readMap->GetCornerHeightMapUnsynced();
+				curHeightMap = readMap->GetCornerHeightMapUnsynced();
+			}
+			#endif
+
+			const int sqx = pos.x / SQUARE_SIZE;
+			const int sqz = pos.z / SQUARE_SIZE;
+
+			// FIXME: we do not want to use maxHeightDif for a MOBILE unit!
+			const float orgHgt = orgHeightMap[sqz * gs->mapxp1 + sqx];
+			const float curHgt = curHeightMap[sqz * gs->mapxp1 + sqx];
+			const float difHgt = unitDef->maxHeightDif;
+
+			if (pos.y > std::max(orgHgt + difHgt, curHgt + difHgt)) { return BUILDSQUARE_BLOCKED; }
+			if (pos.y < std::min(orgHgt - difHgt, curHgt - difHgt)) { return BUILDSQUARE_BLOCKED; }
 		}
-		#endif
-
-		const int sqx = pos.x / SQUARE_SIZE;
-		const int sqz = pos.z / SQUARE_SIZE;
-
-		const float orgHgt = orgHeightMap[sqz * gs->mapxp1 + sqx];
-		const float curHgt = curHeightMap[sqz * gs->mapxp1 + sqx];
-		const float difHgt = unitDef->maxHeightDif;
-
-		if (pos.y > std::max(orgHgt + difHgt, curHgt + difHgt)) { return BUILDSQUARE_BLOCKED; }
-		if (pos.y < std::min(orgHgt - difHgt, curHgt - difHgt)) { return BUILDSQUARE_BLOCKED; }
 	}
 
 	if (!unitDef->CheckTerrainConstraints(moveDef, groundHeight))
