@@ -1178,17 +1178,14 @@ void CUnit::DoDamage(
 		const float baseHealth = (modInfo.paralyzeOnMaxHealth? maxHealth: health);
 		const float paralysisDecayRate = baseHealth * CUnit::empDecline;
 		const float sumParalysisDamage = paralysisDecayRate * damages.paralyzeDamageTime;
-		const float maxParalysisDamage = baseHealth + sumParalysisDamage - paralyzeDamage;
+		const float maxParalysisDamage = std::max(baseHealth + sumParalysisDamage - paralyzeDamage, 0.0f);
 
 		if (baseDamage > 0.0f) {
 			// clamp the dealt paralysis-damage to [0, maxParalysisDamage]
 			baseDamage = Clamp(baseDamage, 0.0f, maxParalysisDamage);
 
-			if (IsStunned()) {
-				// no attacker gains experience from a stunned target
-				experienceMod = 0.0f;
-			}
-
+			// no attacker gains experience from a stunned target
+			experienceMod *= (1 - IsStunned());
 			// increase the current level of paralysis-damage
 			paralyzeDamage += baseDamage;
 
@@ -1196,11 +1193,8 @@ void CUnit::DoDamage(
 				SetStunned(true);
 			}
 		} else {
-			if (paralyzeDamage <= 0.0f) {
-				// no experience from healing a non-stunned target
-				experienceMod = 0.0f;
-			}
-
+			// no experience from healing a non-stunned target
+			experienceMod *= (paralyzeDamage > 0.0f);
 			// decrease ("heal") the current level of paralysis-damage
 			paralyzeDamage += baseDamage;
 			paralyzeDamage = std::max(paralyzeDamage, 0.0f);
