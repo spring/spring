@@ -1561,11 +1561,13 @@ void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cm
 }
 
 
-bool CCommandAI::HasBuildCommand() const {
+bool CCommandAI::HasCommand(int cmdID) const {
 	if (commandQue.empty())
 		return false;
+	if (cmdID < 0)
+		return ((commandQue.front()).IsBuildCommand());
 
-	return ((commandQue.front()).IsBuildCommand());
+	return ((commandQue.front()).GetID() == cmdID);
 }
 
 bool CCommandAI::HasMoreMoveCommands() const

@@ -58,7 +58,7 @@ public:
 	 */
 	virtual void StopAttackingAllyTeam(int ally);
 
-	bool HasBuildCommand() const;
+	bool HasCommand(int cmdID) const;
 	bool HasMoreMoveCommands() const;
 
 	int CancelCommands(const Command& c, CCommandQueue& queue, bool& first);
