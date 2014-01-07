@@ -830,9 +830,18 @@ void CGame::LoadFinalize()
 	// NOTE:
 	//   can stall the loading thread for *minutes* (worst-case)
 	//   better (but very hard) would be to create PFS after Lua
-	loadscreen->SetLoadMessage("Finalizing PathCache");
-	pathManager->UpdateFull();
-	loadscreen->SetLoadMessage("Finalizing Complete");
+	{
+		loadscreen->SetLoadMessage("[" + std::string(__FUNCTION__) + "] finalizing PathCache");
+
+		const spring_time t0 = spring_gettime();
+		pathManager->UpdateFull();
+		const spring_time t1 = spring_gettime();
+
+		loadscreen->SetLoadMessage(
+			"[" + std::string(__FUNCTION__) + "] finalized PathCache " +
+			"(" + IntToString((t1 - t0).toMilliSecsi(), "%ld") + "ms)"
+		);
+	}
 
 	if (CBenchmark::enabled) {
 		static CBenchmark benchmark;
