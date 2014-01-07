@@ -34,6 +34,7 @@ IF    (FONTCONFIG_FOUND)
 	ENDIF (PREFER_STATIC_LIBS)
 ENDIF (FONTCONFIG_FOUND)
 
+FindFreetypeHack() # hack to find different named freetype.dll
 FIND_PACKAGE_STATIC(Freetype REQUIRED)
 foreach(f ${FREETYPE_INCLUDE_DIRS})
 	LIST(APPEND engineIncludes ${f})
