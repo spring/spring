@@ -329,6 +329,7 @@ bool SpringApp::CreateSDLWindow(const char* title)
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
+	// Create GL debug context when wanted (allows further GL verbose informations, but runs slower)
 	if (configHandler->GetBool("ReportGLErrors")) {
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 	}
@@ -366,12 +367,11 @@ bool SpringApp::CreateSDLWindow(const char* title)
 		case CGlobalRendering::WINSTATE_MINIMIZED: sdlflags |= SDL_WINDOW_MINIMIZED; break;
 	}
 
+	// Create Window
 	window = SDL_CreateWindow(title,
-		globalRendering->winPosX,
-		globalRendering->winPosY,
+		globalRendering->winPosX, globalRendering->winPosY,
 		globalRendering->viewSizeX, globalRendering->viewSizeY,
 		sdlflags);
-
 	if (!window) {
 		char buf[1024];
 		SNPRINTF(buf, sizeof(buf), "Could not set video mode:\n%s", SDL_GetError());
@@ -379,18 +379,10 @@ bool SpringApp::CreateSDLWindow(const char* title)
 		return false;
 	}
 
+	// Create GL Context
 	SDL_SetWindowMinimumSize(window, minViewSizeX, minViewSizeY);
 	sdlGlCtx = SDL_GL_CreateContext(window);
 	globalRendering->window = window;
-
-	int bits;
-	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
-
-	if (globalRendering->fullScreen) {
-		LOG("[%s] video mode set to %ix%i/%ibit", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
-	} else {
-		LOG("[%s] video mode set to %ix%i/%ibit (windowed)", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
-	}
 
 #ifdef STREFLOP_H
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
@@ -426,10 +418,7 @@ void SpringApp::GetDisplayGeometry()
 	globalRendering->winSizeX = xsize;
 	globalRendering->winSizeY = ysize;
 
-	int xp, yp;
-	SDL_GetWindowPosition(window, &xp, &yp);
-	globalRendering->winPosX = xp;
-	globalRendering->winPosY = yp;
+	SDL_GetWindowPosition(window, &globalRendering->winPosX, &globalRendering->winPosY);
 
 	//FIXME SDL2 is crap ...
 	// Reading window state fails it is changed via the window manager, like clicking on the titlebar (2013)
@@ -510,6 +499,12 @@ void SpringApp::SetupViewportGeometry()
  */
 void SpringApp::InitOpenGL()
 {
+	// Print final mode
+	SDL_DisplayMode dmode;
+	SDL_GetWindowDisplayMode(window, &dmode);
+	LOG("[%s] video mode set to %ix%i/%ibit %s", __FUNCTION__, dmode.w, dmode.h, SDL_BITSPERPIXEL(dmode.format), globalRendering->fullScreen ? "(windowed)" : "");
+
+	// reinit vsync
 	VSync.Init();
 
 	// check if FSAA init worked fine
@@ -996,7 +991,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					// reactivate sounds and other
 					globalRendering->active = true;
 					if (ISound::IsInitialized()) {
-						sound->Iconified(!globalRendering->active);
+						sound->Iconified(false);
 					}
 				#ifdef WIN32
 					wsdl::ResetMouseButtons();
@@ -1009,7 +1004,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					// deactivate sounds and other
 					globalRendering->active = false;
 					if (ISound::IsInitialized()) {
-						sound->Iconified(!globalRendering->active);
+						sound->Iconified(true);
 					}
 				#ifdef WIN32
 					wsdl::ResetMouseButtons();
