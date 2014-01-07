@@ -17,6 +17,8 @@ public:
 	IMouseInput ();
 	virtual ~IMouseInput() {}
 
+	virtual void InstallWndCallback() {}
+
 	virtual int2 GetPos() { return mousepos; }
 	void SetPos(int2 pos);
 
