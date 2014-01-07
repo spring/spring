@@ -377,9 +377,6 @@ public:
 	/// what categories the unit is part of (bitfield)
 	unsigned int category;
 
-	/// used to see if something has operated on the unit before
-	int tempNum;
-
 	int mapSquare;
 
 	int losRadius;
