@@ -43,6 +43,8 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
 
+	CR_MEMBER(tempNum),
+
 	CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
 	CR_MEMBER(collisionVolume),
@@ -95,6 +97,8 @@ CSolidObject::CSolidObject():
 
 	team(0),
 	allyteam(0),
+
+	tempNum(0),
 
 	objectDef(NULL),
 	moveDef(NULL),

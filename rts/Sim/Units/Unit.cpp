@@ -157,7 +157,6 @@ CUnit::CUnit() : CSolidObject(),
 	lastMuzzleFlameSize(0.0f),
 	armorType(0),
 	category(0),
-	tempNum(0),
 	mapSquare(-1),
 	losRadius(0),
 	airLosRadius(0),
@@ -2361,8 +2360,6 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(quads),
 	CR_MEMBER(los),
-
-	CR_MEMBER(tempNum),
 
 	CR_MEMBER(mapSquare),
 

@@ -258,6 +258,8 @@ public:
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of
 
+	int tempNum;                                ///< used to check if object has already been processed (in QuadField queries, etc)
+
 	const SolidObjectDef* objectDef;            ///< points to a UnitDef or to a FeatureDef instance
 
 	MoveDef* moveDef;                           ///< mobility information about this object (if NULL, object is either static or aircraft)
