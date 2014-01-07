@@ -77,7 +77,6 @@
 	#include <winuser.h> //GetWindowPlacement
 	#include <SDL_syswm.h>
 	#include "System/Platform/Win/WinVersion.h"
-	#include "System/Platform/Win/wsdl.h"
 #elif defined(__APPLE__)
 #elif defined(HEADLESS)
 #else
@@ -570,7 +569,7 @@ void SpringApp::InitOpenGL()
 	// Print Final Mode (call after SetupViewportGeometry, which updates viewSizeX/Y)
 	SDL_DisplayMode dmode;
 	SDL_GetWindowDisplayMode(window, &dmode);
-	LOG_L(L_ERROR, "[%s] video mode set to %ix%i:%ibit @%iHz %s", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? "" : "(windowed)");
+	LOG("[%s] video mode set to %ix%i:%ibit @%iHz %s", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? "" : "(windowed)");
 }
 
 
@@ -997,9 +996,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					if (ISound::IsInitialized()) {
 						sound->Iconified(false);
 					}
-				#ifdef WIN32
-					//wsdl::ResetMouseButtons();
-				#endif
 					if (globalRendering->fullScreen) {
 						FBO::GLContextReinit();
 					}
@@ -1010,9 +1006,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					if (ISound::IsInitialized()) {
 						sound->Iconified(true);
 					}
-				#ifdef WIN32
-					//wsdl::ResetMouseButtons();
-				#endif
 					if (globalRendering->fullScreen) {
 						FBO::GLContextLost();
 					}

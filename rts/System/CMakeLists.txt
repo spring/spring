@@ -126,7 +126,6 @@ SET(sources_engine_System_Platform_Windows
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/MessageBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/seh.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/WinVersion.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/wsdl.cpp"
 	)
 
 ### only use the target platform related directory

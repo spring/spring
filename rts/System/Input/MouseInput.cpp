@@ -30,14 +30,7 @@
 
 #include <boost/bind.hpp>
 #include <SDL_events.h>
-#ifdef _WIN32
-	#include <SDL_syswm.h>
-	#include "System/Platform/Win/wsdl.h"
-#endif
-#if defined(_X11) && !defined(HEADLESS)
-	#include <SDL_syswm.h>
-	#include <X11/Xlib.h>
-#endif
+#include <SDL_syswm.h>
 
 
 IMouseInput* mouseInput = NULL;
@@ -104,41 +97,7 @@ public:
 
 	static LRESULT CALLBACK SpringWndProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
-		/*if (mouse) {
-			switch (msg) {
-				case WM_XBUTTONDOWN:
-				{
-					if ((short)LOWORD(wParam) & MK_XBUTTON1)
-						mouse->MousePress((short)LOWORD(lParam), (short)HIWORD(lParam), 4);
-					if ((short)LOWORD(wParam) & MK_XBUTTON2)
-						mouse->MousePress((short)LOWORD(lParam), (short)HIWORD(lParam), 5);
-				} return 0;
-				case WM_XBUTTONUP:
-				{
-					if ((short)LOWORD(wParam) & MK_XBUTTON1)
-						mouse->MouseRelease((short)LOWORD(lParam), (short)HIWORD(lParam), 4);
-					if ((short)LOWORD(wParam) & MK_XBUTTON2)
-						mouse->MouseRelease((short)LOWORD(lParam), (short)HIWORD(lParam), 5);
-				} return 0;
-			}
-		}*/
-
 		switch (msg) {
-			/*case WM_MOUSEMOVE:
-				return wsdl::OnMouseMotion(wnd, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (UINT)wParam);
-
-			case WM_MOUSEWHEEL:
-				return wsdl::OnMouseWheel(wnd, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (int)(short)HIWORD(wParam), (UINT)(short)LOWORD(wParam));
-
-			//! can't use message crackers: they do not provide for passing uMsg
-			case WM_LBUTTONDOWN:
-			case WM_LBUTTONUP:
-			case WM_RBUTTONDOWN:
-			case WM_RBUTTONUP:
-			case WM_MBUTTONDOWN:
-			case WM_MBUTTONUP:
-				return wsdl::OnMouseButton(wnd, msg, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (UINT)wParam);*/
-
 			case WM_SETCURSOR:
 			{
 				if (inst->hCursor!=NULL) {
@@ -160,7 +119,14 @@ public:
 
 	void InstallWndCallback()
 	{
-		auto cur_wndproc = GetWindowLongPtr(wnd, GWLP_WNDPROC);
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+		if(!SDL_GetWindowWMInfo(globalRendering->window, &info))
+			return;
+
+		wnd = info.info.win.window;
+
+		LONG_PTR cur_wndproc = GetWindowLongPtr(wnd, GWLP_WNDPROC);
 		if (cur_wndproc != (LONG_PTR)SpringWndProc) {
 			sdl_wndproc = GetWindowLongPtr(wnd, GWLP_WNDPROC);
 			SetWindowLongPtr(wnd,GWLP_WNDPROC,(LONG_PTR)SpringWndProc);
@@ -170,28 +136,18 @@ public:
 	CWin32MouseInput()
 	{
 		inst = this;
-
 		hCursor = NULL;
-
 		sdl_wndproc = 0;
-
-		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-		if(!SDL_GetWindowWMInfo(globalRendering->window, &info))
-			return;
-
-		wnd = info.info.win.window;
-		//wsdl::Init(wnd);
-
+		wnd = 0;
 		InstallWndCallback();
 	}
 	~CWin32MouseInput()
 	{
-		//! reinstall the SDL window proc
+		// reinstall the SDL window proc
 		SetWindowLongPtr(wnd, GWLP_WNDPROC, sdl_wndproc);
 	}
 };
-CWin32MouseInput* CWin32MouseInput::inst = 0;
+CWin32MouseInput* CWin32MouseInput::inst = NULL;
 #endif
 
 void IMouseInput::SetPos(int2 pos)
