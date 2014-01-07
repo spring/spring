@@ -160,8 +160,11 @@ public:
 
 	void InstallWndCallback()
 	{
-		sdl_wndproc = GetWindowLongPtr(wnd, GWLP_WNDPROC);
-		SetWindowLongPtr(wnd,GWLP_WNDPROC,(LONG_PTR)SpringWndProc);
+		auto cur_wndproc = GetWindowLongPtr(wnd, GWLP_WNDPROC);
+		if (cur_wndproc != (LONG_PTR)SpringWndProc) {
+			sdl_wndproc = GetWindowLongPtr(wnd, GWLP_WNDPROC);
+			SetWindowLongPtr(wnd,GWLP_WNDPROC,(LONG_PTR)SpringWndProc);
+		}
 	}
 
 	CWin32MouseInput()

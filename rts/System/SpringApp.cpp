@@ -986,6 +986,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 					InitOpenGL();
 					activeController->ResizeEvent();
+					mouseInput->InstallWndCallback();
 				} break;
 				case SDL_WINDOWEVENT_SHOWN: {
 					// reactivate sounds and other
