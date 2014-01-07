@@ -502,7 +502,7 @@ void SpringApp::InitOpenGL()
 	// Print final mode
 	SDL_DisplayMode dmode;
 	SDL_GetWindowDisplayMode(window, &dmode);
-	LOG("[%s] video mode set to %ix%i:%ibit @%iHz %s", __FUNCTION__, dmode.w, dmode.h, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? "(windowed)" : "");
+	LOG("[%s] video mode set to %ix%i:%ibit @%iHz %s", __FUNCTION__, dmode.w, dmode.h, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? "" : "(windowed)");
 
 	// reinit vsync
 	VSync.Init();
