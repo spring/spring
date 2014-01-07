@@ -998,7 +998,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 						sound->Iconified(false);
 					}
 				#ifdef WIN32
-					wsdl::ResetMouseButtons();
+					//wsdl::ResetMouseButtons();
 				#endif
 					if (globalRendering->fullScreen) {
 						FBO::GLContextReinit();
@@ -1011,7 +1011,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 						sound->Iconified(true);
 					}
 				#ifdef WIN32
-					wsdl::ResetMouseButtons();
+					//wsdl::ResetMouseButtons();
 				#endif
 					if (globalRendering->fullScreen) {
 						FBO::GLContextLost();

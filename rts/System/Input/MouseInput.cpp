@@ -104,7 +104,7 @@ public:
 
 	static LRESULT CALLBACK SpringWndProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
-		if (mouse) {
+		/*if (mouse) {
 			switch (msg) {
 				case WM_XBUTTONDOWN:
 				{
@@ -121,10 +121,10 @@ public:
 						mouse->MouseRelease((short)LOWORD(lParam), (short)HIWORD(lParam), 5);
 				} return 0;
 			}
-		}
+		}*/
 
 		switch (msg) {
-			case WM_MOUSEMOVE:
+			/*case WM_MOUSEMOVE:
 				return wsdl::OnMouseMotion(wnd, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (UINT)wParam);
 
 			case WM_MOUSEWHEEL:
@@ -137,7 +137,7 @@ public:
 			case WM_RBUTTONUP:
 			case WM_MBUTTONDOWN:
 			case WM_MBUTTONUP:
-				return wsdl::OnMouseButton(wnd, msg, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (UINT)wParam);
+				return wsdl::OnMouseButton(wnd, msg, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (UINT)wParam);*/
 
 			case WM_SETCURSOR:
 			{
@@ -181,7 +181,7 @@ public:
 			return;
 
 		wnd = info.info.win.window;
-		wsdl::Init(wnd);
+		//wsdl::Init(wnd);
 
 		InstallWndCallback();
 	}
