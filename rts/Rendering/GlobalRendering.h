@@ -24,7 +24,6 @@ public:
 	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
 	void SetViewSize(int vsx, int vsy);
 	void SetDualScreenParams();
-	void UpdateWindowGeometry();
 	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
 
