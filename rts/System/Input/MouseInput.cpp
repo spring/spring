@@ -200,47 +200,18 @@ void IMouseInput::SetPos(int2 pos)
 		return;
 	}
 
-	mousepos = pos;
-	int2 curpos;
-#ifndef WIN32 // seems SDL_GetMouseState isn't always updated on windows when cursor is hidden? (2012 - untested)
-	SDL_GetMouseState(&curpos.x, &curpos.y);
-	if (pos.x == curpos.x && pos.y == curpos.y) {
+	if (pos.x == mousepos.x && pos.y == mousepos.y) {
 		// calling SDL_WarpMouse at 300fps eats ~5% cpu usage, so only update when needed
 		return;
 	}
-#endif
 
-#ifdef WIN32
-	wsdl::SDL_WarpMouse(pos.x, pos.y);
-#else
+	mousepos = pos;
+
 	SDL_WarpMouseInWindow(globalRendering->window, pos.x, pos.y);
-
-	#if defined(_X11) && !defined(HEADLESS)
-		// SDL Workaround!
-		// SDL_WarpMouse has a bug on Linux in fullscreen mode & SDL_ShowCursor(SDL_DISABLE).
-		// It just won't move the real X11 cursor pos (instead it seems to update some SDL internal vars only).
-		// But we use SDL_ShowCursor for MiddleClickScroll and want that the cursor spawns
-		// at screen center when calling SDL_ShowCursor(SDL_ENABLE), so we call X11 here to
-		// force cursor pos update even when the cursor is hidden.
-		/*if (globalRendering->fullScreen) {
-			SDL_SysWMinfo info;
-			SDL_VERSION(&info.version);
-			if(SDL_GetWindowWMInfo(globalRendering->window, &info)) {
-				//info.info.x11.lock_func();
-					Display* display = info.info.x11.display;
-					Window& window = info.info.x11.window;
-
-					if (display && window != None)
-						XWarpPointer(display, None, window, 0, 0, 0, 0, pos.x, pos.y);
-				//info.info.x11.unlock_func();
-			}
-		}*/
-	#endif
-#endif
 
 	// SDL_WarpMouse generates SDL_MOUSEMOTION events
 	// in `middle click scrolling` those SDL generated ones would point into
-	// the oppossite direction the user moved the mouse, and so events would
+	// the opposite direction the user moved the mouse, and so events would
 	// cancel each other -> camera wouldn't move at all
 	// so we need to catch those SDL generated events and delete them
 
