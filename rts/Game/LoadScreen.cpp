@@ -83,6 +83,7 @@ void CLoadScreen::Init()
 #endif
 
 	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
+	net->KeepUpdating(true);
 	netHeartbeatThread = new boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
 	game = new CGame(mapName, modName, saveFile);
