@@ -144,7 +144,6 @@ __FORCE_ALIGN_STACK__
 void CNetProtocol::UpdateLoop()
 {
 	Threading::SetThreadName("heartbeat");
-	keepUpdating = true;
 
 	while (keepUpdating) {
 		Update();

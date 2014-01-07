@@ -1553,6 +1553,7 @@ void CGame::StartPlaying()
 	{
 		// keep connection to server alive in case we need to instantiate AI's
 		// (which can individually trigger massive thread-blocking operations)
+		net->KeepUpdating(true);
 		boost::thread pingThread = boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
 		// setup the teams
