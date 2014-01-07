@@ -210,21 +210,21 @@ extern DECLSPEC int SDLCALL SDL_GetNumDisplayModes(int displayIndex) {
 	return 0;
 }
 
-
-extern DECLSPEC int SDLCALL SDL_GetWindowDisplayMode(SDL_Window* window, SDL_DisplayMode* mode) {
+extern DECLSPEC int SDLCALL SDL_GetDesktopDisplayMode(int displayIndex, SDL_DisplayMode* mode) {
 	mode->format = SDL_PIXELFORMAT_RGB24;
 	mode->w = 640;
 	mode->h = 480;
 	mode->refresh_rate = 100;
 	mode->driverdata = NULL;
+	return 0;
+}
+
+extern DECLSPEC int SDLCALL SDL_GetWindowDisplayMode(SDL_Window* window, SDL_DisplayMode* mode) {
+	return SDL_GetDesktopDisplayMode(0, mode);
 }
 
 extern DECLSPEC int SDLCALL SDL_GetDisplayMode(int displayIndex, int modeIndex, SDL_DisplayMode* mode) {
-	mode->format = SDL_PIXELFORMAT_RGB24;
-	mode->w = 640;
-	mode->h = 480;
-	mode->refresh_rate = 100;
-	mode->driverdata = NULL;
+	return SDL_GetDesktopDisplayMode(0, mode);
 }
 
 
