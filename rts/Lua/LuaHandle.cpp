@@ -2903,9 +2903,9 @@ const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, in
 /******************************************************************************/
 /******************************************************************************/
 
-CONFIG(float, MaxLuaGarbageCollectionTime ).defaultValue(1000.0f / GAME_SPEED).minimumValue(1.0f); // ms
+CONFIG(float, MaxLuaGarbageCollectionTime ).defaultValue(1000.0f / GAME_SPEED).minimumValue(1.0f).description("in MilliSecs");
 CONFIG(  int, MaxLuaGarbageCollectionSteps).defaultValue(10000               ).minimumValue(1   );
-CONFIG(  int, MaxLuaGarbageMemoryFootPrint).defaultValue(64                  ).minimumValue(  32); // MB
+CONFIG(  int, MaxLuaGarbageMemoryFootPrint).defaultValue(64                  ).minimumValue(  32).description("in MB");
 
 void CLuaHandle::CollectGarbage()
 {
@@ -2923,18 +2923,28 @@ void CLuaHandle::CollectGarbage()
 	const float rawRunTime = luaMemFootPrint * (0.02f + 0.08f * smoothstep(25, 100, luaMemFootPrint));
 	const float maxRunTime = std::min(rawRunTime, maxLuaGarbageCollectTime);
 
-	const spring_time endTime = spring_gettime() + spring_msecs(maxRunTime);
+	const spring_time startTime = spring_gettime();
+	const spring_time endTime = startTime + spring_msecs(maxRunTime);
 
 	// collect garbage until time runs out or the maximum
 	// number of steps is exceeded, whichever comes first
 	SetRunning(L, true);
 
-	for (int n = 0; (n < maxLuaGarbageCollectSteps) && (spring_gettime() < endTime); n++) {
-		if (lua_gc(L, LUA_GCSTEP, 10)) {
+	static int gcsteps = 10;
+	int runLoops = 0;
+	while ((runLoops < maxLuaGarbageCollectSteps) && (spring_gettime() < endTime)) {
+		runLoops++;
+		if (lua_gc(L, LUA_GCSTEP, gcsteps)) {
 			// garbage-collection finished
 			break;
 		}
 	}
+
+	// runtime optimize number of steps to process in a batch
+	const float avgTimePerLoopIter = (spring_gettime() - startTime).toMilliSecsf() / runLoops;
+	if (gcsteps <= 1) /*no-op*/;
+	else if (avgTimePerLoopIter > (maxLuaGarbageCollectTime * 0.150f)) gcsteps--;
+	else if (avgTimePerLoopIter < (maxLuaGarbageCollectTime * 0.075f)) gcsteps++;
 
 	// limit the size of the garbage pile even if time is already up
 	// lapi.cpp::lua_gc should return (g->totalbytes - g->estimate) if
