@@ -74,10 +74,11 @@ void queue_button_event(int button, int state, int x, int y)
 {
 	SDL_Event ev;
 	ev.type = Uint8((state == SDL_PRESSED)? SDL_MOUSEBUTTONDOWN : SDL_MOUSEBUTTONUP);
-	ev.button.button = (uint8_t)button;
-	ev.button.state  = (uint8_t)state;
-	ev.button.x = (Uint16)x;
-	ev.button.y = (Uint16)y;
+	ev.button.button = button;
+	ev.button.state  = state;
+	ev.button.which  = 0;
+	ev.button.x = x;
+	ev.button.y = y;
 	queue_event(ev);
 }
 
@@ -230,11 +231,10 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 LRESULT OnMouseWheel(HWND hWnd, int screen_x, int screen_y, int zDelta, UINT fwKeys)
 {
 	int x, y;
-	if(GetCoords(screen_x, screen_y, x, y))
-	{
+	if(GetCoords(screen_x, screen_y, x, y)) {
 		SDL_Event ev;
 		ev.type = SDL_MOUSEWHEEL;
-		ev.wheel.y = zDelta;
+		ev.wheel.y = (zDelta >= 0) ? 1.0f : -1.0f;
 		queue_event(ev);
 	}
 
