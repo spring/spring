@@ -327,18 +327,6 @@ void CGlobalRendering::SetDualScreenParams() {
 	}
 }
 
-void CGlobalRendering::UpdateWindowGeometry() {
-	// NOTE:
-	//   in headless builds this is not called,
-	//   therefore winSize{X,Y} both remain 1
-	screenSizeX = viewSizeX;
-	screenSizeY = viewSizeY;
-	winSizeX = viewSizeX;
-	winSizeY = viewSizeY;
-	winPosX = 0;
-	winPosY = 0;
-}
-
 void CGlobalRendering::UpdateViewPortGeometry() {
 	// NOTE: viewPosY is not currently used (always 0)
 	if (!dualScreenMode) {

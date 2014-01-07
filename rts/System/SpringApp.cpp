@@ -320,11 +320,11 @@ bool SpringApp::CreateSDLWindow(const char* title)
 {
 	int sdlflags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
+	// use standard: 24bit color + 24bit depth + 8bit stencil & doublebuffered
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,  8);
 	//SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,  24);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -342,23 +342,31 @@ bool SpringApp::CreateSDLWindow(const char* title)
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, globalRendering->FSAA);
 	}
 
-	// use desktop resolution?
-	if ((globalRendering->viewSizeX<=0) || (globalRendering->viewSizeY<=0)) {
-		globalRendering->viewSizeX = 0;
-		globalRendering->viewSizeY = 0;
-	}
+	// Use Native Desktop Resolution
+	// and yes SDL2 can do this itself when sizeX & sizeY are set to zero, but
+	// oh wonder SDL2 failes then when you use Display Cloneing and similar
+	//  -> i.e. DVI monitor runs then at 640x400 and HDMI at full-HD (yes with display _cloning_!)
+	SDL_DisplayMode dmode;
+	SDL_GetDesktopDisplayMode(0, &dmode);
+	if (globalRendering->viewSizeX<=0) globalRendering->viewSizeX = dmode.w;
+	if (globalRendering->viewSizeY<=0) globalRendering->viewSizeY = dmode.h;
+
+	// In Windowed Mode Limit Minimum Window Size
 	static const int minViewSizeX = 400;
 	static const int minViewSizeY = 300;
 	if (!globalRendering->fullScreen) {
 		globalRendering->viewSizeX = std::max(globalRendering->viewSizeX, minViewSizeX);
 		globalRendering->viewSizeY = std::max(globalRendering->viewSizeY, minViewSizeY);
 	}
+
+	// Borderless
 	const bool borderless = configHandler->GetBool("WindowBorderless");
 	if (globalRendering->fullScreen) {
 		sdlflags |= borderless ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN;
 	}
 	sdlflags |= borderless ? SDL_WINDOW_BORDERLESS : 0;
 
+	// Window Pos & State
 	globalRendering->winPosX  = configHandler->GetInt("WindowPosX");
 	globalRendering->winPosY  = configHandler->GetInt("WindowPosY");
 	globalRendering->winState = configHandler->GetInt("WindowState");
@@ -398,27 +406,25 @@ bool SpringApp::CreateSDLWindow(const char* title)
 void SpringApp::GetDisplayGeometry()
 {
 #ifdef HEADLESS
-	globalRendering->UpdateWindowGeometry();
+	globalRendering->screenSizeX = 8;
+	globalRendering->screenSizeY = 8;
+	globalRendering->winSizeX = 8;
+	globalRendering->winSizeY = 8;
+	globalRendering->winPosX = 0;
+	globalRendering->winPosY = 0;
+	globalRendering->UpdateViewPortGeometry();
 	return;
 
 #else
-	//! not really needed, but makes it safer against unknown windowmanager behaviours
-	if (globalRendering->fullScreen) {
-		globalRendering->UpdateWindowGeometry();
-		return;
-	}
-
-	int xsize, ysize;
-	SDL_GetWindowSize(window, &xsize, &ysize);
 	SDL_Rect screenSize;
 	SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(window), &screenSize);
-
 	globalRendering->screenSizeX = screenSize.w;
 	globalRendering->screenSizeY = screenSize.h;
-	globalRendering->winSizeX = xsize;
-	globalRendering->winSizeY = ysize;
 
+	SDL_GetWindowSize(window, &globalRendering->winSizeX, &globalRendering->winSizeY);
 	SDL_GetWindowPosition(window, &globalRendering->winPosX, &globalRendering->winPosY);
+
+	globalRendering->UpdateViewPortGeometry();
 
 	//FIXME SDL2 is crap ...
 	// Reading window state fails it is changed via the window manager, like clicking on the titlebar (2013)
@@ -499,11 +505,6 @@ void SpringApp::SetupViewportGeometry()
  */
 void SpringApp::InitOpenGL()
 {
-	// Print final mode
-	SDL_DisplayMode dmode;
-	SDL_GetWindowDisplayMode(window, &dmode);
-	LOG("[%s] video mode set to %ix%i:%ibit @%iHz %s", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? "" : "(windowed)");
-
 	// reinit vsync
 	VSync.Init();
 
@@ -553,7 +554,7 @@ void SpringApp::InitOpenGL()
 	// setup viewport
 	SetupViewportGeometry();
 	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	gluPerspective(45.0f,  globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
+	gluPerspective(45.0f, globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
 
 	// Initialize some GL states
 	glShadeModel(GL_SMOOTH);
@@ -561,10 +562,15 @@ void SpringApp::InitOpenGL()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
-	// clear window
+	// Clear Window
 	glClearColor(0.0f,0.0f,0.0f,0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapWindow(window);
+
+	// Print Final Mode (call after SetupViewportGeometry, which updates viewSizeX/Y)
+	SDL_DisplayMode dmode;
+	SDL_GetWindowDisplayMode(window, &dmode);
+	LOG_L(L_ERROR, "[%s] video mode set to %ix%i:%ibit @%iHz %s", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? "" : "(windowed)");
 }
 
 
@@ -981,9 +987,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					GML_MSTMUTEX_LOCK(sim, -1); // MainEventHandler
 
 					Watchdog::ClearTimer(WDT_MAIN, true);
-					globalRendering->viewSizeX = event.window.data1;
-					globalRendering->viewSizeY = event.window.data2;
-
 					InitOpenGL();
 					activeController->ResizeEvent();
 					mouseInput->InstallWndCallback();
