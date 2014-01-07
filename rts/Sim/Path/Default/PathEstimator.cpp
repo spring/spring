@@ -455,55 +455,58 @@ void CPathEstimator::Update() {
 	if (updatedBlocks.empty())
 		return;
 
-	std::vector<SingleBlock> v;
-	v.reserve(blocksToUpdate);
+	std::vector<SingleBlock> consumedBlocks;
+	consumedBlocks.reserve(blocksToUpdate);
 
-	// CalculateVertices (not threadsafe)
-	for (unsigned int n = 0; !updatedBlocks.empty() && n < blocksToUpdate; ) {
-		// copy the next block in line
-		const SingleBlock sb = updatedBlocks.front();
-		updatedBlocks.pop_front();
+	int2 curBatchBlockPos = (updatedBlocks.front()).blockPos;
+	int2 nxtBatchBlockPos = curBatchBlockPos;
 
-		// check if it's not already updated
-		if ((blockStates.nodeMask[sb.blockPos.y * nbrOfBlocksX + sb.blockPos.x] & PATHOPT_OBSOLETE) == 0)
+	while (!updatedBlocks.empty()) {
+		nxtBatchBlockPos = (updatedBlocks.front()).blockPos;
+
+		if ((blockStates.nodeMask[nxtBatchBlockPos.y * nbrOfBlocksX + nxtBatchBlockPos.x] & PATHOPT_OBSOLETE) == 0) {
+			updatedBlocks.pop_front();
 			continue;
+		}
 
-		// no need to check for duplicates, because FindOffset is deterministic
-		// so even when we compute it multiple times the result will be the same
-		v.push_back(sb);
-
-		// always process all MoveDefs of a block in one batch
+		// MapChanged ensures format of updatedBlocks is {
+		//   (x1,y1,pt1), (x1,y1,pt2), ..., (x1,y1,ptN), // 1st batch
+		//   (x2,y2,pt1), (x2,y2,pt2), ..., (x2,y2,ptN), // 2nd batch
+		//   ...
+		// }
+		//
+		// always process all MoveDefs of a block in one batch (even
+		// if we need to exceed blocksToUpdate to complete the batch)
 		//
 		// needed because blockStates.nodeMask saves PATHOPT_OBSOLETE
 		// for the block as a whole, not for every individual MoveDef
 		// (and terrain changes might affect only a subset of MoveDefs)
 		//
-		// if we didn't do this batching, block changes might be missed
-		// for MoveDefs lower in the (pathType) ordering
-		for (auto it = updatedBlocks.begin(); it != updatedBlocks.end(); ++it) {
-			if (it->blockPos == sb.blockPos) {
-				// same block coordinates but MoveDef will be different
-				// from sb --> add it to the FindOffset/CalcVerts batch
-				v.push_back(*it);
-				n++;
-			} else {
-				updatedBlocks.erase(updatedBlocks.begin(), ++it);
+		// if we didn't use batches, block changes might be missed for
+		// MoveDefs lower in the (path-type) ordering so we only allow
+		// exiting the loop at batch boundaries
+		if (nxtBatchBlockPos != curBatchBlockPos) {
+			curBatchBlockPos = nxtBatchBlockPos;
+
+			if (consumedBlocks.size() >= blocksToUpdate) {
 				break;
 			}
 		}
 
-		// one stale SingleBlock consumed
-		n++;
+		// no need to check for duplicates, because FindOffset is deterministic
+		// so even when we compute it multiple times the result will be the same
+		consumedBlocks.push_back(updatedBlocks.front());
+		updatedBlocks.pop_front();
 	}
 
-	blockUpdatePenalty += std::max(0, int(v.size()) - int(blocksToUpdate));
+	blockUpdatePenalty += std::max(0, int(consumedBlocks.size()) - int(blocksToUpdate));
 
 	// FindOffset (threadsafe)
 	{
 		SCOPED_TIMER("CPathEstimator::FindOffset");
-		for_mt(0, v.size(), [&](const int n) {
+		for_mt(0, consumedBlocks.size(), [&](const int n) {
 			// copy the next block in line
-			const SingleBlock sb = v[n];
+			const SingleBlock sb = consumedBlocks[n];
 
 			const unsigned int blockX = sb.blockPos.x;
 			const unsigned int blockZ = sb.blockPos.y;
@@ -518,16 +521,17 @@ void CPathEstimator::Update() {
 	// CalculateVertices (not threadsafe)
 	{
 		SCOPED_TIMER("CPathEstimator::CalculateVertices");
-		for (unsigned int n = 0; n < v.size(); ++n) {
+		for (unsigned int n = 0; n < consumedBlocks.size(); ++n) {
 			// copy the next block in line
-			const SingleBlock sb = v[n];
+			const SingleBlock sb = consumedBlocks[n];
 
 			const unsigned int blockX = sb.blockPos.x;
 			const unsigned int blockZ = sb.blockPos.y;
 			const unsigned int blockN = blockZ * nbrOfBlocksX + blockX;
 
+			// check for batch boundary
 			const MoveDef* currBlockMD = sb.moveDef;
-			const MoveDef* nextBlockMD = ((n + 1) < v.size())? v[n + 1].moveDef: NULL;
+			const MoveDef* nextBlockMD = ((n + 1) < consumedBlocks.size())? consumedBlocks[n + 1].moveDef: NULL;
 
 			CalculateVertices(*currBlockMD, blockX, blockZ);
 
@@ -541,7 +545,6 @@ void CPathEstimator::Update() {
 		}
 	}
 }
-
 
 void CPathEstimator::UpdateFull() {
 	while (!updatedBlocks.empty()) {
