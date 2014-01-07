@@ -2974,14 +2974,18 @@ int LuaOpenGL::LineStipple(lua_State* L)
 
 int LuaOpenGL::LineWidth(lua_State* L)
 {
-	glLineWidth(luaL_checkfloat(L, 1));
+	const float width = luaL_checkfloat(L, 1);
+	if (width <= 0.0f) luaL_argerror(L, 1, "Incorrect Width (must be greater zero)");
+	glLineWidth(width);
 	return 0;
 }
 
 
 int LuaOpenGL::PointSize(lua_State* L)
 {
-	glPointSize(luaL_checkfloat(L, 1));
+	const float size = luaL_checkfloat(L, 1);
+	if (size <= 0.0f) luaL_argerror(L, 1, "Incorrect Size (must be greater zero)");
+	glPointSize(size);
 	return 0;
 }
 
