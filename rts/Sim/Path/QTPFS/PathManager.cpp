@@ -22,7 +22,6 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
-#include "System/Platform/Watchdog.h"
 #include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
@@ -674,23 +673,6 @@ void QTPFS::PathManager::Update() {
 	ThreadUpdate();
 	#endif
 }
-
-/*
-void QTPFS::PathManager::UpdateFull() {
-	assert(gs->frameNum == 0);
-
-	#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-		assert((pathCaches[layerNum].GetDeadPaths()).empty());
-		assert((pathSearches[layerNum]).empty());
-
-		ExecQueuedNodeLayerUpdates(layerNum, true);
-		Watchdog::ClearTimer();
-	}
-	#endif
-}
-*/
-
 
 __FORCE_ALIGN_STACK__
 void QTPFS::PathManager::ThreadUpdate() {

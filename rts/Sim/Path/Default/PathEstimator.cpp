@@ -31,7 +31,6 @@
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileQueryFlags.h"
-#include "System/Platform/Watchdog.h"
 
 
 CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512).minimumValue(64).description("Maximum memusage (in MByte) of mutlithreaded pathcache generator at loading time.");
@@ -543,13 +542,6 @@ void CPathEstimator::Update() {
 				blockStates.nodeMask[blockN] &= ~PATHOPT_OBSOLETE;
 			}
 		}
-	}
-}
-
-void CPathEstimator::UpdateFull() {
-	while (!updatedBlocks.empty()) {
-		Update();
-		Watchdog::ClearTimer();
 	}
 }
 

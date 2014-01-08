@@ -457,15 +457,6 @@ void CPathManager::Update()
 	lowResPE->Update();
 }
 
-/*
-void CPathManager::UpdateFull()
-{
-	medResPE->UpdateFull();
-	lowResPE->UpdateFull();
-}
-*/
-
-
 // used to deposit heat on the heat-map as a unit moves along its path
 void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathID)
 {
