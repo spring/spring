@@ -2931,20 +2931,22 @@ void CLuaHandle::CollectGarbage()
 	SetRunning(L, true);
 
 	static int gcsteps = 10;
-	int runLoops = 0;
-	while ((runLoops < maxLuaGarbageCollectSteps) && (spring_gettime() < endTime)) {
-		runLoops++;
+	int numLuaGarbageCollectIters = 0;
+
+	while ((numLuaGarbageCollectIters++ < maxLuaGarbageCollectSteps) && (spring_gettime() < endTime)) {
 		if (lua_gc(L, LUA_GCSTEP, gcsteps)) {
 			// garbage-collection finished
 			break;
 		}
 	}
 
-	// runtime optimize number of steps to process in a batch
-	const float avgTimePerLoopIter = (spring_gettime() - startTime).toMilliSecsf() / runLoops;
-	if (gcsteps <= 1) /*no-op*/;
-	else if (avgTimePerLoopIter > (maxLuaGarbageCollectTime * 0.150f)) gcsteps--;
-	else if (avgTimePerLoopIter < (maxLuaGarbageCollectTime * 0.075f)) gcsteps++;
+	if (gcsteps > 1) {
+		// runtime optimize number of steps to process in a batch
+		const float avgTimePerLoopIter = (spring_gettime() - startTime).toMilliSecsf() / numLuaGarbageCollectIters;
+
+		if (avgTimePerLoopIter > (maxLuaGarbageCollectTime * 0.150f)) gcsteps--;
+		if (avgTimePerLoopIter < (maxLuaGarbageCollectTime * 0.075f)) gcsteps++;
+	}
 
 	// limit the size of the garbage pile even if time is already up
 	// lapi.cpp::lua_gc should return (g->totalbytes - g->estimate) if

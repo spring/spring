@@ -98,17 +98,6 @@ QTPFS::PathManager::PathManager() {
 	QTNode::InitStatic();
 	NodeLayer::InitStatic();
 	PathManager::InitStatic();
-
-	pmLoadThread = boost::thread(boost::bind(&PathManager::Load, this));
-	pmLoadScreen.Loop();
-	pmLoadThread.join();
-
-	#ifdef QTPFS_ENABLE_THREADED_UPDATE
-	mutexThreadUpdate = new boost::mutex();
-	condThreadUpdate = new boost::condition_variable();
-	condThreadUpdated = new boost::condition_variable();
-	updateThread = new boost::thread(boost::bind(&PathManager::ThreadUpdate, this));
-	#endif
 }
 
 QTPFS::PathManager::~PathManager() {
@@ -153,6 +142,28 @@ QTPFS::PathManager::~PathManager() {
 	delete condThreadUpdate;
 	delete condThreadUpdated;
 	#endif
+}
+
+boost::int64_t QTPFS::PathManager::Finalize() {
+	const spring_time t0 = spring_gettime();
+
+	{
+		pmLoadThread = boost::thread(boost::bind(&PathManager::Load, this));
+		pmLoadScreen.Loop();
+		pmLoadThread.join();
+
+		#ifdef QTPFS_ENABLE_THREADED_UPDATE
+		mutexThreadUpdate = new boost::mutex();
+		condThreadUpdate = new boost::condition_variable();
+		condThreadUpdated = new boost::condition_variable();
+		updateThread = new boost::thread(boost::bind(&PathManager::ThreadUpdate, this));
+		#endif
+	}
+
+	const spring_time t1 = spring_gettime();
+	const spring_time dt = t1 - t0;
+
+	return (dt.toMilliSecsi());
 }
 
 void QTPFS::PathManager::InitStatic() {
@@ -226,7 +237,7 @@ void QTPFS::PathManager::Load() {
 	{
 		const std::string sumStr = "pfs-checksum: " + IntToString(pfsCheckSum, "%08x") + ", ";
 		const std::string memStr = "mem-footprint: " + IntToString(GetMemFootPrint()) + "MB";
-		pmLoadScreen.AddLoadMessage("[PathManager] " + sumStr + memStr);
+		pmLoadScreen.AddLoadMessage("[" + std::string(__FUNCTION__) + "] " + sumStr + memStr);
 		pmLoadScreen.SetLoading(false);
 	}
 }
@@ -404,6 +415,8 @@ void QTPFS::PathManager::UpdateNodeLayersThread(
 void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle& r) {
 	const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
 
+	if (nodeLayers.empty())
+		return;
 	if (md->udRefCount == 0)
 		return;
 
@@ -662,6 +675,7 @@ void QTPFS::PathManager::Update() {
 	#endif
 }
 
+/*
 void QTPFS::PathManager::UpdateFull() {
 	assert(gs->frameNum == 0);
 
@@ -675,6 +689,8 @@ void QTPFS::PathManager::UpdateFull() {
 	}
 	#endif
 }
+*/
+
 
 __FORCE_ALIGN_STACK__
 void QTPFS::PathManager::ThreadUpdate() {
@@ -973,6 +989,10 @@ unsigned int QTPFS::PathManager::RequestPath(
 	bool synced)
 {
 	SCOPED_TIMER("PathManager::RequestPath");
+
+	if (nodeLayers.empty())
+		return 0;
+
 	return (QueueSearch(NULL, object, moveDef, sourcePoint, targetPoint, radius, synced));
 }
 
@@ -1012,6 +1032,8 @@ float3 QTPFS::PathManager::NextWayPoint(
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
 	const float3 noPathPoint = -XZVector;
 
+	if (nodeLayers.empty())
+		return noPathPoint;
 	if (!synced)
 		return noPathPoint;
 
@@ -1110,6 +1132,8 @@ void QTPFS::PathManager::GetPathWayPoints(
 ) const {
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
 
+	if (nodeLayers.empty())
+		return;
 	if (pathTypeIt == pathTypes.end())
 		return;
 
@@ -1132,9 +1156,11 @@ int2 QTPFS::PathManager::GetNumQueuedUpdates() const {
 	int2 data;
 
 	#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-		data.x += (nodeLayers[layerNum].HaveQueuedUpdate());
-		data.y += (nodeLayers[layerNum].NumQueuedUpdates());
+	if (!nodeLayers.empty()) {
+		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+			data.x += (nodeLayers[layerNum].HaveQueuedUpdate());
+			data.y += (nodeLayers[layerNum].NumQueuedUpdates());
+		}
 	}
 	#endif
 

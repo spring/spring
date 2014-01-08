@@ -36,11 +36,12 @@ namespace QTPFS {
 		unsigned int GetPathFinderType() const { return PFS_TYPE_QTPFS; }
 		boost::uint32_t GetPathCheckSum() const { return pfsCheckSum; }
 
+		boost::int64_t Finalize();
+
 		bool PathUpdated(unsigned int pathID);
 
 		void TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type);
 		void Update();
-		void UpdateFull();
 		void UpdatePath(const CSolidObject* owner, unsigned int pathID);
 		void DeletePath(unsigned int pathID);
 

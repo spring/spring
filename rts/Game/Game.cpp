@@ -668,10 +668,21 @@ void CGame::PostLoadSimulation()
 	losHandler = new CLosHandler();
 	radarHandler = new CRadarHandler(false);
 
+	// pre-load the PFS, gets finalized after Lua
+	//
+	// features loaded from the map (and any terrain changes
+	// made by Lua while loading) would otherwise generate a
+	// queue of pending PFS updates, which should be consumed
+	// to avoid blocking regular updates from being processed
+	// but doing so was impossible without stalling the loading
+	// thread for *minutes* (in the worst-case scenario)
+	//
+	// the only disadvantage is that LuaPathFinder can not be
+	// used during Lua initialization anymore (not a concern)
 	mapDamage = IMapDamage::GetMapDamage();
 	pathManager = IPathManager::GetInstance(modInfo.pathFinderSystem);
 
-	// load map-specific features after pathManager so it knows about them (via TerrainChange)
+	// load map-specific features
 	loadscreen->SetLoadMessage("Initializing Map Features");
 	featureHandler->LoadFeaturesFromMap(saveFile != NULL);
 
@@ -822,24 +833,15 @@ void CGame::LoadFinalize()
 {
 	eventHandler.GamePreload();
 
-	// features loaded from the map (and any terrain changes
-	// made by Lua while loading) will have generated a queue
-	// of pending PFS updates that should be consumed so they
-	// do not block regular updates from being processed
-	//
-	// NOTE:
-	//   can stall the loading thread for *minutes* (worst-case)
-	//   better (but very hard) would be to create PFS after Lua
 	{
-		loadscreen->SetLoadMessage("[" + std::string(__FUNCTION__) + "] finalizing PathCache");
+		loadscreen->SetLoadMessage("[" + std::string(__FUNCTION__) + "] finalizing PFS");
 
-		const spring_time t0 = spring_gettime();
-		pathManager->UpdateFull();
-		const spring_time t1 = spring_gettime();
+		const boost::uint64_t dt = pathManager->Finalize();
+		const boost::uint32_t cs = pathManager->GetPathCheckSum();
 
 		loadscreen->SetLoadMessage(
-			"[" + std::string(__FUNCTION__) + "] finalized PathCache " +
-			"(" + IntToString((t1 - t0).toMilliSecsi(), "%ld") + "ms)"
+			"[" + std::string(__FUNCTION__) + "] finalized PFS " +
+			"(" + IntToString(dt, "%ld") + "ms, checksum " + IntToString(cs, "%08x") + ")"
 		);
 	}
 
