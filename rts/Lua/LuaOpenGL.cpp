@@ -3123,6 +3123,8 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 	LuaTextures::Texture tex;
 	tex.xsize = (GLsizei)luaL_checknumber(L, 1);
 	tex.ysize = (GLsizei)luaL_checknumber(L, 2);
+	if (tex.xsize <= 0) luaL_argerror(L, 1, "Texture Size must be greater than zero!");
+	if (tex.ysize <= 0) luaL_argerror(L, 2, "Texture Size must be greater than zero!");
 
 	if (lua_istable(L, 3)) {
 		const int table = 3;
