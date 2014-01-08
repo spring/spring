@@ -635,7 +635,10 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type) {
 	SCOPED_TIMER("PathManager::TerrainChange");
 
-	// if type is TERRAINCHANGE_OBJECT_INSERTED  or TERRAINCHANGE_OBJECT_INSERTED_YM,
+	if (!IsFinalized())
+		return;
+
+	// if type is TERRAINCHANGE_OBJECT_INSERTED or TERRAINCHANGE_OBJECT_INSERTED_YM,
 	// this rectangle covers the yardmap of a CSolidObject* and will be tesselated to
 	// maximum depth automatically
 	numTerrainChanges += 1;

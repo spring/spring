@@ -436,6 +436,8 @@ void CPathManager::DeletePath(unsigned int pathID) {
 
 // Tells estimators about changes in or on the map.
 void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2, unsigned int /*type*/) {
+	SCOPED_TIMER("PathManager::TerrainChange");
+
 	if (!IsFinalized())
 		return;
 
