@@ -124,6 +124,8 @@ private:
 	void LowRes2MedRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
 	void MedRes2MaxRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
 
+	bool IsFinalized() const { return (maxResPF != NULL); }
+
 	CPathFinder* maxResPF;
 	CPathEstimator* medResPE;
 	CPathEstimator* lowResPE;

@@ -204,11 +204,13 @@ void QTPFS::PathManager::Load() {
 		}
 
 		// NOTE:
-		//     should be sufficient in theory, because if either
-		//     the map or the mod changes then the checksum does
-		//     (should!) as well and we get a cache-miss
-		//     this value is also combined with the tree-sums to
-		//     make it depend on the tesselation code specifics
+		//   should be sufficient in theory, because if either
+		//   the map or the mod changes then the checksum does
+		//   (should!) as well and we get a cache-miss
+		//   this value is also combined with the tree-sums to
+		//   make it depend on the tesselation code specifics
+		// FIXME:
+		//   assumption is invalid now (Lua inits before we do)
 		pfsCheckSum = mapCheckSum ^ modCheckSum;
 
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
@@ -414,7 +416,7 @@ void QTPFS::PathManager::UpdateNodeLayersThread(
 void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle& r) {
 	const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
 
-	if (nodeLayers.empty())
+	if (!IsFinalized())
 		return;
 	if (md->udRefCount == 0)
 		return;
@@ -972,7 +974,7 @@ unsigned int QTPFS::PathManager::RequestPath(
 {
 	SCOPED_TIMER("PathManager::RequestPath");
 
-	if (nodeLayers.empty())
+	if (!IsFinalized())
 		return 0;
 
 	return (QueueSearch(NULL, object, moveDef, sourcePoint, targetPoint, radius, synced));
@@ -1014,7 +1016,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
 	const float3 noPathPoint = -XZVector;
 
-	if (nodeLayers.empty())
+	if (!IsFinalized())
 		return noPathPoint;
 	if (!synced)
 		return noPathPoint;
@@ -1114,7 +1116,7 @@ void QTPFS::PathManager::GetPathWayPoints(
 ) const {
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
 
-	if (nodeLayers.empty())
+	if (!IsFinalized())
 		return;
 	if (pathTypeIt == pathTypes.end())
 		return;
@@ -1138,7 +1140,7 @@ int2 QTPFS::PathManager::GetNumQueuedUpdates() const {
 	int2 data;
 
 	#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-	if (!nodeLayers.empty()) {
+	if (IsFinalized())
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 			data.x += (nodeLayers[layerNum].HaveQueuedUpdate());
 			data.y += (nodeLayers[layerNum].NumQueuedUpdates());
