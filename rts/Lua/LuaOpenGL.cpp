@@ -2474,6 +2474,8 @@ int LuaOpenGL::Scissor(lua_State* L)
 		const GLint   y =   (GLint)luaL_checkint(L, 2);
 		const GLsizei w = (GLsizei)luaL_checkint(L, 3);
 		const GLsizei h = (GLsizei)luaL_checkint(L, 4);
+		if (w < 0) luaL_argerror(L, 3, "<width> must be greater than or equal zero!");
+		if (h < 0) luaL_argerror(L, 4, "<height> must be greater than or equal zero!");
 		glScissor(x + globalRendering->viewPosX, y + globalRendering->viewPosY, w, h);
 	}
 	else {
@@ -2489,12 +2491,13 @@ int LuaOpenGL::Viewport(lua_State* L)
 	CheckDrawingEnabled(L, __FUNCTION__);
 
 	const int x = luaL_checkint(L, 1);
-	const int y = luaL_checkint(L, 1);
-	const int w = luaL_checkint(L, 1);
-	const int h = luaL_checkint(L, 1);
+	const int y = luaL_checkint(L, 2);
+	const int w = luaL_checkint(L, 3);
+	const int h = luaL_checkint(L, 4);
+	if (w < 0) luaL_argerror(L, 3, "<width> must be greater than or equal zero!");
+	if (h < 0) luaL_argerror(L, 4, "<height> must be greater than or equal zero!");
 
 	glViewport(x, y, w, h);
-
 	return 0;
 }
 
