@@ -1140,7 +1140,7 @@ int2 QTPFS::PathManager::GetNumQueuedUpdates() const {
 	int2 data;
 
 	#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-	if (IsFinalized())
+	if (IsFinalized()) {
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 			data.x += (nodeLayers[layerNum].HaveQueuedUpdate());
 			data.y += (nodeLayers[layerNum].NumQueuedUpdates());
