@@ -26,8 +26,9 @@ public:
 	unsigned int GetPathFinderType() const { return PFS_TYPE_DEFAULT; }
 	boost::uint32_t GetPathCheckSum() const;
 
+	boost::int64_t Finalize();
+
 	void Update();
-	void UpdateFull();
 	void UpdatePath(const CSolidObject*, unsigned int);
 	void DeletePath(unsigned int pathID);
 

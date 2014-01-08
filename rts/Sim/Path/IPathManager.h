@@ -21,6 +21,8 @@ public:
 	virtual unsigned int GetPathFinderType() const = 0;
 	virtual boost::uint32_t GetPathCheckSum() const { return 0; }
 
+	virtual boost::int64_t Finalize() { return 0; }
+
 	/**
 	 * returns if a path was changed after RequestPath returned its pathID
 	 * this can happen eg. if a PathManager reacts to TerrainChange events
@@ -29,7 +31,6 @@ public:
 	virtual bool PathUpdated(unsigned int pathID) { return false; }
 
 	virtual void Update() {}
-	virtual void UpdateFull() {}
 	virtual void UpdatePath(const CSolidObject* owner, unsigned int pathID) {}
 
 	/**
