@@ -679,6 +679,12 @@ void CGame::PostLoadSimulation()
 	//
 	// the only disadvantage is that LuaPathFinder can not be
 	// used during Lua initialization anymore (not a concern)
+	//
+	// NOTE:
+	//   the cache written to disk will reflect changes made by
+	//   Lua which can vary each run with {mod,map}options, etc
+	//   --> need a way to let Lua flush it or re-calculate map
+	//   checksum (over heightmap + blockmap, not raw archive)
 	mapDamage = IMapDamage::GetMapDamage();
 	pathManager = IPathManager::GetInstance(modInfo.pathFinderSystem);
 

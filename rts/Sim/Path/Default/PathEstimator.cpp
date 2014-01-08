@@ -874,7 +874,7 @@ void CPathEstimator::ResetSearch() {
 bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::string& map)
 {
 	const unsigned int hash = Hash();
-	char hashString[50];
+	char hashString[64] = {0};
 
 	sprintf(hashString, "%u", hash);
 	LOG("[PathEstimator::%s] hash=%s\n", __FUNCTION__, hashString);
@@ -993,6 +993,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 
 /**
  * Returns a hash-code identifying the dataset of this estimator.
+ * FIXME: uses checksum of raw heightmap (before Lua has seen it)
  */
 unsigned int CPathEstimator::Hash() const
 {

@@ -134,6 +134,8 @@ namespace QTPFS {
 			unsigned int pathType
 		);
 
+		bool IsFinalized() const { return (!nodeTrees.empty()); }
+
 
 		std::string GetCacheDirName(boost::uint32_t mapCheckSum, boost::uint32_t modCheckSum) const;
 		void Serialize(const std::string& cacheFileDir);
