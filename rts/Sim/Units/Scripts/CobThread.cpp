@@ -80,21 +80,18 @@ const string& CCobThread::GetName()
 
 int CCobThread::CheckStack(unsigned int size, bool warn)
 {
-	if ((unsigned)size > stack.size()) {
+	if ((unsigned)size <= stack.size())
+		return size;
+
+	if (warn) {
 		static char msg[512];
 		static const char* fmt =
 			"stack-size mismatch: need %u but have %lu arguments "
 			"(too many passed to function or too few returned?)";
-
-		if (warn) {
-			SNPRINTF(msg, sizeof(msg), fmt, size, stack.size());
-			ShowError(msg);
-		}
-
-		return stack.size();
+		SNPRINTF(msg, sizeof(msg), fmt, size, stack.size());
+		ShowError(msg);
 	}
-
-	return size;
+	return stack.size();
 }
 
 int CCobThread::GetStackVal(int pos)

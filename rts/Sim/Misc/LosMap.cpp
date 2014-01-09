@@ -200,19 +200,15 @@ void CLosTables::OutputTable(int Table)
 	int Radius = Table;
 	char* PaintTable = new char[(Radius+1)*Radius];
 	memset(PaintTable, 0 , (Radius+1)*Radius);
-	int2 P;
-
-	int x, y, r2;
-
-	P.x = 0;
-	P.y = Radius;
+	int2 P(0, Radius);
 	Points.push_back(P);
+
 //  DrawLine(0, Radius, Radius);
 	for (float i=Radius; i>=1; i-=0.5f) {
-		r2 = (int)(i * i);
+		const int r2 = (int)(i * i);
 
-		x = 1;
-		y = (int) (math::sqrt((float)r2 - 1) + 0.5f);
+		int x = 1;
+		int y = (int) (math::sqrt((float)r2 - 1) + 0.5f);
 		while (x < y) {
 			if (!PaintTable[x+y*Radius]) {
 				DrawLine(PaintTable, x, y, Radius);

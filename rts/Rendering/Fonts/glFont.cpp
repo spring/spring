@@ -10,6 +10,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "System/Log/ILog.h"
+#include "System/Color.h"
 #include "System/Exceptions.h"
 #include "System/myMath.h"
 #include "System/Util.h"
@@ -565,7 +566,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
 	int skippedLines;
-	bool endOfString, colorChanged;
+	bool colorChanged;
 	const GlyphInfo* g = NULL;
 	float4 newColor;
 	newColor[3] = 1.0f;
@@ -573,7 +574,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 	int i = 0;
 
 	do {
-		endOfString = SkipColorCodesAndNewLines(str, &i, &newColor, &colorChanged, &skippedLines, &baseTextColor);
+		const bool endOfString = SkipColorCodesAndNewLines(str, &i, &newColor, &colorChanged, &skippedLines, &baseTextColor);
 
 		if (endOfString)
 			return;
@@ -622,7 +623,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	va2->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
 	int skippedLines;
-	bool endOfString, colorChanged;
+	bool colorChanged;
 	const GlyphInfo* g = NULL;
 	float4 newColor;
 	newColor[3] = 1.0f;
@@ -630,7 +631,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	int i = 0;
 
 	do {
-		endOfString = SkipColorCodesAndNewLines(str, &i, &newColor, &colorChanged, &skippedLines, &baseTextColor);
+		const bool endOfString = SkipColorCodesAndNewLines(str, &i, &newColor, &colorChanged, &skippedLines, &baseTextColor);
 
 		if (endOfString)
 			return;
@@ -686,7 +687,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	va2->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
 	int skippedLines;
-	bool endOfString, colorChanged;
+	bool colorChanged;
 	const GlyphInfo* g = NULL;
 	float4 newColor;
 	newColor[3] = 1.0f;
@@ -694,7 +695,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	int i = 0;
 
 	do {
-		endOfString = SkipColorCodesAndNewLines(str, &i, &newColor, &colorChanged, &skippedLines, &baseTextColor);
+		const bool endOfString = SkipColorCodesAndNewLines(str, &i, &newColor, &colorChanged, &skippedLines, &baseTextColor);
 
 		if (endOfString)
 			return;
@@ -832,47 +833,45 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 
 void CglFont::glPrintTable(float x, float y, float s, const int options, const std::string& text)
 {
+	std::vector<std::string> coltext;
+	coltext.push_back("");
+
+	std::vector<SColor> colColor;
+	SColor defaultcolor(0,0,0);
+	defaultcolor[0] = ColorCodeIndicator;
+	for (int i = 0; i < 3; ++i)
+		defaultcolor[i+1] = (unsigned char)(textColor[i] * 255.0f);
+	colColor.push_back(defaultcolor);
+	SColor curcolor(defaultcolor);
+
 	int col = 0;
 	int row = 0;
-	std::vector<std::string> coltext;
-	std::vector<int> coldata;
-	coltext.reserve(text.length());
-	coltext.push_back("");
-	unsigned char curcolor[4];
-	unsigned char defaultcolor[4];
-	defaultcolor[0] = ColorCodeIndicator;
-	for(int i = 0; i < 3; ++i)
-		defaultcolor[i+1] = (unsigned char)(textColor[i]*255.0f);
-	coldata.push_back(*(int *)&defaultcolor);
-	for(int i = 0; i < 4; ++i)
-		curcolor[i] = defaultcolor[i];
-
 	for (int pos = 0; pos < text.length(); pos++) {
 		const unsigned char& c = text[pos];
 		switch(c) {
 			// inline colorcodes
 			case ColorCodeIndicator:
-				for(int i = 0; i < 4 && pos < text.length(); ++i, ++pos) {
+				for (int i = 0; i < 4 && pos < text.length(); ++i, ++pos) {
 					coltext[col] += text[pos];
-					((unsigned char *)curcolor)[i] = text[pos];
+					curcolor[i] = text[pos];
 				}
-				coldata[col] = *(int *)curcolor;
+				colColor[col] = curcolor;
 				--pos;
 				break;
 
 			// column separator is `\t`==`horizontal tab`
-			case 0x09:
+			case '\t':
 				++col;
-				if(col >= coltext.size()) {
+				if (col >= coltext.size()) {
 					coltext.push_back("");
 					for(int i = 0; i < row; ++i)
 						coltext[col] += 0x0a;
-					coldata.push_back(*(int *)&defaultcolor);
+					colColor.push_back(defaultcolor);
 				}
-				if(coldata[col] != *(int *)curcolor) {
+				if (colColor[col] != curcolor) {
 					for(int i = 0; i < 4; ++i)
 						coltext[col] += curcolor[i];
-					coldata[col] = *(int *)curcolor;
+					colColor[col] = curcolor;
 				}
 				break;
 
@@ -881,12 +880,12 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 				if (pos+1 < text.length() && text[pos + 1] == 0x0a)
 					pos++;
 			case 0x0a: // LF
-				for(int i = 0; i < coltext.size(); ++i)
+				for (int i = 0; i < coltext.size(); ++i)
 					coltext[i] += 0x0a;
-				if(coldata[0] != *(int *)curcolor) {
+				if (colColor[0] != curcolor) {
 					for(int i = 0; i < 4; ++i)
 						coltext[0] += curcolor[i];
-					coldata[0] = *(int *)curcolor;
+					colColor[0] = curcolor;
 				}
 				col = 0;
 				++row;
@@ -901,15 +900,16 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 	float totalWidth = 0.0f;
 	float maxHeight = 0.0f;
 	float minDescender = 0.0f;
-	for(int i = 0; i < coltext.size(); ++i) {
+	std::vector<float> colWidths(coltext.size(), 0.0f);
+	for (int i = 0; i < coltext.size(); ++i) {
 		float colwidth = GetTextWidth(coltext[i]);
-		coldata[i] = *(int *)&colwidth;
+		colWidths[i] = colwidth;
 		totalWidth += colwidth;
 		float textDescender;
 		float textHeight = GetTextHeight(coltext[i], &textDescender);
-		if(textHeight > maxHeight)
+		if (textHeight > maxHeight)
 			maxHeight = textHeight;
-		if(textDescender < minDescender)
+		if (textDescender < minDescender)
 			minDescender = textDescender;
 	}
 
@@ -951,10 +951,9 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 		y -= sizeY * minDescender;
 	}
 
-	for(int i = 0; i < coltext.size(); ++i) {
+	for (int i = 0; i < coltext.size(); ++i) {
 		glPrint(x, y, s, (options | FONT_BASELINE) & ~(FONT_RIGHT | FONT_CENTER), coltext[i]);
-		int colwidth = coldata[i];
-		x += sizeX * *(float *)&colwidth;
+		x += sizeX * colWidths[i];
 	}
 }
 

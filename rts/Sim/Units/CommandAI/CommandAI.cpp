@@ -1426,16 +1426,13 @@ void CCommandAI::FinishCommand()
 	assert(!commandQue.empty());
 
 	const Command cmd = commandQue.front();
-	const int cmdID  = cmd.GetID();
-	const int cmdTag = cmd.tag;
-	const unsigned char cmdOpts = cmd.options;
 	const bool dontRepeat = (cmd.options & INTERNAL_ORDER);
 
 	if (repeatOrders
 	    && !dontRepeat
-	    && (cmdID != CMD_STOP)
-	    && (cmdID != CMD_PATROL)
-	    && (cmdID != CMD_SET_WANTED_MAX_SPEED)){
+	    && (cmd.GetID() != CMD_STOP)
+	    && (cmd.GetID() != CMD_PATROL)
+	    && (cmd.GetID() != CMD_SET_WANTED_MAX_SPEED)){
 		commandQue.push_back(cmd);
 	}
 

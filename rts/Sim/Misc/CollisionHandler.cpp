@@ -301,11 +301,11 @@ bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, con
 		return true;
 
 	float minDstSq = std::numeric_limits<float>::max();
-	float curDstSq = 0.0f;
 
 	// save the closest intersection
 	for (cqsIt = cqs.begin(); cqsIt != cqs.end(); ++cqsIt) {
-		if ((curDstSq = (cqsIt->GetHitPos() - p0).SqLength()) >= minDstSq)
+		const float curDstSq = (cqsIt->GetHitPos() - p0).SqLength();
+		if (curDstSq >= minDstSq)
 			continue;
 
 		minDstSq = curDstSq;

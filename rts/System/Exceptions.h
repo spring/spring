@@ -6,14 +6,6 @@
 #include <stdexcept>
 
 
-/** @brief Compile time assertion
-    @param condition Condition to test for.
-    @param message Message to include in the compile error if the assert fails.
-    This must be a valid C++ symbol. */
-#define COMPILE_TIME_ASSERT(condition, message) \
-	typedef int _compile_time_assertion_failed__ ## message [(condition) ? 1 : -1]
-
-
 /**
  * user_error
  *   thrown when a enduser config is broken/invalid.
