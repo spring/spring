@@ -36,6 +36,8 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 	drawMode = drawNormal;
 	drawLineOfSight = false;
 	drawRadarAndJammer = true;
+	drawMapEdges = false;
+	drawDeferred = false;
 	wireframe = false;
 	advShading = false;
 	highResInfoTex = false;

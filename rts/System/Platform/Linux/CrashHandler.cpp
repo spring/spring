@@ -188,11 +188,11 @@ static void FindBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 		char              binPathName[512];
 
 		char line[512];
-		int red;
+
 		// read all lines
 		while (!paths_notFound.empty() && (fgets(line, 511, mapsFile) != NULL)) {
 			// parse the line
-			red = sscanf(line, "%lx-%*x %*s %lx %*s %*u %s",
+			const int red = sscanf(line, "%lx-%*x %*s %lx %*s %*u %s",
 					&mem_start, &binAddr_offset, binPathName);
 
 			if (red == 3) {

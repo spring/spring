@@ -2181,7 +2181,6 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 
 void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
-	GhostSolidObject* gb = NULL;
 
 	if ((dynamic_cast<CBuilding*>(u) != NULL) && gameSetup->ghostedBuildings &&
 		!(u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
@@ -2191,7 +2190,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 		const UnitDef* decoyDef = u->unitDef->decoyDef;
 		S3DModel* gbModel = (decoyDef == NULL) ? u->model : decoyDef->LoadModel();
 
-		gb = new GhostSolidObject();
+		GhostSolidObject* gb = new GhostSolidObject();
 		gb->pos    = u->pos;
 		gb->model  = gbModel;
 		gb->decal  = NULL;

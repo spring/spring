@@ -842,7 +842,6 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float3 rightDir2D = rightdir;
 	float3 yprMults = OnesVector * (1.0f + 0.0f * float(goalDist2D < (turnRadius * spd.w)));
 
-	float otherThreat = 0.0f;
 	float goalDotRight = goalDir2D.dot(rightDir2D.Normalize2D());
 
 	const float aGoalDotFront = goalDir2D.dot(frontdir);
@@ -872,7 +871,7 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 			(otherDif / otherLength):
 			ZeroVector;
 
-		otherThreat = (otherLength > 0.0f)?
+		const float otherThreat = (otherLength > 0.0f)?
 			std::max(1200.0f, goalDist2D) / otherLength * 0.036f:
 			0.0f;
 		goalDotRight -= (otherDir.dot(rightdir) * otherThreat);

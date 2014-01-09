@@ -85,6 +85,8 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	forceHeading(false),
 	dontLand(false),
 
+	loadingUnits(false),
+
 	wantedHeading(GetHeadingFromFacing(owner->buildFacing)),
 	forceHeadingTo(wantedHeading),
 
@@ -789,7 +791,6 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	float curRelHeight = 0.0f;
 
 	float wh = wantedHeight; // wanted RELATIVE height (altitude)
-	float ws = 0.0f;         // wanted vertical speed
 
 	// always stay above the actual terrain (therefore either the value of
 	// <midPos.y - radius> or pos.y must never become smaller than the real
@@ -830,6 +831,9 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	curRelHeight = pos.y - curAbsHeight;
 
 	{
+		// wanted vertical speed
+		float ws = 0.0f;
+
 		if (curRelHeight < wh) {
 			ws = altitudeRate;
 

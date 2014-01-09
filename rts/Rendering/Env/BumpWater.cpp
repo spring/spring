@@ -141,16 +141,13 @@ static void DrawRadialDisc()
 	const float alphainc = fastmath::PI2 / 32;
 	const float size = std::min(xsize, ysize);
 
-	float alpha, r1, r2;
-
 	for (int n = 0; n < 4 ; ++n) {
-		r1 = n*n * size;
+		const float r1 = n*n * size;
+		float r2 = (n + 1) * (n + 1) * size;
 		if (n == 3) {
 			r2 = (n + 0.5) * (n + 0.5) * size;
-		} else {
-			r2 = (n + 1) * (n + 1) * size;
 		}
-		for (alpha = 0.0f; (alpha - fastmath::PI2) < alphainc; alpha += alphainc) {
+		for (float alpha = 0.0f; (alpha - fastmath::PI2) < alphainc; alpha += alphainc) {
 			p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
 			p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
 			va->AddVertex0(p);

@@ -426,7 +426,7 @@ void SpringApp::GetDisplayGeometry()
 	globalRendering->UpdateViewPortGeometry();
 
 	//FIXME SDL2 is crap ...
-	// Reading window state fails it is changed via the window manager, like clicking on the titlebar (2013)
+	// Reading window state fails if it is changed via the window manager, like clicking on the titlebar (2013)
 	// https://bugzilla.libsdl.org/show_bug.cgi?id=1508 & https://bugzilla.libsdl.org/show_bug.cgi?id=2282
 	// happens on linux too!
   #ifdef __APPLE__
@@ -449,6 +449,7 @@ void SpringApp::GetDisplayGeometry()
   #else
 	auto state = MyX11GetWindowState(window);
   #endif
+
 	globalRendering->winState = CGlobalRendering::WINSTATE_DEFAULT;
 	if (state & SDL_WINDOW_MAXIMIZED) {
 		globalRendering->winState = CGlobalRendering::WINSTATE_MAXIMIZED;
