@@ -14,7 +14,7 @@ MAXWAIT=60
 
 for (( i=0; $i<$MAXWAIT; i++ ));
 do
-	if [ -s ~/.config/spring/infolog.txt ] && [ -n "$(grep "finalized PathCache" ~/.config/spring/infolog.txt)" ];
+	if [ -s ~/.config/spring/infolog.txt ] && [ -n "$(grep "finalized P" ~/.config/spring/infolog.txt)" ];
 	then
 		sync
 		sleep 1
