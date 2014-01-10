@@ -85,8 +85,6 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	forceHeading(false),
 	dontLand(false),
 
-	loadingUnits(false),
-
 	wantedHeading(GetHeadingFromFacing(owner->buildFacing)),
 	forceHeadingTo(wantedHeading),
 
@@ -742,6 +740,60 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 }
 
 
+void CHoverAirMoveType::UpdateVerticalSpeed(const float4& spd, float curRelHeight, float curVertSpeed) const
+{
+	float wh = wantedHeight; // wanted RELATIVE height (altitude)
+	float ws = 0.0f;         // wanted vertical speed
+
+	owner->SetVelocity((spd * XZVector) + (UpVector * curVertSpeed));
+
+	if (lastColWarningType == 2) {
+		const float3 dir = lastColWarning->midPos - owner->midPos;
+		const float3 sdir = lastColWarning->speed - spd;
+
+		if (spd.dot(dir + sdir * 20.0f) < 0.0f) {
+			if (lastColWarning->midPos.y > owner->pos.y) {
+				wh -= 30.0f;
+			} else {
+				wh += 50.0f;
+			}
+		}
+	}
+
+	if (curRelHeight < wh) {
+		ws = altitudeRate;
+
+		if ((spd.y > 0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 1.5f) < spd.y) {
+			ws = 0.0f;
+		}
+	} else {
+		ws = -altitudeRate;
+
+		if ((spd.y < -0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 0.7f) < -spd.y) {
+			ws = 0.0f;
+		}
+	}
+
+	ws *= (1 - owner->beingBuilt);
+	// note: don't want this in case unit is built on some raised platform?
+	wh *= (1 - owner->beingBuilt);
+
+	if (math::fabs(wh - curRelHeight) > 2.0f) {
+		if (spd.y > ws) {
+			owner->SetVelocity((spd * XZVector) + (UpVector * std::max(ws, spd.y - accRate * 1.5f)));
+		} else {
+			// accelerate upward faster if close to ground
+			owner->SetVelocity((spd * XZVector) + (UpVector * std::min(ws, spd.y + accRate * ((curRelHeight < 20.0f)? 2.0f: 0.7f))));
+		}
+	} else {
+		owner->SetVelocity((spd * XZVector) + (UpVector * spd.y * 0.95f));
+	}
+
+	// finally update w-component
+	owner->SetSpeed(spd);
+}
+
+
 void CHoverAirMoveType::UpdateAirPhysics()
 {
 	const float3& pos = owner->pos;
@@ -788,9 +840,6 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	float curAbsHeight = owner->unitDef->canSubmerge?
 		ground->GetHeightReal(pos.x, pos.z):
 		ground->GetHeightAboveWater(pos.x, pos.z);
-	float curRelHeight = 0.0f;
-
-	float wh = wantedHeight; // wanted RELATIVE height (altitude)
 
 	// always stay above the actual terrain (therefore either the value of
 	// <midPos.y - radius> or pos.y must never become smaller than the real
@@ -812,59 +861,8 @@ void CHoverAirMoveType::UpdateAirPhysics()
 			smoothGround->GetHeightAboveWater(pos.x, pos.z);
 	}
 
-	// restore original vertical speed
-	owner->SetVelocity((spd * XZVector) + (UpVector * yspeed));
-
-	if (lastColWarningType == 2) {
-		const float3 dir = lastColWarning->midPos - owner->midPos;
-		const float3 sdir = lastColWarning->speed - spd;
-
-		if (spd.dot(dir + sdir * 20.0f) < 0.0f) {
-			if (lastColWarning->midPos.y > owner->pos.y) {
-				wh -= 30.0f;
-			} else {
-				wh += 50.0f;
-			}
-		}
-	}
-
-	curRelHeight = pos.y - curAbsHeight;
-
-	{
-		// wanted vertical speed
-		float ws = 0.0f;
-
-		if (curRelHeight < wh) {
-			ws = altitudeRate;
-
-			if ((spd.y > 0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 1.5f) < spd.y) {
-				ws = 0.0f;
-			}
-		} else {
-			ws = -altitudeRate;
-
-			if ((spd.y < -0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 0.7f) < -spd.y) {
-				ws = 0.0f;
-			}
-		}
-
-		ws *= (1 - owner->beingBuilt);
-		// note: don't want this in case unit is built on some raised platform?
-		wh *= (1 - owner->beingBuilt);
-
-		if (math::fabs(wh - curRelHeight) > 2.0f) {
-			if (spd.y > ws) {
-				owner->SetVelocity((spd * XZVector) + (UpVector * std::max(ws, spd.y - accRate * 1.5f)));
-			} else {
-				// accelerate upward faster if close to ground
-				owner->SetVelocity((spd * XZVector) + (UpVector * std::min(ws, spd.y + accRate * ((curRelHeight < 20.0f)? 2.0f: 0.7f))));
-			}
-		} else {
-			owner->SetVelocity((spd * XZVector) + (UpVector * spd.y * 0.95f));
-		}
-	}
-
-	owner->SetSpeed(spd);
+	// restore original vertical speed, then compute new
+	UpdateVerticalSpeed(spd, pos.y - curAbsHeight, yspeed);
 
 	if (modInfo.allowAircraftToLeaveMap || (pos + spd).IsInBounds()) {
 		owner->Move(spd, true);

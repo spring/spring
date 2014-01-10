@@ -5,6 +5,8 @@
 
 #include "AAirMoveType.h"
 
+struct float4;
+
 class CHoverAirMoveType: public AAirMoveType
 {
 	CR_DECLARE(CHoverAirMoveType);
@@ -72,6 +74,8 @@ private:
 	void UpdateAirPhysics();
 	void UpdateMoveRate();
 
+	void UpdateVerticalSpeed(const float4& spd, float curRelHeight, float curVertSpeed) const;
+
 	bool CanLand(bool busy) const { return (!busy && ((!dontLand && autoLand) || (reservedPad != NULL))); }
 	bool CanLandAt(const float3& pos) const;
 
@@ -94,11 +98,6 @@ private:
 	bool forceHeading;
 	/// Set to true when transporting stuff
 	bool dontLand;
-	/**
-	 * needed to get transport close enough to what is going to be transported.
-	 * better way ?
-	 */
-	bool loadingUnits;
 
 	/// TODO: Seems odd to use heading in unit, since we have toggled useHeading to false..
 	short wantedHeading;

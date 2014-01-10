@@ -80,7 +80,7 @@ const string& CCobThread::GetName()
 
 int CCobThread::CheckStack(unsigned int size, bool warn)
 {
-	if ((unsigned)size <= stack.size())
+	if (size <= stack.size())
 		return size;
 
 	if (warn) {
