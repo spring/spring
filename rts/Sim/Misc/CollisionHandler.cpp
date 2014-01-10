@@ -221,7 +221,7 @@ bool CCollisionHandler::IntersectPieceTreeHelper(
 	const CMatrix44f& mat,
 	const float3& p0,
 	const float3& p1,
-	std::list<CollisionQuery>* cqs
+	std::vector<CollisionQuery>* cqs
 ) {
 	bool ret = false;
 
@@ -252,11 +252,13 @@ bool CCollisionHandler::IntersectPiecesHelper(
 	const CUnit* u,
 	const float3& p0,
 	const float3& p1,
-	std::list<CollisionQuery>* cqs
+	std::vector<CollisionQuery>* cqs
 ) {
 	CMatrix44f unitMat = u->GetTransformMatrix(true);
 	CMatrix44f volMat;
 	CollisionQuery cq;
+
+	cqs->reserve(u->localModel->pieces.size());
 
 	for (unsigned int n = 0; n < u->localModel->pieces.size(); n++) {
 		const LocalModelPiece* lmp = u->localModel->GetPiece(n);
@@ -285,8 +287,8 @@ bool CCollisionHandler::IntersectPiecesHelper(
 
 bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* cq)
 {
-	std::list<CollisionQuery> cqs;
-	std::list<CollisionQuery>::const_iterator cqsIt;
+	std::vector<CollisionQuery> cqs;
+	std::vector<CollisionQuery>::const_iterator cqsIt;
 
 	// TODO:
 	//   needs an early-out test, but gets complicated because
@@ -303,8 +305,10 @@ bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, con
 	float minDstSq = std::numeric_limits<float>::max();
 
 	// save the closest intersection
+	// TODO: merge this with helper?
 	for (cqsIt = cqs.begin(); cqsIt != cqs.end(); ++cqsIt) {
 		const float curDstSq = (cqsIt->GetHitPos() - p0).SqLength();
+
 		if (curDstSq >= minDstSq)
 			continue;
 

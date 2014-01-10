@@ -866,14 +866,14 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	if (lastColWarning != NULL) {
 		const float3 otherDif = lastColWarning->pos - pos;
 		const float otherLength = otherDif.Length();
+		const float otherThreat = (otherLength > 0.0f)?
+			std::max(1200.0f, goalDist2D) / otherLength * 0.036f:
+			0.0f;
 
 		const float3 otherDir = (otherLength > 0.0f)?
 			(otherDif / otherLength):
 			ZeroVector;
 
-		const float otherThreat = (otherLength > 0.0f)?
-			std::max(1200.0f, goalDist2D) / otherLength * 0.036f:
-			0.0f;
 		goalDotRight -= (otherDir.dot(rightdir) * otherThreat);
 	}
 
