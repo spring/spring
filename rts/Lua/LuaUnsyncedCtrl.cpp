@@ -2028,7 +2028,7 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 
 	std::vector<std::string> processArgs;
 
-	// arguments given by Lua code, if any
+	// arguments to Spring binary given by Lua code, if any
 	if (!springArguments.empty()) {
 		processArgs.push_back(springArguments);
 	}
@@ -2036,27 +2036,24 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	if (!scriptContents.empty()) {
 		// create file 'script.txt' with contents given by Lua code
 		std::ofstream scriptFile(scriptFullName.c_str());
+
 		scriptFile.write(scriptContents.c_str(), scriptContents.size());
 		scriptFile.close();
 
 		processArgs.push_back(scriptFullName);
 	}
 
+	LOG("[Spring.%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
+
 #ifdef _WIN32
-		// else OpenAL crashes when using execvp
-		ISound::Shutdown();
+	// else OpenAL crashes when using execvp
+	ISound::Shutdown();
 #endif
 
-	const std::string execError = Platform::ExecuteProcess(springFullName, processArgs);
+	Platform::ExecuteProcess(springFullName, processArgs);
 
-	if (execError.empty()) {
-		LOG("[Spring.%s] the game should be restarting", __FUNCTION__);
-		lua_pushboolean(L, true);
-	} else {
-		LOG_L(L_ERROR, "[Spring.%s] error %s", __FUNCTION__, execError.c_str());
-		lua_pushboolean(L, false);
-	}
-
+	// not reached on success
+	lua_pushboolean(L, false);
 	return 1;
 }
 
