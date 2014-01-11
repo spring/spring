@@ -429,14 +429,14 @@ bool IsRunningInGDB() {
 
 std::string ExecuteProcess(const std::string& file, std::vector<std::string> args)
 {
+	// "The first argument, by convention, should point to
+	// the filename associated with the file being executed."
+	args.insert(args.begin(), Quote(file));
+
 	// "The array of pointers must be terminated by a NULL pointer."
 	// --> include one extra argument string and leave it NULL
 	std::vector<char*> processArgs(args.size() + 1, NULL);
 	std::string execError;
-
-	// "The first argument, by convention, should point to
-	// the filename associated with the file being executed."
-	args.insert(args.begin(), Quote(file));
 
 	for (size_t a = 0; a < args.size(); ++a) {
 		const std::string& arg = args[a];
