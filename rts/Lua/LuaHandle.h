@@ -6,10 +6,9 @@
 
 #include "System/EventClient.h"
 //FIXME#include "LuaArrays.h"
-#include "LuaCallInCheck.h"
 #include "LuaContextData.h"
-#include "LuaUtils.h"
-#include "System/Platform/Threading.h"
+#include "LuaHashString.h"
+#include "lib/lua/include/LuaInclude.h" //FIXME needed for GetLuaContextData
 
 #include <string>
 #include <vector>
@@ -42,6 +41,7 @@ class LuaFBOs;
 class LuaTextures;
 class LuaShaders;
 class CLuaDisplayLists;
+class CLuaRules;
 
 
 class CLuaHandle : public CEventClient
@@ -52,86 +52,56 @@ class CLuaHandle : public CEventClient
 		void ResetCallinErrors() { callinErrors = 0; }
 
 	public:
-#define GET_CONTEXT_DATA(v) (GetLuaContextData(L ? L : GetActiveState())->v)
-#define GET_ACTIVE_CONTEXT_DATA(v) (GetLuaContextData(GetActiveState())->v)
-#define GET_HANDLE_CONTEXT_DATA(v) (GetLuaContextData(L)->v)
-#define SET_ACTIVE_CONTEXT_DATA(v) if(all) { D_Sim.v = _##v; D_Draw.v = _##v; } else GET_ACTIVE_CONTEXT_DATA(v) = _##v
-#define SET_HANDLE_CONTEXT_DATA(v) GET_HANDLE_CONTEXT_DATA(v) = _##v
+	#define PERMISSIONS_FUNCS(Name, type, dataArg) \
+		void Set ## Name(type _ ## dataArg) { GetLuaContextData(L)->dataArg = _ ## dataArg; } \
+		type Get ## Name() const { return GetLuaContextData(L)->dataArg; } \
+		static void SetHandle ## Name(const lua_State* L, type _ ## dataArg) { GetLuaContextData(L)->dataArg = _ ## dataArg;; } \
+		static type GetHandle ## Name(const lua_State* L) { return GetLuaContextData(L)->dataArg; }
 
-		void SetFullRead(bool _fullRead, bool all = false) { SET_ACTIVE_CONTEXT_DATA(fullRead); }
-		bool GetFullRead() const { return GET_ACTIVE_CONTEXT_DATA(fullRead); } // virtual function in CEventClient
-		static void SetHandleFullRead(const lua_State* L, bool _fullRead) { SET_HANDLE_CONTEXT_DATA(fullRead); }
-		static bool GetHandleFullRead(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(fullRead); }
+		PERMISSIONS_FUNCS(FullRead,     bool, fullRead); // virtual function in CEventClient
+		PERMISSIONS_FUNCS(FullCtrl,     bool, fullCtrl);
+		PERMISSIONS_FUNCS(CtrlTeam,     int,  ctrlTeam);
+		PERMISSIONS_FUNCS(ReadTeam,     int,  readTeam);
+		PERMISSIONS_FUNCS(ReadAllyTeam, int,  readAllyTeam); // virtual function in CEventClient
+		PERMISSIONS_FUNCS(SelectTeam,   int,  selectTeam);
 
-		void SetFullCtrl(bool _fullCtrl, bool all = false) { SET_ACTIVE_CONTEXT_DATA(fullCtrl); }
-		bool GetFullCtrl() const { return GET_ACTIVE_CONTEXT_DATA(fullCtrl); }
-		static void SetHandleFullCtrl(const lua_State* L, bool _fullCtrl) { SET_HANDLE_CONTEXT_DATA(fullCtrl); }
-		static bool GetHandleFullCtrl(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(fullCtrl); }
+	#undef PERMISSIONS_FUNCS
 
-		void SetCtrlTeam(int _ctrlTeam, bool all = false) { SET_ACTIVE_CONTEXT_DATA(ctrlTeam); }
-		int GetCtrlTeam() const { return GET_ACTIVE_CONTEXT_DATA(ctrlTeam); }
-		static void SetHandleCtrlTeam(const lua_State* L, int _ctrlTeam) { SET_HANDLE_CONTEXT_DATA(ctrlTeam); }
-		static int GetHandleCtrlTeam(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(ctrlTeam); }
+		bool GetSynced() const { return GetHandleSynced(L); }
+		static bool GetHandleSynced(const lua_State* L) { return GetLuaContextData(L)->synced; }
 
-		void SetReadTeam(int _readTeam, bool all = false) { SET_ACTIVE_CONTEXT_DATA(readTeam); }
-		int GetReadTeam() const { return GET_ACTIVE_CONTEXT_DATA(readTeam); }
-		static void SetHandleReadTeam(const lua_State* L, int _readTeam) { SET_HANDLE_CONTEXT_DATA(readTeam); }
-		static int GetHandleReadTeam(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(readTeam); }
-
-		void SetReadAllyTeam(int _readAllyTeam, bool all = false) { SET_ACTIVE_CONTEXT_DATA(readAllyTeam); }
-		int GetReadAllyTeam() const { return GET_ACTIVE_CONTEXT_DATA(readAllyTeam); } // virtual function in CEventClient
-		static void SetHandleReadAllyTeam(const lua_State* L, int _readAllyTeam) { SET_HANDLE_CONTEXT_DATA(readAllyTeam); }
-		static int GetHandleReadAllyTeam(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(readAllyTeam); }
-
-		void SetSelectTeam(int _selectTeam, bool all = false) { SET_ACTIVE_CONTEXT_DATA(selectTeam); }
-		int GetSelectTeam() const { return GET_ACTIVE_CONTEXT_DATA(selectTeam); }
-		static void SetHandleSelectTeam(const lua_State* L, int _selectTeam) { SET_HANDLE_CONTEXT_DATA(selectTeam); }
-		static int GetHandleSelectTeam(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(selectTeam); }
-
-		void SetSynced(bool _synced, bool all = false) { SET_ACTIVE_CONTEXT_DATA(synced); }
-		bool GetSynced() const { return GET_ACTIVE_CONTEXT_DATA(synced); }
-		static void SetHandleSynced(const lua_State* L, bool _synced) { SET_HANDLE_CONTEXT_DATA(synced); }
-		static bool GetHandleSynced(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(synced); }
-
-		static CLuaHandle* GetHandle(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(owner); }
-
-		static bool GetHandleUserMode(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(owner->GetUserMode()); }
 		bool GetUserMode() const { return userMode; }
+		static bool GetHandleUserMode(const lua_State* L) { return GetLuaContextData(L)->owner->GetUserMode(); }
 
-		static bool CheckModUICtrl(lua_State* L) { return GetModUICtrl() || GetHandleUserMode(L); }
 		bool CheckModUICtrl() const { return GetModUICtrl() || GetUserMode(); }
+		static bool CheckModUICtrl(lua_State* L) { return GetModUICtrl() || GetHandleUserMode(L); }
 
-		void SetRunning(lua_State* L, const bool _running) { GET_HANDLE_CONTEXT_DATA(running) += (_running) ? +1 : -1; assert( GET_HANDLE_CONTEXT_DATA(running) >= 0); }
-		bool IsRunning() const { return (GET_ACTIVE_CONTEXT_DATA(running) > 0); }
+		static int GetHandleAllowChanges(const lua_State* L) { return GetLuaContextData(L)->allowChanges; }
 
-//FIXME		LuaArrays& GetArrays(const lua_State* L = NULL) { return GET_CONTEXT_DATA(arrays); }
-		LuaShaders& GetShaders(const lua_State* L = NULL) { return GET_CONTEXT_DATA(shaders); }
-		LuaTextures& GetTextures(const lua_State* L = NULL) { return GET_CONTEXT_DATA(textures); }
-//FIXME		LuaVBOs& GetVBOs(const lua_State* L = NULL) { return GET_CONTEXT_DATA(vbos); }
-		LuaFBOs& GetFBOs(const lua_State* L = NULL) { return GET_CONTEXT_DATA(fbos); }
-		LuaRBOs& GetRBOs(const lua_State* L = NULL) { return GET_CONTEXT_DATA(rbos); }
-		CLuaDisplayLists& GetDisplayLists(const lua_State* L = NULL) { return GET_CONTEXT_DATA(displayLists); }
+		static CLuaHandle* GetHandle(lua_State* L) { return GetLuaContextData(L)->owner; }
+
+		static void SetHandleRunning(lua_State* L, const bool _running) {
+			GetLuaContextData(L)->running += (_running) ? +1 : -1;
+			assert( GetLuaContextData(L)->running >= 0);
+		}
+		static bool IsHandleRunning(lua_State* L) { return (GetLuaContextData(L)->running > 0); }
+		bool IsRunning() const { return IsHandleRunning(L); }
+
+		bool IsValid() const { return (L != NULL); }
+
+		//FIXME needed by LuaSyncedTable (can be solved cleaner?)
+		lua_State* GetLuaState() const { return L; }
+
+		LuaShaders& GetShaders(const lua_State* L = NULL) { return GetLuaContextData(L)->shaders; }
+		LuaTextures& GetTextures(const lua_State* L = NULL) { return GetLuaContextData(L)->textures; }
+		LuaFBOs& GetFBOs(const lua_State* L = NULL) { return GetLuaContextData(L)->fbos; }
+		LuaRBOs& GetRBOs(const lua_State* L = NULL) { return GetLuaContextData(L)->rbos; }
+		CLuaDisplayLists& GetDisplayLists(const lua_State* L = NULL) { return GetLuaContextData(L)->displayLists; }
 
 	public: // call-ins
-		bool WantsEvent(const string& name)  {
-			BEGIN_ITERATE_LUA_STATES();
-			{
-				GML_DRCMUTEX_LOCK(lua); // WantsEvent
-
-				// ask our derived instance
-				if (HasCallIn(L, name))
-					return true;
-			}
-			END_ITERATE_LUA_STATES();
-			return false;
-		}
-
-		// HasCallIn is only implemented by LuaHandleSynced/LuaIntro/LuaUI
-		virtual bool HasCallIn(lua_State* L, const string& name) { return false; } // FIXME
-		virtual bool SyncedUpdateCallIn(lua_State* L, const string& name) { return false; }
-		virtual bool UnsyncedUpdateCallIn(lua_State* L, const string& name) { return false; }
-
-		void Shutdown();
+		bool WantsEvent(const string& name) { return HasCallIn(L, name); }
+		virtual bool HasCallIn(lua_State* L, const string& name);
+		virtual bool UpdateCallIn(lua_State* L, const string& name);
 
 		void Load(IArchive* archive);
 
@@ -208,9 +178,6 @@ class CLuaHandle : public CEventClient
 		void StockpileChanged(const CUnit* owner,
 		                      const CWeapon* weapon, int oldCount);
 
-		// LuaHandleSynced wraps this to set allowChanges
-		virtual bool RecvLuaMsg(const string& msg, int playerID);
-
 		void Save(zipFile archive);
 
 		void UnsyncedHeightMapUpdate(const SRectangle& rect);
@@ -228,8 +195,6 @@ class CLuaHandle : public CEventClient
 		string GetTooltip(int x, int y);
 
 		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
-
-		bool ConfigCommand(const string& command);
 
 		bool CommandNotify(const Command& cmd);
 
@@ -267,31 +232,14 @@ class CLuaHandle : public CEventClient
 
 		void CollectGarbage();
 
+	public: // Non-eventhandler call-ins
+		void Shutdown();
+		bool GotChatMsg(const string& msg, int playerID);
+		bool RecvLuaMsg(const string& msg, int playerID);
+
 	public: // custom call-in  (inter-script calls)
-		virtual bool HasSyncedXCall(const string& funcName) { return false; }
-		virtual bool HasUnsyncedXCall(lua_State* srcState, const string& funcName) { return false; }
-		virtual int SyncedXCall(lua_State* srcState, const string& funcName) {
-			return 0;
-		}
-		virtual int UnsyncedXCall(lua_State* srcState, const string& funcName) {
-			return 0;
-		}
-
-		struct DelayDataDump {
-			std::vector<LuaUtils::ShallowDataDump> data;
-			std::vector<LuaUtils::DataDump> dump;
-			bool xcall;
-		};
-
-		/// @return true if any calls were processed, false otherwise
-		bool ExecuteCallsFromSynced(bool forced = true);
-		virtual void RecvFromSynced(lua_State* srcState, int args);
-		void RecvFromSim(int args);
-		void DelayRecvFromSynced(lua_State* srcState, int args);
-		std::vector<DelayDataDump> delayedCallsFromSynced;
-		static int SendToUnsynced(lua_State* L);
-
-		void UpdateThreading();
+		bool HasXCall(const string& funcName) { return HasCallIn(L, funcName); }
+		int XCall(lua_State* srcState, const string& funcName);
 
 	protected:
 		CLuaHandle(const string& name, int order, bool userMode);
@@ -299,59 +247,31 @@ class CLuaHandle : public CEventClient
 
 		void KillLua();
 
+		static void PushTracebackFuncToRegistry(lua_State* L);
+
 		bool AddBasicCalls(lua_State* L);
 		bool LoadCode(lua_State* L, const string& code, const string& debug);
-		bool AddEntriesToTable(lua_State* L, const char* name, bool (*entriesFunc)(lua_State*));
+		static bool AddEntriesToTable(lua_State* L, const char* name, bool (*entriesFunc)(lua_State*));
 
 		/// returns error code and sets traceback on error
-		int  RunCallInTraceback(const LuaHashString* hs, int inArgs, int outArgs, int errFuncIndex, std::string& tracebackMsg, bool popErrFunc);
+		int  RunCallInTraceback(lua_State* L, const LuaHashString* hs, int inArgs, int outArgs, int errFuncIndex, std::string& tracebackMsg, bool popErrFunc);
 		/// returns false and prints message to log on error
-		bool RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errFuncIndex, bool popErrFunc = true);
+		bool RunCallInTraceback(lua_State* L, const LuaHashString& hs, int inArgs, int outArgs, int errFuncIndex, bool popErrFunc = true);
 		/// returns false and and sets errormessage on error
-		bool RunCallIn(int inArgs, int outArgs, std::string& errormessage);
+		bool RunCallIn(lua_State* L, int inArgs, int outArgs, std::string& errormessage);
 		/// returns false and prints message to log on error
-		bool RunCallIn(const LuaHashString& hs, int inArgs, int outArgs);
-		bool RunCallInUnsynced(const LuaHashString& hs, int inArgs, int outArgs);
+		bool RunCallIn(lua_State* L, const LuaHashString& hs, int inArgs, int outArgs);
 
 		void LosCallIn(const LuaHashString& hs, const CUnit* unit, int allyTeam);
 		void UnitCallIn(const LuaHashString& hs, const CUnit* unit);
-		bool PushUnsyncedCallIn(lua_State* L, const LuaHashString& hs);
 
-	protected:
-		// MT stuff
-
-		bool singleState;
-		// LUA_MT_OPT inserted below mainly so that compiler can optimize code
-		bool SingleState() const { return !(LUA_MT_OPT & LUA_STATE) || singleState; } // Is this handle using a single Lua state?
-		bool copyExportTable;
-		bool CopyExportTable() const { return (LUA_MT_OPT & LUA_STATE) && copyExportTable; } // Copy the table _G.EXPORT --> SYNCED.EXPORT between dual states?
-		static bool useDualStates;
-		static bool UseDualStates() { return (LUA_MT_OPT & LUA_STATE) && useDualStates; } // Is Lua handle splitting enabled (globally)?
-		bool useEventBatch;
-		bool UseEventBatch() const { return (LUA_MT_OPT & LUA_BATCH) && useEventBatch; } // Use event batch to forward "synced" luaui events into draw thread?
-		bool purgeCallsFromSyncedBatch;
-		bool PurgeCallsFromSyncedBatch() const { return (LUA_MT_OPT & LUA_STATE) && purgeCallsFromSyncedBatch; } // Automatically clean deleted objects/IDs from the SendToUnsynced/XCall batch
-
-		lua_State* ForceUnsyncedState() { lua_State* L_Prev = L_Sim; if (!SingleState() && Threading::IsSimThread()) L_Sim = L_Draw; return L_Prev; }
-		void RestoreState(lua_State* L_Prev) { if (!SingleState() && Threading::IsSimThread()) L_Sim = L_Prev; }
-
-		lua_State* GetActiveState() {
-			return (SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw;
-		}
-		const lua_State* GetActiveState() const {
-			return (SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw;
-		}
-
-		bool IsValid() const { return (L_Sim != NULL) && (L_Draw != NULL); }
+		void RunDrawCallIn(const LuaHashString& hs);
 
 	protected:
 		bool userMode;
 
-		lua_State* L_Sim;
-		lua_State* L_Draw;
-
-		luaContextData D_Sim;
-		luaContextData D_Draw;
+		lua_State* L;
+		luaContextData D;
 
 		bool killMe;
 		string killMsg;
@@ -362,21 +282,7 @@ class CLuaHandle : public CEventClient
 
 		int callinErrors;
 
-	public: // EventBatch
-		void ExecuteUnitEventBatch();
-		void ExecuteFeatEventBatch();
-		void ExecuteProjEventBatch();
-		void ExecuteFrameEventBatch();
-		void ExecuteLogEventBatch();
-
-	protected:
-		std::vector<LuaUnitEventBase> luaUnitEventBatch;
-		std::vector<LuaFeatEventBase> luaFeatEventBatch;
-		std::vector<LuaProjEventBase> luaProjEventBatch;
-		std::vector<LuaLogEventBase> luaLogEventBatch;
-		std::vector<int> luaFrameEventBatch;
-
-	protected: // call-outs
+	private: // call-outs
 		static int KillActiveHandle(lua_State* L);
 		static int CallOutGetName(lua_State* L);
 		static int CallOutGetSynced(lua_State* L);
@@ -389,17 +295,14 @@ class CLuaHandle : public CEventClient
 		static int CallOutGetGlobal(lua_State* L);
 		static int CallOutGetRegistry(lua_State* L);
 		static int CallOutGetCallInList(lua_State* L);
-		static int CallOutSyncedUpdateCallIn(lua_State* L);
-		static int CallOutUnsyncedUpdateCallIn(lua_State* L);
+		static int CallOutUpdateCallIn(lua_State* L);
 
 	public: // static
-//FIXME		static LuaArrays& GetActiveArrays(lua_State* L)   { return GET_HANDLE_CONTEXT_DATA(arrays); }
-		static inline LuaShaders& GetActiveShaders(lua_State* L)  { return GET_HANDLE_CONTEXT_DATA(shaders); }
-		static inline LuaTextures& GetActiveTextures(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(textures); }
-//FIXME		static LuaVBOs& GetActiveVBOs(lua_State* L)     { return GET_HANDLE_CONTEXT_DATA(vbos); }
-		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(fbos); }
-		static inline LuaRBOs& GetActiveRBOs(lua_State* L)     { return GET_HANDLE_CONTEXT_DATA(rbos); }
-		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(displayLists); }
+		static inline LuaShaders& GetActiveShaders(lua_State* L)  { return GetLuaContextData(L)->shaders; }
+		static inline LuaTextures& GetActiveTextures(lua_State* L) { return GetLuaContextData(L)->textures; }
+		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return GetLuaContextData(L)->fbos; }
+		static inline LuaRBOs& GetActiveRBOs(lua_State* L)     { return GetLuaContextData(L)->rbos; }
+		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return GetLuaContextData(L)->displayLists; }
 
 		static void SetDevMode(bool value) { devMode = value; }
 		static bool GetDevMode() { return devMode; }
@@ -409,9 +312,6 @@ class CLuaHandle : public CEventClient
 
 		static void HandleLuaMsg(int playerID, int script, int mode,
 			const std::vector<boost::uint8_t>& msg);
-		static bool IsDrawCallIn() {
-			return (LUA_MT_OPT & LUA_MUTEX) && !Threading::IsSimThread();
-		}
 
 	protected: // static
 		static bool devMode; // allows real file access
@@ -419,23 +319,22 @@ class CLuaHandle : public CEventClient
 
 		// FIXME: because CLuaUnitScript needs to access RunCallIn
 		friend class CLuaUnitScript;
+
+		// FIXME needs access to L & RunCallIn
+		friend class CLuaRules;
 };
 
 
-inline bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
+inline bool CLuaHandle::RunCallIn(lua_State* L, const LuaHashString& hs, int inArgs, int outArgs)
 {
-	return RunCallInTraceback(hs, inArgs, outArgs, 0, false);
+	return RunCallInTraceback(L, hs, inArgs, outArgs, 0, false);
 }
 
 
-inline bool CLuaHandle::RunCallInUnsynced(const LuaHashString& hs, int inArgs, int outArgs)
+inline bool CLuaHandle::RunCallIn(lua_State* L, int inArgs, int outArgs, std::string& errorMsg)
 {
-	SetSynced(false);
-	const bool retval = RunCallIn(hs, inArgs, outArgs);
-	SetSynced(!userMode);
-	return retval;
+	return RunCallInTraceback(L, NULL, inArgs, outArgs, 0, errorMsg, false);
 }
-
 
 
 /******************************************************************************/

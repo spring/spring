@@ -7,7 +7,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/LoadScreen.h"
 #include "Lua/LuaParser.h"
-#include "Lua/LuaRules.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GroundFlash.h"
 #include "Rendering/GlobalRendering.h"
@@ -758,7 +757,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		glPushMatrix();
 			glMultMatrixf(wp->GetTransformMatrix(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE));
 
-			if (!(/*p->luaDraw &&*/ luaRules != NULL && luaRules->DrawProjectile(p))) {
+			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
 				wp->model->DrawStatic();
 			}
 		glPopMatrix();
@@ -779,7 +778,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 			glTranslatef3(pp->pos);
 			glRotatef(pp->spinAngle, pp->spinVec.x, pp->spinVec.y, pp->spinVec.z);
 
-			if (!(/*p->luaDraw &&*/ luaRules != NULL && luaRules->DrawProjectile(p))) {
+			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
 				glCallList(pp->dispList);
 			}
 		glPopMatrix();

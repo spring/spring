@@ -4,7 +4,6 @@
 #include "Feature.h"
 #include "FeatureHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
@@ -270,11 +269,10 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		// Work out how much that will cost
 		const float metalUse  = step * def->metal;
 		const float energyUse = step * def->energy;
-
-		const bool repairAllowed = (luaRules == NULL || luaRules->AllowFeatureBuildStep(builder, this, step));
 		const bool canExecRepair = (builderTeam->metal >= metalUse && builderTeam->energy >= energyUse);
+		const bool repairAllowed = !canExecRepair ? false : eventHandler.AllowFeatureBuildStep(builder, this, step);
 
-		if (repairAllowed && canExecRepair) {
+		if (repairAllowed) {
 			builder->UseMetal(metalUse);
 			builder->UseEnergy(energyUse);
 
@@ -312,7 +310,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 
 		const float step = (-amount) / def->reclaimTime;
 
-		if (luaRules != NULL && !luaRules->AllowFeatureBuildStep(builder, this, -step))
+		if (!eventHandler.AllowFeatureBuildStep(builder, this, -step))
 			return false;
 
 		// stop the last bit giving too much resource
@@ -386,8 +384,8 @@ void CFeature::DoDamage(
 	float baseDamage = damages.GetDefaultDamage();
 	float impulseMult = float((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()));
 
-	if (luaRules != NULL) {
-		luaRules->FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult);
+	if (eventHandler.FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult)) {
+		return;
 	}
 
 	// NOTE:

@@ -20,7 +20,6 @@
 #include "Game/Players/PlayerHandler.h"
 #include "Game/UI/UnitTracker.h"
 #include "Lua/LuaInputReceiver.h"
-#include "Lua/LuaUI.h" // FIXME: for GML
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Rendering/GlobalRendering.h"

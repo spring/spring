@@ -85,8 +85,7 @@ CGuiHandler::CGuiHandler():
 	curIconCommand(-1),
 	actionOffset(0),
 	drawSelectionInfo(true),
-	gatherMode(false),
-	hasLuaUILayoutCommands(false)
+	gatherMode(false)
 {
 	icons = new IconInfo[16];
 	iconsSize = 16;
@@ -539,7 +538,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 		forceLayoutUpdate = false;
 	}
 
-	if (luaUI && luaUI->HasLayoutButtons()) {
+	if (luaUI && luaUI->WantsEvent("LayoutButtons")) {
 		if (LayoutCustomIcons(useSelectionPage)) {
 			if (validInCommand) {
 				RevertToCmdDesc(cmdDesc, defCmd, samePage);
@@ -547,7 +546,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 			return; // we're done here
 		}
 		else {
-			PushLayoutCommand("disable");
+			CLuaUI::FreeHandler();
 		}
 	}
 
@@ -954,8 +953,6 @@ void CGuiHandler::SetShowingMetal(bool show)
 
 void CGuiHandler::Update()
 {
-	RunLayoutCommands();
-
 	SetCursorIcon();
 
 	{
@@ -1689,10 +1686,6 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		LOG("commands.size() = " _STPF_, commands.size());
 		return true;
 	}
-	else if (action.command == "luaui") {
-		PushLayoutCommand(action.extra);
-		return true;
-	}
 	else if (action.command == "invqueuekey") {
 		if (action.extra.empty()) {
 			invertQueueKey = !invertQueueKey;
@@ -1705,63 +1698,6 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 	}
 
 	return false;
-}
-
-
-void CGuiHandler::RunLayoutCommand(const std::string& command)
-{
-	const bool dualStates = (LUA_MT_OPT & LUA_STATE) && (globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_ALL || globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_UNMANAGED);
-
-	if (command == "reload" || command == "enable" || (dualStates && command == "update")) {
-		if (luaUI && luaUI->IsRunning()) {
-			// NOTE: causes a SEGV through RunCallIn()
-			LOG_L(L_WARNING, "Can not reload from within LuaUI, yet");
-			return;
-		}
-		if (luaUI == NULL) {
-			LOG("Loading: \"%s\"", "luaui.lua"); // FIXME
-			CLuaUI::LoadHandler();
-			if (luaUI == NULL) {
-				LoadConfig("ctrlpanel.txt");
-				LOG_L(L_WARNING, "Loading failed");
-			}
-		} else {
-			if (command == "enable") {
-				LOG_L(L_WARNING, "LuaUI is already enabled");
-			} else {
-				LOG("Reloading: \"%s\"", "luaui.lua"); // FIXME
-				CLuaUI::FreeHandler();
-				CLuaUI::LoadHandler();
-				if (luaUI == NULL) {
-					LoadConfig("ctrlpanel.txt");
-					LOG_L(L_WARNING, "Reloading failed");
-				}
-			}
-		}
-		LayoutIcons(false);
-	}
-	else if (command == "disable") {
-		if (luaUI && luaUI->IsRunning()) {
-			// NOTE: might cause a SEGV through RunCallIn()
-			LOG_L(L_WARNING, "Can not disable from within LuaUI, yet");
-			return;
-		}
-		if (luaUI != NULL) {
-			CLuaUI::FreeHandler();
-			LoadConfig("ctrlpanel.txt");
-			LOG("Disabled LuaUI");
-		}
-		LayoutIcons(false);
-	}
-	else {
-		if (luaUI != NULL) {
-			luaUI->ConfigCommand(command);
-		} else {
-			//LOG_L(L_DEBUG, "[%s] LuaUI is not loaded (command=\"%s\")", __FUNCTION__, command.c_str());
-		}
-	}
-
-	return;
 }
 
 
@@ -2745,8 +2681,8 @@ static inline bool BindLuaTexByString(const std::string& str)
 	const char scriptType = str[1];
 	switch (scriptType) {
 		case 'u': { luaHandle = luaUI; break; }
-		case 'g': { luaHandle = luaGaia; break; }
-		case 'm': { luaHandle = luaRules; break; }
+		case 'g': { luaHandle = &luaGaia->unsyncedLuaHandle; break; }
+		case 'm': { luaHandle = &luaRules->unsyncedLuaHandle; break; }
 		default:  { break; }
 	}
 	if (luaHandle == NULL) {
@@ -4334,43 +4270,3 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 
 /******************************************************************************/
 /******************************************************************************/
-
-
-void CGuiHandler::PushLayoutCommand(const std::string& cmd, bool luaCmd) {
-	if (GML::SimEnabled()) {
-		GML_STDMUTEX_LOCK(laycmd); // PushLayoutCommand
-
-		layoutCommands.push_back(cmd);
-		if(luaCmd)
-			hasLuaUILayoutCommands = true;
-	} else {
-		RunLayoutCommand(cmd);
-	}
-}
-
-void CGuiHandler::RunLayoutCommands() {
-	if (!GML::SimEnabled() || layoutCommands.empty())
-		return;
-
-	bool luaCmd;
-	std::vector<std::string> layoutCmds;
-	{
-		GML_STDMUTEX_LOCK(laycmd); // RunLayoutCommands
-
-		layoutCmds.swap(layoutCommands);
-		luaCmd = hasLuaUILayoutCommands;
-		hasLuaUILayoutCommands = false;
-	}
-
-	if(luaCmd) {
-		GML_MSTMUTEX_LOCK(sim, -1); // RunLayoutCommands
-
-		for (std::vector<std::string>::const_iterator cit = layoutCmds.begin(); cit != layoutCmds.end(); ++cit) {
-			RunLayoutCommand(*cit);
-		}
-	} else {
-		for (std::vector<std::string>::const_iterator cit = layoutCmds.begin(); cit != layoutCmds.end(); ++cit) {
-			RunLayoutCommand(*cit);
-		}
-	}
-}

@@ -315,6 +315,8 @@ public:
 			}
 		} else if (luaRules) {
 			luaRules->GotChatMsg(arg, action.GetPlayerID());
+		} else {
+			LOG("LuaRules is not loaded");
 		}
 
 		return true;
@@ -368,7 +370,7 @@ public:
 		} else if (luaGaia) {
 			luaGaia->GotChatMsg(arg, action.GetPlayerID());
 		} else {
-			LOG("LuaGaia disabled");
+			LOG("LuaGaia is not loaded");
 		}
 
 		return true;

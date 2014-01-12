@@ -2,6 +2,7 @@
 
 
 #include <cmath>
+#include <zlib.h>
 #include <boost/regex.hpp>
 
 #include "LuaVFS.h"
@@ -18,11 +19,6 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
-
-#include <set>
-#include <list>
-#include <cctype>
-#include <limits.h>
 
 using std::min;
 
@@ -471,20 +467,45 @@ int LuaVFS::SevenZipFolder(lua_State* L, const string& folderPath, const string&
 	return 0;
 }
 
-/******************************************************************************/
-/******************************************************************************/
-//
-//  Zlib compression
-//
 
 int LuaVFS::ZlibCompress(lua_State* L)
 {
-	return LuaUtils::ZlibCompress(L);
+	size_t inLen;
+	const char* inData = luaL_checklstring(L, 1, &inLen);
+
+	long unsigned bufsize = compressBound(inLen);
+	std::vector<boost::uint8_t> compressed(bufsize, 0);
+	const int error = compress(&compressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
+	if (error == Z_OK)
+	{
+		lua_pushlstring(L, (const char*)&compressed[0], bufsize);
+		return 1;
+	}
+	else
+	{
+		return luaL_error(L, "Error while compressing");
+	}
 }
+
 
 int LuaVFS::ZlibDecompress(lua_State* L)
 {
-	return LuaUtils::ZlibDecompress(L);
+	size_t inLen;
+	const char* inData = luaL_checklstring(L, 1, &inLen);
+
+	long unsigned bufsize = std::max(luaL_optint(L, 2, 65000), 0);
+
+	std::vector<boost::uint8_t> uncompressed(bufsize, 0);
+	const int error = uncompress(&uncompressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
+	if (error == Z_OK)
+	{
+		lua_pushlstring(L, (const char*)&uncompressed[0], bufsize);
+		return 1;
+	}
+	else
+	{
+		return luaL_error(L, "Error while decompressing");
+	}
 }
 
 

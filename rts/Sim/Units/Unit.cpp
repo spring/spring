@@ -28,7 +28,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/Players/Player.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -57,6 +56,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/WeaponLoader.h"
+#include "System/EventBatchHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
@@ -1141,8 +1141,8 @@ void CUnit::DoDamage(
 		restTime = 0; // bleeding != resting
 	}
 
-	if (luaRules != NULL) {
-		luaRules->UnitPreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer, &baseDamage, &impulseMult);
+	if (eventHandler.UnitPreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer, &baseDamage, &impulseMult)) {
+		return;
 	}
 
 	script->HitByWeapon(-(float3(impulse * impulseMult)).SafeNormalize2D(), weaponDefID, /*inout*/ baseDamage);
@@ -1383,7 +1383,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	if (unitHandler->unitsByDefs[newteam][unitDef->id].size() >= unitDef->maxThisUnit)
 		return false;
 
-	if (luaRules && !luaRules->AllowUnitTransfer(this, newteam, type == ChangeCaptured))
+	if (!eventHandler.AllowUnitTransfer(this, newteam, type == ChangeCaptured))
 		return false;
 
 	// do not allow old player to keep controlling the unit
@@ -1773,36 +1773,35 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 			const float metalCostStep  = metalCost  * step;
 			const float energyCostStep = energyCost * step;
 
-			const bool buildAllowed = (luaRules == NULL || luaRules->AllowUnitBuildStep(builder, this, step));
 			const bool canExecBuild = (builderTeam->metal >= metalCostStep && builderTeam->energy >= energyCostStep);
-
-			if (buildAllowed && canExecBuild) {
-				if (builder->UseMetal(metalCostStep)) {
-					// FIXME AllowUnitBuildStep may have changed the storages!!! so the checks can be invalid!
-					// TODO add a builder->UseResources(SResources(metalCostStep, energyCostStep))
-					//
-					if (builder->UseEnergy(energyCostStep)) {
-						health += (maxHealth * step);
-						health = std::min(health, maxHealth);
-						buildProgress += step;
-
-						if (buildProgress >= 1.0f) {
-							FinishedBuilding(false);
-						}
-					} else {
-						// refund already-deducted metal if *energy* cost cannot be
-						builder->UseMetal(-metalCostStep);
-					}
-				}
-
-				return true;
-			} else {
+			if (!canExecBuild) {
 				// update the energy and metal required counts
 				builderTeam->metalPull  += metalCostStep;
 				builderTeam->energyPull += energyCostStep;
+				return false;
 			}
 
-			return false;
+			if (!eventHandler.AllowUnitBuildStep(builder, this, step))
+				return false;
+
+			if (builder->UseMetal(metalCostStep)) {
+				// FIXME eventHandler.AllowUnitBuildStep() may have changed the storages!!! so the checks can be invalid!
+				// TODO add a builder->UseResources(SResources(metalCostStep, energyCostStep))
+				if (builder->UseEnergy(energyCostStep)) {
+					health += (maxHealth * step);
+					health = std::min(health, maxHealth);
+					buildProgress += step;
+
+					if (buildProgress >= 1.0f) {
+						FinishedBuilding(false);
+					}
+				} else {
+					// refund already-deducted metal if *energy* cost cannot be
+					builder->UseMetal(-metalCostStep);
+				}
+			}
+
+			return true;
 		}
 		else if (health < maxHealth) {
 			// repair
@@ -1810,7 +1809,14 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 			const float energyUse = (energyCost * step);
 			const float energyUseScaled = energyUse * modInfo.repairEnergyCostFactor;
 
-			if (luaRules != NULL && !luaRules->AllowUnitBuildStep(builder, this, step))
+			const bool canEffort = (builderTeam->energy >= energyUseScaled);
+			if (!canEffort) {
+				// update the energy and metal required counts
+				builderTeam->energyPull += energyUseScaled;
+				return false;
+			}
+
+			if (!eventHandler.AllowUnitBuildStep(builder, this, step))
 				return false;
 
 	  		if (!builder->UseEnergy(energyUseScaled)) {
@@ -1836,7 +1842,13 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		const float metalRefundStepScaled  =  metalRefundStep * modInfo.reclaimUnitEfficiency;
 		const float energyRefundStepScaled = energyRefundStep * modInfo.reclaimUnitEnergyCostFactor;
 
-		if (luaRules != NULL && !luaRules->AllowUnitBuildStep(builder, this, step))
+		const bool canEffort = (builderTeam->energy >= -energyRefundStepScaled);
+		if (!canEffort) {
+			builderTeam->energyPull += -energyRefundStepScaled;
+			return false;
+		}
+
+		if (!eventHandler.AllowUnitBuildStep(builder, this, step))
 			return false;
 
 		restTime = 0;
@@ -1865,15 +1877,6 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 			beingBuilt = true;
 		} else {
 			// lump reclamation of invested metal
-			// NOTE:
-			//   because the nanoframe is also decaying on its OWN
-			//   (which reduces buildProgress and returns resources)
-			//   *while* we are reclaiming it, the final lump has to
-			//   subtract the amount already returned through decay
-			//
-			//   this also means that in lump-reclaim mode only health
-			//   is reduced since we need buildProgress to calculate a
-			//   proper refund
 			if (buildProgress <= 0.0f || health <= 0.0f) {
 				builder->AddHarvestedMetal((metalCost * buildProgress) * modInfo.reclaimUnitEfficiency);
 			}
