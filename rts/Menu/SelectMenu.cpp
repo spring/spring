@@ -35,6 +35,7 @@
 #include "aGui/Window.h"
 #include "aGui/Picture.h"
 #include "aGui/List.h"
+#include "alphanum.hpp"
 
 using std::string;
 using agui::Button;
@@ -277,7 +278,9 @@ void SelectMenu::ShowSettingsList()
 	}
 	curSelect->list->RemoveAllItems();
 	const std::map<std::string, std::string> &data = configHandler->GetData();
-	for(std::map<std::string,std::string>::const_iterator iter = data.begin(); iter != data.end(); ++iter)
+	typedef std::map<std::string, std::string, doj::alphanum_less<std::string> > DataSorted;
+	const DataSorted dataSorted(data.begin(), data.end());
+	for(DataSorted::const_iterator iter = dataSorted.begin(); iter != dataSorted.end(); ++iter)
 		curSelect->list->AddItem(iter->first + " = " + iter->second, "");
 	if(data.find(userSetting) != data.end())
 		curSelect->list->SetCurrentItem(userSetting + " = " + configHandler->GetString(userSetting));

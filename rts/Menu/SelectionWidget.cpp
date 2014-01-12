@@ -12,6 +12,7 @@
 #include "ExternalAI/LuaAIImplHandler.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "System/Info.h"
+#include "alphanum.hpp"
 
 const std::string SelectionWidget::NoModSelect = "No game selected";
 const std::string SelectionWidget::NoMapSelect = "No map selected";
@@ -69,7 +70,7 @@ void SelectionWidget::ShowModList()
 
 	const std::vector<CArchiveScanner::ArchiveData> &found = archiveScanner->GetPrimaryMods();
 
-	std::map<std::string, std::string> modMap; // name, desc  (using a map to sort)
+	std::map<std::string, std::string, doj::alphanum_less<std::string> > modMap; // name, desc  (using a map to sort)
 	for (std::vector<CArchiveScanner::ArchiveData>::const_iterator it = found.begin(); it != found.end(); ++it) {
 		modMap[it->GetNameVersioned()] = it->GetDescription();
 	}
@@ -91,7 +92,7 @@ void SelectionWidget::ShowMapList()
 
 	const std::vector<std::string> &arFound = archiveScanner->GetMaps();
 
-	std::set<std::string> mapSet; // use a set to sort them
+	std::set<std::string, doj::alphanum_less<std::string> > mapSet; // use a set to sort them
 	for (std::vector<std::string>::const_iterator it = arFound.begin(); it != arFound.end(); ++it) {
 		mapSet.insert((*it).c_str());
 	}
