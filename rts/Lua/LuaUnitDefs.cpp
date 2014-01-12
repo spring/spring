@@ -13,6 +13,7 @@
 
 #include "LuaInclude.h"
 
+#include "LuaConfig.h"
 #include "LuaDefs.h"
 #include "LuaHandle.h"
 #include "LuaUtils.h"

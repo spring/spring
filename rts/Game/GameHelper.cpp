@@ -6,7 +6,6 @@
 #include "GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaUI.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
@@ -749,10 +748,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 					}
 				}
 
-				if (luaRules != NULL) {
-					if (!luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
-						continue;
-					}
+				if (!eventHandler.AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
+					continue;
 				}
 
 				targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));

@@ -12,7 +12,6 @@
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/UI/UnitTracker.h"
-#include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -184,7 +183,7 @@ void CPlayer::StartControllingUnit()
 			return;
 		}
 
-		if (luaRules == NULL || luaRules->AllowDirectUnitControl(this->playerNum, newControlleeUnit)) {
+		if (eventHandler.AllowDirectUnitControl(this->playerNum, newControlleeUnit)) {
 			newControlleeUnit->fpsControlPlayer = this;
 			fpsController.SetControlleeUnit(newControlleeUnit);
 			selectedUnitsHandler.ClearNetSelect(this->playerNum);

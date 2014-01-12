@@ -4,12 +4,21 @@
 #define SPRING_LUA_INCLUDE
 
 #include <string>
+#include <assert.h>
 #include "lua.h"
 #include "lib/lua/src/lstate.h"
 #include "lualib.h"
 #include "lauxlib.h"
 #include "lib/streflop/streflop_cond.h"
 #include "LuaUser.h"
+
+
+#undef lua_pop
+static inline void lua_pop(lua_State* L, const int args)
+{
+	assert(args > 0); // prevent lua_pop(L, -1) which is wrong, args is _count_ and not index (use lua_remove that)
+	lua_settop(L, -(args)-1); // from lua.h!
+}
 
 
 static inline void lua_pushsstring(lua_State* L, const std::string& str)
@@ -66,6 +75,9 @@ static inline float lua_tofloat(lua_State* L, int idx)
 {
 	const float n = lua_tonumber(L, idx);
 #ifdef DEBUG
+	// Note:
+	// luaL_argerror must be called from inside of lua, else it calls exit()
+	// so it can't be used in LuaParser::Get...() and similar
 	if (math::isinf(n) || math::isnan(n)) luaL_argerror(L, idx, "number expected, got NAN (check your code for div0)");
 	//assert(!math::isinf(d));
 	//assert(!math::isnan(d));
@@ -94,9 +106,7 @@ static inline bool luaL_optboolean(lua_State* L, int idx, bool def)
 
 static inline bool luaL_checkboolean(lua_State* L, int idx)
 {
-	if (!lua_isboolean(L, idx)) {
-		luaL_checktype(L, idx, LUA_TBOOLEAN);
-	}
+	luaL_checktype(L, idx, LUA_TBOOLEAN);
 	return lua_toboolean(L, idx);
 }
 

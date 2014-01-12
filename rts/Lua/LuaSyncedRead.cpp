@@ -4,6 +4,7 @@
 
 #include "LuaInclude.h"
 
+#include "LuaConfig.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaMetalMap.h"

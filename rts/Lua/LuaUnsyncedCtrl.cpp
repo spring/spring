@@ -68,7 +68,6 @@
 
 #include <boost/cstdint.hpp>
 #include "System/Platform/Misc.h"
-#include "LuaHelper.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 	#include "System/Sound/EFX.h"

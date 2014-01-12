@@ -16,7 +16,7 @@ public:
 	/**
 	 * @brief network loss factor
 	 *
-	 * Network loss factor, a higher factor will reconfigure the protocol 
+	 * Network loss factor, a higher factor will reconfigure the protocol
 	 * to resend data more frequently, i.e. waste bandwidth to reduce lag
 	 */
 	int networkLossFactor;
@@ -102,18 +102,9 @@ public:
 	bool luaWritableConfigFile;
 
 #if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
-	/**
-	 * @brief multiThreadLua
-	 *
-	 * LuaHandle threading mode for Spring MT
-	 * 
-	 * See LuaConfig.h and ModInfo::luaThreadingModel
-	 */
-	int multiThreadLua;
 	bool enableDrawCallIns;
 #endif
 
-	int GetMultiThreadLua();
 	/**
 	 * @brief teamHighlight
 	 *

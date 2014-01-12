@@ -3,7 +3,6 @@
 #include "FeatureHandler.h"
 
 #include "Lua/LuaParser.h"
-#include "Lua/LuaRules.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
@@ -414,7 +413,7 @@ CFeature* CFeatureHandler::CreateWreckage(
 		}
 	}
 
-	if (luaRules && !luaRules->AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
+	if (!eventHandler.AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
 		return NULL;
 
 	if (!fd->modelName.empty()) {

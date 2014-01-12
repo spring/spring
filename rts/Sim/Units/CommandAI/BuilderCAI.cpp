@@ -10,7 +10,6 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Sim/Features/Feature.h"
@@ -621,7 +620,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 				return;
 			}
 
-			if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build)) {
+			if (!eventHandler.AllowUnitCreation(build.def, owner, &build)) {
 				StopMove(); // cancel KeepPointingTo
 				FinishCommand();
 				return;

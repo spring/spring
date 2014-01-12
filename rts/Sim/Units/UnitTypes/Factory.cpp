@@ -4,7 +4,6 @@
 #include "Factory.h"
 #include "Game/GameHelper.h"
 #include "Game/WaitCommandsAI.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
@@ -296,7 +295,7 @@ unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buil
 		return FACTORY_SKIP_BUILD_ORDER;
 	if (teamHandler->Team(team)->AtUnitLimit())
 		return FACTORY_KEEP_BUILD_ORDER;
-	if (luaRules && !luaRules->AllowUnitCreation(buildeeDef, this, NULL))
+	if (!eventHandler.AllowUnitCreation(buildeeDef, this, NULL))
 		return FACTORY_SKIP_BUILD_ORDER;
 
 	finishedBuildFunc = buildFunc;

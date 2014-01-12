@@ -21,7 +21,6 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/BranchPrediction.h"
 #include "System/Misc/SpringTime.h"
 #include "System/ScopedFPUSettings.h"
 #include "System/Util.h"
@@ -112,8 +111,10 @@ void LuaParser::SetupEnv()
 	lua_pushnil(L); lua_setglobal(L, "require");
 	lua_pushnil(L); lua_setglobal(L, "gcinfo");
 	lua_pushnil(L); lua_setglobal(L, "collectgarbage");
+	lua_pushnil(L); lua_setglobal(L, "newproxy"); // not sync-safe cause of __gc
 
-	// FIXME: replace "random" as in LuaHandleSynced (can write your own for now)
+	// FIXME: replace "random" _as in_ LuaHandleSynced (can write your own for now), we cannot use the LHS one cause gs-> is not valid in LuaParser
+	//        using streflop's RNG is possible
 	lua_getglobal(L, "math");
 	lua_pushliteral(L, "random");     lua_pushnil(L); lua_rawset(L, -3);
 	lua_pushliteral(L, "randomseed"); lua_pushnil(L); lua_rawset(L, -3);
@@ -1113,7 +1114,7 @@ bool LuaTable::GetMap(map<int, float>& data) const
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {
 			const int   key   =   lua_toint(L, -2);
-			const float value = lua_tofloat(L, -1);
+			const float value = lua_tonumber(L, -1);
 			data[key] = value;
 		}
 	}
@@ -1153,7 +1154,7 @@ bool LuaTable::GetMap(map<string, float>& data) const
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 			const string key   = lua_tostring(L, -2);
-			const float  value = lua_tofloat(L, -1);
+			const float  value = lua_tonumber(L, -1);
 			data[key] = value;
 		}
 	}
@@ -1195,7 +1196,7 @@ static bool ParseTableFloat(lua_State* L,
 {
 	lua_pushnumber(L, index);
 	lua_gettable(L, tableIndex);
-	value = lua_tofloat(L, -1);
+	value = lua_tonumber(L, -1);
 	if (unlikely(value == 0) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return false;
@@ -1256,7 +1257,7 @@ static bool ParseBoolean(lua_State* L, int index, bool& value)
 		return true;
 	}
 	else if (lua_isnumber(L, index)) {
-		value = (lua_tofloat(L, index) != 0.0f);
+		value = (lua_tonumber(L, index) != 0.0f);
 		return true;
 	}
 	else if (lua_isstring(L, index)) {
@@ -1315,7 +1316,7 @@ float LuaTable::Get(const string& key, float def) const
 	if (!PushValue(key)) {
 		return def;
 	}
-	const float value = lua_tofloat(L, -1);
+	const float value = lua_tonumber(L, -1);
 	if (unlikely(value == 0.f) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return def;
@@ -1412,7 +1413,7 @@ float LuaTable::Get(int key, float def) const
 	if (!PushValue(key)) {
 		return def;
 	}
-	const float value = lua_tofloat(L, -1);
+	const float value = lua_tonumber(L, -1);
 	if (unlikely(value == 0) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return def;

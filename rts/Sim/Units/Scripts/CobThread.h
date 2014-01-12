@@ -13,6 +13,8 @@
 class CCobFile;
 class CCobInstance;
 
+using std::vector;
+
 
 class CCobThread : public CObject, public CUnitScript::IAnimListener
 {

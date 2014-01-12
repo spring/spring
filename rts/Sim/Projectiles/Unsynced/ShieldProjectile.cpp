@@ -2,7 +2,6 @@
 
 #include "ShieldProjectile.h"
 #include "Game/Camera.h"
-#include "Lua/LuaRules.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
@@ -10,6 +9,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "System/EventHandler.h"
 #include "System/myMath.h"
 
 CR_BIND_DERIVED(ShieldProjectile, CProjectile, (NULL));
@@ -96,7 +96,7 @@ void ShieldProjectile::Update() {
 }
 
 bool ShieldProjectile::AllowDrawing() {
-	// call luaRules->DrawShield only once per shield & frame
+	// call eventHandler.DrawShield only once per shield & frame
 	if (lastAllowDrawingUpdate == globalRendering->drawFrame)
 		return allowDrawing;
 
@@ -110,8 +110,8 @@ bool ShieldProjectile::AllowDrawing() {
 
 	//FIXME if Lua wants to draw the shield itself, we should draw all GL_QUADS in the `va` vertexArray first.
 	// but doing so for each shield might reduce the performance.
-	// so might use a branch-prediction? -> save last return value and if it is true draw `va` before calling luaRules->DrawShield()
-	if (luaRules && luaRules->DrawShield(shield->owner, shield))
+	// so might use a branch-predicion? -> save last return value and if it is true draw `va` before calling eventHandler.DrawShield() ??FIXME
+	if (eventHandler.DrawShield(shield->owner, shield))
 		return allowDrawing;
 
 	const CUnit* owner = shield->owner;

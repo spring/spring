@@ -11,6 +11,7 @@ CEventClient::CEventClient(const std::string& _name, int _order, bool _synced)
 	: name(_name)
 	, order(_order)
 	, synced_(_synced)
+	, autoLinkEvents(false)
 {
 	// Note: virtual functions aren't available in the ctor!
 	//RegisterLinkedEvents(this);
@@ -25,6 +26,86 @@ CEventClient::~CEventClient()
 	eventHandler.RemoveClient(this);
 }
 
+
+bool CEventClient::WantsEvent(const std::string& eventName)
+{
+	if (!autoLinkEvents)
+		return false;
+
+	if (this->linkedEvents.empty())
+		return false;
+
+	std::map<std::string, eventFuncPtr> virtEventPtrs;
+	std::map<std::string, std::string> virtEventPtrsTypeInfo;
+
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wpmf-conversions"
+	#define SETUP_EVENT(eventname, props) \
+		virtEventPtrs[#eventname] = (eventFuncPtr)&CEventClient::eventname; \
+		virtEventPtrsTypeInfo[#eventname] = typeid(&CEventClient::eventname).name();
+
+		#include "Events.def"
+	#undef SETUP_EVENT
+	#pragma GCC diagnostic pop
+
+	if (virtEventPtrs[eventName] != this->linkedEvents[eventName]) {
+		return true;
+	}
+
+	return false;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+//
+//  Synced
+//
+
+bool CEventClient::CommandFallback(const CUnit* unit, const Command& cmd) { return false; }
+bool CEventClient::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced) { return true; }
+
+bool CEventClient::AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo) { return true; }
+bool CEventClient::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture) { return true; }
+bool CEventClient::AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part) { return true; }
+bool CEventClient::AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos) { return true; }
+bool CEventClient::AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part) { return true; }
+bool CEventClient::AllowResourceLevel(int teamID, const string& type, float level) { return true; }
+bool CEventClient::AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount) { return true; }
+bool CEventClient::AllowDirectUnitControl(int playerID, const CUnit* unit) { return true; }
+bool CEventClient::AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos) { return true; }
+
+bool CEventClient::TerraformComplete(const CUnit* unit, const CUnit* build) { return false; }
+bool CEventClient::MoveCtrlNotify(const CUnit* unit, int data) { return false; }
+
+int CEventClient::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID) { return -1; }
+bool CEventClient::AllowWeaponTarget(
+	unsigned int attackerID,
+	unsigned int targetID,
+	unsigned int attackerWeaponNum,
+	unsigned int attackerWeaponDefID,
+	float* targetPriority
+) { return true; }
+bool CEventClient::AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget) { return true; }
+bool CEventClient::UnitPreDamaged(
+	const CUnit* unit,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID,
+	bool paralyzer,
+	float* newDamage,
+	float* impulseMult) { return false; }
+bool CEventClient::FeaturePreDamaged(
+	const CFeature* feature,
+	const CUnit* attacker,
+	float damage,
+	int weaponDefID,
+	int projectileID,
+	float* newDamage,
+	float* impulseMult) { return false; }
+bool CEventClient::ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool) { return false; }
+bool CEventClient::SyncedActionFallback(const string& line, int playerID) { return false; }
 
 /******************************************************************************/
 /******************************************************************************/
@@ -52,6 +133,18 @@ void CEventClient::DrawWorldRefraction() {}
 void CEventClient::DrawScreenEffects() {}
 void CEventClient::DrawScreen() {}
 void CEventClient::DrawInMiniMap() {}
+
+bool CEventClient::DrawUnit(const CUnit* unit) { return false; }
+bool CEventClient::DrawFeature(const CFeature* feature) { return false; }
+bool CEventClient::DrawShield(const CUnit* unit, const CWeapon* weapon) { return false; }
+bool CEventClient::DrawProjectile(const CProjectile* projectile) { return false; }
+
+void CEventClient::GameProgress(int gameFrame) {}
+
+void CEventClient::DrawLoadScreen() {}
+void CEventClient::LoadProgress(const std::string& msg, const bool replace_lastline) {}
+
+void CEventClient::CollectGarbage() {}
 
 // from LuaUI
 bool CEventClient::KeyPress(int key, bool isRepeat) { return false; }

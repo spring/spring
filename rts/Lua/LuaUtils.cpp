@@ -1,22 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/Platform/Win/win32.h"
+//#include "System/Platform/Win/win32.h"
 
-#include <set>
-#include <cctype>
-#include <zlib.h>
 #include <boost/cstdint.hpp>
 #include <string.h>
-
+#include <map>
 
 #include "LuaUtils.h"
 
 #include "System/Log/ILog.h"
+#include "System/TimeProfiler.h"
 #include "System/Util.h"
 #include "LuaConfig.h"
 #include <boost/thread/recursive_mutex.hpp>
 
-static const int maxDepth = 256;
+
+static const int maxDepth = 16;
 int LuaUtils::exportedDataSize = 0;
 
 
@@ -24,11 +23,11 @@ int LuaUtils::exportedDataSize = 0;
 /******************************************************************************/
 
 
-static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth);
-static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth);
+static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied);
+static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied);
 
 
-static inline int PosLuaIndex(lua_State* src, int index)
+static inline int PosAbsLuaIndex(lua_State* src, int index)
 {
 	if (index > 0) {
 		return index;
@@ -38,7 +37,7 @@ static inline int PosLuaIndex(lua_State* src, int index)
 }
 
 
-static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth)
+static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied)
 {
 	const int type = lua_type(src, index);
 	switch (type) {
@@ -51,13 +50,28 @@ static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth)
 			break;
 		}
 		case LUA_TSTRING: {
+			// get string (pointer)
 			size_t len;
 			const char* data = lua_tolstring(src, index, &len);
+
+			// check cache
+			auto it = alreadyCopied.find(data);
+			if (it != alreadyCopied.end()) {
+				lua_rawgeti(dst, LUA_REGISTRYINDEX, it->second);
+				break;
+			}
+
+			// copy string
 			lua_pushlstring(dst, data, len);
+
+			// cache it
+			lua_pushvalue(dst, -1);
+			const int dstRef = luaL_ref(dst, LUA_REGISTRYINDEX);
+			alreadyCopied[data] = dstRef;
 			break;
 		}
 		case LUA_TTABLE: {
-			CopyPushTable(dst, src, index, depth);
+			CopyPushTable(dst, src, index, depth, alreadyCopied);
 			break;
 		}
 		default: {
@@ -69,18 +83,38 @@ static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth)
 }
 
 
-static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth)
+static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied)
 {
+	const int table = PosAbsLuaIndex(src, index);
+
+	// check cache
+	const void* p = lua_topointer(src, table);
+	auto it = alreadyCopied.find(p);
+	if (it != alreadyCopied.end()) {
+		lua_rawgeti(dst, LUA_REGISTRYINDEX, it->second);
+		return true;
+	}
+
+	// check table depth
 	if (depth++ > maxDepth) {
+		LOG("CopyTable: reached max table depth '%i'", depth);
 		lua_pushnil(dst); // push something
 		return false;
 	}
 
-	lua_newtable(dst);
-	const int table = PosLuaIndex(src, index);
+	// create new table
+	const auto array_len = lua_objlen(src, table);
+	lua_createtable(dst, array_len, 5);
+
+	// cache it
+	lua_pushvalue(dst, -1);
+	const int dstRef = luaL_ref(dst, LUA_REGISTRYINDEX);
+	alreadyCopied[p] = dstRef;
+
+	// copy table entries
 	for (lua_pushnil(src); lua_next(src, table) != 0; lua_pop(src, 1)) {
-		CopyPushData(dst, src, -2, depth); // copy the key
-		CopyPushData(dst, src, -1, depth); // copy the value
+		CopyPushData(dst, src, -2, depth, alreadyCopied); // copy the key
+		CopyPushData(dst, src, -1, depth, alreadyCopied); // copy the value
 		lua_rawset(dst, -3);
 	}
 
@@ -90,20 +124,36 @@ static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth)
 
 int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 {
+	SCOPED_TIMER("::CopyData");
+
 	const int srcTop = lua_gettop(src);
 	const int dstTop = lua_gettop(dst);
 	if (srcTop < count) {
+		LOG_L(L_ERROR, "LuaUtils::CopyData: tried to copy more data than there is");
 		return 0;
 	}
-	lua_checkstack(dst, count); // FIXME: not enough for table chains
+	lua_checkstack(dst, count + 3); // +3 needed for table copying
+	lua_lock(src); // we need to be sure tables aren't changed while we iterate them
+
+	// hold a map of all already copied tables in the lua's registry table
+	// needed for recursive tables, i.e. "local t = {}; t[t] = t"
+	std::map<const void*, int> alreadyCopied;
 
 	const int startIndex = (srcTop - count + 1);
 	const int endIndex   = srcTop;
 	for (int i = startIndex; i <= endIndex; i++) {
-		CopyPushData(dst, src, i, 0);
+		CopyPushData(dst, src, i, 0, alreadyCopied);
 	}
-	lua_settop(dst, dstTop + count);
 
+	// clear map
+	for (auto& pair: alreadyCopied) {
+		luaL_unref(dst, LUA_REGISTRYINDEX, pair.second);
+	}
+
+	const int curSrcTop = lua_gettop(src);
+	assert(srcTop == curSrcTop);
+	lua_settop(dst, dstTop + count);
+	lua_unlock(src);
 	return count;
 }
 
@@ -183,7 +233,7 @@ static bool BackupTable(LuaUtils::DataDump &d, lua_State* src, int index, int de
 	if (depth++ > maxDepth)
 		return false;
 
-	const int table = PosLuaIndex(src, index);
+	const int table = PosAbsLuaIndex(src, index);
 	for (lua_pushnil(src); lua_next(src, table) != 0; lua_pop(src, 1)) {
 		LuaUtils::DataDump dk, dv;
 		BackupData(dk, src, -2, depth);
@@ -230,7 +280,7 @@ int LuaUtils::Backup(std::vector<LuaUtils::DataDump> &backup, lua_State* src, in
 int LuaUtils::Restore(const std::vector<LuaUtils::DataDump> &backup, lua_State* dst) {
 	const int dstTop = lua_gettop(dst);
 	int count = backup.size();
-	lua_checkstack(dst, count); // FIXME: not enough for table chains
+	lua_checkstack(dst, count + 3);
 
 	for (std::vector<DataDump>::const_iterator i = backup.begin(); i != backup.end(); ++i) {
 		RestoreData(*i, dst, 0);
@@ -240,87 +290,6 @@ int LuaUtils::Restore(const std::vector<LuaUtils::DataDump> &backup, lua_State* 
 	return count;
 }
 
-
-int LuaUtils::ShallowBackup(std::vector<LuaUtils::ShallowDataDump> &backup, lua_State* src, int count) {
-	const int srcTop = lua_gettop(src);
-	if (srcTop < count)
-		return 0;
-
-	const int startIndex = (srcTop - count + 1);
-	const int endIndex   = srcTop;
-
-	for(int i = startIndex; i <= endIndex; ++i) {
-		const int type = lua_type(src, i);
-		ShallowDataDump sdd;
-		sdd.type = type;
-		switch (type) {
-			case LUA_TBOOLEAN: {
-				sdd.data.bol = lua_toboolean(src, i);
-				break;
-			}
-			case LUA_TNUMBER: {
-				sdd.data.num = lua_tonumber(src, i);
-				break;
-			}
-			case LUA_TSTRING: {
-				size_t len = 0;
-				const char* data = lua_tolstring(src, i, &len);
-				sdd.data.str = new std::string;
-				if (len > 0) {
-					sdd.data.str->resize(len);
-					memcpy(&(*sdd.data.str)[0], data, len);
-				}
-				break;
-			}
-			case LUA_TNIL: {
-				break;
-			}
-			default: {
-				LOG_L(L_WARNING, "ShallowBackup: Invalid type for argument %d", i);
-				break; // nil
-			}
-		}
-		backup.push_back(sdd);
-	}
-
-	return count;
-}
-
-
-int LuaUtils::ShallowRestore(const std::vector<LuaUtils::ShallowDataDump> &backup, lua_State* dst) {
-	int count = backup.size();
-	lua_checkstack(dst, count);
-
-	for (int d = 0; d < count; ++d) {
-		const ShallowDataDump &sdd = backup[d];
-		switch (sdd.type) {
-			case LUA_TBOOLEAN: {
-				lua_pushboolean(dst, sdd.data.bol);
-				break;
-			}
-			case LUA_TNUMBER: {
-				lua_pushnumber(dst, sdd.data.num);
-				break;
-			}
-			case LUA_TSTRING: {
-				lua_pushlstring(dst, sdd.data.str->c_str(), sdd.data.str->size());
-				delete sdd.data.str;
-				break;
-			}
-			case LUA_TNIL: {
-				lua_pushnil(dst);
-				break;
-			}
-			default: {
-				lua_pushnil(dst);
-				LOG_L(L_WARNING, "ShallowRestore: Invalid type for argument %d", d + 1);
-				break; // unhandled type
-			}
-		}
-	}
-
-	return count;
-}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -526,29 +495,7 @@ int LuaUtils::ParseIntArray(lua_State* L, int index, int* array, int size)
 	return size;
 }
 
-/*
-// from LuaShaders.cpp (index unused)
-int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
-{
-	if (!lua_istable(L, -1)) {
-		return -1;
-	}
-	const int table = lua_gettop(L);
-	for (int i = 0; i < size; i++) {
-		lua_rawgeti(L, table, (i + 1));
-		if (lua_isnumber(L, -1)) {
-			array[i] = lua_tofloat(L, -1);
-			lua_pop(L, 1);
-		} else {
-			lua_pop(L, 1);
-			return i;
-		}
-	}
-	return size;
-}
-*/
 
-// from LuaUnsyncedCtrl.cpp
 int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
 {
 	if (!lua_istable(L, index)) {
@@ -957,116 +904,20 @@ int LuaUtils::Log(lua_State* L)
 	return 0;
 }
 
-
 /******************************************************************************/
 /******************************************************************************/
 
-
-int LuaUtils::ZlibCompress(lua_State* L)
+LuaUtils::ScopedStackChecker::ScopedStackChecker(lua_State* L, int _returnVars)
+	: luaState(L)
+	, prevTop(lua_gettop(luaState))
+	, returnVars(_returnVars)
 {
-	size_t inLen;
-	const char* inData = luaL_checklstring(L, 1, &inLen);
-
-	long unsigned bufsize = compressBound(inLen);
-	std::vector<boost::uint8_t> compressed(bufsize, 0);
-	const int error = compress(&compressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
-	if (error == Z_OK)
-	{
-		lua_pushlstring(L, (const char*)&compressed[0], bufsize);
-		return 1;
-	}
-	else
-	{
-		return luaL_error(L, "Error while compressing");
-	}
 }
 
-int LuaUtils::ZlibDecompress(lua_State* L)
-{
-	size_t inLen;
-	const char* inData = luaL_checklstring(L, 1, &inLen);
-
-	long unsigned bufsize = std::max(luaL_optint(L, 2, 65000), 0);
-
-	std::vector<boost::uint8_t> uncompressed(bufsize, 0);
-	const int error = uncompress(&uncompressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
-	if (error == Z_OK)
-	{
-		lua_pushlstring(L, (const char*)&uncompressed[0], bufsize);
-		return 1;
-	}
-	else
-	{
-		return luaL_error(L, "Error while decompressing");
-	}
+LuaUtils::ScopedStackChecker::~ScopedStackChecker() {
+	const int curTop = lua_gettop(luaState); // use var so you can print it in gdb
+	assert(curTop == prevTop + returnVars);
 }
-
-/******************************************************************************/
-/******************************************************************************/
-
-int LuaUtils::tobool(lua_State* L)
-{
-	return 1;
-}
-
-
-int LuaUtils::isnil(lua_State* L)
-{
-	lua_pushboolean(L, lua_isnoneornil(L, 1));
-	return 1;
-}
-
-
-int LuaUtils::isbool(lua_State* L)
-{
-	lua_pushboolean(L, lua_type(L, 1) == LUA_TBOOLEAN);
-	return 1;
-}
-
-
-int LuaUtils::isnumber(lua_State* L)
-{
-	lua_pushboolean(L, lua_type(L, 1) == LUA_TNUMBER);
-	return 1;
-}
-
-
-int LuaUtils::isstring(lua_State* L)
-{
-	lua_pushboolean(L, lua_type(L, 1) == LUA_TSTRING);
-	return 1;
-}
-
-
-int LuaUtils::istable(lua_State* L)
-{
-	lua_pushboolean(L, lua_type(L, 1) == LUA_TTABLE);
-	return 1;
-}
-
-
-int LuaUtils::isthread(lua_State* L)
-{
-	lua_pushboolean(L, lua_type(L, 1) == LUA_TTHREAD);
-	return 1;
-}
-
-
-int LuaUtils::isfunction(lua_State* L)
-{
-	lua_pushboolean(L, lua_type(L, 1) == LUA_TFUNCTION);
-	return 1;
-}
-
-
-int LuaUtils::isuserdata(lua_State* L)
-{
-	const int type = lua_type(L, 1);
-	lua_pushboolean(L, (type == LUA_TUSERDATA) ||
-	                   (type == LUA_TLIGHTUSERDATA));
-	return 1;
-}
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -1101,17 +952,19 @@ int LuaUtils::PushDebugTraceback(lua_State* L)
 
 
 
-LuaUtils::ScopedDebugTraceBack::ScopedDebugTraceBack(lua_State* L)
-	: luaState(L)
-	, errFuncIdx(PushDebugTraceback(L))
+LuaUtils::ScopedDebugTraceBack::ScopedDebugTraceBack(lua_State* _L)
+	: L(_L)
+	, errFuncIdx(PushDebugTraceback(_L))
 {
 	assert(errFuncIdx >= 0);
 }
 
 LuaUtils::ScopedDebugTraceBack::~ScopedDebugTraceBack() {
-	//FIXME better use lua_remove(L, errFuncIdx) and solve zero case?
-	assert(errFuncIdx == 0 || lua_gettop(luaState) == errFuncIdx);
-	lua_pop(luaState, 1);
+	// make sure we are at same position on the stack
+	const int curTop = lua_gettop(L);
+	assert(errFuncIdx == 0 || curTop == errFuncIdx);
+
+	lua_pop(L, 1);
 }
 
 /******************************************************************************/

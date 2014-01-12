@@ -81,6 +81,7 @@
 #include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUI.h"
 #include "Lua/LuaUnsyncedCtrl.h"
+#include "Lua/LuaUtils.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
@@ -397,7 +398,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 	}
 
-	showMTInfo = (showMTInfo != 0)? globalConfig->GetMultiThreadLua() : -1;
+	showMTInfo = -1;
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
@@ -944,7 +945,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	// maybe a widget is interested?
 	if (guihandler != NULL) {
 		for (unsigned int i = 0; i < actionList.size(); ++i) {
-			guihandler->PushLayoutCommand(actionList[i].rawline, false);
+			luaUI->GotChatMsg(actionList[i].rawline, false);
 		}
 	}
 
@@ -1147,7 +1148,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
 
-	if (luaUI)    { luaUI->CheckStack(); luaUI->ExecuteUIEventBatch(); }
+	if (luaUI)    { luaUI->CheckStack(); }
 	if (luaGaia)  { luaGaia->CheckStack(); }
 	if (luaRules) { luaRules->CheckStack(); }
 
@@ -1157,7 +1158,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 			LOG_L(L_ERROR, "5 errors deep in LuaUI, disabling...");
 		}
 
-		guihandler->PushLayoutCommand("disable");
+		CLuaUI::FreeHandler();
 		LOG_L(L_ERROR, "Type '/luaui reload' in the chat to re-enable LuaUI.");
 		LOG_L(L_ERROR, "===>>>  Please report this error to the forum or mantis with your infolog.txt");
 	}
@@ -2218,7 +2219,7 @@ bool CGame::ProcessAction(const Action& action, unsigned int key, bool isRepeat)
 
 	// maybe a widget is interested?
 	if (guihandler != NULL) {
-		guihandler->PushLayoutCommand(action.rawline, false); //FIXME add return argument!
+		luaUI->GotChatMsg(action.rawline, false); //FIXME add return argument!
 	}
 
 	return false;
@@ -2234,8 +2235,8 @@ void CGame::ActionReceived(const Action& action, int playerID)
 		SyncedAction syncedAction(action, playerID);
 		executor->ExecuteAction(syncedAction);
 	} else if (gs->frameNum > 1) {
-		if (luaRules) luaRules->SyncedActionFallback(action.rawline, playerID);
-		if (luaGaia) luaGaia->SyncedActionFallback(action.rawline, playerID);
+		eventHandler.SyncedActionFallback(action.rawline, playerID);
+		//FIXME add unsynced one?
 	}
 }
 

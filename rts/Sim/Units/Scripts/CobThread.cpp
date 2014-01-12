@@ -6,7 +6,6 @@
 #include "CobInstance.h"
 #include "CobEngine.h"
 #include "UnitScriptLog.h"
-#include "Lua/LuaRules.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 

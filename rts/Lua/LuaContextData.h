@@ -9,7 +9,6 @@
 #include "LuaTextures.h"
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
-//FIXME#include "LuaVBOs.h"
 #include "LuaDisplayLists.h"
 #include "System/EventClient.h"
 #include "System/Log/ILog.h"
@@ -162,8 +161,8 @@ struct luaContextData {
 	: owner(NULL)
 	, luamutex(NULL)
 
-	, primary(true)
 	, synced(false)
+	, allowChanges(false)
 	, drawingEnabled(false)
 
 	, running(0)
@@ -181,8 +180,8 @@ struct luaContextData {
 	CLuaHandle* owner;
 	boost::recursive_mutex* luamutex;
 
-	bool primary; //GML crap
 	bool synced;
+	bool allowChanges;
 	bool drawingEnabled;
 
 	int running; //< is currently running? (0: not running; >0: is running)
@@ -199,10 +198,8 @@ struct luaContextData {
 	int  readAllyTeam;
 	int  selectTeam;
 
-	//FIXME		LuaArrays arrays;
 	LuaShaders shaders;
 	LuaTextures textures;
-	//FIXME		LuaVBOs vbos;
 	LuaFBOs fbos;
 	LuaRBOs rbos;
 	CLuaDisplayLists displayLists;
