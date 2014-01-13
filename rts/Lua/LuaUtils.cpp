@@ -337,30 +337,28 @@ void LuaUtils::PushCurrentFuncEnv(lua_State* L, const char* caller)
 /******************************************************************************/
 /******************************************************************************/
 
-static int lowerKeysTable = 0;
 
-
-static bool LowerKeysCheck(lua_State* L, int table)
+static bool LowerKeysCheck(lua_State* L, int table, int alreadyCheckTable)
 {
-	bool used = false;
+	bool checked = true;
 	lua_pushvalue(L, table);
-	lua_rawget(L, lowerKeysTable);
+	lua_rawget(L, alreadyCheckTable);
 	if (lua_isnil(L, -1)) {
-		used = false;
+		checked = false;
 		lua_pushvalue(L, table);
 		lua_pushboolean(L, true);
-		lua_rawset(L, lowerKeysTable);
+		lua_rawset(L, alreadyCheckTable);
 	}
 	lua_pop(L, 1);
-	return used;
+	return checked;
 }
 
 
-static bool LowerKeysReal(lua_State* L)
+static bool LowerKeysReal(lua_State* L, int alreadyCheckTable)
 {
 	luaL_checkstack(L, 8, __FUNCTION__);
 	const int table = lua_gettop(L);
-	if (LowerKeysCheck(L, table)) {
+	if (LowerKeysCheck(L, table, alreadyCheckTable)) {
 		return true;
 	}
 
@@ -370,7 +368,7 @@ static bool LowerKeysReal(lua_State* L)
 
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_istable(L, -1)) {
-			LowerKeysReal(L);
+			LowerKeysReal(L, alreadyCheckTable);
 		}
 		if (lua_israwstring(L, -2)) {
 			const string rawKey = lua_tostring(L, -2);
@@ -402,7 +400,6 @@ static bool LowerKeysReal(lua_State* L)
 	}
 
 	lua_pop(L, 1); // pop the changed table
-
 	return true;
 }
 
@@ -414,16 +411,14 @@ bool LuaUtils::LowerKeys(lua_State* L, int table)
 	}
 
 	// table of processed tables
-	lowerKeysTable = lua_gettop(L) + 1;
 	luaL_checkstack(L, 2, __FUNCTION__);
 	lua_newtable(L);
+	const int checkedTableIdx = lua_gettop(L);
 
 	lua_pushvalue(L, table); // push the table onto the top of the stack
-
-	LowerKeysReal(L);
+	LowerKeysReal(L, checkedTableIdx);
 
 	lua_pop(L, 2); // the lowered table, and the check table
-
 	return true;
 }
 
