@@ -79,6 +79,8 @@ class LuaUtils {
 		// lower case all keys in the table, with recursion
 		static bool LowerKeys(lua_State* L, int tableIndex);
 
+		static bool CheckTableForNaNs(lua_State* L, int table, const std::string& name);
+
 		static void PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable);
 		static void PushCommandOptionsTable(lua_State* L, const Command& cmd, bool subtable);
 		// from LuaUI.cpp / LuaSyncedCtrl.cpp (used to be duplicated)

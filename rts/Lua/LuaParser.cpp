@@ -226,12 +226,11 @@ bool LuaParser::Execute()
 		LuaUtils::LowerKeys(L, 1);
 	}
 
+	LuaUtils::CheckTableForNaNs(L, 1, fileName);
+
 	rootRef = luaL_ref(L, LUA_REGISTRYINDEX);
-
 	lua_settop(L, 0);
-
 	valid = true;
-
 	return true;
 }
 
