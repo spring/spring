@@ -356,10 +356,9 @@ static bool LowerKeysCheck(lua_State* L, int table)
 }
 
 
-static bool LowerKeysReal(lua_State* L, int depth)
+static bool LowerKeysReal(lua_State* L)
 {
-	lua_checkstack(L, lowerKeysTable + 8 + (depth * 3));
-
+	luaL_checkstack(L, 8, __FUNCTION__);
 	const int table = lua_gettop(L);
 	if (LowerKeysCheck(L, table)) {
 		return true;
@@ -371,7 +370,7 @@ static bool LowerKeysReal(lua_State* L, int depth)
 
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_istable(L, -1)) {
-			LowerKeysReal(L, depth + 1);
+			LowerKeysReal(L);
 		}
 		if (lua_israwstring(L, -2)) {
 			const string rawKey = lua_tostring(L, -2);
@@ -416,16 +415,72 @@ bool LuaUtils::LowerKeys(lua_State* L, int table)
 
 	// table of processed tables
 	lowerKeysTable = lua_gettop(L) + 1;
-	lua_checkstack(L, lowerKeysTable + 2);
+	luaL_checkstack(L, 2, __FUNCTION__);
 	lua_newtable(L);
 
 	lua_pushvalue(L, table); // push the table onto the top of the stack
 
-	LowerKeysReal(L, 0);
+	LowerKeysReal(L);
 
 	lua_pop(L, 2); // the lowered table, and the check table
 
 	return true;
+}
+
+
+static bool CheckForNaNsReal(lua_State* L, const std::string& path)
+{
+	luaL_checkstack(L, 3, __FUNCTION__);
+	const int table = lua_gettop(L);
+	bool foundNaNs = false;
+
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (lua_istable(L, -1)) {
+			// We can't work on -2 directly cause lua_tostring would replace the value in -2,
+			// so we need to make a copy and convert that to a string.
+			lua_pushvalue(L, -2);
+			const char* key = lua_tostring(L, -1);
+			const std::string subpath = path + key + ".";
+			lua_pop(L, 1);
+			foundNaNs |= CheckForNaNsReal(L, subpath);
+		} else
+		if (lua_isnumber(L, -1)) {
+			// Check for NaN
+			const float value = lua_tonumber(L, -1);
+			if (math::isinf(value) || math::isnan(value)) {
+				// We can't work on -2 directly cause lua_tostring would replace the value in -2,
+				// so we need to make a copy and convert that to a string.
+				lua_pushvalue(L, -2);
+				const char* key = lua_tostring(L, -1);
+				LOG_L(L_WARNING, "%s%s: Got Invalid NaN/Inf!", path.c_str(), key);
+				lua_pop(L, 1);
+				foundNaNs = true;
+			}
+		}
+	}
+
+	return foundNaNs;
+}
+
+
+bool LuaUtils::CheckTableForNaNs(lua_State* L, int table, const std::string& name)
+{
+	if (!lua_istable(L, table)) {
+		return false;
+	}
+
+	luaL_checkstack(L, 2, __FUNCTION__);
+
+	// table of processed tables
+	lua_newtable(L);
+	// push the table onto the top of the stack
+	lua_pushvalue(L, table);
+
+	const bool foundNaNs = CheckForNaNsReal(L, name + ": ");
+
+	lua_pop(L, 2); // the lowered table, and the check table
+
+	return foundNaNs;
 }
 
 
