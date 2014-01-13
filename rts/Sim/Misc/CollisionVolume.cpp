@@ -328,14 +328,15 @@ float CollisionVolume::GetPointSurfaceDistance(const CMatrix44f& mv, const float
 		case COLVOL_TYPE_CYLINDER: {
 			// code below is only valid for non-ellipsoidal cylinders
 			assert(hAxisScales[volumeAxes[1]] == hAxisScales[volumeAxes[2]]);
+			assert(hsqAxisScales[volumeAxes[1]] == hsqAxisScales[volumeAxes[2]]);
 
 			float pSq = 0.0f;
 			float rSq = 0.0f;
 
 			#define CYLINDER_CASE(a, b, c)                                                  \
 			{                                                                               \
-				pSq = pv.b * pv.b + pv.c * pv.c;                                            \
-				rSq = hsqAxisScales.b + hsqAxisScales.c;                                    \
+				pSq = (pv.b * pv.b) + (pv.c * pv.c);                                        \
+				rSq = (hsqAxisScales.b + hsqAxisScales.c) * 0.5f;                           \
                                                                                             \
 				if (pv.a >= -hAxisScales.a && pv.a <= hAxisScales.a) {                      \
 					/* case 1: point is between end-cap bounds along primary axis */        \
