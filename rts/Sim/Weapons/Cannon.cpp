@@ -111,16 +111,14 @@ bool CCannon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 	const float groundDist = ((avoidFlags & Collision::NOGROUND) == 0)?
 		ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 10, linear, quadratic):
 		-1.0f;
+	const float spread = (AccuracyExperience() + SprayAngleExperience()) * 0.6f * 0.9f;
 
 	if (groundDist > 0.0f) {
 		return false;
 	}
 
-	const float spread = (AccuracyExperience() + SprayAngleExperience()) * 0.6f * 0.9f;
-	const float modFlatLength = flatLength - 30.0f;
-
 	//FIXME add a forcedUserTarget (a forced fire mode enabled with meta key or something) and skip the test below then
-	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
+	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, flatLength,
 		dir.y, quadratic, spread, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}

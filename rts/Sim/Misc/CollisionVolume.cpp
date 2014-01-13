@@ -345,28 +345,18 @@ float CollisionVolume::GetPointSurfaceDistance(const CMatrix44f& mv, const float
 						/* case 2: point is outside end-cap bounds but inside inf-tube */   \
 						d = std::max(math::fabs(pv.a) - hAxisScales.a, 0.0f);               \
 					} else {                                                                \
-						/* general case: compute distance to end-cap edge */                \
-						l = math::fabs(pv.a) - hAxisScales.a;                               \
-						d = 1.0f / (math::sqrt(pSq) / math::sqrt(rSq));                     \
-						pt.b = pv.b * d;                                                    \
-						pt.c = pv.c * d;                                                    \
-						d = math::sqrt((l * l) + (pv - pt).SqLength());                     \
+						/* case 3: compute orthogonal distance to end-cap edge (rim) */     \
+						l = Square(math::fabs(pv.a) - hAxisScales.a);                       \
+						d = Square(std::max(math::sqrt(pSq) - math::sqrt(rSq), 0.0f));      \
+						d = math::sqrt(l + d);                                              \
 					}                                                                       \
 				}                                                                           \
 			}
 
 			switch (volumeAxes[0]) {
-				case COLVOL_AXIS_X: {
-					CYLINDER_CASE(x, y, z)
-				} break;
-
-				case COLVOL_AXIS_Y: {
-					CYLINDER_CASE(y, x, z)
-				} break;
-
-				case COLVOL_AXIS_Z: {
-					CYLINDER_CASE(z, x, y)
-				} break;
+				case COLVOL_AXIS_X: { CYLINDER_CASE(x, y, z) } break;
+				case COLVOL_AXIS_Y: { CYLINDER_CASE(y, x, z) } break;
+				case COLVOL_AXIS_Z: { CYLINDER_CASE(z, x, y) } break;
 			}
 
 			#undef CYLINDER_CASE
