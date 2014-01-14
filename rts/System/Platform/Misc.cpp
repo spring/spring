@@ -429,22 +429,30 @@ bool IsRunningInGDB() {
 
 std::string ExecuteProcess(const std::string& file, std::vector<std::string> args)
 {
-	// "The array of pointers must be terminated by a NULL pointer."
-	// --> include one extra argument string and leave it NULL
-	std::vector<char*> processArgs;
-	std::string execError;
-
 	// "The first argument, by convention, should point to
 	// the filename associated with the file being executed."
-	//
+#ifdef WIN32
 	// NOTE:
-	//   <file> does NOT need to be quoted even if it contains
-	//   space characters, execvp takes care of this internally
-	//   (verified on Linux where adding quotes causes "no such
-	//   file" error, Windows might be different story according
-	//   to #4161)
+	//   Windows doesn't support spaces in the 1st argument,
+	//   neither does it support a quoted filepath.
+	//   So translate it to a short path, which naturally don't
+	//   have spaces in them.
+	std::vector<TCHAR> shortPathC(file.size() + 1, 0);
+	const int length = GetShortPathName(file.c_str(), &shortPath[0], file.size() + 1);
+	if (length > 0 && length <= (file.size() + 1)) {
+		std::string path = shortPathC;
+		args.insert(args.begin(), path);
+	} else {
+		args.insert(args.begin(), file);
+	}
+#else
 	args.insert(args.begin(), file);
-	processArgs.resize(args.size() + 1, NULL);
+#endif
+
+	// "The array of pointers must be terminated by a NULL pointer."
+	// --> include one extra argument string and leave it NULL
+	std::vector<char*> processArgs(args.size(), NULL);
+	std::string execError;
 
 	for (size_t a = 0; a < args.size(); ++a) {
 		const std::string& arg = args[a];
