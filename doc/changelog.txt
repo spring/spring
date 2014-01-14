@@ -3,6 +3,19 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 
+-- 97.0 ---------------------------------------------------------
+Major:
+ - switch from sdl to sdl2:
+	add /fullscreen command ingame
+	fixes some window manager bugs/problems
+ - utf8 support
+
+Buildprocess:
+ - fix freetype not found on windows / mingw
+ - add check for gcc >=4.6 at configure
+ - freetype and fontconfig are now required
+ - sdl2 requirement replaces sdl
+
 -- 96.0 ---------------------------------------------------------
 
 Major:

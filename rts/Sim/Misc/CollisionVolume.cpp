@@ -328,14 +328,15 @@ float CollisionVolume::GetPointSurfaceDistance(const CMatrix44f& mv, const float
 		case COLVOL_TYPE_CYLINDER: {
 			// code below is only valid for non-ellipsoidal cylinders
 			assert(hAxisScales[volumeAxes[1]] == hAxisScales[volumeAxes[2]]);
+			assert(hsqAxisScales[volumeAxes[1]] == hsqAxisScales[volumeAxes[2]]);
 
 			float pSq = 0.0f;
 			float rSq = 0.0f;
 
 			#define CYLINDER_CASE(a, b, c)                                                  \
 			{                                                                               \
-				pSq = pv.b * pv.b + pv.c * pv.c;                                            \
-				rSq = hsqAxisScales.b + hsqAxisScales.c;                                    \
+				pSq = (pv.b * pv.b) + (pv.c * pv.c);                                        \
+				rSq = (hsqAxisScales.b + hsqAxisScales.c) * 0.5f;                           \
                                                                                             \
 				if (pv.a >= -hAxisScales.a && pv.a <= hAxisScales.a) {                      \
 					/* case 1: point is between end-cap bounds along primary axis */        \
@@ -345,28 +346,18 @@ float CollisionVolume::GetPointSurfaceDistance(const CMatrix44f& mv, const float
 						/* case 2: point is outside end-cap bounds but inside inf-tube */   \
 						d = std::max(math::fabs(pv.a) - hAxisScales.a, 0.0f);               \
 					} else {                                                                \
-						/* general case: compute distance to end-cap edge */                \
-						l = math::fabs(pv.a) - hAxisScales.a;                               \
-						d = 1.0f / (math::sqrt(pSq) / math::sqrt(rSq));                     \
-						pt.b = pv.b * d;                                                    \
-						pt.c = pv.c * d;                                                    \
-						d = math::sqrt((l * l) + (pv - pt).SqLength());                     \
+						/* case 3: compute orthogonal distance to end-cap edge (rim) */     \
+						l = Square(math::fabs(pv.a) - hAxisScales.a);                       \
+						d = Square(std::max(math::sqrt(pSq) - math::sqrt(rSq), 0.0f));      \
+						d = math::sqrt(l + d);                                              \
 					}                                                                       \
 				}                                                                           \
 			}
 
 			switch (volumeAxes[0]) {
-				case COLVOL_AXIS_X: {
-					CYLINDER_CASE(x, y, z)
-				} break;
-
-				case COLVOL_AXIS_Y: {
-					CYLINDER_CASE(y, x, z)
-				} break;
-
-				case COLVOL_AXIS_Z: {
-					CYLINDER_CASE(z, x, y)
-				} break;
+				case COLVOL_AXIS_X: { CYLINDER_CASE(x, y, z) } break;
+				case COLVOL_AXIS_Y: { CYLINDER_CASE(y, x, z) } break;
+				case COLVOL_AXIS_Z: { CYLINDER_CASE(z, x, y) } break;
 			}
 
 			#undef CYLINDER_CASE

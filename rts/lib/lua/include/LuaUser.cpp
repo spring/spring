@@ -157,6 +157,7 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 			LOG_L(L_FATAL, maxAllocFmtStr, (lcd->owner->GetName()).c_str(), lcd->curAllocedBytes, lcd->maxAllocedBytes);
 
 			// better kill Lua than whole engine
+			// NOTE: this will trigger luaD_throw --> exit(EXIT_FAILURE)
 			return NULL;
 		}
 

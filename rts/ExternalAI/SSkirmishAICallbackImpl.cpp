@@ -361,33 +361,23 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			break;
 		}
 */
-		case COMMAND_PATH_INIT:
-		{
+		case COMMAND_PATH_INIT: {
 			SInitPathCommand* cmd = static_cast<SInitPathCommand*>(commandData);
-			cmd->ret_pathId = clb->InitPath(cmd->start_posF3,
-					cmd->end_posF3, cmd->pathType, cmd->goalRadius);
+			cmd->ret_pathId = clb->InitPath(cmd->start_posF3, cmd->end_posF3, cmd->pathType, cmd->goalRadius);
 			break;
 		}
-		case COMMAND_PATH_GET_APPROXIMATE_LENGTH:
-		{
-			SGetApproximateLengthPathCommand* cmd =
-					static_cast<SGetApproximateLengthPathCommand*>(commandData);
-			cmd->ret_approximatePathLength =
-					clb->GetPathLength(cmd->start_posF3, cmd->end_posF3,
-							cmd->pathType, cmd->goalRadius);
+		case COMMAND_PATH_GET_APPROXIMATE_LENGTH: {
+			SGetApproximateLengthPathCommand* cmd = static_cast<SGetApproximateLengthPathCommand*>(commandData);
+			cmd->ret_approximatePathLength = clb->GetPathLength(cmd->start_posF3, cmd->end_posF3, cmd->pathType, cmd->goalRadius);
 			break;
 		}
-		case COMMAND_PATH_GET_NEXT_WAYPOINT:
-		{
-			SGetNextWaypointPathCommand* cmd =
-					static_cast<SGetNextWaypointPathCommand*>(commandData);
+		case COMMAND_PATH_GET_NEXT_WAYPOINT: {
+			SGetNextWaypointPathCommand* cmd = static_cast<SGetNextWaypointPathCommand*>(commandData);
 			clb->GetNextWaypoint(cmd->pathId).copyInto(cmd->ret_nextWaypoint_posF3_out);
 			break;
 		}
-		case COMMAND_PATH_FREE:
-		{
-			const SFreePathCommand* cmd = static_cast<SFreePathCommand*>(commandData);
-			clb->FreePath(cmd->pathId);
+		case COMMAND_PATH_FREE: {
+			clb->FreePath(static_cast<SFreePathCommand*>(commandData)->pathId);
 			break;
 		}
 
