@@ -52,6 +52,7 @@
 #include "lib/luasocket/src/luasocket.h"
 
 #include <mutex>
+#include <boost/thread/mutex.hpp>
 #include <stdio.h>
 #include <set>
 #include <cctype>
@@ -87,13 +88,13 @@ static const char* GetVFSMode()
 /******************************************************************************/
 /******************************************************************************/
 
-static std::mutex m_singleton;
+static boost::mutex m_singleton;
 
 
 void CLuaUI::LoadHandler()
 {
 	{
-		std::lock_guard<std::mutex> lk(m_singleton);
+		std::lock_guard<boost::mutex> lk(m_singleton);
 		if (luaUI) return;
 
 		luaUI = new CLuaUI();
@@ -107,7 +108,7 @@ void CLuaUI::LoadHandler()
 
 void CLuaUI::FreeHandler()
 {
-	std::lock_guard<std::mutex> lk(m_singleton);
+	std::lock_guard<boost::mutex> lk(m_singleton);
 	if (!luaUI) return;
 
 	auto* inst = luaUI;

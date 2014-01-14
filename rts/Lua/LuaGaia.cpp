@@ -3,6 +3,7 @@
 
 #include <set>
 #include <mutex>
+#include <boost/thread/mutex.hpp>
 
 #include "LuaGaia.h"
 
@@ -35,13 +36,13 @@ static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
 /******************************************************************************/
 /******************************************************************************/
 
-static std::mutex m_singleton;
+static boost::mutex m_singleton;
 
 
 void CLuaGaia::LoadHandler()
 {
 	{
-		std::lock_guard<std::mutex> lk(m_singleton);
+		std::lock_guard<boost::mutex> lk(m_singleton);
 		if (luaGaia) return;
 
 		luaGaia = new CLuaGaia();
@@ -55,7 +56,7 @@ void CLuaGaia::LoadHandler()
 
 void CLuaGaia::FreeHandler()
 {
-	std::lock_guard<std::mutex> lk(m_singleton);
+	std::lock_guard<boost::mutex> lk(m_singleton);
 	if (!luaGaia) return;
 
 	auto* inst = luaGaia;

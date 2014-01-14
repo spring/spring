@@ -17,6 +17,7 @@
 
 #include <assert.h>
 #include <mutex>
+#include <boost/thread/mutex.hpp>
 
 CLuaRules* luaRules = NULL;
 
@@ -29,13 +30,13 @@ const int* CLuaRules::currentCobArgs = NULL;
 /******************************************************************************/
 /******************************************************************************/
 
-static std::mutex m_singleton;
+static boost::mutex m_singleton;
 
 
 void CLuaRules::LoadHandler()
 {
 	{
-		std::lock_guard<std::mutex> lk(m_singleton);
+		std::lock_guard<boost::mutex> lk(m_singleton);
 		if (luaRules) return;
 
 		luaRules = new CLuaRules();
@@ -49,7 +50,7 @@ void CLuaRules::LoadHandler()
 
 void CLuaRules::FreeHandler()
 {
-	std::lock_guard<std::mutex> lk(m_singleton);
+	std::lock_guard<boost::mutex> lk(m_singleton);
 	if (!luaRules) return;
 
 	auto* inst = luaRules;
