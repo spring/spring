@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <mutex>
+#include <boost/thread/mutex.hpp>
 
 #include "LuaIntro.h"
 
@@ -35,13 +36,13 @@ CLuaIntro* LuaIntro = NULL;
 /******************************************************************************/
 /******************************************************************************/
 
-static std::mutex m_singleton;
+static boost::mutex m_singleton;
 
 
 void CLuaIntro::LoadHandler()
 {
 	{
-		std::lock_guard<std::mutex> lk(m_singleton);
+		std::lock_guard<boost::mutex> lk(m_singleton);
 		if (LuaIntro) return;
 
 		LuaIntro = new CLuaIntro();
@@ -55,7 +56,7 @@ void CLuaIntro::LoadHandler()
 
 void CLuaIntro::FreeHandler()
 {
-	std::lock_guard<std::mutex> lk(m_singleton);
+	std::lock_guard<boost::mutex> lk(m_singleton);
 	if (!LuaIntro) return;
 
 	auto* inst = LuaIntro;
