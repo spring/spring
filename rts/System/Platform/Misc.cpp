@@ -451,7 +451,7 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 
 	// "The array of pointers must be terminated by a NULL pointer."
 	// --> include one extra argument string and leave it NULL
-	std::vector<char*> processArgs(args.size(), NULL);
+	std::vector<char*> processArgs(args.size() + 1, NULL);
 	std::string execError;
 
 	for (size_t a = 0; a < args.size(); ++a) {
