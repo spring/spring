@@ -9,10 +9,15 @@
 #include "LuaUtils.h"
 
 #include "System/Log/ILog.h"
-#include "System/TimeProfiler.h"
 #include "System/Util.h"
 #include "LuaConfig.h"
 #include <boost/thread/recursive_mutex.hpp>
+
+#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
+	#include "System/TimeProfiler.h"
+#else
+	#define SCOPED_TIMER(x)
+#endif
 
 
 static const int maxDepth = 16;
