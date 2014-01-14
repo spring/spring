@@ -377,8 +377,7 @@ struct SInitPathCommand {
 
 /**
  * Returns the approximate path cost between two points.
- * - for pathType {Ground_Move=0, Hover_Move=1, Ship_Move=2},
- *   @see UnitDef_MoveData_getMoveType()
+ * - for pathType @see UnitDef_MoveData_getPathType()
  * - goalRadius defines a goal area within which any square could be accepted as
  *   path target. If a singular goal position is wanted, use 0.0f.
  *   default: 8.0f
@@ -392,7 +391,7 @@ struct SGetApproximateLengthPathCommand {
 	int pathType;
 	/// default: 8.0f
 	float goalRadius;
-	int ret_approximatePathLength;
+	float ret_approximatePathLength;
 }; //$ COMMAND_PATH_GET_APPROXIMATE_LENGTH Pathing_getApproximateLength
 
 struct SGetNextWaypointPathCommand {

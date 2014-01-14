@@ -90,7 +90,9 @@ inline static bool TestTrajectoryConeHelper(
 	// firing-cone is centered along dir2D with radius
 	// <x * spread + baseSize> (usually baseSize != 0
 	// so weapons with spread = 0 will test against a
-	// cylinder, not an infinitely thin line)
+	// cylinder, not an infinitely thin line as safety
+	// measure against friendly-fire damage in tightly
+	// packed unit groups)
 	//
 	// return true iff the world-space point <x, f(x)>
 	// lies on or inside the object's collision volume
@@ -129,8 +131,7 @@ inline static bool TestTrajectoryConeHelper(
 
 	if (globalRendering->drawdebugtraceray && Threading::IsSimThread()) {
 		// FIXME? seems to under-estimate gravity near edge of range
-		// (Cannon and MissileLauncher both subtract 30 elmos from it
-		// in HaveFreeLineOfFire???)
+		// (place objects along trajectory of a cannon to visualize)
 		#define go geometricObjects
 
 		if (ret) {
@@ -518,8 +519,6 @@ bool TestTrajectoryCone(
 	const bool ignoreNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
 	const bool ignoreFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
 
-	const float safetyRadii[2] = {2.0f, 0.5f};
-
 	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
 		const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
 
@@ -536,7 +535,7 @@ bool TestTrajectoryCone(
 				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
-				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadii[u->immobile], u)) {
+				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, 0.0f, u)) {
 					return true;
 				}
 			}
@@ -557,7 +556,7 @@ bool TestTrajectoryCone(
 				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
-				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadii[u->immobile], u))
+				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, 0.0f, u))
 					return true;
 			}
 		}
