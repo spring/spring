@@ -440,7 +440,7 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 	std::vector<TCHAR> shortPathC(file.size() + 1, 0);
 	const int length = GetShortPathName(file.c_str(), &shortPath[0], file.size() + 1);
 	if (length > 0 && length <= (file.size() + 1)) {
-		std::string path = reinterpret_cast<const char*>(&shortPath[0]);
+		std::string path = reinterpret_cast<const char*>(&shortPathC[0]);
 		args.insert(args.begin(), path);
 	} else {
 		args.insert(args.begin(), file);
