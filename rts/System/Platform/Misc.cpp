@@ -438,7 +438,7 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 	//   So translate it to a short path, which naturally don't
 	//   have spaces in them.
 	std::vector<TCHAR> shortPathC(file.size() + 1, 0);
-	const int length = GetShortPathName(file.c_str(), &shortPath[0], file.size() + 1);
+	const int length = GetShortPathName(file.c_str(), &shortPathC[0], file.size() + 1);
 	if (length > 0 && length <= (file.size() + 1)) {
 		std::string path = reinterpret_cast<const char*>(&shortPathC[0]);
 		args.insert(args.begin(), path);
