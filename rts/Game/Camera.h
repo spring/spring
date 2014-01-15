@@ -52,7 +52,6 @@ public:
 		bool upwardDir,
 		bool negSide);
 	void ClearFrustumSides() {
-		GML_RECMUTEX_LOCK(cam); // ClearFrustumSides
 
 		posFrustumSides.clear();
 		negFrustumSides.clear();
@@ -112,12 +111,10 @@ public:
 	};
 
 	const std::vector<FrustumLine> GetNegFrustumSides() const {
-		GML_RECMUTEX_LOCK(cam); // GetNegFrustumSides
 
 		return negFrustumSides;
 	}
 	const std::vector<FrustumLine> GetPosFrustumSides() const {
-		GML_RECMUTEX_LOCK(cam); // GetPosFrustumSides
 
 		return posFrustumSides;
 	}

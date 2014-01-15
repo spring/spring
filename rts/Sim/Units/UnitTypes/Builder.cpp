@@ -837,11 +837,6 @@ void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse
 {
 	const int modelNanoPiece = nanoPieceCache.GetNanoPiece(script);
 
-#ifdef USE_GML
-	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
-		return;
-#endif
-
 	if (localModel == NULL || !localModel->HasPiece(modelNanoPiece))
 		return;
 

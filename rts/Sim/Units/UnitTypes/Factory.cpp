@@ -255,8 +255,6 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	if (unitDef->fullHealthFactory && buildee->health < buildee->maxHealth) { return; }
 
 	{
-		GML_RECMUTEX_LOCK(group); // FinishBuild
-
 		if (group && buildee->group == 0) {
 			buildee->SetGroup(group, true);
 		}
@@ -488,11 +486,6 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 void CFactory::CreateNanoParticle(bool highPriority)
 {
 	const int modelNanoPiece = nanoPieceCache.GetNanoPiece(script);
-
-#ifdef USE_GML
-	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
-		return;
-#endif
 
 	if (localModel == NULL || !localModel->HasPiece(modelNanoPiece))
 		return;

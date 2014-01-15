@@ -193,7 +193,7 @@ void CSmokeTrailProjectile::Draw()
 		}
 	}
 
-	CProjectile* callbacker = GML::SimEnabled()? *(CProjectile* volatile*) &drawCallbacker: drawCallbacker;
+	CProjectile* callbacker = drawCallbacker;
 
 	if (callbacker != NULL) {
 		callbacker->DrawCallback();

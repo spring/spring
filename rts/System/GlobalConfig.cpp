@@ -6,7 +6,6 @@
 #include "System/GlobalConfig.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Lua/LuaConfig.h"
-#include "lib/gml/gml_base.h"
 
 CONFIG(int, NetworkLossFactor)
 .defaultValue(netcode::UDPConnection::MIN_LOSS_FACTOR)
@@ -89,10 +88,6 @@ GlobalConfig::GlobalConfig()
 
 	useNetMessageSmoothingBuffer = configHandler->GetBool("UseNetMessageSmoothingBuffer");
 	luaWritableConfigFile = configHandler->GetBool("LuaWritableConfigFile");
-
-#if defined(USE_GML) && GML_ENABLE_SIM
-	enableDrawCallIns = configHandler->GetBool("EnableDrawCallIns");
-#endif
 
 	teamHighlight = configHandler->GetInt("TeamHighlight");
 }

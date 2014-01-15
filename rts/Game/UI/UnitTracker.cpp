@@ -85,8 +85,6 @@ void CUnitTracker::SetMode(int mode)
 
 void CUnitTracker::Track()
 {
-	GML_RECMUTEX_LOCK(sel); // Track
-
 	CUnitSet& units = selectedUnitsHandler.selectedUnits;
 
 	CleanTrackGroup();
@@ -121,8 +119,6 @@ void CUnitTracker::Track()
 
 void CUnitTracker::MakeTrackGroup()
 {
-	GML_RECMUTEX_LOCK(sel); // MakeTrackGroup
-
 	trackGroup.clear();
 	CUnitSet& units = selectedUnitsHandler.selectedUnits;
 	CUnitSet::const_iterator it;

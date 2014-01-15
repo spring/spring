@@ -46,15 +46,6 @@ public:
 	virtual void RenderFeatureDestroyed(const CFeature* feature);
 	virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
 
-#ifdef USE_GML
-	void DrawFeatureStats(); 	  	
-	void DrawFeatureStatBars(const CFeature*);
-	std::vector<CFeature*> drawStat;
-	bool showRezBars;
-	void SetShowRezBars(bool b) { showRezBars = b; }
-	bool GetShowRezBars() const { return showRezBars; }
-#endif
-
 private:
 	static void UpdateDrawPos(CFeature* f);
 

@@ -53,11 +53,7 @@ void PathHeatMap::AddHeat(const CSolidObject* owner, const CPathManager* pm, uns
 	if (!owner->moveDef->heatMapping)
 		return;
 
-	#ifndef USE_GML
-	static std::vector<int2> points;
-	#else
 	std::vector<int2> points;
-	#endif
 
 	pm->GetDetailedPathSquares(pathID, points);
 

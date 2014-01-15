@@ -121,11 +121,6 @@ public:
 	int updateTextureState;
 	int extraTextureUpdateRate;
 
-#ifdef USE_GML
-	bool multiThreadDrawGround;
-	bool multiThreadDrawGroundShadow;
-#endif
-
 protected:
 	BaseGroundDrawMode drawMode;
 

@@ -45,9 +45,6 @@ CS3OTextureHandler::CS3OTextureHandler()
 	// dummies
 	textures.push_back(new S3OTexMat());
 	textures.push_back(new S3OTexMat());
-
-	if (GML::SimEnabled() && GML::ShareLists())
-		DoUpdateDraw();
 }
 
 CS3OTextureHandler::~CS3OTextureHandler()
@@ -60,12 +57,11 @@ CS3OTextureHandler::~CS3OTextureHandler()
 }
 
 void CS3OTextureHandler::LoadS3OTexture(S3DModel* model) {
-	model->textureType = GML::SimEnabled() && !GML::ShareLists() && GML::IsSimThread() ? -1 : LoadS3OTextureNow(model);
+	model->textureType = LoadS3OTextureNow(model);
 }
 
 int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 {
-	GML_RECMUTEX_LOCK(model); // LoadS3OTextureNow
 	LOG("Load S3O texture now (Flip Y Axis: %s, Invert Team Alpha: %s)",
 			model->invertTexYAxis ? "yes" : "no",
 			model->invertTexAlpha ? "yes" : "no");
@@ -160,9 +156,6 @@ CS3OTextureHandler::S3OTexMat* CS3OTextureHandler::InsertTextureMat(const S3DMod
 	textures.push_back(texMat);
 	textureTable[TEX_MAT_UID(texMat->tex1, texMat->tex2)] = texMat;
 
-	if (GML::SimEnabled() && GML::ShareLists() && !GML::IsSimThread())
-		DoUpdateDraw();
-
 	return texMat;
 }
 
@@ -181,24 +174,9 @@ inline void DoSetTexture(const CS3OTextureHandler::S3OTexMat* texMat) {
 
 void CS3OTextureHandler::SetS3oTexture(int num)
 {
-	if (GML::SimEnabled() && GML::ShareLists()) {
-		if (!GML::IsSimThread()) {
-			DoSetTexture(texturesDraw[num]);
-		} else {
-			// it seems this is only accessed by draw thread, but just in case..
-			GML_RECMUTEX_LOCK(model); // SetS3oTexture
-			DoSetTexture(textures[num]);
-		}
-	} else {
-		DoSetTexture(textures[num]);
-	}
+	DoSetTexture(textures[num]);
 }
 
 void CS3OTextureHandler::UpdateDraw() {
-	if (GML::SimEnabled() && GML::ShareLists()) {
-		GML_RECMUTEX_LOCK(model); // UpdateDraw
-
-		DoUpdateDraw();
-	}
 }
 

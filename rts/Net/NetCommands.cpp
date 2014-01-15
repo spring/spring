@@ -68,7 +68,7 @@ void CGame::SendClientProcUsage()
 		if (playing) {
 			const float simProcUsage = (profiler.GetPercent("SimFrame"));
 			const float drawProcUsage = (profiler.GetPercent("GameController::Draw") / std::max(1.0f, globalRendering->FPS)) * gu->minFPS;
-			const float totalProcUsage = simProcUsage + drawProcUsage * (!GML::SimEnabled() || !GML::MultiThreadSim());
+			const float totalProcUsage = simProcUsage + drawProcUsage;
 
 			// take the minimum drawframes into account, too
 			net->Send(CBaseNetProtocol::Get().SendCPUUsage(totalProcUsage));
@@ -206,11 +206,7 @@ float CGame::GetNetMessageProcessingTimeLimit() const
 
 	float limit = 0.0f;
 
-	if (GML::SimEnabled() && GML::MultiThreadSim()) {
-		limit = (1000.0f / gu->minFPS);
-	} else {
-		limit = Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
-	}
+	limit = Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
 
 	return limit;
 }

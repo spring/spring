@@ -30,7 +30,6 @@
 #include "Game/Camera.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
-#include "lib/gml/gmlmut.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/HeightMapTexture.h"
 #include "Map/MapInfo.h"
@@ -1264,8 +1263,6 @@ int LuaOpenGL::Unit(lua_State* L)
 
 	const bool rawDraw = luaL_optboolean(L, 2, false);
 
-	GML_LODMUTEX_LOCK(unit); // Unit
-
 	bool useLOD = true;
 	if (unit->lodCount <= 0) {
 		useLOD = false;
@@ -1326,8 +1323,6 @@ int LuaOpenGL::UnitRaw(lua_State* L)
 	}
 
 	const bool rawDraw = luaL_optboolean(L, 2, false);
-
-	GML_LODMUTEX_LOCK(unit); // UnitRaw
 
 	bool useLOD = true;
 	if (unit->lodCount <= 0) {

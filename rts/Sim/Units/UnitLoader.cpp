@@ -60,9 +60,6 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 	UnitLoadParams& params = const_cast<UnitLoadParams&>(cparams);
 
 	{
-		GML_RECMUTEX_LOCK(sel); // LoadUnit - for anti deadlock purposes.
-		GML_RECMUTEX_LOCK(quad); // LoadUnit - make sure other threads cannot access an incomplete unit
-
 		const UnitDef* ud = params.unitDef;
 
 		if (ud == NULL)

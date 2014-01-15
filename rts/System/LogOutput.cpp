@@ -2,7 +2,6 @@
 
 #include "System/LogOutput.h"
 
-#include "lib/gml/gmlmut.h"
 #include "System/Util.h"
 #include "Game/GameVersion.h"
 #include "System/Config/ConfigHandler.h"
@@ -219,13 +218,10 @@ CLogOutput::CLogOutput()
 
 CLogOutput::~CLogOutput()
 {
-	GML_STDMUTEX_LOCK_NOPROF(log); // End
 }
 
 void CLogOutput::SetFileName(std::string fname)
 {
-	GML_STDMUTEX_LOCK_NOPROF(log); // SetFileName
-
 	assert(!IsInitialized());
 	fileName = fname;
 }

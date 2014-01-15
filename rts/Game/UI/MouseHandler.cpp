@@ -392,8 +392,6 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	GML_RECMUTEX_LOCK(sel); //FIXME redundant? (selectedUnits already has mutexes)
-
 	// Switch camera mode on a middle click that wasn't a middle mouse drag scroll.
 	// the latter is determined by the time the mouse was held down:
 	// switch (dragScrollThreshold)
@@ -550,9 +548,6 @@ std::string CMouseHandler::GetCurrentTooltip()
 	CFeature* feature;
 
 	{
-		GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCurrentTooltip
-		GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCurrentTooltip
-
 		dist = TraceRay::GuiTraceRay(camera->GetPos(), dir, range, NULL, unit, feature, true, false, true);
 
 		if (unit)    return CTooltipConsole::MakeUnitString(unit);

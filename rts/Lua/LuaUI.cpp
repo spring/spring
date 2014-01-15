@@ -1,8 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "lib/gml/gmlcnf.h"
-
-
 #include "LuaUI.h"
 
 #include "LuaInclude.h"
@@ -123,7 +120,6 @@ void CLuaUI::FreeHandler()
 CLuaUI::CLuaUI()
 : CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true)
 {
-	GML::SetLuaUIState(L);
 	luaUI = this;
 
 	if (!IsValid()) {
@@ -233,7 +229,6 @@ CLuaUI::CLuaUI()
 CLuaUI::~CLuaUI()
 {
 	luaUI = NULL;
-	GML::SetLuaUIState(NULL);
 	if (guihandler) guihandler->LoadConfig("ctrlpanel.txt");
 }
 
@@ -357,12 +352,7 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 
 	float3 gap = (camera->GetPos() - pos);
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	// WTF?
-	const float shockFrontDistMod = (GML::Enabled() && distMod != NULL)? *distMod : this->shockFrontDistAdj;
-#else
 	const float shockFrontDistMod = this->shockFrontDistAdj;
-#endif
 	float dist = gap.Length() + shockFrontDistMod;
 
 	if ((power /= (dist * dist)) < shockFrontMinPower && distMod == NULL)
@@ -422,10 +412,6 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	onlyTextureCmds.clear();
 	buttonList.clear();
 	menuName = "";
-
-	GML_THRMUTEX_LOCK(unit, GML_DRAW); // LayoutButtons
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); // LayoutButtons
-//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // LayoutButtons
 
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 6, __FUNCTION__);

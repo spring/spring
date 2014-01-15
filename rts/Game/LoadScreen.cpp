@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <SDL.h>
+#include <boost/thread.hpp>
 
 #include "Rendering/GL/myGL.h"
 #include "LoadScreen.h"
@@ -320,13 +321,8 @@ bool CLoadScreen::Draw()
 	font->Begin();
 		font->SetOutlineColor(0.0f,0.0f,0.0f,0.65f);
 		font->SetTextColor(1.0f,1.0f,1.0f,1.0f);
-		if (GML::Enabled()) {
-			font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-				"Spring %s (%d threads)", SpringVersion::GetFull().c_str(), GML::ThreadCount());
-		} else {
-			font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
+		font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 				"Spring %s", SpringVersion::GetFull().c_str());
-		}
 		font->glFormat(0.5f,0.02f, globalRendering->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 			"This program is distributed under the GNU General Public License, see license.html for more info");
 	font->End();

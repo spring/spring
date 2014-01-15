@@ -180,8 +180,6 @@ float TraceRay(
 		return -1.0f;
 
 	if (!ignoreFeatures || !ignoreUnits) {
-		GML_RECMUTEX_LOCK(quad); // TraceRay
-
 		CollisionQuery cq;
 
 		int* begQuad = NULL;
@@ -308,8 +306,6 @@ float GuiTraceRay(
 	if (groundOnly)
 		return minRayLength;
 
-	GML_RECMUTEX_LOCK(quad); // GuiTraceRay
-
 	int* begQuad = NULL;
 	int* endQuad = NULL;
 
@@ -424,8 +420,6 @@ bool TestCone(
 	int avoidFlags,
 	CUnit* owner)
 {
-	GML_RECMUTEX_LOCK(quad); // TestCone
-
 	int* begQuad = NULL;
 	int* endQuad = NULL;
 
@@ -507,8 +501,6 @@ bool TestTrajectoryCone(
 	int avoidFlags,
 	CUnit* owner)
 {
-	GML_RECMUTEX_LOCK(quad); // TestTrajectoryCone
-
 	int* begQuad = NULL;
 	int* endQuad = NULL;
 

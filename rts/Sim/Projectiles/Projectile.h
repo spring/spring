@@ -3,7 +3,7 @@
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
 
-#include "lib/gml/gml_base.h"
+#include <list>
 
 #ifdef _MSC_VER
 #pragma warning(disable:4291)
@@ -127,7 +127,6 @@ public:
 	float3 dir;
 	float3 drawPos;
 
-	unsigned lastProjUpdate;
 
 	float mygravity;
 	float tempdist; ///< temp distance used for sorting when rendering

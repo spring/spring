@@ -9,8 +9,6 @@
 
 #include "System/SpringApp.h"
 
-#include "lib/gml/gml_base.h"
-#include "lib/gml/gmlmut.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/errorhandler.h"
@@ -43,16 +41,6 @@ int Run(int argc, char* argv[])
 
 	Threading::DetectCores();
 	Threading::SetMainThread();
-
-#ifdef USE_GML
-	GML::ThreadNumber(GML_DRAW_THREAD_NUM);
-  #if GML_ENABLE_TLS_CHECK
-	// XXX how does this check relate to TLS??? and how does it relate to the line above???
-	if (GML::ThreadNumber() != GML_DRAW_THREAD_NUM) {
-		ErrorMessageBox("Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
-	}
-  #endif
-#endif
 
 	// run
 	try {

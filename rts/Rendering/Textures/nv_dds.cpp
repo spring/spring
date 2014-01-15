@@ -686,9 +686,6 @@ bool CDDSImage::upload_texture1D()
 
     if (is_compressed())
     {
-#ifdef USE_GML
-        ::
-#endif                
         glCompressedTexImage1DARB(GL_TEXTURE_1D, 0, m_format, 
             baseImage.get_width(), 0, baseImage.get_size(), baseImage);
         
@@ -696,9 +693,6 @@ bool CDDSImage::upload_texture1D()
         for (unsigned int i = 0; i < baseImage.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
-#ifdef USE_GML
-            ::
-#endif
             glCompressedTexImage1DARB(GL_TEXTURE_1D, i+1, m_format, 
                 mipmap.get_width(), 0, mipmap.get_size(), mipmap);
         }
@@ -761,9 +755,6 @@ bool CDDSImage::upload_texture2D(unsigned int imageIndex, int target)
     
     if (is_compressed())
     {
-#ifdef USE_GML
-        ::
-#endif
         glCompressedTexImage2DARB(target, 0, m_format, image.get_width(), 
             image.get_height(), 0, image.get_size(), image);
         
@@ -771,9 +762,6 @@ bool CDDSImage::upload_texture2D(unsigned int imageIndex, int target)
         for (unsigned int i = 0; i < image.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = image.get_mipmap(i);
-#ifdef USE_GML
-            ::
-#endif
             glCompressedTexImage2DARB(target, i+1, m_format, 
                 mipmap.get_width(), mipmap.get_height(), 0, 
                 mipmap.get_size(), mipmap);
@@ -822,9 +810,6 @@ bool CDDSImage::upload_texture3D()
 
     if (is_compressed())
     {
-#ifdef USE_GML
-        ::
-#endif
         glCompressedTexImage3DARB(GL_TEXTURE_3D, 0, m_format,  
             baseImage.get_width(), baseImage.get_height(), baseImage.get_depth(),
             0, baseImage.get_size(), baseImage);
@@ -833,9 +818,6 @@ bool CDDSImage::upload_texture3D()
         for (unsigned int i = 0; i < baseImage.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
-#ifdef USE_GML
-            ::
-#endif
             glCompressedTexImage3DARB(GL_TEXTURE_3D, i+1, m_format, 
                 mipmap.get_width(), mipmap.get_height(), mipmap.get_depth(), 
                 0, mipmap.get_size(), mipmap);
@@ -850,9 +832,6 @@ bool CDDSImage::upload_texture3D()
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         }
 
-#ifdef USE_GML
-		::
-#endif
         glTexImage3D(GL_TEXTURE_3D, 0, m_components, baseImage.get_width(), 
             baseImage.get_height(), baseImage.get_depth(), 0, m_format, 
             GL_UNSIGNED_BYTE, baseImage);
@@ -862,9 +841,6 @@ bool CDDSImage::upload_texture3D()
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
 
-#ifdef USE_GML
-		::
-#endif
             glTexImage3D(GL_TEXTURE_3D, i+1, m_components, 
                 mipmap.get_width(), mipmap.get_height(), mipmap.get_depth(), 0, 
                 m_format, GL_UNSIGNED_BYTE,  mipmap);
