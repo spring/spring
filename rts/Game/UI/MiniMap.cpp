@@ -486,8 +486,6 @@ void CMiniMap::MoveView(int x, int y)
 
 void CMiniMap::SelectUnits(int x, int y) const
 {
-	GML_RECMUTEX_LOCK(sel); //FIXME redundant? (selectedUnits already has mutexes)
-
 	if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL)) {
 		selectedUnitsHandler.ClearSelected();
 	}
@@ -792,8 +790,6 @@ std::string CMiniMap::GetTooltip(int x, int y)
 	}
 
 	{
-		GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetTooltip
-
 		const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
 		if (unit) {
 			return CTooltipConsole::MakeUnitString(unit);
@@ -1136,7 +1132,6 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 	glAlphaFunc(GL_GREATER, 0.0f);
 
 	{
-		GML_RECMUTEX_LOCK(unit); // DrawForReal
 		unitDrawer->DrawUnitMiniMapIcons();
 	}
 
@@ -1175,8 +1170,6 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 	}
 
 	{
-		GML_RECMUTEX_LOCK(sel); // DrawForReal
-
 		// draw unit ranges
 		const float radarSquare = radarHandler->radarDiv;
 		CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;

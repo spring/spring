@@ -8,7 +8,6 @@
 #include <map>
 #include <unordered_map>
 #include "ShaderStates.h"
-#include "lib/gml/gmlcnf.h"
 
 
 
@@ -203,9 +202,6 @@ namespace Shader {
 
 		bool valid;
 		bool bound;
-#ifdef USE_GML
-		char tbound[GML_MAX_NUM_THREADS];
-#endif
 		SOVec shaderObjs;
 	public:
 		std::unordered_map<std::size_t, UniformState, fast_hash> uniformStates;
@@ -271,9 +267,6 @@ namespace Shader {
 
 	private:
 		int uniformTarget;
-#ifdef USE_GML
-		int tuniformTargets[GML_MAX_NUM_THREADS];
-#endif
 	};
 
 	struct GLSLProgramObject: public Shader::IProgramObject {

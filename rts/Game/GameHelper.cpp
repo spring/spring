@@ -358,8 +358,6 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 template<typename TFilter, typename TQuery>
 static inline void QueryUnits(TFilter filter, TQuery& query)
 {
-	GML_RECMUTEX_LOCK(qnum); // QueryUnits
-
 	const vector<int> &quads = quadField->GetQuads(query.pos, query.radius);
 
 	const int tempNum = gs->tempNum++;
@@ -1294,8 +1292,6 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
  */
 Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 	float3 tempF1 = pos;
-
-	GML_STDMUTEX_LOCK(cai); // GetBuildCommand
 
 	CCommandQueue::iterator ci;
 

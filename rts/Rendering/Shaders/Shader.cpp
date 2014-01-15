@@ -202,40 +202,21 @@ namespace Shader {
 
 
 	IProgramObject::IProgramObject(const std::string& poName): name(poName), objID(0), curHash(0), valid(false), bound(false) {
-#ifdef USE_GML
-		memset(tbound, 0, sizeof(tbound));
-#endif
 	}
 
 	void IProgramObject::Enable() {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			tbound[GML::ThreadNumber()] = bound ? 0 : 1;
-		} else
-#endif
 		{
 			bound = true;
 		}
 	}
 
 	void IProgramObject::Disable() {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			tbound[GML::ThreadNumber()] = bound ? -1 : 0;
-		} else
-#endif
 		{
 			bound = false;
 		}
 	}
 
 	bool IProgramObject::IsBound() const {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			char tb = tbound[GML::ThreadNumber()];
-			return (tb != 0) ? tb > 0 : bound;
-		} else
-#endif
 		{
 			return bound;
 		}
@@ -293,29 +274,14 @@ namespace Shader {
 	ARBProgramObject::ARBProgramObject(const std::string& poName): IProgramObject(poName) {
 		objID = -1; // not used for ARBProgramObject instances
 		uniformTarget = -1;
-#ifdef USE_GML
-		for (int i = 0; i < GML_MAX_NUM_THREADS; ++i) {
-			tuniformTargets[i] = -1;
-		}
-#endif
 	}
 
 	void ARBProgramObject::SetUniformTarget(int target) {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			tuniformTargets[GML::ThreadNumber()] = target;
-		} else
-#endif
 		{
 			uniformTarget = target;
 		}
 	}
 	int ARBProgramObject::GetUnitformTarget() {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			return tuniformTargets[GML::ThreadNumber()];
-		} else
-#endif
 		{
 			return uniformTarget;
 		}

@@ -7,7 +7,6 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/locks.hpp>
 
-#include "lib/gml/gmlmut.h"
 #include "System/Log/ILog.h"
 #include "System/UnsyncedRNG.h"
 #ifdef THREADPOOL

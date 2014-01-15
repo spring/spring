@@ -37,8 +37,7 @@ void QTPFSPathDrawer::DrawAll() const {
 	if (md == NULL)
 		return;
 
-	// QTPFS::PathManager is not thread-safe
-	if (!GML::SimEnabled() && enabled && (gs->cheatEnabled || gu->spectating)) {
+	if (enabled && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_LIGHTING);

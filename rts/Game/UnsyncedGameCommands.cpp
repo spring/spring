@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "UnsyncedGameCommands.h"
-#include "lib/gml/gmlcnf.h"
 
 #include "UnsyncedActionExecutor.h"
 #include "SyncedGameCommands.h"
@@ -721,8 +720,6 @@ public:
 			"Moves the camera to the center of the currently selected units") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		GML_RECMUTEX_LOCK(sel); // ActionPressed
-
 		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 		if (selUnits.empty())
 			return false;
@@ -1316,44 +1313,6 @@ public:
 
 
 
-class ShowHealthBarsActionExecutor : public IUnsyncedActionExecutor {
-public:
-	ShowHealthBarsActionExecutor() : IUnsyncedActionExecutor("ShowHealthBars",
-			"Enable/Disable rendering of health-bars for units") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-#ifdef USE_GML
-		SetBoolArg(unitDrawer->showHealthBars, action.GetArgs());
-		LogSystemStatus("rendering of health-bars", unitDrawer->showHealthBars);
-#endif // USE_GML
-		return true;
-	}
-};
-
-
-
-class ShowRezurectionBarsActionExecutor : public IUnsyncedActionExecutor {
-public:
-	ShowRezurectionBarsActionExecutor() : IUnsyncedActionExecutor("ShowRezBars",
-			"Enable/Disable rendering of resource-bars for features") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-#ifdef USE_GML
-		bool showResBars = featureDrawer->GetShowRezBars();
-		SetBoolArg(showResBars, action.GetArgs());
-		featureDrawer->SetShowRezBars(showResBars);
-		LogSystemStatus("rendering of resource-bars for features", featureDrawer->GetShowRezBars());
-#endif // USE_GML
-		return true;
-	}
-};
-
-
-
 class PauseActionExecutor : public IUnsyncedActionExecutor {
 public:
 	PauseActionExecutor() : IUnsyncedActionExecutor("Pause",
@@ -1507,146 +1466,6 @@ public:
 		return true;
 	}
 };
-
-
-
-#ifdef USE_GML
-class MultiThreadDrawGroundActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MultiThreadDrawGroundActionExecutor() : IUnsyncedActionExecutor("MultiThreadDrawGround",
-			"Enable/Disable multi threaded ground rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		SetBoolArg(gd->multiThreadDrawGround, action.GetArgs());
-		configHandler->Set("MultiThreadDrawGround", gd->multiThreadDrawGround ? 1 : 0);
-		LogSystemStatus("Multi threaded ground rendering", gd->multiThreadDrawGround);
-		return true;
-	}
-};
-
-
-
-class MultiThreadDrawGroundShadowActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MultiThreadDrawGroundShadowActionExecutor() : IUnsyncedActionExecutor("MultiThreadDrawGroundShadow",
-			"Enable/Disable multi threaded ground shadow rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		SetBoolArg(gd->multiThreadDrawGroundShadow, action.GetArgs());
-		configHandler->Set("MultiThreadDrawGroundShadow", gd->multiThreadDrawGroundShadow ? 1 : 0);
-		LogSystemStatus("Multi threaded ground shadow rendering", gd->multiThreadDrawGroundShadow);
-		return true;
-	}
-};
-
-
-
-class MultiThreadDrawUnitActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MultiThreadDrawUnitActionExecutor() : IUnsyncedActionExecutor("MultiThreadDrawUnit",
-			"Enable/Disable multi threaded unit rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-		SetBoolArg(unitDrawer->multiThreadDrawUnit, action.GetArgs());
-		configHandler->Set("MultiThreadDrawUnit", unitDrawer->multiThreadDrawUnit ? 1 : 0);
-		LogSystemStatus("Multi threaded unit rendering", unitDrawer->multiThreadDrawUnit);
-		return true;
-	}
-};
-
-
-
-class MultiThreadDrawUnitShadowActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MultiThreadDrawUnitShadowActionExecutor() : IUnsyncedActionExecutor("MultiThreadDrawUnitShadow",
-			"Enable/Disable multi threaded unit shadow rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-		SetBoolArg(unitDrawer->multiThreadDrawUnitShadow, action.GetArgs());
-		configHandler->Set("MultiThreadDrawUnitShadow", unitDrawer->multiThreadDrawUnitShadow ? 1 : 0);
-		LogSystemStatus("Multi threaded unit shadow rendering", unitDrawer->multiThreadDrawUnitShadow);
-		return true;
-	}
-};
-
-
-
-class MultiThreadDrawActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MultiThreadDrawActionExecutor() : IUnsyncedActionExecutor("MultiThreadDraw",
-			"Enable/Disable multi threaded rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		bool mtEnabled = IsMTEnabled();
-		SetBoolArg(mtEnabled, action.GetArgs());
-		gd->multiThreadDrawGround = mtEnabled;
-		unitDrawer->multiThreadDrawUnit = mtEnabled;
-		unitDrawer->multiThreadDrawUnitShadow = mtEnabled;
-		if (!mtEnabled) {
-			gd->multiThreadDrawGroundShadow = false;
-		}
-		LogSystemStatus("Multithreaded rendering", IsMTEnabled());
-		return true;
-	}
-
-	static bool IsMTEnabled() {
-		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		// find out if most of the MT stuff is on or off so we can toggle based on that
-		return
-				((gd->multiThreadDrawGround ? 1 : 0)
-				+ (unitDrawer->multiThreadDrawUnit ? 1 : 0)
-				+ (unitDrawer->multiThreadDrawUnitShadow ? 1 : 0))
-				> 1;
-	}
-};
-
-
-
-class MultiThreadSimActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MultiThreadSimActionExecutor(bool inv = false) : IUnsyncedActionExecutor("MultiThreadSim",
-			"Enable/Disable separate simulation thread"), inverse(inv) {}
-
-	bool inverse;
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-#	if GML_ENABLE_SIM
-		bool mtEnabled = MultiThreadDrawActionExecutor::IsMTEnabled();
-		// HACK GetInnerAction() should not be used here
-		bool mtSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? ((inverse && action.GetArgs().empty()) ? !mtEnabled : mtEnabled) : GML::MultiThreadSim();
-		SetBoolArg(mtSim, action.GetArgs());
-		GML::MultiThreadSim(mtSim);
-
-		LogSystemStatus("Separate simulation thread", GML::MultiThreadSim());
-#	endif // GML_ENABLE_SIM
-		return true;
-	}
-};
-
-
-
-class MultiThreadActionExecutor : public SequentialActionExecutor {
-public:
-	MultiThreadActionExecutor() : SequentialActionExecutor("MultiThread") {
-		AddExecutor(new MultiThreadDrawActionExecutor());
-		AddExecutor(new MultiThreadSimActionExecutor(true));
-	}
-};
-#endif // USE_GML
 
 
 
@@ -2256,26 +2075,6 @@ public:
 		return true;
 	}
 };
-
-
-
-class MTInfoActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MTInfoActionExecutor() : IUnsyncedActionExecutor("MTInfo",
-			"Shows/Hides the multi threading info panel") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-		bool showMTInfo = (game->showMTInfo != -1);
-		SetBoolArg(showMTInfo, action.GetArgs());
-		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
-		game->showMTInfo = -1;
-		GML::EnableCallChainWarnings(!!game->showMTInfo);
-		return true;
-	}
-};
-
 
 
 class TeamHighlightActionExecutor : public IUnsyncedActionExecutor {
@@ -3409,8 +3208,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new TrackActionExecutor());
 	AddActionExecutor(new TrackOffActionExecutor());
 	AddActionExecutor(new TrackModeActionExecutor());
-	AddActionExecutor(new ShowHealthBarsActionExecutor()); // MT only
-	AddActionExecutor(new ShowRezurectionBarsActionExecutor()); // MT only
 	AddActionExecutor(new PauseActionExecutor());
 	AddActionExecutor(new DebugActionExecutor());
 	AddActionExecutor(new DebugColVolDrawerActionExecutor());
@@ -3422,15 +3219,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DrawTreesActionExecutor());
 	AddActionExecutor(new DynamicSkyActionExecutor());
 	AddActionExecutor(new DynamicSunActionExecutor());
-#ifdef USE_GML
-	AddActionExecutor(new MultiThreadDrawGroundActionExecutor());
-	AddActionExecutor(new MultiThreadDrawGroundShadowActionExecutor());
-	AddActionExecutor(new MultiThreadDrawUnitActionExecutor());
-	AddActionExecutor(new MultiThreadDrawUnitShadowActionExecutor());
-	AddActionExecutor(new MultiThreadDrawActionExecutor());
-	AddActionExecutor(new MultiThreadSimActionExecutor());
-	AddActionExecutor(new MultiThreadActionExecutor());
-#endif // USE_GML
 	AddActionExecutor(new SpeedControlActionExecutor());
 	AddActionExecutor(new GameInfoActionExecutor());
 	AddActionExecutor(new HideInterfaceActionExecutor());
@@ -3467,7 +3255,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new CrossActionExecutor());
 	AddActionExecutor(new FPSActionExecutor());
 	AddActionExecutor(new SpeedActionExecutor());
-	AddActionExecutor(new MTInfoActionExecutor());
 	AddActionExecutor(new TeamHighlightActionExecutor());
 	AddActionExecutor(new InfoActionExecutor());
 	AddActionExecutor(new CmdColorsActionExecutor());

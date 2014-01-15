@@ -3,11 +3,6 @@
 #ifndef UNIT_H
 #define UNIT_H
 
-#include "lib/gml/gml_base.h" // for GML_ENABLE_SIM
-#ifdef USE_GML
-	#include <boost/thread/recursive_mutex.hpp>
-#endif
-
 #include <map>
 #include <list>
 #include <vector>
@@ -182,9 +177,6 @@ public:
 
 	void SetTransporter(CTransportUnit* trans) { transporter = trans; }
 	inline CTransportUnit* GetTransporter() const {
-		// In MT transporter may suddenly be changed to NULL by sim
-		if (GML::SimEnabled())
-			return (*(CTransportUnit* volatile*) &transporter);
 		return transporter;
 	}
 
@@ -530,10 +522,6 @@ public:
 
 	int lastDrawFrame;
 	unsigned int lastUnitUpdate;
-
-#ifdef USE_GML
-	boost::recursive_mutex lodmutex;
-#endif
 
 	std::string tooltip;
 

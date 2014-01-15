@@ -160,15 +160,10 @@
 #include "System/TimeProfiler.h"
 
 #include <boost/cstdint.hpp>
+#include <boost/thread.hpp>
 #include "lib/lua/include/LuaUser.h"
 
 #undef CreateDirectory
-
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int,CUnit*>* gmlProcessor;
-#endif
-
 
 CONFIG(bool, WindowedEdgeMove).defaultValue(true).description("Sets whether moving the mouse cursor to the screen edge will move the camera across the map.");
 CONFIG(bool, FullscreenEdgeMove).defaultValue(true).description("see WindowedEdgeMove, just for fullscreen mode");
@@ -387,9 +382,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	modInfo.Init(modName.c_str());
 
-	GML::EnableCallChainWarnings(!!showMTInfo);
-	GML::Init(); // modinfo plays key part in MT enable/disable
-
 	// FIXME: THIS HAS ALREADY BEEN CALLED! (SpringApp::Initialize)
 	// Threading::InitThreadPool();
 	Threading::SetThreadScheduler();
@@ -527,7 +519,6 @@ CGame::~CGame()
 
 void CGame::LoadGame(const std::string& mapName, bool threaded)
 {
-	GML::ThreadNumber(GML_LOAD_THREAD_NUM);
 	// NOTE:
 	//   this is needed for LuaHandle::CallOut*UpdateCallIn
 	//   the main-thread is NOT the same as the load-thread
@@ -1073,10 +1064,8 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 		skipLastDrawTime = currentTime;
 
-		if (!GML::SimEnabled() || !GML::MultiThreadSim()) {
-			DrawSkip();
-			return true;
-		}
+		DrawSkip();
+		return true;
 	}
 
 	numDrawFrames++;
@@ -1099,7 +1088,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		frameStartTime = currentTime;
 		numDrawFrames = 0;
 
-		if (GML::SimEnabled()) GML_RESET_LOCK_TIME(); //FIXME move to a GML update place?
 	}
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
@@ -1178,24 +1166,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 }
 
 
-#if defined(USE_GML) && GML_ENABLE_DRAW
 bool CGame::Draw() {
-	gmlProcessor->Work(&CGame::DrawMTcb,NULL,NULL,this,GML::ThreadCount(),TRUE,NULL,1,2,2,FALSE);
-	return true;
-}
-#else
-bool CGame::DrawMT() {
-	return true;
-}
-#endif
-
-
-#if defined(USE_GML) && GML_ENABLE_DRAW
-bool CGame::DrawMT() {
-#else
-bool CGame::Draw() {
-#endif
-	GML_STDMUTEX_LOCK(draw); //Draw
 
 	const spring_time currentTimePreUpdate = spring_gettime();
 
@@ -1441,23 +1412,10 @@ bool CGame::Draw() {
 			smallFont->glPrint(0.99f, 0.90f, 1.0f, INF_FONT_FLAGS, buf);
 		}
 
-		if (GML::SimEnabled() && showMTInfo != -1) {
-			const char* pstr = "LUA-EXP-SIZE(MT): %2.1fK LUA-SYNC-CPU(MT): %2.1fms";
-			char buf[80];
-			SNPRINTF(buf, sizeof(buf), pstr, LuaUtils::exportedDataSize / 1000.0f, GML_LOCK_TIME());
-			const float warnMix = std::max(LuaUtils::exportedDataSize / 5000.0f, (GML_LOCK_TIME() - 1.0f) / 50.0f);
-			const float4 warncol(float(spring_tomsecs(currentTimePreDraw) & 128) * warnMix, 1.0f - warnMix, 0.0f,1.0f);
-			smallFont->SetColors(&warncol, NULL);
-			smallFont->glPrint(0.99f, 0.88f, 1.0f, INF_FONT_FLAGS, buf);
-		}
-
 		CPlayerRosterDrawer::Draw();
 
 		smallFont->End();
 	}
-
-	if (GML::SimEnabled() && skipping)
-		DrawSkip(false);
 
 	mouse->DrawCursor();
 
@@ -1606,7 +1564,6 @@ void CGame::StartPlaying()
 	// and both share the same SimFrame!
 	eventHandler.GameFrame(0);
 
-	GML::PrintStartupMessage(showMTInfo);
 }
 
 
@@ -1695,7 +1652,6 @@ void CGame::UpdateUI(bool updateCam)
 		FPSUnitController& fpsCon = player->fpsController;
 
 		if (fpsCon.oldDCpos != ZeroVector) {
-			GML_STDMUTEX_LOCK(pos); // UpdateUI
 
 			camHandler->GetCurrentController().SetPos(fpsCon.oldDCpos);
 			fpsCon.oldDCpos = ZeroVector;
@@ -2099,7 +2055,6 @@ void CGame::SelectCycle(const string& command)
 	static set<int> unitIDs;
 	static int lastID = -1;
 
-	GML_RECMUTEX_LOCK(sel); // SelectCycle
 
 	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 

@@ -14,8 +14,6 @@
 #include "System/Exceptions.h"
 #include "System/GlobalConfig.h"
 #include "System/myMath.h"
-#include "lib/gml/gml_base.h"
-
 
 CModInfo modInfo;
 
@@ -51,23 +49,8 @@ void CModInfo::Init(const char* modArchive)
 	{
 		// system
 		const LuaTable& system = root.SubTable("system");
-		const size_t numThreads = std::max(0, configHandler->GetInt("MultiThreadCount"));
-
-		bool disableGML = (numThreads == 1);
-
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 
-		if (numThreads == 0) {
-			if (Threading::GetAvailableCores() <= 1     ) disableGML = true;
-		}
-
-		if (disableGML) {
-			// single core, or this game did not make any effort to
-			// specifically support MT ==> disable it by default
-			GML::Enable(false);
-		}
-
-		GML::SetCheckCallChain(false);
 	}
 
 	{

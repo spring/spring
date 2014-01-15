@@ -5,7 +5,6 @@
 
 #include "Projectile.h"
 #include <list>
-#include "lib/gml/gmlcnf.h"
 
 
 class CFireProjectile : public CProjectile
@@ -46,11 +45,7 @@ public:
 		int smokeType;
 	};
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	typedef gmlCircularQueue<CFireProjectile::SubParticle,16> part_list_type;
-#else
 	typedef std::list<SubParticle> part_list_type;
-#endif
 
 	part_list_type subParticles;
 	part_list_type subParticles2;

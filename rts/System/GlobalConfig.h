@@ -2,7 +2,6 @@
 
 #ifndef _GLOBAL_CONFIG_H
 #define _GLOBAL_CONFIG_H
-#include "lib/gml/gmlcnf.h"
 
 
 class GlobalConfig {
@@ -100,10 +99,6 @@ public:
 	 * Allows Lua to write to springsettings/springrc file
 	 */
 	bool luaWritableConfigFile;
-
-#if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
-	bool enableDrawCallIns;
-#endif
 
 	/**
 	 * @brief teamHighlight

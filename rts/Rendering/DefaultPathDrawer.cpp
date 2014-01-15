@@ -56,7 +56,7 @@ DefaultPathDrawer::DefaultPathDrawer(): IPathDrawer()
 
 void DefaultPathDrawer::DrawAll() const {
 	// CPathManager is not thread-safe
-	if (!GML::SimEnabled() && enabled && (gs->cheatEnabled || gu->spectating)) {
+	if (enabled && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT);
 
 		Draw();
@@ -145,8 +145,6 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 							const BuildInfo bi(ud, pos, guihandler->buildFacing);
 
 							CFeature* f = NULL;
-
-							GML_RECMUTEX_LOCK(quad); // UpdateExtraTexture - testunitbuildsquare accesses features in the quadfield
 
 							if (CGameHelper::TestUnitBuildSquare(bi, f, gu->myAllyTeam, false)) {
 								if (f != NULL) {
@@ -394,8 +392,6 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 
 
 void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
-	GML_RECMUTEX_LOCK(sel); // Draw
-
 	const MoveDef* md = GetSelectedMoveDef();
 	const PathNodeStateBuffer& blockStates = pe->blockStates;
 

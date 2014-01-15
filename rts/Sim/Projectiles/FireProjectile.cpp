@@ -16,7 +16,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "System/creg/STL_List.h"
-#include "lib/gml/gmlcnf.h"
 
 CR_BIND_DERIVED(CFireProjectile, CProjectile, (ZeroVector,ZeroVector,NULL,0,0,0,0));
 CR_BIND(CFireProjectile::SubParticle, );
@@ -43,19 +42,6 @@ CR_REG_METADATA_SUB(CFireProjectile, SubParticle, (
 	CR_MEMBER(smokeType),
 	CR_RESERVED(8)
 	));
-
-#if defined(USE_GML) && GML_ENABLE_SIM
-	typedef CFireProjectile::part_list_type part_list_type; // the creg define dislikes "::" in the name
-
-	CR_BIND_TEMPLATE(part_list_type, );
-	CR_REG_METADATA(part_list_type, (
-		CR_MEMBER(elements),
-		CR_MEMBER(front),
-		CR_MEMBER(back),
-		CR_MEMBER(csize),
-		CR_MEMBER(msize)
-	));
-#endif
 
 CFireProjectile::CFireProjectile(
 	const float3& pos,
@@ -165,12 +151,7 @@ void CFireProjectile::Draw()
 	size_t sz2 = subParticles2.size();
 	size_t sz = subParticles.size();
 	va->EnlargeArrays(sz2 * 4 + sz * 8, 0, VA_SIZE_TC);
-#if defined(USE_GML) && GML_ENABLE_SIM
-	size_t temp = 0;
-	for(part_list_type::iterator pi = subParticles2.begin(); temp < sz2; ++pi, ++temp) {
-#else
 	for(part_list_type::iterator pi = subParticles2.begin(); pi != subParticles2.end(); ++pi) {
-#endif
 		float age = pi->age+ageSpeed*globalRendering->timeOffset;
 		float size = pi->maxSize*(age);
 		float rot = pi->rotSpeed*age;
@@ -191,18 +172,8 @@ void CFireProjectile::Draw()
 		va->AddVertexQTC(interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col);
 		va->AddVertexQTC(interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col);
 	}
-#if defined(USE_GML) && GML_ENABLE_SIM
-	temp = 0;
-	for (part_list_type::iterator pi = subParticles.begin(); temp < sz; ++pi, ++temp) {
-		int smokeType = *(volatile int *)&pi->smokeType;
-		if (smokeType < 0 || smokeType >= projectileDrawer->smoketex.size()) {
-			continue;
-		}
-		const AtlasedTexture *at = projectileDrawer->smoketex[smokeType];
-#else
 	for (part_list_type::iterator pi = subParticles.begin(); pi != subParticles.end(); ++pi) {
 		const AtlasedTexture* at = projectileDrawer->smoketex[pi->smokeType];
-#endif
 		float age = pi->age+ageSpeed * globalRendering->timeOffset;
 		float size = pi->maxSize * fastmath::apxsqrt(age);
 		float rot = pi->rotSpeed * age;

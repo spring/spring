@@ -32,36 +32,19 @@ CONFIG(bool, StacktraceOnGLErrors).defaultValue(false).description("Create a sta
 
 static CVertexArray* vertexArray1 = NULL;
 static CVertexArray* vertexArray2 = NULL;
-
-#ifdef USE_GML
-static CVertexArray vertexArrays1[GML_MAX_NUM_THREADS];
-static CVertexArray vertexArrays2[GML_MAX_NUM_THREADS];
-static CVertexArray* currentVertexArrays[GML_MAX_NUM_THREADS];
-#else
 static CVertexArray* currentVertexArray = NULL;
-#endif
 //BOOL gmlVertexArrayEnable = 0;
 /******************************************************************************/
 /******************************************************************************/
 
 CVertexArray* GetVertexArray()
 {
-#ifdef USE_GML // each thread gets its own array to avoid conflicts
-	int thread = GML::ThreadNumber();
-	if (currentVertexArrays[thread] == &vertexArrays1[thread]) {
-		currentVertexArrays[thread] = &vertexArrays2[thread];
-	} else {
-		currentVertexArrays[thread] = &vertexArrays1[thread];
-	}
-	return currentVertexArrays[thread];
-#else
 	if (currentVertexArray == vertexArray1){
 		currentVertexArray = vertexArray2;
 	} else {
 		currentVertexArray = vertexArray1;
 	}
 	return currentVertexArray;
-#endif
 }
 
 

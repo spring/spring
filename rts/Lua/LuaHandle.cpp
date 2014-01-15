@@ -198,8 +198,6 @@ void CLuaHandle::CheckStack()
 	if (!IsValid())
 		return;
 
-	GML_DRCMUTEX_LOCK(lua); // CheckStack
-
 	const int top = lua_gettop(L);
 	if (top != 0) {
 		LOG_L(L_WARNING, "%s stack check: top = %i", GetName().c_str(), top);

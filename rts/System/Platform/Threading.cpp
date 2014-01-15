@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "lib/gml/gml_base.h"
-#include "lib/gml/gmlmut.h"
 #include "Threading.h"
 #include "Game/GameController.h"
 #include "System/bitops.h"
@@ -29,11 +27,6 @@
 	#endif
 	#include <sched.h>
 #endif
-
-#include "lib/gml/gmlcnf.h"
-#include "lib/gml/gml_base.h"
-
-
 
 #ifndef UNIT_TEST
 CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1).description("Count of worker threads (including mainthread!) used in parallel sections.");
@@ -274,20 +267,18 @@ namespace Threading {
 		//Note: only available with mingw64!!!
 
 	#else
-		if (!GML::Enabled()) { // with GML mainthread yields a lot, so SCHED_BATCH with its longer wakup times is counter-productive then
-			if (GetAvailableCores() > 1) {
-				// Change os scheduler for this process.
-				// This way the kernel knows that we are a CPU-intensive task
-				// and won't randomly move us across the cores and tries
-				// to maximize the runtime (_slower_ wakeups, less yields)
-				//Note:
-				// It _may_ be possible that this has negative impact in case
-				// threads are waiting for mutexes (-> less yields).
-				int policy;
-				struct sched_param param;
-				pthread_getschedparam(Threading::GetCurrentThread(), &policy, &param);
-				pthread_setschedparam(Threading::GetCurrentThread(), SCHED_BATCH, &param);
-			}
+		if (GetAvailableCores() > 1) {
+			// Change os scheduler for this process.
+			// This way the kernel knows that we are a CPU-intensive task
+			// and won't randomly move us across the cores and tries
+			// to maximize the runtime (_slower_ wakeups, less yields)
+			//Note:
+			// It _may_ be possible that this has negative impact in case
+			// threads are waiting for mutexes (-> less yields).
+			int policy;
+			struct sched_param param;
+			pthread_getschedparam(Threading::GetCurrentThread(), &policy, &param);
+			pthread_setschedparam(Threading::GetCurrentThread(), SCHED_BATCH, &param);
 		}
 	#endif
 	}
@@ -383,8 +374,6 @@ namespace Threading {
 		return ((!simThreadID)? false : NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *simThreadID));
 	}
 	bool UpdateGameController(CGameController* ac) {
-		GML_MSTMUTEX_LOCK(sim, 1); // UpdateGameController
-
 		SetSimThread(true);
 		bool ret = ac->Update();
 		SetSimThread(false);

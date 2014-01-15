@@ -4,6 +4,7 @@
 #define LUA_CONTEXT_DATA_H
 
 #include <map>
+#include <boost/thread/recursive_mutex.hpp>
 
 #include "LuaShaders.h"
 #include "LuaTextures.h"

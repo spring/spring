@@ -4391,7 +4391,6 @@ EXPORT(bool) skirmishAiCallback_Debug_GraphDrawer_isEnabled(int skirmishAIId) {
 }
 
 EXPORT(int) skirmishAiCallback_getGroups(int skirmishAIId, int* groupIds, int groupIds_sizeMax) {
-	GML_RECMUTEX_LOCK(group); // skirmishAiCallback_getGroups
 
 	const std::vector<CGroup*>& gs = grouphandlers[skirmishAIId_teamId[skirmishAIId]]->groups;
 	const int groupIds_sizeReal = gs.size();

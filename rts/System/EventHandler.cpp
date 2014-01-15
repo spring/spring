@@ -479,32 +479,13 @@ void CEventHandler::Load(IArchive* archive)
 	ITERATE_EVENTCLIENTLIST(Load, archive);
 }
 
-
-#ifdef USE_GML
-	#define GML_DRAW_CALLIN_SELECTOR() if(!globalConfig->enableDrawCallIns) return
-#else
-	#define GML_DRAW_CALLIN_SELECTOR()
-#endif
-
-#define GML_CALLIN_MUTEXES() \
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); \
-	GML_THRMUTEX_LOCK(unit, GML_DRAW)/*; \
-	GML_THRMUTEX_LOCK(proj, GML_DRAW)*/
-
-
 #define EVENTHANDLER_CHECK(name, ...) \
 	const int count = list ## name.size(); \
 	if (count <= 0) \
-		return __VA_ARGS__; \
-	GML_CALLIN_MUTEXES()
-
-
+		return __VA_ARGS__;
 void CEventHandler::Update()
 {
-	GML_DRAW_CALLIN_SELECTOR();
-
 	EVENTHANDLER_CHECK(Update);
-
 	ITERATE_EVENTCLIENTLIST(Update);
 }
 
@@ -540,14 +521,12 @@ void CEventHandler::DeleteSyncedObjects() {
 void CEventHandler::SunChanged(const float3& sunDir)
 {
 	EVENTHANDLER_CHECK(SunChanged);
-
 	ITERATE_EVENTCLIENTLIST(SunChanged, sunDir);
 }
 
 void CEventHandler::ViewResize()
 {
 	EVENTHANDLER_CHECK(ViewResize);
-
 	ITERATE_EVENTCLIENTLIST(ViewResize);
 }
 
@@ -561,10 +540,7 @@ void CEventHandler::GameProgress(int gameFrame)
 #define DRAW_CALLIN(name)                         \
   void CEventHandler:: Draw ## name ()            \
   {                                               \
-    GML_DRAW_CALLIN_SELECTOR();                   \
-		                                          \
     EVENTHANDLER_CHECK(Draw ## name);             \
-                                                  \
     LuaOpenGL::EnableDraw ## name ();             \
     listDraw ## name [0]->Draw ## name ();        \
                                                   \
@@ -593,9 +569,7 @@ DRAW_CALLIN(InMiniMap)
 #define DRAW_ENTITY_CALLIN(name, args, args2)     \
   bool CEventHandler:: Draw ## name args        \
   {                                               \
-    GML_DRAW_CALLIN_SELECTOR();                   \
     EVENTHANDLER_CHECK(Draw ## name, false);      \
-                                                  \
     bool skipEngineDrawing = false;               \
     for (int i = 0; i < listDraw ## name.size(); ) { \
       CEventClient* ec = listDraw ## name [i];    \
@@ -699,8 +673,6 @@ int CEventHandler::MouseRelease(int x, int y, int button)
 	}
 	else
 	{
-		GML_CALLIN_MUTEXES();
-
 		const int retval = mouseOwner->MouseRelease(x, y, button);
 		mouseOwner = NULL;
 		return retval;
@@ -713,8 +685,6 @@ bool CEventHandler::MouseMove(int x, int y, int dx, int dy, int button)
 	if (mouseOwner == NULL) {
 		return false;
 	}
-
-	GML_CALLIN_MUTEXES();
 
 	return mouseOwner->MouseMove(x, y, dx, dy, button);
 }

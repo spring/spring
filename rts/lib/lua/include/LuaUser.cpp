@@ -2,6 +2,7 @@
 
 #include <map>
 #include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread.hpp>
 
 #include "lua.h"
 #include "LuaInclude.h"

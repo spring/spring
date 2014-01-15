@@ -123,30 +123,6 @@ public:
 	void SetUseAdvFading(bool b) { advFading = b; }
 
 
-#ifdef USE_GML
-	bool multiThreadDrawUnit;
-	bool multiThreadDrawUnitShadow;
-
-	volatile bool mtDrawReflection;
-	volatile bool mtDrawRefraction;
-	const CUnit* volatile mtExcludeUnit;
-
-	bool showHealthBars;
-
-	static void DrawOpaqueUnitMT(void* c, CUnit* unit) {
-		CUnitDrawer* const ud = reinterpret_cast<CUnitDrawer*>(c);
-		ud->DrawOpaqueUnit(unit, ud->mtExcludeUnit, ud->mtDrawReflection, ud->mtDrawRefraction);
-	}
-
-	static void DrawOpaqueUnitShadowMT(void* c, CUnit* unit) {
-		reinterpret_cast<CUnitDrawer*>(c)->DrawOpaqueUnitShadow(unit);
-	}
-
-	bool UnitStatBarVisible(const CUnit* unit);
-	void DrawUnitStatBars(CUnit* unit);
-#endif
-
-
 private:
 	bool DrawUnitLOD(CUnit* unit);
 	void DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
@@ -249,9 +225,6 @@ private:
 	std::vector<std::set<CUnit*> > liveGhostBuildings;
 
 	std::set<CUnit*> drawIcon;
-#ifdef USE_GML
-	std::set<CUnit*> drawStat;
-#endif
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
 	std::map<icon::CIconData*, std::set<const CUnit*> > unitsByIcon;
