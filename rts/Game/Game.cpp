@@ -934,7 +934,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	}
 
 	// maybe a widget is interested?
-	if (guihandler != NULL) {
+	if (luaUI != NULL) {
 		for (unsigned int i = 0; i < actionList.size(); ++i) {
 			luaUI->GotChatMsg(actionList[i].rawline, false);
 		}
