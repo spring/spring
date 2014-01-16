@@ -2173,7 +2173,7 @@ bool CGame::ProcessAction(const Action& action, unsigned int key, bool isRepeat)
 	}
 
 	// maybe a widget is interested?
-	if (guihandler != NULL) {
+	if (luaUI != NULL) {
 		luaUI->GotChatMsg(action.rawline, false); //FIXME add return argument!
 	}
 
