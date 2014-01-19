@@ -103,7 +103,7 @@ void luaD_throw (lua_State *L, int errcode) {
       lua_unlock(L);
       G(L)->panic(L);
     }
-	abort();
+    exit(EXIT_FAILURE);
   }
 }
 
