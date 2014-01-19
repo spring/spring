@@ -2,6 +2,7 @@
 
 #include "OggStream.h"
 
+#include <string.h> //memset
 #include "System/FileSystem/FileHandler.h"
 #include "SoundLog.h"
 #include "ALShared.h"
