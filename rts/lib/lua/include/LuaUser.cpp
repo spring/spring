@@ -4,7 +4,6 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread.hpp>
 
-#include "lua.h"
 #include "LuaInclude.h"
 #include "Lua/LuaHandle.h"
 #include "System/Platform/Threading.h"
@@ -116,6 +115,21 @@ void LuaMutexYield(lua_State* L)
 
 	if (y) boost::this_thread::yield();
 	LuaMutexLock(L);
+}
+
+
+///////////////////////////////////////////////////////////////////////////
+//
+
+const char* spring_lua_getName(lua_State* L)
+{
+	auto ld = GetLuaContextData(L);
+	if (ld) {
+		return ld->owner->GetName().c_str();
+	}
+
+	static const char* c = "";
+	return c;
 }
 
 
