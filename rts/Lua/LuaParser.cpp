@@ -196,12 +196,9 @@ bool LuaParser::Execute()
 
 	currentParser = this;
 
-	{
-		// do not signal floating point exceptions in user Lua code
-		ScopedDisableFpuExceptions fe;
-
-		error = lua_pcall(L, 0, 1, 0);
-	}
+	// do not signal floating point exceptions in user Lua code
+	ScopedDisableFpuExceptions fe;
+	error = lua_pcall(L, 0, 1, 0);
 
 	currentParser = NULL;
 
