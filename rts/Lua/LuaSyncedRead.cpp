@@ -2913,19 +2913,24 @@ int LuaSyncedRead::GetUnitPosition(lua_State* L)
 		err -= unit->midPos;
 	}
 
+	// Note: Must be called before any pushing to the stack,
+	//       else in case of noneornil it will read the pushed items.
+	const bool returnMidPos = luaL_optboolean(L, 2, false);
+	const bool returnAimPos = luaL_optboolean(L, 3, false);
+
 	// base-position
 	lua_pushnumber(L, unit->pos.x + err.x);
 	lua_pushnumber(L, unit->pos.y + err.y);
 	lua_pushnumber(L, unit->pos.z + err.z);
 	argc += 3;
 
-	if (luaL_optboolean(L, 2, false)) {
+	if (returnMidPos) {
 		lua_pushnumber(L, unit->midPos.x + err.x);
 		lua_pushnumber(L, unit->midPos.y + err.y);
 		lua_pushnumber(L, unit->midPos.z + err.z);
 		argc += 3;
 	}
-	if (luaL_optboolean(L, 3, false)) {
+	if (returnAimPos) {
 		lua_pushnumber(L, unit->aimPos.x + err.x);
 		lua_pushnumber(L, unit->aimPos.y + err.y);
 		lua_pushnumber(L, unit->aimPos.z + err.z);
@@ -4459,18 +4464,23 @@ int LuaSyncedRead::GetFeaturePosition(lua_State* L)
 		return argc;
 	}
 
+	// Note: Must be called before any pushing to the stack,
+	//       else in case of noneornil it will read the pushed items.
+	const bool returnMidPos = luaL_optboolean(L, 2, false);
+	const bool returnAimPos = luaL_optboolean(L, 3, false);
+
 	lua_pushnumber(L, feature->pos.x);
 	lua_pushnumber(L, feature->pos.y);
 	lua_pushnumber(L, feature->pos.z);
 	argc += 3;
 
-	if (luaL_optboolean(L, 2, false)) {
+	if (returnMidPos) {
 		lua_pushnumber(L, feature->midPos.x);
 		lua_pushnumber(L, feature->midPos.y);
 		lua_pushnumber(L, feature->midPos.z);
 		argc += 3;
 	}
-	if (luaL_optboolean(L, 3, false)) {
+	if (returnAimPos) {
 		lua_pushnumber(L, feature->aimPos.x);
 		lua_pushnumber(L, feature->aimPos.y);
 		lua_pushnumber(L, feature->aimPos.z);
