@@ -8,7 +8,7 @@ Major:
  - switch from sdl to sdl2:
   - add /fullscreen command ingame
   - fixes some window manager bugs/problems
- - utf8 support (kudos got io N0U)
+ - utf8 support (kudos got to N0U)
  - split LuaRules & LuaGaia into their synced/unsynced luaStates
 
 Buildprocess:
@@ -40,8 +40,9 @@ Lua:
  - fix Spring.Restart on windows
  ! new TextInput(utf8char) callin, needed cause of changed unicode handling in SDL2
  - added Spring.SetUnitHarvestStorage(unitid, metal) & Spring.GetUnitHarvestStorage(unitid)
- ! gl.LineWidth & gl.PointSize throw an error when called with incorrect argument (<=0)
- ! gl.Scissor & gl.CreateTexture throw an error on incorrect sizes, too
+ ! prevent triggering of ATi driver bugs
+  ! gl.LineWidth & gl.PointSize throw an error when called with incorrect argument (<=0)
+  ! gl.Scissor & gl.CreateTexture throw an error on incorrect sizes, too
  ! fix gl.Viewport
 
 
