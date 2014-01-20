@@ -76,7 +76,7 @@ class CEventClient
 		template <class T>
 		void RegisterLinkedEvents(T* foo) {
 			#define SETUP_EVENT(eventname, props) \
-				linkedEvents[#eventname] = (eventFuncPtr)&T::eventname; \
+				linkedEvents[#eventname] = reinterpret_cast<eventFuncPtr>(&T::eventname); \
 				linkedEventsTypeInfo[#eventname] = typeid(&T::eventname).name();
 
 				#include "Events.def"
