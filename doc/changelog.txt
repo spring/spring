@@ -8,13 +8,37 @@ Major:
  - switch from sdl to sdl2:
 	add /fullscreen command ingame
 	fixes some window manager bugs/problems
- - utf8 support
+ - utf8 support (kudos got o N0U)
 
 Buildprocess:
  - fix freetype not found on windows / mingw
  - add check for gcc >=4.6 at configure
  - freetype and fontconfig are now required
  - sdl2 requirement replaces sdl
+
+LuaDefs:
+ - the parser now checks the returned tables for NaNs & Infs and prints a warning if it finds some
+
+UnitDefs:
+ - add new "harvestStorage" unitdef tag, UnitHarvestStorageFull lua callin and Spring.GetUnitHarvestStorage(unitid)
+   it's for engine assisted starcraft/c&c like feature harvesting (atm only metal is supported)
+   NOTE: the unload command still needs to be implemented in lua (much less work than the reclaiming one)
+
+Lua:
+ - fix Spring.Restart on windows
+ - new TextInput(utf8char) callin, needed cause of changed unicode handling inside of SDL2
+ - added Spring.SetUnitHarvestStorage(unitid, metal) & Spring.GetUnitHarvestStorage(unitid)
+ - gl.LineWidth & gl.PointSize throw an error when called with incorrect argument (<=0)
+ - gl.Scissor & gl.CreateTexture throw an error on incorrect sizes, too
+ - fix gl.Viewport
+ - LuaRules & LuaGaia are now splitted into their synced & unsynced parts, each one now got its own luaState
+   - this way unsynced parts of gadgets now get `synced` callins like 'UnitCreated' etc. w/o  SendToUnsynced from their synced part
+   - LuaRules & LuaGaia are now ~equal (except a very minor subset of differences) and get the same callins esp. all AllowXYZ callins
+   - LuaUI now has a GotChatMsg too (same as LuaRules always had), it's similar to the now deprecated LuaUI-only ConfigCommand callin, but is called more often
+   - fixed a lot bugs in Spring's c-lua code
+   - use lua's original math.random() code and only use streflop for it in synced luaStates
+   - always make math.randomseed() available (synced & unsynced)
+
 
 -- 96.0 ---------------------------------------------------------
 
