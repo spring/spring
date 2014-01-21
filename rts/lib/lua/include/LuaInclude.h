@@ -128,8 +128,17 @@ static inline void lua_pop(lua_State* L, const int args)
 }
 
 
+static inline int luaS_absIndex(lua_State* L, const int i)
+{
+	if (i <= 0 && i > LUA_REGISTRYINDEX)
+		return lua_gettop(L) + (i) + 1;
+
+	return i;
+}
+
+
 template<typename T>
-inline T luaL_SpringOpt(lua_State* L, int idx, const T def, T(*lua_optFoo)(lua_State*, int, const T), T(*lua_toFoo)(lua_State*, int), int typeFoo, const char* caller)
+static inline T luaL_SpringOpt(lua_State* L, int idx, const T def, T(*lua_optFoo)(lua_State*, int, const T), T(*lua_toFoo)(lua_State*, int), int typeFoo, const char* caller)
 {
 	if (L->errorJmp) {
 		return (*lua_optFoo)(L, idx, def);
@@ -140,41 +149,39 @@ inline T luaL_SpringOpt(lua_State* L, int idx, const T def, T(*lua_optFoo)(lua_S
 		return ret;
 	}
 
-	LOG_L(L_WARNING, "Got wrong return argument type in \"%s::%s\" (%s expected, got %s)", spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
+	LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
 	return def;
 }
 
 
-template<typename T>
-inline T luaL_SpringOptString(lua_State* L, int idx, const T& def, T(*lua_optFoo)(lua_State*, int, const T&), T(*lua_toFoo)(lua_State*, int), int typeFoo, const char* caller)
+static inline std::string luaL_SpringOptString(lua_State* L, int idx, const std::string& def, std::string(*lua_optFoo)(lua_State*, int, const std::string&), std::string(*lua_toFoo)(lua_State*, int), int typeFoo, const char* caller)
 {
 	if (L->errorJmp) {
 		return (*lua_optFoo)(L, idx, def);
 	}
 
-	T ret = (*lua_toFoo)(L, idx);
+	std::string ret = (*lua_toFoo)(L, idx);
 	if (!ret.empty() || (lua_type(L, idx) == typeFoo)) {
 		return ret;
 	}
 
-	LOG_L(L_WARNING, "Got wrong return argument type in \"%s::%s\" (%s expected, got %s)", spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
+	LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
 	return def;
 }
 
 
-template<typename T>
-inline T luaL_SpringOpt(lua_State* L, int idx, const T def, size_t* len, T(*lua_optFoo)(lua_State*, int, T, size_t*), T(*lua_toFoo)(lua_State*, int, size_t*), int typeFoo, const char* caller)
+static inline const char* luaL_SpringOptCString(lua_State* L, int idx, const char* def, size_t* len, const char*(*lua_optFoo)(lua_State*, int, const char*, size_t*), const char*(*lua_toFoo)(lua_State*, int, size_t*), int typeFoo, const char* caller)
 {
 	if (L->errorJmp) {
 		return (*lua_optFoo)(L, idx, def, len);
 	}
 
-	T ret = (*lua_toFoo)(L, idx, len);
+	const char* ret = (*lua_toFoo)(L, idx, len);
 	if (ret || (lua_type(L, idx) == typeFoo)) {
 		return ret;
 	}
 
-	LOG_L(L_WARNING, "Got wrong return argument type in \"%s::%s\" (%s expected, got %s)", spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
+	LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
 	*len = strlen(def);
 	return def;
 }
@@ -183,10 +190,10 @@ inline T luaL_SpringOpt(lua_State* L, int idx, const T def, size_t* len, T(*lua_
 #define luaL_optboolean(L,idx,def)     (luaL_SpringOpt<bool>(L,idx,def,::luaL_optboolean,lua_toboolean,LUA_TBOOLEAN,__FUNCTION__))
 #define luaL_optfloat(L,idx,def)       ((float)luaL_SpringOpt<lua_Number>(L,idx,def,::luaL_optfloat,lua_tofloat,LUA_TNUMBER,__FUNCTION__))
 #define luaL_optinteger(L,idx,def)     (luaL_SpringOpt<lua_Integer>(L,idx,def,::luaL_optinteger,lua_tointeger,LUA_TNUMBER,__FUNCTION__))
-#define luaL_optlstring(L,idx,def,len) (luaL_SpringOpt(L,idx,def,len,::luaL_optlstring,lua_tolstring,LUA_TSTRING,__FUNCTION__))
+#define luaL_optlstring(L,idx,def,len) (luaL_SpringOptCString(L,idx,def,len,::luaL_optlstring,lua_tolstring,LUA_TSTRING,__FUNCTION__))
 #define luaL_optnumber(L,idx,def)      (luaL_SpringOpt<lua_Number>(L,idx,def,::luaL_optnumber,lua_tonumber,LUA_TNUMBER,__FUNCTION__))
 
-#define luaL_optsstring(L,idx,def)     (luaL_SpringOptString<std::string>(L,idx,def,::luaL_optsstring,luaL_tosstring,LUA_TSTRING,__FUNCTION__))
+#define luaL_optsstring(L,idx,def)     (luaL_SpringOptString(L,idx,def,::luaL_optsstring,luaL_tosstring,LUA_TSTRING,__FUNCTION__))
 
 #ifdef luaL_optint
 	#undef luaL_optint
@@ -194,7 +201,7 @@ inline T luaL_SpringOpt(lua_State* L, int idx, const T def, size_t* len, T(*lua_
 #endif
 #ifdef luaL_optstring
 	#undef luaL_optstring
-	#define luaL_optstring(L,idx,def) (luaL_SpringOpt(L,idx,def,NULL,::luaL_optlstring,lua_tolstring,LUA_TSTRING,__FUNCTION__))
+	#define luaL_optstring(L,idx,def) (luaL_SpringOptCString(L,idx,def,NULL,::luaL_optlstring,lua_tolstring,LUA_TSTRING,__FUNCTION__))
 #endif
 
 
