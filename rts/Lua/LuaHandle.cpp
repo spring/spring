@@ -1909,16 +1909,16 @@ bool CLuaHandle::MousePress(int x, int y, int button)
 }
 
 
-int CLuaHandle::MouseRelease(int x, int y, int button)
+void CLuaHandle::MouseRelease(int x, int y, int button)
 {
 	if (!CheckModUICtrl()) {
-		return false;
+		return;
 	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __FUNCTION__);
 	static const LuaHashString cmdStr("MouseRelease");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined, do not take the event
+		return; // the call is not defined, do not take the event
 	}
 
 	lua_pushnumber(L, x - globalRendering->viewPosX);
@@ -1926,12 +1926,7 @@ int CLuaHandle::MouseRelease(int x, int y, int button)
 	lua_pushnumber(L, button);
 
 	// call the function
-	if (!RunCallIn(L, cmdStr, 3, 1))
-		return false;
-
-	const int retval = luaL_optint(L, -1, 0) - 1;
-	lua_pop(L, 1);
-	return retval;
+	RunCallIn(L, cmdStr, 3, 0);
 }
 
 

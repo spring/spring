@@ -255,7 +255,7 @@ class CEventClient
 		virtual bool TextInput(const std::string& utf8);
 		virtual bool MouseMove(int x, int y, int dx, int dy, int button);
 		virtual bool MousePress(int x, int y, int button);
-		virtual int  MouseRelease(int x, int y, int button); // FIXME - bool / void?
+		virtual void MouseRelease(int x, int y, int button);
 		virtual bool MouseWheel(bool up, float value);
 		virtual bool JoystickEvent(const std::string& event, int val1, int val2);
 		virtual bool IsAbove(int x, int y);

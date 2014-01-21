@@ -665,17 +665,11 @@ bool CEventHandler::MousePress(int x, int y, int button)
 }
 
 
-// return a cmd index, or -1
-int CEventHandler::MouseRelease(int x, int y, int button)
+void CEventHandler::MouseRelease(int x, int y, int button)
 {
-	if (mouseOwner == NULL) {
-		return -1;
-	}
-	else
-	{
-		const int retval = mouseOwner->MouseRelease(x, y, button);
+	if (mouseOwner) {
+		mouseOwner->MouseRelease(x, y, button);
 		mouseOwner = NULL;
-		return retval;
 	}
 }
 
