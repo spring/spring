@@ -45,6 +45,9 @@ Lua:
   ! gl.Scissor & gl.CreateTexture throw an error on incorrect sizes, too
  ! fix gl.Viewport
 
+Installer:
+ - disallow to install spring over existing installations / ask for uninstall first
+ - don't associate .sdf with spring.exe any more
 
 
 -- 96.0 ---------------------------------------------------------

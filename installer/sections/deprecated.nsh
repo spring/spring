@@ -2,6 +2,7 @@
 	; 95.0
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT (safemode).lnk"
+	Delete "$INSTDIR\spring-multithreaded.exe"
 
 	; Old DLLs, not needed anymore
 	; (python upgraded to 25)
@@ -33,6 +34,9 @@
 	Delete "$INSTDIR\Zero-K.ico"
 
 	RmDir "$INSTDIR\mods"
+
+        ; Demofile file association (with multiengine support this doesn't work as current spring can't run old demos)
+        !insertmacro APP_UNASSOCIATE "sdf" "spring.demofile"
 
 	; deprecated Shortcuts
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
