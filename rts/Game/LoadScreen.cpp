@@ -246,6 +246,11 @@ bool CLoadScreen::Update()
 		return true;
 	}
 
+	if (!mtLoading) {
+		// without this call the window manager would think the window is unresponsive and thus asks for hard kill
+		SDL_PollEvent(NULL);
+	}
+
 	CNamedTextures::Update();
 	return true;
 }
@@ -272,13 +277,11 @@ bool CLoadScreen::Draw()
 	if (LuaIntro) {
 		LuaIntro->Update();
 		LuaIntro->DrawGenesis();
-	}
-
-	ClearScreen();
-
-	if (LuaIntro) {
+		ClearScreen();
 		LuaIntro->DrawLoadScreen();
 	} else {
+		ClearScreen();
+
 		float xDiv = 0.0f;
 		float yDiv = 0.0f;
 		const float ratioComp = globalRendering->aspectRatio / aspectRatio;
@@ -318,6 +321,7 @@ bool CLoadScreen::Draw()
 		}
 	}
 
+	// Always render Spring's license notice
 	font->Begin();
 		font->SetOutlineColor(0.0f,0.0f,0.0f,0.65f);
 		font->SetTextColor(1.0f,1.0f,1.0f,1.0f);
@@ -363,8 +367,10 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	//! Here it is done for the loading thread, for the mainthread it is done in CLoadScreen::Update()
 	good_fpu_control_registers(curLoadMessage.c_str());
 
-	if (!mtLoading)
+	if (!mtLoading) {
+		Update();
 		Draw();
+	}
 }
 
 
