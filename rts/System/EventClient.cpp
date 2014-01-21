@@ -41,7 +41,7 @@ bool CEventClient::WantsEvent(const std::string& eventName)
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wpmf-conversions"
 	#define SETUP_EVENT(eventname, props) \
-		virtEventPtrs[#eventname] = (eventFuncPtr)&CEventClient::eventname; \
+		virtEventPtrs[#eventname] = reinterpret_cast<eventFuncPtr>(&CEventClient::eventname); \
 		virtEventPtrsTypeInfo[#eventname] = typeid(&CEventClient::eventname).name();
 
 		#include "Events.def"
