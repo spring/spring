@@ -68,7 +68,6 @@
 
 #include <boost/cstdint.hpp>
 #include "System/Platform/Misc.h"
-#include "LuaHelper.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 	#include "System/Sound/EFX.h"
@@ -82,7 +81,6 @@
 
 #include <fstream>
 
-#include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
 using std::min;
@@ -284,7 +282,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 
 	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
+		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
 	}
 
 	return unitHandler->units[unitID];
@@ -357,11 +355,6 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
-	GML_RECMUTEX_LOCK(unit); // DrawUnitCommandQueues
-	GML_RECMUTEX_LOCK(feat); // DrawUnitCommandQueues
-	GML_STDMUTEX_LOCK(cai); // DrawUnitCommandQueues
-	GML_STDMUTEX_LOCK(dque); // DrawUnitCommandQueues
-
 	std::set<int>::const_iterator ui;
 
 	for (ui = drawCmdQueueUnits.begin(); ui != drawCmdQueueUnits.end(); ++ui) {
@@ -381,8 +374,6 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 void LuaUnsyncedCtrl::ClearUnitCommandQueues()
 {
-	GML_STDMUTEX_LOCK(dque); // ClearUnitCommandQueues
-
 	drawCmdQueueUnits.clear();
 }
 
@@ -418,11 +409,11 @@ static string ParseMessage(lua_State* L, const string& msg)
 	}
 
 	if (!playerHandler->IsValidPlayer(playerID)) {
-		luaL_error(L, "Invalid message playerID: %i", playerID);
+		luaL_error(L, "Invalid message playerID: %c", playerID); //FIXME
 	}
 	const CPlayer* player = playerHandler->Player(playerID);
 	if ((player == NULL) || !player->active || player->name.empty()) {
-		luaL_error(L, "Invalid message playerID: %i", playerID);
+		luaL_error(L, "Invalid message playerID: %c", playerID);
 	}
 
 	const string head = msg.substr(0, start);
@@ -764,8 +755,6 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 
 int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 {
-	GML_STDMUTEX_LOCK(dque); // DrawUnitCommands
-
 	if (lua_istable(L, 1)) {
 		const bool isMap = luaL_optboolean(L, 2, false);
 		const int unitArg = isMap ? -2 : -1;
@@ -1164,7 +1153,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 static bool ParseLight(lua_State* L, GL::Light& light, const int tblIdx, const char* caller)
 {
 	if (!lua_istable(L, tblIdx)) {
-		luaL_error(L, "[%s] argument %i must be a table!", caller, tblIdx);
+		luaL_error(L, "[%s] argument %c must be a table!", caller, tblIdx);
 		return false;
 	}
 
@@ -1513,8 +1502,6 @@ int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(sel); // SetUnitNoSelect
-
 	if (CLuaHandle::GetHandleUserMode(L)) {
 		return 0;
 	}
@@ -2021,43 +2008,40 @@ int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 
 int LuaUnsyncedCtrl::Restart(lua_State* L)
 {
-	const std::string arguments = luaL_checkstring(L, 1);
-	const std::string script = luaL_checkstring(L, 2);
+	const std::string springArguments = luaL_checkstring(L, 1);
+	const std::string scriptContents = luaL_checkstring(L, 2);
 
-	const std::string springFullName = (Platform::GetProcessExecutableFile());
+	const std::string springFullName = Platform::GetProcessExecutableFile();
+	const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
 
 	std::vector<std::string> processArgs;
 
-	// Arguments given by Lua code, if any
-	if (!arguments.empty()) {
-		processArgs.push_back(arguments);
+	// arguments to Spring binary given by Lua code, if any
+	if (!springArguments.empty()) {
+		processArgs.push_back(springArguments);
 	}
 
-	// script.txt, if content for it is given by Lua code
-	const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
-	if (!script.empty()) {
-		std::ofstream scriptfile(scriptFullName.c_str());
-		scriptfile << script;
-		scriptfile.close();
+	if (!scriptContents.empty()) {
+		// create file 'script.txt' with contents given by Lua code
+		std::ofstream scriptFile(scriptFullName.c_str());
+
+		scriptFile.write(scriptContents.c_str(), scriptContents.size());
+		scriptFile.close();
 
 		processArgs.push_back(scriptFullName);
 	}
 
+	LOG("[Spring.%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
+
 #ifdef _WIN32
-		// else OpenAL soft crashes when using execvp
-		ISound::Shutdown();
+	// else OpenAL crashes when using execvp
+	ISound::Shutdown();
 #endif
 
-	const std::string execError = Platform::ExecuteProcess(springFullName, processArgs);
-	const bool execOk = execError.empty();
+	Platform::ExecuteProcess(springFullName, processArgs);
 
-	if (execOk) {
-		LOG("The game should restart");
-	} else {
-		LOG_L(L_ERROR, "Error in Restart: %s", execError.c_str());
-	}
-
-	lua_pushboolean(L, execOk);
+	// not reached on success
+	lua_pushboolean(L, false);
 	return 1;
 }
 
@@ -2079,10 +2063,7 @@ int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
 {
 	const std::string title = luaL_checksstring(L, 1);
-	const std::string titleShort = luaL_optsstring(L, 2, title);
-
-	WindowManagerHelper::SetCaption(title, titleShort);
-
+	WindowManagerHelper::SetCaption(title);
 	return 0;
 }
 
@@ -2165,8 +2146,6 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // SetUnitGroup
-
 	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
@@ -2776,36 +2755,35 @@ int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 /******************************************************************************/
 
 int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
-	const char* section = luaL_checkstring(L, 1);
+	int logLevel = LOG_LEVEL_INFO;
 
-	int loglevel = LOG_LEVEL_INFO;
 	if (lua_israwnumber(L, 2)) {
-		loglevel = lua_tonumber(L, 2);
-	} else {
-		std::string loglvlstr = lua_tostring(L, 2);
-		StringToLowerInPlace(loglvlstr);
+		logLevel = lua_tonumber(L, 2);
+	}
+	if (lua_isstring(L, 2)) {
+		const std::string& loglvlstr = StringToLower(lua_tostring(L, 2));
+
 		if (loglvlstr == "debug") {
-			loglevel = LOG_LEVEL_DEBUG;
+			logLevel = LOG_LEVEL_DEBUG;
 		}
 		else if (loglvlstr == "info") {
-			loglevel = LOG_LEVEL_INFO;
+			logLevel = LOG_LEVEL_INFO;
 		}
 		else if (loglvlstr == "warning") {
-			loglevel = LOG_LEVEL_WARNING;
+			logLevel = LOG_LEVEL_WARNING;
 		}
 		else if (loglvlstr == "error") {
-			loglevel = LOG_LEVEL_ERROR;
+			logLevel = LOG_LEVEL_ERROR;
 		}
 		else if (loglvlstr == "fatal") {
-			loglevel = LOG_LEVEL_FATAL;
+			logLevel = LOG_LEVEL_FATAL;
 		}
 		else {
 			return luaL_error(L, "Incorrect arguments to Spring.SetLogSectionFilterLevel(logsection, loglevel)");
 		}
 	}
 
-	//LOG();
-	log_filter_section_setMinLevel(section, loglevel);
+	log_frontend_register_runtime_section(luaL_checkstring(L, 1), logLevel);
 	return 0;
 }
 

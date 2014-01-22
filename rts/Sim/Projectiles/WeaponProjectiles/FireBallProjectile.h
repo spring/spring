@@ -5,7 +5,6 @@
 
 #include "WeaponProjectile.h"
 #include <deque>
-#include "lib/gml/gmlcnf.h"
 
 class CFireBallProjectile : public CWeaponProjectile
 {
@@ -27,11 +26,7 @@ public:
 		int ttl;
 	};
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	typedef gmlCircularQueue<CFireBallProjectile::Spark,32> spark_list_type;
-#else
 	typedef std::deque<Spark> spark_list_type;
-#endif
 
 private:
 	spark_list_type sparks;

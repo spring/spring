@@ -47,11 +47,11 @@ Joystick::Joystick()
 
 	const int stickNum = configHandler->GetInt("JoystickUse");
 
-	myStick =  SDL_JoystickOpen(stickNum);
+	myStick = SDL_JoystickOpen(stickNum);
 
 	if (myStick)
 	{
-		LOG("Using joystick %i: %s", stickNum, SDL_JoystickName(stickNum));
+		LOG("Using joystick %i: %s", stickNum, SDL_JoystickName(myStick));
 		inputCon = input.AddHandler(boost::bind(&Joystick::HandleEvent, this, _1));
 	}
 	else

@@ -22,7 +22,6 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
-#include "System/Platform/Watchdog.h"
 #include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
@@ -98,17 +97,6 @@ QTPFS::PathManager::PathManager() {
 	QTNode::InitStatic();
 	NodeLayer::InitStatic();
 	PathManager::InitStatic();
-
-	pmLoadThread = boost::thread(boost::bind(&PathManager::Load, this));
-	pmLoadScreen.Loop();
-	pmLoadThread.join();
-
-	#ifdef QTPFS_ENABLE_THREADED_UPDATE
-	mutexThreadUpdate = new boost::mutex();
-	condThreadUpdate = new boost::condition_variable();
-	condThreadUpdated = new boost::condition_variable();
-	updateThread = new boost::thread(boost::bind(&PathManager::ThreadUpdate, this));
-	#endif
 }
 
 QTPFS::PathManager::~PathManager() {
@@ -155,6 +143,28 @@ QTPFS::PathManager::~PathManager() {
 	#endif
 }
 
+boost::int64_t QTPFS::PathManager::Finalize() {
+	const spring_time t0 = spring_gettime();
+
+	{
+		pmLoadThread = boost::thread(boost::bind(&PathManager::Load, this));
+		pmLoadScreen.Loop();
+		pmLoadThread.join();
+
+		#ifdef QTPFS_ENABLE_THREADED_UPDATE
+		mutexThreadUpdate = new boost::mutex();
+		condThreadUpdate = new boost::condition_variable();
+		condThreadUpdated = new boost::condition_variable();
+		updateThread = new boost::thread(boost::bind(&PathManager::ThreadUpdate, this));
+		#endif
+	}
+
+	const spring_time t1 = spring_gettime();
+	const spring_time dt = t1 - t0;
+
+	return (dt.toMilliSecsi());
+}
+
 void QTPFS::PathManager::InitStatic() {
 	LAYERS_PER_UPDATE = std::max(1u, mapInfo->pfs.qtpfs_constants.layersPerUpdate);
 	MAX_TEAM_SEARCHES = std::max(1u, mapInfo->pfs.qtpfs_constants.maxTeamSearches);
@@ -194,11 +204,13 @@ void QTPFS::PathManager::Load() {
 		}
 
 		// NOTE:
-		//     should be sufficient in theory, because if either
-		//     the map or the mod changes then the checksum does
-		//     (should!) as well and we get a cache-miss
-		//     this value is also combined with the tree-sums to
-		//     make it depend on the tesselation code specifics
+		//   should be sufficient in theory, because if either
+		//   the map or the mod changes then the checksum does
+		//   (should!) as well and we get a cache-miss
+		//   this value is also combined with the tree-sums to
+		//   make it depend on the tesselation code specifics
+		// FIXME:
+		//   assumption is invalid now (Lua inits before we do)
 		pfsCheckSum = mapCheckSum ^ modCheckSum;
 
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
@@ -226,7 +238,7 @@ void QTPFS::PathManager::Load() {
 	{
 		const std::string sumStr = "pfs-checksum: " + IntToString(pfsCheckSum, "%08x") + ", ";
 		const std::string memStr = "mem-footprint: " + IntToString(GetMemFootPrint()) + "MB";
-		pmLoadScreen.AddLoadMessage("[PathManager] " + sumStr + memStr);
+		pmLoadScreen.AddLoadMessage("[" + std::string(__FUNCTION__) + "] " + sumStr + memStr);
 		pmLoadScreen.SetLoading(false);
 	}
 }
@@ -404,6 +416,8 @@ void QTPFS::PathManager::UpdateNodeLayersThread(
 void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle& r) {
 	const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
 
+	if (!IsFinalized())
+		return;
 	if (md->udRefCount == 0)
 		return;
 
@@ -621,7 +635,10 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type) {
 	SCOPED_TIMER("PathManager::TerrainChange");
 
-	// if type is TERRAINCHANGE_OBJECT_INSERTED  or TERRAINCHANGE_OBJECT_INSERTED_YM,
+	if (!IsFinalized())
+		return;
+
+	// if type is TERRAINCHANGE_OBJECT_INSERTED or TERRAINCHANGE_OBJECT_INSERTED_YM,
 	// this rectangle covers the yardmap of a CSolidObject* and will be tesselated to
 	// maximum depth automatically
 	numTerrainChanges += 1;
@@ -659,20 +676,6 @@ void QTPFS::PathManager::Update() {
 	streflop::streflop_init<streflop::Simple>();
 	#else
 	ThreadUpdate();
-	#endif
-}
-
-void QTPFS::PathManager::UpdateFull() {
-	assert(gs->frameNum == 0);
-
-	#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-		assert((pathCaches[layerNum].GetDeadPaths()).empty());
-		assert((pathSearches[layerNum]).empty());
-
-		ExecQueuedNodeLayerUpdates(layerNum, true);
-		Watchdog::ClearTimer();
-	}
 	#endif
 }
 
@@ -973,6 +976,10 @@ unsigned int QTPFS::PathManager::RequestPath(
 	bool synced)
 {
 	SCOPED_TIMER("PathManager::RequestPath");
+
+	if (!IsFinalized())
+		return 0;
+
 	return (QueueSearch(NULL, object, moveDef, sourcePoint, targetPoint, radius, synced));
 }
 
@@ -1012,6 +1019,8 @@ float3 QTPFS::PathManager::NextWayPoint(
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
 	const float3 noPathPoint = -XZVector;
 
+	if (!IsFinalized())
+		return noPathPoint;
 	if (!synced)
 		return noPathPoint;
 
@@ -1110,6 +1119,8 @@ void QTPFS::PathManager::GetPathWayPoints(
 ) const {
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
 
+	if (!IsFinalized())
+		return;
 	if (pathTypeIt == pathTypes.end())
 		return;
 
@@ -1132,9 +1143,11 @@ int2 QTPFS::PathManager::GetNumQueuedUpdates() const {
 	int2 data;
 
 	#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-		data.x += (nodeLayers[layerNum].HaveQueuedUpdate());
-		data.y += (nodeLayers[layerNum].NumQueuedUpdates());
+	if (IsFinalized()) {
+		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+			data.x += (nodeLayers[layerNum].HaveQueuedUpdate());
+			data.y += (nodeLayers[layerNum].NumQueuedUpdates());
+		}
 	}
 	#endif
 

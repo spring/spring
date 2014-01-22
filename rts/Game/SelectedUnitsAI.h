@@ -38,8 +38,8 @@ private:
 	void AddUnitSetMaxSpeedCommand(CUnit* unit, unsigned char options);
 	void AddGroupSetMaxSpeedCommand(CUnit* unit, unsigned char options);
 	void SelectAttack(const Command& cmd, int player);
-	void SelectCircleUnits(const float3& pos, float radius, std::vector<int>& units, int player);
-	void SelectRectangleUnits(const float3& pos0, const float3& pos1, std::vector<int>& units, int player);
+	void SelectCircleUnits(const float3& pos, float radius, int player, std::vector<int>& units);
+	void SelectRectangleUnits(const float3& pos0, const float3& pos1, int player, std::vector<int>& units);
 	float3 LastQueuePosition(const CUnit* unit);
 
 	float3 minCoor, maxCoor, centerCoor;

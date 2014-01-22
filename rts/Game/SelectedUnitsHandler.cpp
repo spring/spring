@@ -39,7 +39,7 @@
 #include "System/Sound/SoundChannels.h"
 
 #include <SDL_mouse.h>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <map>
 
 
@@ -96,8 +96,6 @@ void CSelectedUnitsHandler::ToggleBuildIconsFirst()
 
 CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailableCommands()
 {
-	GML_RECMUTEX_LOCK(grpsel); // GetAvailableCommands
-
 	possibleCommandsChanged = false;
 
 	int commandPage = 1000;
@@ -195,8 +193,6 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 
 void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 {
-	GML_RECMUTEX_LOCK(grpsel); // GiveCommand
-
 	if (gu->spectating && !gs->godMode)
 		return;
 	if (selectedUnits.empty())
@@ -275,8 +271,6 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 
 void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, const float4& planeLeft, const float4& planeTop, const float4& planeBottom)
 {
-	GML_RECMUTEX_LOCK(sel); // SelectUnits
-
 	CUnit* unit = NULL;
 	int addedunits = 0;
 	int team, lastTeam;
@@ -297,7 +291,7 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 			const float4 vec((*ui)->midPos, 1.0f);
 
 			if (vec.dot4(planeRight) < 0.0f && vec.dot4(planeLeft) < 0.0f && vec.dot4(planeTop) < 0.0f && vec.dot4(planeBottom) < 0.0f) {
-				if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selectedUnits.find(*ui) != selectedUnits.end())) {
+				if (KeyInput::GetKeyModState(KMOD_CTRL) && (selectedUnits.find(*ui) != selectedUnits.end())) {
 					RemoveUnit(*ui);
 				} else {
 					AddUnit(*ui);
@@ -321,8 +315,6 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 
 void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest)
 {
-	GML_RECMUTEX_LOCK(sel); // SelectUnits
-
 	//FIXME make modular?
 	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 
@@ -332,7 +324,7 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 		return;
 
 	if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
-		if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
+		if (KeyInput::GetKeyModState(KMOD_CTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
 			RemoveUnit(unit);
 		} else {
 			AddUnit(unit);
@@ -353,7 +345,7 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 			CUnitSet& teamUnits = teamHandler->Team(team)->units;
 			for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
 				if ((*ui)->unitDef->id == unit->unitDef->id) {
-					if (!doInViewTest || keyInput->IsKeyPressed(SDLK_LCTRL) || camera->InView((*ui)->midPos)) {
+					if (!doInViewTest || KeyInput::GetKeyModState(KMOD_CTRL) || camera->InView((*ui)->midPos)) {
 						AddUnit(*ui);
 					}
 				}
@@ -381,8 +373,6 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 		return;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // AddUnit
-
 	if (selectedUnits.insert(unit).second)
 		AddDeathDependence(unit, DEPENDENCE_SELECTED);
 	selectionChanged = true;
@@ -398,8 +388,6 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 
 void CSelectedUnitsHandler::RemoveUnit(CUnit* unit)
 {
-	GML_RECMUTEX_LOCK(sel); // RemoveUnit
-
 	if (selectedUnits.erase(unit))
 		DeleteDeathDependence(unit, DEPENDENCE_SELECTED);
 	selectionChanged = true;
@@ -411,8 +399,6 @@ void CSelectedUnitsHandler::RemoveUnit(CUnit* unit)
 
 void CSelectedUnitsHandler::ClearSelected()
 {
-	GML_RECMUTEX_LOCK(sel); // ClearSelected
-
 	CUnitSet::iterator ui;
 	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
 		(*ui)->isSelected = false;
@@ -428,8 +414,6 @@ void CSelectedUnitsHandler::ClearSelected()
 
 void CSelectedUnitsHandler::SelectGroup(int num)
 {
-	GML_RECMUTEX_LOCK(grpsel); // SelectGroup - not needed? only reading group
-
 	ClearSelected();
 	selectedGroup=num;
 	CGroup* group=grouphandlers[gu->myTeam]->groups[num];
@@ -457,8 +441,6 @@ void CSelectedUnitsHandler::Draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glLineWidth(cmdColors.UnitBoxLineWidth());
-
-	GML_RECMUTEX_LOCK(grpsel); // Draw
 
 	if (cmdColors.unitBox[3] > 0.05f) {
 		const CUnitSet* unitSet;
@@ -534,12 +516,10 @@ void CSelectedUnitsHandler::Draw()
 	// (or old-style, whenever the shift key is being held down)
 	if (cmdColors.buildBox[3] > 0.0f) {
 		if (!selectedUnits.empty() &&
-				((cmdColors.BuildBoxesOnShift() && keyInput->IsKeyPressed(SDLK_LSHIFT)) ||
+				((cmdColors.BuildBoxesOnShift() && KeyInput::GetKeyModState(KMOD_SHIFT)) ||
 				 ((guihandler->inCommand >= 0) &&
 					(guihandler->inCommand < int(guihandler->commands.size())) &&
 					(guihandler->commands[guihandler->inCommand].id < 0)))) {
-
-			GML_STDMUTEX_LOCK(cai); // Draw
 
 			bool myColor = true;
 			glColor4fv(cmdColors.buildBox);
@@ -580,8 +560,6 @@ void CSelectedUnitsHandler::Draw()
 
 void CSelectedUnitsHandler::DependentDied(CObject *o)
 {
-	GML_RECMUTEX_LOCK(sel); // DependentDied - maybe superfluous, too late anyway
-
 	selectedUnits.erase(static_cast<CUnit*>(o));
 	selectionChanged = true;
 	possibleCommandsChanged = true;
@@ -710,8 +688,6 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 		return luaCmd;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // GetDefaultCmd
-
 	// return the default if there are no units selected
 	CUnitSet::const_iterator ui = selectedUnits.begin();
 	if (ui == selectedUnits.end()) {
@@ -747,8 +723,6 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 
 void CSelectedUnitsHandler::PossibleCommandChange(CUnit* sender)
 {
-	GML_RECMUTEX_LOCK(sel); // PossibleCommandChange
-
 	if (sender == NULL || selectedUnits.find(sender) != selectedUnits.end())
 		possibleCommandsChanged = true;
 }
@@ -772,11 +746,6 @@ void CSelectedUnitsHandler::DrawCommands()
 	            (GLenum)cmdColors.QueuedBlendDst());
 
 	glLineWidth(cmdColors.QueuedLineWidth());
-
-	GML_RECMUTEX_LOCK(unit); // DrawCommands
-	GML_RECMUTEX_LOCK(feat); // DrawCommands
-	GML_RECMUTEX_LOCK(grpsel); // DrawCommands
-	GML_STDMUTEX_LOCK(cai); // DrawCommands
 
 	CUnitSet::iterator ui;
 	if (selectedGroup != -1) {
@@ -808,8 +777,6 @@ std::string CSelectedUnitsHandler::GetTooltip()
 {
 	std::string s = "";
 	{
-		GML_RECMUTEX_LOCK(sel); // GetTooltip - called from TooltipConsole::Draw --> MouseHandler::GetCurrentTooltip --> GetTooltip
-
 		if (!selectedUnits.empty()) {
 			const CUnit* unit = (*selectedUnits.begin());
 			const CTeam* team = NULL;
@@ -835,8 +802,6 @@ std::string CSelectedUnitsHandler::GetTooltip()
 	}
 
 	{
-		GML_RECMUTEX_LOCK(sel); // GetTooltip
-
 		int numFuel = 0;
 		float maxHealth = 0.0f, curHealth = 0.0f;
 		float maxFuel = 0.0f, curFuel = 0.0f;
@@ -906,8 +871,6 @@ std::string CSelectedUnitsHandler::GetTooltip()
 
 void CSelectedUnitsHandler::SetCommandPage(int page)
 {
-	GML_RECMUTEX_LOCK(sel); // SetCommandPage - called from CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc
-
 	CUnitSet::iterator ui;
 	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
 		(*ui)->commandAI->lastSelectedCommandPage = page;
@@ -920,7 +883,6 @@ void CSelectedUnitsHandler::SendCommand(const Command& c)
 {
 	if (selectionChanged) {
 		// send new selection
-		GML_RECMUTEX_LOCK(sel); // SendSelection
 
 		// first, convert CUnit* to unit IDs.
 		std::vector<short> selectedUnitIDs(selectedUnits.size());

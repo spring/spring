@@ -39,15 +39,6 @@ static __thread bool exitThread(false);
 
 static int spinlockMs = 5;
 
-static struct do_once {
-	do_once() {
-		//ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
-	}
-	~do_once() {
-		ThreadPool::SetThreadCount(0);
-	}
-} doOnce;
-
 
 namespace ThreadPool {
 
@@ -56,7 +47,6 @@ int GetThreadNum()
 	//return omp_get_thread_num();
 	return threadnum;
 }
-
 
 static void SetThreadNum(const int idx)
 {
@@ -69,17 +59,16 @@ int GetMaxThreads()
 	return Threading::GetAvailableCores();
 }
 
-
 int GetNumThreads()
 {
-	//FIXME mutex/atomic?
-	return thread_group.size() + 1; // +1 cause we also count mainthread
+	// FIXME: mutex/atomic?
+	// NOTE: +1 cause we also count mainthread
+	return (thread_group.size() + 1);
 }
-
 
 bool HasThreads()
 {
-	return !thread_group.empty() + 1;
+	return !thread_group.empty();
 }
 
 
@@ -99,21 +88,23 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 		if (lk.try_lock()) {
 			bool foundEmpty = false;
 
-			for(auto tg: taskGroups) {
-				auto p = tg->GetTask();
-
-				if (p) {
-					lk.unlock();
-					SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
-					(*p)();
-					return true;
-				}
-
+			for (auto tg: taskGroups) {
 				if (tg->IsEmpty()) {
 					foundEmpty = true;
+					break;
+				} else {
+					lk.unlock();
+					auto p = tg->GetTask();
+					do {
+						if (p) {
+							SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
+							(*p)();
+						}
+					} while (bool(p = tg->GetTask()));
+					break;
 				}
 			}
-			lk.unlock();
+			if (lk.owns_lock()) lk.unlock();
 
 			if (foundEmpty) {
 				//FIXME this could be made lock-free too, but is it worth it?
@@ -215,20 +206,23 @@ void NotifyWorkerThreads()
 
 void SetThreadCount(int num)
 {
-	int curThreads = GetNumThreads();
+	int curThreads = ThreadPool::GetNumThreads();
+
+	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d", __FUNCTION__, num, curThreads);
 
 	if (curThreads < num) {
 #ifndef UNITSYNC
 		if (hasOGLthreads) {
 			try {
-				for (int i = curThreads; i<num; ++i) {
+				for (int i = curThreads; i < num; ++i) {
 					thread_group.push_back(new COffscreenGLThread(boost::bind(&WorkerLoop, i)));
 				}
 			} catch (const opengl_error& gle) {
 				// shared gl context creation failed :<
-				SetThreadCount(0);
+				ThreadPool::SetThreadCount(0);
+
 				hasOGLthreads = false;
-				curThreads = GetNumThreads();
+				curThreads = ThreadPool::GetNumThreads();
 			}
 		}
 #endif
@@ -238,7 +232,7 @@ void SetThreadCount(int num)
 			}
 		}
 	} else {
-		for (int i = curThreads; i>num && i>1; --i) {
+		for (int i = curThreads; i > num && i > 1; --i) {
 			assert(!thread_group.empty());
 
 			auto taskgroup = std::make_shared<ParallelTaskGroup<const std::function<void()>>>();
@@ -258,8 +252,12 @@ void SetThreadCount(int num)
 			}
 			thread_group.pop_back();
 		}
-		if (num == 0) assert(thread_group.empty());
+
+		if (num == 0)
+			assert(thread_group.empty());
 	}
+
+	LOG("[ThreadPool::%s][2] #threads=%lu", __FUNCTION__, thread_group.size());
 }
 
 void SetThreadSpinTime(int milliSeconds)

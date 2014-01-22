@@ -35,6 +35,11 @@ IF    (UNIX AND NOT MINGW)
 
 	# Needed for dynamically loading shared libraries (on some OS)
 	LIST(APPEND engineDedicatedLibraries ${CMAKE_DL_LIBS})
+
+	# Needed for backtrace* on some systems
+	IF(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+		LIST(APPEND engineDedicatedLibraries execinfo)
+	ENDIF(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
 ENDIF (UNIX AND NOT MINGW)
 
 IF    (MINGW OR APPLE)
@@ -45,12 +50,12 @@ IF    (MINGW OR APPLE)
 	# OS X:
 	# Cocoa requires the SDL libary, whenever the SDL headers are used,
 	# due to some #define magic, which is practically impossible to workaround.
-	FIND_PACKAGE(SDL REQUIRED)
-	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+	FIND_PACKAGE(SDL2 REQUIRED)
+	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
 ELSE  (MINGW OR APPLE)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
-	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL)
+	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL2)
 ENDIF (MINGW OR APPLE)
 
 
@@ -148,7 +153,7 @@ ADD_LIBRARY(springserver-static STATIC EXCLUDE_FROM_ALL ${engineDedicatedSources
 Add_Dependencies(springserver-static generateVersionFiles)
 TARGET_LINK_LIBRARIES(springserver-static ${engineDedicatedLibraries})
 IF    (MINGW)
-	TARGET_LINK_LIBRARIES (springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY})
+	TARGET_LINK_LIBRARIES(springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${WINMM_LIBRARY})
 ENDIF (MINGW)
 
 # Compile dedicated server executable

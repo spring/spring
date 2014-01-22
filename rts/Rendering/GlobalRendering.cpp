@@ -67,7 +67,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(zNear),
 	CR_IGNORED(viewRange),
 	CR_IGNORED(FSAA),
-	CR_IGNORED(depthBufferBits),
 
 	CR_IGNORED(maxTextureSize),
 	CR_IGNORED(teamNanospray),
@@ -93,7 +92,8 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(glslMaxUniformBufferSize),
 	CR_IGNORED(dualScreenMode),
 	CR_IGNORED(dualScreenMiniMapOnLeft),
-	CR_IGNORED(fullScreen)
+	CR_IGNORED(fullScreen),
+	CR_IGNORED(window)
 ));
 
 CGlobalRendering::CGlobalRendering()
@@ -129,7 +129,6 @@ CGlobalRendering::CGlobalRendering()
 	, zNear(NEAR_PLANE)
 	, viewRange(MAX_VIEW_RANGE)
 	, FSAA(0)
-	, depthBufferBits(0)
 
 	, maxTextureSize(2048)
 
@@ -167,6 +166,8 @@ CGlobalRendering::CGlobalRendering()
 	, dualScreenMode(false)
 	, dualScreenMiniMapOnLeft(false)
 	, fullScreen(true)
+
+	, window(nullptr)
 {
 }
 
@@ -326,19 +327,7 @@ void CGlobalRendering::SetDualScreenParams() {
 	}
 }
 
-void CGlobalRendering::UpdateWindowGeometry() {
-	// NOTE:
-	//   in headless builds this is not called,
-	//   therefore winSize{X,Y} both remain 1
-	screenSizeX = viewSizeX;
-	screenSizeY = viewSizeY;
-	winSizeX = viewSizeX;
-	winSizeY = viewSizeY;
-	winPosX = 0;
-	winPosY = 0;
-}
-
-void CGlobalRendering::UpdateViewPortGeometry(bool windowExposed) {
+void CGlobalRendering::UpdateViewPortGeometry() {
 	// NOTE: viewPosY is not currently used (always 0)
 	if (!dualScreenMode) {
 		viewSizeX = winSizeX;
@@ -346,12 +335,6 @@ void CGlobalRendering::UpdateViewPortGeometry(bool windowExposed) {
 		viewPosX = 0;
 		viewPosY = 0;
 	} else {
-		// if window was exposed in full-screen mode then
-		// this would divide its size in half (cyclically)
-		// --> keep the old params
-		if (fullScreen && windowExposed)
-			return;
-
 		viewSizeX = winSizeX / 2;
 		viewSizeY = winSizeY;
 

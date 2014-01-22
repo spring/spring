@@ -4,10 +4,6 @@
 //#extension GL_ARB_shading_language_420pack: enable
 
 
-//#define HAVE_INFO_TEX
-#define HAVE_SHADOWS
-
-
 struct SDecal {
 	vec3 pos;
 	float rot;
@@ -129,13 +125,14 @@ void main() {
 	vec3 diffuseTerm = GetDiffuseLighting(worldPos, ntx);
 	float shadowInt  = GetShadowOcclusion(worldPos);
 
+#ifdef HAVE_INFOTEX
+	diffuseTerm.rgb += texture2D(infoTex, worldPos.xz * invMapSizePO2).rgb;
+	diffuseTerm.rgb -= vec3(0.5, 0.5, 0.5);
+#endif
+
 	vec3 lightCol = groundLighting.ambientColor + diffuseTerm * shadowInt;
 	gl_FragColor.rgb = albedo.rgb * lightCol;
 	gl_FragColor.a   = albedo.a;
-
-#ifdef HAVE_INFO_TEX
-	gl_FragColor.rgb *= texture2D(infoTex, worldPos.xz * invMapSizePO2).rgb;
-#endif
 
 	// FOG
 	float fogFactor = (groundLighting.fogEnd - length(worldPos - camPos)) * groundLighting.fogScale;

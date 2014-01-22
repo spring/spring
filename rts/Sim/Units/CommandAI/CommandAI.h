@@ -52,11 +52,14 @@ public:
 	virtual bool WillCancelQueued(const Command& c);
 	virtual bool CanSetMaxSpeed() const { return false; }
 	virtual void StopMove() { return; }
-	virtual bool HasMoreMoveCommands();
+
 	/**
 	 * Removes attack commands targeted at our new ally.
 	 */
 	virtual void StopAttackingAllyTeam(int ally);
+
+	bool HasCommand(int cmdID) const;
+	bool HasMoreMoveCommands() const;
 
 	int CancelCommands(const Command& c, CCommandQueue& queue, bool& first);
 	/**

@@ -216,8 +216,6 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 
 void CAdvTreeDrawer::Update()
 {
-	GML_STDMUTEX_LOCK(tree); // Update
-
 	for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ) {
 		fti->fallPos += (fti->speed * 0.1f);
 
@@ -490,9 +488,6 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	const int cy = int(camera->GetPos().z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
 
 	CAdvTreeSquareDrawer drawer(this, cx, cy, treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE, drawDetailed);
-
-	GML_RECMUTEX_LOCK(feat); // Draw
-	GML_STDMUTEX_LOCK(tree); // Draw
 
 	oldTreeDistance = treeDistance;
 
@@ -904,9 +899,6 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 	Shader::IProgramObject* po = NULL;
 
-	GML_RECMUTEX_LOCK(feat); // DrawShadowPass
-	GML_STDMUTEX_LOCK(tree); // DrawShadowPass
-
 	// draw with extraSize=1
 	readMap->GridVisibility(camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer, 1);
 
@@ -1106,8 +1098,6 @@ void CAdvTreeDrawer::ResetPos(const float3& pos)
 
 void CAdvTreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float size)
 {
-	GML_STDMUTEX_LOCK(tree); // AddTree
-
 	TreeStruct ts;
 	ts.id = treeID;
 	ts.type = treeType;
@@ -1124,8 +1114,6 @@ void CAdvTreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float 
 
 void CAdvTreeDrawer::DeleteTree(int treeID, const float3& pos)
 {
-	GML_STDMUTEX_LOCK(tree); // DeleteTree
-
 	const int treeSquareSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
 	const int treeSquareIdx =
 		((int)pos.x / (treeSquareSize)) +
@@ -1138,8 +1126,6 @@ void CAdvTreeDrawer::DeleteTree(int treeID, const float3& pos)
 
 void CAdvTreeDrawer::AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir)
 {
-	GML_STDMUTEX_LOCK(tree); // AddFallingTree
-
 	float3 dirPlane(dir.x, 0.0f, dir.z);
 	const float len = dirPlane.Length();
 	if (len > 500) {
@@ -1160,15 +1146,11 @@ void CAdvTreeDrawer::AddFallingTree(int treeID, int treeType, const float3& pos,
 
 void CAdvTreeDrawer::AddGrass(const float3& pos)
 {
-	GML_STDMUTEX_LOCK(tree); // AddGrass
-
 	grassDrawer->AddGrass(pos);
 }
 
 void CAdvTreeDrawer::RemoveGrass(int x, int z)
 {
-	GML_STDMUTEX_LOCK(tree); // RemoveGrass
-
 	grassDrawer->RemoveGrass(x, z);
 }
 

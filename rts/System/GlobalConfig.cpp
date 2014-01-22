@@ -6,7 +6,6 @@
 #include "System/GlobalConfig.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Lua/LuaConfig.h"
-#include "lib/gml/gml_base.h"
 
 CONFIG(int, NetworkLossFactor)
 .defaultValue(netcode::UDPConnection::MIN_LOSS_FACTOR)
@@ -56,16 +55,11 @@ CONFIG(int, TeamHighlight)
 	.minimumValue(CTeamHighlight::HIGHLIGHT_FIRST)
 	.maximumValue(CTeamHighlight::HIGHLIGHT_LAST);
 
-CONFIG(bool, EnableDrawCallIns)
-	.defaultValue(true);
+CONFIG(bool, UseNetMessageSmoothingBuffer).defaultValue(true);
 
-CONFIG(bool, LuaWritableConfigFile)
-	.defaultValue(true);
+CONFIG(bool, LuaWritableConfigFile).defaultValue(true);
 
-CONFIG(int, MultiThreadLua)
-	.defaultValue(MT_LUA_DEFAULT)
-	.minimumValue(MT_LUA_FIRST)
-	.maximumValue(MT_LUA_LAST);
+CONFIG(bool, EnableDrawCallIns).defaultValue(true);
 
 GlobalConfig* globalConfig = NULL;
 
@@ -78,7 +72,6 @@ GlobalConfig::GlobalConfig()
 	networkTimeout = configHandler->GetInt("NetworkTimeout");
 	reconnectTimeout = configHandler->GetInt("ReconnectTimeout");
 	mtu = configHandler->GetInt("MaximumTransmissionUnit");
-	teamHighlight = configHandler->GetInt("TeamHighlight");
 
 	linkOutgoingBandwidth = configHandler->GetInt("LinkOutgoingBandwidth");
 	linkIncomingSustainedBandwidth = configHandler->GetInt("LinkIncomingSustainedBandwidth");
@@ -93,26 +86,11 @@ GlobalConfig::GlobalConfig()
 	if (linkIncomingMaxPacketRate > 0 && linkIncomingSustainedBandwidth <= 0)
 		linkIncomingSustainedBandwidth = linkIncomingPeakBandwidth = 1024 * 1024;
 
+	useNetMessageSmoothingBuffer = configHandler->GetBool("UseNetMessageSmoothingBuffer");
 	luaWritableConfigFile = configHandler->GetBool("LuaWritableConfigFile");
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	enableDrawCallIns = configHandler->GetBool("EnableDrawCallIns");
-#endif
-#if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
-	multiThreadLua = configHandler->GetInt("MultiThreadLua");
-#endif
+	teamHighlight = configHandler->GetInt("TeamHighlight");
 }
-
-
-int GlobalConfig::GetMultiThreadLua()
-{
-#if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
-	return (!GML::Enabled()) ? MT_LUA_NONE : std::max((int)MT_LUA_FIRSTACTIVE, std::min((multiThreadLua == MT_LUA_DEFAULT) ? modInfo.luaThreadingModel : multiThreadLua, (int)MT_LUA_LAST));
-#else
-	return MT_LUA_NONE;
-#endif
-}
-
 
 void GlobalConfig::Instantiate()
 {

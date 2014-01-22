@@ -8,23 +8,42 @@
 #include <string>
 #include <map>
 #include <sstream>
-#include "lib/gml/gml_base.h"
-
 
 namespace Shader {
 	struct UniformState {
+	private:
 		union {
 			boost::int32_t i[17];
-			float   f[17];
+			float          f[17];
 		};
-		int type; //TODO implement (should be either GL_FLOAT_VEC2, GL_INT_SAMPLER_CUBE, ... see GLSLCopyState.cpp)
+
+		// TODO implement (should be either GL_FLOAT_VEC2, GL_INT_SAMPLER_CUBE, ... see GLSLCopyState.cpp)
+		// int type;
+		// current glGetUniformLocation
+		int location;
+
 		std::string name;
 
-		UniformState(const std::string& name) : name(name) {
-			i[0] = -6666;
-			i[1] = -6666;
-			i[2] = -6666;
-			i[3] = -6666;
+	public:
+		UniformState(const std::string& _name): location(-1), name(_name) {
+			i[0] = -0xFFFFFF;
+			i[1] = -0xFFFFFF;
+			i[2] = -0xFFFFFF;
+			i[3] = -0xFFFFFF;
+		}
+
+		const int* GetIntValues() const { return &i[0]; }
+		const float* GetFltValues() const { return &f[0]; }
+
+		// int GetType() const { return type; }
+		int GetLocation() const { return location; }
+		const std::string& GetName() const { return name; }
+
+		// void SetType(int type) { type = type; }
+		void SetLocation(int loc) { location = loc; }
+
+		bool IsUninit() const {
+			return (i[0] == -0xFFFFFF) && (i[1] == -0xFFFFFF) && (i[2] == -0xFFFFFF) && (i[3] == -0xFFFFFF);
 		}
 
 		int Hash(const int v0, const int v1, const int v2, const int v3) const {
@@ -35,24 +54,40 @@ namespace Shader {
 			hash += v3 ^ (hash * 33);
 			return hash;
 		}
-		bool CheckHash(const int v0, const int v1 = 0, const int v2 = 0, const int v3 = 0) const {
-			return (Hash(i[0], i[1], i[2], i[3]) == Hash(v0, v1, v2, v3));
-		}
-
 		int Hash(const int* v, int count) const {
 			int hash = ~0;
-			for (int i = 0; i < count; ++i) {
-				hash += v[i] ^ (hash * 33);
+			for (int n = 0; n < count; ++n) {
+				hash += v[n] ^ (hash * 33);
 			}
 			return hash;
 		}
+
+		bool CheckHash(const int v0, const int v1 = 0, const int v2 = 0, const int v3 = 0) const {
+			// NOTE:
+			//   the hash used here collides too much on certain inputs (eg. team-color
+			//   uniforms) and is not any faster to calculate than 4 direct comparisons
+			//   for floating-point inputs the v* are their bitwise representations (so
+			//   equality testing still works as expected)
+			#ifdef USE_HASH_COMPARISON
+			return (Hash(i[0], i[1], i[2], i[3]) == Hash(v0, v1, v2, v3));
+			#else
+			return (i[0] == v0 && i[1] == v1 && i[2] == v2 && i[3] == v3);
+			#endif
+		}
 		bool CheckHash(const int* v, int count) const {
+			#ifdef USE_HASH_COMPARISON
 			return (Hash(i, count) == Hash(v, count));
+			#else
+			bool equal = true;
+			for (int n = 0; (n < count) && equal; n++) {
+				equal &= (v[n] == i[n]);
+			}
+			return equal;
+			#endif
 		}
 
 
 		bool Set(const int v0, const int v1 = 0, const int v2 = 0, const int v3 = 0) {
-			if (GML::ServerActive()) return true;
 			if (CheckHash(v0, v1, v2, v3))
 				return false;
 			i[0] = v0; i[1] = v1; i[2] = v2; i[3] = v3;
@@ -61,11 +96,10 @@ namespace Shader {
 
 
 		bool Set(const float v0, const float v1 = 0.0f, const float v2 = 0.0f, const float v3 = 0.0f) {
-			if (GML::ServerActive()) return true;
-			int i0 = *reinterpret_cast<const int*>(&v0);
-			int i1 = *reinterpret_cast<const int*>(&v1);
-			int i2 = *reinterpret_cast<const int*>(&v2);
-			int i3 = *reinterpret_cast<const int*>(&v3);
+			const int i0 = *reinterpret_cast<const int*>(&v0);
+			const int i1 = *reinterpret_cast<const int*>(&v1);
+			const int i2 = *reinterpret_cast<const int*>(&v2);
+			const int i3 = *reinterpret_cast<const int*>(&v3);
 			if (CheckHash(i0, i1, i2, i3))
 				return false;
 			f[0] = v0; f[1] = v1; f[2] = v2; f[3] = v3;
@@ -74,21 +108,18 @@ namespace Shader {
 
 
 		bool Set2v(const int* v) {
-			if (GML::ServerActive()) return true;
 			if (CheckHash(v[0], v[1]))
 				return false;
 			i[0] = v[0]; i[1] = v[1];
 			return true;
 		}
 		bool Set3v(const int* v) {
-			if (GML::ServerActive()) return true;
 			if (CheckHash(v[0], v[1], v[2]))
 				return false;
 			i[0] = v[0]; i[1] = v[1]; i[2] = v[2];
 			return true;
 		}
 		bool Set4v(const int* v) {
-			if (GML::ServerActive()) return true;
 			if (CheckHash(v[0], v[1], v[2], v[3]))
 				return false;
 			i[0] = v[0]; i[1] = v[1]; i[2] = v[2]; i[3] = v[3];
@@ -97,7 +128,6 @@ namespace Shader {
 
 
 		bool Set2v(const float* v) {
-			if (GML::ServerActive()) return true;
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi[0], vi[1]))
 				return false;
@@ -105,7 +135,6 @@ namespace Shader {
 			return true;
 		}
 		bool Set3v(const float* v) {
-			if (GML::ServerActive()) return true;
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi[0], vi[1], vi[2]))
 				return false;
@@ -113,7 +142,6 @@ namespace Shader {
 			return true;
 		}
 		bool Set4v(const float* v) {
-			if (GML::ServerActive()) return true;
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi[0], vi[1], vi[2], vi[3]))
 				return false;
@@ -123,7 +151,6 @@ namespace Shader {
 
 
 		bool Set2x2(const float* v, bool transp) {
-			if (GML::ServerActive()) return true;
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi, 4) && (bool)i[16] == transp)
 				return false;
@@ -132,7 +159,6 @@ namespace Shader {
 			return true;
 		}
 		bool Set3x3(const float* v, bool transp) {
-			if (GML::ServerActive()) return true;
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi, 9) && (bool)i[16] == transp)
 				return false;
@@ -141,7 +167,6 @@ namespace Shader {
 			return true;
 		}
 		bool Set4x4(const float* v, bool transp) {
-			if (GML::ServerActive()) return true;
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi, 16) && (bool)i[16] == transp)
 				return false;

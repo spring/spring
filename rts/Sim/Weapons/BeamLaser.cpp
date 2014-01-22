@@ -268,7 +268,6 @@ void CBeamLaser::FireImpl(bool scriptCall)
 
 void CBeamLaser::FireInternal(float3 curDir)
 {
-	// fix negative damage when hitting big spheres
 	float actualRange = range;
 	float rangeMod = 1.0f;
 
@@ -276,7 +275,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 		// help units fire while chasing
 		rangeMod = 1.3f;
 	}
-	if (owner->fpsControlPlayer != NULL) {
+	if (owner->UnderFirstPersonControl()) {
 		rangeMod = 0.95f;
 	}
 

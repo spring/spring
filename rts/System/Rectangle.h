@@ -45,7 +45,7 @@ struct SRectangle {
 			y1 < rect.y2 && y2 > rect.y1;
 	}
 
-	bool operator< (const SRectangle& other) {
+	bool operator< (const SRectangle& other) const {
 		if (x1 == other.x1) {
 			return (z1 < other.z1);
 		} else {
@@ -61,15 +61,23 @@ struct SRectangle {
 		);
 	}
 
-	int x1;
+	union {
+		int x1;
+		int left;
+	};
 	union {
 		int z1;
 		int y1;
+		int top;
 	};
-	int x2;
+	union {
+		int x2;
+		int right;
+	};
 	union {
 		int z2;
 		int y2;
+		int bottom;
 	};
 };
 

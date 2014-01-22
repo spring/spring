@@ -188,11 +188,11 @@ static void FindBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 		char              binPathName[512];
 
 		char line[512];
-		int red;
+
 		// read all lines
 		while (!paths_notFound.empty() && (fgets(line, 511, mapsFile) != NULL)) {
 			// parse the line
-			red = sscanf(line, "%lx-%*x %*s %lx %*s %*u %s",
+			const int red = sscanf(line, "%lx-%*x %*s %lx %*s %*u %s",
 					&mem_start, &binAddr_offset, binPathName);
 
 			if (red == 3) {
@@ -365,13 +365,14 @@ namespace CrashHandler
 #ifndef DEDICATED
 		Watchdog::ClearTimer();
 #endif
-		if (threadName) {
-			LOG_I(logLevel, "Stacktrace (%s):", threadName);
+
+		if (threadName != NULL) {
+			LOG_I(logLevel, "Stacktrace (%s) for Spring %s:", threadName, (SpringVersion::GetFull()).c_str());
 		} else {
-			LOG_I(logLevel, "Stacktrace:");
+			LOG_I(logLevel, "Stacktrace for Spring %s:", (SpringVersion::GetFull()).c_str());
 		}
 
-		bool containsOglSo = false; // OpenGL lib -> graphic problem
+		bool containsDriverSo = false; // OpenGL lib -> graphic problem
 		bool containedAIInterfaceSo = false;
 		bool containedSkirmishAISo  = false;
 
@@ -421,10 +422,10 @@ namespace CrashHandler
 				symbols.push_back(data);
 
 				// check if there are known sources of fail on the stack
-				containsOglSo = (containsOglSo || (path.find("libGLcore.so") != std::string::npos));
-				containsOglSo = (containsOglSo || (path.find("psb_dri.so") != std::string::npos));
-				containsOglSo = (containsOglSo || (path.find("i965_dri.so") != std::string::npos));
-				containsOglSo = (containsOglSo || (path.find("fglrx_dri.so") != std::string::npos));
+				containsDriverSo = (containsDriverSo || (path.find("libGLcore.so") != std::string::npos));
+				containsDriverSo = (containsDriverSo || (path.find("psb_dri.so") != std::string::npos));
+				containsDriverSo = (containsDriverSo || (path.find("i965_dri.so") != std::string::npos));
+				containsDriverSo = (containsDriverSo || (path.find("fglrx_dri.so") != std::string::npos));
 				if (!containedAIInterfaceSo && (absPath.find("Interfaces") != std::string::npos)) {
 					containedAIInterfaceSo = true;
 				}
@@ -434,7 +435,7 @@ namespace CrashHandler
 			}
 
 			// Linux Graphic drivers are known to fail with moderate OpenGL usage
-			if (containsOglSo) {
+			if (containsDriverSo) {
 				LOG_I(logLevel, "This stack trace indicates a problem with your graphic card driver. "
 						"Please try upgrading or downgrading it. "
 						"Specifically recommended is the latest driver, and one that is as old as your graphic card. "
@@ -523,7 +524,7 @@ namespace CrashHandler
 		} else if (signal == SIGBUS) {
 			error += " (SIGBUS)";
 		}
-		LOG_L(L_ERROR, "%s in spring %s", error.c_str(), SpringVersion::GetFull().c_str());
+		LOG_L(L_ERROR, "%s in spring %s", error.c_str(), (SpringVersion::GetFull()).c_str());
 
 
 		const bool nonFatalSignal = false;

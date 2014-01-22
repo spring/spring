@@ -6,7 +6,7 @@
 #include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalConstants.h" // for GAME_SPEED
@@ -18,7 +18,6 @@ void ProfileDrawer::SetEnabled(bool enable)
 	if (enable) {
 		assert(instance == NULL);
 		instance = new ProfileDrawer();
-		GML_STDMUTEX_LOCK_NOPROF(time); // SetEnabled
 		// reset peak indicators each time the drawer is restarted
 		std::map<std::string, CTimeProfiler::TimeRecord>::iterator pi;
 		for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi)
@@ -42,8 +41,6 @@ static const float start_y = 0.965f;
 
 void ProfileDrawer::Draw()
 {
-	GML_STDMUTEX_LOCK_NOPROF(time); // Draw
-
 	// draw the background of the window
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(0.0f, 0.0f, 0.5f, 0.5f);
@@ -62,24 +59,20 @@ void ProfileDrawer::Draw()
 	int y = 0;
 	font->Begin();
 	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++y) {
-#if GML_MUTEX_PROFILER
-		const float fStartY = start_y - y * 0.018f;
-#else
 		const float fStartY = start_y - y * 0.024f;
-#endif
-		const float s = pi->second.total.toSecsf();
-		const float p = pi->second.percent * 100;
 		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
-		fStartX += 0.09f;
-		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", s);
+		fStartX += 0.04f;
+		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", pi->second.total.toSecsf());
 
 		// print percent of CPU time used within the last 500ms
 		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", p);
+		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", pi->second.percent * 100);
 		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", pi->second.newpeak?1:255, pi->second.newpeak?1:255, pi->second.peak * 100);
+		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", pi->second.newPeak?1:255, pi->second.newPeak?1:255, pi->second.peak * 100);
+		fStartX += 0.04f;
+		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", pi->second.newLagPeak?1:255, pi->second.newLagPeak?1:255, pi->second.maxLag);
 
 		// print timer name
 		fStartX += 0.01f;
@@ -130,7 +123,7 @@ void ProfileDrawer::Draw()
 			// which ran over many frames, ended in this one.
 			const float p = pi->second.frames[a].toSecsf() * GAME_SPEED;
 			const float x = start_x + (a * steps_x);
-			const float y = 0.02f + (p * 0.4f);
+			const float y = 0.02f + (p * 0.96f);
 			va->AddVertex0(float3(x, y, 0.0f));
 		}
 		glColorf3((float3)pi->second.color);
@@ -138,8 +131,8 @@ void ProfileDrawer::Draw()
 	}
 
 #ifdef DEBUG
+	const spring_time curTime = spring_gettime();
 	const float maxHist = 4.0f;
-	const auto curTime = spring_gettime();
 	const float r = std::fmod(curTime.toSecsf(), maxHist) / maxHist;
 
 	CVertexArray* va = GetVertexArray();
@@ -184,8 +177,6 @@ void ProfileDrawer::Draw()
 
 bool ProfileDrawer::MousePress(int x, int y, int button)
 {
-	GML_STDMUTEX_LOCK_NOPROF(time); // MousePress
-
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
 
@@ -210,8 +201,6 @@ bool ProfileDrawer::MousePress(int x, int y, int button)
 
 bool ProfileDrawer::IsAbove(int x, int y)
 {
-	GML_STDMUTEX_LOCK_NOPROF(time); // IsAbove
-
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
 

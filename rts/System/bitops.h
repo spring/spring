@@ -63,13 +63,13 @@ static inline unsigned int count_bits_set(unsigned int w)
 /**
  * quote from GCC doc "Returns one plus the index of the least significant 1-bit of x, or if x is zero, returns zero."
  */
-static inline int bits_ffs(unsigned int x)
+static inline unsigned bits_ffs(unsigned int x)
 {
 #ifdef __GNUC__
 	return __builtin_ffs(x);
 #else
 	if (x == 0) return 0;
-	int i = 1;
+	unsigned i = 1;
 	while (!(x & 0x1)) {
 		x = x >> 1;
 		++i;
@@ -77,6 +77,8 @@ static inline int bits_ffs(unsigned int x)
 	return i;
 #endif
 }
+
+
 
 /**
  * @brief Make even number macro

@@ -3,7 +3,6 @@
 #include "FeatureHandler.h"
 
 #include "Lua/LuaParser.h"
-#include "Lua/LuaRules.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
@@ -414,13 +413,13 @@ CFeature* CFeatureHandler::CreateWreckage(
 		}
 	}
 
-	if (luaRules && !luaRules->AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
+	if (!eventHandler.AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
 		return NULL;
 
 	if (!fd->modelName.empty()) {
 		FeatureLoadParams params = cparams;
 
-		params.unitDef = ((fd->resurrectable == 0) || (numWreckLevels > 1 && fd->resurrectable < 0))? NULL: cparams.unitDef;
+		params.unitDef = ((fd->resurrectable == 0) || (numWreckLevels > 0 && fd->resurrectable < 0))? NULL: cparams.unitDef;
 		params.smokeTime = fd->smokeTime * emitSmoke;
 		params.featureDef = fd;
 
@@ -452,17 +451,12 @@ void CFeatureHandler::Update()
 	}
 
 	{
-		GML_STDMUTEX_LOCK(rfeat); // Update
-
 		if (!toBeRemoved.empty()) {
 
-			GML_RECMUTEX_LOCK(obj); // Update
 			eventHandler.DeleteSyncedObjects();
 
-			GML_RECMUTEX_LOCK(feat); // Update
 			eventHandler.DeleteSyncedFeatures();
 
-			GML_RECMUTEX_LOCK(quad); // Update
 
 			while (!toBeRemoved.empty()) {
 				CFeature* feature = GetFeature(toBeRemoved.back());

@@ -41,11 +41,6 @@ void CLightningCannon::Update()
 	CWeapon::Update();
 }
 
-void CLightningCannon::Init()
-{
-	CWeapon::Init();
-}
-
 void CLightningCannon::FireImpl(bool scriptCall)
 {
 	float3 curPos = weaponMuzzlePos;

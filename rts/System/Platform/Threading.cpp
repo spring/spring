@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "lib/gml/gml_base.h"
-#include "lib/gml/gmlmut.h"
 #include "Threading.h"
 #include "Game/GameController.h"
 #include "System/bitops.h"
@@ -20,7 +18,7 @@
 #include <boost/thread.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/optional.hpp>
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
 	#include <windows.h>
 #else
@@ -30,11 +28,6 @@
 	#include <sched.h>
 #endif
 
-#include "lib/gml/gmlcnf.h"
-#include "lib/gml/gml_base.h"
-
-
-
 #ifndef UNIT_TEST
 CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1).description("Count of worker threads (including mainthread!) used in parallel sections.");
 CONFIG(int, WorkerThreadSpinTime).defaultValue(5).minimumValue(0).description("The number of milliseconds worker threads will spin after no tasks to perform.");
@@ -43,14 +36,23 @@ CONFIG(int, WorkerThreadSpinTime).defaultValue(5).minimumValue(0).description("T
 
 namespace Threading {
 	static Error* threadError = NULL;
+
 	static bool haveMainThreadID = false;
-	static boost::thread::id mainThreadID;
+	static bool haveGameLoadThreadID = false;
+	static bool haveWatchDogThreadID = false;
+
+	// static boost::thread::id boostMainThreadID;
+	// static boost::thread::id boostGameLoadThreadID;
+	// static boost::thread::id boostWatchDogThreadID;
 
 	static NativeThreadId nativeMainThreadID;
-	static boost::optional<NativeThreadId> simThreadID;
-	static boost::optional<NativeThreadId> batchThreadID;
+	static NativeThreadId nativeGameLoadThreadID;
+	static NativeThreadId nativeWatchDogThreadID;
 
-#if defined(__APPLE__)
+	static boost::optional<NativeThreadId> simThreadID;
+	static boost::optional<NativeThreadId> luaBatchThreadID;
+
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
 	static DWORD cpusSystem = 0;
 #else
@@ -63,7 +65,7 @@ namespace Threading {
 		if (inited)
 			return;
 
-	#if defined(__APPLE__)
+	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
 
 	#elif defined(WIN32)
@@ -87,8 +89,9 @@ namespace Threading {
 			return ~0;
 		}
 
-	#if defined(__APPLE__)
+	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
+		return 0;
 
 	#elif defined(WIN32)
 		// Create mask
@@ -156,7 +159,7 @@ namespace Threading {
 	boost::uint32_t GetAvailableCoresMask()
 	{
 		boost::uint32_t systemCores = 0;
-	#if defined(__APPLE__)
+	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
 		systemCores = ~0;
 
@@ -166,7 +169,7 @@ namespace Threading {
 
 	#else
 		// Create mask
-		int numCpus = std::min(CPU_COUNT(&cpusSystem), 32); // w/o the min(.., 32) `(1 << n)` could overflow!
+		const int numCpus = std::min(CPU_COUNT(&cpusSystem), 32); // w/o the min(.., 32) `(1 << n)` could overflow!
 		for (int n = numCpus - 1; n >= 0; --n) {
 			if (CPU_ISSET(n, &cpusSystem)) {
 				systemCores |= (1 << n);
@@ -213,7 +216,7 @@ namespace Threading {
 	}
 
 
-	void InitOMP() {
+	void InitThreadPool() {
 		boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
 		boost::uint32_t mainAffinity  = systemCores;
 		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
@@ -238,8 +241,9 @@ namespace Threading {
 		// set affinity of worker threads
 		boost::uint32_t ompCores = 0;
 		ompCores = parallel_reduce([&]() -> boost::uint32_t {
-			int i = ThreadPool::GetThreadNum();
-			if (i != 0) { // 0 is the source thread
+			const int i = ThreadPool::GetThreadNum();
+			if (i != 0) {
+				// 0 is the source thread, skip
 				boost::uint32_t ompCore = GetCpuCoreForWorkerThread(i - 1, ompAvailCores, mainAffinity);
 				Threading::SetAffinity(ompCore);
 				return ompCore;
@@ -255,7 +259,7 @@ namespace Threading {
 
 	void SetThreadScheduler()
 	{
-	#if defined(__APPLE__)
+	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
 
 	#elif defined(WIN32)
@@ -263,20 +267,18 @@ namespace Threading {
 		//Note: only available with mingw64!!!
 
 	#else
-		if (!GML::Enabled()) { // with GML mainthread yields a lot, so SCHED_BATCH with its longer wakup times is counter-productive then
-			if (GetAvailableCores() > 1) {
-				// Change os scheduler for this process.
-				// This way the kernel knows that we are a CPU-intensive task
-				// and won't randomly move us across the cores and tries
-				// to maximize the runtime (_slower_ wakeups, less yields)
-				//Note:
-				// It _may_ be possible that this has negative impact in case
-				// threads are waiting for mutexes (-> less yields).
-				int policy;
-				struct sched_param param;
-				pthread_getschedparam(Threading::GetCurrentThread(), &policy, &param);
-				pthread_setschedparam(Threading::GetCurrentThread(), SCHED_BATCH, &param);
-			}
+		if (GetAvailableCores() > 1) {
+			// Change os scheduler for this process.
+			// This way the kernel knows that we are a CPU-intensive task
+			// and won't randomly move us across the cores and tries
+			// to maximize the runtime (_slower_ wakeups, less yields)
+			//Note:
+			// It _may_ be possible that this has negative impact in case
+			// threads are waiting for mutexes (-> less yields).
+			int policy;
+			struct sched_param param;
+			pthread_getschedparam(Threading::GetCurrentThread(), &policy, &param);
+			pthread_setschedparam(Threading::GetCurrentThread(), SCHED_BATCH, &param);
 		}
 	#endif
 	}
@@ -308,23 +310,53 @@ namespace Threading {
 
 
 
-	void SetMainThread()
-	{
+	void SetMainThread() {
 		if (!haveMainThreadID) {
 			haveMainThreadID = true;
-			mainThreadID = boost::this_thread::get_id();
+			// boostMainThreadID = boost::this_thread::get_id();
 			nativeMainThreadID = Threading::GetCurrentThreadId();
 		}
 	}
 
-	bool IsMainThread()
-	{
+	bool IsMainThread() {
 		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), nativeMainThreadID);
 	}
-
-	bool IsMainThread(NativeThreadId threadID)
-	{
+	bool IsMainThread(NativeThreadId threadID) {
 		return NativeThreadIdsEqual(threadID, Threading::nativeMainThreadID);
+	}
+
+
+
+	void SetGameLoadThread() {
+		if (!haveGameLoadThreadID) {
+			haveGameLoadThreadID = true;
+			// boostGameLoadThreadID = boost::this_thread::get_id();
+			nativeGameLoadThreadID = Threading::GetCurrentThreadId();
+		}
+	}
+
+	bool IsGameLoadThread() {
+		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), nativeGameLoadThreadID);
+	}
+	bool IsGameLoadThread(NativeThreadId threadID) {
+		return NativeThreadIdsEqual(threadID, Threading::nativeGameLoadThreadID);
+	}
+
+
+
+	void SetWatchDogThread() {
+		if (!haveWatchDogThreadID) {
+			haveWatchDogThreadID = true;
+			// boostWatchDogThreadID = boost::this_thread::get_id();
+			nativeWatchDogThreadID = Threading::GetCurrentThreadId();
+		}
+	}
+
+	bool IsWatchDogThread() {
+		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), nativeWatchDogThreadID);
+	}
+	bool IsWatchDogThread(NativeThreadId threadID) {
+		return NativeThreadIdsEqual(threadID, Threading::nativeWatchDogThreadID);
 	}
 
 
@@ -332,37 +364,35 @@ namespace Threading {
 	void SetSimThread(bool set) {
 		if (set) {
 			simThreadID = Threading::GetCurrentThreadId();
-			batchThreadID = simThreadID;
+			luaBatchThreadID = simThreadID;
 		} else {
 			simThreadID.reset();
 		}
 	}
+
 	bool IsSimThread() {
-		return !simThreadID ? false : NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *simThreadID);
+		return ((!simThreadID)? false : NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *simThreadID));
 	}
-
 	bool UpdateGameController(CGameController* ac) {
-		GML_MSTMUTEX_LOCK(sim, 1); // UpdateGameController
-
 		SetSimThread(true);
 		bool ret = ac->Update();
 		SetSimThread(false);
 		return ret;
 	}
 
-	void SetBatchThread(bool set) {
+	void SetLuaBatchThread(bool set) {
 		if (set) {
-			batchThreadID = Threading::GetCurrentThreadId();
+			luaBatchThreadID = Threading::GetCurrentThreadId();
 		} else {
-			batchThreadID.reset();
+			luaBatchThreadID.reset();
 		}
 	}
-	bool IsBatchThread() {
-		return !batchThreadID ? false : NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *batchThreadID);
+	bool IsLuaBatchThread() {
+		return ((!luaBatchThreadID)? false : NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *luaBatchThreadID));
 	}
 
 
-	void SetThreadName(std::string newname)
+	void SetThreadName(const std::string& newname)
 	{
 	#if defined(__USE_GNU) && !defined(WIN32)
 		//alternative: pthread_setname_np(pthread_self(), newname.c_str());

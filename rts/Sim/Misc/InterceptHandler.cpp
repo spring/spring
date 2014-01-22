@@ -5,7 +5,6 @@
 
 #include "InterceptHandler.h"
 
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
@@ -13,6 +12,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "System/EventHandler.h"
 #include "System/float3.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
@@ -39,10 +39,9 @@ void CInterceptHandler::Update(bool forced) {
 
 	for (wit = interceptors.begin(); wit != interceptors.end(); ++wit) {
 		CWeapon* w = *wit;
+
 		const WeaponDef* wDef = w->weaponDef;
 		const CUnit* wOwner = w->owner;
-		// const float3& wOwnerPos = wOwner->pos;
-		const float3& wPos = w->weaponPos;
 
 		assert(wDef->interceptor || wDef->isShield);
 
@@ -62,7 +61,7 @@ void CInterceptHandler::Update(bool forced) {
 				continue;
 
 			// note: will be called every Update so long as gadget does not return true
-			if (luaRules != NULL && !luaRules->AllowWeaponInterceptTarget(wOwner, w, p))
+			if (!eventHandler.AllowWeaponInterceptTarget(wOwner, w, p))
 				continue;
 
 			// there are four cases when an interceptor <w> should fire at a projectile <p>:
@@ -73,14 +72,14 @@ void CInterceptHandler::Update(bool forced) {
 			//
 			// these checks all need to be evaluated periodically, not just
 			// when a projectile is created and handed to AddInterceptTarget
-			const float interceptDist = w->weaponPos.distance(p->pos);
-			const float impactDist = ground->LineGroundCol(p->pos, p->pos + p->dir * interceptDist);
+			const float weaponDist = w->weaponPos.distance(p->pos);
+			const float impactDist = ground->LineGroundCol(p->pos, p->pos + p->dir * weaponDist);
 
-			const float3& pFlightPos = p->pos;
 			const float3& pImpactPos = p->pos + p->dir * impactDist;
 			const float3& pTargetPos = p->GetTargetPos();
+			const float3  pWeaponVec = p->pos - w->weaponPos;
 
-			if ((pTargetPos - wPos).SqLength2D() < Square(wDef->coverageRange)) {
+			if ((pTargetPos - w->weaponPos).SqLength2D() < Square(wDef->coverageRange)) {
 				w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);
 				w->incomingProjectiles[p->id] = p;
 				continue; // 1
@@ -94,15 +93,15 @@ void CInterceptHandler::Update(bool forced) {
 				//// continue;
 			}
 
-			if ((pFlightPos - wPos).SqLength2D() < Square(wDef->coverageRange)) {
+			if (pWeaponVec.SqLength2D() < Square(wDef->coverageRange)) {
 				w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);
 				w->incomingProjectiles[p->id] = p;
 				continue; // 2
 			}
 
-			if ((pImpactPos - wPos).SqLength2D() < Square(wDef->coverageRange)) {
-				const float3 pTargetDir = (pTargetPos - pFlightPos).SafeNormalize();
-				const float3 pImpactDir = (pImpactPos - pFlightPos).SafeNormalize();
+			if ((pImpactPos - w->weaponPos).SqLength2D() < Square(wDef->coverageRange)) {
+				const float3 pTargetDir = (pTargetPos - p->pos).SafeNormalize();
+				const float3 pImpactDir = (pImpactPos - p->pos).SafeNormalize();
 
 				// the projected impact position can briefly shift into the covered
 				// area during transition from vertical to horizontal flight, so we
@@ -114,12 +113,10 @@ void CInterceptHandler::Update(bool forced) {
 				}
 			}
 
-			const float3 pCurSeparationVec = wPos - pFlightPos;
-			const float pMinSeparationDist = std::max(pCurSeparationVec.dot(p->dir), 0.0f);
-			const float3 pMinSeparationPos = pFlightPos + (p->dir * pMinSeparationDist);
-			const float3 pMinSeparationVec = wPos - pMinSeparationPos;
+			const float3 pMinSepPos = p->pos + p->dir * std::min(impactDist, std::max(-(pWeaponVec.dot(p->dir)), 0.0f));
+			const float3 pMinSepVec = w->weaponPos - pMinSepPos;
 
-			if (pMinSeparationVec.SqLength() < Square(wDef->coverageRange)) {
+			if (pMinSepVec.SqLength() < Square(wDef->coverageRange)) {
 				w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);
 				w->incomingProjectiles[p->id] = p;
 				continue; // 4

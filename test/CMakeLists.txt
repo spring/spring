@@ -53,26 +53,32 @@ Else  (NOT Boost_FOUND)
 ### UDPListener
 	set(test_name UDPListener)
 	Set(test_src
-			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Net/TestUDPListener.cpp"
-			"${ENGINE_SOURCE_DIR}/Game/GameVersion.cpp"
-			"${ENGINE_SOURCE_DIR}/Net/Protocol/BaseNetProtocol.cpp"
-			"${ENGINE_SOURCE_DIR}/System/CRC.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
-			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/NullGlobalConfig.cpp"
-			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Nullerrorhandler.cpp"
-			${test_Log_sources}
-		)
+		"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Net/TestUDPListener.cpp"
+		"${ENGINE_SOURCE_DIR}/Game/GameVersion.cpp"
+		"${ENGINE_SOURCE_DIR}/Net/Protocol/BaseNetProtocol.cpp"
+		"${ENGINE_SOURCE_DIR}/System/CRC.cpp"
+		"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+		## HACK:
+		##   the engineSystemNet lib is compiled *without* -DUNIT_TEST
+		##   it includes UDPConnection which depends on ConfigHandler
+		##   in normal builds, but fails to link when used as part of
+		##   UT so we compile it again
+		"${ENGINE_SOURCE_DIR}/System/Net/UDPConnection.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/NullGlobalConfig.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Nullerrorhandler.cpp"
+		${test_Log_sources}
+	)
 
 	set(test_libs
-			engineSystemNet
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_SYSTEM_LIBRARY}
-			${Boost_THREAD_LIBRARY}
-			${Boost_CHRONO_LIBRARY_WITH_RT}
-			${WINMM_LIBRARY}
-			${WS2_32_LIBRARY}
-			7zip
-		)
+		engineSystemNet
+		${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+		${Boost_SYSTEM_LIBRARY}
+		${Boost_THREAD_LIBRARY}
+		${Boost_CHRONO_LIBRARY_WITH_RT}
+		${WINMM_LIBRARY}
+		${WS2_32_LIBRARY}
+		7zip
+	)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 	Add_Dependencies(test_UDPListener generateVersionFiles)

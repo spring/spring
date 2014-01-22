@@ -3,11 +3,6 @@
 #ifndef UNIT_H
 #define UNIT_H
 
-#include "lib/gml/gml_base.h" // for GML_ENABLE_SIM
-#ifdef USE_GML
-	#include <boost/thread/recursive_mutex.hpp>
-#endif
-
 #include <map>
 #include <list>
 #include <vector>
@@ -135,6 +130,8 @@ public:
 	void AddMetal(float metal, bool useIncomeMultiplier = true);
 	bool UseEnergy(float energy);
 	void AddEnergy(float energy, bool useIncomeMultiplier = true);
+	bool AddHarvestedMetal(float metal);
+
 	/// push the new wind to the script
 	void UpdateWind(float x, float z, float strength);
 	void SetMetalStorage(float newStorage);
@@ -146,7 +143,7 @@ public:
 
 	void CalculateTerrainType();
 	void UpdateTerrainType();
-	void UpdatePhysicalState();
+	void UpdatePhysicalState(float eps);
 	void UpdateDirVectors(bool useGroundNormal);
 
 	float3 GetErrorVector(int allyteam) const;
@@ -155,6 +152,7 @@ public:
 	void UpdatePosErrorParams(bool updateError, bool updateDelta);
 
 	bool UsingScriptMoveType() const { return (prevMoveType != NULL); }
+	bool UnderFirstPersonControl() const { return (fpsControlPlayer != NULL); }
 
 	bool IsNeutral() const { return neutral; }
 	bool IsCloaked() const { return isCloaked; }
@@ -179,9 +177,6 @@ public:
 
 	void SetTransporter(CTransportUnit* trans) { transporter = trans; }
 	inline CTransportUnit* GetTransporter() const {
-		// In MT transporter may suddenly be changed to NULL by sim
-		if (GML::SimEnabled())
-			return (*(CTransportUnit* volatile*) &transporter);
 		return transporter;
 	}
 
@@ -374,9 +369,6 @@ public:
 	/// what categories the unit is part of (bitfield)
 	unsigned int category;
 
-	/// used to see if something has operated on the unit before
-	int tempNum;
-
 	int mapSquare;
 
 	int losRadius;
@@ -439,6 +431,8 @@ public:
 
 	float metalStorage;
 	float energyStorage;
+	/// per unit metal storage (gets filled on reclaim and needs then to be unloaded at some storage building -> 2nd part is lua's job)
+	float harvestStorage;
 
 	/// frame in which lastAttackedPiece was hit
 	int lastAttackedPieceFrame;
@@ -528,10 +522,6 @@ public:
 
 	int lastDrawFrame;
 	unsigned int lastUnitUpdate;
-
-#ifdef USE_GML
-	boost::recursive_mutex lodmutex;
-#endif
 
 	std::string tooltip;
 

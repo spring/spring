@@ -6,7 +6,7 @@
 #include "GuiHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Net/Protocol/NetProtocol.h"

@@ -44,13 +44,12 @@ void CCannon::Init()
 	highTrajectory = (weaponDef->highTrajectory == 1);
 
 	CWeapon::Init();
-	UpdateRange(range);
 }
 
 void CCannon::UpdateRange(float val)
 {
 	// clamp so as to not extend range if projectile
-	// speed is too low to reach the updated range
+	// speed is too low to reach the *updated* range
 	// note: new range can be zero (!) making range
 	// and height factors irrelevant
 	range = val;
@@ -112,16 +111,14 @@ bool CCannon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 	const float groundDist = ((avoidFlags & Collision::NOGROUND) == 0)?
 		ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 10, linear, quadratic):
 		-1.0f;
+	const float spread = (AccuracyExperience() + SprayAngleExperience()) * 0.6f * 0.9f;
 
 	if (groundDist > 0.0f) {
 		return false;
 	}
 
-	const float spread = (AccuracyExperience() + SprayAngleExperience()) * 0.6f * 0.9f;
-	const float modFlatLength = flatLength - 30.0f;
-
 	//FIXME add a forcedUserTarget (a forced fire mode enabled with meta key or something) and skip the test below then
-	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
+	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, flatLength,
 		dir.y, quadratic, spread, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}
@@ -173,7 +170,7 @@ void CCannon::SlowUpdate()
 
 bool CCannon::AttackGround(float3 pos, bool userTarget)
 {
-	if (owner->fpsControlPlayer != NULL) {
+	if (owner->UnderFirstPersonControl()) {
 		// mostly prevents firing longer than max range using fps mode
 		pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
 	}

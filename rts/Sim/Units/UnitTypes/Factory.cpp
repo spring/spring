@@ -4,7 +4,6 @@
 #include "Factory.h"
 #include "Game/GameHelper.h"
 #include "Game/WaitCommandsAI.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
@@ -256,8 +255,6 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	if (unitDef->fullHealthFactory && buildee->health < buildee->maxHealth) { return; }
 
 	{
-		GML_RECMUTEX_LOCK(group); // FinishBuild
-
 		if (group && buildee->group == 0) {
 			buildee->SetGroup(group, true);
 		}
@@ -296,7 +293,7 @@ unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buil
 		return FACTORY_SKIP_BUILD_ORDER;
 	if (teamHandler->Team(team)->AtUnitLimit())
 		return FACTORY_KEEP_BUILD_ORDER;
-	if (luaRules && !luaRules->AllowUnitCreation(buildeeDef, this, NULL))
+	if (!eventHandler.AllowUnitCreation(buildeeDef, this, NULL))
 		return FACTORY_SKIP_BUILD_ORDER;
 
 	finishedBuildFunc = buildFunc;
@@ -489,11 +486,6 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 void CFactory::CreateNanoParticle(bool highPriority)
 {
 	const int modelNanoPiece = nanoPieceCache.GetNanoPiece(script);
-
-#ifdef USE_GML
-	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
-		return;
-#endif
 
 	if (localModel == NULL || !localModel->HasPiece(modelNanoPiece))
 		return;

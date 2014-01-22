@@ -50,31 +50,19 @@ void float3::ClampInMap()
 	z = Clamp(z, 0.0f, maxzpos + 1);
 }
 
-namespace std {
-	float3 min(const float3 v1, const float3 v2)
-	{
-		return float3(
-			std::min(v1.x, v2.x),
-			std::min(v1.y, v2.y),
-			std::min(v1.z, v2.z)
-		);
-	}
 
-	float3 max(const float3 v1, const float3 v2)
-	{
-		return float3(
-			std::max(v1.x, v2.x),
-			std::max(v1.y, v2.y),
-			std::max(v1.z, v2.z)
-		);
-	}
+float3 float3::min(const float3 v1, const float3 v2)
+{
+	return float3(std::min(v1.x, v2.x), std::min(v1.y, v2.y), std::min(v1.z, v2.z));
+}
 
-	float3 fabs(const float3 v)
-	{
-		return float3(
-			std::fabs(v.x),
-			std::fabs(v.y),
-			std::fabs(v.z)
-		);
-	}
-};
+float3 float3::max(const float3 v1, const float3 v2)
+{
+	return float3(std::max(v1.x, v2.x), std::max(v1.y, v2.y), std::max(v1.z, v2.z));
+}
+
+float3 float3::fabs(const float3 v)
+{
+	return float3(std::fabs(v.x), std::fabs(v.y), std::fabs(v.z));
+}
+

@@ -6,6 +6,7 @@
 #include <string>
 #include <boost/cstdint.hpp>
 
+
 class CmdLineParams;
 class CGameController;
 union SDL_Event;
@@ -22,7 +23,7 @@ public:
 	~SpringApp();
 
 	int Run();                                      //!< Run game loop
-	static void Shutdown();                         //!< Shuts down application
+	static void ShutDown();                         //!< Shuts down application
 
 protected:
 	bool Initialize();                              //!< Initialize app
@@ -31,13 +32,12 @@ protected:
 	bool InitWindow(const char* title);             //!< Initializes window
 	static void InitOpenGL();                       //!< Initializes OpenGL
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
-	static bool SetSDLVideoMode();                  //!< Sets SDL video mode
+	static bool CreateSDLWindow(const char* title);    //!< Creates a SDL window
 	int Update();                                   //!< Run simulation and draw
 	bool UpdateSim(CGameController *ac);
 
-	static bool GetDisplayGeometry();
-	static void SetupViewportGeometry(bool windowExposed);
-	static void RestoreWindowPosition();
+	static void GetDisplayGeometry();
+	static void SetupViewportGeometry();
 	static void SaveWindowPosition();
 
 	/**

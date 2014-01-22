@@ -70,16 +70,10 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	firstSegment(firstSegment),
 	lastSegment(lastSegment),
 	drawCallbacker(drawCallback),
-	texture(texture)
+	texture(texture == NULL ? projectileDrawer->smoketrailtex : texture)
 {
 	checkCol = false;
 	castShadow = true;
-
-	// if no custom texture is defined, use the default texture
-	// Note that this will crash anyway (no idea why) so never have a null texture!
-	if (texture == NULL) {
-		texture = projectileDrawer->smoketrailtex;
-	}
 
 	if (!drawTrail) {
 		const float dist = pos1.distance(pos2);
@@ -199,7 +193,7 @@ void CSmokeTrailProjectile::Draw()
 		}
 	}
 
-	CProjectile* callbacker = GML::SimEnabled()? *(CProjectile* volatile*) &drawCallbacker: drawCallbacker;
+	CProjectile* callbacker = drawCallbacker;
 
 	if (callbacker != NULL) {
 		callbacker->DrawCallback();

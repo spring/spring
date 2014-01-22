@@ -2,8 +2,9 @@
 
 #include "System/Platform/Win/win32.h"
 #if !defined(HEADLESS)
-#include "Rendering/Textures/Bitmap.h"
+	#include "Rendering/Textures/Bitmap.h"
 #endif
+#include "Rendering/GlobalRendering.h"
 
 #if defined(__APPLE__) || defined(HEADLESS)
 	// no hardware cursor support for mac's and headless build
@@ -29,6 +30,7 @@
 #include "System/myMath.h"
 #include <cstring> // for memset
 
+#include <SDL_config.h>
 #include <SDL_syswm.h>
 #include <SDL_mouse.h>
 #include <SDL_events.h>
@@ -518,14 +520,14 @@ void CHwX11Cursor::Finish()
 
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
-	if (!SDL_GetWMInfo(&info)) {
+	if (!SDL_GetWindowWMInfo(globalRendering->window, &info)) {
+		LOG_L(L_ERROR, "SDL error: can't get X11 window info");
 		XcursorImagesDestroy(cis);
 		cimages.clear();
-		LOG_L(L_ERROR, "SDL error: can't get X11 window info");
 		return;
 	}
 
-	cursor = XcursorImagesLoadCursor(info.info.x11.display,cis);
+	cursor = XcursorImagesLoadCursor(info.info.x11.display, cis);
 	XcursorImagesDestroy(cis);
 	cimages.clear();
 }
@@ -534,21 +536,19 @@ void CHwX11Cursor::Bind()
 {
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
-	if (!SDL_GetWMInfo(&info)) {
+	if (!SDL_GetWindowWMInfo(globalRendering->window, &info)) {
 		LOG_L(L_ERROR, "SDL error: can't get X11 window info");
 		return;
 	}
 	// do between lock/unlock so SDL's default cursors doesn't flicker in
-	info.info.x11.lock_func();
-		SDL_ShowCursor(SDL_ENABLE);
-		XDefineCursor(info.info.x11.display, info.info.x11.window, cursor);
-	info.info.x11.unlock_func();
+	SDL_ShowCursor(SDL_ENABLE);
+	XDefineCursor(info.info.x11.display, info.info.x11.window, cursor);
 }
 
 CHwX11Cursor::CHwX11Cursor()
 {
-	cursor = 0;
-	hotSpot=CMouseCursor::Center;
+	cursor   = 0;
+	hotSpot  = CMouseCursor::Center;
 	xmaxsize = ymaxsize = 0;
 }
 
@@ -561,7 +561,7 @@ CHwX11Cursor::~CHwX11Cursor()
 	if (cursor!=0) {
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
-		if (!SDL_GetWMInfo(&info)) {
+		if (!SDL_GetWindowWMInfo(globalRendering->window, &info)) {
 			LOG_L(L_ERROR, "SDL error: can't get X11 window info");
 			return;
 		}

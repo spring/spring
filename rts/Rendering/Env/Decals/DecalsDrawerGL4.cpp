@@ -37,6 +37,7 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
+#include "System/TimeProfiler.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -106,6 +107,7 @@ static GLuint LoadTexture(const std::string& name, size_t* texX, size_t* texY)
 
 	const bool isBitmap = (FileSystem::GetExtension(fullName) == "bmp");
 
+	SCOPED_TIMER("::DECALS");
 	CBitmap bm;
 	if (!bm.Load(fullName)) {
 		throw content_error("Could not load ground decal from file " + fullName);
@@ -218,29 +220,13 @@ void CDecalsDrawerGL4::LoadShaders()
 		LOG_L(L_ERROR, fmt, log);
 	}
 
-/*
-	decalShader->SetUniformLocation("mapSizePO2");         // idx 3
-	decalShader->SetUniformLocation("groundAmbientColor"); // idx 4
-	decalShader->SetUniformLocation("shadowMatrix");       // idx 5
-	decalShader->SetUniformLocation("shadowParams");       // idx 6
-	decalShader->SetUniformLocation("shadowDensity");      // idx 7
-*/
 	decalShader->Enable();
-	/*decalShader->SetUniform1i(0, 0); // decalTex  (idx 0, texunit 0)
-	decalShader->SetUniform1i(1, 1); // shadeTex  (idx 1, texunit 1)
-	decalShader->SetUniform1i(2, 2); // shadowTex (idx 2, texunit 2)
-	decalShader->SetUniform2f(3, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
-	decalShader->SetUniform1f(7, sky->GetLight()->GetGroundShadowDensity());*/
-		GLint invMapSizePO2Loc = glGetUniformLocation(decalShader->GetObjID(), "invMapSizePO2");
-		glUniform2f(invMapSizePO2Loc, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
+		decalShader->SetUniform("invMapSizePO2", 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
+		decalShader->SetUniform("invMapSize",    1.0f / (gs->mapx * SQUARE_SIZE),     1.0f / (gs->mapy * SQUARE_SIZE));
+		decalShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX,   1.0f / globalRendering->viewSizeY);
 
-		GLint invMapSizeLoc = glGetUniformLocation(decalShader->GetObjID(), "invMapSize");
-		glUniform2f(invMapSizeLoc, 1.0f / (gs->mapx * SQUARE_SIZE), 1.0f / (gs->mapy * SQUARE_SIZE));
-
-		GLint invScreenSizeLoc = glGetUniformLocation(decalShader->GetObjID(), "invScreenSize");
-		glUniform2f(invScreenSizeLoc, 1.f / globalRendering->viewSizeX, 1.f / globalRendering->viewSizeY);
 	decalShader->Disable();
-	//decalShader->Validate();
+	decalShader->Validate();
 }
 
 
@@ -529,8 +515,8 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 void CDecalsDrawerGL4::ViewResize()
 {
 	decalShader->Enable();
-	GLint invScreenSizeLoc = glGetUniformLocation(decalShader->GetObjID(), "invScreenSize");
-	glUniform2f(invScreenSizeLoc, 1.f / globalRendering->viewSizeX, 1.f / globalRendering->viewSizeY);
+	decalShader->SetUniform("invScreenSize", 1.f / globalRendering->viewSizeX, 1.f / globalRendering->viewSizeY);
+
 	decalShader->Disable();
 
 	glBindTexture(GL_TEXTURE_2D, depthTex);
@@ -577,27 +563,28 @@ void CDecalsDrawerGL4::Draw()
 	glEnable(GL_DEPTH_CLAMP);
 	//glEnable(GL_DEPTH_TEST);
 
+	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler && shadowHandler->shadowsLoaded);
+	decalShader->SetFlag("HAVE_INFOTEX", gd->DrawExtraTex());
+
 	decalShader->Enable();
- 		static GLint camPosLoc = glGetUniformLocation(decalShader->GetObjID(), "camPos");
-		glUniformf3(camPosLoc, camera->GetPos());
-
-		static GLint shadowMatrixLoc = glGetUniformLocation(decalShader->GetObjID(), "shadowMatrix");
-		glUniformMatrix4fv(shadowMatrixLoc, 1, false, &shadowHandler->shadowMatrix.m[0]);
-
-		static GLint shadowDensityLoc = glGetUniformLocation(decalShader->GetObjID(), "shadowDensity");
-		glUniform1f(shadowDensityLoc, sky->GetLight()->GetGroundShadowDensity());
-
-		static GLint invMapSizeLoc = glGetUniformLocation(decalShader->GetObjID(), "invMapSize");
-		glUniform2f(invMapSizeLoc, 1.0f / (gs->mapx * SQUARE_SIZE), 1.0f / (gs->mapy * SQUARE_SIZE));
+		decalShader->SetUniform3v("camPos", &camera->GetPos()[0]);
+		//decalShader->SetUniform("invMapSizePO2", 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
+		//decalShader->SetUniform("invMapSize",    1.0f / (gs->mapx * SQUARE_SIZE),     1.0f / (gs->mapy * SQUARE_SIZE));
+		//decalShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX,   1.0f / globalRendering->viewSizeY);
 
 	glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, smfrm->GetNormalsTexture());
 
-	glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, (shadowHandler && shadowHandler->shadowsLoaded) ? shadowHandler->shadowTexture : 0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+	if (shadowHandler && shadowHandler->shadowsLoaded) {
+		glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+
+		decalShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->shadowMatrix.m);
+		decalShader->SetUniform("shadowDensity", sky->GetLight()->GetGroundShadowDensity()); //FIXME only do on shadow change?
+	}
 
 	glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
@@ -750,8 +737,6 @@ void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius, bool
 	SNPRINTF(buf, sizeof(buf), "%i", r);
 	s->texOffsets = atlasTexs[std::string(buf)];
 
-	GML_STDMUTEX_LOCK(decal);
-
 	if (decals.size() < maxDecals) {
 		//FIXME use mt-safe container
 		decals.push_back(s);
@@ -768,8 +753,6 @@ void CDecalsDrawerGL4::UnitCreated(const CUnit* unit, const CUnit* builder)
 	//	return;
 	if (!unit->unitDef->decalDef.useGroundDecal)
 		return;
-
-	GML_STDMUTEX_LOCK(decal);
 
 	const int sizex = unit->unitDef->decalDef.groundDecalSizeX;
 	const int sizey = unit->unitDef->decalDef.groundDecalSizeY;
@@ -797,8 +780,6 @@ void CDecalsDrawerGL4::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 {
 	if (!unit->unitDef->decalDef.useGroundDecal)
 		return;
-
-	GML_STDMUTEX_LOCK(decal);
 
 	//TODO FINISH
 	//decal->owner = NULL;

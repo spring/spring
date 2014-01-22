@@ -31,7 +31,7 @@ public:
 	@brief read from demo file
 	@return The data read (or 0 if no data), don't forget to delete it
 	*/
-	netcode::RawPacket* GetData(float curTime);
+	netcode::RawPacket* GetData(const float curTime);
 
 	/**
 	@brief Wether the demo has reached the end

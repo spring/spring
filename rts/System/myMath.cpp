@@ -189,11 +189,11 @@ bool ClampRayInMap(const float3 start, float3& end)
 
 float smoothstep(const float edge0, const float edge1, const float value)
 {
-	if (value<=edge0) return 0.0f;
-	if (value>=edge1) return 1.0f;
-	float t = (value - edge0) / (edge1 - edge0);
-	t = std::min(1.0f,std::max(0.0f, t ));
-	return t * t * (3.0f - 2.0f * t);
+	if (value <= edge0) return 0.0f;
+	if (value >= edge1) return 1.0f;
+	const float x = (value - edge0) / (edge1 - edge0);
+	const float t = Clamp(x, 0.0f, 1.0f);
+	return (t * t * (3.0f - 2.0f * t));
 }
 
 float3 smoothstep(const float edge0, const float edge1, float3 vec)

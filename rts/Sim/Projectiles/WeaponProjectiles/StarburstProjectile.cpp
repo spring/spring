@@ -203,13 +203,15 @@ void CStarburstProjectile::Update()
 		}
 	} else if (doturn && ttl > 0 && distanceToTravel > 0.0f) {
 		if (!luaMoveCtrl) {
-			float3 targetErrorVec = ((targetPos - pos) + aimError).Normalize();
+			float3 targetErrorVec = ((targetPos - pos).Normalize() + aimError).Normalize();
 
 			if (targetErrorVec.dot(dir) > 0.99f) {
 				dir = targetErrorVec;
 				doturn = false;
 			} else {
-				targetErrorVec = ((targetErrorVec - dir) - dir * (targetErrorVec.dot(dir))).Normalize();
+				targetErrorVec = targetErrorVec - dir;
+				targetErrorVec -= dir * (targetErrorVec.dot(dir));
+				targetErrorVec.Normalize();
 
 				if (weaponDef->turnrate != 0) {
 					dir = (dir + (targetErrorVec * weaponDef->turnrate)).Normalize();
@@ -267,7 +269,7 @@ void CStarburstProjectile::Update()
 	{
 		const unsigned int newTracerPart = (curTracerPart + 1) % NUM_TRACER_PARTS;
 
-		curTracerPart = GML::SimEnabled() ? *(volatile size_t*)&newTracerPart : newTracerPart;
+		curTracerPart = newTracerPart;
 		TracerPart* tracerPart = &tracerParts[curTracerPart];
 		tracerPart->pos = pos;
 		tracerPart->dir = dir;
@@ -281,7 +283,7 @@ void CStarburstProjectile::Update()
 		}
 
 		if (tracerPart->numAgeMods != newsize) {
-			tracerPart->numAgeMods = GML::SimEnabled() ? *(volatile size_t*)&newsize : newsize;
+			tracerPart->numAgeMods = newsize;
 		}
 	}
 
@@ -330,7 +332,7 @@ void CStarburstProjectile::Draw()
 	inArray = true;
 
 	if (weaponDef->visuals.smokeTrail) {
-		const int curNumParts = GML::SimEnabled() ? *(volatile int*) &numParts : numParts;
+		const int curNumParts = numParts;
 
 		va->EnlargeArrays(4 + (4 * curNumParts), 0, VA_SIZE_TC);
 
@@ -400,7 +402,7 @@ void CStarburstProjectile::DrawCallback()
 
 	unsigned char col[4];
 
-	size_t part = GML::SimEnabled() ? *(volatile size_t*)&curTracerPart : curTracerPart;
+	size_t part = curTracerPart;
 
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		const TracerPart* tracerPart = &tracerParts[part];
@@ -409,7 +411,7 @@ void CStarburstProjectile::DrawCallback()
 		const float ospeed = tracerPart->speedf;
 		float aa = 0;
 
-		size_t numAgeMods = GML::SimEnabled() ? *(volatile size_t*)&tracerPart->numAgeMods : tracerPart->numAgeMods;
+		size_t numAgeMods = tracerPart->numAgeMods;
 		for (int num = 0; num < numAgeMods; aa += TRACER_PARTS_STEP, ++num) {
 			const float ageMod = tracerPart->ageMods[num];
 			const float age2 = (a + (aa / (ospeed + 0.01f))) * 0.2f;

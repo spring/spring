@@ -25,12 +25,12 @@ IF    (MINGW)
 	# We still need these header files,
 	# even if we are not going to link with SDL.
 	# We have them available anyway (mingwlibs).
-	FIND_PACKAGE(SDL REQUIRED)
-	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+	FIND_PACKAGE(SDL2 REQUIRED)
+	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
 ELSE  (MINGW)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
-	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL)
+	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL2)
 ENDIF (MINGW)
 
 
@@ -94,7 +94,6 @@ set(unitsync_files
 	${main_files}
 	${CMAKE_CURRENT_SOURCE_DIR}/unitsync.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/LuaParserAPI.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/Syncer.cpp
 	)
 
 # HACK unitsync should actually be MODULE (not SHARED),

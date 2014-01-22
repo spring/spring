@@ -12,10 +12,10 @@
 #include "Lua/LuaConfig.h"
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaHandleSynced.h"
+#include "Lua/LuaUtils.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
-#include "Lua/LuaHelper.h"
 
 
 using std::map;
@@ -854,14 +854,17 @@ string CLuaUnitScript::GetScriptName(int functionId) const
 
 bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
 {
+	CUnit* oldActiveUnit = activeUnit;
+	CUnitScript* oldActiveScript = activeScript;
+
 	activeUnit = unit;
 	activeScript = this;
 
 	std::string err;
-	const int error = handle->RunCallIn(inArgs, outArgs, err);
+	const int error = handle->RunCallIn(L, inArgs, outArgs, err);
 
-	activeUnit = NULL;
-	activeScript = NULL;
+	activeUnit = oldActiveUnit;
+	activeScript = oldActiveScript;
 
 	if (error != 0) {
 		const string& fname = GetScriptName(functionId);
@@ -878,7 +881,7 @@ bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
 
 
 void CLuaUnitScript::Destroy() { Call(LUAFN_Destroy); }
-void CLuaUnitScript::StartMoving(bool reversing) { Call(LUAFN_StartMoving, reversing); }
+void CLuaUnitScript::StartMoving(bool reversing) { Call(LUAFN_StartMoving, reversing * 1.0f); }
 void CLuaUnitScript::StopMoving() { Call(LUAFN_StopMoving); }
 void CLuaUnitScript::StartUnload() { Call(LUAFN_StartUnload); }
 void CLuaUnitScript::EndTransport() { Call(LUAFN_EndTransport); }

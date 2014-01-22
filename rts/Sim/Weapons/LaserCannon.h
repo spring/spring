@@ -12,7 +12,7 @@ public:
 	CLaserCannon(CUnit* owner, const WeaponDef* def);
 
 	void Update();
-	void Init();
+	void UpdateRange(float val);
 
 private:
 	void FireImpl(bool scriptCall);

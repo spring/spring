@@ -309,8 +309,6 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 					const unsigned int id = signedId;
 
 					if (id >= unitHandler->MaxUnits()) {
-						GML_RECMUTEX_LOCK(feat); // DrawCommands
-
 						CFeature* feature = featureHandler->GetFeature(id - unitHandler->MaxUnits());
 						if (feature) {
 							const float3 endPos = feature->midPos;

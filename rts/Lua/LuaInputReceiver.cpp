@@ -21,13 +21,13 @@ LuaInputReceiver::~LuaInputReceiver()
 }
 
 
-bool LuaInputReceiver::KeyPressed(unsigned short key, bool isRepeat)
+bool LuaInputReceiver::KeyPressed(int key, bool isRepeat)
 {
 	return eventHandler.KeyPress(key, isRepeat);
 }
 
 
-bool LuaInputReceiver::KeyReleased(unsigned short key)
+bool LuaInputReceiver::KeyReleased(int key)
 {
 	return eventHandler.KeyRelease(key);
 }

@@ -32,19 +32,10 @@ public:
 		return (eventName == "LastMessagePosition");
 	}
 	void LastMessagePosition(const float3& pos);
-	const float3& GetMsgPos();
-	int GetMsgPosCount() const {
-		return lastMsgPositions.size();
-	}
+	const float3& GetMsgPos(const float3& defaultPos = ZeroVector);
+	unsigned int GetMsgPosCount() const { return lastMsgPositions.size(); }
 
 
-	int lifetime;
-	float xpos;
-	float ypos;
-	float width;
-	float height;
-	float fontScale;
-	float fontSize;
 	bool enabled;
 
 public:
@@ -70,21 +61,30 @@ public:
 	int  GetRawLines(std::deque<RawLine>& copy);
 
 private:
-	std::list<float3> lastMsgPositions;
-	std::list<float3>::iterator lastMsgIter;
-
-	std::deque<RawLine> rawData;
-	size_t newLines;
-	int rawId;
-
 	struct InfoLine {
 		std::string text;
 		int time;
 	};
-	int lastTime;
+
+	std::list<float3> lastMsgPositions;
+	std::list<float3>::iterator lastMsgIter;
+
+	std::deque<RawLine> rawData;
 	std::deque<InfoLine> data;
 
+	size_t newLines;
+	int rawId;
+	int lastTime;
+
 	mutable boost::recursive_mutex infoConsoleMutex;
+
+	int lifetime;
+	float xpos;
+	float ypos;
+	float width;
+	float height;
+	float fontScale;
+	float fontSize;
 };
 
 #endif /* INFO_CONSOLE_H */

@@ -30,17 +30,17 @@ public:
 
 	// START overriding CConnection
 
-	void SendData(boost::shared_ptr<const RawPacket> data);
+	void SendData(boost::shared_ptr<const RawPacket> packet);
 	bool HasIncomingData() const;
 	boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
 	boost::shared_ptr<const RawPacket> GetData();
 	void DeleteBufferPacketAt(unsigned index);
-	void Flush(const bool forced);
-	bool CheckTimeout(int seconds, bool initial) const;
+	void Flush(const bool forced) {}
+	bool CheckTimeout(int seconds, bool initial) const { return false; }
 
 	void ReconnectTo(CConnection& conn) {}
-	bool CanReconnect() const;
-	bool NeedsReconnect();
+	bool CanReconnect() const { return false; }
+	bool NeedsReconnect() { return false; }
 	void Unmute() {}
 	void Close(bool flush) {}
 	void SetLossFactor(int factor) {}
@@ -53,15 +53,16 @@ public:
 	// END overriding CConnection
 
 private:
-	static std::deque< boost::shared_ptr<const RawPacket> > Data[2];
-	static boost::mutex Mutex[2];
+	static std::deque< boost::shared_ptr<const RawPacket> > pqueues[2];
+	static boost::mutex mutexes[2];
 
-	unsigned int OtherInstance() const;
+	unsigned int OtherInstance() const { return ((instance + 1) % 2); }
 
-	/// we can have 2 instances, one in serverNet and one in net
-	static unsigned instances;
+	/// we can have two instances, one in GameServer and one in NetProtocol
+	/// (first instance represents server->client and second client->server)
+	static unsigned int instances;
 	/// which instance we are
-	unsigned instance;
+	unsigned int instance;
 };
 
 } // namespace netcode

@@ -109,7 +109,7 @@ public:
 
 	float LODScaleReflection;
 	float LODScaleRefraction;
-	float LODScaleUnitReflection;
+	float LODScaleTerrainReflection;
 
 	int jamColor[3];
 	int losColor[3];
@@ -120,11 +120,6 @@ public:
 
 	int updateTextureState;
 	int extraTextureUpdateRate;
-
-#ifdef USE_GML
-	bool multiThreadDrawGround;
-	bool multiThreadDrawGroundShadow;
-#endif
 
 protected:
 	BaseGroundDrawMode drawMode;

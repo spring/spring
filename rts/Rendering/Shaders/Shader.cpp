@@ -72,7 +72,7 @@ static std::string GetShaderSource(std::string fileName)
 		soSource.resize(soFile.FileSize());
 		soFile.Read(&soSource[0], soFile.FileSize());
 	} else {
-		LOG_L(L_ERROR, "File not found \"%s\"", soPath.c_str());
+		LOG_L(L_ERROR, "[%s] file not found \"%s\"", __FUNCTION__, soPath.c_str());
 	}
 
 	return soSource;
@@ -120,9 +120,9 @@ namespace Shader {
 		valid = (errorPos == -1 && isNative != 0);
 
 		glBindProgramARB(type, 0);
-
 		glDisable(type);
 	}
+
 	void ARBShaderObject::Release() {
 		glDeleteProgramsARB(1, &objID);
 	}
@@ -137,6 +137,7 @@ namespace Shader {
 	{
 		assert(globalRendering->haveGLSL); // non-debug check is done in ShaderHandler
 	}
+
 	void GLSLShaderObject::Compile(bool reloadFromDisk) {
 		if (reloadFromDisk)
 			curShaderSrc = GetShaderSource(srcFile);
@@ -166,7 +167,9 @@ namespace Shader {
 		// NOTE: some drivers cannot handle "#line 0" (?!)
 		sourceStr = "#line 1\n" + sourceStr;
 
-		const GLchar* sources[6] = {
+		// NOTE: many definition flags are not set until after shader is compiled
+		const GLchar* sources[7] = {
+			"// SHADER VERSION\n",
 			versionStr.c_str(),
 			"// SHADER FLAGS\n",
 			rawDefStrs.c_str(),
@@ -174,19 +177,20 @@ namespace Shader {
 			"// SHADER SOURCE\n",
 			sourceStr.c_str()
 		};
-		const GLint lengths[6] = {-1, -1, -1, -1, -1, -1};
+		const GLint lengths[7] = {-1, -1, -1, -1, -1, -1, -1};
 
 		if (objID == 0)
 			objID = glCreateShader(type);
 
-		glShaderSource(objID, 6, sources, lengths);
+		glShaderSource(objID, 7, sources, lengths);
 		glCompileShader(objID);
 
 		valid = glslIsValid(objID);
 		log   = glslGetLog(objID);
 
 		if (!IsValid()) {
-			LOG_L(L_WARNING, "[%s]\n\tshader-object name: %s, compile-log:\n%s", __FUNCTION__, srcFile.c_str(), log.c_str());
+			LOG_L(L_WARNING, "[GLSL-SO::%s] shader-object name: %s, compile-log:\n%s\n", __FUNCTION__, srcFile.c_str(), log.c_str());
+			LOG_L(L_WARNING, "\n%s%s%s%s%s%s%s", sources[0], sources[1], sources[2], sources[3], sources[4], sources[5], sources[6]);
 		}
 	}
 
@@ -198,40 +202,21 @@ namespace Shader {
 
 
 	IProgramObject::IProgramObject(const std::string& poName): name(poName), objID(0), curHash(0), valid(false), bound(false) {
-#ifdef USE_GML
-		memset(tbound, 0, sizeof(tbound));
-#endif
 	}
 
 	void IProgramObject::Enable() {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			tbound[GML::ThreadNumber()] = bound ? 0 : 1;
-		} else
-#endif
 		{
 			bound = true;
 		}
 	}
 
 	void IProgramObject::Disable() {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			tbound[GML::ThreadNumber()] = bound ? -1 : 0;
-		} else
-#endif
 		{
 			bound = false;
 		}
 	}
 
 	bool IProgramObject::IsBound() const {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			char tb = tbound[GML::ThreadNumber()];
-			return (tb != 0) ? tb > 0 : bound;
-		} else
-#endif
 		{
 			return bound;
 		}
@@ -257,6 +242,7 @@ namespace Shader {
 		if (hash == curHash)
 			return;
 
+		// NOTE: this does not preserve the #version pragma
 		const std::string definitionFlags = GetString();
 
 		for (SOVecIt it = shaderObjs.begin(); it != shaderObjs.end(); ++it) {
@@ -264,36 +250,38 @@ namespace Shader {
 		}
 
 		curHash = hash;
+
 		Reload(false);
+		PrintInfo();
+	}
+
+	void IProgramObject::PrintInfo()
+	{
+		LOG_L(L_DEBUG, "Uniform States for program-object \"%s\":", name.c_str());
+		LOG_L(L_DEBUG, "Defs:\n %s", GetString().c_str());
+		LOG_L(L_DEBUG, "Uniforms:");
+		for (const auto& p : uniformStates) {
+			const bool curUsed = GetUniformLocation(p.second.GetName()) >= 0;
+			if (p.second.IsUninit()) {
+				LOG_L(L_DEBUG, "\t%s: uninitialized used=%i", (p.second.GetName()).c_str(), int(curUsed));
+			} else {
+				LOG_L(L_DEBUG, "\t%s: x=float:%f;int:%i y=%f z=%f used=%i", (p.second.GetName()).c_str(), p.second.GetFltValues()[0], p.second.GetIntValues()[0], p.second.GetFltValues()[1], p.second.GetFltValues()[2], int(curUsed));
+			}
+		}
 	}
 
 
 	ARBProgramObject::ARBProgramObject(const std::string& poName): IProgramObject(poName) {
 		objID = -1; // not used for ARBProgramObject instances
 		uniformTarget = -1;
-#ifdef USE_GML
-		for (int i = 0; i < GML_MAX_NUM_THREADS; ++i) {
-			tuniformTargets[i] = -1;
-		}
-#endif
 	}
 
 	void ARBProgramObject::SetUniformTarget(int target) {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			tuniformTargets[GML::ThreadNumber()] = target;
-		} else
-#endif
 		{
 			uniformTarget = target;
 		}
 	}
 	int ARBProgramObject::GetUnitformTarget() {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			return tuniformTargets[GML::ThreadNumber()];
-		} else
-#endif
 		{
 			return uniformTarget;
 		}
@@ -328,7 +316,11 @@ namespace Shader {
 		IProgramObject::Release();
 	}
 	void ARBProgramObject::Reload(bool reloadFromDisk) {
-		
+
+	}
+
+	int ARBProgramObject::GetUniformLoc(const std::string& name) {
+		return -1; //FIXME
 	}
 
 	#define glPEP4f  glProgramEnvParameter4fARB
@@ -368,7 +360,9 @@ namespace Shader {
 	void GLSLProgramObject::Disable() { glUseProgram(0); IProgramObject::Disable(); }
 
 	void GLSLProgramObject::Link() {
+		RecompileIfNeeded();
 		assert(glIsProgram(objID));
+
 		if (!glIsProgram(objID))
 			return;
 
@@ -378,8 +372,7 @@ namespace Shader {
 		log += glslGetLog(objID);
 
 		if (!IsValid()) {
-			LOG_L(L_WARNING, "[%s] linking-error-log in \"%s\":\n%s",
-				__FUNCTION__, name.c_str(), GetLog().c_str());
+			LOG_L(L_WARNING, "[GLSL-PO::%s] program-object name: %s, link-log:\n%s\n", __FUNCTION__, name.c_str(), log.c_str());
 		}
 	}
 
@@ -411,7 +404,7 @@ namespace Shader {
 		}
 
 		GLuint oldProgID = objID;
-		
+
 		for (SOVecIt it = GetAttachedShaderObjs().begin(); it != GetAttachedShaderObjs().end(); ++it) {
 			glDetachShader(oldProgID, (*it)->GetObjID());
 		}
@@ -428,7 +421,7 @@ namespace Shader {
 		}
 
 		Link();
-		GLSLCopyState(objID, oldProgID, &uniformLocs, uniformStates);
+		GLSLCopyState(objID, oldProgID, &((IProgramObject*)(this))->uniformStates);
 
 		glDeleteProgram(oldProgID);
 	}
@@ -444,50 +437,74 @@ namespace Shader {
 		}
 	}
 
-	void GLSLProgramObject::SetUniformLocation(const std::string& name) {
-		uniformLocs.push_back(glGetUniformLocation(objID, name.c_str()));
-		uniformStates.push_back(UniformState(name));
+	int GLSLProgramObject::GetUniformLoc(const std::string& name) {
+		return glGetUniformLocation(objID, name.c_str());
 	}
 
-	void GLSLProgramObject::SetUniform1i(int idx, int   v0                              ) { assert(IsBound()); if (uniformStates[idx].Set(v0            )) glUniform1i(uniformLocs[idx], v0            ); }
-	void GLSLProgramObject::SetUniform2i(int idx, int   v0, int   v1                    ) { assert(IsBound()); if (uniformStates[idx].Set(v0, v1        )) glUniform2i(uniformLocs[idx], v0, v1        ); }
-	void GLSLProgramObject::SetUniform3i(int idx, int   v0, int   v1, int   v2          ) { assert(IsBound()); if (uniformStates[idx].Set(v0, v1, v2    )) glUniform3i(uniformLocs[idx], v0, v1, v2    ); }
-	void GLSLProgramObject::SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3) { assert(IsBound()); if (uniformStates[idx].Set(v0, v1, v2, v3)) glUniform4i(uniformLocs[idx], v0, v1, v2, v3); }
-	void GLSLProgramObject::SetUniform1f(int idx, float v0                              ) { assert(IsBound()); if (uniformStates[idx].Set(v0            )) glUniform1f(uniformLocs[idx], v0            ); }
-	void GLSLProgramObject::SetUniform2f(int idx, float v0, float v1                    ) { assert(IsBound()); if (uniformStates[idx].Set(v0, v1        )) glUniform2f(uniformLocs[idx], v0, v1        ); }
-	void GLSLProgramObject::SetUniform3f(int idx, float v0, float v1, float v2          ) { assert(IsBound()); if (uniformStates[idx].Set(v0, v1, v2    )) glUniform3f(uniformLocs[idx], v0, v1, v2    ); }
-	void GLSLProgramObject::SetUniform4f(int idx, float v0, float v1, float v2, float v3) { assert(IsBound()); if (uniformStates[idx].Set(v0, v1, v2, v3)) glUniform4f(uniformLocs[idx], v0, v1, v2, v3); }
+	void GLSLProgramObject::SetUniformLocation(const std::string& name) {
+		uniformLocs.push_back(hashString(name.c_str()));
+		GetUniformLocation(name);
+	}
 
-	void GLSLProgramObject::SetUniform2iv(int idx, const int*   v) { assert(IsBound()); if (uniformStates[idx].Set2v(v)) glUniform2iv(uniformLocs[idx], 1, v); }
-	void GLSLProgramObject::SetUniform3iv(int idx, const int*   v) { assert(IsBound()); if (uniformStates[idx].Set3v(v)) glUniform3iv(uniformLocs[idx], 1, v); }
-	void GLSLProgramObject::SetUniform4iv(int idx, const int*   v) { assert(IsBound()); if (uniformStates[idx].Set4v(v)) glUniform4iv(uniformLocs[idx], 1, v); }
-	void GLSLProgramObject::SetUniform2fv(int idx, const float* v) { assert(IsBound()); if (uniformStates[idx].Set2v(v)) glUniform2fv(uniformLocs[idx], 1, v); }
-	void GLSLProgramObject::SetUniform3fv(int idx, const float* v) { assert(IsBound()); if (uniformStates[idx].Set3v(v)) glUniform3fv(uniformLocs[idx], 1, v); }
-	void GLSLProgramObject::SetUniform4fv(int idx, const float* v) { assert(IsBound()); if (uniformStates[idx].Set4v(v)) glUniform4fv(uniformLocs[idx], 1, v); }
+	void GLSLProgramObject::SetUniform(UniformState* uState, int   v0)                               { assert(IsBound()); if (uState->Set(v0            )) glUniform1i(uState->GetLocation(), v0             ); }
+	void GLSLProgramObject::SetUniform(UniformState* uState, float v0)                               { assert(IsBound()); if (uState->Set(v0            )) glUniform1f(uState->GetLocation(), v0             ); }
+	void GLSLProgramObject::SetUniform(UniformState* uState, int   v0, int   v1)                     { assert(IsBound()); if (uState->Set(v0, v1        )) glUniform2i(uState->GetLocation(), v0, v1         ); }
+	void GLSLProgramObject::SetUniform(UniformState* uState, float v0, float v1)                     { assert(IsBound()); if (uState->Set(v0, v1        )) glUniform2f(uState->GetLocation(), v0, v1         ); }
+	void GLSLProgramObject::SetUniform(UniformState* uState, int   v0, int   v1, int   v2)           { assert(IsBound()); if (uState->Set(v0, v1, v2    )) glUniform3i(uState->GetLocation(), v0, v1, v2     ); }
+	void GLSLProgramObject::SetUniform(UniformState* uState, float v0, float v1, float v2)           { assert(IsBound()); if (uState->Set(v0, v1, v2    )) glUniform3f(uState->GetLocation(), v0, v1, v2     ); }
+	void GLSLProgramObject::SetUniform(UniformState* uState, int   v0, int   v1, int   v2, int   v3) { assert(IsBound()); if (uState->Set(v0, v1, v2, v3)) glUniform4i(uState->GetLocation(), v0, v1, v2, v3 ); }
+	void GLSLProgramObject::SetUniform(UniformState* uState, float v0, float v1, float v2, float v3) { assert(IsBound()); if (uState->Set(v0, v1, v2, v3)) glUniform4f(uState->GetLocation(), v0, v1, v2, v3 ); }
 
-	void GLSLProgramObject::SetUniformMatrix2fv(int idx, bool transp, const float* v) { assert(IsBound()); if (uniformStates[idx].Set2x2(v, transp)) glUniformMatrix2fv(uniformLocs[idx], 1, transp, v); }
-	void GLSLProgramObject::SetUniformMatrix3fv(int idx, bool transp, const float* v) { assert(IsBound()); if (uniformStates[idx].Set3x3(v, transp)) glUniformMatrix3fv(uniformLocs[idx], 1, transp, v); }
-	void GLSLProgramObject::SetUniformMatrix4fv(int idx, bool transp, const float* v) { assert(IsBound()); if (uniformStates[idx].Set4x4(v, transp)) glUniformMatrix4fv(uniformLocs[idx], 1, transp, v); }
-	void GLSLProgramObject::SetUniformMatrixArray4fv(int idx, int count, bool transp, const float* v) { assert(IsBound()); glUniformMatrix4fv(uniformLocs[idx], count, transp, v); }
+	void GLSLProgramObject::SetUniform2v(UniformState* uState, const int*   v) { assert(IsBound()); if (uState->Set2v(v)) glUniform2iv(uState->GetLocation(), 1, v); }
+	void GLSLProgramObject::SetUniform2v(UniformState* uState, const float* v) { assert(IsBound()); if (uState->Set2v(v)) glUniform2fv(uState->GetLocation(), 1, v); }
+	void GLSLProgramObject::SetUniform3v(UniformState* uState, const int*   v) { assert(IsBound()); if (uState->Set3v(v)) glUniform3iv(uState->GetLocation(), 1, v); }
+	void GLSLProgramObject::SetUniform3v(UniformState* uState, const float* v) { assert(IsBound()); if (uState->Set3v(v)) glUniform3fv(uState->GetLocation(), 1, v); }
+	void GLSLProgramObject::SetUniform4v(UniformState* uState, const int*   v) { assert(IsBound()); if (uState->Set4v(v)) glUniform4iv(uState->GetLocation(), 1, v); }
+	void GLSLProgramObject::SetUniform4v(UniformState* uState, const float* v) { assert(IsBound()); if (uState->Set4v(v)) glUniform4fv(uState->GetLocation(), 1, v); }
+
+	void GLSLProgramObject::SetUniformMatrix2x2(UniformState* uState, bool transp, const float* v) { assert(IsBound()); if (uState->Set2x2(v, transp)) glUniformMatrix2fv(uState->GetLocation(), 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix3x3(UniformState* uState, bool transp, const float* v) { assert(IsBound()); if (uState->Set3x3(v, transp)) glUniformMatrix3fv(uState->GetLocation(), 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix4x4(UniformState* uState, bool transp, const float* v) { assert(IsBound()); if (uState->Set4x4(v, transp)) glUniformMatrix4fv(uState->GetLocation(), 1, transp, v); }
+
+	void GLSLProgramObject::SetUniform1i(int idx, int   v0                              ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0            )) glUniform1i(it->second.GetLocation(), v0            ); }
+	void GLSLProgramObject::SetUniform2i(int idx, int   v0, int   v1                    ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0, v1        )) glUniform2i(it->second.GetLocation(), v0, v1        ); }
+	void GLSLProgramObject::SetUniform3i(int idx, int   v0, int   v1, int   v2          ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0, v1, v2    )) glUniform3i(it->second.GetLocation(), v0, v1, v2    ); }
+	void GLSLProgramObject::SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0, v1, v2, v3)) glUniform4i(it->second.GetLocation(), v0, v1, v2, v3); }
+	void GLSLProgramObject::SetUniform1f(int idx, float v0                              ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0            )) glUniform1f(it->second.GetLocation(), v0            ); }
+	void GLSLProgramObject::SetUniform2f(int idx, float v0, float v1                    ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0, v1        )) glUniform2f(it->second.GetLocation(), v0, v1        ); }
+	void GLSLProgramObject::SetUniform3f(int idx, float v0, float v1, float v2          ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0, v1, v2    )) glUniform3f(it->second.GetLocation(), v0, v1, v2    ); }
+	void GLSLProgramObject::SetUniform4f(int idx, float v0, float v1, float v2, float v3) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0, v1, v2, v3)) glUniform4f(it->second.GetLocation(), v0, v1, v2, v3); }
+
+	void GLSLProgramObject::SetUniform2iv(int idx, const int*   v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set2v(v)) glUniform2iv(it->second.GetLocation(), 1, v); }
+	void GLSLProgramObject::SetUniform3iv(int idx, const int*   v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set3v(v)) glUniform3iv(it->second.GetLocation(), 1, v); }
+	void GLSLProgramObject::SetUniform4iv(int idx, const int*   v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set4v(v)) glUniform4iv(it->second.GetLocation(), 1, v); }
+	void GLSLProgramObject::SetUniform2fv(int idx, const float* v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set2v(v)) glUniform2fv(it->second.GetLocation(), 1, v); }
+	void GLSLProgramObject::SetUniform3fv(int idx, const float* v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set3v(v)) glUniform3fv(it->second.GetLocation(), 1, v); }
+	void GLSLProgramObject::SetUniform4fv(int idx, const float* v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set4v(v)) glUniform4fv(it->second.GetLocation(), 1, v); }
+
+	void GLSLProgramObject::SetUniformMatrix2fv(int idx, bool transp, const float* v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set2x2(v, transp)) glUniformMatrix2fv(it->second.GetLocation(), 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix3fv(int idx, bool transp, const float* v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set3x3(v, transp)) glUniformMatrix3fv(it->second.GetLocation(), 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix4fv(int idx, bool transp, const float* v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set4x4(v, transp)) glUniformMatrix4fv(it->second.GetLocation(), 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrixArray4fv(int idx, int count, bool transp, const float* v) { assert(IsBound()); /*glUniformMatrix4fv(it->second.GetLocation(), count, transp, v);*/ }
 
 	#ifdef glUniformMatrix2dv
-	void GLSLProgramObject::SetUniformMatrix2dv(int idx, bool transp, const double* v) { glUniformMatrix2dv(uniformLocs[idx], 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix2dv(int idx, bool transp, const double* v) { /*glUniformMatrix2dv(it->second.GetLocation(), 1, transp, v);*/ }
 	#else
 	void GLSLProgramObject::SetUniformMatrix2dv(int idx, bool transp, const double* v) {}
 	#endif
 	#ifdef glUniformMatrix3dv
-	void GLSLProgramObject::SetUniformMatrix3dv(int idx, bool transp, const double* v) { glUniformMatrix3dv(uniformLocs[idx], 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix3dv(int idx, bool transp, const double* v) { /*glUniformMatrix3dv(it->second.GetLocation(), 1, transp, v);*/ }
 	#else
 	void GLSLProgramObject::SetUniformMatrix3dv(int idx, bool transp, const double* v) {}
 	#endif
 	#ifdef glUniformMatrix4dv
-	void GLSLProgramObject::SetUniformMatrix4dv(int idx, bool transp, const double* v) { glUniformMatrix4dv(uniformLocs[idx], 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix4dv(int idx, bool transp, const double* v) { /*glUniformMatrix4dv(it->second.GetLocation(), 1, transp, v);*/ }
 	#else
 	void GLSLProgramObject::SetUniformMatrix4dv(int idx, bool transp, const double* v) {}
 	#endif
 
 	#ifdef glUniformMatrix4dv
-	void GLSLProgramObject::SetUniformMatrixArray4dv(int idx, int count, bool transp, const double* v) { glUniformMatrix4dv(uniformLocs[idx], count, transp, v); }
+	void GLSLProgramObject::SetUniformMatrixArray4dv(int idx, int count, bool transp, const double* v) { /*glUniformMatrix4dv(it->second.GetLocation(), count, transp, v);*/ }
 	#else
 	void GLSLProgramObject::SetUniformMatrixArray4dv(int idx, int count, bool transp, const double* v) {}
 	#endif

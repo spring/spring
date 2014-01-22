@@ -4,12 +4,12 @@
 #define LUA_CONTEXT_DATA_H
 
 #include <map>
+#include <boost/thread/recursive_mutex.hpp>
 
 #include "LuaShaders.h"
 #include "LuaTextures.h"
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
-//FIXME#include "LuaVBOs.h"
 #include "LuaDisplayLists.h"
 #include "System/EventClient.h"
 #include "System/Log/ILog.h"
@@ -159,38 +159,48 @@ public:
 
 struct luaContextData {
 	luaContextData()
-	: luamutex(NULL)
-	, primary(true)
+	: owner(NULL)
+	, luamutex(NULL)
+
 	, synced(false)
-	, owner(NULL)
+	, allowChanges(false)
 	, drawingEnabled(false)
+
 	, running(0)
+	, curAllocedBytes(0)
+	, maxAllocedBytes(0)
+
 	, fullCtrl(false)
 	, fullRead(false)
+
 	, ctrlTeam(CEventClient::NoAccessTeam)
 	, readTeam(0)
 	, readAllyTeam(0)
 	, selectTeam(CEventClient::NoAccessTeam) {}
 
-	boost::recursive_mutex* luamutex;
-	bool primary; //GML crap
-	bool synced;
 	CLuaHandle* owner;
+	boost::recursive_mutex* luamutex;
+
+	bool synced;
+	bool allowChanges;
 	bool drawingEnabled;
+
 	int running; //< is currently running? (0: not running; >0: is running)
+
+	unsigned int curAllocedBytes;
+	unsigned int maxAllocedBytes;
 
 	// permission rights
 	bool fullCtrl;
 	bool fullRead;
+
 	int  ctrlTeam;
 	int  readTeam;
 	int  readAllyTeam;
 	int  selectTeam;
 
-	//FIXME		LuaArrays arrays;
 	LuaShaders shaders;
 	LuaTextures textures;
-	//FIXME		LuaVBOs vbos;
 	LuaFBOs fbos;
 	LuaRBOs rbos;
 	CLuaDisplayLists displayLists;

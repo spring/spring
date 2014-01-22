@@ -5,6 +5,8 @@
 
 #include "AAirMoveType.h"
 
+struct float4;
+
 class CHoverAirMoveType: public AAirMoveType
 {
 	CR_DECLARE(CHoverAirMoveType);
@@ -47,7 +49,7 @@ public:
 	void SetGoal(const float3& pos, float distance = 0.0f);
 	void SetState(AircraftState newState);
 	void SetAllowLanding(bool b);
-	void SetLoadingUnits(bool b) { loadingUnits = b; }
+
 	AircraftState GetLandingState() const { return AIRCRAFT_FLYING; }
 	void SetWantedAltitude(float altitude);
 	void SetDefaultAltitude(float altitude);
@@ -64,7 +66,6 @@ public:
 	short GetForcedHeading() const { return forceHeadingTo; }
 
 	bool GetAllowLanding() const { return !dontLand; }
-	bool GetLoadingUnits() const { return loadingUnits; }
 
 private:
 	// Helpers for (multiple) state handlers
@@ -73,7 +74,9 @@ private:
 	void UpdateAirPhysics();
 	void UpdateMoveRate();
 
-	bool CanLand() const { return ((!dontLand && autoLand) || (reservedPad != NULL)); }
+	void UpdateVerticalSpeed(const float4& spd, float curRelHeight, float curVertSpeed) const;
+
+	bool CanLand(bool busy) const { return (!busy && ((!dontLand && autoLand) || (reservedPad != NULL))); }
 	bool CanLandAt(const float3& pos) const;
 
 	void ExecuteStop();
@@ -95,11 +98,6 @@ private:
 	bool forceHeading;
 	/// Set to true when transporting stuff
 	bool dontLand;
-	/**
-	 * needed to get transport close enough to what is going to be transported.
-	 * better way ?
-	 */
-	bool loadingUnits;
 
 	/// TODO: Seems odd to use heading in unit, since we have toggled useHeading to false..
 	short wantedHeading;

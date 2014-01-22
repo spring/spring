@@ -30,7 +30,6 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_MEMBER(drawPos),
 
-	CR_MEMBER(lastProjUpdate),
 	CR_MEMBER(mygravity),
 	CR_IGNORED(tempdist),
 
@@ -76,7 +75,6 @@ CProjectile::CProjectile()
 	, projectileType(-1u)
 	, collisionFlags(0)
 {
-	GML::GetTicks(lastProjUpdate);
 }
 
 CProjectile::CProjectile(
@@ -112,7 +110,6 @@ CProjectile::CProjectile(
 {
 	SetRadiusAndHeight(1.7f, 0.0f);
 	Init(owner, ZeroVector);
-	GML::GetTicks(lastProjUpdate);
 }
 
 void CProjectile::Detach() {
@@ -207,10 +204,6 @@ CUnit* CProjectile::owner() const {
 	//   because ID's are reused it could return a unit that is not the original
 	//   owner (unlikely however unless ID's get recycled very rapidly)
 	CUnit* unit = unitHandler->GetUnit(ownerID);
-
-	// make volatile
-	if (GML::SimEnabled())
-		return (*(CUnit* volatile*) &unit);
 
 	return unit;
 }

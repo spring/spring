@@ -16,10 +16,6 @@ class CLuaIntro : public CLuaHandle
 		static void FreeHandler();
 
 	public: // call-ins
-		bool HasCallIn(lua_State *L, const std::string& name);
-		bool UnsyncedUpdateCallIn(lua_State *L, const std::string& name);
-
-		void Shutdown();
 		void DrawLoadScreen();
 		void LoadProgress(const std::string& msg, const bool replace_lastline);
 

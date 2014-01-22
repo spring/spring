@@ -7,7 +7,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/ModInfo.h"
@@ -19,7 +19,7 @@
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/MsgStrings.h"
 
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 
 
 #define MAX_QUIT_TEAMS (teamHandler->ActiveTeams() - 1)
@@ -365,7 +365,7 @@ void CQuitBox::MouseMove(int x, int y, int dx,int dy, int button)
 }
 
 
-bool CQuitBox::KeyPressed(unsigned short key, bool isRepeat)
+bool CQuitBox::KeyPressed(int key, bool isRepeat)
 {
 	if (key == SDLK_ESCAPE) {
 		delete this;

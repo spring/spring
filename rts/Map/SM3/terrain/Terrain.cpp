@@ -624,15 +624,13 @@ namespace terrain {
 			texturing->BeginTexturing();
 
 			for (int pass = 0; pass < numPasses; pass++) {
-				bool skipNodes = false;
-
 				texturing->BeginPass(pass);
 
 				for (size_t a = 0; a < activeRC->quads.size(); a++) {
 					TQuad* q = activeRC->quads[a].quad;
 
 					// Setup node texturing
-					skipNodes = !texturing->SetupNode(q, pass);
+					const bool skipNodes = !texturing->SetupNode(q, pass);
 
 					assert(q->renderData);
 

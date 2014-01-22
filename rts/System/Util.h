@@ -97,10 +97,13 @@ std::string StringReplace(const std::string& text,
                           const std::string& from,
                           const std::string& to);
 
+/// strips any occurrences of characters in <chars> from <str>
+std::string StringStrip(const std::string& str, const std::string& chars);
+
 /// Removes leading and trailing whitespace from a string, in place.
-void StringTrimInPlace(std::string& str);
+void StringTrimInPlace(std::string& str, const std::string& ws = " \t\n\r");
 /// Removes leading and trailing whitespace from a string, in a copy.
-std::string StringTrim(const std::string& str);
+std::string StringTrim(const std::string& str, const std::string& ws = " \t\n\r");
 
 
 static inline std::string IntToString(int i, const std::string& format = "%i")
@@ -117,13 +120,16 @@ static inline std::string FloatToString(float f, const std::string& format = "%f
 	return std::string(buf);
 }
 
-static inline int StringToInt(std::string str, bool* failed)
+static inline int StringToInt(std::string str, bool* failed = NULL)
 {
 	StringTrimInPlace(str);
 	std::istringstream stream(str);
 	int buffer = 0;
 	stream >> buffer;
-	*failed = stream.fail();
+
+	if (failed != NULL)
+		*failed = stream.fail();
+
 	return buffer;
 }
 
@@ -270,4 +276,33 @@ protected:
 };
 
 
+
+
+char32_t Utf8GetNextChar(const std::string& text, int& pos);
+std::string UnicodeToUtf8(char32_t ch);
+
+
+static inline int Utf8CharLen(const std::string& str, int pos)
+{
+	const auto oldPos = pos;
+	Utf8GetNextChar(str, pos);
+	return pos - oldPos;
+}
+
+static inline int Utf8NextChar(const std::string& str, int pos)
+{
+	Utf8GetNextChar(str, pos);
+	return pos;
+}
+
+static inline int Utf8PrevChar(const std::string& str, int pos)
+{
+	auto startPos = std::max(pos - 4, 0);
+	auto oldPos   = startPos;
+	while (startPos < pos) {
+		oldPos = startPos;
+		Utf8GetNextChar(str, startPos);
+	}
+	return oldPos;
+}
 #endif // UTIL_H

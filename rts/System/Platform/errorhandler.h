@@ -9,6 +9,9 @@
 #define _ERROR_HANDLER_H
 
 #include <string>
+#ifndef NO_CATCH_EXCEPTIONS
+#include <sstream>
+#endif
 #include <boost/thread/exceptions.hpp>
 #include <boost/system/system_error.hpp>
 #include "System/Exceptions.h"
@@ -31,7 +34,7 @@
  *                 - MBF_INFO : Info
  *                 - MBF_CRASH: Crash
  */
-void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags = MBF_OK);
+void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags = MBF_OK, bool fromMain = false);
 
 /**
  * sets springs exit code
@@ -58,8 +61,8 @@ int GetExitCode();
 	catch (const user_error& e) {                                                            \
 		ErrorMessageBox(e.what(), "Spring: Fatal Error (user)", MBF_OK | MBF_EXCL);          \
 	}                                                                                        \
-	catch (const unsupported_error& e) {                                                         \
-		ErrorMessageBox(e.what(), "Spring: Hardware Problem: ", MBF_OK | MBF_CRASH); \
+	catch (const unsupported_error& e) {                                                     \
+		ErrorMessageBox(e.what(), "Spring: Hardware Problem: ", MBF_OK | MBF_CRASH);         \
 	}
 
 /**

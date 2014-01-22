@@ -21,6 +21,8 @@ Preparation
 		git checkout develop
 		git merge release --no-ff
 
+For every month of development the release (and feature-freeze) branch should kept about one week.
+So if last release was 5 months ago, the release branch should stay for 5 weeks of feature-freeze / fixing bugs.
 
 Release Time
 ------------
@@ -30,7 +32,7 @@ Release Time
 		git reset --hard origin/master
 		git merge release --no-ff
 2) Tag the release:
-		export REL_VERS=95.0
+		export REL_VERS=96.0
 		git tag -a -m "${REL_VERS} release [changed APIs: Lua, unitsync, AI]" ${REL_VERS}
    Make sure it looks correct:
 		gitk master develop release &
@@ -68,81 +70,15 @@ Release Time
 		rsync --progress -h spring_${REL_VERS}* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-${REL_VERS}/
 10) Post the news post.
 
-11) After a week, enforce it on the server, if it is a sync relevant change.
+11) After a week, set it as default version on the server:
+	Ask a lobby admin to set the default version on the lobby server:
+		http://springrts.com/wiki/Uberserver#set_spring_version
+	Update download page by chaning the version templates on the Wiki.
+		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Major&action=edit
+		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Minor&action=edit
+		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:ReleaseDate&action=edit
+	Update the default downloads for each platform on SF.
+		Installer .exe for Windows, .tar.gz for all other platforms.
+		Do so through the file(s) properties on this page:
+			https://sourceforge.net/projects/springrts/files/springrts/spring-${REL_VERS}/
 
-
-Enforcing on server
--------------------
-
-This only needs to be done if it is a sync relevant change.
-
-1) Ask a lobby admin to enforce the new version.
-2) Update download page by chaning the version templates on the Wiki.
-	http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Major&action=edit
-	http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Minor&action=edit
-	http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:ReleaseDate&action=edit
-3) Update the default downloads for each platform on SF.
-	Installer .exe for Windows, .tar.gz for all other platforms.
-	Do so through the file(s) properties on this page:
-		https://sourceforge.net/projects/springrts/files/springrts/spring-${REL_VERS}/
-
-
-
-
-Old stuff, to be cleaned up later
-=================================
-
-Checklist of stuff that needs to be doing at release time,
-not necessarily in the optimal order, but I tried to make it pretty much right.
-
-Spring engine:
-Before you start:
-- if necessary, increase PATHESTIMATOR_VERSION to force repathing
-- make sure changelog is up to date (including version number!)
-- talk to people to fix their apps which get included in the installer (Lobby, Downloader...)
-
-Then proceed:
-- make sure all packages build correctly (test building on buildbot, test-generate source packages (and check them if they work))
-- set buildbot to only produce builds if forced to (comment out schedulers)
-- test source package linux (or not if you feel brave)
-- test source package windows (ditto)
-- test installer (NEVER EVER SKIP THIS NO MATTER HOW SMALL THE CHANGES)
-
-- bump version number in rts/Game/GameVersion.cpp
-- tag the released revision in GIT as e.g. "0.78.0"
-- have buildbot compile installer and make source packages
-- upload installer to fnord.clan-sy.com
-- upload installer to the big Spring file sites (watch out for notification bots,
-  it can create chaos if you upload early in release process and the upload gets
-  widely announced already.)
-- upload spring_X.XXbX_src.tar.bz2 to fnord.clan-sy.com
-- upload spring_X.XXbX_src.zip to fnord.clan-sy.com
-- upload spring_X.XXbX_src.tar.bz2 to Berlios (not too important)
-- upload spring_X.XXbX_src.zip to Berlios (ditto)
-- make news post (don't forget to thank contributors, link to installer and source)
-- bump version number in rts/Game/GameVersion.cpp to e.g. "0.76b1+" (note the plus)
-- enable automatic builds in buildbot again
-
-TASServer (when only spring update):
-- update updates.xml with OFFERFILE entries for current Spring version.
-- as admin, do "reloadupdateproperties" in TASServer ($Local in TASClient)
-- as admin, do "setlatestspringversion 0.76b1"  (replace version!)
-- as admin, "broadcast" a message that everyone will be kicked due to upgrade
-- as admin, kick all users from the server ("killall [reason]")
-- set correct Spring version in the shell script that starts server, so it
-  won't boot people if it ever gets restarted (e.g. power outage)
-
-TASServer (full update, ie. Spring+TASServer):
-- easiest is probably to release Spring separately, but usually this is
-  impossible due to compatibility things.
-- update updates.xml with OFFERFILE entries for current lobby version(s)
-  and current Spring version.
-- set correct spring version in the shell script that starts server.
-- update sourcecode to latest version
-- stop server
-- compile server
-- do whatever is needed to migrate data, if anything.
-- start server
-- hotfix the issues that usually arise during TASServer upgrade :-)
-- commit the hotfixes
-- tag the used server in SVN as e.g. "tags/Lobby/TASServer 0.35"

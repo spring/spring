@@ -13,6 +13,7 @@
 
 #include "LuaInclude.h"
 
+#include "LuaConfig.h"
 #include "LuaDefs.h"
 #include "LuaHandle.h"
 #include "LuaUtils.h"
@@ -597,10 +598,29 @@ TYPE_MODEL_FUNC(ModelMaxz,   maxs.z);
 
 
 
-static int ReturnEmptyString(lua_State* L, const void* data) { LOG_L(L_WARNING, "[%s] deprecated field!", __FUNCTION__); lua_pushstring(L, ""); return 1; }
-static int ReturnFalse(lua_State* L, const void* data) { LOG_L(L_WARNING, "[%s] deprecated field!", __FUNCTION__); lua_pushboolean(L, false); return 1; }
-static int ReturnMinusOne(lua_State* L, const void* data) { LOG_L(L_WARNING, "[%s] deprecated field!", __FUNCTION__); lua_pushnumber(L, -1); return 1; }
-static int ReturnNil(lua_State* L, const void* data) { LOG_L(L_WARNING, "[%s] deprecated field!", __FUNCTION__); lua_pushnil(L); return 1; }
+static int ReturnEmptyString(lua_State* L, const void* data) {
+	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, lua_tostring(L, 2));
+	lua_pushstring(L, "");
+	return 1;
+}
+
+static int ReturnFalse(lua_State* L, const void* data) {
+	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, lua_tostring(L, 2));
+	lua_pushboolean(L, false);
+	return 1;
+}
+
+static int ReturnMinusOne(lua_State* L, const void* data) {
+	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, lua_tostring(L, 2));
+	lua_pushnumber(L, -1);
+	return 1;
+}
+
+static int ReturnNil(lua_State* L, const void* data) {
+	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, lua_tostring(L, 2));
+	lua_pushnil(L);
+	return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/

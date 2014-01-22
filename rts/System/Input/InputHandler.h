@@ -17,6 +17,7 @@ public:
 	InputHandler();
 
 	void PushEvent(const SDL_Event& ev);
+	void PushEvents();
 
 	boost::signals2::connection AddHandler(SignalType::slot_function_type);
 

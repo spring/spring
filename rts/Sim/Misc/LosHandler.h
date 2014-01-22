@@ -13,7 +13,8 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "System/MemPool.h"
 #include "System/type2.h"
-#include <assert.h>
+
+#define LOSHANDLER_ALWAYSVISIBLE_OVERRIDES_CLOAKED
 
 /**
  * CLosHandler specific data attached to each unit.
@@ -128,9 +129,20 @@ public:
 		//      are also in radar ("sonar") coverage if requireSonarUnderWater
 		//      is enabled --> underwater units can NOT BE SEEN AT ALL without
 		//      active radar!
+		#ifdef LOSHANDLER_ALWAYSVISIBLE_OVERRIDES_CLOAKED
+		if (unit->alwaysVisible)
+			return true;
 		if (unit->isCloaked)
 			return false;
-		if (unit->alwaysVisible || gs->globalLOS[allyTeam])
+		#else
+		if (unit->isCloaked)
+			return false;
+		if (unit->alwaysVisible)
+			return true;
+		#endif
+
+		// isCloaked always overrides globalLOS
+		if (gs->globalLOS[allyTeam])
 			return true;
 		if (unit->useAirLos)
 			return (InAirLos(unit->pos, allyTeam) || InAirLos(unit->pos + unit->speed, allyTeam));

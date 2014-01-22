@@ -40,10 +40,6 @@ void CEmgCannon::Update()
 }
 
 
-void CEmgCannon::Init()
-{
-	CWeapon::Init();
-}
 
 void CEmgCannon::FireImpl(bool scriptCall)
 {

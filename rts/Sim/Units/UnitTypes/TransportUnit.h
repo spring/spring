@@ -12,10 +12,6 @@ public:
 	CR_DECLARE(CTransportUnit);
 	CR_DECLARE_SUB(TransportedUnit);
 
-	CTransportUnit();
-	~CTransportUnit() {}
-	void PostLoad() {}
-
 	struct TransportedUnit {
 		CR_DECLARE_STRUCT(TransportedUnit);
 		CUnit* unit;
@@ -24,14 +20,19 @@ public:
 		float mass;
 	};
 
+	CTransportUnit(): transportCapacityUsed(0), transportMassUsed(0) {
+	}
+
+	void PostLoad() {}
 	void Update();
 	void DependentDied(CObject* object);
 	void KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSeq = false);
 	bool AttachUnit(CUnit* unit, int piece);
 	bool CanTransport(const CUnit* unit) const;
-	float GetLoadUnloadHeight(const float3& wantedPos, const CUnit* unit, bool* ok = NULL) const;
-	bool CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* loadingHeight = NULL) const;
-	short GetLoadUnloadHeading(const CUnit* unit) const;
+	bool CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* wantedHeightPtr = NULL) const;
+
+	float GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* unit, bool* ok = NULL) const;
+	short GetTransporteeWantedHeading(const CUnit* unit) const;
 
 	bool DetachUnit(CUnit* unit);
 	bool DetachUnitFromAir(CUnit* unit, const float3& pos); ///< moves to position after

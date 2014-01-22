@@ -19,7 +19,7 @@ namespace GL {
 			ATTACHMENT_COUNT   = 6,
 		};
 
-		GeometryBuffer() { Init(); }
+		GeometryBuffer() : bufferName(NULL) { Init(); }
 		~GeometryBuffer() { Kill(); }
 
 		void Init();

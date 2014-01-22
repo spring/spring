@@ -25,13 +25,12 @@ namespace netcode {
 #define SEVERE_PACKET_LOSS_MAX_COUNT 10       // max continuous number of packets to be lost
 #define PACKET_MIN_LATENCY 750                // in [milliseconds] minimum latency
 #define PACKET_MAX_LATENCY 1250               // in [milliseconds] maximum latency
+#define ENABLE_DEBUG_STATS
 
 class Chunk
 {
 public:
-	unsigned GetSize() const {
-		return data.size() + headerSize;
-	}
+	unsigned GetSize() const { return (data.size() + headerSize); }
 	void UpdateChecksum(CRC& crc) const;
 	static const unsigned maxSize = 254;
 	static const unsigned headerSize = 5;
@@ -114,7 +113,7 @@ public:
 	 */
 	void ProcessRawPacket(Packet& packet);
 
-	int GetReconnectSecs() const;
+	int GetReconnectSecs() const { return reconnectTime; }
 
 	/// Are we using this address?
 	bool IsUsingAddress(const boost::asio::ip::udp::endpoint& from) const;
@@ -144,9 +143,16 @@ private:
 	void RequestResend(ChunkPtr ptr);
 	void SendPacket(Packet& pkt);
 
-	spring_time lastChunkCreated;
-	spring_time lastReceiveTime;
-	spring_time lastSendTime;
+	spring_time lastChunkCreatedTime;
+	spring_time lastPacketSendTime;
+	spring_time lastPacketRecvTime;
+
+	spring_time lastUnackResentTime;
+	spring_time lastNakTime;
+	#ifdef ENABLE_DEBUG_STATS
+	spring_time lastDebugMessageTime;
+	spring_time lastFramePacketRecvTime;
+	#endif
 
 	typedef boost::ptr_map<int,RawPacket> packetMap;
 	typedef std::list< boost::shared_ptr<const RawPacket> > packetList;
@@ -158,38 +164,39 @@ private:
 
 	bool muted;
 	bool closed;
-	int netLossFactor;
 	bool resend;
+	bool sharedSocket;
+	bool logMessages;
 
+	int netLossFactor;
 	int reconnectTime;
 
-	bool sharedSocket;
-
-	/// outgoing stuff (pure data without header) waiting to be sended
+	/// outgoing stuff (pure data without header) waiting to be sent
 	packetList outgoingData;
+	/// packets we have received but not yet read
+	packetMap waitingPackets;
 
 	/// Newly created and not yet sent
 	std::deque<ChunkPtr> newChunks;
 	/// packets the other side did not ack'ed until now
 	std::deque<ChunkPtr> unackedChunks;
-	spring_time lastUnackResent;
+
 	/// Packets the other side missed
 	std::map<boost::int32_t, ChunkPtr> resendRequested;
-	int currentNum;
+
+	/// complete packets we received but did not yet consume
+	std::deque< boost::shared_ptr<const RawPacket> > msgQueue;
 
 	boost::int32_t lastMidChunk;
+
 #if	NETWORK_TEST
 	/// Delayed packets, for testing purposes
 	std::map< spring_time, std::vector<boost::uint8_t> > delayed;
 	int lossCounter;
 #endif
 
-	/// packets we have received but not yet read
-	packetMap waitingPackets;
 	int lastInOrder;
 	int lastNak;
-	spring_time lastNakTime;
-	std::deque< boost::shared_ptr<const RawPacket> > msgQueue;
 
 	/// Our socket
 	boost::shared_ptr<boost::asio::ip::udp::socket> mySocket;
@@ -197,16 +204,26 @@ private:
 	RawPacket* fragmentBuffer;
 
 	// Traffic statistics and stuff
+	#ifdef ENABLE_DEBUG_STATS
+	float sumDeltaFramePacketRecvTime;
+	float minDeltaFramePacketRecvTime;
+	float maxDeltaFramePacketRecvTime;
+
+	unsigned int numReceivedFramePackets;
+	unsigned int numEnqueuedFramePackets;
+	unsigned int numEmptyGetDataCalls;
+	unsigned int numTotalGetDataCalls;
+	#endif
+	unsigned int currentPacketChunkNum;
 
 	/// packets that are resent
-	unsigned resentChunks;
-	unsigned droppedChunks;
+	unsigned int resentChunks;
+	unsigned int droppedChunks;
 
-	unsigned sentOverhead, recvOverhead;
-	unsigned sentPackets, recvPackets;
+	unsigned int sentOverhead, recvOverhead;
+	unsigned int sentPackets, recvPackets;
 
-	class BandwidthUsage
-	{
+	class BandwidthUsage {
 	public:
 		BandwidthUsage();
 		void UpdateTime(unsigned newTime);
@@ -221,6 +238,7 @@ private:
 
 		float average;
 	};
+
 	BandwidthUsage outgoing;
 };
 

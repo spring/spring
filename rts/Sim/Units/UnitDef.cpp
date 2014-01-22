@@ -81,6 +81,7 @@ UnitDef::UnitDef()
 	, tidalGenerator(0.0f)
 	, metalStorage(0.0f)
 	, energyStorage(0.0f)
+	, harvestStorage(0.0f)
 	, autoHeal(0.0f)
 	, idleAutoHeal(0.0f)
 	, idleTime(0)
@@ -269,6 +270,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	metalStorage  = udTable.GetFloat("metalStorage",  0.0f);
 	energyStorage = udTable.GetFloat("energyStorage", 0.0f);
+	harvestStorage = udTable.GetFloat("harvestStorage", 0.0f);
 
 	extractsMetal  = udTable.GetFloat("extractsMetal",  0.0f);
 	windGenerator  = udTable.GetFloat("windGenerator",  0.0f);
@@ -842,12 +844,12 @@ void UnitDef::SetNoCost(bool noCost)
 	}
 }
 
-bool UnitDef::IsAllowedTerrainHeight(const MoveDef* moveDef, float rawHeight, float* clampedHeight) const {
+bool UnitDef::CheckTerrainConstraints(const MoveDef* moveDef, float rawHeight, float* clampedHeight) const {
 	// can fail if LuaMoveCtrl has changed a unit's MoveDef (UnitDef::pathType is not updated)
 	// assert(pathType == -1u || moveDef == moveDefHandler->GetMoveDefByPathType(pathType));
 
-	float maxDepth = +1e6f;
-	float minDepth = -1e6f;
+	float minDepth = MoveDef::GetDefaultMinWaterDepth();
+	float maxDepth = MoveDef::GetDefaultMaxWaterDepth();
 
 	if (moveDef != NULL) {
 		// we are a mobile ground-unit, use MoveDef limits

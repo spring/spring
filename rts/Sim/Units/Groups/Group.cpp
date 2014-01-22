@@ -7,7 +7,6 @@
 #include "System/EventHandler.h"
 #include "System/creg/STL_Set.h"
 #include "System/float3.h"
-#include "lib/gml/gmlmut.h"
 
 CR_BIND(CGroup, (0, NULL))
 CR_REG_METADATA(CGroup, (
@@ -47,8 +46,6 @@ void CGroup::PostLoad()
 
 bool CGroup::AddUnit(CUnit* unit)
 {
-	GML_RECMUTEX_LOCK(group); // AddUnit
-
 	units.insert(unit);
 	handler->PushGroupChange(id);
 
@@ -57,8 +54,6 @@ bool CGroup::AddUnit(CUnit* unit)
 
 void CGroup::RemoveUnit(CUnit* unit)
 {
-	GML_RECMUTEX_LOCK(group); // RemoveUnit
-
 	units.erase(unit);
 	handler->PushGroupChange(id);
 }
@@ -81,8 +76,6 @@ void CGroup::Update()
 
 void CGroup::ClearUnits()
 {
-	GML_RECMUTEX_LOCK(group); // ClearUnits
-
 	while (!units.empty()) {
 		(*units.begin())->SetGroup(0);
 	}

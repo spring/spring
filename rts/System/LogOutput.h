@@ -3,11 +3,6 @@
 #ifndef LOG_OUTPUT_H
 #define LOG_OUTPUT_H
 
-#include "lib/gml/gmlcnf.h"
-#if defined(USE_GML) && GML_ENABLE_SIM
-#include <boost/thread/mutex.hpp>
-#endif
-
 #include <string>
 #include <vector>
 
@@ -37,7 +32,7 @@ public:
 	 *
 	 * Relative paths are relative to the writable data-dir.
 	 */
-	const std::string& GetFileName() const;
+	const std::string& GetFileName() const { return fileName; }
 	/**
 	 * @brief returns the absolute path to the log file
 	 *
@@ -45,7 +40,7 @@ public:
 	 * This method may only be called after the logger got initialized.
 	 * @see Initialize()
 	 */
-	const std::string& GetFilePath() const;
+	const std::string& GetFilePath() const { return filePath; }
 
 	/**
 	 * @brief initialize logOutput
@@ -55,7 +50,7 @@ public:
 	 * after the engine chdir'ed to the correct directory.
 	 */
 	void Initialize();
-	bool IsInitialized();
+	bool IsInitialized() const { return (!filePath.empty()); }
 
 
 	/**
@@ -64,21 +59,6 @@ public:
 	static void LogSystemInfo();
 
 private:
-	/**
-	 * @brief initialize the log sections
-	 *
-	 * This writes a list of all available and all enabled sections to the log.
-	 *
-	 * Log sections can be enabled using the configuration key "LogSections",
-	 * or the environment variable "SPRING_LOG_SECTIONS".
-	 *
-	 * Both specify a comma separated list of sections that should be enabled.
-	 * The lists from both sources are combined, there is no overriding.
-	 *
-	 * A section that is enabled by default, can not be disabled.
-	 */
-	void InitializeSections();
-
 	/**
 	 * @brief creates an absolute file path from a file name
 	 *
@@ -99,9 +79,6 @@ private:
 	std::string fileName;
 	std::string filePath;
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	boost::mutex logmutex;
-#endif
 };
 
 

@@ -223,13 +223,13 @@ int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket>& packet)
 void CInMapDraw::SetSpecMapDrawingAllowed(bool state)
 {
 	allowSpecMapDrawing = state;
-	LOG("Spectator map drawing is %s", allowSpecMapDrawing? "disabled": "enabled");
+	LOG("[%s] spectator map-drawing is %s", __FUNCTION__, allowSpecMapDrawing? "enabled": "disabled");
 }
 
 void CInMapDraw::SetLuaMapDrawingAllowed(bool state)
 {
 	allowLuaMapDrawing = state;
-	LOG("Lua map drawing is %s", allowLuaMapDrawing? "disabled": "enabled");
+	LOG("[%s] Lua map-drawing is %s", __FUNCTION__, allowLuaMapDrawing? "enabled": "disabled");
 }
 
 

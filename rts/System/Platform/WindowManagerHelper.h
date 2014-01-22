@@ -23,17 +23,6 @@ public:
 	static void FreeIcon();
 
 	/**
-	 * Sets the window-manager captions/titles for the running process.
-	 * @param title will be displayed in the window title (in windowed mode)
-	 *   example: "MyGame 1.0 - Chicken Mode (Spring 0.83.0.1)"
-	 * @param titleShort will be displayed in the OS task-bar
-	 *   example: "MyGame"
-	 *   This may only ever be used under X11, but not QT(KDE) or Windows.
-	 * @see SDL_WM_SetCaption()
-	 */
-	static void SetCaption(const std::string& title,
-			const std::string& titleShort);
-	/**
 	 * Sets the window-manager caption/title for the running process.
 	 * @param title will be displayed in the window title (in windowed mode)
 	 *   and in the OS task-bar

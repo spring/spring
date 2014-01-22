@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <boost/scoped_ptr.hpp>
 
 #include "ArchiveScanner.h"
 #include "ArchiveLoader.h"
@@ -396,47 +397,57 @@ void CArchiveScanner::Scan(const std::string& curPath, bool doChecksum)
 {
 	isDirty = true;
 
-	const int flags = (FileQueryFlags::INCLUDE_DIRS | FileQueryFlags::RECURSE);
-	const std::vector<std::string> &found = dataDirsAccess.FindFiles(curPath, "*", flags);
+	// check recursive dirs when NOT being sdd's!
+	std::list<std::string> subDirs;
+	subDirs.push_back(curPath);
 
-	for (std::vector<std::string>::const_iterator it = found.begin(); it != found.end(); ++it) {
-		std::string fullName = *it;
+	while (!subDirs.empty()) {
+		FileSystem::EnsurePathSepAtEnd(subDirs.front());
+		const std::vector<std::string>& found = dataDirsAccess.FindFiles(subDirs.front(), "*", FileQueryFlags::INCLUDE_DIRS);
+		subDirs.pop_front();
 
-		// Strip
-		const char lastFullChar = fullName[fullName.size() - 1];
-		if ((lastFullChar == '/') || (lastFullChar == '\\')) {
-			fullName = fullName.substr(0, fullName.size() - 1);
-		}
+		for (auto f: found) {
+			std::string fullName = f;
 
-		const std::string fpath = FileSystem::GetDirectory(fullName);
-		const std::string lcfpath = StringToLower(fpath);
+			// Strip
+			const char lastFullChar = fullName[fullName.size() - 1];
+			if ((lastFullChar == '/') || (lastFullChar == '\\')) {
+				fullName = fullName.substr(0, fullName.size() - 1);
+			}
 
-		// Exclude archivefiles found inside directory archives (.sdd)
-		if (lcfpath.find(".sdd") != std::string::npos) {
-			continue;
-		}
+			const std::string fpath = FileSystem::GetDirectory(fullName);
+			const std::string lcfpath = StringToLower(fpath);
 
-		// Exclude archivefiles found inside hidden directories
-		if ((lcfpath.find("/hidden/")   != std::string::npos) ||
-		    (lcfpath.find("\\hidden\\") != std::string::npos)) {
-			continue;
-		}
+			// Exclude archivefiles found inside directory archives (.sdd)
+			if (lcfpath.find(".sdd") != std::string::npos) {
+				continue;
+			}
 
-#if       !defined(DEDICATED) && !defined(UNITSYNC)
-		Watchdog::ClearTimer(WDT_MAIN);
-#endif // !defined(DEDICATED) && !defined(UNITSYNC)
-		// Is this an archive we should look into?
-		if (archiveLoader.IsArchiveFile(fullName)) {
-			ScanArchive(fullName, doChecksum);
+			// Exclude archivefiles found inside hidden directories
+			if ((lcfpath.find("/hidden/")   != std::string::npos) ||
+			    (lcfpath.find("\\hidden\\") != std::string::npos)) {
+				continue;
+			}
+
+		#if       !defined(DEDICATED) && !defined(UNITSYNC)
+			Watchdog::ClearTimer(WDT_MAIN);
+		#endif // !defined(DEDICATED) && !defined(UNITSYNC)
+
+			// Is this an archive we should look into?
+			if (archiveLoader.IsArchiveFile(fullName)) {
+				ScanArchive(fullName, doChecksum);
+			} else
+			if (FileSystem::DirExists(fullName)) {
+				subDirs.push_back(fullName);
+			}
 		}
 	}
 
 	// Now we'll have to parse the replaces-stuff found in the mods
-	for (std::map<std::string, ArchiveInfo>::iterator aii = archiveInfos.begin(); aii != archiveInfos.end(); ++aii) {
-		for (std::vector<std::string>::const_iterator i = aii->second.archiveData.GetReplaces().begin(); i != aii->second.archiveData.GetReplaces().end(); ++i) {
-
-			const std::string lcname = StringToLower(*i);
-			std::map<std::string, ArchiveInfo>::iterator ar = archiveInfos.find(lcname);
+	for (auto aii: archiveInfos) {
+		for (auto i: aii.second.archiveData.GetReplaces()) {
+			const std::string lcname = StringToLower(i);
+			auto ar = archiveInfos.find(lcname);
 
 			// If it's not there, we will create a new entry
 			if (ar == archiveInfos.end()) {
@@ -453,7 +464,7 @@ void CArchiveScanner::Scan(const std::string& curPath, bool doChecksum)
 			ArchiveData empty;
 			ar->second.archiveData = empty;
 			ar->second.updated = true;
-			ar->second.replaced = aii->first;
+			ar->second.replaced = aii.first;
 		}
 	}
 }
@@ -486,7 +497,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	// If stat fails, assume the archive is not broken nor cached
 	if (!statfailed) {
 		// Determine whether this archive has earlier be found to be broken
-		std::map<std::string, BrokenArchive>::iterator bai = brokenArchives.find(lcfn);
+		auto bai = brokenArchives.find(lcfn);
 		if (bai != brokenArchives.end()) {
 			if ((unsigned)info.st_mtime == bai->second.modified && fpath == bai->second.path) {
 				bai->second.updated = true;
@@ -494,24 +505,21 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 			}
 		}
 
-
 		// Determine whether to rely on the cached info or not
 		if ((aii = archiveInfos.find(lcfn)) != archiveInfos.end()) {
 			// This archive may have been obsoleted, do not process it if so
-			if (aii->second.replaced.length() > 0) {
+			if (!aii->second.replaced.empty()) {
 				return;
 			}
 
 			if ((unsigned)info.st_mtime == aii->second.modified && fpath == aii->second.path) {
-				cached = true;
 				aii->second.updated = true;
-			}
-
-			// If we are here, we could have invalid info in the cache
-			// Force a reread if it is a directory archive (.sdd), as
-			// st_mtime only reflects changes to the directory itself,
-			// not the contents.
-			if (!cached) {
+				cached = true;
+			} else {
+				// If we are here, we could have invalid info in the cache
+				// Force a reread if it is a directory archive (.sdd), as
+				// st_mtime only reflects changes to the directory itself,
+				// not the contents.
 				archiveInfos.erase(aii);
 			}
 		}
@@ -520,128 +528,130 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	// Time to parse the info we are interested in
 	if (cached) {
 		// If cached is true, aii will point to the archive
-		if (doChecksum && (aii->second.checksum == 0))
+		if (doChecksum && (aii->second.checksum == 0)) {
 			aii->second.checksum = GetCRC(fullName);
-	} else {
-		IArchive* ar = archiveLoader.OpenArchive(fullName);
-		if (!ar || !ar->IsOpen()) {
-			LOG("Unable to open archive: %s", fullName.c_str());
-			return;
 		}
-
-		ArchiveInfo ai;
-
-		std::string error;
-		std::string mapfile;
-
-		const bool hasModinfo = ar->FileExists("modinfo.lua");
-		const bool hasMapinfo = ar->FileExists("mapinfo.lua");
-
-		// check for smf/sm3 and if the uncompression of important files is too costy
-		for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
-			std::string name;
-			int size;
-			ar->FileInfo(fid, name, size);
-			const std::string lowerName = StringToLower(name);
-			const std::string ext = FileSystem::GetExtension(lowerName);
-
-			if ((ext == "smf") || (ext == "sm3")) {
-				mapfile = name;
-			}
-
-			const unsigned char metaFileClass = GetMetaFileClass(lowerName);
-			if ((metaFileClass != 0) && !(ar->HasLowReadingCost(fid))) {
-				// is a meta-file and not cheap to read
-				if (metaFileClass == 1) {
-					// 1st class
-					error = "Unpacking/reading cost for meta file " + name
-							+ " is too high, please repack the archive (make sure to use a non-solid algorithm, if applicable)";
-					break;
-				} else if (metaFileClass == 2) {
-					// 2nd class
-					LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING,
-							"Archive %s: The cost for reading a 2nd-class meta-file is too high: %s",
-							fullName.c_str(), name.c_str());
-				}
-			}
-		}
-
-		/*
-		if (!error.empty()) {
-			// we already have an error, no further evaluation required
-		}
-		*/
-		if (hasMapinfo || !mapfile.empty()) {
-			// it is a map
-			if (hasMapinfo) {
-				ScanArchiveLua(ar, "mapinfo.lua", ai, error);
-			} else if (hasModinfo) {
-				// backwards-compat for modinfo.lua in maps
-				ScanArchiveLua(ar, "modinfo.lua", ai, error);
-			}
-
-			if (ai.archiveData.GetName().empty()) {
-				// FIXME The name will never be empty, if version is set (see HACK in ArchiveData)
-				ai.archiveData.SetInfoItemValueString("name_pure", FileSystem::GetBasename(mapfile));
-				ai.archiveData.SetInfoItemValueString("name", FileSystem::GetBasename(mapfile));
-			}
-			if (ai.archiveData.GetMapFile().empty()) {
-				ai.archiveData.SetInfoItemValueString("mapfile", mapfile);
-			}
-
-			AddDependency(ai.archiveData.GetDependencies(), "Map Helper v1");
-			ai.archiveData.SetInfoItemValueInteger("modType", modtype::map);
-
-			LOG_S(LOG_SECTION_ARCHIVESCANNER, "Found new map: %s",
-					ai.archiveData.GetNameVersioned().c_str());
-		} else if (hasModinfo) {
-			// it is a mod
-			ScanArchiveLua(ar, "modinfo.lua", ai, error);
-			if (ai.archiveData.GetModType() == modtype::primary) {
-				AddDependency(ai.archiveData.GetDependencies(), "Spring content v1");
-			}
-
-			LOG_S(LOG_SECTION_ARCHIVESCANNER, "Found new game: %s",
-					ai.archiveData.GetNameVersioned().c_str());
-		} else {
-			// neither a map nor a mod: error
-			error = "missing modinfo.lua/mapinfo.lua";
-		}
-
-		delete ar;
-
-		if (!error.empty()) {
-			// for some reason, the archive is marked as broken
-			LOG_L(L_WARNING, "Failed to scan %s (%s)",
-					fullName.c_str(), error.c_str());
-
-			// record it as broken, so we don't need to look inside everytime
-			BrokenArchive ba;
-			ba.path = fpath;
-			ba.modified = info.st_mtime;
-			ba.updated = true;
-			ba.problem = error;
-			brokenArchives[lcfn] = ba;
-			return;
-		}
-
-		ai.path = fpath;
-		ai.modified = info.st_mtime;
-		ai.origName = fn;
-		ai.updated = true;
-
-		// Optionally calculate a checksum for the file
-		// To prevent reading all files in all directory (.sdd) archives
-		// every time this function is called, directory archive checksums
-		// are calculated on the fly.
-		if (doChecksum) {
-			ai.checksum = GetCRC(fullName);
-		} else {
-			ai.checksum = 0;
-		}
-
-		archiveInfos[lcfn] = ai;
+		return;
 	}
+
+	boost::scoped_ptr<IArchive> ar(archiveLoader.OpenArchive(fullName));
+	if (!ar || !ar->IsOpen()) {
+		LOG("Unable to open archive: %s", fullName.c_str());
+
+		// record it as broken, so we don't need to look inside everytime
+		BrokenArchive ba;
+		ba.path = fpath;
+		ba.modified = info.st_mtime;
+		ba.updated = true;
+		ba.problem = "Unable to open archive";
+		brokenArchives[lcfn] = ba;
+		return;
+	}
+
+	std::string error;
+	std::string mapfile;
+
+	const bool hasModinfo = ar->FileExists("modinfo.lua");
+	const bool hasMapinfo = ar->FileExists("mapinfo.lua");
+
+	// check for smf/sm3 and if the uncompression of important files is too costy
+	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
+		std::string name;
+		int size;
+		ar->FileInfo(fid, name, size);
+		const std::string lowerName = StringToLower(name);
+		const std::string ext = FileSystem::GetExtension(lowerName);
+
+		if ((ext == "smf") || (ext == "sm3")) {
+			mapfile = name;
+		}
+
+		const unsigned char metaFileClass = GetMetaFileClass(lowerName);
+		if ((metaFileClass != 0) && !(ar->HasLowReadingCost(fid))) {
+			// is a meta-file and not cheap to read
+			if (metaFileClass == 1) {
+				// 1st class
+				error = "Unpacking/reading cost for meta file " + name
+						+ " is too high, please repack the archive (make sure to use a non-solid algorithm, if applicable)";
+				break;
+			} else if (metaFileClass == 2) {
+				// 2nd class
+				LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING,
+						"Archive %s: The cost for reading a 2nd-class meta-file is too high: %s",
+						fullName.c_str(), name.c_str());
+			}
+		}
+	}
+
+	ArchiveInfo ai;
+	if (hasMapinfo || !mapfile.empty()) {
+		// it is a map
+		if (hasMapinfo) {
+			ScanArchiveLua(ar.get(), "mapinfo.lua", ai, error);
+		} else if (hasModinfo) {
+			// backwards-compat for modinfo.lua in maps
+			ScanArchiveLua(ar.get(), "modinfo.lua", ai, error);
+		}
+
+		if (ai.archiveData.GetName().empty()) {
+			// FIXME The name will never be empty, if version is set (see HACK in ArchiveData)
+			ai.archiveData.SetInfoItemValueString("name_pure", FileSystem::GetBasename(mapfile));
+			ai.archiveData.SetInfoItemValueString("name", FileSystem::GetBasename(mapfile));
+		}
+		if (ai.archiveData.GetMapFile().empty()) {
+			ai.archiveData.SetInfoItemValueString("mapfile", mapfile);
+		}
+
+		AddDependency(ai.archiveData.GetDependencies(), "Map Helper v1");
+		ai.archiveData.SetInfoItemValueInteger("modType", modtype::map);
+
+		LOG_S(LOG_SECTION_ARCHIVESCANNER, "Found new map: %s",
+				ai.archiveData.GetNameVersioned().c_str());
+	} else if (hasModinfo) {
+		// it is a mod
+		ScanArchiveLua(ar.get(), "modinfo.lua", ai, error);
+		if (ai.archiveData.GetModType() == modtype::primary) {
+			AddDependency(ai.archiveData.GetDependencies(), "Spring content v1");
+		}
+
+		LOG_S(LOG_SECTION_ARCHIVESCANNER, "Found new game: %s",
+				ai.archiveData.GetNameVersioned().c_str());
+	} else {
+		// neither a map nor a mod: error
+		error = "missing modinfo.lua/mapinfo.lua";
+	}
+
+	if (!error.empty()) {
+		// for some reason, the archive is marked as broken
+		LOG_L(L_WARNING, "Failed to scan %s (%s)",
+				fullName.c_str(), error.c_str());
+
+		// record it as broken, so we don't need to look inside everytime
+		BrokenArchive ba;
+		ba.path = fpath;
+		ba.modified = info.st_mtime;
+		ba.updated = true;
+		ba.problem = error;
+		brokenArchives[lcfn] = ba;
+		return;
+	}
+
+	ai.path = fpath;
+	ai.modified = info.st_mtime;
+	ai.origName = fn;
+	ai.updated = true;
+
+	// Optionally calculate a checksum for the file
+	// To prevent reading all files in all directory (.sdd) archives
+	// every time this function is called, directory archive checksums
+	// are calculated on the fly.
+	if (doChecksum) {
+		ai.checksum = GetCRC(fullName);
+	} else {
+		ai.checksum = 0;
+	}
+
+	archiveInfos[lcfn] = ai;
 }
 
 bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err)
@@ -707,17 +717,16 @@ struct CRCPair {
 unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 {
 	CRC crc;
-	IArchive* ar;
 	std::list<std::string> files;
 
 	// Try to open an archive
-	ar = archiveLoader.OpenArchive(arcName);
+	boost::scoped_ptr<IArchive> ar(archiveLoader.OpenArchive(arcName));
 	if (!ar) {
 		return 0; // It wasn't an archive
 	}
 
 	// Load ignore list.
-	IFileFilter* ignore = CreateIgnoreFilter(ar);
+	boost::scoped_ptr<IFileFilter> ignore(CreateIgnoreFilter(ar.get()));
 
 	// Insert all files to check in lowercase format
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
@@ -770,9 +779,6 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 		Watchdog::ClearTimer();
 	#endif
 	}
-
-	delete ignore;
-	delete ar;
 
 	unsigned int digest = crc.GetDigest();
 

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <map>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <set>
 #include <cfloat>
 
@@ -25,7 +25,7 @@
 #include "aGui/Gui.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Menu/SelectMenu.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -108,10 +108,10 @@ void CPreGame::LoadSavefile(const std::string& save)
 	StartServer(savefile->scriptText);
 }
 
-int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
+int CPreGame::KeyPressed(int k, bool isRepeat)
 {
 	if (k == SDLK_ESCAPE) {
-		if (keyInput->IsKeyPressed(SDLK_LSHIFT)) {
+		if (KeyInput::GetKeyModState(KMOD_SHIFT)) {
 			LOG("User exited");
 			gu->globalQuit = true;
 		} else {
@@ -225,7 +225,7 @@ void CPreGame::UpdateClientNet()
 		const unsigned char* inbuf = packet->data;
 
 		if (packet->length <= 0) {
-			LOG_L(L_WARNING, "[CPreGame::%s] zero-length packet (header: %i)", __FUNCTION__, inbuf[0]);
+			LOG_L(L_WARNING, "[PreGame::%s] zero-length packet (header: %i)", __FUNCTION__, inbuf[0]);
 			continue;
 		}
 
@@ -271,18 +271,17 @@ void CPreGame::UpdateClientNet()
 					// same values as here
 					playerHandler->AddPlayer(player);
 
-					LOG("[PG::%s] added new player %s with number %d to team %d", __FUNCTION__, name.c_str(), player.playerNum, player.team);
+					LOG("[PreGame::%s] added new player %s with number %d to team %d", __FUNCTION__, name.c_str(), player.playerNum, player.team);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[PG::%s] got invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
+					LOG_L(L_ERROR, "[PreGame::%s] got invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
 				}
 				break;
 			}
 
 			case NETMSG_GAMEDATA: {
 				// server first sends this to let us know about teams, allyteams
-				// etc.
-				// (not if we are joining mid-game as extra players)
-				// see NETMSG_SETPLAYERNUM
+				// etc. (not if we are joining mid-game as an extra player), see
+				// NETMSG_SETPLAYERNUM
 				if (gameSetup)
 					throw content_error("Duplicate game data received from server");
 				GameDataReceived(packet);
@@ -303,7 +302,7 @@ void CPreGame::UpdateClientNet()
 
 				gu->SetMyPlayer(playerNum);
 
-				LOG("[PG::%s] user number %i (team %i, allyteam %i)", __FUNCTION__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
+				LOG("[PreGame::%s] user number %i (team %i, allyteam %i)", __FUNCTION__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 
 				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
 
@@ -313,7 +312,7 @@ void CPreGame::UpdateClientNet()
 			}
 
 			default: {
-				LOG_L(L_WARNING, "[CPreGame::%s] unknown packet type (header: %i)", __FUNCTION__, inbuf[0]);
+				LOG_L(L_WARNING, "[PreGame::%s] unknown packet type (header: %i)", __FUNCTION__, inbuf[0]);
 				break;
 			}
 		}

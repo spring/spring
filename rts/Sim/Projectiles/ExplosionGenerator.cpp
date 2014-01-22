@@ -82,8 +82,8 @@ CR_REG_METADATA(CCustomExplosionGenerator, (
 
 CExplosionGeneratorHandler* explGenHandler = NULL;
 
-CExpGenSpawnable::CExpGenSpawnable(): CWorldObject() { GML_EXPGEN_CHECK() }
-CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd): CWorldObject(pos, spd) { GML_EXPGEN_CHECK() }
+CExpGenSpawnable::CExpGenSpawnable(): CWorldObject() {}
+CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd): CWorldObject(pos, spd) {}
 
 
 
@@ -463,7 +463,7 @@ bool CStdExplosionGenerator::Explosion(
 		}
 
 		if (!airExplosion && !uwExplosion && waterExplosion) {
-			const int numDirt = std::min(40.f, damage*0.8f);
+			const int numDirt = std::min(40.f, damage * 0.8f);
 			const float3 color(1.0f, 1.0f, 1.0f);
 
 			for (int a = 0; a < numDirt; ++a) {

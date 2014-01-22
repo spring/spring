@@ -17,7 +17,6 @@
 #include "System/Util.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
-#include "lib/gml/gml_base.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 
 C3DModelLoader* modelParser = NULL;
@@ -36,6 +35,7 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 	std::set<std::string> whitelist;
 	std::string extension;
 	std::string extensions;
+	std::string enabledExtensions;
 
 	whitelist.insert("3ds"  ); // 3DSMax
 	whitelist.insert("dae"  ); // Collada
@@ -48,8 +48,6 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 
 	// do not ignore the last extension
 	extensions += ";";
-
-	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, extensions.c_str());
 
 	size_t curIdx = 0;
 	size_t nxtIdx = 0;
@@ -68,7 +66,10 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 			continue;
 
 		formats[extension] = MODELTYPE_ASS;
+		enabledExtensions += "*." + extension + ";";
 	}
+
+	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, enabledExtensions.c_str());
 }
 
 
@@ -117,11 +118,6 @@ C3DModelLoader::~C3DModelLoader()
 	cache.clear();
 	parsers.clear();
 
-	if (GML::SimEnabled() && !GML::ShareLists()) {
-		createLists.clear();
-		fixLocalModels.clear();
-		Update(); // delete remaining local models
-	}
 }
 
 
@@ -183,8 +179,6 @@ std::string C3DModelLoader::FindModelPath(std::string name) const
 
 S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 {
-	GML_RECMUTEX_LOCK(model); // Load3DModel
-
 	// cannot happen except through SpawnProjectile
 	if (modelName.empty())
 		return NULL;
@@ -260,24 +254,6 @@ void C3DModelLoader::AddModelToCache(S3DModel* model, const std::string& modelNa
 }
 
 void C3DModelLoader::Update() {
-	if (GML::SimEnabled() && !GML::ShareLists()) {
-		GML_RECMUTEX_LOCK(model); // Update
-
-		for (std::list<S3DModelPiece*>::iterator it = createLists.begin(); it != createLists.end(); ++it) {
-			CreateListsNow(*it);
-		}
-		createLists.clear();
-
-		for (std::list<LocalModel*>::iterator i = fixLocalModels.begin(); i != fixLocalModels.end(); ++i) {
-			(*i)->ReloadDisplayLists();
-		}
-		fixLocalModels.clear();
-
-		for (std::list<LocalModel*>::iterator i = deleteLocalModels.begin(); i != deleteLocalModels.end(); ++i) {
-			delete *i;
-		}
-		deleteLocalModels.clear();
-	}
 }
 
 
@@ -289,26 +265,11 @@ void C3DModelLoader::CreateLocalModel(LocalModel* localModel)
 
 	if (ompRoot->GetDisplayListID() != 0)
 		return;
-
-	if (GML::SimEnabled() && !GML::ShareLists()) {
-		GML_RECMUTEX_LOCK(model); // CreateLocalModel
-
-		fixLocalModels.push_back(localModel);
-	}
 }
 
 void C3DModelLoader::DeleteLocalModel(LocalModel* localModel)
 {
-	if (GML::SimEnabled() && !GML::ShareLists()) {
-		GML_RECMUTEX_LOCK(model); // DeleteLocalModel
-
-		std::list<LocalModel*>::iterator it = find(fixLocalModels.begin(), fixLocalModels.end(), localModel);
-		if (it != fixLocalModels.end())
-			fixLocalModels.erase(it);
-		deleteLocalModels.push_back(localModel);
-	} else {
-		delete localModel;
-	}
+	delete localModel;
 }
 
 
@@ -329,11 +290,7 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 
 
 void C3DModelLoader::CreateLists(S3DModelPiece* o) {
-	if (GML::SimEnabled() && !GML::ShareLists())
-		// already mutex'ed via ::Load3DModel()
-		createLists.push_back(o);
-	else
-		CreateListsNow(o);
+	CreateListsNow(o);
 }
 
 /******************************************************************************/

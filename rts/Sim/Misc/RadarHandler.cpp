@@ -7,7 +7,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/TimeProfiler.h"
 
-#ifdef SONAR_JAMMER_MAPS
+#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
 	#define SONAR_MAPS CR_MEMBER(sonarJammerMaps),
 #else
 	#define SONAR_MAPS
@@ -63,7 +63,7 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 	seismicMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
 	airRadarMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
 	jammerMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
-#ifdef SONAR_JAMMER_MAPS
+#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
 	sonarJammerMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
 #endif
 	radarErrorSizes.resize(teamHandler->ActiveAllyTeams(), baseRadarErrorSize);
@@ -105,7 +105,7 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 			commonJammerMap.AddMapArea(newPos, -123, unit->jammerRadius, 1);
 		}
 		if (unit->sonarJamRadius) {
-#ifdef SONAR_JAMMER_MAPS
+#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
 			sonarJammerMaps[unit->allyteam].AddMapArea(newPos, -123, unit->sonarJamRadius, 1);
 #endif
 			commonSonarJammerMap.AddMapArea(newPos, -123, unit->sonarJamRadius, 1);
@@ -141,7 +141,7 @@ void CRadarHandler::RemoveUnit(CUnit* unit)
 			commonJammerMap.AddMapArea(unit->oldRadarPos, -123, unit->jammerRadius, -1);
 		}
 		if (unit->sonarJamRadius) {
-#ifdef SONAR_JAMMER_MAPS
+#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
 			sonarJammerMaps[unit->allyteam].AddMapArea(unit->oldRadarPos, -123, unit->sonarJamRadius, -1);
 #endif
 			commonSonarJammerMap.AddMapArea(unit->oldRadarPos, -123, unit->sonarJamRadius, -1);
