@@ -167,6 +167,20 @@ static void DrawRadialDisc()
 
 CBumpWater::CBumpWater()
 	: CEventClient("[CBumpWater]", 271923, false)
+	, target(GL_TEXTURE_2D)
+	, screenTextureX(globalRendering->viewSizeX)
+	, screenTextureY(globalRendering->viewSizeY)
+	, displayList(0)
+	, refractTexture(0)
+	, reflectTexture(0)
+	, depthTexture(0)
+	, waveRandTexture(0)
+	, foamTexture(0)
+	, coastTexture(0)
+	, normalTexture(0)
+	, normalTexture2(0)
+	, coastUpdateTexture(0)
+	, wasVisibleLastFrame(false)
 {
 	eventHandler.AddClient(this);
 
@@ -185,9 +199,6 @@ CBumpWater::CBumpWater()
 	               && ((readMap->HasVisibleWater()) || (mapInfo->water.forceRendering));
 	dynWaves     = (configHandler->GetBool("BumpWaterDynamicWaves")) && (mapInfo->water.numTiles > 1);
 	useUniforms  = (configHandler->GetBool("BumpWaterUseUniforms"));
-
-	refractTexture = 0;
-	reflectTexture = 0;
 
 	// CHECK HARDWARE
 	if (!globalRendering->haveGLSL) {
@@ -300,16 +311,11 @@ CBumpWater::CBumpWater()
 	// CREATE TEXTURES
 	if ((refraction > 0) || depthCopy) {
 		//! ATIs do not have GLSL support for texrects
-		screenTextureX = globalRendering->viewSizeX;
-		screenTextureY = globalRendering->viewSizeY;
 		if (GLEW_ARB_texture_rectangle && !globalRendering->atiHacks) {
 			target = GL_TEXTURE_RECTANGLE_ARB;
-		} else {
-			target = GL_TEXTURE_2D;
-			if (!globalRendering->supportNPOTs) {
-				screenTextureX = next_power_of_2(globalRendering->viewSizeX);
-				screenTextureY = next_power_of_2(globalRendering->viewSizeY);
-			}
+		} else if (!globalRendering->supportNPOTs) {
+			screenTextureX = next_power_of_2(screenTextureX);
+			screenTextureY = next_power_of_2(screenTextureY);
 		}
 	}
 
@@ -389,18 +395,18 @@ CBumpWater::CBumpWater()
 			reflectFBO.Bind();
 			reflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthRBOFormat, reflTexSize, reflTexSize);
 			reflectFBO.AttachTexture(reflectTexture);
-		}
-		if (!reflectFBO.CheckStatus("BUMPWATER(reflection)")) {
-			reflection = 0;
+			if (!reflectFBO.CheckStatus("BUMPWATER(reflection)")) {
+				reflection = 0;
+			}
 		}
 
 		if (refraction>0) {
 			refractFBO.Bind();
 			refractFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthRBOFormat, screenTextureX, screenTextureY);
 			refractFBO.AttachTexture(refractTexture,target);
-		}
-		if (!refractFBO.CheckStatus("BUMPWATER(refraction)")) {
-			refraction = 0;
+			if (!refractFBO.CheckStatus("BUMPWATER(refraction)")) {
+				refraction = 0;
+			}
 		}
 
 		if (dynWaves) {
