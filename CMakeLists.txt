@@ -36,7 +36,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 			message(STATUS "gcc ${CMAKE_CXX_COMPILER_VERSION} detected")
 		endif()
 	else()
-		message(STATUS_WARNING "cmake version <2.8.10 found, couldn't check for gcc ${MIN_GCC_VER}")
+		message(WARNING "cmake version <2.8.10 found, couldn't check for gcc ${MIN_GCC_VER}")
 	endif()
 endif()
 
