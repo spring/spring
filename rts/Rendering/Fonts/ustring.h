@@ -5,7 +5,7 @@
 
 #include <string>
 
-using char8_t = unsigned char;
+typedef unsigned char char8_t;
 
 namespace std {
 	class u8string : public string {
