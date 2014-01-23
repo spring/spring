@@ -305,6 +305,7 @@ bool CUnsyncedLuaHandle::DrawProjectile(const CProjectile* projectile)
 CSyncedLuaHandle::CSyncedLuaHandle(CLuaHandleSynced* _base, const string& _name, int _order)
 	: CLuaHandle(_name, _order, false)
 	, base(*_base)
+	, origNextRef(-1)
 {
 	D.synced = true;
 	D.allowChanges = true;
