@@ -26,9 +26,9 @@ class CProjectile;
 struct Command;
 class IArchive;
 struct SRectangle;
-class UnitDef;
+struct UnitDef;
 struct BuildInfo;
-class FeatureDef;
+struct FeatureDef;
 
 #ifndef zipFile
 	// might be defined through zip.h already
