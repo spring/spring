@@ -187,5 +187,11 @@
 	SETUP_EVENT(CollectGarbage,     MANAGED_BIT | UNSYNCED_BIT);
 
 
-#pragma pop_macro("SETUP_EVENT")
-#pragma pop_macro("SETUP_UNMANAGED_EVENT")
+#ifndef SETUP_EVENT
+	#pragma pop_macro("SETUP_EVENT")
+#endif
+
+#ifndef SETUP_UNMANAGED_EVENT
+	#pragma pop_macro("SETUP_UNMANAGED_EVENT")
+#endif
+
