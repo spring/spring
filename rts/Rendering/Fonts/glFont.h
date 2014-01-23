@@ -67,7 +67,13 @@ public:
 	void SetOutlineColor(const float& r, const float& g, const float& b, const float& a) { const float4 f = float4(r,g,b,a); SetOutlineColor(&f); };
 
 	float GetCharacterWidth(const char32_t c);
-	inline float GetTextWidth(const std::string& text) final;
+#if defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ == 6)
+	#define _final
+#else
+	#define _final final
+#endif
+	inline float GetTextWidth(const std::string& text) _final;
+#undef _final
 	inline float GetTextHeight(const std::string& text, float* descender = NULL, int* numLines = NULL);
 	inline static int GetTextNumLines(const std::string& text);
 	inline static std::string StripColorCodes(const std::string& text);
