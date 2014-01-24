@@ -254,7 +254,7 @@ class CEventHandler
 		bool DrawUnit(const CUnit* unit);
 		bool DrawFeature(const CFeature* feature);
 		bool DrawShield(const CUnit* unit, const CWeapon* weapon);
-		bool DrawProjectile(const CProjectile* projectile);
+		bool DrawProjectile(const CProjectile* projectile, bool drawReflection, bool drawRefraction);
 
 		/// @brief this UNSYNCED event is generated every GameServer::gameProgressFrameInterval
 		/// it skips network queuing and caching and can be used to calculate the current catchup

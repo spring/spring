@@ -137,7 +137,7 @@ void CEventClient::DrawInMiniMap() {}
 bool CEventClient::DrawUnit(const CUnit* unit) { return false; }
 bool CEventClient::DrawFeature(const CFeature* feature) { return false; }
 bool CEventClient::DrawShield(const CUnit* unit, const CWeapon* weapon) { return false; }
-bool CEventClient::DrawProjectile(const CProjectile* projectile) { return false; }
+bool CEventClient::DrawProjectile(const CProjectile* projectile, bool drawReflection, bool drawRefraction) { return false; }
 
 void CEventClient::GameProgress(int gameFrame) {}
 
