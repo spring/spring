@@ -546,9 +546,9 @@ void CGame::ClientReadNet()
 					// check if our checksum for this frame matches what
 					// player <playerNum> sent to the server at the same
 					// frame in the original game (in case of a demo)
-					if (playerNum == gu->myPlayerNum) { return; }
-					if (gs->frameNum != frameNum) { return; }
-					if (checkSum == ourCheckSum) { return; }
+					if (playerNum == gu->myPlayerNum) { break; }
+					if (gs->frameNum != frameNum) { break; }
+					if (checkSum == ourCheckSum) { break; }
 
 					LOG_L(L_ERROR, fmtStr, checkSum, playerNum, player->name.c_str(), ourCheckSum, gs->frameNum);
 				}
