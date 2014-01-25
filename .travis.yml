@@ -11,4 +11,10 @@ script:
   - make spring-headless pr-downloader -k -j2
   - tools/pr-downloader/src/pr-downloader DownCount_v2
   - make check
+notifications:
+  irc:
+    channels:
+      - "chat.freenode.net#taspring"
+    on_success: change
+    on_failure: change
 
