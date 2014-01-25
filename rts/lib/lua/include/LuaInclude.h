@@ -149,7 +149,9 @@ static inline T luaL_SpringOpt(lua_State* L, int idx, const T def, T(*lua_optFoo
 		return ret;
 	}
 
-	LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
+	if (!lua_isnoneornil(L, idx)) {
+		LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
+	}
 	return def;
 }
 
@@ -165,7 +167,9 @@ static inline std::string luaL_SpringOptString(lua_State* L, int idx, const std:
 		return ret;
 	}
 
-	LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
+	if (!lua_isnoneornil(L, idx)) {
+		LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
+	}
 	return def;
 }
 
@@ -181,7 +185,9 @@ static inline const char* luaL_SpringOptCString(lua_State* L, int idx, const cha
 		return ret;
 	}
 
-	LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
+	if (!lua_isnoneornil(L, idx)) {
+		LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
+	}
 	*len = strlen(def);
 	return def;
 }
