@@ -28,6 +28,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/Wind.h"
@@ -552,6 +553,38 @@ static int ModelTable(lua_State* L, const void* data) {
 	return 1;
 }
 
+
+static int ColVolTable(lua_State* L, const void* data) {
+	auto cv = static_cast<const CollisionVolume*>(data);
+	assert(cv != NULL);
+
+	lua_newtable(L);
+	switch (cv->GetVolumeType()) {
+		case CollisionVolume::COLVOL_TYPE_ELLIPSOID:
+			HSTR_PUSH_STRING(L, "type", "ellipsoid");
+			break;
+		case CollisionVolume::COLVOL_TYPE_CYLINDER:
+			HSTR_PUSH_STRING(L, "type", "cylinder");
+			break;
+		case CollisionVolume::COLVOL_TYPE_BOX:
+			HSTR_PUSH_STRING(L, "type", "box");
+			break;
+	}
+
+	LuaPushNamedNumber(L, "scaleX", cv->GetScales().x);
+	LuaPushNamedNumber(L, "scaleY", cv->GetScales().y);
+	LuaPushNamedNumber(L, "scaleZ", cv->GetScales().z);
+	LuaPushNamedNumber(L, "offsetX", cv->GetOffsets().x);
+	LuaPushNamedNumber(L, "offsetY", cv->GetOffsets().y);
+	LuaPushNamedNumber(L, "offsetZ", cv->GetOffsets().z);
+	LuaPushNamedNumber(L, "boundingRadius", cv->GetBoundingRadius());
+	LuaPushNamedBool(L, "defaultToSphere",    cv->DefaultToSphere());
+	LuaPushNamedBool(L, "defaultToFootPrint", cv->DefaultToFootPrint());
+	LuaPushNamedBool(L, "defaultToPieceTree", cv->DefaultToPieceTree());
+	return 1;
+}
+
+
 #define TYPE_FUNC(FuncName, LuaType)                           \
 	static int FuncName(lua_State* L, const void* data)        \
 	{                                                          \
@@ -668,6 +701,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("shieldWeaponDef",    ud.shieldWeaponDef,    WeaponDefToID);
 	ADD_FUNCTION("stockpileWeaponDef", ud.stockpileWeaponDef, WeaponDefToID);
 	ADD_FUNCTION("iconType",           ud.iconType,           SafeIconType);
+	ADD_FUNCTION("collisionVolume",    ud.collisionVolume,    ColVolTable);
 
 	ADD_FUNCTION("isTransport", ud, IsTransportUnit);
 	ADD_FUNCTION("isImmobile", ud, IsImmobileUnit);
@@ -695,6 +729,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("minz",    ud, ModelMinz);
 	ADD_FUNCTION("midz",    ud, ModelMidz);
 	ADD_FUNCTION("maxz",    ud, ModelMaxz);
+
+
 
 	ADD_INT("id", ud.id);
 	ADD_INT("cobID", ud.cobID);
