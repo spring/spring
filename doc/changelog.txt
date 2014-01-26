@@ -44,6 +44,14 @@ Lua:
   ! gl.LineWidth & gl.PointSize throw an error when called with incorrect argument (<=0)
   ! gl.Scissor & gl.CreateTexture throw an error on incorrect sizes, too
  ! fix gl.Viewport
+ - add missing colvol tags to Unit-/FeatureDefs:
+  - .collisionVolume.type = {"ellipsoid" | "cylinder" | "box"}
+  - .collisionVolume.scale{X|Y|Z}
+  - .collisionVolume.offset{X|Y|Z}
+  - .collisionVolume.boundingRadius
+  - .collisionVolume.defaultToSphere
+  - .collisionVolume.defaultToFootPrint
+  - .collisionVolume.defaultToPieceTree
 
 Installer:
  - disallow to install spring over existing installations / ask for uninstall first
