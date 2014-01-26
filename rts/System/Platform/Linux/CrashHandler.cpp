@@ -342,7 +342,11 @@ static void ForcedExitAfterFiveSecs() {
 __FORCE_ALIGN_STACK__
 static void ForcedExitAfterTenSecs() {
 	boost::this_thread::sleep(boost::posix_time::seconds(10));
+#if defined(__GNUC__)
+	std::_Exit(-1);
+#else
 	std::quick_exit(-1);
+#endif
 }
 
 
