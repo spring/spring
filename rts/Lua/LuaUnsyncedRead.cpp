@@ -2089,8 +2089,8 @@ int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 {
 	const int keycode = luaL_checkint(L, 1);
-	lua_pushsstring(L, (keyCodes != NULL)? keyCodes->GetName(keycode): "");
-	lua_pushsstring(L, (keyCodes != NULL)? keyCodes->GetDefaultName(keycode): "");
+	lua_pushsstring(L, (keyCodes != 0)? keyCodes->GetName(keycode): "");
+	lua_pushsstring(L, (keyCodes != 0)? keyCodes->GetDefaultName(keycode): "");
 	return 2;
 }
 
