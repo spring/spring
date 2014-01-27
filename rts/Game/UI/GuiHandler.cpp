@@ -1074,16 +1074,26 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 	for (CUnitSet::const_iterator it = selectedUnitsHandler.selectedUnits.begin(); it != selectedUnitsHandler.selectedUnits.end(); ++it) {
 		const CUnit* u = *it;
 
-		// assume mobile units can get within weapon range of groundPos
-		// (mobile *kamikaze* units can attack by blowing themselves up)
-		if (!u->immobile)
-			return (u->unitDef->canKamikaze || !u->weapons.empty());
+		// mobile kamikaze can always move into range
+		//FIXME do a range check in case of immobile kamikaze (-> mines)
+		if (u->unitDef->canKamikaze && !u->immobile)
+			return true;
 
-		for (unsigned int n = 0; n < u->weapons.size(); n++) {
-			u->weapons[n]->AdjustTargetPosToWater(modGroundPos = groundPos, targetUnit == NULL);
+		for (const CWeapon* w: u->weapons) {
+			w->AdjustTargetPosToWater(modGroundPos = groundPos, targetUnit == NULL);
 
-			if (u->weapons[n]->TryTarget(modGroundPos, false, targetUnit)) {
-				return true;
+			if (u->immobile) {
+				// immobile unit
+				// check range and weapon target properties
+				if (w->TryTarget(modGroundPos, false, targetUnit)) {
+					return true;
+				}
+			} else {
+				// mobile units can always move into range
+				// only check if we got a weapon that can shot the target (i.e. anti-air/anti-sub)
+				if (w->TestTarget(modGroundPos, false, targetUnit)) {
+					return true;
+				}
 			}
 		}
 	}
