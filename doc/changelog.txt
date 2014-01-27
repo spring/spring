@@ -52,6 +52,7 @@ Lua:
   - .collisionVolume.defaultToSphere
   - .collisionVolume.defaultToFootPrint
   - .collisionVolume.defaultToPieceTree
+ - add optional 4th argument to Spring.GetUnitSeperation to calc the distance between the unitsphere surfaces instead of their midpos
 
 Installer:
  - disallow to install spring over existing installations / ask for uninstall first
