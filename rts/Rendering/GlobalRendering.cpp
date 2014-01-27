@@ -189,7 +189,7 @@ void CGlobalRendering::PostInit() {
 		haveIntel  = (vendor.find("intel") != std::string::npos);
 		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
 
-		const int useGlslShaders = configHandler->GetBool("ForceShaders");
+		const int useGlslShaders = configHandler->GetInt("ForceShaders");
 		if (useGlslShaders < 0) {
 			// disable Shaders for Mesa & Intel drivers
 			haveARB  &= !haveIntel;
