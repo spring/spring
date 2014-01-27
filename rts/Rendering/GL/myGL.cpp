@@ -17,16 +17,13 @@
 #include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Platform/MessageBox.h"
-
-#ifdef DEBUG //used for StacktraceOnGLErrors
 #include "System/Platform/CrashHandler.h"
+#include "System/Platform/MessageBox.h"
 #include "System/Platform/Threading.h"
-#endif
 
 
 CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false).description("Disables the warning an user will receive if (s)he attempts to run Spring on an outdated and underpowered video card.");
-CONFIG(bool, DebugGL).defaultValue(false);
+CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug feedback. (see GL_ARB_debug_output)");
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
 
