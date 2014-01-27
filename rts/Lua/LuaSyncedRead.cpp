@@ -3732,11 +3732,13 @@ int LuaSyncedRead::GetUnitSeparation(lua_State* L)
 	}
 
 	float dist;
-	//const int args = lua_gettop(L); // number of arguments
 	if (luaL_optboolean(L, 3, false)) {
 		dist = pos1.distance2D(pos2);
 	} else {
 		dist = pos1.distance(pos2);
+	}
+	if (luaL_optboolean(L, 4, false)) {
+		dist = std::max(0.0f, dist - unit1->radius - unit2->radius);
 	}
 	lua_pushnumber(L, dist);
 
