@@ -745,7 +745,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		glPushMatrix();
 			glMultMatrixf(wp->GetTransformMatrix(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE));
 
-			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
+			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p, true, true))) {
 				wp->model->DrawStatic();
 			}
 		glPopMatrix();
@@ -766,7 +766,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 			glTranslatef3(pp->pos);
 			glRotatef(pp->spinAngle, pp->spinVec.x, pp->spinVec.y, pp->spinVec.z);
 
-			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
+			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p, true, true))) {
 				glCallList(pp->dispList);
 			}
 		glPopMatrix();

@@ -300,7 +300,7 @@ class CEventClient
 		virtual bool DrawUnit(const CUnit* unit);
 		virtual bool DrawFeature(const CFeature* feature);
 		virtual bool DrawShield(const CUnit* unit, const CWeapon* weapon);
-		virtual bool DrawProjectile(const CProjectile* projectile);
+		virtual bool DrawProjectile(const CProjectile* projectile, bool drawReflection, bool drawRefraction);
 
 		virtual void GameProgress(int gameFrame);
 
