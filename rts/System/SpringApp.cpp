@@ -327,7 +327,7 @@ bool SpringApp::CreateSDLWindow(const char* title)
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	// Create GL debug context when wanted (allows further GL verbose informations, but runs slower)
-	if (configHandler->GetBool("ReportGLErrors")) {
+	if (configHandler->GetBool("DebugGL")) {
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 	}
 

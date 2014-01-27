@@ -26,8 +26,8 @@
 
 
 CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false).description("Disables the warning an user will receive if (s)he attempts to run Spring on an outdated and underpowered video card.");
-CONFIG(bool, ReportGLErrors).defaultValue(false);
-CONFIG(bool, StacktraceOnGLErrors).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs (only available in DEBUG builds)");
+CONFIG(bool, DebugGL).defaultValue(false);
+CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
 
 static CVertexArray* vertexArray1 = NULL;
@@ -153,12 +153,10 @@ void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
 	LOG_L(L_ERROR, "OpenGL: source<%s> type<%s> id<%u> severity<%s>:\n%s",
 			sourceStr.c_str(), typeStr.c_str(), id, severityStr.c_str(),
 			messageStr.c_str());
-#ifdef DEBUG
-	if (configHandler->GetBool("StacktraceOnGLErrors")) {
-		const std::string threadName = "rendering";
-		CrashHandler::Stacktrace(Threading::GetCurrentThread(), threadName);
+
+	if (configHandler->GetBool("DebugGLStacktraces")) {
+		CrashHandler::Stacktrace(Threading::GetCurrentThread(), "rendering", LOG_LEVEL_WARNING);
 	}
-#endif
 }
 #endif // GL_ARB_debug_output
 
@@ -319,16 +317,6 @@ void LoadExtensions()
 
 	ShowCrappyGpuWarning(glVendor, glRenderer);
 
-	/*{
-		std::string s = (char*)glGetString(GL_EXTENSIONS);
-		for (unsigned int i=0; i<s.length(); i++)
-			if (s[i]==' ') s[i]='\n';
-
-		std::ofstream ofs("ext.txt");
-		if (!ofs.bad() && ofs.is_open())
-			ofs.write(s.c_str(), s.length());
-	}*/
-
 	std::string missingExts = "";
 	if (!GLEW_ARB_multitexture) {
 		missingExts += " GL_ARB_multitexture";
@@ -357,17 +345,15 @@ void LoadExtensions()
 
 	// install OpenGL DebugMessageCallback
 #if defined(GL_ARB_debug_output) && !defined(HEADLESS)
-	if (GLEW_ARB_debug_output && configHandler->GetBool("ReportGLErrors")) {
+	if (GLEW_ARB_debug_output && configHandler->GetBool("DebugGL")) {
 		LOG("Installing OpenGL-DebugMessageHandler");
 		glDebugMessageCallbackARB(&OpenGLDebugMessageCallback, NULL);
 
-	#ifdef DEBUG
-		if (configHandler->GetBool("StacktraceOnGLErrors")) {
+		if (configHandler->GetBool("DebugGLStacktraces")) {
 			// The callback should happen in the thread that made the gl call
 			// so we get proper stacktraces.
 			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
 		}
-	#endif
 	}
 #endif
 
