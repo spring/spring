@@ -444,6 +444,7 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 {
 	{
 	GLuint uniformBlockIndex = glGetUniformBlockIndex(decalShader->GetObjID(), "SGroundLighting");
+	assert(uniformBlockIndex != GL_INVALID_INDEX);
 
 	GLsizei uniformBlockSize = 0;
 	glGetActiveUniformBlockiv(decalShader->GetObjID(), uniformBlockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &uniformBlockSize);
@@ -477,6 +478,7 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 	uboDecalsStructures.Bind(GL_UNIFORM_BUFFER);
 
 	GLuint uniformBlockIndex = glGetUniformBlockIndex(decalShader->GetObjID(), "decals");
+	assert(uniformBlockIndex != GL_INVALID_INDEX);
 
 	GLsizei uniformBlockSize = 0;
 	glGetActiveUniformBlockiv(decalShader->GetObjID(), uniformBlockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &uniformBlockSize);

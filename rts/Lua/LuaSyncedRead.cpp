@@ -3710,24 +3710,17 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 int LuaSyncedRead::GetUnitSeparation(lua_State* L)
 {
 	CUnit* unit1 = ParseUnit(L, __FUNCTION__, 1);
-	if (unit1 == NULL) {
-		return 0;
-	}
 	CUnit* unit2 = ParseUnit(L, __FUNCTION__, 2);
-	if (unit2 == NULL) {
+	if (unit1 == NULL || unit2 == NULL) {
 		return 0;
 	}
 
-	float3 pos1;
-	if (IsAllyUnit(L, unit1)) {
-		pos1 = unit1->midPos;
-	} else {
+	float3 pos1 = unit1->midPos;
+	if (!IsAllyUnit(L, unit1)) {
 		pos1 = unit1->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
 	}
-	float3 pos2;
-	if (IsAllyUnit(L, unit1)) {
-		pos2 = unit2->midPos;
-	} else {
+	float3 pos2 = unit2->midPos;
+	if (!IsAllyUnit(L, unit1)) {
 		pos2 = unit2->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
 	}
 
