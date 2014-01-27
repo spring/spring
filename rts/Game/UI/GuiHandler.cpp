@@ -1071,9 +1071,7 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 	if (dist <= 0.0f)
 		return false;
 
-	for (CUnitSet::const_iterator it = selectedUnitsHandler.selectedUnits.begin(); it != selectedUnitsHandler.selectedUnits.end(); ++it) {
-		const CUnit* u = *it;
-
+	for (const CUnit* u: selectedUnitsHandler.selectedUnits) {
 		// mobile kamikaze can always move into range
 		//FIXME do a range check in case of immobile kamikaze (-> mines)
 		if (u->unitDef->canKamikaze && !u->immobile)

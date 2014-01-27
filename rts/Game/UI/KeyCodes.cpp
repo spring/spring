@@ -14,7 +14,7 @@ CKeyCodes* keyCodes = NULL;
 
 int CKeyCodes::GetCode(const std::string& name) const
 {
-	std::map<std::string, int>::const_iterator it = nameToCode.find(name);
+	const auto it = nameToCode.find(name);
 	if (it == nameToCode.end()) {
 		return -1;
 	}
@@ -24,7 +24,7 @@ int CKeyCodes::GetCode(const std::string& name) const
 
 std::string CKeyCodes::GetName(int code) const
 {
-	std::map<int, std::string>::const_iterator it = codeToName.find(code);
+	const auto it = codeToName.find(code);
 	if (it == codeToName.end()) {
 		char buf[64];
 		SNPRINTF(buf, sizeof(buf), "0x%03X", code);
@@ -36,7 +36,7 @@ std::string CKeyCodes::GetName(int code) const
 
 std::string CKeyCodes::GetDefaultName(int code) const
 {
-	std::map<int, std::string>::const_iterator it = defaultCodeToName.find(code);
+	const auto it = defaultCodeToName.find(code);
 	if (it == defaultCodeToName.end()) {
 		char buf[64];
 		SNPRINTF(buf, sizeof(buf), "0x%03X", code);
@@ -55,7 +55,7 @@ bool CKeyCodes::AddKeySymbol(const std::string& name, int code)
 	const std::string keysym = StringToLower(name);
 
 	// do not allow existing keysyms to be renamed
-	std::map<std::string, int>::const_iterator name_it = nameToCode.find(keysym);
+	const auto name_it = nameToCode.find(keysym);
 	if (name_it != nameToCode.end()) {
 		return false;
 	}
@@ -233,26 +233,24 @@ void CKeyCodes::Reset()
 	AddPair("joyleft",  322);
 	AddPair("joyright", 323);
 
-	// remember our defaults	
-  defaultNameToCode = nameToCode;
-  defaultCodeToName = codeToName;
+	// remember our defaults
+	defaultNameToCode = nameToCode;
+	defaultCodeToName = codeToName;
 }
 
 
 void CKeyCodes::PrintNameToCode() const
 {
-	std::map<std::string, int>::const_iterator it;
-	for (it = nameToCode.begin(); it != nameToCode.end(); ++it) {
-		LOG("KEYNAME: %13s = 0x%03X", it->first.c_str(), it->second);
+	for (const auto& p: nameToCode) {
+		LOG("KEYNAME: %13s = 0x%03X", p.first.c_str(), p.second);
 	}
 }
 
 
 void CKeyCodes::PrintCodeToName() const
 {
-	std::map<int, std::string>::const_iterator it;
-	for (it = codeToName.begin(); it != codeToName.end(); ++it) {
-		LOG("KEYCODE: 0x%03X = '%s'", it->first, it->second.c_str());
+	for (const auto& p: codeToName) {
+		LOG("KEYCODE: 0x%03X = '%s'", p.first, p.second.c_str());
 	}
 }
 
@@ -260,14 +258,12 @@ void CKeyCodes::PrintCodeToName() const
 void CKeyCodes::SaveUserKeySymbols(FILE* file) const
 {
 	bool output = false;
-	std::map<std::string, int>::const_iterator user_it;
-	for (user_it = nameToCode.begin(); user_it != nameToCode.end(); ++user_it) {
-		std::map<std::string, int>::const_iterator def_it;
-		const std::string& keysym = user_it->first;
-		def_it = defaultNameToCode.find(keysym);
+	for (const auto& p: nameToCode) {
+		const std::string& keysym = p.first;
+		const auto def_it = defaultNameToCode.find(keysym);
 		if (def_it == defaultNameToCode.end()) {
 			// this keysym is not standard
-			const int code = user_it->second;
+			const int code = p.second;
 			std::string name = GetDefaultName(code);
 			if (name.empty()) {
 				char buf[16];
