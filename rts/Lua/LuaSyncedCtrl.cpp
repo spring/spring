@@ -2374,7 +2374,7 @@ int LuaSyncedCtrl::RemoveGrass(lua_State* L)
 	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
 	pos.ClampInBounds();
 
-	treeDrawer->RemoveGrass((int)pos.x,(int)pos.z);
+	treeDrawer->RemoveGrass(pos);
 	return 0;
 }
 
