@@ -1149,9 +1149,9 @@ void CAdvTreeDrawer::AddGrass(const float3& pos)
 	grassDrawer->AddGrass(pos);
 }
 
-void CAdvTreeDrawer::RemoveGrass(int x, int z)
+void CAdvTreeDrawer::RemoveGrass(const float3& pos)
 {
-	grassDrawer->RemoveGrass(x, z);
+	grassDrawer->RemoveGrass(pos);
 }
 
 

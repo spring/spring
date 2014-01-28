@@ -21,7 +21,7 @@ public:
 	void DrawShadow();
 	void AddGrass(const float3& pos);
 	void ResetPos(const float3& pos);
-	void RemoveGrass(int x, int z);
+	void RemoveGrass(const float3& pos);
 
 	struct InviewGrass {
 		int num;

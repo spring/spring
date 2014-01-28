@@ -33,7 +33,7 @@ public:
 
 	virtual void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) {}
 	virtual void AddGrass(const float3& pos) {}
-	virtual void RemoveGrass(int x, int z) {}
+	virtual void RemoveGrass(const float3& pos) {}
 	virtual void DrawShadowPass();
 
 	bool WantsEvent(const std::string& eventName) {
