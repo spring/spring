@@ -13,18 +13,18 @@ Major:
 
 Buildprocess:
  - fix freetype not found on windows / mingw
- - add check for gcc >=4.6 at configure
- ! optional fontconfig support
+ ! add check for gcc >=4.6 at configure
+ - optional fontconfig support
  ! SDL2 dependency
 
 Rendering:
- - ReportGLErrors configtag works now (cause of SDL2 switch)
+ - `DebugGL` configtag works now (cause of SDL2 switch)
 
 LuaDefs:
  - the parser now checks the returned tables for NaNs & Infs and prints a warning if it finds some (they are sources of desyncs!)
 
 UnitDefs:
- - add new "harvestStorage" unitdef tag, UnitHarvestStorageFull lua callin and Spring.GetUnitHarvestStorage(unitid)
+ - add new "harvestStorage" unitdef tag, UnitHarvestStorageFull lua callin and Spring.GetUnitHarvestStorage(unitid) callout
    it's for engine assisted starcraft/c&c like feature harvesting (atm only metal is supported)
    NOTE: the unload command still needs to be implemented in lua (much less work than the reclaiming one)
 
@@ -53,9 +53,10 @@ Lua:
   - .collisionVolume.defaultToFootPrint
   - .collisionVolume.defaultToPieceTree
  - add optional 4th argument to Spring.GetUnitSeperation to calc the distance between the unitsphere surfaces instead of their midpos
+ ! fix wrong coords & crash in Spring.RemoveGrass
 
 Installer:
- - disallow to install spring over existing installations / ask for uninstall first
+ ! disallow to install spring over existing installations / ask for uninstall first
  - don't associate .sdf with spring.exe any more
 
 
