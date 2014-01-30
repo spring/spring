@@ -12,7 +12,6 @@ using std::set;
 
 #include "LuaOpenGLUtils.h"
 #include "LuaUnitMaterial.h" // for LuaMatRef
-#include "LuaUniqueBin.h"
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/ShadowHandler.h"
