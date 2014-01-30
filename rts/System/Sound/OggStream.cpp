@@ -270,19 +270,9 @@ void COggStream::Update()
 	spring_time tick = spring_gettime();
 
 	if (!paused) {
-		if (UpdateBuffers()) {
-			if (!IsPlaying()) {
-				// source state changed
-				if (!StartPlaying()) {
-					// stream stopped
-					ReleaseBuffers();
-				} else {
-					// stream interrupted
-					ReleaseBuffers();
-				}
-			}
-		} else if (!IsPlaying()) {
-			// EOS and all chunks processed by OpenALs
+		UpdateBuffers();
+
+		if (!IsPlaying()) {
 			ReleaseBuffers();
 		}
 
