@@ -67,6 +67,8 @@ public:
 	CGameHelper();
 	~CGameHelper();
 
+	CGameHelper(const CGameHelper&) = delete; // no-copy
+
 	static void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
 	static void GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
 	static CUnit* GetClosestUnit(const float3& pos, float searchRadius);
@@ -180,6 +182,7 @@ private:
 
 	struct ObjectCache {
 	public:
+		ObjectCache() : numUnits(0), numFeatures(0) {}
 		bool Empty() const { return (units.empty() || features.empty()); }
 		void Init(unsigned int maxUnits, unsigned int maxFeatures) {
 			units.resize(maxUnits, NULL);

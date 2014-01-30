@@ -162,26 +162,26 @@ static int UnitDefIndex(lua_State* L)
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
 	const UnitDef* ud = static_cast<const UnitDef*>(userData);
 	const DataElement& elem = it->second;
-	const char* p = ((const char*)ud) + elem.offset;
+	const void* p = ((const char*)ud) + elem.offset;
 	switch (elem.type) {
 		case READONLY_TYPE: {
 			lua_rawget(L, 1);
 			return 1;
 		}
 		case INT_TYPE: {
-			lua_pushnumber(L, *((int*)p));
+			lua_pushnumber(L, *reinterpret_cast<const int*>(p));
 			return 1;
 		}
 		case BOOL_TYPE: {
-			lua_pushboolean(L, *((bool*)p));
+			lua_pushboolean(L, *reinterpret_cast<const bool*>(p));
 			return 1;
 		}
 		case FLOAT_TYPE: {
-			lua_pushnumber(L, *((float*)p));
+			lua_pushnumber(L, *reinterpret_cast<const float*>(p));
 			return 1;
 		}
 		case STRING_TYPE: {
-			lua_pushsstring(L, *((string*)p));
+			lua_pushsstring(L, *reinterpret_cast<const std::string*>(p));
 			return 1;
 		}
 		case FUNCTION_TYPE: {
@@ -226,7 +226,7 @@ static int UnitDefNewIndex(lua_State* L)
 
 	// Definition editing
 	const DataElement& elem = it->second;
-	const char* p = ((const char*)ud) + elem.offset;
+	const void* p = ((const char*)ud) + elem.offset;
 
 	switch (elem.type) {
 		case FUNCTION_TYPE:

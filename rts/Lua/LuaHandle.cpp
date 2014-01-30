@@ -166,13 +166,12 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 	// do not signal floating point exceptions in user Lua code
 	ScopedDisableFpuExceptions fe;
 
-	int loadError = 0;
-	int callError = 0;
+	const int loadError = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
 	bool ret = true;
 
-	if ((loadError = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str())) == 0) {
+	if (loadError == 0) {
 		SetHandleRunning(L, true);
-		callError = lua_pcall(L, 0, 0, 0);
+		const int callError = lua_pcall(L, 0, 0, 0);
 		SetHandleRunning(L, false);
 		assert(!IsHandleRunning(L));
 

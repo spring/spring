@@ -72,6 +72,8 @@ public:
 	CGameServer(const std::string& hostIP, int hostPort, const GameData* const gameData, const CGameSetup* const setup);
 	~CGameServer();
 
+	CGameServer(const CGameServer&) = delete; // no-copy
+
 	void AddLocalClient(const std::string& myName, const std::string& myVersion);
 
 	void AddAutohostInterface(const std::string& autohostIP, const int autohostPort);
