@@ -159,36 +159,6 @@ bool CLuaHandle::AddEntriesToTable(lua_State* L, const char* name,
 }
 
 
-bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
-{
-	lua_settop(L, 0);
-
-	// do not signal floating point exceptions in user Lua code
-	ScopedDisableFpuExceptions fe;
-
-	const int loadError = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
-	bool ret = true;
-
-	if (loadError == 0) {
-		SetHandleRunning(L, true);
-		const int callError = lua_pcall(L, 0, 0, 0);
-		SetHandleRunning(L, false);
-		assert(!IsHandleRunning(L));
-
-		if (callError != 0) {
-			LOG_L(L_ERROR, "Lua LoadCode pcall error = %i, %s, %s", callError, debug.c_str(), lua_tostring(L, -1));
-			lua_pop(L, 1);
-			ret = false;
-		}
-	} else {
-		LOG_L(L_ERROR, "Lua LoadCode loadbuffer error = %i, %s, %s", loadError, debug.c_str(), lua_tostring(L, -1));
-		lua_pop(L, 1);
-		ret = false;
-	}
-
-	return ret;
-}
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -343,9 +313,10 @@ int CLuaHandle::RunCallInTraceback(
 					lua_pop(luaState, outArgs - dbgOutArgs); // only leave traceback str on the stack
 				} else if (outArgs < dbgOutArgs) {
 					LOG_L(L_ERROR, "Internal Lua error: stack corrupted");
+					lua_pushnil(luaState); // to make the code below valid
 				}
 
-				trace += "[Internal Lua error: Traceback failure] ";
+				trace += "[Internal Lua error: Call failure] ";
 				trace += luaL_optstring(luaState, -1, "[No traceback returned]");
 				lua_pop(luaState, 1); // pop traceback string
 
@@ -391,7 +362,33 @@ bool CLuaHandle::RunCallInTraceback(lua_State* L, const LuaHashString& hs, int i
 	return true;
 }
 
+/******************************************************************************/
+/******************************************************************************/
 
+bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
+{
+	lua_settop(L, 0);
+
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
+
+	const int loadError = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
+	bool ret = true;
+
+	if (loadError == 0) {
+		static const LuaHashString cmdStr("Initialize");
+
+		// call the routine
+		ret = RunCallInTraceback(L, cmdStr, 0, 0, traceBack.GetErrFuncIdx(), false);
+	} else {
+		LOG_L(L_ERROR, "Lua LoadCode loadbuffer error = %i, %s, %s", loadError, debug.c_str(), lua_tostring(L, -1));
+		lua_pop(L, 1);
+		ret = false;
+	}
+
+	return ret;
+}
+
+/******************************************************************************/
 /******************************************************************************/
 
 void CLuaHandle::Shutdown()
