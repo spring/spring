@@ -220,13 +220,14 @@ int CLuaHandle::XCall(lua_State* srcState, const string& funcName)
 	int retCount;
 
 	if (srcState == L) {
+		lua_insert(L, 1); // move the function to the beginning
+
 		// call the function
 		if (!RunCallIn(L, funcHash, top, LUA_MULTRET)) {
 			return 0;
 		}
 		retCount = lua_gettop(L);
-	}
-	else {
+	} else {
 		const int srcCount = lua_gettop(srcState);
 
 		LuaUtils::CopyData(L, srcState, srcCount);
@@ -244,10 +245,11 @@ int CLuaHandle::XCall(lua_State* srcState, const string& funcName)
 
 		retCount = lua_gettop(L) - top;
 
+		lua_settop(srcState, 0); // pop all passed arguments on caller stack
 		if (retCount > 0) {
-			LuaUtils::CopyData(srcState, L, retCount);
+			LuaUtils::CopyData(srcState, L, retCount); // push the new returned arguments on caller stack
 		}
-		lua_settop(L, top);
+		lua_settop(L, top); // revert the callee stack
 	}
 
 	return retCount;
