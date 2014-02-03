@@ -1166,7 +1166,7 @@ int CLuaUnitScript::SetUnitValue(lua_State* L, CUnitScript* script, int arg)
 	const int val = luaL_checkint(L, arg++);
 	int param;
 	if (args == 1) {
-		param = luaL_checkint(L, arg++);
+		param = lua_isboolean(L, arg) ? int(lua_toboolean(L, arg++)) : luaL_checkint(L, arg++);
 	}
 	else {
 		const int x = luaL_checkint(L, arg++);
