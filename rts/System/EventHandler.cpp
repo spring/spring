@@ -378,6 +378,7 @@ bool CEventHandler::SyncedActionFallback(const string& line, int playerID)
 			++i; /* the call-in may remove itself from the list */ \
 	}
 
+
 void CEventHandler::Save(zipFile archive)
 {
 	ITERATE_EVENTCLIENTLIST(Save, archive);
@@ -479,13 +480,9 @@ void CEventHandler::Load(IArchive* archive)
 	ITERATE_EVENTCLIENTLIST(Load, archive);
 }
 
-#define EVENTHANDLER_CHECK(name, ...) \
-	const int count = list ## name.size(); \
-	if (count <= 0) \
-		return __VA_ARGS__;
+
 void CEventHandler::Update()
 {
-	EVENTHANDLER_CHECK(Update);
 	ITERATE_EVENTCLIENTLIST(Update);
 }
 
@@ -520,13 +517,11 @@ void CEventHandler::DeleteSyncedObjects() {
 
 void CEventHandler::SunChanged(const float3& sunDir)
 {
-	EVENTHANDLER_CHECK(SunChanged);
 	ITERATE_EVENTCLIENTLIST(SunChanged, sunDir);
 }
 
 void CEventHandler::ViewResize()
 {
-	EVENTHANDLER_CHECK(ViewResize);
 	ITERATE_EVENTCLIENTLIST(ViewResize);
 }
 
@@ -540,7 +535,8 @@ void CEventHandler::GameProgress(int gameFrame)
 #define DRAW_CALLIN(name)                         \
   void CEventHandler:: Draw ## name ()            \
   {                                               \
-    EVENTHANDLER_CHECK(Draw ## name);             \
+    if (listDraw ## name.empty())                 \
+      return;                                     \
     LuaOpenGL::EnableDraw ## name ();             \
     listDraw ## name [0]->Draw ## name ();        \
                                                   \
@@ -569,7 +565,6 @@ DRAW_CALLIN(InMiniMap)
 #define DRAW_ENTITY_CALLIN(name, args, args2)     \
   bool CEventHandler:: Draw ## name args        \
   {                                               \
-    EVENTHANDLER_CHECK(Draw ## name, false);      \
     bool skipEngineDrawing = false;               \
     for (int i = 0; i < listDraw ## name.size(); ) { \
       CEventClient* ec = listDraw ## name [i];    \
@@ -588,74 +583,54 @@ DRAW_ENTITY_CALLIN(Projectile, (const CProjectile* projectile), (projectile))
 /******************************************************************************/
 /******************************************************************************/
 
+#define CONTROL_REVERSE_ITERATE_DEF_TRUE(name, ...) \
+	for (int i = list##name.size() - 1; i >= 0; --i) { \
+		CEventClient* ec = list##name[i]; \
+		if (ec->name(__VA_ARGS__)) \
+			return true; \
+	}
+
+#define CONTROL_REVERSE_ITERATE_STRING(name, ...) \
+	for (int i = list##name.size() - 1; i >= 0; --i) { \
+		CEventClient* ec = list##name[i]; \
+		const std::string& str = ec->name(__VA_ARGS__); \
+		if (!str.empty()) \
+			return str; \
+	}
+
 bool CEventHandler::CommandNotify(const Command& cmd)
 {
-	EVENTHANDLER_CHECK(CommandNotify, false);
-
-	// reverse order, user has the override
-	for (int i = (count - 1); i >= 0; i--) {
-		CEventClient* ec = listCommandNotify[i];
-		if (ec->CommandNotify(cmd)) {
-			return true;
-		}
-	}
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(CommandNotify, cmd)
 	return false;
 }
 
 
 bool CEventHandler::KeyPress(int key, bool isRepeat)
 {
-	EVENTHANDLER_CHECK(KeyPress, false);
-
-	// reverse order, user has the override
-	for (int i = (count - 1); i >= 0; i--) {
-		CEventClient* ec = listKeyPress[i];
-		if (ec->KeyPress(key, isRepeat)) {
-			return true;
-		}
-	}
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(KeyPress, key, isRepeat)
 	return false;
 }
 
 
 bool CEventHandler::KeyRelease(int key)
 {
-	EVENTHANDLER_CHECK(KeyRelease, false);
-
-	// reverse order, user has the override
-	for (int i = (count - 1); i >= 0; i--) {
-		CEventClient* ec = listKeyRelease[i];
-		if (ec->KeyRelease(key)) {
-			return true;
-		}
-	}
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(KeyRelease, key)
 	return false;
 }
 
 
 bool CEventHandler::TextInput(const std::string& utf8)
 {
-	EVENTHANDLER_CHECK(TextInput, false);
-
-	// reverse order, user has the override
-	for (int i = (count - 1); i >= 0; i--) {
-		CEventClient* ec = listTextInput[i];
-		if (ec->TextInput(utf8)) {
-			return true;
-		}
-	}
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(TextInput, utf8)
 	return false;
 }
 
 
 bool CEventHandler::MousePress(int x, int y, int button)
 {
-	EVENTHANDLER_CHECK(MousePress, false);
-
-	// reverse order, user has the override
-	for (int i = (count - 1); i >= 0; i--) {
+	for (int i = listMousePress.size() - 1; i >= 0; --i) {
 		CEventClient* ec = listMousePress[i];
-		if (ec->MousePress(x, y, button)) {
+		if (ec->MousePress(x,y,button)) {
 			if (!mouseOwner)
 				mouseOwner = ec;
 			return true;
@@ -686,86 +661,48 @@ bool CEventHandler::MouseMove(int x, int y, int dx, int dy, int button)
 
 bool CEventHandler::MouseWheel(bool up, float value)
 {
-	EVENTHANDLER_CHECK(MouseWheel, false);
-
-	// reverse order, user has the override
-	for (int i = (count - 1); i >= 0; i--) {
-		CEventClient* ec = listMouseWheel[i];
-		if (ec->MouseWheel(up, value)) {
-			return true;
-		}
-	}
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(MouseWheel, up, value)
 	return false;
 }
 
 bool CEventHandler::JoystickEvent(const std::string& event, int val1, int val2)
 {
-	EVENTHANDLER_CHECK(JoystickEvent, false);
-
-	// reverse order, user has the override
-	for (int i = (count - 1); i >= 0; i--) {
-		CEventClient* ec = listMouseWheel[i];
-		if (ec->JoystickEvent(event, val1, val2)) {
-			return true;
-		}
-	}
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(JoystickEvent, event, val1, val2)
 	return false;
 }
 
 bool CEventHandler::IsAbove(int x, int y)
 {
-	EVENTHANDLER_CHECK(IsAbove, false);
-
-	// reverse order, user has the override
-	for (int i = (count - 1); i >= 0; i--) {
-		CEventClient* ec = listIsAbove[i];
-		if (ec->IsAbove(x, y)) {
-			return true;
-		}
-	}
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(IsAbove, x, y)
 	return false;
 }
 
 string CEventHandler::GetTooltip(int x, int y)
 {
-	EVENTHANDLER_CHECK(GetTooltip, "");
-
-	// reverse order, user has the override
-	for (int i = (count - 1); i >= 0; i--) {
-		CEventClient* ec = listGetTooltip[i];
-		const string tt = ec->GetTooltip(x, y);
-		if (!tt.empty()) {
-			return tt;
-		}
-	}
+	CONTROL_REVERSE_ITERATE_STRING(GetTooltip, x, y)
 	return "";
 }
 
 
 bool CEventHandler::AddConsoleLine(const std::string& msg, const std::string& section, int level)
 {
-	EVENTHANDLER_CHECK(AddConsoleLine, false);
+	if (listAddConsoleLine.empty())
+		return false;
 
 	ITERATE_EVENTCLIENTLIST(AddConsoleLine, msg, section, level);
-
 	return true;
 }
 
 
 void CEventHandler::LastMessagePosition(const float3& pos)
 {
-	EVENTHANDLER_CHECK(LastMessagePosition);
-
 	ITERATE_EVENTCLIENTLIST(LastMessagePosition, pos);
 }
 
 
 bool CEventHandler::GroupChanged(int groupID)
 {
-	EVENTHANDLER_CHECK(GroupChanged, false);
-
 	ITERATE_EVENTCLIENTLIST(GroupChanged, groupID);
-
 	return false;
 }
 
@@ -774,15 +711,7 @@ bool CEventHandler::GroupChanged(int groupID)
 bool CEventHandler::GameSetup(const string& state, bool& ready,
                                   const map<int, string>& playerStates)
 {
-	EVENTHANDLER_CHECK(GameSetup, false);
-
-	// reverse order, user has the override
-	for (int i = (count - 1); i >= 0; i--) {
-		CEventClient* ec = listGameSetup[i];
-		if (ec->GameSetup(state, ready, playerStates)) {
-			return true;
-		}
-	}
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(GameSetup, state, ready, playerStates)
 	return false;
 }
 
@@ -791,16 +720,7 @@ string CEventHandler::WorldTooltip(const CUnit* unit,
                                    const CFeature* feature,
                                    const float3* groundPos)
 {
-	EVENTHANDLER_CHECK(WorldTooltip, "");
-
-	// reverse order, user has the override
-	for (int i = (count - 1); i >= 0; i--) {
-		CEventClient* ec = listWorldTooltip[i];
-		const string tt = ec->WorldTooltip(unit, feature, groundPos);
-		if (!tt.empty()) {
-			return tt;
-		}
-	}
+	CONTROL_REVERSE_ITERATE_STRING(WorldTooltip, unit, feature, groundPos)
 	return "";
 }
 
@@ -809,15 +729,7 @@ bool CEventHandler::MapDrawCmd(int playerID, int type,
                                const float3* pos0, const float3* pos1,
                                    const string* label)
 {
-	EVENTHANDLER_CHECK(MapDrawCmd, false);
-
-	// reverse order, user has the override
-	for (int i = (count - 1); i >= 0; i--) {
-		CEventClient* ec = listMapDrawCmd[i];
-		if (ec->MapDrawCmd(playerID, type, pos0, pos1, label)) {
-			return true;
-		}
-	}
+	CONTROL_REVERSE_ITERATE_DEF_TRUE(MapDrawCmd, playerID, type, pos0, pos1, label)
 	return false;
 }
 
