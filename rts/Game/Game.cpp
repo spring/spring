@@ -161,6 +161,7 @@
 
 #include <boost/cstdint.hpp>
 #include <boost/thread.hpp>
+#include "lib/lua/include/LuaUser.h"
 
 #undef CreateDirectory
 
@@ -1166,6 +1167,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 
 bool CGame::Draw() {
+
 	const spring_time currentTimePreUpdate = spring_gettime();
 
 	if (UpdateUnsynced(currentTimePreUpdate))
@@ -1301,7 +1303,8 @@ bool CGame::Draw() {
 
 		if (!hideInterface) {
 			std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-			for (auto ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
+			std::list<CInputReceiver*>::reverse_iterator ri;
+			for (ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
 				CInputReceiver* rcvr = *ri;
 				if (rcvr) {
 					rcvr->Draw();
@@ -1317,8 +1320,51 @@ bool CGame::Draw() {
 
 	glEnable(GL_TEXTURE_2D);
 
+	#define DBG_FONT_FLAGS (FONT_SCALE | FONT_NORM | FONT_SHADOW)
 	#define KEY_FONT_FLAGS (FONT_SCALE | FONT_CENTER | FONT_NORM)
 	#define INF_FONT_FLAGS (FONT_RIGHT | FONT_SCALE | FONT_NORM | (FONT_OUTLINE * guihandler->GetOutlineFonts()))
+
+	if (globalRendering->drawdebug) {
+		//print some infos (fps,gameframe,particles)
+		font->Begin();
+		font->SetTextColor(1,1,0.5f,0.8f);
+
+		font->glFormat(0.03f, 0.02f, 1.0f, DBG_FONT_FLAGS, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d)",
+		    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, projectileHandler->syncedProjectiles.size() + projectileHandler->unsyncedProjectiles.size(), projectileHandler->currentParticles);
+
+		// 16ms := 60fps := 30simFPS + 30drawFPS
+		font->glFormat(0.03f, 0.07f, 0.7f, DBG_FONT_FLAGS, "avgFrame: %s%2.1fms\b avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
+		   (gu->avgFrameTime     > 30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
+		   (gu->avgDrawFrameTime > 16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
+		   (gu->avgSimFrameTime  > 16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime
+		);
+
+		const int2 pfsUpdates = pathManager->GetNumQueuedUpdates();
+		const char* fmtString = "[%s-PFS] queued updates: %i %i";
+
+		switch (pathManager->GetPathFinderType()) {
+			case PFS_TYPE_DEFAULT: {
+				font->glFormat(0.03f, 0.12f, 0.7f, DBG_FONT_FLAGS, fmtString, "DEFAULT", pfsUpdates.x, pfsUpdates.y);
+			} break;
+			case PFS_TYPE_QTPFS: {
+				font->glFormat(0.03f, 0.12f, 0.7f, DBG_FONT_FLAGS, fmtString, "QT", pfsUpdates.x, pfsUpdates.y);
+			} break;
+		}
+
+		SLuaInfo luaInfo = {0, 0, 0, 0};
+		spring_lua_alloc_get_stats(&luaInfo);
+
+		font->glFormat(
+			0.03f, 0.15f, 0.7f, DBG_FONT_FLAGS,
+			"Lua-allocated memory: %.1fMB (%.5uK allocs : %.5u usecs : %.1u states)",
+			luaInfo.allocedBytes / 1024.0f / 1024.0f,
+			luaInfo.numLuaAllocs / 1000,
+			luaInfo.luaAllocTime,
+			luaInfo.numLuaStates
+		);
+
+		font->End();
+	}
 
 	if (userWriting) {
 		DrawInputText();
@@ -1383,8 +1429,6 @@ bool CGame::Draw() {
 
 	const spring_time currentTimePostDraw = spring_gettime();
 	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, (currentTimePostDraw - currentTimePreDraw).toMilliSecsf(), 0.05f);
-
-	eventHandler.DbgTimingInfo("video", currentTimePreDraw, currentTimePostDraw);
 
 	return true;
 }
@@ -1580,8 +1624,6 @@ void CGame::SimFrame() {
 	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, (lastSimFrameTime - lastFrameTime).toMilliSecsf(), 0.05f);
 	gu->avgSimFrameTime = std::max(gu->avgSimFrameTime, 0.001f);
 
-	eventHandler.DbgTimingInfo("simulation", lastFrameTime, lastSimFrameTime);
-
 	#ifdef HEADLESS
 	{
 		const float msecMaxSimFrameTime = 1000.0f / (GAME_SPEED * gs->wantedSpeedFactor);
@@ -1606,8 +1648,11 @@ void CGame::SimFrame() {
 void CGame::UpdateUI(bool updateCam)
 {
 	if (updateCam) {
-		FPSUnitController& fpsCon = playerHandler->Player(gu->myPlayerNum)->fpsController;
+		CPlayer* player = playerHandler->Player(gu->myPlayerNum);
+		FPSUnitController& fpsCon = player->fpsController;
+
 		if (fpsCon.oldDCpos != ZeroVector) {
+
 			camHandler->GetCurrentController().SetPos(fpsCon.oldDCpos);
 			fpsCon.oldDCpos = ZeroVector;
 		}
