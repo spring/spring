@@ -475,6 +475,12 @@ void CEventHandler::CollectGarbage()
 }
 
 
+void CEventHandler::DbgTimingInfo(const char* name, const spring_time& start, const spring_time& end)
+{
+	ITERATE_EVENTCLIENTLIST(DbgTimingInfo, name, start, end);
+}
+
+
 void CEventHandler::Load(IArchive* archive)
 {
 	ITERATE_EVENTCLIENTLIST(Load, archive);

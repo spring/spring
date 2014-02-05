@@ -865,8 +865,10 @@ int SpringApp::Update()
 	}
 
 	ScopedTimer cputimer("SwapBuffers");
+	spring_time pre = spring_now();
 	VSync.Delay();
 	SDL_GL_SwapWindow(window);
+	eventHandler.DbgTimingInfo("swap", pre, spring_now());
 	return ret;
 }
 

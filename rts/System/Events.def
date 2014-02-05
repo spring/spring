@@ -184,7 +184,8 @@
 	SETUP_UNMANAGED_EVENT(LoadProgress,   UNSYNCED_BIT);
 
 	// System
-	SETUP_EVENT(CollectGarbage,     MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(CollectGarbage,  MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(DbgTimingInfo,   MANAGED_BIT | UNSYNCED_BIT); // informs about video-/sim-frame start & end times
 
 
 #ifndef SETUP_EVENT
