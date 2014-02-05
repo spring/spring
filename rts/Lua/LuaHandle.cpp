@@ -2378,7 +2378,7 @@ void CLuaHandle::CollectGarbage()
 		if (avgTimePerLoopIter < (maxLuaGarbageCollectTime * 0.075f)) gcsteps++;
 	}
 
-	//eventHandler.DbgTimingInfo("garbagecollection", startTime, finishTime);
+	eventHandler.DbgTimingInfo("garbagecollection", startTime, finishTime);
 }
 
 /******************************************************************************/
