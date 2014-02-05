@@ -20,9 +20,9 @@ CEventClient::CEventClient(const std::string& _name, int _order, bool _synced)
 
 CEventClient::~CEventClient()
 {
-	//! No, we can't autobind all clients in the ctor.
-	//! eventHandler.AddClient() calls CEventClient::WantsEvent() that is
-	//! virtual and so not available during the initialization.
+	// No, we can't autobind all clients in the ctor.
+	// eventHandler.AddClient() calls CEventClient::WantsEvent() that is
+	// virtual and so not available during the initialization.
 	eventHandler.RemoveClient(this);
 }
 
