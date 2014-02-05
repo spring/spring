@@ -2370,7 +2370,7 @@ void CLuaHandle::CollectGarbage()
 
 	const spring_time finishTime = spring_gettime();
 
-	if (gcsteps > 1) {
+	if (gcsteps > 1 && numLuaGarbageCollectIters > 0) {
 		// runtime optimize number of steps to process in a batch
 		const float avgTimePerLoopIter = (finishTime - startTime).toMilliSecsf() / numLuaGarbageCollectIters;
 
