@@ -78,6 +78,9 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 	D.owner = this;
 	L = LUA_OPEN(&D);
 
+	L_GC = lua_newthread(L);
+	luaL_ref(L,LUA_REGISTRYINDEX);
+
 	// needed for engine traceback
 	PushTracebackFuncToRegistry(L);
 }
@@ -172,7 +175,6 @@ void CLuaHandle::CheckStack()
 		LOG_L(L_WARNING, "%s stack check: top = %i", GetName().c_str(), top);
 		lua_settop(L, 0);
 	}
-	assert(!IsRunning());
 }
 
 
@@ -278,8 +280,7 @@ int CLuaHandle::RunCallInTraceback(
 			LuaOpenGL::CheckMatrixState(state, func, error);
 			matTracker.PopMatrixState(prevMatState);
 
-			handle->SetHandleRunning(state, false);
-			assert(oldRun == CLuaHandle::IsHandleRunning(luaState));
+			handle->SetHandleRunning(state, oldRun);
 		}
 
 		~ScopedLuaCall() {
@@ -2324,53 +2325,60 @@ const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, in
 /******************************************************************************/
 /******************************************************************************/
 
-CONFIG(float, MaxLuaGarbageCollectionTime ).defaultValue(1000.0f / GAME_SPEED).minimumValue(1.0f).description("in MilliSecs");
-CONFIG(  int, MaxLuaGarbageCollectionSteps).defaultValue(10000               ).minimumValue(1   );
+CONFIG(float, MaxLuaGarbageCollectionTime ).defaultValue(5.f).minimumValue(1.0f).description("in MilliSecs");
+
 
 void CLuaHandle::CollectGarbage()
 {
-	//LOG("CLuaHandle::CollectGarbage %s", GetName().c_str());
-
-	lua_gc(L, LUA_GCSTOP, 0); // don't collect garbage outside of this function
-
-	static const float maxLuaGarbageCollectTime  = configHandler->GetFloat("MaxLuaGarbageCollectionTime" );
-	static const   int maxLuaGarbageCollectSteps = configHandler->GetInt  ("MaxLuaGarbageCollectionSteps");
+	lua_lock(L_GC);
+	//SCOPED_MT_TIMER("CollectGarbage"); // this func doesn't run in parallel yet, cause of problems with IsHandleRunning()
 
 	// kilobytes --> megabytes (note: total footprint INCLUDING garbage)
-	const int luaMemFootPrint = lua_gc(L, LUA_GCCOUNT, 0) / 1024;
+	int luaMemFootPrint = lua_gc(L_GC, LUA_GCCOUNT, 0) / 1024;
 
-	// 25MB --> 20usecs, 100MB --> 100usecs (30x per second)
-	const float rawRunTime = luaMemFootPrint * (0.02f + 0.08f * smoothstep(25, 100, luaMemFootPrint));
-	const float maxRunTime = std::min(rawRunTime, maxLuaGarbageCollectTime);
+	// 30x per second !!!
+	static const float maxLuaGarbageCollectTime = configHandler->GetFloat("MaxLuaGarbageCollectionTime" );
+	const float maxRunTime = smoothstep(10, 100, luaMemFootPrint) * maxLuaGarbageCollectTime;
 
 	const spring_time startTime = spring_gettime();
 	const spring_time endTime = startTime + spring_msecs(maxRunTime);
-
-	// collect garbage until time runs out or the maximum
-	// number of steps is exceeded, whichever comes first
-
 	static int gcsteps = 10;
 	int numLuaGarbageCollectIters = 0;
 
-	assert(!IsRunning());
-	SetHandleRunning(L, true);
+	const bool oldIsRunning = IsHandleRunning(L_GC);
+	SetHandleRunning(L_GC, true);
 
-	while ((numLuaGarbageCollectIters++ < maxLuaGarbageCollectSteps) && (spring_gettime() < endTime)) {
-		if (lua_gc(L, LUA_GCSTEP, gcsteps)) {
-			// garbage-collection finished
+	// collect garbage until time runs out
+	while (spring_gettime() < endTime) {
+		numLuaGarbageCollectIters++;
+		if (lua_gc(L_GC, LUA_GCSTEP, gcsteps)) {
+			// garbage-collection cycle finished
 			break;
 		}
+
+		// check if garbage-collection finished (MB precision is enough)
+		int luaMemFootPrintNow = lua_gc(L_GC, LUA_GCCOUNT, 0) / 1024;
+		if (luaMemFootPrintNow >= luaMemFootPrint) {
+			break;
+		}
+		luaMemFootPrint = luaMemFootPrintNow;
 	}
 
-	SetHandleRunning(L, false);
+	lua_gc(L_GC, LUA_GCSTOP, 0); // don't collect garbage outside of this function
+	SetHandleRunning(L_GC, oldIsRunning);
+	lua_unlock(L_GC);
+
+	const spring_time finishTime = spring_gettime();
 
 	if (gcsteps > 1) {
 		// runtime optimize number of steps to process in a batch
-		const float avgTimePerLoopIter = (spring_gettime() - startTime).toMilliSecsf() / numLuaGarbageCollectIters;
+		const float avgTimePerLoopIter = (finishTime - startTime).toMilliSecsf() / numLuaGarbageCollectIters;
 
 		if (avgTimePerLoopIter > (maxLuaGarbageCollectTime * 0.150f)) gcsteps--;
 		if (avgTimePerLoopIter < (maxLuaGarbageCollectTime * 0.075f)) gcsteps++;
 	}
+
+	//eventHandler.DbgTimingInfo("garbagecollection", startTime, finishTime);
 }
 
 /******************************************************************************/

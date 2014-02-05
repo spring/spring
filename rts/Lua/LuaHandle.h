@@ -273,6 +273,8 @@ class CLuaHandle : public CEventClient
 		lua_State* L;
 		luaContextData D;
 
+		lua_State* L_GC;
+
 		bool killMe;
 		string killMsg;
 
