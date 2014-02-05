@@ -8,7 +8,7 @@ Major:
  - switch from sdl to sdl2:
   - add /fullscreen command ingame
   - fixes some window manager bugs/problems
- - utf8 support (kudos got to N0U)
+ - utf8 support (kudos go to N0U)
  - split LuaRules & LuaGaia into their synced/unsynced luaStates
 
 Buildprocess:
@@ -16,6 +16,9 @@ Buildprocess:
  ! add check for gcc >=4.6 at configure
  - optional fontconfig support
  ! SDL2 dependency
+
+Misc:
+ - improve debug draw (alt+[b])
 
 Rendering:
  - `DebugGL` configtag works now (cause of SDL2 switch)
@@ -54,6 +57,9 @@ Lua:
   - .collisionVolume.defaultToPieceTree
  - add optional 4th argument to Spring.GetUnitSeperation to calc the distance between the unitsphere surfaces instead of their midpos
  ! fix wrong coords & crash in Spring.RemoveGrass
+
+LUS:
+ - SetUnitValue now accepts booleans, too
 
 Installer:
  ! disallow to install spring over existing installations / ask for uninstall first
