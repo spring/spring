@@ -3,11 +3,13 @@
 #ifndef EVENT_CLIENT_H
 #define EVENT_CLIENT_H
 
-#include "System/float3.h"
 #include <string>
 #include <vector>
 #include <map>
 #include <typeinfo>
+
+#include "System/float3.h"
+#include "System/Misc/SpringTime.h"
 
 #ifdef __APPLE__
 // defined in X11/X.h
@@ -308,6 +310,7 @@ class CEventClient
 		virtual void LoadProgress(const std::string& msg, const bool replace_lastline);
 
 		virtual void CollectGarbage();
+		virtual void DbgTimingInfo(const char* name, const spring_time& start, const spring_time& end);
 		/// @}
 };
 

@@ -145,6 +145,7 @@ void CEventClient::DrawLoadScreen() {}
 void CEventClient::LoadProgress(const std::string& msg, const bool replace_lastline) {}
 
 void CEventClient::CollectGarbage() {}
+void CEventClient::DbgTimingInfo(const char* name, const spring_time& start, const spring_time& end) {}
 
 // from LuaUI
 bool CEventClient::KeyPress(int key, bool isRepeat) { return false; }
