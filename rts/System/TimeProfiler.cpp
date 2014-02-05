@@ -109,7 +109,7 @@ ScopedTimer::~ScopedTimer()
 
 ScopedOnceTimer::~ScopedOnceTimer()
 {
-	LOG("%s: %lli ms", GetName().c_str(), spring_diffmsecs(spring_gettime(), starttime));
+	LOG("%s: %i ms", GetName().c_str(), int(spring_diffmsecs(spring_gettime(), starttime)));
 }
 
 
