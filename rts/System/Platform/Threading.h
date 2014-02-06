@@ -79,8 +79,6 @@ namespace Threading {
 	void SetSimThread(bool set);
 	bool IsSimThread();
 
-	bool UpdateGameController(CGameController* ac);
-
 	void SetLuaBatchThread(bool set);
 	bool IsLuaBatchThread();
 

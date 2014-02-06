@@ -857,7 +857,7 @@ int SpringApp::Update()
 
 	int ret = 1;
 	if (activeController) {
-		ret = Threading::UpdateGameController(activeController);
+		ret = activeController->Update();
 		if (ret) {
 			ScopedTimer cputimer("GameController::Draw");
 			ret = activeController->Draw();
