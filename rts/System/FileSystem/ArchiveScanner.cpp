@@ -382,18 +382,43 @@ const std::string& CArchiveScanner::GetFilename() const
 
 void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs, bool doChecksum)
 {
-	// add the archives
-	std::vector<std::string>::const_iterator dir;
-	for (dir = scanDirs.begin(); dir != scanDirs.end(); ++dir) {
-		if (FileSystem::DirExists(*dir)) {
-			LOG("Scanning: %s", dir->c_str());
-			Scan(*dir, doChecksum);
+	// scan for all archives
+	std::list<std::string> foundArchives;
+	for (const std::string& dir: scanDirs) {
+		if (FileSystem::DirExists(dir)) {
+			LOG("Scanning: %s", dir.c_str());
+			Scan(dir, &foundArchives);
+		}
+	}
+
+	// Create archiveInfos etc. when not being in cache already
+	for (const std::string& archive: foundArchives) {
+		LOG("Scanning A: %s", archive.c_str());
+		ScanArchive(archive, doChecksum);
+	#if !defined(DEDICATED) && !defined(UNITSYNC)
+		Watchdog::ClearTimer(WDT_MAIN);
+	#endif
+	}
+
+	// Now we'll have to parse the replaces-stuff found in the mods
+	for (auto& aii: archiveInfos) {
+		for (auto& replaceName: aii.second.archiveData.GetReplaces()) {
+			const std::string lcname = StringToLower(replaceName);
+			ArchiveInfo& ai = archiveInfos[lcname];
+
+			// Overwrite the info for this archive with a replaced pointer
+			ai.path = "";
+			ai.origName = lcname;
+			ai.modified = 1;
+			ai.archiveData = ArchiveData();
+			ai.updated = true;
+			ai.replaced = aii.first;
 		}
 	}
 }
 
 
-void CArchiveScanner::Scan(const std::string& curPath, bool doChecksum)
+void CArchiveScanner::Scan(const std::string& curPath, std::list<std::string>* foundArchives)
 {
 	isDirty = true;
 
@@ -406,17 +431,9 @@ void CArchiveScanner::Scan(const std::string& curPath, bool doChecksum)
 		const std::vector<std::string>& found = dataDirsAccess.FindFiles(subDirs.front(), "*", FileQueryFlags::INCLUDE_DIRS);
 		subDirs.pop_front();
 
-		for (auto f: found) {
-			std::string fullName = f;
-
-			// Strip
-			const char lastFullChar = fullName[fullName.size() - 1];
-			if ((lastFullChar == '/') || (lastFullChar == '\\')) {
-				fullName = fullName.substr(0, fullName.size() - 1);
-			}
-
-			const std::string fpath = FileSystem::GetDirectory(fullName);
-			const std::string lcfpath = StringToLower(fpath);
+		for (auto fullName: found) {
+			FileSystem::EnsureNoPathSepAtEnd(fullName);
+			const std::string lcfpath = StringToLower(FileSystem::GetDirectory(fullName));
 
 			// Exclude archivefiles found inside directory archives (.sdd)
 			if (lcfpath.find(".sdd") != std::string::npos) {
@@ -429,56 +446,28 @@ void CArchiveScanner::Scan(const std::string& curPath, bool doChecksum)
 				continue;
 			}
 
-		#if       !defined(DEDICATED) && !defined(UNITSYNC)
-			Watchdog::ClearTimer(WDT_MAIN);
-		#endif // !defined(DEDICATED) && !defined(UNITSYNC)
-
 			// Is this an archive we should look into?
 			if (archiveLoader.IsArchiveFile(fullName)) {
-				ScanArchive(fullName, doChecksum);
+				foundArchives->push_front(fullName); // push by reversed order!
 			} else
 			if (FileSystem::DirExists(fullName)) {
 				subDirs.push_back(fullName);
 			}
 		}
 	}
-
-	// Now we'll have to parse the replaces-stuff found in the mods
-	for (auto aii: archiveInfos) {
-		for (auto i: aii.second.archiveData.GetReplaces()) {
-			const std::string lcname = StringToLower(i);
-			auto ar = archiveInfos.find(lcname);
-
-			// If it's not there, we will create a new entry
-			if (ar == archiveInfos.end()) {
-				ArchiveInfo tmp;
-				archiveInfos[lcname] = tmp;
-				ar = archiveInfos.find(lcname);
-			}
-
-			// Overwrite the info for this archive with a replaced pointer
-			ar->second.path = "";
-			ar->second.origName = lcname;
-			ar->second.modified = 1;
-
-			ArchiveData empty;
-			ar->second.archiveData = empty;
-			ar->second.updated = true;
-			ar->second.replaced = aii.first;
-		}
-	}
 }
 
 static void AddDependency(std::vector<std::string>& deps, const std::string& dependency)
 {
-	for (std::vector<std::string>::iterator it = deps.begin(); it != deps.end(); ++it) {
-		if (*it == dependency) {
+	for (const std::string& dep: deps) {
+		if (dep == dependency) {
 			return;
 		}
 	}
 
 	deps.push_back(dependency);
 }
+
 
 void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 {
@@ -562,69 +551,37 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		const std::string lowerName = StringToLower(name);
 		const std::string ext = FileSystem::GetExtension(lowerName);
 
-		if ((ext == "smf") || (ext == "sm3")) {
+		if ((ext == "smf") || (ext == "sm3"))
 			mapfile = name;
-		}
 
-		const unsigned char metaFileClass = GetMetaFileClass(lowerName);
-		if ((metaFileClass != 0) && !(ar->HasLowReadingCost(fid))) {
-			// is a meta-file and not cheap to read
-			if (metaFileClass == 1) {
-				// 1st class
-				error = "Unpacking/reading cost for meta file " + name
-						+ " is too high, please repack the archive (make sure to use a non-solid algorithm, if applicable)";
-				break;
-			} else if (metaFileClass == 2) {
-				// 2nd class
-				LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING,
-						"Archive %s: The cost for reading a 2nd-class meta-file is too high: %s",
-						fullName.c_str(), name.c_str());
-			}
+		const auto metaFileClass = CArchiveScanner::GetMetaFileClass(lowerName);
+		if ((metaFileClass == 0) || ar->HasLowReadingCost(fid))
+			continue;
+
+		// is a meta-file and not cheap to read
+		if (metaFileClass == 1) {
+			// 1st class
+			error = "Unpacking/reading cost for meta file " + name
+					+ " is too high, please repack the archive (make sure to use a non-solid algorithm, if applicable)";
+			break;
+		} else if (metaFileClass == 2) {
+			// 2nd class
+			LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING,
+					"Archive %s: The cost for reading a 2nd-class meta-file is too high: %s",
+					fullName.c_str(), name.c_str());
 		}
 	}
 
 	ArchiveInfo ai;
-	if (hasMapinfo || !mapfile.empty()) {
-		// it is a map
-		if (hasMapinfo) {
-			ScanArchiveLua(ar.get(), "mapinfo.lua", ai, error);
-		} else if (hasModinfo) {
-			// backwards-compat for modinfo.lua in maps
-			ScanArchiveLua(ar.get(), "modinfo.lua", ai, error);
-		}
-
-		if (ai.archiveData.GetName().empty()) {
-			// FIXME The name will never be empty, if version is set (see HACK in ArchiveData)
-			ai.archiveData.SetInfoItemValueString("name_pure", FileSystem::GetBasename(mapfile));
-			ai.archiveData.SetInfoItemValueString("name", FileSystem::GetBasename(mapfile));
-		}
-		if (ai.archiveData.GetMapFile().empty()) {
-			ai.archiveData.SetInfoItemValueString("mapfile", mapfile);
-		}
-
-		AddDependency(ai.archiveData.GetDependencies(), "Map Helper v1");
-		ai.archiveData.SetInfoItemValueInteger("modType", modtype::map);
-
-		LOG_S(LOG_SECTION_ARCHIVESCANNER, "Found new map: %s",
-				ai.archiveData.GetNameVersioned().c_str());
+	auto& ad = ai.archiveData;
+	if (hasMapinfo) {
+		ScanArchiveLua(ar.get(), "mapinfo.lua", ai, error);
 	} else if (hasModinfo) {
-		// it is a mod
 		ScanArchiveLua(ar.get(), "modinfo.lua", ai, error);
-		if (ai.archiveData.GetModType() == modtype::primary) {
-			AddDependency(ai.archiveData.GetDependencies(), "Spring content v1");
-		}
-
-		LOG_S(LOG_SECTION_ARCHIVESCANNER, "Found new game: %s",
-				ai.archiveData.GetNameVersioned().c_str());
-	} else {
-		// neither a map nor a mod: error
-		error = "missing modinfo.lua/mapinfo.lua";
 	}
-
 	if (!error.empty()) {
 		// for some reason, the archive is marked as broken
-		LOG_L(L_WARNING, "Failed to scan %s (%s)",
-				fullName.c_str(), error.c_str());
+		LOG_L(L_WARNING, "Failed to scan %s (%s)", fullName.c_str(), error.c_str());
 
 		// record it as broken, so we don't need to look inside everytime
 		BrokenArchive ba;
@@ -636,43 +593,56 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		return;
 	}
 
+	if (hasMapinfo || !mapfile.empty()) {
+		// it is a map
+		if (ad.GetName().empty()) {
+			// FIXME The name will never be empty, if version is set (see HACK in ArchiveData)
+			ad.SetInfoItemValueString("name_pure", FileSystem::GetBasename(mapfile));
+			ad.SetInfoItemValueString("name", FileSystem::GetBasename(mapfile));
+		}
+		if (ad.GetMapFile().empty()) {
+			ad.SetInfoItemValueString("mapfile", mapfile);
+		}
+
+		AddDependency(ad.GetDependencies(), "Map Helper v1");
+		ad.SetInfoItemValueInteger("modType", modtype::map);
+
+		LOG_S(LOG_SECTION_ARCHIVESCANNER, "Found new map: %s", ad.GetNameVersioned().c_str());
+	} else if (hasModinfo) {
+		// it is a game
+		if (ad.GetModType() == modtype::primary) {
+			AddDependency(ad.GetDependencies(), "Spring content v1");
+		}
+
+		LOG_S(LOG_SECTION_ARCHIVESCANNER, "Found new game: %s", ad.GetNameVersioned().c_str());
+	} else {
+		// neither a map nor a mod: error
+		error = "missing modinfo.lua/mapinfo.lua";
+	}
+
 	ai.path = fpath;
 	ai.modified = info.st_mtime;
 	ai.origName = fn;
 	ai.updated = true;
-
-	// Optionally calculate a checksum for the file
-	// To prevent reading all files in all directory (.sdd) archives
-	// every time this function is called, directory archive checksums
-	// are calculated on the fly.
-	if (doChecksum) {
-		ai.checksum = GetCRC(fullName);
-	} else {
-		ai.checksum = 0;
-	}
-
+	ai.checksum = (doChecksum) ? GetCRC(fullName) : 0;
 	archiveInfos[lcfn] = ai;
 }
 
 bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err)
 {
 	std::vector<boost::uint8_t> buf;
-	if (!ar->GetFile(fileName, buf)) {
+	if (!ar->GetFile(fileName, buf) || buf.empty()) {
 		return false;
 	}
 
-	const std::string cleanbuf((char*)(&buf[0]), buf.size());
-	LuaParser p(cleanbuf, SPRING_VFS_MOD);
-
+	LuaParser p(std::string((char*)(&buf[0]), buf.size()), SPRING_VFS_MOD);
 	if (!p.Execute()) {
 		err = "Error in " + fileName + ": " + p.GetErrorLog();
 		return false;
 	}
 
-	const LuaTable& archiveTable = p.GetRoot();
-
 	try {
-		ai.archiveData = CArchiveScanner::ArchiveData(archiveTable, false);
+		ai.archiveData = CArchiveScanner::ArchiveData(p.GetRoot(), false);
 
 		if (!ai.archiveData.IsValid(err)) {
 			err = "Error in " + fileName + ": " + err;
@@ -690,12 +660,9 @@ IFileFilter* CArchiveScanner::CreateIgnoreFilter(IArchive* ar)
 {
 	IFileFilter* ignore = IFileFilter::Create();
 	std::vector<boost::uint8_t> buf;
-	if (ar->GetFile("springignore.txt", buf)) {
+	if (ar->GetFile("springignore.txt", buf) || buf.empty()) {
 		// this automatically splits lines
-		if (!buf.empty()) {
-			const std::string cleanbuf((char*)(&buf[0]), buf.size());
-			ignore->AddRule(cleanbuf);
-		}
+		ignore->AddRule(std::string((char*)(&buf[0]), buf.size()));
 	}
 	return ignore;
 }
@@ -749,8 +716,8 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	std::vector<CRCPair> crcs;
 	crcs.reserve(files.size());
 	CRCPair crcp;
-	for (std::list<std::string>::iterator it = files.begin(); it != files.end(); ++it) {
-		crcp.filename = &(*it);
+	for (std::string& f: files) {
+		crcp.filename = &f;
 		crcs.push_back(crcp);
 	}
 
@@ -772,23 +739,19 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	});
 
 	// Add file CRCs to the main archive CRC
-	for (std::vector<CRCPair>::iterator it = crcs.begin(); it != crcs.end(); ++it) {
-		crc.Update(it->nameCRC);
-		crc.Update(it->dataCRC);
+	for (CRCPair& crcp: crcs) {
+		crc.Update(crcp.nameCRC);
+		crc.Update(crcp.dataCRC);
 	#if !defined(DEDICATED) && !defined(UNITSYNC)
 		Watchdog::ClearTimer();
 	#endif
 	}
 
-	unsigned int digest = crc.GetDigest();
-
 	// A value of 0 is used to indicate no crc.. so never return that
 	// Shouldn't happen all that often
-	if (digest == 0) {
-		return 4711;
-	} else {
-		return digest;
-	}
+	unsigned int digest = crc.GetDigest();
+	if (digest == 0) digest = 4711;
+	return digest;
 }
 
 void CArchiveScanner::ReadCacheData(const std::string& filename)
@@ -799,14 +762,11 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 	}
 
 	LuaParser p(filename, SPRING_VFS_RAW, SPRING_VFS_BASE);
-
 	if (!p.Execute()) {
-		LOG_L(L_ERROR, "Failed to parse archive cache: %s",
-				p.GetErrorLog().c_str());
+		LOG_L(L_ERROR, "Failed to parse archive cache: %s", p.GetErrorLog().c_str());
 		return;
 	}
 	const LuaTable archiveCache = p.GetRoot();
-	const LuaTable archives = archiveCache.SubTable("archives");
 
 	// Do not load old version caches
 	const int ver = archiveCache.GetInt("internalVer", (INTERNAL_VER + 1));
@@ -814,12 +774,14 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		return;
 	}
 
+	const LuaTable archives = archiveCache.SubTable("archives");
 	for (int i = 1; archives.KeyExists(i); ++i) {
 		const LuaTable curArchive = archives.SubTable(i);
 		const LuaTable archived = curArchive.SubTable("archivedata");
-		ArchiveInfo ai;
+		std::string name = curArchive.GetString("name", "");
 
-		ai.origName = curArchive.GetString("name", "");
+		ArchiveInfo& ai = archiveInfos[StringToLower(name)];
+		ai.origName = name;
 		ai.path     = curArchive.GetString("path", "");
 
 		// do not use LuaTable.GetInt() for 32-bit integers, the Spring lua
@@ -835,25 +797,19 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		} else if (ai.archiveData.GetModType() == modtype::primary) {
 			AddDependency(ai.archiveData.GetDependencies(), "Spring content v1");
 		}
-
-		std::string lcname = StringToLower(ai.origName);
-		archiveInfos[lcname] = ai;
 	}
 
 	const LuaTable brokenArchives = archiveCache.SubTable("brokenArchives");
-
 	for (int i = 1; brokenArchives.KeyExists(i); ++i) {
 		const LuaTable curArchive = brokenArchives.SubTable(i);
-		BrokenArchive ba;
 		std::string name = curArchive.GetString("name", "");
+		StringToLowerInPlace(name);
 
+		BrokenArchive& ba = this->brokenArchives[name];
 		ba.path = curArchive.GetString("path", "");
 		ba.modified = strtoul(curArchive.GetString("modified", "0").c_str(), 0, 10);
 		ba.updated = false;
 		ba.problem = curArchive.GetString("problem", "unknown");
-
-		StringToLowerInPlace(name);
-		this->brokenArchives[name] = ba;
 	}
 
 	isDirty = false;
@@ -873,17 +829,8 @@ static inline void SafeStr(FILE* out, const char* prefix, const std::string& str
 
 void FilterDep(std::vector<std::string>& deps, const std::string& exclude)
 {
-	bool clean = true;
-	do {
-		clean = true;
-		for (std::vector<std::string>::iterator it = deps.begin(); it != deps.end(); ++it) {
-			if (*it == exclude) {
-				deps.erase(it);
-				clean = false;
-				break;
-			}
-		}
-	} while (!clean);
+	auto it = std::remove_if(deps.begin(), deps.end(), [&](const std::string& dep) { return (dep == exclude); });
+	deps.erase(it, deps.end());
 };
 
 void CArchiveScanner::WriteCacheData(const std::string& filename)
