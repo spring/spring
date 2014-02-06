@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <map>
 #include "System/Info.h"
 
@@ -178,7 +179,7 @@ private:
 
 private:
 	void ScanDirs(const std::vector<std::string>& dirs, bool checksum = false);
-	void Scan(const std::string& curPath, bool doChecksum);
+	void Scan(const std::string& curPath, std::list<std::string>* foundArchives);
 
 	/// scan mapinfo / modinfo lua files
 	bool ScanArchiveLua(IArchive* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err);
