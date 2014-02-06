@@ -178,7 +178,7 @@ static void DrawFrameBarCode()
 	va->DrawArray0(GL_QUADS);
 
 	// title
-	font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS, "Frame Grapher (%.2fsec)", maxHist);
+	font->glFormat(drawArea[0], drawArea[3] + 10 * globalRendering->pixelY, 0.7f, FONT_TOP | DBG_FONT_FLAGS, "Frame Grapher (%.2fsec)", maxHist);
 
 	// gc frames
 	glColor4f(1.0f,0.5f,1.0f, 0.55f);
@@ -335,11 +335,11 @@ static void DrawInfoText()
 	//print some infos (fps,gameframe,particles)
 	font->SetTextColor(1,1,0.5f,0.8f);
 
-	font->glFormat(0.03f, 0.02f, 1.0f, DBG_FONT_FLAGS, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d)",
+	font->glFormat(0.01f, 0.02f, 1.0f, DBG_FONT_FLAGS, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d)",
 	    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, projectileHandler->syncedProjectiles.size() + projectileHandler->unsyncedProjectiles.size(), projectileHandler->currentParticles);
 
 	// 16ms := 60fps := 30simFPS + 30drawFPS
-	font->glFormat(0.03f, 0.07f, 0.7f, DBG_FONT_FLAGS, "avgFrame: %s%2.1fms\b avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
+	font->glFormat(0.01f, 0.07f, 0.7f, DBG_FONT_FLAGS, "avgFrame: %s%2.1fms\b avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
 	   (gu->avgFrameTime     > 30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
 	   (gu->avgDrawFrameTime > 16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
 	   (gu->avgSimFrameTime  > 16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime
@@ -350,10 +350,10 @@ static void DrawInfoText()
 
 	switch (pathManager->GetPathFinderType()) {
 		case PFS_TYPE_DEFAULT: {
-			font->glFormat(0.03f, 0.12f, 0.7f, DBG_FONT_FLAGS, fmtString, "DEFAULT", pfsUpdates.x, pfsUpdates.y);
+			font->glFormat(0.01f, 0.12f, 0.7f, DBG_FONT_FLAGS, fmtString, "DEFAULT", pfsUpdates.x, pfsUpdates.y);
 		} break;
 		case PFS_TYPE_QTPFS: {
-			font->glFormat(0.03f, 0.12f, 0.7f, DBG_FONT_FLAGS, fmtString, "QT", pfsUpdates.x, pfsUpdates.y);
+			font->glFormat(0.01f, 0.12f, 0.7f, DBG_FONT_FLAGS, fmtString, "QT", pfsUpdates.x, pfsUpdates.y);
 		} break;
 	}
 
@@ -361,7 +361,7 @@ static void DrawInfoText()
 	spring_lua_alloc_get_stats(&luaInfo);
 
 	font->glFormat(
-		0.03f, 0.15f, 0.7f, DBG_FONT_FLAGS,
+		0.01f, 0.15f, 0.7f, DBG_FONT_FLAGS,
 		"Lua-allocated memory: %.1fMB (%.5uK allocs : %.5u usecs : %.1u states)",
 		luaInfo.allocedBytes / 1024.0f / 1024.0f,
 		luaInfo.numLuaAllocs / 1000,
