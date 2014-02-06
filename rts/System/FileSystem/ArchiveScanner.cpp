@@ -392,17 +392,19 @@ void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs, bool do
 	}
 
 	// check for duplicates reached by links
-	for (auto it = foundArchives.begin(); it != foundArchives.end(); ++it) {
+	/*for (auto it = foundArchives.begin(); it != foundArchives.end(); ++it) {
 		auto jt = it;
 		++jt;
 		while (jt != foundArchives.end()) {
-			if (FileSystem::ComparePaths(*it, *jt)) {
+			std::string f1 = StringToLower(FileSystem::GetFilename(*it));
+			std::string f2 = StringToLower(FileSystem::GetFilename(*jt));
+			if ((f1 == f2) || FileSystem::ComparePaths(*it, *jt)) {
 				jt = foundArchives.erase(jt);
 			} else {
 				++jt;
 			}
 		}
-	}
+	}*/
 
 	// Create archiveInfos etc. when not being in cache already
 	for (const std::string& archive: foundArchives) {
