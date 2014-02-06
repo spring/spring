@@ -33,6 +33,7 @@ static std::deque<TimeSlice> vidFrames;
 static std::deque<TimeSlice> simFrames;
 static std::deque<TimeSlice> lgcFrames;
 static std::deque<TimeSlice> swpFrames;
+static std::deque<TimeSlice> uusFrames;
 
 
 ProfileDrawer::ProfileDrawer()
@@ -183,6 +184,10 @@ static void DrawFrameBarCode()
 	glColor4f(1.0f,0.5f,1.0f, 0.55f);
 	DrawTimeSlice(lgcFrames, curTime, maxHist, drawArea);
 
+	// updateunsynced frames
+	glColor4f(1.0f,1.0f,0.0f, 0.9f);
+	DrawTimeSlice(uusFrames, curTime, maxHist, drawArea);
+
 	// video swap frames
 	glColor4f(0.0f,0.0f,1.0f, 0.55f);
 	DrawTimeSlice(swpFrames, curTime, maxHist, drawArea);
@@ -207,8 +212,8 @@ static void DrawFrameBarCode()
 		va->AddVertex0(xf + 10 * globalRendering->pixelX, drawArea[1], 0.0f);
 
 		// draw scale (horizontal bar that indicates 30FPS timing length)
-		const float xs1 = drawArea[0] +         0.0f * (drawArea[2] - drawArea[0]);
-		const float xs2 = drawArea[0] + maxHist/30.f * (drawArea[2] - drawArea[0]);
+		const float xs1 = drawArea[2] - 1.f/(30.f*maxHist) * (drawArea[2] - drawArea[0]);
+		const float xs2 = drawArea[2] +               0.0f * (drawArea[2] - drawArea[0]);
 		va->AddVertex0(xs1, drawArea[3] +  2 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(xs1, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(xs2, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
@@ -232,7 +237,7 @@ static void DrawProfiler()
 			va->AddVertex0(start_x, end_y-profiler.profile.size()*0.024f-0.01f, 0);
 			va->AddVertex0(end_x,   end_y-profiler.profile.size()*0.024f-0.01f, 0);
 		glColor4f(0.0f, 0.0f, 0.5f, 0.5f);
-		va->DrawArray0(GL_QUADS);
+		va->DrawArray0(GL_TRIANGLE_STRIP);
 	}
 
 	std::map<std::string, CTimeProfiler::TimeRecord>::iterator pi;
@@ -449,4 +454,7 @@ void ProfileDrawer::DbgTimingInfo(const char* name, const spring_time& start, co
 	else
 	if (name == "swap")
 		swpFrames.emplace_back(start, end);
+	else
+	if (name == "updateunsynced")
+		uusFrames.emplace_back(start, end);
 }
