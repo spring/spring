@@ -1161,6 +1161,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 	eventHandler.Update();
 
+	eventHandler.DbgTimingInfo("updateunsynced", currentTime, spring_now());
 	return false;
 }
 
