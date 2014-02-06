@@ -354,7 +354,7 @@ CArchiveScanner::CArchiveScanner()
 
 	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
 	std::vector<std::string> scanDirs;
-	for (std::vector<std::string>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
+	for (auto d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
 		scanDirs.push_back(*d + "maps");
 		scanDirs.push_back(*d + "base");
 		scanDirs.push_back(*d + "games");
@@ -387,13 +387,25 @@ void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs, bool do
 	for (const std::string& dir: scanDirs) {
 		if (FileSystem::DirExists(dir)) {
 			LOG("Scanning: %s", dir.c_str());
-			Scan(dir, &foundArchives);
+			ScanDir(dir, &foundArchives);
+		}
+	}
+
+	// check for duplicates reached by links
+	for (auto it = foundArchives.begin(); it != foundArchives.end(); ++it) {
+		auto jt = it;
+		++jt;
+		while (jt != foundArchives.end()) {
+			if (FileSystem::ComparePaths(*it, *jt)) {
+				jt = foundArchives.erase(jt);
+			} else {
+				++jt;
+			}
 		}
 	}
 
 	// Create archiveInfos etc. when not being in cache already
 	for (const std::string& archive: foundArchives) {
-		LOG("Scanning A: %s", archive.c_str());
 		ScanArchive(archive, doChecksum);
 	#if !defined(DEDICATED) && !defined(UNITSYNC)
 		Watchdog::ClearTimer(WDT_MAIN);
@@ -402,11 +414,10 @@ void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs, bool do
 
 	// Now we'll have to parse the replaces-stuff found in the mods
 	for (auto& aii: archiveInfos) {
-		for (auto& replaceName: aii.second.archiveData.GetReplaces()) {
+		for (std::string& replaceName: aii.second.archiveData.GetReplaces()) {
+			// Overwrite the info for this archive with a replaced pointer
 			const std::string lcname = StringToLower(replaceName);
 			ArchiveInfo& ai = archiveInfos[lcname];
-
-			// Overwrite the info for this archive with a replaced pointer
 			ai.path = "";
 			ai.origName = lcname;
 			ai.modified = 1;
@@ -418,7 +429,7 @@ void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs, bool do
 }
 
 
-void CArchiveScanner::Scan(const std::string& curPath, std::list<std::string>* foundArchives)
+void CArchiveScanner::ScanDir(const std::string& curPath, std::list<std::string>* foundArchives)
 {
 	isDirty = true;
 
@@ -431,7 +442,7 @@ void CArchiveScanner::Scan(const std::string& curPath, std::list<std::string>* f
 		const std::vector<std::string>& found = dataDirsAccess.FindFiles(subDirs.front(), "*", FileQueryFlags::INCLUDE_DIRS);
 		subDirs.pop_front();
 
-		for (auto fullName: found) {
+		for (std::string fullName: found) {
 			FileSystem::EnsureNoPathSepAtEnd(fullName);
 			const std::string lcfpath = StringToLower(FileSystem::GetDirectory(fullName));
 
@@ -459,12 +470,8 @@ void CArchiveScanner::Scan(const std::string& curPath, std::list<std::string>* f
 
 static void AddDependency(std::vector<std::string>& deps, const std::string& dependency)
 {
-	for (const std::string& dep: deps) {
-		if (dep == dependency) {
-			return;
-		}
-	}
-
+	auto it = std::find(deps.begin(), deps.end(), dependency);
+	if (it != deps.end()) return;
 	deps.push_back(dependency);
 }
 
@@ -475,10 +482,6 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	const std::string fpath = FileSystem::GetDirectory(fullName);
 	const std::string lcfn  = StringToLower(fn);
 
-	// Cache variables
-	std::map<std::string, ArchiveInfo>::iterator aii;
-	bool cached = false;
-
 	// Stat file
 	struct stat info = {0};
 	int statfailed = stat(fullName.c_str(), &info);
@@ -486,7 +489,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	// If stat fails, assume the archive is not broken nor cached
 	if (!statfailed) {
 		// Determine whether this archive has earlier be found to be broken
-		auto bai = brokenArchives.find(lcfn);
+		std::map<std::string, BrokenArchive>::iterator bai = brokenArchives.find(lcfn);
 		if (bai != brokenArchives.end()) {
 			if ((unsigned)info.st_mtime == bai->second.modified && fpath == bai->second.path) {
 				bai->second.updated = true;
@@ -495,16 +498,26 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		}
 
 		// Determine whether to rely on the cached info or not
-		if ((aii = archiveInfos.find(lcfn)) != archiveInfos.end()) {
+		std::map<std::string, ArchiveInfo>::iterator aii = archiveInfos.find(lcfn);
+		if (aii != archiveInfos.end()) {
 			// This archive may have been obsoleted, do not process it if so
 			if (!aii->second.replaced.empty()) {
 				return;
 			}
 
 			if ((unsigned)info.st_mtime == aii->second.modified && fpath == aii->second.path) {
+				// cache found update checksum if wanted
 				aii->second.updated = true;
-				cached = true;
+				if (doChecksum && (aii->second.checksum == 0)) {
+					aii->second.checksum = GetCRC(fullName);
+				}
+				return;
 			} else {
+				if (aii->second.updated) {
+					LOG_L(L_WARNING, "Found a \"%s\" already in \"%s\", ignoring one in \"%s\"", aii->first.c_str(), aii->second.path.c_str(), fpath.c_str());
+					return;
+				}
+
 				// If we are here, we could have invalid info in the cache
 				// Force a reread if it is a directory archive (.sdd), as
 				// st_mtime only reflects changes to the directory itself,
@@ -514,26 +527,16 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		}
 	}
 
-	// Time to parse the info we are interested in
-	if (cached) {
-		// If cached is true, aii will point to the archive
-		if (doChecksum && (aii->second.checksum == 0)) {
-			aii->second.checksum = GetCRC(fullName);
-		}
-		return;
-	}
-
 	boost::scoped_ptr<IArchive> ar(archiveLoader.OpenArchive(fullName));
 	if (!ar || !ar->IsOpen()) {
-		LOG("Unable to open archive: %s", fullName.c_str());
+		LOG_L(L_WARNING, "Unable to open archive: %s", fullName.c_str());
 
 		// record it as broken, so we don't need to look inside everytime
-		BrokenArchive ba;
+		BrokenArchive& ba = brokenArchives[lcfn];
 		ba.path = fpath;
 		ba.modified = info.st_mtime;
 		ba.updated = true;
 		ba.problem = "Unable to open archive";
-		brokenArchives[lcfn] = ba;
 		return;
 	}
 
@@ -584,12 +587,11 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		LOG_L(L_WARNING, "Failed to scan %s (%s)", fullName.c_str(), error.c_str());
 
 		// record it as broken, so we don't need to look inside everytime
-		BrokenArchive ba;
+		BrokenArchive& ba = brokenArchives[lcfn];
 		ba.path = fpath;
 		ba.modified = info.st_mtime;
 		ba.updated = true;
 		ba.problem = error;
-		brokenArchives[lcfn] = ba;
 		return;
 	}
 
@@ -963,16 +965,16 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() cons
 	std::vector<ArchiveData> ret;
 
 	for (std::map<std::string, ArchiveInfo>::const_iterator i = archiveInfos.begin(); i != archiveInfos.end(); ++i) {
-		if (!(i->second.archiveData.GetName().empty()) && (i->second.archiveData.GetModType() == modtype::primary)) {
+		const ArchiveData& aid = i->second.archiveData;
+		if ((!aid.GetName().empty()) && (aid.GetModType() == modtype::primary)) {
 			// Add the archive the mod is in as the first dependency
-			ArchiveData md = i->second.archiveData;
+			ArchiveData md = aid;
 			md.GetDependencies().insert(md.GetDependencies().begin(), i->second.origName);
 			ret.push_back(md);
 		}
 	}
 
 	sortByName(ret);
-
 	return ret;
 }
 
@@ -982,16 +984,16 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 	std::vector<ArchiveData> ret;
 
 	for (std::map<std::string, ArchiveInfo>::const_iterator i = archiveInfos.begin(); i != archiveInfos.end(); ++i) {
-		if (!(i->second.archiveData.GetName().empty()) && ((i->second.archiveData.GetModType() == modtype::primary) || (i->second.archiveData.GetModType() == modtype::hidden))) {
+		const ArchiveData& aid = i->second.archiveData;
+		if ((!aid.GetName().empty()) && ((aid.GetModType() & (modtype::primary | modtype::hidden)) != 0)) {
 			// Add the archive the mod is in as the first dependency
-			ArchiveData md = i->second.archiveData;
+			ArchiveData md = aid;
 			md.GetDependencies().insert(md.GetDependencies().begin(), i->second.origName);
 			ret.push_back(md);
 		}
 	}
 
 	sortByName(ret);
-
 	return ret;
 }
 
@@ -1072,8 +1074,7 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 			return aii->second.archiveData.GetMapFile();
 		}
 	}
-	LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING,
-			"map file of %s not found", s.c_str());
+	LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING, "map file of %s not found", s.c_str());
 	return s;
 }
 
@@ -1089,8 +1090,7 @@ unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& name) 
 		return 0;
 	}
 
-	LOG_S(LOG_SECTION_ARCHIVESCANNER,"%s checksum: %d/%u",
-			name.c_str(), aii->second.checksum, aii->second.checksum);
+	LOG_S(LOG_SECTION_ARCHIVESCANNER,"%s checksum: %d/%u", name.c_str(), aii->second.checksum, aii->second.checksum);
 	return aii->second.checksum;
 }
 
@@ -1102,8 +1102,7 @@ unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name
 	for (unsigned int a = 0; a < ars.size(); a++) {
 		checksum ^= GetSingleArchiveChecksum(ars[a]);
 	}
-	LOG_S(LOG_SECTION_ARCHIVESCANNER, "archive checksum %s: %d/%u",
-			name.c_str(), checksum, checksum);
+	LOG_S(LOG_SECTION_ARCHIVESCANNER, "archive checksum %s: %d/%u", name.c_str(), checksum, checksum);
 	return checksum;
 }
 
