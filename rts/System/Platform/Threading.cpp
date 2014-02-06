@@ -373,13 +373,6 @@ namespace Threading {
 	bool IsSimThread() {
 		return ((!simThreadID)? false : NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *simThreadID));
 	}
-	bool UpdateGameController(CGameController* ac) {
-		SetSimThread(true);
-		bool ret = ac->Update();
-		SetSimThread(false);
-		return ret;
-	}
-
 	void SetLuaBatchThread(bool set) {
 		if (set) {
 			luaBatchThreadID = Threading::GetCurrentThreadId();
@@ -390,7 +383,6 @@ namespace Threading {
 	bool IsLuaBatchThread() {
 		return ((!luaBatchThreadID)? false : NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *luaBatchThreadID));
 	}
-
 
 	void SetThreadName(const std::string& newname)
 	{
