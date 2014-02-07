@@ -340,15 +340,9 @@ bool CArchiveScanner::ArchiveData::GetInfoValueBool(const std::string& key) cons
 CArchiveScanner::CArchiveScanner()
 : isDirty(false)
 {
-	std::ostringstream file;
-
 	// the "cache" dir is created in DataDirLocater
-	file << FileSystem::GetCacheDir();
-	file << FileSystem::GetNativePathSeparator();
-	file << "ArchiveCache.lua";
-
-	cachefile = file.str();
-	ReadCacheData(dataDirLocater.GetWriteDirPath() + GetFilename());
+	cachefile = dataDirLocater.GetWriteDirPath() + FileSystem::EnsurePathSepAtEnd(FileSystem::GetCacheBaseDir()) + "ArchiveCache.lua";
+	ReadCacheData(GetFilepath());
 
 	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
 	std::vector<std::string> scanDirs;
@@ -360,19 +354,19 @@ CArchiveScanner::CArchiveScanner()
 	}
 	// ArchiveCache has been parsed at this point --> archiveInfos is populated
 	ScanDirs(scanDirs, true);
-	WriteCacheData(dataDirLocater.GetWriteDirPath() + GetFilename());
+	WriteCacheData(GetFilepath());
 }
 
 
 CArchiveScanner::~CArchiveScanner()
 {
 	if (isDirty) {
-		WriteCacheData(dataDirsAccess.LocateFile(GetFilename(), FileQueryFlags::WRITE));
+		WriteCacheData(GetFilepath());
 	}
 }
 
 
-const std::string& CArchiveScanner::GetFilename() const
+const std::string& CArchiveScanner::GetFilepath() const
 {
 	return cachefile;
 }
