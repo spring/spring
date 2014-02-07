@@ -99,7 +99,7 @@ public:
 	CArchiveScanner();
 	~CArchiveScanner();
 
-	const std::string& GetFilename() const;
+	const std::string& GetFilepath() const;
 
 	std::vector<ArchiveData> GetPrimaryMods() const;
 	std::vector<ArchiveData> GetAllMods() const;
