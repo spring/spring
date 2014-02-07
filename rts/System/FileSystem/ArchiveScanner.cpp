@@ -680,6 +680,7 @@ struct CRCPair {
  */
 unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 {
+	CRC crc;
 	std::list<std::string> files;
 
 	// Try to open an archive
@@ -735,7 +736,6 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	});
 
 	// Add file CRCs to the main archive CRC
-	CRC crc;
 	for (CRCPair& crcp: crcs) {
 		crc.Update(crcp.nameCRC);
 		crc.Update(crcp.dataCRC);
