@@ -86,25 +86,24 @@ CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable, bool fro
 		return;
 	}
 
-	std::vector<std::string>::const_iterator key;
-	for (key = keys.begin(); key != keys.end(); ++key) {
-		const std::string& keyLower = StringToLower(*key);
+	for (std::string& key: keys) {
+		const std::string keyLower = StringToLower(key);
 		if (!ArchiveData::IsReservedKey(keyLower)) {
 			if (keyLower == "modtype") {
-				SetInfoItemValueInteger(*key, archiveTable.GetInt(*key, 0));
+				SetInfoItemValueInteger(key, archiveTable.GetInt(key, 0));
 				continue;
 			}
 
-			const int luaType = archiveTable.GetType(*key);
+			const int luaType = archiveTable.GetType(key);
 			switch (luaType) {
 				case LuaTable::STRING: {
-					SetInfoItemValueString(*key, archiveTable.GetString(*key, ""));
+					SetInfoItemValueString(key, archiveTable.GetString(key, ""));
 				} break;
 				case LuaTable::NUMBER: {
-					SetInfoItemValueFloat(*key, archiveTable.GetFloat(*key, 0.0f));
+					SetInfoItemValueFloat(key, archiveTable.GetFloat(key, 0.0f));
 				} break;
 				case LuaTable::BOOLEAN: {
-					SetInfoItemValueBool(*key, archiveTable.GetBool(*key, false));
+					SetInfoItemValueBool(key, archiveTable.GetBool(key, false));
 				} break;
 				default: {
 					// just ignore unsupported types (most likely to be lua-tables)
@@ -226,15 +225,14 @@ InfoItem& CArchiveScanner::ArchiveData::EnsureInfoItem(const std::string& key)
 	const std::map<std::string, InfoItem>::iterator ii = info.find(keyLower);
 	if (ii == info.end()) {
 		// add a new info-item
-		InfoItem infoItem;
+		InfoItem& infoItem = info[keyLower];
 		infoItem.key = key;
 		infoItem.valueType = INFO_VALUE_TYPE_INTEGER;
 		infoItem.value.typeInteger = 0;
-
-		info[keyLower] = infoItem;
+		return infoItem;
 	}
 
-	return info[keyLower];
+	return ii->second;
 }
 
 void CArchiveScanner::ArchiveData::SetInfoItemValueString(const std::string& key, const std::string& value)
@@ -392,6 +390,7 @@ void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs, bool do
 	}
 
 	// check for duplicates reached by links
+	//XXX too slow also ScanArchive() skips duplicates itself, too
 	/*for (auto it = foundArchives.begin(); it != foundArchives.end(); ++it) {
 		auto jt = it;
 		++jt;
@@ -687,7 +686,6 @@ struct CRCPair {
  */
 unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 {
-	CRC crc;
 	std::list<std::string> files;
 
 	// Try to open an archive
@@ -743,6 +741,7 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	});
 
 	// Add file CRCs to the main archive CRC
+	CRC crc;
 	for (CRCPair& crcp: crcs) {
 		crc.Update(crcp.nameCRC);
 		crc.Update(crcp.dataCRC);
@@ -1002,8 +1001,7 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 
 std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, int depth) const
 {
-	LOG_S(LOG_SECTION_ARCHIVESCANNER, "GetArchives: %s (depth %u)",
-			root.c_str(), depth);
+	LOG_S(LOG_SECTION_ARCHIVESCANNER, "GetArchives: %s (depth %u)", root.c_str(), depth);
 	// Protect against circular dependencies
 	// (worst case depth is if all archives form one huge dependency chain)
 	if ((unsigned)depth > archiveInfos.size()) {
@@ -1016,9 +1014,7 @@ std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, i
 	if (aii == archiveInfos.end()) {
 #ifdef UNITSYNC
 		// unresolved dep, add it, so unitsync still shows this file
-		if (!ret.empty()) {
-			ret.push_back(lcname);
-		}
+		ret.push_back(lcname);
 		return ret;
 #else
 		throw content_error("Archive \"" + lcname + "\" not found");
@@ -1030,24 +1026,22 @@ std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, i
 		// FIXME instead of this, call this function recursively, to get the propper error handling
 		aii = archiveInfos.find(aii->second.replaced);
 		if (aii == archiveInfos.end()) {
+#ifdef UNITSYNC
+			// unresolved dep, add it, so unitsync still shows this file
+			ret.push_back(lcname);
+			return ret;
+#else
 			throw content_error("Unknown error parsing archive replacements");
+#endif
 		}
 	}
 
-	ret.push_back(aii->second.path + aii->second.origName);
-
 	// add depth-first
-	for (std::vector<std::string>::const_iterator i = aii->second.archiveData.GetDependencies().begin(); i != aii->second.archiveData.GetDependencies().end(); ++i) {
-		const std::vector<std::string>& deps = GetArchives(*i, depth + 1);
-
-		for (std::vector<std::string>::const_iterator j = deps.begin(); j != deps.end(); ++j) {
-			if (std::find(ret.begin(), ret.end(), *j) == ret.end()) {
-				// add only if this dependency is not already somewhere
-				// in the chain (which can happen if ArchiveCache.lua has
-				// not been written yet) so its checksum is not XOR'ed
-				// with the running one multiple times (Get*Checksum())
-				ret.push_back(*j);
-			}
+	ret.push_back(aii->second.path + aii->second.origName);
+	for (const std::string& dep: aii->second.archiveData.GetDependencies()) {
+		const std::vector<std::string>& deps = GetArchives(dep, depth + 1);
+		for (const std::string& depSub: deps) {
+			AddDependency(ret, depSub);
 		}
 	}
 
@@ -1087,8 +1081,7 @@ unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& name) 
 
 	std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfos.find(lcname);
 	if (aii == archiveInfos.end()) {
-		LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING,
-				"%s checksum: not found (0)", name.c_str());
+		LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING, "%s checksum: not found (0)", name.c_str());
 		return 0;
 	}
 
@@ -1129,12 +1122,10 @@ void CArchiveScanner::CheckArchive(const std::string& name, unsigned checksum) c
 std::string CArchiveScanner::GetArchivePath(const std::string& name) const
 {
 	const std::string lcname = StringToLower(FileSystem::GetFilename(name));
-
 	std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfos.find(lcname);
 	if (aii == archiveInfos.end()) {
 		return "";
 	}
-
 	return aii->second.path;
 }
 
@@ -1156,7 +1147,6 @@ std::string CArchiveScanner::NameFromArchive(const std::string& archiveName) con
 	if (aii != archiveInfos.end()) {
 		return aii->second.archiveData.GetNameVersioned();
 	}
-
 	return archiveName;
 }
 
@@ -1168,7 +1158,6 @@ CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const std::string& 
 			return md;
 		}
 	}
-
 	return ArchiveData();
 }
 
