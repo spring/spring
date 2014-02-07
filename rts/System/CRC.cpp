@@ -28,6 +28,12 @@ unsigned int CRC::GetDigest() const
 }
 
 
+unsigned int CRC::GetCRC(const void* data, unsigned int size)
+{
+	return CrcUpdate(0, data, size);
+}
+
+
 CRC& CRC::Update(const void* data, unsigned int size)
 {
 	crc = CrcUpdate(crc, data, size);
