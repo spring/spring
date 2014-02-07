@@ -374,6 +374,8 @@ const std::string& CArchiveScanner::GetFilepath() const
 
 void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs, bool doChecksum)
 {
+	isDirty = true;
+
 	// scan for all archives
 	std::list<std::string> foundArchives;
 	for (const std::string& dir: scanDirs) {
@@ -426,8 +428,6 @@ void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs, bool do
 
 void CArchiveScanner::ScanDir(const std::string& curPath, std::list<std::string>* foundArchives)
 {
-	isDirty = true;
-
 	// check recursive dirs when NOT being sdd's!
 	std::list<std::string> subDirs;
 	subDirs.push_back(curPath);
@@ -725,7 +725,7 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	//       current (2011) packing libraries support multithreading :/
 	for_mt(0, crcs.size(), [&](const int i) {
 		CRCPair& crcp = crcs[i];
-		const unsigned int nameCRC = CRC().Update((void*)crcp.filename->data(), crcp.filename->size()).GetDigest();
+		const unsigned int nameCRC = CRC::GetCRC((void*)crcp.filename->data(), crcp.filename->size());
 		const unsigned fid = ar->FindFile(*crcp.filename);
 		const unsigned int dataCRC = ar->GetCrc32(fid);
 		crcp.nameCRC = nameCRC;
