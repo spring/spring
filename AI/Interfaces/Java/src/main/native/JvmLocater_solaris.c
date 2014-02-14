@@ -165,6 +165,7 @@ static bool GetJREPathInCommonLocations(char* path, size_t pathSize, const char*
 	size_t possLoc_i = 0;
 
 	possLoc[possLoc_i++] = util_allocStrCpy("/usr/local/jdk*");
+	possLoc[possLoc_i++] = util_allocStrCpy("/usr/lib/jvm/default-java");
 	possLoc[possLoc_i++] = util_allocStrCpy("/usr/lib/jvm/java-?-sun");
 	possLoc[possLoc_i++] = util_allocStrCpy("/usr/lib/jvm/java-?-*");
 	possLoc[possLoc_i++] = util_allocStrCpy("~/jdk*");
