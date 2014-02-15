@@ -343,7 +343,7 @@ void AAIBuildTable::Init()
 
 					if(GetUnitDef(i).categoryString.find("UNDERWATER") != string::npos) {
 						units_static[i].movement_type |= MOVE_TYPE_UNDERWATER;
-					else {
+					} else {
 						units_static[i].movement_type |= MOVE_TYPE_FLOATER;
 					}
 				}
