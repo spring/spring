@@ -325,7 +325,7 @@ void AAIBuildTable::Init()
 
 			if(GetUnitDef(i).movedata)
 			{
-				if(GetUnitDef(i).movedata->moveType == MoveData::Ground_Move)
+				if(GetUnitDef(i).movedata->moveFamily == MoveData::Tank || GetUnitDef(i).movedata->moveFamily == MoveData::KBot)
 				{
 					// check for amphibious units
 					if(GetUnitDef(i).movedata->depth > 250)
@@ -333,17 +333,19 @@ void AAIBuildTable::Init()
 					else
 						units_static[i].movement_type |= MOVE_TYPE_GROUND;
 				}
-				else if(GetUnitDef(i).movedata->moveType == MoveData::Hover_Move)
+				else if(GetUnitDef(i).movedata->moveFamily == MoveData::Hover) {
 					units_static[i].movement_type |= MOVE_TYPE_HOVER;
+				}
 				// ship
-				else if(GetUnitDef(i).movedata->moveType == MoveData::Ship_Move)
+				else if(GetUnitDef(i).movedata->moveFamily == MoveData::Ship)
 				{
 					units_static[i].movement_type |= MOVE_TYPE_SEA;
 
-					if(GetUnitDef(i).categoryString.find("UNDERWATER") != string::npos)
+					if(GetUnitDef(i).categoryString.find("UNDERWATER") != string::npos) {
 						units_static[i].movement_type |= MOVE_TYPE_UNDERWATER;
-					else
+					else {
 						units_static[i].movement_type |= MOVE_TYPE_FLOATER;
+					}
 				}
 			}
 			// aircraft
@@ -494,7 +496,9 @@ void AAIBuildTable::Init()
 			else if(GetUnitDef(i).movedata)
 			{
 				// ground units
-				if(GetUnitDef(i).movedata->moveType == MoveData::Ground_Move || GetUnitDef(i).movedata->moveType == MoveData::Hover_Move)
+				if(GetUnitDef(i).movedata->moveFamily == MoveData::Tank || 
+					GetUnitDef(i).movedata->moveFamily == MoveData::KBot ||
+					GetUnitDef(i).movedata->moveFamily == MoveData::Hover)
 				{
 					// units with weapons
 					if((!GetUnitDef(i).weapons.empty() && GetMaxDamage(i) > 1) || IsAttacker(i))
@@ -509,7 +513,7 @@ void AAIBuildTable::Init()
 							// switch between arty and assault
 							if(IsArty(i))
 							{
-								if(GetUnitDef(i).movedata->moveType == MoveData::Ground_Move)
+								if(GetUnitDef(i).movedata->moveFamily == MoveData::Tank || GetUnitDef(i).movedata->moveFamily == MoveData::KBot)
 								{
 									units_of_category[GROUND_ARTY][units_static[i].side-1].push_back(GetUnitDef(i).id);
 									units_static[i].category = GROUND_ARTY;
@@ -522,7 +526,7 @@ void AAIBuildTable::Init()
 							}
 							else if(GetUnitDef(i).speed > 0)
 							{
-								if(GetUnitDef(i).movedata->moveType == MoveData::Ground_Move)
+								if(GetUnitDef(i).movedata->moveFamily == MoveData::Tank || GetUnitDef(i).movedata->moveFamily == MoveData::KBot)
 								{
 									units_of_category[GROUND_ASSAULT][units_static[i].side-1].push_back(GetUnitDef(i).id);
 									units_static[i].category = GROUND_ASSAULT;
@@ -551,7 +555,7 @@ void AAIBuildTable::Init()
 						}
 					}
 				}
-				else if(GetUnitDef(i).movedata->moveType == MoveData::Ship_Move)
+				else if(GetUnitDef(i).movedata->moveFamily == MoveData::Ship)
 				{
 					// ship
 					if(!GetUnitDef(i).weapons.empty())
@@ -3463,17 +3467,17 @@ bool AAIBuildTable::IsArty(int id)
 		// veh, kbot, hover or ship
 		if(GetUnitDef(id).movedata)
 		{
-			if(GetUnitDef(id).movedata->moveType == MoveData::Ground_Move)
+			if(GetUnitDef(id).movedata->moveFamily == MoveData::Tank || GetUnitDef(id).movedata->moveFamily == MoveData::KBot)
 			{
 				if(max_range > cfg->GROUND_ARTY_RANGE)
 					return true;
 			}
-			else if(GetUnitDef(id).movedata->moveType == MoveData::Ship_Move)
+			else if(GetUnitDef(id).movedata->moveFamily == MoveData::Ship)
 			{
 				if(max_range > cfg->SEA_ARTY_RANGE)
 					return true;
 			}
-			else if(GetUnitDef(id).movedata->moveType == MoveData::Hover_Move)
+			else if(GetUnitDef(id).movedata->moveFamily == MoveData::Hover)
 			{
 				if(max_range > cfg->HOVER_ARTY_RANGE)
 					return true;
