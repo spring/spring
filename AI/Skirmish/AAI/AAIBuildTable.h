@@ -150,6 +150,9 @@ public:
 	// returns false if unit is a member of the dont_build list
 	bool AllowedToBuild(int id);
 
+	//sadly can't detect metal makers anymore, read them from config
+	bool IsMetalMaker(int id);
+
 	// returns true, if unit is a transporter
 	bool IsTransporter(int id);
 

@@ -262,6 +262,24 @@ void AAIConfig::LoadConfig(AAI *ai)
 					}
 				}
 			}
+			else if(!strcmp(keyword, "METAL_MAKERS"))
+			{
+				// get number of transporters
+				fscanf(file, "%i", &ival);
+
+				for(int i = 0; i < ival; ++i)
+				{
+					fscanf(file, "%s", filename);
+					if(ai->Getcb()->GetUnitDef(filename))
+						METAL_MAKERS.push_back(ai->Getcb()->GetUnitDef(filename)->id);
+					else
+					{
+						ai->Log("ERROR: loading transporters - could not find unit %s\n", filename);
+						error = true;
+						break;
+					}
+				}
+			}
 			else if(!strcmp(keyword, "DONT_BUILD"))
 			{
 				// get number of units that should not be built

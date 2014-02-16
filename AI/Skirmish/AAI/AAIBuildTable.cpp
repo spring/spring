@@ -486,7 +486,7 @@ void AAIBuildTable::Init()
 					units_of_category[STORAGE][units_static[i].side-1].push_back(GetUnitDef(i).id);
 					units_static[i].category = STORAGE;
 				}
-				else if(GetUnitDef(i).makesMetal > 0)
+				else if(GetUnitDef(i).makesMetal > 0 || GetUnitDef(i).metalMake > 0 || IsMetalMaker(i))
 				{
 					units_of_category[METAL_MAKER][units_static[i].side-1].push_back(GetUnitDef(i).id);
 					units_static[i].category = METAL_MAKER;
@@ -844,8 +844,13 @@ void AAIBuildTable::PrecacheStats()
 			units_static[*i].efficiency[0] = GetUnitDef(*i).extractsMetal;
 
 		// precache efficiency of metalmakers
-		for(list<int>::iterator i = units_of_category[METAL_MAKER][s].begin(); i != units_of_category[METAL_MAKER][s].end(); ++i)
-			units_static[*i].efficiency[0] = GetUnitDef(*i).makesMetal/(GetUnitDef(*i).energyUpkeep+1);
+		for(list<int>::iterator i = units_of_category[METAL_MAKER][s].begin(); i != units_of_category[METAL_MAKER][s].end(); ++i) {
+			if (GetUnitDef(*i).makesMetal <= 0.1f) {
+				units_static[*i].efficiency[0] = 12.0f/600.0f; //FIXME: this somehow is broken... 
+			} else {
+				units_static[*i].efficiency[0] = GetUnitDef(*i).makesMetal/(GetUnitDef(*i).energyUpkeep+1);
+			}
+		}
 
 
 		// precache average metal and energy consumption of factories
@@ -1489,16 +1494,24 @@ int AAIBuildTable::GetMetalMaker(int side, float cost, float efficiency, float m
 
 	for(list<int>::iterator maker = units_of_category[METAL_MAKER][side-1].begin(); maker != units_of_category[METAL_MAKER][side-1].end(); maker++)
 	{
+
+		//ai->LogConsole("MakesMetal: %f", GetUnitDef(*maker).makesMetal);
+		//this somehow got broken in spring... :(
+		float makesMetal = GetUnitDef(*maker).makesMetal;
+		if (makesMetal <= 0.1f) {
+			makesMetal = 12.0f/600.0f;
+		}
+
 		if(canBuild && units_dynamic[*maker].constructorsAvailable <= 0)
 			my_rating = 0;
 		else if(!water && GetUnitDef(*maker).minWaterDepth <= 0)
 		{
-			my_rating = (pow((long double) efficiency * units_static[*maker].efficiency[0], (long double) 1.4) + pow((long double) metal * GetUnitDef(*maker).makesMetal, (long double) 1.6))
+			my_rating = (pow((long double) efficiency * units_static[*maker].efficiency[0], (long double) 1.4) + pow((long double) metal * makesMetal, (long double) 1.6))
 				/(pow((long double) cost * units_static[*maker].cost,(long double) 1.4) + pow((long double) urgency * GetUnitDef(*maker).buildTime,(long double) 1.4));
 		}
 		else if(water && GetUnitDef(*maker).minWaterDepth > 0)
 		{
-			my_rating = (pow((long double) efficiency * units_static[*maker].efficiency[0], (long double) 1.4) + pow((long double) metal * GetUnitDef(*maker).makesMetal, (long double) 1.6))
+			my_rating = (pow((long double) efficiency * units_static[*maker].efficiency[0], (long double) 1.4) + pow((long double) metal * makesMetal, (long double) 1.6))
 				/(pow((long double) cost * units_static[*maker].cost,(long double) 1.4) + pow((long double) urgency * GetUnitDef(*maker).buildTime,(long double) 1.4));
 		}
 		else
@@ -3554,6 +3567,17 @@ bool AAIBuildTable::AllowedToBuild(int id)
 	}
 
 	return true;
+}
+
+bool AAIBuildTable::IsMetalMaker(int id)
+{
+	for(list<int>::iterator i = cfg->METAL_MAKERS.begin(); i != cfg->METAL_MAKERS.end(); ++i)
+	{
+		if(*i == id)
+			return true;
+	}
+
+	return false;
 }
 
 bool AAIBuildTable::IsMissileLauncher(int def_id)
