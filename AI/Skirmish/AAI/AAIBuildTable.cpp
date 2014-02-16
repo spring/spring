@@ -426,7 +426,7 @@ void AAIBuildTable::Init()
 					units_static[i].category = AIR_BASE;
 				}
 				// check if powerplant
-				else if(GetUnitDef(i).energyMake > cfg->MIN_ENERGY || GetUnitDef(i).tidalGenerator || GetUnitDef(i).energyUpkeep < -cfg->MIN_ENERGY)
+				else if(GetUnitDef(i).energyMake > cfg->MIN_ENERGY || GetUnitDef(i).tidalGenerator || GetUnitDef(i).windGenerator || GetUnitDef(i).energyUpkeep < -cfg->MIN_ENERGY)
 				{
 					if(!GetUnitDef(i).isAirBase && GetUnitDef(i).radarRadius == 0 && GetUnitDef(i).sonarRadius == 0)
 					{
@@ -776,11 +776,16 @@ void AAIBuildTable::Init()
 				temp = units_static[*pplant].efficiency[1];
 
 				// eff. of tidal generators have not been calculated yet (depend on map)
-				if(temp <= 0)
+				if(temp == 0)
 				{
 					temp = ai->Getcb()->GetTidalStrength() / units_static[*pplant].cost;
 
 					units_static[*pplant].efficiency[0] = ai->Getcb()->GetTidalStrength();
+					units_static[*pplant].efficiency[1] = temp;
+				} else if (temp < 0) {
+					temp = (ai->Getcb()->GetMaxWind() + ai->Getcb()->GetMinWind()) * 0.5f / units_static[*pplant].cost;
+
+					units_static[*pplant].efficiency[0] = (ai->Getcb()->GetMaxWind() + ai->Getcb()->GetMinWind()) * 0.5f;
 					units_static[*pplant].efficiency[1] = temp;
 				}
 
@@ -824,6 +829,8 @@ void AAIBuildTable::PrecacheStats()
 		{
 			if(GetUnitDef(*i).tidalGenerator)
 				units_static[*i].efficiency[0] = 0;
+			else if (GetUnitDef(*i).windGenerator)
+				units_static[*i].efficiency[0] = -1;
 			else if(GetUnitDef(*i).energyMake >= cfg->MIN_ENERGY)
 				units_static[*i].efficiency[0] = GetUnitDef(*i).energyMake;
 			else if(GetUnitDef(*i).energyUpkeep <= -cfg->MIN_ENERGY)
