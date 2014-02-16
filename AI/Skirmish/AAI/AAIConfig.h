@@ -84,6 +84,7 @@ public:
 	list<int> SCOUTS;
 	list<int> ATTACKERS;
 	list<int> TRANSPORTERS;
+	list<int> METAL_MAKERS;
 	list<int> DONT_BUILD;
 
 	//float KBOT_MAX_SLOPE;
