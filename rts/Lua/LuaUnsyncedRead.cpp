@@ -2059,10 +2059,8 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 			lua_pushliteral(L, "text");
 			lua_pushsstring(L, lines[i].text);
 			lua_rawset(L, -3);
-			// FIXME migrate priority to level...
 			lua_pushliteral(L, "priority");
-			lua_pushnumber(L, 0);
-			//lua_pushstring(L, lines[i].level);
+			lua_pushnumber(L, lines[i].level);
 			lua_rawset(L, -3);
 		}
 		lua_rawset(L, -3);
