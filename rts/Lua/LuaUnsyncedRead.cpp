@@ -55,6 +55,7 @@
 #include "System/LoadSave/demofile.h"
 #include "System/LoadSave/DemoReader.h"
 #include "System/Log/DefaultFilter.h"
+#include "System/Platform/SDL1_keysym.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Misc/SpringTime.h"
 
@@ -2081,14 +2082,19 @@ int LuaUnsyncedRead::GetCurrentTooltip(lua_State* L)
 
 int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 {
-	lua_pushnumber(L, (keyCodes != NULL)? keyCodes->GetCode(luaL_checksstring(L, 1)): -1);
+	if (keyCodes == NULL) {
+		return 0;
+	}
+
+	const int keycode = keyCodes->GetCode(luaL_checksstring(L, 1));
+	lua_pushnumber(L, SDL2_to_SDL1_keysyms[keycode]);
 	return 1;
 }
 
 
 int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 {
-	const int keycode = luaL_checkint(L, 1);
+	const int keycode = SDL1_to_SDL2_keysyms[luaL_checkint(L, 1)];
 	lua_pushsstring(L, (keyCodes != 0)? keyCodes->GetName(keycode): "");
 	lua_pushsstring(L, (keyCodes != 0)? keyCodes->GetDefaultName(keycode): "");
 	return 2;
