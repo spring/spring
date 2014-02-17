@@ -40,6 +40,7 @@
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Platform/SDL1_keysym.h"
 
 #include "LuaInclude.h"
 
@@ -1799,7 +1800,8 @@ bool CLuaHandle::KeyPress(int key, bool isRepeat)
 		return false; // the call is not defined, do not take the event
 	}
 
-	lua_pushnumber(L, key); //FIXME return scancode here?
+	//FIXME we should never had started using directly SDL consts, somaeday we should weakly force lua-devs to fix their code
+	lua_pushinteger(L, SDL2_to_SDL1_keysyms[key]);
 
 	lua_createtable(L, 0, 4);
 	HSTR_PUSH_BOOL(L, "alt",   !!KeyInput::GetKeyModState(KMOD_ALT));
@@ -1811,7 +1813,7 @@ bool CLuaHandle::KeyPress(int key, bool isRepeat)
 
 	CKeySet ks(key, false);
 	lua_pushsstring(L, ks.GetString(true));
-	lua_pushnumber(L, 0); //FIXME remove, was deprecated utf32 char (now uses TextInput for that)
+	lua_pushinteger(L, 0); //FIXME remove, was deprecated utf32 char (now uses TextInput for that)
 
 	// call the function
 	if (!RunCallIn(L, cmdStr, 5, 1))
@@ -1835,7 +1837,7 @@ bool CLuaHandle::KeyRelease(int key)
 		return false; // the call is not defined, do not take the event
 	}
 
-	lua_pushnumber(L, key);
+	lua_pushinteger(L, SDL2_to_SDL1_keysyms[key]);
 
 	lua_createtable(L, 0, 4);
 	HSTR_PUSH_BOOL(L, "alt",   !!KeyInput::GetKeyModState(KMOD_ALT));
@@ -1845,7 +1847,7 @@ bool CLuaHandle::KeyRelease(int key)
 
 	CKeySet ks(key, false);
 	lua_pushsstring(L, ks.GetString(true));
-	lua_pushnumber(L, 0); //FIXME remove, was deprecated utf32 char (now uses TextInput for that)
+	lua_pushinteger(L, 0); //FIXME remove, was deprecated utf32 char (now uses TextInput for that)
 
 	// call the function
 	if (!RunCallIn(L, cmdStr, 4, 1))
