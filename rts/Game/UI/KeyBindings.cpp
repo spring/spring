@@ -294,10 +294,11 @@ CKeyBindings::~CKeyBindings()
   // delete modes' key bindings
   for (ModeMap::iterator mit = modes.begin(); mit != modes.end(); mit++)
   {
-    KeyMap* bindings = mit->second;
-    delete bindings;
+    KeyMap* pBindings = mit->second;
+    if (pBindings != &bindings) {
+      delete pBindings;
+    }
   }
-  modes.clear();
 }
 
 
