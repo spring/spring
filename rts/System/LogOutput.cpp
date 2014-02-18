@@ -10,6 +10,7 @@
 #include "System/Log/FileSink.h"
 #include "System/Log/ILog.h"
 #include "System/Log/Level.h"
+#include "System/Log/LogUtil.h"
 #include "System/Platform/Misc.h"
 
 #include <string>
@@ -103,7 +104,7 @@ static std::map<std::string, int> GetEnabledSections() {
 					#if defined(DEBUG)
 					sectionLevelMap[logSec] = LOG_LEVEL_DEBUG;
 					#else
-					sectionLevelMap[logSec] = LOG_LEVEL_INFO;
+					sectionLevelMap[logSec] = DEFAULT_LOG_LEVEL;
 					#endif
 
 				}
@@ -140,15 +141,6 @@ static void InitializeLogSections()
 	// environment and the ones specified in the configuration file.
 	const std::map<std::string, int>& enabledSections = GetEnabledSections();
 
-	// NOTE: negative keys so iteration order is FATAL(-60) ... DEBUG(-20)
-	const std::map<int, std::string> logLevelNames = {
-		{-LOG_LEVEL_FATAL,   "LOG_LEVEL_FATAL"  },
-		{-LOG_LEVEL_ERROR,   "LOG_LEVEL_ERROR"  },
-		{-LOG_LEVEL_WARNING, "LOG_LEVEL_WARNING"},
-		{-LOG_LEVEL_INFO,    "LOG_LEVEL_INFO"   },
-		{-LOG_LEVEL_DEBUG,   "LOG_LEVEL_DEBUG"  },
-	};
-
 	std::stringstream availableLogSectionsStr;
 	std::stringstream enabledLogSectionsStr;
 
@@ -178,17 +170,11 @@ static void InitializeLogSections()
 			continue;
 
 		// find the nearest lower known log-level (in descending order)
-		for (auto logLevelIt = logLevelNames.begin(); logLevelIt != logLevelNames.end(); ++logLevelIt) {
-			const int logLevel = -(logLevelIt->first);
+		const int logLevel = log_util_getNearestLevel(sectionLevel);
+		log_filter_section_setMinLevel(*si, logLevel);
 
-			if (sectionLevel >= logLevel) {
-				log_filter_section_setMinLevel(*si, logLevel);
-
-				enabledLogSectionsStr << ((numEnabledSections > 0)? ", ": "");
-				enabledLogSectionsStr << *si << "(" << logLevelIt->second << ")";
-				break;
-			}
-		}
+		enabledLogSectionsStr << ((numEnabledSections > 0)? ", ": "");
+		enabledLogSectionsStr << *si << "(" << log_util_levelToChar(logLevel) << ")";
 
 		numEnabledSections++;
 	}

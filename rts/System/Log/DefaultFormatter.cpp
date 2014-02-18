@@ -116,7 +116,7 @@ static void log_formatter_createPrefix_default(
 		STRCAT_T(*buffer, *bufferSize, prepSection);
 		STRCAT_T(*buffer, *bufferSize, "] ");
 	}
-	if (level != LOG_LEVEL_INFO) {
+	if (level != LOG_LEVEL_INFO && level != LOG_LEVEL_NOTICE) {
 		const char* levelStr = log_util_levelToString(level);
 		STRCAT_T(*buffer, *bufferSize, levelStr);
 		STRCAT_T(*buffer, *bufferSize, ": ");

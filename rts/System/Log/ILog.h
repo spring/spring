@@ -11,7 +11,8 @@
  * Aims:
  * - Support a fixed set of severities levels:
  *   * L_DEBUG   : fine-grained information that is most useful to debug
- *   * L_INFO    : informational messages that highlight runtime progress of
+ *   * L_INFO    : same as L_NOTICE just that it is surpressed on RELEASE builds when a non-default logSection is set
+ *   * L_NOTICE  : default log level (always outputed)
  *   * L_WARNING : potentially harmful situations
  *   * L_ERROR   : errors that might still allow the application to keep running
  *   * L_FATAL   : very severe errors that will lead the application to abort
@@ -196,6 +197,13 @@ extern void log_frontend_cleanup();
 	#warning log messages of level INFO are not compiled into the binary
 #endif
 
+#if _LOG_IS_ENABLED_LEVEL_STATIC(L_NOTICE)
+	#define _LOG_FILTER_L_NOTICE(section, fmt, ...)   _LOG_RECORD(section, L_NOTICE, fmt, ##__VA_ARGS__)
+#else
+	#define _LOG_FILTER_L_NOTICE(section, fmt,...)
+	#warning log messages of level NOTICE are not compiled into the binary
+#endif
+
 #if _LOG_IS_ENABLED_LEVEL_STATIC(L_WARNING)
 	#define _LOG_FILTER_L_WARNING(section, fmt, ...)   _LOG_RECORD(section, L_WARNING, fmt, ##__VA_ARGS__)
 #else
@@ -340,7 +348,7 @@ extern void log_frontend_cleanup();
  * @see LOG_IS_ENABLED()
  */
 #define LOG(fmt, ...) \
-	_LOG(L_INFO, fmt, ##__VA_ARGS__)
+	_LOG(DEFAULT_LOG_LEVEL_SHORT, fmt, ##__VA_ARGS__)
 
 /**
  * Registers a log message with a specifiable level.
