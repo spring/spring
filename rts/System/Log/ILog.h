@@ -183,50 +183,11 @@ extern void log_frontend_cleanup();
 /// Redirect to runtime processing
 #define _LOG_RECORD(section, level, fmt, ...)   log_frontend_record(section, LOG_LEVE##level, fmt, ##__VA_ARGS__)
 
-// per level compile-time filters
-#if _LOG_IS_ENABLED_LEVEL_STATIC(L_DEBUG)
-	#define _LOG_FILTER_L_DEBUG(section, fmt, ...)   _LOG_RECORD(section, L_DEBUG, fmt, ##__VA_ARGS__)
-#else
-	#define _LOG_FILTER_L_DEBUG(section, fmt, ...)
-#endif
-
-#if _LOG_IS_ENABLED_LEVEL_STATIC(L_INFO)
-	#define _LOG_FILTER_L_INFO(section, fmt, ...)   _LOG_RECORD(section, L_INFO, fmt, ##__VA_ARGS__)
-#else
-	#define _LOG_FILTER_L_INFO(section, fmt,...)
-	#warning log messages of level INFO are not compiled into the binary
-#endif
-
-#if _LOG_IS_ENABLED_LEVEL_STATIC(L_NOTICE)
-	#define _LOG_FILTER_L_NOTICE(section, fmt, ...)   _LOG_RECORD(section, L_NOTICE, fmt, ##__VA_ARGS__)
-#else
-	#define _LOG_FILTER_L_NOTICE(section, fmt,...)
-	#warning log messages of level NOTICE are not compiled into the binary
-#endif
-
-#if _LOG_IS_ENABLED_LEVEL_STATIC(L_WARNING)
-	#define _LOG_FILTER_L_WARNING(section, fmt, ...)   _LOG_RECORD(section, L_WARNING, fmt, ##__VA_ARGS__)
-#else
-	#define _LOG_FILTER_L_WARNING(section, fmt, ...)
-	#warning log messages of level WARNING are not compiled into the binary
-#endif
-
-#if _LOG_IS_ENABLED_LEVEL_STATIC(L_ERROR)
-	#define _LOG_FILTER_L_ERROR(section, fmt, ...)   _LOG_RECORD(section, L_ERROR, fmt, ##__VA_ARGS__)
-#else
-	#define _LOG_FILTER_L_ERROR(section, fmt, ##__VA_ARGS__)
-	#warning log messages of level ERROR are not compiled into the binary
-#endif
-
-#if _LOG_IS_ENABLED_LEVEL_STATIC(L_FATAL)
-	#define _LOG_FILTER_L_FATAL(section, fmt, ...)   _LOG_RECORD(section, L_FATAL, fmt, ##__VA_ARGS__)
-#else
-	#define _LOG_FILTER_L_FATAL(section, fmt, ...)
-	#warning log messages of level FATAL are not compiled into the binary
-#endif
+/// per level compile-time filter
+#define _LOG_FILTER(section, level, fmt, ...) if (_LOG_IS_ENABLED_LEVEL_STATIC(level)) _LOG_RECORD(section, level, fmt, ##__VA_ARGS__)
 
 /// Registers the section and connects to the filter macro
-#define _LOG_SECTION(section, level, fmt, ...)   _LOG_FILTER_##level(section, fmt, ##__VA_ARGS__)
+#define _LOG_SECTION(section, level, fmt, ...)   _LOG_FILTER(section, level, fmt, ##__VA_ARGS__)
 
 /// Uses the section defined in LOG_SECTION
 #define _LOG_SECTION_DEFINED(level, fmt, ...)   _LOG_SECTION(LOG_SECTION_CURRENT, level, fmt, ##__VA_ARGS__)

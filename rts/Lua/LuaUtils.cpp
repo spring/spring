@@ -902,6 +902,7 @@ bool LuaUtils::PushLogEntries(lua_State* L)
 #define PUSH_LOG_LEVEL(cmd) LuaPushNamedNumber(L, #cmd, LOG_LEVEL_ ## cmd)
 	PUSH_LOG_LEVEL(DEBUG);
 	PUSH_LOG_LEVEL(INFO);
+	PUSH_LOG_LEVEL(NOTICE);
 	PUSH_LOG_LEVEL(WARNING);
 	PUSH_LOG_LEVEL(ERROR);
 	PUSH_LOG_LEVEL(FATAL);
@@ -935,6 +936,9 @@ int LuaUtils::Log(lua_State* L)
 			loglevel = LOG_LEVEL_DEBUG;
 		}
 		else if (loglvlstr == "info") {
+			loglevel = LOG_LEVEL_INFO;
+		}
+		else if (loglvlstr == "notice") {
 			loglevel = LOG_LEVEL_INFO;
 		}
 		else if (loglvlstr == "warning") {
