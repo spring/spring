@@ -57,6 +57,7 @@ Lua:
   - .collisionVolume.defaultToPieceTree
  - add optional 4th argument to Spring.GetUnitSeperation to calc the distance between the unitsphere surfaces instead of their midpos
  ! fix wrong coords & crash in Spring.RemoveGrass
+ - added new LOG.NOTICE (should be used instead of LOG.INFO)
 
 LUS:
  - SetUnitValue now accepts booleans, too
