@@ -982,11 +982,6 @@ bool CGame::Update()
 	JobDispatcher::Update();
 	net->Update();
 
-	//TODO: why? it already gets called with `true` in ::Draw()?
-	if (!skipping) {
-		UpdateUI(false);
-	}
-
 	// When video recording do step by step simulation, so each simframe gets a corresponding videoframe
 	// FIXME: SERVER ALREADY DOES THIS BY ITSELF
 	if (videoCapturing->IsCapturing() && playing && gameServer != NULL) {
@@ -1094,6 +1089,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	lastSimFrame = gs->frameNum;
 
 	// set camera
+	UpdateCam();
 	camHandler->UpdateCam();
 	camera->Update();
 
@@ -1131,8 +1127,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		sound->UpdateListener(camera->GetPos(), camera->forward, camera->up, unsyncedUpdateDeltaTime);
 	}
 
-	UpdateUI(true);
-
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
 
 	if (luaUI)    { luaUI->CheckStack(); }
@@ -1148,6 +1142,38 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		CLuaUI::FreeHandler();
 		LOG_L(L_ERROR, "Type '/luaui reload' in the chat to re-enable LuaUI.");
 		LOG_L(L_ERROR, "===>>>  Please report this error to the forum or mantis with your infolog.txt");
+	}
+
+	if (chatting && !userWriting) {
+		consoleHistory->AddLine(userInput);
+
+		std::string msg = userInput;
+		std::string pfx = "";
+
+		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+			pfx = userInput.substr(0, 2);
+			msg = userInput.substr(2);
+		}
+		if ((msg[0] == '/') && (msg[1] == '/')) {
+			msg = msg.substr(1);
+		}
+		userInput = pfx + msg;
+		SendNetChat(userInput);
+		chatting = false;
+		userInput = "";
+		writingPos = 0;
+	}
+
+	if (inMapDrawer->IsWantLabel() && !userWriting) {
+		if (userInput.size() > 200) {
+			// avoid troubles with long lines
+			userInput = userInput.substr(0, 200);
+			writingPos = (int)userInput.length();
+		}
+		inMapDrawer->SendWaitingInput(userInput);
+		userInput = "";
+		writingPos = 0;
+		ignoreChar = 0;
 	}
 
 	assert(infoConsole);
@@ -1594,83 +1620,42 @@ void CGame::SimFrame() {
 }
 
 
-
-void CGame::UpdateUI(bool updateCam)
+void CGame::UpdateCam()
 {
-	if (updateCam) {
-		FPSUnitController& fpsCon = playerHandler->Player(gu->myPlayerNum)->fpsController;
-		if (fpsCon.oldDCpos != ZeroVector) {
-			camHandler->GetCurrentController().SetPos(fpsCon.oldDCpos);
-			fpsCon.oldDCpos = ZeroVector;
-		}
+	//FIXME move to camHandler
+
+	CCameraController& cc = camHandler->GetCurrentController();
+	FPSUnitController& fpsCon = playerHandler->Player(gu->myPlayerNum)->fpsController;
+	if (fpsCon.oldDCpos != ZeroVector) {
+		cc.SetPos(fpsCon.oldDCpos);
+		fpsCon.oldDCpos = ZeroVector;
 	}
 
 	if (!gu->fpsMode) {
-		bool disableTracker = false;
-		float3 camMoveVector = camera->GetMoveVectorFromState(true, &disableTracker);
+		// Note: GetMoveVectorFromState doesn't return a vec3, instead it returns a xy-vector and in its
+		//       z-component it returns a speed scaling factor!
 
-		if (!updateCam) {
-			if (disableTracker && camHandler->GetCurrentController().DisableTrackingByKey()) {
-				unitTracker.Disable();
-			}
-		} else {
-			camHandler->GetCurrentController().KeyMove(camMoveVector);
-		}
+		// key scrolling
+		const float3 camMoveVector = camera->GetMoveVectorFromState(true);
+		const bool moved = ((camMoveVector * XYVector).SqLength() > 0.0f);
+		if (moved && cc.DisableTrackingByKey()) unitTracker.Disable();
+		if (moved) cc.KeyMove(camMoveVector);
 
-		// cancel out x- and y-components, leave .z (movement-speed)
-		camMoveVector *= FwdVector;
-
+		// screen edge scrolling
 		if ((globalRendering->fullScreen && fullscreenEdgeMove) || (!globalRendering->fullScreen && windowedEdgeMove)) {
-			disableTracker = false;
-			camMoveVector = camera->GetMoveVectorFromState(false, &disableTracker);
-
-			if (!updateCam && disableTracker) {
-				unitTracker.Disable();
-			}
+			const float3 camMoveVector = camera->GetMoveVectorFromState(false);
+			const bool moved = ((camMoveVector * XYVector).SqLength() > 0.0f);
+			if (moved) unitTracker.Disable();
+			if (moved) cc.ScreenEdgeMove(camMoveVector);
 		}
 
-		if (updateCam) {
-			camHandler->GetCurrentController().ScreenEdgeMove(camMoveVector);
-			camHandler->GetCurrentController().MouseWheelMove(camera->GetMoveDistance(NULL, NULL, CCamera::MOVE_STATE_UP ));
-			camHandler->GetCurrentController().MouseWheelMove(camera->GetMoveDistance(NULL, NULL, CCamera::MOVE_STATE_DWN));
-		}
+		// mouse wheel zoom
+		float mouseWheelDir  = camera->GetMoveDistance(NULL, NULL, CCamera::MOVE_STATE_UP);
+		      mouseWheelDir += camera->GetMoveDistance(NULL, NULL, CCamera::MOVE_STATE_DWN);
+		if (math::fabsf(mouseWheelDir) > 0.0f) cc.MouseWheelMove(mouseWheelDir);
 	}
 
-	if (updateCam) {
-		camHandler->GetCurrentController().Update();
-
-		if (chatting && !userWriting) {
-			consoleHistory->AddLine(userInput);
-
-			string msg = userInput;
-			string pfx = "";
-
-			if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-				pfx = userInput.substr(0, 2);
-				msg = userInput.substr(2);
-			}
-			if ((msg[0] == '/') && (msg[1] == '/')) {
-				msg = msg.substr(1);
-			}
-			userInput = pfx + msg;
-			SendNetChat(userInput);
-			chatting = false;
-			userInput = "";
-			writingPos = 0;
-		}
-
-		if (inMapDrawer->IsWantLabel() && !userWriting) {
-			if (userInput.size() > 200) {
-				// avoid troubles with long lines
-				userInput = userInput.substr(0, 200);
-				writingPos = (int)userInput.length();
-			}
-			inMapDrawer->SendWaitingInput(userInput);
-			userInput = "";
-			writingPos = 0;
-			ignoreChar = 0;
-		}
-	}
+	cc.Update();
 }
 
 
