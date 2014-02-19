@@ -66,6 +66,9 @@ Installer:
  ! disallow to install spring over existing installations / ask for uninstall first
  - don't associate .sdf with spring.exe any more
 
+Linux:
+ ! new BlockCompositing configtag (default true). Disables kwin compositing to fix tearing.
+
 
 -- 96.0 ---------------------------------------------------------
 

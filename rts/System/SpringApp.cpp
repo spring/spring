@@ -111,7 +111,9 @@ CONFIG(int, WindowState).defaultValue(CGlobalRendering::WINSTATE_MAXIMIZED);
 CONFIG(bool, WindowBorderless).defaultValue(false).description("When set and Fullscreen is 0, will put the game in Borderless Window mode, also known as Windowed Fullscreen. When using this, it is generally best to also set WindowPosX and WindowPosY to 0");
 CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
-
+#ifdef __linux
+CONFIG(bool, BlockCompositing).defaultValue(true).description("Disables kwin compositing to fix tearing.");
+#endif
 
 SelectMenu* selectMenu = NULL;
 ClientSetup* startsetup = NULL;
@@ -393,6 +395,14 @@ bool SpringApp::CreateSDLWindow(const char* title)
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
 	// Set single precision floating point math.
 	streflop::streflop_init<streflop::Simple>();
+#endif
+
+#ifdef __linux
+	// disable kwin compositing to fix tearing
+	// (happens at 300fps, neither fullscreen nor vsync fixes it, so disable compositing)
+	if (configHandler->GetBool("BlockCompositing")) {
+		MyX11BlockCompositing(window);
+	}
 #endif
 
 	return true;
