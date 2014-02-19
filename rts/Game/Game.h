@@ -87,9 +87,6 @@ public:
 
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
-	void SelectUnits(const std::string& line);
-	void SelectCycle(const std::string& command);
-
 	void ReloadCOB(const std::string& msg, int player);
 	void ReloadCEGs(const std::string& tag);
 
