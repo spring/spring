@@ -97,8 +97,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 		char fileNameBuffer[256] = {0};
 
 		ifs->Read(&numSmallTiles, sizeof(int));
-		ifs->ReadString(&fileNameBuffer[0], sizeof(char) * sizeof(fileNameBuffer));
-
+		ifs->ReadString(&fileNameBuffer[0], sizeof(char) * (sizeof(fileNameBuffer) - 1));
 		swabDWordInPlace(numSmallTiles);
 
 		std::string smtFileName = fileNameBuffer;

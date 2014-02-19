@@ -423,7 +423,7 @@ void SpringApp::GetDisplayGeometry()
 
 	globalRendering->UpdateViewPortGeometry();
 
-	//FIXME SDL2 is crap ...
+	//XXX SDL2 is crap ...
 	// Reading window state fails if it is changed via the window manager, like clicking on the titlebar (2013)
 	// https://bugzilla.libsdl.org/show_bug.cgi?id=1508 & https://bugzilla.libsdl.org/show_bug.cgi?id=2282
 	// happens on linux too!
