@@ -6,6 +6,22 @@
 #include <SDL_syswm.h>
 
 
+void MyX11BlockCompositing(SDL_Window* window)
+{
+	SDL_SysWMinfo info;
+	SDL_VERSION(&info.version);
+	if (!SDL_GetWindowWMInfo(window, &info))
+		return;
+
+	auto x11display = info.info.x11.display;
+	auto x11window  = info.info.x11.window;
+
+	bool b = true;
+	Atom blockCompositAtom = XInternAtom(x11display, "_KDE_NET_WM_BLOCK_COMPOSITING", false);
+	XChangeProperty(x11display, x11window, blockCompositAtom, XA_INTEGER, 8, PropModeReplace, (const unsigned char*)&b, 1);
+}
+
+
 int MyX11GetWindowState(SDL_Window* window)
 {
 	SDL_SysWMinfo info;

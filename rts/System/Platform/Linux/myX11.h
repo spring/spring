@@ -12,9 +12,15 @@
 
 struct SDL_Window;
 
+
+/**
+ * @brief disables kwin compositing to fix tearing
+ */
+void MyX11BlockCompositing(SDL_Window* window);
+
+
 /**
  * @brief returns the window-state of the given window
- * @see MyX11SetWindowState()
  */
 int MyX11GetWindowState(SDL_Window* window);
 
