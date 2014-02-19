@@ -373,7 +373,7 @@ public:
 			"<chat command description: SelectUnits>") {} // TODO
 
 	bool Execute(const UnsyncedAction& action) const {
-		game->SelectUnits(action.GetArgs()); //TODO give it a return argument?
+		selectedUnitsHandler.SelectUnits(action.GetArgs()); //TODO give it a return argument?
 		return true;
 	}
 };
@@ -386,7 +386,7 @@ public:
 			"<chat command description: SelectUnits>") {} // TODO
 
 	bool Execute(const UnsyncedAction& action) const {
-		game->SelectCycle(action.GetArgs()); //TODO give it a return argument?
+		selectedUnitsHandler.SelectCycle(action.GetArgs()); //TODO give it a return argument?
 		return true;
 	}
 };
