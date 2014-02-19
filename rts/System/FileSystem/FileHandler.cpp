@@ -202,6 +202,7 @@ int CFileHandler::Read(void* buf, int length)
 
 int CFileHandler::ReadString(void* buf, int length)
 {
+	assert(buf != nullptr);
 	assert(length > 0);
 	const int pos = GetPos();
 	const int rlen = Read(buf, length);
