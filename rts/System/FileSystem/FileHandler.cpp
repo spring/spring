@@ -200,6 +200,21 @@ int CFileHandler::Read(void* buf, int length)
 }
 
 
+int CFileHandler::ReadString(void* buf, int length)
+{
+	assert(length > 0);
+	const int pos = GetPos();
+	const int rlen = Read(buf, length);
+	if (rlen < length) ((const char*)buf)[rlen] = 0;
+	const int slen = strlen((const char*)buf);
+	if (rlen > 0) {
+		const int send = pos + slen + 1;
+		Seek(send, std::ios_base::beg);
+	}
+	return slen;
+}
+
+
 void CFileHandler::Seek(int length, std::ios_base::seekdir where)
 {
 	if (ifs.is_open())
