@@ -123,7 +123,7 @@ void CKeyCodes::Reset()
 	AddPair("backspace", SDLK_BACKSPACE);
 	AddPair("tab",       SDLK_TAB);
 	AddPair("clear",     SDLK_CLEAR);
-	AddPair("enter",     SDLK_RETURN);
+	AddPair("enter",     SDLK_RETURN); //FIXME
 	AddPair("return",    SDLK_RETURN);
 	AddPair("pause",     SDLK_PAUSE);
 	AddPair("esc",       SDLK_ESCAPE);
@@ -132,13 +132,15 @@ void CKeyCodes::Reset()
 	AddPair("delete",    SDLK_DELETE);
 
 	// ASCII mapped keysyms
-	for (unsigned char i = ' '; i <= '~'; ++i) {
+	for (unsigned char i = ' '; i <= 'z'; ++i) {
 		if (!isupper(i)) {
 			AddPair(std::string(1, i), i);
 		}
 	}
 
-	nameToCode["\xA7"] = 220;
+	AddPair("~", SDLK_BACKQUOTE);
+	AddPair("tilde", SDLK_BACKQUOTE);
+	AddPair("backquote", SDLK_BACKQUOTE);
 
 	/* Numeric keypad */
 	AddPair("numpad0", SDLK_KP_0);
@@ -201,22 +203,18 @@ void CKeyCodes::Reset()
 	//AddPair("compose", SDLK_COMPOSE); /* Multi-key compose key */
 
 	/* Miscellaneous function keys */
-	//AddPair("help", SDLK_HELP);
+	AddPair("help", SDLK_HELP);
 	AddPair("printscreen", SDLK_PRINTSCREEN);
+	AddPair("print", SDLK_PRINTSCREEN);
 	//AddPair("sysreq", SDLK_SYSREQ);
 	//AddPair("break", SDLK_BREAK);
 	//AddPair("menu", SDLK_MENU);
-	// These conflict with "joy*" nameToCode.
 	//AddPair("power", SDLK_POWER);     /* Power Macintosh power key */
 	//AddPair("euro", SDLK_EURO);       /* Some european keyboards */
 	//AddPair("undo", SDLK_UNDO);       /* Atari keyboard has Undo */
 
-	// Are these required for someone??
-	//AddPair("'<'", 226);
-	//AddPair("','", 188);
-	//AddPair("'.'", 190);
-
-	AddPair("joyx", 400);
+	//XXX Do they work? > NO
+	/*AddPair("joyx", 400);
 	AddPair("joyy", 401);
 	AddPair("joyz", 402);
 	AddPair("joyw", 403);
@@ -231,7 +229,7 @@ void CKeyCodes::Reset()
 	AddPair("joyup",    320);
 	AddPair("joydown",  321);
 	AddPair("joyleft",  322);
-	AddPair("joyright", 323);
+	AddPair("joyright", 323);*/
 
 	// remember our defaults
 	defaultNameToCode = nameToCode;
