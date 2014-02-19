@@ -113,7 +113,7 @@ private:
 
 	void DrawSkip(bool blackscreen = true);
 	void DrawInputText();
-	void UpdateUI(bool cam);
+	void UpdateCam();
 
 	/// Format and display a chat message received over network
 	void HandleChatMsg(const ChatMessage& msg);
