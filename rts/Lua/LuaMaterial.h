@@ -12,7 +12,6 @@ using std::set;
 
 #include "LuaOpenGLUtils.h"
 #include "LuaUnitMaterial.h" // for LuaMatRef
-#include "LuaUniqueBin.h"
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/ShadowHandler.h"
@@ -141,7 +140,7 @@ class LuaMatBin : public LuaMaterial {
 
 	public:
 		void Clear() { units.clear(); }
-		const GML_VECTOR<CUnit*>& GetUnits() const { return units; }
+		const std::vector<CUnit*>& GetUnits() const { return units; }
 
 		void Ref();
 		void UnRef();
@@ -157,7 +156,7 @@ class LuaMatBin : public LuaMaterial {
 
 	private:
 		int refCount;
-		GML_VECTOR<CUnit*> units;
+		std::vector<CUnit*> units;
 };
 
 

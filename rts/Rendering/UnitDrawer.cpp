@@ -13,7 +13,6 @@
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaMaterial.h"
 #include "Lua/LuaUnitMaterial.h"
-#include "Lua/LuaRules.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -23,7 +22,7 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/FarTextureHandler.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
@@ -57,11 +56,6 @@
 #include "System/Platform/Watchdog.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
-
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
-#endif
 
 #define UNIT_SHADOW_ALPHA_MASKING
 
@@ -152,12 +146,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 
 	unitRadarIcons.resize(teamHandler->ActiveAllyTeams());
 
-#ifdef USE_GML
-	showHealthBars = GML::Enabled() && configHandler->GetBool("ShowHealthBars");
-	multiThreadDrawUnit = configHandler->GetBool("MultiThreadDrawUnit");
-	multiThreadDrawUnitShadow = configHandler->GetBool("MultiThreadDrawUnitShadow");
-#endif
-
 	// LH must be initialized before drawer-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
 	geomBuffer.SetName("UNITDRAWER-GBUFFER");
@@ -239,7 +227,6 @@ void CUnitDrawer::SetUnitIconDist(float dist)
 void CUnitDrawer::Update()
 {
 	{
-		GML_STDMUTEX_LOCK(temp); // Update
 
 		while (!tempDrawUnits.empty() && tempDrawUnits.begin()->first < gs->frameNum - 1) {
 			tempDrawUnits.erase(tempDrawUnits.begin());
@@ -252,12 +239,8 @@ void CUnitDrawer::Update()
 	eventHandler.UpdateDrawUnits();
 
 	{
-		GML_RECMUTEX_LOCK(unit); // Update
 
 		drawIcon.clear();
-#ifdef USE_GML
-		drawStat.clear();
-#endif
 		for (std::set<CUnit*>::iterator usi = unsortedUnits.begin(); usi != unsortedUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 
@@ -302,8 +285,6 @@ bool CUnitDrawer::UpdateGeometryBuffer(bool init)
 // only called by DrawOpaqueUnit
 inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 {
-	GML_LODMUTEX_LOCK(unit); // DrawUnitLOD
-
 	if (unit->lodCount > 0) {
 		if (unit->isCloaked) {
 			const LuaMatType matType = (water->DrawReflectionPass())?
@@ -365,10 +346,6 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 				return;
 			}
 		}
-#ifdef USE_GML
-		else
-			unit->lastDrawFrame = gs->frameNum;
-#endif
 
 		if (!unit->isIcon) {
 			if ((unit->pos).SqDistance(camera->GetPos()) > (unit->sqRadius * unitDrawDistSqr)) {
@@ -412,15 +389,6 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	SetupForUnitDrawing(false);
 
 	{
-		GML_RECMUTEX_LOCK(unit); // Draw (lock on the bins)
-
-		#ifdef USE_GML
-		// these member vars will be accessed by DrawOpaqueUnitMT
-		mtDrawReflection = drawReflection;
-		mtDrawRefraction = drawRefraction;
-		mtExcludeUnit = excludeUnit;
-		#endif
-
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			opaqueModelRenderers[modelType]->PushRenderState();
 			DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
@@ -472,8 +440,6 @@ void CUnitDrawer::DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection
 	SetupForUnitDrawing(true);
 
 	{
-		GML_RECMUTEX_LOCK(unit); // Draw (lock on the bins)
-
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			opaqueModelRenderers[modelType]->PushRenderState();
 			DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
@@ -510,19 +476,6 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 
 		const UnitSet& unitSet = unitBinIt->second;
 
-#ifdef USE_GML
-		const bool mt = GML_PROFILER(multiThreadDrawUnit) //FIXME DAMN CRAPPY MACRO!!!
-
-		// small unitSets will add a significant overhead
-		// Profiler results, 4 threads, one single large unitSet: Approximately 20% faster with multiThreadDrawUnit
-		if (mt && unitSet.size() >= GML::ThreadCount() * 4) {
-			gmlProcessor->Work(
-				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitMT, this, GML::ThreadCount(),
-				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
-			);
-		}
-		else
-#endif
 		{
 			for (unitSetIt = unitSet.begin(); unitSetIt != unitSet.end(); ++unitSetIt) {
 				DrawOpaqueUnit(*unitSetIt, excludeUnit, drawReflection, drawRefraction);
@@ -537,8 +490,6 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 
 void CUnitDrawer::DrawOpaqueAIUnits()
 {
-	GML_STDMUTEX_LOCK(temp); // DrawOpaqueAIUnits
-
 	// non-cloaked AI unit ghosts (FIXME: s3o's + teamcolor)
 	for (std::multimap<int, TempDrawUnit>::iterator ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
 		if (camera->InView(ti->second.pos, 100)) {
@@ -574,11 +525,6 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_ALPHA_TEST);
 
-#ifdef USE_GML
-		for (std::set<CUnit*>::iterator ui = drawStat.begin(); ui != drawStat.end(); ++ui) {
-			DrawUnitStatBars(*ui);
-		}
-#endif
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	}
 }
@@ -618,19 +564,13 @@ static void DrawLuaMatBins(LuaMatType type, bool deferredPass)
 		bin->Execute(*currMat, deferredPass);
 		currMat = bin;
 
-		const GML_VECTOR<CUnit*>& units = bin->GetUnits();
+		const std::vector<CUnit*>& units = bin->GetUnits();
 		const int count = (int)units.size();
 		for (int i = 0; i < count; i++) {
 			CUnit* unit = units[i];
 
-			GML_LODMUTEX_LOCK(unit); // DrawLuaMatBins
-
 			const LuaUnitMaterial& unitMat = unit->luaMats[type];
 			const LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(unit->currentLOD);
-#ifdef USE_GML
-			if (!lodMat || !lodMat->IsActive())
-				continue;
-#endif
 			lodMat->uniforms.Execute(unit);
 
 			unitDrawer->SetTeamColour(unit->team);
@@ -804,8 +744,6 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	if (unit->isCloaked) { return; }
 	if (DrawAsIcon(unit, sqDist)) { return; }
 
-	GML_LODMUTEX_LOCK(unit); // DrawOpaqueUnitShadow
-
 	if (unit->lodCount <= 0) {
 		PUSH_SHADOW_TEXTURE_STATE(unit->model);
 		DrawUnitNow(unit);
@@ -840,16 +778,6 @@ void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
 		const UnitSet& unitSet = unitBinIt->second;
 
-#ifdef USE_GML
-		bool mt = GML_PROFILER(multiThreadDrawUnitShadow)
-		if (mt && unitSet.size() >= GML::ThreadCount() * 4) { // small unitSets will add a significant overhead
-			gmlProcessor->Work( // Profiler results, 4 threads, one single large unitSet: Approximately 20% faster with multiThreadDrawUnitShadow
-				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitShadowMT, this, GML::ThreadCount(),
-				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
-			);
-		}
-		else
-#endif
 		{
 			for (unitSetIt = unitSet.begin(); unitSetIt != unitSet.end(); ++unitSetIt) {
 				DrawOpaqueUnitShadow(*unitSetIt);
@@ -874,8 +802,6 @@ void CUnitDrawer::DrawShadowPass()
 	po->Enable();
 
 	SetUnitGlobalLODFactor(LODScale * LODScaleShadow);
-
-	GML_RECMUTEX_LOCK(unit); // DrawShadowPass
 
 	{
 		// 3DO's have clockwise-wound faces and
@@ -1035,8 +961,6 @@ void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 	glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
 
 	{
-		GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
-
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			cloakedModelRenderers[modelType]->PushRenderState();
 			DrawCloakedUnitsHelper(modelType);
@@ -1149,8 +1073,6 @@ inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGh
 
 void CUnitDrawer::DrawCloakedAIUnits()
 {
-	GML_STDMUTEX_LOCK(temp); // DrawCloakedAIUnits
-
 	// cloaked AI unit ghosts (FIXME: S3O's need different state)
 	for (std::multimap<int, TempDrawUnit>::iterator ti = tempTransparentDrawUnits.begin(); ti != tempTransparentDrawUnits.end(); ++ti) {
 		if (camera->InView(ti->second.pos, 100)) {
@@ -1268,18 +1190,10 @@ void CUnitDrawer::CleanUpUnitDrawing(bool deferredPass) const
 
 void CUnitDrawer::SetTeamColour(int team, float alpha) const
 {
-	unitDrawerState->SetTeamColor(team, alpha);
-}
-
-void CUnitDrawer::SetBasicTeamColour(int team, float alpha)
-{
-	const unsigned char* col = teamHandler->Team(team)->color;
-	const float texConstant[] = {col[0] / 255.0f, col[1] / 255.0f, col[2] / 255.0f, alpha};
-	const float matConstant[] = {1.0f, 1.0f, 1.0f, alpha};
-
-	glActiveTexture(GL_TEXTURE0);
-	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matConstant);
+	// need this because we can be called by no-team projectiles
+	if (teamHandler->IsValidTeam(team)) {
+		unitDrawerState->SetTeamColor(team, alpha);
+	}
 }
 
 
@@ -1376,8 +1290,6 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 
 	LuaUnitLODMaterial* lodMat = NULL;
 
-	GML_LODMUTEX_LOCK(unit); // DrawIndividual
-
 	if (unit->lodCount > 0) {
 		const LuaMatType matType = (water->DrawReflectionPass())?
 			LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
@@ -1433,14 +1345,15 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
  * Note: does all the GL state setting for that one unit, so you might want
  * something else for drawing many translucent units.
  */
-void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing)
+void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int team, float3 pos, int facing)
 {
 	const S3DModel* model = unitdef->LoadModel();
 
 	/* From SetupForGhostDrawing. */
 	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT);
 
-	SetBasicTeamColour(side);
+	assert(teamHandler->IsValidTeam(team));
+	IUnitDrawerState::SetBasicTeamColor(team, 1.0f);
 	SetupBasicS3OTexture0();
 
 	switch (model->type) {
@@ -1505,7 +1418,8 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 	glEnable(GL_TEXTURE_2D);
 
 	// get the team-coloured texture constructed by texunit 0
-	SetBasicTeamColour(team);
+	assert(teamHandler->IsValidTeam(team));
+	IUnitDrawerState::SetBasicTeamColor(team, 1.0f);
 	SetupBasicS3OTexture0();
 
 	switch (model->type) {
@@ -1646,20 +1560,13 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 
 inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
-	if (unit->luaDraw && luaRules != NULL && luaRules->DrawUnit(unit)) {
+	if (unit->luaDraw && eventHandler.DrawUnit(unit)) {
 		return;
 	}
 
 	if (unit->lodCount <= 0) {
 		unit->localModel->Draw();
 	} else {
-
-		GML_LODMUTEX_LOCK(unit); // DrawUnitModel
-#ifdef USE_GML
-		if (unit->lodCount <= 0) // re-read the value inside the mutex
-			unit->localModel->Draw();
-		else
-#endif
 		unit->localModel->DrawLOD(unit->currentLOD);
 	}
 }
@@ -1729,13 +1636,6 @@ void CUnitDrawer::DrawUnitRawModel(CUnit* unit)
 	if (unit->lodCount <= 0) {
 		unit->localModel->Draw();
 	} else {
-
-		GML_LODMUTEX_LOCK(unit); // DrawUnitRawModel
-#ifdef USE_GML
-		if (unit->lodCount <= 0)
-			unit->localModel->Draw();
-		else
-#endif
 		unit->localModel->DrawLOD(unit->currentLOD);
 	}
 }
@@ -1759,92 +1659,6 @@ void CUnitDrawer::DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsign
 	glPopMatrix();
 }
 
-#ifdef USE_GML
-void CUnitDrawer::DrawUnitStatBars(CUnit* unit)
-{
-	if ((gu->myAllyTeam != unit->allyteam) &&
-	    !gu->spectatingFullView && unit->unitDef->hideDamage) {
-		return;
-	}
-
-	float3 interPos = unit->drawPos;
-	interPos.y += unit->model->height + 5.0f;
-
-	// setup the billboard transformation
-	glPushMatrix();
-	glTranslatef(interPos.x, interPos.y, interPos.z);
-	glMultMatrixf(camera->GetBillBoardMatrix());
-
-	if (unit->health < unit->maxHealth || unit->paralyzeDamage > 0.0f) {
-		// black background for healthbar
-		glColor3f(0.0f, 0.0f, 0.0f);
-		glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
-
-		// health & stun level
-		const float health = std::max(0.0f, unit->health / unit->maxHealth);
-		const float stun = std::min(1.0f, unit->paralyzeDamage / unit->maxHealth);
-		float hsmin = std::min(health, stun);
-		const float colR = std::max(0.0f, 2.0f - 2.0f * health);
-		const float colG = std::min(2.0f * health, 1.0f);
-		if (hsmin > 0.0f) {
-			const float hscol = 0.8f - 0.5f * hsmin;
-			hsmin *= 10.0f;
-			glColor3f(colR * hscol, colG * hscol, 1.0f);
-			glRectf(-5.0f, 4.0f, hsmin - 5.0f, 6.0f);
-		}
-		if (health > stun) {
-			glColor3f(colR, colG, 0.0f);
-			glRectf(hsmin - 5.0f, 4.0f, health * 10.0f - 5.0f, 6.0f);
-		}
-		if (health < stun) {
-			glColor3f(0.0f, 0.0f, 1.0f);
-			glRectf(hsmin - 5.0f, 4.0f, stun * 10.0f - 5.0f, 6.0f);
-		}
-	}
-
-	// skip the rest of the indicators if it isn't a local unit
-	if ((gu->myTeam == unit->team) || gu->spectatingFullView) {
-		// experience bar
-		if (unit->limExperience > 0.0f) {
-			const float eEnd = (unit->limExperience * 0.8f) * 10.0f;
-			glColor3f(1.0f, 1.0f, 1.0f);
-			glRectf(6.0f, -2.0f, 8.0f, eEnd - 2.0f);
-		}
-		if (unit->beingBuilt) {
-			const float bEnd = (unit->buildProgress * 0.8f) * 10.0f;
-			glColor3f(1.0f, 0.0f, 0.0f);
-			glRectf(-8.0f, -2.0f, -6.0f, bEnd - 2.0f);
-		}
-		else if (unit->stockpileWeapon) {
-			const float sEnd = (unit->stockpileWeapon->buildPercent * 0.8f) * 10.0f;
-			glColor3f(1.0f, 0.0f, 0.0f);
-			glRectf(-8.0f, -2.0f, -6.0f, sEnd - 2.0f);
-		}
-		if (unit->group) {
-			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			font->glFormat(8.0f, 0.0f, 10.0f, FONT_BASELINE, "%i", unit->group->id);
-		}
-	}
-
-	glPopMatrix();
-}
-
-inline bool CUnitDrawer::UnitStatBarVisible(const CUnit* u) {
-	if (!showHealthBars)
-		return false;
-	if (u->noDraw)
-		return false;
-	if (u->IsInVoid())
-		return false;
-	if ((u->pos - camera->GetPos()).SqLength() >= (unitDrawDistSqr * 500.0f))
-		return false;
-
-	return (u->health < u->maxHealth || u->paralyzeDamage > 0.0f || u->limExperience > 0.0f || u->beingBuilt || u->stockpileWeapon || u->group != NULL);
-}
-#endif
-
-
-
 inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 
@@ -1854,11 +1668,6 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 		unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength());
 
-#ifdef USE_GML
-		if (UnitStatBarVisible(unit)) {
-			drawStat.insert(unit);
-		}
-#endif
 	} else if ((losStatus & LOS_PREVLOS) && (losStatus & LOS_CONTRADAR)) {
 		if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
 			unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength());
@@ -1872,21 +1681,10 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
 	const CTransportUnit* trans = u->GetTransporter();
 
-	if (!GML::SimEnabled()) {
-		if (trans != NULL) {
-			u->drawPos = u->pos + (trans->speed * globalRendering->timeOffset);
-		} else {
-			u->drawPos = u->pos + (u->speed * globalRendering->timeOffset);
-		}
+	if (trans != NULL) {
+		u->drawPos = u->pos + (trans->speed * globalRendering->timeOffset);
 	} else {
-		const float timeOffset = (1.0f * spring_tomsecs(globalRendering->lastFrameStart)) - (1.0f * u->lastUnitUpdate);
-		const float timeInterp = timeOffset * globalRendering->weightedSpeedFactor;
-
-		if (trans != NULL) {
-			u->drawPos = u->pos + (trans->speed * timeInterp);
-		} else {
-			u->drawPos = u->pos + (u->speed * timeInterp);
-		}
+		u->drawPos = u->pos + (u->speed * globalRendering->timeOffset);
 	}
 
 	u->drawMidPos = u->drawPos + (u->midPos - u->pos);
@@ -2165,13 +1963,6 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CUnit* unit = const_cast<CUnit*>(u);
 	texturehandlerS3O->UpdateDraw();
 
-	if (GML::SimEnabled() && !GML::ShareLists()) {
-		if (u->model && TEX_TYPE(u) < 0)
-			TEX_TYPE(u) = texturehandlerS3O->LoadS3OTextureNow(u->model);
-		if ((unsortedUnits.size() % 10) == 0)
-			Watchdog::ClearPrimaryTimers(); // batching can create an avalance of events during /give xxx, triggering hang detection
-	}
-
 	if (u->model != NULL) {
 		if (cloaked) {
 			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
@@ -2187,7 +1978,6 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 
 void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
-	GhostSolidObject* gb = NULL;
 
 	if ((dynamic_cast<CBuilding*>(u) != NULL) && gameSetup->ghostedBuildings &&
 		!(u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
@@ -2197,7 +1987,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 		const UnitDef* decoyDef = u->unitDef->decoyDef;
 		S3DModel* gbModel = (decoyDef == NULL) ? u->model : decoyDef->LoadModel();
 
-		gb = new GhostSolidObject();
+		GhostSolidObject* gb = new GhostSolidObject();
 		gb->pos    = u->pos;
 		gb->model  = gbModel;
 		gb->decal  = NULL;
@@ -2223,11 +2013,6 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	for (std::vector<std::set<CUnit*> >::iterator it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
 		(*it).erase(u);
 	}
-#ifdef USE_GML
-	drawIcon.erase(u);
-	drawStat.erase(u);
-#endif
-
 	UpdateUnitMiniMapIcon(unit, false, true);
 	SetUnitLODCount(u, 0);
 }
@@ -2325,8 +2110,6 @@ unsigned int CUnitDrawer::CalcUnitShadowLOD(const CUnit* unit, unsigned int last
 
 void CUnitDrawer::SetUnitLODCount(CUnit* unit, unsigned int count)
 {
-	GML_LODMUTEX_LOCK(unit); // SetUnitLODCount
-
 	const unsigned int oldCount = unit->lodCount;
 
 	unit->lodCount = count;
@@ -2340,19 +2123,7 @@ void CUnitDrawer::SetUnitLODCount(CUnit* unit, unsigned int count)
 	for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
 		unit->luaMats[m].SetLODCount(count);
 	}
-#ifdef USE_GML
-	if (unit->currentLOD >= count)
-		unit->currentLOD = (count == 0) ? 0 : count - 1;
-#endif
 }
-
-
-
-
-
-
-
-
 
 void CUnitDrawer::PlayerChanged(int playerNum) {
 	if (playerNum != gu->myPlayerNum)

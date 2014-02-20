@@ -91,15 +91,13 @@ bool CMissileLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, co
 	const float linear = dir.y + weaponDef->trajectoryHeight;
 	const float quadratic = -weaponDef->trajectoryHeight / flatLength;
 	const float groundDist = ((avoidFlags & Collision::NOGROUND) == 0)?
-		ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 30, linear, quadratic):
+		ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength, linear, quadratic):
 		-1.0f;
-	// FIXME: _WHY_ the 30-elmo subtraction?
-	const float modFlatLength = flatLength - 30.0f;
 
 	if (groundDist > 0.0f)
 		return false;
 
-	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
+	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, flatLength,
 		linear, quadratic, 0, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}

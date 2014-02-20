@@ -43,6 +43,7 @@ void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	glLoadIdentity();
 
 	SetActiveShader(shadowHandler->shadowsLoaded, deferredPass);
+	assert(modelShaders[MODEL_SHADER_ACTIVE] != NULL);
 	modelShaders[MODEL_SHADER_ACTIVE]->Enable();
 
 	// TODO: refactor to use EnableTexturesCommon
@@ -75,6 +76,9 @@ void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
 }
 
 void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool) {
+	assert(modelShaders[MODEL_SHADER_ACTIVE] != NULL);
+
+	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
 	SetActiveShader(shadowHandler->shadowsLoaded, false);
 
 	// TODO: refactor to use DisableTexturesCommon
@@ -139,6 +143,18 @@ void IUnitDrawerState::DisableTexturesCommon(const CUnitDrawer* ud) {
 	glDisable(GL_TEXTURE_2D);
 }
 
+void IUnitDrawerState::SetBasicTeamColor(int team, float alpha) {
+	const CTeam* t = teamHandler->Team(team);
+	const unsigned char* c = t->color;
+
+	const float texConstant[] = {c[0] / 255.0f, c[1] / 255.0f, c[2] / 255.0f, alpha};
+	const float matConstant[] = {1.0f, 1.0f, 1.0f, alpha};
+
+	glActiveTexture(GL_TEXTURE0);
+	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matConstant);
+}
+
 
 
 bool UnitDrawerStateFFP::CanEnable(const CUnitDrawer* ud) const {
@@ -200,7 +216,8 @@ void UnitDrawerStateFFP::DisableTextures(const CUnitDrawer*) {
 
 void UnitDrawerStateFFP::SetTeamColor(int team, float alpha) const {
 	// non-shader case via texture combiners
-	CUnitDrawer::SetBasicTeamColour(team, alpha);
+	assert(teamHandler->IsValidTeam(team));
+	SetBasicTeamColor(team, alpha);
 }
 
 
@@ -269,7 +286,6 @@ void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool) {
 }
 
 void UnitDrawerStateARB::Disable(const CUnitDrawer* ud, bool) {
-	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
 	DisableCommon(ud, false);
 }
 
@@ -282,6 +298,8 @@ void UnitDrawerStateARB::DisableShaders(const CUnitDrawer*) { modelShaders[MODEL
 
 
 void UnitDrawerStateARB::SetTeamColor(int team, float alpha) const {
+	assert(teamHandler->IsValidTeam(team));
+
 	const CTeam* t = teamHandler->Team(team);
 	const float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
@@ -294,12 +312,12 @@ void UnitDrawerStateARB::SetTeamColor(int team, float alpha) const {
 		modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 		modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, &c[0]);
 	} else {
-		CUnitDrawer::SetBasicTeamColour(team, alpha);
+		SetBasicTeamColor(team, alpha);
 	}
 
 	#if 0
-	if (LUA_DRAWING) {
-		CUnitDrawer::SetBasicTeamColour(team, alpha);
+	if (CUnitDrawer::LUA_DRAWING) {
+		SetBasicTeamColor(team, alpha);
 	}
 	#endif
 }
@@ -408,7 +426,6 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass) {
 }
 
 void UnitDrawerStateGLSL::Disable(const CUnitDrawer* ud, bool deferredPass) {
-	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
 	DisableCommon(ud, deferredPass);
 }
 
@@ -435,6 +452,8 @@ void UnitDrawerStateGLSL::UpdateCurrentShader(const CUnitDrawer* ud, const ISkyL
 }
 
 void UnitDrawerStateGLSL::SetTeamColor(int team, float alpha) const {
+	assert(teamHandler->IsValidTeam(team));
+
 	const CTeam* t = teamHandler->Team(team);
 	const float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
@@ -446,12 +465,12 @@ void UnitDrawerStateGLSL::SetTeamColor(int team, float alpha) const {
 	if (modelShaders[MODEL_SHADER_ACTIVE]->IsBound()) {
 		modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(9, &c[0]);
 	} else {
-		CUnitDrawer::SetBasicTeamColour(team, alpha);
+		SetBasicTeamColor(team, alpha);
 	}
 
 	#if 0
-	if (LUA_DRAWING) {
-		CUnitDrawer::SetBasicTeamColour(team, alpha);
+	if (CUnitDrawer::LUA_DRAWING) {
+		SetBasicTeamColor(team, alpha);
 	}
 	#endif
 }

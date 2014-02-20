@@ -3,10 +3,13 @@
 #ifndef EVENT_CLIENT_H
 #define EVENT_CLIENT_H
 
-#include "System/float3.h"
 #include <string>
 #include <vector>
 #include <map>
+#include <typeinfo>
+
+#include "System/float3.h"
+#include "System/Misc/SpringTime.h"
 
 #ifdef __APPLE__
 // defined in X11/X.h
@@ -25,6 +28,9 @@ class CProjectile;
 struct Command;
 class IArchive;
 struct SRectangle;
+struct UnitDef;
+struct BuildInfo;
+struct FeatureDef;
 
 #ifndef zipFile
 	// might be defined through zip.h already
@@ -50,7 +56,7 @@ class CEventClient
 		 * Used by the eventHandler to register
 		 * call-ins when an EventClient is being added.
 		 */
-		virtual bool WantsEvent(const std::string& eventName) = 0;
+		virtual bool WantsEvent(const std::string& eventName);
 
 		// used by the eventHandler to route certain event types
 		virtual int  GetReadAllyTeam() const { return NoAccessTeam; }
@@ -59,10 +65,34 @@ class CEventClient
 			return (GetFullRead() || (GetReadAllyTeam() == allyTeam));
 		}
 
+	public:
+		friend class CEventHandler;
+
+		typedef void (*eventFuncPtr)();
+
+		std::map<std::string, eventFuncPtr> linkedEvents;
+		std::map<std::string, std::string> linkedEventsTypeInfo;
+
+		#pragma GCC diagnostic push
+		#pragma GCC diagnostic ignored "-Wpmf-conversions"
+		template <class T>
+		void RegisterLinkedEvents(T* foo) {
+			#define SETUP_EVENT(eventname, props) \
+				linkedEvents[#eventname] = reinterpret_cast<eventFuncPtr>(&T::eventname); \
+				linkedEventsTypeInfo[#eventname] = typeid(&T::eventname).name();
+
+				#include "Events.def"
+			#undef SETUP_EVENT
+		}
+		#pragma GCC diagnostic pop
+
 	private:
 		const std::string name;
 		const int         order;
 		const bool        synced_;
+
+	protected:
+		      bool        autoLinkEvents;
 
 	protected:
 		CEventClient(const std::string& name, int order, bool synced);
@@ -107,6 +137,7 @@ class CEventClient
 			int projectileID,
 			bool paralyzer) {}
 		virtual void UnitExperience(const CUnit* unit, float oldExperience) {}
+		virtual void UnitHarvestStorageFull(const CUnit* unit) {}
 
 		virtual void UnitSeismicPing(const CUnit* unit, int allyTeam,
 		                             const float3& pos, float strength) {}
@@ -161,6 +192,55 @@ class CEventClient
 		                              const CWeapon* weapon, int oldCount) {}
 
 		virtual bool Explosion(int weaponID, int projectileID, const float3& pos, const CUnit* owner) { return false; }
+
+		virtual bool CommandFallback(const CUnit* unit, const Command& cmd);
+		virtual bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
+
+		virtual bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo);
+		virtual bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
+		virtual bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
+		virtual bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos);
+		virtual bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part);
+		virtual bool AllowResourceLevel(int teamID, const string& type, float level);
+		virtual bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
+		virtual bool AllowDirectUnitControl(int playerID, const CUnit* unit);
+		virtual bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
+
+		virtual bool TerraformComplete(const CUnit* unit, const CUnit* build);
+		virtual bool MoveCtrlNotify(const CUnit* unit, int data);
+
+		virtual int AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID);
+		virtual bool AllowWeaponTarget(
+			unsigned int attackerID,
+			unsigned int targetID,
+			unsigned int attackerWeaponNum,
+			unsigned int attackerWeaponDefID,
+			float* targetPriority
+		);
+		virtual bool AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget);
+
+		virtual bool UnitPreDamaged(
+			const CUnit* unit,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID,
+			bool paralyzer,
+			float* newDamage,
+			float* impulseMult);
+
+		virtual bool FeaturePreDamaged(
+			const CFeature* feature,
+			const CUnit* attacker,
+			float damage,
+			int weaponDefID,
+			int projectileID,
+			float* newDamage,
+			float* impulseMult);
+
+		virtual bool ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool);
+
+		virtual bool SyncedActionFallback(const string& line, int playerID);
 		/// @}
 
 		/**
@@ -172,11 +252,12 @@ class CEventClient
 		virtual void Update();
 		virtual void UnsyncedHeightMapUpdate(const SRectangle& rect);
 
-		virtual bool KeyPress(unsigned short key, bool isRepeat);
-		virtual bool KeyRelease(unsigned short key);
+		virtual bool KeyPress(int key, bool isRepeat);
+		virtual bool KeyRelease(int key);
+		virtual bool TextInput(const std::string& utf8);
 		virtual bool MouseMove(int x, int y, int dx, int dy, int button);
 		virtual bool MousePress(int x, int y, int button);
-		virtual int  MouseRelease(int x, int y, int button); // FIXME - bool / void?
+		virtual void MouseRelease(int x, int y, int button);
 		virtual bool MouseWheel(bool up, float value);
 		virtual bool JoystickEvent(const std::string& event, int val1, int val2);
 		virtual bool IsAbove(int x, int y);
@@ -218,12 +299,18 @@ class CEventClient
 		virtual void DrawScreen();
 		virtual void DrawInMiniMap();
 
-		virtual void GameProgress(int gameFrame) {}
+		virtual bool DrawUnit(const CUnit* unit);
+		virtual bool DrawFeature(const CFeature* feature);
+		virtual bool DrawShield(const CUnit* unit, const CWeapon* weapon);
+		virtual bool DrawProjectile(const CProjectile* projectile);
 
-		virtual void DrawLoadScreen() {}
-		virtual void LoadProgress(const std::string& msg, const bool replace_lastline) {}
+		virtual void GameProgress(int gameFrame);
 
-		virtual void CollectGarbage() {}
+		virtual void DrawLoadScreen();
+		virtual void LoadProgress(const std::string& msg, const bool replace_lastline);
+
+		virtual void CollectGarbage();
+		virtual void DbgTimingInfo(const char* name, const spring_time& start, const spring_time& end);
 		/// @}
 };
 

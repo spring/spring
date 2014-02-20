@@ -15,40 +15,13 @@
 
 #define CLAMP(i) Clamp((i), 0, smfReadMap->maxHeightMapIdx)
 
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int, CUnit*>* gmlProcessor;
-
-void CLegacyMeshDrawer::DoDrawGroundRowMT(void* c, int bty) {
-	((CLegacyMeshDrawer*) c)->DoDrawGroundRow(cam2, bty);
-}
-
-void CLegacyMeshDrawer::DoDrawGroundShadowLODMT(void* c, int nlod) {
-	((CLegacyMeshDrawer*) c)->DoDrawGroundShadowLOD(nlod);
-}
-
-CONFIG(bool, MultiThreadDrawGround).defaultValue(true);
-CONFIG(bool, MultiThreadDrawGroundShadow).defaultValue(false);
-
-#endif
-
-
 CLegacyMeshDrawer::CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	: smfReadMap(rm)
 	, smfGroundDrawer(gd)
 	, viewRadius(4)
 	, neededLod(4)
 	//, waterDrawn(false)
-#ifdef USE_GML
-	// handled by reference!
-	, multiThreadDrawGround(gd->multiThreadDrawGround)
-	, multiThreadDrawGroundShadow(gd->multiThreadDrawGroundShadow)
-#endif
 {
-#ifdef USE_GML
-	multiThreadDrawGround = configHandler->GetBool("MultiThreadDrawGround");
-	multiThreadDrawGroundShadow = configHandler->GetBool("MultiThreadDrawGroundShadow");
-#endif
 }
 
 CLegacyMeshDrawer::~CLegacyMeshDrawer()
@@ -597,26 +570,6 @@ void CLegacyMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 	//waterDrawn = (drawPass == DrawPass::WaterReflection);
 
 	{ // profiler scope
-#ifdef USE_GML
-		// Profiler results, 4 threads: multiThreadDrawGround is faster only if ViewRadius is below 60 (probably depends on memory/cache speeds)
-		const bool mt = GML_PROFILER(multiThreadDrawGround)
-
-		if (mt) {
-			gmlProcessor->Work(
-				NULL,                                 // wrk
-				&CLegacyMeshDrawer::DoDrawGroundRowMT, // wrka
-				NULL,                                 // wrkit
-				this,                                 // cls
-				gmlThreadCount,                       // mt
-				FALSE,                                // sm
-				NULL,                                 // it
-				smfReadMap->numBigTexY,               // nu
-				50,                                   // l1
-				100,                                  // l2
-				TRUE                                  // sw
-			);
-		} else
-#endif
 		{
 			int camBty = math::floor(cam2->GetPos().z / (smfReadMap->bigSquareSize * SQUARE_SIZE));
 			camBty = std::max(0, std::min(smfReadMap->numBigTexY - 1, camBty));
@@ -968,26 +921,6 @@ void CLegacyMeshDrawer::DrawShadowMesh()
 {
 	{ // profiler scope
 		const int NUM_LODS = 4;
-#ifdef USE_GML
-		// Profiler results, 4 threads: multiThreadDrawGroundShadow is rarely faster than single threaded rendering (therefore disabled by default)
-		const bool mt = GML_PROFILER(multiThreadDrawGroundShadow)
-
-		if (mt) {
-			gmlProcessor->Work(
-				NULL,                                       // wrk
-				&CLegacyMeshDrawer::DoDrawGroundShadowLODMT, // wrka
-				NULL,                                       // wrkit
-				this,                                       // cls
-				gmlThreadCount,                             // mt
-				FALSE,                                      // sm
-				NULL,                                       // it
-				NUM_LODS + 1,                               // nu
-				50,                                         // l1
-				100,                                        // l2
-				TRUE                                        // sw
-			);
-		} else
-#endif
 		{
 			for (int nlod = 0; nlod < NUM_LODS + 1; ++nlod) {
 				DoDrawGroundShadowLOD(nlod);

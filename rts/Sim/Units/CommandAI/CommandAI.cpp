@@ -9,7 +9,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/WaitCommandsAI.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Sim/Features/Feature.h"
@@ -596,7 +595,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 
 void CCommandAI::GiveCommand(const Command& c, bool fromSynced)
 {
-	if (luaRules && !luaRules->AllowCommand(owner, c, fromSynced)) {
+	if (!eventHandler.AllowCommand(owner, c, fromSynced)) {
 		return;
 	}
 	eventHandler.UnitCommand(owner, c);
@@ -1350,7 +1349,7 @@ void CCommandAI::SlowUpdate()
 		return;
 	}
 
-	if (luaRules && !luaRules->CommandFallback(owner, c)) {
+	if (!eventHandler.CommandFallback(owner, c)) {
 		return; // luaRules wants the command to stay at the front
 	}
 
@@ -1426,16 +1425,13 @@ void CCommandAI::FinishCommand()
 	assert(!commandQue.empty());
 
 	const Command cmd = commandQue.front();
-	const int cmdID  = cmd.GetID();
-	const int cmdTag = cmd.tag;
-	const unsigned char cmdOpts = cmd.options;
 	const bool dontRepeat = (cmd.options & INTERNAL_ORDER);
 
 	if (repeatOrders
 	    && !dontRepeat
-	    && (cmdID != CMD_STOP)
-	    && (cmdID != CMD_PATROL)
-	    && (cmdID != CMD_SET_WANTED_MAX_SPEED)){
+	    && (cmd.GetID() != CMD_STOP)
+	    && (cmd.GetID() != CMD_PATROL)
+	    && (cmd.GetID() != CMD_SET_WANTED_MAX_SPEED)){
 		commandQue.push_back(cmd);
 	}
 
@@ -1560,13 +1556,23 @@ void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cm
 	}
 }
 
-bool CCommandAI::HasMoreMoveCommands()
+
+bool CCommandAI::HasCommand(int cmdID) const {
+	if (commandQue.empty())
+		return false;
+	if (cmdID < 0)
+		return ((commandQue.front()).IsBuildCommand());
+
+	return ((commandQue.front()).GetID() == cmdID);
+}
+
+bool CCommandAI::HasMoreMoveCommands() const
 {
 	if (commandQue.size() <= 1)
 		return false;
 
 	// skip the first command
-	for (CCommandQueue::iterator i = ++commandQue.begin(); i != commandQue.end(); ++i) {
+	for (CCommandQueue::const_iterator i = ++commandQue.begin(); i != commandQue.end(); ++i) {
 		switch (i->GetID()) {
 			case CMD_AREA_ATTACK:
 			case CMD_ATTACK:
@@ -1584,6 +1590,7 @@ bool CCommandAI::HasMoreMoveCommands()
 			case CMD_UNLOAD_UNIT:
 			case CMD_UNLOAD_UNITS:
 				return true;
+
 			case CMD_DEATHWAIT:
 			case CMD_GATHERWAIT:
 			case CMD_SELFD:
@@ -1592,6 +1599,7 @@ bool CCommandAI::HasMoreMoveCommands()
 			case CMD_TIMEWAIT:
 			case CMD_WAIT:
 				return false;
+
 			default:
 				// build commands are no different from reclaim or repair commands
 				// in that they can require a unit to move, so return true when we

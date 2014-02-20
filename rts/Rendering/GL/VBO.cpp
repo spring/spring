@@ -59,9 +59,6 @@ VBO::VBO(GLenum _defTarget) : vboId(0)
 
 	VBOused = IsSupported();
 
-	// With GML the ctor can be called by a non-render thread
-	// so delay the buffer generation to the first usage
-	//if (VBOused) glGenBuffers(1, &vboId);
 }
 
 

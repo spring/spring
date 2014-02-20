@@ -2,8 +2,8 @@
 
 
 #include <set>
-#include <cctype>
-
+#include <mutex>
+#include <boost/thread/mutex.hpp>
 
 #include "LuaGaia.h"
 
@@ -36,15 +36,17 @@ static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
 /******************************************************************************/
 /******************************************************************************/
 
+static boost::mutex m_singleton;
+
+
 void CLuaGaia::LoadHandler()
 {
-	//FIXME GML: this needs a mutex!!!
+	{
+		std::lock_guard<boost::mutex> lk(m_singleton);
+		if (luaGaia) return;
 
-	if (luaGaia != NULL) {
-		return;
+		luaGaia = new CLuaGaia();
 	}
-
-	luaGaia = new CLuaGaia();
 
 	if (!luaGaia->IsValid()) {
 		FreeHandler();
@@ -54,10 +56,14 @@ void CLuaGaia::LoadHandler()
 
 void CLuaGaia::FreeHandler()
 {
-	//FIXME GML: this needs a mutex!!!
-	delete luaGaia; luaGaia = NULL;
-}
+	std::lock_guard<boost::mutex> lk(m_singleton);
+	if (!luaGaia) return;
 
+	auto* inst = luaGaia;
+	luaGaia = NULL;
+	inst->KillLua();
+	delete inst;
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -69,14 +75,12 @@ CLuaGaia::CLuaGaia()
 		return;
 	}
 
-	teamsLocked = true;
-
-	SetFullCtrl(true, true);
-	SetFullRead(true, true);
-	SetCtrlTeam(AllAccessTeam, true); //teamHandler->GaiaTeamID();
-	SetReadTeam(AllAccessTeam, true);
-	SetReadAllyTeam(AllAccessTeam, true);
-	SetSelectTeam(teamHandler->GaiaTeamID(), true);
+	SetFullCtrl(true);
+	SetFullRead(true);
+	SetCtrlTeam(CEventClient::AllAccessTeam);
+	SetReadTeam(CEventClient::AllAccessTeam);
+	SetReadAllyTeam(CEventClient::AllAccessTeam);
+	SetSelectTeam(teamHandler->GaiaTeamID());
 
 	Init(LuaGaiaSyncedFilename, LuaGaiaUnsyncedFilename, SPRING_VFS_MAP);
 }
@@ -84,17 +88,7 @@ CLuaGaia::CLuaGaia()
 
 CLuaGaia::~CLuaGaia()
 {
-	if (L_Sim != NULL || L_Draw != NULL) {
-		Shutdown();
-		KillLua();
-	}
-
-	assert(this == luaGaia);
-	assert(!IsValid());
-
-	if (killMe) {
-		luaGaia = NULL;
-	}
+	luaGaia = NULL;
 }
 
 
@@ -106,9 +100,6 @@ bool CLuaGaia::AddSyncedCode(lua_State *L)
 
 bool CLuaGaia::AddUnsyncedCode(lua_State *L)
 {
-	/*lua_pushliteral(L, "UNSYNCED");
-	lua_gettable(L, LUA_REGISTRYINDEX);*/
-
 	return true;
 }
 

@@ -54,7 +54,6 @@ class LuaSyncedCtrl
 		static int TransferFeature(lua_State* L);
 
 		static int SetUnitCosts(lua_State* L);
-		static int SetUnitResourcing(lua_State* L);
 		static int SetUnitTooltip(lua_State* L);
 		static int SetUnitHealth(lua_State* L);
 		static int SetUnitMaxHealth(lua_State* L);
@@ -68,7 +67,9 @@ class LuaSyncedCtrl
 		static int SetUnitStealth(lua_State* L);
 		static int SetUnitSonarStealth(lua_State* L);
 		static int SetUnitAlwaysVisible(lua_State* L);
+		static int SetUnitResourcing(lua_State* L);
 		static int SetUnitMetalExtraction(lua_State* L);
+		static int SetUnitHarvestStorage(lua_State* L);
 		static int SetUnitBuildSpeed(lua_State* L);
 		static int SetUnitNanoPieces(lua_State* L);
 		static int SetUnitBlocking(lua_State* L);

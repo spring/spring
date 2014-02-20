@@ -44,7 +44,7 @@ public:
 	void LoadSavefile(const std::string& save);
 
 	bool Draw();
-	int KeyPressed(unsigned short k, bool isRepeat);
+	int KeyPressed(int k, bool isRepeat);
 	bool Update();
 
 private:

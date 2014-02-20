@@ -26,7 +26,6 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(crushable),
 	CR_MEMBER(immobile),
-	CR_MEMBER(crushKilled),
 	CR_MEMBER(blockEnemyPushing),
 	CR_MEMBER(blockHeightChanges),
 
@@ -43,6 +42,8 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
+
+	CR_MEMBER(tempNum),
 
 	CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
@@ -77,7 +78,6 @@ CSolidObject::CSolidObject():
 
 	crushable(false),
 	immobile(false),
-	crushKilled(false),
 	blockEnemyPushing(true),
 	blockHeightChanges(false),
 
@@ -97,6 +97,8 @@ CSolidObject::CSolidObject():
 
 	team(0),
 	allyteam(0),
+
+	tempNum(0),
 
 	objectDef(NULL),
 	moveDef(NULL),
@@ -167,23 +169,44 @@ void CSolidObject::UpdatePhysicalState(float eps) {
 	#endif
 }
 
+
+bool CSolidObject::SetVoidState() {
+	if (IsInVoid())
+		return false;
+
+	// make us transparent to raycasts, quadfield queries, etc.
+	// need to push and pop state bits in case Lua changes them
+	// (otherwise gadgets must listen to all Unit*Loaded events)
+	PushCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS);
+	PushCollidableStateBit(CSTATE_BIT_PROJECTILES);
+	PushCollidableStateBit(CSTATE_BIT_QUADMAPRAYS);
+	ClearCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
+	SetPhysicalStateBit(PSTATE_BIT_INVOID);
+
+	UnBlock();
+	collisionVolume->SetIgnoreHits(true);
+	return true;
+}
+
+bool CSolidObject::ClearVoidState() {
+	if (!IsInVoid())
+		return false;
+
+	PopCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS);
+	PopCollidableStateBit(CSTATE_BIT_PROJECTILES);
+	PopCollidableStateBit(CSTATE_BIT_QUADMAPRAYS);
+	ClearPhysicalStateBit(PSTATE_BIT_INVOID);
+
+	Block();
+	collisionVolume->SetIgnoreHits(false);
+	return true;
+}
+
 void CSolidObject::UpdateVoidState(bool set) {
 	if (set) {
-		// make us transparent to raycasts, quadfield queries, etc.
-		// TODO:
-		//   need to push/pop old state in case Lua has changed it
-		//   (otherwise gadgets must listen for Unit*Loaded events)
-		ClearCollidableStateBit((CSTATE_BIT_SOLIDOBJECTS * objectDef->collidable) | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
-		SetPhysicalStateBit(PSTATE_BIT_INVOID);
-
-		UnBlock();
-		collisionVolume->SetIgnoreHits(true);
+		SetVoidState();
 	} else {
-		SetCollidableStateBit((CSTATE_BIT_SOLIDOBJECTS * objectDef->collidable) | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
-		ClearPhysicalStateBit(PSTATE_BIT_INVOID);
-
-		Block();
-		collisionVolume->SetIgnoreHits(false);
+		ClearVoidState();
 	}
 
 	noSelect = (set || !objectDef->selectable);
@@ -370,10 +393,13 @@ void CSolidObject::SetHeadingFromDirection() {
 
 
 
-void CSolidObject::Kill(const float3& impulse, bool crushKill) {
-	crushKilled = crushKill;
-
+void CSolidObject::Kill(CUnit* killer, const float3& impulse, bool crushed) {
 	UpdateVoidState(false);
-	DoDamage(DamageArray(health + 1.0f), impulse, NULL, -DAMAGE_EXTSOURCE_KILLED, -1);
+
+	if (crushed) {
+		DoDamage(DamageArray(health + 1.0f), impulse, killer, -DAMAGE_EXTSOURCE_CRUSHED, -1);
+	} else {
+		DoDamage(DamageArray(health + 1.0f), impulse, killer, -DAMAGE_EXTSOURCE_KILLED, -1);
+	}
 }
 

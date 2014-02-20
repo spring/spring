@@ -6,7 +6,6 @@
 #include "GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaUI.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
@@ -359,8 +358,6 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 template<typename TFilter, typename TQuery>
 static inline void QueryUnits(TFilter filter, TQuery& query)
 {
-	GML_RECMUTEX_LOCK(qnum); // QueryUnits
-
 	const vector<int> &quads = quadField->GetQuads(query.pos, query.radius);
 
 	const int tempNum = gs->tempNum++;
@@ -749,10 +746,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 					}
 				}
 
-				if (luaRules != NULL) {
-					if (!luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
-						continue;
-					}
+				if (!eventHandler.AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
+					continue;
 				}
 
 				targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
@@ -1000,6 +995,12 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 // against which to compare all footprint squares
 float CGameHelper::GetBuildHeight(const float3& pos, const UnitDef* unitdef, bool synced)
 {
+	// we are not going to terraform the ground for mobile units
+	// (so we do not care about maxHeightDif constraints either)
+	// TODO: maybe respect waterline if <pos> is in water
+	if (!unitdef->IsImmobileUnit())
+		return (std::max(pos.y, ground->GetHeightReal(pos.x, pos.z, synced)));
+
 	const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
 	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
 
@@ -1010,7 +1011,7 @@ float CGameHelper::GetBuildHeight(const float3& pos, const UnitDef* unitdef, boo
 	}
 	#endif
 
-	const float difHgt = unitdef->maxHeightDif;
+	const float maxDifHgt = unitdef->maxHeightDif;
 
 	float minHgt = readMap->GetCurrMinHeight();
 	float maxHgt = readMap->GetCurrMaxHeight();
@@ -1045,8 +1046,8 @@ float CGameHelper::GetBuildHeight(const float3& pos, const UnitDef* unitdef, boo
 			// restrict the range of [minH, maxH] to
 			// the minimum and maximum square height
 			// within the footprint
-			if (minHgt < (sqMinHgt - difHgt)) { minHgt = sqMinHgt - difHgt; }
-			if (maxHgt > (sqMaxHgt + difHgt)) { maxHgt = sqMaxHgt + difHgt; }
+			if (minHgt < (sqMinHgt - maxDifHgt)) { minHgt = sqMinHgt - maxDifHgt; }
+			if (maxHgt > (sqMaxHgt + maxDifHgt)) { maxHgt = sqMaxHgt + maxDifHgt; }
 		}
 	}
 
@@ -1224,19 +1225,23 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 			//   ::Pos2BuildPos --> ::GetBuildHeight which can differ from the actual
 			//   ground height at so->pos (s.t. !so->IsOnGround() and the object will
 			//   be non-blocking)
+			//   fixed: no longer true for mobile units
+			#if 0
 			if (synced) {
 				so->PushPhysicalStateBit(CSolidObject::PSTATE_BIT_ONGROUND);
 				so->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_ONGROUND, (math::fabs(so->pos.y - groundHeight) <= 0.5f));
 			}
+			#endif
 
 			if (moveDef != NULL && CMoveMath::IsNonBlocking(*moveDef, so, NULL)) {
 				ret = BUILDSQUARE_OPEN;
 			}
 
+			#if 0
 			if (synced) {
 				so->PopPhysicalStateBit(CSolidObject::PSTATE_BIT_ONGROUND);
 			}
-
+			#endif
 		}
 
 		if (ret == BUILDSQUARE_BLOCKED) {
@@ -1244,28 +1249,33 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 		}
 	}
 
+	// check maxHeightDif constraint (structures only)
+	//
 	// if we are capable of floating, only test local
 	// height difference IF terrain is above sea-level
-	if (!unitDef->floatOnWater || groundHeight > 0.0f) {
-		const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
-		const float* curHeightMap = readMap->GetCornerHeightMapSynced();
+	if (unitDef->IsImmobileUnit()) {
+		if (!unitDef->floatOnWater || groundHeight > 0.0f) {
+			const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
+			const float* curHeightMap = readMap->GetCornerHeightMapSynced();
 
-		#ifdef USE_UNSYNCED_HEIGHTMAP
-		if (!synced) {
-			orgHeightMap = readMap->GetCornerHeightMapUnsynced();
-			curHeightMap = readMap->GetCornerHeightMapUnsynced();
+			#ifdef USE_UNSYNCED_HEIGHTMAP
+			if (!synced) {
+				orgHeightMap = readMap->GetCornerHeightMapUnsynced();
+				curHeightMap = readMap->GetCornerHeightMapUnsynced();
+			}
+			#endif
+
+			const int sqx = pos.x / SQUARE_SIZE;
+			const int sqz = pos.z / SQUARE_SIZE;
+
+			// FIXME: we do not want to use maxHeightDif for a MOBILE unit!
+			const float orgHgt = orgHeightMap[sqz * gs->mapxp1 + sqx];
+			const float curHgt = curHeightMap[sqz * gs->mapxp1 + sqx];
+			const float difHgt = unitDef->maxHeightDif;
+
+			if (pos.y > std::max(orgHgt + difHgt, curHgt + difHgt)) { return BUILDSQUARE_BLOCKED; }
+			if (pos.y < std::min(orgHgt - difHgt, curHgt - difHgt)) { return BUILDSQUARE_BLOCKED; }
 		}
-		#endif
-
-		const int sqx = pos.x / SQUARE_SIZE;
-		const int sqz = pos.z / SQUARE_SIZE;
-
-		const float orgHgt = orgHeightMap[sqz * gs->mapxp1 + sqx];
-		const float curHgt = curHeightMap[sqz * gs->mapxp1 + sqx];
-		const float difHgt = unitDef->maxHeightDif;
-
-		if (pos.y > std::max(orgHgt + difHgt, curHgt + difHgt)) { return BUILDSQUARE_BLOCKED; }
-		if (pos.y < std::min(orgHgt - difHgt, curHgt - difHgt)) { return BUILDSQUARE_BLOCKED; }
 	}
 
 	if (!unitDef->CheckTerrainConstraints(moveDef, groundHeight))
@@ -1282,8 +1292,6 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
  */
 Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 	float3 tempF1 = pos;
-
-	GML_STDMUTEX_LOCK(cai); // GetBuildCommand
 
 	CCommandQueue::iterator ci;
 

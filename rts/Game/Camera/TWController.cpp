@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <boost/cstdint.hpp>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 
 #include "TWController.h"
 #include "Game/Camera.h"
@@ -41,7 +41,7 @@ void CTWController::KeyMove(float3 move)
 
 void CTWController::MouseMove(float3 move)
 {
-	move *= (1 + keyInput->GetKeyState(SDLK_LSHIFT) * 3) * pixelSize;
+	move *= (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * pixelSize;
 
 	float3 flatForward = camera->forward;
 	flatForward.y = 0;

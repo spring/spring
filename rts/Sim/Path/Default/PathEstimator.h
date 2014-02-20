@@ -99,7 +99,6 @@ public:
 	 * called every frame
 	 */
 	void Update();
-	void UpdateFull();
 
 	/**
 	 * Returns a checksum that can be used to check if every player has the same

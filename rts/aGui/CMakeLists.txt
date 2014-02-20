@@ -1,5 +1,5 @@
 
-include_directories(${SDL_INCLUDE_DIR})
+include_directories(${SDL2_INCLUDE_DIR})
 include_directories(${GLEW_INCLUDE_DIR})
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp"" | sort

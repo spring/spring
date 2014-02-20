@@ -11,7 +11,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/EventHandler.h"
 #include "System/creg/STL_List.h"
-#include "lib/gml/gmlmut.h"
 
 
 CInMapDrawModel* inMapDrawerModel = NULL;
@@ -135,7 +134,6 @@ bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label,
 		return false;
 	}
 
-	GML_STDMUTEX_LOCK(inmap); // LocalPoint
 
 	// let the engine handle it (disallowed
 	// points added here are filtered while
@@ -171,7 +169,6 @@ bool CInMapDrawModel::AddLine(const float3& constPos1, const float3& constPos2, 
 		return false;
 	}
 
-	GML_STDMUTEX_LOCK(inmap); // LocalLine
 
 	MapLine line(sender->spectator, sender->team, sender, pos1, pos2);
 
@@ -200,7 +197,6 @@ void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 		return;
 	}
 
-	GML_STDMUTEX_LOCK(inmap); // LocalErase
 
 	const float radius = 100.0f;
 	const int maxY = drawQuadsY - 1;

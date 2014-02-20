@@ -81,14 +81,12 @@ private:
 		CUnit* collider,
 		const float colliderSpeed,
 		const float colliderRadius,
-		const float3& sepDirMask,
 		const UnitDef* colliderUD,
 		const MoveDef* colliderMD);
 	void HandleFeatureCollisions(
 		CUnit* collider,
 		const float colliderSpeed,
 		const float colliderRadius,
-		const float3& sepDirMask,
 		const UnitDef* colliderUD,
 		const MoveDef* colliderMD);
 

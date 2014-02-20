@@ -22,6 +22,8 @@ public:
 	/** @brief Get the final CRC digest. */
 	unsigned int GetDigest() const;
 
+	static unsigned int GetCRC(const void* data, unsigned int size);
+
 	/** @brief Update CRC over the data. */
 	CRC& Update(const void* data, unsigned int size);
 	/** @brief Update CRC over the 4 bytes of data. */

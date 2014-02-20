@@ -64,15 +64,9 @@ void CCamera::CopyState(const CCamera* cam) {
 	lppScale  = cam->lppScale;
 }
 
-void CCamera::Update()
+void CCamera::Update(bool terrainReflectionPass)
 {
-	if (forward.cross(UpVector) != ZeroVector)
-		up = UpVector;
-
-	right = forward.cross(up);
-	right.UnsafeANormalize();
-	up = right.cross(forward);
-	up.UnsafeANormalize();
+	UpdateRightAndUp(terrainReflectionPass);
 
 	const float aspect = globalRendering->aspectRatio;
 	const float viewx = math::tan(aspect * halfFov);
@@ -198,16 +192,25 @@ bool CCamera::InView(const float3& p, float radius) const
 }
 
 
-void CCamera::UpdateForward()
+void CCamera::UpdateRightAndUp(bool terrainReflectionPass)
 {
-	// NOTE:
-	//   only FreeController calls this, others just seem to manipulate
-	//   azimuth (.x) and zenith (.y) angles for their own (redundant?)
-	//   copy of Camera::forward (CameraController::dir)
-	forward.z = math::cos(rot.y) * math::cos(rot.x);
-	forward.x = math::sin(rot.y) * math::cos(rot.x);
-	forward.y = math::sin(rot.x);
-	forward.Normalize();
+	// terrain (not water) cubemap reflection passes set forward
+	// to {+/-}UpVector which would cause vector degeneracy when
+	// calculating right and up
+	//
+	if (std::fabs(forward.y) >= 0.99f) {
+		// make sure we can still yaw at limits of pitch
+		// (since CamHandler only updates forward, which
+		// is derived from rot)
+		right = float3(-std::cos(rot.y), 0.0f, std::sin(camera->rot.y));
+		up = (right.cross(forward)).UnsafeANormalize();
+	} else {
+		// in the terrain reflection pass everything is upside-down!
+		up = UpVector * -Sign(int(terrainReflectionPass));
+
+		right = (forward.cross(up)).UnsafeANormalize();
+		up = (right.cross(forward)).UnsafeANormalize();
+	}
 }
 
 
@@ -293,7 +296,6 @@ inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const 
 
 
 void CCamera::GetFrustumSides(float miny, float maxy, float scale, bool negSide) {
-	GML_RECMUTEX_LOCK(cam); // GetFrustumSides
 
 	ClearFrustumSides();
 	// note: order does not matter
@@ -312,7 +314,6 @@ void CCamera::GetFrustumSide(
 	bool upwardDir,
 	bool negSide)
 {
-	GML_RECMUTEX_LOCK(cam); // GetFrustumSide
 	// compose an orthonormal axis-system around <zdir>
 	float3 xdir = (zdir.cross(UpVector)).UnsafeANormalize();
 	float3 ydir = (zdir.cross(xdir)).UnsafeANormalize();
@@ -356,7 +357,6 @@ void CCamera::GetFrustumSide(
 }
 
 void CCamera::ClipFrustumLines(bool neg, const float zmin, const float zmax) {
-	GML_RECMUTEX_LOCK(cam); // ClipFrustumLines
 
 	std::vector<FrustumLine>& lines = neg? negFrustumSides: posFrustumSides;
 	std::vector<FrustumLine>::iterator fli, fli2;
@@ -389,12 +389,6 @@ void CCamera::ClipFrustumLines(bool neg, const float zmin, const float zmax) {
 
 float CCamera::GetMoveDistance(float* time, float* speed, int idx) const
 {
-	// NOTE:
-	//   lastFrameTime is MUCH smaller when map edge is in view
-	//   timer is not accurate enough to return non-zero values
-	//   for the majority of the time this condition holds, and
-	//   so the camera will barely react to key input since most
-	//   frames will effectively be 'skipped' (looks like lag)
 	float camDeltaTime = globalRendering->lastFrameTime;
 	float camMoveSpeed = 1.0f;
 
@@ -405,8 +399,8 @@ float CCamera::GetMoveDistance(float* time, float* speed, int idx) const
 	if (speed != NULL) { *speed = camMoveSpeed; }
 
 	switch (idx) {
-		case MOVE_STATE_UP:  { camMoveSpeed *= ( 1.0f * movState[idx]); } break;
-		case MOVE_STATE_DWN: { camMoveSpeed *= (-1.0f * movState[idx]); } break;
+		case MOVE_STATE_UP:  { camMoveSpeed *=  float(movState[idx]); } break;
+		case MOVE_STATE_DWN: { camMoveSpeed *= -float(movState[idx]); } break;
 
 		default: {
 		} break;
@@ -415,14 +409,14 @@ float CCamera::GetMoveDistance(float* time, float* speed, int idx) const
 	return (camDeltaTime * 0.2f * camMoveSpeed);
 }
 
-float3 CCamera::GetMoveVectorFromState(bool fromKeyState, bool* disableTracker)
+float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 {
 	float camDeltaTime = 1.0f;
 	float camMoveSpeed = 1.0f;
 
 	(void) GetMoveDistance(&camDeltaTime, &camMoveSpeed, -1);
 
-	float3 v = FwdVector * camMoveSpeed;
+	float3 v;
 
 	if (fromKeyState) {
 		v.y += (camDeltaTime * 0.001f * movState[MOVE_STATE_FWD]);
@@ -440,9 +434,7 @@ float3 CCamera::GetMoveVectorFromState(bool fromKeyState, bool* disableTracker)
 		v.x -= (camDeltaTime * 0.001f * (mouse->lastx <                               2));
 	}
 
-	(*disableTracker) |= (v.x != 0.0f);
-	(*disableTracker) |= (v.y != 0.0f);
-
+	v.z = camMoveSpeed;
 	return v;
 }
 

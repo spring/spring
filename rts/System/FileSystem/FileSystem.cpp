@@ -269,6 +269,12 @@ bool FileSystem::Remove(std::string file)
 	return FileSystem::DeleteFile(FileSystem::GetNormalizedPath(file));
 }
 
+const std::string& FileSystem::GetCacheBaseDir()
+{
+	static const std::string cacheBaseDir = "cache";
+	return cacheBaseDir;
+}
+
 const std::string& FileSystem::GetCacheDir()
 {
 	// cache-dir versioning must not be too finegrained,
@@ -278,10 +284,8 @@ const std::string& FileSystem::GetCacheDir()
 	// same directory as any previous development build
 	// (regardless of branch), so keep caches separate
 	static const std::string cacheType[2] = {"dev-", "rel-"};
-	static const std::string cacheBaseDir = "cache";
 	static const std::string cacheVersion = SpringVersion::GetMajor() + cacheType[SpringVersion::IsRelease()] + SpringVersion::GetBranch();
-	static const std::string cacheDir = cacheBaseDir + GetNativePathSeparator() + cacheVersion;
-
+	static const std::string cacheDir = EnsurePathSepAtEnd(GetCacheBaseDir()) + cacheVersion;
 	return cacheDir;
 }
 

@@ -26,11 +26,21 @@ public:
 
 	float3 CalcPixelDir(int x,int y) const;
 	float3 CalcWindowCoordinates(const float3& objPos) const;
+
 	void CopyState(const CCamera*);
-	void UpdateForward();
+	// NOTE:
+	//   only FreeController calls this, others just seem to manipulate
+	//   azimuth (.x) and zenith (.y) angles for their own (redundant?)
+	//   copy of Camera::forward (CameraController::dir)
+	//
+	//   <forward> is set by CameraHandler::UpdateCam via CamCon::GetDir
+	//   <right> and <up> are derived from this, never from <rot> directly
+	void UpdateForward(const float3& fwd) { forward = fwd; }
+	void UpdateRightAndUp(bool terrainReflectionPass);
+
 	bool InView(const float3& p, float radius = 0) const;
 	bool InView(const float3& mins, const float3& maxs) const;
-	void Update();
+	void Update(bool terrainReflectionPass = false);
 
 	void GetFrustumSides(float miny, float maxy, float scale, bool negSide = false);
 	void GetFrustumSide(
@@ -42,7 +52,6 @@ public:
 		bool upwardDir,
 		bool negSide);
 	void ClearFrustumSides() {
-		GML_RECMUTEX_LOCK(cam); // ClearFrustumSides
 
 		posFrustumSides.clear();
 		negFrustumSides.clear();
@@ -64,12 +73,11 @@ public:
 	float GetLPPScale() const { return lppScale; }
 
 	/// @param fov in degree
-	float3& SetPos() { return pos; }
-	void SetPos(float3 p) { pos = p; }
+	void SetPos(const float3& p) { pos = p; }
 	void SetFov(float fov);
 
 	float GetMoveDistance(float* time, float* speed, int idx) const;
-	float3 GetMoveVectorFromState(bool fromKeyState, bool* disableTracker);
+	float3 GetMoveVectorFromState(bool fromKeyState) const;
 
 	void SetMovState(int idx, bool b) { movState[idx] = b; }
 	void SetRotState(int idx, bool b) { rotState[idx] = b; }
@@ -103,12 +111,10 @@ public:
 	};
 
 	const std::vector<FrustumLine> GetNegFrustumSides() const {
-		GML_RECMUTEX_LOCK(cam); // GetNegFrustumSides
 
 		return negFrustumSides;
 	}
 	const std::vector<FrustumLine> GetPosFrustumSides() const {
-		GML_RECMUTEX_LOCK(cam); // GetPosFrustumSides
 
 		return posFrustumSides;
 	}

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "lib/gml/gml_base.h"
 #include <windows.h>
 #include <process.h>
 #include <imagehlp.h>
@@ -318,8 +317,6 @@ void CleanupStacktrace(const int logLevel) {
 
 void OutputStacktrace() {
 	LOG_L(L_ERROR, "Error handler invoked for Spring %s.", (SpringVersion::GetFull()).c_str());
-	if (GML::Enabled())
-		LOG_L(L_ERROR, "MT with %d threads.", GML::ThreadCount());
 
 	PrepareStacktrace();
 
@@ -342,9 +339,6 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	// Prologue.
 	logSinkHandler.SetSinking(false);
 	LOG_L(L_ERROR, "Spring %s has crashed.", (SpringVersion::GetFull()).c_str());
-	if (GML::Enabled())
-		LOG_L(L_ERROR, "MT with %d threads.", GML::ThreadCount());
-
 	PrepareStacktrace();
 
 	const std::string error(ExceptionName(e->ExceptionRecord->ExceptionCode));

@@ -4,7 +4,7 @@
 
 
 #include "KeyCodes.h"
-#include "SDL_keysym.h"
+#include "SDL_keycode.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
@@ -14,7 +14,7 @@ CKeyCodes* keyCodes = NULL;
 
 int CKeyCodes::GetCode(const std::string& name) const
 {
-	std::map<std::string, int>::const_iterator it = nameToCode.find(name);
+	const auto it = nameToCode.find(name);
 	if (it == nameToCode.end()) {
 		return -1;
 	}
@@ -24,7 +24,7 @@ int CKeyCodes::GetCode(const std::string& name) const
 
 std::string CKeyCodes::GetName(int code) const
 {
-	std::map<int, std::string>::const_iterator it = codeToName.find(code);
+	const auto it = codeToName.find(code);
 	if (it == codeToName.end()) {
 		char buf[64];
 		SNPRINTF(buf, sizeof(buf), "0x%03X", code);
@@ -36,7 +36,7 @@ std::string CKeyCodes::GetName(int code) const
 
 std::string CKeyCodes::GetDefaultName(int code) const
 {
-	std::map<int, std::string>::const_iterator it = defaultCodeToName.find(code);
+	const auto it = defaultCodeToName.find(code);
 	if (it == defaultCodeToName.end()) {
 		char buf[64];
 		SNPRINTF(buf, sizeof(buf), "0x%03X", code);
@@ -55,7 +55,7 @@ bool CKeyCodes::AddKeySymbol(const std::string& name, int code)
 	const std::string keysym = StringToLower(name);
 
 	// do not allow existing keysyms to be renamed
-	std::map<std::string, int>::const_iterator name_it = nameToCode.find(keysym);
+	const auto name_it = nameToCode.find(keysym);
 	if (name_it != nameToCode.end()) {
 		return false;
 	}
@@ -85,12 +85,12 @@ bool CKeyCodes::IsValidLabel(const std::string& label)
 }
 
 
-bool CKeyCodes::IsModifier(int code) const
+bool CKeyCodes::IsModifier(int code) const //FIXME
 {
 	switch (code) {
 		case SDLK_LALT:
 		case SDLK_LCTRL:
-		case SDLK_LMETA:
+		case SDLK_LGUI:
 		case SDLK_LSHIFT:
 			return true;
 	}
@@ -123,7 +123,7 @@ void CKeyCodes::Reset()
 	AddPair("backspace", SDLK_BACKSPACE);
 	AddPair("tab",       SDLK_TAB);
 	AddPair("clear",     SDLK_CLEAR);
-	AddPair("enter",     SDLK_RETURN);
+	AddPair("enter",     SDLK_RETURN); //FIXME
 	AddPair("return",    SDLK_RETURN);
 	AddPair("pause",     SDLK_PAUSE);
 	AddPair("esc",       SDLK_ESCAPE);
@@ -132,25 +132,27 @@ void CKeyCodes::Reset()
 	AddPair("delete",    SDLK_DELETE);
 
 	// ASCII mapped keysyms
-	for (unsigned char i = ' '; i <= '~'; ++i) {
+	for (unsigned char i = ' '; i <= 'z'; ++i) {
 		if (!isupper(i)) {
 			AddPair(std::string(1, i), i);
 		}
 	}
 
-	nameToCode["\xA7"] = 220;
+	AddPair("~", SDLK_BACKQUOTE);
+	AddPair("tilde", SDLK_BACKQUOTE);
+	AddPair("backquote", SDLK_BACKQUOTE);
 
 	/* Numeric keypad */
-	AddPair("numpad0", SDLK_KP0);
-	AddPair("numpad1", SDLK_KP1);
-	AddPair("numpad2", SDLK_KP2);
-	AddPair("numpad3", SDLK_KP3);
-	AddPair("numpad4", SDLK_KP4);
-	AddPair("numpad5", SDLK_KP5);
-	AddPair("numpad6", SDLK_KP6);
-	AddPair("numpad7", SDLK_KP7);
-	AddPair("numpad8", SDLK_KP8);
-	AddPair("numpad9", SDLK_KP9);
+	AddPair("numpad0", SDLK_KP_0);
+	AddPair("numpad1", SDLK_KP_1);
+	AddPair("numpad2", SDLK_KP_2);
+	AddPair("numpad3", SDLK_KP_3);
+	AddPair("numpad4", SDLK_KP_4);
+	AddPair("numpad5", SDLK_KP_5);
+	AddPair("numpad6", SDLK_KP_6);
+	AddPair("numpad7", SDLK_KP_7);
+	AddPair("numpad8", SDLK_KP_8);
+	AddPair("numpad9", SDLK_KP_9);
 	AddPair("numpad.", SDLK_KP_PERIOD);
 	AddPair("numpad/", SDLK_KP_DIVIDE);
 	AddPair("numpad*", SDLK_KP_MULTIPLY);
@@ -194,29 +196,25 @@ void CKeyCodes::Reset()
 	AddPair("shift", SDLK_LSHIFT);
 	AddPair("ctrl",  SDLK_LCTRL);
 	AddPair("alt",   SDLK_LALT);
-	AddPair("meta",  SDLK_LMETA);
+	AddPair("meta",  SDLK_LGUI);
 	// I doubt these can be used correctly anyway (without special support in other parts of the spring code...)
 	//AddPair("super", SDLK_LSUPER);    /* Left "Windows" key */
 	//AddPair("mode", SDLK_MODE);       /* "Alt Gr" key */
 	//AddPair("compose", SDLK_COMPOSE); /* Multi-key compose key */
 
 	/* Miscellaneous function keys */
-	//AddPair("help", SDLK_HELP);
-	AddPair("printscreen", SDLK_PRINT);
+	AddPair("help", SDLK_HELP);
+	AddPair("printscreen", SDLK_PRINTSCREEN);
+	AddPair("print", SDLK_PRINTSCREEN);
 	//AddPair("sysreq", SDLK_SYSREQ);
 	//AddPair("break", SDLK_BREAK);
 	//AddPair("menu", SDLK_MENU);
-	// These conflict with "joy*" nameToCode.
 	//AddPair("power", SDLK_POWER);     /* Power Macintosh power key */
 	//AddPair("euro", SDLK_EURO);       /* Some european keyboards */
 	//AddPair("undo", SDLK_UNDO);       /* Atari keyboard has Undo */
 
-	// Are these required for someone??
-	//AddPair("'<'", 226);
-	//AddPair("','", 188);
-	//AddPair("'.'", 190);
-
-	AddPair("joyx", 400);
+	//XXX Do they work? > NO
+	/*AddPair("joyx", 400);
 	AddPair("joyy", 401);
 	AddPair("joyz", 402);
 	AddPair("joyw", 403);
@@ -231,28 +229,26 @@ void CKeyCodes::Reset()
 	AddPair("joyup",    320);
 	AddPair("joydown",  321);
 	AddPair("joyleft",  322);
-	AddPair("joyright", 323);
+	AddPair("joyright", 323);*/
 
-	// remember our defaults	
-  defaultNameToCode = nameToCode;
-  defaultCodeToName = codeToName;
+	// remember our defaults
+	defaultNameToCode = nameToCode;
+	defaultCodeToName = codeToName;
 }
 
 
 void CKeyCodes::PrintNameToCode() const
 {
-	std::map<std::string, int>::const_iterator it;
-	for (it = nameToCode.begin(); it != nameToCode.end(); ++it) {
-		LOG("KEYNAME: %13s = 0x%03X", it->first.c_str(), it->second);
+	for (const auto& p: nameToCode) {
+		LOG("KEYNAME: %13s = 0x%03X", p.first.c_str(), p.second);
 	}
 }
 
 
 void CKeyCodes::PrintCodeToName() const
 {
-	std::map<int, std::string>::const_iterator it;
-	for (it = codeToName.begin(); it != codeToName.end(); ++it) {
-		LOG("KEYCODE: 0x%03X = '%s'", it->first, it->second.c_str());
+	for (const auto& p: codeToName) {
+		LOG("KEYCODE: 0x%03X = '%s'", p.first, p.second.c_str());
 	}
 }
 
@@ -260,14 +256,12 @@ void CKeyCodes::PrintCodeToName() const
 void CKeyCodes::SaveUserKeySymbols(FILE* file) const
 {
 	bool output = false;
-	std::map<std::string, int>::const_iterator user_it;
-	for (user_it = nameToCode.begin(); user_it != nameToCode.end(); ++user_it) {
-		std::map<std::string, int>::const_iterator def_it;
-		const std::string& keysym = user_it->first;
-		def_it = defaultNameToCode.find(keysym);
+	for (const auto& p: nameToCode) {
+		const std::string& keysym = p.first;
+		const auto def_it = defaultNameToCode.find(keysym);
 		if (def_it == defaultNameToCode.end()) {
 			// this keysym is not standard
-			const int code = user_it->second;
+			const int code = p.second;
 			std::string name = GetDefaultName(code);
 			if (name.empty()) {
 				char buf[16];

@@ -14,8 +14,8 @@ class LuaInputReceiver : public CInputReceiver
 		LuaInputReceiver();
 		~LuaInputReceiver();
 
-		bool KeyPressed(unsigned short key, bool isRepeat);
-		bool KeyReleased(unsigned short key);
+		bool KeyPressed(int key, bool isRepeat);
+		bool KeyReleased(int key);
 
 		bool MousePress(int x, int y, int button);
 		void MouseMove(int x, int y, int dx, int dy, int button);

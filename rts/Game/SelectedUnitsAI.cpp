@@ -529,7 +529,7 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 		realCount++;
 	}
 
-	if (realCount <= 0)
+	if (realCount == 1)
 		return;
 
 	midPos /= realCount;

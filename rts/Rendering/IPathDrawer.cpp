@@ -3,7 +3,6 @@
 #include "DefaultPathDrawer.h"
 #include "QTPFSPathDrawer.h"
 #include "Game/SelectedUnitsHandler.h"
-#include "lib/gml/gmlmut.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Path/Default/PathManager.h"
@@ -45,8 +44,6 @@ IPathDrawer::~IPathDrawer() {
 }
 
 const MoveDef* IPathDrawer::GetSelectedMoveDef() {
-	GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
-
 	const MoveDef* md = NULL;
 	const CUnitSet& unitSet = selectedUnitsHandler.selectedUnits;
 

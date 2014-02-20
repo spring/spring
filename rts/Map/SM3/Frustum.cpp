@@ -98,15 +98,14 @@ Frustum::VisType Frustum::IsBoxVisible (const Vector3& min, const Vector3& max)
 {
 	bool full = true;
 	Vector3 c,f;
-	float dc, df;
 
 	std::vector<Plane>::iterator p;
 	for(p=planes.begin(); p!=planes.end(); ++p)
 	{
 		BoxPlaneVerts (min, max, p->GetVector(), c, f);
 		
-		dc = p->Dist (&c);
-		df = p->Dist (&f);
+		const float dc = p->Dist(&c);
+		const float df = p->Dist(&f);
 		if(dc < 0.0f || df < 0.0f) full=false;
 		if(dc < 0.0f && df < 0.0f) return Outside;
 	}

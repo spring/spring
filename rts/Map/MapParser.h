@@ -19,6 +19,9 @@ class MapParser
 		MapParser(const std::string& mapFileName);
 		~MapParser();
 
+		// no-copy
+		MapParser(const MapParser&) = delete;
+
 		LuaParser* GetParser() { return parser; }
 
 		LuaTable GetRoot();

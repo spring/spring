@@ -673,7 +673,6 @@ void CGrassDrawer::Draw()
 	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
 
 	SetupGlStateNear();
-		GML_RECMUTEX_LOCK(grass); // Draw
 		static CGrassBlockDrawer drawer;
 			drawer.cx = int(camera->GetPos().x / bMSsq);
 			drawer.cy = int(camera->GetPos().z / bMSsq);
@@ -734,7 +733,6 @@ void CGrassDrawer::DrawShadow()
 	glPolygonOffset(5, 15);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	GML_RECMUTEX_LOCK(grass); // Draw
 	static CGrassBlockDrawer drawer;
 		drawer.cx = int(camera->GetPos().x / bMSsq);
 		drawer.cy = int(camera->GetPos().z / bMSsq);
@@ -788,8 +786,6 @@ void CGrassDrawer::ResetPos(const float3& pos)
 {
 	if (grassOff)
 		return;
-
-	GML_RECMUTEX_LOCK(grass); // ResetPos
 
 	const int idx =
 		(int(pos.z / bMSsq) & 31) * 32 +
@@ -984,21 +980,24 @@ void CGrassDrawer::AddGrass(const float3& pos)
 	if (grassOff)
 		return;
 
-	GML_RECMUTEX_LOCK(grass); // AddGrass
-
-	const int x = int(pos.x) / SQUARE_SIZE / grassSquareSize;
-	const int z = int(pos.z) / SQUARE_SIZE / grassSquareSize;
+	const int x = int(pos.x) / (SQUARE_SIZE * grassSquareSize);
+	const int z = int(pos.z) / (SQUARE_SIZE * grassSquareSize);
+	assert(x >= 0 && x < (gs->mapx - 1) / grassSquareSize);
+	assert(z >= 0 && z < (gs->mapy - 1) / grassSquareSize);
 
 	grassMap[z * gs->mapx / grassSquareSize + x] = 1;
 }
 
-void CGrassDrawer::RemoveGrass(int x, int z)
+void CGrassDrawer::RemoveGrass(const float3& pos)
 {
 	if (grassOff)
 		return;
 
-	GML_RECMUTEX_LOCK(grass); // RemoveGrass
+	const int x = int(pos.x) / (SQUARE_SIZE * grassSquareSize);
+	const int z = int(pos.z) / (SQUARE_SIZE * grassSquareSize);
+	assert(x >= 0 && x < (gs->mapx - 1) / grassSquareSize);
+	assert(z >= 0 && z < (gs->mapy - 1) / grassSquareSize);
 
-	grassMap[(z / grassSquareSize) * gs->mapx / grassSquareSize + x / grassSquareSize] = 0;
-	ResetPos(float3(x * SQUARE_SIZE, 0.0f, z * SQUARE_SIZE));
+	grassMap[z * gs->mapx / grassSquareSize + x] = 0;
+	ResetPos(pos);
 }

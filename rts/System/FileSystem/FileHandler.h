@@ -30,6 +30,7 @@ public:
 	void Open(const std::string& fileName, const std::string& modes = SPRING_VFS_RAW_FIRST);
 
 	int Read(void* buf, int length);
+	int ReadString(void* buf, int length); //< stops after the first 0 char
 	void Seek(int pos, std::ios_base::seekdir where = std::ios_base::beg);
 
 	static bool FileExists(const std::string& filePath, const std::string& modes);

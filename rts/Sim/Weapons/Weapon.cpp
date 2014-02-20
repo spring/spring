@@ -6,7 +6,6 @@
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Game/Players/Player.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -682,12 +681,10 @@ void CWeapon::HoldFire()
 
 bool CWeapon::AllowWeaponTargetCheck()
 {
-	if (luaRules != NULL) {
-		const int checkAllowed = luaRules->AllowWeaponTargetCheck(owner->id, weaponNum, weaponDef->id);
+	const int checkAllowed = eventHandler.AllowWeaponTargetCheck(owner->id, weaponNum, weaponDef->id);
 
-		if (checkAllowed >= 0) {
-			return checkAllowed;
-		}
+	if (checkAllowed >= 0) {
+		return checkAllowed;
 	}
 
 	if (weaponDef->noAutoTarget)                 { return false; }

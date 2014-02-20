@@ -116,7 +116,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 			e->squares.push_back(dif);
 
 			if (dif < -0.3f && strength > 200.0f) {
-				treeDrawer->RemoveGrass(x, y);
+				treeDrawer->RemoveGrass(float3(x * SQUARE_SIZE, 0.0f, y * SQUARE_SIZE));
 			}
 		}
 	}

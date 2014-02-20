@@ -1141,7 +1141,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 				}
 
 				if (!CMoveMath::CrushResistant(*m, obj)) {
-					obj->Kill(owner->frontdir * currentSpeed * 200.0f, true);
+					obj->Kill(owner, owner->frontdir * currentSpeed * 200.0f, true);
 				}
 			}
 		}
@@ -1219,7 +1219,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 				}
 
 				if (!CMoveMath::CrushResistant(*m, obj)) {
-					obj->Kill(owner->frontdir * currentSpeed * 200.0f, true);
+					obj->Kill(owner, owner->frontdir * currentSpeed * 200.0f, true);
 				}
 			}
 		}

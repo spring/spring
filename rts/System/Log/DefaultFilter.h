@@ -98,12 +98,14 @@ void log_enable_and_disable(const bool enable);
 #include <set>
 
 
-
 /**
  * Returns the registered sections.
  * This is simply to be more C++ friendly.
  */
 std::set<const char*> log_filter_section_getRegisteredSet();
+
+const char* log_filter_section_getSectionCString(const char* section_cstr_tmp);
+
 #endif
 
 /** @} */ // logging_filter_defaultFilter_control
