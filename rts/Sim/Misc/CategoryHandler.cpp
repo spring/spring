@@ -9,7 +9,6 @@
 #include "System/creg/STL_Map.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
-#include "lib/gml/gmlmut.h"
 
 CR_BIND(CCategoryHandler, );
 
@@ -49,8 +48,6 @@ unsigned int CCategoryHandler::GetCategory(std::string name)
 
 	unsigned int cat = 0;
 	
-	GML_STDMUTEX_LOCK(cat); // GetCategory
-
 	if (categories.find(name) == categories.end()) {
 		// this category is yet unknown
 		if (firstUnused >= CCategoryHandler::GetMaxCategories()) {
@@ -99,8 +96,6 @@ std::vector<std::string> CCategoryHandler::GetCategoryNames(unsigned int bits) c
 	std::vector<std::string> names;
 
 	std::map<std::string, unsigned int>::const_iterator it;
-
-	GML_STDMUTEX_LOCK(cat); // GetCategoryNames
 
 	for (unsigned int bit = 1; bit != 0; bit = (bit << 1)) {
 		if ((bit & bits) != 0) {

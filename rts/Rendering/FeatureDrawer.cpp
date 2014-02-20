@@ -4,7 +4,6 @@
 
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
-#include "Lua/LuaRules.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
@@ -67,9 +66,6 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	drawQuadsX = gs->mapx/DRAW_QUAD_SIZE;
 	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
 	drawQuads.resize(drawQuadsX * drawQuadsY);
-#ifdef USE_GML
-	showRezBars = GML::Enabled() && configHandler->GetBool("ShowRezBars");
-#endif
 	featureDrawDistance = configHandler->GetFloat("FeatureDrawDistance");
 	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);
 	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
@@ -101,9 +97,6 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
 	texturehandlerS3O->UpdateDraw();
-
-	if (GML::SimEnabled() && !GML::ShareLists() && feature->model && TEX_TYPE(feature) < 0)
-		TEX_TYPE(f) = texturehandlerS3O->LoadS3OTextureNow(feature->model);
 
 	if (feature->def->drawType == DRAWTYPE_MODEL) {
 		f->drawQuad = -1;
@@ -173,8 +166,6 @@ void CFeatureDrawer::Update()
 	eventHandler.UpdateDrawFeatures();
 
 	{
-		GML_RECMUTEX_LOCK(feat); // Update
-
 		for (std::set<CFeature*>::iterator fsi = unsortedFeatures.begin(); fsi != unsortedFeatures.end(); ++fsi) {
 			UpdateDrawPos(*fsi);
 		}
@@ -184,8 +175,7 @@ void CFeatureDrawer::Update()
 
 inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 {
-	const float time = /*!GML::SimEnabled() ?*/ globalRendering->timeOffset /*:
-		((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)f->lastFeatUpdate) * globalRendering->weightedSpeedFactor*/;
+	const float time = globalRendering->timeOffset;
 
 	f->drawPos    =    f->pos + (f->speed * time);
 	f->drawMidPos = f->midPos + (f->speed * time);
@@ -195,8 +185,6 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 void CFeatureDrawer::Draw()
 {
 	ISky::SetupFog();
-
-	GML_RECMUTEX_LOCK(feat); // Draw
 
 	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
@@ -237,9 +225,6 @@ void CFeatureDrawer::Draw()
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
-#ifdef USE_GML
-	DrawFeatureStats();
-#endif
 }
 
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
@@ -266,56 +251,6 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 	}
 }
 
-#ifdef USE_GML
-void CFeatureDrawer::DrawFeatureStats()
-{
-	if (!drawStat.empty()) {
-		if (!water->DrawReflectionPass()) {
-			for (std::vector<CFeature *>::iterator fi = drawStat.begin(); fi != drawStat.end(); ++fi) {
-				DrawFeatureStatBars(*fi);
-			}
-		}
-
-		drawStat.clear();
-	}
-}
-
-void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
-{
-	float3 interPos = feature->pos;
-	interPos.y += feature->height + 5.0f;
-
-	glPushMatrix();
-	glTranslatef(interPos.x, interPos.y, interPos.z);
-	glMultMatrixf(camera->GetBillBoardMatrix());
-
-	const float recl = feature->reclaimLeft;
-	const float rezp = feature->resurrectProgress;
-
-	// black background for the bar
-	glColor3f(0.0f, 0.0f, 0.0f);
-	glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
-
-	// rez/metalbar
-	const float rmin = std::min(recl, rezp) * 10.0f;
-	if (rmin > 0.0f) {
-		glColor3f(1.0f, 0.0f, 1.0f);
-		glRectf(-5.0f, 4.0f, rmin - 5.0f, 6.0f);
-	}
-	if (recl > rezp) {
-		float col = 0.8 - 0.3 * recl;
-		glColor3f(col, col, col);
-		glRectf(rmin - 5.0f, 4.0f, recl * 10.0f - 5.0f, 6.0f);
-	}
-	if (recl < rezp) {
-		glColor3f(0.5f, 0.0f, 1.0f);
-		glRectf(rmin - 5.0f, 4.0f, rezp * 10.0f - 5.0f, 6.0f);
-	}
-
-	glPopMatrix();
-}
-#endif
-
 bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 {
 	if (feature->IsInVoid()) { return false; }
@@ -333,7 +268,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 
 	unitDrawer->SetTeamColour(feature->team, alpha);
 
-	if (!(feature->luaDraw && luaRules != NULL && luaRules->DrawFeature(feature))) {
+	if (!(feature->luaDraw && eventHandler.DrawFeature(feature))) {
 		feature->model->DrawStatic();
 	}
 
@@ -368,8 +303,6 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 		ISky::SetupFog();
 
 		{
-			GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures
-
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 				cloakedModelRenderers[modelType]->PushRenderState();
 				DrawFadeFeaturesHelper(modelType);
@@ -440,8 +373,6 @@ void CFeatureDrawer::DrawShadowPass()
 	po->Enable();
 
 	{
-		GML_RECMUTEX_LOCK(feat); // DrawShadowPass
-
 		// note: for the shadow-pass, we want to make sure
 		// out-of-view features casting frustum-intersecting
 		// shadows are still rendered, but this is expensive
@@ -489,9 +420,6 @@ public:
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
 	bool farFeatures;
-#ifdef USE_GML
-	std::vector<CFeature*>* statFeatures;
-#endif
 
 	std::vector<CFeatureDrawer::DrawQuad>* drawQuads;
 
@@ -533,10 +461,6 @@ public:
 
 				const float sqDist = (f->pos - camera->GetPos()).SqLength();
 				const float farLength = f->sqRadius * unitDrawer->unitDrawDistSqr;
-#ifdef USE_GML
-				if (statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))
-					statFeatures->push_back(f);
-#endif
 
 				if (sqDist < farLength) {
 					float sqFadeDistE;
@@ -582,16 +506,11 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	drawer.sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 	drawer.sqFadeDistBegin = featureFadeDistance * featureFadeDistance;
 	drawer.farFeatures = drawFar;
-#ifdef USE_GML
-	drawer.statFeatures = showRezBars ? &drawStat : NULL;
-#endif
 
 	readMap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
 }
 
 void CFeatureDrawer::SwapFeatures() {
-	GML_RECMUTEX_LOCK(feat); // SwapFeatures
-
 	for(int i = 0; i < MODELTYPE_OTHER; ++i) {
 		opaqueModelRenderers[i]->SwapFeatures();
 		cloakedModelRenderers[i]->SwapFeatures();

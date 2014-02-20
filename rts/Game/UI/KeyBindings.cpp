@@ -8,7 +8,6 @@
 
 #include "KeyBindings.h"
 #include "KeyBindingsLog.h"
-#include "SDL_keysym.h"
 #include "KeyCodes.h"
 #include "KeySet.h"
 #include "SelectionKeyHandler.h"
@@ -212,8 +211,8 @@ defaultBindings[] = {
 	{ "Up+Any+`",    "drawinmap"  },
 	{    "Any+\\",   "drawinmap"  },
 	{ "Up+Any+\\",   "drawinmap"  },
-	{    "Any+0xa7", "drawinmap"  },
-	{ "Up+Any+0xa7", "drawinmap"  },
+	{    "Any+~", "drawinmap"  },
+	{ "Up+Any+~", "drawinmap"  },
 
 	{    "Any+up",       "moveforward"  },
 	{ "Up+Any+up",       "moveforward"  },
@@ -360,8 +359,8 @@ const CKeyBindings::ActionList&
 				(isEmpty ? "  EMPTY" : ""));
 		if (!isEmpty) {
 			const ActionList& al = *alPtr;
-			for (size_t i = 0; i < al.size(); ++i) {
-				LOG("  %s  \"%s\" %s", al[i].command.c_str(), al[i].rawline.c_str(), al[i].boundWith.c_str());
+			for (const auto& a: al) {
+				LOG("  %s  \"%s\" %s", a.command.c_str(), a.rawline.c_str(), a.boundWith.c_str());
 			}
 		}
 	}

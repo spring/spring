@@ -87,9 +87,6 @@ public:
 
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
-	void SelectUnits(const std::string& line);
-	void SelectCycle(const std::string& command);
-
 	void ReloadCOB(const std::string& msg, int player);
 	void ReloadCEGs(const std::string& tag);
 
@@ -116,15 +113,15 @@ private:
 
 	void DrawSkip(bool blackscreen = true);
 	void DrawInputText();
-	void UpdateUI(bool cam);
+	void UpdateCam();
 
 	/// Format and display a chat message received over network
 	void HandleChatMsg(const ChatMessage& msg);
 
 	/// Called when a key is released by the user
-	int KeyReleased(unsigned short k);
+	int KeyReleased(int k);
 	/// Called when the key is pressed by the user (can be called several times due to key repeat)
-	int KeyPressed(unsigned short k, bool isRepeat);
+	int KeyPressed(int k, bool isRepeat);
 
 	bool ActionPressed(unsigned int key, const Action& action, bool isRepeat);
 	bool ActionReleased(const Action& action);

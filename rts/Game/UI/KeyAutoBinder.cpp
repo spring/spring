@@ -53,8 +53,6 @@ CKeyAutoBinder::CKeyAutoBinder()
 	if (!IsValid())
 		return;
 
-	BEGIN_ITERATE_LUA_STATES();
-
 	LoadCompareFunc(L);
 
 	// load the standard libraries
@@ -76,8 +74,6 @@ CKeyAutoBinder::CKeyAutoBinder()
 	}
 
 	lua_settop(L, 0);
-
-	END_ITERATE_LUA_STATES();
 }
 
 
@@ -112,9 +108,9 @@ bool CKeyAutoBinder::LoadCode(lua_State *L, const string& code, const string& de
 		lua_pop(L, 1);
 		return false;
 	}
-	SetRunning(L, true); // just for the sake of consistency
+	SetHandleRunning(L, true); // just for the sake of consistency
 	error = lua_pcall(L, 0, 0, 0);
-	SetRunning(L, false);
+	SetHandleRunning(L, false);
 	if (error != 0) {
 		LOG_L(L_ERROR, "Running: %s", lua_tostring(L, -1));
 		lua_pop(L, 1);
@@ -178,8 +174,6 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 {
 	if (!IsValid())
 		return false;
-
-	SELECT_LUA_STATE();
 
 	lua_settop(L, 0);
 

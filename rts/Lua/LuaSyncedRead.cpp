@@ -4,6 +4,7 @@
 
 #include "LuaInclude.h"
 
+#include "LuaConfig.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaMetalMap.h"
@@ -215,6 +216,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitBuildFacing);
 	REGISTER_LUA_CFUNC(GetUnitIsBuilding);
 	REGISTER_LUA_CFUNC(GetUnitCurrentBuildPower);
+	REGISTER_LUA_CFUNC(GetUnitHarvestStorage);
 	REGISTER_LUA_CFUNC(GetUnitNanoPieces);
 	REGISTER_LUA_CFUNC(GetUnitTransporter);
 	REGISTER_LUA_CFUNC(GetUnitIsTransporting);
@@ -2911,19 +2913,24 @@ int LuaSyncedRead::GetUnitPosition(lua_State* L)
 		err -= unit->midPos;
 	}
 
+	// Note: Must be called before any pushing to the stack,
+	//       else in case of noneornil it will read the pushed items.
+	const bool returnMidPos = luaL_optboolean(L, 2, false);
+	const bool returnAimPos = luaL_optboolean(L, 3, false);
+
 	// base-position
 	lua_pushnumber(L, unit->pos.x + err.x);
 	lua_pushnumber(L, unit->pos.y + err.y);
 	lua_pushnumber(L, unit->pos.z + err.z);
 	argc += 3;
 
-	if (luaL_optboolean(L, 2, false)) {
+	if (returnMidPos) {
 		lua_pushnumber(L, unit->midPos.x + err.x);
 		lua_pushnumber(L, unit->midPos.y + err.y);
 		lua_pushnumber(L, unit->midPos.z + err.z);
 		argc += 3;
 	}
-	if (luaL_optboolean(L, 3, false)) {
+	if (returnAimPos) {
 		lua_pushnumber(L, unit->aimPos.x + err.x);
 		lua_pushnumber(L, unit->aimPos.y + err.y);
 		lua_pushnumber(L, unit->aimPos.z + err.z);
@@ -3074,6 +3081,18 @@ int LuaSyncedRead::GetUnitCurrentBuildPower(lua_State* L)
 		return 0;
 
 	lua_pushnumber(L, pieceCache->GetBuildPower());
+	return 1;
+}
+
+
+int LuaSyncedRead::GetUnitHarvestStorage(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	lua_pushnumber(L, unit->harvestStorage);
 	return 1;
 }
 
@@ -3691,33 +3710,28 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 int LuaSyncedRead::GetUnitSeparation(lua_State* L)
 {
 	CUnit* unit1 = ParseUnit(L, __FUNCTION__, 1);
-	if (unit1 == NULL) {
-		return 0;
-	}
 	CUnit* unit2 = ParseUnit(L, __FUNCTION__, 2);
-	if (unit2 == NULL) {
+	if (unit1 == NULL || unit2 == NULL) {
 		return 0;
 	}
 
-	float3 pos1;
-	if (IsAllyUnit(L, unit1)) {
-		pos1 = unit1->midPos;
-	} else {
+	float3 pos1 = unit1->midPos;
+	if (!IsAllyUnit(L, unit1)) {
 		pos1 = unit1->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
 	}
-	float3 pos2;
-	if (IsAllyUnit(L, unit1)) {
-		pos2 = unit2->midPos;
-	} else {
+	float3 pos2 = unit2->midPos;
+	if (!IsAllyUnit(L, unit2)) {
 		pos2 = unit2->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
 	}
 
 	float dist;
-	//const int args = lua_gettop(L); // number of arguments
 	if (luaL_optboolean(L, 3, false)) {
 		dist = pos1.distance2D(pos2);
 	} else {
 		dist = pos1.distance(pos2);
+	}
+	if (luaL_optboolean(L, 4, false)) {
+		dist = std::max(0.0f, dist - unit1->radius - unit2->radius);
 	}
 	lua_pushnumber(L, dist);
 
@@ -3984,26 +3998,21 @@ int LuaSyncedRead::GetUnitCommands(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	GML_STDMUTEX_LOCK(cai); // GetUnitCommands
-
 	const CCommandAI* commandAI = unit->commandAI;
 
 	if (commandAI == NULL)
 		return 0;
 
 	// send the new unit commands for factories, otherwise the normal commands
-	const CCommandQueue* queue = NULL;
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
+	const CCommandQueue* queue = (factoryCAI == NULL) ? &commandAI->commandQue : &factoryCAI->newUnitCommands;
 
-	if (factoryCAI == NULL) {
-		queue = &commandAI->commandQue;
-	} else {
-		queue = &factoryCAI->newUnitCommands;
-	}
+	const int  numCmds   = luaL_optint(L, 2, -1);
+	const bool cmdsTable = luaL_optboolean(L, 3, true); // deprecated, prefer to set 2nd arg to 0
 
-	if (luaL_optboolean(L, 3, true)) {
+	if (cmdsTable && (numCmds != 0)) {
 		// *get wants the actual commands
-		PackCommandQueue(L, *queue, luaL_optint(L, 2, -1));
+		PackCommandQueue(L, *queue, numCmds);
 	} else {
 		// *get just wants the queue's size
 		lua_pushnumber(L, queue->size());
@@ -4019,8 +4028,6 @@ int LuaSyncedRead::GetFactoryCommands(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	GML_STDMUTEX_LOCK(cai); // GetFactoryCommands
-
 	const CCommandAI* commandAI = unit->commandAI;
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
 
@@ -4030,8 +4037,11 @@ int LuaSyncedRead::GetFactoryCommands(lua_State* L)
 
 	const CCommandQueue& commandQue = factoryCAI->commandQue;
 
-	if (luaL_optboolean(L, 3, true)) {
-		PackCommandQueue(L, commandQue, luaL_optint(L, 2, -1));
+	const int  numCmds   = luaL_optint(L, 2, -1);
+	const bool cmdsTable = luaL_optboolean(L, 3, true); // deprecated, prefer to set 2nd arg to 0
+
+	if (cmdsTable && (numCmds != 0)) {
+		PackCommandQueue(L, commandQue, numCmds);
 	} else {
 		lua_pushnumber(L, commandQue.size());
 	}
@@ -4098,8 +4108,6 @@ int LuaSyncedRead::GetFactoryCounts(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-
-	GML_STDMUTEX_LOCK(cai); // GetFactoryCounts
 
 	const CCommandAI* commandAI = unit->commandAI;
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
@@ -4203,16 +4211,12 @@ static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 
 int LuaSyncedRead::GetFullBuildQueue(lua_State* L)
 {
-	GML_STDMUTEX_LOCK(cai); // GetFullBuildQueue
-
 	return PackBuildQueue(L, false, __FUNCTION__);
 }
 
 
 int LuaSyncedRead::GetRealBuildQueue(lua_State* L)
 {
-	GML_STDMUTEX_LOCK(cai); // GetRealBuildQueue
-
 	return PackBuildQueue(L, true, __FUNCTION__);
 }
 
@@ -4455,18 +4459,23 @@ int LuaSyncedRead::GetFeaturePosition(lua_State* L)
 		return argc;
 	}
 
+	// Note: Must be called before any pushing to the stack,
+	//       else in case of noneornil it will read the pushed items.
+	const bool returnMidPos = luaL_optboolean(L, 2, false);
+	const bool returnAimPos = luaL_optboolean(L, 3, false);
+
 	lua_pushnumber(L, feature->pos.x);
 	lua_pushnumber(L, feature->pos.y);
 	lua_pushnumber(L, feature->pos.z);
 	argc += 3;
 
-	if (luaL_optboolean(L, 2, false)) {
+	if (returnMidPos) {
 		lua_pushnumber(L, feature->midPos.x);
 		lua_pushnumber(L, feature->midPos.y);
 		lua_pushnumber(L, feature->midPos.z);
 		argc += 3;
 	}
-	if (luaL_optboolean(L, 3, false)) {
+	if (returnAimPos) {
 		lua_pushnumber(L, feature->aimPos.x);
 		lua_pushnumber(L, feature->aimPos.y);
 		lua_pushnumber(L, feature->aimPos.z);

@@ -1088,8 +1088,6 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		// (or not yet fully apart), then the object is on the path of the unit
 		// and they are not collided
 		if (DEBUG_DRAWING_ENABLED) {
-			GML_RECMUTEX_LOCK(sel); // GetObstacleAvoidanceDir
-
 			if (selectedUnitsHandler.selectedUnits.find(owner) != selectedUnitsHandler.selectedUnits.end()) {
 				geometricObjects->AddLine(avoider->pos + (UpVector * 20.0f), avoidee->pos + (UpVector * 20.0f), 3, 1, 4);
 			}
@@ -1127,8 +1125,6 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	avoidanceDir = lastAvoidanceDir * LAST_DIR_MIX_ALPHA + avoidanceDir * (1.0f - LAST_DIR_MIX_ALPHA);
 
 	if (DEBUG_DRAWING_ENABLED) {
-		GML_RECMUTEX_LOCK(sel); // GetObstacleAvoidanceDir
-
 		if (selectedUnitsHandler.selectedUnits.find(owner) != selectedUnitsHandler.selectedUnits.end()) {
 			const float3 p0 = owner->pos + (    UpVector * 20.0f);
 			const float3 p1 =         p0 + (avoidanceVec * 40.0f);
@@ -1237,8 +1233,6 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 		}
 
 		if (DEBUG_DRAWING_ENABLED) {
-			GML_RECMUTEX_LOCK(sel); // CanGetNextWayPoint
-
 			if (selectedUnitsHandler.selectedUnits.find(owner) != selectedUnitsHandler.selectedUnits.end()) {
 				// plot the vectors to {curr, next}WayPoint
 				const int cwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), cwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
@@ -1480,8 +1474,6 @@ void CGroundMoveType::HandleObjectCollisions()
 {
 	SCOPED_TIMER("Unit::MoveType::Update::Collisions");
 
-	static const float3 sepDirMask = float3(1.0f, 0.0f, 1.0f);
-
 	CUnit* collider = owner;
 
 	// handle collisions for even-numbered objects on even-numbered frames and vv.
@@ -1502,8 +1494,8 @@ void CGroundMoveType::HandleObjectCollisions()
 		const float colliderSpeed = collider->speed.w;
 		const float colliderRadius = FOOTPRINT_RADIUS(colliderMD->xsize, colliderMD->zsize, 0.75f);
 
-		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
-		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
+		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
+		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
 		HandleStaticObjectCollision(collider, collider, colliderMD, colliderRadius, 0.0f, ZeroVector, true, false, true);
 	}
 }
@@ -1688,7 +1680,6 @@ void CGroundMoveType::HandleUnitCollisions(
 	CUnit* collider,
 	const float colliderSpeed,
 	const float colliderRadius,
-	const float3& sepDirMask,
 	const UnitDef* colliderUD,
 	const MoveDef* colliderMD
 ) {
@@ -1773,7 +1764,7 @@ void CGroundMoveType::HandleUnitCollisions(
 			continue;
 
 		if (crushCollidee && !CMoveMath::CrushResistant(*colliderMD, collidee))
-			collidee->Kill(crushImpulse, true);
+			collidee->Kill(collider, crushImpulse, true);
 
 		if (pathController->IgnoreCollision(collider, collidee))
 			continue;
@@ -1829,7 +1820,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float  sepResponse = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
 
 		const float3 sepDirection   = (separationVector / sepDistance);
-		const float3 colResponseVec = sepDirection * sepDirMask * sepResponse;
+		const float3 colResponseVec = sepDirection * XZVector * sepResponse;
 
 		const float
 			m1 = collider->mass,
@@ -1880,7 +1871,6 @@ void CGroundMoveType::HandleFeatureCollisions(
 	CUnit* collider,
 	const float colliderSpeed,
 	const float colliderRadius,
-	const float3& sepDirMask,
 	const UnitDef* colliderUD,
 	const MoveDef* colliderMD
 ) {
@@ -1910,7 +1900,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 		if (CMoveMath::IsNonBlocking(*colliderMD, collidee, collider))
 			continue;
 		if (!CMoveMath::CrushResistant(*colliderMD, collidee))
-			collidee->Kill(crushImpulse, true);
+			collidee->Kill(collider, crushImpulse, true);
 
 		if (pathController->IgnoreCollision(collider, collidee))
 			continue;
@@ -1937,7 +1927,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 		const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
 
 		const float3 sepDirection   = (separationVector / sepDistance);
-		const float3 colResponseVec = sepDirection * sepDirMask * sepResponse;
+		const float3 colResponseVec = sepDirection * XZVector * sepResponse;
 
 		// multiply the collider's mass by a large constant (so that heavy
 		// features do not bounce light units away like jittering pinballs;

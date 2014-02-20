@@ -7,6 +7,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include <cstring> //memset
 
 CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (ProjectileParams()));
 

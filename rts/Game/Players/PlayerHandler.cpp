@@ -5,7 +5,6 @@
 #include "PlayerHandler.h"
 
 #include "Player.h"
-#include "lib/gml/gmlmut.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Game/GameSetup.h"
 #include "Game/SelectedUnitsHandler.h"
@@ -91,14 +90,10 @@ void CPlayerHandler::GameFrame(int frameNum)
 
 void CPlayerHandler::AddPlayer(const CPlayer& player)
 {
-	GML_MSTMUTEX_DOUNLOCK(sim); // AddPlayer - temporarily unlock this mutex to prevent a deadlock
-
 	const int oldSize = players.size();
 	const int newSize = std::max((int)players.size(), player.playerNum + 1);
 
 	{
-		GML_STDMUTEX_LOCK(draw); // AddPlayer - rendering accesses Player(x) in too many places, lock the entire draw thread
-
 		for (unsigned int i = oldSize; i < newSize; ++i) {
 			// fill gap with stubs
 			CPlayer* stub = new CPlayer();
@@ -116,5 +111,4 @@ void CPlayerHandler::AddPlayer(const CPlayer& player)
 		newPlayer->fpsController.SetControllerPlayer(newPlayer);
 	}
 
-	GML_MSTMUTEX_DOLOCK(sim); // AddPlayer - restore unlocked mutex
 }

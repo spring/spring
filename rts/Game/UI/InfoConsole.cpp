@@ -6,7 +6,7 @@
 #include "InfoConsole.h"
 #include "InputReceiver.h"
 #include "GuiHandler.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "System/EventHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/LogSinkHandler.h"
@@ -27,12 +27,12 @@ const size_t CInfoConsole::maxLastMsgPos = 10;
 
 CInfoConsole::CInfoConsole()
 	: CEventClient("InfoConsole", 999, false)
-	, fontScale(1.0f)
 	, enabled(true)
 	, lastMsgIter(lastMsgPositions.begin())
 	, newLines(0)
 	, rawId(0)
 	, lastTime(0)
+	, fontScale(1.0f)
 {
 	data.clear();
 
@@ -180,14 +180,14 @@ void CInfoConsole::RecordLogMessage(const std::string& section, int level,
 			? math::floor(maxHeight / (fontSize * smallFont->GetLineHeight()))
 			: 1; // this will likely be the case on HEADLESS only
 
-	std::list<std::string> lines = smallFont->Wrap(text, fontSize, maxWidth);
+	std::string wrappedText = smallFont->Wrap(text, fontSize, maxWidth);
+	std::list<std::string> lines = smallFont->SplitIntoLines(wrappedText);
 
-	std::list<std::string>::iterator il;
-	for (il = lines.begin(); il != lines.end(); ++il) {
+	for (auto& line: lines) {
 		// add the line to the console
 		InfoLine l;
 		data.push_back(l);
-		data.back().text = *il;
+		data.back().text = line;
 		data.back().time = lifetime - lastTime;
 		lastTime = lifetime;
 	}
@@ -214,11 +214,10 @@ void CInfoConsole::LastMessagePosition(const float3& pos)
 	lastMsgIter = lastMsgPositions.begin();
 }
 
-const float3& CInfoConsole::GetMsgPos()
+const float3& CInfoConsole::GetMsgPos(const float3& defaultPos)
 {
-	if (lastMsgPositions.empty()) {
-		return ZeroVector;
-	}
+	if (lastMsgPositions.empty())
+		return defaultPos;
 
 	// advance the position
 	const float3& p = *(lastMsgIter++);

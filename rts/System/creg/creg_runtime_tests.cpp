@@ -111,7 +111,7 @@ static bool TestCregClasses2()
 
 		if (cregSize != classSize) {
 			brokenClasses++;
-			LOG_L(L_WARNING, "  Missing member(s) in class %s, real size %u, creg size %u", className.c_str(), classSize, cregSize);
+			LOG_L(L_WARNING, "  Missing member(s) in class %s, real size %i, creg size %i", className.c_str(), int(classSize), int(cregSize));
 			/*for (std::vector<creg::Class::Member*>::const_iterator jt = classMembers.begin(); jt != classMembers.end(); ++jt) {
 				const std::string memberName   = (*jt)->name;
 				const size_t      memberOffset = (*jt)->offset;

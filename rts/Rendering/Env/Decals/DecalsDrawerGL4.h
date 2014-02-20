@@ -18,6 +18,7 @@
 #if !defined(GL_VERSION_4_0) || HEADLESS
 	class CDecalsDrawerGL4: public IGroundDecalDrawer
 	{
+	public:
 		CDecalsDrawerGL4();
 		virtual ~CDecalsDrawerGL4() {}
 

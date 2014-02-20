@@ -3,11 +3,7 @@
 #ifndef FLYING_PIECE_H
 #define FLYING_PIECE_H
 
-#include "lib/gml/gmlcnf.h"
-
-#if !(defined(USE_GML) && GML_ENABLE_SIM)
 #include "System/MemPool.h"
-#endif
 
 #include "System/float3.h"
 #include "System/Matrix44f.h"
@@ -27,10 +23,8 @@ public:
 	size_t GetTeam() const { return team; }
 	size_t GetTexture() const { return texture; }
 
-	#if !(defined(USE_GML) && GML_ENABLE_SIM)
 	inline void* operator new(size_t size) { return mempool.Alloc(size); }
 	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
-	#endif
 
 protected:
 	void InitCommon(const float3& _pos, const float3& _speed, int _team);

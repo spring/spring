@@ -61,7 +61,7 @@ static std::string glslGetLog(GLuint obj)
 }
 
 
-static std::string GetShaderSource(std::string fileName)
+static std::string GetShaderSource(const std::string& fileName)
 {
 	std::string soPath = "shaders/" + fileName;
 	std::string soSource = "";
@@ -76,6 +76,19 @@ static std::string GetShaderSource(std::string fileName)
 	}
 
 	return soSource;
+}
+
+static bool ExtractGlslVersion(std::string* src, std::string* version)
+{
+	const auto pos = src->find("#version ");
+
+	if (pos != std::string::npos) {
+		const auto eol = src->find('\n', pos) + 1;
+		*version = src->substr(pos, eol - pos);
+		src->erase(pos, eol - pos);
+		return true;
+	}
+	return false;
 }
 
 
@@ -143,46 +156,32 @@ namespace Shader {
 			curShaderSrc = GetShaderSource(srcFile);
 
 		std::string sourceStr = curShaderSrc;
+		std::string defFlags  = rawDefStrs + "\n" + modDefStrs;
 		std::string versionStr;
 
 		// extract #version pragma and put it on the first line (only allowed there)
 		// version pragma in definitions overrides version pragma in source (if any)
-		const size_t foo = sourceStr.find("#version ");
-		const size_t bar = rawDefStrs.find("#version ");
-		const size_t eos = std::string::npos;
-
-		if (foo != eos) {
-			versionStr = sourceStr.substr(foo, sourceStr.find('\n', foo) + 1);
-			sourceStr = sourceStr.substr(0, foo) + sourceStr.substr(sourceStr.find('\n', foo) + 1, eos);
-		}
-		if (bar != eos) {
-			versionStr = rawDefStrs.substr(bar, rawDefStrs.find('\n', bar) + 1);
-			rawDefStrs = rawDefStrs.substr(0, bar) + rawDefStrs.substr(rawDefStrs.find('\n', bar) + 1, eos);
-		}
-
-		if (!versionStr.empty() && versionStr[versionStr.size() - 1] != '\n') { versionStr += "\n"; }
-		if (!rawDefStrs.empty() && rawDefStrs[rawDefStrs.size() - 1] != '\n') { rawDefStrs += "\n"; }
-		if (!modDefStrs.empty() && modDefStrs[modDefStrs.size() - 1] != '\n') { modDefStrs += "\n"; }
-
-		// NOTE: some drivers cannot handle "#line 0" (?!)
-		sourceStr = "#line 1\n" + sourceStr;
+		ExtractGlslVersion(&sourceStr, &versionStr);
+		ExtractGlslVersion(&defFlags,  &versionStr);
+		if (!versionStr.empty()) EnsureEndsWith(&versionStr, "\n");
+		if (!defFlags.empty())   EnsureEndsWith(&defFlags,   "\n");
 
 		// NOTE: many definition flags are not set until after shader is compiled
-		const GLchar* sources[7] = {
+		std::vector<const GLchar*> sources = {
 			"// SHADER VERSION\n",
 			versionStr.c_str(),
 			"// SHADER FLAGS\n",
-			rawDefStrs.c_str(),
-			modDefStrs.c_str(),
+			defFlags.c_str(),
 			"// SHADER SOURCE\n",
+			"#line 1\n",
 			sourceStr.c_str()
 		};
-		const GLint lengths[7] = {-1, -1, -1, -1, -1, -1, -1};
+		const std::vector<GLint> lengths(sources.size(), -1);
 
 		if (objID == 0)
 			objID = glCreateShader(type);
 
-		glShaderSource(objID, 7, sources, lengths);
+		glShaderSource(objID, sources.size(), &sources[0], &lengths[0]);
 		glCompileShader(objID);
 
 		valid = glslIsValid(objID);
@@ -202,40 +201,21 @@ namespace Shader {
 
 
 	IProgramObject::IProgramObject(const std::string& poName): name(poName), objID(0), curHash(0), valid(false), bound(false) {
-#ifdef USE_GML
-		memset(tbound, 0, sizeof(tbound));
-#endif
 	}
 
 	void IProgramObject::Enable() {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			tbound[GML::ThreadNumber()] = bound ? 0 : 1;
-		} else
-#endif
 		{
 			bound = true;
 		}
 	}
 
 	void IProgramObject::Disable() {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			tbound[GML::ThreadNumber()] = bound ? -1 : 0;
-		} else
-#endif
 		{
 			bound = false;
 		}
 	}
 
 	bool IProgramObject::IsBound() const {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			char tb = tbound[GML::ThreadNumber()];
-			return (tb != 0) ? tb > 0 : bound;
-		} else
-#endif
 		{
 			return bound;
 		}
@@ -269,45 +249,38 @@ namespace Shader {
 		}
 
 		curHash = hash;
-		Reload(false);
 
+		Reload(false);
 		PrintInfo();
 	}
 
-	void IProgramObject::PrintInfo() const
+	void IProgramObject::PrintInfo()
 	{
 		LOG_L(L_DEBUG, "Uniform States for program-object \"%s\":", name.c_str());
-		for (auto& p : uniformStates)
-			LOG_L(L_DEBUG, "\t%s: %f %f %i", (p.second.GetName()).c_str(), p.second.GetFltValues()[0], p.second.GetFltValues()[1], int(p.second.IsUninit()));
+		LOG_L(L_DEBUG, "Defs:\n %s", GetString().c_str());
+		LOG_L(L_DEBUG, "Uniforms:");
+		for (const auto& p : uniformStates) {
+			const bool curUsed = GetUniformLocation(p.second.GetName()) >= 0;
+			if (p.second.IsUninit()) {
+				LOG_L(L_DEBUG, "\t%s: uninitialized used=%i", (p.second.GetName()).c_str(), int(curUsed));
+			} else {
+				LOG_L(L_DEBUG, "\t%s: x=float:%f;int:%i y=%f z=%f used=%i", (p.second.GetName()).c_str(), p.second.GetFltValues()[0], p.second.GetIntValues()[0], p.second.GetFltValues()[1], p.second.GetFltValues()[2], int(curUsed));
+			}
+		}
 	}
 
 
 	ARBProgramObject::ARBProgramObject(const std::string& poName): IProgramObject(poName) {
 		objID = -1; // not used for ARBProgramObject instances
 		uniformTarget = -1;
-#ifdef USE_GML
-		for (int i = 0; i < GML_MAX_NUM_THREADS; ++i) {
-			tuniformTargets[i] = -1;
-		}
-#endif
 	}
 
 	void ARBProgramObject::SetUniformTarget(int target) {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			tuniformTargets[GML::ThreadNumber()] = target;
-		} else
-#endif
 		{
 			uniformTarget = target;
 		}
 	}
 	int ARBProgramObject::GetUnitformTarget() {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			return tuniformTargets[GML::ThreadNumber()];
-		} else
-#endif
 		{
 			return uniformTarget;
 		}
@@ -386,6 +359,7 @@ namespace Shader {
 	void GLSLProgramObject::Disable() { glUseProgram(0); IProgramObject::Disable(); }
 
 	void GLSLProgramObject::Link() {
+		RecompileIfNeeded();
 		assert(glIsProgram(objID));
 
 		if (!glIsProgram(objID))
@@ -491,7 +465,6 @@ namespace Shader {
 	void GLSLProgramObject::SetUniformMatrix3x3(UniformState* uState, bool transp, const float* v) { assert(IsBound()); if (uState->Set3x3(v, transp)) glUniformMatrix3fv(uState->GetLocation(), 1, transp, v); }
 	void GLSLProgramObject::SetUniformMatrix4x4(UniformState* uState, bool transp, const float* v) { assert(IsBound()); if (uState->Set4x4(v, transp)) glUniformMatrix4fv(uState->GetLocation(), 1, transp, v); }
 
-	// FIXME: even in a hashmap find() is SLOW compared to direct array lookup, string-ops at runtime SUCK!
 	void GLSLProgramObject::SetUniform1i(int idx, int   v0                              ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0            )) glUniform1i(it->second.GetLocation(), v0            ); }
 	void GLSLProgramObject::SetUniform2i(int idx, int   v0, int   v1                    ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0, v1        )) glUniform2i(it->second.GetLocation(), v0, v1        ); }
 	void GLSLProgramObject::SetUniform3i(int idx, int   v0, int   v1, int   v2          ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0, v1, v2    )) glUniform3i(it->second.GetLocation(), v0, v1, v2    ); }

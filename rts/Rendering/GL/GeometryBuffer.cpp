@@ -2,6 +2,7 @@
 
 #include "GeometryBuffer.h"
 #include "Rendering/GlobalRendering.h"
+#include <cstring> //memset
 
 void GL::GeometryBuffer::Init() {
 	memset(&bufferTextureIDs[0], 0, sizeof(bufferTextureIDs));

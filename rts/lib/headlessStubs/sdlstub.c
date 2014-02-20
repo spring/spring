@@ -5,7 +5,7 @@
  * http://www.libsdl.org/docs/html/
  */
 
-#include "SDL.h"
+#include <SDL.h>
 
 
 #ifdef __cplusplus
@@ -22,7 +22,6 @@ static struct SDL_Surface stubSurface;
 static struct SDL_RWops stubRWops;
 static Uint8 stubKeyState[0];
 static SDL_version stubVersion;
-static SDL_VideoInfo stubVideo;
 static Uint32 stubSubSystemsInit = 0;
 
 extern DECLSPEC int SDLCALL SDL_Init(Uint32 flags) {
@@ -31,8 +30,6 @@ extern DECLSPEC int SDLCALL SDL_Init(Uint32 flags) {
 
 	stubSurface.w = 512;
 	stubSurface.h = 512;
-	stubVideo.current_w = 512;
-	stubVideo.current_h = 512;
 	stubSubSystemsInit = SDL_INIT_EVERYTHING;
 
 	return 0;
@@ -46,7 +43,7 @@ extern DECLSPEC int SDLCALL SDL_InitSubSystem(Uint32 flags) {
 	return 0;
 }
 
-extern DECLSPEC char* SDLCALL SDL_GetError() {
+extern DECLSPEC const char* SDLCALL SDL_GetError() {
 	return "using the SDL stub library";
 }
 
@@ -54,12 +51,9 @@ extern DECLSPEC int SDLCALL SDL_GL_SetAttribute(SDL_GLattr attr, int value) {
 	return 0;
 }
 
-extern DECLSPEC SDL_Surface* SDLCALL SDL_SetVideoMode(int width, int height, int bpp, Uint32 flags) {
-	return &stubSurface;
-}
-
-extern DECLSPEC const SDL_VideoInfo* SDLCALL SDL_GetVideoInfo(void) {
-	return &stubVideo;
+extern DECLSPEC SDL_Window* SDLCALL SDL_CreateWindow(const char* title, int x, int y, int w, int h, Uint32 flags) {
+	static int foo;
+	return (SDL_Window*)(&foo);
 }
 
 extern DECLSPEC struct SDL_RWops* SDLCALL SDL_RWFromFile(const char* file, const char* mode) {
@@ -84,7 +78,7 @@ extern DECLSPEC SDL_Surface* SDLCALL SDL_CreateRGBSurfaceFrom(void* pixels, int 
 extern DECLSPEC void SDLCALL SDL_FreeSurface(SDL_Surface* surface) {
 }
 
-extern DECLSPEC void SDLCALL SDL_GL_SwapBuffers() {
+extern DECLSPEC void SDLCALL SDL_GL_SwapWindow(SDL_Window* window) {
 }
 
 extern DECLSPEC void SDLCALL SDL_Delay(Uint32 ms) {
@@ -95,22 +89,28 @@ extern DECLSPEC Uint32 SDLCALL SDL_GetTicks() {
 	return stub_sdl_getSystemMilliSeconds() - startSystemMilliSeconds;
 }
 
-extern DECLSPEC void SDLCALL SDL_WarpMouse(Uint16 x, Uint16 y) {
+extern DECLSPEC void SDLCALL SDL_WarpMouseInWindow(SDL_Window* window, int x, int y) {
 }
 
 extern DECLSPEC int SDLCALL SDL_WM_IconifyWindow() {
 	return 0;
 }
 
-extern DECLSPEC int SDLCALL SDL_EnableUNICODE(int i) {
+extern DECLSPEC void SDLCALL SDL_HideWindow(SDL_Window* window) {
+}
+
+extern DECLSPEC int SDLCALL SDL_SetWindowFullscreen(SDL_Window* window, Uint32 flags) {
 	return 0;
+}
+
+extern DECLSPEC void SDLCALL SDL_SetWindowBordered(SDL_Window* window, SDL_bool bordered) {
 }
 
 extern DECLSPEC int SDLCALL SDL_EnableKeyRepeat(int i, int j) {
 	return 0;
 }
 
-extern DECLSPEC void SDLCALL SDL_SetModState(SDLMod i) {
+extern DECLSPEC void SDLCALL SDL_SetModState(SDL_Keymod modstate) {
 }
 
 extern DECLSPEC int SDLCALL SDL_PollEvent(SDL_Event* event) {
@@ -124,10 +124,13 @@ extern DECLSPEC int SDLCALL SDL_PushEvent(SDL_Event* event) {
 extern DECLSPEC void SDLCALL SDL_PumpEvents() {
 }
 
-extern DECLSPEC void SDLCALL SDL_WM_SetIcon(SDL_Surface* icon, Uint8* mask) {
+extern DECLSPEC void SDLCALL SDL_SetWindowTitle(SDL_Window* window, const char* title) {
 }
 
-extern DECLSPEC void SDLCALL SDL_WM_SetCaption(const char* title, const char* icon) {
+extern DECLSPEC void SDLCALL SDL_SetWindowIcon(SDL_Window* window, SDL_Surface* icon) {
+}
+
+extern DECLSPEC void SDLCALL SDL_SetWindowMinimumSize(SDL_Window* window, int min_w, int min_h) {
 }
 
 extern DECLSPEC int SDLCALL SDL_GL_GetAttribute(SDL_GLattr attr, int* value) {
@@ -135,24 +138,40 @@ extern DECLSPEC int SDLCALL SDL_GL_GetAttribute(SDL_GLattr attr, int* value) {
 	return 0;
 }
 
-extern DECLSPEC SDL_GrabMode SDLCALL SDL_WM_GrabInput(SDL_GrabMode mode) {
+extern DECLSPEC SDL_GLContext SDLCALL SDL_GL_CreateContext(SDL_Window* window) {
+	static int foo;
+	return &foo;
+}
+
+
+extern DECLSPEC void SDLCALL SDL_SetWindowGrab(SDL_Window* window, SDL_bool grabbed) {
+}
+
+extern DECLSPEC SDL_bool SDLCALL SDL_GetWindowGrab(SDL_Window* window) {
 	return 0;
 }
 
-extern DECLSPEC int SDLCALL SDL_GetWMInfo(void* infostruct) {
-
-	// TODO: probably needs to populate infostruct with something reasonable...
-
-	// I _think_ this triggers SpringApp.cpp to just use the screen geometry
-	return 0;
+extern DECLSPEC void SDLCALL SDL_DisableScreenSaver() {
 }
 
-extern DECLSPEC Uint8* SDLCALL SDL_GetKeyState(int* numkeys) {
+extern DECLSPEC char* SDLCALL SDL_GetClipboardText() {
+	return "";
+}
+
+extern DECLSPEC const Uint8 *SDLCALL SDL_GetKeyboardState(int* numkeys) {
 	*numkeys = 0;
 	return stubKeyState;
 }
 
-extern DECLSPEC SDLMod SDLCALL SDL_GetModState() {
+extern DECLSPEC SDL_Keymod SDLCALL SDL_GetModState() {
+	return 0;
+}
+
+extern DECLSPEC SDL_Keycode SDLCALL SDL_GetKeyFromScancode(SDL_Scancode scancode) {
+	return 0;
+}
+
+extern DECLSPEC SDL_Scancode SDLCALL SDL_GetScancodeFromKey(SDL_Keycode key) {
 	return 0;
 }
 
@@ -160,15 +179,15 @@ extern DECLSPEC const SDL_version* SDLCALL SDL_Linked_Version() {
 	return &stubVersion;
 }
 
+extern DECLSPEC void SDLCALL SDL_GetVersion(SDL_version* ver) {
+	*ver = stubVersion;
+}
+
 extern DECLSPEC int SDLCALL SDL_ShowCursor(int toggle) {
 	return 0;
 }
 
-extern DECLSPEC Uint8 SDLCALL SDL_GetMouseState(int* x, int* y) {
-	return 0;
-}
-
-extern DECLSPEC int SDLCALL SDL_SetGamma(float red, float green, float blue) {
+extern DECLSPEC Uint32 SDLCALL SDL_GetMouseState(int* x, int* y) {
 	return 0;
 }
 
@@ -176,7 +195,7 @@ extern DECLSPEC int SDLCALL SDL_NumJoysticks() {
 	return 0;
 }
 
-extern DECLSPEC const char* SDLCALL SDL_JoystickName(int device_index) {
+extern DECLSPEC const char* SDLCALL SDL_JoystickName(SDL_Joystick* device_index) {
 	return "";
 }
 
@@ -187,11 +206,29 @@ extern DECLSPEC SDL_Joystick* SDLCALL SDL_JoystickOpen(int device_index) {
 extern DECLSPEC void SDLCALL SDL_JoystickClose(SDL_Joystick* joystick) {
 }
 
-extern DECLSPEC SDL_Rect** SDLCALL SDL_ListModes(SDL_PixelFormat* format, Uint32 flags) {
-	return NULL;
+extern DECLSPEC int SDLCALL SDL_GetNumDisplayModes(int displayIndex) {
+	return 0;
 }
 
-extern DECLSPEC int SDLCALL SDL_PeepEvents(SDL_Event* events, int numevents, SDL_eventaction action, Uint32 mask) {
+extern DECLSPEC int SDLCALL SDL_GetDesktopDisplayMode(int displayIndex, SDL_DisplayMode* mode) {
+	mode->format = SDL_PIXELFORMAT_RGB24;
+	mode->w = 640;
+	mode->h = 480;
+	mode->refresh_rate = 100;
+	mode->driverdata = NULL;
+	return 0;
+}
+
+extern DECLSPEC int SDLCALL SDL_GetWindowDisplayMode(SDL_Window* window, SDL_DisplayMode* mode) {
+	return SDL_GetDesktopDisplayMode(0, mode);
+}
+
+extern DECLSPEC int SDLCALL SDL_GetDisplayMode(int displayIndex, int modeIndex, SDL_DisplayMode* mode) {
+	return SDL_GetDesktopDisplayMode(0, mode);
+}
+
+
+extern DECLSPEC int SDLCALL SDL_PeepEvents(SDL_Event* events, int numevents, SDL_eventaction action, Uint32 minType, Uint32 maxType) {
 	return 0;
 }
 

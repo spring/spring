@@ -8,8 +8,6 @@
 #include <string>
 #include <map>
 #include <sstream>
-#include "lib/gml/gml_base.h"
-
 
 namespace Shader {
 	struct UniformState {
@@ -90,7 +88,6 @@ namespace Shader {
 
 
 		bool Set(const int v0, const int v1 = 0, const int v2 = 0, const int v3 = 0) {
-			if (GML::ServerActive()) return true;
 			if (CheckHash(v0, v1, v2, v3))
 				return false;
 			i[0] = v0; i[1] = v1; i[2] = v2; i[3] = v3;
@@ -99,7 +96,6 @@ namespace Shader {
 
 
 		bool Set(const float v0, const float v1 = 0.0f, const float v2 = 0.0f, const float v3 = 0.0f) {
-			if (GML::ServerActive()) return true;
 			const int i0 = *reinterpret_cast<const int*>(&v0);
 			const int i1 = *reinterpret_cast<const int*>(&v1);
 			const int i2 = *reinterpret_cast<const int*>(&v2);
@@ -112,21 +108,18 @@ namespace Shader {
 
 
 		bool Set2v(const int* v) {
-			if (GML::ServerActive()) return true;
 			if (CheckHash(v[0], v[1]))
 				return false;
 			i[0] = v[0]; i[1] = v[1];
 			return true;
 		}
 		bool Set3v(const int* v) {
-			if (GML::ServerActive()) return true;
 			if (CheckHash(v[0], v[1], v[2]))
 				return false;
 			i[0] = v[0]; i[1] = v[1]; i[2] = v[2];
 			return true;
 		}
 		bool Set4v(const int* v) {
-			if (GML::ServerActive()) return true;
 			if (CheckHash(v[0], v[1], v[2], v[3]))
 				return false;
 			i[0] = v[0]; i[1] = v[1]; i[2] = v[2]; i[3] = v[3];
@@ -135,7 +128,6 @@ namespace Shader {
 
 
 		bool Set2v(const float* v) {
-			if (GML::ServerActive()) return true;
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi[0], vi[1]))
 				return false;
@@ -143,7 +135,6 @@ namespace Shader {
 			return true;
 		}
 		bool Set3v(const float* v) {
-			if (GML::ServerActive()) return true;
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi[0], vi[1], vi[2]))
 				return false;
@@ -151,7 +142,6 @@ namespace Shader {
 			return true;
 		}
 		bool Set4v(const float* v) {
-			if (GML::ServerActive()) return true;
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi[0], vi[1], vi[2], vi[3]))
 				return false;
@@ -161,7 +151,6 @@ namespace Shader {
 
 
 		bool Set2x2(const float* v, bool transp) {
-			if (GML::ServerActive()) return true;
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi, 4) && (bool)i[16] == transp)
 				return false;
@@ -170,7 +159,6 @@ namespace Shader {
 			return true;
 		}
 		bool Set3x3(const float* v, bool transp) {
-			if (GML::ServerActive()) return true;
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi, 9) && (bool)i[16] == transp)
 				return false;
@@ -179,7 +167,6 @@ namespace Shader {
 			return true;
 		}
 		bool Set4x4(const float* v, bool transp) {
-			if (GML::ServerActive()) return true;
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi, 16) && (bool)i[16] == transp)
 				return false;

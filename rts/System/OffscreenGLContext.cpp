@@ -7,6 +7,7 @@
 #include "System/maindefines.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
+#include <boost/thread.hpp>
 
 
 static PFNGLACTIVETEXTUREPROC mainGlActiveTexture = NULL;

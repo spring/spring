@@ -3,17 +3,23 @@
 #ifndef PROFILE_DRAWER
 #define PROFILE_DRAWER
 
-#include "InputReceiver.h"
+#include "System/EventClient.h"
 
-class ProfileDrawer : public CInputReceiver
+class ProfileDrawer : public CEventClient
 {
+public:
+	// CEventClient interface
+	bool GetFullRead() const { return true; }
+	int  GetReadAllyTeam() const { return AllAccessTeam; }
+
 public:
 	static void SetEnabled(bool enable);
 	static bool IsEnabled();
 
-	virtual void Draw();
+	virtual void DrawScreen();
 	virtual bool MousePress(int x, int y, int button);
-	virtual bool IsAbove(int x, int y);	
+	virtual bool IsAbove(int x, int y);
+	virtual void DbgTimingInfo(const char* name, const spring_time& start, const spring_time& end);
 
 private:
 	ProfileDrawer();

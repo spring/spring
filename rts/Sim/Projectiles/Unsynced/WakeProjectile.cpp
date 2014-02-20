@@ -37,15 +37,14 @@ CWakeProjectile::CWakeProjectile(
 	float alpha,
 	float alphaFalloff,
 	float fadeupTime
-):
-	CProjectile(pos, speed, owner, false, false, false),
-
-	alpha(0.0f),
-	alphaFalloff(alphaFalloff),
-	alphaAdd(alpha / fadeupTime),
-	alphaAddTime((int)fadeupTime),
-	size(startSize),
-	sizeExpansion(sizeExpansion)
+)
+: CProjectile(pos, speed, owner, false, false, false)
+, alpha(0.0f)
+, alphaFalloff(alphaFalloff)
+, alphaAdd(alpha / fadeupTime)
+, alphaAddTime((int)fadeupTime)
+, size(startSize)
+, sizeExpansion(sizeExpansion)
 {
 	this->pos.y = 0.0f;
 	this->speed.y = 0.0f;
@@ -53,7 +52,7 @@ CWakeProjectile::CWakeProjectile(
 	rotSpeed = (gu->RandFloat() - 0.5f) * PI*2*0.01f;
 	checkCol = false;
 	if (water->BlockWakeProjectiles()) {
-		alpha = 0;
+		this->alpha = 0;
 		alphaAddTime = 0;
 		size = 0;
 	}

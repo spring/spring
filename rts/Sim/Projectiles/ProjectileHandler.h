@@ -8,7 +8,6 @@
 #include <vector>
 #include <stack>
 
-#include "lib/gml/gmlcnf.h"
 #include "lib/gml/ThreadSafeContainers.h"
 
 #include "Sim/Projectiles/ProjectileFunctors.h"
@@ -37,11 +36,7 @@ typedef std::map<int, ProjectileMapValPair> ProjectileMap;
 typedef ThreadListSim<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*, ProjectileDetacher> ProjectileContainer;
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-typedef ThreadListSimRender<std::set<FlyingPiece*>, std::set<FlyingPiece*, FlyingPieceComparator>, FlyingPiece*> FlyingPieceContainer;
-#else
 typedef ThreadListSimRender<std::set<FlyingPiece*, FlyingPieceComparator>, void, FlyingPiece*> FlyingPieceContainer;
-#endif
 
 typedef ThreadMapRender<CProjectile*, int, ProjectileMapValPair, ProjectileIndexer> ProjectileRenderMap;
 
@@ -57,8 +52,7 @@ public:
 	void PostLoad();
 
 	inline const ProjectileMapValPair* GetMapPairBySyncedID(int id) const {
-		const bool renderAccess = (GML::SimEnabled() && !Threading::IsSimThread());
-		const ProjectileMap& projectileIDs = renderAccess ? syncedRenderProjectileIDs.get_render_map() : syncedProjectileIDs;
+		const ProjectileMap& projectileIDs = syncedProjectileIDs;
 		const ProjectileMap::const_iterator it = projectileIDs.find(id);
 
 		if (it == projectileIDs.end())
@@ -71,8 +65,7 @@ public:
 		if (UNSYNCED_PROJ_NOEVENT)
 			return NULL; // unsynced projectiles have no IDs if UNSYNCED_PROJ_NOEVENT
 
-		const bool renderAccess = (GML::SimEnabled() && !Threading::IsSimThread());
-		const ProjectileMap& projectileIDs = renderAccess ? unsyncedRenderProjectileIDs.get_render_map() : unsyncedProjectileIDs;
+		const ProjectileMap& projectileIDs = unsyncedProjectileIDs;
 		const ProjectileMap::const_iterator it = projectileIDs.find(id);
 
 		if (it == projectileIDs.end())

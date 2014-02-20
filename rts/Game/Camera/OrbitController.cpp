@@ -3,7 +3,7 @@
 #include <boost/cstdint.hpp>
 
 #include <SDL_mouse.h>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 
 #include "OrbitController.h"
 #include "Game/Camera.h"
@@ -61,7 +61,7 @@ void COrbitController::Init(const float3& p, const float3& tar)
 
 void COrbitController::Update()
 {
-	if (!keyInput->IsKeyPressed(SDLK_LMETA)) {
+	if (!KeyInput::GetKeyModState(KMOD_GUI)) {
 		return;
 	}
 
@@ -157,8 +157,8 @@ float3 COrbitController::GetDir() const
 
 void COrbitController::Orbit()
 {
-	camera->SetPos() = cen + GetOrbitPos();
-	camera->SetPos().y = std::max(camera->GetPos().y, ground->GetHeightReal(camera->GetPos().x, camera->GetPos().z, false));
+	camera->SetPos(cen + GetOrbitPos());
+	camera->SetPos((camera->GetPos() + XZVector) + (UpVector * std::max(camera->GetPos().y, ground->GetHeightReal(camera->GetPos().x, camera->GetPos().z, false))));
 	camera->forward = (cen - camera->GetPos()).ANormalize();
 	camera->up = UpVector;
 }
@@ -166,11 +166,11 @@ void COrbitController::Orbit()
 void COrbitController::Pan(int rdx, int rdy)
 {
 	// horizontal pan
-	camera->SetPos() += (camera->right * -rdx * panSpeedFact);
+	camera->SetPos(camera->GetPos() + (camera->right * -rdx * panSpeedFact));
 	cen += (camera->right * -rdx * panSpeedFact);
 
 	// vertical pan
-	camera->SetPos() += (camera->up * rdy * panSpeedFact);
+	camera->SetPos(camera->GetPos() + (camera->up * rdy * panSpeedFact));
 	cen += (camera->up * rdy * panSpeedFact);
 
 
@@ -179,7 +179,7 @@ void COrbitController::Pan(int rdx, int rdy)
 	const float cenGH = ground->GetHeightReal(cen.x, cen.z, false);
 
 	if (camera->GetPos().y < camGH) {
-		camera->SetPos().y = camGH;
+		camera->SetPos((camera->GetPos() * XZVector) + (UpVector * camGH));
 	}
 
 	if (cen.y < cenGH) {
@@ -215,7 +215,7 @@ void COrbitController::MouseWheelMove(float move)
 
 void COrbitController::SetPos(const float3& newPos)
 {
-	if (keyInput->IsKeyPressed(SDLK_LMETA)) {
+	if (KeyInput::GetKeyModState(KMOD_GUI)) {
 		return;
 	}
 
@@ -227,9 +227,7 @@ void COrbitController::SetPos(const float3& newPos)
 	cen.z += dz;
 	cen.y = ground->GetHeightReal(cen.x, cen.z, false);
 
-	camera->SetPos().x += dx;
-	camera->SetPos().z += dz;
-
+	camera->SetPos(camera->GetPos() + float3(dx, 0.0f, dz));
 	Init(camera->GetPos(), cen);
 }
 

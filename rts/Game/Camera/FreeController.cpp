@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <boost/cstdint.hpp>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 
 #include "FreeController.h"
 #include "Game/Camera.h"
@@ -46,12 +46,12 @@ CFreeController::CFreeController()
   trackRadius(0.0f),
   gndLock(false)
 {
-	dir = float3(0.0f, -2.0f, -1.0f);
-	dir.ANormalize();
+	dir = float3(0.0f, -2.0f, -1.0f).ANormalize();
+
 	if (camera) {
 		const float hDist = math::sqrt((dir.x * dir.x) + (dir.z * dir.z));
-		camera->rot.y = math::atan2(dir.x, dir.z);
-		camera->rot.x = math::atan2(dir.y, hDist);
+		camera->rot.y = math::atan2(dir.x, dir.z); // yaw
+		camera->rot.x = math::atan2(dir.y, hDist); // pitch
 	}
 	pos -= (dir * 1000.0f);
 
@@ -78,21 +78,22 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 {
 	tracking = true;
 	trackPos = target;
-	trackRadius = radius;;
+	trackRadius = radius;
 
 	// lock the view direction to the target
 	const float3 diff(trackPos - pos);
 	const float rads = math::atan2(diff.x, diff.z);
+	const float len2D = diff.Length2D();
+
 	camera->rot.y = rads;
 
-	const float len2D = diff.Length2D();
 	if (math::fabs(len2D) <= 0.001f) {
 		camera->rot.x = 0.0f;
 	} else {
 		camera->rot.x = math::atan2((trackPos.y - pos.y), len2D);
 	}
 
-	camera->UpdateForward();
+	camera->UpdateForward(GetDir());
 }
 
 
@@ -145,8 +146,7 @@ void CFreeController::Update()
 			                    (UpVector        * vel.y) +
 			                    (camera->right   * vel.z));
 			vel = tmpVel;
-		}
-		else {
+		} else {
 			float3 forwardNoY(camera->forward.x, 0.0f, camera->forward.z);
 			forwardNoY.ANormalize();
 			const float3 tmpVel((forwardNoY    * vel.x) +
@@ -181,8 +181,7 @@ void CFreeController::Update()
 		pos           += (vel         * ft);
 		camera->rot   += (avel        * ft);
 		camera->rot.x += (autoTiltVel * ft); // note that this is not smoothed
-	}
-	else {
+	} else {
 		// speed along the tracking direction varies with distance
 		const float3 diff = (pos - trackPos);
 		if (goForward) {
@@ -195,8 +194,7 @@ void CFreeController::Update()
 			const float scale = (newDist / dist);
 			pos = trackPos + (diff * scale);
 			pos.y += (vel.y * ft);
-		}
-		else {
+		} else {
 			const float dist = max(0.1f, diff.Length2D());
 			const float nomDist = 512.0f;
 			float speedScale = (dist / nomDist);
@@ -221,7 +219,7 @@ void CFreeController::Update()
 	// setup ground lock
 	const float gndHeight = ground->GetHeightReal(pos.x, pos.z, false);
 
-	if (keyInput->IsKeyPressed(SDLK_LSHIFT)) {
+	if (KeyInput::GetKeyModState(KMOD_SHIFT)) {
 		if (ctrlVelY > 0.0f) {
 			gndLock = false;
 		} else if ((gndOffset > 0.0f) && (ctrlVelY < 0.0f) &&
@@ -234,15 +232,14 @@ void CFreeController::Update()
 	if (gndOffset < 0.0f) {
 		pos.y = (gndHeight - gndOffset);
 		vel.y = 0.0f;
-	}
-	else if (gndLock && (gravity >= 0.0f)) {
+	} else if (gndLock && (gravity >= 0.0f)) {
 		pos.y = (gndHeight + gndOffset);
 		vel.y = 0.0f;
-	}
-	else if (gndOffset > 0.0f) {
+	} else if (gndOffset > 0.0f) {
 		const float minHeight = (gndHeight + gndOffset);
 		if (pos.y < minHeight) {
 			pos.y = minHeight;
+
 			if (gndLock) {
 				vel.y = min(math::fabs(scrollSpeed), ((minHeight - prevPos.y) / ft));
 			} else {
@@ -252,14 +249,14 @@ void CFreeController::Update()
 	}
 
 	// angular clamps
-	const float xRotLimit = (PI * 0.4999f);
-	if (camera->rot.x > xRotLimit) {
-		camera->rot.x = xRotLimit;
-		avel.x = 0.0f;
-	}
-	else if (camera->rot.x < -xRotLimit) {
-		camera->rot.x = -xRotLimit;
-		avel.x = 0.0f;
+	const float xRotLimit = PI * 0.499f;
+
+	if (camera->rot.x >= xRotLimit) {
+		// maximum upward pitch
+		camera->rot.x = xRotLimit; avel.x = 0.0f;
+	} else if (camera->rot.x <= -xRotLimit) {
+		// maximum downward pitch
+		camera->rot.x = -xRotLimit; avel.x = 0.0f;
 	}
 	camera->rot.y = math::fmod(camera->rot.y, PI * 2.0f);
 
@@ -288,13 +285,13 @@ void CFreeController::KeyMove(float3 move)
 	const float qy = (move.y == 0.0f) ? 0.0f : (move.y > 0.0f ? 1.0f : -1.0f);
 	const float qx = (move.x == 0.0f) ? 0.0f : (move.x > 0.0f ? 1.0f : -1.0f);
 
-	const float speed  = (keyInput->IsKeyPressed(SDLK_LMETA))? 4.0f * scrollSpeed : scrollSpeed;
-	const float aspeed = (keyInput->IsKeyPressed(SDLK_LMETA))? 2.0f * tiltSpeed   : tiltSpeed;
+	const float speed  = (KeyInput::GetKeyModState(KMOD_GUI))? 4.0f * scrollSpeed : scrollSpeed;
+	const float aspeed = (KeyInput::GetKeyModState(KMOD_GUI))? 2.0f * tiltSpeed   : tiltSpeed;
 
-	if (keyInput->IsKeyPressed(SDLK_LCTRL)) {
+	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
 		avel.x += (aspeed * -qy); // tilt
 	}
-	else if (keyInput->IsKeyPressed(SDLK_LSHIFT)) {
+	else if (KeyInput::GetKeyModState(KMOD_SHIFT)) {
 		vel.y += (speed * -qy); // up/down
 	}
 	else {
@@ -304,7 +301,7 @@ void CFreeController::KeyMove(float3 move)
 	if (tracking) {
 		avel.y += (aspeed * qx); // turntable rotation
 	}
-	else if (!keyInput->GetKeyState(SDLK_LALT) == invertAlt) {
+	else if (!KeyInput::GetKeyModState(KMOD_ALT) == invertAlt) {
 		vel.z += (speed * qx); // left/right
 	}
 	else {
@@ -317,48 +314,48 @@ void CFreeController::KeyMove(float3 move)
 
 void CFreeController::MouseMove(float3 move)
 {
-	const boost::uint8_t prevAlt   = keyInput->GetKeyState(SDLK_LALT);
-	const boost::uint8_t prevCtrl  = keyInput->GetKeyState(SDLK_LCTRL);
-	const boost::uint8_t prevShift = keyInput->GetKeyState(SDLK_LSHIFT);
+	const boost::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
+	const boost::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
+	const boost::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
 
-	keyInput->SetKeyState(SDLK_LCTRL, !prevCtrl);
-	keyInput->SetKeyState(SDLK_LALT, (invertAlt == !prevAlt));
+	KeyInput::SetKeyModState(KMOD_CTRL, !prevCtrl);
+	KeyInput::SetKeyModState(KMOD_ALT, (invertAlt == !prevAlt));
 
 	KeyMove(move);
 
-	keyInput->SetKeyState(SDLK_LALT, prevAlt);
-	keyInput->SetKeyState(SDLK_LCTRL, prevCtrl);
-	keyInput->SetKeyState(SDLK_LSHIFT, prevShift);
+	KeyInput::SetKeyModState(KMOD_ALT, prevAlt);
+	KeyInput::SetKeyModState(KMOD_CTRL, prevCtrl);
+	KeyInput::SetKeyModState(KMOD_SHIFT, prevShift);
 }
 
 
 void CFreeController::ScreenEdgeMove(float3 move)
 {
-	const boost::uint8_t prevAlt   = keyInput->GetKeyState(SDLK_LALT);
-	const boost::uint8_t prevCtrl  = keyInput->GetKeyState(SDLK_LCTRL);
-	const boost::uint8_t prevShift = keyInput->GetKeyState(SDLK_LSHIFT);
+	const boost::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
+	const boost::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
+	const boost::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
 
-	keyInput->SetKeyState(SDLK_LALT, (invertAlt == !prevAlt));
+	KeyInput::SetKeyModState(KMOD_ALT, (invertAlt == !prevAlt));
 	KeyMove(move);
 
-	keyInput->SetKeyState(SDLK_LALT, prevAlt);
-	keyInput->SetKeyState(SDLK_LCTRL, prevCtrl);
-	keyInput->SetKeyState(SDLK_LSHIFT, prevShift);
+	KeyInput::SetKeyModState(KMOD_ALT, prevAlt);
+	KeyInput::SetKeyModState(KMOD_CTRL, prevCtrl);
+	KeyInput::SetKeyModState(KMOD_SHIFT, prevShift);
 }
 
 
 void CFreeController::MouseWheelMove(float move)
 {
-	const boost::uint8_t prevCtrl  = keyInput->GetKeyState(SDLK_LCTRL);
-	const boost::uint8_t prevShift = keyInput->GetKeyState(SDLK_LSHIFT);
+	const boost::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
+	const boost::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
 
-	keyInput->SetKeyState(SDLK_LCTRL, 0);
-	keyInput->SetKeyState(SDLK_LSHIFT, 1);
+	KeyInput::SetKeyModState(KMOD_CTRL, 0);
+	KeyInput::SetKeyModState(KMOD_SHIFT, 1);
 
 	KeyMove(float3(0.0f, move, 0.0f));
 
-	keyInput->SetKeyState(SDLK_LCTRL, prevCtrl);
-	keyInput->SetKeyState(SDLK_LSHIFT, prevShift);
+	KeyInput::SetKeyModState(KMOD_CTRL, prevCtrl);
+	KeyInput::SetKeyModState(KMOD_SHIFT, prevShift);
 }
 
 

@@ -16,7 +16,6 @@
 #include "System/Util.h"
 
 
-#if 0
 #define LOG_SECTION_VFS "VFS"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_VFS)
 
@@ -25,7 +24,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_VFS)
 	#undef LOG_SECTION_CURRENT
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_VFS
-#endif
 
 
 CVFSHandler* vfsHandler = NULL;

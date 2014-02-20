@@ -40,6 +40,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
@@ -54,6 +55,7 @@
 #include "System/LoadSave/demofile.h"
 #include "System/LoadSave/DemoReader.h"
 #include "System/Log/DefaultFilter.h"
+#include "System/Platform/SDL1_keysym.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Misc/SpringTime.h"
 
@@ -66,7 +68,7 @@
 #include <list>
 #include <cctype>
 
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <SDL_mouse.h>
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
@@ -554,8 +556,6 @@ int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(sel); // IsUnitSelected
-
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
@@ -789,8 +789,6 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	unsigned int count = 0;
 
 	{
-		GML_RECMUTEX_LOCK(quad); // GetVisibleUnits
-
 		unitQuadIter.Reset();
 		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
 
@@ -917,8 +915,6 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	unsigned int count = 0;
 
 	{
-		GML_RECMUTEX_LOCK(quad); // GetVisibleFeatures
-
 		featureQuadIter.Reset();
 		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
 
@@ -1005,8 +1001,6 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 	unsigned int count = 0;
 
 	{
-		GML_RECMUTEX_LOCK(quad); // GetVisibleProjectiles
-
 		projQuadIter.Reset();
 		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &projQuadIter, INT_MAX);
 
@@ -1097,8 +1091,6 @@ int LuaUnsyncedRead::GetSpectatingState(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(sel); // GetSelectedUnits
-
 	CheckNoArgs(L, __FUNCTION__);
 
 	unsigned int count = 0;
@@ -1118,8 +1110,6 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsSorted
-
 	CheckNoArgs(L, __FUNCTION__);
 
 	map<int, vector<CUnit*> > unitDefMap;
@@ -1161,8 +1151,6 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsCounts
-
 	CheckNoArgs(L, __FUNCTION__);
 
 	map<int, int> countMap;
@@ -1776,8 +1764,6 @@ int LuaUnsyncedRead::GetFPS(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(gui); // GetActiveCommand
-
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1807,8 +1793,6 @@ int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 
 	const int defCmd = guihandler->GetDefaultCommand(mouse->lastx, mouse->lasty);
 
-	GML_RECMUTEX_LOCK(gui); // GetDefaultCommand
-
 	const vector<CommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 
@@ -1825,8 +1809,6 @@ int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDescs
-
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1848,8 +1830,6 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDesc
-
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1867,8 +1847,6 @@ int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 
 int LuaUnsyncedRead::GetCmdDescIndex(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(gui); // GetCmdDescIndex
-
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1985,38 +1963,28 @@ int LuaUnsyncedRead::GetMouseStartPosition(lua_State* L)
 int LuaUnsyncedRead::GetKeyState(lua_State* L)
 {
 	const int key = luaL_checkint(L, 1);
-	if ((key < 0) || (key >= SDLK_LAST)) {
-		lua_pushboolean(L, 0);
-	} else {
-		lua_pushboolean(L, keyInput->GetKeyState(key));
-	}
+	lua_pushboolean(L, KeyInput::IsKeyPressed(key));
 	return 1;
 }
 
 
 int LuaUnsyncedRead::GetModKeyState(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
-	lua_pushboolean(L, keyInput->GetKeyState(SDLK_LALT));
-	lua_pushboolean(L, keyInput->GetKeyState(SDLK_LCTRL));
-	lua_pushboolean(L, keyInput->GetKeyState(SDLK_LMETA));
-	lua_pushboolean(L, keyInput->GetKeyState(SDLK_LSHIFT));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_ALT));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_CTRL));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_GUI));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_SHIFT));
 	return 4;
 }
 
 
 int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
-
-	unsigned int count = 0;
-
-	for (int i = 0; i < SDLK_LAST; i++) {
-		if (keyInput->GetKeyState(i)) {
-			lua_pushboolean(L, 1);
-			lua_rawseti(L, -2, i);
-			count++;
+	for (auto key: KeyInput::GetPressedKeys()) {
+		if (key.second) {
+			lua_pushboolean(L, true);
+			lua_rawseti(L, -2, key.first);
 		}
 	}
 	return 1;
@@ -2038,13 +2006,13 @@ int LuaUnsyncedRead::GetInvertQueueKey(lua_State* L)
 int LuaUnsyncedRead::GetLastMessagePositions(lua_State* L)
 {
 	CInfoConsole* ic = game->infoConsole;
-	if (ic == NULL) {
+
+	if (ic == NULL)
 		return 0;
-	}
 
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
-	for (int i=1; i<=ic->GetMsgPosCount(); i++) {
+	for (unsigned int i = 1; i <= ic->GetMsgPosCount(); i++) {
 		lua_newtable(L); {
 			const float3 msgpos = ic->GetMsgPos();
 			lua_pushnumber(L, msgpos.x); lua_rawseti(L, -2, 1);
@@ -2091,10 +2059,8 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 			lua_pushliteral(L, "text");
 			lua_pushsstring(L, lines[i].text);
 			lua_rawset(L, -3);
-			// FIXME migrate priority to level...
 			lua_pushliteral(L, "priority");
-			lua_pushnumber(L, 0);
-			//lua_pushstring(L, lines[i].level);
+			lua_pushnumber(L, lines[i].level);
 			lua_rawset(L, -3);
 		}
 		lua_rawset(L, -3);
@@ -2107,39 +2073,45 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 int LuaUnsyncedRead::GetCurrentTooltip(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	const string tooltip = mouse->GetCurrentTooltip();
-	lua_pushsstring(L, tooltip);
+	lua_pushsstring(L, mouse->GetCurrentTooltip());
 	return 1;
 }
 
 
 int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 {
-	const string keysym = luaL_checksstring(L, 1);
-	lua_pushnumber(L, keyCodes->GetCode(keysym));
+	if (keyCodes == NULL) {
+		return 0;
+	}
+
+	const int keycode = keyCodes->GetCode(luaL_checksstring(L, 1));
+	lua_pushnumber(L, SDL2_to_SDL1_keysyms[keycode]);
 	return 1;
 }
 
 
 int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 {
-	const int keycode = luaL_checkint(L, 1);
-	lua_pushsstring(L, keyCodes->GetName(keycode));
-	lua_pushsstring(L, keyCodes->GetDefaultName(keycode));
+	const int keycode = SDL1_to_SDL2_keysyms[luaL_checkint(L, 1)];
+	lua_pushsstring(L, (keyCodes != 0)? keyCodes->GetName(keycode): "");
+	lua_pushsstring(L, (keyCodes != 0)? keyCodes->GetDefaultName(keycode): "");
 	return 2;
 }
 
 
 int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 {
-	const string keysetStr = luaL_checksstring(L, 1);
 	CKeySet ks;
-	if (!ks.Parse(keysetStr)) {
+
+	if (!ks.Parse(luaL_checksstring(L, 1)))
 		return 0;
-	}
+	if (keyBindings == NULL)
+		return 0;
+
 	const CKeyBindings::ActionList& actions = keyBindings->GetActionList(ks);
+
 	lua_newtable(L);
-	for (int i = 0; i < (int)actions.size(); i++) {
+	for (unsigned int i = 0; i < actions.size(); i++) {
 		const Action& action = actions[i];
 		lua_newtable(L);
 		lua_pushsstring(L, action.command);
@@ -2153,10 +2125,13 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 
 int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 {
-	const string command = luaL_checksstring(L, 1);
-	const CKeyBindings::HotkeyList& hotkeys = keyBindings->GetHotkeys(command);
+	if (keyBindings == NULL)
+		return 0;
+
+	const CKeyBindings::HotkeyList& hotkeys = keyBindings->GetHotkeys(luaL_checksstring(L, 1));
+
 	lua_newtable(L);
-	for (int i = 0; i < (int)hotkeys.size(); i++) {
+	for (unsigned int i = 0; i < hotkeys.size(); i++) {
 		const string& hotkey = hotkeys[i];
 		lua_pushsstring(L, hotkey);
 		lua_rawseti(L, -2, i + 1);
@@ -2168,8 +2143,6 @@ int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupList(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // GetGroupList
-
 	CheckNoArgs(L, __FUNCTION__);
 	if (grouphandlers[gu->myTeam] == NULL) {
 		return 0;
@@ -2219,8 +2192,6 @@ int LuaUnsyncedRead::GetUnitGroup(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // GetGroupUnits
-
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || ((size_t)groupID >= groups.size()) ||
@@ -2246,8 +2217,6 @@ int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // GetGroupUnitsSorted
-
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || ((size_t)groupID >= groups.size()) ||
@@ -2284,8 +2253,6 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // GetGroupUnitsCounts
-
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || ((size_t)groupID >= groups.size()) ||
@@ -2320,8 +2287,6 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsCount(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // GetGroupUnitsCount
-
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || ((size_t)groupID >= groups.size()) ||

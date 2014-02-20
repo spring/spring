@@ -1,71 +1,101 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <cstring>
 #include <SDL_keyboard.h>
-#include <SDL_keysym.h>
-#include <assert.h>
+#include <SDL_keycode.h>
+#include <SDL_events.h>
+#include <SDL_stdinc.h>
 
 #include "KeyInput.h"
 
-KeyInput* keyInput = NULL;
-
-KeyInput* KeyInput::GetInstance() {
-	if (keyInput == NULL) {
-		keyInput = new KeyInput();
-	}
-
-	return keyInput;
-}
-
-void KeyInput::FreeInstance(KeyInput* keyInp) {
-	delete keyInp; keyInput = NULL;
-}
-
-
-
-KeyInput::KeyInput() {
-	keys.resize(SDLK_LAST, 0);
-
-	// Initialize keyboard
-	SDL_EnableUNICODE(1);
-	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-	SDL_SetModState(KMOD_NONE);
-}
-
+#include "System/Log/ILog.h"
 /**
- * Tests SDL keystates and sets values in key array
- */
-void KeyInput::Update(boost::uint16_t currKeyUnicodeChar, boost::int8_t fakeMetaKey)
-{
-	int numKeys = 0;
+* @brief keys
+*
+* Array of possible keys, and which are being pressed
+*/
+static std::map<int, bool> keys;
+static SDL_Keymod keyMods;
 
-	const SDLMod keyMods = SDL_GetModState();
-	const boost::uint8_t* keyStates = SDL_GetKeyState(&numKeys);
 
-	assert(numKeys <= SDLK_LAST);
-	memcpy(&keys[0], keyStates, sizeof(boost::uint8_t) * numKeys);
-
-	keys[SDLK_LALT]   = (keyMods & KMOD_ALT)   ? 1 : 0;
-	keys[SDLK_LCTRL]  = (keyMods & KMOD_CTRL)  ? 1 : 0;
-	keys[SDLK_LMETA]  = (keyMods & KMOD_META)  ? 1 : 0;
-	keys[SDLK_LSHIFT] = (keyMods & KMOD_SHIFT) ? 1 : 0;
-
-	if (fakeMetaKey >= 0) {
-		keys[SDLK_LMETA] |= keys[fakeMetaKey];
+namespace KeyInput {
+	bool IsKeyPressed(int idx) {
+		auto it = keys.find(idx);
+		if (it != keys.end())
+			return (it->second != 0);
+		return false;
 	}
 
-	currentKeyUnicodeChar = currKeyUnicodeChar;
-}
-
-boost::uint16_t KeyInput::GetNormalizedKeySymbol(boost::uint16_t sym) const {
-
-	if (sym <= SDLK_DELETE) {
-		sym = tolower(sym);
+	void SetKeyModState(int mod, bool pressed) {
+		if (pressed) {
+			keyMods = SDL_Keymod(keyMods | mod);
+		} else {
+			keyMods = SDL_Keymod(keyMods & ~mod);
+		}
 	}
-	else if (sym == SDLK_RSHIFT) { sym = SDLK_LSHIFT; }
-	else if (sym == SDLK_RCTRL)  { sym = SDLK_LCTRL;  }
-	else if (sym == SDLK_RMETA)  { sym = SDLK_LMETA;  }
-	else if (sym == SDLK_RALT)   { sym = SDLK_LALT;   }
 
-	return sym;
-}
+	bool GetKeyModState(int mod) {
+		return (keyMods & mod);
+	}
+
+	/**
+	* Tests SDL keystates and sets values in key array
+	*/
+	void Update(int currKeycode, int fakeMetaKey)
+	{
+		int numKeys = 0;
+		auto state = SDL_GetKeyboardState(&numKeys);
+		for (int i = 0; i < numKeys; ++i) {
+			auto scancode = (SDL_Scancode)i;
+			auto keycode  = SDL_GetKeyFromScancode(scancode);
+			keys[keycode] = (state[scancode] != 0);
+		}
+
+		keyMods = SDL_GetModState();
+		SetKeyModState(KMOD_GUI, keys[fakeMetaKey]);
+
+		keys[SDLK_LALT]   = GetKeyModState(KMOD_ALT);
+		keys[SDLK_LCTRL]  = GetKeyModState(KMOD_CTRL);
+		keys[SDLK_LGUI]   = GetKeyModState(KMOD_GUI);
+		keys[SDLK_LSHIFT] = GetKeyModState(KMOD_SHIFT);
+	}
+
+	const std::map<int,bool>& GetPressedKeys()
+	{
+		return keys;
+	}
+
+	int GetNormalizedKeySymbol(int sym)
+	{
+		if (sym <= SDLK_DELETE) {
+			sym = tolower(sym);
+		}
+		else if (sym == SDLK_RSHIFT) { sym = SDLK_LSHIFT; }
+		else if (sym == SDLK_RCTRL)  { sym = SDLK_LCTRL;  }
+		else if (sym == SDLK_RGUI)   { sym = SDLK_LGUI;   }
+		else if (sym == SDLK_RALT)   { sym = SDLK_LALT;   }
+
+		return sym;
+	}
+
+	void ReleaseAllKeys()
+	{
+		for (auto key: keys) {
+			auto keycode  = (SDL_Keycode)key.first;
+			auto scancode = SDL_GetScancodeFromKey(keycode);
+
+			if (keycode == SDLK_NUMLOCKCLEAR || keycode == SDLK_CAPSLOCK || keycode == SDLK_SCROLLLOCK)
+				continue;
+
+			if (!KeyInput::IsKeyPressed(keycode))
+				continue;
+
+			SDL_Event event;
+			event.type = event.key.type = SDL_KEYUP;
+			event.key.state = SDL_RELEASED;
+			event.key.keysym.sym = keycode;
+			event.key.keysym.mod = 0;
+			event.key.keysym.scancode = scancode;
+			SDL_PushEvent(&event);
+		}
+	}
+}; // namespace KeyInput

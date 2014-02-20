@@ -21,6 +21,8 @@ CVertexArray::~CVertexArray()
 {
 	delete[] drawArray;
 	delete[] stripArray;
+	drawArray = NULL;
+	stripArray = NULL;
 }
 
 

@@ -11,6 +11,8 @@ const char* log_util_levelToString(int level);
 
 char log_util_levelToChar(int level);
 
+int log_util_getNearestLevel(int level);
+
 /**
  * Ensure we have a non-NULL section.
  */

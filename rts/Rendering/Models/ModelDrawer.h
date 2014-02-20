@@ -25,7 +25,6 @@ public:
 	virtual ~IModelDrawer();
 	virtual void Draw();
 
-	// NOTE: GML synchronization points
 	virtual void RenderUnitCreated(const CUnit* u, int cloaked);
 	virtual void RenderUnitDestroyed(const CUnit* u);
 	virtual void RenderUnitCloakChanged(const CUnit* u, int cloaked);

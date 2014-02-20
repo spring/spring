@@ -26,7 +26,7 @@
 #include "Sim/Path/Default/PathFlowMap.hpp"
 #undef private
 
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/DefaultPathDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
@@ -56,7 +56,7 @@ DefaultPathDrawer::DefaultPathDrawer(): IPathDrawer()
 
 void DefaultPathDrawer::DrawAll() const {
 	// CPathManager is not thread-safe
-	if (!GML::SimEnabled() && enabled && (gs->cheatEnabled || gu->spectating)) {
+	if (enabled && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT);
 
 		Draw();
@@ -72,7 +72,7 @@ void DefaultPathDrawer::DrawAll() const {
 void DefaultPathDrawer::DrawInMiniMap()
 {
 	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-	const auto pe = pm->medResPE;
+	const CPathEstimator* pe = pm->medResPE;
 	const MoveDef* md = GetSelectedMoveDef();
 
 	if (md == NULL)
@@ -145,8 +145,6 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 							const BuildInfo bi(ud, pos, guihandler->buildFacing);
 
 							CFeature* f = NULL;
-
-							GML_RECMUTEX_LOCK(quad); // UpdateExtraTexture - testunitbuildsquare accesses features in the quadfield
 
 							if (CGameHelper::TestUnitBuildSquare(bi, f, gu->myAllyTeam, false)) {
 								if (f != NULL) {
@@ -394,8 +392,6 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 
 
 void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
-	GML_RECMUTEX_LOCK(sel); // Draw
-
 	const MoveDef* md = GetSelectedMoveDef();
 	const PathNodeStateBuffer& blockStates = pe->blockStates;
 

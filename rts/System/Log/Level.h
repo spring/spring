@@ -14,13 +14,17 @@
 
 #define LOG_LEVEL_ALL       0
 
-#define LOG_LEVEL_DEBUG    20
-#define LOG_LEVEL_INFO     30
-#define LOG_LEVEL_WARNING  40
-#define LOG_LEVEL_ERROR    50
-#define LOG_LEVEL_FATAL    60
+#define LOG_LEVEL_DEBUG     20
+#define LOG_LEVEL_INFO      30
+#define LOG_LEVEL_NOTICE    35
+#define LOG_LEVEL_WARNING   40
+#define LOG_LEVEL_ERROR     50
+#define LOG_LEVEL_FATAL     60
 
-#define LOG_LEVEL_NONE    255
+#define LOG_LEVEL_NONE     255
+
+#define DEFAULT_LOG_LEVEL_SHORT         L_NOTICE
+#define DEFAULT_LOG_LEVEL       LOG_LEVEL_NOTICE
 
 ///@}
 

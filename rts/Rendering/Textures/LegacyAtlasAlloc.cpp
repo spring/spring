@@ -1,9 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "LegacyAtlasAlloc.h"
-#include "System/Log/ILog.h"
-#include "System/Exceptions.h"
+#include <vector>
 #include <list>
 
 
@@ -76,7 +74,7 @@ bool CLegacyAtlasAlloc::Allocate()
 
 					if (max.y > atlasSize.y) {
 						if (IncreaseSize()) {
- 							nextSub.clear();
+							nextSub.clear();
 							thisSub.clear();
 							cur.y = max.y = cur.x = 0;
 							recalc = true;

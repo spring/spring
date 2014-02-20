@@ -79,13 +79,14 @@ public:
 		CSTATE_BIT_QUADMAPRAYS  = (1 << 2),
 	};
 	enum DamageType {
-		DAMAGE_EXPLOSION_WEAPON = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
-		DAMAGE_EXPLOSION_DEBRIS = 1, // piece-projectile that triggered GameHelper::Explosion (weaponDefID < 0)
-		DAMAGE_COLLISION_GROUND = 2, // ground collision
-		DAMAGE_COLLISION_OBJECT = 3, // object collision
-		DAMAGE_EXTSOURCE_FIRE   = 4,
-		DAMAGE_EXTSOURCE_WATER  = 5, // lava/acid/etc
-		DAMAGE_EXTSOURCE_KILLED = 6,
+		DAMAGE_EXPLOSION_WEAPON  = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
+		DAMAGE_EXPLOSION_DEBRIS  = 1, // piece-projectile that triggered GameHelper::Explosion (weaponDefID < 0)
+		DAMAGE_COLLISION_GROUND  = 2, // ground collision
+		DAMAGE_COLLISION_OBJECT  = 3, // object collision
+		DAMAGE_EXTSOURCE_FIRE    = 4,
+		DAMAGE_EXTSOURCE_WATER   = 5, // lava/acid/etc
+		DAMAGE_EXTSOURCE_KILLED  = 6,
+		DAMAGE_EXTSOURCE_CRUSHED = 7,
 	};
 
 	CSolidObject();
@@ -96,7 +97,7 @@ public:
 
 	virtual void ApplyImpulse(const float3& impulse) { SetVelocity(speed + impulse); }
 
-	virtual void Kill(const float3& impulse, bool crushKill);
+	virtual void Kill(CUnit* killer, const float3& impulse, bool crushed);
 	virtual int GetBlockingMapID() const { return -1; }
 
 	virtual void ForcedMove(const float3& newPos) {}
@@ -210,6 +211,8 @@ public:
 		return (HasCollidableStateBit(bit));
 	}
 
+	bool SetVoidState();
+	bool ClearVoidState();
 	void UpdateVoidState(bool set);
 
 private:
@@ -238,7 +241,6 @@ public:
 
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
 	bool immobile;                              ///< whether this object can be moved or not (except perhaps along y-axis, to make it stay on ground)
-	bool crushKilled;                           ///< true if this object died by being crushed during a collision
 	bool blockEnemyPushing;                     ///< if false, object can be pushed during enemy collisions even when modrules forbid it
 	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
 
@@ -255,6 +257,8 @@ public:
 
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of
+
+	int tempNum;                                ///< used to check if object has already been processed (in QuadField queries, etc)
 
 	const SolidObjectDef* objectDef;            ///< points to a UnitDef or to a FeatureDef instance
 

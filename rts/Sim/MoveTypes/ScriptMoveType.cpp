@@ -3,12 +3,12 @@
 
 #include "ScriptMoveType.h"
 
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
+#include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 
@@ -98,7 +98,7 @@ inline void CScriptMoveType::CalcDirections()
 void CScriptMoveType::CheckNotify()
 {
 	if (scriptNotify) {
-		if (luaRules && luaRules->MoveCtrlNotify(owner, scriptNotify)) {
+		if (eventHandler.MoveCtrlNotify(owner, scriptNotify)) {
 			// NOTE: deletes \<this\>
 			owner->DisableScriptMoveType();
 		} else {

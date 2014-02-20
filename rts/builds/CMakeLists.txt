@@ -82,9 +82,7 @@ if    (NOT HEADLESS_SYSTEM)
 	IF    (WIN32 AND MINGW)
 		SET(ENGINE_ICON "${ENGINE_SRC_ROOT_DIR}/icon.rc")
 	ENDIF (WIN32 AND MINGW)
-	# spring-multithreaded is unmaintained / doesn't compile
-	# AddEngineBuild(multithreaded) ## ASIM GML OMP
-	AddEngineBuild(legacy) ## OMP
+	AddEngineBuild(legacy)
 endif (NOT HEADLESS_SYSTEM)
 
 AddEngineBuild(dedicated)

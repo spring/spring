@@ -21,11 +21,7 @@ class LuaTable;
 
 
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
-#if defined(USE_GML) && GML_ENABLE_SIM
-typedef ThreadListSimRender<std::set<FlyingPiece*>, std::set<FlyingPiece*, FlyingPieceComparator>, FlyingPiece*> FlyingPieceContainer;
-#else
 typedef ThreadListSimRender<std::set<FlyingPiece*, FlyingPieceComparator>, void, FlyingPiece*> FlyingPieceContainer;
-#endif
 
 
 class CProjectileDrawer: public CEventClient {

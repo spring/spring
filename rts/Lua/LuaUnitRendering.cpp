@@ -10,8 +10,6 @@
 #include "LuaHashString.h"
 #include "LuaUtils.h"
 
-#include "lib/gml/gmlmut.h"
-
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -120,8 +118,6 @@ int LuaUnitRendering::SetLODLength(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	GML_LODMUTEX_LOCK(unit); // SetLODLength
-
 	const unsigned int lod = (unsigned int)luaL_checknumber(L, 2) - 1;
 	if (lod >= unit->lodCount) {
 		return 0;
@@ -137,9 +133,6 @@ int LuaUnitRendering::SetLODDistance(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-
-	GML_LODMUTEX_LOCK(unit); // SetLODDistance
-
 	const unsigned int lod = (unsigned int)luaL_checknumber(L, 2) - 1;
 	if (lod >= unit->lodCount) {
 		return 0;
@@ -160,8 +153,6 @@ int LuaUnitRendering::SetPieceList(lua_State* L)
 	if ((unit == NULL) || (unit->localModel == NULL)) {
 		return 0;
 	}
-
-	GML_LODMUTEX_LOCK(unit); // SetPieceList
 
 	const LocalModel* localModel = unit->localModel;
 
@@ -555,8 +546,6 @@ int LuaUnitRendering::SetMaterial(lua_State* L)
 		return 0;
 	}
 
-	GML_LODMUTEX_LOCK(unit); // SetMaterial
-
 	const unsigned int lod = (unsigned int)luaL_checknumber(L, 2) - 1;
 	const string matName = luaL_checkstring(L, 3);
 	const LuaMatType matType = ParseMaterialType(matName);
@@ -587,8 +576,6 @@ int LuaUnitRendering::SetMaterialLastLOD(lua_State* L)
 		return 0;
 	}
 
-	GML_LODMUTEX_LOCK(unit); // SetMaterialLastLod
-
 	const string matName = luaL_checkstring(L, 2);
 	LuaUnitMaterial* unitMat = GetUnitMaterial(unit, matName);
 	if (unitMat == NULL) {
@@ -606,8 +593,6 @@ int LuaUnitRendering::SetMaterialDisplayLists(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-
-	GML_LODMUTEX_LOCK(unit); // SetMaterialDisplayLists
 
 	const unsigned int lod = (unsigned int)luaL_checknumber(L, 2) - 1;
 	const string matName = luaL_checkstring(L, 3);
@@ -632,8 +617,6 @@ int LuaUnitRendering::SetUnitUniform(lua_State* L) // FIXME
 	if (unit == NULL) {
 		return 0;
 	}
-
-	GML_LODMUTEX_LOCK(unit); // SetUnitUniform
 
 	const string matName = luaL_checkstring(L, 2);
 	LuaUnitMaterial* unitMat = GetUnitMaterial(unit, matName);
@@ -696,8 +679,6 @@ int LuaUnitRendering::SetFeatureLuaDraw(lua_State* L)
 
 static void PrintUnitLOD(CUnit* unit, int lod)
 {
-	GML_LODMUTEX_LOCK(unit); // PrintUnitLOD
-
 	LOG("  LOD %i:", lod);
 	LOG("    LodLength = %f", unit->lodLengths[lod]);
 	for (int type = 0; type < LUAMAT_TYPE_COUNT; type++) {
@@ -722,8 +703,6 @@ int LuaUnitRendering::Debug(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-
-	GML_LODMUTEX_LOCK(unit); // Debug
 
 	LOG_L(L_DEBUG, "%s", "");
 	LOG_L(L_DEBUG, "UnitID      = %i", unit->id);

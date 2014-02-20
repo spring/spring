@@ -9,6 +9,6 @@ TESTDIR=${TMP_BASE}/tests
 
 #install
 cd ${BUILDDIR}
-DESTDIR=${TESTDIR} ${MAKE} install-spring-headless install-pr-downloader demotool lua2php
+DESTDIR=${TESTDIR} ${MAKE} pr-downloader_shared install-spring-headless install-pr-downloader demotool lua2php
 
 

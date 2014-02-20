@@ -10,7 +10,6 @@
 #include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/creg/STL_Map.h"
-#include "lib/gml/gmlmut.h"
 
 CGroundBlockingObjectMap* groundBlockingObjectMap;
 
@@ -38,8 +37,6 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 		AddGroundBlockingObject(object, YARDMAP_BLOCKED);
 		return;
 	}
-
-	GML_STDMUTEX_LOCK(block); // AddGroundBlockingObject
 
 	const int objID = GetObjectID(object);
 
@@ -73,8 +70,6 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 
 void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, const YardMapStatus& mask)
 {
-	GML_STDMUTEX_LOCK(block); // AddGroundBlockingObject
-
 	const int objID = GetObjectID(object);
 
 	object->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING);
@@ -113,8 +108,6 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 
 void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 {
-	GML_STDMUTEX_LOCK(block); // RemoveGroundBlockingObject
-
 	const int objID = GetObjectID(object);
 
 	const int bx = object->mapPos.x;
@@ -146,8 +139,6 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
   * pointer to the top-most / bottom-most blocking object is returned.
   */
 CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare) const {
-	GML_STDMUTEX_LOCK(block); // GroundBlockedUnsafe
-
 	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
 
 	if (cell.empty())
@@ -178,8 +169,6 @@ bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, CSolidObject* ignoreO
 		return false;
 
 	const int mapSquare = x + z * gs->mapx;
-
-	GML_STDMUTEX_LOCK(block); // GroundBlockedUnsafe
 
 	if (groundBlockingMap[mapSquare].empty())
 		return false;
@@ -233,8 +222,6 @@ void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* object) {
 
 inline bool CGroundBlockingObjectMap::CheckYard(CSolidObject* yardUnit, const YardMapStatus& mask) const
 {
-	//GML_STDMUTEX_LOCK(block); //done in GroundBlocked
-
 	for (int z = yardUnit->mapPos.y; z < yardUnit->mapPos.y + yardUnit->zsize; ++z) {
 		for (int x = yardUnit->mapPos.x; x < yardUnit->mapPos.x + yardUnit->xsize; ++x) {
 			if (yardUnit->GetGroundBlockingMaskAtPos(float3(x * SQUARE_SIZE, 0.0f, z * SQUARE_SIZE)) & mask)

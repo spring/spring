@@ -9,6 +9,9 @@
 #define _ERROR_HANDLER_H
 
 #include <string>
+#ifndef NO_CATCH_EXCEPTIONS
+#include <sstream>
+#endif
 #include <boost/thread/exceptions.hpp>
 #include <boost/system/system_error.hpp>
 #include "System/Exceptions.h"

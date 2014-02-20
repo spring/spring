@@ -33,9 +33,8 @@ IWater::IWater()
 }
 
 
-void IWater::PushWaterMode(int nextWaterRenderMode) {
-	GML_STDMUTEX_LOCK(water); // PushWaterMode
-
+void IWater::PushWaterMode(int nextWaterRenderMode)
+{
 	waterModes.push_back(nextWaterRenderMode);
 }
 
@@ -44,8 +43,6 @@ void IWater::ApplyPushedChanges(CGame* game) {
 	std::vector<int> wm;
 
 	{
-		GML_STDMUTEX_LOCK(water); // UpdateIWater
-
 		wm.swap(waterModes);
 	}
 

@@ -30,14 +30,7 @@
 
 #include <boost/bind.hpp>
 #include <SDL_events.h>
-#ifdef _WIN32
-	#include <SDL_syswm.h>
-	#include "System/Platform/Win/wsdl.h"
-#endif
-#if defined(_X11) && !defined(HEADLESS)
-	#include <SDL_syswm.h>
-	#include <X11/Xlib.h>
-#endif
+#include <SDL_syswm.h>
 
 
 IMouseInput* mouseInput = NULL;
@@ -52,52 +45,46 @@ IMouseInput::IMouseInput()
 bool IMouseInput::HandleSDLMouseEvent(const SDL_Event& event)
 {
 	switch (event.type) {
-		case SDL_ACTIVEEVENT: {
-			if (event.active.state & (SDL_APPACTIVE | SDL_APPMOUSEFOCUS)) {
-				if (event.active.gain == 0) { //! mouse left window (set mouse pos internally to window center to prevent endless scrolling)
-					mousepos.x = globalRendering->viewSizeX / 2;
-					mousepos.y = globalRendering->viewSizeY / 2;
-					if (mouse) {
-						mouse->MouseMove(mousepos.x, mousepos.y, 0, 0);
-					}
-				}
-			}
-			break;
-		}
 		case SDL_MOUSEMOTION: {
 			mousepos = int2(event.motion.x, event.motion.y);
 			if (mouse) {
 				mouse->MouseMove(mousepos.x, mousepos.y, event.motion.xrel, event.motion.yrel);
 			}
-			break;
-		}
+		} break;
 		case SDL_MOUSEBUTTONDOWN: {
 			mousepos = int2(event.button.x, event.button.y);
 			if (mouse) {
-				if (event.button.button == SDL_BUTTON_WHEELUP) {
-					mouse->MouseWheel(1.0f);
-				} else if (event.button.button == SDL_BUTTON_WHEELDOWN) {
-					mouse->MouseWheel(-1.0f);
-				} else {
-					mouse->MousePress(event.button.x, event.button.y, event.button.button);
-				}
+				mouse->MousePress(mousepos.x, mousepos.y, event.button.button);
 			}
-			break;
-		}
+		} break;
 		case SDL_MOUSEBUTTONUP: {
 			mousepos = int2(event.button.x, event.button.y);
 			if (mouse) {
-				mouse->MouseRelease(event.button.x, event.button.y, event.button.button);
+				mouse->MouseRelease(mousepos.x, mousepos.y, event.button.button);
 			}
-			break;
-		}
+		} break;
+		case SDL_MOUSEWHEEL: {
+			if (mouse) {
+				mouse->MouseWheel(event.wheel.y);
+			}
+		} break;
+		case SDL_WINDOWEVENT: {
+			if (event.window.event == SDL_WINDOWEVENT_LEAVE) {
+				// mouse left window (set mouse pos internally to window center to prevent endless scrolling)
+				mousepos.x = globalRendering->viewSizeX / 2;
+				mousepos.y = globalRendering->viewSizeY / 2;
+				if (mouse) {
+					mouse->MouseMove(mousepos.x, mousepos.y, 0, 0);
+				}
+			}
+		} break;
 	}
 	return false;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-#ifdef WIN32
+#if defined(WIN32) && !defined (HEADLESS)
 
 class CWin32MouseInput : public IMouseInput
 {
@@ -110,41 +97,7 @@ public:
 
 	static LRESULT CALLBACK SpringWndProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
-		if (mouse) {
-			switch (msg) {
-				case WM_XBUTTONDOWN:
-				{
-					if ((short)LOWORD(wParam) & MK_XBUTTON1)
-						mouse->MousePress((short)LOWORD(lParam), (short)HIWORD(lParam), 4);
-					if ((short)LOWORD(wParam) & MK_XBUTTON2)
-						mouse->MousePress((short)LOWORD(lParam), (short)HIWORD(lParam), 5);
-				} return 0;
-				case WM_XBUTTONUP:
-				{
-					if ((short)LOWORD(wParam) & MK_XBUTTON1)
-						mouse->MouseRelease((short)LOWORD(lParam), (short)HIWORD(lParam), 4);
-					if ((short)LOWORD(wParam) & MK_XBUTTON2)
-						mouse->MouseRelease((short)LOWORD(lParam), (short)HIWORD(lParam), 5);
-				} return 0;
-			}
-		}
-
 		switch (msg) {
-			case WM_MOUSEMOVE:
-				return wsdl::OnMouseMotion(wnd, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (UINT)wParam);
-
-			case WM_MOUSEWHEEL:
-				return wsdl::OnMouseWheel(wnd, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (int)(short)HIWORD(wParam), (UINT)(short)LOWORD(wParam));
-
-			//! can't use message crackers: they do not provide for passing uMsg
-			case WM_LBUTTONDOWN:
-			case WM_LBUTTONUP:
-			case WM_RBUTTONDOWN:
-			case WM_RBUTTONUP:
-			case WM_MBUTTONDOWN:
-			case WM_MBUTTONUP:
-				return wsdl::OnMouseButton(wnd, msg, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (UINT)wParam);
-
 			case WM_SETCURSOR:
 			{
 				if (inst->hCursor!=NULL) {
@@ -152,20 +105,6 @@ public:
 					if ( hittest == HTCLIENT ) {
 						SetCursor(inst->hCursor);
 						return TRUE;
-					}
-				}
-			} break;
-
-			case WM_ACTIVATE:
-			{
-				wsdl::ResetMouseButtons();
-				// wsdl::OnActivate(wnd, LOWORD(wParam), NULL, HIWORD(lParam));
-				// FIXME: move to SpringApp somehow and use GLContext.h instead!
-				if (globalRendering->fullScreen) {
-					if (LOWORD(wParam) == WA_INACTIVE) {
-						FBO::GLContextLost();
-					} else if (LOWORD(wParam) == WA_ACTIVE) {
-						FBO::GLContextReinit();
 					}
 				}
 			} break;
@@ -180,35 +119,35 @@ public:
 
 	void InstallWndCallback()
 	{
-		sdl_wndproc = GetWindowLongPtr(wnd, GWLP_WNDPROC);
-		SetWindowLongPtr(wnd,GWLP_WNDPROC,(LONG_PTR)SpringWndProc);
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+		if(!SDL_GetWindowWMInfo(globalRendering->window, &info))
+			return;
+
+		wnd = info.info.win.window;
+
+		LONG_PTR cur_wndproc = GetWindowLongPtr(wnd, GWLP_WNDPROC);
+		if (cur_wndproc != (LONG_PTR)SpringWndProc) {
+			sdl_wndproc = GetWindowLongPtr(wnd, GWLP_WNDPROC);
+			SetWindowLongPtr(wnd,GWLP_WNDPROC,(LONG_PTR)SpringWndProc);
+		}
 	}
 
 	CWin32MouseInput()
 	{
 		inst = this;
-
 		hCursor = NULL;
-
 		sdl_wndproc = 0;
-
-		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-		if(!SDL_GetWMInfo(&info))
-			return;
-
-		wnd = info.window;
-		wsdl::Init(wnd);
-
+		wnd = 0;
 		InstallWndCallback();
 	}
 	~CWin32MouseInput()
 	{
-		//! reinstall the SDL window proc
+		// reinstall the SDL window proc
 		SetWindowLongPtr(wnd, GWLP_WNDPROC, sdl_wndproc);
 	}
 };
-CWin32MouseInput* CWin32MouseInput::inst = 0;
+CWin32MouseInput* CWin32MouseInput::inst = NULL;
 #endif
 
 void IMouseInput::SetPos(int2 pos)
@@ -217,56 +156,25 @@ void IMouseInput::SetPos(int2 pos)
 		return;
 	}
 
-	mousepos = pos;
-	int2 curpos;
-#ifndef WIN32 // seems SDL_GetMouseState isn't always updated on windows when cursor is hidden? (2012 - untested)
-	SDL_GetMouseState(&curpos.x, &curpos.y);
-	if (pos.x == curpos.x && pos.y == curpos.y) {
+	if (pos.x == mousepos.x && pos.y == mousepos.y) {
 		// calling SDL_WarpMouse at 300fps eats ~5% cpu usage, so only update when needed
 		return;
 	}
-#endif
 
-#ifdef WIN32
-	wsdl::SDL_WarpMouse(pos.x, pos.y);
-#else
-	SDL_WarpMouse(pos.x, pos.y);
+	mousepos = pos;
 
-	#if defined(_X11) && !defined(HEADLESS)
-		// SDL Workaround!
-		// SDL_WarpMouse has a bug on Linux in fullscreen mode & SDL_ShowCursor(SDL_DISABLE).
-		// It just won't move the real X11 cursor pos (instead it seems to update some SDL internal vars only).
-		// But we use SDL_ShowCursor for MiddleClickScroll and want that the cursor spawns
-		// at screen center when calling SDL_ShowCursor(SDL_ENABLE), so we call X11 here to
-		// force cursor pos update even when the cursor is hidden.
-		if (globalRendering->fullScreen) {
-			SDL_SysWMinfo info;
-			SDL_VERSION(&info.version);
-			if(SDL_GetWMInfo(&info)) {
-				info.info.x11.lock_func();
-					Display* display = info.info.x11.display;
-					Window& window = info.info.x11.window;
-
-					if (display && window != None)
-						XWarpPointer(display, None, window, 0, 0, 0, 0, pos.x, pos.y);
-				info.info.x11.unlock_func();
-			}
-		}
-	#endif
-#endif
+	SDL_WarpMouseInWindow(globalRendering->window, pos.x, pos.y);
 
 	// SDL_WarpMouse generates SDL_MOUSEMOTION events
 	// in `middle click scrolling` those SDL generated ones would point into
-	// the oppossite direction the user moved the mouse, and so events would
+	// the opposite direction the user moved the mouse, and so events would
 	// cancel each other -> camera wouldn't move at all
 	// so we need to catch those SDL generated events and delete them
 
-	// first we need to gather the motion events
-	SDL_PumpEvents();
-
 	// delete all SDL_MOUSEMOTION in the queue
+	SDL_PumpEvents();
 	static SDL_Event events[100];
-	SDL_PeepEvents(&events[0], 100, SDL_GETEVENT, SDL_MOUSEMOTIONMASK);
+	SDL_PeepEvents(&events[0], 100, SDL_GETEVENT, SDL_MOUSEMOTION, SDL_MOUSEMOTION);
 }
 
 
@@ -274,7 +182,7 @@ void IMouseInput::SetPos(int2 pos)
 IMouseInput* IMouseInput::GetInstance()
 {
 	if (mouseInput == NULL) {
-#ifdef WIN32
+#if defined(WIN32) && !defined(HEADLESS)
 		mouseInput = new CWin32MouseInput;
 #else
 		mouseInput = new IMouseInput;

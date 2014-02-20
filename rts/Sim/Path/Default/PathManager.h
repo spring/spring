@@ -26,8 +26,9 @@ public:
 	unsigned int GetPathFinderType() const { return PFS_TYPE_DEFAULT; }
 	boost::uint32_t GetPathCheckSum() const;
 
+	boost::int64_t Finalize();
+
 	void Update();
-	void UpdateFull();
 	void UpdatePath(const CSolidObject*, unsigned int);
 	void DeletePath(unsigned int pathID);
 
@@ -122,6 +123,8 @@ private:
 	unsigned int Store(MultiPath* path);
 	void LowRes2MedRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
 	void MedRes2MaxRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
+
+	bool IsFinalized() const { return (maxResPF != NULL); }
 
 	CPathFinder* maxResPF;
 	CPathEstimator* medResPE;

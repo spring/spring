@@ -452,7 +452,7 @@ void CDynWater::DrawReflection(CGame* game)
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
 	camera->forward.y *= -1.0f;
-	camera->SetPos().y *= -1.0f;
+	camera->SetPos(camera->GetPos() * float3(1.0f, -1.0f, 1.0f));
 	camera->Update();
 
 	reflectRight = camera->right;
@@ -1112,8 +1112,6 @@ void CDynWater::AddShipWakes()
 	va2->Initialize();
 
 	{
-		GML_RECMUTEX_LOCK(unit); // AddShipWakes
-
 		const std::set<CUnit*>& units = unitDrawer->GetUnsortedUnits();
 		const int nadd = units.size() * 4;
 
@@ -1203,8 +1201,6 @@ void CDynWater::AddShipWakes()
 
 void CDynWater::AddExplosions()
 {
-	GML_STDMUTEX_LOCK(water); // AddExplosions
-
 	if (explosions.empty()) {
 		return;
 	}
@@ -1293,8 +1289,6 @@ void CDynWater::AddExplosion(const float3& pos, float strength, float size)
 	if ((pos.y > size) || (size < 8)) {
 		return;
 	}
-
-	GML_STDMUTEX_LOCK(water); // AddExplosion
 
 	explosions.push_back(Explosion(pos, std::min(size*20, strength), size));
 }
