@@ -19,7 +19,7 @@ public:
 	virtual void DrawScreen();
 	virtual bool MousePress(int x, int y, int button);
 	virtual bool IsAbove(int x, int y);
-	virtual void DbgTimingInfo(const char* name, const spring_time& start, const spring_time& end);
+	virtual void DbgTimingInfo(const std::string& name, const spring_time& start, const spring_time& end);
 
 private:
 	ProfileDrawer();

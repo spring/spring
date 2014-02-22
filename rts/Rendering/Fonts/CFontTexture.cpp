@@ -158,9 +158,9 @@ static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 }
 
 
+#ifndef HEADLESS
 static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const int size)
 {
-#ifndef HEADLESS
 	std::lock_guard<boost::recursive_mutex> lk(m);
 
 	//TODO add support to load fonts by name (needs fontconfig)
@@ -225,10 +225,9 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 
 	fontCache[fontfile + IntToString(size)] = shFace;
 	return shFace;
-#else
-	return NULL;
-#endif
 }
+#endif
+
 
 
 static std::shared_ptr<FontFace> GetFontForCharacters(std::list<char32_t>& characters, const FT_Face origFace, const int origSize)
