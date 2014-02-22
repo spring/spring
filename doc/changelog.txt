@@ -33,7 +33,7 @@ UnitDefs:
 
 Lua:
  - LuaRules & LuaGaia are now splitted into their synced & unsynced parts, and each one got its own luaState
-  - this way unsynced parts of gadgets now get `synced` callins like 'UnitCreated' etc. w/o  SendToUnsynced from their synced part
+  ! this way unsynced parts of gadgets now get `synced` callins like 'UnitCreated' etc. w/o  SendToUnsynced from their synced part
   - LuaRules & LuaGaia are now ~equal (except a very minor subset of differences) and get the same callins esp. all AllowXYZ callins
   - LuaUI now has a GotChatMsg too (same as LuaRules always had), it's similar to the now deprecated LuaUI-only ConfigCommand callin, but is called more often
   - fixed a lot bugs in Spring's c-lua code

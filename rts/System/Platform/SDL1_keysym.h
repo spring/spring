@@ -9,10 +9,14 @@
 static std::unordered_map<int, int> SDL2_to_SDL1_keysyms;
 static std::unordered_map<int, int> SDL1_to_SDL2_keysyms;
 
-#define MAP(k,v) SDL2_to_SDL1_keysyms[k] = v; SDL1_to_SDL2_keysyms[v] = k;
+static void MAP_(int k, int v) {
+	if (SDL2_to_SDL1_keysyms.find(k) == SDL2_to_SDL1_keysyms.end()) SDL2_to_SDL1_keysyms[k] = v;
+	if (SDL1_to_SDL2_keysyms.find(v) == SDL1_to_SDL2_keysyms.end()) SDL1_to_SDL2_keysyms[v] = k;
+}
+#define MAP(k,v) MAP_(k,v);
 
-DO_ONCE_FNC(
-	//MAP(SDLK_UNKNOWN, 0)
+static void InitSDL12Keysyms() {
+	MAP(SDLK_UNKNOWN, 0)
 
 	MAP(SDLK_RETURN, 13)
 	MAP(SDLK_ESCAPE, 27)
@@ -260,7 +264,9 @@ DO_ONCE_FNC(
 //	MAP(SDLK_KBDILLUMUP, 0)
 //	MAP(SDLK_EJECT, 0)
 //	MAP(SDLK_SLEEP, 0)
-)
+}
 #undef MAP
+
+DO_ONCE(InitSDL12Keysyms)
 
 #endif // SDL1_KEYSYM_H
