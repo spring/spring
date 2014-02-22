@@ -397,7 +397,7 @@ bool SpringApp::CreateSDLWindow(const char* title)
 	streflop::streflop_init<streflop::Simple>();
 #endif
 
-#ifdef __linux
+#if defined(__linux) && !defined(HEADLESS)
 	// disable kwin compositing to fix tearing
 	// (happens at 300fps, neither fullscreen nor vsync fixes it, so disable compositing)
 	if (configHandler->GetBool("BlockCompositing")) {
