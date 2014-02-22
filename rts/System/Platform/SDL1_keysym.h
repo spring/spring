@@ -12,7 +12,7 @@ static std::unordered_map<int, int> SDL1_to_SDL2_keysyms;
 #define MAP(k,v) SDL2_to_SDL1_keysyms[k] = v; SDL1_to_SDL2_keysyms[v] = k;
 
 DO_ONCE_FNC(
-	MAP(SDLK_UNKNOWN, 0)
+	//MAP(SDLK_UNKNOWN, 0)
 
 	MAP(SDLK_RETURN, 13)
 	MAP(SDLK_ESCAPE, 27)
