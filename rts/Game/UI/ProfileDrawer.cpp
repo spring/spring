@@ -438,11 +438,14 @@ bool ProfileDrawer::IsAbove(int x, int y)
 }
 
 
-void ProfileDrawer::DbgTimingInfo(const std::string& name, const spring_time& start, const spring_time& end)
+void ProfileDrawer::DbgTimingInfo(const char* name, const spring_time& start, const spring_time& end)
 {
 	if (!IsEnabled())
 		return;
 
+	// Note: we compare pointers here and not the string content
+	//       -> faster, but breaks when const literals aren't globally alloced
+	//       (in gcc same const literals share the same memory)
 	if (name == "video")
 		vidFrames.emplace_back(start, end);
 	else
