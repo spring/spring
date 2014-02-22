@@ -146,8 +146,8 @@ static void DrawThreadBarCode()
 	}
 
 	// feeder
-	const float y1 = 0.0f;
-	const float y2 = 0.1f * numThreads;
+	//const float y1 = 0.0f;
+	//const float y2 = 0.1f * numThreads;
 	//CVertexArray* va = GetVertexArray();
 	va->Initialize();
 		const float r = std::fmod(curTime.toSecsf(), maxHist) / maxHist;
@@ -438,7 +438,7 @@ bool ProfileDrawer::IsAbove(int x, int y)
 }
 
 
-void ProfileDrawer::DbgTimingInfo(const char* name, const spring_time& start, const spring_time& end)
+void ProfileDrawer::DbgTimingInfo(const std::string& name, const spring_time& start, const spring_time& end)
 {
 	if (!IsEnabled())
 		return;

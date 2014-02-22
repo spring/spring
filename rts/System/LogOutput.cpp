@@ -268,11 +268,12 @@ void CLogOutput::LogSystemInfo()
 	LOG("Compiler: %s", SpringVersion::GetCompiler().c_str());
 	LOG("OS: %s", Platform::GetOS().c_str());
 
-	if (Platform::Is64Bit())
+	if (Platform::Is64Bit()) {
 		LOG("OS: 64bit native mode");
-	else if (Platform::Is32BitEmulation())
+	} else if (Platform::Is32BitEmulation()) {
 		LOG("OS: emulated 32bit mode");
-	else
+	} else {
 		LOG("OS: 32bit native mode");
+	}
 }
 
