@@ -292,13 +292,11 @@ const CKeyBindings::ActionList&
 	CKeyBindings::GetActionList(const CKeySet& ks) const
 {
 	static const ActionList empty;
-	const ActionList* alPtr = NULL;
+	const ActionList* alPtr = &empty;
 
 	if (ks.AnyMod()) {
 		KeyMap::const_iterator it = bindings.find(ks);
-		if (it == bindings.end()) {
-			alPtr = &empty;
-		} else {
+		if (it != bindings.end()) {
 			alPtr = &(it->second);
 		}
 	}
@@ -310,18 +308,15 @@ const CKeyBindings::ActionList&
 		KeyMap::const_iterator ait = bindings.find(anyMod);
 		const bool haveNormal = (nit != bindings.end());
 		const bool haveAnyMod = (ait != bindings.end());
-		if (!haveNormal && !haveAnyMod) {
-			alPtr = &empty;
-		}
-		else if (haveNormal && !haveAnyMod) {
+		if (haveNormal && !haveAnyMod) {
 			alPtr = &(nit->second);
 		}
 		else if (!haveNormal && haveAnyMod) {
 			alPtr = &(ait->second);
 		}
-		else {
+		else if (haveNormal && haveAnyMod) {
 			// combine the two lists (normal first)
-			static ActionList merged;
+			static ActionList merged; //FIXME this breaks threading!
 			merged = nit->second;
 			merged.insert(merged.end(), ait->second.begin(), ait->second.end());
 			alPtr = &merged;
@@ -329,15 +324,14 @@ const CKeyBindings::ActionList&
 	}
 
 	if (debugEnabled) {
-		const bool isEmpty = (alPtr == &empty);
-		LOG("GetAction: %s (0x%03X)%s",
-				ks.GetString(false).c_str(), ks.Key(),
-				(isEmpty ? "  EMPTY" : ""));
-		if (!isEmpty) {
-			const ActionList& al = *alPtr;
-			for (const auto& a: al) {
-				LOG("  %s  \"%s\" %s", a.command.c_str(), a.rawline.c_str(), a.boundWith.c_str());
+		LOG("GetActions: hex=0x%02X acii=\"%s\":", ks.Key(), ks.GetString(false).c_str());
+		if (alPtr != &empty) {
+			int i = 1;
+			for (const auto& a: *alPtr) {
+				LOG("   %i. action=\"%s\"  rawline=\"%s\"  shortcut=\"%s\"", i++, a.command.c_str(), a.rawline.c_str(), a.boundWith.c_str());
 			}
+		} else {
+			LOG("   EMPTY");
 		}
 	}
 
