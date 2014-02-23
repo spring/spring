@@ -23,6 +23,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/creg/STL_Set.h"
 #include "System/creg/STL_Deque.h"
@@ -367,11 +368,16 @@ static inline bool IsCommandInMap(const Command& c)
 	// TODO:
 	//   extend the check to commands for which
 	//   position is not stored in params[0..2]
-	if (c.params.size() >= 3) {
-		return ((c.GetPos(0)).IsInBounds());
+	if (c.params.size() < 3) {
+		return true;
 	}
+	if ((c.GetPos(0)).IsInBounds()) {
+		return true;
+	}
+	const float3 pos = c.GetPos(0);
+	LOG_L(L_ERROR, "Invalid command received: %d param pos: x:%f y:%f z:%f", c.GetID(), pos.x, pos.y, pos.z);
+	return false;
 
-	return true;
 }
 
 static inline bool AdjustGroundAttackCommand(const Command& c, bool fromSynced, bool aiOrder)
@@ -439,7 +445,13 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 		case CMD_MANUALFIRE:
 		case CMD_UNLOAD_UNIT:
 		case CMD_UNLOAD_UNITS: {
-			if (!IsCommandInMap(c)) { return false; }
+			if (!c.params.size()>=3)  {
+				LOG_L(L_ERROR, "Invalid command received: %d param size: %u", c.GetID(), (unsigned int)c.params.size());
+				return false;
+			}
+			if (!IsCommandInMap(c)) {
+				return false;
+			}
 		} break;
 
 		default: {
