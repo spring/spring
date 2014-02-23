@@ -2085,14 +2085,14 @@ int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 	}
 
 	const int keycode = keyCodes->GetCode(luaL_checksstring(L, 1));
-	lua_pushnumber(L, SDL2_to_SDL1_keysyms[keycode]);
+	lua_pushnumber(L, SDL21_keysyms(keycode));
 	return 1;
 }
 
 
 int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 {
-	const int keycode = SDL1_to_SDL2_keysyms[luaL_checkint(L, 1)];
+	const int keycode = SDL12_keysyms(luaL_checkint(L, 1));
 	lua_pushsstring(L, (keyCodes != 0)? keyCodes->GetName(keycode): "");
 	lua_pushsstring(L, (keyCodes != 0)? keyCodes->GetDefaultName(keycode): "");
 	return 2;

@@ -1801,7 +1801,7 @@ bool CLuaHandle::KeyPress(int key, bool isRepeat)
 	}
 
 	//FIXME we should never had started using directly SDL consts, somaeday we should weakly force lua-devs to fix their code
-	lua_pushinteger(L, SDL2_to_SDL1_keysyms[key]);
+	lua_pushinteger(L, SDL21_keysyms(key));
 
 	lua_createtable(L, 0, 4);
 	HSTR_PUSH_BOOL(L, "alt",   !!KeyInput::GetKeyModState(KMOD_ALT));
@@ -1837,7 +1837,7 @@ bool CLuaHandle::KeyRelease(int key)
 		return false; // the call is not defined, do not take the event
 	}
 
-	lua_pushinteger(L, SDL2_to_SDL1_keysyms[key]);
+	lua_pushinteger(L, SDL21_keysyms(key));
 
 	lua_createtable(L, 0, 4);
 	HSTR_PUSH_BOOL(L, "alt",   !!KeyInput::GetKeyModState(KMOD_ALT));
