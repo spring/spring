@@ -445,10 +445,6 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 		case CMD_MANUALFIRE:
 		case CMD_UNLOAD_UNIT:
 		case CMD_UNLOAD_UNITS: {
-			if (c.params.size() < 3)  {
-				LOG_L(L_ERROR, "Invalid command received: %d param size: %u", c.GetID(), (unsigned int)c.params.size());
-				return false;
-			}
 			if (!IsCommandInMap(c)) {
 				return false;
 			}
