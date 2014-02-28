@@ -41,7 +41,6 @@ class CKeyBindings : public CommandReceiver
 
 	protected:
 		void LoadDefaults();
-		void Sanitize();
 		void BuildHotkeyMap();
 
 		bool Bind(const std::string& keystring, const std::string& action);
@@ -51,8 +50,7 @@ class CKeyBindings : public CommandReceiver
 		bool SetFakeMetaKey(const std::string& keystring);
 		bool AddKeySymbol(const std::string& keysym, const std::string& code);
 
-		bool ParseKeySet(const std::string& keystr, CKeySet& ks) const;
-		bool RemoveCommandFromList(ActionList& al, const std::string& command);
+		static bool RemoveCommandFromList(ActionList& al, const std::string& command);
 
 		bool FileSave(FILE* file) const;
 
@@ -68,7 +66,7 @@ class CKeyBindings : public CommandReceiver
 		std::set<std::string> statefulCommands;
 
 		int fakeMetaKey;
-		bool userCommand;
+		bool buildHotkeyMap;
 	private:
 		bool debugEnabled;
 };

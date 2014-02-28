@@ -6,7 +6,6 @@
 #include <cstring>
 
 #include "KeyBindings.h"
-#include "KeyBindingsLog.h"
 #include "KeyCodes.h"
 #include "KeySet.h"
 #include "SelectionKeyHandler.h"
@@ -18,10 +17,16 @@
 #include "System/Log/DefaultFilter.h"
 #include "System/Util.h"
 
+
+#define LOG_SECTION_KEY_BINDINGS "KeyBindings"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_KEY_BINDINGS)
+
+// use the specific section for all LOG*() calls in this source file
 #ifdef LOG_SECTION_CURRENT
 	#undef LOG_SECTION_CURRENT
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_KEY_BINDINGS
+
 
 
 CKeyBindings* keyBindings = NULL;
@@ -248,12 +253,11 @@ static const std::vector<DefaultBinding> defaultBindings = {
 // CKeyBindings
 //
 
-CKeyBindings::CKeyBindings():
-	fakeMetaKey(1),
-	userCommand(true),
-	debugEnabled(false)
+CKeyBindings::CKeyBindings()
+	: fakeMetaKey(1)
+	, buildHotkeyMap(true)
+	, debugEnabled(false)
 {
-
 	statefulCommands.insert("drawinmap");
 	statefulCommands.insert("moveforward");
 	statefulCommands.insert("moveback");
@@ -287,8 +291,7 @@ CKeyBindings::~CKeyBindings()
 
 /******************************************************************************/
 
-const CKeyBindings::ActionList&
-	CKeyBindings::GetActionList(const CKeySet& ks) const
+const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) const
 {
 	static const ActionList empty;
 	const ActionList* alPtr = &empty;
@@ -355,7 +358,7 @@ const CKeyBindings::HotkeyList& CKeyBindings::GetHotkeys(const std::string& acti
 bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 {
 	CKeySet ks;
-	if (!ParseKeySet(keystr, ks)) {
+	if (!ks.Parse(keystr)) {
 		LOG_L(L_WARNING, "Bind: could not parse key: %s", keystr.c_str());
 		return false;
 	}
@@ -405,7 +408,7 @@ bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 bool CKeyBindings::UnBind(const std::string& keystr, const std::string& command)
 {
 	CKeySet ks;
-	if (!ParseKeySet(keystr, ks)) {
+	if (!ks.Parse(keystr)) {
 		LOG_L(L_WARNING, "UnBind: could not parse key: %s", keystr.c_str());
 		return false;
 	}
@@ -413,6 +416,7 @@ bool CKeyBindings::UnBind(const std::string& keystr, const std::string& command)
 
 	KeyMap::iterator it = bindings.find(ks);
 	if (it != bindings.end()) {
+		success = true;
 		ActionList& al = it->second;
 		success = RemoveCommandFromList(al, command);
 		if (al.empty()) {
@@ -426,7 +430,7 @@ bool CKeyBindings::UnBind(const std::string& keystr, const std::string& command)
 bool CKeyBindings::UnBindKeyset(const std::string& keystr)
 {
 	CKeySet ks;
-	if (!ParseKeySet(keystr, ks)) {
+	if (!ks.Parse(keystr)) {
 		LOG_L(L_WARNING, "UnBindKeyset: could not parse key: %s", keystr.c_str());
 		return false;
 	}
@@ -437,6 +441,7 @@ bool CKeyBindings::UnBindKeyset(const std::string& keystr)
 		bindings.erase(it);
 		success = true;
 	}
+
 	return success;
 }
 
@@ -452,10 +457,7 @@ bool CKeyBindings::UnBindAction(const std::string& command)
 			success = true;
 		}
 		if (al.empty()) {
-			KeyMap::iterator it_next = it;
-			++it_next;
-			bindings.erase(it);
-			it = it_next;
+			it = bindings.erase(it);
 		} else {
 			++it;
 		}
@@ -479,6 +481,7 @@ bool CKeyBindings::SetFakeMetaKey(const std::string& keystr)
 	return true;
 }
 
+
 bool CKeyBindings::AddKeySymbol(const std::string& keysym, const std::string& code)
 {
 	CKeySet ks;
@@ -497,23 +500,18 @@ bool CKeyBindings::AddKeySymbol(const std::string& keysym, const std::string& co
 bool CKeyBindings::RemoveCommandFromList(ActionList& al, const std::string& command)
 {
 	bool success = false;
-	for (int i = 0; i < (int)al.size(); ++i) {
-		if (al[i].command == command) {
+	ActionList::iterator it = al.begin();
+	while (it != al.end()) {
+		if (it->command == command) {
+			it = al.erase(it);
 			success = true;
-			for (int j = (i + 1); j < (int)al.size(); ++j) {
-				al[j - 1] = al[j];
-			}
-			al.resize(al.size() - 1);
+		} else {
+			++it;
 		}
 	}
 	return success;
 }
 
-
-bool CKeyBindings::ParseKeySet(const std::string& keystr, CKeySet& ks) const
-{
-	return ks.Parse(keystr);
-}
 
 
 
@@ -523,7 +521,7 @@ bool CKeyBindings::ParseKeySet(const std::string& keystr, CKeySet& ks) const
 void CKeyBindings::LoadDefaults()
 {
 	SetFakeMetaKey("space");
-	for (auto b: defaultBindings) {
+	for (const auto& b: defaultBindings) {
 		Bind(b.key, b.action);
 	}
 }
@@ -604,8 +602,8 @@ bool CKeyBindings::ExecuteCommand(const std::string& line)
 		return false;
 	}
 
-	if (userCommand) {
-		Sanitize();
+	if (buildHotkeyMap) {
+		BuildHotkeyMap();
 	}
 
 	return false;
@@ -616,9 +614,7 @@ bool CKeyBindings::Load(const std::string& filename)
 {
 	CFileHandler ifs(filename);
 	CSimpleParser parser(ifs);
-
-	userCommand = false; // temporarily disable Sanitize() calls
-
+	buildHotkeyMap = false; // temporarily disable BuildHotkeyMap() calls
 	LoadDefaults();
 
 	while (true) {
@@ -629,19 +625,9 @@ bool CKeyBindings::Load(const std::string& filename)
 		ExecuteCommand(line);
 	}
 
-	Sanitize();
-
-	userCommand = true; // re-enable Sanitize() calls
-
-	return true;
-}
-
-
-void CKeyBindings::Sanitize()
-{
-	// FIXME -- do something extra here?
-	//          (seems as though removing the Up states fixed most of the problems)
 	BuildHotkeyMap();
+	buildHotkeyMap = true; // re-enable BuildHotkeyMap() calls
+	return true;
 }
 
 
@@ -687,9 +673,7 @@ bool CKeyBindings::Save(const std::string& filename) const
 	}
 
 	const bool success = FileSave(out);
-
 	fclose(out);
-
 	return success;
 }
 
