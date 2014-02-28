@@ -263,7 +263,6 @@ int CLuaHandle::RunCallInTraceback(
 			, errFuncIdx(_errFuncIdx)
 			, popErrFunc(_popErrFunc)
 		{
-			const bool oldRun = CLuaHandle::IsHandleRunning(luaState);
 			handle->SetHandleRunning(state, true);
 
 			GLMatrixStateTracker& matTracker = GetLuaContextData(state)->glMatrixTracker;
@@ -281,7 +280,7 @@ int CLuaHandle::RunCallInTraceback(
 			LuaOpenGL::CheckMatrixState(state, func, error);
 			matTracker.PopMatrixState(prevMatState);
 
-			handle->SetHandleRunning(state, oldRun);
+			handle->SetHandleRunning(state, false);
 		}
 
 		~ScopedLuaCall() {
@@ -2347,7 +2346,6 @@ void CLuaHandle::CollectGarbage()
 	static int gcsteps = 10;
 	int numLuaGarbageCollectIters = 0;
 
-	const bool oldIsRunning = IsHandleRunning(L_GC);
 	SetHandleRunning(L_GC, true);
 
 	// collect garbage until time runs out
@@ -2367,7 +2365,7 @@ void CLuaHandle::CollectGarbage()
 	}
 
 	lua_gc(L_GC, LUA_GCSTOP, 0); // don't collect garbage outside of this function
-	SetHandleRunning(L_GC, oldIsRunning);
+	SetHandleRunning(L_GC, false);
 	lua_unlock(L_GC);
 
 	const spring_time finishTime = spring_gettime();

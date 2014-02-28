@@ -188,7 +188,7 @@ static inline const char* luaL_SpringOptCString(lua_State* L, int idx, const cha
 	if (!lua_isnoneornil(L, idx)) {
 		LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
 	}
-	*len = strlen(def);
+	if (len != NULL) *len = strlen(def);
 	return def;
 }
 
