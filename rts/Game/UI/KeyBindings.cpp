@@ -379,21 +379,21 @@ bool CKeyBindings::Bind(const string& keystr, const string& line)
 		ActionList& al = bindings[ks];
 		al.push_back(action);
 	} else {
+		ActionList& al = it->second;
 		if (it->first != ks) {
 			// not a match, push it
-			ActionList& al = it->second;
 			al.push_back(action);
 		}
 		else {
 			// an exact keyset match, check the command
-			ActionList& al = it->second;
-			int i;
-			for (i = 0; i < (int)al.size(); i++) {
-				if (action.command == al[i].command) {
+			bool found = false;
+			for (const Action& act: al) {
+				if (act.command == action.command) {
+					found = true;
 					break;
 				}
 			}
-			if (i == (int)al.size()) {
+			if (!found) {
 				// not a match, push it
 				al.push_back(action);
 			}
