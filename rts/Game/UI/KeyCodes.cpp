@@ -85,13 +85,17 @@ bool CKeyCodes::IsValidLabel(const std::string& label)
 }
 
 
-bool CKeyCodes::IsModifier(int code) const //FIXME
+bool CKeyCodes::IsModifier(int code)
 {
 	switch (code) {
 		case SDLK_LALT:
 		case SDLK_LCTRL:
 		case SDLK_LGUI:
 		case SDLK_LSHIFT:
+		case SDLK_RALT:
+		case SDLK_RCTRL:
+		case SDLK_RGUI:
+		case SDLK_RSHIFT:
 			return true;
 	}
 	return false;
