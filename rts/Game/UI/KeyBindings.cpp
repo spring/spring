@@ -28,16 +28,16 @@
 CKeyBindings* keyBindings = NULL;
 
 
-static const struct DefaultBinding {
+struct DefaultBinding {
 	const char* key;
 	const char* action;
-}
-defaultBindings[] = {
+};
 
-	{        "esc", "quitmessage"    },
-	{        "Shift+esc", "quitmenu"    },
-	{ "Ctrl+Shift+esc", "quitforce"    },
-	{  "Any+pause", "pause"       },
+static const std::vector<DefaultBinding> defaultBindings = {
+	{            "esc", "quitmessage" },
+	{      "Shift+esc", "quitmenu"    },
+	{ "Ctrl+Shift+esc", "quitforce"   },
+	{      "Any+pause", "pause"       },
 
 	{ "c", "controlunit"          },
 	{ "Any+h", "sharedialog"          },
@@ -551,9 +551,8 @@ bool CKeyBindings::ParseKeySet(const string& keystr, CKeySet& ks) const
 void CKeyBindings::LoadDefaults()
 {
 	SetFakeMetaKey("space");
-	const int count = sizeof(defaultBindings) / sizeof(defaultBindings[0]);
-	for (int i = 0; i < count; ++i) {
-		Bind(defaultBindings[i].key, defaultBindings[i].action);
+	for (auto b: defaultBindings) {
+		Bind(b.key, b.action);
 	}
 }
 
@@ -680,7 +679,8 @@ bool CKeyBindings::ParseTypeBind(CSimpleParser& parser, const string& line)
 
 	const vector<string> words = parser.Tokenize(line, 2);
 	if ((words.size() == 3) &&
-			(words[2] == "{") && (StringToLower(words[0]) == "bindbuildtype")) {
+	    (words[2] == "{") && (StringToLower(words[0]) == "bindbuildtype")
+	) {
 		btb.keystr = words[1];
 	} else {
 		return false;
@@ -721,8 +721,7 @@ bool CKeyBindings::ParseTypeBind(CSimpleParser& parser, const string& line)
 	typeBindings.push_back(btb);
 
 	CKeyAutoBinder autoBinder;
-	if (!autoBinder.BindBuildType(btb.keystr,
-	                              btb.reqs, btb.sorts, btb.chords)) {
+	if (!autoBinder.BindBuildType(btb.keystr, btb.reqs, btb.sorts, btb.chords)) {
 		return false;
 	}
 
@@ -810,7 +809,7 @@ bool CKeyBindings::FileSave(FILE* out) const
 	NamedKeySetMap::const_iterator ks_it;
 	for (ks_it = namedKeySets.begin(); ks_it != namedKeySets.end(); ++ks_it) {
 		fprintf(out, "keyset  %-15s  %s\n",
-		        ks_it->first.c_str(), ks_it->second.GetString(false).c_str());
+		ks_it->first.c_str(), ks_it->second.GetString(false).c_str());
 	}
 	if (!namedKeySets.empty()) {
 		fprintf(out, "\n");
@@ -832,12 +831,12 @@ bool CKeyBindings::FileSave(FILE* out) const
 			}
 			if (comment.empty()) {
 				fprintf(out, "bind %18s  %s\n",
-				        action.boundWith.c_str(),
-				        action.rawline.c_str());
+				action.boundWith.c_str(),
+				action.rawline.c_str());
 			} else {
 				fprintf(out, "bind %18s  %-20s%s\n",
-				        action.boundWith.c_str(),
-				        action.rawline.c_str(), comment.c_str());
+				action.boundWith.c_str(),
+				action.rawline.c_str(), comment.c_str());
 			}
 		}
 	}
