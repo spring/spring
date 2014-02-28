@@ -4007,6 +4007,22 @@ int LuaSyncedRead::GetUnitCommands(lua_State* L)
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
 	const CCommandQueue* queue = (factoryCAI == NULL) ? &commandAI->commandQue : &factoryCAI->newUnitCommands;
 
+	// performance relevant `debug` message
+	if (lua_isnoneornil(L, 2)) {
+		static int calls = 0;
+		static spring_time nextWarning = spring_gettime();
+		calls++;
+		if (spring_gettime() >= nextWarning) {
+			nextWarning = spring_gettime() + spring_secs(5);
+			if (calls > 1000) {
+				luaL_error(L,
+					"[%s] called too often without a 2nd argument to define maxNumCmds returned in the table, please check your code!\n"
+					"Especially when you only read the first cmd or want to check if the queue is non-empty, this can be a huge performance leak!\n", __FUNCTION__);
+			}
+			calls = 0;
+		}
+	}
+
 	const int  numCmds   = luaL_optint(L, 2, -1);
 	const bool cmdsTable = luaL_optboolean(L, 3, true); // deprecated, prefer to set 2nd arg to 0
 
