@@ -514,10 +514,8 @@ bool CKeyBindings::ParseKeySet(const std::string& keystr, CKeySet& ks) const
 {
 	return ks.Parse(keystr);
 }
-		}
-	}
-	return true;
-}
+
+
 
 
 /******************************************************************************/
