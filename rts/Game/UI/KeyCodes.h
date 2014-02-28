@@ -19,7 +19,7 @@ class CKeyCodes {
 
 		bool AddKeySymbol(const std::string& name, int code);
 
-		bool IsModifier(int code) const;
+		static bool IsModifier(int code);
 
 		void PrintNameToCode() const;
 		void PrintCodeToName() const;

@@ -89,7 +89,6 @@ bool CKeySet::ParseModifier(std::string& s, const std::string& token, const std:
 		return true;
 	}
 	if (s.find(abbr) == 0) {
-
 		s.erase(0, abbr.size());
 		return true;
 	}

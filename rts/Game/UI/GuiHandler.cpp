@@ -1473,14 +1473,10 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 				const bool tmpMeta  = !!KeyInput::GetKeyModState(KMOD_GUI);
 				const bool tmpShift = !!KeyInput::GetKeyModState(KMOD_SHIFT);
 
-				if (outMods.alt   == Required)  { KeyInput::SetKeyModState(KMOD_ALT,   1); }
-				if (outMods.alt   == Forbidden) { KeyInput::SetKeyModState(KMOD_ALT,   0); }
-				if (outMods.ctrl  == Required)  { KeyInput::SetKeyModState(KMOD_CTRL,  1); }
-				if (outMods.ctrl  == Forbidden) { KeyInput::SetKeyModState(KMOD_CTRL,  0); }
-				if (outMods.meta  == Required)  { KeyInput::SetKeyModState(KMOD_GUI,   1); }
-				if (outMods.meta  == Forbidden) { KeyInput::SetKeyModState(KMOD_GUI,   0); }
-				if (outMods.shift == Required)  { KeyInput::SetKeyModState(KMOD_SHIFT, 1); }
-				if (outMods.shift == Forbidden) { KeyInput::SetKeyModState(KMOD_SHIFT, 0); }
+				if (outMods.alt   != DontCare)  { KeyInput::SetKeyModState(KMOD_ALT,   int(outMods.alt   == Required)); }
+				if (outMods.ctrl  != DontCare)  { KeyInput::SetKeyModState(KMOD_CTRL,  int(outMods.ctrl  == Required)); }
+				if (outMods.meta  != DontCare)  { KeyInput::SetKeyModState(KMOD_GUI,   int(outMods.meta  == Required)); }
+				if (outMods.shift != DontCare)  { KeyInput::SetKeyModState(KMOD_SHIFT, int(outMods.shift == Required)); }
 
 				Action action(copy);
 				if (!ProcessLocalActions(action)) {
@@ -1763,17 +1759,17 @@ bool CGuiHandler::KeyPressed(int key, bool isRepeat)
 		return true;
 	}
 
-	CKeySet ks(key, false);
-	const CKeyBindings::ActionList& al = keyBindings->GetActionList(ks);
+	const CKeySet ks(key, false);
 
 	// setup actionOffset
+	//WTF a bit more documentation???
 	int tmpActionOffset = actionOffset;
 	if ((inCommand < 0) || (lastKeySet.Key() < 0)){
 		actionOffset = 0;
 		tmpActionOffset = 0;
 		lastKeySet.Reset();
 	}
-	else if (!keyCodes->IsModifier(ks.Key()) &&
+	else if (!CKeyCodes::IsModifier(ks.Key()) &&
 	         (ks.Key() != keyBindings->GetFakeMetaKey())) {
 		// not a modifier
 		if ((ks == lastKeySet) && (ks.Key() >= 0)) {
@@ -1784,8 +1780,9 @@ bool CGuiHandler::KeyPressed(int key, bool isRepeat)
 		}
 	}
 
+	const CKeyBindings::ActionList& al = keyBindings->GetActionList(ks);
 	for (int ali = 0; ali < (int)al.size(); ++ali) {
-		const int actionIndex = (ali + tmpActionOffset) % (int)al.size();
+		const int actionIndex = (ali + tmpActionOffset) % (int)al.size(); //????
 		const Action& action = al[actionIndex];
 		if (SetActiveCommand(action, ks, actionIndex)) {
 			return true;
