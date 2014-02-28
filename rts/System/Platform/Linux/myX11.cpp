@@ -17,8 +17,12 @@ void MyX11BlockCompositing(SDL_Window* window)
 	auto x11window  = info.info.x11.window;
 
 	bool b = true;
-	Atom blockCompositAtom = XInternAtom(x11display, "_KDE_NET_WM_BLOCK_COMPOSITING", false);
+	Atom blockCompositAtomKDE = XInternAtom(x11display, "_KDE_NET_WM_BLOCK_COMPOSITING", false);
+	XChangeProperty(x11display, x11window, blockCompositAtomKDE, XA_INTEGER, 8, PropModeReplace, (const unsigned char*)&b, 1);
+
+	Atom blockCompositAtom = XInternAtom(x11display, "_NET_WM_BYPASS_COMPOSITOR", false);
 	XChangeProperty(x11display, x11window, blockCompositAtom, XA_INTEGER, 8, PropModeReplace, (const unsigned char*)&b, 1);
+
 }
 
 
