@@ -10,7 +10,6 @@
 #include "KeyCodes.h"
 #include "KeySet.h"
 #include "SelectionKeyHandler.h"
-#include "KeyAutoBinder.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/FileSystem/FileHandler.h"
@@ -495,22 +494,6 @@ bool CKeyBindings::AddKeySymbol(const std::string& keysym, const std::string& co
 }
 
 
-bool CKeyBindings::AddNamedKeySet(const string& name, const string& keystr)
-{
-	CKeySet ks;
-	if (!ks.Parse(keystr)) {
-		LOG_L(L_WARNING, "AddNamedKeySet: could not parse keyset: %s", keystr.c_str());
-		return false;
-	}
-	if ((ks.Key() < 0) || !CKeyCodes::IsValidLabel(name)) {
-		LOG_L(L_WARNING, "AddNamedKeySet: bad custom keyset name: %s", name.c_str());
-		return false;
-	}
-	namedKeySets[name] = ks;
-	return true;
-}
-
-
 bool CKeyBindings::RemoveCommandFromList(ActionList& al, const std::string& command)
 {
 	bool success = false;
@@ -527,18 +510,10 @@ bool CKeyBindings::RemoveCommandFromList(ActionList& al, const std::string& comm
 }
 
 
-bool CKeyBindings::ParseKeySet(const string& keystr, CKeySet& ks) const
+bool CKeyBindings::ParseKeySet(const std::string& keystr, CKeySet& ks) const
 {
-	if (keystr[0] != NamedKeySetChar) {
-		return ks.Parse(keystr);
-	}
-	else {
-		const string keysetName = keystr.substr(1);
-		NamedKeySetMap::const_iterator it = namedKeySets.find(keysetName);
-		if (it !=  namedKeySets.end()) {
-			ks = it->second;
-		} else {
-			return false;
+	return ks.Parse(keystr);
+}
 		}
 	}
 	return true;
@@ -607,9 +582,6 @@ bool CKeyBindings::ExecuteCommand(const std::string& line)
 	else if ((command == "fakemeta") && (words.size() > 1)) {
 		if (!SetFakeMetaKey(words[1])) { return false; }
 	}
-	else if ((command == "keyset") && (words.size() > 2)) {
-		if (!AddNamedKeySet(words[1], words[2])) { return false; }
-	}
 	else if ((command == "keysym") && (words.size() > 2)) {
 		if (!AddKeySymbol(words[1], words[2])) { return false; }
 	}
@@ -628,8 +600,6 @@ bool CKeyBindings::ExecuteCommand(const std::string& line)
 	else if (command == "unbindall") {
 		bindings.clear();
 		keyCodes->Reset();
-		namedKeySets.clear();
-		typeBindings.clear();
 		Bind("enter", "chat"); // bare minimum
 	}
 	else {
@@ -654,74 +624,16 @@ bool CKeyBindings::Load(const std::string& filename)
 	LoadDefaults();
 
 	while (true) {
-		const string line = parser.GetCleanLine();
+		const std::string line = parser.GetCleanLine();
 		if (line.empty()) {
 			break;
 		}
-		if (!ExecuteCommand(line)) {
-			ParseTypeBind(parser, line);
-		}
+		ExecuteCommand(line);
 	}
 
 	Sanitize();
 
 	userCommand = true; // re-enable Sanitize() calls
-
-	return true;
-}
-
-
-bool CKeyBindings::ParseTypeBind(CSimpleParser& parser, const string& line)
-{
-	BuildTypeBinding btb;
-
-	const vector<string> words = parser.Tokenize(line, 2);
-	if ((words.size() == 3) &&
-	    (words[2] == "{") && (StringToLower(words[0]) == "bindbuildtype")
-	) {
-		btb.keystr = words[1];
-	} else {
-		return false;
-	}
-
-	while (true) {
-		const std::string line = parser.GetCleanLine();
-		if (line.empty()) {
-			return false;
-		}
-
-		const vector<string> words = parser.Tokenize(line, 1);
-		if ((words.size() == 1) && (words[0] == "}")) {
-			break;
-		}
-
-		const string command = StringToLower(words[0]);
-
-		if ((command == "req") || (command == "require")) {
-			if (words.size() > 1) {
-				btb.reqs.push_back(words[1]);
-			}
-		}
-		else if (command == "sort") {
-			if (words.size() > 1) {
-				btb.sorts.push_back(words[1]);
-			}
-		}
-		else if (command == "chords") {
-			// split them up, tack them on  (in order)
-			const vector<string> chords = parser.Tokenize(line, 0);
-			for (int i = 1; i < (int)chords.size(); i++) {
-				btb.chords.push_back(chords[i]);
-			}
-		}
-	}
-
-	typeBindings.push_back(btb);
-
-	CKeyAutoBinder autoBinder;
-	if (!autoBinder.BindBuildType(btb.keystr, btb.reqs, btb.sorts, btb.chords)) {
-		return false;
-	}
 
 	return true;
 }
@@ -802,16 +714,6 @@ bool CKeyBindings::FileSave(FILE* out) const
 	// save the fake meta key (if it has been defined)
 	if (fakeMetaKey >= 0) {
 		fprintf(out, "fakemeta  %s\n\n", keyCodes->GetName(fakeMetaKey).c_str());
-	}
-
-	// save the named keysets
-	NamedKeySetMap::const_iterator ks_it;
-	for (ks_it = namedKeySets.begin(); ks_it != namedKeySets.end(); ++ks_it) {
-		fprintf(out, "keyset  %-15s  %s\n",
-		ks_it->first.c_str(), ks_it->second.GetString(false).c_str());
-	}
-	if (!namedKeySets.empty()) {
-		fprintf(out, "\n");
 	}
 
 	// save the bindings

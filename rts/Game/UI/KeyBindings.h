@@ -38,8 +38,6 @@ class CKeyBindings : public CommandReceiver
 
 		int GetFakeMetaKey() const { return fakeMetaKey; }
 
-	public:
-		static const char NamedKeySetChar = '&';
 
 	protected:
 		void LoadDefaults();
@@ -52,8 +50,6 @@ class CKeyBindings : public CommandReceiver
 		bool UnBindAction(const std::string& action);
 		bool SetFakeMetaKey(const std::string& keystring);
 		bool AddKeySymbol(const std::string& keysym, const std::string& code);
-		bool AddNamedKeySet(const std::string& name, const std::string& keyset);
-		bool ParseTypeBind(CSimpleParser& parser, const std::string& line);
 
 		bool ParseKeySet(const std::string& keystr, CKeySet& ks) const;
 		bool RemoveCommandFromList(ActionList& al, const std::string& command);
@@ -67,17 +63,7 @@ class CKeyBindings : public CommandReceiver
 		typedef std::map<std::string, HotkeyList> ActionMap; // action to keyset
 		ActionMap hotkeys;
 
-		typedef std::map<std::string, CKeySet> NamedKeySetMap; // user defined keysets
-		NamedKeySetMap namedKeySets;
-
-		struct BuildTypeBinding {
-			std::string keystr;         // principal keyset
-			std::vector<std::string> reqs;   // requirements
-			std::vector<std::string> sorts;  // sorting criteria
-			std::vector<std::string> chords; // enumerated keyset chords
-		};
-		std::vector<BuildTypeBinding> typeBindings;
-
+	protected:
 		// commands that use both Up and Down key presses
 		std::set<std::string> statefulCommands;
 
