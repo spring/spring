@@ -339,8 +339,7 @@ const CKeyBindings::ActionList&
 }
 
 
-const CKeyBindings::HotkeyList&
-	CKeyBindings::GetHotkeys(const string& action) const
+const CKeyBindings::HotkeyList& CKeyBindings::GetHotkeys(const std::string& action) const
 {
 	ActionMap::const_iterator it = hotkeys.find(action);
 	if (it == hotkeys.end()) {
@@ -354,7 +353,7 @@ const CKeyBindings::HotkeyList&
 
 /******************************************************************************/
 
-bool CKeyBindings::Bind(const string& keystr, const string& line)
+bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 {
 	CKeySet ks;
 	if (!ParseKeySet(keystr, ks)) {
@@ -404,7 +403,7 @@ bool CKeyBindings::Bind(const string& keystr, const string& line)
 }
 
 
-bool CKeyBindings::UnBind(const string& keystr, const string& command)
+bool CKeyBindings::UnBind(const std::string& keystr, const std::string& command)
 {
 	CKeySet ks;
 	if (!ParseKeySet(keystr, ks)) {
@@ -425,7 +424,7 @@ bool CKeyBindings::UnBind(const string& keystr, const string& command)
 }
 
 
-bool CKeyBindings::UnBindKeyset(const string& keystr)
+bool CKeyBindings::UnBindKeyset(const std::string& keystr)
 {
 	CKeySet ks;
 	if (!ParseKeySet(keystr, ks)) {
@@ -443,7 +442,7 @@ bool CKeyBindings::UnBindKeyset(const string& keystr)
 }
 
 
-bool CKeyBindings::UnBindAction(const string& command)
+bool CKeyBindings::UnBindAction(const std::string& command)
 {
 	bool success = false;
 
@@ -466,7 +465,7 @@ bool CKeyBindings::UnBindAction(const string& command)
 }
 
 
-bool CKeyBindings::SetFakeMetaKey(const string& keystr)
+bool CKeyBindings::SetFakeMetaKey(const std::string& keystr)
 {
 	CKeySet ks;
 	if (StringToLower(keystr) == "none") {
@@ -481,7 +480,7 @@ bool CKeyBindings::SetFakeMetaKey(const string& keystr)
 	return true;
 }
 
-bool CKeyBindings::AddKeySymbol(const string& keysym, const string& code)
+bool CKeyBindings::AddKeySymbol(const std::string& keysym, const std::string& code)
 {
 	CKeySet ks;
 	if (!ks.Parse(code)) {
@@ -512,7 +511,7 @@ bool CKeyBindings::AddNamedKeySet(const string& name, const string& keystr)
 }
 
 
-bool CKeyBindings::RemoveCommandFromList(ActionList& al, const string& command)
+bool CKeyBindings::RemoveCommandFromList(ActionList& al, const std::string& command)
 {
 	bool success = false;
 	for (int i = 0; i < (int)al.size(); ++i) {
@@ -587,14 +586,14 @@ void CKeyBindings::PushAction(const Action& action)
 	}
 }
 
-bool CKeyBindings::ExecuteCommand(const string& line)
+bool CKeyBindings::ExecuteCommand(const std::string& line)
 {
-	const vector<string> words = CSimpleParser::Tokenize(line, 2);
+	const std::vector<std::string> words = CSimpleParser::Tokenize(line, 2);
 
 	if (words.empty()) {
 		return false;
 	}
-	const string command = StringToLower(words[0]);
+	const std::string command = StringToLower(words[0]);
 
 	if (command == "keydebug") {
 		if (words.size() == 1) {
@@ -645,9 +644,8 @@ bool CKeyBindings::ExecuteCommand(const string& line)
 }
 
 
-bool CKeyBindings::Load(const string& filename)
+bool CKeyBindings::Load(const std::string& filename)
 {
-//	inComment = false;
 	CFileHandler ifs(filename);
 	CSimpleParser parser(ifs);
 
@@ -687,7 +685,7 @@ bool CKeyBindings::ParseTypeBind(CSimpleParser& parser, const string& line)
 	}
 
 	while (true) {
-		const string line = parser.GetCleanLine();
+		const std::string line = parser.GetCleanLine();
 		if (line.empty()) {
 			return false;
 		}
@@ -739,12 +737,13 @@ void CKeyBindings::Sanitize()
 
 void CKeyBindings::BuildHotkeyMap()
 {
+	// create reverse map of bindings ([action] -> key shortcuts)
 	hotkeys.clear();
 
 	KeyMap::const_iterator kit;
 	for (kit = bindings.begin(); kit != bindings.end(); ++kit) {
 		const CKeySet ks = kit->first;
-		const string keystr = ks.GetString(true);
+		const std::string keystr = ks.GetString(true);
 		const ActionList& al = kit->second;
 		for (int i = 0; i < (int)al.size(); ++i) {
 			HotkeyList& hl = hotkeys[al[i].command + ((al[i].extra == "") ? "" : " " + al[i].extra)];
@@ -770,7 +769,7 @@ void CKeyBindings::Print() const
 }
 
 
-bool CKeyBindings::Save(const string& filename) const
+bool CKeyBindings::Save(const std::string& filename) const
 {
 	FILE* out = fopen(filename.c_str(), "wt");
 	if (out == NULL) {
@@ -819,11 +818,10 @@ bool CKeyBindings::FileSave(FILE* out) const
 	KeyMap::const_iterator it;
 	for (it = bindings.begin(); it != bindings.end(); ++it) {
 		const ActionList& al = it->second;
-		for (int i = 0; i < (int)al.size(); ++i) {
-			const Action& action = al[i];
-			string comment;
+		for (const Action& action: al) {
+			std::string comment;
 			if (unitDefHandler && (action.command.find("buildunit_") == 0)) {
-				const string unitName = action.command.substr(10);
+				const std::string unitName = action.command.substr(10);
 				const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(unitName);
 				if (unitDef) {
 					comment = "  // " + unitDef->humanName + " - " + unitDef->tooltip;
