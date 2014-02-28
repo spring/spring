@@ -2131,10 +2131,10 @@ int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 	const CKeyBindings::HotkeyList& hotkeys = keyBindings->GetHotkeys(luaL_checksstring(L, 1));
 
 	lua_newtable(L);
-	for (unsigned int i = 0; i < hotkeys.size(); i++) {
-		const string& hotkey = hotkeys[i];
+	int i = 1;
+	for (const std::string& hotkey: hotkeys) {
 		lua_pushsstring(L, hotkey);
-		lua_rawseti(L, -2, i + 1);
+		lua_rawseti(L, -2, i++);
 	}
 	return 1;
 }

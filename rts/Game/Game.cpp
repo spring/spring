@@ -884,9 +884,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 		playerHandler->Player(gu->myPlayerNum)->currentStats.keyPresses++;
 	}
 
-	// Get the list of possible key actions
 	const CKeySet ks(key, false);
-	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
 
 	if (!hotBinding.empty()) {
 		if (key == SDLK_ESCAPE) {
@@ -903,6 +901,8 @@ int CGame::KeyPressed(int key, bool isRepeat)
 		return 0;
 	}
 
+	// Get the list of possible key actions
+	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
 	if (userWriting) {
 		for (unsigned int actionIndex = 0; actionIndex < actionList.size(); actionIndex++) {
 			if (ProcessKeyPressAction(key, actionList[actionIndex])) {
