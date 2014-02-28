@@ -1,20 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <cstdio>
-#include <cctype>
-#include <cstring>
+#include <stdio.h>
 
 #include "KeyBindings.h"
 #include "KeyCodes.h"
 #include "KeySet.h"
-#include "SelectionKeyHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Log/ILog.h"
-#include "System/Log/DefaultFilter.h"
 #include "System/Util.h"
 
 
@@ -348,8 +343,7 @@ const CKeyBindings::HotkeyList& CKeyBindings::GetHotkeys(const std::string& acti
 		static HotkeyList empty;
 		return empty;
 	}
-	const HotkeyList& hl = it->second;
-	return hl;
+	return it->second;
 }
 
 
@@ -376,28 +370,24 @@ bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 
 	KeyMap::iterator it = bindings.find(ks);
 	if (it == bindings.end()) {
-		// new entry, push it
+		// create new keyset entry and push it command
 		ActionList& al = bindings[ks];
 		al.push_back(action);
 	} else {
 		ActionList& al = it->second;
-		if (it->first != ks) {
-			// not a match, push it
-			al.push_back(action);
+		assert(it->first == ks);
+
+		// check if the command is already found to the given keyset
+		bool found = false;
+		for (const Action& act: al) {
+			if (act.command == action.command) {
+				found = true;
+				break;
+			}
 		}
-		else {
-			// an exact keyset match, check the command
-			bool found = false;
-			for (const Action& act: al) {
-				if (act.command == action.command) {
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				// not a match, push it
-				al.push_back(action);
-			}
+		if (!found) {
+			// not yet bound, push it
+			al.push_back(action);
 		}
 	}
 
@@ -547,10 +537,10 @@ void CKeyBindings::PushAction(const Action& action)
 		Print();
 	}
 	else if (action.command == "keysyms") {
-		keyCodes->PrintNameToCode(); // move to CKeyCodes?
+		keyCodes->PrintNameToCode(); //TODO move to CKeyCodes?
 	}
 	else if (action.command == "keycodes") {
-		keyCodes->PrintCodeToName(); // move to CKeyCodes?
+		keyCodes->PrintCodeToName(); //TODO move to CKeyCodes?
 	}
 	else {
 		ExecuteCommand(action.rawline);
@@ -617,11 +607,8 @@ bool CKeyBindings::Load(const std::string& filename)
 	buildHotkeyMap = false; // temporarily disable BuildHotkeyMap() calls
 	LoadDefaults();
 
-	while (true) {
+	while (!parser.Eof()) {
 		const std::string line = parser.GetCleanLine();
-		if (line.empty()) {
-			break;
-		}
 		ExecuteCommand(line);
 	}
 
@@ -636,22 +623,14 @@ void CKeyBindings::BuildHotkeyMap()
 	// create reverse map of bindings ([action] -> key shortcuts)
 	hotkeys.clear();
 
-	KeyMap::const_iterator kit;
-	for (kit = bindings.begin(); kit != bindings.end(); ++kit) {
-		const CKeySet ks = kit->first;
+	for (const auto& p: bindings) {
+		const CKeySet ks = p.first;
+		const ActionList& al = p.second;
 		const std::string keystr = ks.GetString(true);
-		const ActionList& al = kit->second;
-		for (int i = 0; i < (int)al.size(); ++i) {
-			HotkeyList& hl = hotkeys[al[i].command + ((al[i].extra == "") ? "" : " " + al[i].extra)];
-			int j;
-			for (j = 0; j < (int)hl.size(); ++j) {
-				if (hl[j] == keystr) {
-					break;
-				}
-			}
-			if (j == (int)hl.size()) {
-				hl.push_back(keystr);
-			}
+
+		for (const Action& action: al) {
+			HotkeyList& hl = hotkeys[action.command + ((action.extra == "") ? "" : " " + action.extra)];
+			hl.insert(keystr);
 		}
 	}
 }
@@ -699,9 +678,8 @@ bool CKeyBindings::FileSave(FILE* out) const
 	}
 
 	// save the bindings
-	KeyMap::const_iterator it;
-	for (it = bindings.begin(); it != bindings.end(); ++it) {
-		const ActionList& al = it->second;
+	for (const auto& p: bindings) {
+		const ActionList& al = p.second;
 		for (const Action& action: al) {
 			std::string comment;
 			if (unitDefHandler && (action.command.find("buildunit_") == 0)) {
@@ -713,12 +691,12 @@ bool CKeyBindings::FileSave(FILE* out) const
 			}
 			if (comment.empty()) {
 				fprintf(out, "bind %18s  %s\n",
-				action.boundWith.c_str(),
-				action.rawline.c_str());
+					action.boundWith.c_str(),
+					action.rawline.c_str());
 			} else {
 				fprintf(out, "bind %18s  %-20s%s\n",
-				action.boundWith.c_str(),
-				action.rawline.c_str(), comment.c_str());
+					action.boundWith.c_str(),
+					action.rawline.c_str(), comment.c_str());
 			}
 		}
 	}

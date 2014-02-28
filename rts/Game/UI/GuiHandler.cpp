@@ -1993,13 +1993,11 @@ std::string CGuiHandler::GetTooltip(int x, int y)
 			s = commands[iconCmd].name;
 		}
 
-		const CKeyBindings::HotkeyList& hl =
-			keyBindings->GetHotkeys(commands[iconCmd].action);
+		const CKeyBindings::HotkeyList& hl = keyBindings->GetHotkeys(commands[iconCmd].action);
 		if(!hl.empty()){
-			s+="\nHotkeys:";
-			for (int i = 0; i < (int)hl.size(); ++i) {
-				s+=" ";
-				s+=hl[i];
+			s += "\nHotkeys:";
+			for (const std::string& hk: hl) {
+				s += " " + hk;
 			}
 		}
 	}

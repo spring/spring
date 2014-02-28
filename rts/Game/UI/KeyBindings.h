@@ -3,7 +3,6 @@
 #ifndef KEYBINDINGS_H
 #define KEYBINDINGS_H
 
-#include <stdio.h>
 #include <string>
 #include <vector>
 #include <set>
@@ -13,12 +12,13 @@
 #include "Game/Console.h"
 #include "Game/Action.h"
 
-class CUnit;
-class CSimpleParser;
-
 
 class CKeyBindings : public CommandReceiver
 {
+	public:
+		typedef std::vector<Action> ActionList;
+		typedef std::set<std::string> HotkeyList;
+
 	public:
 		CKeyBindings();
 		~CKeyBindings();
@@ -26,9 +26,6 @@ class CKeyBindings : public CommandReceiver
 		bool Load(const std::string& filename);
 		bool Save(const std::string& filename) const;
 		void Print() const;
-
-		typedef std::vector<Action> ActionList;
-		typedef std::vector<std::string> HotkeyList;
 
 		const ActionList& GetActionList(const CKeySet& ks) const;
 		const HotkeyList& GetHotkeys(const std::string& action) const;
@@ -56,12 +53,10 @@ class CKeyBindings : public CommandReceiver
 
 	protected:
 		typedef std::map<CKeySet, ActionList> KeyMap; // keyset to action
-		KeyMap bindings;
-
 		typedef std::map<std::string, HotkeyList> ActionMap; // action to keyset
+		KeyMap bindings;
 		ActionMap hotkeys;
 
-	protected:
 		// commands that use both Up and Down key presses
 		std::set<std::string> statefulCommands;
 
