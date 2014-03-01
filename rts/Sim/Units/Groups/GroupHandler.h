@@ -40,8 +40,8 @@ public:
 
 	void Update();
 
-	void GroupCommand(int num);
-	void GroupCommand(int num, const std::string& cmd);
+	bool GroupCommand(int num);
+	bool GroupCommand(int num, const std::string& cmd);
 
 	CGroup* CreateNewGroup();
 	void RemoveGroup(CGroup* group);
