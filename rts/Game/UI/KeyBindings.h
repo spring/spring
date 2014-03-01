@@ -13,6 +13,7 @@
 #include "Game/Action.h"
 
 
+
 class CKeyBindings : public CommandReceiver
 {
 	public:
@@ -28,6 +29,7 @@ class CKeyBindings : public CommandReceiver
 		void Print() const;
 
 		const ActionList& GetActionList(const CKeySet& ks) const;
+		const ActionList& GetActionList(const CKeyChain& kc) const;
 		const HotkeyList& GetHotkeys(const std::string& action) const;
 
 		virtual void PushAction(const Action&);
@@ -35,6 +37,10 @@ class CKeyBindings : public CommandReceiver
 
 		int GetFakeMetaKey() const { return fakeMetaKey; }
 
+		// Receive configuration notifications (for KeyChainTimeout)
+		void ConfigNotify(const std::string& key, const std::string& value);
+
+		int GetKeyChainTimeout() const { return keyChainTimeout; }
 
 	protected:
 		void LoadDefaults();
@@ -64,6 +70,7 @@ class CKeyBindings : public CommandReceiver
 		bool buildHotkeyMap;
 	private:
 		bool debugEnabled;
+		int keyChainTimeout;
 };
 
 
