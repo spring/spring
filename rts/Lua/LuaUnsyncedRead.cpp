@@ -2110,14 +2110,17 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 
 	const CKeyBindings::ActionList& actions = keyBindings->GetActionList(ks);
 
+	int i = 1;
 	lua_newtable(L);
-	for (unsigned int i = 0; i < actions.size(); i++) {
-		const Action& action = actions[i];
+	for (const Action& action: actions) {
 		lua_newtable(L);
-		lua_pushsstring(L, action.command);
-		lua_pushsstring(L, action.extra);
-		lua_rawset(L, -3);
-		lua_rawseti(L, -2, i + 1);
+			lua_pushsstring(L, action.command);
+			lua_pushsstring(L, action.extra);
+			lua_rawset(L, -3);
+			LuaPushNamedString(L, "command",   action.command);
+			LuaPushNamedString(L, "extra",     action.extra);
+			LuaPushNamedString(L, "boundWith", action.boundWith);
+		lua_rawseti(L, -2, i++);
 	}
 	return 1;
 }
