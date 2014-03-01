@@ -210,6 +210,7 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	{ "Any+`,Any+`",    "drawlabel" },
 	{ "Any+\\,Any+\\",  "drawlabel" },
 	{ "Any+~,Any+~",    "drawlabel" },
+	{ "Any+§,Any+§",    "drawlabel" },
 
 	{    "Any+`",    "drawinmap"  },
 	{ "Up+Any+`",    "drawinmap"  },
@@ -217,6 +218,8 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	{ "Up+Any+\\",   "drawinmap"  },
 	{    "Any+~",    "drawinmap"  },
 	{ "Up+Any+~",    "drawinmap"  },
+	{    "Any+§",    "drawinmap"  },
+	{ "Up+Any+§",    "drawinmap"  },
 
 	{    "Any+up",       "moveforward"  },
 	{ "Up+Any+up",       "moveforward"  },

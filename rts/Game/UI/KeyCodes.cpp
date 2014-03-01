@@ -142,6 +142,7 @@ void CKeyCodes::Reset()
 		}
 	}
 
+	AddPair("§", 0xA7);
 	AddPair("~", SDLK_BACKQUOTE);
 	AddPair("tilde", SDLK_BACKQUOTE);
 	AddPair("backquote", SDLK_BACKQUOTE);
