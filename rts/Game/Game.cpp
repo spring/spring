@@ -885,7 +885,9 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	}
 
 	const CKeySet ks(key, false);
+	if (!isRepeat) curKeyChain.push_back(key, spring_gettime());
 
+	// hotbind - FIXME deprecated, replace with a widget!
 	if (!hotBinding.empty()) {
 		if (key == SDLK_ESCAPE) {
 			hotBinding.clear();
@@ -898,26 +900,31 @@ int CGame::KeyPressed(int key, bool isRepeat)
 			hotBinding.clear();
 			LOG("%s", cmd.c_str());
 		}
+		curKeyChain.clear();
 		return 0;
 	}
 
 	// Get the list of possible key actions
-	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
+	//LOG_L(L_DEBUG, "curKeyChain: %s", curKeyChain.GetString().c_str());
+	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(curKeyChain);
+
 	if (userWriting) {
 		for (const Action& action: actionList) {
 			if (ProcessKeyPressAction(key, action)) {
 				// the key was used, ignore it (ex: alt+a)
-				ignoreNextChar = (actionIndex < (actionList.size() - 1));
+				ignoreNextChar = true;
 				break;
 			}
 		}
 
+		curKeyChain.clear(); // no chains during chatting!
 		return 0;
 	}
 
 	// try the input receivers
 	for (CInputReceiver* recv: GetInputReceivers()) {
 		if (recv && recv->KeyPressed(key, isRepeat)) {
+			//curKeyChain.clear();
 			return 0;
 		}
 	}
@@ -925,6 +932,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	// try our list of actions
 	for (const Action& action: actionList) {
 		if (ActionPressed(key, action, isRepeat)) {
+			//curKeyChain.clear();
 			return 0;
 		}
 	}
@@ -942,13 +950,15 @@ int CGame::KeyPressed(int key, bool isRepeat)
 
 int CGame::KeyReleased(int k)
 {
-	if ((userWriting) && (((k>=' ') && (k<='Z')) || (k==8) || (k==190))) {
+	if ((userWriting) && (((k>=' ') && (k<='Z')) || (k==8) || (k==190))) { //FIXME use a function? (also wtf is 190?)
+		//curKeyChain.clear();
 		return 0;
 	}
 
 	// try the input receivers
 	for (CInputReceiver* recv: GetInputReceivers()) {
 		if (recv && recv->KeyReleased(k)) {
+			//curKeyChain.clear();
 			return 0;
 		}
 	}
@@ -958,6 +968,7 @@ int CGame::KeyReleased(int k)
 	const CKeyBindings::ActionList& al = keyBindings->GetActionList(ks);
 	for (const Action& action: al) {
 		if (ActionReleased(action)) {
+			//curKeyChain.clear();
 			return 0;
 		}
 	}

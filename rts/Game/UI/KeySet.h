@@ -4,7 +4,9 @@
 #define KEYSET_H
 
 #include <string>
-#include <map>
+#include <deque>
+#include "System/Misc/SpringTime.h"
+
 
 class CKeySet {
 	public:
@@ -44,6 +46,11 @@ class CKeySet {
 			return false;
 		}
 
+		bool fit(const CKeySet& ks) const
+		{
+			return (key == ks.key) && ((modifiers == ks.modifiers) || AnyMod() || ks.AnyMod());
+		}
+
 		bool operator==(const CKeySet& ks) const
 		{
 			return ((key == ks.key) && (modifiers == ks.modifiers));
@@ -60,6 +67,61 @@ class CKeySet {
 	protected:
 		int key;
 		unsigned char modifiers;
+};
+
+
+class CKeyChain : public std::deque<CKeySet>
+{
+	public:
+		bool operator<(const CKeyChain& kc) const
+		{
+			if (size() < kc.size()) { return true;  }
+			if (size() > kc.size()) { return false; }
+			if (empty())            { return false; }
+			return (back() < kc.back());
+		}
+
+		bool operator==(const CKeyChain& kc) const
+		{
+			if (size() < kc.size())
+				return false;
+
+			return std::equal(kc.rbegin(), kc.rend(), rbegin());
+		}
+
+		bool fit(const CKeyChain& kc) const
+		{
+			if (size() < kc.size())
+				return false;
+
+			return std::equal(kc.rbegin(), kc.rend(), rbegin(), [](const CKeySet& a, const CKeySet& b) { return a.fit(b); });
+		}
+
+		std::string GetString() const
+		{
+			std::string s;
+			for (const CKeySet& ks: *this) {
+				if (!s.empty()) s += ",";
+				s += ks.GetString(true);
+			}
+			return s;
+		}
+};
+
+
+class CTimedKeyChain : public CKeyChain
+{
+	public:
+		std::deque<spring_time> times;
+
+		void clear()
+		{
+			CKeyChain::clear();
+			times.clear();
+		}
+
+		void push_back(const int key, const spring_time t);
+		void emplace_back(const CKeySet& ks, const spring_time t) { assert(false); }
 };
 
 

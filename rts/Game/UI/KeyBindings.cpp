@@ -11,6 +11,7 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
+#include "System/Config/ConfigHandler.h"
 
 
 #define LOG_SECTION_KEY_BINDINGS "KeyBindings"
@@ -22,6 +23,8 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_KEY_BINDINGS)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_KEY_BINDINGS
 
+
+CONFIG(int, KeyChainTimeout).defaultValue(750).minimumValue(0).description("Timeout in milliseconds waiting for a key chain shortcut.");
 
 
 CKeyBindings* keyBindings = NULL;
@@ -208,8 +211,8 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	{ "Up+Any+`",    "drawinmap"  },
 	{    "Any+\\",   "drawinmap"  },
 	{ "Up+Any+\\",   "drawinmap"  },
-	{    "Any+~", "drawinmap"  },
-	{ "Up+Any+~", "drawinmap"  },
+	{    "Any+~",    "drawinmap"  },
+	{ "Up+Any+~",    "drawinmap"  },
 
 	{    "Any+up",       "moveforward"  },
 	{ "Up+Any+up",       "moveforward"  },
@@ -228,7 +231,6 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	{ "Up+Any+ctrl",     "moveslow"     },
 	{    "Any+shift",    "movefast"     },
 	{ "Up+Any+shift",    "movefast"     },
-
 
 	// selection keys
 	{ "Ctrl+a",    "select AllMap++_ClearSelection_SelectAll+"                                         },
@@ -251,6 +253,7 @@ CKeyBindings::CKeyBindings()
 	: fakeMetaKey(1)
 	, buildHotkeyMap(true)
 	, debugEnabled(false)
+	, keyChainTimeout(750)
 {
 	statefulCommands.insert("drawinmap");
 	statefulCommands.insert("moveforward");
@@ -275,6 +278,8 @@ CKeyBindings::CKeyBindings()
 	RegisterAction("keyprint");
 	RegisterAction("keysyms");
 	RegisterAction("keycodes");
+
+	configHandler->NotifyOnChange(this);
 }
 
 
@@ -312,7 +317,7 @@ const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) c
 		}
 		else if (haveNormal && haveAnyMod) {
 			// combine the two lists (normal first)
-			static ActionList merged; //FIXME this breaks threading!
+			static thread_local ActionList merged;
 			merged = nit->second;
 			merged.insert(merged.end(), ait->second.begin(), ait->second.end());
 			alPtr = &merged;
@@ -335,6 +340,23 @@ const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) c
 }
 
 
+const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeyChain& kc) const
+{
+	static thread_local ActionList out;
+	out.clear();
+
+	if (kc.empty())
+		return out;
+
+	const CKeyBindings::ActionList& al = GetActionList(kc.back());
+	for (const Action& action: al) {
+		if (kc.fit(action.keyChain))
+			out.push_back(action);
+	}
+	return out;
+}
+
+
 const CKeyBindings::HotkeyList& CKeyBindings::GetHotkeys(const std::string& action) const
 {
 	ActionMap::const_iterator it = hotkeys.find(action);
@@ -350,16 +372,32 @@ const CKeyBindings::HotkeyList& CKeyBindings::GetHotkeys(const std::string& acti
 
 bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 {
-	CKeySet ks;
-	if (!ks.Parse(keystr)) {
-		LOG_L(L_WARNING, "Bind: could not parse key: %s", keystr.c_str());
-		return false;
-	}
 	Action action(line);
 	action.boundWith = keystr;
 	if (action.command.empty()) {
 		LOG_L(L_WARNING, "Bind: empty action: %s", line.c_str());
 		return false;
+	}
+
+	CKeySet ks;
+	if (keystr.find(",") != std::string::npos) {
+		std::stringstream ss(keystr);
+		while(ss.good()) {
+			char kcstr[256];
+			ss.getline(kcstr, 256, ',');
+			std::string kstr(kcstr);
+			if (!ks.Parse(kstr)) {
+				LOG_L(L_WARNING, "Bind: could not parse key: %s in %s", kstr.c_str(), keystr.c_str());
+				return false;
+			}
+			action.keyChain.emplace_back(ks);
+		}
+	} else {
+		if (!ks.Parse(keystr)) {
+			LOG_L(L_WARNING, "Bind: could not parse key: %s", keystr.c_str());
+			return false;
+		}
+		action.keyChain.emplace_back(ks);
 	}
 
 	// Try to be safe, force AnyMod mode for stateful commands
@@ -502,7 +540,12 @@ bool CKeyBindings::RemoveCommandFromList(ActionList& al, const std::string& comm
 }
 
 
-
+void CKeyBindings::ConfigNotify(const std::string& key, const std::string& value)
+{
+	if (key == "KeyChainTimeout") {
+		keyChainTimeout = atoi(value.c_str());
+	}
+}
 
 
 /******************************************************************************/
@@ -623,13 +666,9 @@ void CKeyBindings::BuildHotkeyMap()
 	hotkeys.clear();
 
 	for (const auto& p: bindings) {
-		const CKeySet ks = p.first;
-		const ActionList& al = p.second;
-		const std::string keystr = ks.GetString(true);
-
-		for (const Action& action: al) {
+		for (const Action& action: p.second) {
 			HotkeyList& hl = hotkeys[action.command + ((action.extra == "") ? "" : " " + action.extra)];
-			hl.insert(keystr);
+			hl.insert(action.boundWith);
 		}
 	}
 }
