@@ -904,8 +904,8 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	// Get the list of possible key actions
 	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
 	if (userWriting) {
-		for (unsigned int actionIndex = 0; actionIndex < actionList.size(); actionIndex++) {
-			if (ProcessKeyPressAction(key, actionList[actionIndex])) {
+		for (const Action& action: actionList) {
+			if (ProcessKeyPressAction(key, action)) {
 				// the key was used, ignore it (ex: alt+a)
 				ignoreNextChar = (actionIndex < (actionList.size() - 1));
 				break;
@@ -916,26 +916,23 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	}
 
 	// try the input receivers
-	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::list<CInputReceiver*>::iterator ri;
-	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		CInputReceiver* recv = *ri;
+	for (CInputReceiver* recv: GetInputReceivers()) {
 		if (recv && recv->KeyPressed(key, isRepeat)) {
 			return 0;
 		}
 	}
 
 	// try our list of actions
-	for (unsigned int i = 0; i < actionList.size(); ++i) {
-		if (ActionPressed(key, actionList[i], isRepeat)) {
+	for (const Action& action: actionList) {
+		if (ActionPressed(key, action, isRepeat)) {
 			return 0;
 		}
 	}
 
 	// maybe a widget is interested?
 	if (luaUI != NULL) {
-		for (unsigned int i = 0; i < actionList.size(); ++i) {
-			luaUI->GotChatMsg(actionList[i].rawline, false);
+		for (const Action& action: actionList) {
+			luaUI->GotChatMsg(action.rawline, false);
 		}
 	}
 
@@ -950,10 +947,7 @@ int CGame::KeyReleased(int k)
 	}
 
 	// try the input receivers
-	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::list<CInputReceiver*>::iterator ri;
-	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		CInputReceiver* recv = *ri;
+	for (CInputReceiver* recv: GetInputReceivers()) {
 		if (recv && recv->KeyReleased(k)) {
 			return 0;
 		}
@@ -962,8 +956,8 @@ int CGame::KeyReleased(int k)
 	// try our list of actions
 	CKeySet ks(k, true);
 	const CKeyBindings::ActionList& al = keyBindings->GetActionList(ks);
-	for (int i = 0; i < (int)al.size(); ++i) {
-		if (ActionReleased(al[i])) {
+	for (const Action& action: al) {
+		if (ActionReleased(action)) {
 			return 0;
 		}
 	}
