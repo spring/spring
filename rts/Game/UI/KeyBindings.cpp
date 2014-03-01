@@ -321,7 +321,7 @@ const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) c
 		}
 		else if (haveNormal && haveAnyMod) {
 			// combine the two lists (normal first)
-			static thread_local ActionList merged;
+			static __local ActionList merged; //FIXME switch to thread_local when all buildbots are using >=gcc4.7
 			merged = nit->second;
 			merged.insert(merged.end(), ait->second.begin(), ait->second.end());
 			alPtr = &merged;
@@ -346,7 +346,7 @@ const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) c
 
 const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeyChain& kc) const
 {
-	static thread_local ActionList out;
+	static __local ActionList out; //FIXME switch to thread_local when all buildbots are using >=gcc4.7
 	out.clear();
 
 	if (kc.empty())
