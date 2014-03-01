@@ -8,9 +8,8 @@
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
 
-#include <cstdlib>
-#include <boost/cstdint.hpp>
 #include <SDL_keycode.h>
+
 
 #define DISALLOW_RELEASE_BINDINGS
 
