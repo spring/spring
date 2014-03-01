@@ -72,7 +72,7 @@ void CGroupHandler::Update()
 	}
 }
 
-void CGroupHandler::GroupCommand(int num)
+bool CGroupHandler::GroupCommand(int num)
 {
 	std::string cmd = "";
 
@@ -88,10 +88,10 @@ void CGroupHandler::GroupCommand(int num)
 		cmd = "selecttoggle";
 	}
 
-	GroupCommand(num, cmd);
+	return GroupCommand(num, cmd);
 }
 
-void CGroupHandler::GroupCommand(int num, const std::string& cmd)
+bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 {
 	CGroup* group = groups[num];
 
@@ -111,7 +111,7 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
 			selectedUnitsHandler.AddUnit(*ui);
 		}
-		return;
+		return true;
 	}
 	else if (cmd == "selectclear")  {
 		// do not select the group, just remove its members from the current selection
@@ -119,7 +119,7 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
 			selectedUnitsHandler.RemoveUnit(*ui);
 		}
-		return;
+		return true;
 	}
 	else if (cmd == "selecttoggle")  {
 		// do not select the group, just toggle its members with the current selection
@@ -132,16 +132,20 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 				selectedUnitsHandler.RemoveUnit(*ui);
 			}
 		}
-		return;
+		return true;
 	}
 
-	if ((selectedUnitsHandler.IsGroupSelected(num)) && !group->units.empty()) {
+	if (group->units.empty())
+		return false;
+
+	if (selectedUnitsHandler.IsGroupSelected(num)) {
 		const float3 groupCenter = group->CalculateCenter();
 		camHandler->CameraTransition(0.5f);
 		camHandler->GetCurrentController().SetPos(groupCenter);
 	}
 
 	selectedUnitsHandler.SelectGroup(num);
+	return true;
 }
 
 CGroup* CGroupHandler::CreateNewGroup()

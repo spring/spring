@@ -1201,9 +1201,9 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (!action.IsRepeat()) {
-			grouphandlers[gu->myTeam]->GroupCommand(groupId);
+			return grouphandlers[gu->myTeam]->GroupCommand(groupId);
 		}
-		return true;
+		return false;
 	}
 
 private:
