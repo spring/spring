@@ -207,6 +207,10 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	// NOTE: Up bindings are currently converted to press bindings
 	//       (see KeySet.cpp / DISALLOW_RELEASE_BINDINGS)
 
+	{ "Any+`,Any+`",    "drawlabel" },
+	{ "Any+\\,Any+\\",  "drawlabel" },
+	{ "Any+~,Any+~",    "drawlabel" },
+
 	{    "Any+`",    "drawinmap"  },
 	{ "Up+Any+`",    "drawinmap"  },
 	{    "Any+\\",   "drawinmap"  },
