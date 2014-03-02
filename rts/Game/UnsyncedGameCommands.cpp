@@ -191,25 +191,39 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 		return true;
 	}
 	else if (action.command == "chatswitchally") {
-		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+		if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
+			// already are in ally chat -> toggle it off
+			userInput = userInput.substr(2);
+			writingPos = std::max(0, writingPos - 2);
+			userInputPrefix = "";
+		}
+		else if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
+			// are in spec chat -> switch it to ally chat
 			userInput[0] = 'a';
+			userInputPrefix = "a:";
 		} else {
 			userInput = "a:" + userInput;
 			writingPos += 2;
+			userInputPrefix = "a:";
 		}
-
-		userInputPrefix = "a:";
 		return true;
 	}
 	else if (action.command == "chatswitchspec") {
-		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+		if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
+			// already are in spec chat -> toggle it off
+			userInput = userInput.substr(2);
+			writingPos = std::max(0, writingPos - 2);
+			userInputPrefix = "";
+		}
+		else if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
+			// are in ally chat -> switch it to spec chat
 			userInput[0] = 's';
+			userInputPrefix = "s:";
 		} else {
 			userInput = "s:" + userInput;
 			writingPos += 2;
+			userInputPrefix = "s:";
 		}
-
-		userInputPrefix = "s:";
 		return true;
 	}
 	else if (action.command == "pastetext") {
@@ -273,12 +287,12 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 		writingPos = p;
 		return true;
 	}
-	else if ((action.command == "edit_prev_line") && chatting) { //TODO It don't seems to work correctly with utf-8
+	else if ((action.command == "edit_prev_line") && chatting) {
 		userInput = consoleHistory->PrevLine(userInput);
 		writingPos = (int)userInput.length();
 		return true;
 	}
-	else if ((action.command == "edit_next_line") && chatting) { //TODO It don't seems to work correctly with utf-8
+	else if ((action.command == "edit_next_line") && chatting) {
 		userInput = consoleHistory->NextLine(userInput);
 		writingPos = (int)userInput.length();
 		return true;
@@ -1324,7 +1338,6 @@ public:
 		SetBoolArg(newPause, action.GetArgs());
 		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
 		return true;
-
 	}
 
 };
