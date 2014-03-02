@@ -1080,8 +1080,8 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 			if (activeController->userWriting && !catched){
 				auto ac = activeController;
-				if (ac->ignoreNextChar && (ac->ignoreChar == utf8Text[0])) {
-					utf8Text = utf8Text.substr(1);
+				if (ac->ignoreNextChar) {
+					utf8Text = utf8Text.substr(Utf8NextChar(utf8Text, 0));
 				}
 				ac->writingPos = Clamp<int>(ac->writingPos, 0, ac->userInput.length());
 				ac->userInput.insert(ac->writingPos, utf8Text);

@@ -102,7 +102,14 @@ bool CKeyCodes::IsModifier(int code)
 }
 
 
-void CKeyCodes::AddPair(const std::string& name, int code)
+bool CKeyCodes::IsPrintable(int code)
+{
+	return (printableCodes.find(code) != printableCodes.end());
+}
+
+
+
+void CKeyCodes::AddPair(const std::string& name, const int code, const bool printable)
 {
 	if (nameToCode.find(name) == nameToCode.end()) {
 		nameToCode[name] = code;
@@ -110,6 +117,8 @@ void CKeyCodes::AddPair(const std::string& name, int code)
 	if (codeToName.find(code) == codeToName.end()) {
 		codeToName[code] = name;
 	}
+	if (printable)
+		printableCodes.insert(code);
 }
 
 
@@ -132,38 +141,38 @@ void CKeyCodes::Reset()
 	AddPair("pause",     SDLK_PAUSE);
 	AddPair("esc",       SDLK_ESCAPE);
 	AddPair("escape",    SDLK_ESCAPE);
-	AddPair("space",     SDLK_SPACE);
+	AddPair("space",     SDLK_SPACE, true);
 	AddPair("delete",    SDLK_DELETE);
 
 	// ASCII mapped keysyms
 	for (unsigned char i = ' '; i <= 'z'; ++i) {
 		if (!isupper(i)) {
-			AddPair(std::string(1, i), i);
+			AddPair(std::string(1, i), i, true);
 		}
 	}
 
-	AddPair("§", 0xA7);
-	AddPair("~", SDLK_BACKQUOTE);
-	AddPair("tilde", SDLK_BACKQUOTE);
-	AddPair("backquote", SDLK_BACKQUOTE);
+	AddPair("§", 0xA7, true);
+	AddPair("~", SDLK_BACKQUOTE, true);
+	AddPair("tilde", SDLK_BACKQUOTE, true);
+	AddPair("backquote", SDLK_BACKQUOTE, true);
 
 	/* Numeric keypad */
-	AddPair("numpad0", SDLK_KP_0);
-	AddPair("numpad1", SDLK_KP_1);
-	AddPair("numpad2", SDLK_KP_2);
-	AddPair("numpad3", SDLK_KP_3);
-	AddPair("numpad4", SDLK_KP_4);
-	AddPair("numpad5", SDLK_KP_5);
-	AddPair("numpad6", SDLK_KP_6);
-	AddPair("numpad7", SDLK_KP_7);
-	AddPair("numpad8", SDLK_KP_8);
-	AddPair("numpad9", SDLK_KP_9);
-	AddPair("numpad.", SDLK_KP_PERIOD);
-	AddPair("numpad/", SDLK_KP_DIVIDE);
-	AddPair("numpad*", SDLK_KP_MULTIPLY);
-	AddPair("numpad-", SDLK_KP_MINUS);
-	AddPair("numpad+", SDLK_KP_PLUS);
-	AddPair("numpad=", SDLK_KP_EQUALS);
+	AddPair("numpad0", SDLK_KP_0, true);
+	AddPair("numpad1", SDLK_KP_1, true);
+	AddPair("numpad2", SDLK_KP_2, true);
+	AddPair("numpad3", SDLK_KP_3, true);
+	AddPair("numpad4", SDLK_KP_4, true);
+	AddPair("numpad5", SDLK_KP_5, true);
+	AddPair("numpad6", SDLK_KP_6, true);
+	AddPair("numpad7", SDLK_KP_7, true);
+	AddPair("numpad8", SDLK_KP_8, true);
+	AddPair("numpad9", SDLK_KP_9, true);
+	AddPair("numpad.", SDLK_KP_PERIOD, true);
+	AddPair("numpad/", SDLK_KP_DIVIDE, true);
+	AddPair("numpad*", SDLK_KP_MULTIPLY, true);
+	AddPair("numpad-", SDLK_KP_MINUS, true);
+	AddPair("numpad+", SDLK_KP_PLUS, true);
+	AddPair("numpad=", SDLK_KP_EQUALS, true);
 	AddPair("numpad_enter", SDLK_KP_ENTER);
 
 	/* Arrows + Home/End pad */

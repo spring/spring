@@ -62,6 +62,7 @@
 #include "UI/InfoConsole.h"
 #include "UI/InputReceiver.h"
 #include "UI/KeyBindings.h"
+#include "UI/KeyCodes.h"
 #include "UI/MiniMap.h"
 #include "UI/QuitBox.h"
 #include "UI/ResourceBar.h"
@@ -681,9 +682,7 @@ public:
 		if (pos.x >= 0) {
 			inMapDrawer->SetDrawMode(false);
 			inMapDrawer->PromptLabel(pos);
-			if ((action.GetKey() >= SDLK_SPACE) && (action.GetKey() <= SDLK_DELETE)) {
-				game->ignoreNextChar=true;
-			}
+			game->ignoreNextChar = keyCodes->IsPrintable(action.GetKey());
 		} else {
 			LOG_L(L_WARNING, "/DrawLabel: move mouse over the map");
 		}
@@ -1249,11 +1248,7 @@ public:
 		game->userInput = game->userInputPrefix;
 		game->writingPos = (int)game->userInput.length();
 		game->chatting = true;
-		//this command can get called too from console or lua, if so GetKey is -1, don't drop next char then
-		if (action.GetKey() != SDLK_RETURN && action.GetKey() != -1 ) {
-			game->ignoreNextChar = true;
-		}
-
+		game->ignoreNextChar = keyCodes->IsPrintable(action.GetKey());
 		game->consoleHistory->ResetPosition();
 		return true;
 	}

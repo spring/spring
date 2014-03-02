@@ -269,7 +269,6 @@ void CInMapDraw::PromptLabel(const float3& pos)
 	game->userWriting = true;
 	wantLabel = true;
 	game->userPrompt = "Label: ";
-	game->ignoreChar = '~'; // should do something better here
 }
 
 
