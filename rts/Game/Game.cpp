@@ -912,7 +912,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 		for (const Action& action: actionList) {
 			if (ProcessKeyPressAction(key, action)) {
 				// the key was used, ignore it (ex: alt+a)
-				ignoreNextChar = keyCodes->IsPrintable(action.GetKey());
+				ignoreNextChar = keyCodes->IsPrintable(key);
 				break;
 			}
 		}
