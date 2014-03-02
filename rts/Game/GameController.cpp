@@ -12,7 +12,6 @@ CGameController::CGameController()
 	: userWriting(false)
 	, writingPos(0)
 	, ignoreNextChar(false)
-	, ignoreChar(0)
 {
 }
 
