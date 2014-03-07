@@ -3,7 +3,6 @@
 
 #include "KeySet.h"
 #include "KeyCodes.h"
-#include "KeyBindings.h"
 
 #include "System/Log/ILog.h"
 #include "System/Util.h"
@@ -150,34 +149,4 @@ bool CKeySet::Parse(const std::string& token)
 	}
 	
 	return true;
-}
-
-
-/******************************************************************************/
-//
-// CTimedKeyChain
-//
-
-void CTimedKeyChain::push_back(const int key, const spring_time t)
-{
-	assert(keyBindings);
-
-	// clear chain on timeout
-	const auto dropTime = t - spring_msecs(keyBindings->GetKeyChainTimeout());
-	if (!empty() && times.back() < dropTime) {
-		clear();
-	}
-
-	// remove "Ctrl+ctrl" etc. from the tail of the chain (still allow it at front!)
-	if (!empty()) {
-		const auto& ks = back();
-		if (CKeyCodes::IsModifier(ks.Key()) || (ks.Key() == keyBindings->GetFakeMetaKey())) {
-			pop_back();
-			times.pop_back();
-		}
-	}
-
-	// push new to front
-	CKeyChain::emplace_back(key, false);
-	times.emplace_back(t);
 }

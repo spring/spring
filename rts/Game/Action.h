@@ -4,7 +4,6 @@
 #define ACTION_H
 
 #include <string>
-#include "Game/UI/KeySet.h"
 
 class Action
 {
@@ -16,8 +15,6 @@ public:
 	std::string extra;     ///< everything but the first word
 	std::string rawline;   ///< includes the command, case preserved
 	std::string boundWith; ///< the string that defined the binding keyset
-
-	CKeyChain keyChain;    ///< the bounded keychain/keyset
 };
 
 #endif // ACTION_H

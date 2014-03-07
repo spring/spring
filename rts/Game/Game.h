@@ -5,14 +5,15 @@
 
 #include <string>
 #include <map>
+#include <set>
 
 #include "GameController.h"
-#include "Game/UI/KeySet.h"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 
 class IWater;
 class CConsoleHistory;
+class CKeySet;
 class CInfoConsole;
 class LuaParser;
 class LuaInputReceiver;
@@ -187,7 +188,6 @@ public:
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
 
-	CTimedKeyChain curKeyChain;
 	std::string hotBinding;
 	std::string userInputPrefix;
 

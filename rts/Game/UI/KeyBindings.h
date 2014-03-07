@@ -3,6 +3,7 @@
 #ifndef KEYBINDINGS_H
 #define KEYBINDINGS_H
 
+#include <stdio.h>
 #include <string>
 #include <vector>
 #include <set>
@@ -12,14 +13,13 @@
 #include "Game/Console.h"
 #include "Game/Action.h"
 
+class CUnit;
+class CFileHandler;
+class CSimpleParser;
 
 
 class CKeyBindings : public CommandReceiver
 {
-	public:
-		typedef std::vector<Action> ActionList;
-		typedef std::set<std::string> HotkeyList;
-
 	public:
 		CKeyBindings();
 		~CKeyBindings();
@@ -28,8 +28,10 @@ class CKeyBindings : public CommandReceiver
 		bool Save(const std::string& filename) const;
 		void Print() const;
 
+		typedef std::vector<Action> ActionList;
+		typedef std::vector<std::string> HotkeyList;
+
 		const ActionList& GetActionList(const CKeySet& ks) const;
-		const ActionList& GetActionList(const CKeyChain& kc) const;
 		const HotkeyList& GetHotkeys(const std::string& action) const;
 
 		virtual void PushAction(const Action&);
@@ -37,13 +39,12 @@ class CKeyBindings : public CommandReceiver
 
 		int GetFakeMetaKey() const { return fakeMetaKey; }
 
-		// Receive configuration notifications (for KeyChainTimeout)
-		void ConfigNotify(const std::string& key, const std::string& value);
-
-		int GetKeyChainTimeout() const { return keyChainTimeout; }
+	public:
+		static const char NamedKeySetChar = '&';
 
 	protected:
 		void LoadDefaults();
+		void Sanitize();
 		void BuildHotkeyMap();
 
 		bool Bind(const std::string& keystring, const std::string& action);
@@ -52,25 +53,37 @@ class CKeyBindings : public CommandReceiver
 		bool UnBindAction(const std::string& action);
 		bool SetFakeMetaKey(const std::string& keystring);
 		bool AddKeySymbol(const std::string& keysym, const std::string& code);
+		bool AddNamedKeySet(const std::string& name, const std::string& keyset);
+		bool ParseTypeBind(CSimpleParser& parser, const std::string& line);
 
-		static bool RemoveCommandFromList(ActionList& al, const std::string& command);
+		bool ParseKeySet(const std::string& keystr, CKeySet& ks) const;
+		bool RemoveCommandFromList(ActionList& al, const std::string& command);
 
 		bool FileSave(FILE* file) const;
 
 	protected:
 		typedef std::map<CKeySet, ActionList> KeyMap; // keyset to action
-		typedef std::map<std::string, HotkeyList> ActionMap; // action to keyset
 		KeyMap bindings;
+
+		typedef std::map<std::string, HotkeyList> ActionMap; // action to keyset
 		ActionMap hotkeys;
+
+		typedef std::map<std::string, CKeySet> NamedKeySetMap; // user defined keysets
+		NamedKeySetMap namedKeySets;
+
+		struct BuildTypeBinding {
+			std::string keystr;         // principal keyset
+			std::vector<std::string> reqs;   // requirements
+			std::vector<std::string> sorts;  // sorting criteria
+			std::vector<std::string> chords; // enumerated keyset chords
+		};
+		std::vector<BuildTypeBinding> typeBindings;
 
 		// commands that use both Up and Down key presses
 		std::set<std::string> statefulCommands;
 
 		int fakeMetaKey;
-		bool buildHotkeyMap;
-	private:
-		bool debugEnabled;
-		int keyChainTimeout;
+		bool userCommand;
 };
 
 
