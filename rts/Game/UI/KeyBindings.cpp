@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cctype>
 #include <cstring>
+#include <list>
 
 #include "KeyBindings.h"
 #include "KeyCodes.h"
@@ -14,6 +15,7 @@
 #include "System/Log/ILog.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/Util.h"
+#include "System/Config/ConfigHandler.h"
 
 
 #define LOG_SECTION_KEY_BINDINGS "KeyBindings"
@@ -249,6 +251,8 @@ static const std::vector<DefaultBinding> defaultBindings = {
 //
 
 CKeyBindings::CKeyBindings():
+	keyModeResetTime(400),
+	keyModeSustain(false),
 	fakeMetaKey(1),
 	userCommand(true),
 	debugEnabled(false)
@@ -276,25 +280,47 @@ CKeyBindings::CKeyBindings():
 	RegisterAction("keyprint");
 	RegisterAction("keysyms");
 	RegisterAction("keycodes");
+
+	currentBindings = &bindings;
+	modes[""] = &bindings;
+
+  configHandler->NotifyOnChange(this);
 }
 
 
 CKeyBindings::~CKeyBindings()
 {
+  // delete modes' key bindings
+  for (ModeMap::iterator mit = modes.begin(); mit != modes.end(); mit++)
+  {
+    KeyMap* pBindings = mit->second;
+    if (pBindings != &bindings) {
+      delete pBindings;
+    }
+  }
 }
 
 
 /******************************************************************************/
 
 const CKeyBindings::ActionList&
-	CKeyBindings::GetActionList(const CKeySet& ks) const
+	CKeyBindings::GetActionList(const CKeySet& ks)
 {
 	static const ActionList empty;
 	const ActionList* alPtr = &empty;
 
+  // Check if mode reset delay has elapsed
+  if (currentBindings != &bindings) {
+    if (IsModeExpired()) { // Revert to default key bindings if delay has elapsed
+      SwitchMode("");
+    }
+  } else {
+    SustainMode();
+  }
+
 	if (ks.AnyMod()) {
-		KeyMap::const_iterator it = bindings.find(ks);
-		if (it == bindings.end()) {
+		KeyMap::const_iterator it = currentBindings->find(ks);
+		if (it == currentBindings->end()) {
 			alPtr = &empty;
 		} else {
 			alPtr = &(it->second);
@@ -304,10 +330,10 @@ const CKeyBindings::ActionList&
 		// have to check for an AnyMod keyset as well as the normal one
 		CKeySet anyMod = ks;
 		anyMod.SetAnyBit();
-		KeyMap::const_iterator nit = bindings.find(ks);
-		KeyMap::const_iterator ait = bindings.find(anyMod);
-		const bool haveNormal = (nit != bindings.end());
-		const bool haveAnyMod = (ait != bindings.end());
+		KeyMap::const_iterator nit = currentBindings->find(ks);
+		KeyMap::const_iterator ait = currentBindings->find(anyMod);
+		const bool haveNormal = (nit != currentBindings->end());
+		const bool haveAnyMod = (ait != currentBindings->end());
 		if (!haveNormal && !haveAnyMod) {
 			alPtr = &empty;
 		}
@@ -357,8 +383,20 @@ const CKeyBindings::HotkeyList& CKeyBindings::GetHotkeys(const std::string& acti
 
 bool CKeyBindings::Bind(const string& keystr, const string& line)
 {
+  std::string modeName;
+
+  // If line contains a @mode string, then this bind activates a mode, i.e. "binding a key to a mode"
+  if (line[0] == ModeKeySetChar) {
+    std::string newModeName;
+    int end = line.find_first_of(" \t");
+    newModeName = line.substr(1,end);
+    if (modes.find(newModeName) == modes.end()) {
+      CreateMode(newModeName);
+    }
+  }
+
 	CKeySet ks;
-	if (!ParseKeySet(keystr, ks)) {
+	if (!ParseModeAndKeySet(keystr, ks, modeName)) {
 		LOG_L(L_WARNING, "Bind: could not parse key: %s", keystr.c_str());
 		return false;
 	}
@@ -374,10 +412,14 @@ bool CKeyBindings::Bind(const string& keystr, const string& line)
 		ks.SetAnyBit();
 	}
 
-	KeyMap::iterator it = bindings.find(ks);
-	if (it == bindings.end()) {
+	// Use specific bindings for the mode if appropriate
+	KeyMap* effectiveBindings = GetModeBindings(modeName, true);
+
+	//KeyMap::iterator it = bindings.find(ks);
+	KeyMap::iterator it = effectiveBindings->find(ks);
+	if (it == effectiveBindings->end()) {
 		// new entry, push it
-		ActionList& al = bindings[ks];
+		ActionList& al = (*effectiveBindings)[ks];
 		al.push_back(action);
 	} else {
 		if (it->first != ks) {
@@ -405,22 +447,60 @@ bool CKeyBindings::Bind(const string& keystr, const string& line)
 }
 
 
-bool CKeyBindings::UnBind(const string& keystr, const string& command)
+bool CKeyBindings::UnBind(const string& keystr)
 {
+std::string modeName;
 	CKeySet ks;
-	if (!ParseKeySet(keystr, ks)) {
+
+	if (!ParseModeAndKeySet(keystr, ks, modeName)) {
 		LOG_L(L_WARNING, "UnBind: could not parse key: %s", keystr.c_str());
 		return false;
 	}
 	bool success = false;
 
-	KeyMap::iterator it = bindings.find(ks);
-	if (it != bindings.end()) {
+  KeyMap* effectiveBindings = GetModeBindings(modeName); // this is the mode triggers the bind, associated with keystr
+	KeyMap::iterator it = effectiveBindings->find(ks);
+  std::list<std::string> modesToCheck;
+	if (it != effectiveBindings->end()) {
+    ActionList& al = it->second;
+    for (ActionList::iterator ait = al.begin(); ait != al.end(); ait++) {
+      if (IsModeSwitchAction(ait->command)) {
+        modesToCheck.push_back(ait->command.substr(1));
+      }
+    }
+    effectiveBindings->erase(it);
+	}
+
+  for (auto lit = modesToCheck.begin(); lit != modesToCheck.end(); lit++) {
+    CheckAndCleanModesByName(*lit);
+	}
+	return success;
+
+}
+
+bool CKeyBindings::UnBind(const string& keystr, const string& command)
+{
+  std::string modeName;
+	CKeySet ks;
+
+	if (!ParseModeAndKeySet(keystr, ks, modeName)) {
+		LOG_L(L_WARNING, "UnBind: could not parse key: %s", keystr.c_str());
+		return false;
+	}
+	bool success = false;
+
+  KeyMap* effectiveBindings = GetModeBindings(modeName); // this is the mode triggers the bind, associated with keystr
+	KeyMap::iterator it = effectiveBindings->find(ks);
+	if (it != effectiveBindings->end()) {
 		ActionList& al = it->second;
 		success = RemoveCommandFromList(al, command);
 		if (al.empty()) {
-			bindings.erase(it);
+			effectiveBindings->erase(it);
 		}
+	}
+  if (IsModeSwitchAction(command)) {
+    std::string modeActivateName = command.substr(1);
+    CheckAndCleanModesByName(modeActivateName);
 	}
 	return success;
 }
@@ -428,18 +508,37 @@ bool CKeyBindings::UnBind(const string& keystr, const string& command)
 
 bool CKeyBindings::UnBindKeyset(const std::string& keystr)
 {
+  std::string modeName;
 	CKeySet ks;
-	if (!ParseKeySet(keystr, ks)) {
+
+	if (!ParseModeAndKeySet(keystr, ks, modeName)) {
 		LOG_L(L_WARNING, "UnBindKeyset: could not parse key: %s", keystr.c_str());
 		return false;
 	}
 	bool success = false;
 
-	KeyMap::iterator it = bindings.find(ks);
-	if (it != bindings.end()) {
-		bindings.erase(it);
+  std::list<KeyMap* > modeBindingsList;                       // there should only be one KeyMap for a given key, but users can make mistakes...
+	KeyMap* effectiveBindings = GetModeBindings(modeName);
+	KeyMap::iterator kit = effectiveBindings->find(ks);
+	std::list<std::string> modeActivateNames;
+	if (kit != effectiveBindings->end()) {
+	  ActionList& al = kit->second;
+	  // if the ActionList contains a key mode activation and it is the only activation for that key mode, it needs to be cleaned up
+
+    for (ActionList::iterator ait = al.begin(); ait != al.end(); ait++) {
+      Action& act = *ait;
+      if (IsModeSwitchAction(act.command)) {
+        modeActivateNames.push_back(act.command.substr(1));
+      }
+    }
+		effectiveBindings->erase(kit);
 		success = true;
 	}
+
+	for (auto lit = modeActivateNames.begin(); lit != modeActivateNames.end(); lit++) {
+	  CheckAndCleanModesByName(*lit);
+	}
+
 	return success;
 }
 
@@ -448,21 +547,31 @@ bool CKeyBindings::UnBindAction(const std::string& command)
 {
 	bool success = false;
 
-	KeyMap::iterator it = bindings.begin();
-	while (it != bindings.end()) {
-		ActionList& al = it->second;
-		if (RemoveCommandFromList(al, command)) {
-			success = true;
-		}
-		if (al.empty()) {
-			KeyMap::iterator it_next = it;
-			++it_next;
-			bindings.erase(it);
-			it = it_next;
-		} else {
-			++it;
-		}
-	}
+  LOG_L(L_INFO, "UnBindAction(%s)", command.c_str());
+
+
+  for (ModeMap::iterator mit = modes.begin(); mit != modes.end(); mit++) {
+    KeyMap* effectiveBindings = mit->second;
+	  KeyMap::iterator it = effectiveBindings->begin();
+	  while (it != effectiveBindings->end()) {
+		  ActionList& al = it->second;
+		  if (RemoveCommandFromList(al, command)) {
+  			success = true;
+	  	}
+		  if (al.empty()) {
+			  KeyMap::iterator it_next = it;
+			  ++it_next;
+			  effectiveBindings->erase(it);
+			  it = it_next;
+		  } else {
+			  ++it;
+		  }
+	  }
+  }
+  if (IsModeSwitchAction(command)) {
+    std::string modeActivateName = command.substr(1);
+    CheckAndCleanModesByName(modeActivateName);
+  }
 	return success;
 }
 
@@ -514,12 +623,10 @@ bool CKeyBindings::RemoveCommandFromList(ActionList& al, const std::string& comm
 }
 
 
-bool CKeyBindings::ParseKeySet(const string& keystr, CKeySet& ks) const
+bool CKeyBindings::ParseModeAndKeySet(const string& keystr, CKeySet& ks, std::string& modeName) const
 {
-	if (keystr[0] != NamedKeySetChar) {
-		return ks.Parse(keystr);
-	}
-	else {
+  modeName = "";
+	if (keystr[0] == NamedKeySetChar) {
 		const string keysetName = keystr.substr(1);
 		NamedKeySetMap::const_iterator it = namedKeySets.find(keysetName);
 		if (it !=  namedKeySets.end()) {
@@ -527,8 +634,157 @@ bool CKeyBindings::ParseKeySet(const string& keystr, CKeySet& ks) const
 		} else {
 			return false;
 		}
+	} else if (keystr[0] == ModeKeySetChar) {
+	  auto endPos = keystr.find('+')-1;
+	  if (endPos != string::npos) {
+      modeName = keystr.substr(1,endPos);
+	  } else {
+	    return false;
+	  }
+	  // +1 char for the '@' symbol and +1 for the trailing '+' after the modeName
+	  std::string remaining = keystr.substr(1 + modeName.length() + 1 );
+	  return ks.Parse(remaining);
+	} else {
+		return ks.Parse(keystr);
 	}
+
 	return true;
+}
+
+
+void CKeyBindings::CreateMode(const std::string& modeName)
+{
+  std::string normalizedModeName;
+
+  // strip off the '@' character if it exists
+  if (!modeName.empty() && modeName[0] == '@') {
+    normalizedModeName = modeName.substr(1);
+  } else {
+    normalizedModeName = modeName;
+  }
+  if (modes.find(normalizedModeName) != modes.end()) return;
+  LOG_L(L_INFO, "Created mode %s", normalizedModeName.c_str());
+  modes.emplace(normalizedModeName,new KeyMap());
+}
+
+void CKeyBindings::RemoveMode(const std::string& modeName)
+{
+  if (modeName == "") {
+    LOG_L(L_WARNING, "RemoveMode: cannot remove the default bindings as a mode");
+    return;
+  }
+  ModeMap::iterator it = modes.find(modeName);
+  if (it != modes.end()) return;
+  if (currentBindings == it->second) {
+    SwitchMode("");
+  }
+  KeyMap* bindings = it->second;
+  delete bindings;
+  modes.erase(it);
+}
+
+CKeyBindings::KeyMap* CKeyBindings::GetModeBindings(const std::string& modeName, bool create)
+{
+  std::string normalizedModeName = modeName;
+  if (!modeName.empty() && modeName[0] == ModeKeySetChar) {
+    normalizedModeName = modeName.substr(1);
+  }
+  CKeyBindings::KeyMap* effectiveBindings = &bindings; // default
+  if (normalizedModeName != "") {
+    ModeMap::iterator it = modes.find(normalizedModeName);
+    if (it != modes.end()) {
+      effectiveBindings = it->second;
+    } else if (create) {
+      CreateMode(normalizedModeName);
+    } else {
+      // Mode not found, issue a warning.
+      LOG_L(L_WARNING, "GetModeBindings: unknown mode name: %s", modeName.c_str());
+    }
+  }
+  return effectiveBindings;
+}
+
+
+void CKeyBindings::SwitchMode(const std::string& modeName)
+{
+  std::string normalizedModeName(modeName);
+
+  if (modeName[0] == ModeKeySetChar) { // strip off the leading '@' char if it exists
+    normalizedModeName = modeName.substr(1);
+  }
+
+  if (normalizedModeName.length() == 0) {
+    currentBindings = &bindings;
+    lastModeUseTime = spring_gettime();
+  } else {
+    auto it = modes.find(normalizedModeName);
+    if (it != modes.end()) {
+      currentBindings = it->second;
+      lastModeUseTime = spring_gettime();
+    } else {
+      LOG_L(L_WARNING, "SwitchMode: unknown mode \"%s\"", normalizedModeName.c_str());
+    }
+  }
+}
+
+void CKeyBindings::SustainMode()
+{
+  lastModeUseTime = spring_gettime();
+}
+
+bool CKeyBindings::IsModeSwitchAction(const std::string& cmdText)
+{
+  return (cmdText.size() > 0) && (cmdText[0] == ModeKeySetChar);
+}
+
+
+void CKeyBindings::CheckAndCleanModesByName(const std::string& modeName)
+{
+  int references = 0;
+
+  for (ModeMap::iterator mit = modes.begin(); mit != modes.end(); mit++) {
+    KeyMap* kmToCheck = mit->second;
+    for (KeyMap::iterator kit = kmToCheck->begin(); kit != kmToCheck->end(); kit++) {
+      ActionList& al = kit->second;
+      for (ActionList::iterator ait = al.begin(); ait != al.end(); ait++) {
+        const Action& action = *ait;
+        if (action.command == (std::string("@") + modeName)) {
+          references++;
+        }
+      }
+    }
+  }
+
+  // The bindings in the keyboard mode itself need to be completely unbound before we purge the object.
+  ModeMap::iterator mit = modes.find(modeName);
+  if (mit != modes.end()) {
+    KeyMap* namedMap = mit->second;
+    references += namedMap->size();
+  }
+
+  if (references == 0) { // We need to delete the KeyMap object since it is no longer referred to by any binding.
+    ModeMap::iterator mit = modes.find(modeName);
+    if (mit != modes.end()) {
+      KeyMap* kmToClean = mit->second;
+      modes.erase(mit);
+
+      // Finally, free the object itself now that nothing points to it
+      delete kmToClean;
+    }
+	}
+}
+
+
+void CKeyBindings::ConfigNotify(const std::string& key, const std::string& value)
+{
+  if (key == "KeyModeResetTime") {
+    int millis = atoi(value.c_str());
+    if (millis >= 0) {
+      keyModeResetTime = millis;
+    }
+  } else if (key == "KeyModeSustain") {
+    keyModeSustain = StringToBool(value);
+  }
 }
 
 
@@ -599,6 +855,9 @@ bool CKeyBindings::ExecuteCommand(const std::string& line)
 	}
 	else if ((command == "bind") && (words.size() > 2)) {
 		if (!Bind(words[1], words[2])) { return false; }
+	}
+	else if ((command == "unbind") && (words.size() == 2)) {
+		if (!UnBind(words[1])) { return false; }
 	}
 	else if ((command == "unbind") && (words.size() > 2)) {
 		if (!UnBind(words[1], words[2])) { return false; }
