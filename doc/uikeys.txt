@@ -22,8 +22,6 @@
 //  4. A keyset using the Shift modifier should be bound with its
 //     unshifted key  (ex: bind  "Shift+."  instead of  "Shift+>" )
 //
-//  5. A keyset can be a chain (ex: bind  "Ctrl+1,Ctrl+2" )
-//
 
 
 //
