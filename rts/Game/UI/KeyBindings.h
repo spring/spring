@@ -120,6 +120,7 @@ class CKeyBindings : public CommandReceiver
 
 		int fakeMetaKey;
 		bool userCommand;
+		bool debugEnabled;
 };
 
 

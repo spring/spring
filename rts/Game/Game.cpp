@@ -916,7 +916,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 		for (const Action& action: actionList) {
 			if (ProcessKeyPressAction(key, action)) {
 				// the key was used, ignore it (ex: alt+a)
-				ignoreNextChar = (actionIndex < (actionList.size() - 1));
+				ignoreNextChar = true;
 				break;
 			}
 		}
@@ -1179,7 +1179,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		inMapDrawer->SendWaitingInput(userInput);
 		userInput = "";
 		writingPos = 0;
-		ignoreChar = 0;
 	}
 
 	assert(infoConsole);

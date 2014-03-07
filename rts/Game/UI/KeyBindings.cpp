@@ -381,7 +381,7 @@ const CKeyBindings::HotkeyList& CKeyBindings::GetHotkeys(const std::string& acti
 
 /******************************************************************************/
 
-bool CKeyBindings::Bind(const string& keystr, const string& line)
+bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 {
   std::string modeName;
 
@@ -447,7 +447,7 @@ bool CKeyBindings::Bind(const string& keystr, const string& line)
 }
 
 
-bool CKeyBindings::UnBind(const string& keystr)
+bool CKeyBindings::UnBind(const std::string& keystr)
 {
 std::string modeName;
 	CKeySet ks;
@@ -478,7 +478,7 @@ std::string modeName;
 
 }
 
-bool CKeyBindings::UnBind(const string& keystr, const string& command)
+bool CKeyBindings::UnBind(const std::string& keystr, const std::string& command)
 {
   std::string modeName;
 	CKeySet ks;
@@ -623,11 +623,11 @@ bool CKeyBindings::RemoveCommandFromList(ActionList& al, const std::string& comm
 }
 
 
-bool CKeyBindings::ParseModeAndKeySet(const string& keystr, CKeySet& ks, std::string& modeName) const
+bool CKeyBindings::ParseModeAndKeySet(const std::string& keystr, CKeySet& ks, std::string& modeName) const
 {
   modeName = "";
 	if (keystr[0] == NamedKeySetChar) {
-		const string keysetName = keystr.substr(1);
+		const std::string keysetName = keystr.substr(1);
 		NamedKeySetMap::const_iterator it = namedKeySets.find(keysetName);
 		if (it !=  namedKeySets.end()) {
 			ks = it->second;
@@ -636,7 +636,7 @@ bool CKeyBindings::ParseModeAndKeySet(const string& keystr, CKeySet& ks, std::st
 		}
 	} else if (keystr[0] == ModeKeySetChar) {
 	  auto endPos = keystr.find('+')-1;
-	  if (endPos != string::npos) {
+	  if (endPos != std::string::npos) {
       modeName = keystr.substr(1,endPos);
 	  } else {
 	    return false;
@@ -664,7 +664,7 @@ void CKeyBindings::CreateMode(const std::string& modeName)
   }
   if (modes.find(normalizedModeName) != modes.end()) return;
   LOG_L(L_INFO, "Created mode %s", normalizedModeName.c_str());
-  modes.emplace(normalizedModeName,new KeyMap());
+  modes[normalizedModeName] = new KeyMap();
 }
 
 void CKeyBindings::RemoveMode(const std::string& modeName)
@@ -877,7 +877,7 @@ bool CKeyBindings::ExecuteCommand(const std::string& line)
 		return false;
 	}
 
-	if (buildHotkeyMap) {
+	if (userCommand) {
 		BuildHotkeyMap();
 	}
 
@@ -889,7 +889,7 @@ bool CKeyBindings::Load(const std::string& filename)
 {
 	CFileHandler ifs(filename);
 	CSimpleParser parser(ifs);
-	buildHotkeyMap = false; // temporarily disable BuildHotkeyMap() calls
+	userCommand = false; // temporarily disable BuildHotkeyMap() calls
 	LoadDefaults();
 
 	while (!parser.Eof()) {
@@ -898,7 +898,7 @@ bool CKeyBindings::Load(const std::string& filename)
 	}
 
 	BuildHotkeyMap();
-	buildHotkeyMap = true; // re-enable BuildHotkeyMap() calls
+	userCommand = true; // re-enable BuildHotkeyMap() calls
 	return true;
 }
 
@@ -915,7 +915,7 @@ void CKeyBindings::BuildHotkeyMap()
 
 		for (const Action& action: al) {
 			HotkeyList& hl = hotkeys[action.command + ((action.extra == "") ? "" : " " + action.extra)];
-			hl.insert(keystr);
+			hl.push_back(keystr);
 		}
 	}
 }
