@@ -34,7 +34,6 @@ struct IsBasicType {
 		enum {Yes=1, No=0 };										\
 	};
 
-CREG_SUPPORT_BASIC_TYPE(boost::int64_t, crInt64)
 CREG_SUPPORT_BASIC_TYPE(int, crInt)
 CREG_SUPPORT_BASIC_TYPE(unsigned int, crUInt)
 CREG_SUPPORT_BASIC_TYPE(short, crShort)
@@ -42,6 +41,8 @@ CREG_SUPPORT_BASIC_TYPE(unsigned short, crUShort)
 CREG_SUPPORT_BASIC_TYPE(char, crChar)
 CREG_SUPPORT_BASIC_TYPE(unsigned char, crUChar)
 CREG_SUPPORT_BASIC_TYPE(unsigned long, crUInt)
+CREG_SUPPORT_BASIC_TYPE(boost::int64_t, crInt64)
+CREG_SUPPORT_BASIC_TYPE(boost::uint64_t, crUInt64)
 CREG_SUPPORT_BASIC_TYPE(float, crFloat)
 CREG_SUPPORT_BASIC_TYPE(double, crDouble)
 CREG_SUPPORT_BASIC_TYPE(bool, crBool)
