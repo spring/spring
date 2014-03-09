@@ -84,8 +84,6 @@ public:
 	bool ProcessKeyPressAction(unsigned int key, const Action& action);
 	bool ProcessAction(const Action& action, unsigned int key = -1, bool isRepeat = false);
 
-	void SetHotBinding(const std::string& action) { hotBinding = action; }
-
 	void ReloadCOB(const std::string& msg, int player);
 	void ReloadCEGs(const std::string& tag);
 
@@ -188,7 +186,6 @@ public:
 	bool noSpectatorChat;
 
 	CTimedKeyChain curKeyChain;
-	std::string hotBinding;
 	std::string userInputPrefix;
 
 	/// <playerID, <packetCode, total bytes> >

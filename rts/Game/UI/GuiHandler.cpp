@@ -1626,24 +1626,6 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		selectedUnitsHandler.SetCommandPage(activePage);
 		return true;
 	}
-	else if (action.command == "hotbind") {
-		const int iconPos = IconAtPos(mouse->lastx, mouse->lasty);
-		const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
-		if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
-			game->SetHotBinding(commands[iconCmd].action);
-		}
-		return true;
-	}
-	else if (action.command == "hotunbind") {
-		const int iconPos = IconAtPos(mouse->lastx, mouse->lasty);
-		const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
-		if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
-			std::string cmd = "unbindaction " + commands[iconCmd].action;
-			keyBindings->ExecuteCommand(cmd);
-			LOG("%s", cmd.c_str());
-		}
-		return true;
-	}
 	else if (action.command == "showcommands") {
 		// bonus command for debugging
 		LOG("Available Commands:");
