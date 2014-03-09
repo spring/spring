@@ -827,15 +827,19 @@ void cRAI::Update()
 								c.params.clear();
 								c.id = CMD_MOVE;
 								c.options = SHIFT_KEY;
+								float3 newPos;
 								if( position.x < conPosition.x )
-									c.params.push_back(position.x - ((position.x-conPosition.x)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->xsize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->xsize/2.0) );
+									newPos.x = (position.x - ((position.x-conPosition.x)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->xsize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->xsize/2.0) );
 								else
-									c.params.push_back(position.x + ((position.x-conPosition.x)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->xsize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->xsize/2.0) );
-								c.params.push_back(position.y);
+									newPos.x = (position.x + ((position.x-conPosition.x)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->xsize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->xsize/2.0) );
 								if( position.z < conPosition.z )
-									c.params.push_back(position.z - ((position.z-conPosition.z)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->zsize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->zsize/2.0) );
+									newPos.z = (position.z - ((position.z-conPosition.z)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->zsize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->zsize/2.0) );
 								else
-									c.params.push_back(position.z + ((position.z-conPosition.z)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->zsize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->zsize/2.0) );
+									newPos.z = (position.z + ((position.z-conPosition.z)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->zsize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->zsize/2.0) );
+								CorrectPosition(newPos);
+								c.params.push_back(newPos.x);
+								c.params.push_back(newPos.y);
+								c.params.push_back(newPos.z);
 								cb->GiveOrder(eventList[0]->unitID,&c);
 							}
 						}
@@ -848,16 +852,21 @@ void cRAI::Update()
 						Command c;
 						c.id = CMD_MOVE;
 						float f = (40.0+(rand()%401)/10.0);
+						float3 newPos = position;
 						if( rand()%2 == 0 )
-							c.params.push_back(position.x + f );
+							newPos.x += f;
 						else
-							c.params.push_back(position.x - f );
-						c.params.push_back(position.y);
+							newPos.x -= f;
 						f = (40.0+(rand()%401)/10.0);
 						if( rand()%2 == 0 )
-							c.params.push_back(position.z + f );
+							newPos.z += f;
 						else
-							c.params.push_back(position.z - f );
+							newPos.z -= f;
+
+						CorrectPosition(newPos);
+						c.params.push_back(newPos.x);
+						c.params.push_back(newPos.y);
+						c.params.push_back(newPos.z);
 						cb->GiveOrder(eventList[0]->unitID,&c);
 						*eventList[0]->lastPosition = position;
 					}
@@ -985,12 +994,12 @@ void cRAI::CorrectPosition(float3& position)
 {
 	if( position.x < 1 )
 		position.x = 1;
-	else if( position.x > 8*cb->GetMapWidth()-1 )
-		position.x = 8*cb->GetMapWidth()-1;
+	else if( position.x > 8*cb->GetMapWidth()-2 )
+		position.x = 8*cb->GetMapWidth()-2;
 	if( position.z < 1 )
 		position.z = 1;
-	else if( position.z > 8*cb->GetMapHeight()-1 )
-		position.z = 8*cb->GetMapHeight()-1;
+	else if( position.z > 8*cb->GetMapHeight()-2 )
+		position.z = 8*cb->GetMapHeight()-2;
 	position.y = cb->GetElevation(position.x,position.z);
 }
 
@@ -1016,7 +1025,7 @@ float3 cRAI::GetRandomPosition(TerrainMapArea* area)
 	{
 		Pos.x=1.0 + rand()%7 + 8.0*(rand()%cb->GetMapWidth());
 		Pos.z=1.0 + rand()%7 + 8.0*(rand()%cb->GetMapHeight());
-		Pos.y=cb->GetElevation(Pos.x,Pos.z);
+		CorrectPosition(Pos);
 		return Pos;
 	}
 
@@ -1026,7 +1035,7 @@ float3 cRAI::GetRandomPosition(TerrainMapArea* area)
 	int iS=Temp.at(rand()%int(Temp.size()));
 	Pos.x=TM->sector[iS].position.x - TM->convertStoP/2-1.0 + rand()%(TM->convertStoP-1);
 	Pos.z=TM->sector[iS].position.z - TM->convertStoP/2-1.0 + rand()%(TM->convertStoP-1);
-	Pos.y=cb->GetElevation(Pos.x,Pos.z);
+	CorrectPosition(Pos);
 	return Pos;
 }
 
