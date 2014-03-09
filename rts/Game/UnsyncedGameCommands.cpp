@@ -696,7 +696,6 @@ public:
 		if (pos.x >= 0) {
 			inMapDrawer->SetDrawMode(false);
 			inMapDrawer->PromptLabel(pos);
-			game->ignoreNextChar = keyCodes->IsPrintable(action.GetKey());
 		} else {
 			LOG_L(L_WARNING, "/DrawLabel: move mouse over the map");
 		}
@@ -1262,7 +1261,7 @@ public:
 		game->userInput = game->userInputPrefix;
 		game->writingPos = (int)game->userInput.length();
 		game->chatting = true;
-		game->ignoreNextChar = keyCodes->IsPrintable(action.GetKey());
+		game->ignoreNextChar = true;
 		game->consoleHistory->ResetPosition();
 		return true;
 	}

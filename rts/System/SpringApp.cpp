@@ -1087,7 +1087,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				ac->userInput.insert(ac->writingPos, utf8Text);
 				ac->writingPos += utf8Text.length();
 			}
-			activeController->ignoreNextChar = false;
 		} break;
 		case SDL_KEYDOWN: {
 			KeyInput::Update(event.key.keysym.sym, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
@@ -1100,6 +1099,9 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			KeyInput::Update(event.key.keysym.sym, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
 
 			if (activeController) {
+				if (activeController->ignoreNextChar) {
+					activeController->ignoreNextChar = false;
+				}
 				activeController->KeyReleased(KeyInput::GetNormalizedKeySymbol(event.key.keysym.sym));
 			}
 		} break;
