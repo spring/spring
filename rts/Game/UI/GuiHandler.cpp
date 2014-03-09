@@ -1767,8 +1767,7 @@ bool CGuiHandler::KeyPressed(int key, bool isRepeat)
 		tmpActionOffset = 0;
 		lastKeySet.Reset();
 	}
-	else if (!CKeyCodes::IsModifier(ks.Key()) &&
-	         (ks.Key() != keyBindings->GetFakeMetaKey())) {
+	else if (!ks.IsPureModifier()) {
 		// not a modifier
 		if ((ks == lastKeySet) && (ks.Key() >= 0)) {
 			actionOffset++;

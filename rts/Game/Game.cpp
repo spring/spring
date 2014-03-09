@@ -885,7 +885,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	}
 
 	const CKeySet ks(key, false);
-	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
+	if (!isRepeat) curKeyChain.push_back(key, spring_gettime());
 
 	if (!hotBinding.empty()) {
 		if (key == SDLK_ESCAPE) {
@@ -899,18 +899,12 @@ int CGame::KeyPressed(int key, bool isRepeat)
 			hotBinding.clear();
 			LOG("%s", cmd.c_str());
 		}
-		keyBindings->ResetMode();
 		return 0;
 	}
 
-	// If the *first and only* action in the list is a mode change, then change modes.
-  if (actionList.size() == 1) {
-    const Action& singleAction = actionList[0];
-    if (CKeyBindings::IsModeSwitchAction(singleAction.command)) {
-      keyBindings->SwitchMode(singleAction.command);
-      return 0;
-    }
-  }
+	// Get the list of possible key actions
+	LOG_L(L_DEBUG, "curKeyChain: %s", curKeyChain.GetString().c_str());
+	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(curKeyChain);
 
 	if (userWriting) {
 		for (const Action& action: actionList) {
@@ -927,15 +921,13 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	// try the input receivers
 	for (CInputReceiver* recv: GetInputReceivers()) {
 		if (recv && recv->KeyPressed(key, isRepeat)) {
-		  keyBindings->SustainOrResetMode();
 			return 0;
 		}
 	}
 
 	// try our list of actions
-	for (unsigned int i = 0; i < actionList.size(); ++i) {
-		if (ActionPressed(key, actionList[i], isRepeat)) {
-		  keyBindings->SustainOrResetMode();
+	for (const Action& action: actionList) {
+		if (ActionPressed(key, action, isRepeat)) {
 			return 0;
 		}
 	}
@@ -947,14 +939,13 @@ int CGame::KeyPressed(int key, bool isRepeat)
 		}
 	}
 
-  keyBindings->SustainOrResetMode();
 	return 0;
 }
 
 
 int CGame::KeyReleased(int k)
 {
-	if ((userWriting) && (((k>=' ') && (k<='Z')) || (k==8) || (k==190))) {
+	if ((userWriting) && (((k>=' ') && (k<='Z')) || (k==8) || (k==190))) { //FIXME use a function? (also wtf is 190?)
 		return 0;
 	}
 

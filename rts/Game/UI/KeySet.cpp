@@ -3,6 +3,7 @@
 
 #include "KeySet.h"
 #include "KeyCodes.h"
+#include "KeyBindings.h"
 
 #include "System/Log/ILog.h"
 #include "System/Util.h"
@@ -36,6 +37,12 @@ void CKeySet::SetAnyBit()
 {
 	ClearModifiers();
 	modifiers |= KS_ANYMOD;
+}
+
+
+bool CKeySet::IsPureModifier() const
+{
+	return (CKeyCodes::IsModifier(Key()) || (Key() == keyBindings->GetFakeMetaKey()));
 }
 
 
@@ -139,7 +146,7 @@ bool CKeySet::Parse(const std::string& token)
 			return false;
 		}
 	}
-	
+
 	if (keyCodes != NULL && keyCodes->IsModifier(key)) {
 		modifiers |= KS_ANYMOD;
 	}
@@ -149,4 +156,38 @@ bool CKeySet::Parse(const std::string& token)
 	}
 	
 	return true;
+}
+
+
+/******************************************************************************/
+//
+// CTimedKeyChain
+//
+
+void CTimedKeyChain::push_back(const int key, const spring_time t)
+{
+	assert(keyBindings);
+
+	// clear chain on timeout
+	const auto dropTime = t - spring_msecs(keyBindings->GetKeyChainTimeout());
+	if (!empty() && times.back() < dropTime) {
+		clear();
+	}
+
+	CKeySet ks(key, false);
+
+	// When you want to press c,alt+b you will press the c(down),c(up),alt(down),b(down)
+	// -> the chain will be: c,Alt+alt,Alt+b
+	// this should now match "c,alt+b", so we need to get rid of the redundant Alt+alt .
+	// Still we want to support "Alt+alt,Alt+alt" (double click alt), so only override e.g. the last in chain
+	// when the new keypress is _not_ a modifier.
+	if (!empty() && !ks.IsPureModifier() && back().IsPureModifier() && (back().Mod() == ks.Mod())) {
+		times.back() = t;
+		back() = ks;
+		return;
+	}
+
+	// push new to front
+	CKeyChain::emplace_back(ks);
+	times.emplace_back(t);
 }

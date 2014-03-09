@@ -51,7 +51,7 @@ bool CKeyCodes::AddKeySymbol(const std::string& name, int code)
 	if ((code < 0) || !IsValidLabel(name)) {
 		return false;
 	}
-	
+
 	const std::string keysym = StringToLower(name);
 
 	// do not allow existing keysyms to be renamed
