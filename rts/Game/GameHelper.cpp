@@ -1181,7 +1181,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	int allyteam,
 	bool synced
 ) {
-	if (!pos.IsInMap())
+	if (!pos.IsInBounds())
 		return BUILDSQUARE_BLOCKED;
 
 	const int yardxpos = int(pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;

@@ -340,8 +340,9 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	const float searchRadius = radius * 4.0f + unit->radius * 4.0f;
 	const int numSteps = 36;
 
+	const float3 exitPos = pos + frontdir*(radius + unit->radius);
 	float3 foundPos = pos + frontdir * searchRadius;
-	float3 tempPos = foundPos;
+	const float3 tempPos = foundPos;
 
 	for (int x = 0; x < numSteps; ++x) {
 		const float a = searchRadius * math::cos(x * PI / (numSteps * 0.5f));
@@ -349,7 +350,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 
 		float3 testPos = pos + frontdir * a + rightdir * b;
 
-		if (!testPos.IsInMap())
+		if (!testPos.IsInBounds())
 			continue;
 		// don't pick spots behind the factory (because
 		// units will want to path through it when open
@@ -377,7 +378,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 			foundPos.x = pos.x + frontdir.x * a + rightdir.x * b;
 			foundPos.z = pos.z + frontdir.z * a + rightdir.z * b;
 			foundPos.y += 1.0f;
-		} while ((!foundPos.IsInMap() || (foundPos - pos).dot(frontdir) < 0.0f) && (foundPos.y < 100.0f));
+		} while ((!foundPos.IsInBounds() || (foundPos - pos).dot(frontdir) < 0.0f) && (foundPos.y < 100.0f));
 
 		foundPos.y = ground->GetHeightAboveWater(foundPos.x, foundPos.z);
 	}
@@ -386,7 +387,6 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	// (otherwise units will try to turn before exiting when
 	// foundPos lies behind exit and cause jams / get stuck)
 	// we assume this temporary point is not itself blocked
-	// (redundant now foundPos always lies in front of us)
 	//
 	// NOTE:
 	//   MobileCAI::AutoGenerateTarget inserts a _third_
@@ -397,12 +397,12 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	//   (and should also be more than CMD_CANCEL_DIST
 	//   elmos distant from foundPos)
 	//
-	//   Command c0(CMD_MOVE, tempPos);
-	Command c1(CMD_MOVE, SHIFT_KEY | INTERNAL_ORDER, foundPos);
-	Command c2(CMD_MOVE, SHIFT_KEY,                  foundPos + frontdir * 20.0f);
-	// unit->commandAI->GiveCommand(c0);
+	if (!unit->unitDef->canfly && exitPos.IsInBounds()) {
+		Command c0(CMD_MOVE, SHIFT_KEY, exitPos);
+		unit->commandAI->GiveCommand(c0);
+	}
+	Command c1(CMD_MOVE, SHIFT_KEY, foundPos);
 	unit->commandAI->GiveCommand(c1);
-	unit->commandAI->GiveCommand(c2);
 }
 
 void CFactory::AssignBuildeeOrders(CUnit* unit) {
@@ -444,7 +444,12 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 			}
 		}
 
-		c.PushPos(tmpPos);
+		if (tmpPos.IsInBounds()) {
+			c.PushPos(tmpPos);
+		} else {
+			// set dummy pos if tmpPos is outside map
+			c.PushPos(unit->pos);
+		}
 	} else {
 		// dummy rallypoint for aircraft
 		c.PushPos(unit->pos);
