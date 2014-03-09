@@ -1432,7 +1432,7 @@ void CCommandAI::FinishCommand()
 {
 	assert(!commandQue.empty());
 
-	const Command& cmd = commandQue.front();
+	const Command cmd = commandQue.front(); //cppcheck false positive, copy is needed here
 	const bool dontRepeat = (cmd.options & INTERNAL_ORDER);
 
 	if (repeatOrders
