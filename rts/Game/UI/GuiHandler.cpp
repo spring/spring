@@ -116,10 +116,8 @@ CGuiHandler::~CGuiHandler()
 
 	delete[] icons;
 
-	std::map<std::string, unsigned int>::iterator it;
-	for (it = textureMap.begin(); it != textureMap.end(); ++it) {
-		const GLuint texID = it->second;
-		glDeleteTextures (1, &texID);
+	for (auto& p: textureMap) {
+		glDeleteTextures(1, &p.second);
 	}
 }
 
