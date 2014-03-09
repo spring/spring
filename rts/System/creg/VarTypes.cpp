@@ -44,6 +44,7 @@ std::string BasicType::GetName()
 		case crChar:  return "char";
 		case crUChar: return "uchar";
 		case crInt64: return "int64";
+		case crUInt64: return "uint64";
 		case crFloat: return "float";
 		case crDouble: return "double";
 		case crBool: return "bool";
@@ -72,6 +73,7 @@ size_t BasicType::GetSize()
 		case crChar:  return sizeof(char);
 		case crUChar: return sizeof(unsigned char);
 		case crInt64: return sizeof(boost::int64_t);
+		case crUInt64: return sizeof(boost::uint64_t);
 		case crFloat: return sizeof(float);
 		case crDouble: return sizeof(double);
 		case crBool: return sizeof(bool);
