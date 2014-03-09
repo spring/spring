@@ -293,7 +293,7 @@ CKeyBindings::CKeyBindings():
 CKeyBindings::~CKeyBindings()
 {
   // delete modes' key bindings
-  for (ModeMap::iterator mit = modes.begin(); mit != modes.end(); mit++)
+  for (ModeMap::iterator mit = modes.begin(); mit != modes.end(); ++mit)
   {
     KeyMap* pBindings = mit->second;
     if (pBindings != &bindings) {
@@ -465,7 +465,7 @@ std::string modeName;
   std::list<std::string> modesToCheck;
 	if (it != effectiveBindings->end()) {
     ActionList& al = it->second;
-    for (ActionList::iterator ait = al.begin(); ait != al.end(); ait++) {
+    for (ActionList::iterator ait = al.begin(); ait != al.end(); ++ait) {
       if (IsModeSwitchAction(ait->command)) {
         modesToCheck.push_back(ait->command.substr(1));
       }
@@ -473,7 +473,7 @@ std::string modeName;
     effectiveBindings->erase(it);
 	}
 
-  for (auto lit = modesToCheck.begin(); lit != modesToCheck.end(); lit++) {
+  for (auto lit = modesToCheck.begin(); lit != modesToCheck.end(); ++lit) {
     CheckAndCleanModesByName(*lit);
 	}
 	return success;
@@ -527,7 +527,7 @@ bool CKeyBindings::UnBindKeyset(const std::string& keystr)
 	  ActionList& al = kit->second;
 	  // if the ActionList contains a key mode activation and it is the only activation for that key mode, it needs to be cleaned up
 
-    for (ActionList::iterator ait = al.begin(); ait != al.end(); ait++) {
+    for (ActionList::iterator ait = al.begin(); ait != al.end(); ++ait) {
       Action& act = *ait;
       if (IsModeSwitchAction(act.command)) {
         modeActivateNames.push_back(act.command.substr(1));
@@ -552,7 +552,7 @@ bool CKeyBindings::UnBindAction(const std::string& command)
   LOG_L(L_INFO, "UnBindAction(%s)", command.c_str());
 
 
-  for (ModeMap::iterator mit = modes.begin(); mit != modes.end(); mit++) {
+  for (ModeMap::iterator mit = modes.begin(); mit != modes.end(); ++mit) {
     KeyMap* effectiveBindings = mit->second;
 	  KeyMap::iterator it = effectiveBindings->begin();
 	  while (it != effectiveBindings->end()) {
@@ -744,11 +744,11 @@ void CKeyBindings::CheckAndCleanModesByName(const std::string& modeName)
 {
   int references = 0;
 
-  for (ModeMap::iterator mit = modes.begin(); mit != modes.end(); mit++) {
+  for (ModeMap::iterator mit = modes.begin(); mit != modes.end(); ++mit) {
     KeyMap* kmToCheck = mit->second;
-    for (KeyMap::iterator kit = kmToCheck->begin(); kit != kmToCheck->end(); kit++) {
+    for (KeyMap::iterator kit = kmToCheck->begin(); kit != kmToCheck->end(); ++kit) {
       ActionList& al = kit->second;
-      for (ActionList::iterator ait = al.begin(); ait != al.end(); ait++) {
+      for (ActionList::iterator ait = al.begin(); ait != al.end(); ++ait) {
         const Action& action = *ait;
         if (action.command == (std::string("@") + modeName)) {
           references++;

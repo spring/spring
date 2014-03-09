@@ -198,8 +198,6 @@ void CGlobalRendering::PostInit() {
 			haveGLSL &= !haveMesa;
 		} else if (useGlslShaders == 0) {
 			haveARB  = false;
-			haveARB  = false;
-			haveGLSL = false;
 			haveGLSL = false;
 		} else if (useGlslShaders > 0) {
 			// rely on extension detection (don't force enable shaders, when the extensions aren't exposed!)
