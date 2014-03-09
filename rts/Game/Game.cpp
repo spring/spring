@@ -208,7 +208,6 @@ CR_REG_METADATA(CGame, (
 	CR_MEMBER(gameID),
 	//CR_MEMBER(infoConsole),
 	//CR_MEMBER(consoleHistory),
-	CR_IGNORED(hotBinding),
 	CR_IGNORED(inputTextPosX),
 	CR_IGNORED(inputTextPosY),
 	CR_IGNORED(inputTextSizeX),
@@ -887,21 +886,6 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	const CKeySet ks(key, false);
 	if (!isRepeat) curKeyChain.push_back(key, spring_gettime());
 
-	if (!hotBinding.empty()) {
-		if (key == SDLK_ESCAPE) {
-			hotBinding.clear();
-		}
-		else if (!keyCodes->IsModifier(key) && (key != keyBindings->GetFakeMetaKey())) {
-			string cmd = "bind";
-			cmd += " " + ks.GetString(false);
-			cmd += " " + hotBinding;
-			keyBindings->ExecuteCommand(cmd);
-			hotBinding.clear();
-			LOG("%s", cmd.c_str());
-		}
-		return 0;
-	}
-
 	// Get the list of possible key actions
 	LOG_L(L_DEBUG, "curKeyChain: %s", curKeyChain.GetString().c_str());
 	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(curKeyChain);
@@ -1345,15 +1329,6 @@ bool CGame::Draw() {
 
 	if (userWriting) {
 		DrawInputText();
-	}
-
-	if (!hotBinding.empty()) {
-		glColor4f(1.0f, 0.3f, 0.3f, 1.0f);
-		font->glPrint(0.5f, 0.6f, 3.0f, KEY_FONT_FLAGS, "Hit keyset for:");
-		glColor4f(0.3f, 1.0f, 0.3f, 1.0f);
-		font->glFormat(0.5f, 0.5f, 3.0f, KEY_FONT_FLAGS, "%s", hotBinding.c_str());
-		glColor4f(0.3f, 0.3f, 1.0f, 1.0f);
-		font->glPrint(0.5f, 0.4f, 3.0f, KEY_FONT_FLAGS, "(or Escape)");
 	}
 
 	if (!hideInterface) {
