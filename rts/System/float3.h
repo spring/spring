@@ -717,9 +717,9 @@ public:
  * Defines constant upwards vector
  * (0, 1, 0)
  */
-const float3  UpVector(0.0f, 1.0f, 0.0f);
-const float3 FwdVector(0.0f, 0.0f, 1.0f);
-const float3 RgtVector(1.0f, 0.0f, 0.0f);
+static const float3  UpVector(0.0f, 1.0f, 0.0f);
+static const float3 FwdVector(0.0f, 0.0f, 1.0f);
+static const float3 RgtVector(1.0f, 0.0f, 0.0f);
 
 /**
  * @brief zero vector
@@ -727,12 +727,12 @@ const float3 RgtVector(1.0f, 0.0f, 0.0f);
  * Defines constant zero vector
  * (0, 0, 0)
  */
-const float3 ZeroVector(0.0f, 0.0f, 0.0f);
-const float3 OnesVector(1.0f, 1.0f, 1.0f);
+static const float3 ZeroVector(0.0f, 0.0f, 0.0f);
+static const float3 OnesVector(1.0f, 1.0f, 1.0f);
 
-const float3 XYVector(1.0f, 1.0f, 0.0f);
-const float3 XZVector(1.0f, 0.0f, 1.0f);
-const float3 YZVector(0.0f, 1.0f, 1.0f);
+static const float3 XYVector(1.0f, 1.0f, 0.0f);
+static const float3 XZVector(1.0f, 0.0f, 1.0f);
+static const float3 YZVector(0.0f, 1.0f, 1.0f);
 
 #endif /* FLOAT3_H */
 

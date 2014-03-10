@@ -444,12 +444,7 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 			}
 		}
 
-		if (tmpPos.IsInBounds()) {
-			c.PushPos(tmpPos);
-		} else {
-			// set dummy pos if tmpPos is outside map
-			c.PushPos(unit->pos);
-		}
+		c.PushPos(tmpPos.ClampInBounds());
 	} else {
 		// dummy rallypoint for aircraft
 		c.PushPos(unit->pos);
