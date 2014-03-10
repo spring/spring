@@ -77,9 +77,6 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	{ "Any+home", "increaseViewRadius" },
 	{ "Any+end",  "decreaseViewRadius" },
 
-	{ "Ctrl+insert", "hotbind"   },
-	{ "Ctrl+delete", "hotunbind" },
-
 	{ "Alt+insert",  "speedup"  },
 	{ "Alt+delete",  "slowdown" },
 	{ "Alt+=",       "speedup"  },
