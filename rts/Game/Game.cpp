@@ -887,7 +887,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	if (!isRepeat) curKeyChain.push_back(key, spring_gettime());
 
 	// Get the list of possible key actions
-	LOG_L(L_DEBUG, "curKeyChain: %s", curKeyChain.GetString().c_str());
+	//LOG_L(L_DEBUG, "curKeyChain: %s", curKeyChain.GetString().c_str());
 	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(curKeyChain);
 
 	if (userWriting) {
