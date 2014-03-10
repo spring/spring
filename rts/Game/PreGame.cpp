@@ -487,7 +487,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		recorder->SaveToDemo(packet->data, packet->length, net->GetPacketTime(gs->frameNum));
 		net->SetDemoRecorder(recorder);
 
-		LOG("recording demo: %s", (recorder->GetName()).c_str());
+		LOG("Recording demo to: %s", (recorder->GetName()).c_str());
 	}
 }
 
