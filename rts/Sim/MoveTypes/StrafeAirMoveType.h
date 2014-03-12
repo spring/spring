@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _AIR_MOVE_TYPE_H_
-#define _AIR_MOVE_TYPE_H_
+#ifndef STRAFE_AIR_MOVE_TYPE_H_
+#define STRAFE_AIR_MOVE_TYPE_H_
 
 #include "AAirMoveType.h"
 #include <vector>
@@ -20,14 +20,21 @@ public:
 	bool Update();
 	void SlowUpdate();
 
+	bool SetMemberValue(unsigned int memberHash, void* memberValue);
+
 	void UpdateManeuver();
 	void UpdateFighterAttack();
 	void UpdateAttack();
 	void UpdateFlying(float wantedHeight, float engine);
 	void UpdateLanded();
 	void UpdateLanding();
-	void UpdateAirPhysics(float rudder, float aileron, float elevator,
-			float engine, const float3& engineVector);
+	void UpdateAirPhysics(
+		float rudder,
+		float aileron,
+		float elevator,
+		float engine,
+		const float3& engineVector
+	);
 	void SetState(AircraftState state);
 	void UpdateTakeOff(float wantedHeight);
 

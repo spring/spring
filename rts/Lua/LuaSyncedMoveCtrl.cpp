@@ -7,6 +7,7 @@
 
 #include "LuaHandle.h"
 #include "LuaHashString.h"
+#include "LuaHelper.h"
 #include "LuaUtils.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/ScriptMoveType.h"
@@ -18,6 +19,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
+#include "System/Sync/HsiehHash.h"
 
 #include <cctype>
 
@@ -531,39 +533,16 @@ static inline bool SetAirMoveTypeValue(CStrafeAirMoveType* mt, const string& key
 {
 	if (SetGenericMoveTypeValue(mt, key, value))
 		return true;
-	if (key == "wantedHeight") {
-		mt->wantedHeight = value; return true;
-	} else if (key == "myGravity") {
-		mt->myGravity = value; return true;
-	} else if (key == "maxBank") {
-		mt->maxBank = value; return true;
-	} else if (key == "maxPitch") {
-		mt->maxPitch = value; return true;
-	} else if (key == "turnRadius") {
-		mt->turnRadius = value; return true;
-	} else if (key == "maxAcc") {
-		mt->accRate = value; return true;
-	} else if (key == "maxAileron") {
-		mt->maxAileron = value; return true;
-	} else if (key == "maxElevator") {
-		mt->maxElevator = value; return true;
-	} else if (key == "maxRudder") {
-		mt->maxRudder = value; return true;
-	}
 
-	return false;
+	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
 }
 
 static inline bool SetAirMoveTypeValue(CStrafeAirMoveType* mt, const string& key, bool value)
 {
 	if (SetGenericMoveTypeValue(mt, key, value))
 		return true;
-	if (key == "collide") {
-		mt->collide = value; return true;
-	} else if (key == "useSmoothMesh") {
-		mt->useSmoothMesh = value; return true;
-	}
-	return false;
+
+	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
 }
 
 
@@ -579,16 +558,16 @@ static inline void SetSingleAirMoveTypeValue(lua_State* L, int keyidx, int valid
 	}
 
 	if (!assigned) {
-		LOG_L(L_WARNING, "Can not assign key \"%s\" to AirMoveType", key.c_str());
+		LOG_L(L_WARNING, "Can not assign key \"%s\" to StrafeAirMoveType", key.c_str());
 	}
 }
 
 int LuaSyncedMoveCtrl::SetAirMoveTypeData(lua_State* L)
 {
 	CStrafeAirMoveType* moveType = ParseMoveType<CStrafeAirMoveType>(L, __FUNCTION__, 1);
-	if (moveType == NULL) {
-		luaL_error(L, "Unit does not have a compatible MoveType");
-	}
+
+	if (moveType == NULL)
+		luaL_error(L, "[%s] not a StrafeAirMoveType unit", __FUNCTION__);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -617,19 +596,7 @@ static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key
 	if (SetGenericMoveTypeValue(mt, key, value))
 		return true;
 
-	if (key == "turnRate") {
-		mt->turnRate = value; return true;
-	} else if (key == "accRate") {
-		mt->accRate = value; return true;
-	} else if (key == "decRate") {
-		mt->decRate = value; return true;
-	} else if (key == "maxReverseSpeed") {
-		// use setter?
-		mt->maxReverseSpeed = value / GAME_SPEED;
-		return true;
-	}
-
-	return false;
+	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
 }
 
 static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key, bool value)
@@ -637,8 +604,9 @@ static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key
 	if (SetGenericMoveTypeValue(mt, key, value))
 		return true;
 
-	return false;
+	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
 }
+
 
 static inline void SetSingleGroundMoveTypeValue(lua_State* L, int keyidx, int validx, CGroundMoveType* moveType)
 {
@@ -659,9 +627,9 @@ static inline void SetSingleGroundMoveTypeValue(lua_State* L, int keyidx, int va
 int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State *L)
 {
 	CGroundMoveType* moveType = ParseMoveType<CGroundMoveType>(L, __FUNCTION__, 1);
-	if (moveType == NULL) {
-		luaL_error(L, "Unit does not have a compatible MoveType");
-	}
+
+	if (moveType == NULL)
+		luaL_error(L, "[%s] not a GroundMoveType unit", __FUNCTION__);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -688,29 +656,10 @@ int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State *L)
 
 static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string& key, float value)
 {
-	if (SetGenericMoveTypeValue(mt, key, value)) {
+	if (SetGenericMoveTypeValue(mt, key, value))
 		return true;
-	}
 
-	if (key == "wantedHeight") {
-		mt->SetDefaultAltitude(value); return true;
-	} else if (key == "turnRate") {
-		mt->turnRate = value; return true;
-	} else if (key == "accRate") {
-		mt->accRate = value; return true;
-	} else if (key == "decRate") {
-		mt->decRate = value; return true;
-	} else if (key == "altitudeRate") {
-		mt->altitudeRate = value; return true;
-	} else if (key == "currentBank") {
-		mt->currentBank = value; return true;
-	} else if (key == "currentPitch") {
-		mt->currentPitch = value; return true;
-	} else if (key == "maxDrift") {
-		mt->maxDrift = value; return true;
-	}
-
-	return false;
+	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
 }
 
 static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string& key, bool value)
@@ -718,19 +667,7 @@ static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string&
 	if (SetGenericMoveTypeValue(mt, key, value))
 		return true;
 
-	if (key == "collide") {
-		mt->collide = value; return true;
-	} else if (key == "useSmoothMesh") {
-		mt->useSmoothMesh = value; return true;
-	} else if (key == "bankingAllowed") {
-		mt->bankingAllowed = value; return true;
-	} else if (key == "airStrafe") {
-		mt->airStrafe = value; return true;
-	} else if (key == "dontLand") {
-		mt->SetAllowLanding(!value); return true;
-	}
-
-	return false;
+	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
 }
 
 static inline void SetSingleHoverAirMoveTypeValue(lua_State* L, int keyIdx, int valIdx, CHoverAirMoveType* moveType)
@@ -745,16 +682,16 @@ static inline void SetSingleHoverAirMoveTypeValue(lua_State* L, int keyIdx, int 
 	}
 
 	if (!assigned) {
-		LOG_L(L_WARNING, "Can not assign key \"%s\" to GunshipMoveType", key.c_str());
+		LOG_L(L_WARNING, "Can not assign key \"%s\" to HoverAirMoveType", key.c_str());
 	}
 }
 
 int LuaSyncedMoveCtrl::SetGunshipMoveTypeData(lua_State *L)
 {
 	CHoverAirMoveType* moveType = ParseMoveType<CHoverAirMoveType>(L, __FUNCTION__, 1);
-	if (moveType == NULL) {
-		luaL_error(L, "Unit does not have a compatible MoveType");
-	}
+
+	if (moveType == NULL)
+		luaL_error(L, "[%s] not a HoverAirMoveType unit", __FUNCTION__);
 
 	const int args = lua_gettop(L); // number of arguments
 

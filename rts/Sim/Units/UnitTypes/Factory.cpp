@@ -444,8 +444,7 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 			}
 		}
 
-		tmpPos.ClampInBounds();
-		c.PushPos(tmpPos);
+		c.PushPos(tmpPos.cClampInBounds());
 	} else {
 		// dummy rallypoint for aircraft
 		c.PushPos(unit->pos);

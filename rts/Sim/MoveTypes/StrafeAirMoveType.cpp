@@ -18,6 +18,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/myMath.h"
+#include "System/Sync/HsiehHash.h"
 
 CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (NULL));
 
@@ -1319,3 +1320,59 @@ void CStrafeAirMoveType::Takeoff()
 		}
 	}
 }
+
+
+
+bool CStrafeAirMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
+	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
+	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
+
+	static const unsigned int boolMemberHashes[] = {
+		MEMBER_LITERAL_HASH(      "collide"),
+		MEMBER_LITERAL_HASH("useSmoothMesh"),
+	};
+	static const unsigned int floatMemberHashes[] = {
+		MEMBER_LITERAL_HASH( "wantedHeight"),
+		MEMBER_LITERAL_HASH(   "turnRadius"),
+		MEMBER_LITERAL_HASH(      "accRate"),
+		MEMBER_LITERAL_HASH(    "myGravity"),
+		MEMBER_LITERAL_HASH(      "maxBank"),
+		MEMBER_LITERAL_HASH(     "maxPitch"),
+		MEMBER_LITERAL_HASH(   "maxAileron"),
+		MEMBER_LITERAL_HASH(  "maxElevator"),
+		MEMBER_LITERAL_HASH(    "maxRudder"),
+	};
+
+	#undef MEMBER_CHARPTR_HASH
+	#undef MEMBER_LITERAL_HASH
+
+
+	// unordered_map etc. perform dynallocs, so KISS here
+	bool* boolMemberPtrs[] = {
+		&collide, &useSmoothMesh,
+	};
+	float* floatMemberPtrs[] = {
+		&wantedHeight, &turnRadius,
+		&accRate, &myGravity,
+		&maxBank, &maxPitch,
+		&maxAileron, &maxElevator, &maxRudder,
+	};
+
+	// note: <memberHash> should be calculated via HsiehHash
+	for (unsigned int n = 0; n < sizeof(boolMemberPtrs) / sizeof(boolMemberPtrs[0]); n++) {
+		if (memberHash == boolMemberHashes[n]) {
+			*(boolMemberPtrs[n]) = *(reinterpret_cast<bool*>(memberValue));
+			return true;
+		}
+	}
+
+	for (unsigned int n = 0; n < sizeof(floatMemberPtrs) / sizeof(floatMemberPtrs[0]); n++) {
+		if (memberHash == floatMemberHashes[n]) {
+			*(floatMemberPtrs[n]) = *(reinterpret_cast<float*>(memberValue));
+			return true;
+		}
+	}
+
+	return false;
+}
+

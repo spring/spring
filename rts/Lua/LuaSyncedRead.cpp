@@ -497,6 +497,50 @@ static int GetWorldObjectVelocity(lua_State* L, const CWorldObject* o, bool isFe
 	return 4;
 }
 
+static int GetSolidObjectPosition(lua_State* L, const CSolidObject* o, bool isFeature)
+{
+	if (o == NULL)
+		return 0;
+
+	// no error for features
+	float3 errorVec;
+
+	if (isFeature) {
+		if (!IsFeatureVisible(L, static_cast<const CFeature*>(o))) {
+			return 0;
+		}
+	} else {
+		if (!IsAllyUnit(L, static_cast<const CUnit*>(o))) {
+			errorVec += static_cast<const CUnit*>(o)->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
+			errorVec -= o->midPos;
+		}
+	}
+
+	// NOTE:
+	//   must be called before any pushing to the stack,
+	//   else in case of noneornil it will read the pushed items.
+	const bool returnMidPos = luaL_optboolean(L, 2, false);
+	const bool returnAimPos = luaL_optboolean(L, 3, false);
+
+	// base-position
+	lua_pushnumber(L, o->pos.x + errorVec.x);
+	lua_pushnumber(L, o->pos.y + errorVec.y);
+	lua_pushnumber(L, o->pos.z + errorVec.z);
+
+	if (returnMidPos) {
+		lua_pushnumber(L, o->midPos.x + errorVec.x);
+		lua_pushnumber(L, o->midPos.y + errorVec.y);
+		lua_pushnumber(L, o->midPos.z + errorVec.z);
+	}
+	if (returnAimPos) {
+		lua_pushnumber(L, o->aimPos.x + errorVec.x);
+		lua_pushnumber(L, o->aimPos.y + errorVec.y);
+		lua_pushnumber(L, o->aimPos.z + errorVec.z);
+	}
+
+	return (3 + (3 * returnMidPos) + (3 * returnAimPos));
+}
+
 static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
 {
 	if (o == NULL)
@@ -2899,45 +2943,7 @@ int LuaSyncedRead::GetUnitRadius(lua_State* L)
 
 int LuaSyncedRead::GetUnitPosition(lua_State* L)
 {
-	int argc = 0;
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-
-	if (unit == NULL) {
-		return argc;
-	}
-
-	float3 err = ZeroVector;
-
-	if (!IsAllyUnit(L, unit)) {
-		err += unit->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
-		err -= unit->midPos;
-	}
-
-	// Note: Must be called before any pushing to the stack,
-	//       else in case of noneornil it will read the pushed items.
-	const bool returnMidPos = luaL_optboolean(L, 2, false);
-	const bool returnAimPos = luaL_optboolean(L, 3, false);
-
-	// base-position
-	lua_pushnumber(L, unit->pos.x + err.x);
-	lua_pushnumber(L, unit->pos.y + err.y);
-	lua_pushnumber(L, unit->pos.z + err.z);
-	argc += 3;
-
-	if (returnMidPos) {
-		lua_pushnumber(L, unit->midPos.x + err.x);
-		lua_pushnumber(L, unit->midPos.y + err.y);
-		lua_pushnumber(L, unit->midPos.z + err.z);
-		argc += 3;
-	}
-	if (returnAimPos) {
-		lua_pushnumber(L, unit->aimPos.x + err.x);
-		lua_pushnumber(L, unit->aimPos.y + err.y);
-		lua_pushnumber(L, unit->aimPos.z + err.z);
-		argc += 3;
-	}
-
-	return argc;
+	return (GetSolidObjectPosition(L, ParseUnit(L, __FUNCTION__, 1), false));
 }
 
 
@@ -3620,17 +3626,21 @@ int LuaSyncedRead::GetUnitLastAttacker(lua_State* L)
 int LuaSyncedRead::GetUnitLastAttackedPiece(lua_State* L)
 {
 	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1); // ?
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
-	if (unit->lastAttackedPiece == NULL) {
+	if (unit->lastAttackedPiece == NULL)
 		return 0;
-	}
 
 	const LocalModelPiece* lmp = unit->lastAttackedPiece;
 	const S3DModelPiece* omp = lmp->original;
 
-	lua_pushsstring(L, omp->name);
+	if (lua_isboolean(L, 1) && lua_toboolean(L, 1)) {
+		lua_pushnumber(L, lmp->GetLModelPieceIndex() + 1);
+	} else {
+		lua_pushsstring(L, omp->name);
+	}
+
 	lua_pushnumber(L, unit->lastAttackedPieceFrame);
 	return 2;
 }
@@ -3716,10 +3726,11 @@ int LuaSyncedRead::GetUnitSeparation(lua_State* L)
 	}
 
 	float3 pos1 = unit1->midPos;
+	float3 pos2 = unit2->midPos;
+
 	if (!IsAllyUnit(L, unit1)) {
 		pos1 = unit1->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
 	}
-	float3 pos2 = unit2->midPos;
 	if (!IsAllyUnit(L, unit2)) {
 		pos2 = unit2->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
 	}
@@ -4468,39 +4479,8 @@ int LuaSyncedRead::GetFeatureRadius(lua_State* L)
 
 int LuaSyncedRead::GetFeaturePosition(lua_State* L)
 {
-	int argc = 0;
-	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-
-	if (feature == NULL || !IsFeatureVisible(L, feature)) {
-		return argc;
-	}
-
-	// Note: Must be called before any pushing to the stack,
-	//       else in case of noneornil it will read the pushed items.
-	const bool returnMidPos = luaL_optboolean(L, 2, false);
-	const bool returnAimPos = luaL_optboolean(L, 3, false);
-
-	lua_pushnumber(L, feature->pos.x);
-	lua_pushnumber(L, feature->pos.y);
-	lua_pushnumber(L, feature->pos.z);
-	argc += 3;
-
-	if (returnMidPos) {
-		lua_pushnumber(L, feature->midPos.x);
-		lua_pushnumber(L, feature->midPos.y);
-		lua_pushnumber(L, feature->midPos.z);
-		argc += 3;
-	}
-	if (returnAimPos) {
-		lua_pushnumber(L, feature->aimPos.x);
-		lua_pushnumber(L, feature->aimPos.y);
-		lua_pushnumber(L, feature->aimPos.z);
-		argc += 3;
-	}
-
-	return argc;
+	return (GetSolidObjectPosition(L, ParseFeature(L, __FUNCTION__, 1), true));
 }
-
 
 int LuaSyncedRead::GetFeatureDirection(lua_State* L)
 {
@@ -5207,12 +5187,16 @@ int LuaSyncedRead::GetClosestValidPosition(lua_State* L)
 
 int LuaSyncedRead::GetUnitPieceMap(lua_State* L)
 {
-	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	const CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
 		return 0;
-	}
+
 	const LocalModel* localModel = unit->localModel;
-	lua_newtable(L);
+
+	lua_createtable(L, 0, localModel->pieces.size());
+
+	// {"piece" = 123, ...}
 	for (size_t i = 0; i < localModel->pieces.size(); i++) {
 		const LocalModelPiece& lp = *localModel->pieces[i];
 		lua_pushsstring(L, lp.original->name);
@@ -5225,12 +5209,16 @@ int LuaSyncedRead::GetUnitPieceMap(lua_State* L)
 
 int LuaSyncedRead::GetUnitPieceList(lua_State* L)
 {
-	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	const CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
 		return 0;
-	}
+
 	const LocalModel* localModel = unit->localModel;
-	lua_newtable(L);
+
+	lua_createtable(L, localModel->pieces.size(), 0);
+
+	// {[1] = "piece", ...}
 	for (size_t i = 0; i < localModel->pieces.size(); i++) {
 		const LocalModelPiece& lp = *localModel->pieces[i];
 		lua_pushsstring(L, lp.original->name);

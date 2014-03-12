@@ -932,9 +932,9 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 
 		// File read successful.
 		return true;
-	} else {
-		return false;
 	}
+
+	return false;
 }
 
 
