@@ -35,6 +35,8 @@ public:
 	bool CanApplyImpulse(const float3&);
 	void LeaveTransport();
 
+	bool SetMemberValue(unsigned int memberHash, void* memberValue);
+
 	bool OnSlope(float minSlideTolerance);
 	bool IsReversing() const { return reversing; }
 
@@ -56,7 +58,7 @@ private:
 	bool CanGetNextWayPoint();
 	bool ReRequestPath(bool callScript, bool forceRequest);
 
-	float BrakingDistance(float speed) const;
+	float BrakingDistance(float speed, float rate) const;
 	float3 Here();
 
 	void StartEngine(bool callScript);
@@ -113,7 +115,10 @@ private:
 	IPathController* pathController;
 
 public:
-	float turnRate;
+	float turnRate; // maximum angular speed (angular units/frame)
+	float turnSpeed; // current angular speed (angular units/frame)
+	float turnAccel; // angular acceleration (angular units/frame^2)
+
 	float accRate;
 	float decRate;
 	float myGravity;
@@ -141,7 +146,6 @@ private:
 	bool canReverse;
 	bool useMainHeading;
 
-	float3 skidRotVector;  /// vector orthogonal to skidDir
 	float skidRotSpeed;    /// rotational speed when skidding (radians / (GAME_SPEED frames))
 	float skidRotAccel;    /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
 
@@ -149,6 +153,7 @@ private:
 	float3 flatFrontDir;
 	float3 lastAvoidanceDir;
 	float3 mainHeadingPos;
+	float3 skidRotVector;  /// vector orthogonal to skidDir
 
 	unsigned int nextObstacleAvoidanceFrame;
 	unsigned int lastPathRequestFrame;

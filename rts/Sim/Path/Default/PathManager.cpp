@@ -93,7 +93,7 @@ unsigned int CPathManager::RequestPath(
 Request a new multipath, store the result and return a handle-id to it.
 */
 unsigned int CPathManager::RequestPath(
-	const MoveDef* md,
+	const MoveDef* moveDef,
 	const float3& startPos,
 	const float3& goalPos,
 	CPathFinderDef* pfDef,
@@ -105,10 +105,7 @@ unsigned int CPathManager::RequestPath(
 	if (!IsFinalized())
 		return 0;
 
-	// FIXME: this is here only because older code required a non-const version
-	MoveDef* moveDef = moveDefHandler->GetMoveDefByPathType(md->pathType);
-
-	assert(md == moveDef);
+	assert(moveDef == moveDefHandler->GetMoveDefByPathType(moveDef->pathType));
 
 	// Creates a new multipath.
 	IPath::SearchResult result = IPath::Error;

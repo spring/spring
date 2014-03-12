@@ -26,6 +26,9 @@ public:
 	virtual bool CanApplyImpulse(const float3&) { return false; }
 	virtual void LeaveTransport() {}
 
+	// generic setter for Lua-writable values
+	virtual bool SetMemberValue(unsigned int memberHash, void* memberValue) { return false; }
+
 	virtual void SetGoal(const float3& pos, float distance = 0.0f) { goalPos = pos; }
 
 	// NOTE:
