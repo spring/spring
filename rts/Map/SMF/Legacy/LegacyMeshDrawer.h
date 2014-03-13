@@ -42,22 +42,12 @@ private:
 	void DoDrawGroundRow(const CCamera* cam, int bty);
 	void DoDrawGroundShadowLOD(int nlod);
 
-#ifdef USE_GML
-	static void DoDrawGroundRowMT(void* c, int bty);
-	static void DoDrawGroundShadowLODMT(void* c, int nlod);
-#endif
-
 private:
 	CSMFReadMap* smfReadMap;
 	CSMFGroundDrawer* smfGroundDrawer;
 
 	int viewRadius;
 	int neededLod;
-
-#ifdef USE_GML
-	bool& multiThreadDrawGround;
-	bool& multiThreadDrawGroundShadow;
-#endif
 };
 
 #endif // _LEGACY_MESH_DRAWER_H_
