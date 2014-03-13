@@ -160,13 +160,13 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	canReverse((owner != NULL) && (owner->unitDef->rSpeed > 0.0f)),
 	useMainHeading(false),
 
-	skidRotVector(UpVector),
 	skidRotSpeed(0.0f),
 	skidRotAccel(0.0f),
 
 	flatFrontDir(FwdVector),
 	lastAvoidanceDir(ZeroVector),
 	mainHeadingPos(ZeroVector),
+	skidRotVector(UpVector),
 
 	nextObstacleAvoidanceFrame(0),
 	lastPathRequestFrame(0),
