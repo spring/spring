@@ -43,11 +43,6 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 	highResInfoTex = false;
 	updateTextureState = 0;
 
-#ifdef USE_GML
-	multiThreadDrawGroundShadow = false;
-	multiThreadDrawGround = false;
-#endif
-
 	infoTexPBO.Bind();
 	infoTexPBO.Resize(gs->pwr2mapx * gs->pwr2mapy * 4);
 	infoTexPBO.Unbind(false);

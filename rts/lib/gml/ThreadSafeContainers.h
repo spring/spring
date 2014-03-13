@@ -27,8 +27,6 @@
 
 /////////////////////////////////////////////////////////
 
-#if !defined(USE_GML) || !GML_ENABLE_SIM
-
 template <class C, class R, class T>
 class ThreadListSimRender {
 private:
@@ -403,10 +401,6 @@ public:
 	std::vector<T> cont;
 };
 
-#endif
-
-
-
 template <class C, class R, class T, class D>
 class ThreadListSim {
 private:
@@ -472,9 +466,7 @@ public:
 	void detach_erased_synced() {
 		for (VecIT it = del.begin(); it != del.end(); ++it) {
 			D::Detach(*it);
-#if !defined(USE_GML) || !GML_ENABLE_SIM
 			delete *it;
-#endif
 		}
 		del.clear();
 	}
@@ -500,18 +492,12 @@ public:
 	}
 
 	SimIT erase_delete(SimIT& it) {
-#if !defined(USE_GML) || !GML_ENABLE_SIM
 		delete *it;
-#endif
 		return cont.erase(it);
 	}
 
 	SimIT erase_detach(SimIT& it) {
-#if !defined(USE_GML) || !GML_ENABLE_SIM
 		delete *it;
-#else
-		D::Detach(*it);
-#endif
 		return cont.erase(it);
 	}
 
