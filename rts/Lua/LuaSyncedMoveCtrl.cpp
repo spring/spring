@@ -7,7 +7,6 @@
 
 #include "LuaHandle.h"
 #include "LuaHashString.h"
-#include "LuaHelper.h"
 #include "LuaUtils.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/ScriptMoveType.h"
