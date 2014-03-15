@@ -365,6 +365,12 @@ bool SpringApp::CreateSDLWindow(const char* title)
 	}
 	sdlflags |= borderless ? SDL_WINDOW_BORDERLESS : 0;
 
+#if defined(WIN32)
+	if (borderless && !globalRendering->fullScreen) {
+		sdlflags &= ~SDL_WINDOW_RESIZABLE;
+	}
+#endif
+
 	// Window Pos & State
 	globalRendering->winPosX  = configHandler->GetInt("WindowPosX");
 	globalRendering->winPosY  = configHandler->GetInt("WindowPosY");
