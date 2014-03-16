@@ -2444,7 +2444,6 @@ public:
 			guihandler->LayoutIcons(false);
 		}
 		else if (luaUI) {
-			luaUI->ConfigCommand(command); //FIXME deprecated
 			luaUI->GotChatMsg(command, 0);
 		} else {
 			LOG_L(L_DEBUG, "LuaUI is not loaded");
