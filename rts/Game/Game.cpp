@@ -145,7 +145,6 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/VFSHandler.h"
-#include "System/FileSystem/SimpleParser.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Log/ILog.h"
@@ -1163,7 +1162,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	mouse->Update();
 	mouse->UpdateCursors();
 	guihandler->Update();
-
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 	eventHandler.Update();
 
