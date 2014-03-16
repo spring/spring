@@ -73,10 +73,10 @@ bool ProfileDrawer::IsEnabled()
 
 
 
-static void DrawTimeSlice(std::deque<TimeSlice>& frames, const spring_time curTime, const float maxHist, const float drawArea[4])
+static void DrawTimeSlice(std::deque<TimeSlice>& frames, const spring_time curTime, const spring_time maxHist, const float drawArea[4])
 {
 	// remove old entries
-	while (!frames.empty() && (curTime - frames.front().second) > spring_secs(maxHist)) {
+	while (!frames.empty() && (curTime - frames.front().second) > maxHist) {
 		frames.pop_front();
 	}
 
@@ -87,8 +87,8 @@ static void DrawTimeSlice(std::deque<TimeSlice>& frames, const spring_time curTi
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 	for (TimeSlice& ts: frames) {
-		float x1 = std::fmod(ts.first.toSecsf(),  maxHist) / maxHist;
-		float x2 = std::fmod(ts.second.toSecsf(), maxHist) / maxHist;
+		float x1 = (ts.first % maxHist).toSecsf() / maxHist.toSecsf();
+		float x2 = (ts.second % maxHist).toSecsf() / maxHist.toSecsf();
 		x2 = std::max(x1 + globalRendering->pixelX, x2);
 
 		x1 = drawArea[0] + x1 * (drawArea[2] - drawArea[0]);
@@ -99,8 +99,8 @@ static void DrawTimeSlice(std::deque<TimeSlice>& frames, const spring_time curTi
 		va->AddVertex0(x2, y2, 0.0f);
 		va->AddVertex0(x2, y1, 0.0f);
 
-		float mx1 = x1 + 3 * globalRendering->pixelX;
-		float mx2 = x2 - 3 * globalRendering->pixelX;
+		const float mx1 = x1 + 3 * globalRendering->pixelX;
+		const float mx2 = x2 - 3 * globalRendering->pixelX;
 		if (mx1 < mx2) {
 			va->AddVertex0(mx1, y1 + 3 * globalRendering->pixelX, 0.0f);
 			va->AddVertex0(mx1, y2 - 3 * globalRendering->pixelX, 0.0f);
@@ -113,14 +113,15 @@ static void DrawTimeSlice(std::deque<TimeSlice>& frames, const spring_time curTi
 }
 
 
-static void DrawThreadBarCode()
+static void DrawThreadBarcode()
 {
+	const float maxHist_f = 4.0f;
 	const spring_time curTime = spring_now();
-	const float maxHist = 4.0f;
+	const spring_time maxHist = spring_secs(maxHist_f);
 	auto& coreProf = profiler.profileCore;
 	const auto numThreads = coreProf.size();
 
-	float drawArea[4] = {0.01f, 0.30f, (start_x / 2), 0.35f};
+	const float drawArea[4] = {0.01f, 0.30f, (start_x / 2), 0.35f};
 
 	// background
 	CVertexArray* va = GetVertexArray();
@@ -133,7 +134,7 @@ static void DrawThreadBarCode()
 	va->DrawArray0(GL_QUADS);
 
 	// title
-	font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS, "ThreadPool (%.0fsec)", maxHist);
+	font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS, "ThreadPool (%.0fsec)", maxHist_f);
 
 	// bars
 	glColor4f(1.0f,0.0f,0.0f, 0.6f);
@@ -150,7 +151,7 @@ static void DrawThreadBarCode()
 	//const float y2 = 0.1f * numThreads;
 	//CVertexArray* va = GetVertexArray();
 	va->Initialize();
-		const float r = std::fmod(curTime.toSecsf(), maxHist) / maxHist;
+		const float r = (curTime % maxHist).toSecsf() / maxHist_f;
 		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
 		va->AddVertex0(xf, drawArea[1], 0.0f);
 		va->AddVertex0(xf, drawArea[3], 0.0f);
@@ -161,10 +162,11 @@ static void DrawThreadBarCode()
 }
 
 
-static void DrawFrameBarCode()
+static void DrawFrameBarcode()
 {
+	const float maxHist_f = 0.5f;
 	const spring_time curTime = spring_now();
-	const float maxHist = 0.5f;
+	const spring_time maxHist = spring_secs(maxHist_f);
 	float drawArea[4] = {0.01f, 0.2f, start_x - 0.05f, 0.25f};
 
 	// background
@@ -178,7 +180,7 @@ static void DrawFrameBarCode()
 	va->DrawArray0(GL_QUADS);
 
 	// title
-	font->glFormat(drawArea[0], drawArea[3] + 10 * globalRendering->pixelY, 0.7f, FONT_TOP | DBG_FONT_FLAGS, "Frame Grapher (%.2fsec)", maxHist);
+	font->glFormat(drawArea[0], drawArea[3] + 10 * globalRendering->pixelY, 0.7f, FONT_TOP | DBG_FONT_FLAGS, "Frame Grapher (%.2fsec)", maxHist_f);
 
 	// gc frames
 	glColor4f(1.0f,0.5f,1.0f, 0.55f);
@@ -204,7 +206,7 @@ static void DrawFrameBarCode()
 	//CVertexArray* va = GetVertexArray();
 	va->Initialize();
 		// draw feeder
-		const float r = std::fmod(curTime.toSecsf(), maxHist) / maxHist;
+		const float r = (curTime % maxHist).toSecsf() / maxHist_f;
 		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
 		va->AddVertex0(xf, drawArea[1], 0.0f);
 		va->AddVertex0(xf, drawArea[3], 0.0f);
@@ -212,7 +214,7 @@ static void DrawFrameBarCode()
 		va->AddVertex0(xf + 10 * globalRendering->pixelX, drawArea[1], 0.0f);
 
 		// draw scale (horizontal bar that indicates 30FPS timing length)
-		const float xs1 = drawArea[2] - 1.f/(30.f*maxHist) * (drawArea[2] - drawArea[0]);
+		const float xs1 = drawArea[2] - 1.f/(30.f*maxHist_f) * (drawArea[2] - drawArea[0]);
 		const float xs2 = drawArea[2] +               0.0f * (drawArea[2] - drawArea[0]);
 		va->AddVertex0(xs1, drawArea[3] +  2 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(xs1, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
@@ -386,8 +388,8 @@ void ProfileDrawer::DrawScreen()
 	font->Begin();
 	font->SetTextColor(1,1,0.5f,0.8f);
 
-	DrawThreadBarCode();
-	DrawFrameBarCode();
+	DrawThreadBarcode();
+	DrawFrameBarcode();
 	DrawProfiler();
 	DrawInfoText();
 
