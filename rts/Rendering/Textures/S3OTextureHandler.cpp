@@ -62,7 +62,7 @@ void CS3OTextureHandler::LoadS3OTexture(S3DModel* model) {
 
 int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 {
-	LOG("Load S3O texture now (Flip Y Axis: %s, Invert Team Alpha: %s)",
+	LOG_L(L_INFO, "Load S3O texture now (Flip Y Axis: %s, Invert Team Alpha: %s)",
 			model->invertTexYAxis ? "yes" : "no",
 			model->invertTexAlpha ? "yes" : "no");
 
