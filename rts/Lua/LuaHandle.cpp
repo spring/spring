@@ -427,6 +427,9 @@ bool CLuaHandle::GotChatMsg(const string& msg, int playerID)
 
 	const bool processed = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
+	if (!processed && (this == luaUI)) {
+		return luaUI->ConfigCommand(msg); //FIXME deprecated
+	}
 	return processed;
 }
 
