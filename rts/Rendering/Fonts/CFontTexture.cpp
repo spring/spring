@@ -453,12 +453,7 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 
 	// load fail glyph for all remaining ones (they will all share the same fail glyph)
 	for (auto c: map) {
-#ifndef HEADLESS
-		FT_UInt index = FT_Get_Char_Index(*shFace, c);
-#else
-		unsigned index = 0;
-#endif
-		LoadGlyph(shFace, c, index);
+		LoadGlyph(shFace, c, 0);
 	}
 
 
