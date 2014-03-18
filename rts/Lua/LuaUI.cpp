@@ -323,7 +323,7 @@ bool CLuaUI::ConfigCommand(const string& command) //FIXME rename to fit event na
 	luaL_checkstack(L, 2, __FUNCTION__);
 	static const LuaHashString cmdStr("ConfigureLayout");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		return true; // the call is not defined
+		return false; // the call is not defined
 	}
 
 	lua_pushsstring(L, command);
@@ -332,6 +332,7 @@ bool CLuaUI::ConfigCommand(const string& command) //FIXME rename to fit event na
 	if (!RunCallIn(L, cmdStr, 1, 0)) {
 		return false;
 	}
+
 	return true;
 }
 

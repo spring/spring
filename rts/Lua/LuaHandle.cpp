@@ -414,21 +414,21 @@ bool CLuaHandle::GotChatMsg(const string& msg, int playerID)
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 4, __FUNCTION__);
 	static const LuaHashString cmdStr("GotChatMsg");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined
+
+	bool processed = false;
+	if (cmdStr.GetGlobalFunc(L)) {
+		lua_pushsstring(L, msg);
+		lua_pushnumber(L, playerID);
+
+		// call the routine
+		if (RunCallIn(L, cmdStr, 2, 1)) {
+			processed = luaL_optboolean(L, -1, false);
+			lua_pop(L, 1);
+		}
 	}
 
-	lua_pushsstring(L, msg);
-	lua_pushnumber(L, playerID);
-
-	// call the routine
-	if (!RunCallIn(L, cmdStr, 2, 1))
-		return false;
-
-	const bool processed = luaL_optboolean(L, -1, false);
-	lua_pop(L, 1);
 	if (!processed && (this == luaUI)) {
-		return luaUI->ConfigCommand(msg); //FIXME deprecated
+		processed = luaUI->ConfigCommand(msg); //FIXME deprecated
 	}
 	return processed;
 }
