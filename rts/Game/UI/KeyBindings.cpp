@@ -370,6 +370,48 @@ const CKeyBindings::HotkeyList& CKeyBindings::GetHotkeys(const std::string& acti
 
 /******************************************************************************/
 
+static bool ParseKeyChain_kernel(const std::string& keystr, CKeyChain* kc)
+{
+	kc->clear();
+	CKeySet ks;
+	std::stringstream ss(keystr);
+	while (ss.good()) {
+		char kcstr[256];
+		ss.getline(kcstr, 256, ',');
+		std::string kstr(kcstr);
+		if (!ks.Parse(kstr, false)) {
+			return false;
+		}
+		kc->emplace_back(ks);
+	}
+	return true;
+}
+
+
+static bool ParseKeyChain(std::string keystr, CKeyChain* kc, const size_t pos = std::string::npos)
+{
+	// recursive function to allow "," as seperator-char & as shortcut
+	// -> when parsing fails, this functions replaces one by one all "," by their hexcode
+	//    and tries then to reparse it
+	// -> i.e. ",,," will at the end parsed as "0x2c,0x2c"
+
+	const size_t cpos = keystr.rfind(',', pos);
+
+	if (ParseKeyChain_kernel(keystr, kc))
+		return true;
+
+	if (cpos == std::string::npos)
+		return false;
+
+	const size_t nextpos = (cpos > 0) ? cpos - 1 : std::string::npos;
+	if ((nextpos != std::string::npos) && ParseKeyChain(keystr, kc, nextpos))
+		return true;
+
+	keystr.replace(cpos, 1, IntToString(keyCodes->GetCode(","), "%#x"));
+	return ParseKeyChain(keystr, kc, cpos);
+}
+
+
 bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 {
 	Action action(line);
@@ -379,26 +421,11 @@ bool CKeyBindings::Bind(const std::string& keystr, const std::string& line)
 		return false;
 	}
 
-	CKeySet ks;
-	if (keystr.find(",") != std::string::npos) {
-		std::stringstream ss(keystr);
-		while(ss.good()) {
-			char kcstr[256];
-			ss.getline(kcstr, 256, ',');
-			std::string kstr(kcstr);
-			if (!ks.Parse(kstr)) {
-				LOG_L(L_WARNING, "Bind: could not parse key: %s in %s", kstr.c_str(), keystr.c_str());
-				return false;
-			}
-			action.keyChain.emplace_back(ks);
-		}
-	} else {
-		if (!ks.Parse(keystr)) {
-			LOG_L(L_WARNING, "Bind: could not parse key: %s", keystr.c_str());
-			return false;
-		}
-		action.keyChain.emplace_back(ks);
+	if (!ParseKeyChain(keystr, &action.keyChain) || action.keyChain.empty()) {
+		LOG_L(L_WARNING, "Bind: could not parse key: %s", keystr.c_str());
+		return false;
 	}
+	CKeySet& ks = action.keyChain.back();
 
 	// Try to be safe, force AnyMod mode for stateful commands
 	if (statefulCommands.find(action.command) != statefulCommands.end()) {
