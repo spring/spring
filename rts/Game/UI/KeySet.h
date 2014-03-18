@@ -16,7 +16,7 @@ class CKeySet {
 		void Reset();
 		void SetAnyBit();
 		void ClearModifiers();
-		bool Parse(const std::string& token);
+		bool Parse(const std::string& token, bool showerror = true);
 
 		std::string GetString(bool useDefaultKeysym) const;
 

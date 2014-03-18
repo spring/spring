@@ -102,7 +102,7 @@ bool CKeySet::ParseModifier(std::string& s, const std::string& token, const std:
 }
 
 
-bool CKeySet::Parse(const std::string& token)
+bool CKeySet::Parse(const std::string& token, bool showerror)
 {
 	Reset();
 
@@ -124,7 +124,13 @@ bool CKeySet::Parse(const std::string& token)
 #ifdef DISALLOW_RELEASE_BINDINGS
 	modifiers &= ~KS_RELEASE;
 #endif
-	
+
+	if (s.empty()) {
+		Reset();
+		if (showerror) LOG_L(L_ERROR, "KeySet: Missing key");
+		return false;
+	}
+
 	// remove ''s, if present
 	if ((s.size() >= 2) && (s[0] == '\'') && (s[s.size() - 1] == '\'')) {
 		s = s.substr(1, s.size() - 2);
@@ -136,13 +142,13 @@ bool CKeySet::Parse(const std::string& token)
 		key = strtol(start, &end, 16);
 		if (end == start) {
 			Reset();
-			LOG_L(L_ERROR, "KeySet: Bad hex value: %s", s.c_str());
+			if (showerror) LOG_L(L_ERROR, "KeySet: Bad hex value: %s", s.c_str());
 			return false;
 		}
 	} else {
 		if ((keyCodes != NULL) && (key = keyCodes->GetCode(s)) < 0) {
 			Reset();
-			LOG_L(L_ERROR, "KeySet: Bad keysym: %s", s.c_str());
+			if (showerror) LOG_L(L_ERROR, "KeySet: Bad keysym: %s", s.c_str());
 			return false;
 		}
 	}
