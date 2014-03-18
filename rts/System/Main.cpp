@@ -52,8 +52,7 @@ int Run(int argc, char* argv[])
 	Threading::Error* err = Threading::GetThreadError();
 
 	if (err != NULL) {
-		LOG_L(L_ERROR, "[%s] ret=%d err=\"%s\"", __FUNCTION__, ret, err->message.c_str());
-		ErrorMessageBox("[" + std::string(__FUNCTION__) + "] error: " + err->message, err->caption, err->flags, true);
+		ErrorMessageBox(" error: " + err->message, err->caption, err->flags, true);
 	}
 
 	return ret;
