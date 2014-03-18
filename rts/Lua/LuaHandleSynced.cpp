@@ -180,7 +180,7 @@ bool CUnsyncedLuaHandle::DrawUnit(const CUnit* unit)
 	luaL_checkstack(L, 4, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!cmdStr.GetRegistryFunc(L))
+	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
 	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
@@ -207,7 +207,7 @@ bool CUnsyncedLuaHandle::DrawFeature(const CFeature* feature)
 	luaL_checkstack(L, 4, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!cmdStr.GetRegistryFunc(L))
+	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
 	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
@@ -235,7 +235,7 @@ bool CUnsyncedLuaHandle::DrawShield(const CUnit* unit, const CWeapon* weapon)
 
 	static const LuaHashString cmdStr(__FUNCTION__);
 
-	if (!cmdStr.GetRegistryFunc(L))
+	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
 	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
@@ -266,7 +266,7 @@ bool CUnsyncedLuaHandle::DrawProjectile(const CProjectile* projectile)
 	luaL_checkstack(L, 5, __FUNCTION__);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!cmdStr.GetRegistryFunc(L))
+	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
 	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
@@ -434,7 +434,6 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 
 bool CSyncedLuaHandle::SyncedActionFallback(const string& msg, int playerID)
 {
-	//FIXME needs mutex?
 	string cmd = msg;
 	const string::size_type pos = cmd.find_first_of(" \t");
 	if (pos != string::npos) {
