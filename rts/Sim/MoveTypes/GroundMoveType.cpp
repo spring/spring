@@ -2303,8 +2303,13 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
 
 
 bool CGroundMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
+	// try the generic members first
+	if (AMoveType::SetMemberValue(memberHash, memberValue))
+		return true;
+
 	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
 	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
+
 	#define MAXREVERSESPEED_MEMBER_IDX 5
 
 	static const unsigned int boolMemberHashes[] = {
@@ -2326,11 +2331,17 @@ bool CGroundMoveType::SetMemberValue(unsigned int memberHash, void* memberValue)
 
 	// unordered_map etc. perform dynallocs, so KISS here
 	bool* boolMemberPtrs[] = {
-		&atGoal, &atEndOfPath,
+		&atGoal,
+		&atEndOfPath,
 	};
 	float* floatMemberPtrs[] = {
-		&turnRate, &turnAccel,
-		&accRate, &decRate, &myGravity,
+		&turnRate,
+		&turnAccel,
+
+		&accRate,
+		&decRate,
+
+		&myGravity,
 		&maxReverseSpeed,
 	};
 

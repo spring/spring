@@ -1324,6 +1324,10 @@ void CStrafeAirMoveType::Takeoff()
 
 
 bool CStrafeAirMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
+	// try the generic members first
+	if (AMoveType::SetMemberValue(memberHash, memberValue))
+		return true;
+
 	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
 	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
 
@@ -1335,12 +1339,15 @@ bool CStrafeAirMoveType::SetMemberValue(unsigned int memberHash, void* memberVal
 		MEMBER_LITERAL_HASH( "wantedHeight"),
 		MEMBER_LITERAL_HASH(   "turnRadius"),
 		MEMBER_LITERAL_HASH(      "accRate"),
-		MEMBER_LITERAL_HASH(    "myGravity"),
+		MEMBER_LITERAL_HASH(      "decRate"),
+		MEMBER_LITERAL_HASH(       "maxAcc"), // synonym for accRate
+		MEMBER_LITERAL_HASH(       "maxDec"), // synonym for decRate
 		MEMBER_LITERAL_HASH(      "maxBank"),
 		MEMBER_LITERAL_HASH(     "maxPitch"),
 		MEMBER_LITERAL_HASH(   "maxAileron"),
 		MEMBER_LITERAL_HASH(  "maxElevator"),
 		MEMBER_LITERAL_HASH(    "maxRudder"),
+		MEMBER_LITERAL_HASH(    "myGravity"),
 	};
 
 	#undef MEMBER_CHARPTR_HASH
@@ -1349,13 +1356,26 @@ bool CStrafeAirMoveType::SetMemberValue(unsigned int memberHash, void* memberVal
 
 	// unordered_map etc. perform dynallocs, so KISS here
 	bool* boolMemberPtrs[] = {
-		&collide, &useSmoothMesh,
+		&collide,
+		&useSmoothMesh,
 	};
 	float* floatMemberPtrs[] = {
-		&wantedHeight, &turnRadius,
-		&accRate, &myGravity,
-		&maxBank, &maxPitch,
-		&maxAileron, &maxElevator, &maxRudder,
+		&wantedHeight,
+		&turnRadius,
+
+		&accRate, // hash("accRate") case
+		&decRate, // hash("decRate") case
+		&accRate, // hash( "maxAcc") case
+		&decRate, // hash( "maxDec") case
+
+		&maxBank,
+		&maxPitch,
+
+		&maxAileron,
+		&maxElevator,
+		&maxRudder,
+
+		&myGravity,
 	};
 
 	// note: <memberHash> should be calculated via HsiehHash
