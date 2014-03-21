@@ -503,26 +503,6 @@ int LuaSyncedMoveCtrl::SetCollideStop(lua_State* L)
 	return 0;
 }
 
-/******************************************************************************/
-/******************************************************************************/
-/* MoveType-specific methods */
-
-static inline bool SetGenericMoveTypeValue(AMoveType* mt, const string& key, float value)
-{
-	// can't set goal here, need a different function that calls mt->SetGoal
-	// FIXME should use setter methods in all Set*MoveTypeValue functions, but they mostly don't exist
-	if (key == "maxSpeed") {
-		mt->SetMaxSpeed(value / GAME_SPEED); return true;
-	} else if (key == "repairBelowHealth") {
-		mt->SetRepairBelowHealth(value); return true;
-	}
-	return false;
-}
-
-static inline bool SetGenericMoveTypeValue(AMoveType* mt, const string& key, bool value)
-{
-	return false;
-}
 
 
 /******************************************************************************/
@@ -530,22 +510,16 @@ static inline bool SetGenericMoveTypeValue(AMoveType* mt, const string& key, boo
 
 static inline bool SetAirMoveTypeValue(CStrafeAirMoveType* mt, const string& key, float value)
 {
-	if (SetGenericMoveTypeValue(mt, key, value))
-		return true;
-
 	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
 }
 
 static inline bool SetAirMoveTypeValue(CStrafeAirMoveType* mt, const string& key, bool value)
 {
-	if (SetGenericMoveTypeValue(mt, key, value))
-		return true;
-
 	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
 }
 
 
-static inline void SetSingleAirMoveTypeValue(lua_State* L, int keyidx, int validx, CStrafeAirMoveType* moveType)
+static inline void SetSingleAirMoveTypeValue(lua_State* L, CStrafeAirMoveType* moveType, int keyidx, int validx)
 {
 	const string key = lua_tostring(L, keyidx);
 	bool assigned = true;
@@ -572,13 +546,13 @@ int LuaSyncedMoveCtrl::SetAirMoveTypeData(lua_State* L)
 
 	if (args == 3 && lua_isstring(L, 2)) {
 		// a single value
-		SetSingleAirMoveTypeValue(L, 2, 3, moveType);
+		SetSingleAirMoveTypeValue(L, moveType, 2, 3);
 	} else if (args == 2 && lua_istable(L, 2)) {
 		// a table of values
 		const int table = 2;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2)) {
-				SetSingleAirMoveTypeValue(L, -2, -1, moveType);
+				SetSingleAirMoveTypeValue(L, moveType, -2, -1);
 			}
 		}
 	}
@@ -592,22 +566,16 @@ int LuaSyncedMoveCtrl::SetAirMoveTypeData(lua_State* L)
 
 static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key, float value)
 {
-	if (SetGenericMoveTypeValue(mt, key, value))
-		return true;
-
 	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
 }
 
 static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key, bool value)
 {
-	if (SetGenericMoveTypeValue(mt, key, value))
-		return true;
-
 	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
 }
 
 
-static inline void SetSingleGroundMoveTypeValue(lua_State* L, int keyidx, int validx, CGroundMoveType* moveType)
+static inline void SetSingleGroundMoveTypeValue(lua_State* L, CGroundMoveType* moveType, int keyidx, int validx)
 {
 	const string key = lua_tostring(L, keyidx);
 	bool assigned = true;
@@ -634,13 +602,13 @@ int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State *L)
 
 	if (args == 3 && lua_isstring(L, 2)) {
 		// a single value
-		SetSingleGroundMoveTypeValue(L, 2, 3, moveType);
+		SetSingleGroundMoveTypeValue(L, moveType, 2, 3);
 	} else if (args == 2 && lua_istable(L, 2)) {
 		// a table of values
 		const int table = 2;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2)) {
-				SetSingleGroundMoveTypeValue(L, -2, -1, moveType);
+				SetSingleGroundMoveTypeValue(L, moveType, -2, -1);
 			}
 		}
 	}
@@ -655,21 +623,15 @@ int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State *L)
 
 static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string& key, float value)
 {
-	if (SetGenericMoveTypeValue(mt, key, value))
-		return true;
-
 	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
 }
 
 static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string& key, bool value)
 {
-	if (SetGenericMoveTypeValue(mt, key, value))
-		return true;
-
 	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
 }
 
-static inline void SetSingleHoverAirMoveTypeValue(lua_State* L, int keyIdx, int valIdx, CHoverAirMoveType* moveType)
+static inline void SetSingleHoverAirMoveTypeValue(lua_State* L, CHoverAirMoveType* moveType, int keyIdx, int valIdx)
 {
 	const string key = lua_tostring(L, keyIdx);
 	bool assigned = true;
@@ -696,13 +658,13 @@ int LuaSyncedMoveCtrl::SetGunshipMoveTypeData(lua_State *L)
 
 	if (args == 3 && lua_isstring(L, 2)) {
 		// a single value
-		SetSingleHoverAirMoveTypeValue(L, 2, 3, moveType);
+		SetSingleHoverAirMoveTypeValue(L, moveType, 2, 3);
 	} else if (args == 2 && lua_istable(L, 2)) {
 		// a table of values
 		const int table = 2;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2)) {
-				SetSingleHoverAirMoveTypeValue(L, -2, -1, moveType);
+				SetSingleHoverAirMoveTypeValue(L, moveType, -2, -1);
 			}
 		}
 	}

@@ -1160,8 +1160,13 @@ bool CHoverAirMoveType::HandleCollisions(bool checkCollisions)
 
 
 bool CHoverAirMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
+	// try the generic members first
+	if (AMoveType::SetMemberValue(memberHash, memberValue))
+		return true;
+
 	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
 	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
+
 	#define     DONTLAND_MEMBER_IDX 1
 	#define WANTEDHEIGHT_MEMBER_IDX 0
 
@@ -1189,13 +1194,25 @@ bool CHoverAirMoveType::SetMemberValue(unsigned int memberHash, void* memberValu
 
 	// unordered_map etc. perform dynallocs, so KISS here
 	bool* boolMemberPtrs[] = {
-		&collide, &dontLand, &airStrafe, &useSmoothMesh, &bankingAllowed
+		&collide,
+		&dontLand,
+		&airStrafe,
+
+		&useSmoothMesh,
+		&bankingAllowed
 	};
 	float* floatMemberPtrs[] = {
 		&wantedHeight,
-		&accRate, &decRate,
-		&turnRate, &altitudeRate,
-		&currentBank, &currentPitch,
+
+		&accRate,
+		&decRate,
+
+		&turnRate,
+		&altitudeRate,
+
+		&currentBank,
+		&currentPitch,
+
 		&maxDrift
 	};
 

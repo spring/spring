@@ -27,7 +27,7 @@ public:
 	virtual void LeaveTransport() {}
 
 	// generic setter for Lua-writable values
-	virtual bool SetMemberValue(unsigned int memberHash, void* memberValue) { return false; }
+	virtual bool SetMemberValue(unsigned int memberHash, void* memberValue);
 
 	virtual void SetGoal(const float3& pos, float distance = 0.0f) { goalPos = pos; }
 
