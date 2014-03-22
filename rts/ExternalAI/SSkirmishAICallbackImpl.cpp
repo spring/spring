@@ -1262,7 +1262,7 @@ EXPORT(void) skirmishAiCallback_Game_getCategoryName(int skirmishAIId, int categ
 
 	const std::vector<std::string>& names = CCategoryHandler::Instance()->GetCategoryNames(categoryFlag);
 
-	const char* theName = '\0';
+	const char* theName = "";
 	if (!names.empty()) {
 		theName = names.begin()->c_str();
 	}
