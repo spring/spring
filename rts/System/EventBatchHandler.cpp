@@ -19,8 +19,6 @@ boost::int64_t EventBatchHandler::eventSequenceNumber = 0;
 EventBatchHandler::EventBatchHandler()
 	: CEventClient("[EventBatchHandler]", 0, true)
 {
-	autoLinkEvents = true;
-	RegisterLinkedEvents(this);
 	eventHandler.AddClient(this);
 }
 
