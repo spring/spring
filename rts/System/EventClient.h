@@ -56,7 +56,7 @@ class CEventClient
 		 * Used by the eventHandler to register
 		 * call-ins when an EventClient is being added.
 		 */
-		virtual bool WantsEvent(const std::string& eventName);
+		virtual bool WantsEvent(const std::string& eventName) = 0;
 
 		// used by the eventHandler to route certain event types
 		virtual int  GetReadAllyTeam() const { return NoAccessTeam; }
@@ -68,31 +68,10 @@ class CEventClient
 	public:
 		friend class CEventHandler;
 
-		typedef void (*eventFuncPtr)();
-
-		std::map<std::string, eventFuncPtr> linkedEvents;
-		std::map<std::string, std::string> linkedEventsTypeInfo;
-
-		#pragma GCC diagnostic push
-		#pragma GCC diagnostic ignored "-Wpmf-conversions"
-		template <class T>
-		void RegisterLinkedEvents(T* foo) {
-			#define SETUP_EVENT(eventname, props) \
-				linkedEvents[#eventname] = reinterpret_cast<eventFuncPtr>(&T::eventname); \
-				linkedEventsTypeInfo[#eventname] = typeid(&T::eventname).name();
-
-				#include "Events.def"
-			#undef SETUP_EVENT
-		}
-		#pragma GCC diagnostic pop
-
 	private:
 		const std::string name;
 		const int         order;
 		const bool        synced_;
-
-	protected:
-		      bool        autoLinkEvents;
 
 	protected:
 		CEventClient(const std::string& name, int order, bool synced);
