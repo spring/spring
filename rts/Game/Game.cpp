@@ -974,9 +974,7 @@ bool CGame::Update()
 
 	if (!gameOver) {
 		if (net->NeedsReconnect()) {
-			// FIXME: refactor to accessor (defined in SpringApp)
-			extern ClientSetup* startsetup;
-			net->AttemptReconnect(startsetup->myPlayerName, startsetup->myPasswd, SpringVersion::GetFull());
+			net->AttemptReconnect(SpringVersion::GetFull());
 		}
 
 		if (net->CheckTimeout(0, gs->frameNum == 0)) {
