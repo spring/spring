@@ -39,6 +39,8 @@ static std::deque<TimeSlice> uusFrames;
 ProfileDrawer::ProfileDrawer()
 : CEventClient("[ProfileDrawer]", 199991, false)
 {
+	autoLinkEvents = true;
+	RegisterLinkedEvents(this);
 	eventHandler.AddClient(this);
 }
 

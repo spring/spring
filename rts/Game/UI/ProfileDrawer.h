@@ -9,7 +9,6 @@ class ProfileDrawer : public CEventClient
 {
 public:
 	// CEventClient interface
-	bool WantsEvent(const std::string& eventName) { return true; }
 	bool GetFullRead() const { return true; }
 	int  GetReadAllyTeam() const { return AllAccessTeam; }
 

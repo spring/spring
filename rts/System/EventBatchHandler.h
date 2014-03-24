@@ -16,8 +16,6 @@ public: // EventClient
 	bool GetFullRead() const { return true; }
 	int  GetReadAllyTeam() const { return CEventClient::AllAccessTeam; }
 
-	bool WantsEvent(const std::string& eventName) { return true; }
-
 	void UnitCreated(const CUnit* unit);
 	void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
 
