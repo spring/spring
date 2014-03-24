@@ -327,8 +327,6 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_USER_SPEED: {
-				gs->wantedSpeedFactor = *((float*) &inbuf[2]);
-
 				const unsigned char player = inbuf[1];
 				if (!playerHandler->IsValidPlayer(player) && player != SERVER_PLAYER) {
 					LOG_L(L_ERROR, "Got invalid player num %i in user speed msg", player);
@@ -337,6 +335,7 @@ void CGame::ClientReadNet()
 				const char* pName = (player == SERVER_PLAYER)? "server": playerHandler->Player(player)->name.c_str();
 
 				LOG("Speed set to %.1f [%s]", gs->wantedSpeedFactor, pName);
+				gs->wantedSpeedFactor = *((float*) &inbuf[2]);
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
