@@ -43,7 +43,7 @@ public:
 	/// Are we still connected (or did the connection time-out)?
 	bool CheckTimeout(int nsecs = 0, bool initial = false) const;
 
-	void AttemptReconnect(const std::string& myName, const std::string& myPasswd, const std::string& myVersion);
+	void AttemptReconnect(const std::string& myVersion);
 
 	bool NeedsReconnect();
 
@@ -111,6 +111,9 @@ private:
 
 	boost::scoped_ptr<netcode::CConnection> serverConn;
 	boost::scoped_ptr<CDemoRecorder> demoRecorder;
+
+	std::string userName;
+	std::string userPasswd;
 };
 
 extern CNetProtocol* net;
