@@ -1306,6 +1306,10 @@ void CUnit::ChangeSensorRadius(int* valuePtr, int newValue)
 
 void CUnit::AddExperience(float exp)
 {
+	if (exp == 0.0f)
+		return;
+
+	assert(exp > 0.0f);
 	const float oldExp = experience;
 	experience += exp;
 
