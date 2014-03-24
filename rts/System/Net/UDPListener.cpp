@@ -21,6 +21,7 @@
 #include "System/Platform/errorhandler.h"
 #include "System/Util.h" // for IntToString (header only)
 
+
 namespace netcode
 {
 using namespace boost::asio;
@@ -50,7 +51,6 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 	std::string errorMsg = "";
 
 	try {
-		ip::address addr;
 		boost::system::error_code err;
 
 		socket->reset(new ip::udp::socket(netservice));
@@ -58,7 +58,7 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 
 		const bool supportsIPv6 = !err;
 
-		addr = WrapIP(ip, &err);
+		auto addr = ResolveAddr(ip, port, &err);
 		if (ip.empty()) {
 			// use the "any" address
 			addr = ip::udp::endpoint(GetAnyAddress(supportsIPv6), port);
@@ -66,15 +66,15 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 			throw std::runtime_error("Failed to parse address " + ip + ": " + err.message());
 		}
 
-		if (!supportsIPv6 && addr.is_v6()) {
-			throw std::runtime_error("IP v6 not supported, can not use address " + addr.to_string());
+		if (!supportsIPv6 && addr.address().is_v6()) {
+			throw std::runtime_error("IP v6 not supported, can not use address " + addr.address().to_string());
 		}
 
-		if (netcode::IsLoopbackAddress(addr)) {
+		if (netcode::IsLoopbackAddress(addr.address())) {
 			LOG_L(L_WARNING, "Opening socket on loopback address. Other users will not be able to connect!");
 		}
 
-		if (!addr.is_v6()) {
+		if (!addr.address().is_v6()) {
 			if (supportsIPv6) {
 				(*socket)->close();
 			}
@@ -84,14 +84,14 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 			}
 		}
 
-		if ((port < 0) || (port > 65535)) {
-			throw std::range_error("Port is out of range [0, 65535]: " + IntToString(port));
+		if ((addr.port() == 0) || (addr.port() > 65535)) {
+			throw std::range_error("Port is out of range [1, 65535]: " + IntToString(port));
 		}
 
 		LOG("Binding UDP socket to IP %s %s port %i",
-				(addr.is_v6() ? "(v6)" : "(v4)"), addr.to_string().c_str(),
-				port);
-		(*socket)->bind(ip::udp::endpoint(addr, port));
+				(addr.address().is_v6() ? "(v6)" : "(v4)"), addr.address().to_string().c_str(),
+				addr.port());
+		(*socket)->bind(addr);
 	} catch (const std::runtime_error& ex) { // includes boost::system::system_error and std::range_error
 		socket->reset();
 		errorMsg = ex.what();
