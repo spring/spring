@@ -41,7 +41,6 @@ class Action;
 class CDemoRecorder;
 class AutohostInterface;
 class CGameSetup;
-class ClientSetup;
 class ChatMessage;
 class GameParticipant;
 class GameSkirmishAI;
