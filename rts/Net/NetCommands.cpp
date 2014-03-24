@@ -40,6 +40,9 @@
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_NET)
 
 
+static std::map<int, unsigned int> mySyncChecksums;
+
+
 void CGame::AddTraffic(int playerID, int packetCode, int length)
 {
 	std::map<int, PlayerTrafficInfo>::iterator it = playerTraffic.find(playerID);
@@ -507,6 +510,11 @@ void CGame::ClientReadNet()
 				ASSERT_SYNCED(CSyncChecker::GetChecksum());
 				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum()));
 
+				if (gameServer != NULL && gameServer->GetDemoReader() != NULL) {
+					// buffer all checksums, so we can check sync later between demo & local
+					mySyncChecksums[gs->frameNum] = CSyncChecker::GetChecksum();
+				}
+
 				if ((gs->frameNum & 4095) == 0) {
 					// reset checksum every 4096 frames =~ 2.5 minutes
 					CSyncChecker::NewFrame();
@@ -529,10 +537,11 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket pckt(packet, 1);
 
 					unsigned char playerNum; pckt >> playerNum;
-						      int  frameNum; pckt >> frameNum;
+						  int  frameNum; pckt >> frameNum;
 					unsigned  int  checkSum; pckt >> checkSum;
 
-					const unsigned int ourCheckSum = CSyncChecker::GetChecksum();
+					const unsigned int ourCheckSum = mySyncChecksums[frameNum];
+
 					const char* fmtStr =
 						"[DESYNC_WARNING] checksum %x from player %d (%s)"
 						" does not match our checksum %x for frame-number %d";
@@ -542,10 +551,9 @@ void CGame::ClientReadNet()
 					// player <playerNum> sent to the server at the same
 					// frame in the original game (in case of a demo)
 					if (playerNum == gu->myPlayerNum) { break; }
-					if (gs->frameNum != frameNum) { break; }
 					if (checkSum == ourCheckSum) { break; }
 
-					LOG_L(L_ERROR, fmtStr, checkSum, playerNum, player->name.c_str(), ourCheckSum, gs->frameNum);
+					LOG_L(L_ERROR, fmtStr, checkSum, playerNum, player->name.c_str(), ourCheckSum, frameNum);
 				}
 #endif
 			} break;
