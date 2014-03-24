@@ -61,11 +61,7 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 		addr = WrapIP(ip, &err);
 		if (ip.empty()) {
 			// use the "any" address
-			if (supportsIPv6) {
-				addr = ip::address_v6::any();
-			} else {
-				addr = ip::address_v4::any();
-			}
+			addr = ip::udp::endpoint(GetAnyAddress(supportsIPv6), port);
 		} else if (err) {
 			throw std::runtime_error("Failed to parse address " + ip + ": " + err.message());
 		}
