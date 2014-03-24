@@ -250,14 +250,10 @@ UDPConnection::UDPConnection(boost::shared_ptr<ip::udp::socket> netSocket, const
 UDPConnection::UDPConnection(int sourcePort, const std::string& address, const unsigned port)
 	: sharedSocket(false)
 {
-	addr = ResolveAddr(address, port);
+	boost::system::error_code err;
+	addr = ResolveAddr(address, port, &err);
 
-	ip::address sourceAddr;
-	if (addr.address().is_v6()) {
-		sourceAddr = ip::address_v6::any();
-	} else {
-		sourceAddr = ip::address_v4::any();
-	}
+	ip::address sourceAddr = GetAnyAddress(addr.address().is_v6());
 	boost::shared_ptr<ip::udp::socket> tempSocket(new ip::udp::socket(
 			netcode::netservice, ip::udp::endpoint(sourceAddr, sourcePort)));
 	mySocket = tempSocket;

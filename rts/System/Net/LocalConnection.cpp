@@ -98,7 +98,7 @@ std::string CLocalConnection::Statistics() const
 
 std::string CLocalConnection::GetFullAddress() const
 {
-	return "shared memory";
+	return "Localhost";
 }
 
 
