@@ -47,3 +47,9 @@ fi
 
 VERSION_="${CONFIG_}${BRANCH_}${REV}"
 VERSION=`echo "${VERSION_}" | tr '<>:\"/\\|?*' -`
+
+if [ -z "${MAKE}" ]; then
+	echo "MAKE isn't set, using 'make' as default"
+	MAKE=make
+fi
+
