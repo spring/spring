@@ -330,14 +330,14 @@ void LoadExtensions()
 		char errorMsg[errorMsg_maxSize];
 		SNPRINTF(errorMsg, errorMsg_maxSize,
 				"Needed OpenGL extension(s) not found:\n"
-				"%s\n"
+				"  %s\n\n"
 				"Update your graphic-card driver!\n"
-				"graphic card:   %s\n"
-				"OpenGL version: %s\n",
+				"  Graphic card:   %s\n"
+				"  OpenGL version: %s\n",
 				missingExts.c_str(),
 				glRenderer,
 				glVersion);
-		handleerror(0, errorMsg, "Update graphic drivers", 0);
+		throw unsupported_error(errorMsg);
 	}
 
 	// install OpenGL DebugMessageCallback
