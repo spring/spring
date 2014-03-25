@@ -166,7 +166,7 @@ int main(int argc, char* argv[])
 		if (!fh.LoadStringData(scriptText))
 			throw content_error("script cannot be read: " + scriptName);
 
-		settings.Init(scriptText);
+		settings.LoadFromStartScript(scriptText);
 		gameSetup = new CGameSetup(); // to store the gamedata inside
 
 		if (!gameSetup->Init(scriptText)) {
