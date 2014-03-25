@@ -797,14 +797,16 @@ static void ParseSpringUri(const std::string& uri, std::string* username, std::s
 	if (uri.find("spring://") != std::string::npos)
 		return; // wrong scheme
 
-	const std::string authority = uri.substr(std::string("spring://").length());
-	std::string user_info, server, portStr;
+	const std::string full = uri.substr(std::string("spring://").length());
+	std::string authority, query, user_info, server, portStr;
 	bool error = false;
+	SplitString(full,      "/", &authority, &query, &authority);
 	SplitString(authority, "@", &user_info, &server, &server);
 	SplitString(user_info, ":", username, password, username);
-	SplitString(server, ":", host, &portStr, host);
+	SplitString(server,    ":", host, &portStr, host);
 	*port = StringToInt(portStr, &error);
 	if (error) *port = 0;
+	//FIXME pass query
 }
 
 
