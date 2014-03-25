@@ -31,7 +31,9 @@ UDPListener::UDPListener(int port, const std::string& ip)
 {
 	SocketPtr socket;
 
-	if (UDPListener::TryBindSocket(port, &socket, ip)) {
+	const std::string err = TryBindSocket(port, &socket, ip);
+
+	if (err.empty()) {
 		boost::asio::socket_base::non_blocking_io socketCommand(true);
 		socket->io_control(socketCommand);
 
@@ -42,11 +44,11 @@ UDPListener::UDPListener(int port, const std::string& ip)
 	if (IsAcceptingConnections()) {
 		LOG("[UDPListener] successfully bound socket on port %i", port);
 	} else {
-		handleerror(NULL, "[UDPListener] error: unable to bind UDP port, see log for details.", "Network error", MBF_OK | MBF_EXCL);
+		throw network_error(err);
 	}
 }
 
-bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& ip) {
+std::string UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& ip) {
 
 	std::string errorMsg = "";
 
@@ -63,7 +65,7 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 			// use the "any" address
 			addr = ip::udp::endpoint(GetAnyAddress(supportsIPv6), port);
 		} else if (err) {
-			throw std::runtime_error("Failed to parse address " + ip + ": " + err.message());
+			throw std::runtime_error("Failed to parse hostname \"" + ip + "\": " + err.message());
 		}
 
 		if (!supportsIPv6 && addr.address().is_v6()) {
@@ -99,14 +101,8 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 			errorMsg = "Unknown problem";
 		}
 	}
-	const bool isBound = errorMsg.empty();
 
-	if (!isBound) {
-		LOG_L(L_ERROR, "Failed to bind UDP socket on IP %s, port %i: %s",
-				ip.c_str(), port, errorMsg.c_str());
-	}
-
-	return isBound;
+	return errorMsg;
 }
 
 void UDPListener::Update() {

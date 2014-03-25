@@ -46,6 +46,10 @@
 #include "System/Net/UnpackPacket.h"
 #include "System/Platform/errorhandler.h"
 #include "lib/luasocket/src/restrictions.h"
+#ifdef SYNCDEBUG
+	#include "System/Sync/SyncDebugger.h"
+#endif
+
 
 using netcode::RawPacket;
 using std::string;
@@ -55,20 +59,26 @@ CONFIG(bool, DemoFromDemo).defaultValue(false);
 CPreGame* pregame = NULL;
 extern SelectMenu* selectMenu;
 
-CPreGame::CPreGame(const ClientSetup* setup) :
-	settings(setup),
-	savefile(NULL),
-	timer(spring_gettime()),
-	wantDemo(true)
+CPreGame::CPreGame(boost::shared_ptr<const ClientSetup> setup)
+	: settings(setup)
+	, savefile(NULL)
+	, timer(spring_gettime())
+	, wantDemo(true)
 {
 	net = new CNetProtocol();
 	activeController = this;
 
+#ifdef SYNCDEBUG
+	CSyncDebugger::GetInstance()->Initialize(settings->isHost, 64); //FIXME: add actual number of player
+#endif
+
 	if (!settings->isHost) {
 		//don't allow luasocket to connect to the host
+		LOG("Connecting to: %s:%i", settings->hostIP.c_str(), settings->hostPort);
 		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, settings->hostIP, settings->hostPort, false);
 		net->InitClient(settings->hostIP.c_str(), settings->hostPort, settings->myPlayerName, settings->myPasswd, SpringVersion::GetFull());
 	} else {
+		LOG("Hosting on: %s:%i", settings->hostIP.c_str(), settings->hostPort);
 		net->InitLocalClient();
 	}
 }

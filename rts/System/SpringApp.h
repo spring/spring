@@ -5,8 +5,10 @@
 
 #include <string>
 #include <boost/cstdint.hpp>
+#include <boost/shared_ptr.hpp>
 
 
+class ClientSetup;
 class CmdLineParams;
 class CGameController;
 union SDL_Event;
@@ -49,7 +51,7 @@ protected:
 
 private:
 	bool MainEventHandler(const SDL_Event& ev);
-	void RunScript(const std::string& buf);
+	void RunScript(boost::shared_ptr<ClientSetup> clientSetup, const std::string& buf);
 };
 
 /**

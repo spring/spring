@@ -5,12 +5,14 @@
 
 #include <string>
 
+
 class ClientSetup
 {
 public:
 	ClientSetup();
 
-	void Init(const std::string& setup);
+	void LoadFromStartScript(const std::string& setup);
+	void SanityCheck();
 
 	std::string myPlayerName;
 	std::string myPasswd;
@@ -18,6 +20,7 @@ public:
 	//! if this client is not the server player, the IP address we connect to
 	//! if this client is the server player, the IP address that other players connect to
 	std::string hostIP;
+
 	//! if this client is not the server player, the port which we connect over
 	//! if this client is the server player, the port over which we accept incoming connections
 	int hostPort;
