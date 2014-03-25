@@ -120,20 +120,16 @@ private:
 	};
 };
 
-SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), settingsWindow(NULL), curSelect(NULL)
+SelectMenu::SelectMenu(boost::shared_ptr<ClientSetup> setup)
+: GuiElement(NULL)
+, clientSetup(setup)
+, conWindow(NULL)
+, settingsWindow(NULL)
+, curSelect(NULL)
 {
 	SetPos(0,0);
 	SetSize(1,1);
 	agui::gui->AddElement(this, true);
-	mySettings = new ClientSetup();
-
-	mySettings->isHost = server;
-	mySettings->myPlayerName = configHandler->GetString("name");
-	if (mySettings->myPlayerName.empty()) {
-		mySettings->myPlayerName = UnnamedPlayerName;
-	} else {
-		mySettings->myPlayerName = StringReplaceInPlace(mySettings->myPlayerName, ' ', '_');
-	}
 
 	{ // GUI stuff
 		agui::Picture* background = new agui::Picture(this);;
@@ -169,7 +165,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), setting
 		background->GeometryChange();
 	}
 
-	if (!mySettings->isHost) {
+	if (!clientSetup->isHost) {
 		ShowConnectWindow(true);
 	}
 }
@@ -179,8 +175,6 @@ SelectMenu::~SelectMenu()
 	ShowConnectWindow(false);
 	ShowSettingsWindow(false, "");
 	CleanWindow();
-
-	delete mySettings;
 }
 
 bool SelectMenu::Draw()
@@ -209,14 +203,13 @@ void SelectMenu::Single()
 	}
 	else if (!once) // in case of double-click
 	{
-
 		if (selw->userScript == SelectionWidget::SandboxAI) {
 			selw->userScript.clear();
 		}
 		once = true;
-		mySettings->isHost = true;
-		pregame = new CPreGame(mySettings);
-		pregame->LoadSetupscript(StartScriptGen::CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName));
+
+		pregame = new CPreGame(clientSetup);
+		pregame->LoadSetupscript(StartScriptGen::CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, clientSetup->myPlayerName));
 		agui::gui->RmElement(this);
 		//delete this;
 	}
@@ -225,6 +218,7 @@ void SelectMenu::Single()
 void SelectMenu::Quit()
 {
 	gu->globalQuit = true;
+	agui::gui->RmElement(this);
 	//delete this;
 }
 
@@ -307,9 +301,9 @@ void SelectMenu::CleanWindow() {
 void SelectMenu::DirectConnect(const std::string& addr)
 {
 	configHandler->SetString("address", addr);
-	mySettings->hostIP = addr;
-	mySettings->isHost = false;
-	pregame = new CPreGame(mySettings);
+	clientSetup->hostIP = addr;
+	clientSetup->isHost = false;
+	pregame = new CPreGame(clientSetup);
 	agui::gui->RmElement(this);
 }
 

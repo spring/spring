@@ -51,4 +51,16 @@ public:
 	unsupported_error(const std::string& msg) : std::runtime_error(msg) {};
 };
 
+
+/**
+ * network_error
+ *   thrown when udp socket can't be bound or hostname can't be resolved
+ */
+class network_error : public std::runtime_error
+{
+public:
+	network_error(const std::string& msg) : std::runtime_error(msg) {};
+};
+
+
 #endif

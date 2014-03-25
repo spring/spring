@@ -61,8 +61,10 @@
 #include "System/Input/MouseInput.h"
 #include "System/Input/Joystick.h"
 #include "System/FileSystem/DataDirLocater.h"
-#include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileSystemInitializer.h"
+#include "System/Net/Socket.h"
 #include "System/Platform/CmdLineParams.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
@@ -116,7 +118,6 @@ CONFIG(bool, BlockCompositing).defaultValue(true).description("Disables kwin com
 #endif
 
 SelectMenu* selectMenu = NULL;
-ClientSetup* startsetup = NULL;
 
 
 static SDL_GLContext sdlGlCtx;
@@ -632,8 +633,7 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 	cmdline->AddSwitch('b', "minimise",           "Start in background (minimised)");
 	cmdline->AddSwitch(0,   "nocolor",            "Disables colorized stdout");
 	cmdline->AddSwitch('q', "quiet",              "Ignore unrecognized arguments");
-	cmdline->AddSwitch('s', "server",             "Run as a server");
-	cmdline->AddSwitch('c', "client",             "Run as a client");
+	cmdline->AddString('s', "server",             "Run as a server");
 
 	cmdline->AddSwitch('t', "textureatlas",       "Dump each finalized textureatlas in textureatlasN.tga");
 	cmdline->AddInt(   0,   "benchmark",          "Enable benchmark mode (writes a benchmark.data file). The given number specifies the timespan to test.");
@@ -767,22 +767,45 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 }
 
 
-void SpringApp::RunScript(const std::string& buf) {
-	startsetup = new ClientSetup();
-	startsetup->Init(buf);
+void SpringApp::RunScript(boost::shared_ptr<ClientSetup> clientSetup, const std::string& buf)
+{
+	clientSetup->LoadFromStartScript(buf);
+	// LoadFromStartScript overrides all values so reset cmdline defined ones
+	if (cmdline->IsSet("server")) { clientSetup->hostIP = cmdline->GetString("server"); clientSetup->isHost = true; }
+	clientSetup->SanityCheck();
 
-	// commandline parameters overwrite setup
-	if (cmdline->IsSet("client"))
-		startsetup->isHost = false;
-	else if (cmdline->IsSet("server"))
-		startsetup->isHost = true;
-
-#ifdef SYNCDEBUG
-	CSyncDebugger::GetInstance()->Initialize(startsetup->isHost, 64); //FIXME: add actual number of player
-#endif
-	pregame = new CPreGame(startsetup);
-	if (startsetup->isHost)
+	pregame = new CPreGame(clientSetup);
+	if (clientSetup->isHost)
 		pregame->LoadSetupscript(buf);
+}
+
+
+static void SplitString(const std::string& text, const char* sepChar, std::string* s1, std::string* s2, std::string* all)
+{
+	const size_t q = text.find(sepChar);
+	if (q != std::string::npos) {
+		*s1 = text.substr(0, q);
+		*s2 = text.substr(q + 1);
+		return;
+	}
+	*all = text;
+}
+
+
+static void ParseSpringUri(const std::string& uri, std::string* username, std::string* password, std::string* host, int* port)
+{
+	// see http://cpp-netlib.org/0.10.1/in_depth/uri.html (2014)
+	if (uri.find("spring://") != std::string::npos)
+		return; // wrong scheme
+
+	const std::string authority = uri.substr(std::string("spring://").length());
+	std::string user_info, server, portStr;
+	bool error = false;
+	SplitString(authority, "@", &user_info, &server, &server);
+	SplitString(user_info, ":", username, password, username);
+	SplitString(server, ":", host, &portStr, host);
+	*port = StringToInt(portStr, &error);
+	if (error) *port = 0;
 }
 
 
@@ -791,63 +814,58 @@ void SpringApp::RunScript(const std::string& buf) {
  */
 void SpringApp::Startup()
 {
-	if ((cmdline->IsSet("game") && cmdline->IsSet("map"))) { // --game and --map directly specified, try to run them
-		const std::string game = cmdline->GetString("game");
-		const std::string map = cmdline->GetString("map");
-		std::string buf = StartScriptGen::CreateMinimalSetup(game, map);
-		RunScript(buf);
+	// bash input
+	const std::string inputFile = cmdline->GetInputFile();
+	const std::string extension = FileSystem::GetExtension(inputFile);
+
+	// create base clientsetup
+	boost::shared_ptr<ClientSetup> startsetup(new ClientSetup());
+	if (cmdline->IsSet("server")) { startsetup->hostIP = cmdline->GetString("server"); startsetup->isHost = true; }
+	startsetup->myPlayerName = configHandler->GetString("name");
+	startsetup->SanityCheck();
+
+	// no argument (either game is given or show selectmenu)
+	if (inputFile.empty()) {
+		if (cmdline->IsSet("game") && cmdline->IsSet("map")) {
+			// --game and --map directly specified, try to run them
+			startsetup->isHost = true;
+			std::string buf = StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map"));
+			RunScript(startsetup, buf);
+		} else {
+			// menu
+		#ifdef HEADLESS
+			handleerror(NULL,
+				"The headless version of the engine can not be run in interactive mode.\n"
+				"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
+		#endif
+			selectMenu = new SelectMenu(startsetup);
+			activeController = selectMenu;
+		}
 		return;
 	}
 
-	const std::string inputFile = cmdline->GetInputFile();
-
-	if (inputFile.empty()) {
-#ifdef HEADLESS
-		LOG_L(L_FATAL,
-				"The headless version of the engine can not be run in interactive mode.\n"
-				"Please supply a start-script, save- or demo-file.");
-		exit(1);
-#endif
-		bool server = !cmdline->IsSet("client") || cmdline->IsSet("server");
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(server, 64);
-#endif
-		selectMenu = new SelectMenu(server);
-		activeController = selectMenu;
-	} else if (inputFile.rfind("sdf") == inputFile.size() - 3) {
-		std::string demoFileName = inputFile;
-		std::string demoPlayerName = configHandler->GetString("name");
-
-		if (demoPlayerName.empty()) {
-			demoPlayerName = UnnamedPlayerName;
-		} else {
-			demoPlayerName = StringReplaceInPlace(demoPlayerName, ' ', '_');
-		}
-
-		demoPlayerName += " (spec)";
-
-		startsetup = new ClientSetup();
-			startsetup->isHost       = true; // local demo play
-			startsetup->myPlayerName = demoPlayerName;
-
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
-#endif
-
+	// process given argument
+	if (inputFile.find("spring://") == 0) {
+		// url (syntax: spring://username:password@host:port)
+		int port;
+		startsetup->isHost = false;
+		ParseSpringUri(inputFile, &startsetup->myPlayerName, &startsetup->myPasswd, &startsetup->hostIP, &port);
+		if (port != 0) startsetup->hostPort = port;
 		pregame = new CPreGame(startsetup);
-		pregame->LoadDemo(demoFileName);
-	} else if (inputFile.rfind("ssf") == inputFile.size() - 3) {
-		std::string savefile = inputFile;
-		startsetup = new ClientSetup();
+	} else if (extension == "sdf") {
+		// demo
+		startsetup->isHost        = true;
+		startsetup->myPlayerName += " (spec)";
+		pregame = new CPreGame(startsetup);
+		pregame->LoadDemo(inputFile);
+	} else if (extension == "ssf") {
+		// savegame
 		startsetup->isHost = true;
-		startsetup->myPlayerName = configHandler->GetString("name");
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
-#endif
 		pregame = new CPreGame(startsetup);
-		pregame->LoadSavefile(savefile);
+		pregame->LoadSavefile(inputFile);
 	} else {
-		LOG("[%s] loading startscript from: %s", __FUNCTION__, inputFile.c_str());
+		// startscript
+		LOG("[%s] Loading StartScript from: %s", __FUNCTION__, inputFile.c_str());
 		CFileHandler fh(inputFile, SPRING_VFS_PWD_ALL);
 		if (!fh.FileExists())
 			throw content_error("Setup-script does not exist in given location: " + inputFile);
@@ -855,7 +873,8 @@ void SpringApp::Startup()
 		std::string buf;
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setup-script cannot be read: " + inputFile);
-		RunScript(buf);
+
+		RunScript(startsetup, buf);
 	}
 }
 
@@ -978,7 +997,6 @@ void SpringApp::ShutDown()
 	SafeDelete(gs);
 	SafeDelete(gu);
 	SafeDelete(globalRendering);
-	SafeDelete(startsetup);
 	SafeDelete(luaSocketRestrictions);
 
 	LOG("[SpringApp::%s][10]", __FUNCTION__);
@@ -988,6 +1006,7 @@ void SpringApp::ShutDown()
 	Watchdog::Uninstall();
 	LOG("[SpringApp::%s][12]", __FUNCTION__);
 }
+
 
 bool SpringApp::MainEventHandler(const SDL_Event& event)
 {

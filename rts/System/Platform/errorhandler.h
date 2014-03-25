@@ -63,6 +63,9 @@ int GetExitCode();
 	}                                                                                        \
 	catch (const unsupported_error& e) {                                                     \
 		ErrorMessageBox(e.what(), "Spring: Hardware Problem: ", MBF_OK | MBF_CRASH);         \
+	}                                                                                        \
+	catch (const network_error& e) {                                                     \
+		ErrorMessageBox(e.what(), "Spring: Network Error: ", MBF_OK | MBF_EXCL);         \
 	}
 
 /**
