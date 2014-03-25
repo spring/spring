@@ -5,11 +5,11 @@
 #include <boost/test/unit_test.hpp>
 
 static inline bool TryBindAddr(netcode::SocketPtr& socket, const char* address) {
-	return netcode::UDPListener::TryBindSocket(11111, &socket, address);
+	return netcode::UDPListener::TryBindSocket(11111, &socket, address).empty();
 }
 
 static inline bool TryBindPort(netcode::SocketPtr& socket, int port) {
-	return netcode::UDPListener::TryBindSocket(port, &socket, "::");
+	return netcode::UDPListener::TryBindSocket(port, &socket, "::").empty();
 }
 
 BOOST_AUTO_TEST_CASE(TryBindSocket)
@@ -40,8 +40,8 @@ BOOST_AUTO_TEST_CASE(TryBindSocket)
 
 	BOOST_CHECK(!TryBindAddr(socket, "fe80"));
 
-	// host-names (only addresses are allowed)
-	BOOST_CHECK(!TryBindAddr(socket, "localhost"));
+	// host-names
+	BOOST_CHECK(TryBindAddr(socket, "localhost"));
 	BOOST_CHECK(!TryBindAddr(socket, "local.lan"));
 	BOOST_CHECK(!TryBindAddr(socket, "google.com"));
 
