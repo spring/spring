@@ -55,6 +55,10 @@ std::string UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::s
 	try {
 		boost::system::error_code err;
 
+		if ((port <= 0) || (port > 65535)) {
+			throw std::range_error("Port is out of range [1, 65535]: " + IntToString(port));
+		}
+
 		socket->reset(new ip::udp::socket(netservice));
 		(*socket)->open(ip::udp::v6(), err); // test IP v6 support
 
@@ -84,10 +88,6 @@ std::string UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::s
 			if (err) {
 				throw std::runtime_error("Failed to open IP V4 socket: " + err.message());
 			}
-		}
-
-		if ((addr.port() == 0) || (addr.port() > 65535)) {
-			throw std::range_error("Port is out of range [1, 65535]: " + IntToString(port));
 		}
 
 		LOG("Binding UDP socket to IP %s %s port %i",
