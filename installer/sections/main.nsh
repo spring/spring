@@ -25,6 +25,12 @@
 		; please use this values directly without modifying them
 		WriteRegStr ${PRODUCT_ROOT_KEY} ${PRODUCT_KEY} "SpringEngineHelper" "$INSTDIR\unitsync.dll"
 		WriteRegStr ${PRODUCT_ROOT_KEY} ${PRODUCT_KEY} "SpringEngine" "$INSTDIR\spring.exe"
+
+		; link custom spring:// scheme, so we can start spring from browser
+		WriteRegStr HKCR "spring" "" "URL:Spring Protocol"
+		WriteRegStr HKCR "spring" "URL Protocol" ""
+		WriteRegStr HKCR "spring\DefaultIcon" "" "spring.exe,1"
+		WriteRegStr HKCR "spring\shell\open\command" "" "$INSTDIR\spring.exe %1"
 	${EndIf}
 
 !else
@@ -44,8 +50,8 @@
 	RmDir "$INSTDIR\games"
 
 	; Registry Keys
-	DeleteRegValue ${PRODUCT_ROOT_KEY} ${PRODUCT_KEY} "SpringEngineHelper"
-	DeleteRegValue ${PRODUCT_ROOT_KEY} ${PRODUCT_KEY} "SpringEngine"
+	DeleteRegKey ${PRODUCT_ROOT_KEY} ${PRODUCT_KEY}
+	DeleteRegKey HKCR "spring"
 
 	MessageBox MB_YESNO|MB_ICONQUESTION "Do you want me to completely remove all spring related files?$\n\
 			All maps, games, screenshots and your settings will be removed. $\n\
