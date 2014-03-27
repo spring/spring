@@ -68,27 +68,17 @@ class CEventClient
 	public:
 		friend class CEventHandler;
 
-		typedef size_t eventFuncPtrHash;
+		typedef void (*eventFuncPtr)();
 
-		std::map<std::string, eventFuncPtrHash> linkedEvents;
+		std::map<std::string, eventFuncPtr> linkedEvents;
 		std::map<std::string, std::string> linkedEventsTypeInfo;
 
 		#pragma GCC diagnostic push
 		#pragma GCC diagnostic ignored "-Wpmf-conversions"
-
-		template <typename F>
-		static size_t GetEventFuncPtrHash(F opt)
-		{
-			char buf[sizeof(F)];
-			memcpy(&buf,&opt,sizeof(F));
-			std::string s(buf,sizeof(F));
-			return std::hash<std::string>()(s);
-		}
-
 		template <class T>
 		void RegisterLinkedEvents(T* foo) {
 			#define SETUP_EVENT(eventname, props) \
-				linkedEvents[#eventname] = GetEventFuncPtrHash(&T::eventname); \
+				linkedEvents[#eventname] = reinterpret_cast<eventFuncPtr>(&T::eventname); \
 				linkedEventsTypeInfo[#eventname] = typeid(&T::eventname).name();
 
 				#include "Events.def"
