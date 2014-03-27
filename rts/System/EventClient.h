@@ -70,19 +70,22 @@ class CEventClient
 
 		typedef void (*eventFuncPtr)();
 
-		std::map<std::string, eventFuncPtr> linkedEvents;
-		std::map<std::string, std::string> linkedEventsTypeInfo;
+		std::map<std::string, bool> autoLinkedEvents;
 
 		#pragma GCC diagnostic push
 		#pragma GCC diagnostic ignored "-Wpmf-conversions"
 		template <class T>
 		void RegisterLinkedEvents(T* foo) {
+		#ifndef __GNUC__
+			#warning "CEventClient: FIXME AutoLinking disabled (needs missing gcc extension). Many stuff won't work. FIXME"
+		#else
 			#define SETUP_EVENT(eventname, props) \
-				linkedEvents[#eventname] = reinterpret_cast<eventFuncPtr>(&T::eventname); \
-				linkedEventsTypeInfo[#eventname] = typeid(&T::eventname).name();
+				autoLinkedEvents[#eventname]  = (reinterpret_cast<eventFuncPtr>(&T::eventname) != reinterpret_cast<eventFuncPtr>(&CEventClient::eventname)); \
+				autoLinkedEvents[#eventname] &= (typeid(&T::eventname) == typeid(&CEventClient::eventname));
 
 				#include "Events.def"
 			#undef SETUP_EVENT
+		#endif
 		}
 		#pragma GCC diagnostic pop
 

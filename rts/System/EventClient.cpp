@@ -32,23 +32,10 @@ bool CEventClient::WantsEvent(const std::string& eventName)
 	if (!autoLinkEvents)
 		return false;
 
-	if (this->linkedEvents.empty())
-		return false;
+	assert(!autoLinkedEvents.empty());
 
-	std::map<std::string, eventFuncPtr> virtEventPtrs;
-	std::map<std::string, std::string> virtEventPtrsTypeInfo;
-
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wpmf-conversions"
-	#define SETUP_EVENT(eventname, props) \
-		virtEventPtrs[#eventname] = reinterpret_cast<eventFuncPtr>(&CEventClient::eventname); \
-		virtEventPtrsTypeInfo[#eventname] = typeid(&CEventClient::eventname).name();
-
-		#include "Events.def"
-	#undef SETUP_EVENT
-	#pragma GCC diagnostic pop
-
-	if (virtEventPtrs[eventName] != this->linkedEvents[eventName]) {
+	if (autoLinkedEvents[eventName]) {
+		//LOG("\"%s\" autolinks \"%s\"", GetName().c_str(), eventName.c_str());
 		return true;
 	}
 
