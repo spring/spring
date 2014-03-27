@@ -1,11 +1,10 @@
 [Desktop Entry]
 Name=Spring
-MimeType=application/x-spring-demo;
+MimeType=application/x-spring-demo;x-scheme-handler/spring;
 Comment=An open source RTS with similar gameplay to TA
 Comment[de]=Open-Source Multiplayerstrategie
 Comment[it]=Un gioco di strategia in tempo reale multi giocatore simile a TA
-TryExec=spring
-Exec=spring %f
+Exec=spring %u
 Icon=spring
 Terminal=false
 Type=Application
