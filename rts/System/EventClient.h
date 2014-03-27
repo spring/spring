@@ -179,7 +179,7 @@ class CEventClient
 			float damage,
 			int weaponDefID,
 			int projectileID) {}
-		virtual void FeatureMoved(const CFeature* feature) {}
+		virtual void FeatureMoved(const CFeature* feature, const float3& oldpos) {}
 
 		virtual void RenderFeatureCreated(const CFeature* feature) {}
 		virtual void RenderFeatureDestroyed(const CFeature* feature) {}

@@ -31,9 +31,6 @@ EventBatchHandler* EventBatchHandler::GetInstance()
 	return &ebh;
 }
 
-void EventBatchHandler::UnitCreated(const CUnit* unit) { /*GetUnitCreatedDestroyedBatch().enqueue(UD(unit, unit->isCloaked));*/ }
-void EventBatchHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker) { /*GetUnitCreatedDestroyedBatch().dequeue_synced(unit);*/ }
-
 void EventBatchHandler::UnitMoved(const CUnit* unit) { EnqueueUnitMovedEvent(unit, unit->pos); }
 void EventBatchHandler::UnitEnteredRadar(const CUnit* unit, int at) { EnqueueUnitLOSStateChangeEvent(unit, at, unit->losStatus[at]); }
 void EventBatchHandler::UnitEnteredLos(const CUnit* unit, int at) { EnqueueUnitLOSStateChangeEvent(unit, at, unit->losStatus[at]); }

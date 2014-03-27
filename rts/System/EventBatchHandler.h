@@ -16,9 +16,6 @@ public: // EventClient
 	bool GetFullRead() const { return true; }
 	int  GetReadAllyTeam() const { return CEventClient::AllAccessTeam; }
 
-	void UnitCreated(const CUnit* unit);
-	void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
-
 	void UnitMoved(const CUnit* unit);
 	void UnitEnteredRadar(const CUnit* unit, int at);
 	void UnitEnteredLos(const CUnit* unit, int at);
