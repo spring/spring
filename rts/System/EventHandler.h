@@ -562,7 +562,7 @@ inline void CEventHandler::FeatureMoved(const CFeature* feature, const float3& o
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listFeatureMoved[i];
 		if ((featureAllyTeam < 0) || ec->CanReadAllyTeam(featureAllyTeam)) {
-			ec->FeatureMoved(feature);
+			ec->FeatureMoved(feature, oldpos);
 		}
 	}
 }
