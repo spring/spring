@@ -827,9 +827,9 @@ void SpringApp::Startup()
 
 	// no argument (either game is given or show selectmenu)
 	if (inputFile.empty()) {
+		startsetup->isHost = true;
 		if (cmdline->IsSet("game") && cmdline->IsSet("map")) {
 			// --game and --map directly specified, try to run them
-			startsetup->isHost = true;
 			std::string buf = StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map"));
 			RunScript(startsetup, buf);
 		} else {
