@@ -79,8 +79,7 @@ class CEventClient
 
 			// new way, works everywhere
 			#define SETUP_EVENT(eventname, props) \
-				autoLinkedEvents[#eventname] = (typeid(&T::eventname) != typeid(&CEventClient::eventname)) \
-							&& (std::string(typeid(&T::eventname).name()) == typeid(&CEventClient::eventname).name());
+				autoLinkedEvents[#eventname] = (typeid(&T::eventname) != typeid(&CEventClient::eventname));
 
 				#include "Events.def"
 			#undef SETUP_EVENT
