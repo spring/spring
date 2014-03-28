@@ -32,10 +32,6 @@ bool CEventClient::WantsEvent(const std::string& eventName)
 	if (!autoLinkEvents)
 		return false;
 
-#if defined(__clang__)
-	#warning "CEventClient: FIXME AutoLinking disabled (needs missing gcc extension). Many stuff won't work. FIXME"
-	return true;
-#else
 	assert(!autoLinkedEvents.empty());
 
 	if (autoLinkedEvents[eventName]) {
@@ -44,7 +40,6 @@ bool CEventClient::WantsEvent(const std::string& eventName)
 	}
 
 	return false;
-#endif
 }
 
 
