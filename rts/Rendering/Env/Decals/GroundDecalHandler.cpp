@@ -462,7 +462,7 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 			}
 		} else {
 			assert(decalOwnerFeature == NULL);
-
+			if (decalOwnerUnit->isIcon) continue;
 			// unit is in LOS
 			if ((decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_INLOS) != 0) {
 				decalsToDraw.push_back(decal);
@@ -487,15 +487,14 @@ void CGroundDecalHandler::DrawObjectDecals() {
 
 		if (decalType->objectDecals.empty())
 			continue;
-
-		glBindTexture(GL_TEXTURE_2D, decalType->texture);
-
 		{
 			GatherDecalsForType(decalType);
 		}
-
-		for (unsigned int k = 0; k < decalsToDraw.size(); k++) {
-			DrawObjectDecal(decalsToDraw[k]);
+		if (decalsToDraw.size() > 0) {		
+			glBindTexture(GL_TEXTURE_2D, decalType->texture);
+			for (unsigned int k = 0; k < decalsToDraw.size(); k++) {
+				DrawObjectDecal(decalsToDraw[k]);
+			}
 		}
 
 		// glBindTexture(GL_TEXTURE_2D, 0);
