@@ -76,12 +76,11 @@ class CEventClient
 		#pragma GCC diagnostic ignored "-Wpmf-conversions"
 		template <class T>
 		void RegisterLinkedEvents(T* foo) {
-		#ifndef __GNUC__
+		#if defined(__clang__)
 			#warning "CEventClient: FIXME AutoLinking disabled (needs missing gcc extension). Many stuff won't work. FIXME"
 		#else
 			#define SETUP_EVENT(eventname, props) \
-				autoLinkedEvents[#eventname]  = (reinterpret_cast<eventFuncPtr>(&T::eventname) != reinterpret_cast<eventFuncPtr>(&CEventClient::eventname)); \
-				autoLinkedEvents[#eventname] &= (typeid(&T::eventname) == typeid(&CEventClient::eventname));
+				autoLinkedEvents[#eventname] = (reinterpret_cast<eventFuncPtr>(&T::eventname) != reinterpret_cast<eventFuncPtr>(&CEventClient::eventname));
 
 				#include "Events.def"
 			#undef SETUP_EVENT
