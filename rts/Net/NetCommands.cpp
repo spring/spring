@@ -337,8 +337,8 @@ void CGame::ClientReadNet()
 				}
 				const char* pName = (player == SERVER_PLAYER)? "server": playerHandler->Player(player)->name.c_str();
 
-				LOG("Speed set to %.1f [%s]", gs->wantedSpeedFactor, pName);
 				gs->wantedSpeedFactor = *((float*) &inbuf[2]);
+				LOG("Speed set to %.1f [%s]", gs->wantedSpeedFactor, pName);
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
