@@ -495,11 +495,7 @@ static int SetSolidObjectDirection(lua_State* L, CSolidObject* o)
 	if (o == NULL)
 		return 0;
 
-	float3 dir(luaL_checkfloat(L, 2),
-	           luaL_checkfloat(L, 3),
-	           luaL_checkfloat(L, 4));
-
-	o->ForcedSpin(dir.Normalize());
+	o->ForcedSpin((float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4))).SafeNormalize());
 	return 0;
 }
 
@@ -2813,26 +2809,33 @@ int LuaSyncedCtrl::SetPieceProjectileParams(lua_State* L)
 	return 0;
 }
 
-
+//
+// TODO: move this and SpawnCEG to LuaUnsyncedCtrl
+//
 int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
 {
 	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
 
 	if (proj == NULL)
 		return 0;
+	if (!proj->weapon && !proj->piece)
+		return 0;
 
-	assert(proj->weapon || proj->piece);
+	unsigned int cegID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
 
-	if (proj->weapon) {
-		CWeaponProjectile* wproj = static_cast<CWeaponProjectile*>(proj);
-		wproj->SetCustomExplosionGeneratorID(explGenHandler->LoadGeneratorID(luaL_checkstring(L, 2)));
+	if (lua_isstring(L, 2)) {
+		cegID = explGenHandler->LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 2));
+	} else {
+		cegID = luaL_checknumber(L, 2);
 	}
-	if (proj->piece) {
-		CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);
-		pproj->SetCustomExplosionGeneratorID(explGenHandler->LoadGeneratorID(luaL_checkstring(L, 2)));
+
+	// if cegID is EXPGEN_ID_INVALID, this also returns NULL
+	if (explGenHandler->GetGenerator(cegID) != NULL) {
+		proj->SetCustomExplosionGeneratorID(cegID);
 	}
 
-	return 0;
+	lua_pushnumber(L, cegID);
+	return 1;
 }
 
 

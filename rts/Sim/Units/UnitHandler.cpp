@@ -216,8 +216,8 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit::MoveType::Update");
-		std::list<CUnit*>::iterator usi;
-		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+
+		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 			AMoveType* moveType = unit->moveType;
 
@@ -238,9 +238,9 @@ void CUnitHandler::Update()
 
 	{
 		// Delete dead units
-		std::list<CUnit*>::iterator usi;
-		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
+
 			if (unit->deathScriptFinished) {
 				// there are many ways to fiddle with "deathScriptFinished", so a unit may
 				// arrive here without having been properly killed (and isDead still false),
@@ -254,8 +254,8 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit::UpdatePieceMatrices");
-		std::list<CUnit*>::iterator usi;
-		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+
+		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			// UnitScript only applies piece-space transforms so
 			// we apply the forward kinematics update separately
 			// (only if we have any dirty pieces)
@@ -266,8 +266,8 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit::Update");
-		std::list<CUnit*>::iterator usi;
-		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+
+		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 			UNIT_SANITY_CHECK(unit);
 			unit->Update();
@@ -284,7 +284,7 @@ void CUnitHandler::Update()
 		}
 
 		// stagger the SlowUpdate's
-		int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
+		unsigned int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
 
 		for (; activeSlowUpdateUnit != activeUnits.end() && n != 0; ++activeSlowUpdateUnit) {
 			CUnit* unit = *activeSlowUpdateUnit;
