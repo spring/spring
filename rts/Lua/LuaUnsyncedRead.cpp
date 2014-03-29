@@ -157,9 +157,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetSoundStreamTime);
 	REGISTER_LUA_CFUNC(GetSoundEffectParams);
 
-	// moved from LuaUI
-
 	REGISTER_LUA_CFUNC(GetFPS);
+	REGISTER_LUA_CFUNC(GetGameSpeed);
 
 	REGISTER_LUA_CFUNC(GetActiveCommand);
 	REGISTER_LUA_CFUNC(GetDefaultCommand);
@@ -1757,6 +1756,15 @@ int LuaUnsyncedRead::GetFPS(lua_State* L)
 		lua_pushnumber(L, 0);
 	}
 	return 1;
+}
+
+
+int LuaUnsyncedRead::GetGameSpeed(lua_State* L)
+{
+	lua_pushnumber(L, gs->wantedSpeedFactor);
+	lua_pushnumber(L, gs->speedFactor);
+	lua_pushboolean(L, gs->paused);
+	return 3;
 }
 
 
