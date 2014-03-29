@@ -119,7 +119,6 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetGaiaTeamID);
 
-	REGISTER_LUA_CFUNC(GetGameSpeed);
 	REGISTER_LUA_CFUNC(GetGameFrame);
 	REGISTER_LUA_CFUNC(GetGameSeconds);
 
@@ -864,19 +863,8 @@ int LuaSyncedRead::GetGaiaTeamID(lua_State* L)
 }
 
 
-int LuaSyncedRead::GetGameSpeed(lua_State* L)
-{
-	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, gs->wantedSpeedFactor);
-	lua_pushnumber(L, gs->speedFactor);
-	lua_pushboolean(L, gs->paused);
-	return 3;
-}
-
-
 int LuaSyncedRead::GetGameFrame(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	const int dayFrames = GAME_SPEED * (24 * 60 * 60);
 	lua_pushnumber(L, gs->frameNum % dayFrames);
 	lua_pushnumber(L, gs->frameNum / dayFrames);

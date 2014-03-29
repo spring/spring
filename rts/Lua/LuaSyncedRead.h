@@ -30,7 +30,6 @@ class LuaSyncedRead {
 
 		static int GetGaiaTeamID(lua_State* L);
 
-		static int GetGameSpeed(lua_State* L);
 		static int GetGameFrame(lua_State* L);
 		static int GetGameSeconds(lua_State* L);
 
