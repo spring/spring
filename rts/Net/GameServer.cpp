@@ -2503,8 +2503,9 @@ void CGameServer::UpdateLoop()
 		Threading::SetThreadName("netcode");
 		Threading::SetAffinity(~0);
 
+		//FIXME use async callback funcs in boost udp sockets and so get rid of any latency & remove netcode thread
 		while (!quitServer) {
-			spring_sleep(spring_msecs(1));
+			spring_sleep(spring_msecs(5));
 
 			if (UDPNet)
 				UDPNet->Update();
