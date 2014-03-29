@@ -582,17 +582,17 @@ static int SetMoveTypeData(lua_State* L, AMoveType* moveType, const char* caller
 
 int LuaSyncedMoveCtrl::SetGunshipMoveTypeData(lua_State* L)
 {
-	return (SetMoveTypeData(L, ParseDerivedMoveType<CHoverAirMoveType>(L, __FUNCTION__, 1)), __FUNCTION__);
+	return (SetMoveTypeData(L, ParseDerivedMoveType<CHoverAirMoveType>(L, __FUNCTION__, 1), __FUNCTION__));
 }
 
 int LuaSyncedMoveCtrl::SetAirMoveTypeData(lua_State* L)
 {
-	return (SetMoveTypeData(L, ParseDerivedMoveType<CStrafeAirMoveType>(L, __FUNCTION__, 1)), __FUNCTION__);
+	return (SetMoveTypeData(L, ParseDerivedMoveType<CStrafeAirMoveType>(L, __FUNCTION__, 1), __FUNCTION__));
 }
 
 int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State* L)
 {
-	return (SetMoveTypeData(L, ParseDerivedMoveType<CGroundMoveType>(L, __FUNCTION__, 1)), __FUNCTION__);
+	return (SetMoveTypeData(L, ParseDerivedMoveType<CGroundMoveType>(L, __FUNCTION__, 1), __FUNCTION__));
 }
 
 
