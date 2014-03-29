@@ -750,7 +750,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 					continue;
 				}
 
-				targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
+				targets.emplace(targetPriority, targetUnit);
 			}
 		}
 	}
