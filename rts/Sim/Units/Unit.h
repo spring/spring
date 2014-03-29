@@ -100,7 +100,6 @@ public:
 	void Deactivate();
 
 	void ForcedMove(const float3& newPos);
-	void ForcedSpin(const float3& newDir);
 
 	void EnableScriptMoveType();
 	void DisableScriptMoveType();

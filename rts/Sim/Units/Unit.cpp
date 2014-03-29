@@ -549,28 +549,6 @@ void CUnit::ForcedMove(const float3& newPos)
 	radarHandler->MoveUnit(this);
 }
 
-
-void CUnit::ForcedSpin(const float3& newDir)
-{
-	assert(math::fabsf(newDir.SqLength() - 1.0f) <= float3::NORMALIZE_EPS);
-
-	updir = UpVector;
-	if (updir == newDir) {
-		//FIXME perhaps save the old right,up,front directions, so we can
-		// reconstruct the old upvector and generate a better assumption for updir
-		updir -= GetVectorFromHeading(heading);
-	}
-	frontdir = newDir;
-	rightdir = newDir.cross(updir).Normalize();
-	updir    = rightdir.cross(newDir);
-	heading  = GetHeadingFromVector(newDir.x, newDir.z);
-
-	UpdateMidAndAimPos();
-	ForcedMove(pos);
-}
-
-
-
 // NOTE: movetypes call this directly
 void CUnit::UpdateDirVectors(bool useGroundNormal)
 {
@@ -1949,10 +1927,12 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 	isDead = true;
 	deathSpeed = speed;
 
+	// TODO: add UnitPreDestroyed, call these later
 	eventHandler.UnitDestroyed(this, attacker);
 	eoh->UnitDestroyed(*this, attacker);
+
 	// Will be called in the destructor again, but this can not hurt
-	this->SetGroup(NULL);
+	SetGroup(NULL);
 
 	blockHeightChanges = false;
 

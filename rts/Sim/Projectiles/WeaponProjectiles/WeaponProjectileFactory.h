@@ -4,8 +4,6 @@
 #define WEAPONPROJECTILE_FACTORY_H
 
 struct ProjectileParams;
-struct ProjectileExtParams {
-};
 
 class WeaponProjectileFactory {
 public:

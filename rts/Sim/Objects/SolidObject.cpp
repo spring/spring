@@ -387,8 +387,29 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	return updir;
 }
 
+
+
 void CSolidObject::SetHeadingFromDirection() {
 	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
+}
+
+void CSolidObject::ForcedSpin(const float3& newDir) {
+	// new front-direction should be normalized
+	assert(math::fabsf(newDir.SqLength() - 1.0f) <= float3::NORMALIZE_EPS);
+
+	// if zdir is parallel to world-y, use heading-vector
+	// (or its inverse) as auxiliary to avoid degeneracies
+	const float3 zdir = newDir;
+	const float3 udir = mix(UpVector, (frontdir * Sign(-zdir.y)), (math::fabs(zdir.dot(UpVector)) >= 0.99f));
+	const float3 xdir = (zdir.cross(udir)).Normalize();
+	const float3 ydir = (xdir.cross(zdir)).Normalize();
+
+	frontdir = zdir;
+	rightdir = xdir;
+	   updir = ydir;
+
+	SetHeadingFromDirection();
+	UpdateMidAndAimPos();
 }
 
 

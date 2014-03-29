@@ -126,13 +126,14 @@ bool AMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
 	#undef MEMBER_CHARPTR_HASH
 	#undef MEMBER_LITERAL_HASH
 
-
+	/*
 	// unordered_map etc. perform dynallocs, so KISS here
 	float* floatMemberPtrs[] = {
 		&maxSpeed,
 		&maxWantedSpeed,
 		&repairBelowHealth,
 	};
+	*/
 
 	// special cases
 	if (memberHash == floatMemberHashes[MAXSPEED_MEMBER_IDX]) {

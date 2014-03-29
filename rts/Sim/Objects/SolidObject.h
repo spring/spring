@@ -101,7 +101,7 @@ public:
 	virtual int GetBlockingMapID() const { return -1; }
 
 	virtual void ForcedMove(const float3& newPos) {}
-	virtual void ForcedSpin(const float3& newDir) {}
+	virtual void ForcedSpin(const float3& newDir);
 
 	virtual void UpdatePhysicalState(float eps);
 

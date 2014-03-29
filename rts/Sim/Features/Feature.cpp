@@ -458,16 +458,10 @@ void CFeature::ForcedMove(const float3& newPos)
 
 void CFeature::ForcedSpin(const float3& newDir)
 {
-	float3 updir = UpVector;
-	if (updir == newDir) {
-		//FIXME perhaps save the old right,up,front directions, so we can
-		// reconstruct the old upvector and generate a better assumption for updir
-		updir -= GetVectorFromHeading(heading);
-	}
-	float3 rightdir = newDir.cross(updir).Normalize();
-	updir = rightdir.cross(newDir);
-	transMatrix = CMatrix44f(pos, -rightdir, updir, newDir);
-	heading = GetHeadingFromVector(newDir.x, newDir.z);
+	// update local direction-vectors
+	CSolidObject::ForcedSpin(newDir);
+
+	transMatrix = CMatrix44f(pos, -rightdir, updir, frontdir);
 }
 
 
