@@ -18,7 +18,7 @@ public:
 class B : public A
 {
 public:
-       void Foo() override {}
+       void Foo() {}
 };
 
 
