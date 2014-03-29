@@ -16,6 +16,7 @@ class CWeapon;
 struct Command;
 struct BuildInfo;
 
+
 class CEventHandler
 {
 	public:
@@ -262,7 +263,7 @@ class CEventHandler
 		void GameProgress(int gameFrame);
 
 		void CollectGarbage();
-		void DbgTimingInfo(const char* name, const spring_time& start, const spring_time& end);
+		void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
 		/// @}
 
 		//FIXME no real event

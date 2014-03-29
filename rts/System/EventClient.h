@@ -38,6 +38,15 @@ struct FeatureDef;
 #endif
 
 
+enum DbgTimingInfoType {
+	TIMING_VIDEO,
+	TIMING_SIM,
+	TIMING_GC,
+	TIMING_SWAP,
+	TIMING_UNSYNCED
+};
+
+
 class CEventClient
 {
 	public:
@@ -309,7 +318,7 @@ class CEventClient
 		virtual void LoadProgress(const std::string& msg, const bool replace_lastline);
 
 		virtual void CollectGarbage();
-		virtual void DbgTimingInfo(const char* name, const spring_time& start, const spring_time& end);
+		virtual void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
 		/// @}
 };
 
