@@ -17,7 +17,6 @@
 #include "Camera.h"
 #include "CameraHandler.h"
 #include "ChatMessage.h"
-#include "ClientSetup.h"
 #include "CommandMessage.h"
 #include "ConsoleHistory.h"
 #include "GameHelper.h"

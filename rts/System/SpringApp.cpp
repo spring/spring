@@ -116,9 +116,6 @@ CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your
 CONFIG(bool, BlockCompositing).defaultValue(true).description("Disables kwin compositing to fix tearing.");
 #endif
 
-SelectMenu* selectMenu = NULL;
-
-
 static SDL_GLContext sdlGlCtx;
 static SDL_Window* window;
 
@@ -839,8 +836,7 @@ void SpringApp::Startup()
 				"The headless version of the engine can not be run in interactive mode.\n"
 				"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
 		#endif
-			selectMenu = new SelectMenu(startsetup);
-			activeController = selectMenu;
+			activeController = new SelectMenu(startsetup);
 		}
 		return;
 	}
@@ -960,21 +956,19 @@ void SpringApp::ShutDown()
 	// expect game-pointer to remain valid during call
 	delete game; game = NULL;
 
-	LOG("[SpringApp::%s][3]", __FUNCTION__);
-	SafeDelete(selectMenu);
 	agui::FreeGui();
 
-	LOG("[SpringApp::%s][4]", __FUNCTION__);
+	LOG("[SpringApp::%s][3]", __FUNCTION__);
 	SafeDelete(net);
 	SafeDelete(gameServer);
 	SafeDelete(gameSetup);
 
-	LOG("[SpringApp::%s][5]", __FUNCTION__);
+	LOG("[SpringApp::%s][4]", __FUNCTION__);
 	CLoadScreen::DeleteInstance();
 	ISound::Shutdown();
 	FreeJoystick();
 
-	LOG("[SpringApp::%s][6]", __FUNCTION__);
+	LOG("[SpringApp::%s][5]", __FUNCTION__);
 	SafeDelete(font);
 	SafeDelete(smallFont);
 	CNamedTextures::Kill();
@@ -982,10 +976,9 @@ void SpringApp::ShutDown()
 	GlobalConfig::Deallocate();
 	UnloadExtensions();
 
-	LOG("[SpringApp::%s][7]", __FUNCTION__);
 	IMouseInput::FreeInstance(mouseInput);
 
-	LOG("[SpringApp::%s][8]", __FUNCTION__);
+	LOG("[SpringApp::%s][6]", __FUNCTION__);
 	SDL_SetWindowGrab(window, SDL_FALSE);
 	WindowManagerHelper::FreeIcon();
 #if !defined(HEADLESS)
@@ -994,18 +987,17 @@ void SpringApp::ShutDown()
 #endif
 	SDL_Quit();
 
-	LOG("[SpringApp::%s][9]", __FUNCTION__);
+	LOG("[SpringApp::%s][7]", __FUNCTION__);
 	SafeDelete(gs);
 	SafeDelete(gu);
 	SafeDelete(globalRendering);
 	SafeDelete(luaSocketRestrictions);
 
-	LOG("[SpringApp::%s][10]", __FUNCTION__);
 	FileSystemInitializer::Cleanup();
 
-	LOG("[SpringApp::%s][11]", __FUNCTION__);
+	LOG("[SpringApp::%s][8]", __FUNCTION__);
 	Watchdog::Uninstall();
-	LOG("[SpringApp::%s][12]", __FUNCTION__);
+	LOG("[SpringApp::%s][9]", __FUNCTION__);
 }
 
 
