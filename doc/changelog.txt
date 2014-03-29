@@ -5,24 +5,37 @@ Spring changelog
 
 -- 97.0 ---------------------------------------------------------
 Major:
- - switch from sdl to sdl2:
-  - add /fullscreen command ingame
-  - fixes some window manager bugs/problems
  - utf8 support (kudos go to N0U)
+ - switch from sdl to sdl2:
+  - added /fullscreen (alt+enter) command ingame
+  - fixes some window manager bugs/problems
  - KeyChains (kudos go to MajBoredom)
  - split LuaRules & LuaGaia into their synced/unsynced luaStates
 
+
+Cmdline Arguments:
+ - added new `spring spring://username:passwd@hostname:port` syntax  (all except hostname are optional, i.e. spring://localhost does work fine)
+  - Should in longterm replace script.txt for clients, so script.txt is only needed for hosts.
+    -> No need to create a file on the filesystem to start spring as a client.
+  - Spring links spring:// URL scheme in the OS, so you can start such URLs from browser (as UT99 did).
+    E.g. you can place a spectator link on your website to join your autohosts and/or you can use it for weblobbies.
+ ! changed -s/--server argument to take a param (the ip/hostname listen to)
+ ! removed -c/--client argument (was only needed in times when clients didn't retrieved their script.txt from the server)
+
+Hosting & Connecting:
+ - fixed direct connect in SelectMenu
+ - by default listen to localhost:8452 now, so you can always connect to localhost started matches
+
+Misc:
+ - improve debug draw (alt+[b])
+ ! demofile string in infolog changed "recording demo: %s" -> "Recording demo to: %s"
+ - demo filehandle is now opened on start, so you can use lsof to readback the used filename
 
 Buildprocess:
  - fix freetype not found on windows / mingw
  ! add check for gcc >=4.6 at configure
  - optional fontconfig support
  ! SDL2 dependency
-
-Misc:
- - improve debug draw (alt+[b])
- ! demofile string in infolog changed "recording demo: %s" -> "Recording demo to: %s"
- - demo filehandle is now opened on start, so you can use lsof to readback the used filename
 
 Rendering:
  - `DebugGL` configtag works now (cause of SDL2 switch)
@@ -35,8 +48,8 @@ KeyBindings/uikeys.txt:
   - you can double bind a button this way, e.g.:
    - "/bind e,e say Bar", "/bind e say Foo" -> 1st press prints Foo, 2nd press prints Bar
  - use KeyChains for defaults:
-  - double hitting drawbutton sets label
-  - switching between ally,spec & all chat is now done by double hitting alt,shift or ctrl
+  ! double hitting drawbutton sets label
+  ! switching between ally,spec & all chat is now done by double hitting alt,shift or ctrl
   ! alt+return now toggles fullscreen (default shortcut e.g. in mediaplayers)
 
 LuaDefs:
@@ -62,6 +75,7 @@ Lua:
   ! SYNCED. can't be localized in global scope anymore:
    - bad:    local foo = SYNCED.foo;    function gadget:DrawWorld() ... foo ... end
    - good:   function gadget:DrawWorld() local foo = SYNCED.foo; ... foo ... end
+ ! moved Spring.GetGameSpeed() from SyncedRead to UnsyncedRead cause it was causing desyncs in demos
  - fix Spring.Restart on windows
  ! new TextInput(utf8char) callin, needed cause of changed unicode handling in SDL2
  - added Spring.SetUnitHarvestStorage(unitid, metal) & Spring.GetUnitHarvestStorage(unitid)
@@ -84,6 +98,9 @@ Lua:
 
 LUS:
  - SetUnitValue now accepts booleans, too
+
+Demos:
+ - fixed desync checker
 
 Installer:
  ! disallow to install spring over existing installations / ask for uninstall first
