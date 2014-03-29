@@ -440,26 +440,26 @@ bool ProfileDrawer::IsAbove(int x, int y)
 }
 
 
-void ProfileDrawer::DbgTimingInfo(const char* name, const spring_time& start, const spring_time& end)
+void ProfileDrawer::DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end)
 {
 	if (!IsEnabled())
 		return;
 
-	// Note: we compare pointers here and not the string content
-	//       -> faster, but breaks when const literals aren't globally alloced
-	//       (in gcc same const literals share the same memory)
-	if (name == "video")
-		vidFrames.emplace_back(start, end);
-	else
-	if (name == "simulation")
-		simFrames.emplace_back(start, end);
-	else
-	if (name == "garbagecollection")
-		lgcFrames.emplace_back(start, end);
-	else
-	if (name == "swap")
-		swpFrames.emplace_back(start, end);
-	else
-	if (name == "updateunsynced")
-		uusFrames.emplace_back(start, end);
+	switch (type) {
+		case TIMING_VIDEO: {
+			vidFrames.emplace_back(start, end);
+		} break;
+		case TIMING_SIM: {
+			simFrames.emplace_back(start, end);
+		} break;
+		case TIMING_GC: {
+			lgcFrames.emplace_back(start, end);
+		} break;
+		case TIMING_SWAP: {
+			swpFrames.emplace_back(start, end);
+		} break;
+		case TIMING_UNSYNCED: {
+			uusFrames.emplace_back(start, end);
+		} break;
+	}
 }

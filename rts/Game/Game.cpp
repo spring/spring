@@ -1163,7 +1163,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 	eventHandler.Update();
 
-	eventHandler.DbgTimingInfo("updateunsynced", currentTime, spring_now());
+	eventHandler.DbgTimingInfo(TIMING_UNSYNCED, currentTime, spring_now());
 	return false;
 }
 
@@ -1369,7 +1369,7 @@ bool CGame::Draw() {
 	const spring_time currentTimePostDraw = spring_gettime();
 	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, (currentTimePostDraw - currentTimePreDraw).toMilliSecsf(), 0.05f);
 
-	eventHandler.DbgTimingInfo("video", currentTimePreDraw, currentTimePostDraw);
+	eventHandler.DbgTimingInfo(TIMING_VIDEO, currentTimePreDraw, currentTimePostDraw);
 
 	return true;
 }
@@ -1565,7 +1565,7 @@ void CGame::SimFrame() {
 	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, (lastSimFrameTime - lastFrameTime).toMilliSecsf(), 0.05f);
 	gu->avgSimFrameTime = std::max(gu->avgSimFrameTime, 0.001f);
 
-	eventHandler.DbgTimingInfo("simulation", lastFrameTime, lastSimFrameTime);
+	eventHandler.DbgTimingInfo(TIMING_SIM, lastFrameTime, lastSimFrameTime);
 
 	#ifdef HEADLESS
 	{

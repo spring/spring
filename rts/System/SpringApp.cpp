@@ -904,7 +904,7 @@ int SpringApp::Update()
 	spring_time pre = spring_now();
 	VSync.Delay();
 	SDL_GL_SwapWindow(window);
-	eventHandler.DbgTimingInfo("swap", pre, spring_now());
+	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
 	return ret;
 }
 
