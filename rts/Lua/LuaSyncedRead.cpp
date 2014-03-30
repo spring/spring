@@ -274,6 +274,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureCollisionVolumeData);
 
 	REGISTER_LUA_CFUNC(GetProjectilePosition);
+	REGISTER_LUA_CFUNC(GetProjectileDirection);
 	REGISTER_LUA_CFUNC(GetProjectileVelocity);
 	REGISTER_LUA_CFUNC(GetProjectileGravity);
 	REGISTER_LUA_CFUNC(GetProjectileSpinAngle);
