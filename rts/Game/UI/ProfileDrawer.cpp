@@ -179,8 +179,15 @@ static void DrawFrameBarcode()
 	glColor4f(0.0f,0.0f,0.0f, 0.5f);
 	va->DrawArray0(GL_QUADS);
 
-	// title
-	font->glFormat(drawArea[0], drawArea[3] + 10 * globalRendering->pixelY, 0.7f, FONT_TOP | DBG_FONT_FLAGS, "Frame Grapher (%.2fsec)", maxHist_f);
+	// title and legend
+	font->glFormat(drawArea[0], drawArea[3] + 10 * globalRendering->pixelY, 0.7f, FONT_TOP | DBG_FONT_FLAGS,
+			"Frame Grapher (%.2fsec)"
+			"\xff\xff\x80\xff  GC"
+			"\xff\xff\xff\x01  Unsynced"
+			"\xff\x01\x01\xff  Swap"
+			"\xff\x01\xff\x01  Video"
+			"\xff\xff\x01\x01  Sim"
+			, maxHist_f);
 
 	// gc frames
 	glColor4f(1.0f,0.5f,1.0f, 0.55f);
