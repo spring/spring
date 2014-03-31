@@ -695,15 +695,6 @@ static int ParseFloatArray(lua_State* L, float* array, int size)
 }
 
 
-static inline void CheckNoArgs(lua_State* L, const char* funcName)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		luaL_error(L, "%s() takes no arguments", funcName);
-	}
-}
-
-
 /******************************************************************************/
 
 static int PushRulesParams(lua_State* L, const char* caller,
@@ -793,7 +784,6 @@ static int GetRulesParam(lua_State* L, const char* caller, int index,
 
 int LuaSyncedRead::IsCheatingEnabled(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	lua_pushboolean(L, gs->cheatEnabled);
 	return 1;
 }
@@ -801,7 +791,6 @@ int LuaSyncedRead::IsCheatingEnabled(lua_State* L)
 
 int LuaSyncedRead::IsGodModeEnabled(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	lua_pushboolean(L, gs->godMode);
 	return 1;
 }
@@ -809,7 +798,6 @@ int LuaSyncedRead::IsGodModeEnabled(lua_State* L)
 
 int LuaSyncedRead::IsDevLuaEnabled(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	lua_pushboolean(L, CLuaHandle::GetDevMode());
 	return 1;
 }
@@ -817,7 +805,6 @@ int LuaSyncedRead::IsDevLuaEnabled(lua_State* L)
 
 int LuaSyncedRead::IsEditDefsEnabled(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	lua_pushboolean(L, gs->editDefsEnabled);
 	return 1;
 }
@@ -825,7 +812,6 @@ int LuaSyncedRead::IsEditDefsEnabled(lua_State* L)
 
 int LuaSyncedRead::AreHelperAIsEnabled(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	if (!game) {
 		return 0;
 	}
@@ -836,7 +822,6 @@ int LuaSyncedRead::AreHelperAIsEnabled(lua_State* L)
 
 int LuaSyncedRead::FixedAllies(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	if (!game) {
 		return 0;
 	}
@@ -847,7 +832,6 @@ int LuaSyncedRead::FixedAllies(lua_State* L)
 
 int LuaSyncedRead::IsGameOver(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	lua_pushboolean(L, game->IsGameOver());
 	return 1;
 }
@@ -855,7 +839,6 @@ int LuaSyncedRead::IsGameOver(lua_State* L)
 
 int LuaSyncedRead::GetGaiaTeamID(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	if (!gs->useLuaGaia) {
 		return 0;
 	}
@@ -875,7 +858,6 @@ int LuaSyncedRead::GetGameFrame(lua_State* L)
 
 int LuaSyncedRead::GetGameSeconds(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	const float seconds = gs->frameNum / (float)GAME_SPEED;
 	lua_pushnumber(L, seconds);
 	return 1;
@@ -884,7 +866,6 @@ int LuaSyncedRead::GetGameSeconds(lua_State* L)
 
 int LuaSyncedRead::GetWind(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	lua_pushnumber(L, wind.GetCurrentWind().x);
 	lua_pushnumber(L, wind.GetCurrentWind().y);
 	lua_pushnumber(L, wind.GetCurrentWind().z);
@@ -1066,7 +1047,6 @@ int LuaSyncedRead::GetTeamStartPosition(lua_State* L)
 
 int LuaSyncedRead::GetAllyTeamList(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	int count = 1;
 	for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
@@ -1604,7 +1584,6 @@ int LuaSyncedRead::ArePlayersAllied(lua_State* L)
 
 int LuaSyncedRead::GetAllUnits(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	int count = 1;
 	std::list<CUnit*>::const_iterator uit;
 	if (CLuaHandle::GetHandleFullRead(L)) {
@@ -4370,7 +4349,6 @@ int LuaSyncedRead::ValidFeatureID(lua_State* L)
 
 int LuaSyncedRead::GetAllFeatures(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	int count = 0;
 	const CFeatureSet& activeFeatures = featureHandler->GetActiveFeatures();
 	CFeatureSet::const_iterator fit;
@@ -4870,7 +4848,6 @@ int LuaSyncedRead::GetGroundBlocked(lua_State* L)
 
 int LuaSyncedRead::GetGroundExtremes(lua_State* L)
 {
-	CheckNoArgs(L, __FUNCTION__);
 	lua_pushnumber(L, readMap->GetInitMinHeight());
 	lua_pushnumber(L, readMap->GetInitMaxHeight());
 	return 2;
