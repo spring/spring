@@ -96,7 +96,6 @@ static inline bool MayRequireSetMaxSpeedCommand(const Command &c)
 	return true;
 }
 
-
 void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 {
 	const std::vector<int>& netSelected = selectedUnitsHandler.netSelected[player];
@@ -480,8 +479,6 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 	const unsigned int targetsCount = targets.size();
 	const unsigned int selectedCount = selected.size();
 
-	unsigned int realCount = 0;
-
 	if (selectedCount == 0)
 		return;
 
@@ -513,7 +510,7 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 
 	// get the group center
 	float3 midPos;
-
+	unsigned int realCount = 0;
 	for (unsigned int s = 0; s < selectedCount; s++) {
 		CUnit* unit = unitHandler->units[selected[s]];
 
@@ -529,7 +526,7 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 		realCount++;
 	}
 
-	if (realCount == 1)
+	if (realCount == 0)
 		return;
 
 	midPos /= realCount;
