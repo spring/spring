@@ -2404,6 +2404,7 @@ bool CLuaHandle::AddBasicCalls(lua_State *L)
 		HSTR_PUSH_CFUNC(L, "GetGlobal",       CallOutGetGlobal);
 		HSTR_PUSH_CFUNC(L, "GetRegistry",     CallOutGetRegistry);
 		HSTR_PUSH_CFUNC(L, "GetCallInList",   CallOutGetCallInList);
+		HSTR_PUSH_CFUNC(L, "IsEngineMinVersion", CallOutIsEngineMinVersion);
 		// special team constants
 		HSTR_PUSH_NUMBER(L, "NO_ACCESS_TEAM",  CEventClient::NoAccessTeam);
 		HSTR_PUSH_NUMBER(L, "ALL_ACCESS_TEAM", CEventClient::AllAccessTeam);
@@ -2496,6 +2497,36 @@ int CLuaHandle::CallOutGetRegistry(lua_State* L)
 }
 
 
+int CLuaHandle::CallOutIsEngineMinVersion(lua_State* L)
+{
+	const int minMajorVer = luaL_checkint(L, 1);
+	const int minMinorVer = luaL_optinteger(L, 2, 0);
+	const int minCommits  = luaL_optinteger(L, 3, 0);
+
+	if (StringToInt(SpringVersion::GetMajor()) < minMajorVer) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	if (StringToInt(SpringVersion::GetMajor()) == minMajorVer) {
+		if (StringToInt(SpringVersion::GetMinor()) < minMinorVer) {
+			if (GetHandleSynced(L)) { // minor is only allowed to contain unsynced changes!
+				lua_pushboolean(L, false);
+				return 1;
+			}
+		}
+
+		if (StringToInt(SpringVersion::GetCommits()) < minCommits) {
+			lua_pushboolean(L, false);
+			return 1;
+		}
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+
 int CLuaHandle::CallOutGetCallInList(lua_State* L)
 {
 	vector<string> list;
@@ -2524,8 +2555,6 @@ int CLuaHandle::CallOutUpdateCallIn(lua_State* L)
 	CLuaHandle* lh = GetHandle(L);
 	lh->UpdateCallIn(L, name);
 	return 0;
-
-
 }
 
 

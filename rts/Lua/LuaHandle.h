@@ -298,6 +298,7 @@ class CLuaHandle : public CEventClient
 		static int CallOutGetRegistry(lua_State* L);
 		static int CallOutGetCallInList(lua_State* L);
 		static int CallOutUpdateCallIn(lua_State* L);
+		static int CallOutIsEngineMinVersion(lua_State* L);
 
 	public: // static
 		static inline LuaShaders& GetActiveShaders(lua_State* L)  { return GetLuaContextData(L)->shaders; }
