@@ -17,7 +17,6 @@ CR_BIND_DERIVED(CCannon, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CCannon,(
 	CR_MEMBER(highTrajectory),
-	CR_MEMBER(selfExplode),
 	CR_MEMBER(rangeFactor),
 	CR_MEMBER(lastDiff),
 	CR_MEMBER(lastDir),
@@ -35,7 +34,6 @@ CCannon::CCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 	highTrajectory = false;
 	rangeFactor = 1.0f;
 	gravity = 0.0f;
-	selfExplode = def->selfExplode;
 }
 
 void CCannon::Init()
@@ -142,7 +140,7 @@ void CCannon::FireImpl(bool scriptCall)
 
 	if (weaponDef->flighttime > 0) {
 		ttl = weaponDef->flighttime;
-	} else if (selfExplode) {
+	} else if (weaponDef->selfExplode) {
 		ttl = (predict + gs->randFloat() * 2.5f - 0.5f);
 	} else if ((weaponDef->groundBounce || weaponDef->waterBounce) && weaponDef->numBounce > 0) {
 		ttl = (predict * (1 + weaponDef->numBounce * weaponDef->bounceRebound));

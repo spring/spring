@@ -71,7 +71,7 @@ void CLaserCannon::FireImpl(bool scriptCall)
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
-	params.ttl = std::min(ttlreq, ttlmax);
+	params.ttl = mix(std::max(ttlreq, ttlmax), std::min(ttlreq, ttlmax), weaponDef->selfExplode);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }
