@@ -7,6 +7,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL));
 
