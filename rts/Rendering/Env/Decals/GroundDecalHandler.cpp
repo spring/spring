@@ -211,11 +211,6 @@ static inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, co
 
 inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 {
-	// TODO: do we want LOS-checks for decals?
-	if (!camera->InView(decal->pos, decal->radius))
-		return;
-
-
 	const float* hm = readMap->GetCornerHeightMapUnsynced();
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
@@ -415,6 +410,9 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 
 		const CUnit* decalOwnerUnit = NULL;
 		const CFeature* decalOwnerFeature = NULL;
+		
+		if (!camera->InView(decal->pos, decal->radius))
+			continue;
 
 		// must use static_cast, not enough RTTI
 		if (decalOwner != NULL) {
@@ -462,7 +460,7 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 			}
 		} else {
 			assert(decalOwnerFeature == NULL);
-
+			if (decalOwnerUnit->isIcon) continue;
 			// unit is in LOS
 			if ((decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_INLOS) != 0) {
 				decalsToDraw.push_back(decal);
@@ -487,15 +485,14 @@ void CGroundDecalHandler::DrawObjectDecals() {
 
 		if (decalType->objectDecals.empty())
 			continue;
-
-		glBindTexture(GL_TEXTURE_2D, decalType->texture);
-
 		{
 			GatherDecalsForType(decalType);
 		}
-
-		for (unsigned int k = 0; k < decalsToDraw.size(); k++) {
-			DrawObjectDecal(decalsToDraw[k]);
+		if (decalsToDraw.size() > 0) {		
+			glBindTexture(GL_TEXTURE_2D, decalType->texture);
+			for (unsigned int k = 0; k < decalsToDraw.size(); k++) {
+				DrawObjectDecal(decalsToDraw[k]);
+			}
 		}
 
 		// glBindTexture(GL_TEXTURE_2D, 0);
