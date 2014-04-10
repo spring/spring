@@ -16,7 +16,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_LUASOCKET)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_LUASOCKET
 
-CONFIG(std::string, TCPAllowConnect).defaultValue("").readOnly(true);
+CONFIG(std::string, TCPAllowConnect).defaultValue("lobby.springrts.com:8200").readOnly(true);
 CONFIG(std::string, TCPAllowListen).defaultValue("").readOnly(true);
 CONFIG(std::string, UDPAllowConnect).defaultValue("").readOnly(true);
 CONFIG(std::string, UDPAllowListen).defaultValue("").readOnly(true);
