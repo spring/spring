@@ -375,7 +375,8 @@ static inline bool IsCommandInMap(const Command& c)
 		return true;
 	}
 	const float3 pos = c.GetPos(0);
-	LOG_L(L_ERROR, "Invalid command received: %d param pos: x:%f y:%f z:%f", c.GetID(), pos.x, pos.y, pos.z);
+	LOG_L(L_DEBUG, "Dropped command %d: outside of map (x:%f y:%f z:%f)", c.GetID(), pos.x, pos.y, pos.z);
+
 	return false;
 
 }
