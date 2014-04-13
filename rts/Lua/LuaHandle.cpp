@@ -2254,7 +2254,7 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L, false);
-	luaL_checkstack(L, 6, __FUNCTION__);
+	luaL_checkstack(L, 5, __FUNCTION__);
 	static const LuaHashString cmdStr("GameSetup");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false;
@@ -2272,25 +2272,19 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 	}
 
 	// call the routine
-	if (!RunCallIn(L, cmdStr, 3, 3))
+	if (!RunCallIn(L, cmdStr, 3, 2))
 		return false;
 
-	if (lua_isboolean(L, 1)) {
-		if (lua_toboolean(L, 1)) {
-			if (lua_isboolean(L, 2)) {
-				ready = lua_toboolean(L, 2);
+	if (lua_isboolean(L, -2)) {
+		if (lua_toboolean(L, -2)) {
+			if (lua_isboolean(L, -1)) {
+				ready = lua_toboolean(L, -1);
 			}
+			lua_pop(L, 2);
+			return true;
 		}
 	}
-
-    if (lua_isboolean(L, 3)) {
-        if (lua_toboolean(L, 3)) {
-            lua_pop(L, 3);
-            return true;
-        }
-    }
-
-	lua_pop(L, 3);
+	lua_pop(L, 2);
 	return false;
 }
 
