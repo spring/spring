@@ -6,5 +6,11 @@
 
 std::string CClipboard::GetContents() const
 {
-	return SDL_GetClipboardText();
+	char* text = SDL_GetClipboardText();
+	if (text == NULL) {
+		return "";
+	}
+	std::string s = text;
+	SDL_free(text);
+	return s;
 };

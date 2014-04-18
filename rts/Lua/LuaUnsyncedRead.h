@@ -99,6 +99,8 @@ class LuaUnsyncedRead {
 		static int GetPressedKeys(lua_State* L);
 		static int GetInvertQueueKey(lua_State* L);
 
+		static int GetClipboard(lua_State* L);
+
 		static int GetActiveCommand(lua_State* L);
 		static int GetDefaultCommand(lua_State* L);
 		static int GetActiveCmdDescs(lua_State* L);
