@@ -95,6 +95,7 @@ Lua:
  ! fix wrong coords & crash in Spring.RemoveGrass
  - added new LOG.NOTICE (should be used instead of LOG.INFO)
  - improve Spring.GetKeyBindings output (backward compatible)
+ - added Spring.GetClipboard() & Spring.SetClipboard(string text)
 
 LUS:
  - SetUnitValue now accepts booleans, too
