@@ -2277,6 +2277,7 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 
 	if (lua_isboolean(L, -2)) {
 		if (lua_toboolean(L, -2)) {
+			// only allow ready-state change if Lua takes the event
 			if (lua_isboolean(L, -1)) {
 				ready = lua_toboolean(L, -1);
 			}

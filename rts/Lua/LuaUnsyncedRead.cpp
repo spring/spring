@@ -484,11 +484,7 @@ int LuaUnsyncedRead::IsUnitInView(lua_State* L)
 
 static bool UnitIsIcon(const CUnit* unit)
 {
-	const float sqDist = (unit->pos - camera->GetPos()).SqLength();
-	const float iconLength = unitDrawer->iconLength;
-	const float iconDistSqrMult = unit->unitDef->iconType->GetDistanceSqr();
-	const float realIconLength = iconLength * iconDistSqrMult;
-	return (sqDist > realIconLength);
+	return (unitDrawer->DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength()));
 }
 
 
