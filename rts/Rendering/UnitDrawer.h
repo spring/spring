@@ -92,6 +92,9 @@ public:
 	static void DrawBuildingSample(const UnitDef* unitdef, int team, float3 pos, int facing = 0);
 	static void DrawUnitDef(const UnitDef* unitDef, int team);
 
+	/// Returns true if the given unit should be drawn as icon in the current frame.
+	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
+
 	/** LuaOpenGL::Unit{Raw} **/
 	void DrawIndividual(CUnit* unit);
 
@@ -155,9 +158,6 @@ private:
 	static void DrawIcon(CUnit* unit, bool asRadarBlip);
 	void DrawCloakedUnitsHelper(int modelType);
 	void DrawCloakedUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass);
-
-	/// Returns true if the given unit should be drawn as icon in the current frame.
-	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
 
 	void SelectRenderState(bool shaderPath) {
 		unitDrawerState = shaderPath? unitDrawerStateSSP: unitDrawerStateFFP;
