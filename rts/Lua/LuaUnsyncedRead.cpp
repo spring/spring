@@ -68,6 +68,7 @@
 #include <list>
 #include <cctype>
 
+#include <SDL_clipboard.h>
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
 
@@ -181,6 +182,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetModKeyState);
 	REGISTER_LUA_CFUNC(GetPressedKeys);
 	REGISTER_LUA_CFUNC(GetInvertQueueKey);
+
+	REGISTER_LUA_CFUNC(GetClipboard);
 
 	REGISTER_LUA_CFUNC(GetKeyCode);
 	REGISTER_LUA_CFUNC(GetKeySymbol);
@@ -481,11 +484,7 @@ int LuaUnsyncedRead::IsUnitInView(lua_State* L)
 
 static bool UnitIsIcon(const CUnit* unit)
 {
-	const float sqDist = (unit->pos - camera->GetPos()).SqLength();
-	const float iconLength = unitDrawer->iconLength;
-	const float iconDistSqrMult = unit->unitDef->iconType->GetDistanceSqr();
-	const float realIconLength = iconLength * iconDistSqrMult;
-	return (sqDist > realIconLength);
+	return (unitDrawer->DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength()));
 }
 
 
@@ -1950,6 +1949,19 @@ int LuaUnsyncedRead::GetInvertQueueKey(lua_State* L)
 		return 0;
 	}
 	lua_pushboolean(L, guihandler->GetInvertQueueKey());
+	return 1;
+}
+
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetClipboard(lua_State* L)
+{
+	char* text = SDL_GetClipboardText();
+	if (text == NULL) {
+		return 0;
+	}
+	lua_pushstring(L, text);
+	SDL_free(text);
 	return 1;
 }
 

@@ -81,6 +81,7 @@
 
 #include <fstream>
 
+#include <SDL_clipboard.h>
 #include <SDL_mouse.h>
 
 using std::min;
@@ -201,6 +202,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetMouseCursor);
 	REGISTER_LUA_CFUNC(WarpMouse);
+
+	REGISTER_LUA_CFUNC(SetClipboard);
 
 	REGISTER_LUA_CFUNC(SetCameraOffset);
 
@@ -1830,6 +1833,17 @@ int LuaUnsyncedCtrl::SetMouseCursor(lua_State* L)
 	return 0;
 }
 
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::SetClipboard(lua_State* L)
+{
+	if (!CLuaHandle::CheckModUICtrl(L)) {
+		return 0;
+	}
+
+	SDL_SetClipboardText(luaL_checkstring(L, 1));
+	return 0;
+}
 
 /******************************************************************************/
 
