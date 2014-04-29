@@ -844,7 +844,7 @@ void SpringApp::Startup()
 	// process given argument
 	if (inputFile.find("spring://") == 0) {
 		// url (syntax: spring://username:password@host:port)
-		int port;
+		int port = 0;
 		startsetup->isHost = false;
 		ParseSpringUri(inputFile, &startsetup->myPlayerName, &startsetup->myPasswd, &startsetup->hostIP, &port);
 		if (port != 0) startsetup->hostPort = port;

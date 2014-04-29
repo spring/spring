@@ -24,6 +24,11 @@ static Uint8 stubKeyState[0];
 static SDL_version stubVersion;
 static Uint32 stubSubSystemsInit = 0;
 
+
+extern DECLSPEC void SDLCALL SDL_free(void* p) {
+	return;
+}
+
 extern DECLSPEC int SDLCALL SDL_Init(Uint32 flags) {
 
 	startSystemMilliSeconds = stub_sdl_getSystemMilliSeconds();
@@ -156,6 +161,10 @@ extern DECLSPEC void SDLCALL SDL_DisableScreenSaver() {
 
 extern DECLSPEC char* SDLCALL SDL_GetClipboardText() {
 	return "";
+}
+
+extern DECLSPEC int SDLCALL SDL_SetClipboardText(const char* text) {
+	return -1;
 }
 
 extern DECLSPEC const Uint8 *SDLCALL SDL_GetKeyboardState(int* numkeys) {
