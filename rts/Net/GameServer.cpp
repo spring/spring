@@ -283,6 +283,12 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	// Set single precision floating point math.
 	streflop::streflop_init<streflop::Simple>();
 #endif
+
+	if (!demoReader) {
+		GenerateAndSendGameID();
+		rng.Seed(gameID.intArray[0] ^ gameID.intArray[1] ^ gameID.intArray[2] ^ gameID.intArray[3]);
+		Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
+	}
 }
 
 CGameServer::~CGameServer()
@@ -2068,9 +2074,6 @@ void CGameServer::StartGame(bool forced)
 		}
 	}
 
-	GenerateAndSendGameID();
-	rng.Seed(gameID.intArray[0] ^ gameID.intArray[1] ^ gameID.intArray[2] ^ gameID.intArray[3]);
-	Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
 	Broadcast(CBaseNetProtocol::Get().SendStartPlaying(0));
 
 	if (hostif != NULL) {
