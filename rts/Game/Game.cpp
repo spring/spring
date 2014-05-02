@@ -929,7 +929,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 
 int CGame::KeyReleased(int k)
 {
-	if ((userWriting) && (((k>=' ') && (k<='Z')) || (k==8) || (k==190))) { //FIXME use a function? (also wtf is 190?)
+	if (userWriting && keyCodes->IsPrintable(k)) {
 		return 0;
 	}
 
