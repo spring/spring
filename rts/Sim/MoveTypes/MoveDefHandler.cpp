@@ -124,7 +124,7 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 		const MoveDef& md = moveDefs.back();
 		moveDefNames[md.name] = md.pathType;
 
-		crc << mdGetCheckSum();
+		crc << md.GetCheckSum();
 	}
 
 	CMoveMath::noHoverWaterMove = (mapInfo->water.damage >= MAX_ALLOWED_WATER_DAMAGE_HMM);
@@ -138,13 +138,13 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 }
 
 
-MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name) const
+MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name)
 {
 	map<string, int>::const_iterator it = moveDefNames.find(name);
 	if (it == moveDefNames.end()) {
 		return NULL;
 	}
-	return moveDefs[it->second];
+	return &moveDefs[it->second];
 }
 
 
