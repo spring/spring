@@ -95,6 +95,7 @@ Lua:
  ! fix wrong coords & crash in Spring.RemoveGrass
  - added new LOG.NOTICE (should be used instead of LOG.INFO)
  - improve Spring.GetKeyBindings output (backward compatible)
+ - added Script.IsEngineMinVersion(major [,minor [,commits]])
  - added Spring.GetClipboard() & Spring.SetClipboard(string text)
 
 LUS:
@@ -103,6 +104,8 @@ LUS:
 Demos:
  - fixed desync checker
 
+StartScript:
+ - added GAME/MUTATOR{0..9} so you can load arbitrary mutator archives before the game
 Installer:
  ! disallow to install spring over existing installations / ask for uninstall first
  - don't associate .sdf with spring.exe any more

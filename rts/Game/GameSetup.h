@@ -58,6 +58,7 @@ public:
 	const std::vector<TeamBase>& GetTeamStartingDataCont() const { return teamStartingData; }
 	const std::vector<AllyTeam>& GetAllyStartingDataCont() const { return allyStartingData; }
 	const std::vector<SkirmishAIData>& GetAIStartingDataCont() const { return skirmishAIStartingData; }
+	const std::vector<std::string>& GetMutatorsCont() const { return mutatorsList; }
 
 	const std::string MapFile() const;
 
@@ -113,6 +114,8 @@ private:
 	 * @pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
 	 */
 	void LoadStartPositionsFromMap();
+
+	void LoadMutators(const TdfParser& file, std::vector<std::string>& mutatorsList);
 	/**
 	 * @brief Load unit restrictions
 	 * @post restrictedUnits initialized
@@ -157,6 +160,7 @@ private:
 	std::vector<TeamBase> teamStartingData;
 	std::vector<AllyTeam> allyStartingData;
 	std::vector<SkirmishAIData> skirmishAIStartingData;
+	std::vector<std::string> mutatorsList;
 
 	std::map<int, const SkirmishAIData*> team_skirmishAI;
 	std::map<std::string, int> restrictedUnits;
