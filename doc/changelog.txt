@@ -106,6 +106,9 @@ Demos:
 
 StartScript:
  - added GAME/MUTATOR{0..9} so you can load arbitrary mutator archives before the game
+ - make GameID the only seed of the synced random generator
+   so you can define the gameid in a luaAI battle startscript and you will always get a syncing match
+
 Installer:
  ! disallow to install spring over existing installations / ask for uninstall first
  - don't associate .sdf with spring.exe any more
