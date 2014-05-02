@@ -139,7 +139,6 @@ class MoveDefHandler
 	CR_DECLARE_STRUCT(MoveDefHandler);
 public:
 	MoveDefHandler(LuaParser* defsParser);
-	~MoveDefHandler();
 
 	MoveDef* GetMoveDefByPathType(unsigned int pathType) { return moveDefs[pathType]; }
 	MoveDef* GetMoveDefByName(const std::string& name) const;
@@ -148,7 +147,7 @@ public:
 	unsigned int GetCheckSum() const { return checksum; }
 
 private:
-	std::vector<MoveDef*> moveDefs;
+	std::vector<MoveDef> moveDefs;
 	std::map<std::string, int> moveDefNames;
 
 	unsigned int checksum;

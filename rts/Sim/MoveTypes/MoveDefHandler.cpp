@@ -120,11 +120,11 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 			break;
 		}
 
-		MoveDef* md = new MoveDef(moveDefTable, num);
-		moveDefs.push_back(md);
-		moveDefNames[md->name] = md->pathType;
+		moveDefs.emplace_back(moveDefTable, num);
+		const MoveDef& md = moveDefs.back();
+		moveDefNames[md.name] = md.pathType;
 
-		crc << md->GetCheckSum();
+		crc << mdGetCheckSum();
 	}
 
 	CMoveMath::noHoverWaterMove = (mapInfo->water.damage >= MAX_ALLOWED_WATER_DAMAGE_HMM);
@@ -135,15 +135,6 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 	crc << CMoveMath::noHoverWaterMove;
 
 	checksum = crc.GetDigest();
-}
-
-
-MoveDefHandler::~MoveDefHandler()
-{
-	while (!moveDefs.empty()) {
-		delete moveDefs.back();
-		moveDefs.pop_back();
-	}
 }
 
 
