@@ -464,27 +464,36 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		}
 	}
 
-	gs->SetRandSeed(gameData->GetRandomSeed(), true);
-	LOG("Using map: %s", gameSetup->mapName.c_str());
+	// Load archives into VFS
+	{
+		// Load Map archive
+		LOG("Using map: %s", gameSetup->mapName.c_str());
+		vfsHandler->AddArchiveWithDeps(gameSetup->mapName, false);
 
-	vfsHandler->AddArchiveWithDeps(gameSetup->mapName, false);
+		// Load Mutators (if any)
+		for (const std::string& mut: gameSetup->GetMutatorsCont()) {
+			LOG("Using mutator: %s", mut.c_str());
+			vfsHandler->AddArchiveWithDeps(mut, false);
+		}
+
+		// Load Game archive
+		LOG("Using game: %s", gameSetup->modName.c_str());
+		vfsHandler->AddArchiveWithDeps(gameSetup->modName, false);
+		modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
+		LOG("Using game archive: %s", modArchive.c_str());
+	}
+
+	// Check checksums of map & game
 	try {
 		archiveScanner->CheckArchive(gameSetup->mapName, gameData->GetMapChecksum());
 	} catch (const content_error& ex) {
 		LOG_L(L_WARNING, "Incompatible map-checksum: %s", ex.what());
 	}
-
-	LOG("Using game: %s", gameSetup->modName.c_str());
-	vfsHandler->AddArchiveWithDeps(gameSetup->modName, false);
-	modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
-	LOG("Using game archive: %s", modArchive.c_str());
-
 	try {
 		archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
 	} catch (const content_error& ex) {
 		LOG_L(L_WARNING, "Incompatible game-checksum: %s", ex.what());
 	}
-
 
 	if (net != NULL && wantDemo) {
 		assert(net->GetDemoRecorder() == NULL);
