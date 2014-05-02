@@ -140,8 +140,8 @@ class MoveDefHandler
 public:
 	MoveDefHandler(LuaParser* defsParser);
 
-	MoveDef* GetMoveDefByPathType(unsigned int pathType) { return moveDefs[pathType]; }
-	MoveDef* GetMoveDefByName(const std::string& name) const;
+	MoveDef* GetMoveDefByPathType(unsigned int pathType) { return &moveDefs[pathType]; }
+	MoveDef* GetMoveDefByName(const std::string& name);
 
 	unsigned int GetNumMoveDefs() const { return moveDefs.size(); }
 	unsigned int GetCheckSum() const { return checksum; }
