@@ -1923,24 +1923,25 @@ void CGameServer::GenerateAndSendGameID()
 	gameID.intArray[2] = crc.GetDigest();
 
 	CRC entropy;
-	entropy.Update(spring_tomsecs(lastNewFrameTick - serverStartTime));
+	entropy.Update((lastNewFrameTick - serverStartTime).toNanoSecsi());
 	gameID.intArray[3] = entropy.GetDigest();
 
 	// fixed gameID?
 	if (!setup->gameID.empty()) {
 		unsigned char p[16];
 	#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
-		// workaround missing C99 support in a msvc lib with %02hhx
+		// workaround missing C99 support in a msvc lib with %2hhx
 		generatedGameID = (sscanf(setup->gameID.c_str(),
 		      "%02hc%02hc%02hc%02hc%02hc%02hc%02hc%02hc"
 		      "%02hc%02hc%02hc%02hc%02hc%02hc%02hc%02hc",
 		      &p[ 0], &p[ 1], &p[ 2], &p[ 3], &p[ 4], &p[ 5], &p[ 6], &p[ 7],
 		      &p[ 8], &p[ 9], &p[10], &p[11], &p[12], &p[13], &p[14], &p[15]) == 16);
 	#else
-		auto s = reinterpret_cast<short unsigned int*>(&p[0]);
 		generatedGameID = (sscanf(setup->gameID.c_str(),
-		      "%02hx%02hx%02hx%02hx%02hx%02hx%02hx%02hx",
-		      &s[ 0], &s[ 1], &s[ 2], &s[ 3], &s[ 4], &s[ 5], &s[ 6], &s[ 7]) == 8);
+		       "%hhx%hhx%hhx%hhx%hhx%hhx%hhx%hhx"
+		       "%hhx%hhx%hhx%hhx%hhx%hhx%hhx%hhx",
+		       &p[ 0], &p[ 1], &p[ 2], &p[ 3], &p[ 4], &p[ 5], &p[ 6], &p[ 7],
+		       &p[ 8], &p[ 9], &p[10], &p[11], &p[12], &p[13], &p[14], &p[15]) == 16);
 	#endif
 		if (generatedGameID)
 			for (int i = 0; i<16; ++i)
