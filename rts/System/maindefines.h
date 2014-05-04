@@ -148,5 +148,14 @@
 #define __FORCE_ALIGN_STACK__
 #endif
 
+#if defined(_MSC_VER)
+#if defined(max) //windows.h defines max
+#undef max
+#endif
+#if defined(min) //windows.h defines min
+#undef min
+#endif
+#endif
+
 #endif // MAIN_DEFINES_H
 
