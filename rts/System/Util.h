@@ -307,8 +307,8 @@ static inline int Utf8NextChar(const std::string& str, int pos)
 
 static inline int Utf8PrevChar(const std::string& str, int pos)
 {
-	auto startPos = std::max(pos - 4, 0);
-	auto oldPos   = startPos;
+	int startPos = std::max(pos - 4, 0);
+	int oldPos   = startPos;
 	while (startPos < pos) {
 		oldPos = startPos;
 		Utf8GetNextChar(str, startPos);
