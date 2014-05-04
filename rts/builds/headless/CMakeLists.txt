@@ -30,6 +30,14 @@ ELSE  (MINGW OR APPLE)
 	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL)
 ENDIF (MINGW OR APPLE)
 
+IF    (UNIX)
+        FIND_PACKAGE(Libunwind)
+        IF (LIBUNWIND_FOUND)
+          MESSAGE(STATUS "Found libunwind libraries at ${LIBUNWIND_LIBRARIES}")
+          LIST(APPEND engineHeadlessLibraries ${LIBUNWIND_LIBRARIES})
+        ENDIF (LIBUNWIND_FOUND)
+ENDIF (UNIX)
+
 
 # headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
 LIST(APPEND engineHeadlessLibraries headlessStubs)

@@ -69,8 +69,10 @@ void ForcedExit(const std::string& msg, const std::string& caption, unsigned int
 
 void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags, bool fromMain)
 {
-#ifdef DEDICATED
+#if DEDICATED || UNIT_TEST
+  #if !UNIT_TEST
 	SafeDelete(gameServer);
+  #endif
 	ExitMessage(msg, caption, flags, false);
 	return;
 #else

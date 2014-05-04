@@ -218,6 +218,8 @@ public:
 	CInfoConsole* infoConsole;
 	CConsoleHistory* consoleHistory;
 
+    bool hangThread;
+
 private:
 	CWorldDrawer* worldDrawer;
 
@@ -228,6 +230,7 @@ private:
 
 	volatile bool finishedLoading;
 	bool gameOver;
+
 };
 
 

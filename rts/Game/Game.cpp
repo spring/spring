@@ -150,6 +150,8 @@
 #include "System/Net/PackPacket.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Watchdog.h"
+#include "System/Platform/Threading.h"
+#include "System/Platform/errorhandler.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/DumpState.h"
@@ -159,6 +161,8 @@
 
 #include <boost/cstdint.hpp>
 #include "lib/lua/include/LuaUser.h"
+#include <boost/thread.hpp>
+#include <thread>
 
 #undef CreateDirectory
 
@@ -355,6 +359,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, worldDrawer(NULL)
 	, finishedLoading(false)
 	, gameOver(false)
+    , hangThread(false)
 {
 	game = this;
 
@@ -525,30 +530,47 @@ CGame::~CGame()
 
 void CGame::LoadGame(const std::string& mapName, bool threaded)
 {
-	GML::ThreadNumber(GML_LOAD_THREAD_NUM);
-	// NOTE:
-	//   this is needed for LuaHandle::CallOut*UpdateCallIn
-	//   the main-thread is NOT the same as the load-thread
-	//   when LoadingMT=1 (!!!)
-	Threading::SetGameLoadThread();
-	Watchdog::RegisterThread(WDT_LOAD);
+    COffscreenGLContext glOffscreenCtx;
 
-	if (!gu->globalQuit) LoadMap(mapName);
-	if (!gu->globalQuit) LoadDefs();
-	if (!gu->globalQuit) PreLoadSimulation();
-	if (!gu->globalQuit) PreLoadRendering();
-	if (!gu->globalQuit) PostLoadSimulation();
-	if (!gu->globalQuit) PostLoadRendering();
-	if (!gu->globalQuit) LoadInterface();
-	if (!gu->globalQuit) LoadLua();
-	if (!gu->globalQuit) LoadFinalize();
+    glOffscreenCtx.WorkerThreadPost();
+#ifdef STREFLOP_H
+    // init streflop
+    // not needed for sync'ness (precision flags are per-process)
+    // but fpu exceptions are per-thread
+    streflop::streflop_init<streflop::Simple>();
+#endif
 
-	if (!gu->globalQuit && saveFile) {
-		loadscreen->SetLoadMessage("Loading game");
-		saveFile->LoadGame();
-	}
+    try {
 
-	Watchdog::DeregisterThread(WDT_LOAD);
+        // NOTE:
+        //   this is needed for LuaHandle::CallOut*UpdateCallIn
+        //   the main-thread is NOT the same as the load-thread
+        //   when LoadingMT=1 (!!!)
+        Threading::SetGameLoadThread();
+        Watchdog::RegisterThread(WDT_LOAD);
+
+        if (!gu->globalQuit) LoadMap(mapName);
+        if (!gu->globalQuit) LoadDefs();
+        if (!gu->globalQuit) PreLoadSimulation();
+        if (!gu->globalQuit) PreLoadRendering();
+        if (!gu->globalQuit) PostLoadSimulation();
+        if (!gu->globalQuit) PostLoadRendering();
+        if (!gu->globalQuit) LoadInterface();
+        if (!gu->globalQuit) LoadLua();
+        if (!gu->globalQuit) LoadFinalize();
+
+        if (!gu->globalQuit && saveFile) {
+            loadscreen->SetLoadMessage("Loading game");
+            saveFile->LoadGame();
+        }
+
+        Watchdog::DeregisterThread(WDT_LOAD);
+
+    } catch(boost::thread_interrupted const&) {
+        // do nothing
+    } CATCH_SPRING_ERRORS
+
+    glOffscreenCtx.WorkerThreadFree();
 }
 
 
@@ -975,6 +997,12 @@ bool CGame::Update()
 	if (videoCapturing->IsCapturing() && playing && gameServer != NULL) {
 		gameServer->CreateNewFrame(false, true);
 	}
+
+    // Temporary: hang this thread on the rising edge of a flag.
+    if (hangThread) {
+        std::this_thread::sleep_for( std::chrono::seconds(11) );
+        hangThread = false;
+    }
 
 	ENTER_SYNCED_CODE();
 	SendClientProcUsage();
@@ -1526,6 +1554,14 @@ void CGame::StartPlaying()
 	gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
 //	grouphandler->team = gu->myTeam;
 	CLuaUI::UpdateTeams();
+
+    using namespace Threading;
+    using namespace boost;
+
+    //boost::thread pingThread = boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
+    //Thread* pingThread = CreateThread((boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net)), false);
+    //Thread pingThread(SYMBOL_PAIR((boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net))));
+    boost::thread pingThread = CreateNewThread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
 	// setup the teams
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {

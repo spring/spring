@@ -16,15 +16,13 @@
 
 #include "SoundItem.h"
 
+#include <boost/thread.hpp>
+
 class CSoundSource;
 class SoundBuffer;
 class SoundItem;
 struct ALCdevice_struct;
 typedef struct ALCdevice_struct ALCdevice;
-
-namespace boost {
-	class thread;
-};
 
 
 /// Default sound system implementation (OpenAL)
@@ -94,7 +92,7 @@ private:
 	soundItemDef defaultItem;
 	soundItemDefMap soundItemDefs;
 
-	boost::thread* soundThread;
+    boost::thread soundThread;
 
 	volatile bool soundThreadQuit;
 };

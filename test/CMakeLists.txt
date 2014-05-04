@@ -313,6 +313,35 @@ Else  (NOT Boost_FOUND)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
 
 ################################################################################
+## StackTraces
+        set(test_name StackTrace)
+        set(test_src
+          "${ENGINE_SOURCE_DIR}/System/Platform/Linux/CrashHandler.cpp"
+          "${ENGINE_SOURCE_DIR}/System/ThreadPool.cpp"                       # Want multithreaded tests
+          "${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
+          "${ENGINE_SOURCE_DIR}/System/Platform/Linux/thread_backtrace.cpp"  # Linux backtrace functionality
+          "${ENGINE_SOURCE_DIR}/System/FileSystem/FileSystem.cpp"            # For symbol table file reading
+          "${ENGINE_SOURCE_DIR}/System/FileSystem/FileSystemAbstraction.cpp"
+          "${ENGINE_SOURCE_DIR}/Game/GameVersion.cpp"                        # Game Version reported in traces
+          "${ENGINE_SOURCE_DIR}/System/Util.cpp"                             # StringReplace()
+          "${ENGINE_SOURCE_DIR}/System/Platform/Misc.cpp"                    # GetModulePath()
+         #"${ENGINE_SOURCE_DIR}/System/Platform/errorhandler.cpp"            # simple version of ErrorMessageBox
+         #"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+          ${test_Log_sources}
+          )
+        include_directories("${CMAKE_SOURCE_DIR}/include/SDL2")
+	set(test_libs
+                        dl
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_THREAD_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${Boost_SYSTEM_LIBRARY}
+                        ${Boost_REGEX_LIBRARY}
+                        ${Boost_FILESYSTEM_LIBRARY}
+			${WINMM_LIBRARY}
+		)
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC -DHEADLESS -DUNIT_TEST")
+################################################################################
 EndIf (NOT Boost_FOUND)
 
 add_subdirectory(headercheck)

@@ -16,6 +16,7 @@
 	#include "System/Sync/FPUCheck.h"
 #endif
 
+#include <memory>
 #include <boost/version.hpp>
 #include <boost/thread.hpp>
 #include <boost/cstdint.hpp>
@@ -58,6 +59,8 @@ namespace Threading {
 
 	static boost::optional<NativeThreadId> simThreadID;
 	static boost::optional<NativeThreadId> luaBatchThreadID;
+
+	boost::thread_specific_ptr<std::shared_ptr<Threading::ThreadControls>> threadCtls;
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
@@ -317,7 +320,42 @@ namespace Threading {
 	#endif
 	}
 
+	ThreadControls::ThreadControls () :
+		running(false)
+	{
+#ifndef WIN32
+		memset(&ucontext, 0, sizeof(ucontext_t));
+#endif
+		mutSuspend;
+	}
 
+	ThreadControls::~ThreadControls()
+	{
+
+	}
+
+    std::shared_ptr<ThreadControls>* GetCurrentThreadControls()
+	{
+        return threadCtls.get();
+	}
+
+
+    boost::thread CreateNewThread (boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppCtlsArg)
+	{
+        auto pThreadCtls = new Threading::ThreadControls();
+        auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (pThreadCtls);
+        if (ppCtlsArg != nullptr) {
+            *ppCtlsArg = *ppThreadCtls;
+        }
+
+        boost::unique_lock<boost::mutex> lock (pThreadCtls->mutSuspend);
+
+        boost::thread localthread(boost::bind(Threading::ThreadStart, taskFunc, ppThreadCtls));
+
+        pThreadCtls->condInitialized.wait(lock);
+
+        return localthread;
+	}
 
 	void SetMainThread() {
 		if (!haveMainThreadID) {
@@ -325,7 +363,9 @@ namespace Threading {
 			// boostMainThreadID = boost::this_thread::get_id();
 			nativeMainThreadID = Threading::GetCurrentThreadId();
 		}
-	}
+        auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (new Threading::ThreadControls());
+        SetCurrentThreadControls(ppThreadCtls);
+    }
 
 	bool IsMainThread() {
 		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), nativeMainThreadID);
@@ -333,7 +373,6 @@ namespace Threading {
 	bool IsMainThread(NativeThreadId threadID) {
 		return NativeThreadIdsEqual(threadID, Threading::nativeMainThreadID);
 	}
-
 
 
 	void SetGameLoadThread() {

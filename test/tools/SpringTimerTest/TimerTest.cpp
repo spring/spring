@@ -111,8 +111,9 @@ static void TimerFunc(unsigned int N) {
 int main(int argc, char** argv) {
 	srandom(time(NULL));
 
-	boost::thread timer = boost::thread(boost::bind(&TimerFunc, (argc >= 2)? atoi(argv[1]): (GAME_SPEED_HZ * 60 * 60)));
-	timer.join();
+	//boost::thread timer = boost::thread(boost::bind(&TimerFunc, (argc >= 2)? atoi(argv[1]): (GAME_SPEED_HZ * 60 * 60)));
+	struct ThreadData* tData = CreateThread(boost::bind(&TimerFunc, (argc >= 2)? atoi(argv[1]): (GAME_SPEED_HZ * 60 * 60)));
+	tData->bThread.join();
 	return 0;
 }
 

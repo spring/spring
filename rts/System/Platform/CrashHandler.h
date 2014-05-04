@@ -11,7 +11,7 @@ namespace CrashHandler {
 	void Install();
 	void Remove();
 
-	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel = LOG_LEVEL_ERROR);
+	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel = LOG_LEVEL_ERROR, Threading::ThreadControls* ctls = nullptr);
 	void PrepareStacktrace(const int logLevel = LOG_LEVEL_ERROR);
 	void CleanupStacktrace(const int logLevel = LOG_LEVEL_ERROR);
 

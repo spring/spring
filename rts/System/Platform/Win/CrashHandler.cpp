@@ -288,12 +288,12 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 	GlobalFree(pSym);
 }
 
-static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR) {
+static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR, Threading::ThreadControls* ctls) {
 	StacktraceInline(threadName, e, hThread, logLevel);
 }
 
 
-void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel)
+void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel, Threading::ThreadControls* ctls)
 {
 	Stacktrace(threadName.c_str(), NULL, thread, logLevel);
 }

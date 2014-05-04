@@ -18,6 +18,8 @@
 #include <boost/thread.hpp>
 #include <SDL_events.h>
 #include <sys/resource.h> //for getrlimits
+#define UNW_LOCAL_ONLY
+#include <libunwind.h>
 
 #include "thread_backtrace.h"
 #include "System/FileSystem/FileSystem.h"
@@ -360,9 +362,29 @@ static sigaction_t& GetSigAction(void (*s_hand)(int))
 
 namespace CrashHandler
 {
-	static void Stacktrace(bool* aiCrash, pthread_t* hThread = NULL, const char* threadName = NULL, const int logLevel = LOG_LEVEL_ERROR)
+	static int thread_unwind(ucontext_t* uc, void** buffer, int maxLines)
 	{
-#ifndef DEDICATED
+		assert(uc != nullptr);
+		assert(buffer != nullptr);
+		unw_cursor_t cursor;
+        int err = unw_init_local(&cursor, uc);
+        if (err) {
+            LOG_L(L_ERROR, "unw_init_local returned %d", err);
+            return 0;
+        }
+		int i=0;
+		while (i < maxLines && unw_step(&cursor)) {
+			unw_word_t ip;
+			unw_get_reg(&cursor, UNW_REG_IP, &ip);
+			buffer[i++] = reinterpret_cast<void*>(ip);
+		}
+        LOG("thread_unwind returned %d/%d", i, maxLines);
+		return i;
+	}
+
+	static void Stacktrace(bool* aiCrash, pthread_t* hThread = NULL, const char* threadName = NULL, const int logLevel = LOG_LEVEL_ERROR, Threading::ThreadControls* ctls = nullptr)
+	{
+#if !(DEDICATED || UNIT_TEST)
 		Watchdog::ClearTimer();
 #endif
 
@@ -385,9 +407,19 @@ namespace CrashHandler
 			std::vector<void*> buffer(MAX_STACKTRACE_DEPTH + 2);
 			int numLines;
 			if (hThread && Threading::GetCurrentThread() != *hThread) {
-				LOG_I(logLevel, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
-				LOG_CLEANUP();
-				numLines = thread_backtrace(*hThread, &buffer[0], buffer.size());    // stack pointers
+				//Threading::ThreadControls* ctls = GetThreadControls(*hThread);
+				if (ctls == NULL) {
+					// If we don't have a ThreadControls object for this thread, then we can still get an approximate trace from the foreign thread as it is running...
+					LOG_I(logLevel, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
+					LOG_CLEANUP();
+					numLines = thread_backtrace(*hThread, &buffer[0], buffer.size());    // stack pointers
+				} else {
+					// If we have a ThreadControls object, then we can suspend it and use libunwind to get an exact stack trace:
+                    LOG_I(logLevel, "  [Using libunwind to create trace...]");
+					ctls->Suspend();
+					numLines = thread_unwind(&ctls->ucontext, &buffer[0], buffer.size());
+					ctls->Resume();
+				}
 			} else {
 				numLines = backtrace(&buffer[0], buffer.size());    // stack pointers
 				buffer.erase(buffer.begin()); // pop Stacktrace()
@@ -470,7 +502,7 @@ namespace CrashHandler
 	}
 
 
-	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel)
+	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel, Threading::ThreadControls* ctls)
 	{
 		//TODO Our custom thread_backtrace() only works on the mainthread.
 		//     Use to gdb's libthread_db to get the stacktraces of all threads.
@@ -479,7 +511,7 @@ namespace CrashHandler
 			LOG_I(logLevel, "  No Stacktraces for non-MainThread.");
 			return;
 		}
-		Stacktrace(NULL, &thread, threadName.c_str(), logLevel);
+		Stacktrace(NULL, &thread, threadName.c_str(), logLevel, ctls);
 	}
 
 	void PrepareStacktrace(const int logLevel) {}
@@ -494,10 +526,12 @@ namespace CrashHandler
 			// ctrl+c = kill
 			LOG("caught SIGINT, aborting");
 
+#ifndef HEADLESS
 			// first try a clean exit
 			SDL_Event event;
 			event.type = SDL_QUIT;
 			SDL_PushEvent(&event);
+#endif
 
 			// abort after 5sec
 			boost::thread(boost::bind(&ForcedExitAfterFiveSecs));

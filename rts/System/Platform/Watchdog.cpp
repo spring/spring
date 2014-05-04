@@ -44,6 +44,7 @@ namespace Watchdog
 		volatile Threading::NativeThreadId threadid;
 		spring_time timer;
 		volatile unsigned int numreg;
+        std::shared_ptr<Threading::ThreadControls> ctls;
 	};
 
 	struct WatchDogThreadSlot {
@@ -126,7 +127,7 @@ namespace Watchdog
 					if (!threadSlots[i].active)
 						continue;
 
-					CrashHandler::Stacktrace(registeredThreads[i]->thread, threadNames[i], LOG_LEVEL_WARNING);
+                    CrashHandler::Stacktrace(registeredThreads[i]->thread, threadNames[i], LOG_LEVEL_WARNING, registeredThreads[i]->ctls.get());
 				}
 
 				CrashHandler::CleanupStacktrace(LOG_LEVEL_WARNING);
@@ -137,7 +138,7 @@ namespace Watchdog
 	}
 
 
-	void RegisterThread(WatchdogThreadnum num, bool primary)
+    void RegisterThread(WatchdogThreadnum num, bool primary)
 	{
 		boost::mutex::scoped_lock lock(wdmutex);
 
@@ -177,6 +178,12 @@ namespace Watchdog
 		threadInfo->thread = thread;
 		threadInfo->threadid = threadId;
 		threadInfo->timer = spring_gettime();
+        auto ppThreadCtls = Threading::GetCurrentThreadControls();
+        if (ppThreadCtls != nullptr) {
+            LOG("Registering thread controls for thread [%s]", threadNames[num]);
+            threadInfo->ctls = *ppThreadCtls;
+        }
+        assert(threadInfo->ctls != nullptr);
 		++threadInfo->numreg;
 
 		threadSlots[num].primary = primary;
@@ -185,7 +192,7 @@ namespace Watchdog
 	}
 
 
-	void DeregisterThread(WatchdogThreadnum num)
+    void DeregisterThread(WatchdogThreadnum num)
 	{
 		boost::mutex::scoped_lock lock(wdmutex);
 

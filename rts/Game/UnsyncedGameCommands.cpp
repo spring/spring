@@ -83,6 +83,8 @@
 #include "System/Util.h"
 
 #include <SDL_events.h>
+#include <thread>
+#include <chrono>
 
 
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
@@ -1688,6 +1690,21 @@ public:
 		}
 		return true;
 	}
+};
+
+
+
+class HangThreadExecutor : public IUnsyncedActionExecutor {
+public:
+    HangThreadExecutor() :  IUnsyncedActionExecutor("HangThread","Hangs the thread for 10 seconds") {
+    }
+    bool Execute(const UnsyncedAction& action) const {
+        LOG("Hanging thread ...");
+        if (game) {
+            game->hangThread = true;
+        }
+        return true;
+    }
 };
 
 
@@ -3379,7 +3396,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 #endif // USE_GML
 	AddActionExecutor(new SpeedControlActionExecutor());
 	AddActionExecutor(new GameInfoActionExecutor());
-	AddActionExecutor(new HideInterfaceActionExecutor());
+    AddActionExecutor(new HangThreadExecutor());
+    AddActionExecutor(new HideInterfaceActionExecutor());
 	AddActionExecutor(new HardwareCursorActionExecutor());
 	AddActionExecutor(new IncreaseViewRadiusActionExecutor());
 	AddActionExecutor(new DecreaseViewRadiusActionExecutor());
