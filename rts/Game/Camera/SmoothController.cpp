@@ -40,7 +40,7 @@ SmoothController::SmoothController()
 	fov = configHandler->GetFloat("SmoothFOV");
 	lastSource = Noone;
 
-	if (ground && globalRendering) {
+	if (globalRendering) {
 		// make whole map visible
 		const float h = std::max(pos.x / globalRendering->aspectRatio, pos.z);
 		height = CGround::GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
