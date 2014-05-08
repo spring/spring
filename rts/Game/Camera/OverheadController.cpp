@@ -35,7 +35,7 @@ COverheadController::COverheadController()
 	enabled = configHandler->GetBool("OverheadEnabled");
 	fov = configHandler->GetFloat("OverheadFOV");
 
-	if (ground && globalRendering) {
+	if (globalRendering) {
 		// make whole map visible
 		const float h = std::max(pos.x / globalRendering->aspectRatio, pos.z);
 		height = CGround::GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);

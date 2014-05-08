@@ -203,7 +203,7 @@ inline static bool ClampInMapHeight(float3& from, float3& to)
 }
 
 
-float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
+float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 {
 	const float* hm  = readMap->GetSharedCornerHeightMap(synced);
 	const float3* nm = readMap->GetSharedFaceNormals(synced);
@@ -374,7 +374,7 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 }
 
 
-float CGround::GetApproximateHeight(float x, float z, bool synced) const
+float CGround::GetApproximateHeight(float x, float z, bool synced)
 {
 	const int xsquare = Clamp(int(x) / SQUARE_SIZE, 0, gs->mapxm1);
 	const int zsquare = Clamp(int(z) / SQUARE_SIZE, 0, gs->mapym1);
@@ -383,23 +383,23 @@ float CGround::GetApproximateHeight(float x, float z, bool synced) const
 	return heightMap[xsquare + zsquare * gs->mapx];
 }
 
-float CGround::GetHeightAboveWater(float x, float z, bool synced) const
+float CGround::GetHeightAboveWater(float x, float z, bool synced)
 {
 	return std::max(0.0f, GetHeightReal(x, z, synced));
 }
 
-float CGround::GetHeightReal(float x, float z, bool synced) const
+float CGround::GetHeightReal(float x, float z, bool synced)
 {
 	return InterpolateHeight(x, z, readMap->GetSharedCornerHeightMap(synced));
 }
 
-float CGround::GetOrigHeight(float x, float z) const
+float CGround::GetOrigHeight(float x, float z)
 {
 	return InterpolateHeight(x, z, readMap->GetOriginalHeightMapSynced());
 }
 
 
-const float3& CGround::GetNormal(float x, float z, bool synced) const
+const float3& CGround::GetNormal(float x, float z, bool synced)
 {
 	const int xsquare = Clamp(int(x) / SQUARE_SIZE, 0, gs->mapxm1);
 	const int zsquare = Clamp(int(z) / SQUARE_SIZE, 0, gs->mapym1);
@@ -408,7 +408,7 @@ const float3& CGround::GetNormal(float x, float z, bool synced) const
 	return normalMap[xsquare + zsquare * gs->mapx];
 }
 
-const float3& CGround::GetNormalAboveWater(float x, float z, bool synced) const
+const float3& CGround::GetNormalAboveWater(float x, float z, bool synced)
 {
 	if (GetHeightReal(x, z, synced) <= 0.0f)
 		return UpVector;
@@ -417,7 +417,7 @@ const float3& CGround::GetNormalAboveWater(float x, float z, bool synced) const
 }
 
 
-float CGround::GetSlope(float x, float z, bool synced) const
+float CGround::GetSlope(float x, float z, bool synced)
 {
 	const int xhsquare = Clamp(int(x) / (2 * SQUARE_SIZE), 0, gs->hmapx - 1);
 	const int zhsquare = Clamp(int(z) / (2 * SQUARE_SIZE), 0, gs->hmapy - 1);
@@ -427,7 +427,7 @@ float CGround::GetSlope(float x, float z, bool synced) const
 }
 
 
-float3 CGround::GetSmoothNormal(float x, float z, bool synced) const
+float3 CGround::GetSmoothNormal(float x, float z, bool synced)
 {
 	const int sx = Clamp(int(math::floor(x / SQUARE_SIZE)), 1, gs->mapx - 2);
 	const int sz = Clamp(int(math::floor(z / SQUARE_SIZE)), 1, gs->mapy - 2);
@@ -469,7 +469,7 @@ float3 CGround::GetSmoothNormal(float x, float z, bool synced) const
 	return ((n1 + n2 + n3 + n4).Normalize());
 }
 
-float CGround::TrajectoryGroundCol(float3 from, const float3& flatdir, float length, float linear, float quadratic) const
+float CGround::TrajectoryGroundCol(float3 from, const float3& flatdir, float length, float linear, float quadratic)
 {
 	float3 dir(flatdir.x, linear, flatdir.z);
 
@@ -493,3 +493,4 @@ float CGround::TrajectoryGroundCol(float3 from, const float3& flatdir, float len
 
 	return -1.0f;
 }
+
