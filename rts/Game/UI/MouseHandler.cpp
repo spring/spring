@@ -341,11 +341,11 @@ void CMouseHandler::MousePress(int x, int y, int button)
  */
 void CMouseHandler::GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft)
 {
-	float dist = ground->LineGroundCol(pos1, pos1 + dir1 * globalRendering->viewRange * 1.4f, false);
+	float dist = CGround::LineGroundCol(pos1, pos1 + dir1 * globalRendering->viewRange * 1.4f, false);
 	if(dist < 0) dist = globalRendering->viewRange * 1.4f;
 	float3 gpos1 = pos1 + dir1 * dist;
 
-	dist = ground->LineGroundCol(pos2, pos2 + dir2 * globalRendering->viewRange * 1.4f, false);
+	dist = CGround::LineGroundCol(pos2, pos2 + dir2 * globalRendering->viewRange * 1.4f, false);
 	if(dist < 0) dist = globalRendering->viewRange * 1.4f;
 	float3 gpos2 = pos2 + dir2 * dist;
 

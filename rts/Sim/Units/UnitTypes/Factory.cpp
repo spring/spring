@@ -358,7 +358,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 		if ((testPos - pos).dot(frontdir) < 0.0f)
 			continue;
 
-		testPos.y = ground->GetHeightAboveWater(testPos.x, testPos.z);
+		testPos.y = CGround::GetHeightAboveWater(testPos.x, testPos.z);
 
 		if (quadField->GetSolidsExact(testPos, unit->radius * 1.5f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS).empty()) {
 			foundPos = testPos; break;
@@ -380,7 +380,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 			foundPos.y += 1.0f;
 		} while ((!foundPos.IsInBounds() || (foundPos - pos).dot(frontdir) < 0.0f) && (foundPos.y < 100.0f));
 
-		foundPos.y = ground->GetHeightAboveWater(foundPos.x, foundPos.z);
+		foundPos.y = CGround::GetHeightAboveWater(foundPos.x, foundPos.z);
 	}
 
 	// first queue a temporary waypoint outside the factory

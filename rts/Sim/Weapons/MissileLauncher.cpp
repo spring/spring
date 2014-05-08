@@ -91,7 +91,7 @@ bool CMissileLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, co
 	const float linear = dir.y + weaponDef->trajectoryHeight;
 	const float quadratic = -weaponDef->trajectoryHeight / flatLength;
 	const float groundDist = ((avoidFlags & Collision::NOGROUND) == 0)?
-		ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength, linear, quadratic):
+		CGround::TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength, linear, quadratic):
 		-1.0f;
 
 	if (groundDist > 0.0f)

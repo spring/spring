@@ -2824,7 +2824,7 @@ public:
 			} else {
 				const float3& pos = camera->GetPos();
 				const float3& dir = mouse->dir;
-				const float dist = ground->LineGroundCol(pos, pos + (dir * 30000.0f));
+				const float dist = CGround::LineGroundCol(pos, pos + (dir * 30000.0f));
 				givePos = pos + (dir * dist);
 			}
 

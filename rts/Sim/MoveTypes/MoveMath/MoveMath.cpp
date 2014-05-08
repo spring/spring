@@ -20,7 +20,7 @@ float CMoveMath::yLevel(const MoveDef& moveDef, int xSqr, int zSqr)
 	switch (moveDef.speedModClass) {
 		case MoveDef::Tank: // fall-through
 		case MoveDef::KBot:  { return (readMap->GetCenterHeightMapSynced()[xSqr + zSqr * gs->mapx]);                 } break; // NOTE: why not just GetHeightReal too?
-		case MoveDef::Hover: { return (ground->GetHeightAboveWater(xSqr * SQUARE_SIZE, zSqr * SQUARE_SIZE) + 10.0f); } break;
+		case MoveDef::Hover: { return (CGround::GetHeightAboveWater(xSqr * SQUARE_SIZE, zSqr * SQUARE_SIZE) + 10.0f); } break;
 		case MoveDef::Ship:  { return (                                                                       0.0f); } break;
 	}
 
@@ -31,8 +31,8 @@ float CMoveMath::yLevel(const MoveDef& moveDef, const float3& pos)
 {
 	switch (moveDef.speedModClass) {
 		case MoveDef::Tank: // fall-through
-		case MoveDef::KBot:  { return (ground->GetHeightReal      (pos.x, pos.z) + 10.0f); } break;
-		case MoveDef::Hover: { return (ground->GetHeightAboveWater(pos.x, pos.z) + 10.0f); } break;
+		case MoveDef::KBot:  { return (CGround::GetHeightReal      (pos.x, pos.z) + 10.0f); } break;
+		case MoveDef::Hover: { return (CGround::GetHeightAboveWater(pos.x, pos.z) + 10.0f); } break;
 		case MoveDef::Ship:  { return (                                             0.0f); } break;
 	}
 
@@ -216,7 +216,7 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 		// ret |= (collidee->pos.y > (collider->pos.y + collider->height));
 		// ret |= ((collidee->pos.y + collidee->height) < collider->pos.y));
 		//
-		// ret = ((collidee->midPos.y - math::fabs(collidee->height)) > ground->GetHeightReal(collidee->pos.x, collidee->pos.z));
+		// ret = ((collidee->midPos.y - math::fabs(collidee->height)) > CGround::GetHeightReal(collidee->pos.x, collidee->pos.z));
 
 		return (!collidee->IsOnGround());
 	} else {

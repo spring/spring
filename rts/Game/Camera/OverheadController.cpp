@@ -38,7 +38,7 @@ COverheadController::COverheadController()
 	if (ground && globalRendering) {
 		// make whole map visible
 		const float h = std::max(pos.x / globalRendering->aspectRatio, pos.z);
-		height = ground->GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
+		height = CGround::GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
 	}
 
 	maxHeight = 9.5f * std::max(gs->mapx, gs->mapy);
@@ -109,7 +109,7 @@ void COverheadController::MouseWheelMove(float move)
 			}
 
 			float3 wantedPos = cpos + mouse->dir * dif;
-			float newHeight = ground->LineGroundCol(wantedPos, wantedPos + dir * 15000, false);
+			float newHeight = CGround::LineGroundCol(wantedPos, wantedPos + dir * 15000, false);
 
 			if (newHeight < 0.0f) {
 				newHeight = height * (1.0f + move * 0.007f * shiftSpeed);
@@ -153,7 +153,7 @@ void COverheadController::UpdateVectors()
 {
 	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
 	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false);
+	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 	height = Clamp(height, 60.0f, maxHeight);
 	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
 }

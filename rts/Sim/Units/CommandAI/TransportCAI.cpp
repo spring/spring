@@ -220,7 +220,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 					SetGoal(wantedPos, owner->pos, 1.0f);
 
 					am->ForceHeading(trans->GetTransporteeWantedHeading(unit));
-					am->SetWantedAltitude(wantedPos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z));
+					am->SetWantedAltitude(wantedPos.y - CGround::GetHeightAboveWater(wantedPos.x, wantedPos.z));
 					am->maxDrift = 1.0f;
 
 					// FIXME: kill the hardcoded constants, use the command's radius
@@ -377,7 +377,7 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 		pos.y -= unitToUnload->radius;
 
 		// don't unload unit on too-steep slopes
-		if (moveDef != NULL && ground->GetSlope(pos.x, pos.z) > moveDef->maxSlope)
+		if (moveDef != NULL && CGround::GetSlope(pos.x, pos.z) > moveDef->maxSlope)
 			continue;
 
 		const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, spread, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
@@ -399,7 +399,7 @@ bool CTransportCAI::SpotIsClear(float3 pos, CUnit* unitToUnload)
 {
 	if (!static_cast<CTransportUnit*>(owner)->CanLoadUnloadAtPos(pos, unitToUnload))
 		return false;
-	if (unitToUnload->moveDef != NULL && ground->GetSlope(pos.x, pos.z) > unitToUnload->moveDef->maxSlope)
+	if (unitToUnload->moveDef != NULL && CGround::GetSlope(pos.x, pos.z) > unitToUnload->moveDef->maxSlope)
 		return false;
 
 	const float radius = std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE;
@@ -418,7 +418,7 @@ bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload)
 
 	if (!ownerTrans->CanLoadUnloadAtPos(pos, unitToUnload))
 		return false;
-	if (unitToUnload->moveDef != NULL && ground->GetSlope(pos.x, pos.z) > unitToUnload->moveDef->maxSlope)
+	if (unitToUnload->moveDef != NULL && CGround::GetSlope(pos.x, pos.z) > unitToUnload->moveDef->maxSlope)
 		return false;
 
 	const float radius = std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE;
@@ -468,7 +468,7 @@ bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list
 	// remaining spots
 	while (ti != transportees.end() && startpos.SqDistance(nextPos) < startpos.SqDistance(endpos)) {
 		nextPos += (dir * (ti->unit->radius));
-		nextPos.y = ground->GetHeightAboveWater(nextPos.x, nextPos.z);
+		nextPos.y = CGround::GetHeightAboveWater(nextPos.x, nextPos.z);
 
 		// check landing spot is ok for landing on
 		if (!SpotIsClear(nextPos, ti->unit))
@@ -684,7 +684,7 @@ void CTransportCAI::UnloadLand(Command& c)
 				// handle air transports differently
 				SetGoal(wantedPos, owner->pos);
 
-				am->SetWantedAltitude(wantedPos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z));
+				am->SetWantedAltitude(wantedPos.y - CGround::GetHeightAboveWater(wantedPos.x, wantedPos.z));
 				am->ForceHeading(static_cast<CTransportUnit*>(owner)->GetTransporteeWantedHeading(transportee));
 
 				am->maxDrift = 1.0f;
@@ -760,7 +760,7 @@ void CTransportCAI::UnloadDrop(Command& c)
 		CUnit* transportee = (transportees.front()).unit;
 
 		if (am != NULL) {
-			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
+			pos.y = CGround::GetHeightAboveWater(pos.x, pos.z);
 			am->maxDrift = 1.0f;
 
 			// if near target or passed it accidentally, drop unit
@@ -844,7 +844,7 @@ void CTransportCAI::UnloadLandFlood(Command& c)
 
 			if (am != NULL) {
 				// lower to ground
-				startingDropPos.y = ground->GetHeightAboveWater(startingDropPos.x, startingDropPos.z);
+				startingDropPos.y = CGround::GetHeightAboveWater(startingDropPos.x, startingDropPos.z);
 				const float3 wantedPos = startingDropPos + UpVector * transportee->model->height;
 				SetGoal(wantedPos, owner->pos);
 
@@ -859,7 +859,7 @@ void CTransportCAI::UnloadLandFlood(Command& c)
 				isFirstIteration = false;
 
 				// once at ground
-				if (owner->pos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z) < SQUARE_SIZE) {
+				if (owner->pos.y - CGround::GetHeightAboveWater(wantedPos.x, wantedPos.z) < SQUARE_SIZE) {
 					// nail it to the ground before it tries jumping up, only to land again...
 					am->SetState(am->AIRCRAFT_LANDED);
 					// call this so that other animations such as opening doors may be started

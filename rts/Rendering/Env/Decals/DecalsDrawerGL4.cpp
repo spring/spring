@@ -710,7 +710,7 @@ void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius, bool
 	//	return;
 
 	//FIXME decalLevel is private! const float lifeTime = decalLevel * damage * 3.0f;
-	const float altitude = pos.y - ground->GetHeightReal(pos.x, pos.z, false);
+	const float altitude = pos.y - CGround::GetHeightReal(pos.x, pos.z, false);
 
 	// no decals for below-ground & in-air explosions
 	if (abs(altitude) > radius) { return; }

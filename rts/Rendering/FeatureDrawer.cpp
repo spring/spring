@@ -450,7 +450,7 @@ public:
 							camera->GetPos() * (f->midPos.y / dif) +
 							f->midPos * (-camera->GetPos().y / dif);
 					}
-					if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z, false) > f->drawRadius) {
+					if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > f->drawRadius) {
 						continue;
 					}
 				}

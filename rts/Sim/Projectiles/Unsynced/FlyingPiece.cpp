@@ -27,7 +27,7 @@ bool FlyingPiece::Update() {
 	transMat.LoadIdentity();
 	transMat.Rotate(rotAngle, rotAxis);
 
-	return (pos.y >= ground->GetApproximateHeight(pos.x, pos.z - 10.0f, false));
+	return (pos.y >= CGround::GetApproximateHeight(pos.x, pos.z - 10.0f, false));
 }
 
 void FlyingPiece::InitCommon(const float3& _pos, const float3& _speed, int _team)

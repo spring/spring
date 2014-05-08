@@ -472,7 +472,7 @@ CGame::~CGame()
 
 	LOG("[%s][10]", __FUNCTION__);
 	SafeDelete(pathManager);
-	SafeDelete(ground);
+	SafeDelete(readMap);
 	SafeDelete(smoothGround);
 	SafeDelete(groundBlockingObjectMap);
 	SafeDelete(radarHandler);
@@ -552,11 +552,10 @@ void CGame::LoadMap(const std::string& mapName)
 
 		CWordCompletion::CreateInstance();
 
+		loadscreen->SetLoadMessage("Parsing Map Information");
+
 		// simulation components
 		helper = new CGameHelper();
-		ground = new CGround();
-
-		loadscreen->SetLoadMessage("Parsing Map Information");
 
 		readMap = CReadMap::LoadMap(mapName);
 		groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
@@ -629,7 +628,7 @@ void CGame::PreLoadSimulation()
 	ENTER_SYNCED_CODE();
 
 	loadscreen->SetLoadMessage("Creating Smooth Height Mesh");
-	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE * 2, SQUARE_SIZE * 40);
+	smoothGround = new SmoothHeightMesh(float3::maxxpos, float3::maxzpos, SQUARE_SIZE * 2, SQUARE_SIZE * 40);
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
 	moveDefHandler = new MoveDefHandler(defsParser);

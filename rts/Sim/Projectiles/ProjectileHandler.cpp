@@ -492,7 +492,7 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 
 		// NOTE: don't add p->radius to groundHeight, or most
 		// projectiles will collide with the ground too early
-		const float groundHeight = ground->GetHeightReal(p->pos.x, p->pos.z);
+		const float groundHeight = CGround::GetHeightReal(p->pos.x, p->pos.z);
 		const bool belowGround = (p->pos.y < groundHeight);
 		const bool insideWater = (p->pos.y <= 0.0f && !belowGround);
 		const bool ignoreWater = p->ignoreWater;

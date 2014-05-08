@@ -419,8 +419,8 @@ static inline bool AdjustGroundAttackCommand(const Command& c, bool fromSynced, 
 	//
 	Command& cc = const_cast<Command&>(c);
 
-	cc.params[1] = std::min(cPos.y, ground->GetHeightAboveWater(cPos.x, cPos.z, true || fromSynced));
-	// cc.params[1] = ground->GetHeightReal(cPos.x, cPos.z, true || fromSynced);
+	cc.params[1] = std::min(cPos.y, CGround::GetHeightAboveWater(cPos.x, cPos.z, true || fromSynced));
+	// cc.params[1] = CGround::GetHeightReal(cPos.x, cPos.z, true || fromSynced);
 
 	return true;
 	#endif

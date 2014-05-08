@@ -127,7 +127,7 @@ CSolidObject::~CSolidObject() {
 }
 
 void CSolidObject::UpdatePhysicalState(float eps) {
-	const float gh = ground->GetHeightReal(pos.x, pos.z);
+	const float gh = CGround::GetHeightReal(pos.x, pos.z);
 	const float wh = std::max(gh, 0.0f);
 
 	unsigned int ps = physicalState;
@@ -360,7 +360,7 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	//   the water surface) and neither are tanks / bots due to impulses,
 	//   gravity, ...
 	//
-	const float3 gn = ground->GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
+	const float3 gn = CGround::GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
 	const float3 wn =                             UpVector  * (1 - useGroundNormal);
 
 	if (moveDef == NULL) {

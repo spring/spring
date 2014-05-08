@@ -343,8 +343,8 @@ void CHoverAirMoveType::UpdateTakeoff()
 	UpdateAirPhysics();
 
 	const float altitude = owner->unitDef->canSubmerge?
-		(pos.y - ground->GetHeightReal(pos.x, pos.z)):
-		(pos.y - ground->GetHeightAboveWater(pos.x, pos.z));
+		(pos.y - CGround::GetHeightReal(pos.x, pos.z)):
+		(pos.y - CGround::GetHeightAboveWater(pos.x, pos.z));
 
 	if (altitude > orgWantedHeight * 0.8f) {
 		SetState(AIRCRAFT_FLYING);
@@ -427,8 +427,8 @@ void CHoverAirMoveType::UpdateFlying()
 
 	const float goalDistSq2D = goalVec.SqLength2D();
 	const float gHeight = UseSmoothMesh()?
-		std::max(smoothGround->GetHeight(pos.x, pos.z), ground->GetApproximateHeight(pos.x, pos.z)):
-		ground->GetHeightAboveWater(pos.x, pos.z);
+		std::max(smoothGround->GetHeight(pos.x, pos.z), CGround::GetApproximateHeight(pos.x, pos.z)):
+		CGround::GetHeightAboveWater(pos.x, pos.z);
 
 	const bool closeToGoal = (flyState == FLY_ATTACKING)?
 		(goalDistSq2D < (             400.0f)):
@@ -627,8 +627,8 @@ void CHoverAirMoveType::UpdateLanding()
 
 	// We have stopped, time to land
 	// NOTE: wantedHeight is interpreted as RELATIVE altitude
-	const float gh = ground->GetHeightAboveWater(pos.x, pos.z);
-	const float gah = ground->GetHeightReal(pos.x, pos.z);
+	const float gh = CGround::GetHeightAboveWater(pos.x, pos.z);
+	const float gah = CGround::GetHeightReal(pos.x, pos.z);
 	float altitude = (wantedHeight = 0.0f);
 
 	// can we submerge and are we still above water?
@@ -838,8 +838,8 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	// calculated with respect to that (for changing vertical
 	// speed, but not for ground collision)
 	float curAbsHeight = owner->unitDef->canSubmerge?
-		ground->GetHeightReal(pos.x, pos.z):
-		ground->GetHeightAboveWater(pos.x, pos.z);
+		CGround::GetHeightReal(pos.x, pos.z):
+		CGround::GetHeightAboveWater(pos.x, pos.z);
 
 	// always stay above the actual terrain (therefore either the value of
 	// <midPos.y - radius> or pos.y must never become smaller than the real
@@ -966,7 +966,7 @@ bool CHoverAirMoveType::Update()
 		case AIRCRAFT_CRASHING: {
 			UpdateAirPhysics();
 
-			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
+			if ((CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
 				owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
 				owner->KillUnit(NULL, true, false);
 			} else {
@@ -1025,7 +1025,7 @@ bool CHoverAirMoveType::CanLandAt(const float3& pos) const
 		return false;
 
 	const UnitDef* ud = owner->unitDef;
-	const float gah = ground->GetApproximateHeight(pos.x, pos.z);
+	const float gah = CGround::GetApproximateHeight(pos.x, pos.z);
 
 	if ((gah < 0.0f) && !(ud->floatOnWater || ud->canSubmerge)) {
 		return false;

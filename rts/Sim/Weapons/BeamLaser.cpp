@@ -248,7 +248,7 @@ float3 CBeamLaser::GetFireDir(bool sweepFire, bool scriptCall)
 		dir.Normalize2D();
 
 		const float3 tgtPos = float3(dir.x * sweepFireState.GetTargetDist2D(), 0.0f, dir.z * sweepFireState.GetTargetDist2D());
-		const float tgtHgt = ground->GetHeightReal(weaponMuzzlePos.x + tgtPos.x, weaponMuzzlePos.z + tgtPos.z);
+		const float tgtHgt = CGround::GetHeightReal(weaponMuzzlePos.x + tgtPos.x, weaponMuzzlePos.z + tgtPos.z);
 
 		// NOTE: INTENTIONALLY NOT NORMALIZED HERE
 		dir = (tgtPos + UpVector * (tgtHgt - weaponMuzzlePos.y));

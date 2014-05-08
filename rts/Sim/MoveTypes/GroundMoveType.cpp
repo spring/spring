@@ -659,7 +659,7 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	//   small-charge capacitor
 	//
 	const bool startSkidding = StartSkidding(newSpeed, skidDir);
-	const bool startFlying = StartFlying(newSpeed, ground->GetNormal(owner->pos.x, owner->pos.z));
+	const bool startFlying = StartFlying(newSpeed, CGround::GetNormal(owner->pos.x, owner->pos.z));
 
 	if (newSpeed.SqLength2D() >= 0.01f) {
 		skidDir = newSpeed.Normalize2D();
@@ -689,7 +689,7 @@ void CGroundMoveType::UpdateSkid()
 
 	if (owner->IsFlying()) {
 		const float impactSpeed = pos.IsInBounds()?
-			-spd.dot(ground->GetNormal(pos.x, pos.z)):
+			-spd.dot(CGround::GetNormal(pos.x, pos.z)):
 			-spd.dot(UpVector);
 		const float impactDamageMult = impactSpeed * owner->mass * COLLISION_DAMAGE_MULT;
 		const bool doColliderDamage = (modInfo.allowUnitCollisionDamage && impactSpeed > ud->minCollisionSpeed && ud->minCollisionSpeed >= 0.0f);
@@ -736,7 +736,7 @@ void CGroundMoveType::UpdateSkid()
 			const float remTime = std::max(1.0f, speedScale / speedReduction);
 
 			if (onSlope) {
-				const float3 normalVector = ground->GetNormal(pos.x, pos.z);
+				const float3 normalVector = CGround::GetNormal(pos.x, pos.z);
 				const float3 normalForce = normalVector * normalVector.dot(UpVector * mapInfo->map.gravity);
 				const float3 newForce = UpVector * mapInfo->map.gravity - normalForce;
 
@@ -769,7 +769,7 @@ void CGroundMoveType::UpdateSkid()
 			// LHS is always negative, so this becomes true when the
 			// unit is falling back down and will impact the ground
 			// in one frame
-			const float3& normal = (pos.IsInBounds())? ground->GetNormal(pos.x, pos.z): UpVector;
+			const float3& normal = (pos.IsInBounds())? CGround::GetNormal(pos.x, pos.z): UpVector;
 			const float dot = spd.dot(normal);
 
 			if (dot > 0.0f) {
@@ -2081,7 +2081,7 @@ bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 	// (otherwise the unit could stop on an invalid path location, and be teleported
 	// back)
 	const float slopeMul = mix(ud->slideTolerance, 1.0f, (minSlideTolerance <= 0.0f));
-	const float curSlope = ground->GetSlope(pos.x, pos.z);
+	const float curSlope = CGround::GetSlope(pos.x, pos.z);
 	const float maxSlope = md->maxSlope * slopeMul;
 
 	return (curSlope > maxSlope);
@@ -2092,17 +2092,17 @@ bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 const float3& CGroundMoveType::GetGroundNormal(const float3& p) const
 {
 	if (owner->IsInWater() && !owner->IsOnGround()) {
-		// ship or hovercraft; return (ground->GetNormalAboveWater(p));
+		// ship or hovercraft; return (CGround::GetNormalAboveWater(p));
 		return UpVector;
 	}
 
-	return (ground->GetNormal(p.x, p.z));
+	return (CGround::GetNormal(p.x, p.z));
 }
 
 float CGroundMoveType::GetGroundHeight(const float3& p) const
 {
 	// in [minHeight, maxHeight]
-	const float gh = ground->GetHeightReal(p.x, p.z);
+	const float gh = CGround::GetHeightReal(p.x, p.z);
 	const float wh = -owner->unitDef->waterline * (gh <= 0.0f);
 
 	if (owner->unitDef->floatOnWater) {
@@ -2123,9 +2123,9 @@ void CGroundMoveType::AdjustPosToWaterLine()
 
 	if (modInfo.allowGroundUnitGravity) {
 		if (owner->unitDef->floatOnWater) {
-			owner->Move(UpVector * (std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z), -owner->unitDef->waterline) - owner->pos.y), true);
+			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z), -owner->unitDef->waterline) - owner->pos.y), true);
 		} else {
-			owner->Move(UpVector * (std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z),               owner->pos.y) - owner->pos.y), true);
+			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z),               owner->pos.y) - owner->pos.y), true);
 		}
 	} else {
 		owner->Move(UpVector * (GetGroundHeight(owner->pos) - owner->pos.y), true);

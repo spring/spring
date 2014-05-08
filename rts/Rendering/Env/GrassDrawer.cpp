@@ -251,7 +251,7 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 			for (int x2 = x * grassBlockSize; x2 < (x + 1) * grassBlockSize; ++x2) {
 				if (gd->grassMap[y2 * gs->mapx / grassSquareSize + x2]) {
 					float3 squarePos((x2 + 0.5f) * gSSsq, 0.0f, (y2 + 0.5f) * gSSsq);
-						squarePos.y = ground->GetHeightReal(squarePos.x, squarePos.z, false);
+						squarePos.y = CGround::GetHeightReal(squarePos.x, squarePos.z, false);
 
 					const float sqdist = (camera->GetPos() - squarePos).SqLength();
 
@@ -265,8 +265,8 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 							const float dx = (x2 + rng.RandFloat()) * gSSsq;
 							const float dy = (y2 + rng.RandFloat()) * gSSsq;
 
-							float3 pos(dx, ground->GetHeightReal(dx, dy, false), dy);
-								pos.y -= ground->GetSlope(dx, dy, false) * 10.0f + 0.03f;
+							float3 pos(dx, CGround::GetHeightReal(dx, dy, false), dy);
+								pos.y -= CGround::GetSlope(dx, dy, false) * 10.0f + 0.03f;
 
 							if (ng->square != y2 * 2048 + x2) {
 								const float3 v = squarePos - camera->GetPos();
@@ -315,7 +315,7 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 
 		if (!grass->va) {
 			grass->va = new CVertexArray;
-			grass->pos = float3((x + 0.5f) * bMSsq, ground->GetHeightReal((x + 0.5f) * bMSsq, (y + 0.5f) * bMSsq, false), (y + 0.5f) * bMSsq);
+			grass->pos = float3((x + 0.5f) * bMSsq, CGround::GetHeightReal((x + 0.5f) * bMSsq, (y + 0.5f) * bMSsq, false), (y + 0.5f) * bMSsq);
 
 			CVertexArray* va = grass->va;
 			va->Initialize();
@@ -330,8 +330,8 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 							const float dy = (y2 + rng.RandFloat()) * gSSsq;
 							const float col = 1.0f;
 
-							float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
-								pos.y -= (ground->GetSlope(dx, dy, false) * 10.0f + 0.03f);
+							float3 pos(dx, CGround::GetHeightReal(dx, dy, false) + 0.5f, dy);
+								pos.y -= (CGround::GetSlope(dx, dy, false) * 10.0f + 0.03f);
 
 							va->AddVertexTN(pos, 0.0f,         0.0f, float3(-partTurfSize, -partTurfSize, col));
 							va->AddVertexTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
@@ -650,8 +650,8 @@ void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inview
 			const float dy = (y + rng.RandFloat()) * gSSsq;
 			const float col = 1.0f;
 
-			float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
-				pos.y -= (ground->GetSlope(dx, dy, false) * 10.0f + 0.03f);
+			float3 pos(dx, CGround::GetHeightReal(dx, dy, false) + 0.5f, dy);
+				pos.y -= (CGround::GetSlope(dx, dy, false) * 10.0f + 0.03f);
 
 			va->AddVertexQTN(pos,         0.0f, 0.0f, float3(-partTurfSize, -partTurfSize, col));
 			va->AddVertexQTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));

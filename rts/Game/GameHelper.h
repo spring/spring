@@ -139,6 +139,7 @@ public:
 	);
 	void DoExplosionDamage(
 		CFeature* feature,
+		CUnit* owner,
 		const float3& expPos,
 		const float expRadius,
 		const float expEdgeEffect,
@@ -147,7 +148,7 @@ public:
 		const int projectileID
 	);
 
-	void DamageObjectsInExplosionRadius(const ExplosionParams& params, const float3& expPos, const float expRad, const int weaponDefID);
+	void DamageObjectsInExplosionRadius(const ExplosionParams& params, const float expRad, const int weaponDefID);
 	void Explosion(const ExplosionParams& params);
 
 private:

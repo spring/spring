@@ -107,7 +107,7 @@ bool CCannon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 	const float linear = dir.y;
 	const float quadratic = gravity / (projectileSpeed * projectileSpeed) * 0.5f;
 	const float groundDist = ((avoidFlags & Collision::NOGROUND) == 0)?
-		ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 10, linear, quadratic):
+		CGround::TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 10, linear, quadratic):
 		-1.0f;
 	const float spread = (AccuracyExperience() + SprayAngleExperience()) * 0.6f * 0.9f;
 
@@ -170,7 +170,7 @@ bool CCannon::AttackGround(float3 pos, bool userTarget)
 {
 	if (owner->UnderFirstPersonControl()) {
 		// mostly prevents firing longer than max range using fps mode
-		pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
+		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z);
 	}
 
 	// NOTE: this calls back into our derived TryTarget

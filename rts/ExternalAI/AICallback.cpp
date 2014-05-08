@@ -1049,7 +1049,7 @@ const unsigned char* CAICallback::GetMetalMap()
 
 float CAICallback::GetElevation(float x, float z)
 {
-	return ground->GetHeightReal(x, z);
+	return CGround::GetHeightReal(x, z);
 }
 
 

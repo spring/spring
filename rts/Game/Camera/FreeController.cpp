@@ -125,13 +125,13 @@ void CFreeController::Update()
 	// adjustment to match the ground slope
 	float autoTiltVel = 0.0f;
 	if (gndLock && (autoTilt > 0.0f)) {
-		const float gndHeight = ground->GetHeightReal(pos.x, pos.z, false);
+		const float gndHeight = CGround::GetHeightReal(pos.x, pos.z, false);
 		if (pos.y < (gndHeight + gndOffset + 1.0f)) {
 			float3 hDir;
 			hDir.y = 0.0f;
 			hDir.x = (float)math::sin(camera->rot.y);
 			hDir.z = (float)math::cos(camera->rot.y);
-			const float3 gndNormal = ground->GetSmoothNormal(pos.x, pos.z, false);
+			const float3 gndNormal = CGround::GetSmoothNormal(pos.x, pos.z, false);
 			const float dot = gndNormal.dot(hDir);
 			const float gndRotX = (float)math::acos(dot) - (PI * 0.5f);
 			const float rotXdiff = (gndRotX - camera->rot.x);
@@ -165,9 +165,9 @@ void CFreeController::Update()
 		const float dGrav = (gravity * ft);
 		vel.y += dGrav;
 		if (slide > 0.0f) {
-			const float gndHeight = ground->GetHeightReal(pos.x, pos.z, false);
+			const float gndHeight = CGround::GetHeightReal(pos.x, pos.z, false);
 			if (pos.y < (gndHeight + gndOffset + 1.0f)) {
-				const float3 gndNormal = ground->GetSmoothNormal(pos.x, pos.z, false);
+				const float3 gndNormal = CGround::GetSmoothNormal(pos.x, pos.z, false);
 				const float dotVal = gndNormal.y;
 				const float scale = (dotVal * slide * -dGrav);
 				vel.x += (gndNormal.x * scale);
@@ -217,7 +217,7 @@ void CFreeController::Update()
 	}
 
 	// setup ground lock
-	const float gndHeight = ground->GetHeightReal(pos.x, pos.z, false);
+	const float gndHeight = CGround::GetHeightReal(pos.x, pos.z, false);
 
 	if (KeyInput::GetKeyModState(KMOD_SHIFT)) {
 		if (ctrlVelY > 0.0f) {
@@ -361,7 +361,7 @@ void CFreeController::MouseWheelMove(float move)
 
 void CFreeController::SetPos(const float3& newPos)
 {
-	const float h = ground->GetHeightReal(newPos.x, newPos.z, false);
+	const float h = CGround::GetHeightReal(newPos.x, newPos.z, false);
 	const float3 target = float3(newPos.x, h, newPos.z);
 //	const float3 target = newPos;
 	const float yDiff = pos.y - target.y;
@@ -375,7 +375,7 @@ void CFreeController::SetPos(const float3& newPos)
 	CCameraController::SetPos(newPos);
 	pos.y = oldPosY;
 	if (gndOffset != 0.0f) {
-		const float h = ground->GetHeightReal(pos.x, pos.z, false);
+		const float h = CGround::GetHeightReal(pos.x, pos.z, false);
 		const float absH = h + math::fabsf(gndOffset);
 		if (pos.y < absH) {
 			pos.y = absH;
@@ -391,7 +391,7 @@ float3 CFreeController::SwitchFrom() const
 {
 	const float x = max(0.1f, min(float3::maxxpos - 0.1f, pos.x));
 	const float z = max(0.1f, min(float3::maxzpos - 0.1f, pos.z));
-	return float3(x, ground->GetHeightAboveWater(x, z, false) + 5.0f, z);
+	return float3(x, CGround::GetHeightAboveWater(x, z, false) + 5.0f, z);
 }
 
 

@@ -362,7 +362,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		float3 p1;
 			p1.x = sqr.x * SQUARE_SIZE;
 			p1.z = sqr.y * SQUARE_SIZE;
-			p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 15.0f;
+			p1.y = CGround::GetHeightAboveWater(p1.x, p1.z, false) + 15.0f;
 		float3 p2;
 
 		if (!camera->InView(p1) && !camera->InView(p2))
@@ -379,7 +379,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		*/
 			p2.x = obx * SQUARE_SIZE;
 			p2.z = obz * SQUARE_SIZE;
-			p2.y = ground->GetHeightAboveWater(p2.x, p2.z, false) + 15.0f;
+			p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 15.0f;
 
 			glVertexf3(p1);
 			glVertexf3(p2);
@@ -423,7 +423,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 				float3 p1;
 					p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
 					p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
-					p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 10.0f;
+					p1.y = CGround::GetHeightAboveWater(p1.x, p1.z, false) + 10.0f;
 
 				if (!camera->InView(p1))
 					continue;
@@ -450,7 +450,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 					float3 p2;
 						p2.x = (blockStates.peNodeOffsets[obBlockNr][md->pathType].x) * SQUARE_SIZE;
 						p2.z = (blockStates.peNodeOffsets[obBlockNr][md->pathType].y) * SQUARE_SIZE;
-						p2.y = ground->GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
+						p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
 					glColor3f(1.0f / math::sqrtf(cost), 1.0f / cost, peBlueValue);
 					glVertexf3(p1);
@@ -468,7 +468,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 				float3 p1;
 					p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
 					p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
-					p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 10.0f;
+					p1.y = CGround::GetHeightAboveWater(p1.x, p1.z, false) + 10.0f;
 
 				if (!camera->InView(p1))
 					continue;
@@ -491,7 +491,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 					float3 p2;
 						p2.x = (blockStates.peNodeOffsets[obBlockNr][md->pathType].x) * SQUARE_SIZE;
 						p2.z = (blockStates.peNodeOffsets[obBlockNr][md->pathType].y) * SQUARE_SIZE;
-						p2.y = ground->GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
+						p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
 					p2 = (p1 + p2) / 2.0f;
 
@@ -531,11 +531,11 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 			float3 p1;
 				p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
 				p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
-				p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 15.0f;
+				p1.y = CGround::GetHeightAboveWater(p1.x, p1.z, false) + 15.0f;
 			float3 p2;
 				p2.x = (blockStates.peNodeOffsets[obBlockNr][md->pathType].x) * SQUARE_SIZE;
 				p2.z = (blockStates.peNodeOffsets[obBlockNr][md->pathType].y) * SQUARE_SIZE;
-				p2.y = ground->GetHeightAboveWater(p2.x, p2.z, false) + 15.0f;
+				p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 15.0f;
 
 			if (!camera->InView(p1) && !camera->InView(p2))
 				continue;
@@ -558,7 +558,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 			float3 p1;
 				p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
 				p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
-				p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 35.0f;
+				p1.y = CGround::GetHeightAboveWater(p1.x, p1.z, false) + 35.0f;
 
 			if (!camera->InView(p1))
 				continue;

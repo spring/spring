@@ -230,9 +230,9 @@ void CWeapon::AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const
 		return;
 
 	if (weaponDef->waterweapon) {
-		tgtPos.y = std::max(tgtPos.y, ground->GetHeightReal(tgtPos.x, tgtPos.z));
+		tgtPos.y = std::max(tgtPos.y, CGround::GetHeightReal(tgtPos.x, tgtPos.z));
 	} else {
-		tgtPos.y = std::max(tgtPos.y, ground->GetHeightAboveWater(tgtPos.x, tgtPos.z));
+		tgtPos.y = std::max(tgtPos.y, CGround::GetHeightAboveWater(tgtPos.x, tgtPos.z));
 	}
 }
 
@@ -311,7 +311,7 @@ void CWeapon::UpdateTargeting()
 		// never target below terrain
 		// never target below water if not a water-weapon
 		targetPos = (targetBorder == 0.0f)? tmpTargetPos: targetBorderPos;
-		targetPos.y = std::max(targetPos.y, ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
+		targetPos.y = std::max(targetPos.y, CGround::GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
 		targetPos.y = std::max(targetPos.y, targetPos.y * weaponDef->waterweapon);
 	}
 
@@ -572,7 +572,7 @@ bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 
 	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
-	if (weaponMuzzlePos.y < ground->GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
+	if (weaponMuzzlePos.y < CGround::GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
 		// hope that we are underground because we are a popup weapon and will come above ground later
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
@@ -603,7 +603,7 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
 	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
-	if (weaponMuzzlePos.y < ground->GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
+	if (weaponMuzzlePos.y < CGround::GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
 		// hope that we are underground because we are a popup weapon and will come above ground later
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
@@ -651,7 +651,7 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	targetType = Target_Unit;
 	targetUnit = newTargetUnit;
 	targetPos = (targetBorder == 0.0f)? newTargetPos: targetBorderPos;
-	targetPos.y = std::max(targetPos.y, ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
+	targetPos.y = std::max(targetPos.y, CGround::GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
 
 	AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 	avoidTarget = false;
@@ -757,7 +757,7 @@ void CWeapon::AutoTarget() {
 		prevTargetUnit = nextTargetUnit;
 		nextTargetPos = nextTargetUnit->aimPos + (errorVector * weaponError);
 
-		const float appHeight = ground->GetApproximateHeight(nextTargetPos.x, nextTargetPos.z) + 2.0f;
+		const float appHeight = CGround::GetApproximateHeight(nextTargetPos.x, nextTargetPos.z) + 2.0f;
 
 		if (nextTargetPos.y < appHeight) {
 			nextTargetPos.y = appHeight;
@@ -822,7 +822,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
 
-	if (weaponMuzzlePos.y < ground->GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
+	if (weaponMuzzlePos.y < CGround::GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
 		// hope that we are underground because we are a popup weapon and will come above ground later
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
@@ -1191,7 +1191,7 @@ float3 CWeapon::GetUnitPositionWithError(const CUnit* unit) const {
 	const float errorScale = (MoveErrorExperience() * GAME_SPEED * unit->speed.w);
 
 	float3 tempTargetPos = errorPos + errorVector * errorScale;
-	tempTargetPos.y = std::max(tempTargetPos.y, ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f);
+	tempTargetPos.y = std::max(tempTargetPos.y, CGround::GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f);
 	return tempTargetPos;
 }
 
@@ -1200,7 +1200,7 @@ bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget) {
 	const float errorScale = (MoveErrorExperience() * GAME_SPEED * unit->speed.w);
 
 	float3 tempTargetPos = errorPos + errorVector * errorScale;
-	tempTargetPos.y = std::max(tempTargetPos.y, ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f);
+	tempTargetPos.y = std::max(tempTargetPos.y, CGround::GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f);
 
 	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
 	const short enemyHeading = GetHeadingFromVector(tempTargetPos.x - weaponPos.x, tempTargetPos.z - weaponPos.z);

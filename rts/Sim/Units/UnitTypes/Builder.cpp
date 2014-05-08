@@ -699,7 +699,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 	CUnit* buildee = unitLoader->LoadUnit(buildeeParams);
 
 	// floating structures don't terraform the seabed
-	const float groundheight = ground->GetHeightReal(buildee->pos.x, buildee->pos.z);
+	const float groundheight = CGround::GetHeightReal(buildee->pos.x, buildee->pos.z);
 	const bool onWater = (buildeeDef->floatOnWater && groundheight <= 0.0f);
 
 	if (mapDamage->disabled || !buildeeDef->levelGround || onWater ||

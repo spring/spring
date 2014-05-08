@@ -55,7 +55,7 @@ void AMoveType::SlowUpdate()
 	if (owner->pos != oldSlowUpdatePos) {
 		oldSlowUpdatePos = owner->pos;
 
-		const int newMapSquare = ground->GetSquare(owner->pos);
+		const int newMapSquare = CGround::GetSquare(owner->pos);
 
 		const float losHeight = owner->losHeight;
 		const float radarHeight = owner->radarHeight;
@@ -66,7 +66,7 @@ void AMoveType::SlowUpdate()
 			// if owner is an aircraft, temporarily add current altitude to emit-heights
 			// otherwise leave them as-is unless owner floats on water and is over water
 			if (!owner->UsingScriptMoveType()) {
-				const float agh = ground->GetApproximateHeight(owner->pos.x, owner->pos.z);
+				const float agh = CGround::GetApproximateHeight(owner->pos.x, owner->pos.z);
 				const float alt = owner->pos.y - agh;
 
 				if (owner->IsInAir() && owner->unitDef->canfly) {
