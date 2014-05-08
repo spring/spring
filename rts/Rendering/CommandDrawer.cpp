@@ -79,7 +79,7 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 				} else {
 					const float x = ci->params[0];
 					const float z = ci->params[2];
-					const float y = ground->GetHeightReal(x, z, false) + 3.0f;
+					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
 				}
@@ -147,7 +147,7 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 				} else {
 					const float x = ci->params[0];
 					const float z = ci->params[2];
-					const float y = ground->GetHeightReal(x, z, false) + 3.0f;
+					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
 				}
@@ -280,7 +280,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 				} else {
 					const float x = ci->params[0];
 					const float z = ci->params[2];
-					const float y = ground->GetHeightReal(x, z, false) + 3.0f;
+					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
 				}
@@ -420,7 +420,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 				} else {
 					const float x = ci->params[0];
 					const float z = ci->params[2];
-					const float y = ground->GetHeightReal(x, z, false) + 3.0f;
+					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
 				}
@@ -520,7 +520,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 				else if (ci->params.size() >= 3) {
 					const float x = ci->params[0];
 					const float z = ci->params[2];
-					const float y = ground->GetHeightReal(x, z, false) + 3.0f;
+					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
 				}
@@ -603,7 +603,7 @@ void CommandDrawer::DrawTransportCAICommands(const CTransportCAI* cai) const
 				} else {
 					const float x = ci->params[0];
 					const float z = ci->params[2];
-					const float y = ground->GetHeightReal(x, z, false) + 3.0f;
+					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
 				}

@@ -138,7 +138,7 @@ bool CScriptMoveType::Update()
 	}
 
 	if (trackGround) {
-		const float gndMin = ground->GetHeightReal(owner->pos.x, owner->pos.z) + groundOffset;
+		const float gndMin = CGround::GetHeightReal(owner->pos.x, owner->pos.z) + groundOffset;
 
 		if (owner->pos.y <= gndMin) {
 			owner->Move(UpVector * (gndMin - owner->pos.y), true);

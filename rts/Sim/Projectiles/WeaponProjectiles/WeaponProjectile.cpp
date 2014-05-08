@@ -280,9 +280,9 @@ void CWeaponProjectile::UpdateGroundBounce()
 	float wh = 0.0f;
 
 	if (!weaponDef->waterBounce) {
-		wh = ground->GetHeightReal(pos.x, pos.z);
+		wh = CGround::GetHeightReal(pos.x, pos.z);
 	} else if (weaponDef->groundBounce) {
-		wh = ground->GetHeightAboveWater(pos.x, pos.z);
+		wh = CGround::GetHeightAboveWater(pos.x, pos.z);
 	}
 
 	if (pos.y >= wh)
@@ -290,7 +290,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 	if (weaponDef->numBounce >= 0 && (bounces += 1) > weaponDef->numBounce)
 		return;
 
-	const float3& normal = ground->GetNormal(pos.x, pos.z);
+	const float3& normal = CGround::GetNormal(pos.x, pos.z);
 	const float dot = speed.dot(normal);
 
 	SetPosition(pos - speed);

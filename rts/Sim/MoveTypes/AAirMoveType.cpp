@@ -182,8 +182,8 @@ void AAirMoveType::UpdateLanded()
 	// in mid-air or sink below it
 	// let gravity do the job instead of teleporting
 	const float minHeight = owner->unitDef->canSubmerge?
-		ground->GetHeightReal(owner->pos.x, owner->pos.z):
-		ground->GetHeightAboveWater(owner->pos.x, owner->pos.z);
+		CGround::GetHeightReal(owner->pos.x, owner->pos.z):
+		CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z);
 	const float curHeight = owner->pos.y;
 
 	if (curHeight > minHeight) {
@@ -326,7 +326,7 @@ bool AAirMoveType::CanLandOnPad(const float3& padPos) const {
 
 bool AAirMoveType::HaveLandedOnPad(const float3& padPos) {
 	const AircraftState landingState = GetLandingState();
-	const float landingPadHeight = ground->GetHeightAboveWater(padPos.x, padPos.z);
+	const float landingPadHeight = CGround::GetHeightAboveWater(padPos.x, padPos.z);
 
 	reservedLandingPos = padPos;
 	wantedHeight = padPos.y - landingPadHeight;

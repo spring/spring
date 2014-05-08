@@ -124,19 +124,19 @@ CStandardGroundFlash::CStandardGroundFlash(const float3& p, float circleAlpha, f
 	}
 
 	const float3 fw = camera->forward * -1000.0f;
-	this->pos.y = ground->GetHeightReal(p.x, p.z, false) + 1.0f;
+	this->pos.y = CGround::GetHeightReal(p.x, p.z, false) + 1.0f;
 
 	float3 p1(p.x + flashSize, 0, p.z);
-		p1.y = ground->GetApproximateHeight(p1.x, p1.z, false);
+		p1.y = CGround::GetApproximateHeight(p1.x, p1.z, false);
 		p1  += fw;
 	float3 p2(p.x - flashSize, 0, p.z);
-		p2.y = ground->GetApproximateHeight(p2.x, p2.z, false);
+		p2.y = CGround::GetApproximateHeight(p2.x, p2.z, false);
 		p2  += fw;
 	float3 p3(p.x, 0, p.z + flashSize);
-		p3.y = ground->GetApproximateHeight(p3.x, p3.z, false);
+		p3.y = CGround::GetApproximateHeight(p3.x, p3.z, false);
 		p3  += fw;
 	float3 p4(p.x, 0, p.z - flashSize);
-		p4.y = ground->GetApproximateHeight(p4.x, p4.z, false);
+		p4.y = CGround::GetApproximateHeight(p4.x, p4.z, false);
 		p4  += fw;
 
 	// else ANormalize() fails!
@@ -236,19 +236,19 @@ void CSimpleGroundFlash::Init(CUnit* owner, const float3& offset)
 	const float flashsize = size + (sizeGrowth * ttl);
 	const float3 fw = camera->forward * -1000.0f;
 
-	this->pos.y = ground->GetHeightReal(pos.x, pos.z, false) + 1.0f;
+	this->pos.y = CGround::GetHeightReal(pos.x, pos.z, false) + 1.0f;
 
 	float3 p1(pos.x + flashsize, 0.0f, pos.z);
-		p1.y = ground->GetApproximateHeight(p1.x, p1.z, false);
+		p1.y = CGround::GetApproximateHeight(p1.x, p1.z, false);
 		p1 += fw;
 	float3 p2(pos.x - flashsize, 0.0f, pos.z);
-		p2.y = ground->GetApproximateHeight(p2.x, p2.z, false);
+		p2.y = CGround::GetApproximateHeight(p2.x, p2.z, false);
 		p2 += fw;
 	float3 p3(pos.x, 0.0f, pos.z + flashsize);
-		p3.y = ground->GetApproximateHeight(p3.x, p3.z, false);
+		p3.y = CGround::GetApproximateHeight(p3.x, p3.z, false);
 		p3 += fw;
 	float3 p4(pos.x, 0.0f, pos.z - flashsize);
-		p4.y = ground->GetApproximateHeight(p4.x, p4.z, false);
+		p4.y = CGround::GetApproximateHeight(p4.x, p4.z, false);
 		p4 += fw;
 
 	const float3 n1 = ((p3 - p1).cross(p4 - p1)).ANormalize();
@@ -306,19 +306,19 @@ CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, int ttl, int fade, flo
 	const float flashsize = size + sizeGrowth * ttl;
 	const float3 fw = camera->forward * -1000.0f;
 
-	this->pos.y = ground->GetHeightReal(p.x, p.z, false) + 1.0f;
+	this->pos.y = CGround::GetHeightReal(p.x, p.z, false) + 1.0f;
 
 	float3 p1(p.x + flashsize, 0.0f, p.z);
-		p1.y = ground->GetApproximateHeight(p1.x, p1.z, false);
+		p1.y = CGround::GetApproximateHeight(p1.x, p1.z, false);
 		p1 += fw;
 	float3 p2(p.x - flashsize, 0.0f, p.z);
-		p2.y = ground->GetApproximateHeight(p2.x, p2.z, false);
+		p2.y = CGround::GetApproximateHeight(p2.x, p2.z, false);
 		p2 += fw;
 	float3 p3(p.x, 0.0f, p.z + flashsize);
-		p3.y = ground->GetApproximateHeight(p3.x, p3.z, false);
+		p3.y = CGround::GetApproximateHeight(p3.x, p3.z, false);
 		p3 += fw;
 	float3 p4(p.x, 0.0f, p.z - flashsize);
-		p4.y = ground->GetApproximateHeight(p4.x, p4.z, false);
+		p4.y = CGround::GetApproximateHeight(p4.x, p4.z, false);
 		p4 += fw;
 
 	const float3 n1 = ((p3 - p1).cross(p4 - p1)).SafeANormalize();

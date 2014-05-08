@@ -297,7 +297,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				def->second,
 				NULL,
 
-				float3(mfi[a].pos.x, ground->GetHeightReal(mfi[a].pos.x, mfi[a].pos.z), mfi[a].pos.z),
+				float3(mfi[a].pos.x, CGround::GetHeightReal(mfi[a].pos.x, mfi[a].pos.z), mfi[a].pos.z),
 				ZeroVector,
 
 				-1, // featureID

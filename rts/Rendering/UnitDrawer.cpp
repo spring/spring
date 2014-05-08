@@ -251,7 +251,7 @@ void CUnitDrawer::Update()
 	if (useDistToGroundForIcons) {
 		const float3& camPos = camera->GetPos();
 		// use the height at the current camera position
-		//const float groundHeight = ground->GetHeightAboveWater(camPos.x, camPos.z, false);
+		//const float groundHeight = CGround::GetHeightAboveWater(camPos.x, camPos.z, false);
 		// use the middle between the highest and lowest position on the map as average
 		const float groundHeight = (readMap->GetCurrMinHeight() + readMap->GetCurrMaxHeight()) * 0.5f;
 		const float overGround = camPos.y - groundHeight;
@@ -334,7 +334,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 					camera->GetPos()  * (unit->drawMidPos.y / dif) +
 					unit->drawMidPos * (-camera->GetPos().y / dif);
 			}
-			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
+			if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
 				return;
 			}
 		}
@@ -852,7 +852,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	}
 
 	// make sure icon is above ground (needed before we calculate scale below)
-	const float h = ground->GetHeightReal(pos.x, pos.z, false);
+	const float h = CGround::GetHeightReal(pos.x, pos.z, false);
 
 	if (pos.y < h) {
 		pos.y = h;

@@ -1397,7 +1397,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 					return 2;
 				}
 			}
-			const float posY = ground->GetHeightReal(pos.x, pos.z, false);
+			const float posY = CGround::GetHeightReal(pos.x, pos.z, false);
 			lua_pushliteral(L, "ground");
 			lua_createtable(L, 3, 0);
 			lua_pushnumber(L, pos.x); lua_rawseti(L, -2, 1);
@@ -2055,8 +2055,8 @@ int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 {
 	const int keycode = SDL12_keysyms(luaL_checkint(L, 1));
-	lua_pushsstring(L, (keyCodes != 0)? keyCodes->GetName(keycode): "");
-	lua_pushsstring(L, (keyCodes != 0)? keyCodes->GetDefaultName(keycode): "");
+	lua_pushsstring(L, (keyCodes != NULL)? keyCodes->GetName(keycode): "");
+	lua_pushsstring(L, (keyCodes != NULL)? keyCodes->GetDefaultName(keycode): "");
 	return 2;
 }
 

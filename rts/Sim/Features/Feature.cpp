@@ -217,9 +217,9 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	eventHandler.FeatureCreated(this);
 
 	if (def->floating) {
-		finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
+		finalHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
 	} else {
-		finalHeight = ground->GetHeightReal(pos.x, pos.z);
+		finalHeight = CGround::GetHeightReal(pos.x, pos.z);
 	}
 
 	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(params.speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
@@ -228,7 +228,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 void CFeature::CalculateTransform()
 {
-	updir    = (!def->upright)? ground->GetNormal(pos.x, pos.z): UpVector;
+	updir    = (!def->upright)? CGround::GetNormal(pos.x, pos.z): UpVector;
 	frontdir = GetVectorFromHeading(heading);
 	rightdir = (frontdir.cross(updir)).Normalize();
 	frontdir = (updir.cross(rightdir)).Normalize();
@@ -478,7 +478,7 @@ bool CFeature::UpdatePosition()
 		// even if their "owner" was a floating object (as is the case for
 		// ships anyway)
 		if (IsMoving()) {
-			const float realGroundHeight = ground->GetHeightReal(pos.x, pos.z);
+			const float realGroundHeight = CGround::GetHeightReal(pos.x, pos.z);
 			const bool reachedWater  = ( pos.y                     <= 0.1f);
 			const bool reachedGround = ((pos.y - realGroundHeight) <= 0.1f);
 
@@ -572,9 +572,9 @@ void CFeature::UpdateFinalHeight(bool useGroundHeight)
 
 	if (useGroundHeight) {
 		if (def->floating) {
-			finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
+			finalHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
 		} else {
-			finalHeight = ground->GetHeightReal(pos.x, pos.z);
+			finalHeight = CGround::GetHeightReal(pos.x, pos.z);
 		}
 	} else {
 		// permanently stay at this height,

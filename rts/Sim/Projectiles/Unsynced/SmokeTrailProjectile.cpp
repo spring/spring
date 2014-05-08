@@ -90,7 +90,7 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	}
 	SetRadiusAndHeight(pos1.distance(pos2), 0.0f);
 
-	if ((pos.y - ground->GetApproximateHeight(pos.x, pos.z)) > 10) {
+	if ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z)) > 10) {
 		useAirLos = true;
 	}
 }

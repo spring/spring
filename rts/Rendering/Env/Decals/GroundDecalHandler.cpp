@@ -360,10 +360,10 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 				float tx2 = max(0.0f, (pos.x - px2) / radius4 + 0.25f);
 				float tz1 = min(0.5f, (pos.z - pz1) / radius4 + 0.25f);
 				float tz2 = max(0.0f, (pos.z - pz2) / radius4 + 0.25f);
-				float h1 = ground->GetHeightReal(px1, pz1, false);
-				float h2 = ground->GetHeightReal(px2, pz1, false);
-				float h3 = ground->GetHeightReal(px2, pz2, false);
-				float h4 = ground->GetHeightReal(px1, pz2, false);
+				float h1 = CGround::GetHeightReal(px1, pz1, false);
+				float h2 = CGround::GetHeightReal(px2, pz1, false);
+				float h3 = CGround::GetHeightReal(px2, pz2, false);
+				float h4 = CGround::GetHeightReal(px1, pz2, false);
 
 				scar->va->AddVertexTC(float3(px1, h1, pz1), tx1 + tx, tz1 + ty, color);
 				scar->va->AddVertexTC(float3(px2, h2, pz1), tx2 + tx, tz1 + ty, color);
@@ -886,8 +886,8 @@ void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newPos)
 	TrackPart* tp = new TrackPart();
 	tp->pos1 = pos + unit->rightdir * decalDef.trackDecalWidth * 0.5f;
 	tp->pos2 = pos - unit->rightdir * decalDef.trackDecalWidth * 0.5f;
-	tp->pos1.y = ground->GetHeightReal(tp->pos1.x, tp->pos1.z, false);
-	tp->pos2.y = ground->GetHeightReal(tp->pos2.x, tp->pos2.z, false);
+	tp->pos1.y = CGround::GetHeightReal(tp->pos1.x, tp->pos1.z, false);
+	tp->pos2.y = CGround::GetHeightReal(tp->pos2.x, tp->pos2.z, false);
 	tp->creationTime = gs->frameNum;
 
 	TrackToAdd tta;
@@ -984,7 +984,7 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 	if (decalLevel == 0 || !addScar)
 		return;
 
-	const float altitude = pos.y - ground->GetHeightReal(pos.x, pos.z, false);
+	const float altitude = pos.y - CGround::GetHeightReal(pos.x, pos.z, false);
 
 	// no decals for below-ground explosions
 	if (altitude <= -1.0f)

@@ -147,7 +147,7 @@ bool CClassicGroundMoveType::Update()
 	}
 
 	if (OnSlope() &&
-		(!owner->unitDef->floatOnWater || ground->GetHeightAboveWater(owner->midPos.x, owner->midPos.z) > 0))
+		(!owner->unitDef->floatOnWater || CGround::GetHeightAboveWater(owner->midPos.x, owner->midPos.z) > 0))
 	{
 		owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 	}
@@ -288,12 +288,12 @@ void CClassicGroundMoveType::SlowUpdate()
 		float wh = 0.0f;
 
 		if (owner->unitDef->floatOnWater) {
-			wh = ground->GetHeightAboveWater(owner->pos.x, owner->pos.z);
+			wh = CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z);
 			if (wh == 0.0f) {
 				wh = -owner->unitDef->waterline;
 			}
 		} else {
-			wh = ground->GetHeightReal(owner->pos.x, owner->pos.z);
+			wh = CGround::GetHeightReal(owner->pos.x, owner->pos.z);
 		}
 		owner->Move(UpVector * (wh - owner->pos.y), true);
 	}
@@ -417,7 +417,7 @@ void CClassicGroundMoveType::ChangeHeading(short wantedHeading) {
 		owner->updir = UpVector;
 		owner->rightdir = owner->frontdir.cross(owner->updir);
 	} else {
-		owner->updir = ground->GetNormal(owner->pos.x, owner->pos.z);
+		owner->updir = CGround::GetNormal(owner->pos.x, owner->pos.z);
 		owner->rightdir = owner->frontdir.cross(owner->updir);
 		owner->rightdir.Normalize();
 		owner->frontdir = owner->updir.cross(owner->rightdir);
@@ -443,7 +443,7 @@ bool CClassicGroundMoveType::CanApplyImpulse(const float3& extImpulse)
 		impulse = ZeroVector;
 	}
 
-	float3 groundNormal = ground->GetNormal(pos.x, pos.z);
+	float3 groundNormal = CGround::GetNormal(pos.x, pos.z);
 	float3 skidDir = spd;
 
 	if (impulse.dot(groundNormal) < 0)
@@ -488,9 +488,9 @@ void CClassicGroundMoveType::UpdateSkid()
 		float wh = 0.0f;
 
 		if (owner->unitDef->floatOnWater)
-			wh = ground->GetHeightAboveWater(midPos.x, midPos.z);
+			wh = CGround::GetHeightAboveWater(midPos.x, midPos.z);
 		else
-			wh = ground->GetHeightReal(midPos.x, midPos.z);
+			wh = CGround::GetHeightReal(midPos.x, midPos.z);
 
 		if(wh>midPos.y-owner->relMidPos.y){
 			skidRotSpeed += (gs->randFloat()-0.5f)*1500;
@@ -498,7 +498,7 @@ void CClassicGroundMoveType::UpdateSkid()
 			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			owner->Move(UpVector * (wh + owner->relMidPos.y - spd.y * 0.5f - pos.y), true);
 
-			const float impactSpeed = -spd.dot(ground->GetNormal(midPos.x,midPos.z));
+			const float impactSpeed = -spd.dot(CGround::GetNormal(midPos.x,midPos.z));
 
 			if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0) {
 				owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), ZeroVector, NULL, -1, -1);
@@ -509,8 +509,8 @@ void CClassicGroundMoveType::UpdateSkid()
 		float speedReduction=0.35f;
 
 		const bool onSlope =
-			(ground->GetSlope(owner->midPos.x, owner->midPos.z) > owner->moveDef->maxSlope) &&
-			(!owner->unitDef->floatOnWater || ground->GetHeightAboveWater(midPos.x, midPos.z) > 0.0f);
+			(CGround::GetSlope(owner->midPos.x, owner->midPos.z) > owner->moveDef->maxSlope) &&
+			(!owner->unitDef->floatOnWater || CGround::GetHeightAboveWater(midPos.x, midPos.z) > 0.0f);
 
 		if (speedf < speedReduction && !onSlope) {
 			owner->SetVelocity(ZeroVector);
@@ -524,7 +524,7 @@ void CClassicGroundMoveType::UpdateSkid()
 			ChangeHeading(owner->heading);
 		} else {
 			if (onSlope) {
-				const float3 dir = ground->GetNormal(midPos.x, midPos.z);
+				const float3 dir = CGround::GetNormal(midPos.x, midPos.z);
 				const float3 normalForce = dir*dir.dot(UpVector*mapInfo->map.gravity);
 				const float3 newForce = UpVector*mapInfo->map.gravity - normalForce;
 
@@ -550,9 +550,9 @@ void CClassicGroundMoveType::UpdateSkid()
 		float wh = 0.0f;
 
 		if (owner->unitDef->floatOnWater)
-			wh = ground->GetHeightAboveWater(pos.x, pos.z);
+			wh = CGround::GetHeightAboveWater(pos.x, pos.z);
 		else
-			wh = ground->GetHeightReal(pos.x, pos.z);
+			wh = CGround::GetHeightReal(pos.x, pos.z);
 
 		if (wh - pos.y < spd.y + mapInfo->map.gravity){
 			owner->SetVelocity(spd + (UpVector * mapInfo->map.gravity));
@@ -560,7 +560,7 @@ void CClassicGroundMoveType::UpdateSkid()
 			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 		} else if (wh - pos.y > spd.y) {
-			const float3& normal = ground->GetNormal(pos.x, pos.z);
+			const float3& normal = CGround::GetNormal(pos.x, pos.z);
 			const float dot = spd.dot(normal);
 
 			if (dot > 0.0f) {
@@ -597,9 +597,9 @@ void CClassicGroundMoveType::UpdateControlledDrop()
 		float wh = 0.0f;
 
 		if (owner->unitDef->floatOnWater)
-			wh = ground->GetHeightAboveWater(midPos.x, midPos.z);
+			wh = CGround::GetHeightAboveWater(midPos.x, midPos.z);
 		else
-			wh = ground->GetHeightReal(midPos.x, midPos.z);
+			wh = CGround::GetHeightReal(midPos.x, midPos.z);
 
 		if (wh > midPos.y - owner->relMidPos.y) {
 			owner->Move(UpVector * (wh + owner->relMidPos.y - spd.y * 0.8 - midPos.y), true);
@@ -722,7 +722,7 @@ void CClassicGroundMoveType::CalcSkidRot()
 		owner->updir = UpVector;
 		owner->rightdir = owner->frontdir.cross(owner->updir);
 	} else {
-		owner->updir = ground->GetSmoothNormal(owner->pos.x, owner->pos.z);
+		owner->updir = CGround::GetSmoothNormal(owner->pos.x, owner->pos.z);
 		owner->rightdir = owner->frontdir.cross(owner->updir);
 		owner->rightdir.Normalize();
 		owner->frontdir = owner->updir.cross(owner->rightdir);
@@ -1570,7 +1570,7 @@ void CClassicGroundMoveType::LeaveTransport()
 
 bool CClassicGroundMoveType::OnSlope(){
 	return owner->unitDef->slideTolerance >= 1
-		&& (ground->GetSlope(owner->midPos.x, owner->midPos.z) >
+		&& (CGround::GetSlope(owner->midPos.x, owner->midPos.z) >
 		owner->moveDef->maxSlope*owner->unitDef->slideTolerance);
 }
 
@@ -1580,11 +1580,11 @@ void CClassicGroundMoveType::AdjustPosToWaterLine()
 {
 	float wh = 0.0f;
 	if (owner->unitDef->floatOnWater) {
-		wh = ground->GetHeightAboveWater(owner->pos.x, owner->pos.z);
+		wh = CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z);
 		if (wh == 0.0f)
 			wh = -owner->unitDef->waterline;
 	} else {
-		wh = ground->GetHeightReal(owner->pos.x, owner->pos.z);
+		wh = CGround::GetHeightReal(owner->pos.x, owner->pos.z);
 	}
 
 	if (!(owner->IsFalling() || owner->IsFlying())) {

@@ -258,7 +258,7 @@ float TraceRay(
 
 	if (!ignoreGround) {
 		// ground intersection
-		const float groundLength = ground->LineGroundCol(start, start + dir * length);
+		const float groundLength = CGround::LineGroundCol(start, start + dir * length);
 
 		if (length > groundLength && groundLength > 0.0f) {
 			length = groundLength;
@@ -290,7 +290,7 @@ float GuiTraceRay(
 
 	// ground and water-plane intersection
 	const float guiRayLength = length;
-	const float groundRayLength = ground->LineGroundCol(start, start + dir * guiRayLength, false);
+	const float groundRayLength = CGround::LineGroundCol(start, start + dir * guiRayLength, false);
 	const float waterRayLength = math::floorf(math::fabs(start.y / std::min(dir.y, -0.00001f)));
 
 	float minRayLength = groundRayLength;

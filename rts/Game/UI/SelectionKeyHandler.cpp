@@ -257,7 +257,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		ReadDelimiter(selectString);
 		float maxDist=atof(ReadToken(selectString).c_str());
 
-		float dist = ground->LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * 8000, false);
+		float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * 8000, false);
 		float3 mp=camera->GetPos()+mouse->dir*dist;
 		if (cylindrical) {
 			mp.y = 0;

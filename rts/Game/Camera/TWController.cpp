@@ -73,7 +73,7 @@ void CTWController::UpdateVectors()
 {
 	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
 	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false);
+	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 
 	camera->rot.x = Clamp(camera->rot.x, -PI * 0.4f, -0.1f);
 
@@ -95,8 +95,8 @@ float3 CTWController::GetPos() const
 	float dist = -camera->rot.x * 1500;
 
 	float3 cpos = pos - dir * dist;
-	if (cpos.y < ground->GetHeightAboveWater(cpos.x, cpos.z, false) + 5)
-		cpos.y = ground->GetHeightAboveWater(cpos.x, cpos.z, false) + 5;
+	if (cpos.y < CGround::GetHeightAboveWater(cpos.x, cpos.z, false) + 5)
+		cpos.y = CGround::GetHeightAboveWater(cpos.x, cpos.z, false) + 5;
 
 	return cpos;
 }

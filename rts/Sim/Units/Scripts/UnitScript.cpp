@@ -527,7 +527,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 
 	// Make sure wakes are only emitted on water
 	if ((sfxType >= SFX_WAKE) && (sfxType <= SFX_REVERSE_WAKE_2)) {
-		if (ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 0.0f) {
+		if (CGround::GetApproximateHeight(unit->pos.x, unit->pos.z) > 0.0f) {
 			return;
 		}
 	}
@@ -782,7 +782,7 @@ void CUnitScript::Explode(int piece, int flags)
 		const float l2 = 3 + math::sqrt(l - 3);
 		baseSpeed *= (l2 / l);
 	}
-	if (unit->pos.y - ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 15) {
+	if (unit->pos.y - CGround::GetApproximateHeight(unit->pos.x, unit->pos.z) > 15) {
 		explSpeed.y = (0.5f - gs->randFloat()) * 6.0f;
 	}
 
@@ -952,9 +952,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case HYPOT:
 		return int(math::hypot((float)p1, (float)p2));
 	case GROUND_HEIGHT:
-		return int(ground->GetHeightAboveWater(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
+		return int(CGround::GetHeightAboveWater(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
 	case GROUND_WATER_HEIGHT:
-		return int(ground->GetHeightReal(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
+		return int(CGround::GetHeightReal(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
 	case BUILD_PERCENT_LEFT:
 		return int((1.0f - unit->buildProgress) * 100);
 

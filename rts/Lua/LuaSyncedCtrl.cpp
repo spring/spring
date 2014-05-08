@@ -2155,9 +2155,9 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 		pos.z = luaL_checkfloat(L, 3);
 
 		if (luaL_optboolean(L, 4, false)) {
-			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
+			pos.y = CGround::GetHeightAboveWater(pos.x, pos.z);
 		} else {
-			pos.y = ground->GetHeightReal(pos.x, pos.z);
+			pos.y = CGround::GetHeightReal(pos.x, pos.z);
 		}
 	}
 

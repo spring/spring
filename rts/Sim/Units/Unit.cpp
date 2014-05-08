@@ -366,7 +366,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	if (collisionVolume->DefaultToFootPrint())
 		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
 
-	mapSquare = ground->GetSquare((params.pos).cClampInMap());
+	mapSquare = CGround::GetSquare((params.pos).cClampInMap());
 
 	heading  = GetHeadingFromFacing(buildFacing);
 	frontdir = GetVectorFromHeading(heading);
@@ -484,7 +484,7 @@ void CUnit::PostInit(const CUnit* builder)
 	UpdatePosErrorParams(true, true);
 
 	if (unitDef->floatOnWater && IsInWater()) {
-		Move(UpVector * (std::max(ground->GetHeightReal(pos.x, pos.z), -unitDef->waterline) - pos.y), true);
+		Move(UpVector * (std::max(CGround::GetHeightReal(pos.x, pos.z), -unitDef->waterline) - pos.y), true);
 	}
 
 	if (unitDef->canmove || unitDef->builder) {
@@ -1225,7 +1225,7 @@ void CUnit::ApplyImpulse(const float3& impulse) {
 		return;
 	}
 
-	const float3& groundNormal = ground->GetNormal(pos.x, pos.z);
+	const float3& groundNormal = CGround::GetNormal(pos.x, pos.z);
 	const float groundImpulseScale = std::min(0.0f, impulse.dot(groundNormal));
 	const float3 modImpulse = impulse - (groundNormal * groundImpulseScale * IsOnGround());
 
@@ -1681,7 +1681,7 @@ void CUnit::CalculateTerrainType()
 		return;
 	}
 
-	const float height = ground->GetApproximateHeight(pos.x, pos.z);
+	const float height = CGround::GetApproximateHeight(pos.x, pos.z);
 
 	// water
 	if (height < -5.0f) {

@@ -220,7 +220,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 				unitDefHandler->GetUnitDefByID(a),
 				NULL,
 
-				float3(px, ground->GetHeightReal(px, pz), pz),
+				float3(px, CGround::GetHeightReal(px, pz), pz),
 				ZeroVector,
 
 				-1,
@@ -281,7 +281,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 						unitDef,
 						NULL,
 
-						float3(px, ground->GetHeightReal(px, pz), pz),
+						float3(px, CGround::GetHeightReal(px, pz), pz),
 						ZeroVector,
 
 						-1,
@@ -320,7 +320,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 				for (int x = 0; x < squareSize && total > 0; ++x) {
 					const float px = squarePos.x + x * xsize * SQUARE_SIZE;
 					const float pz = squarePos.z + z * zsize * SQUARE_SIZE;
-					const float3 featurePos = float3(px, ground->GetHeightReal(px, pz), pz);
+					const float3 featurePos = float3(px, CGround::GetHeightReal(px, pz), pz);
 
 					Watchdog::ClearPrimaryTimers();
 					FeatureLoadParams params = {
@@ -357,7 +357,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 void CUnitLoader::FlattenGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const float groundheight = ground->GetHeightReal(unit->pos.x, unit->pos.z);
+	const float groundheight = CGround::GetHeightReal(unit->pos.x, unit->pos.z);
 
 	if (mapDamage->disabled) return;
 	if (!unitDef->levelGround) return;
@@ -387,7 +387,7 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 void CUnitLoader::RestoreGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const float groundheight = ground->GetHeightReal(unit->pos.x, unit->pos.z);
+	const float groundheight = CGround::GetHeightReal(unit->pos.x, unit->pos.z);
 
 	if (mapDamage->disabled) return;
 	if (!unitDef->levelGround) return;

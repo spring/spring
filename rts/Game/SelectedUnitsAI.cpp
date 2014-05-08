@@ -443,7 +443,7 @@ float3 CSelectedUnitsHandlerAI::MoveToPos(int unit, float3 nextCornerPos, float3
 	float3 pos;
 	pos.x = rightPos.x + (movePos.x * (dir.x / dir.y)) - (movePos.z * (dir.z/dir.y));
 	pos.z = rightPos.z + (movePos.x * (dir.z / dir.y)) + (movePos.z * (dir.x/dir.y));
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
+	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z);
 
 	Command c(command->GetID(), command->options, pos);
 
