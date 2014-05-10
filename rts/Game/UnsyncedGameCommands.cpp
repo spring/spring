@@ -1986,7 +1986,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		SDL_bool newMode;
-		if (!action.GetArgs().empty()) {
+		if (action.GetArgs().empty()) {
 			newMode = (SDL_GetWindowGrab(globalRendering->window)) ? SDL_FALSE : SDL_TRUE;
 		} else {
 			if (atoi(action.GetArgs().c_str())) {
