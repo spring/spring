@@ -284,9 +284,6 @@ bool CLuaIntro::LoadUnsyncedReadFunctions(lua_State *L)
 	REGISTER_LUA_CFUNC(GetKeyBindings);
 	REGISTER_LUA_CFUNC(GetActionHotKeys);
 
-	REGISTER_LUA_CFUNC(GetMyAllyTeamID);
-	REGISTER_LUA_CFUNC(GetMyTeamID);
-
 	REGISTER_LUA_CFUNC(GetLogSections);
 
 	#undef REGISTER_LUA_CFUNC
