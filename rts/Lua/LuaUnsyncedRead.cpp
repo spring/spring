@@ -84,6 +84,11 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	lua_pushcfunction(L, x);    \
 	lua_rawset(L, -3)
 
+#define REGISTER_NAMED_LUA_CFUNC(x,name) \
+	lua_pushstring(L, #name);      \
+	lua_pushcfunction(L, x);    \
+	lua_rawset(L, -3)
+
 	REGISTER_LUA_CFUNC(IsReplay);
 	REGISTER_LUA_CFUNC(GetReplayLength);
 	REGISTER_LUA_CFUNC(GetModUICtrl);
@@ -99,6 +104,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetMiniMapGeometry);
 	REGISTER_LUA_CFUNC(GetMiniMapDualScreen);
 	REGISTER_LUA_CFUNC(IsAboveMiniMap);
+	REGISTER_LUA_CFUNC(IsGUIHidden);
 
 	REGISTER_LUA_CFUNC(IsAABBInView);
 	REGISTER_LUA_CFUNC(IsSphereInView);
@@ -128,6 +134,11 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetLocalPlayerID);
 	REGISTER_LUA_CFUNC(GetLocalTeamID);
 	REGISTER_LUA_CFUNC(GetLocalAllyTeamID);
+
+	REGISTER_NAMED_LUA_CFUNC(GetLocalPlayerID,   GetMyPlayerID);
+	REGISTER_NAMED_LUA_CFUNC(GetLocalTeamID,     GetMyTeamID);
+	REGISTER_NAMED_LUA_CFUNC(GetLocalAllyTeamID, GetMyAllyTeamID);
+
 	REGISTER_LUA_CFUNC(GetSpectatingState);
 
 	REGISTER_LUA_CFUNC(GetSelectedUnits);
@@ -135,7 +146,6 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetSelectedUnitsCounts);
 	REGISTER_LUA_CFUNC(GetSelectedUnitsCount);
 
-	REGISTER_LUA_CFUNC(IsGUIHidden);
 	REGISTER_LUA_CFUNC(HaveShadows);
 	REGISTER_LUA_CFUNC(HaveAdvShading);
 	REGISTER_LUA_CFUNC(GetWaterMode);
@@ -166,12 +176,9 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetActiveCmdDescs);
 	REGISTER_LUA_CFUNC(GetActiveCmdDesc);
 	REGISTER_LUA_CFUNC(GetCmdDescIndex);
-
 	REGISTER_LUA_CFUNC(GetBuildFacing);
 	REGISTER_LUA_CFUNC(GetBuildSpacing);
-
 	REGISTER_LUA_CFUNC(GetGatherMode);
-
 	REGISTER_LUA_CFUNC(GetActivePage);
 
 	REGISTER_LUA_CFUNC(GetMouseState);
@@ -191,19 +198,12 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetActionHotKeys);
 
 	REGISTER_LUA_CFUNC(GetLastMessagePositions);
-
 	REGISTER_LUA_CFUNC(GetConsoleBuffer);
 	REGISTER_LUA_CFUNC(GetCurrentTooltip);
 
-	REGISTER_LUA_CFUNC(GetMyAllyTeamID);
-	REGISTER_LUA_CFUNC(GetMyTeamID);
-	REGISTER_LUA_CFUNC(GetMyPlayerID);
-
+	REGISTER_LUA_CFUNC(GetUnitGroup);
 	REGISTER_LUA_CFUNC(GetGroupList);
 	REGISTER_LUA_CFUNC(GetSelectedGroup);
-
-	REGISTER_LUA_CFUNC(GetUnitGroup);
-
 	REGISTER_LUA_CFUNC(GetGroupUnits);
 	REGISTER_LUA_CFUNC(GetGroupUnitsSorted);
 	REGISTER_LUA_CFUNC(GetGroupUnitsCounts);
@@ -216,7 +216,6 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetDrawSelectionInfo);
 
 	REGISTER_LUA_CFUNC(GetConfigParams);
-
 	REGISTER_LUA_CFUNC(GetLogSections);
 
 	return true;
@@ -2257,30 +2256,6 @@ int LuaUnsyncedRead::GetGroupUnitsCount(lua_State* L)
 		return 0; // nils
 	}
 	lua_pushnumber(L, groups[groupID]->units.size());
-	return 1;
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-int LuaUnsyncedRead::GetMyPlayerID(lua_State* L)
-{
-	lua_pushnumber(L, gu->myPlayerNum);
-	return 1;
-}
-
-
-int LuaUnsyncedRead::GetMyTeamID(lua_State* L)
-{
-	lua_pushnumber(L, gu->myTeam);
-	return 1;
-}
-
-
-int LuaUnsyncedRead::GetMyAllyTeamID(lua_State* L)
-{
-	lua_pushnumber(L, gu->myAllyTeam);
 	return 1;
 }
 
