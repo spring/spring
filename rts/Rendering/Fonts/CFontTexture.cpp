@@ -434,23 +434,23 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 	// load glyphs from different fonts (using fontconfig)
 	std::shared_ptr<FontFace> f = shFace;
 	std::set<std::shared_ptr<FontFace>> alreadyCheckedFonts;
+#ifndef HEADLESS
 	do {
 		alreadyCheckedFonts.insert(f);
-		for (auto it = map.begin(); it != map.end(); ++it) {
-#ifndef HEADLESS
+		for (auto it = map.begin(); it != map.end();) {
 			FT_UInt index = FT_Get_Char_Index(*f, *it);
-#else
-			unsigned index = 0;
-#endif
+
 			if (index != 0) {
 				LoadGlyph(f, *it, index);
 				it = map.erase(it);
+			} else {
+				++it;
 			}
 		}
 		f = GetFontForCharacters(map, *f, fontSize);
 		usedFallbackFonts.insert(f);
 	} while (!map.empty() && f && (alreadyCheckedFonts.find(f) == alreadyCheckedFonts.end()));
-
+#endif
 	// load fail glyph for all remaining ones (they will all share the same fail glyph)
 	for (auto c: map) {
 		LoadGlyph(shFace, c, 0);
