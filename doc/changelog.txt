@@ -97,6 +97,7 @@ Lua:
  - improve Spring.GetKeyBindings output (backward compatible)
  - added Script.IsEngineMinVersion(major [,minor [,commits]])
  - added Spring.GetClipboard() & Spring.SetClipboard(string text)
+ - allow to connect to lobby.springrts.com:8200 by luasocket as default
 
 LUS:
  - SetUnitValue now accepts booleans, too
