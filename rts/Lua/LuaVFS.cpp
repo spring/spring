@@ -85,6 +85,7 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "UseArchive",	UseArchive);
 	HSTR_PUSH_CFUNC(L, "CompressFolder",	CompressFolder);
 	HSTR_PUSH_CFUNC(L, "MapArchive",	MapArchive);
+	HSTR_PUSH_CFUNC(L, "UnmapArchive",	UnmapArchive);
 
 	HSTR_PUSH_CFUNC(L, "ZlibCompress", ZlibCompress);
 
@@ -430,6 +431,34 @@ int LuaVFS::MapArchive(lua_State* L)
 	}
 	return 0;
 }
+
+int LuaVFS::UnmapArchive(lua_State* L)
+{
+	if (CLuaHandle::GetHandleSynced(L)) // only from unsynced
+	{
+		return 0;
+	}
+
+	const string filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
+	if (!LuaIO::IsSimplePath(filename)) {
+		// the path may point to a file or dir outside of any data-dir
+		//FIXME		return 0;
+	}
+
+	if (!vfsHandler->RemoveArchive(filename))
+	{
+		std::ostringstream buf;
+		buf << "Failed to remove archive: " << filename;
+		lua_pushboolean(L, false);
+		lua_pushsstring(L, buf.str());
+	}
+	else
+	{
+		lua_pushboolean(L, true);
+	}
+	return 0;
+}
+
 
 
 /******************************************************************************/
