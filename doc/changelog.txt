@@ -97,6 +97,7 @@ Lua:
  - improve Spring.GetKeyBindings output (backward compatible)
  - added Script.IsEngineMinVersion(major [,minor [,commits]])
  - added Spring.GetClipboard() & Spring.SetClipboard(string text)
+ - added VFS.UnmapArchive(string fileName)
 
 LUS:
  - SetUnitValue now accepts booleans, too
