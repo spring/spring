@@ -407,7 +407,7 @@ int LuaVFS::MapArchive(lua_State* L)
 	if (args >= 2) {
 		// FIXME: why parse checksum as a STRING only to convert it to a number??
 		// const unsigned int argChecksum = lua_tonumber(L, 2);
-		const unsigned int argChecksum = StringToInt<unsigned int>(lua_tostring(L, 2));
+		const unsigned int argChecksum = StringToInt(lua_tostring(L, 2));
 		const unsigned int realChecksum = archiveScanner->GetSingleArchiveChecksum(filename);
 
 		if (argChecksum != realChecksum) {
