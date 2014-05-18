@@ -114,6 +114,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	lua_pushcfunction(L, x);    \
 	lua_rawset(L, -3)
 
+	REGISTER_LUA_CFUNC(SetAlly);
 	REGISTER_LUA_CFUNC(KillTeam);
 	REGISTER_LUA_CFUNC(GameOver);
 
@@ -567,6 +568,20 @@ static int SetWorldObjectAlwaysVisible(lua_State* L, CWorldObject* o, const char
 // The call-outs
 //
 
+int LuaSyncedCtrl::SetAlly(lua_State* L)
+{
+	const int firstAllyTeamID = luaL_checkint(L, 1);
+	if (!teamHandler->IsValidAllyTeam(firstAllyTeamID)) {
+		return 0;
+	}
+	const int secondAllyTeamID = luaL_checkint(L, 2);
+	if (!teamHandler->IsValidAllyTeam(secondAllyTeamID)) {
+		return 0;
+	}
+	const bool allied = luaL_checkboolean(L, 3);
+	teamHandler->SetAlly(firstAllyTeamID, secondAllyTeamID, allied);
+	return 0;
+}
 
 int LuaSyncedCtrl::KillTeam(lua_State* L)
 {
@@ -3917,7 +3932,6 @@ int LuaSyncedCtrl::RemoveUnitCmdDesc(lua_State* L)
 
 	return 0;
 }
-
 
 /******************************************************************************/
 /******************************************************************************/

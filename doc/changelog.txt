@@ -488,6 +488,7 @@ Lua:
          number offset.x, number offset.y, number offset.z
          [, number volumeType [, number primaryAxis]]
        )
+	add SetAlly(firstAllyTeamId, secondAllyTeamId, ally)
 
  ! LuaSyncedRead: deprecate the Spring.GetProjectileSpin* functions
  - LuaSyncedRead:
