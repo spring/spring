@@ -2,6 +2,10 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 98.0 ---------------------------------------------------------
+Lua:
+  - added SetAlly(firstAllyTeamId, secondAllyTeamId, ally)
+  - added VFS.UnmapArchive(string fileName)
 
 -- 97.0 ---------------------------------------------------------
 Major:
@@ -97,7 +101,6 @@ Lua:
  - improve Spring.GetKeyBindings output (backward compatible)
  - added Script.IsEngineMinVersion(major [,minor [,commits]])
  - added Spring.GetClipboard() & Spring.SetClipboard(string text)
- - added VFS.UnmapArchive(string fileName)
 
 LUS:
  - SetUnitValue now accepts booleans, too
@@ -488,7 +491,6 @@ Lua:
          number offset.x, number offset.y, number offset.z
          [, number volumeType [, number primaryAxis]]
        )
-	add SetAlly(firstAllyTeamId, secondAllyTeamId, ally)
 
  ! LuaSyncedRead: deprecate the Spring.GetProjectileSpin* functions
  - LuaSyncedRead:
