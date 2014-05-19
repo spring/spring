@@ -405,7 +405,8 @@ int LuaVFS::MapArchive(lua_State* L)
 	}
 
 	if (args >= 2) {
-		// FIXME: why parse checksum as a STRING only to convert it to a number??
+		// parse checksum as a STRING to convert it to a number because
+		// lua numbers are float and so limited to 2^24, while the checksum is an int32.
 		// const unsigned int argChecksum = lua_tonumber(L, 2);
 		const unsigned int argChecksum = StringToInt(lua_tostring(L, 2));
 		const unsigned int realChecksum = archiveScanner->GetSingleArchiveChecksum(filename);
