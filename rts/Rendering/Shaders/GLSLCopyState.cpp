@@ -374,7 +374,7 @@ static void CopyShaderState_TransformFeedback(GLuint newProgID, GLuint oldProgID
 
 
 
-static bool CopyShaderState_ContainsGeometryShader(GLuint progID)
+static bool CopyShaderState_ContainsGeometryShader(GLuint oldProgID)
 {
 	bool ret = false;
 
@@ -383,7 +383,7 @@ static bool CopyShaderState_ContainsGeometryShader(GLuint progID)
 	GLint attachedShaderType = 0;
 
 	// glGetProgramiv(oldProgID, GL_ATTACHED_SHADERS, &numAttachedShaders);
-	glGetAttachedShaders(oldProgID, 3, &numAttachedShaders, &attachedShaderIDs);
+	glGetAttachedShaders(oldProgID, 3, &numAttachedShaders, &attachedShaderIDs[0]);
 
 	for (GLsizei n = 0; n < numAttachedShaders; n++) {
 		glGetShaderiv(attachedShaderIDs[n], GL_SHADER_TYPE, &attachedShaderType);
