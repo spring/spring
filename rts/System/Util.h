@@ -120,11 +120,12 @@ static inline std::string FloatToString(float f, const std::string& format = "%f
 	return std::string(buf);
 }
 
-static inline int StringToInt(std::string str, bool* failed = NULL)
+template<typename int_type = int>
+static inline int_type StringToInt(std::string str, bool* failed = NULL)
 {
 	StringTrimInPlace(str);
 	std::istringstream stream(str);
-	int buffer = 0;
+	int_type buffer = 0;
 	stream >> buffer;
 
 	if (failed != NULL)
