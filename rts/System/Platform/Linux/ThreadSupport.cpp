@@ -6,25 +6,13 @@
 #include "System/Platform/Threading.h"
 #include <iostream>
 
-static pthread_key_t  threadMutexKey = 0;
-static pthread_key_t  ucontextKey = 0;
-static pthread_once_t threadInitKey = PTHREAD_ONCE_INIT;
-
 namespace Threading {
 
 void ThreadSIGUSR1Handler (int signum, siginfo_t* info, void* pCtx)
 { // Signal handler, so don't use LOG or anything that might write directly to disk. Just use perror().
     int err=0;
 
-    LOG("ThreadSIGUSR1Handler caught signal!");
-
-    // ucontext_t is passed in by OS.
-    ucontext_t* pContext = reinterpret_cast<ucontext_t*> (pCtx);
-    assert(threadObjectKey != 0);
-
-    // Thread object should be in thread-local storage
-    assert(threadCtls->get() != nullptr);
-    assert(threadCtls->get()->get() != nullptr);
+    LOG_SL("LinuxCrashHandler", L_DEBUG, "ThreadSIGUSR1Handler[1]");
 
     std::shared_ptr<Threading::ThreadControls> pThreadCtls = *threadCtls;
 
@@ -38,12 +26,16 @@ void ThreadSIGUSR1Handler (int signum, siginfo_t* info, void* pCtx)
     //   it had to have been locked by some other thread.
     pThreadCtls->running = false;
 
+    LOG_SL("LinuxCrashHandler", L_DEBUG, "ThreadSIGUSR1Handler[2]");
+
     // Try to acquire the suspend/resume mutex; this will block the signal handler and the corresponding thread.
     {
         pThreadCtls->mutSuspend.lock();
 
         pThreadCtls->mutSuspend.unlock();
     }
+
+    LOG_SL("LinuxCrashHandler", L_DEBUG, "ThreadSIGUSR1Handler[3]");
 
     pThreadCtls->running = true;
 }
@@ -106,7 +98,7 @@ void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadContro
         // Install the SIGUSR1 handler:
         SetCurrentThreadControls(ppThreadCtls);
 
-        LOG("New thread's handle is %.4x");
+        LOG_I(LOG_LEVEL_DEBUG, "ThreadStart(): New thread's handle is %.4x", pThreadCtls->handle);
 
         // We are fully initialized, so notify the condition variable. The thread's parent will unblock in whatever function created this thread.
         pThreadCtls->condInitialized.notify_all();
@@ -141,7 +133,7 @@ SuspendResult ThreadControls::Suspend ()
         return Threading::THREADERR_NOT_RUNNING;
     }
 
-    LOG("Sending SIGUSR1 to %.4x", handle);
+    LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "Sending SIGUSR1 to 0x%x", handle);
 
     // Send signal to thread to trigger its handler
     if (err = pthread_kill(handle, SIGUSR1)) {

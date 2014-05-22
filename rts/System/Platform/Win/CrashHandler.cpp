@@ -288,7 +288,7 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 	GlobalFree(pSym);
 }
 
-static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR, Threading::ThreadControls* ctls) {
+static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR) {
 	StacktraceInline(threadName, e, hThread, logLevel);
 }
 

@@ -127,7 +127,11 @@ namespace Watchdog
 					if (!threadSlots[i].active)
 						continue;
 
-                    CrashHandler::Stacktrace(registeredThreads[i]->thread, threadNames[i], LOG_LEVEL_WARNING, registeredThreads[i]->ctls.get());
+#ifdef WIN32
+                    CrashHandler::Stacktrace(registeredThreads[i]->thread, threadNames[i], LOG_LEVEL_WARNING);
+#else
+                    CrashHandler::Stacktrace(registeredThreads[i]->thread, threadNames[i], LOG_LEVEL_WARNING);
+#endif
 				}
 
 				CrashHandler::CleanupStacktrace(LOG_LEVEL_WARNING);
