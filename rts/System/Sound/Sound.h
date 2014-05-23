@@ -11,12 +11,11 @@
 #include <vector>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread.hpp>
 
 #include "System/float3.h"
 
 #include "SoundItem.h"
-
-#include <boost/thread.hpp>
 
 class CSoundSource;
 class SoundBuffer;
@@ -92,7 +91,7 @@ private:
 	soundItemDef defaultItem;
 	soundItemDefMap soundItemDefs;
 
-    boost::thread soundThread;
+	boost::thread soundThread;
 
 	volatile bool soundThreadQuit;
 };

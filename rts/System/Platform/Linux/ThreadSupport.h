@@ -7,9 +7,9 @@
 
 namespace Threading {
 
- class ThreadControls;
+	class ThreadControls;
 
- void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadControls> * ppThreadCtls);
+	void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadControls> * ppThreadCtls);
 
 }
 

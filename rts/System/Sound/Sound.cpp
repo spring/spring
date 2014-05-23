@@ -72,8 +72,8 @@ CSound::CSound()
 	if (maxSounds <= 0) {
 		LOG_L(L_WARNING, "MaxSounds set to 0, sound is disabled");
 	} else {
-        //soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
-        soundThread = Threading::CreateNewThread(boost::bind(&CSound::StartThread, this, maxSounds));
+		//soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
+		soundThread = Threading::CreateNewThread(boost::bind(&CSound::StartThread, this, maxSounds));
 	}
 
 	configHandler->NotifyOnChange(this);
@@ -83,16 +83,20 @@ CSound::~CSound()
 {
 	soundThreadQuit = true;
 
-    LOG_L(L_INFO, "[%s][1] soundThread=%p", __FUNCTION__, &soundThread);
+	LOG_L(L_INFO, "[%s][1] soundThread=%p", __FUNCTION__, &soundThread);
 
-    /*
+	/*
+	 *
+	 * soundThread is now an object rather than pointer-to-object
+	 *
+	 *
 	if (soundThread != NULL) {
 		soundThread->join();
 		delete soundThread;
 		soundThread = NULL;
 	}
-    */
-    soundThread.join();
+	*/
+	soundThread.join();
 
 	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
 

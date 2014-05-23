@@ -37,7 +37,7 @@ namespace Threading {
 	typedef pthread_t NativeThreadHandle;
 #endif
 	NativeThreadHandle GetCurrentThread();
-	NativeThreadId     GetCurrentThreadId();
+	NativeThreadId GetCurrentThreadId();
 
 	/**
 	 * Used to indicate the result of a suspend or resume operation.
@@ -49,17 +49,20 @@ namespace Threading {
 	};
 
 	/**
-	 * Creates a new boost::thread that is wrapped by some boilerplate code that allows for suspend/resume.
+	 * Creates a new boost::thread whose entry function is wrapped by some boilerplate code that allows for suspend/resume.
 	 * These suspend/resume controls are exposed via the ThreadControls object that is provided by the caller and initialized by the thread.
 	 * The thread is guaranteed to be in a running and initialized state when this function returns.
+	 *
+	 * The ppThreadCtls object is an optional return parameter that gives access to the Suspend/Resume controls under Linux.
+	 *
 	 */
-    boost::thread CreateNewThread (boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppThreadCtls = nullptr);
+	boost::thread CreateNewThread (boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppThreadCtls = nullptr);
 
 	/**
 	 * Retrieves a shared pointer to the current ThreadControls for the calling thread.
 	 */
-    std::shared_ptr<ThreadControls> * GetCurrentThreadControls ();
-    void SetCurrentThreadControls(std::shared_ptr<ThreadControls> * ppThreadCtls);
+	std::shared_ptr<ThreadControls> GetCurrentThreadControls ();
+	void SetCurrentThreadControls(std::shared_ptr<ThreadControls> * ppThreadCtls);
 
 	/**
 	 * @brief Provides suspend/resume functionality for worker threads.
@@ -68,7 +71,6 @@ namespace Threading {
 	public:
 		ThreadControls();
 		~ThreadControls();
-
 		/* These are implemented in System/Platform/<platform>/ThreadSupport.cpp */
 		SuspendResult Suspend();
 		SuspendResult Resume();
@@ -76,16 +78,16 @@ namespace Threading {
 		boost::condition_variable condInitialized;
 		NativeThreadHandle      handle;
 		bool                    running;
-
-#ifndef WIN32
+	#ifndef WIN32
 		boost::mutex            mutSuspend;
 		ucontext_t              ucontext;
-#endif
+	#endif
 
-        friend void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadControls>  * ppThreadCtls);
+		friend void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadControls>  * ppThreadCtls);
 	};
 
 	inline bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2);
+
 
 	/**
 	 * Sets the affinity of the current thread
@@ -99,6 +101,7 @@ namespace Threading {
 	void SetAffinityHelper(const char* threadName, boost::uint32_t affinity);
 	int GetAvailableCores();
 	boost::uint32_t GetAvailableCoresMask();
+
 
 	/**
 	 * threadpool related stuff
@@ -169,7 +172,7 @@ namespace Threading {
 namespace Threading {
 	bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2)
 	{
-#ifdef __APPLE__
+	#ifdef __APPLE__
 		// quote from the pthread_equal manpage:
 		// Implementations may choose to define a thread ID as a structure.
 		// This allows additional flexibility and robustness over using an int.
@@ -180,7 +183,7 @@ namespace Threading {
 		{
 			return pthread_equal(thID1, thID2);
 		}
-#endif
+	#endif
 
 		return (thID1 == thID2);
 	}
@@ -191,33 +194,33 @@ namespace Threading {
 		AtomicCounterInt64(boost::int64_t start = 0) : num(start) {}
 
 		boost::int64_t operator++() {
-#ifdef _MSC_VER
+	#ifdef _MSC_VER
 			return InterlockedIncrement64(&num);
-#elif defined(__APPLE__)
+	#elif defined(__APPLE__)
 			return OSAtomicIncrement64(&num);
-#else // assuming GCC (__sync_fetch_and_add is a builtin)
+	#else // assuming GCC (__sync_fetch_and_add is a builtin)
 			return __sync_fetch_and_add(&num, boost::int64_t(1));
-#endif
+	#endif
 		}
 
 		boost::int64_t operator+=(int x) {
-#ifdef _MSC_VER
+	#ifdef _MSC_VER
 			return InterlockedExchangeAdd64(&num, boost::int64_t(x));
-#elif defined(__APPLE__)
+	#elif defined(__APPLE__)
 			return OSAtomicAdd64(boost::int64_t(x), &num);
-#else // assuming GCC (__sync_fetch_and_add is a builtin)
+	#else // assuming GCC (__sync_fetch_and_add is a builtin)
 			return __sync_fetch_and_add(&num, boost::int64_t(x));
-#endif
+	#endif
 		}
 
 		boost::int64_t operator-=(int x) {
-#ifdef _MSC_VER
+	#ifdef _MSC_VER
 			return InterlockedExchangeAdd64(&num, boost::int64_t(-x));
-#elif defined(__APPLE__)
+	#elif defined(__APPLE__)
 			return OSAtomicAdd64(boost::int64_t(-x), &num);
-#else // assuming GCC (__sync_fetch_and_add is a builtin)
+	#else // assuming GCC (__sync_fetch_and_add is a builtin)
 			return __sync_fetch_and_add(&num, boost::int64_t(-x));
-#endif
+	#endif
 		}
 
 		operator boost::int64_t() {
@@ -225,13 +228,12 @@ namespace Threading {
 		}
 
 	private:
-#ifdef _MSC_VER
+	#ifdef _MSC_VER
 		__declspec(align(8)) boost::int64_t num;
-#else
+	#else
 		__attribute__ ((aligned (8))) boost::int64_t num;
-#endif
+	#endif
 	};
-
 }
 
 #endif // _THREADING_H_

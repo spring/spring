@@ -44,7 +44,9 @@ namespace Watchdog
 		volatile Threading::NativeThreadId threadid;
 		spring_time timer;
 		volatile unsigned int numreg;
-        std::shared_ptr<Threading::ThreadControls> ctls;
+#ifndef WIN32
+		std::shared_ptr<Threading::ThreadControls> ctls;
+#endif
 	};
 
 	struct WatchDogThreadSlot {
@@ -128,9 +130,9 @@ namespace Watchdog
 						continue;
 
 #ifdef WIN32
-                    CrashHandler::Stacktrace(registeredThreads[i]->thread, threadNames[i], LOG_LEVEL_WARNING);
+					CrashHandler::Stacktrace(registeredThreads[i]->thread, threadNames[i], LOG_LEVEL_WARNING);
 #else
-                    CrashHandler::Stacktrace(registeredThreads[i]->thread, threadNames[i], LOG_LEVEL_WARNING);
+					CrashHandler::SuspendedStacktrace(registeredThreads[i]->ctls.get(), std::string(threadNames[i]));
 #endif
 				}
 
@@ -142,7 +144,7 @@ namespace Watchdog
 	}
 
 
-    void RegisterThread(WatchdogThreadnum num, bool primary)
+	void RegisterThread(WatchdogThreadnum num, bool primary)
 	{
 		boost::mutex::scoped_lock lock(wdmutex);
 
@@ -182,12 +184,14 @@ namespace Watchdog
 		threadInfo->thread = thread;
 		threadInfo->threadid = threadId;
 		threadInfo->timer = spring_gettime();
-        auto ppThreadCtls = Threading::GetCurrentThreadControls();
-        if (ppThreadCtls != nullptr) {
-            LOG("Registering thread controls for thread [%s]", threadNames[num]);
-            threadInfo->ctls = *ppThreadCtls;
-        }
-        assert(threadInfo->ctls != nullptr);
+#ifndef WIN32
+		auto threadCtls = Threading::GetCurrentThreadControls();
+		assert(threadCtls.get() != nullptr);
+		LOG("Registering thread controls for thread [%s]", threadNames[num]);
+		// copy shared_ptr object, not shared_ptr*
+		threadInfo->ctls = threadCtls;
+		assert(threadInfo->ctls != nullptr);
+#endif
 		++threadInfo->numreg;
 
 		threadSlots[num].primary = primary;
@@ -196,7 +200,7 @@ namespace Watchdog
 	}
 
 
-    void DeregisterThread(WatchdogThreadnum num)
+	void DeregisterThread(WatchdogThreadnum num)
 	{
 		boost::mutex::scoped_lock lock(wdmutex);
 

@@ -334,27 +334,32 @@ namespace Threading {
 
 	}
 
-    std::shared_ptr<ThreadControls>* GetCurrentThreadControls()
+	std::shared_ptr<ThreadControls> GetCurrentThreadControls()
 	{
-        return threadCtls.get();
+		// If there is no object registered, need to return an "empty" shared_ptr
+		if (threadCtls.get() == nullptr) {
+			return std::shared_ptr<ThreadControls> ();
+		}
+		return *(threadCtls.get());
 	}
 
 
-    boost::thread CreateNewThread (boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppCtlsArg)
+	boost::thread CreateNewThread (boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppCtlsReturn)
 	{
-        auto pThreadCtls = new Threading::ThreadControls();
-        auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (pThreadCtls);
-        if (ppCtlsArg != nullptr) {
-            *ppCtlsArg = *ppThreadCtls;
-        }
+		auto pThreadCtls = new Threading::ThreadControls();
+		auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (pThreadCtls);
+		if (ppCtlsReturn != nullptr) {
+			*ppCtlsReturn = *ppThreadCtls;
+		}
 
-        boost::unique_lock<boost::mutex> lock (pThreadCtls->mutSuspend);
+		boost::unique_lock<boost::mutex> lock (pThreadCtls->mutSuspend);
 
-        boost::thread localthread(boost::bind(Threading::ThreadStart, taskFunc, ppThreadCtls));
+		boost::thread localthread(boost::bind(Threading::ThreadStart, taskFunc, ppThreadCtls));
 
-        pThreadCtls->condInitialized.wait(lock);
+		// Wait on condition variable so that we know the thread running and fully initialized before we leave this function.
+		pThreadCtls->condInitialized.wait(lock);
 
-        return localthread;
+		return localthread;
 	}
 
 	void SetMainThread() {
@@ -363,9 +368,11 @@ namespace Threading {
 			// boostMainThreadID = boost::this_thread::get_id();
 			nativeMainThreadID = Threading::GetCurrentThreadId();
 		}
-        auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (new Threading::ThreadControls());
-        SetCurrentThreadControls(ppThreadCtls);
-    }
+#ifndef WIN32
+		auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (new Threading::ThreadControls());
+		SetCurrentThreadControls(ppThreadCtls);
+#endif
+	}
 
 	bool IsMainThread() {
 		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), nativeMainThreadID);
@@ -373,6 +380,7 @@ namespace Threading {
 	bool IsMainThread(NativeThreadId threadID) {
 		return NativeThreadIdsEqual(threadID, Threading::nativeMainThreadID);
 	}
+
 
 
 	void SetGameLoadThread() {

@@ -293,7 +293,7 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 }
 
 
-void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel, Threading::ThreadControls* ctls)
+void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel)
 {
 	Stacktrace(threadName.c_str(), NULL, thread, logLevel);
 }

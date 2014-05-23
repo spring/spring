@@ -1694,18 +1694,20 @@ public:
 
 
 
-class HangThreadExecutor : public IUnsyncedActionExecutor {
+class HangThreadActionExecutor : public IUnsyncedActionExecutor {
 public:
-    HangThreadExecutor() :  IUnsyncedActionExecutor("HangThread","Hangs the thread for 10 seconds") {
-    }
-    bool Execute(const UnsyncedAction& action) const {
-        LOG("Hanging thread ...");
-        if (game) {
-            game->hangThread = true;
-        }
-        return true;
-    }
+	HangThreadActionExecutor() : IUnsyncedActionExecutor("Hang",
+			"Hang the main thread") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		if (game) {
+			LOG("Hanging main thread...");
+			game->hangThread = true;
+		}
+		return true;
+	}
 };
+
 
 
 
@@ -3396,8 +3398,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 #endif // USE_GML
 	AddActionExecutor(new SpeedControlActionExecutor());
 	AddActionExecutor(new GameInfoActionExecutor());
-    AddActionExecutor(new HangThreadExecutor());
-    AddActionExecutor(new HideInterfaceActionExecutor());
+	AddActionExecutor(new HangThreadActionExecutor());
+	AddActionExecutor(new HideInterfaceActionExecutor());
 	AddActionExecutor(new HardwareCursorActionExecutor());
 	AddActionExecutor(new IncreaseViewRadiusActionExecutor());
 	AddActionExecutor(new DecreaseViewRadiusActionExecutor());

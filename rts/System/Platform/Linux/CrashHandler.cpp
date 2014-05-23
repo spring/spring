@@ -61,8 +61,7 @@ struct StackFunction {
 };
 
 struct StackFrame {
-    int                   level;
-    bool                  hidden;
+	int                   level;    // level in the original unwinding (inlined functions share the same level as their "caller")
     void*                 ip;       // instruction pointer from libunwind or backtrace()
     std::string           mangled;  // mangled name retrieved from libunwind (not printed, memoized for debugging)
     std::string           symbol;   // backtrace_symbols output
@@ -71,7 +70,6 @@ struct StackFrame {
     std::list<StackFunction> entries;  // function names and lines (possibly several inlined) retrieved from addr2line
     StackFrame() :
       level(0),
-      hidden(false),
       ip(0),
       addr(0) { }
 };
@@ -246,9 +244,7 @@ static void FindBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 					&mem_start, &binAddr_offset, binPathName);
 
 			if (red == 3) {
-                //line[strlen(line)-1] = 0;
-                //LOG(line);
-                if (binAddr_offset == 0) {
+				if (binAddr_offset == 0) {
 					//-> start of binary's memory space
 					std::string matchingPath = "";
 					// go through all paths of the binaries involved in the stack trace
@@ -334,8 +330,6 @@ static void ExtractSymbols (char** lines, StackTrace& stacktrace) {
 
 static int CommonStringLength(const std::string& str1, const std::string& str2, int* len)
 {
-    assert(len != nullptr);
-    *len = 0;
     int n=0, m = std::min(str1.length(), str2.length());
     while (n < m && str1[n] == str2[n]) { n++; }
     if (len != nullptr) {
@@ -352,60 +346,60 @@ static int CommonStringLength(const std::string& str1, const std::string& str2, 
  */
 static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int logLevel )
 {
-    // Extract important data from backtrace_symbols' output
-    bool containsDriverSo = false; // OpenGL lib -> graphic problem
-    bool containsAIInterfaceSo = false;
-    bool containsSkirmishAISo  = false;
+	// Extract important data from backtrace_symbols' output
+	bool containsDriverSo = false; // OpenGL lib -> graphic problem
+	bool containsAIInterfaceSo = false;
+	bool containsSkirmishAISo  = false;
 
-    LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[1]");
+	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[1]");
 
-    for (auto it = stacktrace.begin(); it != stacktrace.end(); ++it) {
-        // prepare for addr2line()
-        const std::string path    = ExtractPath(it->symbol);
-        const std::string absPath = CreateAbsolutePath(path);
-        it->path = absPath;
-        it->addr = ExtractAddr(it->symbol);
+	for (auto it = stacktrace.begin(); it != stacktrace.end(); ++it) {
+		// prepare for addr2line()
+		const std::string path    = ExtractPath(it->symbol);
+		const std::string absPath = CreateAbsolutePath(path);
+		it->path = absPath;
+		it->addr = ExtractAddr(it->symbol);
 
-        LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "symbol = \"%s\", path = \"%s\", absPath = \"%s\", addr = 0x%lx", it->symbol.c_str(), path.c_str(), absPath.c_str(), it->addr);
+		LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "symbol = \"%s\", path = \"%s\", absPath = \"%s\", addr = 0x%lx", it->symbol.c_str(), path.c_str(), absPath.c_str(), it->addr);
 
-        // check if there are known sources of fail on the stack
-        containsDriverSo = (containsDriverSo || (path.find("libGLcore.so") != std::string::npos));
-        containsDriverSo = (containsDriverSo || (path.find("psb_dri.so") != std::string::npos));
-        containsDriverSo = (containsDriverSo || (path.find("i965_dri.so") != std::string::npos));
-        containsDriverSo = (containsDriverSo || (path.find("fglrx_dri.so") != std::string::npos));
-        if (!containsAIInterfaceSo && (absPath.find("Interfaces") != std::string::npos)) {
-            containsAIInterfaceSo = true;
-        }
-        if (!containsSkirmishAISo && (absPath.find("Skirmish") != std::string::npos)) {
-            containsSkirmishAISo = true;
-        }
-    }
+		// check if there are known sources of fail on the stack
+		containsDriverSo = (containsDriverSo || (path.find("libGLcore.so") != std::string::npos));
+		containsDriverSo = (containsDriverSo || (path.find("psb_dri.so") != std::string::npos));
+		containsDriverSo = (containsDriverSo || (path.find("i965_dri.so") != std::string::npos));
+		containsDriverSo = (containsDriverSo || (path.find("fglrx_dri.so") != std::string::npos));
+		if (!containsAIInterfaceSo && (absPath.find("Interfaces") != std::string::npos)) {
+			containsAIInterfaceSo = true;
+		}
+		if (!containsSkirmishAISo && (absPath.find("Skirmish") != std::string::npos)) {
+			containsSkirmishAISo = true;
+		}
+	}
 
-    LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[2]");
+	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[2]");
 
-    // Linux Graphic drivers are known to fail with moderate OpenGL usage
-    if (containsDriverSo) {
-        LOG_I(logLevel, "This stack trace indicates a problem with your graphic card driver. "
-              "Please try upgrading or downgrading it. "
-              "Specifically recommended is the latest driver, and one that is as old as your graphic card. "
-              "Also try lower graphic details and disabling Lua widgets in spring-settings.\n");
-    }
+	// Linux Graphic drivers are known to fail with moderate OpenGL usage
+	if (containsDriverSo) {
+		LOG_I(logLevel, "This stack trace indicates a problem with your graphic card driver. "
+			  "Please try upgrading or downgrading it. "
+			  "Specifically recommended is the latest driver, and one that is as old as your graphic card. "
+			  "Also try lower graphic details and disabling Lua widgets in spring-settings.\n");
+	}
 
-    // if stack trace contains AI and AI Interface frames,
-    // it is very likely that the problem lies in the AI only
-    if (containsSkirmishAISo) {
-        containsAIInterfaceSo = false;
-    }
-    if (containsAIInterfaceSo) {
-        LOG_I(logLevel, "This stack trace indicates a problem with an AI Interface library.");
-        if (aiCrash) *aiCrash = true;
-    }
-    if (containsSkirmishAISo) {
-        LOG_I(logLevel, "This stack trace indicates a problem with a Skirmish AI library.");
-        if (aiCrash) *aiCrash = true;
-    }
+	// if stack trace contains AI and AI Interface frames,
+	// it is very likely that the problem lies in the AI only
+	if (containsSkirmishAISo) {
+		containsAIInterfaceSo = false;
+	}
+	if (containsAIInterfaceSo) {
+		LOG_I(logLevel, "This stack trace indicates a problem with an AI Interface library.");
+		if (aiCrash) *aiCrash = true;
+	}
+	if (containsSkirmishAISo) {
+		LOG_I(logLevel, "This stack trace indicates a problem with a Skirmish AI library.");
+		if (aiCrash) *aiCrash = true;
+	}
 
-    LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[3]");
+	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[3]");
 
 	// Check if addr2line is available
 	static int addr2line_found = -1;
@@ -421,93 +415,91 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 	}
 	if (!addr2line_found) {
 		LOG_L(L_WARNING, " addr2line not found!");
-        return;
+		return;
 	}
 
-    LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[4]");
+	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[4]");
 
 	// Detect BaseMemoryAddresses of all Lib's found in the stacktrace
 	std::map<std::string,uintptr_t> binPath_baseMemAddr;
-    for (auto it = stacktrace.cbegin(); it != stacktrace.cend(); ++it) {
-        binPath_baseMemAddr[it->path] = 0;
+	for (auto it = stacktrace.cbegin(); it != stacktrace.cend(); it++) {
+		binPath_baseMemAddr[it->path] = 0;
 	}
 	FindBaseMemoryAddresses(binPath_baseMemAddr);
 
-    LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[5]");
+	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[5]");
 
-    // Finally translate it:
-    //   This is nested so that the outer loop covers all the entries for one library -- this means fewer addr2line calls.
-    for (auto it = binPath_baseMemAddr.cbegin(); it != binPath_baseMemAddr.cend(); ++it) {
-        const std::string& modulePath = it->first;
-        //const uintptr_t&   moduleAddr = it->second;
-        const std::string symbolFile = LocateSymbolFile(modulePath);
+	// Finally translate it:
+	//   This is nested so that the outer loop covers all the entries for one library -- this means fewer addr2line calls.
+	for (auto it = binPath_baseMemAddr.cbegin(); it != binPath_baseMemAddr.cend(); it++) {
+		const std::string& modulePath = it->first;
+		//const uintptr_t&   moduleAddr = it->second;
+		const std::string symbolFile = LocateSymbolFile(modulePath);
 
-        LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "modulePath: %s, symbolFile: %s", modulePath.c_str(), symbolFile.c_str());
+		LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "modulePath: %s, symbolFile: %s", modulePath.c_str(), symbolFile.c_str());
 
 		std::ostringstream buf;
-
-        // cmd line:
-        buf << ADDR2LINE << " -i -a -f -C --exe=\"" << symbolFile << "\"";
+		buf << ADDR2LINE << " -i -a -f -C --exe=\"" << symbolFile << "\"";
 
 		// insert requested addresses that should be translated by addr2line
 		std::queue<size_t> indices;
-        int i=0;
-        for (auto fit = stacktrace.cbegin(); fit != stacktrace.cend(); fit++) {
-            if (fit->path == modulePath) {
-                buf << " " << std::hex << fit->addr;
+		int i=0;
+		for (auto fit = stacktrace.cbegin(); fit != stacktrace.cend(); fit++) {
+			if (fit->path == modulePath) {
+				buf << " " << std::hex << fit->addr;
 				indices.push(i);
 			}
-            i++;
+			i++;
 		}
 
 		// execute command addr2line, read stdout and write to log-file
 		buf << " 2>/dev/null"; // hide error output from spring's pipe
-        LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "> %s", buf.str().c_str());
+		LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "> %s", buf.str().c_str());
 		FILE* cmdOut = popen(buf.str().c_str(), "r");
 		if (cmdOut != NULL) {
-            const size_t maxLength = 2048;
-            char line[maxLength];
-            char* res = fgets_addr2line(line, maxLength, cmdOut);
-            while (res != NULL) {
-                i = indices.front();
-                indices.pop();
-                // First scan the address and ensure that it matches the one we were expecting
-                uintptr_t parsedAddr = 0;
-                int matched = sscanf(line, "0x%lx", &parsedAddr);
-                if (matched != 1 || parsedAddr != stacktrace[i].addr) {
-                    LOG_L(L_WARNING, "Mismatched address received from addr2line: 0x%lx != 0x%lx", parsedAddr, stacktrace[i].addr);
-                    break;
-                }
-                res = fgets_addr2line(line, maxLength, cmdOut);
-                while (res != NULL) {
+			const size_t maxLength = 2048;
+			char line[maxLength];
+			char* res = fgets_addr2line(line, maxLength, cmdOut);
+			while (res != NULL) {
+				i = indices.front();
+				indices.pop();
+				// First scan the address and ensure that it matches the one we were expecting
+				uintptr_t parsedAddr = 0;
+				int matched = sscanf(line, "0x%lx", &parsedAddr);
+				if (matched != 1 || parsedAddr != stacktrace[i].addr) {
+					LOG_L(L_WARNING, "Mismatched address received from addr2line: 0x%lx != 0x%lx", parsedAddr, stacktrace[i].addr);
+					break;
+				}
+				res = fgets_addr2line(line, maxLength, cmdOut);
+				while (res != NULL) {
 
-                    if (line[0] == '0' && line[1] == 'x') {
-                        break; // This is the start of a new address
-                    }
+					if (line[0] == '0' && line[1] == 'x') {
+						break; // This is the start of a new address
+					}
 
-                    StackFunction entry;
-                    entry.inLine = true; // marked false later if the last entry
-                    std::string funcname = std::string(line);
-                    entry.funcname  = funcname.substr(0, funcname.rfind(" (discriminator"));
+					StackFunction entry;
+					entry.inLine = true; // marked false later if the last entry
+					std::string funcname = std::string(line);
+					entry.funcname  = funcname.substr(0, funcname.rfind(" (discriminator"));
 
-                    if (fgets_addr2line(line, maxLength, cmdOut) == nullptr) { break; }
-                    entry.fileline = std::string(line);
+					if (fgets_addr2line(line, maxLength, cmdOut) == nullptr) { break; }
+					entry.fileline = std::string(line);
 
-                    stacktrace[i].entries.push_back(entry);
+					stacktrace[i].entries.push_back(entry);
 
-                    res = fgets_addr2line(line, maxLength, cmdOut);
-                }
-                if (!stacktrace[i].entries.empty()) { // Ensure that the last entry in a sequence of results is marked as "not inlined"
-                    stacktrace[i].entries.rbegin()->inLine = false;
-                }
+					res = fgets_addr2line(line, maxLength, cmdOut);
+				}
+				if (!stacktrace[i].entries.empty()) { // Ensure that the last entry in a sequence of results is marked as "not inlined"
+					stacktrace[i].entries.rbegin()->inLine = false;
+				}
 			}
 			pclose(cmdOut);
 		}
-    }
+	}
 
-    LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[6]");
+	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[6]");
 
-    return;
+	return;
 
 }
 
@@ -587,72 +579,80 @@ static sigaction_t& GetSigAction(void (*sigact_handler)(int, siginfo_t*, void*))
 	static sigaction_t sa;
 	memset(&sa, 0, sizeof(sa));
 	sigemptyset(&sa.sa_mask);
-    if (sigact_handler == nullptr) {
-        sa.sa_handler = SIG_DFL;
-    } else {
-        sa.sa_flags |= SA_SIGINFO;
-        sa.sa_sigaction = sigact_handler;
-    }
+	if (sigact_handler == nullptr) {
+		// the default signal handler uses the old sa_handler interface, so just identify this case with sigact_handler == null
+		sa.sa_handler = SIG_DFL;
+	} else {
+		sa.sa_flags |= SA_SIGINFO;
+		sa.sa_sigaction = sigact_handler;
+	}
 	return sa;
 }
 
 
 namespace CrashHandler
 {
-    /**
-     * This is used to obtain the list of symbols using a ucontext_t structure.
-     * So, it is used by both the HaltedStacktrace and the SuspendedStacktrace.
-     * Since this method is pure implementation, it's
-     */
-    int thread_unwind(ucontext_t* uc, void** iparray, StackTrace& stacktrace)
+	/**
+	 * This is used to obtain the list of symbols using a ucontext_t structure.
+	 * So, it is used by both the HaltedStacktrace and the SuspendedStacktrace.
+	 * Since this method is pure implementation, it's
+	 */
+	int thread_unwind(ucontext_t* uc, void** iparray, StackTrace& stacktrace)
 	{
-        assert(iparray != nullptr);
+		assert(iparray != nullptr);
+		assert(&stacktrace != nullptr);
+
 		unw_cursor_t cursor;
-        // Effective ucontext_t. If uc not supplied, use unw_getcontext locally. This is appropriate inside signal handlers.
-        ucontext_t thisctx;
-        if (uc == nullptr) {
-            unw_getcontext(&thisctx);
-            uc = &thisctx;
-        }
-        const int BUFR_SZ = 1000;
-        char procbuffer[BUFR_SZ];
-        stacktrace.clear();
-        stacktrace.reserve(120);
-        /*
-         * This doesn't seem to work, even though the first uc_link value is often non-null.
-        while (uc->uc_link) {
-            uc = uc->uc_link;
-            LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "Dereferencing uc_link");
-        }
-        */
-        int err = unw_init_local(&cursor, uc);
-        if (err) {
-            LOG_L(L_ERROR, "unw_init_local returned %d", err);
-            return 0;
-        }
-        int i=0;
-        while (i < MAX_STACKTRACE_DEPTH && unw_step(&cursor)) {
-            StackFrame frame;
-            unw_word_t ip;
-            unw_word_t offp;
-            unw_get_reg(&cursor, UNW_REG_IP, &ip);
-            frame.ip = reinterpret_cast<void*>(ip);
-            frame.level = i;
-            iparray[i] = frame.ip;
-            if (!unw_get_proc_name(&cursor, procbuffer, BUFR_SZ-1, &offp)) {
-                frame.mangled = std::string(procbuffer);
-            } else {
-                frame.mangled = std::string("UNW_ENOINFO");
-            }
-            stacktrace.push_back(frame);
-            i++;
-        }
-        stacktrace.resize(i);
-        LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "thread_unwind returned %d frames", i);
+		// Effective ucontext_t. If uc not supplied, use unw_getcontext locally. This is appropriate inside signal handlers.
+		ucontext_t thisctx;
+		if (uc == nullptr) {
+			unw_getcontext(&thisctx);
+			uc = &thisctx;
+		}
+		const int BUFR_SZ = 1000;
+		char procbuffer[BUFR_SZ];
+		stacktrace.clear();
+		stacktrace.reserve(120);
+		/*
+		 * Note: documentation seems to indicate that uc_link contains a pointer to a "successor" context
+		 * that is to be resumed after the current one (as you might expect in a signal handler).
+		 * In practice however, the Linux OS seems to re-use the existing context of a thread, and so this approach
+		 * does not work. The uc_link is sometimes non-NULL however, but I do not know what the relation is to the
+		 * target context (uc).
+		 *
+		while (uc->uc_link) {
+			uc = uc->uc_link;
+			LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "Dereferencing uc_link");
+		}
+		*/
+		int err = unw_init_local(&cursor, uc);
+		if (err) {
+			LOG_L(L_ERROR, "unw_init_local returned %d", err);
+			return 0;
+		}
+		int i=0;
+		while (i < MAX_STACKTRACE_DEPTH && unw_step(&cursor)) {
+			StackFrame frame;
+			unw_word_t ip;
+			unw_word_t offp;
+			unw_get_reg(&cursor, UNW_REG_IP, &ip);
+			frame.ip = reinterpret_cast<void*>(ip);
+			frame.level = i;
+			iparray[i] = frame.ip;
+			if (!unw_get_proc_name(&cursor, procbuffer, BUFR_SZ-1, &offp)) {
+				frame.mangled = std::string(procbuffer);
+			} else {
+				frame.mangled = std::string("UNW_ENOINFO");
+			}
+			stacktrace.push_back(frame);
+			i++;
+		}
+		stacktrace.resize(i);
+		LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "thread_unwind returned %d frames", i);
 		return i;
 	}
 
-    static void Stacktrace(bool* aiCrash, pthread_t* hThread = NULL, const char* threadName = NULL, const int logLevel = LOG_LEVEL_ERROR)
+	static void Stacktrace(bool* aiCrash, pthread_t* hThread = NULL, const char* threadName = NULL, const int logLevel = LOG_LEVEL_ERROR)
 	{
 #if !(DEDICATED || UNIT_TEST)
 		Watchdog::ClearTimer();
@@ -668,29 +668,31 @@ namespace CrashHandler
 		bool containedAIInterfaceSo = false;
 		bool containedSkirmishAISo  = false;
 
-        StackTrace stacktrace;
+		StackTrace stacktrace;
 
-        // Get untranslated stacktrace symbols
+		// Get untranslated stacktrace symbols
 		{
 			// process and analyse the raw stack trace
-            char** lines;
-            void* iparray[MAX_STACKTRACE_DEPTH];
-            int numLines = -1;
+			char** lines;
+			void* iparray[MAX_STACKTRACE_DEPTH];
+			int numLines = -1;
 			if (hThread && Threading::GetCurrentThread() != *hThread) {
 				//Threading::ThreadControls* ctls = GetThreadControls(*hThread);
-                // If we don't have a ThreadControls object for this thread, then we can still get an approximate trace from the foreign thread as it is running...
-                LOG_I(logLevel, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
-                LOG_CLEANUP();
-                numLines = thread_backtrace(*hThread, iparray, MAX_STACKTRACE_DEPTH);    // stack pointers
-            } else {
-                numLines = backtrace(iparray, MAX_STACKTRACE_DEPTH);
+				// If we don't have a ThreadControls object for this thread, then we can still get an approximate trace from the foreign thread as it is running...
+				LOG_I(logLevel, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
+				LOG_CLEANUP();
+				numLines = thread_backtrace(*hThread, iparray, MAX_STACKTRACE_DEPTH);    // stack pointers
+			} else {
+				numLines = backtrace(iparray, MAX_STACKTRACE_DEPTH);
 			}
-            if(numLines > MAX_STACKTRACE_DEPTH) {
-                LOG_L(L_ERROR, "thread_backtrace or backtrace returned more lines than we allotted space for!");
-            }
-            lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
+			if(numLines > MAX_STACKTRACE_DEPTH) {
+				LOG_L(L_ERROR, "thread_backtrace or backtrace returned more lines than we allotted space for!");
+			}
+			lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
 
-            ExtractSymbols(lines, stacktrace);
+			ExtractSymbols(lines, stacktrace);
+
+			free(lines);
 		}
 
 		if (stacktrace.empty()) {
@@ -699,16 +701,16 @@ namespace CrashHandler
 		}
 
 		// Translate it
-        TranslateStackTrace(nullptr, stacktrace, logLevel);
+		TranslateStackTrace(nullptr, stacktrace, logLevel);
 
-        LogStacktrace(logLevel, stacktrace);
-    }
+		LogStacktrace(logLevel, stacktrace);
+	}
 
-    /**
-     * This is the "classic" stack trace call that has been used until at least 96.0.
-     * This should be phased out -- the function call admits many combinations of optional parameters.
-     */
-    void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel)
+	/**
+	 * This is the "classic" stack trace call that has been used until at least 96.0.
+	 * This should be phased out -- the function call admits many combinations of optional parameters.
+	 */
+	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel)
 	{
 		//TODO Our custom thread_backtrace() only works on the mainthread.
 		//     Use to gdb's libthread_db to get the stacktraces of all threads.
@@ -717,10 +719,11 @@ namespace CrashHandler
 			LOG_I(logLevel, "  No Stacktraces for non-MainThread.");
 			return;
 		}
-        Stacktrace(NULL, &thread, threadName.c_str(), logLevel);
+		Stacktrace(NULL, &thread, threadName.c_str(), logLevel);
 	}
 
-    /**
+	/**
+	 *
      * This entry point is tailored for the Watchdog module.
      * Since the thread to be traced may be running, it requires a ThreadControls object in order to suspend/resume the thread.
      * @brief RemoteStacktrace
@@ -751,9 +754,7 @@ namespace CrashHandler
             void* iparray[MAX_STACKTRACE_DEPTH];
             int numLines = -1;
 
-            ctls->Suspend();
             numLines = thread_unwind(&ctls->ucontext, iparray, stacktrace);
-            ctls->Resume();
 
             LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "SuspendedStacktrace[2]");
 
@@ -781,6 +782,7 @@ namespace CrashHandler
         LogStacktrace(LOG_LEVEL_WARNING, stacktrace);
 
     }
+
 
     /**
      * This stack trace is tailored for the SIGSEGV / SIGILL / SIGFPE etc signal handler.
@@ -840,7 +842,7 @@ namespace CrashHandler
 		LOG_CLEANUP();
 	}
 
-    void HandleSignal(int signal, siginfo_t* siginfo, void* pctx)
+	void HandleSignal(int signal, siginfo_t* siginfo, void* pctx)
 	{
 		if (signal == SIGINT) {
 			// ctrl+c = kill
@@ -859,15 +861,15 @@ namespace CrashHandler
 			return;
 		}
 
-        // Turn off signal handling for this signal temporarily in order to disable recursive events (e.g. SIGSEGV)
-        reentrances++;
+		// Turn off signal handling for this signal temporarily in order to disable recursive events (e.g. SIGSEGV)
+		reentrances++;
 
-        if (reentrances >= 2) {
-            sigaction_t& sa = GetSigAction(NULL);
-            sigaction(signal, &sa, NULL);
-        }
+		if (reentrances >= 2) {
+			sigaction_t& sa = GetSigAction(NULL);
+			sigaction(signal, &sa, NULL);
+		}
 
-        ucontext_t* uctx = reinterpret_cast<ucontext_t*> (pctx);
+		ucontext_t* uctx = reinterpret_cast<ucontext_t*> (pctx);
 
 		logSinkHandler.SetSinking(false);
 
@@ -910,7 +912,7 @@ namespace CrashHandler
 
 		// print stacktrace
 		PrepareStacktrace();
-        HaltedStacktrace(error, siginfo, uctx);
+		HaltedStacktrace(error, siginfo, uctx);
 		CleanupStacktrace();
 
 		// try to clean up
@@ -952,6 +954,7 @@ namespace CrashHandler
 		}
 
         // Re-enable signal handling for this signal
+		// FIXME: reentrances should be implemented using boost::thread_specific_ptr
         if (reentrances >= 2) {
             sigaction_t& sa = GetSigAction(&HandleSignal);
             sigaction(signal, &sa, NULL);
@@ -997,8 +1000,8 @@ namespace CrashHandler
 	}
 
 	void Remove() {
-        //const sigaction_t& sa = GetSigAction(SIG_DFL);
-        const sigaction_t& sa = GetSigAction(nullptr);
+		//const sigaction_t& sa = GetSigAction(SIG_DFL);
+		const sigaction_t& sa = GetSigAction(nullptr);
 
 		sigaction(SIGSEGV, &sa, NULL); // segmentation fault
 		sigaction(SIGILL,  &sa, NULL); // illegal instruction
