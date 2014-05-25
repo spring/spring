@@ -21,6 +21,7 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/Players/PlayerHandler.h"
+#include "Game/Players/Player.h"
 #include "Net/GameServer.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
@@ -116,6 +117,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetAlly);
 	REGISTER_LUA_CFUNC(KillTeam);
+	REGISTER_LUA_CFUNC(AssignPlayerToTeam);
 	REGISTER_LUA_CFUNC(GameOver);
 
 	REGISTER_LUA_CFUNC(AddTeamResource);
@@ -600,6 +602,16 @@ int LuaSyncedCtrl::KillTeam(lua_State* L)
 	}
 	team->Died();
 	return 0;
+}
+
+int LuaSyncedCtrl::AssignPlayerToTeam(lua_State* L)
+{
+    const int playerID = luaL_checkint(L,1);
+    const int teamID = luaL_checkint(L,2);
+    if (playerHandler->IsValidPlayer(playerID) && teamHandler->IsValidTeam(teamID)) {
+        teamHandler->Team(teamID)->AddPlayer(playerID);
+    }
+    return 0;
 }
 
 
@@ -3932,6 +3944,7 @@ int LuaSyncedCtrl::RemoveUnitCmdDesc(lua_State* L)
 
 	return 0;
 }
+
 
 /******************************************************************************/
 /******************************************************************************/
