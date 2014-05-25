@@ -321,12 +321,12 @@ namespace Threading {
 	}
 
 	ThreadControls::ThreadControls () :
+		handle(0),
 		running(false)
 	{
 #ifndef WIN32
 		memset(&ucontext, 0, sizeof(ucontext_t));
 #endif
-		mutSuspend;
 	}
 
 	ThreadControls::~ThreadControls()
@@ -354,11 +354,12 @@ namespace Threading {
 
 		boost::unique_lock<boost::mutex> lock (pThreadCtls->mutSuspend);
 
+#ifndef WIN32
 		boost::thread localthread(boost::bind(Threading::ThreadStart, taskFunc, ppThreadCtls));
-
-		// Wait on condition variable so that we know the thread running and fully initialized before we leave this function.
-		pThreadCtls->condInitialized.wait(lock);
-
+		pThreadCtls->condInitialized.wait(lock); 		// Wait so that we know the thread is running and fully initialized before returning.
+#else
+		boost::thread localthread(taskFunc);
+#endif
 		return localthread;
 	}
 
@@ -389,6 +390,13 @@ namespace Threading {
 			// boostGameLoadThreadID = boost::this_thread::get_id();
 			nativeGameLoadThreadID = Threading::GetCurrentThreadId();
 		}
+#ifndef WIN32
+		auto pThreadCtls = GetCurrentThreadControls();
+		if (pThreadCtls.get() == nullptr) { // Loading is sometimes done from the main thread, but this function is still called in 96.0.
+			auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (new Threading::ThreadControls());
+			SetCurrentThreadControls(ppThreadCtls);
+		}
+#endif
 	}
 
 	bool IsGameLoadThread() {

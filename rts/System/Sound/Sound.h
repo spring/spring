@@ -11,7 +11,6 @@
 #include <vector>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/thread/recursive_mutex.hpp>
-#include <boost/thread.hpp>
 
 #include "System/float3.h"
 
@@ -22,6 +21,10 @@ class SoundBuffer;
 class SoundItem;
 struct ALCdevice_struct;
 typedef struct ALCdevice_struct ALCdevice;
+
+namespace boost {
+	class thread;
+};
 
 
 /// Default sound system implementation (OpenAL)
@@ -91,7 +94,7 @@ private:
 	soundItemDef defaultItem;
 	soundItemDefMap soundItemDefs;
 
-	boost::thread soundThread;
+	boost::thread* soundThread;
 
 	volatile bool soundThreadQuit;
 };

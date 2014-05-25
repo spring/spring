@@ -62,16 +62,16 @@ struct StackFunction {
 
 struct StackFrame {
 	int                   level;    // level in the original unwinding (inlined functions share the same level as their "caller")
-    void*                 ip;       // instruction pointer from libunwind or backtrace()
-    std::string           mangled;  // mangled name retrieved from libunwind (not printed, memoized for debugging)
-    std::string           symbol;   // backtrace_symbols output
-    uintptr_t             addr;     // translated address
-    std::string           path;     // translated library or module path
-    std::list<StackFunction> entries;  // function names and lines (possibly several inlined) retrieved from addr2line
-    StackFrame() :
-      level(0),
-      ip(0),
-      addr(0) { }
+	void*                 ip;       // instruction pointer from libunwind or backtrace()
+	std::string           mangled;  // mangled name retrieved from libunwind (not printed, memoized for debugging)
+	std::string           symbol;   // backtrace_symbols output
+	uintptr_t             addr;     // translated address
+	std::string           path;     // translated library or module path
+	std::list<StackFunction> entries;  // function names and lines (possibly several inlined) retrieved from addr2line
+	StackFrame() :
+		level(0),
+		ip(0),
+		addr(0) { }
 };
 
 typedef std::vector<StackFrame> StackTrace;
@@ -664,10 +664,6 @@ namespace CrashHandler
 			LOG_I(logLevel, "Stacktrace for Spring %s:", (SpringVersion::GetFull()).c_str());
 		}
 
-		bool containsDriverSo = false; // OpenGL lib -> graphic problem
-		bool containedAIInterfaceSo = false;
-		bool containedSkirmishAISo  = false;
-
 		StackTrace stacktrace;
 
 		// Get untranslated stacktrace symbols
@@ -740,10 +736,6 @@ namespace CrashHandler
         LOG_L(L_WARNING, "Suspended-thread Stacktrace (%s) for Spring %s:", threadName.c_str(), (SpringVersion::GetFull()).c_str());
 
         LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "SuspendedStacktrace[1]");
-
-        bool containsDriverSo = false; // OpenGL lib -> graphic problem
-        bool containedAIInterfaceSo = false;
-        bool containedSkirmishAISo  = false;
 
         StackTrace stacktrace;
 

@@ -217,7 +217,6 @@ public:
 
 	CInfoConsole* infoConsole;
 	CConsoleHistory* consoleHistory;
-	bool hangThread;
 
 private:
 	CWorldDrawer* worldDrawer;

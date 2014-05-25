@@ -57,7 +57,7 @@ static std::map<std::string, int> GetEnabledSections() {
 	#if defined(DEBUG)
 	// unitsync logging in debug mode always on
 	// configHandler cannot be accessed here in unitsync, as it may not exist.
-	enabledSections += "unitsync:20,ArchiveScanner:20,";
+	enabledSections += "unitsync,ArchiveScanner,";
 	#endif
 #else
 	#if defined(DEDICATED)

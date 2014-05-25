@@ -26,8 +26,8 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/myMath.h"
 #include "System/Util.h"
-#include "System/Platform/Watchdog.h"
 #include "System/Platform/Threading.h"
+#include "System/Platform/Watchdog.h"
 
 #include "System/float3.h"
 
@@ -47,6 +47,7 @@ boost::recursive_mutex soundMutex;
 CSound::CSound()
 	: myPos(ZeroVector)
 	, prevVelocity(ZeroVector)
+	, soundThread(NULL)
 	, soundThreadQuit(false)
 {
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
@@ -73,7 +74,8 @@ CSound::CSound()
 		LOG_L(L_WARNING, "MaxSounds set to 0, sound is disabled");
 	} else {
 		//soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
-		soundThread = Threading::CreateNewThread(boost::bind(&CSound::StartThread, this, maxSounds));
+		soundThread = new boost::thread();
+		*soundThread = Threading::CreateNewThread(boost::bind(&CSound::StartThread, this, maxSounds));
 	}
 
 	configHandler->NotifyOnChange(this);
@@ -83,20 +85,13 @@ CSound::~CSound()
 {
 	soundThreadQuit = true;
 
-	LOG_L(L_INFO, "[%s][1] soundThread=%p", __FUNCTION__, &soundThread);
+	LOG_L(L_INFO, "[%s][1] soundThread=%p", __FUNCTION__, soundThread);
 
-	/*
-	 *
-	 * soundThread is now an object rather than pointer-to-object
-	 *
-	 *
 	if (soundThread != NULL) {
 		soundThread->join();
 		delete soundThread;
 		soundThread = NULL;
 	}
-	*/
-	soundThread.join();
 
 	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
 

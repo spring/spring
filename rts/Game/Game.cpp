@@ -150,9 +150,6 @@
 #include "System/Net/PackPacket.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Watchdog.h"
-#include "System/Platform/Threading.h"
-#include "System/Platform/CrashHandler.h"
-#include "System/Platform/errorhandler.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/DumpState.h"
@@ -162,9 +159,6 @@
 
 #include <boost/cstdint.hpp>
 #include "lib/lua/include/LuaUser.h"
-#include <boost/thread.hpp>
-#include <thread>
-
 
 #undef CreateDirectory
 
@@ -361,7 +355,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, worldDrawer(NULL)
 	, finishedLoading(false)
 	, gameOver(false)
-	, hangThread(false)
 {
 	game = this;
 
@@ -998,11 +991,6 @@ bool CGame::Update()
 		}
 	}
 	LEAVE_SYNCED_CODE();
-
-	if (hangThread) {
-		boost::this_thread::sleep_for(boost::chrono::seconds(10));
-		hangThread = false;
-	}
 
 	//TODO move this to ::Draw()?
 	if (gs->frameNum == 0 || gs->paused)
