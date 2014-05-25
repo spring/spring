@@ -20,11 +20,6 @@
 	_UTIL_CONCAT_SUB(start, end)
 
 
-/**
- * Abbreviation that facilitates certain diagnostics
- */
-#define SYMBOL_PAIR(x) (#x), (x)
-
 
 #define DO_ONCE(func) \
 	struct do_once##func { do_once##func() {func();} }; static do_once##func do_once_var##func;
