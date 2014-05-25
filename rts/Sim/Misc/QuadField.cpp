@@ -402,7 +402,7 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 		float xn, zn;
 		bool keepgoing = true;
 
-		for (int i = 0; i < NUM_TEMP_QUADS && keepgoing; i++) {
+		for (unsigned int i = 0; i < tempQuads.size() && keepgoing; i++) {
 			*endQuad = ((int)(zp * invQuadSizeZ) * numQuadsX) + (int)(xp * invQuadSizeX);
 			++endQuad;
 

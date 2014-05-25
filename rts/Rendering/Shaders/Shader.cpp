@@ -176,12 +176,11 @@ namespace Shader {
 			"#line 1\n",
 			sourceStr.c_str()
 		};
-		const std::vector<GLint> lengths(sources.size(), -1);
 
 		if (objID == 0)
 			objID = glCreateShader(type);
 
-		glShaderSource(objID, sources.size(), &sources[0], &lengths[0]);
+		glShaderSource(objID, sources.size(), &sources[0], NULL);
 		glCompileShader(objID);
 
 		valid = glslIsValid(objID);

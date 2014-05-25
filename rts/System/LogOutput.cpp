@@ -85,7 +85,11 @@ static std::map<std::string, int> GetEnabledSections() {
 	enabledSections = StringToLower(enabledSections);
 	enabledSections = StringStrip(enabledSections, " \t\n\r");
 
-	// <enabledSections> always starts with a ','
+	// make the last "section:level" substring findable
+	if (!enabledSections.empty() && enabledSections.back() != ',')
+		enabledSections += ",";
+
+	// n=1 because <enabledSections> always starts with a ',' (if non-empty)
 	for (size_t n = 1; n < enabledSections.size(); ) {
 		const size_t k = enabledSections.find(",", n);
 
@@ -171,6 +175,11 @@ static void InitializeLogSections()
 
 		// find the nearest lower known log-level (in descending order)
 		const int logLevel = log_util_getNearestLevel(sectionLevel);
+
+		// levels can't go lower than this
+		if (logLevel < 0)
+			continue;
+
 		log_filter_section_setMinLevel(*si, logLevel);
 
 		enabledLogSectionsStr << ((numEnabledSections > 0)? ", ": "");
@@ -263,17 +272,17 @@ void CLogOutput::Initialize()
 void CLogOutput::LogSystemInfo()
 {
 	LOG("Spring %s", SpringVersion::GetFull().c_str());
-	LOG("Build date/time: %s", SpringVersion::GetBuildTime().c_str());
-	LOG("Build environment: %s", SpringVersion::GetBuildEnvironment().c_str());
-	LOG("Compiler: %s", SpringVersion::GetCompiler().c_str());
-	LOG("OS: %s", Platform::GetOS().c_str());
+	LOG("Build Date & Time: %s", SpringVersion::GetBuildTime().c_str());
+	LOG("Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
+	LOG("Compiler Version:  %s", SpringVersion::GetCompiler().c_str());
+	LOG("Operating System:  %s", Platform::GetOS().c_str());
 
 	if (Platform::Is64Bit()) {
-		LOG("OS: 64bit native mode");
+		LOG("\trunning in 64-bit native mode");
 	} else if (Platform::Is32BitEmulation()) {
-		LOG("OS: emulated 32bit mode");
+		LOG("\trunning in emulated 32-bit mode");
 	} else {
-		LOG("OS: 32bit native mode");
+		LOG("\trunning in 32-bit native mode");
 	}
 }
 
