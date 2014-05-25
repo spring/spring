@@ -25,6 +25,7 @@ class LuaSyncedCtrl
 		// all LuaHandleSynced
 		static int SetAlly(lua_State* L);
 		static int KillTeam(lua_State* L);
+		static int AssignPlayerToTeam(lua_State* L);
 		static int GameOver(lua_State* L);
 
 		static int AddTeamResource(lua_State* L);
