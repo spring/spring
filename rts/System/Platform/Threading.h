@@ -17,6 +17,8 @@
 #include <boost/thread.hpp>
 #include <boost/cstdint.hpp>
 
+#include <semaphore.h>
+
 
 class CGameController;
 
@@ -75,11 +77,12 @@ namespace Threading {
 		SuspendResult Suspend();
 		SuspendResult Resume();
 
-		boost::condition_variable condInitialized;
 		NativeThreadHandle      handle;
 		bool                    running;
 	#ifndef WIN32
-		boost::mutex            mutSuspend;
+		// a mutex wouldn't let us count the waiters, which we need to do before returning from suspend()
+		//boost::mutex            mutSuspend;
+		sem_t                   semSuspend;
 		ucontext_t              ucontext;
 	#endif
 

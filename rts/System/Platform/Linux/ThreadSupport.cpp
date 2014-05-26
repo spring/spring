@@ -6,6 +6,8 @@
 #include "System/Platform/Threading.h"
 #include <iostream>
 
+#include <semaphore.h>
+
 namespace Threading {
 
 void ThreadSIGUSR1Handler (int signum, siginfo_t* info, void* pCtx)
@@ -28,11 +30,17 @@ void ThreadSIGUSR1Handler (int signum, siginfo_t* info, void* pCtx)
 
 	LOG_SL("LinuxCrashHandler", L_DEBUG, "ThreadSIGUSR1Handler[2]");
 
-	// Try to acquire the suspend/resume mutex; this will block the signal handler and the corresponding thread.
+	// Wait on the semaphore. This should block the thread.
 	{
-		pThreadCtls->mutSuspend.lock();
+		int semCnt = 0;
+		sem_getvalue(&pThreadCtls->semSuspend, &semCnt);
+		assert(semCnt == 0);
 
-		pThreadCtls->mutSuspend.unlock();
+		//pThreadCtls->mutSuspend.lock();
+		sem_wait(&pThreadCtls->semSuspend);
+		//pThreadCtls->mutSuspend.unlock();
+
+		// No need to unlock or post .. the resume function does this for us.
 	}
 
 	LOG_SL("LinuxCrashHandler", L_DEBUG, "ThreadSIGUSR1Handler[3]");
@@ -48,7 +56,7 @@ void SetCurrentThreadControls(std::shared_ptr<ThreadControls> * ppThreadCtls)
 	auto pThreadCtls = ppThreadCtls->get();
 	assert(pThreadCtls != nullptr);
 
-	if (threadCtls.get() != nullptr) { // Generally, you only need to set this once per thread. The shared pointer object is deleted at the thread's end by the TLS framework.
+	if (threadCtls.get() != nullptr) {
 		LOG_L(L_WARNING, "Setting a ThreadControls object on a thread that already has such an object registered.");
 		auto oldPtr = threadCtls.get();
 		threadCtls.reset();
@@ -93,30 +101,29 @@ void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadContro
 
 	// Lock the thread object so that users can't suspend/resume yet.
 	{
-		pThreadCtls->mutSuspend.lock();
-		pThreadCtls->running = true;
-
 		// Install the SIGUSR1 handler:
 		SetCurrentThreadControls(ppThreadCtls);
+
+		//pThreadCtls->mutSuspend.lock();
+		sem_post(&pThreadCtls->semSuspend);
+		pThreadCtls->running = true;
 
 		LOG_I(LOG_LEVEL_DEBUG, "ThreadStart(): New thread's handle is %.4x", pThreadCtls->handle);
 
 		// We are fully initialized, so notify the condition variable. The thread's parent will unblock in whatever function created this thread.
-		pThreadCtls->condInitialized.notify_all();
+		//pThreadCtls->condInitialized.notify_all();
 
 		// Ok, the thread should be ready to run its task now, so unlock the suspend mutex!
-		pThreadCtls->mutSuspend.unlock();
+		//pThreadCtls->mutSuspend.unlock();
 
 		// Run the task function...
 		taskFunc();
 	}
 
 	// Finish up: change the thread's running state to false.
-	{
-		pThreadCtls->mutSuspend.lock();
-		pThreadCtls->running = false;
-		pThreadCtls->mutSuspend.unlock();
-	}
+	//pThreadCtls->mutSuspend.lock();
+	pThreadCtls->running = false;
+	//pThreadCtls->mutSuspend.unlock();
 
 }
 
@@ -124,14 +131,26 @@ void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadContro
 SuspendResult ThreadControls::Suspend ()
 {
 	int err=0;
+	int semCnt = 0;
 
-	mutSuspend.lock();
+	err = sem_getvalue(&semSuspend, &semCnt);
+	if (err) {
+		LOG_L(L_ERROR, "Could not get suspend/resume semaphore value, error code = %d", err);
+		return Threading::THREADERR_MISC;
+	}
+	assert(semCnt == 1);
 
 	// Return an error if the running flag is false.
 	if (!running) {
-		LOG("Weird, thread's running flag is set to false. Refusing to suspend using pthread_kill.");
-		mutSuspend.unlock();
+		LOG_L(L_ERROR, "Cannot suspend if a thread's running flag is set to false. Refusing to suspend using pthread_kill.");
 		return Threading::THREADERR_NOT_RUNNING;
+	}
+
+	//mutSuspend.lock();
+	err = sem_wait(&semSuspend);
+	if (err) {
+		LOG_L(L_ERROR, "Error while trying to decrement the suspend/resume semaphore");
+		return Threading::THREADERR_MISC;
 	}
 
 	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "Sending SIGUSR1 to 0x%x", handle);
@@ -144,13 +163,29 @@ SuspendResult ThreadControls::Suspend ()
 
 	// TODO: Before leaving this function, we need some kind of guarantee that the thread has stopped,
 	//       otherwise the signal may not be delivered to it before we return and keep working in this thread.
+	// spinwait for the semaphore count to decrement one more time
+	do {
+		err = sem_getvalue(&semSuspend, &semCnt);
+		if (err) {
+			LOG_L(L_ERROR, "Error while waiting for remote thread to suspend on semaphore. Err code = %d", err);
+			return Threading::THREADERR_MISC;
+		}
+	} while (semCnt != -1);
+
 
 	return Threading::THREADERR_NONE;
 }
 
 SuspendResult ThreadControls::Resume ()
 {
-	mutSuspend.unlock();
+	//mutSuspend.unlock();
+	int suspendResumeSemaphoreCount = 0;
+	sem_getvalue(&semSuspend, &suspendResumeSemaphoreCount);
+	assert(suspendResumeSemaphoreCount == -1);
+
+	// twice: once for us and once for the signal handler that was suspended.
+	sem_post(&semSuspend);
+	sem_post(&semSuspend);
 
 	return Threading::THREADERR_NONE;
 }
