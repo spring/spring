@@ -37,10 +37,12 @@ IF    (UNIX)
 	FIND_PACKAGE_STATIC(X11 REQUIRED)
 	LIST(APPEND engineLibraries ${X11_Xcursor_LIB} ${X11_X11_LIB})
 
-        FIND_PACKAGE(Libunwind)
+        FIND_PACKAGE(Libunwind REQUIRED)
         IF (LIBUNWIND_FOUND)
           MESSAGE(STATUS "Found libunwind libraries at ${LIBUNWIND_LIBRARIES}")
           LIST(APPEND engineLibraries ${LIBUNWIND_LIBRARIES})
+        ELSE (LIBUNWIND_FOUND)
+          MESSAGE(SEND_ERROR "Could not find libunwind libraries!")
         ENDIF (LIBUNWIND_FOUND)
 	IF    (PREFER_STATIC_LIBS)
 		# dependencies of X11/XCursor

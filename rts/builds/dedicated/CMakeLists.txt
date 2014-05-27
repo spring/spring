@@ -43,7 +43,7 @@ IF    (UNIX AND NOT MINGW)
 ENDIF (UNIX AND NOT MINGW)
 
 IF    (UNIX)
-        FIND_PACKAGE(Libunwind)
+        FIND_PACKAGE(Libunwind REQUIRED)
         LIST(APPEND engineLibraries ${LIBUNWIND_LIBRARIES})
 ENDIF (UNIX)
 
@@ -78,10 +78,12 @@ IF	(UNIX)
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/thread_backtrace.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp)
-        FIND_PACKAGE(Libunwind)
+        FIND_PACKAGE(Libunwind REQUIRED)
         IF (LIBUNWIND_FOUND)
           MESSAGE(STATUS "Found libunwind libraries at ${LIBUNWIND_LIBRARIES}")
           LIST(APPEND engineDedicatedLibraries ${LIBUNWIND_LIBRARIES})
+        ELSE (LIBUNWIND_FOUND)
+          MESSAGE(SEND_ERROR "Could not find libunwind libraries!")
         ENDIF (LIBUNWIND_FOUND)
 
 ELSEIF	(WIN32)
