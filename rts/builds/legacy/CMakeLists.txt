@@ -92,7 +92,6 @@ if   (MSVC)
 endif(MSVC)
 
 ### Build the executable
-message(STATUS "Engine libraries are ${engineLibraries}")
 ADD_EXECUTABLE(engine-legacy ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(engine-legacy ${engineLibraries})
 
