@@ -88,6 +88,17 @@ if    (USE_TCMALLOC AND TCMALLOC_LIBRARY)
 endif (USE_TCMALLOC AND TCMALLOC_LIBRARY)
 
 
+if(UNIX)
+	FIND_PACKAGE_STATIC(Libunwind REQUIRED)
+	LIST(APPEND engineCommonLibraries ${LIBUNWIND_LIBRARIES})
+	if(LIBUNWIND_FOUND)
+		message(STATUS "Found libunwind libraries at ${LIBUNWIND_LIBRARIES}")
+	else()
+		message(FATAL_ERROR "Couldn't find libunwind")
+	endif()
+endif()
+
+
 
 ### Assemble engine sources
 Add_Subdirectory(Game)

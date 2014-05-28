@@ -42,12 +42,6 @@ IF    (UNIX AND NOT MINGW)
 	ENDIF(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
 ENDIF (UNIX AND NOT MINGW)
 
-IF    (UNIX)
-        FIND_PACKAGE(Libunwind REQUIRED)
-        LIST(APPEND engineLibraries ${LIBUNWIND_LIBRARIES})
-ENDIF (UNIX)
-
-
 IF    (MINGW OR APPLE)
 	# Windows:
 	# We still need these header files,
@@ -78,14 +72,6 @@ IF	(UNIX)
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/thread_backtrace.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp)
-        FIND_PACKAGE(Libunwind REQUIRED)
-        IF (LIBUNWIND_FOUND)
-          MESSAGE(STATUS "Found libunwind libraries at ${LIBUNWIND_LIBRARIES}")
-          LIST(APPEND engineDedicatedLibraries ${LIBUNWIND_LIBRARIES})
-        ELSE (LIBUNWIND_FOUND)
-          MESSAGE(SEND_ERROR "Could not find libunwind libraries!")
-        ENDIF (LIBUNWIND_FOUND)
-
 ELSEIF	(WIN32)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/seh.cpp
@@ -141,7 +127,6 @@ SET(engineDedicatedSources
 	${system_files}
 	${sources_engine_NetServer}
 	${sources_engine_System_Log}
-        ${sources_engine_System_Platform_Linux}
 	${ENGINE_SRC_ROOT_DIR}/Game/ClientSetup.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/GameSetup.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/GameData.cpp
