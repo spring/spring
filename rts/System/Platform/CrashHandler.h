@@ -15,6 +15,20 @@ namespace CrashHandler {
 	void PrepareStacktrace(const int logLevel = LOG_LEVEL_ERROR);
 	void CleanupStacktrace(const int logLevel = LOG_LEVEL_ERROR);
 
+#ifndef WIN32
+	/*
+	 * MajBoredom feature branch comment:
+	 *
+	 * The following method breaks the Stacktrace() interface, but it is unavoidable since we need to provide the
+	 *   ucontext_t parameter to thread_unwind (and hence to libunwind) in order to work with the foreign thread.
+	 * The ucontext_t structure is embeded within Threading::ThreadControls under Linux.
+	 *
+	 * Imho this is a better solution than adding yet another optional parameter to the Stacktrace interface because
+	 *   the parameter is specific to the needs of one platform.
+	 */
+	void SuspendedStacktrace(Threading::ThreadControls* ctls, const std::string& threadName);
+#endif
+
 	void OutputStacktrace();
 };
 
