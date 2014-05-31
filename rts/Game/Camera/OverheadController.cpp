@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <boost/cstdint.hpp>
 
 #include "OverheadController.h"
@@ -35,10 +35,10 @@ COverheadController::COverheadController()
 	enabled = configHandler->GetBool("OverheadEnabled");
 	fov = configHandler->GetFloat("OverheadFOV");
 
-	if (ground && globalRendering) {
+	if (globalRendering) {
 		// make whole map visible
 		const float h = std::max(pos.x / globalRendering->aspectRatio, pos.z);
-		height = ground->GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
+		height = CGround::GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
 	}
 
 	maxHeight = 9.5f * std::max(gs->mapx, gs->mapy);
@@ -66,8 +66,8 @@ void COverheadController::MouseMove(float3 move)
 	}
 	move *= 100 * middleClickScrollSpeed;
 
-	pos.x += move.x * pixelSize * (1 + keyInput->GetKeyState(SDLK_LSHIFT) * 3) * scrollSpeed;
-	pos.z += move.y * pixelSize * (1 + keyInput->GetKeyState(SDLK_LSHIFT) * 3) * scrollSpeed;
+	pos.x += move.x * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed;
+	pos.z += move.y * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed;
 	UpdateVectors();
 }
 
@@ -84,14 +84,14 @@ void COverheadController::MouseWheelMove(float move)
 
 	camHandler->CameraTransition(0.05f);
 
-	const float shiftSpeed = (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3.0f : 1.0f);
+	const float shiftSpeed = (KeyInput::GetKeyModState(KMOD_SHIFT) ? 3.0f : 1.0f);
 	const float altZoomDist = height * move * 0.007f * shiftSpeed;
 	
 	// tilt the camera if LCTRL is pressed
 	//
 	// otherwise holding down LALT uses 'instant-zoom'
 	// from here to the end of the function (smoothed)
-	if (keyInput->IsKeyPressed(SDLK_LCTRL)) {
+	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
 		zscale *= (1.0f + (0.01f * move * tiltSpeed * shiftSpeed));
 		zscale = Clamp(zscale, 0.05f, 10.0f);
 	} else {
@@ -103,13 +103,13 @@ void COverheadController::MouseWheelMove(float move)
 			if ((height - dif) < 60.0f) {
 				dif = height - 60.0f;
 			}
-			if (keyInput->IsKeyPressed(SDLK_LALT)) {
+			if (KeyInput::GetKeyModState(KMOD_ALT)) {
 				// instazoom in to standard view
 				dif = (height - oldAltHeight) / mouse->dir.y * dir.y;
 			}
 
 			float3 wantedPos = cpos + mouse->dir * dif;
-			float newHeight = ground->LineGroundCol(wantedPos, wantedPos + dir * 15000, false);
+			float newHeight = CGround::LineGroundCol(wantedPos, wantedPos + dir * 15000, false);
 
 			if (newHeight < 0.0f) {
 				newHeight = height * (1.0f + move * 0.007f * shiftSpeed);
@@ -123,7 +123,7 @@ void COverheadController::MouseWheelMove(float move)
 			}
 		} else {
 			// ZOOM OUT from mid screen
-			if (keyInput->IsKeyPressed(SDLK_LALT)) {
+			if (KeyInput::GetKeyModState(KMOD_ALT)) {
 				// instazoom out to maximum height
 				if (height < maxHeight*0.5f && changeAltHeight) {
 					oldAltHeight = height;
@@ -138,7 +138,7 @@ void COverheadController::MouseWheelMove(float move)
 		}
 
 		// instant-zoom: turn on the smooth transition and reset the camera tilt
-		if (keyInput->IsKeyPressed(SDLK_LALT)) {
+		if (KeyInput::GetKeyModState(KMOD_ALT)) {
 			zscale = 0.5f;
 			camHandler->CameraTransition(1.0f);
 		} else {
@@ -153,7 +153,7 @@ void COverheadController::UpdateVectors()
 {
 	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
 	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false);
+	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 	height = Clamp(height, 60.0f, maxHeight);
 	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
 }

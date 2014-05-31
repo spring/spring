@@ -27,7 +27,7 @@
 
 #define SHADOWMATRIX_NONLINEAR      0
 
-CONFIG(int, Shadows).defaultValue(2).minimumValue(0).description("Sets whether shadows are rendered.\n0:=off, 1:=full, 2:=fast (skip terrain)"); //FIXME document bitmask
+CONFIG(int, Shadows).defaultValue(2).minimumValue(-1).safemodeValue(-1).description("Sets whether shadows are rendered.\n-1:=forceoff, 0:=off, 1:=full, 2:=fast (skip terrain)"); //FIXME document bitmask
 CONFIG(int, ShadowMapSize).defaultValue(CShadowHandler::DEF_SHADOWMAP_SIZE).minimumValue(32).description("Sets the resolution of shadows. Higher numbers increase quality at the cost of performance.");
 CONFIG(int, ShadowProjectionMode).defaultValue(CShadowHandler::SHADOWPROMODE_CAM_CENTER);
 
@@ -588,7 +588,7 @@ float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& p
 
 		projectionMidPos.x = (gs->mapx * SQUARE_SIZE) * 0.5f;
 		projectionMidPos.z = (gs->mapy * SQUARE_SIZE) * 0.5f;
-		projectionMidPos.y = ground->GetHeightReal(projectionMidPos.x, projectionMidPos.z, false);
+		projectionMidPos.y = CGround::GetHeightReal(projectionMidPos.x, projectionMidPos.z, false);
 	}
 
 	return curMapDiameter;
@@ -624,8 +624,8 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& proje
 				cx1 = Clamp(x1, 0.0f, (float3::maxxpos + 1.0f)),
 				cz1 = Clamp(z1, 0.0f, (float3::maxzpos + 1.0f));
 
-			const float3 p0 = float3(cx0, ground->GetHeightReal(cx0, cz0, false), cz0);
-			const float3 p1 = float3(cx1, ground->GetHeightReal(cx1, cz1, false), cz1);
+			const float3 p0 = float3(cx0, CGround::GetHeightReal(cx0, cz0, false), cz0);
+			const float3 p1 = float3(cx1, CGround::GetHeightReal(cx1, cz1, false), cz1);
 
 			frustumPoints[j + 0] = p0;
 			frustumPoints[j + 1] = p1;
@@ -638,7 +638,7 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& proje
 
 	projectionMidPos.x = frustumCenter.x / (sides.size() * 2);
 	projectionMidPos.z = frustumCenter.z / (sides.size() * 2);
-	projectionMidPos.y = ground->GetHeightReal(projectionMidPos.x, projectionMidPos.z, false);
+	projectionMidPos.y = CGround::GetHeightReal(projectionMidPos.x, projectionMidPos.z, false);
 
 	// calculate the radius of the minimally-bounding sphere around the projected frustum
 	for (unsigned int n = 0; n < (sides.size() * 2); n++) {

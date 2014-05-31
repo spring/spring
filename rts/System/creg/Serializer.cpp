@@ -417,8 +417,8 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	stream->write((const char*)&ph, sizeof(PackageHeader));
 
 	LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG,
-			"Checksum: %X\nNumber of objects saved: %d\nNumber of classes involved: %d",
-			ph.metadataChecksum, objects.size(), classRefs.size());
+			"Checksum: %X\nNumber of objects saved: %i\nNumber of classes involved: %i",
+			ph.metadataChecksum, int(objects.size()), int(classRefs.size()));
 
 	stream->seekp(endOffset);
 	ptrToId.clear();
@@ -660,8 +660,8 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 	rootCls = classRefs[objects[1].classRef];
 
 	LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG,
-			"SaveGame loaded.\nNumber of objects loaded: %d\nNumber of classes involved: %d\n",
-			objects.size(), classRefs.size());
+			"SaveGame loaded.\nNumber of objects loaded: %i\nNumber of classes involved: %i\n",
+			int(objects.size()), int(classRefs.size()));
 
 	s->seekg(endOffset);
 	unfixedPointers.clear();

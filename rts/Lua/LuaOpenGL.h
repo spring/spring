@@ -31,8 +31,8 @@ class LuaOpenGL {
 
 		static bool PushEntries(lua_State* L);
 
-		static bool IsDrawingEnabled(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(drawingEnabled); }
-		static void SetDrawingEnabled(lua_State* L, bool value) { GET_HANDLE_CONTEXT_DATA(drawingEnabled) = value; }
+		static bool IsDrawingEnabled(lua_State* L) { return GetLuaContextData(L)->drawingEnabled; }
+		static void SetDrawingEnabled(lua_State* L, bool value) { GetLuaContextData(L)->drawingEnabled = value; }
 
 		static bool CanUseShaders() { return canUseShaders; }
 

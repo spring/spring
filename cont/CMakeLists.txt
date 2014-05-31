@@ -58,10 +58,10 @@ if    (MINGW)
 	#install(FILES ${STDCXX_LIBRARY} DESTINATION ${BINDIR})
 
 	# pthreadGC2 is a dependency of ThreadPool
-	find_library(PTHREADGC2_LIBRARY NAMES pthreadGC2)
-	if(NOT EXISTS ${PTHREADGC2_LIBRARY})
-		message(SEND_ERROR "pthreadGC2 not found!")
-	endif()
-	install(FILES ${PTHREADGC2_LIBRARY} DESTINATION ${BINDIR})
+#	find_library(PTHREADGC2_LIBRARY NAMES pthreadGC2)
+#	if(NOT EXISTS ${PTHREADGC2_LIBRARY})
+#		message(SEND_ERROR "pthreadGC2 not found!")
+#	endif()
+#	install(FILES ${PTHREADGC2_LIBRARY} DESTINATION ${BINDIR})
 endif (MINGW)
 

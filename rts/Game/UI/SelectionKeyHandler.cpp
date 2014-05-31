@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <fstream>
-#include <SDL_keysym.h>
 
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
@@ -212,8 +211,6 @@ namespace
 
 void CSelectionKeyHandler::DoSelection(std::string selectString)
 {
-	GML_RECMUTEX_LOCK(sel); // DoSelection
-
 	std::list<CUnit*> selection;
 
 //	guicontroller->AddText(selectString.c_str());
@@ -260,7 +257,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		ReadDelimiter(selectString);
 		float maxDist=atof(ReadToken(selectString).c_str());
 
-		float dist = ground->LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * 8000, false);
+		float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * 8000, false);
 		float3 mp=camera->GetPos()+mouse->dir*dist;
 		if (cylindrical) {
 			mp.y = 0;

@@ -88,8 +88,6 @@ CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
 
 
 // use the specific section for all LOG*() calls in this source file
-// TODO: enable when #4171 is fixed
-#if 0
 #define LOG_SECTION_GAMESERVER "GameServer"
 #ifdef LOG_SECTION_CURRENT
 	#undef LOG_SECTION_CURRENT
@@ -97,7 +95,6 @@ CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
 #define LOG_SECTION_CURRENT LOG_SECTION_GAMESERVER
 
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GAMESERVER)
-#endif
 
 
 
@@ -286,6 +283,12 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	// Set single precision floating point math.
 	streflop::streflop_init<streflop::Simple>();
 #endif
+
+	if (!demoReader) {
+		GenerateAndSendGameID();
+		rng.Seed(gameID.intArray[0] ^ gameID.intArray[1] ^ gameID.intArray[2] ^ gameID.intArray[3]);
+		Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
+	}
 }
 
 CGameServer::~CGameServer()
@@ -910,7 +913,7 @@ void CGameServer::LagProtection()
 	cpu.reserve(players.size());
 	ping.reserve(players.size());
 
-	// detect reference cpu usage
+	// detect reference cpu usage ( highest )
 	float refCpuUsage = 0.0f;
 	for (size_t a = 0; a < players.size(); ++a) {
 		GameParticipant& player = players[a];
@@ -953,17 +956,23 @@ void CGameServer::LagProtection()
 
 	// adjust game speed
 	if (refCpuUsage > 0.0f && !isPaused) {
+		//userSpeedFactor holds the wanted speed adjusted manually by user ( normally 1)
+		//internalSpeed holds the current speed the sim is running
+		//refCpuUsage holds the highest cpu if curSpeedCtrl == 0 or median if curSpeedCtrl == 1
+
 		// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference
 		float wantedCpuUsage = (curSpeedCtrl == 1) ?  0.60f : 0.75f;
-		wantedCpuUsage += (1.0f - internalSpeed / userSpeedFactor) * 0.5f; //???
 
-		float newSpeed = internalSpeed * wantedCpuUsage / refCpuUsage;
-		newSpeed = (newSpeed + internalSpeed) * 0.5f;
+		//the following line can actually make it go faster than wanted normal speed ( userSpeedFactor )
+		//if the current cpu of the target is smaller than the aimed cpu target but the clamp will cap it
+		// the clamp will throttle it to the wanted one, otherwise it's a simple linear proportion aiming
+		// to keep cpu load constant
+		float newSpeed = internalSpeed/refCpuUsage*wantedCpuUsage;
 		newSpeed = Clamp(newSpeed, 0.1f, userSpeedFactor);
-		if (userSpeedFactor <= 2.f)
-			newSpeed = std::max(newSpeed, (curSpeedCtrl == 1) ? userSpeedFactor * 0.8f : userSpeedFactor * 0.5f);
-
+		//average to smooth the speed change over time to reduce the impact of cpu spikes in the players
+		newSpeed = (newSpeed + internalSpeed) * 0.5f;
 #ifndef DEDICATED
+		// in non-dedicated hosting, we'll add an additional safeguard to make sure the host can keep up with the game's speed
 		// adjust game speed to localclient's (:= host) maximum SimFrame rate
 		const float maxSimFPS = (1000.0f / gu->avgSimFrameTime) * (1.0f - gu->reconnectSimDrawBalance);
 		newSpeed = Clamp(newSpeed, 0.1f, ((maxSimFPS / GAME_SPEED) + internalSpeed) * 0.5f);
@@ -1920,24 +1929,25 @@ void CGameServer::GenerateAndSendGameID()
 	gameID.intArray[2] = crc.GetDigest();
 
 	CRC entropy;
-	entropy.Update(spring_tomsecs(lastNewFrameTick - serverStartTime));
+	entropy.Update((lastNewFrameTick - serverStartTime).toNanoSecsi());
 	gameID.intArray[3] = entropy.GetDigest();
 
 	// fixed gameID?
 	if (!setup->gameID.empty()) {
 		unsigned char p[16];
 	#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
-		// workaround missing C99 support in a msvc lib with %02hhx
+		// workaround missing C99 support in a msvc lib with %2hhx
 		generatedGameID = (sscanf(setup->gameID.c_str(),
 		      "%02hc%02hc%02hc%02hc%02hc%02hc%02hc%02hc"
 		      "%02hc%02hc%02hc%02hc%02hc%02hc%02hc%02hc",
 		      &p[ 0], &p[ 1], &p[ 2], &p[ 3], &p[ 4], &p[ 5], &p[ 6], &p[ 7],
 		      &p[ 8], &p[ 9], &p[10], &p[11], &p[12], &p[13], &p[14], &p[15]) == 16);
 	#else
-		auto s = reinterpret_cast<short unsigned int*>(&p[0]);
 		generatedGameID = (sscanf(setup->gameID.c_str(),
-		      "%02hx%02hx%02hx%02hx%02hx%02hx%02hx%02hx",
-		      &s[ 0], &s[ 1], &s[ 2], &s[ 3], &s[ 4], &s[ 5], &s[ 6], &s[ 7]) == 8);
+		       "%hhx%hhx%hhx%hhx%hhx%hhx%hhx%hhx"
+		       "%hhx%hhx%hhx%hhx%hhx%hhx%hhx%hhx",
+		       &p[ 0], &p[ 1], &p[ 2], &p[ 3], &p[ 4], &p[ 5], &p[ 6], &p[ 7],
+		       &p[ 8], &p[ 9], &p[10], &p[11], &p[12], &p[13], &p[14], &p[15]) == 16);
 	#endif
 		if (generatedGameID)
 			for (int i = 0; i<16; ++i)
@@ -2064,9 +2074,6 @@ void CGameServer::StartGame(bool forced)
 		}
 	}
 
-	GenerateAndSendGameID();
-	rng.Seed(gameID.intArray[0] ^ gameID.intArray[1] ^ gameID.intArray[2] ^ gameID.intArray[3]);
-	Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
 	Broadcast(CBaseNetProtocol::Get().SendStartPlaying(0));
 
 	if (hostif != NULL) {
@@ -2124,11 +2131,11 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 			} else {
 				const std::string name = StringToLower(tokens[0]);
 
-				bool muteChat;
-				bool muteDraw;
+				bool muteChat = true;
+				bool muteDraw = true;
 
-				if (!tokens.empty()) SetBoolArg(muteChat, tokens[1]);
-				if (tokens.size() >= 2) SetBoolArg(muteDraw, tokens[2]);
+				if (tokens.size() >= 2) SetBoolArg(muteChat, tokens[1]);
+				if (tokens.size() >= 3) SetBoolArg(muteDraw, tokens[2]);
 
 				for (size_t a = 0; a < players.size(); ++a) {
 					const std::string playerLower = StringToLower(players[a].name);
@@ -2159,8 +2166,8 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 				bool muteChat = true;
 				bool muteDraw = true;
 
-				if (!tokens.empty()) SetBoolArg(muteChat, tokens[1]);
-				if (tokens.size() >= 2) SetBoolArg(muteDraw, tokens[2]);
+				if (tokens.size() >= 2) SetBoolArg(muteChat, tokens[1]);
+				if (tokens.size() >= 3) SetBoolArg(muteDraw, tokens[2]);
 
 				MutePlayer(playerID, muteChat, muteDraw);
 			}
@@ -2497,8 +2504,9 @@ void CGameServer::UpdateLoop()
 		Threading::SetThreadName("netcode");
 		Threading::SetAffinity(~0);
 
+		//FIXME use async callback funcs in boost udp sockets and so get rid of any latency & remove netcode thread
 		while (!quitServer) {
-			spring_sleep(spring_msecs(1));
+			spring_sleep(spring_msecs(5));
 
 			if (UDPNet)
 				UDPNet->Update();
@@ -2552,11 +2560,11 @@ void CGameServer::MutePlayer(const int playerNum, bool muteChat, bool muteDraw )
 		}
 		return;
 	}
-	if ( playerNum < mutedPlayersChat.size() ) {
-		mutedPlayersChat.resize(playerNum);
+	if ( playerNum >= mutedPlayersChat.size() ) {
+		mutedPlayersChat.resize(playerNum+1);
 	}
-	if ( playerNum < mutedPlayersDraw.size() ) {
-		mutedPlayersDraw.resize(playerNum);
+	if ( playerNum >= mutedPlayersDraw.size() ) {
+		mutedPlayersDraw.resize(playerNum+1);
 	}
 	mutedPlayersChat[playerNum] = muteChat;
 	mutedPlayersDraw[playerNum] = muteDraw;

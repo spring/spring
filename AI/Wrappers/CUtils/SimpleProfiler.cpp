@@ -58,12 +58,9 @@ std::string Profiler::ToString() const {
 
 ScopedTimer::ScopedTimer(const char* const part, Profiler* profiler)
 	: part(part)
-	, profiler(profiler)
+	, profiler(profiler ? profiler : Profiler::GetDefault())
 	, startTime(timeUtil_getCurrentTimeMillis())
 {
-	if (profiler == NULL) {
-		profiler = Profiler::GetDefault();
-	}
 }
 
 ScopedTimer::~ScopedTimer()

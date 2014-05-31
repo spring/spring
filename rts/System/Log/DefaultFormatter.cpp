@@ -77,6 +77,7 @@ static inline void PrintfAppend(char** buffer, size_t* bufferSize, const char* f
 
 // *******************************************************************************************
 
+/*
 static void log_formatter_createPrefix_xorgStyle(
 	char** buffer,
 	size_t* bufferSize,
@@ -89,7 +90,9 @@ static void log_formatter_createPrefix_xorgStyle(
 	SNPRINTF(*buffer, *bufferSize, "(%c%c) %*.*s - ", levelChar, levelChar,
 			SECTION_SIZE_MIN, SECTION_SIZE_MAX, prepSection);
 }
+*/
 
+/*
 static void log_formatter_createPrefix_testing(
 	char** buffer,
 	size_t* bufferSize,
@@ -101,6 +104,7 @@ static void log_formatter_createPrefix_testing(
 
 	SNPRINTF(*buffer, *bufferSize, "%s %s: ", levelStr, prepSection);
 }
+*/
 
 static void log_formatter_createPrefix_default(
 	char** buffer,
@@ -116,7 +120,7 @@ static void log_formatter_createPrefix_default(
 		STRCAT_T(*buffer, *bufferSize, prepSection);
 		STRCAT_T(*buffer, *bufferSize, "] ");
 	}
-	if (level != LOG_LEVEL_INFO) {
+	if (level != LOG_LEVEL_INFO && level != LOG_LEVEL_NOTICE) {
 		const char* levelStr = log_util_levelToString(level);
 		STRCAT_T(*buffer, *bufferSize, levelStr);
 		STRCAT_T(*buffer, *bufferSize, ": ");

@@ -617,7 +617,7 @@ bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
 
 	if (enemyUnitIDs.empty()) {
 		float3 attackPos = pos + (gs->randVector() * radius);
-		attackPos.y = ground->GetHeightAboveWater(attackPos.x, attackPos.z);
+		attackPos.y = CGround::GetHeightAboveWater(attackPos.x, attackPos.z);
 
 		owner->AttackGround(attackPos, (ac.options & INTERNAL_ORDER) == 0, false);
 		SetGoal(attackPos, owner->pos);

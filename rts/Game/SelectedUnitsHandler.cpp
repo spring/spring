@@ -29,17 +29,19 @@
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/Color.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "System/Net/PackPacket.h"
+#include "System/FileSystem/SimpleParser.h"
 #include "System/Input/KeyInput.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 
 #include <SDL_mouse.h>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <map>
 
 
@@ -96,93 +98,73 @@ void CSelectedUnitsHandler::ToggleBuildIconsFirst()
 
 CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailableCommands()
 {
-	GML_RECMUTEX_LOCK(grpsel); // GetAvailableCommands
-
 	possibleCommandsChanged = false;
 
 	int commandPage = 1000;
 	int foundGroup = -2;
 	int foundGroup2 = -2;
-	map<int, int> states;
+	std::map<int, int> states;
 
-	for (CUnitSet::const_iterator ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-		const std::vector<CommandDescription>* c = &((*ui)->commandAI->GetPossibleCommands());
-		std::vector<CommandDescription>::const_iterator ci;
-		for (ci = c->begin(); ci != c->end(); ++ci) {
-			states[ci->id] = ci->disabled ? 2 : 1;
+	for (const CUnit* u: selectedUnits) {
+		const std::vector<CommandDescription>& c = u->commandAI->GetPossibleCommands();
+		for (const CommandDescription& cmdDesc: c) {
+			states[cmdDesc.id] = cmdDesc.disabled ? 2 : 1;
 		}
-		if ((*ui)->commandAI->lastSelectedCommandPage < commandPage) {
-			commandPage = (*ui)->commandAI->lastSelectedCommandPage;
+		if (u->commandAI->lastSelectedCommandPage < commandPage) {
+			commandPage = u->commandAI->lastSelectedCommandPage;
 		}
 
-		if (foundGroup == -2 && (*ui)->group) {
-			foundGroup = (*ui)->group->id;
+		if (foundGroup == -2 && u->group) {
+			foundGroup = u->group->id;
 		}
-		if (!(*ui)->group || foundGroup!=(*ui)->group->id) {
+		if (!u->group || foundGroup != u->group->id) {
 			foundGroup = -1;
 		}
 
-		if (foundGroup2 == -2 && (*ui)->group) {
-			foundGroup2 = (*ui)->group->id;
+		if (foundGroup2 == -2 && u->group) {
+			foundGroup2 = u->group->id;
 		}
-		if (foundGroup2 >= 0 && (*ui)->group && (*ui)->group->id != foundGroup2) {
+		if (foundGroup2 >= 0 && u->group && u->group->id != foundGroup2) {
 			foundGroup2 = -1;
 		}
 	}
 
-	std::vector<CommandDescription> groupCommands;
-
-	std::vector<CommandDescription> commands ;
+	std::vector<CommandDescription> commands;
 	// load the first set (separating build and non-build commands)
-	for (CUnitSet::const_iterator ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-		const std::vector<CommandDescription>* c = &((*ui)->commandAI->GetPossibleCommands());
-		std::vector<CommandDescription>::const_iterator ci;
-		for (ci = c->begin(); ci != c->end(); ++ci) {
+	for (const CUnit* u: selectedUnits) {
+		const std::vector<CommandDescription>& c = u->commandAI->GetPossibleCommands();
+		for (const CommandDescription& cmdDesc: c) {
 			if (buildIconsFirst) {
-				if (ci->id >= 0) { continue; }
+				if (cmdDesc.id >= 0) { continue; }
 			} else {
-				if (ci->id < 0)  { continue; }
+				if (cmdDesc.id < 0)  { continue; }
 			}
-			if (ci->showUnique && selectedUnits.size() > 1) {
+			if (cmdDesc.showUnique && selectedUnits.size() > 1) {
 				continue;
 			}
-			if (states[ci->id] > 0) {
-				commands.push_back(*ci);
-				states[ci->id] = 0;
+			if (states[cmdDesc.id] > 0) {
+				commands.push_back(cmdDesc);
+				states[cmdDesc.id] = 0;
 			}
-		}
-	}
-
-	if (!buildIconsFirst && !gs->noHelperAIs) {
-		std::vector<CommandDescription>::const_iterator ci;
-		for(ci = groupCommands.begin(); ci != groupCommands.end(); ++ci) {
-			commands.push_back(*ci);
 		}
 	}
 
 	// load the second set (all those that have not already been included)
-	for (CUnitSet::const_iterator ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-		std::vector<CommandDescription>* c = &(*ui)->commandAI->GetPossibleCommands();
-		std::vector<CommandDescription>::const_iterator ci;
-		for (ci = c->begin(); ci != c->end(); ++ci) {
+	for (const CUnit* u: selectedUnits) {
+		const std::vector<CommandDescription>& c = u->commandAI->GetPossibleCommands();
+		for (const CommandDescription& cmdDesc: c) {
 			if (buildIconsFirst) {
-				if (ci->id < 0)  { continue; }
+				if (cmdDesc.id < 0)  { continue; }
 			} else {
-				if (ci->id >= 0) { continue; }
+				if (cmdDesc.id >= 0) { continue; }
 			}
-			if (ci->showUnique && selectedUnits.size() > 1) {
+			if (cmdDesc.showUnique && selectedUnits.size() > 1) {
 				continue;
 			}
-			if (states[ci->id] > 0) {
-				commands.push_back(*ci);
-				states[ci->id] = 0;
+			if (states[cmdDesc.id] > 0) {
+				commands.push_back(cmdDesc);
+				states[cmdDesc.id] = 0;
 			}
-		}
-	}
-	if (buildIconsFirst && !gs->noHelperAIs) {
-		std::vector<CommandDescription>::const_iterator ci;
-		for (ci = groupCommands.begin(); ci != groupCommands.end(); ++ci) {
-			commands.push_back(*ci);
 		}
 	}
 
@@ -195,8 +177,6 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 
 void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 {
-	GML_RECMUTEX_LOCK(grpsel); // GiveCommand
-
 	if (gu->spectating && !gs->godMode)
 		return;
 	if (selectedUnits.empty())
@@ -275,8 +255,6 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 
 void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, const float4& planeLeft, const float4& planeTop, const float4& planeBottom)
 {
-	GML_RECMUTEX_LOCK(sel); // SelectUnits
-
 	CUnit* unit = NULL;
 	int addedunits = 0;
 	int team, lastTeam;
@@ -297,7 +275,7 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 			const float4 vec((*ui)->midPos, 1.0f);
 
 			if (vec.dot4(planeRight) < 0.0f && vec.dot4(planeLeft) < 0.0f && vec.dot4(planeTop) < 0.0f && vec.dot4(planeBottom) < 0.0f) {
-				if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selectedUnits.find(*ui) != selectedUnits.end())) {
+				if (KeyInput::GetKeyModState(KMOD_CTRL) && (selectedUnits.find(*ui) != selectedUnits.end())) {
 					RemoveUnit(*ui);
 				} else {
 					AddUnit(*ui);
@@ -321,8 +299,6 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 
 void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest)
 {
-	GML_RECMUTEX_LOCK(sel); // SelectUnits
-
 	//FIXME make modular?
 	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 
@@ -332,7 +308,7 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 		return;
 
 	if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
-		if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
+		if (KeyInput::GetKeyModState(KMOD_CTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
 			RemoveUnit(unit);
 		} else {
 			AddUnit(unit);
@@ -353,7 +329,7 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 			CUnitSet& teamUnits = teamHandler->Team(team)->units;
 			for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
 				if ((*ui)->unitDef->id == unit->unitDef->id) {
-					if (!doInViewTest || keyInput->IsKeyPressed(SDLK_LCTRL) || camera->InView((*ui)->midPos)) {
+					if (!doInViewTest || KeyInput::GetKeyModState(KMOD_CTRL) || camera->InView((*ui)->midPos)) {
 						AddUnit(*ui);
 					}
 				}
@@ -381,8 +357,6 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 		return;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // AddUnit
-
 	if (selectedUnits.insert(unit).second)
 		AddDeathDependence(unit, DEPENDENCE_SELECTED);
 	selectionChanged = true;
@@ -398,8 +372,6 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 
 void CSelectedUnitsHandler::RemoveUnit(CUnit* unit)
 {
-	GML_RECMUTEX_LOCK(sel); // RemoveUnit
-
 	if (selectedUnits.erase(unit))
 		DeleteDeathDependence(unit, DEPENDENCE_SELECTED);
 	selectionChanged = true;
@@ -411,12 +383,9 @@ void CSelectedUnitsHandler::RemoveUnit(CUnit* unit)
 
 void CSelectedUnitsHandler::ClearSelected()
 {
-	GML_RECMUTEX_LOCK(sel); // ClearSelected
-
-	CUnitSet::iterator ui;
-	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-		(*ui)->isSelected = false;
-		DeleteDeathDependence(*ui, DEPENDENCE_SELECTED);
+	for (CUnit* u: selectedUnits) {
+		u->isSelected = false;
+		DeleteDeathDependence(u, DEPENDENCE_SELECTED);
 	}
 
 	selectedUnits.clear();
@@ -428,23 +397,119 @@ void CSelectedUnitsHandler::ClearSelected()
 
 void CSelectedUnitsHandler::SelectGroup(int num)
 {
-	GML_RECMUTEX_LOCK(grpsel); // SelectGroup - not needed? only reading group
-
 	ClearSelected();
 	selectedGroup=num;
 	CGroup* group=grouphandlers[gu->myTeam]->groups[num];
 
-	CUnitSet::iterator ui;
-	for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
-		if (!(*ui)->noSelect) {
-			(*ui)->isSelected = true;
-			selectedUnits.insert(*ui);
-			AddDeathDependence(*ui, DEPENDENCE_SELECTED);
+	for (CUnit* u: group->units) {
+		if (!u->noSelect) {
+			u->isSelected = true;
+			selectedUnits.insert(u);
+			AddDeathDependence(u, DEPENDENCE_SELECTED);
 		}
 	}
 
 	selectionChanged = true;
 	possibleCommandsChanged = true;
+}
+
+
+void CSelectedUnitsHandler::SelectUnits(const std::string& line)
+{
+	const std::vector<string>& args = CSimpleParser::Tokenize(line, 0);
+	for (int i = 0; i < (int)args.size(); i++) {
+		const std::string& arg = args[i];
+		if (arg == "clear") {
+			selectedUnitsHandler.ClearSelected();
+		}
+		else if ((arg[0] == '+') || (arg[0] == '-')) {
+			char* endPtr;
+			const char* startPtr = arg.c_str() + 1;
+			const int unitIndex = strtol(startPtr, &endPtr, 10);
+			if (endPtr == startPtr) {
+				continue; // bad number
+			}
+			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= unitHandler->MaxUnits())) {
+				continue; // bad index
+			}
+			CUnit* unit = unitHandler->units[unitIndex];
+			if (unit == NULL) {
+				continue; // bad pointer
+			}
+			if (!gu->spectatingFullSelect) {
+				const CUnitSet& teamUnits = teamHandler->Team(gu->myTeam)->units;
+				if (teamUnits.find(unit) == teamUnits.end()) {
+					continue; // not mine to select
+				}
+			}
+
+			// perform the selection
+			if (arg[0] == '+') {
+				AddUnit(unit);
+			} else {
+				RemoveUnit(unit);
+			}
+		}
+	}
+}
+
+
+void CSelectedUnitsHandler::SelectCycle(const std::string& command)
+{
+	static std::set<int> unitIDs;
+	static int lastID = -1;
+
+	if (command == "restore") {
+		ClearSelected();
+		for (const int& unitID: unitIDs) {
+			CUnit* unit = unitHandler->units[unitID];
+			if (unit != NULL) {
+				AddUnit(unit);
+			}
+		}
+		return;
+	}
+
+	if (selectedUnits.size() >= 2) {
+		// assign the cycle units
+		unitIDs.clear();
+		for (const CUnit* u: selectedUnits) {
+			unitIDs.insert(u->id);
+		}
+		ClearSelected();
+		lastID = *unitIDs.begin();
+		AddUnit(unitHandler->units[lastID]);
+		return;
+	}
+
+	// clean the list
+	std::set<int> tmpSet;
+	for (const int& unitID: unitIDs) {
+		if (unitHandler->units[unitID] != NULL) {
+			tmpSet.insert(unitID);
+		}
+	}
+	unitIDs = tmpSet;
+	if ((lastID >= 0) && (unitHandler->units[lastID] == NULL)) {
+		lastID = -1;
+	}
+
+	// selectedUnits size is 0 or 1
+	ClearSelected();
+	if (!unitIDs.empty()) {
+		std::set<int>::const_iterator fit = unitIDs.find(lastID);
+		if (fit == unitIDs.end()) {
+			lastID = *unitIDs.begin();
+		} else {
+			++fit;
+			if (fit != unitIDs.end()) {
+				lastID = *fit;
+			} else {
+				lastID = *unitIDs.begin();
+			}
+		}
+		AddUnit(unitHandler->units[lastID]);
+	}
 }
 
 
@@ -458,7 +523,11 @@ void CSelectedUnitsHandler::Draw()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glLineWidth(cmdColors.UnitBoxLineWidth());
 
-	GML_RECMUTEX_LOCK(grpsel); // Draw
+	SColor color1(cmdColors.unitBox);
+	SColor color2(cmdColors.unitBox);
+	color2.r = 255 - color2.r;
+	color2.g = 255 - color2.g;
+	color2.b = 255 - color2.b;
 
 	if (cmdColors.unitBox[3] > 0.05f) {
 		const CUnitSet* unitSet;
@@ -500,26 +569,12 @@ void CSelectedUnitsHandler::Draw()
 				float3(unit->drawPos.x + mhxsize, unit->drawPos.y, unit->drawPos.z - mhzsize),
 			};
 
-			const unsigned char color1[4] = {
-				(unsigned char)( cmdColors.unitBox[0] * 255 ),
-				(unsigned char)( cmdColors.unitBox[1] * 255 ),
-				(unsigned char)( cmdColors.unitBox[2] * 255 ),
-				(unsigned char)( cmdColors.unitBox[3] * 255 )
-			};
-
 			va->AddVertexQC(verts[0], color1);
 			va->AddVertexQC(verts[1], color1);
 			va->AddVertexQC(verts[2], color1);
 			va->AddVertexQC(verts[3], color1);
 
 			if (globalRendering->drawdebug && (mhxsize != uhxsize || mhzsize != uhzsize)) {
-				const unsigned char color2[4] = {
-					(unsigned char)( (1.0f - cmdColors.unitBox[0]) * 255 ),
-					(unsigned char)( (1.0f - cmdColors.unitBox[1]) * 255 ),
-					(unsigned char)( (1.0f - cmdColors.unitBox[2]) * 255 ),
-					(unsigned char)( cmdColors.unitBox[3] * 255 )
-				};
-
 				va->AddVertexQC(verts[4], color2);
 				va->AddVertexQC(verts[5], color2);
 				va->AddVertexQC(verts[6], color2);
@@ -534,12 +589,10 @@ void CSelectedUnitsHandler::Draw()
 	// (or old-style, whenever the shift key is being held down)
 	if (cmdColors.buildBox[3] > 0.0f) {
 		if (!selectedUnits.empty() &&
-				((cmdColors.BuildBoxesOnShift() && keyInput->IsKeyPressed(SDLK_LSHIFT)) ||
+				((cmdColors.BuildBoxesOnShift() && KeyInput::GetKeyModState(KMOD_SHIFT)) ||
 				 ((guihandler->inCommand >= 0) &&
 					(guihandler->inCommand < int(guihandler->commands.size())) &&
 					(guihandler->commands[guihandler->inCommand].id < 0)))) {
-
-			GML_STDMUTEX_LOCK(cai); // Draw
 
 			bool myColor = true;
 			glColor4fv(cmdColors.buildBox);
@@ -580,8 +633,6 @@ void CSelectedUnitsHandler::Draw()
 
 void CSelectedUnitsHandler::DependentDied(CObject *o)
 {
-	GML_RECMUTEX_LOCK(sel); // DependentDied - maybe superfluous, too late anyway
-
 	selectedUnits.erase(static_cast<CUnit*>(o));
 	selectionChanged = true;
 	possibleCommandsChanged = true;
@@ -710,8 +761,6 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 		return luaCmd;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // GetDefaultCmd
-
 	// return the default if there are no units selected
 	CUnitSet::const_iterator ui = selectedUnits.begin();
 	if (ui == selectedUnits.end()) {
@@ -747,8 +796,6 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 
 void CSelectedUnitsHandler::PossibleCommandChange(CUnit* sender)
 {
-	GML_RECMUTEX_LOCK(sel); // PossibleCommandChange
-
 	if (sender == NULL || selectedUnits.find(sender) != selectedUnits.end())
 		possibleCommandsChanged = true;
 }
@@ -773,20 +820,14 @@ void CSelectedUnitsHandler::DrawCommands()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
-	GML_RECMUTEX_LOCK(unit); // DrawCommands
-	GML_RECMUTEX_LOCK(feat); // DrawCommands
-	GML_RECMUTEX_LOCK(grpsel); // DrawCommands
-	GML_STDMUTEX_LOCK(cai); // DrawCommands
-
-	CUnitSet::iterator ui;
 	if (selectedGroup != -1) {
 		CUnitSet& groupUnits = grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
-		for(ui = groupUnits.begin(); ui != groupUnits.end(); ++ui) {
-			commandDrawer->Draw((*ui)->commandAI);
+		for(CUnit* u: groupUnits) {
+			commandDrawer->Draw(u->commandAI);
 		}
 	} else {
-		for(ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-			commandDrawer->Draw((*ui)->commandAI);
+		for(CUnit* u: selectedUnits) {
+			commandDrawer->Draw(u->commandAI);
 		}
 	}
 
@@ -808,8 +849,6 @@ std::string CSelectedUnitsHandler::GetTooltip()
 {
 	std::string s = "";
 	{
-		GML_RECMUTEX_LOCK(sel); // GetTooltip - called from TooltipConsole::Draw --> MouseHandler::GetCurrentTooltip --> GetTooltip
-
 		if (!selectedUnits.empty()) {
 			const CUnit* unit = (*selectedUnits.begin());
 			const CTeam* team = NULL;
@@ -821,7 +860,6 @@ std::string CSelectedUnitsHandler::GetTooltip()
 			} else {
 				s = unit->tooltip;
 			}
-
 		}
 
 		if (selectedUnits.empty()) {
@@ -835,8 +873,6 @@ std::string CSelectedUnitsHandler::GetTooltip()
 	}
 
 	{
-		GML_RECMUTEX_LOCK(sel); // GetTooltip
-
 		int numFuel = 0;
 		float maxHealth = 0.0f, curHealth = 0.0f;
 		float maxFuel = 0.0f, curFuel = 0.0f;
@@ -847,9 +883,7 @@ std::string CSelectedUnitsHandler::GetTooltip()
 #define MULTI_TEAM -64
 		int ctrlTeam = NO_TEAM;
 
-		CUnitSet::const_iterator ui;
-		for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-			const CUnit* unit = *ui;
+		for (const CUnit* unit: selectedUnits) {
 			maxHealth  += unit->maxHealth;
 			curHealth  += unit->health;
 			exp        += unit->experience;
@@ -906,11 +940,8 @@ std::string CSelectedUnitsHandler::GetTooltip()
 
 void CSelectedUnitsHandler::SetCommandPage(int page)
 {
-	GML_RECMUTEX_LOCK(sel); // SetCommandPage - called from CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc
-
-	CUnitSet::iterator ui;
-	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-		(*ui)->commandAI->lastSelectedCommandPage = page;
+	for (const CUnit* u: selectedUnits) {
+		u->commandAI->lastSelectedCommandPage = page;
 	}
 }
 
@@ -920,7 +951,6 @@ void CSelectedUnitsHandler::SendCommand(const Command& c)
 {
 	if (selectionChanged) {
 		// send new selection
-		GML_RECMUTEX_LOCK(sel); // SendSelection
 
 		// first, convert CUnit* to unit IDs.
 		std::vector<short> selectedUnitIDs(selectedUnits.size());

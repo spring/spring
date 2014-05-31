@@ -59,6 +59,9 @@ public:
 	bool IsGroupSelected(int groupID) const { return (selectedGroup == groupID); }
 	int GetSelectedGroup() const { return selectedGroup; }
 
+	void SelectUnits(const std::string& line);
+	void SelectCycle(const std::string& command);
+
 public:
 	CUnitSet selectedUnits;
 

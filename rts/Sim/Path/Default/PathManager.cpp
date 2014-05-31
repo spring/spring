@@ -23,33 +23,46 @@
 
 CPathManager::CPathManager(): nextPathID(0)
 {
+	maxResPF = NULL;
+	medResPE = NULL;
+	lowResPE = NULL;
+
 	pathFlowMap = PathFlowMap::GetInstance();
 	pathHeatMap = PathHeatMap::GetInstance();
-
-	maxResPF = new CPathFinder();
-	medResPE = new CPathEstimator(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
-	lowResPE = new CPathEstimator(maxResPF, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
-
-	LOG("[CPathManager] pathing data checksum: %08x", GetPathCheckSum());
-
-	#ifdef SYNCDEBUG
-	// clients may have a non-writable cache directory (which causes
-	// the estimator path-file checksum to remain zero), so we can't
-	// update the sync-checker with this in normal builds
-	// NOTE: better to just checksum the in-memory data and broadcast
-	// that instead of relying on the zip-file CRC?
-	{ SyncedUint tmp(GetPathCheckSum()); }
-	#endif
 }
 
 CPathManager::~CPathManager()
 {
-	delete lowResPE;
-	delete medResPE;
-	delete maxResPF;
+	delete lowResPE; lowResPE = NULL;
+	delete medResPE; medResPE = NULL;
+	delete maxResPF; maxResPF = NULL;
 
 	PathHeatMap::FreeInstance(pathHeatMap);
 	PathFlowMap::FreeInstance(pathFlowMap);
+}
+
+boost::int64_t CPathManager::Finalize() {
+	const spring_time t0 = spring_gettime();
+
+	{
+		maxResPF = new CPathFinder();
+		medResPE = new CPathEstimator(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
+		lowResPE = new CPathEstimator(maxResPF, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
+
+		#ifdef SYNCDEBUG
+		// clients may have a non-writable cache directory (which causes
+		// the estimator path-file checksum to remain zero), so we can't
+		// update the sync-checker with this in normal builds
+		// NOTE: better to just checksum the in-memory data and broadcast
+		// that instead of relying on the zip-file CRC?
+		{ SyncedUint tmp(GetPathCheckSum()); }
+		#endif
+	}
+
+	const spring_time t1 = spring_gettime();
+	const spring_time dt = t1 - t0;
+
+	return (dt.toMilliSecsi());
 }
 
 
@@ -80,7 +93,7 @@ unsigned int CPathManager::RequestPath(
 Request a new multipath, store the result and return a handle-id to it.
 */
 unsigned int CPathManager::RequestPath(
-	const MoveDef* md,
+	const MoveDef* moveDef,
 	const float3& startPos,
 	const float3& goalPos,
 	CPathFinderDef* pfDef,
@@ -89,10 +102,10 @@ unsigned int CPathManager::RequestPath(
 ) {
 	SCOPED_TIMER("PathManager::RequestPath");
 
-	// FIXME: this is here only because older code required a non-const version
-	MoveDef* moveDef = moveDefHandler->GetMoveDefByPathType(md->pathType);
+	if (!IsFinalized())
+		return 0;
 
-	assert(md == moveDef);
+	assert(moveDef == moveDefHandler->GetMoveDefByPathType(moveDef->pathType));
 
 	// Creates a new multipath.
 	IPath::SearchResult result = IPath::Error;
@@ -213,6 +226,8 @@ unsigned int CPathManager::Store(MultiPath* path)
 // converts part of a med-res path into a high-res path
 void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, const CSolidObject* owner, bool synced) const
 {
+	assert(IsFinalized());
+
 	IPath::Path& maxResPath = multiPath.maxResPath;
 	IPath::Path& medResPath = multiPath.medResPath;
 	IPath::Path& lowResPath = multiPath.lowResPath;
@@ -259,6 +274,8 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, c
 // converts part of a low-res path into a med-res path
 void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, const CSolidObject* owner, bool synced) const
 {
+	assert(IsFinalized());
+
 	IPath::Path& medResPath = multiPath.medResPath;
 	IPath::Path& lowResPath = multiPath.lowResPath;
 
@@ -317,6 +334,9 @@ float3 CPathManager::NextWayPoint(
 	SCOPED_TIMER("PathManager::NextWayPoint");
 
 	const float3 noPathPoint = -XZVector;
+
+	if (!IsFinalized())
+		return noPathPoint;
 
 	// 0 indicates a no-path id
 	if (pathID == 0)
@@ -394,14 +414,16 @@ float3 CPathManager::NextWayPoint(
 
 
 // Delete a given multipath from the collection.
+// 0 indicates a no-path id.
 void CPathManager::DeletePath(unsigned int pathID) {
-	// 0 indicate a no-path id.
 	if (pathID == 0)
 		return;
 
-	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathID);
+	const auto pi = pathMap.find(pathID);
+
 	if (pi == pathMap.end())
 		return;
+
 	MultiPath* multiPath = pi->second;
 	pathMap.erase(pathID);
 	delete multiPath;
@@ -411,6 +433,11 @@ void CPathManager::DeletePath(unsigned int pathID) {
 
 // Tells estimators about changes in or on the map.
 void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2, unsigned int /*type*/) {
+	SCOPED_TIMER("PathManager::TerrainChange");
+
+	if (!IsFinalized())
+		return;
+
 	medResPE->MapChanged(x1, z1, x2, z2);
 	lowResPE->MapChanged(x1, z1, x2, z2);
 }
@@ -420,6 +447,7 @@ void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int 
 void CPathManager::Update()
 {
 	SCOPED_TIMER("PathManager::Update");
+	assert(IsFinalized());
 
 	pathFlowMap->Update();
 	pathHeatMap->Update();
@@ -428,17 +456,11 @@ void CPathManager::Update()
 	lowResPE->Update();
 }
 
-
-void CPathManager::UpdateFull()
-{
-	medResPE->UpdateFull();
-	lowResPE->UpdateFull();
-}
-
-
 // used to deposit heat on the heat-map as a unit moves along its path
 void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathID)
 {
+	assert(IsFinalized());
+
 	pathFlowMap->AddFlow(owner);
 	pathHeatMap->AddHeat(owner, this, pathID);
 }
@@ -451,14 +473,16 @@ void CPathManager::GetDetailedPath(unsigned pathID, std::vector<float3>& points)
 	points.clear();
 
 	MultiPath* multiPath = GetMultiPath(pathID);
+
 	if (multiPath == NULL)
 		return;
 
-	const IPath::path_list_type& maxResPoints = multiPath->maxResPath.path;
+	const IPath::Path& path = multiPath->maxResPath;
+	const IPath::path_list_type& maxResPoints = path.path;
 
 	points.reserve(maxResPoints.size());
 
-	for (IPath::path_list_type::const_reverse_iterator pvi = maxResPoints.rbegin(); pvi != maxResPoints.rend(); ++pvi) {
+	for (auto pvi = maxResPoints.rbegin(); pvi != maxResPoints.rend(); ++pvi) {
 		points.push_back(*pvi);
 	}
 }
@@ -468,14 +492,16 @@ void CPathManager::GetDetailedPathSquares(unsigned pathID, std::vector<int2>& po
 	points.clear();
 
 	MultiPath* multiPath = GetMultiPath(pathID);
+
 	if (multiPath == NULL)
 		return;
 
-	const IPath::square_list_type& maxResSquares = multiPath->maxResPath.squares;
+	const IPath::Path& path = multiPath->maxResPath;
+	const IPath::square_list_type& maxResSquares = path.squares;
 
 	points.reserve(maxResSquares.size());
 
-	for (IPath::square_list_type::const_reverse_iterator pvi = maxResSquares.rbegin(); pvi != maxResSquares.rend(); ++pvi) {
+	for (auto pvi = maxResSquares.rbegin(); pvi != maxResSquares.rend(); ++pvi) {
 		points.push_back(*pvi);
 	}
 }
@@ -491,6 +517,7 @@ void CPathManager::GetPathWayPoints(
 	starts.clear();
 
 	MultiPath* multiPath = GetMultiPath(pathID);
+
 	if (multiPath == NULL)
 		return;
 
@@ -522,12 +549,16 @@ void CPathManager::GetPathWayPoints(
 
 
 boost::uint32_t CPathManager::GetPathCheckSum() const {
+	assert(IsFinalized());
 	return (medResPE->GetPathChecksum() + lowResPE->GetPathChecksum());
 }
 
 
 
 bool CPathManager::SetNodeExtraCost(unsigned int x, unsigned int z, float cost, bool synced) {
+	if (!IsFinalized())
+		return 0.0f;
+
 	if (x >= gs->mapx) { return false; }
 	if (z >= gs->mapy) { return false; }
 
@@ -542,6 +573,9 @@ bool CPathManager::SetNodeExtraCost(unsigned int x, unsigned int z, float cost, 
 }
 
 bool CPathManager::SetNodeExtraCosts(const float* costs, unsigned int sizex, unsigned int sizez, bool synced) {
+	if (!IsFinalized())
+		return 0.0f;
+
 	if (sizex < 1 || sizex > gs->mapx) { return false; }
 	if (sizez < 1 || sizez > gs->mapy) { return false; }
 
@@ -557,6 +591,9 @@ bool CPathManager::SetNodeExtraCosts(const float* costs, unsigned int sizex, uns
 }
 
 float CPathManager::GetNodeExtraCost(unsigned int x, unsigned int z, bool synced) const {
+	if (!IsFinalized())
+		return 0.0f;
+
 	if (x >= gs->mapx) { return 0.0f; }
 	if (z >= gs->mapy) { return 0.0f; }
 
@@ -566,6 +603,9 @@ float CPathManager::GetNodeExtraCost(unsigned int x, unsigned int z, bool synced
 }
 
 const float* CPathManager::GetNodeExtraCosts(bool synced) const {
+	if (!IsFinalized())
+		return NULL;
+
 	const PathNodeStateBuffer& buf = maxResPF->GetNodeStateBuffer();
 	const float* costs = buf.GetNodeExtraCosts(synced);
 	return costs;
@@ -573,8 +613,12 @@ const float* CPathManager::GetNodeExtraCosts(bool synced) const {
 
 int2 CPathManager::GetNumQueuedUpdates() const {
 	int2 data;
-	data.x = medResPE->updatedBlocks.size();
-	data.y = lowResPE->updatedBlocks.size();
+
+	if (IsFinalized()) {
+		data.x = medResPE->updatedBlocks.size();
+		data.y = lowResPE->updatedBlocks.size();
+	}
+
 	return data;
 }
 

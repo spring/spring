@@ -151,12 +151,13 @@ BOOST_AUTO_TEST_CASE(IsSingleInstruction)
 {
 	// do NOT add braces here, as that would invalidate the test!
 	int x = 0;
-	if      (x == 0)
+	if      (x == 0) {
 		LOG("(IsSingleInstruction) Test");
-	else if (x == 1)
+	} else if (x == 1) {
 		LOG("(IsSingleInstruction) if");
-	else
+	} else {
 		LOG("(IsSingleInstruction) LOG() is a single instruction.");
+	}
 
 	TLOG("(IsSingleInstruction) Test");
 }

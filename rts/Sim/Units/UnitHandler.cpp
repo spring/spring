@@ -2,8 +2,6 @@
 
 #include <cassert>
 
-#include "lib/gml/gmlmut.h"
-#include "lib/gml/gml_base.h"
 #include "UnitHandler.h"
 #include "Unit.h"
 #include "UnitDefHandler.h"
@@ -150,8 +148,6 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			delTeam = delUnit->team;
 			delType = delUnit->unitDef->id;
 
-			GML_STDMUTEX_LOCK(dque); // DeleteUnitNow
-
 			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
 			activeUnits.erase(usi);
@@ -184,21 +180,11 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 void CUnitHandler::Update()
 {
 	{
-		GML_STDMUTEX_LOCK(runit); // Update
-
 		if (!unitsToBeRemoved.empty()) {
-			GML_RECMUTEX_LOCK(obj); // Update
-
 			while (!unitsToBeRemoved.empty()) {
 				eventHandler.DeleteSyncedObjects(); // the unit destructor may invoke eventHandler, so we need to call these for every unit to clear invaild references from the batching systems
 
-				GML_RECMUTEX_LOCK(unit); // Update
-
 				eventHandler.DeleteSyncedUnits();
-
-				GML_RECMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
-				GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
-				GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
 
 				CUnit* delUnit = unitsToBeRemoved.back();
 				unitsToBeRemoved.pop_back();
@@ -209,8 +195,6 @@ void CUnitHandler::Update()
 
 		eventHandler.UpdateUnits();
 	}
-
-	GML::UpdateTicks();
 
 	#define MAPPOS_SANITY_CHECK(unit)                          \
 		if (unit->unitDef->IsGroundUnit()) {                   \
@@ -232,8 +216,8 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit::MoveType::Update");
-		std::list<CUnit*>::iterator usi;
-		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+
+		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 			AMoveType* moveType = unit->moveType;
 
@@ -249,15 +233,14 @@ void CUnitHandler::Update()
 			}
 
 			UNIT_SANITY_CHECK(unit);
-			GML::GetTicks(unit->lastUnitUpdate);
 		}
 	}
 
 	{
 		// Delete dead units
-		std::list<CUnit*>::iterator usi;
-		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
+
 			if (unit->deathScriptFinished) {
 				// there are many ways to fiddle with "deathScriptFinished", so a unit may
 				// arrive here without having been properly killed (and isDead still false),
@@ -271,8 +254,8 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit::UpdatePieceMatrices");
-		std::list<CUnit*>::iterator usi;
-		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+
+		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			// UnitScript only applies piece-space transforms so
 			// we apply the forward kinematics update separately
 			// (only if we have any dirty pieces)
@@ -283,8 +266,8 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit::Update");
-		std::list<CUnit*>::iterator usi;
-		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+
+		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 			UNIT_SANITY_CHECK(unit);
 			unit->Update();
@@ -301,7 +284,7 @@ void CUnitHandler::Update()
 		}
 
 		// stagger the SlowUpdate's
-		int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
+		unsigned int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
 
 		for (; activeSlowUpdateUnit != activeUnits.end() && n != 0; ++activeSlowUpdateUnit) {
 			CUnit* unit = *activeSlowUpdateUnit;
@@ -319,16 +302,12 @@ void CUnitHandler::Update()
 
 void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 {
-	GML_STDMUTEX_LOCK(cai); // AddBuilderCAI
-
 	// called from CBuilderCAI --> owner is already valid
 	builderCAIs[b->owner->id] = b;
 }
 
 void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 {
-	GML_STDMUTEX_LOCK(cai); // RemoveBuilderCAI
-
 	// called from ~CUnit --> owner is still valid
 	assert(b->owner != NULL);
 	builderCAIs.erase(b->owner->id);

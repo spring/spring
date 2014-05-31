@@ -30,7 +30,7 @@ public:
 		shield = NULL;
 	}
 
-	inline CPlasmaRepulser* GetShield() const { return GML::SimEnabled() ? *(CPlasmaRepulser* volatile*)&shield : shield; }
+	inline CPlasmaRepulser* GetShield() const { return shield; }
 	const AtlasedTexture* GetShieldTexture() const { return shieldTexture; }
 
 private:

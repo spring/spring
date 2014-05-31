@@ -218,7 +218,7 @@ void cBuilder::UnitFinished(const int& unit, UnitInfo *U)
 						fPos.z-=150+rand()%201;
 					else
 						fPos.z+=150+rand()%201;
-					fPos.y=cb->GetElevation(fPos.x,fPos.z);
+					G->CorrectPosition(fPos);
 					c.params.push_back(fPos.x);
 					c.params.push_back(fPos.y);
 					c.params.push_back(fPos.z);

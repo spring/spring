@@ -20,7 +20,7 @@
 #undef protected
 #undef private
 
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/QTPFSPathDrawer.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
@@ -37,8 +37,7 @@ void QTPFSPathDrawer::DrawAll() const {
 	if (md == NULL)
 		return;
 
-	// QTPFS::PathManager is not thread-safe
-	if (!GML::SimEnabled() && enabled && (gs->cheatEnabled || gu->spectating)) {
+	if (enabled && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_LIGHTING);
@@ -161,8 +160,8 @@ void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, CVertexArray* va) const
 			if (!camera->InView(p0) && !camera->InView(p1))
 				continue;
 
-			p0.y = ground->GetHeightReal(p0.x, p0.z, false);
-			p1.y = ground->GetHeightReal(p1.x, p1.z, false);
+			p0.y = CGround::GetHeightReal(p0.x, p0.z, false);
+			p1.y = CGround::GetHeightReal(p1.x, p1.z, false);
 
 			va->AddVertexQC(p0, color);
 			va->AddVertexQC(p1, color);
@@ -250,11 +249,11 @@ void QTPFSPathDrawer::DrawNode(
 	#define zmidw (node->zmid() * SQUARE_SIZE)
 
 	const float3 verts[5] = {
-		float3(xminw, ground->GetHeightReal(xminw, zminw, false) + 4.0f, zminw),
-		float3(xmaxw, ground->GetHeightReal(xmaxw, zminw, false) + 4.0f, zminw),
-		float3(xmaxw, ground->GetHeightReal(xmaxw, zmaxw, false) + 4.0f, zmaxw),
-		float3(xminw, ground->GetHeightReal(xminw, zmaxw, false) + 4.0f, zmaxw),
-		float3(xmidw, ground->GetHeightReal(xmidw, zmidw, false) + 4.0f, zmidw),
+		float3(xminw, CGround::GetHeightReal(xminw, zminw, false) + 4.0f, zminw),
+		float3(xmaxw, CGround::GetHeightReal(xmaxw, zminw, false) + 4.0f, zminw),
+		float3(xmaxw, CGround::GetHeightReal(xmaxw, zmaxw, false) + 4.0f, zmaxw),
+		float3(xminw, CGround::GetHeightReal(xminw, zmaxw, false) + 4.0f, zmaxw),
+		float3(xmidw, CGround::GetHeightReal(xmidw, zmidw, false) + 4.0f, zmidw),
 	};
 	static const unsigned char colors[3][4] = {
 		{1 * 255, 0 * 255, 0 * 255, 1 * 255}, // red --> blocked
@@ -313,8 +312,8 @@ void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS:
 	#define zmidw(n) (n->zmid() * SQUARE_SIZE)
 
 	const float3 verts[2] = {
-		float3(xmidw(pushedNode), ground->GetHeightReal(xmidw(pushedNode), zmidw(pushedNode), false) + 4.0f, zmidw(pushedNode)),
-		float3(xmidw(poppedNode), ground->GetHeightReal(xmidw(poppedNode), zmidw(poppedNode), false) + 4.0f, zmidw(poppedNode)),
+		float3(xmidw(pushedNode), CGround::GetHeightReal(xmidw(pushedNode), zmidw(pushedNode), false) + 4.0f, zmidw(pushedNode)),
+		float3(xmidw(poppedNode), CGround::GetHeightReal(xmidw(poppedNode), zmidw(poppedNode), false) + 4.0f, zmidw(poppedNode)),
 	};
 	static const unsigned char color[4] = {
 		1 * 255, 0 * 255, 1 * 255, 1 * 128,

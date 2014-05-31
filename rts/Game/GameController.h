@@ -13,8 +13,8 @@ public:
 
 	virtual bool Draw();
 	virtual bool Update();
-	virtual int KeyPressed(unsigned short key, bool isRepeat);
-	virtual int KeyReleased(unsigned short key);
+	virtual int KeyPressed(int key, bool isRepeat);
+	virtual int KeyReleased(int key);
 	virtual void ResizeEvent() {}
 
 	/// true if user is writing
@@ -22,7 +22,6 @@ public:
 	/// current writing position
 	int  writingPos;
 	bool ignoreNextChar;
-	char ignoreChar;
 	std::string userInput;
 	std::string userPrompt;
 

@@ -9,8 +9,6 @@
 #include "Game/Players/PlayerHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
-#include "Lua/LuaRules.h"
-#include "Lua/LuaUI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
@@ -208,11 +206,11 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 		return;
 	}
 
-	if (!luaRules || luaRules->AllowResourceTransfer(teamNum, toTeam, "m", metal)) {
+	if (eventHandler.AllowResourceTransfer(teamNum, toTeam, "m", metal)) {
 		target->metal += metal;
 		metal = 0;
 	}
-	if (!luaRules || luaRules->AllowResourceTransfer(teamNum, toTeam, "e", energy)) {
+	if (eventHandler.AllowResourceTransfer(teamNum, toTeam, "e", energy)) {
 		target->energy += energy;
 		energy = 0;
 	}

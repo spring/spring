@@ -12,7 +12,6 @@ CGameController::CGameController()
 	: userWriting(false)
 	, writingPos(0)
 	, ignoreNextChar(false)
-	, ignoreChar(0)
 {
 }
 
@@ -37,13 +36,13 @@ bool CGameController::Update()
 }
 
 
-int CGameController::KeyPressed(unsigned short key, bool isRepeat)
+int CGameController::KeyPressed(int key, bool isRepeat)
 {
 	return 0;
 }
 
 
-int CGameController::KeyReleased(unsigned short key)
+int CGameController::KeyReleased(int key)
 {
 	return 0;
 }

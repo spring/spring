@@ -48,7 +48,6 @@ public:
 		, airLosMul(1.0f)
 		, requireSonarUnderWater(true)
 		, featureVisibility(FEATURELOS_NONE)
-		, luaThreadingModel(2)
 		, pathFinderSystem(PFS_TYPE_DEFAULT)
 	{}
 
@@ -173,8 +172,6 @@ public:
 	/// feature visibility style: 0 - no LOS for features, 1 - gaia features visible
 	/// 2 - gaia/allied features visible, 3 - all features visible
 	int featureVisibility;
-	// Lua threading model: Controls which Lua MT optimizations the mod will use by default (see LuaConfig.h for details)
-	int luaThreadingModel;
 
 	// which pathfinder system (DEFAULT/legacy or QTPFS) the mod will use
 	int pathFinderSystem;

@@ -61,7 +61,7 @@ static std::string glslGetLog(GLuint obj)
 }
 
 
-static std::string GetShaderSource(std::string fileName)
+static std::string GetShaderSource(const std::string& fileName)
 {
 	std::string soPath = "shaders/" + fileName;
 	std::string soSource = "";
@@ -76,6 +76,19 @@ static std::string GetShaderSource(std::string fileName)
 	}
 
 	return soSource;
+}
+
+static bool ExtractGlslVersion(std::string* src, std::string* version)
+{
+	const auto pos = src->find("#version ");
+
+	if (pos != std::string::npos) {
+		const auto eol = src->find('\n', pos) + 1;
+		*version = src->substr(pos, eol - pos);
+		src->erase(pos, eol - pos);
+		return true;
+	}
+	return false;
 }
 
 
@@ -143,46 +156,31 @@ namespace Shader {
 			curShaderSrc = GetShaderSource(srcFile);
 
 		std::string sourceStr = curShaderSrc;
+		std::string defFlags  = rawDefStrs + "\n" + modDefStrs;
 		std::string versionStr;
 
 		// extract #version pragma and put it on the first line (only allowed there)
 		// version pragma in definitions overrides version pragma in source (if any)
-		const size_t foo = sourceStr.find("#version ");
-		const size_t bar = rawDefStrs.find("#version ");
-		const size_t eos = std::string::npos;
-
-		if (foo != eos) {
-			versionStr = sourceStr.substr(foo, sourceStr.find('\n', foo) + 1);
-			sourceStr = sourceStr.substr(0, foo) + sourceStr.substr(sourceStr.find('\n', foo) + 1, eos);
-		}
-		if (bar != eos) {
-			versionStr = rawDefStrs.substr(bar, rawDefStrs.find('\n', bar) + 1);
-			rawDefStrs = rawDefStrs.substr(0, bar) + rawDefStrs.substr(rawDefStrs.find('\n', bar) + 1, eos);
-		}
-
-		if (!versionStr.empty() && versionStr[versionStr.size() - 1] != '\n') { versionStr += "\n"; }
-		if (!rawDefStrs.empty() && rawDefStrs[rawDefStrs.size() - 1] != '\n') { rawDefStrs += "\n"; }
-		if (!modDefStrs.empty() && modDefStrs[modDefStrs.size() - 1] != '\n') { modDefStrs += "\n"; }
-
-		// NOTE: some drivers cannot handle "#line 0" (?!)
-		sourceStr = "#line 1\n" + sourceStr;
+		ExtractGlslVersion(&sourceStr, &versionStr);
+		ExtractGlslVersion(&defFlags,  &versionStr);
+		if (!versionStr.empty()) EnsureEndsWith(&versionStr, "\n");
+		if (!defFlags.empty())   EnsureEndsWith(&defFlags,   "\n");
 
 		// NOTE: many definition flags are not set until after shader is compiled
-		const GLchar* sources[7] = {
+		std::vector<const GLchar*> sources = {
 			"// SHADER VERSION\n",
 			versionStr.c_str(),
 			"// SHADER FLAGS\n",
-			rawDefStrs.c_str(),
-			modDefStrs.c_str(),
+			defFlags.c_str(),
 			"// SHADER SOURCE\n",
+			"#line 1\n",
 			sourceStr.c_str()
 		};
-		const GLint lengths[7] = {-1, -1, -1, -1, -1, -1, -1};
 
 		if (objID == 0)
 			objID = glCreateShader(type);
 
-		glShaderSource(objID, 7, sources, lengths);
+		glShaderSource(objID, sources.size(), &sources[0], NULL);
 		glCompileShader(objID);
 
 		valid = glslIsValid(objID);
@@ -202,40 +200,21 @@ namespace Shader {
 
 
 	IProgramObject::IProgramObject(const std::string& poName): name(poName), objID(0), curHash(0), valid(false), bound(false) {
-#ifdef USE_GML
-		memset(tbound, 0, sizeof(tbound));
-#endif
 	}
 
 	void IProgramObject::Enable() {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			tbound[GML::ThreadNumber()] = bound ? 0 : 1;
-		} else
-#endif
 		{
 			bound = true;
 		}
 	}
 
 	void IProgramObject::Disable() {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			tbound[GML::ThreadNumber()] = bound ? -1 : 0;
-		} else
-#endif
 		{
 			bound = false;
 		}
 	}
 
 	bool IProgramObject::IsBound() const {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			char tb = tbound[GML::ThreadNumber()];
-			return (tb != 0) ? tb > 0 : bound;
-		} else
-#endif
 		{
 			return bound;
 		}
@@ -293,29 +272,14 @@ namespace Shader {
 	ARBProgramObject::ARBProgramObject(const std::string& poName): IProgramObject(poName) {
 		objID = -1; // not used for ARBProgramObject instances
 		uniformTarget = -1;
-#ifdef USE_GML
-		for (int i = 0; i < GML_MAX_NUM_THREADS; ++i) {
-			tuniformTargets[i] = -1;
-		}
-#endif
 	}
 
 	void ARBProgramObject::SetUniformTarget(int target) {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			tuniformTargets[GML::ThreadNumber()] = target;
-		} else
-#endif
 		{
 			uniformTarget = target;
 		}
 	}
 	int ARBProgramObject::GetUnitformTarget() {
-#ifdef USE_GML
-		if (GML::ServerActive()) {
-			return tuniformTargets[GML::ThreadNumber()];
-		} else
-#endif
 		{
 			return uniformTarget;
 		}

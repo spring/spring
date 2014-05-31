@@ -9,6 +9,7 @@
 
 #include "LuaInclude.h"
 
+#include "LuaConfig.h"
 #include "LuaRules.h" // for MAX_LUA_COB_ARGS
 #include "LuaHandleSynced.h"
 #include "LuaHashString.h"
@@ -62,11 +63,11 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/ObjectDependenceTypes.h"
 #include "System/Log/ILog.h"
 #include "System/Sync/HsiehHash.h"
-#include "LuaHelper.h"
 
 using std::max;
 using std::min;
@@ -97,12 +98,7 @@ static float smoothMeshAmountChanged;
 
 inline void LuaSyncedCtrl::CheckAllowGameChanges(lua_State* L)
 {
-	const CLuaHandleSynced* lhs = CLuaHandleSynced::GetSyncedHandle(L);
-
-	if (lhs == NULL) {
-		luaL_error(L, "Internal lua error, unsynced script using synced calls");
-	}
-	if (!lhs->GetAllowChanges()) {
+	if (!CLuaHandle::GetHandleAllowChanges(L)) {
 		luaL_error(L, "Unsafe attempt to change game state");
 	}
 }
@@ -155,6 +151,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitSonarStealth);
 	REGISTER_LUA_CFUNC(SetUnitAlwaysVisible);
 	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
+	REGISTER_LUA_CFUNC(SetUnitHarvestStorage);
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
 	REGISTER_LUA_CFUNC(SetUnitNanoPieces);
 	REGISTER_LUA_CFUNC(SetUnitBlocking);
@@ -498,11 +495,7 @@ static int SetSolidObjectDirection(lua_State* L, CSolidObject* o)
 	if (o == NULL)
 		return 0;
 
-	float3 dir(luaL_checkfloat(L, 2),
-	           luaL_checkfloat(L, 3),
-	           luaL_checkfloat(L, 4));
-
-	o->ForcedSpin(dir.Normalize());
+	o->ForcedSpin((float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4))).SafeNormalize());
 	return 0;
 }
 
@@ -810,7 +803,7 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 
 	if (type == "metal") {
 		amount = std::min(amount, (float)team1->metal);
-		if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "m", amount)) {
+		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "m", amount)) { //FIXME can cause an endless loop
 			team1->metal                       -= amount;
 			team1->metalSent                   += amount;
 			team1->currentStats->metalSent     += amount;
@@ -820,7 +813,7 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 		}
 	} else if (type == "energy") {
 		amount = std::min(amount, (float)team1->energy);
-		if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "e", amount)) {
+		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "e", amount)) { //FIXME can cause an endless loop
 			team1->energy                       -= amount;
 			team1->energySent                   += amount;
 			team1->currentStats->energySent     += amount;
@@ -1681,6 +1674,16 @@ int LuaSyncedCtrl::SetUnitMetalExtraction(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetUnitHarvestStorage(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	unit->harvestStorage = luaL_checkfloat(L, 2);
+	return 0;
+}
+
 int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -2152,9 +2155,9 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 		pos.z = luaL_checkfloat(L, 3);
 
 		if (luaL_optboolean(L, 4, false)) {
-			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
+			pos.y = CGround::GetHeightAboveWater(pos.x, pos.z);
 		} else {
-			pos.y = ground->GetHeightReal(pos.x, pos.z);
+			pos.y = CGround::GetHeightReal(pos.x, pos.z);
 		}
 	}
 
@@ -2367,7 +2370,7 @@ int LuaSyncedCtrl::RemoveGrass(lua_State* L)
 	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
 	pos.ClampInBounds();
 
-	treeDrawer->RemoveGrass((int)pos.x,(int)pos.z);
+	treeDrawer->RemoveGrass(pos);
 	return 0;
 }
 
@@ -2806,26 +2809,33 @@ int LuaSyncedCtrl::SetPieceProjectileParams(lua_State* L)
 	return 0;
 }
 
-
+//
+// TODO: move this and SpawnCEG to LuaUnsyncedCtrl
+//
 int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
 {
 	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
 
 	if (proj == NULL)
 		return 0;
+	if (!proj->weapon && !proj->piece)
+		return 0;
 
-	assert(proj->weapon || proj->piece);
+	unsigned int cegID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
 
-	if (proj->weapon) {
-		CWeaponProjectile* wproj = static_cast<CWeaponProjectile*>(proj);
-		wproj->SetCustomExplosionGeneratorID(explGenHandler->LoadGeneratorID(luaL_checkstring(L, 2)));
+	if (lua_isstring(L, 2)) {
+		cegID = explGenHandler->LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 2));
+	} else {
+		cegID = luaL_checknumber(L, 2);
 	}
-	if (proj->piece) {
-		CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);
-		pproj->SetCustomExplosionGeneratorID(explGenHandler->LoadGeneratorID(luaL_checkstring(L, 2)));
+
+	// if cegID is EXPGEN_ID_INVALID, this also returns NULL
+	if (explGenHandler->GetGenerator(cegID) != NULL) {
+		proj->SetCustomExplosionGeneratorID(cegID);
 	}
 
-	return 0;
+	lua_pushnumber(L, cegID);
+	return 1;
 }
 
 

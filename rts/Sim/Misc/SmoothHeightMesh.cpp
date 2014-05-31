@@ -41,7 +41,7 @@ static float Interpolate(float x, float y, const int maxx, const int maxy, const
 }
 
 
-SmoothHeightMesh::SmoothHeightMesh(const CGround* ground, float mx, float my, float res, float smoothRad)
+SmoothHeightMesh::SmoothHeightMesh(float mx, float my, float res, float smoothRad)
 	: maxx((mx / res) + 1)
 	, maxy((my / res) + 1)
 	, fmaxx(mx)
@@ -49,7 +49,7 @@ SmoothHeightMesh::SmoothHeightMesh(const CGround* ground, float mx, float my, fl
 	, resolution(res)
 	, smoothRadius(std::max(1.0f, smoothRad))
 {
-	MakeSmoothMesh(ground);
+	MakeSmoothMesh();
 }
 
 SmoothHeightMesh::~SmoothHeightMesh() {
@@ -105,7 +105,7 @@ inline static void FindMaximumColumnHeights(
 		for (int x = 0; x <= maxx; ++x)  {
 			const float curx = x * resolution;
 			const float cury = y * resolution;
-			const float curh = ground->GetHeightAboveWater(curx, cury);
+			const float curh = CGround::GetHeightAboveWater(curx, cury);
 
 			if (curh > colsMaxima[x]) {
 				colsMaxima[x] = curh;
@@ -128,7 +128,7 @@ inline static void AdvanceMaximaRows(
 	for (int x = 0; x <= maxx; ++x) {
 		if (maximaRows[x] == (y - 1)) {
 			const float curx = x * resolution;
-			const float curh = ground->GetHeightAboveWater(curx, cury);
+			const float curh = CGround::GetHeightAboveWater(curx, cury);
 
 			if (curh == colsMaxima[x]) {
 				maximaRows[x] = y;
@@ -162,7 +162,7 @@ inline static void FindRadialMaximum(
 		for (int i = startx; i <= endx; ++i) {
 			assert(i >= 0);
 			assert(i <= maxx);
-			assert(ground->GetHeightReal(i * resolution, cury) <= colsMaxima[i]);
+			assert(CGround::GetHeightReal(i * resolution, cury) <= colsMaxima[i]);
 
 			maxRowHeight = std::max(colsMaxima[i], maxRowHeight);
 		}
@@ -170,7 +170,7 @@ inline static void FindRadialMaximum(
 #ifndef NDEBUG
 		const float curx = x * resolution;
 		assert(maxRowHeight <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
-		assert(maxRowHeight >= ground->GetHeightAboveWater(curx, cury));
+		assert(maxRowHeight >= CGround::GetHeightAboveWater(curx, cury));
 
 	#ifdef SMOOTHMESH_CORRECTNESS_CHECK
 		// naive algorithm
@@ -178,7 +178,7 @@ inline static void FindRadialMaximum(
 
 		for (float y1 = cury - smoothRadius; y1 <= cury + smoothRadius; y1 += resolution) {
 			for (float x1 = curx - smoothRadius; x1 <= curx + smoothRadius; x1 += resolution) {
-				maxRowHeightAlt = std::max(maxRowHeightAlt, ground->GetHeightAboveWater(x1, y1));
+				maxRowHeightAlt = std::max(maxRowHeightAlt, CGround::GetHeightAboveWater(x1, y1));
 			}
 		}
 
@@ -208,7 +208,7 @@ inline static void FixRemainingMaxima(
 	for (int x = 0; x <= maxx; ++x) {
 #ifdef _DEBUG
 		for (int y1 = std::max(0, y - intrad); y1 <= std::min(maxy, y + intrad); ++y1) {
-			assert(ground->GetHeightReal(x * resolution, y1 * resolution) <= colsMaxima[x]);
+			assert(CGround::GetHeightReal(x * resolution, y1 * resolution) <= colsMaxima[x]);
 		}
 #endif
 		const float curx = x * resolution;
@@ -218,7 +218,7 @@ inline static void FixRemainingMaxima(
 			colsMaxima[x] = -std::numeric_limits<float>::max();
 
 			for (int y1 = std::max(0, y - intrad + 1); y1 <= std::min(maxy, nextrow); ++y1) {
-				const float h = ground->GetHeightAboveWater(curx, y1 * resolution);
+				const float h = CGround::GetHeightAboveWater(curx, y1 * resolution);
 
 				if (h > colsMaxima[x]) {
 					colsMaxima[x] = h;
@@ -230,7 +230,7 @@ inline static void FixRemainingMaxima(
 			}
 		} else if (nextrow <= maxy) {
 			// else, just check if a new maximum has entered the window
-			const float h = ground->GetHeightAboveWater(curx, nextrowy);
+			const float h = CGround::GetHeightAboveWater(curx, nextrowy);
 
 			if (h > colsMaxima[x]) {
 				colsMaxima[x] = h;
@@ -243,7 +243,7 @@ inline static void FixRemainingMaxima(
 
 #ifdef _DEBUG
 		for (int y1 = std::max(0, y - intrad + 1); y1 <= std::min(maxy, y + intrad + 1); ++y1) {
-			assert(colsMaxima[x] >= ground->GetHeightReal(curx, y1 * resolution));
+			assert(colsMaxima[x] >= CGround::GetHeightReal(curx, y1 * resolution));
 		}
 #endif
 	}
@@ -284,7 +284,7 @@ inline static void BlurHorizontal(
 					smoothed[idx] += mesh[x1 + y * lineSize];
 				}
 
-				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
+				const float gh = CGround::GetHeightAboveWater(x * resolution, y * resolution);
 				const float sh = smoothed[idx] / (xend - xstart + 1);
 
 				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
@@ -292,7 +292,7 @@ inline static void BlurHorizontal(
 				// non-border case
 				avg += mesh[idx + smoothrad] - mesh[idx - smoothrad - 1];
 
-				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
+				const float gh = CGround::GetHeightAboveWater(x * resolution, y * resolution);
 				const float sh = recipn * avg;
 
 				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
@@ -337,7 +337,7 @@ inline static void BlurVertical(
 					smoothed[idx] += mesh[x + y1 * lineSize];
 				}
 
-				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
+				const float gh = CGround::GetHeightAboveWater(x * resolution, y * resolution);
 				const float sh = smoothed[idx] / (yend - ystart + 1);
 
 				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
@@ -345,7 +345,7 @@ inline static void BlurVertical(
 				// non-border case
 				avg += mesh[x + (y + smoothrad) * lineSize] - mesh[x + (y - smoothrad - 1) * lineSize];
 
-				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
+				const float gh = CGround::GetHeightAboveWater(x * resolution, y * resolution);
 				const float sh = recipn * avg;
 
 				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
@@ -379,14 +379,14 @@ inline static void CheckInvariants(
 	}
 	for (int y1 = std::max(0, y - intrad + 1); y1 <= std::min(maxy, y + intrad + 1); ++y1) {
 		for (int x1 = 0; x1 <= maxx; ++x1) {
-			assert(ground->GetHeightReal(x1 * resolution, y1 * resolution) <= colsMaxima[x1]);
+			assert(CGround::GetHeightReal(x1 * resolution, y1 * resolution) <= colsMaxima[x1]);
 		}
 	}
 }
 
 
 
-void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
+void SmoothHeightMesh::MakeSmoothMesh()
 {
 	ScopedOnceTimer timer("SmoothHeightMesh::MakeSmoothMesh");
 

@@ -43,11 +43,6 @@ class CLuaUI : public CLuaHandle
 
 	public: // call-ins
 		bool HasCallIn(lua_State* L, const string& name);
-		bool UnsyncedUpdateCallIn(lua_State* L, const string& name);
-
-		void Shutdown();
-
-		bool HasLayoutButtons();
 
 		bool LayoutButtons(int& xButtons, int& yButtons,
 		                   const vector<CommandDescription>& cmds,
@@ -65,34 +60,21 @@ class CLuaUI : public CLuaHandle
 
 		void ShockFront(const float3& pos, float power, float areaOfEffect, const float* distMod = NULL);
 
-	public: // custom call-in
-		bool HasUnsyncedXCall(lua_State* srcState, const string& funcName);
-		int UnsyncedXCall(lua_State* srcState, const string& funcName);
-		void ExecuteUIEventBatch();
-
 	protected:
 		CLuaUI();
-		~CLuaUI();
+		virtual ~CLuaUI();
 
 		string LoadFile(const string& filename) const;
 
 		bool LoadCFunctions(lua_State* L);
+		void InitLuaSocket(lua_State* L);
 
-		bool BuildCmdDescTable(lua_State* L,
-		                       const vector<CommandDescription>& cmds);
-
+		bool BuildCmdDescTable(lua_State* L, const vector<CommandDescription>& cmds);
 		bool GetLuaIntMap(lua_State* L, int index, map<int, int>& intList);
-
 		bool GetLuaIntList(lua_State* L, int index, vector<int>& intList);
-
-		bool GetLuaReStringList(lua_State* L, int index,
-		                        vector<ReStringPair>& reStringCmds);
-
-		bool GetLuaReParamsList(lua_State* L, int index,
-		                        vector<ReParamsPair>& reParamsCmds);
-
-		bool GetLuaCmdDescList(lua_State* L, int index,
-		                       vector<CommandDescription>& customCmds);
+		bool GetLuaReStringList(lua_State* L, int index, vector<ReStringPair>& reStringCmds);
+		bool GetLuaReParamsList(lua_State* L, int index, vector<ReParamsPair>& reParamsCmds);
+		bool GetLuaCmdDescList(lua_State* L, int index,  vector<CommandDescription>& customCmds);
 
 	protected:
 		bool haveShockFront;
@@ -102,15 +84,6 @@ class CLuaUI : public CLuaHandle
 
 	private: // call-outs
 		static int SetShockFrontFactors(lua_State* L);
-
-		int UpdateUnsyncedXCalls(lua_State* L);
-		/**
-		*	initialize luasocket
-		*/
-		void InitLuaSocket(lua_State* L);
-
-		std::set<std::string> unsyncedXCalls;
-		std::vector<UIEventBase> luaUIEventBatch;
 };
 
 

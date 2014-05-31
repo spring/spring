@@ -9,6 +9,9 @@
 #define _ERROR_HANDLER_H
 
 #include <string>
+#ifndef NO_CATCH_EXCEPTIONS
+#include <sstream>
+#endif
 #include <boost/thread/exceptions.hpp>
 #include <boost/system/system_error.hpp>
 #include "System/Exceptions.h"
@@ -60,6 +63,9 @@ int GetExitCode();
 	}                                                                                        \
 	catch (const unsupported_error& e) {                                                     \
 		ErrorMessageBox(e.what(), "Spring: Hardware Problem: ", MBF_OK | MBF_CRASH);         \
+	}                                                                                        \
+	catch (const network_error& e) {                                                     \
+		ErrorMessageBox(e.what(), "Spring: Network Error: ", MBF_OK | MBF_EXCL);         \
 	}
 
 /**

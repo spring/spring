@@ -97,16 +97,8 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 		char fileNameBuffer[256] = {0};
 
 		ifs->Read(&numSmallTiles, sizeof(int));
-		// works but would need to seek back
-		// ifs->Read(&fileNameBuffer[0], sizeof(char) * sizeof(fileNameBuffer));
-
+		ifs->ReadString(&fileNameBuffer[0], sizeof(char) * (sizeof(fileNameBuffer) - 1));
 		swabDWordInPlace(numSmallTiles);
-
-		for (unsigned int n = 0; n < sizeof(fileNameBuffer); n++) {
-			if (ifs->Read(&fileNameBuffer[n], sizeof(char)) != 1 || fileNameBuffer[n] == 0) {
-				break;
-			}
-		}
 
 		std::string smtFileName = fileNameBuffer;
 		std::string smtFilePath = (!smtHeaderOverride)?
@@ -117,11 +109,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 
 		if (!tileFile.FileExists()) {
 			// try absolute path
-			if (!smtHeaderOverride) {
-				smtFilePath = smtFileName;
-			} else {
-				smtFilePath = smf.smtFileNames[a];
-			}
+			smtFilePath = (!smtHeaderOverride) ? smtFileName : smf.smtFileNames[a];
 			tileFile.Open(smtFilePath);
 		}
 

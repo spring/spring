@@ -4,6 +4,7 @@
 
 #include "System/TdfParser.h"
 #include "System/Exceptions.h"
+#include "System/MsgStrings.h"
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Util.h"
@@ -11,17 +12,31 @@
 #include "System/Platform/errorhandler.h"
 #endif
 
+
 static const unsigned int DEFAULT_HOST_PORT = 8452;
-static const std::string DEFAULT_HOST_IP = ""; // -> any local address
+static const std::string DEFAULT_HOST_IP = "localhost"; // -> any local address
 static const std::string DEFAULT_HOST_PORT_STR = IntToString(DEFAULT_HOST_PORT);
 
-ClientSetup::ClientSetup():
-	hostPort(DEFAULT_HOST_PORT),
-	isHost(false)
+ClientSetup::ClientSetup()
+	: hostIP(DEFAULT_HOST_IP)
+	, hostPort(DEFAULT_HOST_PORT)
+	, isHost(false)
 {
 }
 
-void ClientSetup::Init(const std::string& setup)
+
+void ClientSetup::SanityCheck()
+{
+	if (myPlayerName.empty()) myPlayerName = UnnamedPlayerName;
+	StringReplaceInPlace(myPlayerName, ' ', '_');
+
+	if (hostIP == "none") {
+		hostIP = "";
+	}
+}
+
+
+void ClientSetup::LoadFromStartScript(const std::string& setup)
 {
 	TdfParser file(setup.c_str(), setup.length());
 
@@ -31,12 +46,6 @@ void ClientSetup::Init(const std::string& setup)
 
 	// Technical parameters
 	file.GetDef(hostIP,       DEFAULT_HOST_IP,       "GAME\\HostIP");
-	if (StringToLower(hostIP) == "localhost") {
-		// FIXME temporary hack: we do not support (host-)names.
-		// "localhost" was the only name supported in the past.
-		// added 7. January 2011, to be removed in ~ 1 year
-		hostIP = "127.0.0.1";
-	}
 	file.GetDef(hostPort,     DEFAULT_HOST_PORT_STR, "GAME\\HostPort");
 
 	file.GetDef(myPlayerName, "", "GAME\\MyPlayerName");
@@ -51,6 +60,7 @@ void ClientSetup::Init(const std::string& setup)
 	}
 #endif
 
+	//FIXME WTF
 	std::string sourceport, autohostip, autohostport;
 	if (file.SGetValue(sourceport, "GAME\\SourcePort")) {
 		configHandler->SetString("SourcePort", sourceport, true);
@@ -60,12 +70,5 @@ void ClientSetup::Init(const std::string& setup)
 	}
 	if (file.SGetValue(autohostport, "GAME\\AutohostPort")) {
 		configHandler->SetString("AutohostPort", autohostport, true);
-	}
-
-	if (file.SectionExist("OPTIONS")) {
-		const std::map<std::string, std::string>& options = file.GetAllValues("OPTIONS");
-		for (std::map<std::string,std::string>::const_iterator it = options.begin(); it != options.end(); ++it) {
-			configHandler->SetString(it->first, it->second, true);
-		}
 	}
 }

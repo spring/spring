@@ -9,7 +9,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/WaitCommandsAI.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Sim/Features/Feature.h"
@@ -24,6 +23,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/creg/STL_Set.h"
 #include "System/creg/STL_Deque.h"
@@ -368,11 +368,17 @@ static inline bool IsCommandInMap(const Command& c)
 	// TODO:
 	//   extend the check to commands for which
 	//   position is not stored in params[0..2]
-	if (c.params.size() >= 3) {
-		return ((c.GetPos(0)).IsInBounds());
+	if (c.params.size() < 3) {
+		return true;
 	}
+	if ((c.GetPos(0)).IsInBounds()) {
+		return true;
+	}
+	const float3 pos = c.GetPos(0);
+	LOG_L(L_DEBUG, "Dropped command %d: outside of map (x:%f y:%f z:%f)", c.GetID(), pos.x, pos.y, pos.z);
 
-	return true;
+	return false;
+
 }
 
 static inline bool AdjustGroundAttackCommand(const Command& c, bool fromSynced, bool aiOrder)
@@ -413,8 +419,8 @@ static inline bool AdjustGroundAttackCommand(const Command& c, bool fromSynced, 
 	//
 	Command& cc = const_cast<Command&>(c);
 
-	cc.params[1] = std::min(cPos.y, ground->GetHeightAboveWater(cPos.x, cPos.z, true || fromSynced));
-	// cc.params[1] = ground->GetHeightReal(cPos.x, cPos.z, true || fromSynced);
+	cc.params[1] = std::min(cPos.y, CGround::GetHeightAboveWater(cPos.x, cPos.z, true || fromSynced));
+	// cc.params[1] = CGround::GetHeightReal(cPos.x, cPos.z, true || fromSynced);
 
 	return true;
 	#endif
@@ -440,7 +446,9 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 		case CMD_MANUALFIRE:
 		case CMD_UNLOAD_UNIT:
 		case CMD_UNLOAD_UNITS: {
-			if (!IsCommandInMap(c)) { return false; }
+			if (!IsCommandInMap(c)) {
+				return false;
+			}
 		} break;
 
 		default: {
@@ -596,7 +604,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 
 void CCommandAI::GiveCommand(const Command& c, bool fromSynced)
 {
-	if (luaRules && !luaRules->AllowCommand(owner, c, fromSynced)) {
+	if (!eventHandler.AllowCommand(owner, c, fromSynced)) {
 		return;
 	}
 	eventHandler.UnitCommand(owner, c);
@@ -1350,7 +1358,7 @@ void CCommandAI::SlowUpdate()
 		return;
 	}
 
-	if (luaRules && !luaRules->CommandFallback(owner, c)) {
+	if (!eventHandler.CommandFallback(owner, c)) {
 		return; // luaRules wants the command to stay at the front
 	}
 
@@ -1425,17 +1433,14 @@ void CCommandAI::FinishCommand()
 {
 	assert(!commandQue.empty());
 
-	const Command cmd = commandQue.front();
-	const int cmdID  = cmd.GetID();
-	const int cmdTag = cmd.tag;
-	const unsigned char cmdOpts = cmd.options;
+	const Command cmd = commandQue.front(); //cppcheck false positive, copy is needed here
 	const bool dontRepeat = (cmd.options & INTERNAL_ORDER);
 
 	if (repeatOrders
 	    && !dontRepeat
-	    && (cmdID != CMD_STOP)
-	    && (cmdID != CMD_PATROL)
-	    && (cmdID != CMD_SET_WANTED_MAX_SPEED)){
+	    && (cmd.GetID() != CMD_STOP)
+	    && (cmd.GetID() != CMD_PATROL)
+	    && (cmd.GetID() != CMD_SET_WANTED_MAX_SPEED)){
 		commandQue.push_back(cmd);
 	}
 
@@ -1561,11 +1566,13 @@ void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cm
 }
 
 
-bool CCommandAI::HasBuildCommand() const {
+bool CCommandAI::HasCommand(int cmdID) const {
 	if (commandQue.empty())
 		return false;
+	if (cmdID < 0)
+		return ((commandQue.front()).IsBuildCommand());
 
-	return ((commandQue.front()).IsBuildCommand());
+	return ((commandQue.front()).GetID() == cmdID);
 }
 
 bool CCommandAI::HasMoreMoveCommands() const

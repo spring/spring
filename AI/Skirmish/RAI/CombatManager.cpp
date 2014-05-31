@@ -63,9 +63,12 @@ void cCombatManager::UnitIdle(const int& unit, UnitInfo *U)
 		else // cant see enemy or Mod Workaround: Combat Lords - cant be given attack orders
 		{
 			c.id = CMD_MOVE;
-			c.params.push_back(EPos.x -100.0 +rand()%201 );
+			EPos.x += -100.0 +rand()%201;
+			EPos.z += -100.0 +rand()%201;
+			G->CorrectPosition(EPos);
+			c.params.push_back(EPos.x);
 			c.params.push_back(EPos.y);
-			c.params.push_back(EPos.z -100.0 +rand()%201 );
+			c.params.push_back(EPos.z);
 		}
 
 		cb->GiveOrder(unit, &c);
@@ -218,6 +221,7 @@ bool cCombatManager::CommandManeuver(const int& unitID, UnitInfo *U, const float
 		float distanceAway=(0.87*U->enemyEff->BestRange-EDis);
 		Pos.x+=(Pos.x-EPos.x)*(distanceAway/EDis);
 		Pos.z+=(Pos.z-EPos.z)*(distanceAway/EDis);
+		G->CorrectPosition(Pos);
 
 		if( !G->TM->CanMoveToPos(U->area,Pos) )
 			return false;
@@ -243,7 +247,7 @@ void cCombatManager::CommandRun(const int& unitID, UnitInfo *U, float3& EPos)
 	Command c;
 	c.id = CMD_MOVE;
 	c.params.push_back(Pos.x);
-	c.params.push_back(cb->GetElevation(Pos.x,Pos.z));
+	c.params.push_back(Pos.y);
 	c.params.push_back(Pos.z);
 	cb->GiveOrder(unitID, &c);
 	G->UpdateEventAdd(1,cb->GetCurrentFrame()+210,unitID,U);

@@ -120,11 +120,12 @@ static inline std::string FloatToString(float f, const std::string& format = "%f
 	return std::string(buf);
 }
 
-static inline int StringToInt(std::string str, bool* failed = NULL)
+template<typename int_type = int>
+static inline int_type StringToInt(std::string str, bool* failed = NULL)
 {
 	StringTrimInPlace(str);
 	std::istringstream stream(str);
-	int buffer = 0;
+	int_type buffer = 0;
 	stream >> buffer;
 
 	if (failed != NULL)
@@ -152,6 +153,16 @@ static inline bool StringEndsWith(const std::string& str, const std::string& pos
 {
 	return StringEndsWith(str, postfix.c_str());
 }
+
+
+/// Appends postfix, when it doesn't already ends with it
+static inline void EnsureEndsWith(std::string* str, const char* postfix)
+{
+	if (!StringEndsWith(*str, postfix)) {
+		*str += postfix;
+	}
+}
+
 
 /// Helper function to avoid division by Zero
 static inline float SafeDivide(const float a, const float b)
@@ -276,4 +287,33 @@ protected:
 };
 
 
+
+
+char32_t Utf8GetNextChar(const std::string& text, int& pos);
+std::string UnicodeToUtf8(char32_t ch);
+
+
+static inline int Utf8CharLen(const std::string& str, int pos)
+{
+	const auto oldPos = pos;
+	Utf8GetNextChar(str, pos);
+	return pos - oldPos;
+}
+
+static inline int Utf8NextChar(const std::string& str, int pos)
+{
+	Utf8GetNextChar(str, pos);
+	return pos;
+}
+
+static inline int Utf8PrevChar(const std::string& str, int pos)
+{
+	int startPos = std::max(pos - 4, 0);
+	int oldPos   = startPos;
+	while (startPos < pos) {
+		oldPos = startPos;
+		Utf8GetNextChar(str, startPos);
+	}
+	return oldPos;
+}
 #endif // UTIL_H

@@ -101,7 +101,7 @@ public:
 	virtual int GetBlockingMapID() const { return -1; }
 
 	virtual void ForcedMove(const float3& newPos) {}
-	virtual void ForcedSpin(const float3& newDir) {}
+	virtual void ForcedSpin(const float3& newDir);
 
 	virtual void UpdatePhysicalState(float eps);
 
@@ -257,6 +257,8 @@ public:
 
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of
+
+	int tempNum;                                ///< used to check if object has already been processed (in QuadField queries, etc)
 
 	const SolidObjectDef* objectDef;            ///< points to a UnitDef or to a FeatureDef instance
 

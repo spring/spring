@@ -3,6 +3,121 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 
+-- 97.0 ---------------------------------------------------------
+Major:
+ - utf8 support (kudos go to N0U)
+ - switch from sdl to sdl2:
+  - added /fullscreen (alt+enter) command ingame
+  - fixes some window manager bugs/problems
+ - KeyChains (kudos go to MajBoredom)
+ - split LuaRules & LuaGaia into their synced/unsynced luaStates
+
+
+Cmdline Arguments:
+ - added new `spring spring://username:passwd@hostname:port` syntax  (all except hostname are optional, i.e. spring://localhost does work fine)
+  - Should in longterm replace script.txt for clients, so script.txt is only needed for hosts.
+    -> No need to create a file on the filesystem to start spring as a client.
+  - Spring links spring:// URL scheme in the OS, so you can start such URLs from browser (as UT99 did).
+    E.g. you can place a spectator link on your website to join your autohosts and/or you can use it for weblobbies.
+ ! changed -s/--server argument to take a param (the ip/hostname listen to)
+ ! removed -c/--client argument (was only needed in times when clients didn't retrieved their script.txt from the server)
+
+Hosting & Connecting:
+ - fixed direct connect in SelectMenu
+ - by default listen to localhost:8452 now, so you can always connect to localhost started matches
+
+Misc:
+ - improve debug draw (alt+[b])
+ ! demofile string in infolog changed "recording demo: %s" -> "Recording demo to: %s"
+ - demo filehandle is now opened on start, so you can use lsof to readback the used filename
+
+Buildprocess:
+ - fix freetype not found on windows / mingw
+ ! add check for gcc >=4.6 at configure
+ - optional fontconfig support
+ ! SDL2 dependency
+
+Rendering:
+ - `DebugGL` configtag works now (cause of SDL2 switch)
+
+KeyBindings/uikeys.txt:
+ ! removed /keyset
+ ! removed /hotbind (Ctrl+insert)
+ - new KeyChains support:
+  - example: /bind Ctrl+a,Ctrl+b say Hello World!
+  - you can double bind a button this way, e.g.:
+   - "/bind e,e say Bar", "/bind e say Foo" -> 1st press prints Foo, 2nd press prints Bar
+ - use KeyChains for defaults:
+  ! double hitting drawbutton sets label
+  ! switching between ally,spec & all chat is now done by double hitting alt,shift or ctrl
+  ! alt+return now toggles fullscreen (default shortcut e.g. in mediaplayers)
+
+LuaDefs:
+ - the parser now checks the returned tables for NaNs & Infs and prints a warning if it finds some (they are sources of desyncs!)
+
+UnitDefs:
+ - add new "harvestStorage" unitdef tag, UnitHarvestStorageFull lua callin and Spring.GetUnitHarvestStorage(unitid) callout
+   it's for engine assisted starcraft/c&c like feature harvesting (atm only metal is supported)
+   NOTE: the unload command still needs to be implemented in lua (much less work than the reclaiming one)
+
+Lua:
+ - LuaRules & LuaGaia are now splitted into their synced & unsynced parts, and each one got its own luaState
+  ! this way unsynced parts of gadgets now get `synced` callins like 'UnitCreated' etc. w/o  SendToUnsynced from their synced part
+  - LuaRules & LuaGaia are now ~equal (except a very minor subset of differences) and get the same callins esp. all AllowXYZ callins
+  - LuaUI now has a GotChatMsg too (same as LuaRules always had), it's similar to the now deprecated LuaUI-only ConfigCommand callin, but is called more often
+  - fixed a lot bugs in Spring's c-lua code
+  - use lua's original math.random() code and only use streflop for it in synced luaStates
+  - always make math.randomseed() available (synced & unsynced)
+  - in future this will also allow multithreading of the different luaStates
+  ! SYNCED. does a copy on access now and so is slow:
+   - bad:    for i=1,100 do ... SYNCED.foo[i] ... end
+   - good:   local foo = SYNCED.foo; for i=1,100 do ... foo[i] ... end
+  ! SYNCED. can't be localized in global scope anymore:
+   - bad:    local foo = SYNCED.foo;    function gadget:DrawWorld() ... foo ... end
+   - good:   function gadget:DrawWorld() local foo = SYNCED.foo; ... foo ... end
+ ! moved Spring.GetGameSpeed() from SyncedRead to UnsyncedRead cause it was causing desyncs in demos
+ - fix Spring.Restart on windows
+ ! new TextInput(utf8char) callin, needed cause of changed unicode handling in SDL2
+ - added Spring.SetUnitHarvestStorage(unitid, metal) & Spring.GetUnitHarvestStorage(unitid)
+ ! prevent triggering of ATi driver bugs
+  ! gl.LineWidth & gl.PointSize throw an error when called with incorrect argument (<=0)
+  ! gl.Scissor & gl.CreateTexture throw an error on incorrect sizes, too
+ ! fix gl.Viewport
+ - add missing colvol tags to Unit-/FeatureDefs:
+  - .collisionVolume.type = {"ellipsoid" | "cylinder" | "box"}
+  - .collisionVolume.scale{X|Y|Z}
+  - .collisionVolume.offset{X|Y|Z}
+  - .collisionVolume.boundingRadius
+  - .collisionVolume.defaultToSphere
+  - .collisionVolume.defaultToFootPrint
+  - .collisionVolume.defaultToPieceTree
+ - add optional 4th argument to Spring.GetUnitSeperation to calc the distance between the unitsphere surfaces instead of their midpos
+ ! fix wrong coords & crash in Spring.RemoveGrass
+ - added new LOG.NOTICE (should be used instead of LOG.INFO)
+ - improve Spring.GetKeyBindings output (backward compatible)
+ - added Script.IsEngineMinVersion(major [,minor [,commits]])
+ - added Spring.GetClipboard() & Spring.SetClipboard(string text)
+ - allow to connect to lobby.springrts.com:8200 by luasocket as default
+
+LUS:
+ - SetUnitValue now accepts booleans, too
+
+Demos:
+ - fixed desync checker
+
+StartScript:
+ - added GAME/MUTATOR{0..9} so you can load arbitrary mutator archives before the game
+ - make GameID the only seed of the synced random generator
+   so you can define the gameid in a luaAI battle startscript and you will always get a syncing match
+
+Installer:
+ ! disallow to install spring over existing installations / ask for uninstall first
+ - don't associate .sdf with spring.exe any more
+
+Linux:
+ ! new BlockCompositing configtag (default true). Disables kwin compositing to fix tearing.
+
+
 -- 96.0 ---------------------------------------------------------
 
 Major:

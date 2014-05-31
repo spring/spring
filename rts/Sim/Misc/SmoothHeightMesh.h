@@ -13,7 +13,7 @@ class CGround;
 class SmoothHeightMesh
 {
 public:
-	SmoothHeightMesh(const CGround* ground, float mx, float my, float res, float smoothRad);
+	SmoothHeightMesh(float mx, float my, float res, float smoothRad);
 	~SmoothHeightMesh();
 
 	float GetHeight(float x, float y);
@@ -32,7 +32,7 @@ public:
 	const float* GetOriginalMeshData() const { return &origMesh[0]; }
 
 private:
-	void MakeSmoothMesh(const CGround* ground);
+	void MakeSmoothMesh();
 
 	const int maxx, maxy;
 	const float fmaxx, fmaxy;

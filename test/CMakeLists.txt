@@ -276,6 +276,7 @@ Else  (NOT Boost_FOUND)
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" -"DTEST")
+
 ################################################################################
 ### UnitSync
 	set(test_name UnitSync)
@@ -292,6 +293,7 @@ Else  (NOT Boost_FOUND)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 	add_dependencies(test_${test_name} springcontent.sdz)
+
 ################################################################################
 ### ThreadPool
 	set(test_name ThreadPool)
@@ -311,6 +313,18 @@ Else  (NOT Boost_FOUND)
 			${WINMM_LIBRARY}
 		)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
+
+################################################################################
+### EventClient
+	set(test_name EventClient)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/EventClient.cpp"
+			${test_Log_sources}
+		)
+	set(test_libs
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+		)
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 
 ################################################################################
 EndIf (NOT Boost_FOUND)

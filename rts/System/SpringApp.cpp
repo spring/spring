@@ -3,14 +3,14 @@
 #include "System/Input/InputHandler.h"
 
 #include <SDL.h>
-#if !defined(HEADLESS)
-	#include <SDL_syswm.h>
-#endif
 
 #include <iostream>
 
+#ifdef WIN32
+//windows workarrounds
 #undef KeyPress
 #undef KeyRelease
+#endif
 
 #include "Rendering/GL/myGL.h"
 #include "System/SpringApp.h"
@@ -32,9 +32,10 @@
 #include "Lua/LuaOpenGL.h"
 #include "Menu/SelectMenu.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GLContext.h"
 #include "Rendering/VerticalSync.h"
+#include "Rendering/GL/FBO.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/DefinitionTag.h"
@@ -60,8 +61,9 @@
 #include "System/Input/MouseInput.h"
 #include "System/Input/Joystick.h"
 #include "System/FileSystem/DataDirLocater.h"
-#include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileSystemInitializer.h"
 #include "System/Platform/CmdLineParams.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
@@ -73,6 +75,8 @@
 #include "System/Sync/FPUCheck.h"
 
 #ifdef WIN32
+	#include <winuser.h> //GetWindowPlacement
+	#include <SDL_syswm.h>
 	#include "System/Platform/Win/WinVersion.h"
 #elif defined(__APPLE__)
 #elif defined(HEADLESS)
@@ -81,7 +85,6 @@
 	#include "System/Platform/Linux/myX11.h"
 #endif
 
-#include "lib/gml/gml_base.h"
 #include "lib/luasocket/src/restrictions.h"
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
@@ -105,15 +108,16 @@ CONFIG(int, XResolution).defaultValue(0).minimumValue(0).description("Sets the w
 CONFIG(int, YResolution).defaultValue(0).minimumValue(0).description("Sets the height of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
 CONFIG(int, WindowPosX).defaultValue(32).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
 CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
-CONFIG(int, WindowState).defaultValue(0);
+CONFIG(int, WindowState).defaultValue(CGlobalRendering::WINSTATE_MAXIMIZED);
 CONFIG(bool, WindowBorderless).defaultValue(false).description("When set and Fullscreen is 0, will put the game in Borderless Window mode, also known as Windowed Fullscreen. When using this, it is generally best to also set WindowPosX and WindowPosY to 0");
 CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
-CONFIG(int, MultiThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0).maximumValue(GML_MAX_NUM_THREADS);
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
+#ifdef __linux
+CONFIG(bool, BlockCompositing).defaultValue(true).description("Disables kwin compositing to fix tearing.");
+#endif
 
-
-SelectMenu* selectMenu = NULL;
-ClientSetup* startsetup = NULL;
+static SDL_GLContext sdlGlCtx;
+static SDL_Window* window;
 
 
 /**
@@ -184,10 +188,7 @@ bool SpringApp::Initialize()
 
 	globalRendering = new CGlobalRendering();
 	globalRendering->SetFullScreen(configHandler->GetBool("Fullscreen"), cmdline->IsSet("window"), cmdline->IsSet("fullscreen"));
-	globalRendering->SetViewSize(
-		cmdline->IsSet("xresolution")? std::max(cmdline->GetInt("xresolution"), 640): configHandler->GetInt("XResolution"),
-		cmdline->IsSet("yresolution")? std::max(cmdline->GetInt("yresolution"), 480): configHandler->GetInt("YResolution")
-	);
+	globalRendering->SetViewSize(configHandler->GetInt("XResolution"), configHandler->GetInt("YResolution"));
 
 #if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
 	// this MUST run before any other X11 call (esp. those by SDL!)
@@ -198,7 +199,7 @@ bool SpringApp::Initialize()
 	}
 #endif
 
-#if defined(_WIN32) && defined(__GNUC__)
+#if defined(WIN32) && defined(__GNUC__)
 	// load QTCreator's gdb helper dll; a variant of this should also work on other OSes
 	{
 		// don't display a dialog box if gdb helpers aren't found
@@ -226,44 +227,32 @@ bool SpringApp::Initialize()
 		return false;
 	}
 
+	// Init OpenGL
+	LoadExtensions(); // Initialize GLEW
+	globalRendering->PostInit();
+	InitOpenGL();
+
 	// Install Watchdog (must happen after time epoch is set)
 	Watchdog::Install();
 	Watchdog::RegisterThread(WDT_MAIN, true);
 
 	// ArchiveScanner uses for_mt --> needs thread-count set
-	// FIXME: USELESS? InitThreadPool ALSO CALLS SetThreadCount!
+	// (use all threads available, later switch to less)
 	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
 	FileSystemInitializer::Initialize();
-	Threading::InitThreadPool();
 
 	mouseInput = IMouseInput::GetInstance();
-	keyInput = KeyInput::GetInstance();
 	input.AddHandler(boost::bind(&SpringApp::MainEventHandler, this, _1));
 
 	// Global structures
 	gs = new CGlobalSynced();
 	gu = new CGlobalUnsynced();
 
-	// Initialize GLEW
-	LoadExtensions();
-
-	// check if FSAA init worked fine
-	if (globalRendering->FSAA && !MultisampleVerify())
-		globalRendering->FSAA = 0;
-
-	globalRendering->PostInit();
-
-	InitOpenGL();
+	// GUIs
 	agui::InitGui();
 	LoadFonts();
-
-	// Initialize named texture handler
 	CNamedTextures::Init();
-
-	// Initialize Lua GL
 	LuaOpenGL::Init();
-
-	// Sound & Input
 	ISound::Initialize();
 	InitJoystick();
 
@@ -272,6 +261,7 @@ bool SpringApp::Initialize()
 
 	// Multithreading & Affinity
 	Threading::SetThreadName("unknown"); // set default threadname
+	Threading::InitThreadPool();
 
 	LOG("[%s] CPU Clock: %s", __FUNCTION__, spring_clock::GetName());
 	LOG("[%s] CPU Cores: %d", __FUNCTION__, Threading::GetAvailableCores());
@@ -294,33 +284,23 @@ bool SpringApp::InitWindow(const char* title)
 	// SDL will cause a creation of gpu-driver thread that will clone its name from the starting threads (= this one = mainthread)
 	Threading::SetThreadName("gpu-driver");
 
-	#ifdef WIN32
 	// the crash reporter should be catching errors, not SDL
 	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) == -1)) {
-	#else
-	if ((SDL_Init(SDL_INIT_VIDEO) == -1)) {
-	#endif
 		LOG_L(L_FATAL, "Could not initialize SDL: %s", SDL_GetError());
 		return false;
 	}
 
 	PrintAvailableResolutions();
-	WindowManagerHelper::SetCaption(title);
+	SDL_DisableScreenSaver();
 
-	if (!SetSDLVideoMode()) {
+	if (!CreateSDLWindow(title)) {
 		LOG_L(L_FATAL, "Failed to set SDL video mode: %s", SDL_GetError());
 		return false;
 	}
 
-	RestoreWindowPosition();
 	if (cmdline->IsSet("minimise")) {
-		globalRendering->active = false;
-		SDL_WM_IconifyWindow();
+		SDL_HideWindow(window);
 	}
-
-	glClearColor(0.0f,0.0f,0.0f,0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	SDL_GL_SwapBuffers();
 
 	// anyone other thread spawned from the main-process should be `unknown`
 	Threading::SetThreadName("unknown");
@@ -332,27 +312,25 @@ bool SpringApp::InitWindow(const char* title)
  *
  * Sets SDL video mode options/settings
  */
-bool SpringApp::SetSDLVideoMode()
+bool SpringApp::CreateSDLWindow(const char* title)
 {
-	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
+	int sdlflags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
-	// w/o SDL_NOFRAME, kde's windowmanager still creates a border (in fullscreen!) and forces a `window`-resize causing a lot of trouble (in the ::SaveWindowPosition)
-	sdlflags |= globalRendering->fullScreen ? SDL_FULLSCREEN | SDL_NOFRAME : 0;
-
-	const bool winBorderless = configHandler->GetBool("WindowBorderless");
-	sdlflags |= winBorderless ? SDL_NOFRAME : 0;
-
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+	// use standard: 24bit color + 24bit depth + 8bit stencil & doublebuffered
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); // enable alpha channel ???
-
-	globalRendering->depthBufferBits = 24;
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, globalRendering->depthBufferBits);
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,  8);
+	//SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,  24);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-	//! FullScreen AntiAliasing
+	// Create GL debug context when wanted (allows further GL verbose informations, but runs slower)
+	if (configHandler->GetBool("DebugGL")) {
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+	}
+
+	// FullScreen AntiAliasing
 	globalRendering->FSAA = configHandler->GetInt("FSAALevel");
 	if (globalRendering->FSAA > 0) {
 		make_even_number(globalRendering->FSAA);
@@ -360,38 +338,192 @@ bool SpringApp::SetSDLVideoMode()
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, globalRendering->FSAA);
 	}
 
-	//! use desktop resolution?
-	if ((globalRendering->viewSizeX<=0) || (globalRendering->viewSizeY<=0)) {
-		const SDL_VideoInfo* screenInfo = SDL_GetVideoInfo(); //! it's a read-only struct (we don't need to free it!)
-		globalRendering->viewSizeX = screenInfo->current_w;
-		globalRendering->viewSizeY = screenInfo->current_h;
-	}
-	//! fallback if resolution couldn't be detected
-	if ((globalRendering->viewSizeX<=0) || (globalRendering->viewSizeY<=0)) {
-		globalRendering->viewSizeX = 1024;
-		globalRendering->viewSizeY = 768;
+	// Use Native Desktop Resolution
+	// and yes SDL2 can do this itself when sizeX & sizeY are set to zero, but
+	// oh wonder SDL2 failes then when you use Display Cloneing and similar
+	//  -> i.e. DVI monitor runs then at 640x400 and HDMI at full-HD (yes with display _cloning_!)
+	SDL_DisplayMode dmode;
+	SDL_GetDesktopDisplayMode(0, &dmode);
+	if (globalRendering->viewSizeX<=0) globalRendering->viewSizeX = dmode.w;
+	if (globalRendering->viewSizeY<=0) globalRendering->viewSizeY = dmode.h;
+
+	// In Windowed Mode Limit Minimum Window Size
+	static const int minViewSizeX = 400;
+	static const int minViewSizeY = 300;
+	if (!globalRendering->fullScreen) {
+		globalRendering->viewSizeX = std::max(globalRendering->viewSizeX, minViewSizeX);
+		globalRendering->viewSizeY = std::max(globalRendering->viewSizeY, minViewSizeY);
 	}
 
-	//! screen will be freed by SDL_Quit()
-	//! from: http://sdl.beuc.net/sdl.wiki/SDL_SetVideoMode
-	//! Note 3: This function should be called in the main thread of your application.
-	//! User note 1: Some have found that enabling OpenGL attributes like SDL_GL_STENCIL_SIZE (the stencil buffer size) before the video mode has been set causes the application to simply ignore those attributes, while enabling attributes after the video mode has been set works fine.
-	//! User note 2: Also note that, in Windows, setting the video mode resets the current OpenGL context. You must execute again the OpenGL initialization code (set the clear color or the shade model, or reload textures, for example) after calling SDL_SetVideoMode. In Linux, however, it works fine, and the initialization code only needs to be executed after the first call to SDL_SetVideoMode (although there is no harm in executing the initialization code after each call to SDL_SetVideoMode, for example for a multiplatform application).
-	SDL_Surface* screen = SDL_SetVideoMode(globalRendering->viewSizeX, globalRendering->viewSizeY, 32, sdlflags);
-	if (!screen) {
+	// Borderless
+	const bool borderless = configHandler->GetBool("WindowBorderless");
+	if (globalRendering->fullScreen) {
+		sdlflags |= borderless ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN;
+	}
+	sdlflags |= borderless ? SDL_WINDOW_BORDERLESS : 0;
+
+#if defined(WIN32)
+	if (borderless && !globalRendering->fullScreen) {
+		sdlflags &= ~SDL_WINDOW_RESIZABLE;
+	}
+#endif
+
+	// Window Pos & State
+	globalRendering->winPosX  = configHandler->GetInt("WindowPosX");
+	globalRendering->winPosY  = configHandler->GetInt("WindowPosY");
+	globalRendering->winState = configHandler->GetInt("WindowState");
+	switch (globalRendering->winState) {
+		case CGlobalRendering::WINSTATE_MAXIMIZED: sdlflags |= SDL_WINDOW_MAXIMIZED; break;
+		case CGlobalRendering::WINSTATE_MINIMIZED: sdlflags |= SDL_WINDOW_MINIMIZED; break;
+	}
+
+	// Create Window
+	window = SDL_CreateWindow(title,
+		globalRendering->winPosX, globalRendering->winPosY,
+		globalRendering->viewSizeX, globalRendering->viewSizeY,
+		sdlflags);
+	if (!window) {
 		char buf[1024];
 		SNPRINTF(buf, sizeof(buf), "Could not set video mode:\n%s", SDL_GetError());
 		handleerror(NULL, buf, "ERROR", MBF_OK|MBF_EXCL);
 		return false;
 	}
 
+	// Create GL Context
+	SDL_SetWindowMinimumSize(window, minViewSizeX, minViewSizeY);
+	sdlGlCtx = SDL_GL_CreateContext(window);
+	globalRendering->window = window;
+
 #ifdef STREFLOP_H
-	//! Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
-	//! Set single precision floating point math.
+	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
+	// Set single precision floating point math.
 	streflop::streflop_init<streflop::Simple>();
 #endif
 
-	//! setup GL smoothing
+#if defined(__linux) && !defined(HEADLESS)
+	// disable kwin compositing to fix tearing
+	// (happens at 300fps, neither fullscreen nor vsync fixes it, so disable compositing)
+	if (configHandler->GetBool("BlockCompositing")) {
+		MyX11BlockCompositing(window);
+	}
+#endif
+
+	return true;
+}
+
+
+// origin for our coordinates is the bottom left corner
+void SpringApp::GetDisplayGeometry()
+{
+#ifdef HEADLESS
+	globalRendering->screenSizeX = 8;
+	globalRendering->screenSizeY = 8;
+	globalRendering->winSizeX = 8;
+	globalRendering->winSizeY = 8;
+	globalRendering->winPosX = 0;
+	globalRendering->winPosY = 0;
+	globalRendering->UpdateViewPortGeometry();
+	return;
+
+#else
+	SDL_Rect screenSize;
+	SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(window), &screenSize);
+	globalRendering->screenSizeX = screenSize.w;
+	globalRendering->screenSizeY = screenSize.h;
+
+	SDL_GetWindowSize(window, &globalRendering->winSizeX, &globalRendering->winSizeY);
+	SDL_GetWindowPosition(window, &globalRendering->winPosX, &globalRendering->winPosY);
+
+	globalRendering->UpdateViewPortGeometry();
+
+	//XXX SDL2 is crap ...
+	// Reading window state fails if it is changed via the window manager, like clicking on the titlebar (2013)
+	// https://bugzilla.libsdl.org/show_bug.cgi?id=1508 & https://bugzilla.libsdl.org/show_bug.cgi?id=2282
+	// happens on linux too!
+  #ifdef __APPLE__
+	auto state = SDL_GetWindowFlags(window);
+  #elif defined(WIN32)
+	int state = 0;
+	WINDOWPLACEMENT wp;
+	wp.length = sizeof(WINDOWPLACEMENT);
+
+	struct SDL_SysWMinfo info;
+	SDL_VERSION(&info.version);
+	SDL_GetWindowWMInfo(globalRendering->window, &info);
+
+	if (GetWindowPlacement(info.info.win.window, &wp)) {
+		if (wp.showCmd == SW_SHOWMAXIMIZED)
+			state = SDL_WINDOW_MAXIMIZED;
+		if (wp.showCmd == SW_SHOWMINIMIZED)
+			state = SDL_WINDOW_MINIMIZED;
+	}
+  #else
+	auto state = MyX11GetWindowState(window);
+  #endif
+
+	globalRendering->winState = CGlobalRendering::WINSTATE_DEFAULT;
+	if (state & SDL_WINDOW_MAXIMIZED) {
+		globalRendering->winState = CGlobalRendering::WINSTATE_MAXIMIZED;
+	} else
+	if (state & SDL_WINDOW_MINIMIZED) {
+		globalRendering->winState = CGlobalRendering::WINSTATE_MINIMIZED;
+	}
+#endif
+}
+
+
+/**
+ * Saves position of the window, if we are not in full-screen mode
+ */
+void SpringApp::SaveWindowPosition()
+{
+#ifndef HEADLESS
+	configHandler->Set("Fullscreen", globalRendering->fullScreen);
+	if (!globalRendering->fullScreen) {
+		GetDisplayGeometry();
+		if (globalRendering->winState == CGlobalRendering::WINSTATE_DEFAULT) {
+			configHandler->Set("WindowPosX",  globalRendering->winPosX);
+			configHandler->Set("WindowPosY",  globalRendering->winPosY);
+			configHandler->Set("WindowState", globalRendering->winState);
+		} else
+		if (globalRendering->winState == CGlobalRendering::WINSTATE_MINIMIZED) {
+			// don't automatically save minimized states
+		} else {
+			configHandler->Set("WindowState", globalRendering->winState);
+		}
+	}
+#endif
+}
+
+
+void SpringApp::SetupViewportGeometry()
+{
+	GetDisplayGeometry();
+
+	globalRendering->SetDualScreenParams();
+	globalRendering->UpdateViewPortGeometry();
+	globalRendering->UpdatePixelGeometry();
+
+	const int vpx = globalRendering->viewPosX;
+	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
+
+	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
+}
+
+
+/**
+ * Initializes OpenGL
+ */
+void SpringApp::InitOpenGL()
+{
+	// reinit vsync
+	VSync.Init();
+
+	// check if FSAA init worked fine
+	if (globalRendering->FSAA && !MultisampleVerify())
+		globalRendering->FSAA = 0;
+
+	// setup GL smoothing
 	const int lineSmoothing = configHandler->GetInt("SmoothLines");
 	if (lineSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
@@ -415,259 +547,41 @@ bool SpringApp::SetSDLVideoMode()
 		glHint(GL_POINT_SMOOTH_HINT, hint);
 	}
 
-	//! setup LOD bias factor
+	// setup LOD bias factor
 	const float lodBias = configHandler->GetFloat("TextureLODBias");
-	if (math::fabs(lodBias)>0.01f) {
-		glTexEnvf(GL_TEXTURE_FILTER_CONTROL,GL_TEXTURE_LOD_BIAS, lodBias );
+	if (math::fabs(lodBias) > 0.01f) {
+		glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, lodBias );
 	}
 
-	//! there must be a way to see if this is necessary, compare old/new context pointers?
+	//FIXME not needed anymore with SDL2?
 	if (configHandler->GetBool("FixAltTab")) {
-		//! free GL resources
+		// free GL resources
 		GLContext::Free();
 
-		//! initialize any GL resources that were lost
+		// initialize any GL resources that were lost
 		GLContext::Init();
 	}
 
-	int bits;
-	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
-	SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE,  &globalRendering->depthBufferBits);
-
-	if (globalRendering->fullScreen) {
-		LOG("[%s] video mode set to %ix%i/%ibit", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
-	} else {
-		LOG("[%s] video mode set to %ix%i/%ibit (windowed)", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
-	}
-
-	return true;
-}
-
-
-// origin for our coordinates is the bottom left corner
-bool SpringApp::GetDisplayGeometry()
-{
-#ifndef HEADLESS
-	//! not really needed, but makes it safer against unknown windowmanager behaviours
-	if (globalRendering->fullScreen) {
-		globalRendering->UpdateWindowGeometry();
-		return true;
-	}
-
-	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-
-	if (!SDL_GetWMInfo(&info)) {
-		return false;
-	}
-
-
-  #if       defined(__APPLE__)
-	// TODO: implement this function & RestoreWindowPosition() on Mac
-	globalRendering->screenSizeX = 0;
-	globalRendering->screenSizeY = 0;
-	globalRendering->winSizeX = globalRendering->viewSizeX;
-	globalRendering->winSizeY = globalRendering->viewSizeY;
-	globalRendering->winPosX = 30;
-	globalRendering->winPosY = 30;
-	globalRendering->winState = CGlobalRendering::WINSTATE_DEFAULT;
-
-  #elif     defined(WIN32)
-	globalRendering->screenSizeX = GetSystemMetrics(SM_CXSCREEN);
-	globalRendering->screenSizeY = GetSystemMetrics(SM_CYSCREEN);
-
-	RECT rect;
-	if (!GetClientRect(info.window, &rect)) {
-		return false;
-	}
-
-	if ((rect.right - rect.left) == 0 || (rect.bottom - rect.top) == 0)
-		return false;
-
-	globalRendering->winSizeX = rect.right - rect.left;
-	globalRendering->winSizeY = rect.bottom - rect.top;
-
-	// translate from client coords to screen coords
-	MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
-
-	// GetClientRect doesn't do the right thing for restoring window position
-	if (!globalRendering->fullScreen) {
-		GetWindowRect(info.window, &rect);
-	}
-
-	globalRendering->winPosX = rect.left;
-	globalRendering->winPosY = rect.top;
-
-	// Get WindowState
-	WINDOWPLACEMENT wp;
-	wp.length = sizeof(WINDOWPLACEMENT);
-	if (GetWindowPlacement(info.window, &wp)) {
-		switch (wp.showCmd) {
-			case SW_SHOWMAXIMIZED:
-				globalRendering->winState = CGlobalRendering::WINSTATE_MAXIMIZED;
-				break;
-			case SW_SHOWMINIMIZED:
-				//! minimized startup breaks SDL_init stuff, so don't store it
-				//globalRendering->winState = CGlobalRendering::WINSTATE_MINIMIZED;
-				//break;
-			default:
-				globalRendering->winState = CGlobalRendering::WINSTATE_DEFAULT;
-		}
-	}
-
-  #else
-	info.info.x11.lock_func();
-	{
-		Display* display = info.info.x11.display;
-		Window   window  = info.info.x11.wmwindow;
-
-		XWindowAttributes attrs;
-		XGetWindowAttributes(display, window, &attrs);
-		const Screen* screen = attrs.screen;
-
-		globalRendering->screenSizeX = WidthOfScreen(screen);
-		globalRendering->screenSizeY = HeightOfScreen(screen);
-		globalRendering->winSizeX = attrs.width;
-		globalRendering->winSizeY = attrs.height;
-
-		Window tmp;
-		int xp, yp;
-		XTranslateCoordinates(display, window, attrs.root, 0, 0, &xp, &yp, &tmp);
-		globalRendering->winPosX = xp;
-		globalRendering->winPosY = yp;
-
-		if (!globalRendering->fullScreen) {
-			int frame_left, frame_top;
-			MyX11GetFrameBorderOffset(display, window, &frame_left, &frame_top);
-			globalRendering->winPosX -= frame_left;
-			globalRendering->winPosY -= frame_top;
-		}
-
-		globalRendering->winState = MyX11GetWindowState(display, window);
-	}
-	info.info.x11.unlock_func();
-
-  #endif // defined(__APPLE__)
-#endif // defined(HEADLESS)
-
-	return true;
-}
-
-
-/**
- * Restores position of the window, if we are not in full-screen mode
- */
-void SpringApp::RestoreWindowPosition()
-{
-	globalRendering->winPosX  = configHandler->GetInt("WindowPosX");
-	globalRendering->winPosY  = configHandler->GetInt("WindowPosY");
-	globalRendering->winState = configHandler->GetInt("WindowState");
-
-#ifndef HEADLESS
-	if (!globalRendering->fullScreen) {
-		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-
-		if (SDL_GetWMInfo(&info)) {
-  #if       defined(WIN32)
-			bool stateChanged = false;
-
-			if (globalRendering->winState != CGlobalRendering::WINSTATE_DEFAULT) {
-				WINDOWPLACEMENT wp;
-				memset(&wp,0,sizeof(WINDOWPLACEMENT));
-				wp.length = sizeof(WINDOWPLACEMENT);
-				stateChanged = true;
-				int wState;
-				switch (globalRendering->winState) {
-					case 1: wState = SW_SHOWMAXIMIZED; break;
-					//! Setting the main-window minimized breaks initialization
-					case 2: // wState = SW_SHOWMINIMIZED; break;
-					default: stateChanged = false;
-				}
-				if (stateChanged) {
-					ShowWindow(info.window, wState);
-					GetDisplayGeometry();
-				}
-			}
-
-			if (!stateChanged) {
-				MoveWindow(info.window, globalRendering->winPosX, globalRendering->winPosY, globalRendering->viewSizeX, globalRendering->viewSizeY, true);
-				streflop::streflop_init<streflop::Simple>(); // MoveWindow may modify FPU flags
-			}
-
-  #elif     defined(__APPLE__)
-			// TODO: implement this function
-
-  #else
-			info.info.x11.lock_func();
-			{
-				XMoveWindow(info.info.x11.display, info.info.x11.wmwindow, globalRendering->winPosX, globalRendering->winPosY);
-				MyX11SetWindowState(info.info.x11.display, info.info.x11.wmwindow, globalRendering->winState);
-			}
-			info.info.x11.unlock_func();
-
-  #endif // defined(WIN32)
-		}
-	}
-#endif // defined(HEADLESS)
-}
-
-
-/**
- * Saves position of the window, if we are not in full-screen mode
- */
-void SpringApp::SaveWindowPosition()
-{
-#ifndef HEADLESS
-	if (!globalRendering->fullScreen) {
-		GetDisplayGeometry();
-		if (globalRendering->winState == CGlobalRendering::WINSTATE_DEFAULT) {
-			configHandler->Set("WindowPosX",  globalRendering->winPosX);
-			configHandler->Set("WindowPosY",  globalRendering->winPosY);
-			configHandler->Set("WindowState", globalRendering->winState);
-		} else {
-			configHandler->Set("WindowState", globalRendering->winState);
-		}
-	}
-#endif
-}
-
-
-void SpringApp::SetupViewportGeometry(bool windowExposed)
-{
-	if (!GetDisplayGeometry()) {
-		// note: if GDG returns false this might not have been called
-		// guaranteed in fullscreen-mode when it returns (true) early
-		globalRendering->UpdateWindowGeometry();
-	}
-
-	globalRendering->SetDualScreenParams();
-	globalRendering->UpdateViewPortGeometry(windowExposed);
-	globalRendering->UpdatePixelGeometry();
-
-	const int vpx = globalRendering->viewPosX;
-	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
-
-	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
-}
-
-
-/**
- * Initializes OpenGL
- */
-void SpringApp::InitOpenGL()
-{
-	VSync.Init();
-
-	SetupViewportGeometry(false);
+	// setup viewport
+	SetupViewportGeometry();
 	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	gluPerspective(45.0f,  globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
+	gluPerspective(45.0f, globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
 
 	// Initialize some GL states
 	glShadeModel(GL_SMOOTH);
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
+
+	// Clear Window
+	glClearColor(0.0f,0.0f,0.0f,0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	SDL_GL_SwapWindow(window);
+
+	// Print Final Mode (call after SetupViewportGeometry, which updates viewSizeX/Y)
+	SDL_DisplayMode dmode;
+	SDL_GetWindowDisplayMode(window, &dmode);
+	LOG("[%s] video mode set to %ix%i:%ibit @%iHz %s", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? "" : "(windowed)");
 }
 
 
@@ -691,7 +605,8 @@ void SpringApp::LoadFonts()
 	const static std::string installBroken = ", installation of spring broken? did you run make install?";
 	if (!font) {
 		throw content_error(std::string("Failed to load FontFile: ") + fontFile + installBroken);
-	} else if (!smallFont) {
+	}
+	if (!smallFont) {
 		throw content_error(std::string("Failed to load SmallFontFile: ") + smallFontFile + installBroken);
 	}
 }
@@ -714,8 +629,7 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 	cmdline->AddSwitch('b', "minimise",           "Start in background (minimised)");
 	cmdline->AddSwitch(0,   "nocolor",            "Disables colorized stdout");
 	cmdline->AddSwitch('q', "quiet",              "Ignore unrecognized arguments");
-	cmdline->AddSwitch('s', "server",             "Run as a server");
-	cmdline->AddSwitch('c', "client",             "Run as a client");
+	cmdline->AddString('s', "server",             "Run as a server");
 
 	cmdline->AddSwitch('t', "textureatlas",       "Dump each finalized textureatlas in textureatlasN.tga");
 	cmdline->AddInt(   0,   "benchmark",          "Enable benchmark mode (writes a benchmark.data file). The given number specifies the timespan to test.");
@@ -849,22 +763,47 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 }
 
 
-void SpringApp::RunScript(const std::string& buf) {
-	startsetup = new ClientSetup();
-	startsetup->Init(buf);
+void SpringApp::RunScript(boost::shared_ptr<ClientSetup> clientSetup, const std::string& buf)
+{
+	clientSetup->LoadFromStartScript(buf);
+	// LoadFromStartScript overrides all values so reset cmdline defined ones
+	if (cmdline->IsSet("server")) { clientSetup->hostIP = cmdline->GetString("server"); clientSetup->isHost = true; }
+	clientSetup->SanityCheck();
 
-	// commandline parameters overwrite setup
-	if (cmdline->IsSet("client"))
-		startsetup->isHost = false;
-	else if (cmdline->IsSet("server"))
-		startsetup->isHost = true;
-
-#ifdef SYNCDEBUG
-	CSyncDebugger::GetInstance()->Initialize(startsetup->isHost, 64); //FIXME: add actual number of player
-#endif
-	pregame = new CPreGame(startsetup);
-	if (startsetup->isHost)
+	pregame = new CPreGame(clientSetup);
+	if (clientSetup->isHost)
 		pregame->LoadSetupscript(buf);
+}
+
+
+static void SplitString(const std::string& text, const char* sepChar, std::string* s1, std::string* s2, std::string* all)
+{
+	const size_t q = text.find(sepChar);
+	if (q != std::string::npos) {
+		*s1 = text.substr(0, q);
+		*s2 = text.substr(q + 1);
+		return;
+	}
+	*all = text;
+}
+
+
+static void ParseSpringUri(const std::string& uri, std::string* username, std::string* password, std::string* host, int* port)
+{
+	// see http://cpp-netlib.org/0.10.1/in_depth/uri.html (2014)
+	if (uri.find("spring://") != std::string::npos)
+		return; // wrong scheme
+
+	const std::string full = uri.substr(std::string("spring://").length());
+	std::string authority, query, user_info, server, portStr;
+	bool error = false;
+	SplitString(full,      "/", &authority, &query, &authority);
+	SplitString(authority, "@", &user_info, &server, &server);
+	SplitString(user_info, ":", username, password, username);
+	SplitString(server,    ":", host, &portStr, host);
+	*port = StringToInt(portStr, &error);
+	if (error) *port = 0;
+	//FIXME pass query
 }
 
 
@@ -873,63 +812,57 @@ void SpringApp::RunScript(const std::string& buf) {
  */
 void SpringApp::Startup()
 {
-	if ((cmdline->IsSet("game") && cmdline->IsSet("map"))) { // --game and --map directly specified, try to run them
-		const std::string game = cmdline->GetString("game");
-		const std::string map = cmdline->GetString("map");
-		std::string buf = StartScriptGen::CreateMinimalSetup(game, map);
-		RunScript(buf);
+	// bash input
+	const std::string inputFile = cmdline->GetInputFile();
+	const std::string extension = FileSystem::GetExtension(inputFile);
+
+	// create base clientsetup
+	boost::shared_ptr<ClientSetup> startsetup(new ClientSetup());
+	if (cmdline->IsSet("server")) { startsetup->hostIP = cmdline->GetString("server"); startsetup->isHost = true; }
+	startsetup->myPlayerName = configHandler->GetString("name");
+	startsetup->SanityCheck();
+
+	// no argument (either game is given or show selectmenu)
+	if (inputFile.empty()) {
+		startsetup->isHost = true;
+		if (cmdline->IsSet("game") && cmdline->IsSet("map")) {
+			// --game and --map directly specified, try to run them
+			std::string buf = StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map"));
+			RunScript(startsetup, buf);
+		} else {
+			// menu
+		#ifdef HEADLESS
+			handleerror(NULL,
+				"The headless version of the engine can not be run in interactive mode.\n"
+				"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
+		#endif
+			activeController = new SelectMenu(startsetup);
+		}
 		return;
 	}
 
-	const std::string inputFile = cmdline->GetInputFile();
-
-	if (inputFile.empty()) {
-#ifdef HEADLESS
-		LOG_L(L_FATAL,
-				"The headless version of the engine can not be run in interactive mode.\n"
-				"Please supply a start-script, save- or demo-file.");
-		exit(1);
-#endif
-		bool server = !cmdline->IsSet("client") || cmdline->IsSet("server");
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(server, 64);
-#endif
-		selectMenu = new SelectMenu(server);
-		activeController = selectMenu;
-	} else if (inputFile.rfind("sdf") == inputFile.size() - 3) {
-		std::string demoFileName = inputFile;
-		std::string demoPlayerName = configHandler->GetString("name");
-
-		if (demoPlayerName.empty()) {
-			demoPlayerName = UnnamedPlayerName;
-		} else {
-			demoPlayerName = StringReplaceInPlace(demoPlayerName, ' ', '_');
-		}
-
-		demoPlayerName += " (spec)";
-
-		startsetup = new ClientSetup();
-			startsetup->isHost       = true; // local demo play
-			startsetup->myPlayerName = demoPlayerName;
-
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
-#endif
-
+	// process given argument
+	if (inputFile.find("spring://") == 0) {
+		// url (syntax: spring://username:password@host:port)
+		int port = 0;
+		startsetup->isHost = false;
+		ParseSpringUri(inputFile, &startsetup->myPlayerName, &startsetup->myPasswd, &startsetup->hostIP, &port);
+		if (port != 0) startsetup->hostPort = port;
 		pregame = new CPreGame(startsetup);
-		pregame->LoadDemo(demoFileName);
-	} else if (inputFile.rfind("ssf") == inputFile.size() - 3) {
-		std::string savefile = inputFile;
-		startsetup = new ClientSetup();
+	} else if (extension == "sdf") {
+		// demo
+		startsetup->isHost        = true;
+		startsetup->myPlayerName += " (spec)";
+		pregame = new CPreGame(startsetup);
+		pregame->LoadDemo(inputFile);
+	} else if (extension == "ssf") {
+		// savegame
 		startsetup->isHost = true;
-		startsetup->myPlayerName = configHandler->GetString("name");
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
-#endif
 		pregame = new CPreGame(startsetup);
-		pregame->LoadSavefile(savefile);
+		pregame->LoadSavefile(inputFile);
 	} else {
-		LOG("[%s] loading startscript from: %s", __FUNCTION__, inputFile.c_str());
+		// startscript
+		LOG("[%s] Loading StartScript from: %s", __FUNCTION__, inputFile.c_str());
 		CFileHandler fh(inputFile, SPRING_VFS_PWD_ALL);
 		if (!fh.FileExists())
 			throw content_error("Setup-script does not exist in given location: " + inputFile);
@@ -937,7 +870,8 @@ void SpringApp::Startup()
 		std::string buf;
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setup-script cannot be read: " + inputFile);
-		RunScript(buf);
+
+		RunScript(startsetup, buf);
 	}
 }
 
@@ -955,63 +889,19 @@ int SpringApp::Update()
 
 	int ret = 1;
 	if (activeController) {
-		Watchdog::ClearTimer(WDT_MAIN);
-
-		if (!GML::SimThreadRunning()) {
-			ret = Threading::UpdateGameController(activeController);
-		}
-
+		ret = activeController->Update();
 		if (ret) {
 			ScopedTimer cputimer("GameController::Draw");
 			ret = activeController->Draw();
-
-			GML::PumpAux();
 		}
 	}
 
-	{
-		ScopedTimer cputimer("SwapBuffers");
-		VSync.Delay();
-		SDL_GL_SwapBuffers();
-	}
-
-	if (globalRendering->FSAA)
-		glDisable(GL_MULTISAMPLE_ARB);
-
+	ScopedTimer cputimer("SwapBuffers");
+	spring_time pre = spring_now();
+	VSync.Delay();
+	SDL_GL_SwapWindow(window);
+	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
 	return ret;
-}
-
-
-
-static void ResetScreenSaverTimeout()
-{
-#ifndef HEADLESS
-  #if defined(WIN32)
-	static spring_time lastreset;
-	spring_time curreset = spring_gettime();
-	if(globalRendering->active && (curreset - lastreset) > spring_secs(1)) {
-		lastreset = curreset;
-		int timeout; // reset screen saver timer
-		if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
-			SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
-		streflop::streflop_init<streflop::Simple>(); // SystemParametersInfo may modify FPU flags
-	}
-  #elif defined(__APPLE__)
-	// TODO: implement
-	return;
-  #else
-	static spring_time lastreset;
-	spring_time curreset = spring_gettime();
-	if(globalRendering->active && (curreset - lastreset) > spring_secs(1)) {
-		lastreset = curreset;
-		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-		if (SDL_GetWMInfo(&info)) {
-			XForceScreenSaver(info.info.x11.display, ScreenSaverReset);
-		}
-	}
-  #endif
-#endif
 }
 
 
@@ -1028,13 +918,11 @@ int SpringApp::Run()
 	CATCH_SPRING_ERRORS
 
 	while (!gu->globalQuit) {
-		ResetScreenSaverTimeout();
+		Watchdog::ClearTimer(WDT_MAIN);
 		input.PushEvents();
-
 		if (!Update())
 			break;
 	}
-
 	SaveWindowPosition();
 	ShutDown();
 
@@ -1061,7 +949,6 @@ void SpringApp::ShutDown()
 
 	LOG("[SpringApp::%s][1]", __FUNCTION__);
 	ThreadPool::SetThreadCount(0);
-	GML::Exit();
 	LOG("[SpringApp::%s][2]", __FUNCTION__);
 
 	SafeDelete(pregame);
@@ -1069,21 +956,19 @@ void SpringApp::ShutDown()
 	// expect game-pointer to remain valid during call
 	delete game; game = NULL;
 
-	LOG("[SpringApp::%s][3]", __FUNCTION__);
-	SafeDelete(selectMenu);
 	agui::FreeGui();
 
-	LOG("[SpringApp::%s][4]", __FUNCTION__);
+	LOG("[SpringApp::%s][3]", __FUNCTION__);
 	SafeDelete(net);
 	SafeDelete(gameServer);
 	SafeDelete(gameSetup);
 
-	LOG("[SpringApp::%s][5]", __FUNCTION__);
+	LOG("[SpringApp::%s][4]", __FUNCTION__);
 	CLoadScreen::DeleteInstance();
 	ISound::Shutdown();
 	FreeJoystick();
 
-	LOG("[SpringApp::%s][6]", __FUNCTION__);
+	LOG("[SpringApp::%s][5]", __FUNCTION__);
 	SafeDelete(font);
 	SafeDelete(smallFont);
 	CNamedTextures::Kill();
@@ -1091,111 +976,84 @@ void SpringApp::ShutDown()
 	GlobalConfig::Deallocate();
 	UnloadExtensions();
 
-	LOG("[SpringApp::%s][7]", __FUNCTION__);
 	IMouseInput::FreeInstance(mouseInput);
-	KeyInput::FreeInstance(keyInput);
 
-	LOG("[SpringApp::%s][8]", __FUNCTION__);
-	SDL_WM_GrabInput(SDL_GRAB_OFF);
+	LOG("[SpringApp::%s][6]", __FUNCTION__);
+	SDL_SetWindowGrab(window, SDL_FALSE);
 	WindowManagerHelper::FreeIcon();
 #if !defined(HEADLESS)
+	SDL_GL_DeleteContext(sdlGlCtx);
 	SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 #endif
 	SDL_Quit();
 
-	LOG("[SpringApp::%s][9]", __FUNCTION__);
+	LOG("[SpringApp::%s][7]", __FUNCTION__);
 	SafeDelete(gs);
 	SafeDelete(gu);
 	SafeDelete(globalRendering);
-	SafeDelete(startsetup);
 	SafeDelete(luaSocketRestrictions);
 
-	LOG("[SpringApp::%s][10]", __FUNCTION__);
 	FileSystemInitializer::Cleanup();
 
-	LOG("[SpringApp::%s][11]", __FUNCTION__);
+	LOG("[SpringApp::%s][8]", __FUNCTION__);
 	Watchdog::Uninstall();
-	LOG("[SpringApp::%s][12]", __FUNCTION__);
+	LOG("[SpringApp::%s][9]", __FUNCTION__);
 }
+
 
 bool SpringApp::MainEventHandler(const SDL_Event& event)
 {
 	switch (event.type) {
-		case SDL_VIDEORESIZE: {
-			GML_MSTMUTEX_LOCK(sim, -1); // MainEventHandler
-
-			Watchdog::ClearTimer(WDT_MAIN, true);
-			globalRendering->viewSizeX = event.resize.w;
-			globalRendering->viewSizeY = event.resize.h;
-#ifndef WIN32
-			// HACK   We don't want to break resizing on windows (again?),
-			//        so someone should test this very well before enabling it.
-			SetSDLVideoMode();
-#endif
-			InitOpenGL();
-			activeController->ResizeEvent();
-
-			break;
-		}
-		case SDL_VIDEOEXPOSE: {
-			GML_MSTMUTEX_LOCK(sim, -1); // MainEventHandler
-
-			Watchdog::ClearTimer(WDT_MAIN, true);
-			// re-initialize the stencil
-			glClearStencil(0);
-			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
-			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
-			SetupViewportGeometry(true);
-
-			break;
-		}
-		case SDL_QUIT: {
-			gu->globalQuit = true;
-			break;
-		}
-		case SDL_ACTIVEEVENT: {
-			Watchdog::ClearTimer(WDT_MAIN, true);
-
-			//! deactivate sounds and other
-			if (event.active.state & (SDL_APPACTIVE | (globalRendering->fullScreen ? SDL_APPINPUTFOCUS : 0))) {
-				globalRendering->active = !!event.active.gain;
-				if (ISound::IsInitialized()) {
-					sound->Iconified(!event.active.gain);
-				}
-			}
-
-			//! update keydown table
-			if (event.active.gain) {
-				keyInput->Update(event.key.keysym.unicode, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
-			}
-
-			//! unlock mouse
-			if (mouse && mouse->locked) {
-				mouse->ToggleMiddleClickScroll();
-			}
-
-			//! release all keyboard keys
-			if ((event.active.state & (SDL_APPACTIVE | SDL_APPINPUTFOCUS))) {
-				for (boost::uint16_t i = 1; i < SDLK_LAST; ++i) {
-					if (i != SDLK_NUMLOCK && i != SDLK_CAPSLOCK && i != SDLK_SCROLLOCK && keyInput->IsKeyPressed(i)) {
-						SDL_Event event;
-						event.type = event.key.type = SDL_KEYUP;
-						event.key.state = SDL_RELEASED;
-						event.key.keysym.sym = (SDLKey)i;
-						event.key.keysym.unicode = i;
-						//event.keysym.mod =;
-						//event.keysym.scancode =;
-						SDL_PushEvent(&event);
+		case SDL_WINDOWEVENT: {
+			switch (event.window.event) {
+				case SDL_WINDOWEVENT_RESIZED: {
+					Watchdog::ClearTimer(WDT_MAIN, true);
+					InitOpenGL();
+					activeController->ResizeEvent();
+					mouseInput->InstallWndCallback();
+				} break;
+				case SDL_WINDOWEVENT_SHOWN: {
+					// reactivate sounds and other
+					globalRendering->active = true;
+					if (ISound::IsInitialized()) {
+						sound->Iconified(false);
 					}
-				}
-				// SDL has some bug and does not update modstate on alt+tab/minimize etc.
-				SDL_SetModState((SDLMod)(SDL_GetModState() & (KMOD_NUM | KMOD_CAPS | KMOD_MODE)));
-			}
+					if (globalRendering->fullScreen) {
+						FBO::GLContextReinit();
+					}
+				} break;
+				case SDL_WINDOWEVENT_HIDDEN: {
+					// deactivate sounds and other
+					globalRendering->active = false;
+					if (ISound::IsInitialized()) {
+						sound->Iconified(true);
+					}
+					if (globalRendering->fullScreen) {
+						FBO::GLContextLost();
+					}
+				} break;
+				case SDL_WINDOWEVENT_FOCUS_GAINED: {
+					// update keydown table
+					KeyInput::Update(0, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
+				} break;
+				case SDL_WINDOWEVENT_FOCUS_LOST: {
+					Watchdog::ClearTimer(WDT_MAIN, true);
 
-			//! simulate mouse release to prevent hung buttons
-			if ((event.active.state & (SDL_APPACTIVE | SDL_APPMOUSEFOCUS))) {
-				for (int i = 1; i <= NUM_BUTTONS; ++i) {
-					if (mouse && mouse->buttons[i].pressed) {
+					// SDL has some bug and does not update modstate on alt+tab/minimize etc.
+					//FIXME check if still happens with SDL2 (2013)
+					SDL_SetModState((SDL_Keymod)(SDL_GetModState() & (KMOD_NUM | KMOD_CAPS | KMOD_MODE)));
+
+					// release all keyboard keys
+					KeyInput::ReleaseAllKeys();
+
+					// simulate mouse release to prevent hung buttons
+					for (int i = 1; i <= NUM_BUTTONS; ++i) {
+						if (!mouse)
+							continue;
+
+						if (!mouse->buttons[i].pressed)
+							continue;
+
 						SDL_Event event;
 						event.type = event.button.type = SDL_MOUSEBUTTONUP;
 						event.button.state = SDL_RELEASED;
@@ -1205,67 +1063,67 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 						event.button.y = -1;
 						SDL_PushEvent(&event);
 					}
-				}
 
-				//! and make sure to un-capture mouse
-				if(!event.active.gain && SDL_WM_GrabInput(SDL_GRAB_QUERY) == SDL_GRAB_ON)
-					SDL_WM_GrabInput(SDL_GRAB_OFF);
-			}
-
-			break;
-		}
-		case SDL_KEYDOWN: {
-			const boost::uint16_t sym = keyInput->GetNormalizedKeySymbol(event.key.keysym.sym);
-			const bool isRepeat = !!keyInput->GetKeyState(sym);
-
-			keyInput->Update(event.key.keysym.unicode, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
-
-			if (activeController) {
-				activeController->KeyPressed(sym, isRepeat);
-
-				if (activeController->userWriting){
-					// use unicode for printed characters
-					const boost::uint16_t usym = keyInput->GetCurrentKeyUnicodeChar();
-
-					const bool isDelete = (usym == 127);
-					const bool isIllegalUnicode = (127 < usym) && (usym < 161);
-
-					//TODO spring doesn't support unicode/non-latin yet :<
-					const bool isLatin = (usym >= 32) && (usym <= 255);
-					const bool isColor = (usym == 255); // we use \255 for inlined colorcodes!
-
-					if (isLatin && !isDelete && !isIllegalUnicode) {
-						CGameController* ac = activeController;
-
-						if (ac->ignoreNextChar || (ac->ignoreChar == (char)usym)) {
-							ac->ignoreNextChar = false;
-						} else {
-							if (!isColor && (!isRepeat || ac->userInput.length() > 0)) {
-								const int len = (int)ac->userInput.length();
-								const char str[2] = { (char)usym, 0 };
-
-								ac->writingPos = std::max(0, std::min(len, ac->writingPos));
-								ac->userInput.insert(ac->writingPos, str);
-								ac->writingPos++;
-							}
-						}
+					// unlock mouse
+					if (mouse && mouse->locked) {
+						mouse->ToggleMiddleClickScroll();
 					}
+
+					// and make sure to un-capture mouse
+					if (SDL_GetWindowGrab(window))
+						SDL_SetWindowGrab(window, SDL_FALSE);
+
+					break;
 				}
-				activeController->ignoreNextChar = false;
+				case SDL_WINDOWEVENT_CLOSE: {
+					gu->globalQuit = true;
+					break;
+				}
+			};
+		} break;
+		case SDL_QUIT: {
+			gu->globalQuit = true;
+		} break;
+		case SDL_TEXTEDITING: {
+			//FIXME don't known when this is called
+		} break;
+		case SDL_TEXTINPUT: {
+			if (!activeController) {
+				break;
 			}
-			break;
-		}
-		case SDL_KEYUP: {
-			keyInput->Update(event.key.keysym.unicode, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
+
+			std::string utf8Text = event.text.text;
+
+			const bool catched = eventHandler.TextInput(utf8Text);
+
+			if (activeController->userWriting && !catched){
+				auto ac = activeController;
+				if (ac->ignoreNextChar) {
+					utf8Text = utf8Text.substr(Utf8NextChar(utf8Text, 0));
+				}
+				ac->writingPos = Clamp<int>(ac->writingPos, 0, ac->userInput.length());
+				ac->userInput.insert(ac->writingPos, utf8Text);
+				ac->writingPos += utf8Text.length();
+			}
+		} break;
+		case SDL_KEYDOWN: {
+			KeyInput::Update(event.key.keysym.sym, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
 
 			if (activeController) {
-				activeController->KeyReleased(keyInput->GetNormalizedKeySymbol(event.key.keysym.sym));
+				activeController->KeyPressed(KeyInput::GetNormalizedKeySymbol(event.key.keysym.sym), event.key.repeat);
 			}
-			break;
-		}
-		default:
-			break;
-	}
+		} break;
+		case SDL_KEYUP: {
+			KeyInput::Update(event.key.keysym.sym, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
+
+			if (activeController) {
+				if (activeController->ignoreNextChar) {
+					activeController->ignoreNextChar = false;
+				}
+				activeController->KeyReleased(KeyInput::GetNormalizedKeySymbol(event.key.keysym.sym));
+			}
+		} break;
+	};
 
 	return false;
 }

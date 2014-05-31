@@ -17,7 +17,7 @@ COverviewController::COverviewController()
 	pos.x = gs->mapx * 0.5f * SQUARE_SIZE;
 	pos.z = gs->mapy * 0.5f * SQUARE_SIZE;
 	const float height = std::max(pos.x / globalRendering->aspectRatio, pos.z);
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * height);
+	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * height);
 
 	dir = float3(0.0f, -1.0f, -0.001f).ANormalize();
 }
@@ -49,7 +49,7 @@ void COverviewController::SetPos(const float3& newPos)
 float3 COverviewController::SwitchFrom() const
 {
 	float3 dir = mouse->dir;
-	float length = ground->LineGroundCol(pos, pos + dir * 50000, false);
+	float length = CGround::LineGroundCol(pos, pos + dir * 50000, false);
 	float3 rpos = pos + dir * length;
 
 	if (!globalRendering->dualScreenMode) {

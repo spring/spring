@@ -41,6 +41,7 @@ find_file(DOCBOOK_XSL
 	PATH_SUFFIXES
 		xml/docbook/stylesheet/nwalsh/manpages
 		sgml/docbook/xsl-stylesheets/manpages
+		xsl/docbook/manpages
 	DOC "DocBook XSL Style-Sheet"
 	)
 

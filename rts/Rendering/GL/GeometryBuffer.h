@@ -19,7 +19,7 @@ namespace GL {
 			ATTACHMENT_COUNT   = 6,
 		};
 
-		GeometryBuffer() { Init(); }
+		GeometryBuffer() : bufferName(NULL) { Init(); }
 		~GeometryBuffer() { Kill(); }
 
 		void Init();
@@ -29,6 +29,7 @@ namespace GL {
 		void DrawDebug(unsigned int texID);
 		void SetName(const char* name) { bufferName = name; }
 
+		bool HasAttachments() const { return (bufferTextureIDs[0] != 0); }
 		bool Valid() const { return (buffer.IsValid()); }
 		bool Create(const int2 size);
 		bool Update(const bool init);

@@ -14,7 +14,6 @@
 #else
 	#include <GL/glew.h>
 #endif // defined(HEADLESS)
-#include "lib/gml/gml.h"
 
 // includes boost now!
 #include "System/float3.h"

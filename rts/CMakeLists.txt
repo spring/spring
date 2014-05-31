@@ -29,9 +29,6 @@ if (SYNCDEBUG)
 	EndIf  ()
 endif (SYNCDEBUG)
 
-# Only used by GML build, but used in builds/GML and lib/gml
-option(USE_GML_DEBUG "Use GML call debugging?" FALSE)
-
 ### give error when not found
 FIND_PACKAGE_STATIC(DevIL REQUIRED)
 

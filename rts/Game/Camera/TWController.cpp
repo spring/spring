@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <boost/cstdint.hpp>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 
 #include "TWController.h"
 #include "Game/Camera.h"
@@ -41,7 +41,7 @@ void CTWController::KeyMove(float3 move)
 
 void CTWController::MouseMove(float3 move)
 {
-	move *= (1 + keyInput->GetKeyState(SDLK_LSHIFT) * 3) * pixelSize;
+	move *= (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * pixelSize;
 
 	float3 flatForward = camera->forward;
 	flatForward.y = 0;
@@ -73,7 +73,7 @@ void CTWController::UpdateVectors()
 {
 	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
 	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false);
+	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 
 	camera->rot.x = Clamp(camera->rot.x, -PI * 0.4f, -0.1f);
 
@@ -95,8 +95,8 @@ float3 CTWController::GetPos() const
 	float dist = -camera->rot.x * 1500;
 
 	float3 cpos = pos - dir * dist;
-	if (cpos.y < ground->GetHeightAboveWater(cpos.x, cpos.z, false) + 5)
-		cpos.y = ground->GetHeightAboveWater(cpos.x, cpos.z, false) + 5;
+	if (cpos.y < CGround::GetHeightAboveWater(cpos.x, cpos.z, false) + 5)
+		cpos.y = CGround::GetHeightAboveWater(cpos.x, cpos.z, false) + 5;
 
 	return cpos;
 }

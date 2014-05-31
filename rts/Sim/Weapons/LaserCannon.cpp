@@ -7,6 +7,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL));
 
@@ -71,7 +72,7 @@ void CLaserCannon::FireImpl(bool scriptCall)
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
-	params.ttl = std::min(ttlreq, ttlmax);
+	params.ttl = mix(std::max(ttlreq, ttlmax), std::min(ttlreq, ttlmax), weaponDef->selfExplode);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

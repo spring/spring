@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <mutex>
+#include <boost/thread/mutex.hpp>
 
 #include "LuaIntro.h"
 
@@ -10,7 +12,7 @@
 #include "LuaConstCMD.h"
 #include "LuaConstCMDTYPE.h"
 #include "LuaConstGame.h"
-#include "LuaUnsyncedCall.h"
+#include "LuaInterCall.h"
 #include "LuaUnsyncedRead.h"
 #include "LuaScream.h"
 #include "LuaSyncedRead.h"
@@ -34,29 +36,33 @@ CLuaIntro* LuaIntro = NULL;
 /******************************************************************************/
 /******************************************************************************/
 
+static boost::mutex m_singleton;
+
 
 void CLuaIntro::LoadHandler()
 {
-	if (LuaIntro) {
-		return;
+	{
+		std::lock_guard<boost::mutex> lk(m_singleton);
+		if (LuaIntro) return;
+
+		LuaIntro = new CLuaIntro();
 	}
 
-	new CLuaIntro();
-
 	if (!LuaIntro->IsValid()) {
-		delete LuaIntro;
+		FreeHandler();
 	}
 }
 
 
 void CLuaIntro::FreeHandler()
 {
-	static bool inFree = false;
-	if (!inFree) {
-		inFree = true;
-		delete LuaIntro;
-		inFree = false;
-	}
+	std::lock_guard<boost::mutex> lk(m_singleton);
+	if (!LuaIntro) return;
+
+	auto* inst = LuaIntro;
+	LuaIntro = NULL;
+	inst->KillLua();
+	delete inst;
 }
 
 
@@ -78,8 +84,6 @@ CLuaIntro::CLuaIntro()
 		KillLua();
 		return;
 	}
-
-	lua_State* L = L_Sim;
 
 	// load the standard libraries
 	LUA_OPEN_LIB(L, luaopen_base);
@@ -116,11 +120,6 @@ CLuaIntro::CLuaIntro()
 
 	AddBasicCalls(L); // into Global
 
-	lua_pushstring(L, "Script");
-	lua_rawget(L, -2);
-	LuaPushNamedCFunc(L, "UpdateCallIn", CallOutUnsyncedUpdateCallIn);
-	lua_pop(L, 1);
-
 	// load the spring libraries
 	if (
 	    !AddEntriesToTable(L, "Spring",    LoadUnsyncedCtrlFunctions) ||
@@ -131,6 +130,7 @@ CLuaIntro::CLuaIntro()
 	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
 	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
 	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
+	    //!AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesUnsynced) ||
 	    //!AddEntriesToTable(L, "Script",      LuaLobby::PushEntries)        ||
 	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)       ||
 	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)      ||
@@ -160,10 +160,6 @@ CLuaIntro::CLuaIntro()
 
 CLuaIntro::~CLuaIntro()
 {
-	if (L_Sim != NULL || L_Draw != NULL) {
-		Shutdown();
-		KillLua();
-	}
 	LuaIntro = NULL;
 }
 
@@ -288,9 +284,6 @@ bool CLuaIntro::LoadUnsyncedReadFunctions(lua_State *L)
 	REGISTER_LUA_CFUNC(GetKeyBindings);
 	REGISTER_LUA_CFUNC(GetActionHotKeys);
 
-	REGISTER_LUA_CFUNC(GetMyAllyTeamID);
-	REGISTER_LUA_CFUNC(GetMyTeamID);
-
 	REGISTER_LUA_CFUNC(GetLogSections);
 
 	#undef REGISTER_LUA_CFUNC
@@ -355,64 +348,8 @@ string CLuaIntro::LoadFile(const string& filename) const
 }
 
 
-bool CLuaIntro::HasCallIn(lua_State *L, const string& name)
-{
-	if (!IsValid()) {
-		return false;
-	}
-
-	// never allow these calls
-	if (name == "Explosion") {
-		return false;
-	}
-
-	if (name == "CollectGarbage") {
-		return false;
-	}
-
-	lua_getglobal(L, name.c_str());
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, 1);
-		return false;
-	}
-	lua_pop(L, 1);
-	return true;
-}
-
-
-bool CLuaIntro::UnsyncedUpdateCallIn(lua_State *L, const string& name)
-{
-	// never allow this call-in
-	if (name == "Explosion") {
-		return false;
-	}
-
-	if (HasCallIn(L, name)) {
-		eventHandler.InsertEvent(this, name);
-	} else {
-		eventHandler.RemoveEvent(this, name);
-	}
-
-	return true;
-}
-
-
 /******************************************************************************/
 /******************************************************************************/
-
-void CLuaIntro::Shutdown()
-{
-	LUA_CALL_IN_CHECK(L);
-	luaL_checkstack(L, 2, __FUNCTION__);
-	static const LuaHashString cmdStr("Shutdown");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return;
-	}
-
-	// call the routine
-	RunCallIn(cmdStr, 0, 0);
-}
-
 
 void CLuaIntro::DrawLoadScreen()
 {
@@ -428,7 +365,7 @@ void CLuaIntro::DrawLoadScreen()
 	LuaOpenGL::EnableCommon(LuaOpenGL::DRAW_SCREEN);
 
 	// call the routine
-	RunCallIn(cmdStr, 0, 0);
+	RunCallIn(L, cmdStr, 0, 0);
 
 	LuaOpenGL::DisableCommon(LuaOpenGL::DRAW_SCREEN);
 	LuaOpenGL::SetDrawingEnabled(L, false);
@@ -448,7 +385,7 @@ void CLuaIntro::LoadProgress(const std::string& msg, const bool replace_lastline
 	lua_pushboolean(L, replace_lastline);
 
 	// call the routine
-	RunCallIn(cmdStr, 2, 0);
+	RunCallIn(L, cmdStr, 2, 0);
 }
 
 /******************************************************************************/

@@ -78,7 +78,7 @@ static inline int log_filter_section_getDefaultMinLevel(const char* section) {
 #else
 		return LOG_LEVEL_INFO;
 	} else {
-		return LOG_LEVEL_WARNING;
+		return LOG_LEVEL_NOTICE;
 #endif
 	}
 }

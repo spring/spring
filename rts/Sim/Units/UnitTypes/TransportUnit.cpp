@@ -154,7 +154,7 @@ void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed
 				// if this transporter uses the piece-underneath-ground
 				// method to "hide" transportees, place transportee near
 				// the transporter's place of death
-				if (transportee->pos.y < ground->GetHeightReal(transportee->pos.x, transportee->pos.z)) {
+				if (transportee->pos.y < CGround::GetHeightReal(transportee->pos.x, transportee->pos.z)) {
 					const float r1 = transportee->radius + radius;
 					const float r2 = r1 * std::max(unitDef->unloadSpread, 1.0f);
 
@@ -164,7 +164,7 @@ void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed
 						float3 pos = transportee->pos;
 						pos.x += (gs->randFloat() * 2.0f * r2 - r2);
 						pos.z += (gs->randFloat() * 2.0f * r2 - r2);
-						pos.y = ground->GetHeightReal(pos.x, pos.z);
+						pos.y = CGround::GetHeightReal(pos.x, pos.z);
 
 						if (!pos.IsInBounds())
 							continue;
@@ -452,7 +452,7 @@ float CTransportUnit::GetTransporteeWantedHeight(const float3& wantedPos, const 
 	if (unit->GetTransporter() != NULL) {
 		// if unit is being transported, set <clampedHeight>
 		// to the altitude at which to UNload the transportee
-		wantedHeight = ground->GetHeightReal(wantedPos.x, wantedPos.z);
+		wantedHeight = CGround::GetHeightReal(wantedPos.x, wantedPos.z);
 		isAllowedHeight = transporteeUnitDef->CheckTerrainConstraints(transporteeMoveDef, wantedHeight, &clampedHeight);
 
 		if (isAllowedHeight) {

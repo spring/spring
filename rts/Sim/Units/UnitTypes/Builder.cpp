@@ -6,7 +6,6 @@
 #include "Building.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
@@ -199,7 +198,7 @@ void CBuilder::Update()
 							mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 							curBuild->groundLevelled = true;
 
-							if (luaRules && luaRules->TerraformComplete(this, curBuild)) {
+							if (eventHandler.TerraformComplete(this, curBuild)) {
 								StopBuild();
 							}
 						}
@@ -373,7 +372,7 @@ void CBuilder::Update()
 						// Corpse has been restored, begin resurrection
 						const float step = resurrectSpeed / ud->buildTime;
 
-						const bool resurrectAllowed = (luaRules == NULL || luaRules->AllowFeatureBuildStep(this, curResurrect, step));
+						const bool resurrectAllowed = eventHandler.AllowFeatureBuildStep(this, curResurrect, step);
 						const bool canExecResurrect = (resurrectAllowed && UseEnergy(ud->energy * step * modInfo.resurrectEnergyCostFactor));
 
 						if (canExecResurrect) {
@@ -457,7 +456,7 @@ void CBuilder::Update()
 					const float captureFraction = captureProgressTemp - curCapture->captureProgress;
 					const float energyUseScaled = curCapture->energyCost * captureFraction * modInfo.captureEnergyCostFactor;
 
-					const bool captureAllowed = (luaRules == NULL || luaRules->AllowUnitBuildStep(this, curCapture, captureProgressStep));
+					const bool captureAllowed = (eventHandler.AllowUnitBuildStep(this, curCapture, captureProgressStep));
 					const bool canExecCapture = (captureAllowed && UseEnergy(energyUseScaled));
 
 					if (canExecCapture) {
@@ -700,7 +699,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 	CUnit* buildee = unitLoader->LoadUnit(buildeeParams);
 
 	// floating structures don't terraform the seabed
-	const float groundheight = ground->GetHeightReal(buildee->pos.x, buildee->pos.z);
+	const float groundheight = CGround::GetHeightReal(buildee->pos.x, buildee->pos.z);
 	const bool onWater = (buildeeDef->floatOnWater && groundheight <= 0.0f);
 
 	if (mapDamage->disabled || !buildeeDef->levelGround || onWater ||
@@ -837,11 +836,6 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse, bool highPriority)
 {
 	const int modelNanoPiece = nanoPieceCache.GetNanoPiece(script);
-
-#ifdef USE_GML
-	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
-		return;
-#endif
 
 	if (localModel == NULL || !localModel->HasPiece(modelNanoPiece))
 		return;

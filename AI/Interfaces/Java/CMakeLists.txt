@@ -431,7 +431,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		"${myNativeSourceDir}/JavaBridge.c"
 		"${myNativeSourceDir}/JniUtil.c"
 		"${myNativeSourceDir}/JvmLocater_common.c"
-		"${myNativeSourceDir}/JvmLocater_solaris.c"
+		"${myNativeSourceDir}/JvmLocater_linux.c"
 		"${myNativeSourceDir}/JvmLocater_windows.c"
 		)
 	set(myNativeGeneratedSources

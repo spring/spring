@@ -25,7 +25,6 @@
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
-#include "lib/gml/gmlmut.h"
 
 // reserve 5% of maxNanoParticles for important stuff such as capture and reclaim other teams' units
 #define NORMAL_NANO_PRIO 0.95f
@@ -222,7 +221,6 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			quadField->MovedProjectile(p);
 
 			PROJECTILE_SANITY_CHECK(p);
-			GML::GetTicks(p->lastProjUpdate);
 
 			++pci;
 		}
@@ -237,14 +235,12 @@ void CProjectileHandler::Update()
 
 	{
 		SCOPED_TIMER("ProjectileHandler::Update");
-		GML::UpdateTicks();
 
 		UpdateProjectileContainer(syncedProjectiles, true);
 		UpdateProjectileContainer(unsyncedProjectiles, false);
 
 
 		{
-			GML_STDMUTEX_LOCK(rproj); // Update
 
 			syncedRenderProjectileIDs.delay_delete();
 			syncedRenderProjectileIDs.delay_add();
@@ -276,7 +272,6 @@ void CProjectileHandler::Update()
 		}
 
 		{
-			GML_STDMUTEX_LOCK(rflash); // Update
 
 			groundFlashes.delay_delete();
 			groundFlashes.delay_add();
@@ -299,7 +294,6 @@ void CProjectileHandler::Update()
 		#undef UPDATE_FLYING_PIECES
 
 		{
-			GML_STDMUTEX_LOCK(rpiece); // Update
 
 			flyingPieces3DO.delay_delete();
 			flyingPieces3DO.delay_add();
@@ -498,7 +492,7 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 
 		// NOTE: don't add p->radius to groundHeight, or most
 		// projectiles will collide with the ground too early
-		const float groundHeight = ground->GetHeightReal(p->pos.x, p->pos.z);
+		const float groundHeight = CGround::GetHeightReal(p->pos.x, p->pos.z);
 		const bool belowGround = (p->pos.y < groundHeight);
 		const bool insideWater = (p->pos.y <= 0.0f && !belowGround);
 		const bool ignoreWater = p->ignoreWater;

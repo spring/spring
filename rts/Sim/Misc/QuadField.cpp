@@ -2,7 +2,6 @@
 
 #include <algorithm>
 
-#include "lib/gml/gmlmut.h"
 #include "QuadField.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -188,8 +187,6 @@ unsigned int CQuadField::GetQuads(float3 pos, float radius, int*& begQuad, int*&
 
 std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetUnits
-
 	const int tempNum = gs->tempNum++;
 
 	int* begQuad = &tempQuads[0];
@@ -217,8 +214,6 @@ std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
 
 std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, bool spherical)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetUnitsExact
-
 	const int tempNum = gs->tempNum++;
 
 	int* begQuad = &tempQuads[0];
@@ -255,8 +250,6 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, b
 
 std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetUnitsExact
-
 	const std::vector<int>& quads = GetQuadsRectangle(mins, maxs);
 	const int tempNum = gs->tempNum++;
 
@@ -409,7 +402,7 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 		float xn, zn;
 		bool keepgoing = true;
 
-		for (int i = 0; i < NUM_TEMP_QUADS && keepgoing; i++) {
+		for (unsigned int i = 0; i < tempQuads.size() && keepgoing; i++) {
 			*endQuad = ((int)(zp * invQuadSizeZ) * numQuadsX) + (int)(xp * invQuadSizeX);
 			++endQuad;
 
@@ -454,8 +447,6 @@ void CQuadField::MovedUnit(CUnit* unit)
 		}
 	}
 
-	GML_RECMUTEX_LOCK(quad); // MovedUnit
-
 	std::vector<int>::const_iterator qi;
 	for (qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
 		std::list<CUnit*>& quadUnits     = baseQuads[*qi].units;
@@ -480,8 +471,6 @@ void CQuadField::MovedUnit(CUnit* unit)
 
 void CQuadField::RemoveUnit(CUnit* unit)
 {
-	GML_RECMUTEX_LOCK(quad); // RemoveUnit
-
 	std::vector<int>::const_iterator qi;
 	for (qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
 		std::list<CUnit*>& quadUnits     = baseQuads[*qi].units;
@@ -503,8 +492,6 @@ void CQuadField::RemoveUnit(CUnit* unit)
 
 void CQuadField::AddFeature(CFeature* feature)
 {
-	GML_RECMUTEX_LOCK(quad); // AddFeature
-
 	const std::vector<int>& newQuads = GetQuads(feature->pos, feature->radius);
 
 	std::vector<int>::const_iterator qi;
@@ -515,8 +502,6 @@ void CQuadField::AddFeature(CFeature* feature)
 
 void CQuadField::RemoveFeature(CFeature* feature)
 {
-	GML_RECMUTEX_LOCK(quad); // RemoveFeature
-
 	const std::vector<int>& quads = GetQuads(feature->pos, feature->radius);
 
 	std::vector<int>::const_iterator qi;
@@ -568,8 +553,6 @@ void CQuadField::AddProjectile(CProjectile* p)
 {
 	assert(p->synced);
 
-	GML_RECMUTEX_LOCK(quad); // AddProjectile
-
 	CProjectile::QuadFieldCellData qfcd;
 
 	typedef CQuadField::Quad Cell;
@@ -616,8 +599,6 @@ void CQuadField::RemoveProjectile(CProjectile* p)
 {
 	assert(p->synced);
 
-	GML_RECMUTEX_LOCK(quad); // RemoveProjectile
-
 	CProjectile::QuadFieldCellData& qfcd = p->GetQuadFieldCellData();
 
 	typedef CQuadField::Quad Cell;
@@ -651,8 +632,6 @@ void CQuadField::RemoveProjectile(CProjectile* p)
 
 std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float radius)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact
-
 	const std::vector<int>& quads = GetQuads(pos, radius);
 	const int tempNum = gs->tempNum++;
 
@@ -675,8 +654,6 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float rad
 
 std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float radius, bool spherical)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact
-
 	const std::vector<int>& quads = GetQuads(pos, radius);
 	const int tempNum = gs->tempNum++;
 
@@ -703,8 +680,6 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float rad
 
 std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins, const float3& maxs)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact
-
 	const std::vector<int>& quads = GetQuadsRectangle(mins, maxs);
 	const int tempNum = gs->tempNum++;
 
@@ -735,8 +710,6 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins, const fl
 
 std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& pos, float radius)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetProjectilesExact
-
 	const std::vector<int>& quads = GetQuads(pos, radius);
 
 	std::vector<CProjectile*> projectiles;
@@ -760,8 +733,6 @@ std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& pos, flo
 
 std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& mins, const float3& maxs)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetProjectilesExact
-
 	const std::vector<int>& quads = GetQuadsRectangle(mins, maxs);
 
 	std::vector<CProjectile*> projectiles;
@@ -793,8 +764,6 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(
 	const unsigned int physicalStateBits,
 	const unsigned int collisionStateBits
 ) {
-	GML_RECMUTEX_LOCK(qnum); // GetSolidsExact
-
 	const std::vector<int>& quads = GetQuads(pos, radius);
 	const int tempNum = gs->tempNum++;
 
@@ -884,8 +853,6 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	unsigned int* numUnitsPtr,
 	unsigned int* numFeaturesPtr
 ) {
-	GML_RECMUTEX_LOCK(qnum); // GetUnitsAndFeaturesColVol
-
 	const int tempNum = gs->tempNum++;
 
 	// start counting from the previous object-cache sizes

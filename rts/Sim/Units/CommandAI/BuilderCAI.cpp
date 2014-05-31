@@ -10,7 +10,6 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Sim/Features/Feature.h"
@@ -621,7 +620,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 				return;
 			}
 
-			if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build)) {
+			if (!eventHandler.AllowUnitCreation(build.def, owner, &build)) {
 				StopMove(); // cancel KeepPointingTo
 				FinishCommand();
 				return;
@@ -1268,7 +1267,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 			FinishCommand();
 		}
 	} else if (owner->unitDef->canRestore) {
-		const float3 pos(c.params[0], ground->GetHeightReal(c.params[0], c.params[2]), c.params[2]);
+		const float3 pos(c.params[0], CGround::GetHeightReal(c.params[0], c.params[2]), c.params[2]);
 		const float radius = std::min(c.params[3], 200.0f);
 
 		if (MoveInBuildRange(pos, radius * 0.7f)) {

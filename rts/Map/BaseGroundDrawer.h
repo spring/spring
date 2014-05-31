@@ -44,6 +44,7 @@ public:
 
 	CBaseGroundDrawer();
 	virtual ~CBaseGroundDrawer();
+	CBaseGroundDrawer(const CBaseGroundDrawer&) = delete; // no-copy
 
 	virtual void Draw(const DrawPass::e& drawPass) = 0;
 	virtual void DrawShadowPass() {}
@@ -120,11 +121,6 @@ public:
 
 	int updateTextureState;
 	int extraTextureUpdateRate;
-
-#ifdef USE_GML
-	bool multiThreadDrawGround;
-	bool multiThreadDrawGroundShadow;
-#endif
 
 protected:
 	BaseGroundDrawMode drawMode;

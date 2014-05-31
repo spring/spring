@@ -3,7 +3,7 @@
 #include <boost/cstdint.hpp>
 
 #include <SDL_mouse.h>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 
 #include "OrbitController.h"
 #include "Game/Camera.h"
@@ -40,7 +40,7 @@ COrbitController::COrbitController():
 void COrbitController::Init(const float3& p, const float3& tar)
 {
 	const float l = (tar == ZeroVector)?
-		std::max(ground->LineGroundCol(p, p + camera->forward * 1024.0f, false), 512.0f):
+		std::max(CGround::LineGroundCol(p, p + camera->forward * 1024.0f, false), 512.0f):
 		p.distance(tar);
 
 	const float3 t = (tar == ZeroVector)? (p + camera->forward * l): tar;
@@ -61,7 +61,7 @@ void COrbitController::Init(const float3& p, const float3& tar)
 
 void COrbitController::Update()
 {
-	if (!keyInput->IsKeyPressed(SDLK_LMETA)) {
+	if (!KeyInput::GetKeyModState(KMOD_GUI)) {
 		return;
 	}
 
@@ -158,7 +158,7 @@ float3 COrbitController::GetDir() const
 void COrbitController::Orbit()
 {
 	camera->SetPos(cen + GetOrbitPos());
-	camera->SetPos((camera->GetPos() + XZVector) + (UpVector * std::max(camera->GetPos().y, ground->GetHeightReal(camera->GetPos().x, camera->GetPos().z, false))));
+	camera->SetPos((camera->GetPos() + XZVector) + (UpVector * std::max(camera->GetPos().y, CGround::GetHeightReal(camera->GetPos().x, camera->GetPos().z, false))));
 	camera->forward = (cen - camera->GetPos()).ANormalize();
 	camera->up = UpVector;
 }
@@ -175,8 +175,8 @@ void COrbitController::Pan(int rdx, int rdy)
 
 
 	// don't allow orbit center or ourselves to drop below the terrain
-	const float camGH = ground->GetHeightReal(camera->GetPos().x, camera->GetPos().z, false);
-	const float cenGH = ground->GetHeightReal(cen.x, cen.z, false);
+	const float camGH = CGround::GetHeightReal(camera->GetPos().x, camera->GetPos().z, false);
+	const float cenGH = CGround::GetHeightReal(cen.x, cen.z, false);
 
 	if (camera->GetPos().y < camGH) {
 		camera->SetPos((camera->GetPos() * XZVector) + (UpVector * camGH));
@@ -215,7 +215,7 @@ void COrbitController::MouseWheelMove(float move)
 
 void COrbitController::SetPos(const float3& newPos)
 {
-	if (keyInput->IsKeyPressed(SDLK_LMETA)) {
+	if (KeyInput::GetKeyModState(KMOD_GUI)) {
 		return;
 	}
 
@@ -225,7 +225,7 @@ void COrbitController::SetPos(const float3& newPos)
 
 	cen.x += dx;
 	cen.z += dz;
-	cen.y = ground->GetHeightReal(cen.x, cen.z, false);
+	cen.y = CGround::GetHeightReal(cen.x, cen.z, false);
 
 	camera->SetPos(camera->GetPos() + float3(dx, 0.0f, dz));
 	Init(camera->GetPos(), cen);

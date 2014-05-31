@@ -3,14 +3,14 @@
 
 #include "KeySet.h"
 #include "KeyCodes.h"
+#include "KeyBindings.h"
 
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
 
-#include <cstdlib>
-#include <boost/cstdint.hpp>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
+
 
 #define DISALLOW_RELEASE_BINDINGS
 
@@ -40,15 +40,21 @@ void CKeySet::SetAnyBit()
 }
 
 
+bool CKeySet::IsPureModifier() const
+{
+	return (CKeyCodes::IsModifier(Key()) || (Key() == keyBindings->GetFakeMetaKey()));
+}
+
+
 CKeySet::CKeySet(int k, bool release)
 {
 	key = k;
 	modifiers = 0;
 
-	if (keyInput->IsKeyPressed(SDLK_LALT))   { modifiers |= KS_ALT; }
-	if (keyInput->IsKeyPressed(SDLK_LCTRL))  { modifiers |= KS_CTRL; }
-	if (keyInput->IsKeyPressed(SDLK_LMETA))  { modifiers |= KS_META; }
-	if (keyInput->IsKeyPressed(SDLK_LSHIFT)) { modifiers |= KS_SHIFT; }
+	if (KeyInput::GetKeyModState(KMOD_ALT))   { modifiers |= KS_ALT; }
+	if (KeyInput::GetKeyModState(KMOD_CTRL))  { modifiers |= KS_CTRL; }
+	if (KeyInput::GetKeyModState(KMOD_GUI))   { modifiers |= KS_META; }
+	if (KeyInput::GetKeyModState(KMOD_SHIFT)) { modifiers |= KS_SHIFT; }
 
 #ifndef DISALLOW_RELEASE_BINDINGS
 	if (release) { modifiers |= KS_RELEASE; }
@@ -89,7 +95,6 @@ bool CKeySet::ParseModifier(std::string& s, const std::string& token, const std:
 		return true;
 	}
 	if (s.find(abbr) == 0) {
-
 		s.erase(0, abbr.size());
 		return true;
 	}
@@ -97,7 +102,7 @@ bool CKeySet::ParseModifier(std::string& s, const std::string& token, const std:
 }
 
 
-bool CKeySet::Parse(const std::string& token)
+bool CKeySet::Parse(const std::string& token, bool showerror)
 {
 	Reset();
 
@@ -119,7 +124,13 @@ bool CKeySet::Parse(const std::string& token)
 #ifdef DISALLOW_RELEASE_BINDINGS
 	modifiers &= ~KS_RELEASE;
 #endif
-	
+
+	if (s.empty()) {
+		Reset();
+		if (showerror) LOG_L(L_ERROR, "KeySet: Missing key");
+		return false;
+	}
+
 	// remove ''s, if present
 	if ((s.size() >= 2) && (s[0] == '\'') && (s[s.size() - 1] == '\'')) {
 		s = s.substr(1, s.size() - 2);
@@ -131,22 +142,17 @@ bool CKeySet::Parse(const std::string& token)
 		key = strtol(start, &end, 16);
 		if (end == start) {
 			Reset();
-			LOG_L(L_ERROR, "KeySet: Bad hex value: %s", s.c_str());
-			return false;
-		}
-		if (key >= SDLK_LAST) {
-			Reset();
-			LOG_L(L_ERROR, "KeySet: Hex value out of range: %s", s.c_str());
+			if (showerror) LOG_L(L_ERROR, "KeySet: Bad hex value: %s", s.c_str());
 			return false;
 		}
 	} else {
 		if ((keyCodes != NULL) && (key = keyCodes->GetCode(s)) < 0) {
 			Reset();
-			LOG_L(L_ERROR, "KeySet: Bad keysym: %s", s.c_str());
+			if (showerror) LOG_L(L_ERROR, "KeySet: Bad keysym: %s", s.c_str());
 			return false;
 		}
 	}
-	
+
 	if (keyCodes != NULL && keyCodes->IsModifier(key)) {
 		modifiers |= KS_ANYMOD;
 	}
@@ -156,4 +162,38 @@ bool CKeySet::Parse(const std::string& token)
 	}
 	
 	return true;
+}
+
+
+/******************************************************************************/
+//
+// CTimedKeyChain
+//
+
+void CTimedKeyChain::push_back(const int key, const spring_time t)
+{
+	assert(keyBindings);
+
+	// clear chain on timeout
+	const auto dropTime = t - spring_msecs(keyBindings->GetKeyChainTimeout());
+	if (!empty() && times.back() < dropTime) {
+		clear();
+	}
+
+	CKeySet ks(key, false);
+
+	// When you want to press c,alt+b you will press the c(down),c(up),alt(down),b(down)
+	// -> the chain will be: c,Alt+alt,Alt+b
+	// this should now match "c,alt+b", so we need to get rid of the redundant Alt+alt .
+	// Still we want to support "Alt+alt,Alt+alt" (double click alt), so only override e.g. the last in chain
+	// when the new keypress is _not_ a modifier.
+	if (!empty() && !ks.IsPureModifier() && back().IsPureModifier() && (back().Mod() == ks.Mod())) {
+		times.back() = t;
+		back() = ks;
+		return;
+	}
+
+	// push new to front
+	CKeyChain::emplace_back(ks);
+	times.emplace_back(t);
 }

@@ -89,7 +89,6 @@ public:
 	float reclaimLeft;
 	float finalHeight;
 
-	int tempNum;
 	int lastReclaim;
 
 	/// which drawQuad we are part of

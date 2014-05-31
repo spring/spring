@@ -17,10 +17,12 @@ struct SDL_Surface;
 class CBitmap
 {
 public:
-	CBitmap(const unsigned char* data,int xsize,int ysize);
+	CBitmap(const unsigned char* data, int xsize, int ysize, int channels = 4);
 	CBitmap();
 	CBitmap(const CBitmap& old);
 	CBitmap& operator=(const CBitmap& bm);
+	CBitmap(CBitmap&& bm);
+	CBitmap& operator=(CBitmap&& bm);
 
 	virtual ~CBitmap();
 
@@ -42,7 +44,6 @@ public:
 	void Renormalize(float3 newCol);
 	void Blur(int iterations = 1, float weight = 1.0f);
 
-	CBitmap GetRegion(int startx, int starty, int width, int height) const;
 	void CopySubImage(const CBitmap& src, int x, int y);
 
 	/**
@@ -64,15 +65,7 @@ public:
 	int xsize;
 	int ysize;
 	int channels;
-
-	enum BitmapType
-	{
-		BitmapTypeStandardRGBA,
-		BitmapTypeStandardAlpha,
-		BitmapTypeDDS
-	};
-
-	BitmapType type;
+	bool compressed;
 
 #ifndef BITMAP_NO_OPENGL
 	int textype; //! GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ...
@@ -80,12 +73,14 @@ public:
 #endif // !BITMAP_NO_OPENGL
 
 public:
+	CBitmap CanvasResize(const int newx, const int newy, const bool center = true) const;
 	CBitmap CreateRescaled(int newx, int newy) const;
 	void ReverseYAxis();
 	void InvertColors();
 	void InvertAlpha();
 	void GrayScale();
 	void Tint(const float tint[3]);
+
 private:
 	/**
 	 * Allocates a red 1x1, 4-channel bitmap

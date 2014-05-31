@@ -3,7 +3,7 @@
 
 #include "InMapDrawView.h"
 #include "Rendering/Colors.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/GlobalRendering.h"
 
@@ -192,8 +192,6 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 
 void CInMapDrawView::Draw()
 {
-	GML_STDMUTEX_LOCK(inmap); // Draw
-
 	CVertexArray* pointsVa = GetVertexArray();
 	pointsVa->Initialize();
 	CVertexArray* linesVa = GetVertexArray();

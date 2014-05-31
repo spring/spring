@@ -52,7 +52,6 @@ public:
 		bool upwardDir,
 		bool negSide);
 	void ClearFrustumSides() {
-		GML_RECMUTEX_LOCK(cam); // ClearFrustumSides
 
 		posFrustumSides.clear();
 		negFrustumSides.clear();
@@ -78,7 +77,7 @@ public:
 	void SetFov(float fov);
 
 	float GetMoveDistance(float* time, float* speed, int idx) const;
-	float3 GetMoveVectorFromState(bool fromKeyState, bool* disableTracker);
+	float3 GetMoveVectorFromState(bool fromKeyState) const;
 
 	void SetMovState(int idx, bool b) { movState[idx] = b; }
 	void SetRotState(int idx, bool b) { rotState[idx] = b; }
@@ -112,12 +111,10 @@ public:
 	};
 
 	const std::vector<FrustumLine> GetNegFrustumSides() const {
-		GML_RECMUTEX_LOCK(cam); // GetNegFrustumSides
 
 		return negFrustumSides;
 	}
 	const std::vector<FrustumLine> GetPosFrustumSides() const {
-		GML_RECMUTEX_LOCK(cam); // GetPosFrustumSides
 
 		return posFrustumSides;
 	}

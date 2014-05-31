@@ -36,15 +36,12 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 	drawMode = drawNormal;
 	drawLineOfSight = false;
 	drawRadarAndJammer = true;
+	drawMapEdges = false;
+	drawDeferred = false;
 	wireframe = false;
 	advShading = false;
 	highResInfoTex = false;
 	updateTextureState = 0;
-
-#ifdef USE_GML
-	multiThreadDrawGroundShadow = false;
-	multiThreadDrawGround = false;
-#endif
 
 	infoTexPBO.Bind();
 	infoTexPBO.Resize(gs->pwr2mapx * gs->pwr2mapy * 4);
@@ -410,7 +407,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 								totalLos = inLos + inAir;
 							}
 #ifdef RADARHANDLER_SONAR_JAMMER_MAPS
-							const bool useRadar = (ground->GetHeightReal(xPos, zPos, false) >= 0.0f);
+							const bool useRadar = (CGround::GetHeightReal(xPos, zPos, false) >= 0.0f);
 							const unsigned short* radarMap  = useRadar ? myRadar  : mySonar;
 							const unsigned short* jammerMap = useRadar ? myJammer : mySonarJammer;
 #else

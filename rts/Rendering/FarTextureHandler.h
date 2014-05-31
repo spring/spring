@@ -31,7 +31,7 @@ private:
 	static const int iconSizeY;
 	static const int numOrientations;
 
-	GML_VECTOR<const CSolidObject*> queuedForRender;
+	std::vector<const CSolidObject*> queuedForRender;
 	std::vector< std::vector<int> > cache;
 
 	FBO fbo;

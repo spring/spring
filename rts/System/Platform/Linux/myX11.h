@@ -10,26 +10,19 @@
 #undef KeyRelease
 #undef GrayScale
 
+struct SDL_Window;
+
+
 /**
- * @brief returns the offset of a window to the display
- * @param display  The display
- * @param window   The window
- * @param out_left Pointer to an int, that will hold the x offset
- * @param out_top  Pointer to an int, that will hold the y offset
+ * @brief disables kwin compositing to fix tearing
  */
-void MyX11GetFrameBorderOffset(Display* display, Window& window, int* out_left, int* out_top);
+void MyX11BlockCompositing(SDL_Window* window);
+
 
 /**
  * @brief returns the window-state of the given window
- * @see MyX11SetWindowState()
  */
-int MyX11GetWindowState(Display* display, Window& window);
-
-/**
- * @brief sets the window to windowState (maximized, minimized, ...)
- * @see MyX11GetWindowState()
- */
-void MyX11SetWindowState(Display* display, Window& window, int windowState);
+int MyX11GetWindowState(SDL_Window* window);
 
 #endif // #ifndef HEADLESS
 

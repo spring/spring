@@ -82,8 +82,8 @@ CR_REG_METADATA(CCustomExplosionGenerator, (
 
 CExplosionGeneratorHandler* explGenHandler = NULL;
 
-CExpGenSpawnable::CExpGenSpawnable(): CWorldObject() { GML_EXPGEN_CHECK() }
-CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd): CWorldObject(pos, spd) { GML_EXPGEN_CHECK() }
+CExpGenSpawnable::CExpGenSpawnable(): CWorldObject() {}
+CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd): CWorldObject(pos, spd) {}
 
 
 
@@ -382,7 +382,7 @@ bool CStdExplosionGenerator::Explosion(
 	CUnit* owner,
 	CUnit* hit
 ) {
-	const float groundHeight = ground->GetHeightReal(pos.x, pos.z);
+	const float groundHeight = CGround::GetHeightReal(pos.x, pos.z);
 	const float altitude = pos.y - groundHeight;
 
 	float3 camVect = camera->GetPos() - pos;
@@ -431,7 +431,7 @@ bool CStdExplosionGenerator::Explosion(
 				(-0.1f + gu->RandFloat() * 0.2f)
 			);
 
-			const float h = ground->GetApproximateHeight(npos.x, npos.z);
+			const float h = CGround::GetApproximateHeight(npos.x, npos.z);
 			const float time = (40.0f + smokeDamageSQRT * 15.0f) * (0.8f + gu->RandFloat() * 0.7f);
 
 			float3 npos = pos + gu->RandVector() * smokeDamage;
@@ -996,7 +996,7 @@ bool CCustomExplosionGenerator::Explosion(
 	CUnit* owner,
 	CUnit* hit
 ) {
-	const float groundHeight = ground->GetHeightReal(pos.x, pos.z);
+	const float groundHeight = CGround::GetHeightReal(pos.x, pos.z);
 	const float altitude = pos.y - groundHeight;
 
 	unsigned int flags = GetFlagsFromHeight(pos.y, altitude);

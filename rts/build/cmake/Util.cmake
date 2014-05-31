@@ -272,3 +272,25 @@ Macro    (CatchRegexGroup pattern group var str)
 		String(REGEX REPLACE "${pattern}" "\\${group}" ${var} "${str}")
 	EndIf  ()
 EndMacro (CatchRegexGroup)
+
+
+# macro that adds "freetype-6 freetype6" to find_library on win32
+Macro(FindFreetypeHack)
+	if(WIN32)
+
+PREFER_STATIC_LIBS()
+find_library(FREETYPE_LIBRARY
+  NAMES freetype libfreetype freetype219 freetype-6 freetype6
+  HINTS
+    ENV FREETYPE_DIR
+  PATH_SUFFIXES lib
+  PATHS
+  /usr/X11R6
+  /usr/local/X11R6
+  /usr/local/X11
+  /usr/freeware
+)
+UNPREFER_STATIC_LIBS()
+	endif()
+EndMacro()
+

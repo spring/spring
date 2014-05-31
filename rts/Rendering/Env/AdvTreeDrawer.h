@@ -30,7 +30,7 @@ public:
 	void DrawGrass();
 	void DrawShadowGrass();
 	void AddGrass(const float3& pos);
-	void RemoveGrass(int x, int z);
+	void RemoveGrass(const float3& pos);
 	void DrawShadowPass();
 
 	static void DrawTreeVertexA(CVertexArray* va, float3& ftpos, float dx, float dy);
