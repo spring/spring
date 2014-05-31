@@ -199,7 +199,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	logDebugMessages = configHandler->GetBool("ServerLogDebugMessages");
 	logWarnMessages = configHandler->GetBool("ServerLogWarnMessages");
 
-	if (!hostIP.empty() && (hostPort > 0)) {
+	if (!setup->onlyLocal) {
 		UDPNet.reset(new netcode::UDPListener(hostPort, hostIP));
 	}
 
