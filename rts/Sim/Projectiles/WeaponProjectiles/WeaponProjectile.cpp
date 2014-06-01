@@ -281,7 +281,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 	if (!weaponDef->groundBounce && !weaponDef->waterBounce)
 		return;
 
-	const float gh = ground->GetHeightReal(pos.x, pos.z);
+	const float gh = CGround::GetHeightReal(pos.x, pos.z);
 	const float dg = pos.y - gh;
 	const float dw = pos.y - std::max(gh, 0.0f);
 
@@ -299,7 +299,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 	if ((bounces += 1) > weaponDef->numBounce)
 		return;
 
-	const float3& normal = ground->GetNormal(pos.x, pos.z);
+	const float3& normal = CGround::GetNormal(pos.x, pos.z);
 	const float dot = math::fabs(speed.dot(normal));
 
 	// spawn CEG before bouncing, otherwise we might be too
