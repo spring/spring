@@ -393,6 +393,16 @@ void CSolidObject::SetHeadingFromDirection() {
 	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
 }
 
+void CSolidObject::UpdateDirVectors(bool useGroundNormal)
+{
+	updir    = GetWantedUpDir(useGroundNormal);
+	frontdir = GetVectorFromHeading(heading);
+	rightdir = (frontdir.cross(updir)).Normalize();
+	frontdir = updir.cross(rightdir);
+}
+
+
+
 void CSolidObject::ForcedSpin(const float3& newDir) {
 	// new front-direction should be normalized
 	assert(math::fabsf(newDir.SqLength() - 1.0f) <= float3::NORMALIZE_EPS);

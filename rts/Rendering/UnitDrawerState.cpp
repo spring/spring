@@ -231,7 +231,7 @@ bool UnitDrawerStateARB::Init(const CUnitDrawer* ud) {
 		return false;
 	}
 	if (!configHandler->GetBool("AdvUnitShading")) {
-		// not allowed to do (ARB) shader-based map rendering
+		// not allowed to do (ARB) shader-based model rendering
 		return false;
 	}
 
@@ -333,7 +333,7 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		return false;
 	}
 	if (!configHandler->GetBool("AdvUnitShading")) {
-		// not allowed to do (GLSL) shader-based map rendering
+		// not allowed to do (GLSL) shader-based model rendering
 		return false;
 	}
 

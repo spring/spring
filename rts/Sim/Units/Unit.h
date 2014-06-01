@@ -143,7 +143,6 @@ public:
 	void CalculateTerrainType();
 	void UpdateTerrainType();
 	void UpdatePhysicalState(float eps);
-	void UpdateDirVectors(bool useGroundNormal);
 
 	float3 GetErrorVector(int allyteam) const;
 	float3 GetErrorPos(int allyteam, bool aiming = false) const { return (aiming? aimPos: midPos) + GetErrorVector(allyteam); }

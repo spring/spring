@@ -45,14 +45,16 @@ void CBuilding::PostInit(const CUnit* builder)
 
 
 void CBuilding::ForcedMove(const float3& newPos) {
+	// heading might have changed if building was dropped from transport
+	// (always needs to be axis-aligned because yardmaps are not rotated)
 	heading = GetHeadingFromFacing(buildFacing);
-	frontdir = GetVectorFromHeading(heading);
 
+	UpdateDirVectors(false);
 	SetVelocity(ZeroVector);
-	Move(CGameHelper::Pos2BuildPos(BuildInfo(unitDef, newPos, buildFacing), true), false);
-	UpdateMidAndAimPos();
 
-	CUnit::ForcedMove(pos);
+	// update quadfield, etc.
+	CUnit::ForcedMove(CGameHelper::Pos2BuildPos(BuildInfo(unitDef, newPos, buildFacing), true));
 
 	unitLoader->FlattenGround(this);
 }
+
