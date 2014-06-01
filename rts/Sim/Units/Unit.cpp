@@ -549,15 +549,6 @@ void CUnit::ForcedMove(const float3& newPos)
 	radarHandler->MoveUnit(this);
 }
 
-// NOTE: movetypes call this directly
-void CUnit::UpdateDirVectors(bool useGroundNormal)
-{
-	updir    = GetWantedUpDir(useGroundNormal);
-	frontdir = GetVectorFromHeading(heading);
-	rightdir = (frontdir.cross(updir)).Normalize();
-	frontdir = updir.cross(rightdir);
-}
-
 
 
 float3 CUnit::GetErrorVector(int allyteam) const

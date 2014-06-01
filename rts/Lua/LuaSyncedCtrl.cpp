@@ -551,6 +551,7 @@ static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
 	o->SetDirVectors(matrix);
 	o->UpdateMidAndAimPos();
 	o->SetHeadingFromDirection();
+	// do not need ForcedSpin, above three calls cover it
 	o->ForcedMove(pos);
 	o->SetVelocityAndSpeed(speed);
 	return 0;
@@ -2165,9 +2166,9 @@ int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	float3 pos;
 
@@ -2207,10 +2208,10 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 
 	assert(matrix.IsOrthoNormal() == 0);
 
+	// do not need ForcedSpin, below three calls cover it
 	unit->SetDirVectors(matrix);
 	unit->UpdateMidAndAimPos();
 	unit->SetHeadingFromDirection();
-	unit->ForcedMove(unit->pos);
 	return 0;
 }
 
