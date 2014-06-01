@@ -272,34 +272,45 @@ void CWeaponProjectile::UpdateGroundBounce()
 {
 	if (luaMoveCtrl)
 		return;
-	if (ttl <= 0 && weaponDef->numBounce < 0)
+	if (ttl <= 0)
 		return;
+	// projectile is not allowed to bounce even once
+	if (weaponDef->numBounce < 0)
+		return;
+	// projectile is not allowed to bounce on either surface
 	if (!weaponDef->groundBounce && !weaponDef->waterBounce)
 		return;
 
-	float wh = 0.0f;
+	const float gh = ground->GetHeightReal(pos.x, pos.z);
+	const float dg = pos.y - gh;
+	const float dw = pos.y - std::max(gh, 0.0f);
 
-	if (!weaponDef->waterBounce) {
-		wh = CGround::GetHeightReal(pos.x, pos.z);
-	} else if (weaponDef->groundBounce) {
-		wh = CGround::GetHeightAboveWater(pos.x, pos.z);
-	}
-
-	if (pos.y >= wh)
-		return;
-	if (weaponDef->numBounce >= 0 && (bounces += 1) > weaponDef->numBounce)
+	// if not close to a bounceable surface, bail
+	if (dg > 0.1f && dw > 0.1f)
 		return;
 
-	const float3& normal = CGround::GetNormal(pos.x, pos.z);
-	const float dot = speed.dot(normal);
+	// if close to water but not allowed to bounce on it, bail
+	if ((dw <= 0.1f) && !weaponDef->waterBounce)
+		return;
+	// if close to ground but not allowed to bounce on it, bail
+	if ((dg <= 0.1f) && !weaponDef->groundBounce)
+		return;
+
+	if ((bounces += 1) > weaponDef->numBounce)
+		return;
+
+	const float3& normal = ground->GetNormal(pos.x, pos.z);
+	const float dot = math::fabs(speed.dot(normal));
+
+	// spawn CEG before bouncing, otherwise we might be too
+	// far up in the air if it has the (under)water flag set
+	explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, pos, normal, speed.w, 1.0f, 1.0f, owner(), NULL);
 
 	SetPosition(pos - speed);
-	CWorldObject::SetVelocity(speed - (speed + normal * math::fabs(dot)) * (1 - weaponDef->bounceSlip));
-	CWorldObject::SetVelocity(speed + (normal * (math::fabs(dot))) * (1 + weaponDef->bounceRebound));
+	CWorldObject::SetVelocity(speed - (speed + normal * dot) * (1 - weaponDef->bounceSlip   ));
+	CWorldObject::SetVelocity(         speed + normal * dot  * (1 + weaponDef->bounceRebound));
 	SetPosition(pos + speed);
 	SetVelocityAndSpeed(speed);
-
-	explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, pos, normal, speed.w, 1.0f, 1.0f, owner(), NULL);
 }
 
 
