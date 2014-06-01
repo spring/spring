@@ -49,25 +49,24 @@ CVertexArray* GetVertexArray()
 
 void PrintAvailableResolutions()
 {
-	char buffer[1024];
-	int n = 0;
+	std::string modes;
 
 	// Get available fullscreen/hardware modes
 	//FIXME this checks only the main screen
-	for (int i=SDL_GetNumDisplayModes(0) - 1; i>=0; --i) {
+	const int nummodes = SDL_GetNumDisplayModes(0) - 1;
+	for (int i = nummodes; i >= 0; --i) { //FIXME: why reverse order? isn't needed
 		SDL_DisplayMode mode;
 		SDL_GetDisplayMode(0, i, &mode);
-		n += SNPRINTF(&buffer[n], 1024-n, "%dx%d, ", mode.w, mode.h);
+		if (!modes.empty()) {
+			modes += ", ";
+		}
+		modes += IntToString(mode.w) + "x" + IntToString(mode.h);
+	}
+	if (nummodes == 0) {
+		modes = "NONE";
 	}
 
-	// remove last comma
-	if (n >= 2) {
-		buffer[n - 2] = '\0';
-	}
-	if (n == 0) {
-		SNPRINTF(&buffer[n], 1024-n, "NONE");
-	}
-	LOG("Supported Video modes: %s", buffer);
+	LOG("Supported Video modes: %s", modes.c_str());
 }
 
 #ifdef GL_ARB_debug_output
