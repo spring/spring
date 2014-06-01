@@ -53,8 +53,8 @@ void PrintAvailableResolutions()
 
 	// Get available fullscreen/hardware modes
 	//FIXME this checks only the main screen
-	const int nummodes = SDL_GetNumDisplayModes(0) - 1;
-	for (int i = nummodes; i >= 0; --i) { //FIXME: why reverse order? isn't needed
+	const int nummodes = SDL_GetNumDisplayModes(0);
+	for (int i = (nummodes-1); i >= 0; --i) { // reverse order to print them from low to high
 		SDL_DisplayMode mode;
 		SDL_GetDisplayMode(0, i, &mode);
 		if (!modes.empty()) {
@@ -62,7 +62,7 @@ void PrintAvailableResolutions()
 		}
 		modes += IntToString(mode.w) + "x" + IntToString(mode.h);
 	}
-	if (nummodes == 0) {
+	if (nummodes < 1) {
 		modes = "NONE";
 	}
 
