@@ -110,7 +110,9 @@ FixLibName(unitsync)
 install (TARGETS unitsync DESTINATION ${LIBDIR})
 
 Add_Subdirectory(test)
-If     (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/python/CMakeLists.txt" )
+
+OPTION(UNITSYNC_PYTHON_BINDINGS "compile python bindings for unitsync (FIXME: broken with gcc 4.9 see #4377)" OFF)
+If     (UNITSYNC_PYTHON_BINDINGS)
 	# only add this if the submodule is present
 	Add_Subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/python")
-EndIf  (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/python/CMakeLists.txt")
+EndIf()
