@@ -6,7 +6,7 @@
 */
 
 $allowed = array(
-	'94.23.255.23', # springfiles.com
+	'37.187.92.174', # springfiles.com
 );
 
 $ip = $_SERVER['REMOTE_ADDR'];
