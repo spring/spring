@@ -4,7 +4,6 @@
 #include "Feature.h"
 #include "FeatureHandler.h"
 #include "Game/GlobalUnsynced.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
@@ -35,7 +34,6 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(resurrectProgress),
 	CR_MEMBER(reclaimLeft),
 	CR_MEMBER(finalHeight),
-	CR_MEMBER(tempNum),
 	CR_MEMBER(lastReclaim),
 	CR_MEMBER(drawQuad),
 	CR_MEMBER(fireTime),
@@ -58,7 +56,6 @@ CFeature::CFeature() : CSolidObject(),
 	resurrectProgress(0.0f),
 	reclaimLeft(1.0f),
 	finalHeight(0.0f),
-	tempNum(0),
 	lastReclaim(0),
 	drawQuad(-2),
 	fireTime(0),
@@ -220,9 +217,9 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	eventHandler.FeatureCreated(this);
 
 	if (def->floating) {
-		finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
+		finalHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
 	} else {
-		finalHeight = ground->GetHeightReal(pos.x, pos.z);
+		finalHeight = CGround::GetHeightReal(pos.x, pos.z);
 	}
 
 	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(params.speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
@@ -231,7 +228,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 void CFeature::CalculateTransform()
 {
-	updir    = (!def->upright)? ground->GetNormal(pos.x, pos.z): UpVector;
+	updir    = (!def->upright)? CGround::GetNormal(pos.x, pos.z): UpVector;
 	frontdir = GetVectorFromHeading(heading);
 	rightdir = (frontdir.cross(updir)).Normalize();
 	frontdir = (updir.cross(rightdir)).Normalize();
@@ -272,11 +269,10 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		// Work out how much that will cost
 		const float metalUse  = step * def->metal;
 		const float energyUse = step * def->energy;
-
-		const bool repairAllowed = (luaRules == NULL || luaRules->AllowFeatureBuildStep(builder, this, step));
 		const bool canExecRepair = (builderTeam->metal >= metalUse && builderTeam->energy >= energyUse);
+		const bool repairAllowed = !canExecRepair ? false : eventHandler.AllowFeatureBuildStep(builder, this, step);
 
-		if (repairAllowed && canExecRepair) {
+		if (repairAllowed) {
 			builder->UseMetal(metalUse);
 			builder->UseEnergy(energyUse);
 
@@ -314,7 +310,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 
 		const float step = (-amount) / def->reclaimTime;
 
-		if (luaRules != NULL && !luaRules->AllowFeatureBuildStep(builder, this, -step))
+		if (!eventHandler.AllowFeatureBuildStep(builder, this, -step))
 			return false;
 
 		// stop the last bit giving too much resource
@@ -388,8 +384,8 @@ void CFeature::DoDamage(
 	float baseDamage = damages.GetDefaultDamage();
 	float impulseMult = float((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()));
 
-	if (luaRules != NULL) {
-		luaRules->FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult);
+	if (eventHandler.FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult)) {
+		return;
 	}
 
 	// NOTE:
@@ -462,16 +458,10 @@ void CFeature::ForcedMove(const float3& newPos)
 
 void CFeature::ForcedSpin(const float3& newDir)
 {
-	float3 updir = UpVector;
-	if (updir == newDir) {
-		//FIXME perhaps save the old right,up,front directions, so we can
-		// reconstruct the old upvector and generate a better assumption for updir
-		updir -= GetVectorFromHeading(heading);
-	}
-	float3 rightdir = newDir.cross(updir).Normalize();
-	updir = rightdir.cross(newDir);
-	transMatrix = CMatrix44f(pos, -rightdir, updir, newDir);
-	heading = GetHeadingFromVector(newDir.x, newDir.z);
+	// update local direction-vectors
+	CSolidObject::ForcedSpin(newDir);
+
+	transMatrix = CMatrix44f(pos, -rightdir, updir, frontdir);
 }
 
 
@@ -488,7 +478,7 @@ bool CFeature::UpdatePosition()
 		// even if their "owner" was a floating object (as is the case for
 		// ships anyway)
 		if (IsMoving()) {
-			const float realGroundHeight = ground->GetHeightReal(pos.x, pos.z);
+			const float realGroundHeight = CGround::GetHeightReal(pos.x, pos.z);
 			const bool reachedWater  = ( pos.y                     <= 0.1f);
 			const bool reachedGround = ((pos.y - realGroundHeight) <= 0.1f);
 
@@ -582,9 +572,9 @@ void CFeature::UpdateFinalHeight(bool useGroundHeight)
 
 	if (useGroundHeight) {
 		if (def->floating) {
-			finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
+			finalHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
 		} else {
-			finalHeight = ground->GetHeightReal(pos.x, pos.z);
+			finalHeight = CGround::GetHeightReal(pos.x, pos.z);
 		}
 	} else {
 		// permanently stay at this height,

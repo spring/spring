@@ -18,6 +18,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/myMath.h"
+#include "System/Sync/HsiehHash.h"
 
 CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (NULL));
 
@@ -241,7 +242,7 @@ static float GetElevatorDeflection(
 				elevator = -upside;
 			}
 		} else {
-			const float gHeightR = ground->GetHeightAboveWater(pos.x + spd.x * 40.0f, pos.z + spd.z * 40.0f);
+			const float gHeightR = CGround::GetHeightAboveWater(pos.x + spd.x * 40.0f, pos.z + spd.z * 40.0f);
 			const float hdif = std::max(gHeightR, groundHeight) + 60 - pos.y - frontdir.y * spd.w * 20.0f;
 
 			const float maxElevatorSpeedf = maxElevator * spd.w;
@@ -291,7 +292,7 @@ static float GetElevatorDeflection(
 
 			if (notColliding) {
 				const float maxElevatorSpeedf = maxElevator * 20.0f * spd.w * spd.w;
-				const float gHeightAW = ground->GetHeightAboveWater(pos.x + spd.x * 40.0f, pos.z + spd.z * 40.0f);
+				const float gHeightAW = CGround::GetHeightAboveWater(pos.x + spd.x * 40.0f, pos.z + spd.z * 40.0f);
 				const float hdif = std::max(groundHeight, gHeightAW) + wantedHeight - pos.y - frontdir.y * spd.w * 20.0f;
 
 				if (hdif < -maxElevatorSpeedf && frontdir.y > -maxPitch) {
@@ -512,7 +513,7 @@ bool CStrafeAirMoveType::Update()
 			// NOTE: the crashing-state can only be set (and unset) by scripts
 			UpdateAirPhysics(crashRudder, crashAileron, crashElevator, 0, owner->frontdir);
 
-			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
+			if ((CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
 				owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
 				owner->KillUnit(NULL, true, false);
 			}
@@ -672,7 +673,7 @@ void CStrafeAirMoveType::UpdateManeuver()
 				maneuver = 0;
 			}
 			// [?] some seem to report that the "unlimited altitude" thing is because of these maneuvers
-			if (owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z) > wantedHeight * 4.0f) {
+			if (owner->pos.y - CGround::GetApproximateHeight(owner->pos.x, owner->pos.z) > wantedHeight * 4.0f) {
 				maneuver = 0;
 			}
 			break;
@@ -755,7 +756,7 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 	oldGoalPos = goalPos;
 	goalPos += difGoalPos;
 
-	const float gHeightAW = ground->GetHeightAboveWater(pos.x, pos.z);
+	const float gHeightAW = CGround::GetHeightAboveWater(pos.x, pos.z);
 	const float goalDist = pos.distance(goalPos);
 	const float3 goalDir = (goalDist > 0.0f)?
 		(goalPos - pos) / goalDist:
@@ -830,9 +831,9 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float gHeight = 0.0f;
 
 	if (UseSmoothMesh()) {
-		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), ground->GetApproximateHeight(pos.x, pos.z));
+		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), CGround::GetApproximateHeight(pos.x, pos.z));
 	} else {
-		gHeight = ground->GetHeightAboveWater(pos.x, pos.z);
+		gHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
 	}
 
 	if (((gs->frameNum + owner->id) & 3) == 0) {
@@ -842,7 +843,6 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float3 rightDir2D = rightdir;
 	float3 yprMults = OnesVector * (1.0f + 0.0f * float(goalDist2D < (turnRadius * spd.w)));
 
-	float otherThreat = 0.0f;
 	float goalDotRight = goalDir2D.dot(rightDir2D.Normalize2D());
 
 	const float aGoalDotFront = goalDir2D.dot(frontdir);
@@ -867,14 +867,14 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	if (lastColWarning != NULL) {
 		const float3 otherDif = lastColWarning->pos - pos;
 		const float otherLength = otherDif.Length();
+		const float otherThreat = (otherLength > 0.0f)?
+			std::max(1200.0f, goalDist2D) / otherLength * 0.036f:
+			0.0f;
 
 		const float3 otherDir = (otherLength > 0.0f)?
 			(otherDif / otherLength):
 			ZeroVector;
 
-		otherThreat = (otherLength > 0.0f)?
-			std::max(1200.0f, goalDist2D) / otherLength * 0.036f:
-			0.0f;
 		goalDotRight -= (otherDir.dot(rightdir) * otherThreat);
 	}
 
@@ -915,8 +915,8 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 	SyncedFloat3& updir    = owner->updir;
 
 	const float currentHeight = pos.y - (owner->unitDef->canSubmerge?
-		ground->GetHeightReal(pos.x, pos.z):
-		ground->GetHeightAboveWater(pos.x, pos.z));
+		CGround::GetHeightReal(pos.x, pos.z):
+		CGround::GetHeightAboveWater(pos.x, pos.z));
 	const float yawSign = Sign((goalPos - pos).dot(rightdir));
 
 	frontdir += (rightdir * yawSign * (maxRudder * spd.y));
@@ -1036,8 +1036,8 @@ void CStrafeAirMoveType::UpdateLanding()
 	owner->UpdateMidAndAimPos();
 
 	// see if we are at the reserved (not user-clicked) landing spot
-	const float gh = ground->GetHeightAboveWater(pos.x, pos.z);
-	const float gah = ground->GetHeightReal(pos.x, pos.z);
+	const float gh = CGround::GetHeightAboveWater(pos.x, pos.z);
+	const float gah = CGround::GetHeightReal(pos.x, pos.z);
 	float altitude = 0.0f;
 
 	// can we submerge and are we still above water?
@@ -1073,7 +1073,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	lastAileronPos = aileron;
 	lastElevatorPos = elevator;
 
-	const float gHeight = ground->GetHeightAboveWater(pos.x, pos.z);
+	const float gHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
 	const float speedf = spd.w;
 	const float3 speeddir = spd / (speedf + 0.1f);
 
@@ -1133,7 +1133,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 		if (groundContact && handleContact) {
 			owner->Move(UpVector * (gHeight - (owner->midPos.y - owner->radius) + 0.01f), true);
 
-			const float3& gNormal = ground->GetNormal(pos.x, pos.z);
+			const float3& gNormal = CGround::GetNormal(pos.x, pos.z);
 			const float impactSpeed = -spd.dot(gNormal) * int(1 - owner->IsStunned());
 
 			if (impactSpeed > 0.0f) {
@@ -1235,7 +1235,7 @@ float3 CStrafeAirMoveType::FindLandingPos(float brakeRate) const
 	const UnitDef* ud = owner->unitDef;
 
 	float3 tryPos = owner->pos + owner->frontdir * ((Square(owner->speed.w) * 0.5f) / brakeRate);
-	tryPos.y = ground->GetHeightReal(tryPos.x, tryPos.z);
+	tryPos.y = CGround::GetHeightReal(tryPos.x, tryPos.z);
 
 	if ((tryPos.y < 0.0f) && !(ud->floatOnWater || ud->canSubmerge))
 		return ret;
@@ -1253,7 +1253,7 @@ float3 CStrafeAirMoveType::FindLandingPos(float brakeRate) const
 	}
 
 	// FIXME: better use ud->maxHeightDif?
-	if (ground->GetSlope(tryPos.x, tryPos.z) > 0.03f)
+	if (CGround::GetSlope(tryPos.x, tryPos.z) > 0.03f)
 		return ret;
 
 	return tryPos;
@@ -1320,3 +1320,79 @@ void CStrafeAirMoveType::Takeoff()
 		}
 	}
 }
+
+
+
+bool CStrafeAirMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
+	// try the generic members first
+	if (AMoveType::SetMemberValue(memberHash, memberValue))
+		return true;
+
+	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
+	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
+
+	static const unsigned int boolMemberHashes[] = {
+		MEMBER_LITERAL_HASH(      "collide"),
+		MEMBER_LITERAL_HASH("useSmoothMesh"),
+	};
+	static const unsigned int floatMemberHashes[] = {
+		MEMBER_LITERAL_HASH( "wantedHeight"),
+		MEMBER_LITERAL_HASH(   "turnRadius"),
+		MEMBER_LITERAL_HASH(      "accRate"),
+		MEMBER_LITERAL_HASH(      "decRate"),
+		MEMBER_LITERAL_HASH(       "maxAcc"), // synonym for accRate
+		MEMBER_LITERAL_HASH(       "maxDec"), // synonym for decRate
+		MEMBER_LITERAL_HASH(      "maxBank"),
+		MEMBER_LITERAL_HASH(     "maxPitch"),
+		MEMBER_LITERAL_HASH(   "maxAileron"),
+		MEMBER_LITERAL_HASH(  "maxElevator"),
+		MEMBER_LITERAL_HASH(    "maxRudder"),
+		MEMBER_LITERAL_HASH(    "myGravity"),
+	};
+
+	#undef MEMBER_CHARPTR_HASH
+	#undef MEMBER_LITERAL_HASH
+
+
+	// unordered_map etc. perform dynallocs, so KISS here
+	bool* boolMemberPtrs[] = {
+		&collide,
+		&useSmoothMesh,
+	};
+	float* floatMemberPtrs[] = {
+		&wantedHeight,
+		&turnRadius,
+
+		&accRate, // hash("accRate") case
+		&decRate, // hash("decRate") case
+		&accRate, // hash( "maxAcc") case
+		&decRate, // hash( "maxDec") case
+
+		&maxBank,
+		&maxPitch,
+
+		&maxAileron,
+		&maxElevator,
+		&maxRudder,
+
+		&myGravity,
+	};
+
+	// note: <memberHash> should be calculated via HsiehHash
+	for (unsigned int n = 0; n < sizeof(boolMemberPtrs) / sizeof(boolMemberPtrs[0]); n++) {
+		if (memberHash == boolMemberHashes[n]) {
+			*(boolMemberPtrs[n]) = *(reinterpret_cast<bool*>(memberValue));
+			return true;
+		}
+	}
+
+	for (unsigned int n = 0; n < sizeof(floatMemberPtrs) / sizeof(floatMemberPtrs[0]); n++) {
+		if (memberHash == floatMemberHashes[n]) {
+			*(floatMemberPtrs[n]) = *(reinterpret_cast<float*>(memberValue));
+			return true;
+		}
+	}
+
+	return false;
+}
+

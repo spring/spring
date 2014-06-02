@@ -32,8 +32,6 @@ public:
 
 	/// indicates high trajectory on/off state
 	bool highTrajectory;
-	/// burnblow tag. defines flakker-like behaviour
-	bool selfExplode;
 	/// projectile gravity
 	float gravity;
 

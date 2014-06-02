@@ -10,7 +10,7 @@
 #include "Game/Players/Player.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Net/Protocol/NetProtocol.h"
 
 
@@ -67,7 +67,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	if ((showReadyBox && InBox(mx, my, readyBox)) || gs->frameNum > 0)
 		return (!Ready(false));
 
-	const float dist = ground->LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * globalRendering->viewRange * 1.4f, false);
+	const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * globalRendering->viewRange * 1.4f, false);
 
 	if (dist < 0.0f)
 		return true;
@@ -115,8 +115,8 @@ void CStartPosSelecter::Draw()
 		float3 pos1(bx + (a    ) * dx, 0.0f, by);
 		float3 pos2(bx + (a + 1) * dx, 0.0f, by);
 
-		pos1.y = ground->GetHeightAboveWater(pos1.x, pos1.z, false);
-		pos2.y = ground->GetHeightAboveWater(pos2.x, pos2.z, false);
+		pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false);
+		pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false);
 
 		glVertexf3(pos1);
 		glVertexf3(pos2);
@@ -125,8 +125,8 @@ void CStartPosSelecter::Draw()
 
 		pos1 = float3(bx + (a    ) * dx, 0.0f, by + dy * 10.0f);
 		pos2 = float3(bx + (a + 1) * dx, 0.0f, by + dy * 10.0f);
-		pos1.y = ground->GetHeightAboveWater(pos1.x, pos1.z, false);
-		pos2.y = ground->GetHeightAboveWater(pos2.x, pos2.z, false);
+		pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false);
+		pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false);
 
 		glVertexf3(pos1);
 		glVertexf3(pos2);
@@ -135,8 +135,8 @@ void CStartPosSelecter::Draw()
 
 		pos1 = float3(bx, 0.0f, by + dy * (a    ));
 		pos2 = float3(bx, 0.0f, by + dy * (a + 1));
-		pos1.y = ground->GetHeightAboveWater(pos1.x, pos1.z, false);
-		pos2.y = ground->GetHeightAboveWater(pos2.x, pos2.z, false);
+		pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false);
+		pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false);
 
 		glVertexf3(pos1);
 		glVertexf3(pos2);
@@ -145,8 +145,8 @@ void CStartPosSelecter::Draw()
 
 		pos1 = float3(bx + dx * 10.0f, 0.0f, by + dy * (a    ));
 		pos2 = float3(bx + dx * 10.0f, 0.0f, by + dy * (a + 1));
-		pos1.y = ground->GetHeightAboveWater(pos1.x, pos1.z, false);
-		pos2.y = ground->GetHeightAboveWater(pos2.x, pos2.z, false);
+		pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false);
+		pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false);
 
 		glVertexf3(pos1);
 		glVertexf3(pos2);

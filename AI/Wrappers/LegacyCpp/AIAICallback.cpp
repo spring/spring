@@ -1690,8 +1690,9 @@ int springLegacyAI::CAIAICallback::Internal_GiveOrder(int unitId, int groupId, s
 int springLegacyAI::CAIAICallback::InitPath(float3 start, float3 end, int pathType, float goalRadius) {
 
 	float start_f3[3];
-	start.copyInto(start_f3);
 	float end_f3[3];
+
+	start.copyInto(start_f3);
 	end.copyInto(end_f3);
 
 	SInitPathCommand cmd = {start_f3, end_f3, pathType, goalRadius};
@@ -1710,12 +1711,14 @@ float3 springLegacyAI::CAIAICallback::GetNextWaypoint(int pathId) {
 float springLegacyAI::CAIAICallback::GetPathLength(float3 start, float3 end, int pathType, float goalRadius) {
 
 	float start_f3[3];
-	start.copyInto(start_f3);
 	float end_f3[3];
+
+	start.copyInto(start_f3);
 	end.copyInto(end_f3);
 
 	SGetApproximateLengthPathCommand cmd = {start_f3, end_f3, pathType, goalRadius};
-	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_APPROXIMATE_LENGTH, &cmd); return cmd.ret_approximatePathLength;
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_APPROXIMATE_LENGTH, &cmd);
+	return cmd.ret_approximatePathLength;
 }
 
 void springLegacyAI::CAIAICallback::FreePath(int pathId) {

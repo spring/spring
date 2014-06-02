@@ -30,7 +30,6 @@ class LuaSyncedRead {
 
 		static int GetGaiaTeamID(lua_State* L);
 
-		static int GetGameSpeed(lua_State* L);
 		static int GetGameFrame(lua_State* L);
 		static int GetGameSeconds(lua_State* L);
 
@@ -122,6 +121,7 @@ class LuaSyncedRead {
 		static int GetUnitBuildFacing(lua_State* L);
 		static int GetUnitIsBuilding(lua_State* L);
 		static int GetUnitCurrentBuildPower(lua_State* L);
+		static int GetUnitHarvestStorage(lua_State* L);
 		static int GetUnitNanoPieces(lua_State* L);
 		static int GetUnitTransporter(lua_State* L);
 		static int GetUnitIsTransporting(lua_State* L);

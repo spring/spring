@@ -12,10 +12,10 @@
 #include "Lua/LuaConfig.h"
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaHandleSynced.h"
+#include "Lua/LuaUtils.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
-#include "Lua/LuaHelper.h"
 
 
 using std::map;
@@ -403,33 +403,6 @@ inline void CLuaUnitScript::PushUnit(const CUnit* targetUnit)
 inline bool CLuaUnitScript::RunCallIn(int id, int inArgs, int outArgs)
 {
 	return RawRunCallIn(scriptIndex[id], inArgs, outArgs);
-}
-
-bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
-{
-	CUnit* oldActiveUnit = activeUnit;
-	CUnitScript* oldActiveScript = activeScript;
-
-	activeUnit = unit;
-	activeScript = this;
-
-	std::string err;
-	const int error = handle->RunCallIn(inArgs, outArgs, err);
-
-	activeUnit = oldActiveUnit;
-	activeScript = oldActiveScript;
-
-	if (error != 0) {
-		const string& fname = GetScriptName(functionId);
-
-		LOG_L(L_ERROR, "%s::RunCallIn: error = %i, %s::%s, %s",
-				handle->GetName().c_str(), error, "CLuaUnitScript",
-				fname.c_str(), err.c_str());
-		RemoveCallIn(fname);
-
-		return false;
-	}
-	return true;
 }
 
 
@@ -879,6 +852,34 @@ string CLuaUnitScript::GetScriptName(int functionId) const
 }
 
 
+bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
+{
+	CUnit* oldActiveUnit = activeUnit;
+	CUnitScript* oldActiveScript = activeScript;
+
+	activeUnit = unit;
+	activeScript = this;
+
+	std::string err;
+	const int error = handle->RunCallIn(L, inArgs, outArgs, err);
+
+	activeUnit = oldActiveUnit;
+	activeScript = oldActiveScript;
+
+	if (error != 0) {
+		const string& fname = GetScriptName(functionId);
+
+		LOG_L(L_ERROR, "%s::RunCallIn: error = %i, %s::%s, %s",
+				handle->GetName().c_str(), error, "CLuaUnitScript",
+				fname.c_str(), err.c_str());
+		RemoveCallIn(fname);
+
+		return false;
+	}
+	return true;
+}
+
+
 void CLuaUnitScript::Destroy() { Call(LUAFN_Destroy); }
 void CLuaUnitScript::StartMoving(bool reversing) { Call(LUAFN_StartMoving, reversing * 1.0f); }
 void CLuaUnitScript::StopMoving() { Call(LUAFN_StopMoving); }
@@ -1165,7 +1166,7 @@ int CLuaUnitScript::SetUnitValue(lua_State* L, CUnitScript* script, int arg)
 	const int val = luaL_checkint(L, arg++);
 	int param;
 	if (args == 1) {
-		param = luaL_checkint(L, arg++);
+		param = lua_isboolean(L, arg) ? int(lua_toboolean(L, arg++)) : luaL_checkint(L, arg++);
 	}
 	else {
 		const int x = luaL_checkint(L, arg++);

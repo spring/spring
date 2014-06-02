@@ -23,14 +23,20 @@ public:
 	virtual int GetMaxMipMaps() = 0;
 
 public:
-	void AddEntry(const std::string& name, int2 size)
+	void AddEntry(const std::string& name, int2 size, void* data = NULL)
 	{
-		entries[name] = SAtlasEntry(size);
+		entries[name] = SAtlasEntry(size, data);
 	}
 
 	float4 GetEntry(const std::string& name)
 	{
 		return entries[name].texCoords;
+	}
+
+	void*& GetEntryData(const std::string& name)
+	{
+		assert(entries[name].data);
+		return entries[name].data;
 	}
 
 	float4 GetTexCoords(const std::string& name)
@@ -50,17 +56,31 @@ public:
 		return uv;
 	}
 
+	bool contains(const std::string& name) const
+	{
+		return (entries.find(name) != entries.end());
+	}
+
+	//! note: it doesn't clear the atlas! it only clears the entry db!
+	void clear()
+	{
+		entries.clear();
+	}
+	//auto begin() { return entries.begin(); }
+	//auto end() { return entries.end(); }
+
 	int2 GetMaxSize() const { return maxsize; }
 	int2 GetAtlasSize() const { return atlasSize; }
 
 protected:
 	struct SAtlasEntry
 	{
-		SAtlasEntry() {}
-		SAtlasEntry(int2 _size) : size(_size) {}
+		SAtlasEntry() : data(NULL) {}
+		SAtlasEntry(const int2 _size, void* _data = NULL) : size(_size), data(_data) {}
 		
 		int2 size;
 		float4 texCoords;
+		void* data;
 	};
 
 	std::map<std::string, SAtlasEntry> entries;

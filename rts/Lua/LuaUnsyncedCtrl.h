@@ -114,6 +114,7 @@ class LuaUnsyncedCtrl {
 		static int WarpMouse(lua_State* L);
 
 		static int SetMouseCursor(lua_State* L);
+		static int SetClipboard(lua_State* L);
 
 		static int SetCameraOffset(lua_State* L);
 

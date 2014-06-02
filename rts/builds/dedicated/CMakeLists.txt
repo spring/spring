@@ -23,6 +23,7 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
 LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
 LIST(APPEND engineDedicatedLibraries headlessStubs engineSystemNet)
+LIST(APPEND engineDedicatedLibraries ${LIBUNWIND_LIBRARIES})
 
 IF (WIN32)
 	LIST(APPEND engineDedicatedLibraries ${WINMM_LIBRARY})
@@ -42,12 +43,6 @@ IF    (UNIX AND NOT MINGW)
 	ENDIF(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
 ENDIF (UNIX AND NOT MINGW)
 
-IF    (UNIX)
-        FIND_PACKAGE(Libunwind REQUIRED)
-        LIST(APPEND engineLibraries ${LIBUNWIND_LIBRARIES})
-ENDIF (UNIX)
-
-
 IF    (MINGW OR APPLE)
 	# Windows:
 	# We still need these header files,
@@ -56,12 +51,12 @@ IF    (MINGW OR APPLE)
 	# OS X:
 	# Cocoa requires the SDL libary, whenever the SDL headers are used,
 	# due to some #define magic, which is practically impossible to workaround.
-	FIND_PACKAGE(SDL REQUIRED)
-	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+	FIND_PACKAGE(SDL2 REQUIRED)
+	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
 ELSE  (MINGW OR APPLE)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
-	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL)
+	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL2)
 ENDIF (MINGW OR APPLE)
 
 
@@ -77,15 +72,8 @@ IF	(UNIX)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/thread_backtrace.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp)
-        FIND_PACKAGE(Libunwind REQUIRED)
-        IF (LIBUNWIND_FOUND)
-          MESSAGE(STATUS "Found libunwind libraries at ${LIBUNWIND_LIBRARIES}")
-          LIST(APPEND engineDedicatedLibraries ${LIBUNWIND_LIBRARIES})
-        ELSE (LIBUNWIND_FOUND)
-          MESSAGE(SEND_ERROR "Could not find libunwind libraries!")
-        ENDIF (LIBUNWIND_FOUND)
-
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/ThreadSupport.cpp)
 ELSEIF	(WIN32)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/seh.cpp
@@ -141,7 +129,6 @@ SET(engineDedicatedSources
 	${system_files}
 	${sources_engine_NetServer}
 	${sources_engine_System_Log}
-        ${sources_engine_System_Platform_Linux}
 	${ENGINE_SRC_ROOT_DIR}/Game/ClientSetup.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/GameSetup.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/GameData.cpp
@@ -168,7 +155,7 @@ ADD_LIBRARY(springserver-static STATIC EXCLUDE_FROM_ALL ${engineDedicatedSources
 Add_Dependencies(springserver-static generateVersionFiles)
 TARGET_LINK_LIBRARIES(springserver-static ${engineDedicatedLibraries})
 IF    (MINGW)
-	TARGET_LINK_LIBRARIES (springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY})
+	TARGET_LINK_LIBRARIES(springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${WINMM_LIBRARY})
 ENDIF (MINGW)
 
 # Compile dedicated server executable

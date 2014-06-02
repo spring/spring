@@ -236,11 +236,11 @@ static void FindBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 		char              binPathName[512];
 
 		char line[512];
-		int red;
+
 		// read all lines
 		while (!paths_notFound.empty() && (fgets(line, 511, mapsFile) != NULL)) {
 			// parse the line
-			red = sscanf(line, "%lx-%*x %*s %lx %*s %*u %s",
+			const int red = sscanf(line, "%lx-%*x %*s %lx %*s %*u %s",
 					&mem_start, &binAddr_offset, binPathName);
 
 			if (red == 3) {
@@ -562,13 +562,17 @@ static void LogStacktrace (const int logLevel, const StackTrace& stacktrace) {
 __FORCE_ALIGN_STACK__
 static void ForcedExitAfterFiveSecs() {
 	boost::this_thread::sleep(boost::posix_time::seconds(5));
-	exit(-1);
+	std::exit(-1);
 }
 
 __FORCE_ALIGN_STACK__
 static void ForcedExitAfterTenSecs() {
 	boost::this_thread::sleep(boost::posix_time::seconds(10));
+#if defined(__GNUC__)
 	std::_Exit(-1);
+#else
+	std::quick_exit(-1);
+#endif
 }
 
 

@@ -48,6 +48,7 @@
 	SETUP_EVENT(UnitCmdDone,    MANAGED_BIT);
 	SETUP_EVENT(UnitDamaged,    MANAGED_BIT);
 	SETUP_EVENT(UnitExperience, MANAGED_BIT);
+	SETUP_EVENT(UnitHarvestStorageFull, MANAGED_BIT);
 
 	SETUP_EVENT(UnitSeismicPing,  MANAGED_BIT);
 	SETUP_EVENT(UnitEnteredRadar, MANAGED_BIT);
@@ -78,7 +79,7 @@
 	SETUP_EVENT(ProjectileCreated,   MANAGED_BIT);
 	SETUP_EVENT(ProjectileDestroyed, MANAGED_BIT);
 
-	SETUP_EVENT(Explosion, MANAGED_BIT);
+	SETUP_EVENT(Explosion, MANAGED_BIT | CONTROL_BIT);
 
 	SETUP_EVENT(StockpileChanged, MANAGED_BIT);
 
@@ -91,6 +92,7 @@
 
 	SETUP_EVENT(KeyPress,       MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(KeyRelease,     MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(TextInput,      MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(MouseMove,      MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(MousePress,     MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(MouseRelease,   MANAGED_BIT | UNSYNCED_BIT);
@@ -139,44 +141,58 @@
 
 	SETUP_EVENT(RenderUnitMoved,     MANAGED_BIT | UNSYNCED_BIT);
 
+	SETUP_EVENT(SyncedActionFallback, MANAGED_BIT | CONTROL_BIT);
+
+	SETUP_EVENT(CommandFallback,        MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(AllowCommand,           MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(AllowUnitCreation,      MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(AllowUnitTransfer,      MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(AllowUnitBuildStep,     MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(AllowFeatureCreation,   MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(AllowFeatureBuildStep,  MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(AllowResourceLevel,     MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(AllowResourceTransfer,  MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(AllowDirectUnitControl, MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(AllowStartPosition,     MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(TerraformComplete,      MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(MoveCtrlNotify,         MANAGED_BIT | CONTROL_BIT);
+
+	SETUP_EVENT(AllowWeaponTargetCheck,     MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(AllowWeaponTarget,          MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(AllowWeaponInterceptTarget, MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(UnitPreDamaged,             MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(FeaturePreDamaged,          MANAGED_BIT | CONTROL_BIT);
+	SETUP_EVENT(ShieldPreDamaged,           MANAGED_BIT | CONTROL_BIT);
+
+	SETUP_EVENT(DrawUnit,              MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT);
+	SETUP_EVENT(DrawFeature,           MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT);
+	SETUP_EVENT(DrawShield,            MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT);
+	SETUP_EVENT(DrawProjectile,        MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT);
+
 	// unmanaged call-ins
 	SETUP_UNMANAGED_EVENT(Shutdown, 0);
 	SETUP_UNMANAGED_EVENT(RecvLuaMsg, 0);
+	SETUP_UNMANAGED_EVENT(GotChatMsg, CONTROL_BIT);
 
-	SETUP_UNMANAGED_EVENT(DrawUnit, UNSYNCED_BIT);
-	SETUP_UNMANAGED_EVENT(DrawFeature, UNSYNCED_BIT);
 	SETUP_UNMANAGED_EVENT(RecvSkirmishAIMessage, UNSYNCED_BIT);
 
 	// LuaUI
 	SETUP_UNMANAGED_EVENT(ConfigureLayout, UNSYNCED_BIT | CONTROL_BIT);
-
-	// LuaRules
-	SETUP_UNMANAGED_EVENT(CommandFallback,        CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(AllowCommand,           CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(AllowUnitCreation,      CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(AllowUnitTransfer,      CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(AllowUnitBuildStep,     CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(AllowFeatureCreation,   CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(AllowFeatureBuildStep,  CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(AllowResourceLevel,     CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(AllowResourceTransfer,  CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(AllowDirectUnitControl, CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(AllowStartPosition,     CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(TerraformComplete,      CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(MoveCtrlNotify,         CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(UnitPreDamaged,         CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(FeaturePreDamaged,      CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(ShieldPreDamaged,       CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(AllowWeaponTargetCheck, CONTROL_BIT);
-	SETUP_UNMANAGED_EVENT(AllowWeaponTarget,      CONTROL_BIT);
 
 	// LuaIntro
 	SETUP_UNMANAGED_EVENT(DrawLoadScreen, UNSYNCED_BIT);
 	SETUP_UNMANAGED_EVENT(LoadProgress,   UNSYNCED_BIT);
 
 	// System
-	SETUP_EVENT(CollectGarbage,     MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(CollectGarbage,  MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(DbgTimingInfo,   MANAGED_BIT | UNSYNCED_BIT); // informs about video-/sim-frame start & end times
 
 
-#pragma pop_macro("SETUP_EVENT")
-#pragma pop_macro("SETUP_UNMANAGED_EVENT")
+#ifndef SETUP_EVENT
+	#pragma pop_macro("SETUP_EVENT")
+#endif
+
+#ifndef SETUP_UNMANAGED_EVENT
+	#pragma pop_macro("SETUP_UNMANAGED_EVENT")
+#endif
+

@@ -12,9 +12,6 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <SDL_keysym.h>
-#include <SDL_mouse.h>
-
 
 #include "LuaOpenGL.h"
 #include "LuaInclude.h"
@@ -33,12 +30,11 @@
 #include "Game/Camera.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
-#include "lib/gml/gmlmut.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/HeightMapTexture.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
@@ -1267,8 +1263,6 @@ int LuaOpenGL::Unit(lua_State* L)
 
 	const bool rawDraw = luaL_optboolean(L, 2, false);
 
-	GML_LODMUTEX_LOCK(unit); // Unit
-
 	bool useLOD = true;
 	if (unit->lodCount <= 0) {
 		useLOD = false;
@@ -1329,8 +1323,6 @@ int LuaOpenGL::UnitRaw(lua_State* L)
 	}
 
 	const bool rawDraw = luaL_optboolean(L, 2, false);
-
-	GML_LODMUTEX_LOCK(unit); // UnitRaw
 
 	bool useLOD = true;
 	if (unit->lodCount <= 0) {
@@ -2477,6 +2469,8 @@ int LuaOpenGL::Scissor(lua_State* L)
 		const GLint   y =   (GLint)luaL_checkint(L, 2);
 		const GLsizei w = (GLsizei)luaL_checkint(L, 3);
 		const GLsizei h = (GLsizei)luaL_checkint(L, 4);
+		if (w < 0) luaL_argerror(L, 3, "<width> must be greater than or equal zero!");
+		if (h < 0) luaL_argerror(L, 4, "<height> must be greater than or equal zero!");
 		glScissor(x + globalRendering->viewPosX, y + globalRendering->viewPosY, w, h);
 	}
 	else {
@@ -2492,12 +2486,13 @@ int LuaOpenGL::Viewport(lua_State* L)
 	CheckDrawingEnabled(L, __FUNCTION__);
 
 	const int x = luaL_checkint(L, 1);
-	const int y = luaL_checkint(L, 1);
-	const int w = luaL_checkint(L, 1);
-	const int h = luaL_checkint(L, 1);
+	const int y = luaL_checkint(L, 2);
+	const int w = luaL_checkint(L, 3);
+	const int h = luaL_checkint(L, 4);
+	if (w < 0) luaL_argerror(L, 3, "<width> must be greater than or equal zero!");
+	if (h < 0) luaL_argerror(L, 4, "<height> must be greater than or equal zero!");
 
 	glViewport(x, y, w, h);
-
 	return 0;
 }
 
@@ -2977,14 +2972,18 @@ int LuaOpenGL::LineStipple(lua_State* L)
 
 int LuaOpenGL::LineWidth(lua_State* L)
 {
-	glLineWidth(luaL_checkfloat(L, 1));
+	const float width = luaL_checkfloat(L, 1);
+	if (width <= 0.0f) luaL_argerror(L, 1, "Incorrect Width (must be greater zero)");
+	glLineWidth(width);
 	return 0;
 }
 
 
 int LuaOpenGL::PointSize(lua_State* L)
 {
-	glPointSize(luaL_checkfloat(L, 1));
+	const float size = luaL_checkfloat(L, 1);
+	if (size <= 0.0f) luaL_argerror(L, 1, "Incorrect Size (must be greater zero)");
+	glPointSize(size);
 	return 0;
 }
 
@@ -3122,6 +3121,8 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 	LuaTextures::Texture tex;
 	tex.xsize = (GLsizei)luaL_checknumber(L, 1);
 	tex.ysize = (GLsizei)luaL_checknumber(L, 2);
+	if (tex.xsize <= 0) luaL_argerror(L, 1, "Texture Size must be greater than zero!");
+	if (tex.ysize <= 0) luaL_argerror(L, 2, "Texture Size must be greater than zero!");
 
 	if (lua_istable(L, 3)) {
 		const int table = 3;

@@ -48,18 +48,7 @@ public:
 public:
 	const S3OTexMat* GetS3oTex(unsigned int num) {
 		S3OTexMat* texMat = NULL;
-
-		if (GML::SimEnabled() && GML::ShareLists()) {
-			if (!GML::IsSimThread()) {
-				texMat = (num < texturesDraw.size())? texturesDraw[num]: NULL;
-			} else {
-				GML_RECMUTEX_LOCK(model); // GetS3oTex
-				texMat = (num < textures.size())? textures[num]: NULL;
-			}
-		} else {
-			texMat = (num < textures.size())? textures[num]: NULL;
-		}
-
+		texMat = (num < textures.size())? textures[num]: NULL;
 		return texMat;
 	}
 
@@ -69,10 +58,6 @@ private:
 	S3OTexMat* InsertTextureMat(const S3DModel* model);
 
 	inline void DoUpdateDraw() {
-		if (GML::SimEnabled() && GML::ShareLists()) {
-			while (texturesDraw.size() < textures.size())
-				texturesDraw.push_back(textures[texturesDraw.size()]);
-		}
 	}
 
 private:

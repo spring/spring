@@ -68,7 +68,6 @@
 
 #include <boost/cstdint.hpp>
 #include "System/Platform/Misc.h"
-#include "LuaHelper.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 	#include "System/Sound/EFX.h"
@@ -82,7 +81,7 @@
 
 #include <fstream>
 
-#include <SDL_keysym.h>
+#include <SDL_clipboard.h>
 #include <SDL_mouse.h>
 
 using std::min;
@@ -203,6 +202,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetMouseCursor);
 	REGISTER_LUA_CFUNC(WarpMouse);
+
+	REGISTER_LUA_CFUNC(SetClipboard);
 
 	REGISTER_LUA_CFUNC(SetCameraOffset);
 
@@ -357,11 +358,6 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
-	GML_RECMUTEX_LOCK(unit); // DrawUnitCommandQueues
-	GML_RECMUTEX_LOCK(feat); // DrawUnitCommandQueues
-	GML_STDMUTEX_LOCK(cai); // DrawUnitCommandQueues
-	GML_STDMUTEX_LOCK(dque); // DrawUnitCommandQueues
-
 	std::set<int>::const_iterator ui;
 
 	for (ui = drawCmdQueueUnits.begin(); ui != drawCmdQueueUnits.end(); ++ui) {
@@ -381,8 +377,6 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 void LuaUnsyncedCtrl::ClearUnitCommandQueues()
 {
-	GML_STDMUTEX_LOCK(dque); // ClearUnitCommandQueues
-
 	drawCmdQueueUnits.clear();
 }
 
@@ -764,8 +758,6 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 
 int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 {
-	GML_STDMUTEX_LOCK(dque); // DrawUnitCommands
-
 	if (lua_istable(L, 1)) {
 		const bool isMap = luaL_optboolean(L, 2, false);
 		const int unitArg = isMap ? -2 : -1;
@@ -1513,8 +1505,6 @@ int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(sel); // SetUnitNoSelect
-
 	if (CLuaHandle::GetHandleUserMode(L)) {
 		return 0;
 	}
@@ -1843,6 +1833,17 @@ int LuaUnsyncedCtrl::SetMouseCursor(lua_State* L)
 	return 0;
 }
 
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::SetClipboard(lua_State* L)
+{
+	if (!CLuaHandle::CheckModUICtrl(L)) {
+		return 0;
+	}
+
+	SDL_SetClipboardText(luaL_checkstring(L, 1));
+	return 0;
+}
 
 /******************************************************************************/
 
@@ -2029,7 +2030,7 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 
 	std::vector<std::string> processArgs;
 
-	// arguments given by Lua code, if any
+	// arguments to Spring binary given by Lua code, if any
 	if (!springArguments.empty()) {
 		processArgs.push_back(springArguments);
 	}
@@ -2037,27 +2038,24 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	if (!scriptContents.empty()) {
 		// create file 'script.txt' with contents given by Lua code
 		std::ofstream scriptFile(scriptFullName.c_str());
+
 		scriptFile.write(scriptContents.c_str(), scriptContents.size());
 		scriptFile.close();
 
 		processArgs.push_back(scriptFullName);
 	}
 
+	LOG("[Spring.%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
+
 #ifdef _WIN32
-		// else OpenAL crashes when using execvp
-		ISound::Shutdown();
+	// else OpenAL crashes when using execvp
+	ISound::Shutdown();
 #endif
 
-	const std::string execError = Platform::ExecuteProcess(springFullName, processArgs);
+	Platform::ExecuteProcess(springFullName, processArgs);
 
-	if (execError.empty()) {
-		LOG("[Spring.%s] the game should be restarting", __FUNCTION__);
-		lua_pushboolean(L, true);
-	} else {
-		LOG_L(L_ERROR, "[Spring.%s] error %s", __FUNCTION__, execError.c_str());
-		lua_pushboolean(L, false);
-	}
-
+	// not reached on success
+	lua_pushboolean(L, false);
 	return 1;
 }
 
@@ -2079,10 +2077,7 @@ int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
 {
 	const std::string title = luaL_checksstring(L, 1);
-	const std::string titleShort = luaL_optsstring(L, 2, title);
-
-	WindowManagerHelper::SetCaption(title, titleShort);
-
+	WindowManagerHelper::SetCaption(title);
 	return 0;
 }
 
@@ -2165,8 +2160,6 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // SetUnitGroup
-
 	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}

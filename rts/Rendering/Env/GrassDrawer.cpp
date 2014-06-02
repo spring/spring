@@ -251,7 +251,7 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 			for (int x2 = x * grassBlockSize; x2 < (x + 1) * grassBlockSize; ++x2) {
 				if (gd->grassMap[y2 * gs->mapx / grassSquareSize + x2]) {
 					float3 squarePos((x2 + 0.5f) * gSSsq, 0.0f, (y2 + 0.5f) * gSSsq);
-						squarePos.y = ground->GetHeightReal(squarePos.x, squarePos.z, false);
+						squarePos.y = CGround::GetHeightReal(squarePos.x, squarePos.z, false);
 
 					const float sqdist = (camera->GetPos() - squarePos).SqLength();
 
@@ -265,8 +265,8 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 							const float dx = (x2 + rng.RandFloat()) * gSSsq;
 							const float dy = (y2 + rng.RandFloat()) * gSSsq;
 
-							float3 pos(dx, ground->GetHeightReal(dx, dy, false), dy);
-								pos.y -= ground->GetSlope(dx, dy, false) * 10.0f + 0.03f;
+							float3 pos(dx, CGround::GetHeightReal(dx, dy, false), dy);
+								pos.y -= CGround::GetSlope(dx, dy, false) * 10.0f + 0.03f;
 
 							if (ng->square != y2 * 2048 + x2) {
 								const float3 v = squarePos - camera->GetPos();
@@ -315,7 +315,7 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 
 		if (!grass->va) {
 			grass->va = new CVertexArray;
-			grass->pos = float3((x + 0.5f) * bMSsq, ground->GetHeightReal((x + 0.5f) * bMSsq, (y + 0.5f) * bMSsq, false), (y + 0.5f) * bMSsq);
+			grass->pos = float3((x + 0.5f) * bMSsq, CGround::GetHeightReal((x + 0.5f) * bMSsq, (y + 0.5f) * bMSsq, false), (y + 0.5f) * bMSsq);
 
 			CVertexArray* va = grass->va;
 			va->Initialize();
@@ -330,8 +330,8 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 							const float dy = (y2 + rng.RandFloat()) * gSSsq;
 							const float col = 1.0f;
 
-							float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
-								pos.y -= (ground->GetSlope(dx, dy, false) * 10.0f + 0.03f);
+							float3 pos(dx, CGround::GetHeightReal(dx, dy, false) + 0.5f, dy);
+								pos.y -= (CGround::GetSlope(dx, dy, false) * 10.0f + 0.03f);
 
 							va->AddVertexTN(pos, 0.0f,         0.0f, float3(-partTurfSize, -partTurfSize, col));
 							va->AddVertexTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
@@ -650,8 +650,8 @@ void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inview
 			const float dy = (y + rng.RandFloat()) * gSSsq;
 			const float col = 1.0f;
 
-			float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
-				pos.y -= (ground->GetSlope(dx, dy, false) * 10.0f + 0.03f);
+			float3 pos(dx, CGround::GetHeightReal(dx, dy, false) + 0.5f, dy);
+				pos.y -= (CGround::GetSlope(dx, dy, false) * 10.0f + 0.03f);
 
 			va->AddVertexQTN(pos,         0.0f, 0.0f, float3(-partTurfSize, -partTurfSize, col));
 			va->AddVertexQTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
@@ -673,7 +673,6 @@ void CGrassDrawer::Draw()
 	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
 
 	SetupGlStateNear();
-		GML_RECMUTEX_LOCK(grass); // Draw
 		static CGrassBlockDrawer drawer;
 			drawer.cx = int(camera->GetPos().x / bMSsq);
 			drawer.cy = int(camera->GetPos().z / bMSsq);
@@ -734,7 +733,6 @@ void CGrassDrawer::DrawShadow()
 	glPolygonOffset(5, 15);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	GML_RECMUTEX_LOCK(grass); // Draw
 	static CGrassBlockDrawer drawer;
 		drawer.cx = int(camera->GetPos().x / bMSsq);
 		drawer.cy = int(camera->GetPos().z / bMSsq);
@@ -788,8 +786,6 @@ void CGrassDrawer::ResetPos(const float3& pos)
 {
 	if (grassOff)
 		return;
-
-	GML_RECMUTEX_LOCK(grass); // ResetPos
 
 	const int idx =
 		(int(pos.z / bMSsq) & 31) * 32 +
@@ -984,21 +980,24 @@ void CGrassDrawer::AddGrass(const float3& pos)
 	if (grassOff)
 		return;
 
-	GML_RECMUTEX_LOCK(grass); // AddGrass
-
-	const int x = int(pos.x) / SQUARE_SIZE / grassSquareSize;
-	const int z = int(pos.z) / SQUARE_SIZE / grassSquareSize;
+	const int x = int(pos.x) / (SQUARE_SIZE * grassSquareSize);
+	const int z = int(pos.z) / (SQUARE_SIZE * grassSquareSize);
+	assert(x >= 0 && x < (gs->mapx - 1) / grassSquareSize);
+	assert(z >= 0 && z < (gs->mapy - 1) / grassSquareSize);
 
 	grassMap[z * gs->mapx / grassSquareSize + x] = 1;
 }
 
-void CGrassDrawer::RemoveGrass(int x, int z)
+void CGrassDrawer::RemoveGrass(const float3& pos)
 {
 	if (grassOff)
 		return;
 
-	GML_RECMUTEX_LOCK(grass); // RemoveGrass
+	const int x = int(pos.x) / (SQUARE_SIZE * grassSquareSize);
+	const int z = int(pos.z) / (SQUARE_SIZE * grassSquareSize);
+	assert(x >= 0 && x < (gs->mapx - 1) / grassSquareSize);
+	assert(z >= 0 && z < (gs->mapy - 1) / grassSquareSize);
 
-	grassMap[(z / grassSquareSize) * gs->mapx / grassSquareSize + x / grassSquareSize] = 0;
-	ResetPos(float3(x * SQUARE_SIZE, 0.0f, z * SQUARE_SIZE));
+	grassMap[z * gs->mapx / grassSquareSize + x] = 0;
+	ResetPos(pos);
 }

@@ -26,6 +26,6 @@ void CStaticMoveType::SlowUpdate()
 	if (ud->floatOnWater && owner->IsInWater()) {
 		owner->Move(UpVector * (-ud->waterline - owner->pos.y), true);
 	} else {
-		owner->Move(UpVector * (ground->GetHeightReal(owner->pos.x, owner->pos.z) - owner->pos.y), true);
+		owner->Move(UpVector * (CGround::GetHeightReal(owner->pos.x, owner->pos.z) - owner->pos.y), true);
 	}
 }

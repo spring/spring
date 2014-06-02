@@ -43,7 +43,7 @@ public:
 	/// Are we still connected (or did the connection time-out)?
 	bool CheckTimeout(int nsecs = 0, bool initial = false) const;
 
-	void AttemptReconnect(const std::string& myName, const std::string& myPasswd, const std::string& myVersion);
+	void AttemptReconnect(const std::string& myVersion);
 
 	bool NeedsReconnect();
 
@@ -89,7 +89,7 @@ public:
 
 	/**
 	 * Updates our network while the game loads to prevent timeouts.
-	 * Runs until \a loading is false.
+	 * Runs until \a keepUpdating is false.
 	 */
 	void UpdateLoop();
 
@@ -98,7 +98,7 @@ public:
 
 	void Close(bool flush = false);
 
-	void SetLoading(bool b) { loading = b; }
+	void KeepUpdating(bool b) { keepUpdating = b; }
 
 	void SetDemoRecorder(CDemoRecorder* r);
 	CDemoRecorder* GetDemoRecorder() const;
@@ -107,10 +107,13 @@ public:
 
 
 private:
-	volatile bool loading;
+	volatile bool keepUpdating;
 
 	boost::scoped_ptr<netcode::CConnection> serverConn;
 	boost::scoped_ptr<CDemoRecorder> demoRecorder;
+
+	std::string userName;
+	std::string userPasswd;
 };
 
 extern CNetProtocol* net;

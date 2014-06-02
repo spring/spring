@@ -43,6 +43,7 @@ void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	glLoadIdentity();
 
 	SetActiveShader(shadowHandler->shadowsLoaded, deferredPass);
+	assert(modelShaders[MODEL_SHADER_ACTIVE] != NULL);
 	modelShaders[MODEL_SHADER_ACTIVE]->Enable();
 
 	// TODO: refactor to use EnableTexturesCommon
@@ -75,6 +76,9 @@ void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
 }
 
 void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool) {
+	assert(modelShaders[MODEL_SHADER_ACTIVE] != NULL);
+
+	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
 	SetActiveShader(shadowHandler->shadowsLoaded, false);
 
 	// TODO: refactor to use DisableTexturesCommon
@@ -282,7 +286,6 @@ void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool) {
 }
 
 void UnitDrawerStateARB::Disable(const CUnitDrawer* ud, bool) {
-	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
 	DisableCommon(ud, false);
 }
 
@@ -423,7 +426,6 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass) {
 }
 
 void UnitDrawerStateGLSL::Disable(const CUnitDrawer* ud, bool deferredPass) {
-	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
 	DisableCommon(ud, deferredPass);
 }
 

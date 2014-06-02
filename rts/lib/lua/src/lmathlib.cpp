@@ -192,25 +192,11 @@ static int math_max (lua_State *L) {
 }
 
 
-static int lua_streflop_random_seed = 0;
 
 static int math_random (lua_State *L) {
   /* the `%' avoids the (rare) case of r==1, and is needed also because on
      some systems (SunOS!) `rand()' may return a value larger than RAND_MAX */
-
-//SPRING
-// respect the original lua code that uses rand,
-// and rand is auto-seeded always with the same value
-#ifdef STREFLOP_H
-  if (lua_streflop_random_seed == 0) {
-    lua_streflop_random_seed = 1;
-    math::RandomInit(1); // streflop
-  }
-
-  lua_Number r = math::Random<true, false, lua_Number>(lua_Number(0.0), lua_Number(1.0)); // streflop
-#else
-  lua_Number r = 0.0f;
-#endif
+  lua_Number r = (lua_Number)(rand()%RAND_MAX) / (lua_Number)RAND_MAX;
   switch (lua_gettop(L)) {  /* check number of arguments */
     case 0: {  /* no arguments */
       lua_pushnumber(L, r);  /* Number between 0 and 1 */
@@ -235,11 +221,7 @@ static int math_random (lua_State *L) {
 }
 
 static int math_randomseed (lua_State *L) {
-//SPRING srand(luaL_checkint(L, 1));
-#ifdef STREFLOP_H
-  math::RandomInit(luaL_checkint(L, 1)); // streflop
-#endif
-
+  srand(luaL_checkint(L, 1));
   return 0;
 }
 

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <map>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <set>
 #include <cfloat>
 
@@ -24,8 +24,7 @@
 
 #include "aGui/Gui.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "Menu/SelectMenu.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -46,6 +45,10 @@
 #include "System/Net/UnpackPacket.h"
 #include "System/Platform/errorhandler.h"
 #include "lib/luasocket/src/restrictions.h"
+#ifdef SYNCDEBUG
+	#include "System/Sync/SyncDebugger.h"
+#endif
+
 
 using netcode::RawPacket;
 using std::string;
@@ -53,22 +56,27 @@ using std::string;
 CONFIG(bool, DemoFromDemo).defaultValue(false);
 
 CPreGame* pregame = NULL;
-extern SelectMenu* selectMenu;
 
-CPreGame::CPreGame(const ClientSetup* setup) :
-	settings(setup),
-	savefile(NULL),
-	timer(spring_gettime()),
-	wantDemo(true)
+CPreGame::CPreGame(boost::shared_ptr<const ClientSetup> setup)
+	: settings(setup)
+	, savefile(NULL)
+	, timer(spring_gettime())
+	, wantDemo(true)
 {
 	net = new CNetProtocol();
 	activeController = this;
 
+#ifdef SYNCDEBUG
+	CSyncDebugger::GetInstance()->Initialize(settings->isHost, 64); //FIXME: add actual number of player
+#endif
+
 	if (!settings->isHost) {
 		//don't allow luasocket to connect to the host
+		LOG("Connecting to: %s:%i", settings->hostIP.c_str(), settings->hostPort);
 		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, settings->hostIP, settings->hostPort, false);
 		net->InitClient(settings->hostIP.c_str(), settings->hostPort, settings->myPlayerName, settings->myPasswd, SpringVersion::GetFull());
 	} else {
+		LOG("Hosting on: %s:%i", settings->hostIP.c_str(), settings->hostPort);
 		net->InitLocalClient();
 	}
 }
@@ -78,7 +86,6 @@ CPreGame::~CPreGame()
 {
 	// don't delete infoconsole, its beeing reused by CGame
 	agui::gui->Draw(); // delete leftover gui elements (remove once the gui is drawn ingame)
-	selectMenu = NULL;
 
 	pregame = NULL;
 }
@@ -108,10 +115,10 @@ void CPreGame::LoadSavefile(const std::string& save)
 	StartServer(savefile->scriptText);
 }
 
-int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
+int CPreGame::KeyPressed(int k, bool isRepeat)
 {
 	if (k == SDLK_ESCAPE) {
-		if (keyInput->IsKeyPressed(SDLK_LSHIFT)) {
+		if (KeyInput::GetKeyModState(KMOD_SHIFT)) {
 			LOG("User exited");
 			gu->globalQuit = true;
 		} else {
@@ -457,27 +464,36 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		}
 	}
 
-	gs->SetRandSeed(gameData->GetRandomSeed(), true);
-	LOG("Using map: %s", gameSetup->mapName.c_str());
+	// Load archives into VFS
+	{
+		// Load Map archive
+		LOG("Using map: %s", gameSetup->mapName.c_str());
+		vfsHandler->AddArchiveWithDeps(gameSetup->mapName, false);
 
-	vfsHandler->AddArchiveWithDeps(gameSetup->mapName, false);
+		// Load Mutators (if any)
+		for (const std::string& mut: gameSetup->GetMutatorsCont()) {
+			LOG("Using mutator: %s", mut.c_str());
+			vfsHandler->AddArchiveWithDeps(mut, false);
+		}
+
+		// Load Game archive
+		LOG("Using game: %s", gameSetup->modName.c_str());
+		vfsHandler->AddArchiveWithDeps(gameSetup->modName, false);
+		modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
+		LOG("Using game archive: %s", modArchive.c_str());
+	}
+
+	// Check checksums of map & game
 	try {
 		archiveScanner->CheckArchive(gameSetup->mapName, gameData->GetMapChecksum());
 	} catch (const content_error& ex) {
 		LOG_L(L_WARNING, "Incompatible map-checksum: %s", ex.what());
 	}
-
-	LOG("Using game: %s", gameSetup->modName.c_str());
-	vfsHandler->AddArchiveWithDeps(gameSetup->modName, false);
-	modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
-	LOG("Using game archive: %s", modArchive.c_str());
-
 	try {
 		archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
 	} catch (const content_error& ex) {
 		LOG_L(L_WARNING, "Incompatible game-checksum: %s", ex.what());
 	}
-
 
 	if (net != NULL && wantDemo) {
 		assert(net->GetDemoRecorder() == NULL);
@@ -487,7 +503,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		recorder->SaveToDemo(packet->data, packet->length, net->GetPacketTime(gs->frameNum));
 		net->SetDemoRecorder(recorder);
 
-		LOG("recording demo: %s", (recorder->GetName()).c_str());
+		LOG("Recording demo to: %s", (recorder->GetName()).c_str());
 	}
 }
 

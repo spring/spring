@@ -20,11 +20,10 @@
 #include "Game/Players/PlayerHandler.h"
 #include "Game/UI/UnitTracker.h"
 #include "Lua/LuaInputReceiver.h"
-#include "Lua/LuaUI.h" // FIXME: for GML
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Features/FeatureDef.h"
@@ -50,7 +49,7 @@
 // can't be up there since those contain conflicting definitions
 #include <SDL_mouse.h>
 #include <SDL_events.h>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 
 
 CONFIG(bool, HardwareCursor).defaultValue(false).description("Sets hardware mouse cursor rendering. If you have a low framerate, your mouse cursor will seem \"laggy\". Setting hardware cursor will render the mouse cursor separately from spring and the mouse will behave normally. Note, not all GPU drivers support it in fullscreen mode!");
@@ -342,11 +341,11 @@ void CMouseHandler::MousePress(int x, int y, int button)
  */
 void CMouseHandler::GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft)
 {
-	float dist = ground->LineGroundCol(pos1, pos1 + dir1 * globalRendering->viewRange * 1.4f, false);
+	float dist = CGround::LineGroundCol(pos1, pos1 + dir1 * globalRendering->viewRange * 1.4f, false);
 	if(dist < 0) dist = globalRendering->viewRange * 1.4f;
 	float3 gpos1 = pos1 + dir1 * dist;
 
-	dist = ground->LineGroundCol(pos2, pos2 + dir2 * globalRendering->viewRange * 1.4f, false);
+	dist = CGround::LineGroundCol(pos2, pos2 + dir2 * globalRendering->viewRange * 1.4f, false);
 	if(dist < 0) dist = globalRendering->viewRange * 1.4f;
 	float3 gpos2 = pos2 + dir2 * dist;
 
@@ -393,8 +392,6 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	GML_RECMUTEX_LOCK(sel); //FIXME redundant? (selectedUnits already has mutexes)
-
 	// Switch camera mode on a middle click that wasn't a middle mouse drag scroll.
 	// the latter is determined by the time the mouse was held down:
 	// switch (dragScrollThreshold)
@@ -413,7 +410,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	if ((button == SDL_BUTTON_LEFT) && !buttons[button].chorded) {
 		ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
 
-		if (!keyInput->IsKeyPressed(SDLK_LSHIFT) && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
+		if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL)) {
 			selectedUnitsHandler.ClearSelected();
 		}
 
@@ -551,9 +548,6 @@ std::string CMouseHandler::GetCurrentTooltip()
 	CFeature* feature;
 
 	{
-		GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCurrentTooltip
-		GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCurrentTooltip
-
 		dist = TraceRay::GuiTraceRay(camera->GetPos(), dir, range, NULL, unit, feature, true, false, true);
 
 		if (unit)    return CTooltipConsole::MakeUnitString(unit);
@@ -941,9 +935,11 @@ void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
 		}
 	}
 
-	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ++it) {
+	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ) {
 		if (it->second == cursor) {
 			it = set_erase(cursorFileMap, it);
+		} else {
+			++it;
 		}
 	}
 

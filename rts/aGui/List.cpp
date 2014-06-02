@@ -2,10 +2,9 @@
 
 #include "List.h"
 
-#include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/GlobalUnsynced.h"
@@ -70,7 +69,7 @@ void List::AddItem(const std::string& name, const std::string& description)
 	items.push_back(name);
 
 	// calculate width of text and resize box if necessary
-	const float w = itemFontScale * font->GetSize() * font->GetTextWidth(name) * screensize[0] + 2 * itemSpacing;
+	float w = itemFontScale * font->GetSize() * font->GetTextWidth(name) * screensize[0] + 2 * itemSpacing;
 	if (w > (size[0]))
 	{
 		//box.x1 = 0.5f - 0.5f * w;
@@ -88,13 +87,6 @@ bool List::MousePress(int x, int y, int button)
 			MouseUpdate(x, y); // make sure place is up to date
 			break;
 		}
-		case SDL_BUTTON_WHEELDOWN:
-			ScrollDownOne();
-			break;
-
-		case SDL_BUTTON_WHEELUP:
-			ScrollUpOne();
-			break;
 	}
 	return false;
 }
@@ -309,16 +301,7 @@ bool List::HandleEventSelf(const SDL_Event& ev)
 {
 	switch (ev.type) {
 		case SDL_MOUSEBUTTONDOWN: {
-			if (gui->MouseOverElement(GetRoot(), ev.motion.x, ev.motion.y))
-			{
-				if(!hasFocus) {
-					hasFocus = true;
-					MouseMove(ev.motion.x, ev.motion.y, ev.motion.xrel, ev.motion.yrel, ev.motion.state);
-				}
-			}
-			else {
-				hasFocus = false;
-			}
+			hasFocus = gui->MouseOverElement(GetRoot(), ev.button.x, ev.button.y);
 			if(MouseOver(ev.button.x, ev.button.y)) {
 				if(hasFocus) {
 					MousePress(ev.button.x, ev.button.y, ev.button.button);
@@ -337,10 +320,22 @@ bool List::HandleEventSelf(const SDL_Event& ev)
 			}
 			break;
 		}
+		case SDL_MOUSEWHEEL: {
+			int mousex, mousey;
+			SDL_GetMouseState(&mousex, &mousey);
+			if(hasFocus && MouseOver(mousex, mousey)) {
+				if (ev.wheel.y > 0) {
+					ScrollUpOne();
+				} else {
+					ScrollDownOne();
+				}
+				return true;
+			}
+		} break;
 		case SDL_MOUSEMOTION: {
 			if (!hasFocus)
 				break;
-			if (MouseOver(ev.button.x, ev.button.y) || activeScrollbar)
+			if (MouseOver(ev.motion.x, ev.motion.y) || activeScrollbar)
 			{
 				MouseMove(ev.motion.x, ev.motion.y, ev.motion.xrel, ev.motion.yrel, ev.motion.state);
 				return true;
@@ -412,7 +407,7 @@ void List::CenterSelected()
 	topIndex = std::max(0, place - NumDisplay()/2);
 }
 
-bool List::KeyPressed(unsigned short k, bool isRepeat)
+bool List::KeyPressed(int k, bool isRepeat)
 {
 	if (k == SDLK_ESCAPE) {
 		if (cancelPlace >= 0) {

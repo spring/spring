@@ -20,6 +20,7 @@
 #include "Rendering/Models/IModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "System/Log/ILog.h"
 
 
@@ -169,26 +170,26 @@ static int FeatureDefIndex(lua_State* L)
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
 	const FeatureDef* fd = static_cast<const FeatureDef*>(userData);
 	const DataElement& elem = it->second;
-	const char* p = ((const char*)fd) + elem.offset;
+	const void* p = ((const char*)fd) + elem.offset;
 	switch (elem.type) {
 		case READONLY_TYPE: {
 			lua_rawget(L, 1);
 			return 1;
 		}
 		case INT_TYPE: {
-			lua_pushnumber(L, *((int*)p));
+			lua_pushnumber(L, *reinterpret_cast<const int*>(p));
 			return 1;
 		}
 		case BOOL_TYPE: {
-			lua_pushboolean(L, *((bool*)p));
+			lua_pushboolean(L, *reinterpret_cast<const bool*>(p));
 			return 1;
 		}
 		case FLOAT_TYPE: {
-			lua_pushnumber(L, *((float*)p));
+			lua_pushnumber(L, *reinterpret_cast<const float*>(p));
 			return 1;
 		}
 		case STRING_TYPE: {
-			lua_pushsstring(L, *((string*)p));
+			lua_pushsstring(L, *reinterpret_cast<const std::string*>(p));
 			return 1;
 		}
 		case FUNCTION_TYPE: {
@@ -233,7 +234,7 @@ static int FeatureDefNewIndex(lua_State* L)
 
 	// Definition editing
 	const DataElement& elem = it->second;
-	const char* p = ((const char*)fd) + elem.offset;
+	const void* p = ((const char*)fd) + elem.offset;
 
 	switch (elem.type) {
 		case FUNCTION_TYPE:
@@ -399,6 +400,37 @@ static int ModelName(lua_State* L, const void* data)
 }
 
 
+static int ColVolTable(lua_State* L, const void* data) {
+	auto cv = static_cast<const CollisionVolume*>(data);
+	assert(cv != NULL);
+
+	lua_newtable(L);
+	switch (cv->GetVolumeType()) {
+		case CollisionVolume::COLVOL_TYPE_ELLIPSOID:
+			HSTR_PUSH_STRING(L, "type", "ellipsoid");
+			break;
+		case CollisionVolume::COLVOL_TYPE_CYLINDER:
+			HSTR_PUSH_STRING(L, "type", "cylinder");
+			break;
+		case CollisionVolume::COLVOL_TYPE_BOX:
+			HSTR_PUSH_STRING(L, "type", "box");
+			break;
+	}
+
+	LuaPushNamedNumber(L, "scaleX", cv->GetScales().x);
+	LuaPushNamedNumber(L, "scaleY", cv->GetScales().y);
+	LuaPushNamedNumber(L, "scaleZ", cv->GetScales().z);
+	LuaPushNamedNumber(L, "offsetX", cv->GetOffsets().x);
+	LuaPushNamedNumber(L, "offsetY", cv->GetOffsets().y);
+	LuaPushNamedNumber(L, "offsetZ", cv->GetOffsets().z);
+	LuaPushNamedNumber(L, "boundingRadius", cv->GetBoundingRadius());
+	LuaPushNamedBool(L, "defaultToSphere",    cv->DefaultToSphere());
+	LuaPushNamedBool(L, "defaultToFootPrint", cv->DefaultToFootPrint());
+	LuaPushNamedBool(L, "defaultToPieceTree", cv->DefaultToPieceTree());
+	return 1;
+}
+
+
 #define TYPE_MODEL_FUNC(name, param)                            \
 	static int Model ## name(lua_State* L, const void* data)    \
 	{                                                           \
@@ -435,6 +467,8 @@ static bool InitParamMap()
 	// dummy FeatureDef for address lookups
 	const FeatureDef fd;
 	const char* start = ADDRESS(fd);
+
+	ADD_FUNCTION("collisionVolume", fd.collisionVolume, ColVolTable);
 
 	ADD_FUNCTION("drawTypeString", fd.drawType,     DrawTypeString);
 

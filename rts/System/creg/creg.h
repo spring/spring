@@ -27,7 +27,7 @@ namespace creg {
 		crInt,		crUInt,
 		crShort,	crUShort,
 		crChar,		crUChar,
-		crInt64,
+		crInt64,	crUInt64,
 		crFloat,
 		crDouble,
 		crBool,
@@ -515,9 +515,10 @@ namespace creg {
 	TSubClass##MemberRegistrator() {				\
 		Type::memberRegistrator=this;				\
 	}												\
-	void RegisterMembers(creg::Class* class_) {		\
-		Type* null=(Type*)0;						\
-		Members; }									\
+	void RegisterMembers(creg::Class* class_) { \
+		Type* null=(Type*)0; \
+		(void)null; \
+		Members; } \
 	} static TSuperClass##TSubClass##mreg;
 
 /** @def CR_MEMBER

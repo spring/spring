@@ -470,6 +470,7 @@ void cUnitManager::GroupResetRallyPoint(sRAIGroup* group)
 		group->M->RallyPoint = GPos;
 	else
 		group->M->RallyPoint = pos;
+	G->CorrectPosition(group->M->RallyPoint);
 
 //	G->DebugDrawShape(group->M->RallyPoint,100.0f,5,0,50,900);
 }

@@ -2,6 +2,7 @@
 
 #include "GeometryBuffer.h"
 #include "Rendering/GlobalRendering.h"
+#include <cstring> //memset
 
 void GL::GeometryBuffer::Init() {
 	memset(&bufferTextureIDs[0], 0, sizeof(bufferTextureIDs));
@@ -38,6 +39,10 @@ void GL::GeometryBuffer::DetachTextures(const bool init) {
 	buffer.Unbind();
 
 	glDeleteTextures(ATTACHMENT_COUNT, &bufferTextureIDs[0]);
+
+	// return to incomplete state
+	memset(&bufferTextureIDs[0], 0, sizeof(bufferTextureIDs));
+	memset(&bufferAttachments[0], 0, sizeof(bufferAttachments));
 }
 
 void GL::GeometryBuffer::DrawDebug(unsigned int texID) {
@@ -113,18 +118,18 @@ bool GL::GeometryBuffer::Update(const bool init) {
 	if (!buffer.IsValid())
 		return false;
 
-	if (buffer.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT) {
-		// FBO cannot be complete yet during init!
-		//
-		// however GL spec says that FBO's with only
-		// empty attachments are complete by default
-		// --> extend FBO class to test for this?
+	// buffer isn't bound by calling context, can not call
+	// GetStatus to check for GL_FRAMEBUFFER_COMPLETE_EXT
+	//
+	if (HasAttachments()) {
+		// technically a buffer can not be complete yet during
+		// initialization, however the GL spec says that FBO's
+		// with only empty attachments are complete by default
 		// assert(!init);
 
-		// FBO was already initialized (during init
-		// or from Lua) so it will have attachments
-		// --> check if they need to be regenerated
-		// (eg. if a window resize event happened)
+		// FBO was already initialized (during init or from Lua)
+		// so it will have attachments -> check if they need to
+		// be regenerated, eg. if a window resize event happened
 		if (prevBufferSize == currBufferSize)
 			return true;
 

@@ -3,6 +3,7 @@
 #ifndef EVENT_BATCH_HANDLER_HDR
 #define EVENT_BATCH_HANDLER_HDR
 
+#include "EventClient.h"
 #include "lib/gml/ThreadSafeContainers.h"
 #include "Sim/Projectiles/ProjectileHandler.h" // for UNSYNCED_PROJ_NOEVENT
 
@@ -10,7 +11,35 @@ class CUnit;
 class CFeature;
 class CProjectile;
 
-struct EventBatchHandler {
+class EventBatchHandler : public CEventClient {
+public: // EventClient
+	bool GetFullRead() const { return true; }
+	int  GetReadAllyTeam() const { return CEventClient::AllAccessTeam; }
+
+	void UnitMoved(const CUnit* unit);
+	void UnitEnteredRadar(const CUnit* unit, int at);
+	void UnitEnteredLos(const CUnit* unit, int at);
+	void UnitLeftRadar(const CUnit* unit, int at);
+	void UnitLeftLos(const CUnit* unit, int at);
+	void UnitCloaked(const CUnit* unit);
+	void UnitDecloaked(const CUnit* unit);
+
+	void FeatureCreated(const CFeature* feature);
+	void FeatureDestroyed(const CFeature* feature);
+	void FeatureMoved(const CFeature* feature, const float3& oldpos);
+	void ProjectileCreated(const CProjectile* proj);
+	void ProjectileDestroyed(const CProjectile* proj);
+
+	//FIXME check them in EventHandler to see what needs to be fixed
+	//void UnsyncedProjectileCreated(const CProjectile* proj)
+	//void UnsyncedProjectileDestroyed(const CProjectile* proj)
+	//void LoadedModelRequested()
+
+public:
+	static EventBatchHandler* GetInstance();
+	EventBatchHandler();
+	virtual ~EventBatchHandler() {}
+
 private:
 	static boost::int64_t eventSequenceNumber;
 
@@ -167,8 +196,6 @@ private:
 	FeatureMovedEventBatch featureMovedEventBatch;
 
 public:
-	static EventBatchHandler* GetInstance();
-
 	void UpdateUnits();
 	void UpdateDrawUnits();
 	void DeleteSyncedUnits();

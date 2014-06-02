@@ -43,6 +43,8 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
 
+	CR_MEMBER(tempNum),
+
 	CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
 	CR_MEMBER(collisionVolume),
@@ -96,6 +98,8 @@ CSolidObject::CSolidObject():
 	team(0),
 	allyteam(0),
 
+	tempNum(0),
+
 	objectDef(NULL),
 	moveDef(NULL),
 	collisionVolume(NULL),
@@ -123,7 +127,7 @@ CSolidObject::~CSolidObject() {
 }
 
 void CSolidObject::UpdatePhysicalState(float eps) {
-	const float gh = ground->GetHeightReal(pos.x, pos.z);
+	const float gh = CGround::GetHeightReal(pos.x, pos.z);
 	const float wh = std::max(gh, 0.0f);
 
 	unsigned int ps = physicalState;
@@ -356,7 +360,7 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	//   the water surface) and neither are tanks / bots due to impulses,
 	//   gravity, ...
 	//
-	const float3 gn = ground->GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
+	const float3 gn = CGround::GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
 	const float3 wn =                             UpVector  * (1 - useGroundNormal);
 
 	if (moveDef == NULL) {
@@ -383,8 +387,29 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	return updir;
 }
 
+
+
 void CSolidObject::SetHeadingFromDirection() {
 	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
+}
+
+void CSolidObject::ForcedSpin(const float3& newDir) {
+	// new front-direction should be normalized
+	assert(math::fabsf(newDir.SqLength() - 1.0f) <= float3::NORMALIZE_EPS);
+
+	// if zdir is parallel to world-y, use heading-vector
+	// (or its inverse) as auxiliary to avoid degeneracies
+	const float3 zdir = newDir;
+	const float3 udir = mix(UpVector, (frontdir * Sign(-zdir.y)), (math::fabs(zdir.dot(UpVector)) >= 0.99f));
+	const float3 xdir = (zdir.cross(udir)).Normalize();
+	const float3 ydir = (xdir.cross(zdir)).Normalize();
+
+	frontdir = zdir;
+	rightdir = xdir;
+	   updir = ydir;
+
+	SetHeadingFromDirection();
+	UpdateMidAndAimPos();
 }
 
 

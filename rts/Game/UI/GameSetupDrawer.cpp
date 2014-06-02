@@ -12,12 +12,10 @@
 #include "Net/GameServer.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-
-#include <SDL_keysym.h>
 
 #include <cassert>
 #include <string>
@@ -87,8 +85,8 @@ void GameSetupDrawer::Draw()
 		startState = "Choose start pos";
 	} else if (gameServer) {
 		// we are the host and can get the show on the road by force
-		const CKeyBindings::HotkeyList fsKeys = keyBindings->GetHotkeys("forcestart");
-		const std::string& fsKey = fsKeys.empty() ? "<none>" : fsKeys.front();
+		const CKeyBindings::HotkeyList& fsKeys = keyBindings->GetHotkeys("forcestart");
+		const std::string fsKey = fsKeys.empty() ? "<none>" : *fsKeys.begin();
 		startState = std::string("Waiting for players, press ") + fsKey + " to force start";
 	} else {
 		startState = "Waiting for players";

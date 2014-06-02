@@ -6,7 +6,6 @@
 #include "GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaUI.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
@@ -157,6 +156,7 @@ void CGameHelper::DoExplosionDamage(
 
 void CGameHelper::DoExplosionDamage(
 	CFeature* feature,
+	CUnit* owner,
 	const float3& expPos,
 	const float expRadius,
 	const float expEdgeEffect,
@@ -183,14 +183,13 @@ void CGameHelper::DoExplosionDamage(
 	const float3 impulseDir = (volPos - expPos).SafeNormalize();
 	const float3 expImpulse = impulseDir * modImpulseScale;
 
-	feature->DoDamage(damages * expDistanceMod, expImpulse, NULL, weaponDefID, projectileID);
+	feature->DoDamage(damages * expDistanceMod, expImpulse, owner, weaponDefID, projectileID);
 }
 
 
 
 void CGameHelper::DamageObjectsInExplosionRadius(
 	const ExplosionParams& params,
-	const float3& expPos,
 	const float expRad,
 	const int weaponDefID
 ) {
@@ -205,7 +204,7 @@ void CGameHelper::DamageObjectsInExplosionRadius(
 	const unsigned int oldNumUnits = *(cache.GetNumUnitsPtr());
 	const unsigned int oldNumFeatures = *(cache.GetNumFeaturesPtr());
 
-	quadField->GetUnitsAndFeaturesColVol(expPos, expRad, units, features, cache.GetNumUnitsPtr(), cache.GetNumFeaturesPtr());
+	quadField->GetUnitsAndFeaturesColVol(params.pos, expRad, units, features, cache.GetNumUnitsPtr(), cache.GetNumFeaturesPtr());
 
 	const unsigned int newNumUnits = *(cache.GetNumUnitsPtr());
 	const unsigned int newNumFeatures = *(cache.GetNumFeaturesPtr());
@@ -217,20 +216,18 @@ void CGameHelper::DamageObjectsInExplosionRadius(
 	//   not keep track of end-markers --> certain objects
 	//   would not be damaged AT ALL (!)
 	for (unsigned int n = oldNumUnits; n < newNumUnits; n++) {
-		DoExplosionDamage(units[n], params.owner, expPos, expRad, params.explosionSpeed, params.edgeEffectiveness, params.ignoreOwner, params.damages, weaponDefID, params.projectileID);
+		DoExplosionDamage(units[n], params.owner, params.pos, expRad, params.explosionSpeed, params.edgeEffectiveness, params.ignoreOwner, params.damages, weaponDefID, params.projectileID);
 	}
 
 	// damage all features within the explosion radius
 	for (unsigned int n = oldNumFeatures; n < newNumFeatures; n++) {
-		DoExplosionDamage(features[n], expPos, expRad, params.edgeEffectiveness, params.damages, weaponDefID, params.projectileID);
+		DoExplosionDamage(features[n], params.owner, params.pos, expRad, params.edgeEffectiveness, params.damages, weaponDefID, params.projectileID);
 	}
 
 	cache.Reset(oldNumUnits, oldNumFeatures);
 }
 
 void CGameHelper::Explosion(const ExplosionParams& params) {
-	const float3 expDir = params.dir;
-	const float3 expPos = params.pos;
 	const DamageArray& damages = params.damages;
 
 	// if weaponDef is NULL, this is a piece-explosion
@@ -244,15 +241,15 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	const float craterAOE = std::max(1.0f, params.craterAreaOfEffect);
 	const float damageAOE = std::max(1.0f, params.damageAreaOfEffect);
 
-	const float realHeight = ground->GetHeightReal(expPos.x, expPos.z);
-	const float altitude = expPos.y - realHeight;
+	const float realHeight = CGround::GetHeightReal(params.pos);
+	const float altitude = (params.pos).y - realHeight;
 
 	// NOTE: event triggers before damage is applied to objects
-	const bool noGfx = eventHandler.Explosion(weaponDefID, params.projectileID, expPos, params.owner);
+	const bool noGfx = eventHandler.Explosion(weaponDefID, params.projectileID, params.pos, params.owner);
 
 	if (luaUI != NULL) {
 		if (weaponDef != NULL && weaponDef->cameraShake > 0.0f) {
-			luaUI->ShockFront(expPos, weaponDef->cameraShake, damageAOE);
+			luaUI->ShockFront(params.pos, weaponDef->cameraShake, damageAOE);
 		}
 	}
 
@@ -261,7 +258,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 			DoExplosionDamage(
 				params.hitUnit,
 				params.owner,
-				expPos,
+				params.pos,
 				damageAOE,
 				params.explosionSpeed,
 				params.edgeEffectiveness,
@@ -275,7 +272,8 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 		if (params.hitFeature != NULL) {
 			DoExplosionDamage(
 				params.hitFeature,
-				expPos,
+				params.owner,
+				params.pos,
 				damageAOE,
 				params.edgeEffectiveness,
 				params.damages,
@@ -284,7 +282,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 			);
 		}
 	} else {
-		DamageObjectsInExplosionRadius(params, expPos, damageAOE, weaponDefID);
+		DamageObjectsInExplosionRadius(params, damageAOE, weaponDefID);
 
 		// deform the map if the explosion was above-ground
 		// (but had large enough radius to touch the ground)
@@ -296,7 +294,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 				const float craterStrength = (damageDepth + damages.craterBoost) * damages.craterMult;
 				const float craterRadius = craterAOE - altitude;
 
-				mapDamage->Explosion(expPos, craterStrength, craterRadius);
+				mapDamage->Explosion(params.pos, craterStrength, craterRadius);
 			}
 		}
 	}
@@ -304,8 +302,8 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	if (!noGfx) {
 		explGenHandler->GenExplosion(
 			explosionID,
-			expPos,
-			expDir,
+			params.pos,
+			params.dir,
 			damages.GetDefaultDamage(),
 			damageAOE,
 			params.gfxMod,
@@ -314,21 +312,21 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 		);
 	}
 
-	CExplosionEvent explosionEvent(expPos, damages.GetDefaultDamage(), damageAOE, weaponDef);
+	CExplosionEvent explosionEvent(params.pos, damages.GetDefaultDamage(), damageAOE, weaponDef);
 	CExplosionCreator::FireExplosionEvent(explosionEvent);
 
 	#if (PLAY_SOUNDS == 1)
 	if (weaponDef != NULL) {
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
 
-		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(expPos.y, altitude);
+		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(params.pos.y, altitude);
 		const unsigned int soundMask = CCustomExplosionGenerator::SPW_WATER | CCustomExplosionGenerator::SPW_UNDERWATER;
 
 		const int soundNum = ((soundFlags & soundMask) != 0);
 		const int soundID = soundSet.getID(soundNum);
 
 		if (soundID > 0) {
-			Channels::Battle.PlaySample(soundID, expPos, soundSet.getVolume(soundNum));
+			Channels::Battle.PlaySample(soundID, params.pos, soundSet.getVolume(soundNum));
 		}
 	}
 	#endif
@@ -359,8 +357,6 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 template<typename TFilter, typename TQuery>
 static inline void QueryUnits(TFilter filter, TQuery& query)
 {
-	GML_RECMUTEX_LOCK(qnum); // QueryUnits
-
 	const vector<int> &quads = quadField->GetQuads(query.pos, query.radius);
 
 	const int tempNum = gs->tempNum++;
@@ -680,7 +676,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 					if (!modInfo.targetableTransportedUnits)
 						continue;
 					// the transportee might be "hidden" below terrain, in which case we can't target it
-					if (targetUnit->pos.y < ground->GetHeightReal(targetUnit->pos.x, targetUnit->pos.z))
+					if (targetUnit->pos.y < CGround::GetHeightReal(targetUnit->pos.x, targetUnit->pos.z))
 						continue;
 				}
 				if (tempTargetUnits[targetUnit->id] == tempNum) {
@@ -749,10 +745,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 					}
 				}
 
-				if (luaRules != NULL) {
-					if (!luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
-						continue;
-					}
+				if (!eventHandler.AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
+					continue;
 				}
 
 				targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
@@ -1004,7 +998,7 @@ float CGameHelper::GetBuildHeight(const float3& pos, const UnitDef* unitdef, boo
 	// (so we do not care about maxHeightDif constraints either)
 	// TODO: maybe respect waterline if <pos> is in water
 	if (!unitdef->IsImmobileUnit())
-		return (std::max(pos.y, ground->GetHeightReal(pos.x, pos.z, synced)));
+		return (std::max(pos.y, CGround::GetHeightReal(pos.x, pos.z, synced)));
 
 	const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
 	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
@@ -1186,13 +1180,13 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	int allyteam,
 	bool synced
 ) {
-	if (!pos.IsInMap())
+	if (!pos.IsInBounds())
 		return BUILDSQUARE_BLOCKED;
 
 	const int yardxpos = int(pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
 	const int yardypos = int(pos.z + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
 
-	const float groundHeight = ground->GetHeightReal(pos.x, pos.z, synced);
+	const float groundHeight = CGround::GetHeightReal(pos.x, pos.z, synced);
 
 	BuildSquareStatus ret = BUILDSQUARE_OPEN;
 	CSolidObject* so = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
@@ -1254,28 +1248,33 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 		}
 	}
 
+	// check maxHeightDif constraint (structures only)
+	//
 	// if we are capable of floating, only test local
 	// height difference IF terrain is above sea-level
-	if (!unitDef->floatOnWater || groundHeight > 0.0f) {
-		const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
-		const float* curHeightMap = readMap->GetCornerHeightMapSynced();
+	if (unitDef->IsImmobileUnit()) {
+		if (!unitDef->floatOnWater || groundHeight > 0.0f) {
+			const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
+			const float* curHeightMap = readMap->GetCornerHeightMapSynced();
 
-		#ifdef USE_UNSYNCED_HEIGHTMAP
-		if (!synced) {
-			orgHeightMap = readMap->GetCornerHeightMapUnsynced();
-			curHeightMap = readMap->GetCornerHeightMapUnsynced();
+			#ifdef USE_UNSYNCED_HEIGHTMAP
+			if (!synced) {
+				orgHeightMap = readMap->GetCornerHeightMapUnsynced();
+				curHeightMap = readMap->GetCornerHeightMapUnsynced();
+			}
+			#endif
+
+			const int sqx = pos.x / SQUARE_SIZE;
+			const int sqz = pos.z / SQUARE_SIZE;
+
+			// FIXME: we do not want to use maxHeightDif for a MOBILE unit!
+			const float orgHgt = orgHeightMap[sqz * gs->mapxp1 + sqx];
+			const float curHgt = curHeightMap[sqz * gs->mapxp1 + sqx];
+			const float difHgt = unitDef->maxHeightDif;
+
+			if (pos.y > std::max(orgHgt + difHgt, curHgt + difHgt)) { return BUILDSQUARE_BLOCKED; }
+			if (pos.y < std::min(orgHgt - difHgt, curHgt - difHgt)) { return BUILDSQUARE_BLOCKED; }
 		}
-		#endif
-
-		const int sqx = pos.x / SQUARE_SIZE;
-		const int sqz = pos.z / SQUARE_SIZE;
-
-		const float orgHgt = orgHeightMap[sqz * gs->mapxp1 + sqx];
-		const float curHgt = curHeightMap[sqz * gs->mapxp1 + sqx];
-		const float difHgt = unitDef->maxHeightDif;
-
-		if (pos.y > std::max(orgHgt + difHgt, curHgt + difHgt)) { return BUILDSQUARE_BLOCKED; }
-		if (pos.y < std::min(orgHgt - difHgt, curHgt - difHgt)) { return BUILDSQUARE_BLOCKED; }
 	}
 
 	if (!unitDef->CheckTerrainConstraints(moveDef, groundHeight))
@@ -1292,8 +1291,6 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
  */
 Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 	float3 tempF1 = pos;
-
-	GML_STDMUTEX_LOCK(cai); // GetBuildCommand
 
 	CCommandQueue::iterator ci;
 

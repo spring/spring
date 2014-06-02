@@ -17,7 +17,6 @@ CR_BIND_DERIVED(CCannon, CWeapon, (NULL, NULL));
 
 CR_REG_METADATA(CCannon,(
 	CR_MEMBER(highTrajectory),
-	CR_MEMBER(selfExplode),
 	CR_MEMBER(rangeFactor),
 	CR_MEMBER(lastDiff),
 	CR_MEMBER(lastDir),
@@ -35,7 +34,6 @@ CCannon::CCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 	highTrajectory = false;
 	rangeFactor = 1.0f;
 	gravity = 0.0f;
-	selfExplode = def->selfExplode;
 }
 
 void CCannon::Init()
@@ -109,18 +107,16 @@ bool CCannon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 	const float linear = dir.y;
 	const float quadratic = gravity / (projectileSpeed * projectileSpeed) * 0.5f;
 	const float groundDist = ((avoidFlags & Collision::NOGROUND) == 0)?
-		ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 10, linear, quadratic):
+		CGround::TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 10, linear, quadratic):
 		-1.0f;
+	const float spread = (AccuracyExperience() + SprayAngleExperience()) * 0.6f * 0.9f;
 
 	if (groundDist > 0.0f) {
 		return false;
 	}
 
-	const float spread = (AccuracyExperience() + SprayAngleExperience()) * 0.6f * 0.9f;
-	const float modFlatLength = flatLength - 30.0f;
-
 	//FIXME add a forcedUserTarget (a forced fire mode enabled with meta key or something) and skip the test below then
-	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
+	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, flatLength,
 		dir.y, quadratic, spread, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}
@@ -144,7 +140,7 @@ void CCannon::FireImpl(bool scriptCall)
 
 	if (weaponDef->flighttime > 0) {
 		ttl = weaponDef->flighttime;
-	} else if (selfExplode) {
+	} else if (weaponDef->selfExplode) {
 		ttl = (predict + gs->randFloat() * 2.5f - 0.5f);
 	} else if ((weaponDef->groundBounce || weaponDef->waterBounce) && weaponDef->numBounce > 0) {
 		ttl = (predict * (1 + weaponDef->numBounce * weaponDef->bounceRebound));
@@ -174,7 +170,7 @@ bool CCannon::AttackGround(float3 pos, bool userTarget)
 {
 	if (owner->UnderFirstPersonControl()) {
 		// mostly prevents firing longer than max range using fps mode
-		pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
+		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z);
 	}
 
 	// NOTE: this calls back into our derived TryTarget

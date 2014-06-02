@@ -332,7 +332,6 @@ if    (AI_TYPES_JAVA)
 		if (JAVA_INCLUDE_PATH)
 			set (JNI_FOUND TRUE)
 			include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2} ${JNI_INCLUDE_DIRS})
-                        Message(STATUS "JNI found at ${JNI_INCLUDE_DIRS}")
 		else (JAVA_INCLUDE_PATH)
 			set (JNI_FOUND FALSE)
 			Message(WARNING "No Java includes found!")
@@ -432,7 +431,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		"${myNativeSourceDir}/JavaBridge.c"
 		"${myNativeSourceDir}/JniUtil.c"
 		"${myNativeSourceDir}/JvmLocater_common.c"
-		"${myNativeSourceDir}/JvmLocater_solaris.c"
+		"${myNativeSourceDir}/JvmLocater_linux.c"
 		"${myNativeSourceDir}/JvmLocater_windows.c"
 		)
 	set(myNativeGeneratedSources

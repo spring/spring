@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <SDL.h>
+#include <boost/thread.hpp>
 
 #include "Rendering/GL/myGL.h"
 #include "LoadScreen.h"
@@ -14,7 +15,7 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Lua/LuaIntro.h"
 #include "Map/MapInfo.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
@@ -84,7 +85,7 @@ void CLoadScreen::Init()
 #endif
 
 	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
-	//netHeartbeatThread = new boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
+	net->KeepUpdating(true);
 	netHeartbeatThread = new boost::thread();
 	*netHeartbeatThread = Threading::CreateNewThread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
@@ -139,7 +140,7 @@ CLoadScreen::~CLoadScreen()
 	delete gameLoadThread; gameLoadThread = NULL;
 
 	if (net)
-		net->SetLoading(false);
+		net->KeepUpdating(false);
 	if (netHeartbeatThread)
 		netHeartbeatThread->join();
 	delete netHeartbeatThread; netHeartbeatThread = NULL;
@@ -214,7 +215,7 @@ void CLoadScreen::ResizeEvent()
 }
 
 
-int CLoadScreen::KeyPressed(unsigned short k, bool isRepeat)
+int CLoadScreen::KeyPressed(int k, bool isRepeat)
 {
 	//FIXME add mouse events
 	if (LuaIntro)
@@ -224,7 +225,7 @@ int CLoadScreen::KeyPressed(unsigned short k, bool isRepeat)
 }
 
 
-int CLoadScreen::KeyReleased(unsigned short k)
+int CLoadScreen::KeyReleased(int k)
 {
 	if (LuaIntro)
 		LuaIntro->KeyRelease(k);
@@ -245,6 +246,11 @@ bool CLoadScreen::Update()
 	if (game->IsFinishedLoading()) {
 		CLoadScreen::DeleteInstance();
 		return true;
+	}
+
+	if (!mtLoading) {
+		// without this call the window manager would think the window is unresponsive and thus asks for hard kill
+		SDL_PollEvent(NULL);
 	}
 
 	CNamedTextures::Update();
@@ -273,13 +279,11 @@ bool CLoadScreen::Draw()
 	if (LuaIntro) {
 		LuaIntro->Update();
 		LuaIntro->DrawGenesis();
-	}
-
-	ClearScreen();
-
-	if (LuaIntro) {
+		ClearScreen();
 		LuaIntro->DrawLoadScreen();
 	} else {
+		ClearScreen();
+
 		float xDiv = 0.0f;
 		float yDiv = 0.0f;
 		const float ratioComp = globalRendering->aspectRatio / aspectRatio;
@@ -319,22 +323,18 @@ bool CLoadScreen::Draw()
 		}
 	}
 
+	// Always render Spring's license notice
 	font->Begin();
 		font->SetOutlineColor(0.0f,0.0f,0.0f,0.65f);
 		font->SetTextColor(1.0f,1.0f,1.0f,1.0f);
-		if (GML::Enabled()) {
-			font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-				"Spring %s (%d threads)", SpringVersion::GetFull().c_str(), GML::ThreadCount());
-		} else {
-			font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
+		font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 				"Spring %s", SpringVersion::GetFull().c_str());
-		}
 		font->glFormat(0.5f,0.02f, globalRendering->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 			"This program is distributed under the GNU General Public License, see license.html for more info");
 	font->End();
 
 	if (!mtLoading)
-		SDL_GL_SwapBuffers();
+		SDL_GL_SwapWindow(globalRendering->window);
 
 	return true;
 }
@@ -369,8 +369,10 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	//! Here it is done for the loading thread, for the mainthread it is done in CLoadScreen::Update()
 	good_fpu_control_registers(curLoadMessage.c_str());
 
-	if (!mtLoading)
+	if (!mtLoading) {
+		Update();
 		Draw();
+	}
 }
 
 

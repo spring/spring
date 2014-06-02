@@ -9,19 +9,12 @@
 
 #include "System/SpringApp.h"
 
-#include "lib/gml/gml_base.h"
-#include "lib/gml/gmlmut.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Misc.h"
 #include "System/Log/ILog.h"
-
-#if !defined(__APPLE__) || !defined(HEADLESS)
-	// SDL_main.h contains a macro that replaces the main function on some OS, see SDL_main.h for details
-	#include <SDL_main.h>
-#endif
 
 #ifdef WIN32
 	#include "lib/SOP/SOP.hpp" // NvOptimus
@@ -49,16 +42,6 @@ int Run(int argc, char* argv[])
 	Threading::DetectCores();
 	Threading::SetMainThread();
 
-#ifdef USE_GML
-	GML::ThreadNumber(GML_DRAW_THREAD_NUM);
-  #if GML_ENABLE_TLS_CHECK
-	// XXX how does this check relate to TLS??? and how does it relate to the line above???
-	if (GML::ThreadNumber() != GML_DRAW_THREAD_NUM) {
-		ErrorMessageBox("Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
-	}
-  #endif
-#endif
-
 	// run
 	try {
 		SpringApp app(argc, argv);
@@ -69,8 +52,7 @@ int Run(int argc, char* argv[])
 	Threading::Error* err = Threading::GetThreadError();
 
 	if (err != NULL) {
-		LOG_L(L_ERROR, "[%s] ret=%d err=\"%s\"", __FUNCTION__, ret, err->message.c_str());
-		ErrorMessageBox("[" + std::string(__FUNCTION__) + "] error: " + err->message, err->caption, err->flags, true);
+		ErrorMessageBox(" error: " + err->message, err->caption, err->flags, true);
 	}
 
 	return ret;

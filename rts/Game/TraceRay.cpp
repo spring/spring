@@ -90,7 +90,9 @@ inline static bool TestTrajectoryConeHelper(
 	// firing-cone is centered along dir2D with radius
 	// <x * spread + baseSize> (usually baseSize != 0
 	// so weapons with spread = 0 will test against a
-	// cylinder, not an infinitely thin line)
+	// cylinder, not an infinitely thin line as safety
+	// measure against friendly-fire damage in tightly
+	// packed unit groups)
 	//
 	// return true iff the world-space point <x, f(x)>
 	// lies on or inside the object's collision volume
@@ -129,8 +131,7 @@ inline static bool TestTrajectoryConeHelper(
 
 	if (globalRendering->drawdebugtraceray && Threading::IsSimThread()) {
 		// FIXME? seems to under-estimate gravity near edge of range
-		// (Cannon and MissileLauncher both subtract 30 elmos from it
-		// in HaveFreeLineOfFire???)
+		// (place objects along trajectory of a cannon to visualize)
 		#define go geometricObjects
 
 		if (ret) {
@@ -179,8 +180,6 @@ float TraceRay(
 		return -1.0f;
 
 	if (!ignoreFeatures || !ignoreUnits) {
-		GML_RECMUTEX_LOCK(quad); // TraceRay
-
 		CollisionQuery cq;
 
 		int* begQuad = NULL;
@@ -259,7 +258,7 @@ float TraceRay(
 
 	if (!ignoreGround) {
 		// ground intersection
-		const float groundLength = ground->LineGroundCol(start, start + dir * length);
+		const float groundLength = CGround::LineGroundCol(start, start + dir * length);
 
 		if (length > groundLength && groundLength > 0.0f) {
 			length = groundLength;
@@ -291,7 +290,7 @@ float GuiTraceRay(
 
 	// ground and water-plane intersection
 	const float guiRayLength = length;
-	const float groundRayLength = ground->LineGroundCol(start, start + dir * guiRayLength, false);
+	const float groundRayLength = CGround::LineGroundCol(start, start + dir * guiRayLength, false);
 	const float waterRayLength = math::floorf(math::fabs(start.y / std::min(dir.y, -0.00001f)));
 
 	float minRayLength = groundRayLength;
@@ -306,8 +305,6 @@ float GuiTraceRay(
 		minRayLength = std::min(groundRayLength, waterRayLength);
 	if (groundOnly)
 		return minRayLength;
-
-	GML_RECMUTEX_LOCK(quad); // GuiTraceRay
 
 	int* begQuad = NULL;
 	int* endQuad = NULL;
@@ -423,8 +420,6 @@ bool TestCone(
 	int avoidFlags,
 	CUnit* owner)
 {
-	GML_RECMUTEX_LOCK(quad); // TestCone
-
 	int* begQuad = NULL;
 	int* endQuad = NULL;
 
@@ -506,8 +501,6 @@ bool TestTrajectoryCone(
 	int avoidFlags,
 	CUnit* owner)
 {
-	GML_RECMUTEX_LOCK(quad); // TestTrajectoryCone
-
 	int* begQuad = NULL;
 	int* endQuad = NULL;
 
@@ -517,8 +510,6 @@ bool TestTrajectoryCone(
 	const bool ignoreAllies   = ((avoidFlags & Collision::NOFRIENDLIES) != 0);
 	const bool ignoreNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
 	const bool ignoreFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
-
-	const float safetyRadii[2] = {2.0f, 0.5f};
 
 	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
 		const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
@@ -536,7 +527,7 @@ bool TestTrajectoryCone(
 				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
-				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadii[u->immobile], u)) {
+				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, 0.0f, u)) {
 					return true;
 				}
 			}
@@ -557,7 +548,7 @@ bool TestTrajectoryCone(
 				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
-				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadii[u->immobile], u))
+				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, 0.0f, u))
 					return true;
 			}
 		}

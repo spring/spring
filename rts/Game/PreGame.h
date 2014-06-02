@@ -5,12 +5,10 @@
 
 #include <string>
 #include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include "GameController.h"
 #include "System/Misc/SpringTime.h"
 
-class CInfoConsole;
 class ILoadSaveHandler;
 class GameData;
 class ClientSetup;
@@ -36,7 +34,7 @@ namespace netcode {
 class CPreGame : public CGameController
 {
 public:
-	CPreGame(const ClientSetup* setup);
+	CPreGame(boost::shared_ptr<const ClientSetup> setup);
 	virtual ~CPreGame();
 
 	void LoadSetupscript(const std::string& script);
@@ -44,7 +42,7 @@ public:
 	void LoadSavefile(const std::string& save);
 
 	bool Draw();
-	int KeyPressed(unsigned short k, bool isRepeat);
+	int KeyPressed(int k, bool isRepeat);
 	bool Update();
 
 private:
@@ -63,10 +61,10 @@ private:
 
 	We won't start until we received this
 	*/
-	boost::scoped_ptr<const GameData> gameData;
-	const ClientSetup* settings;
+	boost::shared_ptr<const GameData> gameData;
+	boost::shared_ptr<const ClientSetup> settings;
 	std::string modArchive;
-	ILoadSaveHandler *savefile;
+	ILoadSaveHandler* savefile;
 
 	spring_time timer;
 	bool wantDemo;

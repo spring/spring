@@ -76,7 +76,7 @@ void CDirtProjectile::Update()
 	alpha = std::max(alpha - alphaFalloff, 0.0f);
 	size += sizeExpansion;
 
-	if (ground->GetApproximateHeight(pos.x, pos.z, false) - 40.0f > pos.y) {
+	if (CGround::GetApproximateHeight(pos.x, pos.z, false) - 40.0f > pos.y) {
 		deleteMe = true;
 	}
 	if (alpha <= 0.0f) {

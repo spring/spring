@@ -1,9 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <boost/cstdint.hpp>
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 
-#include "lib/gml/gmlmut.h"
 #include "GroupHandler.h"
 #include "Group.h"
 #include "Game/SelectedUnitsHandler.h"
@@ -52,8 +51,6 @@ CGroupHandler::~CGroupHandler()
 void CGroupHandler::Update()
 {
 	{
-		GML_RECMUTEX_LOCK(group); // Update
-
 		for (std::vector<CGroup*>::iterator gi = groups.begin(); gi != groups.end(); ++gi) {
 			if ((*gi) != NULL) {
 				// Update may invoke RemoveGroup, but this will only NULL the element, so there will be no iterator invalidation here
@@ -64,8 +61,6 @@ void CGroupHandler::Update()
 
 	std::set<int> grpChg;
 	{
-		GML_STDMUTEX_LOCK(grpchg); // Update
-
 		if (changedGroups.empty())
 			return;
 
@@ -77,31 +72,27 @@ void CGroupHandler::Update()
 	}
 }
 
-void CGroupHandler::GroupCommand(int num)
+bool CGroupHandler::GroupCommand(int num)
 {
-	GML_RECMUTEX_LOCK(grpsel); // GroupCommand
-
 	std::string cmd = "";
 
-	if (keyInput->IsKeyPressed(SDLK_LCTRL)) {
-		if (!keyInput->IsKeyPressed(SDLK_LSHIFT)) {
+	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
+		if (!KeyInput::GetKeyModState(KMOD_SHIFT)) {
 			cmd = "set";
 		} else {
 			cmd = "add";
 		}
-	} else if (keyInput->IsKeyPressed(SDLK_LSHIFT))  {
+	} else if (KeyInput::GetKeyModState(KMOD_SHIFT))  {
 		cmd = "selectadd";
-	} else if (keyInput->IsKeyPressed(SDLK_LALT)) {
+	} else if (KeyInput::GetKeyModState(KMOD_ALT)) {
 		cmd = "selecttoggle";
 	}
 
-	GroupCommand(num, cmd);
+	return GroupCommand(num, cmd);
 }
 
-void CGroupHandler::GroupCommand(int num, const std::string& cmd)
+bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 {
-	GML_RECMUTEX_LOCK(grpsel); // GroupCommand
-
 	CGroup* group = groups[num];
 
 	if ((cmd == "set") || (cmd == "add")) {
@@ -120,7 +111,7 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
 			selectedUnitsHandler.AddUnit(*ui);
 		}
-		return;
+		return true;
 	}
 	else if (cmd == "selectclear")  {
 		// do not select the group, just remove its members from the current selection
@@ -128,7 +119,7 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
 			selectedUnitsHandler.RemoveUnit(*ui);
 		}
-		return;
+		return true;
 	}
 	else if (cmd == "selecttoggle")  {
 		// do not select the group, just toggle its members with the current selection
@@ -141,22 +132,24 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 				selectedUnitsHandler.RemoveUnit(*ui);
 			}
 		}
-		return;
+		return true;
 	}
 
-	if ((selectedUnitsHandler.IsGroupSelected(num)) && !group->units.empty()) {
+	if (group->units.empty())
+		return false;
+
+	if (selectedUnitsHandler.IsGroupSelected(num)) {
 		const float3 groupCenter = group->CalculateCenter();
 		camHandler->CameraTransition(0.5f);
 		camHandler->GetCurrentController().SetPos(groupCenter);
 	}
 
 	selectedUnitsHandler.SelectGroup(num);
+	return true;
 }
 
 CGroup* CGroupHandler::CreateNewGroup()
 {
-	GML_RECMUTEX_LOCK(group); // GroupCommand
-
 	if (freeGroups.empty()) {
 		CGroup* group = new CGroup(firstUnusedGroup++, this);
 		groups.push_back(group);
@@ -172,8 +165,6 @@ CGroup* CGroupHandler::CreateNewGroup()
 
 void CGroupHandler::RemoveGroup(CGroup* group)
 {
-	GML_RECMUTEX_LOCK(grpsel); // RemoveGroup
-
 	if (group->id < FIRST_SPECIAL_GROUP) {
 		LOG_L(L_WARNING, "Trying to remove hot-key group %i", group->id);
 		return;
@@ -188,8 +179,6 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 
 void CGroupHandler::PushGroupChange(int id)
 {
-	GML_STDMUTEX_LOCK(grpchg); // PushGroupChange
-
 	changedGroups.insert(id);
 }
 

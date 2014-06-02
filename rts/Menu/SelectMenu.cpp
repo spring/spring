@@ -2,7 +2,7 @@
 
 #include "SelectMenu.h"
 
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <boost/bind.hpp>
 #include <sstream>
 #include <stack>
@@ -13,7 +13,7 @@
 #include "Game/ClientSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/PreGame.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
@@ -35,6 +35,7 @@
 #include "aGui/Window.h"
 #include "aGui/Picture.h"
 #include "aGui/List.h"
+#include "alphanum.hpp"
 
 using std::string;
 using agui::Button;
@@ -119,20 +120,16 @@ private:
 	};
 };
 
-SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), settingsWindow(NULL), curSelect(NULL)
+SelectMenu::SelectMenu(boost::shared_ptr<ClientSetup> setup)
+: GuiElement(NULL)
+, clientSetup(setup)
+, conWindow(NULL)
+, settingsWindow(NULL)
+, curSelect(NULL)
 {
 	SetPos(0,0);
 	SetSize(1,1);
 	agui::gui->AddElement(this, true);
-	mySettings = new ClientSetup();
-
-	mySettings->isHost = server;
-	mySettings->myPlayerName = configHandler->GetString("name");
-	if (mySettings->myPlayerName.empty()) {
-		mySettings->myPlayerName = UnnamedPlayerName;
-	} else {
-		mySettings->myPlayerName = StringReplaceInPlace(mySettings->myPlayerName, ' ', '_');
-	}
 
 	{ // GUI stuff
 		agui::Picture* background = new agui::Picture(this);;
@@ -168,7 +165,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), setting
 		background->GeometryChange();
 	}
 
-	if (!mySettings->isHost) {
+	if (!clientSetup->isHost) {
 		ShowConnectWindow(true);
 	}
 }
@@ -178,8 +175,6 @@ SelectMenu::~SelectMenu()
 	ShowConnectWindow(false);
 	ShowSettingsWindow(false, "");
 	CleanWindow();
-
-	delete mySettings;
 }
 
 bool SelectMenu::Draw()
@@ -208,15 +203,14 @@ void SelectMenu::Single()
 	}
 	else if (!once) // in case of double-click
 	{
-
 		if (selw->userScript == SelectionWidget::SandboxAI) {
 			selw->userScript.clear();
 		}
 		once = true;
-		mySettings->isHost = true;
-		pregame = new CPreGame(mySettings);
-		pregame->LoadSetupscript(StartScriptGen::CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName));
-		agui::gui->RmElement(this);
+
+		pregame = new CPreGame(clientSetup);
+		pregame->LoadSetupscript(StartScriptGen::CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, clientSetup->myPlayerName));
+		return agui::gui->RmElement(this);
 		//delete this;
 	}
 }
@@ -224,6 +218,7 @@ void SelectMenu::Single()
 void SelectMenu::Quit()
 {
 	gu->globalQuit = true;
+	return agui::gui->RmElement(this);
 	//delete this;
 }
 
@@ -277,7 +272,9 @@ void SelectMenu::ShowSettingsList()
 	}
 	curSelect->list->RemoveAllItems();
 	const std::map<std::string, std::string> &data = configHandler->GetData();
-	for(std::map<std::string,std::string>::const_iterator iter = data.begin(); iter != data.end(); ++iter)
+	typedef std::map<std::string, std::string, doj::alphanum_less<std::string> > DataSorted;
+	const DataSorted dataSorted(data.begin(), data.end());
+	for(DataSorted::const_iterator iter = dataSorted.begin(); iter != dataSorted.end(); ++iter)
 		curSelect->list->AddItem(iter->first + " = " + iter->second, "");
 	if(data.find(userSetting) != data.end())
 		curSelect->list->SetCurrentItem(userSetting + " = " + configHandler->GetString(userSetting));
@@ -304,10 +301,11 @@ void SelectMenu::CleanWindow() {
 void SelectMenu::DirectConnect(const std::string& addr)
 {
 	configHandler->SetString("address", addr);
-	mySettings->hostIP = addr;
-	mySettings->isHost = false;
-	pregame = new CPreGame(mySettings);
-	agui::gui->RmElement(this);
+	clientSetup->hostIP = addr;
+	clientSetup->isHost = false;
+	pregame = new CPreGame(clientSetup);
+	return agui::gui->RmElement(this);
+	//delete this;
 }
 
 bool SelectMenu::HandleEventSelf(const SDL_Event& ev)

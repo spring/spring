@@ -44,7 +44,7 @@ void CWreckProjectile::Update()
 		CSmokeProjectile* hp = new CSmokeProjectile(owner(), pos, ZeroVector, 50, 4, 0.3f, 0.5f);
 		hp->size += 0.1f;
 	}
-	if (pos.y + 0.3f < ground->GetApproximateHeight(pos.x, pos.z)) {
+	if (pos.y + 0.3f < CGround::GetApproximateHeight(pos.x, pos.z)) {
 		deleteMe = true;
 	}
 }

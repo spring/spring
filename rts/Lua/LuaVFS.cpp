@@ -2,6 +2,7 @@
 
 
 #include <cmath>
+#include <zlib.h>
 #include <boost/regex.hpp>
 
 #include "LuaVFS.h"
@@ -18,11 +19,6 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
-
-#include <set>
-#include <list>
-#include <cctype>
-#include <limits.h>
 
 using std::min;
 
@@ -89,6 +85,7 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "UseArchive",	UseArchive);
 	HSTR_PUSH_CFUNC(L, "CompressFolder",	CompressFolder);
 	HSTR_PUSH_CFUNC(L, "MapArchive",	MapArchive);
+	HSTR_PUSH_CFUNC(L, "UnmapArchive",	UnmapArchive);
 
 	HSTR_PUSH_CFUNC(L, "ZlibCompress", ZlibCompress);
 
@@ -383,57 +380,89 @@ int LuaVFS::UseArchive(lua_State* L)
 
 int LuaVFS::MapArchive(lua_State* L)
 {
-	if (CLuaHandle::GetHandleSynced(L)) // only from unsynced
-	{
+	if (CLuaHandle::GetHandleSynced(L)) {
+		// only from unsynced
 		return 0;
 	}
 
 	const int args = lua_gettop(L); // number of arguments
-	const string filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
+	const std::string filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
+
 	if (!LuaIO::IsSimplePath(filename)) {
 		// the path may point to a file or dir outside of any data-dir
-		//FIXME		return 0;
-	}
-
-	CFileHandler f(filename, SPRING_VFS_RAW);
-	if (!f.FileExists())
-	{
-		std::ostringstream buf;
-		buf << "Achive not found: " << filename;
-		lua_pushboolean(L, false);
-		lua_pushsstring(L, buf.str());
 		return 0;
 	}
 
-	if (args >= 2)
-	{
-		const std::string checksumBuf = lua_tostring(L, 2);
-		int checksum = 0;
-		std::istringstream buf(checksumBuf);
-		buf >> checksum;
-		const int realchecksum = archiveScanner->GetSingleArchiveChecksum(filename);
-		if (checksum != realchecksum)
-		{
-			std::ostringstream buf;
-			buf << "Bad archive checksum, got: " << realchecksum << " expected: " << checksum;
-			lua_pushboolean(L, false);
-			lua_pushsstring(L, buf.str());
-			return 0;
-		}
-	}
-	if (!vfsHandler->AddArchive(filename, false))
-	{
+	CFileHandler f(filename, SPRING_VFS_RAW);
+
+	if (!f.FileExists()) {
 		std::ostringstream buf;
-		buf << "Failed to load archive: " << filename;
+		buf << "Achive not found: " << filename;
+
 		lua_pushboolean(L, false);
 		lua_pushsstring(L, buf.str());
+		return 2;
 	}
-	else
-	{
-		lua_pushboolean(L, true);
+
+	if (args >= 2) {
+		// parse checksum as a STRING to convert it to a number because
+		// lua numbers are float and so limited to 2^24, while the checksum is an int32.
+		// const unsigned int argChecksum = lua_tonumber(L, 2);
+		const unsigned int argChecksum = StringToInt(lua_tostring(L, 2));
+		const unsigned int realChecksum = archiveScanner->GetSingleArchiveChecksum(filename);
+
+		if (argChecksum != realChecksum) {
+			std::ostringstream buf;
+
+			buf << "[" << __FUNCTION__ << "] incorrect archive checksum ";
+			buf << "(got: " << argChecksum << ", expected: " << realChecksum << ")";
+
+			lua_pushboolean(L, false);
+			lua_pushsstring(L, buf.str());
+			return 2;
+		}
 	}
-	return 0;
+
+	if (!vfsHandler->AddArchive(filename, false)) {
+		std::ostringstream buf;
+		buf << "[" << __FUNCTION__ << "] failed to load archive: " << filename;
+
+		lua_pushboolean(L, false);
+		lua_pushsstring(L, buf.str());
+		return 2;
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
 }
+
+int LuaVFS::UnmapArchive(lua_State* L)
+{
+	if (CLuaHandle::GetHandleSynced(L)) {
+		// only from unsynced
+		return 0;
+	}
+
+	const std::string filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
+
+	if (!LuaIO::IsSimplePath(filename)) {
+		// the path may point to a file or dir outside of any data-dir
+		return 0;
+	}
+
+	if (!vfsHandler->RemoveArchive(filename)) {
+		std::ostringstream buf;
+		buf << "[" << __FUNCTION__ << "] failed to remove archive: " << filename;
+
+		lua_pushboolean(L, false);
+		lua_pushsstring(L, buf.str());
+		return 2;
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
 
 
 /******************************************************************************/
@@ -471,20 +500,45 @@ int LuaVFS::SevenZipFolder(lua_State* L, const string& folderPath, const string&
 	return 0;
 }
 
-/******************************************************************************/
-/******************************************************************************/
-//
-//  Zlib compression
-//
 
 int LuaVFS::ZlibCompress(lua_State* L)
 {
-	return LuaUtils::ZlibCompress(L);
+	size_t inLen;
+	const char* inData = luaL_checklstring(L, 1, &inLen);
+
+	long unsigned bufsize = compressBound(inLen);
+	std::vector<boost::uint8_t> compressed(bufsize, 0);
+	const int error = compress(&compressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
+	if (error == Z_OK)
+	{
+		lua_pushlstring(L, (const char*)&compressed[0], bufsize);
+		return 1;
+	}
+	else
+	{
+		return luaL_error(L, "Error while compressing");
+	}
 }
+
 
 int LuaVFS::ZlibDecompress(lua_State* L)
 {
-	return LuaUtils::ZlibDecompress(L);
+	size_t inLen;
+	const char* inData = luaL_checklstring(L, 1, &inLen);
+
+	long unsigned bufsize = std::max(luaL_optint(L, 2, 65000), 0);
+
+	std::vector<boost::uint8_t> uncompressed(bufsize, 0);
+	const int error = uncompress(&uncompressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
+	if (error == Z_OK)
+	{
+		lua_pushlstring(L, (const char*)&uncompressed[0], bufsize);
+		return 1;
+	}
+	else
+	{
+		return luaL_error(L, "Error while decompressing");
+	}
 }
 
 

@@ -96,7 +96,6 @@ static inline bool MayRequireSetMaxSpeedCommand(const Command &c)
 	return true;
 }
 
-
 void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 {
 	const std::vector<int>& netSelected = selectedUnitsHandler.netSelected[player];
@@ -444,7 +443,7 @@ float3 CSelectedUnitsHandlerAI::MoveToPos(int unit, float3 nextCornerPos, float3
 	float3 pos;
 	pos.x = rightPos.x + (movePos.x * (dir.x / dir.y)) - (movePos.z * (dir.z/dir.y));
 	pos.z = rightPos.z + (movePos.x * (dir.z / dir.y)) + (movePos.z * (dir.x/dir.y));
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
+	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z);
 
 	Command c(command->GetID(), command->options, pos);
 
@@ -480,8 +479,6 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 	const unsigned int targetsCount = targets.size();
 	const unsigned int selectedCount = selected.size();
 
-	unsigned int realCount = 0;
-
 	if (selectedCount == 0)
 		return;
 
@@ -513,7 +510,7 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 
 	// get the group center
 	float3 midPos;
-
+	unsigned int realCount = 0;
 	for (unsigned int s = 0; s < selectedCount; s++) {
 		CUnit* unit = unitHandler->units[selected[s]];
 
@@ -529,7 +526,7 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 		realCount++;
 	}
 
-	if (realCount <= 0)
+	if (realCount == 0)
 		return;
 
 	midPos /= realCount;

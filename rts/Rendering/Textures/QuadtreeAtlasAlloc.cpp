@@ -2,6 +2,7 @@
 
 
 #include "QuadtreeAtlasAlloc.h"
+#include <string.h> // memset
 #include "System/Exceptions.h"
 #include "System/bitops.h"
 #include "System/Log/ILog.h"

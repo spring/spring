@@ -11,7 +11,8 @@
  * Aims:
  * - Support a fixed set of severities levels:
  *   * L_DEBUG   : fine-grained information that is most useful to debug
- *   * L_INFO    : informational messages that highlight runtime progress of
+ *   * L_INFO    : same as L_NOTICE just that it is surpressed on RELEASE builds when a non-default logSection is set
+ *   * L_NOTICE  : default log level (always outputed)
  *   * L_WARNING : potentially harmful situations
  *   * L_ERROR   : errors that might still allow the application to keep running
  *   * L_FATAL   : very severe errors that will lead the application to abort
@@ -182,43 +183,11 @@ extern void log_frontend_cleanup();
 /// Redirect to runtime processing
 #define _LOG_RECORD(section, level, fmt, ...)   log_frontend_record(section, LOG_LEVE##level, fmt, ##__VA_ARGS__)
 
-// per level compile-time filters
-#if _LOG_IS_ENABLED_LEVEL_STATIC(L_DEBUG)
-	#define _LOG_FILTER_L_DEBUG(section, fmt, ...)   _LOG_RECORD(section, L_DEBUG, fmt, ##__VA_ARGS__)
-#else
-	#define _LOG_FILTER_L_DEBUG(section, fmt, ...)
-#endif
-
-#if _LOG_IS_ENABLED_LEVEL_STATIC(L_INFO)
-	#define _LOG_FILTER_L_INFO(section, fmt, ...)   _LOG_RECORD(section, L_INFO, fmt, ##__VA_ARGS__)
-#else
-	#define _LOG_FILTER_L_INFO(section, fmt,...)
-	#warning log messages of level INFO are not compiled into the binary
-#endif
-
-#if _LOG_IS_ENABLED_LEVEL_STATIC(L_WARNING)
-	#define _LOG_FILTER_L_WARNING(section, fmt, ...)   _LOG_RECORD(section, L_WARNING, fmt, ##__VA_ARGS__)
-#else
-	#define _LOG_FILTER_L_WARNING(section, fmt, ...)
-	#warning log messages of level WARNING are not compiled into the binary
-#endif
-
-#if _LOG_IS_ENABLED_LEVEL_STATIC(L_ERROR)
-	#define _LOG_FILTER_L_ERROR(section, fmt, ...)   _LOG_RECORD(section, L_ERROR, fmt, ##__VA_ARGS__)
-#else
-	#define _LOG_FILTER_L_ERROR(section, fmt, ##__VA_ARGS__)
-	#warning log messages of level ERROR are not compiled into the binary
-#endif
-
-#if _LOG_IS_ENABLED_LEVEL_STATIC(L_FATAL)
-	#define _LOG_FILTER_L_FATAL(section, fmt, ...)   _LOG_RECORD(section, L_FATAL, fmt, ##__VA_ARGS__)
-#else
-	#define _LOG_FILTER_L_FATAL(section, fmt, ...)
-	#warning log messages of level FATAL are not compiled into the binary
-#endif
+/// per level compile-time filter
+#define _LOG_FILTER(section, level, fmt, ...) if (_LOG_IS_ENABLED_LEVEL_STATIC(level)) _LOG_RECORD(section, level, fmt, ##__VA_ARGS__)
 
 /// Registers the section and connects to the filter macro
-#define _LOG_SECTION(section, level, fmt, ...)   _LOG_FILTER_##level(section, fmt, ##__VA_ARGS__)
+#define _LOG_SECTION(section, level, fmt, ...)   _LOG_FILTER(section, level, fmt, ##__VA_ARGS__)
 
 /// Uses the section defined in LOG_SECTION
 #define _LOG_SECTION_DEFINED(level, fmt, ...)   _LOG_SECTION(LOG_SECTION_CURRENT, level, fmt, ##__VA_ARGS__)
@@ -340,7 +309,7 @@ extern void log_frontend_cleanup();
  * @see LOG_IS_ENABLED()
  */
 #define LOG(fmt, ...) \
-	_LOG(L_INFO, fmt, ##__VA_ARGS__)
+	_LOG(DEFAULT_LOG_LEVEL_SHORT, fmt, ##__VA_ARGS__)
 
 /**
  * Registers a log message with a specifiable level.

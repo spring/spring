@@ -301,16 +301,12 @@ void CAICallback::ReleasedSharedMemArea(char* name)
 
 int CAICallback::CreateGroup()
 {
-	GML_RECMUTEX_LOCK(group); // CreateGroup
-
 	const CGroup* g = gh->CreateNewGroup();
 	return g->id;
 }
 
 void CAICallback::EraseGroup(int groupId)
 {
-	GML_RECMUTEX_LOCK(group); // EraseGroup
-
 	if (CHECK_GROUPID(groupId)) {
 		if (gh->groups[groupId]) {
 			gh->RemoveGroup(gh->groups[groupId]);
@@ -324,8 +320,6 @@ bool CAICallback::AddUnitToGroup(int unitId, int groupId)
 
 	CUnit* unit = GetMyTeamUnit(unitId);
 	if (unit) {
-		GML_RECMUTEX_LOCK(group); // AddUnitToGroup
-
 		if (CHECK_GROUPID(groupId) && gh->groups[groupId]) {
 			added = unit->SetGroup(gh->groups[groupId]);
 		}
@@ -1055,7 +1049,7 @@ const unsigned char* CAICallback::GetMetalMap()
 
 float CAICallback::GetElevation(float x, float z)
 {
-	return ground->GetHeightReal(x, z);
+	return CGround::GetHeightReal(x, z);
 }
 
 
@@ -1143,8 +1137,6 @@ void CAICallback::DrawUnit(const char* unitName, const float3& pos,
 	tdu.drawBorder = drawBorder;
 	tdu.facing = facing;
 	std::pair<int, CUnitDrawer::TempDrawUnit> tp(gs->frameNum + lifetime, tdu);
-
-	GML_STDMUTEX_LOCK(temp); // DrawUnit
 
 	if (transparent) {
 		unitDrawer->tempTransparentDrawUnits.insert(tp);
@@ -1771,7 +1763,6 @@ int CAICallback::GetSelectedUnits(int* unitIds, int unitIds_max)
 	verify();
 	int a = 0;
 
-	GML_RECMUTEX_LOCK(sel); // GetSelectedUnit
 	// check if the allyteam of the player running
 	// the AI lib matches the AI's actual allyteam
 	if (gu->myAllyTeam == teamHandler->AllyTeam(team)) {

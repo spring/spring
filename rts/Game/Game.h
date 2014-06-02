@@ -5,15 +5,14 @@
 
 #include <string>
 #include <map>
-#include <set>
 
 #include "GameController.h"
+#include "Game/UI/KeySet.h"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 
 class IWater;
 class CConsoleHistory;
-class CKeySet;
 class CInfoConsole;
 class LuaParser;
 class LuaInputReceiver;
@@ -85,11 +84,6 @@ public:
 	bool ProcessKeyPressAction(unsigned int key, const Action& action);
 	bool ProcessAction(const Action& action, unsigned int key = -1, bool isRepeat = false);
 
-	void SetHotBinding(const std::string& action) { hotBinding = action; }
-
-	void SelectUnits(const std::string& line);
-	void SelectCycle(const std::string& command);
-
 	void ReloadCOB(const std::string& msg, int player);
 	void ReloadCEGs(const std::string& tag);
 
@@ -116,15 +110,15 @@ private:
 
 	void DrawSkip(bool blackscreen = true);
 	void DrawInputText();
-	void UpdateUI(bool cam);
+	void UpdateCam();
 
 	/// Format and display a chat message received over network
 	void HandleChatMsg(const ChatMessage& msg);
 
 	/// Called when a key is released by the user
-	int KeyReleased(unsigned short k);
+	int KeyReleased(int k);
 	/// Called when the key is pressed by the user (can be called several times due to key repeat)
-	int KeyPressed(unsigned short k, bool isRepeat);
+	int KeyPressed(int k, bool isRepeat);
 
 	bool ActionPressed(unsigned int key, const Action& action, bool isRepeat);
 	bool ActionReleased(const Action& action);
@@ -191,7 +185,7 @@ public:
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
 
-	std::string hotBinding;
+	CTimedKeyChain curKeyChain;
 	std::string userInputPrefix;
 
 	/// <playerID, <packetCode, total bytes> >

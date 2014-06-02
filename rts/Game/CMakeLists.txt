@@ -55,7 +55,6 @@ SET(sources_engine_Game
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/HwMouseCursor.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/InfoConsole.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/InputReceiver.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/UI/KeyAutoBinder.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/KeyBindings.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/KeyCodes.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/KeySet.cpp"

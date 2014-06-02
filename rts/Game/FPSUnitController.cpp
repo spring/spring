@@ -72,7 +72,7 @@ void FPSUnitController::Update() {
 			// projectiles can gain extra flighttime and travel further
 			//
 			// NOTE: CWeapon::AttackGround checks range via TryTarget
-			if ((targetPos.y - ground->GetHeightReal(targetPos.x, targetPos.z)) <= SQUARE_SIZE) {
+			if ((targetPos.y - CGround::GetHeightReal(targetPos.x, targetPos.z)) <= SQUARE_SIZE) {
 				controllee->AttackGround(targetPos, true, true, true);
 			}
 		}

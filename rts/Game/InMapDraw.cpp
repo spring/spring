@@ -146,7 +146,7 @@ void CInMapDraw::MouseMove(int x, int y, int dx, int dy, int button)
 
 float3 CInMapDraw::GetMouseMapPos() // TODO move to some more global place?
 {
-	const float dist = ground->LineGroundCol(camera->GetPos(), camera->GetPos() + (mouse->dir * globalRendering->viewRange * 1.4f), false);
+	const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + (mouse->dir * globalRendering->viewRange * 1.4f), false);
 	if (dist < 0) {
 		return float3(-1.0f, 1.0f, -1.0f);
 	}
@@ -223,13 +223,13 @@ int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket>& packet)
 void CInMapDraw::SetSpecMapDrawingAllowed(bool state)
 {
 	allowSpecMapDrawing = state;
-	LOG("Spectator map drawing is %s", allowSpecMapDrawing? "disabled": "enabled");
+	LOG("[%s] spectator map-drawing is %s", __FUNCTION__, allowSpecMapDrawing? "enabled": "disabled");
 }
 
 void CInMapDraw::SetLuaMapDrawingAllowed(bool state)
 {
 	allowLuaMapDrawing = state;
-	LOG("Lua map drawing is %s", allowLuaMapDrawing? "disabled": "enabled");
+	LOG("[%s] Lua map-drawing is %s", __FUNCTION__, allowLuaMapDrawing? "enabled": "disabled");
 }
 
 
@@ -269,7 +269,7 @@ void CInMapDraw::PromptLabel(const float3& pos)
 	game->userWriting = true;
 	wantLabel = true;
 	game->userPrompt = "Label: ";
-	game->ignoreChar = '\xA7'; // should do something better here
+	game->ignoreNextChar = true;
 }
 
 

@@ -19,11 +19,10 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
-#include "lib/gml/gmlmut.h"
 
 CONFIG(int, SourcePort).defaultValue(0);
 
-CNetProtocol::CNetProtocol() : loading(false)
+CNetProtocol::CNetProtocol() : keepUpdating(false)
 {
 	demoRecorder.reset(NULL);
 }
@@ -37,23 +36,23 @@ CNetProtocol::~CNetProtocol()
 
 void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const std::string& myName, const std::string& myPasswd, const std::string& myVersion)
 {
-	GML_STDMUTEX_LOCK(net); // InitClient
+	userName = myName;
+	userPasswd = myPasswd;
 
 	netcode::UDPConnection* conn = new netcode::UDPConnection(configHandler->GetInt("SourcePort"), server_addr, portnum);
 	conn->Unmute();
 	serverConn.reset(conn);
-	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion, globalConfig->networkLossFactor));
+	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, myVersion, globalConfig->networkLossFactor));
 	serverConn->Flush(true);
 
 	LOG("Connecting to %s:%i using name %s", server_addr, portnum, myName.c_str());
 }
 
-void CNetProtocol::AttemptReconnect(const std::string& myName, const std::string& myPasswd, const std::string& myVersion) {
-	GML_STDMUTEX_LOCK(net); // AttemptReconnect
-
+void CNetProtocol::AttemptReconnect(const std::string& myVersion)
+{
 	netcode::UDPConnection* conn = new netcode::UDPConnection(*serverConn);
 	conn->Unmute();
-	conn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion, globalConfig->networkLossFactor, true));
+	conn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, myVersion, globalConfig->networkLossFactor, true));
 	conn->Flush(true);
 
 	LOG("Reconnecting to server... %ds", dynamic_cast<netcode::UDPConnection&>(*serverConn).GetReconnectSecs());
@@ -67,8 +66,6 @@ bool CNetProtocol::NeedsReconnect() {
 
 void CNetProtocol::InitLocalClient()
 {
-	GML_STDMUTEX_LOCK(net); // InitLocalClient
-
 	serverConn.reset(new netcode::CLocalConnection);
 	serverConn->Flush();
 
@@ -91,15 +88,11 @@ std::string CNetProtocol::ConnectionStr() const
 
 boost::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) const
 {
-	GML_STDMUTEX_LOCK(net); // Peek
-
 	return serverConn->Peek(ahead);
 }
 
 void CNetProtocol::DeleteBufferPacketAt(unsigned index)
 {
-	GML_STDMUTEX_LOCK(net); // DeleteBufferPacketAt
-
 	return serverConn->DeleteBufferPacketAt(index);
 }
 
@@ -113,8 +106,6 @@ float CNetProtocol::GetPacketTime(int frameNum) const
 
 boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int frameNum)
 {
-	GML_STDMUTEX_LOCK(net); // GetData
-
 	boost::shared_ptr<const netcode::RawPacket> ret = serverConn->GetData();
 
 	if (ret.get() == NULL) { return ret; }
@@ -129,8 +120,6 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int frameNum)
 
 void CNetProtocol::Send(boost::shared_ptr<const netcode::RawPacket> pkt)
 {
-	GML_STDMUTEX_LOCK(net); // Send
-
 	serverConn->SendData(pkt);
 }
 
@@ -144,23 +133,20 @@ __FORCE_ALIGN_STACK__
 void CNetProtocol::UpdateLoop()
 {
 	Threading::SetThreadName("heartbeat");
-	loading = true;
-	while (loading) {
+
+	while (keepUpdating) {
 		Update();
-		spring_msecs(400).sleep();
+		spring_msecs(100).sleep();
 	}
 }
 
 void CNetProtocol::Update()
 {
-	GML_STDMUTEX_LOCK(net); // Update
-
 	serverConn->Update();
 }
 
-void CNetProtocol::Close(bool flush) {
-	GML_STDMUTEX_LOCK(net); // Close
-
+void CNetProtocol::Close(bool flush)
+{
 	serverConn->Close(flush);
 }
 

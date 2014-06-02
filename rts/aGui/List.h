@@ -21,7 +21,7 @@ public:
 	virtual ~List();
 
 	// CInputReceiver implementation
-	bool KeyPressed(unsigned short k, bool isRepeat);
+	bool KeyPressed(int k, bool isRepeat);
 	bool MousePress(int x, int y, int button);
 	void MouseMove(int x, int y, int dx,int dy, int button);
 	void MouseRelease(int x, int y, int button);

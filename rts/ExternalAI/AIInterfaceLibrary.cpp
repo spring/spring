@@ -19,6 +19,7 @@ CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)
 		, initialized(false)
 		, info(_info)
 {
+	sAIInterfaceLibrary = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 	libFilePath = FindLibFile();
 

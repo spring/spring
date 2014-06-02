@@ -3,7 +3,6 @@
 #include "FeatureHandler.h"
 
 #include "Lua/LuaParser.h"
-#include "Lua/LuaRules.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
@@ -298,7 +297,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				def->second,
 				NULL,
 
-				float3(mfi[a].pos.x, ground->GetHeightReal(mfi[a].pos.x, mfi[a].pos.z), mfi[a].pos.z),
+				float3(mfi[a].pos.x, CGround::GetHeightReal(mfi[a].pos.x, mfi[a].pos.z), mfi[a].pos.z),
 				ZeroVector,
 
 				-1, // featureID
@@ -414,7 +413,7 @@ CFeature* CFeatureHandler::CreateWreckage(
 		}
 	}
 
-	if (luaRules && !luaRules->AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
+	if (!eventHandler.AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
 		return NULL;
 
 	if (!fd->modelName.empty()) {
@@ -452,17 +451,12 @@ void CFeatureHandler::Update()
 	}
 
 	{
-		GML_STDMUTEX_LOCK(rfeat); // Update
-
 		if (!toBeRemoved.empty()) {
 
-			GML_RECMUTEX_LOCK(obj); // Update
 			eventHandler.DeleteSyncedObjects();
 
-			GML_RECMUTEX_LOCK(feat); // Update
 			eventHandler.DeleteSyncedFeatures();
 
-			GML_RECMUTEX_LOCK(quad); // Update
 
 			while (!toBeRemoved.empty()) {
 				CFeature* feature = GetFeature(toBeRemoved.back());

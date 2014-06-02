@@ -74,11 +74,14 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Textures/TextureAtlas.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Textures/nv_dds.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Textures/QuadtreeAtlasAlloc.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Textures/RowAtlasAlloc.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UnitDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UnitDrawerState.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/VerticalSync.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/WorldDrawer.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/glFont.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Fonts/CFontTexture.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Fonts/glFont.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Fonts/TextWrap.cpp"
 	)
 
 MakeGlobal(sources_engine_Rendering)

@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <SDL_keysym.h>
+#include <SDL_keycode.h>
 #include <SDL_mouse.h>
 
 #include "lib/gml/ThreadSafeContainers.h"
@@ -22,7 +22,6 @@
 #include "Game/Players/Player.h"
 #include "Game/UI/UnitTracker.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Lua/LuaUI.h" // FIXME: for GML
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
@@ -487,9 +486,7 @@ void CMiniMap::MoveView(int x, int y)
 
 void CMiniMap::SelectUnits(int x, int y) const
 {
-	GML_RECMUTEX_LOCK(sel); //FIXME redundant? (selectedUnits already has mutexes)
-
-	if (!keyInput->IsKeyPressed(SDLK_LSHIFT) && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
+	if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL)) {
 		selectedUnitsHandler.ClearSelected();
 	}
 
@@ -620,7 +617,7 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		} else {
 			width = std::min(globalRendering->viewSizeX, width);
 		}
-		if (keyInput->IsKeyPressed(SDLK_LSHIFT)) {
+		if (KeyInput::GetKeyModState(KMOD_SHIFT)) {
 			width = (height * gs->mapx) / gs->mapy;
 		}
 		width = std::max(5, width);
@@ -661,7 +658,7 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 
 	if (button == SDL_BUTTON_LEFT) {
 		if (showButtons && maximizeBox.Inside(x, y)) {
-			ToggleMaximized(!!keyInput->GetKeyState(SDLK_LSHIFT));
+			ToggleMaximized(!!KeyInput::GetKeyModState(KMOD_SHIFT));
 			return;
 		}
 
@@ -793,8 +790,6 @@ std::string CMiniMap::GetTooltip(int x, int y)
 	}
 
 	{
-		GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetTooltip
-
 		const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
 		if (unit) {
 			return CTooltipConsole::MakeUnitString(unit);
@@ -1137,7 +1132,6 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 	glAlphaFunc(GL_GREATER, 0.0f);
 
 	{
-		GML_RECMUTEX_LOCK(unit); // DrawForReal
 		unitDrawer->DrawUnitMiniMapIcons();
 	}
 
@@ -1176,8 +1170,6 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 	}
 
 	{
-		GML_RECMUTEX_LOCK(sel); // DrawForReal
-
 		// draw unit ranges
 		const float radarSquare = radarHandler->radarDiv;
 		CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;

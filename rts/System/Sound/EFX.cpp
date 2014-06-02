@@ -51,10 +51,11 @@ CEFX::CEFX(ALCdevice* device)
 	*sfxProperties = eaxPresets[default_preset];
 
 	if (!supported) {
-		if(!hasExtension)
+		if(!hasExtension) {
 			LOG("  EFX Supported: no");
-		else
+		} else {
 			LOG("  EFX is supported but software does not seem to work properly");
+		}
 		return;
 	}
 

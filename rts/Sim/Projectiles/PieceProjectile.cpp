@@ -97,7 +97,7 @@ CPieceProjectile::CPieceProjectile(
 
 	castShadow = true;
 
-	if (pos.y - ground->GetApproximateHeight(pos.x, pos.z) > 10) {
+	if (pos.y - CGround::GetApproximateHeight(pos.x, pos.z) > 10) {
 		useAirLos = true;
 	}
 
@@ -159,7 +159,7 @@ CPieceProjectile::~CPieceProjectile()
 
 void CPieceProjectile::Collision()
 {
-	const float3& norm = ground->GetNormal(pos.x, pos.z);
+	const float3& norm = CGround::GetNormal(pos.x, pos.z);
 	const float ns = speed.dot(norm);
 
 	SetVelocityAndSpeed(speed - (norm * ns * 1.6f));

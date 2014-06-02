@@ -5,7 +5,10 @@
 
 #include <string>
 #include <boost/cstdint.hpp>
+#include <boost/shared_ptr.hpp>
 
+
+class ClientSetup;
 class CmdLineParams;
 class CGameController;
 union SDL_Event;
@@ -31,13 +34,12 @@ protected:
 	bool InitWindow(const char* title);             //!< Initializes window
 	static void InitOpenGL();                       //!< Initializes OpenGL
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
-	static bool SetSDLVideoMode();                  //!< Sets SDL video mode
+	static bool CreateSDLWindow(const char* title);    //!< Creates a SDL window
 	int Update();                                   //!< Run simulation and draw
 	bool UpdateSim(CGameController *ac);
 
-	static bool GetDisplayGeometry();
-	static void SetupViewportGeometry(bool windowExposed);
-	static void RestoreWindowPosition();
+	static void GetDisplayGeometry();
+	static void SetupViewportGeometry();
 	static void SaveWindowPosition();
 
 	/**
@@ -49,7 +51,7 @@ protected:
 
 private:
 	bool MainEventHandler(const SDL_Event& ev);
-	void RunScript(const std::string& buf);
+	void RunScript(boost::shared_ptr<ClientSetup> clientSetup, const std::string& buf);
 };
 
 /**

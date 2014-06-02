@@ -11,7 +11,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/EventHandler.h"
 #include "System/creg/STL_List.h"
-#include "lib/gml/gmlmut.h"
 
 
 CInMapDrawModel* inMapDrawerModel = NULL;
@@ -127,7 +126,7 @@ bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label,
 
 	float3 pos = constPos;
 	pos.ClampInBounds();
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false) + 2.0f;
+	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + 2.0f;
 
 	// event clients may process the point
 	// if their owner is allowed to see it
@@ -135,7 +134,6 @@ bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label,
 		return false;
 	}
 
-	GML_STDMUTEX_LOCK(inmap); // LocalPoint
 
 	// let the engine handle it (disallowed
 	// points added here are filtered while
@@ -164,14 +162,13 @@ bool CInMapDrawModel::AddLine(const float3& constPos1, const float3& constPos2, 
 	float3 pos2 = constPos2;
 	pos1.ClampInBounds();
 	pos2.ClampInBounds();
-	pos1.y = ground->GetHeightAboveWater(pos1.x, pos1.z, false) + 2.0f;
-	pos2.y = ground->GetHeightAboveWater(pos2.x, pos2.z, false) + 2.0f;
+	pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false) + 2.0f;
+	pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false) + 2.0f;
 
 	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_LINE, &pos1, &pos2, NULL)) {
 		return false;
 	}
 
-	GML_STDMUTEX_LOCK(inmap); // LocalLine
 
 	MapLine line(sender->spectator, sender->team, sender, pos1, pos2);
 
@@ -194,13 +191,12 @@ void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 
 	float3 pos = constPos;
 	pos.ClampInBounds();
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false) + 2.0f;
+	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + 2.0f;
 
 	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_ERASE, &pos, NULL, NULL)) {
 		return;
 	}
 
-	GML_STDMUTEX_LOCK(inmap); // LocalErase
 
 	const float radius = 100.0f;
 	const int maxY = drawQuadsY - 1;

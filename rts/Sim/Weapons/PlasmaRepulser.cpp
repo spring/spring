@@ -3,7 +3,6 @@
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Set.h"
 #include "PlasmaRepulser.h"
-#include "Lua/LuaRules.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -14,6 +13,7 @@
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "System/EventHandler.h"
 #include "System/myMath.h"
 
 CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL, NULL));
@@ -109,7 +109,7 @@ void CPlasmaRepulser::Update()
 			continue;
 		}
 
-		if (luaRules && luaRules->ShieldPreDamaged(pro, this, owner, weaponDef->shieldRepulser)) {
+		if (eventHandler.ShieldPreDamaged(pro, this, owner, weaponDef->shieldRepulser)) {
 			// gadget handles the collision event, don't touch the projectile
 			continue;
 		}

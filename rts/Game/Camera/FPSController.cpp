@@ -72,7 +72,7 @@ void CFPSController::UpdateVectors()
 		pos.x = Clamp(pos.x, xMin, xMax);
 		pos.z = Clamp(pos.z, zMin, zMax);
 
-		const float gndHeight = ground->GetHeightAboveWater(pos.x, pos.z, false);
+		const float gndHeight = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 		const float yMin = gndHeight + 5.0f;
 		const float yMax = 9000.0f;
 		pos.y = Clamp(pos.y, yMin, yMax);
@@ -91,7 +91,7 @@ void CFPSController::SetPos(const float3& newPos)
 	CCameraController::SetPos(newPos);
 
 	if (!gu->fpsMode) {
-		pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false) + oldHeight;
+		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + oldHeight;
 	}
 	UpdateVectors();
 }

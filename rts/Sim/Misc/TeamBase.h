@@ -38,7 +38,7 @@ public:
 		// will always be clamped to a team's start-box
 		// (and hence the map) when clients receive them
 		// so this should be redundant
-		if (!startPos.IsInMap())
+		if (!startPos.IsInBounds())
 			return false;
 
 		return true;

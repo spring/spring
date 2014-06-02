@@ -58,7 +58,7 @@ void CRotOverheadController::ScreenEdgeMove(float3 move)
 
 void CRotOverheadController::MouseWheelMove(float move)
 {
-	const float gheight = ground->GetHeightAboveWater(pos.x, pos.z, false);
+	const float gheight = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 	float height = pos.y - gheight;
 
 	height *= (1.0f + (move * mouseScale));
@@ -77,7 +77,7 @@ void CRotOverheadController::UpdateVectors()
 	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
 	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
 
-	float h = ground->GetHeightAboveWater(pos.x, pos.z, false);
+	float h = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 	pos.y = Clamp(pos.y, h + 5, 9000.0f);
 	oldHeight = pos.y - h;
 }
@@ -85,7 +85,7 @@ void CRotOverheadController::UpdateVectors()
 void CRotOverheadController::SetPos(const float3& newPos)
 {
 	CCameraController::SetPos(newPos);
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false) + oldHeight;
+	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + oldHeight;
 	UpdateVectors();
 }
 

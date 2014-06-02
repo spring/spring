@@ -4,6 +4,7 @@
 #define DEMO_RECORDER
 
 #include <vector>
+#include <fstream>
 #include <sstream>
 #include <list>
 
@@ -43,8 +44,10 @@ private:
 	void WritePlayerStats();
 	void WriteTeamStats();
 	void WriteWinnerList();
-	void WriteDemoFile(const std::string& name, const std::string& data);
+	void WriteDemoFile();
 
+private:
+	std::ofstream file;
 	std::stringstream demoStream;
 	std::vector<PlayerStatistics> playerStats;
 	std::vector< std::vector<TeamStatistics> > teamStats;

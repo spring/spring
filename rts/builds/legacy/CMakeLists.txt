@@ -9,9 +9,9 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 
 ### Assemble libraries
-FIND_PACKAGE(SDL REQUIRED)
-SET(engineIncludes ${SDL_INCLUDE_DIR})
-SET(engineLibraries ${SDL_LIBRARY})
+FIND_PACKAGE(SDL2 REQUIRED)
+SET(engineIncludes ${SDL2_INCLUDE_DIR})
+SET(engineLibraries ${SDL2_LIBRARY})
 
 
 FIND_PACKAGE_STATIC(OpenGL REQUIRED)
@@ -21,6 +21,20 @@ if   (MSVC)
 	LIST(APPEND engineIncludes ${GLEW_INCLUDE_DIR})
 endif(MSVC)
 
+FIND_PACKAGE_STATIC(FontConfig)
+IF    (FONTCONFIG_FOUND)
+	LIST(APPEND engineIncludes ${FONTCONFIG_INCLUDE_DIR})
+	LIST(APPEND engineLibraries ${FONTCONFIG_LIBRARIES})
+	ADD_DEFINITIONS(-DUSE_FONTCONFIG)
+	IF    (PREFER_STATIC_LIBS)
+		PREFER_STATIC_LIBS()
+		FIND_LIBRARY(EXPAT_LIBRARY expat)
+		UNPREFER_STATIC_LIBS()
+		LIST(APPEND engineLibraries ${EXPAT_LIBRARY})
+	ENDIF (PREFER_STATIC_LIBS)
+ENDIF (FONTCONFIG_FOUND)
+
+FindFreetypeHack() # hack to find different named freetype.dll
 FIND_PACKAGE_STATIC(Freetype REQUIRED)
 foreach(f ${FREETYPE_INCLUDE_DIRS})
 	LIST(APPEND engineIncludes ${f})
@@ -37,13 +51,6 @@ IF    (UNIX)
 	FIND_PACKAGE_STATIC(X11 REQUIRED)
 	LIST(APPEND engineLibraries ${X11_Xcursor_LIB} ${X11_X11_LIB})
 
-        FIND_PACKAGE(Libunwind REQUIRED)
-        IF (LIBUNWIND_FOUND)
-          MESSAGE(STATUS "Found libunwind libraries at ${LIBUNWIND_LIBRARIES}")
-          LIST(APPEND engineLibraries ${LIBUNWIND_LIBRARIES})
-        ELSE (LIBUNWIND_FOUND)
-          MESSAGE(SEND_ERROR "Could not find libunwind libraries!")
-        ENDIF (LIBUNWIND_FOUND)
 	IF    (PREFER_STATIC_LIBS)
 		# dependencies of X11/XCursor
 		FIND_PACKAGE_STATIC(XCB REQUIRED)
@@ -78,7 +85,6 @@ if   (MSVC)
 endif(MSVC)
 
 ### Build the executable
-message(STATUS "Engine libraries are ${engineLibraries}")
 ADD_EXECUTABLE(engine-legacy ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(engine-legacy ${engineLibraries})
 

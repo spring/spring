@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string>
 #include <map>
+#include <set>
 
 class CKeyCodes {
 	public:
@@ -19,7 +20,8 @@ class CKeyCodes {
 
 		bool AddKeySymbol(const std::string& name, int code);
 
-		bool IsModifier(int code) const;
+		static bool IsModifier(int code);
+		       bool IsPrintable(int code);
 
 		void PrintNameToCode() const;
 		void PrintCodeToName() const;
@@ -30,13 +32,14 @@ class CKeyCodes {
 		static bool IsValidLabel(const std::string& label);
 
 	protected:
-		void AddPair(const std::string& name, int code);
+		void AddPair(const std::string& name, const int code, const bool printable = false);
 
 	protected:
 		std::map<std::string, int> nameToCode;
 		std::map<int, std::string> codeToName;
 		std::map<std::string, int> defaultNameToCode;
 		std::map<int, std::string> defaultCodeToName;
+		std::set<int> printableCodes;
 };
 
 extern CKeyCodes* keyCodes;

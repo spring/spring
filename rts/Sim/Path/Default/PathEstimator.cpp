@@ -7,6 +7,7 @@
 #include <fstream>
 #include <boost/bind.hpp>
 #include <boost/thread/barrier.hpp>
+#include <boost/thread/thread.hpp>
 
 #include "minizip/zip.h"
 
@@ -31,7 +32,6 @@
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileQueryFlags.h"
-#include "System/Platform/Watchdog.h"
 
 
 CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512).minimumValue(64).description("Maximum memusage (in MByte) of mutlithreaded pathcache generator at loading time.");
@@ -413,22 +413,22 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 	// bi-directional vertices
 	for (int z = upperZ; z >= lowerZ; z--) {
 		for (int x = upperX; x >= lowerX; x--) {
-			if (!(blockStates.nodeMask[z * nbrOfBlocksX + x] & PATHOPT_OBSOLETE)) {
-				std::vector<MoveDef*>::iterator mi;
+			if ((blockStates.nodeMask[z * nbrOfBlocksX + x] & PATHOPT_OBSOLETE) != 0)
+				continue;
 
-				for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
-					const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
+			for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
+				const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
-					if (md->udRefCount > 0) {
-						SingleBlock sb;
-							sb.blockPos.x = x;
-							sb.blockPos.y = z;
-							sb.moveDef = md;
+				if (md->udRefCount == 0)
+					continue;
 
-						updatedBlocks.push_back(sb);
-						blockStates.nodeMask[z * nbrOfBlocksX + x] |= PATHOPT_OBSOLETE;
-					}
-				}
+				SingleBlock sb;
+					sb.blockPos.x = x;
+					sb.blockPos.y = z;
+					sb.moveDef = md;
+
+				updatedBlocks.push_back(sb);
+				blockStates.nodeMask[z * nbrOfBlocksX + x] |= PATHOPT_OBSOLETE;
 			}
 		}
 	}
@@ -455,47 +455,58 @@ void CPathEstimator::Update() {
 	if (updatedBlocks.empty())
 		return;
 
-	std::vector<SingleBlock> v;
-	v.reserve(blocksToUpdate);
+	std::vector<SingleBlock> consumedBlocks;
+	consumedBlocks.reserve(blocksToUpdate);
 
-	// CalculateVertices (not threadsafe)
-	for (unsigned int n = 0; !updatedBlocks.empty() && n < blocksToUpdate; ) {
-		// copy the next block in line
-		const SingleBlock sb = updatedBlocks.front();
-		updatedBlocks.pop_front();
+	int2 curBatchBlockPos = (updatedBlocks.front()).blockPos;
+	int2 nxtBatchBlockPos = curBatchBlockPos;
 
-		// check if it's not already updated
-		if (blockStates.nodeMask[sb.blockPos.y * nbrOfBlocksX + sb.blockPos.x] & PATHOPT_OBSOLETE) {
-			// no need to check for duplicates, cause FindOffset is deterministic
-			// and so even when we compute it multiple times the result will be the same
-			v.push_back(sb);
+	while (!updatedBlocks.empty()) {
+		nxtBatchBlockPos = (updatedBlocks.front()).blockPos;
 
-			// always process all movedefs of a square in one rush
-			// needed cause blockStates.nodeMask saves PATHOPT_OBSOLETE just for the square and not the movedefs
-			// if we wouldn't process them in one rush, it could happen that square changes are missed for `lower` movdefs
-			for (auto it = updatedBlocks.begin(), E = updatedBlocks.end(); it != E; ++it) {
-				if ((it->blockPos.x == sb.blockPos.x) && (it->blockPos.y == sb.blockPos.y)) {
-					v.push_back(sb);
-					n++;
-				} else {
-					updatedBlocks.erase(updatedBlocks.begin(), ++it);
-					break;
-				}
-			}
-
-			// one stale SingleBlock consumed
-			n++;
+		if ((blockStates.nodeMask[nxtBatchBlockPos.y * nbrOfBlocksX + nxtBatchBlockPos.x] & PATHOPT_OBSOLETE) == 0) {
+			updatedBlocks.pop_front();
+			continue;
 		}
+
+		// MapChanged ensures format of updatedBlocks is {
+		//   (x1,y1,pt1), (x1,y1,pt2), ..., (x1,y1,ptN), // 1st batch
+		//   (x2,y2,pt1), (x2,y2,pt2), ..., (x2,y2,ptN), // 2nd batch
+		//   ...
+		// }
+		//
+		// always process all MoveDefs of a block in one batch (even
+		// if we need to exceed blocksToUpdate to complete the batch)
+		//
+		// needed because blockStates.nodeMask saves PATHOPT_OBSOLETE
+		// for the block as a whole, not for every individual MoveDef
+		// (and terrain changes might affect only a subset of MoveDefs)
+		//
+		// if we didn't use batches, block changes might be missed for
+		// MoveDefs lower in the (path-type) ordering so we only allow
+		// exiting the loop at batch boundaries
+		if (nxtBatchBlockPos != curBatchBlockPos) {
+			curBatchBlockPos = nxtBatchBlockPos;
+
+			if (consumedBlocks.size() >= blocksToUpdate) {
+				break;
+			}
+		}
+
+		// no need to check for duplicates, because FindOffset is deterministic
+		// so even when we compute it multiple times the result will be the same
+		consumedBlocks.push_back(updatedBlocks.front());
+		updatedBlocks.pop_front();
 	}
 
-	blockUpdatePenalty += std::max(0, int(v.size()) - int(blocksToUpdate));
+	blockUpdatePenalty += std::max(0, int(consumedBlocks.size()) - int(blocksToUpdate));
 
 	// FindOffset (threadsafe)
 	{
 		SCOPED_TIMER("CPathEstimator::FindOffset");
-		for_mt(0, v.size(), [&](const int n) {
+		for_mt(0, consumedBlocks.size(), [&](const int n) {
 			// copy the next block in line
-			const SingleBlock sb = v[n];
+			const SingleBlock sb = consumedBlocks[n];
 
 			const unsigned int blockX = sb.blockPos.x;
 			const unsigned int blockZ = sb.blockPos.y;
@@ -510,19 +521,17 @@ void CPathEstimator::Update() {
 	// CalculateVertices (not threadsafe)
 	{
 		SCOPED_TIMER("CPathEstimator::CalculateVertices");
-		for (unsigned int n = 0; n < v.size(); ++n) {
+		for (unsigned int n = 0; n < consumedBlocks.size(); ++n) {
 			// copy the next block in line
-			const SingleBlock sb = v[n];
+			const SingleBlock sb = consumedBlocks[n];
 
 			const unsigned int blockX = sb.blockPos.x;
 			const unsigned int blockZ = sb.blockPos.y;
 			const unsigned int blockN = blockZ * nbrOfBlocksX + blockX;
 
+			// check for batch boundary
 			const MoveDef* currBlockMD = sb.moveDef;
-			const MoveDef* nextBlockMD = NULL;
-			if ((n + 1) < v.size()) {
-				nextBlockMD = v[n + 1].moveDef;
-			}
+			const MoveDef* nextBlockMD = ((n + 1) < consumedBlocks.size())? consumedBlocks[n + 1].moveDef: NULL;
 
 			CalculateVertices(*currBlockMD, blockX, blockZ);
 
@@ -534,14 +543,6 @@ void CPathEstimator::Update() {
 				blockStates.nodeMask[blockN] &= ~PATHOPT_OBSOLETE;
 			}
 		}
-	}
-}
-
-
-void CPathEstimator::UpdateFull() {
-	while (!updatedBlocks.empty()) {
-		Update();
-		Watchdog::ClearTimer();
 	}
 }
 
@@ -874,7 +875,7 @@ void CPathEstimator::ResetSearch() {
 bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::string& map)
 {
 	const unsigned int hash = Hash();
-	char hashString[50];
+	char hashString[64] = {0};
 
 	sprintf(hashString, "%u", hash);
 	LOG("[PathEstimator::%s] hash=%s\n", __FUNCTION__, hashString);
@@ -931,9 +932,9 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 
 		// File read successful.
 		return true;
-	} else {
-		return false;
 	}
+
+	return false;
 }
 
 
@@ -993,6 +994,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 
 /**
  * Returns a hash-code identifying the dataset of this estimator.
+ * FIXME: uses checksum of raw heightmap (before Lua has seen it)
  */
 unsigned int CPathEstimator::Hash() const
 {

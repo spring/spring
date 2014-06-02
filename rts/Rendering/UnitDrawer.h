@@ -92,6 +92,9 @@ public:
 	static void DrawBuildingSample(const UnitDef* unitdef, int team, float3 pos, int facing = 0);
 	static void DrawUnitDef(const UnitDef* unitDef, int team);
 
+	/// Returns true if the given unit should be drawn as icon in the current frame.
+	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
+
 	/** LuaOpenGL::Unit{Raw} **/
 	void DrawIndividual(CUnit* unit);
 
@@ -121,30 +124,6 @@ public:
 
 	void SetUseAdvShading(bool b) { advShading = b; }
 	void SetUseAdvFading(bool b) { advFading = b; }
-
-
-#ifdef USE_GML
-	bool multiThreadDrawUnit;
-	bool multiThreadDrawUnitShadow;
-
-	volatile bool mtDrawReflection;
-	volatile bool mtDrawRefraction;
-	const CUnit* volatile mtExcludeUnit;
-
-	bool showHealthBars;
-
-	static void DrawOpaqueUnitMT(void* c, CUnit* unit) {
-		CUnitDrawer* const ud = reinterpret_cast<CUnitDrawer*>(c);
-		ud->DrawOpaqueUnit(unit, ud->mtExcludeUnit, ud->mtDrawReflection, ud->mtDrawRefraction);
-	}
-
-	static void DrawOpaqueUnitShadowMT(void* c, CUnit* unit) {
-		reinterpret_cast<CUnitDrawer*>(c)->DrawOpaqueUnitShadow(unit);
-	}
-
-	bool UnitStatBarVisible(const CUnit* unit);
-	void DrawUnitStatBars(CUnit* unit);
-#endif
 
 
 private:
@@ -179,9 +158,6 @@ private:
 	static void DrawIcon(CUnit* unit, bool asRadarBlip);
 	void DrawCloakedUnitsHelper(int modelType);
 	void DrawCloakedUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass);
-
-	/// Returns true if the given unit should be drawn as icon in the current frame.
-	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
 
 	void SelectRenderState(bool shaderPath) {
 		unitDrawerState = shaderPath? unitDrawerStateSSP: unitDrawerStateFFP;
@@ -249,9 +225,6 @@ private:
 	std::vector<std::set<CUnit*> > liveGhostBuildings;
 
 	std::set<CUnit*> drawIcon;
-#ifdef USE_GML
-	std::set<CUnit*> drawStat;
-#endif
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
 	std::map<icon::CIconData*, std::set<const CUnit*> > unitsByIcon;

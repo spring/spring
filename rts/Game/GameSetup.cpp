@@ -202,6 +202,15 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 	}
 }
 
+void CGameSetup::LoadMutators(const TdfParser& file, std::vector<std::string>& mutatorsList)
+{
+	for (int a = 0; a < 10; ++a) {
+		std::string s = file.SGetValueDef("", IntToString(a, "GAME\\MUTATOR%i"));
+		if (s.empty()) break;
+		mutatorsList.push_back(s);
+	}
+}
+
 void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameList)
 {
 	numDemoPlayers = 0;
@@ -504,6 +513,7 @@ bool CGameSetup::Init(const std::string& buf)
 	RemapTeams();
 	RemapAllyteams();
 
+	LoadMutators(file, mutatorsList);
 	LoadUnitRestrictions(file);
 
 	// Postprocessing

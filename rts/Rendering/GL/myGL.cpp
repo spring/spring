@@ -17,51 +17,31 @@
 #include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Platform/MessageBox.h"
-
-#ifdef DEBUG //used for StacktraceOnGLErrors
 #include "System/Platform/CrashHandler.h"
+#include "System/Platform/MessageBox.h"
 #include "System/Platform/Threading.h"
-#endif
 
 
 CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false).description("Disables the warning an user will receive if (s)he attempts to run Spring on an outdated and underpowered video card.");
-CONFIG(bool, ReportGLErrors).defaultValue(false);
-CONFIG(bool, StacktraceOnGLErrors).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs (only available in DEBUG builds)");
+CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug feedback. (see GL_ARB_debug_output)");
+CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
 
 static CVertexArray* vertexArray1 = NULL;
 static CVertexArray* vertexArray2 = NULL;
-
-#ifdef USE_GML
-static CVertexArray vertexArrays1[GML_MAX_NUM_THREADS];
-static CVertexArray vertexArrays2[GML_MAX_NUM_THREADS];
-static CVertexArray* currentVertexArrays[GML_MAX_NUM_THREADS];
-#else
 static CVertexArray* currentVertexArray = NULL;
-#endif
 //BOOL gmlVertexArrayEnable = 0;
 /******************************************************************************/
 /******************************************************************************/
 
 CVertexArray* GetVertexArray()
 {
-#ifdef USE_GML // each thread gets its own array to avoid conflicts
-	int thread = GML::ThreadNumber();
-	if (currentVertexArrays[thread] == &vertexArrays1[thread]) {
-		currentVertexArrays[thread] = &vertexArrays2[thread];
-	} else {
-		currentVertexArrays[thread] = &vertexArrays1[thread];
-	}
-	return currentVertexArrays[thread];
-#else
 	if (currentVertexArray == vertexArray1){
 		currentVertexArray = vertexArray2;
 	} else {
 		currentVertexArray = vertexArray1;
 	}
 	return currentVertexArray;
-#endif
 }
 
 
@@ -69,24 +49,25 @@ CVertexArray* GetVertexArray()
 
 void PrintAvailableResolutions()
 {
+	char buffer[1024];
+	int n = 0;
+
 	// Get available fullscreen/hardware modes
-	SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL);
-	if (modes == (SDL_Rect**)0) {
-		LOG("Supported Video modes: No modes available!");
-	} else if (modes == (SDL_Rect**)-1) {
-		LOG("Supported Video modes: All modes available.");
-	} else {
-		char buffer[1024];
-		unsigned char n = 0;
-		for (int i = 0; modes[i]; ++i) {
-			n += SNPRINTF(&buffer[n], 1024-n, "%dx%d, ", modes[i]->w, modes[i]->h);
-		}
-		// remove last comma
-		if (n >= 2) {
-			buffer[n - 2] = '\0';
-		}
-		LOG("Supported Video modes: %s", buffer);
+	//FIXME this checks only the main screen
+	for (int i=SDL_GetNumDisplayModes(0) - 1; i>=0; --i) {
+		SDL_DisplayMode mode;
+		SDL_GetDisplayMode(0, i, &mode);
+		n += SNPRINTF(&buffer[n], 1024-n, "%dx%d, ", mode.w, mode.h);
 	}
+
+	// remove last comma
+	if (n >= 2) {
+		buffer[n - 2] = '\0';
+	}
+	if (n == 0) {
+		SNPRINTF(&buffer[n], 1024-n, "NONE");
+	}
+	LOG("Supported Video modes: %s", buffer);
 }
 
 #ifdef GL_ARB_debug_output
@@ -169,12 +150,10 @@ void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
 	LOG_L(L_ERROR, "OpenGL: source<%s> type<%s> id<%u> severity<%s>:\n%s",
 			sourceStr.c_str(), typeStr.c_str(), id, severityStr.c_str(),
 			messageStr.c_str());
-#ifdef DEBUG
-	if (configHandler->GetBool("StacktraceOnGLErrors")) {
-		const std::string threadName = "rendering";
-		CrashHandler::Stacktrace(Threading::GetCurrentThread(), threadName);
+
+	if (configHandler->GetBool("DebugGLStacktraces")) {
+		CrashHandler::Stacktrace(Threading::GetCurrentThread(), "rendering", LOG_LEVEL_WARNING);
 	}
-#endif
 }
 #endif // GL_ARB_debug_output
 
@@ -203,7 +182,7 @@ static bool GetAvailableVideoRAM(GLint* memory)
 	} else
 #endif
 	{
-		memory[0] = SDL_GetVideoInfo()->video_mem;
+		memory[0] = 0;
 		memory[1] = memory[0]; // not available
 	}
 
@@ -300,7 +279,11 @@ void LoadExtensions()
 {
 	glewInit();
 
-	const SDL_version* sdlVersion = SDL_Linked_Version();
+	SDL_version sdlVersionCompiled;
+	SDL_version sdlVersionLinked;
+
+	SDL_VERSION(&sdlVersionCompiled);
+	SDL_GetVersion(&sdlVersionLinked);
 	const char* glVersion = (const char*) glGetString(GL_VERSION);
 	const char* glVendor = (const char*) glGetString(GL_VENDOR);
 	const char* glRenderer = (const char*) glGetString(GL_RENDERER);
@@ -321,7 +304,7 @@ void LoadExtensions()
 	}
 
 	// log some useful version info
-	LOG("SDL version:  %d.%d.%d", sdlVersion->major, sdlVersion->minor, sdlVersion->patch);
+	LOG("SDL version:  linked %d.%d.%d; compiled %d.%d.%d", sdlVersionLinked.major, sdlVersionLinked.minor, sdlVersionLinked.patch, sdlVersionCompiled.major, sdlVersionCompiled.minor, sdlVersionCompiled.patch);
 	LOG("GL version:   %s", glVersion);
 	LOG("GL vendor:    %s", glVendor);
 	LOG("GL renderer:  %s", glRenderer);
@@ -330,16 +313,6 @@ void LoadExtensions()
 	LOG("Video RAM:    %s", glVidMemStr);
 
 	ShowCrappyGpuWarning(glVendor, glRenderer);
-
-	/*{
-		std::string s = (char*)glGetString(GL_EXTENSIONS);
-		for (unsigned int i=0; i<s.length(); i++)
-			if (s[i]==' ') s[i]='\n';
-
-		std::ofstream ofs("ext.txt");
-		if (!ofs.bad() && ofs.is_open())
-			ofs.write(s.c_str(), s.length());
-	}*/
 
 	std::string missingExts = "";
 	if (!GLEW_ARB_multitexture) {
@@ -357,29 +330,27 @@ void LoadExtensions()
 		char errorMsg[errorMsg_maxSize];
 		SNPRINTF(errorMsg, errorMsg_maxSize,
 				"Needed OpenGL extension(s) not found:\n"
-				"%s\n"
+				"  %s\n\n"
 				"Update your graphic-card driver!\n"
-				"graphic card:   %s\n"
-				"OpenGL version: %s\n",
+				"  Graphic card:   %s\n"
+				"  OpenGL version: %s\n",
 				missingExts.c_str(),
 				glRenderer,
 				glVersion);
-		handleerror(0, errorMsg, "Update graphic drivers", 0);
+		throw unsupported_error(errorMsg);
 	}
 
 	// install OpenGL DebugMessageCallback
 #if defined(GL_ARB_debug_output) && !defined(HEADLESS)
-	if (GLEW_ARB_debug_output && configHandler->GetBool("ReportGLErrors")) {
+	if (GLEW_ARB_debug_output && configHandler->GetBool("DebugGL")) {
 		LOG("Installing OpenGL-DebugMessageHandler");
 		glDebugMessageCallbackARB(&OpenGLDebugMessageCallback, NULL);
 
-	#ifdef DEBUG
-		if (configHandler->GetBool("StacktraceOnGLErrors")) {
+		if (configHandler->GetBool("DebugGLStacktraces")) {
 			// The callback should happen in the thread that made the gl call
 			// so we get proper stacktraces.
 			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
 		}
-	#endif
 	}
 #endif
 

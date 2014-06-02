@@ -6,7 +6,7 @@
 #include <string>
 #ifndef WIN32
 #include <pthread.h>
-#include <System/Platform/Linux/ThreadSupport.h>
+#include "System/Platform/Linux/ThreadSupport.h"
 #endif
 #ifdef __APPLE__
 #include <libkern/OSAtomic.h> // OSAtomicIncrement64
@@ -136,8 +136,6 @@ namespace Threading {
 	 */
 	void SetSimThread(bool set);
 	bool IsSimThread();
-
-	bool UpdateGameController(CGameController* ac);
 
 	void SetLuaBatchThread(bool set);
 	bool IsLuaBatchThread();

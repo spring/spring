@@ -1,8 +1,23 @@
 language: cpp
 compiler:
+#  - clang
   - gcc
 before_script:
-  - sudo apt-get install libglew-dev libsdl-dev libdevil-dev libopenal-dev libogg-dev libvorbis-dev libfreetype6-dev p7zip-full libxcursor-dev libboost-thread-dev libboost-regex-dev libboost-system-dev libboost-program-options-dev libboost-signals-dev
+  - sudo add-apt-repository ppa:bartbes/love-stable --yes
+  - sudo apt-get update -qq
+  - sudo apt-get install libglew-dev libsdl2-dev libdevil-dev libopenal-dev libogg-dev libvorbis-dev libfreetype6-dev p7zip-full libxcursor-dev
+  - sudo apt-get install libboost-thread1.48-dev libboost-regex1.48-dev libboost-system1.48-dev libboost-program-options1.48-dev libboost-signals1.48-dev libboost-chrono1.48-dev libboost-filesystem1.48-dev libboost-test1.48-dev
 script:
-  - cmake . && make spring-headless && make check
+  - cmake .
+  - make spring-headless pr-downloader tests -k
+  - tools/pr-downloader/src/pr-downloader DownCount_v2
+# disabled because "make check" needs installed spring and gcc 4.6 fails
+# with creg it seems: https://travis-ci.org/spring/spring/builds/17682923#L2664
+#  - make check
+notifications:
+  irc:
+    channels:
+      - "chat.freenode.net#taspring"
+    on_success: change
+    on_failure: change
 

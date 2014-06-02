@@ -20,6 +20,7 @@ bool LuaMathExtra::PushEntries(lua_State* L)
 	LuaPushNamedCFunc(L, "mix",    mix);
 	LuaPushNamedCFunc(L, "round",  round);
 	LuaPushNamedCFunc(L, "erf",    erf);
+	LuaPushNamedCFunc(L, "smoothstep", smoothstep);
 	return true;
 }
 
@@ -69,7 +70,7 @@ int LuaMathExtra::mix(lua_State* L) {
 	const lua_Number y = luaL_checknumber_noassert(L, 2);
 	const lua_Number a = luaL_checknumber_noassert(L, 3);
 
-	lua_pushnumber(L, Blend(x, y, a));
+	lua_pushnumber(L, ::mix(x, y, a));
 	return 1;
 }
 
@@ -96,6 +97,11 @@ int LuaMathExtra::round(lua_State* L) {
 
 int LuaMathExtra::erf(lua_State* L) {
 	lua_pushnumber(L, math::erf(luaL_checknumber_noassert(L, 1)));
+	return 1;
+}
+
+int LuaMathExtra::smoothstep(lua_State* L) {
+	lua_pushnumber(L, ::smoothstep(luaL_checkfloat(L, 1), luaL_checkfloat(L, 2), luaL_checkfloat(L, 3)));
 	return 1;
 }
 

@@ -10,7 +10,6 @@ ADD_SUBDIRECTORY(headlessStubs)
 ADD_SUBDIRECTORY(assimp)
 
 if    (NOT HEADLESS_SYSTEM)
-	Add_Subdirectory(gml)
 
 	if    (USE_LIBSQUISH)
 		ADD_SUBDIRECTORY(rg-etc1)

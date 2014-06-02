@@ -47,6 +47,12 @@ class LuaVFS {
 		LuaParameters: (string Filename), (unsigned int checksum, optional)
 		*/
 		static int MapArchive(lua_State* L);
+		/**
+		@brief Unmaps archives mapped with MapArchive from VFS (only from unsynced)
+		
+		LuaParameters: (string Filename)
+		*/
+		static int UnmapArchive(lua_State* L);
 
 		static int ZlibCompress(lua_State* L);
 		static int ZlibDecompress(lua_State* L);

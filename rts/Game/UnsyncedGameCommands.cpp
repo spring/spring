@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "UnsyncedGameCommands.h"
-#include "lib/gml/gmlcnf.h"
 
 #include "UnsyncedActionExecutor.h"
 #include "SyncedGameCommands.h"
@@ -42,7 +41,7 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/FeatureDrawer.h"
-#include "Rendering/glFont.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/Screenshot.h"
@@ -55,6 +54,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Groups/GroupHandler.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/EndGameBox.h"
 #include "UI/GameInfo.h"
@@ -62,6 +62,7 @@
 #include "UI/InfoConsole.h"
 #include "UI/InputReceiver.h"
 #include "UI/KeyBindings.h"
+#include "UI/KeyCodes.h"
 #include "UI/MiniMap.h"
 #include "UI/QuitBox.h"
 #include "UI/ResourceBar.h"
@@ -75,12 +76,12 @@
 #include "System/Log/ILog.h"
 #include "System/GlobalConfig.h"
 #include "Net/Protocol/NetProtocol.h"
-#include "System/Input/KeyInput.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/DumpState.h"
 #include "System/Util.h"
+#include "System/EventHandler.h"
 
 #include <SDL_events.h>
 
@@ -190,25 +191,39 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 		return true;
 	}
 	else if (action.command == "chatswitchally") {
-		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+		if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
+			// already are in ally chat -> toggle it off
+			userInput = userInput.substr(2);
+			writingPos = std::max(0, writingPos - 2);
+			userInputPrefix = "";
+		}
+		else if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
+			// are in spec chat -> switch it to ally chat
 			userInput[0] = 'a';
+			userInputPrefix = "a:";
 		} else {
 			userInput = "a:" + userInput;
 			writingPos += 2;
+			userInputPrefix = "a:";
 		}
-
-		userInputPrefix = "a:";
 		return true;
 	}
 	else if (action.command == "chatswitchspec") {
-		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+		if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
+			// already are in spec chat -> toggle it off
+			userInput = userInput.substr(2);
+			writingPos = std::max(0, writingPos - 2);
+			userInputPrefix = "";
+		}
+		else if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
+			// are in ally chat -> switch it to spec chat
 			userInput[0] = 's';
+			userInputPrefix = "s:";
 		} else {
 			userInput = "s:" + userInput;
 			writingPos += 2;
+			userInputPrefix = "s:";
 		}
-
-		userInputPrefix = "s:";
 		return true;
 	}
 	else if (action.command == "pastetext") {
@@ -226,14 +241,15 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 
 	else if (action.command == "edit_backspace") {
 		if (!userInput.empty() && (writingPos > 0)) {
-			userInput.erase(writingPos - 1, 1);
-			writingPos--;
+			int prev=Utf8PrevChar(userInput,writingPos);
+			userInput.erase(prev, writingPos-prev);
+			writingPos=prev;
 		}
 		return true;
 	}
 	else if (action.command == "edit_delete") {
 		if (!userInput.empty() && (writingPos < (int)userInput.size())) {
-			userInput.erase(writingPos, 1);
+			userInput.erase(writingPos, Utf8CharLen(userInput,writingPos));
 		}
 		return true;
 	}
@@ -246,14 +262,14 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 		return true;
 	}
 	else if (action.command == "edit_prev_char") {
-		writingPos = std::max(0, std::min((int)userInput.length(), writingPos - 1));
+		writingPos = Utf8PrevChar(userInput,writingPos);
 		return true;
 	}
 	else if (action.command == "edit_next_char") {
-		writingPos = std::max(0, std::min((int)userInput.length(), writingPos + 1));
+		writingPos = Utf8NextChar(userInput,writingPos);
 		return true;
 	}
-	else if (action.command == "edit_prev_word") {
+	else if (action.command == "edit_prev_word") { //TODO It don't seems to work correctly with utf-8
 		// prev word
 		const char* s = userInput.c_str();
 		int p = writingPos;
@@ -262,7 +278,7 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 		writingPos = p;
 		return true;
 	}
-	else if (action.command == "edit_next_word") {
+	else if (action.command == "edit_next_word") { //TODO It don't seems to work correctly with utf-8
 		const int len = (int)userInput.length();
 		const char* s = userInput.c_str();
 		int p = writingPos;
@@ -372,7 +388,7 @@ public:
 			"<chat command description: SelectUnits>") {} // TODO
 
 	bool Execute(const UnsyncedAction& action) const {
-		game->SelectUnits(action.GetArgs()); //TODO give it a return argument?
+		selectedUnitsHandler.SelectUnits(action.GetArgs()); //TODO give it a return argument?
 		return true;
 	}
 };
@@ -385,7 +401,7 @@ public:
 			"<chat command description: SelectUnits>") {} // TODO
 
 	bool Execute(const UnsyncedAction& action) const {
-		game->SelectCycle(action.GetArgs()); //TODO give it a return argument?
+		selectedUnitsHandler.SelectCycle(action.GetArgs()); //TODO give it a return argument?
 		return true;
 	}
 };
@@ -680,9 +696,6 @@ public:
 		if (pos.x >= 0) {
 			inMapDrawer->SetDrawMode(false);
 			inMapDrawer->PromptLabel(pos);
-			if ((action.GetKey() >= SDLK_SPACE) && (action.GetKey() <= SDLK_DELETE)) {
-				game->ignoreNextChar=true;
-			}
 		} else {
 			LOG_L(L_WARNING, "/DrawLabel: move mouse over the map");
 		}
@@ -719,8 +732,6 @@ public:
 			"Moves the camera to the center of the currently selected units") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		GML_RECMUTEX_LOCK(sel); // ActionPressed
-
 		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 		if (selUnits.empty())
 			return false;
@@ -1202,9 +1213,9 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (!action.IsRepeat()) {
-			grouphandlers[gu->myTeam]->GroupCommand(groupId);
+			return grouphandlers[gu->myTeam]->GroupCommand(groupId);
 		}
-		return true;
+		return false;
 	}
 
 private:
@@ -1219,6 +1230,9 @@ public:
 			"Moves the camera to show the position of the last message") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		if (game->infoConsole->GetMsgPosCount() == 0)
+			return false;
+
 		// cycle through the positions
 		camHandler->CameraTransition(0.6f);
 		camHandler->GetCurrentController().SetPos(game->infoConsole->GetMsgPos());
@@ -1247,11 +1261,7 @@ public:
 		game->userInput = game->userInputPrefix;
 		game->writingPos = (int)game->userInput.length();
 		game->chatting = true;
-		//this command can get called too from console or lua, if so GetKey is -1, don't drop next char then
-		if (action.GetKey() != SDLK_RETURN && action.GetKey() != -1 ) {
-			game->ignoreNextChar = true;
-		}
-
+		game->ignoreNextChar = true;
 		game->consoleHistory->ResetPosition();
 		return true;
 	}
@@ -1311,44 +1321,6 @@ public:
 
 
 
-class ShowHealthBarsActionExecutor : public IUnsyncedActionExecutor {
-public:
-	ShowHealthBarsActionExecutor() : IUnsyncedActionExecutor("ShowHealthBars",
-			"Enable/Disable rendering of health-bars for units") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-#ifdef USE_GML
-		SetBoolArg(unitDrawer->showHealthBars, action.GetArgs());
-		LogSystemStatus("rendering of health-bars", unitDrawer->showHealthBars);
-#endif // USE_GML
-		return true;
-	}
-};
-
-
-
-class ShowRezurectionBarsActionExecutor : public IUnsyncedActionExecutor {
-public:
-	ShowRezurectionBarsActionExecutor() : IUnsyncedActionExecutor("ShowRezBars",
-			"Enable/Disable rendering of resource-bars for features") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-#ifdef USE_GML
-		bool showResBars = featureDrawer->GetShowRezBars();
-		SetBoolArg(showResBars, action.GetArgs());
-		featureDrawer->SetShowRezBars(showResBars);
-		LogSystemStatus("rendering of resource-bars for features", featureDrawer->GetShowRezBars());
-#endif // USE_GML
-		return true;
-	}
-};
-
-
-
 class PauseActionExecutor : public IUnsyncedActionExecutor {
 public:
 	PauseActionExecutor() : IUnsyncedActionExecutor("Pause",
@@ -1365,7 +1337,6 @@ public:
 		SetBoolArg(newPause, action.GetArgs());
 		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
 		return true;
-
 	}
 
 };
@@ -1505,146 +1476,6 @@ public:
 
 
 
-#ifdef USE_GML
-class MultiThreadDrawGroundActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MultiThreadDrawGroundActionExecutor() : IUnsyncedActionExecutor("MultiThreadDrawGround",
-			"Enable/Disable multi threaded ground rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		SetBoolArg(gd->multiThreadDrawGround, action.GetArgs());
-		configHandler->Set("MultiThreadDrawGround", gd->multiThreadDrawGround ? 1 : 0);
-		LogSystemStatus("Multi threaded ground rendering", gd->multiThreadDrawGround);
-		return true;
-	}
-};
-
-
-
-class MultiThreadDrawGroundShadowActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MultiThreadDrawGroundShadowActionExecutor() : IUnsyncedActionExecutor("MultiThreadDrawGroundShadow",
-			"Enable/Disable multi threaded ground shadow rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		SetBoolArg(gd->multiThreadDrawGroundShadow, action.GetArgs());
-		configHandler->Set("MultiThreadDrawGroundShadow", gd->multiThreadDrawGroundShadow ? 1 : 0);
-		LogSystemStatus("Multi threaded ground shadow rendering", gd->multiThreadDrawGroundShadow);
-		return true;
-	}
-};
-
-
-
-class MultiThreadDrawUnitActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MultiThreadDrawUnitActionExecutor() : IUnsyncedActionExecutor("MultiThreadDrawUnit",
-			"Enable/Disable multi threaded unit rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-		SetBoolArg(unitDrawer->multiThreadDrawUnit, action.GetArgs());
-		configHandler->Set("MultiThreadDrawUnit", unitDrawer->multiThreadDrawUnit ? 1 : 0);
-		LogSystemStatus("Multi threaded unit rendering", unitDrawer->multiThreadDrawUnit);
-		return true;
-	}
-};
-
-
-
-class MultiThreadDrawUnitShadowActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MultiThreadDrawUnitShadowActionExecutor() : IUnsyncedActionExecutor("MultiThreadDrawUnitShadow",
-			"Enable/Disable multi threaded unit shadow rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-		SetBoolArg(unitDrawer->multiThreadDrawUnitShadow, action.GetArgs());
-		configHandler->Set("MultiThreadDrawUnitShadow", unitDrawer->multiThreadDrawUnitShadow ? 1 : 0);
-		LogSystemStatus("Multi threaded unit shadow rendering", unitDrawer->multiThreadDrawUnitShadow);
-		return true;
-	}
-};
-
-
-
-class MultiThreadDrawActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MultiThreadDrawActionExecutor() : IUnsyncedActionExecutor("MultiThreadDraw",
-			"Enable/Disable multi threaded rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		bool mtEnabled = IsMTEnabled();
-		SetBoolArg(mtEnabled, action.GetArgs());
-		gd->multiThreadDrawGround = mtEnabled;
-		unitDrawer->multiThreadDrawUnit = mtEnabled;
-		unitDrawer->multiThreadDrawUnitShadow = mtEnabled;
-		if (!mtEnabled) {
-			gd->multiThreadDrawGroundShadow = false;
-		}
-		LogSystemStatus("Multithreaded rendering", IsMTEnabled());
-		return true;
-	}
-
-	static bool IsMTEnabled() {
-		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		// find out if most of the MT stuff is on or off so we can toggle based on that
-		return
-				((gd->multiThreadDrawGround ? 1 : 0)
-				+ (unitDrawer->multiThreadDrawUnit ? 1 : 0)
-				+ (unitDrawer->multiThreadDrawUnitShadow ? 1 : 0))
-				> 1;
-	}
-};
-
-
-
-class MultiThreadSimActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MultiThreadSimActionExecutor(bool inv = false) : IUnsyncedActionExecutor("MultiThreadSim",
-			"Enable/Disable separate simulation thread"), inverse(inv) {}
-
-	bool inverse;
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-#	if GML_ENABLE_SIM
-		bool mtEnabled = MultiThreadDrawActionExecutor::IsMTEnabled();
-		// HACK GetInnerAction() should not be used here
-		bool mtSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? ((inverse && action.GetArgs().empty()) ? !mtEnabled : mtEnabled) : GML::MultiThreadSim();
-		SetBoolArg(mtSim, action.GetArgs());
-		GML::MultiThreadSim(mtSim);
-
-		LogSystemStatus("Separate simulation thread", GML::MultiThreadSim());
-#	endif // GML_ENABLE_SIM
-		return true;
-	}
-};
-
-
-
-class MultiThreadActionExecutor : public SequentialActionExecutor {
-public:
-	MultiThreadActionExecutor() : SequentialActionExecutor("MultiThread") {
-		AddExecutor(new MultiThreadDrawActionExecutor());
-		AddExecutor(new MultiThreadSimActionExecutor(true));
-	}
-};
-#endif // USE_GML
-
-
-
 class SpeedControlActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SpeedControlActionExecutor() : IUnsyncedActionExecutor("SpeedControl",
@@ -1715,6 +1546,35 @@ public:
 		mouse->ToggleHwCursor(enable);
 		configHandler->Set("HardwareCursor", enable);
 		LogSystemStatus("Hardware mouse-cursor", enable);
+		return true;
+	}
+};
+
+
+
+class FullscreenActionExecutor : public IUnsyncedActionExecutor {
+public:
+	FullscreenActionExecutor() : IUnsyncedActionExecutor("Fullscreen",
+			"Switches fullscreen mode") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		if (!action.GetArgs().empty()) {
+			globalRendering->fullScreen = (atoi(action.GetArgs().c_str()) != 0);
+		} else {
+			globalRendering->fullScreen = !globalRendering->fullScreen;
+		}
+
+		const bool borderless = configHandler->GetBool("WindowBorderless");
+		if (globalRendering->fullScreen) {
+			if (borderless) {
+				SDL_SetWindowFullscreen(globalRendering->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+			} else {
+				SDL_SetWindowFullscreen(globalRendering->window, SDL_WINDOW_FULLSCREEN);
+			}
+		} else {
+			SDL_SetWindowFullscreen(globalRendering->window, 0);
+			SDL_SetWindowBordered(globalRendering->window, borderless ? SDL_FALSE : SDL_TRUE);
+		}
 		return true;
 	}
 };
@@ -2032,8 +1892,8 @@ public:
 		if  (inputReceivers.empty() || dynamic_cast<CQuitBox*>(inputReceivers.front()))
 			return false;
 
-		const CKeyBindings::HotkeyList quitList = keyBindings->GetHotkeys("quitmenu");
-		const std::string quitKey = quitList.empty() ? "<none>" : quitList.front();
+		const CKeyBindings::HotkeyList& quitList = keyBindings->GetHotkeys("quitmenu");
+		const std::string quitKey = quitList.empty() ? "<none>" : *quitList.begin();
 		LOG("Press %s to access the quit menu", quitKey.c_str());
 		return true;
 	}
@@ -2125,23 +1985,18 @@ public:
 			"Prevents/Enables the mouse from leaving the game window (windowed mode only)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		SDL_GrabMode newMode;
+		SDL_bool newMode;
 		if (action.GetArgs().empty()) {
-			const SDL_GrabMode curMode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
-			switch (curMode) {
-				default: // make compiler happy
-				case SDL_GRAB_OFF: newMode = SDL_GRAB_ON;  break;
-				case SDL_GRAB_ON:  newMode = SDL_GRAB_OFF; break;
-			}
+			newMode = (SDL_GetWindowGrab(globalRendering->window)) ? SDL_FALSE : SDL_TRUE;
 		} else {
 			if (atoi(action.GetArgs().c_str())) {
-				newMode = SDL_GRAB_ON;
+				newMode = SDL_TRUE;
 			} else {
-				newMode = SDL_GRAB_OFF;
+				newMode = SDL_FALSE;
 			}
 		}
-		SDL_WM_GrabInput(newMode);
-		LogSystemStatus("Input grabbing", (newMode == SDL_GRAB_ON));
+		SDL_SetWindowGrab(globalRendering->window, newMode);
+		LogSystemStatus("Input grabbing", (newMode == SDL_TRUE));
 		return true;
 	}
 };
@@ -2227,27 +2082,6 @@ public:
 		return true;
 	}
 };
-
-
-
-class MTInfoActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MTInfoActionExecutor() : IUnsyncedActionExecutor("MTInfo",
-			"Shows/Hides the multi threading info panel") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		if (!GML::Enabled())
-			return false;
-		bool showMTInfo = (game->showMTInfo != -1);
-		SetBoolArg(showMTInfo, action.GetArgs());
-		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
-		int mtl = globalConfig->GetMultiThreadLua();
-		game->showMTInfo = showMTInfo ? mtl : -1;
-		GML::EnableCallChainWarnings(!!game->showMTInfo);
-		return true;
-	}
-};
-
 
 
 class TeamHighlightActionExecutor : public IUnsyncedActionExecutor {
@@ -2560,13 +2394,61 @@ public:
 class LuaUIActionExecutor : public IUnsyncedActionExecutor {
 public:
 	LuaUIActionExecutor() : IUnsyncedActionExecutor("LuaUI",
-			"Allow/Disallow Lua to draw (GUI elements)") {}
+			"Allows one to reload or disable LuaUI, or alternatively to send"
+			" a chat message to LuaUI") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (!guihandler)
 			return false;
 
-		guihandler->PushLayoutCommand(action.GetArgs());
+		const std::string& command = action.GetArgs();
+
+		if (command == "reload" || command == "enable") {
+			if (luaUI && luaUI->IsRunning()) {
+				// NOTE: causes a SEGV through RunCallIn()
+				LOG_L(L_WARNING, "Can not reload from within LuaUI, yet");
+				return true;
+			}
+			if (luaUI == NULL) {
+				LOG("Loading: \"%s\"", "luaui.lua"); // FIXME duplicate of below
+				CLuaUI::LoadHandler();
+				if (luaUI == NULL) {
+					guihandler->LoadConfig("ctrlpanel.txt");
+					LOG_L(L_WARNING, "Loading failed");
+				}
+			} else {
+				if (command == "enable") {
+					LOG_L(L_WARNING, "LuaUI is already enabled");
+				} else {
+					LOG("Reloading: \"%s\"", "luaui.lua"); // FIXME
+					CLuaUI::FreeHandler();
+					CLuaUI::LoadHandler();
+					if (luaUI == NULL) {
+						guihandler->LoadConfig("ctrlpanel.txt");
+						LOG_L(L_WARNING, "Reloading failed");
+					}
+				}
+			}
+			guihandler->LayoutIcons(false);
+		}
+		else if (command == "disable") {
+			if (luaUI && luaUI->IsRunning()) {
+				// NOTE: might cause a SEGV through RunCallIn()
+				LOG_L(L_WARNING, "Can not disable from within LuaUI, yet");
+				return true;
+			}
+			if (luaUI != NULL) {
+				CLuaUI::FreeHandler();
+				LOG("Disabled LuaUI");
+			}
+			guihandler->LayoutIcons(false);
+		}
+		else if (luaUI) {
+			luaUI->GotChatMsg(command, 0);
+		} else {
+			LOG_L(L_DEBUG, "LuaUI is not loaded");
+		}
+
 		return true;
 	}
 };
@@ -2882,29 +2764,6 @@ public:
 
 
 
-class SetGammaActionExecutor : public IUnsyncedActionExecutor {
-public:
-	SetGammaActionExecutor() : IUnsyncedActionExecutor("SetGamma",
-			"Set the rendering gamma value(s) through SDL") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		float r, g, b;
-		const int count = sscanf(action.GetArgs().c_str(), "%f %f %f", &r, &g, &b);
-		if (count == 1) {
-			SDL_SetGamma(r, r, r);
-			LOG("Set gamma value");
-		} else if (count == 3) {
-			SDL_SetGamma(r, g, b);
-			LOG("Set gamma values");
-		} else {
-			LOG_L(L_WARNING, "Unknown gamma format");
-		}
-		return true;
-	}
-};
-
-
-
 class CrashActionExecutor : public IUnsyncedActionExecutor {
 public:
 	CrashActionExecutor() : IUnsyncedActionExecutor("Crash",
@@ -2965,7 +2824,7 @@ public:
 			} else {
 				const float3& pos = camera->GetPos();
 				const float3& dir = mouse->dir;
-				const float dist = ground->LineGroundCol(pos, pos + (dir * 30000.0f));
+				const float dist = CGround::LineGroundCol(pos, pos + (dir * 30000.0f));
 				givePos = pos + (dir * dist);
 			}
 
@@ -3355,8 +3214,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new TrackActionExecutor());
 	AddActionExecutor(new TrackOffActionExecutor());
 	AddActionExecutor(new TrackModeActionExecutor());
-	AddActionExecutor(new ShowHealthBarsActionExecutor()); // MT only
-	AddActionExecutor(new ShowRezurectionBarsActionExecutor()); // MT only
 	AddActionExecutor(new PauseActionExecutor());
 	AddActionExecutor(new DebugActionExecutor());
 	AddActionExecutor(new DebugColVolDrawerActionExecutor());
@@ -3368,19 +3225,11 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DrawTreesActionExecutor());
 	AddActionExecutor(new DynamicSkyActionExecutor());
 	AddActionExecutor(new DynamicSunActionExecutor());
-#ifdef USE_GML
-	AddActionExecutor(new MultiThreadDrawGroundActionExecutor());
-	AddActionExecutor(new MultiThreadDrawGroundShadowActionExecutor());
-	AddActionExecutor(new MultiThreadDrawUnitActionExecutor());
-	AddActionExecutor(new MultiThreadDrawUnitShadowActionExecutor());
-	AddActionExecutor(new MultiThreadDrawActionExecutor());
-	AddActionExecutor(new MultiThreadSimActionExecutor());
-	AddActionExecutor(new MultiThreadActionExecutor());
-#endif // USE_GML
 	AddActionExecutor(new SpeedControlActionExecutor());
 	AddActionExecutor(new GameInfoActionExecutor());
 	AddActionExecutor(new HideInterfaceActionExecutor());
 	AddActionExecutor(new HardwareCursorActionExecutor());
+	AddActionExecutor(new FullscreenActionExecutor());
 	AddActionExecutor(new IncreaseViewRadiusActionExecutor());
 	AddActionExecutor(new DecreaseViewRadiusActionExecutor());
 	AddActionExecutor(new MoreTreesActionExecutor());
@@ -3412,7 +3261,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new CrossActionExecutor());
 	AddActionExecutor(new FPSActionExecutor());
 	AddActionExecutor(new SpeedActionExecutor());
-	AddActionExecutor(new MTInfoActionExecutor());
 	AddActionExecutor(new TeamHighlightActionExecutor());
 	AddActionExecutor(new InfoActionExecutor());
 	AddActionExecutor(new CmdColorsActionExecutor());
@@ -3444,7 +3292,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DistDrawActionExecutor());
 	AddActionExecutor(new LODScaleActionExecutor());
 	AddActionExecutor(new WireMapActionExecutor());
-	AddActionExecutor(new SetGammaActionExecutor());
 	AddActionExecutor(new CrashActionExecutor());
 	AddActionExecutor(new ExceptionActionExecutor());
 	AddActionExecutor(new DivByZeroActionExecutor());

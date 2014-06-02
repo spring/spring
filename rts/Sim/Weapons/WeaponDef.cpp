@@ -326,6 +326,15 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		} else if (type == "BeamLaser" || type == "LightningCannon") {
 			heightmod = wdTable.GetFloat("heightMod", 1.0f);
 		}
+
+		if (type == "LaserCannon") {
+			// for lasers we want this to be true by default: it sets
+			// projectile ttl values to the minimum required to hit a
+			// target which prevents them overshooting (lasers travel
+			// many elmos per frame and ttl's are rounded) at maximum
+			// range
+			selfExplode = wdTable.GetBool("burnblow", true);
+		}
 	}
 
 	// setup the default damages

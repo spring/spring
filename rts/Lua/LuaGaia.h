@@ -21,7 +21,7 @@ class CLuaGaia : public CLuaHandleSynced
 
 	private:
 		CLuaGaia();
-		~CLuaGaia();
+		virtual ~CLuaGaia();
 };
 
 

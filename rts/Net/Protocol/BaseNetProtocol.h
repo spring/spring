@@ -18,7 +18,7 @@ namespace netcode
 struct PlayerStatistics;
 
 
-const unsigned short NETWORK_VERSION = atoi(SpringVersion::GetMajor().c_str());
+static const unsigned short NETWORK_VERSION = atoi(SpringVersion::GetMajor().c_str());
 
 
 /*

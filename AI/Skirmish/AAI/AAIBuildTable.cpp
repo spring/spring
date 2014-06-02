@@ -325,7 +325,7 @@ void AAIBuildTable::Init()
 
 			if(GetUnitDef(i).movedata)
 			{
-				if(GetUnitDef(i).movedata->moveType == MoveData::Ground_Move)
+				if(GetUnitDef(i).movedata->moveFamily == MoveData::Tank || GetUnitDef(i).movedata->moveFamily == MoveData::KBot)
 				{
 					// check for amphibious units
 					if(GetUnitDef(i).movedata->depth > 250)
@@ -333,17 +333,19 @@ void AAIBuildTable::Init()
 					else
 						units_static[i].movement_type |= MOVE_TYPE_GROUND;
 				}
-				else if(GetUnitDef(i).movedata->moveType == MoveData::Hover_Move)
+				else if(GetUnitDef(i).movedata->moveFamily == MoveData::Hover) {
 					units_static[i].movement_type |= MOVE_TYPE_HOVER;
+				}
 				// ship
-				else if(GetUnitDef(i).movedata->moveType == MoveData::Ship_Move)
+				else if(GetUnitDef(i).movedata->moveFamily == MoveData::Ship)
 				{
 					units_static[i].movement_type |= MOVE_TYPE_SEA;
 
-					if(GetUnitDef(i).categoryString.find("UNDERWATER") != string::npos)
+					if(GetUnitDef(i).categoryString.find("UNDERWATER") != string::npos) {
 						units_static[i].movement_type |= MOVE_TYPE_UNDERWATER;
-					else
+					} else {
 						units_static[i].movement_type |= MOVE_TYPE_FLOATER;
+					}
 				}
 			}
 			// aircraft
@@ -424,7 +426,7 @@ void AAIBuildTable::Init()
 					units_static[i].category = AIR_BASE;
 				}
 				// check if powerplant
-				else if(GetUnitDef(i).energyMake > cfg->MIN_ENERGY || GetUnitDef(i).tidalGenerator || GetUnitDef(i).energyUpkeep < -cfg->MIN_ENERGY)
+				else if(GetUnitDef(i).energyMake > cfg->MIN_ENERGY || GetUnitDef(i).tidalGenerator || GetUnitDef(i).windGenerator || GetUnitDef(i).energyUpkeep < -cfg->MIN_ENERGY)
 				{
 					if(!GetUnitDef(i).isAirBase && GetUnitDef(i).radarRadius == 0 && GetUnitDef(i).sonarRadius == 0)
 					{
@@ -484,7 +486,7 @@ void AAIBuildTable::Init()
 					units_of_category[STORAGE][units_static[i].side-1].push_back(GetUnitDef(i).id);
 					units_static[i].category = STORAGE;
 				}
-				else if(GetUnitDef(i).makesMetal > 0)
+				else if(GetUnitDef(i).makesMetal > 0 || GetUnitDef(i).metalMake > 0 || IsMetalMaker(i))
 				{
 					units_of_category[METAL_MAKER][units_static[i].side-1].push_back(GetUnitDef(i).id);
 					units_static[i].category = METAL_MAKER;
@@ -494,7 +496,9 @@ void AAIBuildTable::Init()
 			else if(GetUnitDef(i).movedata)
 			{
 				// ground units
-				if(GetUnitDef(i).movedata->moveType == MoveData::Ground_Move || GetUnitDef(i).movedata->moveType == MoveData::Hover_Move)
+				if(GetUnitDef(i).movedata->moveFamily == MoveData::Tank || 
+					GetUnitDef(i).movedata->moveFamily == MoveData::KBot ||
+					GetUnitDef(i).movedata->moveFamily == MoveData::Hover)
 				{
 					// units with weapons
 					if((!GetUnitDef(i).weapons.empty() && GetMaxDamage(i) > 1) || IsAttacker(i))
@@ -509,7 +513,7 @@ void AAIBuildTable::Init()
 							// switch between arty and assault
 							if(IsArty(i))
 							{
-								if(GetUnitDef(i).movedata->moveType == MoveData::Ground_Move)
+								if(GetUnitDef(i).movedata->moveFamily == MoveData::Tank || GetUnitDef(i).movedata->moveFamily == MoveData::KBot)
 								{
 									units_of_category[GROUND_ARTY][units_static[i].side-1].push_back(GetUnitDef(i).id);
 									units_static[i].category = GROUND_ARTY;
@@ -522,7 +526,7 @@ void AAIBuildTable::Init()
 							}
 							else if(GetUnitDef(i).speed > 0)
 							{
-								if(GetUnitDef(i).movedata->moveType == MoveData::Ground_Move)
+								if(GetUnitDef(i).movedata->moveFamily == MoveData::Tank || GetUnitDef(i).movedata->moveFamily == MoveData::KBot)
 								{
 									units_of_category[GROUND_ASSAULT][units_static[i].side-1].push_back(GetUnitDef(i).id);
 									units_static[i].category = GROUND_ASSAULT;
@@ -551,7 +555,7 @@ void AAIBuildTable::Init()
 						}
 					}
 				}
-				else if(GetUnitDef(i).movedata->moveType == MoveData::Ship_Move)
+				else if(GetUnitDef(i).movedata->moveFamily == MoveData::Ship)
 				{
 					// ship
 					if(!GetUnitDef(i).weapons.empty())
@@ -772,11 +776,16 @@ void AAIBuildTable::Init()
 				temp = units_static[*pplant].efficiency[1];
 
 				// eff. of tidal generators have not been calculated yet (depend on map)
-				if(temp <= 0)
+				if(temp == 0)
 				{
 					temp = ai->Getcb()->GetTidalStrength() / units_static[*pplant].cost;
 
 					units_static[*pplant].efficiency[0] = ai->Getcb()->GetTidalStrength();
+					units_static[*pplant].efficiency[1] = temp;
+				} else if (temp < 0) {
+					temp = (ai->Getcb()->GetMaxWind() + ai->Getcb()->GetMinWind()) * 0.5f / units_static[*pplant].cost;
+
+					units_static[*pplant].efficiency[0] = (ai->Getcb()->GetMaxWind() + ai->Getcb()->GetMinWind()) * 0.5f;
 					units_static[*pplant].efficiency[1] = temp;
 				}
 
@@ -820,6 +829,8 @@ void AAIBuildTable::PrecacheStats()
 		{
 			if(GetUnitDef(*i).tidalGenerator)
 				units_static[*i].efficiency[0] = 0;
+			else if (GetUnitDef(*i).windGenerator)
+				units_static[*i].efficiency[0] = -1;
 			else if(GetUnitDef(*i).energyMake >= cfg->MIN_ENERGY)
 				units_static[*i].efficiency[0] = GetUnitDef(*i).energyMake;
 			else if(GetUnitDef(*i).energyUpkeep <= -cfg->MIN_ENERGY)
@@ -833,8 +844,13 @@ void AAIBuildTable::PrecacheStats()
 			units_static[*i].efficiency[0] = GetUnitDef(*i).extractsMetal;
 
 		// precache efficiency of metalmakers
-		for(list<int>::iterator i = units_of_category[METAL_MAKER][s].begin(); i != units_of_category[METAL_MAKER][s].end(); ++i)
-			units_static[*i].efficiency[0] = GetUnitDef(*i).makesMetal/(GetUnitDef(*i).energyUpkeep+1);
+		for(list<int>::iterator i = units_of_category[METAL_MAKER][s].begin(); i != units_of_category[METAL_MAKER][s].end(); ++i) {
+			if (GetUnitDef(*i).makesMetal <= 0.1f) {
+				units_static[*i].efficiency[0] = 12.0f/600.0f; //FIXME: this somehow is broken... 
+			} else {
+				units_static[*i].efficiency[0] = GetUnitDef(*i).makesMetal/(GetUnitDef(*i).energyUpkeep+1);
+			}
+		}
 
 
 		// precache average metal and energy consumption of factories
@@ -1478,16 +1494,24 @@ int AAIBuildTable::GetMetalMaker(int side, float cost, float efficiency, float m
 
 	for(list<int>::iterator maker = units_of_category[METAL_MAKER][side-1].begin(); maker != units_of_category[METAL_MAKER][side-1].end(); maker++)
 	{
+
+		//ai->LogConsole("MakesMetal: %f", GetUnitDef(*maker).makesMetal);
+		//this somehow got broken in spring... :(
+		float makesMetal = GetUnitDef(*maker).makesMetal;
+		if (makesMetal <= 0.1f) {
+			makesMetal = 12.0f/600.0f;
+		}
+
 		if(canBuild && units_dynamic[*maker].constructorsAvailable <= 0)
 			my_rating = 0;
 		else if(!water && GetUnitDef(*maker).minWaterDepth <= 0)
 		{
-			my_rating = (pow((long double) efficiency * units_static[*maker].efficiency[0], (long double) 1.4) + pow((long double) metal * GetUnitDef(*maker).makesMetal, (long double) 1.6))
+			my_rating = (pow((long double) efficiency * units_static[*maker].efficiency[0], (long double) 1.4) + pow((long double) metal * makesMetal, (long double) 1.6))
 				/(pow((long double) cost * units_static[*maker].cost,(long double) 1.4) + pow((long double) urgency * GetUnitDef(*maker).buildTime,(long double) 1.4));
 		}
 		else if(water && GetUnitDef(*maker).minWaterDepth > 0)
 		{
-			my_rating = (pow((long double) efficiency * units_static[*maker].efficiency[0], (long double) 1.4) + pow((long double) metal * GetUnitDef(*maker).makesMetal, (long double) 1.6))
+			my_rating = (pow((long double) efficiency * units_static[*maker].efficiency[0], (long double) 1.4) + pow((long double) metal * makesMetal, (long double) 1.6))
 				/(pow((long double) cost * units_static[*maker].cost,(long double) 1.4) + pow((long double) urgency * GetUnitDef(*maker).buildTime,(long double) 1.4));
 		}
 		else
@@ -3463,17 +3487,17 @@ bool AAIBuildTable::IsArty(int id)
 		// veh, kbot, hover or ship
 		if(GetUnitDef(id).movedata)
 		{
-			if(GetUnitDef(id).movedata->moveType == MoveData::Ground_Move)
+			if(GetUnitDef(id).movedata->moveFamily == MoveData::Tank || GetUnitDef(id).movedata->moveFamily == MoveData::KBot)
 			{
 				if(max_range > cfg->GROUND_ARTY_RANGE)
 					return true;
 			}
-			else if(GetUnitDef(id).movedata->moveType == MoveData::Ship_Move)
+			else if(GetUnitDef(id).movedata->moveFamily == MoveData::Ship)
 			{
 				if(max_range > cfg->SEA_ARTY_RANGE)
 					return true;
 			}
-			else if(GetUnitDef(id).movedata->moveType == MoveData::Hover_Move)
+			else if(GetUnitDef(id).movedata->moveFamily == MoveData::Hover)
 			{
 				if(max_range > cfg->HOVER_ARTY_RANGE)
 					return true;
@@ -3543,6 +3567,17 @@ bool AAIBuildTable::AllowedToBuild(int id)
 	}
 
 	return true;
+}
+
+bool AAIBuildTable::IsMetalMaker(int id)
+{
+	for(list<int>::iterator i = cfg->METAL_MAKERS.begin(); i != cfg->METAL_MAKERS.end(); ++i)
+	{
+		if(*i == id)
+			return true;
+	}
+
+	return false;
 }
 
 bool AAIBuildTable::IsMissileLauncher(int def_id)
