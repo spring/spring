@@ -3,6 +3,9 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 -- 98.0 ---------------------------------------------------------
+Bugfixes:
+  - fix #4406: crash at start
+
 Lua:
   - added SetAlly(firstAllyTeamId, secondAllyTeamId, ally)
   - added VFS.UnmapArchive(string fileName)
