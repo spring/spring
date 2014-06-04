@@ -791,7 +791,7 @@ static void SplitString(const std::string& text, const char* sepChar, std::strin
 static void ParseSpringUri(const std::string& uri, std::string* username, std::string* password, std::string* host, int* port)
 {
 	// see http://cpp-netlib.org/0.10.1/in_depth/uri.html (2014)
-	if (uri.find("spring://") != std::string::npos)
+	if (uri.find("spring://") == std::string::npos)
 		return; // wrong scheme
 
 	const std::string full = uri.substr(std::string("spring://").length());
