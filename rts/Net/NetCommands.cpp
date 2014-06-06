@@ -136,7 +136,12 @@ void CGame::UpdateNumQueuedSimFrames()
 		if (deltaTime.toMilliSecsf() < (1000.0f / gs->speedFactor))
 			return;
 
-		const unsigned int numQueuedFrames = GetNumQueuedSimFrameMessages(GAME_SPEED * gs->speedFactor * 5);
+		// NOTE:
+		//   unnecessary to scan entire queue *unless* joining a running game
+		//   only reason in that case is to handle NETMSG_GAME_FRAME_PROGRESS
+		//
+		// const unsigned int numQueuedFrames = GetNumQueuedSimFrameMessages(GAME_SPEED * gs->speedFactor * 5);
+		const unsigned int numQueuedFrames = GetNumQueuedSimFrameMessages(-1u);
 
 		if (numQueuedFrames < lastNumQueuedSimFrames) {
 			// conservative policy: take minimum of current and previous queue size
@@ -1289,7 +1294,9 @@ void CGame::ClientReadNet()
 				}
 				break;
 			}
-			// drop NETMSG_GAME_FRAME_PROGRESS, if we recieved it here, it means we're the host ( so message wasn't processed ), so discard it
+
+			// if we received this packet here we are the host player
+			// (meaning the message was not processed), so discard it
 			case NETMSG_GAME_FRAME_PROGRESS: {
 				break;
 			}
