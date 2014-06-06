@@ -995,8 +995,8 @@ void CGrassDrawer::RemoveGrass(const float3& pos)
 
 	const int x = int(pos.x) / (SQUARE_SIZE * grassSquareSize);
 	const int z = int(pos.z) / (SQUARE_SIZE * grassSquareSize);
-	assert(x >= 0 && x < (gs->mapx - 1) / grassSquareSize);
-	assert(z >= 0 && z < (gs->mapy - 1) / grassSquareSize);
+	assert(x >= 0 && x <= (gs->mapx - 1) / grassSquareSize);
+	assert(z >= 0 && z <= (gs->mapy - 1) / grassSquareSize);
 
 	grassMap[z * gs->mapx / grassSquareSize + x] = 0;
 	ResetPos(pos);
