@@ -232,7 +232,6 @@ std::string CreateMinimalSetup(const std::string& game, const std::string& map)
 	modopts->AddPair("MinimalSetup", 1); //use for ingame detecting this type of start
 
 	g->AddPair("IsHost", 1);
-	g->AddPair("OnlyLocal", 1);
 	g->add_name_value("MyPlayerName", playername);
 
 	TdfParser::TdfSection* player0 = g->construct_subsection("PLAYER0");
@@ -267,7 +266,6 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& game, 
 	modopts->AddPair("MaxSpeed", 20);
 
 	g->AddPair("IsHost", 1);
-	g->AddPair("OnlyLocal", 1);
 	g->add_name_value("MyPlayerName", playername);
 
 	g->AddPair("NoHelperAIs", configHandler->GetBool("NoHelperAIs"));
