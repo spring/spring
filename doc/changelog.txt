@@ -3,12 +3,17 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 -- 98.0 ---------------------------------------------------------
-Bugfixes:
-  - fix #4406: crash at start
-
 Lua:
-  - added SetAlly(firstAllyTeamId, secondAllyTeamId, ally)
-  - added VFS.UnmapArchive(string fileName)
+ - added SetAlly(firstAllyTeamId, secondAllyTeamId, ally)
+ - added VFS.UnmapArchive(string fileName)
+
+Bugfixes:
+ - fix #4417 (spring spring://username:passwd@hostname:port doesn't work)
+ - fix #4413 (widget:GameProgress() was no longer called for rejoining player)
+ - fix #4407 (SetUnitRotation broken for buildings)
+ - fix #4406 (crash at start)
+ - fix #4377 (compile with cmake 3.0)
+ - fix #3677 (bounceExplosionGenerator tag does not work for bouncing aircraftbomb weapon types)
 
 -- 97.0 ---------------------------------------------------------
 Major:
