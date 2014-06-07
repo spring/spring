@@ -343,17 +343,13 @@ namespace Threading {
 			*ppCtlsReturn = *ppThreadCtls;
 		}
 
-		//boost::unique_lock<boost::mutex> lock (pThreadCtls->mutSuspend);
+		boost::unique_lock<boost::mutex> lock (pThreadCtls->mutSuspend);
 
 #ifndef WIN32
 		boost::thread localthread(boost::bind(Threading::ThreadStart, taskFunc, ppThreadCtls));
 
 		// Wait so that we know the thread is running and fully initialized before returning.
-		//pThreadCtls->condInitialized.wait(lock);
-		int semcnt = 0;
-		do { // spinlock waiting for the thread to increase its semaphore to 1 as a signal that it's initialized.
-			sem_getvalue(&pThreadCtls->semSuspend, &semcnt);
-		} while (semcnt == 0);
+		pThreadCtls->condInitialized.wait(lock);
 #else
 		boost::thread localthread(taskFunc);
 #endif

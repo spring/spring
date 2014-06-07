@@ -56,6 +56,8 @@ static const uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
 struct StackFunction {
     std::string fileline;
     std::string funcname;
+	std::string abbrev_fileline;
+	std::string abbrev_funcname;
     bool inLine;
     StackFunction() : inLine(true) {}
 };
@@ -503,12 +505,30 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 
 }
 
-static void LogStacktrace (const int logLevel, const StackTrace& stacktrace) {
+static void LogStacktrace (const int logLevel, StackTrace& stacktrace) {
 
-    int colFileline = 50;
-    for (auto fit = stacktrace.cbegin(); fit != stacktrace.cend(); fit++) {
+	int colFileline = 0;
+	const std::string& exe_path = Platform::GetProcessExecutablePath();
+	const std::string& cwd_path = Platform::GetOrigCWD();
+	for (auto fit = stacktrace.begin(); fit != stacktrace.end(); fit++) {
         for (auto eit = fit->entries.begin(); eit != fit->entries.end(); eit++) {
-            colFileline = std::max(colFileline, (int)eit->fileline.length());
+			eit->abbrev_funcname = eit->funcname;
+			eit->abbrev_fileline  = eit->fileline;
+			int abbrev_start = 0;
+			if (eit->fileline[0] == '/') { // See if we can shorten the file/line bit by removing the common path
+				if (CommonStringLength(eit->fileline, exe_path, &abbrev_start) > 1) { // i.e. one char for first '/'
+					eit->abbrev_fileline = std::string(".../") + eit->fileline.substr(abbrev_start, std::string::npos);
+				} else if (CommonStringLength(eit->fileline, cwd_path, &abbrev_start) > 1) {
+					eit->abbrev_fileline = std::string("./") + eit->fileline.substr(abbrev_start, std::string::npos);
+				}
+			}
+
+			if (eit->abbrev_funcname.size() > 100) {
+				eit->abbrev_funcname.resize(94);
+				eit->abbrev_funcname.append(" [...]");
+			}
+
+			colFileline = std::max(colFileline, (int)eit->abbrev_fileline.length());
         }
     }
 
@@ -517,30 +537,13 @@ static void LogStacktrace (const int logLevel, const StackTrace& stacktrace) {
     // Print out the translated StackTrace
     unsigned numLine = 0;
     unsigned hiddenLines = 0;
-    const std::string& exe_path = Platform::GetProcessExecutablePath();
-    const std::string& cwd_path = Platform::GetOrigCWD();
     while (numLine == 0) { // outer loop at most twice -- tries to find the signal handler once and if that doesn't work, then just print every frame
         for (auto fit = stacktrace.cbegin(); fit != stacktrace.cend(); fit++) {
             for (auto eit = fit->entries.begin(); eit != fit->entries.end(); eit++) {
 
-                std::string shortname = eit->funcname;
-                std::string fileline  = eit->fileline;
-                int abbrev_start = 0;
-                if (fileline[0] == '/') { // See if we can shorten the file/line bit by removing the common path
-                    if (CommonStringLength(fileline, exe_path, &abbrev_start) > 1) { // i.e. one char for first '/'
-                        fileline = std::string(".../") + fileline.substr(abbrev_start, std::string::npos);
-                    } else if (CommonStringLength(fileline, cwd_path, &abbrev_start)) {
-                        fileline = std::string("./") + fileline.substr(abbrev_start, std::string::npos);
-                    }
-                }
-
-                if (shortname.size() > 100) {
-                    shortname.resize(94);
-                    shortname.append(" [...]");
-                }
                 if (hideSignalHandler) {
                     hiddenLines++;
-                    if (fileline.find("sigaction.c:?") == 0) {
+					if (eit->fileline.find("sigaction.c:?") == 0) {
                         hideSignalHandler = false;
                         LOG_I(logLevel, "(Signal handler calls suppressed [%d]. Inlined calls denoted by < > brackets.)", hiddenLines);
                     }
@@ -548,9 +551,9 @@ static void LogStacktrace (const int logLevel, const StackTrace& stacktrace) {
                 }
 
                 if (eit->inLine) {
-                    LOG_I(logLevel, "  <%02u> %*s  %s", fit->level, colFileline, eit->fileline.c_str(), shortname.c_str());
+					LOG_I(logLevel, "  <%02u> %*s  %s", fit->level, colFileline, eit->abbrev_fileline.c_str(), eit->abbrev_funcname.c_str());
                 } else {
-                    LOG_I(logLevel, "[%02u]   %*s  %s", fit->level, colFileline, eit->fileline.c_str(), shortname.c_str());
+					LOG_I(logLevel, "[%02u]   %*s  %s", fit->level, colFileline, eit->abbrev_fileline.c_str(), eit->abbrev_funcname.c_str());
                 }
                 numLine++;
             }
@@ -750,7 +753,11 @@ namespace CrashHandler
             void* iparray[MAX_STACKTRACE_DEPTH];
             int numLines = -1;
 
+			ctls->Suspend();
+
             numLines = thread_unwind(&ctls->ucontext, iparray, stacktrace);
+
+			ctls->Resume();
 
             LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "SuspendedStacktrace[2]");
 
@@ -887,7 +894,6 @@ namespace CrashHandler
 			error += " (SIGBUS)";
 		}
 		LOG_L(L_ERROR, "%s in spring %s", error.c_str(), (SpringVersion::GetFull()).c_str());
-
 
 		const bool nonFatalSignal = false;
 		const bool fatalSignal =

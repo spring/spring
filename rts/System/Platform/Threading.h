@@ -15,6 +15,7 @@
 #include "System/Platform/Win/win32.h"
 #include <functional>
 #include <boost/thread.hpp>
+#include <boost/atomic.hpp>
 #include <boost/cstdint.hpp>
 
 #include <semaphore.h>
@@ -78,12 +79,12 @@ namespace Threading {
 		SuspendResult Resume();
 
 		NativeThreadHandle      handle;
-		bool                    running;
+		boost::atomic<bool>     running;
 	#ifndef WIN32
-		// a mutex wouldn't let us count the waiters, which we need to do before returning from suspend()
-		//boost::mutex            mutSuspend;
-		sem_t                   semSuspend;
+		boost::mutex            mutSuspend;
+		boost::condition_variable condInitialized;
 		ucontext_t              ucontext;
+		pid_t                   thread_id;
 	#endif
 
 		friend void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadControls>  * ppThreadCtls);

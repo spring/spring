@@ -1,20 +1,80 @@
 #include <pthread.h>
+#include <unistd.h>
 #include <signal.h>
 #include <ucontext.h>
+#include <fstream>
+#include <sys/syscall.h>
 #include <boost/thread/tss.hpp>
+#include <boost/atomic.hpp>
+
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
-#include <iostream>
 
-#include <semaphore.h>
+
 
 namespace Threading {
 
+
+enum LinuxThreadState {
+	LTS_RUNNING,
+	LTS_SLEEP,
+	LTS_DISK_SLEEP,
+	LTS_STOPPED,
+	LTS_PAGING,
+	LTS_ZOMBIE,
+	LTS_UNKNOWN
+};
+
+/**
+ * There is no glibc wrapper for this system call, so you have to write one:
+ */
+int gettid () {
+	long tid = syscall(SYS_gettid);
+	return tid;
+}
+
+/**
+ * This method requires at least a 2.6 kernel in order to access the file /proc/<pid>/task/<tid>/status.
+ *
+ * @brief GetLinuxThreadState
+ * @param handle
+ * @return
+ */
+LinuxThreadState GetLinuxThreadState (int tid)
+{
+	char filename[64];
+	int pid = getpid();
+	snprintf(filename, 64, "/proc/%d/task/%d/status", pid, tid);
+	std::fstream sfile;
+	sfile.open(filename, std::fstream::in);
+	if (sfile.fail()) {
+		LOG_SL("LinuxCrashHandler", L_WARNING, "GetLinuxThreadState could not query %s", filename);
+		sfile.close();
+		return LTS_UNKNOWN;
+	}
+	char statestr[64];
+	char flags[64];
+	sfile.getline(statestr,64); // first line isn't needed
+	sfile.getline(statestr,64); // second line contains thread running state
+	sscanf(statestr, "State: %s", flags);
+
+	switch (flags[0]) {
+	case 'R': return LTS_RUNNING;
+	case 'S': return LTS_SLEEP;
+	case 'D': return LTS_DISK_SLEEP;
+	case 'T': return LTS_STOPPED;
+	case 'W': return LTS_PAGING;
+	case 'Z': return LTS_ZOMBIE;
+	}
+	return LTS_UNKNOWN;
+}
+
 void ThreadSIGUSR1Handler (int signum, siginfo_t* info, void* pCtx)
-{ // Signal handler, so don't use LOG or anything that might write directly to disk. Just use perror().
+{
 	int err=0;
 
 	LOG_SL("LinuxCrashHandler", L_DEBUG, "ThreadSIGUSR1Handler[1]");
+	printf("test");
 
 	std::shared_ptr<Threading::ThreadControls> pThreadCtls = *threadCtls;
 
@@ -26,28 +86,20 @@ void ThreadSIGUSR1Handler (int signum, siginfo_t* info, void* pCtx)
 
 	// Change the "running" flag to false. Note that we don't own a lock on the suspend mutex, but in order to get here,
 	//   it had to have been locked by some other thread.
-	pThreadCtls->running = false;
+	pThreadCtls->running.store(false);
 
 	LOG_SL("LinuxCrashHandler", L_DEBUG, "ThreadSIGUSR1Handler[2]");
 
-	// Wait on the semaphore. This should block the thread.
+	// Wait on the mutex. This should block the thread.
 	{
-		int semCnt = 0;
-		sem_getvalue(&pThreadCtls->semSuspend, &semCnt);
-		assert(semCnt == 0);
-
-		//pThreadCtls->mutSuspend.lock();
-		sem_wait(&pThreadCtls->semSuspend);
-		//pThreadCtls->mutSuspend.unlock();
-
-		// No need to unlock or post .. the resume function does this for us.
+		pThreadCtls->mutSuspend.lock();
+		pThreadCtls->running.store(true);
+		pThreadCtls->mutSuspend.unlock();
 	}
 
 	LOG_SL("LinuxCrashHandler", L_DEBUG, "ThreadSIGUSR1Handler[3]");
 
-	pThreadCtls->running = true;
 }
-
 
 
 void SetCurrentThreadControls(std::shared_ptr<ThreadControls> * ppThreadCtls)
@@ -84,7 +136,8 @@ void SetCurrentThreadControls(std::shared_ptr<ThreadControls> * ppThreadCtls)
 	}
 
 	pThreadCtls->handle = GetCurrentThread();
-	pThreadCtls->running = true;
+	pThreadCtls->thread_id = gettid();
+	pThreadCtls->running.store(true);
 
 	threadCtls.reset(ppThreadCtls);
 }
@@ -104,26 +157,28 @@ void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadContro
 		// Install the SIGUSR1 handler:
 		SetCurrentThreadControls(ppThreadCtls);
 
-		//pThreadCtls->mutSuspend.lock();
-		sem_post(&pThreadCtls->semSuspend);
-		pThreadCtls->running = true;
+		pThreadCtls->mutSuspend.lock();
+		pThreadCtls->running.store(true);
 
 		LOG_I(LOG_LEVEL_DEBUG, "ThreadStart(): New thread's handle is %.4x", pThreadCtls->handle);
 
 		// We are fully initialized, so notify the condition variable. The thread's parent will unblock in whatever function created this thread.
-		//pThreadCtls->condInitialized.notify_all();
+		pThreadCtls->condInitialized.notify_all();
 
 		// Ok, the thread should be ready to run its task now, so unlock the suspend mutex!
-		//pThreadCtls->mutSuspend.unlock();
-
-		// Run the task function...
-		taskFunc();
+		pThreadCtls->mutSuspend.unlock();
 	}
 
+	// Run the task function...
+	taskFunc();
+
+
 	// Finish up: change the thread's running state to false.
-	//pThreadCtls->mutSuspend.lock();
-	pThreadCtls->running = false;
-	//pThreadCtls->mutSuspend.unlock();
+	{
+		pThreadCtls->mutSuspend.lock();
+		pThreadCtls->running = false;
+		pThreadCtls->mutSuspend.unlock();
+	}
 
 }
 
@@ -133,25 +188,13 @@ SuspendResult ThreadControls::Suspend ()
 	int err=0;
 	int semCnt = 0;
 
-	err = sem_getvalue(&semSuspend, &semCnt);
-	if (err) {
-		LOG_L(L_ERROR, "Could not get suspend/resume semaphore value, error code = %d", err);
-		return Threading::THREADERR_MISC;
-	}
-	assert(semCnt == 1);
-
 	// Return an error if the running flag is false.
 	if (!running) {
 		LOG_L(L_ERROR, "Cannot suspend if a thread's running flag is set to false. Refusing to suspend using pthread_kill.");
 		return Threading::THREADERR_NOT_RUNNING;
 	}
 
-	//mutSuspend.lock();
-	err = sem_wait(&semSuspend);
-	if (err) {
-		LOG_L(L_ERROR, "Error while trying to decrement the suspend/resume semaphore");
-		return Threading::THREADERR_MISC;
-	}
+	mutSuspend.lock();
 
 	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "Sending SIGUSR1 to 0x%x", handle);
 
@@ -161,31 +204,25 @@ SuspendResult ThreadControls::Suspend ()
 		return Threading::THREADERR_MISC;
 	}
 
-	// TODO: Before leaving this function, we need some kind of guarantee that the thread has stopped,
-	//       otherwise the signal may not be delivered to it before we return and keep working in this thread.
-	// spinwait for the semaphore count to decrement one more time
-	do {
-		err = sem_getvalue(&semSuspend, &semCnt);
-		if (err) {
-			LOG_L(L_ERROR, "Error while waiting for remote thread to suspend on semaphore. Err code = %d", err);
-			return Threading::THREADERR_MISC;
-		}
-	} while (semCnt != -1);
-
+	// Before leaving this function, we need some kind of guarantee that the stalled thread is suspended, so spinwait until it is guaranteed.
+	// FIXME: this sort of spin-waiting inside the watchdog loop could be avoided by creating another worker thread
+	//        inside SuspendedStacktrace itself to do the work of checking that the stalled thread has been suspended and performing the trace there.
+	LinuxThreadState tstate;
+	struct timespec req;
+	req.tv_sec = 0;
+	req.tv_nsec = 25000000; // 25 ms
+	const int max_attempts = 40; // 40 attempts * 0.025s = 1 sec max.
+	for (int a = 0; a < max_attempts; a++) {
+		tstate = GetLinuxThreadState(thread_id);
+		if (tstate == LTS_SLEEP) break;
+	}
 
 	return Threading::THREADERR_NONE;
 }
 
 SuspendResult ThreadControls::Resume ()
 {
-	//mutSuspend.unlock();
-	int suspendResumeSemaphoreCount = 0;
-	sem_getvalue(&semSuspend, &suspendResumeSemaphoreCount);
-	assert(suspendResumeSemaphoreCount == -1);
-
-	// twice: once for us and once for the signal handler that was suspended.
-	sem_post(&semSuspend);
-	sem_post(&semSuspend);
+	mutSuspend.unlock();
 
 	return Threading::THREADERR_NONE;
 }
