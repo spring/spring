@@ -23,6 +23,7 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
 LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
 LIST(APPEND engineDedicatedLibraries headlessStubs engineSystemNet)
+LIST(APPEND engineDedicatedLibraries ${LIBUNWIND_LIBRARIES})
 
 IF (WIN32)
 	LIST(APPEND engineDedicatedLibraries ${WINMM_LIBRARY})
@@ -71,7 +72,8 @@ IF	(UNIX)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/thread_backtrace.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp)
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/ThreadSupport.cpp)
 ELSEIF	(WIN32)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/seh.cpp

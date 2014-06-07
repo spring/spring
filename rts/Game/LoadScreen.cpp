@@ -29,6 +29,7 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/Watchdog.h"
+#include "System/Platform/Threading.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 
@@ -85,7 +86,8 @@ void CLoadScreen::Init()
 
 	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
 	net->KeepUpdating(true);
-	netHeartbeatThread = new boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
+	netHeartbeatThread = new boost::thread();
+	*netHeartbeatThread = Threading::CreateNewThread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
 	game = new CGame(mapName, modName, saveFile);
 

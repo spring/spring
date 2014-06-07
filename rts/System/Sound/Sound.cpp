@@ -26,6 +26,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/myMath.h"
 #include "System/Util.h"
+#include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
 
 #include "System/float3.h"
@@ -72,7 +73,9 @@ CSound::CSound()
 	if (maxSounds <= 0) {
 		LOG_L(L_WARNING, "MaxSounds set to 0, sound is disabled");
 	} else {
-		soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
+		//soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
+		soundThread = new boost::thread();
+		*soundThread = Threading::CreateNewThread(boost::bind(&CSound::StartThread, this, maxSounds));
 	}
 
 	configHandler->NotifyOnChange(this);

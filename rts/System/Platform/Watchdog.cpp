@@ -42,6 +42,9 @@ namespace Watchdog
 		volatile Threading::NativeThreadId threadid;
 		spring_time timer;
 		volatile unsigned int numreg;
+#ifndef WIN32
+		std::shared_ptr<Threading::ThreadControls> ctls;
+#endif
 	};
 
 	struct WatchDogThreadSlot {
@@ -122,7 +125,11 @@ namespace Watchdog
 					if (!threadSlots[i].active)
 						continue;
 
+#ifdef WIN32
 					CrashHandler::Stacktrace(registeredThreads[i]->thread, threadNames[i], LOG_LEVEL_WARNING);
+#else
+					CrashHandler::SuspendedStacktrace(registeredThreads[i]->ctls.get(), std::string(threadNames[i]));
+#endif
 				}
 
 				CrashHandler::CleanupStacktrace(LOG_LEVEL_WARNING);
@@ -173,6 +180,14 @@ namespace Watchdog
 		threadInfo->thread = thread;
 		threadInfo->threadid = threadId;
 		threadInfo->timer = spring_gettime();
+#ifndef WIN32
+		auto threadCtls = Threading::GetCurrentThreadControls();
+		assert(threadCtls.get() != nullptr);
+		LOG("Registering thread controls for thread [%s]", threadNames[num]);
+		// copy shared_ptr object, not shared_ptr*
+		threadInfo->ctls = threadCtls;
+		assert(threadInfo->ctls != nullptr);
+#endif
 		++threadInfo->numreg;
 
 		threadSlots[num].primary = primary;

@@ -14,6 +14,7 @@
 	#include "System/Sync/FPUCheck.h"
 #endif
 
+#include <memory>
 #include <boost/version.hpp>
 #include <boost/thread.hpp>
 #include <boost/cstdint.hpp>
@@ -51,6 +52,8 @@ namespace Threading {
 
 	static boost::optional<NativeThreadId> simThreadID;
 	static boost::optional<NativeThreadId> luaBatchThreadID;
+
+	boost::thread_specific_ptr<std::shared_ptr<Threading::ThreadControls>> threadCtls;
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
@@ -308,7 +311,50 @@ namespace Threading {
 	#endif
 	}
 
+	ThreadControls::ThreadControls () :
+		handle(0),
+		running(false)
+	{
+#ifndef WIN32
+		memset(&ucontext, 0, sizeof(ucontext_t));
+#endif
+	}
 
+	ThreadControls::~ThreadControls()
+	{
+
+	}
+
+	std::shared_ptr<ThreadControls> GetCurrentThreadControls()
+	{
+		// If there is no object registered, need to return an "empty" shared_ptr
+		if (threadCtls.get() == nullptr) {
+			return std::shared_ptr<ThreadControls> ();
+		}
+		return *(threadCtls.get());
+	}
+
+
+	boost::thread CreateNewThread (boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppCtlsReturn)
+	{
+		auto pThreadCtls = new Threading::ThreadControls();
+		auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (pThreadCtls);
+		if (ppCtlsReturn != nullptr) {
+			*ppCtlsReturn = *ppThreadCtls;
+		}
+
+		boost::unique_lock<boost::mutex> lock (pThreadCtls->mutSuspend);
+
+#ifndef WIN32
+		boost::thread localthread(boost::bind(Threading::ThreadStart, taskFunc, ppThreadCtls));
+
+		// Wait so that we know the thread is running and fully initialized before returning.
+		pThreadCtls->condInitialized.wait(lock);
+#else
+		boost::thread localthread(taskFunc);
+#endif
+		return localthread;
+	}
 
 	void SetMainThread() {
 		if (!haveMainThreadID) {
@@ -316,6 +362,10 @@ namespace Threading {
 			// boostMainThreadID = boost::this_thread::get_id();
 			nativeMainThreadID = Threading::GetCurrentThreadId();
 		}
+#ifndef WIN32
+		auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (new Threading::ThreadControls());
+		SetCurrentThreadControls(ppThreadCtls);
+#endif
 	}
 
 	bool IsMainThread() {
@@ -333,6 +383,13 @@ namespace Threading {
 			// boostGameLoadThreadID = boost::this_thread::get_id();
 			nativeGameLoadThreadID = Threading::GetCurrentThreadId();
 		}
+#ifndef WIN32
+		auto pThreadCtls = GetCurrentThreadControls();
+		if (pThreadCtls.get() == nullptr) { // Loading is sometimes done from the main thread, but this function is still called in 96.0.
+			auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (new Threading::ThreadControls());
+			SetCurrentThreadControls(ppThreadCtls);
+		}
+#endif
 	}
 
 	bool IsGameLoadThread() {
