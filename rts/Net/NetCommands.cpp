@@ -136,12 +136,7 @@ void CGame::UpdateNumQueuedSimFrames()
 		if (deltaTime.toMilliSecsf() < (1000.0f / gs->speedFactor))
 			return;
 
-		// NOTE:
-		//   unnecessary to scan entire queue *unless* joining a running game
-		//   only reason in that case is to handle NETMSG_GAME_FRAME_PROGRESS
-		//
-		// const unsigned int numQueuedFrames = GetNumQueuedSimFrameMessages(GAME_SPEED * gs->speedFactor * 5);
-		const unsigned int numQueuedFrames = GetNumQueuedSimFrameMessages(-1u);
+		const unsigned int numQueuedFrames = GetNumQueuedSimFrameMessages(GAME_SPEED * gs->speedFactor * 5);
 
 		if (numQueuedFrames < lastNumQueuedSimFrames) {
 			// conservative policy: take minimum of current and previous queue size
