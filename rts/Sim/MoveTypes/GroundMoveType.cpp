@@ -90,7 +90,6 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(currentSpeed),
 	CR_MEMBER(deltaSpeed),
 
-	CR_MEMBER(pathID),
 	CR_MEMBER(goalRadius),
 
 	CR_MEMBER(currWayPoint),
@@ -104,6 +103,8 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(numIdlingUpdates),
 	CR_MEMBER(numIdlingSlowUpdates),
 	CR_MEMBER(wantedHeading),
+
+	CR_MEMBER(pathID),
 
 	CR_MEMBER(nextObstacleAvoidanceFrame),
 	CR_MEMBER(lastPathRequestFrame),
@@ -144,8 +145,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	currentSpeed(0.0f),
 	deltaSpeed(0.0f),
 
-	pathID(0),
-	goalRadius(0),
+	goalRadius(0.0f),
 
 	currWayPoint(ZeroVector),
 	nextWayPoint(ZeroVector),
@@ -167,6 +167,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	lastAvoidanceDir(ZeroVector),
 	mainHeadingPos(ZeroVector),
 	skidRotVector(UpVector),
+
+	pathID(0),
 
 	nextObstacleAvoidanceFrame(0),
 	lastPathRequestFrame(0),

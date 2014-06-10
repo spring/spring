@@ -40,6 +40,8 @@ public:
 	bool OnSlope(float minSlideTolerance);
 	bool IsReversing() const { return reversing; }
 
+	unsigned int GetPathID() const { return pathID; }
+
 private:
 	float3 GetObstacleAvoidanceDir(const float3& desiredDir);
 	float3 GetNewSpeedVector(const float hAcc, const float vAcc) const;
@@ -54,6 +56,7 @@ private:
 	float Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal = 0.0f);
 
 	unsigned int GetNewPath();
+
 	void GetNextWayPoint();
 	bool CanGetNextWayPoint();
 	bool ReRequestPath(bool callScript, bool forceRequest);
@@ -128,7 +131,6 @@ public:
 	float currentSpeed;
 	float deltaSpeed;
 
-	unsigned int pathID;
 	float goalRadius;
 
 	SyncedFloat3 currWayPoint;
@@ -154,6 +156,8 @@ private:
 	float3 lastAvoidanceDir;
 	float3 mainHeadingPos;
 	float3 skidRotVector;  /// vector orthogonal to skidDir
+
+	unsigned int pathID;
 
 	unsigned int nextObstacleAvoidanceFrame;
 	unsigned int lastPathRequestFrame;
