@@ -3573,7 +3573,7 @@ int LuaSyncedRead::GetUnitEstimatedPath(lua_State* L)
 		return 0;
 	}
 
-	return (LuaPathFinder::PushPathNodes(L, gmt->pathId));
+	return (LuaPathFinder::PushPathNodes(L, gmt->GetPathID()));
 }
 
 
