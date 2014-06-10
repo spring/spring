@@ -90,7 +90,7 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(currentSpeed),
 	CR_MEMBER(deltaSpeed),
 
-	CR_MEMBER(pathId),
+	CR_MEMBER(pathID),
 	CR_MEMBER(goalRadius),
 
 	CR_MEMBER(currWayPoint),
@@ -144,7 +144,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	currentSpeed(0.0f),
 	deltaSpeed(0.0f),
 
-	pathId(0),
+	pathID(0),
 	goalRadius(0),
 
 	currWayPoint(ZeroVector),
@@ -197,8 +197,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 CGroundMoveType::~CGroundMoveType()
 {
-	if (pathId != 0) {
-		pathManager->DeletePath(pathId);
+	if (pathID != 0) {
+		pathManager->DeletePath(pathID);
 	}
 
 	IPathController::FreeInstance(pathController);
@@ -209,8 +209,8 @@ void CGroundMoveType::PostLoad()
 	pathController = IPathController::GetInstance(owner);
 
 	// HACK: re-initialize path after load
-	if (pathId != 0) {
-		pathId = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius, true);
+	if (pathID != 0) {
+		pathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius, true);
 	}
 }
 
@@ -327,7 +327,7 @@ void CGroundMoveType::SlowUpdate()
 		}
 	} else {
 		if (progressState == Active) {
-			if (pathId != 0) {
+			if (pathID != 0) {
 				if (idling) {
 					numIdlingSlowUpdates = std::min(MAX_IDLING_SLOWUPDATES, int(numIdlingSlowUpdates + 1));
 				} else {
@@ -338,7 +338,7 @@ void CGroundMoveType::SlowUpdate()
 					// case A: we have a path but are not moving
 					LOG_L(L_DEBUG,
 							"SlowUpdate: unit %i has pathID %i but %i ETA failures",
-							owner->id, pathId, numIdlingUpdates);
+							owner->id, pathID, numIdlingUpdates);
 
 					if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
 						ReRequestPath(false, true);
@@ -377,7 +377,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	// set the new goal
 	goalPos = moveGoalPos * XZVector;
 	goalRadius = moveGoalRadius;
-	atGoal = false;
+	atGoal = ((goalPos * XZVector) == (owner->pos * XZVector));
 
 	useMainHeading = false;
 	progressState = Active;
@@ -389,6 +389,9 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	prevWayPointDist = 0.0f;
 
 	LOG_L(L_DEBUG, "StartMoving: starting engine for unit %i", owner->id);
+
+	if (atGoal)
+		return;
 
 	// silently free previous path if unit already had one
 	//
@@ -432,7 +435,7 @@ bool CGroundMoveType::FollowPath()
 {
 	bool wantReverse = false;
 
-	if (pathId == 0) {
+	if (pathID == 0) {
 		ChangeSpeed(0.0f, false);
 		SetMainHeading();
 	} else {
@@ -493,7 +496,7 @@ bool CGroundMoveType::FollowPath()
 		ChangeSpeed(maxWantedSpeed, wantReverse);
 	}
 
-	pathManager->UpdatePath(owner, pathId);
+	pathManager->UpdatePath(owner, pathID);
 	return wantReverse;
 }
 
@@ -585,7 +588,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 			wantedSpeed *= std::max(groundSpeedMod, 1.0f);
 			targetSpeed *= groundSpeedMod;
 			targetSpeed *= (1 - startBraking);
-			targetSpeed *= (pathId != 0 || fpsMode);
+			targetSpeed *= (pathID != 0 || fpsMode);
 			targetSpeed = std::min(targetSpeed, wantedSpeed);
 		} else {
 			targetSpeed = 0.0f;
@@ -593,7 +596,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 	}
 
 	deltaSpeed = pathController->GetDeltaSpeed(
-		pathId,
+		pathID,
 		targetSpeed,
 		currentSpeed,
 		accRate,
@@ -612,10 +615,10 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 	if (owner->GetTransporter() != NULL) return;
 
 	#if 0
-	owner->heading += pathController->GetDeltaHeading(pathId, (wantedHeading = newHeading), owner->heading, turnRate);
+	owner->heading += pathController->GetDeltaHeading(pathID, (wantedHeading = newHeading), owner->heading, turnRate);
 	#else
 	// model rotational inertia (more realistic for ships)
-	owner->heading += pathController->GetDeltaHeading(pathId, (wantedHeading = newHeading), owner->heading, turnRate, turnAccel, BrakingDistance(turnSpeed, turnAccel), &turnSpeed);
+	owner->heading += pathController->GetDeltaHeading(pathID, (wantedHeading = newHeading), owner->heading, turnRate, turnAccel, BrakingDistance(turnSpeed, turnAccel), &turnSpeed);
 	#endif
 
 	owner->UpdateDirVectors(!owner->upright);
@@ -1000,7 +1003,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	#endif
 
 	// Obstacle-avoidance-system only needs to be run if the unit wants to move
-	if (pathId == 0)
+	if (pathID == 0)
 		return ZeroVector;
 
 	// Speed-optimizer. Reduces the times this system is run.
@@ -1187,23 +1190,27 @@ float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, 
 }
 
 // Creates a path to the goal.
-void CGroundMoveType::GetNewPath()
+unsigned int CGroundMoveType::GetNewPath()
 {
-	assert(pathId == 0);
-	pathId = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius, true);
+	unsigned int newPathID = 0;
 
-	if (pathId != 0) {
+	if ((owner->pos * XZVector) == (goalPos * XZVector))
+		return newPathID;
+
+	if ((newPathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius, true)) != 0) {
 		atGoal = false;
 		atEndOfPath = false;
 
-		currWayPoint = pathManager->NextWayPoint(owner, pathId, 0,   owner->pos, 1.25f * SQUARE_SIZE, true);
-		nextWayPoint = pathManager->NextWayPoint(owner, pathId, 0, currWayPoint, 1.25f * SQUARE_SIZE, true);
+		currWayPoint = pathManager->NextWayPoint(owner, newPathID, 0,   owner->pos, 1.25f * SQUARE_SIZE, true);
+		nextWayPoint = pathManager->NextWayPoint(owner, newPathID, 0, currWayPoint, 1.25f * SQUARE_SIZE, true);
 
-		pathController->SetRealGoalPosition(pathId, goalPos);
-		pathController->SetTempGoalPosition(pathId, currWayPoint);
+		pathController->SetRealGoalPosition(newPathID, goalPos);
+		pathController->SetTempGoalPosition(newPathID, currWayPoint);
 	} else {
 		Fail(false);
 	}
+
+	return newPathID;
 }
 
 bool CGroundMoveType::ReRequestPath(bool callScript, bool forceRequest) {
@@ -1221,9 +1228,9 @@ bool CGroundMoveType::ReRequestPath(bool callScript, bool forceRequest) {
 
 
 bool CGroundMoveType::CanGetNextWayPoint() {
-	if (pathId == 0)
+	if (pathID == 0)
 		return false;
-	if (!pathController->AllowSetTempGoalPosition(pathId, nextWayPoint))
+	if (!pathController->AllowSetTempGoalPosition(pathID, nextWayPoint))
 		return false;
 
 
@@ -1232,14 +1239,14 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 		      float3& cwp = (float3&) currWayPoint;
 		      float3& nwp = (float3&) nextWayPoint;
 
-		if (pathManager->PathUpdated(pathId)) {
+		if (pathManager->PathUpdated(pathID)) {
 			// path changed while we were following it (eg. due
 			// to terrain deformation) in between two waypoints
 			// but still has the same ID; in this case (which is
 			// specific to QTPFS) we don't go through GetNewPath
 			//
-			cwp = pathManager->NextWayPoint(owner, pathId, 0, pos, 1.25f * SQUARE_SIZE, true);
-			nwp = pathManager->NextWayPoint(owner, pathId, 0, cwp, 1.25f * SQUARE_SIZE, true);
+			cwp = pathManager->NextWayPoint(owner, pathID, 0, pos, 1.25f * SQUARE_SIZE, true);
+			nwp = pathManager->NextWayPoint(owner, pathID, 0, cwp, 1.25f * SQUARE_SIZE, true);
 		}
 
 		if (DEBUG_DRAWING_ENABLED) {
@@ -1298,7 +1305,7 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 					// if still further than SS elmos from waypoint, disallow skipping
 					// note: can somehow cause units to move in circles near obstacles
 					// (mantis3718) if rectangle is too generous in size
-					if ((pos - cwp).SqLength() > (SQUARE_SIZE * SQUARE_SIZE)) {
+					if ((pos - cwp).SqLength() > Square(SQUARE_SIZE) && (pos - cwp).dot(flatFrontDir) >= 0.0f) {
 						return false;
 					}
 				}
@@ -1330,11 +1337,11 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 void CGroundMoveType::GetNextWayPoint()
 {
 	if (CanGetNextWayPoint()) {
-		pathController->SetTempGoalPosition(pathId, nextWayPoint);
+		pathController->SetTempGoalPosition(pathID, nextWayPoint);
 
 		// NOTE: pathfinder implementation should ensure waypoints are not equal
 		currWayPoint = nextWayPoint;
-		nextWayPoint = pathManager->NextWayPoint(owner, pathId, 0, currWayPoint, 1.25f * SQUARE_SIZE, true);
+		nextWayPoint = pathManager->NextWayPoint(owner, pathID, 0, currWayPoint, 1.25f * SQUARE_SIZE, true);
 	}
 
 	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
@@ -1391,11 +1398,11 @@ float3 CGroundMoveType::Here()
 
 
 void CGroundMoveType::StartEngine(bool callScript) {
-	if (pathId == 0)
-		GetNewPath();
+	if (pathID == 0)
+		pathID = GetNewPath();
 
-	if (pathId != 0) {
-		pathManager->UpdatePath(owner, pathId);
+	if (pathID != 0) {
+		pathManager->UpdatePath(owner, pathID);
 
 		if (callScript) {
 			// makes no sense to call this unless we have a new path
@@ -1407,9 +1414,9 @@ void CGroundMoveType::StartEngine(bool callScript) {
 }
 
 void CGroundMoveType::StopEngine(bool callScript, bool hardStop) {
-	if (pathId != 0) {
-		pathManager->DeletePath(pathId);
-		pathId = 0;
+	if (pathID != 0) {
+		pathManager->DeletePath(pathID);
+		pathID = 0;
 
 		if (callScript) {
 			owner->script->StopMoving();
@@ -1555,8 +1562,8 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		// mantis{3614,4217}
 		//   we cannot nicely bounce off terrain when checking only the center square
 		//   however, testing more squares means CD can (sometimes) disagree with PFS
-		//   --> compromise and assume a 3x3 footprint --> still possible but have to
-		//   ensure we allow only lateral (non-obstructing) bounces
+		//   in narrow passages --> still possible, but have to ensure we allow only
+		//   lateral (non-obstructing) bounces
 		const int xsh = colliderMD->xsizeh * (checkYardMap || (checkTerrain * colliderMD->allowTerrainCollisions));
 		const int zsh = colliderMD->zsizeh * (checkYardMap || (checkTerrain * colliderMD->allowTerrainCollisions));
 
@@ -1644,10 +1651,14 @@ void CGroundMoveType::HandleStaticObjectCollision(
 			if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, ZeroVector, checkTerrain, checkYardMap, checkTerrain)) {
 				collider->Move(strafeVec + bounceVec, true);
 			} else {
-				collider->Move(oldPos, false);
+				collider->Move(oldPos - collider->pos, wantRequestPath = true);
 			}
 		}
 
+		// note:
+		//   in many cases this does not mean we should request a new path
+		//   (and it can be counter-productive to do so since we might not
+		//   even *get* one)
 		wantRequestPath = ((strafeVec + bounceVec) != ZeroVector);
 	} else {
 		const float  colRadiusSum = colliderRadius + collideeRadius;
@@ -1671,10 +1682,11 @@ void CGroundMoveType::HandleStaticObjectCollision(
 			// the new speedvector which is constructed from deltaSpeed --> we would simply keep
 			// moving forward through obstacles if not counteracted by this
 			if (collider->frontdir.dot(separationVector) < 0.25f) {
-				collider->Move(oldPos, false);
+				collider->Move(oldPos - collider->pos, wantRequestPath = true);
 			}
 		}
 
+		// same here
 		wantRequestPath = (penDistance < 0.0f);
 	}
 
@@ -2008,7 +2020,7 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 	// NOTE:
 	//   by changing the progress-state here (which seems redundant),
 	//   SlowUpdate can suddenly request a new path for us even after
-	//   StopMoving (which clears pathId; CAI often calls StopMoving
+	//   StopMoving (which clears pathID; CAI often calls StopMoving
 	//   before unit is at goalPos!)
 	//   for this reason StopMoving always updates goalPos so internal
 	//   GetNewPath's are no-ops (while CAI does not call StartMoving)
@@ -2239,8 +2251,31 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
 		// NOTE:
 		//   does not check for structure blockage, coldet handles that
 		//   entering of impassable terrain is *also* handled by coldet
+		//
+		//   the loop below tries to evade "corner" squares that would
+		//   block us from initiating motion and is needed for when we
+		//   are not *currently* moving but want to get underway to our
+		//   first waypoint (HSOC coldet won't help then)
+		//
+ 		//   allowing movement through blocked squares when pathID != 0
+ 		//   relies on assumption that PFS will not search if start-sqr
+ 		//   is blocked, so too fragile
+		//
 		if (!pathController->IgnoreTerrain(*owner->moveDef, owner->pos) && !owner->moveDef->TestMoveSquare(owner, owner->pos, ZeroVector, true, false, true)) {
-			owner->Move(owner->pos - newSpeedVector, false);
+			bool updatePos = false;
+
+			for (unsigned int n = 1; n <= SQUARE_SIZE; n++) {
+				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos + owner->rightdir * n, ZeroVector, true, false, true))) {
+					owner->Move(owner->pos + owner->rightdir * n, false); break;
+				}
+				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos - owner->rightdir * n, ZeroVector, true, false, true))) {
+					owner->Move(owner->pos - owner->rightdir * n, false); break;
+				}
+			}
+
+			if (!updatePos) {
+				owner->Move(owner->pos - newSpeedVector, false);
+			}
 		}
 
 		// NOTE:

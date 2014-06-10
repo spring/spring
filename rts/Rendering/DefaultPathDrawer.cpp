@@ -368,9 +368,9 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		if (!camera->InView(p1) && !camera->InView(p2))
 			continue;
 
-		const unsigned int dir = pf->squareStates.nodeMask[square] & PATHOPT_AXIS_DIRS;
-		const unsigned int obx = sqr.x - pf->directionVectors2D[dir].x;
-		const unsigned int obz = sqr.y - pf->directionVectors2D[dir].y;
+		const unsigned int dir = pf->squareStates.nodeMask[square] & PATHOPT_CARDINALS;
+		const unsigned int obx = sqr.x - (CPathFinder::GetDirectionVectorsTable2D())[dir].x;
+		const unsigned int obz = sqr.y - (CPathFinder::GetDirectionVectorsTable2D())[dir].y;
 		/*
 		const unsigned int obsquare =  obz * gs->mapx + obx;
 
@@ -433,8 +433,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 				glVertexf3(p1 - UpVector * 10.0f);
 
 				for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
-					const int obx = x + pe->directionVectors[dir].x;
-					const int obz = z + pe->directionVectors[dir].y;
+					const int obx = x + (CPathEstimator::GetDirectionVectorsTable())[dir].x;
+					const int obz = z + (CPathEstimator::GetDirectionVectorsTable())[dir].y;
 
 					if (obx <                 0) continue;
 					if (obz <                 0) continue;
@@ -474,8 +474,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 					continue;
 
 				for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
-					const int obx = x + pe->directionVectors[dir].x;
-					const int obz = z + pe->directionVectors[dir].y;
+					const int obx = x + (CPathEstimator::GetDirectionVectorsTable())[dir].x;
+					const int obz = z + (CPathEstimator::GetDirectionVectorsTable())[dir].y;
 
 					if (obx <                 0) continue;
 					if (obz <                 0) continue;
