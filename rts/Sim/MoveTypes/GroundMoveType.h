@@ -53,7 +53,7 @@ private:
 
 	float Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal = 0.0f);
 
-	void GetNewPath();
+	unsigned int GetNewPath();
 	void GetNextWayPoint();
 	bool CanGetNextWayPoint();
 	bool ReRequestPath(bool callScript, bool forceRequest);
@@ -128,7 +128,7 @@ public:
 	float currentSpeed;
 	float deltaSpeed;
 
-	unsigned int pathId;
+	unsigned int pathID;
 	float goalRadius;
 
 	SyncedFloat3 currWayPoint;

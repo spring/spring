@@ -27,6 +27,13 @@ struct SRectangle {
 	int GetHeight() const { return z2 - z1; }
 	int GetArea() const { return (GetWidth() * GetHeight()); }
 
+	bool Inside(const int2 pos) const {
+		// note: *min inclusive, *max exclusive
+		const bool xb = (pos.x >= x1 && pos.x < x2);
+		const bool yb = (pos.y >= y1 && pos.y < y2);
+		return (xb && yb);
+	}
+
 	void ClampPos(int2* pos) const {
 		pos->x = Clamp(pos->x, x1, x2);
 		pos->y = Clamp(pos->y, y1, y2);
