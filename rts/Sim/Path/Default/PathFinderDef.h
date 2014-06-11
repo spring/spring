@@ -78,7 +78,7 @@ public:
 	bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const {
 		if (parentBlockRect.Inside(int2(xSquare, zSquare))) return true;
 		if ( childBlockRect.Inside(int2(xSquare, zSquare))) return true;
-		return false;
+		return (constraintDisabled);
 	}
 
 private:
