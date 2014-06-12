@@ -611,7 +611,7 @@ int LuaSyncedCtrl::AssignPlayerToTeam(lua_State* L)
 	const int playerID = luaL_checkint(L, 1);
 	const int teamID = luaL_checkint(L, 2);
 
-	if (!playerHandler->IsValidPlayer(playerID)
+	if (!playerHandler->IsValidPlayer(playerID))
 		return 0;
 	if (!teamHandler->IsValidTeam(teamID))
 		return 0;
