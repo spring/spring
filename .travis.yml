@@ -10,7 +10,6 @@ before_script:
 script:
   - cmake .
   - make spring-headless pr-downloader tests -k
-  - tools/pr-downloader/src/pr-downloader DownCount_v2
 # disabled because "make check" needs installed spring and gcc 4.6 fails
 # with creg it seems: https://travis-ci.org/spring/spring/builds/17682923#L2664
 #  - make check
