@@ -24,6 +24,7 @@ public:
 	bool Update();
 	void SlowUpdate();
 
+	void StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius);
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed) { StartMoving(pos, goalRadius); }
 	void StopMoving(bool callScript = false, bool hardStop = false);
@@ -39,8 +40,29 @@ public:
 
 	bool OnSlope(float minSlideTolerance);
 	bool IsReversing() const { return reversing; }
+	bool WantToStop() const { return (pathID == 0 && !useRawMovement); }
 
+
+	float GetTurnRate() const { return turnRate; }
+	float GetTurnSpeed() const { return turnSpeed; }
+	float GetTurnAccel() const { return turnAccel; }
+
+	float GetAccRate() const { return accRate; }
+	float GetDecRate() const { return decRate; }
+	float GetMyGravity() const { return myGravity; }
+
+	float GetMaxReverseSpeed() const { return maxReverseSpeed; }
+	float GetWantedSpeed() const { return wantedSpeed; }
+	float GetCurrentSpeed() const { return currentSpeed; }
+	float GetDeltaSpeed() const { return deltaSpeed; }
+
+	float GetCurrWayPointDist() const { return currWayPointDist; }
+	float GetPrevWayPointDist() const { return prevWayPointDist; }
+	float GetGoalRadius() const { return goalRadius; }
 	unsigned int GetPathID() const { return pathID; }
+
+	const SyncedFloat3& GetCurrWayPoint() const { return currWayPoint; }
+	const SyncedFloat3& GetNextWayPoint() const { return nextWayPoint; }
 
 private:
 	float3 GetObstacleAvoidanceDir(const float3& desiredDir);
@@ -117,7 +139,15 @@ private:
 private:
 	IPathController* pathController;
 
-public:
+	SyncedFloat3 currWayPoint;
+	SyncedFloat3 nextWayPoint;
+
+	float3 waypointDir;
+	float3 flatFrontDir;
+	float3 lastAvoidanceDir;
+	float3 mainHeadingPos;
+	float3 skidRotVector;  /// vector orthogonal to skidDir
+
 	float turnRate; // maximum angular speed (angular units/frame)
 	float turnSpeed; // current angular speed (angular units/frame)
 	float turnAccel; // angular acceleration (angular units/frame^2)
@@ -131,31 +161,22 @@ public:
 	float currentSpeed;
 	float deltaSpeed;
 
-	float goalRadius;
-
-	SyncedFloat3 currWayPoint;
-	SyncedFloat3 nextWayPoint;
-
-private:
 	bool atGoal;
 	bool atEndOfPath;
 
 	float currWayPointDist;
 	float prevWayPointDist;
+	float goalRadius;
 
 	bool reversing;
 	bool idling;
 	bool canReverse;
-	bool useMainHeading;
+	bool useMainHeading;   /// if true, turn toward mainHeadingPos until weapons[0] can TryTargeT() it
+	bool useRawMovement;   /// if true, move towards goal without invoking PFS
 
 	float skidRotSpeed;    /// rotational speed when skidding (radians / (GAME_SPEED frames))
 	float skidRotAccel;    /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
 
-	float3 waypointDir;
-	float3 flatFrontDir;
-	float3 lastAvoidanceDir;
-	float3 mainHeadingPos;
-	float3 skidRotVector;  /// vector orthogonal to skidDir
 
 	unsigned int pathID;
 
