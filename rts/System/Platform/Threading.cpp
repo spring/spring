@@ -219,10 +219,10 @@ namespace Threading {
 	void InitThreadPool() {
 		boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
 		boost::uint32_t mainAffinity  = systemCores;
-		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
 #ifndef UNIT_TEST
 		mainAffinity = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
 #endif
+		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
 
 		{
 			int workerCount = -1;
