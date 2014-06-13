@@ -184,6 +184,9 @@ bool SpringApp::Initialize()
 
 	FileSystemInitializer::InitializeLogOutput();
 	CLogOutput::LogSystemInfo();
+	LOG("         CPU Clock: %s", spring_clock::GetName());
+	LOG("Physical CPU Cores: %d", Threading::GetPhysicalCpuCores());
+	LOG(" Logical CPU Cores: %d", Threading::GetLogicalCpuCores());
 	CMyMath::Init();
 
 	globalRendering = new CGlobalRendering();
@@ -210,15 +213,12 @@ bool SpringApp::Initialize()
 		SetErrorMode(olderrors);
 	}
 #endif
-
-	// Initialize class system
-	creg::System::InitializeClasses();
-
 	// Initialize crash reporting
 	CrashHandler::Install();
-
 	good_fpu_control_registers(__FUNCTION__);
 
+	// CREG & GlobalConfig
+	creg::System::InitializeClasses();
 	GlobalConfig::Instantiate();
 
 	// Create Window
@@ -262,9 +262,6 @@ bool SpringApp::Initialize()
 	// Multithreading & Affinity
 	Threading::SetThreadName("unknown"); // set default threadname
 	Threading::InitThreadPool();
-
-	LOG("[%s] CPU Clock: %s", __FUNCTION__, spring_clock::GetName());
-	LOG("[%s] CPU Cores: %d", __FUNCTION__, Threading::GetAvailableCores());
 
 	// Create CGameSetup and CPreGame objects
 	Startup();

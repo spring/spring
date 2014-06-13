@@ -56,7 +56,7 @@ static void SetThreadNum(const int idx)
 
 int GetMaxThreads()
 {
-	return Threading::GetAvailableCores();
+	return Threading::GetPhysicalCpuCores();
 }
 
 int GetNumThreads()
