@@ -275,7 +275,7 @@ namespace Threading {
 		{
 			int workerCount = -1;
 #ifndef UNIT_TEST
-			workerCount = configHandler->GetUnsigned("WorkerThreadCount");
+			workerCount = std::min(ThreadPool::GetMaxThreads() - 1, configHandler->GetUnsigned("WorkerThreadCount"));
 			ThreadPool::SetThreadSpinTime(configHandler->GetUnsigned("WorkerThreadSpinTime"));
 #endif
 			const int numCores = ThreadPool::GetMaxThreads();
