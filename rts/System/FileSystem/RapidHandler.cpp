@@ -13,7 +13,6 @@
 
 class RapidEntry{
 public:
-	std::vector<std::string> value;
 	RapidEntry(const std::string& line) {
 		value.resize(entries);
 		size_t pos = 0, start = 0;
@@ -23,9 +22,19 @@ public:
 			start = pos + 1;
 		}
 	}
+	const std::string& GetTag()
+	{
+		return value[0];
+	}
+
+	const std::string& GetName()
+	{
+		return value[3];
+	}
 private:
 	static const char delim = ',';
 	static const size_t entries = 4;
+	std::vector<std::string> value;
 
 };
 
@@ -47,9 +56,9 @@ static std::string GetNameFromFile(const std::string& tag, const std::string& na
 		if (buf[len-1] == '\n') len--;
 		if (buf[len-1] == '\r') len--;
 
-		RapidEntry tmp(std::string(buf, len));
-		if (tmp.value[0] == tag) {
-			return tmp.value[3];
+		RapidEntry ent(std::string(buf, len));
+		if (ent.GetTag() == tag) {
+			return ent.GetName();
 		}
 	}
 	gzclose(in);
