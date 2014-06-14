@@ -8,6 +8,8 @@
 #include "System/Util.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
+#include "System/UriParser.h"
+#include "System/FileSystem/RapidHandler.h"
 #include "System/Log/ILog.h"
 #include <boost/cstdint.hpp>
 
@@ -188,6 +190,14 @@ namespace StartScriptGen {
 		return false;
 	}
 
+	static bool GetGameByRapidTag(const std::string& lazyName, std::string& tag)
+	{
+		if (!ParseRapidUri(lazyName, tag))
+			return false;
+		tag = GetRapidName(tag);
+		return !tag.empty();
+	}
+
 
 	static std::string GetGame(const std::string& lazyName)
 	{
@@ -195,7 +205,7 @@ namespace StartScriptGen {
 		if (GetGameByExactName(lazyName, &applicableName)) return applicableName;
 		if (GetGameByShortName(lazyName, &applicableName)) return applicableName;
 		if (GetRandomGame(lazyName, &applicableName))      return applicableName;
-		//TODO add rapid tags support, e.g. `s44:test`
+		if (GetGameByRapidTag(lazyName, applicableName))   return applicableName;
 
 		return lazyName;
 	}

@@ -73,6 +73,7 @@
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Sound/ISound.h"
 #include "System/Sync/FPUCheck.h"
+#include "System/UriParser.h"
 
 #ifdef WIN32
 	#include <winuser.h> //GetWindowPlacement
@@ -773,37 +774,6 @@ void SpringApp::RunScript(boost::shared_ptr<ClientSetup> clientSetup, const std:
 }
 
 
-static void SplitString(const std::string& text, const char* sepChar, std::string* s1, std::string* s2, std::string* all)
-{
-	const size_t q = text.find(sepChar);
-	if (q != std::string::npos) {
-		*s1 = text.substr(0, q);
-		*s2 = text.substr(q + 1);
-		return;
-	}
-	*all = text;
-}
-
-
-static void ParseSpringUri(const std::string& uri, std::string* username, std::string* password, std::string* host, int* port)
-{
-	// see http://cpp-netlib.org/0.10.1/in_depth/uri.html (2014)
-	if (uri.find("spring://") == std::string::npos)
-		return; // wrong scheme
-
-	const std::string full = uri.substr(std::string("spring://").length());
-	std::string authority, query, user_info, server, portStr;
-	bool error = false;
-	SplitString(full,      "/", &authority, &query, &authority);
-	SplitString(authority, "@", &user_info, &server, &server);
-	SplitString(user_info, ":", username, password, username);
-	SplitString(server,    ":", host, &portStr, host);
-	*port = StringToInt(portStr, &error);
-	if (error) *port = 0;
-	//FIXME pass query
-}
-
-
 /**
  * Initializes instance of GameSetup
  */
@@ -841,10 +811,9 @@ void SpringApp::Startup()
 	// process given argument
 	if (inputFile.find("spring://") == 0) {
 		// url (syntax: spring://username:password@host:port)
-		int port = 0;
+		if (!ParseSpringUri(inputFile, startsetup->myPlayerName, startsetup->myPasswd, startsetup->hostIP, startsetup->hostPort))
+			throw content_error("invalid url specified: " + inputFile);
 		startsetup->isHost = false;
-		ParseSpringUri(inputFile, &startsetup->myPlayerName, &startsetup->myPasswd, &startsetup->hostIP, &port);
-		if (port != 0) startsetup->hostPort = port;
 		pregame = new CPreGame(startsetup);
 	} else if (extension == "sdf") {
 		// demo
