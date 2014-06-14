@@ -282,11 +282,8 @@ const char *inet_tryconnect(p_socket ps, const char *address,
 \*-------------------------------------------------------------------------*/
 const char *inet_trybind(p_socket ps, const char *address, unsigned short port)
 {
-    /*
-    // bind is always allowed
     if (!isAllowed(ps, address, port, false))
 	return "bind denied";
-    */
 
     struct sockaddr_in local;
     int err;
