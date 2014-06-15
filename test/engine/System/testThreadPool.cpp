@@ -7,7 +7,7 @@
 #define BOOST_TEST_MODULE ThreadPool
 #include <boost/test/unit_test.hpp>
 
-#define NUM_THREADS 10
+static int NUM_THREADS = std::min(ThreadPool::GetMaxThreads(), 10);
 
 // !!! BOOST.TEST IS NOT THREADSAFE !!! (facepalms)
 #define SAFE_BOOST_CHECK( P )           do { boost::lock_guard<boost::mutex> _(m); BOOST_CHECK( ( P ) );               } while( 0 );

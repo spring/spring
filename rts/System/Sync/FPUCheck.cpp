@@ -5,16 +5,11 @@
 #endif
 
 #include "FPUCheck.h"
-#include <cstddef>
 #include "lib/streflop/streflop_cond.h"
 #include "System/Exceptions.h"
 #include "System/ThreadPool.h"
 #include "System/Log/ILog.h"
-#include "System/Platform/Threading.h"
-
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
+#include "System/Platform/CpuID.h"
 
 #ifdef STREFLOP_H
 	#ifdef STREFLOP_SSE
@@ -193,56 +188,6 @@ void streflop_init_omp() {
 }
 
 namespace springproc {
-	#if defined(__GNUC__)
-		// function inlining breaks this
-		__attribute__((__noinline__))
-		void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
-		{
-		#ifndef __APPLE__
-			__asm__ __volatile__(
-				"cpuid"
-				: "=a" (*a), "=b" (*b), "=c" (*c), "=d" (*d)
-				: "0" (*a)
-			);
-		#else
-			#ifdef __x86_64__
-				__asm__ __volatile__(
-					"pushq %%rbx\n\t"
-					"cpuid\n\t"
-					"movl %%ebx, %1\n\t"
-					"popq %%rbx"
-					: "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
-					: "0" (*a)
-				);
-			#else
-				__asm__ __volatile__(
-					"pushl %%ebx\n\t"
-					"cpuid\n\t"
-					"movl %%ebx, %1\n\t"
-					"popl %%ebx"
-					: "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
-					: "0" (*a)
-				);
-			#endif
-		#endif
-		}
-	#elif defined(_MSC_VER) && (_MSC_VER >= 1310)
-		void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
-		{
-			int features[4];
-			__cpuid(features, *a);
-			*a=features[0];
-			*b=features[1];
-			*c=features[2];
-			*d=features[3];
-		}
-	#else
-		// no-op on other compilers
-		void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
-		{
-		}
-	#endif
-
 	unsigned int GetProcMaxStandardLevel()
 	{
 		unsigned int rEAX = 0x00000000;

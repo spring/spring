@@ -69,6 +69,7 @@ INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/7zip)
 ### Assemble sources
 IF	(UNIX)
 	SET(sources_engine_Platform_CrashHandler
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/thread_backtrace.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp)
@@ -78,6 +79,7 @@ ELSEIF	(WIN32)
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/CrashHandler.cpp)
 ELSE	()
 	SET(sources_engine_Platform_CrashHandler
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Mac/CrashHandler.cpp)
 ENDIF	()
@@ -93,8 +95,9 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigVariable.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/CRC.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/CmdLineParams.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/ScopedFileLock.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/TdfParser.cpp
