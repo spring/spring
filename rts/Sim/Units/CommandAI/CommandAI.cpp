@@ -931,8 +931,6 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 		}
 	}
 
-	// FIXME: handle CMD_LOOPBACKATTACK, etc...
-
 	CCommandQueue::iterator insertIt = queue->begin();
 
 	if (c.options & ALT_KEY) {

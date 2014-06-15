@@ -15,6 +15,12 @@ class CStrafeAirMoveType: public AAirMoveType
 	CR_DECLARE_SUB(DrawLine);
 
 public:
+	enum {
+		MANEUVER_FLY_STRAIGHT = 0,
+		MANEUVER_IMMELMAN     = 1,
+		MANEUVER_IMMELMAN_INV = 2,
+	};
+
 	CStrafeAirMoveType(CUnit* owner);
 
 	bool Update();
@@ -23,9 +29,8 @@ public:
 	bool SetMemberValue(unsigned int memberHash, void* memberValue);
 
 	void UpdateManeuver();
-	void UpdateFighterAttack();
 	void UpdateAttack();
-	void UpdateFlying(float wantedHeight, float engine);
+	bool UpdateFlying(float wantedHeight, float engine);
 	void UpdateLanded();
 	void UpdateLanding();
 	void UpdateAirPhysics(
@@ -49,7 +54,7 @@ public:
 
 	void Takeoff();
 
-	int maneuver;
+	int maneuverState;
 	int maneuverSubState;
 
 	bool loopbackAttack;
@@ -81,11 +86,6 @@ public:
 	float lastRudderPos;
 	float lastElevatorPos;
 	float lastAileronPos;
-
-	float inefficientAttackTime;
-
-	/// used by fighters to turn away when closing in on ground targets
-	float3 exitVector;
 
 private:
 	bool HandleCollisions(bool checkCollisions);
