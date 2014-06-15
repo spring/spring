@@ -7,7 +7,6 @@
 #include <fstream>
 #include <sys/syscall.h>
 #include <boost/thread/tss.hpp>
-#include <boost/atomic.hpp>
 
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
@@ -176,7 +175,7 @@ void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadContro
 		pThreadCtls->mutSuspend.lock();
 		pThreadCtls->running.store(true);
 
-		LOG_I(L_DEBUG, "ThreadStart(): New thread's handle is %.4x", pThreadCtls->handle);
+		LOG_L(L_DEBUG, "ThreadStart(): New thread's handle is %.4x", pThreadCtls->handle);
 
 		// We are fully initialized, so notify the condition variable. The thread's parent will unblock in whatever function created this thread.
 		pThreadCtls->condInitialized.notify_all();
