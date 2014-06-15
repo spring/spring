@@ -14,8 +14,8 @@
 
 #include "System/Platform/Win/win32.h"
 #include <functional>
+#include <atomic>
 #include <boost/thread.hpp>
-#include <boost/atomic.hpp>
 #include <boost/cstdint.hpp>
 
 #include <semaphore.h>
@@ -80,7 +80,7 @@ namespace Threading {
 		SuspendResult Resume();
 
 		NativeThreadHandle      handle;
-		boost::atomic<bool>     running;
+		std::atomic<bool>       running;
 	#ifndef WIN32
 		boost::mutex            mutSuspend;
 		boost::condition_variable condInitialized;
