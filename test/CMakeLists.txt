@@ -301,8 +301,9 @@ Else  (NOT Boost_FOUND)
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testThreadPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/ThreadPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Platform/CpuID.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
 			${test_Log_sources}
 		)
 	set(test_libs

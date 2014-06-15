@@ -17,10 +17,9 @@ public:
 	}
 };
 
-typedef std::list<TSocketRule> TStrIntMap;
-
 class CLuaSocketRestrictions {
 public:
+
 	enum RestrictType{
 		TCP_CONNECT=0,
 		TCP_LISTEN,
@@ -69,7 +68,7 @@ private:
 	*/
 	const char* ruleToStr(RestrictType type);
 
-	TStrIntMap restrictions[ALL_RULES];
+	std::list<TSocketRule> restrictions[ALL_RULES];
 
 };
 

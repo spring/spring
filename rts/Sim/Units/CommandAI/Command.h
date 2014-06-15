@@ -51,7 +51,6 @@
 #define CMD_RESURRECT            125
 #define CMD_CAPTURE              130
 #define CMD_AUTOREPAIRLEVEL      135
-#define CMD_LOOPBACKATTACK       140
 #define CMD_IDLEMODE             145
 #define CMD_FAILED               150
 

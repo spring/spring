@@ -59,6 +59,7 @@ Else   ()
 	if (CMAKE_SIZEOF_VOID_P EQUAL 8) # add fpic flag on 64 bit platforms
 		Set(PIC_FLAG "-fpic")
 	else () #no fpic needed on 32bit
+		set(CMAKE_POSITION_INDEPENDENT_CODE FALSE)
 		Set(PIC_FLAG "")
 	endif()
 EndIf  ()

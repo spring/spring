@@ -21,17 +21,20 @@ namespace IPath {
 	struct Path {
 		Path()
 			: desiredGoal(ZeroVector)
-			, goalRadius(-1.0f)
 			, pathGoal(ZeroVector)
+			, goalRadius(-1.0f)
 			, pathCost(-1.0f)
 		{}
+
 		// Information about the requested path.
 		float3 desiredGoal;
-		float goalRadius;
 		// Information about the generated path.
 		float3 pathGoal;
+
 		path_list_type path;
 		square_list_type squares;
+
+		float goalRadius;
 		float pathCost;
 	};
 };

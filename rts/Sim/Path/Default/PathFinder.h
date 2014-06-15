@@ -57,6 +57,7 @@ public:
 		bool testMobile,
 		bool exactPath,
 		bool needPath,
+		bool peCall,
 		bool synced
 	);
 
@@ -67,13 +68,28 @@ public:
 
 	PathNodeStateBuffer& GetNodeStateBuffer() { return squareStates; }
 
+	static void InitDirectionVectorsTable();
+	static void InitDirectionCostsTable();
+
+	static const   int2* GetDirectionVectorsTable2D();
+	static const float3* GetDirectionVectorsTable3D();
+
 private:
 	/// Clear things up from last search.
 	void ResetSearch();
 	/// Set up the starting point of the search.
-	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced);
+	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool peCall, bool synced);
 	/// Performs the actual search.
-	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced);
+	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool peCall, bool synced);
+
+
+	void TestNeighborSquares(
+		const MoveDef& moveDef,
+		const CPathFinderDef& pfDef,
+		const PathNode* parentSquare,
+		const CSolidObject* owner,
+		bool synced
+	);
 	/**
 	 * Test the availability and value of a square,
 	 * and possibly add it to the queue of open squares.
@@ -81,9 +97,13 @@ private:
 	bool TestSquare(
 		const MoveDef& moveDef,
 		const CPathFinderDef& pfDef,
-		const PathNode* parentOpenSquare,
+		const PathNode* parentSquare,
 		const CSolidObject* owner,
-		unsigned int pathOptDir,
+		const unsigned int pathOptDir,
+		const unsigned int blockStatus,
+		const float posSpeedMod,
+		const float dirSpeedMod,
+		bool withinConstraints,
 		bool synced
 	);
 	/**
@@ -105,10 +125,7 @@ private:
 	);
 
 
-	int2 directionVectors2D[PATH_DIRECTIONS << 1];
-	float3 directionVectors3D[PATH_DIRECTIONS << 1];
-	float directionCosts[PATH_DIRECTIONS << 1];
-
+	// copy of original starting position
 	float3 start;
 
 	unsigned int startxSqr;
