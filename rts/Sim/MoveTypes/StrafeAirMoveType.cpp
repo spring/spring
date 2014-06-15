@@ -362,7 +362,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	turnRadius(150),
 	maxAileron(0.04f),
 	maxElevator(0.02f),
-	maxRudder(0.01f),
+	maxRudder(0.01f)
 {
 	assert(owner != NULL);
 	assert(owner->unitDef != NULL);
@@ -512,13 +512,13 @@ bool CStrafeAirMoveType::Update()
 						UpdateManeuver();
 					} else if (goalInFront && goalInRange) {
 						UpdateAttack();
-					} else if (!goalInFront) {
-						if (UpdateFlying(wantedHeight, 1.0f) && loopbackAttack) {
+					} else {
+						if (UpdateFlying(wantedHeight, 1.0f) && !goalInFront && loopbackAttack) {
 							// once yaw and roll are unblocked, semi-randomly decide to turn or loop
 							const SyncedFloat3& rightdir = owner->rightdir;
 							const SyncedFloat3& frontdir = owner->frontdir;
 
-							const float altitude = ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) - lastPos.y;
+							const float altitude = CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z) - lastPos.y;
 
 							if ((maneuverState = SelectLoopBackManeuver(frontdir, rightdir, lastSpd, turnRadius, altitude)) == MANEUVER_IMMELMAN_INV) {
 								maneuverSubState = 0;
@@ -699,7 +699,7 @@ void CStrafeAirMoveType::UpdateManeuver()
 				maneuverState = MANEUVER_FLY_STRAIGHT;
 			}
 			// [?] some seem to report that the "unlimited altitude" thing is because of these maneuvers
-			if ((owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z)) > (wantedHeight * 4.0f)) {
+			if ((owner->pos.y - CGround::GetApproximateHeight(owner->pos.x, owner->pos.z)) > (wantedHeight * 4.0f)) {
 				maneuverState = MANEUVER_FLY_STRAIGHT;
 			}
 		} break;
