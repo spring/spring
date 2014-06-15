@@ -84,7 +84,7 @@ static std::string GetBinaryLocation()
 #endif
 }
 
-#define LOG_SECTION_CRASHHANDLER "LinuxCrashHandler"
+#define LOG_SECTION_CRASHHANDLER "CrashHandler"
 
 /* Initialized before main() */
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_CRASHHANDLER);

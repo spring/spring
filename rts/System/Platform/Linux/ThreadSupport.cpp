@@ -12,7 +12,7 @@
 #include "System/Platform/Threading.h"
 
 
-#define LOG_SECTION_CRASHHANDLER "LinuxCrashHandler"
+#define LOG_SECTION_CRASHHANDLER "CrashHandler"
 
 
 // already registerd in CrashHandler.cpp
