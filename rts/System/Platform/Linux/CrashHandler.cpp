@@ -44,12 +44,7 @@
 #define ADDR2LINE "addr2line"
 #endif
 
-#ifdef DEBUG
-static const int MAX_STACKTRACE_DEPTH = 300;
-#else
 static const int MAX_STACKTRACE_DEPTH = 100;
-#endif
-
 static const std::string INVALID_LINE_INDICATOR = "#####";
 static const uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
 

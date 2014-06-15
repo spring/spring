@@ -79,7 +79,9 @@ void ThreadSIGUSR1Handler (int signum, siginfo_t* info, void* pCtx)
 	std::shared_ptr<Threading::ThreadControls> pThreadCtls = *threadCtls;
 
 	// Fill in ucontext_t structure before locking, this allows stack walking...
-	if (err = getcontext(&pThreadCtls->ucontext)) {
+
+	err = getcontext(&pThreadCtls->ucontext);
+	if (err != 0) {
 		LOG_L(L_ERROR, "Couldn't get thread context within suspend signal handler: %s", strerror(err));
 		return;
 	}
@@ -120,7 +122,8 @@ void SetCurrentThreadControls(std::shared_ptr<ThreadControls> * ppThreadCtls)
 		sigemptyset(&sigSet);
 		sigaddset(&sigSet, SIGUSR1);
 
-		if (err = pthread_sigmask(SIG_UNBLOCK, &sigSet, NULL)) {
+		err = pthread_sigmask(SIG_UNBLOCK, &sigSet, NULL);
+		if (err != 0) {
 			LOG_L(L_FATAL, "Error while setting new pthread's signal mask: %s", strerror(err));
 			return;
 		}
@@ -186,7 +189,6 @@ void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadContro
 SuspendResult ThreadControls::Suspend ()
 {
 	int err=0;
-	int semCnt = 0;
 
 	// Return an error if the running flag is false.
 	if (!running) {
@@ -199,7 +201,8 @@ SuspendResult ThreadControls::Suspend ()
 	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "Sending SIGUSR1 to 0x%x", handle);
 
 	// Send signal to thread to trigger its handler
-	if (err = pthread_kill(handle, SIGUSR1)) {
+	err = pthread_kill(handle, SIGUSR1);
+	if (err != 0) {
 		LOG_L(L_ERROR, "Error while trying to send signal to suspend thread: %s", strerror(err));
 		return Threading::THREADERR_MISC;
 	}
@@ -208,9 +211,6 @@ SuspendResult ThreadControls::Suspend ()
 	// FIXME: this sort of spin-waiting inside the watchdog loop could be avoided by creating another worker thread
 	//        inside SuspendedStacktrace itself to do the work of checking that the stalled thread has been suspended and performing the trace there.
 	LinuxThreadState tstate;
-	struct timespec req;
-	req.tv_sec = 0;
-	req.tv_nsec = 25000000; // 25 ms
 	const int max_attempts = 40; // 40 attempts * 0.025s = 1 sec max.
 	for (int a = 0; a < max_attempts; a++) {
 		tstate = GetLinuxThreadState(thread_id);
