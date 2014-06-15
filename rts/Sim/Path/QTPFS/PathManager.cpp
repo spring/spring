@@ -83,7 +83,7 @@ namespace QTPFS {
 
 	static size_t GetNumThreads() {
 		const size_t numThreads = std::max(0, configHandler->GetInt("PathingThreadCount"));
-		const size_t numCores = Threading::GetAvailableCores();
+		const size_t numCores = Threading::GetLogicalCpuCores();
 		return ((numThreads == 0)? numCores: numThreads);
 	}
 

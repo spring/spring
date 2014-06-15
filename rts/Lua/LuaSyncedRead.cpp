@@ -3573,7 +3573,7 @@ int LuaSyncedRead::GetUnitEstimatedPath(lua_State* L)
 		return 0;
 	}
 
-	return (LuaPathFinder::PushPathNodes(L, gmt->pathId));
+	return (LuaPathFinder::PushPathNodes(L, gmt->GetPathID()));
 }
 
 
@@ -3774,22 +3774,22 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State* L)
 	if (groundmt != NULL) {
 		HSTR_PUSH_STRING(L, "name", "ground");
 
-		HSTR_PUSH_NUMBER(L, "turnRate", groundmt->turnRate);
-		HSTR_PUSH_NUMBER(L, "accRate", groundmt->accRate);
-		HSTR_PUSH_NUMBER(L, "decRate", groundmt->decRate);
+		HSTR_PUSH_NUMBER(L, "turnRate", groundmt->GetTurnRate());
+		HSTR_PUSH_NUMBER(L, "accRate", groundmt->GetAccRate());
+		HSTR_PUSH_NUMBER(L, "decRate", groundmt->GetDecRate());
 
-		HSTR_PUSH_NUMBER(L, "maxReverseSpeed", groundmt->maxReverseSpeed * GAME_SPEED);
-		HSTR_PUSH_NUMBER(L, "wantedSpeed", groundmt->wantedSpeed * GAME_SPEED);
-		HSTR_PUSH_NUMBER(L, "currentSpeed", groundmt->currentSpeed * GAME_SPEED);
+		HSTR_PUSH_NUMBER(L, "maxReverseSpeed", groundmt->GetMaxReverseSpeed() * GAME_SPEED);
+		HSTR_PUSH_NUMBER(L, "wantedSpeed", groundmt->GetWantedSpeed() * GAME_SPEED);
+		HSTR_PUSH_NUMBER(L, "currentSpeed", groundmt->GetCurrentSpeed() * GAME_SPEED);
 
-		HSTR_PUSH_NUMBER(L, "goalRadius", groundmt->goalRadius);
+		HSTR_PUSH_NUMBER(L, "goalRadius", groundmt->GetGoalRadius());
 
-		HSTR_PUSH_NUMBER(L, "currwaypointx", groundmt->currWayPoint.x);
-		HSTR_PUSH_NUMBER(L, "currwaypointy", groundmt->currWayPoint.y);
-		HSTR_PUSH_NUMBER(L, "currwaypointz", groundmt->currWayPoint.z);
-		HSTR_PUSH_NUMBER(L, "nextwaypointx", groundmt->nextWayPoint.x);
-		HSTR_PUSH_NUMBER(L, "nextwaypointy", groundmt->nextWayPoint.y);
-		HSTR_PUSH_NUMBER(L, "nextwaypointz", groundmt->nextWayPoint.z);
+		HSTR_PUSH_NUMBER(L, "currwaypointx", (groundmt->GetCurrWayPoint()).x);
+		HSTR_PUSH_NUMBER(L, "currwaypointy", (groundmt->GetCurrWayPoint()).y);
+		HSTR_PUSH_NUMBER(L, "currwaypointz", (groundmt->GetCurrWayPoint()).z);
+		HSTR_PUSH_NUMBER(L, "nextwaypointx", (groundmt->GetNextWayPoint()).x);
+		HSTR_PUSH_NUMBER(L, "nextwaypointy", (groundmt->GetNextWayPoint()).y);
+		HSTR_PUSH_NUMBER(L, "nextwaypointz", (groundmt->GetNextWayPoint()).z);
 
 		HSTR_PUSH_NUMBER(L, "requestedSpeed", 0.0f);
 

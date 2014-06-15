@@ -112,6 +112,9 @@ public:
 
 	PathNodeStateBuffer& GetNodeStateBuffer() { return blockStates; }
 
+	static void InitDirectionVectorsTable();
+	static const int2* GetDirectionVectorsTable();
+
 private:
 	void InitEstimator(const std::string& cacheFileName, const std::string& map);
 	void InitBlocks();
@@ -177,7 +180,6 @@ private:
 	std::list<unsigned int> dirtyBlocks;        /// List of blocks changed in last search.
 	std::list<SingleBlock> updatedBlocks;       /// Blocks that may need an update due to map changes.
 
-	int2 directionVectors[PATH_DIRECTIONS];
 	int2 mStartBlock;
 	int2 mGoalBlock;
 	int2 mGoalSqrOffset;

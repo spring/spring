@@ -56,7 +56,7 @@ static void SetThreadNum(const int idx)
 
 int GetMaxThreads()
 {
-	return Threading::GetAvailableCores();
+	return Threading::GetPhysicalCpuCores();
 }
 
 int GetNumThreads()
@@ -207,8 +207,8 @@ void NotifyWorkerThreads()
 void SetThreadCount(int num)
 {
 	int curThreads = ThreadPool::GetNumThreads();
-
 	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d", __FUNCTION__, num, curThreads);
+	num = std::min(num, ThreadPool::GetMaxThreads());
 
 	if (curThreads < num) {
 #ifndef UNITSYNC

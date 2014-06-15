@@ -23,6 +23,7 @@
 
 class CGameController;
 
+
 namespace Threading {
 
 	class ThreadControls;
@@ -103,9 +104,14 @@ namespace Threading {
 	void DetectCores();
 	boost::uint32_t SetAffinity(boost::uint32_t cores_bitmask, bool hard = true);
 	void SetAffinityHelper(const char* threadName, boost::uint32_t affinity);
-	int GetAvailableCores();
 	boost::uint32_t GetAvailableCoresMask();
 
+	/**
+	 * returns count of cpu cores/ hyperthreadings cores
+	 */
+	int GetPhysicalCpuCores(); /// physical cores only (excluding hyperthreading)
+	int GetLogicalCpuCores();  /// physical + hyperthreading
+	bool HasHyperThreading();
 
 	/**
 	 * threadpool related stuff
@@ -167,6 +173,7 @@ namespace Threading {
 	 */
 	struct AtomicCounterInt64;
 };
+
 
 //
 // Inlined Definitions

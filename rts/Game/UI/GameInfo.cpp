@@ -123,7 +123,7 @@ CGameInfo::CGameInfo()
 	labels.push_back("Game Name:");
 	values.push_back(gameSetup->modName);
 
-	labels.push_back("PathFinder:");
+	labels.push_back("PFS Name:");
 	switch (pathManager->GetPathFinderType()) {
 		case PFS_TYPE_DEFAULT: { values.push_back("Default"); } break;
 		case PFS_TYPE_QTPFS:   { values.push_back("QTPFS"  ); } break;
