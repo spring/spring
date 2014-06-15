@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include <pthread.h>
 #include <unistd.h>
 #include <signal.h>
@@ -10,6 +12,18 @@
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
 
+
+#define LOG_SECTION_CRASHHANDLER "LinuxCrashHandler"
+
+
+// already registerd in CrashHandler.cpp
+//LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_CRASHHANDLER);
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+        #undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_CRASHHANDLER
 
 
 namespace Threading {
@@ -48,7 +62,7 @@ LinuxThreadState GetLinuxThreadState (int tid)
 	std::fstream sfile;
 	sfile.open(filename, std::fstream::in);
 	if (sfile.fail()) {
-		LOG_SL("LinuxCrashHandler", L_WARNING, "GetLinuxThreadState could not query %s", filename);
+		LOG_L(L_WARNING, "GetLinuxThreadState could not query %s", filename);
 		sfile.close();
 		return LTS_UNKNOWN;
 	}
@@ -73,8 +87,7 @@ void ThreadSIGUSR1Handler (int signum, siginfo_t* info, void* pCtx)
 {
 	int err=0;
 
-	LOG_SL("LinuxCrashHandler", L_DEBUG, "ThreadSIGUSR1Handler[1]");
-	printf("test");
+	LOG_L(L_DEBUG, "ThreadSIGUSR1Handler[1]");
 
 	std::shared_ptr<Threading::ThreadControls> pThreadCtls = *threadCtls;
 
@@ -90,7 +103,7 @@ void ThreadSIGUSR1Handler (int signum, siginfo_t* info, void* pCtx)
 	//   it had to have been locked by some other thread.
 	pThreadCtls->running.store(false);
 
-	LOG_SL("LinuxCrashHandler", L_DEBUG, "ThreadSIGUSR1Handler[2]");
+	LOG_L(L_DEBUG, "ThreadSIGUSR1Handler[2]");
 
 	// Wait on the mutex. This should block the thread.
 	{
@@ -99,7 +112,7 @@ void ThreadSIGUSR1Handler (int signum, siginfo_t* info, void* pCtx)
 		pThreadCtls->mutSuspend.unlock();
 	}
 
-	LOG_SL("LinuxCrashHandler", L_DEBUG, "ThreadSIGUSR1Handler[3]");
+	LOG_L(L_DEBUG, "ThreadSIGUSR1Handler[3]");
 
 }
 
@@ -163,7 +176,7 @@ void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadContro
 		pThreadCtls->mutSuspend.lock();
 		pThreadCtls->running.store(true);
 
-		LOG_I(LOG_LEVEL_DEBUG, "ThreadStart(): New thread's handle is %.4x", pThreadCtls->handle);
+		LOG_I(L_DEBUG, "ThreadStart(): New thread's handle is %.4x", pThreadCtls->handle);
 
 		// We are fully initialized, so notify the condition variable. The thread's parent will unblock in whatever function created this thread.
 		pThreadCtls->condInitialized.notify_all();
@@ -198,7 +211,7 @@ SuspendResult ThreadControls::Suspend ()
 
 	mutSuspend.lock();
 
-	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "Sending SIGUSR1 to 0x%x", handle);
+	LOG_L(L_DEBUG, "Sending SIGUSR1 to 0x%x", handle);
 
 	// Send signal to thread to trigger its handler
 	err = pthread_kill(handle, SIGUSR1);

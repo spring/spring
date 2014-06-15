@@ -84,8 +84,17 @@ static std::string GetBinaryLocation()
 #endif
 }
 
+#define LOG_SECTION_CRASHHANDLER "LinuxCrashHandler"
+
 /* Initialized before main() */
-LOG_REGISTER_SECTION_GLOBAL("LinuxCrashHandler");
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_CRASHHANDLER);
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+        #undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_CRASHHANDLER
+
 
 /**
  * Returns the absolute version of a supplied relative path.
@@ -186,7 +195,7 @@ static char* fgets_addr2line(char* line, int maxLength, FILE* cmdOut)
     } else {
         line[0] = 0;
     }
-    LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "addr2line: %s", line);
+    LOG_L(L_DEBUG, "addr2line: %s", line);
 
     return res;
 }
@@ -313,7 +322,7 @@ static void ExtractSymbols (char** lines, StackTrace& stacktrace) {
     int l=0;
     auto fit = stacktrace.begin();
     while (fit != stacktrace.end()) {
-        LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "backtrace_symbols: %s", lines[l]);
+        LOG_L(L_DEBUG, "backtrace_symbols: %s", lines[l]);
         if (strncmp(lines[l], "[(nil)]", 20) != 0) {
             fit->symbol = lines[l];
             fit++;
@@ -348,7 +357,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 	bool containsAIInterfaceSo = false;
 	bool containsSkirmishAISo  = false;
 
-	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[1]");
+	LOG_L(L_DEBUG, "TranslateStackTrace[1]");
 
 	for (auto it = stacktrace.begin(); it != stacktrace.end(); ++it) {
 		// prepare for addr2line()
@@ -357,7 +366,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		it->path = absPath;
 		it->addr = ExtractAddr(it->symbol);
 
-		LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "symbol = \"%s\", path = \"%s\", absPath = \"%s\", addr = 0x%lx", it->symbol.c_str(), path.c_str(), absPath.c_str(), it->addr);
+		LOG_L(L_DEBUG, "symbol = \"%s\", path = \"%s\", absPath = \"%s\", addr = 0x%lx", it->symbol.c_str(), path.c_str(), absPath.c_str(), it->addr);
 
 		// check if there are known sources of fail on the stack
 		containsDriverSo = (containsDriverSo || (path.find("libGLcore.so") != std::string::npos));
@@ -372,7 +381,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		}
 	}
 
-	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[2]");
+	LOG_L(L_DEBUG, "TranslateStackTrace[2]");
 
 	// Linux Graphic drivers are known to fail with moderate OpenGL usage
 	if (containsDriverSo) {
@@ -396,7 +405,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		if (aiCrash) *aiCrash = true;
 	}
 
-	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[3]");
+	LOG_L(L_DEBUG, "TranslateStackTrace[3]");
 
 	// Check if addr2line is available
 	static int addr2line_found = -1;
@@ -415,7 +424,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		return;
 	}
 
-	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[4]");
+	LOG_L(L_DEBUG, "TranslateStackTrace[4]");
 
 	// Detect BaseMemoryAddresses of all Lib's found in the stacktrace
 	std::map<std::string,uintptr_t> binPath_baseMemAddr;
@@ -424,7 +433,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 	}
 	FindBaseMemoryAddresses(binPath_baseMemAddr);
 
-	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[5]");
+	LOG_L(L_DEBUG, "TranslateStackTrace[5]");
 
 	// Finally translate it:
 	//   This is nested so that the outer loop covers all the entries for one library -- this means fewer addr2line calls.
@@ -433,7 +442,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		//const uintptr_t&   moduleAddr = it->second;
 		const std::string symbolFile = LocateSymbolFile(modulePath);
 
-		LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "modulePath: %s, symbolFile: %s", modulePath.c_str(), symbolFile.c_str());
+		LOG_L(L_DEBUG, "modulePath: %s, symbolFile: %s", modulePath.c_str(), symbolFile.c_str());
 
 		std::ostringstream buf;
 		buf << ADDR2LINE << " -i -a -f -C --exe=\"" << symbolFile << "\"";
@@ -451,7 +460,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 
 		// execute command addr2line, read stdout and write to log-file
 		buf << " 2>/dev/null"; // hide error output from spring's pipe
-		LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "> %s", buf.str().c_str());
+		LOG_L(L_DEBUG, "> %s", buf.str().c_str());
 		FILE* cmdOut = popen(buf.str().c_str(), "r");
 		if (cmdOut != NULL) {
 			const size_t maxLength = 2048;
@@ -494,7 +503,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		}
 	}
 
-	LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "TranslateStackTrace[6]");
+	LOG_L(L_DEBUG, "TranslateStackTrace[6]");
 
 	return;
 
@@ -624,7 +633,7 @@ namespace CrashHandler
 		 *
 		while (uc->uc_link) {
 			uc = uc->uc_link;
-			LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "Dereferencing uc_link");
+			LOG_L(L_DEBUG, "Dereferencing uc_link");
 		}
 		*/
 		int err = unw_init_local(&cursor, uc);
@@ -650,7 +659,7 @@ namespace CrashHandler
 			i++;
 		}
 		stacktrace.resize(i);
-		LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "thread_unwind returned %d frames", i);
+		LOG_L(L_DEBUG, "thread_unwind returned %d frames", i);
 		return i;
 	}
 
@@ -737,7 +746,7 @@ namespace CrashHandler
 
         LOG_L(L_WARNING, "Suspended-thread Stacktrace (%s) for Spring %s:", threadName.c_str(), (SpringVersion::GetFull()).c_str());
 
-        LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "SuspendedStacktrace[1]");
+        LOG_L(L_DEBUG, "SuspendedStacktrace[1]");
 
         StackTrace stacktrace;
 
@@ -754,7 +763,7 @@ namespace CrashHandler
 
 			ctls->Resume();
 
-            LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "SuspendedStacktrace[2]");
+            LOG_L(L_DEBUG, "SuspendedStacktrace[2]");
 
             if(numLines > MAX_STACKTRACE_DEPTH) {
                 LOG_L(L_ERROR, "thread_backtrace or backtrace returned more lines than we allotted space for!");
@@ -769,12 +778,12 @@ namespace CrashHandler
             return;
         }
 
-        LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "SuspendedStacktrace[3]");
+        LOG_L(L_DEBUG, "SuspendedStacktrace[3]");
 
         // Translate symbols into code line numbers
         TranslateStackTrace(NULL, stacktrace, LOG_LEVEL_WARNING);
 
-        LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "SuspendedStacktrace[4]");
+        LOG_L(L_DEBUG, "SuspendedStacktrace[4]");
 
         // Print out the translated StackTrace
         LogStacktrace(LOG_LEVEL_WARNING, stacktrace);
@@ -796,7 +805,7 @@ namespace CrashHandler
 
         StackTrace stacktrace;
 
-        LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "HaltedStacktrace[1]");
+        LOG_L(L_DEBUG, "HaltedStacktrace[1]");
 
         // Get untranslated stacktrace symbols
         {
@@ -806,7 +815,7 @@ namespace CrashHandler
 
             numLines = thread_unwind(nullptr, iparray, stacktrace);
 
-            LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "HaltedStacktrace[2]");
+            LOG_L(L_DEBUG, "HaltedStacktrace[2]");
 
             if(numLines > MAX_STACKTRACE_DEPTH) {
                 LOG_L(L_ERROR, "thread_backtrace or backtrace returned more lines than we allotted space for!");
@@ -817,7 +826,7 @@ namespace CrashHandler
             ExtractSymbols(lines, stacktrace);
         }
 
-        LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "HaltedStacktrace[3]");
+        LOG_L(L_DEBUG, "HaltedStacktrace[3]");
 
         if (stacktrace.empty()) {
             LOG_I(LOG_LEVEL_ERROR, "  Unable to create stacktrace");
@@ -827,7 +836,7 @@ namespace CrashHandler
         // Translate it
         TranslateStackTrace(NULL, stacktrace, LOG_LEVEL_ERROR);
 
-        LOG_SI("LinuxCrashHandler", LOG_LEVEL_DEBUG, "HaltedStacktrace[4]");
+        LOG_L(L_DEBUG, "HaltedStacktrace[4]");
 
         // Print out the translated StackTrace. Ignore the frames that occur inside the signal handler (before its line in the trace) -- they are likely some kind of padding or just garbage.
         LogStacktrace(LOG_LEVEL_ERROR, stacktrace);
