@@ -83,7 +83,6 @@ protected:
 	GrassStruct grass[32 * 32];
 	NearGrassStruct nearGrass[32 * 32];
 
-	int lastListClean;
 	void CreateGrassDispList(int listNum);
 
 	friend class CGrassBlockDrawer;

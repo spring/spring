@@ -86,7 +86,6 @@ CGrassDrawer::CGrassDrawer()
 	blocksY = gs->mapy / grassSquareSize / grassBlockSize;
 
 	rng.Seed(15);
-	lastListClean = 0;
 	grassDL = glGenLists(1);
 	CreateGrassDispList(grassDL);
 
@@ -312,7 +311,7 @@ void CGrassBlockDrawer::DrawQuad(int x, int y)
 		const int curModSquare = (y & 31) * 32 + (x & 31);
 
 		CGrassDrawer::GrassStruct* grass = gd->grass + curModSquare;
-		grass->lastSeen = gs->frameNum;
+		grass->lastSeen = globalRendering->drawFrame;
 
 		if (grass->square != curSquare) {
 			grass->square = curSquare;
@@ -761,32 +760,13 @@ void CGrassDrawer::DrawShadow()
 
 void CGrassDrawer::GarbageCollect()
 {
-	const int startClean = (lastListClean * 20) % (32 * 32);
-	const int endClean = (gs->frameNum * 20) % (32 * 32);
-
-	if (startClean > endClean) {
-		for (GrassStruct* pGS = grass + startClean; pGS < grass + 32 * 32; ++pGS) {
-			if ((pGS->lastSeen < gs->frameNum - 50) && pGS->va) {
-				delete pGS->va;
-				pGS->va = nullptr;
-			}
-		}
-		for (GrassStruct* pGS = grass; pGS < grass + endClean; ++pGS) {
-			if ((pGS->lastSeen < gs->frameNum - 50) && pGS->va) {
-				delete pGS->va;
-				pGS->va = nullptr;
-			}
-		}
-	} else {
-		for (GrassStruct* pGS = grass + startClean; pGS < grass + endClean; ++pGS) {
-			if ((pGS->lastSeen < gs->frameNum - 50) && pGS->va) {
-				delete pGS->va;
-				pGS->va = nullptr;
-			}
+	for (int i = 0; i < 32*32; ++i) {
+		GrassStruct* pGS = &grass[i];
+		if ((pGS->lastSeen < globalRendering->drawFrame - 50) && pGS->va) {
+			delete pGS->va;
+			pGS->va = nullptr;
 		}
 	}
-
-	lastListClean = gs->frameNum;
 }
 
 
@@ -924,6 +904,7 @@ void CGrassDrawer::CreateFarTex()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.f,0.f,0.f,0.f);
 
+	// render turf from different vertical angles
 	for (int a=0;a<16;++a) {
 		glViewport(a*64*sizeMod, 0, 64*sizeMod, 64*sizeMod);
 		glMatrixMode(GL_MODELVIEW);
@@ -943,6 +924,7 @@ void CGrassDrawer::CreateFarTex()
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 
+	// scale down the rendered fartextures (MSAA) and write to the final texture
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo.fboId);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboTex.fboId);
 	glBlitFramebuffer(0, 0, 1024*sizeMod, 64*sizeMod,
@@ -951,6 +933,7 @@ void CGrassDrawer::CreateFarTex()
 
 	fbo.Unbind();
 
+	// compute mipmaps
 	glBindTexture(GL_TEXTURE_2D, farTex);
 	glGenerateMipmap(GL_TEXTURE_2D);
 }
