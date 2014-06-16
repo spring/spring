@@ -40,6 +40,11 @@ static UnsyncedRNG rng;
 
 
 CGrassDrawer::CGrassDrawer()
+: grassOff(false)
+, grassDL(0)
+, grassBladeTex(0)
+, farTex(0)
+, grassMap(nullptr)
 {
 	const int detail = configHandler->GetInt("GrassDetail");
 
@@ -47,56 +52,37 @@ CGrassDrawer::CGrassDrawer()
 	if ((detail == 0) || ((detail == 7) && globalRendering->haveATI)) {
 		grassOff = true;
 		return;
-	} else {
-		grassOff = false;
 	}
 
-	MapBitmapInfo grassbm;
-	unsigned char* grassdata = readMap->GetInfoMap("grass", &grassbm);
+	{
+		MapBitmapInfo grassbm;
+		unsigned char* grassdata = readMap->GetInfoMap("grass", &grassbm);
 
-	if (grassdata) {
+		if (!grassdata) {
+			grassOff = true;
+			return;
+		}
+
 		if (grassbm.width != gs->mapx / grassSquareSize || grassbm.height != gs->mapy / grassSquareSize) {
 			char b[128];
 			SNPRINTF(b, sizeof(b), "grass-map has wrong size (%dx%d, should be %dx%d)\n",
 				grassbm.width, grassbm.height, gs->mapx / 4, gs->mapy / 4);
 			throw std::runtime_error(b);
 		}
-
 		const int grassMapSize = gs->mapx * gs->mapy / (grassSquareSize * grassSquareSize);
 		grassMap = new unsigned char[grassMapSize];
-
 		memcpy(grassMap, grassdata, grassMapSize);
 		readMap->FreeInfoMap("grass", grassdata);
-	} else {
-		grassOff = true;
-		return;
 	}
 
-	// TODO: get rid of the magic constants
-	maxGrassDist = 800 + std::sqrt((float) detail) * 240;
-	maxDetailedDist = 146 + detail * 24;
-	detailedBlocks = int((maxDetailedDist - 24) / bMSsq) + 1;
-	const float detail_lim = std::min(3, detail);
-	numTurfs = 3 + int(detail_lim * 0.5f);
-	strawPerTurf = 50 + int(std::sqrt(detail_lim) * 10);
+	ChangeDetail(detail);
 
 	blocksX = gs->mapx / grassSquareSize / grassBlockSize;
 	blocksY = gs->mapy / grassSquareSize / grassBlockSize;
 
-	for (int y = 0; y < 32; y++) {
-		for (int x = 0; x < 32; x++) {
-			grass[y * 32 + x].va = 0;
-			grass[y * 32 + x].lastSeen = 0;
-			grass[y * 32 + x].pos = ZeroVector;
-			grass[y * 32 + x].square = 0;
-
-			nearGrass[y * 32 + x].square = -1;
-		}
-	}
-
+	rng.Seed(15);
 	lastListClean = 0;
 	grassDL = glGenLists(1);
-	rng.Seed(15);
 	CreateGrassDispList(grassDL);
 
 	{
@@ -120,12 +106,12 @@ CGrassDrawer::CGrassDrawer()
 
 	CreateFarTex();
 	LoadGrassShaders();
+	configHandler->NotifyOnChange(this);
 }
 
 CGrassDrawer::~CGrassDrawer()
 {
-	if (grassOff)
-		return;
+	configHandler->RemoveObserver(this);
 
 	for (int y = 0; y < 32; y++) {
 		for (int x = 0; x < 32; x++) {
@@ -144,6 +130,23 @@ CGrassDrawer::~CGrassDrawer()
 	grassShaders.clear();
 }
 
+
+void CGrassDrawer::ChangeDetail(int detail) {
+	// TODO: get rid of the magic constants
+	maxGrassDist = 800 + std::sqrt((float) detail) * 240;
+	maxDetailedDist = 146 + detail * 24;
+	detailedBlocks = int((maxDetailedDist - 24) / bMSsq) + 1;
+	const float detail_lim = std::min(3, detail);
+	numTurfs = 3 + int(detail_lim * 0.5f);
+	strawPerTurf = 50 + int(std::sqrt(detail_lim) * 10);
+}
+
+
+void CGrassDrawer::ConfigNotify(const std::string& key, const std::string& value) {
+	if (key == "GrassDetail") {
+		ChangeDetail(std::atoi(value.c_str()));
+	}
+}
 
 
 void CGrassDrawer::LoadGrassShaders() {
@@ -881,11 +884,16 @@ void CGrassDrawer::CreateFarTex()
 	memset(buf,0,64*sizeMod*1024*sizeMod*4);
 	memset(buf2,0,256*sizeMod*256*sizeMod*4);
 
+	/*FBO fbo2;
+	fbo2.Bind();
+	fbo2.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, 256, 256);
+	fbo2.CheckStatus("GRASSDRAWER1");*/
+
 	FBO fbo;
 	fbo.Bind();
 	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, 256*sizeMod, 256*sizeMod);
 	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 256*sizeMod, 256*sizeMod);
-	fbo.CheckStatus("GRASSDRAWER");
+	fbo.CheckStatus("GRASSDRAWER2");
 
 	glPushMatrix();
 	glLoadIdentity();
@@ -916,40 +924,51 @@ void CGrassDrawer::CreateFarTex()
 
 		glCallList(grassDL);
 
-		glReadPixels(0,0,256*sizeMod,256*sizeMod,GL_RGBA,GL_UNSIGNED_BYTE,buf2);
+		/* FINISH ME (should replace the loop below)
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo.fboId);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo2.fboId);
+		glBlitFramebuffer(0, 0, 256*sizeMod,256*sizeMod,
+			0, 0, 256,256,
+			GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
-//		CBitmap bm(buf2,512,512);
-//		bm.Save("ft.bmp");
+		fbo.Bind();
+		glReadPixels(0,0,256,256,GL_RGBA,GL_UNSIGNED_BYTE,buf2);*/
+
+		glReadPixels(0,0,256*sizeMod,256*sizeMod,GL_RGBA,GL_UNSIGNED_BYTE,buf2);
+		//CBitmap bm(buf2,512,512);
+		//bm.Save("ft.bmp");
 
 		int dx=a*64*sizeMod;
 		for(int y=0;y<64*sizeMod;++y){
 			for(int x=0;x<64*sizeMod;++x){
-				float r=0,g=0,b=0,a=0;
+				float4 col;
 				for(int y2=0;y2<4;++y2){
 					for(int x2=0;x2<4;++x2){
-						if(buf2[((y*4+y2)*256*sizeMod+x*4+x2)*4]==0 && buf2[((y*4+y2)*256*sizeMod+x*4+x2)*4+1]==0 && buf2[((y*4+y2)*256*sizeMod+x*4+x2)*4+2]==0){
+						const int srcIdx = ((y*4+y2)*256*sizeMod+x*4+x2)*4;
+						if (buf2[srcIdx]==0 && buf2[srcIdx+1]==0 && buf2[srcIdx+2]==0) {
 						} else {
-							float s=1;
-							if(y!=0 && y!=64*sizeMod-1 && (buf2[((y*4+y2)*256*sizeMod+x*4+x2+1)*4+1]==0 || buf2[((y*4+y2)*256*sizeMod+x*4+x2-1)*4+1]==0 || buf2[((y*4+y2+1)*256*sizeMod+x*4+x2)*4+1]==0 || buf2[((y*4+y2-1)*256*sizeMod+x*4+x2)*4+1]==0)){
-								s=0.5f;
+							float s = 1;
+							if (y!=0 && y!=64*sizeMod-1 && (buf2[((y*4+y2)*256*sizeMod+x*4+x2+1)*4+1]==0 || buf2[((y*4+y2)*256*sizeMod+x*4+x2-1)*4+1]==0 || buf2[((y*4+y2+1)*256*sizeMod+x*4+x2)*4+1]==0 || buf2[((y*4+y2-1)*256*sizeMod+x*4+x2)*4+1]==0)){
+								s = 0.5f;
 							}
-							r+=s*buf2[((y*4+y2)*256*sizeMod+x*4+x2)*4+0];
-							g+=s*buf2[((y*4+y2)*256*sizeMod+x*4+x2)*4+1];
-							b+=s*buf2[((y*4+y2)*256*sizeMod+x*4+x2)*4+2];
-							a+=s;
+							col.r += s*buf2[((y*4+y2)*256*sizeMod+x*4+x2)*4+0];
+							col.g += s*buf2[((y*4+y2)*256*sizeMod+x*4+x2)*4+1];
+							col.b += s*buf2[((y*4+y2)*256*sizeMod+x*4+x2)*4+2];
+							col.a += s;
 						}
 					}
 				}
-				if(a==0){
-					buf[((y)*1024*sizeMod+x+dx)*4+0]=190;
-					buf[((y)*1024*sizeMod+x+dx)*4+1]=230;
-					buf[((y)*1024*sizeMod+x+dx)*4+2]=190;
-					buf[((y)*1024*sizeMod+x+dx)*4+3]=0;
+				const int destIdx = (y*1024*sizeMod+x+dx)*4;
+				if(col.a==0){
+					buf[destIdx+0]=190;
+					buf[destIdx+1]=230;
+					buf[destIdx+2]=190;
+					buf[destIdx+3]=0;
 				} else {
-					buf[((y)*1024*sizeMod+x+dx)*4+0]=(unsigned char) (r/a);
-					buf[((y)*1024*sizeMod+x+dx)*4+1]=(unsigned char) (g/a);
-					buf[((y)*1024*sizeMod+x+dx)*4+2]=(unsigned char) (b/a);
-					buf[((y)*1024*sizeMod+x+dx)*4+3]=(unsigned char) (std::min((float)255,a*16));
+					buf[destIdx+0]=(unsigned char) (col.r/col.a);
+					buf[destIdx+1]=(unsigned char) (col.g/col.a);
+					buf[destIdx+2]=(unsigned char) (col.b/col.a);
+					buf[destIdx+3]=(unsigned char) (std::min((float)255,col.a*16));
 				}
 			}
 		}

@@ -23,6 +23,12 @@ public:
 	void ResetPos(const float3& pos);
 	void RemoveGrass(const float3& pos);
 
+	void ChangeDetail(int detail);
+
+	/// @see ConfigHandler::ConfigNotifyCallback
+	void ConfigNotify(const std::string& key, const std::string& value);
+
+public:
 	struct InviewGrass {
 		int num;
 		float dist;
@@ -33,12 +39,22 @@ public:
 		float dist;
 	};
 	struct GrassStruct {
+		GrassStruct()
+			: va(nullptr)
+			, lastSeen(0)
+			, pos(ZeroVector)
+		{}
+
 		CVertexArray* va;
 		int lastSeen;
 		int square;
 		float3 pos;
 	};
 	struct NearGrassStruct {
+		NearGrassStruct()
+			: rotation(0)
+			, square(-1)
+		{}
 		float rotation;
 		int square;
 	};
