@@ -386,12 +386,15 @@ void WorkaroundATIPointSizeBug()
 
 void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height)
 {
+#ifdef GLEW_ARB_texture_storage
 	if (levels < 0)
 		levels = std::ceil(std::log(std::max(width, height) + 1));
 
 	if (GLEW_ARB_texture_storage) {
 		glTexStorage2D(target, levels, internalFormat, width, height);
-	} else {
+	} else
+#endif
+	{
 		GLenum format = GL_RGBA, type = GL_UNSIGNED_BYTE;
 		switch (internalFormat) {
 			case GL_RGBA8: format = GL_RGBA; type = GL_UNSIGNED_BYTE; break;
