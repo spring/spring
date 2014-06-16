@@ -69,6 +69,8 @@ inline void glUniformf3(const GLint location, const float3& v)
 
 void WorkaroundATIPointSizeBug();
 
+void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height);
+
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data);
 
 void SetTexGen(const float& scaleX, const float& scaleZ, const float& offsetX, const float& offsetZ);
