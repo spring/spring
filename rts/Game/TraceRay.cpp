@@ -251,8 +251,10 @@ float TraceRay(
 					}
 				}
 			}
-			if (hitUnit)
+
+			if (hitUnit != NULL) {
 				hitFeature = NULL;
+			}
 		}
 	}
 
