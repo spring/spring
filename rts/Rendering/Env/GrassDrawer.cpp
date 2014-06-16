@@ -20,6 +20,7 @@
 #include "Sim/Misc/Wind.h"
 #include "System/myMath.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/Color.h"
 #include "System/Exceptions.h"
 #include "System/UnsyncedRNG.h"
 #include "System/Util.h"
@@ -848,13 +849,11 @@ void CGrassDrawer::CreateGrassBladeTex(unsigned char* buf)
 	col.y = Clamp(col.y, 0.f, 1.f);
 	col.z = Clamp(col.z, 0.f, 1.f);
 
+	SColor* img = reinterpret_cast<SColor*>(buf);
 	for(int y=0;y<64;++y){
 		for(int x=0;x<16;++x){
-			const float brightness = (0.4f + 0.6f * (y/64.0f)) * 255.f;
-			buf[(y*256+x)*4+0] = (unsigned char)(col.x * brightness);
-			buf[(y*256+x)*4+1] = (unsigned char)(col.y * brightness);
-			buf[(y*256+x)*4+2] = (unsigned char)(col.z * brightness);
-			buf[(y*256+x)*4+3] = 255;
+			const float brightness = (0.4f + 0.6f * (y/63.0f));
+			img[y*256+x] = SColor(col.r * brightness, col.g * brightness, col.b * brightness, 1.0f);
 		}
 	}
 }
@@ -925,9 +924,9 @@ void CGrassDrawer::CreateFarTex()
 	glPopMatrix();
 
 	// scale down the rendered fartextures (MSAA) and write to the final texture
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo.fboId);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboTex.fboId);
-	glBlitFramebuffer(0, 0, 1024*sizeMod, 64*sizeMod,
+	glBlitFramebufferEXT(GL_READ_FRAMEBUFFER, fbo.fboId);
+	glBlitFramebufferEXT(GL_DRAW_FRAMEBUFFER, fboTex.fboId);
+	glBlitFramebufferEXT(0, 0, 1024*sizeMod, 64*sizeMod,
 		0, 0, 1024, 64,
 		GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
