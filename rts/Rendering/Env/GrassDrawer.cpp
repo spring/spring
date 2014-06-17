@@ -924,8 +924,8 @@ void CGrassDrawer::CreateFarTex()
 	glPopMatrix();
 
 	// scale down the rendered fartextures (MSAA) and write to the final texture
-	glBlitFramebufferEXT(GL_READ_FRAMEBUFFER, fbo.fboId);
-	glBlitFramebufferEXT(GL_DRAW_FRAMEBUFFER, fboTex.fboId);
+	glBindFramebufferEXT(GL_READ_FRAMEBUFFER, fbo.fboId);
+	glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER, fboTex.fboId);
 	glBlitFramebufferEXT(0, 0, 1024*sizeMod, 64*sizeMod,
 		0, 0, 1024, 64,
 		GL_COLOR_BUFFER_BIT, GL_LINEAR);
