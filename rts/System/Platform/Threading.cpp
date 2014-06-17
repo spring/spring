@@ -223,36 +223,12 @@ namespace Threading {
 		static int cores = -1;
 
 		if (cores < 0) {
-			unsigned int regs[4];
-			regs[0] = 0;
-			springproc::ExecCPUID(&regs[0], &regs[1], &regs[2], &regs[3]);
-
-			// Get vendor
-			char vendor[12];
-			((unsigned *)vendor)[0] = regs[1]; // EBX
-			((unsigned *)vendor)[1] = regs[3]; // EDX
-			((unsigned *)vendor)[2] = regs[2]; // ECX
-			std::string cpuVendor = std::string(vendor, 12);
-
 			// Get CPU features
-			regs[0] = 1;
+			unsigned int regs[4] = {1,0,0,0};
 			springproc::ExecCPUID(&regs[0], &regs[1], &regs[2], &regs[3]);
 
 			// Logical core count per CPU
-			int logical = (regs[1] >> 16) & 0xff; // EBX[23:16]
-
-			cores = logical;
-			if (cpuVendor == "GenuineIntel") {
-				// Get DCP cache info
-				regs[0] = 4;
-				springproc::ExecCPUID(&regs[0], &regs[1], &regs[2], &regs[3]);
-				cores = ((regs[0] >> 26) & 0x3f) + 1; // EAX[31:26] + 1
-			} else if (cpuVendor == "AuthenticAMD") {
-				// Get NC: Number of CPU cores - 1
-				regs[0] = 0x80000008;
-				springproc::ExecCPUID(&regs[0], &regs[1], &regs[2], &regs[3]);
-				cores = ((unsigned)(regs[2] & 0xff)) + 1; // ECX[7:0] + 1
-			}
+			cores = (regs[1] >> 16) & 0xff; // EBX[23:16]
 		}
 
 		return cores;
