@@ -217,21 +217,8 @@ namespace Threading {
 
 
 	int GetPhysicalCpuCores() {
-		// src: http://stackoverflow.com/a/3082553/3650440
-		// note: this function doesn't support multiple processors, only multicores are supported
-
-		static int cores = -1;
-
-		if (cores < 0) {
-			// Get CPU features
-			unsigned int regs[4] = {1,0,0,0};
-			springproc::ExecCPUID(&regs[0], &regs[1], &regs[2], &regs[3]);
-
-			// Logical core count per CPU
-			cores = (regs[1] >> 16) & 0xff; // EBX[23:16]
-		}
-
-		return cores;
+		//FIXME substract HTT cores here!
+		return GetLogicalCpuCores();
 	}
 
 
