@@ -253,6 +253,10 @@ void CWeaponProjectile::UpdateInterception()
 	if (po == NULL)
 		return;
 
+	// we are the interceptor, point us toward the interceptee each frame
+	// (normally not needed, subclasses handle it *until* our owner dies)
+	targetPos = po->pos + po->speed;
+
 	if (hitscan) {
 		if (ClosestPointOnLine(startPos, targetPos, po->pos).SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
 			po->Collision();

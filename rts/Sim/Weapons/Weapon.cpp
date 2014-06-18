@@ -1321,7 +1321,10 @@ void CWeapon::UpdateInterceptTarget()
 		// if ((interceptTarget != NULL) && ((p->pos - weaponPos).SqLength() >= (interceptTarget->pos - weaponPos).SqLength()))
 		//     continue;
 
-		// keep targetPos in sync with the incoming projectile's position
+		// trigger us to auto-fire at this incoming projectile
+		// we do not really need to set targetPos here since it
+		// will be read from params.target (GetProjectileParams)
+		// when our subclass Fire()'s
 		interceptTarget = p;
 		targetType = Target_Intercept;
 		targetPos = p->pos + p->speed;
