@@ -110,8 +110,12 @@ std::string DataDirsAccess::LocateFile(std::string file, int flags) const
 
 std::string DataDirsAccess::LocateDir(std::string dir, int flags) const
 {
-	if (!FileSystem::CheckFile(dir) || FileSystem::IsAbsolutePath(dir)) {
+	if (!FileSystem::CheckFile(dir)) {
 		return "";
+	}
+
+	if (FileSystem::IsAbsolutePath(dir)) {
+		return dir;
 	}
 
 	FileSystem::FixSlashes(dir);
