@@ -189,7 +189,7 @@ void CMissileProjectile::Update()
 
 				wobbleDir += wobbleDif;
 
-				dir += wobbleDir * weaponDef->wobble * (owner()? (1.0f - owner()->limExperience * 0.5f): 1);
+				dir += wobbleDir * weaponDef->wobble * (owner()? (1.0f - owner()->limExperience * weaponDef->ownerExpAccWeight): 1);
 				dir.Normalize();
 			}
 
