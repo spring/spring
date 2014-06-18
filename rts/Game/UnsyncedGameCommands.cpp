@@ -128,6 +128,9 @@ bool CGame::ProcessCommandText(unsigned int key, const std::string& command) {
 
 // TODO CGame stuff in UnsyncedGameCommands: refactor (or move)
 bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
+	if (!userWriting)
+		return false;
+
 	if (action.command == "edit_return") {
 		userWriting = false;
 		writingPos = 0;
