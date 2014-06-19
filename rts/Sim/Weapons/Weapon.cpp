@@ -1342,6 +1342,7 @@ ProjectileParams CWeapon::GetProjectileParams()
 		params.target = targetUnit;
 	}
 
+	params.weaponID = weaponNum;
 	params.owner = owner;
 	params.weaponDef = weaponDef;
 
@@ -1367,12 +1368,24 @@ void CWeapon::StopAttackingAllyTeam(int ally)
 	}
 }
 
+
 float CWeapon::ExperienceScale() const
 {
-	return (1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
+	// (1.0f - (limExperience * expAccWeight)) means accuracy increases
+	//   accWeight=1.00 --> 0.5 experience gives (1.0 - 0.500)=0.500 weighted acc
+	//   accWeight=0.50 --> 0.5 experience gives (1.0 - 0.250)=0.750 weighted acc
+	//   accWeight=0.25 --> 0.5 experience gives (1.0 - 0.125)=0.875 weighted acc
+	//   accWeight=0.00 --> 0.5 experience gives (1.0 - 0.000)=1.000 weighted acc
+	return (CUnit::ExperienceScale(owner->limExperience, weaponDef->ownerExpAccWeight));
 }
 
 float CWeapon::MoveErrorExperience() const
 {
-	return weaponDef->targetMoveError*(1.0f - owner->limExperience);
+	// 1.0f - (1.0f - (limExperience * targetMoveError)) means error decreases
+	//   moveError=1.00 --> 0.5 experience gives 1.0 - (1.0 - 0.500)=0.500 weighted error
+	//   moveError=0.50 --> 0.5 experience gives 1.0 - (1.0 - 0.250)=0.250 weighted error
+	//   moveError=0.25 --> 0.5 experience gives 1.0 - (1.0 - 0.125)=0.125 weighted error
+	//   moveError=0.00 --> 0.5 experience gives 1.0 - (1.0 - 0.000)=0.000 weighted error
+	return (1.0f - CUnit::ExperienceScale(owner->limExperience, weaponDef->targetMoveError));
 }
+

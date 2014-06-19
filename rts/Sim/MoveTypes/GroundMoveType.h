@@ -171,7 +171,7 @@ private:
 	bool reversing;
 	bool idling;
 	bool canReverse;
-	bool useMainHeading;   /// if true, turn toward mainHeadingPos until weapons[0] can TryTargeT() it
+	bool useMainHeading;   /// if true, turn toward mainHeadingPos until weapons[0] can TryTarget() it
 	bool useRawMovement;   /// if true, move towards goal without invoking PFS
 
 	float skidRotSpeed;    /// rotational speed when skidding (radians / (GAME_SPEED frames))
