@@ -11,7 +11,7 @@ class CSpherePartProjectile : public CProjectile
 
 public:
 	CSpherePartProjectile(
-		CUnit* owner,
+		const CUnit* owner,
 		const float3& centerPos,
 		int xpart,
 		int ypart,
