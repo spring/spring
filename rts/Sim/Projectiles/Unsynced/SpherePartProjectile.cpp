@@ -29,7 +29,7 @@ CR_REG_METADATA(CSpherePartProjectile, (
 ));
 
 CSpherePartProjectile::CSpherePartProjectile(
-	CUnit* owner,
+	const CUnit* owner,
 	const float3& centerPos,
 	int xpart,
 	int ypart,
@@ -67,9 +67,6 @@ CSpherePartProjectile::CSpherePartProjectile(
 	texy = projectileDrawer->sphereparttex->ystart + (projectileDrawer->sphereparttex->yend - projectileDrawer->sphereparttex->ystart) * 0.5f;
 }
 
-CSpherePartProjectile::~CSpherePartProjectile()
-{
-}
 
 void CSpherePartProjectile::Update()
 {
@@ -114,7 +111,7 @@ void CSpherePartProjectile::Draw()
 }
 
 
-void CSpherePartProjectile::CreateSphere(float3 pos, float alpha, int ttl, float expansionSpeed , CUnit* owner, float3 color)
+void CSpherePartProjectile::CreateSphere(const CUnit* owner, int ttl, float alpha, float expansionSpeed, float3 pos, float3 color)
 {
 	for (int y = 0; y < 16; y += 4) {
 		for (int x = 0; x < 32; x += 4) {
@@ -129,10 +126,6 @@ CSpherePartSpawner::CSpherePartSpawner()
 	, ttl(0)
 	, expansionSpeed(0.0f)
 	, color(ZeroVector)
-{
-}
-
-CSpherePartSpawner::~CSpherePartSpawner()
 {
 }
 
@@ -152,5 +145,6 @@ void CSpherePartSpawner::Init(const CUnit* owner, const float3& offset)
 {
 	CProjectile::Init(owner, offset);
 	deleteMe = true;
-	CSpherePartProjectile::CreateSphere(pos, alpha, ttl, expansionSpeed, owner, color);
+	CSpherePartProjectile::CreateSphere(owner, ttl, alpha, expansionSpeed, pos, color);
 }
+

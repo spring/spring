@@ -20,13 +20,18 @@ public:
 		int ttl,
 		const float3& color
 	);
-	~CSpherePartProjectile();
 
 	void Draw();
 	void Update();
-	static void CreateSphere(float3 pos, float alpha, int ttl,
-			float expansionSpeed , CUnit* owner,
-			float3 color = float3(0.8, 0.8, 0.6));
+
+	static void CreateSphere(
+		const CUnit* owner,
+		int ttl,
+		float alpha,
+		float expansionSpeed,
+		float3 pos,
+		float3 color = float3(0.8, 0.8, 0.6)
+	);
 
 private:
 	float3 centerPos;
@@ -53,7 +58,6 @@ class CSpherePartSpawner : CProjectile
 
 public:
 	CSpherePartSpawner();
-	~CSpherePartSpawner();
 
 	void Init(const CUnit* owner, const float3& offset);
 
