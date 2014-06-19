@@ -148,7 +148,7 @@ CR_REG_METADATA(CSpherePartSpawner,
 	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
-void CSpherePartSpawner::Init(CUnit* owner, const float3& offset)
+void CSpherePartSpawner::Init(const CUnit* owner, const float3& offset)
 {
 	CProjectile::Init(owner, offset);
 	deleteMe = true;

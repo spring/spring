@@ -152,7 +152,7 @@ void CSimpleParticleSystem::Update()
 	}
 }
 
-void CSimpleParticleSystem::Init(CUnit* owner, const float3& offset)
+void CSimpleParticleSystem::Init(const CUnit* owner, const float3& offset)
 {
 	CProjectile::Init(owner, offset);
 

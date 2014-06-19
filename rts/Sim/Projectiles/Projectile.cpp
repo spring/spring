@@ -80,7 +80,7 @@ CProjectile::CProjectile()
 CProjectile::CProjectile(
 	const float3& pos,
 	const float3& spd,
-	CUnit* owner,
+	const CUnit* owner,
 	bool isSynced,
 	bool isWeapon,
 	bool isPiece,
@@ -125,7 +125,7 @@ CProjectile::~CProjectile() {
 	assert(!synced || detached);
 }
 
-void CProjectile::Init(CUnit* owner, const float3& offset)
+void CProjectile::Init(const CUnit* owner, const float3& offset)
 {
 	if (owner != NULL) {
 		// must be set before the AddProjectile call

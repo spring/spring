@@ -78,7 +78,7 @@ CSmokeProjectile::CSmokeProjectile(
 
 
 
-void CSmokeProjectile::Init(CUnit* owner, const float3& offset)
+void CSmokeProjectile::Init(const CUnit* owner, const float3& offset)
 {
 	textureNum = (int) (gu->RandInt() % projectileDrawer->smoketex.size());
 

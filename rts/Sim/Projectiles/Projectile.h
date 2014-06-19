@@ -30,7 +30,7 @@ public:
 	CProjectile(
 		const float3& pos,
 		const float3& spd,
-		CUnit* owner,
+		const CUnit* owner,
 		bool isSynced,
 		bool isWeapon,
 		bool isPiece,
@@ -43,7 +43,7 @@ public:
 	virtual void Collision(CUnit* unit);
 	virtual void Collision(CFeature* feature);
 	virtual void Update();
-	virtual void Init(CUnit* owner, const float3& offset);
+	virtual void Init(const CUnit* owner, const float3& offset);
 
 	virtual void Draw() {}
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
