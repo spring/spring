@@ -1371,7 +1371,7 @@ void CWeapon::StopAttackingAllyTeam(int ally)
 
 float CWeapon::ExperienceScale() const
 {
-	// (1.0f - (limExperience * expAccWeight)) means accuracy increases
+	// (1.0f - (limExperience * expAccWeight)) means accuracy increases (lower is better)
 	//   accWeight=1.00 --> 0.5 experience gives (1.0 - 0.500)=0.500 weighted acc
 	//   accWeight=0.50 --> 0.5 experience gives (1.0 - 0.250)=0.750 weighted acc
 	//   accWeight=0.25 --> 0.5 experience gives (1.0 - 0.125)=0.875 weighted acc
@@ -1381,11 +1381,7 @@ float CWeapon::ExperienceScale() const
 
 float CWeapon::MoveErrorExperience() const
 {
-	// 1.0f - (1.0f - (limExperience * targetMoveError)) means error decreases
-	//   moveError=1.00 --> 0.5 experience gives 1.0 - (1.0 - 0.500)=0.500 weighted error
-	//   moveError=0.50 --> 0.5 experience gives 1.0 - (1.0 - 0.250)=0.250 weighted error
-	//   moveError=0.25 --> 0.5 experience gives 1.0 - (1.0 - 0.125)=0.125 weighted error
-	//   moveError=0.00 --> 0.5 experience gives 1.0 - (1.0 - 0.000)=0.000 weighted error
-	return (1.0f - CUnit::ExperienceScale(owner->limExperience, weaponDef->targetMoveError));
+	// see above
+	return (CUnit::ExperienceScale(owner->limExperience, weaponDef->ownerExpAccWeight) * weaponDef->targetMoveError);
 }
 
