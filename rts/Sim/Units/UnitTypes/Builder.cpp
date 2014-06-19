@@ -643,6 +643,7 @@ void CBuilder::StopBuild(bool callScript)
 bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitStance)
 {
 	StopBuild(false);
+	TempHoldFire();
 
 	buildInfo.pos = CGameHelper::Pos2BuildPos(buildInfo, true);
 
