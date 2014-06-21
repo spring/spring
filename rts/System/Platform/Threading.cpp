@@ -216,9 +216,13 @@ namespace Threading {
 	}
 
 
+	/** Function that returns the number of real cpu cores (not 
+	    hyperthreading ones). These are the total cores in the system
+	    (across all existing processors, if more than one)*/
 	int GetPhysicalCpuCores() {
-		//FIXME substract HTT cores here!
-		return GetLogicalCpuCores();
+		// Get CPU features
+		springproc::CpuId cpuid;
+		return cpuid.getCoreTotalNumber();;
 	}
 
 
