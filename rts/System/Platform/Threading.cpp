@@ -224,11 +224,8 @@ namespace Threading {
 
 		if (cores < 0) {
 			// Get CPU features
-			unsigned int regs[4] = {1,0,0,0};
-			springproc::ExecCPUID(&regs[0], &regs[1], &regs[2], &regs[3]);
-
-			// Logical core count per CPU
-			cores = (regs[1] >> 16) & 0xff; // EBX[23:16]
+			springproc::CpuId cpuid;
+			cores = cpuid.getCoreTotalNumber();
 		}
 
 		return cores;
