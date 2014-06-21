@@ -75,6 +75,8 @@ namespace springproc {
 	{
 	
 		nbProcessors = Threading::NumProcessors();
+		// TODO: allocating a bit more than needed, maybe move
+		// this after determining the numbers.
 		affinityMaskOfCores = new uint64_t[nbProcessors];
 		affinityMaskOfPackages = new uint64_t[nbProcessors];
 		processorApicIds = new uint32_t[nbProcessors];
@@ -88,7 +90,8 @@ namespace springproc {
 			getIdsIntel();
 		} else if (ebx == 0x68747541) {	// "htuA" from "AuthenticAMD"
 			// TODO: AMD has also something similar to SMT (called CMT) in Bulldozer
-			// microarchitecture (FX processors). 
+			// microarchitecture (FX processors).
+			getIdsAmd();
 		}
 	}
 
@@ -268,7 +271,7 @@ namespace springproc {
 
 	void CpuId::getIdsAmd()
 	{
-		LOG_L(L_WARNING,"ht/smt/cmt detection for AMD is not implemented! Using OS processor number.\n");
+		LOG_L(L_WARNING,"ht/smt/cmt detection for AMD is not implemented! Using processor number reported by OS.\n");
 		setDefault();
 	}
 
