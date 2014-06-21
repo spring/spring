@@ -182,8 +182,8 @@ public:
 	virtual void KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence = true);
 	virtual void IncomingMissile(CMissileProjectile* missile);
 
-	void TempHoldFire();
-	void ReleaseTempHoldFire();
+	void TempHoldFire(int cmdID);
+	void ReleaseTempHoldFire() { dontFire = false; }
 
 	/// start this unit in free fall from parent unit
 	void Drop(const float3& parentPos, const float3& parentDir, CUnit* parent);
@@ -348,9 +348,9 @@ public:
 	/// tells weapons that support it to try to use a high trajectory
 	bool useHighTrajectory;
 
-	/// used by landed gunships to block weapon updates
+	/// used by landed gunships to block weapon Update()'s
 	bool dontUseWeapons;
-	/// temp variable that can be set when building etc to stop units to turn away to fire
+	/// used by builders to prevent weapon SlowUpdate()'s and Attack{Unit,Ground}()'s
 	bool dontFire;
 
 	/// the script has finished exectuting the killed function and the unit can be deleted
