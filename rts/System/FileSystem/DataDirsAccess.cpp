@@ -20,7 +20,6 @@ std::vector<std::string> DataDirsAccess::FindFiles(std::string dir, const std::s
 		return std::vector<std::string>();
 	}
 
-	if (dir.empty()) dir = "./";
 	FileSystem::FixSlashes(dir);
 	FileSystem::EnsurePathSepAtEnd(dir);
 
