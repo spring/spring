@@ -271,6 +271,12 @@ bool CEventHandler::AllowDirectUnitControl(int playerID, const CUnit* unit)
 }
 
 
+bool CEventHandler::AllowBuilderHoldFire(const CUnit* unit, int action)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowBuilderHoldFire, unit, action)
+}
+
+
 bool CEventHandler::AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos)
 {
 	CONTROL_ITERATE_DEF_TRUE(AllowStartPosition, playerID, readyState, clampedPos, rawPickPos)

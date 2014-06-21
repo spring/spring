@@ -63,6 +63,7 @@ class CSyncedLuaHandle : public CLuaHandle
 		bool AllowResourceLevel(int teamID, const string& type, float level);
 		bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
+		bool AllowBuilderHoldFire(const CUnit* unit, int action);
 		bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
 
 		bool TerraformComplete(const CUnit* unit, const CUnit* build);
