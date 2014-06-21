@@ -23,7 +23,8 @@ namespace Threading {
 			int ret = sched_getaffinity(0, sizeof(set), &set);
 			if(ret!=0) {
 				LOG("[%s] sched_getaffinity error: %s (%d)", __FUNCTION__, strerror(errno), errno);
-				// We still can continue executing
+				// We still can continue executing, will just
+				// not return any usefull mask
 				CPU_ZERO(&set);
 			}
 
@@ -46,7 +47,7 @@ namespace Threading {
 		// (The process gets migrated immediately by the setaffinity call)
 		if(ret!=0) {
 			LOG("[%s] sched_setaffinity error: %s (%d)", __FUNCTION__, strerror(errno), errno);
-			// We still can continue executing
+			// We still can continue executing, but we run as before
 			CPU_ZERO(&set);
 		}
 
