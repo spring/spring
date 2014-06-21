@@ -21,8 +21,8 @@ std::vector<std::string> DataDirsAccess::FindFiles(std::string dir, const std::s
 	}
 
 	if (dir.empty()) dir = "./";
-	FileSystem::EnsurePathSepAtEnd(dir);
 	FileSystem::FixSlashes(dir);
+	FileSystem::EnsurePathSepAtEnd(dir);
 
 	if (flags & FileQueryFlags::ONLY_DIRS) {
 		flags |= FileQueryFlags::INCLUDE_DIRS;
