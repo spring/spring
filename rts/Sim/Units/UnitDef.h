@@ -252,6 +252,7 @@ public:
 
 	int fireState;
 	int moveState;
+	int maneuverLeashLength;
 
 	//aircraft stuff
 	float wingDrag;
