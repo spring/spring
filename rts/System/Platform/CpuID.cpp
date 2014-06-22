@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "CpuID.h"
-#include "System/Platform/Linux/Threading.h"
+#include "System/Platform/Threading.h"
 #include "System/Log/ILog.h"
 //#include <cstddef>
 #ifdef _MSC_VER
@@ -73,8 +73,8 @@ namespace springproc {
 	  maskVirtual(0),  maskCore(0), maskPackage(0),
 	  hasLeaf11(false)
 	{
-	
-		nbProcessors = Threading::NumProcessors();
+
+		nbProcessors = Threading::GetLogicalCpuCores();
 		// TODO: allocating a bit more than needed, maybe move
 		// this after determining the numbers.
 		affinityMaskOfCores = new uint64_t[nbProcessors];
@@ -168,7 +168,7 @@ namespace springproc {
 		}
 	}
 
-	// Implementing "Sub ID Extraction Parameters for x2APIC ID" from 
+	// Implementing "Sub ID Extraction Parameters for x2APIC ID" from
 	// Kuo_CpuTopology_rc1.rh1.final.pdf
 
 	void CpuId::getMasksIntelLeaf11()
@@ -220,10 +220,10 @@ namespace springproc {
 
 	void CpuId::getIdsIntelEnumerate()
 	{
-		int processorNumber = Threading::NumProcessors();
+		int processorNumber = Threading::GetLogicalCpuCores();
 		assert(processorNumber <= 64);	// as the affinity mask is a uint64_t
 		for (size_t processor = 0; processor < processorNumber; processor++) {
-			Threading::SetThreadAffinityMask(((uint64_t) 1) << processor);
+			Threading::SetAffinity(((uint32_t) 1) << processor);
 			processorApicIds[processor] = getApicIdIntel();
 		}
 
@@ -297,11 +297,11 @@ namespace springproc {
 
 	void CpuId::setDefault()
 	{
-		coreTotalNumber = Threading::NumProcessors();
-		packageTotalNumber = Threading::NumProcessors();
+		coreTotalNumber = Threading::GetLogicalCpuCores();
+		packageTotalNumber = Threading::GetLogicalCpuCores();
 
 		// As we could not determine anything just set affinity mask to (-1)
-		for (int i = 0; i < Threading::NumProcessors(); i++) {
+		for (int i = 0; i < Threading::GetLogicalCpuCores(); i++) {
 			affinityMaskOfCores[i] = affinityMaskOfPackages[i] = -1;
 		}
 	}
