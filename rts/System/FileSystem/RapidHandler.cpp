@@ -10,6 +10,7 @@
 #include "System/Log/ILog.h"
 
 #include <zlib.h>
+#include <string.h> //strlen
 
 class RapidEntry{
 public:
