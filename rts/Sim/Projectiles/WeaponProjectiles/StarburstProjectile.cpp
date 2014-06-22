@@ -23,7 +23,6 @@
 static const float SMOKE_TIME = 70.0f;
 
 static const float TRACER_PARTS_STEP = 2.0f;
-static const unsigned int NUM_TRACER_PARTS = 5;
 static const unsigned int MAX_NUM_AGEMODS = 32;
 
 CR_BIND(CStarburstProjectile::TracerPart, )

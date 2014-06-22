@@ -52,6 +52,7 @@ private:
 
 	int numParts;
 	int missileAge;
+	static const unsigned int NUM_TRACER_PARTS = 5;
 	unsigned int curTracerPart;
 
 	struct TracerPart {
