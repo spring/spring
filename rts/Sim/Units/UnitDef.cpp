@@ -176,6 +176,7 @@ UnitDef::UnitDef()
 
 	, fireState(FIRESTATE_HOLDFIRE)
 	, moveState(MOVESTATE_HOLDPOS)
+	, maneuverLeashLength(500)
 	, wingDrag(0.0f)
 	, wingAngle(0.0f)
 	, frontToSpeed(0.0f)
@@ -385,6 +386,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	fireState = std::min(fireState, int(FIRESTATE_FIREATWILL));
 	moveState = udTable.GetInt("moveState", (canmove && speed > 0.0f)? MOVESTATE_NONE: MOVESTATE_MANEUVER);
 	moveState = std::min(moveState, int(MOVESTATE_ROAM));
+	maneuverLeashLength = udTable.GetInt("manueverLeashLength", 500);
 
 	flankingBonusMode = udTable.GetInt("flankingBonusMode", modInfo.flankingBonusModeDefault);
 	flankingBonusMax  = udTable.GetFloat("flankingBonusMax", 1.9f);
