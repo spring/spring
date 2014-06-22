@@ -52,9 +52,7 @@ private:
 
 	int numParts;
 	int missileAge;
-	size_t curTracerPart;
-
-	static const int NUM_TRACER_PARTS = 5;
+	unsigned int curTracerPart;
 
 	struct TracerPart {
 		CR_DECLARE_STRUCT(TracerPart);
@@ -63,7 +61,7 @@ private:
 		float3 dir;
 		float speedf;
 		std::vector<float> ageMods;
-		size_t numAgeMods;
+		unsigned int numAgeMods;
 	};
 
 	TracerPart tracerParts[NUM_TRACER_PARTS];
