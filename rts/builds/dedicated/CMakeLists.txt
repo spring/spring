@@ -72,7 +72,6 @@ IF	(UNIX)
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/thread_backtrace.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/Threading.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp)
 ELSEIF	(WIN32)
 	SET(sources_engine_Platform_CrashHandler
