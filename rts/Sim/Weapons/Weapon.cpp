@@ -41,7 +41,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(nextSalvo),
 	CR_MEMBER(predict),
 	CR_MEMBER(targetUnit),
-	CR_MEMBER(accuracy),
+	CR_MEMBER(accuracyError),
 	CR_MEMBER(projectileSpeed),
 	CR_MEMBER(predictSpeedMod),
 	CR_MEMBER(metalFireCost),
@@ -122,7 +122,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	range(1),
 	heightMod(0),
 	projectileSpeed(1),
-	accuracy(0),
+	accuracyError(0),
 	sprayAngle(0),
 	salvoDelay(0),
 	salvoSize(1),
@@ -447,7 +447,7 @@ void CWeapon::UpdateFire()
 
 			salvoLeft = salvoSize;
 			nextSalvo = gs->frameNum;
-			salvoError = gs->randVector() * (owner->IsMoving()? weaponDef->movingAccuracy: accuracy);
+			salvoError = gs->randVector() * (owner->IsMoving()? weaponDef->movingAccuracy: accuracyError);
 
 			if (targetType == Target_Pos || (targetType == Target_Unit && !(targetUnit->losStatus[owner->allyteam] & LOS_INLOS))) {
 				// area firing stuff is too effective at radar firing...
@@ -462,7 +462,7 @@ void CWeapon::UpdateFire()
 		if (!weaponDef->stockpile && TryTarget(targetPos, haveUserTarget, targetUnit)) {
 			// update the energy and metal required counts
 			const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
-			const float averageFactor = 1.0f / (float)minPeriod;
+			const float averageFactor = 1.0f / minPeriod;
 
 			ownerTeam->energyPull += (averageFactor * energyFireCost);
 			ownerTeam->metalPull += (averageFactor * metalFireCost);
@@ -865,14 +865,15 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		targetType = Target_None;
 
 		if (slavedTo->targetType == Target_Unit) {
-			const float3 tp =
-				slavedTo->targetUnit->GetErrorPos(owner->allyteam, true) +
-				errorVector * (MoveErrorExperience() * GAME_SPEED * slavedTo->targetUnit->speed.w);
+			const float errorScale = (MoveErrorExperience() * GAME_SPEED * slavedTo->targetUnit->speed.w);
 
-			if (TryTarget(tp, false, slavedTo->targetUnit)) {
+			const float3 errorPos = slavedTo->targetUnit->GetErrorPos(owner->allyteam, true);
+			const float3 targetErrPos = errorPos + errorVector * errorScale;
+
+			if (TryTarget(targetErrPos, false, slavedTo->targetUnit)) {
 				targetType = Target_Unit;
 				targetUnit = slavedTo->targetUnit;
-				targetPos = tp;
+				targetPos = targetErrPos;
 
 				AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 			}
@@ -1369,19 +1370,22 @@ void CWeapon::StopAttackingAllyTeam(int ally)
 }
 
 
-float CWeapon::ExperienceScale() const
+float CWeapon::ExperienceErrorScale() const
 {
-	// (1.0f - (limExperience * expAccWeight)) means accuracy increases (lower is better)
-	//   accWeight=1.00 --> 0.5 experience gives (1.0 - 0.500)=0.500 weighted acc
-	//   accWeight=0.50 --> 0.5 experience gives (1.0 - 0.250)=0.750 weighted acc
-	//   accWeight=0.25 --> 0.5 experience gives (1.0 - 0.125)=0.875 weighted acc
-	//   accWeight=0.00 --> 0.5 experience gives (1.0 - 0.000)=1.000 weighted acc
+	// accuracy (error) is increased (decreased) with experience
+	// scale is 1.0f - (limExperience * expAccWeight), such that
+	// for weight=0 scale is 1 and for weight=1 scale is 1 - exp
+	// (lower is better)
+	//
+	//   for accWeight=0.00 and {0.25, 0.50, 0.75, 1.0} exp, scale=(1.0 - {0.25*0.00, 0.5*0.00, 0.75*0.00, 1.0*0.00}) = {1.0000, 1.000, 1.0000, 1.00}
+	//   for accWeight=0.25 and {0.25, 0.50, 0.75, 1.0} exp, scale=(1.0 - {0.25*0.25, 0.5*0.25, 0.75*0.25, 1.0*0.25}) = {0.9375, 0.875, 0.8125, 0.75}
+	//   for accWeight=0.50 and {0.25, 0.50, 0.75, 1.0} exp, scale=(1.0 - {0.25*0.50, 0.5*0.50, 0.75*0.50, 1.0*0.50}) = {0.8750, 0.750, 0.6250, 0.50}
+	//   for accWeight=1.00 and {0.25, 0.50, 0.75, 1.0} exp, scale=(1.0 - {0.25*1.00, 0.5*1.00, 0.75*1.00, 1.0*0.75}) = {0.7500, 0.500, 0.2500, 0.25}
 	return (CUnit::ExperienceScale(owner->limExperience, weaponDef->ownerExpAccWeight));
 }
 
 float CWeapon::MoveErrorExperience() const
 {
-	// see above
-	return (CUnit::ExperienceScale(owner->limExperience, weaponDef->ownerExpAccWeight) * weaponDef->targetMoveError);
+	return (ExperienceErrorScale() * weaponDef->targetMoveError);
 }
 
