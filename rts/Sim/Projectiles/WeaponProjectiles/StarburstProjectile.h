@@ -52,7 +52,6 @@ private:
 
 	int numParts;
 	int missileAge;
-	static const unsigned int NUM_TRACER_PARTS = 5;
 	unsigned int curTracerPart;
 
 	struct TracerPart {
@@ -65,6 +64,7 @@ private:
 		unsigned int numAgeMods;
 	};
 
+	static const unsigned int NUM_TRACER_PARTS = 5;
 	TracerPart tracerParts[NUM_TRACER_PARTS];
 };
 
