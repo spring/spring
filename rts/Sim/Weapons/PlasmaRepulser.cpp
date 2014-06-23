@@ -114,7 +114,7 @@ void CPlasmaRepulser::Update()
 			continue;
 		}
 
-		const int shield_damage = proWD->damages[weaponDef->shieldArmorType];
+		const float shield_damage = proWD->damages[weaponDef->shieldArmorType];
 
 		if (curPower < shield_damage) {
 			// shield does not have enough power, don't touch the projectile
