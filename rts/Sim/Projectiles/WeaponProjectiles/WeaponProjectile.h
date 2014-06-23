@@ -4,6 +4,7 @@
 #define WEAPON_PROJECTILE_H
 
 #include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/ProjectileParams.h" // easier to include this here
 #include "WeaponProjectileTypes.h"
 
 struct WeaponDef;
