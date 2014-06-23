@@ -119,7 +119,7 @@ void CPlasmaRepulser::Update()
 			? proWD->damages
 			: weaponDefHandler->DynamicDamages (
 				proWD->damages,
-				pro->startPos,
+				pro->GetStartPos(),
 				pro->pos,
 				(proWD->dynDamageRange > 0.0f)
 					? proWD->dynDamageRange
