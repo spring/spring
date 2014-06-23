@@ -1457,7 +1457,7 @@ static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		weapon->reloadTime = (int)(value * GAME_SPEED);
 	}
 	else if (key == "accuracy") {
-		weapon->accuracy = value;
+		weapon->accuracyError = value;
 	}
 	else if (key == "sprayAngle") {
 		weapon->sprayAngle = value;

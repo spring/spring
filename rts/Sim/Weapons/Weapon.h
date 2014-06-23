@@ -8,6 +8,7 @@
 #include "System/Object.h"
 #include "Sim/Misc/DamageArray.h"
 #include "System/float3.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h" //ProjectileParams
 
 class CUnit;
 class CWeaponProjectile;
