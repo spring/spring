@@ -190,7 +190,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	// maxSpeed is set in AMoveType's ctor
 	maxReverseSpeed = owner->unitDef->rSpeed / GAME_SPEED;
 
-	turnRate = owner->unitDef->turnRate;
+	turnRate = std::max(owner->unitDef->turnRate, 1.0f);
 	turnAccel = turnRate * mix(0.333f, 0.033f, owner->moveDef->speedModClass == MoveDef::Ship);
 
 	accRate = std::max(0.01f, owner->unitDef->maxAcc);
