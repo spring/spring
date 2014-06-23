@@ -114,7 +114,9 @@ void CPlasmaRepulser::Update()
 			continue;
 		}
 
-		if (curPower < proWD->damages[0]) {
+		const int shield_damage = proWD->damages[weaponDef->shieldArmorType];
+
+		if (curPower < shield_damage) {
 			// shield does not have enough power, don't touch the projectile
 			continue;
 		}
@@ -139,14 +141,14 @@ void CPlasmaRepulser::Update()
 
 				if (weaponDef->shieldPower != 0) {
 					//FIXME some weapons do range dependent damage! (mantis #2345)
-					curPower -= proWD->damages[0];
+					curPower -= shield_damage;
 				}
 			} else {
 				//FIXME why do all weapons except LASERs do only (1 / GAME_SPEED) damage???
 				owner->UseEnergy(weaponDef->shieldEnergyUse / GAME_SPEED);
 
 				if (weaponDef->shieldPower != 0) {
-					curPower -= proWD->damages[0] / GAME_SPEED;
+					curPower -= shield_damage / GAME_SPEED;
 				}
 			}
 
@@ -170,7 +172,7 @@ void CPlasmaRepulser::Update()
 			if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
 				if (weaponDef->shieldPower != 0) {
 					//FIXME some weapons do range dependent damage! (mantis #2345)
-					curPower -= proWD->damages[0];
+					curPower -= shield_damage;
 				}
 
 				pro->Collision(owner);
