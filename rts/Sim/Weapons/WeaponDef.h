@@ -165,6 +165,7 @@ public:
 	float3 shieldGoodColor;          // color when shield at full power
 	float3 shieldBadColor;           // color when shield is empty
 	float shieldAlpha;               // shield alpha value
+	int shieldArmorType;              // armor type for the damage table
 
 	unsigned int shieldInterceptType;      // type of shield (bitfield)
 	unsigned int interceptedByShieldType;  // weapon can be affected by shields where (shieldInterceptType & interceptedByShieldType) is not zero
