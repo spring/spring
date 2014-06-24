@@ -22,7 +22,25 @@
 #define VA_SIZE_2DT  4
 #define VA_SIZE_2DTC 5
 
-class CVertexArray  
+
+struct VA_TYPE_0 {
+	float3 p;
+};
+struct VA_TYPE_T {
+	float3 p;
+	float3 n;
+};
+struct VA_TYPE_TN {
+	float3 p;
+	float  s;
+	float  t;
+	float3 n;
+};
+
+
+
+
+class CVertexArray
 {
 public:
 	typedef void (*StripCallback)(void* data);
@@ -34,6 +52,7 @@ public:
 	void Initialize();
 	inline void CheckInitSize(const unsigned int vertexes, const unsigned int strips = 0);
 
+	// standard API
 	inline void AddVertex0(const float3& p);
 	inline void AddVertex0(float x, float y, float z);
 	inline void AddVertex2d0(float x, float z);
@@ -47,6 +66,29 @@ public:
 	inline void AddVertex2dT(float x, float y, float tx, float ty);
 	inline void AddVertex2dTC(float x, float y, float tx, float ty, const unsigned char* c);
 
+	// same as the AddVertex... functions just without automated CheckEnlargeDrawArray
+	inline void AddVertexQ0(float x, float y, float z);
+	inline void AddVertexQ0(const float3& f3) { AddVertexQ0(f3.x, f3.y, f3.z); }
+	inline void AddVertex2dQ0(float x, float z);
+	inline void AddVertexQN(const float3& p, const float3& n);
+	inline void AddVertexQC(const float3& p, const unsigned char* c);
+	inline void AddVertexQT(const float3& p, float tx, float ty);
+	inline void AddVertex2dQT(float x, float y, float tx, float ty);
+	inline void AddVertexQTN(const float3& p, float tx, float ty, const float3& n);
+	inline void AddVertexQTNT(const float3& p, float tx, float ty, const float3& n, const float3& st, const float3& tt);
+	inline void AddVertexQTC(const float3& p, float tx, float ty, const unsigned char* c);
+
+	// 3rd and newest API
+	// it appends a block of size * sizeof(T) at the end of the VA and returns the typed address to it
+	template<typename T> inline T* GetTypedVertexArray(const int size) {
+		EnlargeArrays(size, 0, (sizeof(T) / sizeof(float)));
+		T* r = reinterpret_cast<T*>(drawArrayPos);
+		drawArrayPos += (sizeof(T) / sizeof(float)) * size;
+		return r;
+	}
+
+
+	// Render the VA
 	void DrawArray0(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_0);
 	void DrawArray2d0(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_2D0);
 	void DrawArrayN(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_N);
@@ -60,19 +102,8 @@ public:
 	void DrawArray2dTC(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_2DTC);
 	void DrawArray2dT(const int drawType, StripCallback callback, void* data, unsigned int stride = sizeof(float) * VA_SIZE_2DT);
 
-	//! same as the AddVertex... functions just without automated CheckEnlargeDrawArray
-	inline void AddVertexQ0(float x, float y, float z);
-	inline void AddVertexQ0(const float3& f3) { AddVertexQ0(f3.x, f3.y, f3.z); }
-	inline void AddVertex2dQ0(float x, float z);
-	inline void AddVertexQN(const float3& p, const float3& n);
-	inline void AddVertexQC(const float3& p, const unsigned char* c);
-	inline void AddVertexQT(const float3& p, float tx, float ty);
-	inline void AddVertex2dQT(float x, float y, float tx, float ty);
-	inline void AddVertexQTN(const float3& p, float tx, float ty, const float3& n);
-	inline void AddVertexQTNT(const float3& p, float tx, float ty, const float3& n, const float3& st, const float3& tt);
-	inline void AddVertexQTC(const float3& p, float tx, float ty, const unsigned char* c);
 
-	//! same as EndStrip, but without automated EnlargeStripArray
+	// same as EndStrip, but without automated EnlargeStripArray
 	inline void EndStripQ();
 
 	void EndStrip();
