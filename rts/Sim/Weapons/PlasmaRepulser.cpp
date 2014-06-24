@@ -13,6 +13,7 @@
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 
@@ -114,7 +115,23 @@ void CPlasmaRepulser::Update()
 			continue;
 		}
 
-		if (curPower < proWD->damages[0]) {
+		const DamageArray& damageArray = (proWD->dynDamageExp <= 0.0f)
+			? proWD->damages
+			: weaponDefHandler->DynamicDamages (
+				proWD->damages,
+				pro->GetStartPos(),
+				pro->pos,
+				(proWD->dynDamageRange > 0.0f)
+					? proWD->dynDamageRange
+					: proWD->range,
+				proWD->dynDamageExp,
+				proWD->dynDamageMin,
+				proWD->dynDamageInverted
+		);
+
+		const float shield_damage = damageArray[weaponDef->shieldArmorType];
+
+		if (curPower < shield_damage) {
 			// shield does not have enough power, don't touch the projectile
 			continue;
 		}
@@ -138,15 +155,19 @@ void CPlasmaRepulser::Update()
 				owner->UseEnergy(weaponDef->shieldEnergyUse);
 
 				if (weaponDef->shieldPower != 0) {
-					//FIXME some weapons do range dependent damage! (mantis #2345)
-					curPower -= proWD->damages[0];
+					curPower -= shield_damage;
 				}
 			} else {
 				//FIXME why do all weapons except LASERs do only (1 / GAME_SPEED) damage???
+				// because they go inside and take time to get pushed back
+				// during that time they deal damage every frame
+				// so in total they do their nominal damage each second
+				// on the other hand lasers get insta-bounced in 1 frame
+				// regardless of shield pushing power
 				owner->UseEnergy(weaponDef->shieldEnergyUse / GAME_SPEED);
 
 				if (weaponDef->shieldPower != 0) {
-					curPower -= proWD->damages[0] / GAME_SPEED;
+					curPower -= shield_damage / GAME_SPEED;
 				}
 			}
 
@@ -169,8 +190,7 @@ void CPlasmaRepulser::Update()
 			// kill the projectile
 			if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
 				if (weaponDef->shieldPower != 0) {
-					//FIXME some weapons do range dependent damage! (mantis #2345)
-					curPower -= proWD->damages[0];
+					curPower -= shield_damage;
 				}
 
 				pro->Collision(owner);

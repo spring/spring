@@ -195,8 +195,8 @@ WEAPONTAG(float3, shieldGoodColor).externalName("shield.goodColor").fallbackName
 	.defaultValue(float3(0.5f, 0.5f, 1.0f)).description("The RGB colour the shield transitions to as its hit-points are regenerated towards its maximum power.");
 WEAPONTAG(float, shieldAlpha).externalName("shield.alpha").fallbackName("shieldAlpha")
 	.defaultValue(0.2f).description("The alpha transparency of the shield whilst it is visible.");
-
-
+WEAPONDUMMYTAG(std::string, shieldArmorType).externalName("shield.armorType").fallbackName("shieldArmorType")
+	.defaultValue("default").description("Specifies the armorclass of the shield; you can input either an armorclass name OR a unitdef name to share that unit's armorclass");
 
 // Unsynced (= Visuals)
 WEAPONTAG(std::string, model, visuals.modelName).defaultValue("");
@@ -293,6 +293,8 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		LOG_L(L_WARNING, "WeaponDef (%s) The \"isShield\" tag has been removed. Use the weaponType=\"Shield\" tag instead!", name.c_str());
 
 	shieldRechargeDelay = int(wdTable.GetFloat("rechargeDelay", 0) * GAME_SPEED);
+	std::string shieldArmorName = wdTable.GetString("shieldArmorType", "default");
+	shieldArmorType = damageArrayHandler->GetTypeFromName(shieldArmorName);
 	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * 32);
 
 	//FIXME may be smarter to merge the collideXYZ tags with avoidXYZ and removing the collisionFlags tag (and move the code into CWeapon)?
