@@ -66,35 +66,46 @@ const WeaponDef* CWeaponDefHandler::GetWeaponDefByID(int weaponDefId) const
 
 
 
-DamageArray CWeaponDefHandler::DynamicDamages(const DamageArray& damages, const float3 startPos, const float3 curPos, const float range, const float exp, const float damageMin, const bool inverted)
-{
+DamageArray CWeaponDefHandler::DynamicDamages(
+	const WeaponDef* weaponDef,
+	const float3 startPos,
+	const float3 curPos
+) {
+	const DamageArray& damages = weaponDef->damages;
+
+	if (weaponDef->dynDamageExp <= 0.0f)
+		return damages;
+
 	DamageArray dynDamages(damages);
 
+	const float range     = (weaponDef->dynDamageRange > 0.0f)? weaponDef->dynDamageRange: weaponDef->range;
+	const float damageMin = weaponDef->dynDamageMin;
+
 	const float travDist  = std::min(range, curPos.distance2D(startPos));
-	const float damageMod = 1.0f - math::pow(1.0f / range * travDist, exp);
+	const float damageMod = 1.0f - math::pow(1.0f / range * travDist, weaponDef->dynDamageExp);
 	const float ddmod     = damageMin / damages[0]; // get damage mod from first damage type
 
-	if (inverted) {
-		for(int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
+	if (weaponDef->dynDamageInverted) {
+		for (int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
 			dynDamages[i] = damages[i] - damageMod * damages[i];
 
-			if (damageMin > 0)
+			if (damageMin > 0.0f)
 				dynDamages[i] = std::max(damages[i] * ddmod, dynDamages[i]);
 
 			// to prevent div by 0
 			dynDamages[i] = std::max(0.0001f, dynDamages[i]);
 		}
-	}
-	else {
-		for(int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
+	} else {
+		for (int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
 			dynDamages[i] = damageMod * damages[i];
 
-			if (damageMin > 0)
+			if (damageMin > 0.0f)
 				dynDamages[i] = std::max(damages[i] * ddmod, dynDamages[i]);
 
 			// div by 0
 			dynDamages[i] = std::max(0.0001f, dynDamages[i]);
 		}
 	}
+
 	return dynDamages;
 }

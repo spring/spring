@@ -149,19 +149,7 @@ void CWeaponProjectile::Explode(
 	float3 impactPos,
 	float3 impactDir
 ) {
-	const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
-		weaponDef->damages:
-		weaponDefHandler->DynamicDamages(
-			weaponDef->damages,
-			startPos,
-			impactPos,
-			(weaponDef->dynDamageRange > 0.0f)?
-				weaponDef->dynDamageRange:
-				weaponDef->range,
-			weaponDef->dynDamageExp, weaponDef->dynDamageMin,
-			weaponDef->dynDamageInverted
-		);
-
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(weaponDef, startPos, impactPos);
 	const CGameHelper::ExplosionParams params = {
 		impactPos,
 		impactDir.SafeNormalize(),

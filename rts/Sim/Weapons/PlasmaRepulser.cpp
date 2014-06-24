@@ -115,23 +115,10 @@ void CPlasmaRepulser::Update()
 			continue;
 		}
 
-		const DamageArray& damageArray = (proWD->dynDamageExp <= 0.0f)
-			? proWD->damages
-			: weaponDefHandler->DynamicDamages (
-				proWD->damages,
-				pro->GetStartPos(),
-				pro->pos,
-				(proWD->dynDamageRange > 0.0f)
-					? proWD->dynDamageRange
-					: proWD->range,
-				proWD->dynDamageExp,
-				proWD->dynDamageMin,
-				proWD->dynDamageInverted
-		);
+		const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(proWD, pro->GetStartPos(), pro->pos);
+		const float shieldDamage = damageArray[weaponDef->shieldArmorType];
 
-		const float shield_damage = damageArray[weaponDef->shieldArmorType];
-
-		if (curPower < shield_damage) {
+		if (curPower < shieldDamage) {
 			// shield does not have enough power, don't touch the projectile
 			continue;
 		}
@@ -155,7 +142,7 @@ void CPlasmaRepulser::Update()
 				owner->UseEnergy(weaponDef->shieldEnergyUse);
 
 				if (weaponDef->shieldPower != 0) {
-					curPower -= shield_damage;
+					curPower -= shieldDamage;
 				}
 			} else {
 				//FIXME why do all weapons except LASERs do only (1 / GAME_SPEED) damage???
@@ -167,7 +154,7 @@ void CPlasmaRepulser::Update()
 				owner->UseEnergy(weaponDef->shieldEnergyUse / GAME_SPEED);
 
 				if (weaponDef->shieldPower != 0) {
-					curPower -= shield_damage / GAME_SPEED;
+					curPower -= shieldDamage / GAME_SPEED;
 				}
 			}
 
@@ -190,7 +177,7 @@ void CPlasmaRepulser::Update()
 			// kill the projectile
 			if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
 				if (weaponDef->shieldPower != 0) {
-					curPower -= shield_damage;
+					curPower -= shieldDamage;
 				}
 
 				pro->Collision(owner);
