@@ -23,7 +23,9 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(checkCol),
 	CR_MEMBER(ignoreWater),
 	CR_MEMBER(deleteMe),
+
 	CR_MEMBER(castShadow),
+	CR_MEMBER(drawSorted),
 
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(dir),
@@ -31,7 +33,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(drawPos),
 
 	CR_MEMBER(mygravity),
-	CR_IGNORED(tempdist),
+	CR_IGNORED(sortDist),
 
 	CR_MEMBER(ownerID),
 	CR_MEMBER(teamID),
@@ -64,7 +66,9 @@ CProjectile::CProjectile()
 	, checkCol(true)
 	, ignoreWater(false)
 	, deleteMe(false)
+
 	, castShadow(false)
+	, drawSorted(true)
 
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
 
@@ -96,7 +100,9 @@ CProjectile::CProjectile(
 	, checkCol(true)
 	, ignoreWater(false)
 	, deleteMe(false)
+
 	, castShadow(false)
+	, drawSorted(true)
 
 	, dir(ZeroVector) // set via Init()
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)

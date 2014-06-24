@@ -30,7 +30,9 @@ CGfxProjectile::CGfxProjectile(): CProjectile()
 {
 	creationTime = lifeTime = 0;
 	color[0] = color[1] = color[2] = color[3] = 255;
+
 	checkCol = false;
+	drawSorted = false;
 }
 
 CGfxProjectile::CGfxProjectile(const float3& pos, const float3& speed, int lifeTime, const float3& color):
@@ -39,6 +41,8 @@ CGfxProjectile::CGfxProjectile(const float3& pos, const float3& speed, int lifeT
 	lifeTime(lifeTime)
 {
 	checkCol = false;
+	drawSorted = false;
+
 	this->color[0] = (unsigned char) (color[0] * 255);
 	this->color[1] = (unsigned char) (color[1] * 255);
 	this->color[2] = (unsigned char) (color[2] * 255);
