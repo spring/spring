@@ -12,6 +12,7 @@
 #include "VertexArray.h"
 #include "VertexArrayRange.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
@@ -383,6 +384,38 @@ void WorkaroundATIPointSizeBug()
 }
 
 /******************************************************************************/
+
+void glSaveTexture(const GLuint textureID, const std::string& filename)
+{
+	const GLenum target = GL_TEXTURE_2D;
+	GLenum format = GL_RGBA8;
+	int sizeX, sizeY;
+
+	int bits = 0;
+	{
+		glBindTexture(GL_TEXTURE_2D, textureID);
+
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &sizeX);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &sizeY);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, (GLint*)&format);
+
+		GLint _cbits;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &_cbits); bits += _cbits;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &_cbits); bits += _cbits;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE, &_cbits); bits += _cbits;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &_cbits); bits += _cbits;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_DEPTH_SIZE, &_cbits); bits += _cbits;
+	}
+	assert(bits == 32);
+	assert(format == GL_RGBA8);
+
+	CBitmap bmp;
+	bmp.channels = 4;
+	bmp.Alloc(sizeX,sizeY);
+	glGetTexImage(target,0,GL_RGBA,GL_UNSIGNED_BYTE, &bmp.mem[0]);
+	bmp.Save(filename, false);
+}
+
 
 void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height)
 {

@@ -110,8 +110,9 @@ public:
 		float bladeWidth;
 		float bladeHeight;    //! actual blades will be (bladeHeight + randf(0, bladeHeight)) tall
 		float bladeAngle;
-		float4 color;
-		std::string grassBladeTexName;    // defaults to internally-generated texture
+		int maxStrawsPerTurf;
+		float3 color;
+		std::string bladeTexName;    // defaults to internally-generated texture
 	} grass;
 
 	/** settings read from "MAP\LIGHT" section */
