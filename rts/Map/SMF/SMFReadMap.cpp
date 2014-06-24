@@ -752,20 +752,10 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 	const int drawQuadsX = gs->mapx / quadSize;
 	const int drawQuadsY = gs->mapy / quadSize;
 
-	int sy = cy - drawSquare;
-	int ey = cy + drawSquare;
-	int sxi = cx - drawSquare;
-	int exi = cx + drawSquare;
-
-	if (sy < 0)
-		sy = 0;
-	if (ey > drawQuadsY - 1)
-		ey = drawQuadsY - 1;
-
-	if (sxi < 0)
-		sxi = 0;
-	if (exi > drawQuadsX - 1)
-		exi = drawQuadsX - 1;
+	int sy  = Clamp(cy - drawSquare, 0, drawQuadsY - 1);
+	int ey  = Clamp(cy + drawSquare, 0, drawQuadsY - 1);
+	int sxi = Clamp(cx - drawSquare, 0, drawQuadsX - 1);
+	int exi = Clamp(cx + drawSquare, 0, drawQuadsX - 1);
 
 	// NOTE:
 	//     GridVisibility is only ever passed <camera>, not <cam2>
@@ -796,7 +786,7 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 			xtest  = ((fli->base + fli->dir * ( y * quadSize)            ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 
-			if (xtest > xtest2)
+			if (xtest2 < xtest) //use std::min?
 				xtest = xtest2;
 
 			xtest /= quadSize;
@@ -808,7 +798,7 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 			xtest  = ((fli->base + fli->dir *  (y * quadSize)           ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 
-			if (xtest < xtest2)
+			if (xtest2 > xtest)
 				xtest = xtest2;
 
 			xtest /= quadSize;
