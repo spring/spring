@@ -25,14 +25,6 @@ public:
 	const WeaponDef* GetWeaponDefByID(int weaponDefId) const;
 
 	static DamageArray DynamicDamages(const WeaponDef* weaponDef, const float3 startPos, const float3 curPos);
-	static DamageArray DynamicDamages(const DamageArray& damages,
-		const float3 startPos,
-		const float3 curPos,
-		const float range,
-		const float exp,
-		const float damageMin,
-		const bool inverted
-	);
 
 public:
 	std::vector<WeaponDef> weaponDefs;
