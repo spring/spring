@@ -378,7 +378,7 @@ void CGrassDrawer::DrawNear(const std::vector<InviewNearGrass>& inviewGrass)
 {
 	for (const InviewNearGrass& g: inviewGrass) {
 		rng.Seed(g.y * gs->mapx / grassSquareSize + g.x);
-		const float distSq = GetCamDistOfGrassBlock(g.x, g.y, true);
+//		const float distSq = GetCamDistOfGrassBlock(g.x, g.y, true);
 		const float rdist  = 1.0f + rng.RandFloat() * 0.5f;
 		const float alpha  = linearstep(maxDetailedDist, maxDetailedDist + 128.f * rdist, g.dist);
 
