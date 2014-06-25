@@ -60,11 +60,6 @@ CGrassDrawer::CGrassDrawer()
 , updateBillboards(false)
 , grassMap(nullptr)
 {
-	// eventclient
-	autoLinkEvents = true;
-	RegisterLinkedEvents(this);
-	eventHandler.AddClient(this);
-
 	rng.Seed(15);
 	const int detail = configHandler->GetInt("GrassDetail");
 
@@ -127,6 +122,11 @@ CGrassDrawer::CGrassDrawer()
 	ChangeDetail(detail);
 	LoadGrassShaders();
 	configHandler->NotifyOnChange(this);
+
+	// eventclient
+	autoLinkEvents = true;
+	RegisterLinkedEvents(this);
+	eventHandler.AddClient(this);
 }
 
 CGrassDrawer::~CGrassDrawer()
