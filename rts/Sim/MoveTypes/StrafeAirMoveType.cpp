@@ -842,13 +842,14 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 		CheckForCollision();
 	}
 
-	const bool b0 = (goalDist2D >= TurnRadius(turnRadius, spd.w));
-	const bool b1 = ((gs->frameNum - owner->lastFireWeapon) >= GAME_SPEED * 3);
+	// RHS is needed for moving targets (when called by UpdateAttack)
+	const bool allowUnlockYR = (goalDist2D >= TurnRadius(turnRadius, spd.w) || goalVec.dot(owner->frontdir) > 0.0f);
+	const bool forceUnlockYR = ((gs->frameNum - owner->lastFireWeapon) >= GAME_SPEED * 3);
 
 	// yaw and roll have to be unblocked after a certain time or aircraft
 	// can fly straight forever if their target is another chasing aircraft
 	float3 rightDir2D = rightdir;
-	float3 yprMults = (XZVector * float(b0 || b1)) + UpVector;
+	float3 yprMults = (XZVector * float(allowUnlockYR || forceUnlockYR)) + UpVector;
 
 	float goalDotRight = goalDir2D.dot(rightDir2D.Normalize2D());
 
@@ -890,7 +891,7 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	const float elevator = GetElevatorDeflection(owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, gHeight, wantedHeight, maxElevator, maxPitch, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // pitch
 
 	UpdateAirPhysics(rudder * yprMults.x, aileron * yprMults.z, elevator * yprMults.y, engine, owner->frontdir);
-	return (b0 || b1);
+	return (allowUnlockYR || forceUnlockYR);
 }
 
 
