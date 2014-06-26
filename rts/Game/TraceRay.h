@@ -16,12 +16,14 @@ namespace Collision {
 		NOFEATURES   = 4,
 		NONEUTRALS   = 8,
 		NOGROUND     = 16,
-		BOOLEAN      = 32, // skip further testings after the first collision
+		NOCLOAKED    = 32,
+		BOOLEAN      = 64, // skip further tests after the first collision (unused)
 		NOUNITS = NOENEMIES | NOFRIENDLIES | NONEUTRALS
 	};
 }
 
 namespace TraceRay {
+	// TODO: extend with allyTeam param s.t. we can add Collision::NO{LOS,RADAR}, etc.
 	float TraceRay(
 		const float3& start,
 		const float3& dir,
