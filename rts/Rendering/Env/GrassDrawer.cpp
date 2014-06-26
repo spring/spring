@@ -1046,7 +1046,7 @@ void CGrassDrawer::AddGrass(const float3& pos)
 	assert(z >= 0 && z < (gs->mapy - 1) / grassSquareSize);
 
 	grassMap[z * gs->mapx / grassSquareSize + x] = 1;
-	ResetPos(x, z);
+	ResetPos(pos);
 }
 
 
@@ -1061,7 +1061,7 @@ void CGrassDrawer::RemoveGrass(const float3& pos)
 	assert(z >= 0 && z <= (gs->mapy - 1) / grassSquareSize);
 
 	grassMap[z * gs->mapx / grassSquareSize + x] = 0;
-	ResetPos(x, z);
+	ResetPos(pos);
 }
 
 
