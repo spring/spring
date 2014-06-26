@@ -115,11 +115,11 @@ void LuaOpenGL::Free()
 {
 	glDeleteLists(resetStateList, 1);
 
-	if (globalRendering->haveGLSL) {
-		set<unsigned int>::const_iterator it;
-		for (it = occlusionQueries.begin(); it != occlusionQueries.end(); ++it) {
-			glDeleteQueries(1, &(*it));
-		}
+	if (!globalRendering->haveGLSL)
+		return;
+
+	for (auto it = occlusionQueries.begin(); it != occlusionQueries.end(); ++it) {
+		glDeleteQueries(1, &(*it));
 	}
 }
 
@@ -4257,28 +4257,36 @@ int LuaOpenGL::CreateQuery(lua_State* L)
 {
 	GLuint q;
 	glGenQueries(1, &q);
-	if (q == 0) {
+
+	if (q == 0)
 		return 0;
-	}
-	occlusionQueries.insert(q);
-	lua_pushlightuserdata(L, (void*) &(*occlusionQueries.find(q)));
+
+	// store a raw pointer to the inserted query value as userdata
+	const auto pair = occlusionQueries.insert(q);
+	const auto iter = pair.first;
+	const void* addr = &(*iter);
+
+	lua_pushlightuserdata(L, const_cast<void*>(addr));
 	return 1;
 }
 
 
 int LuaOpenGL::DeleteQuery(lua_State* L)
 {
-	if (lua_isnil(L, 1)) {
+	if (lua_isnil(L, 1))
 		return 0;
-	}
-	if (!lua_islightuserdata(L, 1)) {
+
+	if (!lua_islightuserdata(L, 1))
 		luaL_error(L, "invalid argument");
+
+	const GLuint* ptr = reinterpret_cast<const unsigned int*>(lua_topointer(L, 1));
+	const GLuint qry = *ptr;
+
+	if (occlusionQueries.find(qry) != occlusionQueries.end()) {
+		occlusionQueries.erase(qry);
+		glDeleteQueries(1, &qry);
 	}
-	GLuint q = (unsigned long int)lua_topointer(L, 1);
-	if (occlusionQueries.find(q) != occlusionQueries.end()) {
-		occlusionQueries.erase(q);
-		glDeleteQueries(1, &q);
-	}
+
 	return 0;
 }
 
@@ -4287,23 +4295,25 @@ int LuaOpenGL::RunQuery(lua_State* L)
 {
 	static bool running = false;
 
-	if (running) {
+	if (running)
 		luaL_error(L, "not re-entrant");
-	}
-	if (!lua_islightuserdata(L, 1)) {
+
+	if (!lua_islightuserdata(L, 1))
 		luaL_error(L, "expecting a query");
-	}
-	GLuint q = (unsigned long int)lua_topointer(L, 1);
-	if (occlusionQueries.find(q) == occlusionQueries.end()) {
+
+	const GLuint* ptr = reinterpret_cast<const unsigned int*>(lua_topointer(L, 1));
+	const GLuint qry = *ptr;
+
+	if (occlusionQueries.find(qry) == occlusionQueries.end())
 		return 0;
-	}
-	if (!lua_isfunction(L, 2)) {
+
+	if (!lua_isfunction(L, 2))
 		luaL_error(L, "expecting a function");
-	}
+
 	const int args = lua_gettop(L); // number of arguments
 
 	running = true;
-	glBeginQuery(GL_SAMPLES_PASSED, q);
+	glBeginQuery(GL_SAMPLES_PASSED, qry);
 	const int error = lua_pcall(L, (args - 2), 0, 0);
 	glEndQuery(GL_SAMPLES_PASSED);
 	running = false;
@@ -4320,19 +4330,19 @@ int LuaOpenGL::RunQuery(lua_State* L)
 
 int LuaOpenGL::GetQuery(lua_State* L)
 {
-	if (!lua_islightuserdata(L, 1)) {
+	if (!lua_islightuserdata(L, 1))
 		luaL_error(L, "invalid argument");
-	}
-	GLuint q = (unsigned long int)lua_topointer(L, 1);
-	if (occlusionQueries.find(q) == occlusionQueries.end()) {
+
+	const GLuint* ptr = reinterpret_cast<const unsigned int*>(lua_topointer(L, 1));
+	const GLuint qry = *ptr;
+
+	if (occlusionQueries.find(qry) == occlusionQueries.end())
 		return 0;
-	}
 
 	GLuint count;
-	glGetQueryObjectuiv(q, GL_QUERY_RESULT, &count);
+	glGetQueryObjectuiv(qry, GL_QUERY_RESULT, &count);
 
 	lua_pushnumber(L, count);
-
 	return 1;
 }
 
