@@ -470,6 +470,44 @@ static void AddDependency(std::vector<std::string>& deps, const std::string& dep
 	deps.push_back(dependency);
 }
 
+std::string CArchiveScanner::SearchMapFile(IArchive* ar, bool checksolid, const std::string& fullName, std::string& error)
+{
+	assert(ar!=NULL);
+
+	std::string mapfile;
+	// check for smf/sm3 and if the uncompression of important files is too costy
+	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
+		std::string name;
+		int size;
+		ar->FileInfo(fid, name, size);
+		const std::string lowerName = StringToLower(name);
+		const std::string ext = FileSystem::GetExtension(lowerName);
+
+		if ((ext == "smf") || (ext == "sm3")) {
+			mapfile = name;
+			if (!checksolid)
+				break;
+		}
+
+		const auto metaFileClass = CArchiveScanner::GetMetaFileClass(lowerName);
+		if ((metaFileClass == 0) || ar->HasLowReadingCost(fid))
+			continue;
+
+		// is a meta-file and not cheap to read
+		if (metaFileClass == 1) {
+			// 1st class
+			error = "Unpacking/reading cost for meta file " + name
+					+ " is too high, please repack the archive (make sure to use a non-solid algorithm, if applicable)";
+			break;
+		} else if (metaFileClass == 2) {
+			// 2nd class
+			LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING,
+					"Archive %s: The cost for reading a 2nd-class meta-file is too high: %s",
+					fullName.c_str(), name.c_str());
+		}
+	}
+	return mapfile;
+}
 
 void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 {
@@ -541,34 +579,6 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	const bool hasModinfo = ar->FileExists("modinfo.lua");
 	const bool hasMapinfo = ar->FileExists("mapinfo.lua");
 
-	// check for smf/sm3 and if the uncompression of important files is too costy
-	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
-		std::string name;
-		int size;
-		ar->FileInfo(fid, name, size);
-		const std::string lowerName = StringToLower(name);
-		const std::string ext = FileSystem::GetExtension(lowerName);
-
-		if ((ext == "smf") || (ext == "sm3"))
-			mapfile = name;
-
-		const auto metaFileClass = CArchiveScanner::GetMetaFileClass(lowerName);
-		if ((metaFileClass == 0) || ar->HasLowReadingCost(fid))
-			continue;
-
-		// is a meta-file and not cheap to read
-		if (metaFileClass == 1) {
-			// 1st class
-			error = "Unpacking/reading cost for meta file " + name
-					+ " is too high, please repack the archive (make sure to use a non-solid algorithm, if applicable)";
-			break;
-		} else if (metaFileClass == 2) {
-			// 2nd class
-			LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING,
-					"Archive %s: The cost for reading a 2nd-class meta-file is too high: %s",
-					fullName.c_str(), name.c_str());
-		}
-	}
 
 	ArchiveInfo ai;
 	auto& ad = ai.archiveData;
@@ -576,7 +586,10 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		ScanArchiveLua(ar.get(), "mapinfo.lua", ai, error);
 	} else if (hasModinfo) {
 		ScanArchiveLua(ar.get(), "modinfo.lua", ai, error);
+	} else {
+		mapfile = SearchMapFile(ar.get(), ar->CheckForSolid(), fullName, error);
 	}
+
 	if (!error.empty()) {
 		// for some reason, the archive is marked as broken
 		LOG_L(L_WARNING, "Failed to scan %s (%s)", fullName.c_str(), error.c_str());
@@ -629,6 +642,7 @@ bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, 
 {
 	std::vector<boost::uint8_t> buf;
 	if (!ar->GetFile(fileName, buf) || buf.empty()) {
+		err = "Error reading " + fileName + " from " + ar->GetArchiveName();
 		return false;
 	}
 

@@ -21,6 +21,7 @@ extern "C" {
 class CSevenZipArchiveFactory : public IArchiveFactory {
 public:
 	CSevenZipArchiveFactory();
+	bool CheckForSolid() const { return true; }
 private:
 	IArchive* DoCreateArchive(const std::string& filePath) const;
 };

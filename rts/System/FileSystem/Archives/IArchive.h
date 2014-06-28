@@ -88,6 +88,11 @@ public:
 	 * @return true if cost is ~ relative to its file-size
 	 */
 	virtual bool HasLowReadingCost(unsigned int fid) const;
+
+	/**
+	 * @return true if archive type can be packed solid (which is VERY slow when reading)
+	 */
+	virtual bool CheckForSolid() const { return false; }
 	/**
 	 * Fetches the CRC32 hash of a file by its ID.
 	 */

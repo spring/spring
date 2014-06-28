@@ -184,6 +184,13 @@ private:
 	/// scan mapinfo / modinfo lua files
 	bool ScanArchiveLua(IArchive* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err);
 
+	/**
+	 * scan archive for map file
+	 * @return file name if found, empty string if not
+	 */
+	std::string SearchMapFile(IArchive* ar, bool checksolid, const std::string& fullName, std::string& error);
+
+
 	void ReadCacheData(const std::string& filename);
 	void WriteCacheData(const std::string& filename);
 
