@@ -41,7 +41,7 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 //////////////////////////////////////////////////////////////////////
 
 CSmokeTrailProjectile::CSmokeTrailProjectile(
-	CUnit* owner,
+	const CUnit* owner,
 	const float3& pos1,
 	const float3& pos2,
 	const float3& dir1,

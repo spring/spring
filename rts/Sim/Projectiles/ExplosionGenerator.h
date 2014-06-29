@@ -27,7 +27,7 @@ public:
 	CExpGenSpawnable(const float3& pos, const float3& spd);
 
 	virtual ~CExpGenSpawnable() {}
-	virtual void Init(CUnit* owner, const float3& offset) = 0;
+	virtual void Init(const CUnit* owner, const float3& offset) = 0;
 };
 
 

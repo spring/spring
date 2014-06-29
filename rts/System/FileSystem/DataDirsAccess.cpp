@@ -20,9 +20,8 @@ std::vector<std::string> DataDirsAccess::FindFiles(std::string dir, const std::s
 		return std::vector<std::string>();
 	}
 
-	if (dir.empty()) dir = "./";
-	FileSystem::EnsurePathSepAtEnd(dir);
 	FileSystem::FixSlashes(dir);
+	FileSystem::EnsurePathSepAtEnd(dir);
 
 	if (flags & FileQueryFlags::ONLY_DIRS) {
 		flags |= FileQueryFlags::INCLUDE_DIRS;
@@ -110,8 +109,12 @@ std::string DataDirsAccess::LocateFile(std::string file, int flags) const
 
 std::string DataDirsAccess::LocateDir(std::string dir, int flags) const
 {
-	if (!FileSystem::CheckFile(dir) || FileSystem::IsAbsolutePath(dir)) {
+	if (!FileSystem::CheckFile(dir)) {
 		return "";
+	}
+
+	if (FileSystem::IsAbsolutePath(dir)) {
+		return dir;
 	}
 
 	FileSystem::FixSlashes(dir);

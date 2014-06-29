@@ -108,13 +108,10 @@ unsigned int CGame::GetNumQueuedSimFrameMessages(unsigned int maxFrames) const
 
 			case NETMSG_NEWFRAME:
 			case NETMSG_KEYFRAME:
-				++numQueuedFrames;
+				if (numQueuedFrames < maxFrames)
+					++numQueuedFrames;
 			default:
 				++packetPeekIndex;
-		}
-
-		if (numQueuedFrames > maxFrames) {
-			break;
 		}
 	}
 
@@ -131,7 +128,9 @@ void CGame::UpdateNumQueuedSimFrames()
 	const spring_time currTime = spring_gettime();
 	const spring_time deltaTime = currTime - lastUpdateTime;
 
-	if (globalConfig->useNetMessageSmoothingBuffer) {
+	// TODO Forcing UseNetMessageSmoothingBuffer to avoid players testing with this turned off.
+	// We should make this the default and not configurable.
+	if (true /*globalConfig->useNetMessageSmoothingBuffer*/) {
 		// update consumption-rate faster at higher game speeds
 		if (deltaTime.toMilliSecsf() < (1000.0f / gs->speedFactor))
 			return;
@@ -140,7 +139,7 @@ void CGame::UpdateNumQueuedSimFrames()
 		//   unnecessary to scan entire queue *unless* joining a running game
 		//   only reason in that case is to handle NETMSG_GAME_FRAME_PROGRESS
 		//
-		// const unsigned int numQueuedFrames = GetNumQueuedSimFrameMessages(GAME_SPEED * gs->speedFactor * 5);
+		//const unsigned int numQueuedFrames = GetNumQueuedSimFrameMessages(GAME_SPEED * gs->speedFactor * 5);
 		const unsigned int numQueuedFrames = GetNumQueuedSimFrameMessages(-1u);
 
 		if (numQueuedFrames < lastNumQueuedSimFrames) {
@@ -159,7 +158,8 @@ void CGame::UpdateNumQueuedSimFrames()
 		// at higher speeds we need to keep more distance!
 		// (because effect of network jitter is amplified)
 		consumeSpeedMult = GAME_SPEED * gs->speedFactor + lastNumQueuedSimFrames - (2 * gs->speedFactor);
-		lastUpdateTime = currTime;
+		if (lastNumQueuedSimFrames == 0)
+			msgProcTimeLeft = -50.0f; // don't consume netframes for some time
 	} else {
 		if (deltaTime.toMilliSecsf() < 1000.0f)
 			return;
@@ -169,6 +169,7 @@ void CGame::UpdateNumQueuedSimFrames()
 		// to jitter (especially on lower-quality connections)
 		consumeSpeedMult = GAME_SPEED * gs->speedFactor + (GetNumQueuedSimFrameMessages(-1u) / 2);
 	}
+	lastUpdateTime = currTime;
 }
 
 void CGame::UpdateNetMessageProcessingTimeLeft()
@@ -188,8 +189,6 @@ void CGame::UpdateNetMessageProcessingTimeLeft()
 			// (the amount of processing time is weighted by dt and also increases
 			// when more messages are waiting)
 			//
-			// don't let the limit get over 1000ms
-			msgProcTimeLeft -= (1000.0f * float(msgProcTimeLeft > 1000.0f));
 			msgProcTimeLeft += (consumeSpeedMult * deltaReadNetTime.toMilliSecsf());
 		}
 
@@ -217,9 +216,10 @@ float CGame::GetNetMessageProcessingTimeLimit() const
 
 void CGame::ClientReadNet()
 {
-	UpdateNetMessageProcessingTimeLeft();
 	// look ahead so we can adapt consumeSpeedMult to network fluctuations
 	UpdateNumQueuedSimFrames();
+
+	UpdateNetMessageProcessingTimeLeft();
 
 	const spring_time msgProcEndTime = spring_gettime() + spring_msecs(GetNetMessageProcessingTimeLimit());
 

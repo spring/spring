@@ -19,7 +19,6 @@ public:
 		float alphaFalloff,
 		float fadeupTime
 	);
-	~CWakeProjectile() {}
 
 	void Update();
 	void Draw();

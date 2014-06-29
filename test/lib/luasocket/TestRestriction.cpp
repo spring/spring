@@ -42,9 +42,9 @@ BOOST_AUTO_TEST_CASE(TestRestriction)
 	for(int i=0; i<CLuaSocketRestrictions::ALL_RULES; i++) {
 		CheckAccess(false, i, "localhost", 80);
 		CheckAccess(false, i, "localhost", -1);
-		CheckAccess(CLuaSocketRestrictions::TCP_CONNECT == i, i, "springrts.com", 80);
+		CheckAccess((CLuaSocketRestrictions::TCP_CONNECT == i), i, "springrts.com", 80);
 		CheckAccess(false, i, "springrts.com", -1);
-		CheckAccess(CLuaSocketRestrictions::TCP_CONNECT == i, i, "94.23.170.70", 80);
+		CheckAccess((CLuaSocketRestrictions::TCP_CONNECT == i), i, "94.23.170.70", 80);
 		CheckAccess(false, i, "94.23.170.70", -1);
 		CheckAccess(false, i, "zero-k.info", 80);
 		CheckAccess(false, i, "zero-k.info", -1);
@@ -55,10 +55,10 @@ BOOST_AUTO_TEST_CASE(TestRestriction)
 
 	for(int i=0; i<CLuaSocketRestrictions::ALL_RULES; i++) {
 		CheckAccess(false, i, "localhost", -1);
-		CheckAccess(CLuaSocketRestrictions::UDP_LISTEN == i, i, "localhost", 80);
-		CheckAccess(CLuaSocketRestrictions::TCP_CONNECT == i, i, "springrts.com", 80);
+		CheckAccess((CLuaSocketRestrictions::UDP_LISTEN == i), i, "localhost", 80);
+		CheckAccess((CLuaSocketRestrictions::TCP_CONNECT == i), i, "springrts.com", 80);
 		CheckAccess(false, i, "springrts.com", -1);
-		CheckAccess(CLuaSocketRestrictions::TCP_CONNECT == i, i, "94.23.170.70", 80);
+		CheckAccess((CLuaSocketRestrictions::TCP_CONNECT == i), i, "94.23.170.70", 80);
 		CheckAccess(false, i, "94.23.170.70", -1);
 		CheckAccess(false, i, "zero-k.info", 80);
 		CheckAccess(false, i, "zero-k.info", -1);

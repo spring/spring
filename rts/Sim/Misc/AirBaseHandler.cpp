@@ -155,9 +155,10 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 			LandingPad* foundPad = foundBase->freePads.front();
 			foundBase->freePads.pop_front();
 			return foundPad;
-		} else {
-			if (!foundBase->pads.empty())
-				return foundBase->pads.front();
+		}
+
+		if (!foundBase->pads.empty()) {
+			return foundBase->pads.front();
 		}
 	}
 

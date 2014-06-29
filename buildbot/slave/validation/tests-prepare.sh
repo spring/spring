@@ -14,7 +14,7 @@ $PRDL --download-map "$MAP"
 
 echo "Creating script: test/validation/prepare.sh \"$GAME1\" \"$MAP\" \"$AI\" \"$AIVER\""
 ${SOURCEDIR}/test/validation/prepare.sh "$GAME1" "$MAP" "$AI" "$AIVER" > ${CONTENT_DIR}/script.txt
-${SOURCEDIR}/test/validation/prepare-client.sh ValidationClient 127.0.0.1 8452 >${CONTENT_DIR}/connect.txt
+${SOURCEDIR}/test/validation/prepare-client.sh ValidationClient localhost 8452 >${CONTENT_DIR}/connect.txt
 
 #install required files into spring dir
 cd ${SOURCEDIR}

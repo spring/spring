@@ -6,7 +6,7 @@
 #include "MapInfo.h"
 #include "BaseGroundDrawer.h"
 #include "HeightMapTexture.h"
-#include "Rendering/Env/ITreeDrawer.h"
+#include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
@@ -116,7 +116,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 			e->squares.push_back(dif);
 
 			if (dif < -0.3f && strength > 200.0f) {
-				treeDrawer->RemoveGrass(float3(x * SQUARE_SIZE, 0.0f, y * SQUARE_SIZE));
+				grassDrawer->RemoveGrass(float3(x * SQUARE_SIZE, 0.0f, y * SQUARE_SIZE));
 			}
 		}
 	}

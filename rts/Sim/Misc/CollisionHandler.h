@@ -21,8 +21,8 @@ enum {
 
 struct CollisionQuery {
 public:
-	CollisionQuery(): lmp(NULL) { Reset(); }
-	CollisionQuery(const CollisionQuery& cq): lmp(NULL) { Reset(&cq); }
+	CollisionQuery(                        ): lmp(NULL) { Reset(NULL); }
+	CollisionQuery(const CollisionQuery& cq): lmp(NULL) { Reset( &cq); }
 
 	void Reset(const CollisionQuery* cq = NULL) {
 		// (0, 0, 0) is volume-space center, so impossible
@@ -53,9 +53,10 @@ public:
 	}
 
 	// if the hit-position equals ZeroVector (i.e. if we have an
-	// inside-hit special case), the projected distance would be
-	// negative --> clamp it
-	float GetHitPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetHitPos() - pos).dot(dir)))); }
+	// inside-hit special case), the projected distance could be
+	// positive or negative depending on <dir> but we want it to
+	// be 0 --> turn <pos> into a ZeroVector if InsideHit()
+	float GetHitPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetHitPos() - pos * (1 - InsideHit())).dot(dir)))); }
 	float GetIngressPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetIngressPos() - pos).dot(dir)))); }
 	float GetEgressPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetEgressPos() - pos).dot(dir)))); }
 

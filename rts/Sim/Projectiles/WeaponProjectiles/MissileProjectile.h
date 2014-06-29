@@ -22,10 +22,17 @@ public:
 	void Update();
 	void Draw();
 
-	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos,
-			float shieldForce, float shieldMaxSpeed);
+	int ShieldRepulse(
+		CPlasmaRepulser* shield,
+		float3 shieldPos,
+		float shieldForce,
+		float shieldMaxSpeed
+	);
 
 private:
+	void UpdateWobble();
+	void UpdateDance();
+
 	float maxSpeed;
 	float areaOfEffect;
 	float extraHeight;

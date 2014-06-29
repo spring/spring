@@ -504,7 +504,7 @@ void CBuilder::SetRepairTarget(CUnit* target)
 		return;
 
 	StopBuild(false);
-	TempHoldFire();
+	TempHoldFire(CMD_REPAIR);
 
 	curBuild = target;
 	AddDeathDependence(curBuild, DEPENDENCE_BUILD);
@@ -542,7 +542,7 @@ void CBuilder::SetReclaimTarget(CSolidObject* target)
 	}
 
 	StopBuild(false);
-	TempHoldFire();
+	TempHoldFire(CMD_RECLAIM);
 
 	reclaimingUnit = (recUnit != NULL);
 	curReclaim = target;
@@ -558,7 +558,7 @@ void CBuilder::SetResurrectTarget(CFeature* target)
 		return;
 
 	StopBuild(false);
-	TempHoldFire();
+	TempHoldFire(CMD_RESURRECT);
 
 	curResurrect = target;
 
@@ -573,7 +573,7 @@ void CBuilder::SetCaptureTarget(CUnit* target)
 		return;
 
 	StopBuild(false);
-	TempHoldFire();
+	TempHoldFire(CMD_CAPTURE);
 
 	curCapture = target;
 
@@ -585,7 +585,7 @@ void CBuilder::SetCaptureTarget(CUnit* target)
 void CBuilder::StartRestore(float3 centerPos, float radius)
 {
 	StopBuild(false);
-	TempHoldFire();
+	TempHoldFire(CMD_RESTORE);
 
 	terraforming=true;
 	terraformType=Terraform_Restore;
@@ -643,6 +643,7 @@ void CBuilder::StopBuild(bool callScript)
 bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitStance)
 {
 	StopBuild(false);
+	TempHoldFire(-1);
 
 	buildInfo.pos = CGameHelper::Pos2BuildPos(buildInfo, true);
 

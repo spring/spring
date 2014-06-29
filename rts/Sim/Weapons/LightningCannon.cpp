@@ -76,20 +76,7 @@ void CLightningCannon::FireImpl(bool scriptCall)
 		hitUnit->SetLastAttackedPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 	}
 
-	const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
-		weaponDef->damages:
-		weaponDefHandler->DynamicDamages(
-			weaponDef->damages,
-			weaponMuzzlePos,
-			targetPos,
-			(weaponDef->dynDamageRange > 0.0f)?
-				weaponDef->dynDamageRange:
-				weaponDef->range,
-			weaponDef->dynDamageExp,
-			weaponDef->dynDamageMin,
-			weaponDef->dynDamageInverted
-		);
-
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(weaponDef, weaponMuzzlePos, targetPos);
 	const CGameHelper::ExplosionParams params = {
 		curPos + curDir * boltLength,                     // hitPos (same as hitColQuery.GetHitPos() if no water or shield in way)
 		curDir,
