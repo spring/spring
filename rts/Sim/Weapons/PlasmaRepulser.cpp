@@ -257,7 +257,9 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 		return -1.0f;
 	}
 
-	if (emitter->weaponDef->damages[0] > curPower) {
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponPos);
+
+	if (damageArray[weaponDef->shieldArmorType] > curPower) {
 		return -1.0f;
 	}
 	if (weaponDef->smartShield && teamHandler->AlliedTeams(emitter->owner->team, owner->team)) {
@@ -301,7 +303,7 @@ bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter, float damageMultiplier)
 {
 	if (weaponDef->shieldPower > 0) {
 		//FIXME some weapons do range dependent damage! (mantis #2345)
-		curPower -= emitter->weaponDef->damages[0] * damageMultiplier;
+		curPower -= emitter->weaponDef->damages[weaponDef->shieldArmorType] * damageMultiplier;
 	}
 	return weaponDef->shieldRepulser;
 }
