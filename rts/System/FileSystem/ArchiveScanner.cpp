@@ -470,25 +470,15 @@ static void AddDependency(std::vector<std::string>& deps, const std::string& dep
 	deps.push_back(dependency);
 }
 
-std::string CArchiveScanner::SearchMapFile(IArchive* ar, bool checksolid, const std::string& fullName, std::string& error)
+bool CArchiveScanner::CheckCompression(const IArchive* ar,const std::string& fullName, std::string& error)
 {
-	assert(ar!=NULL);
-
-	std::string mapfile;
-	// check for smf/sm3 and if the uncompression of important files is too costy
+	if (!ar->CheckForSolid())
+		return true;
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
 		std::string name;
 		int size;
 		ar->FileInfo(fid, name, size);
 		const std::string lowerName = StringToLower(name);
-		const std::string ext = FileSystem::GetExtension(lowerName);
-
-		if ((ext == "smf") || (ext == "sm3")) {
-			mapfile = name;
-			if (!checksolid)
-				break;
-		}
-
 		const auto metaFileClass = CArchiveScanner::GetMetaFileClass(lowerName);
 		if ((metaFileClass == 0) || ar->HasLowReadingCost(fid))
 			continue;
@@ -498,15 +488,36 @@ std::string CArchiveScanner::SearchMapFile(IArchive* ar, bool checksolid, const 
 			// 1st class
 			error = "Unpacking/reading cost for meta file " + name
 					+ " is too high, please repack the archive (make sure to use a non-solid algorithm, if applicable)";
-			break;
+			return false;
 		} else if (metaFileClass == 2) {
 			// 2nd class
 			LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING,
 					"Archive %s: The cost for reading a 2nd-class meta-file is too high: %s",
 					fullName.c_str(), name.c_str());
 		}
+
 	}
-	return mapfile;
+	return true;
+}
+
+std::string CArchiveScanner::SearchMapFile(const IArchive* ar, std::string& error)
+{
+	assert(ar!=NULL);
+
+	// check for smf/sm3 and if the uncompression of important files is too costy
+	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
+		std::string name;
+		int size;
+		ar->FileInfo(fid, name, size);
+		const std::string lowerName = StringToLower(name);
+		const std::string ext = FileSystem::GetExtension(lowerName);
+
+		if ((ext == "smf") || (ext == "sm3")) {
+			return name;
+		}
+
+	}
+	return "";
 }
 
 void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
@@ -587,8 +598,9 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	} else if (hasModinfo) {
 		ScanArchiveLua(ar.get(), "modinfo.lua", ai, error);
 	} else {
-		mapfile = SearchMapFile(ar.get(), ar->CheckForSolid(), fullName, error);
+		mapfile = SearchMapFile(ar.get(), error);
 	}
+	CheckCompression(ar.get(), fullName, error);
 
 	if (!error.empty()) {
 		// for some reason, the archive is marked as broken
@@ -1174,7 +1186,8 @@ CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveDataByArchive(const std:
 	return GetArchiveData(NameFromArchive(archive));
 }
 
-unsigned char CArchiveScanner::GetMetaFileClass(const std::string& filePath) {
+unsigned char CArchiveScanner::GetMetaFileClass(const std::string& filePath)
+{
 
 	unsigned char metaFileClass = 0;
 

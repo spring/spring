@@ -129,25 +129,6 @@ public:
 	ArchiveData GetArchiveData(const std::string& name) const;
 	ArchiveData GetArchiveDataByArchive(const std::string& archive) const;
 
-	/**
-	 * Returns a value > 0 if the file is rated as a meta-file.
-	 * First class means, it is essential for the archive, and will be read by
-	 * pretty much every software that scanns through archives.
-	 * Second class means, it is not essential for the archive, but it may be
-	 * read by certain tools that generate spezialized indices while scanning
-	 * through archives.
-	 * Examples:
-	 * "objects3d/ddm.s3o" -> 0
-	 * "ModInfo.lua" -> 1
-	 * "maps/dsd.smf" -> 1
-	 * "LuaAI.lua" -> 2
-	 * "sides/arm.bmp" -> 2
-	 * @param filePath file path, relative to archive-root
-	 * @return 0 if the file is not a meta-file,
-	 *         1 if the file is a first class meta-file,
-	 *         2 if the file is a second class meta-file
-	 */
-	static unsigned char GetMetaFileClass(const std::string& filePath);
 
 private:
 	struct ArchiveInfo
@@ -188,7 +169,7 @@ private:
 	 * scan archive for map file
 	 * @return file name if found, empty string if not
 	 */
-	std::string SearchMapFile(IArchive* ar, bool checksolid, const std::string& fullName, std::string& error);
+	std::string SearchMapFile(const IArchive* ar, std::string& error);
 
 
 	void ReadCacheData(const std::string& filename);
@@ -201,6 +182,27 @@ private:
 	 * Returns 0 if file could not be opened.
 	 */
 	unsigned int GetCRC(const std::string& filename);
+
+	/**
+	 * Returns a value > 0 if the file is rated as a meta-file.
+	 * First class means, it is essential for the archive, and will be read by
+	 * pretty much every software that scans through archives.
+	 * Second class means, it is not essential for the archive, but it may be
+	 * read by certain tools that generate spezialized indices while scanning
+	 * through archives.
+	 * Examples:
+	 * "objects3d/ddm.s3o" -> 0
+	 * "ModInfo.lua" -> 1
+	 * "maps/dsd.smf" -> 1
+	 * "LuaAI.lua" -> 2
+	 * "sides/arm.bmp" -> 2
+	 * @param filePath file path, relative to archive-root
+	 * @return 0 if the file is not a meta-file,
+	 *         1 if the file is a first class meta-file,
+	 *         2 if the file is a second class meta-file
+	 */
+	static unsigned char GetMetaFileClass(const std::string& filePath);
+	static bool CheckCompression(const IArchive* ar,const std::string& fullName, std::string& error);
 
 private:
 	std::map<std::string, ArchiveInfo> archiveInfos;
