@@ -7,6 +7,7 @@
 #ifndef WIN32
 #include <pthread.h>
 #include "System/Platform/Linux/ThreadSupport.h"
+#include <semaphore.h>
 #endif
 #ifdef __APPLE__
 #include <libkern/OSAtomic.h> // OSAtomicIncrement64
@@ -18,7 +19,6 @@
 #include <boost/thread.hpp>
 #include <boost/cstdint.hpp>
 
-#include <semaphore.h>
 
 
 class CGameController;
