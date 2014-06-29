@@ -299,11 +299,12 @@ void CPlasmaRepulser::DependentDied(CObject* o)
 }
 
 
-bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter, float damageMultiplier)
+bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter, float3 start, float damageMultiplier)
 {
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponPos);
+
 	if (weaponDef->shieldPower > 0) {
-		//FIXME some weapons do range dependent damage! (mantis #2345)
-		curPower -= emitter->weaponDef->damages[weaponDef->shieldArmorType] * damageMultiplier;
+		curPower -= damageArray[weaponDef->shieldArmorType] * damageMultiplier;
 	}
 	return weaponDef->shieldRepulser;
 }
