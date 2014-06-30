@@ -69,7 +69,7 @@ void CLightningCannon::FireImpl(bool scriptCall)
 
 	if (shieldLength < boltLength) {
 		boltLength = shieldLength;
-		hitShield->BeamIntercepted(this);
+		hitShield->BeamIntercepted(this, curPos);
 	}
 
 	if (hitUnit != NULL) {
