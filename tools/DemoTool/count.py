@@ -5,12 +5,18 @@ import sys
 import fileinput
 
 count = 0
+paused = False
 for line in fileinput.input():
 	args = line.strip().split(" ")
 	if len(args)>1 and args[1] == "NEWFRAME":
 		if count>400:
-			print "%s %s" % (args[0], count)
+			print("%s %s" % (args[0], count))
 		count = 0
 		sumframes = 0
-	else:
+	elif len(args) == 6 and args[1] == "NETMSG_PAUSE:":
+		#000009 NETMSG_PAUSE: Player 8 paused: 1
+		paused = (args[5] == "1")
+		#print("paused: " + str(paused))
+	elif not paused:
 		count = count + 1
+

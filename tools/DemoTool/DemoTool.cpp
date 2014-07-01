@@ -380,7 +380,7 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << "NETMSG_CCOMMAND: " << std::endl;
 				break;
 			case NETMSG_PAUSE:
-				std::cout << "NETMSG_PAUSE: " << std::endl;
+				std::cout << "NETMSG_PAUSE: Player " << (unsigned)buffer[1] << " paused: " << (unsigned)buffer[2] << std::endl;
 				break;
 			case NETMSG_SYNCRESPONSE:
 				std::cout << "NETMSG_SYNCRESPONSE: " << std::endl;
