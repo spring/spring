@@ -200,6 +200,7 @@ void PrintBinary(void* buf, int len)
 	for(int i=0; i<len; i++) {
 		std::cout << std::hex << (int)((char*)buf)[i];
 	}
+	std::cout << std::dec; //reset to decimal
 }
 
 void TrafficDump(CDemoReader& reader, bool trafficStats)
@@ -220,7 +221,8 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 		char buf[16]; // FIXME: cba to look up how to format numbers with iostreams
 		sprintf(buf, "%06d ", frame);
 		std::cout << buf;
-		switch ((unsigned char)buffer[0])
+		const int cmd = (unsigned char)buffer[0];
+		switch (cmd)
 		{
 			case NETMSG_AICOMMAND:
 				std::cout << "AICOMMAND: Playernum: " << (unsigned)buffer[3];
@@ -374,8 +376,23 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << " Energy: " << *(float*)(buffer + 8);
 				std::cout << std::endl;
 				break;
+			case NETMSG_CCOMMAND:
+				std::cout << "NETMSG_CCOMMAND: " << std::endl;
+				break;
+			case NETMSG_PAUSE:
+				std::cout << "NETMSG_PAUSE: " << std::endl;
+				break;
+			case NETMSG_SYNCRESPONSE:
+				std::cout << "NETMSG_SYNCRESPONSE: " << std::endl;
+				break;
+			case NETMSG_DIRECT_CONTROL:
+				std::cout << "NETMSG_DIRECT_CONTROL: " << std::endl;
+				break;
+			case NETMSG_SETSHARE:
+				std::cout << "NETMSG_SETSHARE: " << std::endl;
+				break;
 			default:
-				std::cout << "MSG: " << (unsigned)buffer[0] << std::endl;
+				std::cout << "MSG: " << cmd << std::endl;
 		}
 		delete packet;
 	}
