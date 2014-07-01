@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <boost/program_options.hpp>
+#include <iomanip> //hex
 
 #include "StringSerializer.h"
 
@@ -194,6 +195,13 @@ const std::string& GetCommandName(int commandId)
 	return CMD_NAME_UNKNOWN;
 }
 
+void PrintBinary(void* buf, int len)
+{
+	for(int i=0; i<len; i++) {
+		std::cout << std::hex << (int)((char*)buf)[i];
+	}
+}
+
 void TrafficDump(CDemoReader& reader, bool trafficStats)
 {
 	InitCommandNames();
@@ -235,7 +243,7 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << " Pair: " << (unsigned)buffer[5];
 				unsigned int sameid = *((unsigned int*)(buffer + 6));
 				std::cout << " SameID: " << sameid;
-				unsigned char sameopt = (unsigned)buffer[10];
+				unsigned int sameopt = (unsigned)buffer[10];
 				std::cout << " SameOpt: " << sameopt;
 				unsigned short samesize = *((unsigned short*)(buffer + 11));
 				std::cout << " SameSize: " << samesize;
@@ -302,11 +310,10 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 			case NETMSG_LUAMSG:
 				{
 				std::cout << "LUAMSG length:" << packet->length << " Player:" << (unsigned)buffer[3] << " Script: " << *(uint16_t*)&buffer[4] << " Mode: " << (unsigned)buffer[6] << " Msg: ";
-				for(int i = 7; i < packet->length; ++i)
-					std::cout << (char) packet->data[i];
+				PrintBinary(&packet->data[7], packet->length);
 				std::cout << std::endl;
-				}
 				break;
+				}
 			case NETMSG_TEAM:
 				std::cout << "TEAM Playernum:" << (int)buffer[1] << " Action:";
 				switch (buffer[2]) {
