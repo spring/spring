@@ -110,7 +110,7 @@ public:
 
 	bool IsReady() const;
 	inline unsigned int drawIndex() const;
-	inline void EnlargeArrays(const unsigned int vertexes, const unsigned int strips, const unsigned int stripsize = VA_SIZE_0);
+	inline void EnlargeArrays(const unsigned int vertexes, const unsigned int strips = 0, const unsigned int stripsize = VA_SIZE_0);
 
 	float* drawArray;
 	float* drawArrayPos;
