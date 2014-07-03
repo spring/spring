@@ -341,8 +341,13 @@ CArchiveScanner::CArchiveScanner()
 : isDirty(false)
 {
 	// the "cache" dir is created in DataDirLocater
-	cachefile = dataDirLocater.GetWriteDirPath() + FileSystem::EnsurePathSepAtEnd(FileSystem::GetCacheBaseDir()) + "ArchiveCache.lua";
+	const std:: string cacheFolder = dataDirLocater.GetWriteDirPath() + FileSystem::EnsurePathSepAtEnd(FileSystem::GetCacheBaseDir());
+	cachefile = cacheFolder + IntToString(INTERNAL_VER, "ArchiveCache%i.lua");
 	ReadCacheData(GetFilepath());
+	if (archiveInfos.empty()) {
+		// when versioned ArchiveCache%i.lua is missing or empty, try old unversioned filename
+		ReadCacheData(cacheFolder + "ArchiveCache.lua");
+	}
 
 	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
 	std::vector<std::string> scanDirs;
