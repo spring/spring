@@ -64,10 +64,12 @@ void CInfoConsole::Draw()
 {
 	if (!enabled) return;
 	if (!smallFont) return;
+	if (data.empty()) return;
 
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex); // XXX is this really needed?
 
-	if(!data.empty() && (guihandler && !guihandler->GetOutlineFonts())){
+	if (guihandler && !guihandler->GetOutlineFonts()) {
+		// draw a black background when not using outlined font
 		glDisable(GL_TEXTURE_2D);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
