@@ -5,6 +5,7 @@
 
 #include "WorldDrawer.h"
 #include "Rendering/Env/CubeMapHandler.h"
+#include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
@@ -49,6 +50,7 @@ CWorldDrawer::CWorldDrawer()
 
 	loadscreen->SetLoadMessage("Creating TreeDrawer");
 	treeDrawer = ITreeDrawer::GetTreeDrawer();
+	grassDrawer = new CGrassDrawer();
 
 	inMapDrawerView = new CInMapDrawView();
 	pathDrawer = IPathDrawer::GetInstance();
@@ -74,6 +76,7 @@ CWorldDrawer::~CWorldDrawer()
 	SafeDelete(water);
 	SafeDelete(sky);
 	SafeDelete(treeDrawer);
+	SafeDelete(grassDrawer);
 	SafeDelete(pathDrawer);
 	SafeDelete(modelDrawer);
 	SafeDelete(shadowHandler);
@@ -130,7 +133,7 @@ void CWorldDrawer::Draw()
 		}
 		{
 			SCOPED_TIMER("WorldDrawer::Foliage");
-			treeDrawer->DrawGrass();
+			grassDrawer->Draw();
 			gd->DrawTrees();
 		}
 		smoothHeightMeshDrawer->Draw(1.0f);

@@ -2715,6 +2715,9 @@ bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 		return false;
 	}
 
+	assert(xscale<=0.5); //border >= 50% makes no sence
+	assert(yscale<=0.5);
+
 	// calculate the scaled quad
 	const float x1 = b.x1 + (xIconSize * xscale);
 	const float x2 = b.x2 - (xIconSize * xscale);

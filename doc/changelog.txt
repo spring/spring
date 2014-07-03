@@ -3,9 +3,21 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 -- 98.0 ---------------------------------------------------------
+Cmdline Arguments:
+ - allow ./spring --game rapid://ba:stable --map DeltaSiegeDry
+
 Lua:
  - added SetAlly(firstAllyTeamId, secondAllyTeamId, ally)
  - added VFS.UnmapArchive(string fileName)
+ - allow tcp connections by luasocket as default (udp is still restricted)
+ - add callin AllowBuilderHoldFire(unitID, unitDefID, action) --> boolean
+     action is one of:
+       Build      -1
+       Repair     40 (CMD_REPAIR)
+       Reclaim    90 (CMD_RECLAIM)
+       Restore   110 (CMD_RESTORE)
+       Resurrect 125 (CMD_RESURRECT)
+       Capture   130 (CMD_CAPTURE)
 
 Bugfixes:
  - fix #4417 (spring spring://username:passwd@hostname:port doesn't work)

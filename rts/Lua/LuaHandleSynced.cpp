@@ -738,6 +738,30 @@ bool CSyncedLuaHandle::AllowDirectUnitControl(int playerID, const CUnit* unit)
 }
 
 
+bool CSyncedLuaHandle::AllowBuilderHoldFire(const CUnit* unit, int action)
+{
+	LUA_CALL_IN_CHECK(L, true);
+	luaL_checkstack(L, 2 + 3 + 1, __FUNCTION__);
+
+	static const LuaHashString cmdStr(__FUNCTION__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return true; // the call is not defined
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, action);
+
+	// call the function
+	if (!RunCallIn(L, cmdStr, 3, 1))
+		return true;
+
+	// get the results
+	const bool retval = luaL_optboolean(L, -1, true);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
 bool CSyncedLuaHandle::AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos)
 {
 	LUA_CALL_IN_CHECK(L, true);

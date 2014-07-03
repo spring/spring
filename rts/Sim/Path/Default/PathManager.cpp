@@ -367,7 +367,7 @@ float3 CPathManager::NextWayPoint(
 		}
 	}
 
-	#define EXTEND_PATH_POINTS(curResPts, nxtResPts, dist) (!curResPts.empty() && (curResPts.back()).SqDistance2D(callerPos) < Square((dist)) || nxtResPts.size() <= 2)
+	#define EXTEND_PATH_POINTS(curResPts, nxtResPts, dist) ((!curResPts.empty() && (curResPts.back()).SqDistance2D(callerPos) < Square((dist))) || nxtResPts.size() <= 2)
 	const bool extendMaxResPath = EXTEND_PATH_POINTS(medResPathPoints, maxResPathPoints, MIN_MAXRES_SEARCH_DISTANCE * SQUARE_SIZE);
 	const bool extendMedResPath = EXTEND_PATH_POINTS(lowResPathPoints, medResPathPoints, MIN_MEDRES_SEARCH_DISTANCE * SQUARE_SIZE);
 	#undef EXTEND_PATH_POINTS

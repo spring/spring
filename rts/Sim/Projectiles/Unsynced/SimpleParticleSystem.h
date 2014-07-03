@@ -21,7 +21,7 @@ public:
 
 	virtual void Draw();
 	virtual void Update();
-	virtual void Init(CUnit* owner, const float3& offset);
+	virtual void Init(const CUnit* owner, const float3& offset);
 
 protected:
 	float3 emitVector;

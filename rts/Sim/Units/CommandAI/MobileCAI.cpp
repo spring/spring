@@ -1169,11 +1169,9 @@ void CMobileCAI::StartSlowGuard(float speed) {
 
 void CMobileCAI::CalculateCancelDistance()
 {
-	// calculate a rough turn radius
-	const float turnFrames = SPRING_CIRCLE_DIVS / std::max(owner->unitDef->turnRate, 1.0f);
-	const float turnRadius = ((owner->unitDef->speed / GAME_SPEED) * turnFrames) / (PI + PI);
-	const float tmp = turnRadius + (SQUARE_SIZE << 1);
+	const float tmp = owner->moveType->CalcStaticTurnRadius() + (SQUARE_SIZE << 1);
 
 	// clamp it a bit because the units don't have to turn at max speed
-	cancelDistance = std::min(std::max(tmp * tmp, 1024.f), 2048.f);
+	cancelDistance = Clamp(tmp * tmp, 1024.0f, 2048.0f);
 }
+

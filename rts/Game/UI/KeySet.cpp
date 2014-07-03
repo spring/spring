@@ -170,7 +170,7 @@ bool CKeySet::Parse(const std::string& token, bool showerror)
 // CTimedKeyChain
 //
 
-void CTimedKeyChain::push_back(const int key, const spring_time t)
+void CTimedKeyChain::push_back(const int key, const spring_time t, const bool isRepeat)
 {
 	assert(keyBindings);
 
@@ -181,6 +181,10 @@ void CTimedKeyChain::push_back(const int key, const spring_time t)
 	}
 
 	CKeySet ks(key, false);
+
+	// append repeating keystrokes only wjen they differ from the last
+	if (isRepeat && (!empty() && ks == back()))
+		return;
 
 	// When you want to press c,alt+b you will press the c(down),c(up),alt(down),b(down)
 	// -> the chain will be: c,Alt+alt,Alt+b

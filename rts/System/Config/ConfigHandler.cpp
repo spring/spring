@@ -28,6 +28,7 @@ typedef map<string, string> StringMap;
 
 ConfigHandler* configHandler = NULL;
 
+
 /******************************************************************************/
 
 class ConfigHandlerImpl : public ConfigHandler
@@ -47,7 +48,18 @@ public:
 	void EnableWriting(bool write) { writingEnabled = write; }
 
 protected:
-	void AddObserver(ConfigNotifyCallback observer);
+	struct NamedConfigNotifyCallback {
+		NamedConfigNotifyCallback(ConfigNotifyCallback c, void* h)
+		: callback(c)
+		, holder(h)
+		{}
+		ConfigNotifyCallback callback;
+		void* holder;
+	};
+
+protected:
+	void AddObserver(ConfigNotifyCallback observer, void* holder);
+	void RemoveObserver(void* holder);
 
 private:
 	void RemoveDefaults();
@@ -58,7 +70,7 @@ private:
 	vector<ReadOnlyConfigSource*> sources;
 
 	// observer related
-	list<ConfigNotifyCallback> observers;
+	list<NamedConfigNotifyCallback> observers;
 	boost::mutex observerMutex;
 	StringMap changedValues;
 	bool writingEnabled;
@@ -133,6 +145,7 @@ ConfigHandlerImpl::~ConfigHandlerImpl()
 void ConfigHandlerImpl::RemoveDefaults()
 {
 	StringMap defaults = sources.back()->GetData();
+
 	vector<ReadOnlyConfigSource*>::const_reverse_iterator rsource = sources.rbegin();
 	for (; rsource != sources.rend(); ++rsource) {
 		FileConfigSource* source = dynamic_cast<FileConfigSource*> (*rsource);
@@ -271,8 +284,8 @@ void ConfigHandlerImpl::Update()
 	for (StringMap::const_iterator ut = changedValues.begin(); ut != changedValues.end(); ++ut) {
 		const string& key = ut->first;
 		const string& value = ut->second;
-		for (list<ConfigNotifyCallback>::const_iterator it = observers.begin(); it != observers.end(); ++it) {
-			(*it)(key, value);
+		for (list<NamedConfigNotifyCallback>::const_iterator it = observers.begin(); it != observers.end(); ++it) {
+			(it->callback)(key, value);
 		}
 	}
 	changedValues.clear();
@@ -292,10 +305,21 @@ const StringMap ConfigHandlerImpl::GetData() const {
 	return data;
 }
 
-void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer) {
+void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer, void* holder) {
 	boost::mutex::scoped_lock lck(observerMutex);
-	observers.push_back(observer);
+	observers.emplace_back(observer, holder);
 }
+
+void ConfigHandlerImpl::RemoveObserver(void* holder) {
+	boost::mutex::scoped_lock lck(observerMutex);
+	for (list<NamedConfigNotifyCallback>::iterator it = observers.begin(); it != observers.end(); ++it) {
+		if (it->holder == holder) {
+			observers.erase(it);
+			return;
+		}
+	}
+}
+
 
 /******************************************************************************/
 

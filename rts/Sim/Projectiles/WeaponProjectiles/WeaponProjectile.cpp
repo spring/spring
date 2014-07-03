@@ -4,6 +4,7 @@
 #include "Rendering/Colors.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileParams.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Features/Feature.h"
@@ -12,8 +13,6 @@
 #include "Sim/Misc/QuadField.h"
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
-
-
 
 CR_BIND_DERIVED(CWeaponProjectile, CProjectile, );
 
@@ -148,19 +147,7 @@ void CWeaponProjectile::Explode(
 	float3 impactPos,
 	float3 impactDir
 ) {
-	const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
-		weaponDef->damages:
-		weaponDefHandler->DynamicDamages(
-			weaponDef->damages,
-			startPos,
-			impactPos,
-			(weaponDef->dynDamageRange > 0.0f)?
-				weaponDef->dynDamageRange:
-				weaponDef->range,
-			weaponDef->dynDamageExp, weaponDef->dynDamageMin,
-			weaponDef->dynDamageInverted
-		);
-
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(weaponDef, startPos, impactPos);
 	const CGameHelper::ExplosionParams params = {
 		impactPos,
 		impactDir.SafeNormalize(),
@@ -253,6 +240,13 @@ void CWeaponProjectile::UpdateInterception()
 	if (po == NULL)
 		return;
 
+	// we are the interceptor, point us toward the interceptee pos each frame
+	// (normally not needed, subclasses handle it directly in their Update()'s
+	// *until* our owner dies)
+	if (owner() == NULL) {
+		targetPos = po->pos + po->speed;
+	}
+
 	if (hitscan) {
 		if (ClosestPointOnLine(startPos, targetPos, po->pos).SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
 			po->Collision();
@@ -274,6 +268,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 		return;
 	if (ttl <= 0)
 		return;
+
 	// projectile is not allowed to bounce even once
 	if (weaponDef->numBounce < 0)
 		return;
@@ -281,19 +276,19 @@ void CWeaponProjectile::UpdateGroundBounce()
 	if (!weaponDef->groundBounce && !weaponDef->waterBounce)
 		return;
 
-	const float gh = CGround::GetHeightReal(pos.x, pos.z);
-	const float dg = pos.y - gh;
-	const float dw = pos.y - std::max(gh, 0.0f);
+	#define INTERSECT_SURFACE(lvl, py, vy) ((py) > (lvl) && ((py) + (vy)) <= (lvl))
+	const bool intersectGround = INTERSECT_SURFACE(CGround::GetHeightReal(pos.x, pos.z), pos.y, speed.y);
+	const bool intersectWater = INTERSECT_SURFACE(0.0f, pos.y, speed.y);
+	#undef INTERSECT_SURFACE
 
-	// if not close to a bounceable surface, bail
-	if (dg > 0.1f && dw > 0.1f)
+	if (!intersectGround && !intersectWater)
 		return;
 
 	// if close to water but not allowed to bounce on it, bail
-	if ((dw <= 0.1f) && !weaponDef->waterBounce)
+	if (intersectWater && !weaponDef->waterBounce)
 		return;
 	// if close to ground but not allowed to bounce on it, bail
-	if ((dg <= 0.1f) && !weaponDef->groundBounce)
+	if (intersectGround && !weaponDef->groundBounce)
 		return;
 
 	if ((bounces += 1) > weaponDef->numBounce)
@@ -306,10 +301,8 @@ void CWeaponProjectile::UpdateGroundBounce()
 	// far up in the air if it has the (under)water flag set
 	explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, pos, normal, speed.w, 1.0f, 1.0f, owner(), NULL);
 
-	SetPosition(pos - speed);
 	CWorldObject::SetVelocity(speed - (speed + normal * dot) * (1 - weaponDef->bounceSlip   ));
 	CWorldObject::SetVelocity(         speed + normal * dot  * (1 + weaponDef->bounceRebound));
-	SetPosition(pos + speed);
 	SetVelocityAndSpeed(speed);
 }
 

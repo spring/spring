@@ -143,7 +143,11 @@ void CDemoRecorder::InitializeStats(int numPlayers, int numTeams )
 /** @brief Set (overwrite) the CPlayer::Statistics for player playerNum */
 void CDemoRecorder::SetPlayerStats(int playerNum, const PlayerStatistics& stats)
 {
-	assert((unsigned)playerNum < playerStats.size());
+	// player who sent the NETMSG_PLAYERSTAT might be a spectator
+	// that joined later (only statistics for the original players
+	// are saved)
+	if (playerNum >= playerStats.size())
+		return;
 
 	playerStats[playerNum] = stats;
 }

@@ -96,7 +96,7 @@ void CExploSpikeProjectile::Draw()
 	#undef let
 }
 
-void CExploSpikeProjectile::Init(CUnit* owner, const float3& offset)
+void CExploSpikeProjectile::Init(const CUnit* owner, const float3& offset)
 {
 	CProjectile::Init(owner, offset);
 

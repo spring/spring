@@ -36,12 +36,12 @@ CTracerProjectile::CTracerProjectile(CUnit* owner, const float3& pos, const floa
 	SetRadiusAndHeight(1.0f, 0.0f);
 
 	checkCol = false;
-	// Projectile::Init has been called, so .w is defined
+	// Projectile::Init has been called by base ctor, so .w is defined
 	// FIXME: constant, assumes |speed| never changes after creation
 	speedf = this->speed.w;
 }
 
-void CTracerProjectile::Init(CUnit* owner, const float3& offset)
+void CTracerProjectile::Init(const CUnit* owner, const float3& offset)
 {
 	CProjectile::Init(owner, offset);
 

@@ -227,7 +227,7 @@ CSimpleGroundFlash::CSimpleGroundFlash()
 	sizeGrowth = 0.0f;
 }
 
-void CSimpleGroundFlash::Init(CUnit* owner, const float3& offset)
+void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
 {
 	pos += offset;
 	age = ttl ? 0.0f : 1.0f;

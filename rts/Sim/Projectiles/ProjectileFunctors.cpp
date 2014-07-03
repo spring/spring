@@ -14,8 +14,8 @@ int ProjectileIndexer::Index(const CProjectile* p) {
 
 
 bool ProjectileDistanceComparator::operator() (const CProjectile* arg1, const CProjectile* arg2) const {
-	if (arg1->tempdist != arg2->tempdist) // strict ordering required
-		return (arg1->tempdist > arg2->tempdist);
+	if (arg1->GetSortDist() != arg2->GetSortDist()) // strict ordering required
+		return (arg1->GetSortDist() > arg2->GetSortDist());
 	return (arg1 > arg2);
 }
 

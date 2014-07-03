@@ -278,11 +278,11 @@ void CLogOutput::LogSystemInfo()
 	LOG("Operating System:  %s", Platform::GetOS().c_str());
 
 	if (Platform::Is64Bit()) {
-		LOG("\trunning in 64-bit native mode");
+		LOG("Word Size:         64-bit (native mode)");
 	} else if (Platform::Is32BitEmulation()) {
-		LOG("\trunning in emulated 32-bit mode");
+		LOG("Word Size:         32-bit (emulated)");
 	} else {
-		LOG("\trunning in 32-bit native mode");
+		LOG("Word Size:         32-bit (native mode)");
 	}
 }
 

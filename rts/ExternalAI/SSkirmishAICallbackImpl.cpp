@@ -1648,6 +1648,10 @@ EXPORT(int) skirmishAiCallback_Map_getResourceMapRaw(
 			resources_size = 0;
 		}
 
+		if (tmpMap == NULL) {
+			return 0;
+		}
+
 		int i;
 		for (i=0; i < resources_size; ++i) {
 			resources[i] = tmpMap[i];

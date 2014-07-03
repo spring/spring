@@ -62,8 +62,8 @@ public:
 	bool IsExtractorUnit()     const { return (extractsMetal > 0.0f && extractRange > 0.0f); }
 	bool IsGroundUnit()        const { return (pathType != -1U && !canfly); }
 	bool IsAirUnit()           const { return (pathType == -1U &&  canfly); }
-	bool IsStrafingAirUnit()   const { return (IsAirUnit() && !hoverAttack); }
-	bool IsHoveringAirUnit()   const { return (IsAirUnit() &&  hoverAttack); }
+	bool IsStrafingAirUnit()   const { return (IsAirUnit() && !(IsBuilderUnit() || IsTransportUnit() || hoverAttack)); }
+	bool IsHoveringAirUnit()   const { return (IsAirUnit() &&  (IsBuilderUnit() || IsTransportUnit() || hoverAttack)); }
 	bool IsFighterAirUnit()    const { return (IsStrafingAirUnit() && !weapons.empty() && !HasBomberWeapon()); }
 	bool IsBomberAirUnit()     const { return (IsStrafingAirUnit() && !weapons.empty() &&  HasBomberWeapon()); }
 

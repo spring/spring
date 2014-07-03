@@ -88,7 +88,7 @@ void CBitmapMuzzleFlame::Update()
 	deleteMe |= ((ttl--) == 0);
 }
 
-void CBitmapMuzzleFlame::Init(CUnit* owner, const float3& offset)
+void CBitmapMuzzleFlame::Init(const CUnit* owner, const float3& offset)
 {
 	CProjectile::Init(owner, offset);
 

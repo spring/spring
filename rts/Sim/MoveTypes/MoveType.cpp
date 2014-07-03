@@ -104,6 +104,14 @@ void AMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive)
 	KeepPointingTo(float3(unit->pos), distance, aggressive);
 }
 
+float AMoveType::CalcStaticTurnRadius() const {
+	// calculate a rough turn radius (not based on current speed)
+	const float turnFrames = SPRING_CIRCLE_DIVS / std::max(owner->unitDef->turnRate, 1.0f);
+	const float turnRadius = (maxSpeedDef * turnFrames) / (PI + PI);
+
+	return turnRadius;
+}
+
 
 
 bool AMoveType::WantsRepair() const { return (owner->health      < (repairBelowHealth * owner->maxHealth)); }

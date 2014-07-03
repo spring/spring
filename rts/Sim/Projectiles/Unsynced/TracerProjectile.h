@@ -20,7 +20,7 @@ public:
 
 	void Draw();
 	void Update();
-	void Init(CUnit* owner, const float3& offset);
+	void Init(const CUnit* owner, const float3& offset);
 
 private:
 	float speedf;

@@ -1157,6 +1157,16 @@ function gadgetHandler:AllowDirectUnitControl(unitID, unitDefID, unitTeam,
 end
 
 
+function gadgetHandler:AllowBuilderHoldFire(unitID, unitDefID, action)
+  for _,g in ipairs(self.AllowBuilderHoldFire) do
+    if (not AllowBuilderHoldFire(unitID, unitDefID, action)) then
+      return false
+    end
+  end
+  return true
+end
+
+
 function gadgetHandler:MoveCtrlNotify(unitID, unitDefID, unitTeam, data)
   local state = false
   for _,g in ipairs(self.MoveCtrlNotifyList) do

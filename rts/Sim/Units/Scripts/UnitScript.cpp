@@ -1245,90 +1245,100 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 
 		return 1;
 	}
+
+
 	case WEAPON_RELOADSTATE: {
 		const int np1 = -p1;
-		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
-			return unit->weapons[p1-1]->reloadStatus;
-		}
-		else if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			const int old = unit->weapons[np1 - 1]->reloadStatus;
-			unit->weapons[np1 - 1]->reloadStatus = p2;
+
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
+			return unit->weapons[p1 - 1]->reloadStatus;
+
+		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[np1 - 1];
+			const int old = w->reloadStatus;
+			w->reloadStatus = p2;
 			return old;
 		}
-		else {
-			return -1;
-		}
+
+		return -1;
 	}
 	case WEAPON_RELOADTIME: {
 		const int np1 = -p1;
-		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
-			return unit->weapons[p1-1]->reloadTime;
-		}
-		else if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			const int old = unit->weapons[np1 - 1]->reloadTime;
-			unit->weapons[np1 - 1]->reloadTime = p2;
+
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
+			return unit->weapons[p1 - 1]->reloadTime;
+
+		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[np1 - 1];
+			const int old = w->reloadTime;
+			w->reloadTime = p2;
 			return old;
 		}
-		else {
-			return -1;
-		}
+
+		return -1;
 	}
 	case WEAPON_ACCURACY: {
 		const int np1 = -p1;
-		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
-			return int(unit->weapons[p1-1]->accuracy * COBSCALE);
-		}
-		else if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			const int old = unit->weapons[np1 - 1]->accuracy * COBSCALE;
-			unit->weapons[np1 - 1]->accuracy = float(p2) / COBSCALE;
+
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
+			return int(unit->weapons[p1 - 1]->accuracyError * COBSCALE);
+
+		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[np1 - 1];
+			const int old = w->accuracyError * COBSCALE;
+			w->accuracyError = float(p2) / COBSCALE;
 			return old;
 		}
-		else {
-			return -1;
-		}
+
+		return -1;
 	}
 	case WEAPON_SPRAY: {
 		const int np1 = -p1;
-		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
-			return int(unit->weapons[p1-1]->sprayAngle * COBSCALE);
-		}
-		else if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			const int old = unit->weapons[np1 - 1]->sprayAngle * COBSCALE;
-			unit->weapons[np1 - 1]->sprayAngle = float(p2) / COBSCALE;
+
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
+			return int(unit->weapons[p1 - 1]->sprayAngle * COBSCALE);
+
+		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[np1 - 1];
+			const int old = w->sprayAngle * COBSCALE;
+			w->sprayAngle = float(p2) / COBSCALE;
 			return old;
 		}
-		else {
-			return -1;
-		}
+
+		return -1;
 	}
 	case WEAPON_RANGE: {
 		const int np1 = -p1;
-		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
+
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
 			return int(unit->weapons[p1 - 1]->range * COBSCALE);
-		}
-		else if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			const int old = unit->weapons[np1 - 1]->range * COBSCALE;
-			unit->weapons[np1 - 1]->range = float(p2) / COBSCALE;
+
+		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[np1 - 1];
+			const int old = w->range * COBSCALE;
+			w->range = float(p2) / COBSCALE;
 			return old;
 		}
-		else {
-			return -1;
-		}
+
+		return -1;
 	}
 	case WEAPON_PROJECTILE_SPEED: {
 		const int np1 = -p1;
-		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
-			return int(unit->weapons[p1-1]->projectileSpeed * COBSCALE);
-		}
-		else if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			const int old = unit->weapons[np1 - 1]->projectileSpeed * COBSCALE;
-			unit->weapons[np1 - 1]->projectileSpeed = float(p2) / COBSCALE;
+
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
+			return int(unit->weapons[p1 - 1]->projectileSpeed * COBSCALE);
+
+		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[np1 - 1];
+			const int old = w->projectileSpeed * COBSCALE;
+			w->projectileSpeed = float(p2) / COBSCALE;
 			return old;
 		}
-		else {
-			return -1;
-		}
+
+		return -1;
 	}
+
+
 	case GAME_FRAME: {
 		return gs->frameNum;
 	}

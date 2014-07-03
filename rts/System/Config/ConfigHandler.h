@@ -51,8 +51,15 @@ public:
 	void NotifyOnChange(T* observer)
 	{
 		// issues: still needs to call configHandler->Get() on startup, automate it
-		AddObserver(boost::bind(&T::ConfigNotify, observer, _1, _2));
-	};
+		AddObserver(boost::bind(&T::ConfigNotify, observer, _1, _2), (void*)observer);
+	}
+
+	template<class T>
+	void RemoveObserver(T* observer)
+	{
+		RemoveObserver((void*)observer);
+	}
+
 
 	/// @see SetString
 	template<typename T>
@@ -137,7 +144,8 @@ public:
 protected:
 	typedef boost::function<void(const std::string&, const std::string&)> ConfigNotifyCallback;
 
-	virtual void AddObserver(ConfigNotifyCallback observer) = 0;
+	virtual void AddObserver(ConfigNotifyCallback observer, void* holder) = 0;
+	virtual void RemoveObserver(void* holder) = 0;
 
 private:
 	/// @see GetString

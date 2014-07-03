@@ -5,38 +5,34 @@
 
 #include <limits.h>
 
-// like 5-6x slower than our, but much better distribution
-//#define USE_BOOST_RNG
 
+
+UnsyncedRNG::UnsyncedRNG()
+: randSeed(0)
 #ifdef USE_BOOST_RNG
-	#include <boost/random/mersenne_twister.hpp>
-	#include <boost/random/uniform_01.hpp>
-	#include <boost/random/uniform_smallint.hpp>
-	#include <boost/random/uniform_on_sphere.hpp>
-	#include <boost/random/variate_generator.hpp>
-
-	static boost::random::mt19937 rng;
-	//static boost::random::mt11213b rng;
-	static boost::random::uniform_01<float> dist01;
-	static boost::random::uniform_smallint<int> distInt(0, RANDINT_MAX);
-	static boost::random::uniform_on_sphere<float> distSphere(3);
-	static boost::variate_generator<boost::random::mt19937&, boost::uniform_01<float> > gen01(rng, dist01);
-	static boost::variate_generator<boost::random::mt19937&, boost::uniform_smallint<int> > genInt(rng, distInt);
-	static boost::variate_generator<boost::random::mt19937&, boost::uniform_on_sphere<float> > genSphere(rng, distSphere);
+, distInt(0, RANDINT_MAX)
+, distSphere(3)
+, gen01(rng, dist01)
+, genInt(rng, distInt)
+, genSphere(rng, distSphere)
 #endif
-
-
-UnsyncedRNG::UnsyncedRNG() : randSeed(0)
 {
 
 }
 
+
+void UnsyncedRNG::operator=(const UnsyncedRNG& urng)
+{
+	randSeed = urng.randSeed;
+	Seed(randSeed);
+}
+
+
 void UnsyncedRNG::Seed(unsigned seed)
 {
+	randSeed = seed;
 #ifdef USE_BOOST_RNG
 	rng.seed(seed);
-#else
-	randSeed = seed;
 #endif
 }
 
@@ -73,6 +69,17 @@ float3 UnsyncedRNG::RandVector()
 		ret.z = RandFloat() * 2 - 1;
 	} while (ret.SqLength() > 1);
 #endif
+
+	return ret;
+}
+
+float3 UnsyncedRNG::RandVector2D()
+{
+	float3 ret;
+	do {
+		ret.x = RandFloat() * 2 - 1;
+		ret.z = RandFloat() * 2 - 1;
+	} while (ret.SqLength() > 1);
 
 	return ret;
 }

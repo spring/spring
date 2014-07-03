@@ -28,6 +28,9 @@ GlobalConfig::GlobalConfig() {
 	if ((linkIncomingMaxPacketRate > 0) && (linkIncomingSustainedBandwidth <= 0)) {
 		linkIncomingSustainedBandwidth = linkIncomingPeakBandwidth = 1024 * 1024;
 	}
+	useNetMessageSmoothingBuffer = true;
+	luaWritableConfigFile = false;
+	networkLossFactor = 0;
 }
 
 void GlobalConfig::Instantiate() {

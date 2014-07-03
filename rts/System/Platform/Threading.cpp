@@ -8,11 +8,8 @@
 	#include "System/Config/ConfigHandler.h"
 #endif
 #include "System/Log/ILog.h"
+#include "System/Platform/CpuID.h"
 #include "System/Platform/CrashHandler.h"
-
-#ifndef DEDICATED
-	#include "System/Sync/FPUCheck.h"
-#endif
 
 #include <boost/version.hpp>
 #include <boost/thread.hpp>
@@ -79,6 +76,7 @@ namespace Threading {
 		sched_getaffinity(0, sizeof(cpu_set_t), &cpusSystem);
 	#endif
 
+		GetPhysicalCpuCores(); // (uses a static, too)
 		inited = true;
 	}
 
@@ -149,12 +147,6 @@ namespace Threading {
 		}
 	}
 
-	int GetAvailableCores()
-	{
-		// auto-detect number of system threads
-		return boost::thread::hardware_concurrency();
-	}
-
 
 	boost::uint32_t GetAvailableCoresMask()
 	{
@@ -186,6 +178,8 @@ namespace Threading {
 		boost::uint32_t ompCore = 1;
 
 		// find an unused core
+		// count down cause hyperthread cores are appended to the end and we prefer those for our worker threads
+		// (the physical cores are prefered for task specific threads)
 		{
 			while ((ompCore) && !(ompCore & availCores))
 				ompCore <<= 1;
@@ -216,13 +210,34 @@ namespace Threading {
 	}
 
 
+	int GetLogicalCpuCores() {
+		// auto-detect number of system threads (including hyperthreading)
+		return boost::thread::hardware_concurrency();
+	}
+
+
+	/** Function that returns the number of real cpu cores (not 
+	    hyperthreading ones). These are the total cores in the system
+	    (across all existing processors, if more than one)*/
+	int GetPhysicalCpuCores() {
+		// Get CPU features
+		springproc::CpuId cpuid;
+		return cpuid.getCoreTotalNumber();;
+	}
+
+
+	bool HasHyperThreading() {
+		return (GetLogicalCpuCores() > GetPhysicalCpuCores());
+	}
+
+
 	void InitThreadPool() {
 		boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
 		boost::uint32_t mainAffinity  = systemCores;
-		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
 #ifndef UNIT_TEST
-		mainAffinity = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
+		mainAffinity &= configHandler->GetUnsigned("SetCoreAffinity");
 #endif
+		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
 
 		{
 			int workerCount = -1;
@@ -230,10 +245,23 @@ namespace Threading {
 			workerCount = configHandler->GetUnsigned("WorkerThreadCount");
 			ThreadPool::SetThreadSpinTime(configHandler->GetUnsigned("WorkerThreadSpinTime"));
 #endif
+			const int numCores = ThreadPool::GetMaxThreads();
+
 			// For latency reasons our worker threads yield rarely and so eat a lot cputime with idleing.
 			// So it's better we always leave 1 core free for our other threads, drivers & OS
-			if (workerCount < 0) workerCount = ThreadPool::GetMaxThreads() - 1;
-			//if (workerCount > ThreadPool::GetMaxThreads()) LOG_L(L_WARNING, "");
+			if (workerCount < 0) {
+				if (numCores == 2) {
+					workerCount = numCores;
+				} else if (numCores < 6) {
+					workerCount = numCores - 1;
+				} else {
+					workerCount = numCores / 2;
+				}
+			}
+			if (workerCount > numCores) {
+				LOG_L(L_WARNING, "Set ThreadPool workers to %i, but there are just %i cores!", workerCount, numCores);
+				workerCount = numCores;
+			}
 
 			ThreadPool::SetThreadCount(workerCount);
 		}
@@ -242,13 +270,15 @@ namespace Threading {
 		boost::uint32_t ompCores = 0;
 		ompCores = parallel_reduce([&]() -> boost::uint32_t {
 			const int i = ThreadPool::GetThreadNum();
-			if (i != 0) {
-				// 0 is the source thread, skip
-				boost::uint32_t ompCore = GetCpuCoreForWorkerThread(i - 1, ompAvailCores, mainAffinity);
-				Threading::SetAffinity(ompCore);
-				return ompCore;
-			}
-			return 0;
+
+			// 0 is the source thread, skip
+			if (i == 0)
+				return 0;
+
+			boost::uint32_t ompCore = GetCpuCoreForWorkerThread(i - 1, ompAvailCores, mainAffinity);
+			//boost::uint32_t ompCore = ompAvailCores;
+			Threading::SetAffinity(ompCore);
+			return ompCore;
 		}, [](boost::uint32_t a, boost::unique_future<boost::uint32_t>& b) -> boost::uint32_t { return a | b.get(); });
 
 		// affinity of mainthread
@@ -267,7 +297,7 @@ namespace Threading {
 		//Note: only available with mingw64!!!
 
 	#else
-		if (GetAvailableCores() > 1) {
+		if (GetLogicalCpuCores() > 1) {
 			// Change os scheduler for this process.
 			// This way the kernel knows that we are a CPU-intensive task
 			// and won't randomly move us across the cores and tries

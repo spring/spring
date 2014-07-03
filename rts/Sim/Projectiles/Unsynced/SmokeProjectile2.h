@@ -27,7 +27,7 @@ public:
 
 	void Update();
 	void Draw();
-	void Init(CUnit* owner, const float3& offset);
+	void Init(const CUnit* owner, const float3& offset);
 
 private:
 	float color;

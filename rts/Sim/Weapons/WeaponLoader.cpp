@@ -115,7 +115,7 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 
 	weapon->damageAreaOfEffect = weaponDef->damageAreaOfEffect;
 	weapon->craterAreaOfEffect = weaponDef->craterAreaOfEffect;
-	weapon->accuracy = weaponDef->accuracy;
+	weapon->accuracyError = weaponDef->accuracy;
 	weapon->sprayAngle = weaponDef->sprayAngle;
 
 	weapon->stockpileTime = int(weaponDef->stockpileTime * GAME_SPEED);
