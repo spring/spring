@@ -451,12 +451,6 @@ void CArchiveScanner::ScanDir(const std::string& curPath, std::list<std::string>
 				continue;
 			}
 
-			// Exclude archivefiles found inside hidden directories
-			if ((lcfpath.find("/hidden/")   != std::string::npos) ||
-			    (lcfpath.find("\\hidden\\") != std::string::npos)) {
-				continue;
-			}
-
 			// Is this an archive we should look into?
 			if (archiveLoader.IsArchiveFile(fullName)) {
 				foundArchives->push_front(fullName); // push by reversed order!
