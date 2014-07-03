@@ -526,9 +526,7 @@ bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vec
 
 		// send only to AI's in team <aiTeam>
 		for (aiIDsIter = aiIDs.begin(); aiIDsIter != aiIDs.end(); ++aiIDsIter) {
-			const size_t aiID = aiIDs[*aiIDsIter];
-
-			CSkirmishAIWrapper* wrapperAI = id_skirmishAI[aiID];
+			CSkirmishAIWrapper* wrapperAI = id_skirmishAI[*aiIDsIter];
 			wrapperAI->SendLuaMessage(inData, &outData[n++]);
 		}
 	} else {
