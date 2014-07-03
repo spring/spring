@@ -562,6 +562,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
 	unsigned int length = (unsigned int)str.length();
+	const std::u8string& ustr = toustring(str);
 
 	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
@@ -574,7 +575,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 	int i = 0;
 
 	do {
-		const bool endOfString = SkipColorCodesAndNewLines(str, &i, &newColor, &colorChanged, &skippedLines, &baseTextColor);
+		const bool endOfString = SkipColorCodesAndNewLines(ustr, &i, &newColor, &colorChanged, &skippedLines, &baseTextColor);
 
 		if (endOfString)
 			return;
@@ -618,6 +619,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
 	unsigned int length = (unsigned int)str.length();
+	const std::u8string& ustr = toustring(str);
 
 	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 	va2->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
@@ -631,7 +633,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	int i = 0;
 
 	do {
-		const bool endOfString = SkipColorCodesAndNewLines(str, &i, &newColor, &colorChanged, &skippedLines, &baseTextColor);
+		const bool endOfString = SkipColorCodesAndNewLines(ustr, &i, &newColor, &colorChanged, &skippedLines, &baseTextColor);
 
 		if (endOfString)
 			return;
@@ -681,6 +683,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
+	const std::u8string& ustr = toustring(str);
 	unsigned int length = (unsigned int)str.length();
 
 	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
@@ -695,7 +698,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	int i = 0;
 
 	do {
-		const bool endOfString = SkipColorCodesAndNewLines(str, &i, &newColor, &colorChanged, &skippedLines, &baseTextColor);
+		const bool endOfString = SkipColorCodesAndNewLines(ustr, &i, &newColor, &colorChanged, &skippedLines, &baseTextColor);
 
 		if (endOfString)
 			return;

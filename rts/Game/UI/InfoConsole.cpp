@@ -183,7 +183,7 @@ void CInfoConsole::RecordLogMessage(const std::string& section, int level,
 			: 1; // this will likely be the case on HEADLESS only
 
 	std::string wrappedText = smallFont->Wrap(text, fontSize, maxWidth);
-	std::list<std::string> lines = smallFont->SplitIntoLines(wrappedText);
+	std::list<std::string> lines = smallFont->SplitIntoLines(toustring(wrappedText));
 
 	for (auto& line: lines) {
 		// add the line to the console

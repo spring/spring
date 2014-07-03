@@ -12,7 +12,7 @@ namespace std {
 	public:
 		// copy ctors
 		//using string::string; // gcc4.8 and newer
-		u8string(const std::string& s) : string(s) {}
+		explicit u8string(const std::string& s) : string(s) {}
 		u8string(const char* c) : string(c) {}
 
 		//! this is an important difference, we return an unsigned value here!
@@ -42,12 +42,12 @@ namespace std {
 
 static inline const std::u8string& toustring(const std::string& str)
 {
-	return *(const std::u8string*)&str;
+	return *static_cast<const std::u8string*>(&str);
 }
 
 static inline std::u8string& toustring(std::string& str)
 {
-	return *(std::u8string*)&str;
+	return *static_cast<std::u8string*>(&str);
 }
 
 #endif
