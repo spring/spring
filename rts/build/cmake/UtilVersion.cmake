@@ -189,10 +189,12 @@ Macro    (FetchSpringVersion dir prefix)
 		EndIf (${${prefix}_VERSION-NOTFOUND})
 	EndIf  (EXISTS "${dir}/.git")
 
-
-	If(NOT "${${prefix}_VERSION}" MATCHES "^${VERSION_REGEX_ANY}$")
-		Message(FATAL_ERROR "Invalid version format: ${${prefix}_VERSION}")
+	if(DEFINED ENV{CI})
+		Message(STATUS "Build on travis-ci detected, not checking version (git clone --depth=...)")
+	else()
+		if(NOT "${${prefix}_VERSION}" MATCHES "^${VERSION_REGEX_ANY}$")
+			Message(FATAL_ERROR "Invalid version format: ${${prefix}_VERSION}")
+		endif()
 	endif()
-
 EndMacro (FetchSpringVersion)
 
