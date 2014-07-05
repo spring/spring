@@ -149,7 +149,7 @@ Macro    (FetchSpringVersion dir prefix)
 		EndIf  (NOT GIT_FOUND)
 
 		# Fetch git version info
-		Git_Util_Describe(${prefix}_Describe ${dir} "*.*")
+		Git_Util_Describe(${prefix}_Describe ${dir} "*")
 		If     (NOT ${prefix}_Describe)
 			Message(FATAL_ERROR "Failed to fetch git-describe for ${prefix}.")
 		EndIf  (NOT ${prefix}_Describe)
@@ -161,7 +161,7 @@ Macro    (FetchSpringVersion dir prefix)
 		If     (NOT ${prefix}_IsRelease)
 			# We always want the long git-describe output on non-releases
 			# for example: 83.0.1-0-g1234567
-			Git_Util_Describe(${prefix}_Describe ${dir} "*.*" --long)
+			Git_Util_Describe(${prefix}_Describe ${dir} "*" --long)
 		EndIf  (NOT ${prefix}_IsRelease)
 
 		Git_Util_Branch(${prefix}_Branch ${dir})
@@ -188,6 +188,11 @@ Macro    (FetchSpringVersion dir prefix)
 			Message(STATUS "${prefix} version fetched from VERSION file: ${${prefix}_VERSION}")
 		EndIf (${${prefix}_VERSION-NOTFOUND})
 	EndIf  (EXISTS "${dir}/.git")
-EndMacro (FetchSpringVersion)
 
+
+	If(NOT "${${prefix}_VERSION}" MATCHES "^${VERSION_REGEX_ANY}$")
+		Message(FATAL_ERROR "Invalid version format: ${${prefix}_VERSION}")
+	endif()
+
+EndMacro (FetchSpringVersion)
 
