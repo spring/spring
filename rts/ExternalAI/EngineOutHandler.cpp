@@ -417,7 +417,7 @@ void CEngineOutHandler::UnitDamaged(
 		}
 		const bool attackerInLosOrRadar = attacker && IsUnitInLosOrRadarOfAllyTeam(*attacker, damaged.allyteam);
 		for (ids_t::iterator ai = team_skirmishAIs[dt].begin(); ai != team_skirmishAIs[dt].end(); ++ai) {
-			CSkirmishAIWrapper* saw = id_skirmishAI[*ai];
+			const CSkirmishAIWrapper* saw = id_skirmishAI[*ai];
 			int visibleAttackerUnitId = -1;
 			if (attackerInLosOrRadar || saw->IsCheatEventsEnabled()) {
 				visibleAttackerUnitId = attackerUnitId;
