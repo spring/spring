@@ -2,7 +2,6 @@
 
 #include "Rendering/GL/myGL.h"
 
-
 #include "InfoConsole.h"
 #include "InputReceiver.h"
 #include "GuiHandler.h"
@@ -11,11 +10,9 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/LogSinkHandler.h"
 
-#include <fstream>
-
 #define border 7
 
-CONFIG(int, InfoMessageTime).defaultValue(400);
+CONFIG(int, InfoMessageTime).defaultValue(10).description("Timeout till old messages disappear from the ingame console.");
 CONFIG(std::string, InfoConsoleGeometry).defaultValue("0.26 0.96 0.41 0.205");
 
 //////////////////////////////////////////////////////////////////////
@@ -31,11 +28,9 @@ CInfoConsole::CInfoConsole()
 	, lastMsgIter(lastMsgPositions.begin())
 	, newLines(0)
 	, rawId(0)
-	, lastTime(0)
 	, fontScale(1.0f)
+	, maxLines(1)
 {
-	data.clear();
-
 	lifetime = configHandler->GetInt("InfoMessageTime");
 
 	const std::string geo = configHandler->GetString("InfoConsoleGeometry");
@@ -47,6 +42,9 @@ CInfoConsole::CInfoConsole()
 		width = 0.41f;
 		height = 0.205f;
 	}
+
+	if (width == 0.f || height == 0.f)
+		enabled = false;
 
 	fontSize = fontScale * smallFont->GetSize();
 
@@ -66,7 +64,7 @@ void CInfoConsole::Draw()
 	if (!smallFont) return;
 	if (data.empty()) return;
 
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex); // XXX is this really needed?
+	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
 	if (guihandler && !guihandler->GetOutlineFonts()) {
 		// draw a black background when not using outlined font
@@ -94,10 +92,9 @@ void CInfoConsole::Draw()
 	if (guihandler && guihandler->GetOutlineFonts())
 		fontOptions |= FONT_OUTLINE;
 
-	std::deque<InfoLine>::iterator ili;
-	for (ili = data.begin(); ili != data.end(); ++ili) {
+	for (int i = 0; i < std::min(data.size(), maxLines); ++i) {
 		curY -= fontHeight;
-		smallFont->glPrint(curX, curY, fontSize, fontOptions, ili->text);
+		smallFont->glPrint(curX, curY, fontSize, fontOptions, data[i].text);
 	}
 
 	smallFont->End();
@@ -107,14 +104,24 @@ void CInfoConsole::Draw()
 void CInfoConsole::Update()
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
-	if (lastTime > 0) {
-		lastTime--;
+	if (!data.empty())
+		return;
+
+	// pop old messages after timeout
+	if (data[0].timeout <= spring_gettime()) {
+		data.pop_front();
 	}
-	if (!data.empty()) {
-		data.begin()->time--;
-		if (data[0].time <= 0) {
-			data.pop_front();
-		}
+
+	if (!smallFont) return;
+
+	// if we have more lines then we can show, remove the oldest one,
+	// and make sure the others are shown long enough
+	const float maxHeight = (height * globalRendering->viewSizeY) - (border * 2);
+	maxLines = (smallFont->GetLineHeight() > 0)
+			? math::floor(maxHeight / (fontSize * smallFont->GetLineHeight()))
+			: 1; // this will likely be the case on HEADLESS only
+	for (size_t i = data.size(); i > maxLines; i--) {
+		data.pop_front();
 	}
 }
 
@@ -146,13 +153,10 @@ void CInfoConsole::PushNewLinesToEventHandler()
 
 int CInfoConsole::GetRawLines(std::deque<RawLine>& lines)
 {
-	int tmp;
-	{
-		boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
-		lines = rawData;
-		tmp = newLines;
-		newLines = 0;
-	}
+	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	lines = rawData;
+	int tmp = newLines;
+	newLines = 0;
 	return tmp;
 }
 
@@ -162,55 +166,45 @@ void CInfoConsole::RecordLogMessage(const std::string& section, int level,
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
-	RawLine rl(text, section, level, rawId);
-	rawId++;
-	rawData.push_back(rl);
 	if (rawData.size() > maxRawLines) {
 		rawData.pop_front();
-	}
-	if (newLines < maxRawLines) {
+	} else {
 		newLines++;
 	}
+	rawData.emplace_back(text, section, level, rawId++);
 
 	if (!smallFont) {
 		return;
 	}
 
-	const float maxWidth  = (width  * globalRendering->viewSizeX) - (border * 2);
-	const float maxHeight = (height * globalRendering->viewSizeY) - (border * 2);
-	const unsigned int maxLines = (smallFont->GetLineHeight() > 0)
-			? math::floor(maxHeight / (fontSize * smallFont->GetLineHeight()))
-			: 1; // this will likely be the case on HEADLESS only
-
+	// !!! Warning !!!
+	// We must not remove elements from `data` here
+	// cause ::Draw() iterats that container, and it's
+	// possible that it calls LOG(), which will end
+	// in here. So if we would remove stuff here it's
+	// possible that we delete a var that is used in
+	// Draw() & co, and so we might invalidate references
+	// (e.g. of std::strings) and cause SIGFAULTs!
+	const float maxWidth = (width  * globalRendering->viewSizeX) - (2 * border);
 	std::string wrappedText = smallFont->Wrap(text, fontSize, maxWidth);
 	std::list<std::string> lines = smallFont->SplitIntoLines(toustring(wrappedText));
 
 	for (auto& line: lines) {
 		// add the line to the console
-		InfoLine l;
-		data.push_back(l);
-		data.back().text = line;
-		data.back().time = lifetime - lastTime;
-		lastTime = lifetime;
-	}
-
-	// if we have more lines then we can show, remove the oldest one,
-	// and make sure the others are shown long enough
-	for (size_t i = data.size(); i > maxLines; i--) {
-		data[1].time += data[0].time;
-		data.pop_front();
+		data.emplace_back();
+		InfoLine& l = data.back();
+		l.text    = std::move(line);
+		l.timeout = spring_gettime() + spring_secs(lifetime);
 	}
 }
 
 
 void CInfoConsole::LastMessagePosition(const float3& pos)
 {
-	if (lastMsgPositions.size() < maxLastMsgPos) {
-		lastMsgPositions.push_front(pos);
-	} else {
-		lastMsgPositions.push_front(pos);
+	if (lastMsgPositions.size() >= maxLastMsgPos) {
 		lastMsgPositions.pop_back();
 	}
+	lastMsgPositions.push_front(pos);
 
 	// reset the iterator when a new msg comes in
 	lastMsgIter = lastMsgPositions.begin();
