@@ -634,13 +634,6 @@ void CGrassDrawer::SetupGlStateNear()
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 				glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_ALPHA);
-				static const float texConstant[] = {
-					mapInfo->light.groundAmbientColor.x * 1.24f,
-					mapInfo->light.groundAmbientColor.y * 1.24f,
-					mapInfo->light.groundAmbientColor.z * 1.24f,
-					1.0f
-				};
-				glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
 		}
 
 		glMatrixMode(GL_PROJECTION);
@@ -769,13 +762,6 @@ void CGrassDrawer::SetupGlStateFar()
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_ALPHA);
-			static const float texConstant[] = {
-				mapInfo->light.groundAmbientColor.x * 1.24f,
-				mapInfo->light.groundAmbientColor.y * 1.24f,
-				mapInfo->light.groundAmbientColor.z * 1.24f,
-				1.0f
-			};
-			glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
 	}
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -829,8 +815,7 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 
 		float3 normalBend = -bendVect;
 
-		// start with a degenerated triangle
-		va->AddVertexTN(basePos + sideVect - float3(0.0f, 3.0f, 0.0f), xtexCoord              , 0.f, normalBend);
+		// start btm
 		va->AddVertexTN(basePos + sideVect - float3(0.0f, 3.0f, 0.0f), xtexCoord              , 0.f, normalBend);
 		va->AddVertexTN(basePos - sideVect - float3(0.0f, 3.0f, 0.0f), xtexCoord + (1.0f / 16), 0.f, normalBend);
 
@@ -845,12 +830,13 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 			va->AddVertexTN(basePos + edgePosL, xtexCoord - (1.0f / 32) * h + (1.0f / 16), h, (n - sideVect * 0.04f).ANormalize());
 		}
 
-		// end with a degenerated triangle
-		// -> this way we can render multiple blades in a single GL_TRIANGLE_STRIP
+		// end top tip (single triangle)
 		const float3 edgePos = (UpVector * std::cos(maxAng) + bendVect * std::sin(maxAng)) * length;
 		const float3 n = (normalBend * std::cos(maxAng) + UpVector * std::sin(maxAng)).ANormalize();
 		va->AddVertexTN(basePos + edgePos, xtexCoord + (1.0f / 32), 1.0f, n);
-		va->AddVertexTN(basePos + edgePos, xtexCoord + (1.0f / 32), 1.0f, n);
+
+		// next blade
+		va->EndStrip();
 	}
 
 	glNewList(listNum, GL_COMPILE);
@@ -1018,8 +1004,8 @@ void CGrassDrawer::ResetPos(const int grassBlockX, const int grassBlockZ)
 	if (grassOff)
 		return;
 
-	assert(grassBlockX >= 0 && grassBlockX < (gs->mapx - 1) / grassSquareSize);
-	assert(grassBlockZ >= 0 && grassBlockZ < (gs->mapy - 1) / grassSquareSize);
+	assert(grassBlockX >= 0 && grassBlockX < blocksX);
+	assert(grassBlockZ >= 0 && grassBlockZ < blocksY);
 
 	GrassStruct& gb = grass[grassBlockZ * blocksX + grassBlockX];
 	delete gb.va;
@@ -1042,8 +1028,8 @@ void CGrassDrawer::AddGrass(const float3& pos)
 
 	const int x = int(pos.x) / (SQUARE_SIZE * grassSquareSize);
 	const int z = int(pos.z) / (SQUARE_SIZE * grassSquareSize);
-	assert(x >= 0 && x < (gs->mapx - 1) / grassSquareSize);
-	assert(z >= 0 && z < (gs->mapy - 1) / grassSquareSize);
+	assert(x >= 0 && x < (gs->mapx / grassSquareSize));
+	assert(z >= 0 && z < (gs->mapy / grassSquareSize));
 
 	grassMap[z * gs->mapx / grassSquareSize + x] = 1;
 	ResetPos(pos);
@@ -1057,8 +1043,8 @@ void CGrassDrawer::RemoveGrass(const float3& pos)
 
 	const int x = int(pos.x) / (SQUARE_SIZE * grassSquareSize);
 	const int z = int(pos.z) / (SQUARE_SIZE * grassSquareSize);
-	assert(x >= 0 && x <= (gs->mapx - 1) / grassSquareSize);
-	assert(z >= 0 && z <= (gs->mapy - 1) / grassSquareSize);
+	assert(x >= 0 && x < (gs->mapx / grassSquareSize));
+	assert(z >= 0 && z < (gs->mapy / grassSquareSize));
 
 	grassMap[z * gs->mapx / grassSquareSize + x] = 0;
 	ResetPos(pos);
