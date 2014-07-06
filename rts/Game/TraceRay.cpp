@@ -170,6 +170,7 @@ float TraceRay(
 	const bool ignoreFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
 	const bool ignoreNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
 	const bool ignoreGround   = ((avoidFlags & Collision::NOGROUND    ) != 0);
+	const bool ignoreCloaked  = ((avoidFlags & Collision::NOCLOAKED   ) != 0);
 
 	const bool ignoreUnits = ignoreEnemies && ignoreAllies && ignoreNeutrals;
 
@@ -234,9 +235,11 @@ float TraceRay(
 						continue;
 					if (ignoreAllies && u->allyteam == owner->allyteam)
 						continue;
+					if (ignoreEnemies && u->allyteam != owner->allyteam)
+						continue;
 					if (ignoreNeutrals && u->IsNeutral())
 						continue;
-					if (ignoreEnemies && u->allyteam != owner->allyteam)
+					if (ignoreCloaked && u->IsCloaked())
 						continue;
 
 					if (CCollisionHandler::DetectHit(u, start, start + dir * length, &cq, true)) {

@@ -389,6 +389,8 @@ static void DrawInfoText()
 
 void ProfileDrawer::DrawScreen()
 {
+	SCOPED_TIMER("ProfileDrawer");
+
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();

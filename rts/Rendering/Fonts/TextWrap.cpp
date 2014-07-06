@@ -163,7 +163,7 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 			}
 		} while(i < w.text.length());
 
-		w2.text  = w.text.substr(0,goodbreak);
+		w2.text  = toustring(w.text.substr(0,goodbreak));
 		w2.width = GetTextWidth(w2.text);
 		w.text.erase(0,goodbreak);
 		w.width  = GetTextWidth(w.text);
@@ -273,7 +273,7 @@ void CTextWrap::AddEllipsis(std::list<line>& lines, std::list<word>& words, floa
 
 	// add our ellipsis
 	word ellipsis;
-	ellipsis.text  = ellipsisUTF8;
+	ellipsis.text  = toustring(ellipsisUTF8);
 	ellipsis.width = ellipsisAdvance;
 	std::list<word>::iterator wi(l->end);
 	++l->end;
@@ -505,7 +505,7 @@ void CTextWrap::RemergeColorCodes(std::list<word>* words, std::list<colorcode>& 
 		word wc;
 		wc.pos = c.pos;
 		wc.isColorCode = true;
-		wc.text = c.tostring();
+		wc.text = toustring(c.tostring());
 
 		if (wi2->isSpace || wi2->isLineBreak) {
 			while(wi2 != words->end() && (wi2->isSpace || wi2->isLineBreak))
@@ -524,7 +524,7 @@ void CTextWrap::RemergeColorCodes(std::list<word>* words, std::list<colorcode>& 
 			size_t pos = c.pos - wi2->pos;
 			if (pos < wi2->text.size() && pos > 0) {
 				word w2;
-				w2.text = wi2->text.substr(0,pos);
+				w2.text = toustring(wi2->text.substr(0,pos));
 				w2.pos = wi2->pos;
 				wi2->text.erase(0,pos);
 				wi2->pos += pos;

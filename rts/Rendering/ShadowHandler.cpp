@@ -12,6 +12,7 @@
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/GL/FBO.h"
@@ -331,7 +332,7 @@ void CShadowHandler::DrawShadowPasses()
 
 			if ((shadowGenBits & SHADOWGEN_BIT_TREE) != 0) {
 				treeDrawer->DrawShadowPass();
-				treeDrawer->DrawShadowGrass();
+				grassDrawer->DrawShadow();
 			}
 
 			if ((shadowGenBits & SHADOWGEN_BIT_PROJ) != 0)

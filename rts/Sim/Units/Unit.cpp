@@ -1742,8 +1742,7 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 			const float metalCostStep  = metalCost  * step;
 			const float energyCostStep = energyCost * step;
 
-			const bool canExecBuild = (builderTeam->metal >= metalCostStep && builderTeam->energy >= energyCostStep);
-			if (!canExecBuild) {
+			if (builderTeam->metal < metalCostStep || builderTeam->energy < energyCostStep) {
 				// update the energy and metal required counts
 				builderTeam->metalPull  += metalCostStep;
 				builderTeam->energyPull += energyCostStep;
@@ -1778,8 +1777,7 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 			const float energyUse = (energyCost * step);
 			const float energyUseScaled = energyUse * modInfo.repairEnergyCostFactor;
 
-			const bool canEffort = (builderTeam->energy >= energyUseScaled);
-			if (!canEffort) {
+			if ((builderTeam->energy < energyUseScaled)) {
 				// update the energy and metal required counts
 				builderTeam->energyPull += energyUseScaled;
 				return false;
@@ -1811,8 +1809,7 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		const float metalRefundStepScaled  =  metalRefundStep * modInfo.reclaimUnitEfficiency;
 		const float energyRefundStepScaled = energyRefundStep * modInfo.reclaimUnitEnergyCostFactor;
 
-		const bool canEffort = (builderTeam->energy >= -energyRefundStepScaled);
-		if (!canEffort) {
+		if (builderTeam->energy < -energyRefundStepScaled) {
 			builderTeam->energyPull += -energyRefundStepScaled;
 			return false;
 		}

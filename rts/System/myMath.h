@@ -104,6 +104,9 @@ bool ClampRayInMap(const float3 start, float3& end);
 float smoothstep(const float edge0, const float edge1, const float value) _pure _warn_unused_result;
 float3 smoothstep(const float edge0, const float edge1, float3 vec) _pure _warn_unused_result;
 
+float linearstep(const float edge0, const float edge1, const float value) _pure _warn_unused_result;
+
+
 // inlined to avoid multiple definitions due to the specializing templates
 template<class T> inline T argmin(const T v1, const T v2) { return std::min(v1, v2); }
 template<class T> inline T argmax(const T v1, const T v2) { return std::max(v1, v2); }

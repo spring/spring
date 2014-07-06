@@ -108,6 +108,9 @@ public:
 	// UNSYNCED ONLY
 	CMatrix44f GetTransformMatrix(bool offsetPos) const;
 
+	float GetSortDist() const { return sortDist; }
+	void SetSortDist(float d) { sortDist = d; }
+
 public:
 	static bool inArray;
 	static CVertexArray* va;
@@ -122,14 +125,16 @@ public:
 	bool checkCol;
 	bool ignoreWater;
 	bool deleteMe;
+
 	bool castShadow;
+	bool drawSorted;
 
 	float3 dir;
 	float3 drawPos;
 
 
 	float mygravity;
-	float tempdist; ///< temp distance used for sorting when rendering
+	float sortDist; ///< distance used for z-sorting when rendering
 
 protected:
 	unsigned int ownerID;

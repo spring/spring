@@ -64,6 +64,8 @@ public:
 	float GetMaxWantedSpeed() const { return maxWantedSpeed; }
 	float GetRepairBelowHealth() const { return repairBelowHealth; }
 
+	float CalcStaticTurnRadius() const;
+
 public:
 	CUnit* owner;
 

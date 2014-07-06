@@ -23,8 +23,7 @@
 static const float SMOKE_TIME = 70.0f;
 
 static const float TRACER_PARTS_STEP = 2.0f;
-
-static const size_t MAX_NUM_AGEMODS = 32;
+static const unsigned int MAX_NUM_AGEMODS = 32;
 
 CR_BIND(CStarburstProjectile::TracerPart, )
 CR_REG_METADATA_SUB(CStarburstProjectile, TracerPart, (
@@ -108,13 +107,13 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	drawTrail = (camDist >= 200.0f);
 	drawRadius = maxSpeed * 8.0f;
 
-	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
+	for (unsigned int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		tracerParts[a].dir = dir;
 		tracerParts[a].pos = pos;
 		tracerParts[a].speedf = speed.w;
 
 		tracerParts[a].ageMods.resize(MAX_NUM_AGEMODS, 1.0f);
-		tracerParts[a].numAgeMods = std::min(MAX_NUM_AGEMODS, (size_t)std::floor((speed.w + 0.6f) / TRACER_PARTS_STEP));
+		tracerParts[a].numAgeMods = std::min(MAX_NUM_AGEMODS, static_cast<unsigned int>((speed.w + 0.6f) / TRACER_PARTS_STEP));
 	}
 	castShadow = true;
 
@@ -138,7 +137,7 @@ void CStarburstProjectile::Detach()
 CStarburstProjectile::~CStarburstProjectile()
 {
 	// UNSYNCED
-	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
+	for (unsigned int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		tracerParts[a].ageMods.clear();
 	}
 }
@@ -402,16 +401,17 @@ void CStarburstProjectile::DrawCallback()
 
 	unsigned char col[4];
 
-	size_t part = curTracerPart;
+	unsigned int part = curTracerPart;
 
-	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
+	for (unsigned int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		const TracerPart* tracerPart = &tracerParts[part];
 		const float3& opos = tracerPart->pos;
 		const float3& odir = tracerPart->dir;
 		const float ospeed = tracerPart->speedf;
 		float aa = 0;
 
-		size_t numAgeMods = tracerPart->numAgeMods;
+		unsigned int numAgeMods = tracerPart->numAgeMods;
+
 		for (int num = 0; num < numAgeMods; aa += TRACER_PARTS_STEP, ++num) {
 			const float ageMod = tracerPart->ageMods[num];
 			const float age2 = (a + (aa / (ospeed + 0.01f))) * 0.2f;
@@ -441,7 +441,8 @@ void CStarburstProjectile::DrawCallback()
 			#undef wt3
 		}
 
-		part = (part == 0) ? NUM_TRACER_PARTS - 1 : part - 1;
+		// unsigned, so LHS will wrap around to UINT_MAX
+		part = std::min(part - 1, NUM_TRACER_PARTS - 1);
 	}
 
 	// draw the engine flare

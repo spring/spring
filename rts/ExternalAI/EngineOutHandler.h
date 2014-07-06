@@ -90,11 +90,6 @@ public:
 	 */
 	void DestroySkirmishAI(const size_t skirmishAIId);
 
-
-	void SetCheating(bool enable);
-	bool IsCheating() const;
-
-
 	void Load(std::istream* s);
 	void Save(std::ostream* s);
 

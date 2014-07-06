@@ -44,8 +44,8 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 	updateTextureState = 0;
 
 	infoTexPBO.Bind();
-	infoTexPBO.Resize(gs->pwr2mapx * gs->pwr2mapy * 4);
-	infoTexPBO.Unbind(false);
+	infoTexPBO.New(gs->pwr2mapx * gs->pwr2mapy * 4);
+	infoTexPBO.Unbind();
 
 	highResInfoTexWanted = false;
 
@@ -465,7 +465,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 		}
 		*/
 
-		infoTexPBO.Unbind(false);
+		infoTexPBO.Unbind();
 	}
 
 
@@ -497,7 +497,8 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx>>1, gs->pwr2mapy>>1, 0, GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
 			}
 
-			infoTexPBO.Unbind(false);
+			infoTexPBO.Invalidate();
+			infoTexPBO.Unbind();
 
 			highResInfoTex = highResInfoTexWanted;
 			updateTextureState = 0;
@@ -512,7 +513,8 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 			} else {
 				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, gs->pwr2mapx>>1, gs->pwr2mapy>>1, GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
 			}
-		infoTexPBO.Unbind(false);
+		infoTexPBO.Invalidate();
+		infoTexPBO.Unbind();
 
 		updateTextureState = 0;
 		return true;

@@ -221,7 +221,7 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 	const int gsmx1 = gsmx + 1;
 	const int gsmy = gs->mapy;
 
-	unsigned char color[4] = {255, 255, 255, (unsigned char)(decal->alpha * 255)};
+	SColor color(255, 255, 255, int(decal->alpha * 255));
 
 	#ifndef DEBUG
 	#define HEIGHT(z, x) (hm[((z) * gsmx1) + (x)])
@@ -297,19 +297,17 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 			}
 		}
 	} else {
-		const float c = *((float*) (color));
-		const int start = 0;
-		const int stride = 6;
-		const int sdi = decal->va->drawIndex();
+		const int num = decal->va->drawIndex() / VA_SIZE_TC;
+		decal->va->ResetPos();
+		VA_TYPE_TC* mem = decal->va->GetTypedVertexArray<VA_TYPE_TC>(num);
 
-		for (int i = start; i < sdi; i += stride) {
-			const int x = int(decal->va->drawArray[i + 0]) >> 3;
-			const int z = int(decal->va->drawArray[i + 2]) >> 3;
-			const float h = hm[z * gsmx1 + x];
+		for (int i = 0; i < num; ++i) {
+			const int x = int(mem[i].p.x) >> 3;
+			const int z = int(mem[i].p.z) >> 3;
 
 			// update the height and alpha
-			decal->va->drawArray[i + 1] = h;
-			decal->va->drawArray[i + 5] = c;
+			mem[i].p.y = hm[z * gsmx1 + x];
+			mem[i].c   = color;
 		}
 
 		decal->va->DrawArrayTC(GL_QUADS);
@@ -325,12 +323,7 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 	if (!camera->InView(scar->pos, scar->radius + 16))
 		return;
 
-	const float* hm = readMap->GetCornerHeightMapUnsynced();
-
-	const int gsmx = gs->mapx;
-	const int gsmx1 = gsmx + 1;
-
-	unsigned char color[4] = {255, 255, 255, 255};
+	SColor color(255, 255, 255, 255);
 
 	if (scar->va == NULL) {
 		scar->va = new CVertexArray();
@@ -350,7 +343,6 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 		// create the scar texture-quads
 		float px1 = sx * 16;
 		for (int x = sx; x <= ex; ++x) {
-			//const float* hm2 = hm;
 			float px2 = px1 + 16;
 			float pz1 = sz * 16;
 
@@ -369,11 +361,9 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 				scar->va->AddVertexTC(float3(px2, h2, pz1), tx2 + tx, tz1 + ty, color);
 				scar->va->AddVertexTC(float3(px2, h3, pz2), tx2 + tx, tz2 + ty, color);
 				scar->va->AddVertexTC(float3(px1, h4, pz2), tx1 + tx, tz2 + ty, color);
-				//hm2 += gsmx12;
 				pz1 = pz2;
 			}
 
-			//hm2 += 2;
 			px1 = px2;
 		}
 	} else {
@@ -384,17 +374,20 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 				color[3] = (int) (scar->startAlpha - (gs->frameNum - scar->creationTime) * scar->alphaFalloff);
 			}
 
-			const int start = 0;
-			const int stride = 6;
-			const int sdi = scar->va->drawIndex();
+			const int gsmx1 = gs->mapx + 1;
+			const float* hm = readMap->GetCornerHeightMapUnsynced();
 
-			for (int i = start; i < sdi; i += stride) {
-				const int x = int(scar->va->drawArray[i + 0]) >> 3;
-				const int z = int(scar->va->drawArray[i + 2]) >> 3;
+			const int num = scar->va->drawIndex() / VA_SIZE_TC;
+			scar->va->ResetPos();
+			VA_TYPE_TC* mem = scar->va->GetTypedVertexArray<VA_TYPE_TC>(num);
+
+			for (int i = 0; i < num; ++i) {
+				const int x = int(mem[i].p.x) >> 3;
+				const int z = int(mem[i].p.z) >> 3;
 
 				// update the height and alpha
-				scar->va->drawArray[i + 1] = hm[z * gsmx1 + x];
-				scar->va->drawArray[i + 5] = *reinterpret_cast<float*>(color);
+				mem[i].p.y = hm[z * gsmx1 + x];
+				mem[i].c   = color;
 			}
 		}
 

@@ -2,7 +2,6 @@
 
 #include "AdvTreeDrawer.h"
 #include "AdvTreeGenerator.h"
-#include "GrassDrawer.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/BaseGroundDrawer.h"
@@ -51,7 +50,6 @@ CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
 
 	treeGen = new CAdvTreeGenerator();
 	treeGen->CreateFarTex(treeShaders[TREE_PROGRAM_NEAR_BASIC]);
-	grassDrawer = new CGrassDrawer();
 
 	oldTreeDistance = 4;
 	lastListClean = 0;
@@ -82,7 +80,6 @@ CAdvTreeDrawer::~CAdvTreeDrawer()
 
 	delete[] trees;
 	delete treeGen;
-	delete grassDrawer;
 
 	shaderHandler->ReleaseProgramObjects("[TreeDrawer]");
 	treeShaders.clear();
@@ -1033,6 +1030,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 		po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE_FAR);
 		po->Enable();
 
+		// draw far-distance trees
 		glBindTexture(GL_TEXTURE_2D, activeFarTex);
 		va->DrawArrayT(GL_QUADS);
 
@@ -1066,19 +1064,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 	glDisable(GL_ALPHA_TEST);
 }
 
-void CAdvTreeDrawer::DrawGrass()
-{
-	if (drawTrees) {
-		grassDrawer->Draw();
-	}
-}
 
-void CAdvTreeDrawer::DrawShadowGrass()
-{
-	if (drawTrees) {
-		grassDrawer->DrawShadow();
-	}
-}
 void CAdvTreeDrawer::ResetPos(const float3& pos)
 {
 	const int x = (int) pos.x / TREE_SQUARE_SIZE / SQUARE_SIZE;
@@ -1093,7 +1079,6 @@ void CAdvTreeDrawer::ResetPos(const float3& pos)
 		delDispLists.push_back(pTSS->farDispList);
 		pTSS->farDispList = 0;
 	}
-	grassDrawer->ResetPos(pos);
 }
 
 void CAdvTreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float size)
@@ -1143,15 +1128,4 @@ void CAdvTreeDrawer::AddFallingTree(int treeID, int treeType, const float3& pos,
 
 	fallingTrees.push_back(ft);
 }
-
-void CAdvTreeDrawer::AddGrass(const float3& pos)
-{
-	grassDrawer->AddGrass(pos);
-}
-
-void CAdvTreeDrawer::RemoveGrass(const float3& pos)
-{
-	grassDrawer->RemoveGrass(pos);
-}
-
 

@@ -27,6 +27,7 @@
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Models/IModelParser.h"
@@ -1457,7 +1458,7 @@ static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		weapon->reloadTime = (int)(value * GAME_SPEED);
 	}
 	else if (key == "accuracy") {
-		weapon->accuracy = value;
+		weapon->accuracyError = value;
 	}
 	else if (key == "sprayAngle") {
 		weapon->sprayAngle = value;
@@ -2396,7 +2397,7 @@ int LuaSyncedCtrl::AddGrass(lua_State* L)
 	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
 	pos.ClampInBounds();
 
-	treeDrawer->AddGrass(pos);
+	grassDrawer->AddGrass(pos);
 	return 0;
 }
 
@@ -2406,7 +2407,7 @@ int LuaSyncedCtrl::RemoveGrass(lua_State* L)
 	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
 	pos.ClampInBounds();
 
-	treeDrawer->RemoveGrass(pos);
+	grassDrawer->RemoveGrass(pos);
 	return 0;
 }
 

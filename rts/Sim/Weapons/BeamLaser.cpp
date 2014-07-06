@@ -380,23 +380,10 @@ void CBeamLaser::FireInternal(float3 curDir)
 	}
 
 	if (curLength < maxLength) {
-		const DamageArray& baseDamages = (weaponDef->dynDamageExp <= 0.0f)?
-			weaponDef->damages:
-			weaponDefHandler->DynamicDamages(
-				weaponDef->damages,
-				weaponMuzzlePos,
-				curPos,
-				(weaponDef->dynDamageRange > 0.0f)?
-					weaponDef->dynDamageRange:
-					weaponDef->range,
-				weaponDef->dynDamageExp,
-				weaponDef->dynDamageMin,
-				weaponDef->dynDamageInverted
-			);
-
 		// make it possible to always hit with some minimal intensity (melee weapons have use for that)
 		const float hitIntensity = std::max(minIntensity, 1.0f - curLength / (actualRange * 2.0f));
 
+		const DamageArray& baseDamages = CWeaponDefHandler::DynamicDamages(weaponDef, weaponMuzzlePos, curPos);
 		const DamageArray damages = baseDamages * (hitIntensity * salvoDamageMult);
 		const CGameHelper::ExplosionParams params = {
 			hitPos,

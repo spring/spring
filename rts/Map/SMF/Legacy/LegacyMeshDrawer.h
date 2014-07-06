@@ -36,7 +36,6 @@ private:
 
 	inline void DrawVertexAQ(CVertexArray* ma, int x, int y);
 	inline void DrawVertexAQ(CVertexArray* ma, int x, int y, float height);
-	inline void EndStripQ(CVertexArray* ma);
 	inline void DrawGroundVertexArrayQ(CVertexArray*& ma);
 
 	void DoDrawGroundRow(const CCamera* cam, int bty);

@@ -72,8 +72,7 @@ void glBallisticCircle(const float3& center, const float radius,
 	va->Initialize();
 	va->EnlargeArrays(resolution, 0, VA_SIZE_0);
 
-	float3* vertices = reinterpret_cast<float3*>(va->drawArray);
-	va->drawArrayPos = va->drawArray + resolution * 3;
+	float3* vertices = va->GetTypedVertexArray<float3>(resolution);
 
 	for_mt(0, resolution, [&](const int i) {
 		const float radians = (2.0f * PI) * (float)i / (float)resolution;

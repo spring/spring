@@ -1155,6 +1155,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	assert(infoConsole);
 	infoConsole->PushNewLinesToEventHandler();
+	infoConsole->Update();
 
 	configHandler->Update();
 	mouse->Update();
@@ -1526,7 +1527,6 @@ void CGame::SimFrame() {
 
 	if (!skipping) {
 		// everything here is unsynced and should ideally moved to Game::Update()
-		infoConsole->Update();
 		waitCommandsAI.Update();
 		geometricObjects->Update();
 		sound->NewFrame();

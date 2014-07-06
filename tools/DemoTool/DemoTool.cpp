@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <boost/program_options.hpp>
+#include <iomanip> //hex
 
 #include "StringSerializer.h"
 
@@ -194,6 +195,14 @@ const std::string& GetCommandName(int commandId)
 	return CMD_NAME_UNKNOWN;
 }
 
+void PrintBinary(void* buf, int len)
+{
+	for(int i=0; i<len; i++) {
+		std::cout << std::hex << (int)((char*)buf)[i];
+	}
+	std::cout << std::dec; //reset to decimal
+}
+
 void TrafficDump(CDemoReader& reader, bool trafficStats)
 {
 	InitCommandNames();
@@ -212,7 +221,8 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 		char buf[16]; // FIXME: cba to look up how to format numbers with iostreams
 		sprintf(buf, "%06d ", frame);
 		std::cout << buf;
-		switch ((unsigned char)buffer[0])
+		const int cmd = (unsigned char)buffer[0];
+		switch (cmd)
 		{
 			case NETMSG_AICOMMAND:
 				std::cout << "AICOMMAND: Playernum: " << (unsigned)buffer[3];
@@ -235,7 +245,7 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << " Pair: " << (unsigned)buffer[5];
 				unsigned int sameid = *((unsigned int*)(buffer + 6));
 				std::cout << " SameID: " << sameid;
-				unsigned char sameopt = (unsigned)buffer[10];
+				unsigned int sameopt = (unsigned)buffer[10];
 				std::cout << " SameOpt: " << sameopt;
 				unsigned short samesize = *((unsigned short*)(buffer + 11));
 				std::cout << " SameSize: " << samesize;
@@ -302,11 +312,10 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 			case NETMSG_LUAMSG:
 				{
 				std::cout << "LUAMSG length:" << packet->length << " Player:" << (unsigned)buffer[3] << " Script: " << *(uint16_t*)&buffer[4] << " Mode: " << (unsigned)buffer[6] << " Msg: ";
-				for(int i = 7; i < packet->length; ++i)
-					std::cout << (char) packet->data[i];
+				PrintBinary(&packet->data[7], packet->length);
 				std::cout << std::endl;
-				}
 				break;
+				}
 			case NETMSG_TEAM:
 				std::cout << "TEAM Playernum:" << (int)buffer[1] << " Action:";
 				switch (buffer[2]) {
@@ -367,8 +376,23 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << " Energy: " << *(float*)(buffer + 8);
 				std::cout << std::endl;
 				break;
+			case NETMSG_CCOMMAND:
+				std::cout << "NETMSG_CCOMMAND: " << std::endl;
+				break;
+			case NETMSG_PAUSE:
+				std::cout << "NETMSG_PAUSE: Player " << (unsigned)buffer[1] << " paused: " << (unsigned)buffer[2] << std::endl;
+				break;
+			case NETMSG_SYNCRESPONSE:
+				std::cout << "NETMSG_SYNCRESPONSE: " << std::endl;
+				break;
+			case NETMSG_DIRECT_CONTROL:
+				std::cout << "NETMSG_DIRECT_CONTROL: " << std::endl;
+				break;
+			case NETMSG_SETSHARE:
+				std::cout << "NETMSG_SETSHARE: " << std::endl;
+				break;
 			default:
-				std::cout << "MSG: " << (unsigned)buffer[0] << std::endl;
+				std::cout << "MSG: " << cmd << std::endl;
 		}
 		delete packet;
 	}
