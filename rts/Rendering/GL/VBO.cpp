@@ -64,6 +64,11 @@ VBO::VBO(GLenum _defTarget, const bool storage) : vboId(0), VBOused(true)
 
 VBO::~VBO()
 {
+	if (mapped) {
+		Bind();
+		UnmapBuffer();
+		Unbind();
+	}
 	glDeleteBuffers(1, &vboId);
 	delete[] data;
 	data = nullptr;
@@ -218,6 +223,8 @@ GLubyte* VBO::MapBuffer(GLbitfield access)
 GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr _size, GLbitfield access)
 {
 	assert(!mapped);
+	assert(offset + _size <= size);
+	mapped = true;
 
 	// glMapBuffer & glMapBufferRange use different flags for their access argument
 	// for easier handling convert the glMapBuffer ones here
@@ -235,10 +242,6 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr _size, GLbitfield access)
 			access = GL_MAP_READ_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
 			break;
 	}
-
-	mapped = true;
-
-	assert(offset + _size <= size);
 
 	if (_size == 0) {
 		// nvidia incorrectly returns GL_INVALID_VALUE when trying to call glMapBufferRange with size zero
