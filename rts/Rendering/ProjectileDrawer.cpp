@@ -912,7 +912,7 @@ void CProjectileDrawer::UpdatePerlin() {
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
-		va->CheckInitSize(4 * VA_SIZE_TC, 0);
+		va->CheckInitSize(4 * VA_SIZE_TC);
 
 		for (int b = 0; b < 4; ++b)
 			col[b] = int((1.0f - perlinBlend[a]) * 16 * size);
@@ -929,7 +929,7 @@ void CProjectileDrawer::UpdatePerlin() {
 
 		va = GetVertexArray();
 		va->Initialize();
-		va->CheckInitSize(4 * VA_SIZE_TC, 0);
+		va->CheckInitSize(4 * VA_SIZE_TC);
 
 		for (int b = 0; b < 4; ++b)
 			col[b] = int(perlinBlend[a] * 16 * size);

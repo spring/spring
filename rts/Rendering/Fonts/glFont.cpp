@@ -373,12 +373,11 @@ void CglFont::SetTextColor(const float4* color)
 	if (color == NULL) color = &white;
 
 	if (inBeginEnd && !(*color==textColor)) {
-		if ((va->stripArrayPos - va->stripArray) != (va->drawArrayPos - va->drawArray)) {
+		if (va->drawIndex() == 0 && !stripTextColors.empty()) {
+			stripTextColors.back() = *color;
+		} else {
 			stripTextColors.push_back(*color);
 			va->EndStrip();
-		} else {
-			float4& back = stripTextColors.back();
-			back = *color;
 		}
 	}
 
@@ -391,12 +390,11 @@ void CglFont::SetOutlineColor(const float4* color)
 	if (color == NULL) color = ChooseOutlineColor(textColor);
 
 	if (inBeginEnd && !(*color==outlineColor)) {
-		if ((va2->stripArrayPos - va2->stripArray) != (va2->drawArrayPos - va2->drawArray)) {
+		if (va2->drawIndex() == 0 && !stripOutlineColors.empty()) {
+			stripOutlineColors.back() = *color;
+		} else {
 			stripOutlineColors.push_back(*color);
 			va2->EndStrip();
-		} else {
-			float4& back = stripOutlineColors.back();
-			back = *color;
 		}
 	}
 
@@ -406,32 +404,8 @@ void CglFont::SetOutlineColor(const float4* color)
 
 void CglFont::SetColors(const float4* _textColor, const float4* _outlineColor)
 {
-	if (_textColor == NULL) _textColor = &white;
-	if (_outlineColor == NULL) _outlineColor = ChooseOutlineColor(*_textColor);
-
-	if (inBeginEnd) {
-		if (!(*_textColor==textColor)) {
-			if ((va->stripArrayPos - va->stripArray) != (va->drawArrayPos - va->drawArray)) {
-				stripTextColors.push_back(*_textColor);
-				va->EndStrip();
-			} else {
-				float4& back = stripTextColors.back();
-				back = *_textColor;
-			}
-		}
-		if (!(*_outlineColor==outlineColor)) {
-			if ((va2->stripArrayPos - va2->stripArray) != (va2->drawArrayPos - va2->drawArray)) {
-				stripOutlineColors.push_back(*_outlineColor);
-				va2->EndStrip();
-			} else {
-				float4& back = stripOutlineColors.back();
-				back = *_outlineColor;
-			}
-		}
-	}
-
-	textColor    = *_textColor;
-	outlineColor = *_outlineColor;
+	SetTextColor(_textColor);
+	SetOutlineColor(_outlineColor);
 }
 
 
@@ -527,7 +501,7 @@ void CglFont::End()
 
 	if (stripTextColors.size() > 1) {
 		ColorMap::iterator sci = stripTextColors.begin();
-		va->DrawArray2dT(GL_QUADS,TextStripCallback,&sci);
+		va->DrawArray2dT(GL_QUADS,TextStripCallback,&sci);//FIXME calls a 0 length strip!
 	} else {
 		if (setColor) glColor4fv(textColor);
 		va->DrawArray2dT(GL_QUADS);
@@ -603,10 +577,10 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 		const float dx0 = (scaleX * g->size.x0()) + x, dy0 = (scaleY * g->size.y0()) + y;
 		const float dx1 = (scaleX * g->size.x1()) + x, dy1 = (scaleY * g->size.y1()) + y;
 
-		va->AddVertex2dQT(dx0, dy1, tc.x0(), tc.y1());
-		va->AddVertex2dQT(dx0, dy0, tc.x0(), tc.y0());
-		va->AddVertex2dQT(dx1, dy0, tc.x1(), tc.y0());
-		va->AddVertex2dQT(dx1, dy1, tc.x1(), tc.y1());
+		va->AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
+		va->AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
+		va->AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
+		va->AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
 	} while(true);
 }
 
@@ -664,16 +638,16 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 		const float dx1 = (scaleX * g->size.x1()) + x, dy1 = (scaleY * g->size.y1()) + y;
 
 		// draw shadow
-		va2->AddVertex2dQT(dx0+shiftX-ssX, dy1-shiftY-ssY, stc.x0(), stc.y1());
-		va2->AddVertex2dQT(dx0+shiftX-ssX, dy0-shiftY+ssY, stc.x0(), stc.y0());
-		va2->AddVertex2dQT(dx1+shiftX+ssX, dy0-shiftY+ssY, stc.x1(), stc.y0());
-		va2->AddVertex2dQT(dx1+shiftX+ssX, dy1-shiftY-ssY, stc.x1(), stc.y1());
+		va2->AddVertexQ2dT(dx0+shiftX-ssX, dy1-shiftY-ssY, stc.x0(), stc.y1());
+		va2->AddVertexQ2dT(dx0+shiftX-ssX, dy0-shiftY+ssY, stc.x0(), stc.y0());
+		va2->AddVertexQ2dT(dx1+shiftX+ssX, dy0-shiftY+ssY, stc.x1(), stc.y0());
+		va2->AddVertexQ2dT(dx1+shiftX+ssX, dy1-shiftY-ssY, stc.x1(), stc.y1());
 
 		// draw the actual character
-		va->AddVertex2dQT(dx0, dy1, tc.x0(), tc.y1());
-		va->AddVertex2dQT(dx0, dy0, tc.x0(), tc.y0());
-		va->AddVertex2dQT(dx1, dy0, tc.x1(), tc.y0());
-		va->AddVertex2dQT(dx1, dy1, tc.x1(), tc.y1());
+		va->AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
+		va->AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
+		va->AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
+		va->AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
 	} while(true);
 }
 
@@ -729,16 +703,16 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 		const float dx1 = (scaleX * g->size.x1()) + x, dy1 = (scaleY * g->size.y1()) + y;
 
 		// draw outline
-		va2->AddVertex2dQT(dx0-shiftX, dy1-shiftY, stc.x0(), stc.y1());
-		va2->AddVertex2dQT(dx0-shiftX, dy0+shiftY, stc.x0(), stc.y0());
-		va2->AddVertex2dQT(dx1+shiftX, dy0+shiftY, stc.x1(), stc.y0());
-		va2->AddVertex2dQT(dx1+shiftX, dy1-shiftY, stc.x1(), stc.y1());
+		va2->AddVertexQ2dT(dx0-shiftX, dy1-shiftY, stc.x0(), stc.y1());
+		va2->AddVertexQ2dT(dx0-shiftX, dy0+shiftY, stc.x0(), stc.y0());
+		va2->AddVertexQ2dT(dx1+shiftX, dy0+shiftY, stc.x1(), stc.y0());
+		va2->AddVertexQ2dT(dx1+shiftX, dy1-shiftY, stc.x1(), stc.y1());
 
 		// draw the actual character
-		va->AddVertex2dQT(dx0, dy1, tc.x0(), tc.y1());
-		va->AddVertex2dQT(dx0, dy0, tc.x0(), tc.y0());
-		va->AddVertex2dQT(dx1, dy0, tc.x1(), tc.y0());
-		va->AddVertex2dQT(dx1, dy1, tc.x1(), tc.y1());
+		va->AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
+		va->AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
+		va->AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
+		va->AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
 	} while(true);
 }
 

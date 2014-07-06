@@ -1323,8 +1323,8 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 
 		for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
 			if (fli->minz < fli->maxz) {
-				va->AddVertex2dQ0(fli->base + (fli->dir * fli->minz), fli->minz);
-				va->AddVertex2dQ0(fli->base + (fli->dir * fli->maxz), fli->maxz);
+				va->AddVertexQ2d0(fli->base + (fli->dir * fli->minz), fli->minz);
+				va->AddVertexQ2d0(fli->base + (fli->dir * fli->maxz), fli->maxz);
 			}
 		}
 
@@ -1353,10 +1353,10 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(4, 0, VA_SIZE_2D0);
-			va->AddVertex2dQ0(oldPos.x, oldPos.z);
-			va->AddVertex2dQ0(newPos.x, oldPos.z);
-			va->AddVertex2dQ0(newPos.x, newPos.z);
-			va->AddVertex2dQ0(oldPos.x, newPos.z);
+			va->AddVertexQ2d0(oldPos.x, oldPos.z);
+			va->AddVertexQ2d0(newPos.x, oldPos.z);
+			va->AddVertexQ2d0(newPos.x, newPos.z);
+			va->AddVertexQ2d0(oldPos.x, newPos.z);
 		va->DrawArray2d0(GL_LINE_LOOP);
 
 		glLineWidth(1.0f);

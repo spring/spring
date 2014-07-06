@@ -315,31 +315,6 @@ void CVertexArray::DrawArray2dT(const int drawType, StripCallback callback, void
 }
 
 
-void CVertexArray::DrawArrayT2(const int drawType, unsigned int stride)
-{
-	if (drawIndex() == 0)
-		return;
-
-	CheckEndStrip();
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, stride, drawArray);
-	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 3);
-
-	glClientActiveTextureARB(GL_TEXTURE1_ARB);
-	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 5);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glClientActiveTextureARB(GL_TEXTURE0_ARB);
-	DrawArrays(drawType, stride);
-	glClientActiveTextureARB(GL_TEXTURE1_ARB);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glClientActiveTextureARB(GL_TEXTURE0_ARB);
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-}
-
-
 void CVertexArray::DrawArrayTN(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
