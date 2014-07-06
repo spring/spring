@@ -25,13 +25,6 @@ namespace std {
 			auto& str = *static_cast<const std::string*>(this);
 			return *reinterpret_cast<const char8_t*>(&str[t]);
 		}
-
-		operator string&() {
-			return *this;
-		}
-		operator const string& () const {
-			return *this;
-		}
 	};
 
 	// alternative solution

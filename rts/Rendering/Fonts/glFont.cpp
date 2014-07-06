@@ -658,7 +658,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
 	const std::u8string& ustr = toustring(str);
-	unsigned int length = (unsigned int)str.length();
+	const size_t length = str.length();
 
 	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 	va2->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
@@ -666,8 +666,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	int skippedLines;
 	bool colorChanged;
 	const GlyphInfo* g = NULL;
-	float4 newColor;
-	newColor[3] = 1.0f;
+	float4 newColor(0.f, 0.f, 0.f, 1.f);
 	char32_t c;
 	int i = 0;
 
