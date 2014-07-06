@@ -207,7 +207,7 @@ void NotifyWorkerThreads()
 void SetThreadCount(int num)
 {
 	int curThreads = ThreadPool::GetNumThreads();
-	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d", __FUNCTION__, num, curThreads);
+	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d #max=%d", __FUNCTION__, num, curThreads, ThreadPool::GetMaxThreads());
 	num = std::min(num, ThreadPool::GetMaxThreads());
 
 	if (curThreads < num) {
