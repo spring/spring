@@ -138,11 +138,11 @@ void SS3OPiece::UploadGeometryVBOs()
 
 	//FIXME share 1 VBO for ALL models
 	vboAttributes.Bind(GL_ARRAY_BUFFER);
-	vboAttributes.Resize(vertices.size() * sizeof(SS3OVertex), GL_STATIC_DRAW, &vertices[0]);
+	vboAttributes.New(vertices.size() * sizeof(SS3OVertex), GL_STATIC_DRAW, &vertices[0]);
 	vboAttributes.Unbind();
 
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboIndices.Resize(vertexDrawIndices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &vertexDrawIndices[0]);
+	vboIndices.New(vertexDrawIndices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &vertexDrawIndices[0]);
 	vboIndices.Unbind();
 
 	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
