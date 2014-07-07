@@ -47,18 +47,14 @@ Else  ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
 	Set(DEBUG_BUILD FALSE)
 EndIf ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
 
-# MSVC needs the default flags
-if(NOT MSVC)
-	### Strip C[XX]_FLAGS
-	option(CUSTOM_CFLAGS "If false all C[XX]_FLAGS are cleared (more reliable to sync/safer for online play)." FALSE)
-	if    (CUSTOM_CFLAGS)
-		Message(WARNING "Using custom CXX_FLAGS! this build will very likely not sync in online mode!")
-	else  (CUSTOM_CFLAGS)
-		set(CMAKE_C_FLAGS "")
-		set(CMAKE_CXX_FLAGS "")
-	endif (CUSTOM_CFLAGS)
-endif(NOT MSVC)
 
+if(NOT "${CMAKE_C_FLAGS}" STREQUAL "")
+	Message(WARNING "Using custom C_FLAGS: ${CMAKE_C_FLAGS} this build will very likely not sync in online mode!")
+endif()
+
+if(NOT "${CMAKE_CXX_FLAGS}" STREQUAL "")
+	Message(WARNING "Using custom CXX_FLAGS: ${CMAKE_CXX_FLAGS} this build will very likely not sync in online mode!")
+endif()
 
 set (CUSTOM_COMPILER_DEFINITIONS "" CACHE STRING "Custom flags can be defined here")
 if    (CUSTOM_COMPILER_DEFINITIONS)
