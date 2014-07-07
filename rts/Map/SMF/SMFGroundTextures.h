@@ -42,7 +42,7 @@ private:
 
 	std::vector<GroundSquare> squares;
 
-	std::vector<int> tileMap;
+	std::vector<unsigned int> tileMap;
 	std::vector<char> tiles;
 
 	// FIXME? these are not updated at runtime
