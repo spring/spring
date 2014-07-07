@@ -203,7 +203,7 @@ void CAdvWater::Draw(bool useBlending)
 
 				xbase += dh;
 			}
-			va->EndStripQ();
+			va->EndStrip();
 			base += dv;
 			screenY -= yInc;
 		}

@@ -67,7 +67,7 @@ namespace Threading {
 
 	#elif defined(WIN32)
 		// Get the available cores
-		DWORD curMask;
+		DWORD_PTR curMask;
 		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cpusSystem);
 
 	#else

@@ -418,7 +418,7 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 	const int numSqBytes = (mipSqSize * mipSqSize) / 2;
 
 	pbo.Bind();
-	pbo.Resize(numSqBytes);
+	pbo.New(numSqBytes);
 	ExtractSquareTiles(texSquareX, texSquareY, texMipLevel, (GLint*) pbo.MapBuffer());
 	pbo.UnmapBuffer();
 
@@ -426,6 +426,7 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 	glCompressedTexImage2D(ttarget, 0, tileTexFormat, texSizeX, texSizeY, 0, numSqBytes, pbo.GetPtr());
 	glBindTexture(ttarget, 0);
 
+	pbo.Invalidate();
 	pbo.Unbind();
 	return true;
 }
@@ -480,7 +481,7 @@ void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 	square->texLevel = level;
 
 	pbo.Bind();
-	pbo.Resize(numSqBytes);
+	pbo.New(numSqBytes);
 	ExtractSquareTiles(x, y, level, (GLint*) pbo.MapBuffer());
 	pbo.UnmapBuffer();
 
@@ -504,6 +505,8 @@ void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 	}
 
 	glCompressedTexImage2D(ttarget, 0, tileTexFormat, mipSqSize, mipSqSize, 0, numSqBytes, pbo.GetPtr());
+
+	pbo.Invalidate();
 	pbo.Unbind();
 }
 

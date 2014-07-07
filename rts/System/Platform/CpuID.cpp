@@ -106,7 +106,7 @@ namespace springproc {
 			// Check if cpuid leaf 11 really exists
 			if (ebx != 0) {
 				hasLeaf11 = true;
-				LOG_L(L_DEBUG,"[CpuId] leaf 11 support\n");
+				LOG_L(L_DEBUG,"[CpuId] leaf 11 support");
 				getMasksIntelLeaf11();
 				getIdsIntelEnumerate();
 				return;
@@ -114,14 +114,14 @@ namespace springproc {
 		}
 
 		if (maxLeaf >= 4) {
-			LOG_L(L_DEBUG,"[CpuId] leaf 4 support\n");
+			LOG_L(L_DEBUG,"[CpuId] leaf 4 support");
 			getMasksIntelLeaf1and4();
 			getIdsIntelEnumerate();
 			return;
 		}
 		// Either it is a very old processor, or the cpuid instruction is disabled
 		// from BIOS. Print a warning an use processor number
-		LOG_L(L_WARNING,"[CpuId] Max cpuid leaf is less than 4! Using OS processor number.\n");
+		LOG_L(L_WARNING,"[CpuId] Max cpuid leaf is less than 4! Using OS processor number.");
 		setDefault();
 	}
 
@@ -142,10 +142,10 @@ namespace springproc {
 			return;
 
 		if (((ecx >> 8) & 0xFF) == 1) {
-			LOG_L(L_DEBUG,"[CpuId] SMT level found\n");
+			LOG_L(L_DEBUG,"[CpuId] SMT level found");
 			shiftCore = eax & 0xf;
 		} else {
-			LOG_L(L_DEBUG,"[CpuId] No SMT level supported\n");
+			LOG_L(L_DEBUG,"[CpuId] No SMT level supported");
 		}
 
 		eax = 11;
@@ -154,11 +154,11 @@ namespace springproc {
 		ExecCPUID(&eax, &ebx, &ecx, &edx);
 
 		if (((ecx >> 8) & 0xFF) == 2) {
-			LOG_L(L_DEBUG,"[CpuId] Core level found\n");
+			LOG_L(L_DEBUG,"[CpuId] Core level found");
 			    // Practically this is shiftCore + shitVirtual so it is shiftPackage
 			    shiftPackage = eax & 0xf;
 		} else {
-			LOG_L(L_DEBUG,"[CpuId] NO Core level supported\n");
+			LOG_L(L_DEBUG,"[CpuId] NO Core level supported");
 		}
 	}
 
@@ -265,7 +265,7 @@ namespace springproc {
 
 	void CpuId::getIdsAmd()
 	{
-		LOG_L(L_WARNING,"[CpuId] ht/smt/cmt detection for AMD is not implemented! Using processor number reported by OS.\n");
+		LOG_L(L_WARNING,"[CpuId] ht/smt/cmt detection for AMD is not implemented! Using processor number reported by OS.");
 		setDefault();
 	}
 

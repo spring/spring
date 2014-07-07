@@ -134,7 +134,7 @@ void CTextureAtlas::CreateTexture()
 
 	PBO pbo;
 	pbo.Bind();
-	pbo.Resize(atlasSize.x * atlasSize.y * 4);
+	pbo.New(atlasSize.x * atlasSize.y * 4);
 
 	unsigned char* data = (unsigned char*)pbo.MapBuffer(GL_WRITE_ONLY);
 
@@ -182,6 +182,7 @@ void CTextureAtlas::CreateTexture()
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, atlasSize.x, atlasSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pbo.GetPtr());
 		}
 
+	pbo.Invalidate();
 	pbo.Unbind();
 
 	initialized = true;

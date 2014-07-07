@@ -16,9 +16,6 @@ class PBO : public VBO
 public:
 	PBO() : VBO(GL_PIXEL_UNPACK_BUFFER) {}
 	virtual ~PBO() {}
-
-	void Bind() const { VBO::Bind(GL_PIXEL_UNPACK_BUFFER); }
-	void Unbind(bool discard = true) { VBO::Unbind(discard); }
 };
 
 #endif /* PBO_H */

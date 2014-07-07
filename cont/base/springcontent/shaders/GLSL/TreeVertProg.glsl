@@ -38,8 +38,8 @@ void main() {
 	#endif
 
 	#if (defined(TREE_NEAR_SHADOW) || defined(TREE_DIST_SHADOW))
-	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
-	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
+	vec2 p17 = shadowParams.zz;
+	vec2 p18 = shadowParams.ww;
 
 	vec4 vertexShadowPos = shadowMatrix * vertexPos;
 		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
