@@ -51,7 +51,7 @@ namespace Threading {
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
-	static DWORD cpusSystem = 0;
+	static DWORD_PTR cpusSystem = 0;
 #else
 	static cpu_set_t cpusSystem;
 #endif
