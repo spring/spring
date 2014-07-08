@@ -470,7 +470,6 @@ bool CKeyBindings::UnBind(const std::string& keystr, const std::string& command)
 
 	KeyMap::iterator it = bindings.find(ks);
 	if (it != bindings.end()) {
-		success = true;
 		ActionList& al = it->second;
 		success = RemoveCommandFromList(al, command);
 		if (al.empty()) {
