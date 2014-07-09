@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <vector>
 #include <string>
 #include <SDL.h>
 
@@ -10,7 +11,6 @@
 
 #include "myGL.h"
 #include "VertexArray.h"
-#include "VertexArrayRange.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
@@ -28,21 +28,17 @@ CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug fe
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
 
-static CVertexArray* vertexArray1 = NULL;
-static CVertexArray* vertexArray2 = NULL;
-static CVertexArray* currentVertexArray = NULL;
-//BOOL gmlVertexArrayEnable = 0;
+static std::vector<CVertexArray*> vertexArrays;
+static int currentVertexArray = 0;
+
+
 /******************************************************************************/
 /******************************************************************************/
 
 CVertexArray* GetVertexArray()
 {
-	if (currentVertexArray == vertexArray1){
-		currentVertexArray = vertexArray2;
-	} else {
-		currentVertexArray = vertexArray1;
-	}
-	return currentVertexArray;
+	currentVertexArray = (currentVertexArray + 1) % vertexArrays.size();
+	return vertexArrays[currentVertexArray];
 }
 
 
@@ -354,17 +350,15 @@ void LoadExtensions()
 	}
 #endif
 
-	vertexArray1 = new CVertexArray;
-	vertexArray2 = new CVertexArray;
+	for (int i = 0; i<5; ++i)
+		vertexArrays.push_back(new CVertexArray);
 }
 
 
 void UnloadExtensions()
 {
-	delete vertexArray1;
-	delete vertexArray2;
-	vertexArray1 = NULL;
-	vertexArray2 = NULL;
+	for (CVertexArray* va: vertexArrays)
+		delete va;
 }
 
 /******************************************************************************/
