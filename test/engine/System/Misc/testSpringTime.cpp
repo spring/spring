@@ -193,7 +193,7 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 	float springAvg = TestProcessor<SpringClock>::Run();
 
 	bestAvg = std::min(bestAvg, springAvg);
-	BOOST_CHECK( std::abs(springAvg - bestAvg) < 3.f * bestAvg );
+	BOOST_CHECK( std::abs(springAvg - bestAvg) < 3.5f * bestAvg );
 
 
 	// check min precision range
