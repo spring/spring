@@ -235,8 +235,6 @@ static void DrawFrameBarcode()
 static void DrawProfiler()
 {
 	font->SetTextColor(1,1,1,1);
-	CVertexArray* va  = GetVertexArray();
-	CVertexArray* va2 = GetVertexArray();
 
 	// draw the background of the window
 	if (!profiler.profile.empty()) {
@@ -244,8 +242,8 @@ static void DrawProfiler()
 		va->Initialize();
 			va->AddVertex0(start_x, end_y,                                      0);
 			va->AddVertex0(end_x,   end_y,                                      0);
-			va->AddVertex0(start_x, end_y-profiler.profile.size()*lineHeight-0.01f, 0);
-			va->AddVertex0(end_x,   end_y-profiler.profile.size()*lineHeight-0.01f, 0);
+			va->AddVertex0(start_x, end_y - (profiler.profile.size()+1) * lineHeight - 0.01f, 0);
+			va->AddVertex0(end_x,   end_y - (profiler.profile.size()+1) * lineHeight - 0.01f, 0);
 		glColor4f(0.0f, 0.0f, 0.5f, 0.5f);
 		va->DrawArray0(GL_TRIANGLE_STRIP);
 	}
@@ -254,8 +252,30 @@ static void DrawProfiler()
 
 	const float textSize = 0.5f;
 
+	// table header
+	{
+		const float fStartY = start_y;
+		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
+
+		// print total-time running since application start
+		fStartX += 0.04f;
+		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "totaltime");
+
+		// print percent of CPU time used within the last 500ms
+		fStartX += 0.06f;
+		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "cur-%%usage");
+		fStartX += 0.04f;
+		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "max-%%usage");
+		fStartX += 0.04f;
+		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "lag");
+
+		// print timer name
+		fStartX += 0.01f;
+		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM, "title");
+	}
+
 	// draw the textual info (total-time, short-time percentual time, timer-name)
-	int y = 0;
+	int y = 1;
 	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++y) {
 		const auto& profileData = pi->second;
 
@@ -284,7 +304,9 @@ static void DrawProfiler()
 	const float boxSize = lineHeight*0.9;
 	const float selOffset = boxSize*0.2;
 	glPushMatrix();
-	glTranslatef(start_x + 0.005f, start_y + boxSize, 0); // we are now at upper left of first box
+	glTranslatef(start_x + 0.005f, start_y + boxSize - lineHeight, 0); // we are now at upper left of first box
+		CVertexArray* va  = GetVertexArray();
+		CVertexArray* va2 = GetVertexArray();
 		va->Initialize();
 		va2->Initialize();
 			int i = 0;
@@ -316,7 +338,7 @@ static void DrawProfiler()
 		if (!pi->second.showGraph) {
 			continue;
 		}
-		va  = GetVertexArray();
+		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		const float steps_x = (end_x - start_x) / CTimeProfiler::TimeRecord::frames_size;
 		for (size_t a=0; a < CTimeProfiler::TimeRecord::frames_size; ++a) {
