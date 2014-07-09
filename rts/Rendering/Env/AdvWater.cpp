@@ -276,6 +276,7 @@ void CAdvWater::UpdateWater(CGame* game)
 
 	va->DrawArrayT(GL_QUADS);
 
+	va = GetVertexArray();
 	va->Initialize();
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
 
@@ -286,6 +287,7 @@ void CAdvWater::UpdateWater(CGame* game)
 
 	va->DrawArrayT(GL_QUADS);
 
+	va = GetVertexArray();
 	va->Initialize();
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
 

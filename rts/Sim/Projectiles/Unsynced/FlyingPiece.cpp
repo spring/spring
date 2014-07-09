@@ -49,6 +49,7 @@ void FlyingPiece::DrawCommon(size_t* lastTeam, CVertexArray* va) {
 		*lastTeam = team;
 
 		va->DrawArrayTN(GL_QUADS); //switch to GL_TRIANGLES?
+		va = GetVertexArray();
 		va->Initialize();
 		unitDrawer->SetTeamColour(team);
 	}
@@ -92,6 +93,7 @@ void SS3OFlyingPiece::Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* va) 
 		}
 
 		va->DrawArrayTN(GL_QUADS);
+		va = GetVertexArray();
 		va->Initialize();
 		texturehandlerS3O->SetS3oTexture(texture);
 	}

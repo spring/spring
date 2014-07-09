@@ -127,14 +127,11 @@ static GLuint LoadTexture(const string& filename, const float anisotropy = 0.0f,
 }
 
 
-static void DrawRadialDisc()
+static void DrawRadialDisc(CVertexArray* va)
 {
 	//! SAME ALGORITHM AS FOR WATER-PLANE IN BFGroundDrawer.cpp!
 	const float xsize = (gs->mapx * SQUARE_SIZE) >> 2;
 	const float ysize = (gs->mapy * SQUARE_SIZE) >> 2;
-
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
 
 	float3 p;
 
@@ -540,19 +537,19 @@ CBumpWater::CBumpWater()
 
 	// CREATE DISPLAYLIST
 	displayList = glGenLists(1);
+	CVertexArray* va = GetVertexArray();
+	va->Initialize();
+	va->CheckInitSize(4 * 33 * 2); // endless
 	glNewList(displayList, GL_COMPILE);
 	if (endlessOcean) {
-		DrawRadialDisc();
+		DrawRadialDisc(va);
 	} else {
 		const int mapX = gs->mapx * SQUARE_SIZE;
 		const int mapZ = gs->mapy * SQUARE_SIZE;
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
 		for (int z = 0; z < 9; z++) {
 			for (int x = 0; x < 10; x++) {
-				for (int zs = 0; zs <= 1; zs++) {
-					va->AddVertex0(float3(x*(mapX/9.0f), 0.0f, (z + zs)*(mapZ/9.0f)));
-				}
+				va->AddVertex0(float3(x*(mapX/9.0f), 0.0f, (z + 0)*(mapZ/9.0f)));
+				va->AddVertex0(float3(x*(mapX/9.0f), 0.0f, (z + 1)*(mapZ/9.0f)));
 			}
 			va->EndStrip();
 		}

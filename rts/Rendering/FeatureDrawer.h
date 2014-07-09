@@ -11,7 +11,6 @@
 
 class CFeature;
 class IWorldObjectModelRenderer;
-class CVertexArray;
 
 
 class CFeatureDrawer: public CEventClient

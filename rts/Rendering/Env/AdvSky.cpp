@@ -803,11 +803,6 @@ void CAdvSky::CreateDetailTex()
 		glColor4f(c,c,c,ifade);
 		va->DrawArrayT(GL_QUADS);
 	}
-/*	unsigned char buf[256*256*4];
-	glReadPixels(0,0,256,256,GL_RGBA,GL_UNSIGNED_BYTE,buf);
-	CBitmap bm(buf,256,256);
-	bm.Save("dc.bmp");
-*/
 
 	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 	fbo.Unbind();

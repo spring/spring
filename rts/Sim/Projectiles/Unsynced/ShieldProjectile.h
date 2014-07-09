@@ -11,7 +11,6 @@ class CUnit;
 class CPlasmaRepulser;
 struct WeaponDef;
 
-class CVertexArray;
 struct AtlasedTexture;
 class ShieldSegmentProjectile;
 

@@ -149,9 +149,7 @@ static void DrawThreadBarcode()
 	}
 
 	// feeder
-	//const float y1 = 0.0f;
-	//const float y2 = 0.1f * numThreads;
-	//CVertexArray* va = GetVertexArray();
+	va = GetVertexArray();
 	va->Initialize();
 		const float r = (curTime % maxHist).toSecsf() / maxHist_f;
 		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
@@ -212,7 +210,7 @@ static void DrawFrameBarcode()
 	DrawTimeSlice(simFrames, curTime, maxHist, drawArea);
 
 	// draw `feeder` indicating current time pos
-	//CVertexArray* va = GetVertexArray();
+	va = GetVertexArray();
 	va->Initialize();
 		// draw feeder
 		const float r = (curTime % maxHist).toSecsf() / maxHist_f;
@@ -241,7 +239,8 @@ static void DrawProfiler()
 	CVertexArray* va2 = GetVertexArray();
 
 	// draw the background of the window
-	if(!profiler.profile.empty()){
+	if (!profiler.profile.empty()) {
+		CVertexArray* va  = GetVertexArray();
 		va->Initialize();
 			va->AddVertex0(start_x, end_y,                                      0);
 			va->AddVertex0(end_x,   end_y,                                      0);
@@ -258,20 +257,22 @@ static void DrawProfiler()
 	// draw the textual info (total-time, short-time percentual time, timer-name)
 	int y = 0;
 	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++y) {
+		const auto& profileData = pi->second;
+
 		const float fStartY = start_y - y * lineHeight;
 		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
 		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", pi->second.total.toSecsf());
+		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", profileData.total.toSecsf());
 
 		// print percent of CPU time used within the last 500ms
+		fStartX += 0.06f;
+		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", profileData.percent * 100);
 		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", pi->second.percent * 100);
+		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", profileData.newPeak?1:255, profileData.newPeak?1:255, profileData.peak * 100);
 		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", pi->second.newPeak?1:255, pi->second.newPeak?1:255, pi->second.peak * 100);
-		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", pi->second.newLagPeak?1:255, pi->second.newLagPeak?1:255, pi->second.maxLag);
+		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", profileData.newLagPeak?1:255, profileData.newLagPeak?1:255, profileData.maxLag);
 
 		// print timer name
 		fStartX += 0.01f;
@@ -288,7 +289,6 @@ static void DrawProfiler()
 		va2->Initialize();
 			int i = 0;
 			for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++i){
-
 				auto& fc = pi->second.color;
 				SColor c(fc[0], fc[1], fc[2]);
 				va->AddVertexC(float3(0, -i*lineHeight, 0), c); // upper left
@@ -316,6 +316,7 @@ static void DrawProfiler()
 		if (!pi->second.showGraph) {
 			continue;
 		}
+		va  = GetVertexArray();
 		va->Initialize();
 		const float steps_x = (end_x - start_x) / CTimeProfiler::TimeRecord::frames_size;
 		for (size_t a=0; a < CTimeProfiler::TimeRecord::frames_size; ++a) {
