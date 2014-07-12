@@ -76,10 +76,10 @@ static float DegreesToMaxSlope(float degrees)
 
 static MoveDef::SpeedModClass ParseSpeedModClass(const std::string& moveDefName, const LuaTable& moveDefTable)
 {
-	const MoveDef::SpeedModClass speedModClass = MoveDef::SpeedModClass(moveDefTable.GetInt("speedModClass", -1));
+	const int speedModClass = moveDefTable.GetInt("speedModClass", -1);
 
 	if (speedModClass != -1)
-		return Clamp(speedModClass, MoveDef::Tank, MoveDef::Ship);
+		return Clamp(MoveDef::SpeedModClass(speedModClass), MoveDef::Tank, MoveDef::Ship);
 
 	// name-based fallbacks
 	if (moveDefName.find( "boat") != string::npos)
