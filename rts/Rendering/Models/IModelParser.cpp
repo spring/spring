@@ -253,9 +253,6 @@ void C3DModelLoader::AddModelToCache(S3DModel* model, const std::string& modelNa
 	cache[modelPath] = model->id;
 }
 
-void C3DModelLoader::Update() {
-}
-
 
 
 void C3DModelLoader::CreateLocalModel(LocalModel* localModel)

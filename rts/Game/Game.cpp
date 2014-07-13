@@ -1077,7 +1077,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	if (doDrawWorld) {
 		worldDrawer->Update();
 		CNamedTextures::Update();
-		modelParser->Update();
 		CFontTexture::Update();
 
 		if (newSimFrame) {

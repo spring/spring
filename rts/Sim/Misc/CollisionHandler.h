@@ -5,7 +5,6 @@
 
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
-#include <vector>
 
 struct CollisionVolume;
 class CMatrix44f;
@@ -112,8 +111,7 @@ class CCollisionHandler {
 		static bool Intersect(const CollisionVolume* v, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* cq);
 		static bool IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* cq);
 
-		static bool IntersectPieceTreeHelper(LocalModelPiece* lmp, const CMatrix44f& mat, const float3& p0, const float3& p1, std::vector<CollisionQuery>* cqs);
-		static bool IntersectPiecesHelper(const CUnit* u, const float3& p0, const float3& p1, std::vector<CollisionQuery>* cqs);
+		static bool IntersectPiecesHelper(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* cqp);
 
 	public:
 		static bool IntersectEllipsoid(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* cq);
