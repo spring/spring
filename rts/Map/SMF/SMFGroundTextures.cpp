@@ -146,7 +146,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 
 	for (int i = 0; i < smfMap->tileCount; i++) {
 		swabDWordInPlace(tileMap[i]);
-		tileMap[i] = fmin( tileMap[i], tileHeader.numTiles );
+		tileMap[i] = std::min( tileMap[i], (unsigned int)tileHeader.numTiles );
 	}
 
 #if defined(USE_LIBSQUISH) && !defined(HEADLESS) && defined(GLEW_ARB_ES3_compatibility)
