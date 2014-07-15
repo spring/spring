@@ -306,8 +306,7 @@ void CFarTextureHandler::Draw()
 		ISky::SetupFog();
 
 		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(queuedForRender.size() * 4, 0, VA_SIZE_T);
+		va->Initialize(queuedForRender.size() * 4, VA_SIZE_T);
 		for (std::vector<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
 			DrawFarTexture(*it, va);
 		}

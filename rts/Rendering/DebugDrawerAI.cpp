@@ -267,11 +267,11 @@ void DebugDrawerAI::Graph::Draw() {
 		color[3] = 1.00f * 255;
 
 		// label-box
-		va->Initialize();
-		va->AddVertexC(pos,                                                                               color);
-		va->AddVertexC(pos + float3(-(((maxLabelWidth * 1.33f) / globalRendering->viewSizeX) * size.x),   0.0f, 0.0f), color);
-		va->AddVertexC(pos + float3(-(((maxLabelWidth * 1.33f) / globalRendering->viewSizeX) * size.x), size.y, 0.0f), color);
-		va->AddVertexC(pos + float3(                                                0.0f,  size.y, 0.0f), color);
+		va->Initialize(4, VA_SIZE_C);
+		va->AddVertexQC(pos,                                                                               color);
+		va->AddVertexQC(pos + float3(-(((maxLabelWidth * 1.33f) / globalRendering->viewSizeX) * size.x),   0.0f, 0.0f), color);
+		va->AddVertexQC(pos + float3(-(((maxLabelWidth * 1.33f) / globalRendering->viewSizeX) * size.x), size.y, 0.0f), color);
+		va->AddVertexQC(pos + float3(                                                0.0f,  size.y, 0.0f), color);
 		va->DrawArrayC(GL_LINE_STRIP);
 
 		if (scale.y > 0.0f && scale.x > 0.0f) {
@@ -280,9 +280,9 @@ void DebugDrawerAI::Graph::Draw() {
 
 			// horizontal grid lines
 			for (float s = 0.0f; s <= (scale.y + 0.01f); s += (scale.y * 0.1f)) {
-				va->Initialize();
-				va->AddVertexC(pos + float3(  0.0f, (s / scale.y) * size.y, 0.0f), color);
-				va->AddVertexC(pos + float3(size.x, (s / scale.y) * size.y, 0.0f), color);
+				va->Initialize(2, VA_SIZE_C);
+				va->AddVertexQC(pos + float3(  0.0f, (s / scale.y) * size.y, 0.0f), color);
+				va->AddVertexQC(pos + float3(size.x, (s / scale.y) * size.y, 0.0f), color);
 				va->DrawArrayC(GL_LINES);
 
 				const float tx = (pos.x + size.x) + (size.x * 0.025f);
@@ -293,9 +293,9 @@ void DebugDrawerAI::Graph::Draw() {
 
 			// vertical grid lines
 			for (float s = 0.0f; s <= (scale.x + 0.01f); s += (scale.x * 0.1f)) {
-				va->Initialize();
-				va->AddVertexC(pos + float3((s / scale.x) * size.x,   0.0f, 0.0f), color);
-				va->AddVertexC(pos + float3((s / scale.x) * size.x, size.y, 0.0f), color);
+				va->Initialize(4, VA_SIZE_C);
+				va->AddVertexQC(pos + float3((s / scale.x) * size.x,   0.0f, 0.0f), color);
+				va->AddVertexQC(pos + float3((s / scale.x) * size.x, size.y, 0.0f), color);
 				va->DrawArrayC(GL_LINES);
 
 				const float tx = (pos.x + (s / scale.x) * size.x) - (size.x * 0.05f);
@@ -340,7 +340,7 @@ void DebugDrawerAI::Graph::Draw() {
 				color[3] = 255;
 
 				glLineWidth(line.lineWidth);
-				va->Initialize();
+				va->Initialize(data.size() * 2, VA_SIZE_C);
 
 				for (ListIt pit = data.begin(); pit != data.end(); ++pit) {
 					ListIt npit = pit; ++npit;
@@ -350,8 +350,8 @@ void DebugDrawerAI::Graph::Draw() {
 					const float px2 = (npit == data.end()) ? px1 : ((npit->x - minScale.x) / scale.x) * size.x;
 					const float py2 = (npit == data.end()) ? py1 : ((npit->y - minScale.y) / scale.y) * size.y;
 
-					va->AddVertexC(pos + float3(px1, py1, 0.0f), color);
-					va->AddVertexC(pos + float3(px2, py2, 0.0f), color);
+					va->AddVertexQC(pos + float3(px1, py1, 0.0f), color);
+					va->AddVertexQC(pos + float3(px2, py2, 0.0f), color);
 				}
 
 				va->DrawArrayC(GL_LINE_STRIP);
@@ -451,11 +451,11 @@ void DebugDrawerAI::TexSet::Draw() {
 			const float3& size = tex->GetSize();
 
 			glBindTexture(GL_TEXTURE_2D, tex->GetID());
-			va->Initialize();
-			va->AddVertexT(pos,                                0.0f, 1.0f);
-			va->AddVertexT(pos + float3(size.x,   0.0f, 0.0f), 1.0f, 1.0f);
-			va->AddVertexT(pos + float3(size.x, size.y, 0.0f), 1.0f, 0.0f);
-			va->AddVertexT(pos + float3(  0.0f, size.y, 0.0f), 0.0f, 0.0f);
+			va->Initialize(4, VA_SIZE_T);
+			va->AddVertexQT(pos,                                0.0f, 1.0f);
+			va->AddVertexQT(pos + float3(size.x,   0.0f, 0.0f), 1.0f, 1.0f);
+			va->AddVertexQT(pos + float3(size.x, size.y, 0.0f), 1.0f, 0.0f);
+			va->AddVertexQT(pos + float3(  0.0f, size.y, 0.0f), 0.0f, 0.0f);
 			va->DrawArrayT(GL_QUADS);
 			glBindTexture(GL_TEXTURE_2D, 0);
 

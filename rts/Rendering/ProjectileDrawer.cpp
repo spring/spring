@@ -530,10 +530,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 				CVertexArray* lines = GetVertexArray();
 				CVertexArray* points = GetVertexArray();
 
-				lines->Initialize();
-				lines->EnlargeArrays((binIt->second).size() * 2, 0, VA_SIZE_C);
-				points->Initialize();
-				points->EnlargeArrays((binIt->second).size(), 0, VA_SIZE_C);
+				lines->Initialize(binIt->second.size() * 2, VA_SIZE_C);
+				points->Initialize(binIt->second.size(), VA_SIZE_C);
 
 				for (ProjectileSetIt setIt = (binIt->second).begin(); setIt != (binIt->second).end(); ++setIt) {
 					CProjectile* p = *setIt;
@@ -555,12 +553,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 	if (!renderProjectiles.empty()) {
 		CVertexArray* lines = GetVertexArray();
 		CVertexArray* points = GetVertexArray();
-
-		lines->Initialize();
-		lines->EnlargeArrays(renderProjectiles.size() * 2, 0, VA_SIZE_C);
-
-		points->Initialize();
-		points->EnlargeArrays(renderProjectiles.size(), 0, VA_SIZE_C);
+		lines->Initialize(renderProjectiles.size() * 2, VA_SIZE_C);
+		points->Initialize(renderProjectiles.size(), VA_SIZE_C);
 
 		for (std::set<CProjectile*>::iterator it = renderProjectiles.begin(); it != renderProjectiles.end(); ++it) {
 			CProjectile* p = *it;
@@ -588,11 +582,9 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 	FlyingPieceContainer* container = containers[modelType];
 	FlyingPieceContainer::render_iterator fpi;
 
-	if (container != NULL) {
+	if (container != NULL && numFlyingPieces > 0) {
 		CVertexArray* va = GetVertexArray();
-
-		va->Initialize();
-		va->EnlargeArrays(numFlyingPieces * 4, 0, VA_SIZE_TN);
+		va->Initialize(numFlyingPieces * 4, VA_SIZE_TN);
 
 		size_t lastTex = -1;
 		size_t lastTeam = -1;
@@ -652,7 +644,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		projectileHandler->currentParticles = 0;
 		CProjectile::inArray = false;
 		CProjectile::va = GetVertexArray();
-		CProjectile::va->Initialize();
+		CProjectile::va->Initialize(VA_SIZE_TC);
 
 		// draw the particle effects
 		for (auto it = zSortedProjectiles.begin(); it != zSortedProjectiles.end(); ++it) {
@@ -709,7 +701,7 @@ void CProjectileDrawer::DrawShadowPass()
 
 	CProjectile::inArray = false;
 	CProjectile::va = GetVertexArray();
-	CProjectile::va->Initialize();
+	CProjectile::va->Initialize(VA_SIZE_TC);
 
 	{
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
@@ -810,8 +802,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 	}
 
 	CGroundFlash::va = GetVertexArray();
-	CGroundFlash::va->Initialize();
-	CGroundFlash::va->EnlargeArrays(8, 0, VA_SIZE_TC);
+	CGroundFlash::va->Initialize(8, VA_SIZE_TC);
 
 	GroundFlashContainer& gfc = projectileHandler->groundFlashes;
 	GroundFlashContainer::render_iterator gfi;
@@ -848,8 +839,8 @@ void CProjectileDrawer::DrawGroundFlashes()
 			gf->Draw();
 		}
 
-		CGroundFlash::va->DrawArrayTC(GL_QUADS);
-		CGroundFlash::va->Initialize();
+		CGroundFlash::va->DrawArrayTC(GL_QUADS); //FIXME very inefficient?!
+		CGroundFlash::va->Initialize(8, VA_SIZE_TC);
 	}
 
 
@@ -911,8 +902,7 @@ void CProjectileDrawer::UpdatePerlin() {
 			glDisable(GL_BLEND);
 
 		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->CheckInitSize(4 * VA_SIZE_TC);
+		va->Initialize(4, VA_SIZE_TC);
 
 		for (int b = 0; b < 4; ++b)
 			col[b] = int((1.0f - perlinBlend[a]) * 16 * size);
@@ -928,8 +918,7 @@ void CProjectileDrawer::UpdatePerlin() {
 			glEnable(GL_BLEND);
 
 		va = GetVertexArray();
-		va->Initialize();
-		va->CheckInitSize(4 * VA_SIZE_TC);
+		va->Initialize(4, VA_SIZE_TC);
 
 		for (int b = 0; b < 4; ++b)
 			col[b] = int(perlinBlend[a] * 16 * size);

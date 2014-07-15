@@ -112,9 +112,9 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	srand(15U);
 	for (int a = 0; a < 8; ++a) {
 		va = GetVertexArray();
-		va->Initialize();
 		barkva = GetVertexArray();
-		barkva->Initialize();
+		va->Initialize(VA_SIZE_TN);
+		barkva->Initialize(VA_SIZE_TN);
 
 		glNewList(leafDL + a, GL_COMPILE);
 			float size = 0.65f + fRand(0.2f);
@@ -128,7 +128,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	srand(15U);
 	for (int a = 0; a < 8; ++a) {
 		va = GetVertexArray();
-		va->Initialize();
+		va->Initialize(VA_SIZE_TN);
 
 		glNewList(pineDL + a, GL_COMPILE);
 			float size = 0.7f + fRand(0.2f);
@@ -144,10 +144,6 @@ CAdvTreeGenerator::~CAdvTreeGenerator()
 	glDeleteTextures(2, farTex);
 	glDeleteLists(leafDL, 8);
 	glDeleteLists(pineDL, 8);
-}
-
-void CAdvTreeGenerator::Draw() const
-{
 }
 
 void CAdvTreeGenerator::DrawTrunk(const float3& start, const float3& end, const float3& orto1, const float3& orto2, float size)

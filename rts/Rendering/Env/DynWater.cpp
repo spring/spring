@@ -834,7 +834,7 @@ void CDynWater::DrawWaterSurface()
 	bool inStrip = false;
 
 	va = GetVertexArray();
-	va->Initialize();
+	va->Initialize(VA_SIZE_0);
 
 	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapx*SQUARE_SIZE - WH_SIZE, (float)camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
 	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapy*SQUARE_SIZE - WH_SIZE, (float)camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
@@ -908,7 +908,7 @@ void CDynWater::DrawWaterSurface()
 			const int yhlod = y + hlod;
 
 			const int nloop = (xe - xs) / lod + 1;
-			va->EnlargeArrays(nloop*13);
+			va->EnlargeArrays(nloop*13, 0, VA_SIZE_0);
 			for (int x = xs; x < xe; x += lod) {
 				const int xlod = x + lod;
 				const int xhlod = x + hlod;
@@ -1107,16 +1107,13 @@ void CDynWater::AddShipWakes()
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -(oldCamPosBig.x - WH_SIZE)/WF_SIZE, -(oldCamPosBig.z - WH_SIZE)/WF_SIZE, 0, 0);
 
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
 	CVertexArray* va2 = GetVertexArray(); // never try to get more than 2 at once
-	va2->Initialize();
 
 	{
 		const std::set<CUnit*>& units = unitDrawer->GetUnsortedUnits();
-		const int nadd = units.size() * 4;
 
-		va->EnlargeArrays(nadd, 0, VA_SIZE_TN);
-		va2->EnlargeArrays(nadd, 0, VA_SIZE_TN);
+		va->Initialize(units.size() * 4, VA_SIZE_TN);
+		va2->Initialize(units.size() * 4, VA_SIZE_TN);
 
 		for (std::set<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			const CUnit* unit = *ui;
@@ -1237,10 +1234,7 @@ void CDynWater::AddExplosions()
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -(oldCamPosBig.x - WH_SIZE)/WF_SIZE, -(oldCamPosBig.z - WH_SIZE)/WF_SIZE, 0, 0);
 
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-
-	const int nadd = explosions.size()*4;
-	va->EnlargeArrays(nadd, 0, VA_SIZE_TN);
+	va->Initialize(explosions.size() * 4, VA_SIZE_TN);
 
 	for (std::vector<Explosion>::iterator ei = explosions.begin(); ei != explosions.end(); ++ei) {
 		Explosion& explo = *ei;
@@ -1330,8 +1324,7 @@ void CDynWater::DrawSingleUpdateSquare(float startx, float starty, float endx, f
 	float texdif = texend - texstart;
 
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->CheckInitSize(4 * VA_SIZE_T);
+	va->Initialize(4, VA_SIZE_T);
 
 	va->AddVertexQT(float3(startx, starty, 0), texstart + startx*texdif, texstart + starty*texdif);
 	va->AddVertexQT(float3(startx, endy,   0), texstart + startx*texdif, texstart + endy*texdif);
@@ -1344,9 +1337,8 @@ void CDynWater::DrawSingleUpdateSquare(float startx, float starty, float endx, f
 void CDynWater::DrawOuterSurface()
 {
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
+	va->Initialize(3*3*16*16*4, VA_SIZE_0);
 
-	va->EnlargeArrays(3*3*16*16*4);
 	float posx = camPosBig2.x - WH_SIZE - WF_SIZE;
 	float posy = camPosBig2.z - WH_SIZE - WF_SIZE;
 

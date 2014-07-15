@@ -538,8 +538,7 @@ CBumpWater::CBumpWater()
 	// CREATE DISPLAYLIST
 	displayList = glGenLists(1);
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->CheckInitSize(4 * 33 * 2); // endless
+	va->Initialize(4 * 33 * 2, VA_SIZE_0);
 	glNewList(displayList, GL_COMPILE);
 	if (endlessOcean) {
 		DrawRadialDisc(va);
@@ -548,8 +547,8 @@ CBumpWater::CBumpWater()
 		const int mapZ = gs->mapy * SQUARE_SIZE;
 		for (int z = 0; z < 9; z++) {
 			for (int x = 0; x < 10; x++) {
-				va->AddVertex0(float3(x*(mapX/9.0f), 0.0f, (z + 0)*(mapZ/9.0f)));
-				va->AddVertex0(float3(x*(mapX/9.0f), 0.0f, (z + 1)*(mapZ/9.0f)));
+				va->AddVertexQ0(float3(x*(mapX/9.0f), 0.0f, (z + 0)*(mapZ/9.0f)));
+				va->AddVertexQ0(float3(x*(mapX/9.0f), 0.0f, (z + 1)*(mapZ/9.0f)));
 			}
 			va->EndStrip();
 		}

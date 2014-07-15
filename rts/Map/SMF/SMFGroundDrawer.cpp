@@ -150,9 +150,6 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	const float ysize = (smfMap->mapSizeZ) >> 2;
 	const float size = std::min(xsize, ysize);
 
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-
 	const unsigned char fogColor[4] = {
 		(unsigned char)(255 * mapInfo->atmosphere.fogColor[0]),
 		(unsigned char)(255 * mapInfo->atmosphere.fogColor[1]),
@@ -169,8 +166,10 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 
 	const float alphainc = fastmath::PI2 / 32;
 	float alpha,r1,r2;
-
 	float3 p(0.0f, std::min(-200.0f, smfMap->GetInitMinHeight() - 400.0f), 0.0f);
+
+	CVertexArray* va = GetVertexArray();
+	va->Initialize(4 * 33 * 2, VA_SIZE_C);
 
 	for (int n = (camOufOfMap) ? 0 : 1; n < 4 ; ++n) {
 		if ((n == 1) && !camOufOfMap) {
@@ -189,10 +188,10 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 		for (alpha = 0.0f; (alpha - fastmath::PI2) < alphainc ; alpha += alphainc) {
 			p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
 			p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
-			va->AddVertexC(p, planeColor );
+			va->AddVertexQC(p, planeColor );
 			p.x = r2 * fastmath::sin(alpha) + 2 * xsize;
 			p.z = r2 * fastmath::cos(alpha) + 2 * ysize;
-			va->AddVertexC(p, (n==3) ? fogColor : planeColor);
+			va->AddVertexQC(p, (n==3) ? fogColor : planeColor);
 		}
 	}
 	va->DrawArrayC(GL_TRIANGLE_STRIP);

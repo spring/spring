@@ -446,7 +446,7 @@ void CGrassDrawer::DrawFarBillboards(const std::vector<GrassStruct*>& inviewFarG
 
 			g.lastDist = distSq;
 			CVertexArray* va = g.va;
-			va->Initialize();
+			va->Initialize(VA_SIZE_TN);
 
 			for (int y2 = g.posZ * grassBlockSize; y2 < (g.posZ + 1) * grassBlockSize; ++y2) {
 				for (int x2 = g.posX * grassBlockSize; x2 < (g.posX  + 1) * grassBlockSize; ++x2) {
@@ -506,7 +506,7 @@ void CGrassDrawer::Update()
 		) {
 			std::sort(drawer.inviewFarGrass.begin(), drawer.inviewFarGrass.end(), GrassSort);
 			std::sort(drawer.inviewNearGrass.begin(), drawer.inviewNearGrass.end(), GrassSortNear);
-			farnearVA->Initialize();
+			farnearVA->Initialize(VA_SIZE_TN);
 			updateBillboards = true;
 		}
 	}
@@ -794,7 +794,7 @@ void CGrassDrawer::ResetGlStateFar()
 void CGrassDrawer::CreateGrassDispList(int listNum)
 {
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
+	va->Initialize(VA_SIZE_TN);
 	rng.Seed(15);
 
 	for (int a = 0; a < strawPerTurf; ++a) {
@@ -972,11 +972,11 @@ void CGrassDrawer::CreateFarTex()
 			glViewport(0, 0, texSizeX>>mipLevel, texSizeY>>mipLevel);
 
 			CVertexArray* va = GetVertexArray();
-			va->Initialize();
-				va->AddVertexT(float3(-1.0f,  1.0f, 0.0f), 0.0f, 1.0f);
-				va->AddVertexT(float3( 1.0f,  1.0f, 0.0f), 1.0f, 1.0f);
-				va->AddVertexT(float3( 1.0f, -1.0f, 0.0f), 1.0f, 0.0f);
-				va->AddVertexT(float3(-1.0f, -1.0f, 0.0f), 0.0f, 0.0f);
+			va->Initialize(4, VA_SIZE_T);
+				va->AddVertexQT(float3(-1.0f,  1.0f, 0.0f), 0.0f, 1.0f);
+				va->AddVertexQT(float3( 1.0f,  1.0f, 0.0f), 1.0f, 1.0f);
+				va->AddVertexQT(float3( 1.0f, -1.0f, 0.0f), 1.0f, 0.0f);
+				va->AddVertexQT(float3(-1.0f, -1.0f, 0.0f), 0.0f, 0.0f);
 			va->DrawArrayT(GL_QUADS);
 		}
 

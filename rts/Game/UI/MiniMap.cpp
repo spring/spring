@@ -1318,8 +1318,7 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(negSides.size() * 2, 0, VA_SIZE_2D0);
+		va->Initialize(negSides.size() * 2, VA_SIZE_2D0);
 
 		for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
 			if (fli->minz < fli->maxz) {
@@ -1351,8 +1350,7 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		glLineWidth(cmdColors.MouseBoxLineWidth());
 
 		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(4, 0, VA_SIZE_2D0);
+		va->Initialize(4, VA_SIZE_2D0);
 			va->AddVertexQ2d0(oldPos.x, oldPos.z);
 			va->AddVertexQ2d0(newPos.x, oldPos.z);
 			va->AddVertexQ2d0(newPos.x, newPos.z);
@@ -1541,13 +1539,6 @@ void CMiniMap::DrawButtons()
 
 void CMiniMap::DrawNotes()
 {
-	if (notes.empty()) {
-		return;
-	}
-
-	const float baseSize = gs->mapx * SQUARE_SIZE;
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
 	std::list<Notification>::iterator ni = notes.begin();
 	while (ni != notes.end()) {
 		const float age = gu->gameTime - ni->creationTime;
@@ -1555,6 +1546,18 @@ void CMiniMap::DrawNotes()
 			ni = notes.erase(ni);
 			continue;
 		}
+		++ni;
+	}
+
+	if (notes.empty()) {
+		return;
+	}
+
+	const float baseSize = gs->mapx * SQUARE_SIZE;
+	CVertexArray* va = GetVertexArray();
+	va->Initialize(notes.size() * 3 * 8, VA_SIZE_C);
+	for (const Notification& n: notes) {
+		const float age = gu->gameTime - n.creationTime;
 		for (int a = 0; a < 3; ++a) {
 			const float modage = age + a * 0.1f;
 			const float rot = modage * 3;
@@ -1572,16 +1575,15 @@ void CMiniMap::DrawNotes()
 			const float cosSize = fastmath::cos(rot) * size;
 
 			const SColor color(ni->color[0], ni->color[1], ni->color[2], ni->color[3]);
-			va->AddVertexC(float3(ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x + cosSize, ni->pos.z - sinSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x + cosSize, ni->pos.z - sinSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x - sinSize, ni->pos.z - cosSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x - sinSize, ni->pos.z - cosSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x - cosSize, ni->pos.z + sinSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x - cosSize, ni->pos.z + sinSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f),color);
+			va->AddVertexQC(float3(n.pos.x + sinSize, n.pos.z + cosSize, 0.0f), color);
+			va->AddVertexQC(float3(n.pos.x + cosSize, n.pos.z - sinSize, 0.0f), color);
+			va->AddVertexQC(float3(n.pos.x + cosSize, n.pos.z - sinSize, 0.0f), color);
+			va->AddVertexQC(float3(n.pos.x - sinSize, n.pos.z - cosSize, 0.0f), color);
+			va->AddVertexQC(float3(n.pos.x - sinSize, n.pos.z - cosSize, 0.0f), color);
+			va->AddVertexQC(float3(n.pos.x - cosSize, n.pos.z + sinSize, 0.0f), color);
+			va->AddVertexQC(float3(n.pos.x - cosSize, n.pos.z + sinSize, 0.0f), color);
+			va->AddVertexQC(float3(n.pos.x + sinSize, n.pos.z + cosSize, 0.0f), color);
 		}
-		++ni;
 	}
 	va->DrawArrayC(GL_LINES);
 }

@@ -529,20 +529,17 @@ void CSelectedUnitsHandler::Draw()
 	color2.g = 255 - color2.g;
 	color2.b = 255 - color2.b;
 
-	if (cmdColors.unitBox[3] > 0.05f) {
-		const CUnitSet* unitSet;
-		if (selectedGroup != -1) {
-			// note: units in this set are not necessarily all selected themselves, eg.
-			// if autoAddBuiltUnitsToSelectedGroup is true, so we check IsUnitSelected
-			// for each
-			unitSet = &grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
-		} else {
-			unitSet = &selectedUnits;
-		}
+	const CUnitSet* unitSet = &selectedUnits;
+	if (selectedGroup != -1) {
+		// note: units in this set are not necessarily all selected themselves, eg.
+		// if autoAddBuiltUnitsToSelectedGroup is true, so we check IsUnitSelected
+		// for each
+		unitSet = &grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
+	}
 
+	if (cmdColors.unitBox[3] > 0.05f && !unitSet->empty()) {
 		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(unitSet->size() * 8, 0, VA_SIZE_C);
+		va->Initialize(unitSet->size() * 8, VA_SIZE_C);
 
 		for (CUnitSet::const_iterator ui = unitSet->begin(); ui != unitSet->end(); ++ui) {
 			const CUnit* unit = *ui;

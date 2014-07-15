@@ -1753,8 +1753,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	}
 
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(buildableSquares.size() * 4, 0, VA_SIZE_0);
+	va->Initialize(buildableSquares.size() * 4, VA_SIZE_0);
 
 	for (unsigned int i = 0; i < buildableSquares.size(); i++) {
 		va->AddVertexQ0(buildableSquares[i]                                      );
@@ -1767,8 +1766,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 
 	glColor4f(0.9f, 0.8f, 0.0f, 0.7f);
 	va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(featureSquares.size() * 4, 0, VA_SIZE_0);
+	va->Initialize(featureSquares.size() * 4, VA_SIZE_0);
 
 	for (unsigned int i = 0; i < featureSquares.size(); i++) {
 		va->AddVertexQ0(featureSquares[i]                                      );
@@ -1781,8 +1779,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 
 	glColor4f(0.9f, 0.0f, 0.0f, 0.7f);
 	va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(illegalSquares.size() * 4, 0, VA_SIZE_0);
+	va->Initialize(illegalSquares.size() * 4, VA_SIZE_0);
 
 	for (unsigned int i = 0; i < illegalSquares.size(); i++) {
 		va->AddVertexQ0(illegalSquares[i]);
@@ -1798,8 +1795,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		const unsigned char e[4] = { 0, 128, 255, 255 }; // end color
 
 		va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(8, 0, VA_SIZE_C);
+		va->Initialize(8, VA_SIZE_C);
 		va->AddVertexQC(float3(x1, h, z1), s); va->AddVertexQC(float3(x1, 0.f, z1), e);
 		va->AddVertexQC(float3(x1, h, z2), s); va->AddVertexQC(float3(x1, 0.f, z2), e);
 		va->AddVertexQC(float3(x2, h, z2), s); va->AddVertexQC(float3(x2, 0.f, z2), e);
@@ -1807,7 +1803,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		va->DrawArrayC(GL_LINES);
 
 		va = GetVertexArray();
-		va->Initialize();
+		va->Initialize(8, VA_SIZE_C);
 		va->AddVertexQC(float3(x1, 0.0f, z1), e);
 		va->AddVertexQC(float3(x1, 0.0f, z2), e);
 		va->AddVertexQC(float3(x2, 0.0f, z2), e);
@@ -1927,8 +1923,7 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 		if (units.empty())
 			continue;
 
-		va->Initialize();
-		va->EnlargeArrays(units.size() * 4, 0, VA_SIZE_2DTC);
+		va->Initialize(units.size() * 4, VA_SIZE_2DTC);
 		icon->BindTexture();
 
 		for (unitIt = units.begin(); unitIt != units.end(); ++unitIt) {

@@ -356,15 +356,17 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 		SAtlasTex aTex(texCoords);
 		atlasTexs[it->first.c_str()] = aTex;
 
-		CVertexArray va;
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		glBindTexture(GL_TEXTURE_2D, it->second.id);
+
+		CVertexArray* va = GetVertexArray();
+		va->Initialize(4, VA_SIZE_2DT);
 		//FIXME why +1?
-		va.AddVertex2dT(absCoords.x,   absCoords.y, 0.0f, 0.0f);
-		va.AddVertex2dT(absCoords.z+1, absCoords.y, 1.0f, 0.0f);
-		va.AddVertex2dT(absCoords.x,   absCoords.w+1, 0.0f, 1.0f);
-		va.AddVertex2dT(absCoords.z+1, absCoords.w+1, 1.0f, 1.0f);
-		va.DrawArray2dT(GL_TRIANGLE_STRIP);
+		va->AddVertex2dT(absCoords.x,   absCoords.y, 0.0f, 0.0f);
+		va->AddVertex2dT(absCoords.z+1, absCoords.y, 1.0f, 0.0f);
+		va->AddVertex2dT(absCoords.x,   absCoords.w+1, 0.0f, 1.0f);
+		va->AddVertex2dT(absCoords.z+1, absCoords.w+1, 1.0f, 1.0f);
+		va->DrawArray2dT(GL_TRIANGLE_STRIP);
 	}
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

@@ -406,8 +406,8 @@ void S3DOPiece::DrawForList() const
 	// via GetVertexArray(), it wraps around
 	CVertexArray* va1 = GetVertexArray();
 	CVertexArray* va2 = GetVertexArray();
-	va1->Initialize();
-	va2->Initialize();
+	va1->Initialize(VA_SIZE_TN);
+	va2->Initialize(VA_SIZE_TN);
 
 	for (std::vector<S3DOPrimitive>::const_iterator ps = prims.begin(); ps != prims.end(); ++ps) {
 		C3DOTextureHandler::UnitTexture* tex = ps->texture;

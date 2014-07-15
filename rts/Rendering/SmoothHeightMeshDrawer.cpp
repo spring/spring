@@ -62,8 +62,7 @@ void SmoothHeightMeshDrawer::Draw(float yoffset) {
 	const unsigned int numQuadsZ = smoothGround->GetFMaxY() / quadSize;
 
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays((numQuadsX + 1) * (numQuadsZ + 1) * 4, 0, VA_SIZE_0);
+	va->Initialize((numQuadsX + 1) * (numQuadsZ + 1) * 4,  VA_SIZE_0);
 
 	for (unsigned int zq = 0; zq <= numQuadsZ; zq++) {
 		for (unsigned int xq = 0; xq <= numQuadsX; xq++) {

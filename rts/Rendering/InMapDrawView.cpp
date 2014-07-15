@@ -193,9 +193,9 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 void CInMapDrawView::Draw()
 {
 	CVertexArray* pointsVa = GetVertexArray();
-	pointsVa->Initialize();
+	pointsVa->Initialize(VA_SIZE_TC);
 	CVertexArray* linesVa = GetVertexArray();
-	linesVa->Initialize();
+	linesVa->Initialize(VA_SIZE_C);
 
 	InMapDraw_QuadDrawer drawer;
 	drawer.linesVa = linesVa;

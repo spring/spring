@@ -53,15 +53,14 @@ void QTPFSPathDrawer::DrawAll() const {
 
 void QTPFSPathDrawer::DrawNodeTree(const MoveDef* md) const {
 	QTPFS::QTNode* nt = pm->nodeTrees[md->pathType];
-	CVertexArray* va = GetVertexArray();
 
 	std::list<const QTPFS::QTNode*> nodes;
 	std::list<const QTPFS::QTNode*>::const_iterator nodesIt;
 
 	GetVisibleNodes(nt, nodes);
 
-	va->Initialize();
-	va->EnlargeArrays(nodes.size() * 4, 0, VA_SIZE_C);
+	CVertexArray* va = GetVertexArray();
+	va->Initialize(nodes.size() * 4, VA_SIZE_C);
 
 	for (nodesIt = nodes.begin(); nodesIt != nodes.end(); ++nodesIt) {
 		DrawNode(*nodesIt, md, va, false, true, true);
@@ -146,8 +145,7 @@ void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, CVertexArray* va) const
 	glLineWidth(4);
 
 	{
-		va->Initialize();
-		va->EnlargeArrays(path->NumPoints() * 2, 0, VA_SIZE_C);
+		va->Initialize(path->NumPoints() * 2, VA_SIZE_C);
 
 		static const unsigned char color[4] = {
 			0 * 255, 0 * 255, 1 * 255, 1 * 255,
@@ -273,8 +271,7 @@ void QTPFSPathDrawer::DrawNode(
 			return;
 		}
 
-		va->Initialize();
-		va->EnlargeArrays(4, 0, VA_SIZE_C);
+		va->Initialize(4, VA_SIZE_C);
 
 		if (!fillQuad) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -322,8 +319,7 @@ void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS:
 	if (!camera->InView(verts[0]) && !camera->InView(verts[1]))
 		return;
 
-	va->Initialize();
-	va->EnlargeArrays(2, 0, VA_SIZE_C);
+	va->Initialize(2, VA_SIZE_C);
 	va->AddVertexQC(verts[0], color);
 	va->AddVertexQC(verts[1], color);
 	glLineWidth(2);

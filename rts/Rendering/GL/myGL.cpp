@@ -350,7 +350,7 @@ void LoadExtensions()
 	}
 #endif
 
-	for (int i = 0; i<5; ++i)
+	for (int i = 0; i<20; ++i) //FIXME
 		vertexArrays.push_back(new CVertexArray);
 }
 

@@ -787,8 +787,7 @@ void CAdvSky::CreateDetailTex()
 		float tSize = std::max(1,8>>a);
 		float c = math::pow(2.0f,a)*6/255.0f;
 		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->CheckInitSize(4*VA_SIZE_T);
+		va->Initialize(4, VA_SIZE_T);
 		va->AddVertexQT(ZeroVector,    0,     0);
 		va->AddVertexQT(RgtVector, tSize,     0);
 		va->AddVertexQT(XYVector,  tSize, tSize);

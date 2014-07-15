@@ -232,7 +232,7 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 	if (!decal->va) {
 		// NOTE: this really needs CLOD'ing
 		decal->va = new CVertexArray();
-		decal->va->Initialize();
+		decal->va->Initialize(VA_SIZE_TC);
 
 		const int
 			dxsize = decal->xsize,
@@ -327,7 +327,7 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 
 	if (scar->va == NULL) {
 		scar->va = new CVertexArray();
-		scar->va->Initialize();
+		scar->va->Initialize(VA_SIZE_TC);
 
 		float3 pos = scar->pos;
 		const float radius = scar->radius;
@@ -564,7 +564,7 @@ void CGroundDecalHandler::DrawTracks() {
 		set<UnitTrackStruct*>::iterator utsi = tt->tracks.begin();
 
 		CVertexArray* va = GetVertexArray();
-		va->Initialize();
+		va->Initialize(VA_SIZE_TC);
 		glBindTexture(GL_TEXTURE_2D, tt->texture);
 
 		while (utsi != tt->tracks.end()) {

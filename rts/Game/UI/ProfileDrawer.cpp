@@ -86,7 +86,7 @@ static void DrawTimeSlice(std::deque<TimeSlice>& frames, const spring_time curTi
 
 	// render
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
+	va->Initialize(frames.size() * 8, VA_SIZE_0);
 	for (TimeSlice& ts: frames) {
 		float x1 = (ts.first % maxHist).toSecsf() / maxHist.toSecsf();
 		float x2 = (ts.second % maxHist).toSecsf() / maxHist.toSecsf();
@@ -95,18 +95,18 @@ static void DrawTimeSlice(std::deque<TimeSlice>& frames, const spring_time curTi
 		x1 = drawArea[0] + x1 * (drawArea[2] - drawArea[0]);
 		x2 = drawArea[0] + x2 * (drawArea[2] - drawArea[0]);
 
-		va->AddVertex0(x1, y1, 0.0f);
-		va->AddVertex0(x1, y2, 0.0f);
-		va->AddVertex0(x2, y2, 0.0f);
-		va->AddVertex0(x2, y1, 0.0f);
+		va->AddVertexQ0(x1, y1, 0.0f);
+		va->AddVertexQ0(x1, y2, 0.0f);
+		va->AddVertexQ0(x2, y2, 0.0f);
+		va->AddVertexQ0(x2, y1, 0.0f);
 
 		const float mx1 = x1 + 3 * globalRendering->pixelX;
 		const float mx2 = x2 - 3 * globalRendering->pixelX;
 		if (mx1 < mx2) {
-			va->AddVertex0(mx1, y1 + 3 * globalRendering->pixelX, 0.0f);
-			va->AddVertex0(mx1, y2 - 3 * globalRendering->pixelX, 0.0f);
-			va->AddVertex0(mx2, y2 - 3 * globalRendering->pixelX, 0.0f);
-			va->AddVertex0(mx2, y1 + 3 * globalRendering->pixelX, 0.0f);
+			va->AddVertexQ0(mx1, y1 + 3 * globalRendering->pixelX, 0.0f);
+			va->AddVertexQ0(mx1, y2 - 3 * globalRendering->pixelX, 0.0f);
+			va->AddVertexQ0(mx2, y2 - 3 * globalRendering->pixelX, 0.0f);
+			va->AddVertexQ0(mx2, y1 + 3 * globalRendering->pixelX, 0.0f);
 		}
 	}
 
@@ -126,11 +126,11 @@ static void DrawThreadBarcode()
 
 	// background
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-		va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
+	va->Initialize(4, VA_SIZE_0);
+		va->AddVertexQ0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
+		va->AddVertexQ0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
+		va->AddVertexQ0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
+		va->AddVertexQ0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
 	glColor4f(0.0f,0.0f,0.0f, 0.5f);
 	va->DrawArray0(GL_QUADS);
 
@@ -149,13 +149,13 @@ static void DrawThreadBarcode()
 
 	// feeder
 	va = GetVertexArray();
-	va->Initialize();
+	va->Initialize(4, VA_SIZE_0);
 		const float r = (curTime % maxHist).toSecsf() / maxHist_f;
 		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
-		va->AddVertex0(xf, drawArea[1], 0.0f);
-		va->AddVertex0(xf, drawArea[3], 0.0f);
-		va->AddVertex0(xf + 5 * globalRendering->pixelX, drawArea[3], 0.0f);
-		va->AddVertex0(xf + 5 * globalRendering->pixelX, drawArea[1], 0.0f);
+		va->AddVertexQ0(xf, drawArea[1], 0.0f);
+		va->AddVertexQ0(xf, drawArea[3], 0.0f);
+		va->AddVertexQ0(xf + 5 * globalRendering->pixelX, drawArea[3], 0.0f);
+		va->AddVertexQ0(xf + 5 * globalRendering->pixelX, drawArea[1], 0.0f);
 	glColor3f(1.0f,0.0f,0.0f);
 	va->DrawArray0(GL_QUADS);
 }
@@ -170,11 +170,11 @@ static void DrawFrameBarcode()
 
 	// background
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-		va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[3] + 20 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[3] + 20 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
+	va->Initialize(4, VA_SIZE_0);
+		va->AddVertexQ0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
+		va->AddVertexQ0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[3] + 20 * globalRendering->pixelY, 0.0f);
+		va->AddVertexQ0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[3] + 20 * globalRendering->pixelY, 0.0f);
+		va->AddVertexQ0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
 	glColor4f(0.0f,0.0f,0.0f, 0.5f);
 	va->DrawArray0(GL_QUADS);
 
@@ -210,22 +210,22 @@ static void DrawFrameBarcode()
 
 	// draw `feeder` indicating current time pos
 	va = GetVertexArray();
-	va->Initialize();
+	va->Initialize(8, VA_SIZE_0);
 		// draw feeder
 		const float r = (curTime % maxHist).toSecsf() / maxHist_f;
 		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
-		va->AddVertex0(xf, drawArea[1], 0.0f);
-		va->AddVertex0(xf, drawArea[3], 0.0f);
-		va->AddVertex0(xf + 10 * globalRendering->pixelX, drawArea[3], 0.0f);
-		va->AddVertex0(xf + 10 * globalRendering->pixelX, drawArea[1], 0.0f);
+		va->AddVertexQ0(xf, drawArea[1], 0.0f);
+		va->AddVertexQ0(xf, drawArea[3], 0.0f);
+		va->AddVertexQ0(xf + 10 * globalRendering->pixelX, drawArea[3], 0.0f);
+		va->AddVertexQ0(xf + 10 * globalRendering->pixelX, drawArea[1], 0.0f);
 
 		// draw scale (horizontal bar that indicates 30FPS timing length)
 		const float xs1 = drawArea[2] - 1.f/(30.f*maxHist_f) * (drawArea[2] - drawArea[0]);
 		const float xs2 = drawArea[2] +               0.0f * (drawArea[2] - drawArea[0]);
-		va->AddVertex0(xs1, drawArea[3] +  2 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(xs1, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(xs2, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(xs2, drawArea[3] +  2 * globalRendering->pixelY, 0.0f);
+		va->AddVertexQ0(xs1, drawArea[3] +  2 * globalRendering->pixelY, 0.0f);
+		va->AddVertexQ0(xs1, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
+		va->AddVertexQ0(xs2, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
+		va->AddVertexQ0(xs2, drawArea[3] +  2 * globalRendering->pixelY, 0.0f);
 	glColor4f(1.0f,0.0f,0.0f, 1.0f);
 	va->DrawArray0(GL_QUADS);
 }
@@ -238,11 +238,11 @@ static void DrawProfiler()
 	// draw the background of the window
 	{
 		CVertexArray* va  = GetVertexArray();
-		va->Initialize();
-			va->AddVertex0(start_x, start_y + lineHeight + 0.005f,                          0);
-			va->AddVertex0(end_x,   start_y + lineHeight + 0.005f,                          0);
-			va->AddVertex0(start_x, start_y - profiler.profile.size() * lineHeight - 0.01f, 0);
-			va->AddVertex0(end_x,   start_y - profiler.profile.size() * lineHeight - 0.01f, 0);
+		va->Initialize(4, VA_SIZE_0);
+			va->AddVertexQ0(start_x, start_y + lineHeight + 0.005f,                          0);
+			va->AddVertexQ0(end_x,   start_y + lineHeight + 0.005f,                          0);
+			va->AddVertexQ0(start_x, start_y - profiler.profile.size() * lineHeight - 0.01f, 0);
+			va->AddVertexQ0(end_x,   start_y - profiler.profile.size() * lineHeight - 0.01f, 0);
 		glColor4f(0.0f, 0.0f, 0.5f, 0.5f);
 		va->DrawArray0(GL_TRIANGLE_STRIP);
 	}
@@ -304,22 +304,22 @@ static void DrawProfiler()
 	glTranslatef(start_x + 0.005f, start_y + boxSize, 0); // we are now at upper left of first box
 		CVertexArray* va  = GetVertexArray();
 		CVertexArray* va2 = GetVertexArray();
-		va->Initialize();
-		va2->Initialize();
+		va->Initialize(profiler.profile.size() * 4, VA_SIZE_C);
+		va2->Initialize(profiler.profile.size() * 4, VA_SIZE_0);
 			int i = 1;
 			for (auto pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++i){
 				auto& fc = pi->second.color;
 				SColor c(fc[0], fc[1], fc[2]);
-				va->AddVertexC(float3(0, -i*lineHeight, 0), c); // upper left
-				va->AddVertexC(float3(0, -i*lineHeight-boxSize, 0), c); // lower left
-				va->AddVertexC(float3(boxSize, -i*lineHeight-boxSize, 0), c); // lower right
-				va->AddVertexC(float3(boxSize, -i*lineHeight, 0), c); // upper right
+				va->AddVertexQC(float3(0, -i*lineHeight, 0), c); // upper left
+				va->AddVertexQC(float3(0, -i*lineHeight-boxSize, 0), c); // lower left
+				va->AddVertexQC(float3(boxSize, -i*lineHeight-boxSize, 0), c); // lower right
+				va->AddVertexQC(float3(boxSize, -i*lineHeight, 0), c); // upper right
 
 				if (pi->second.showGraph) {
-					va2->AddVertex0(lineHeight+selOffset, -i*lineHeight-selOffset, 0); // upper left
-					va2->AddVertex0(lineHeight+selOffset, -i*lineHeight-boxSize+selOffset, 0); // lower left
-					va2->AddVertex0(lineHeight+boxSize-selOffset, -i*lineHeight-boxSize+selOffset, 0); // lower right
-					va2->AddVertex0(lineHeight+boxSize-selOffset, -i*lineHeight-selOffset, 0); // upper right
+					va2->AddVertexQ0(lineHeight+selOffset, -i*lineHeight-selOffset, 0); // upper left
+					va2->AddVertexQ0(lineHeight+selOffset, -i*lineHeight-boxSize+selOffset, 0); // lower left
+					va2->AddVertexQ0(lineHeight+boxSize-selOffset, -i*lineHeight-boxSize+selOffset, 0); // lower right
+					va2->AddVertexQ0(lineHeight+boxSize-selOffset, -i*lineHeight-selOffset, 0); // upper right
 				}
 			}
 		// draw the boxes
@@ -336,7 +336,7 @@ static void DrawProfiler()
 			continue;
 		}
 		CVertexArray* va = GetVertexArray();
-		va->Initialize();
+		va->Initialize(CTimeProfiler::TimeRecord::frames_size, VA_SIZE_0);
 		const float steps_x = (end_x - start_x) / CTimeProfiler::TimeRecord::frames_size;
 		for (size_t a=0; a < CTimeProfiler::TimeRecord::frames_size; ++a) {
 			// profile runtime; eg 0.5f means: uses 50% of a CPU (during that frame)
@@ -345,7 +345,7 @@ static void DrawProfiler()
 			const float p = pi->second.frames[a].toSecsf() * GAME_SPEED;
 			const float x = start_x + (a * steps_x);
 			const float y = 0.02f + (p * 0.96f);
-			va->AddVertex0(x, y, 0.0f);
+			va->AddVertexQ0(x, y, 0.0f);
 		}
 
 		glColorf3((float3)pi->second.color);
@@ -359,11 +359,11 @@ static void DrawInfoText()
 {
 	// background
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-		va->AddVertex0(0.01f - 10 * globalRendering->pixelX, 0.02f - 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(0.01f - 10 * globalRendering->pixelX, 0.16f + 20 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(start_x - 0.05f + 10 * globalRendering->pixelX, 0.16f + 20 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(start_x - 0.05f + 10 * globalRendering->pixelX, 0.02f - 10 * globalRendering->pixelY, 0.0f);
+	va->Initialize(4, VA_SIZE_0);
+		va->AddVertexQ0(0.01f - 10 * globalRendering->pixelX, 0.02f - 10 * globalRendering->pixelY, 0.0f);
+		va->AddVertexQ0(0.01f - 10 * globalRendering->pixelX, 0.16f + 20 * globalRendering->pixelY, 0.0f);
+		va->AddVertexQ0(start_x - 0.05f + 10 * globalRendering->pixelX, 0.16f + 20 * globalRendering->pixelY, 0.0f);
+		va->AddVertexQ0(start_x - 0.05f + 10 * globalRendering->pixelX, 0.02f - 10 * globalRendering->pixelY, 0.0f);
 	glColor4f(0.0f,0.0f,0.0f, 0.5f);
 	va->DrawArray0(GL_QUADS);
 

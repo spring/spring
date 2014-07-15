@@ -1,5 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#if (0 == 0)
+	#include "StreamBuffer.h"
+#else
 #ifndef VERTEXARRAY_H
 #define VERTEXARRAY_H
 
@@ -167,3 +170,4 @@ protected:
 #include "VertexArray.inl"
 
 #endif /* VERTEXARRAY_H */
+#endif

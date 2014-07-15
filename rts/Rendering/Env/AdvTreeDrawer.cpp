@@ -20,6 +20,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "System/Matrix44f.h"
+#include "System/Exceptions.h"
 
 static const float TEX_LEAF_START_Y1 = 0.001f;
 static const float TEX_LEAF_END_Y1   = 0.124f;
@@ -329,6 +330,9 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 	const int treesX = td->treesX;
 	ITreeDrawer::TreeSquareStruct* tss = &td->trees[(y * treesX) + x];
 
+	if (tss->trees.empty())
+		return;
+
 	if ((abs(cy - y) <= 2) && (abs(cx - x) <= 2) && drawDetailed) {
 		// skip the closest squares
 		return;
@@ -351,8 +355,7 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 			tss->dispList = glGenLists(1);
 
 			CVertexArray* va = GetVertexArray();
-			va->Initialize();
-			va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
+			va->Initialize(12 * tss->trees.size(), VA_SIZE_T);
 
 			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &ti->second;
@@ -391,8 +394,7 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 				tss->farDispList = glGenLists(1);
 
 			CVertexArray* va = GetVertexArray();
-			va->Initialize();
-			va->EnlargeArrays(4 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
+			va->Initialize(4 * tss->trees.size(), VA_SIZE_T);
 			tss->viewVector = dif;
 
 			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
@@ -547,7 +549,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 		CVertexArray* va = GetVertexArray();
-		va->Initialize();
+		va->Initialize(VA_SIZE_T);
 
 		static FadeTree fadeTrees[3000];
 		FadeTree* pFT = fadeTrees;
@@ -683,8 +685,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 				continue;
 
 			va = GetVertexArray();
-			va->Initialize();
-			va->CheckInitSize(12 * VA_SIZE_T);
+			va->Initialize(12, VA_SIZE_T);
 
 			CAdvTreeDrawer::DrawTreeVertex(va, pFTree->pos, pFTree->type * 0.125f, pFTree->deltaY, false);
 
@@ -768,6 +769,9 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 	const int treesX = td->treesX;
 	ITreeDrawer::TreeSquareStruct* tss = &td->trees[(y * treesX) + x];
 
+	if (tss->trees.empty())
+		return;
+
 	if ((abs(cy - y) <= 2) && (abs(cx - x) <= 2) && drawDetailed) {
 		// skip the closest squares
 		return;
@@ -790,8 +794,7 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 			tss->dispList = glGenLists(1);
 
 			CVertexArray* va = GetVertexArray();
-			va->Initialize();
-			va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
+			va->Initialize(12 * tss->trees.size(), VA_SIZE_T);
 
 			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &ti->second;
@@ -830,8 +833,7 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 				tss->farDispList = glGenLists(1);
 
 			CVertexArray* va = GetVertexArray();
-			va->Initialize();
-			va->EnlargeArrays(4 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
+			va->Initialize(4 * tss->trees.size(), VA_SIZE_T);
 			tss->viewVector = dif;
 
 			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
@@ -927,7 +929,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 		CVertexArray* va = GetVertexArray();
-		va->Initialize();
+		va->Initialize(VA_SIZE_T);
 
 		static FadeTree fadeTrees[3000];
 		FadeTree* pFT = fadeTrees;
@@ -1046,8 +1048,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 				continue;
 
 			va = GetVertexArray();
-			va->Initialize();
-			va->CheckInitSize(12 * VA_SIZE_T);
+			va->Initialize(12, VA_SIZE_T);
 
 			CAdvTreeDrawer::DrawTreeVertex(va, pFTree->pos, pFTree->type * 0.125f, pFTree->deltaY, false);
 

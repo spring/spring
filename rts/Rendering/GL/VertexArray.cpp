@@ -4,6 +4,8 @@
 
 #include "VertexArray.h"
 
+#ifdef VERTEXARRAY_H
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -431,3 +433,4 @@ void CVertexArray::EnlargeStripArray()
 	stripArraySize = stripArray + newsize;
 	stripArrayPos = stripArray + pos;
 }
+#endif

@@ -328,7 +328,7 @@ void CEndGameBox::Draw()
 
 		glBindTexture(GL_TEXTURE_2D, graphTex);
 		CVertexArray* va=GetVertexArray();
-		va->Initialize();
+		va->Initialize(4, VA_SIZE_T);
 
 		va->AddVertexT(float3(box.x1+0.15f, box.y1+0.08f, 0), 0, 0);
 		va->AddVertexT(float3(box.x1+0.69f, box.y1+0.08f, 0), 4, 0);
@@ -344,7 +344,7 @@ void CEndGameBox::Draw()
 			glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
 			glDisable(GL_TEXTURE_2D);
 			CVertexArray* va = GetVertexArray();
-			va->Initialize();
+			va->Initialize(4, VA_SIZE_T);
 
 			va->AddVertex0(float3(box.x1 + 0.01f, box.y1 + 0.55f - (sel * 0.02f)         , 0));
 			va->AddVertex0(float3(box.x1 + 0.01f, box.y1 + 0.55f - (sel * 0.02f) + 0.02f , 0));

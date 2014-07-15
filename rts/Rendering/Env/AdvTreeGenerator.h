@@ -20,8 +20,6 @@ public:
 	CAdvTreeGenerator();
 	virtual ~CAdvTreeGenerator();
 
-	void Draw() const;
-
 	GLuint barkTex;
 	GLuint farTex[2];
 	unsigned int leafDL;

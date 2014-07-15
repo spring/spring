@@ -171,10 +171,9 @@ void CAdvWater::Draw(bool useBlending)
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1, -forward.x, forward.z, 0, 0);
 
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(5*numDivs*(numDivs + 1)*2, 5*numDivs, VA_SIZE_TC); //! alloc room for all vertexes and strips
+	va->Initialize(5*numDivs*(numDivs + 1)*2, VA_SIZE_TC);
 	float3 dir, zpos;
-	for (int a = 0; a < 5; ++a) { //! CAUTION: loop count must match EnlargeArrays above
+	for (int a = 0; a < 5; ++a) { //! CAUTION: loop count must match Initialize above
 		bool maxReached = false;
 		for (int y = 0; y < numDivs; ++y) {
 			dir = base;
@@ -186,7 +185,7 @@ void CAdvWater::Draw(bool useBlending)
 			}
 
 			xbase = base;
-			for (int x = 0; x < numDivs + 1; ++x) { //! CAUTION: loop count must match EnlargeArrays above
+			for (int x = 0; x < numDivs + 1; ++x) { //! CAUTION: loop count must match Initialize above
 				dir = xbase + dv;
 				dir.ANormalize();
 				zpos = camera->GetPos() + dir*(camera->GetPos().y / -dir.y);
@@ -254,8 +253,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	glColor3f(0.2f, 0.2f, 0.2f);
 
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(12, 0, VA_SIZE_T);
+	va->Initialize(12, VA_SIZE_T);
 
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[0]);
 
@@ -277,7 +275,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	va->DrawArrayT(GL_QUADS);
 
 	va = GetVertexArray();
-	va->Initialize();
+	va->Initialize(4, VA_SIZE_T);
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
 
 	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0036f);
@@ -288,7 +286,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	va->DrawArrayT(GL_QUADS);
 
 	va = GetVertexArray();
-	va->Initialize();
+	va->Initialize(4, VA_SIZE_T);
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
 
 	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0082f);

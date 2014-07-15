@@ -13,14 +13,14 @@
 static void defSurfaceCircle(const float3& center, float radius, unsigned int res)
 {
 	CVertexArray* va=GetVertexArray();
-	va->Initialize();
+	va->Initialize(res, VA_SIZE_0);
 	for (unsigned int i = 0; i < res; ++i) {
 		const float radians = (2.0f * PI) * (float)i / (float)res;
 		float3 pos;
 		pos.x = center.x + (fastmath::sin(radians) * radius);
 		pos.z = center.z + (fastmath::cos(radians) * radius);
 		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + 5.0f;
-		va->AddVertex0(pos);
+		va->AddVertexQ0(pos);
 	}
 	va->DrawArray0(GL_LINE_LOOP);
 }
@@ -34,11 +34,11 @@ static void defSurfaceSquare(const float3& center, float xsize, float zsize)
 	const float3 p3 = center + float3(-xsize, 0.0f,  zsize);
 
 	CVertexArray* va=GetVertexArray();
-	va->Initialize();
-		va->AddVertex0(p0.x, CGround::GetHeightAboveWater(p0.x, p0.z, false), p0.z);
-		va->AddVertex0(p1.x, CGround::GetHeightAboveWater(p1.x, p1.z, false), p1.z);
-		va->AddVertex0(p2.x, CGround::GetHeightAboveWater(p2.x, p2.z, false), p2.z);
-		va->AddVertex0(p3.x, CGround::GetHeightAboveWater(p3.x, p3.z, false), p3.z);
+	va->Initialize(4, VA_SIZE_0);
+		va->AddVertexQ0(p0.x, CGround::GetHeightAboveWater(p0.x, p0.z, false), p0.z);
+		va->AddVertexQ0(p1.x, CGround::GetHeightAboveWater(p1.x, p1.z, false), p1.z);
+		va->AddVertexQ0(p2.x, CGround::GetHeightAboveWater(p2.x, p2.z, false), p2.z);
+		va->AddVertexQ0(p3.x, CGround::GetHeightAboveWater(p3.x, p3.z, false), p3.z);
 	va->DrawArray0(GL_LINE_LOOP);
 }
 
@@ -69,8 +69,7 @@ void glBallisticCircle(const float3& center, const float radius,
 	resolution *= 2;
 	rdiv *= 1;
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(resolution, 0, VA_SIZE_0);
+	va->Initialize(resolution, VA_SIZE_0);
 
 	float3* vertices = va->GetTypedVertexArray<float3>(resolution);
 

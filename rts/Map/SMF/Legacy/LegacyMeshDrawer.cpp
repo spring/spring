@@ -167,7 +167,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 	const float cy2 = cam2->GetPos().z / SQUARE_SIZE;
 
 	for (int btx = sx; btx < ex; ++btx) {
-		ma->Initialize();
+		ma->Initialize(VA_SIZE_0);
 
 		for (int lod = 1; lod < neededLod; lod <<= 1) {
 			float oldcamxpart = 0.0f;
@@ -234,7 +234,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 				int yhlod = y + hlod;
 				int nloop = (xe - xs) / lod + 1;
 
-				ma->EnlargeArrays(52 * nloop);
+				ma->EnlargeArrays(52 * nloop, 0, VA_SIZE_0);
 
 				int yhdx = y * smfReadMap->heightMapSizeX;
 				int ylhdx = yhdx + lod * smfReadMap->heightMapSizeX;
@@ -395,7 +395,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 			int nloop = (yed - yst) / lod + 1;
 
 			if (nloop > 0)
-				ma->EnlargeArrays(8 * nloop);
+				ma->EnlargeArrays(8 * nloop, 0, VA_SIZE_0);
 
 			//! rita yttre begr?snings yta mot n?ta lod
 			if (maxlx < maxtx && maxlx >= mintx) {
@@ -461,7 +461,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 					int nloop = (xe - xs) / lod + 2; //! one extra for if statment
 					int ylhdx = (y + lod) * smfReadMap->heightMapSizeX;
 
-					ma->EnlargeArrays(2 * nloop);
+					ma->EnlargeArrays(2 * nloop, 0, VA_SIZE_0);
 
 					if (x % dlod) {
 						int idx2 = CLAMP(ylhdx + x), idx2PLOD = CLAMP(idx2 + lod), idx2MLOD = CLAMP(idx2 - lod);
@@ -499,7 +499,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 					int yhdx = y * smfReadMap->heightMapSizeX;
 					int nloop = (xe - xs) / lod + 2; //! one extra for if statment
 
-					ma->EnlargeArrays(2 * nloop);
+					ma->EnlargeArrays(2 * nloop, 0, VA_SIZE_0);
 
 					if (x % dlod) {
 						int idx1 = CLAMP(yhdx + x), idx1PLOD = CLAMP(idx1 + lod), idx1MLOD = CLAMP(idx1 - lod);
@@ -584,7 +584,7 @@ void CLegacyMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 
 void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 	CVertexArray* ma = GetVertexArray();
-	ma->Initialize();
+	ma->Initialize(VA_SIZE_0);
 
 	bool inStrip = false;
 	int x,y;
@@ -652,7 +652,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 		int ydx = y * smfReadMap->heightMapSizeX;
 		int nloop = (xe - xs) / lod + 1;
 
-		ma->EnlargeArrays(52 * nloop);
+		ma->EnlargeArrays(52 * nloop, 0, VA_SIZE_0);
 
 		for (x = xs; x < xe; x += lod) {
 			int xlod = x + lod;
@@ -786,7 +786,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 	int yst = std::max(ystart - lod, minty);
 	int yed = std::min(yend + lod, maxty);
 	int nloop = (yed - yst) / lod + 1;
-	ma->EnlargeArrays(8 * nloop);
+	ma->EnlargeArrays(8 * nloop, 0, VA_SIZE_0);
 
 	//!rita yttre begr?snings yta mot n?ta lod
 	if (maxlx < maxtx && maxlx >= mintx) {
@@ -842,7 +842,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 			const int ydx = y * smfReadMap->heightMapSizeX;
 			const int nloop = (xe - xs) / lod + 2; //! two extra for if statment
 
-			ma->EnlargeArrays(2 * nloop);
+			ma->EnlargeArrays(2 * nloop, 0, VA_SIZE_0);
 
 			if (x % dlod) {
 				const int ylhdx = ydx + x + lhdx;
@@ -879,7 +879,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 			const int ydx = y * smfReadMap->heightMapSizeX;
 			const int nloop = (xe - xs) / lod + 2; //! two extra for if statment
 
-			ma->EnlargeArrays(2 * nloop);
+			ma->EnlargeArrays(2 * nloop, 0, VA_SIZE_0);
 
 			if (x % dlod) {
 				const int yhdx = ydx + x;

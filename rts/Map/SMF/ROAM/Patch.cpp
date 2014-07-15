@@ -620,7 +620,7 @@ void Patch::RecursBorderRender(CVertexArray* va, TriTreeNode* const& tri, const 
 
 void Patch::GenerateBorderIndices(CVertexArray* va)
 {
-	va->Initialize();
+	va->Initialize(VA_SIZE_C);
 
 	const bool isLeftBorder   = !m_BaseLeft.LeftNeighbor;
 	const bool isBottomBorder = !m_BaseRight.RightNeighbor;

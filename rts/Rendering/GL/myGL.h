@@ -5,21 +5,20 @@
 
 #define GLEW_STATIC
 #ifndef NOMINMAX
-#define NOMINMAX
+	#define NOMINMAX
 #endif
 
-#include <string>
-#if       defined(HEADLESS)
+#ifdef HEADLESS
 	#include "lib/headlessStubs/glewstub.h"
 #else
 	#include <GL/glew.h>
-#endif // defined(HEADLESS)
+#endif
 
-// includes boost now!
+#include <string>
 #include "System/float3.h"
 
 
-#if       defined(HEADLESS)
+#ifdef HEADLESS
 	// All OpenGL functions should always exists on HEADLESS.
 	// If one does not, we should crash, and it has to be added to glstub.c.
 	// No runtime check should be performed, or it can be optimized away
@@ -29,7 +28,7 @@
 #else
 	// Check if the functions address is non-NULL.
 	#define IS_GL_FUNCTION_AVAILABLE(functionName) (functionName != NULL)
-#endif // defined(HEADLESS)
+#endif
 
 
 inline void glVertexf3(const float3& v)    { glVertex3f(v.x, v.y, v.z); }

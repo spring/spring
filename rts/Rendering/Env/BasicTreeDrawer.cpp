@@ -13,6 +13,8 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "System/Log/ILog.h"
+#include "System/Exceptions.h"
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -279,8 +281,7 @@ void CBasicTreeSquareDrawer::DrawQuad(int x, int y)
 			tss->dispList = glGenLists(1);
 
 			va = GetVertexArray();
-			va->Initialize();
-			va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
+			va->Initialize(12 * tss->trees.size(), VA_SIZE_T);
 
 			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &ti->second;
@@ -314,8 +315,7 @@ void CBasicTreeSquareDrawer::DrawQuad(int x, int y)
 				tss->farDispList = glGenLists(1);
 
 			va = GetVertexArray();
-			va->Initialize();
-			va->EnlargeArrays(4 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
+			va->Initialize(4 * tss->trees.size(), VA_SIZE_T);
 
 			tss->viewVector = dif;
 

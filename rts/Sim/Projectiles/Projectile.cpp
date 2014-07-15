@@ -198,7 +198,7 @@ int CProjectile::DrawArray()
 	const int idx = (va->drawIndex() / 24);
 
 	va = GetVertexArray();
-	va->Initialize();
+	va->Initialize(VA_SIZE_TC);
 	inArray = false;
 
 	return idx;

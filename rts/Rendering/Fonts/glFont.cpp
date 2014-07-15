@@ -45,9 +45,6 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 , autoOutlineColor(true)
 , setColor(false)
 {
-	va  = new CVertexArray();
-	va2 = new CVertexArray();
-
 	textColor    = white;
 	outlineColor = darkOutline;
 }
@@ -66,8 +63,6 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 
 CglFont::~CglFont()
 {
-	delete va;
-	delete va2;
 }
 
 
@@ -444,8 +439,10 @@ void CglFont::Begin(const bool immediate, const bool resetColors)
 
 	inBeginEnd = true;
 
-	va->Initialize();
-	va2->Initialize();
+	va = GetVertexArray();
+	va2 = GetVertexArray();
+	va->Initialize(VA_SIZE_2DT);
+	va2->Initialize(VA_SIZE_2DT);
 	stripTextColors.clear();
 	stripOutlineColors.clear();
 	stripTextColors.push_back(textColor);
@@ -492,7 +489,7 @@ void CglFont::End()
 	if (va2->drawIndex() > 0) {
 		if (stripOutlineColors.size() > 1) {
 			ColorMap::iterator sci = stripOutlineColors.begin();
-			va2->DrawArray2dT(GL_QUADS,TextStripCallback,&sci);
+			va2->DrawArray2dT(GL_QUADS, TextStripCallback, &sci);
 		} else {
 			glColor4fv(outlineColor);
 			va2->DrawArray2dT(GL_QUADS);
@@ -506,6 +503,9 @@ void CglFont::End()
 		if (setColor) glColor4fv(textColor);
 		va->DrawArray2dT(GL_QUADS);
 	}
+
+	va = nullptr;
+	va2 = nullptr;
 
 	// pop texture matrix
 	glMatrixMode(GL_TEXTURE);
