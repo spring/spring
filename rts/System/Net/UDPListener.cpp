@@ -42,7 +42,7 @@ UDPListener::UDPListener(int port, const std::string& ip)
 	}
 
 	if (IsAcceptingConnections()) {
-		LOG("[UDPListener] successfully bound socket on port %i", port);
+		LOG("[UDPListener] successfully bound socket on port %i", socket->local_endpoint().port());
 	} else {
 		throw network_error(err);
 	}
@@ -56,7 +56,7 @@ std::string UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::s
 		boost::system::error_code err;
 
 		if ((port < 0) || (port > 65535)) {
-			throw std::range_error("Port is out of range [1, 65535]: " + IntToString(port));
+			throw std::range_error("Port is out of range [0, 65535]: " + IntToString(port));
 		}
 
 		socket->reset(new ip::udp::socket(netservice));
