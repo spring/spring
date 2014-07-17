@@ -55,7 +55,7 @@ std::string UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::s
 	try {
 		boost::system::error_code err;
 
-		if ((port <= 0) || (port > 65535)) {
+		if ((port < 0) || (port > 65535)) {
 			throw std::range_error("Port is out of range [1, 65535]: " + IntToString(port));
 		}
 
