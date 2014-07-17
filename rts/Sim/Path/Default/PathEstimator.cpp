@@ -891,7 +891,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 	char hashString[64] = {0};
 
 	sprintf(hashString, "%u", hash);
-	LOG("[PathEstimator::%s] hash=%s\n", __FUNCTION__, hashString);
+	LOG("[PathEstimator::%s] hash=%s", __FUNCTION__, hashString);
 
 	std::string filename = GetPathCacheDir() + map + hashString + "." + cacheFileName + ".zip";
 	if (!FileSystem::FileExists(filename))
@@ -964,7 +964,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 	char hashString[64] = {0};
 
 	sprintf(hashString, "%u", hash);
-	LOG("[PathEstimator::%s] hash=%s\n", __FUNCTION__, hashString);
+	LOG("[PathEstimator::%s] hash=%s", __FUNCTION__, hashString);
 
 	const std::string filename = GetPathCacheDir() + map + hashString + "." + cacheFileName + ".zip";
 
