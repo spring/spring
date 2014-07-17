@@ -221,7 +221,7 @@ void VBO::New(GLsizeiptr _size, GLenum usage, const void* data_)
 
 #ifdef GLEW_ARB_buffer_storage
 		if (immutableStorage) {
-			usage = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_DYNAMIC_STORAGE_BIT;
+			usage = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_CLIENT_STORAGE_BIT;
 			glBufferStorage(curBoundTarget, size, data_, usage);
 		} else
 #endif
