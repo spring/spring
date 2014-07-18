@@ -445,20 +445,19 @@ bool CStrafeAirMoveType::Update()
 
 			const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
 
-			if (con.forward || con.back || con.left || con.right) {
-				float aileron = 0.0f;
-				float elevator = 0.0f;
+			float aileron = 0.0f;
+			float elevator = 0.0f;
 
-				if (con.forward) { elevator -= 1.0f; }
-				if (con.back   ) { elevator += 1.0f; }
-				if (con.right  ) { aileron  += 1.0f; }
-				if (con.left   ) { aileron  -= 1.0f; }
+			if (con.forward) elevator -= 1.0f;
+			if (con.back   ) elevator += 1.0f;
+			if (con.right  ) aileron  += 1.0f;
+			if (con.left   ) aileron  -= 1.0f;
 
-				UpdateAirPhysics(0.0f, aileron, elevator, 1.0f, owner->frontdir);
-				maneuverState = MANEUVER_FLY_STRAIGHT;
+			UpdateAirPhysics(0.0f, aileron, elevator, 1.0f, owner->frontdir);
+			maneuverState = MANEUVER_FLY_STRAIGHT;
 
-				return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
-			}
+			return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
+
 		}
 
 		if (reservedPad != NULL) {
