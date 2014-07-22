@@ -169,8 +169,9 @@ void CInfoConsole::RecordLogMessage(const std::string& section, int level,
 
 	if (rawData.size() > maxRawLines) {
 		rawData.pop_front();
-	} else {
-		newLines++;
+	}
+	if (newLines < maxRawLines) {
+		++newLines;
 	}
 	rawData.emplace_back(text, section, level, rawId++);
 
