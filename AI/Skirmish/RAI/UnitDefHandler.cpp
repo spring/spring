@@ -592,19 +592,19 @@ void sRAIUnitDef::SetBestWeaponEff(sWeaponEfficiency *we, int type, float MaxFir
 
 // ------------------------------------------------------------------------------------------------
 
-sRAIBuildList::sRAIBuildList(int MaxDefSize, cRAIUnitDefHandler *UDRHandler)
+sRAIBuildList::sRAIBuildList(int MaxDefSize, cRAIUnitDefHandler *UDRHandler):
+	Name("Undefined"),
+	UDR(UDRHandler),
+	UDef(new sRAIUnitDefBL*[MaxDefSize]),
+	UDefActive(0),
+	UDefActiveTemp(0),
+	UDefSize(0),
+	priority(-1),
+	minUnits(0),
+	unitsActive(0),
+	index(UDR->BLSize),
+	minEfficiency(1.0)
 {
-	UDR = UDRHandler;
-	index = UDR->BLSize;
-	UDef = new sRAIUnitDefBL*[MaxDefSize];
-	UDefSize=0;
-	UDefActive=0;
-	UDefActiveTemp=0;
-	priority=-1;
-	minUnits=0;
-	minEfficiency=1.0;
-	unitsActive=0;
-	Name = "Undefined";
 }
 
 sRAIBuildList::~sRAIBuildList()

@@ -21,9 +21,10 @@ CR_REG_METADATA(CLightningCannon,(
 	CR_RESERVED(8)
 ));
 
-CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
+CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)
+	: CWeapon(owner, def)
+	, color(def->visuals.color)
 {
-	color = def->visuals.color;
 }
 
 

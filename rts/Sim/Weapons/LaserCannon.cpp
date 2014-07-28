@@ -16,9 +16,10 @@ CR_REG_METADATA(CLaserCannon,(
 	CR_RESERVED(8)
 ));
 
-CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
+CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def)
+	: CWeapon(owner, def)
+	, color(def->visuals.color)
 {
-	color = def->visuals.color;
 }
 
 

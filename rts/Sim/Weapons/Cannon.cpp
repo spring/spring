@@ -28,12 +28,13 @@ CR_REG_METADATA(CCannon,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CCannon::CCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
+CCannon::CCannon(CUnit* owner, const WeaponDef* def)
+	: CWeapon(owner, def)
+	, rangeFactor(1.0f)
+	, lastDir(-UpVector)
+	, highTrajectory(false)
+	, gravity(0.0f)
 {
-	lastDir = -UpVector;
-	highTrajectory = false;
-	rangeFactor = 1.0f;
-	gravity = 0.0f;
 }
 
 void CCannon::Init()

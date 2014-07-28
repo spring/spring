@@ -79,10 +79,11 @@ float CBeamLaser::SweepFireState::GetTargetDist2D() const {
 
 
 
-CBeamLaser::CBeamLaser(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
+CBeamLaser::CBeamLaser(CUnit* owner, const WeaponDef* def)
+	: CWeapon(owner, def)
+	, color(def->visuals.color)
+	, salvoDamageMult(1.0f)
 {
-	color = def->visuals.color;
-	salvoDamageMult = 1.0f;
 	sweepFireState.SetDamageAllies((collisionFlags & Collision::NOFRIENDLIES) == 0);
 }
 

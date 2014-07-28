@@ -65,10 +65,10 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 	, wobbleTime(1)
 
 	, oldSmoke(pos)
+	, oldDir(dir)
 {
 	projectileType = WEAPON_MISSILE_PROJECTILE;
 
-	oldDir = dir;
 
 	if (model != NULL) {
 		SetRadiusAndHeight(model);
