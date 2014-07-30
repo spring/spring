@@ -60,17 +60,18 @@ CR_REG_METADATA(CStarburstProjectile, (
 
 
 CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWeaponProjectile(params)
-	, tracking(0.0f)
+	, tracking(params.tracking)
 	, maxGoodDif(0.0f)
 	, maxSpeed(0.0f)
 	, acceleration(0.f)
 	, areaOfEffect(0.0f)
-	, distanceToTravel(0.0f)
+	, distanceToTravel(params.maxRange)
 
 	, uptime(0)
 	, age(0)
 
 	, oldSmoke(pos)
+	, aimError(params.error)
 
 	, drawTrail(true)
 	, doturn(true)
@@ -82,9 +83,6 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 {
 	projectileType = WEAPON_STARBURST_PROJECTILE;
 
-	tracking = params.tracking;
-	distanceToTravel = params.maxRange;
-	aimError = params.error;
 
 	if (weaponDef != NULL) {
 		maxSpeed = weaponDef->projectilespeed;
