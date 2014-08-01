@@ -842,10 +842,10 @@ static inline void SafeStr(FILE* out, const char* prefix, const std::string& str
 	if (str.empty()) {
 		return;
 	}
-	if (str.find_first_of("\\\"") == std::string::npos) {
-		fprintf(out, "%s\"%s\",\n", prefix, str.c_str());
-	} else {
+	if ( (str.find_first_of("\\\"") != std::string::npos) || (str.find_first_of("\n") != std::string::npos )) {
 		fprintf(out, "%s[[%s]],\n", prefix, str.c_str());
+	} else {
+		fprintf(out, "%s\"%s\",\n", prefix, str.c_str());
 	}
 }
 
