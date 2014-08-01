@@ -265,6 +265,10 @@ ENDIF (UNIX AND NOT MINGW)
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.
 FIND_PACKAGE(SDL2)
+if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
+	message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
+endif()
+
 FIND_PACKAGE_STATIC(DevIL)
 IF    (PREFER_STATIC_LIBS)
 	# dependencies of DevIL
