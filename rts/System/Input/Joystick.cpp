@@ -41,6 +41,7 @@ void FreeJoystick() {
 }
 
 Joystick::Joystick()
+	: myStick(nullptr)
 {
 	const int numSticks = SDL_NumJoysticks();
 	LOG("Joysticks found: %i", numSticks);
