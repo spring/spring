@@ -151,21 +151,19 @@ CGameServer* gameServer = NULL;
 
 CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData* const newGameData, const CGameSetup* const mysetup)
 : setup(mysetup)
-, serverStartTime(spring_gettime())
-, lastUpdate(serverStartTime)
-, lastPlayerInfo(serverStartTime)
-, syncErrorFrame(0)
-, syncWarningFrame(0)
+, quitServer(false)
 , serverFrameNum(0)
+
+, serverStartTime(spring_gettime())
+, readyTime(spring_notime)
+, gameEndTime(spring_notime)
+, lastPlayerInfo(serverStartTime)
+, lastUpdate(serverStartTime)
 
 , modGameTime(0.0f)
 , gameTime(0.0f)
 , startTime(0.0f)
 , frameTimeLeft(0.0f)
-
-, quitServer(false)
-, hasLocalClient(false)
-, localClientNumber(0)
 
 , isPaused(false)
 , gamePausable(true)
@@ -173,19 +171,22 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 , userSpeedFactor(1.0f)
 , internalSpeed(1.0f)
 
+, medianCpu(0.0f)
+, medianPing(0)
+
+, cheating(false)
 , noHelperAIs(false)
 , canReconnect(false)
 , allowSpecDraw(true)
-, cheating(false)
+
+, syncErrorFrame(0)
+, syncWarningFrame(0)
+
+, hasLocalClient(false)
+, localClientNumber(0)
 
 , gameHasStarted(false)
 , generatedGameID(false)
-
-, gameEndTime(spring_notime)
-, readyTime(spring_notime)
-
-, medianCpu(0.0f)
-, medianPing(0)
 {
 	assert(setup);
 	curSpeedCtrl = configHandler->GetInt("SpeedControl");
