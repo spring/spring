@@ -85,8 +85,6 @@ public:
 
 	void CreateNewFrame(bool fromServerThread, bool fixedFrameTime);
 
-	bool WaitsOnCon() const;
-
 	void SetGamePausable(const bool arg);
 
 	bool HasStarted() const { return gameHasStarted; }
@@ -125,9 +123,10 @@ private:
 	/**
 	 * @brief drops chat or drawin messages for given playerNum
 	 */
-	void MutePlayer(const int playerNum, bool muteChat, bool muteDraw );
+	void MutePlayer(const int playerNum, bool muteChat, bool muteDraw);
 	void ResignPlayer(const int playerNum);
 
+	bool CheckPlayersPassword(const int playerNum, const std::string& pw) const;
 
 	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect = false, int netloss = 0);
 
@@ -227,13 +226,11 @@ private:
 	bool noHelperAIs;
 	bool canReconnect;
 	bool allowSpecDraw;
-	bool bypassScriptPasswordCheck;
+	bool allowSpecJoin;
 	bool whiteListAdditionalPlayers;
 
 	bool logInfoMessages;
-	bool logErrorMessages;
 	bool logDebugMessages;
-	bool logWarnMessages;
 
 	std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > > packetCache;
 
