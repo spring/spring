@@ -49,7 +49,9 @@ void WindowManagerHelper::SetIcon(const CBitmap* icon) {
 }
 
 void WindowManagerHelper::FreeIcon() {
-	SDL_SetWindowIcon(globalRendering->window, NULL);
+	if (globalRendering != NULL)
+		SDL_SetWindowIcon(globalRendering->window, NULL);
+
 	if (currentIcon != NULL) {
 		// release the old icon
 		unsigned char* pixelData = (unsigned char*) currentIcon->pixels;
