@@ -152,8 +152,7 @@ void CCregLoadSaveHandler::SaveGame(const std::string& file)
 /// this just loads the mapname and some other early stuff
 void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 {
-	const std::string file2 = FindSaveFile(file);
-	ifs = new std::ifstream(dataDirsAccess.LocateFile(file2).c_str(), std::ios::in|std::ios::binary);
+	ifs = new std::ifstream(dataDirsAccess.LocateFile(FindSaveFile(file)), std::ios::in|std::ios::binary);
 
 	// in case these contained values alredy
 	// (this is the case when loading a game through the spring menu eg),
