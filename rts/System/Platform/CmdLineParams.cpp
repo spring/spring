@@ -89,7 +89,13 @@ std::string CmdLineParams::GetCmdLine() const
 	std::string cmdLine = (argc > 0) ? UnQuote(argv[0]) : "unknown";
 	for (int i = 1; i < argc; ++i) {
 		cmdLine += " ";
-		cmdLine += argv[i];
+		if (argv[i][0] != '-') {
+			cmdLine += "\"";
+			cmdLine += argv[i];
+			cmdLine += "\"";
+		} else {
+			cmdLine += argv[i];
+		}
 	}
 	return cmdLine;
 }
