@@ -52,7 +52,6 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Objects/SolidObject.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Objects/SolidObjectDef.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Objects/WorldObject.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathAllocator.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathCache.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathEstimator.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathFinder.cpp"

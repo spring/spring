@@ -21,9 +21,6 @@ public:
 	CPathFinder();
 	~CPathFinder();
 
-	void* operator new(size_t size);
-	void operator delete(void* p, size_t size);
-
 	/**
 	 * Gives a detailed path from given starting location to target defined in
 	 * CPathFinderDef, whenever any such are available.

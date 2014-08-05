@@ -11,7 +11,6 @@
 
 #include "minizip/zip.h"
 
-#include "PathAllocator.h"
 #include "PathCache.h"
 #include "PathFinder.h"
 #include "PathFinderDef.h"
@@ -91,8 +90,6 @@ CPathEstimator::~CPathEstimator()
 	delete pathCache[1]; pathCache[1] = NULL;
 }
 
-void* CPathEstimator::operator new(size_t size) { return PathAllocator::Alloc(size); }
-void CPathEstimator::operator delete(void* p, size_t size) { PathAllocator::Free(p, size); }
 
 void CPathEstimator::InitDirectionVectorsTable() {
 	// these give the changes in (x, z) coors

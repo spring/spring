@@ -45,10 +45,6 @@ public:
 	CPathEstimator(CPathFinder*, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName);
 	~CPathEstimator();
 
-	void* operator new(size_t size);
-	void operator delete(void* p, size_t size);
-
-
 
 	/**
 	 * Returns an aproximate, low-resolution path from the starting location to

@@ -4,7 +4,6 @@
 #include <ostream>
 #include <deque>
 
-#include "PathAllocator.h"
 #include "PathFinder.h"
 #include "PathFinderDef.h"
 #include "PathFlowMap.hpp"
@@ -52,8 +51,6 @@ CPathFinder::~CPathFinder()
 	ResetSearch();
 }
 
-void* CPathFinder::operator new(size_t size) { return PathAllocator::Alloc(size); }
-void CPathFinder::operator delete(void* p, size_t size) { PathAllocator::Free(p, size); }
 
 void CPathFinder::InitDirectionVectorsTable() {
 	PF_DIRECTION_VECTORS_2D[PATHOPT_LEFT                ] = int2(+1 * PATH_NODE_SPACING,  0                    );
