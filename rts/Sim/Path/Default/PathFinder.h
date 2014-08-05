@@ -91,15 +91,14 @@ private:
 	 * Test the availability and value of a square,
 	 * and possibly add it to the queue of open squares.
 	 */
-	bool TestSquare(
+	bool TestBlock(
 		const MoveDef& moveDef,
 		const CPathFinderDef& pfDef,
 		const PathNode* parentSquare,
 		const CSolidObject* owner,
 		const unsigned int pathOptDir,
 		const unsigned int blockStatus,
-		const float posSpeedMod,
-		const float dirSpeedMod,
+		float speedMod,
 		bool withinConstraints,
 		bool synced
 	);
@@ -109,7 +108,7 @@ private:
 	 *
 	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
 	 */
-	void FinishSearch(const MoveDef&, IPath::Path&);
+	void FinishSearch(const MoveDef&, IPath::Path&) const;
 	/**
 	 * Adjusts the found path to cut corners where possible.
 	 */
@@ -119,7 +118,7 @@ private:
 		float3& nextPoint,
 		std::deque<int2>& previous,
 		int2 square
-	);
+	) const;
 
 
 	// copy of original starting position

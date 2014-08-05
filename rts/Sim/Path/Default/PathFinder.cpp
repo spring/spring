@@ -314,10 +314,9 @@ void CPathFinder::TestNeighborSquares(
 	bool synced
 ) {
 	unsigned int ngbBlockedState[PATH_DIRECTIONS];
-	unsigned int ngbAllowedState[PATH_DIRECTIONS];
-
+	bool ngbInSearchRadius[PATH_DIRECTIONS];
 	float ngbPosSpeedMod[PATH_DIRECTIONS];
-	float ngbDirSpeedMod[PATH_DIRECTIONS];
+	float ngbSpeedMod[PATH_DIRECTIONS];
 
 	// note: because the spacing between nodes is 2 (not 1) we
 	// must also make sure not to skip across any intermediate
@@ -331,10 +330,15 @@ void CPathFinder::TestNeighborSquares(
 		const int2 ngbSquareCoors = square->nodePos + PF_DIRECTION_VECTORS_2D[ PathDir2PathOpt(dir) ];
 
 		ngbBlockedState[dir] = CMoveMath::IsBlockedNoSpeedModCheck(moveDef, ngbSquareCoors.x, ngbSquareCoors.y, owner);
-		ngbAllowedState[dir] = pfDef.WithinConstraints(ngbSquareCoors.x, ngbSquareCoors.y);
+		ngbInSearchRadius[dir] = pfDef.WithinConstraints(ngbSquareCoors.x, ngbSquareCoors.y);
 
-		ngbPosSpeedMod[dir] = CMoveMath::GetPosSpeedMod(moveDef, ngbSquareCoors.x, ngbSquareCoors.y);
-		ngbDirSpeedMod[dir] = CMoveMath::GetPosSpeedMod(moveDef, ngbSquareCoors.x, ngbSquareCoors.y, PF_DIRECTION_VECTORS_3D[ PathDir2PathOpt(dir) ]);
+		// use the minimum of positional and directional speed-modifiers
+		// because this agrees more with current assumptions in movetype
+		// code and the estimators have no directional information
+		const float posSpeedMod = CMoveMath::GetPosSpeedMod(moveDef, ngbSquareCoors.x, ngbSquareCoors.y);
+		const float dirSpeedMod = CMoveMath::GetPosSpeedMod(moveDef, ngbSquareCoors.x, ngbSquareCoors.y, PF_DIRECTION_VECTORS_3D[ PathDir2PathOpt(dir) ]);
+		ngbPosSpeedMod[dir] = posSpeedMod;
+		ngbSpeedMod[dir] = std::min(posSpeedMod, dirSpeedMod);
 	}
 
 	// first test squares along the cardinal directions
@@ -344,10 +348,10 @@ void CPathFinder::TestNeighborSquares(
 
 		if ((ngbBlockedState[dir] & CMoveMath::BLOCK_STRUCTURE) != 0)
 			continue;
-		if (!ngbAllowedState[dir])
+		if (!ngbInSearchRadius[dir])
 			continue;
 
-		TestSquare(moveDef, pfDef, square, owner, opt, ngbBlockedState[dir], ngbAllowedState[dir], ngbPosSpeedMod[dir], ngbDirSpeedMod[dir], synced);
+		TestBlock(moveDef, pfDef, square, owner, opt, ngbBlockedState[dir], ngbSpeedMod[dir], ngbInSearchRadius[dir], synced);
 	}
 
 
@@ -371,15 +375,12 @@ void CPathFinder::TestNeighborSquares(
 	#define CAN_TEST_SQUARE(dir) ((ngbBlockedState[dir] & CMoveMath::BLOCK_STRUCTURE) == 0 && ngbPosSpeedMod[dir] != 0.0f)
 	#define TEST_DIAG_SQUARE(BASE_DIR_X, BASE_DIR_Y, BASE_DIR_XY)                                                        \
 		if (CAN_TEST_SQUARE(BASE_DIR_X) && CAN_TEST_SQUARE(BASE_DIR_Y) && CAN_TEST_SQUARE(BASE_DIR_XY)) {                \
-			if ((ngbAllowedState[BASE_DIR_X] && ngbAllowedState[BASE_DIR_Y]) || ngbAllowedState[BASE_DIR_XY]) {          \
+			if ((ngbInSearchRadius[BASE_DIR_X] && ngbInSearchRadius[BASE_DIR_Y]) || ngbInSearchRadius[BASE_DIR_XY]) {          \
 				const unsigned int ngbOpt = PathDir2PathOpt(BASE_DIR_XY);                                                \
 				const unsigned int ngbBlk = ngbBlockedState[BASE_DIR_XY];                                                \
-				const unsigned int ngbVis = ngbAllowedState[BASE_DIR_XY];                                                \
+				const unsigned int ngbVis = ngbInSearchRadius[BASE_DIR_XY];                                                \
                                                                                                                          \
-				const float ngbPosSpdMod = ngbPosSpeedMod[BASE_DIR_XY];                                                  \
-				const float ngbDirSpdMod = ngbDirSpeedMod[BASE_DIR_XY];                                                  \
-                                                                                                                         \
-				TestSquare(moveDef, pfDef, square, owner, ngbOpt, ngbBlk, ngbVis, ngbPosSpdMod, ngbDirSpdMod, synced);   \
+				TestBlock(moveDef, pfDef, square, owner, ngbOpt, ngbBlk, ngbSpeedMod[BASE_DIR_XY], ngbVis, synced);   \
 			}                                                                                                            \
 		}
 
@@ -395,15 +396,14 @@ void CPathFinder::TestNeighborSquares(
 	squareStates.nodeMask[square->nodeNum] |= PATHOPT_CLOSED;
 }
 
-bool CPathFinder::TestSquare(
+bool CPathFinder::TestBlock(
 	const MoveDef& moveDef,
 	const CPathFinderDef& pfDef,
 	const PathNode* parentSquare,
 	const CSolidObject* owner,
 	const unsigned int pathOptDir,
 	const unsigned int blockStatus,
-	const float posSpeedMod,
-	const float dirSpeedMod,
+	float speedMod,
 	bool withinConstraints,
 	bool synced
 ) {
@@ -433,12 +433,8 @@ bool CPathFinder::TestSquare(
 
 	// evaluate this square
 	//
-	// use the minimum of positional and directional speed-modifiers
-	// because this agrees more with current assumptions in movetype
-	// code and the estimators have no directional information
-	float squareSpeedMod = std::min(posSpeedMod, dirSpeedMod);
 
-	if (squareSpeedMod == 0.0f) {
+	if (speedMod == 0.0f) {
 		squareStates.nodeMask[sqrIdx] |= PATHOPT_FORBIDDEN;
 		dirtySquares.push_back(sqrIdx);
 		return false;
@@ -446,11 +442,11 @@ bool CPathFinder::TestSquare(
 
 	if (testMobile && moveDef.avoidMobilesOnPath && (blockStatus & squareMobileBlockBits)) {
 		if (blockStatus & CMoveMath::BLOCK_MOBILE_BUSY) {
-			squareSpeedMod *= moveDef.speedModMults[MoveDef::SPEEDMOD_MOBILE_BUSY_MULT];
+			speedMod *= moveDef.speedModMults[MoveDef::SPEEDMOD_MOBILE_BUSY_MULT];
 		} else if (blockStatus & CMoveMath::BLOCK_MOBILE) {
-			squareSpeedMod *= moveDef.speedModMults[MoveDef::SPEEDMOD_MOBILE_IDLE_MULT];
+			speedMod *= moveDef.speedModMults[MoveDef::SPEEDMOD_MOBILE_IDLE_MULT];
 		} else { // (blockStatus & CMoveMath::BLOCK_MOVING)
-			squareSpeedMod *= moveDef.speedModMults[MoveDef::SPEEDMOD_MOBILE_MOVE_MULT];
+			speedMod *= moveDef.speedModMults[MoveDef::SPEEDMOD_MOBILE_MOVE_MULT];
 		}
 	}
 
@@ -459,7 +455,7 @@ bool CPathFinder::TestSquare(
 
 	const float dirMoveCost = (1.0f + heatCost + flowCost) * PF_DIRECTION_COSTS[pathOptDir];
 	const float extraCost = squareStates.GetNodeExtraCost(square.x, square.y, synced);
-	const float nodeCost = (dirMoveCost / squareSpeedMod) + extraCost;
+	const float nodeCost = (dirMoveCost / speedMod) + extraCost;
 
 	const float gCost = parentSquare->gCost + nodeCost;      // g
 	const float hCost = pfDef.Heuristic(square.x, square.y); // h
@@ -503,7 +499,7 @@ bool CPathFinder::TestSquare(
 }
 
 
-void CPathFinder::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) {
+void CPathFinder::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) const {
 	// backtrack
 	if (needPath) {
 		int2 square;
@@ -568,7 +564,7 @@ static inline void FixupPath3Pts(const MoveDef& moveDef, float3& p1, float3& p2,
 
 
 void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath, float3& nextPoint,
-	std::deque<int2>& previous, int2 square)
+	std::deque<int2>& previous, int2 square) const
 {
 #define COSTMOD 1.39f	// (math::sqrt(2) + 1)/math::sqrt(3)
 #define TRYFIX3POINTS(dxtest, dytest)                                                            \
