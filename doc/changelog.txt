@@ -3,6 +3,7 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 -- 98.0 ---------------------------------------------------------
+
 Cmdline Arguments:
  - allow ./spring --game rapid://ba:stable --map DeltaSiegeDry
 
@@ -24,6 +25,10 @@ Lua:
 
 Pather:
  - modrules: add system.pathFinderUpdateRate tag
+
+Misc:
+ - add /set GrassDetail to console
+ - slightly speed up scanning for archives
 
 Bugfixes:
  - fix #4417 (spring spring://username:passwd@hostname:port doesn't work)
