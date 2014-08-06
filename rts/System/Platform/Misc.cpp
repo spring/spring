@@ -470,7 +470,7 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 	#define EXECVP execvp
 #endif
 	if (EXECVP(args[0].c_str(), &processArgs[0]) == -1) {
-		LOG("[%s] error: %s (%d)", __FUNCTION__, (execError = strerror(errno)).c_str(), errno);
+		LOG("[%s] error: \"%s\" %s (%d)", __FUNCTION__, args[0].c_str(), (execError = strerror(errno)).c_str(), errno);
 	}
 	#undef EXECVP
 
