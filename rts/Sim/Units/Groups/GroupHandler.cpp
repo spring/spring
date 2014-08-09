@@ -14,7 +14,6 @@
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
-#include "System/FileSystem/FileSystem.h"
 #include "System/EventHandler.h"
 
 std::vector<CGroupHandler*> grouphandlers;
