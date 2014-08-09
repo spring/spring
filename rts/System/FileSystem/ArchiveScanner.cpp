@@ -594,6 +594,10 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	auto& ad = ai.archiveData;
 	if (hasMapinfo) {
 		ScanArchiveLua(ar.get(), "mapinfo.lua", ai, error);
+		if (ad.GetMapFile().empty()) {
+			LOG_L(L_WARNING, "%s: mapfile isn't set in mapinfo.lua, please set it for faster loading!", fullName.c_str());
+			mapfile = SearchMapFile(ar.get(), error);
+		}
 	} else if (hasModinfo) {
 		ScanArchiveLua(ar.get(), "modinfo.lua", ai, error);
 	} else {
