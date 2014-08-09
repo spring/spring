@@ -58,7 +58,7 @@ static size_t GetNumThreads() {
 CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName):
 	BLOCK_SIZE(BSIZE),
 	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
-	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
+	BLOCKS_TO_UPDATE(modInfo.pfUpdateRate * SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
 	nbrOfBlocksX(gs->mapx / BLOCK_SIZE),
 	nbrOfBlocksZ(gs->mapy / BLOCK_SIZE),
 
@@ -455,7 +455,7 @@ void CPathEstimator::Update() {
 	pathCache[0]->Update();
 	pathCache[1]->Update();
 
-	const unsigned progressiveUpdates = updatedBlocks.size() * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f) * modInfo.pfUpdateRate;
+	const unsigned progressiveUpdates = updatedBlocks.size() * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f) * 0.007f;
 
 	static const unsigned MIN_BLOCKS_TO_UPDATE = std::max(BLOCKS_TO_UPDATE >> 1, 4U);
 	static const unsigned MAX_BLOCKS_TO_UPDATE = std::min(BLOCKS_TO_UPDATE << 1, MIN_BLOCKS_TO_UPDATE);
