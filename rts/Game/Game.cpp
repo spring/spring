@@ -530,6 +530,7 @@ void CGame::LoadGame(const std::string& mapName, bool threaded)
 	if (!gu->globalQuit) PostLoadRendering();
 	if (!gu->globalQuit) LoadInterface();
 	if (!gu->globalQuit) LoadLua();
+	if (!gu->globalQuit) InitSkirmishAIs();
 	if (!gu->globalQuit) LoadFinalize();
 
 	if (!gu->globalQuit && saveFile) {
@@ -820,6 +821,21 @@ void CGame::LoadLua()
 
 	delete defsParser;
 	defsParser = NULL;
+}
+
+void CGame::InitSkirmishAIs()
+{
+	if (gameSetup->hostDemo) {
+		return;
+	}
+
+	loadscreen->SetLoadMessage("Loading Skirmish AIs");
+
+	const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
+	CSkirmishAIHandler::id_ai_t::const_iterator ai;
+	for (ai = ais.begin(); ai != ais.end(); ++ai) {
+		skirmishAIHandler.CreateLocalSkirmishAI(ai->first);
+	}
 }
 
 void CGame::LoadFinalize()
@@ -1477,16 +1493,6 @@ void CGame::StartPlaying()
 				// any), silently generate one for him
 				// TODO: notify Lua of this also?
 				team->SetDefaultStartPos();
-			}
-
-			if (gameSetup->hostDemo)
-				continue;
-
-			// create a Skirmish AI if required
-			const CSkirmishAIHandler::ids_t& localAIs = skirmishAIHandler.GetSkirmishAIsInTeam(a, gu->myPlayerNum);
-
-			for (auto ai = localAIs.begin(); ai != localAIs.end(); ++ai) {
-				skirmishAIHandler.CreateLocalSkirmishAI(*ai);
 			}
 		}
 
