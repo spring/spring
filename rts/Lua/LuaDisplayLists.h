@@ -4,7 +4,7 @@
 #define LUA_DISPLAY_LISTS_H
 
 #include <vector>
-using std::vector;
+#include <map>
 
 #include "Rendering/GL/myGL.h"
 
@@ -82,8 +82,8 @@ class CLuaDisplayLists {
 			GLuint id;
 			MatrixStateData matData;
 		};
-		vector<DLdata> active;
-		vector<unsigned int> unused; // references slots in active
+		std::vector<DLdata> active;
+		std::vector<unsigned int> unused; // references slots in active
 };
 
 
