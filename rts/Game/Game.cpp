@@ -831,10 +831,11 @@ void CGame::InitSkirmishAIs()
 
 	loadscreen->SetLoadMessage("Loading Skirmish AIs");
 
-	const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
-	CSkirmishAIHandler::id_ai_t::const_iterator ai;
-	for (ai = ais.begin(); ai != ais.end(); ++ai) {
-		skirmishAIHandler.CreateLocalSkirmishAI(ai->first);
+	// create a Skirmish AI if required
+	const CSkirmishAIHandler::ids_t& localAIs = skirmishAIHandler.GetSkirmishAIsByPlayer(gu->myPlayerNum);
+
+	for (auto ai = localAIs.begin(); ai != localAIs.end(); ++ai) {
+		skirmishAIHandler.CreateLocalSkirmishAI(*ai);
 	}
 }
 
