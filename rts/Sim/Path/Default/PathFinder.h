@@ -61,9 +61,9 @@ public:
 
 	// size of the memory-region we hold allocated (excluding sizeof(*this))
 	// (PathManager stores HeatMap and FlowMap, so we do not need to add them)
-	unsigned int GetMemFootPrint() const { return (squareStates.GetMemFootPrint()); }
+	unsigned int GetMemFootPrint() const { return (blockStates.GetMemFootPrint()); }
 
-	PathNodeStateBuffer& GetNodeStateBuffer() { return squareStates; }
+	PathNodeStateBuffer& GetNodeStateBuffer() { return blockStates; }
 
 	static void InitDirectionVectorsTable();
 	static void InitDirectionCostsTable();
@@ -71,7 +71,7 @@ public:
 	static const   int2* GetDirectionVectorsTable2D();
 	static const float3* GetDirectionVectorsTable3D();
 
-private:
+protected: // IPathFinder impl
 	/// Clear things up from last search.
 	void ResetSearch();
 	/// Set up the starting point of the search.
@@ -79,14 +79,6 @@ private:
 	/// Performs the actual search.
 	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool peCall, bool synced);
 
-
-	void TestNeighborSquares(
-		const MoveDef& moveDef,
-		const CPathFinderDef& pfDef,
-		const PathNode* parentSquare,
-		const CSolidObject* owner,
-		bool synced
-	);
 	/**
 	 * Test the availability and value of a square,
 	 * and possibly add it to the queue of open squares.
@@ -109,6 +101,16 @@ private:
 	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
 	 */
 	void FinishSearch(const MoveDef&, IPath::Path&) const;
+
+private:
+	void TestNeighborSquares(
+		const MoveDef& moveDef,
+		const CPathFinderDef& pfDef,
+		const PathNode* parentSquare,
+		const CSolidObject* owner,
+		bool synced
+	);
+
 	/**
 	 * Adjusts the found path to cut corners where possible.
 	 */
@@ -124,24 +126,25 @@ private:
 	// copy of original starting position
 	float3 start;
 
-	unsigned int startxSqr;
-	unsigned int startzSqr;
-	unsigned int mStartSquareIdx;
-	unsigned int mGoalSquareIdx;                     ///< set during each search as the square closest to the goal
-	float mGoalHeuristic;                            ///< heuristic value of goalSquareIdx
-
 	bool exactPath;
 	bool testMobile;
 	bool needPath;
 
-	unsigned int maxOpenNodes;
-	unsigned int testedNodes;
+private: //IPathFinder stuff
+	int2 mStartBlock;
 
-	PathNodeBuffer openSquareBuffer;
-	PathNodeStateBuffer squareStates;
-	PathPriorityQueue openSquares;
+	unsigned int mStartBlockIdx;
+	unsigned int mGoalBlockIdx;  ///< set during each search as the square closest to the goal
+	float mGoalHeuristic;        ///< heuristic value of goalSquareIdx
 
-	std::vector<unsigned int> dirtySquares;         ///< Squares tested by search.
+	unsigned int maxBlocksToBeSearched;
+	unsigned int testedBlocks;
+
+	PathNodeBuffer openBlockBuffer;
+	PathNodeStateBuffer blockStates;
+	PathPriorityQueue openBlocks;
+
+	std::vector<unsigned int> dirtyBlocks;         ///< Squares tested by search.
 };
 
 #endif // PATH_FINDER_H
