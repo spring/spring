@@ -6,13 +6,9 @@
 #include "GroupHandler.h"
 #include "Group.h"
 #include "Game/SelectedUnitsHandler.h"
-#include "Game/UI/MouseHandler.h"
-#include "Game/Camera/CameraController.h"
 #include "Game/CameraHandler.h"
-#include "Sim/Units/Unit.h"
 #include "System/creg/STL_Set.h"
 #include "System/Log/ILog.h"
-#include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
 #include "System/EventHandler.h"
 

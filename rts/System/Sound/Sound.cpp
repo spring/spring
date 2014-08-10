@@ -334,7 +334,7 @@ void CSound::StartThread(int maxSounds)
 		if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
 		{
 			LOG("  Available Devices:");
-			const char* deviceSpecifier = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
+			const char* deviceSpecifier = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
 			while (*deviceSpecifier != '\0') {
 				LOG("              %s", deviceSpecifier);
 				while (*deviceSpecifier++ != '\0')

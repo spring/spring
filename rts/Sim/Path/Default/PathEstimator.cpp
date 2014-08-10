@@ -458,7 +458,7 @@ void CPathEstimator::Update() {
 	const unsigned progressiveUpdates = updatedBlocks.size() * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f) * 0.007f * modInfo.pfUpdateRate;
 
 	static const unsigned MIN_BLOCKS_TO_UPDATE = std::max(BLOCKS_TO_UPDATE >> 1, 4U);
-	static const unsigned MAX_BLOCKS_TO_UPDATE = std::min(BLOCKS_TO_UPDATE << 1, MIN_BLOCKS_TO_UPDATE);
+	static const unsigned MAX_BLOCKS_TO_UPDATE = std::max(BLOCKS_TO_UPDATE << 1, MIN_BLOCKS_TO_UPDATE);
 	const unsigned blocksToUpdate = Clamp(progressiveUpdates, MIN_BLOCKS_TO_UPDATE, MAX_BLOCKS_TO_UPDATE);
 
 	blockUpdatePenalty = std::max(0, blockUpdatePenalty - int(blocksToUpdate));

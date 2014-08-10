@@ -245,7 +245,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 		} break;
 
 		case CBaseGroundDrawer::drawPathCost: {
-			const PathNodeStateBuffer& maxResStates = pm->maxResPF->squareStates;
+			const PathNodeStateBuffer& maxResStates = pm->maxResPF->blockStates;
 			const PathNodeStateBuffer& medResStates = pm->medResPE->blockStates;
 			const PathNodeStateBuffer& lowResStates = pm->lowResPE->blockStates;
 
@@ -351,12 +351,12 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_LINES);
 
-	for (unsigned int idx = 0; idx < pf->openSquareBuffer.GetSize(); idx++) {
-		const PathNode* os = pf->openSquareBuffer.GetNode(idx);
+	for (unsigned int idx = 0; idx < pf->openBlockBuffer.GetSize(); idx++) {
+		const PathNode* os = pf->openBlockBuffer.GetNode(idx);
 		const int2 sqr = os->nodePos;
 		const int square = os->nodeNum;
 
-		if (pf->squareStates.nodeMask[square] & PATHOPT_START)
+		if (pf->blockStates.nodeMask[square] & PATHOPT_START)
 			continue;
 
 		float3 p1;
@@ -368,7 +368,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		if (!camera->InView(p1) && !camera->InView(p2))
 			continue;
 
-		const unsigned int dir = pf->squareStates.nodeMask[square] & PATHOPT_CARDINALS;
+		const unsigned int dir = pf->blockStates.nodeMask[square] & PATHOPT_CARDINALS;
 		const unsigned int obx = sqr.x - (CPathFinder::GetDirectionVectorsTable2D())[dir].x;
 		const unsigned int obz = sqr.y - (CPathFinder::GetDirectionVectorsTable2D())[dir].y;
 		/*

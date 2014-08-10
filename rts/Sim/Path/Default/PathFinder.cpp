@@ -32,17 +32,15 @@ static  float PF_DIRECTION_COSTS[PATH_DIRECTIONS << 1];
 
 CPathFinder::CPathFinder()
 	: start(ZeroVector)
-	, startxSqr(0)
-	, startzSqr(0)
-	, mStartSquareIdx(0)
-	, mGoalSquareIdx(0)
-	, mGoalHeuristic(0.0f)
 	, exactPath(false)
 	, testMobile(false)
 	, needPath(false)
-	, maxOpenNodes(0)
-	, testedNodes(0)
-	, squareStates(int2(gs->mapx, gs->mapy), int2(gs->mapx, gs->mapy))
+	, mStartBlockIdx(0)
+	, mGoalBlockIdx(0)
+	, mGoalHeuristic(0.0f)
+	, maxBlocksToBeSearched(0)
+	, testedBlocks(0)
+	, blockStates(int2(gs->mapx, gs->mapy), int2(gs->mapx, gs->mapy))
 {
 }
 
@@ -124,7 +122,7 @@ IPath::SearchResult CPathFinder::GetPath(
 	path.squares.clear();
 	path.pathCost = PATHCOST_INFINITY;
 
-	maxOpenNodes = std::min(MAX_SEARCHED_NODES_PF - 8U, maxNodes);
+	maxBlocksToBeSearched = std::min(MAX_SEARCHED_NODES_PF - 8U, maxNodes);
 
 	// if true, factor presence of mobile objects on squares into cost
 	this->testMobile = testMobile;
@@ -134,15 +132,13 @@ IPath::SearchResult CPathFinder::GetPath(
 	this->needPath = needPath;
 
 	start = startPos;
-
-	startxSqr = start.x / SQUARE_SIZE;
-	startzSqr = start.z / SQUARE_SIZE;
+	mStartBlock = int2(start.x / SQUARE_SIZE, start.z / SQUARE_SIZE);
 
 	// Clamp the start position
-	if (startxSqr >= gs->mapx) startxSqr = gs->mapxm1;
-	if (startzSqr >= gs->mapy) startzSqr = gs->mapym1;
+	if (mStartBlock.x >= gs->mapx) mStartBlock.x = gs->mapxm1;
+	if (mStartBlock.y >= gs->mapy) mStartBlock.y = gs->mapym1;
 
-	mStartSquareIdx = startxSqr + startzSqr * gs->mapx;
+	mStartBlockIdx = mStartBlock.x + mStartBlock.y * gs->mapx;
 
 	// Start up the search.
 	const IPath::SearchResult result = InitSearch(moveDef, pfDef, owner, peCall, synced);
@@ -153,16 +149,16 @@ IPath::SearchResult CPathFinder::GetPath(
 
 		if (LOG_IS_ENABLED(L_DEBUG)) {
 			LOG_L(L_DEBUG, "Path found.");
-			LOG_L(L_DEBUG, "Nodes tested: %u", testedNodes);
-			LOG_L(L_DEBUG, "Open squares: %u", openSquareBuffer.GetSize());
+			LOG_L(L_DEBUG, "Nodes tested: %u", testedBlocks);
+			LOG_L(L_DEBUG, "Open squares: %u", openBlockBuffer.GetSize());
 			LOG_L(L_DEBUG, "Path nodes: " _STPF_, path.path.size());
 			LOG_L(L_DEBUG, "Path cost: %f", path.pathCost);
 		}
 	} else {
 		if (LOG_IS_ENABLED(L_DEBUG)) {
 			LOG_L(L_DEBUG, "No path found!");
-			LOG_L(L_DEBUG, "Nodes tested: %u", testedNodes);
-			LOG_L(L_DEBUG, "Open squares: %u", openSquareBuffer.GetSize());
+			LOG_L(L_DEBUG, "Nodes tested: %u", testedBlocks);
+			LOG_L(L_DEBUG, "Open squares: %u", openBlockBuffer.GetSize());
 		}
 	}
 
@@ -216,7 +212,7 @@ IPath::SearchResult CPathFinder::InitSearch(
 	// NOTE:
 	//   if search starts on  odd-numbered square, only  odd-numbered nodes are explored
 	//   if search starts on even-numbered square, only even-numbered nodes are explored
-	const bool isStartGoal = pfDef.IsGoal(startxSqr, startzSqr);
+	const bool isStartGoal = pfDef.IsGoal(mStartBlock.x, mStartBlock.y);
 
 	// although our starting square may be inside the goal radius, the starting coordinate may be outside.
 	// in this case we do not want to return CantGetCloser, but instead a path to our starting square.
@@ -227,35 +223,35 @@ IPath::SearchResult CPathFinder::InitSearch(
 	ResetSearch();
 
 	// Marks and store the start-square.
-	squareStates.nodeMask[mStartSquareIdx] = (PATHOPT_START | PATHOPT_OPEN);
-	squareStates.fCost[mStartSquareIdx] = 0.0f;
-	squareStates.gCost[mStartSquareIdx] = 0.0f;
+	blockStates.nodeMask[mStartBlockIdx] = (PATHOPT_START | PATHOPT_OPEN);
+	blockStates.fCost[mStartBlockIdx] = 0.0f;
+	blockStates.gCost[mStartBlockIdx] = 0.0f;
 
-	squareStates.SetMaxCost(NODE_COST_F, 0.0f);
-	squareStates.SetMaxCost(NODE_COST_G, 0.0f);
+	blockStates.SetMaxCost(NODE_COST_F, 0.0f);
+	blockStates.SetMaxCost(NODE_COST_G, 0.0f);
 
-	dirtySquares.push_back(mStartSquareIdx);
+	dirtyBlocks.push_back(mStartBlockIdx);
 
 	// this is updated every square we get closer to our real goal (s.t. we
 	// always have waypoints to return even if we only find a partial path)
-	mGoalSquareIdx = mStartSquareIdx;
-	mGoalHeuristic = pfDef.Heuristic(startxSqr, startzSqr);
+	mGoalBlockIdx = mStartBlockIdx;
+	mGoalHeuristic = pfDef.Heuristic(mStartBlock.x, mStartBlock.y);
 
 	// add start-square to the queue
-	openSquareBuffer.SetSize(0);
-	PathNode* os = openSquareBuffer.GetNode(openSquareBuffer.GetSize());
+	openBlockBuffer.SetSize(0);
+	PathNode* os = openBlockBuffer.GetNode(openBlockBuffer.GetSize());
 		os->fCost     = 0.0f;
 		os->gCost     = 0.0f;
-		os->nodePos.x = startxSqr;
-		os->nodePos.y = startzSqr;
-		os->nodeNum   = mStartSquareIdx;
-	openSquares.push(os);
+		os->nodePos.x = mStartBlock.x;
+		os->nodePos.y = mStartBlock.y;
+		os->nodeNum   = mStartBlockIdx;
+	openBlocks.push(os);
 
 	// perform the search
 	IPath::SearchResult result = DoSearch(moveDef, pfDef, owner, peCall, synced);
 
 	// if no improvements are found, then return CantGetCloser instead
-	if ((mGoalSquareIdx == mStartSquareIdx && (!isStartGoal || pfDef.startInGoalRadius)) || mGoalSquareIdx == 0)
+	if ((mGoalBlockIdx == mStartBlockIdx && (!isStartGoal || pfDef.startInGoalRadius)) || mGoalBlockIdx == 0)
 		return IPath::CantGetCloser;
 
 	return result;
@@ -271,18 +267,18 @@ IPath::SearchResult CPathFinder::DoSearch(
 ) {
 	bool foundGoal = false;
 
-	while (!openSquares.empty() && (openSquareBuffer.GetSize() < maxOpenNodes)) {
+	while (!openBlocks.empty() && (openBlockBuffer.GetSize() < maxBlocksToBeSearched)) {
 		// Get the open square with lowest expected path-cost.
-		PathNode* openSquare = const_cast<PathNode*>(openSquares.top());
-		openSquares.pop();
+		PathNode* openSquare = const_cast<PathNode*>(openBlocks.top());
+		openBlocks.pop();
 
 		// check if this PathNode has become obsolete
-		if (squareStates.fCost[openSquare->nodeNum] != openSquare->fCost)
+		if (blockStates.fCost[openSquare->nodeNum] != openSquare->fCost)
 			continue;
 
 		// Check if the goal is reached.
 		if (pfDef.IsGoal(openSquare->nodePos.x, openSquare->nodePos.y)) {
-			mGoalSquareIdx = openSquare->nodeNum;
+			mGoalBlockIdx = openSquare->nodeNum;
 			mGoalHeuristic = 0.0f;
 			foundGoal = true;
 			break;
@@ -294,12 +290,12 @@ IPath::SearchResult CPathFinder::DoSearch(
 	if (foundGoal)
 		return IPath::Ok;
 
-	// could not reach goal within <maxOpenNodes> exploration limit
-	if (openSquareBuffer.GetSize() >= maxOpenNodes)
+	// could not reach goal within <maxBlocksToBeSearched> exploration limit
+	if (openBlockBuffer.GetSize() >= maxBlocksToBeSearched)
 		return IPath::GoalOutOfRange;
 
 	// could not reach goal from this starting position if nothing to left to explore
-	if (openSquares.empty())
+	if (openBlocks.empty())
 		return IPath::GoalOutOfRange;
 
 	// should be unreachable
@@ -393,7 +389,7 @@ void CPathFinder::TestNeighborSquares(
 	#undef CAN_TEST_SQUARE
 
 	// mark this square as closed
-	squareStates.nodeMask[square->nodeNum] |= PATHOPT_CLOSED;
+	blockStates.nodeMask[square->nodeNum] |= PATHOPT_CLOSED;
 }
 
 bool CPathFinder::TestBlock(
@@ -407,7 +403,7 @@ bool CPathFinder::TestBlock(
 	bool withinConstraints,
 	bool synced
 ) {
-	testedNodes++;
+	testedBlocks++;
 
 	const int2 square = parentSquare->nodePos + PF_DIRECTION_VECTORS_2D[pathOptDir];
 	const unsigned int sqrIdx = square.x + square.y * gs->mapx;
@@ -417,7 +413,7 @@ bool CPathFinder::TestBlock(
 	if (square.x >= gs->mapx || square.y >= gs->mapy) return false;
 
 	// check if the square is inaccessable
-	if (squareStates.nodeMask[sqrIdx] & (PATHOPT_CLOSED | PATHOPT_FORBIDDEN | PATHOPT_BLOCKED))
+	if (blockStates.nodeMask[sqrIdx] & (PATHOPT_CLOSED | PATHOPT_FORBIDDEN | PATHOPT_BLOCKED))
 		return false;
 
 	// caller has already tested for this
@@ -425,9 +421,9 @@ bool CPathFinder::TestBlock(
 
 	// check if square is outside search-constraint
 	// (this has already been done for open squares)
-	if ((squareStates.nodeMask[sqrIdx] & PATHOPT_OPEN) == 0 && !withinConstraints) {
-		squareStates.nodeMask[sqrIdx] |= PATHOPT_BLOCKED;
-		dirtySquares.push_back(sqrIdx);
+	if ((blockStates.nodeMask[sqrIdx] & PATHOPT_OPEN) == 0 && !withinConstraints) {
+		blockStates.nodeMask[sqrIdx] |= PATHOPT_BLOCKED;
+		dirtyBlocks.push_back(sqrIdx);
 		return false;
 	}
 
@@ -435,8 +431,8 @@ bool CPathFinder::TestBlock(
 	//
 
 	if (speedMod == 0.0f) {
-		squareStates.nodeMask[sqrIdx] |= PATHOPT_FORBIDDEN;
-		dirtySquares.push_back(sqrIdx);
+		blockStates.nodeMask[sqrIdx] |= PATHOPT_FORBIDDEN;
+		dirtyBlocks.push_back(sqrIdx);
 		return false;
 	}
 
@@ -454,7 +450,7 @@ bool CPathFinder::TestBlock(
 	const float flowCost = (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, pathOptDir);
 
 	const float dirMoveCost = (1.0f + heatCost + flowCost) * PF_DIRECTION_COSTS[pathOptDir];
-	const float extraCost = squareStates.GetNodeExtraCost(square.x, square.y, synced);
+	const float extraCost = blockStates.GetNodeExtraCost(square.x, square.y, synced);
 	const float nodeCost = (dirMoveCost / speedMod) + extraCost;
 
 	const float gCost = parentSquare->gCost + nodeCost;      // g
@@ -462,39 +458,39 @@ bool CPathFinder::TestBlock(
 	const float fCost = gCost + hCost;                       // f
 
 
-	if (squareStates.nodeMask[sqrIdx] & PATHOPT_OPEN) {
+	if (blockStates.nodeMask[sqrIdx] & PATHOPT_OPEN) {
 		// already in the open set, look for a cost-improvement
-		if (squareStates.fCost[sqrIdx] <= fCost)
+		if (blockStates.fCost[sqrIdx] <= fCost)
 			return true;
 
-		squareStates.nodeMask[sqrIdx] &= ~PATHOPT_CARDINALS;
+		blockStates.nodeMask[sqrIdx] &= ~PATHOPT_CARDINALS;
 	}
 
 	// if heuristic says this node is closer to goal than previous h-estimate, keep it
 	if (!exactPath && hCost < mGoalHeuristic) {
-		mGoalSquareIdx = sqrIdx;
+		mGoalBlockIdx = sqrIdx;
 		mGoalHeuristic = hCost;
 	}
 
 	// store and mark this square as open (expanded, but not yet pulled from pqueue)
-	openSquareBuffer.SetSize(openSquareBuffer.GetSize() + 1);
-	assert(openSquareBuffer.GetSize() < MAX_SEARCHED_NODES_PF);
+	openBlockBuffer.SetSize(openBlockBuffer.GetSize() + 1);
+	assert(openBlockBuffer.GetSize() < MAX_SEARCHED_NODES_PF);
 
-	PathNode* os = openSquareBuffer.GetNode(openSquareBuffer.GetSize());
+	PathNode* os = openBlockBuffer.GetNode(openBlockBuffer.GetSize());
 		os->fCost   = fCost;
 		os->gCost   = gCost;
 		os->nodePos = square;
 		os->nodeNum = sqrIdx;
-	openSquares.push(os);
+	openBlocks.push(os);
 
-	squareStates.SetMaxCost(NODE_COST_F, std::max(squareStates.GetMaxCost(NODE_COST_F), fCost));
-	squareStates.SetMaxCost(NODE_COST_G, std::max(squareStates.GetMaxCost(NODE_COST_G), gCost));
+	blockStates.SetMaxCost(NODE_COST_F, std::max(blockStates.GetMaxCost(NODE_COST_F), fCost));
+	blockStates.SetMaxCost(NODE_COST_G, std::max(blockStates.GetMaxCost(NODE_COST_G), gCost));
 
-	squareStates.fCost[sqrIdx] = os->fCost;
-	squareStates.gCost[sqrIdx] = os->gCost;
-	squareStates.nodeMask[sqrIdx] |= (PATHOPT_OPEN | pathOptDir);
+	blockStates.fCost[sqrIdx] = os->fCost;
+	blockStates.gCost[sqrIdx] = os->gCost;
+	blockStates.nodeMask[sqrIdx] |= (PATHOPT_OPEN | pathOptDir);
 
-	dirtySquares.push_back(sqrIdx);
+	dirtyBlocks.push_back(sqrIdx);
 	return true;
 }
 
@@ -503,8 +499,8 @@ void CPathFinder::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) c
 	// backtrack
 	if (needPath) {
 		int2 square;
-			square.x = mGoalSquareIdx % gs->mapx;
-			square.y = mGoalSquareIdx / gs->mapx;
+			square.x = mGoalBlockIdx % gs->mapx;
+			square.y = mGoalBlockIdx / gs->mapx;
 
 		// for path adjustment (cutting corners)
 		std::deque<int2> previous;
@@ -517,7 +513,7 @@ void CPathFinder::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) c
 		while (true) {
 			const int sqrIdx = square.y * gs->mapx + square.x;
 
-			if (squareStates.nodeMask[sqrIdx] & PATHOPT_START)
+			if (blockStates.nodeMask[sqrIdx] & PATHOPT_START)
 				break;
 
 			float3 cs;
@@ -534,8 +530,8 @@ void CPathFinder::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) c
 			previous.pop_front();
 			previous.push_back(square);
 
-			square.x -= PF_DIRECTION_VECTORS_2D[squareStates.nodeMask[sqrIdx] & PATHOPT_CARDINALS].x;
-			square.y -= PF_DIRECTION_VECTORS_2D[squareStates.nodeMask[sqrIdx] & PATHOPT_CARDINALS].y;
+			square.x -= PF_DIRECTION_VECTORS_2D[blockStates.nodeMask[sqrIdx] & PATHOPT_CARDINALS].x;
+			square.y -= PF_DIRECTION_VECTORS_2D[blockStates.nodeMask[sqrIdx] & PATHOPT_CARDINALS].y;
 		}
 
 		if (!foundPath.path.empty()) {
@@ -544,7 +540,7 @@ void CPathFinder::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) c
 	}
 
 	// Adds the cost of the path.
-	foundPath.pathCost = squareStates.fCost[mGoalSquareIdx];
+	foundPath.pathCost = blockStates.fCost[mGoalBlockIdx];
 }
 
 /** Helper function for AdjustFoundPath */
@@ -571,8 +567,8 @@ void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath
 	do {                                                                                         \
 		int testsqr = square.x + (dxtest) + (square.y + (dytest)) * gs->mapx;                    \
 		int p2sqr = previous[2].x + previous[2].y * gs->mapx;                                    \
-		if (!(squareStates.nodeMask[testsqr] & (PATHOPT_BLOCKED | PATHOPT_FORBIDDEN)) &&         \
-			 squareStates.fCost[testsqr] <= (COSTMOD) * squareStates.fCost[p2sqr]) {             \
+		if (!(blockStates.nodeMask[testsqr] & (PATHOPT_BLOCKED | PATHOPT_FORBIDDEN)) &&         \
+			 blockStates.fCost[testsqr] <= (COSTMOD) * blockStates.fCost[p2sqr]) {             \
 			float3& p2 = foundPath.path[foundPath.path.size() - 2];                              \
 			float3& p1 = foundPath.path.back();                                                  \
 			float3& p0 = nextPoint;                                                              \
@@ -674,17 +670,17 @@ void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath
 
 void CPathFinder::ResetSearch()
 {
-	openSquares.Clear();
+	openBlocks.Clear();
 
-	while (!dirtySquares.empty()) {
-		const unsigned int lsquare = dirtySquares.back();
+	while (!dirtyBlocks.empty()) {
+		const unsigned int lsquare = dirtyBlocks.back();
 
-		squareStates.nodeMask[lsquare] = 0;
-		squareStates.fCost[lsquare] = PATHCOST_INFINITY;
-		squareStates.gCost[lsquare] = PATHCOST_INFINITY;
+		blockStates.nodeMask[lsquare] = 0;
+		blockStates.fCost[lsquare] = PATHCOST_INFINITY;
+		blockStates.gCost[lsquare] = PATHCOST_INFINITY;
 
-		dirtySquares.pop_back();
+		dirtyBlocks.pop_back();
 	}
 
-	testedNodes = 0;
+	testedBlocks = 0;
 }
