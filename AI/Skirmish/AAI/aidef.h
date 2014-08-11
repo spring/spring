@@ -7,8 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#ifndef AIDEF_H
-#define AIDEF_H
+#ifndef AAI_DEF_H
+#define AAI_DEF_H
 
 #include <list>
 #include <vector>
@@ -187,3 +187,4 @@ struct AAIContinent
 typedef unsigned char uchar;
 
 #endif
+

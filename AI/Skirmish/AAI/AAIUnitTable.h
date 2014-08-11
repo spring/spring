@@ -7,7 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#pragma once
+#ifndef AAI_UNITTABLE_H
+#define AAI_UNITTABLE_H
 
 #include <set>
 #include "aidef.h"
@@ -114,4 +115,6 @@ private:
 	AAI *ai;
 
 };
+
+#endif
 

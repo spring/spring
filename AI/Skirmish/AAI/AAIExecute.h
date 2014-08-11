@@ -7,7 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#pragma once
+#ifndef AAI_EXECUTE_H
+#define AAI_EXECUTE_H
 
 #include "AAI.h"
 #include "aidef.h"
@@ -217,4 +218,6 @@ private:
 	// stores which buildque belongs to what kind of factory
 	vector<int> factory_table;
 };
+
+#endif
 

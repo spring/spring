@@ -7,7 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#pragma once
+#ifndef AAI_MAP_H
+#define AAI_MAP_H
 
 #include "aidef.h"
 #include "AAISector.h"
@@ -227,3 +228,6 @@ private:
 
 	static list<UnitCategory> map_categories;
 };
+
+#endif
+

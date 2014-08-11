@@ -7,8 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-
-#pragma once
+#ifndef AAI_BRAIN_H
+#define AAI_BRAIN_H
 
 #include "aidef.h"
 #include "AAISector.h"
@@ -132,3 +132,6 @@ private:
 
 	AAI *ai;
 };
+
+#endif
+

@@ -7,7 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#pragma once
+#ifndef AAI_BUILDTABLE_H
+#define AAI_BUILDTABLE_H
 
 class AAI;
 
@@ -284,3 +285,6 @@ private:
 	// all the unit defs, FIXME: this can't be made static as spring seems to free the memory returned by GetUnitDefList()
 	std::vector<const UnitDef*> unitList;
 };
+
+#endif
+

@@ -7,7 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#pragma once
+#ifndef AAI_GROUP_H
+#define AAI_GROUP_H
 
 #include "aidef.h"
 #include "AAISector.h"
@@ -106,3 +107,6 @@ private:
 	AAISector *target_sector;
 
 };
+
+#endif
+

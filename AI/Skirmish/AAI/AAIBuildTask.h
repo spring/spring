@@ -1,4 +1,14 @@
-#pragma once
+// -------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the Spring engine.
+// Copyright Alexander Seizinger
+//
+// Released under GPL license: see LICENSE.html for more information.
+// -------------------------------------------------------------------------
+
+#ifndef AAI_BUILDTASK_H
+#define AAI_BUILDTASK_H
 
 #include "aidef.h"
 class AAI;
@@ -25,3 +35,6 @@ public:
 private:
 	AAI* ai;
 };
+
+#endif
+

@@ -7,8 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-
-#pragma once
+#ifndef AAI_ATTACK_H
+#define AAI_ATTACK_H
 
 #include "aidef.h"
 #include <set>
@@ -55,3 +55,4 @@ private:
 	AAI *ai;
 };
 
+#endif

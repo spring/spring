@@ -7,8 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-
-#pragma once
+#ifndef AAI_AIRFORCEMANAGER_H
+#define AAI_AIRFORCEMANAGER_H
 
 #include "aidef.h"
 
@@ -53,3 +53,5 @@ private:
 	int my_team;
 	int num_of_targets;
 };
+
+#endif

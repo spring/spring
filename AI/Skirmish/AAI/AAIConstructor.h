@@ -7,7 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#pragma once
+#ifndef AAI_CONSTRUCTOR_H
+#define AAI_CONSTRUCTOR_H
 
 #include "aidef.h"
 
@@ -90,3 +91,6 @@ private:
 	list<int> *buildque;
 
 };
+
+#endif
+

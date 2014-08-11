@@ -7,8 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-
-#pragma once
+#ifndef AAI_H
+#define AAI_H
 
 #include "aidef.h"
 #include "AAIBrain.h"
@@ -114,4 +114,6 @@ private:
 	static int aai_instance;
 
 };
+
+#endif
 

@@ -7,7 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#pragma once
+#ifndef AAI_CONFIG_H
+#define AAI_CONFIG_H
 
 #include "LegacyCpp/IAICallback.h"
 
@@ -144,3 +145,6 @@ private:
 	int MIN_SUBMARINE_WATERLINE;
 
 };
+
+#endif
+
