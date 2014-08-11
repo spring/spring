@@ -87,19 +87,19 @@ void CAILibraryManager::GatherInterfaceLibrariesInfos() {
 		if (info->second.size() >= 2) {
 			duplicateInterfaceInfos[info->first] = info->second;
 
-			if (LOG_IS_ENABLED(L_WARNING)) {
-				LOG_L(L_WARNING, "Duplicate AI Interface Info found:");
-				LOG_L(L_WARNING, "\tfor interface: %s %s",
+			if (LOG_IS_ENABLED(L_ERROR)) {
+				LOG_L(L_ERROR, "Duplicate AI Interface Info found:");
+				LOG_L(L_ERROR, "\tfor interface: %s %s",
 						info->first.GetShortName().c_str(),
 						info->first.GetVersion().c_str());
-				LOG_L(L_WARNING, "\tin files:");
+				LOG_L(L_ERROR, "\tin files:");
 				const std::string* lastDir = NULL;
 				std::set<std::string>::const_iterator dir;
 				for (dir = info->second.begin(); dir != info->second.end(); ++dir) {
 					LOG_L(L_WARNING, "\t%s", dir->c_str());
 					lastDir = &(*dir);
 				}
-				LOG_L(L_WARNING, "\tusing: %s", lastDir->c_str());
+				LOG_L(L_ERROR, "\tusing: %s", lastDir->c_str());
 			}
 		}
 	}
