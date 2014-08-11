@@ -26,9 +26,6 @@ AAIBrain::AAIBrain(AAI *ai)
 	freeBaseSpots = false;
 	expandable = true;
 
-	// initialize random numbers generator
-	srand ( time(NULL) );
-
 	max_distance = ai->Getmap()->xSectors + ai->Getmap()->ySectors - 2;
 	sectors.resize(max_distance);
 

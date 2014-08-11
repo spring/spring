@@ -63,8 +63,6 @@ AAIExecute::AAIExecute(AAI *ai)
 	}
 
 	counter = 0;
-
-	srand( time(NULL) );
 }
 
 AAIExecute::~AAIExecute(void)

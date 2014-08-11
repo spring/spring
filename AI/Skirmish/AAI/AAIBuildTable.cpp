@@ -212,9 +212,6 @@ void AAIBuildTable::Init()
 {
 	float max_cost = 0, min_cost = 1000000, eff;
 
-	// initialize random numbers generator
-	srand ( time(NULL) );
-
 	// get number of units and alloc memory for unit list
 	const int numOfUnits = ai->Getcb()->GetNumUnitDefs();
 

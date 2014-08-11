@@ -70,9 +70,6 @@ list<int> AAIMap::map_categories_id;
 
 AAIMap::AAIMap(AAI *ai)
 {
-	// initialize random numbers generator
-	srand ( time(NULL) );
-
 	this->ai = ai;
 	initialized = false;
 }
