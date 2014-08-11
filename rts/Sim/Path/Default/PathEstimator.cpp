@@ -60,7 +60,7 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, const std::s
 	: BLOCK_SIZE(BSIZE)
 	, mStartBlockIdx(0)
 	, mGoalHeuristic(0.0f)
-	, blockStates(int2(nbrOfBlocksX, nbrOfBlocksZ), int2(gs->mapx, gs->mapy))
+	, blockStates(int2(gs->mapx / BLOCK_SIZE, gs->mapy / BLOCK_SIZE), int2(gs->mapx, gs->mapy))
 
 	, BLOCK_PIXEL_SIZE(BLOCK_SIZE * SQUARE_SIZE)
 	, BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1)
