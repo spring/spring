@@ -20,7 +20,7 @@ class CPathFinderDef;
 class CPathFinder: public IPathFinder {
 public:
 	CPathFinder();
-	~CPathFinder();
+
 
 	/**
 	 * Gives a detailed path from given starting location to target defined in
@@ -73,8 +73,6 @@ public:
 	static const float3* GetDirectionVectorsTable3D();
 
 protected: // IPathFinder impl
-	/// Clear things up from last search.
-	void ResetSearch();
 	/// Set up the starting point of the search.
 	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool peCall, bool synced);
 	/// Performs the actual search.

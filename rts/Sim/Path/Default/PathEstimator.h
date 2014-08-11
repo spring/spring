@@ -129,7 +129,6 @@ private:
 	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, bool);
 	void TestBlock(const MoveDef&, const CPathFinderDef&, PathNode&, unsigned int pathDir, bool synced);
 	void FinishSearch(const MoveDef& moveDef, IPath::Path& path);
-	void ResetSearch();
 
 	bool ReadFile(const std::string& cacheFileName, const std::string& map);
 	void WriteFile(const std::string& cacheFileName, const std::string& map);
@@ -168,8 +167,6 @@ private:
 
 	std::vector<float> vertexCosts;	
 	std::list<SingleBlock> updatedBlocks;       /// Blocks that may need an update due to map changes.
-
-	int2 mGoalSqrOffset;
 
 	int blockUpdatePenalty;
 };

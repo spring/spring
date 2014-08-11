@@ -22,6 +22,7 @@ int2 IPathFinder::PE_DIRECTION_VECTORS[PATH_DIRECTIONS] = {
 	int2(+1, -1), // PATHDIR_LEFT_DOWN
 };
 
+//FIXME why not use PATHDIR_* consts and merge code with top one
 int2 IPathFinder::PF_DIRECTION_VECTORS_2D[PATH_DIRECTIONS << 1] = {
 	int2(0, 0),
 	int2(+1 * PATH_NODE_SPACING,  0 * PATH_NODE_SPACING), // PATHOPT_LEFT
@@ -55,3 +56,21 @@ IPathFinder::IPathFinder(unsigned int _BLOCK_SIZE)
 {
 }
 
+
+IPathFinder::~IPathFinder()
+{
+	//ResetSearch();
+}
+
+
+void IPathFinder::ResetSearch()
+{
+	openBlocks.Clear();
+
+	while (!dirtyBlocks.empty()) {
+		blockStates.ClearSquare(dirtyBlocks.back());
+		dirtyBlocks.pop_back();
+	}
+
+	testedBlocks = 0;
+}

@@ -36,11 +36,6 @@ CPathFinder::CPathFinder()
 {
 }
 
-CPathFinder::~CPathFinder()
-{
-	ResetSearch();
-}
-
 
 void CPathFinder::InitDirectionVectorsTable() {
 	for (int i = 0; i < (PATH_DIRECTIONS << 1); ++i) {
@@ -624,22 +619,4 @@ void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath
 	}
 #undef TRYFIX3POINTS
 #undef COSTMOD
-}
-
-
-void CPathFinder::ResetSearch()
-{
-	openBlocks.Clear();
-
-	while (!dirtyBlocks.empty()) {
-		const unsigned int lsquare = dirtyBlocks.back();
-
-		blockStates.nodeMask[lsquare] = 0;
-		blockStates.fCost[lsquare] = PATHCOST_INFINITY;
-		blockStates.gCost[lsquare] = PATHCOST_INFINITY;
-
-		dirtyBlocks.pop_back();
-	}
-
-	testedBlocks = 0;
 }

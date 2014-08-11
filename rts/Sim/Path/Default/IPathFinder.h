@@ -19,9 +19,13 @@ class CSolidObject;
 class IPathFinder {
 public:
 	IPathFinder(unsigned int BLOCK_SIZE);
-	virtual ~IPathFinder() {}
+	virtual ~IPathFinder();
 
 	PathNodeStateBuffer& GetNodeStateBuffer() { return blockStates; }
+
+protected:
+	/// Clear things up from last search.
+	void ResetSearch();
 
 public:
 	static int2 PE_DIRECTION_VECTORS[PATH_DIRECTIONS];

@@ -62,7 +62,6 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BLOCK_SIZE, const s
 	, offsetBlockNum(nbrOfBlocksX * nbrOfBlocksZ)
 	, costBlockNum(nbrOfBlocksX * nbrOfBlocksZ)
 	, pathFinder(pf)
-	, mGoalSqrOffset(BLOCK_SIZE >> 1, BLOCK_SIZE >> 1)
 	, blockUpdatePenalty(0)
 {
 	vertexCosts.resize(moveDefHandler->GetNumMoveDefs() * blockStates.GetSize() * PATH_DIRECTION_VERTICES, PATHCOST_INFINITY);
@@ -635,9 +634,6 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveDef& moveDef, const CPa
 	mGoalBlockIdx = mStartBlockIdx;
 	mGoalHeuristic = peDef.Heuristic(square.x, square.y);
 
-	// get the goal square offset
-	mGoalSqrOffset = peDef.GoalSquareOffset(BLOCK_SIZE);
-
 	// perform the search
 	IPath::SearchResult result = DoSearch(moveDef, peDef, synced);
 
@@ -656,6 +652,9 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveDef& moveDef, const CPa
 IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPathFinderDef& peDef, bool synced) {
 	bool foundGoal = false;
 
+	// get the goal square offset
+	const int2 goalSqrOffset = peDef.GoalSquareOffset(BLOCK_SIZE);
+
 	while (!openBlocks.empty() && (openBlockBuffer.GetSize() < maxBlocksToBeSearched)) {
 		// get the open block with lowest cost
 		PathNode* ob = const_cast<PathNode*>(openBlocks.top());
@@ -668,8 +667,8 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
 		// no, check if the goal is already reached
 		const unsigned int xBSquare = blockStates.peNodeOffsets[ob->nodeNum][moveDef.pathType].x;
 		const unsigned int zBSquare = blockStates.peNodeOffsets[ob->nodeNum][moveDef.pathType].y;
-		const unsigned int xGSquare = ob->nodePos.x * BLOCK_SIZE + mGoalSqrOffset.x;
-		const unsigned int zGSquare = ob->nodePos.y * BLOCK_SIZE + mGoalSqrOffset.y;
+		const unsigned int xGSquare = ob->nodePos.x * BLOCK_SIZE + goalSqrOffset.x;
+		const unsigned int zGSquare = ob->nodePos.y * BLOCK_SIZE + goalSqrOffset.y;
 
 		if (peDef.IsGoal(xBSquare, zBSquare) || peDef.IsGoal(xGSquare, zGSquare)) {
 			mGoalBlockIdx = ob->nodeNum;
@@ -831,21 +830,6 @@ void CPathEstimator::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath
 
 	// set some additional information
 	foundPath.pathCost = blockStates.fCost[mGoalBlockIdx] - mGoalHeuristic;
-}
-
-
-/**
- * Clean lists from last search
- */
-void CPathEstimator::ResetSearch() {
-	openBlocks.Clear();
-
-	while (!dirtyBlocks.empty()) {
-		blockStates.ClearSquare(dirtyBlocks.back());
-		dirtyBlocks.pop_back();
-	}
-
-	testedBlocks = 0;
 }
 
 
