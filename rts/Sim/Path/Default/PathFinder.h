@@ -8,6 +8,7 @@
 #include <deque>
 
 #include "IPath.h"
+#include "IPathFinder.h"
 #include "PathConstants.h"
 #include "PathDataTypes.h"
 #include "Sim/Objects/SolidObject.h"
@@ -16,7 +17,7 @@ struct MoveDef;
 class CPathFinderDef;
 
 
-class CPathFinder {
+class CPathFinder: public IPathFinder {
 public:
 	CPathFinder();
 	~CPathFinder();
@@ -125,22 +126,6 @@ private:
 	bool exactPath;
 	bool testMobile;
 	bool needPath;
-
-private: //IPathFinder stuff
-	int2 mStartBlock;
-
-	unsigned int mStartBlockIdx;
-	unsigned int mGoalBlockIdx;  ///< set during each search as the square closest to the goal
-	float mGoalHeuristic;        ///< heuristic value of goalSquareIdx
-
-	unsigned int maxBlocksToBeSearched;
-	unsigned int testedBlocks;
-
-	PathNodeBuffer openBlockBuffer;
-	PathNodeStateBuffer blockStates;
-	PathPriorityQueue openBlocks;
-
-	std::vector<unsigned int> dirtyBlocks;         ///< Squares tested by search.
 };
 
 #endif // PATH_FINDER_H

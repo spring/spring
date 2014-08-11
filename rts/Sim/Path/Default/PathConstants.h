@@ -37,36 +37,41 @@ static const unsigned int PATH_HEATMAP_ZSCALE =  1; // wrt. gs->hmapy
 static const unsigned int PATH_FLOWMAP_XSCALE = 32; // wrt. gs->mapx
 static const unsigned int PATH_FLOWMAP_ZSCALE = 32; // wrt. gs->mapy
 
-static const unsigned int PATH_DIRECTIONS = 8;
+
+// PE-only flags (indices)
+enum {
+	PATHDIR_LEFT       = 0, // +x
+	PATHDIR_LEFT_UP    = 1, // +x+z
+	PATHDIR_UP         = 2, // +z
+	PATHDIR_RIGHT_UP   = 3, // -x+z
+	PATHDIR_RIGHT      = 4, // -x
+	PATHDIR_RIGHT_DOWN = 5, // -x-z
+	PATHDIR_DOWN       = 6, // -z
+	PATHDIR_LEFT_DOWN  = 7, // +x-z
+	PATH_DIRECTIONS    = 8,
+};
+static const unsigned int PATHDIR_CARDINALS[4] = {PATHDIR_LEFT, PATHDIR_RIGHT, PATHDIR_UP, PATHDIR_DOWN};
 static const unsigned int PATH_DIRECTION_VERTICES = PATH_DIRECTIONS >> 1;
 static const unsigned int PATH_NODE_SPACING = 2;
 
-// PE-only flags (indices)
-static const unsigned int PATHDIR_LEFT       = 0; // +x
-static const unsigned int PATHDIR_LEFT_UP    = 1; // +x+z
-static const unsigned int PATHDIR_UP         = 2; // +z
-static const unsigned int PATHDIR_RIGHT_UP   = 3; // -x+z
-static const unsigned int PATHDIR_RIGHT      = 4; // -x
-static const unsigned int PATHDIR_RIGHT_DOWN = 5; // -x-z
-static const unsigned int PATHDIR_DOWN       = 6; // -z
-static const unsigned int PATHDIR_LEFT_DOWN  = 7; // +x-z
-static const unsigned int PATHDIR_CARDINALS[4] = {PATHDIR_LEFT, PATHDIR_RIGHT, PATHDIR_UP, PATHDIR_DOWN};
-static const unsigned int PATHDIR_DIAGONALS[4] = {PATHDIR_LEFT_UP, PATHDIR_LEFT_DOWN, PATHDIR_RIGHT_UP, PATHDIR_RIGHT_DOWN};
-
 // PF-only flags (bitmasks)
-static const unsigned int PATHOPT_LEFT      =   1; // +x
-static const unsigned int PATHOPT_RIGHT     =   2; // -x
-static const unsigned int PATHOPT_UP        =   4; // +z
-static const unsigned int PATHOPT_DOWN      =   8; // -z
+enum {
+	PATHOPT_LEFT  = 1, // +x
+	PATHOPT_RIGHT = 2, // -x
+	PATHOPT_UP    = 4, // +z
+	PATHOPT_DOWN  = 8, // -z
+};
 static const unsigned int PATHOPT_CARDINALS = (PATHOPT_RIGHT | PATHOPT_LEFT | PATHOPT_UP | PATHOPT_DOWN);
 
 // PF and PE flags
-static const unsigned int PATHOPT_START     =  16;
-static const unsigned int PATHOPT_OPEN      =  32;
-static const unsigned int PATHOPT_CLOSED    =  64;
-static const unsigned int PATHOPT_FORBIDDEN = 128;
-static const unsigned int PATHOPT_BLOCKED   = 256;
-static const unsigned int PATHOPT_OBSOLETE  = 512;
+enum {
+	PATHOPT_START     =  16,
+	PATHOPT_OPEN      =  32,
+	PATHOPT_CLOSED    =  64,
+	PATHOPT_FORBIDDEN = 128,
+	PATHOPT_BLOCKED   = 256,
+	PATHOPT_OBSOLETE  = 512,
+};
 
 
 

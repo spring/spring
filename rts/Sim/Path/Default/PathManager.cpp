@@ -25,7 +25,6 @@ CPathManager::CPathManager(): nextPathID(0)
 {
 	CPathFinder::InitDirectionVectorsTable();
 	CPathFinder::InitDirectionCostsTable();
-	CPathEstimator::InitDirectionVectorsTable();
 
 	maxResPF = NULL;
 	medResPE = NULL;

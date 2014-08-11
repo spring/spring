@@ -38,11 +38,6 @@ CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512).minimumValue(64).desc
 
 
 
-// indexed by PATHDIR*
-static int2 PE_DIRECTION_VECTORS[PATH_DIRECTIONS];
-
-
-
 static const std::string GetPathCacheDir() {
 	return (FileSystem::GetCacheDir() + "/paths/");
 }
@@ -55,13 +50,8 @@ static size_t GetNumThreads() {
 
 
 
-CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName)
-	//: IPathFinder(BSIZE),
-	: BLOCK_SIZE(BSIZE)
-	, mStartBlockIdx(0)
-	, mGoalHeuristic(0.0f)
-	, blockStates(int2(gs->mapx / BLOCK_SIZE, gs->mapy / BLOCK_SIZE), int2(gs->mapx, gs->mapy))
-
+CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BLOCK_SIZE, const std::string& cacheFileName, const std::string& mapFileName)
+	: IPathFinder(BLOCK_SIZE)
 	, BLOCK_PIXEL_SIZE(BLOCK_SIZE * SQUARE_SIZE)
 	, BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1)
 	, nbrOfBlocksX(gs->mapx / BLOCK_SIZE)
@@ -87,23 +77,6 @@ CPathEstimator::~CPathEstimator()
 	delete pathCache[1]; pathCache[1] = NULL;
 }
 
-
-void CPathEstimator::InitDirectionVectorsTable() {
-	// these give the changes in (x, z) coors
-	// when moving one step in given direction
-	//
-	// NOTE: the choices of +1 for LEFT and UP are *not* arbitrary
-	// (they are related to GetBlockVertexOffset) and also need to
-	// be consistent with the PATHOPT_* flags (for PathDir2PathOpt)
-	PE_DIRECTION_VECTORS[PATHDIR_LEFT      ] = int2(+1,  0);
-	PE_DIRECTION_VECTORS[PATHDIR_RIGHT     ] = int2(-1,  0);
-	PE_DIRECTION_VECTORS[PATHDIR_UP        ] = int2( 0, +1);
-	PE_DIRECTION_VECTORS[PATHDIR_DOWN      ] = int2( 0, -1);
-	PE_DIRECTION_VECTORS[PATHDIR_LEFT_UP   ] = int2(PE_DIRECTION_VECTORS[PATHDIR_LEFT ].x, PE_DIRECTION_VECTORS[PATHDIR_UP  ].y);
-	PE_DIRECTION_VECTORS[PATHDIR_RIGHT_UP  ] = int2(PE_DIRECTION_VECTORS[PATHDIR_RIGHT].x, PE_DIRECTION_VECTORS[PATHDIR_UP  ].y);
-	PE_DIRECTION_VECTORS[PATHDIR_RIGHT_DOWN] = int2(PE_DIRECTION_VECTORS[PATHDIR_RIGHT].x, PE_DIRECTION_VECTORS[PATHDIR_DOWN].y);
-	PE_DIRECTION_VECTORS[PATHDIR_LEFT_DOWN ] = int2(PE_DIRECTION_VECTORS[PATHDIR_LEFT ].x, PE_DIRECTION_VECTORS[PATHDIR_DOWN].y);
-}
 
 const int2* CPathEstimator::GetDirectionVectorsTable() {
 	return (&PE_DIRECTION_VECTORS[0]);

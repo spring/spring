@@ -23,23 +23,16 @@ using namespace Bitwise;
 const CMoveMath::BlockType squareMobileBlockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 
 // indexed by PATHOPT* bitmasks
-static   int2 PF_DIRECTION_VECTORS_2D[PATH_DIRECTIONS << 1];
 static float3 PF_DIRECTION_VECTORS_3D[PATH_DIRECTIONS << 1];
-
 static  float PF_DIRECTION_COSTS[PATH_DIRECTIONS << 1];
 
 
 
 CPathFinder::CPathFinder()
-	: exactPath(false)
+	: IPathFinder(1)
+	, exactPath(false)
 	, testMobile(false)
 	, needPath(false)
-	, mStartBlockIdx(0)
-	, mGoalBlockIdx(0)
-	, mGoalHeuristic(0.0f)
-	, maxBlocksToBeSearched(0)
-	, testedBlocks(0)
-	, blockStates(int2(gs->mapx, gs->mapy), int2(gs->mapx, gs->mapy))
 {
 }
 
@@ -50,40 +43,11 @@ CPathFinder::~CPathFinder()
 
 
 void CPathFinder::InitDirectionVectorsTable() {
-	PF_DIRECTION_VECTORS_2D[PATHOPT_LEFT                ] = int2(+1 * PATH_NODE_SPACING,  0                    );
-	PF_DIRECTION_VECTORS_2D[PATHOPT_RIGHT               ] = int2(-1 * PATH_NODE_SPACING,  0                    );
-	PF_DIRECTION_VECTORS_2D[PATHOPT_UP                  ] = int2( 0,                     +1 * PATH_NODE_SPACING);
-	PF_DIRECTION_VECTORS_2D[PATHOPT_DOWN                ] = int2( 0,                     -1 * PATH_NODE_SPACING);
-	PF_DIRECTION_VECTORS_2D[PATHOPT_LEFT  | PATHOPT_UP  ] = int2(PF_DIRECTION_VECTORS_2D[PATHOPT_LEFT ].x, PF_DIRECTION_VECTORS_2D[PATHOPT_UP   ].y);
-	PF_DIRECTION_VECTORS_2D[PATHOPT_RIGHT | PATHOPT_UP  ] = int2(PF_DIRECTION_VECTORS_2D[PATHOPT_RIGHT].x, PF_DIRECTION_VECTORS_2D[PATHOPT_UP   ].y);
-	PF_DIRECTION_VECTORS_2D[PATHOPT_RIGHT | PATHOPT_DOWN] = int2(PF_DIRECTION_VECTORS_2D[PATHOPT_RIGHT].x, PF_DIRECTION_VECTORS_2D[PATHOPT_DOWN ].y);
-	PF_DIRECTION_VECTORS_2D[PATHOPT_LEFT  | PATHOPT_DOWN] = int2(PF_DIRECTION_VECTORS_2D[PATHOPT_LEFT ].x, PF_DIRECTION_VECTORS_2D[PATHOPT_DOWN ].y);
-
-	PF_DIRECTION_VECTORS_3D[PATHOPT_RIGHT               ].x = PF_DIRECTION_VECTORS_2D[PATHOPT_RIGHT               ].x;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_RIGHT               ].z = PF_DIRECTION_VECTORS_2D[PATHOPT_RIGHT               ].y;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_LEFT                ].x = PF_DIRECTION_VECTORS_2D[PATHOPT_LEFT                ].x;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_LEFT                ].z = PF_DIRECTION_VECTORS_2D[PATHOPT_LEFT                ].y;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_UP                  ].x = PF_DIRECTION_VECTORS_2D[PATHOPT_UP                  ].x;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_UP                  ].z = PF_DIRECTION_VECTORS_2D[PATHOPT_UP                  ].y;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_DOWN                ].x = PF_DIRECTION_VECTORS_2D[PATHOPT_DOWN                ].x;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_DOWN                ].z = PF_DIRECTION_VECTORS_2D[PATHOPT_DOWN                ].y;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_RIGHT | PATHOPT_UP  ].x = PF_DIRECTION_VECTORS_2D[PATHOPT_RIGHT | PATHOPT_UP  ].x;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_RIGHT | PATHOPT_UP  ].z = PF_DIRECTION_VECTORS_2D[PATHOPT_RIGHT | PATHOPT_UP  ].y;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_LEFT  | PATHOPT_UP  ].x = PF_DIRECTION_VECTORS_2D[PATHOPT_LEFT  | PATHOPT_UP  ].x;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_LEFT  | PATHOPT_UP  ].z = PF_DIRECTION_VECTORS_2D[PATHOPT_LEFT  | PATHOPT_UP  ].y;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_RIGHT | PATHOPT_DOWN].x = PF_DIRECTION_VECTORS_2D[PATHOPT_RIGHT | PATHOPT_DOWN].x;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_RIGHT | PATHOPT_DOWN].z = PF_DIRECTION_VECTORS_2D[PATHOPT_RIGHT | PATHOPT_DOWN].y;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_LEFT  | PATHOPT_DOWN].x = PF_DIRECTION_VECTORS_2D[PATHOPT_LEFT  | PATHOPT_DOWN].x;
-	PF_DIRECTION_VECTORS_3D[PATHOPT_LEFT  | PATHOPT_DOWN].z = PF_DIRECTION_VECTORS_2D[PATHOPT_LEFT  | PATHOPT_DOWN].y;
-
-	PF_DIRECTION_VECTORS_3D[PATHOPT_RIGHT               ].ANormalize();
-	PF_DIRECTION_VECTORS_3D[PATHOPT_LEFT                ].ANormalize();
-	PF_DIRECTION_VECTORS_3D[PATHOPT_UP                  ].ANormalize();
-	PF_DIRECTION_VECTORS_3D[PATHOPT_DOWN                ].ANormalize();
-	PF_DIRECTION_VECTORS_3D[PATHOPT_RIGHT | PATHOPT_UP  ].ANormalize();
-	PF_DIRECTION_VECTORS_3D[PATHOPT_LEFT  | PATHOPT_UP  ].ANormalize();
-	PF_DIRECTION_VECTORS_3D[PATHOPT_RIGHT | PATHOPT_DOWN].ANormalize();
-	PF_DIRECTION_VECTORS_3D[PATHOPT_LEFT  | PATHOPT_DOWN].ANormalize();
+	for (int i = 0; i < (PATH_DIRECTIONS << 1); ++i) {
+		PF_DIRECTION_VECTORS_3D[i].x = PF_DIRECTION_VECTORS_2D[i].x;
+		PF_DIRECTION_VECTORS_3D[i].z = PF_DIRECTION_VECTORS_2D[i].y;
+		PF_DIRECTION_VECTORS_3D[i].Normalize();
+	}
 }
 
 void CPathFinder::InitDirectionCostsTable() {
@@ -335,8 +299,7 @@ void CPathFinder::TestNeighborSquares(
 	}
 
 	// first test squares along the cardinal directions
-	for (unsigned int n = 0; n < (sizeof(PATHDIR_CARDINALS) / sizeof(PATHDIR_CARDINALS[0])); n++) {
-		const unsigned int dir = PATHDIR_CARDINALS[n];
+	for (unsigned int dir: PATHDIR_CARDINALS) {
 		const unsigned int opt = PathDir2PathOpt(dir);
 
 		if ((ngbBlockedState[dir] & CMoveMath::BLOCK_STRUCTURE) != 0)
@@ -527,8 +490,7 @@ void CPathFinder::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) c
 			previous.pop_front();
 			previous.push_back(square);
 
-			square.x -= PF_DIRECTION_VECTORS_2D[blockStates.nodeMask[sqrIdx] & PATHOPT_CARDINALS].x;
-			square.y -= PF_DIRECTION_VECTORS_2D[blockStates.nodeMask[sqrIdx] & PATHOPT_CARDINALS].y;
+			square -= PF_DIRECTION_VECTORS_2D[blockStates.nodeMask[sqrIdx] & PATHOPT_CARDINALS];
 		}
 
 		if (!foundPath.path.empty()) {

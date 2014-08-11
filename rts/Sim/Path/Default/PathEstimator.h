@@ -8,6 +8,7 @@
 #include <list>
 
 #include "IPath.h"
+#include "IPathFinder.h"
 #include "PathConstants.h"
 #include "PathDataTypes.h"
 #include "System/float3.h"
@@ -20,13 +21,15 @@ class CPathFinder;
 class CPathEstimatorDef;
 class CPathFinderDef;
 class CPathCache;
+class CSolidObject;
+
 
 namespace boost {
 	class thread;
 	class barrier;
 }
 
-class CPathEstimator {
+class CPathEstimator: public IPathFinder {
 public:
 	/**
 	 * Creates a new estimator based on a couple of parameters
@@ -108,7 +111,6 @@ public:
 
 	PathNodeStateBuffer& GetNodeStateBuffer() { return blockStates; }
 
-	static void InitDirectionVectorsTable();
 	static const int2* GetDirectionVectorsTable();
 
 private:
@@ -132,24 +134,6 @@ private:
 	bool ReadFile(const std::string& cacheFileName, const std::string& map);
 	void WriteFile(const std::string& cacheFileName, const std::string& map);
 	unsigned int Hash() const;
-
-private: //IPathFinder stuff
-	const unsigned int BLOCK_SIZE;
-
-	int2 mStartBlock;
-
-	unsigned int mStartBlockIdx;
-	unsigned int mGoalBlockIdx;
-	float mGoalHeuristic;
-
-	unsigned int maxBlocksToBeSearched;
-	unsigned int testedBlocks;
-
-	PathNodeBuffer openBlockBuffer;
-	PathNodeStateBuffer blockStates;
-	PathPriorityQueue openBlocks;           /// The priority-queue used to select next block to be searched.
-
-	std::vector<unsigned int> dirtyBlocks;  /// List of blocks changed in last search.
 
 private:
 	friend class CPathManager;
