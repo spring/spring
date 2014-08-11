@@ -49,9 +49,9 @@ public:
 
 	// groups participating
 	set<AAIGroup*> combat_groups;
+private:
 	set<AAIGroup*> aa_groups;
 	set<AAIGroup*> arty_groups;
-
-private:
 	AAI *ai;
 };
+

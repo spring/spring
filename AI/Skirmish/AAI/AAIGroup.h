@@ -65,21 +65,15 @@ public:
 
 	float3 GetGroupPos();
 
-	// returns true if group is strong enough to attack
-	bool SufficientAttackPower();
-
 	// checks if the group may participate in an attack (= idle, sufficient combat power, etc.)
 	bool AvailableForAttack();
 
 	int maxSize;
 	int size;
-	int speed_group;
-	float avg_speed;
 
+	float avg_speed;
 	list<int2> units;
 
-	Command lastCommand;
-	int lastCommandFrame;
 
 	float task_importance;	// importance of current task
 
@@ -92,8 +86,6 @@ public:
 
 	unsigned int group_movement_type;
 
-	AAISector *target_sector;
-
 	// attack the group takes part in
 	AAIAttack *attack;
 
@@ -104,6 +96,13 @@ public:
 	int continent;
 
 private:
+	// returns true if group is strong enough to attack
+	bool SufficientAttackPower();
+	int lastCommandFrame;
+	Command lastCommand;
+	int speed_group;
+
 	AAI* ai;
+	AAISector *target_sector;
 
 };

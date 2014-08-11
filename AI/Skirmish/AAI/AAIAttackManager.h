@@ -29,27 +29,27 @@ public:
 	AAIAttackManager(AAI *ai, int continents);
 	~AAIAttackManager(void);
 
-	void Update();
-
-	void GetNextDest(AAIAttack *attack);
-
-	void LaunchAttack();
-
-	void StopAttack(AAIAttack *attack);
-
 	void CheckAttack(AAIAttack *attack);
-
-	// sends all groups to a rallypoint
-	void RallyGroups(AAIAttack *attack);
-
-	// true if combat groups have suffiecient attack power to face stationary defences
-	bool SufficientAttackPowerVS(AAISector *dest, set<AAIGroup*> *combat_groups, float aggressiveness);
 
 	// true if units have sufficient combat power to face mobile units in dest
 	bool SufficientCombatPowerAt(AAISector *dest, set<AAIGroup*> *combat_groups, float aggressiveness);
 
+	// true if combat groups have suffiecient attack power to face stationary defences
+	bool SufficientAttackPowerVS(AAISector *dest, set<AAIGroup*> *combat_groups, float aggressiveness);
+
 	// true if defences have sufficient combat power to push back mobile units in dest
 	bool SufficientDefencePowerAt(AAISector *dest, float aggressiveness);
+
+	void GetNextDest(AAIAttack *attack);
+
+	void Update();
+private:
+
+	void LaunchAttack();
+	void StopAttack(AAIAttack *attack);
+
+	// sends all groups to a rallypoint
+	void RallyGroups(AAIAttack *attack);
 
 	list<AAIAttack*> attacks;
 
@@ -65,8 +65,6 @@ public:
 	// stores total attack power for different unit types on each continent
 	vector< vector<float> > attack_power_continent;
 	vector<float> attack_power_global;
-
-private:
 
 	AAI *ai;
 };

@@ -25,30 +25,17 @@ public:
 	void Init();
 
 	void SaveBuildTable(int game_period, MapType map_type);
-
 	// cache for combat eff (needs side, thus initialized later)
 	void InitCombatEffCache(int side);
 
-	// precaches speed/cost/buildtime/range stats
-	void PrecacheStats();
-
-	// only precaches costs (called after possible cost multipliers have been assigned)
-	void PrecacheCosts();
-
 	// returns true, if a builder can build a certain unit (use UnitDef.id)
 	bool CanBuildUnit(int id_builder, int id_unit);
-
-	// returns side of a unit
-	int GetSide(int unit);
 
 	// returns side of a certian unittype (use UnitDef->id)
 	int GetSideByID(int unit_id);
 
 	// return unit type (for groups)
 	UnitType GetUnitType(int def_id);
-
-	// returns true, if unitid is in the list
-	bool MemberOf(int unit_id, list<int> unit_list);
 
 	// ******************************************************************************************************
 	// the following functions are used to determine units that suit a certain purpose
@@ -60,6 +47,7 @@ public:
 
 	// returns a extractor from the list based on certain factors
 	int GetMex(int side, float cost, float effiency, bool armed, bool water, bool canBuild);
+
 	// returns mex with the biggest yardmap
 	int GetBiggestMex();
 
@@ -272,6 +260,17 @@ public:
 	const UnitDef& GetUnitDef(int i) { assert(IsValidUnitDefID(i));	return *unitList[i];}
 	bool IsValidUnitDefID(int i) { return (i>=0) && (i<=unitList.size()); }
 private:
+	// precaches speed/cost/buildtime/range stats
+	void PrecacheStats();
+
+	// only precaches costs (called after possible cost multipliers have been assigned)
+	void PrecacheCosts();
+
+	// returns side of a unit
+	int GetSide(int unit);
+
+	// returns true, if unitid is in the list
+	bool MemberOf(int unit_id, list<int> unit_list);
 	// for internal use
 	void CalcBuildTree(int unit);
 	bool LoadBuildTable();
