@@ -31,8 +31,7 @@ static  float PF_DIRECTION_COSTS[PATH_DIRECTIONS << 1];
 
 
 CPathFinder::CPathFinder()
-	: start(ZeroVector)
-	, exactPath(false)
+	: exactPath(false)
 	, testMobile(false)
 	, needPath(false)
 	, mStartBlockIdx(0)
@@ -131,12 +130,10 @@ IPath::SearchResult CPathFinder::GetPath(
 	// if false, we are only interested in the cost (not the waypoints)
 	this->needPath = needPath;
 
-	start = startPos;
-	mStartBlock = int2(start.x / SQUARE_SIZE, start.z / SQUARE_SIZE);
-
 	// Clamp the start position
-	if (mStartBlock.x >= gs->mapx) mStartBlock.x = gs->mapxm1;
-	if (mStartBlock.y >= gs->mapy) mStartBlock.y = gs->mapym1;
+	mStartBlock = int2(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE);
+	mStartBlock.x = Clamp(mStartBlock.x, 0, gs->mapxm1);
+	mStartBlock.y = Clamp(mStartBlock.y, 0, gs->mapym1);
 
 	mStartBlockIdx = mStartBlock.x + mStartBlock.y * gs->mapx;
 
@@ -183,7 +180,7 @@ IPath::SearchResult CPathFinder::InitSearch(
 		// be more lenient for normal searches so players can "unstuck" units
 		//
 		// blocked goal positions are always early-outs (no searching needed)
-		const bool strtBlocked = ((CMoveMath::IsBlocked(moveDef, start, owner) & CMoveMath::BLOCK_STRUCTURE) != 0);
+		const bool strtBlocked = ((CMoveMath::IsBlocked(moveDef, mStartBlock.x, mStartBlock.y, owner) & CMoveMath::BLOCK_STRUCTURE) != 0);
 		const bool goalBlocked = pfDef.GoalIsBlocked(moveDef, CMoveMath::BLOCK_STRUCTURE, owner);
 
  		if (strtBlocked || goalBlocked) {
@@ -199,7 +196,7 @@ IPath::SearchResult CPathFinder::InitSearch(
 		// be much smaller as well (do not call PathFinderDef::GoalIsBlocked here
 		// because that uses its own definition of "small area")
 		if (owner != NULL) {
-			const bool goalInRange = ((owner->pos - pfDef.goal).SqLength2D() < (owner->sqRadius + pfDef.sqGoalRadius));
+			const bool goalInRange = (pfDef.goal.SqDistance2D(owner->pos) < (owner->sqRadius + pfDef.sqGoalRadius));
 			const bool goalBlocked = ((CMoveMath::IsBlocked(moveDef, pfDef.goal, owner) & CMoveMath::BLOCK_STRUCTURE) != 0);
 
 			if (goalInRange && goalBlocked) {

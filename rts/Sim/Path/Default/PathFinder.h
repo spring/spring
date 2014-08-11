@@ -4,8 +4,8 @@
 #define PATH_FINDER_H
 
 #include <list>
-#include <queue>
-#include <cstdlib>
+#include <vector>
+#include <deque>
 
 #include "IPath.h"
 #include "PathConstants.h"
@@ -121,10 +121,6 @@ private:
 		std::deque<int2>& previous,
 		int2 square
 	) const;
-
-
-	// copy of original starting position
-	float3 start;
 
 	bool exactPath;
 	bool testMobile;

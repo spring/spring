@@ -4,8 +4,8 @@
 #define PATHESTIMATOR_H
 
 #include <string>
+#include <vector>
 #include <list>
-#include <queue>
 
 #include "IPath.h"
 #include "PathConstants.h"
@@ -133,6 +133,24 @@ private:
 	void WriteFile(const std::string& cacheFileName, const std::string& map);
 	unsigned int Hash() const;
 
+private: //IPathFinder stuff
+	const unsigned int BLOCK_SIZE;
+
+	int2 mStartBlock;
+
+	unsigned int mStartBlockIdx;
+	unsigned int mGoalBlockIdx;
+	float mGoalHeuristic;
+
+	unsigned int maxBlocksToBeSearched;
+	unsigned int testedBlocks;
+
+	PathNodeBuffer openBlockBuffer;
+	PathNodeStateBuffer blockStates;
+	PathPriorityQueue openBlocks;           /// The priority-queue used to select next block to be searched.
+
+	std::vector<unsigned int> dirtyBlocks;  /// List of blocks changed in last search.
+
 private:
 	friend class CPathManager;
 	friend class CDefaultPathDrawer;
@@ -142,16 +160,12 @@ private:
 		const MoveDef* moveDef;
 	};
 
-	const unsigned int BLOCK_SIZE;
 	const unsigned int BLOCK_PIXEL_SIZE;
 	const unsigned int BLOCKS_TO_UPDATE;
 
 	unsigned int nbrOfBlocksX;                  /// Number of blocks on the X axis of the map.
 	unsigned int nbrOfBlocksZ;                  /// Number of blocks on the Z axis of the map.
 	unsigned int moveMathOptions;
-
-	unsigned int maxBlocksToBeSearched;
-	unsigned int testedBlocks;
 
 	unsigned int nextOffsetMessageIdx;
 	unsigned int nextCostMessageIdx;
@@ -165,23 +179,13 @@ private:
 	CPathFinder* pathFinder;
 	CPathCache* pathCache[2];                   /// [0] = !synced, [1] = synced
 
-	PathNodeBuffer openBlockBuffer;
-	PathNodeStateBuffer blockStates;
-	PathPriorityQueue openBlocks;               /// The priority-queue used to select next block to be searched.
-
 	std::vector<CPathFinder*> pathFinders;
 	std::vector<boost::thread*> threads;
 
-	std::vector<float> vertexCosts;
-	std::list<unsigned int> dirtyBlocks;        /// List of blocks changed in last search.
+	std::vector<float> vertexCosts;	
 	std::list<SingleBlock> updatedBlocks;       /// Blocks that may need an update due to map changes.
 
-	int2 mStartBlock;
-	int2 mGoalBlock;
 	int2 mGoalSqrOffset;
-
-	unsigned int mStartBlockIdx;
-	float mGoalHeuristic;
 
 	int blockUpdatePenalty;
 };
