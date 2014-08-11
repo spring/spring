@@ -16,6 +16,9 @@ class AAI;
 class AAIBuildTable;
 class AAIBuildTask;
 
+#include <list>
+using namespace std;
+
 class AAIConstructor
 {
 public:

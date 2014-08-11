@@ -11,10 +11,27 @@
 #define AAI_MAP_H
 
 #include "aidef.h"
-#include "AAISector.h"
+#include "System/float3.h"
+
+#include <vector>
+#include <list>
+using namespace std;
 
 class AAIBuildTable;
 class AAI;
+class AAISector;
+
+namespace springLegacyAI {
+	struct UnitDef;
+};
+using namespace springLegacyAI;
+
+struct AAIContinent
+{
+	int id;
+	int size;			// number of cells
+	bool water;
+};
 
 class AAIMap
 {

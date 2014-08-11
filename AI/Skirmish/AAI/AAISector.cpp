@@ -9,7 +9,15 @@
 
 #include "AAISector.h"
 #include "AAI.h"
+#include "AAIBuildTable.h"
+#include "AAIBrain.h"
+#include "AAIConfig.h"
 #include "AAIMap.h"
+
+#include "LegacyCpp/IGlobalAICallback.h"
+#include "LegacyCpp/UnitDef.h"
+using namespace springLegacyAI;
+
 
 AAISector::AAISector()
 {

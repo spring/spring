@@ -10,12 +10,26 @@
 #ifndef AAI_GROUP_H
 #define AAI_GROUP_H
 
+#include "System/type2.h"
 #include "aidef.h"
-#include "AAISector.h"
+
+enum GroupTask {GROUP_IDLE, GROUP_ATTACKING, GROUP_DEFENDING, GROUP_PATROLING, GROUP_BOMBING, GROUP_RETREATING};
+
+namespace springLegacyAI {
+	struct UnitDef;
+	struct Command;
+};
+#include "LegacyCpp/Command.h"
+using namespace springLegacyAI;
+
+#include <vector>
+#include <list>
+using namespace std;
 
 class AAI;
 class AAIBuildTable;
 class AAIAttack;
+class AAISector;
 
 class AAIGroup
 {

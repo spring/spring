@@ -11,13 +11,15 @@
 #define AAI_UNITTABLE_H
 
 #include <set>
-#include "aidef.h"
 
 using std::set;
+
+#include "aidef.h"
 
 class AAI;
 class AAIBuildTable;
 class AAIExecute;
+class AAIConstructor;
 
 class AAIUnitTable
 {

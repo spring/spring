@@ -10,12 +10,28 @@
 #ifndef AAI_AIRFORCEMANAGER_H
 #define AAI_AIRFORCEMANAGER_H
 
+#include <vector>
+#include "System/float3.h"
 #include "aidef.h"
+
+namespace springLegacyAI {
+	struct UnitDef;
+};
+using namespace springLegacyAI;
+using namespace std;
 
 class AAI;
 class AAIBuildTable;
-class AAIMap;
 
+struct AAIAirTarget
+{
+	float3 pos;
+	int def_id;
+	int unit_id;
+	float cost;
+	float health;
+	UnitCategory category;
+};
 
 class AAIAirForceManager
 {

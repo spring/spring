@@ -12,8 +12,45 @@
 
 class AAI;
 
+namespace springLegacyAI {
+	struct UnitDef;
+};
+using namespace springLegacyAI;
+
+
 #include "aidef.h"
 #include <assert.h>
+#include <list>
+#include <vector>
+
+using namespace std;
+
+struct UnitTypeDynamic
+{
+	int under_construction;	// how many units of that type are under construction
+	int requested;			// how many units of that type have been requested
+	int active;				// how many units of that type are currently alive
+	int constructorsAvailable;	// how many factories/builders available being able to build that unit
+	int constructorsRequested;	// how many factories/builders requested being able to build that unit
+};
+
+struct UnitTypeStatic
+{
+	int def_id;
+	int side;				// 0 if side has not been set
+	list<int> canBuildList;
+	list<int> builtByList;
+	vector<float> efficiency;		// 0 -> ground assault, 1 -> air assault, 2 -> hover assault
+									// 3 -> sea assault, 4 -> submarine , 5 -> stat. defences
+	float range;              // max weapon range (0 for unarmed units)
+	float cost;
+	float builder_cost;
+	UnitCategory category;
+
+	unsigned int unit_type;
+	unsigned int movement_type;
+};
+
 
 class AAIBuildTable
 {

@@ -10,7 +10,6 @@
 #ifndef AAI_ATTACK_H
 #define AAI_ATTACK_H
 
-#include "aidef.h"
 #include <set>
 using namespace std;
 

@@ -8,9 +8,22 @@
 // -------------------------------------------------------------------------
 
 #include "AAIGroup.h"
+
 #include "AAI.h"
 #include "AAIBuildTable.h"
 #include "AAIAttack.h"
+#include "AAIExecute.h"
+#include "AAIAttackManager.h"
+#include "AAIAirForceManager.h"
+#include "AAIUnitTable.h"
+#include "AAIConfig.h"
+#include "AAIMap.h"
+#include "AAISector.h"
+
+
+#include "LegacyCpp/UnitDef.h"
+using namespace springLegacyAI;
+
 
 AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continent_id)
 {

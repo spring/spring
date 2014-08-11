@@ -10,14 +10,16 @@
 #ifndef AAI_BRAIN_H
 #define AAI_BRAIN_H
 
-#include "aidef.h"
-#include "AAISector.h"
-#include "AAIGroup.h"
-
 class AAI;
 class AAIBuildTable;
 class AAIExecute;
 class AIIMap;
+class AAISector;
+
+#include "aidef.h"
+
+enum SectorType {UNKNOWN_SECTOR, LAND_SECTOR, LAND_WATER_SECTOR, WATER_SECTOR};
+
 
 class AAIBrain
 {

@@ -7,9 +7,23 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
+
+#include "AAI.h"
 #include "AAIExecute.h"
 #include "AAIBuildTable.h"
-#include "System/FastMath.h"
+#include "AAIBrain.h"
+#include "AAIUnitTable.h"
+#include "AAIConstructor.h"
+#include "AAIBuildTask.h"
+#include "AAIConfig.h"
+#include "AAIMap.h"
+#include "AAIGroup.h"
+#include "AAISector.h"
+
+#include "LegacyCpp/UnitDef.h"
+#include "LegacyCpp/CommandQueue.h"
+using namespace springLegacyAI;
+
 
 // all the static vars
 float AAIExecute::current = 0.5;

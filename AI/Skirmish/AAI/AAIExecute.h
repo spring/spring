@@ -10,15 +10,21 @@
 #ifndef AAI_EXECUTE_H
 #define AAI_EXECUTE_H
 
-#include "AAI.h"
 #include "aidef.h"
-#include "AAIGroup.h"
+
+namespace springLegacyAI {
+	struct UnitDef;
+};
+using namespace springLegacyAI;
+
+enum BuildOrderStatus {BUILDORDER_FAILED, BUILDORDER_NOBUILDPOS, BUILDORDER_NOBUILDER, BUILDORDER_SUCCESFUL};
 
 class AAI;
 class AAIBuildTable;
 class AAIBrain;
 class AAIMap;
 class AAIUnitTable;
+class AAISector;
 
 class AAIExecute
 {

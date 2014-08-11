@@ -9,6 +9,13 @@
 
 #include "AAIConfig.h"
 #include "AAI.h"
+#include "aidef.h"
+#include "System/SafeCStrings.h"
+#include "System/Util.h"
+
+#include "LegacyCpp/UnitDef.h"
+using namespace springLegacyAI;
+
 
 AAIConfig::AAIConfig(void)
 {

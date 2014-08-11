@@ -9,8 +9,16 @@
 
 #include "AAIMap.h"
 #include "AAI.h"
-#include "AAISector.h"
 #include "AAIBuildTable.h"
+#include "AAIBrain.h"
+#include "AAIConfig.h"
+#include "AAISector.h"
+#include "aidef.h"
+
+#include "System/Util.h"
+#include "LegacyCpp/UnitDef.h"
+using namespace springLegacyAI;
+
 
 int AAIMap::xSize;
 int AAIMap::ySize;

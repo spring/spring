@@ -146,5 +146,8 @@ private:
 
 };
 
+extern AAIConfig *cfg;
+
+
 #endif
 

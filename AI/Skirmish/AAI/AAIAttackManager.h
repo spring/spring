@@ -10,11 +10,12 @@
 #ifndef AAI_ATTACKMANAGER_H
 #define AAI_ATTACKMANAGER_H
 
-
 #include "aidef.h"
 #include <set>
+#include <list>
+#include <vector>
 
-using std::set;
+using namespace std;
 
 class AAI;
 class AAIBrain;

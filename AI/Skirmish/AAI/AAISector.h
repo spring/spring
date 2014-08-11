@@ -10,17 +10,32 @@
 #ifndef AAI_SECTOR_H
 #define AAI_SECTOR_H
 
+
+#include "System/float3.h"
 #include "aidef.h"
+#include <list>
+#include <vector>
+using namespace std;
 
 class AAI;
 class AAIUnitTable;
 class AAIMap;
+class AAIMetalSpot;
+
+namespace springLegacyAI {
+	struct UnitDef;
+};
+using namespace springLegacyAI;
+
+enum Direction {WEST, EAST, SOUTH, NORTH, CENTER, NO_DIRECTION};
 
 struct DefenceCoverage
 {
 	Direction direction;
 	float defence;
 };
+
+
 
 class AAISector
 {

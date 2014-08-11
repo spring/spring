@@ -7,9 +7,17 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
+#include <set>
+using namespace std;
+
 #include "AAIBuildTask.h"
 #include "AAI.h"
 #include "AAIConstructor.h"
+#include "AAIUnitTable.h"
+#include "AAIBuildTable.h"
+#include "AAIExecute.h"
+#include "AAIMap.h"
+#include "AAISector.h"
 
 AAIBuildTask::AAIBuildTask(AAI *ai, int unit_id, int def_id, float3 *pos, int tick)
 {

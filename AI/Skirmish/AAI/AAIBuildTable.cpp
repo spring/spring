@@ -7,10 +7,19 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#include "System/FastMath.h"
 #include "System/Util.h"
 #include "AAIBuildTable.h"
 #include "AAI.h"
+#include "AAIBrain.h"
+#include "AAIExecute.h"
+#include "AAIUnitTable.h"
+#include "AAIConfig.h"
+#include "AAIMap.h"
+
+#include "LegacyCpp/UnitDef.h"
+#include "LegacyCpp/MoveData.h"
+using namespace springLegacyAI;
+
 
 // all the static vars
 list<int>* AAIBuildTable::units_of_category[MOBILE_CONSTRUCTOR+1];

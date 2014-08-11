@@ -10,7 +10,8 @@
 #ifndef AAI_BUILDTASK_H
 #define AAI_BUILDTASK_H
 
-#include "aidef.h"
+#include "System/float3.h"
+
 class AAI;
 
 class AAIBuildTask

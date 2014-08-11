@@ -1,8 +1,28 @@
+// -------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the Spring engine.
+// Copyright Alexander Seizinger
+//
+// Released under GPL license: see LICENSE.html for more information.
+// -------------------------------------------------------------------------
 
-#include "aidef.h"
+#include <set>
+
 #include "AAI.h"
 #include "AAIConstructor.h"
 #include "AAIBuildTask.h"
+#include "AAIExecute.h"
+#include "AAIBuildTable.h"
+#include "AAIUnitTable.h"
+#include "AAIConfig.h"
+#include "AAIMap.h"
+#include "AAISector.h"
+
+#include "LegacyCpp/UnitDef.h"
+#include "LegacyCpp/CommandQueue.h"
+using namespace springLegacyAI;
+
 
 AAIConstructor::AAIConstructor(AAI *ai, int unit_id, int def_id, bool factory, bool builder, bool assistant)
 {

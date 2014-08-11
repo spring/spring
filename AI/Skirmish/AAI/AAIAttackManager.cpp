@@ -11,9 +11,11 @@
 #include "AAI.h"
 #include "AAIBrain.h"
 #include "AAIBuildTable.h"
+#include "AAIAttack.h"
+#include "AAIConfig.h"
 #include "AAIGroup.h"
 #include "AAIMap.h"
-#include "AAIAttack.h"
+#include "AAISector.h"
 
 AAIAttackManager::AAIAttackManager(AAI *ai, int continents)
 {
