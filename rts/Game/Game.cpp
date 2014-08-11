@@ -829,13 +829,15 @@ void CGame::InitSkirmishAIs()
 		return;
 	}
 
-	loadscreen->SetLoadMessage("Loading Skirmish AIs");
-
 	// create a Skirmish AI if required
 	const CSkirmishAIHandler::ids_t& localAIs = skirmishAIHandler.GetSkirmishAIsByPlayer(gu->myPlayerNum);
 
-	for (auto ai = localAIs.begin(); ai != localAIs.end(); ++ai) {
-		skirmishAIHandler.CreateLocalSkirmishAI(*ai);
+	if (!localAIs.empty()) {
+		loadscreen->SetLoadMessage("Loading Skirmish AIs");
+
+		for (auto ai = localAIs.begin(); ai != localAIs.end(); ++ai) {
+			skirmishAIHandler.CreateLocalSkirmishAI(*ai);
+		}
 	}
 }
 
@@ -1475,30 +1477,20 @@ void CGame::StartPlaying()
 //	grouphandler->team = gu->myTeam;
 	CLuaUI::UpdateTeams();
 
-	{
-		// keep connection to server alive in case we need to instantiate AI's
-		// (which can individually trigger massive thread-blocking operations)
-		net->KeepUpdating(true);
-		boost::thread pingThread = boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
+	// setup the teams
+	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
+		CTeam* team = teamHandler->Team(a);
 
-		// setup the teams
-		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-			CTeam* team = teamHandler->Team(a);
+		if (team->gaia)
+			continue;
 
-			if (team->gaia)
-				continue;
-
-			if (!team->HasValidStartPos() && gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame) {
-				// if the player did not choose a start position (eg. if
-				// the game was force-started by the host before sending
-				// any), silently generate one for him
-				// TODO: notify Lua of this also?
-				team->SetDefaultStartPos();
-			}
+		if (!team->HasValidStartPos() && gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame) {
+			// if the player did not choose a start position (eg. if
+			// the game was force-started by the host before sending
+			// any), silently generate one for him
+			// TODO: notify Lua of this also?
+			team->SetDefaultStartPos();
 		}
-
-		net->KeepUpdating(false);
-		pingThread.join();
 	}
 
 	eventHandler.GameStart();
