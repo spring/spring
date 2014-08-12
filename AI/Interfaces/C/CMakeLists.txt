@@ -109,7 +109,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${mySourceDir}/InterfaceExport.cpp"
 		)
 	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${myVersionDepFile})
-	target_link_libraries(${myTarget} CUtils)
+	target_link_libraries(${myTarget} CUtilsAIInterface)
 	FixLibName(${myTarget})
 
 	Add_Dependencies(${myTarget} generateVersionFiles)
