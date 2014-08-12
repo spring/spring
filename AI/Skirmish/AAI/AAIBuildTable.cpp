@@ -67,7 +67,7 @@ AAIBuildTable::AAIBuildTable(AAI* ai)
 
 	for(int i = 0; i < numOfSides; ++i)
 	{
-		temp = ai->Getcb()->GetUnitDef(cfg->START_UNITS[i]);
+		temp = ai->Getcb()->GetUnitDef(cfg->START_UNITS[i].c_str());
 
 		if(temp)
 			startUnits[i] = temp->id;
@@ -75,7 +75,7 @@ AAIBuildTable::AAIBuildTable(AAI* ai)
 		{
 			startUnits[i] = -1;
 			ai->LogConsole("Error: starting unit %s not found\n",
-					cfg->START_UNITS[i]);
+					cfg->START_UNITS[i].c_str());
 		}
 
 		sideNames[i+1].assign(cfg->SIDE_NAMES[i]);
@@ -2517,7 +2517,7 @@ bool AAIBuildTable::LoadBuildTable()
 	{
 		// get filename
 		char buffer[500];
-		STRCPY(buffer, MAIN_PATH);
+		STRCPY(buffer, "");
 		STRCAT(buffer, MOD_LEARN_PATH);
 		const std::string modHumanName = MakeFileSystemCompatible(ai->Getcb()->GetModHumanName());
 		STRCAT(buffer, modHumanName.c_str());
@@ -2776,7 +2776,7 @@ void AAIBuildTable::DebugPrint()
 	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
 	char filename[2048];
 	char buffer[500];
-	STRCPY(buffer, MAIN_PATH);
+	STRCPY(buffer, "");
 	STRCAT(buffer, AILOG_PATH);
 	STRCAT(buffer, "BuildTable_");
 	const std::string modHumanName = MakeFileSystemCompatible(ai->Getcb()->GetModHumanName());
@@ -2947,39 +2947,11 @@ void ReplaceExtension(const char *n, char *dst, int s, const char *ext)
 		a--;
 
 	strncpy (dst, "", s);
-	if (a>s-sizeof(MAIN_PATH)) a=s-sizeof("");
+	if (a>s-sizeof("")) a=s-sizeof("");
 	memcpy (&dst [sizeof ("")-1], n, a);
 	dst[a+sizeof("")]=0;
 
 	strncat (dst, ext, s);
-}
-
-static bool IsFSGoodChar(const char c) {
-
-	if ((c >= '0') && (c <= '9')) {
-		return true;
-	} else if ((c >= 'a') && (c <= 'z')) {
-		return true;
-	} else if ((c >= 'A') && (c <= 'Z')) {
-		return true;
-	} else if ((c == '.') || (c == '_') || (c == '-')) {
-		return true;
-	}
-
-	return false;
-}
-// declaration is in aidef.h
-std::string MakeFileSystemCompatible(const std::string& str) {
-
-	std::string cleaned = str;
-
-	for (std::string::size_type i=0; i < cleaned.size(); i++) {
-		if (!IsFSGoodChar(cleaned[i])) {
-			cleaned[i] = '_';
-		}
-	}
-
-	return cleaned;
 }
 
 float AAIBuildTable::GetFactoryRating(int def_id)

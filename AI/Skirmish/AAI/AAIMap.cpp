@@ -461,7 +461,7 @@ void AAIMap::ReadContinentFile()
 	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
 	static const size_t buffer_sizeMax = 2048;
 	char buffer[buffer_sizeMax];
-	STRCPY(buffer, MAIN_PATH);
+	STRCPY(buffer, " ");
 	STRCAT(buffer, MAP_CACHE_PATH);
 	std::string mapName = MakeFileSystemCompatible(ai->Getcb()->GetMapName());
 	mapName.resize(mapName.size() - 4); // cut off extension
@@ -543,7 +543,7 @@ void AAIMap::ReadContinentFile()
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	// save movement maps
-	STRCPY(buffer, MAIN_PATH);
+	STRCPY(buffer, " ");
 	STRCAT(buffer, MAP_CACHE_PATH);
 	STRCAT(buffer, mapName.c_str());
 	STRCAT(buffer, "_");
@@ -586,7 +586,7 @@ std::string AAIMap::LocateMapLearnFile(const bool forWriting) const {
 	const size_t buffer_sizeMax = 2048;
 	char buffer[buffer_sizeMax];
 
-	STRCPY(buffer, MAIN_PATH);
+	STRCPY(buffer, " ");
 	STRCAT(buffer, MAP_LEARN_PATH);
 	std::string mapName = MakeFileSystemCompatible(ai->Getcb()->GetMapName());
 	mapName.resize(mapName.size() - 4); // cut off extension
@@ -617,7 +617,7 @@ std::string AAIMap::LocateMapCacheFile(const bool forWriting) const {
 	const size_t buffer_sizeMax = 2048;
 	char buffer[buffer_sizeMax];
 
-	STRCPY(buffer, MAIN_PATH);
+	STRCPY(buffer, " ");
 	STRCAT(buffer, MAP_CACHE_PATH);
 	std::string mapName = MakeFileSystemCompatible(ai->Getcb()->GetMapName());
 	mapName.resize(mapName.size() - 4); // cut off extension

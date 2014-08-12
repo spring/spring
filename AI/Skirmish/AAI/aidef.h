@@ -21,8 +21,6 @@
 // The following two helper functions implementations are in AAIBuildTable.cpp
 
 void ReplaceExtension(const char *n, char *dst, int s, const char *ext);
-/// Converts a string to one that can be used in a file name (eg. "Abc.123 $%^*" -> "Abc.123_____")
-std::string MakeFileSystemCompatible(const std::string& str);
 
 #define AAI_VERSION aiexport_getVersion()
 #define MAP_CACHE_VERSION "MAP_DATA_0_89"
@@ -30,14 +28,10 @@ std::string MakeFileSystemCompatible(const std::string& str);
 #define MOD_LEARN_VERSION "MOD_LEARN_0_90"
 #define CONTINENT_DATA_VERSION "MOVEMENT_MAPS_0_87"
 
-// all paths
-#define MAIN_PATH ""
 #define AILOG_PATH "log/"
-#define MOD_CFG_PATH "cfg/mod/"
-#define GENERAL_CFG_FILE "cfg/general.cfg"
-#define MOD_LEARN_PATH "learn/mod/"
 #define MAP_CACHE_PATH "cache/"
-#define MAP_LEARN_PATH "learn/map/"
+#define MAP_LEARN_PATH "learn/mod/"
+#define MOD_LEARN_PATH "learn/mod/"
 
 
 class AAIMetalSpot
@@ -82,6 +76,7 @@ public:
 #define UNIT_TYPE_FIGHTER (unsigned int) 256
 #define UNIT_TYPE_BOMBER (unsigned int) 512
 #define UNIT_TYPE_GUNSHIP (unsigned int) 1024
+
 
 enum UnitCategory {UNKNOWN, STATIONARY_DEF, STATIONARY_ARTY, STORAGE, STATIONARY_CONSTRUCTOR, AIR_BASE,
 STATIONARY_RECON, STATIONARY_JAMMER, STATIONARY_LAUNCHER, DEFLECTION_SHIELD, POWER_PLANT, EXTRACTOR, METAL_MAKER,
