@@ -1357,7 +1357,7 @@ int CLuaUnitScript::TurnVec(lua_State* L)
    if (activeScript == NULL) {
    return 0;
    }
-//Checking the luavals here,boss
+//Checking the luavals here,boss	
 const int piece =    luaL_checkint(L, 1) - 1;
 const float x_vec=   luaL_checkfloat(L, 2);
 const float y_vec=   luaL_checkfloat(L, 3);
