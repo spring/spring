@@ -831,7 +831,7 @@ void AAIBuildTable::PrecacheStats()
 	for(int s = 0; s < numOfSides; s++)
 	{
 		// precache efficiency of power plants
-		for(list<int>::iterator i = units_of_category[POWER_PLANT][s].begin(); i != units_of_category[POWER_PLANT][s].end(); i++)
+		for(list<int>::iterator i = units_of_category[POWER_PLANT][s].begin(); i != units_of_category[POWER_PLANT][s].end(); ++i)
 		{
 			if(GetUnitDef(*i).tidalGenerator)
 				units_static[*i].efficiency[0] = 0;
@@ -846,7 +846,7 @@ void AAIBuildTable::PrecacheStats()
 		}
 
 		// precache efficiency of extractors
-		for(list<int>::iterator i = units_of_category[EXTRACTOR][s].begin(); i != units_of_category[EXTRACTOR][s].end(); i++)
+		for(list<int>::iterator i = units_of_category[EXTRACTOR][s].begin(); i != units_of_category[EXTRACTOR][s].end(); ++i)
 			units_static[*i].efficiency[0] = GetUnitDef(*i).extractsMetal;
 
 		// precache efficiency of metalmakers
@@ -865,7 +865,7 @@ void AAIBuildTable::PrecacheStats()
 		{
 			average_metal = average_energy = 0;
 
-			for(list<int>::iterator unit = units_static[*i].canBuildList.begin(); unit != units_static[*i].canBuildList.end(); unit++)
+			for(list<int>::iterator unit = units_static[*i].canBuildList.begin(); unit != units_static[*i].canBuildList.end(); ++unit)
 			{
 				average_metal += ( GetUnitDef(*unit).metalCost * GetUnitDef(*i).buildSpeed ) / GetUnitDef(*unit).buildTime;
 				average_energy += ( GetUnitDef(*unit).energyCost * GetUnitDef(*i).buildSpeed ) / GetUnitDef(*unit).buildTime;
@@ -991,14 +991,14 @@ void AAIBuildTable::PrecacheStats()
 		}
 
 		// precache usage of jammers
-		for(list<int>::iterator i = units_of_category[STATIONARY_JAMMER][s].begin(); i != units_of_category[STATIONARY_JAMMER][s].end(); i++)
+		for(list<int>::iterator i = units_of_category[STATIONARY_JAMMER][s].begin(); i != units_of_category[STATIONARY_JAMMER][s].end(); ++i)
 		{
 			if(GetUnitDef(*i).energyUpkeep - GetUnitDef(*i).energyMake > 0)
 				units_static[*i].efficiency[0] = GetUnitDef(*i).energyUpkeep - GetUnitDef(*i).energyMake;
 		}
 
 		// precache usage of radar
-		for(list<int>::iterator i = units_of_category[STATIONARY_RECON][s].begin(); i != units_of_category[STATIONARY_RECON][s].end(); i++)
+		for(list<int>::iterator i = units_of_category[STATIONARY_RECON][s].begin(); i != units_of_category[STATIONARY_RECON][s].end(); ++i)
 		{
 			if(GetUnitDef(*i).energyUpkeep - GetUnitDef(*i).energyMake > 0)
 				units_static[*i].efficiency[0] = GetUnitDef(*i).energyUpkeep - GetUnitDef(*i).energyMake;
@@ -1353,7 +1353,7 @@ UnitType AAIBuildTable::GetUnitType(int def_id)
 bool AAIBuildTable::MemberOf(int unit_id, list<int> unit_list)
 {
 	// test all units in list
-	for(list<int>::iterator i = unit_list.begin(); i != unit_list.end(); i++)
+	for(list<int>::iterator i = unit_list.begin(); i != unit_list.end(); ++i)
 	{
 		if(*i == unit_id)
 			return true;
@@ -1414,7 +1414,7 @@ int AAIBuildTable::GetMex(int side, float cost, float effiency, bool armed, bool
 
 	side -= 1;
 
-	for(list<int>::iterator i = units_of_category[EXTRACTOR][side].begin(); i != units_of_category[EXTRACTOR][side].end(); i++)
+	for(list<int>::iterator i = units_of_category[EXTRACTOR][side].begin(); i != units_of_category[EXTRACTOR][side].end(); ++i)
 	{
 		if(canBuild && units_dynamic[*i].constructorsAvailable <= 0)
 			my_ranking = -10000;
@@ -1465,7 +1465,7 @@ int AAIBuildTable::GetStorage(int side, float cost, float metal, float energy, f
 	int best_storage = 0;
 	float best_rating = 0, my_rating;
 
-	for(list<int>::iterator storage = units_of_category[STORAGE][side-1].begin(); storage != units_of_category[STORAGE][side-1].end(); storage++)
+	for(list<int>::iterator storage = units_of_category[STORAGE][side-1].begin(); storage != units_of_category[STORAGE][side-1].end(); ++storage)
 	{
 		if(canBuild && units_dynamic[*storage].constructorsAvailable <= 0)
 			my_rating = 0;
@@ -1498,7 +1498,7 @@ int AAIBuildTable::GetMetalMaker(int side, float cost, float efficiency, float m
 	int best_maker = 0;
 	float best_rating = 0, my_rating;
 
-	for(list<int>::iterator maker = units_of_category[METAL_MAKER][side-1].begin(); maker != units_of_category[METAL_MAKER][side-1].end(); maker++)
+	for(list<int>::iterator maker = units_of_category[METAL_MAKER][side-1].begin(); maker != units_of_category[METAL_MAKER][side-1].end(); ++maker)
 	{
 
 		//ai->LogConsole("MakesMetal: %f", GetUnitDef(*maker).makesMetal);
@@ -1715,7 +1715,7 @@ int AAIBuildTable::GetRandomDefence(int side, UnitCategory /*category*/)
 
 	int best_defence = 0;
 
-	for(list<int>::iterator i = units_of_category[STATIONARY_DEF][side-1].begin(); i != units_of_category[STATIONARY_DEF][side-1].end(); i++)
+	for(list<int>::iterator i = units_of_category[STATIONARY_DEF][side-1].begin(); i != units_of_category[STATIONARY_DEF][side-1].end(); ++i)
 	{
 		my_rating = rand()%512;
 
@@ -1798,7 +1798,7 @@ int AAIBuildTable::GetRadar(int side, float cost, float range, bool water, bool 
 	float my_rating, best_rating = -10000;
 	side -= 1;
 
-	for(list<int>::iterator i = units_of_category[STATIONARY_RECON][side].begin(); i != units_of_category[STATIONARY_RECON][side].end(); i++)
+	for(list<int>::iterator i = units_of_category[STATIONARY_RECON][side].begin(); i != units_of_category[STATIONARY_RECON][side].end(); ++i)
 	{
 		if(GetUnitDef(*i).radarRadius > 0)
 		{
@@ -1835,7 +1835,7 @@ int AAIBuildTable::GetJammer(int side, float cost, float range, bool water, bool
 	float my_rating, best_rating = -10000;
 	side -= 1;
 
-	for(list<int>::iterator i = units_of_category[STATIONARY_JAMMER][side].begin(); i != units_of_category[STATIONARY_JAMMER][side].end(); i++)
+	for(list<int>::iterator i = units_of_category[STATIONARY_JAMMER][side].begin(); i != units_of_category[STATIONARY_JAMMER][side].end(); ++i)
 	{
 		if(canBuild && units_dynamic[*i].constructorsAvailable <= 0)
 			my_rating = -10000;
@@ -1902,7 +1902,7 @@ int AAIBuildTable::GetRandomUnit(list<int> unit_list)
 
 	int best_unit = 0;
 
-	for(list<int>::iterator i = unit_list.begin(); i != unit_list.end(); i++)
+	for(list<int>::iterator i = unit_list.begin(); i != unit_list.end(); ++i)
 	{
 		my_rating = rand()%512;
 
@@ -2909,7 +2909,7 @@ float AAIBuildTable::GetMaxRange(int unit_id)
 {
 	float max_range = 0;
 
-	for(vector<UnitDef::UnitDefWeapon>::const_iterator i = GetUnitDef(unit_id).weapons.begin(); i != GetUnitDef(unit_id).weapons.end(); i++)
+	for(vector<UnitDef::UnitDefWeapon>::const_iterator i = GetUnitDef(unit_id).weapons.begin(); i != GetUnitDef(unit_id).weapons.end(); ++i)
 	{
 		if((*i).def->range > max_range)
 			max_range = (*i).def->range;
@@ -3001,7 +3001,7 @@ float AAIBuildTable::GetFactoryRating(int def_id)
 
 	if(cfg->AIR_ONLY_MOD)
 	{
-		for(list<int>::iterator unit = units_static[def_id].canBuildList.begin(); unit != units_static[def_id].canBuildList.end(); unit++)
+		for(list<int>::iterator unit = units_static[def_id].canBuildList.begin(); unit != units_static[def_id].canBuildList.end(); ++unit)
 		{
 			if(units_static[*unit].category >= GROUND_ASSAULT && units_static[*unit].category <= SEA_ASSAULT)
 			{
@@ -3408,7 +3408,7 @@ void AAIBuildTable::BuildBuilderFor(int building_def_id)
 			ai->Getut()->UnitRequested(MOBILE_CONSTRUCTOR);
 
 			// set all its buildoptions buildable
-			for(list<int>::iterator j = units_static[constructor].canBuildList.begin(); j != units_static[constructor].canBuildList.end(); j++)
+			for(list<int>::iterator j = units_static[constructor].canBuildList.begin(); j != units_static[constructor].canBuildList.end(); ++j)
 				units_dynamic[*j].constructorsRequested += 1;
 
 			// debug
@@ -3481,7 +3481,7 @@ bool AAIBuildTable::IsArty(int id)
 		float max_range = 0;
 //		const WeaponDef *longest = 0;
 
-		for(vector<UnitDef::UnitDefWeapon>::const_iterator weapon = GetUnitDef(id).weapons.begin(); weapon != GetUnitDef(id).weapons.end(); weapon++)
+		for(vector<UnitDef::UnitDefWeapon>::const_iterator weapon = GetUnitDef(id).weapons.begin(); weapon != GetUnitDef(id).weapons.end(); ++weapon)
 		{
 			if(weapon->def->range > max_range)
 			{

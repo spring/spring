@@ -177,7 +177,7 @@ void AAISector::Update()
 AAIMetalSpot* AAISector::GetFreeMetalSpot()
 {
 	// look for the first unoccupied metalspot
-	for(list<AAIMetalSpot*>::iterator i = metalSpots.begin(); i != metalSpots.end(); i++)
+	for(list<AAIMetalSpot*>::iterator i = metalSpots.begin(); i != metalSpots.end(); ++i)
 	{
 		// if metalspot is occupied, try next one
 		if(!(*i)->occupied)

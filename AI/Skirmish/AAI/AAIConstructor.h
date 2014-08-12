@@ -86,7 +86,7 @@ private:
 	double GetMyQueBuildtime();
 	bool IsBusy();
 
-	bool resurrect;		// can resurrect
+//	bool resurrect;		// can resurrect
 	AAI *ai;
 	// engine tick the build order had been given
 	int order_tick;

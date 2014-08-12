@@ -2026,7 +2026,6 @@ void AAIMap::SearchMetalSpots()
 	// clear variables, just in case!
 	TotalMetal = 0;
 	MaxMetal = 0;
-	Stopme = 0;
 	SpotsFound = 0;
 
 	//Load up the metal Values in each pixel
@@ -2082,7 +2081,7 @@ void AAIMap::SearchMetalSpots()
 			}
 		}
 		if (TempMetal < MinMetalForSpot)
-			Stopme = 1; // if the spots get too crappy it will stop running the loops to speed it all up
+			Stopme = true; // if the spots get too crappy it will stop running the loops to speed it all up
 
 		if (!Stopme)
 		{
