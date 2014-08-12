@@ -736,7 +736,6 @@ int CLuaUnitScript::QueryNanoPiece()
 	return RunQueryCallIn(LUAFN_QueryNanoPiece);
 }
 
-
 int CLuaUnitScript::QueryBuildInfo()
 {
 	return RunQueryCallIn(LUAFN_QueryBuildInfo);
@@ -932,6 +931,7 @@ bool CLuaUnitScript::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Spin);
 	REGISTER_LUA_CFUNC(StopSpin);
 	REGISTER_LUA_CFUNC(Turn);
+	REGISTER_LUA_CFUNC(TurnVec);
 	REGISTER_LUA_CFUNC(Move);
 	REGISTER_LUA_CFUNC(IsInTurn);
 	REGISTER_LUA_CFUNC(IsInMove);
@@ -1350,6 +1350,48 @@ int CLuaUnitScript::Turn(lua_State* L)
 	}
 
 	return 0;
+}
+
+int CLuaUnitScript::TurnVec(lua_State* L)
+{
+   if (activeScript == NULL) {
+   return 0;
+   }
+//Checking the luavals here,boss
+const int piece =    luaL_checkint(L, 1) - 1;
+const float x_vec=   luaL_checkfloat(L, 2);
+const float y_vec=   luaL_checkfloat(L, 3);
+const float z_vec=   luaL_checkfloat(L, 4);
+const float xspeed=   luaL_checkfloat(L, 5);
+const float yspeed=   luaL_checkfloat(L, 6);
+const float zspeed=   luaL_checkfloat(L, 7);
+const float zspeed=   luaL_checkfloat(L, 7);
+
+const float destx =GetHeadingFromVector(1,x_vec);
+const float desty =GetHeadingFromVector(1,y_vec);
+const float destz =GetHeadingFromVector(1,z_vec);
+
+   if (yspeed == 0.0f || yspeed==0.0f || zspeed== 0.0f)
+   {
+   activeScript->TurnNow(piece, 1, destx);
+   activeScript->TurnNow(piece, 2, desty);
+   activeScript->TurnNow(piece, 3, destz);
+   }
+
+   if (lua_isboolean(L, 8) && lua_toboolean(L, 8)) {
+   // CUnit* unit = activeScript->GetUnit();
+   // LocalModel* model = unit->localModel;
+   LocalModelPiece* piece = ParseLocalModelPiece(L, activeScript, __FUNCTION__);
+
+   // note:
+   // both of these only have effect if MoveNow() was called, but
+   // the former starts from the ROOT piece (less efficient here)
+   // model->UpdatePieceMatrices();
+   piece->UpdateMatricesRec(true);
+   }
+
+return 0;
+
 }
 
 
