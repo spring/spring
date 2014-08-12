@@ -21,7 +21,6 @@
  * as key type for C++ maps or C hash maps (eg. to cache loaded Skirmish AIs).
  * Engine side, we are using the C++ class SkirmishAIKey for the same purposes.
  */
-#if defined BUILDING_AI_INTERFACE
 
 #ifndef _SSKIRMISHAISPECIFIER_H
 #define _SSKIRMISHAISPECIFIER_H
@@ -75,4 +74,3 @@ struct SSkirmishAISpecifier_Comparator {
 
 #endif // _SSKIRMISHAISPECIFIER_H
 
-#endif // defined BUILDING_AI_INTERFACE

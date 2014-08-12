@@ -107,9 +107,10 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(mySources
 			"${mySourceDir}/Interface.cpp"
 			"${mySourceDir}/InterfaceExport.cpp"
+			"${mySourceDir}/SSkirmishAISpecifier.cpp"
 		)
 	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${myVersionDepFile})
-	target_link_libraries(${myTarget} CUtilsAIInterface)
+	target_link_libraries(${myTarget} CUtils)
 	FixLibName(${myTarget})
 
 	Add_Dependencies(${myTarget} generateVersionFiles)
