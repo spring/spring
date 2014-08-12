@@ -69,8 +69,7 @@ struct PathNodeStateBuffer {
 		, br(bufRes)
 		, mr(mapRes)
 	{
-		ps.x = mapRes.x / bufRes.x;
-		ps.y = mapRes.y / bufRes.y;
+		ps = mapRes / bufRes;
 
 		fCost.resize(br.x * br.y, PATHCOST_INFINITY);
 		gCost.resize(br.x * br.y, PATHCOST_INFINITY);
@@ -81,7 +80,7 @@ struct PathNodeStateBuffer {
 		//extraCostUnsynced.resize(br.x * br.y, 0.0f);
 
 		// Note: Full resolution buffer does not need those!
-		if (bufRes.x != mapRes.x || bufRes.y != mapRes.y) {
+		if (bufRes != mapRes) {
 			peParentNodePos.resize(br.x * br.y, int2(-1, -1));
 			peNodeOffsets.resize(br.x * br.y);
 		}
@@ -98,7 +97,7 @@ struct PathNodeStateBuffer {
 		fCost[idx] = PATHCOST_INFINITY;
 		gCost[idx] = PATHCOST_INFINITY;
 		nodeMask[idx] &= PATHOPT_OBSOLETE;
-		peParentNodePos[idx] = int2(-1, -1);
+		if (!peParentNodePos.empty()) peParentNodePos[idx] = int2(-1, -1);
 	}
 	
 
