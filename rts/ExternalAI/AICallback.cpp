@@ -1446,17 +1446,17 @@ int CAICallback::HandleCommand(int commandId, void* data)
 		} break;
 		case AIHCAddMapPointId: {
 			const AIHCAddMapPoint* cmdData = static_cast<AIHCAddMapPoint*>(data);
-			net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(team, (short)cmdData->pos.x, (short)cmdData->pos.z, std::string(cmdData->label), false));
+			net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)cmdData->pos.x, (short)cmdData->pos.z, std::string(cmdData->label), false));
 			return 1;
 		} break;
 		case AIHCAddMapLineId: {
 			const AIHCAddMapLine* cmdData = static_cast<AIHCAddMapLine*>(data);
-			net->Send(CBaseNetProtocol::Get().SendMapDrawLine(team, (short)cmdData->posfrom.x, (short)cmdData->posfrom.z, (short)cmdData->posto.x, (short)cmdData->posto.z, false));
+			net->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)cmdData->posfrom.x, (short)cmdData->posfrom.z, (short)cmdData->posto.x, (short)cmdData->posto.z, false));
 			return 1;
 		} break;
 		case AIHCRemoveMapPointId: {
 			const AIHCRemoveMapPoint* cmdData = static_cast<AIHCRemoveMapPoint*>(data);
-			net->Send(CBaseNetProtocol::Get().SendMapErase(team, (short)cmdData->pos.x, (short)cmdData->pos.z));
+			net->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)cmdData->pos.x, (short)cmdData->pos.z));
 			return 1;
 		} break;
 		case AIHCSendStartPosId: {
