@@ -460,7 +460,7 @@ void AAIMap::ReadMapCacheFile()
 
 void AAIMap::ReadContinentFile()
 {
-	const std::string filename = cfg->GetFileName(cfg->getUniqueName(true, true, true, true), MAP_CACHE_PATH "continent-", ".dat", true);
+	const std::string filename = cfg->GetFileName(cfg->getUniqueName(true, true, true, true), MAP_CACHE_PATH, "_continent.dat", true);
 	FILE* file = fopen(filename.c_str(), "r");
 
 	if(file != NULL)
@@ -522,7 +522,7 @@ void AAIMap::ReadContinentFile()
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	// save movement maps
-	const std::string movementfile = cfg->GetFileName(cfg->getUniqueName(true, false, true, false), MAP_CACHE_PATH "movement-", ".dat", true);
+	const std::string movementfile = cfg->GetFileName(cfg->getUniqueName(true, false, true, false), MAP_CACHE_PATH, "_movement.dat", true);
 	file = fopen(movementfile.c_str(), "w+");
 
 	fprintf(file, "%s\n",  CONTINENT_DATA_VERSION);
@@ -552,12 +552,12 @@ void AAIMap::ReadContinentFile()
 
 std::string AAIMap::LocateMapLearnFile() const
 {
-	return cfg->GetFileName(cfg->getUniqueName(true, true, true, true), MAP_LEARN_PATH "maplearn-", ".dat", true);
+	return cfg->GetFileName(cfg->getUniqueName(true, true, true, true), MAP_LEARN_PATH, "_maplearn.dat", true);
 }
 
 std::string AAIMap::LocateMapCacheFile() const
 {
-	return cfg->GetFileName(cfg->getUniqueName(false, false, true, true), MAP_LEARN_PATH "maplearn-", ".dat", true);
+	return cfg->GetFileName(cfg->getUniqueName(false, false, true, true), MAP_LEARN_PATH, "_mapcache.dat", true);
 }
 
 void AAIMap::ReadMapLearnFile(bool auto_set)

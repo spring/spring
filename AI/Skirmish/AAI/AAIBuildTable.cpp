@@ -2494,6 +2494,11 @@ void AAIBuildTable::CalcBuildTree(int unit)
 	}
 }
 
+std::string AAIBuildTable::GetBuildCacheFileName()
+{
+	return cfg->GetFileName(cfg->getUniqueName(true, true, true, true), MOD_LEARN_PATH, "_buildcache.txt", true);
+}
+
 
 // returns true if cache found
 bool AAIBuildTable::LoadBuildTable()
@@ -2512,34 +2517,18 @@ bool AAIBuildTable::LoadBuildTable()
 		}
 
 		return true;
-	}
-	else	// load data
-	{
-		// get filename
-		char buffer[500];
-		STRCPY(buffer, "");
-		STRCAT(buffer, MOD_LEARN_PATH);
-		const std::string modHumanName = MakeFileSystemCompatible(ai->Getcb()->GetModHumanName());
-		STRCAT(buffer, modHumanName.c_str());
-		STRCAT(buffer, "-");
-		const std::string modHash = IntToString(ai->Getcb()->GetModHash(), "%x");
-		STRCAT(buffer, modHash.c_str());
-		STRCAT(buffer, ".dat");
-		STRCPY(buildtable_filename, buffer);
-
-		// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
-		char buildtable_filename_r[2048];
-		STRCPY(buildtable_filename_r, buildtable_filename);
-		ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_R, buildtable_filename_r);
+	} else {
+		// load data
 
 		FILE *load_file;
 
 		int tmp = 0, cat = 0;
 		size_t bo = 0, bb = 0;
-
+		const std::string filename = GetBuildCacheFileName();
 		// load units if file exists
-		if((load_file = fopen(buildtable_filename_r, "r")))
+		if((load_file = fopen(filename.c_str(), "r")))
 		{
+			char buffer[1024];
 			// check if correct version
 			fscanf(load_file, "%s", buffer);
 
@@ -2668,12 +2657,8 @@ void AAIBuildTable::SaveBuildTable(int game_period, MapType map_type)
 			units_static[*builder].efficiency[5] = -1;
 	}
 
-	// get filename
-	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
-	char buildtable_filename_w[2048];
-	STRCPY(buildtable_filename_w, buildtable_filename);
-	ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, buildtable_filename_w);
-	FILE *save_file = fopen(buildtable_filename_w, "w+");
+	const std::string filename = GetBuildCacheFileName();
+	FILE *save_file = fopen(filename.c_str(), "w+");
 
 	// file version
 	fprintf(save_file, "%s \n", MOD_LEARN_VERSION);
@@ -2774,22 +2759,9 @@ void AAIBuildTable::DebugPrint()
 	// for debugging
 	UnitType unitType;
 	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
-	char filename[2048];
-	char buffer[500];
-	STRCPY(buffer, "");
-	STRCAT(buffer, AILOG_PATH);
-	STRCAT(buffer, "BuildTable_");
-	const std::string modHumanName = MakeFileSystemCompatible(ai->Getcb()->GetModHumanName());
-	STRCAT(buffer, modHumanName.c_str());
-	STRCAT(buffer, "-");
-	const std::string modHash = IntToString(ai->Getcb()->GetModHash(), "%x");
-	STRCAT(buffer, modHash.c_str());
-	STRCAT(buffer, ".txt");
-	STRCPY(filename, buffer);
+	const std::string filename = cfg->GetFileName(cfg->getUniqueName(true, true, true, true), MOD_LEARN_PATH, "_buildtable.txt", true);
 
-	ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, filename);
-
-	FILE *file = fopen(filename, "w");
+	FILE *file = fopen(filename.c_str(), "w");
 
 	if(file)
 	{
