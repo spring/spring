@@ -1446,16 +1446,22 @@ int CAICallback::HandleCommand(int commandId, void* data)
 		} break;
 		case AIHCAddMapPointId: {
 			const AIHCAddMapPoint* cmdData = static_cast<AIHCAddMapPoint*>(data);
+			/*
+			   TODO: gu->myPlayerNum makes the command to look like as it comes from the local player,
+			   "team" should be used (but needs some major changes in other engine parts)
+			*/
 			net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)cmdData->pos.x, (short)cmdData->pos.z, std::string(cmdData->label), false));
 			return 1;
 		} break;
 		case AIHCAddMapLineId: {
 			const AIHCAddMapLine* cmdData = static_cast<AIHCAddMapLine*>(data);
+			// see TODO above
 			net->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)cmdData->posfrom.x, (short)cmdData->posfrom.z, (short)cmdData->posto.x, (short)cmdData->posto.z, false));
 			return 1;
 		} break;
 		case AIHCRemoveMapPointId: {
 			const AIHCRemoveMapPoint* cmdData = static_cast<AIHCRemoveMapPoint*>(data);
+			// see TODO above
 			net->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)cmdData->pos.x, (short)cmdData->pos.z));
 			return 1;
 		} break;
