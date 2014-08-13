@@ -132,14 +132,18 @@ public:
 	float LEARN_SPEED;
 	int LEARN_RATE;
 	int GAME_PERIODS;
-private:
-	~AAIConfig(void);
+
 	/**
 	 * open a file in springs data directory
 	 * @param filename relative path of the file in the spring data dir
 	 * @param mode mode file to open, see manpage of fopen
 	 */
-	std::string GetFileName(const std::string& filename, const std::string& prefix = "", const std::string& suffix = "", bool write = false);
+	std::string GetFileName(const std::string& filename, const std::string& prefix = "", const std::string& suffix = "", bool write = false) const;
+	std::string getUniqueName(bool game, bool gamehash, bool map, bool maphash) const;
+
+private:
+	~AAIConfig(void);
+
 	const UnitDef* GetUnitDef(const std::string& name);
 	int GetInt(FILE* file);
 	float GetFloat(FILE* file);

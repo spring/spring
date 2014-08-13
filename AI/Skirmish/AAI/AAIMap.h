@@ -207,8 +207,8 @@ private:
 
 	void BuildMapPos2Pos(float3 *pos, const UnitDef* def);
 
-	std::string LocateMapLearnFile(const bool forWriting) const;
-	std::string LocateMapCacheFile(const bool forWriting) const;
+	std::string LocateMapLearnFile() const;
+	std::string LocateMapCacheFile() const;
 
 	AAI *ai;
 

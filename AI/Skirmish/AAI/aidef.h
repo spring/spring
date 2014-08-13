@@ -29,7 +29,6 @@ void ReplaceExtension(const char *n, char *dst, int s, const char *ext);
 #define CONTINENT_DATA_VERSION "MOVEMENT_MAPS_0_87"
 
 #define AILOG_PATH "log/"
-#define MAP_CACHE_PATH "cache/"
 #define MAP_LEARN_PATH "learn/mod/"
 #define MOD_LEARN_PATH "learn/mod/"
 

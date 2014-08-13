@@ -182,7 +182,7 @@ AAIConfig::~AAIConfig(void)
 }
 
 
-std::string AAIConfig::GetFileName(const std::string& filename, const std::string& prefix, const std::string& suffix, bool write)
+std::string AAIConfig::GetFileName(const std::string& filename, const std::string& prefix, const std::string& suffix, bool write) const
 {
 	std::string name = prefix + MakeFileSystemCompatible(filename) + suffix;
 
@@ -508,6 +508,34 @@ const UnitDef* AAIConfig::GetUnitDef(const std::string& name)
 	const UnitDef* res = ai->Getcb()->GetUnitDef(name.c_str());
 	if (res == NULL) {
 		ai->Log("ERROR: loading unit - could not find unit %s\n", name.c_str());
+	}
+	return res;
+}
+
+std::string AAIConfig::getUniqueName(bool game, bool gamehash, bool map, bool maphash) const
+{
+	std::string res;
+	if (map) {
+		if (!res.empty())
+			res += "-";
+		std::string mapName = MakeFileSystemCompatible(ai->Getcb()->GetMapName());
+		mapName.resize(mapName.size() - 4); // cut off extension
+		res += mapName;
+	}
+	if (maphash) {
+		if (!res.empty())
+			res += "-";
+		res += IntToString(ai->Getcb()->GetMapHash(), "%x");
+	}
+	if (game) {
+		if (!res.empty())
+			res += "_";
+		res += MakeFileSystemCompatible(ai->Getcb()->GetModHumanName());
+	}
+	if (gamehash) {
+		if (!res.empty())
+			res += "-";
+		res += IntToString(ai->Getcb()->GetModHash(), "%x");
 	}
 	return res;
 }
