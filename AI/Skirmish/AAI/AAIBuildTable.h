@@ -22,6 +22,7 @@ using namespace springLegacyAI;
 #include <assert.h>
 #include <list>
 #include <vector>
+#include <string>
 
 using namespace std;
 
@@ -298,6 +299,7 @@ public:
 	const UnitDef& GetUnitDef(int i) { assert(IsValidUnitDefID(i));	return *unitList[i];}
 	bool IsValidUnitDefID(int i) { return (i>=0) && (i<=unitList.size()); }
 private:
+	std::string GetBuildCacheFileName();
 	// precaches speed/cost/buildtime/range stats
 	void PrecacheStats();
 
@@ -317,7 +319,7 @@ private:
 
 	AAI * ai;
 
-	FILE *file;
+//	FILE *file;
 
 	// all the unit defs, FIXME: this can't be made static as spring seems to free the memory returned by GetUnitDefList()
 	std::vector<const UnitDef*> unitList;

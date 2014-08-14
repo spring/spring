@@ -25,12 +25,12 @@
 using namespace springLegacyAI;
 
 
-AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continent_id)
+AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continent_id):
+	rally_point(ZeroVector)
 {
 	this->ai = ai;
 
 	attack = 0;
-	rally_point = ZeroVector;
 
 	category = ai->Getbt()->units_static[def->id].category;
 	combat_category = ai->Getbt()->GetIDOfAssaultCategory(category);

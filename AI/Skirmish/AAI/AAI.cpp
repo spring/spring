@@ -167,7 +167,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 
 	SNPRINTF(team_number, 3, "%d", team);
 
-	STRCPY(buffer, MAIN_PATH);
+	STRCPY(buffer, "");
 	STRCAT(buffer, AILOG_PATH);
 	STRCAT(buffer, "AAI_log_team_");
 	STRCAT(buffer, team_number);

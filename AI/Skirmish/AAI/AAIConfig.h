@@ -21,12 +21,20 @@ using std::list;
 using std::vector;
 
 class AAI;
+namespace springLegacyAI {
+	struct UnitDef;
+};
+
+using namespace springLegacyAI;
 
 struct CostMultiplier
 {
 	int id;
 	float multiplier;
 };
+
+/// Converts a string to one that can be used in a file name (eg. "Abc.123 $%^*" -> "Abc.123_____")
+std::string MakeFileSystemCompatible(const std::string& str);
 
 class AAIConfig
 {
@@ -75,8 +83,8 @@ public:
 	int MIN_METAL_STORAGE;
 	int MAX_METAL_COST;
 	int MAX_AIR_TARGETS;
-	char **START_UNITS;
-	char **SIDE_NAMES;
+	std::vector<std::string> START_UNITS;
+	std::vector<std::string> SIDE_NAMES;
 
 	list<int> SCOUTS;
 	list<int> ATTACKERS;
@@ -124,17 +132,33 @@ public:
 	float LEARN_SPEED;
 	int LEARN_RATE;
 	int GAME_PERIODS;
+
+	/**
+	 * open a file in springs data directory
+	 * @param filename relative path of the file in the spring data dir
+	 * @param mode mode file to open, see manpage of fopen
+	 */
+	std::string GetFileName(const std::string& filename, const std::string& prefix = "", const std::string& suffix = "", bool write = false) const;
+	std::string getUniqueName(bool game, bool gamehash, bool map, bool maphash) const;
+
 private:
 	~AAIConfig(void);
+
+	const UnitDef* GetUnitDef(const std::string& name);
+	int GetInt(FILE* file);
+	float GetFloat(FILE* file);
+	std::string GetString(FILE* file);
+
+	AAI *ai;
 	int CONSTRUCTION_TIMEOUT;
 	float WATER_MAP_RATIO;
 	float LAND_WATER_MAP_RATIO;
 	float LIGHT_ASSAULT_RATIO;
 	int MIN_FACTORIES_FOR_RADAR_JAMMER;
-	int MAX_MEX_DEFENCE_COST;
+//	int MAX_MEX_DEFENCE_COST;
 	int MAX_METAL_MAKERS;
 	float MIN_SECTOR_THREAT;
-	float SHIP_MIN_WATERDEPTH;
+//	float SHIP_MIN_WATERDEPTH;
 	int MIN_AIR_ATTACK_COST;
 	int MAX_BUILDERS;
 	int MIN_ASSISTANCE_BUILDSPEED;
