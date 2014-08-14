@@ -10,6 +10,12 @@
 #include "SoundLog.h"
 #include "System/Config/ConfigHandler.h"
 
+#include "ISoundChannels.h"
+#include "Null/NullAudioChannel.h"
+#ifndef NO_SOUND
+#include "OpenAL/AudioChannel.h"
+#endif
+
 CONFIG(bool, NoSound).defaultValue(false);
 
 
@@ -27,10 +33,20 @@ void ISound::Initialize()
 #ifndef NO_SOUND
 		const bool noSound = configHandler->GetBool("NoSound");
 		if (!noSound) {
+			Channels::BGMusic = new AudioChannel();
+			Channels::General = new AudioChannel();
+			Channels::Battle = new AudioChannel();
+			Channels::UnitReply = new AudioChannel();
+			Channels::UserInterface = new AudioChannel();
 			singleton = new CSound();
 		} else
 #endif // NO_SOUND
 		{
+			Channels::BGMusic = new NullAudioChannel();
+			Channels::General = new NullAudioChannel();
+			Channels::Battle = new NullAudioChannel();
+			Channels::UnitReply = new NullAudioChannel();
+			Channels::UserInterface = new NullAudioChannel();
 			singleton = new NullSound();
 		}
 	} else {
@@ -38,13 +54,24 @@ void ISound::Initialize()
 	}
 }
 
+#define SafeDelete(var) \
+	delete var; \
+	var = NULL;
+
 void ISound::Shutdown()
 {
+	SafeDelete(Channels::BGMusic);
+	SafeDelete(Channels::General);
+	SafeDelete(Channels::Battle);
+	SafeDelete(Channels::UnitReply);
+	SafeDelete(Channels::UserInterface);
+
 	ISound* tmpSound = singleton;
 	singleton = NULL;
 	delete tmpSound;
 	tmpSound = NULL;
 }
+
 
 bool ISound::IsInitialized()
 {

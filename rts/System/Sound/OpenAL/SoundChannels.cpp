@@ -4,9 +4,9 @@
 
 namespace Channels
 {
-	AudioChannel BGMusic;
-	AudioChannel General;
-	AudioChannel Battle;
-	AudioChannel UnitReply;
-	AudioChannel UserInterface;
+	AudioChannel* BGMusic = NULL;
+	AudioChannel* General = NULL;
+	AudioChannel* Battle = NULL;
+	AudioChannel* UnitReply = NULL;
+	AudioChannel* UserInterface = NULL;
 }
