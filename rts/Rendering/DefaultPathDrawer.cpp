@@ -71,24 +71,16 @@ void DefaultPathDrawer::DrawAll() const {
 
 void DefaultPathDrawer::DrawInMiniMap()
 {
-	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	const CPathEstimator* pe = pm->medResPE;
-	const MoveDef* md = GetSelectedMoveDef();
 
-	if (md == NULL)
-		return;
-
-	if (gd->GetDrawMode() < CBaseGroundDrawer::drawPathTrav)
-		return;
-	if (gd->GetDrawMode() > CBaseGroundDrawer::drawPathCost)
+	if (!IsEnabled())
 		return;
 
 	glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glLoadIdentity();
-		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f);
-		glTranslatef((float)minimap->GetPosX() * globalRendering->pixelX, (float)minimap->GetPosY() * globalRendering->pixelY, 0.0f);
-		glScalef((float)minimap->GetSizeX() * globalRendering->pixelX, (float)minimap->GetSizeY() * globalRendering->pixelY, 1.0f);
+		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
+		minimap->ApplyConstraintsMatrix();
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
@@ -99,12 +91,11 @@ void DefaultPathDrawer::DrawInMiniMap()
 	glColor4f(1.0f, 1.0f, 0.0f, 0.7f);
 
 	for (const CPathEstimator::SingleBlock& sb: pe->updatedBlocks) {
-		if (sb.moveDef == md) {
-			const int blockIdxX = sb.blockPos.x * pe->GetBlockSize();
-			const int blockIdxY = sb.blockPos.y * pe->GetBlockSize();
-			glRectf(blockIdxX, blockIdxY, blockIdxX + pe->GetBlockSize(), blockIdxY + pe->GetBlockSize());
-		}
+		const int blockIdxX = sb.blockPos.x * pe->GetBlockSize();
+		const int blockIdxY = sb.blockPos.y * pe->GetBlockSize();
+		glRectf(blockIdxX, blockIdxY, blockIdxX + pe->GetBlockSize(), blockIdxY + pe->GetBlockSize());
 	}
+
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glEnable(GL_TEXTURE_2D);
 
