@@ -804,7 +804,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 		switch (basicType->id) {
 			case creg::crInt:   code.push_back(OP_STOREI); break;
-			case creg::crBool:  code.push_back(OP_STOREI); break;
+			case creg::crBool:  code.push_back(OP_STOREC); break;
 			case creg::crFloat: code.push_back(OP_STOREF); break;
 			case creg::crUChar: code.push_back(OP_STOREC); break;
 			default: break;
