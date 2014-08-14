@@ -530,8 +530,8 @@ void CGame::LoadGame(const std::string& mapName, bool threaded)
 	if (!gu->globalQuit) PostLoadRendering();
 	if (!gu->globalQuit) LoadInterface();
 	if (!gu->globalQuit) LoadLua();
-	if (!gu->globalQuit) InitSkirmishAIs();
 	if (!gu->globalQuit) LoadFinalize();
+	if (!gu->globalQuit) InitSkirmishAIs();
 
 	if (!gu->globalQuit && saveFile) {
 		loadscreen->SetLoadMessage("Loading game");
@@ -839,6 +839,7 @@ void CGame::InitSkirmishAIs()
 			skirmishAIHandler.CreateLocalSkirmishAI(*ai);
 		}
 	}
+	finishedLoading = true;
 }
 
 void CGame::LoadFinalize()
@@ -868,7 +869,6 @@ void CGame::LoadFinalize()
 	lastDrawFrameTime = lastReadNetTime;
 	updateDeltaSeconds = 0.0f;
 
-	finishedLoading = true;
 }
 
 
