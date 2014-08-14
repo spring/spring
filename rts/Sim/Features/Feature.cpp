@@ -489,15 +489,18 @@ bool CFeature::UpdatePosition()
 			CWorldObject::SetVelocity(speed + GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f)));
 
 			if (speed.SqLength2D() > 0.01f) {
-				UnBlock();
+				//hint: only this updates horizontal position all other
+				//   lines in this function update vertical speed only!
+
 				quadField->RemoveFeature(this);
+				UnBlock();
 
 				// update our forward speed (and quadfield
 				// position) if it is still greater than 0
 				Move(speed, true);
 
-				quadField->AddFeature(this);
 				Block();
+				quadField->AddFeature(this);
 			} else {
 				CWorldObject::SetVelocity(speed * UpVector);
 			}
@@ -561,6 +564,7 @@ bool CFeature::UpdatePosition()
 
 	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
 	UpdatePhysicalState(0.1f);
+	Block(); // does the check if wanted itself
 
 	return (IsMoving());
 }

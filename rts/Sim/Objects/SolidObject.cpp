@@ -233,8 +233,12 @@ void CSolidObject::Block() {
 		return;
 
 	UnBlock();
-	groundBlockingObjectMap->AddGroundBlockingObject(this);
-	assert(IsBlocking());
+
+	// only block when `touching` the ground
+	if ((pos.y - radius) <= CGround::GetHeightAboveWater(pos.x, pos.z)) {
+		groundBlockingObjectMap->AddGroundBlockingObject(this);
+		assert(IsBlocking());
+	}
 }
 
 
