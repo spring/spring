@@ -62,7 +62,7 @@ void CClassicGroundMoveType::LeaveTransport() {}
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/type2.h"
@@ -321,7 +321,7 @@ void CClassicGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadiu
 	StartEngine();
 
 	if (owner->team == gu->myTeam) {
-		Channels::General.PlayRandomSample(owner->unitDef->sounds.activate, owner);
+		Channels::General->PlayRandomSample(owner->unitDef->sounds.activate, owner);
 	}
 }
 
@@ -1017,7 +1017,7 @@ void CClassicGroundMoveType::Arrived()
 		StopEngine();
 
 		if (owner->team == gu->myTeam) {
-			Channels::General.PlayRandomSample(owner->unitDef->sounds.arrived, owner);
+			Channels::General->PlayRandomSample(owner->unitDef->sounds.arrived, owner);
 		}
 
 		progressState = Done;

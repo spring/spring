@@ -12,10 +12,8 @@
 #include "System/Exceptions.h"
 #include "System/myMath.h"
 
-#if !defined(HEADLESS) && !defined(NO_SOUND)
-	#include "System/Sound/EFX.h"
-	#include "System/Sound/EFXPresets.h"
-#endif
+#include "System/Sound/OpenAL/EFX.h"
+#include "System/Sound/OpenAL/EFXPresets.h"
 
 #include <cassert>
 #include <cfloat>

@@ -3,7 +3,7 @@
 #ifndef _NULL_SOUND_H_
 #define _NULL_SOUND_H_
 
-#include "ISound.h"
+#include "System/Sound/ISound.h"
 
 #include <string>
 

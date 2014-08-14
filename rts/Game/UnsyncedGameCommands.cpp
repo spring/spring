@@ -78,7 +78,7 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/DumpState.h"
 #include "System/Util.h"
 #include "System/EventHandler.h"
@@ -1398,15 +1398,15 @@ public:
 			enable = true;
 
 		if (channel == "UnitReply")
-			Channels::UnitReply.Enable(enable);
+			Channels::UnitReply->Enable(enable);
 		else if (channel == "General")
-			Channels::General.Enable(enable);
+			Channels::General->Enable(enable);
 		else if (channel == "Battle")
-			Channels::Battle.Enable(enable);
+			Channels::Battle->Enable(enable);
 		else if (channel == "UserInterface")
-			Channels::UserInterface.Enable(enable);
+			Channels::UserInterface->Enable(enable);
 		else if (channel == "Music")
-			Channels::BGMusic.Enable(enable);
+			Channels::BGMusic->Enable(enable);
 		else
 			LOG_L(L_WARNING, "/%s: wrong channel name \"%s\"", GetCommand().c_str(), channel.c_str());
 

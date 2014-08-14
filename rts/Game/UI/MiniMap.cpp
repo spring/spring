@@ -49,7 +49,7 @@
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/SimpleParser.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 
 #include <boost/cstdint.hpp>
 

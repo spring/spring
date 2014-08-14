@@ -24,7 +24,7 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/Log/ILog.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 
 
 CInMapDraw* inMapDrawer = NULL;
@@ -56,7 +56,7 @@ public:
 			// even if this message is not intented for our ears
 			LOG("%s added point: %s", sender->name.c_str(), label->c_str());
 			eventHandler.LastMessagePosition(*pos0);
-			Channels::UserInterface.PlaySample(blippSound, *pos0);
+			Channels::UserInterface->PlaySample(blippSound, *pos0);
 			minimap->AddNotification(*pos0, OnesVector, 1.0f);
 		}
 

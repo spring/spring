@@ -3,9 +3,9 @@
 #include "ISound.h"
 
 #ifndef   NO_SOUND
-#include "Sound.h"
+#include "OpenAL/Sound.h"
 #endif // NO_SOUND
-#include "NullSound.h"
+#include "Null/NullSound.h"
 
 #include "SoundLog.h"
 #include "System/Config/ConfigHandler.h"

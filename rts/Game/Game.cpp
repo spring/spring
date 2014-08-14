@@ -151,7 +151,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Watchdog.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/DumpState.h"
 #include "System/Sync/SyncedPrimitiveIO.h"
 #include "System/Sync/SyncTracer.h"
@@ -1750,20 +1750,20 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			const bool allied = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
 			if (gu->spectating || (allied && !player->spectator)) {
 				LOG("%sAllies: %s", label.c_str(), s.c_str());
-				Channels::UserInterface.PlaySample(chatSound, 5);
+				Channels::UserInterface->PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_SPECTATORS) {
 			if (gu->spectating || myMsg) {
 				LOG("%sSpectators: %s", label.c_str(), s.c_str());
-				Channels::UserInterface.PlaySample(chatSound, 5);
+				Channels::UserInterface->PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_EVERYONE) {
 			const bool specsOnly = noSpectatorChat && (player && player->spectator);
 			if (gu->spectating || !specsOnly) {
 				LOG("%s%s", label.c_str(), s.c_str());
-				Channels::UserInterface.PlaySample(chatSound, 5);
+				Channels::UserInterface->PlaySample(chatSound, 5);
 			}
 		}
 		else if ((msg.destination < playerHandler->ActivePlayers()) && player)
@@ -1771,7 +1771,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			// player <-> player and spectator <-> spectator are allowed
 			if (msg.destination == gu->myPlayerNum && player->spectator == gu->spectating) {
 				LOG("%sPrivate: %s", label.c_str(), s.c_str());
-				Channels::UserInterface.PlaySample(chatSound, 5);
+				Channels::UserInterface->PlaySample(chatSound, 5);
 			}
 			else if (player->playerNum == gu->myPlayerNum)
 			{

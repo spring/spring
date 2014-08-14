@@ -3,7 +3,7 @@
 #ifndef NULL_AUDIO_CHANNEL_H
 #define NULL_AUDIO_CHANNEL_H
 
-#include "IAudioChannel.h"
+#include "System/Sound/IAudioChannel.h"
 
 
 class NullAudioChannel : public IAudioChannel {
