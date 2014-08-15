@@ -41,7 +41,6 @@
 #include "System/Sync/SyncTracer.h"
 
 #define NUM_WAITING_DAMAGE_LISTS 128
-#define PLAY_SOUNDS 1
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -315,7 +314,6 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	CExplosionEvent explosionEvent(params.pos, damages.GetDefaultDamage(), damageAOE, weaponDef);
 	CExplosionCreator::FireExplosionEvent(explosionEvent);
 
-	#if (PLAY_SOUNDS == 1)
 	if (weaponDef != NULL) {
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
 
@@ -329,7 +327,6 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 			Channels::Battle->PlaySample(soundID, params.pos, soundSet.getVolume(soundNum));
 		}
 	}
-	#endif
 }
 
 

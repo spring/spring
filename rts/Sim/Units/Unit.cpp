@@ -64,8 +64,6 @@
 #include "System/Sync/SyncedPrimitive.h"
 #include "System/Sync/SyncTracer.h"
 
-#define PLAY_SOUNDS 1
-
 // See end of source for member bindings
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -2079,11 +2077,9 @@ void CUnit::Activate()
 
 	radarHandler->MoveUnit(this);
 
-	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
 		Channels::General->PlayRandomSample(unitDef->sounds.activate, this);
 	}
-	#endif
 }
 
 void CUnit::Deactivate()
@@ -2100,11 +2096,9 @@ void CUnit::Deactivate()
 
 	radarHandler->RemoveUnit(this);
 
-	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
 		Channels::General->PlayRandomSample(unitDef->sounds.deactivate, this);
 	}
-	#endif
 }
 
 

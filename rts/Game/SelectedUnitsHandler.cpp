@@ -45,8 +45,6 @@
 #include <map>
 
 
-#define PLAY_SOUNDS 1
-
 CONFIG(bool, BuildIconsFirst).defaultValue(false);
 CONFIG(bool, AutoAddBuiltUnitsToFactoryGroup).defaultValue(false).description("Controls whether or not units built by factories will inherit that factory's unit group.");
 CONFIG(bool, AutoAddBuiltUnitsToSelectedGroup).defaultValue(false);
@@ -244,12 +242,10 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 
 	SendCommand(c);
 
-	#if (PLAY_SOUNDS == 1)
 	if (!selectedUnits.empty()) {
 		CUnitSet::const_iterator ui = selectedUnits.begin();
 		Channels::UnitReply->PlayRandomSample((*ui)->unitDef->sounds.ok, *ui);
 	}
-	#endif
 }
 
 
@@ -286,14 +282,12 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 		}
 	}
 
-	#if (PLAY_SOUNDS == 1)
 	if (addedunits >= 2) {
 		Channels::UserInterface->PlaySample(soundMultiselID);
 	}
 	else if (addedunits == 1) {
 		Channels::UnitReply->PlayRandomSample(unit->unitDef->sounds.select, unit);
 	}
-	#endif
 }
 
 
@@ -337,9 +331,7 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 		}
 	}
 
-	#if (PLAY_SOUNDS == 1)
 	Channels::UnitReply->PlayRandomSample(unit->unitDef->sounds.select, unit);
-	#endif
 }
 
 

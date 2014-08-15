@@ -67,7 +67,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define MAX_IDLING_SLOWUPDATES           16
 #define IGNORE_OBSTACLES                  0
 #define WAIT_FOR_PATH                     1
-#define PLAY_SOUNDS                       1
 
 #define UNIT_CMD_QUE_SIZE(u) (u->commandAI->commandQue.size())
 #define UNIT_HAS_MOVE_CMD(u) (u->commandAI->commandQue.empty() || u->commandAI->commandQue[0].GetID() == CMD_MOVE)
@@ -429,11 +428,9 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	// unless they come to a full stop first
 	ReRequestPath(false, true);
 
-	#if (PLAY_SOUNDS == 1)
 	if (owner->team == gu->myTeam) {
 		Channels::General->PlayRandomSample(owner->unitDef->sounds.activate, owner);
 	}
-	#endif
 }
 
 void CGroundMoveType::StopMoving(bool callScript, bool hardStop) {
@@ -1487,11 +1484,9 @@ void CGroundMoveType::Arrived(bool callScript)
 	if (progressState == Active) {
 		StopEngine(callScript);
 
-		#if (PLAY_SOUNDS == 1)
 		if (owner->team == gu->myTeam) {
 			Channels::General->PlayRandomSample(owner->unitDef->sounds.arrived, owner);
 		}
-		#endif
 
 		// and the action is done
 		progressState = Done;

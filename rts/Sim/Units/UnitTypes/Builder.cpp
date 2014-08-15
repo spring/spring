@@ -27,8 +27,6 @@
 #include "System/Log/ILog.h"
 #include "System/Sound/ISoundChannels.h"
 
-#define PLAY_SOUNDS 1
-
 using std::min;
 using std::max;
 
@@ -810,11 +808,9 @@ bool CBuilder::ScriptStartBuilding(float3 pos, bool silent)
 		script->StartBuilding(ClampRad(h - heading * TAANG2RAD), p - pitch);
 	}
 
-	#if (PLAY_SOUNDS == 1)
 	if ((!silent || inBuildStance) && losStatus[gu->myAllyTeam] & LOS_INLOS) {
 		Channels::General->PlayRandomSample(unitDef->sounds.build, pos);
 	}
-	#endif
 
 	return inBuildStance;
 }

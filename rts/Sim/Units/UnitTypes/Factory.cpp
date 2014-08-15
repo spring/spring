@@ -23,10 +23,7 @@
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
-#define PLAY_SOUNDS 1
-#if (PLAY_SOUNDS == 1)
 #include "Game/GlobalUnsynced.h"
-#endif
 
 CR_BIND_DERIVED(CFactory, CBuilding, );
 
@@ -206,11 +203,9 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 	curBuild = buildee;
 	curBuildDef = NULL;
 
-	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
 		Channels::General->PlayRandomSample(unitDef->sounds.build, buildPos);
 	}
-	#endif
 }
 
 void CFactory::UpdateBuild(CUnit* buildee) {
