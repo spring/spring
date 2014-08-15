@@ -37,7 +37,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
 #define NUM_WAITING_DAMAGE_LISTS 128
@@ -326,7 +326,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 		const int soundID = soundSet.getID(soundNum);
 
 		if (soundID > 0) {
-			Channels::Battle.PlaySample(soundID, params.pos, soundSet.getVolume(soundNum));
+			Channels::Battle->PlaySample(soundID, params.pos, soundSet.getVolume(soundNum));
 		}
 	}
 	#endif

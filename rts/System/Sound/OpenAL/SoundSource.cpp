@@ -7,9 +7,9 @@
 
 #include "ALShared.h"
 #include "EFX.h"
-#include "IAudioChannel.h"
+#include "System/Sound/IAudioChannel.h"
 #include "OggStream.h"
-#include "SoundLog.h"
+#include "System/Sound/SoundLog.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
 

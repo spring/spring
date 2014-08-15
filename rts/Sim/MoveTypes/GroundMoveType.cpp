@@ -35,7 +35,7 @@
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
 #include "System/type2.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/HsiehHash.h"
 #include "System/Sync/SyncTracer.h"
 
@@ -431,7 +431,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 
 	#if (PLAY_SOUNDS == 1)
 	if (owner->team == gu->myTeam) {
-		Channels::General.PlayRandomSample(owner->unitDef->sounds.activate, owner);
+		Channels::General->PlayRandomSample(owner->unitDef->sounds.activate, owner);
 	}
 	#endif
 }
@@ -1489,7 +1489,7 @@ void CGroundMoveType::Arrived(bool callScript)
 
 		#if (PLAY_SOUNDS == 1)
 		if (owner->team == gu->myTeam) {
-			Channels::General.PlayRandomSample(owner->unitDef->sounds.arrived, owner);
+			Channels::General->PlayRandomSample(owner->unitDef->sounds.arrived, owner);
 		}
 		#endif
 

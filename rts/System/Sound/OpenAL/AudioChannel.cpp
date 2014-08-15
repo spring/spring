@@ -3,9 +3,9 @@
 #include "AudioChannel.h"
 
 #include "ALShared.h"
-#include "ISound.h"
+#include "System/Sound/ISound.h"
 #include "SoundItem.h"
-#include "SoundLog.h"
+#include "System/Sound/SoundLog.h"
 #include "SoundSource.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Objects/WorldObject.h"

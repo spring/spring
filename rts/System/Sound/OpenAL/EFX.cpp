@@ -6,7 +6,7 @@
 #include "EFXPresets.h"
 #include "EFXfuncs.h"
 
-#include "SoundLog.h"
+#include "System/Sound/SoundLog.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/myMath.h"
 

@@ -3,7 +3,7 @@
 #include "SoundBuffer.h"
 
 
-#include "SoundLog.h"
+#include "System/Sound/SoundLog.h"
 #include "ALShared.h"
 #include "VorbisShared.h"
 #include "System/Platform/byteorder.h"

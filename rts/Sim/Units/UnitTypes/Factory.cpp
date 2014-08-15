@@ -20,7 +20,7 @@
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
 #define PLAY_SOUNDS 1
@@ -208,7 +208,7 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 
 	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.build, buildPos);
+		Channels::General->PlayRandomSample(unitDef->sounds.build, buildPos);
 	}
 	#endif
 }

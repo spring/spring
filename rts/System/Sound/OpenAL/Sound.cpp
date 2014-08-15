@@ -8,8 +8,8 @@
 #include <boost/cstdint.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "SoundChannels.h"
-#include "SoundLog.h"
+#include "System/Sound/ISoundChannels.h"
+#include "System/Sound/SoundLog.h"
 #include "SoundSource.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
@@ -56,13 +56,13 @@ CSound::CSound()
 	pitchAdjust = configHandler->GetBool("PitchAdjust");
 
 	masterVolume = configHandler->GetInt("snd_volmaster") * 0.01f;
-	Channels::General.SetVolume(configHandler->GetInt("snd_volgeneral") * 0.01f);
-	Channels::UnitReply.SetVolume(configHandler->GetInt("snd_volunitreply") * 0.01f);
-	Channels::UnitReply.SetMaxConcurrent(1);
-	Channels::UnitReply.SetMaxEmmits(1);
-	Channels::Battle.SetVolume(configHandler->GetInt("snd_volbattle") * 0.01f);
-	Channels::UserInterface.SetVolume(configHandler->GetInt("snd_volui") * 0.01f);
-	Channels::BGMusic.SetVolume(configHandler->GetInt("snd_volmusic") * 0.01f);
+	Channels::General->SetVolume(configHandler->GetInt("snd_volgeneral") * 0.01f);
+	Channels::UnitReply->SetVolume(configHandler->GetInt("snd_volunitreply") * 0.01f);
+	Channels::UnitReply->SetMaxConcurrent(1);
+	Channels::UnitReply->SetMaxEmmits(1);
+	Channels::Battle->SetVolume(configHandler->GetInt("snd_volbattle") * 0.01f);
+	Channels::UserInterface->SetVolume(configHandler->GetInt("snd_volui") * 0.01f);
+	Channels::BGMusic->SetVolume(configHandler->GetInt("snd_volmusic") * 0.01f);
 
 	SoundBuffer::Initialise();
 	soundItemDef temp;
@@ -217,23 +217,23 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	}
 	else if (key == "snd_volgeneral")
 	{
-		Channels::General.SetVolume(std::atoi(value.c_str()) * 0.01f);
+		Channels::General->SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
 	else if (key == "snd_volunitreply")
 	{
-		Channels::UnitReply.SetVolume(std::atoi(value.c_str()) * 0.01f);
+		Channels::UnitReply->SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
 	else if (key == "snd_volbattle")
 	{
-		Channels::Battle.SetVolume(std::atoi(value.c_str()) * 0.01f);
+		Channels::Battle->SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
 	else if (key == "snd_volui")
 	{
-		Channels::UserInterface.SetVolume(std::atoi(value.c_str()) * 0.01f);
+		Channels::UserInterface->SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
 	else if (key == "snd_volmusic")
 	{
-		Channels::BGMusic.SetVolume(std::atoi(value.c_str()) * 0.01f);
+		Channels::BGMusic->SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
 	else if (key == "PitchAdjust")
 	{
@@ -595,10 +595,10 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 
 void CSound::NewFrame()
 {
-	Channels::General.UpdateFrame();
-	Channels::Battle.UpdateFrame();
-	Channels::UnitReply.UpdateFrame();
-	Channels::UserInterface.UpdateFrame();
+	Channels::General->UpdateFrame();
+	Channels::Battle->UpdateFrame();
+	Channels::UnitReply->UpdateFrame();
+	Channels::UserInterface->UpdateFrame();
 }
 
 

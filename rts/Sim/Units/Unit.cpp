@@ -60,7 +60,7 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncedPrimitive.h"
 #include "System/Sync/SyncTracer.h"
 
@@ -2081,7 +2081,7 @@ void CUnit::Activate()
 
 	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.activate, this);
+		Channels::General->PlayRandomSample(unitDef->sounds.activate, this);
 	}
 	#endif
 }
@@ -2102,7 +2102,7 @@ void CUnit::Deactivate()
 
 	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.deactivate, this);
+		Channels::General->PlayRandomSample(unitDef->sounds.deactivate, this);
 	}
 	#endif
 }

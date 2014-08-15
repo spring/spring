@@ -25,7 +25,7 @@
 #include "Sim/Units/UnitLoader.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 
 #define PLAY_SOUNDS 1
 
@@ -812,7 +812,7 @@ bool CBuilder::ScriptStartBuilding(float3 pos, bool silent)
 
 	#if (PLAY_SOUNDS == 1)
 	if ((!silent || inBuildStance) && losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.build, pos);
+		Channels::General->PlayRandomSample(unitDef->sounds.build, pos);
 	}
 	#endif
 

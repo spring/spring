@@ -37,7 +37,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/Util.h"
 #include "System/myMath.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
 #endif // _CONSOLE
@@ -612,7 +612,7 @@ void CCobInstance::Signal(int signal)
 
 void CCobInstance::PlayUnitSound(int snr, int attr)
 {
-	Channels::UnitReply.PlaySample(script.sounds[snr], unit->pos, unit->speed, attr);
+	Channels::UnitReply->PlaySample(script.sounds[snr], unit->pos, unit->speed, attr);
 }
 
 
