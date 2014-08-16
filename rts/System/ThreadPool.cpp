@@ -136,12 +136,11 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 static bool DoTask(std::shared_ptr<ITaskGroup> tg)
 {
 	auto p = tg->GetTask();
-	const bool f = p;
-	if (f) {
+	if (p) {
 		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
 		(*p)();
 	}
-	return f;
+	return static_cast<bool>(p);
 }
 
 
