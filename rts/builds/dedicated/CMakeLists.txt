@@ -176,16 +176,5 @@ INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
 # use cases:
 # * make spring-dedicated
 # * make install-spring-dedicated
-set(springDsDeps
-		engine-dedicated
-		springserver
-		gamedata
-		unitsync
-	)
-set(springDsInstallDirs
-		"rts/builds/dedicated"
-		"tools/unitsync"
-		"cont"
-	)
 CreateEngineBuildAndInstallTarget(dedicated)
-add_dependencies(spring-dedicated springDsDeps springDsInstallDirs)
+
