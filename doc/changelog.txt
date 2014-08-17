@@ -39,6 +39,7 @@ Bugfixes:
  - fix #4406 (crash at start)
  - fix #4377 (compile with cmake 3.0)
  - fix #3677 (bounceExplosionGenerator tag does not work for bouncing aircraftbomb weapon types)
+ - fix #4483 (Spring.SetProjectileAlwaysVisible doesn't always make a projectile always visible)
  - KR found the cause of a _very_ old bug: fix green screen tint in startselector stage
  - give correct error message when cmdline given filepath wasn't quoted and contained spaces
 
