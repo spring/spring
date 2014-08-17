@@ -27,8 +27,10 @@ Pather:
  - modrules: add system.pathFinderUpdateRate tag
 
 Misc:
+ - AI is initializated earlier: no more hang on game start
  - add /set GrassDetail to console
  - slightly speed up scanning for archives
+ - add HostIPDefault, HostPortDefault to set default host ip/port
 
 Bugfixes:
  - fix #4417 (spring spring://username:passwd@hostname:port doesn't work)
@@ -39,6 +41,10 @@ Bugfixes:
  - fix #3677 (bounceExplosionGenerator tag does not work for bouncing aircraftbomb weapon types)
  - KR found the cause of a _very_ old bug: fix green screen tint in startselector stage
  - give correct error message when cmdline given filepath wasn't quoted and contained spaces
+
+Buildprocess:
+ - fixes for CMake 3.0
+ - heavily reduced files which are compiled multiple times
 
 
 -- 97.0 ---------------------------------------------------------
