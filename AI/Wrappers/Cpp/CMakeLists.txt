@@ -94,12 +94,14 @@ if    (BUILD_${myName}_AIWRAPPER)
 		#${myGeneratedSourceDir}/AbstractPath.cpp
 		${myGeneratedSourceDir}/AbstractPathDrawer.cpp
 		${myGeneratedSourceDir}/AbstractPathing.cpp
+		${myGeneratedSourceDir}/AbstractPodParam.cpp
 		${myGeneratedSourceDir}/AbstractPoint.cpp
 		${myGeneratedSourceDir}/AbstractResource.cpp
 		${myGeneratedSourceDir}/AbstractRoots.cpp
 		${myGeneratedSourceDir}/AbstractShield.cpp
 		${myGeneratedSourceDir}/AbstractSkirmishAI.cpp
 		${myGeneratedSourceDir}/AbstractSkirmishAIs.cpp
+		${myGeneratedSourceDir}/AbstractTeam.cpp
 		${myGeneratedSourceDir}/AbstractTeams.cpp
 		${myGeneratedSourceDir}/AbstractUnit.cpp
 		${myGeneratedSourceDir}/AbstractUnitDef.cpp
@@ -137,12 +139,14 @@ if    (BUILD_${myName}_AIWRAPPER)
 		#${myGeneratedSourceDir}/StubPath.cpp
 		${myGeneratedSourceDir}/StubPathDrawer.cpp
 		${myGeneratedSourceDir}/StubPathing.cpp
+		${myGeneratedSourceDir}/StubPodParam.cpp
 		${myGeneratedSourceDir}/StubPoint.cpp
 		${myGeneratedSourceDir}/StubResource.cpp
 		${myGeneratedSourceDir}/StubRoots.cpp
 		${myGeneratedSourceDir}/StubShield.cpp
 		${myGeneratedSourceDir}/StubSkirmishAI.cpp
 		${myGeneratedSourceDir}/StubSkirmishAIs.cpp
+		${myGeneratedSourceDir}/StubTeam.cpp
 		${myGeneratedSourceDir}/StubTeams.cpp
 		${myGeneratedSourceDir}/StubUnit.cpp
 		${myGeneratedSourceDir}/StubUnitDef.cpp
@@ -183,12 +187,14 @@ if    (BUILD_${myName}_AIWRAPPER)
 		#${myGeneratedSourceDir}/WrappPath.cpp
 		${myGeneratedSourceDir}/WrappPathDrawer.cpp
 		${myGeneratedSourceDir}/WrappPathing.cpp
+		${myGeneratedSourceDir}/WrappPodParam.cpp
 		${myGeneratedSourceDir}/WrappPoint.cpp
 		${myGeneratedSourceDir}/WrappResource.cpp
 		${myGeneratedSourceDir}/WrappRoots.cpp
 		${myGeneratedSourceDir}/WrappShield.cpp
 		${myGeneratedSourceDir}/WrappSkirmishAI.cpp
 		${myGeneratedSourceDir}/WrappSkirmishAIs.cpp
+		${myGeneratedSourceDir}/WrappTeam.cpp
 		${myGeneratedSourceDir}/WrappTeams.cpp
 		${myGeneratedSourceDir}/WrappUnit.cpp
 		${myGeneratedSourceDir}/WrappUnitDef.cpp

@@ -154,6 +154,53 @@ static bool unitModParamIsVisible(int skirmishAIId, const CUnit& unit,
 	return false;
 }
 
+static const CTeam* getTeam(int teamId) {
+
+	if (teamId < MAX_TEAMS) {
+		return teamHandler->Team(teamId);
+	} else {
+		return NULL;
+	}
+}
+
+//static bool isAlliedTeam(int skirmishAIId, const CTeam* team) {
+//	return teamHandler->AlliedTeams(team.teamNum, skirmishAIId_teamId[skirmishAIId]);
+//}
+//
+//static inline bool teamModParamIsValidId(const CTeam& team, int modParamId) {
+//	return ((size_t)modParamId < team.modParams.size());
+//}
+//
+//static bool teamModParamIsVisible(int skirmishAIId, const CTeam& team,
+//		int modParamId)
+//{
+//	const int teamId = skirmishAIId_teamId[skirmishAIId];
+//
+//	if (teamModParamIsValidId(team, modParamId)) {
+//		const int allyID = teamHandler->AllyTeam(teamId);
+//		const int losStatus = unit.losStatus[allyID];
+//
+//		int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
+//
+//		if (isAlliedTeam(skirmishAIId, &team)
+//				|| skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+//			losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
+//		} else if (teamHandler->AlliedTeams(team.teamNum, teamId)) {
+//			// ingame alliances
+//			losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
+//		} else if (losStatus & LOS_INLOS) {
+//			losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
+//		} else if (losStatus & LOS_INRADAR) {
+//			losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
+//		}
+//
+//		return ((team.modParams[modParamId].los & losMask) > 0);
+//	}
+//
+//	return false;
+//}
+
+
 static inline const UnitDef* getUnitDefById(int skirmishAIId, int unitDefId) {
 
 	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefId);
@@ -1268,6 +1315,16 @@ EXPORT(void) skirmishAiCallback_Game_getCategoryName(int skirmishAIId, int categ
 	}
 	STRCPY_T(name, name_sizeMax, theName);
 }
+
+//EXPORT(int) skirmishAiCallback_Game_getModParams(int skirmishAIId, int unitId) {
+//
+//	const CUnit* unit = getUnit(unitId);
+//	if (unit && /*(skirmishAiCallback_Cheats_isEnabled(skirmishAIId) || */isAlliedUnit(skirmishAIId, unit)/*)*/) {
+//		return unit->modParams.size();
+//	} else {
+//		return 0;
+//	}
+//}
 
 EXPORT(float) skirmishAiCallback_Gui_getViewRange(int skirmishAIId) {
 
@@ -3596,6 +3653,98 @@ EXPORT(int) skirmishAiCallback_getTeamUnits(int skirmishAIId, int* unitIds, int 
 	return a;
 }
 
+
+//########### BEGINN Team
+EXPORT(bool) skirmishAiCallback_Team_hasAIController(int skirmishAIId, int teamId) {
+
+	for (auto& tid : skirmishAIId_teamId) {
+		if (tid.second == teamId) {
+			return true;
+		}
+	}
+	return false;
+}
+
+EXPORT(int) skirmishAiCallback_getEnemyTeams(int skirmishAIId, int* teamIds, int teamIds_sizeMax) {
+
+	int a = 0;
+
+	const int teamId = skirmishAIId_teamId[skirmishAIId];
+	for (int i = 0; i < teamHandler->ActiveTeams() && a < teamIds_sizeMax; i++) {
+		if (!teamHandler->AlliedTeams(i, teamId)) {
+			if (teamIds != NULL) {
+				teamIds[a] = i;
+			}
+			a++;
+		}
+	}
+
+	return a;
+}
+
+EXPORT(int) skirmishAiCallback_getAllyTeams(int skirmishAIId, int* teamIds, int teamIds_sizeMax) {
+
+	int a = 0;
+
+	const int teamId = skirmishAIId_teamId[skirmishAIId];
+	for (int i = 0; i < teamHandler->ActiveTeams() && a < teamIds_sizeMax; i++) {
+		if (teamHandler->AlliedTeams(i, teamId)) {
+			if (teamIds != NULL) {
+				teamIds[a] = i;
+			}
+			a++;
+		}
+	}
+
+	return a;
+}
+
+EXPORT(int) skirmishAiCallback_Team_getPodParams(int skirmishAIId, int teamId) {
+
+	const CTeam* team = getTeam(teamId);
+//	if (team && /*(skirmishAiCallback_Cheats_isEnabled(skirmishAIId) || */isAlliedTeam(skirmishAIId, team)/*)*/) {
+		return team->modParams.size();
+//	} else {
+//		return 0;
+//	}
+}
+
+EXPORT(const char*) skirmishAiCallback_Team_PodParam_getName(int skirmishAIId, int teamId, int podParamId)
+{
+	const char* name = "";
+
+	const CTeam* team = getTeam(teamId);
+	if (team /*&& teamModParamIsVisible(skirmishAIId, *team, modParamId)*/) {
+		std::map<std::string, int>::const_iterator mi, mb, me;
+		mb = team->modParamsMap.begin();
+		me = team->modParamsMap.end();
+		for (mi = mb; mi != me; ++mi) {
+			if (mi->second == podParamId) {
+				name = mi->first.c_str();
+			}
+		}
+	}
+
+	return name;
+}
+
+EXPORT(float) skirmishAiCallback_Team_PodParam_getValue(int skirmishAIId,
+		int teamId, int podParamId)
+{
+	float value = 0.0f;
+
+	const CTeam* team = getTeam(teamId);
+	if (team /*&& teamModParamIsVisible(skirmishAIId, *team, podParamId)*/) {
+		//FIXME add function to get string params, too!
+		value = team->modParams[podParamId].valueInt;
+	}
+
+	return value;
+}
+
+//########### END Team
+
+
 //########### BEGINN FeatureDef
 EXPORT(int) skirmishAiCallback_getFeatureDefs(int skirmishAIId, int* featureDefIds, int featureDefIds_sizeMax) {
 
@@ -4587,6 +4736,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Game_getCategoryFlag = &skirmishAiCallback_Game_getCategoryFlag;
 	callback->Game_getCategoriesFlag = &skirmishAiCallback_Game_getCategoriesFlag;
 	callback->Game_getCategoryName = &skirmishAiCallback_Game_getCategoryName;
+//	callback->Game_getModParams = &skirmishAiCallback_Game_getModParams;
 	callback->Gui_getViewRange = &skirmishAiCallback_Gui_getViewRange;
 	callback->Gui_getScreenX = &skirmishAiCallback_Gui_getScreenX;
 	callback->Gui_getScreenY = &skirmishAiCallback_Gui_getScreenY;
@@ -4886,6 +5036,12 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Unit_isNeutral = &skirmishAiCallback_Unit_isNeutral;
 	callback->Unit_getBuildingFacing = &skirmishAiCallback_Unit_getBuildingFacing;
 	callback->Unit_getLastUserOrderFrame = &skirmishAiCallback_Unit_getLastUserOrderFrame;
+	callback->Team_hasAIController = &skirmishAiCallback_Team_hasAIController;
+	callback->getEnemyTeams = &skirmishAiCallback_getEnemyTeams;
+	callback->getAllyTeams = &skirmishAiCallback_getAllyTeams;
+	callback->Team_getPodParams = &skirmishAiCallback_Team_getPodParams;
+	callback->Team_PodParam_getName = &skirmishAiCallback_Team_PodParam_getName;
+	callback->Team_PodParam_getValue = &skirmishAiCallback_Team_PodParam_getValue;
 	callback->getGroups = &skirmishAiCallback_getGroups;
 	callback->Group_getSupportedCommands = &skirmishAiCallback_Group_getSupportedCommands;
 	callback->Group_SupportedCommand_getId = &skirmishAiCallback_Group_SupportedCommand_getId;

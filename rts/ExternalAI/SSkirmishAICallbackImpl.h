@@ -125,6 +125,8 @@ EXPORT(int              ) skirmishAiCallback_Game_getCategoriesFlag(int skirmish
 
 EXPORT(void             ) skirmishAiCallback_Game_getCategoryName(int skirmishAIId, int categoryFlag, char* name, int name_sizeMax);
 
+//EXPORT(int              ) skirmishAiCallback_Game_getModParams(int skirmishAIId);
+
 // END misc callback functions
 
 
@@ -757,6 +759,22 @@ EXPORT(int              ) skirmishAiCallback_Unit_getBuildingFacing(int skirmish
 EXPORT(int              ) skirmishAiCallback_Unit_getLastUserOrderFrame(int skirmishAIId, int unitId);
 
 // END OBJECT Unit
+
+
+// BEGINN OBJECT Team
+EXPORT(bool             ) skirmishAiCallback_Team_hasAIController(int skirmishAIId, int teamId);
+
+EXPORT(int              ) skirmishAiCallback_getEnemyTeams(int skirmishAIId, int* teamIds, int teamIds_sizeMax);
+
+EXPORT(int              ) skirmishAiCallback_getAllyTeams(int skirmishAIId, int* teamIds, int teamIds_sizeMax);
+
+EXPORT(int              ) skirmishAiCallback_Team_getPodParams(int skirmishAIId, int teamId);
+
+EXPORT(const char*      ) skirmishAiCallback_Team_PodParam_getName(int skirmishAIId, int teamId, int podParamId);
+
+EXPORT(float            ) skirmishAiCallback_Team_PodParam_getValue(int skirmishAIId, int teamId, int podParamId);
+
+// END OBJECT Team
 
 
 // BEGINN OBJECT Group

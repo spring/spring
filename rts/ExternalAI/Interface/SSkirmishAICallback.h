@@ -398,6 +398,22 @@ struct SSkirmishAICallback {
 	 */
 	void              (CALLING_CONV *Game_getCategoryName)(int skirmishAIId, int categoryFlag, char* name, int name_sizeMax);
 
+//	/**
+//	 * This is a set of parameters that is initialized
+//	 * in CreateGameRulesParams() and may change during the game.
+//	 * Each parameter is uniquely identified only by its id
+//	 * (which is the index in the vector).
+//	 * Parameters may or may not have a name.
+//	 */
+//	int               (CALLING_CONV *Game_getModParams)(int skirmishAIId); //$ FETCHER:MULTI:NUM:ModParam
+//
+//	/**
+//	 * Not every mod parameter has a name.
+//	 */
+//	const char*       (CALLING_CONV *Game_ModParam_getName)(int skirmishAIId, int modParamId);
+//
+//	float             (CALLING_CONV *Game_ModParam_getValue)(int skirmishAIId, int modParamId);
+
 // END misc callback functions
 
 
@@ -1333,6 +1349,32 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Unit_getLastUserOrderFrame)(int skirmishAIId, int unitId);
 
 // END OBJECT Unit
+
+
+// BEGINN OBJECT Team
+	bool              (CALLING_CONV *Team_hasAIController)(int skirmishAIId, int teamId);
+
+	int               (CALLING_CONV *getEnemyTeams)(int skirmishAIId, int* teamIds, int teamIds_sizeMax); //$ FETCHER:MULTI:IDs:Team:teamIds
+
+	int               (CALLING_CONV *getAllyTeams)(int skirmishAIId, int* teamIds, int teamIds_sizeMax); //$ FETCHER:MULTI:IDs:Team:teamIds
+
+	/**
+	 * This is a set of parameters that is initialized
+	 * in CreateTeamRulesParams() and may change during the game.
+	 * Each parameter is uniquely identified only by its id
+	 * (which is the index in the vector).
+	 * Parameters may or may not have a name.
+	 */
+	int               (CALLING_CONV *Team_getPodParams)(int skirmishAIId, int teamId); //$ FETCHER:MULTI:NUM:PodParam
+
+	/**
+	 * Not every mod parameter has a name.
+	 */
+	const char*       (CALLING_CONV *Team_PodParam_getName)(int skirmishAIId, int teamId, int podParamId);
+
+	float             (CALLING_CONV *Team_PodParam_getValue)(int skirmishAIId, int teamId, int podParamId);
+
+// END OBJECT Team
 
 
 // BEGINN OBJECT Group
