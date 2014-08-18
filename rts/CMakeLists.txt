@@ -101,8 +101,7 @@ Add_Subdirectory(Net)
 Add_Subdirectory(Sim)
 #Add_Subdirectory(System) # this is already added in ../
 
-SET(engineSources "" PARENT_SCOPE)
-LIST(APPEND engineSources
+MakeGlobalVar(engineSources
 		${sources_engine_Game}
 		${sources_engine_Net}
 		${sources_engine_Lua}

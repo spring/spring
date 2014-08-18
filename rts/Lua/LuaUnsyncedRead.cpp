@@ -971,7 +971,7 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 
 	static CVisProjectileQuadDrawer projQuadIter;
 
-	const bool addSyncedProjectiles = luaL_optboolean(L, 2, true);
+	/*const bool addSyncedProjectiles =*/ luaL_optboolean(L, 2, true);
 	const bool addWeaponProjectiles = luaL_optboolean(L, 3, true);
 	const bool addPieceProjectiles = luaL_optboolean(L, 4, true);
 

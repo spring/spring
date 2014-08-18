@@ -2,7 +2,7 @@
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp" -or -name "*.c" | sort
 # Then Sound/ stuff was removed, because it is now a separate static lib.
-SET(sources_engine_System_common
+MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/AIScriptHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigLocater.cpp"
@@ -69,16 +69,16 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/float3.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/float4.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/myMath.cpp"
-		PARENT_SCOPE
 	)
-SET(sources_engine_System_creg
+
+
+MakeGlobalVar(sources_engine_System_creg
 		"${CMAKE_CURRENT_SOURCE_DIR}/creg/Serializer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/creg/VarTypes.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg_runtime_tests.cpp"
-		PARENT_SCOPE
 	)
-SET(sources_engine_System_FileSystem
+MakeGlobalVar(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveLoader.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveScanner.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/CacheDir.cpp"
@@ -92,60 +92,51 @@ SET(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/SimpleParser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/VFSHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/RapidHandler.cpp"
-		PARENT_SCOPE
 	)
-SET(sources_engine_System_Log
+MakeGlobalVar(sources_engine_System_Log
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/Backend.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFilter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFormatter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/FramePrefixer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogSinkHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogUtil.c"
-		PARENT_SCOPE
 	)
-SET(sources_engine_System_Log_sinkStream
+MakeGlobalVar(sources_engine_System_Log_sinkStream
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/StreamSink.cpp"
-		PARENT_SCOPE
 	)
-SET(sources_engine_System_Log_sinkConsole
+MakeGlobalVar(sources_engine_System_Log_sinkConsole
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/ConsoleSink.cpp"
-		PARENT_SCOPE
 	)
-SET(sources_engine_System_Log_sinkFile
+MakeGlobalVar(sources_engine_System_Log_sinkFile
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/FileSink.cpp"
-		PARENT_SCOPE
 	)
-SET(sources_engine_System_Log_sinkOutputDebugString
+MakeGlobalVar(sources_engine_System_Log_sinkOutputDebugString
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/OutputDebugStringSink.cpp"
-		PARENT_SCOPE
 	)
-SET(sources_engine_System_Platform_Linux
+MakeGlobalVar(sources_engine_System_Platform_Linux
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/CrashHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/myX11.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/SoLib.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/thread_backtrace.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/MessageBox.cpp"
-		PARENT_SCOPE
 	)
-SET(sources_engine_System_Platform_Mac
+MakeGlobalVar(sources_engine_System_Platform_Mac
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/SoLib.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/MessageBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/CrashHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/thread_backtrace.cpp"
-		PARENT_SCOPE
 	)
-SET(sources_engine_System_Platform_Windows
+MakeGlobalVar(sources_engine_System_Platform_Windows
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/CrashHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/DllLib.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/MessageBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/seh.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/WinVersion.cpp"
-		PARENT_SCOPE
 	)
 
 ### only use the target platform related directory
 IF     (APPLE)
-	SET(sources_engine_System
+	MakeGlobalVar(sources_engine_System
 			${sources_engine_System_common}
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
@@ -153,10 +144,9 @@ IF     (APPLE)
 			${sources_engine_System_Log_sinkConsole}
 			${sources_engine_System_Log_sinkFile}
 			${sources_engine_System_Platform_Mac}
-			PARENT_SCOPE
 		)
 ELSEIF (UNIX)
-	SET(sources_engine_System
+	MakeGlobalVar(sources_engine_System
 			${sources_engine_System_common}
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
@@ -164,10 +154,9 @@ ELSEIF (UNIX)
 			${sources_engine_System_Log_sinkConsole}
 			${sources_engine_System_Log_sinkFile}
 			${sources_engine_System_Platform_Linux}
-			PARENT_SCOPE
 		)
 ELSEIF (WIN32)
-	SET(sources_engine_System
+	MakeGlobalVar(sources_engine_System
 			${sources_engine_System_common}
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
@@ -176,17 +165,15 @@ ELSEIF (WIN32)
 			${sources_engine_System_Log_sinkFile}
 			${sources_engine_System_Log_sinkOutputDebugString}
 			${sources_engine_System_Platform_Windows}
-			PARENT_SCOPE
 		)
 ELSE   ()
-	SET(sources_engine_System
+	MakeGlobalVar(sources_engine_System
 			${sources_engine_System_common}
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
 			${sources_engine_System_Log}
 			${sources_engine_System_Log_sinkConsole}
 			${sources_engine_System_Log_sinkFile}
-			PARENT_SCOPE
 		)
 ENDIF  ()
 

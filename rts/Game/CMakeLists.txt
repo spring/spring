@@ -1,7 +1,7 @@
 
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp" | sort
-SET(sources_engine_Game
+MakeGlobalVar(sources_engine_Game
 		"${CMAKE_CURRENT_SOURCE_DIR}/Action.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/AviVideoCapturing.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Benchmark.cpp"
@@ -72,6 +72,5 @@ SET(sources_engine_Game
 		"${CMAKE_CURRENT_SOURCE_DIR}/UnsyncedGameCommands.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/WaitCommandsAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/WordCompletion.cpp"
-		PARENT_SCOPE
 	)
 
