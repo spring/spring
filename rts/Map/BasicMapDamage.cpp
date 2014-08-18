@@ -67,10 +67,10 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	e->pos = pos;
 	e->strength = strength;
 	e->ttl = 10;
-	e->x1 = std::max((int) (pos.x - radius) / SQUARE_SIZE,            2);
-	e->x2 = std::min((int) (pos.x + radius) / SQUARE_SIZE, gs->mapx - 3);
-	e->y1 = std::max((int) (pos.z - radius) / SQUARE_SIZE,            2);
-	e->y2 = std::min((int) (pos.z + radius) / SQUARE_SIZE, gs->mapy - 3);
+	e->x1 = Clamp<int>((pos.x - radius) / SQUARE_SIZE, 1, gs->mapxm1);
+	e->x2 = Clamp<int>((pos.x + radius) / SQUARE_SIZE, 1, gs->mapxm1);
+	e->y1 = Clamp<int>((pos.z - radius) / SQUARE_SIZE, 1, gs->mapym1);
+	e->y2 = Clamp<int>((pos.z + radius) / SQUARE_SIZE, 1, gs->mapym1);
 	e->squares.reserve((e->y2 - e->y1 + 1) * (e->x2 - e->x1 + 1));
 
 	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
@@ -234,7 +234,7 @@ void CBasicMapDamage::Update()
 		}
 
 		if (e->ttl == 0) {
-			RecalcArea(x1 - 2, x2 + 2, y1 - 2, y2 + 2);
+			RecalcArea(e->x1 - 1, e->x2 + 1, e->y1 - 1, e->y2 + 1);
 		}
 	}
 
