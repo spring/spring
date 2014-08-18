@@ -90,9 +90,9 @@ void DefaultPathDrawer::DrawInMiniMap()
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 0.0f, 0.7f);
 
-	for (const CPathEstimator::SingleBlock& sb: pe->updatedBlocks) {
-		const int blockIdxX = sb.blockPos.x * pe->GetBlockSize();
-		const int blockIdxY = sb.blockPos.y * pe->GetBlockSize();
+	for (const int2& sb: pe->updatedBlocks) {
+		const int blockIdxX = sb.x * pe->GetBlockSize();
+		const int blockIdxY = sb.y * pe->GetBlockSize();
 		glRectf(blockIdxX, blockIdxY, blockIdxX + pe->GetBlockSize(), blockIdxY + pe->GetBlockSize());
 	}
 

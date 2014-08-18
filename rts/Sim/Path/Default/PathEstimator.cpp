@@ -335,8 +335,8 @@ void CPathEstimator::CalculateVertex(
 	// goal position within child block
 	const int2 childSquare = blockStates.peNodeOffsets[childBlockNbr][moveDef.pathType];
 
-	const float3& startPos = SquareToFloat3(parentSquare.x, parentSquare.y);
-	const float3& goalPos = SquareToFloat3(childSquare.x, childSquare.y);
+	const float3 startPos = SquareToFloat3(parentSquare.x, parentSquare.y);
+	const float3 goalPos = SquareToFloat3(childSquare.x, childSquare.y);
 
 	// keep search exactly contained within the two blocks
 	CRectangularSearchConstraint pfDef(startPos, goalPos, BLOCK_SIZE);
@@ -366,29 +366,12 @@ void CPathEstimator::CalculateVertex(
  */
 void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x2, unsigned z2) {
 	// find the upper and lower corner of the rectangular area
-	int lowerX, upperX;
-	int lowerZ, upperZ;
-
-	if (x1 < x2) {
-		lowerX = (x1 / BLOCK_SIZE) - 1;
-		upperX = (x2 / BLOCK_SIZE);
-	} else {
-		lowerX = (x2 / BLOCK_SIZE) - 1;
-		upperX = (x1 / BLOCK_SIZE);
-	}
-	if (z1 < z2) {
-		lowerZ = (z1 / BLOCK_SIZE) - 1;
-		upperZ = (z2 / BLOCK_SIZE);
-	} else {
-		lowerZ = (z2 / BLOCK_SIZE) - 1;
-		upperZ = (z1 / BLOCK_SIZE);
-	}
-
-	// error-check
-	upperX = std::min(upperX, int(nbrOfBlocksX - 1));
-	upperZ = std::min(upperZ, int(nbrOfBlocksZ - 1));
-	lowerX = std::max(lowerX,                    0 );
-	lowerZ = std::max(lowerZ,                    0 );
+	const auto mmx = std::minmax(x1, x2);
+	const auto mmz = std::minmax(z1, z2);
+	const int lowerX = Clamp<int>(mmx.first  / BLOCK_SIZE, 0, int(nbrOfBlocksX - 1));
+	const int upperX = Clamp<int>(mmx.second / BLOCK_SIZE, 0, int(nbrOfBlocksX - 1));
+	const int lowerZ = Clamp<int>(mmz.first  / BLOCK_SIZE, 0, int(nbrOfBlocksZ - 1));
+	const int upperZ = Clamp<int>(mmz.second / BLOCK_SIZE, 0, int(nbrOfBlocksZ - 1));
 
 	// mark the blocks inside the rectangle, enqueue them
 	// from upper to lower because of the placement of the
@@ -398,20 +381,8 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 			if ((blockStates.nodeMask[z * nbrOfBlocksX + x] & PATHOPT_OBSOLETE) != 0)
 				continue;
 
-			for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
-				const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
-
-				if (md->udRefCount == 0)
-					continue;
-
-				SingleBlock sb;
-					sb.blockPos.x = x;
-					sb.blockPos.y = z;
-					sb.moveDef = md;
-
-				updatedBlocks.push_back(sb);
-				blockStates.nodeMask[z * nbrOfBlocksX + x] |= PATHOPT_OBSOLETE;
-			}
+			updatedBlocks.emplace_back(x,z);
+			blockStates.nodeMask[z * nbrOfBlocksX + x] |= PATHOPT_OBSOLETE;
 		}
 	}
 }
@@ -424,65 +395,62 @@ void CPathEstimator::Update() {
 	pathCache[0]->Update();
 	pathCache[1]->Update();
 
-	const unsigned progressiveUpdates = updatedBlocks.size() * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f) * modInfo.pfUpdateRate;
+	const auto numMoveDefs = moveDefHandler->GetNumMoveDefs();
 
-	static const unsigned MIN_BLOCKS_TO_UPDATE = std::max(BLOCKS_TO_UPDATE >> 1, 4U);
-	static const unsigned MAX_BLOCKS_TO_UPDATE = std::max(BLOCKS_TO_UPDATE << 1, MIN_BLOCKS_TO_UPDATE);
-	const unsigned blocksToUpdate = Clamp(progressiveUpdates, MIN_BLOCKS_TO_UPDATE, MAX_BLOCKS_TO_UPDATE);
+	// determine how many blocks we should update
+	size_t blocksToUpdate = 0;
+	{
+		const unsigned progressiveUpdates = updatedBlocks.size() * numMoveDefs * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f) * modInfo.pfUpdateRate;
 
-	blockUpdatePenalty = std::max(0, blockUpdatePenalty - int(blocksToUpdate));
+		static const unsigned MIN_BLOCKS_TO_UPDATE = std::max(BLOCKS_TO_UPDATE >> 1, 4U);
+		static const unsigned MAX_BLOCKS_TO_UPDATE = std::max(BLOCKS_TO_UPDATE << 1, MIN_BLOCKS_TO_UPDATE);
+		blocksToUpdate = Clamp(progressiveUpdates, MIN_BLOCKS_TO_UPDATE, MAX_BLOCKS_TO_UPDATE);
 
-	if (blockUpdatePenalty >= blocksToUpdate)
+		// we have to update blocks always for all movedefs
+		const int consumedBlocks = int(ceil(float(blocksToUpdate) / numMoveDefs));
+
+		blockUpdatePenalty = std::max(0, blockUpdatePenalty + (consumedBlocks - int(blocksToUpdate)));
+
+		if (blockUpdatePenalty > 0)
+			blocksToUpdate = 0;
+	}
+
+	if (blocksToUpdate == 0)
 		return;
 
 	if (updatedBlocks.empty())
 		return;
 
+	struct SingleBlock {
+		int2 blockPos;
+		const MoveDef* moveDef;
+		SingleBlock(const int2& pos, const MoveDef* md) : blockPos(pos), moveDef(md) {}
+	};
 	std::vector<SingleBlock> consumedBlocks;
 	consumedBlocks.reserve(blocksToUpdate);
 
-	int2 curBatchBlockPos = (updatedBlocks.front()).blockPos;
-	int2 nxtBatchBlockPos = curBatchBlockPos;
-
+	// get blocks to update
 	while (!updatedBlocks.empty()) {
-		nxtBatchBlockPos = (updatedBlocks.front()).blockPos;
+		int2& pos = updatedBlocks.front();
 
-		if ((blockStates.nodeMask[nxtBatchBlockPos.y * nbrOfBlocksX + nxtBatchBlockPos.x] & PATHOPT_OBSOLETE) == 0) {
+		if ((blockStates.nodeMask[pos.y * nbrOfBlocksX + pos.x] & PATHOPT_OBSOLETE) == 0) {
 			updatedBlocks.pop_front();
 			continue;
 		}
 
-		// MapChanged ensures format of updatedBlocks is {
-		//   (x1,y1,pt1), (x1,y1,pt2), ..., (x1,y1,ptN), // 1st batch
-		//   (x2,y2,pt1), (x2,y2,pt2), ..., (x2,y2,ptN), // 2nd batch
-		//   ...
-		// }
-		//
-		// always process all MoveDefs of a block in one batch (even
-		// if we need to exceed blocksToUpdate to complete the batch)
-		//
-		// needed because blockStates.nodeMask saves PATHOPT_OBSOLETE
-		// for the block as a whole, not for every individual MoveDef
-		// (and terrain changes might affect only a subset of MoveDefs)
-		//
-		// if we didn't use batches, block changes might be missed for
-		// MoveDefs lower in the (path-type) ordering so we only allow
-		// exiting the loop at batch boundaries
-		if (nxtBatchBlockPos != curBatchBlockPos) {
-			curBatchBlockPos = nxtBatchBlockPos;
-
-			if (consumedBlocks.size() >= blocksToUpdate) {
-				break;
-			}
+		if (consumedBlocks.size() >= blocksToUpdate) {
+			break;
 		}
 
 		// no need to check for duplicates, because FindOffset is deterministic
 		// so even when we compute it multiple times the result will be the same
-		consumedBlocks.push_back(updatedBlocks.front());
+		for (unsigned int i = 0; i < numMoveDefs; i++) {
+			const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
+			if (md->udRefCount > 0)
+				consumedBlocks.emplace_back(pos, md);
+		}
 		updatedBlocks.pop_front();
 	}
-
-	blockUpdatePenalty += std::max(0, int(consumedBlocks.size()) - int(blocksToUpdate));
 
 	// FindOffset (threadsafe)
 	{

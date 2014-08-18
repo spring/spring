@@ -138,11 +138,6 @@ private:
 	friend class CPathManager;
 	friend class CDefaultPathDrawer;
 
-	struct SingleBlock {
-		int2 blockPos;
-		const MoveDef* moveDef;
-	};
-
 	const unsigned int BLOCK_PIXEL_SIZE;
 	const unsigned int BLOCKS_TO_UPDATE;
 
@@ -166,7 +161,7 @@ private:
 	std::vector<boost::thread*> threads;
 
 	std::vector<float> vertexCosts;	
-	std::list<SingleBlock> updatedBlocks;       /// Blocks that may need an update due to map changes.
+	std::list<int2> updatedBlocks;       /// Blocks that may need an update due to map changes.
 
 	int blockUpdatePenalty;
 };
