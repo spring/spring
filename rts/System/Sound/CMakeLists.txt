@@ -16,9 +16,9 @@ set_target_properties(no-sound PROPERTIES COMPILE_FLAGS "-DNO_SOUND")
 
 # Define default sound implementation
 if    (NO_SOUND)
-	SetGlobal(sound-impl no-sound)
+	set(sound-impl no-sound PARENT_SCOPE)
 else  (NO_SOUND)
-	SetGlobal(sound-impl sound)
+	set(sound-impl sound PARENT_SCOPE)
 endif (NO_SOUND)
 
 

@@ -5,12 +5,15 @@ SET(sources_engine_NetServer
 		"${CMAKE_CURRENT_SOURCE_DIR}/GameParticipant.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Protocol/BaseNetProtocol.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Protocol/NetProtocol.cpp"
+		PARENT_SCOPE
 	)
 SET(sources_engine_NetClient
 		"${CMAKE_CURRENT_SOURCE_DIR}/NetCommands.cpp"
 	)
 
-Set(sources_engine_Net ${sources_engine_NetServer} ${sources_engine_NetClient})
+Set(sources_engine_Net
+		${sources_engine_NetServer}
+		${sources_engine_NetClient}
+		PARENT_SCOPE
+	)
 
-MakeGlobal(sources_engine_NetServer)
-MakeGlobal(sources_engine_Net)
