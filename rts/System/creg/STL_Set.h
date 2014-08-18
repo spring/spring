@@ -92,7 +92,7 @@ namespace creg
 			return boost::shared_ptr<IType>(new SetType<SPRING_HASH_SET<T> >(elemtype.Get()));
 		}
 	};
-};
+}
 
 #endif // USING_CREG
 

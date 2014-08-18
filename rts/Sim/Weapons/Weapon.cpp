@@ -26,7 +26,7 @@
 #include "System/Sound/ISoundChannels.h"
 #include "System/Log/ILog.h"
 
-CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL));
+CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL))
 
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
@@ -101,7 +101,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(errorVectorAdd),
 	CR_MEMBER(targetPos),
 	CR_MEMBER(targetBorderPos)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

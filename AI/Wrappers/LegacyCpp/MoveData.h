@@ -14,7 +14,7 @@ namespace springLegacyAI {
 
 // FIXME: this is a million years behind the engine version now
 struct MoveData {
-	CR_DECLARE_STRUCT(MoveData);
+	CR_DECLARE_STRUCT(MoveData)
 
 	MoveData()
 		: moveType(MoveData::Ground_Move)

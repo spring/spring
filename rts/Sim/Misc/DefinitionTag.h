@@ -44,7 +44,7 @@ namespace {
 	{
 		return os << "\"\"";
 	}
-};
+}
 
 // must be included after "std::ostream& operator<<" definitions for LLVM/Clang compilation
 #include "System/Util.h"

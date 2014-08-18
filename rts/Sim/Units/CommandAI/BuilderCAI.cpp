@@ -35,7 +35,7 @@
 #include "System/creg/STL_Map.h"
 
 
-CR_BIND_DERIVED(CBuilderCAI ,CMobileCAI , );
+CR_BIND_DERIVED(CBuilderCAI ,CMobileCAI , )
 
 CR_REG_METADATA(CBuilderCAI , (
 	CR_MEMBER(buildOptions),
@@ -54,7 +54,7 @@ CR_REG_METADATA(CBuilderCAI , (
 	CR_MEMBER(lastPC2),
 	CR_MEMBER(lastPC3),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 // not adding to members, should repopulate itself
 CUnitSet CBuilderCAI::reclaimers;

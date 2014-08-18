@@ -14,7 +14,7 @@
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
 
-CR_BIND_DERIVED(CWeaponProjectile, CProjectile, );
+CR_BIND_DERIVED(CWeaponProjectile, CProjectile, )
 
 CR_REG_METADATA(CWeaponProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -27,7 +27,7 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(bounces),
 	CR_MEMBER(weaponDefID),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 
 

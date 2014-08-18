@@ -35,8 +35,8 @@ CEventHandler::CEventHandler()
 	mouseOwner = NULL;
 
 	// Setup all events
-	#define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props)
-	#define SETUP_UNMANAGED_EVENT(name, props) SetupEvent(#name, NULL, props)
+	#define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props);
+	#define SETUP_UNMANAGED_EVENT(name, props) SetupEvent(#name, NULL, props);
 		#include "Events.def"
 	#undef SETUP_EVENT
 	#undef SETUP_UNMANAGED_EVENT

@@ -24,7 +24,7 @@
 #define AIRTRANSPORT_DOCKING_RADIUS 16
 #define AIRTRANSPORT_DOCKING_ANGLE 50
 
-CR_BIND_DERIVED(CTransportCAI,CMobileCAI , );
+CR_BIND_DERIVED(CTransportCAI,CMobileCAI , )
 
 CR_REG_METADATA(CTransportCAI, (
 	CR_MEMBER(toBeTransportedUnitId),
@@ -37,7 +37,7 @@ CR_REG_METADATA(CTransportCAI, (
 	CR_MEMBER(approachVector),
 	CR_MEMBER(endDropPos),
 	CR_RESERVED(16)
-));
+))
 
 CTransportCAI::CTransportCAI()
 	: CMobileCAI()

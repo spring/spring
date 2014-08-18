@@ -24,7 +24,7 @@ typedef struct ALCdevice_struct ALCdevice;
 
 namespace boost {
 	class thread;
-};
+}
 
 
 /// Default sound system implementation (OpenAL)

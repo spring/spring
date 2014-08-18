@@ -19,7 +19,8 @@ sRAIUnitDefBL::sRAIUnitDefBL(sRAIUnitDef* RAIud, sRAIBuildList* BuildList, float
 		task = Task;
 	else
 		task = -1;
-};
+}
+
 sRAIUnitDefBL::~sRAIUnitDefBL()
 {
 	for(int iUD=0; iUD<RBL->UDefSize; iUD++ )
@@ -42,7 +43,7 @@ sRAIUnitDefBL::~sRAIUnitDefBL()
 			iBL=RUD->ListSize; // end loop
 		}
 	}
-};
+}
 
 // ------------------------------------------------------------------------------------------------
 
@@ -337,7 +338,7 @@ int sRAIUnitDef::GetPrerequisite()
 	}
 
 	return ud->id;
-};
+}
 
 int sRAIUnitDef::GetPrerequisiteNewBuilder()
 {

@@ -21,7 +21,7 @@ CR_REG_METADATA(CGroupHandler, (
 	CR_MEMBER(freeGroups),
 	CR_MEMBER(firstUnusedGroup),
 	CR_MEMBER(changedGroups)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

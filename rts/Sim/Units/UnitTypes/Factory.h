@@ -17,7 +17,7 @@ typedef void (*FinishBuildCallBackFunc) (CFactory*, const Command&);
 class CFactory : public CBuilding
 {
 public:
-	CR_DECLARE(CFactory);
+	CR_DECLARE(CFactory)
 
 	CFactory();
 

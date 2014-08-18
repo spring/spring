@@ -18,7 +18,7 @@ class TdfParser;
 
 class CGameSetup
 {
-	CR_DECLARE_STRUCT(CGameSetup);
+	CR_DECLARE_STRUCT(CGameSetup)
 
 public:
 	CGameSetup();

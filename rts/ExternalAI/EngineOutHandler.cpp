@@ -34,7 +34,7 @@ CR_REG_METADATA(CEngineOutHandler, (
 	CR_MEMBER(id_skirmishAI),
 	CR_MEMBER(team_skirmishAIs),
 	CR_RESERVED(128)
-));
+))
 
 
 static inline bool IsUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int allyTeamId) {

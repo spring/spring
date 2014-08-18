@@ -477,7 +477,7 @@ namespace {
 			}
 		};
 
-	}; // end of namespace Filter
+	} // end of namespace Filter
 
 
 	namespace Query {
@@ -625,8 +625,8 @@ namespace {
 			}
 		};
 
-	}; // end of namespace Query
-}; // end of namespace
+	} // end of namespace Query
+} // end of namespace
 
 // Use this instead of unit->tempNum here, because it requires a mutex lock that will deadlock if luaRules is invoked simultaneously.
 // Not the cleanest solution, but faster than e.g. a std::set, and this function is called quite frequently.

@@ -20,7 +20,7 @@
 #include "System/myMath.h"
 #include "System/Sync/HsiehHash.h"
 
-CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (NULL));
+CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (NULL))
 
 CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(maneuverState),
@@ -54,7 +54,7 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(lastAileronPos),
 
 	CR_RESERVED(63)
-));
+))
 
 
 

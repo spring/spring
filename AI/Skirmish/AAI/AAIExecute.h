@@ -14,7 +14,7 @@
 
 namespace springLegacyAI {
 	struct UnitDef;
-};
+}
 using namespace springLegacyAI;
 
 enum BuildOrderStatus {BUILDORDER_FAILED, BUILDORDER_NOBUILDPOS, BUILDORDER_NOBUILDER, BUILDORDER_SUCCESFUL};

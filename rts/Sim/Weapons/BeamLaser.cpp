@@ -20,7 +20,7 @@
 
 #define SWEEPFIRE_ENABLED 1
 
-CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CBeamLaser,(
 	CR_MEMBER(color),
@@ -28,7 +28,7 @@ CR_REG_METADATA(CBeamLaser,(
 
 	CR_MEMBER(salvoDamageMult),
 	CR_MEMBER(sweepFireState)
-));
+))
 
 CR_BIND(CBeamLaser::SweepFireState, )
 CR_REG_METADATA_SUB(CBeamLaser, SweepFireState, (
@@ -43,7 +43,7 @@ CR_REG_METADATA_SUB(CBeamLaser, SweepFireState, (
 	CR_MEMBER(sweepCurrDst),
 	CR_MEMBER(sweepStartAngle),
 	CR_MEMBER(sweepFiring)
-));
+))
 
 
 

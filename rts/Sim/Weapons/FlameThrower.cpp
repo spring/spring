@@ -7,13 +7,13 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CFlameThrower, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CFlameThrower, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CFlameThrower,(
 	CR_MEMBER(color),
 	CR_MEMBER(color2),
 	CR_RESERVED(8)
-));
+))
 
 CFlameThrower::CFlameThrower(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {

@@ -7,7 +7,7 @@
 
 class CMuzzleFlame : public CProjectile
 {
-	CR_DECLARE(CMuzzleFlame);
+	CR_DECLARE(CMuzzleFlame)
 
 	void creg_Serialize(creg::ISerializer& s);
 public:

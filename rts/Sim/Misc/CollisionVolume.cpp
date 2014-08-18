@@ -7,7 +7,7 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 
-CR_BIND(CollisionVolume, );
+CR_BIND(CollisionVolume, )
 CR_REG_METADATA(CollisionVolume, (
 	CR_MEMBER(fAxisScales),
 	CR_MEMBER(hAxisScales),
@@ -22,7 +22,7 @@ CR_REG_METADATA(CollisionVolume, (
 	CR_MEMBER(useContHitTest),
 	CR_MEMBER(defaultToFootPrint),
 	CR_MEMBER(defaultToPieceTree)
-));
+))
 
 // base ctor (CREG-only)
 CollisionVolume::CollisionVolume():

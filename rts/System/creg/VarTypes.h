@@ -45,7 +45,7 @@ namespace creg
 		size_t GetSize();
 	};
 
-};
+}
 
 #endif
 

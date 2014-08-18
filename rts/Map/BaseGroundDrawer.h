@@ -20,7 +20,7 @@ class CCamera;
 namespace GL {
 	struct GeometryBuffer;
 	struct LightHandler;
-};
+}
 
 class CBaseGroundDrawer
 {

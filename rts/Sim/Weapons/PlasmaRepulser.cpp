@@ -17,7 +17,7 @@
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(radius),
@@ -28,7 +28,7 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(isEnabled),
 	CR_MEMBER(shieldProjectile),
 	CR_MEMBER(repulsedProjectiles)
-));
+))
 
 
 CPlasmaRepulser::CPlasmaRepulser(CUnit* owner, const WeaponDef* def): CWeapon(owner, def),

@@ -51,7 +51,7 @@ namespace {
 	DataType GetDataType(bool)        { return BOOL_TYPE; }
 	DataType GetDataType(float)       { return FLOAT_TYPE; }
 	DataType GetDataType(const std::string&) { return STRING_TYPE; }
-};
+}
 
 #define ADDRESS(name) ((const char *)&name)
 

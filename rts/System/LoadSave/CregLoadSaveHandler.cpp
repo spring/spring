@@ -43,7 +43,7 @@ CCregLoadSaveHandler::~CCregLoadSaveHandler()
 
 class CGameStateCollector
 {
-	CR_DECLARE_STRUCT(CGameStateCollector);
+	CR_DECLARE_STRUCT(CGameStateCollector)
 
 public:
 	CGameStateCollector() {}
@@ -51,10 +51,10 @@ public:
 	void Serialize(creg::ISerializer& s);
 };
 
-CR_BIND(CGameStateCollector, );
+CR_BIND(CGameStateCollector, )
 CR_REG_METADATA(CGameStateCollector, (
 	CR_SERIALIZER(Serialize)
-));
+))
 
 static void WriteString(std::ostream& s, const std::string& str)
 {

@@ -45,7 +45,7 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(solidOnTop),
 	CR_MEMBER(transMatrix),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 
 CFeature::CFeature() : CSolidObject(),

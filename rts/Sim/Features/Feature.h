@@ -26,7 +26,7 @@ class CFireProjectile;
 
 class CFeature: public CSolidObject, public boost::noncopyable
 {
-	CR_DECLARE(CFeature);
+	CR_DECLARE(CFeature)
 
 public:
 	CFeature();

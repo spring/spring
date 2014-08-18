@@ -317,4 +317,4 @@ namespace creg {
 		res &= TestCregClasses4();
 		return res;
 	}
-};
+}

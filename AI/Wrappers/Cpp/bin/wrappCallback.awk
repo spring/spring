@@ -305,7 +305,7 @@ function printTripleFunc(fRet_tr, fName_tr, fParams_tr, thrownExceptions_tr, out
 			fSetterName_tr = fName_tr;
 			sub(/^(Get|Is)/, "Set", fSetterName_tr);
 			print("private:") >> outFile_stb_h_tr;
-			print("\t" fRet_tr " " propName_tr ";/* = "  nullTypeValue_tr "*/; // TODO: FIXME: put this into a constructor") >> outFile_stb_h_tr;
+			print("\t" fRet_tr " " propName_tr ";/* = "  nullTypeValue_tr ";*/ // TODO: FIXME: put this into a constructor") >> outFile_stb_h_tr;
 			print("public:") >> outFile_stb_h_tr;
 
 			print("\t" "virtual " "void "                  fSetterName_tr "(" fRet_tr " " propName_tr ")" ";")  >> outFile_stb_h_tr;

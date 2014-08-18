@@ -23,7 +23,7 @@ using std::vector;
 class AAI;
 namespace springLegacyAI {
 	struct UnitDef;
-};
+}
 
 using namespace springLegacyAI;
 

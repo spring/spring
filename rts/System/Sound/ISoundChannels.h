@@ -13,6 +13,6 @@ namespace Channels {
 	extern IAudioChannel* Battle;
 	extern IAudioChannel* UnitReply;
 	extern IAudioChannel* UserInterface;
-};
+}
 
 #endif

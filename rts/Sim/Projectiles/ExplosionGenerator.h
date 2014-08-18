@@ -21,7 +21,7 @@ class IExplosionGenerator;
 
 class CExpGenSpawnable: public CWorldObject
 {
-	CR_DECLARE(CExpGenSpawnable);
+	CR_DECLARE(CExpGenSpawnable)
 public:
 	CExpGenSpawnable();
 	CExpGenSpawnable(const float3& pos, const float3& spd);
@@ -105,7 +105,7 @@ protected:
 // Base explosion generator class
 class IExplosionGenerator
 {
-	CR_DECLARE(IExplosionGenerator);
+	CR_DECLARE(IExplosionGenerator)
 
 	IExplosionGenerator(): generatorID(CExplosionGeneratorHandler::EXPGEN_ID_INVALID) {}
 	virtual ~IExplosionGenerator() {}
@@ -134,7 +134,7 @@ protected:
 // has no internal state so we never need to allocate instances
 class CStdExplosionGenerator: public IExplosionGenerator
 {
-	CR_DECLARE(CStdExplosionGenerator);
+	CR_DECLARE(CStdExplosionGenerator)
 
 public:
 	CStdExplosionGenerator(): IExplosionGenerator() {}
@@ -156,14 +156,14 @@ public:
 // result of an explosion as a series of new projectiles
 class CCustomExplosionGenerator: public IExplosionGenerator
 {
-	CR_DECLARE(CCustomExplosionGenerator);
-	CR_DECLARE_SUB(ProjectileSpawnInfo);
-	CR_DECLARE_SUB(GroundFlashInfo);
-	CR_DECLARE_SUB(ExpGenParams);
+	CR_DECLARE(CCustomExplosionGenerator)
+	CR_DECLARE_SUB(ProjectileSpawnInfo)
+	CR_DECLARE_SUB(GroundFlashInfo)
+	CR_DECLARE_SUB(ExpGenParams)
 
 protected:
 	struct ProjectileSpawnInfo {
-		CR_DECLARE_STRUCT(ProjectileSpawnInfo);
+		CR_DECLARE_STRUCT(ProjectileSpawnInfo)
 
 		ProjectileSpawnInfo()
 			: projectileClass(NULL)
@@ -189,7 +189,7 @@ protected:
 
 	// TODO: Handle ground flashes with more flexibility like the projectiles
 	struct GroundFlashInfo {
-		CR_DECLARE_STRUCT(GroundFlashInfo);
+		CR_DECLARE_STRUCT(GroundFlashInfo)
 
 		GroundFlashInfo()
 			: flashSize(0.0f)
@@ -211,7 +211,7 @@ protected:
 	};
 
 	struct ExpGenParams {
-		CR_DECLARE_STRUCT(ExpGenParams);
+		CR_DECLARE_STRUCT(ExpGenParams)
 
 		std::vector<ProjectileSpawnInfo> projectiles;
 

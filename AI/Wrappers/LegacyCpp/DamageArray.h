@@ -11,7 +11,7 @@ namespace springLegacyAI {
 
 struct DamageArray
 {
-	CR_DECLARE_STRUCT(DamageArray);
+	CR_DECLARE_STRUCT(DamageArray)
 
 public:
 

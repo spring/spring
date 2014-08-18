@@ -19,7 +19,7 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (ProjectileParams()))
 
 CR_REG_METADATA(CTorpedoProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -29,7 +29,7 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	CR_MEMBER(nextBubble),
 	CR_MEMBER(texx),
 	CR_MEMBER(texy)
-));
+))
 
 CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, tracking(0.0f)

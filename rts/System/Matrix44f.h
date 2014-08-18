@@ -9,7 +9,7 @@
 class CMatrix44f
 {
 public:
-	CR_DECLARE_STRUCT(CMatrix44f);
+	CR_DECLARE_STRUCT(CMatrix44f)
 
 	CMatrix44f();
 	CMatrix44f(const CMatrix44f& mat);

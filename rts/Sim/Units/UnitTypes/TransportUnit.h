@@ -9,11 +9,11 @@
 class CTransportUnit : public CUnit
 {
 public:
-	CR_DECLARE(CTransportUnit);
-	CR_DECLARE_SUB(TransportedUnit);
+	CR_DECLARE(CTransportUnit)
+	CR_DECLARE_SUB(TransportedUnit)
 
 	struct TransportedUnit {
-		CR_DECLARE_STRUCT(TransportedUnit);
+		CR_DECLARE_STRUCT(TransportedUnit)
 		CUnit* unit;
 		int piece;
 		int size;

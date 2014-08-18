@@ -9,7 +9,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 
-CR_BIND_DERIVED(CExploSpikeProjectile, CProjectile, );
+CR_BIND_DERIVED(CExploSpikeProjectile, CProjectile, )
 
 CR_REG_METADATA(CExploSpikeProjectile,
 (
@@ -22,7 +22,7 @@ CR_REG_METADATA(CExploSpikeProjectile,
 		CR_MEMBER(color),
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_RESERVED(8)
-));
+))
 
 CExploSpikeProjectile::CExploSpikeProjectile()
 	: CProjectile()

@@ -8,7 +8,7 @@
 
 CONFIG(bool, MetalMapPalette).defaultValue(false);
 
-CR_BIND(CMetalMap,(NULL, 0, 0, 0.0f));
+CR_BIND(CMetalMap,(NULL, 0, 0, 0.0f))
 
 CR_REG_METADATA(CMetalMap,(
 	CR_MEMBER(metalScale),
@@ -17,7 +17,7 @@ CR_REG_METADATA(CMetalMap,(
 	CR_MEMBER(metalPal),
 	CR_MEMBER(distributionMap),
 	CR_MEMBER(extractionMap)
-));
+))
 
 CMetalMap::CMetalMap(const unsigned char* map, int _sizeX, int _sizeZ, float _metalScale)
 	: metalScale(_metalScale)

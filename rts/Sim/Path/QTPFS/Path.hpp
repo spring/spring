@@ -119,7 +119,7 @@ namespace QTPFS {
 		// object that requested this path (NULL if none)
 		const CSolidObject* owner;
 	};
-};
+}
 
 #endif
 

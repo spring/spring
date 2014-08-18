@@ -14,7 +14,7 @@ class AAI;
 
 namespace springLegacyAI {
 	struct UnitDef;
-};
+}
 using namespace springLegacyAI;
 
 

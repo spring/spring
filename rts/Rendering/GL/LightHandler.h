@@ -39,6 +39,6 @@ namespace GL {
 		unsigned int numLights;
 		unsigned int lightHandle;
 	};
-};
+}
 
 #endif // _GL_LIGHTHANDLER_H

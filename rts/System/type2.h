@@ -8,7 +8,7 @@
 #include "System/FastMath.h"
 
 template<typename t> struct type2 {
-	CR_DECLARE_STRUCT(type2);
+	CR_DECLARE_STRUCT(type2)
 
 	type2<t>(): x(t(0)), y(t(0)) {}
 	type2<t>(const t nx, const t ny) : x(nx), y(ny) {}

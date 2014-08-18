@@ -19,15 +19,15 @@ CR_REG_METADATA(CAirBaseHandler,(
 	CR_MEMBER(bases),
 	CR_MEMBER(airBaseIDs),
 	CR_RESERVED(16)
-));
+))
 
-CR_BIND_DERIVED(CAirBaseHandler::LandingPad, CObject, (0, 0, NULL));
+CR_BIND_DERIVED(CAirBaseHandler::LandingPad, CObject, (0, 0, NULL))
 CR_REG_METADATA_SUB(CAirBaseHandler, LandingPad, (
 	CR_MEMBER(unit),
 	CR_MEMBER(piece),
 	CR_MEMBER(base),
 	CR_RESERVED(8)
-));
+))
 
 CR_BIND(CAirBaseHandler::AirBase, (NULL))
 CR_REG_METADATA_SUB(CAirBaseHandler, AirBase, (
@@ -35,7 +35,7 @@ CR_REG_METADATA_SUB(CAirBaseHandler, AirBase, (
 	CR_MEMBER(freePads),
 	CR_MEMBER(pads),
 	CR_RESERVED(8)
-));
+))
 
 
 CAirBaseHandler::CAirBaseHandler() : bases(teamHandler->ActiveAllyTeams())

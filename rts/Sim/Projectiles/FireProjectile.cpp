@@ -17,8 +17,8 @@
 #include "Sim/Units/Unit.h"
 #include "System/creg/STL_List.h"
 
-CR_BIND_DERIVED(CFireProjectile, CProjectile, (ZeroVector,ZeroVector,NULL,0,0,0,0));
-CR_BIND(CFireProjectile::SubParticle, );
+CR_BIND_DERIVED(CFireProjectile, CProjectile, (ZeroVector,ZeroVector,NULL,0,0,0,0))
+CR_BIND(CFireProjectile::SubParticle, )
 
 CR_REG_METADATA(CFireProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -31,7 +31,7 @@ CR_REG_METADATA(CFireProjectile,(
 	CR_MEMBER(subParticles2),
 	CR_MEMBER(subParticles),
 	CR_RESERVED(16)
-	));
+	))
 
 CR_REG_METADATA_SUB(CFireProjectile, SubParticle, (
 	CR_MEMBER(pos),
@@ -41,7 +41,7 @@ CR_REG_METADATA_SUB(CFireProjectile, SubParticle, (
 	CR_MEMBER(rotSpeed),
 	CR_MEMBER(smokeType),
 	CR_RESERVED(8)
-	));
+	))
 
 CFireProjectile::CFireProjectile(
 	const float3& pos,

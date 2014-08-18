@@ -264,7 +264,7 @@ void SetThreadSpinTime(int milliSeconds)
 	spinlockMs = milliSeconds;
 }
 
-};
+}
 
 #endif
 

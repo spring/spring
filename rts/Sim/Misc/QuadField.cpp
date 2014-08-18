@@ -15,7 +15,7 @@
 #define CELL_IDX_X(wpx) Clamp(int((wpx) / quadSizeX), 0, numQuadsX - 1)
 #define CELL_IDX_Z(wpz) Clamp(int((wpz) / quadSizeZ), 0, numQuadsZ - 1)
 
-CR_BIND(CQuadField, (1, 1));
+CR_BIND(CQuadField, (1, 1))
 CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(baseQuads),
 	CR_MEMBER(tempQuads),
@@ -23,15 +23,15 @@ CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(numQuadsZ),
 	CR_MEMBER(quadSizeX),
 	CR_MEMBER(quadSizeZ)
-));
+))
 
-CR_BIND(CQuadField::Quad, );
+CR_BIND(CQuadField::Quad, )
 CR_REG_METADATA_SUB(CQuadField, Quad, (
 	CR_MEMBER(units),
 	CR_MEMBER(teamUnits),
 	CR_MEMBER(features),
 	CR_MEMBER(projectiles)
-));
+))
 
 CQuadField* quadField = NULL;
 

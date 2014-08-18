@@ -12,7 +12,7 @@ class CUnit;
 
 class AMoveType : public CObject
 {
-	CR_DECLARE(AMoveType);
+	CR_DECLARE(AMoveType)
 
 public:
 	AMoveType(CUnit* owner);

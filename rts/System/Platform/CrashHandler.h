@@ -16,6 +16,6 @@ namespace CrashHandler {
 	void CleanupStacktrace(const int logLevel = LOG_LEVEL_ERROR);
 
 	void OutputStacktrace();
-};
+}
 
 #endif // _CRASH_HANDLER_H_

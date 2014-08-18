@@ -113,7 +113,7 @@ namespace Threading {
 	 * A 64bit atomic counter
 	 */
 	struct AtomicCounterInt64;
-};
+}
 
 
 //

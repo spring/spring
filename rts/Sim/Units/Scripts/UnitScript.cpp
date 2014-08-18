@@ -1662,7 +1662,7 @@ int CUnitScript::ScriptToModel(int scriptPieceNum) const {
 	const LocalModelPiece* smp = GetScriptLocalModelPiece(scriptPieceNum);
 
 	return (smp->GetLModelPieceIndex());
-};
+}
 
 int CUnitScript::ModelToScript(int lmodelPieceNum) const {
 	const LocalModel* lm = unit->localModel;
@@ -1673,5 +1673,5 @@ int CUnitScript::ModelToScript(int lmodelPieceNum) const {
 	const LocalModelPiece* lmp = lm->GetPiece(lmodelPieceNum);
 
 	return (lmp->GetScriptPieceIndex());
-};
+}
 

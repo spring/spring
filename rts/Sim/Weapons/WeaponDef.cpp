@@ -15,7 +15,7 @@
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
 
-CR_BIND(WeaponDef, );
+CR_BIND(WeaponDef, )
 
 
 
@@ -106,7 +106,7 @@ WEAPONTAG(float, heightBoostFactor).defaultValue(-1.0f);
 WEAPONTAG(float, proximityPriority).defaultValue(1.0f);
 
 // Target Error
-TAGFUNCTION(AccuracyToSin, float, math::sin(x * PI / 0xafff)); // should really be tan but TA seem to cap it somehow, should also be 7fff or ffff theoretically but neither seems good
+TAGFUNCTION(AccuracyToSin, float, math::sin(x * PI / 0xafff)) // should really be tan but TA seem to cap it somehow, should also be 7fff or ffff theoretically but neither seems good
 WEAPONTAG(float, accuracy).defaultValue(0.0f).tagFunction(AccuracyToSin);
 WEAPONTAG(float, sprayAngle).defaultValue(0.0f).tagFunction(AccuracyToSin);
 WEAPONTAG(float, movingAccuracy).externalName("accuracy").defaultValue(0.0f).tagFunction(AccuracyToSin);

@@ -8,7 +8,7 @@
 
 namespace springLegacyAI {
 
-CR_BIND(MoveData, );
+CR_BIND(MoveData, )
 
 CR_REG_METADATA(MoveData, (
 	CR_ENUM_MEMBER(moveType),
@@ -37,7 +37,7 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(subMarine),
 
 	CR_RESERVED(16)
-));
+))
 
 } // namespace springLegacyAI
 

@@ -331,7 +331,7 @@ namespace creg {
 		}
 		size_t GetSize() { return size; }
 	};
-};
+}
 
 #include "TypeDeduction.h"
 
@@ -631,6 +631,6 @@ namespace creg {
  */
 #define CR_POSTLOAD(PostLoadFunc) \
 	(class_->postLoadProc = (void(creg::_DummyStruct::*)())&Type::PostLoadFunc)
-};
+}
 
 #endif // _CREG_H

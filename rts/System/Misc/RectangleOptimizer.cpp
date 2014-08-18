@@ -6,12 +6,12 @@
 
 #include <cassert>
 
-CR_BIND(CRectangleOptimizer, );
+CR_BIND(CRectangleOptimizer, )
 CR_REG_METADATA(CRectangleOptimizer, (
 	CR_MEMBER(maxAreaPerRect),
 	CR_MEMBER(rectangles),
 	CR_MEMBER(needsUpdate)
-));
+))
 
 unsigned CRectangleOptimizer::statsTotalSize = 0;
 unsigned CRectangleOptimizer::statsOptSize   = 0;

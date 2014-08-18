@@ -24,7 +24,7 @@ class AAIMetalSpot;
 
 namespace springLegacyAI {
 	struct UnitDef;
-};
+}
 using namespace springLegacyAI;
 
 enum Direction {WEST, EAST, SOUTH, NORTH, CENTER, NO_DIRECTION};

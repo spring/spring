@@ -66,7 +66,7 @@ CR_REG_METADATA(CReadMap, (
 	CR_MEMBER(unsyncedHeightMapUpdatesTemp),
 	HEIGHTMAP_DIGESTS
 	CR_SERIALIZER(Serialize)
-));
+))
 
 
 CReadMap* CReadMap::LoadMap(const std::string& mapname)

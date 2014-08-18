@@ -12,7 +12,7 @@ class CRepulseGfx;
 
 class CPlasmaRepulser: public CWeapon
 {
-	CR_DECLARE(CPlasmaRepulser);
+	CR_DECLARE(CPlasmaRepulser)
 public:
 	CPlasmaRepulser(CUnit* owner, const WeaponDef* def);
 	~CPlasmaRepulser();

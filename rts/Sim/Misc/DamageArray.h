@@ -9,7 +9,7 @@
 
 struct DamageArray
 {
-	CR_DECLARE_STRUCT(DamageArray);
+	CR_DECLARE_STRUCT(DamageArray)
 
 public:
 	DamageArray(float damage = 1.0f);

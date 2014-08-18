@@ -18,7 +18,7 @@ enum GroupTask {GROUP_IDLE, GROUP_ATTACKING, GROUP_DEFENDING, GROUP_PATROLING, G
 namespace springLegacyAI {
 	struct UnitDef;
 	struct Command;
-};
+}
 #include "LegacyCpp/Command.h"
 using namespace springLegacyAI;
 

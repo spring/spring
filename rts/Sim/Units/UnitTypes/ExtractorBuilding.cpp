@@ -15,7 +15,7 @@
 #include "System/creg/STL_List.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CExtractorBuilding, CBuilding, );
+CR_BIND_DERIVED(CExtractorBuilding, CBuilding, )
 
 CR_REG_METADATA(CExtractorBuilding, (
 	CR_MEMBER(extractionRange),
@@ -24,15 +24,15 @@ CR_REG_METADATA(CExtractorBuilding, (
 	CR_MEMBER(neighbours),
 	CR_RESERVED(16),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
-CR_BIND(CExtractorBuilding::MetalSquareOfControl, );
+CR_BIND(CExtractorBuilding::MetalSquareOfControl, )
 
 CR_REG_METADATA_SUB(CExtractorBuilding,MetalSquareOfControl, (
 	CR_MEMBER(x),
 	CR_MEMBER(z),
 	CR_MEMBER(extractionDepth)
-));
+))
 
 // TODO: How are class statics incorporated into creg?
 float CExtractorBuilding::maxExtractionRange = 0.0f;

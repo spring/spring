@@ -38,15 +38,15 @@
 #include "System/Util.h"
 
 
-CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject);
-CR_REG_METADATA(CExpGenSpawnable, );
+CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject)
+CR_REG_METADATA(CExpGenSpawnable, )
 
-CR_BIND_INTERFACE(IExplosionGenerator);
+CR_BIND_INTERFACE(IExplosionGenerator)
 CR_REG_METADATA(IExplosionGenerator, (
 	CR_MEMBER(generatorID)
-));
+))
 
-CR_BIND_DERIVED(CStdExplosionGenerator, IExplosionGenerator, );
+CR_BIND_DERIVED(CStdExplosionGenerator, IExplosionGenerator, )
 
 CR_BIND(CCustomExplosionGenerator::ProjectileSpawnInfo, )
 CR_REG_METADATA_SUB(CCustomExplosionGenerator, ProjectileSpawnInfo, (
@@ -54,7 +54,7 @@ CR_REG_METADATA_SUB(CCustomExplosionGenerator, ProjectileSpawnInfo, (
 	CR_MEMBER(code),
 	CR_MEMBER(count),
 	CR_MEMBER(flags)
-));
+))
 
 CR_BIND(CCustomExplosionGenerator::GroundFlashInfo, )
 CR_REG_METADATA_SUB(CCustomExplosionGenerator, GroundFlashInfo, (
@@ -65,19 +65,19 @@ CR_REG_METADATA_SUB(CCustomExplosionGenerator, GroundFlashInfo, (
 	CR_MEMBER(ttl),
 	CR_MEMBER(flags),
 	CR_MEMBER(color)
-));
+))
 
 CR_BIND(CCustomExplosionGenerator::ExpGenParams, )
 CR_REG_METADATA_SUB(CCustomExplosionGenerator, ExpGenParams, (
 	CR_MEMBER(projectiles),
 	CR_MEMBER(groundFlash),
 	CR_MEMBER(useDefaultExplosions)
-));
+))
 
-CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
+CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, )
 CR_REG_METADATA(CCustomExplosionGenerator, (
 	CR_MEMBER(expGenParams)
-));
+))
 
 
 CExplosionGeneratorHandler* explGenHandler = NULL;

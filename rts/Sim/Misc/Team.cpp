@@ -20,7 +20,7 @@
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_Set.h"
 
-CR_BIND_DERIVED(CTeam, TeamBase, (-1));
+CR_BIND_DERIVED(CTeam, TeamBase, (-1))
 CR_REG_METADATA(CTeam, (
 	CR_MEMBER(teamNum),
 	CR_MEMBER(maxUnits),
@@ -64,7 +64,7 @@ CR_REG_METADATA(CTeam, (
 	CR_MEMBER(modParams),
 	CR_MEMBER(modParamsMap),
 	CR_IGNORED(highlight)
-));
+))
 
 
 //////////////////////////////////////////////////////////////////////

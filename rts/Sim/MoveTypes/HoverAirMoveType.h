@@ -9,7 +9,7 @@ struct float4;
 
 class CHoverAirMoveType: public AAirMoveType
 {
-	CR_DECLARE(CHoverAirMoveType);
+	CR_DECLARE(CHoverAirMoveType)
 public:
 	CHoverAirMoveType(CUnit* owner);
 

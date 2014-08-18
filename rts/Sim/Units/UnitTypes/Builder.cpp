@@ -30,7 +30,7 @@
 using std::min;
 using std::max;
 
-CR_BIND_DERIVED(CBuilder, CUnit, );
+CR_BIND_DERIVED(CBuilder, CUnit, )
 
 CR_REG_METADATA(CBuilder, (
 	CR_MEMBER(range3D),
@@ -57,7 +57,7 @@ CR_REG_METADATA(CBuilder, (
 	CR_ENUM_MEMBER(terraformType),
 	CR_MEMBER(nanoPieceCache),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 
 //////////////////////////////////////////////////////////////////////

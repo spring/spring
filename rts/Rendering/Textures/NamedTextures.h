@@ -30,6 +30,6 @@ namespace CNamedTextures {
 	};
 
 	const TexInfo* GetInfo(const std::string& texName, const bool forceLoad = false);
-};
+}
 
 #endif /* NAMED_TEXTURES_H */

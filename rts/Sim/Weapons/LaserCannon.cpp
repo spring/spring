@@ -9,12 +9,12 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CLaserCannon,(
 	CR_MEMBER(color),
 	CR_RESERVED(8)
-));
+))
 
 CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def)
 	: CWeapon(owner, def)

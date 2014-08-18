@@ -19,7 +19,7 @@ CFeatureHandler* featureHandler = NULL;
 
 /******************************************************************************/
 
-CR_BIND(CFeatureHandler, (NULL));
+CR_BIND(CFeatureHandler, (NULL))
 CR_REG_METADATA(CFeatureHandler, (
 	CR_MEMBER(idPool),
 	CR_MEMBER(featureDefs),
@@ -29,7 +29,7 @@ CR_REG_METADATA(CFeatureHandler, (
 	CR_MEMBER(features),
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(updateFeatures)
-));
+))
 
 /******************************************************************************/
 

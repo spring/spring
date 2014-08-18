@@ -30,7 +30,7 @@ namespace modtype
 	static const int primary = 1;
 	static const int hidden = 0;
 	static const int map = 3;
-};
+}
 
 class CArchiveScanner
 {

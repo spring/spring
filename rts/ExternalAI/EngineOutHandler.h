@@ -23,7 +23,7 @@ struct SSkirmishAICallback;
 void handleAIException(const char* description);
 
 class CEngineOutHandler : public CObject {
-	CR_DECLARE(CEngineOutHandler);
+	CR_DECLARE(CEngineOutHandler)
 
 	~CEngineOutHandler();
 

@@ -4,14 +4,14 @@
 
 #include <float.h>
 
-CR_BIND(CResource, );
+CR_BIND(CResource, )
 
 CR_REG_METADATA(CResource, (
 				CR_MEMBER(name),
 				CR_MEMBER(optimum),
 				CR_MEMBER(extractorRadius),
 				CR_MEMBER(maxWorth)
-				));
+				))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -125,7 +125,7 @@ boost::shared_ptr<IType> GetType(T& var) {
 	DeduceType<T> deduce;
 	return deduce.Get();
 }
-};
+}
 
 #endif // _TYPE_DEDUCTION_H
 

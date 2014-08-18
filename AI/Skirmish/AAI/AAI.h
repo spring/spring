@@ -16,7 +16,7 @@
 
 namespace springLegacyAI {
 	class IAICallback;
-};
+}
 
 using namespace springLegacyAI;
 using namespace std;

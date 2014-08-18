@@ -16,7 +16,7 @@ CGroundBlockingObjectMap* groundBlockingObjectMap;
 CR_BIND(CGroundBlockingObjectMap, (1))
 CR_REG_METADATA(CGroundBlockingObjectMap, (
 	CR_MEMBER(groundBlockingMap)
-));
+))
 
 
 

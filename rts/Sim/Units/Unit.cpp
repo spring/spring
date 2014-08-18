@@ -2255,7 +2255,7 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 	}
 }
 
-CR_BIND_DERIVED(CUnit, CSolidObject, );
+CR_BIND_DERIVED(CUnit, CSolidObject, )
 CR_REG_METADATA(CUnit, (
 	CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefID),
@@ -2479,4 +2479,4 @@ CR_REG_METADATA(CUnit, (
 //	CR_MEMBER(model),
 
 	CR_POSTLOAD(PostLoad)
-));
+))

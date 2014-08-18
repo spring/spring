@@ -25,7 +25,7 @@
 
 #include "Game/GlobalUnsynced.h"
 
-CR_BIND_DERIVED(CFactory, CBuilding, );
+CR_BIND_DERIVED(CFactory, CBuilding, )
 
 CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
@@ -39,7 +39,7 @@ CR_REG_METADATA(CFactory, (
 	CR_MEMBER(finishedBuildCommand),
 	CR_MEMBER(nanoPieceCache),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

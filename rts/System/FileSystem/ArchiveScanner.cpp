@@ -857,7 +857,7 @@ void FilterDep(std::vector<std::string>& deps, const std::string& exclude)
 {
 	auto it = std::remove_if(deps.begin(), deps.end(), [&](const std::string& dep) { return (dep == exclude); });
 	deps.erase(it, deps.end());
-};
+}
 
 void CArchiveScanner::WriteCacheData(const std::string& filename)
 {

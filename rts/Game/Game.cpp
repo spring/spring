@@ -177,7 +177,7 @@ CONFIG(bool, LuaModUICtrl).defaultValue(true);
 CGame* game = NULL;
 
 
-CR_BIND(CGame, (std::string(""), std::string(""), NULL));
+CR_BIND(CGame, (std::string(""), std::string(""), NULL))
 
 CR_REG_METADATA(CGame, (
 	CR_IGNORED(finishedLoading),
@@ -216,7 +216,7 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(consumeSpeedMult),
 
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 
 
@@ -295,7 +295,7 @@ DO_ONCE_FNC(
 	j.name = "EventHandler::CollectGarbage";
 	// static initialization is done BEFORE Spring's time-epoch is set
 	JobDispatcher::AddJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
-);
+)
 
 DO_ONCE_FNC(
 	JobDispatcher::Job j;
@@ -306,7 +306,7 @@ DO_ONCE_FNC(
 	j.freq = 1;
 	j.name = "Profiler::Update";
 	JobDispatcher::AddJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
-);
+)
 
 
 

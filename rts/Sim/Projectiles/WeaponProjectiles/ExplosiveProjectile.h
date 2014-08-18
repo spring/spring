@@ -7,7 +7,7 @@
 
 class CExplosiveProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CExplosiveProjectile);
+	CR_DECLARE(CExplosiveProjectile)
 public:
 	CExplosiveProjectile(const ProjectileParams& params);
 

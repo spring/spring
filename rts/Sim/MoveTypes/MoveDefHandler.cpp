@@ -13,8 +13,8 @@
 #include "System/myMath.h"
 #include "System/Util.h"
 
-CR_BIND(MoveDef, ());
-CR_BIND(MoveDefHandler, (NULL));
+CR_BIND(MoveDef, ())
+CR_BIND(MoveDefHandler, (NULL))
 
 CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(name),
@@ -47,13 +47,13 @@ CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(heatMod),
 	CR_MEMBER(flowMod),
 	CR_MEMBER(heatProduced)
-));
+))
 
 CR_REG_METADATA(MoveDefHandler, (
 	CR_MEMBER(moveDefs),
 	CR_MEMBER(moveDefNames),
 	CR_MEMBER(checksum)
-));
+))
 
 
 MoveDefHandler* moveDefHandler;

@@ -74,7 +74,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define FOOTPRINT_RADIUS(xs, zs, s) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * s)
 
 
-CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
+CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL))
 CR_REG_METADATA(CGroundMoveType, (
 	CR_IGNORED(pathController),
 
@@ -125,7 +125,7 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(skidRotAccel),
 
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 
 

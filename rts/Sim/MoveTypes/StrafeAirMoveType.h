@@ -11,8 +11,8 @@
  */
 class CStrafeAirMoveType: public AAirMoveType
 {
-	CR_DECLARE(CStrafeAirMoveType);
-	CR_DECLARE_SUB(DrawLine);
+	CR_DECLARE(CStrafeAirMoveType)
+	CR_DECLARE_SUB(DrawLine)
 
 public:
 	enum {
