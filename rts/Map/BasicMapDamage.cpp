@@ -67,8 +67,6 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 		return;
 	}
 
-	radius *= 1.5f;
-
 	Explo* e = new Explo;
 	e->pos = pos;
 	e->strength = strength;
