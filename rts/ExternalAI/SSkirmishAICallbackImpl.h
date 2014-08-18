@@ -125,9 +125,17 @@ EXPORT(int              ) skirmishAiCallback_Game_getCategoriesFlag(int skirmish
 
 EXPORT(void             ) skirmishAiCallback_Game_getCategoryName(int skirmishAIId, int categoryFlag, char* name, int name_sizeMax);
 
-//EXPORT(int              ) skirmishAiCallback_Game_getModParams(int skirmishAIId);
-
 // END misc callback functions
+
+
+// BEGINN OBJECT GameRulesParam
+EXPORT(int              ) skirmishAiCallback_getGameRulesParams(int skirmishAIId);
+
+EXPORT(const char*      ) skirmishAiCallback_GameRulesParam_getName(int skirmishAIId, int gameRulesParamId);
+
+EXPORT(float            ) skirmishAiCallback_GameRulesParam_getValue(int skirmishAIId, int gameRulesParamId);
+
+// END OBJECT GameRulesParam
 
 
 // BEGINN Visualization related callback functions

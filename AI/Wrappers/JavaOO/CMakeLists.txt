@@ -121,6 +121,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"Figure"
 		"FlankingBonus"
 		"Game"
+		"GameRulesParam"
 		"GraphDrawer"
 		"GraphLine"
 		"Group"
