@@ -51,7 +51,7 @@ void CModInfo::Init(const char* modArchive)
 		const LuaTable& system = root.SubTable("system");
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 
-		pfUpdateRate = system.GetFloat("pathFinderUpdateRate", 0.007f);
+		pfUpdateRate = system.GetFloat("pathFinderUpdateRate", 1.0f);
 	}
 
 	{
