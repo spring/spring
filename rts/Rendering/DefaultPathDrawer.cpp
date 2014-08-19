@@ -240,8 +240,8 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 			const PathNodeStateBuffer& medResStates = pm->medResPE->blockStates;
 			const PathNodeStateBuffer& lowResStates = pm->lowResPE->blockStates;
 
-			const unsigned int medResBlockSize = pm->medResPE->BLOCK_SIZE, medResBlocksX = pm->medResPE->nbrOfBlocksX;
-			const unsigned int lowResBlockSize = pm->lowResPE->BLOCK_SIZE, lowResBlocksX = pm->lowResPE->nbrOfBlocksX;
+			const unsigned int medResBlockSize = pm->medResPE->BLOCK_SIZE, medResBlocksX = pm->medResPE->GetNumBlocks().x;
+			const unsigned int lowResBlockSize = pm->lowResPE->BLOCK_SIZE, lowResBlocksX = pm->lowResPE->GetNumBlocks().x;
 
 			const float gCostMax[3] = {
 				std::max(1.0f, maxResStates.GetMaxCost(NODE_COST_G)),
@@ -398,7 +398,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	const bool extraOverlay =
 		(overlayNumber == 0 && pe == pm->medResPE) ||
 		(overlayNumber == 1 && pe == pm->lowResPE);
-	const int peNumBlocks = pe->nbrOfBlocksX * pe->nbrOfBlocksZ;
+	const int peNumBlocks = pe->GetNumBlocks().x * pe->GetNumBlocks().y;
 	const float peBlueValue = (pe == pm->lowResPE)? 1.0f: 0.0f;
 
 	// alternate between the extra debug-overlays
@@ -407,9 +407,9 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	if (extraOverlay) {
 		glBegin(GL_LINES);
 
-		for (int z = 0; z < pe->nbrOfBlocksZ; z++) {
-			for (int x = 0; x < pe->nbrOfBlocksX; x++) {
-				const int blockNr = z * pe->nbrOfBlocksX + x;
+		for (int z = 0; z < pe->GetNumBlocks().y; z++) {
+			for (int x = 0; x < pe->GetNumBlocks().x; x++) {
+				const int blockNr = z * pe->GetNumBlocks().x + x;
 
 				float3 p1;
 					p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
@@ -429,13 +429,13 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					if (obx <                 0) continue;
 					if (obz <                 0) continue;
-					if (obx >= pe->nbrOfBlocksX) continue;
-					if (obz >= pe->nbrOfBlocksZ) continue;
+					if (obx >= pe->GetNumBlocks().x) continue;
+					if (obz >= pe->GetNumBlocks().y) continue;
 
-					const int obBlockNr = obz * pe->nbrOfBlocksX + obx;
+					const int obBlockNr = obz * pe->GetNumBlocks().x + obx;
 					const int vertexNr =
 						md->pathType * peNumBlocks * PATH_DIRECTION_VERTICES +
-						blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, pe->nbrOfBlocksX);
+						blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, pe->GetNumBlocks().x);
 					const float cost = pe->vertexCosts[vertexNr] / pe->BLOCK_SIZE;
 
 					float3 p2;
@@ -452,9 +452,9 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 		glEnd();
 
-		for (int z = 0; z < pe->nbrOfBlocksZ; z++) {
-			for (int x = 0; x < pe->nbrOfBlocksX; x++) {
-				const int blockNr = z * pe->nbrOfBlocksX + x;
+		for (int z = 0; z < pe->GetNumBlocks().y; z++) {
+			for (int x = 0; x < pe->GetNumBlocks().x; x++) {
+				const int blockNr = z * pe->GetNumBlocks().x + x;
 
 				float3 p1;
 					p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
@@ -470,13 +470,13 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					if (obx <                 0) continue;
 					if (obz <                 0) continue;
-					if (obx >= pe->nbrOfBlocksX) continue;
-					if (obz >= pe->nbrOfBlocksZ) continue;
+					if (obx >= pe->GetNumBlocks().x) continue;
+					if (obz >= pe->GetNumBlocks().y) continue;
 
-					const int obBlockNr = obz * pe->nbrOfBlocksX + obx;
+					const int obBlockNr = obz * pe->GetNumBlocks().x + obx;
 					const int vertexNr =
 						md->pathType * peNumBlocks * PATH_DIRECTION_VERTICES +
-						blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, pe->nbrOfBlocksX);
+						blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, pe->GetNumBlocks().x);
 					const float cost = pe->vertexCosts[vertexNr] / pe->BLOCK_SIZE;
 
 					float3 p2;
@@ -514,7 +514,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 			const int obx = blockStates.peParentNodePos[ob->nodeNum].x;
 			const int obz = blockStates.peParentNodePos[ob->nodeNum].y;
-			const int obBlockNr = obz * pe->nbrOfBlocksX + obx;
+			const int obBlockNr = obz * pe->GetNumBlocks().x + obx;
 
 			if (obBlockNr < 0)
 				continue;

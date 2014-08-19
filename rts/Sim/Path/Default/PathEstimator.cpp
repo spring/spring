@@ -51,13 +51,11 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BLOCK_SIZE, const s
 	: IPathFinder(BLOCK_SIZE)
 	, BLOCK_PIXEL_SIZE(BLOCK_SIZE * SQUARE_SIZE)
 	, BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1)
-	, nbrOfBlocksX(gs->mapx / BLOCK_SIZE)
-	, nbrOfBlocksZ(gs->mapy / BLOCK_SIZE)
 	, nextOffsetMessageIdx(0)
 	, nextCostMessageIdx(0)
 	, pathChecksum(0)
-	, offsetBlockNum(nbrOfBlocksX * nbrOfBlocksZ)
-	, costBlockNum(nbrOfBlocksX * nbrOfBlocksZ)
+	, offsetBlockNum(nbrOfBlocks.x * nbrOfBlocks.y)
+	, costBlockNum(nbrOfBlocks.x * nbrOfBlocks.y)
 	, pathFinder(pf)
 	, blockUpdatePenalty(0)
 {
@@ -134,19 +132,15 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		loadscreen->SetLoadMessage("PathCosts: written", true);
 	}
 
-	pathCache[0] = new CPathCache(nbrOfBlocksX, nbrOfBlocksZ);
-	pathCache[1] = new CPathCache(nbrOfBlocksX, nbrOfBlocksZ);
+	pathCache[0] = new CPathCache(nbrOfBlocks.x, nbrOfBlocks.y);
+	pathCache[1] = new CPathCache(nbrOfBlocks.x, nbrOfBlocks.y);
 }
 
 
 
 void CPathEstimator::InitBlocks() {
 	for (unsigned int idx = 0; idx < blockStates.GetSize(); idx++) {
-		const unsigned int blockX = idx % nbrOfBlocksX;
-		const unsigned int blockZ = idx / nbrOfBlocksX;
-		const unsigned int blockNr = blockZ * nbrOfBlocksX + blockX;
-
-		blockStates.peNodeOffsets[blockNr].resize(moveDefHandler->GetNumMoveDefs());
+		blockStates.peNodeOffsets[idx].resize(moveDefHandler->GetNumMoveDefs());
 	}
 }
 
@@ -182,8 +176,7 @@ void CPathEstimator::CalcOffsetsAndPathCosts(unsigned int threadNum) {
 
 void CPathEstimator::CalculateBlockOffsets(unsigned int blockIdx, unsigned int threadNum)
 {
-	const unsigned int x = blockIdx % nbrOfBlocksX;
-	const unsigned int z = blockIdx / nbrOfBlocksX;
+	const int2 blockPos = BlockIdxToPos(blockIdx);
 
 	if (threadNum == 0 && blockIdx >= nextOffsetMessageIdx) {
 		nextOffsetMessageIdx = blockIdx + blockStates.GetSize() / 16;
@@ -194,14 +187,15 @@ void CPathEstimator::CalculateBlockOffsets(unsigned int blockIdx, unsigned int t
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
 		if (md->udRefCount > 0) {
-			blockStates.peNodeOffsets[blockIdx][md->pathType] = FindOffset(*md, x, z);
+			blockStates.peNodeOffsets[blockIdx][md->pathType] = FindOffset(*md, blockPos.x, blockPos.y);
 		}
 	}
 }
 
-void CPathEstimator::EstimatePathCosts(unsigned int blockIdx, unsigned int threadNum) {
-	const unsigned int x = blockIdx % nbrOfBlocksX;
-	const unsigned int z = blockIdx / nbrOfBlocksX;
+
+void CPathEstimator::EstimatePathCosts(unsigned int blockIdx, unsigned int threadNum)
+{
+	const int2 blockPos = BlockIdxToPos(blockIdx);
 
 	if (threadNum == 0 && blockIdx >= nextCostMessageIdx) {
 		nextCostMessageIdx = blockIdx + blockStates.GetSize() / 16;
@@ -217,7 +211,7 @@ void CPathEstimator::EstimatePathCosts(unsigned int blockIdx, unsigned int threa
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
 		if (md->udRefCount > 0) {
-			CalculateVertices(*md, x, z, threadNum);
+			CalculateVertices(*md, blockPos.x, blockPos.y, threadNum);
 		}
 	}
 }
@@ -312,15 +306,15 @@ void CPathEstimator::CalculateVertex(
 	const unsigned int childBlockX = parentBlockX + PE_DIRECTION_VECTORS[direction].x;
 	const unsigned int childBlockZ = parentBlockZ + PE_DIRECTION_VECTORS[direction].y;
 
-	const unsigned int parentBlockNbr = parentBlockZ * nbrOfBlocksX + parentBlockX;
-	const unsigned int childBlockNbr = childBlockZ * nbrOfBlocksX + childBlockX;
+	const unsigned int parentBlockNbr = BlockPosToIdx(int2(parentBlockX, parentBlockZ));
+	const unsigned int childBlockNbr  = BlockPosToIdx(int2(childBlockX, childBlockZ));
 	const unsigned int vertexNbr =
 		moveDef.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES +
 		parentBlockNbr * PATH_DIRECTION_VERTICES +
 		direction;
 
 	// outside map?
-	if (childBlockX >= nbrOfBlocksX || childBlockZ >= nbrOfBlocksZ) {
+	if (childBlockX >= nbrOfBlocks.x || childBlockZ >= nbrOfBlocks.y) {
 		vertexCosts[vertexNbr] = PATHCOST_INFINITY;
 		return;
 	}
@@ -379,21 +373,22 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 	// find the upper and lower corner of the rectangular area
 	const auto mmx = std::minmax(x1, x2);
 	const auto mmz = std::minmax(z1, z2);
-	const int lowerX = Clamp<int>(mmx.first  / BLOCK_SIZE, 0, int(nbrOfBlocksX - 1));
-	const int upperX = Clamp<int>(mmx.second / BLOCK_SIZE, 0, int(nbrOfBlocksX - 1));
-	const int lowerZ = Clamp<int>(mmz.first  / BLOCK_SIZE, 0, int(nbrOfBlocksZ - 1));
-	const int upperZ = Clamp<int>(mmz.second / BLOCK_SIZE, 0, int(nbrOfBlocksZ - 1));
+	const int lowerX = Clamp<int>(mmx.first  / BLOCK_SIZE, 0, int(nbrOfBlocks.x - 1));
+	const int upperX = Clamp<int>(mmx.second / BLOCK_SIZE, 0, int(nbrOfBlocks.x - 1));
+	const int lowerZ = Clamp<int>(mmz.first  / BLOCK_SIZE, 0, int(nbrOfBlocks.y - 1));
+	const int upperZ = Clamp<int>(mmz.second / BLOCK_SIZE, 0, int(nbrOfBlocks.y - 1));
 
 	// mark the blocks inside the rectangle, enqueue them
 	// from upper to lower because of the placement of the
 	// bi-directional vertices
 	for (int z = upperZ; z >= lowerZ; z--) {
 		for (int x = upperX; x >= lowerX; x--) {
-			if ((blockStates.nodeMask[z * nbrOfBlocksX + x] & PATHOPT_OBSOLETE) != 0)
+			const int idx = BlockPosToIdx(int2(x,z));
+			if ((blockStates.nodeMask[idx] & PATHOPT_OBSOLETE) != 0)
 				continue;
 
-			updatedBlocks.emplace_back(x,z);
-			blockStates.nodeMask[z * nbrOfBlocksX + x] |= PATHOPT_OBSOLETE;
+			updatedBlocks.emplace_back(x, z);
+			blockStates.nodeMask[idx] |= PATHOPT_OBSOLETE;
 		}
 	}
 }
@@ -444,8 +439,9 @@ void CPathEstimator::Update() {
 	// get blocks to update
 	while (!updatedBlocks.empty()) {
 		int2& pos = updatedBlocks.front();
+		const int idx = BlockPosToIdx(pos);
 
-		if ((blockStates.nodeMask[pos.y * nbrOfBlocksX + pos.x] & PATHOPT_OBSOLETE) == 0) {
+		if ((blockStates.nodeMask[idx] & PATHOPT_OBSOLETE) == 0) {
 			updatedBlocks.pop_front();
 			continue;
 		}
@@ -470,14 +466,9 @@ void CPathEstimator::Update() {
 		for_mt(0, consumedBlocks.size(), [&](const int n) {
 			// copy the next block in line
 			const SingleBlock sb = consumedBlocks[n];
-
-			const int blockX = sb.blockPos.x;
-			const int blockZ = sb.blockPos.y;
-			const int blockN = blockZ * nbrOfBlocksX + blockX;
-
+			const int blockN = BlockPosToIdx(sb.blockPos);
 			const MoveDef* currBlockMD = sb.moveDef;
-
-			blockStates.peNodeOffsets[blockN][currBlockMD->pathType] = FindOffset(*currBlockMD, blockX, blockZ);
+			blockStates.peNodeOffsets[blockN][currBlockMD->pathType] = FindOffset(*currBlockMD, sb.blockPos.x, sb.blockPos.y);
 		});
 	}
 
@@ -487,16 +478,11 @@ void CPathEstimator::Update() {
 		for (unsigned int n = 0; n < consumedBlocks.size(); ++n) {
 			// copy the next block in line
 			const SingleBlock sb = consumedBlocks[n];
-
-			const int blockX = sb.blockPos.x;
-			const int blockZ = sb.blockPos.y;
-			const int blockN = blockZ * nbrOfBlocksX + blockX;
-
-			// check for batch boundary
+			const int blockN = BlockPosToIdx(sb.blockPos);
 			const MoveDef* currBlockMD = sb.moveDef;
 			const MoveDef* nextBlockMD = ((n + 1) < consumedBlocks.size())? consumedBlocks[n + 1].moveDef: NULL;
 
-			CalculateVertices(*currBlockMD, blockX, blockZ);
+			CalculateVertices(*currBlockMD, sb.blockPos.x, sb.blockPos.y);
 
 			// each MapChanged() call adds AT MOST <moveDefs.size()> SingleBlock's
 			// in ascending pathType order per (x, z) PE-block, therefore when the
@@ -538,7 +524,7 @@ IPath::SearchResult CPathEstimator::GetPath(
 		goalBlock.y = peDef.goalSquareZ / BLOCK_SIZE;
 
 	mStartBlock = startBlock;
-	mStartBlockIdx = startBlock.y * nbrOfBlocksX + startBlock.x;
+	mStartBlockIdx = BlockPosToIdx(startBlock);
 
 	const CPathCache::CacheItem* ci = pathCache[synced]->GetCachedPath(startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
 
@@ -710,10 +696,10 @@ void CPathEstimator::TestBlock(
 	const int vertexIdx =
 		moveDef.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES +
 		parentOpenBlock.nodeNum * PATH_DIRECTION_VERTICES +
-		GetBlockVertexOffset(pathDir, nbrOfBlocksX);
-	const unsigned int blockIdx = block.y * nbrOfBlocksX + block.x;
+		GetBlockVertexOffset(pathDir, nbrOfBlocks.x);
+	const unsigned int blockIdx = BlockPosToIdx(block);
 
-	if (block.x < 0 || block.x >= nbrOfBlocksX || block.y < 0 || block.y >= nbrOfBlocksZ) {
+	if (block.x < 0 || block.x >= nbrOfBlocks.x || block.y < 0 || block.y >= nbrOfBlocks.y) {
 		// blocks should never be able to lie outside map
 		// (due to the infinite vertex-costs at the edges)
 		return;
@@ -800,8 +786,7 @@ void CPathEstimator::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath
 		foundPath.path.push_back(pos);
 
 		// next step backwards
-		const int2 nextPos = blockStates.peParentNodePos[blockIdx];
-		blockIdx = nextPos.y * nbrOfBlocksX + nextPos.x;
+		blockIdx = BlockPosToIdx(blockStates.peParentNodePos[blockIdx]);
 	}
 
 	if (!foundPath.path.empty()) {

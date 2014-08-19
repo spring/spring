@@ -105,12 +105,6 @@ public:
 	 */
 	boost::uint32_t GetPathChecksum() const { return pathChecksum; }
 
-	unsigned int GetBlockSize() const { return BLOCK_SIZE; }
-	unsigned int GetNumBlocksX() const { return nbrOfBlocksX; }
-	unsigned int GetNumBlocksZ() const { return nbrOfBlocksZ; }
-
-	PathNodeStateBuffer& GetNodeStateBuffer() { return blockStates; }
-
 	static const int2* GetDirectionVectorsTable();
 
 private:
@@ -140,9 +134,6 @@ private:
 
 	const unsigned int BLOCK_PIXEL_SIZE;
 	const unsigned int BLOCKS_TO_UPDATE;
-
-	unsigned int nbrOfBlocksX;                  /// Number of blocks on the X axis of the map.
-	unsigned int nbrOfBlocksZ;                  /// Number of blocks on the Z axis of the map.
 
 	unsigned int nextOffsetMessageIdx;
 	unsigned int nextCostMessageIdx;

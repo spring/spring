@@ -58,13 +58,6 @@ public:
 		bool synced
 	);
 
-
-	// size of the memory-region we hold allocated (excluding sizeof(*this))
-	// (PathManager stores HeatMap and FlowMap, so we do not need to add them)
-	unsigned int GetMemFootPrint() const { return (blockStates.GetMemFootPrint()); }
-
-	PathNodeStateBuffer& GetNodeStateBuffer() { return blockStates; }
-
 	static void InitDirectionVectorsTable();
 	static void InitDirectionCostsTable();
 
