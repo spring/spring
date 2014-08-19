@@ -164,42 +164,33 @@ static const CTeam* getTeam(int teamId) {
 	}
 }
 
-//static bool isAlliedTeam(int skirmishAIId, const CTeam* team) {
-//	return teamHandler->AlliedTeams(team.teamNum, skirmishAIId_teamId[skirmishAIId]);
-//}
-//
-//static inline bool teamModParamIsValidId(const CTeam& team, int modParamId) {
-//	return ((size_t)modParamId < team.modParams.size());
-//}
-//
-//static bool teamModParamIsVisible(int skirmishAIId, const CTeam& team,
-//		int modParamId)
-//{
-//	const int teamId = skirmishAIId_teamId[skirmishAIId];
-//
-//	if (teamModParamIsValidId(team, modParamId)) {
-//		const int allyID = teamHandler->AllyTeam(teamId);
-//		const int losStatus = unit.losStatus[allyID];
-//
-//		int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
-//
-//		if (isAlliedTeam(skirmishAIId, &team)
-//				|| skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
-//			losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
-//		} else if (teamHandler->AlliedTeams(team.teamNum, teamId)) {
-//			// ingame alliances
-//			losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
-//		} else if (losStatus & LOS_INLOS) {
-//			losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
-//		} else if (losStatus & LOS_INRADAR) {
-//			losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
-//		}
-//
-//		return ((team.modParams[modParamId].los & losMask) > 0);
-//	}
-//
-//	return false;
-//}
+static bool isAlliedTeam(int skirmishAIId, const CTeam* team) {
+	return teamHandler->AlliedTeams(team.teamNum, skirmishAIId_teamId[skirmishAIId]);
+}
+
+static inline bool teamModParamIsValidId(const CTeam& team, int modParamId) {
+	return ((size_t)modParamId < team.modParams.size());
+}
+
+static bool teamModParamIsVisible(int skirmishAIId, const CTeam& team, int modParamId) {
+
+	const int teamId = skirmishAIId_teamId[skirmishAIId];
+
+	if (teamModParamIsValidId(team, modParamId)) {
+		int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
+
+		if (isAlliedTeam(skirmishAIId, &team) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+			losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
+		} else if (teamHandler->AlliedTeams(team.teamNum, teamId)) {
+			// ingame alliances
+			losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
+		}
+
+		return ((team.modParams[modParamId].los & losMask) > 0);
+	}
+
+	return false;
+}
 
 static bool gameModParamIsVisible(const LuaRulesParams::Param& param) {
 
@@ -1323,14 +1314,55 @@ EXPORT(void) skirmishAiCallback_Game_getCategoryName(int skirmishAIId, int categ
 	STRCPY_T(name, name_sizeMax, theName);
 }
 
-
-//########### BEGINN GameRulesParams
-
-EXPORT(int) skirmishAiCallback_getGameRulesParams(int skirmishAIId) {
+EXPORT(int) skirmishAiCallback_Game_getGameRulesParams(int skirmishAIId) {
 	return CLuaHandleSynced::GetGameParams().size();
 }
 
-EXPORT(int) skirmishAiCallback_getGameRulesParamByName(int skirmishAIId, const char* gameRulesParamName) {
+EXPORT(int) skirmishAiCallback_Game_getRulesParamsFloat(int skirmishAIId, const char** keys, const char** values) {
+
+	int count = 0;
+
+	if ((keys != NULL) && (values != NULL)) {
+		return count;
+	}
+
+	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
+	const LuaRulesParams::Params& params = CLuaHandleSynced::GetGameParams();
+	for (auto& iter : paramsMap) {
+		auto& param = params[iter.second];
+		if (gameModParamIsVisible(param)) {
+			keys[count] = iter.first.c_str();
+			values[count] = std::to_string(param.valueInt).c_str();
+			count++;
+		}
+	}
+
+	return count;
+}
+
+EXPORT(int) skirmishAiCallback_Game_getRulesParamsString(int skirmishAIId, const char** keys, const char** values) {
+
+	int count = 0;
+
+	if ((keys != NULL) && (values != NULL)) {
+		return count;
+	}
+
+	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
+	const LuaRulesParams::Params& params = CLuaHandleSynced::GetGameParams();
+	for (auto& iter : paramsMap) {
+		auto& param = params[iter.second];
+		if (gameModParamIsVisible(param)) {
+			keys[count] = iter.first.c_str();
+			values[count] = param.valueString.c_str();
+			count++;
+		}
+	}
+
+	return count;
+}
+
+EXPORT(int) skirmishAiCallback_Game_getGameRulesParamByName(int skirmishAIId, const char* gameRulesParamName) {
 
 	int res = -1;
 
@@ -1397,8 +1429,6 @@ EXPORT(const char*) skirmishAiCallback_GameRulesParam_getValueString(int skirmis
 
 	return value;
 }
-
-//########### END GameRulesParams
 
 
 EXPORT(float) skirmishAiCallback_Gui_getViewRange(int skirmishAIId) {
@@ -3860,11 +3890,11 @@ EXPORT(int) skirmishAiCallback_getAllyTeams(int skirmishAIId, int* teamIds, int 
 EXPORT(int) skirmishAiCallback_Team_getTeamRulesParams(int skirmishAIId, int teamId) {
 
 	const CTeam* team = getTeam(teamId);
-//	if (team && /*(skirmishAiCallback_Cheats_isEnabled(skirmishAIId) || */isAlliedTeam(skirmishAIId, team)/*)*/) {
+	if (team) {
 		return team->modParams.size();
-//	} else {
-//		return 0;
-//	}
+	} else {
+		return 0;
+	}
 }
 
 EXPORT(const char*) skirmishAiCallback_Team_TeamRulesParam_getName(int skirmishAIId, int teamId, int teamRulesParamId) {
@@ -3872,13 +3902,11 @@ EXPORT(const char*) skirmishAiCallback_Team_TeamRulesParam_getName(int skirmishA
 	const char* name = "";
 
 	const CTeam* team = getTeam(teamId);
-	if (team /*&& teamModParamIsVisible(skirmishAIId, *team, modParamId)*/) {
-		std::map<std::string, int>::const_iterator mi, mb, me;
-		mb = team->modParamsMap.begin();
-		me = team->modParamsMap.end();
-		for (mi = mb; mi != me; ++mi) {
-			if (mi->second == teamRulesParamId) {
-				name = mi->first.c_str();
+	if (team && teamModParamIsVisible(skirmishAIId, *team, teamRulesParamId)) {
+		for (auto& mi : team->modParamsMap) {
+			if (mi.second == teamRulesParamId) {
+				name = mi.first.c_str();
+				break;
 			}
 		}
 	}
@@ -3886,14 +3914,25 @@ EXPORT(const char*) skirmishAiCallback_Team_TeamRulesParam_getName(int skirmishA
 	return name;
 }
 
-EXPORT(float) skirmishAiCallback_Team_TeamRulesParam_getValue(int skirmishAIId, int teamId, int teamRulesParamId) {
+EXPORT(float) skirmishAiCallback_Team_TeamRulesParam_getValueFloat(int skirmishAIId, int teamId, int teamRulesParamId) {
 
 	float value = 0.0f;
 
 	const CTeam* team = getTeam(teamId);
-	if (team /*&& teamModParamIsVisible(skirmishAIId, *team, podParamId)*/) {
-		//FIXME add function to get string params, too!
+	if (team && teamModParamIsVisible(skirmishAIId, *team, teamRulesParamId)) {
 		value = team->modParams[teamRulesParamId].valueInt;
+	}
+
+	return value;
+}
+
+EXPORT(const char*) skirmishAiCallback_Team_TeamRulesParam_getValueString(int skirmishAIId, int teamId, int teamRulesParamId) {
+
+	const char* value = "";
+
+	const CTeam* team = getTeam(teamId);
+	if (team && teamModParamIsVisible(skirmishAIId, *team, teamRulesParamId)) {
+		value = team->modParams[teamRulesParamId].valueString.c_str();
 	}
 
 	return value;
@@ -4893,8 +4932,8 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Game_getCategoryFlag = &skirmishAiCallback_Game_getCategoryFlag;
 	callback->Game_getCategoriesFlag = &skirmishAiCallback_Game_getCategoriesFlag;
 	callback->Game_getCategoryName = &skirmishAiCallback_Game_getCategoryName;
-	callback->getGameRulesParams = &skirmishAiCallback_getGameRulesParams;
-	callback->getGameRulesParamByName = &skirmishAiCallback_getGameRulesParamByName;
+	callback->getGameRulesParams = &skirmishAiCallback_Game_getGameRulesParams;
+	callback->getGameRulesParamByName = &skirmishAiCallback_Game_getGameRulesParamByName;
 	callback->GameRulesParam_getName = &skirmishAiCallback_GameRulesParam_getName;
 	callback->GameRulesParam_getValueFloat = &skirmishAiCallback_GameRulesParam_getValueFloat;
 	callback->GameRulesParam_getValueString = &skirmishAiCallback_GameRulesParam_getValueString;
@@ -5206,7 +5245,8 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->getAllyTeams = &skirmishAiCallback_getAllyTeams;
 	callback->Team_getTeamRulesParams = &skirmishAiCallback_Team_getTeamRulesParams;
 	callback->Team_TeamRulesParam_getName = &skirmishAiCallback_Team_TeamRulesParam_getName;
-	callback->Team_TeamRulesParam_getValue = &skirmishAiCallback_Team_TeamRulesParam_getValue;
+	callback->Team_TeamRulesParam_getValueFloat = &skirmishAiCallback_Team_TeamRulesParam_getValueFloat;
+	callback->Team_TeamRulesParam_getValueString = &skirmishAiCallback_Team_TeamRulesParam_getValueString;
 	callback->getGroups = &skirmishAiCallback_getGroups;
 	callback->Group_getSupportedCommands = &skirmishAiCallback_Group_getSupportedCommands;
 	callback->Group_SupportedCommand_getId = &skirmishAiCallback_Group_SupportedCommand_getId;

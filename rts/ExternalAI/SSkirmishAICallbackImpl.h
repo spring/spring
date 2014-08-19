@@ -125,13 +125,13 @@ EXPORT(int              ) skirmishAiCallback_Game_getCategoriesFlag(int skirmish
 
 EXPORT(void             ) skirmishAiCallback_Game_getCategoryName(int skirmishAIId, int categoryFlag, char* name, int name_sizeMax);
 
-// END misc callback functions
+EXPORT(int              ) skirmishAiCallback_Game_getGameRulesParams(int skirmishAIId);
 
+EXPORT(int              ) skirmishAiCallback_Game_getRulesParamsFloat(int skirmishAIId, const char** keys, const char** values);
 
-// BEGINN OBJECT GameRulesParam
-EXPORT(int              ) skirmishAiCallback_getGameRulesParams(int skirmishAIId);
+EXPORT(int              ) skirmishAiCallback_Game_getRulesParamsString(int skirmishAIId, const char** keys, const char** values);
 
-EXPORT(int              ) skirmishAiCallback_getGameRulesParamByName(int skirmishAIId, const char* gameRulesParamName);
+EXPORT(int              ) skirmishAiCallback_Game_getGameRulesParamByName(int skirmishAIId, const char* gameRulesParamName);
 
 EXPORT(const char*      ) skirmishAiCallback_GameRulesParam_getName(int skirmishAIId, int gameRulesParamId);
 
@@ -139,7 +139,7 @@ EXPORT(float            ) skirmishAiCallback_GameRulesParam_getValueFloat(int sk
 
 EXPORT(const char*      ) skirmishAiCallback_GameRulesParam_getValueString(int skirmishAIId, int gameRulesParamId);
 
-// END OBJECT GameRulesParam
+// END misc callback functions
 
 
 // BEGINN Visualization related callback functions
@@ -792,7 +792,9 @@ EXPORT(int              ) skirmishAiCallback_Team_getTeamRulesParams(int skirmis
 
 EXPORT(const char*      ) skirmishAiCallback_Team_TeamRulesParam_getName(int skirmishAIId, int teamId, int teamRulesParamId);
 
-EXPORT(float            ) skirmishAiCallback_Team_TeamRulesParam_getValue(int skirmishAIId, int teamId, int teamRulesParamId);
+EXPORT(float            ) skirmishAiCallback_Team_TeamRulesParam_getValueFloat(int skirmishAIId, int teamId, int teamRulesParamId);
+
+EXPORT(const char*      ) skirmishAiCallback_Team_TeamRulesParam_getValueString(int skirmishAIId, int teamId, int teamRulesParamId);
 
 // END OBJECT Team
 

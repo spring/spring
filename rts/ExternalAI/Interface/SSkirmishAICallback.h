@@ -398,18 +398,18 @@ struct SSkirmishAICallback {
 	 */
 	void              (CALLING_CONV *Game_getCategoryName)(int skirmishAIId, int categoryFlag, char* name, int name_sizeMax);
 
-// END misc callback functions
-
-
-// BEGINN OBJECT GameRulesParam
 	/**
 	 * This is a set of GameRulesParams parameters that may change during the game.
 	 * Each parameter is uniquely identified only by its id (which is the index in the vector).
 	 * Parameters may or may not have a name.
 	 */
-	int               (CALLING_CONV *getGameRulesParams)(int skirmishAIId); //$ FETCHER:MULTI:NUM:GameRulesParam
+	int               (CALLING_CONV *Game_getGameRulesParams)(int skirmishAIId); //$ FETCHER:MULTI:NUM:GameRulesParam
 
-	int               (CALLING_CONV *getGameRulesParamByName)(int skirmishAIId, const char* gameRulesParamName); //$ REF:RETURN->GameRulesParam
+	int               (CALLING_CONV *Game_getRulesParamsFloat)(int skirmishAIId, const char** keys, const char** values); //$ MAP
+
+	int               (CALLING_CONV *Game_getRulesParamsString)(int skirmishAIId, const char** keys, const char** values); //$ MAP
+
+	int               (CALLING_CONV *Game_getGameRulesParamByName)(int skirmishAIId, const char* gameRulesParamName); //$ REF:RETURN->GameRulesParam
 
 	/**
 	 * Not every mod parameter has a name.
@@ -420,7 +420,7 @@ struct SSkirmishAICallback {
 
 	const char*       (CALLING_CONV *GameRulesParam_getValueString)(int skirmishAIId, int gameRulesParamId);
 
-// END OBJECT GameRulesParam
+// END misc callback functions
 
 
 // BEGINN Visualization related callback functions
@@ -1214,10 +1214,8 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Unit_getDef)(int skirmishAIId, int unitId); //$ REF:RETURN->UnitDef
 
 	/**
-	 * This is a set of parameters that is initialized
-	 * in CreateUnitRulesParams() and may change during the game.
-	 * Each parameter is uniquely identified only by its id
-	 * (which is the index in the vector).
+	 * This is a set of UnitRulesParams parameters that may change during the game.
+	 * Each parameter is uniquely identified only by its id (which is the index in the vector).
 	 * Parameters may or may not have a name.
 	 */
 	int               (CALLING_CONV *Unit_getUnitRulesParams)(int skirmishAIId, int unitId); //$ FETCHER:MULTI:NUM:UnitRulesParam
@@ -1373,10 +1371,8 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *getAllyTeams)(int skirmishAIId, int* teamIds, int teamIds_sizeMax); //$ FETCHER:MULTI:IDs:Team:teamIds
 
 	/**
-	 * This is a set of parameters that is initialized
-	 * in CreateTeamRulesParams() and may change during the game.
-	 * Each parameter is uniquely identified only by its id
-	 * (which is the index in the vector).
+	 * This is a set of TeamRulesParams parameters that may change during the game.
+	 * Each parameter is uniquely identified only by its id (which is the index in the vector).
 	 * Parameters may or may not have a name.
 	 */
 	int               (CALLING_CONV *Team_getTeamRulesParams)(int skirmishAIId, int teamId); //$ FETCHER:MULTI:NUM:TeamRulesParam
@@ -1386,7 +1382,9 @@ struct SSkirmishAICallback {
 	 */
 	const char*       (CALLING_CONV *Team_TeamRulesParam_getName)(int skirmishAIId, int teamId, int teamRulesParamId);
 
-	float             (CALLING_CONV *Team_TeamRulesParam_getValue)(int skirmishAIId, int teamId, int teamRulesParamId);
+	float             (CALLING_CONV *Team_TeamRulesParam_getValueFloat)(int skirmishAIId, int teamId, int teamRulesParamId);
+
+	const char*       (CALLING_CONV *Team_TeamRulesParam_getValueString)(int skirmishAIId, int teamId, int teamRulesParamId);
 
 // END OBJECT Team
 
