@@ -70,7 +70,6 @@ IPath::SearchResult CPathFinder::GetPath(
 	IPath::Path& path,
 	unsigned int maxNodes,
 	bool testMobile,
-	bool exactPath,
 	bool needPath,
 	bool peCall,
 	bool synced
@@ -85,7 +84,7 @@ IPath::SearchResult CPathFinder::GetPath(
 	// if true, factor presence of mobile objects on squares into cost
 	this->testMobile = testMobile;
 	// if true, neither start nor goal are allowed to be blocked squares
-	this->exactPath = exactPath;
+	this->exactPath = peCall;
 	// if false, we are only interested in the cost (not the waypoints)
 	this->needPath = needPath;
 
@@ -129,25 +128,7 @@ IPath::SearchResult CPathFinder::InitSearch(
 	bool peCall,
 	bool synced
 ) {
-	if (exactPath) {
-		assert(peCall);
-
-		// if called from an estimator, we never want to allow searches from
-		// any blocked starting positions (otherwise PE and PF can disagree)
-		// note: PE itself should ensure this never happens to begin with?
-		//
-		// be more lenient for normal searches so players can "unstuck" units
-		//
-		// blocked goal positions are always early-outs (no searching needed)
-		const bool strtBlocked = ((CMoveMath::IsBlocked(moveDef, mStartBlock.x, mStartBlock.y, owner) & CMoveMath::BLOCK_STRUCTURE) != 0);
-		const bool goalBlocked = pfDef.GoalIsBlocked(moveDef, CMoveMath::BLOCK_STRUCTURE, owner);
-
- 		if (strtBlocked || goalBlocked) {
-			return IPath::CantGetCloser;
-		}
-	} else {
-		assert(!peCall);
-
+	if (!peCall) {
 		// also need a "dead zone" around blocked goal-squares for non-exact paths
 		// otherwise CPU use can become unacceptable even with circular constraint
 		//

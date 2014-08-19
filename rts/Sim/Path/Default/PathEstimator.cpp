@@ -16,13 +16,10 @@
 #include "PathFinderDef.h"
 #include "PathFlowMap.hpp"
 #include "PathLog.h"
-#include "Map/ReadMap.h"
 #include "Game/LoadScreen.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitDef.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
@@ -340,17 +337,31 @@ void CPathEstimator::CalculateVertex(
 
 	// keep search exactly contained within the two blocks
 	CRectangularSearchConstraint pfDef(startPos, goalPos, BLOCK_SIZE);
-	// CCircularSearchConstraint pfDef(startPos, goalPos, 0, 1.1f, 2);
 
 	IPath::Path path;
-	IPath::SearchResult result;
+	IPath::SearchResult result = IPath::Ok;
+
+	// we never want to allow searches from
+	// any blocked starting positions (otherwise PE and PF can disagree)
+	// note: PE itself should ensure this never happens to begin with?
+	//
+	// be more lenient for normal searches so players can "unstuck" units
+	//
+	// blocked goal positions are always early-outs (no searching needed)
+	const bool strtBlocked = ((CMoveMath::IsBlocked(moveDef, startPos, nullptr) & CMoveMath::BLOCK_STRUCTURE) != 0);
+	const bool goalBlocked = pfDef.GoalIsBlocked(moveDef, CMoveMath::BLOCK_STRUCTURE, nullptr);
+	if (strtBlocked || goalBlocked) {
+		result = IPath::CantGetCloser;
+	}
 
 	// find path from parent to child block
 	//
 	// since CPathFinder::GetPath() is not thread-safe, use
 	// this thread's "private" CPathFinder instance (rather
 	// than locking pathFinder->GetPath()) if we are in one
-	result = pathFinders[threadNum]->GetPath(moveDef, pfDef, NULL, startPos, path, MAX_SEARCHED_NODES_PF >> 2, false, true, false, true, true);
+	if (result == IPath::Ok) {
+		result = pathFinders[threadNum]->GetPath(moveDef, pfDef, nullptr, startPos, path, MAX_SEARCHED_NODES_PF >> 2, false, false, true, true);
+	}
 
 	// store the result
 	if (result == IPath::Ok) {

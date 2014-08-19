@@ -143,7 +143,6 @@ private:
 
 	unsigned int nbrOfBlocksX;                  /// Number of blocks on the X axis of the map.
 	unsigned int nbrOfBlocksZ;                  /// Number of blocks on the Z axis of the map.
-	unsigned int moveMathOptions;
 
 	unsigned int nextOffsetMessageIdx;
 	unsigned int nextCostMessageIdx;

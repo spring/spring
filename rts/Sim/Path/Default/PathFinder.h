@@ -53,7 +53,6 @@ public:
 		IPath::Path& path,
 		unsigned int maxNodes,
 		bool testMobile,
-		bool exactPath,
 		bool needPath,
 		bool peCall,
 		bool synced
