@@ -68,7 +68,7 @@ protected: // IPathFinder impl
 	/// Set up the starting point of the search.
 	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool peCall, bool synced);
 	/// Performs the actual search.
-	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool peCall, bool synced);
+	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced);
 
 	/**
 	 * Test the availability and value of a square,

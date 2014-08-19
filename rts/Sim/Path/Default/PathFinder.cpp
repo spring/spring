@@ -185,7 +185,7 @@ IPath::SearchResult CPathFinder::InitSearch(
 	openBlocks.push(os);
 
 	// perform the search
-	IPath::SearchResult result = DoSearch(moveDef, pfDef, owner, peCall, synced);
+	IPath::SearchResult result = DoSearch(moveDef, pfDef, owner, synced);
 
 	// if no improvements are found, then return CantGetCloser instead
 	if ((mGoalBlockIdx == mStartBlockIdx && (!isStartGoal || pfDef.startInGoalRadius)) || mGoalBlockIdx == 0)
@@ -199,7 +199,6 @@ IPath::SearchResult CPathFinder::DoSearch(
 	const MoveDef& moveDef,
 	const CPathFinderDef& pfDef,
 	const CSolidObject* owner,
-	bool peCall,
 	bool synced
 ) {
 	bool foundGoal = false;
