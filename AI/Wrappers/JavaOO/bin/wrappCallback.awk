@@ -810,7 +810,8 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			_retVar_out_new = retVar_out_m "_out";
 			_wrappGetInst_params = myWrapVar;
 			_hasRetInd = 0;
-			if (retType != "void") {
+			_inPa_size = split(innerParams, _, ",");
+			if (retType != "void" && (_inPa_size == addInds_size_m || _inPa_size == 0)) {
 				_hasRetInd = 1;
 			}
 			for (ai=1; ai <= (addInds_size_m-_hasRetInd); ai++) {

@@ -201,6 +201,12 @@ static const CTeam* getTeam(int teamId) {
 //	return false;
 //}
 
+static bool gameModParamIsVisible(const LuaRulesParams::Param& param) {
+
+	int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
+
+	return ((param.los & losMask) > 0);
+}
 
 static inline const UnitDef* getUnitDefById(int skirmishAIId, int unitDefId) {
 
@@ -1321,13 +1327,27 @@ EXPORT(void) skirmishAiCallback_Game_getCategoryName(int skirmishAIId, int categ
 //########### BEGINN GameRulesParams
 
 EXPORT(int) skirmishAiCallback_getGameRulesParams(int skirmishAIId) {
+	return CLuaHandleSynced::GetGameParams().size();
+}
 
+EXPORT(int) skirmishAiCallback_getGameRulesParamByName(int skirmishAIId, const char* gameRulesParamName) {
+
+	int res = -1;
+
+	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
+	const LuaRulesParams::HashMap::const_iterator pmi = paramsMap.find(gameRulesParamName);
+	if (pmi == paramsMap.end()) {
+		return res;
+	}
+
+	int modParamId = pmi->second;
 	const LuaRulesParams::Params& params = CLuaHandleSynced::GetGameParams();
-//	if (unit && /*(skirmishAiCallback_Cheats_isEnabled(skirmishAIId) || */isAlliedUnit(skirmishAIId, unit)/*)*/) {
-		return params.size();
-//	} else {
-//		return 0;
-//	}
+	const LuaRulesParams::Param& param = params[modParamId];
+	if (gameModParamIsVisible(param)) {
+		res = modParamId;
+	}
+
+	return res;
 }
 
 EXPORT(const char*) skirmishAiCallback_GameRulesParam_getName(int skirmishAIId, int gameRulesParamId) {
@@ -1335,30 +1355,45 @@ EXPORT(const char*) skirmishAiCallback_GameRulesParam_getName(int skirmishAIId, 
 	const char* name = "";
 
 	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
-//	if (team /*&& teamModParamIsVisible(skirmishAIId, *team, modParamId)*/) {
+	const LuaRulesParams::Params& params = CLuaHandleSynced::GetGameParams();
+	const LuaRulesParams::Param& param = params[gameRulesParamId];
+	if (gameModParamIsVisible(param)) {
 		std::map<std::string, int>::const_iterator mi, mb, me;
 		mb = paramsMap.begin();
 		me = paramsMap.end();
 		for (mi = mb; mi != me; ++mi) {
 			if (mi->second == gameRulesParamId) {
 				name = mi->first.c_str();
+				break;
 			}
 		}
-//	}
+	}
 
 	return name;
 }
 
-EXPORT(float) skirmishAiCallback_GameRulesParam_getValue(int skirmishAIId, int gameRulesParamId) {
+EXPORT(float) skirmishAiCallback_GameRulesParam_getValueFloat(int skirmishAIId, int gameRulesParamId) {
 
 	float value = 0.0f;
 
 	const LuaRulesParams::Params& params = CLuaHandleSynced::GetGameParams();
+	const LuaRulesParams::Param& param = params[gameRulesParamId];
+	if (gameModParamIsVisible(param)) {
+		value = param.valueInt;
+	}
 
-//	if (team /*&& teamModParamIsVisible(skirmishAIId, *team, podParamId)*/) {
-		//FIXME add function to get string params, too!
-		value = params[gameRulesParamId].valueInt;
-//	}
+	return value;
+}
+
+EXPORT(const char*) skirmishAiCallback_GameRulesParam_getValueString(int skirmishAIId, int gameRulesParamId) {
+
+	const char* value = "";
+
+	const LuaRulesParams::Params& params = CLuaHandleSynced::GetGameParams();
+	const LuaRulesParams::Param& param = params[gameRulesParamId];
+	if (gameModParamIsVisible(param)) {
+		value = param.valueString.c_str();
+	}
 
 	return value;
 }
@@ -3203,29 +3238,102 @@ EXPORT(int) skirmishAiCallback_Unit_getDef(int skirmishAIId, int unitId) {
 	}
 }
 
-EXPORT(int) skirmishAiCallback_Unit_getModParams(int skirmishAIId, int unitId) {
+EXPORT(int) skirmishAiCallback_Unit_getUnitRulesParams(int skirmishAIId, int unitId) {
 
 	const CUnit* unit = getUnit(unitId);
-	if (unit && /*(skirmishAiCallback_Cheats_isEnabled(skirmishAIId) || */isAlliedUnit(skirmishAIId, unit)/*)*/) {
+	if (unit /*&& /*(skirmishAiCallback_Cheats_isEnabled(skirmishAIId) || isAlliedUnit(skirmishAIId, unit)/*)*/) {
 		return unit->modParams.size();
 	} else {
 		return 0;
 	}
 }
 
-EXPORT(const char*) skirmishAiCallback_Unit_ModParam_getName(int skirmishAIId,
-		int unitId, int modParamId)
-{
+EXPORT(int) skirmishAiCallback_Unit_getRulesParamsFloat(int skirmishAIId, int unitId, const char** keys, const char** values) {
+
+	int count = 0;
+
+	if ((keys != NULL) && (values != NULL)) {
+		return count;
+	}
+	const CUnit* unit = getUnit(unitId);
+	if (!unit) {
+		return count;
+	}
+
+	const LuaRulesParams::HashMap& paramsMap = unit->modParamsMap;
+	const LuaRulesParams::Params& params = unit->modParams;
+	for (auto& iter : paramsMap) {
+		if (unitModParamIsVisible(skirmishAIId, *unit, iter.second)) {
+			keys[count] = iter.first.c_str();
+			values[count] = std::to_string(params[iter.second].valueInt).c_str();
+			count++;
+		}
+	}
+
+	return count;
+}
+
+EXPORT(int) skirmishAiCallback_Unit_getRulesParamsString(int skirmishAIId, int unitId, const char** keys, const char** values) {
+
+	int count = 0;
+
+	if ((keys != NULL) && (values != NULL)) {
+		return count;
+	}
+	const CUnit* unit = getUnit(unitId);
+	if (!unit) {
+		return count;
+	}
+
+	const LuaRulesParams::HashMap& paramsMap = unit->modParamsMap;
+	const LuaRulesParams::Params& params = unit->modParams;
+	for (auto& iter : paramsMap) {
+		if (unitModParamIsVisible(skirmishAIId, *unit, iter.second)) {
+			keys[count] = iter.first.c_str();
+			values[count] = params[iter.second].valueString.c_str();
+			count++;
+		}
+	}
+
+	return count;
+}
+
+EXPORT(int) skirmishAiCallback_Unit_getUnitRulesParamByName(int skirmishAIId, int unitId, const char* unitRulesParamName) {
+
+	int res = -1;
+
+	const CUnit* unit = getUnit(unitId);
+	if (!unit) {
+		return res;
+	}
+
+	const LuaRulesParams::HashMap& paramsMap = unit->modParamsMap;
+	const LuaRulesParams::HashMap::const_iterator pmi = paramsMap.find(unitRulesParamName);
+	if (pmi == paramsMap.end()) {
+		return res;
+	}
+
+	int modParamId = pmi->second;
+	if (unitModParamIsVisible(skirmishAIId, *unit, modParamId)) {
+		res = modParamId;
+	}
+
+	return res;
+}
+
+EXPORT(const char*) skirmishAiCallback_Unit_UnitRulesParam_getName(int skirmishAIId, int unitId, int unitRulesParamId) {
+
 	const char* name = "";
 
 	const CUnit* unit = getUnit(unitId);
-	if (unit && unitModParamIsVisible(skirmishAIId, *unit, modParamId)) {
+	if (unit && unitModParamIsVisible(skirmishAIId, *unit, unitRulesParamId)) {
 		std::map<std::string, int>::const_iterator mi, mb, me;
 		mb = unit->modParamsMap.begin();
 		me = unit->modParamsMap.end();
 		for (mi = mb; mi != me; ++mi) {
-			if (mi->second == modParamId) {
+			if (mi->second == unitRulesParamId) {
 				name = mi->first.c_str();
+				break;
 			}
 		}
 	}
@@ -3233,15 +3341,25 @@ EXPORT(const char*) skirmishAiCallback_Unit_ModParam_getName(int skirmishAIId,
 	return name;
 }
 
-EXPORT(float) skirmishAiCallback_Unit_ModParam_getValue(int skirmishAIId,
-		int unitId, int modParamId)
-{
+EXPORT(float) skirmishAiCallback_Unit_UnitRulesParam_getValueFloat(int skirmishAIId, int unitId, int unitRulesParamId) {
+
 	float value = 0.0f;
 
 	const CUnit* unit = getUnit(unitId);
-	if (unit && unitModParamIsVisible(skirmishAIId, *unit, modParamId)) {
-		//FIXME add function to get string params, too!
-		value = unit->modParams[modParamId].valueInt;
+	if (unit && unitModParamIsVisible(skirmishAIId, *unit, unitRulesParamId)) {
+		value = unit->modParams[unitRulesParamId].valueInt;
+	}
+
+	return value;
+}
+
+EXPORT(const char*) skirmishAiCallback_Unit_UnitRulesParam_getValueString(int skirmishAIId, int unitId, int unitRulesParamId) {
+
+	const char* value = "";
+
+	const CUnit* unit = getUnit(unitId);
+	if (unit && unitModParamIsVisible(skirmishAIId, *unit, unitRulesParamId)) {
+		value = unit->modParams[unitRulesParamId].valueString.c_str();
 	}
 
 	return value;
@@ -3739,7 +3857,7 @@ EXPORT(int) skirmishAiCallback_getAllyTeams(int skirmishAIId, int* teamIds, int 
 	return a;
 }
 
-EXPORT(int) skirmishAiCallback_Team_getPodParams(int skirmishAIId, int teamId) {
+EXPORT(int) skirmishAiCallback_Team_getTeamRulesParams(int skirmishAIId, int teamId) {
 
 	const CTeam* team = getTeam(teamId);
 //	if (team && /*(skirmishAiCallback_Cheats_isEnabled(skirmishAIId) || */isAlliedTeam(skirmishAIId, team)/*)*/) {
@@ -3749,7 +3867,7 @@ EXPORT(int) skirmishAiCallback_Team_getPodParams(int skirmishAIId, int teamId) {
 //	}
 }
 
-EXPORT(const char*) skirmishAiCallback_Team_PodParam_getName(int skirmishAIId, int teamId, int podParamId) {
+EXPORT(const char*) skirmishAiCallback_Team_TeamRulesParam_getName(int skirmishAIId, int teamId, int teamRulesParamId) {
 
 	const char* name = "";
 
@@ -3759,7 +3877,7 @@ EXPORT(const char*) skirmishAiCallback_Team_PodParam_getName(int skirmishAIId, i
 		mb = team->modParamsMap.begin();
 		me = team->modParamsMap.end();
 		for (mi = mb; mi != me; ++mi) {
-			if (mi->second == podParamId) {
+			if (mi->second == teamRulesParamId) {
 				name = mi->first.c_str();
 			}
 		}
@@ -3768,14 +3886,14 @@ EXPORT(const char*) skirmishAiCallback_Team_PodParam_getName(int skirmishAIId, i
 	return name;
 }
 
-EXPORT(float) skirmishAiCallback_Team_PodParam_getValue(int skirmishAIId, int teamId, int podParamId) {
+EXPORT(float) skirmishAiCallback_Team_TeamRulesParam_getValue(int skirmishAIId, int teamId, int teamRulesParamId) {
 
 	float value = 0.0f;
 
 	const CTeam* team = getTeam(teamId);
 	if (team /*&& teamModParamIsVisible(skirmishAIId, *team, podParamId)*/) {
 		//FIXME add function to get string params, too!
-		value = team->modParams[podParamId].valueInt;
+		value = team->modParams[teamRulesParamId].valueInt;
 	}
 
 	return value;
@@ -4776,8 +4894,10 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Game_getCategoriesFlag = &skirmishAiCallback_Game_getCategoriesFlag;
 	callback->Game_getCategoryName = &skirmishAiCallback_Game_getCategoryName;
 	callback->getGameRulesParams = &skirmishAiCallback_getGameRulesParams;
+	callback->getGameRulesParamByName = &skirmishAiCallback_getGameRulesParamByName;
 	callback->GameRulesParam_getName = &skirmishAiCallback_GameRulesParam_getName;
-	callback->GameRulesParam_getValue = &skirmishAiCallback_GameRulesParam_getValue;
+	callback->GameRulesParam_getValueFloat = &skirmishAiCallback_GameRulesParam_getValueFloat;
+	callback->GameRulesParam_getValueString = &skirmishAiCallback_GameRulesParam_getValueString;
 	callback->Gui_getViewRange = &skirmishAiCallback_Gui_getViewRange;
 	callback->Gui_getScreenX = &skirmishAiCallback_Gui_getScreenX;
 	callback->Gui_getScreenY = &skirmishAiCallback_Gui_getScreenY;
@@ -5035,9 +5155,13 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->getTeamUnits = &skirmishAiCallback_getTeamUnits;
 	callback->getSelectedUnits = &skirmishAiCallback_getSelectedUnits;
 	callback->Unit_getDef = &skirmishAiCallback_Unit_getDef;
-	callback->Unit_getModParams = &skirmishAiCallback_Unit_getModParams;
-	callback->Unit_ModParam_getName = &skirmishAiCallback_Unit_ModParam_getName;
-	callback->Unit_ModParam_getValue = &skirmishAiCallback_Unit_ModParam_getValue;
+	callback->Unit_getUnitRulesParams = &skirmishAiCallback_Unit_getUnitRulesParams;
+	callback->Unit_getRulesParamsFloat = &skirmishAiCallback_Unit_getRulesParamsFloat;
+	callback->Unit_getRulesParamsString = &skirmishAiCallback_Unit_getRulesParamsString;
+	callback->Unit_getUnitRulesParamByName = &skirmishAiCallback_Unit_getUnitRulesParamByName;
+	callback->Unit_UnitRulesParam_getName = &skirmishAiCallback_Unit_UnitRulesParam_getName;
+	callback->Unit_UnitRulesParam_getValueFloat = &skirmishAiCallback_Unit_UnitRulesParam_getValueFloat;
+	callback->Unit_UnitRulesParam_getValueString = &skirmishAiCallback_Unit_UnitRulesParam_getValueString;
 	callback->Unit_getTeam = &skirmishAiCallback_Unit_getTeam;
 	callback->Unit_getAllyTeam = &skirmishAiCallback_Unit_getAllyTeam;
 	callback->Unit_getAiHint = &skirmishAiCallback_Unit_getAiHint;
@@ -5080,9 +5204,9 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Team_hasAIController = &skirmishAiCallback_Team_hasAIController;
 	callback->getEnemyTeams = &skirmishAiCallback_getEnemyTeams;
 	callback->getAllyTeams = &skirmishAiCallback_getAllyTeams;
-	callback->Team_getPodParams = &skirmishAiCallback_Team_getPodParams;
-	callback->Team_PodParam_getName = &skirmishAiCallback_Team_PodParam_getName;
-	callback->Team_PodParam_getValue = &skirmishAiCallback_Team_PodParam_getValue;
+	callback->Team_getTeamRulesParams = &skirmishAiCallback_Team_getTeamRulesParams;
+	callback->Team_TeamRulesParam_getName = &skirmishAiCallback_Team_TeamRulesParam_getName;
+	callback->Team_TeamRulesParam_getValue = &skirmishAiCallback_Team_TeamRulesParam_getValue;
 	callback->getGroups = &skirmishAiCallback_getGroups;
 	callback->Group_getSupportedCommands = &skirmishAiCallback_Group_getSupportedCommands;
 	callback->Group_SupportedCommand_getId = &skirmishAiCallback_Group_SupportedCommand_getId;

@@ -131,9 +131,13 @@ EXPORT(void             ) skirmishAiCallback_Game_getCategoryName(int skirmishAI
 // BEGINN OBJECT GameRulesParam
 EXPORT(int              ) skirmishAiCallback_getGameRulesParams(int skirmishAIId);
 
+EXPORT(int              ) skirmishAiCallback_getGameRulesParamByName(int skirmishAIId, const char* gameRulesParamName);
+
 EXPORT(const char*      ) skirmishAiCallback_GameRulesParam_getName(int skirmishAIId, int gameRulesParamId);
 
-EXPORT(float            ) skirmishAiCallback_GameRulesParam_getValue(int skirmishAIId, int gameRulesParamId);
+EXPORT(float            ) skirmishAiCallback_GameRulesParam_getValueFloat(int skirmishAIId, int gameRulesParamId);
+
+EXPORT(const char*      ) skirmishAiCallback_GameRulesParam_getValueString(int skirmishAIId, int gameRulesParamId);
 
 // END OBJECT GameRulesParam
 
@@ -680,11 +684,19 @@ EXPORT(int              ) skirmishAiCallback_getSelectedUnits(int skirmishAIId, 
 
 EXPORT(int              ) skirmishAiCallback_Unit_getDef(int skirmishAIId, int unitId);
 
-EXPORT(int              ) skirmishAiCallback_Unit_getModParams(int skirmishAIId, int unitId);
+EXPORT(int              ) skirmishAiCallback_Unit_getUnitRulesParams(int skirmishAIId, int unitId);
 
-EXPORT(const char*      ) skirmishAiCallback_Unit_ModParam_getName(int skirmishAIId, int unitId, int modParamId);
+EXPORT(int              ) skirmishAiCallback_Unit_getRulesParamsFloat(int skirmishAIId, int unitId, const char** keys, const char** values);
 
-EXPORT(float            ) skirmishAiCallback_Unit_ModParam_getValue(int skirmishAIId, int unitId, int modParamId);
+EXPORT(int              ) skirmishAiCallback_Unit_getRulesParamsString(int skirmishAIId, int unitId, const char** keys, const char** values);
+
+EXPORT(int              ) skirmishAiCallback_Unit_getUnitRulesParamByName(int skirmishAIId, int unitId, const char* unitRulesParamName);
+
+EXPORT(const char*      ) skirmishAiCallback_Unit_UnitRulesParam_getName(int skirmishAIId, int unitId, int unitRulesParamId);
+
+EXPORT(float            ) skirmishAiCallback_Unit_UnitRulesParam_getValueFloat(int skirmishAIId, int unitId, int unitRulesParamId);
+
+EXPORT(const char*      ) skirmishAiCallback_Unit_UnitRulesParam_getValueString(int skirmishAIId, int unitId, int unitRulesParamId);
 
 EXPORT(int              ) skirmishAiCallback_Unit_getTeam(int skirmishAIId, int unitId);
 
@@ -776,11 +788,11 @@ EXPORT(int              ) skirmishAiCallback_getEnemyTeams(int skirmishAIId, int
 
 EXPORT(int              ) skirmishAiCallback_getAllyTeams(int skirmishAIId, int* teamIds, int teamIds_sizeMax);
 
-EXPORT(int              ) skirmishAiCallback_Team_getPodParams(int skirmishAIId, int teamId);
+EXPORT(int              ) skirmishAiCallback_Team_getTeamRulesParams(int skirmishAIId, int teamId);
 
-EXPORT(const char*      ) skirmishAiCallback_Team_PodParam_getName(int skirmishAIId, int teamId, int podParamId);
+EXPORT(const char*      ) skirmishAiCallback_Team_TeamRulesParam_getName(int skirmishAIId, int teamId, int teamRulesParamId);
 
-EXPORT(float            ) skirmishAiCallback_Team_PodParam_getValue(int skirmishAIId, int teamId, int podParamId);
+EXPORT(float            ) skirmishAiCallback_Team_TeamRulesParam_getValue(int skirmishAIId, int teamId, int teamRulesParamId);
 
 // END OBJECT Team
 
