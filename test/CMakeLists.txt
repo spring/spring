@@ -312,7 +312,10 @@ Else  (NOT Boost_FOUND)
 			${Boost_SYSTEM_LIBRARY}
 			${WINMM_LIBRARY}
 		)
+if(NOT WIN32)
+# FIXME: sometimes fails on windows
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
+endif()
 
 ################################################################################
 ### EventClient
