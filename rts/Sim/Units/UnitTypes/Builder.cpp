@@ -702,7 +702,8 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 	const bool onWater = (buildeeDef->floatOnWater && groundheight <= 0.0f);
 
 	if (mapDamage->disabled || !buildeeDef->levelGround || onWater ||
-	    (buildeeDef->canmove && (buildeeDef->speed > 0.0f))) {
+	    (!buildeeDef->IsAirUnit() && !buildeeDef->IsImmobileUnit())
+	) {
 		// skip the terraforming job
 		buildee->terraformLeft = 0;
 		buildee->groundLevelled = true;
