@@ -410,6 +410,7 @@ void CPathEstimator::Update() {
 
 	// determine how many blocks we should update
 	size_t blocksToUpdate = 0;
+	size_t consumeBlocks = 0;
 	{
 		const unsigned progressiveUpdates = updatedBlocks.size() * numMoveDefs * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f) * modInfo.pfUpdateRate;
 
@@ -418,9 +419,9 @@ void CPathEstimator::Update() {
 		blocksToUpdate = Clamp(progressiveUpdates, MIN_BLOCKS_TO_UPDATE, MAX_BLOCKS_TO_UPDATE);
 
 		// we have to update blocks always for all movedefs
-		const int consumedBlocks = int(ceil(float(blocksToUpdate) / numMoveDefs));
+		consumeBlocks = int(ceil(float(blocksToUpdate) / numMoveDefs));
 
-		blockUpdatePenalty = std::max(0, blockUpdatePenalty + (consumedBlocks - int(blocksToUpdate)));
+		blockUpdatePenalty = std::max(0, blockUpdatePenalty + (int(consumeBlocks) - int(blocksToUpdate)));
 
 		if (blockUpdatePenalty > 0)
 			blocksToUpdate = 0;
@@ -438,7 +439,7 @@ void CPathEstimator::Update() {
 		SingleBlock(const int2& pos, const MoveDef* md) : blockPos(pos), moveDef(md) {}
 	};
 	std::vector<SingleBlock> consumedBlocks;
-	consumedBlocks.reserve(blocksToUpdate);
+	consumedBlocks.reserve(consumeBlocks);
 
 	// get blocks to update
 	while (!updatedBlocks.empty()) {
@@ -470,9 +471,9 @@ void CPathEstimator::Update() {
 			// copy the next block in line
 			const SingleBlock sb = consumedBlocks[n];
 
-			const unsigned int blockX = sb.blockPos.x;
-			const unsigned int blockZ = sb.blockPos.y;
-			const unsigned int blockN = blockZ * nbrOfBlocksX + blockX;
+			const int blockX = sb.blockPos.x;
+			const int blockZ = sb.blockPos.y;
+			const int blockN = blockZ * nbrOfBlocksX + blockX;
 
 			const MoveDef* currBlockMD = sb.moveDef;
 
@@ -487,9 +488,9 @@ void CPathEstimator::Update() {
 			// copy the next block in line
 			const SingleBlock sb = consumedBlocks[n];
 
-			const unsigned int blockX = sb.blockPos.x;
-			const unsigned int blockZ = sb.blockPos.y;
-			const unsigned int blockN = blockZ * nbrOfBlocksX + blockX;
+			const int blockX = sb.blockPos.x;
+			const int blockZ = sb.blockPos.y;
+			const int blockN = blockZ * nbrOfBlocksX + blockX;
 
 			// check for batch boundary
 			const MoveDef* currBlockMD = sb.moveDef;
