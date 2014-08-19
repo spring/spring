@@ -663,7 +663,7 @@ void CGameServer::Message(const std::string& message, bool broadcast)
 		hostif->Message(message);
 
 #ifdef DEDICATED
-	LOG(message.c_str());
+	LOG("%s", message.c_str());
 #endif
 }
 
