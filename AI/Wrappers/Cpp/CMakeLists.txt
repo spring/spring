@@ -257,7 +257,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		OUTPUT
 			${myGeneratedWrapperSources}
 		COMMAND "${AWK_BIN}"
-#			"-D"
+			"-D"
 			${commonAwkScriptArgs}
 			"-f" "${commonAwkScriptsDir}/commonOOCallback.awk"
 			"-f" "${myAwkScriptsDir}/wrappCallback.awk"
