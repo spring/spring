@@ -340,12 +340,13 @@ bool CPathFinder::TestBlock(
 ) {
 	testedBlocks++;
 
+	// initial calculations of the new block
 	const int2 square = parentSquare->nodePos + PF_DIRECTION_VECTORS_2D[pathOptDir];
-	const unsigned int sqrIdx = square.x + square.y * gs->mapx;
+	const unsigned int sqrIdx = BlockPosToIdx(square);
 
 	// bounds-check
-	if (square.x <         0 || square.y <         0) return false;
-	if (square.x >= gs->mapx || square.y >= gs->mapy) return false;
+	if ((unsigned)square.x >= nbrOfBlocks.x) return false;
+	if ((unsigned)square.y >= nbrOfBlocks.y) return false;
 
 	// check if the square is inaccessable
 	if (blockStates.nodeMask[sqrIdx] & (PATHOPT_CLOSED | PATHOPT_FORBIDDEN | PATHOPT_BLOCKED))
@@ -381,17 +382,16 @@ bool CPathFinder::TestBlock(
 		}
 	}
 
-	const float heatCost = (PathHeatMap::GetInstance())->GetHeatCost(square.x, square.y, moveDef, ((owner != NULL)? owner->id: -1U));
-	const float flowCost = (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, pathOptDir);
+	const float heatCost  = (PathHeatMap::GetInstance())->GetHeatCost(square.x, square.y, moveDef, ((owner != NULL)? owner->id: -1U));
+	const float flowCost  = (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, pathOptDir);
+	const float extraCost = blockStates.GetNodeExtraCost(square.x, square.y, synced);
 
 	const float dirMoveCost = (1.0f + heatCost + flowCost) * PF_DIRECTION_COSTS[pathOptDir];
-	const float extraCost = blockStates.GetNodeExtraCost(square.x, square.y, synced);
 	const float nodeCost = (dirMoveCost / speedMod) + extraCost;
 
 	const float gCost = parentSquare->gCost + nodeCost;      // g
 	const float hCost = pfDef.Heuristic(square.x, square.y); // h
 	const float fCost = gCost + hCost;                       // f
-
 
 	if (blockStates.nodeMask[sqrIdx] & PATHOPT_OPEN) {
 		// already in the open set, look for a cost-improvement

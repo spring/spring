@@ -36,6 +36,30 @@ protected:
 	/// Clear things up from last search.
 	void ResetSearch();
 
+protected: // pure virtuals
+	/**
+	 * Test the availability and value of a block,
+	 * and possibly add it to the queue of open blocks.
+	 */
+	virtual bool TestBlock(
+		const MoveDef& moveDef,
+		const CPathFinderDef& pfDef,
+		const PathNode* parentSquare,
+		const CSolidObject* owner,
+		const unsigned int pathOptDir,
+		const unsigned int blockStatus,
+		float speedMod,
+		bool withinConstraints,
+		bool synced
+	) = 0;
+
+	/**
+	 * Recreates the path found by pathfinder.
+	 * Starting at goalSquare and tracking backwards.
+	 *
+	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
+	 */
+	virtual void FinishSearch(const MoveDef& moveDef, IPath::Path& path) const = 0;
 public:
 	static int2 PE_DIRECTION_VECTORS[PATH_DIRECTIONS];
 	static int2 PF_DIRECTION_VECTORS_2D[PATH_DIRECTIONS << 1];

@@ -646,14 +646,14 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
 		// no, test the 8 surrounding blocks
 		// NOTE: each of these calls increments openBlockBuffer.idx by 1, so
 		// maxBlocksToBeSearched is always less than <MAX_SEARCHED_NODES_PE - 8>
-		TestBlock(moveDef, peDef, *ob, PATHDIR_LEFT,       synced);
-		TestBlock(moveDef, peDef, *ob, PATHDIR_LEFT_UP,    synced);
-		TestBlock(moveDef, peDef, *ob, PATHDIR_UP,         synced);
-		TestBlock(moveDef, peDef, *ob, PATHDIR_RIGHT_UP,   synced);
-		TestBlock(moveDef, peDef, *ob, PATHDIR_RIGHT,      synced);
-		TestBlock(moveDef, peDef, *ob, PATHDIR_RIGHT_DOWN, synced);
-		TestBlock(moveDef, peDef, *ob, PATHDIR_DOWN,       synced);
-		TestBlock(moveDef, peDef, *ob, PATHDIR_LEFT_DOWN,  synced);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT,       PATHOPT_OPEN, 1.f, true, synced);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_UP,    PATHOPT_OPEN, 1.f, true, synced);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_UP,         PATHOPT_OPEN, 1.f, true, synced);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_UP,   PATHOPT_OPEN, 1.f, true, synced);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT,      PATHOPT_OPEN, 1.f, true, synced);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_DOWN, PATHOPT_OPEN, 1.f, true, synced);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_DOWN,       PATHOPT_OPEN, 1.f, true, synced);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_DOWN,  PATHOPT_OPEN, 1.f, true, synced);
 
 		// mark this block as closed
 		blockStates.nodeMask[ob->nodeNum] |= PATHOPT_CLOSED;
@@ -681,63 +681,64 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
  * Test the accessability of a block and its value,
  * possibly also add it to the open-blocks pqueue.
  */
-void CPathEstimator::TestBlock(
+bool CPathEstimator::TestBlock(
 	const MoveDef& moveDef,
 	const CPathFinderDef& peDef,
-	PathNode& parentOpenBlock,
-	unsigned int pathDir,
+	const PathNode* parentOpenBlock,
+	const CSolidObject* /*owner*/,
+	const unsigned int pathDir,
+	const unsigned int /*blockStatus*/,
+	float /*speedMod*/,
+	bool /*withinConstraints*/,
 	bool synced
 ) {
 	testedBlocks++;
 
 	// initial calculations of the new block
-	const int2 block = parentOpenBlock.nodePos + PE_DIRECTION_VECTORS[pathDir];
-
-	const int vertexIdx =
-		moveDef.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES +
-		parentOpenBlock.nodeNum * PATH_DIRECTION_VERTICES +
-		GetBlockVertexOffset(pathDir, nbrOfBlocks.x);
+	const int2 block = parentOpenBlock->nodePos + PE_DIRECTION_VECTORS[pathDir];
 	const unsigned int blockIdx = BlockPosToIdx(block);
 
-	if (block.x < 0 || block.x >= nbrOfBlocks.x || block.y < 0 || block.y >= nbrOfBlocks.y) {
-		// blocks should never be able to lie outside map
-		// (due to the infinite vertex-costs at the edges)
-		return;
-	}
-
-	if (vertexIdx < 0 || vertexIdx >= vertexCosts.size())
-		return;
-
-	if (vertexCosts[vertexIdx] >= PATHCOST_INFINITY)
-		return;
+	// bounds-check
+	if ((unsigned)block.x >= nbrOfBlocks.x) return false;
+	if ((unsigned)block.y >= nbrOfBlocks.y) return false;
 
 	// check if the block is unavailable
 	if (blockStates.nodeMask[blockIdx] & (PATHOPT_FORBIDDEN | PATHOPT_BLOCKED | PATHOPT_CLOSED))
-		return;
+		return false;
+
 
 	const int2 square = blockStates.peNodeOffsets[blockIdx][moveDef.pathType];
+
+	const unsigned int vertexIdx =
+		moveDef.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES +
+		parentOpenBlock->nodeNum * PATH_DIRECTION_VERTICES +
+		GetBlockVertexOffset(pathDir, nbrOfBlocks.x);
+
+	assert((unsigned)vertexIdx >= vertexCosts.size());
+	if (vertexCosts[vertexIdx] >= PATHCOST_INFINITY)
+		return false;
+
 
 	// check if the block is blocked or out of constraints
 	if (!peDef.WithinConstraints(square.x, square.y)) {
 		blockStates.nodeMask[blockIdx] |= PATHOPT_BLOCKED;
 		dirtyBlocks.push_back(blockIdx);
-		return;
+		return false;
 	}
 
 	// evaluate this node (NOTE the max-resolution indexing for {flow,extra}Cost)
-	const float flowCost = (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, PathDir2PathOpt(pathDir));
+	const float flowCost  = (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, PathDir2PathOpt(pathDir));
 	const float extraCost = blockStates.GetNodeExtraCost(square.x, square.y, synced);
-	const float nodeCost = vertexCosts[vertexIdx] + flowCost + extraCost;
+	const float nodeCost  = vertexCosts[vertexIdx] + flowCost + extraCost;
 
-	const float gCost = parentOpenBlock.gCost + nodeCost;
+	const float gCost = parentOpenBlock->gCost + nodeCost;
 	const float hCost = peDef.Heuristic(square.x, square.y);
 	const float fCost = gCost + hCost;
-
 
 	if (blockStates.nodeMask[blockIdx] & PATHOPT_OPEN) {
 		// already in the open set
 		if (blockStates.fCost[blockIdx] <= fCost)
-			return;
+			return true;
 
 		blockStates.nodeMask[blockIdx] &= ~PATHOPT_CARDINALS;
 	}
@@ -766,16 +767,17 @@ void CPathEstimator::TestBlock(
 	blockStates.fCost[blockIdx] = fCost;
 	blockStates.gCost[blockIdx] = gCost;
 	blockStates.nodeMask[blockIdx] |= (pathDir | PATHOPT_OPEN);
-	blockStates.peParentNodePos[blockIdx] = parentOpenBlock.nodePos;
+	blockStates.peParentNodePos[blockIdx] = parentOpenBlock->nodePos;
 
 	dirtyBlocks.push_back(blockIdx);
+	return true;
 }
 
 
 /**
  * Recreate the path taken to the goal
  */
-void CPathEstimator::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) {
+void CPathEstimator::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) const {
 	unsigned int blockIdx = mGoalBlockIdx;
 
 	while (blockIdx != mStartBlockIdx) {

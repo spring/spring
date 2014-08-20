@@ -107,6 +107,19 @@ public:
 
 	static const int2* GetDirectionVectorsTable();
 
+protected: // IPathFinder impl
+	bool TestBlock(
+		const MoveDef& moveDef,
+		const CPathFinderDef& pfDef,
+		const PathNode* parentSquare,
+		const CSolidObject* owner,
+		const unsigned int pathOptDir,
+		const unsigned int blockStatus,
+		float speedMod,
+		bool withinConstraints,
+		bool synced);
+	void FinishSearch(const MoveDef& moveDef, IPath::Path& path) const;
+
 private:
 	void InitEstimator(const std::string& cacheFileName, const std::string& map);
 	void InitBlocks();
@@ -121,8 +134,6 @@ private:
 
 	IPath::SearchResult InitSearch(const MoveDef&, const CPathFinderDef&, bool);
 	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, bool);
-	void TestBlock(const MoveDef&, const CPathFinderDef&, PathNode&, unsigned int pathDir, bool synced);
-	void FinishSearch(const MoveDef& moveDef, IPath::Path& path);
 
 	bool ReadFile(const std::string& cacheFileName, const std::string& map);
 	void WriteFile(const std::string& cacheFileName, const std::string& map);
