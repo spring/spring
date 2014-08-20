@@ -2,8 +2,10 @@
 
 #include "IPathFinder.h"
 #include "PathFinderDef.h"
+#include "PathLog.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Objects/SolidObject.h"
+#include "System/Log/ILog.h"
 
 
 // these give the changes in (x, z) coors
@@ -47,6 +49,7 @@ int2 IPathFinder::PF_DIRECTION_VECTORS_2D[PATH_DIRECTIONS << 1] = {
 
 IPathFinder::IPathFinder(unsigned int _BLOCK_SIZE)
 	: BLOCK_SIZE(_BLOCK_SIZE)
+	, BLOCK_PIXEL_SIZE(BLOCK_SIZE * SQUARE_SIZE)
 	, isEstimator(BLOCK_SIZE != 1)
 	, mStartBlockIdx(0)
 	, mGoalBlockIdx(0)
@@ -75,6 +78,76 @@ void IPathFinder::ResetSearch()
 	}
 
 	testedBlocks = 0;
+}
+
+
+IPath::SearchResult IPathFinder::GetPath(
+	const MoveDef& moveDef,
+	const CPathFinderDef& pfDef,
+	const CSolidObject* owner,
+	float3 startPos,
+	IPath::Path& path,
+	const unsigned int maxNodes,
+	const bool peCall,
+	const bool synced
+) {
+	startPos.ClampInBounds();
+
+	// Clear the path
+	path.path.clear();
+	path.squares.clear();
+	path.pathCost = PATHCOST_INFINITY;
+
+	// initial calculations
+	if (isEstimator) {
+		maxBlocksToBeSearched = std::min(MAX_SEARCHED_NODES_PE - 8U, maxNodes);
+	} else {
+		maxBlocksToBeSearched = std::min(MAX_SEARCHED_NODES_PF - 8U, maxNodes);
+	}
+	mStartBlock.x  = startPos.x / BLOCK_PIXEL_SIZE;
+	mStartBlock.y  = startPos.z / BLOCK_PIXEL_SIZE;
+	mStartBlockIdx = BlockPosToIdx(mStartBlock);
+	assert((unsigned)mStartBlock.x < nbrOfBlocks.x && (unsigned)mStartBlock.y < nbrOfBlocks.y);
+
+	// Check cache (when there is one)
+	int2 goalBlock;
+	goalBlock.x = pfDef.goalSquareX / BLOCK_SIZE;
+	goalBlock.y = pfDef.goalSquareZ / BLOCK_SIZE;
+	const CPathCache::CacheItem* ci = GetCache(mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, synced);
+	if (ci != nullptr) {
+		path = ci->path;
+		return ci->result;
+	}
+
+	// Start up a new search
+	const IPath::SearchResult result = InitSearch(moveDef, pfDef, owner, peCall, synced);
+
+	// If search was successful, generate new path
+	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
+		FinishSearch(moveDef, path);
+
+		// Save to cache
+		if (result == IPath::Ok) {
+			// add succesful paths to the cache
+			AddCache(&path, result, mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, synced);
+		}
+
+		if (LOG_IS_ENABLED(L_DEBUG)) {
+			LOG_L(L_DEBUG, "%s: Search completed.", (isEstimator) ? "PE" : "PF");
+			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
+			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
+			LOG_L(L_DEBUG, "Path length: " _STPF_, path.path.size());
+			LOG_L(L_DEBUG, "Path cost: %f", path.pathCost);
+		}
+	} else {
+		if (LOG_IS_ENABLED(L_DEBUG)) {
+			LOG_L(L_DEBUG, "%s: Search failed!", (isEstimator) ? "PE" : "PF");
+			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
+			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
+		}
+	}
+
+	return result;
 }
 
 

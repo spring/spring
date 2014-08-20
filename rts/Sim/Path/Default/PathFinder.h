@@ -21,29 +21,9 @@ class CPathFinder: public IPathFinder {
 public:
 	CPathFinder();
 
-
 	/**
-	 * Gives a detailed path from given starting location to target defined in
-	 * CPathFinderDef, whenever any such are available.
-	 * If no complete path was found, any path leading as "close" to target as
-	 * possible will be created, and SearchResult::OutOfRange will be returned.
-	 * Only when no "closer" position than the given starting location could be
-	 * found no path is created, and SearchResult::CantGetCloser is returned.
-	 * Path resolution: 2*SQUARE_SIZE
-	 *
-	 * @param moveDef defining the footprint of the unit requesting the path.
-	 * @param startPos The starting location of the path. (Projected onto (x,z))
-	 * @param pfDef Object defining the target/goal of the search.
-	 *   Could also be used to put constraints on the searchspace used.
-	 * @param path If any path could be found, it will be generated and put into
-	 *   this structure.
-	 * @param exactPath Overrides the return of the "closest" path.
-	 *   If this option is true, a path is returned only if it's completed all
-	 *   the way to the goal defined in pfDef. All SearchResult::OutOfRange are
-	 *   then turned into SearchResult::CantGetCloser.
-	 * @param maxNodes The maximum number of nodes / squares the search is
-	 *   allowed to analyze. This restriction could be used in cases where
-	 *   CPU-consumption is critical.
+	 * Small wrapper for IPathFinder::GetPath(),
+	 * adds testMobile & needPath arguments.
 	 */
 	IPath::SearchResult GetPath(
 		const MoveDef& moveDef,
@@ -90,6 +70,27 @@ protected: // IPathFinder impl
 	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
 	 */
 	void FinishSearch(const MoveDef&, IPath::Path&) const;
+
+	const CPathCache::CacheItem* GetCache(
+		const int2 strtBlock,
+		const int2 goalBlock,
+		float goalRadius,
+		int pathType,
+		const bool synced
+	) const {
+		// only cache in Estimator! (cause of flow & heatmapping etc.)
+		return nullptr;
+	}
+
+	void AddCache(
+		const IPath::Path* path,
+		const IPath::SearchResult result,
+		const int2 strtBlock,
+		const int2 goalBlock,
+		float goalRadius,
+		int pathType,
+		const bool synced
+	) { }
 
 private:
 	void TestNeighborSquares(

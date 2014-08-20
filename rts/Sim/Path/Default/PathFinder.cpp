@@ -74,13 +74,6 @@ IPath::SearchResult CPathFinder::GetPath(
 	bool peCall,
 	bool synced
 ) {
-	// Clear the given path.
-	path.path.clear();
-	path.squares.clear();
-	path.pathCost = PATHCOST_INFINITY;
-
-	maxBlocksToBeSearched = std::min(MAX_SEARCHED_NODES_PF - 8U, maxNodes);
-
 	// if true, factor presence of mobile objects on squares into cost
 	this->testMobile = testMobile;
 	// if true, neither start nor goal are allowed to be blocked squares
@@ -88,36 +81,7 @@ IPath::SearchResult CPathFinder::GetPath(
 	// if false, we are only interested in the cost (not the waypoints)
 	this->needPath = needPath;
 
-	// Clamp the start position
-	mStartBlock = int2(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE);
-	mStartBlock.x = Clamp(mStartBlock.x, 0, gs->mapxm1);
-	mStartBlock.y = Clamp(mStartBlock.y, 0, gs->mapym1);
-
-	mStartBlockIdx = mStartBlock.x + mStartBlock.y * gs->mapx;
-
-	// Start up the search.
-	const IPath::SearchResult result = InitSearch(moveDef, pfDef, owner, peCall, synced);
-
-	// Respond to the success of the search.
-	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-		FinishSearch(moveDef, path);
-
-		if (LOG_IS_ENABLED(L_DEBUG)) {
-			LOG_L(L_DEBUG, "Path found.");
-			LOG_L(L_DEBUG, "Nodes tested: %u", testedBlocks);
-			LOG_L(L_DEBUG, "Open squares: %u", openBlockBuffer.GetSize());
-			LOG_L(L_DEBUG, "Path nodes: " _STPF_, path.path.size());
-			LOG_L(L_DEBUG, "Path cost: %f", path.pathCost);
-		}
-	} else {
-		if (LOG_IS_ENABLED(L_DEBUG)) {
-			LOG_L(L_DEBUG, "No path found!");
-			LOG_L(L_DEBUG, "Nodes tested: %u", testedBlocks);
-			LOG_L(L_DEBUG, "Open squares: %u", openBlockBuffer.GetSize());
-		}
-	}
-
-	return result;
+	return IPathFinder::GetPath(moveDef, pfDef, owner, startPos, path, maxNodes, peCall, synced);
 }
 
 

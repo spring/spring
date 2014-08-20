@@ -141,13 +141,13 @@ unsigned int CPathManager::RequestPath(
 		// fallback (note that this uses the estimators as backup,
 		// unconstrained PF queries are too expensive on average)
 		if (result != IPath::Ok) {
-			result = medResPE->GetPath(*moveDef, *pfDef, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, synced);
+			result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
 		}
 		if (result != IPath::Ok) {
-			result = lowResPE->GetPath(*moveDef, *pfDef, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3, synced);
+			result = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
 		}
 	} else if (heuristicGoalDist2D < MEDRES_SEARCH_DISTANCE) {
-		result = medResPE->GetPath(*moveDef, *pfDef, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, synced);
+		result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
 
 		// CantGetCloser may be a false positive due to PE approximations and large goalRadius
 		if (result == IPath::CantGetCloser && (startPos - goalPos).SqLength2D() > pfDef->sqGoalRadius) {
@@ -160,14 +160,14 @@ unsigned int CPathManager::RequestPath(
 
 		// fallback
 		if (result != IPath::Ok) {
-			result = medResPE->GetPath(*moveDef, *pfDef, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, synced);
+			result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
 		}
 	} else {
-		result = lowResPE->GetPath(*moveDef, *pfDef, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3, synced);
+		result = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
 
 		// CantGetCloser may be a false positive due to PE approximations and large goalRadius
 		if (result == IPath::CantGetCloser && (startPos - goalPos).SqLength2D() > pfDef->sqGoalRadius) {
-			result = medResPE->GetPath(*moveDef, *pfDef, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, synced);
+			result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
 
 			#if 0
 			if (result == IPath::CantGetCloser) // Same thing again
@@ -181,7 +181,7 @@ unsigned int CPathManager::RequestPath(
 
 		// fallback
 		if (result != IPath::Ok) {
-			result = lowResPE->GetPath(*moveDef, *pfDef, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3, synced);
+			result = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
 		}
 	}
 
@@ -309,9 +309,9 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, c
 	IPath::SearchResult result = IPath::Error;
 
 	if (lowResPath.path.empty()) {
-		result = medResPE->GetPath(*multiPath.moveDef, *multiPath.peDef, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE, synced);
+		result = medResPE->GetPath(*multiPath.moveDef, *multiPath.peDef, owner, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE, false, synced);
 	} else {
-		result = medResPE->GetPath(*multiPath.moveDef, rangedGoalDef, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE, synced);
+		result = medResPE->GetPath(*multiPath.moveDef, rangedGoalDef, owner, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE, false, synced);
 	}
 
 	// If no refined path could be found, set goal as desired goal.

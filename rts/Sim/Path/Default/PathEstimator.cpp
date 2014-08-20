@@ -11,7 +11,6 @@
 
 #include "minizip/zip.h"
 
-#include "PathCache.h"
 #include "PathFinder.h"
 #include "PathFinderDef.h"
 #include "PathFlowMap.hpp"
@@ -49,7 +48,6 @@ static size_t GetNumThreads() {
 
 CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BLOCK_SIZE, const std::string& cacheFileName, const std::string& mapFileName)
 	: IPathFinder(BLOCK_SIZE)
-	, BLOCK_PIXEL_SIZE(BLOCK_SIZE * SQUARE_SIZE)
 	, BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1)
 	, nextOffsetMessageIdx(0)
 	, nextCostMessageIdx(0)
@@ -496,72 +494,15 @@ void CPathEstimator::Update() {
 }
 
 
-/**
- * Stores data and does some top-administration
- */
-IPath::SearchResult CPathEstimator::GetPath(
-	const MoveDef& moveDef,
-	const CPathFinderDef& peDef,
-	float3 start,
-	IPath::Path& path,
-	unsigned int maxSearchedBlocks,
-	bool synced
-) {
-	start.ClampInBounds();
+const CPathCache::CacheItem* CPathEstimator::GetCache(const int2 strtBlock, const int2 goalBlock, float goalRadius, int pathType, const bool synced) const
+{
+	return pathCache[synced]->GetCachedPath(strtBlock, goalBlock, goalRadius, pathType);
+}
 
-	// clear the path
-	path.path.clear();
-	path.pathCost = PATHCOST_INFINITY;
 
-	// initial calculations
-	maxBlocksToBeSearched = std::min(maxSearchedBlocks, MAX_SEARCHED_NODES_PE - 8U);
-
-	int2 startBlock;
-		startBlock.x = start.x / BLOCK_PIXEL_SIZE;
-		startBlock.y = start.z / BLOCK_PIXEL_SIZE;
-	int2 goalBlock;
-		goalBlock.x = peDef.goalSquareX / BLOCK_SIZE;
-		goalBlock.y = peDef.goalSquareZ / BLOCK_SIZE;
-
-	mStartBlock = startBlock;
-	mStartBlockIdx = BlockPosToIdx(startBlock);
-
-	const CPathCache::CacheItem* ci = pathCache[synced]->GetCachedPath(startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
-
-	if (ci != NULL) {
-		// use a cached path if we have one
-		path = ci->path;
-		return ci->result;
-	}
-
-	// oterhwise search
-	const IPath::SearchResult result = InitSearch(moveDef, peDef, nullptr, false, synced);
-
-	// if search successful, generate new path
-	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-		FinishSearch(moveDef, path);
-
-		if (result == IPath::Ok) {
-			// add succesful paths to the cache
-			pathCache[synced]->AddPath(&path, result, startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
-		}
-
-		if (LOG_IS_ENABLED(L_DEBUG)) {
-			LOG_L(L_DEBUG, "PE: Search completed.");
-			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
-			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
-			LOG_L(L_DEBUG, "Path length: " _STPF_, path.path.size());
-			LOG_L(L_DEBUG, "Path cost: %f", path.pathCost);
-		}
-	} else {
-		if (LOG_IS_ENABLED(L_DEBUG)) {
-			LOG_L(L_DEBUG, "PE: Search failed!");
-			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
-			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
-		}
-	}
-
-	return result;
+void CPathEstimator::AddCache(const IPath::Path* path, const IPath::SearchResult result, const int2 strtBlock, const int2 goalBlock, float goalRadius, int pathType, const bool synced)
+{
+	pathCache[synced]->AddPath(path, result, strtBlock, goalBlock, goalRadius, pathType);
 }
 
 
