@@ -104,7 +104,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/AbstractTeamRulesParam.cpp
 		${myGeneratedSourceDir}/AbstractTeams.cpp
 		${myGeneratedSourceDir}/AbstractUnit.cpp
-		${myGeneratedSourceDir}/AbstractUnitRulesParam.cpp
 		${myGeneratedSourceDir}/AbstractUnitDef.cpp
 		${myGeneratedSourceDir}/AbstractVersion.cpp
 		${myGeneratedSourceDir}/AbstractWeaponDef.cpp
@@ -150,7 +149,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/StubTeamRulesParam.cpp
 		${myGeneratedSourceDir}/StubTeams.cpp
 		${myGeneratedSourceDir}/StubUnit.cpp
-		${myGeneratedSourceDir}/StubUnitRulesParam.cpp
 		${myGeneratedSourceDir}/StubUnitDef.cpp
 		${myGeneratedSourceDir}/StubVersion.cpp
 		${myGeneratedSourceDir}/StubWeaponDef.cpp
@@ -199,7 +197,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/WrappTeamRulesParam.cpp
 		${myGeneratedSourceDir}/WrappTeams.cpp
 		${myGeneratedSourceDir}/WrappUnit.cpp
-		${myGeneratedSourceDir}/WrappUnitRulesParam.cpp
 		${myGeneratedSourceDir}/WrappUnitDef.cpp
 		${myGeneratedSourceDir}/WrappUnitSupportedCommand.cpp
 		${myGeneratedSourceDir}/WrappVersion.cpp

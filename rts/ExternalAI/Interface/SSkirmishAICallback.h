@@ -399,7 +399,7 @@ struct SSkirmishAICallback {
 	void              (CALLING_CONV *Game_getCategoryName)(int skirmishAIId, int categoryFlag, char* name, int name_sizeMax);
 
 	/**
-	 * This is a set of GameRulesParams parameters that may change during the game.
+	 * This is a set of parameters that is created by SetGameRulesParam() and may change during the game.
 	 * Each parameter is uniquely identified only by its id (which is the index in the vector).
 	 * Parameters may or may not have a name.
 	 */
@@ -1214,26 +1214,28 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Unit_getDef)(int skirmishAIId, int unitId); //$ REF:RETURN->UnitDef
 
 	/**
-	 * This is a set of UnitRulesParams parameters that may change during the game.
+	 * This is a set of parameters that is created by SetUnitRulesParam() and may change during the game.
 	 * Each parameter is uniquely identified only by its id (which is the index in the vector).
 	 * Parameters may or may not have a name.
 	 */
-	int               (CALLING_CONV *Unit_getUnitRulesParams)(int skirmishAIId, int unitId); //$ FETCHER:MULTI:NUM:UnitRulesParam
-
-	int               (CALLING_CONV *Unit_getRulesParamsFloat)(int skirmishAIId, int unitId, const char** keys, const char** values); //$ MAP
-
-	int               (CALLING_CONV *Unit_getRulesParamsString)(int skirmishAIId, int unitId, const char** keys, const char** values); //$ MAP
-
-	int               (CALLING_CONV *Unit_getUnitRulesParamByName)(int skirmishAIId, int unitId, const char* unitRulesParamName); //$ REF:RETURN->UnitRulesParam
+	int               (CALLING_CONV *Unit_getRulesParams)(int skirmishAIId, int unitId, const char** params, int params_sizeMax); //$ ARRAY:params
 
 	/**
 	 * Not every mod parameter has a name.
 	 */
-	const char*       (CALLING_CONV *Unit_UnitRulesParam_getName)(int skirmishAIId, int unitId, int unitRulesParamId);
+	int               (CALLING_CONV *Unit_getRulesParamsWithNames)(int skirmishAIId, int unitId, const char** keys, const char** values); //$ MAP
 
-	float             (CALLING_CONV *Unit_UnitRulesParam_getValueFloat)(int skirmishAIId, int unitId, int unitRulesParamId);
+	/**
+	 * Not every mod parameter has a name.
+	 */
+	const char*       (CALLING_CONV *Unit_getRulesParamNameById)(int skirmishAIId, int unitId, int rulesParamId);
 
-	const char*       (CALLING_CONV *Unit_UnitRulesParam_getValueString)(int skirmishAIId, int unitId, int unitRulesParamId);
+	/**
+	 * Not every mod parameter has a name.
+	 */
+	const char*       (CALLING_CONV *Unit_getRulesParamByName)(int skirmishAIId, int unitId, const char* rulesParamName);
+
+	const char*       (CALLING_CONV *Unit_getRulesParamById)(int skirmishAIId, int unitId, int rulesParamId);
 
 	int               (CALLING_CONV *Unit_getTeam)(int skirmishAIId, int unitId);
 
@@ -1371,11 +1373,13 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *getAllyTeams)(int skirmishAIId, int* teamIds, int teamIds_sizeMax); //$ FETCHER:MULTI:IDs:Team:teamIds
 
 	/**
-	 * This is a set of TeamRulesParams parameters that may change during the game.
+	 * This is a set of parameters that is created by SetTeamRulesParam() and may change during the game.
 	 * Each parameter is uniquely identified only by its id (which is the index in the vector).
 	 * Parameters may or may not have a name.
 	 */
 	int               (CALLING_CONV *Team_getTeamRulesParams)(int skirmishAIId, int teamId); //$ FETCHER:MULTI:NUM:TeamRulesParam
+
+//	int               (CALLING_CONV *Team_getTeamRulesParamByName)(int skirmishAIId, int teamId, const char* teamRulesParamName); //$ FETCHER:MULTI:NUM:TeamRulesParam
 
 	/**
 	 * Not every mod parameter has a name.
@@ -1385,6 +1389,10 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *Team_TeamRulesParam_getValueFloat)(int skirmishAIId, int teamId, int teamRulesParamId);
 
 	const char*       (CALLING_CONV *Team_TeamRulesParam_getValueString)(int skirmishAIId, int teamId, int teamRulesParamId);
+
+	const char*       (CALLING_CONV *Team_getTeamRulesParamByName)(int skirmishAIId, int teamId, const char* teamRulesParamName);
+
+	const char*       (CALLING_CONV *Team_getTeamRulesParamById)(int skirmishAIId, int teamId, int teamRulesParamId);
 
 // END OBJECT Team
 

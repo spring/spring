@@ -150,7 +150,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"OverlayTexture"
 		"UnitDef"
 		"Unit"
-		"UnitRulesParam"
 		"Version"
 		"WeaponDef"
 		"WeaponMount"
