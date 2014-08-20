@@ -66,7 +66,6 @@ private:
 
 	OverlayConfigSource* overlay;
 	FileConfigSource* writableSource;
-	DefaultConfigSource* defaultSource;
 	vector<ReadOnlyConfigSource*> sources;
 
 	// observer related

@@ -33,7 +33,6 @@
 
 #include "System/maindefines.h"
 #include "System/SafeCStrings.h"
-#include "lib/streflop/streflopC.h" // for streflop_init_Simple()
 
 
 char* util_allocStr(unsigned int length) {
@@ -913,10 +912,6 @@ const char* util_map_getValueByKey(
 	}
 
 	return value;
-}
-
-void util_resetEngineEnv() {
-	streflop_init_Simple();
 }
 
 void util_finalize() {}
