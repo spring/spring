@@ -535,7 +535,7 @@ IPath::SearchResult CPathEstimator::GetPath(
 	}
 
 	// oterhwise search
-	const IPath::SearchResult result = InitSearch(moveDef, peDef, synced);
+	const IPath::SearchResult result = InitSearch(moveDef, peDef, nullptr, false, synced);
 
 	// if search successful, generate new path
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -566,7 +566,7 @@ IPath::SearchResult CPathEstimator::GetPath(
 
 
 // set up the starting point of the search
-IPath::SearchResult CPathEstimator::InitSearch(const MoveDef& moveDef, const CPathFinderDef& peDef, bool synced) {
+IPath::SearchResult CPathEstimator::InitSearch(const MoveDef& moveDef, const CPathFinderDef& peDef, const CSolidObject* owner, bool /*peCall*/, bool synced) {
 	const int2 square = blockStates.peNodeOffsets[mStartBlockIdx][moveDef.pathType];
 	const bool isStartGoal = peDef.IsGoal(square.x, square.y);
 
@@ -601,7 +601,7 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveDef& moveDef, const CPa
 	mGoalHeuristic = peDef.Heuristic(square.x, square.y);
 
 	// perform the search
-	IPath::SearchResult result = DoSearch(moveDef, peDef, synced);
+	IPath::SearchResult result = DoSearch(moveDef, peDef, owner, synced);
 
 	// if no improvements are found, then return CantGetCloser instead
 	if ((mGoalBlockIdx == mStartBlockIdx) && (!isStartGoal || peDef.startInGoalRadius)) {
@@ -615,7 +615,8 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveDef& moveDef, const CPa
 /**
  * Performs the actual search.
  */
-IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPathFinderDef& peDef, bool synced) {
+IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPathFinderDef& peDef, const CSolidObject* owner, bool synced)
+{
 	bool foundGoal = false;
 
 	// get the goal square offset

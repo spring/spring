@@ -37,6 +37,8 @@ protected:
 	void ResetSearch();
 
 protected: // pure virtuals
+	virtual IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner, bool synced) = 0;
+
 	/**
 	 * Test the availability and value of a block,
 	 * and possibly add it to the queue of open blocks.
@@ -60,6 +62,7 @@ protected: // pure virtuals
 	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
 	 */
 	virtual void FinishSearch(const MoveDef& moveDef, IPath::Path& path) const = 0;
+
 public:
 	static int2 PE_DIRECTION_VECTORS[PATH_DIRECTIONS];
 	static int2 PF_DIRECTION_VECTORS_2D[PATH_DIRECTIONS << 1];

@@ -108,6 +108,8 @@ public:
 	static const int2* GetDirectionVectorsTable();
 
 protected: // IPathFinder impl
+	IPath::SearchResult InitSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner, bool peCall, bool synced);
+	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner, bool synced);
 	bool TestBlock(
 		const MoveDef& moveDef,
 		const CPathFinderDef& pfDef,
@@ -131,9 +133,6 @@ private:
 	int2 FindOffset(const MoveDef&, unsigned int, unsigned int);
 	void CalculateVertices(const MoveDef&, unsigned int, unsigned int, unsigned int threadNum = 0);
 	void CalculateVertex(const MoveDef&, unsigned int, unsigned int, unsigned int, unsigned int threadNum = 0);
-
-	IPath::SearchResult InitSearch(const MoveDef&, const CPathFinderDef&, bool);
-	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, bool);
 
 	bool ReadFile(const std::string& cacheFileName, const std::string& map);
 	void WriteFile(const std::string& cacheFileName, const std::string& map);
