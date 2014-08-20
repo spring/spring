@@ -101,7 +101,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/AbstractSkirmishAI.cpp
 		${myGeneratedSourceDir}/AbstractSkirmishAIs.cpp
 		${myGeneratedSourceDir}/AbstractTeam.cpp
-		${myGeneratedSourceDir}/AbstractTeamRulesParam.cpp
 		${myGeneratedSourceDir}/AbstractTeams.cpp
 		${myGeneratedSourceDir}/AbstractUnit.cpp
 		${myGeneratedSourceDir}/AbstractUnitDef.cpp
@@ -146,7 +145,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/StubSkirmishAI.cpp
 		${myGeneratedSourceDir}/StubSkirmishAIs.cpp
 		${myGeneratedSourceDir}/StubTeam.cpp
-		${myGeneratedSourceDir}/StubTeamRulesParam.cpp
 		${myGeneratedSourceDir}/StubTeams.cpp
 		${myGeneratedSourceDir}/StubUnit.cpp
 		${myGeneratedSourceDir}/StubUnitDef.cpp
@@ -194,7 +192,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/WrappSkirmishAI.cpp
 		${myGeneratedSourceDir}/WrappSkirmishAIs.cpp
 		${myGeneratedSourceDir}/WrappTeam.cpp
-		${myGeneratedSourceDir}/WrappTeamRulesParam.cpp
 		${myGeneratedSourceDir}/WrappTeams.cpp
 		${myGeneratedSourceDir}/WrappUnit.cpp
 		${myGeneratedSourceDir}/WrappUnitDef.cpp

@@ -145,7 +145,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"SkirmishAI"
 		"SkirmishAIs"
 		"Team"
-		"TeamRulesParam"
 		"Teams"
 		"OverlayTexture"
 		"UnitDef"

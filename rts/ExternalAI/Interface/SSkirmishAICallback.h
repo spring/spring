@@ -1377,22 +1377,24 @@ struct SSkirmishAICallback {
 	 * Each parameter is uniquely identified only by its id (which is the index in the vector).
 	 * Parameters may or may not have a name.
 	 */
-	int               (CALLING_CONV *Team_getTeamRulesParams)(int skirmishAIId, int teamId); //$ FETCHER:MULTI:NUM:TeamRulesParam
-
-//	int               (CALLING_CONV *Team_getTeamRulesParamByName)(int skirmishAIId, int teamId, const char* teamRulesParamName); //$ FETCHER:MULTI:NUM:TeamRulesParam
+	int               (CALLING_CONV *Team_getRulesParams)(int skirmishAIId, int teamId, const char** params, int params_sizeMax); //$ ARRAY:params
 
 	/**
 	 * Not every mod parameter has a name.
 	 */
-	const char*       (CALLING_CONV *Team_TeamRulesParam_getName)(int skirmishAIId, int teamId, int teamRulesParamId);
+	int               (CALLING_CONV *Team_getRulesParamsWithNames)(int skirmishAIId, int teamId, const char** keys, const char** values); //$ MAP
 
-	float             (CALLING_CONV *Team_TeamRulesParam_getValueFloat)(int skirmishAIId, int teamId, int teamRulesParamId);
+	/**
+	 * Not every mod parameter has a name.
+	 */
+	const char*       (CALLING_CONV *Team_getRulesParamNameById)(int skirmishAIId, int teamId, int rulesParamId);
 
-	const char*       (CALLING_CONV *Team_TeamRulesParam_getValueString)(int skirmishAIId, int teamId, int teamRulesParamId);
+	/**
+	 * Not every mod parameter has a name.
+	 */
+	const char*       (CALLING_CONV *Team_getRulesParamByName)(int skirmishAIId, int teamId, const char* rulesParamName);
 
-	const char*       (CALLING_CONV *Team_getTeamRulesParamByName)(int skirmishAIId, int teamId, const char* teamRulesParamName);
-
-	const char*       (CALLING_CONV *Team_getTeamRulesParamById)(int skirmishAIId, int teamId, int teamRulesParamId);
+	const char*       (CALLING_CONV *Team_getRulesParamById)(int skirmishAIId, int teamId, int rulesParamId);
 
 // END OBJECT Team
 
