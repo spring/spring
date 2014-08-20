@@ -76,7 +76,8 @@ void PrintAvailableResolutions()
 #else
 	#define _APIENTRY
 #endif
-void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam)
+
+void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam)
 {
 	std::string sourceStr;
 	std::string typeStr;
@@ -340,7 +341,8 @@ void LoadExtensions()
 #if defined(GL_ARB_debug_output) && !defined(HEADLESS)
 	if (GLEW_ARB_debug_output && configHandler->GetBool("DebugGL")) {
 		LOG("Installing OpenGL-DebugMessageHandler");
-		glDebugMessageCallbackARB(&OpenGLDebugMessageCallback, NULL);
+		//typecast is a workarround for #4510, signature of the callback message changed :-|
+		glDebugMessageCallbackARB((GLDEBUGPROCARB)&OpenGLDebugMessageCallback, NULL);
 
 		if (configHandler->GetBool("DebugGLStacktraces")) {
 			// The callback should happen in the thread that made the gl call
