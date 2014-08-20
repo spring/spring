@@ -125,19 +125,15 @@ EXPORT(int              ) skirmishAiCallback_Game_getCategoriesFlag(int skirmish
 
 EXPORT(void             ) skirmishAiCallback_Game_getCategoryName(int skirmishAIId, int categoryFlag, char* name, int name_sizeMax);
 
-EXPORT(int              ) skirmishAiCallback_Game_getGameRulesParams(int skirmishAIId);
+EXPORT(int              ) skirmishAiCallback_Game_getRulesParams(int skirmishAIId, const char** params, int params_sizeMax);
 
-EXPORT(int              ) skirmishAiCallback_Game_getRulesParamsFloat(int skirmishAIId, const char** keys, const char** values);
+EXPORT(int              ) skirmishAiCallback_Game_getRulesParamsWithNames(int skirmishAIId, const char** keys, const char** values);
 
-EXPORT(int              ) skirmishAiCallback_Game_getRulesParamsString(int skirmishAIId, const char** keys, const char** values);
+EXPORT(const char*      ) skirmishAiCallback_Game_getRulesParamNameById(int skirmishAIId, int rulesParamId);
 
-EXPORT(int              ) skirmishAiCallback_Game_getGameRulesParamByName(int skirmishAIId, const char* gameRulesParamName);
+EXPORT(const char*      ) skirmishAiCallback_Game_getRulesParamByName(int skirmishAIId, const char* rulesParamName);
 
-EXPORT(const char*      ) skirmishAiCallback_GameRulesParam_getName(int skirmishAIId, int gameRulesParamId);
-
-EXPORT(float            ) skirmishAiCallback_GameRulesParam_getValueFloat(int skirmishAIId, int gameRulesParamId);
-
-EXPORT(const char*      ) skirmishAiCallback_GameRulesParam_getValueString(int skirmishAIId, int gameRulesParamId);
+EXPORT(const char*      ) skirmishAiCallback_Game_getRulesParamById(int skirmishAIId, int rulesParamId);
 
 // END misc callback functions
 

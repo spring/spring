@@ -403,22 +403,24 @@ struct SSkirmishAICallback {
 	 * Each parameter is uniquely identified only by its id (which is the index in the vector).
 	 * Parameters may or may not have a name.
 	 */
-	int               (CALLING_CONV *Game_getGameRulesParams)(int skirmishAIId); //$ FETCHER:MULTI:NUM:GameRulesParam
-
-	int               (CALLING_CONV *Game_getRulesParamsFloat)(int skirmishAIId, const char** keys, const char** values); //$ MAP
-
-	int               (CALLING_CONV *Game_getRulesParamsString)(int skirmishAIId, const char** keys, const char** values); //$ MAP
-
-	int               (CALLING_CONV *Game_getGameRulesParamByName)(int skirmishAIId, const char* gameRulesParamName); //$ REF:RETURN->GameRulesParam
+	int               (CALLING_CONV *Game_getRulesParams)(int skirmishAIId, const char** params, int params_sizeMax); //$ ARRAY:params
 
 	/**
 	 * Not every mod parameter has a name.
 	 */
-	const char*       (CALLING_CONV *GameRulesParam_getName)(int skirmishAIId, int gameRulesParamId);
+	int               (CALLING_CONV *Game_getRulesParamsWithNames)(int skirmishAIId, const char** keys, const char** values); //$ MAP
 
-	float             (CALLING_CONV *GameRulesParam_getValueFloat)(int skirmishAIId, int gameRulesParamId);
+	/**
+	 * Not every mod parameter has a name.
+	 */
+	const char*       (CALLING_CONV *Game_getRulesParamNameById)(int skirmishAIId, int rulesParamId);
 
-	const char*       (CALLING_CONV *GameRulesParam_getValueString)(int skirmishAIId, int gameRulesParamId);
+	/**
+	 * Not every mod parameter has a name.
+	 */
+	const char*       (CALLING_CONV *Game_getRulesParamByName)(int skirmishAIId, const char* rulesParamName);
+
+	const char*       (CALLING_CONV *Game_getRulesParamById)(int skirmishAIId, int rulesParamId);
 
 // END misc callback functions
 

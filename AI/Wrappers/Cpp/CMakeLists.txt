@@ -78,7 +78,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/AbstractFile.cpp
 		${myGeneratedSourceDir}/AbstractFlankingBonus.cpp
 		${myGeneratedSourceDir}/AbstractGame.cpp
-		${myGeneratedSourceDir}/AbstractGameRulesParam.cpp
 		${myGeneratedSourceDir}/AbstractGroup.cpp
 		${myGeneratedSourceDir}/AbstractGui.cpp
 		${myGeneratedSourceDir}/AbstractInfo.cpp
@@ -122,7 +121,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/StubFile.cpp
 		${myGeneratedSourceDir}/StubFlankingBonus.cpp
 		${myGeneratedSourceDir}/StubGame.cpp
-		${myGeneratedSourceDir}/StubGameRulesParam.cpp
 		${myGeneratedSourceDir}/StubGroup.cpp
 		${myGeneratedSourceDir}/StubGui.cpp
 		${myGeneratedSourceDir}/StubInfo.cpp
@@ -166,7 +164,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/WrappFile.cpp
 		${myGeneratedSourceDir}/WrappFlankingBonus.cpp
 		${myGeneratedSourceDir}/WrappGame.cpp
-		${myGeneratedSourceDir}/WrappGameRulesParam.cpp
 		${myGeneratedSourceDir}/WrappGraphDrawer.cpp
 		${myGeneratedSourceDir}/WrappGraphLine.cpp
 		${myGeneratedSourceDir}/WrappGroup.cpp

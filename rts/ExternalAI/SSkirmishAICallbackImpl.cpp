@@ -119,8 +119,8 @@ static bool isAlliedUnit(int skirmishAIId, const CUnit* unit) {
 	return teamHandler->AlliedTeams(unit->team, skirmishAIId_teamId[skirmishAIId]);
 }
 
-static inline bool unitModParamIsValidId(const CUnit* unit, int modParamId) {
-	return ((size_t)modParamId < unit->modParams.size());
+static inline bool modParamIsValidId(const LuaRulesParams::Params& params, int modParamId) {
+	return ((size_t)modParamId < params.size());
 }
 
 static int unitModParamLosMask(int skirmishAIId, const CUnit* unit) {
@@ -145,45 +145,19 @@ static int unitModParamLosMask(int skirmishAIId, const CUnit* unit) {
 	return losMask;
 }
 
-static inline bool unitModParamIsVisible(const LuaRulesParams::Param& param, const int losMask) {
+static inline bool modParamIsVisible(const LuaRulesParams::Param& param, const int losMask) {
 	return (param.los & losMask) > 0;
 }
 
 static const CTeam* getTeam(int teamId) {
-	return (teamId < teamHanlder->ActiveTeams()) ? teamHandler->Team(teamId) : NULL;
+	return (teamId < teamHandler->ActiveTeams()) ? teamHandler->Team(teamId) : NULL;
 }
 
 static bool isAlliedTeam(int skirmishAIId, const CTeam* team) {
 	return teamHandler->AlliedTeams(team->teamNum, skirmishAIId_teamId[skirmishAIId]);
 }
 
-static inline bool teamModParamIsValidId(const CTeam* team, int modParamId) {
-	return ((size_t)modParamId < team->modParams.size());
-}
-
 static int teamModParamLosMask(int skirmishAIId, const CTeam* team) {
-
-	const int teamId = skirmishAIId_teamId[skirmishAIId];
-	const int allyID = teamHandler->AllyTeam(teamId);
-	const int losStatus = unit->losStatus[allyID];
-
-	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
-
-	if (isAlliedUnit(skirmishAIId, unit) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
-		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
-	} else if (teamHandler->AlliedTeams(unit->team, teamId)) {
-		// ingame alliances
-		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
-	} else if (losStatus & LOS_INLOS) {
-		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
-	} else if (losStatus & LOS_INRADAR) {
-		losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
-	}
-
-	return losMask;
-}
-
-static bool teamModParamIsVisible(int skirmishAIId, const CTeam* team) {
 
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
@@ -198,12 +172,121 @@ static bool teamModParamIsVisible(int skirmishAIId, const CTeam* team) {
 	return losMask;
 }
 
-static bool gameModParamIsVisible(const LuaRulesParams::Param& param) {
-
-	int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
-
-	return ((param.los & losMask) > 0);
+static inline int gameModParamLosMask(void) {
+	return LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 }
+
+static int getRulesParams(const LuaRulesParams::Params& ps, const int losMask,
+		const char** params, const int params_sizeMax)
+{
+	if (params == NULL) {
+		// Count number of visible modParams
+		size_t params_size = 0;
+		for (size_t i = 0; i < ps.size(); i++) {
+			if (modParamIsVisible(ps[i], losMask)) {
+				params_size++;
+			}
+		}
+		return params_size;
+	}
+
+	// Fill array with visible modParams
+	size_t params_size = 0;
+	for (size_t i = 0; i < ps.size(); i++) {
+		const LuaRulesParams::Param& p = ps[i];
+		if (modParamIsVisible(p, losMask)) {
+			params[params_size] = p.valueString.empty() ? std::to_string(p.valueInt).c_str() : p.valueString.c_str();
+			params_size++;
+			if (params_size >= params_sizeMax) {
+				break;
+			}
+		}
+	}
+
+	return params_size;
+}
+
+static int getRulesParamsWithNames(const LuaRulesParams::Params& params, const LuaRulesParams::HashMap& paramsMap, const int losMask,
+		const char** keys, const char** values)
+{
+	if ((keys == NULL) || (values == NULL)) {
+		// Count number of visible modParams
+		size_t params_size = 0;
+		for (auto& iter : paramsMap) {
+			if (modParamIsVisible(params[iter.second], losMask)) {
+				params_size++;
+			}
+		}
+		return params_size;
+	}
+
+	// Fill keys and values with visible modParams
+	size_t params_size = 0;
+	for (auto& iter : paramsMap) {
+		const LuaRulesParams::Param& param = params[iter.second];
+		if (modParamIsVisible(param, losMask)) {
+			keys[params_size] = iter.first.c_str();
+			values[params_size] = param.valueString.empty() ? std::to_string(param.valueInt).c_str() : param.valueString.c_str();
+			params_size++;
+		}
+	}
+
+	return params_size;
+}
+
+static const char* getRulesParamNameById(const LuaRulesParams::Params& params, const LuaRulesParams::HashMap& paramsMap, const int losMask,
+		const int rulesParamId)
+{
+	const char* name = "";
+
+	if (modParamIsValidId(params, rulesParamId) && modParamIsVisible(params[rulesParamId], losMask)) {
+		std::map<std::string, int>::const_iterator mi, mb, me;
+		mb = paramsMap.begin();
+		me = paramsMap.end();
+		for (mi = mb; mi != me; ++mi) {
+			if (mi->second == rulesParamId) {
+				name = mi->first.c_str();
+				break;
+			}
+		}
+	}
+
+	return name;
+}
+
+static const char* getRulesParamByName(const LuaRulesParams::Params& params, const LuaRulesParams::HashMap& paramsMap, const int losMask,
+		const char* rulesParamName)
+{
+	const char* value = "";
+
+	const LuaRulesParams::HashMap::const_iterator pmi = paramsMap.find(rulesParamName);
+	if (pmi == paramsMap.end()) {
+		return value;
+	}
+
+	const LuaRulesParams::Param& param = params[pmi->second];
+	if (modParamIsVisible(param, losMask)) {
+		value = param.valueString.empty() ? std::to_string(param.valueInt).c_str() : param.valueString.c_str();
+	}
+
+	return value;
+}
+
+static const char* getRulesParamById(const LuaRulesParams::Params& params, const int losMask,
+		const int rulesParamId)
+{
+	const char* value = "";
+
+	if (modParamIsValidId(params, rulesParamId)) {
+		const LuaRulesParams::Param& param = params[rulesParamId];
+		if (modParamIsVisible(param, losMask)) {
+			value = param.valueString.empty() ? std::to_string(param.valueInt).c_str() : param.valueString.c_str();
+		}
+	}
+
+	return value;
+}
+
 
 static inline const UnitDef* getUnitDefById(int skirmishAIId, int unitDefId) {
 
@@ -1320,120 +1403,24 @@ EXPORT(void) skirmishAiCallback_Game_getCategoryName(int skirmishAIId, int categ
 	STRCPY_T(name, name_sizeMax, theName);
 }
 
-EXPORT(int) skirmishAiCallback_Game_getGameRulesParams(int skirmishAIId) {
-	return CLuaHandleSynced::GetGameParams().size();
+EXPORT(int) skirmishAiCallback_Game_getRulesParams(int skirmishAIId, const char** params, int params_sizeMax) {
+	return getRulesParams(CLuaHandleSynced::GetGameParams(), gameModParamLosMask(), params, params_sizeMax);
 }
 
-EXPORT(int) skirmishAiCallback_Game_getRulesParamsFloat(int skirmishAIId, const char** keys, const char** values) {
-
-	int count = 0;
-
-	if ((keys != NULL) && (values != NULL)) {
-		return count;
-	}
-
-	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
-	const LuaRulesParams::Params& params = CLuaHandleSynced::GetGameParams();
-	for (auto& iter : paramsMap) {
-		auto& param = params[iter.second];
-		if (gameModParamIsVisible(param)) {
-			keys[count] = iter.first.c_str();
-			values[count] = std::to_string(param.valueInt).c_str();
-			count++;
-		}
-	}
-
-	return count;
+EXPORT(int) skirmishAiCallback_Game_getRulesParamsWithNames(int skirmishAIId, const char** keys, const char** values) {
+	return getRulesParamsWithNames(CLuaHandleSynced::GetGameParams(), CLuaHandleSynced::GetGameParamsMap(), gameModParamLosMask(), keys, values);
 }
 
-EXPORT(int) skirmishAiCallback_Game_getRulesParamsString(int skirmishAIId, const char** keys, const char** values) {
-
-	int count = 0;
-
-	if ((keys != NULL) && (values != NULL)) {
-		return count;
-	}
-
-	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
-	const LuaRulesParams::Params& params = CLuaHandleSynced::GetGameParams();
-	for (auto& iter : paramsMap) {
-		auto& param = params[iter.second];
-		if (gameModParamIsVisible(param)) {
-			keys[count] = iter.first.c_str();
-			values[count] = param.valueString.c_str();
-			count++;
-		}
-	}
-
-	return count;
+EXPORT(const char*) skirmishAiCallback_Game_getRulesParamNameById(int skirmishAIId, int rulesParamId) {
+	return getRulesParamNameById(CLuaHandleSynced::GetGameParams(), CLuaHandleSynced::GetGameParamsMap(), gameModParamLosMask(), rulesParamId);
 }
 
-EXPORT(int) skirmishAiCallback_Game_getGameRulesParamByName(int skirmishAIId, const char* gameRulesParamName) {
-
-	int res = -1;
-
-	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
-	const LuaRulesParams::HashMap::const_iterator pmi = paramsMap.find(gameRulesParamName);
-	if (pmi == paramsMap.end()) {
-		return res;
-	}
-
-	int modParamId = pmi->second;
-	const LuaRulesParams::Params& params = CLuaHandleSynced::GetGameParams();
-	const LuaRulesParams::Param& param = params[modParamId];
-	if (gameModParamIsVisible(param)) {
-		res = modParamId;
-	}
-
-	return res;
+EXPORT(const char*) skirmishAiCallback_Game_getRulesParamByName(int skirmishAIId, const char* rulesParamName) {
+	return getRulesParamByName(CLuaHandleSynced::GetGameParams(), CLuaHandleSynced::GetGameParamsMap(), gameModParamLosMask(), rulesParamName);
 }
 
-EXPORT(const char*) skirmishAiCallback_GameRulesParam_getName(int skirmishAIId, int gameRulesParamId) {
-
-	const char* name = "";
-
-	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
-	const LuaRulesParams::Params& params = CLuaHandleSynced::GetGameParams();
-	const LuaRulesParams::Param& param = params[gameRulesParamId];
-	if (gameModParamIsVisible(param)) {
-		std::map<std::string, int>::const_iterator mi, mb, me;
-		mb = paramsMap.begin();
-		me = paramsMap.end();
-		for (mi = mb; mi != me; ++mi) {
-			if (mi->second == gameRulesParamId) {
-				name = mi->first.c_str();
-				break;
-			}
-		}
-	}
-
-	return name;
-}
-
-EXPORT(float) skirmishAiCallback_GameRulesParam_getValueFloat(int skirmishAIId, int gameRulesParamId) {
-
-	float value = 0.0f;
-
-	const LuaRulesParams::Params& params = CLuaHandleSynced::GetGameParams();
-	const LuaRulesParams::Param& param = params[gameRulesParamId];
-	if (gameModParamIsVisible(param)) {
-		value = param.valueInt;
-	}
-
-	return value;
-}
-
-EXPORT(const char*) skirmishAiCallback_GameRulesParam_getValueString(int skirmishAIId, int gameRulesParamId) {
-
-	const char* value = "";
-
-	const LuaRulesParams::Params& params = CLuaHandleSynced::GetGameParams();
-	const LuaRulesParams::Param& param = params[gameRulesParamId];
-	if (gameModParamIsVisible(param)) {
-		value = param.valueString.c_str();
-	}
-
-	return value;
+EXPORT(const char*) skirmishAiCallback_Game_getRulesParamById(int skirmishAIId, int rulesParamId) {
+	return getRulesParamById(CLuaHandleSynced::GetGameParams(), gameModParamLosMask(), rulesParamId);
 }
 
 
@@ -3274,7 +3261,6 @@ EXPORT(int) skirmishAiCallback_Unit_getDef(int skirmishAIId, int unitId) {
 	}
 }
 
-
 EXPORT(int) skirmishAiCallback_Unit_getRulesParams(int skirmishAIId, int unitId, const char** params, int params_sizeMax) {
 
 	const CUnit* unit = getUnit(unitId);
@@ -3282,33 +3268,7 @@ EXPORT(int) skirmishAiCallback_Unit_getRulesParams(int skirmishAIId, int unitId,
 		return 0;
 	}
 
-	const LuaRulesParams::Params& ps = unit->modParams;
-	const int losMask = unitModParamLosMask(skirmishAIId, unit);
-	if (params == NULL) {
-		// Count number of visible modParams
-		size_t params_size = 0;
-		for (size_t i = 0; i < ps.size(); i++) {
-			if (unitModParamIsVisible(ps[i], losMask)) {
-				param_size++;
-			}
-		}
-		return params_size;
-	}
-
-	// Fill array with visible modParams
-	params_size = 0;
-	for (size_t i = 0; i < ps.size(); i++) {
-		const LuaRulesParams::Param& p = ps[i];
-		if (unitModParamIsVisible(p, losMask)) {
-			params[params_size] = p.valueString.empty() ? std::to_string(p.valueInt).c_str() : p.valueString.c_str();
-			params_size++;
-			if (params_size >= params_sizeMax) {
-				break;
-			}
-		}
-	}
-
-	return params_size;
+	return getRulesParams(unit->modParams, unitModParamLosMask(skirmishAIId, unit), params, params_sizeMax);
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getRulesParamsWithNames(int skirmishAIId, int unitId, const char** keys, const char** values) {
@@ -3318,97 +3278,37 @@ EXPORT(int) skirmishAiCallback_Unit_getRulesParamsWithNames(int skirmishAIId, in
 		return 0;
 	}
 
-	const LuaRulesParams::HashMap& paramsMap = unit->modParamsMap;
-	const LuaRulesParams::Params& params = unit->modParams;
-	const int losMask = unitModParamLosMask(skirmishAIId, unit);
-	if ((keys == NULL) || (values == NULL)) {
-		// Count number of visible modParams
-		size_t params_size = 0;
-		for (auto& iter : paramsMap) {
-			if (unitModParamIsVisible(params[iter.second], losMask)) {
-				param_size++;
-			}
-		}
-		return params_size;
-	}
-
-	// Fill keys and values with visible modParams
-	size_t params_size = 0;
-	for (auto& iter : paramsMap) {
-		const LuaRulesParams::Param& param = params[iter.second];
-		if (unitModParamIsVisible(param, losMask)) {
-			keys[params_size] = iter.first.c_str();
-			values[params_size] = param.valueString.empty() ? std::to_string(param.valueInt).c_str() : param.valueString.c_str();
-			params_size++;
-		}
-	}
-
-	return params_size;
+	return getRulesParamsWithNames(unit->modParams, unit->modParamsMap, unitModParamLosMask(skirmishAIId, unit), keys, values);
 }
 
 EXPORT(const char*) skirmishAiCallback_Unit_getRulesParamNameById(int skirmishAIId, int unitId, int rulesParamId) {
 
-	const char* name = "";
-
 	const CUnit* unit = getUnit(unitId);
-	if (!unit || !unitModParamIsValidId(unit, rulesParamId)) {
-		return name;
+	if (!unit) {
+		return "";
 	}
 
-	const int losMask = unitModParamLosMask(skirmishAIId, unit);
-	if (unitModParamIsVisible(unit->modParams[rulesParamId], losMask)) {
-		std::map<std::string, int>::const_iterator mi, mb, me;
-		mb = unit->modParamsMap.begin();
-		me = unit->modParamsMap.end();
-		for (mi = mb; mi != me; ++mi) {
-			if (mi->second == rulesParamId) {
-				name = mi->first.c_str();
-				break;
-			}
-		}
-	}
-
-	return name;
+	return getRulesParamNameById(unit->modParams, unit->modParamsMap, unitModParamLosMask(skirmishAIId, unit), rulesParamId);
 }
 
 EXPORT(const char*) skirmishAiCallback_Unit_getRulesParamByName(int skirmishAIId, int unitId, const char* rulesParamName) {
 
-	const char* value = "";
-
 	const CUnit* unit = getUnit(unitId);
 	if (!unit) {
-		return value;
+		return "";
 	}
 
-	const LuaRulesParams::HashMap& paramsMap = unit->modParamsMap;
-	const LuaRulesParams::HashMap::const_iterator pmi = paramsMap.find(rulesParamName);
-	if (pmi == paramsMap.end()) {
-		return value;
-	}
-
-	const LuaRulesParams::Param& param = unit->modParams[pmi->second];
-	const int losMask = unitModParamLosMask(skirmishAIId, unit);
-	if (unitModParamIsVisible(param, losMask)) {
-		value = param.valueString.empty() ? std::to_string(param.valueInt).c_str() : param.valueString.c_str();
-	}
-
-	return value;
+	return getRulesParamByName(unit->modParams, unit->modParamsMap, unitModParamLosMask(skirmishAIId, unit), rulesParamName);
 }
 
 EXPORT(const char*) skirmishAiCallback_Unit_getRulesParamById(int skirmishAIId, int unitId, int rulesParamId) {
 
-	const char* value = "";
-
 	const CUnit* unit = getUnit(unitId);
-	if (unit && unitModParamIsValidId(unit, rulesParamId)) {
-		const LuaRulesParams::Param& param = unit->modParams[rulesParamId];
-		const int losMask = unitModParamLosMask(skirmishAIId, unit);
-		if (unitModParamIsVisible(param, losMask)) {
-			value = param.valueString.empty() ? std::to_string(param.valueInt).c_str() : param.valueString.c_str();
-		}
+	if (!unit) {
+		return "";
 	}
 
-	return value;
+	return getRulesParamById(unit->modParams, unitModParamLosMask(skirmishAIId, unit), rulesParamId);
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getTeam(int skirmishAIId, int unitId) {
@@ -3910,33 +3810,7 @@ EXPORT(int) skirmishAiCallback_Team_getRulesParams(int skirmishAIId, int teamId,
 		return 0;
 	}
 
-	const LuaRulesParams::Params& ps = team->modParams;
-	const int losMask = teamModParamLosMask(skirmishAIId, team);
-	if (params == NULL) {
-		// Count number of visible modParams
-		size_t params_size = 0;
-		for (size_t i = 0; i < ps.size(); i++) {
-			if (teamModParamIsVisible(ps[i], losMask)) {
-				param_size++;
-			}
-		}
-		return params_size;
-	}
-
-	// Fill array with visible modParams
-	params_size = 0;
-	for (size_t i = 0; i < ps.size(); i++) {
-		const LuaRulesParams::Param& p = ps[i];
-		if (teamModParamIsVisible(p, losMask)) {
-			params[params_size] = p.valueString.empty() ? std::to_string(p.valueInt).c_str() : p.valueString.c_str();
-			params_size++;
-			if (params_size >= params_sizeMax) {
-				break;
-			}
-		}
-	}
-
-	return params_size;
+	return getRulesParams(team->modParams, teamModParamLosMask(skirmishAIId, team), params, params_sizeMax);
 }
 
 EXPORT(int) skirmishAiCallback_Team_getRulesParamsWithNames(int skirmishAIId, int teamId, const char** keys, const char** values) {
@@ -3946,97 +3820,37 @@ EXPORT(int) skirmishAiCallback_Team_getRulesParamsWithNames(int skirmishAIId, in
 		return 0;
 	}
 
-	const LuaRulesParams::HashMap& paramsMap = team->modParamsMap;
-	const LuaRulesParams::Params& params = team->modParams;
-	const int losMask = teamModParamLosMask(skirmishAIId, team);
-	if ((keys == NULL) || (values == NULL)) {
-		// Count number of visible modParams
-		size_t params_size = 0;
-		for (auto& iter : paramsMap) {
-			if (teamModParamIsVisible(params[iter.second], losMask)) {
-				param_size++;
-			}
-		}
-		return params_size;
-	}
-
-	// Fill keys and values with visible modParams
-	size_t params_size = 0;
-	for (auto& iter : paramsMap) {
-		const LuaRulesParams::Param& param = params[iter.second];
-		if (unitModParamIsVisible(param, losMask)) {
-			keys[params_size] = iter.first.c_str();
-			values[params_size] = param.valueString.empty() ? std::to_string(param.valueInt).c_str() : param.valueString.c_str();
-			params_size++;
-		}
-	}
-
-	return params_size;
+	return getRulesParamsWithNames(team->modParams, team->modParamsMap, teamModParamLosMask(skirmishAIId, team), keys, values);
 }
 
 EXPORT(const char*) skirmishAiCallback_Team_getRulesParamNameById(int skirmishAIId, int teamId, int rulesParamId) {
 
-	const char* name = "";
-
 	const CTeam* team = getTeam(teamId);
-	if (!team || !teamModParamIsValidId(team, rulesParamId)) {
-		return name;
+	if (!team) {
+		return "";
 	}
 
-	const int losMask = teamModParamLosMask(skirmishAIId, team);
-	if (teamModParamIsVisible(team->modParams[rulesParamId], losMask)) {
-		std::map<std::string, int>::const_iterator mi, mb, me;
-		mb = unit->modParamsMap.begin();
-		me = unit->modParamsMap.end();
-		for (mi = mb; mi != me; ++mi) {
-			if (mi->second == rulesParamId) {
-				name = mi->first.c_str();
-				break;
-			}
-		}
-	}
-
-	return name;
+	return getRulesParamNameById(team->modParams, team->modParamsMap, teamModParamLosMask(skirmishAIId, team), rulesParamId);
 }
 
 EXPORT(const char*) skirmishAiCallback_Team_getRulesParamByName(int skirmishAIId, int teamId, const char* rulesParamName) {
 
-	const char* value = "";
-
 	const CTeam* team = getTeam(teamId);
 	if (!team) {
-		return value;
+		return "";
 	}
 
-	const LuaRulesParams::HashMap& paramsMap = team->modParamsMap;
-	const LuaRulesParams::HashMap::const_iterator pmi = paramsMap.find(rulesParamName);
-	if (pmi == paramsMap.end()) {
-		return value;
-	}
-
-	const LuaRulesParams::Param& param = team->modParams[pmi->second];
-	const int losMask = teamModParamLosMask(skirmishAIId, team);
-	if (teamModParamIsVisible(param, losMask)) {
-		value = param.valueString.empty() ? std::to_string(param.valueInt).c_str() : param.valueString.c_str();
-	}
-
-	return value;
+	return getRulesParamByName(team->modParams, team->modParamsMap, teamModParamLosMask(skirmishAIId, team), rulesParamName);
 }
 
 EXPORT(const char*) skirmishAiCallback_Team_getRulesParamById(int skirmishAIId, int teamId, int rulesParamId) {
 
-	const char* value = "";
-
 	const CTeam* team = getTeam(teamId);
-	if (team && unitModParamIsValidId(team, rulesParamId)) {
-		const LuaRulesParams::Param& param = team->modParams[rulesParamId];
-		const int losMask = unitModParamLosMask(skirmishAIId, team);
-		if (unitModParamIsVisible(param, losMask)) {
-			value = param.valueString.empty() ? std::to_string(param.valueInt).c_str() : param.valueString.c_str();
-		}
+	if (!team) {
+		return "";
 	}
 
-	return value;
+	return getRulesParamById(team->modParams, teamModParamLosMask(skirmishAIId, team), rulesParamId);
 }
 
 //########### END Team
@@ -5033,11 +4847,11 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Game_getCategoryFlag = &skirmishAiCallback_Game_getCategoryFlag;
 	callback->Game_getCategoriesFlag = &skirmishAiCallback_Game_getCategoriesFlag;
 	callback->Game_getCategoryName = &skirmishAiCallback_Game_getCategoryName;
-	callback->Game_getGameRulesParams = &skirmishAiCallback_Game_getGameRulesParams;
-	callback->Game_getGameRulesParamByName = &skirmishAiCallback_Game_getGameRulesParamByName;
-	callback->GameRulesParam_getName = &skirmishAiCallback_GameRulesParam_getName;
-	callback->GameRulesParam_getValueFloat = &skirmishAiCallback_GameRulesParam_getValueFloat;
-	callback->GameRulesParam_getValueString = &skirmishAiCallback_GameRulesParam_getValueString;
+	callback->Game_getRulesParams = &skirmishAiCallback_Game_getRulesParams;
+	callback->Game_getRulesParamsWithNames = &skirmishAiCallback_Game_getRulesParamsWithNames;
+	callback->Game_getRulesParamNameById = &skirmishAiCallback_Game_getRulesParamNameById;
+	callback->Game_getRulesParamByName = &skirmishAiCallback_Game_getRulesParamByName;
+	callback->Game_getRulesParamById = &skirmishAiCallback_Game_getRulesParamById;
 	callback->Gui_getViewRange = &skirmishAiCallback_Gui_getViewRange;
 	callback->Gui_getScreenX = &skirmishAiCallback_Gui_getScreenX;
 	callback->Gui_getScreenY = &skirmishAiCallback_Gui_getScreenY;
