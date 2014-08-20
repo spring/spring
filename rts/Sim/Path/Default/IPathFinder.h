@@ -33,6 +33,9 @@ public:
 	int  BlockPosToIdx(const int2 pos) const { return pos.y * nbrOfBlocks.x + pos.x; }
 
 protected:
+	///
+	IPath::SearchResult InitSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner, bool peCall, bool synced);
+
 	/// Clear things up from last search.
 	void ResetSearch();
 

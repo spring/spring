@@ -65,8 +65,6 @@ public:
 	static const float3* GetDirectionVectorsTable3D();
 
 protected: // IPathFinder impl
-	/// Set up the starting point of the search.
-	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool peCall, bool synced);
 	/// Performs the actual search.
 	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced);
 

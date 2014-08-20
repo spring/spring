@@ -565,53 +565,6 @@ IPath::SearchResult CPathEstimator::GetPath(
 }
 
 
-// set up the starting point of the search
-IPath::SearchResult CPathEstimator::InitSearch(const MoveDef& moveDef, const CPathFinderDef& peDef, const CSolidObject* owner, bool /*peCall*/, bool synced) {
-	const int2 square = blockStates.peNodeOffsets[mStartBlockIdx][moveDef.pathType];
-	const bool isStartGoal = peDef.IsGoal(square.x, square.y);
-
-	// although our starting square may be inside the goal radius, the starting coordinate may be outside.
-	// in this case we do not want to return CantGetCloser, but instead a path to our starting square.
-	if (isStartGoal && peDef.startInGoalRadius)
-		return IPath::CantGetCloser;
-
-	// no, clean the system from last search
-	ResetSearch();
-
-	// mark and store the start-block
-	blockStates.nodeMask[mStartBlockIdx] |= PATHOPT_OPEN;
-	blockStates.fCost[mStartBlockIdx] = 0.0f;
-	blockStates.gCost[mStartBlockIdx] = 0.0f;
-	blockStates.SetMaxCost(NODE_COST_F, 0.0f);
-	blockStates.SetMaxCost(NODE_COST_G, 0.0f);
-
-	dirtyBlocks.push_back(mStartBlockIdx);
-
-	// add the starting block to the open-blocks-queue
-	openBlockBuffer.SetSize(0);
-	PathNode* ob = openBlockBuffer.GetNode(openBlockBuffer.GetSize());
-		ob->fCost   = 0.0f;
-		ob->gCost   = 0.0f;
-		ob->nodePos = mStartBlock;
-		ob->nodeNum = mStartBlockIdx;
-	openBlocks.push(ob);
-
-	// mark starting point as best found position
-	mGoalBlockIdx = mStartBlockIdx;
-	mGoalHeuristic = peDef.Heuristic(square.x, square.y);
-
-	// perform the search
-	IPath::SearchResult result = DoSearch(moveDef, peDef, owner, synced);
-
-	// if no improvements are found, then return CantGetCloser instead
-	if ((mGoalBlockIdx == mStartBlockIdx) && (!isStartGoal || peDef.startInGoalRadius)) {
-		return IPath::CantGetCloser;
-	}
-
-	return result;
-}
-
-
 /**
  * Performs the actual search.
  */

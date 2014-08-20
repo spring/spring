@@ -108,7 +108,6 @@ public:
 	static const int2* GetDirectionVectorsTable();
 
 protected: // IPathFinder impl
-	IPath::SearchResult InitSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner, bool peCall, bool synced);
 	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner, bool synced);
 	bool TestBlock(
 		const MoveDef& moveDef,

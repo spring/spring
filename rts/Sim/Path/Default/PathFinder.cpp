@@ -121,80 +121,6 @@ IPath::SearchResult CPathFinder::GetPath(
 }
 
 
-IPath::SearchResult CPathFinder::InitSearch(
-	const MoveDef& moveDef,
-	const CPathFinderDef& pfDef,
-	const CSolidObject* owner,
-	bool peCall,
-	bool synced
-) {
-	if (!peCall) {
-		// also need a "dead zone" around blocked goal-squares for non-exact paths
-		// otherwise CPU use can become unacceptable even with circular constraint
-		//
-		// helps only a little because the allowed search radius in this case will
-		// be much smaller as well (do not call PathFinderDef::GoalIsBlocked here
-		// because that uses its own definition of "small area")
-		if (owner != NULL) {
-			const bool goalInRange = (pfDef.goal.SqDistance2D(owner->pos) < (owner->sqRadius + pfDef.sqGoalRadius));
-			const bool goalBlocked = ((CMoveMath::IsBlocked(moveDef, pfDef.goal, owner) & CMoveMath::BLOCK_STRUCTURE) != 0);
-
-			if (goalInRange && goalBlocked) {
-				return IPath::CantGetCloser;
-			}
-		}
-	}
-
-	// start-position is clamped by caller
-	// NOTE:
-	//   if search starts on  odd-numbered square, only  odd-numbered nodes are explored
-	//   if search starts on even-numbered square, only even-numbered nodes are explored
-	const bool isStartGoal = pfDef.IsGoal(mStartBlock.x, mStartBlock.y);
-
-	// although our starting square may be inside the goal radius, the starting coordinate may be outside.
-	// in this case we do not want to return CantGetCloser, but instead a path to our starting square.
-	if (isStartGoal && pfDef.startInGoalRadius)
-		return IPath::CantGetCloser;
-
-	// Clear the system from last search.
-	ResetSearch();
-
-	// Marks and store the start-square.
-	blockStates.nodeMask[mStartBlockIdx] = (PATHOPT_START | PATHOPT_OPEN);
-	blockStates.fCost[mStartBlockIdx] = 0.0f;
-	blockStates.gCost[mStartBlockIdx] = 0.0f;
-
-	blockStates.SetMaxCost(NODE_COST_F, 0.0f);
-	blockStates.SetMaxCost(NODE_COST_G, 0.0f);
-
-	dirtyBlocks.push_back(mStartBlockIdx);
-
-	// this is updated every square we get closer to our real goal (s.t. we
-	// always have waypoints to return even if we only find a partial path)
-	mGoalBlockIdx = mStartBlockIdx;
-	mGoalHeuristic = pfDef.Heuristic(mStartBlock.x, mStartBlock.y);
-
-	// add start-square to the queue
-	openBlockBuffer.SetSize(0);
-	PathNode* os = openBlockBuffer.GetNode(openBlockBuffer.GetSize());
-		os->fCost     = 0.0f;
-		os->gCost     = 0.0f;
-		os->nodePos.x = mStartBlock.x;
-		os->nodePos.y = mStartBlock.y;
-		os->nodeNum   = mStartBlockIdx;
-	openBlocks.push(os);
-
-	// perform the search
-	IPath::SearchResult result = DoSearch(moveDef, pfDef, owner, synced);
-
-	// if no improvements are found, then return CantGetCloser instead
-	if ((mGoalBlockIdx == mStartBlockIdx && (!isStartGoal || pfDef.startInGoalRadius)) || mGoalBlockIdx == 0)
-		return IPath::CantGetCloser;
-
-	return result;
-}
-
-
 IPath::SearchResult CPathFinder::DoSearch(
 	const MoveDef& moveDef,
 	const CPathFinderDef& pfDef,
@@ -451,7 +377,7 @@ void CPathFinder::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) c
 			if (blockStates.nodeMask[sqrIdx] & PATHOPT_START)
 				break;
 
-			float3 cs;
+			float3 cs; //FIXME
 				cs.x = (square.x/2/* + 0.5f*/) * SQUARE_SIZE * 2 + SQUARE_SIZE;
 				cs.z = (square.y/2/* + 0.5f*/) * SQUARE_SIZE * 2 + SQUARE_SIZE;
 				cs.y = CMoveMath::yLevel(moveDef, square.x, square.y);

@@ -3,6 +3,7 @@
 #include "IPathFinder.h"
 #include "PathFinderDef.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
+#include "Sim/Objects/SolidObject.h"
 
 
 // these give the changes in (x, z) coors
@@ -74,4 +75,62 @@ void IPathFinder::ResetSearch()
 	}
 
 	testedBlocks = 0;
+}
+
+
+// set up the starting point of the search
+IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool peCall, bool synced)
+{
+	int2 square = mStartBlock;
+	if (isEstimator) {
+		square = blockStates.peNodeOffsets[mStartBlockIdx][moveDef.pathType];
+	}
+	const bool isStartGoal = pfDef.IsGoal(square.x, square.y);
+
+	// although our starting square may be inside the goal radius, the starting coordinate may be outside.
+	// in this case we do not want to return CantGetCloser, but instead a path to our starting square.
+	if (isStartGoal && pfDef.startInGoalRadius)
+		return IPath::CantGetCloser;
+
+	// no, clean the system from last search
+	ResetSearch();
+
+	// mark and store the start-block
+	if (isEstimator) { //FIXME which of them is better to be used for both?
+		blockStates.nodeMask[mStartBlockIdx] |= PATHOPT_OPEN;
+	} else {
+		blockStates.nodeMask[mStartBlockIdx]  = (PATHOPT_START | PATHOPT_OPEN);
+	}
+	blockStates.fCost[mStartBlockIdx] = 0.0f;
+	blockStates.gCost[mStartBlockIdx] = 0.0f;
+	blockStates.SetMaxCost(NODE_COST_F, 0.0f);
+	blockStates.SetMaxCost(NODE_COST_G, 0.0f);
+
+	dirtyBlocks.push_back(mStartBlockIdx);
+
+	// add the starting block to the open-blocks-queue
+	openBlockBuffer.SetSize(0);
+	PathNode* ob = openBlockBuffer.GetNode(openBlockBuffer.GetSize());
+		ob->fCost   = 0.0f;
+		ob->gCost   = 0.0f;
+		ob->nodePos = mStartBlock;
+		ob->nodeNum = mStartBlockIdx;
+	openBlocks.push(ob);
+
+	// mark starting point as best found position
+	mGoalBlockIdx = mStartBlockIdx;
+	mGoalHeuristic = pfDef.Heuristic(square.x, square.y);
+
+	// perform the search
+	IPath::SearchResult result = DoSearch(moveDef, pfDef, owner, synced);
+
+	// if no improvements are found, then return CantGetCloser instead
+	if ((mGoalBlockIdx == mStartBlockIdx) && (!isStartGoal || pfDef.startInGoalRadius)) {
+		return IPath::CantGetCloser;
+	}
+	if (!isEstimator && mGoalBlockIdx == 0) { //FIXME do for PE too?
+		return IPath::CantGetCloser;
+	}
+
+	return result;
 }
