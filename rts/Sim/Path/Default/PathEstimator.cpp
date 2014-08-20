@@ -668,7 +668,7 @@ bool CPathEstimator::TestBlock(
 		parentOpenBlock->nodeNum * PATH_DIRECTION_VERTICES +
 		GetBlockVertexOffset(pathDir, nbrOfBlocks.x);
 
-	assert((unsigned)vertexIdx >= vertexCosts.size());
+	assert((unsigned)vertexIdx < vertexCosts.size());
 	if (vertexCosts[vertexIdx] >= PATHCOST_INFINITY)
 		return false;
 
