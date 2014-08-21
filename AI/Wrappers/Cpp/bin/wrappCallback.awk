@@ -1028,7 +1028,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			}
 			_hasRetInd = 0;
 			_refObj = _refObj"*";
-			if (retType != "void") {
+			if (retType != "void" && split(innerParams, _, ",") == addInds_size_m) {
 				_hasRetInd = 1;
 			}
 			for (ai=1; ai <= (addInds_size_m-_hasRetInd); ai++) {
