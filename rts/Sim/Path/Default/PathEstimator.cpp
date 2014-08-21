@@ -389,22 +389,23 @@ void CPathEstimator::Update()
 	const auto numMoveDefs = moveDefHandler->GetNumMoveDefs();
 
 	// determine how many blocks we should update
-	size_t blocksToUpdate = 0;
-	size_t consumeBlocks = 0;
+	int blocksToUpdate = 0;
+	int consumeBlocks = 0;
 	{
-		const unsigned progressiveUpdates = updatedBlocks.size() * numMoveDefs * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f) * modInfo.pfUpdateRate;
-
-		static const unsigned MIN_BLOCKS_TO_UPDATE = std::max(BLOCKS_TO_UPDATE >> 1, 4U);
-		static const unsigned MAX_BLOCKS_TO_UPDATE = std::max(BLOCKS_TO_UPDATE << 1, MIN_BLOCKS_TO_UPDATE);
+		const int progressiveUpdates = updatedBlocks.size() * numMoveDefs * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f) * modInfo.pfUpdateRate;
+		const int MIN_BLOCKS_TO_UPDATE = std::max<int>(BLOCKS_TO_UPDATE >> 1, 4U);
+		const int MAX_BLOCKS_TO_UPDATE = std::max<int>(BLOCKS_TO_UPDATE << 1, MIN_BLOCKS_TO_UPDATE);
 		blocksToUpdate = Clamp(progressiveUpdates, MIN_BLOCKS_TO_UPDATE, MAX_BLOCKS_TO_UPDATE);
 
-		// we have to update blocks always for all movedefs
-		consumeBlocks = int(ceil(float(blocksToUpdate) / numMoveDefs));
-
-		blockUpdatePenalty = std::max(0, blockUpdatePenalty + (int(consumeBlocks) - int(blocksToUpdate)));
+		blockUpdatePenalty = std::max(0, blockUpdatePenalty - blocksToUpdate);
 
 		if (blockUpdatePenalty > 0)
-			blocksToUpdate = 0;
+			blocksToUpdate = std::max(0, blocksToUpdate - blockUpdatePenalty);
+
+		// we have to update blocks for all movedefs (cause PATHOPT_OBSOLETE is per block and not movedef)
+		consumeBlocks = int(progressiveUpdates != 0) * int(ceil(float(blocksToUpdate) / numMoveDefs)) * numMoveDefs;
+
+		blockUpdatePenalty += consumeBlocks;
 	}
 
 	if (blocksToUpdate == 0)
