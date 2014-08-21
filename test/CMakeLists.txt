@@ -237,6 +237,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_REGEX_LIBRARY}
 		)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
+	add_dependencies(test_${test_name} generateVersionFiles)
 ################################################################################
 ### LuaSocketRestrictions
 	set(test_name LuaSocketRestrictions)
