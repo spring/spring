@@ -347,9 +347,6 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		const int2 sqr = os->nodePos;
 		const int square = os->nodeNum;
 
-		if (pf->blockStates.nodeMask[square] & PATHOPT_START)
-			continue;
-
 		float3 p1;
 			p1.x = sqr.x * SQUARE_SIZE;
 			p1.z = sqr.y * SQUARE_SIZE;

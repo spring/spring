@@ -24,7 +24,7 @@ static const float MIN_MAXRES_SEARCH_DISTANCE = 12.0f;
 // how many recursive refinement attempts NextWayPoint should make
 static const unsigned int MAX_PATH_REFINEMENT_DEPTH = 4;
 
-static const unsigned int PATHESTIMATOR_VERSION = 55;
+static const unsigned int PATHESTIMATOR_VERSION = 56;
 
 static const unsigned int MEDRES_PE_BLOCKSIZE =  8;
 static const unsigned int LOWRES_PE_BLOCKSIZE = 32;
@@ -65,12 +65,10 @@ static const unsigned int PATHOPT_CARDINALS = (PATHOPT_RIGHT | PATHOPT_LEFT | PA
 
 // PF and PE flags
 enum {
-	PATHOPT_START     =  16,
-	PATHOPT_OPEN      =  32,
-	PATHOPT_CLOSED    =  64,
-	PATHOPT_FORBIDDEN = 128,
-	PATHOPT_BLOCKED   = 256,
-	PATHOPT_OBSOLETE  = 512,
+	PATHOPT_OPEN      =  16,
+	PATHOPT_CLOSED    =  32,
+	PATHOPT_BLOCKED   =  64,
+	PATHOPT_OBSOLETE  = 128,
 };
 
 

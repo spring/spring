@@ -183,8 +183,8 @@ public:
 	std::vector<float> fCost;
 	std::vector<float> gCost;
 
-	/// combination of PATHOPT_{OPEN, ..., OBSOLETE} flags
-	std::vector<boost::uint16_t> nodeMask;
+	/// bitmask of PATHOPT_{OPEN, ..., OBSOLETE} flags
+	std::vector<boost::uint8_t> nodeMask;
 
 	/// needed for the PE to back-track path to goal
 	std::vector<int2> peParentNodePos;

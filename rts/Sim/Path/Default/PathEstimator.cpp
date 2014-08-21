@@ -509,7 +509,7 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
 		openBlocks.pop();
 
 		// check if the block has been marked as unaccessible during its time in the queue
-		if (blockStates.nodeMask[ob->nodeNum] & (PATHOPT_BLOCKED | PATHOPT_CLOSED | PATHOPT_FORBIDDEN))
+		if (blockStates.nodeMask[ob->nodeNum] & (PATHOPT_BLOCKED | PATHOPT_CLOSED))
 			continue;
 
 		// no, check if the goal is already reached
@@ -585,7 +585,7 @@ bool CPathEstimator::TestBlock(
 	if ((unsigned)block.y >= nbrOfBlocks.y) return false;
 
 	// check if the block is unavailable
-	if (blockStates.nodeMask[blockIdx] & (PATHOPT_FORBIDDEN | PATHOPT_BLOCKED | PATHOPT_CLOSED))
+	if (blockStates.nodeMask[blockIdx] & (PATHOPT_BLOCKED | PATHOPT_CLOSED))
 		return false;
 
 
@@ -665,8 +665,9 @@ void CPathEstimator::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath
 
 	while (blockIdx != mStartBlockIdx) {
 		// use offset defined by the block
-		const int2 bsquare = blockStates.peNodeOffsets[blockIdx][moveDef.pathType];
-		const float3& pos = SquareToFloat3(bsquare.x, bsquare.y);
+		const int2 square = blockStates.peNodeOffsets[blockIdx][moveDef.pathType];
+		float3 pos(square.x * SQUARE_SIZE, 0.0f, square.y * SQUARE_SIZE);
+		pos.y = CMoveMath::yLevel(moveDef, square.x, square.y);
 
 		foundPath.path.push_back(pos);
 

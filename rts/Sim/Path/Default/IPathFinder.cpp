@@ -172,7 +172,7 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	if (isEstimator) { //FIXME which of them is better to be used for both?
 		blockStates.nodeMask[mStartBlockIdx] |= PATHOPT_OPEN;
 	} else {
-		blockStates.nodeMask[mStartBlockIdx]  = (PATHOPT_START | PATHOPT_OPEN);
+		blockStates.nodeMask[mStartBlockIdx]  = PATHOPT_OPEN;
 	}
 	blockStates.fCost[mStartBlockIdx] = 0.0f;
 	blockStates.gCost[mStartBlockIdx] = 0.0f;
@@ -191,7 +191,7 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	openBlocks.push(ob);
 
 	// mark starting point as best found position
-	mGoalBlockIdx = mStartBlockIdx;
+	mGoalBlockIdx  = mStartBlockIdx;
 	mGoalHeuristic = pfDef.Heuristic(square.x, square.y);
 
 	// perform the search

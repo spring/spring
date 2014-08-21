@@ -239,7 +239,7 @@ bool CPathFinder::TestBlock(
 	if ((unsigned)square.y >= nbrOfBlocks.y) return false;
 
 	// check if the square is inaccessable
-	if (blockStates.nodeMask[sqrIdx] & (PATHOPT_CLOSED | PATHOPT_FORBIDDEN | PATHOPT_BLOCKED))
+	if (blockStates.nodeMask[sqrIdx] & (PATHOPT_CLOSED | PATHOPT_BLOCKED))
 		return false;
 
 	// caller has already tested for this
@@ -257,7 +257,7 @@ bool CPathFinder::TestBlock(
 	//
 
 	if (speedMod == 0.0f) {
-		blockStates.nodeMask[sqrIdx] |= PATHOPT_FORBIDDEN;
+		blockStates.nodeMask[sqrIdx] |= PATHOPT_BLOCKED;
 		dirtyBlocks.push_back(sqrIdx);
 		return false;
 	}
@@ -323,9 +323,8 @@ bool CPathFinder::TestBlock(
 void CPathFinder::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) const {
 	// backtrack
 	if (needPath) {
-		int2 square;
-			square.x = mGoalBlockIdx % gs->mapx;
-			square.y = mGoalBlockIdx / gs->mapx;
+		int2 square = BlockIdxToPos(mGoalBlockIdx);
+		unsigned int blockIdx = mGoalBlockIdx;
 
 		// for path adjustment (cutting corners)
 		std::deque<int2> previous;
@@ -335,27 +334,21 @@ void CPathFinder::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) c
 		previous.push_back(int2(-100, -100));
 		previous.push_back(int2(-100, -100));
 
-		while (true) {
-			const int sqrIdx = square.y * gs->mapx + square.x;
-
-			if (blockStates.nodeMask[sqrIdx] & PATHOPT_START)
-				break;
-
-			float3 cs; //FIXME
-				cs.x = (square.x/2/* + 0.5f*/) * SQUARE_SIZE * 2 + SQUARE_SIZE;
-				cs.z = (square.y/2/* + 0.5f*/) * SQUARE_SIZE * 2 + SQUARE_SIZE;
-				cs.y = CMoveMath::yLevel(moveDef, square.x, square.y);
+		while (blockIdx != mStartBlockIdx) {
+			float3 pos(square.x * SQUARE_SIZE, 0.0f, square.y * SQUARE_SIZE);
+			pos.y = CMoveMath::yLevel(moveDef, square.x, square.y);
 
 			// try to cut corners
-			AdjustFoundPath(moveDef, foundPath, /* inout */ cs, previous, square);
+			AdjustFoundPath(moveDef, foundPath, /* inout */ pos, previous, square);
 
-			foundPath.path.push_back(cs);
+			foundPath.path.push_back(pos);
 			foundPath.squares.push_back(square);
 
 			previous.pop_front();
 			previous.push_back(square);
 
-			square -= PF_DIRECTION_VECTORS_2D[blockStates.nodeMask[sqrIdx] & PATHOPT_CARDINALS];
+			square -= PF_DIRECTION_VECTORS_2D[blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS];
+			blockIdx = BlockPosToIdx(square);
 		}
 
 		if (!foundPath.path.empty()) {
@@ -391,7 +384,7 @@ void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath
 	do {                                                                                         \
 		int testsqr = square.x + (dxtest) + (square.y + (dytest)) * gs->mapx;                    \
 		int p2sqr = previous[2].x + previous[2].y * gs->mapx;                                    \
-		if (!(blockStates.nodeMask[testsqr] & (PATHOPT_BLOCKED | PATHOPT_FORBIDDEN)) &&         \
+		if ((blockStates.nodeMask[testsqr] & PATHOPT_BLOCKED == 0) &&         \
 			 blockStates.fCost[testsqr] <= (COSTMOD) * blockStates.fCost[p2sqr]) {             \
 			float3& p2 = foundPath.path[foundPath.path.size() - 2];                              \
 			float3& p1 = foundPath.path.back();                                                  \
