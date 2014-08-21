@@ -86,6 +86,7 @@ endif(MSVC)
 ### Build the executable
 ADD_EXECUTABLE(engine-legacy ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(engine-legacy ${engineLibraries})
+add_dependencies(engine-legacy engineSim)
 
 
 ### Install the executable
