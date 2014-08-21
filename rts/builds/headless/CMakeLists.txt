@@ -34,7 +34,7 @@ ENDIF (MINGW OR APPLE)
 
 # headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
 LIST(APPEND engineHeadlessLibraries headlessStubs)
-LIST(APPEND engineHeadlessLibraries engineSim)
+LIST(APPEND engineHeadlessLibraries ${SPRING_SIM_LIBRARIES})
 LIST(APPEND engineHeadlessLibraries engineSystemNet)
 LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
 LIST(APPEND engineHeadlessLibraries engineaGui)

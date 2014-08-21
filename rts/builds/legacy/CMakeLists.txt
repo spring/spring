@@ -70,7 +70,7 @@ LIST(APPEND engineLibraries engineSystemNet)
 LIST(APPEND engineLibraries ${engineCommonLibraries})
 LIST(APPEND engineLibraries engineaGui)
 LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
-LIST(APPEND engineLibraries engineSim)
+LIST(APPEND engineLibraries ${SPRING_SIM_LIBRARIES})
 
 ### Assemble external incude dirs
 LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
