@@ -1,6 +1,6 @@
 ### builds
 #
-# Macros and fucntions defined in this file:
+# Macros and functions defined in this file:
 # * CreateEngineBuildAndInstallTarget
 #
 
