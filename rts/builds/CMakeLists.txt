@@ -62,7 +62,7 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 		# * make install-spring
 		message(STATUS "Using ${targetName} as default engine")
 		add_dependencies(spring spring-${targetName}) # This also works for custom targets
-		add_dependencies(install-spring install-spring-${targetName} ${${targetName}-Deps}) # This also works for custom targets
+		add_dependencies(install-spring install-spring-${targetName}) # This also works for custom targets
 		set_target_properties(engine-${targetName} PROPERTIES OUTPUT_NAME "spring")
 	else()
 		set_target_properties(engine-${targetName} PROPERTIES OUTPUT_NAME "spring-${targetName}")
