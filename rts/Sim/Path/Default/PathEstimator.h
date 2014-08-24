@@ -45,7 +45,7 @@ public:
 	 *   name of the corresponding map.
 	 *   Ex. PE-name "pe" + Mapname "Desert" => "Desert.pe"
 	 */
-	CPathEstimator(CPathFinder*, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName);
+	CPathEstimator(IPathFinder*, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName);
 	~CPathEstimator();
 
 
@@ -71,7 +71,7 @@ public:
 	static const int2* GetDirectionVectorsTable();
 
 protected: // IPathFinder impl
-	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner, bool synced);
+	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner);
 	bool TestBlock(
 		const MoveDef& moveDef,
 		const CPathFinderDef& pfDef,
@@ -80,9 +80,8 @@ protected: // IPathFinder impl
 		const unsigned int pathOptDir,
 		const unsigned int blockStatus,
 		float speedMod,
-		bool withinConstraints,
-		bool synced);
-	void FinishSearch(const MoveDef& moveDef, IPath::Path& path) const;
+		bool withinConstraints);
+	IPath::SearchResult FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const;
 
 	const CPathCache::CacheItem* GetCache(
 		const int2 strtBlock,
@@ -133,10 +132,10 @@ private:
 	boost::detail::atomic_count costBlockNum;
 	boost::barrier* pathBarrier;
 
-	CPathFinder* pathFinder;
+	IPathFinder* pathFinder;
 	CPathCache* pathCache[2];                   /// [0] = !synced, [1] = synced
 
-	std::vector<CPathFinder*> pathFinders;
+	std::vector<IPathFinder*> pathFinders;
 	std::vector<boost::thread*> threads;
 
 	std::vector<float> vertexCosts;	

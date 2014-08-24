@@ -57,7 +57,7 @@ IPathFinder::IPathFinder(unsigned int _BLOCK_SIZE)
 	, maxBlocksToBeSearched(0)
 	, testedBlocks(0)
 	, nbrOfBlocks(gs->mapx / BLOCK_SIZE, gs->mapy / BLOCK_SIZE)
-	, blockStates(int2(gs->mapx / BLOCK_SIZE, gs->mapy / BLOCK_SIZE), int2(gs->mapx, gs->mapy))
+	, blockStates(nbrOfBlocks, int2(gs->mapx, gs->mapy))
 {
 }
 
@@ -87,9 +87,7 @@ IPath::SearchResult IPathFinder::GetPath(
 	const CSolidObject* owner,
 	float3 startPos,
 	IPath::Path& path,
-	const unsigned int maxNodes,
-	const bool peCall,
-	const bool synced
+	const unsigned int maxNodes
 ) {
 	startPos.ClampInBounds();
 
@@ -113,23 +111,23 @@ IPath::SearchResult IPathFinder::GetPath(
 	int2 goalBlock;
 	goalBlock.x = pfDef.goalSquareX / BLOCK_SIZE;
 	goalBlock.y = pfDef.goalSquareZ / BLOCK_SIZE;
-	const CPathCache::CacheItem* ci = GetCache(mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, synced);
+	const CPathCache::CacheItem* ci = GetCache(mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
 	if (ci != nullptr) {
 		path = ci->path;
 		return ci->result;
 	}
 
 	// Start up a new search
-	const IPath::SearchResult result = InitSearch(moveDef, pfDef, owner, peCall, synced);
+	IPath::SearchResult result = InitSearch(moveDef, pfDef, owner);
 
 	// If search was successful, generate new path
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-		FinishSearch(moveDef, path);
+		result = FinishSearch(moveDef, pfDef, path);
 
 		// Save to cache
 		if (result == IPath::Ok) {
 			// add succesful paths to the cache
-			AddCache(&path, result, mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, synced);
+			AddCache(&path, result, mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
 		}
 
 		if (LOG_IS_ENABLED(L_DEBUG)) {
@@ -152,7 +150,7 @@ IPath::SearchResult IPathFinder::GetPath(
 
 
 // set up the starting point of the search
-IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool peCall, bool synced)
+IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner)
 {
 	int2 square = mStartBlock;
 	if (isEstimator) {
@@ -181,6 +179,7 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 
 	dirtyBlocks.push_back(mStartBlockIdx);
 
+	// start a new search and
 	// add the starting block to the open-blocks-queue
 	openBlockBuffer.SetSize(0);
 	PathNode* ob = openBlockBuffer.GetNode(openBlockBuffer.GetSize());
@@ -195,7 +194,7 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	mGoalHeuristic = pfDef.Heuristic(square.x, square.y);
 
 	// perform the search
-	IPath::SearchResult result = DoSearch(moveDef, pfDef, owner, synced);
+	IPath::SearchResult result = DoSearch(moveDef, pfDef, owner);
 
 	// if no improvements are found, then return CantGetCloser instead
 	if ((mGoalBlockIdx == mStartBlockIdx) && (!isStartGoal || pfDef.startInGoalRadius)) {

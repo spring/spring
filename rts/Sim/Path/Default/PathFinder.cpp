@@ -30,9 +30,6 @@ static  float PF_DIRECTION_COSTS[PATH_DIRECTIONS << 1];
 
 CPathFinder::CPathFinder()
 	: IPathFinder(1)
-	, exactPath(false)
-	, testMobile(false)
-	, needPath(false)
 {
 }
 
@@ -62,34 +59,10 @@ const float3* CPathFinder::GetDirectionVectorsTable3D() { return (&PF_DIRECTION_
 
 
 
-IPath::SearchResult CPathFinder::GetPath(
-	const MoveDef& moveDef,
-	const CPathFinderDef& pfDef,
-	const CSolidObject* owner,
-	const float3& startPos,
-	IPath::Path& path,
-	unsigned int maxNodes,
-	bool testMobile,
-	bool needPath,
-	bool peCall,
-	bool synced
-) {
-	// if true, factor presence of mobile objects on squares into cost
-	this->testMobile = testMobile;
-	// if true, neither start nor goal are allowed to be blocked squares
-	this->exactPath = peCall;
-	// if false, we are only interested in the cost (not the waypoints)
-	this->needPath = needPath;
-
-	return IPathFinder::GetPath(moveDef, pfDef, owner, startPos, path, maxNodes, peCall, synced);
-}
-
-
 IPath::SearchResult CPathFinder::DoSearch(
 	const MoveDef& moveDef,
 	const CPathFinderDef& pfDef,
-	const CSolidObject* owner,
-	bool synced
+	const CSolidObject* owner
 ) {
 	bool foundGoal = false;
 
@@ -110,7 +83,7 @@ IPath::SearchResult CPathFinder::DoSearch(
 			break;
 		}
 
-		TestNeighborSquares(moveDef, pfDef, openSquare, owner, synced);
+		TestNeighborSquares(moveDef, pfDef, openSquare, owner);
 	}
 
 	if (foundGoal)
@@ -132,8 +105,7 @@ void CPathFinder::TestNeighborSquares(
 	const MoveDef& moveDef,
 	const CPathFinderDef& pfDef,
 	const PathNode* square,
-	const CSolidObject* owner,
-	bool synced
+	const CSolidObject* owner
 ) {
 	unsigned int ngbBlockedState[PATH_DIRECTIONS];
 	bool ngbInSearchRadius[PATH_DIRECTIONS];
@@ -172,7 +144,7 @@ void CPathFinder::TestNeighborSquares(
 		if (!ngbInSearchRadius[dir])
 			continue;
 
-		TestBlock(moveDef, pfDef, square, owner, opt, ngbBlockedState[dir], ngbSpeedMod[dir], ngbInSearchRadius[dir], synced);
+		TestBlock(moveDef, pfDef, square, owner, opt, ngbBlockedState[dir], ngbSpeedMod[dir], ngbInSearchRadius[dir]);
 	}
 
 
@@ -201,7 +173,7 @@ void CPathFinder::TestNeighborSquares(
 				const unsigned int ngbBlk = ngbBlockedState[BASE_DIR_XY];                                                \
 				const unsigned int ngbVis = ngbInSearchRadius[BASE_DIR_XY];                                                \
                                                                                                                          \
-				TestBlock(moveDef, pfDef, square, owner, ngbOpt, ngbBlk, ngbSpeedMod[BASE_DIR_XY], ngbVis, synced);   \
+				TestBlock(moveDef, pfDef, square, owner, ngbOpt, ngbBlk, ngbSpeedMod[BASE_DIR_XY], ngbVis);   \
 			}                                                                                                            \
 		}
 
@@ -225,8 +197,7 @@ bool CPathFinder::TestBlock(
 	const unsigned int pathOptDir,
 	const unsigned int blockStatus,
 	float speedMod,
-	bool withinConstraints,
-	bool synced
+	bool withinConstraints
 ) {
 	testedBlocks++;
 
@@ -262,7 +233,7 @@ bool CPathFinder::TestBlock(
 		return false;
 	}
 
-	if (testMobile && moveDef.avoidMobilesOnPath && (blockStatus & squareMobileBlockBits)) {
+	if (pfDef.testMobile && moveDef.avoidMobilesOnPath && (blockStatus & squareMobileBlockBits)) {
 		if (blockStatus & CMoveMath::BLOCK_MOBILE_BUSY) {
 			speedMod *= moveDef.speedModMults[MoveDef::SPEEDMOD_MOBILE_BUSY_MULT];
 		} else if (blockStatus & CMoveMath::BLOCK_MOBILE) {
@@ -274,7 +245,7 @@ bool CPathFinder::TestBlock(
 
 	const float heatCost  = (PathHeatMap::GetInstance())->GetHeatCost(square.x, square.y, moveDef, ((owner != NULL)? owner->id: -1U));
 	const float flowCost  = (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, pathOptDir);
-	const float extraCost = blockStates.GetNodeExtraCost(square.x, square.y, synced);
+	const float extraCost = blockStates.GetNodeExtraCost(square.x, square.y, pfDef.synced);
 
 	const float dirMoveCost = (1.0f + heatCost + flowCost) * PF_DIRECTION_COSTS[pathOptDir];
 	const float nodeCost = (dirMoveCost / speedMod) + extraCost;
@@ -292,7 +263,7 @@ bool CPathFinder::TestBlock(
 	}
 
 	// if heuristic says this node is closer to goal than previous h-estimate, keep it
-	if (!exactPath && hCost < mGoalHeuristic) {
+	if (!pfDef.exactPath && hCost < mGoalHeuristic) {
 		mGoalBlockIdx = sqrIdx;
 		mGoalHeuristic = hCost;
 	}
@@ -320,9 +291,10 @@ bool CPathFinder::TestBlock(
 }
 
 
-void CPathFinder::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) const {
+IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& foundPath) const
+{
 	// backtrack
-	if (needPath) {
+	if (pfDef.needPath) {
 		int2 square = BlockIdxToPos(mGoalBlockIdx);
 		unsigned int blockIdx = mGoalBlockIdx;
 
@@ -358,6 +330,8 @@ void CPathFinder::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) c
 
 	// Adds the cost of the path.
 	foundPath.pathCost = blockStates.fCost[mGoalBlockIdx];
+
+	return IPath::Ok;
 }
 
 /** Helper function for AdjustFoundPath */

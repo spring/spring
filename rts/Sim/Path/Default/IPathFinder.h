@@ -62,20 +62,18 @@ public:
 		const CSolidObject* owner,
 		float3 startPos,
 		IPath::Path& path,
-		const unsigned int maxNodes,
-		const bool peCall,
-		const bool synced
+		const unsigned int maxNodes
 	);
 
 protected:
 	///
-	IPath::SearchResult InitSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner, bool peCall, bool synced);
+	IPath::SearchResult InitSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner);
 
 	/// Clear things up from last search.
 	void ResetSearch();
 
 protected: // pure virtuals
-	virtual IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner, bool synced) = 0;
+	virtual IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner) = 0;
 
 	/**
 	 * Test the availability and value of a block,
@@ -89,8 +87,7 @@ protected: // pure virtuals
 		const unsigned int pathOptDir,
 		const unsigned int blockStatus,
 		float speedMod,
-		bool withinConstraints,
-		bool synced
+		bool withinConstraints
 	) = 0;
 
 	/**
@@ -99,7 +96,7 @@ protected: // pure virtuals
 	 *
 	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
 	 */
-	virtual void FinishSearch(const MoveDef& moveDef, IPath::Path& path) const = 0;
+	virtual IPath::SearchResult FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const = 0;
 
 
 	virtual const CPathCache::CacheItem* GetCache(

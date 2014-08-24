@@ -21,23 +21,6 @@ class CPathFinder: public IPathFinder {
 public:
 	CPathFinder();
 
-	/**
-	 * Small wrapper for IPathFinder::GetPath(),
-	 * adds testMobile & needPath arguments.
-	 */
-	IPath::SearchResult GetPath(
-		const MoveDef& moveDef,
-		const CPathFinderDef& pfDef,
-		const CSolidObject* owner,
-		const float3& startPos,
-		IPath::Path& path,
-		unsigned int maxNodes,
-		bool testMobile,
-		bool needPath,
-		bool peCall,
-		bool synced
-	);
-
 	static void InitDirectionVectorsTable();
 	static void InitDirectionCostsTable();
 
@@ -46,7 +29,7 @@ public:
 
 protected: // IPathFinder impl
 	/// Performs the actual search.
-	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced);
+	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner);
 
 	/**
 	 * Test the availability and value of a square,
@@ -60,8 +43,7 @@ protected: // IPathFinder impl
 		const unsigned int pathOptDir,
 		const unsigned int blockStatus,
 		float speedMod,
-		bool withinConstraints,
-		bool synced
+		bool withinConstraints
 	);
 	/**
 	 * Recreates the path found by pathfinder.
@@ -69,7 +51,7 @@ protected: // IPathFinder impl
 	 *
 	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
 	 */
-	void FinishSearch(const MoveDef&, IPath::Path&) const;
+	IPath::SearchResult FinishSearch(const MoveDef&, const CPathFinderDef&, IPath::Path&) const;
 
 	const CPathCache::CacheItem* GetCache(
 		const int2 strtBlock,
@@ -97,8 +79,7 @@ private:
 		const MoveDef& moveDef,
 		const CPathFinderDef& pfDef,
 		const PathNode* parentSquare,
-		const CSolidObject* owner,
-		bool synced
+		const CSolidObject* owner
 	);
 
 	/**
@@ -111,10 +92,6 @@ private:
 		std::deque<int2>& previous,
 		int2 square
 	) const;
-
-	bool exactPath;
-	bool testMobile;
-	bool needPath;
 };
 
 #endif // PATH_FINDER_H

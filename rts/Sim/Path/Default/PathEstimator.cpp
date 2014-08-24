@@ -46,7 +46,7 @@ static size_t GetNumThreads() {
 
 
 
-CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BLOCK_SIZE, const std::string& cacheFileName, const std::string& mapFileName)
+CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const std::string& cacheFileName, const std::string& mapFileName)
 	: IPathFinder(BLOCK_SIZE)
 	, BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1)
 	, nextOffsetMessageIdx(0)
@@ -337,8 +337,11 @@ void CPathEstimator::CalculateVertex(
 	// since CPathFinder::GetPath() is not thread-safe, use
 	// this thread's "private" CPathFinder instance (rather
 	// than locking pathFinder->GetPath()) if we are in one
+	pfDef.testMobile = false;
+	pfDef.needPath   = false;
+	pfDef.exactPath  = true;
 	IPath::Path path;
-	IPath::SearchResult result = pathFinders[threadNum]->GetPath(moveDef, pfDef, nullptr, startPos, path, MAX_SEARCHED_NODES_PF >> 2, false, false, true, true);
+	IPath::SearchResult result = pathFinders[threadNum]->GetPath(moveDef, pfDef, nullptr, startPos, path, MAX_SEARCHED_NODES_PF >> 2);
 
 	// store the result
 	if (result == IPath::Ok) {
@@ -497,7 +500,7 @@ void CPathEstimator::AddCache(const IPath::Path* path, const IPath::SearchResult
 /**
  * Performs the actual search.
  */
-IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPathFinderDef& peDef, const CSolidObject* owner, bool synced)
+IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPathFinderDef& peDef, const CSolidObject* owner)
 {
 	bool foundGoal = false;
 
@@ -529,14 +532,14 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
 		// no, test the 8 surrounding blocks
 		// NOTE: each of these calls increments openBlockBuffer.idx by 1, so
 		// maxBlocksToBeSearched is always less than <MAX_SEARCHED_NODES_PE - 8>
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT,       PATHOPT_OPEN, 1.f, true, synced);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_UP,    PATHOPT_OPEN, 1.f, true, synced);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_UP,         PATHOPT_OPEN, 1.f, true, synced);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_UP,   PATHOPT_OPEN, 1.f, true, synced);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT,      PATHOPT_OPEN, 1.f, true, synced);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_DOWN, PATHOPT_OPEN, 1.f, true, synced);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_DOWN,       PATHOPT_OPEN, 1.f, true, synced);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_DOWN,  PATHOPT_OPEN, 1.f, true, synced);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT,       PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_UP,    PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_UP,         PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_UP,   PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT,      PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_DOWN, PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_DOWN,       PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_DOWN,  PATHOPT_OPEN, 1.f, true);
 
 		// mark this block as closed
 		blockStates.nodeMask[ob->nodeNum] |= PATHOPT_CLOSED;
@@ -572,8 +575,7 @@ bool CPathEstimator::TestBlock(
 	const unsigned int pathDir,
 	const unsigned int /*blockStatus*/,
 	float /*speedMod*/,
-	bool /*withinConstraints*/,
-	bool synced
+	bool /*withinConstraints*/
 ) {
 	testedBlocks++;
 
@@ -589,29 +591,30 @@ bool CPathEstimator::TestBlock(
 	if (blockStates.nodeMask[blockIdx] & (PATHOPT_BLOCKED | PATHOPT_CLOSED))
 		return false;
 
-
-	const int2 square = blockStates.peNodeOffsets[blockIdx][moveDef.pathType];
-
+	// read precached vertex costs
 	const unsigned int vertexIdx =
 		moveDef.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES +
 		parentOpenBlock->nodeNum * PATH_DIRECTION_VERTICES +
 		GetBlockVertexOffset(pathDir, nbrOfBlocks.x);
-
 	assert((unsigned)vertexIdx < vertexCosts.size());
-	if (vertexCosts[vertexIdx] >= PATHCOST_INFINITY)
+	if (vertexCosts[vertexIdx] >= PATHCOST_INFINITY) {
+		blockStates.nodeMask[blockIdx] |= PATHOPT_BLOCKED;
+		dirtyBlocks.push_back(blockIdx);
 		return false;
+	}
 
-
-	// check if the block is blocked or out of constraints
+	// check if the block is out of constraints
+	const int2 square = blockStates.peNodeOffsets[blockIdx][moveDef.pathType];
 	if (!peDef.WithinConstraints(square.x, square.y)) {
 		blockStates.nodeMask[blockIdx] |= PATHOPT_BLOCKED;
 		dirtyBlocks.push_back(blockIdx);
 		return false;
 	}
 
+
 	// evaluate this node (NOTE the max-resolution indexing for {flow,extra}Cost)
 	const float flowCost  = (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, PathDir2PathOpt(pathDir));
-	const float extraCost = blockStates.GetNodeExtraCost(square.x, square.y, synced);
+	const float extraCost = blockStates.GetNodeExtraCost(square.x, square.y, peDef.synced);
 	const float nodeCost  = vertexCosts[vertexIdx] + flowCost + extraCost;
 
 	const float gCost = parentOpenBlock->gCost + nodeCost;
@@ -660,28 +663,32 @@ bool CPathEstimator::TestBlock(
 /**
  * Recreate the path taken to the goal
  */
-void CPathEstimator::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) const
+IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& foundPath) const
 {
-	unsigned int blockIdx = mGoalBlockIdx;
+	if (pfDef.needPath) {
+		unsigned int blockIdx = mGoalBlockIdx;
 
-	while (blockIdx != mStartBlockIdx) {
-		// use offset defined by the block
-		const int2 square = blockStates.peNodeOffsets[blockIdx][moveDef.pathType];
-		float3 pos(square.x * SQUARE_SIZE, 0.0f, square.y * SQUARE_SIZE);
-		pos.y = CMoveMath::yLevel(moveDef, square.x, square.y);
+		while (blockIdx != mStartBlockIdx) {
+			// use offset defined by the block
+			const int2 square = blockStates.peNodeOffsets[blockIdx][moveDef.pathType];
+			float3 pos(square.x * SQUARE_SIZE, 0.0f, square.y * SQUARE_SIZE);
+			pos.y = CMoveMath::yLevel(moveDef, square.x, square.y);
 
-		foundPath.path.push_back(pos);
+			foundPath.path.push_back(pos);
 
-		// next step backwards
-		blockIdx = BlockPosToIdx(blockStates.peParentNodePos[blockIdx]);
-	}
+			// next step backwards
+			blockIdx = BlockPosToIdx(blockStates.peParentNodePos[blockIdx]);
+		}
 
-	if (!foundPath.path.empty()) {
-		foundPath.pathGoal = foundPath.path.front();
+		if (!foundPath.path.empty()) {
+			foundPath.pathGoal = foundPath.path.front();
+		}
 	}
 
 	// set some additional information
 	foundPath.pathCost = blockStates.fCost[mGoalBlockIdx] - mGoalHeuristic;
+
+	return IPath::Ok;
 }
 
 

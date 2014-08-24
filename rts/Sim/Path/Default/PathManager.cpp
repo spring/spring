@@ -115,6 +115,7 @@ unsigned int CPathManager::RequestPath(
 	MultiPath* newPath = new MultiPath(startPos, pfDef, moveDef);
 	newPath->finalGoal = goalPos;
 	newPath->caller = caller;
+	pfDef->synced = synced;
 
 	if (caller != NULL) {
 		caller->UnBlock();
@@ -129,7 +130,7 @@ unsigned int CPathManager::RequestPath(
 	const float heuristicGoalDist2D = pfDef->Heuristic(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE) + math::fabs(goalPos.y - startPos.y) / SQUARE_SIZE;
 
 	if (heuristicGoalDist2D < MAXRES_SEARCH_DISTANCE) {
-		result = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, true, false, synced);
+		result = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3);
 
 		#if (PM_UNCONSTRAINED_MAXRES_FALLBACK_SEARCH == 1)
 		// unnecessary so long as a fallback path exists within the
@@ -141,17 +142,17 @@ unsigned int CPathManager::RequestPath(
 		// fallback (note that this uses the estimators as backup,
 		// unconstrained PF queries are too expensive on average)
 		if (result != IPath::Ok) {
-			result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
+			result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3);
 		}
 		if (result != IPath::Ok) {
-			result = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
+			result = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3);
 		}
 	} else if (heuristicGoalDist2D < MEDRES_SEARCH_DISTANCE) {
-		result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
+		result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3);
 
 		// CantGetCloser may be a false positive due to PE approximations and large goalRadius
 		if (result == IPath::CantGetCloser && (startPos - goalPos).SqLength2D() > pfDef->sqGoalRadius) {
-			result = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, true, false, synced);
+			result = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3);
 		}
 
 		#if (PM_UNCONSTRAINED_MEDRES_FALLBACK_SEARCH == 1)
@@ -160,18 +161,18 @@ unsigned int CPathManager::RequestPath(
 
 		// fallback
 		if (result != IPath::Ok) {
-			result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
+			result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3);
 		}
 	} else {
-		result = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
+		result = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3);
 
 		// CantGetCloser may be a false positive due to PE approximations and large goalRadius
 		if (result == IPath::CantGetCloser && (startPos - goalPos).SqLength2D() > pfDef->sqGoalRadius) {
-			result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
+			result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3);
 
 			#if 0
 			if (result == IPath::CantGetCloser) // Same thing again
-				result = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, true, false, synced);
+				result = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3);
 			#endif
 		}
 
@@ -181,7 +182,7 @@ unsigned int CPathManager::RequestPath(
 
 		// fallback
 		if (result != IPath::Ok) {
-			result = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3, false, synced);
+			result = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3);
 		}
 	}
 
@@ -247,25 +248,23 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, c
 	}
 
 	// get the goal of the detailed search
-	float3 goalPos;
-
-	if (medResPath.path.empty()) {
-		goalPos = medResPath.pathGoal;
-	} else {
+	float3 goalPos = medResPath.pathGoal;
+	if (!medResPath.path.empty()) {
 		goalPos = medResPath.path.back();
 	}
 
 	// define the search
 	CCircularSearchConstraint rangedGoalPFD(startPos, goalPos, 0.0f, 2.0f, 1000);
+	rangedGoalPFD.synced = synced;
 
 	// Perform the search.
 	// If this is the final improvement of the path, then use the original goal.
 	IPath::SearchResult result = IPath::Error;
 
 	if (medResPath.path.empty() && lowResPath.path.empty()) {
-		result = maxResPF->GetPath(*multiPath.moveDef, *multiPath.peDef, owner, startPos, maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, true, false, synced);
+		result = maxResPF->GetPath(*multiPath.moveDef, *multiPath.peDef, owner, startPos, maxResPath, MAX_SEARCHED_NODES_PF >> 3);
 	} else {
-		result = maxResPF->GetPath(*multiPath.moveDef, rangedGoalPFD, owner, startPos, maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, true, false, synced);
+		result = maxResPF->GetPath(*multiPath.moveDef, rangedGoalPFD, owner, startPos, maxResPath, MAX_SEARCHED_NODES_PF >> 3);
 	}
 
 	// If no refined path could be found, set goal as desired goal.
@@ -303,15 +302,16 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, c
 
 	// define the search
 	CCircularSearchConstraint rangedGoalDef(startPos, goalPos, 0.0f, 2.0f, 20);
+	rangedGoalDef.synced = synced;
 
 	// Perform the search.
 	// If there is no low-res path left, use original goal.
 	IPath::SearchResult result = IPath::Error;
 
 	if (lowResPath.path.empty()) {
-		result = medResPE->GetPath(*multiPath.moveDef, *multiPath.peDef, owner, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE, false, synced);
+		result = medResPE->GetPath(*multiPath.moveDef, *multiPath.peDef, owner, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE);
 	} else {
-		result = medResPE->GetPath(*multiPath.moveDef, rangedGoalDef, owner, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE, false, synced);
+		result = medResPE->GetPath(*multiPath.moveDef, rangedGoalDef, owner, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE);
 	}
 
 	// If no refined path could be found, set goal as desired goal.
@@ -356,19 +356,15 @@ float3 CPathManager::NextWayPoint(
 	IPath::Path& medResPath = multiPath->medResPath;
 	IPath::Path& lowResPath = multiPath->lowResPath;
 
-	IPath::path_list_type& maxResPathPoints = maxResPath.path;
-	IPath::path_list_type& medResPathPoints = medResPath.path;
-	IPath::path_list_type& lowResPathPoints = lowResPath.path;
-
-	if (callerPos == ZeroVector) {
-		if (!maxResPathPoints.empty()) {
-			callerPos = maxResPathPoints.back();
-		}
+	if ((callerPos == ZeroVector) && !maxResPath.path.empty()) {
+		callerPos = maxResPath.path.back();
 	}
 
+	const_cast<CPathFinderDef*>(multiPath->peDef)->synced = synced;
+
 	#define EXTEND_PATH_POINTS(curResPts, nxtResPts, dist) ((!curResPts.empty() && (curResPts.back()).SqDistance2D(callerPos) < Square((dist))) || nxtResPts.size() <= 2)
-	const bool extendMaxResPath = EXTEND_PATH_POINTS(medResPathPoints, maxResPathPoints, MIN_MAXRES_SEARCH_DISTANCE * SQUARE_SIZE);
-	const bool extendMedResPath = EXTEND_PATH_POINTS(lowResPathPoints, medResPathPoints, MIN_MEDRES_SEARCH_DISTANCE * SQUARE_SIZE);
+	const bool extendMaxResPath = EXTEND_PATH_POINTS(medResPath.path, maxResPath.path, MIN_MAXRES_SEARCH_DISTANCE * SQUARE_SIZE);
+	const bool extendMedResPath = EXTEND_PATH_POINTS(lowResPath.path, medResPath.path, MIN_MEDRES_SEARCH_DISTANCE * SQUARE_SIZE);
 	#undef EXTEND_PATH_POINTS
 
 	// check whether the max-res path needs extending through
@@ -399,8 +395,8 @@ float3 CPathManager::NextWayPoint(
 		// at the goal OR the path could not reach all
 		// the way to it (ie. a GoalOutOfRange result)
 		// OR we are stuck on an impassable square
-		if (maxResPathPoints.empty()) {
-			if (lowResPathPoints.empty() && medResPath.path.empty()) {
+		if (maxResPath.path.empty()) {
+			if (lowResPath.path.empty() && medResPath.path.empty()) {
 				if (multiPath->searchResult == IPath::Ok) {
 					waypoint = multiPath->finalGoal; break;
 				} else {
@@ -412,8 +408,8 @@ float3 CPathManager::NextWayPoint(
 				break;
 			}
 		} else {
-			waypoint = maxResPathPoints.back();
-			maxResPathPoints.pop_back();
+			waypoint = maxResPath.path.back();
+			maxResPath.path.pop_back();
 		}
 	} while ((callerPos.SqDistance2D(waypoint) < Square(radius)) && (waypoint != maxResPath.pathGoal));
 

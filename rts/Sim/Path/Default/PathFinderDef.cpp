@@ -7,10 +7,14 @@
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 
-CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance):
-goal(goalCenter),
-sqGoalRadius(goalRadius * goalRadius),
-constraintDisabled(false)
+CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance)
+: goal(goalCenter)
+, sqGoalRadius(goalRadius * goalRadius)
+, constraintDisabled(false)
+, testMobile(true)
+, needPath(true)
+, exactPath(false)
+, synced(true)
 {
 	goalSquareX = goalCenter.x / SQUARE_SIZE;
 	goalSquareZ = goalCenter.z / SQUARE_SIZE;

@@ -22,7 +22,7 @@ public:
 	bool GoalIsBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& blockMask, const CSolidObject* owner) const;
 	int2 GoalSquareOffset(unsigned int blockSize) const;
 
-
+public:
 	// world-space goal position
 	float3 goal;
 
@@ -31,6 +31,11 @@ public:
 	// if true, do not need to generate any waypoints
 	bool startInGoalRadius;
 	bool constraintDisabled;
+
+	bool testMobile;
+	bool needPath;
+	bool exactPath;
+	bool synced;
 
 	unsigned int goalSquareX;
 	unsigned int goalSquareZ;
