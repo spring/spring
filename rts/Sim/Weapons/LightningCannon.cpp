@@ -102,7 +102,7 @@ void CLightningCannon::FireImpl(bool scriptCall)
 	ProjectileParams pparams = GetProjectileParams();
 	pparams.pos = curPos;
 	pparams.end = curPos + curDir * (boltLength + 10.0f);
-	pparams.ttl = 10;
+	pparams.ttl = weaponDef->beamLaserTTL;
 
 	WeaponProjectileFactory::LoadProjectile(pparams);
 }
