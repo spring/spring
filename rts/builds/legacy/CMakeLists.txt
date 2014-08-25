@@ -71,6 +71,7 @@ LIST(APPEND engineLibraries ${engineCommonLibraries})
 LIST(APPEND engineLibraries engineaGui)
 LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
 LIST(APPEND engineLibraries ${SPRING_SIM_LIBRARIES})
+LIST(APPEND engineLibraries engineSim)
 
 ### Assemble external incude dirs
 LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
@@ -86,7 +87,6 @@ endif(MSVC)
 ### Build the executable
 ADD_EXECUTABLE(engine-legacy ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(engine-legacy ${engineLibraries})
-add_dependencies(engine-legacy engineSim)
 
 
 ### Install the executable

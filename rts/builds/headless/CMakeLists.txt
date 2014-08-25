@@ -39,7 +39,7 @@ LIST(APPEND engineHeadlessLibraries engineSystemNet)
 LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
 LIST(APPEND engineHeadlessLibraries engineaGui)
 LIST(APPEND engineHeadlessLibraries no-sound)
-
+LIST(APPEND engineHeadlessLibraries engineSim)
 
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 
@@ -47,7 +47,6 @@ INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 ### Build the executable
 ADD_EXECUTABLE(engine-headless ${engineSources} ${ENGINE_ICON})
 TARGET_LINK_LIBRARIES(engine-headless no-sound ${engineHeadlessLibraries} no-sound)
-add_dependencies(engine-headless engineSim)
 
 IF    (MINGW)
 	# To enable console output/force a console window to open
