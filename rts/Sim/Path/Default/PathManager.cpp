@@ -92,6 +92,45 @@ unsigned int CPathManager::RequestPath(
 	return (RequestPath(moveDef, sp, gp, pfDef, caller, synced));
 }
 
+
+void CPathManager::FinalizePath(MultiPath* path, const float3 startPos, const float3 goalPos, const bool cantGetCloser)
+{
+	IPath::Path* sp = &path->lowResPath;
+	if (!path->medResPath.path.empty()) {
+		sp = &path->medResPath;
+	}
+	if (!path->maxResPath.path.empty()) {
+		sp = &path->maxResPath;
+	}
+	if (!sp->path.empty()) {
+		sp->path.back() = startPos;
+		sp->path.back().y = CMoveMath::yLevel(*path->moveDef, sp->path.back());
+	}
+
+	if (!path->maxResPath.path.empty() && !path->medResPath.path.empty()) {
+		path->medResPath.path.back() = path->maxResPath.path.front();
+	}
+	if (!path->medResPath.path.empty() && !path->lowResPath.path.empty()) {
+		path->lowResPath.path.back() = path->medResPath.path.front();
+	}
+
+	if (cantGetCloser)
+		return;
+
+	IPath::Path* ep = &path->maxResPath;
+	if (!path->medResPath.path.empty()) {
+		ep = &path->medResPath;
+	}
+	if (!path->lowResPath.path.empty()) {
+		ep = &path->lowResPath;
+	}
+	if (!ep->path.empty()) {
+		ep->path.front() = goalPos;
+		ep->path.front().y = CMoveMath::yLevel(*path->moveDef, ep->path.front());
+	}
+}
+
+
 /*
 Request a new multipath, store the result and return a handle-id to it.
 */
@@ -204,6 +243,7 @@ unsigned int CPathManager::RequestPath(
 			}
 		}
 
+		FinalizePath(newPath, startPos, goalPos, result == IPath::CantGetCloser);
 		newPath->searchResult = result;
 		pathID = Store(newPath);
 	} else {
@@ -384,6 +424,8 @@ float3 CPathManager::NextWayPoint(
 		if (multiPath->caller != NULL) {
 			multiPath->caller->Block();
 		}
+
+		FinalizePath(multiPath, callerPos, multiPath->finalGoal, multiPath->searchResult == IPath::CantGetCloser);
 	}
 
 	float3 waypoint;
