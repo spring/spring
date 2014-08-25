@@ -188,11 +188,6 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 	// remaining conditions under which obstacle does NOT block unit
 	// only reachable from stand-alone PE invocations or GameHelper
 	//   1.
-	//      unit is ground-following and obstacle is NOT on the
-	//      ground even if by just a millimeter (less arbitrary
-	//      than eg. "obstacle's center-position minus its model
-	//      height > magic value" although causes more clipping)
-	//   2.
 	//      unit is a submarine, obstacle sticks out above-water
 	//      (and not itself flagged as a submarine) *OR* unit is
 	//      not a submarine and obstacle is (fully under-water or
@@ -205,31 +200,21 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 	//        will cause stacking for submarines that are *not*
 	//        explicitly flagged as such in their MoveDefs
 	//
-	// note that these conditions can lead to a certain degree of
+	// note that these condition(s) can lead to a certain degree of
 	// clipping: for full 3D accuracy the height of the MoveDef's
 	// owner would need to be accessible (but the path-estimator
 	// defs aren't tied to any collider instances) --> add extra
 	// "clearance" parameter to MoveDef?
 	//
-	if (colliderMD.followGround) {
-		// would be the correct way, but collider is NULL here
-		// ret |= (collidee->pos.y > (collider->pos.y + collider->height));
-		// ret |= ((collidee->pos.y + collidee->height) < collider->pos.y));
-		//
-		// ret = ((collidee->midPos.y - math::fabs(collidee->height)) > CGround::GetHeightReal(collidee->pos.x, collidee->pos.z));
+	#define IS_SUBMARINE(md) ((md) != NULL && (md)->subMarine)
 
-		return (!collidee->IsOnGround());
+	if (IS_SUBMARINE(&colliderMD)) {
+		return (!collidee->IsUnderWater() && !IS_SUBMARINE(collidee->moveDef));
 	} else {
-		#define IS_SUBMARINE(md) ((md) != NULL && (md)->subMarine)
-
-		if (IS_SUBMARINE(&colliderMD)) {
-			return (!collidee->IsUnderWater() && !IS_SUBMARINE(collidee->moveDef));
-		} else {
-			return ( collidee->IsUnderWater() ||  IS_SUBMARINE(collidee->moveDef));
-		}
-
-		#undef IS_SUBMARINE
+		return ( collidee->IsUnderWater() ||  IS_SUBMARINE(collidee->moveDef));
 	}
+
+	#undef IS_SUBMARINE
 
 	return false;
 }
@@ -255,12 +240,12 @@ bool CMoveMath::IsNonBlocking(const CSolidObject* collidee, const CSolidObject* 
 
 CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
-	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy)
+	if ((unsigned)xSquare >= gs->mapx || (unsigned)zSquare >= gs->mapy)
 		return BLOCK_IMPASSABLE;
 
 	BlockType r = BLOCK_NONE;
 
-	const BlockingMapCell& c = groundBlockingObjectMap->GetCell(xSquare + zSquare * gs->mapx);
+	const BlockingMapCell& c = groundBlockingObjectMap->GetCell(zSquare * gs->mapx + xSquare);
 
 	for (BlockingMapCellIt it = c.begin(); it != c.end(); ++it) {
 		const CSolidObject* collidee = it->second;
