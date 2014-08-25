@@ -461,7 +461,7 @@ void CPathEstimator::Update()
 
 		// inform dependent pathEstimator that we change vertex cost of those blocks
 		if (nextPathEstimator)
-			nextPathEstimator->MapChanged(pos.x, pos.y, pos.x, pos.y);
+			nextPathEstimator->MapChanged(pos.x * BLOCK_SIZE, pos.y * BLOCK_SIZE, pos.x * BLOCK_SIZE, pos.y * BLOCK_SIZE);
 	}
 
 	// FindOffset (threadsafe)
