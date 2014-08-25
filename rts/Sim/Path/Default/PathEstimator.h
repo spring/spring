@@ -138,6 +138,8 @@ private:
 	std::vector<IPathFinder*> pathFinders;
 	std::vector<boost::thread*> threads;
 
+	CPathEstimator* nextPathEstimator;
+
 	std::vector<float> vertexCosts;	
 	std::list<int2> updatedBlocks;       /// Blocks that may need an update due to map changes.
 

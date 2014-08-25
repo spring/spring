@@ -55,9 +55,14 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 	, offsetBlockNum(nbrOfBlocks.x * nbrOfBlocks.y)
 	, costBlockNum(nbrOfBlocks.x * nbrOfBlocks.y)
 	, pathFinder(pf)
+	, nextPathEstimator(nullptr)
 	, blockUpdatePenalty(0)
 {
 	vertexCosts.resize(moveDefHandler->GetNumMoveDefs() * blockStates.GetSize() * PATH_DIRECTION_VERTICES, PATHCOST_INFINITY);
+
+	if (dynamic_cast<CPathEstimator*>(pf) != nullptr) {
+		dynamic_cast<CPathEstimator*>(pf)->nextPathEstimator = this;
+	}
 
 	// load precalculated data if it exists
 	InitEstimator(cacheFileName, mapFileName);
@@ -360,10 +365,10 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 	// find the upper and lower corner of the rectangular area
 	const auto mmx = std::minmax(x1, x2);
 	const auto mmz = std::minmax(z1, z2);
-	const int lowerX = Clamp<int>(mmx.first  / BLOCK_SIZE, 0, int(nbrOfBlocks.x - 1));
-	const int upperX = Clamp<int>(mmx.second / BLOCK_SIZE, 0, int(nbrOfBlocks.x - 1));
-	const int lowerZ = Clamp<int>(mmz.first  / BLOCK_SIZE, 0, int(nbrOfBlocks.y - 1));
-	const int upperZ = Clamp<int>(mmz.second / BLOCK_SIZE, 0, int(nbrOfBlocks.y - 1));
+	const int lowerX = Clamp(int(mmx.first  / BLOCK_SIZE) - 1, 0, int(nbrOfBlocks.x - 1));
+	const int upperX = Clamp(int(mmx.second / BLOCK_SIZE) + 1, 0, int(nbrOfBlocks.x - 1));
+	const int lowerZ = Clamp(int(mmz.first  / BLOCK_SIZE) - 1, 0, int(nbrOfBlocks.y - 1));
+	const int upperZ = Clamp(int(mmz.second / BLOCK_SIZE) + 1, 0, int(nbrOfBlocks.y - 1));
 
 	// mark the blocks inside the rectangle, enqueue them
 	// from upper to lower because of the placement of the
@@ -395,7 +400,7 @@ void CPathEstimator::Update()
 	int blocksToUpdate = 0;
 	int consumeBlocks = 0;
 	{
-		const int progressiveUpdates = updatedBlocks.size() * numMoveDefs * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f) * modInfo.pfUpdateRate;
+		const int progressiveUpdates = updatedBlocks.size() * numMoveDefs * modInfo.pfUpdateRate;
 		const int MIN_BLOCKS_TO_UPDATE = std::max<int>(BLOCKS_TO_UPDATE >> 1, 4U);
 		const int MAX_BLOCKS_TO_UPDATE = std::max<int>(BLOCKS_TO_UPDATE << 1, MIN_BLOCKS_TO_UPDATE);
 		blocksToUpdate = Clamp(progressiveUpdates, MIN_BLOCKS_TO_UPDATE, MAX_BLOCKS_TO_UPDATE);
@@ -447,6 +452,11 @@ void CPathEstimator::Update()
 				consumedBlocks.emplace_back(pos, md);
 		}
 		updatedBlocks.pop_front();
+		blockStates.nodeMask[idx] &= ~PATHOPT_OBSOLETE;
+
+		// inform dependent pathEstimator that we change vertex cost of those blocks
+		if (nextPathEstimator)
+			nextPathEstimator->MapChanged(pos.x, pos.y, pos.x, pos.y);
 	}
 
 	// FindOffset (threadsafe)
@@ -467,19 +477,7 @@ void CPathEstimator::Update()
 		for (unsigned int n = 0; n < consumedBlocks.size(); ++n) {
 			// copy the next block in line
 			const SingleBlock sb = consumedBlocks[n];
-			const int blockN = BlockPosToIdx(sb.blockPos);
-			const MoveDef* currBlockMD = sb.moveDef;
-			const MoveDef* nextBlockMD = ((n + 1) < consumedBlocks.size())? consumedBlocks[n + 1].moveDef: NULL;
-
-			CalculateVertices(*currBlockMD, sb.blockPos);
-
-			// each MapChanged() call adds AT MOST <moveDefs.size()> SingleBlock's
-			// in ascending pathType order per (x, z) PE-block, therefore when the
-			// next SingleBlock's pathType is less or equal to the current we know
-			// that all have been processed (for one PE-block)
-			if (nextBlockMD == NULL || nextBlockMD->pathType <= currBlockMD->pathType) {
-				blockStates.nodeMask[blockN] &= ~PATHOPT_OBSOLETE;
-			}
+			CalculateVertices(*sb.moveDef, sb.blockPos);
 		}
 	}
 }
@@ -665,6 +663,9 @@ bool CPathEstimator::TestBlock(
  */
 IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& foundPath) const
 {
+	// set some additional information
+	foundPath.pathCost = blockStates.fCost[mGoalBlockIdx] - mGoalHeuristic;
+
 	if (pfDef.needPath) {
 		unsigned int blockIdx = mGoalBlockIdx;
 
@@ -684,9 +685,6 @@ IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const C
 			foundPath.pathGoal = foundPath.path.front();
 		}
 	}
-
-	// set some additional information
-	foundPath.pathCost = blockStates.fCost[mGoalBlockIdx] - mGoalHeuristic;
 
 	return IPath::Ok;
 }

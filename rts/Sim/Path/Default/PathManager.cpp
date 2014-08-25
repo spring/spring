@@ -50,7 +50,7 @@ boost::int64_t CPathManager::Finalize() {
 	{
 		maxResPF = new CPathFinder();
 		medResPE = new CPathEstimator(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
-		lowResPE = new CPathEstimator(maxResPF, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
+		lowResPE = new CPathEstimator(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
 
 		#ifdef SYNCDEBUG
 		// clients may have a non-writable cache directory (which causes
@@ -360,7 +360,7 @@ float3 CPathManager::NextWayPoint(
 		callerPos = maxResPath.path.back();
 	}
 
-	const_cast<CPathFinderDef*>(multiPath->peDef)->synced = synced;
+	assert(multiPath->peDef->synced == synced);
 
 	#define EXTEND_PATH_POINTS(curResPts, nxtResPts, dist) ((!curResPts.empty() && (curResPts.back()).SqDistance2D(callerPos) < Square((dist))) || nxtResPts.size() <= 2)
 	const bool extendMaxResPath = EXTEND_PATH_POINTS(medResPath.path, maxResPath.path, MIN_MAXRES_SEARCH_DISTANCE * SQUARE_SIZE);
@@ -444,7 +444,7 @@ void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int 
 		return;
 
 	medResPE->MapChanged(x1, z1, x2, z2);
-	lowResPE->MapChanged(x1, z1, x2, z2);
+	//lowResPE->MapChanged(x1, z1, x2, z2); //is informed via medResPE
 }
 
 
