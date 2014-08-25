@@ -532,6 +532,7 @@ void CGame::LoadGame(const std::string& mapName, bool threaded)
 	if (!gu->globalQuit) LoadLua();
 	if (!gu->globalQuit) LoadFinalize();
 	if (!gu->globalQuit) InitSkirmishAIs();
+	finishedLoading = true;
 
 	if (!gu->globalQuit && saveFile) {
 		loadscreen->SetLoadMessage("Loading game");
@@ -839,7 +840,6 @@ void CGame::InitSkirmishAIs()
 			skirmishAIHandler.CreateLocalSkirmishAI(*ai);
 		}
 	}
-	finishedLoading = true;
 }
 
 void CGame::LoadFinalize()
@@ -868,7 +868,6 @@ void CGame::LoadFinalize()
 	lastSimFrameTime = lastReadNetTime;
 	lastDrawFrameTime = lastReadNetTime;
 	updateDeltaSeconds = 0.0f;
-
 }
 
 
@@ -926,6 +925,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 			return 0;
 		}
 	}
+
 
 	// try our list of actions
 	for (const Action& action: actionList) {
