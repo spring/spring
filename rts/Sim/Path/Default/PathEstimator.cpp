@@ -90,7 +90,8 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		pathFinders.resize(numThreads);
 	}
 
-	pathFinders[0] = pathFinder;
+	// always use PF for initialization, later PE maybe used
+	pathFinders[0] = new CPathFinder();
 
 	// Not much point in multithreading these...
 	InitBlocks();
@@ -136,6 +137,10 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		WriteFile(cacheFileName, map);
 		loadscreen->SetLoadMessage("PathCosts: written", true);
 	}
+
+	// switch to runtime wanted IPathFinder (maybe PF or PE)
+	delete pathFinders[0];
+	pathFinders[0] = pathFinder;
 
 	pathCache[0] = new CPathCache(nbrOfBlocks.x, nbrOfBlocks.y);
 	pathCache[1] = new CPathCache(nbrOfBlocks.x, nbrOfBlocks.y);
