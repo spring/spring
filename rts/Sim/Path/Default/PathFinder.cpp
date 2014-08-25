@@ -358,7 +358,7 @@ void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath
 	do {                                                                                         \
 		int testsqr = square.x + (dxtest) + (square.y + (dytest)) * gs->mapx;                    \
 		int p2sqr = previous[2].x + previous[2].y * gs->mapx;                                    \
-		if ((blockStates.nodeMask[testsqr] & PATHOPT_BLOCKED == 0) &&         \
+		if (((blockStates.nodeMask[testsqr] & PATHOPT_BLOCKED) == 0) &&         \
 			 blockStates.fCost[testsqr] <= (COSTMOD) * blockStates.fCost[p2sqr]) {             \
 			float3& p2 = foundPath.path[foundPath.path.size() - 2];                              \
 			float3& p1 = foundPath.path.back();                                                  \
