@@ -1555,7 +1555,11 @@ void CGroundMoveType::HandleObjectCollisions()
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
-		HandleStaticObjectCollision(collider, collider, colliderMD, colliderRadius, 0.0f, ZeroVector, true, false, true);
+
+		// blocked square collision (very performance hungry process only every 2nd game frame)
+		if ((collider->id & 1) == (gs->frameNum & 1)) {
+			HandleStaticObjectCollision(owner, owner, owner->moveDef, colliderRadius, 0.0f, ZeroVector, true, false, true);
+		}
 	}
 }
 
@@ -1747,7 +1751,7 @@ void CGroundMoveType::HandleUnitCollisions(
 	const UnitDef* colliderUD,
 	const MoveDef* colliderMD
 ) {
-	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 1.0f);
+	const float searchRadius = colliderSpeed + (colliderRadius * 2.0f);
 
 	const std::vector<CUnit*>& nearUnits = quadField->GetUnitsExact(collider->pos, searchRadius);
 	      std::vector<CUnit*>::const_iterator uit;
@@ -1938,7 +1942,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 	const UnitDef* colliderUD,
 	const MoveDef* colliderMD
 ) {
-	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 1.0f);
+	const float searchRadius = colliderSpeed + (colliderRadius * 2.0f);
 
 	const std::vector<CFeature*>& nearFeatures = quadField->GetFeaturesExact(collider->pos, searchRadius);
 	      std::vector<CFeature*>::const_iterator fit;
