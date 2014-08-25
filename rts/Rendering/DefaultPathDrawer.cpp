@@ -30,6 +30,7 @@
 #include "Rendering/DefaultPathDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/GL/VertexArray.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
@@ -333,48 +334,44 @@ void DefaultPathDrawer::Draw() const {
 
 
 void DefaultPathDrawer::Draw(const CPathFinderDef* pfd) const {
-	glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
+	if (pfd->synced) {
+		glColor4f(1.0f, 1.0f, 0.0f, 1.0f);
+	} else {
+		glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
+	}
 	glSurfaceCircle(pfd->goal, math::sqrt(pfd->sqGoalRadius), 20);
 }
 
 void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 	glColor3f(0.7f, 0.2f, 0.2f);
 	glDisable(GL_TEXTURE_2D);
-	glBegin(GL_LINES);
+	CVertexArray* va = GetVertexArray();
+	va->Initialize();
 
 	for (unsigned int idx = 0; idx < pf->openBlockBuffer.GetSize(); idx++) {
 		const PathNode* os = pf->openBlockBuffer.GetNode(idx);
 		const int2 sqr = os->nodePos;
 		const int square = os->nodeNum;
-
 		float3 p1;
 			p1.x = sqr.x * SQUARE_SIZE;
 			p1.z = sqr.y * SQUARE_SIZE;
 			p1.y = CGround::GetHeightAboveWater(p1.x, p1.z, false) + 15.0f;
+
+		const unsigned int dir = pf->blockStates.nodeMask[square] & PATHOPT_CARDINALS;
+		const int2 obp = sqr - (CPathFinder::GetDirectionVectorsTable2D())[dir];
 		float3 p2;
+			p2.x = obp.x * SQUARE_SIZE;
+			p2.z = obp.y * SQUARE_SIZE;
+			p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 15.0f;
 
 		if (!camera->InView(p1) && !camera->InView(p2))
 			continue;
 
-		const unsigned int dir = pf->blockStates.nodeMask[square] & PATHOPT_CARDINALS;
-		const unsigned int obx = sqr.x - (CPathFinder::GetDirectionVectorsTable2D())[dir].x;
-		const unsigned int obz = sqr.y - (CPathFinder::GetDirectionVectorsTable2D())[dir].y;
-		/*
-		const unsigned int obsquare =  obz * gs->mapx + obx;
-
-		// is always greater 0?
-		if (obsquare >= 0) {
-		*/
-			p2.x = obx * SQUARE_SIZE;
-			p2.z = obz * SQUARE_SIZE;
-			p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 15.0f;
-
-			glVertexf3(p1);
-			glVertexf3(p2);
-		//}
+		va->AddVertex0(p1);
+		va->AddVertex0(p2);
 	}
 
-	glEnd();
+	va->DrawArray0(GL_LINES);
 }
 
 
@@ -406,7 +403,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 		for (int z = 0; z < pe->GetNumBlocks().y; z++) {
 			for (int x = 0; x < pe->GetNumBlocks().x; x++) {
-				const int blockNr = z * pe->GetNumBlocks().x + x;
+				const int blockNr = pe->BlockPosToIdx(int2(x,z));
 
 				float3 p1;
 					p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
@@ -504,14 +501,15 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	}
 
 	{
-		glBegin(GL_LINES);
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+
 		for (unsigned int idx = 0; idx < pe->openBlockBuffer.GetSize(); idx++) {
 			const PathNode* ob = pe->openBlockBuffer.GetNode(idx);
 			const int blockNr = ob->nodeNum;
 
-			const int obx = blockStates.peParentNodePos[ob->nodeNum].x;
-			const int obz = blockStates.peParentNodePos[ob->nodeNum].y;
-			const int obBlockNr = obz * pe->GetNumBlocks().x + obx;
+			const int2 obp = blockStates.peParentNodePos[ob->nodeNum];
+			const int obBlockNr = pe->BlockPosToIdx(obp);
 
 			if (obBlockNr < 0)
 				continue;
@@ -528,10 +526,10 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 			if (!camera->InView(p1) && !camera->InView(p2))
 				continue;
 
-			glVertexf3(p1);
-			glVertexf3(p2);
+			va->AddVertex0(p1);
+			va->AddVertex0(p2);
 		}
-		glEnd();
+		va->DrawArray0(GL_LINES);
 	}
 
 	#if (PE_EXTRA_DEBUG_OVERLAYS == 1)
