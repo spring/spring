@@ -44,12 +44,6 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 	object->mapPos = object->GetMapPos();
 	object->groundBlockPos = object->pos;
 
-	if (object->immobile) {
-		// align position to even-numbered squares
-		object->mapPos.x &= 0xfffffe;
-		object->mapPos.y &= 0xfffffe;
-	}
-
 	const int bx = object->mapPos.x, sx = object->xsize;
 	const int bz = object->mapPos.y, sz = object->zsize;
 	const int minXSqr = bx, maxXSqr = bx + sx;
@@ -75,11 +69,6 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 	object->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING);
 	object->mapPos = object->GetMapPos();
 	object->groundBlockPos = object->pos;
-
-	if (object->immobile) {
-		object->mapPos.x &= 0xfffffe;
-		object->mapPos.y &= 0xfffffe;
-	}
 
 	const int bx = object->mapPos.x, sx = object->xsize;
 	const int bz = object->mapPos.y, sz = object->zsize;
