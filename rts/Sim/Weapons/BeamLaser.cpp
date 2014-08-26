@@ -341,7 +341,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 
 		if (shieldLength < beamLength) {
 			beamLength = shieldLength;
-			tryAgain = hitShield->BeamIntercepted(this, salvoDamageMult);
+			tryAgain = hitShield->BeamIntercepted(this, curPos, salvoDamageMult);
 		} else {
 			tryAgain = false;
 		}
