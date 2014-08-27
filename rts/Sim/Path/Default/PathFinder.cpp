@@ -306,7 +306,7 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 		previous.push_back(int2(-100, -100));
 		previous.push_back(int2(-100, -100));
 
-		while (blockIdx != mStartBlockIdx) {
+		while (true) {
 			float3 pos(square.x * SQUARE_SIZE, 0.0f, square.y * SQUARE_SIZE);
 			pos.y = CMoveMath::yLevel(moveDef, square.x, square.y);
 
@@ -318,6 +318,9 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 
 			previous.pop_front();
 			previous.push_back(square);
+
+			if (blockIdx == mStartBlockIdx)
+				break;
 
 			square -= PF_DIRECTION_VECTORS_2D[blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS];
 			blockIdx = BlockPosToIdx(square);

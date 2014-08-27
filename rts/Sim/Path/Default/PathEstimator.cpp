@@ -671,13 +671,16 @@ IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const C
 	if (pfDef.needPath) {
 		unsigned int blockIdx = mGoalBlockIdx;
 
-		while (blockIdx != mStartBlockIdx) {
+		while (true) {
 			// use offset defined by the block
 			const int2 square = blockStates.peNodeOffsets[blockIdx][moveDef.pathType];
 			float3 pos(square.x * SQUARE_SIZE, 0.0f, square.y * SQUARE_SIZE);
 			pos.y = CMoveMath::yLevel(moveDef, square.x, square.y);
 
 			foundPath.path.push_back(pos);
+
+			if (blockIdx == mStartBlockIdx)
+				break;
 
 			// next step backwards
 			blockIdx = BlockPosToIdx(blockStates.peParentNodePos[blockIdx]);
