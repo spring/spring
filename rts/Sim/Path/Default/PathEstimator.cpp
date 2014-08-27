@@ -149,8 +149,9 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 
 void CPathEstimator::InitBlocks()
 {
-	for (unsigned int idx = 0; idx < blockStates.GetSize(); idx++) {
-		blockStates.peNodeOffsets[idx].resize(moveDefHandler->GetNumMoveDefs());
+	blockStates.peNodeOffsets.resize(moveDefHandler->GetNumMoveDefs());
+	for (unsigned int idx = 0; idx < moveDefHandler->GetNumMoveDefs(); idx++) {
+		blockStates.peNodeOffsets[idx].resize(nbrOfBlocks.x * nbrOfBlocks.y);
 	}
 }
 
@@ -162,8 +163,6 @@ void CPathEstimator::CalcOffsetsAndPathCosts(unsigned int threadNum)
 	streflop::streflop_init<streflop::Simple>();
 
 	if (threadNum > 0) {
-		// FIXME: not running any thread on core 0 is a big perf-hit
-		// Threading::SetAffinity(1 << threadNum);
 		Threading::SetAffinity(~0);
 		Threading::SetThreadName(IntToString(threadNum, "pathhelper%i"));
 	}
@@ -198,7 +197,7 @@ void CPathEstimator::CalculateBlockOffsets(unsigned int blockIdx, unsigned int t
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
 		if (md->udRefCount > 0) {
-			blockStates.peNodeOffsets[blockIdx][md->pathType] = FindOffset(*md, blockPos.x, blockPos.y);
+			blockStates.peNodeOffsets[md->pathType][blockIdx] = FindOffset(*md, blockPos.x, blockPos.y);
 		}
 	}
 }
@@ -318,10 +317,10 @@ void CPathEstimator::CalculateVertex(
 
 
 	// start position within parent block
-	const int2 parentSquare = blockStates.peNodeOffsets[parentBlockNbr][moveDef.pathType];
+	const int2 parentSquare = blockStates.peNodeOffsets[moveDef.pathType][parentBlockNbr];
 
 	// goal position within child block
-	const int2 childSquare = blockStates.peNodeOffsets[childBlockNbr][moveDef.pathType];
+	const int2 childSquare = blockStates.peNodeOffsets[moveDef.pathType][childBlockNbr];
 	const float3 startPos  = SquareToFloat3(parentSquare.x, parentSquare.y);
 	const float3 goalPos   = SquareToFloat3(childSquare.x, childSquare.y);
 
@@ -472,7 +471,7 @@ void CPathEstimator::Update()
 			const SingleBlock sb = consumedBlocks[n];
 			const int blockN = BlockPosToIdx(sb.blockPos);
 			const MoveDef* currBlockMD = sb.moveDef;
-			blockStates.peNodeOffsets[blockN][currBlockMD->pathType] = FindOffset(*currBlockMD, sb.blockPos.x, sb.blockPos.y);
+			blockStates.peNodeOffsets[currBlockMD->pathType][blockN] = FindOffset(*currBlockMD, sb.blockPos.x, sb.blockPos.y);
 		});
 	}
 
@@ -520,7 +519,7 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
 			continue;
 
 		// no, check if the goal is already reached
-		const int2 bSquare = blockStates.peNodeOffsets[ob->nodeNum][moveDef.pathType];
+		const int2 bSquare = blockStates.peNodeOffsets[moveDef.pathType][ob->nodeNum];
 		const int2 gSquare = ob->nodePos * BLOCK_SIZE + goalSqrOffset;
 		if (peDef.IsGoal(bSquare.x, bSquare.y) || peDef.IsGoal(gSquare.x, gSquare.y)) {
 			mGoalBlockIdx = ob->nodeNum;
@@ -604,7 +603,7 @@ bool CPathEstimator::TestBlock(
 	}
 
 	// check if the block is out of constraints
-	const int2 square = blockStates.peNodeOffsets[blockIdx][moveDef.pathType];
+	const int2 square = blockStates.peNodeOffsets[moveDef.pathType][blockIdx];
 	if (!peDef.WithinConstraints(square.x, square.y)) {
 		blockStates.nodeMask[blockIdx] |= PATHOPT_BLOCKED;
 		dirtyBlocks.push_back(blockIdx);
@@ -673,7 +672,7 @@ IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const C
 
 		while (true) {
 			// use offset defined by the block
-			const int2 square = blockStates.peNodeOffsets[blockIdx][moveDef.pathType];
+			const int2 square = blockStates.peNodeOffsets[moveDef.pathType][blockIdx];
 			float3 pos(square.x * SQUARE_SIZE, 0.0f, square.y * SQUARE_SIZE);
 			pos.y = CMoveMath::yLevel(moveDef, square.x, square.y);
 
@@ -736,19 +735,19 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 		if (buffer.size() < 4)
 			return false;
 
-		unsigned filehash = *((unsigned*)&buffer[0]);
+		unsigned pos = 0;
+		unsigned filehash = *((unsigned*)&buffer[pos]);
+		pos += sizeof(unsigned);
 		if (filehash != hash)
 			return false;
 
-		unsigned pos = sizeof(unsigned);
-
 		// Read block-center-offset data.
-		const unsigned blockSize = moveDefHandler->GetNumMoveDefs() * sizeof(int2);
-		if (buffer.size() < pos + blockSize * blockStates.GetSize())
+		const unsigned blockSize = blockStates.GetSize() * sizeof(int2);
+		if (buffer.size() < pos + blockSize * moveDefHandler->GetNumMoveDefs())
 			return false;
 
-		for (int blocknr = 0; blocknr < blockStates.GetSize(); blocknr++) {
-			std::memcpy(&blockStates.peNodeOffsets[blocknr][0], &buffer[pos], blockSize);
+		for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType) {
+			std::memcpy(&blockStates.peNodeOffsets[pathType][0], &buffer[pos], blockSize);
 			pos += blockSize;
 		}
 
@@ -794,8 +793,8 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 	zipWriteInFileInZip(file, (void*) &hash, 4);
 
 	// Write block-center-offsets.
-	for (int blocknr = 0; blocknr < blockStates.GetSize(); blocknr++)
-		zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[blocknr][0], moveDefHandler->GetNumMoveDefs() * sizeof(int2));
+	for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType)
+		zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[pathType][0], blockStates.GetSize() * sizeof(int2));
 
 	// Write vertices.
 	zipWriteInFileInZip(file, &vertexCosts[0], vertexCosts.size() * sizeof(float));

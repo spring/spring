@@ -154,7 +154,7 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 {
 	int2 square = mStartBlock;
 	if (isEstimator) {
-		square = blockStates.peNodeOffsets[mStartBlockIdx][moveDef.pathType];
+		square = blockStates.peNodeOffsets[moveDef.pathType][mStartBlockIdx];
 	}
 	const bool isStartGoal = pfDef.IsGoal(square.x, square.y);
 

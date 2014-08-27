@@ -82,7 +82,7 @@ struct PathNodeStateBuffer {
 		// Note: Full resolution buffer does not need those!
 		if (bufRes != mapRes) {
 			peParentNodePos.resize(br.x * br.y, int2(-1, -1));
-			peNodeOffsets.resize(br.x * br.y);
+			//peNodeOffsets.resize(); is done in PathEstimator
 		}
 
 		maxCosts[NODE_COST_F] = 0.0f;
@@ -189,9 +189,10 @@ public:
 	/// needed for the PE to back-track path to goal
 	std::vector<int2> peParentNodePos;
 
-	/// for the PE, each node (block) maintains the
+	/// for the PE, maintains an array of the
 	/// best accessible offset (from its own center
-	/// position) with respect to each movetype
+	/// position)
+	/// peNodeOffsets[pathType][blockIdx]
 	std::vector< std::vector<int2> > peNodeOffsets;
 
 private:
