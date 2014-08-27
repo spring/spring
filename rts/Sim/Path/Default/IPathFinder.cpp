@@ -200,9 +200,6 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	if ((mGoalBlockIdx == mStartBlockIdx) && (!isStartGoal || pfDef.startInGoalRadius)) {
 		return IPath::CantGetCloser;
 	}
-	if (!isEstimator && mGoalBlockIdx == 0) { //FIXME do for PE too?
-		return IPath::CantGetCloser;
-	}
 
 	return result;
 }
