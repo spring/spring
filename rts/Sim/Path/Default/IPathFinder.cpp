@@ -122,7 +122,7 @@ IPath::SearchResult IPathFinder::GetPath(
 
 	// If search was successful, generate new path
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-		result = FinishSearch(moveDef, pfDef, path);
+		FinishSearch(moveDef, pfDef, path);
 
 		// Save to cache
 		if (result == IPath::Ok) {
