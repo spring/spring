@@ -336,7 +336,7 @@ void CPathEstimator::CalculateVertex(
 	//
 	// blocked goal positions are always early-outs (no searching needed)
 	const bool strtBlocked = ((CMoveMath::IsBlocked(moveDef, startPos, nullptr) & CMoveMath::BLOCK_STRUCTURE) != 0);
-	const bool goalBlocked = pfDef.GoalIsBlocked(moveDef, CMoveMath::BLOCK_STRUCTURE, nullptr);
+	const bool goalBlocked = pfDef.IsGoalBlocked(moveDef, CMoveMath::BLOCK_STRUCTURE, nullptr);
 	if (strtBlocked || goalBlocked) {
 		vertexCosts[vertexNbr] = PATHCOST_INFINITY;
 		return;
@@ -520,12 +520,9 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
 			continue;
 
 		// no, check if the goal is already reached
-		const unsigned int xBSquare = blockStates.peNodeOffsets[ob->nodeNum][moveDef.pathType].x;
-		const unsigned int zBSquare = blockStates.peNodeOffsets[ob->nodeNum][moveDef.pathType].y;
-		const unsigned int xGSquare = ob->nodePos.x * BLOCK_SIZE + goalSqrOffset.x;
-		const unsigned int zGSquare = ob->nodePos.y * BLOCK_SIZE + goalSqrOffset.y;
-
-		if (peDef.IsGoal(xBSquare, zBSquare) || peDef.IsGoal(xGSquare, zGSquare)) {
+		const int2 bSquare = blockStates.peNodeOffsets[ob->nodeNum][moveDef.pathType];
+		const int2 gSquare = ob->nodePos * BLOCK_SIZE + goalSqrOffset;
+		if (peDef.IsGoal(bSquare.x, bSquare.y) || peDef.IsGoal(gSquare.x, gSquare.y)) {
 			mGoalBlockIdx = ob->nodeNum;
 			mGoalHeuristic = 0.0f;
 			foundGoal = true;

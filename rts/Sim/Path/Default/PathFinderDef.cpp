@@ -7,6 +7,7 @@
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 
+
 CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance)
 : goal(goalCenter)
 , sqGoalRadius(goalRadius * goalRadius)
@@ -40,7 +41,7 @@ float CPathFinderDef::Heuristic(unsigned int xSquare, unsigned int zSquare) cons
 
 // returns if the goal is inaccessable: this is
 // true if the goal area is "small" and blocked
-bool CPathFinderDef::GoalIsBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& blockMask, const CSolidObject* owner) const {
+bool CPathFinderDef::IsGoalBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& blockMask, const CSolidObject* owner) const {
 	const float r0 = SQUARE_SIZE * SQUARE_SIZE * 4.0f; // same as (SQUARE_SIZE*2)^2
 	const float r1 = ((moveDef.xsize * SQUARE_SIZE) >> 1) * ((moveDef.zsize * SQUARE_SIZE) >> 1) * 1.5f;
 
@@ -98,19 +99,19 @@ CRectangularSearchConstraint::CRectangularSearchConstraint(
 	unsigned int blockSize
 ): CPathFinderDef(goalPos, 0.0f, startPos.SqDistance2D(goalPos))
 {
-	const unsigned int parentBlockX = startPos.x / (SQUARE_SIZE * blockSize);
-	const unsigned int parentBlockZ = startPos.z / (SQUARE_SIZE * blockSize);
-	const unsigned int  childBlockX =  goalPos.x / (SQUARE_SIZE * blockSize);
-	const unsigned int  childBlockZ =  goalPos.z / (SQUARE_SIZE * blockSize);
+	const unsigned int startBlockX = startPos.x / SQUARE_SIZE;
+	const unsigned int startBlockZ = startPos.z / SQUARE_SIZE;
+	const unsigned int  goalBlockX =  goalPos.x / SQUARE_SIZE;
+	const unsigned int  goalBlockZ =  goalPos.z / SQUARE_SIZE;
 
-	parentBlockRect.x1 = parentBlockX * blockSize;
-	parentBlockRect.z1 = parentBlockZ * blockSize;
-	parentBlockRect.x2 = parentBlockX * blockSize + blockSize;
-	parentBlockRect.z2 = parentBlockZ * blockSize + blockSize;
+	startBlockRect.x1 = startBlockX;
+	startBlockRect.z1 = startBlockZ;
+	startBlockRect.x2 = startBlockX + blockSize;
+	startBlockRect.z2 = startBlockZ + blockSize;
 
-	childBlockRect.x1 = childBlockX * blockSize;
-	childBlockRect.z1 = childBlockZ * blockSize;
-	childBlockRect.x2 = childBlockX * blockSize + blockSize;
-	childBlockRect.z2 = childBlockZ * blockSize + blockSize;
+	goalBlockRect.x1 = goalBlockX;
+	goalBlockRect.z1 = goalBlockZ;
+	goalBlockRect.x2 = goalBlockX + blockSize;
+	goalBlockRect.z2 = goalBlockZ + blockSize;
 }
 

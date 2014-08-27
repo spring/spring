@@ -19,6 +19,9 @@ template<typename t> struct type2 {
 	type2<t> operator + (const type2<t>& v) const { return (type2<t>(x + v.x, y + v.y)); }
 	type2<t> operator - (const type2<t>& v) const { return (type2<t>(x - v.x, y - v.y)); }
 	type2<t> operator / (const type2<t>& v) const { return (type2<t>(x / v.x, y / v.y)); }
+	type2<t> operator / (const t& i) const        { return (type2<t>(x / i  , y / i  )); }
+	type2<t> operator * (const type2<t>& v) const { return (type2<t>(x * v.x, y * v.y)); }
+	type2<t> operator * (const t& i) const        { return (type2<t>(x * i  , y * i  )); }
 
 	type2<t>& operator += (const type2<t>& v) { x += v.x; y += v.y; return *this; }
 	type2<t>& operator -= (const type2<t>& v) { x -= v.x; y -= v.y; return *this; }

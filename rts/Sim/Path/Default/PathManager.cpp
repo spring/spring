@@ -486,7 +486,8 @@ void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int 
 		return;
 
 	medResPE->MapChanged(x1, z1, x2, z2);
-	//lowResPE->MapChanged(x1, z1, x2, z2); //is informed via medResPE
+	if (medResPE->nextPathEstimator == nullptr)
+		lowResPE->MapChanged(x1, z1, x2, z2); // is informed via medResPE
 }
 
 

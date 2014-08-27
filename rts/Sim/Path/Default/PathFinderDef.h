@@ -19,7 +19,7 @@ public:
 
 	bool IsGoal(unsigned int xSquare, unsigned int zSquare) const;
 	float Heuristic(unsigned int xSquare, unsigned int zSquare) const;
-	bool GoalIsBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& blockMask, const CSolidObject* owner) const;
+	bool IsGoalBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& blockMask, const CSolidObject* owner) const;
 	int2 GoalSquareOffset(unsigned int blockSize) const;
 
 public:
@@ -81,14 +81,14 @@ public:
 	);
 
 	bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const {
-		if (parentBlockRect.Inside(int2(xSquare, zSquare))) return true;
-		if ( childBlockRect.Inside(int2(xSquare, zSquare))) return true;
+		if (startBlockRect.Inside(int2(xSquare, zSquare))) return true;
+		if ( goalBlockRect.Inside(int2(xSquare, zSquare))) return true;
 		return (constraintDisabled);
 	}
 
 private:
-	SRectangle parentBlockRect;
-	SRectangle  childBlockRect;
+	SRectangle startBlockRect;
+	SRectangle  goalBlockRect;
 };
 
 #endif
