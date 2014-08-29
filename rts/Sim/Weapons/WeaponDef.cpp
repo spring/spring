@@ -50,7 +50,7 @@ WEAPONTAG(bool, impactOnly).defaultValue(false);
 WEAPONTAG(bool, noSelfDamage).defaultValue(false);
 WEAPONTAG(bool, noExplode).defaultValue(false);
 WEAPONTAG(bool, selfExplode).externalName("burnblow").defaultValue(false);
-WEAPONTAG(float, damageAreaOfEffect).externalName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
+WEAPONTAG(float, damageAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
 WEAPONTAG(float, edgeEffectiveness).defaultValue(0.0f).maximumValue(0.999f);
 WEAPONTAG(float, collisionSize).defaultValue(0.05f);
 
@@ -75,7 +75,7 @@ WEAPONTAG(float, impulseFactor, damages.impulseFactor).defaultValue(1.0f);
 WEAPONTAG(float, impulseBoost, damages.impulseBoost).defaultValue(0.0f);
 WEAPONTAG(float, craterMult, damages.craterMult).fallbackName("impulseFactor").defaultValue(1.0f);
 WEAPONTAG(float, craterBoost, damages.craterBoost).defaultValue(0.0f);
-WEAPONTAG(float, craterAreaOfEffect).externalName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
+WEAPONTAG(float, craterAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
 
 // Water
 WEAPONTAG(bool, waterweapon).defaultValue(false);
