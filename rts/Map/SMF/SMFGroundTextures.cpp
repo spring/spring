@@ -62,14 +62,18 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	CFileHandler* ifs = file.GetFileHandler();
 	const SMFHeader& header = file.GetHeader();
 
-	assert(gs->mapx == header.mapx);
-	assert(gs->mapy == header.mapy);
+	if ((gs->mapx != header.mapx) || (gs->mapy != header.mapy)) {
+		throw content_error("Error loading map: size from header doesn't match map size.");
+	}
 
 	ifs->Seek(header.tilesPtr);
 
 	MapTileHeader tileHeader;
 	READPTR_MAPTILEHEADER(tileHeader, ifs);
 
+	if (smfMap->tileCount <= 0) {
+		throw content_error("Error loading map: count of tiles is 0.");
+	}
 	tileMap.resize(smfMap->tileCount);
 	tiles.resize(tileHeader.numTiles * SMALL_TILE_SIZE);
 	squares.resize(smfMap->numBigTexX * smfMap->numBigTexY);
