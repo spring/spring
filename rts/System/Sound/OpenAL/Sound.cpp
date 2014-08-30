@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <alc.h>
+#include <alext.h> //needed for ALC_ALL_DEVICES_SPECIFIER on some special *nix
 #include <boost/cstdint.hpp>
 #include <boost/thread/thread.hpp>
 
