@@ -85,6 +85,7 @@ CSound::CSound()
 CSound::~CSound()
 {
 	soundThreadQuit = true;
+	configHandler->RemoveObserver(this);
 
 	LOG_L(L_INFO, "[%s][1] soundThread=%p", __FUNCTION__, soundThread);
 

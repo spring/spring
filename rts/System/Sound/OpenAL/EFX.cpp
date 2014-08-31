@@ -186,6 +186,7 @@ CEFX::CEFX(ALCdevice* device)
 
 CEFX::~CEFX()
 {
+	configHandler->RemoveObserver(this);
 	if (supported) {
 		alAuxiliaryEffectSloti(sfxSlot, AL_EFFECTSLOT_EFFECT, AL_EFFECT_NULL);
 		alDeleteFilters(1, &sfxFilter);

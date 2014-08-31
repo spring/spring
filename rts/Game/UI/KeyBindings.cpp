@@ -285,6 +285,7 @@ CKeyBindings::CKeyBindings()
 
 CKeyBindings::~CKeyBindings()
 {
+	configHandler->RemoveObserver(this);
 }
 
 
