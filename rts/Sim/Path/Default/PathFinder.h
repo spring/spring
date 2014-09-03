@@ -92,6 +92,15 @@ private:
 		std::deque<int2>& previous,
 		int2 square
 	) const;
+
+	inline void TryFix3Points(
+		const int2 dp,
+		const MoveDef& moveDef,
+		IPath::Path& foundPath,
+		float3& nextPoint,
+		std::deque<int2>& previous,
+		const int2 square
+	) const;
 };
 
 #endif // PATH_FINDER_H

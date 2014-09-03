@@ -353,42 +353,46 @@ static inline void FixupPath3Pts(const MoveDef& moveDef, float3& p1, float3& p2,
 }
 
 
+void CPathFinder::TryFix3Points(const int2 dp, const MoveDef& moveDef, IPath::Path& foundPath, float3& nextPoint, std::deque<int2>& previous, const int2 square) const
+{
+	static const int COSTMOD = 1.39f; // (math::sqrt(2) + 1) / math::sqrt(3)
+	const int2 p = square + dp;
+	const int tstsqr = BlockPosToIdx(p);
+	const int prvsqr = BlockPosToIdx(previous[2]);
+	if (
+		   (blockStates.nodeMask[tstsqr] & PATHOPT_BLOCKED)
+		&& (blockStates.fCost[tstsqr] <= COSTMOD * blockStates.fCost[prvsqr])
+	) {
+		float3& p2 = foundPath.path[foundPath.path.size() - 2];
+		float3& p1 = foundPath.path.back();
+		float3& p0 = nextPoint;
+		FixupPath3Pts(moveDef, p0, p1, p2, p);
+	}
+}
+
+
 void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath, float3& nextPoint,
 	std::deque<int2>& previous, int2 square) const
 {
-#define COSTMOD 1.39f	// (math::sqrt(2) + 1)/math::sqrt(3)
-#define TRYFIX3POINTS(dxtest, dytest)                                                            \
-	do {                                                                                         \
-		int testsqr = square.x + (dxtest) + (square.y + (dytest)) * gs->mapx;                    \
-		int p2sqr = previous[2].x + previous[2].y * gs->mapx;                                    \
-		if (((blockStates.nodeMask[testsqr] & PATHOPT_BLOCKED) == 0) &&         \
-			 blockStates.fCost[testsqr] <= (COSTMOD) * blockStates.fCost[p2sqr]) {             \
-			float3& p2 = foundPath.path[foundPath.path.size() - 2];                              \
-			float3& p1 = foundPath.path.back();                                                  \
-			float3& p0 = nextPoint;                                                              \
-			FixupPath3Pts(moveDef, p0, p1, p2, int2(square.x + (dxtest), square.y + (dytest))); \
-		}                                                                                        \
-	} while (false)
-
 	if (previous[2].x == square.x) {
 		if (previous[2].y == square.y-2) {
 			if (previous[1].x == square.x-2 && previous[1].y == square.y-4) {
 				LOG_L(L_DEBUG, "case N, NW");
-				TRYFIX3POINTS(-2, -2);
+				TryFix3Points(int2(-2, -2), moveDef, foundPath, nextPoint, previous, square);
 			}
 			else if (previous[1].x == square.x+2 && previous[1].y == square.y-4) {
 				LOG_L(L_DEBUG, "case N, NE");
-				TRYFIX3POINTS(2, -2);
+				TryFix3Points(int2(2, -2), moveDef, foundPath, nextPoint, previous, square);
 			}
 		}
 		else if (previous[2].y == square.y+2) {
 			if (previous[1].x == square.x+2 && previous[1].y == square.y+4) {
 				LOG_L(L_DEBUG, "case S, SE");
-				TRYFIX3POINTS(2, 2);
+				TryFix3Points(int2(2, 2), moveDef, foundPath, nextPoint, previous, square);
 			}
 			else if (previous[1].x == square.x-2 && previous[1].y == square.y+4) {
 				LOG_L(L_DEBUG, "case S, SW");
-				TRYFIX3POINTS(-2, 2);
+				TryFix3Points(int2(-2, 2), moveDef, foundPath, nextPoint, previous, square);
 			}
 		}
 	}
@@ -396,31 +400,31 @@ void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath
 		if (previous[2].y == square.y) {
 			if (previous[1].x == square.x-4 && previous[1].y == square.y-2) {
 				LOG_L(L_DEBUG, "case W, NW");
-				TRYFIX3POINTS(-2, -2);
+				TryFix3Points(int2(-2, -2), moveDef, foundPath, nextPoint, previous, square);
 			}
 			else if (previous[1].x == square.x-4 && previous[1].y == square.y+2) {
 				LOG_L(L_DEBUG, "case W, SW");
-				TRYFIX3POINTS(-2, 2);
+				TryFix3Points(int2(-2, 2), moveDef, foundPath, nextPoint, previous, square);
 			}
 		}
 		else if (previous[2].y == square.y-2) {
 			if (previous[1].x == square.x-2 && previous[1].y == square.y-4) {
 				LOG_L(L_DEBUG, "case NW, N");
-				TRYFIX3POINTS(0, -2);
+				TryFix3Points(int2(0, -2), moveDef, foundPath, nextPoint, previous, square);
 			}
 			else if (previous[1].x == square.x-4 && previous[1].y == square.y-2) {
 				LOG_L(L_DEBUG, "case NW, W");
-				TRYFIX3POINTS(-2, 0);
+				TryFix3Points(int2(-2, 0), moveDef, foundPath, nextPoint, previous, square);
 			}
 		}
 		else if (previous[2].y == square.y+2) {
 			if (previous[1].x == square.x-2 && previous[1].y == square.y+4) {
 				LOG_L(L_DEBUG, "case SW, S");
-				TRYFIX3POINTS(0, 2);
+				TryFix3Points(int2(0, 2), moveDef, foundPath, nextPoint, previous, square);
 			}
 			else if (previous[1].x == square.x-4 && previous[1].y == square.y+2) {
 				LOG_L(L_DEBUG, "case SW, W");
-				TRYFIX3POINTS(-2, 0);
+				TryFix3Points(int2(-2, 0), moveDef, foundPath, nextPoint, previous, square);
 			}
 		}
 	}
@@ -428,35 +432,33 @@ void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath
 		if (previous[2].y == square.y) {
 			if (previous[1].x == square.x+4 && previous[1].y == square.y-2) {
 				LOG_L(L_DEBUG, "case NE, E");
-				TRYFIX3POINTS(2, -2);
+				TryFix3Points(int2(2, -2), moveDef, foundPath, nextPoint, previous, square);
 			}
 			else if (previous[1].x == square.x+4 && previous[1].y == square.y+2) {
 				LOG_L(L_DEBUG, "case SE, E");
-				TRYFIX3POINTS(2, 2);
+				TryFix3Points(int2(2, 2), moveDef, foundPath, nextPoint, previous, square);
 			}
 		}
 		if (previous[2].y == square.y+2) {
 			if (previous[1].x == square.x+2 && previous[1].y == square.y+4) {
 				LOG_L(L_DEBUG, "case SE, S");
-				TRYFIX3POINTS(0, 2);
+				TryFix3Points(int2(0, 2), moveDef, foundPath, nextPoint, previous, square);
 			}
 			else if (previous[1].x == square.x+4 && previous[1].y == square.y+2) {
 				LOG_L(L_DEBUG, "case SE, E");
-				TRYFIX3POINTS(2, 0);
+				TryFix3Points(int2(2, 0), moveDef, foundPath, nextPoint, previous, square);
 			}
 
 		}
 		else if (previous[2].y == square.y-2) {
 			if (previous[1].x == square.x+2 && previous[1].y == square.y-4) {
 				LOG_L(L_DEBUG, "case NE, N");
-				TRYFIX3POINTS(0, -2);
+				TryFix3Points(int2(0, -2), moveDef, foundPath, nextPoint, previous, square);
 			}
 			else if (previous[1].x == square.x+4 && previous[1].y == square.y-2) {
 				LOG_L(L_DEBUG, "case NE, E");
-				TRYFIX3POINTS(0, -2);
+				TryFix3Points(int2(0, -2), moveDef, foundPath, nextPoint, previous, square);
 			}
 		}
 	}
-#undef TRYFIX3POINTS
-#undef COSTMOD
 }
