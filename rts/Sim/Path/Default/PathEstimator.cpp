@@ -597,8 +597,14 @@ bool CPathEstimator::TestBlock(
 		GetBlockVertexOffset(pathDir, nbrOfBlocks.x);
 	assert((unsigned)vertexIdx < vertexCosts.size());
 	if (vertexCosts[vertexIdx] >= PATHCOST_INFINITY) {
-		blockStates.nodeMask[blockIdx] |= PATHOPT_BLOCKED;
-		dirtyBlocks.push_back(blockIdx);
+		// warning:
+		// we cannot naively set PATHOPT_BLOCKED here
+		// cause vertexCosts[] depends on the direction and nodeMask doesn't
+		// so we would have to save the direction via PATHOPT_LEFT etc. in the nodeMask
+		// but that's complicated and not worth it.
+		// Performance gain is low, cause we would just save the vertexCosts[] lookup
+		//blockStates.nodeMask[blockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_BLOCKED);
+		//dirtyBlocks.push_back(blockIdx);
 		return false;
 	}
 
