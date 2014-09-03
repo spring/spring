@@ -14,7 +14,8 @@ CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float
 , constraintDisabled(false)
 , testMobile(true)
 , needPath(true)
-, exactPath(false)
+, exactPath(true)
+, dirIndependent(false)
 , synced(true)
 {
 	goalSquareX = goalCenter.x / SQUARE_SIZE;

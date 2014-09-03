@@ -35,6 +35,7 @@ public:
 	bool testMobile;
 	bool needPath;
 	bool exactPath;
+	bool dirIndependent;
 	bool synced;
 
 	unsigned int goalSquareX;

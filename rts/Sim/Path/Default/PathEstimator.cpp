@@ -349,6 +349,7 @@ void CPathEstimator::CalculateVertex(
 	pfDef.testMobile = false;
 	pfDef.needPath   = false;
 	pfDef.exactPath  = true;
+	pfDef.dirIndependent = true;
 	IPath::Path path;
 	IPath::SearchResult result = pathFinders[threadNum]->GetPath(moveDef, pfDef, nullptr, startPos, path, MAX_SEARCHED_NODES_PF >> 2);
 
@@ -689,8 +690,7 @@ IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const C
 				break;
 
 			// next step backwards
-			auto pathOptDir = blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS;
-			auto pathDir  = PathOpt2PathDir(pathOptDir);
+			auto pathDir  = PathOpt2PathDir(blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS);
 			int2 blockPos = BlockIdxToPos(blockIdx) - PE_DIRECTION_VECTORS[pathDir];
 			blockIdx = BlockPosToIdx(blockPos);
 		}

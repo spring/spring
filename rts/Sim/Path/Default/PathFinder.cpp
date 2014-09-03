@@ -12,7 +12,7 @@
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "Sim/Misc/GeometricObjects.h"
+
 
 #define PATHDEBUG 0
 
@@ -132,7 +132,8 @@ void CPathFinder::TestNeighborSquares(
 		const float posSpeedMod = CMoveMath::GetPosSpeedMod(moveDef, ngbSquareCoors.x, ngbSquareCoors.y);
 		const float dirSpeedMod = CMoveMath::GetPosSpeedMod(moveDef, ngbSquareCoors.x, ngbSquareCoors.y, PF_DIRECTION_VECTORS_3D[ PathDir2PathOpt(dir) ]);
 		ngbPosSpeedMod[dir] = posSpeedMod;
-		ngbSpeedMod[dir] = std::min(posSpeedMod, dirSpeedMod);
+		// hint: use posSpeedMod for PE! cause it assumes path costs are bidirectional and so it only saves one `cost` for left & right movement
+		ngbSpeedMod[dir] = (pfDef.dirIndependent) ? posSpeedMod : std::min(posSpeedMod, dirSpeedMod);
 	}
 
 	// first test squares along the cardinal directions
