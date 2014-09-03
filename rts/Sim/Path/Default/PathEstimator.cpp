@@ -626,11 +626,13 @@ bool CPathEstimator::TestBlock(
 	const float hCost = peDef.Heuristic(square.x, square.y);
 	const float fCost = gCost + hCost;
 
+	// already in the open set?
 	if (blockStates.nodeMask[blockIdx] & PATHOPT_OPEN) {
-		// already in the open set
+		// check if new found path is better or worse than the old one
 		if (blockStates.fCost[blockIdx] <= fCost)
 			return true;
 
+		// no, clear old path data
 		blockStates.nodeMask[blockIdx] &= ~PATHOPT_CARDINALS;
 	}
 
@@ -657,8 +659,7 @@ bool CPathEstimator::TestBlock(
 	// mark this block as open
 	blockStates.fCost[blockIdx] = fCost;
 	blockStates.gCost[blockIdx] = gCost;
-	blockStates.nodeMask[blockIdx] |= (pathDir | PATHOPT_OPEN);
-	blockStates.peParentNodePos[blockIdx] = parentOpenBlock->nodePos;
+	blockStates.nodeMask[blockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_OPEN);
 
 	dirtyBlocks.push_back(blockIdx);
 	return true;
@@ -688,7 +689,10 @@ IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const C
 				break;
 
 			// next step backwards
-			blockIdx = BlockPosToIdx(blockStates.peParentNodePos[blockIdx]);
+			auto pathOptDir = blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS;
+			auto pathDir  = PathOpt2PathDir(pathOptDir);
+			int2 blockPos = BlockIdxToPos(blockIdx) - PE_DIRECTION_VECTORS[pathDir];
+			blockIdx = BlockPosToIdx(blockPos);
 		}
 
 		if (!foundPath.path.empty()) {

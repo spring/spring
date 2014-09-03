@@ -495,9 +495,9 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 
 	if (pe == pm->medResPE) {
-		glColor3f(0.2f, 0.7f, 0.2f);
+		glColor3f(0.7f, 0.2f, 0.7f);
 	} else {
-		glColor3f(0.2f, 0.2f, 0.7f);
+		glColor3f(0.2f, 0.7f, 0.7f);
 	}
 
 	{
@@ -508,7 +508,9 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 			const PathNode* ob = pe->openBlockBuffer.GetNode(idx);
 			const int blockNr = ob->nodeNum;
 
-			const int2 obp = blockStates.peParentNodePos[ob->nodeNum];
+			auto pathOptDir = blockStates.nodeMask[blockNr] & PATHOPT_CARDINALS;
+			auto pathDir = PathOpt2PathDir(pathOptDir);
+			const int2 obp = pe->BlockIdxToPos(blockNr) - pe->PE_DIRECTION_VECTORS[pathDir];
 			const int obBlockNr = pe->BlockPosToIdx(obp);
 
 			if (obBlockNr < 0)

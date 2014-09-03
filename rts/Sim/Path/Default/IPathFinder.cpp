@@ -167,11 +167,7 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	ResetSearch();
 
 	// mark and store the start-block
-	if (isEstimator) { //FIXME which of them is better to be used for both?
-		blockStates.nodeMask[mStartBlockIdx] |= PATHOPT_OPEN;
-	} else {
-		blockStates.nodeMask[mStartBlockIdx]  = PATHOPT_OPEN;
-	}
+	blockStates.nodeMask[mStartBlockIdx] = PATHOPT_OPEN;
 	blockStates.fCost[mStartBlockIdx] = 0.0f;
 	blockStates.gCost[mStartBlockIdx] = 0.0f;
 	blockStates.SetMaxCost(NODE_COST_F, 0.0f);

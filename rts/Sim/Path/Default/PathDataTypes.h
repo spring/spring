@@ -81,7 +81,6 @@ struct PathNodeStateBuffer {
 
 		// Note: Full resolution buffer does not need those!
 		if (bufRes != mapRes) {
-			peParentNodePos.resize(br.x * br.y, int2(-1, -1));
 			//peNodeOffsets.resize(); is done in PathEstimator
 		}
 
@@ -96,8 +95,7 @@ struct PathNodeStateBuffer {
 		//assert(idx>=0 && idx<fCost.size());
 		fCost[idx] = PATHCOST_INFINITY;
 		gCost[idx] = PATHCOST_INFINITY;
-		nodeMask[idx] &= PATHOPT_OBSOLETE;
-		if (!peParentNodePos.empty()) peParentNodePos[idx] = int2(-1, -1);
+		nodeMask[idx] = PATHOPT_OBSOLETE;
 	}
 	
 
@@ -110,7 +108,6 @@ struct PathNodeStateBuffer {
 		}
 
 		memFootPrint += (nodeMask.size() * sizeof(unsigned int));
-		memFootPrint += (peParentNodePos.size() * sizeof(int2));
 		memFootPrint += ((fCost.size() + gCost.size()) * sizeof(float));
 		memFootPrint += ((extraCostSynced.size() + extraCostUnsynced.size()) * sizeof(float));
 
@@ -185,9 +182,7 @@ public:
 
 	/// bitmask of PATHOPT_{OPEN, ..., OBSOLETE} flags
 	std::vector<boost::uint8_t> nodeMask;
-
-	/// needed for the PE to back-track path to goal
-	std::vector<int2> peParentNodePos;
+	static_assert(PATHOPT_SIZE <= std::numeric_limits<boost::uint8_t>::max(), "nodeMask basic type to small to hold bitmask of PATHOPT");
 
 	/// for the PE, maintains an array of the
 	/// best accessible offset (from its own center
