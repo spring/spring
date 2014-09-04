@@ -297,8 +297,8 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 		std::deque<int2> previous;
 
 		// make sure we don't match anything
-		previous.push_back(int2(-100, -100));
-		previous.push_back(int2(-100, -100));
+		previous.push_back(square);
+		previous.push_back(square);
 
 		while (true) {
 			float3 pos(square.x * SQUARE_SIZE, 0.0f, square.y * SQUARE_SIZE);
