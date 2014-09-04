@@ -55,6 +55,12 @@ static const unsigned int PATHDIR_CARDINALS[4] = {PATHDIR_LEFT, PATHDIR_RIGHT, P
 static const unsigned int PATH_DIRECTION_VERTICES = PATH_DIRECTIONS >> 1;
 static const unsigned int PATH_NODE_SPACING = 2;
 
+// note: because the spacing between nodes is 2 (not 1) we
+// must also make sure not to skip across any intermediate
+// impassable squares (!) but without reducing the spacing
+// factor which would drop performance four-fold --> messy
+static_assert(PATH_NODE_SPACING == 2, "");
+
 // PF and PE flags (used in nodeMask[])
 enum {
 	PATHOPT_LEFT      =   1, // +x

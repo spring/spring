@@ -93,13 +93,12 @@ private:
 		int2 square
 	) const;
 
-	inline void TryFix3Points(
-		const int2 dp,
+	inline void SmoothMidWaypoint(
+		const int2 testsqr,
+		const int2 prvsqr,
 		const MoveDef& moveDef,
 		IPath::Path& foundPath,
-		float3& nextPoint,
-		std::deque<int2>& previous,
-		const int2 square
+		float3& nextPoint
 	) const;
 };
 

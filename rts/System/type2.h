@@ -25,6 +25,8 @@ template<typename t> struct type2 {
 
 	type2<t>& operator += (const type2<t>& v) { x += v.x; y += v.y; return *this; }
 	type2<t>& operator -= (const type2<t>& v) { x -= v.x; y -= v.y; return *this; }
+	type2<t>& operator *= (const t& i) { x *= i; y *= i; return *this; }
+	type2<t>& operator /= (const t& i) { x /= i; y /= i; return *this; }
 
 	t distance(const type2<t>& f) const {
 		const t dx = x - f.x;

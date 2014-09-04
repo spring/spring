@@ -12,6 +12,7 @@
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
+#include "Sim/Misc/GeometricObjects.h"
 
 
 #define PATHDEBUG 0
@@ -111,13 +112,6 @@ void CPathFinder::TestNeighborSquares(
 	bool ngbInSearchRadius[PATH_DIRECTIONS];
 	float ngbPosSpeedMod[PATH_DIRECTIONS];
 	float ngbSpeedMod[PATH_DIRECTIONS];
-
-	// note: because the spacing between nodes is 2 (not 1) we
-	// must also make sure not to skip across any intermediate
-	// impassable squares (!) but without reducing the spacing
-	// factor which would drop performance four-fold --> messy
-	//
-	assert(PATH_NODE_SPACING == 2);
 
 	// precompute structure-blocked and within-constraint states for all neighbors
 	for (unsigned int dir = 0; dir < PATH_DIRECTIONS; dir++) {
@@ -339,127 +333,71 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 }
 
 /** Helper function for AdjustFoundPath */
-static inline void FixupPath3Pts(const MoveDef& moveDef, float3& p1, float3& p2, float3& p3, int2 sqr)
+static inline void FixupPath3Pts(const MoveDef& moveDef, const float3& p1, float3& p2, const float3& p3)
 {
 	float3 old = p2;
-	old.y += 10;
 	p2.x = 0.5f * (p1.x + p3.x);
 	p2.z = 0.5f * (p1.z + p3.z);
-	p2.y = CMoveMath::yLevel(moveDef, sqr.x, sqr.y);
+	p2.y = CMoveMath::yLevel(moveDef, p2);
 
 #if PATHDEBUG
-	geometricObjects->AddLine(p3 + float3(0, 5, 0), p2 + float3(0, 10, 0), 5, 10, 600, 0);
-	geometricObjects->AddLine(p3 + float3(0, 5, 0), old,                   5, 10, 600, 0);
+	geometricObjects->AddLine(old + float3(0, 10, 0), p2 + float3(0, 10, 0), 5, 10, 600, 0);
 #endif
 }
 
 
-void CPathFinder::TryFix3Points(const int2 dp, const MoveDef& moveDef, IPath::Path& foundPath, float3& nextPoint, std::deque<int2>& previous, const int2 square) const
+void CPathFinder::SmoothMidWaypoint(const int2 testsqr, const int2 prevsqr, const MoveDef& moveDef, IPath::Path& foundPath, float3& nextPoint) const
 {
 	static const int COSTMOD = 1.39f; // (math::sqrt(2) + 1) / math::sqrt(3)
-	const int2 p = square + dp;
-	const int tstsqr = BlockPosToIdx(p);
-	const int prvsqr = BlockPosToIdx(previous[2]);
+	const int tstsqr = BlockPosToIdx(testsqr);
+	const int prvsqr = BlockPosToIdx(prevsqr);
 	if (
-		   (blockStates.nodeMask[tstsqr] & PATHOPT_BLOCKED)
+		   ((blockStates.nodeMask[tstsqr] & PATHOPT_BLOCKED) == 0)
 		&& (blockStates.fCost[tstsqr] <= COSTMOD * blockStates.fCost[prvsqr])
 	) {
 		float3& p2 = foundPath.path[foundPath.path.size() - 2];
 		float3& p1 = foundPath.path.back();
 		float3& p0 = nextPoint;
-		FixupPath3Pts(moveDef, p0, p1, p2, p);
+		FixupPath3Pts(moveDef, p0, p1, p2);
 	}
 }
 
 
+/*
+ * This function takes the current & the last 2 waypoints and detects when they form
+ * a "soft" curve. And if so, it takes the mid waypoint of those 3 and smooths it
+ * between the one before and the current waypoint (so the soft curve gets even smoother).
+ * Hint: hard curves (e.g. `move North then West`) can't and will not smoothed. Only soft ones
+ *  like `move North then North-West` can.
+ */
 void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath, float3& nextPoint,
-	std::deque<int2>& previous, int2 square) const
+	std::deque<int2>& previous, int2 curquare) const
 {
-	if (previous[2].x == square.x) {
-		if (previous[2].y == square.y-2) {
-			if (previous[1].x == square.x-2 && previous[1].y == square.y-4) {
-				LOG_L(L_DEBUG, "case N, NW");
-				TryFix3Points(int2(-2, -2), moveDef, foundPath, nextPoint, previous, square);
-			}
-			else if (previous[1].x == square.x+2 && previous[1].y == square.y-4) {
-				LOG_L(L_DEBUG, "case N, NE");
-				TryFix3Points(int2(2, -2), moveDef, foundPath, nextPoint, previous, square);
-			}
-		}
-		else if (previous[2].y == square.y+2) {
-			if (previous[1].x == square.x+2 && previous[1].y == square.y+4) {
-				LOG_L(L_DEBUG, "case S, SE");
-				TryFix3Points(int2(2, 2), moveDef, foundPath, nextPoint, previous, square);
-			}
-			else if (previous[1].x == square.x-2 && previous[1].y == square.y+4) {
-				LOG_L(L_DEBUG, "case S, SW");
-				TryFix3Points(int2(-2, 2), moveDef, foundPath, nextPoint, previous, square);
-			}
-		}
-	}
-	else if (previous[2].x == square.x-2) {
-		if (previous[2].y == square.y) {
-			if (previous[1].x == square.x-4 && previous[1].y == square.y-2) {
-				LOG_L(L_DEBUG, "case W, NW");
-				TryFix3Points(int2(-2, -2), moveDef, foundPath, nextPoint, previous, square);
-			}
-			else if (previous[1].x == square.x-4 && previous[1].y == square.y+2) {
-				LOG_L(L_DEBUG, "case W, SW");
-				TryFix3Points(int2(-2, 2), moveDef, foundPath, nextPoint, previous, square);
-			}
-		}
-		else if (previous[2].y == square.y-2) {
-			if (previous[1].x == square.x-2 && previous[1].y == square.y-4) {
-				LOG_L(L_DEBUG, "case NW, N");
-				TryFix3Points(int2(0, -2), moveDef, foundPath, nextPoint, previous, square);
-			}
-			else if (previous[1].x == square.x-4 && previous[1].y == square.y-2) {
-				LOG_L(L_DEBUG, "case NW, W");
-				TryFix3Points(int2(-2, 0), moveDef, foundPath, nextPoint, previous, square);
-			}
-		}
-		else if (previous[2].y == square.y+2) {
-			if (previous[1].x == square.x-2 && previous[1].y == square.y+4) {
-				LOG_L(L_DEBUG, "case SW, S");
-				TryFix3Points(int2(0, 2), moveDef, foundPath, nextPoint, previous, square);
-			}
-			else if (previous[1].x == square.x-4 && previous[1].y == square.y+2) {
-				LOG_L(L_DEBUG, "case SW, W");
-				TryFix3Points(int2(-2, 0), moveDef, foundPath, nextPoint, previous, square);
-			}
-		}
-	}
-	else if (previous[2].x == square.x+2) {
-		if (previous[2].y == square.y) {
-			if (previous[1].x == square.x+4 && previous[1].y == square.y-2) {
-				LOG_L(L_DEBUG, "case NE, E");
-				TryFix3Points(int2(2, -2), moveDef, foundPath, nextPoint, previous, square);
-			}
-			else if (previous[1].x == square.x+4 && previous[1].y == square.y+2) {
-				LOG_L(L_DEBUG, "case SE, E");
-				TryFix3Points(int2(2, 2), moveDef, foundPath, nextPoint, previous, square);
-			}
-		}
-		if (previous[2].y == square.y+2) {
-			if (previous[1].x == square.x+2 && previous[1].y == square.y+4) {
-				LOG_L(L_DEBUG, "case SE, S");
-				TryFix3Points(int2(0, 2), moveDef, foundPath, nextPoint, previous, square);
-			}
-			else if (previous[1].x == square.x+4 && previous[1].y == square.y+2) {
-				LOG_L(L_DEBUG, "case SE, E");
-				TryFix3Points(int2(2, 0), moveDef, foundPath, nextPoint, previous, square);
-			}
+	assert(previous.size() == 2);
+	const int2& p1 = previous[1]; // two before curquare
+	const int2& p2 = previous[2]; // one before curquare
 
+	int2 dirNow = (p2 - curquare);
+	int2 dirPrv = (p1 - curquare) - dirNow;
+	assert(dirNow.x % PATH_NODE_SPACING == 0);
+	assert(dirNow.y % PATH_NODE_SPACING == 0);
+	assert(dirPrv.x % PATH_NODE_SPACING == 0);
+	assert(dirPrv.y % PATH_NODE_SPACING == 0);
+	dirNow /= PATH_NODE_SPACING;
+	dirPrv /= PATH_NODE_SPACING;
+
+	for (unsigned pathDir = PATHDIR_LEFT; pathDir < PATH_DIRECTIONS; ++pathDir) {
+		// find the pathDir
+		if (dirNow != PE_DIRECTION_VECTORS[pathDir])
+			continue;
+
+		// only smooth "soft" curves (e.g. `move North-East then North`)
+		if (
+			   (dirPrv == PE_DIRECTION_VECTORS[(pathDir-1) % PATH_DIRECTIONS])
+			|| (dirPrv == PE_DIRECTION_VECTORS[(pathDir+1) % PATH_DIRECTIONS])
+		) {
+			SmoothMidWaypoint(curquare + (dirPrv * PATH_NODE_SPACING), p2, moveDef, foundPath, nextPoint);
 		}
-		else if (previous[2].y == square.y-2) {
-			if (previous[1].x == square.x+2 && previous[1].y == square.y-4) {
-				LOG_L(L_DEBUG, "case NE, N");
-				TryFix3Points(int2(0, -2), moveDef, foundPath, nextPoint, previous, square);
-			}
-			else if (previous[1].x == square.x+4 && previous[1].y == square.y-2) {
-				LOG_L(L_DEBUG, "case NE, E");
-				TryFix3Points(int2(0, -2), moveDef, foundPath, nextPoint, previous, square);
-			}
-		}
+		break;
 	}
 }
