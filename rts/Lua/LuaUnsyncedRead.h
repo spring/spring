@@ -13,6 +13,8 @@ class LuaUnsyncedRead {
 		static bool PushEntries(lua_State* L);
 
 	private:
+		static int GetDoubleDrawIndex(lua_State* L);
+		static int IsDoubleDrawing(lua_State* L);
 		static int IsReplay(lua_State* L);
 		static int GetReplayLength(lua_State* L);
 		static int GetModUICtrl(lua_State* L);

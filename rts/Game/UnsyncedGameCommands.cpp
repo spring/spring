@@ -332,6 +332,28 @@ private:
 };
 
 
+class DoubleDrawExecutor : public IUnsyncedActionExecutor {
+public:
+	DoubleDrawExecutor() : IUnsyncedActionExecutor("DoubleDraw",
+			"Enable/Disable render the same world twice (for stabilizing stereoscopic image): 0=off, 1=on") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+
+		
+		if (!action.GetArgs().empty()) {
+			int useDoubleDraw = -1;
+			sscanf((action.GetArgs()).c_str(), "%i", &useDoubleDraw);
+
+			game->SetDoubleDraw(useDoubleDraw > 0);
+		} else {
+			// toggle
+			game->SetDoubleDraw(!game->IsDoubleDraw());
+		}
+		LogSystemStatus("DoubleDraw", game->IsDoubleDraw());
+		return true;
+	}
+};
+
 
 /**
  * Special case executor which allows to combine multiple commands into one,
@@ -3160,6 +3182,7 @@ bool CGame::ActionReleased(const Action& action)
 
 void UnsyncedGameCommands::AddDefaultActionExecutors() {
 
+	AddActionExecutor(new DoubleDrawExecutor());
 	AddActionExecutor(new SelectActionExecutor());
 	AddActionExecutor(new SelectUnitsActionExecutor());
 	AddActionExecutor(new SelectCycleActionExecutor());

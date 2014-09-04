@@ -89,6 +89,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	lua_pushcfunction(L, x);    \
 	lua_rawset(L, -3)
 
+	REGISTER_LUA_CFUNC(GetDoubleDrawIndex);
+	REGISTER_LUA_CFUNC(IsDoubleDrawing);
 	REGISTER_LUA_CFUNC(IsReplay);
 	REGISTER_LUA_CFUNC(GetReplayLength);
 	REGISTER_LUA_CFUNC(GetModUICtrl);
@@ -278,6 +280,24 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 //
 //  The call-outs
 //
+
+
+int LuaUnsyncedRead::GetDoubleDrawIndex(lua_State* L)
+{
+	lua_pushnumber(L, game->GetDoubleDrawIndex());
+	return 1;
+}
+
+int LuaUnsyncedRead::IsDoubleDrawing(lua_State* L)
+{
+	if (game->IsDoubleDraw()) {
+		lua_pushboolean(L, true);
+	} else {
+		lua_pushboolean(L, false);
+	}
+	return 1;
+}
+
 
 int LuaUnsyncedRead::IsReplay(lua_State* L)
 {
