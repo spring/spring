@@ -305,7 +305,7 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 			pos.y = CMoveMath::yLevel(moveDef, square.x, square.y);
 
 			// try to cut corners
-			AdjustFoundPath(moveDef, foundPath, /* inout */ pos, previous, square);
+			AdjustFoundPath(moveDef, foundPath, pos, previous, square);
 
 			foundPath.path.push_back(pos);
 			foundPath.squares.push_back(square);
@@ -332,7 +332,7 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 }
 
 /** Helper function for AdjustFoundPath */
-static inline void FixupPath3Pts(const MoveDef& moveDef, const float3& p1, float3& p2, const float3& p3)
+static inline void FixupPath3Pts(const MoveDef& moveDef, const float3 p1, float3& p2, const float3 p3)
 {
 	float3 old = p2;
 	p2.x = 0.5f * (p1.x + p3.x);
@@ -345,7 +345,7 @@ static inline void FixupPath3Pts(const MoveDef& moveDef, const float3& p1, float
 }
 
 
-void CPathFinder::SmoothMidWaypoint(const int2 testsqr, const int2 prevsqr, const MoveDef& moveDef, IPath::Path& foundPath, float3& nextPoint) const
+void CPathFinder::SmoothMidWaypoint(const int2 testsqr, const int2 prevsqr, const MoveDef& moveDef, IPath::Path& foundPath, const float3 nextPoint) const
 {
 	static const int COSTMOD = 1.39f; // (math::sqrt(2) + 1) / math::sqrt(3)
 	const int tstsqr = BlockPosToIdx(testsqr);
@@ -354,9 +354,9 @@ void CPathFinder::SmoothMidWaypoint(const int2 testsqr, const int2 prevsqr, cons
 		   ((blockStates.nodeMask[tstsqr] & PATHOPT_BLOCKED) == 0)
 		&& (blockStates.fCost[tstsqr] <= COSTMOD * blockStates.fCost[prvsqr])
 	) {
-		float3& p2 = foundPath.path[foundPath.path.size() - 2];
-		float3& p1 = foundPath.path.back();
-		float3& p0 = nextPoint;
+		const float3& p2 = foundPath.path[foundPath.path.size() - 2];
+		      float3& p1 = foundPath.path.back();
+		const float3& p0 = nextPoint;
 		FixupPath3Pts(moveDef, p0, p1, p2);
 	}
 }
@@ -369,7 +369,7 @@ void CPathFinder::SmoothMidWaypoint(const int2 testsqr, const int2 prevsqr, cons
  * Hint: hard curves (e.g. `move North then West`) can't and will not smoothed. Only soft ones
  *  like `move North then North-West` can.
  */
-void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath, float3& nextPoint,
+void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath, const float3 nextPoint,
 	std::deque<int2>& previous, int2 curquare) const
 {
 	assert(previous.size() == 2);

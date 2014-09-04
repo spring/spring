@@ -88,7 +88,7 @@ private:
 	void AdjustFoundPath(
 		const MoveDef&,
 		IPath::Path&,
-		float3& nextPoint,
+		const float3 nextPoint,
 		std::deque<int2>& previous,
 		int2 square
 	) const;
@@ -98,7 +98,7 @@ private:
 		const int2 prvsqr,
 		const MoveDef& moveDef,
 		IPath::Path& foundPath,
-		float3& nextPoint
+		const float3 nextPoint
 	) const;
 };
 
