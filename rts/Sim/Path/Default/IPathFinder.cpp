@@ -167,7 +167,8 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	ResetSearch();
 
 	// mark and store the start-block
-	blockStates.nodeMask[mStartBlockIdx] = PATHOPT_OPEN;
+	blockStates.nodeMask[mStartBlockIdx] &= PATHOPT_OBSOLETE; // clear all except PATHOPT_OBSOLETE
+	blockStates.nodeMask[mStartBlockIdx] |= PATHOPT_OPEN;
 	blockStates.fCost[mStartBlockIdx] = 0.0f;
 	blockStates.gCost[mStartBlockIdx] = 0.0f;
 	blockStates.SetMaxCost(NODE_COST_F, 0.0f);

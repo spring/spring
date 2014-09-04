@@ -95,7 +95,7 @@ struct PathNodeStateBuffer {
 		//assert(idx>=0 && idx<fCost.size());
 		fCost[idx] = PATHCOST_INFINITY;
 		gCost[idx] = PATHCOST_INFINITY;
-		nodeMask[idx] &= PATHOPT_OBSOLETE;
+		nodeMask[idx] &= PATHOPT_OBSOLETE; // clear all except PATHOPT_OBSOLETE
 	}
 	
 
