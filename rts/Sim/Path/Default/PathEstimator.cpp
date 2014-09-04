@@ -449,19 +449,19 @@ void CPathEstimator::Update()
 			break;
 		}
 
-		// no need to check for duplicates, because FindOffset is deterministic
-		// so even when we compute it multiple times the result will be the same
+		// issue repathing for all active movedefs
 		for (unsigned int i = 0; i < numMoveDefs; i++) {
 			const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 			if (md->udRefCount > 0)
 				consumedBlocks.emplace_back(pos, md);
 		}
-		updatedBlocks.pop_front();
-		blockStates.nodeMask[idx] &= ~PATHOPT_OBSOLETE;
 
 		// inform dependent pathEstimator that we change vertex cost of those blocks
 		if (nextPathEstimator)
 			nextPathEstimator->MapChanged(pos.x * BLOCK_SIZE, pos.y * BLOCK_SIZE, pos.x * BLOCK_SIZE, pos.y * BLOCK_SIZE);
+
+		updatedBlocks.pop_front(); // must happen _after_ last usage of the `pos` reference!
+		blockStates.nodeMask[idx] &= ~PATHOPT_OBSOLETE;
 	}
 
 	// FindOffset (threadsafe)
