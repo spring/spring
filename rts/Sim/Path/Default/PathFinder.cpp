@@ -299,7 +299,6 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 		// make sure we don't match anything
 		previous.push_back(int2(-100, -100));
 		previous.push_back(int2(-100, -100));
-		previous.push_back(int2(-100, -100));
 
 		while (true) {
 			float3 pos(square.x * SQUARE_SIZE, 0.0f, square.y * SQUARE_SIZE);
@@ -374,8 +373,8 @@ void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath
 	std::deque<int2>& previous, int2 curquare) const
 {
 	assert(previous.size() == 2);
-	const int2& p1 = previous[1]; // two before curquare
-	const int2& p2 = previous[2]; // one before curquare
+	const int2& p1 = previous[0]; // two before curquare
+	const int2& p2 = previous[1]; // one before curquare
 
 	int2 dirNow = (p2 - curquare);
 	int2 dirPrv = (p1 - curquare) - dirNow;
