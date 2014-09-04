@@ -73,6 +73,10 @@ public:
 	bool IsGameOver() const { return gameOver; }
 	bool IsLagging(float maxLatency = 500.0f) const;
 
+	void SetDoubleDraw(bool enableDoubleDraw) { doDoubleDraw = enableDoubleDraw; } 
+	bool IsDoubleDraw() { return doDoubleDraw; }
+	int GetDoubleDrawIndex() { return doubleDrawIndex; } 
+
 	const std::map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
 		return playerTraffic;
 	}
@@ -103,6 +107,7 @@ public:
 	GameDrawMode GetDrawMode() const { return gameDrawMode; }
 
 private:
+	bool DrawAll();
 	bool Draw();
 	bool DrawMT();
 
@@ -223,6 +228,8 @@ private:
 
 	volatile bool finishedLoading;
 	bool gameOver;
+	bool doDoubleDraw;
+	int doubleDrawIndex;
 };
 
 

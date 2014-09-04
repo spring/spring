@@ -214,6 +214,8 @@ CR_REG_METADATA(CGame, (
 	CR_MEMBER(playing),
 	CR_IGNORED(msgProcTimeLeft),
 	CR_IGNORED(consumeSpeedMult),
+	CR_IGNORED(doubleDrawIndex),
+	CR_IGNORED(doDoubleDraw),
 
 	CR_POSTLOAD(PostLoad)
 ))
@@ -348,6 +350,8 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, saveFile(saveFile)
 	, finishedLoading(false)
 	, gameOver(false)
+	, doDoubleDraw(false)
+	, doubleDrawIndex(1)
 {
 	game = this;
 
@@ -1186,8 +1190,20 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	return false;
 }
 
-
 bool CGame::Draw() {
+	if (doDoubleDraw)
+	{
+		// We draw the same world twice to help stereoscopic widget to produce stable 3D image.
+		// Activated by command "/DoubleDraw 1", status check by call-out Spring.GetIsDoubleDraw()
+		// and Spring.GetDoubleDrawIndex()
+		doubleDrawIndex = 2;
+		DrawAll();
+		doubleDrawIndex = 1;
+	}
+	return DrawAll();
+}
+
+bool CGame::DrawAll() {
 	const spring_time currentTimePreUpdate = spring_gettime();
 
 	if (UpdateUnsynced(currentTimePreUpdate))
