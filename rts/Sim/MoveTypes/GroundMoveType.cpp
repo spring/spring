@@ -523,7 +523,7 @@ bool CGroundMoveType::FollowPath()
 		// ASSERT_SYNCED(modWantedDir);
 
 		ChangeHeading(GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
-		ChangeSpeed(maxWantedSpeed * (1 - atGoal), wantReverse);
+		ChangeSpeed(maxWantedSpeed, wantReverse);
 	}
 
 	pathManager->UpdatePath(owner, pathID);
