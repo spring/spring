@@ -317,18 +317,16 @@ static inline const FeatureDef* getFeatureDefById(int skirmishAIId, int featureD
 	return featureDef;
 }
 
-static int wrapper_HandleCommand(CAICallback* clb, CAICheats* clbCheat,
-		int cmdId, void* cmdData) {
-
-	int ret;
+//FIXME: get rid of this function (=call functions directly)
+static int wrapper_HandleCommand(CAICallback* clb, CAICheats* clbCheat, int cmdId, void* cmdData) {
 
 	if (clbCheat != NULL) {
-		ret = clbCheat->HandleCommand(cmdId, cmdData);
-	} else {
-		ret = clb->HandleCommand(cmdId, cmdData);
+		const int ret = clbCheat->HandleCommand(cmdId, cmdData);
+		if (ret != 0) { //cheat interface handled the command
+			return ret;
+		}
 	}
-
-	return ret;
+	return clb->HandleCommand(cmdId, cmdData);
 }
 
 EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, int commandId,
@@ -399,8 +397,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_SEND_START_POS:
 		{
 			const SSendStartPosCommand* cmd = static_cast<SSendStartPosCommand*>(commandData);
-			AIHCSendStartPos data = {cmd->ready, cmd->pos_posF3};
-			wrapper_HandleCommand(clb, clbCheat, AIHCSendStartPosId, &data);
+			clb->SendStartPos(cmd->ready, cmd->pos_posF3);
 			break;
 		}
 		case COMMAND_DRAWER_POINT_ADD:
