@@ -245,6 +245,18 @@ extern DECLSPEC Uint8 SDLCALL SDL_GetAppState() {
 	return 0;
 }
 
+extern DECLSPEC int SDL_GetNumVideoDisplays(void) {
+	return 0;
+}
+int SDL_GetDisplayBounds(int displayIndex, SDL_Rect* rect) {
+	if (rect == 0) return -1;
+	rect->w = 640;
+	rect->h = 480;
+	rect->x = 0;
+	rect->y = 0;
+	return 0;
+}
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
