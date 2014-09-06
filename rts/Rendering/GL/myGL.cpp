@@ -46,24 +46,27 @@ CVertexArray* GetVertexArray()
 
 void PrintAvailableResolutions()
 {
-	std::string modes;
-
 	// Get available fullscreen/hardware modes
-	//FIXME this checks only the main screen
-	const int nummodes = SDL_GetNumDisplayModes(0);
-	for (int i = (nummodes-1); i >= 0; --i) { // reverse order to print them from low to high
-		SDL_DisplayMode mode;
-		SDL_GetDisplayMode(0, i, &mode);
-		if (!modes.empty()) {
-			modes += ", ";
-		}
-		modes += IntToString(mode.w) + "x" + IntToString(mode.h);
-	}
-	if (nummodes < 1) {
-		modes = "NONE";
-	}
+	const int numdisplays = SDL_GetNumVideoDisplays();
+	for(int k=0; k < numdisplays; ++k) {
+		std::string modes;
+		SDL_Rect rect;
+		const int nummodes = SDL_GetNumDisplayModes(k);
+		SDL_GetDisplayBounds(k, &rect);
 
-	LOG("Supported Video modes: %s", modes.c_str());
+		for (int i = (nummodes-1); i >= 0; --i) { // reverse order to print them from low to high
+			SDL_DisplayMode mode;
+			SDL_GetDisplayMode(0, i, &mode);
+			if (!modes.empty()) {
+				modes += ", ";
+			}
+			modes += IntToString(mode.w) + "x" + IntToString(mode.h);
+		}
+		if (nummodes < 1) {
+			modes = "NONE";
+		}
+		LOG("Supported Video modes on Display %d x:%d y:%d %dx%d:\n\t%s", k+1,rect.x, rect.y, rect.w, rect.h, modes.c_str());
+	}
 }
 
 #ifdef GL_ARB_debug_output
