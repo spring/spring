@@ -317,6 +317,7 @@ void VBO::UnmapBuffer()
 void VBO::Invalidate()
 {
 	assert(bound);
+	assert(!mapped);
 
 #ifdef GLEW_ARB_invalidate_subdata
 	// OpenGL4 way
@@ -325,10 +326,11 @@ void VBO::Invalidate()
 		return;
 	}
 #endif
-	if (globalRendering->atiHacks) {
+	if (VBOused && globalRendering->atiHacks) {
 		Unbind();
 		glDeleteBuffers(1, &vboId);
 		glGenBuffers(1, &vboId);
+		size = 0;
 		Bind();
 		//New(size, usage, nullptr);
 		return;
