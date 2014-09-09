@@ -330,9 +330,8 @@ void VBO::Invalidate()
 		Unbind();
 		glDeleteBuffers(1, &vboId);
 		glGenBuffers(1, &vboId);
-		size = 0;
 		Bind();
-		//New(size, usage, nullptr);
+		New(size, usage, nullptr);
 		return;
 	}
 
