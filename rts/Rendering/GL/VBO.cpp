@@ -290,7 +290,9 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr _size, GLbitfield access)
 	}
 
 	if (VBOused) {
-		return (GLubyte*)glMapBufferRange(curBoundTarget, offset, _size, access);
+		GLubyte* ptr = (GLubyte*)glMapBufferRange(curBoundTarget, offset, _size, access);
+		assert(ptr);
+		return ptr;
 	} else {
 		assert(data);
 		return data + offset;
@@ -331,8 +333,8 @@ void VBO::Invalidate()
 		glDeleteBuffers(1, &vboId);
 		glGenBuffers(1, &vboId);
 		Bind();
-		size = -1; // else New() would early-exit
-		New(size, usage, nullptr);
+		size = -size; // else New() would early-exit
+		New(-size, usage, nullptr);
 		return;
 	}
 
