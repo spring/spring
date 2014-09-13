@@ -844,7 +844,9 @@ void CGame::InitSkirmishAIs()
 
 void CGame::LoadFinalize()
 {
+	ENTER_SYNCED_CODE();
 	eventHandler.GamePreload();
+	LEAVE_SYNCED_CODE();
 
 	{
 		loadscreen->SetLoadMessage("[" + std::string(__FUNCTION__) + "] finalizing PFS");
