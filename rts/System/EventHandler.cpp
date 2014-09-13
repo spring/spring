@@ -40,6 +40,9 @@ CEventHandler::CEventHandler()
 		#include "Events.def"
 	#undef SETUP_EVENT
 	#undef SETUP_UNMANAGED_EVENT
+
+	// helper event client (alwayss create)
+	EventBatchHandler::GetInstance();
 }
 
 
