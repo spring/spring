@@ -274,7 +274,7 @@ std::set<const char*> log_filter_section_getRegisteredSet()
 
 const char* log_filter_section_getSectionCString(const char* section_cstr_tmp)
 {
-	static std::unordered_map<std::string, std::unique_ptr<const char>> cache;
+	static std::unordered_map<std::string, std::unique_ptr<const char[]>> cache;
 
 	const auto str = std::string(section_cstr_tmp);
 	const auto it = cache.find(str);
