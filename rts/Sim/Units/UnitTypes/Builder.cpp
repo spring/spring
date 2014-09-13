@@ -772,23 +772,23 @@ float CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 void CBuilder::DependentDied(CObject *o)
 {
 	if (o == curBuild) {
-		curBuild = 0;
+		curBuild = nullptr;
 		StopBuild();
 	}
 	if (o == curReclaim) {
-		curReclaim = 0;
+		curReclaim = nullptr;
 		StopBuild();
 	}
 	if (o == helpTerraform) {
-		helpTerraform = 0;
+		helpTerraform = nullptr;
 		StopBuild();
 	}
 	if (o == curResurrect) {
-		curResurrect = 0;
+		curResurrect = nullptr;
 		StopBuild();
 	}
 	if (o == curCapture) {
-		curCapture = 0;
+		curCapture = nullptr;
 		StopBuild();
 	}
 	CUnit::DependentDied(o);

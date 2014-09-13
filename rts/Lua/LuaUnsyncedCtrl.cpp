@@ -2752,9 +2752,9 @@ int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 
 	luaL_checkstack(L, 2, __FUNCTION__);
 	lua_pushboolean(L, eoh->SendLuaMessages(aiTeam, inData, outData));
-	lua_createtable(L, outData.size(), 0);
 
 	// push the AI response(s)
+	lua_createtable(L, outData.size(), 0);
 	for (unsigned int n = 0; n < outData.size(); n++) {
 		lua_pushstring(L, outData[n]);
 		lua_rawseti(L, -2, n + 1);

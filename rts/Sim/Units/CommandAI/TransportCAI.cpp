@@ -7,7 +7,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitHandler.h"

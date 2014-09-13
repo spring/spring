@@ -148,7 +148,7 @@ void VBO::Resize(GLsizeiptr _size, GLenum usage)
 		glClearErrors();
 		auto oldBoundTarget = curBoundTarget;
 
-#ifdef GLEW_ARB_copy_buffer
+	#ifdef GLEW_ARB_copy_buffer
 		if (GLEW_ARB_copy_buffer) {
 			VBO vbo(GL_COPY_WRITE_BUFFER, immutableStorage);
 			vbo.Bind(GL_COPY_WRITE_BUFFER);
@@ -162,7 +162,7 @@ void VBO::Resize(GLsizeiptr _size, GLenum usage)
 			*this = std::move(vbo);
 			Bind(oldBoundTarget);
 		} else
-#endif
+	#endif
 		{
 			void* memsrc = MapBuffer(GL_READ_ONLY);
 			Unbind();
@@ -219,12 +219,12 @@ void VBO::New(GLsizeiptr _size, GLenum usage, const void* data_)
 	if (VBOused) {
 		glClearErrors();
 
-#ifdef GLEW_ARB_buffer_storage
+	#ifdef GLEW_ARB_buffer_storage
 		if (immutableStorage) {
 			usage = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_DYNAMIC_STORAGE_BIT;
 			glBufferStorage(curBoundTarget, size, data_, usage);
 		} else
-#endif
+	#endif
 		{
 			glBufferData(curBoundTarget, size, data_, usage);
 		}
@@ -268,11 +268,11 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr _size, GLbitfield access)
 	switch (access) {
 		case GL_WRITE_ONLY:
 			access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
-#ifdef GLEW_ARB_buffer_storage
+		#ifdef GLEW_ARB_buffer_storage
 			if (immutableStorage) {
 				access = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
 			}
-#endif
+		#endif
 			break;
 		case GL_READ_WRITE:
 			access = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;

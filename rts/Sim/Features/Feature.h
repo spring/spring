@@ -12,7 +12,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/Matrix44f.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/ModInfo.h"
 
 #define TREE_RADIUS 20
 
