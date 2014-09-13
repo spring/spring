@@ -287,6 +287,6 @@ const char* log_filter_section_getSectionCString(const char* section_cstr_tmp)
 	strcpy(&section_cstr[0], section_cstr_tmp);
 	section_cstr[str.size()] = '\0';
 
-	cache[str].reset(section_cstr);
+	cache[str].reset(const_cast<const char*>(section_cstr));
 	return section_cstr;
 }
