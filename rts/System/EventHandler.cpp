@@ -42,12 +42,13 @@ CEventHandler::CEventHandler()
 	#undef SETUP_UNMANAGED_EVENT
 
 	// helper event client (alwayss create)
-	EventBatchHandler::GetInstance();
+	EventBatchHandler::CreateInstance();
 }
 
 
 CEventHandler::~CEventHandler()
 {
+	EventBatchHandler::DeleteInstance();
 }
 
 
