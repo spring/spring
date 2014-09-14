@@ -60,16 +60,16 @@ void ISound::Initialize()
 
 void ISound::Shutdown()
 {
+	ISound* tmpSound = singleton;
+	singleton = NULL;
+	SafeDelete(tmpSound);
+
 	SafeDelete(Channels::BGMusic);
 	SafeDelete(Channels::General);
 	SafeDelete(Channels::Battle);
 	SafeDelete(Channels::UnitReply);
 	SafeDelete(Channels::UserInterface);
 
-	ISound* tmpSound = singleton;
-	singleton = NULL;
-	delete tmpSound;
-	tmpSound = NULL;
 }
 
 
