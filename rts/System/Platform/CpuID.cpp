@@ -8,6 +8,7 @@
 	#include <intrin.h>
 #endif
 
+#include <boost/thread/thread.hpp>
 #include <assert.h>
 #include <set>
 
