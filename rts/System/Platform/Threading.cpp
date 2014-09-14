@@ -81,6 +81,36 @@ namespace Threading {
 	}
 
 
+	boost::uint32_t GetAffinity()
+	{
+	#if defined(__APPLE__) || defined(__FreeBSD__)
+		// no-op
+		return 0;
+
+	#elif defined(WIN32)
+		DWORD_PTR curMask;
+		DWORD_PTR systemCpus;
+		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &systemCpus);
+		return curMask;
+	#else
+		cpu_set_t curAffinity;
+		CPU_ZERO(&curAffinity);
+		sched_getaffinity(0, sizeof(cpu_set_t), &curAffinity);
+
+		boost::uint32_t mask = 0;
+
+		int numCpus = std::min(CPU_COUNT(&curAffinity), 32); // w/o the min(.., 32) `(1 << n)` could overflow!
+		for (int n = numCpus - 1; n >= 0; --n) {
+			if (CPU_ISSET(n, &curAffinity)) {
+				mask |= (1 << n);
+			}
+		}
+
+		return mask;
+	#endif
+	}
+
+
 	boost::uint32_t SetAffinity(boost::uint32_t cores_bitmask, bool hard)
 	{
 		if (cores_bitmask == 0) {
@@ -221,8 +251,8 @@ namespace Threading {
 	    (across all existing processors, if more than one)*/
 	int GetPhysicalCpuCores() {
 		// Get CPU features
-		springproc::CpuId cpuid;
-		return cpuid.getCoreTotalNumber();;
+		static springproc::CpuId cpuid;
+		return cpuid.getCoreTotalNumber();
 	}
 
 
