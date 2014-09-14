@@ -21,6 +21,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/MessageBox.h"
 #include "System/Platform/Threading.h"
+#include "System/type2.h"
 
 
 CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false).description("Disables the warning an user will receive if (s)he attempts to run Spring on an outdated and underpowered video card.");
@@ -54,13 +55,17 @@ void PrintAvailableResolutions()
 		const int nummodes = SDL_GetNumDisplayModes(k);
 		SDL_GetDisplayBounds(k, &rect);
 
+		std::set<int2> resolutions;
 		for (int i = (nummodes-1); i >= 0; --i) { // reverse order to print them from low to high
 			SDL_DisplayMode mode;
-			SDL_GetDisplayMode(0, i, &mode);
+			SDL_GetDisplayMode(k, i, &mode);
+			resolutions.insert(int2(mode.w, mode.h));
+		}
+		for (const int2& res: resolutions) {
 			if (!modes.empty()) {
 				modes += ", ";
 			}
-			modes += IntToString(mode.w) + "x" + IntToString(mode.h);
+			modes += IntToString(res.x) + "x" + IntToString(res.y);
 		}
 		if (nummodes < 1) {
 			modes = "NONE";
