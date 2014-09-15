@@ -1362,21 +1362,33 @@ public:
 };
 
 
-
-// XXX unlucky name; maybe make this "Sound {0|1}" instead (bool arg or toggle)
-class NoSoundActionExecutor : public IUnsyncedActionExecutor {
+class MuteActionExecutor : public IUnsyncedActionExecutor {
 public:
-	NoSoundActionExecutor() : IUnsyncedActionExecutor("NoSound",
-			"Enable/Disable the sound system") {}
+	MuteActionExecutor() : IUnsyncedActionExecutor("Mute",
+			"Mute/Unmute the current sound system") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 
 		// toggle
 		sound->Mute();
-		LogSystemStatus("Sound", !sound->IsMuted());
+		LogSystemStatus("Mute", sound->IsMuted());
 		return true;
 	}
 };
+
+class SoundActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SoundActionExecutor() : IUnsyncedActionExecutor("Sound",
+			"Switch the sound output system (currently only OpenAL / NullAudio)") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+
+		// toggle
+		LogSystemStatus("Sound", !sound->ChangeOutput());
+		return true;
+	}
+};
+
 
 
 
@@ -3222,7 +3234,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DebugColVolDrawerActionExecutor());
 	AddActionExecutor(new DebugPathDrawerActionExecutor());
 	AddActionExecutor(new DebugTraceRayDrawerActionExecutor());
-	AddActionExecutor(new NoSoundActionExecutor());
+	AddActionExecutor(new MuteActionExecutor());
+	AddActionExecutor(new SoundActionExecutor());
 	AddActionExecutor(new SoundChannelEnableActionExecutor());
 	AddActionExecutor(new CreateVideoActionExecutor());
 	AddActionExecutor(new DrawTreesActionExecutor());

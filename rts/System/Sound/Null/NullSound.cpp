@@ -49,7 +49,7 @@ void NullSound::PrintDebugInfo() {
 	LOG("Null Sound System");
 }
 
-bool NullSound::LoadSoundDefs(const std::string& fileName) {
+bool NullSound::LoadSoundDefsImpl(const std::string& fileName) {
 	return false;
 }
 

@@ -483,7 +483,7 @@ void CSound::PrintDebugInfo()
 	LOG_L(L_DEBUG, "# SoundItems: %i", (int)sounds.size());
 }
 
-bool CSound::LoadSoundDefs(const std::string& fileName)
+bool CSound::LoadSoundDefsImpl(const std::string& fileName)
 {
 	//! can be called from LuaUnsyncedCtrl too
 	boost::recursive_mutex::scoped_lock lck(soundMutex);

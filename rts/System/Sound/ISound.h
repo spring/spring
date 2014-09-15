@@ -48,16 +48,22 @@ public:
 	virtual bool Mute() = 0;
 	virtual bool IsMuted() const = 0;
 
+	///change current output device
+	static bool ChangeOutput();
+
 	virtual void Iconified(bool state) = 0;
 
 	virtual void PrintDebugInfo() = 0;
-	virtual bool LoadSoundDefs(const std::string& fileName) = 0;
+	bool LoadSoundDefs(const std::string& fileName);
 	
 	virtual const float3& GetListenerPos() const = 0;
 
 public:
 	unsigned numEmptyPlayRequests;
 	unsigned numAbortedPlays;
+private:
+	virtual bool LoadSoundDefsImpl(const std::string& fileName) = 0;
+	static bool IsNullAudio();
 };
 
 #define sound ISound::GetInstance()

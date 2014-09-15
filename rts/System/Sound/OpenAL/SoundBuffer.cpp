@@ -237,7 +237,6 @@ void SoundBuffer::Initialise()
 
 void SoundBuffer::Deinitialise()
 {
-	buffers.resize(0);
 	bufferMap.clear();
 	buffers.clear();
 }
@@ -281,6 +280,8 @@ size_t SoundBuffer::Insert(boost::shared_ptr<SoundBuffer> buffer)
 bool SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const boost::uint8_t* data, size_t datalength, int rate)
 {
 	alGenBuffers(1, &id);
+	if (!CheckError("SoundBuffer::AlGenBuffers"))
+		return false;
 	alBufferData(id, format, (ALvoid*) data, datalength, rate);
-	return CheckError("SoundBuffer::AlGenBuffer");
+	return CheckError("SoundBuffer::AlGenBufferData");
 }

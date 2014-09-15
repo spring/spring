@@ -35,7 +35,7 @@ public:
 	void Iconified(bool state);
 
 	void PrintDebugInfo();
-	bool LoadSoundDefs(const std::string& fileName);
+	bool LoadSoundDefsImpl(const std::string& fileName);
 	
 	const float3& GetListenerPos() const;
 };

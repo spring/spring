@@ -53,8 +53,7 @@ public:
 	virtual void Iconified(bool state);
 
 	virtual void PrintDebugInfo();
-	virtual bool LoadSoundDefs(const std::string& fileName);
-
+	virtual bool LoadSoundDefsImpl(const std::string& fileName);
 	const float3& GetListenerPos() const {
 		return myPos;
 	}
