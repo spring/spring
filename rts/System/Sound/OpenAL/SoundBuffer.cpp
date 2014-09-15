@@ -238,6 +238,8 @@ void SoundBuffer::Initialise()
 void SoundBuffer::Deinitialise()
 {
 	buffers.resize(0);
+	bufferMap.clear();
+	buffers.clear();
 }
 
 size_t SoundBuffer::GetId(const std::string& name)

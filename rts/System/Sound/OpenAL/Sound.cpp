@@ -393,6 +393,7 @@ void CSound::StartThread(int maxSounds)
 
 	sources.clear(); // delete all sources
 	delete efx; // must happen after sources and before context
+	efx = NULL;
 	ALCcontext* curcontext = alcGetCurrentContext();
 	ALCdevice* curdevice = alcGetContextsDevice(curcontext);
 	alcMakeContextCurrent(NULL);
