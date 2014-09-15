@@ -1364,7 +1364,7 @@ public:
 
 class MuteActionExecutor : public IUnsyncedActionExecutor {
 public:
-	MuteActionExecutor() : IUnsyncedActionExecutor("Mute",
+	MuteActionExecutor() : IUnsyncedActionExecutor("NoSound",
 			"Mute/Unmute the current sound system") {}
 
 	bool Execute(const UnsyncedAction& action) const {
@@ -1378,7 +1378,7 @@ public:
 
 class SoundActionExecutor : public IUnsyncedActionExecutor {
 public:
-	SoundActionExecutor() : IUnsyncedActionExecutor("Sound",
+	SoundActionExecutor() : IUnsyncedActionExecutor("SoundDevice",
 			"Switch the sound output system (currently only OpenAL / NullAudio)") {}
 
 	bool Execute(const UnsyncedAction& action) const {

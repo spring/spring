@@ -56,7 +56,6 @@ Misc:
  - slightly speed up scanning for archives
  - add HostIPDefault, HostPortDefault to set default host ip/port
  - reduce default spintime of ThreadPool workers to 1ms (from 5ms)
- ! renamed /nosound into /mute
 
 Bugfixes:
  - fix #4417 (spring spring://username:passwd@hostname:port doesn't work)
