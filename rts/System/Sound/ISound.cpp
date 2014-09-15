@@ -16,6 +16,7 @@
 #include "OpenAL/AudioChannel.h"
 #endif
 #include <list>
+#include "System/Misc/SpringTime.h" //FIXME: remove this
 
 CONFIG(bool, Sound).defaultValue(true).description("Select the Sound driver, true = OpenAL, false = NullAudio");
 
@@ -42,7 +43,7 @@ void ISound::Initialize()
 			Channels::UserInterface = new AudioChannel();
 			singleton = new CSound();
 			for(const std::string& filename: sounddefs) {
-				sleep(1); //FIXME BADHACK: the sound device is initialized asynchron in a thread this is why loading sounds instantly fails
+				spring_sleep(spring_msecs(1000)); //FIXME BADHACK: the sound device is initialized asynchron in a thread this is why loading sounds instantly fails
 				singleton->LoadSoundDefsImpl(filename);
 			}
 		} else
