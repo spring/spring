@@ -9,7 +9,12 @@
 namespace Shader {
 	bool UniformState::IsLocationValid() const
 	{
+	#ifdef HEADLESS
+		// our stub headers are outdated and are missing GL_INVALID_INDEX
+		return false;
+	#else
 		return (location != GL_INVALID_INDEX);
+	#endif
 	}
 
 
