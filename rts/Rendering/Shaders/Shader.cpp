@@ -268,6 +268,13 @@ namespace Shader {
 		}
 	}
 
+	UniformState* IProgramObject::GetNewUniformState(const std::string name)
+	{
+		UniformState* us = &uniformStates.emplace(hashString(name.c_str()), name).first->second;
+		us->SetLocation(GetUniformLoc(name));
+		return us;
+	}
+
 
 	ARBProgramObject::ARBProgramObject(const std::string& poName): IProgramObject(poName) {
 		objID = -1; // not used for ARBProgramObject instances
