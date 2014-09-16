@@ -42,10 +42,13 @@ namespace Shader {
 		// void SetType(int type) { type = type; }
 		void SetLocation(int loc) { location = loc; }
 
+		bool IsLocationValid() const;
+
 		bool IsUninit() const {
 			return (i[0] == -0xFFFFFF) && (i[1] == -0xFFFFFF) && (i[2] == -0xFFFFFF) && (i[3] == -0xFFFFFF);
 		}
 
+	public:
 		int Hash(const int v0, const int v1, const int v2, const int v3) const {
 			int hash = ~0;//FIXME check if this is really faster than a for() if()
 			hash += v0 ^ (hash * 33);
@@ -86,12 +89,12 @@ namespace Shader {
 			#endif
 		}
 
-
+	public:
 		bool Set(const int v0, const int v1 = 0, const int v2 = 0, const int v3 = 0) {
 			if (CheckHash(v0, v1, v2, v3))
 				return false;
 			i[0] = v0; i[1] = v1; i[2] = v2; i[3] = v3;
-			return true;
+			return IsLocationValid();
 		}
 
 
@@ -103,7 +106,7 @@ namespace Shader {
 			if (CheckHash(i0, i1, i2, i3))
 				return false;
 			f[0] = v0; f[1] = v1; f[2] = v2; f[3] = v3;
-			return true;
+			return IsLocationValid();
 		}
 
 
@@ -111,19 +114,19 @@ namespace Shader {
 			if (CheckHash(v[0], v[1]))
 				return false;
 			i[0] = v[0]; i[1] = v[1];
-			return true;
+			return IsLocationValid();
 		}
 		bool Set3v(const int* v) {
 			if (CheckHash(v[0], v[1], v[2]))
 				return false;
 			i[0] = v[0]; i[1] = v[1]; i[2] = v[2];
-			return true;
+			return IsLocationValid();
 		}
 		bool Set4v(const int* v) {
 			if (CheckHash(v[0], v[1], v[2], v[3]))
 				return false;
 			i[0] = v[0]; i[1] = v[1]; i[2] = v[2]; i[3] = v[3];
-			return true;
+			return IsLocationValid();
 		}
 
 
@@ -132,21 +135,21 @@ namespace Shader {
 			if (CheckHash(vi[0], vi[1]))
 				return false;
 			f[0] = v[0]; f[1] = v[1];
-			return true;
+			return IsLocationValid();
 		}
 		bool Set3v(const float* v) {
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi[0], vi[1], vi[2]))
 				return false;
 			f[0] = v[0]; f[1] = v[1]; f[2] = v[2];
-			return true;
+			return IsLocationValid();
 		}
 		bool Set4v(const float* v) {
 			const int* vi = reinterpret_cast<const int*>(v);
 			if (CheckHash(vi[0], vi[1], vi[2], vi[3]))
 				return false;
 			f[0] = v[0]; f[1] = v[1]; f[2] = v[2]; f[3] = v[3];
-			return true;
+			return IsLocationValid();
 		}
 
 
@@ -156,7 +159,7 @@ namespace Shader {
 				return false;
 			memcpy(f, v, 4 * sizeof(float));
 			i[16] = transp;
-			return true;
+			return IsLocationValid();
 		}
 		bool Set3x3(const float* v, bool transp) {
 			const int* vi = reinterpret_cast<const int*>(v);
@@ -164,7 +167,7 @@ namespace Shader {
 				return false;
 			memcpy(f, v, 9 * sizeof(float));
 			i[16] = transp;
-			return true;
+			return IsLocationValid();
 		}
 		bool Set4x4(const float* v, bool transp) {
 			const int* vi = reinterpret_cast<const int*>(v);
@@ -172,7 +175,7 @@ namespace Shader {
 				return false;
 			memcpy(f, v, 16 * sizeof(float));
 			i[16] = transp;
-			return true;
+			return IsLocationValid();
 		}
 	};
 

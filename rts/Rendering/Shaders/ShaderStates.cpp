@@ -2,10 +2,17 @@
 
 //#include <boost/functional/hash.hpp>
 #include "Rendering/Shaders/ShaderStates.h"
+#include "Rendering/GL/myGL.h"
 #include "System/Sync/HsiehHash.h"
 
 
 namespace Shader {
+	bool UniformState::IsLocationValid() const
+	{
+		return (location != GL_INVALID_INDEX);
+	}
+
+
 	unsigned int SShaderFlagState::GetHash()
 	{
 		if (updates != lastUpdates) {

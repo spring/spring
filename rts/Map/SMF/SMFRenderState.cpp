@@ -166,7 +166,7 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		glslShaders[n]->SetUniformLocation("detailNormalTex");     // idx 28
 		glslShaders[n]->SetUniformLocation("lightEmissionTex");    // idx 29
 		glslShaders[n]->SetUniformLocation("parallaxHeightTex");   // idx 30
-		glslShaders[n]->SetUniformLocation("infoTexIntensityMul"); // idx 31
+		glslShaders[n]->SetUniformLocation("$UNUSED$");            // idx 31
 		glslShaders[n]->SetUniformLocation("normalTexGen");        // idx 32
 		glslShaders[n]->SetUniformLocation("specularTexGen");      // idx 33
 		glslShaders[n]->SetUniformLocation("infoTexGen");          // idx 34
@@ -197,7 +197,7 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		glslShaders[n]->SetUniform1i(28, 11); // detailNormalTex (idx 28, texunit 11)
 		glslShaders[n]->SetUniform1i(29, 12); // lightEmisionTex (idx 29, texunit 12)
 		glslShaders[n]->SetUniform1i(30, 13); // parallaxHeightTex (idx 30, texunit 13)
-		glslShaders[n]->SetUniform1f(31, 1.0f); // infoTexIntensityMul
+		glslShaders[n]->SetUniform("infoTexIntensityMul", 1.0f);
 		glslShaders[n]->SetUniform2f(32, 1.0f / ((smfMap->normalTexSize.x - 1) * SQUARE_SIZE), 1.0f / ((smfMap->normalTexSize.y - 1) * SQUARE_SIZE));
 		glslShaders[n]->SetUniform2f(33, 1.0f / (gs->mapx * SQUARE_SIZE), 1.0f / (gs->mapy * SQUARE_SIZE));
 		glslShaders[n]->SetUniform2f(34, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
@@ -450,7 +450,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3fv(11, &camera->GetPos()[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4fv(13, false, shadowHandler->shadowMatrix);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform1f(31, float(smfGroundDrawer->GetDrawMode() == CBaseGroundDrawer::drawMetal) + 1.0f);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("infoTexIntensityMul", float(smfGroundDrawer->GetDrawMode() == CBaseGroundDrawer::drawMetal) + 1.0f);
 
 	// already on the MV stack at this point
 	glLoadIdentity();
