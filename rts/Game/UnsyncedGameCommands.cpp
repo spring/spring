@@ -1364,7 +1364,7 @@ public:
 
 class MuteActionExecutor : public IUnsyncedActionExecutor {
 public:
-	MuteActionExecutor() : IUnsyncedActionExecutor("NoSound",
+	MuteActionExecutor() : IUnsyncedActionExecutor("MuteSound",
 			"Mute/Unmute the current sound system") {}
 
 	bool Execute(const UnsyncedAction& action) const {
