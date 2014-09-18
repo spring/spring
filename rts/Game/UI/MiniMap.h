@@ -81,17 +81,26 @@ class CMiniMap : public CInputReceiver {
 		void ProxyMousePress(int x, int y, int button);
 		void ProxyMouseRelease(int x, int y, int button);
 
+		bool RenderCachedTexture(const bool use_geo);
+		void DrawBackground() const;
+		void DrawUnitIcons() const;
+		void DrawUnitRanges() const;
+		void DrawWorldStuff() const;
+		void DrawCameraFrustumAndMouseSelection();
+		void SetClipPlanes(const bool lua) const;
+
 		void DrawFrame();
 		void DrawNotes();
 		void DrawButtons();
 		void DrawMinimizedButton();
 
 		void DrawUnitHighlight(const CUnit* unit);
-		void DrawCircle(const float3& pos, float radius);
-		void DrawSquare(const float3& pos, float xsize, float zsize);
+		void DrawCircle(const float3& pos, float radius) const;
+		void DrawSquare(const float3& pos, float xsize, float zsize) const;
 		const icon::CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
 
-		void DrawCameraFrustumAndMouseSelection();
+		void UpdateTextureCache();
+		void ResizeTextureCache();
 
 	protected:
 		static void DrawSurfaceCircle(const float3& pos, float radius, unsigned int resolution);

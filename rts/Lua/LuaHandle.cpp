@@ -1750,16 +1750,30 @@ void CLuaHandle::DrawInMiniMap()
 		return;
 	}
 
-	const int xSize = minimap->GetSizeX();
-	const int ySize = minimap->GetSizeY();
+	lua_pushnumber(L, minimap->GetSizeX());
+	lua_pushnumber(L, minimap->GetSizeY());
 
-	if ((xSize < 1) || (ySize < 1)) {
-		lua_pop(L, 1);
+	const bool origDrawingState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
+	// call the routine
+	RunCallIn(L, cmdStr, 2, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
+}
+
+
+void CLuaHandle::DrawInMiniMapBackground()
+{
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 4, __FUNCTION__);
+	static const LuaHashString cmdStr("DrawInMiniMapBackground");
+	if (!cmdStr.GetGlobalFunc(L)) {
 		return;
 	}
 
-	lua_pushnumber(L, xSize);
-	lua_pushnumber(L, ySize);
+	lua_pushnumber(L, minimap->GetSizeX());
+	lua_pushnumber(L, minimap->GetSizeY());
 
 	const bool origDrawingState = LuaOpenGL::IsDrawingEnabled(L);
 	LuaOpenGL::SetDrawingEnabled(L, true);

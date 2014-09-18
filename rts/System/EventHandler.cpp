@@ -576,6 +576,7 @@ DRAW_CALLIN(WorldRefraction)
 DRAW_CALLIN(ScreenEffects)
 DRAW_CALLIN(Screen)
 DRAW_CALLIN(InMiniMap)
+DRAW_CALLIN(InMiniMapBackground)
 
 
 #define DRAW_ENTITY_CALLIN(name, args, args2)     \

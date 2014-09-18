@@ -252,6 +252,7 @@ class CEventHandler
 		void DrawScreenEffects();
 		void DrawScreen();
 		void DrawInMiniMap();
+		void DrawInMiniMapBackground();
 
 		bool DrawUnit(const CUnit* unit);
 		bool DrawFeature(const CFeature* feature);

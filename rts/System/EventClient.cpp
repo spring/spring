@@ -121,6 +121,7 @@ void CEventClient::DrawWorldRefraction() {}
 void CEventClient::DrawScreenEffects() {}
 void CEventClient::DrawScreen() {}
 void CEventClient::DrawInMiniMap() {}
+void CEventClient::DrawInMiniMapBackground() {}
 
 bool CEventClient::DrawUnit(const CUnit* unit) { return false; }
 bool CEventClient::DrawFeature(const CFeature* feature) { return false; }

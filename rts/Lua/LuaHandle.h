@@ -227,6 +227,7 @@ class CLuaHandle : public CEventClient
 		void DrawScreenEffects();
 		void DrawScreen();
 		void DrawInMiniMap();
+		void DrawInMiniMapBackground();
 
 		void GameProgress(int frameNum);
 
