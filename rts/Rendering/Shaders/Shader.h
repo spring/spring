@@ -152,9 +152,9 @@ namespace Shader {
 		virtual void SetUniform4v(UniformState* uState, const int*   v) { SetUniform4iv(uState->GetLocation(), v); }
 		virtual void SetUniform4v(UniformState* uState, const float* v) { SetUniform4fv(uState->GetLocation(), v); }
 
-		virtual void SetUniformMatrix2x2(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix2fv(uState->GetLocation(), transp, m); }
-		virtual void SetUniformMatrix3x3(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix3fv(uState->GetLocation(), transp, m); }
-		virtual void SetUniformMatrix4x4(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix4fv(uState->GetLocation(), transp, m); }
+		virtual void SetUniformMatrix2x2(UniformState* uState, bool transp, const float* m) { SetUniformMatrix2fv(uState->GetLocation(), transp, m); }
+		virtual void SetUniformMatrix3x3(UniformState* uState, bool transp, const float* m) { SetUniformMatrix3fv(uState->GetLocation(), transp, m); }
+		virtual void SetUniformMatrix4x4(UniformState* uState, bool transp, const float* m) { SetUniformMatrix4fv(uState->GetLocation(), transp, m); }
 
 
 		virtual void SetUniformTarget(int) {}

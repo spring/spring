@@ -439,7 +439,7 @@ void CSMFGroundTextures::ExtractSquareTiles(
 	const int mipLevel,
 	GLint* tileBuf
 ) const {
-	static const int TILE_MIP_OFFSET[] = {0, 512, 640, 672};
+	static const int TILE_MIP_OFFSET[] = {0, 512, 512+128, 512+128+32};
 	static const int BLOCK_SIZE = 32;
 
 	const int mipOffset = TILE_MIP_OFFSET[mipLevel];
