@@ -1453,7 +1453,6 @@ bool CMiniMap::RenderCachedTexture(bool use_geo)
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(1,1,1,1);
 	glPopAttrib();
-	glCheckState();
 	return true;
 }
 
