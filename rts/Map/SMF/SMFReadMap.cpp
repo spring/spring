@@ -40,6 +40,10 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 	, normalsTex(0)
 	, minimapTex(0)
 	, splatDetailTex(0)
+	, splatDetailNormalTex1(0)
+	, splatDetailNormalTex2(0)
+	, splatDetailNormalTex3(0)
+	, splatDetailNormalTex4(0)
 	, splatDistrTex(0)
 	, skyReflectModTex(0)
 	, detailNormalTex(0)
@@ -52,6 +56,7 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 
 	haveSpecularTexture = !(mapInfo->smf.specularTexName.empty());
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
+	haveSplatNormalTexture = (!mapInfo->smf.splatDistrTexName.empty() && !mapInfo->smf.splatDetailNormalTex1Name.empty());
 
 	ParseHeader();
 	LoadHeightMap();
@@ -83,6 +88,10 @@ CSMFReadMap::~CSMFReadMap()
 	glDeleteTextures(1, &shadingTex       );
 	glDeleteTextures(1, &normalsTex       );
 	glDeleteTextures(1, &splatDetailTex   );
+	glDeleteTextures(1, &splatDetailNormalTex1   );
+	glDeleteTextures(1, &splatDetailNormalTex2   );
+	glDeleteTextures(1, &splatDetailNormalTex3   );
+	glDeleteTextures(1, &splatDetailNormalTex4   );
 	glDeleteTextures(1, &splatDistrTex    );
 	glDeleteTextures(1, &grassShadingTex  );
 	glDeleteTextures(1, &skyReflectModTex );
@@ -246,6 +255,67 @@ void CSMFReadMap::CreateSplatDetailTextures()
 
 	splatDetailTex = splatDetailTexBM.CreateTexture(true);
 	splatDistrTex = splatDistrTexBM.CreateTexture(true);
+
+	if (!haveSplatNormalTexture){
+        return;
+	}
+
+	CBitmap splatDetailNormalTex1BM;
+
+	if (!splatDetailNormalTex1BM.Load(mapInfo->smf.splatDetailNormalTex1Name)) {
+		splatDetailNormalTex1BM.channels = 4;
+		splatDetailNormalTex1BM.Alloc(1, 1);
+		splatDetailNormalTex1BM.mem[0] = 127; //RGB is packed standard normal map
+		splatDetailNormalTex1BM.mem[1] = 127;
+		splatDetailNormalTex1BM.mem[2] = 255;
+		splatDetailNormalTex1BM.mem[3] = 127; //Alpha is diffuse as in old-style detail textures
+	}
+
+	splatDetailNormalTex1 = splatDetailNormalTex1BM.CreateTexture(true);
+
+
+	CBitmap splatDetailNormalTex2BM;
+
+	if (!splatDetailNormalTex2BM.Load(mapInfo->smf.splatDetailNormalTex2Name)) {
+		splatDetailNormalTex2BM.channels = 4;
+		splatDetailNormalTex2BM.Alloc(1, 1);
+		splatDetailNormalTex2BM.mem[0] = 127; //RGB is packed standard normal map
+		splatDetailNormalTex2BM.mem[1] = 127;
+		splatDetailNormalTex2BM.mem[2] = 255;
+		splatDetailNormalTex2BM.mem[3] = 127; //Alpha is diffuse as in old-style detail textures
+	}
+
+	splatDetailNormalTex2 = splatDetailNormalTex2BM.CreateTexture(true);
+
+
+	CBitmap splatDetailNormalTex3BM;
+
+	if (!splatDetailNormalTex3BM.Load(mapInfo->smf.splatDetailNormalTex3Name)) {
+		splatDetailNormalTex3BM.channels = 4;
+		splatDetailNormalTex3BM.Alloc(1, 1);
+		splatDetailNormalTex3BM.mem[0] = 127; //RGB is packed standard normal map
+		splatDetailNormalTex3BM.mem[1] = 127;
+		splatDetailNormalTex3BM.mem[2] = 255;
+		splatDetailNormalTex3BM.mem[3] = 127; //Alpha is diffuse as in old-style detail textures
+	}
+
+	splatDetailNormalTex3 = splatDetailNormalTex3BM.CreateTexture(true);
+
+	CBitmap splatDetailNormalTex4BM;
+
+	if (!splatDetailNormalTex4BM.Load(mapInfo->smf.splatDetailNormalTex4Name)) {
+		splatDetailNormalTex4BM.channels = 4;
+		splatDetailNormalTex4BM.Alloc(1, 1);
+		splatDetailNormalTex4BM.mem[0] = 127; //RGB is packed standard normal map
+		splatDetailNormalTex4BM.mem[1] = 127;
+		splatDetailNormalTex4BM.mem[2] = 255;
+		splatDetailNormalTex4BM.mem[3] = 127; //Alpha is diffuse as in old-style detail textures
+	}
+
+	splatDetailNormalTex4 = splatDetailNormalTex4BM.CreateTexture(true);
+
+
+
 }
 
 

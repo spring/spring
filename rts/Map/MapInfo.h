@@ -181,6 +181,11 @@ public:
 		std::string detailNormalTexName;
 		std::string lightEmissionTexName;
 		std::string parallaxHeightTexName;
+		std::string splatDetailNormalTex1Name;
+		std::string splatDetailNormalTex2Name;
+		std::string splatDetailNormalTex3Name;
+		std::string splatDetailNormalTex4Name;
+
 
 		float minHeight;
 		bool  minHeightOverride;
