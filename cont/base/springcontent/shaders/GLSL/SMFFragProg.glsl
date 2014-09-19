@@ -31,8 +31,18 @@ uniform float groundShadowDensity;
 	uniform vec3 waterAbsorbColor;
 #endif
 
-#if (SMF_DETAIL_TEXTURE_SPLATTING == 1)
+#if (SMF_DETAIL_TEXTURE_SPLATTING == 1 && SMF_DETAIL_NORMAL_TEXTURE_SPLATTING == 0)
 	uniform sampler2D splatDetailTex;
+	uniform sampler2D splatDistrTex;
+	uniform vec4 splatTexMults;  // per-channel splat intensity multipliers
+	uniform vec4 splatTexScales; // defaults to SMF_DETAILTEX_RES per channel
+#endif
+
+#if (SMF_DETAIL_NORMAL_TEXTURE_SPLATTING == 1)
+	uniform sampler2D splatDetailNormalTex1;
+	uniform sampler2D splatDetailNormalTex2;
+	uniform sampler2D splatDetailNormalTex3;
+	uniform sampler2D splatDetailNormalTex4;
 	uniform sampler2D splatDistrTex;
 	uniform vec4 splatTexMults;  // per-channel splat intensity multipliers
 	uniform vec4 splatTexScales; // defaults to SMF_DETAILTEX_RES per channel
@@ -106,21 +116,45 @@ vec3 GetFragmentNormal(vec2 uv) {
 }
 
 vec4 GetDetailTextureColor(vec2 uv) {
-	#if (SMF_DETAIL_TEXTURE_SPLATTING == 0)
+	#if (SMF_DETAIL_TEXTURE_SPLATTING == 0 && SMF_DETAIL_NORMAL_TEXTURE_SPLATTING == 0)
 		vec2 detailTexCoord = vertexWorldPos.xz * vec2(SMF_DETAILTEX_RES);
 		vec4 detailCol = (texture2D(detailTex, detailTexCoord) * 2.0) - 1.0;
 	#else
+		#if (SMF_DETAIL_NORMAL_TEXTURE_SPLATTING == 1)
 		vec4 splatTexCoord0 = vertexWorldPos.xzxz * splatTexScales.rrgg;
 		vec4 splatTexCoord1 = vertexWorldPos.xzxz * splatTexScales.bbaa;
-		vec4 splatDetails;
-			splatDetails.r = texture2D(splatDetailTex, splatTexCoord0.st).r;
-			splatDetails.g = texture2D(splatDetailTex, splatTexCoord0.pq).g;
-			splatDetails.b = texture2D(splatDetailTex, splatTexCoord1.st).b;
-			splatDetails.a = texture2D(splatDetailTex, splatTexCoord1.pq).a;
-			splatDetails   = (splatDetails * 2.0) - 1.0;
-
+		vec4 splatDetails = vec4(0.0, 0.0, 0.01 ,0.0); // just so that if the splatStrength is 0, that we dont return a null vector as a normal, but one that will be pointing 'up' +Y
 		vec4 splatCofac = texture2D(splatDistrTex, uv) * splatTexMults;
-		vec4 detailCol = vec4(dot(splatDetails, splatCofac));
+		
+		float splatStrength=dot(splatCofac, vec4(1.0, 1.0, 1.0, 1.0));
+		
+		splatDetails += (texture2D(splatDetailNormalTex1, splatTexCoord0.st) - 0.5) * splatCofac.r;
+		splatDetails += (texture2D(splatDetailNormalTex2, splatTexCoord0.pq) - 0.5) * splatCofac.g;
+		splatDetails += (texture2D(splatDetailNormalTex3, splatTexCoord1.st) - 0.5) * splatCofac.b;
+		splatDetails += (texture2D(splatDetailNormalTex4, splatTexCoord1.pq) - 0.5) * splatCofac.a;
+		
+		// detailNormal is intentionally not normalized, as it will be rotated by the map's normal vector and then normalized.
+		splatDetails=2.0 * splatDetails;
+		splatDetails.xyz= splatDetails.xyz / (max(1.0, splatStrength)); 
+		
+		//swizzle (y-z) for normal map to spring conversion:
+		vec4 detailCol= vec4(splatDetails.x, splatDetails.y, splatDetails.z, splatDetails.a); //we return the normals in RGB and the diffuse in A
+		
+		
+		#else //SMF_DETAIL_TEXTURE_SPLATTING==1
+			vec4 splatTexCoord0 = vertexWorldPos.xzxz * splatTexScales.rrgg;
+			vec4 splatTexCoord1 = vertexWorldPos.xzxz * splatTexScales.bbaa;
+			vec4 splatDetails;
+				splatDetails.r = texture2D(splatDetailTex, splatTexCoord0.st).r;
+				splatDetails.g = texture2D(splatDetailTex, splatTexCoord0.pq).g;
+				splatDetails.b = texture2D(splatDetailTex, splatTexCoord1.st).b;
+				splatDetails.a = texture2D(splatDetailTex, splatTexCoord1.pq).a;
+				splatDetails   = (splatDetails * 2.0) - 1.0;
+
+			vec4 splatCofac = texture2D(splatDistrTex, uv) * splatTexMults;
+			vec4 detailCol = vec4(dot(splatDetails, splatCofac));
+		#endif
+		
 	#endif
 
 	return detailCol;
@@ -192,7 +226,7 @@ void main() {
 	vec3 cameraDir = vertexWorldPos.xyz - cameraPos;
 	vec3 normal = GetFragmentNormal(normTexCoords);
 
-	#if (SMF_DETAIL_NORMALS == 1 || SMF_PARALLAX_MAPPING == 1)
+	#if (SMF_DETAIL_NORMALS == 1 || SMF_PARALLAX_MAPPING == 1 || SMF_DETAIL_NORMAL_TEXTURE_SPLATTING ==1)
 		// detail-normals are (assumed to be) defined within STN space
 		// (for a regular vertex normal equal to <0, 1, 0>, the S- and
 		// T-tangents are aligned with Spring's +x and +z (!) axes)
@@ -231,6 +265,13 @@ void main() {
 		normal = normalize(mix(normal, stnMatrix * dtNormal, dtSample.a));
 	}
 	#endif
+	
+	vec4 detailCol = GetDetailTextureColor(specTexCoords);
+	#if (SMF_DETAIL_NORMAL_TEXTURE_SPLATTING == 1)
+		normal=mix(normalize(stnMatrix*detailCol.xyz),normal,0); //convert the splat detail normal to world space
+
+		detailCol=vec4(detailCol.a, detailCol.a, detailCol.a, detailCol.a);
+	#endif
 
 	#if (DEFERRED_MODE == 0)
 	float cosAngleDiffuse = clamp(dot(normalize(lightDir.xyz), normal), 0.0, 1.0);
@@ -238,7 +279,6 @@ void main() {
 	#endif
 
 	vec4 diffuseCol = texture2D(diffuseTex, diffTexCoords);
-	vec4 detailCol = GetDetailTextureColor(specTexCoords);
 	// non-zero default specularity on non-SSMF maps (for DL)
 	vec4 specularCol = vec4(0.5, 0.5, 0.5, 1.0);
 	vec4 emissionCol = vec4(0.0, 0.0, 0.0, 0.0);
@@ -365,7 +405,8 @@ void main() {
 	// linearly transform the eye-space depths, might be more useful?
 	// gl_FragDepth = gl_FragCoord.z / gl_FragCoord.w;
 	#else
-	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor);
+	 gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor);
+	//gl_FragColor.rgb = normalize(normal.rgb)*0.5+0.5; //debugging to see the normals of the map
 	#endif
 }
 

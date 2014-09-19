@@ -112,6 +112,7 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		glslShaders[n]->SetFlag("SMF_VOID_GROUND",              int(mapInfo->map.voidGround));
 		glslShaders[n]->SetFlag("SMF_ARB_LIGHTING",             int(!smfMap->HaveSpecularTexture()));
 		glslShaders[n]->SetFlag("SMF_DETAIL_TEXTURE_SPLATTING", int(smfMap->HaveSplatTexture()));
+		glslShaders[n]->SetFlag("SMF_DETAIL_NORMAL_TEXTURE_SPLATTING", int(smfMap->HaveSplatNormalTexture()));
 		glslShaders[n]->SetFlag("SMF_WATER_ABSORPTION",         int(smfMap->HasVisibleWater()));
 		glslShaders[n]->SetFlag("SMF_SKY_REFLECTIONS",          int(smfMap->GetSkyReflectModTexture() != 0));
 		glslShaders[n]->SetFlag("SMF_DETAIL_NORMALS",           int(smfMap->GetDetailNormalTexture() != 0));
@@ -163,6 +164,11 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		glslShaders[n]->SetUniform("detailNormalTex", 11);
 		glslShaders[n]->SetUniform("lightEmissionTex", 12);
 		glslShaders[n]->SetUniform("parallaxHeightTex", 13);
+
+		glslShaders[n]->SetUniform("splatDetailNormalTex1",15);//idx 35
+		glslShaders[n]->SetUniform("splatDetailNormalTex2",16);//idx 36
+		glslShaders[n]->SetUniform("splatDetailNormalTex3",17);//idx 37
+		glslShaders[n]->SetUniform("splatDetailNormalTex4",18);//idx 38
 		glslShaders[n]->SetUniform("infoTexIntensityMul", 1.0f);
 		glslShaders[n]->SetUniform("normalTexGen", 1.0f / ((smfMap->normalTexSize.x - 1) * SQUARE_SIZE), 1.0f / ((smfMap->normalTexSize.y - 1) * SQUARE_SIZE));
 		glslShaders[n]->SetUniform("specularTexGen", 1.0f / (gs->mapx * SQUARE_SIZE), 1.0f / (gs->mapy * SQUARE_SIZE));
@@ -445,6 +451,10 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glActiveTexture(GL_TEXTURE12); glBindTexture(GL_TEXTURE_2D, smfMap->GetLightEmissionTexture());
 	glActiveTexture(GL_TEXTURE13); glBindTexture(GL_TEXTURE_2D, smfMap->GetParallaxHeightTexture());
 	glActiveTexture(GL_TEXTURE14); glBindTexture(GL_TEXTURE_2D, smfGroundDrawer->GetActiveInfoTexture());
+	glActiveTexture(GL_TEXTURE15); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailNormalTexture1());
+	glActiveTexture(GL_TEXTURE16); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailNormalTexture2());
+	glActiveTexture(GL_TEXTURE17); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailNormalTexture3());
+	glActiveTexture(GL_TEXTURE18); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailNormalTexture4());
 
 	glActiveTexture(GL_TEXTURE0);
 }
@@ -452,6 +462,10 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 	glslShaders[GLSL_SHADER_CURRENT]->Disable();
 
+	glActiveTexture(GL_TEXTURE18); glBindTexture(GL_TEXTURE_2D, 0);
+	glActiveTexture(GL_TEXTURE17); glBindTexture(GL_TEXTURE_2D, 0);
+	glActiveTexture(GL_TEXTURE16); glBindTexture(GL_TEXTURE_2D, 0);
+	glActiveTexture(GL_TEXTURE15); glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE14); glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE13); glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE12); glBindTexture(GL_TEXTURE_2D, 0);

@@ -103,6 +103,10 @@ local mapDefaults = {
     detailNormalTex   = '',
     lightEmissionTex  = '',
     parallaxHeightTex = '',
+    splatDetailNormalTex1 = '',
+    splatDetailNormalTex2 = '',
+    splatDetailNormalTex3 = '',
+    splatDetailNormalTex4 = '',
   },
 
   defaultTerrainType = {

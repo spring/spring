@@ -63,7 +63,7 @@ CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
 	ReadSound();
 
 	//FIXME save all data in an array, so we can destroy the lua context (to save mem)?
-	//delete parser; 
+	//delete parser;
 }
 
 CMapInfo::~CMapInfo()
@@ -326,6 +326,10 @@ void CMapInfo::ReadSMF()
 	smf.specularTexName    = mapResTable.GetString("specularTex", "");
 	smf.splatDetailTexName = mapResTable.GetString("splatDetailTex", "");
 	smf.splatDistrTexName  = mapResTable.GetString("splatDistrTex", "");
+	smf.splatDetailNormalTex1Name  = mapResTable.GetString("splatDetailNormalTex1", "");
+	smf.splatDetailNormalTex2Name  = mapResTable.GetString("splatDetailNormalTex2", "");
+	smf.splatDetailNormalTex3Name  = mapResTable.GetString("splatDetailNormalTex3", "");
+	smf.splatDetailNormalTex4Name  = mapResTable.GetString("splatDetailNormalTex4", "");
 
 	smf.grassShadingTexName = mapResTable.GetString("grassShadingTex", "");
 
@@ -350,6 +354,11 @@ void CMapInfo::ReadSMF()
 	if (!smf.detailNormalTexName.empty()) { smf.detailNormalTexName = "maps/" + smf.detailNormalTexName; }
 	if (!smf.lightEmissionTexName.empty()) { smf.lightEmissionTexName = "maps/" + smf.lightEmissionTexName; }
 	if (!smf.parallaxHeightTexName.empty()) { smf.parallaxHeightTexName = "maps/" + smf.parallaxHeightTexName; }
+
+	if (!smf.splatDetailNormalTex1Name.empty()) { smf.splatDetailNormalTex1Name = "maps/" + smf.splatDetailNormalTex1Name; }
+	if (!smf.splatDetailNormalTex2Name.empty()) { smf.splatDetailNormalTex2Name = "maps/" + smf.splatDetailNormalTex2Name; }
+	if (!smf.splatDetailNormalTex3Name.empty()) { smf.splatDetailNormalTex3Name = "maps/" + smf.splatDetailNormalTex3Name; }
+	if (!smf.splatDetailNormalTex4Name.empty()) { smf.splatDetailNormalTex4Name = "maps/" + smf.splatDetailNormalTex4Name; }
 
 	// height overrides
 	const LuaTable& smfTable = parser->GetRoot().SubTable("smf");
@@ -450,7 +459,7 @@ void CMapInfo::ReadSound()
 
 		if (luaType == LuaTable::NIL)
 			continue;
-		
+
 		const ALuint param = it->second;
 		const unsigned& type = alParamType[param];
 		switch (type) {
