@@ -93,6 +93,7 @@ namespace Shader {
 
 	private:
 		virtual int GetUniformLoc(const std::string& name) = 0;
+		virtual int GetUniformType(const int loc) = 0;
 
 	private:
 		UniformState* GetNewUniformState(const std::string name);
@@ -226,6 +227,7 @@ namespace Shader {
 		void Reload(bool reloadFromDisk) {}
 
 		int GetUniformLoc(const std::string& name) { return -1; }
+		int GetUniformType(const int loc) { return -1; }
 
 		void SetUniform1i(int idx, int   v0) {}
 		void SetUniform2i(int idx, int   v0, int   v1) {}
@@ -254,6 +256,7 @@ namespace Shader {
 		void Reload(bool reloadFromDisk);
 
 		int GetUniformLoc(const std::string& name);
+		int GetUniformType(const int loc) { return -1; }
 		void SetUniformTarget(int target);
 		int GetUnitformTarget();
 
@@ -289,6 +292,7 @@ namespace Shader {
 		void Release();
 		void Reload(bool reloadFromDisk);
 
+		int GetUniformType(const int loc);
 		int GetUniformLoc(const std::string& name);
 		void SetUniformLocation(const std::string&);
 

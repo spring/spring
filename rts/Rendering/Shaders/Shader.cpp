@@ -8,6 +8,9 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/Log/ILog.h"
 #include <algorithm>
+#ifdef DEBUG
+	#include <string.h>
+#endif
 
 
 #define LOG_SECTION_SHADER "Shader"
@@ -18,6 +21,10 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SHADER)
 	#undef LOG_SECTION_CURRENT
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_SHADER
+
+
+static std::unordered_map<std::string, GLuint> bufGlslShaders;
+
 
 
 static bool glslIsValid(GLuint obj)
@@ -272,6 +279,10 @@ namespace Shader {
 	{
 		UniformState* us = &uniformStates.emplace(hashString(name.c_str()), name).first->second;
 		us->SetLocation(GetUniformLoc(name));
+	#if DEBUG
+		if (us->IsLocationValid())
+			us->SetType(GetUniformType(us->GetLocation()));
+	#endif
 		return us;
 	}
 
@@ -391,6 +402,38 @@ namespace Shader {
 		log += glslGetLog(objID);
 
 		valid = valid && bool(validated);
+
+	#ifdef DEBUG
+		GLsizei numUniforms, maxUniformNameLength;
+		glGetProgramiv(objID, GL_ACTIVE_UNIFORMS, &numUniforms);
+		glGetProgramiv(objID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
+
+		if (maxUniformNameLength <= 0)
+			return;
+
+		std::string bufname(maxUniformNameLength, 0);
+		for (int i = 0; i < numUniforms; ++i) {
+			GLsizei nameLength = 0;
+			GLint size = 0;
+			GLenum type = 0;
+			glGetActiveUniform(objID, i, maxUniformNameLength, &nameLength, &size, &type, &bufname[0]);
+			bufname[nameLength] = 0;
+
+			if (nameLength == 0)
+				continue;
+
+			if (strncmp(&bufname[0], "gl_", 3) == 0)
+				continue;
+
+			const auto hash = hashString(&bufname[0]);
+			auto it = uniformStates.find(hash);
+			if (it != uniformStates.end())
+				continue;
+
+			LOG_L(L_WARNING, "[GLSL-PO::%s] program-object name: %s, unset uniform: %s", __FUNCTION__, name.c_str(), &bufname[0]);
+			//assert(false);
+		}
+	#endif
 	}
 
 	void GLSLProgramObject::Release() {
@@ -440,6 +483,14 @@ namespace Shader {
 				glAttachShader(objID, so->GetObjID());
 			}
 		}
+	}
+
+	int GLSLProgramObject::GetUniformType(const int loc) {
+		GLint size = 0;
+		GLenum type = 0;
+		glGetActiveUniform(objID, loc, 0, nullptr, &size, &type, nullptr);
+		assert(size == 1); // arrays aren't handled yet
+		return type;
 	}
 
 	int GLSLProgramObject::GetUniformLoc(const std::string& name) {
