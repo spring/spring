@@ -789,11 +789,9 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		return buildTip;
 	}
 
-	{
-		const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
-		if (unit) {
-			return CTooltipConsole::MakeUnitString(unit);
-		}
+	const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
+	if (unit) {
+		return CTooltipConsole::MakeUnitString(unit);
 	}
 
 	const string selTip = selectedUnitsHandler.GetTooltip();
