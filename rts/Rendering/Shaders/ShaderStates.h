@@ -38,11 +38,14 @@ namespace Shader {
 	#endif
 
 	public:
-		UniformState(const std::string& _name): location(-1), name(_name), type(-1) {
+		UniformState(const std::string& _name): location(-1), name(_name) {
 			i[0] = -0xFFFFFF;
 			i[1] = -0xFFFFFF;
 			i[2] = -0xFFFFFF;
 			i[3] = -0xFFFFFF;
+		#ifdef DEBUG
+			type = -1;
+		#endif
 		}
 
 		const int* GetIntValues() const { return &i[0]; }
