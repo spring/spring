@@ -356,6 +356,9 @@ namespace creg {
 	#define alignofv(v) alignof(v)
 #endif
 
+//FIXME: defined cause gcc4.8 still doesn't support c++11's offsetof for non-static members
+#define offsetof_creg(type, member) (std::size_t)(((char*)&null->member) - ((char*)null))
+
 
 namespace creg {
 
@@ -500,7 +503,7 @@ namespace creg {
 		Type::memberRegistrator=this;				\
 	}												\
 	void RegisterMembers(creg::Class* class_) {		\
-		TClass* null=(Type*)0;						\
+		Type* null=nullptr;						\
 		(void)null; /*suppress compiler warning if this isn't used*/	\
 		Members; }									\
 	} static TClass##mreg;
@@ -516,7 +519,7 @@ namespace creg {
 		Type::memberRegistrator=this;				\
 	}												\
 	void RegisterMembers(creg::Class* class_) { \
-		Type* null=(Type*)0; \
+		Type* null=nullptr; \
 		(void)null; \
 		Members; } \
 	} static TSuperClass##TSubClass##mreg;
@@ -538,19 +541,19 @@ namespace creg {
  * For enumerated type members, @see CR_ENUM_MEMBER
  */
 #define CR_MEMBER(Member) \
-	class_->AddMember( #Member, creg::GetType(null->Member), (unsigned int)(((char*)&null->Member)-((char*)0)), alignofv(null->Member))
+	class_->AddMember( #Member, creg::GetType(null->Member), offsetof_creg(Type, Member), alignofv(Type::Member))
 
 /** @def CR_ENUM_MEMBER
  * Registers a class/struct member variable with an enumerated type
  */
 #define CR_ENUM_MEMBER(Member) \
-	class_->AddMember( #Member, creg::IType::CreateEnumeratedType(sizeof(null->Member)), (unsigned int)(((char*)&null->Member)-((char*)0)), alignofv(null->Member))
+	class_->AddMember( #Member, creg::IType::CreateEnumeratedType(sizeof(Type::Member)), offsetof_creg(Type, Member), alignofv(Type::Member))
 
 /** @def CR_IGNORED
  * Registers a member variable that isn't saved/loaded
  */
 #define CR_IGNORED(Member) \
-	class_->AddMember( #Member, new creg::IgnoredType(sizeof(null->Member)), (unsigned int)(((char*)&null->Member)-((char*)0)), alignofv(null->Member))
+	class_->AddMember( #Member, new creg::IgnoredType(sizeof(Type::Member)), offsetof_creg(Type, Member), alignofv(Type::Member))
 
 
 /** @def CR_MEMBER_UN
