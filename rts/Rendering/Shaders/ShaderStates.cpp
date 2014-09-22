@@ -7,6 +7,7 @@
 
 
 static std::unordered_set<int> samplerTypes = {
+#ifndef HEADLESS
 	GL_SAMPLER_1D,
 	GL_SAMPLER_2D,
 	GL_SAMPLER_3D,
@@ -45,6 +46,7 @@ static std::unordered_set<int> samplerTypes = {
 	GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY,
 	GL_UNSIGNED_INT_SAMPLER_BUFFER,
 	GL_UNSIGNED_INT_SAMPLER_2D_RECT,
+#endif
 };
 
 
