@@ -187,7 +187,7 @@ void CSMFReadMap::CreateSpecularTex()
 	if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
 		// maps wants specular lighting, but no moderation
 		specularTexBM.channels = 4;
-		specularTexBM.AllocDummy(1, 1, SColor(255,255,255,255));
+		specularTexBM.AllocDummy(SColor(255,255,255,255));
 	}
 
 	specularTex = specularTexBM.CreateTexture(false);
@@ -224,12 +224,12 @@ void CSMFReadMap::CreateSplatDetailTextures()
 	if (!splatDetailTexBM.Load(mapInfo->smf.splatDetailTexName)) {
 		// default detail-texture should be all-grey
 		splatDetailTexBM.channels = 4;
-		splatDetailTexBM.AllocDummy(1, 1, SColor(127,127,127,127));
+		splatDetailTexBM.AllocDummy(SColor(127,127,127,127));
 	}
 
 	if (!splatDistrTexBM.Load(mapInfo->smf.splatDistrTexName)) {
 		splatDistrTexBM.channels = 4;
-		splatDistrTexBM.AllocDummy(1, 1, SColor(255,0,0,0));
+		splatDistrTexBM.AllocDummy(SColor(255,0,0,0));
 	}
 
 	splatDetailTex = splatDetailTexBM.CreateTexture(true);

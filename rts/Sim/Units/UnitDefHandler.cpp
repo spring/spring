@@ -292,7 +292,7 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef, const std::string&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".png", bitmap) &&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".pcx", bitmap) &&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".bmp", bitmap)) {
-			bitmap.Alloc(1, 1); // last resort
+			bitmap.AllocDummy(SColor(255, 0, 0, 255));
 		}
 	}
 
