@@ -9,7 +9,10 @@
 #include "System/Log/ILog.h"
 #include <algorithm>
 #ifdef DEBUG
-	#include <string.h>
+	#include <string.h> // strncmp
+#endif
+#ifdef HEADLESS
+	#define GL_INVALID_INDEX -1
 #endif
 
 
@@ -210,27 +213,21 @@ namespace Shader {
 	}
 
 	void IProgramObject::Enable() {
-		{
-			bound = true;
-		}
+		bound = true;
 	}
 
 	void IProgramObject::Disable() {
-		{
-			bound = false;
-		}
+		bound = false;
 	}
 
 	bool IProgramObject::IsBound() const {
-		{
-			return bound;
-		}
+		return bound;
 	}
 
 	void IProgramObject::Release() {
-		for (SOVecIt it = shaderObjs.begin(); it != shaderObjs.end(); ++it) {
-			(*it)->Release();
-			delete *it;
+		for (IShaderObject*& so: shaderObjs) {
+			so->Release();
+			delete so;
 		}
 
 		shaderObjs.clear();
@@ -250,8 +247,8 @@ namespace Shader {
 		// NOTE: this does not preserve the #version pragma
 		const std::string definitionFlags = GetString();
 
-		for (SOVecIt it = shaderObjs.begin(); it != shaderObjs.end(); ++it) {
-			(*it)->SetDefinitions(definitionFlags);
+		for (IShaderObject*& so: shaderObjs) {
+			so->SetDefinitions(definitionFlags);
 		}
 
 		curHash = hash;
@@ -293,28 +290,24 @@ namespace Shader {
 	}
 
 	void ARBProgramObject::SetUniformTarget(int target) {
-		{
-			uniformTarget = target;
-		}
+		uniformTarget = target;
 	}
 	int ARBProgramObject::GetUnitformTarget() {
-		{
-			return uniformTarget;
-		}
+		return uniformTarget;
 	}
 
 	void ARBProgramObject::Enable() {
 		RecompileIfNeeded();
-		for (SOVecConstIt it = shaderObjs.begin(); it != shaderObjs.end(); it++) {
-			glEnable((*it)->GetType());
-			glBindProgramARB((*it)->GetType(), (*it)->GetObjID());
+		for (const IShaderObject* so: shaderObjs) {
+			glEnable(so->GetType());
+			glBindProgramARB(so->GetType(), so->GetObjID());
 		}
 		IProgramObject::Enable();
 	}
 	void ARBProgramObject::Disable() {
-		for (SOVecConstIt it = shaderObjs.begin(); it != shaderObjs.end(); it++) {
-			glBindProgramARB((*it)->GetType(), 0);
-			glDisable((*it)->GetType());
+		for (const IShaderObject* so: shaderObjs) {
+			glBindProgramARB(so->GetType(), 0);
+			glDisable(so->GetType());
 		}
 		IProgramObject::Disable();
 	}
@@ -322,8 +315,8 @@ namespace Shader {
 	void ARBProgramObject::Link() {
 		bool shaderObjectsValid = true;
 
-		for (SOVecConstIt it = shaderObjs.begin(); it != shaderObjs.end(); it++) {
-			shaderObjectsValid = (shaderObjectsValid && (*it)->IsValid());
+		for (const IShaderObject* so: shaderObjs) {
+			shaderObjectsValid = (shaderObjectsValid && so->IsValid());
 		}
 
 		valid = shaderObjectsValid;
@@ -453,18 +446,21 @@ namespace Shader {
 
 		GLuint oldProgID = objID;
 
-		for (SOVecIt it = GetAttachedShaderObjs().begin(); it != GetAttachedShaderObjs().end(); ++it) {
-			glDetachShader(oldProgID, (*it)->GetObjID());
+		for (auto& us_pair: uniformStates) {
+			us_pair.second.SetLocation(GL_INVALID_INDEX);
 		}
-		for (SOVecIt it = GetAttachedShaderObjs().begin(); it != GetAttachedShaderObjs().end(); ++it) {
-			(*it)->Release();
-			(*it)->Compile(reloadFromDisk);
+		for (IShaderObject*& so: GetAttachedShaderObjs()) {
+			glDetachShader(oldProgID, so->GetObjID());
+		}
+		for (IShaderObject*& so: GetAttachedShaderObjs()) {
+			so->Release();
+			so->Compile(reloadFromDisk);
 		}
 
 		objID = glCreateProgram();
-		for (SOVecIt it = GetAttachedShaderObjs().begin(); it != GetAttachedShaderObjs().end(); ++it) {
-			if ((*it)->IsValid()) {
-				glAttachShader(objID, (*it)->GetObjID());
+		for (IShaderObject*& so: GetAttachedShaderObjs()) {
+			if (so->IsValid()) {
+				glAttachShader(objID, so->GetObjID());
 			}
 		}
 
