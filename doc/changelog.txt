@@ -18,6 +18,7 @@ Lua:
  - added SetAlly(firstAllyTeamId, secondAllyTeamId, ally)
  - added VFS.UnmapArchive(string fileName)
  - allow tcp connections by luasocket as default (udp is still restricted)
+ - add callin DrawInMiniMapBackground(sizex, sizey) -> nil
  - add callin AllowBuilderHoldFire(unitID, unitDefID, action) --> boolean
      action is one of:
        Build      -1
