@@ -96,7 +96,7 @@ void CAILibraryManager::GatherInterfaceLibrariesInfos() {
 				const std::string* lastDir = NULL;
 				std::set<std::string>::const_iterator dir;
 				for (dir = info->second.begin(); dir != info->second.end(); ++dir) {
-					LOG_L(L_WARNING, "\t%s", dir->c_str());
+					LOG_L(L_ERROR, "\t%s", dir->c_str());
 					lastDir = &(*dir);
 				}
 				LOG_L(L_ERROR, "\tusing: %s", lastDir->c_str());
