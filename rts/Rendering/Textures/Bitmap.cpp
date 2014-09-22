@@ -209,15 +209,11 @@ void CBitmap::Alloc(int w, int h)
 	Alloc(w, h, channels);
 }
 
-void CBitmap::AllocDummy()
+void CBitmap::AllocDummy(const SColor fill)
 {
 	compressed = false;
-	channels = 4;
-	Alloc(1, 1);
-	mem[0] = 255; // Red allows us to easily see textures that failed to load
-	mem[1] = 0;
-	mem[2] = 0;
-	mem[3] = 255; // Non Transparent
+	Alloc(1, 1, 4);
+	reinterpret_cast<SColor*>(mem)[0] = fill;
 }
 
 bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
@@ -590,7 +586,7 @@ void CBitmap::CreateAlpha(unsigned char red, unsigned char green, unsigned char 
 }
 
 
-void CBitmap::SetTransparent(const SColor& c, const SColor& trans)
+void CBitmap::SetTransparent(const SColor& c, const SColor trans)
 {
 	if (compressed) {
 		return;

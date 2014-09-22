@@ -21,12 +21,7 @@ CBasicWater::CBasicWater()
 		LOG_L(L_WARNING, "[%s] could not read water texture from file \"%s\"", __FUNCTION__, mapInfo->water.texture.c_str());
 
 		// fallback
-		waterTexBM.channels = 4;
-		waterTexBM.Alloc(1, 1);
-		waterTexBM.mem[0] =   0;
-		waterTexBM.mem[1] =   0;
-		waterTexBM.mem[2] = 255;
-		waterTexBM.mem[3] = 255;
+		waterTexBM.AllocDummy(1, 1, SColor(0,0,255,255));
 	}
 
 	// create mipmapped texture
