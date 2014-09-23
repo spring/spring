@@ -335,7 +335,9 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 /** Helper function for AdjustFoundPath */
 static inline void FixupPath3Pts(const MoveDef& moveDef, const float3 p1, float3& p2, const float3 p3)
 {
+#if PATHDEBUG
 	float3 old = p2;
+#endif
 	p2.x = 0.5f * (p1.x + p3.x);
 	p2.z = 0.5f * (p1.z + p3.z);
 	p2.y = CMoveMath::yLevel(moveDef, p2);
@@ -348,7 +350,7 @@ static inline void FixupPath3Pts(const MoveDef& moveDef, const float3 p1, float3
 
 void CPathFinder::SmoothMidWaypoint(const int2 testsqr, const int2 prevsqr, const MoveDef& moveDef, IPath::Path& foundPath, const float3 nextPoint) const
 {
-	static const int COSTMOD = 1.39f; // (math::sqrt(2) + 1) / math::sqrt(3)
+	static const float COSTMOD = 1.39f; // (math::sqrt(2) + 1) / math::sqrt(3)
 	const int tstsqr = BlockPosToIdx(testsqr);
 	const int prvsqr = BlockPosToIdx(prevsqr);
 	if (
