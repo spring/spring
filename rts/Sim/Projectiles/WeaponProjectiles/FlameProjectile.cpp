@@ -41,7 +41,7 @@ CFlameProjectile::CFlameProjectile(const ProjectileParams& params):CWeaponProjec
 
 void CFlameProjectile::Collision()
 {
-	const float3 norm = CGround::GetNormal(pos.x, pos.z);
+	const float3& norm = CGround::GetNormal(pos.x, pos.z);
 	const float ns = speed.dot(norm);
 
 	SetVelocityAndSpeed(speed - (norm * ns));

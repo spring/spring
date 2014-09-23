@@ -66,11 +66,10 @@ struct PathNodeStateBuffer {
 	PathNodeStateBuffer(const int2& bufRes, const int2& mapRes)
 		: extraCostsOverlaySynced(NULL)
 		, extraCostsOverlayUnsynced(NULL)
+		, ps(mapRes / bufRes)
 		, br(bufRes)
 		, mr(mapRes)
 	{
-		ps = mapRes / bufRes;
-
 		fCost.resize(br.x * br.y, PATHCOST_INFINITY);
 		gCost.resize(br.x * br.y, PATHCOST_INFINITY);
 		nodeMask.resize(br.x * br.y, 0);

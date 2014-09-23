@@ -537,10 +537,10 @@ void CQuadField::MovedProjectile(CProjectile* p)
 
 	const CProjectile::QuadFieldCellData& qfcd = p->GetQuadFieldCellData();
 
-	const int2 oldCellCoors = qfcd.GetCoor(0);
+	const int2& oldCellCoors = qfcd.GetCoor(0);
 	const int2 newCellCoors = {
-		std::max(0, std::min(int(p->pos.x / quadSizeX), numQuadsX - 1)),
-		std::max(0, std::min(int(p->pos.z / quadSizeZ), numQuadsZ - 1))
+		Clamp(int(p->pos.x / quadSizeX), 0, numQuadsX - 1),
+		Clamp(int(p->pos.z / quadSizeZ), 0, numQuadsZ - 1)
 	};
 
 	if (newCellCoors != oldCellCoors) {

@@ -768,7 +768,7 @@ void CGroundMoveType::UpdateSkid()
 			const float remTime = std::max(1.0f, speedScale / speedReduction);
 
 			if (onSlope) {
-				const float3 normalVector = CGround::GetNormal(pos.x, pos.z);
+				const float3& normalVector = CGround::GetNormal(pos.x, pos.z);
 				const float3 normalForce = normalVector * normalVector.dot(UpVector * mapInfo->map.gravity);
 				const float3 newForce = UpVector * mapInfo->map.gravity - normalForce;
 

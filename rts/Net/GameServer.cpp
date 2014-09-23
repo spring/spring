@@ -338,7 +338,7 @@ void CGameServer::StripGameSetupText(const GameData* const newGameData)
 	for (TdfParser::sectionsMap_t::iterator it = rootSec->sections.begin(); it != rootSec->sections.end(); ++it) {
 		const std::string& sectionKey = StringToLower(it->first);
 
-		if (sectionKey.find("player") != 0)
+		if (!StringStartsWith(sectionKey, "player"))
 			continue;
 
 		TdfParser::TdfSection* playerSec = it->second;

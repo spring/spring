@@ -6,7 +6,7 @@
 #include <unordered_set>
 
 
-static std::unordered_set<int> samplerTypes = {
+static std::unordered_set<int> samplerTypes{
 #ifndef HEADLESS
 	GL_SAMPLER_1D,
 	GL_SAMPLER_2D,

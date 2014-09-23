@@ -319,7 +319,7 @@ void VBO::UnmapBuffer()
 void VBO::Invalidate()
 {
 	assert(bound);
-	assert(!mapped);
+	assert(immutableStorage || !mapped);
 
 #ifdef GLEW_ARB_invalidate_subdata
 	// OpenGL4 way

@@ -524,9 +524,9 @@ void CClassicGroundMoveType::UpdateSkid()
 			ChangeHeading(owner->heading);
 		} else {
 			if (onSlope) {
-				const float3 dir = CGround::GetNormal(midPos.x, midPos.z);
-				const float3 normalForce = dir*dir.dot(UpVector*mapInfo->map.gravity);
-				const float3 newForce = UpVector*mapInfo->map.gravity - normalForce;
+				const float3& dir = CGround::GetNormal(midPos.x, midPos.z);
+				const float3 normalForce = dir * dir.dot(UpVector * mapInfo->map.gravity);
+				const float3 newForce = UpVector * mapInfo->map.gravity - normalForce;
 
 				owner->SetVelocity(spd + newForce);
 				owner->SetVelocity(spd * (1.0f - (0.1f * dir.y)));

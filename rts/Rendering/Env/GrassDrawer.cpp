@@ -234,18 +234,20 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 	grassShader->Enable();
 
 	grassShader->SetUniform("frame", gs->frameNum + globalRendering->timeOffset);
-	grassShader->SetUniformMatrix4x4("shadowMatrix", false, &shadowHandler->shadowMatrix.m[0]);
-	grassShader->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
 	grassShader->SetUniform3v("windSpeed", &windSpeed.x);
 	grassShader->SetUniform3v("camPos",    &camera->GetPos().x);
 	grassShader->SetUniform3v("camDir",    &camera->forward.x);
 	grassShader->SetUniform3v("camUp",     &camera->up.x);
 	grassShader->SetUniform3v("camRight",  &camera->right.x);
+
+	grassShader->SetUniform("groundShadowDensity", mapInfo->light.groundShadowDensity);
+	grassShader->SetUniformMatrix4x4("shadowMatrix", false, &shadowHandler->shadowMatrix.m[0]);
+	grassShader->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
+
 	grassShader->SetUniform3v("ambientLightColor",  &mapInfo->light.unitAmbientColor.x);
 	grassShader->SetUniform3v("diffuseLightColor",  &mapInfo->light.unitSunColor.x);
 	grassShader->SetUniform3v("specularLightColor", &mapInfo->light.unitSpecularColor.x);
-	grassShader->SetUniform3v("sunDir",    &mapInfo->light.sunDir.x);
-	grassShader->SetUniform("groundShadowDensity", mapInfo->light.groundShadowDensity);
+	grassShader->SetUniform3v("sunDir",             &mapInfo->light.sunDir.x);
 }
 
 
