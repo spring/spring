@@ -1,6 +1,6 @@
 #version 120
 
-#if !(MAX_DYNAMIC_MAP_LIGHTS != 0)
+#ifdef NOSPRING
 	#define SMF_INTENSITY_MULT (210.0 / 255.0)
 	#define SMF_TEXSQUARE_SIZE 1024.0
 	#define MAX_DYNAMIC_MAP_LIGHTS 4
