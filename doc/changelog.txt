@@ -75,6 +75,7 @@ AI:
 Buildprocess:
  - fixes for CMake 3.0
  - heavily reduced files which are compiled multiple times
+ ! add check for gcc >=4.7 at configure
 
 
 -- 97.0 ---------------------------------------------------------
