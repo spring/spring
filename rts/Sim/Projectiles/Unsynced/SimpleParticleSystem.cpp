@@ -204,7 +204,7 @@ CSphereParticleSpawner::CSphereParticleSpawner(): CSimpleParticleSystem()
 }
 
 
-void CSphereParticleSpawner::Init(CUnit* owner, const float3& offset)
+void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 {
 	const float3 up = emitVector;
 	const float3 right = up.cross(float3(up.y, up.z, -up.x));

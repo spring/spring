@@ -23,7 +23,7 @@ CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_RESERVED(8)
 ))
 
-CGenericParticleProjectile::CGenericParticleProjectile(CUnit* owner, const float3& pos, const float3& speed)
+CGenericParticleProjectile::CGenericParticleProjectile(const CUnit* owner, const float3& pos, const float3& speed)
 	: CProjectile(pos, speed, owner, false, false, false)
 
 	, gravity(ZeroVector)

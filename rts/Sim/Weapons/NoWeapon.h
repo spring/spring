@@ -17,7 +17,7 @@ public:
 
 private:
 	bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const { return false; }
-	void FireImpl() {}
+	void FireImpl(bool scriptCall) {}
 };
 
 

@@ -27,7 +27,7 @@ CExpGenSpawner::CExpGenSpawner() :
 
 void CExpGenSpawner::Update()
 {
-	if (deleteMe |= ((delay--) <= 0)) {
+	if ((deleteMe |= ((delay--) <= 0))) {
 		explosionGenerator->Explosion(pos, dir, damage, 0.0f, 0.0f, owner(), NULL);
 	}
 }

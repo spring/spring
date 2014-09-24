@@ -78,7 +78,7 @@ public:
 
 	void Draw() {}
 	void Update() {}
-	virtual void Init(CUnit* owner, const float3& offset);
+	void Init(const CUnit* owner, const float3& offset);
 };
 
 #endif // SIMPLE_PARTICLE_SYSTEM_H

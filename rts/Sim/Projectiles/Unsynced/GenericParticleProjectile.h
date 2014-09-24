@@ -14,7 +14,7 @@ class CGenericParticleProjectile : public CProjectile
 
 public:
 	CGenericParticleProjectile(
-		CUnit* owner,
+		const CUnit* owner,
 		const float3& pos,
 		const float3& speed
 	);
