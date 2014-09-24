@@ -1095,6 +1095,7 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 	// allow the LUA scripts to draw into the minimap
 	SetClipPlanes(true);
 	eventHandler.DrawInMiniMap();
+	SetClipPlanes(false);
 
 	if (!updateTex) {
 		glPushMatrix();
@@ -1118,7 +1119,6 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 	cursorIcons.Enable(true);
 	setSurfaceCircleFunc(NULL);
 	setSurfaceSquareFunc(NULL);
-
 }
 
 
