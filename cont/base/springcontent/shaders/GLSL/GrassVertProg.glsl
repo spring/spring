@@ -49,7 +49,7 @@ vec2 SmoothCurve( vec2 x ) {
 	return x * x * (3.0 - 2.0 * x);
 }
 vec2 TriangleWave( vec2 x ) {
-	return abs( fract( x + 0.5 ) * 2.0 - 1.0 );
+	return abs( fract( x + 0.5 ) * 1.99 - 1.0 );
 }
 vec2 SmoothTriangleWave( vec2 x ) {
 	// similar to sine wave, but faster
