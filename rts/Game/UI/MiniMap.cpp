@@ -1095,7 +1095,6 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 	// allow the LUA scripts to draw into the minimap
 	SetClipPlanes(true);
 	eventHandler.DrawInMiniMap();
-	SetClipPlanes(false);
 
 	if (!updateTex) {
 		glPushMatrix();
@@ -1131,6 +1130,10 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 
 	// clip everything outside of the minimap box
 	SetClipPlanes(false);
+	glEnable(GL_CLIP_PLANE0);
+	glEnable(GL_CLIP_PLANE1);
+	glEnable(GL_CLIP_PLANE2);
+	glEnable(GL_CLIP_PLANE3);
 
 	// switch to top-down map/world coords (z is twisted with y compared to the real map/world coords)
 	glPushMatrix();
