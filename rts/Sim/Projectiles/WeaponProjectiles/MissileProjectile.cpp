@@ -3,7 +3,6 @@
 
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
-#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "MissileProjectile.h"
 #include "Rendering/GlobalRendering.h"

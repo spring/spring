@@ -2,7 +2,6 @@
 
 #include "TorpedoLauncher.h"
 #include "WeaponDef.h"
-#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/UnitDef.h"
