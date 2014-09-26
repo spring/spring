@@ -275,18 +275,23 @@ void CWeaponProjectile::UpdateGroundBounce()
 	if (ttl <= 0)
 		return;
 
+	static const float dontTouchSurface = 0.99f;
+
 	// water or ground bounce?
+	float3 normal;
 	bool bounced = false;
-	const float distWaterHit  = (pos.y >= 0.0f) ? (pos.y / std::min(-speed.y, -0.00001f)) : -1.0f;
+	const float distWaterHit  = (pos.y > 0.0f && speed.y < 0.0f) ? (pos.y / -speed.y) : -1.0f;
 	const bool intersectWater = (distWaterHit >= 0.0f) && (distWaterHit <= 1.0f);
 	if (intersectWater && weaponDef->waterBounce) {
-		pos += speed * distWaterHit;
+		pos += speed * distWaterHit * dontTouchSurface;
+		normal = CGround::GetNormalAboveWater(pos.x, pos.z);
 		bounced = true;
 	} else {
 		const float distGroundHit  = CGround::LineGroundCol(pos, pos + speed); //TODO use traj one for traj weapons?
 		const bool intersectGround = (distGroundHit >= 0.0f);
 		if (intersectGround && weaponDef->groundBounce) {
-			pos += dir * distGroundHit;
+			pos += dir * distGroundHit * dontTouchSurface;
+			normal = CGround::GetNormal(pos.x, pos.z);
 			bounced = true;
 		}
 	}
@@ -294,14 +299,12 @@ void CWeaponProjectile::UpdateGroundBounce()
 	if (!bounced)
 		return;
 
-	const float3& normal = CGround::GetNormal(pos.x, pos.z);
-	const float dot = math::fabs(speed.dot(normal));
-
 	// spawn CEG before bouncing, otherwise we might be too
 	// far up in the air if it has the (under)water flag set
 	explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, pos, normal, speed.w, 1.0f, 1.0f, owner(), NULL);
 
 	++bounces;
+	const float dot = math::fabs(speed.dot(normal));
 	CWorldObject::SetVelocity(speed - (speed + normal * dot) * (1 - weaponDef->bounceSlip   ));
 	CWorldObject::SetVelocity(         speed + normal * dot  * (1 + weaponDef->bounceRebound));
 	SetVelocityAndSpeed(speed);
