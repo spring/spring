@@ -277,7 +277,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 
 	// water or ground bounce?
 	bool bounced = false;
-	const float distWaterHit  = (pos.y > 0.0f) ? (pos.y / std::min(speed.y, -0.00001f)) : -1.0f;
+	const float distWaterHit  = (pos.y >= 0.0f) ? (pos.y / std::min(-speed.y, -0.00001f)) : -1.0f;
 	const bool intersectWater = (distWaterHit >= 0.0f) && (distWaterHit <= 1.0f);
 	if (intersectWater && weaponDef->waterBounce) {
 		pos += speed * distWaterHit;
@@ -285,14 +285,14 @@ void CWeaponProjectile::UpdateGroundBounce()
 	} else {
 		const float distGroundHit  = CGround::LineGroundCol(pos, pos + speed); //TODO use traj one for traj weapons?
 		const bool intersectGround = (distGroundHit >= 0.0f);
-		if (intersectGround && !weaponDef->groundBounce) {
+		if (intersectGround && weaponDef->groundBounce) {
 			pos += dir * distGroundHit;
 			bounced = true;
 		}
 	}
 
 	if (!bounced)
-		return
+		return;
 
 	const float3& normal = CGround::GetNormal(pos.x, pos.z);
 	const float dot = math::fabs(speed.dot(normal));
