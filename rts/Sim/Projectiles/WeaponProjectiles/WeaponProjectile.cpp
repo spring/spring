@@ -264,35 +264,35 @@ void CWeaponProjectile::UpdateInterception()
 
 void CWeaponProjectile::UpdateGroundBounce()
 {
+	// projectile is not allowed to bounce on either surface
+	if (!weaponDef->groundBounce && !weaponDef->waterBounce)
+		return;
+	// max bounce already reached?
+	if ((bounces + 1) > weaponDef->numBounce)
+		return;
 	if (luaMoveCtrl)
 		return;
 	if (ttl <= 0)
 		return;
 
-	// projectile is not allowed to bounce even once
-	if (weaponDef->numBounce < 0)
-		return;
-	// projectile is not allowed to bounce on either surface
-	if (!weaponDef->groundBounce && !weaponDef->waterBounce)
-		return;
+	// water or ground bounce?
+	bool bounced = false;
+	const float distWaterHit  = (pos.y > 0.0f) ? (pos.y / std::min(speed.y, -0.00001f)) : -1.0f;
+	const bool intersectWater = (distWaterHit >= 0.0f) && (distWaterHit <= 1.0f);
+	if (intersectWater && weaponDef->waterBounce) {
+		pos += speed * distWaterHit;
+		bounced = true;
+	} else {
+		const float distGroundHit  = CGround::LineGroundCol(pos, pos + speed); //TODO use traj one for traj weapons?
+		const bool intersectGround = (distGroundHit >= 0.0f);
+		if (intersectGround && !weaponDef->groundBounce) {
+			pos += dir * distGroundHit;
+			bounced = true;
+		}
+	}
 
-	#define INTERSECT_SURFACE(lvl, py, vy) ((py) > (lvl) && ((py) + (vy)) <= (lvl))
-	const bool intersectGround = INTERSECT_SURFACE(CGround::GetHeightReal(pos.x, pos.z), pos.y, speed.y);
-	const bool intersectWater = INTERSECT_SURFACE(0.0f, pos.y, speed.y);
-	#undef INTERSECT_SURFACE
-
-	if (!intersectGround && !intersectWater)
-		return;
-
-	// if close to water but not allowed to bounce on it, bail
-	if (intersectWater && !weaponDef->waterBounce)
-		return;
-	// if close to ground but not allowed to bounce on it, bail
-	if (intersectGround && !weaponDef->groundBounce)
-		return;
-
-	if ((bounces += 1) > weaponDef->numBounce)
-		return;
+	if (!bounced)
+		return
 
 	const float3& normal = CGround::GetNormal(pos.x, pos.z);
 	const float dot = math::fabs(speed.dot(normal));
@@ -301,6 +301,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 	// far up in the air if it has the (under)water flag set
 	explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, pos, normal, speed.w, 1.0f, 1.0f, owner(), NULL);
 
+	++bounces;
 	CWorldObject::SetVelocity(speed - (speed + normal * dot) * (1 - weaponDef->bounceSlip   ));
 	CWorldObject::SetVelocity(         speed + normal * dot  * (1 + weaponDef->bounceRebound));
 	SetVelocityAndSpeed(speed);
