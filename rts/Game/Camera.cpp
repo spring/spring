@@ -198,7 +198,7 @@ void CCamera::UpdateRightAndUp(bool terrainReflectionPass)
 	// to {+/-}UpVector which would cause vector degeneracy when
 	// calculating right and up
 	//
-	if (std::fabs(forward.y) >= 0.99f) {
+	if (std::fabs(forward.y) >= 0.999f) {
 		// make sure we can still yaw at limits of pitch
 		// (since CamHandler only updates forward, which
 		// is derived from rot)
