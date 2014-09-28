@@ -101,16 +101,35 @@ unsigned int CCustomExplosionGenerator::GetFlagsFromTable(const LuaTable& table)
 	return flags;
 }
 
-unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float altitude)
+unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float groundHeight)
 {
 	unsigned int flags = 0;
 
+	const float waterDist = std::abs(height);
+	const float altitude  = height - groundHeight;
+
 	// note: ranges do not overlap, although code in
 	// *ExplosionGenerator::Explosion assumes they can
-	     if (height >    0.0f && altitude >= 20.0f) { flags |= CCustomExplosionGenerator::SPW_AIR;        }
-	else if (height >    0.0f && altitude >= -1.0f) { flags |= CCustomExplosionGenerator::SPW_GROUND;     }
-	else if (height >   -5.0f && altitude >= -1.0f) { flags |= CCustomExplosionGenerator::SPW_WATER;      }
-	else if (height <=  -5.0f && altitude >= -1.0f) { flags |= CCustomExplosionGenerator::SPW_UNDERWATER; }
+	if (altitude  < -1.0f) {
+		/* underground! don't spawn CEG! */
+	} else
+	if (height   >= 5.0f) { // above water
+		if (altitude >= 20.0f) {
+			flags |= CCustomExplosionGenerator::SPW_AIR;    // air
+		} else {
+			flags |= CCustomExplosionGenerator::SPW_GROUND; // ground
+		}
+	} else
+	if (waterDist < 5.0f) { // water surface
+		if (groundHeight > -2.0f) {
+			flags |= CCustomExplosionGenerator::SPW_GROUND; // shallow water (use ground fx)
+		} else {
+			flags |= CCustomExplosionGenerator::SPW_WATER;  // water (surface)
+		}
+	} else
+	/*if (height <= -5.0f) */ { // under water
+		flags |= CCustomExplosionGenerator::SPW_UNDERWATER;     // underwater
+	}
 
 	return flags;
 }
@@ -355,20 +374,12 @@ bool CExplosionGeneratorHandler::GenExplosion(
 	CUnit* owner,
 	CUnit* hit
 ) {
-	bool ret = false;
-
 	if (expGenID == EXPGEN_ID_INVALID)
-		return ret;
+		return false;
 
 	assert(expGenID < explosionGenerators.size());
 
-	if (expGenID == EXPGEN_ID_STANDARD) {
-		ret = explosionGenerators[EXPGEN_ID_STANDARD]->Explosion(pos, dir, damage, radius, gfxMod, owner, hit);
-	} else {
-		ret = explosionGenerators[expGenID]->Explosion(pos, dir, damage, radius, gfxMod, owner, hit);
-	}
-
-	return ret;
+	return explosionGenerators[expGenID]->Explosion(pos, dir, damage, radius, gfxMod, owner, hit);
 }
 
 
@@ -387,7 +398,7 @@ bool CStdExplosionGenerator::Explosion(
 
 	float3 camVect = camera->GetPos() - pos;
 
-	const unsigned int flags = CCustomExplosionGenerator::GetFlagsFromHeight(pos.y, altitude);
+	const unsigned int flags = CCustomExplosionGenerator::GetFlagsFromHeight(pos.y, groundHeight);
 	const bool airExplosion    = ((flags & CCustomExplosionGenerator::SPW_AIR       ) != 0);
 	const bool groundExplosion = ((flags & CCustomExplosionGenerator::SPW_GROUND    ) != 0);
 	const bool waterExplosion  = ((flags & CCustomExplosionGenerator::SPW_WATER     ) != 0);
@@ -997,9 +1008,8 @@ bool CCustomExplosionGenerator::Explosion(
 	CUnit* hit
 ) {
 	const float groundHeight = CGround::GetHeightReal(pos.x, pos.z);
-	const float altitude = pos.y - groundHeight;
 
-	unsigned int flags = GetFlagsFromHeight(pos.y, altitude);
+	unsigned int flags = GetFlagsFromHeight(pos.y, groundHeight);
 	const bool groundExplosion = ((flags & CCustomExplosionGenerator::SPW_GROUND) != 0);
 
 	if (hit) flags |= SPW_UNIT;

@@ -225,7 +225,7 @@ public:
 
 	static bool OutputProjectileClassInfo();
 	static unsigned int GetFlagsFromTable(const LuaTable& table);
-	static unsigned int GetFlagsFromHeight(float height, float altitude);
+	static unsigned int GetFlagsFromHeight(float height, float groundHeight);
 
 	/// @throws content_error/runtime_error on errors
 	bool Load(CExplosionGeneratorHandler* handler, const std::string& tag);
