@@ -5,6 +5,7 @@
 #include "LuaInclude.h"
 
 #include "LuaUnsyncedCtrl.h"
+#include "LuaArchive.h"
 #include "LuaCallInCheck.h"
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
@@ -195,6 +196,7 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
 	    !AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesUnsynced) ||
 	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
+	    !AddEntriesToTable(L, "Spring",      LuaArchive::PushEntries)      ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
