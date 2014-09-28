@@ -2,8 +2,6 @@
 
 #include "LuaArchive.h"
 
-#include "alphanum.hpp"
-
 #include "LuaInclude.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
@@ -50,17 +48,13 @@ bool LuaArchive::PushEntries(lua_State* L)
 
 int LuaArchive::GetMaps(lua_State* L)
 {
-	const std::vector<std::string> &arFound = archiveScanner->GetMaps();
-	std::set<std::string, doj::alphanum_less<std::string> > mapSet; // use a set to sort them
-	for (const auto& mapStr: arFound) {
-		mapSet.insert(mapStr.c_str());
-	}
+	const std::vector<std::string>& maps= archiveScanner->GetMaps();
 
 	unsigned int count = 0;
 
-	lua_createtable(L, mapSet.size(), 0);
+	lua_createtable(L, maps.size(), 0);
 
-	for (const auto& mapStr: mapSet) {
+	for (const auto& mapStr: maps) {
 		lua_pushstring(L, mapStr.c_str());
 		lua_rawseti(L, -2, ++count);
 	}
@@ -72,18 +66,14 @@ int LuaArchive::GetMaps(lua_State* L)
 
 int LuaArchive::GetGames(lua_State* L)
 {
-	const std::vector<CArchiveScanner::ArchiveData> &found = archiveScanner->GetPrimaryMods();
-	std::set<std::string, doj::alphanum_less<std::string> > modSet; // use a set to sort them
-	for (const auto& modStr: found) {
-		modSet.insert(modStr.GetNameVersioned());
-	}
+	const std::vector<CArchiveScanner::ArchiveData>& mods= archiveScanner->GetPrimaryMods();
 
 	unsigned int count = 0;
 
-	lua_createtable(L, modSet.size(), 0);
+	lua_createtable(L, mods.size(), 0);
 
-	for (const auto& modStr: modSet) {
-		lua_pushstring(L, modStr.c_str());
+	for (const auto& mod: mods) {
+		lua_pushstring(L, mod.GetNameVersioned().c_str());
 		lua_rawseti(L, -2, ++count);
 	}
 	return 1;
