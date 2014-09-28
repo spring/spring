@@ -118,7 +118,7 @@ void CLuaUI::FreeHandler()
 /******************************************************************************/
 
 CLuaUI::CLuaUI()
-: CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true)
+: CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true, false)
 {
 	luaUI = this;
 

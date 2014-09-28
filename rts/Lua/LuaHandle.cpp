@@ -70,13 +70,14 @@ void CLuaHandle::PushTracebackFuncToRegistry(lua_State* L)
 }
 
 
-CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
-	: CEventClient(_name, _order, false)
+CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _synced)
+	: CEventClient(_name, _order, _synced)
 	, userMode   (_userMode)
 	, killMe     (false)
 	, callinErrors(0)
 {
 	D.owner = this;
+	D.synced = _synced;
 	L = LUA_OPEN(&D);
 
 	L_GC = lua_newthread(L);

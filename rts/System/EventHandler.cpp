@@ -62,9 +62,9 @@ void CEventHandler::AddClient(CEventClient* ec)
 	EventMap::const_iterator it;
 	for (it = eventMap.begin(); it != eventMap.end(); ++it) {
 		const EventInfo& ei = it->second;
-		if (ei.HasPropBit(MANAGED_BIT) && (ei.GetList() != NULL)) {
+		if (ei.HasPropBit(MANAGED_BIT)) {
 			if (ec->WantsEvent(it->first)) {
-				ListInsert(*ei.GetList(), ec);
+				InsertEvent(ec, it->first);
 			}
 		}
 	}
@@ -82,8 +82,8 @@ void CEventHandler::RemoveClient(CEventClient* ec)
 	EventMap::const_iterator it;
 	for (it = eventMap.begin(); it != eventMap.end(); ++it) {
 		const EventInfo& ei = it->second;
-		if (ei.HasPropBit(MANAGED_BIT) && (ei.GetList() != NULL)) {
-			ListRemove(*ei.GetList(), ec);
+		if (ei.HasPropBit(MANAGED_BIT)) {
+			RemoveEvent(ec, it->first);
 		}
 	}
 }

@@ -57,10 +57,9 @@ LuaRulesParams::HashMap CLuaHandleSynced::gameParamsMap;
 //  #######  ##    ##  ######     ##    ##    ##  ######  ######## ########
 
 CUnsyncedLuaHandle::CUnsyncedLuaHandle(CLuaHandleSynced* _base, const string& _name, int _order)
-	: CLuaHandle(_name, _order, false)
+	: CLuaHandle(_name, _order, false, false)
 	, base(*_base)
 {
-	D.synced = false;
 	D.allowChanges = false;
 }
 
@@ -303,11 +302,10 @@ bool CUnsyncedLuaHandle::DrawProjectile(const CProjectile* projectile)
 //  ######     ##    ##    ##  ######  ######## ########
 
 CSyncedLuaHandle::CSyncedLuaHandle(CLuaHandleSynced* _base, const string& _name, int _order)
-	: CLuaHandle(_name, _order, false)
+	: CLuaHandle(_name, _order, false, true)
 	, base(*_base)
 	, origNextRef(-1)
 {
-	D.synced = true;
 	D.allowChanges = true;
 }
 
