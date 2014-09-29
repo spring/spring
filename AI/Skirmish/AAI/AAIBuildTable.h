@@ -225,20 +225,20 @@ public:
 	static char buildtable_filename[500];
 
 	// cached values of average costs and buildtime
-	static float *avg_cost[MOBILE_CONSTRUCTOR+1];
-	static float *avg_buildtime[MOBILE_CONSTRUCTOR+1];
-	static float *avg_value[MOBILE_CONSTRUCTOR+1];	// used for different things, range of weapons, radar range, mex efficiency
-	static float *max_cost[MOBILE_CONSTRUCTOR+1];
-	static float *max_buildtime[MOBILE_CONSTRUCTOR+1];
-	static float *max_value[MOBILE_CONSTRUCTOR+1];
-	static float *min_cost[MOBILE_CONSTRUCTOR+1];
-	static float *min_buildtime[MOBILE_CONSTRUCTOR+1];
-	static float *min_value[MOBILE_CONSTRUCTOR+1];
+	static vector<vector<float>> avg_cost;
+	static vector<vector<float>> avg_buildtime;
+	static vector<vector<float>> avg_value;	// used for different things, range of weapons, radar range, mex efficiency
+	static vector<vector<float>> max_cost;
+	static vector<vector<float>> max_buildtime;
+	static vector<vector<float>> max_value;
+	static vector<vector<float>> min_cost;
+	static vector<vector<float>> min_buildtime;
+	static vector<vector<float>> min_value;
 
-	static float **avg_speed;
-	static float **min_speed;
-	static float **max_speed;
-	static float **group_speed;
+	static vector<vector<float>> avg_speed;
+	static vector<vector<float>> min_speed;
+	static vector<vector<float>> max_speed;
+	static vector<vector<float>> group_speed;
 
 	// combat categories that attacked AI in certain game period attacked_by_category_learned[map_type][period][cat]
 	static vector< vector< vector<float> > > attacked_by_category_learned;
@@ -247,7 +247,7 @@ public:
 	static vector< vector<float> > attacked_by_category_current;
 
 	// units of the different categories
-	static list<int> *units_of_category[MOBILE_CONSTRUCTOR+1];
+	static vector<vector<list<int>>> units_of_category;
 
 	// AAI unit defs (static things like id, side, etc.)
 	static vector<UnitTypeStatic> units_static;

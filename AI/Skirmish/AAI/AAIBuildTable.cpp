@@ -22,21 +22,21 @@ using namespace springLegacyAI;
 
 
 // all the static vars
-list<int>* AAIBuildTable::units_of_category[MOBILE_CONSTRUCTOR+1];
+vector<vector<list<int>>> AAIBuildTable::units_of_category;
 char AAIBuildTable::buildtable_filename[500];
-float* AAIBuildTable::avg_cost[MOBILE_CONSTRUCTOR+1];
-float* AAIBuildTable::avg_buildtime[MOBILE_CONSTRUCTOR+1];
-float* AAIBuildTable::avg_value[MOBILE_CONSTRUCTOR+1];
-float* AAIBuildTable::max_cost[MOBILE_CONSTRUCTOR+1];
-float* AAIBuildTable::max_buildtime[MOBILE_CONSTRUCTOR+1];
-float* AAIBuildTable::max_value[MOBILE_CONSTRUCTOR+1];
-float* AAIBuildTable::min_cost[MOBILE_CONSTRUCTOR+1];
-float* AAIBuildTable::min_buildtime[MOBILE_CONSTRUCTOR+1];
-float* AAIBuildTable::min_value[MOBILE_CONSTRUCTOR+1];
-float**	AAIBuildTable::avg_speed;
-float**	AAIBuildTable::min_speed;
-float**	AAIBuildTable::max_speed;
-float**	AAIBuildTable::group_speed;
+vector<vector<float>> AAIBuildTable::avg_cost;
+vector<vector<float>> AAIBuildTable::avg_buildtime;
+vector<vector<float>> AAIBuildTable::avg_value;
+vector<vector<float>> AAIBuildTable::max_cost;
+vector<vector<float>> AAIBuildTable::max_buildtime;
+vector<vector<float>> AAIBuildTable::max_value;
+vector<vector<float>> AAIBuildTable::min_cost;
+vector<vector<float>> AAIBuildTable::min_buildtime;
+vector<vector<float>> AAIBuildTable::min_value;
+vector<vector<float>> AAIBuildTable::avg_speed;
+vector<vector<float>> AAIBuildTable::min_speed;
+vector<vector<float>> AAIBuildTable::max_speed;
+vector<vector<float>> AAIBuildTable::group_speed;
 vector< vector< vector<float> > > AAIBuildTable::attacked_by_category_learned;
 vector< vector<float> > AAIBuildTable::attacked_by_category_current;
 vector<UnitTypeStatic> AAIBuildTable::units_static;
@@ -91,21 +91,32 @@ AAIBuildTable::AAIBuildTable(AAI* ai)
 	// only set up static things if first aai intsance is iniatialized
 	if(ai->GetInstances() == 1)
 	{
+		avg_cost.resize(MOBILE_CONSTRUCTOR+1);
+		avg_buildtime.resize(MOBILE_CONSTRUCTOR+1);
+		avg_value.resize(MOBILE_CONSTRUCTOR+1);
+		max_cost.resize(MOBILE_CONSTRUCTOR+1);
+		max_buildtime.resize(MOBILE_CONSTRUCTOR+1);
+		max_value.resize(MOBILE_CONSTRUCTOR+1);
+		min_cost.resize(MOBILE_CONSTRUCTOR+1);
+		min_buildtime.resize(MOBILE_CONSTRUCTOR+1);
+		min_value.resize(MOBILE_CONSTRUCTOR+1);
+		units_of_category.resize(MOBILE_CONSTRUCTOR+1);
+
 		for(int i = 0; i <= MOBILE_CONSTRUCTOR; ++i)
 		{
 			// set up the unit lists
-			units_of_category[i] = new list<int>[numOfSides];
+			units_of_category[i].resize(numOfSides);
 
 			// statistical values (mod sepcific)
-			avg_cost[i] = new float[numOfSides];
-			avg_buildtime[i] = new float[numOfSides];
-			avg_value[i] = new float[numOfSides];
-			max_cost[i] = new float[numOfSides];
-			max_buildtime[i] = new float[numOfSides];
-			max_value[i] = new float[numOfSides];
-			min_cost[i] = new float[numOfSides];
-			min_buildtime[i] = new float[numOfSides];
-			min_value[i] = new float[numOfSides];
+			avg_cost[i].resize(numOfSides);
+			avg_buildtime[i].resize(numOfSides);
+			avg_value[i].resize(numOfSides);
+			max_cost[i].resize(numOfSides);
+			max_buildtime[i].resize(numOfSides);
+			max_value[i].resize(numOfSides);
+			min_cost[i].resize(numOfSides);
+			min_buildtime[i].resize(numOfSides);
+			min_value[i].resize(numOfSides);
 
 			for(int s = 0; s < numOfSides; ++s)
 			{
@@ -134,20 +145,20 @@ AAIBuildTable::AAIBuildTable(AAI* ai)
 		}*/
 
 		// set up speed and attacked_by table
-		avg_speed = new float*[combat_categories];
-		max_speed = new float*[combat_categories];
-		min_speed = new float*[combat_categories];
-		group_speed = new float*[combat_categories];
+		avg_speed.resize(combat_categories);
+		max_speed.resize(combat_categories);
+		min_speed.resize(combat_categories);
+		group_speed.resize(combat_categories);
 
 		attacked_by_category_current.resize(cfg->GAME_PERIODS, vector<float>(combat_categories, 0));
 		attacked_by_category_learned.resize(3,  vector< vector<float> >(cfg->GAME_PERIODS, vector<float>(combat_categories, 0)));
 
 		for(int i = 0; i < combat_categories; ++i)
 		{
-			avg_speed[i] = new float[numOfSides];
-			max_speed[i] = new float[numOfSides];
-			min_speed[i] = new float[numOfSides];
-			group_speed[i] = new float[numOfSides];
+			avg_speed[i].resize(numOfSides);
+			max_speed[i].resize(numOfSides);
+			min_speed[i].resize(numOfSides);
+			group_speed[i].resize(numOfSides);
 		}
 
 		// init eff stats
@@ -163,39 +174,26 @@ AAIBuildTable::~AAIBuildTable(void)
 	// delete common data only if last aai instance has gone
 	if(ai->GetInstances() == 0)
 	{
+		units_of_category.clear();
 
-
-		for(int i = 0; i <= MOBILE_CONSTRUCTOR; ++i)
-		{
-			SafeDeleteArray(units_of_category[i]);
-
-			SafeDeleteArray(avg_cost[i]);
-			SafeDeleteArray(avg_buildtime[i]);
-			SafeDeleteArray(avg_value[i]);
-			SafeDeleteArray(max_cost[i]);
-			SafeDeleteArray(max_buildtime[i]);
-			SafeDeleteArray(max_value[i]);
-			SafeDeleteArray(min_cost[i]);
-			SafeDeleteArray(min_buildtime[i]);
-			SafeDeleteArray(min_value[i]);
-		}
+		avg_cost.clear();
+		avg_buildtime.clear();
+		avg_value.clear();
+		max_cost.clear();
+		max_buildtime.clear();
+		max_value.clear();
+		min_cost.clear();
+		min_buildtime.clear();
+		min_value.clear();
 
 		/*SafeDeleteArray(max_builder_buildtime);
 		SafeDeleteArray(max_builder_cost);
 		SafeDeleteArray(max_builder_buildspeed);*/
 
-		for(int i = 0; i < combat_categories; ++i)
-		{
-			SafeDeleteArray(avg_speed[i]);
-			SafeDeleteArray(max_speed[i]);
-			SafeDeleteArray(min_speed[i]);
-			SafeDeleteArray(group_speed[i]);
-		}
-
-		SafeDeleteArray(avg_speed);
-		SafeDeleteArray(max_speed);
-		SafeDeleteArray(min_speed);
-		SafeDeleteArray(group_speed);
+		avg_speed.clear();
+		max_speed.clear();
+		min_speed.clear();
+		group_speed.clear();
 
 		attacked_by_category_learned.clear();
 		attacked_by_category_current.clear();
