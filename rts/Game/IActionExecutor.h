@@ -29,6 +29,7 @@ private:
 	const Action& action;
 };
 
+
 template<class action_t, bool synced_v>
 class IActionExecutor
 {
@@ -75,20 +76,6 @@ protected:
 		this->description = description;
 	}
 
-	/**
-	 * Sets a bool according to the value encoded in a string.
-	 * The conversion works like this:
-	 * - ""  -> toggle-value
-	 * - "0" -> false
-	 * - "1" -> true
-	 */
-	static void SetBoolArg(bool& container, const std::string& newValue);
-
-	/**
-	 * Logs the enabled/disabled status of a sub-system of the engine.
-	 */
-	static void LogSystemStatus(const std::string& system, bool status);
-
 private:
 	/**
 	 * Executes one instance of an action of this type.
@@ -108,7 +95,8 @@ private:
  */
 
 template<class action_t, bool synced_v>
-bool IActionExecutor<action_t, synced_v>::ExecuteAction(const action_t& action) const {
+bool IActionExecutor<action_t, synced_v>::ExecuteAction(const action_t& action) const
+{
 	//assert(action.GetAction().command == GetCommand());
 
 	if (IsCheatRequired() && !gs->cheatEnabled) {
@@ -120,25 +108,5 @@ bool IActionExecutor<action_t, synced_v>::ExecuteAction(const action_t& action) 
 		return Execute(action);
 	}
 }
-
-template<class action_t, bool synced_v>
-void IActionExecutor<action_t, synced_v>::SetBoolArg(bool& container, const std::string& newValue) {
-
-	if (newValue.empty())  {
-		// toggle
-		container = !container;
-	} else {
-		// set
-		const int num = atoi(newValue.c_str());
-		container = (num != 0);
-	}
-}
-
-template<class action_t, bool synced_v>
-void IActionExecutor<action_t, synced_v>::LogSystemStatus(const std::string& system, bool status) {
-
-	LOG("%s is %s!", system.c_str(), (status ? "enabled" : "disabled"));
-}
-
 
 #endif // I_ACTION_EXECUTOR_H

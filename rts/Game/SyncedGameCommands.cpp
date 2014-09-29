@@ -42,7 +42,7 @@ public:
 			" commands to be usable") {}
 
 	bool Execute(const SyncedAction& action) const {
-		SetBoolArg(gs->cheatEnabled, action.GetArgs());
+		InverseOrSetBool(gs->cheatEnabled, action.GetArgs());
 		LogSystemStatus("Cheating", gs->cheatEnabled);
 		return true;
 	}
@@ -55,7 +55,7 @@ public:
 			"Enables/Disables widgets (LuaUI control)") {}
 
 	bool Execute(const SyncedAction& action) const {
-		SetBoolArg(gs->noHelperAIs, action.GetArgs());
+		InverseOrSetBool(gs->noHelperAIs, action.GetArgs());
 		selectedUnitsHandler.PossibleCommandChange(NULL);
 		LogSystemStatus("LuaUI control", gs->noHelperAIs);
 		return true;
@@ -70,7 +70,7 @@ public:
 
 	bool Execute(const SyncedAction& action) const {
 		bool disabled;
-		SetBoolArg(disabled, action.GetArgs());
+		InverseOrSetBool(disabled, action.GetArgs());
 		inMapDrawer->SetSpecMapDrawingAllowed(!disabled);
 		return true;
 	}
@@ -85,7 +85,7 @@ public:
 			"replays, which will DESYNC them)", true) {}
 
 	bool Execute(const SyncedAction& action) const {
-		SetBoolArg(gs->godMode, action.GetArgs());
+		InverseOrSetBool(gs->godMode, action.GetArgs());
 		CLuaUI::UpdateTeams();
 		LogSystemStatus("God-Mode", gs->godMode);
 		CPlayer::UpdateControlledTeams();
@@ -193,7 +193,7 @@ public:
 			"Enables/Disables spectators to use the chat") {}
 
 	bool Execute(const SyncedAction& action) const {
-		SetBoolArg(game->noSpectatorChat, action.GetArgs());
+		InverseOrSetBool(game->noSpectatorChat, action.GetArgs());
 		LogSystemStatus("Spectators chat", !game->noSpectatorChat);
 		return true;
 	}
@@ -232,7 +232,7 @@ public:
 
 	bool Execute(const SyncedAction& action) const {
 		bool devMode = CLuaHandle::GetDevMode();
-		SetBoolArg(devMode, action.GetArgs());
+		InverseOrSetBool(devMode, action.GetArgs());
 		CLuaHandle::SetDevMode(devMode);
 		LogSystemStatus("Lua dev-mode (can cause desyncs if enabled)", devMode);
 		return true;
@@ -247,7 +247,7 @@ public:
 			" through Lua", true) {}
 
 	bool Execute(const SyncedAction& action) const {
-		SetBoolArg(gs->editDefsEnabled, action.GetArgs());
+		InverseOrSetBool(gs->editDefsEnabled, action.GetArgs());
 		LogSystemStatus("Unit-, Feature- & Weapon-Def editing",
 				gs->editDefsEnabled);
 		return true;

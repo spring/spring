@@ -1,10 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Util.h"
+#include "System/Log/ILog.h"
 #if defined(_MSC_VER) && (_MSC_VER >= 1310)
-#include <intrin.h>
+	#include <intrin.h>
 #endif
 #include <cstring>
+
 
 std::string StringReplace(const std::string& text,
                           const std::string& from,
@@ -106,6 +108,26 @@ bool StringEndsWith(const std::string& str, const char* postfix)
 		return (str.compare(str.size() - strlen(postfix), str.size(), postfix) == 0);
 	}
 }
+
+
+void InverseOrSetBool(bool& container, const std::string& argValue, const bool inverseArg)
+{
+	if (argValue.empty()) {
+		// toggle
+		container = !container;
+	} else {
+		// set
+		const bool value = StringToBool(argValue);
+		container = inverseArg ? (!value) : (value);
+	}
+}
+
+
+void LogSystemStatus(const std::string& system, const bool status)
+{
+	LOG("%s is %s!", system.c_str(), (status ? "enabled" : "disabled"));
+}
+
 
 
 static inline unsigned count_leading_ones(uint8_t x)
