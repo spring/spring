@@ -35,8 +35,7 @@ bool LuaArchive::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetArchiveDependencies);
 	REGISTER_LUA_CFUNC(GetArchiveReplaces);
 
-	REGISTER_LUA_CFUNC(GetSingleArchiveChecksum);
-	REGISTER_LUA_CFUNC(GetArchiveCompleteChecksum);
+	REGISTER_LUA_CFUNC(GetArchiveChecksum);
 
 	return true;
 }
@@ -185,20 +184,12 @@ int LuaArchive::GetArchiveReplaces(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaArchive::GetSingleArchiveChecksum(lua_State* L)
+int LuaArchive::GetArchiveChecksum(lua_State* L)
 {
 	const std::string archiveName = luaL_checksstring(L, 1);
-	const unsigned int checksum = archiveScanner->GetSingleArchiveChecksum(archiveName);
-	lua_pushsstring(L, IntToString(checksum, "%X"));
-	return 1;
+	const unsigned int checksumSingl = archiveScanner->GetSingleArchiveChecksum(archiveName);
+	const unsigned int checksumAccum = archiveScanner->GetArchiveCompleteChecksum(archiveName);
+	lua_pushsstring(L, IntToString(checksumSingl, "%X"));
+	lua_pushsstring(L, IntToString(checksumAccum, "%X"));
+	return 2;
 }
-
-
-int LuaArchive::GetArchiveCompleteChecksum(lua_State* L)
-{
-	const std::string archiveName = luaL_checksstring(L, 1);
-	const unsigned int checksum = archiveScanner->GetArchiveCompleteChecksum(archiveName);
-	lua_pushsstring(L, IntToString(checksum, "%X"));
-	return 1;
-}
-

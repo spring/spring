@@ -24,8 +24,7 @@ class LuaArchive {
 		static int GetArchiveDependencies(lua_State* L);
 		static int GetArchiveReplaces(lua_State* L);
 
-		static int GetSingleArchiveChecksum(lua_State* L);
-		static int GetArchiveCompleteChecksum(lua_State* L);
+		static int GetArchiveChecksum(lua_State* L);
 };
 
 
