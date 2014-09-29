@@ -115,20 +115,18 @@ int LuaArchive::GetArchiveInfo(lua_State* L)
 		const InfoItem&    itemData = pair.second;
 
 		lua_pushsstring(L, itemName);
-		lua_createtable(L, 0, 2);
-		LuaPushNamedString(L, "desc", itemData.desc);
 		switch (itemData.valueType) {
 			case INFO_VALUE_TYPE_STRING: {
-				LuaPushNamedString(L, "value", itemData.valueTypeString);
+				lua_pushsstring(L, itemData.valueTypeString);
 			} break;
 			case INFO_VALUE_TYPE_INTEGER: {
-				LuaPushNamedNumber(L, "value", itemData.value.typeInteger);
+				lua_pushinteger(L, itemData.value.typeInteger);
 			} break;
 			case INFO_VALUE_TYPE_FLOAT: {
-				LuaPushNamedNumber(L, "value", itemData.value.typeFloat);
+				lua_pushnumber(L,  itemData.value.typeFloat);
 			} break;
 			case INFO_VALUE_TYPE_BOOL: {
-				LuaPushNamedBool(  L, "value", itemData.value.typeBool);
+				lua_pushboolean(L, itemData.value.typeBool);
 			} break;
 			default: assert(false);
 		}
