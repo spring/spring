@@ -171,8 +171,8 @@ int LuaArchive::GetArchiveReplaces(lua_State* L)
 	unsigned int count = 0;
 	lua_createtable(L, replaces.size(), 0);
 
-	for (const std::string& dependency: replaces) {
-		lua_pushsstring(L, dependency);
+	for (const std::string& replace: replaces) {
+		lua_pushsstring(L, replace);
 		lua_rawseti(L, -2, ++count);
 	}
 	return 1;
