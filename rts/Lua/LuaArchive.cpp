@@ -8,10 +8,7 @@
 #include "LuaUtils.h"
 
 #include "System/FileSystem/ArchiveScanner.h"
-
-#include <set>
-#include <list>
-#include <cctype>
+#include "System/Util.h"
 
 
 /******************************************************************************/
@@ -31,12 +28,15 @@ bool LuaArchive::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetMaps);
 	REGISTER_LUA_CFUNC(GetGames);
-
+	REGISTER_LUA_CFUNC(GetAllArchives);
 	REGISTER_LUA_CFUNC(HasArchive);
-	REGISTER_LUA_CFUNC(GetArchiveInfo);
 
+	REGISTER_LUA_CFUNC(GetArchiveInfo);
 	REGISTER_LUA_CFUNC(GetArchiveDependencies);
 	REGISTER_LUA_CFUNC(GetArchiveReplaces);
+
+	REGISTER_LUA_CFUNC(GetSingleArchiveChecksum);
+	REGISTER_LUA_CFUNC(GetArchiveCompleteChecksum);
 
 	return true;
 }
@@ -48,43 +48,43 @@ bool LuaArchive::PushEntries(lua_State* L)
 
 int LuaArchive::GetMaps(lua_State* L)
 {
-	const std::vector<std::string>& maps= archiveScanner->GetMaps();
+	const auto& list = archiveScanner->GetMaps();
+	lua_createtable(L, list.size(), 0);
 
 	unsigned int count = 0;
-
-	lua_createtable(L, maps.size(), 0);
-
-	for (const auto& mapStr: maps) {
-		lua_pushstring(L, mapStr.c_str());
+	for (const std::string& mapName: list) {
+		lua_pushsstring(L, mapName);
 		lua_rawseti(L, -2, ++count);
 	}
 	return 1;
 }
 
-/******************************************************************************/
-/******************************************************************************/
 
 int LuaArchive::GetGames(lua_State* L)
 {
-	const std::vector<CArchiveScanner::ArchiveData>& mods= archiveScanner->GetPrimaryMods();
+	const auto& list = archiveScanner->GetPrimaryMods();
+	lua_createtable(L, list.size(), 0);
 
 	unsigned int count = 0;
-
-	lua_createtable(L, mods.size(), 0);
-
-	for (const auto& mod: mods) {
-		lua_pushstring(L, mod.GetNameVersioned().c_str());
+	for (const CArchiveScanner::ArchiveData& gameArchData: list) {
+		lua_pushsstring(L, gameArchData.GetNameVersioned());
 		lua_rawseti(L, -2, ++count);
 	}
 	return 1;
 }
 
-/******************************************************************************/
-/******************************************************************************/
-bool LuaArchive::_HasArchive(const std::string& archiveName)
+
+int LuaArchive::GetAllArchives(lua_State* L)
 {
-	CArchiveScanner::ArchiveData archiveData = archiveScanner->GetArchiveData(archiveName);
-	return (archiveName != "" && archiveName == archiveData.GetNameVersioned());
+	const auto& list = archiveScanner->GetAllArchives();
+	lua_createtable(L, list.size(), 0);
+
+	unsigned int count = 0;
+	for (const CArchiveScanner::ArchiveData& archName: list) {
+		lua_pushsstring(L, archName.GetNameVersioned());
+		lua_rawseti(L, -2, ++count);
+	}
+	return 1;
 }
 
 /******************************************************************************/
@@ -93,9 +93,8 @@ bool LuaArchive::_HasArchive(const std::string& archiveName)
 int LuaArchive::HasArchive(lua_State* L)
 {
 	const std::string archiveName = luaL_checksstring(L, 1);
-
-	lua_pushboolean(L, _HasArchive(archiveName));
-
+	CArchiveScanner::ArchiveData archiveData = archiveScanner->GetArchiveData(archiveName);
+	lua_pushboolean(L, !archiveData.IsEmpty());
 	return 1;
 }
 
@@ -105,79 +104,101 @@ int LuaArchive::HasArchive(lua_State* L)
 int LuaArchive::GetArchiveInfo(lua_State* L)
 {
 	const std::string archiveName = luaL_checksstring(L, 1);
-
-	if (!_HasArchive(archiveName)) {
+	CArchiveScanner::ArchiveData archiveData = archiveScanner->GetArchiveData(archiveName);
+	if (archiveData.IsEmpty()) {
 		return 0;
 	}
 
-	CArchiveScanner::ArchiveData archiveData = archiveScanner->GetArchiveData(archiveName);
+	lua_createtable(L, 0, archiveData.GetInfo().size());
 
-	const std::string name = archiveData.GetName();
-	const std::string nameVersioned = archiveData.GetNameVersioned();
-	const std::string shortName = archiveData.GetShortName();
-	const std::string version = archiveData.GetVersion();
-	const std::string mutator = archiveData.GetMutator();
-	const std::string game = archiveData.GetGame();
-	const std::string shortGame = archiveData.GetShortGame();
-	const std::string description = archiveData.GetDescription();
-	const std::string mapFile = archiveData.GetMapFile();
-	const int modType = archiveData.GetModType();
-	const int modHash = archiveScanner->GetArchiveCompleteChecksum(nameVersioned);
+	for (const auto& pair: archiveData.GetInfo()) {
+		const std::string& itemName = pair.first;
+		const InfoItem&    itemData = pair.second;
 
-	lua_pushstring(L, name.c_str());
-	lua_pushstring(L, nameVersioned.c_str());
-	lua_pushstring(L, shortName.c_str());
-	lua_pushstring(L, version.c_str());
-	lua_pushstring(L, mutator.c_str());
-	lua_pushstring(L, game.c_str());
-	lua_pushstring(L, shortGame.c_str());
-	lua_pushstring(L, description.c_str());
-	lua_pushstring(L, mapFile.c_str());
-	lua_pushnumber(L, modType);
-	lua_pushnumber(L, modHash);
+		lua_pushsstring(L, itemName);
+		lua_createtable(L, 0, 2);
+		LuaPushNamedString(L, "desc", itemData.desc);
+		switch (itemData.valueType) {
+			case INFO_VALUE_TYPE_STRING: {
+				LuaPushNamedString(L, "value", itemData.valueTypeString);
+			} break;
+			case INFO_VALUE_TYPE_INTEGER: {
+				LuaPushNamedNumber(L, "value", itemData.value.typeInteger);
+			} break;
+			case INFO_VALUE_TYPE_FLOAT: {
+				LuaPushNamedNumber(L, "value", itemData.value.typeFloat);
+			} break;
+			case INFO_VALUE_TYPE_BOOL: {
+				LuaPushNamedBool(  L, "value", itemData.value.typeBool);
+			} break;
+			default: assert(false);
+		}
+		lua_rawset(L, -3);
+	}
 
-	return 11;
+	return 1;
 }
 
-
-/******************************************************************************/
-/******************************************************************************/
 
 int LuaArchive::GetArchiveDependencies(lua_State* L)
 {
 	const std::string archiveName = luaL_checksstring(L, 1);
-
 	CArchiveScanner::ArchiveData archiveData = archiveScanner->GetArchiveData(archiveName);
+	if (archiveData.IsEmpty()) {
+		return 0;
+	}
 
-	const std::vector<std::string> dependencies = archiveData.GetDependencies();
+	const std::vector<std::string>& dependencies = archiveData.GetDependencies();
 
 	unsigned int count = 0;
 	lua_createtable(L, dependencies.size(), 0);
 
-	for (const auto& dependency: dependencies) {
-		lua_pushstring(L, dependency.c_str());
+	for (const std::string& dependency: dependencies) {
+		lua_pushsstring(L, dependency);
 		lua_rawseti(L, -2, ++count);
 	}
 	return 1;
 }
 
-/******************************************************************************/
-/******************************************************************************/
 
 int LuaArchive::GetArchiveReplaces(lua_State* L)
 {
 	const std::string archiveName = luaL_checksstring(L, 1);
-
 	CArchiveScanner::ArchiveData archiveData = archiveScanner->GetArchiveData(archiveName);
+	if (archiveData.IsEmpty()) {
+		return 0;
+	}
 
-	const std::vector<std::string> replaces = archiveData.GetReplaces();
+	const std::vector<std::string>& replaces = archiveData.GetReplaces();
 
 	unsigned int count = 0;
 	lua_createtable(L, replaces.size(), 0);
 
-	for (const auto& dependency: replaces) {
-		lua_pushstring(L, dependency.c_str());
+	for (const std::string& dependency: replaces) {
+		lua_pushsstring(L, dependency);
 		lua_rawseti(L, -2, ++count);
 	}
 	return 1;
 }
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaArchive::GetSingleArchiveChecksum(lua_State* L)
+{
+	const std::string archiveName = luaL_checksstring(L, 1);
+	const unsigned int checksum = archiveScanner->GetSingleArchiveChecksum(archiveName);
+	lua_pushsstring(L, IntToString(checksum, "%X"));
+	return 1;
+}
+
+
+int LuaArchive::GetArchiveCompleteChecksum(lua_State* L)
+{
+	const std::string archiveName = luaL_checksstring(L, 1);
+	const unsigned int checksum = archiveScanner->GetArchiveCompleteChecksum(archiveName);
+	lua_pushsstring(L, IntToString(checksum, "%X"));
+	return 1;
+}
+

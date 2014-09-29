@@ -6,6 +6,7 @@
 #include "LuaIntro.h"
 
 #include "LuaInclude.h"
+#include "LuaArchive.h"
 #include "LuaUnsyncedCtrl.h"
 #include "LuaCallInCheck.h"
 #include "LuaConstGL.h"
@@ -129,6 +130,7 @@ CLuaIntro::CLuaIntro()
 	    !AddEntriesToTable(L, "VFS",       LuaVFS::PushUnsynced)         ||
 	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
 	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
+	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)      ||
 	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
 	    //!AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesUnsynced) ||
 	    //!AddEntriesToTable(L, "Script",      LuaLobby::PushEntries)        ||

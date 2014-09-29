@@ -17,9 +17,10 @@ GameServer:
 Lua:
  - added SetAlly(firstAllyTeamId, secondAllyTeamId, ally)
  - added VFS.UnmapArchive(string fileName)
- - added GetMaps(), GetGames(), HasArchive(archiveName)
- - added GetArchiveInfo(archiveName)
- - added GetArchiveDependencies(archiveName), GetArchiveReplaces(archiveName)
+ - added VFS.GetMaps(), VFS.GetGames(), VFS.GetAllArchives(), VFS.HasArchive(archiveName)
+ - added VFS.GetArchiveInfo(archiveName)
+ - added VFS.GetSingleArchiveChecksum(archiveName), VFS.GetArchiveCompleteChecksum(archiveName);
+ - added VFS.GetArchiveDependencies(archiveName), VFS.GetArchiveReplaces(archiveName)
  - allow tcp connections by luasocket as default (udp is still restricted)
  - add callin DrawInMiniMapBackground(sizex, sizey) -> nil
  - add callin AllowBuilderHoldFire(unitID, unitDefID, action) --> boolean

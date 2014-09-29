@@ -1022,7 +1022,24 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 }
 
 
-std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, int depth) const
+std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllArchives() const
+{
+	std::vector<ArchiveData> ret;
+
+	for (const auto& pair: archiveInfos) {
+		const ArchiveData& aid = pair.second.archiveData;
+
+		// Add the archive the mod is in as the first dependency
+		ArchiveData md = aid;
+		md.GetDependencies().insert(md.GetDependencies().begin(), pair.second.origName);
+		ret.push_back(md);
+	}
+
+	sortByName(ret);
+	return ret;
+}
+
+std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string& root, int depth) const
 {
 	LOG_S(LOG_SECTION_ARCHIVESCANNER, "GetArchives: %s (depth %u)", root.c_str(), depth);
 	// Protect against circular dependencies
@@ -1062,7 +1079,7 @@ std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, i
 	// add depth-first
 	ret.push_back(aii->second.path + aii->second.origName);
 	for (const std::string& dep: aii->second.archiveData.GetDependencies()) {
-		const std::vector<std::string>& deps = GetArchives(dep, depth + 1);
+		const std::vector<std::string>& deps = GetAllArchivesUsedBy(dep, depth + 1);
 		for (const std::string& depSub: deps) {
 			AddDependency(ret, depSub);
 		}
@@ -1114,7 +1131,7 @@ unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& name) 
 
 unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name) const
 {
-	const std::vector<std::string> &ars = GetArchives(name);
+	const std::vector<std::string>& ars = GetAllArchivesUsedBy(name);
 	unsigned int checksum = 0;
 
 	for (unsigned int a = 0; a < ars.size(); a++) {

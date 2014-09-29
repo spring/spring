@@ -80,7 +80,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool override, cons
 
 bool CVFSHandler::AddArchiveWithDeps(const std::string& archiveName, bool override, const std::string& type)
 {
-	const std::vector<std::string> &ars = archiveScanner->GetArchives(archiveName);
+	const std::vector<std::string> &ars = archiveScanner->GetAllArchivesUsedBy(archiveName);
 
 	if (ars.empty())
 		throw content_error("Could not find any archives for '" + archiveName + "'.");

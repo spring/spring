@@ -17,13 +17,15 @@ class LuaArchive {
 	private:
 		static int GetMaps(lua_State* L);
 		static int GetGames(lua_State* L);
-
-		static bool _HasArchive(const std::string& archiveName);
+		static int GetAllArchives(lua_State* L);
 		static int HasArchive(lua_State* L);
-		static int GetArchiveInfo(lua_State* L);
 
+		static int GetArchiveInfo(lua_State* L);
 		static int GetArchiveDependencies(lua_State* L);
 		static int GetArchiveReplaces(lua_State* L);
+
+		static int GetSingleArchiveChecksum(lua_State* L);
+		static int GetArchiveCompleteChecksum(lua_State* L);
 };
 
 
