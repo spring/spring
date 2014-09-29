@@ -2497,7 +2497,9 @@ public:
 		if (!minimap)
 			return false;
 
-		minimap->ConfigCommand(action.GetArgs());
+		bool enable = !minimap->GetSlaveMode();
+		SetBoolArg(enable, action.GetArgs());
+		minimap->SetSlaveMode(!enable);
 		return true;
 	}
 };
