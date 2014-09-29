@@ -93,7 +93,6 @@ private:
  * Because this is a template enabled class,
  * the implementations have to be in the same file.
  */
-
 template<class action_t, bool synced_v>
 bool IActionExecutor<action_t, synced_v>::ExecuteAction(const action_t& action) const
 {
@@ -107,6 +106,13 @@ bool IActionExecutor<action_t, synced_v>::ExecuteAction(const action_t& action) 
 	} else {
 		return Execute(action);
 	}
+}
+
+
+/// Logs the enabled/disabled status of a sub-system of the engine.
+static inline void LogSystemStatus(const std::string& system, const bool status)
+{
+	LOG("%s is %s!", system.c_str(), (status ? "enabled" : "disabled"));
 }
 
 #endif // I_ACTION_EXECUTOR_H

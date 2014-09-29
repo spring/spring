@@ -174,10 +174,6 @@ static inline void EnsureEndsWith(std::string* str, const char* postfix)
 void InverseOrSetBool(bool& container, const std::string& argValue, const bool inverseArg = false);
 
 
-/// Logs the enabled/disabled status of a sub-system of the engine.
-void LogSystemStatus(const std::string& system, const bool status);
-
-
 /// Helper function to avoid division by Zero
 static inline float SafeDivide(const float a, const float b)
 {

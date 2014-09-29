@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Util.h"
-#include "System/Log/ILog.h"
 #if defined(_MSC_VER) && (_MSC_VER >= 1310)
 	#include <intrin.h>
 #endif
@@ -120,12 +119,6 @@ void InverseOrSetBool(bool& container, const std::string& argValue, const bool i
 		const bool value = StringToBool(argValue);
 		container = inverseArg ? (!value) : (value);
 	}
-}
-
-
-void LogSystemStatus(const std::string& system, const bool status)
-{
-	LOG("%s is %s!", system.c_str(), (status ? "enabled" : "disabled"));
 }
 
 
