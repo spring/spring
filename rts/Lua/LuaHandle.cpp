@@ -2380,12 +2380,12 @@ void CLuaHandle::CollectGarbage()
 	lua_lock(L_GC);
 	//SCOPED_MT_TIMER("CollectGarbage"); // this func doesn't run in parallel yet, cause of problems with IsHandleRunning()
 
-	// kilobytes --> megabytes (note: total footprint INCLUDING garbage)
-	int luaMemFootPrint = lua_gc(L_GC, LUA_GCCOUNT, 0) / 1024;
+	// note: total footprint INCLUDING garbage
+	int luaMemFootPrintKB = lua_gc(L_GC, LUA_GCCOUNT, 0);
 
 	// 30x per second !!!
-	static const float maxLuaGarbageCollectTime = configHandler->GetFloat("MaxLuaGarbageCollectionTime" );
-	const float maxRunTime = smoothstep(10, 100, luaMemFootPrint) * maxLuaGarbageCollectTime;
+	static const float maxLuaGarbageCollectTime = configHandler->GetFloat("MaxLuaGarbageCollectionTime");
+	float maxRunTime = smoothstep(10, 100, luaMemFootPrintKB / 1024) * maxLuaGarbageCollectTime;
 
 	const spring_time startTime = spring_gettime();
 	const spring_time endTime = startTime + spring_msecs(maxRunTime);
@@ -2397,17 +2397,17 @@ void CLuaHandle::CollectGarbage()
 	// collect garbage until time runs out
 	while (spring_gettime() < endTime) {
 		numLuaGarbageCollectIters++;
-		if (lua_gc(L_GC, LUA_GCSTEP, gcsteps)) {
-			// garbage-collection cycle finished
-			break;
-		}
+		if (!lua_gc(L_GC, LUA_GCSTEP, gcsteps))
+			continue;
 
-		// check if garbage-collection finished (MB precision is enough)
-		int luaMemFootPrintNow = lua_gc(L_GC, LUA_GCCOUNT, 0) / 1024;
-		if (luaMemFootPrintNow >= luaMemFootPrint) {
+		// garbage-collection cycle finished
+		const int luaMemFootPrintNow = lua_gc(L_GC, LUA_GCCOUNT, 0);
+		const int luaMemFootPrintChange = luaMemFootPrintNow - luaMemFootPrintKB;
+		luaMemFootPrintKB = luaMemFootPrintNow;
+
+		// cycle didn't freed any memory early-exit
+		if (luaMemFootPrintChange == 0)
 			break;
-		}
-		luaMemFootPrint = luaMemFootPrintNow;
 	}
 
 	lua_gc(L_GC, LUA_GCSTOP, 0); // don't collect garbage outside of this function
