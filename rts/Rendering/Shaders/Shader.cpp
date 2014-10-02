@@ -26,7 +26,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SHADER)
 #define LOG_SECTION_CURRENT LOG_SECTION_SHADER
 
 
-static std::unordered_map<std::string, GLuint> bufGlslShaders;
+static std::unordered_map<size_t, GLuint> glslShadersCache;
 
 
 
@@ -251,8 +251,6 @@ namespace Shader {
 			so->SetDefinitions(definitionFlags);
 		}
 
-		curHash = hash;
-
 		Reload(false);
 		PrintInfo();
 	}
@@ -437,6 +435,9 @@ namespace Shader {
 	}
 
 	void GLSLProgramObject::Reload(bool reloadFromDisk) {
+		const unsigned int oldHash = curHash;
+		curHash = GetHash();
+
 		log = "";
 		valid = false;
 
@@ -449,25 +450,39 @@ namespace Shader {
 		for (auto& us_pair: uniformStates) {
 			us_pair.second.SetLocation(GL_INVALID_INDEX);
 		}
-		for (IShaderObject*& so: GetAttachedShaderObjs()) {
-			glDetachShader(oldProgID, so->GetObjID());
-		}
-		for (IShaderObject*& so: GetAttachedShaderObjs()) {
-			so->Release();
-			so->Compile(reloadFromDisk);
-		}
 
-		objID = glCreateProgram();
-		for (IShaderObject*& so: GetAttachedShaderObjs()) {
-			if (so->IsValid()) {
-				glAttachShader(objID, so->GetObjID());
+		bool deleteOldShader = false;
+		if (glslShadersCache.find(oldHash) == glslShadersCache.end()) {
+			glslShadersCache[oldHash] = oldProgID;
+		} else {
+			for (IShaderObject*& so: GetAttachedShaderObjs()) {
+				glDetachShader(oldProgID, so->GetObjID());
+				so->Release();
 			}
+			deleteOldShader = true;
 		}
 
-		Link();
+		auto it = glslShadersCache.find(curHash);
+		if (it != glslShadersCache.end()) {
+			objID = it->second;
+			glslShadersCache.erase(it);
+		} else {
+			objID = glCreateProgram();
+			for (IShaderObject*& so: GetAttachedShaderObjs()) {
+				so->Compile(reloadFromDisk); //FIXME check if changed or not (when it did, we can't use shader cache!)
+			}
+			for (IShaderObject*& so: GetAttachedShaderObjs()) {
+				if (so->IsValid()) {
+					glAttachShader(objID, so->GetObjID());
+				}
+			}
+			Link();
+		}
+
 		GLSLCopyState(objID, oldProgID, &((IProgramObject*)(this))->uniformStates);
 
-		glDeleteProgram(oldProgID);
+		if (deleteOldShader)
+			glDeleteProgram(oldProgID);
 	}
 
 	void GLSLProgramObject::AttachShaderObject(IShaderObject* so) {
