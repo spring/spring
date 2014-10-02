@@ -34,6 +34,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/Exceptions.h"
 #include "System/GlobalConfig.h"
 #include "System/Rectangle.h"
 #include "System/ScopedFPUSettings.h"
@@ -70,6 +71,15 @@ void CLuaHandle::PushTracebackFuncToRegistry(lua_State* L)
 }
 
 
+
+static int handlepanic(lua_State *L)
+{
+	std::string err = luaL_optsstring(L, 1, "lua paniced");
+	throw content_error(err);
+}
+
+
+
 CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _synced)
 	: CEventClient(_name, _order, _synced)
 	, userMode   (_userMode)
@@ -85,6 +95,9 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _sy
 
 	// needed for engine traceback
 	PushTracebackFuncToRegistry(L);
+
+	// prevent lua from calling c's exit()
+	lua_atpanic(L, handlepanic);
 }
 
 
@@ -128,8 +141,12 @@ int CLuaHandle::KillActiveHandle(lua_State* L)
 		if ((args >= 1) && lua_isstring(L, 1)) {
 			ah->killMsg = lua_tostring(L, 1);
 		}
+
 		// get rid of us next GameFrame call
 		ah->killMe = true;
+
+		// don't process any further events
+		eventHandler.RemoveClient(ah);
 	}
 	return 0;
 }
@@ -359,6 +376,16 @@ bool CLuaHandle::RunCallInTraceback(lua_State* L, const LuaHashString& hs, int i
 	if (error != 0) {
 		LOG_L(L_ERROR, "%s::RunCallIn: error = %i, %s, %s", GetName().c_str(),
 				error, hs.GetString().c_str(), traceback.c_str());
+
+		if (error == LUA_ERRMEM) {
+			// try to free some memory so other lua states can alloc again
+			for (int i=0; i<20; ++i) {
+				CollectGarbage();
+			}
+
+			// Kill
+			KillActiveHandle(L);
+		}
 		return false;
 	}
 	return true;
