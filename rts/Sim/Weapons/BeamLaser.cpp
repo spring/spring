@@ -270,20 +270,11 @@ void CBeamLaser::FireImpl(bool scriptCall)
 void CBeamLaser::FireInternal(float3 curDir)
 {
 	float actualRange = range;
-	float rangeMod = 1.0f;
-
-	if (!owner->unitDef->IsImmobileUnit()) {
-		// help units fire while chasing
-		rangeMod = 1.3f;
-	}
-	if (owner->UnderFirstPersonControl()) {
-		rangeMod = 0.95f;
-	}
 
 	bool tryAgain = true;
 	bool doDamage = true;
 
-	float maxLength = range * rangeMod;
+	float maxLength = range;
 	float curLength = 0.0f;
 
 	float3 curPos = weaponMuzzlePos;
