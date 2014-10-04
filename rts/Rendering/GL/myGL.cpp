@@ -316,6 +316,7 @@ void LoadExtensions()
 	LOG("GLSL version: %s", glslVersion);
 	LOG("GLEW version: %s", glewVersion);
 	LOG("Video RAM:    %s", glVidMemStr);
+	LOG("SwapInterval: %d", SDL_GL_GetSwapInterval());
 
 	ShowCrappyGpuWarning(glVendor, glRenderer);
 
