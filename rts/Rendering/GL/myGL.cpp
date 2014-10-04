@@ -56,7 +56,7 @@ void PrintAvailableResolutions()
 		SDL_GetDisplayBounds(k, &rect);
 
 		std::set<int2> resolutions;
-		for (int i = (nummodes-1); i >= 0; --i) { // reverse order to print them from low to high
+		for (int i = 0; i < nummodes; ++i) {
 			SDL_DisplayMode mode;
 			SDL_GetDisplayMode(k, i, &mode);
 			resolutions.insert(int2(mode.w, mode.h));
