@@ -557,7 +557,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 				return;
 			} else {
 				if (aii->second.updated) {
-					LOG_L(L_WARNING, "Found a \"%s\" already in \"%s\", ignoring one in \"%s\"", aii->first.c_str(), aii->second.path.c_str(), fpath.c_str());
+					LOG_L(L_ERROR, "Found a \"%s\" already in \"%s\", ignoring one in \"%s\"", aii->first.c_str(), aii->second.path.c_str(), fpath.c_str());
 					return;
 				}
 
