@@ -2491,7 +2491,7 @@ public:
 class MiniMapActionExecutor : public IUnsyncedActionExecutor {
 public:
 	MiniMapActionExecutor() : IUnsyncedActionExecutor("MiniMap",
-			"Show/Hide the mini-map provided by the engine") {}
+			"FIXME document subcommands") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (!minimap)
