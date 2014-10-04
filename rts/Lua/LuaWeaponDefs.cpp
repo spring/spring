@@ -547,6 +547,7 @@ static bool InitParamMap()
 	ADD_FLOAT("dance",  wd.dance);
 
 	ADD_FLOAT("trajectoryHeight", wd.trajectoryHeight);
+	ADD_FLOAT("flightTime", wd.flightTime / 32.0);
 
 	ADD_BOOL("largeBeamLaser", wd.largeBeamLaser);
 	ADD_BOOL("laserHardStop", wd.laserHardStop);
@@ -598,3 +599,6 @@ static bool InitParamMap()
 
 /******************************************************************************/
 /******************************************************************************/
+,     v.pulseSpeed);
+	HSTR_PUSH_NUMBER(L, , wd.leadBonus);
+	ADD_FLOAT(
