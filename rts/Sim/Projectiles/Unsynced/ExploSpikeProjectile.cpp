@@ -103,8 +103,5 @@ void CExploSpikeProjectile::Init(const CUnit* owner, const float3& offset)
 	lengthGrowth = dir.Length() * (0.5f + gu->RandFloat() * 0.4f);
 	dir /= lengthGrowth;
 
-	checkCol = false;
-	useAirLos = true;
-
 	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
 }
