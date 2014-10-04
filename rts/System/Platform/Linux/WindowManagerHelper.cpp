@@ -1,13 +1,20 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef HEADLESS
-
-#include "myX11.h"
+#include "System/Platform/WindowManagerHelper.h"
 #include <SDL_syswm.h>
 
+#ifndef HEADLESS
+	#include <X11/Xlib.h>
+	#undef KeyPress
+	#undef KeyRelease
+	#undef GrayScale
+#endif
 
-void MyX11BlockCompositing(SDL_Window* window)
+namespace WindowManagerHelper {
+
+void BlockCompositing(SDL_Window* window)
 {
+#ifndef HEADLESS
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
 	if (!SDL_GetWindowWMInfo(window, &info))
@@ -22,12 +29,13 @@ void MyX11BlockCompositing(SDL_Window* window)
 
 	Atom blockCompositAtom = XInternAtom(x11display, "_NET_WM_BYPASS_COMPOSITOR", false);
 	XChangeProperty(x11display, x11window, blockCompositAtom, XA_INTEGER, 8, PropModeReplace, (const unsigned char*)&b, 1);
-
+#endif
 }
 
 
-int MyX11GetWindowState(SDL_Window* window)
+int GetWindowState(SDL_Window* window)
 {
+#ifndef HEADLESS
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
 	if (!SDL_GetWindowWMInfo(window, &info))
@@ -64,28 +72,30 @@ int MyX11GetWindowState(SDL_Window* window)
 		&bytes_remaining,
 		(unsigned char**)&data);
 
-	if (status == Success) {
-		int maximized = 0;
-		bool minimized = false;
-		for (int i=0; i<nitems; i++) {
-			Atom& a = data[i];
-			if (a == maxVAtom) {
-				maximized |= 1;
-			} else
-			if (a == maxHAtom) {
-				maximized |= 2;
-			} else
-			if (a == minAtom) {
-				minimized = true;
-			}
-		}
-		XFree(data);
+	if (status != Success)
+		return 0;
 
-		int flags = 0;
-		flags |= (maximized == 3) ? SDL_WINDOW_MAXIMIZED : 0;
-		flags |= (minimized) ? SDL_WINDOW_MINIMIZED : 0;
-		return flags;
+	int maximized = 0;
+	bool minimized = false;
+	for (int i=0; i<nitems; i++) {
+		Atom& a = data[i];
+		if (a == maxVAtom) {
+			maximized |= 1;
+		} else
+		if (a == maxHAtom) {
+			maximized |= 2;
+		} else
+		if (a == minAtom) {
+			minimized = true;
+		}
 	}
-	return 0;
+	XFree(data);
+
+	int flags = 0;
+	flags |= (maximized == 3) ? SDL_WINDOW_MAXIMIZED : 0;
+	flags |= (minimized) ? SDL_WINDOW_MINIMIZED : 0;
+	return flags;
+#endif
 }
-#endif // #ifndef HEADLESS
+
+}; // namespace WindowManagerHelper
