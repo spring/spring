@@ -2496,10 +2496,12 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		if (!minimap)
 			return false;
-
-		bool enable = minimap->GetSlaveMode();
-		InverseOrSetBool(enable, action.GetArgs(), true);
-		minimap->SetSlaveMode(enable);
+		const std::string args = action.GetArgs();
+		if (args.empty()) { // toggle
+			minimap->SetSlaveMode(!minimap->GetSlaveMode());
+		} else {
+			minimap->ConfigCommand(args);
+		}
 		return true;
 	}
 };
