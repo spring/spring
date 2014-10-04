@@ -547,7 +547,7 @@ static bool InitParamMap()
 	ADD_FLOAT("dance",  wd.dance);
 
 	ADD_FLOAT("trajectoryHeight", wd.trajectoryHeight);
-	ADD_FLOAT("flightTime", wd.flightTime / 32.0);
+	ADD_FLOAT("flightTime", wd.flighttime / 32.0);
 
 	ADD_BOOL("largeBeamLaser", wd.largeBeamLaser);
 	ADD_BOOL("laserHardStop", wd.laserHardStop);
