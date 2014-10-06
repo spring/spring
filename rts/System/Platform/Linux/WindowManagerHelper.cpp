@@ -35,6 +35,7 @@ void BlockCompositing(SDL_Window* window)
 
 int GetWindowState(SDL_Window* window)
 {
+	int flags = 0;
 #ifndef HEADLESS
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
@@ -91,11 +92,10 @@ int GetWindowState(SDL_Window* window)
 	}
 	XFree(data);
 
-	int flags = 0;
 	flags |= (maximized == 3) ? SDL_WINDOW_MAXIMIZED : 0;
 	flags |= (minimized) ? SDL_WINDOW_MINIMIZED : 0;
-	return flags;
 #endif
+	return flags;
 }
 
 }; // namespace WindowManagerHelper
