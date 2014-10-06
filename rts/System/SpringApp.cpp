@@ -107,7 +107,7 @@ CONFIG(int, WindowState).defaultValue(CGlobalRendering::WINSTATE_MAXIMIZED);
 CONFIG(bool, WindowBorderless).defaultValue(false).description("When set and Fullscreen is 0, will put the game in Borderless Window mode, also known as Windowed Fullscreen. When using this, it is generally best to also set WindowPosX and WindowPosY to 0");
 CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
-CONFIG(bool, BlockCompositing).defaultValue(true).description("Disables kwin compositing to fix tearing.");
+CONFIG(bool, BlockCompositing).defaultValue(false).safemodeValue(true).description("Disables kwin compositing to fix tearing, possible fixes low FPS in windowed mode, too.");
 
 
 static SDL_GLContext sdlGlCtx;
