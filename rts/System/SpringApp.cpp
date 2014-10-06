@@ -585,7 +585,16 @@ void SpringApp::LoadFonts()
 	}
 }
 
-
+// initialize basic systems for command line help / output
+static void ConsolePrintInitialize(const std::string& configSource, bool safemode)
+{
+	spring_clock::PushTickRate(false);
+	spring_time::setstarttime(spring_time::gettime(true));
+	LOG_DISABLE();
+	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
+	FileSystemInitializer::InitializeLogOutput();
+	LOG_ENABLE();
+}
 
 /**
  * @return whether commandline parsing was successful
@@ -697,18 +706,12 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->IsSet("list-ai-interfaces")) {
-		LOG_DISABLE();
-		FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
-		FileSystemInitializer::InitializeLogOutput();
-		LOG_ENABLE();
+		ConsolePrintInitialize(configSource, safemode);
 		IAILibraryManager::OutputAIInterfacesInfo();
 		exit(0);
 	}
 	else if (cmdline->IsSet("list-skirmish-ais")) {
-		LOG_DISABLE();
-		FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
-		FileSystemInitializer::InitializeLogOutput();
-		LOG_ENABLE();
+		ConsolePrintInitialize(configSource, safemode);
 		IAILibraryManager::OutputSkirmishAIInfo();
 		exit(0);
 	}
