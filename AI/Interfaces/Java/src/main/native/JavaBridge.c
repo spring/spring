@@ -22,6 +22,7 @@
 
 #include <string.h>	// strlen(), strcat(), strcpy()
 #include <stdlib.h>	// malloc(), calloc(), free()
+#include <assert.h>
 
 struct Properties {
 	size_t       size;
@@ -1160,6 +1161,7 @@ bool java_initSkirmishAIClass(
 	// sai is now either the instantiated one, or a free one
 
 	// instantiate AI (if needed)
+	assert(sai < skirmishAiImpl_size);
 	if (skirmishAiImpl_className[sai] == NULL) {
 		sai = firstFree;
 		java_establishJavaEnv();
@@ -1209,6 +1211,7 @@ bool java_releaseSkirmishAIClass(const char* className) {
 	// sai is now either the instantiated one, or a free one
 
 	// release AI (if needed)
+	assert(sai < skirmishAiImpl_size);
 	if (skirmishAiImpl_className[sai] != NULL) {
 		java_establishJavaEnv();
 		JNIEnv* env = java_getJNIEnv();
