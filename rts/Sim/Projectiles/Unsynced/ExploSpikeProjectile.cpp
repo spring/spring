@@ -9,7 +9,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 
-CR_BIND_DERIVED(CExploSpikeProjectile, CProjectile, );
+CR_BIND_DERIVED(CExploSpikeProjectile, CProjectile, )
 
 CR_REG_METADATA(CExploSpikeProjectile,
 (
@@ -22,7 +22,7 @@ CR_REG_METADATA(CExploSpikeProjectile,
 		CR_MEMBER(color),
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_RESERVED(8)
-));
+))
 
 CExploSpikeProjectile::CExploSpikeProjectile()
 	: CProjectile()
@@ -96,15 +96,12 @@ void CExploSpikeProjectile::Draw()
 	#undef let
 }
 
-void CExploSpikeProjectile::Init(CUnit* owner, const float3& offset)
+void CExploSpikeProjectile::Init(const CUnit* owner, const float3& offset)
 {
 	CProjectile::Init(owner, offset);
 
 	lengthGrowth = dir.Length() * (0.5f + gu->RandFloat() * 0.4f);
 	dir /= lengthGrowth;
-
-	checkCol = false;
-	useAirLos = true;
 
 	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
 }

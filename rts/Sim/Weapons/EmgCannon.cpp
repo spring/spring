@@ -2,7 +2,6 @@
 
 #include "EmgCannon.h"
 #include "WeaponDef.h"
-#include "Game/TraceRay.h"
 #include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
@@ -10,11 +9,11 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/Sync/SyncTracer.h"
 
-CR_BIND_DERIVED(CEmgCannon, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CEmgCannon, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CEmgCannon,(
 	CR_RESERVED(8)
-));
+))
 
 CEmgCannon::CEmgCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {

@@ -47,7 +47,7 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 /// used only by creg
 CSkirmishAIWrapper::CSkirmishAIWrapper():

@@ -13,7 +13,7 @@
  */
 class AAirMoveType : public AMoveType
 {
-	CR_DECLARE(AAirMoveType);
+	CR_DECLARE(AAirMoveType)
 public:
 
 	enum AircraftState {

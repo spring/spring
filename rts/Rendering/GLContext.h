@@ -32,6 +32,6 @@ namespace GLContext
 	void Free();
 	void InsertHookSet(Func init, Func free, void* data);
 	void RemoveHookSet(Func init, Func free, void* data);
-};
+}
 
 #endif /* GL_CONTEXT_H */

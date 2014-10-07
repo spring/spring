@@ -80,11 +80,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 					__FUNCTION__, model->tex1.c_str(), model->name.c_str());
 
 				// file not found (or headless build), set single pixel to red so unit is visible
-				texBitMaps[0].Alloc(1, 1, 4);
-				texBitMaps[0].mem[0] = 255;
-				texBitMaps[0].mem[1] =   0;
-				texBitMaps[0].mem[2] =   0;
-				texBitMaps[0].mem[3] = 255; // team-color
+				texBitMaps[0].AllocDummy(SColor(255, 0, 0, 255));
 			}
 		}
 
@@ -103,11 +99,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 	if (texCacheIters[1] == textureCache.end()) {
 		if (!texBitMaps[1].Load(model->tex2)) {
 			if (!texBitMaps[1].Load("unittextures/" + model->tex2)) {
-				texBitMaps[1].Alloc(1, 1, 4);
-				texBitMaps[1].mem[0] =   0; // self-illum
-				texBitMaps[1].mem[1] =   0; // spec+refl
-				texBitMaps[1].mem[2] =   0; // unused
-				texBitMaps[1].mem[3] = 255; // transparency
+				texBitMaps[1].AllocDummy(SColor(0, 0, 0, 255));
 			}
 		}
 

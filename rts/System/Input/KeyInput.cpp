@@ -98,4 +98,4 @@ namespace KeyInput {
 			SDL_PushEvent(&event);
 		}
 	}
-}; // namespace KeyInput
+} // namespace KeyInput

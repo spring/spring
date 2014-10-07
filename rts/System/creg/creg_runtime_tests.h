@@ -5,7 +5,7 @@
 
 namespace creg {
 	bool RuntimeTest();
-};
+}
 
 #endif // _CREG_RUNTIME_TESTS_H
 

@@ -35,16 +35,20 @@ CEventHandler::CEventHandler()
 	mouseOwner = NULL;
 
 	// Setup all events
-	#define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props)
-	#define SETUP_UNMANAGED_EVENT(name, props) SetupEvent(#name, NULL, props)
+	#define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props);
+	#define SETUP_UNMANAGED_EVENT(name, props) SetupEvent(#name, NULL, props);
 		#include "Events.def"
 	#undef SETUP_EVENT
 	#undef SETUP_UNMANAGED_EVENT
+
+	// helper event client (alwayss create)
+	EventBatchHandler::CreateInstance();
 }
 
 
 CEventHandler::~CEventHandler()
 {
+	EventBatchHandler::DeleteInstance();
 }
 
 
@@ -58,9 +62,9 @@ void CEventHandler::AddClient(CEventClient* ec)
 	EventMap::const_iterator it;
 	for (it = eventMap.begin(); it != eventMap.end(); ++it) {
 		const EventInfo& ei = it->second;
-		if (ei.HasPropBit(MANAGED_BIT) && (ei.GetList() != NULL)) {
+		if (ei.HasPropBit(MANAGED_BIT)) {
 			if (ec->WantsEvent(it->first)) {
-				ListInsert(*ei.GetList(), ec);
+				InsertEvent(ec, it->first);
 			}
 		}
 	}
@@ -78,8 +82,8 @@ void CEventHandler::RemoveClient(CEventClient* ec)
 	EventMap::const_iterator it;
 	for (it = eventMap.begin(); it != eventMap.end(); ++it) {
 		const EventInfo& ei = it->second;
-		if (ei.HasPropBit(MANAGED_BIT) && (ei.GetList() != NULL)) {
-			ListRemove(*ei.GetList(), ec);
+		if (ei.HasPropBit(MANAGED_BIT)) {
+			RemoveEvent(ec, it->first);
 		}
 	}
 }
@@ -268,6 +272,12 @@ bool CEventHandler::AllowResourceTransfer(int oldTeam, int newTeam, const string
 bool CEventHandler::AllowDirectUnitControl(int playerID, const CUnit* unit)
 {
 	CONTROL_ITERATE_DEF_TRUE(AllowDirectUnitControl, playerID, unit)
+}
+
+
+bool CEventHandler::AllowBuilderHoldFire(const CUnit* unit, int action)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowBuilderHoldFire, unit, action)
 }
 
 
@@ -566,6 +576,7 @@ DRAW_CALLIN(WorldRefraction)
 DRAW_CALLIN(ScreenEffects)
 DRAW_CALLIN(Screen)
 DRAW_CALLIN(InMiniMap)
+DRAW_CALLIN(InMiniMapBackground)
 
 
 #define DRAW_ENTITY_CALLIN(name, args, args2)     \

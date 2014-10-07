@@ -3,7 +3,7 @@
 #ifndef _NULL_SOUND_H_
 #define _NULL_SOUND_H_
 
-#include "ISound.h"
+#include "System/Sound/ISound.h"
 
 #include <string>
 
@@ -35,7 +35,7 @@ public:
 	void Iconified(bool state);
 
 	void PrintDebugInfo();
-	bool LoadSoundDefs(const std::string& fileName);
+	bool LoadSoundDefsImpl(const std::string& fileName);
 	
 	const float3& GetListenerPos() const;
 };

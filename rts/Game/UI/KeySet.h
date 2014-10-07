@@ -126,7 +126,7 @@ class CTimedKeyChain : public CKeyChain
 			times.clear();
 		}
 
-		void push_back(const int key, const spring_time t);
+		void push_back(const int key, const spring_time t, const bool isRepeat);
 		void emplace_back(const CKeySet& ks, const spring_time t) { assert(false); }
 };
 

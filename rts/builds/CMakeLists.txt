@@ -1,6 +1,6 @@
 ### builds
 #
-# Macros and fucntions defined in this file:
+# Macros and functions defined in this file:
 # * CreateEngineBuildAndInstallTarget
 #
 
@@ -19,12 +19,17 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 	set(myBuildTarget spring-${targetName})
 	set(${targetName}-Deps
 			engine-${targetName}
-			manpages
-			userdocs
-			gamedata
+			basecontent
 			unitsync
 			${DEPS_AI_ALL}
 		)
+	if (CREATE_MAN_PAGES)
+		LIST(APPEND ${targetName}-Deps manpages)
+	endif()
+	if (userdoc_INSTALL_HTML)
+		LIST(APPEND ${targetName}-Deps userdocs)
+	endif()
+
 	# Create a custom meta build target
 	add_custom_target(${myBuildTarget}
 		WORKING_DIRECTORY

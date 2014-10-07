@@ -478,27 +478,27 @@ void SOBJPiece::UploadGeometryVBOs()
 	}
 
 	vboPositions.Bind(GL_ARRAY_BUFFER);
-	vboPositions.Resize(vertices.size() * sizeof(float3), GL_STATIC_DRAW, &vertices[0]);
+	vboPositions.New(vertices.size() * sizeof(float3), GL_STATIC_DRAW, &vertices[0]);
 	vboPositions.Unbind();
 
 	vboNormals.Bind(GL_ARRAY_BUFFER);
-	vboNormals.Resize(vnormals.size() * sizeof(float3), GL_STATIC_DRAW, &vnormals[0]);
+	vboNormals.New(vnormals.size() * sizeof(float3), GL_STATIC_DRAW, &vnormals[0]);
 	vboNormals.Unbind();
 
 	vboTexcoords.Bind(GL_ARRAY_BUFFER);
-	vboTexcoords.Resize(texcoors.size() * sizeof(float2), GL_STATIC_DRAW, &texcoors[0]);
+	vboTexcoords.New(texcoors.size() * sizeof(float2), GL_STATIC_DRAW, &texcoors[0]);
 	vboTexcoords.Unbind();
 
 	vbosTangents.Bind(GL_ARRAY_BUFFER);
-	vbosTangents.Resize(sTangents.size() * sizeof(float3), GL_STATIC_DRAW, &sTangents[0]);
+	vbosTangents.New(sTangents.size() * sizeof(float3), GL_STATIC_DRAW, &sTangents[0]);
 	vbosTangents.Unbind();
 
 	vbotTangents.Bind(GL_ARRAY_BUFFER);
-	vbotTangents.Resize(tTangents.size() * sizeof(float3), GL_STATIC_DRAW, &tTangents[0]);
+	vbotTangents.New(tTangents.size() * sizeof(float3), GL_STATIC_DRAW, &tTangents[0]);
 	vbotTangents.Unbind();
 
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboIndices.Resize(vertexDrawIndices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &vertexDrawIndices[0]);
+	vboIndices.New(vertexDrawIndices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &vertexDrawIndices[0]);
 	vboIndices.Unbind();
 
 	// FIXME:

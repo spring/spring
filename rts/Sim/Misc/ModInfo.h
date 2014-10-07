@@ -49,6 +49,7 @@ public:
 		, requireSonarUnderWater(true)
 		, featureVisibility(FEATURELOS_NONE)
 		, pathFinderSystem(PFS_TYPE_DEFAULT)
+		, pfUpdateRate(0.0f)
 	{}
 
 
@@ -173,8 +174,10 @@ public:
 	/// 2 - gaia/allied features visible, 3 - all features visible
 	int featureVisibility;
 
-	// which pathfinder system (DEFAULT/legacy or QTPFS) the mod will use
+	// Path Finder
+	/// which pathfinder system (DEFAULT/legacy or QTPFS) the mod will use
 	int pathFinderSystem;
+	float pfUpdateRate;
 };
 
 extern CModInfo modInfo;

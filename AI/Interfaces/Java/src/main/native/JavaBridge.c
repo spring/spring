@@ -16,6 +16,7 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "System/SafeCStrings.h"
+#include "lib/streflop/streflopC.h"
 
 #include <jni.h>
 
@@ -72,7 +73,7 @@ static jclass g_cls_ai_int = NULL;
 inline void java_establishSpringEnv() {
 
 	//(*g_jvm)->DetachCurrentThread(g_jvm);
-	util_resetEngineEnv();
+	streflop_init_Simple();
 }
 /// The JVM sets the environment it wants automatically, so this is a no-op
 inline void java_establishJavaEnv() {}
@@ -1154,8 +1155,6 @@ bool java_initSkirmishAIClass(
 	for (sai = 0; sai < skirmishAiImpl_size; ++sai) {
 		if (skirmishAiImpl_className[sai] == NULL) {
 			firstFree = sai;
-		} else if (strcmp(skirmishAiImpl_className[sai], className) == 0) {
-			break;
 		}
 	}
 	// sai is now either the instantiated one, or a free one

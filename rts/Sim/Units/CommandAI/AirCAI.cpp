@@ -35,7 +35,7 @@ static CStrafeAirMoveType* GetStrafeAirMoveType(const CUnit* owner) {
 
 
 
-CR_BIND_DERIVED(CAirCAI, CMobileCAI, );
+CR_BIND_DERIVED(CAirCAI, CMobileCAI, )
 CR_REG_METADATA(CAirCAI, (
 	CR_MEMBER(basePos),
 	CR_MEMBER(baseDir),
@@ -46,7 +46,7 @@ CR_REG_METADATA(CAirCAI, (
 	CR_MEMBER(lastPC1),
 	CR_MEMBER(lastPC2),
 	CR_RESERVED(16)
-));
+))
 
 CAirCAI::CAirCAI()
 	: CMobileCAI()
@@ -74,21 +74,6 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.mouseicon = c.name;
 		c.tooltip = "Sets the aircraft to attack enemy units within a circle";
 		possibleCommands.push_back(c);
-	}
-
-	if (owner->unitDef->canLoopbackAttack) {
-		c.params.clear();
-		c.id = CMD_LOOPBACKATTACK;
-		c.action = "loopbackattack";
-		c.type = CMDTYPE_ICON_MODE;
-		c.name = "Loopback";
-		c.mouseicon = c.name;
-		c.params.push_back("0");
-		c.params.push_back("Normal");
-		c.params.push_back("Loopback");
-		c.tooltip = "Loopback attack: Sets if the aircraft should loopback after an attack instead of overflying target";
-		possibleCommands.push_back(c);
-		nonQueingCommands.insert(CMD_LOOPBACKATTACK);
 	}
 
 	basePos = owner->pos;
@@ -149,27 +134,6 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
 				if (possibleCommands[n].id != CMD_IDLEMODE)
-					continue;
-
-				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
-				break;
-			}
-
-			selectedUnitsHandler.PossibleCommandChange(owner);
-			return;
-		}
-
-		if (c.GetID() == CMD_LOOPBACKATTACK) {
-			if (c.params.empty())
-				return;
-
-			switch ((int) c.params[0]) {
-				case 0: { airMT->loopbackAttack = false; break; }
-				case 1: { airMT->loopbackAttack = true;  break; }
-			}
-
-			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
-				if (possibleCommands[n].id != CMD_LOOPBACKATTACK)
 					continue;
 
 				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");

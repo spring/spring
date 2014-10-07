@@ -21,7 +21,7 @@ class CGroup;
  */
 class CGroupHandler {
 private:
-	CR_DECLARE_STRUCT(CGroupHandler);
+	CR_DECLARE_STRUCT(CGroupHandler)
 
 	CGroupHandler(int teamId);
 	~CGroupHandler();

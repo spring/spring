@@ -8,8 +8,8 @@
 
 class CFireBallProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CFireBallProjectile);
-	CR_DECLARE_SUB(Spark);
+	CR_DECLARE(CFireBallProjectile)
+	CR_DECLARE_SUB(Spark)
 public:
 	CFireBallProjectile(const ProjectileParams& params);
 
@@ -19,7 +19,7 @@ public:
 	void Collision();
 
 	struct Spark {
-		CR_DECLARE_STRUCT(Spark);
+		CR_DECLARE_STRUCT(Spark)
 		float3 pos;
 		float3 speed;
 		float size;

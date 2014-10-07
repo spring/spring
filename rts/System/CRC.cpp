@@ -4,7 +4,7 @@
 
 extern "C" {
 #include "lib/7z/7zCrc.h"
-};
+}
 
 
 static bool crcTableInitialized;

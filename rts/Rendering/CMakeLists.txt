@@ -82,6 +82,6 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Fonts/CFontTexture.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Fonts/glFont.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Fonts/TextWrap.cpp"
+		PARENT_SCOPE
 	)
 
-MakeGlobal(sources_engine_Rendering)

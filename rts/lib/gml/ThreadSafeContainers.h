@@ -35,7 +35,7 @@ private:
 	typedef typename std::vector<T>::const_iterator VecIT;
 
 public:
-	CR_DECLARE_STRUCT(ThreadListSimRender);
+	CR_DECLARE_STRUCT(ThreadListSimRender)
 
 	void PostLoad() {};
 
@@ -178,7 +178,7 @@ private:
 	typedef typename std::vector<T>::const_iterator VecIT;
 
 public:
-	CR_DECLARE_STRUCT(ThreadListRender);
+	CR_DECLARE_STRUCT(ThreadListRender)
 
 	~ThreadListRender() {
 		clear();
@@ -272,7 +272,7 @@ private:
 	typedef std::map<K,V> TMapC;
 
 public:
-	CR_DECLARE_STRUCT(ThreadMapRender);
+	CR_DECLARE_STRUCT(ThreadMapRender)
 
 	~ThreadMapRender() {
 		clear();
@@ -322,7 +322,7 @@ private:
 	typedef typename std::vector<T>::const_iterator VecIT;
 
 public:
-	CR_DECLARE_STRUCT(ThreadListSim);
+	CR_DECLARE_STRUCT(ThreadListSim)
 
 	~ThreadListSim() {
 		clear();

@@ -60,11 +60,9 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncedPrimitive.h"
 #include "System/Sync/SyncTracer.h"
-
-#define PLAY_SOUNDS 1
 
 // See end of source for member bindings
 //////////////////////////////////////////////////////////////////////
@@ -549,15 +547,6 @@ void CUnit::ForcedMove(const float3& newPos)
 	radarHandler->MoveUnit(this);
 }
 
-// NOTE: movetypes call this directly
-void CUnit::UpdateDirVectors(bool useGroundNormal)
-{
-	updir    = GetWantedUpDir(useGroundNormal);
-	frontdir = GetVectorFromHeading(heading);
-	rightdir = (frontdir.cross(updir)).Normalize();
-	frontdir = updir.cross(rightdir);
-}
-
 
 
 float3 CUnit::GetErrorVector(int allyteam) const
@@ -981,40 +970,41 @@ void CUnit::SlowUpdateWeapons() {
 
 	haveTarget = false;
 
-	if (!dontFire) {
-		for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
-			CWeapon* w = *wi;
+	if (dontFire)
+		return;
 
-			w->SlowUpdate();
+	for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
+		CWeapon* w = *wi;
 
-			// NOTE:
-			//     pass w->haveUserTarget so we do not interfere with
-			//     user targets; w->haveUserTarget can only be true if
-			//     either 1) ::AttackUnit was called with a (non-NULL)
-			//     target-unit which the CAI did *not* auto-select, or
-			//     2) ::AttackGround was called with any user-selected
-			//     position and all checks succeeded
-			if (haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire)) {
-				if (attackTarget != NULL) {
-					w->AttackUnit(attackTarget, w->haveUserTarget);
-				} else if (userAttackGround) {
-					// this implies a user-order
-					w->AttackGround(attackPos, true);
-				}
+		w->SlowUpdate();
+
+		// NOTE:
+		//     pass w->haveUserTarget so we do not interfere with
+		//     user targets; w->haveUserTarget can only be true if
+		//     either 1) ::AttackUnit was called with a (non-NULL)
+		//     target-unit which the CAI did *not* auto-select, or
+		//     2) ::AttackGround was called with any user-selected
+		//     position and all checks succeeded
+		if (haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire)) {
+			if (attackTarget != NULL) {
+				w->AttackUnit(attackTarget, w->haveUserTarget);
+			} else if (userAttackGround) {
+				// this implies a user-order
+				w->AttackGround(attackPos, true);
 			}
-
-			if (lastAttacker == NULL)
-				continue;
-			if ((lastAttackFrame + 200) <= gs->frameNum)
-				continue;
-			if (w->targetType != Target_None)
-				continue;
-			if (fireState == FIRESTATE_HOLDFIRE)
-				continue;
-
-			// return fire at our last attacker if allowed
-			w->AttackUnit(lastAttacker, false);
 		}
+
+		if (lastAttacker == NULL)
+			continue;
+		if ((lastAttackFrame + 200) <= gs->frameNum)
+			continue;
+		if (w->targetType != Target_None)
+			continue;
+		if (fireState == FIRESTATE_HOLDFIRE)
+			continue;
+
+		// return fire at our last attacker if allowed
+		w->AttackUnit(lastAttacker, false);
 	}
 }
 
@@ -1750,8 +1740,7 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 			const float metalCostStep  = metalCost  * step;
 			const float energyCostStep = energyCost * step;
 
-			const bool canExecBuild = (builderTeam->metal >= metalCostStep && builderTeam->energy >= energyCostStep);
-			if (!canExecBuild) {
+			if (builderTeam->metal < metalCostStep || builderTeam->energy < energyCostStep) {
 				// update the energy and metal required counts
 				builderTeam->metalPull  += metalCostStep;
 				builderTeam->energyPull += energyCostStep;
@@ -1786,8 +1775,7 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 			const float energyUse = (energyCost * step);
 			const float energyUseScaled = energyUse * modInfo.repairEnergyCostFactor;
 
-			const bool canEffort = (builderTeam->energy >= energyUseScaled);
-			if (!canEffort) {
+			if ((builderTeam->energy < energyUseScaled)) {
 				// update the energy and metal required counts
 				builderTeam->energyPull += energyUseScaled;
 				return false;
@@ -1819,8 +1807,7 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		const float metalRefundStepScaled  =  metalRefundStep * modInfo.reclaimUnitEfficiency;
 		const float energyRefundStepScaled = energyRefundStep * modInfo.reclaimUnitEnergyCostFactor;
 
-		const bool canEffort = (builderTeam->energy >= -energyRefundStepScaled);
-		if (!canEffort) {
+		if (builderTeam->energy < -energyRefundStepScaled) {
 			builderTeam->energyPull += -energyRefundStepScaled;
 			return false;
 		}
@@ -2090,11 +2077,9 @@ void CUnit::Activate()
 
 	radarHandler->MoveUnit(this);
 
-	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.activate, this);
+		Channels::General->PlayRandomSample(unitDef->sounds.activate, this);
 	}
-	#endif
 }
 
 void CUnit::Deactivate()
@@ -2111,11 +2096,9 @@ void CUnit::Deactivate()
 
 	radarHandler->RemoveUnit(this);
 
-	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.deactivate, this);
+		Channels::General->PlayRandomSample(unitDef->sounds.deactivate, this);
 	}
-	#endif
 }
 
 
@@ -2131,28 +2114,33 @@ void CUnit::UpdateWind(float x, float z, float strength)
 
 void CUnit::IncomingMissile(CMissileProjectile* missile)
 {
-	if (unitDef->canDropFlare) {
-		incomingMissiles.push_back(missile);
-		AddDeathDependence(missile, DEPENDENCE_INCOMING);
+	if (!unitDef->canDropFlare)
+		return;
 
-		if (lastFlareDrop < (gs->frameNum - unitDef->flareReloadTime * 30)) {
-			new CFlareProjectile(pos, speed, this, (int) (gs->frameNum + unitDef->flareDelay * (1 + gs->randFloat()) * 15));
-			lastFlareDrop = gs->frameNum;
-		}
-	}
+	incomingMissiles.push_back(missile);
+	AddDeathDependence(missile, DEPENDENCE_INCOMING);
+
+	if (lastFlareDrop >= (gs->frameNum - unitDef->flareReloadTime * GAME_SPEED))
+		return;
+
+	new CFlareProjectile(pos, speed, this, (int) (gs->frameNum + unitDef->flareDelay * (1 + gs->randFloat()) * 15));
+	lastFlareDrop = gs->frameNum;
 }
 
 
 
-void CUnit::TempHoldFire()
+void CUnit::TempHoldFire(int cmdID)
 {
+	if (weapons.empty())
+		return;
+	if (!eventHandler.AllowBuilderHoldFire(this, cmdID))
+		return;
+
+	// block the SlowUpdateWeapons cycle
 	dontFire = true;
-	AttackUnit(NULL, false, false);
-}
 
-void CUnit::ReleaseTempHoldFire()
-{
-	dontFire = false;
+	// clear current target (if any)
+	AttackUnit(NULL, false, false);
 }
 
 
@@ -2267,7 +2255,7 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 	}
 }
 
-CR_BIND_DERIVED(CUnit, CSolidObject, );
+CR_BIND_DERIVED(CUnit, CSolidObject, )
 CR_REG_METADATA(CUnit, (
 	CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefID),
@@ -2491,4 +2479,4 @@ CR_REG_METADATA(CUnit, (
 //	CR_MEMBER(model),
 
 	CR_POSTLOAD(PostLoad)
-));
+))

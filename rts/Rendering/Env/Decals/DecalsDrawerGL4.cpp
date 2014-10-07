@@ -432,8 +432,8 @@ void CDecalsDrawerGL4::CreateBoundingBoxVBOs()
 	vboVertices.Bind(GL_ARRAY_BUFFER);
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
 
-	vboVertices.Resize(sizeof(boxverts) * sizeof(float3), GL_STATIC_DRAW, &boxverts[0]);
-	vboIndices.Resize(sizeof(indices) * sizeof(GLubyte), GL_STATIC_DRAW, &indices[0]);
+	vboVertices.New(sizeof(boxverts) * sizeof(float3), GL_STATIC_DRAW, &boxverts[0]);
+	vboIndices.New(sizeof(indices) * sizeof(GLubyte), GL_STATIC_DRAW, &indices[0]);
 
 	vboVertices.Unbind();
 	vboIndices.Unbind();
@@ -459,7 +459,7 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 
 
 	uboGroundLighting.Bind(GL_UNIFORM_BUFFER);
-	uboGroundLighting.Resize(uniformBlockSize, GL_STATIC_DRAW);
+	uboGroundLighting.New(uniformBlockSize, GL_STATIC_DRAW);
 		SGLSLGroundLighting* uboGroundLightingData = (SGLSLGroundLighting*)uboGroundLighting.MapBuffer(0, sizeof(SGLSLGroundLighting));
 		uboGroundLightingData->ambientColor  = mapInfo->light.groundAmbientColor  * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->diffuseColor  = mapInfo->light.groundSunColor      * CGlobalRendering::SMF_INTENSITY_MULT;
@@ -477,8 +477,8 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 	{
 	uboDecalsStructures.Bind(GL_UNIFORM_BUFFER);
 
-	GLuint uniformBlockIndex = glGetUniformBlockIndex(decalShader->GetObjID(), "decals");
-	assert(uniformBlockIndex != GL_INVALID_INDEX);
+	// Uniform Array Solution
+	/*GLuint uniformBlockIndex = glGetUniformBlockIndex(decalShader->GetObjID(), "decals");
 
 	GLsizei uniformBlockSize = 0;
 	glGetActiveUniformBlockiv(decalShader->GetObjID(), uniformBlockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &uniformBlockSize);
@@ -489,16 +489,20 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 
 	maxDecals = uniformBlockSize / sizeof(SGLSLDecal);
 
+	uniformBlockSize = maxDecals * sizeof(SGLSLDecal);
+	uboDecalsStructures.New(uniformBlockSize, GL_DYNAMIC_DRAW);
+
+	glUniformBlockBinding(decalShader->GetObjID(), uniformBlockIndex, 3);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 3, uboDecalsStructures.GetId());*/
+
+	// TBO solution
 	GLint maxTexBufSize;
 	glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE, &maxTexBufSize);
 
 	maxDecals = (maxTexBufSize / sizeof(SGLSLDecal)) / 2;
 
-	uniformBlockSize = maxDecals * sizeof(SGLSLDecal);
-	uboDecalsStructures.Resize(uniformBlockSize, GL_DYNAMIC_DRAW);
-
-	glUniformBlockBinding(decalShader->GetObjID(), uniformBlockIndex, 3);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 3, uboDecalsStructures.GetId());
+	GLsizei uniformBlockSize = maxDecals * sizeof(SGLSLDecal);
+	uboDecalsStructures.New(uniformBlockSize, GL_DYNAMIC_DRAW);
 
 	uboDecalsStructures.Unbind();
 	}
@@ -508,7 +512,7 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 
 	/*{
 	vboVisibilityFeeback.Bind(GL_UNIFORM_BUFFER);
-	vboVisibilityFeeback.Resize(maxDecals, GL_STATIC_DRAW);
+	vboVisibilityFeeback.New(maxDecals, GL_STATIC_DRAW);
 	vboVisibilityFeeback.Unbind();
 	}*/
 }

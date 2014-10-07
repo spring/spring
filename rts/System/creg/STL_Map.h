@@ -153,7 +153,7 @@ namespace creg
 			return boost::shared_ptr<IType>(new PairType<std::pair<TFirst, TSecond> >(first.Get(), second.Get()));
 		}
 	};
-};
+}
 
 #endif // USING_CREG
 

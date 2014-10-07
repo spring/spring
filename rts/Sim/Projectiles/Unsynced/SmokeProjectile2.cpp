@@ -12,7 +12,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
 
-CR_BIND_DERIVED(CSmokeProjectile2, CProjectile, );
+CR_BIND_DERIVED(CSmokeProjectile2, CProjectile, )
 
 CR_REG_METADATA(CSmokeProjectile2,
 (
@@ -28,7 +28,7 @@ CR_REG_METADATA(CSmokeProjectile2,
 	CR_MEMBER(age),
 	CR_MEMBER(textureNum),
 	CR_RESERVED(8)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -78,7 +78,7 @@ CSmokeProjectile2::CSmokeProjectile2(
 
 
 
-void CSmokeProjectile2::Init(CUnit* owner, const float3& offset)
+void CSmokeProjectile2::Init(const CUnit* owner, const float3& offset)
 {
 	textureNum = (int) (gu->RandInt() % projectileDrawer->smoketex.size());
 

@@ -5,6 +5,7 @@
 #include "LuaInclude.h"
 
 #include "LuaUtils.h"
+#include "LuaArchive.h"
 #include "LuaCallInCheck.h"
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
@@ -57,10 +58,9 @@ LuaRulesParams::HashMap CLuaHandleSynced::gameParamsMap;
 //  #######  ##    ##  ######     ##    ##    ##  ######  ######## ########
 
 CUnsyncedLuaHandle::CUnsyncedLuaHandle(CLuaHandleSynced* _base, const string& _name, int _order)
-	: CLuaHandle(_name, _order, false)
+	: CLuaHandle(_name, _order, false, false)
 	, base(*_base)
 {
-	D.synced = false;
 	D.allowChanges = false;
 }
 
@@ -111,6 +111,7 @@ bool CUnsyncedLuaHandle::Init(const string& code, const string& file)
 	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)         ||
 	    !AddEntriesToTable(L, "VFS",         LuaZipFileReader::PushUnsynced) ||
 	    !AddEntriesToTable(L, "VFS",         LuaZipFileWriter::PushUnsynced) ||
+	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)      ||
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
@@ -303,11 +304,10 @@ bool CUnsyncedLuaHandle::DrawProjectile(const CProjectile* projectile)
 //  ######     ##    ##    ##  ######  ######## ########
 
 CSyncedLuaHandle::CSyncedLuaHandle(CLuaHandleSynced* _base, const string& _name, int _order)
-	: CLuaHandle(_name, _order, false)
+	: CLuaHandle(_name, _order, false, true)
 	, base(*_base)
 	, origNextRef(-1)
 {
-	D.synced = true;
 	D.allowChanges = true;
 }
 
@@ -729,6 +729,30 @@ bool CSyncedLuaHandle::AllowDirectUnitControl(int playerID, const CUnit* unit)
 
 	// call the function
 	if (!RunCallIn(L, cmdStr, 4, 1))
+		return true;
+
+	// get the results
+	const bool retval = luaL_optboolean(L, -1, true);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+bool CSyncedLuaHandle::AllowBuilderHoldFire(const CUnit* unit, int action)
+{
+	LUA_CALL_IN_CHECK(L, true);
+	luaL_checkstack(L, 2 + 3 + 1, __FUNCTION__);
+
+	static const LuaHashString cmdStr(__FUNCTION__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return true; // the call is not defined
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, action);
+
+	// call the function
+	if (!RunCallIn(L, cmdStr, 3, 1))
 		return true;
 
 	// get the results

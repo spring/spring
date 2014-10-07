@@ -6,13 +6,13 @@
 #include <string>
 
 
-CR_BIND(SkirmishAIKey, );
+CR_BIND(SkirmishAIKey, )
 
 CR_REG_METADATA(SkirmishAIKey, (
 		CR_MEMBER(shortName),
 		CR_MEMBER(version),
 		CR_MEMBER(interface)
-		));
+		))
 
 SkirmishAIKey::SkirmishAIKey(
 		const std::string& shortName,

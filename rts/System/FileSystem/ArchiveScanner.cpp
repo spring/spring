@@ -341,8 +341,13 @@ CArchiveScanner::CArchiveScanner()
 : isDirty(false)
 {
 	// the "cache" dir is created in DataDirLocater
-	cachefile = dataDirLocater.GetWriteDirPath() + FileSystem::EnsurePathSepAtEnd(FileSystem::GetCacheBaseDir()) + "ArchiveCache.lua";
+	const std:: string cacheFolder = dataDirLocater.GetWriteDirPath() + FileSystem::EnsurePathSepAtEnd(FileSystem::GetCacheBaseDir());
+	cachefile = cacheFolder + IntToString(INTERNAL_VER, "ArchiveCache%i.lua");
 	ReadCacheData(GetFilepath());
+	if (archiveInfos.empty()) {
+		// when versioned ArchiveCache%i.lua is missing or empty, try old unversioned filename
+		ReadCacheData(cacheFolder + "ArchiveCache.lua");
+	}
 
 	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
 	std::vector<std::string> scanDirs;
@@ -446,12 +451,6 @@ void CArchiveScanner::ScanDir(const std::string& curPath, std::list<std::string>
 				continue;
 			}
 
-			// Exclude archivefiles found inside hidden directories
-			if ((lcfpath.find("/hidden/")   != std::string::npos) ||
-			    (lcfpath.find("\\hidden\\") != std::string::npos)) {
-				continue;
-			}
-
 			// Is this an archive we should look into?
 			if (archiveLoader.IsArchiveFile(fullName)) {
 				foundArchives->push_front(fullName); // push by reversed order!
@@ -470,6 +469,55 @@ static void AddDependency(std::vector<std::string>& deps, const std::string& dep
 	deps.push_back(dependency);
 }
 
+bool CArchiveScanner::CheckCompression(const IArchive* ar,const std::string& fullName, std::string& error)
+{
+	if (!ar->CheckForSolid())
+		return true;
+	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
+		std::string name;
+		int size;
+		ar->FileInfo(fid, name, size);
+		const std::string lowerName = StringToLower(name);
+		const auto metaFileClass = CArchiveScanner::GetMetaFileClass(lowerName);
+		if ((metaFileClass == 0) || ar->HasLowReadingCost(fid))
+			continue;
+
+		// is a meta-file and not cheap to read
+		if (metaFileClass == 1) {
+			// 1st class
+			error = "Unpacking/reading cost for meta file " + name
+					+ " is too high, please repack the archive (make sure to use a non-solid algorithm, if applicable)";
+			return false;
+		} else if (metaFileClass == 2) {
+			// 2nd class
+			LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING,
+					"Archive %s: The cost for reading a 2nd-class meta-file is too high: %s",
+					fullName.c_str(), name.c_str());
+		}
+
+	}
+	return true;
+}
+
+std::string CArchiveScanner::SearchMapFile(const IArchive* ar, std::string& error)
+{
+	assert(ar!=NULL);
+
+	// check for smf/sm3 and if the uncompression of important files is too costy
+	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
+		std::string name;
+		int size;
+		ar->FileInfo(fid, name, size);
+		const std::string lowerName = StringToLower(name);
+		const std::string ext = FileSystem::GetExtension(lowerName);
+
+		if ((ext == "smf") || (ext == "sm3")) {
+			return name;
+		}
+
+	}
+	return "";
+}
 
 void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 {
@@ -509,7 +557,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 				return;
 			} else {
 				if (aii->second.updated) {
-					LOG_L(L_WARNING, "Found a \"%s\" already in \"%s\", ignoring one in \"%s\"", aii->first.c_str(), aii->second.path.c_str(), fpath.c_str());
+					LOG_L(L_ERROR, "Found a \"%s\" already in \"%s\", ignoring one in \"%s\"", aii->first.c_str(), aii->second.path.c_str(), fpath.c_str());
 					return;
 				}
 
@@ -541,42 +589,22 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	const bool hasModinfo = ar->FileExists("modinfo.lua");
 	const bool hasMapinfo = ar->FileExists("mapinfo.lua");
 
-	// check for smf/sm3 and if the uncompression of important files is too costy
-	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
-		std::string name;
-		int size;
-		ar->FileInfo(fid, name, size);
-		const std::string lowerName = StringToLower(name);
-		const std::string ext = FileSystem::GetExtension(lowerName);
-
-		if ((ext == "smf") || (ext == "sm3"))
-			mapfile = name;
-
-		const auto metaFileClass = CArchiveScanner::GetMetaFileClass(lowerName);
-		if ((metaFileClass == 0) || ar->HasLowReadingCost(fid))
-			continue;
-
-		// is a meta-file and not cheap to read
-		if (metaFileClass == 1) {
-			// 1st class
-			error = "Unpacking/reading cost for meta file " + name
-					+ " is too high, please repack the archive (make sure to use a non-solid algorithm, if applicable)";
-			break;
-		} else if (metaFileClass == 2) {
-			// 2nd class
-			LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING,
-					"Archive %s: The cost for reading a 2nd-class meta-file is too high: %s",
-					fullName.c_str(), name.c_str());
-		}
-	}
 
 	ArchiveInfo ai;
 	auto& ad = ai.archiveData;
 	if (hasMapinfo) {
 		ScanArchiveLua(ar.get(), "mapinfo.lua", ai, error);
+		if (ad.GetMapFile().empty()) {
+			LOG_L(L_WARNING, "%s: mapfile isn't set in mapinfo.lua, please set it for faster loading!", fullName.c_str());
+			mapfile = SearchMapFile(ar.get(), error);
+		}
 	} else if (hasModinfo) {
 		ScanArchiveLua(ar.get(), "modinfo.lua", ai, error);
+	} else {
+		mapfile = SearchMapFile(ar.get(), error);
 	}
+	CheckCompression(ar.get(), fullName, error);
+
 	if (!error.empty()) {
 		// for some reason, the archive is marked as broken
 		LOG_L(L_WARNING, "Failed to scan %s (%s)", fullName.c_str(), error.c_str());
@@ -629,6 +657,7 @@ bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, 
 {
 	std::vector<boost::uint8_t> buf;
 	if (!ar->GetFile(fileName, buf) || buf.empty()) {
+		err = "Error reading " + fileName + " from " + ar->GetArchiveName();
 		return false;
 	}
 
@@ -817,10 +846,10 @@ static inline void SafeStr(FILE* out, const char* prefix, const std::string& str
 	if (str.empty()) {
 		return;
 	}
-	if (str.find_first_of("\\\"") == std::string::npos) {
-		fprintf(out, "%s\"%s\",\n", prefix, str.c_str());
-	} else {
+	if ( (str.find_first_of("\\\"") != std::string::npos) || (str.find_first_of("\n") != std::string::npos )) {
 		fprintf(out, "%s[[%s]],\n", prefix, str.c_str());
+	} else {
+		fprintf(out, "%s\"%s\",\n", prefix, str.c_str());
 	}
 }
 
@@ -828,7 +857,7 @@ void FilterDep(std::vector<std::string>& deps, const std::string& exclude)
 {
 	auto it = std::remove_if(deps.begin(), deps.end(), [&](const std::string& dep) { return (dep == exclude); });
 	deps.erase(it, deps.end());
-};
+}
 
 void CArchiveScanner::WriteCacheData(const std::string& filename)
 {
@@ -993,7 +1022,24 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 }
 
 
-std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, int depth) const
+std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllArchives() const
+{
+	std::vector<ArchiveData> ret;
+
+	for (const auto& pair: archiveInfos) {
+		const ArchiveData& aid = pair.second.archiveData;
+
+		// Add the archive the mod is in as the first dependency
+		ArchiveData md = aid;
+		md.GetDependencies().insert(md.GetDependencies().begin(), pair.second.origName);
+		ret.push_back(md);
+	}
+
+	sortByName(ret);
+	return ret;
+}
+
+std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string& root, int depth) const
 {
 	LOG_S(LOG_SECTION_ARCHIVESCANNER, "GetArchives: %s (depth %u)", root.c_str(), depth);
 	// Protect against circular dependencies
@@ -1033,7 +1079,7 @@ std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, i
 	// add depth-first
 	ret.push_back(aii->second.path + aii->second.origName);
 	for (const std::string& dep: aii->second.archiveData.GetDependencies()) {
-		const std::vector<std::string>& deps = GetArchives(dep, depth + 1);
+		const std::vector<std::string>& deps = GetAllArchivesUsedBy(dep, depth + 1);
 		for (const std::string& depSub: deps) {
 			AddDependency(ret, depSub);
 		}
@@ -1085,7 +1131,7 @@ unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& name) 
 
 unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name) const
 {
-	const std::vector<std::string> &ars = GetArchives(name);
+	const std::vector<std::string>& ars = GetAllArchivesUsedBy(name);
 	unsigned int checksum = 0;
 
 	for (unsigned int a = 0; a < ars.size(); a++) {
@@ -1160,7 +1206,8 @@ CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveDataByArchive(const std:
 	return GetArchiveData(NameFromArchive(archive));
 }
 
-unsigned char CArchiveScanner::GetMetaFileClass(const std::string& filePath) {
+unsigned char CArchiveScanner::GetMetaFileClass(const std::string& filePath)
+{
 
 	unsigned char metaFileClass = 0;
 

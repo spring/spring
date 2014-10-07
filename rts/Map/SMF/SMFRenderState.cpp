@@ -108,25 +108,25 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		glslShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", "#version 120\n" + defs, GL_VERTEX_SHADER));
 		glslShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", "#version 120\n" + defs, GL_FRAGMENT_SHADER));
 
-		glslShaders[n]->SetFlag("SMF_VOID_WATER",               int(mapInfo->map.voidWater));
-		glslShaders[n]->SetFlag("SMF_VOID_GROUND",              int(mapInfo->map.voidGround));
-		glslShaders[n]->SetFlag("SMF_ARB_LIGHTING",             int(!smfMap->HaveSpecularTexture()));
-		glslShaders[n]->SetFlag("SMF_DETAIL_TEXTURE_SPLATTING", int(smfMap->HaveSplatTexture()));
-		glslShaders[n]->SetFlag("SMF_WATER_ABSORPTION",         int(smfMap->HasVisibleWater()));
-		glslShaders[n]->SetFlag("SMF_SKY_REFLECTIONS",          int(smfMap->GetSkyReflectModTexture() != 0));
-		glslShaders[n]->SetFlag("SMF_DETAIL_NORMALS",           int(smfMap->GetDetailNormalTexture() != 0));
-		glslShaders[n]->SetFlag("SMF_LIGHT_EMISSION",           int(smfMap->GetLightEmissionTexture() != 0));
-		glslShaders[n]->SetFlag("SMF_PARALLAX_MAPPING",         int(smfMap->GetParallaxHeightTexture() != 0));
+		glslShaders[n]->SetFlag("SMF_VOID_WATER",               mapInfo->map.voidWater);
+		glslShaders[n]->SetFlag("SMF_VOID_GROUND",              mapInfo->map.voidGround);
+		glslShaders[n]->SetFlag("SMF_ARB_LIGHTING",             !smfMap->HaveSpecularTexture());
+		glslShaders[n]->SetFlag("SMF_DETAIL_TEXTURE_SPLATTING", smfMap->HaveSplatTexture());
+		glslShaders[n]->SetFlag("SMF_WATER_ABSORPTION",         smfMap->HasVisibleWater());
+		glslShaders[n]->SetFlag("SMF_SKY_REFLECTIONS",          (smfMap->GetSkyReflectModTexture() != 0));
+		glslShaders[n]->SetFlag("SMF_DETAIL_NORMALS",           (smfMap->GetDetailNormalTexture() != 0));
+		glslShaders[n]->SetFlag("SMF_LIGHT_EMISSION",           (smfMap->GetLightEmissionTexture() != 0));
+		glslShaders[n]->SetFlag("SMF_PARALLAX_MAPPING",         (smfMap->GetParallaxHeightTexture() != 0));
 
 		glslShaders[n]->SetFlag("BASE_DYNAMIC_MAP_LIGHT",       lightHandler->GetBaseLight());
 		glslShaders[n]->SetFlag("MAX_DYNAMIC_MAP_LIGHTS",       lightHandler->GetMaxLights());
 
 		// both are runtime set, but ATI drivers need them set from the beginning
-		glslShaders[n]->SetFlag("HAVE_SHADOWS", 0);
-		glslShaders[n]->SetFlag("HAVE_INFOTEX", 0);
+		glslShaders[n]->SetFlag("HAVE_SHADOWS", false);
+		glslShaders[n]->SetFlag("HAVE_INFOTEX", false);
 
 		// used to strip down the shader for the deferred pass
-		glslShaders[n]->SetFlag("DEFERRED_MODE", int(n != GLSL_SHADER_STANDARD));
+		glslShaders[n]->SetFlag("DEFERRED_MODE", (n != GLSL_SHADER_STANDARD));
 		glslShaders[n]->SetFlag("GBUFFER_NORMTEX_IDX", GL::GeometryBuffer::ATTACHMENT_NORMTEX);
 		glslShaders[n]->SetFlag("GBUFFER_DIFFTEX_IDX", GL::GeometryBuffer::ATTACHMENT_DIFFTEX);
 		glslShaders[n]->SetFlag("GBUFFER_SPECTEX_IDX", GL::GeometryBuffer::ATTACHMENT_SPECTEX);
@@ -135,72 +135,40 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		glslShaders[n]->SetFlag("GBUFFER_ZVALTEX_IDX", GL::GeometryBuffer::ATTACHMENT_ZVALTEX);
 
 		glslShaders[n]->Link();
-		glslShaders[n]->SetUniformLocation("diffuseTex");          // idx  0
-		glslShaders[n]->SetUniformLocation("normalsTex");          // idx  1
-		glslShaders[n]->SetUniformLocation("shadowTex");           // idx  2
-		glslShaders[n]->SetUniformLocation("detailTex");           // idx  3
-		glslShaders[n]->SetUniformLocation("specularTex");         // idx  4
-		glslShaders[n]->SetUniformLocation("infoTex");             // idx  5
-		glslShaders[n]->SetUniformLocation("mapSizePO2");          // idx  6
-		glslShaders[n]->SetUniformLocation("mapSize");             // idx  7
-		glslShaders[n]->SetUniformLocation("texSquare");           // idx  8
-		glslShaders[n]->SetUniformLocation("mapHeights");          // idx  9
-		glslShaders[n]->SetUniformLocation("lightDir");            // idx 10
-		glslShaders[n]->SetUniformLocation("cameraPos");           // idx 11
-		glslShaders[n]->SetUniformLocation("$UNUSED$");            // idx 12
-		glslShaders[n]->SetUniformLocation("shadowMat");           // idx 13
-		glslShaders[n]->SetUniformLocation("shadowParams");        // idx 14
-		glslShaders[n]->SetUniformLocation("groundAmbientColor");  // idx 15
-		glslShaders[n]->SetUniformLocation("groundDiffuseColor");  // idx 16
-		glslShaders[n]->SetUniformLocation("groundSpecularColor"); // idx 17
-		glslShaders[n]->SetUniformLocation("groundShadowDensity"); // idx 18
-		glslShaders[n]->SetUniformLocation("waterMinColor");       // idx 19
-		glslShaders[n]->SetUniformLocation("waterBaseColor");      // idx 20
-		glslShaders[n]->SetUniformLocation("waterAbsorbColor");    // idx 21
-		glslShaders[n]->SetUniformLocation("splatDetailTex");      // idx 22
-		glslShaders[n]->SetUniformLocation("splatDistrTex");       // idx 23
-		glslShaders[n]->SetUniformLocation("splatTexScales");      // idx 24
-		glslShaders[n]->SetUniformLocation("splatTexMults");       // idx 25
-		glslShaders[n]->SetUniformLocation("skyReflectTex");       // idx 26
-		glslShaders[n]->SetUniformLocation("skyReflectModTex");    // idx 27
-		glslShaders[n]->SetUniformLocation("detailNormalTex");     // idx 28
-		glslShaders[n]->SetUniformLocation("lightEmissionTex");    // idx 29
-		glslShaders[n]->SetUniformLocation("parallaxHeightTex");   // idx 30
-		glslShaders[n]->SetUniformLocation("infoTexIntensityMul"); // idx 31
-		glslShaders[n]->SetUniformLocation("normalTexGen");        // idx 32
-		glslShaders[n]->SetUniformLocation("specularTexGen");      // idx 33
-		glslShaders[n]->SetUniformLocation("infoTexGen");          // idx 34
-
 		glslShaders[n]->Enable();
-		glslShaders[n]->SetUniform1i(0,  0); // diffuseTex  (idx 0, texunit  0)
-		glslShaders[n]->SetUniform1i(1,  5); // normalsTex  (idx 1, texunit  5)
-		glslShaders[n]->SetUniform1i(2,  4); // shadowTex   (idx 2, texunit  4)
-		glslShaders[n]->SetUniform1i(3,  2); // detailTex   (idx 3, texunit  2)
-		glslShaders[n]->SetUniform1i(4,  6); // specularTex (idx 4, texunit  6)
-		glslShaders[n]->SetUniform1i(5, 14); // infoTex     (idx 5, texunit 14)
-		glslShaders[n]->SetUniform2f(6, (gs->pwr2mapx * SQUARE_SIZE), (gs->pwr2mapy * SQUARE_SIZE));
-		glslShaders[n]->SetUniform2f(7, (gs->mapx * SQUARE_SIZE), (gs->mapy * SQUARE_SIZE));
-		glslShaders[n]->SetUniform4fv(10, &((sky->GetLight())->GetLightDir()).x);
-		glslShaders[n]->SetUniform3fv(15, &mapInfo->light.groundAmbientColor[0]);
-		glslShaders[n]->SetUniform3fv(16, &mapInfo->light.groundSunColor[0]);
-		glslShaders[n]->SetUniform3fv(17, &mapInfo->light.groundSpecularColor[0]);
-		glslShaders[n]->SetUniform1f(18, sky->GetLight()->GetGroundShadowDensity());
-		glslShaders[n]->SetUniform3fv(19, &mapInfo->water.minColor[0]);
-		glslShaders[n]->SetUniform3fv(20, &mapInfo->water.baseColor[0]);
-		glslShaders[n]->SetUniform3fv(21, &mapInfo->water.absorb[0]);
-		glslShaders[n]->SetUniform1i(22, 7); // splatDetailTex (idx 22, texunit 7)
-		glslShaders[n]->SetUniform1i(23, 8); // splatDistrTex (idx 23, texunit 8)
-		glslShaders[n]->SetUniform4fv(24, &mapInfo->splats.texScales[0]);
-		glslShaders[n]->SetUniform4fv(25, &mapInfo->splats.texMults[0]);
-		glslShaders[n]->SetUniform1i(26,  9); // skyReflectTex (idx 26, texunit 9)
-		glslShaders[n]->SetUniform1i(27, 10); // skyReflectModTex (idx 27, texunit 10)
-		glslShaders[n]->SetUniform1i(28, 11); // detailNormalTex (idx 28, texunit 11)
-		glslShaders[n]->SetUniform1i(29, 12); // lightEmisionTex (idx 29, texunit 12)
-		glslShaders[n]->SetUniform1i(30, 13); // parallaxHeightTex (idx 30, texunit 13)
-		glslShaders[n]->SetUniform1f(31, 1.0f); // infoTexIntensityMul
-		glslShaders[n]->SetUniform2f(32, 1.0f / ((smfMap->normalTexSize.x - 1) * SQUARE_SIZE), 1.0f / ((smfMap->normalTexSize.y - 1) * SQUARE_SIZE));
-		glslShaders[n]->SetUniform2f(33, 1.0f / (gs->mapx * SQUARE_SIZE), 1.0f / (gs->mapy * SQUARE_SIZE));
-		glslShaders[n]->SetUniform2f(34, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
+		glslShaders[n]->SetUniform("diffuseTex",         0);
+		glslShaders[n]->SetUniform("detailTex",          2);
+		glslShaders[n]->SetUniform("shadowTex",          4);
+		glslShaders[n]->SetUniform("normalsTex",         5);
+		glslShaders[n]->SetUniform("specularTex",        6);
+		glslShaders[n]->SetUniform("splatDetailTex",     7);
+		glslShaders[n]->SetUniform("splatDistrTex",      8);
+		glslShaders[n]->SetUniform("skyReflectTex",      9);
+		glslShaders[n]->SetUniform("skyReflectModTex",  10);
+		glslShaders[n]->SetUniform("detailNormalTex",   11);
+		glslShaders[n]->SetUniform("lightEmissionTex",  12);
+		glslShaders[n]->SetUniform("parallaxHeightTex", 13);
+		glslShaders[n]->SetUniform("infoTex",           14);
+
+		glslShaders[n]->SetUniform("mapSizePO2", float(gs->pwr2mapx * SQUARE_SIZE), float(gs->pwr2mapy * SQUARE_SIZE));
+		glslShaders[n]->SetUniform("mapSize",    float(gs->mapx * SQUARE_SIZE),     float(gs->mapy * SQUARE_SIZE));
+		glslShaders[n]->SetUniform4v("lightDir",            &sky->GetLight()->GetLightDir()[0]);
+		glslShaders[n]->SetUniform3v("cameraPos",           &FwdVector[0]);
+		glslShaders[n]->SetUniform3v("groundAmbientColor",  &mapInfo->light.groundAmbientColor[0]);
+		glslShaders[n]->SetUniform3v("groundDiffuseColor",  &mapInfo->light.groundSunColor[0]);
+		glslShaders[n]->SetUniform3v("groundSpecularColor", &mapInfo->light.groundSpecularColor[0]);
+		glslShaders[n]->SetUniform("groundShadowDensity",   sky->GetLight()->GetGroundShadowDensity());
+		glslShaders[n]->SetUniform3v("waterMinColor",    &mapInfo->water.minColor[0]);
+		glslShaders[n]->SetUniform3v("waterBaseColor",   &mapInfo->water.baseColor[0]);
+		glslShaders[n]->SetUniform3v("waterAbsorbColor", &mapInfo->water.absorb[0]);
+
+		glslShaders[n]->SetUniform4v("splatTexScales", &mapInfo->splats.texScales[0]);
+		glslShaders[n]->SetUniform4v("splatTexMults", &mapInfo->splats.texMults[0]);
+
+		glslShaders[n]->SetUniform("infoTexIntensityMul", 1.0f);
+		glslShaders[n]->SetUniform("normalTexGen", 1.0f / ((smfMap->normalTexSize.x - 1) * SQUARE_SIZE), 1.0f / ((smfMap->normalTexSize.y - 1) * SQUARE_SIZE));
+		glslShaders[n]->SetUniform("specularTexGen", 1.0f / (gs->mapx * SQUARE_SIZE), 1.0f / (gs->mapy * SQUARE_SIZE));
+		glslShaders[n]->SetUniform("infoTexGen", 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
 		glslShaders[n]->Disable();
 		glslShaders[n]->Validate();
 	}
@@ -442,33 +410,31 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_SHADOWS", int(shadowHandler->shadowsLoaded));
-	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_INFOTEX", int(smfGroundDrawer->DrawExtraTex()));
+	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_SHADOWS", shadowHandler->shadowsLoaded);
+	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_INFOTEX", smfGroundDrawer->DrawExtraTex());
 
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform2f(9, readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight());
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3fv(11, &camera->GetPos()[0]);
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4fv(13, false, shadowHandler->shadowMatrix);
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform1f(31, float(smfGroundDrawer->GetDrawMode() == CBaseGroundDrawer::drawMetal) + 1.0f);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("mapHeights", readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight());
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("cameraPos", &camera->GetPos()[0]);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4("shadowMat", false, shadowHandler->shadowMatrix.m);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("infoTexIntensityMul", float(smfGroundDrawer->GetDrawMode() == CBaseGroundDrawer::drawMetal) + 1.0f);
 
 	// already on the MV stack at this point
 	glLoadIdentity();
 	const_cast<GL::LightHandler*>(lightHandler)->Update(glslShaders[GLSL_SHADER_CURRENT]);
 	glMultMatrixf(camera->GetViewMatrix());
 
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, smfMap->GetShadingTexture());
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
-
 	// setup for shadow2DProj
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
+	if (shadowHandler->shadowsLoaded) {
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
+	}
 
+	glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 	glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, smfMap->GetNormalsTexture());
 	glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, smfMap->GetSpecularTexture());
 	glActiveTexture(GL_TEXTURE7); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailTexture());
@@ -486,25 +452,11 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 	glslShaders[GLSL_SHADER_CURRENT]->Disable();
 
-	glActiveTexture(GL_TEXTURE14); glBindTexture(GL_TEXTURE_2D, 0);
-	glActiveTexture(GL_TEXTURE13); glBindTexture(GL_TEXTURE_2D, 0);
-	glActiveTexture(GL_TEXTURE12); glBindTexture(GL_TEXTURE_2D, 0);
-	glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, 0);
-	glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, 0);
-	glActiveTexture(GL_TEXTURE9); glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);
-	glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0);
-	glActiveTexture(GL_TEXTURE7); glBindTexture(GL_TEXTURE_2D, 0);
-	glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, 0);
-	glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, 0);
-
-	glActiveTexture(GL_TEXTURE4);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, 0);
-	glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, 0);
-
-	glActiveTexture(GL_TEXTURE0);
+	if (shadowHandler->shadowsLoaded) {
+		glActiveTexture(GL_TEXTURE4);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glActiveTexture(GL_TEXTURE0);
+	}
 }
 
 
@@ -525,7 +477,7 @@ void SMFRenderStateARB::SetSquareTexGen(const int sqx, const int sqy) const {
 }
 
 void SMFRenderStateGLSL::SetSquareTexGen(const int sqx, const int sqy) const {
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform2i(8, sqx, sqy);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("texSquare", sqx, sqy);
 }
 
 
@@ -556,8 +508,8 @@ void SMFRenderStateARB::UpdateCurrentShader(const ISkyLight* skyLight) const {
 
 void SMFRenderStateGLSL::UpdateCurrentShader(const ISkyLight* skyLight) const {
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4fv(10, &skyLight->GetLightDir().x);
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform1f(18, skyLight->GetGroundShadowDensity());
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("lightDir", &skyLight->GetLightDir().x);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("groundShadowDensity", skyLight->GetGroundShadowDensity());
 	glslShaders[GLSL_SHADER_CURRENT]->Disable();
 }
 

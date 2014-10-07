@@ -3,7 +3,7 @@
 #include "ExpGenSpawner.h"
 #include "ExplosionGenerator.h"
 
-CR_BIND_DERIVED(CExpGenSpawner, CProjectile, );
+CR_BIND_DERIVED(CExpGenSpawner, CProjectile, )
 
 CR_REG_METADATA(CExpGenSpawner,
 (
@@ -13,7 +13,7 @@ CR_REG_METADATA(CExpGenSpawner,
 		CR_MEMBER(explosionGenerator),
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_RESERVED(8)
-));
+))
 
 CExpGenSpawner::CExpGenSpawner() :
 	CProjectile(),
@@ -27,7 +27,7 @@ CExpGenSpawner::CExpGenSpawner() :
 
 void CExpGenSpawner::Update()
 {
-	if (deleteMe |= ((delay--) <= 0)) {
+	if ((deleteMe |= ((delay--) <= 0))) {
 		explosionGenerator->Explosion(pos, dir, damage, 0.0f, 0.0f, owner(), NULL);
 	}
 }

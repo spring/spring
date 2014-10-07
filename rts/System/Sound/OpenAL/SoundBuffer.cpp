@@ -3,7 +3,7 @@
 #include "SoundBuffer.h"
 
 
-#include "SoundLog.h"
+#include "System/Sound/SoundLog.h"
 #include "ALShared.h"
 #include "VorbisShared.h"
 #include "System/Platform/byteorder.h"
@@ -28,12 +28,12 @@ size_t VorbisRead(void* ptr, size_t size, size_t nmemb, void* datasource)
 	memcpy(ptr, buffer->data + buffer->pos, maxRead);
 	buffer->pos += maxRead;
 	return maxRead;
-};
+}
 
 int	VorbisClose(void* datasource)
 {
 	return 0; // nothing to be done here
-};
+}
 }
 
 SoundBuffer::bufferMapT SoundBuffer::bufferMap; // filename, index into Buffers
@@ -233,12 +233,13 @@ int SoundBuffer::BufferSize() const
 void SoundBuffer::Initialise()
 {
 	buffers.resize(1); // empty ("zero") buffer
-};
+}
 
 void SoundBuffer::Deinitialise()
 {
-	buffers.resize(0);
-};
+	bufferMap.clear();
+	buffers.clear();
+}
 
 size_t SoundBuffer::GetId(const std::string& name)
 {
@@ -247,18 +248,18 @@ size_t SoundBuffer::GetId(const std::string& name)
 		return it->second;
 	else
 		return 0;
-};
+}
 
 boost::shared_ptr<SoundBuffer> SoundBuffer::GetById(const size_t id)
 {
 	assert(id < buffers.size());
 	return buffers.at(id);
-};
+}
 
 size_t SoundBuffer::Count()
 {
 	return buffers.size();
-};
+}
 
 size_t SoundBuffer::AllocedSize()
 {
@@ -266,7 +267,7 @@ size_t SoundBuffer::AllocedSize()
 	for (bufferVecT::const_iterator it = ++buffers.begin(); it != buffers.end(); ++it)
 		numBytes += (*it)->BufferSize();
 	return numBytes;
-};
+}
 
 size_t SoundBuffer::Insert(boost::shared_ptr<SoundBuffer> buffer)
 {
@@ -274,11 +275,13 @@ size_t SoundBuffer::Insert(boost::shared_ptr<SoundBuffer> buffer)
 	buffers.push_back(buffer);
 	bufferMap[buffer->GetFilename()] = bufId;
 	return bufId;
-};
+}
 
 bool SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const boost::uint8_t* data, size_t datalength, int rate)
 {
 	alGenBuffers(1, &id);
+	if (!CheckError("SoundBuffer::AlGenBuffers"))
+		return false;
 	alBufferData(id, format, (ALvoid*) data, datalength, rate);
-	return CheckError("SoundBuffer::AlGenBuffer");
+	return CheckError("SoundBuffer::AlGenBufferData");
 }

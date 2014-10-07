@@ -27,7 +27,7 @@
 
 CUnitHandler* unitHandler = NULL;
 
-CR_BIND(CUnitHandler, );
+CR_BIND(CUnitHandler, )
 CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(units),
 	CR_MEMBER(unitsByDefs),
@@ -38,7 +38,7 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(maxUnits),
 	CR_MEMBER(maxUnitRadius),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 
 

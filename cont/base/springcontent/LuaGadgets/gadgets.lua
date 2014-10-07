@@ -886,10 +886,6 @@ function gadgetHandler:GotChatMsg(msg, player)
     end
   end
 
-  if (IsSyncedCode()) then
-    SendToUnsynced(player, msg)
-  end
-
   return false
 end
 
@@ -1154,6 +1150,16 @@ function gadgetHandler:AllowDirectUnitControl(unitID, unitDefID, unitTeam,
   for _,g in ipairs(self.AllowDirectUnitControlList) do
     if (not g:AllowDirectUnitControl(unitID, unitDefID, unitTeam,
                                      playerID)) then
+      return false
+    end
+  end
+  return true
+end
+
+
+function gadgetHandler:AllowBuilderHoldFire(unitID, unitDefID, action)
+  for _,g in ipairs(self.AllowBuilderHoldFire) do
+    if (not AllowBuilderHoldFire(unitID, unitDefID, action)) then
       return false
     end
   end

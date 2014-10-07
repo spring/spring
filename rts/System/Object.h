@@ -13,7 +13,7 @@
 class CObject
 {
 public:
-	CR_DECLARE(CObject);
+	CR_DECLARE(CObject)
 
 	CObject();
 	virtual ~CObject();

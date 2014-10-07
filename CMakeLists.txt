@@ -27,7 +27,7 @@ CheckMinCMakeVersion(CUSTOM_TARGET_SOURCES_SUPPORT 2 6 3)
 
 
 # check for minimal gcc version
-set(MIN_GCC_VER "4.6")
+set(MIN_GCC_VER "4.7")
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	if(NOT ${CMAKE_CXX_COMPILER_VERSION} STREQUAL "")
 		if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "${MIN_GCC_VER}")
@@ -47,18 +47,14 @@ Else  ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
 	Set(DEBUG_BUILD FALSE)
 EndIf ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
 
-# MSVC needs the default flags
-if(NOT MSVC)
-	### Strip C[XX]_FLAGS
-	option(CUSTOM_CFLAGS "If false all C[XX]_FLAGS are cleared (more reliable to sync/safer for online play)." FALSE)
-	if    (CUSTOM_CFLAGS)
-		Message(WARNING "Using custom CXX_FLAGS! this build will very likely not sync in online mode!")
-	else  (CUSTOM_CFLAGS)
-		set(CMAKE_C_FLAGS "")
-		set(CMAKE_CXX_FLAGS "")
-	endif (CUSTOM_CFLAGS)
-endif(NOT MSVC)
 
+if(NOT "${CMAKE_C_FLAGS}" STREQUAL "")
+	Message(WARNING "Using custom C_FLAGS: ${CMAKE_C_FLAGS} this build will very likely not sync in online mode!")
+endif()
+
+if(NOT "${CMAKE_CXX_FLAGS}" STREQUAL "")
+	Message(WARNING "Using custom CXX_FLAGS: ${CMAKE_CXX_FLAGS} this build will very likely not sync in online mode!")
+endif()
 
 set (CUSTOM_COMPILER_DEFINITIONS "" CACHE STRING "Custom flags can be defined here")
 if    (CUSTOM_COMPILER_DEFINITIONS)
@@ -269,6 +265,10 @@ ENDIF (UNIX AND NOT MINGW)
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.
 FIND_PACKAGE(SDL2)
+if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
+	message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
+endif()
+
 FIND_PACKAGE_STATIC(DevIL)
 IF    (PREFER_STATIC_LIBS)
 	# dependencies of DevIL
@@ -305,13 +305,15 @@ endif (VALGRIND_FOUND)
 INCLUDE(TestCXXFlags)
 
 ## 32bit or 64bit?
+set(MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
 if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
-	message (STATUS "Building Spring for 64bit environment")
-	set(MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
+	Message(STATUS "Building Spring for 64bit environment")
 	set(MARCH_BITS 64 INTERNAL)
+	if     (MINGW)
+		Message(FATAL_ERROR "Spring's MinGWLibs don't include 64bit libraries (yet). Please, compile as 32bit.")
+	endif  (MINGW)
 else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
-	message (STATUS "Building Spring for 32bit environment")
-	set(MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
+	Message(STATUS "Building Spring for 32bit environment")
 	set(MARCH_BITS 32 INTERNAL)
 endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
@@ -387,16 +389,14 @@ if    ($ENV{CXX} MATCHES "icpc")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axK") # SSE1
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
 elseif (CMAKE_COMPILER_IS_GNUCXX)
-	if    (NOT CUSTOM_CFLAGS)
-		if    (MARCH_FLAG)
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
-			Message(STATUS "using march=${MARCH_FLAG}")
-		else  (MARCH_FLAG)
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=generic")
-			Message(STATUS "using mtune=generic (unsure if it will sync in online gaming)")
-		endif (MARCH_FLAG)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
-	endif (NOT CUSTOM_CFLAGS)
+	if    (MARCH_FLAG)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
+		Message(STATUS "using march=${MARCH_FLAG}")
+	else  (MARCH_FLAG)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=generic")
+		Message(STATUS "using mtune=generic (unsure if it will sync in online gaming)")
+	endif (MARCH_FLAG)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
 elseif (MSVC)
 	# nothing to be done here
 else   (MSVC)

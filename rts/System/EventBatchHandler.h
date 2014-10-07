@@ -36,13 +36,18 @@ public: // EventClient
 	//void LoadedModelRequested()
 
 public:
-	static EventBatchHandler* GetInstance();
+	static EventBatchHandler* GetInstance() { assert(ebh); return ebh; }
+	static void CreateInstance();
+	static void DeleteInstance();
+
 	EventBatchHandler();
 	virtual ~EventBatchHandler() {}
 
 private:
+	static EventBatchHandler* ebh;
 	static boost::int64_t eventSequenceNumber;
 
+private:
 	struct ProjectileCreatedDestroyedEvent {
 		static void Add(const CProjectile*);
 		static void Remove(const CProjectile*);

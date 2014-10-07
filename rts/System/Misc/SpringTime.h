@@ -19,7 +19,7 @@
 	#define SPRINGTIME_USING_STDCHRONO
 	#undef gt
 	#include <chrono>
-	namespace chrono { using namespace std::chrono; };
+	namespace chrono { using namespace std::chrono; }
 #else
 	#define SPRINGTIME_USING_BOOST
 	#undef gt
@@ -59,14 +59,14 @@ namespace spring_clock {
 	// number of ticks since clock epoch
 	boost::int64_t GetTicks();
 	const char* GetName();
-};
+}
 
 
 
 // class Timer
 struct spring_time {
 private:
-	CR_DECLARE_STRUCT(spring_time);
+	CR_DECLARE_STRUCT(spring_time)
 
 	typedef boost::int64_t int64;
 

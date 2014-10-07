@@ -15,13 +15,14 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
 
-CR_BIND_DERIVED(CTransportUnit, CUnit, );
+CR_BIND_DERIVED(CTransportUnit, CUnit, )
 
 CR_REG_METADATA(CTransportUnit, (
 	CR_MEMBER(transportedUnits),
@@ -29,9 +30,9 @@ CR_REG_METADATA(CTransportUnit, (
 	CR_MEMBER(transportMassUsed),
 	CR_RESERVED(16),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
-CR_BIND(CTransportUnit::TransportedUnit,);
+CR_BIND(CTransportUnit::TransportedUnit,)
 
 CR_REG_METADATA_SUB(CTransportUnit,TransportedUnit,(
 	CR_MEMBER(unit),
@@ -39,7 +40,7 @@ CR_REG_METADATA_SUB(CTransportUnit,TransportedUnit,(
 	CR_MEMBER(size),
 	CR_MEMBER(mass),
 	CR_RESERVED(8)
-));
+))
 
 
 

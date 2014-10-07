@@ -1,8 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "NullSound.h"
+#include "NullAudioChannel.h"
 
-#include "SoundLog.h"
+#include "System/Sound/SoundLog.h"
 #include "System/float3.h"
 
 
@@ -48,7 +49,7 @@ void NullSound::PrintDebugInfo() {
 	LOG("Null Sound System");
 }
 
-bool NullSound::LoadSoundDefs(const std::string& fileName) {
+bool NullSound::LoadSoundDefsImpl(const std::string& fileName) {
 	return false;
 }
 

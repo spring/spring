@@ -59,7 +59,7 @@
 #include "System/Net/PackPacket.h"
 #include "System/Util.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystem.h"
@@ -69,10 +69,8 @@
 #include <boost/cstdint.hpp>
 #include "System/Platform/Misc.h"
 
-#if !defined(HEADLESS) && !defined(NO_SOUND)
-	#include "System/Sound/EFX.h"
-	#include "System/Sound/EFXPresets.h"
-#endif
+#include "System/Sound/OpenAL/EFX.h"
+#include "System/Sound/OpenAL/EFXPresets.h"
 
 #include <map>
 #include <set>
@@ -521,7 +519,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 		}
 
 		//! last argument (with and without pos/speed arguments) is the optional `sfx channel`
-		AudioChannelImpl* channel = &Channels::General;
+		IAudioChannel** channel = &Channels::General;
 		if (args >= index) {
 			if (lua_isstring(L, index)) {
 				string channelStr = lua_tostring(L, index);
@@ -553,12 +551,12 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 
 		if (pos_given) {
 			if (speed_given) {
-				channel->PlaySample(soundID, pos, speed, volume);
+				channel[0]->PlaySample(soundID, pos, speed, volume);
 			} else {
-				channel->PlaySample(soundID, pos, volume);
+				channel[0]->PlaySample(soundID, pos, volume);
 			}
 		} else
-			channel->PlaySample(soundID, volume);
+			channel[0]->PlaySample(soundID, volume);
 
 		success = true;
 	}
@@ -578,7 +576,7 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 	const float volume = luaL_optnumber(L, 2, 1.0f);
 	bool enqueue = luaL_optboolean(L, 3, false);
 
-	Channels::BGMusic.StreamPlay(soundFile, volume, enqueue);
+	Channels::BGMusic->StreamPlay(soundFile, volume, enqueue);
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
@@ -592,17 +590,17 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 
 int LuaUnsyncedCtrl::StopSoundStream(lua_State*)
 {
-	Channels::BGMusic.StreamStop();
+	Channels::BGMusic->StreamStop();
 	return 0;
 }
 int LuaUnsyncedCtrl::PauseSoundStream(lua_State*)
 {
-	Channels::BGMusic.StreamPause();
+	Channels::BGMusic->StreamPause();
 	return 0;
 }
 int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)
 {
-	Channels::BGMusic.SetVolume(luaL_checkfloat(L, 1));
+	Channels::BGMusic->SetVolume(luaL_checkfloat(L, 1));
 	return 0;
 }
 
@@ -2754,9 +2752,9 @@ int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 
 	luaL_checkstack(L, 2, __FUNCTION__);
 	lua_pushboolean(L, eoh->SendLuaMessages(aiTeam, inData, outData));
-	lua_createtable(L, outData.size(), 0);
 
 	// push the AI response(s)
+	lua_createtable(L, outData.size(), 0);
 	for (unsigned int n = 0; n < outData.size(); n++) {
 		lua_pushstring(L, outData[n]);
 		lua_rawseti(L, -2, n + 1);

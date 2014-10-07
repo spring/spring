@@ -13,8 +13,8 @@
 #include "System/myMath.h"
 #include "System/Util.h"
 
-CR_BIND(MoveDef, ());
-CR_BIND(MoveDefHandler, (NULL));
+CR_BIND(MoveDef, ())
+CR_BIND(MoveDefHandler, (NULL))
 
 CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(name),
@@ -47,13 +47,13 @@ CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(heatMod),
 	CR_MEMBER(flowMod),
 	CR_MEMBER(heatProduced)
-));
+))
 
 CR_REG_METADATA(MoveDefHandler, (
 	CR_MEMBER(moveDefs),
 	CR_MEMBER(moveDefNames),
 	CR_MEMBER(checksum)
-));
+))
 
 
 MoveDefHandler* moveDefHandler;
@@ -76,10 +76,10 @@ static float DegreesToMaxSlope(float degrees)
 
 static MoveDef::SpeedModClass ParseSpeedModClass(const std::string& moveDefName, const LuaTable& moveDefTable)
 {
-	const MoveDef::SpeedModClass speedModClass = MoveDef::SpeedModClass(moveDefTable.GetInt("speedModClass", -1));
+	const int speedModClass = moveDefTable.GetInt("speedModClass", -1);
 
 	if (speedModClass != -1)
-		return Clamp(speedModClass, MoveDef::Tank, MoveDef::Ship);
+		return Clamp(MoveDef::SpeedModClass(speedModClass), MoveDef::Tank, MoveDef::Ship);
 
 	// name-based fallbacks
 	if (moveDefName.find( "boat") != string::npos)

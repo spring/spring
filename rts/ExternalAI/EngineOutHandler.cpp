@@ -34,7 +34,7 @@ CR_REG_METADATA(CEngineOutHandler, (
 	CR_MEMBER(id_skirmishAI),
 	CR_MEMBER(team_skirmishAIs),
 	CR_RESERVED(128)
-));
+))
 
 
 static inline bool IsUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int allyTeamId) {
@@ -417,7 +417,7 @@ void CEngineOutHandler::UnitDamaged(
 		}
 		const bool attackerInLosOrRadar = attacker && IsUnitInLosOrRadarOfAllyTeam(*attacker, damaged.allyteam);
 		for (ids_t::iterator ai = team_skirmishAIs[dt].begin(); ai != team_skirmishAIs[dt].end(); ++ai) {
-			CSkirmishAIWrapper* saw = id_skirmishAI[*ai];
+			const CSkirmishAIWrapper* saw = id_skirmishAI[*ai];
 			int visibleAttackerUnitId = -1;
 			if (attackerInLosOrRadar || saw->IsCheatEventsEnabled()) {
 				visibleAttackerUnitId = attackerUnitId;
@@ -526,9 +526,7 @@ bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vec
 
 		// send only to AI's in team <aiTeam>
 		for (aiIDsIter = aiIDs.begin(); aiIDsIter != aiIDs.end(); ++aiIDsIter) {
-			const size_t aiID = aiIDs[*aiIDsIter];
-
-			CSkirmishAIWrapper* wrapperAI = id_skirmishAI[aiID];
+			CSkirmishAIWrapper* wrapperAI = id_skirmishAI[*aiIDsIter];
 			wrapperAI->SendLuaMessage(inData, &outData[n++]);
 		}
 	} else {

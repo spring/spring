@@ -52,7 +52,7 @@ namespace creg {
 			return boost::shared_ptr<IType>(new ListType< std::list<T> >(elemtype.Get()));
 		}
 	};
-};
+}
 
 #endif // USING_CREG
 

@@ -13,10 +13,11 @@
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(radius),
@@ -27,7 +28,7 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(isEnabled),
 	CR_MEMBER(shieldProjectile),
 	CR_MEMBER(repulsedProjectiles)
-));
+))
 
 
 CPlasmaRepulser::CPlasmaRepulser(CUnit* owner, const WeaponDef* def): CWeapon(owner, def),
@@ -114,7 +115,10 @@ void CPlasmaRepulser::Update()
 			continue;
 		}
 
-		if (curPower < proWD->damages[0]) {
+		const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(proWD, pro->GetStartPos(), pro->pos);
+		const float shieldDamage = damageArray[weaponDef->shieldArmorType];
+
+		if (curPower < shieldDamage) {
 			// shield does not have enough power, don't touch the projectile
 			continue;
 		}
@@ -138,15 +142,19 @@ void CPlasmaRepulser::Update()
 				owner->UseEnergy(weaponDef->shieldEnergyUse);
 
 				if (weaponDef->shieldPower != 0) {
-					//FIXME some weapons do range dependent damage! (mantis #2345)
-					curPower -= proWD->damages[0];
+					curPower -= shieldDamage;
 				}
 			} else {
 				//FIXME why do all weapons except LASERs do only (1 / GAME_SPEED) damage???
+				// because they go inside and take time to get pushed back
+				// during that time they deal damage every frame
+				// so in total they do their nominal damage each second
+				// on the other hand lasers get insta-bounced in 1 frame
+				// regardless of shield pushing power
 				owner->UseEnergy(weaponDef->shieldEnergyUse / GAME_SPEED);
 
 				if (weaponDef->shieldPower != 0) {
-					curPower -= proWD->damages[0] / GAME_SPEED;
+					curPower -= shieldDamage / GAME_SPEED;
 				}
 			}
 
@@ -169,8 +177,7 @@ void CPlasmaRepulser::Update()
 			// kill the projectile
 			if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
 				if (weaponDef->shieldPower != 0) {
-					//FIXME some weapons do range dependent damage! (mantis #2345)
-					curPower -= proWD->damages[0];
+					curPower -= shieldDamage;
 				}
 
 				pro->Collision(owner);
@@ -250,7 +257,9 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 		return -1.0f;
 	}
 
-	if (emitter->weaponDef->damages[0] > curPower) {
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponPos);
+
+	if (damageArray[weaponDef->shieldArmorType] > curPower) {
 		return -1.0f;
 	}
 	if (weaponDef->smartShield && teamHandler->AlliedTeams(emitter->owner->team, owner->team)) {
@@ -290,11 +299,12 @@ void CPlasmaRepulser::DependentDied(CObject* o)
 }
 
 
-bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter, float damageMultiplier)
+bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter, float3 start, float damageMultiplier)
 {
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponPos);
+
 	if (weaponDef->shieldPower > 0) {
-		//FIXME some weapons do range dependent damage! (mantis #2345)
-		curPower -= emitter->weaponDef->damages[0] * damageMultiplier;
+		curPower -= damageArray[weaponDef->shieldArmorType] * damageMultiplier;
 	}
 	return weaponDef->shieldRepulser;
 }

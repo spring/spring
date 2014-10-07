@@ -27,7 +27,7 @@
 # * GetVersionPlusDepFile
 # * GetNativeSourcesRecursive
 # * CheckMinCMakeVersion
-#
+# * MakeGlobalVar
 
 
 If   (CMAKE_HOST_WIN32)
@@ -59,6 +59,7 @@ Else   ()
 	if (CMAKE_SIZEOF_VOID_P EQUAL 8) # add fpic flag on 64 bit platforms
 		Set(PIC_FLAG "-fpic")
 	else () #no fpic needed on 32bit
+		set(CMAKE_POSITION_INDEPENDENT_CODE FALSE)
 		Set(PIC_FLAG "")
 	endif()
 EndIf  ()
@@ -293,4 +294,13 @@ find_library(FREETYPE_LIBRARY
 UNPREFER_STATIC_LIBS()
 	endif()
 EndMacro()
+
+
+# make a var global (not cached in CMakeCache.txt!)
+# both calls are required, else the variable is empty
+# http://www.cmake.org/Bug/view.php?id=15093
+macro(MakeGlobalVar varname)
+        set(${varname} ${ARGN} PARENT_SCOPE)
+        set(${varname} ${ARGN})
+endmacro()
 

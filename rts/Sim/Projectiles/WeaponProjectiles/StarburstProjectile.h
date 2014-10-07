@@ -11,8 +11,8 @@ class CSmokeTrailProjectile;
 
 class CStarburstProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CStarburstProjectile);
-	CR_DECLARE_SUB(TracerPart);
+	CR_DECLARE(CStarburstProjectile)
+	CR_DECLARE_SUB(TracerPart)
 
 public:
 	CStarburstProjectile(const ProjectileParams& params);
@@ -52,20 +52,19 @@ private:
 
 	int numParts;
 	int missileAge;
-	size_t curTracerPart;
-
-	static const int NUM_TRACER_PARTS = 5;
+	unsigned int curTracerPart;
 
 	struct TracerPart {
-		CR_DECLARE_STRUCT(TracerPart);
+		CR_DECLARE_STRUCT(TracerPart)
 
 		float3 pos;
 		float3 dir;
 		float speedf;
 		std::vector<float> ageMods;
-		size_t numAgeMods;
+		unsigned int numAgeMods;
 	};
 
+	static const unsigned int NUM_TRACER_PARTS = 5;
 	TracerPart tracerParts[NUM_TRACER_PARTS];
 };
 

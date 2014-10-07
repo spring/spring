@@ -9,7 +9,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include <cstring> //memset
 
-CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (ProjectileParams()))
 
 CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -23,7 +23,7 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_MEMBER(decay),
 	CR_MEMBER(midtexx),
 	CR_RESERVED(16)
-));
+))
 
 
 CBeamLaserProjectile::CBeamLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)

@@ -3,7 +3,7 @@
 #ifndef _SOUND_H_
 #define _SOUND_H_
 
-#include "ISound.h"
+#include "System/Sound/ISound.h"
 
 #include <set>
 #include <string>
@@ -24,7 +24,7 @@ typedef struct ALCdevice_struct ALCdevice;
 
 namespace boost {
 	class thread;
-};
+}
 
 
 /// Default sound system implementation (OpenAL)
@@ -53,8 +53,7 @@ public:
 	virtual void Iconified(bool state);
 
 	virtual void PrintDebugInfo();
-	virtual bool LoadSoundDefs(const std::string& fileName);
-
+	virtual bool LoadSoundDefsImpl(const std::string& fileName);
 	const float3& GetListenerPos() const {
 		return myPos;
 	}

@@ -462,8 +462,12 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 
 	DrawProjectileModel(pro, false);
 
-	pro->tempdist = pro->pos.dot(camera->forward);
-	zSortedProjectiles.insert(pro);
+	if (pro->drawSorted) {
+		pro->SetSortDist(pro->pos.dot(camera->forward));
+		zSortedProjectiles.insert(pro);
+	} else {
+		unsortedProjectiles.push_back(pro);
+	}
 }
 
 
@@ -623,6 +627,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	}
 
 	zSortedProjectiles.clear();
+	// unsortedProjectiles.clear();
 
 	int numFlyingPieces = projectileHandler->flyingPieces3DO.render_size() + projectileHandler->flyingPiecesS3O.render_size();
 	int drawnPieces = 0;
@@ -640,7 +645,8 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 
 		unitDrawer->CleanUpUnitDrawing(false);
 
-		// z-sort the model-less projectiles
+		// note: model-less projectiles are NOT drawn by this call but
+		// only z-sorted (if the projectiles indicate they want to be)
 		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
 
 		projectileHandler->currentParticles = 0;
@@ -649,7 +655,10 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		CProjectile::va->Initialize();
 
 		// draw the particle effects
-		for (std::set<CProjectile*, ProjectileDistanceComparator>::iterator it = zSortedProjectiles.begin(); it != zSortedProjectiles.end(); ++it) {
+		for (auto it = zSortedProjectiles.begin(); it != zSortedProjectiles.end(); ++it) {
+			(*it)->Draw();
+		}
+		for (auto it = unsortedProjectiles.begin(); it != unsortedProjectiles.end(); it = unsortedProjectiles.erase(it)) {
 			(*it)->Draw();
 		}
 	}
@@ -658,7 +667,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	glDisable(GL_FOG);
 
 	if (CProjectile::inArray) {
-		// Alpha transculent particles
+		// alpha-translucent particles
 		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_TEXTURE_2D);
 		textureAtlas->BindTexture();
@@ -903,7 +912,7 @@ void CProjectileDrawer::UpdatePerlin() {
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
-		va->CheckInitSize(4 * VA_SIZE_TC, 0);
+		va->CheckInitSize(4 * VA_SIZE_TC);
 
 		for (int b = 0; b < 4; ++b)
 			col[b] = int((1.0f - perlinBlend[a]) * 16 * size);
@@ -920,7 +929,7 @@ void CProjectileDrawer::UpdatePerlin() {
 
 		va = GetVertexArray();
 		va->Initialize();
-		va->CheckInitSize(4 * VA_SIZE_TC, 0);
+		va->CheckInitSize(4 * VA_SIZE_TC);
 
 		for (int b = 0; b < 4; ++b)
 			col[b] = int(perlinBlend[a] * 16 * size);

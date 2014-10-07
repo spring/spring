@@ -54,6 +54,8 @@ public:
 		//   {ONGROUND,*WATER} and INAIR are mutually exclusive
 		//   {UNDERGROUND,UNDERWATER} are not (and are the only
 		//   bits to take radius into account)
+		// TODO:
+		//   should isDead be on this list for spatial queries?
 		PSTATE_BIT_ONGROUND    = (1 << 0),
 		PSTATE_BIT_INWATER     = (1 << 1),
 		PSTATE_BIT_UNDERWATER  = (1 << 2),
@@ -126,12 +128,18 @@ public:
 	}
 
 
-	void SetHeadingFromDirection();
 	void SetDirVectors(const CMatrix44f& matrix) {
 		rightdir.x = -matrix[0]; updir.x = matrix[4]; frontdir.x = matrix[ 8];
 		rightdir.y = -matrix[1]; updir.y = matrix[5]; frontdir.y = matrix[ 9];
 		rightdir.z = -matrix[2]; updir.z = matrix[6]; frontdir.z = matrix[10];
 	}
+	// update object's <heading> from current frontdir
+	// should always be called after a SetDirVectors()
+	void SetHeadingFromDirection();
+	// update object's local coor-sys from current <heading>
+	// (unlike ForcedSpin which updates from given <updir>)
+	// NOTE: movetypes call this directly
+	void UpdateDirVectors(bool useGroundNormal);
 
 	virtual CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const {
 		// should never get called (should be pure virtual, but cause of CREG we cannot use it)

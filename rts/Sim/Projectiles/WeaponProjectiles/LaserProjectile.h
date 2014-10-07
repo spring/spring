@@ -8,7 +8,7 @@
 
 class CLaserProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CLaserProjectile);
+	CR_DECLARE(CLaserProjectile)
 public:
 	CLaserProjectile(const ProjectileParams& params);
 

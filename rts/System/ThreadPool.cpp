@@ -56,7 +56,7 @@ static void SetThreadNum(const int idx)
 
 int GetMaxThreads()
 {
-	return Threading::GetAvailableCores();
+	return Threading::GetPhysicalCpuCores();
 }
 
 int GetNumThreads()
@@ -136,12 +136,11 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 static bool DoTask(std::shared_ptr<ITaskGroup> tg)
 {
 	auto p = tg->GetTask();
-	const bool f = p;
-	if (f) {
+	if (p) {
 		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
 		(*p)();
 	}
-	return f;
+	return static_cast<bool>(p);
 }
 
 
@@ -207,8 +206,8 @@ void NotifyWorkerThreads()
 void SetThreadCount(int num)
 {
 	int curThreads = ThreadPool::GetNumThreads();
-
-	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d", __FUNCTION__, num, curThreads);
+	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d #max=%d", __FUNCTION__, num, curThreads, ThreadPool::GetMaxThreads());
+	num = std::min(num, ThreadPool::GetMaxThreads());
 
 	if (curThreads < num) {
 #ifndef UNITSYNC
@@ -265,7 +264,7 @@ void SetThreadSpinTime(int milliSeconds)
 	spinlockMs = milliSeconds;
 }
 
-};
+}
 
 #endif
 

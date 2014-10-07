@@ -9,7 +9,7 @@ namespace DebugColVolDrawer
 	extern bool enable;
 
 	void Draw();
-};
+}
 
 
 #endif /* DEBUGCOLVOLDRAWER_H_ */

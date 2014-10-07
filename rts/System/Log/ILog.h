@@ -140,7 +140,7 @@ extern void log_frontend_cleanup();
 		_LOG_REGISTER_SECTION_SUB(section, _UNIQUE_IDENT(SectionRegistrator))
 	#define _LOG_REGISTER_SECTION_GLOBAL(section) \
 		namespace { \
-			_LOG_REGISTER_SECTION(section); \
+			_LOG_REGISTER_SECTION(section) \
 		} // namespace
 #else  // defined(__cplusplus)
 	/*
@@ -240,7 +240,7 @@ extern void log_frontend_cleanup();
  * NOTE: This is supported in C++ only, not in C.
  */
 #define LOG_REGISTER_SECTION_GLOBAL(section) \
-	_LOG_REGISTER_SECTION_GLOBAL(section);
+	_LOG_REGISTER_SECTION_GLOBAL(section)
 
 /**
  * Returns whether logging for the current section and the supplied level is

@@ -13,7 +13,7 @@ class CCommandQueue {
 	friend class CFactoryCAI;
 
 	// see CommandAI.cpp for further creg stuff for this class
-	CR_DECLARE_STRUCT(CCommandQueue);
+	CR_DECLARE_STRUCT(CCommandQueue)
 
 	public:
 		enum QueueType {

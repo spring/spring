@@ -18,7 +18,7 @@
 #include "System/Matrix44f.h"
 #include "System/Sync/HsiehHash.h"
 
-CR_BIND_DERIVED(CHoverAirMoveType, AAirMoveType, (NULL));
+CR_BIND_DERIVED(CHoverAirMoveType, AAirMoveType, (NULL))
 
 CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(bankingAllowed),
@@ -50,7 +50,7 @@ CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(lastMoveRate),
 
 	CR_RESERVED(32)
-));
+))
 
 
 

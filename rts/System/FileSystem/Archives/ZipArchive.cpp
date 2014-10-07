@@ -27,7 +27,7 @@ CZipArchive::CZipArchive(const std::string& archiveName)
 {
 	zip = unzOpen(archiveName.c_str());
 	if (!zip) {
-		LOG_L(L_ERROR, "Error opening %s", archiveName.c_str());
+		LOG_L(L_ERROR, "Error opening \"%s\"", archiveName.c_str());
 		return;
 	}
 

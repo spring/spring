@@ -2,8 +2,8 @@
 
 #include "TeamController.h" // for swabDWord
 
-CR_BIND(TeamController, );
+CR_BIND(TeamController, )
 CR_REG_METADATA(TeamController, (
 	CR_MEMBER(team),
 	CR_MEMBER(name)
-));
+))

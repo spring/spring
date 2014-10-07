@@ -60,6 +60,7 @@ bool CEventClient::AllowFeatureBuildStep(const CUnit* builder, const CFeature* f
 bool CEventClient::AllowResourceLevel(int teamID, const string& type, float level) { return true; }
 bool CEventClient::AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount) { return true; }
 bool CEventClient::AllowDirectUnitControl(int playerID, const CUnit* unit) { return true; }
+bool CEventClient::AllowBuilderHoldFire(const CUnit* unit, int action) { return true; }
 bool CEventClient::AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos) { return true; }
 
 bool CEventClient::TerraformComplete(const CUnit* unit, const CUnit* build) { return false; }
@@ -120,6 +121,7 @@ void CEventClient::DrawWorldRefraction() {}
 void CEventClient::DrawScreenEffects() {}
 void CEventClient::DrawScreen() {}
 void CEventClient::DrawInMiniMap() {}
+void CEventClient::DrawInMiniMapBackground() {}
 
 bool CEventClient::DrawUnit(const CUnit* unit) { return false; }
 bool CEventClient::DrawFeature(const CFeature* feature) { return false; }

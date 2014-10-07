@@ -143,7 +143,6 @@ public:
 	void CalculateTerrainType();
 	void UpdateTerrainType();
 	void UpdatePhysicalState(float eps);
-	void UpdateDirVectors(bool useGroundNormal);
 
 	float3 GetErrorVector(int allyteam) const;
 	float3 GetErrorPos(int allyteam, bool aiming = false) const { return (aiming? aimPos: midPos) + GetErrorVector(allyteam); }
@@ -182,8 +181,10 @@ public:
 public:
 	virtual void KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence = true);
 	virtual void IncomingMissile(CMissileProjectile* missile);
-	void TempHoldFire();
-	void ReleaseTempHoldFire();
+
+	void TempHoldFire(int cmdID);
+	void ReleaseTempHoldFire() { dontFire = false; }
+
 	/// start this unit in free fall from parent unit
 	void Drop(const float3& parentPos, const float3& parentDir, CUnit* parent);
 	void PostLoad();
@@ -196,15 +197,22 @@ protected:
 
 public:
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
-	static float GetExpMultiplier()     { return expMultiplier; }
 	static void  SetExpPowerScale(float value) { expPowerScale = value; }
-	static float GetExpPowerScale()     { return expPowerScale; }
 	static void  SetExpHealthScale(float value) { expHealthScale = value; }
-	static float GetExpHealthScale()     { return expHealthScale; }
 	static void  SetExpReloadScale(float value) { expReloadScale = value; }
-	static float GetExpReloadScale()     { return expReloadScale; }
 	static void  SetExpGrade(float value) { expGrade = value; }
-	static float GetExpGrade()     { return expGrade; }
+
+	static float GetExpMultiplier() { return expMultiplier; }
+	static float GetExpPowerScale() { return expPowerScale; }
+	static float GetExpHealthScale() { return expHealthScale; }
+	static float GetExpReloadScale() { return expReloadScale; }
+	static float GetExpGrade() { return expGrade; }
+
+	static float ExperienceScale(const float limExperience, const float experienceWeight) {
+		// limExperience ranges from 0.0 to 0.9999..., experienceWeight
+		// should be in [0, 1] and have no effect on accuracy when zero
+		return (1.0f - (limExperience * experienceWeight));
+	}
 
 	static void SetSpawnFeature(bool b) { spawnFeature = b; }
 
@@ -340,9 +348,9 @@ public:
 	/// tells weapons that support it to try to use a high trajectory
 	bool useHighTrajectory;
 
-	/// used by landed gunships to block weapon updates
+	/// used by landed gunships to block weapon Update()'s
 	bool dontUseWeapons;
-	/// temp variable that can be set when building etc to stop units to turn away to fire
+	/// used by builders to prevent weapon SlowUpdate()'s and Attack{Unit,Ground}()'s
 	bool dontFire;
 
 	/// the script has finished exectuting the killed function and the unit can be deleted

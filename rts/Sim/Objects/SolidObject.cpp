@@ -17,7 +17,7 @@ const float CSolidObject::DEFAULT_MASS = 1e5f;
 const float CSolidObject::MINIMUM_MASS = 1e0f; // 1.0f
 const float CSolidObject::MAXIMUM_MASS = 1e6f;
 
-CR_BIND_DERIVED(CSolidObject, CWorldObject, );
+CR_BIND_DERIVED(CSolidObject, CWorldObject, )
 CR_REG_METADATA(CSolidObject,
 (
 	CR_MEMBER(health),
@@ -68,7 +68,7 @@ CR_REG_METADATA(CSolidObject,
 	// CR_MEMBER(blockMap), //FIXME add bitwiseenum to creg
 
 	CR_MEMBER(buildFacing)
-));
+))
 
 
 CSolidObject::CSolidObject():
@@ -233,8 +233,12 @@ void CSolidObject::Block() {
 		return;
 
 	UnBlock();
-	groundBlockingObjectMap->AddGroundBlockingObject(this);
-	assert(IsBlocking());
+
+	// only block when `touching` the ground
+	if ((pos.y - radius) <= CGround::GetHeightAboveWater(pos.x, pos.z)) {
+		groundBlockingObjectMap->AddGroundBlockingObject(this);
+		assert(IsBlocking());
+	}
 }
 
 
@@ -271,7 +275,7 @@ YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 		gpos -= float3(mapPos.x * SQUARE_SIZE, 0.0f, mapPos.y * SQUARE_SIZE);
 
 		// need to revert some of the transformations of CSolidObject::GetMapPos()
-		gpos.x += SQUARE_SIZE / 2 - (this->xsize >> 1) * SQUARE_SIZE; 
+		gpos.x += SQUARE_SIZE / 2 - (this->xsize >> 1) * SQUARE_SIZE;
 		gpos.z += SQUARE_SIZE / 2 - (this->zsize >> 1) * SQUARE_SIZE;
 	#endif
 
@@ -392,6 +396,16 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 void CSolidObject::SetHeadingFromDirection() {
 	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
 }
+
+void CSolidObject::UpdateDirVectors(bool useGroundNormal)
+{
+	updir    = GetWantedUpDir(useGroundNormal);
+	frontdir = GetVectorFromHeading(heading);
+	rightdir = (frontdir.cross(updir)).Normalize();
+	frontdir = updir.cross(rightdir);
+}
+
+
 
 void CSolidObject::ForcedSpin(const float3& newDir) {
 	// new front-direction should be normalized

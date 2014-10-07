@@ -10,7 +10,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/Matrix44f.h"
 
-CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
+CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, )
 
 CR_REG_METADATA(CProjectile,
 (
@@ -23,7 +23,9 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(checkCol),
 	CR_MEMBER(ignoreWater),
 	CR_MEMBER(deleteMe),
+
 	CR_MEMBER(castShadow),
+	CR_MEMBER(drawSorted),
 
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(dir),
@@ -31,7 +33,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(drawPos),
 
 	CR_MEMBER(mygravity),
-	CR_IGNORED(tempdist),
+	CR_IGNORED(sortDist),
 
 	CR_MEMBER(ownerID),
 	CR_MEMBER(teamID),
@@ -41,7 +43,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(collisionFlags),
 
 	CR_MEMBER(qfCellData)
-));
+))
 
 CR_BIND(CProjectile::QuadFieldCellData, )
 
@@ -64,7 +66,9 @@ CProjectile::CProjectile()
 	, checkCol(true)
 	, ignoreWater(false)
 	, deleteMe(false)
+
 	, castShadow(false)
+	, drawSorted(true)
 
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
 
@@ -80,7 +84,7 @@ CProjectile::CProjectile()
 CProjectile::CProjectile(
 	const float3& pos,
 	const float3& spd,
-	CUnit* owner,
+	const CUnit* owner,
 	bool isSynced,
 	bool isWeapon,
 	bool isPiece,
@@ -96,7 +100,9 @@ CProjectile::CProjectile(
 	, checkCol(true)
 	, ignoreWater(false)
 	, deleteMe(false)
+
 	, castShadow(false)
+	, drawSorted(true)
 
 	, dir(ZeroVector) // set via Init()
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
@@ -125,7 +131,7 @@ CProjectile::~CProjectile() {
 	assert(!synced || detached);
 }
 
-void CProjectile::Init(CUnit* owner, const float3& offset)
+void CProjectile::Init(const CUnit* owner, const float3& offset)
 {
 	if (owner != NULL) {
 		// must be set before the AddProjectile call

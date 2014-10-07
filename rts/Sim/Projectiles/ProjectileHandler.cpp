@@ -43,14 +43,14 @@ CR_BIND_TEMPLATE(ProjectileContainer, )
 CR_REG_METADATA(ProjectileContainer, (
 	CR_MEMBER(cont),
 	CR_POSTLOAD(PostLoad)
-));
+))
 CR_BIND_TEMPLATE(GroundFlashContainer, )
 CR_REG_METADATA(GroundFlashContainer, (
 	CR_MEMBER(cont),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
-CR_BIND(CProjectileHandler, );
+CR_BIND(CProjectileHandler, )
 CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(syncedProjectiles),
 	CR_MEMBER(unsyncedProjectiles),
@@ -77,7 +77,7 @@ CR_REG_METADATA(CProjectileHandler, (
 
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 
 

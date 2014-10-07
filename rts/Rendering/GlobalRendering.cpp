@@ -32,7 +32,7 @@ const float CGlobalRendering::MAX_VIEW_RANGE     = 8000.0f;
 const float CGlobalRendering::NEAR_PLANE         =    2.8f;
 const float CGlobalRendering::SMF_INTENSITY_MULT = 210.0f / 255.0f;
 
-CR_BIND(CGlobalRendering, );
+CR_BIND(CGlobalRendering, )
 
 CR_REG_METADATA(CGlobalRendering, (
 	CR_MEMBER(teamNanospray),
@@ -94,7 +94,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(dualScreenMiniMapOnLeft),
 	CR_IGNORED(fullScreen),
 	CR_IGNORED(window)
-));
+))
 
 CGlobalRendering::CGlobalRendering()
 	: timeOffset(0.0f)

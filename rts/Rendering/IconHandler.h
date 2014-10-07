@@ -93,6 +93,6 @@ namespace icon {
 	};
 
 	extern CIconHandler* iconHandler;
-};
+}
 
 #endif // ICON_HANDLER_H

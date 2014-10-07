@@ -7,7 +7,7 @@
 
 class CExploSpikeProjectile : public CProjectile
 {
-	CR_DECLARE(CExploSpikeProjectile);
+	CR_DECLARE(CExploSpikeProjectile)
 
 	/// used only by creg
 	CExploSpikeProjectile();
@@ -26,7 +26,7 @@ public:
 	void Draw();
 	void Update();
 
-	void Init(CUnit* owner, const float3& offset);
+	void Init(const CUnit* owner, const float3& offset);
 
 private:
 	float length;

@@ -62,14 +62,18 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	CFileHandler* ifs = file.GetFileHandler();
 	const SMFHeader& header = file.GetHeader();
 
-	assert(gs->mapx == header.mapx);
-	assert(gs->mapy == header.mapy);
+	if ((gs->mapx != header.mapx) || (gs->mapy != header.mapy)) {
+		throw content_error("Error loading map: size from header doesn't match map size.");
+	}
 
 	ifs->Seek(header.tilesPtr);
 
 	MapTileHeader tileHeader;
 	READPTR_MAPTILEHEADER(tileHeader, ifs);
 
+	if (smfMap->tileCount <= 0) {
+		throw content_error("Error loading map: count of tiles is 0.");
+	}
 	tileMap.resize(smfMap->tileCount);
 	tiles.resize(tileHeader.numTiles * SMALL_TILE_SIZE);
 	squares.resize(smfMap->numBigTexX * smfMap->numBigTexY);
@@ -414,7 +418,7 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 	const int numSqBytes = (mipSqSize * mipSqSize) / 2;
 
 	pbo.Bind();
-	pbo.Resize(numSqBytes);
+	pbo.New(numSqBytes);
 	ExtractSquareTiles(texSquareX, texSquareY, texMipLevel, (GLint*) pbo.MapBuffer());
 	pbo.UnmapBuffer();
 
@@ -422,6 +426,7 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 	glCompressedTexImage2D(ttarget, 0, tileTexFormat, texSizeX, texSizeY, 0, numSqBytes, pbo.GetPtr());
 	glBindTexture(ttarget, 0);
 
+	pbo.Invalidate();
 	pbo.Unbind();
 	return true;
 }
@@ -434,7 +439,7 @@ void CSMFGroundTextures::ExtractSquareTiles(
 	const int mipLevel,
 	GLint* tileBuf
 ) const {
-	static const int TILE_MIP_OFFSET[] = {0, 512, 640, 672};
+	static const int TILE_MIP_OFFSET[] = {0, 512, 512+128, 512+128+32};
 	static const int BLOCK_SIZE = 32;
 
 	const int mipOffset = TILE_MIP_OFFSET[mipLevel];
@@ -476,7 +481,7 @@ void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 	square->texLevel = level;
 
 	pbo.Bind();
-	pbo.Resize(numSqBytes);
+	pbo.New(numSqBytes);
 	ExtractSquareTiles(x, y, level, (GLint*) pbo.MapBuffer());
 	pbo.UnmapBuffer();
 
@@ -500,6 +505,8 @@ void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 	}
 
 	glCompressedTexImage2D(ttarget, 0, tileTexFormat, mipSqSize, mipSqSize, 0, numSqBytes, pbo.GetPtr());
+
+	pbo.Invalidate();
 	pbo.Unbind();
 }
 

@@ -17,6 +17,7 @@
 
 class CGameController;
 
+
 namespace Threading {
 	/**
 	 * Generic types & functions to handle OS native threads
@@ -42,11 +43,17 @@ namespace Threading {
 	 * want to run. Note that this approach will fail when N > 32.
 	 */
 	void DetectCores();
+	boost::uint32_t GetAffinity();
 	boost::uint32_t SetAffinity(boost::uint32_t cores_bitmask, bool hard = true);
 	void SetAffinityHelper(const char* threadName, boost::uint32_t affinity);
-	int GetAvailableCores();
 	boost::uint32_t GetAvailableCoresMask();
 
+	/**
+	 * returns count of cpu cores/ hyperthreadings cores
+	 */
+	int GetPhysicalCpuCores(); /// physical cores only (excluding hyperthreading)
+	int GetLogicalCpuCores();  /// physical + hyperthreading
+	bool HasHyperThreading();
 
 	/**
 	 * threadpool related stuff
@@ -107,7 +114,8 @@ namespace Threading {
 	 * A 64bit atomic counter
 	 */
 	struct AtomicCounterInt64;
-};
+}
+
 
 //
 // Inlined Definitions

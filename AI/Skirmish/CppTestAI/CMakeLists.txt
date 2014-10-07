@@ -2,9 +2,9 @@
 #
 
 set(mySourceDirRel         "src") # Common values are "" or "src"
-set(additionalSources      ${CUtils_SRC})
+set(additionalSources      "")
 set(additionalCompileFlags "")
-set(additionalLibraries    ${Cpp_AIWRAPPER_TARGET})
+set(additionalLibraries    ${Cpp_AIWRAPPER_TARGET} CUtils)
 
 
 if    (BUILD_Cpp_AIWRAPPER)

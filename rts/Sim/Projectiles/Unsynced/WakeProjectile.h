@@ -7,7 +7,7 @@
 
 class CWakeProjectile : public CProjectile
 {
-	CR_DECLARE(CWakeProjectile);
+	CR_DECLARE(CWakeProjectile)
 public:
 	CWakeProjectile(
 		CUnit* owner,
@@ -19,7 +19,6 @@ public:
 		float alphaFalloff,
 		float fadeupTime
 	);
-	~CWakeProjectile() {}
 
 	void Update();
 	void Draw();

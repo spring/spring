@@ -11,11 +11,11 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CWreckProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f));
+CR_BIND_DERIVED(CWreckProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f))
 
 CR_REG_METADATA(CWreckProjectile,
 	CR_RESERVED(8)
-);
+)
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

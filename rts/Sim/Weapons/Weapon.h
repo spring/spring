@@ -7,10 +7,11 @@
 
 #include "System/Object.h"
 #include "Sim/Misc/DamageArray.h"
-#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
+#include "Sim/Projectiles/ProjectileParams.h"
 #include "System/float3.h"
 
 class CUnit;
+class CWeaponProjectile;
 struct WeaponDef;
 
 enum TargetType {
@@ -22,7 +23,7 @@ enum TargetType {
 
 class CWeapon : public CObject
 {
-	CR_DECLARE(CWeapon);
+	CR_DECLARE(CWeapon)
 public:
 	CWeapon(CUnit* owner, const WeaponDef* def);
 	virtual ~CWeapon();
@@ -73,11 +74,11 @@ public:
 	void Fire(bool scriptCall);
 	void HoldFire();
 
-	float ExperienceScale() const;
-	float AccuracyExperience() const { return (accuracy * ExperienceScale()); }
-	float SprayAngleExperience() const { return (sprayAngle * ExperienceScale()); }
-	float3 SalvoErrorExperience() const { return (salvoError * ExperienceScale()); }
+	float ExperienceErrorScale() const;
 	float MoveErrorExperience() const;
+	float AccuracyExperience() const { return (accuracyError * ExperienceErrorScale()); }
+	float SprayAngleExperience() const { return (sprayAngle * ExperienceErrorScale()); }
+	float3 SalvoErrorExperience() const { return (salvoError * ExperienceErrorScale()); }
 
 	void StopAttackingAllyTeam(int ally);
 	void UpdateInterceptTarget();
@@ -123,7 +124,7 @@ public:
 	float heightMod;						// how much extra range the weapon gain per height difference
 
 	float projectileSpeed;
-	float accuracy;							// inaccuracy of whole salvo
+	float accuracyError;					// inaccuracy of whole salvo
 	float sprayAngle;						// inaccuracy of individual shots inside salvo
 
 	int salvoDelay;							// delay between shots in a salvo

@@ -21,11 +21,13 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/Players/PlayerHandler.h"
+#include "Game/Players/Player.h"
 #include "Net/GameServer.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Models/IModelParser.h"
@@ -34,6 +36,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -114,7 +117,9 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	lua_pushcfunction(L, x);    \
 	lua_rawset(L, -3)
 
+	REGISTER_LUA_CFUNC(SetAlly);
 	REGISTER_LUA_CFUNC(KillTeam);
+	REGISTER_LUA_CFUNC(AssignPlayerToTeam);
 	REGISTER_LUA_CFUNC(GameOver);
 
 	REGISTER_LUA_CFUNC(AddTeamResource);
@@ -548,6 +553,7 @@ static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
 	o->SetDirVectors(matrix);
 	o->UpdateMidAndAimPos();
 	o->SetHeadingFromDirection();
+	// do not need ForcedSpin, above three calls cover it
 	o->ForcedMove(pos);
 	o->SetVelocityAndSpeed(speed);
 	return 0;
@@ -567,23 +573,52 @@ static int SetWorldObjectAlwaysVisible(lua_State* L, CWorldObject* o, const char
 // The call-outs
 //
 
+int LuaSyncedCtrl::SetAlly(lua_State* L)
+{
+	const int firstAllyTeamID = luaL_checkint(L, 1);
+	const int secondAllyTeamID = luaL_checkint(L, 2);
+
+	if (!teamHandler->IsValidAllyTeam(firstAllyTeamID))
+		return 0;
+	if (!teamHandler->IsValidAllyTeam(secondAllyTeamID))
+		return 0;
+
+	teamHandler->SetAlly(firstAllyTeamID, secondAllyTeamID, luaL_checkboolean(L, 3));
+	return 0;
+}
 
 int LuaSyncedCtrl::KillTeam(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if (!teamHandler->IsValidTeam(teamID)) {
+
+	if (!teamHandler->IsValidTeam(teamID))
 		return 0;
-	}
-	if (teamID == teamHandler->GaiaTeamID()) {
-		//FIXME either we disallow it here or it needs modifications in GameServer.cpp (it creates a `teams` vector w/o gaia)
-		//  possible fix would be to always create the Gaia team (currently it's conditional on gs->useLuaGaia)
+
+	//FIXME either we disallow it here or it needs modifications in GameServer.cpp (it creates a `teams` vector w/o gaia)
+	//  possible fix would be to always create the Gaia team (currently it's conditional on gs->useLuaGaia)
+	if (teamID == teamHandler->GaiaTeamID())
 		return 0;
-	}
+
 	CTeam* team = teamHandler->Team(teamID);
-	if (team == NULL) {
+
+	if (team == NULL)
 		return 0;
-	}
+
 	team->Died();
+	return 0;
+}
+
+int LuaSyncedCtrl::AssignPlayerToTeam(lua_State* L)
+{
+	const int playerID = luaL_checkint(L, 1);
+	const int teamID = luaL_checkint(L, 2);
+
+	if (!playerHandler->IsValidPlayer(playerID))
+		return 0;
+	if (!teamHandler->IsValidTeam(teamID))
+		return 0;
+
+	teamHandler->Team(teamID)->AddPlayer(playerID);
 	return 0;
 }
 
@@ -1424,7 +1459,7 @@ static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		weapon->reloadTime = (int)(value * GAME_SPEED);
 	}
 	else if (key == "accuracy") {
-		weapon->accuracy = value;
+		weapon->accuracyError = value;
 	}
 	else if (key == "sprayAngle") {
 		weapon->sprayAngle = value;
@@ -2112,19 +2147,22 @@ int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 {
 	CheckAllowGameChanges(L);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
-	if (unit->moveType == NULL) {
+	if (unit->moveType == NULL)
 		return 0;
-	}
-	const float3 pos(luaL_checkfloat(L, 2),
-									 luaL_checkfloat(L, 3),
-									 luaL_checkfloat(L, 4));
+
+	const float3 pos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
+
 	const float radius = luaL_optfloat(L, 5, 0.0f);
 	const float speed  = luaL_optfloat(L, 6, unit->moveType->GetMaxSpeed());
 
-	unit->moveType->StartMoving(pos, radius, speed);
+	if (luaL_optboolean(L, 7, false)) {
+		unit->moveType->StartMovingRaw(pos, radius);
+	} else {
+		unit->moveType->StartMoving(pos, radius, speed);
+	}
 
 	return 0;
 }
@@ -2138,9 +2176,9 @@ int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	float3 pos;
 
@@ -2180,10 +2218,10 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 
 	assert(matrix.IsOrthoNormal() == 0);
 
+	// do not need ForcedSpin, below three calls cover it
 	unit->SetDirVectors(matrix);
 	unit->UpdateMidAndAimPos();
 	unit->SetHeadingFromDirection();
-	unit->ForcedMove(unit->pos);
 	return 0;
 }
 
@@ -2360,7 +2398,7 @@ int LuaSyncedCtrl::AddGrass(lua_State* L)
 	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
 	pos.ClampInBounds();
 
-	treeDrawer->AddGrass(pos);
+	grassDrawer->AddGrass(pos);
 	return 0;
 }
 
@@ -2370,7 +2408,7 @@ int LuaSyncedCtrl::RemoveGrass(lua_State* L)
 	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
 	pos.ClampInBounds();
 
-	treeDrawer->RemoveGrass(pos);
+	grassDrawer->RemoveGrass(pos);
 	return 0;
 }
 

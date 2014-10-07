@@ -150,6 +150,10 @@ local function BackwardCompability(wdName, wd)
     end
   end
 
+  if (not wd.craterareaofeffect) then
+    wd.craterareaofeffect = tonumber(wd.areaofeffect or 0) * 1.5
+  end
+
   if (tobool(wd.ballistic) or tobool(wd.dropped)) then
     wd.gravityaffected = true
   end

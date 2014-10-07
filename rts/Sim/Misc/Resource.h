@@ -9,7 +9,7 @@
 class CResource
 {
 public:
-	CR_DECLARE_STRUCT(CResource);
+	CR_DECLARE_STRUCT(CResource)
 
 	CResource();
 	~CResource();

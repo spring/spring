@@ -48,7 +48,7 @@
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 
@@ -1200,7 +1200,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, const float3& cameraPos
 	Command c = GetCommand(x, y, button, false, cameraPos, mouseDir);
 
 	if (c.GetID() == CMD_FAILED) { // indicates we should not finish the current command
-		Channels::UserInterface.PlaySample(failedSound, 5);
+		Channels::UserInterface->PlaySample(failedSound, 5);
 		return;
 	}
 
@@ -2714,6 +2714,9 @@ bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 	if (!BindTextureString(tex2)) {
 		return false;
 	}
+
+	assert(xscale<=0.5); //border >= 50% makes no sence
+	assert(yscale<=0.5);
 
 	// calculate the scaled quad
 	const float x1 = b.x1 + (xIconSize * xscale);

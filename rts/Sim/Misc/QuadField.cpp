@@ -15,7 +15,7 @@
 #define CELL_IDX_X(wpx) Clamp(int((wpx) / quadSizeX), 0, numQuadsX - 1)
 #define CELL_IDX_Z(wpz) Clamp(int((wpz) / quadSizeZ), 0, numQuadsZ - 1)
 
-CR_BIND(CQuadField, (1, 1));
+CR_BIND(CQuadField, (1, 1))
 CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(baseQuads),
 	CR_MEMBER(tempQuads),
@@ -23,15 +23,15 @@ CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(numQuadsZ),
 	CR_MEMBER(quadSizeX),
 	CR_MEMBER(quadSizeZ)
-));
+))
 
-CR_BIND(CQuadField::Quad, );
+CR_BIND(CQuadField::Quad, )
 CR_REG_METADATA_SUB(CQuadField, Quad, (
 	CR_MEMBER(units),
 	CR_MEMBER(teamUnits),
 	CR_MEMBER(features),
 	CR_MEMBER(projectiles)
-));
+))
 
 CQuadField* quadField = NULL;
 
@@ -537,10 +537,10 @@ void CQuadField::MovedProjectile(CProjectile* p)
 
 	const CProjectile::QuadFieldCellData& qfcd = p->GetQuadFieldCellData();
 
-	const int2 oldCellCoors = qfcd.GetCoor(0);
+	const int2& oldCellCoors = qfcd.GetCoor(0);
 	const int2 newCellCoors = {
-		std::max(0, std::min(int(p->pos.x / quadSizeX), numQuadsX - 1)),
-		std::max(0, std::min(int(p->pos.z / quadSizeZ), numQuadsZ - 1))
+		Clamp(int(p->pos.x / quadSizeX), 0, numQuadsX - 1),
+		Clamp(int(p->pos.z / quadSizeZ), 0, numQuadsZ - 1)
 	};
 
 	if (newCellCoors != oldCellCoors) {

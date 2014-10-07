@@ -118,6 +118,8 @@ void CWordCompletion::Reset()
 	words["/setminspeed "] = sl;
 	words["/kick "] = sl;
 	words["/kickbynum "] = sl;
+	words["/mute "] = sl;
+	words["/mutebynum "] = sl;
 }
 
 

@@ -187,11 +187,7 @@ void CSMFReadMap::CreateSpecularTex()
 	if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
 		// maps wants specular lighting, but no moderation
 		specularTexBM.channels = 4;
-		specularTexBM.Alloc(1, 1);
-		specularTexBM.mem[0] = 255;
-		specularTexBM.mem[1] = 255;
-		specularTexBM.mem[2] = 255;
-		specularTexBM.mem[3] = 255;
+		specularTexBM.AllocDummy(SColor(255,255,255,255));
 	}
 
 	specularTex = specularTexBM.CreateTexture(false);
@@ -228,20 +224,12 @@ void CSMFReadMap::CreateSplatDetailTextures()
 	if (!splatDetailTexBM.Load(mapInfo->smf.splatDetailTexName)) {
 		// default detail-texture should be all-grey
 		splatDetailTexBM.channels = 4;
-		splatDetailTexBM.Alloc(1, 1);
-		splatDetailTexBM.mem[0] = 127;
-		splatDetailTexBM.mem[1] = 127;
-		splatDetailTexBM.mem[2] = 127;
-		splatDetailTexBM.mem[3] = 127;
+		splatDetailTexBM.AllocDummy(SColor(127,127,127,127));
 	}
 
 	if (!splatDistrTexBM.Load(mapInfo->smf.splatDistrTexName)) {
 		splatDistrTexBM.channels = 4;
-		splatDistrTexBM.Alloc(1, 1);
-		splatDistrTexBM.mem[0] = 255;
-		splatDistrTexBM.mem[1] = 0;
-		splatDistrTexBM.mem[2] = 0;
-		splatDistrTexBM.mem[3] = 0;
+		splatDistrTexBM.AllocDummy(SColor(255,0,0,0));
 	}
 
 	splatDetailTex = splatDetailTexBM.CreateTexture(true);
@@ -752,20 +740,10 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 	const int drawQuadsX = gs->mapx / quadSize;
 	const int drawQuadsY = gs->mapy / quadSize;
 
-	int sy = cy - drawSquare;
-	int ey = cy + drawSquare;
-	int sxi = cx - drawSquare;
-	int exi = cx + drawSquare;
-
-	if (sy < 0)
-		sy = 0;
-	if (ey > drawQuadsY - 1)
-		ey = drawQuadsY - 1;
-
-	if (sxi < 0)
-		sxi = 0;
-	if (exi > drawQuadsX - 1)
-		exi = drawQuadsX - 1;
+	int sy  = Clamp(cy - drawSquare, 0, drawQuadsY - 1);
+	int ey  = Clamp(cy + drawSquare, 0, drawQuadsY - 1);
+	int sxi = Clamp(cx - drawSquare, 0, drawQuadsX - 1);
+	int exi = Clamp(cx + drawSquare, 0, drawQuadsX - 1);
 
 	// NOTE:
 	//     GridVisibility is only ever passed <camera>, not <cam2>
@@ -796,7 +774,7 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 			xtest  = ((fli->base + fli->dir * ( y * quadSize)            ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 
-			if (xtest > xtest2)
+			if (xtest2 < xtest) //use std::min?
 				xtest = xtest2;
 
 			xtest /= quadSize;
@@ -808,7 +786,7 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 			xtest  = ((fli->base + fli->dir *  (y * quadSize)           ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 
-			if (xtest < xtest2)
+			if (xtest2 > xtest)
 				xtest = xtest2;
 
 			xtest /= quadSize;

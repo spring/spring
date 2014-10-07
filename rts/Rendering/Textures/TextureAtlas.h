@@ -22,7 +22,7 @@ struct AtlasedTexture : public float4
 	AtlasedTexture() : float4() {}
 	AtlasedTexture(const float4& f) : float4(f) {}
 
-	CR_DECLARE_STRUCT(AtlasedTexture);
+	CR_DECLARE_STRUCT(AtlasedTexture)
 };
 
 
@@ -33,7 +33,7 @@ struct AtlasedTexture : public float4
  */
 struct GroundFXTexture : public AtlasedTexture
 {
-	CR_DECLARE_STRUCT(GroundFXTexture);
+	CR_DECLARE_STRUCT(GroundFXTexture)
 };
 
 

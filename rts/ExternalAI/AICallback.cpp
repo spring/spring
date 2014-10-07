@@ -1446,34 +1446,33 @@ int CAICallback::HandleCommand(int commandId, void* data)
 		} break;
 		case AIHCAddMapPointId: {
 			const AIHCAddMapPoint* cmdData = static_cast<AIHCAddMapPoint*>(data);
-			net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(team, (short)cmdData->pos.x, (short)cmdData->pos.z, std::string(cmdData->label), false));
+			/*
+			   TODO: gu->myPlayerNum makes the command to look like as it comes from the local player,
+			   "team" should be used (but needs some major changes in other engine parts)
+			*/
+			net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)cmdData->pos.x, (short)cmdData->pos.z, std::string(cmdData->label), false));
 			return 1;
 		} break;
 		case AIHCAddMapLineId: {
 			const AIHCAddMapLine* cmdData = static_cast<AIHCAddMapLine*>(data);
-			net->Send(CBaseNetProtocol::Get().SendMapDrawLine(team, (short)cmdData->posfrom.x, (short)cmdData->posfrom.z, (short)cmdData->posto.x, (short)cmdData->posto.z, false));
+			// see TODO above
+			net->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)cmdData->posfrom.x, (short)cmdData->posfrom.z, (short)cmdData->posto.x, (short)cmdData->posto.z, false));
 			return 1;
 		} break;
 		case AIHCRemoveMapPointId: {
 			const AIHCRemoveMapPoint* cmdData = static_cast<AIHCRemoveMapPoint*>(data);
-			net->Send(CBaseNetProtocol::Get().SendMapErase(team, (short)cmdData->pos.x, (short)cmdData->pos.z));
+			// see TODO above
+			net->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)cmdData->pos.x, (short)cmdData->pos.z));
 			return 1;
 		} break;
-		case AIHCSendStartPosId: {
-			const AIHCSendStartPos* cmdData = static_cast<AIHCSendStartPos*>(data);
-			SendStartPos(cmdData->ready, cmdData->pos);
-			return 1;
-		} break;
-		case AIHCGetUnitDefByIdId: {
-			// NOTE: this command should never arrive, handled in SSkirmishAICallbackImpl
-			return 0;
-		} break;
-		case AIHCGetWeaponDefByIdId: {
-			// NOTE: this command should never arrive, handled in SSkirmishAICallbackImpl
-			return 0;
-		} break;
-		case AIHCGetFeatureDefByIdId: {
-			// NOTE: this command should never arrive, handled in SSkirmishAICallbackImpl
+		case AIHCSendStartPosId:
+		case AIHCGetUnitDefByIdId:
+		case AIHCGetWeaponDefByIdId:
+		case AIHCGetFeatureDefByIdId:
+		case AIHCGetDataDirId:
+		{
+			// NOTE: these commands should never arrive, handled in SSkirmishAICallbackImpl
+			assert(false);
 			return 0;
 		} break;
 
@@ -1537,15 +1536,6 @@ int CAICallback::HandleCommand(int commandId, void* data)
 					cmdData->reason != NULL ? cmdData->reason : "UNSPECIFIED");
 
 			return 1;
-		} break;
-
-		case AIHCGetDataDirId: {
-			// do nothing
-			// this event will never end up here, as
-			// it is handled in the C layer directly
-			// see Clb_DataDirs_allocatePath in rts/ExternalAI/Interface/SSkirmishAICallback.h
-
-			return 0;
 		} break;
 
 		case AIHCDebugDrawId: {

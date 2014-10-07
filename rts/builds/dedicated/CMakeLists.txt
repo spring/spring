@@ -69,6 +69,7 @@ INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/7zip)
 ### Assemble sources
 IF	(UNIX)
 	SET(sources_engine_Platform_CrashHandler
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/thread_backtrace.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp)
@@ -78,6 +79,7 @@ ELSEIF	(WIN32)
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/CrashHandler.cpp)
 ELSE	()
 	SET(sources_engine_Platform_CrashHandler
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Mac/CrashHandler.cpp)
 ENDIF	()
@@ -93,8 +95,9 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigVariable.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/CRC.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/CmdLineParams.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/ScopedFileLock.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/TdfParser.cpp
@@ -148,24 +151,21 @@ SET(engineDedicatedSources
 	)
 
 
-# Compile dedicated server shared library
-ADD_LIBRARY(springserver-static STATIC EXCLUDE_FROM_ALL ${engineDedicatedSources})
-Add_Dependencies(springserver-static generateVersionFiles)
-TARGET_LINK_LIBRARIES(springserver-static ${engineDedicatedLibraries})
-IF    (MINGW)
-	TARGET_LINK_LIBRARIES(springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${WINMM_LIBRARY})
-ENDIF (MINGW)
-
 # Compile dedicated server executable
 ADD_EXECUTABLE(engine-dedicated
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp
+		${engineDedicatedSources}
 		${sources_engine_System_Log_sinkConsole}
 		${sources_engine_System_Log_sinkFile}
 		${sources_engine_System_Log_sinkOutputDebugString}
 		${ENGINE_ICON}
 		main
 	)
-TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
+TARGET_LINK_LIBRARIES(engine-dedicated ${engineDedicatedLibraries})
+IF    (MINGW)
+	TARGET_LINK_LIBRARIES(engine-dedicated ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${WINMM_LIBRARY})
+ENDIF (MINGW)
+Add_Dependencies(engine-dedicated generateVersionFiles)
 
 INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
 
@@ -173,16 +173,5 @@ INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
 # use cases:
 # * make spring-dedicated
 # * make install-spring-dedicated
-set(springDsDeps
-		engine-dedicated
-		springserver
-		gamedata
-		unitsync
-	)
-set(springDsInstallDirs
-		"rts/builds/dedicated"
-		"tools/unitsync"
-		"cont"
-	)
 CreateEngineBuildAndInstallTarget(dedicated)
-add_dependencies(spring-dedicated springDsDeps springDsInstallDirs)
+

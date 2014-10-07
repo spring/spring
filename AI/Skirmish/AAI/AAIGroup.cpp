@@ -8,16 +8,29 @@
 // -------------------------------------------------------------------------
 
 #include "AAIGroup.h"
+
 #include "AAI.h"
 #include "AAIBuildTable.h"
 #include "AAIAttack.h"
+#include "AAIExecute.h"
+#include "AAIAttackManager.h"
+#include "AAIAirForceManager.h"
+#include "AAIUnitTable.h"
+#include "AAIConfig.h"
+#include "AAIMap.h"
+#include "AAISector.h"
 
-AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continent_id)
+
+#include "LegacyCpp/UnitDef.h"
+using namespace springLegacyAI;
+
+
+AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continent_id):
+	rally_point(ZeroVector)
 {
 	this->ai = ai;
 
 	attack = 0;
-	rally_point = ZeroVector;
 
 	category = ai->Getbt()->units_static[def->id].category;
 	combat_category = ai->Getbt()->GetIDOfAssaultCategory(category);

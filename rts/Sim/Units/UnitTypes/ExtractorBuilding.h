@@ -7,8 +7,8 @@
 
 class CExtractorBuilding : public CBuilding {
 public:
-	CR_DECLARE(CExtractorBuilding);
-	CR_DECLARE_SUB(MetalSquareOfControl);
+	CR_DECLARE(CExtractorBuilding)
+	CR_DECLARE_SUB(MetalSquareOfControl)
 
 	CExtractorBuilding();
 	virtual ~CExtractorBuilding();
@@ -28,7 +28,7 @@ public:
 
 protected:
 	struct MetalSquareOfControl {
-		CR_DECLARE_STRUCT(MetalSquareOfControl);
+		CR_DECLARE_STRUCT(MetalSquareOfControl)
 		int x;
 		int z;
 		float extractionDepth;

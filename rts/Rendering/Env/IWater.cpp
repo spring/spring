@@ -109,8 +109,8 @@ IWater* IWater::GetWater(IWater* currWaterRenderer, int nextWaterRendererMode)
 		case WATER_RENDERER_BUMPMAPPED: {
 			const bool canLoad =
 				GLEW_ARB_shading_language_100 &&
-				GL_ARB_fragment_shader &&
-				GL_ARB_vertex_shader;
+				GLEW_ARB_fragment_shader &&
+				GLEW_ARB_vertex_shader;
 
 			if (canLoad) {
 				try {

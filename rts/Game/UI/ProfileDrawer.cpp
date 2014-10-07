@@ -24,8 +24,9 @@ ProfileDrawer* ProfileDrawer::instance = NULL;
 
 static const float start_x = 0.6f;
 static const float end_x   = 0.99f;
-static const float end_y   = 0.99f;
-static const float start_y = 0.965f;
+static const float start_y = 0.95f;
+static const float lineHeight = 0.017f;
+
 static const auto DBG_FONT_FLAGS = (FONT_SCALE | FONT_NORM | FONT_SHADOW);
 
 typedef std::pair<spring_time,spring_time> TimeSlice;
@@ -147,9 +148,7 @@ static void DrawThreadBarcode()
 	}
 
 	// feeder
-	//const float y1 = 0.0f;
-	//const float y2 = 0.1f * numThreads;
-	//CVertexArray* va = GetVertexArray();
+	va = GetVertexArray();
 	va->Initialize();
 		const float r = (curTime % maxHist).toSecsf() / maxHist_f;
 		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
@@ -210,7 +209,7 @@ static void DrawFrameBarcode()
 	DrawTimeSlice(simFrames, curTime, maxHist, drawArea);
 
 	// draw `feeder` indicating current time pos
-	//CVertexArray* va = GetVertexArray();
+	va = GetVertexArray();
 	va->Initialize();
 		// draw feeder
 		const float r = (curTime % maxHist).toSecsf() / maxHist_f;
@@ -235,81 +234,108 @@ static void DrawFrameBarcode()
 static void DrawProfiler()
 {
 	font->SetTextColor(1,1,1,1);
-	CVertexArray* va  = GetVertexArray();
-	CVertexArray* va2 = GetVertexArray();
 
 	// draw the background of the window
-	if(!profiler.profile.empty()){
+	{
+		CVertexArray* va  = GetVertexArray();
 		va->Initialize();
-			va->AddVertex0(start_x, end_y,                                      0);
-			va->AddVertex0(end_x,   end_y,                                      0);
-			va->AddVertex0(start_x, end_y-profiler.profile.size()*0.024f-0.01f, 0);
-			va->AddVertex0(end_x,   end_y-profiler.profile.size()*0.024f-0.01f, 0);
+			va->AddVertex0(start_x, start_y + lineHeight + 0.005f,                          0);
+			va->AddVertex0(end_x,   start_y + lineHeight + 0.005f,                          0);
+			va->AddVertex0(start_x, start_y - profiler.profile.size() * lineHeight - 0.01f, 0);
+			va->AddVertex0(end_x,   start_y - profiler.profile.size() * lineHeight - 0.01f, 0);
 		glColor4f(0.0f, 0.0f, 0.5f, 0.5f);
 		va->DrawArray0(GL_TRIANGLE_STRIP);
 	}
 
-	std::map<std::string, CTimeProfiler::TimeRecord>::iterator pi;
+	const float textSize = 0.5f;
 
-	// draw the textual info (total-time, short-time percentual time, timer-name)
-	int y = 0;
-	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++y) {
-		const float fStartY = start_y - y * 0.024f;
+	// table header
+	{
+		const float fStartY = start_y + 0.005f;
 		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
 		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", pi->second.total.toSecsf());
+		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "totaltime");
 
 		// print percent of CPU time used within the last 500ms
+		fStartX += 0.06f;
+		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "cur-%%usage");
 		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", pi->second.percent * 100);
+		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "max-%%usage");
 		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", pi->second.newPeak?1:255, pi->second.newPeak?1:255, pi->second.peak * 100);
-		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", pi->second.newLagPeak?1:255, pi->second.newLagPeak?1:255, pi->second.maxLag);
+		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "lag");
 
 		// print timer name
 		fStartX += 0.01f;
-		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM, pi->first);
+		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM, "title");
+	}
+
+	// draw the textual info (total-time, short-time percentual time, timer-name)
+	int y = 1;
+	for (auto pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++y) {
+		const auto& profileData = pi->second;
+
+		const float fStartY = start_y - y * lineHeight;
+		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
+
+		// print total-time running since application start
+		fStartX += 0.04f;
+		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", profileData.total.toSecsf());
+
+		// print percent of CPU time used within the last 500ms
+		fStartX += 0.06f;
+		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", profileData.percent * 100);
+		fStartX += 0.04f;
+		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", profileData.newPeak?1:255, profileData.newPeak?1:255, profileData.peak * 100);
+		fStartX += 0.04f;
+		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", profileData.newLagPeak?1:255, profileData.newLagPeak?1:255, profileData.maxLag);
+
+		// print timer name
+		fStartX += 0.01f;
+		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, pi->first);
 	}
 
 
 	// draw the Timer selection boxes
+	const float boxSize = lineHeight*0.9;
+	const float selOffset = boxSize*0.2;
 	glPushMatrix();
-	glTranslatef(start_x + 0.005f, start_y, 0);
-	glScalef(0.015f, 0.02f, 0.02f);
+	glTranslatef(start_x + 0.005f, start_y + boxSize, 0); // we are now at upper left of first box
+		CVertexArray* va  = GetVertexArray();
+		CVertexArray* va2 = GetVertexArray();
 		va->Initialize();
 		va2->Initialize();
-			int i = 0;
-			for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++i){
+			int i = 1;
+			for (auto pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++i){
 				auto& fc = pi->second.color;
 				SColor c(fc[0], fc[1], fc[2]);
-				va->AddVertexC(float3(0, 0 - i * 1.2f, 0), c);
-				va->AddVertexC(float3(1, 0 - i * 1.2f, 0), c);
-				va->AddVertexC(float3(1, 1 - i * 1.2f, 0), c);
-				va->AddVertexC(float3(0, 1 - i * 1.2f, 0), c);
+				va->AddVertexC(float3(0, -i*lineHeight, 0), c); // upper left
+				va->AddVertexC(float3(0, -i*lineHeight-boxSize, 0), c); // lower left
+				va->AddVertexC(float3(boxSize, -i*lineHeight-boxSize, 0), c); // lower right
+				va->AddVertexC(float3(boxSize, -i*lineHeight, 0), c); // upper right
 
-				if (!pi->second.showGraph) {
-					va2->AddVertex0(0, 0 - i * 1.2f, 0);
-					va2->AddVertex0(1, 1 - i * 1.2f, 0);
-					va2->AddVertex0(1, 0 - i * 1.2f, 0);
-					va2->AddVertex0(0, 1 - i * 1.2f, 0);
+				if (pi->second.showGraph) {
+					va2->AddVertex0(lineHeight+selOffset, -i*lineHeight-selOffset, 0); // upper left
+					va2->AddVertex0(lineHeight+selOffset, -i*lineHeight-boxSize+selOffset, 0); // lower left
+					va2->AddVertex0(lineHeight+boxSize-selOffset, -i*lineHeight-boxSize+selOffset, 0); // lower right
+					va2->AddVertex0(lineHeight+boxSize-selOffset, -i*lineHeight-selOffset, 0); // upper right
 				}
 			}
 		// draw the boxes
 		va->DrawArrayC(GL_QUADS);
 		// draw the 'graph view disabled' cross
 		glColor3f(1,0,0);
-		va2->DrawArray0(GL_LINES);
+		va2->DrawArray0(GL_QUADS);
 	glPopMatrix();
 
 	// draw the graph
 	glLineWidth(3.0f);
-	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi) {
+	for (auto pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi) {
 		if (!pi->second.showGraph) {
 			continue;
 		}
+		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		const float steps_x = (end_x - start_x) / CTimeProfiler::TimeRecord::frames_size;
 		for (size_t a=0; a < CTimeProfiler::TimeRecord::frames_size; ++a) {
@@ -383,6 +409,8 @@ static void DrawInfoText()
 
 void ProfileDrawer::DrawScreen()
 {
+	SCOPED_TIMER("ProfileDrawer");
+
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
@@ -411,23 +439,18 @@ void ProfileDrawer::DrawScreen()
 
 bool ProfileDrawer::MousePress(int x, int y, int button)
 {
-	const float mx = CInputReceiver::MouseX(x);
-	const float my = CInputReceiver::MouseY(y);
-
-	// check if a Timer selection box was hit
-	if (mx<start_x || mx>end_x || my<end_y-profiler.profile.size()*0.024f-0.01f || my>end_y) {
+	if (!IsAbove(x, y))
 		return false;
-	}
 
-	const int selIndex = (int) ((end_y - my) / 0.024f);
+	const float my = CInputReceiver::MouseY(y);
+	const int selIndex = (int) ((start_y - my) / lineHeight);
 
 	// switch the selected Timers showGraph value
 	if ((selIndex >= 0) && (selIndex < profiler.profile.size())) {
-		std::map<std::string, CTimeProfiler::TimeRecord>::iterator pi = profiler.profile.begin();
-		for (int i = 0; i < selIndex; i++) {
-			++pi;
-		}
+		auto pi = profiler.profile.begin();
+		std::advance(pi, selIndex);
 		pi->second.showGraph = !pi->second.showGraph;
+		return true;
 	}
 
 	return false;
@@ -439,7 +462,7 @@ bool ProfileDrawer::IsAbove(int x, int y)
 	const float my = CInputReceiver::MouseY(y);
 
 	// check if a Timer selection box was hit
-	if (mx<start_x || mx>end_x || my<end_y - profiler.profile.size()*0.024f-0.01f || my>end_y) {
+	if (mx<start_x || mx>end_x || my<start_y - profiler.profile.size()*lineHeight || my>start_y) {
 		return false;
 	}
 

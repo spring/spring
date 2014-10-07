@@ -8,7 +8,7 @@
 class CTracerProjectile : public CProjectile
 {
 public:
-	CR_DECLARE(CTracerProjectile);
+	CR_DECLARE(CTracerProjectile)
 
 	CTracerProjectile();
 	CTracerProjectile(
@@ -20,7 +20,7 @@ public:
 
 	void Draw();
 	void Update();
-	void Init(CUnit* owner, const float3& offset);
+	void Init(const CUnit* owner, const float3& offset);
 
 private:
 	float speedf;

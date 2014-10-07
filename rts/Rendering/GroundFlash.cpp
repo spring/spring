@@ -11,16 +11,16 @@
 #include "Rendering/ProjectileDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, );
+CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, )
 CR_REG_METADATA(CGroundFlash, (
  	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(size),
 		CR_MEMBER(depthTest),
 		CR_MEMBER(depthMask),
 	CR_MEMBER_ENDFLAG(CM_Config)
-));
+))
 
-CR_BIND_DERIVED(CStandardGroundFlash, CGroundFlash, );
+CR_BIND_DERIVED(CStandardGroundFlash, CGroundFlash, )
 CR_REG_METADATA(CStandardGroundFlash, (
  	CR_MEMBER_BEGINFLAG(CM_Config),
  		CR_MEMBER(flashSize),
@@ -38,9 +38,9 @@ CR_REG_METADATA(CStandardGroundFlash, (
 	CR_MEMBER(circleAlphaDec),
 	CR_MEMBER(color),
 	CR_MEMBER(ttl)
-));
+))
 
-CR_BIND_DERIVED(CSeismicGroundFlash, CGroundFlash, (ZeroVector, 1, 0, 1, 1, 1, ZeroVector));
+CR_BIND_DERIVED(CSeismicGroundFlash, CGroundFlash, (ZeroVector, 1, 0, 1, 1, 1, ZeroVector))
 CR_REG_METADATA(CSeismicGroundFlash, (
 	CR_MEMBER(side1),
 	CR_MEMBER(side2),
@@ -50,9 +50,9 @@ CR_REG_METADATA(CSeismicGroundFlash, (
 	CR_MEMBER(fade),
 	CR_MEMBER(ttl),
 	CR_MEMBER(color)
-));
+))
 
-CR_BIND_DERIVED(CSimpleGroundFlash, CGroundFlash, );
+CR_BIND_DERIVED(CSimpleGroundFlash, CGroundFlash, )
 CR_REG_METADATA(CSimpleGroundFlash, (
 	CR_MEMBER(side1),
 	CR_MEMBER(side2),
@@ -64,7 +64,7 @@ CR_REG_METADATA(CSimpleGroundFlash, (
 		CR_MEMBER(colorMap),
 		CR_MEMBER(texture),
 	CR_MEMBER_ENDFLAG(CM_Config)
-));
+))
 
 
 
@@ -227,7 +227,7 @@ CSimpleGroundFlash::CSimpleGroundFlash()
 	sizeGrowth = 0.0f;
 }
 
-void CSimpleGroundFlash::Init(CUnit* owner, const float3& offset)
+void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
 {
 	pos += offset;
 	age = ttl ? 0.0f : 1.0f;

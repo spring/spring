@@ -18,7 +18,7 @@ class LuaTable;
 struct WeaponDef
 {
 private:
-	CR_DECLARE_STRUCT(WeaponDef);
+	CR_DECLARE_STRUCT(WeaponDef)
 
 public:
 	WeaponDef();
@@ -51,9 +51,9 @@ public:
 
 	float range;
 	float heightmod;
-	float accuracy;            ///< inaccuracy of whole burst
-	float sprayAngle;          ///< inaccuracy of individual shots inside burst
-	float movingAccuracy;      ///< inaccuracy while owner moving
+	float accuracy;            ///< INaccuracy (!) of whole burst
+	float sprayAngle;          ///< INaccuracy of individual shots inside burst
+	float movingAccuracy;      ///< INaccuracy (!) while owner moving
 	float ownerExpAccWeight;   ///< if 0, accuracy is not increased with owner experience (max. 1)
 	float targetMoveError;     ///< fraction of targets move speed that is used as error offset
 	float leadLimit;           ///< maximum distance the weapon will lead the target
@@ -165,6 +165,8 @@ public:
 	float3 shieldGoodColor;          // color when shield at full power
 	float3 shieldBadColor;           // color when shield is empty
 	float shieldAlpha;               // shield alpha value
+	int shieldArmorType;             // armor type for the damage table
+	std::string shieldArmorTypeName; // name of the armor type
 
 	unsigned int shieldInterceptType;      // type of shield (bitfield)
 	unsigned int interceptedByShieldType;  // weapon can be affected by shields where (shieldInterceptType & interceptedByShieldType) is not zero

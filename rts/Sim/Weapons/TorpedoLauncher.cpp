@@ -2,18 +2,17 @@
 
 #include "TorpedoLauncher.h"
 #include "WeaponDef.h"
-#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CTorpedoLauncher, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CTorpedoLauncher, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CTorpedoLauncher,(
 	CR_MEMBER(tracking),
 	CR_RESERVED(8)
-));
+))
 
 CTorpedoLauncher::CTorpedoLauncher(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {

@@ -7,7 +7,7 @@
 #include <vector>
 #include <string.h>
 
-#include "IAudioChannel.h"
+#include "System/Sound/IAudioChannel.h"
 #include <boost/thread/recursive_mutex.hpp>
 
 struct GuiSoundSet;
@@ -23,6 +23,7 @@ class CWorldObject;
 class AudioChannel : public IAudioChannel {
 public:
 	AudioChannel();
+	~AudioChannel() {}
 
 	void Enable(bool newState);
 	void SetVolume(float newVolume);

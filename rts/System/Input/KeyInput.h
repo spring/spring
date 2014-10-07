@@ -15,6 +15,6 @@ namespace KeyInput {
 	const std::map<int,bool>& GetPressedKeys();
 
 	int GetNormalizedKeySymbol(int key);
-};
+}
 
 #endif

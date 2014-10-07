@@ -15,7 +15,7 @@ struct SDL_Window;
  * that does not remain synced.
  */
 class CGlobalRendering {
-	CR_DECLARE_STRUCT(CGlobalRendering);
+	CR_DECLARE_STRUCT(CGlobalRendering)
 
 	CGlobalRendering();
 

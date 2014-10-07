@@ -203,6 +203,7 @@ bool COverheadController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "height", height);
 	SetStateFloat(sm, "zscale", zscale);
 	SetStateBool (sm, "flipped", flipped);
+	UpdateVectors();
 
 	return true;
 }

@@ -24,7 +24,7 @@
 #include "System/creg/STL_Set.h"
 
 
-CR_BIND_DERIVED(CPlayer, PlayerBase, );
+CR_BIND_DERIVED(CPlayer, PlayerBase, )
 CR_REG_METADATA(CPlayer, (
 	CR_MEMBER(active),
 	CR_MEMBER(playerNum),
@@ -32,7 +32,7 @@ CR_REG_METADATA(CPlayer, (
 	CR_MEMBER(currentStats),
 	//CR_MEMBER(fpsController), FIXME add their classes to creg
 	CR_MEMBER(controlledTeams)
-));
+))
 
 
 //////////////////////////////////////////////////////////////////////

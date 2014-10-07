@@ -9,8 +9,12 @@
 
 #include "AAIAttack.h"
 #include "AAI.h"
-#include "AAISector.h"
+#include "AAIAttackManager.h"
+#include "AAIMap.h"
 #include "AAIGroup.h"
+
+#include "LegacyCpp/IAICallback.h"
+using namespace springLegacyAI;
 
 AAIAttack::AAIAttack(AAI *ai):
 	dest(NULL),
