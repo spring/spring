@@ -2,6 +2,8 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 99.0 ---------------------------------------------------------
+
 -- 98.0 ---------------------------------------------------------
 Major:
  - vaporized PathFinder's runtime precache cpu usage

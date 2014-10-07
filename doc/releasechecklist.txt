@@ -32,7 +32,7 @@ Release Time
 		git reset --hard origin/master
 		git merge release --no-ff
 2) Tag the release:
-		export REL_VERS=96.0
+		export REL_VERS=98.0
 		git tag -a -m "${REL_VERS} release [changed APIs: Lua, unitsync, AI]" ${REL_VERS}
    Make sure it looks correct:
 		gitk master develop release &
