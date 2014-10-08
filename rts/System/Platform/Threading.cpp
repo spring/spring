@@ -377,9 +377,9 @@ namespace Threading {
 			*ppCtlsReturn = *ppThreadCtls;
 		}
 
-		boost::unique_lock<boost::mutex> lock (pThreadCtls->mutSuspend);
 
 #ifndef WIN32
+		boost::unique_lock<boost::mutex> lock (pThreadCtls->mutSuspend);
 		boost::thread localthread(boost::bind(Threading::ThreadStart, taskFunc, ppThreadCtls));
 
 		// Wait so that we know the thread is running and fully initialized before returning.
