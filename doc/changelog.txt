@@ -17,6 +17,7 @@ GameServer:
  - rename BypassScriptPasswordCheck to AllowSpectatorJoin and default to true
 
 Lua:
+ - added AssignPlayerToTeam(playerID, teamID)
  - added SetAlly(firstAllyTeamId, secondAllyTeamId, ally)
  - added VFS.UnmapArchive(string fileName)
  - added VFS.GetMaps(), VFS.GetGames(), VFS.GetAllArchives(), VFS.HasArchive(archiveName)
@@ -79,7 +80,6 @@ AI:
  - fixed return-type and value of Pathing::GetApproximateLength (pullrequest by rlcevg)
 
 Buildprocess:
- - fixes for CMake 3.0
  - heavily reduced files which are compiled multiple times
  ! add check for gcc >=4.7 at configure
 
