@@ -51,9 +51,11 @@ CEG:
  ! fixed booleans in CEGs (sometimes they were randomly overriden with random data)
 
 Weapons:
- - Beamlasers respect repulser-shields' armorclass (pullrequest by sprunk)
+ ! Shields obey dynamic damage
  ! move magic number to weapondef_post.lua: crater were 1.5x of craterAreaOfEffect while decals are 1.0x -> make them _both same size_
  ! fixed #4523: typo in craterAoE loading
+ ! LightningCannon visual now obeys the beamTTL weapondef tag (behaviour same as BeamLaser) - previous value was hardcoded 10
+ ! wobble and sprayAngle now improve with experience (same as [moving]accuracy)
 
 Sim:
  - GroundBlocking: don't align immobile objects to even squares
