@@ -3,6 +3,7 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 -- 99.0 ---------------------------------------------------------
+- new linux crashhandler by Major Bor3d0m
 - fix #4576 F6 does not sound mute
 
 -- 98.0 ---------------------------------------------------------
