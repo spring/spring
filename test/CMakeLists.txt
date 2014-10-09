@@ -302,8 +302,14 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/CpuID.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
+
 			${test_Log_sources}
 		)
+	if(NOT WIN32)
+		LIST(APPEND test_src
+			"${ENGINE_SOURCE_DIR}/System/Platform/Linux/ThreadSupport.cpp")
+	endif()
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_THREAD_LIBRARY}
