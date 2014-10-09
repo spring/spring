@@ -164,6 +164,7 @@ add_library(engineSim STATIC
 	)
 
 include_directories(${SDL2_INCLUDE_DIR})
+include_directories(${GLEW_INCLUDE_DIR})
 
 get_property(SPRING_SIM_LIBRARIES TARGET engineSim PROPERTY LOCATION)
 if( CMAKE_COMPILER_IS_GNUCXX)

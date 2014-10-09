@@ -48,7 +48,7 @@ class CGameStateCollector
 public:
 	CGameStateCollector() {}
 
-	void Serialize(creg::ISerializer& s);
+	void Serialize(creg::ISerializer* s);
 };
 
 CR_BIND(CGameStateCollector, )
@@ -69,31 +69,31 @@ static void ReadString(std::istream& s, std::string& str)
 	str += cstr;
 }
 
-void CGameStateCollector::Serialize(creg::ISerializer& s)
+void CGameStateCollector::Serialize(creg::ISerializer* s)
 {
-	s.SerializeObjectInstance(gs, gs->GetClass());
-	s.SerializeObjectInstance(gu, gu->GetClass());
-	s.SerializeObjectInstance(gameSetup, gameSetup->GetClass());
-	s.SerializeObjectInstance(game, game->GetClass());
-	s.SerializeObjectInstance(readMap, readMap->GetClass());
-	s.SerializeObjectInstance(quadField, quadField->GetClass());
-	s.SerializeObjectInstance(unitHandler, unitHandler->GetClass());
-	s.SerializeObjectInstance(featureHandler, featureHandler->GetClass());
-	s.SerializeObjectInstance(losHandler, losHandler->GetClass());
-	s.SerializeObjectInstance(radarHandler, radarHandler->GetClass());
-	s.SerializeObjectInstance(airBaseHandler, airBaseHandler->GetClass());
-	s.SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());
-	s.SerializeObjectInstance(CCategoryHandler::Instance(), CCategoryHandler::Instance()->GetClass());
-	s.SerializeObjectInstance(projectileHandler, projectileHandler->GetClass());
-	s.SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
-	s.SerializeObjectInstance(&wind, wind.GetClass());
-	s.SerializeObjectInstance(inMapDrawerModel, inMapDrawerModel->GetClass());
-	s.SerializeObjectInstance(moveDefHandler, moveDefHandler->GetClass());
-	s.SerializeObjectInstance(teamHandler, teamHandler->GetClass());
+	s->SerializeObjectInstance(gs, gs->GetClass());
+	s->SerializeObjectInstance(gu, gu->GetClass());
+	s->SerializeObjectInstance(gameSetup, gameSetup->GetClass());
+	s->SerializeObjectInstance(game, game->GetClass());
+	s->SerializeObjectInstance(readMap, readMap->GetClass());
+	s->SerializeObjectInstance(quadField, quadField->GetClass());
+	s->SerializeObjectInstance(unitHandler, unitHandler->GetClass());
+	s->SerializeObjectInstance(featureHandler, featureHandler->GetClass());
+	s->SerializeObjectInstance(losHandler, losHandler->GetClass());
+	s->SerializeObjectInstance(radarHandler, radarHandler->GetClass());
+	s->SerializeObjectInstance(airBaseHandler, airBaseHandler->GetClass());
+	s->SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());
+	s->SerializeObjectInstance(CCategoryHandler::Instance(), CCategoryHandler::Instance()->GetClass());
+	s->SerializeObjectInstance(projectileHandler, projectileHandler->GetClass());
+	s->SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
+	s->SerializeObjectInstance(&wind, wind.GetClass());
+	s->SerializeObjectInstance(inMapDrawerModel, inMapDrawerModel->GetClass());
+	s->SerializeObjectInstance(moveDefHandler, moveDefHandler->GetClass());
+	s->SerializeObjectInstance(teamHandler, teamHandler->GetClass());
 	for (int a=0; a < teamHandler->ActiveTeams(); a++) {
-		s.SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
+		s->SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
 	}
-	s.SerializeObjectInstance(eoh, eoh->GetClass());
+	s->SerializeObjectInstance(eoh, eoh->GetClass());
 }
 
 static void PrintSize(const char* txt, int size)

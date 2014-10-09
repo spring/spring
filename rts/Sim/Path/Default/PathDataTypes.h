@@ -181,8 +181,9 @@ public:
 
 	/// bitmask of PATHOPT_{OPEN, ..., OBSOLETE} flags
 	std::vector<boost::uint8_t> nodeMask;
+#if !defined(_MSC_FULL_VER) || _MSC_FULL_VER > 180040000 // ensure that ::max() is constexpr
 	static_assert(PATHOPT_SIZE <= std::numeric_limits<boost::uint8_t>::max(), "nodeMask basic type to small to hold bitmask of PATHOPT");
-
+#endif
 	/// for the PE, maintains an array of the
 	/// best accessible offset (from its own center
 	/// position)

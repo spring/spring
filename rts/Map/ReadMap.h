@@ -61,7 +61,7 @@ public:
 	}
 
 	/// creg serialize callback
-	void Serialize(creg::ISerializer& s);
+	void Serialize(creg::ISerializer* s);
 
 
 	/**

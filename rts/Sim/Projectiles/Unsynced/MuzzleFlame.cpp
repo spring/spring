@@ -21,7 +21,7 @@ CR_REG_METADATA(CMuzzleFlame,(
 	CR_RESERVED(8)
 	))
 
-void CMuzzleFlame::creg_Serialize(creg::ISerializer& s)
+void CMuzzleFlame::creg_Serialize(creg::ISerializer* s)
 {
 //	s.Serialize(randSmokeDir, numSmoke*sizeof(float3));
 }

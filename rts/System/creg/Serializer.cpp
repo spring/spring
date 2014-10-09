@@ -173,13 +173,12 @@ void COutputStreamSerializer::SerializeObject(Class* c, void* ptr, ObjectRef* ob
 	}
 
 
-	if (c->serializeProc) {
+	if (c->HasSerialize()) {
 		ObjectMember om;
 		om.member = NULL;
 		om.memberId = -1;
 		unsigned mstart = stream->tellp();
-		_DummyStruct *obj = (_DummyStruct*)ptr;
-		(obj->*(c->serializeProc))(*this);
+		c->CallSerializeProc(ptr, this);
 		unsigned mend = stream->tellp();
 		om.size = mend - mstart;
 		omg.members.push_back(om);
@@ -467,9 +466,8 @@ void CInputStreamSerializer::SerializeObject(Class* c, void* ptr)
 		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Deserialized %s::%s type:%s size:%u", c->name.c_str(), m->name, m->type->GetName().c_str(), unsigned(stream->tellg()) - oldPos);
 	}
 
-	if (c->serializeProc) {
-		_DummyStruct* obj = (_DummyStruct*)ptr;
-		(obj->*(c->serializeProc))(*this);
+	if (c->HasSerialize()) {
+		c->CallSerializeProc(ptr, this);
 	}
 }
 
@@ -643,13 +641,12 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 	// Run post load functions on `all` objects (exclude root object)
 	for (uint a = 1; a < objects.size(); a++) {
 		StoredObject& o = objects[a];
-		_DummyStruct* ds = (_DummyStruct*)o.obj;
 		creg::Class* oc = classRefs[objects[a].classRef];
 		creg::Class* c = oc;
 		while (c) {
-			if (c->postLoadProc) {
+			if (c->HasPostLoad()) {
 				LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Run PostLoad of %s::%s", oc->name.c_str(), c->name.c_str());
-				(ds->*c->postLoadProc)();
+				c->CallPostLoadProc(o.obj);
 			}
 			c = c->base;
 		}

@@ -49,7 +49,7 @@ namespace Sync {
 
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) && defined(SYNCCHECK)
 #  define ENTER_SYNCED_CODE() CSyncChecker::EnterSyncedCode()
 #  define LEAVE_SYNCED_CODE() CSyncChecker::LeaveSyncedCode()
 #else
