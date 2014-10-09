@@ -5,8 +5,6 @@
 
 #include <set>
 #include <string>
-using std::set;
-using std::string;
 
 #include "Rendering/GL/myGL.h"
 
@@ -24,7 +22,7 @@ class LuaFBOs {
 	public:
 		static bool PushEntries(lua_State* L);
 
-		static GLenum ParseAttachment(const string& name);
+		static GLenum ParseAttachment(const std::string& name);
 
 	public:
 		struct FBO {
@@ -39,7 +37,7 @@ class LuaFBOs {
 		};
 
 	private:
-		set<FBO*> fbos;
+		std::set<FBO*> fbos;
 
 	private: // helpers
 		static bool CreateMetatable(lua_State* L);

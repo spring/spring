@@ -5,6 +5,7 @@
 #include "LuaInclude.h"
 
 #include "LuaUnsyncedCtrl.h"
+#include "LuaArchive.h"
 #include "LuaCallInCheck.h"
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
@@ -118,7 +119,7 @@ void CLuaUI::FreeHandler()
 /******************************************************************************/
 
 CLuaUI::CLuaUI()
-: CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true)
+: CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true, false)
 {
 	luaUI = this;
 
@@ -190,6 +191,7 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)         ||
 	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
 	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
+	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)      ||
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||

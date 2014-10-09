@@ -14,7 +14,7 @@ struct S3DModel;
 class CWorldObject: public CObject
 {
 public:
-	CR_DECLARE(CWorldObject);
+	CR_DECLARE(CWorldObject)
 
 	CWorldObject()
 		: id(-1)

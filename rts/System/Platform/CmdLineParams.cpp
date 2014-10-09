@@ -63,13 +63,17 @@ void CmdLineParams::Parse()
 	po::positional_options_description p;
 	p.add("input-file", 1);
 
-	po::parsed_options parsed = po::command_line_parser(argc, argv).options(all).positional(p).allow_unregistered().run();
-	po::store(parsed, vm);
-	po::notify(vm);
+	try {
+		po::parsed_options parsed = po::command_line_parser(argc, argv).options(all).positional(p).allow_unregistered().run();
+		po::store(parsed, vm);
+		po::notify(vm);
 
-	std::vector<std::string> unrecognized = po::collect_unrecognized(parsed.options, po::exclude_positional);
-	if (!unrecognized.empty())
-		throw unrecognized_option("unrecognized option '" + unrecognized[0] + "'");
+		std::vector<std::string> unrecognized = po::collect_unrecognized(parsed.options, po::exclude_positional);
+		if (!unrecognized.empty())
+			throw unrecognized_option("unrecognized option '" + unrecognized[0] + "'");
+	} catch(const boost::program_options::too_many_positional_options_error& err) {
+		throw unrecognized_option("too many unnamed cmdline input options (forgot to quote filepath?)");
+	}
 }
 
 void CmdLineParams::PrintUsage() const
@@ -89,7 +93,13 @@ std::string CmdLineParams::GetCmdLine() const
 	std::string cmdLine = (argc > 0) ? UnQuote(argv[0]) : "unknown";
 	for (int i = 1; i < argc; ++i) {
 		cmdLine += " ";
-		cmdLine += argv[i];
+		if (argv[i][0] != '-') {
+			cmdLine += "\"";
+			cmdLine += argv[i];
+			cmdLine += "\"";
+		} else {
+			cmdLine += argv[i];
+		}
 	}
 	return cmdLine;
 }

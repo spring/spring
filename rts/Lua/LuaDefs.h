@@ -46,12 +46,12 @@ namespace {
 		assert(valid_type);
 		return ERROR_TYPE;
 	}
-	DataType GetDataType(unsigned)    { return INT_TYPE; }
-	DataType GetDataType(int)         { return INT_TYPE; }
-	DataType GetDataType(bool)        { return BOOL_TYPE; }
-	DataType GetDataType(float)       { return FLOAT_TYPE; }
-	DataType GetDataType(const std::string&) { return STRING_TYPE; }
-};
+	template<> DataType GetDataType(unsigned)           { return INT_TYPE; }
+	template<> DataType GetDataType(int)                { return INT_TYPE; }
+	template<> DataType GetDataType(bool)               { return BOOL_TYPE; }
+	template<> DataType GetDataType(float)              { return FLOAT_TYPE; }
+	template<> DataType GetDataType(std::string)        { return STRING_TYPE; }
+}
 
 #define ADDRESS(name) ((const char *)&name)
 

@@ -156,7 +156,7 @@ void FileConfigSource::Read(FILE* file)
 			}
 			else {
 				// neither a comment nor an empty line nor a key=value line
-				LOG_L(L_ERROR, "ConfigSource: Error: Can not parse line: %s\n", line);
+				LOG_L(L_ERROR, "ConfigSource: Error: Can not parse line: %s", line);
 			}
 		}
 	}

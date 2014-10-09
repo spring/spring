@@ -14,7 +14,7 @@ CR_REG_METADATA(CGroup, (
 	CR_MEMBER(units),
 	CR_MEMBER(handler),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

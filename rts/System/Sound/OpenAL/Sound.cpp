@@ -5,11 +5,15 @@
 #include <cstdlib>
 #include <cmath>
 #include <alc.h>
+#ifndef ALC_ALL_DEVICES_SPECIFIER
+//needed for ALC_ALL_DEVICES_SPECIFIER on some special *nix
+#include <alext.h>
+#endif
 #include <boost/cstdint.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "SoundChannels.h"
-#include "SoundLog.h"
+#include "System/Sound/ISoundChannels.h"
+#include "System/Sound/SoundLog.h"
 #include "SoundSource.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
@@ -57,13 +61,13 @@ CSound::CSound()
 	pitchAdjust = configHandler->GetBool("PitchAdjust");
 
 	masterVolume = configHandler->GetInt("snd_volmaster") * 0.01f;
-	Channels::General.SetVolume(configHandler->GetInt("snd_volgeneral") * 0.01f);
-	Channels::UnitReply.SetVolume(configHandler->GetInt("snd_volunitreply") * 0.01f);
-	Channels::UnitReply.SetMaxConcurrent(1);
-	Channels::UnitReply.SetMaxEmmits(1);
-	Channels::Battle.SetVolume(configHandler->GetInt("snd_volbattle") * 0.01f);
-	Channels::UserInterface.SetVolume(configHandler->GetInt("snd_volui") * 0.01f);
-	Channels::BGMusic.SetVolume(configHandler->GetInt("snd_volmusic") * 0.01f);
+	Channels::General->SetVolume(configHandler->GetInt("snd_volgeneral") * 0.01f);
+	Channels::UnitReply->SetVolume(configHandler->GetInt("snd_volunitreply") * 0.01f);
+	Channels::UnitReply->SetMaxConcurrent(1);
+	Channels::UnitReply->SetMaxEmmits(1);
+	Channels::Battle->SetVolume(configHandler->GetInt("snd_volbattle") * 0.01f);
+	Channels::UserInterface->SetVolume(configHandler->GetInt("snd_volui") * 0.01f);
+	Channels::BGMusic->SetVolume(configHandler->GetInt("snd_volmusic") * 0.01f);
 
 	SoundBuffer::Initialise();
 	soundItemDef temp;
@@ -84,6 +88,7 @@ CSound::CSound()
 CSound::~CSound()
 {
 	soundThreadQuit = true;
+	configHandler->RemoveObserver(this);
 
 	LOG_L(L_INFO, "[%s][1] soundThread=%p", __FUNCTION__, soundThread);
 
@@ -220,23 +225,23 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	}
 	else if (key == "snd_volgeneral")
 	{
-		Channels::General.SetVolume(std::atoi(value.c_str()) * 0.01f);
+		Channels::General->SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
 	else if (key == "snd_volunitreply")
 	{
-		Channels::UnitReply.SetVolume(std::atoi(value.c_str()) * 0.01f);
+		Channels::UnitReply->SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
 	else if (key == "snd_volbattle")
 	{
-		Channels::Battle.SetVolume(std::atoi(value.c_str()) * 0.01f);
+		Channels::Battle->SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
 	else if (key == "snd_volui")
 	{
-		Channels::UserInterface.SetVolume(std::atoi(value.c_str()) * 0.01f);
+		Channels::UserInterface->SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
 	else if (key == "snd_volmusic")
 	{
-		Channels::BGMusic.SetVolume(std::atoi(value.c_str()) * 0.01f);
+		Channels::BGMusic->SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
 	else if (key == "PitchAdjust")
 	{
@@ -337,7 +342,7 @@ void CSound::StartThread(int maxSounds)
 		if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
 		{
 			LOG("  Available Devices:");
-			const char* deviceSpecifier = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
+			const char* deviceSpecifier = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
 			while (*deviceSpecifier != '\0') {
 				LOG("              %s", deviceSpecifier);
 				while (*deviceSpecifier++ != '\0')
@@ -391,6 +396,7 @@ void CSound::StartThread(int maxSounds)
 
 	sources.clear(); // delete all sources
 	delete efx; // must happen after sources and before context
+	efx = NULL;
 	ALCcontext* curcontext = alcGetCurrentContext();
 	ALCdevice* curdevice = alcGetContextsDevice(curcontext);
 	alcMakeContextCurrent(NULL);
@@ -480,7 +486,7 @@ void CSound::PrintDebugInfo()
 	LOG_L(L_DEBUG, "# SoundItems: %i", (int)sounds.size());
 }
 
-bool CSound::LoadSoundDefs(const std::string& fileName)
+bool CSound::LoadSoundDefsImpl(const std::string& fileName)
 {
 	//! can be called from LuaUnsyncedCtrl too
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
@@ -598,10 +604,10 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 
 void CSound::NewFrame()
 {
-	Channels::General.UpdateFrame();
-	Channels::Battle.UpdateFrame();
-	Channels::UnitReply.UpdateFrame();
-	Channels::UserInterface.UpdateFrame();
+	Channels::General->UpdateFrame();
+	Channels::Battle->UpdateFrame();
+	Channels::UnitReply->UpdateFrame();
+	Channels::UserInterface->UpdateFrame();
 }
 
 

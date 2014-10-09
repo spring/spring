@@ -7,18 +7,24 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#include "AAIBrain.h"
 #include "AAI.h"
+#include "AAIBrain.h"
+#include "AAIBuildTable.h"
+#include "AAIExecute.h"
+#include "AAIUnitTable.h"
+#include "AAIConfig.h"
 #include "AAIMap.h"
+#include "AAIGroup.h"
+#include "AAISector.h"
+
+#include "LegacyCpp/UnitDef.h"
+using namespace springLegacyAI;
 
 AAIBrain::AAIBrain(AAI *ai)
 {
 	this->ai = ai;
 	freeBaseSpots = false;
 	expandable = true;
-
-	// initialize random numbers generator
-	srand ( time(NULL) );
 
 	max_distance = ai->Getmap()->xSectors + ai->Getmap()->ySectors - 2;
 	sectors.resize(max_distance);

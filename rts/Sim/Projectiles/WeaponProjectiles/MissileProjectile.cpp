@@ -3,7 +3,6 @@
 
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
-#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "MissileProjectile.h"
 #include "Rendering/GlobalRendering.h"
@@ -22,7 +21,7 @@
 
 const float CMissileProjectile::SMOKE_TIME = 60.0f;
 
-CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ProjectileParams()))
 
 CR_REG_METADATA(CMissileProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -45,7 +44,7 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_MEMBER(extraHeight),
 	CR_MEMBER(extraHeightDecay),
 	CR_MEMBER(extraHeightTime)
-));
+))
 
 CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, maxSpeed(0.0f)
@@ -65,10 +64,10 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 	, wobbleTime(1)
 
 	, oldSmoke(pos)
+	, oldDir(dir)
 {
 	projectileType = WEAPON_MISSILE_PROJECTILE;
 
-	oldDir = dir;
 
 	if (model != NULL) {
 		SetRadiusAndHeight(model);

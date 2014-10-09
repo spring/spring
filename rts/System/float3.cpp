@@ -5,8 +5,8 @@
 #include "System/myMath.h"
 #include <cmath> // std::min, std::max, std::fabs
 
-CR_BIND(float3, );
-CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
+CR_BIND(float3, )
+CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)))
 
 //! gets initialized later when the map is loaded
 float float3::maxxpos = -1.0f;

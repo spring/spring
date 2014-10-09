@@ -112,7 +112,7 @@ enum {
 struct Command
 {
 private:
-	CR_DECLARE_STRUCT(Command);
+	CR_DECLARE_STRUCT(Command)
 /*
 	TODO check if usage of System/MemPool.h for this struct improves performance
 */
@@ -347,7 +347,7 @@ private:
 
 struct CommandDescription {
 private:
-	CR_DECLARE_STRUCT(CommandDescription);
+	CR_DECLARE_STRUCT(CommandDescription)
 
 public:
 	CommandDescription():

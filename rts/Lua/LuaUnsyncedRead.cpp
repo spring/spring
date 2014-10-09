@@ -56,12 +56,12 @@
 #include "System/LoadSave/DemoReader.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/Platform/SDL1_keysym.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Misc/SpringTime.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
-	#include "System/Sound/EFX.h"
-	#include "System/Sound/EFXPresets.h"
+	#include "System/Sound/OpenAL/EFX.h"
+	#include "System/Sound/OpenAL/EFXPresets.h"
 #endif
 
 #include <set>
@@ -971,7 +971,7 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 
 	static CVisProjectileQuadDrawer projQuadIter;
 
-	const bool addSyncedProjectiles = luaL_optboolean(L, 2, true);
+	/*const bool addSyncedProjectiles =*/ luaL_optboolean(L, 2, true);
 	const bool addWeaponProjectiles = luaL_optboolean(L, 3, true);
 	const bool addPieceProjectiles = luaL_optboolean(L, 4, true);
 
@@ -1606,8 +1606,8 @@ int LuaUnsyncedRead::DiffTimers(lua_State* L)
 
 int LuaUnsyncedRead::GetSoundStreamTime(lua_State* L)
 {
-	lua_pushnumber(L, Channels::BGMusic.StreamGetPlayTime());
-	lua_pushnumber(L, Channels::BGMusic.StreamGetTime());
+	lua_pushnumber(L, Channels::BGMusic->StreamGetPlayTime());
+	lua_pushnumber(L, Channels::BGMusic->StreamGetTime());
 	return 2;
 }
 

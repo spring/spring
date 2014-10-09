@@ -20,7 +20,7 @@ class CGroupHandler;
  */
 class CGroup
 {
-	CR_DECLARE_STRUCT(CGroup);
+	CR_DECLARE_STRUCT(CGroup)
 
 public:
 	CGroup(int id, CGroupHandler* groupHandler);

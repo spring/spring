@@ -25,14 +25,12 @@
 #include "Sim/Units/UnitLoader.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
-#include "System/Sound/SoundChannels.h"
-
-#define PLAY_SOUNDS 1
+#include "System/Sound/ISoundChannels.h"
 
 using std::min;
 using std::max;
 
-CR_BIND_DERIVED(CBuilder, CUnit, );
+CR_BIND_DERIVED(CBuilder, CUnit, )
 
 CR_REG_METADATA(CBuilder, (
 	CR_MEMBER(range3D),
@@ -59,7 +57,7 @@ CR_REG_METADATA(CBuilder, (
 	CR_ENUM_MEMBER(terraformType),
 	CR_MEMBER(nanoPieceCache),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 
 //////////////////////////////////////////////////////////////////////
@@ -704,7 +702,8 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 	const bool onWater = (buildeeDef->floatOnWater && groundheight <= 0.0f);
 
 	if (mapDamage->disabled || !buildeeDef->levelGround || onWater ||
-	    (buildeeDef->canmove && (buildeeDef->speed > 0.0f))) {
+	    buildeeDef->IsAirUnit() || !buildeeDef->IsImmobileUnit()
+	) {
 		// skip the terraforming job
 		buildee->terraformLeft = 0;
 		buildee->groundLevelled = true;
@@ -773,23 +772,23 @@ float CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 void CBuilder::DependentDied(CObject *o)
 {
 	if (o == curBuild) {
-		curBuild = 0;
+		curBuild = nullptr;
 		StopBuild();
 	}
 	if (o == curReclaim) {
-		curReclaim = 0;
+		curReclaim = nullptr;
 		StopBuild();
 	}
 	if (o == helpTerraform) {
-		helpTerraform = 0;
+		helpTerraform = nullptr;
 		StopBuild();
 	}
 	if (o == curResurrect) {
-		curResurrect = 0;
+		curResurrect = nullptr;
 		StopBuild();
 	}
 	if (o == curCapture) {
-		curCapture = 0;
+		curCapture = nullptr;
 		StopBuild();
 	}
 	CUnit::DependentDied(o);
@@ -810,11 +809,9 @@ bool CBuilder::ScriptStartBuilding(float3 pos, bool silent)
 		script->StartBuilding(ClampRad(h - heading * TAANG2RAD), p - pitch);
 	}
 
-	#if (PLAY_SOUNDS == 1)
 	if ((!silent || inBuildStance) && losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.build, pos);
+		Channels::General->PlayRandomSample(unitDef->sounds.build, pos);
 	}
-	#endif
 
 	return inBuildStance;
 }

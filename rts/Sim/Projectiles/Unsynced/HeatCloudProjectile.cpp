@@ -8,7 +8,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 
-CR_BIND_DERIVED(CHeatCloudProjectile, CProjectile, );
+CR_BIND_DERIVED(CHeatCloudProjectile, CProjectile, )
 
 CR_REG_METADATA(CHeatCloudProjectile,
 (
@@ -23,7 +23,7 @@ CR_REG_METADATA(CHeatCloudProjectile,
 		CR_MEMBER(texture),
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_RESERVED(8)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

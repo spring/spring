@@ -19,7 +19,7 @@ namespace ThreadPool {
 	static inline int GetMaxThreads() { return 1; }
 	static inline int GetNumThreads() { return 1; }
 	static inline void NotifyWorkerThreads() {}
-};
+}
 
 
 static inline void for_mt(int start, int end, int step, const std::function<void(const int i)>&& f)
@@ -118,7 +118,7 @@ namespace ThreadPool {
 	int GetMaxThreads();
 	int GetNumThreads();
 	void NotifyWorkerThreads();
-};
+}
 
 
 template<class F, class... Args>
@@ -378,7 +378,7 @@ namespace ThreadPool {
 		ThreadPool::PushTaskGroup(singletask);
 		return singletask->GetFuture();
 	}
-};
+}
 
 #endif
 #endif

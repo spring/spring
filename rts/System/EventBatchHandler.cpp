@@ -13,6 +13,7 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "System/Platform/Threading.h"
 
+EventBatchHandler* EventBatchHandler::ebh = nullptr;
 boost::int64_t EventBatchHandler::eventSequenceNumber = 0;
 
 
@@ -25,10 +26,16 @@ EventBatchHandler::EventBatchHandler()
 }
 
 
-EventBatchHandler* EventBatchHandler::GetInstance()
+void EventBatchHandler::CreateInstance()
 {
-	static EventBatchHandler ebh;
-	return &ebh;
+	ebh = new EventBatchHandler();
+}
+
+
+void EventBatchHandler::DeleteInstance()
+{
+	delete ebh;
+	ebh = nullptr;
 }
 
 void EventBatchHandler::UnitMoved(const CUnit* unit) { EnqueueUnitMovedEvent(unit, unit->pos); }

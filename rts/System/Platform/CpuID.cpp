@@ -8,6 +8,7 @@
 	#include <intrin.h>
 #endif
 
+#include <boost/thread/thread.hpp>
 #include <assert.h>
 #include <set>
 
@@ -75,6 +76,8 @@ namespace springproc {
 		affinityMaskOfPackages = new uint64_t[nbProcessors];
 		processorApicIds = new uint32_t[nbProcessors];
 
+		setDefault();
+
 		unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
 		eax = 0;
 		ExecCPUID(&eax, &ebx, &ecx, &edx);
@@ -106,7 +109,7 @@ namespace springproc {
 			// Check if cpuid leaf 11 really exists
 			if (ebx != 0) {
 				hasLeaf11 = true;
-				LOG_L(L_DEBUG,"[CpuId] leaf 11 support\n");
+				LOG_L(L_DEBUG,"[CpuId] leaf 11 support");
 				getMasksIntelLeaf11();
 				getIdsIntelEnumerate();
 				return;
@@ -114,14 +117,14 @@ namespace springproc {
 		}
 
 		if (maxLeaf >= 4) {
-			LOG_L(L_DEBUG,"[CpuId] leaf 4 support\n");
+			LOG_L(L_DEBUG,"[CpuId] leaf 4 support");
 			getMasksIntelLeaf1and4();
 			getIdsIntelEnumerate();
 			return;
 		}
 		// Either it is a very old processor, or the cpuid instruction is disabled
 		// from BIOS. Print a warning an use processor number
-		LOG_L(L_WARNING,"[CpuId] Max cpuid leaf is less than 4! Using OS processor number.\n");
+		LOG_L(L_WARNING,"[CpuId] Max cpuid leaf is less than 4! Using OS processor number.");
 		setDefault();
 	}
 
@@ -142,10 +145,10 @@ namespace springproc {
 			return;
 
 		if (((ecx >> 8) & 0xFF) == 1) {
-			LOG_L(L_DEBUG,"[CpuId] SMT level found\n");
+			LOG_L(L_DEBUG,"[CpuId] SMT level found");
 			shiftCore = eax & 0xf;
 		} else {
-			LOG_L(L_DEBUG,"[CpuId] No SMT level supported\n");
+			LOG_L(L_DEBUG,"[CpuId] No SMT level supported");
 		}
 
 		eax = 11;
@@ -154,11 +157,11 @@ namespace springproc {
 		ExecCPUID(&eax, &ebx, &ecx, &edx);
 
 		if (((ecx >> 8) & 0xFF) == 2) {
-			LOG_L(L_DEBUG,"[CpuId] Core level found\n");
+			LOG_L(L_DEBUG,"[CpuId] Core level found");
 			    // Practically this is shiftCore + shitVirtual so it is shiftPackage
 			    shiftPackage = eax & 0xf;
 		} else {
-			LOG_L(L_DEBUG,"[CpuId] NO Core level supported\n");
+			LOG_L(L_DEBUG,"[CpuId] NO Core level supported");
 		}
 	}
 
@@ -214,38 +217,41 @@ namespace springproc {
 
 	void CpuId::getIdsIntelEnumerate()
 	{
+		auto oldAffinity = Threading::GetAffinity();
+
 		int processorNumber = Threading::GetLogicalCpuCores();
-		assert(processorNumber <= 64);	// as the affinity mask is a uint64_t
+		assert(processorNumber <= 64); // as the affinity mask is a uint64_t
+		assert(processorNumber <= 32); // spring uses uint32_t
 		for (size_t processor = 0; processor < processorNumber; processor++) {
-			Threading::SetAffinity(((uint32_t) 1) << processor);
+			Threading::SetAffinity(((uint32_t) 1) << processor, true);
+			boost::this_thread::yield();
 			processorApicIds[processor] = getApicIdIntel();
 		}
 
-		std::pair < std::set < uint32_t >::iterator, bool > ret;
-		// We determine the total numbers of cores cores
-		std::set < uint32_t > cores;
+		// We determine the total numbers of cores
+		std::set< uint32_t> cores;
 		for (size_t processor = 0; processor < processorNumber; processor++) {
-			ret = cores.insert(processorApicIds[processor] >> shiftCore);
-			if (ret.second) {
-				affinityMaskOfCores[cores.size() - 1] =
-				    ((uint64_t) 1) << processor;
-			}
+			auto ret = cores.insert(processorApicIds[processor] >> shiftCore);
+			if (!ret.second)
+				continue;
+
+			affinityMaskOfCores[cores.size() - 1] = ((uint64_t) 1) << processor;
 		}
 		coreTotalNumber = cores.size();
 
 		// We determine the total numbers of packages cores
-		std::set < uint32_t > packages;
+		std::set<uint32_t> packages;
 		for (size_t processor = 0; processor < processorNumber; processor++) {
-			ret =
-			    packages.
-			    insert(processorApicIds[processor] >> shiftPackage);
-			if (ret.second) {
-				affinityMaskOfPackages[packages.size() - 1] =
-				    ((uint64_t) 1) << processor;
-			}
+			auto ret = packages.insert(processorApicIds[processor] >> shiftPackage);
+			if (!ret.second)
+				continue;
+
+			affinityMaskOfPackages[packages.size() - 1] |= ((uint64_t) 1) << processor;
 		}
 
 		packageTotalNumber = packages.size();
+
+		Threading::SetAffinity(oldAffinity);
 	}
 
 	uint32_t CpuId::getApicIdIntel()
@@ -265,8 +271,7 @@ namespace springproc {
 
 	void CpuId::getIdsAmd()
 	{
-		LOG_L(L_WARNING,"[CpuId] ht/smt/cmt detection for AMD is not implemented! Using processor number reported by OS.\n");
-		setDefault();
+		LOG_L(L_WARNING,"[CpuId] ht/smt/cmt detection for AMD is not implemented! Using processor number reported by OS.");
 	}
 
 	int CpuId::getCoreTotalNumber()
@@ -292,7 +297,7 @@ namespace springproc {
 	void CpuId::setDefault()
 	{
 		coreTotalNumber = Threading::GetLogicalCpuCores();
-		packageTotalNumber = Threading::GetLogicalCpuCores();
+		packageTotalNumber = 1;
 
 		// As we could not determine anything just set affinity mask to (-1)
 		for (int i = 0; i < Threading::GetLogicalCpuCores(); i++) {

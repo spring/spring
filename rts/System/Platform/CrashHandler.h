@@ -28,6 +28,6 @@ namespace CrashHandler {
 #endif
 
 	void OutputStacktrace();
-};
+}
 
 #endif // _CRASH_HANDLER_H_

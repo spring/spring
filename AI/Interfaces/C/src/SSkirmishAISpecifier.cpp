@@ -20,7 +20,7 @@
 
 #include "SSkirmishAISpecifier.h"
 
-#include "Util.h"
+#include "CUtils/Util.h"
 
 #include "System/maindefines.h"
 #include "System/SafeCStrings.h"

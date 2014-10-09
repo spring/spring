@@ -12,7 +12,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/Matrix44f.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/ModInfo.h"
 
 #define TREE_RADIUS 20
 
@@ -26,7 +25,7 @@ class CFireProjectile;
 
 class CFeature: public CSolidObject, public boost::noncopyable
 {
-	CR_DECLARE(CFeature);
+	CR_DECLARE(CFeature)
 
 public:
 	CFeature();

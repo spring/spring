@@ -85,8 +85,6 @@ public:
 
 	void CreateNewFrame(bool fromServerThread, bool fixedFrameTime);
 
-	bool WaitsOnCon() const;
-
 	void SetGamePausable(const bool arg);
 
 	bool HasStarted() const { return gameHasStarted; }
@@ -125,9 +123,10 @@ private:
 	/**
 	 * @brief drops chat or drawin messages for given playerNum
 	 */
-	void MutePlayer(const int playerNum, bool muteChat, bool muteDraw );
+	void MutePlayer(const int playerNum, bool muteChat, bool muteDraw);
 	void ResignPlayer(const int playerNum);
 
+	bool CheckPlayersPassword(const int playerNum, const std::string& pw) const;
 
 	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect = false, int netloss = 0);
 
@@ -169,8 +168,11 @@ private:
 	float GetDemoTime() const;
 
 private:
-	/////////////////// game status variables ///////////////////
+	/////////////////// game settings ///////////////////
+	boost::scoped_ptr<const CGameSetup> setup;
+	boost::scoped_ptr<const GameData> gameData;
 
+	/////////////////// game status variables ///////////////////
 	unsigned char playerNumberMap[256];
 	volatile bool quitServer;
 	int serverFrameNum;
@@ -196,11 +198,8 @@ private:
 	float userSpeedFactor;
 	float internalSpeed;
 
-	unsigned char ReserveNextAvailableSkirmishAIId();
-
 	std::map<unsigned char, GameSkirmishAI> ais;
 	std::list<unsigned char> usedSkirmishAIIds;
-	void FreeSkirmishAIId(const unsigned char skirmishAIId);
 
 	std::vector<GameParticipant> players;
 	std::vector<GameTeam> teams;
@@ -213,13 +212,8 @@ private:
 	int medianPing;
 	int curSpeedCtrl;
 
-	/////////////////// game settings ///////////////////
-	boost::scoped_ptr<const CGameSetup> setup;
-	boost::scoped_ptr<const GameData> gameData;
-
 	/// The maximum speed users are allowed to set
 	float maxUserSpeed;
-
 	/// The minimum speed users are allowed to set (actual speed can be lower due to high cpu usage)
 	float minUserSpeed;
 
@@ -227,13 +221,11 @@ private:
 	bool noHelperAIs;
 	bool canReconnect;
 	bool allowSpecDraw;
-	bool bypassScriptPasswordCheck;
+	bool allowSpecJoin;
 	bool whiteListAdditionalPlayers;
 
 	bool logInfoMessages;
-	bool logErrorMessages;
 	bool logDebugMessages;
-	bool logWarnMessages;
 
 	std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > > packetCache;
 
@@ -249,6 +241,8 @@ private:
 	void UserSpeedChange(float newSpeed, int player);
 
 	void AddAdditionalUser( const std::string& name, const std::string& passwd, bool fromDemo = false, bool spectator = true, int team = 0);
+	unsigned char ReserveNextAvailableSkirmishAIId();
+	void FreeSkirmishAIId(const unsigned char skirmishAIId);
 
 	bool hasLocalClient;
 	unsigned localClientNumber;

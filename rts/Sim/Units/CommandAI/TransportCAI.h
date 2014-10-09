@@ -22,7 +22,7 @@ struct Command;
 class CTransportCAI : public CMobileCAI
 {
 public:
-	CR_DECLARE(CTransportCAI);
+	CR_DECLARE(CTransportCAI)
 	CTransportCAI(CUnit* owner);
 	CTransportCAI();
 	~CTransportCAI();

@@ -13,7 +13,7 @@
 	#define SONAR_MAPS
 #endif
 
-CR_BIND(CRadarHandler, (false));
+CR_BIND(CRadarHandler, (false))
 
 CR_REG_METADATA(CRadarHandler, (
 	CR_MEMBER(radarErrorSizes),
@@ -36,7 +36,7 @@ CR_REG_METADATA(CRadarHandler, (
 	CR_MEMBER(seismicMaps),
 	CR_MEMBER(commonJammerMap),
 	CR_MEMBER(commonSonarJammerMap)
-));
+))
 
 
 CRadarHandler* radarHandler = NULL;

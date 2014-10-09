@@ -48,12 +48,12 @@ CFeatureDrawer* featureDrawer = NULL;
 
 /******************************************************************************/
 
-CR_BIND(CFeatureDrawer, );
-CR_BIND(CFeatureDrawer::DrawQuad, );
+CR_BIND(CFeatureDrawer, )
+CR_BIND(CFeatureDrawer::DrawQuad, )
 
 CR_REG_METADATA(CFeatureDrawer, (
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 /******************************************************************************/
 

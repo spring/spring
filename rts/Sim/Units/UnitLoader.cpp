@@ -208,16 +208,17 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		const int sqSize = math::ceil(math::sqrt((float) numRequestedUnits));
 		const float sqHalfMapSize = sqSize / 2 * 10 * SQUARE_SIZE;
 
-		pos.x = std::max(sqHalfMapSize, std::min(pos.x, float3::maxxpos - sqHalfMapSize - 1));
-		pos.z = std::max(sqHalfMapSize, std::min(pos.z, float3::maxzpos - sqHalfMapSize - 1));
+		pos.x = Clamp(pos.x, sqHalfMapSize, float3::maxxpos - sqHalfMapSize - 1);
+		pos.z = Clamp(pos.z, sqHalfMapSize, float3::maxzpos - sqHalfMapSize - 1);
 
 		for (int a = 1; a <= numRequestedUnits; ++a) {
 			Watchdog::ClearPrimaryTimers(); // the other thread may be waiting for a mutex held by this one, triggering hang detection
 			const float px = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 			const float pz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
+			const UnitDef* ud = unitDefHandler->GetUnitDefByID(a);
 
 			const UnitLoadParams unitParams = {
-				unitDefHandler->GetUnitDefByID(a),
+				ud,
 				NULL,
 
 				float3(px, CGround::GetHeightReal(px, pz), pz),
@@ -361,6 +362,7 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 
 	if (mapDamage->disabled) return;
 	if (!unitDef->levelGround) return;
+	if (unitDef->IsAirUnit()) return;
 	if (!unitDef->IsImmobileUnit()) return;
 	if (unitDef->floatOnWater && groundheight <= 0.0f) return;
 
@@ -391,6 +393,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 
 	if (mapDamage->disabled) return;
 	if (!unitDef->levelGround) return;
+	if (unitDef->IsAirUnit()) return;
 	if (!unitDef->IsImmobileUnit()) return;
 	if (unitDef->floatOnWater && groundheight <= 0.0f) return;
 

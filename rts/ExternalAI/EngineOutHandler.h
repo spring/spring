@@ -23,7 +23,7 @@ struct SSkirmishAICallback;
 void handleAIException(const char* description);
 
 class CEngineOutHandler : public CObject {
-	CR_DECLARE(CEngineOutHandler);
+	CR_DECLARE(CEngineOutHandler)
 
 	~CEngineOutHandler();
 
@@ -89,11 +89,6 @@ public:
 	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
 	 */
 	void DestroySkirmishAI(const size_t skirmishAIId);
-
-
-	void SetCheating(bool enable);
-	bool IsCheating() const;
-
 
 	void Load(std::istream* s);
 	void Save(std::ostream* s);

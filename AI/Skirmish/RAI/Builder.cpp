@@ -17,20 +17,20 @@ sBuildQuarry::sBuildQuarry(sRAIBuildList *buildlist)
 	index=0;
 	type=0;
 	deletionFrame=0;
-};
+}
 
 sBuildQuarry::~sBuildQuarry()
 {
 	if( BL != 0 )
 		BL->unitsActive--;
-};
+}
 
 bool sBuildQuarry::IsValid(int frame)
 {
 	if( int(creationID.size()) == 0 && builderID == -1 && frame >= deletionFrame )
 		return false;
 	return true;
-};
+}
 
 void sBuildQuarry::SetRS(ResourceSiteExt* rs)
 {
@@ -39,7 +39,7 @@ void sBuildQuarry::SetRS(ResourceSiteExt* rs)
 	RS = rs;
 	if( RS != 0 )
 		RS->builderID=builderID;
-};
+}
 // ------------------------------------------------------------------------------------------------
 
 cBuilder::cBuilder(IAICallback* callback, cRAI* global)

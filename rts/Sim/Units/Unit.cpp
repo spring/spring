@@ -60,11 +60,9 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncedPrimitive.h"
 #include "System/Sync/SyncTracer.h"
-
-#define PLAY_SOUNDS 1
 
 // See end of source for member bindings
 //////////////////////////////////////////////////////////////////////
@@ -2079,11 +2077,9 @@ void CUnit::Activate()
 
 	radarHandler->MoveUnit(this);
 
-	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.activate, this);
+		Channels::General->PlayRandomSample(unitDef->sounds.activate, this);
 	}
-	#endif
 }
 
 void CUnit::Deactivate()
@@ -2100,11 +2096,9 @@ void CUnit::Deactivate()
 
 	radarHandler->RemoveUnit(this);
 
-	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.deactivate, this);
+		Channels::General->PlayRandomSample(unitDef->sounds.deactivate, this);
 	}
-	#endif
 }
 
 
@@ -2261,7 +2255,7 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 	}
 }
 
-CR_BIND_DERIVED(CUnit, CSolidObject, );
+CR_BIND_DERIVED(CUnit, CSolidObject, )
 CR_REG_METADATA(CUnit, (
 	CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefID),
@@ -2485,4 +2479,4 @@ CR_REG_METADATA(CUnit, (
 //	CR_MEMBER(model),
 
 	CR_POSTLOAD(PostLoad)
-));
+))

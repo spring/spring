@@ -127,7 +127,7 @@ CSevenZipArchive::CSevenZipArchive(const std::string& name):
 	WRes wres = InFile_Open(&archiveStream.file, name.c_str());
 	if (wres) {
 		boost::system::error_code e(wres, boost::system::get_system_category());
-		LOG_L(L_ERROR, "Error opening %s: %s (%i)",
+		LOG_L(L_ERROR, "Error opening \"%s\": %s (%i)",
 				name.c_str(), e.message().c_str(), e.value());
 		return;
 	}
@@ -145,7 +145,7 @@ CSevenZipArchive::CSevenZipArchive(const std::string& name):
 		isOpen = true;
 	} else {
 		isOpen = false;
-		LOG_L(L_ERROR, "Error opening %s: %s", name.c_str(), GetErrorStr(res));
+		LOG_L(L_ERROR, "Error opening \"%s\": %s", name.c_str(), GetErrorStr(res));
 		return;
 	}
 

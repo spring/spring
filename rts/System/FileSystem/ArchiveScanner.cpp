@@ -341,8 +341,13 @@ CArchiveScanner::CArchiveScanner()
 : isDirty(false)
 {
 	// the "cache" dir is created in DataDirLocater
-	cachefile = dataDirLocater.GetWriteDirPath() + FileSystem::EnsurePathSepAtEnd(FileSystem::GetCacheBaseDir()) + "ArchiveCache.lua";
+	const std:: string cacheFolder = dataDirLocater.GetWriteDirPath() + FileSystem::EnsurePathSepAtEnd(FileSystem::GetCacheBaseDir());
+	cachefile = cacheFolder + IntToString(INTERNAL_VER, "ArchiveCache%i.lua");
 	ReadCacheData(GetFilepath());
+	if (archiveInfos.empty()) {
+		// when versioned ArchiveCache%i.lua is missing or empty, try old unversioned filename
+		ReadCacheData(cacheFolder + "ArchiveCache.lua");
+	}
 
 	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
 	std::vector<std::string> scanDirs;
@@ -443,12 +448,6 @@ void CArchiveScanner::ScanDir(const std::string& curPath, std::list<std::string>
 
 			// Exclude archivefiles found inside directory archives (.sdd)
 			if (lcfpath.find(".sdd") != std::string::npos) {
-				continue;
-			}
-
-			// Exclude archivefiles found inside hidden directories
-			if ((lcfpath.find("/hidden/")   != std::string::npos) ||
-			    (lcfpath.find("\\hidden\\") != std::string::npos)) {
 				continue;
 			}
 
@@ -558,7 +557,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 				return;
 			} else {
 				if (aii->second.updated) {
-					LOG_L(L_WARNING, "Found a \"%s\" already in \"%s\", ignoring one in \"%s\"", aii->first.c_str(), aii->second.path.c_str(), fpath.c_str());
+					LOG_L(L_ERROR, "Found a \"%s\" already in \"%s\", ignoring one in \"%s\"", aii->first.c_str(), aii->second.path.c_str(), fpath.c_str());
 					return;
 				}
 
@@ -595,6 +594,10 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	auto& ad = ai.archiveData;
 	if (hasMapinfo) {
 		ScanArchiveLua(ar.get(), "mapinfo.lua", ai, error);
+		if (ad.GetMapFile().empty()) {
+			LOG_L(L_WARNING, "%s: mapfile isn't set in mapinfo.lua, please set it for faster loading!", fullName.c_str());
+			mapfile = SearchMapFile(ar.get(), error);
+		}
 	} else if (hasModinfo) {
 		ScanArchiveLua(ar.get(), "modinfo.lua", ai, error);
 	} else {
@@ -843,10 +846,10 @@ static inline void SafeStr(FILE* out, const char* prefix, const std::string& str
 	if (str.empty()) {
 		return;
 	}
-	if (str.find_first_of("\\\"") == std::string::npos) {
-		fprintf(out, "%s\"%s\",\n", prefix, str.c_str());
-	} else {
+	if ( (str.find_first_of("\\\"") != std::string::npos) || (str.find_first_of("\n") != std::string::npos )) {
 		fprintf(out, "%s[[%s]],\n", prefix, str.c_str());
+	} else {
+		fprintf(out, "%s\"%s\",\n", prefix, str.c_str());
 	}
 }
 
@@ -854,7 +857,7 @@ void FilterDep(std::vector<std::string>& deps, const std::string& exclude)
 {
 	auto it = std::remove_if(deps.begin(), deps.end(), [&](const std::string& dep) { return (dep == exclude); });
 	deps.erase(it, deps.end());
-};
+}
 
 void CArchiveScanner::WriteCacheData(const std::string& filename)
 {
@@ -1019,7 +1022,24 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 }
 
 
-std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, int depth) const
+std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllArchives() const
+{
+	std::vector<ArchiveData> ret;
+
+	for (const auto& pair: archiveInfos) {
+		const ArchiveData& aid = pair.second.archiveData;
+
+		// Add the archive the mod is in as the first dependency
+		ArchiveData md = aid;
+		md.GetDependencies().insert(md.GetDependencies().begin(), pair.second.origName);
+		ret.push_back(md);
+	}
+
+	sortByName(ret);
+	return ret;
+}
+
+std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string& root, int depth) const
 {
 	LOG_S(LOG_SECTION_ARCHIVESCANNER, "GetArchives: %s (depth %u)", root.c_str(), depth);
 	// Protect against circular dependencies
@@ -1059,7 +1079,7 @@ std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, i
 	// add depth-first
 	ret.push_back(aii->second.path + aii->second.origName);
 	for (const std::string& dep: aii->second.archiveData.GetDependencies()) {
-		const std::vector<std::string>& deps = GetArchives(dep, depth + 1);
+		const std::vector<std::string>& deps = GetAllArchivesUsedBy(dep, depth + 1);
 		for (const std::string& depSub: deps) {
 			AddDependency(ret, depSub);
 		}
@@ -1111,7 +1131,7 @@ unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& name) 
 
 unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name) const
 {
-	const std::vector<std::string> &ars = GetArchives(name);
+	const std::vector<std::string>& ars = GetAllArchivesUsedBy(name);
 	unsigned int checksum = 0;
 
 	for (unsigned int a = 0; a < ars.size(); a++) {

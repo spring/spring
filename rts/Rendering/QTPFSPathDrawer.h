@@ -18,8 +18,8 @@ namespace QTPFS {
 
 	namespace PathSearchTrace {
 		struct Execution;
-	};
-};
+	}
+}
 
 struct QTPFSPathDrawer: public IPathDrawer {
 public:

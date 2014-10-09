@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <vector>
 #include <string>
 #include <SDL.h>
 
@@ -10,7 +11,6 @@
 
 #include "myGL.h"
 #include "VertexArray.h"
-#include "VertexArrayRange.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
@@ -21,6 +21,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/MessageBox.h"
 #include "System/Platform/Threading.h"
+#include "System/type2.h"
 
 
 CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false).description("Disables the warning an user will receive if (s)he attempts to run Spring on an outdated and underpowered video card.");
@@ -28,21 +29,17 @@ CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug fe
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
 
-static CVertexArray* vertexArray1 = NULL;
-static CVertexArray* vertexArray2 = NULL;
-static CVertexArray* currentVertexArray = NULL;
-//BOOL gmlVertexArrayEnable = 0;
+static std::vector<CVertexArray*> vertexArrays;
+static int currentVertexArray = 0;
+
+
 /******************************************************************************/
 /******************************************************************************/
 
 CVertexArray* GetVertexArray()
 {
-	if (currentVertexArray == vertexArray1){
-		currentVertexArray = vertexArray2;
-	} else {
-		currentVertexArray = vertexArray1;
-	}
-	return currentVertexArray;
+	currentVertexArray = (currentVertexArray + 1) % vertexArrays.size();
+	return vertexArrays[currentVertexArray];
 }
 
 
@@ -50,24 +47,31 @@ CVertexArray* GetVertexArray()
 
 void PrintAvailableResolutions()
 {
-	std::string modes;
-
 	// Get available fullscreen/hardware modes
-	//FIXME this checks only the main screen
-	const int nummodes = SDL_GetNumDisplayModes(0);
-	for (int i = (nummodes-1); i >= 0; --i) { // reverse order to print them from low to high
-		SDL_DisplayMode mode;
-		SDL_GetDisplayMode(0, i, &mode);
-		if (!modes.empty()) {
-			modes += ", ";
-		}
-		modes += IntToString(mode.w) + "x" + IntToString(mode.h);
-	}
-	if (nummodes < 1) {
-		modes = "NONE";
-	}
+	const int numdisplays = SDL_GetNumVideoDisplays();
+	for(int k=0; k < numdisplays; ++k) {
+		std::string modes;
+		SDL_Rect rect;
+		const int nummodes = SDL_GetNumDisplayModes(k);
+		SDL_GetDisplayBounds(k, &rect);
 
-	LOG("Supported Video modes: %s", modes.c_str());
+		std::set<int2> resolutions;
+		for (int i = 0; i < nummodes; ++i) {
+			SDL_DisplayMode mode;
+			SDL_GetDisplayMode(k, i, &mode);
+			resolutions.insert(int2(mode.w, mode.h));
+		}
+		for (const int2& res: resolutions) {
+			if (!modes.empty()) {
+				modes += ", ";
+			}
+			modes += IntToString(res.x) + "x" + IntToString(res.y);
+		}
+		if (nummodes < 1) {
+			modes = "NONE";
+		}
+		LOG("Supported Video modes on Display %d x:%d y:%d %dx%d:\n\t%s", k+1,rect.x, rect.y, rect.w, rect.h, modes.c_str());
+	}
 }
 
 #ifdef GL_ARB_debug_output
@@ -80,7 +84,8 @@ void PrintAvailableResolutions()
 #else
 	#define _APIENTRY
 #endif
-void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam)
+
+void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam)
 {
 	std::string sourceStr;
 	std::string typeStr;
@@ -311,6 +316,7 @@ void LoadExtensions()
 	LOG("GLSL version: %s", glslVersion);
 	LOG("GLEW version: %s", glewVersion);
 	LOG("Video RAM:    %s", glVidMemStr);
+	LOG("SwapInterval: %d", SDL_GL_GetSwapInterval());
 
 	ShowCrappyGpuWarning(glVendor, glRenderer);
 
@@ -344,7 +350,8 @@ void LoadExtensions()
 #if defined(GL_ARB_debug_output) && !defined(HEADLESS)
 	if (GLEW_ARB_debug_output && configHandler->GetBool("DebugGL")) {
 		LOG("Installing OpenGL-DebugMessageHandler");
-		glDebugMessageCallbackARB(&OpenGLDebugMessageCallback, NULL);
+		//typecast is a workarround for #4510, signature of the callback message changed :-|
+		glDebugMessageCallbackARB((GLDEBUGPROCARB)&OpenGLDebugMessageCallback, NULL);
 
 		if (configHandler->GetBool("DebugGLStacktraces")) {
 			// The callback should happen in the thread that made the gl call
@@ -354,17 +361,15 @@ void LoadExtensions()
 	}
 #endif
 
-	vertexArray1 = new CVertexArray;
-	vertexArray2 = new CVertexArray;
+	for (int i = 0; i<2; ++i)
+		vertexArrays.push_back(new CVertexArray);
 }
 
 
 void UnloadExtensions()
 {
-	delete vertexArray1;
-	delete vertexArray2;
-	vertexArray1 = NULL;
-	vertexArray2 = NULL;
+	for (CVertexArray* va: vertexArrays)
+		delete va;
 }
 
 /******************************************************************************/

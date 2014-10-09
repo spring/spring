@@ -14,9 +14,7 @@
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
 
-
-
-CR_BIND_DERIVED(CWeaponProjectile, CProjectile, );
+CR_BIND_DERIVED(CWeaponProjectile, CProjectile, )
 
 CR_REG_METADATA(CWeaponProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -29,7 +27,7 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(bounces),
 	CR_MEMBER(weaponDefID),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 
 
@@ -266,46 +264,49 @@ void CWeaponProjectile::UpdateInterception()
 
 void CWeaponProjectile::UpdateGroundBounce()
 {
+	// projectile is not allowed to bounce on either surface
+	if (!weaponDef->groundBounce && !weaponDef->waterBounce)
+		return;
+	// max bounce already reached?
+	if ((bounces + 1) > weaponDef->numBounce)
+		return;
 	if (luaMoveCtrl)
 		return;
 	if (ttl <= 0)
 		return;
-	// projectile is not allowed to bounce even once
-	if (weaponDef->numBounce < 0)
-		return;
-	// projectile is not allowed to bounce on either surface
-	if (!weaponDef->groundBounce && !weaponDef->waterBounce)
-		return;
 
-	const float gh = CGround::GetHeightReal(pos.x, pos.z);
-	const float dg = pos.y - gh;
-	const float dw = pos.y - std::max(gh, 0.0f);
+	// water or ground bounce?
+	float3 normal;
+	bool bounced = false;
+	const float distWaterHit  = (pos.y > 0.0f && speed.y < 0.0f) ? (pos.y / -speed.y) : -1.0f;
+	const bool intersectWater = (distWaterHit >= 0.0f) && (distWaterHit <= 1.0f);
+	if (intersectWater && weaponDef->waterBounce) {
+		pos += speed * distWaterHit;
+		pos.y = 0.5f;
+		normal = CGround::GetNormalAboveWater(pos.x, pos.z);
+		bounced = true;
+	} else {
+		const float distGroundHit  = CGround::LineGroundCol(pos, pos + speed); //TODO use traj one for traj weapons?
+		const bool intersectGround = (distGroundHit >= 0.0f);
+		if (intersectGround && weaponDef->groundBounce) {
+			static const float dontTouchSurface = 0.99f;
+			pos += dir * distGroundHit * dontTouchSurface;
+			normal = CGround::GetNormal(pos.x, pos.z);
+			bounced = true;
+		}
+	}
 
-	// if not close to a bounceable surface, bail
-	if (dg > 0.1f && dw > 0.1f)
+	if (!bounced)
 		return;
-
-	// if close to water but not allowed to bounce on it, bail
-	if ((dw <= 0.1f) && !weaponDef->waterBounce)
-		return;
-	// if close to ground but not allowed to bounce on it, bail
-	if ((dg <= 0.1f) && !weaponDef->groundBounce)
-		return;
-
-	if ((bounces += 1) > weaponDef->numBounce)
-		return;
-
-	const float3& normal = CGround::GetNormal(pos.x, pos.z);
-	const float dot = math::fabs(speed.dot(normal));
 
 	// spawn CEG before bouncing, otherwise we might be too
 	// far up in the air if it has the (under)water flag set
 	explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, pos, normal, speed.w, 1.0f, 1.0f, owner(), NULL);
 
-	SetPosition(pos - speed);
+	++bounces;
+	const float dot = math::fabs(speed.dot(normal));
 	CWorldObject::SetVelocity(speed - (speed + normal * dot) * (1 - weaponDef->bounceSlip   ));
 	CWorldObject::SetVelocity(         speed + normal * dot  * (1 + weaponDef->bounceRebound));
-	SetPosition(pos + speed);
 	SetVelocityAndSpeed(speed);
 }
 

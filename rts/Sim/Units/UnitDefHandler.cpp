@@ -92,7 +92,8 @@ int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable&
 		// force-initialize the real* members
 		newDef->SetNoCost(true);
 		newDef->SetNoCost(noCost);
-	} catch (const content_error&) {
+	} catch (const content_error& err) {
+		LOG_L(L_ERROR, "%s", err.what());
 		delete newDef;
 		return 0;
 	}
@@ -291,7 +292,7 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef, const std::string&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".png", bitmap) &&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".pcx", bitmap) &&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".bmp", bitmap)) {
-			bitmap.Alloc(1, 1); // last resort
+			bitmap.AllocDummy(SColor(255, 0, 0, 255));
 		}
 	}
 

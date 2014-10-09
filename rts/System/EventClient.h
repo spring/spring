@@ -307,6 +307,7 @@ class CEventClient
 		virtual void DrawScreenEffects();
 		virtual void DrawScreen();
 		virtual void DrawInMiniMap();
+		virtual void DrawInMiniMapBackground();
 
 		virtual bool DrawUnit(const CUnit* unit);
 		virtual bool DrawFeature(const CFeature* feature);

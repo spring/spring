@@ -35,14 +35,8 @@ CONFIG(bool, RotateLogFiles).defaultValue(false)
 CONFIG(std::string, LogSections).defaultValue("")
 		.description("Comma seperated list of enabled logsections, see infolog.txt / console output for possible values");
 
-/*
-LogFlush defaults to true, because there should be pretty low performance gains as most
-fwrite implementations cache on their own. Also disabling this causes stack-traces to
-be cut off. BEFORE letting it default to false again, verify that it really increases
-performance as the drawbacks really suck.
-*/
-CONFIG(bool, LogFlush).defaultValue(true)
-		.description("Instantly write to the logfile, use only for debugging as it will cause a slowdown");
+CONFIG(int, LogFlushLevel).defaultValue(LOG_LEVEL_ERROR)
+		.description("Flush the logfile when level of message is above LogFlushLevel. i.e. ERROR is flushed as default, WARNING isn't.");
 
 /******************************************************************************/
 /******************************************************************************/
@@ -183,7 +177,7 @@ static void InitializeLogSections()
 		log_filter_section_setMinLevel(*si, logLevel);
 
 		enabledLogSectionsStr << ((numEnabledSections > 0)? ", ": "");
-		enabledLogSectionsStr << *si << "(" << log_util_levelToChar(logLevel) << ")";
+		enabledLogSectionsStr << *si << "(" << log_util_levelToString(logLevel) << ")";
 
 		numEnabledSections++;
 	}
@@ -261,7 +255,7 @@ void CLogOutput::Initialize()
 	if (configHandler->GetBool("RotateLogFiles"))
 		RotateLogFile();
 
-	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, configHandler->GetBool("LogFlush"));
+	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, configHandler->GetInt("LogFlushLevel"));
 	InitializeLogSections();
 
 	LOG("LogOutput initialized.");

@@ -164,6 +164,16 @@ static inline void EnsureEndsWith(std::string* str, const char* postfix)
 }
 
 
+/**
+ * Sets a bool according to the value encoded in a string.
+ * The conversion works like this:
+ * - ""  -> toggle-value
+ * - "0" -> false
+ * - "1" -> true
+ */
+void InverseOrSetBool(bool& container, const std::string& argValue, const bool inverseArg = false);
+
+
 /// Helper function to avoid division by Zero
 static inline float SafeDivide(const float a, const float b)
 {

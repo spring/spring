@@ -30,6 +30,7 @@
 #include "Rendering/DefaultPathDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/GL/VertexArray.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
@@ -71,24 +72,16 @@ void DefaultPathDrawer::DrawAll() const {
 
 void DefaultPathDrawer::DrawInMiniMap()
 {
-	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	const CPathEstimator* pe = pm->medResPE;
-	const MoveDef* md = GetSelectedMoveDef();
 
-	if (md == NULL)
-		return;
-
-	if (gd->GetDrawMode() < CBaseGroundDrawer::drawPathTrav)
-		return;
-	if (gd->GetDrawMode() > CBaseGroundDrawer::drawPathCost)
+	if (!IsEnabled())
 		return;
 
 	glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glLoadIdentity();
-		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f);
-		glTranslatef((float)minimap->GetPosX() * globalRendering->pixelX, (float)minimap->GetPosY() * globalRendering->pixelY, 0.0f);
-		glScalef((float)minimap->GetSizeX() * globalRendering->pixelX, (float)minimap->GetSizeY() * globalRendering->pixelY, 1.0f);
+		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
+		minimap->ApplyConstraintsMatrix();
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
@@ -98,13 +91,12 @@ void DefaultPathDrawer::DrawInMiniMap()
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 0.0f, 0.7f);
 
-	for (const CPathEstimator::SingleBlock& sb: pe->updatedBlocks) {
-		if (sb.moveDef == md) {
-			const int blockIdxX = sb.blockPos.x * pe->GetBlockSize();
-			const int blockIdxY = sb.blockPos.y * pe->GetBlockSize();
-			glRectf(blockIdxX, blockIdxY, blockIdxX + pe->GetBlockSize(), blockIdxY + pe->GetBlockSize());
-		}
+	for (const int2& sb: pe->updatedBlocks) {
+		const int blockIdxX = sb.x * pe->GetBlockSize();
+		const int blockIdxY = sb.y * pe->GetBlockSize();
+		glRectf(blockIdxX, blockIdxY, blockIdxX + pe->GetBlockSize(), blockIdxY + pe->GetBlockSize());
 	}
+
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glEnable(GL_TEXTURE_2D);
 
@@ -245,12 +237,12 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 		} break;
 
 		case CBaseGroundDrawer::drawPathCost: {
-			const PathNodeStateBuffer& maxResStates = pm->maxResPF->squareStates;
+			const PathNodeStateBuffer& maxResStates = pm->maxResPF->blockStates;
 			const PathNodeStateBuffer& medResStates = pm->medResPE->blockStates;
 			const PathNodeStateBuffer& lowResStates = pm->lowResPE->blockStates;
 
-			const unsigned int medResBlockSize = pm->medResPE->BLOCK_SIZE, medResBlocksX = pm->medResPE->nbrOfBlocksX;
-			const unsigned int lowResBlockSize = pm->lowResPE->BLOCK_SIZE, lowResBlocksX = pm->lowResPE->nbrOfBlocksX;
+			const unsigned int medResBlockSize = pm->medResPE->BLOCK_SIZE, medResBlocksX = pm->medResPE->GetNumBlocks().x;
+			const unsigned int lowResBlockSize = pm->lowResPE->BLOCK_SIZE, lowResBlocksX = pm->lowResPE->GetNumBlocks().x;
 
 			const float gCostMax[3] = {
 				std::max(1.0f, maxResStates.GetMaxCost(NODE_COST_G)),
@@ -342,51 +334,44 @@ void DefaultPathDrawer::Draw() const {
 
 
 void DefaultPathDrawer::Draw(const CPathFinderDef* pfd) const {
-	glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
+	if (pfd->synced) {
+		glColor4f(1.0f, 1.0f, 0.0f, 1.0f);
+	} else {
+		glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
+	}
 	glSurfaceCircle(pfd->goal, math::sqrt(pfd->sqGoalRadius), 20);
 }
 
 void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 	glColor3f(0.7f, 0.2f, 0.2f);
 	glDisable(GL_TEXTURE_2D);
-	glBegin(GL_LINES);
+	CVertexArray* va = GetVertexArray();
+	va->Initialize();
 
-	for (unsigned int idx = 0; idx < pf->openSquareBuffer.GetSize(); idx++) {
-		const PathNode* os = pf->openSquareBuffer.GetNode(idx);
+	for (unsigned int idx = 0; idx < pf->openBlockBuffer.GetSize(); idx++) {
+		const PathNode* os = pf->openBlockBuffer.GetNode(idx);
 		const int2 sqr = os->nodePos;
 		const int square = os->nodeNum;
-
-		if (pf->squareStates.nodeMask[square] & PATHOPT_START)
-			continue;
-
 		float3 p1;
 			p1.x = sqr.x * SQUARE_SIZE;
 			p1.z = sqr.y * SQUARE_SIZE;
 			p1.y = CGround::GetHeightAboveWater(p1.x, p1.z, false) + 15.0f;
+
+		const unsigned int dir = pf->blockStates.nodeMask[square] & PATHOPT_CARDINALS;
+		const int2 obp = sqr - (CPathFinder::GetDirectionVectorsTable2D())[dir];
 		float3 p2;
+			p2.x = obp.x * SQUARE_SIZE;
+			p2.z = obp.y * SQUARE_SIZE;
+			p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 15.0f;
 
 		if (!camera->InView(p1) && !camera->InView(p2))
 			continue;
 
-		const unsigned int dir = pf->squareStates.nodeMask[square] & PATHOPT_CARDINALS;
-		const unsigned int obx = sqr.x - (CPathFinder::GetDirectionVectorsTable2D())[dir].x;
-		const unsigned int obz = sqr.y - (CPathFinder::GetDirectionVectorsTable2D())[dir].y;
-		/*
-		const unsigned int obsquare =  obz * gs->mapx + obx;
-
-		// is always greater 0?
-		if (obsquare >= 0) {
-		*/
-			p2.x = obx * SQUARE_SIZE;
-			p2.z = obz * SQUARE_SIZE;
-			p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 15.0f;
-
-			glVertexf3(p1);
-			glVertexf3(p2);
-		//}
+		va->AddVertex0(p1);
+		va->AddVertex0(p2);
 	}
 
-	glEnd();
+	va->DrawArray0(GL_LINES);
 }
 
 
@@ -403,12 +388,12 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 	#if (PE_EXTRA_DEBUG_OVERLAYS == 1)
 	const int overlayPeriod = GAME_SPEED * 5;
-	const int overlayNumber = (gs->frameNum % (overlayPeriod * 3)) / overlayPeriod;
+	const int overlayNumber = (gs->frameNum % (overlayPeriod * 2)) / overlayPeriod;
 	const bool extraOverlay =
 		(overlayNumber == 0 && pe == pm->medResPE) ||
 		(overlayNumber == 1 && pe == pm->lowResPE);
-	const int peNumBlocks = pe->nbrOfBlocksX * pe->nbrOfBlocksZ;
-	const float peBlueValue = (pe == pm->lowResPE)? 1.0f: 0.0f;
+	const int peNumBlocks = pe->GetNumBlocks().x * pe->GetNumBlocks().y;
+	const float peBlueValue = (pe == pm->lowResPE)? 0.75f: 0.0f;
 
 	// alternate between the extra debug-overlays
 	// (normally TMI, but useful to keep the code
@@ -416,13 +401,13 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	if (extraOverlay) {
 		glBegin(GL_LINES);
 
-		for (int z = 0; z < pe->nbrOfBlocksZ; z++) {
-			for (int x = 0; x < pe->nbrOfBlocksX; x++) {
-				const int blockNr = z * pe->nbrOfBlocksX + x;
+		for (int z = 0; z < pe->GetNumBlocks().y; z++) {
+			for (int x = 0; x < pe->GetNumBlocks().x; x++) {
+				const int blockNr = pe->BlockPosToIdx(int2(x,z));
 
 				float3 p1;
-					p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
-					p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
+					p1.x = (blockStates.peNodeOffsets[md->pathType][blockNr].x) * SQUARE_SIZE;
+					p1.z = (blockStates.peNodeOffsets[md->pathType][blockNr].y) * SQUARE_SIZE;
 					p1.y = CGround::GetHeightAboveWater(p1.x, p1.z, false) + 10.0f;
 
 				if (!camera->InView(p1))
@@ -438,18 +423,18 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					if (obx <                 0) continue;
 					if (obz <                 0) continue;
-					if (obx >= pe->nbrOfBlocksX) continue;
-					if (obz >= pe->nbrOfBlocksZ) continue;
+					if (obx >= pe->GetNumBlocks().x) continue;
+					if (obz >= pe->GetNumBlocks().y) continue;
 
-					const int obBlockNr = obz * pe->nbrOfBlocksX + obx;
+					const int obBlockNr = obz * pe->GetNumBlocks().x + obx;
 					const int vertexNr =
 						md->pathType * peNumBlocks * PATH_DIRECTION_VERTICES +
-						blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, pe->nbrOfBlocksX);
+						blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, pe->GetNumBlocks().x);
 					const float cost = pe->vertexCosts[vertexNr] / pe->BLOCK_SIZE;
 
 					float3 p2;
-						p2.x = (blockStates.peNodeOffsets[obBlockNr][md->pathType].x) * SQUARE_SIZE;
-						p2.z = (blockStates.peNodeOffsets[obBlockNr][md->pathType].y) * SQUARE_SIZE;
+						p2.x = (blockStates.peNodeOffsets[md->pathType][obBlockNr].x) * SQUARE_SIZE;
+						p2.z = (blockStates.peNodeOffsets[md->pathType][obBlockNr].y) * SQUARE_SIZE;
 						p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
 					glColor3f(1.0f / math::sqrtf(cost), 1.0f / cost, peBlueValue);
@@ -461,13 +446,13 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 		glEnd();
 
-		for (int z = 0; z < pe->nbrOfBlocksZ; z++) {
-			for (int x = 0; x < pe->nbrOfBlocksX; x++) {
-				const int blockNr = z * pe->nbrOfBlocksX + x;
+		for (int z = 0; z < pe->GetNumBlocks().y; z++) {
+			for (int x = 0; x < pe->GetNumBlocks().x; x++) {
+				const int blockNr = z * pe->GetNumBlocks().x + x;
 
 				float3 p1;
-					p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
-					p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
+					p1.x = (blockStates.peNodeOffsets[md->pathType][blockNr].x) * SQUARE_SIZE;
+					p1.z = (blockStates.peNodeOffsets[md->pathType][blockNr].y) * SQUARE_SIZE;
 					p1.y = CGround::GetHeightAboveWater(p1.x, p1.z, false) + 10.0f;
 
 				if (!camera->InView(p1))
@@ -479,18 +464,18 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					if (obx <                 0) continue;
 					if (obz <                 0) continue;
-					if (obx >= pe->nbrOfBlocksX) continue;
-					if (obz >= pe->nbrOfBlocksZ) continue;
+					if (obx >= pe->GetNumBlocks().x) continue;
+					if (obz >= pe->GetNumBlocks().y) continue;
 
-					const int obBlockNr = obz * pe->nbrOfBlocksX + obx;
+					const int obBlockNr = obz * pe->GetNumBlocks().x + obx;
 					const int vertexNr =
 						md->pathType * peNumBlocks * PATH_DIRECTION_VERTICES +
-						blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, pe->nbrOfBlocksX);
+						blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, pe->GetNumBlocks().x);
 					const float cost = pe->vertexCosts[vertexNr] / pe->BLOCK_SIZE;
 
 					float3 p2;
-						p2.x = (blockStates.peNodeOffsets[obBlockNr][md->pathType].x) * SQUARE_SIZE;
-						p2.z = (blockStates.peNodeOffsets[obBlockNr][md->pathType].y) * SQUARE_SIZE;
+						p2.x = (blockStates.peNodeOffsets[md->pathType][obBlockNr].x) * SQUARE_SIZE;
+						p2.z = (blockStates.peNodeOffsets[md->pathType][obBlockNr].y) * SQUARE_SIZE;
 						p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
 					p2 = (p1 + p2) / 2.0f;
@@ -510,40 +495,43 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 
 	if (pe == pm->medResPE) {
-		glColor3f(0.2f, 0.7f, 0.2f);
+		glColor3f(0.7f, 0.2f, 0.7f);
 	} else {
-		glColor3f(0.2f, 0.2f, 0.7f);
+		glColor3f(0.2f, 0.7f, 0.7f);
 	}
 
 	{
-		glBegin(GL_LINES);
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+
 		for (unsigned int idx = 0; idx < pe->openBlockBuffer.GetSize(); idx++) {
 			const PathNode* ob = pe->openBlockBuffer.GetNode(idx);
 			const int blockNr = ob->nodeNum;
 
-			const int obx = blockStates.peParentNodePos[ob->nodeNum].x;
-			const int obz = blockStates.peParentNodePos[ob->nodeNum].y;
-			const int obBlockNr = obz * pe->nbrOfBlocksX + obx;
+			auto pathOptDir = blockStates.nodeMask[blockNr] & PATHOPT_CARDINALS;
+			auto pathDir = PathOpt2PathDir(pathOptDir);
+			const int2 obp = pe->BlockIdxToPos(blockNr) - pe->PE_DIRECTION_VECTORS[pathDir];
+			const int obBlockNr = pe->BlockPosToIdx(obp);
 
 			if (obBlockNr < 0)
 				continue;
 
 			float3 p1;
-				p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
-				p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
+				p1.x = (blockStates.peNodeOffsets[md->pathType][blockNr].x) * SQUARE_SIZE;
+				p1.z = (blockStates.peNodeOffsets[md->pathType][blockNr].y) * SQUARE_SIZE;
 				p1.y = CGround::GetHeightAboveWater(p1.x, p1.z, false) + 15.0f;
 			float3 p2;
-				p2.x = (blockStates.peNodeOffsets[obBlockNr][md->pathType].x) * SQUARE_SIZE;
-				p2.z = (blockStates.peNodeOffsets[obBlockNr][md->pathType].y) * SQUARE_SIZE;
+				p2.x = (blockStates.peNodeOffsets[md->pathType][obBlockNr].x) * SQUARE_SIZE;
+				p2.z = (blockStates.peNodeOffsets[md->pathType][obBlockNr].y) * SQUARE_SIZE;
 				p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 15.0f;
 
 			if (!camera->InView(p1) && !camera->InView(p2))
 				continue;
 
-			glVertexf3(p1);
-			glVertexf3(p2);
+			va->AddVertex0(p1);
+			va->AddVertex0(p2);
 		}
-		glEnd();
+		va->DrawArray0(GL_LINES);
 	}
 
 	#if (PE_EXTRA_DEBUG_OVERLAYS == 1)
@@ -556,8 +544,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 			const int blockNr = ob->nodeNum;
 
 			float3 p1;
-				p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
-				p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
+				p1.x = (blockStates.peNodeOffsets[md->pathType][blockNr].x) * SQUARE_SIZE;
+				p1.z = (blockStates.peNodeOffsets[md->pathType][blockNr].y) * SQUARE_SIZE;
 				p1.y = CGround::GetHeightAboveWater(p1.x, p1.z, false) + 35.0f;
 
 			if (!camera->InView(p1))

@@ -7,7 +7,7 @@
 
 class CDGunWeapon: public CWeapon
 {
-	CR_DECLARE(CDGunWeapon);
+	CR_DECLARE(CDGunWeapon)
 public:
 	CDGunWeapon(CUnit* owner, const WeaponDef* def);
 

@@ -9,7 +9,7 @@
 #include "System/creg/STL_Map.h"
 
 
-CR_BIND(TeamBase, );
+CR_BIND(TeamBase, )
 CR_REG_METADATA(TeamBase, (
 	CR_MEMBER(leader),
 	CR_MEMBER(color),
@@ -19,7 +19,7 @@ CR_REG_METADATA(TeamBase, (
 	CR_MEMBER(side),
 	CR_MEMBER(startPos),
 	CR_MEMBER(customValues)
-));
+))
 
 
 unsigned char TeamBase::teamDefaultColor[10][4] =

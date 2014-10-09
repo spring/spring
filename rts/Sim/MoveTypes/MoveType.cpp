@@ -13,7 +13,7 @@
 #include "System/myMath.h"
 #include "System/Sync/HsiehHash.h"
 
-CR_BIND_DERIVED_INTERFACE(AMoveType, CObject);
+CR_BIND_DERIVED_INTERFACE(AMoveType, CObject)
 CR_REG_METADATA(AMoveType, (
 	CR_MEMBER(owner),
 	CR_MEMBER(goalPos),
@@ -24,10 +24,11 @@ CR_REG_METADATA(AMoveType, (
 	CR_MEMBER(maxSpeedDef),
 	CR_MEMBER(maxWantedSpeed),
 	CR_MEMBER(repairBelowHealth),
+	CR_MEMBER(maneuverLeash),
 
 	CR_MEMBER(useHeading),
 	CR_ENUM_MEMBER(progressState)
-));
+))
 
 AMoveType::AMoveType(CUnit* owner):
 	owner(owner),
@@ -44,7 +45,8 @@ AMoveType::AMoveType(CUnit* owner):
 	maxSpeedDef(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
 	maxWantedSpeed(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
 
-	repairBelowHealth(0.3f)
+	repairBelowHealth(0.3f),
+	maneuverLeash(500.0f)
 {
 }
 
@@ -124,11 +126,13 @@ bool AMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
 	#define          MAXSPEED_MEMBER_IDX 0
 	#define    MAXWANTEDSPEED_MEMBER_IDX 1
 	#define REPAIRBELOWHEALTH_MEMBER_IDX 2
+	#define     MANEUVERLEASH_MEMBER_IDX 3
 
 	static const unsigned int floatMemberHashes[] = {
 		MEMBER_LITERAL_HASH(         "maxSpeed"),
 		MEMBER_LITERAL_HASH(   "maxWantedSpeed"),
 		MEMBER_LITERAL_HASH("repairBelowHealth"),
+		MEMBER_LITERAL_HASH(    "maneuverLeash"),
 	};
 
 	#undef MEMBER_CHARPTR_HASH
@@ -154,6 +158,10 @@ bool AMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
 	}
 	if (memberHash == floatMemberHashes[REPAIRBELOWHEALTH_MEMBER_IDX]) {
 		SetRepairBelowHealth(*reinterpret_cast<float*>(memberValue));
+		return true;
+	}
+	if (memberHash == floatMemberHashes[MANEUVERLEASH_MEMBER_IDX]) {
+		SetManeuverLeash(*reinterpret_cast<float*>(memberValue));
 		return true;
 	}
 

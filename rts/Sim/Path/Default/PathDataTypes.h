@@ -66,12 +66,10 @@ struct PathNodeStateBuffer {
 	PathNodeStateBuffer(const int2& bufRes, const int2& mapRes)
 		: extraCostsOverlaySynced(NULL)
 		, extraCostsOverlayUnsynced(NULL)
+		, ps(mapRes / bufRes)
 		, br(bufRes)
 		, mr(mapRes)
 	{
-		ps.x = mapRes.x / bufRes.x;
-		ps.y = mapRes.y / bufRes.y;
-
 		fCost.resize(br.x * br.y, PATHCOST_INFINITY);
 		gCost.resize(br.x * br.y, PATHCOST_INFINITY);
 		nodeMask.resize(br.x * br.y, 0);
@@ -81,9 +79,8 @@ struct PathNodeStateBuffer {
 		//extraCostUnsynced.resize(br.x * br.y, 0.0f);
 
 		// Note: Full resolution buffer does not need those!
-		if (bufRes.x != mapRes.x || bufRes.y != mapRes.y) {
-			peParentNodePos.resize(br.x * br.y, int2(-1, -1));
-			peNodeOffsets.resize(br.x * br.y);
+		if (bufRes != mapRes) {
+			//peNodeOffsets.resize(); is done in PathEstimator
 		}
 
 		maxCosts[NODE_COST_F] = 0.0f;
@@ -97,8 +94,7 @@ struct PathNodeStateBuffer {
 		//assert(idx>=0 && idx<fCost.size());
 		fCost[idx] = PATHCOST_INFINITY;
 		gCost[idx] = PATHCOST_INFINITY;
-		nodeMask[idx] &= PATHOPT_OBSOLETE;
-		peParentNodePos[idx] = int2(-1, -1);
+		nodeMask[idx] &= PATHOPT_OBSOLETE; // clear all except PATHOPT_OBSOLETE
 	}
 	
 
@@ -111,7 +107,6 @@ struct PathNodeStateBuffer {
 		}
 
 		memFootPrint += (nodeMask.size() * sizeof(unsigned int));
-		memFootPrint += (peParentNodePos.size() * sizeof(int2));
 		memFootPrint += ((fCost.size() + gCost.size()) * sizeof(float));
 		memFootPrint += ((extraCostSynced.size() + extraCostUnsynced.size()) * sizeof(float));
 
@@ -184,15 +179,14 @@ public:
 	std::vector<float> fCost;
 	std::vector<float> gCost;
 
-	/// combination of PATHOPT_{OPEN, ..., OBSOLETE} flags
-	std::vector<boost::uint16_t> nodeMask;
+	/// bitmask of PATHOPT_{OPEN, ..., OBSOLETE} flags
+	std::vector<boost::uint8_t> nodeMask;
+	static_assert(PATHOPT_SIZE <= std::numeric_limits<boost::uint8_t>::max(), "nodeMask basic type to small to hold bitmask of PATHOPT");
 
-	/// needed for the PE to back-track path to goal
-	std::vector<int2> peParentNodePos;
-
-	/// for the PE, each node (block) maintains the
+	/// for the PE, maintains an array of the
 	/// best accessible offset (from its own center
-	/// position) with respect to each movetype
+	/// position)
+	/// peNodeOffsets[pathType][blockIdx]
 	std::vector< std::vector<int2> > peNodeOffsets;
 
 private:

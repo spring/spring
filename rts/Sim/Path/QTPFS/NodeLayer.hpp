@@ -122,7 +122,7 @@ namespace QTPFS {
 		float maxRelSpeedMod;
 		float avgRelSpeedMod;
 	};
-};
+}
 
 #endif
 

@@ -6,7 +6,7 @@
 #include "EFXPresets.h"
 #include "EFXfuncs.h"
 
-#include "SoundLog.h"
+#include "System/Sound/SoundLog.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/myMath.h"
 
@@ -186,6 +186,7 @@ CEFX::CEFX(ALCdevice* device)
 
 CEFX::~CEFX()
 {
+	configHandler->RemoveObserver(this);
 	if (supported) {
 		alAuxiliaryEffectSloti(sfxSlot, AL_EFFECTSLOT_EFFECT, AL_EFFECT_NULL);
 		alDeleteFilters(1, &sfxFilter);

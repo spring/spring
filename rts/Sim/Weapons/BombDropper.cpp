@@ -11,14 +11,14 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, NULL, false));
+CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, NULL, false))
 
 CR_REG_METADATA(CBombDropper,(
 	CR_MEMBER(dropTorpedoes),
 	CR_MEMBER(torpMoveRange),
 	CR_MEMBER(tracking),
 	CR_RESERVED(16)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

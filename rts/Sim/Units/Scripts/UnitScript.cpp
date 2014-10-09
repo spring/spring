@@ -42,7 +42,7 @@
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
 #endif
@@ -1155,9 +1155,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 				break;
 		}
 		if (p4 == 0) {
-			Channels::General.PlaySample(script->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
+			Channels::General->PlaySample(script->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
 		} else {
-			Channels::General.PlaySample(script->sounds[p1], float(p2) / COBSCALE);
+			Channels::General->PlaySample(script->sounds[p1], float(p2) / COBSCALE);
 		}
 		return 0;
 	}
@@ -1662,7 +1662,7 @@ int CUnitScript::ScriptToModel(int scriptPieceNum) const {
 	const LocalModelPiece* smp = GetScriptLocalModelPiece(scriptPieceNum);
 
 	return (smp->GetLModelPieceIndex());
-};
+}
 
 int CUnitScript::ModelToScript(int lmodelPieceNum) const {
 	const LocalModel* lm = unit->localModel;
@@ -1673,5 +1673,5 @@ int CUnitScript::ModelToScript(int lmodelPieceNum) const {
 	const LocalModelPiece* lmp = lm->GetPiece(lmodelPieceNum);
 
 	return (lmp->GetScriptPieceIndex());
-};
+}
 

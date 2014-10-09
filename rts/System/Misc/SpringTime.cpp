@@ -12,11 +12,11 @@
 #include "System/creg/Serializer.h"
 
 //FIXME always use class even in non-debug! for creg!
-CR_BIND(spring_time, );
+CR_BIND(spring_time, )
 CR_REG_METADATA(spring_time,(
 	CR_IGNORED(x),
 	CR_SERIALIZER(Serialize)
-));
+))
 #endif
 #endif
 
@@ -34,7 +34,7 @@ CR_REG_METADATA(spring_time,(
 	#define _GLIBCXX_USE_SCHED_YIELD // workaround a gcc <4.8 bug
 	#include <thread>
 	#include <mutex>
-	namespace this_thread { using namespace std::this_thread; };
+	namespace this_thread { using namespace std::this_thread; }
 #endif
 
 #define USE_NATIVE_WINDOWS_CLOCK (defined(WIN32) && !defined(FORCE_CHRONO_TIMERS))

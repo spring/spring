@@ -32,7 +32,7 @@ CGlobalUnsynced* gu;
 const float CGlobalUnsynced::reconnectSimDrawBalance = 0.15f;
 UnsyncedRNG CGlobalUnsynced::rng;
 
-CR_BIND(CGlobalUnsynced, );
+CR_BIND(CGlobalUnsynced, )
 
 CR_REG_METADATA(CGlobalUnsynced, (
 	CR_IGNORED(simFPS),
@@ -52,7 +52,7 @@ CR_REG_METADATA(CGlobalUnsynced, (
 	CR_MEMBER(spectatingFullSelect),
 	CR_IGNORED(fpsMode),
 	CR_IGNORED(globalQuit)
-));
+))
 
 CGlobalUnsynced::CGlobalUnsynced()
 {

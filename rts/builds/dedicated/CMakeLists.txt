@@ -153,24 +153,21 @@ SET(engineDedicatedSources
 	)
 
 
-# Compile dedicated server shared library
-ADD_LIBRARY(springserver-static STATIC EXCLUDE_FROM_ALL ${engineDedicatedSources})
-Add_Dependencies(springserver-static generateVersionFiles)
-TARGET_LINK_LIBRARIES(springserver-static ${engineDedicatedLibraries})
-IF    (MINGW)
-	TARGET_LINK_LIBRARIES(springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${WINMM_LIBRARY})
-ENDIF (MINGW)
-
 # Compile dedicated server executable
 ADD_EXECUTABLE(engine-dedicated
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp
+		${engineDedicatedSources}
 		${sources_engine_System_Log_sinkConsole}
 		${sources_engine_System_Log_sinkFile}
 		${sources_engine_System_Log_sinkOutputDebugString}
 		${ENGINE_ICON}
 		main
 	)
-TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
+TARGET_LINK_LIBRARIES(engine-dedicated ${engineDedicatedLibraries})
+IF    (MINGW)
+	TARGET_LINK_LIBRARIES(engine-dedicated ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${WINMM_LIBRARY})
+ENDIF (MINGW)
+Add_Dependencies(engine-dedicated generateVersionFiles)
 
 INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
 
@@ -178,16 +175,5 @@ INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
 # use cases:
 # * make spring-dedicated
 # * make install-spring-dedicated
-set(springDsDeps
-		engine-dedicated
-		springserver
-		gamedata
-		unitsync
-	)
-set(springDsInstallDirs
-		"rts/builds/dedicated"
-		"tools/unitsync"
-		"cont"
-	)
 CreateEngineBuildAndInstallTarget(dedicated)
-add_dependencies(spring-dedicated springDsDeps springDsInstallDirs)
+

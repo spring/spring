@@ -14,7 +14,7 @@ class AAirMoveType;
 class CAirCAI : public CMobileCAI
 {
 public:
-	CR_DECLARE(CAirCAI);
+	CR_DECLARE(CAirCAI)
 	CAirCAI(CUnit* owner);
 	CAirCAI();
 

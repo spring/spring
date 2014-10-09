@@ -8,19 +8,26 @@
 #include "System/FastMath.h"
 
 template<typename t> struct type2 {
-	CR_DECLARE_STRUCT(type2);
+	CR_DECLARE_STRUCT(type2)
 
 	type2<t>(): x(t(0)), y(t(0)) {}
 	type2<t>(const t nx, const t ny) : x(nx), y(ny) {}
 
 	bool operator == (const type2<t>& v) const { return (x == v.x) && (y == v.y); }
 	bool operator != (const type2<t>& v) const { return (x != v.x) || (y != v.y); }
+	bool operator  < (const type2<t>& f) const { return (x != f.x) ? (x < f.x) : (y < f.y); }
 
 	type2<t> operator + (const type2<t>& v) const { return (type2<t>(x + v.x, y + v.y)); }
 	type2<t> operator - (const type2<t>& v) const { return (type2<t>(x - v.x, y - v.y)); }
+	type2<t> operator / (const type2<t>& v) const { return (type2<t>(x / v.x, y / v.y)); }
+	type2<t> operator / (const t& i) const        { return (type2<t>(x / i  , y / i  )); }
+	type2<t> operator * (const type2<t>& v) const { return (type2<t>(x * v.x, y * v.y)); }
+	type2<t> operator * (const t& i) const        { return (type2<t>(x * i  , y * i  )); }
 
 	type2<t>& operator += (const type2<t>& v) { x += v.x; y += v.y; return *this; }
 	type2<t>& operator -= (const type2<t>& v) { x -= v.x; y -= v.y; return *this; }
+	type2<t>& operator *= (const t& i) { x *= i; y *= i; return *this; }
+	type2<t>& operator /= (const t& i) { x /= i; y /= i; return *this; }
 
 	t distance(const type2<t>& f) const {
 		const t dx = x - f.x;

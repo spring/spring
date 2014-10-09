@@ -18,7 +18,7 @@ static int RAIs=0;
 
 namespace std
 {
-	void _xlen(){};
+	void _xlen(){}
 }
 
 UnitInfo::UnitInfo(sRAIUnitDef* rUnitDef)

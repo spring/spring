@@ -32,7 +32,7 @@
 
 #ifndef UNIT_TEST
 CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1).description("Count of worker threads (including mainthread!) used in parallel sections.");
-CONFIG(int, WorkerThreadSpinTime).defaultValue(5).minimumValue(0).description("The number of milliseconds worker threads will spin after no tasks to perform.");
+CONFIG(int, WorkerThreadSpinTime).defaultValue(1).minimumValue(0).description("The number of milliseconds worker threads will spin after no tasks to perform.");
 #endif
 
 
@@ -58,7 +58,7 @@ namespace Threading {
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
-	static DWORD cpusSystem = 0;
+	static DWORD_PTR cpusSystem = 0;
 #else
 	static cpu_set_t cpusSystem;
 #endif
@@ -74,7 +74,7 @@ namespace Threading {
 
 	#elif defined(WIN32)
 		// Get the available cores
-		DWORD curMask;
+		DWORD_PTR curMask;
 		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cpusSystem);
 
 	#else
@@ -85,6 +85,36 @@ namespace Threading {
 
 		GetPhysicalCpuCores(); // (uses a static, too)
 		inited = true;
+	}
+
+
+	boost::uint32_t GetAffinity()
+	{
+	#if defined(__APPLE__) || defined(__FreeBSD__)
+		// no-op
+		return 0;
+
+	#elif defined(WIN32)
+		DWORD_PTR curMask;
+		DWORD_PTR systemCpus;
+		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &systemCpus);
+		return curMask;
+	#else
+		cpu_set_t curAffinity;
+		CPU_ZERO(&curAffinity);
+		sched_getaffinity(0, sizeof(cpu_set_t), &curAffinity);
+
+		boost::uint32_t mask = 0;
+
+		int numCpus = std::min(CPU_COUNT(&curAffinity), 32); // w/o the min(.., 32) `(1 << n)` could overflow!
+		for (int n = numCpus - 1; n >= 0; --n) {
+			if (CPU_ISSET(n, &curAffinity)) {
+				mask |= (1 << n);
+			}
+		}
+
+		return mask;
+	#endif
 	}
 
 
@@ -228,8 +258,8 @@ namespace Threading {
 	    (across all existing processors, if more than one)*/
 	int GetPhysicalCpuCores() {
 		// Get CPU features
-		springproc::CpuId cpuid;
-		return cpuid.getCoreTotalNumber();;
+		static springproc::CpuId cpuid;
+		return cpuid.getCoreTotalNumber();
 	}
 
 
@@ -493,4 +523,4 @@ namespace Threading {
 	{
 		return threadError;
 	}
-};
+}

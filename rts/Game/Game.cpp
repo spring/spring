@@ -151,7 +151,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Watchdog.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/DumpState.h"
 #include "System/Sync/SyncedPrimitiveIO.h"
 #include "System/Sync/SyncTracer.h"
@@ -177,7 +177,7 @@ CONFIG(bool, LuaModUICtrl).defaultValue(true);
 CGame* game = NULL;
 
 
-CR_BIND(CGame, (std::string(""), std::string(""), NULL));
+CR_BIND(CGame, (std::string(""), std::string(""), NULL))
 
 CR_REG_METADATA(CGame, (
 	CR_IGNORED(finishedLoading),
@@ -216,7 +216,7 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(consumeSpeedMult),
 
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 
 
@@ -295,7 +295,7 @@ DO_ONCE_FNC(
 	j.name = "EventHandler::CollectGarbage";
 	// static initialization is done BEFORE Spring's time-epoch is set
 	JobDispatcher::AddJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
-);
+)
 
 DO_ONCE_FNC(
 	JobDispatcher::Job j;
@@ -306,7 +306,7 @@ DO_ONCE_FNC(
 	j.freq = 1;
 	j.name = "Profiler::Update";
 	JobDispatcher::AddJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
-);
+)
 
 
 
@@ -531,6 +531,8 @@ void CGame::LoadGame(const std::string& mapName, bool threaded)
 	if (!gu->globalQuit) LoadInterface();
 	if (!gu->globalQuit) LoadLua();
 	if (!gu->globalQuit) LoadFinalize();
+	if (!gu->globalQuit) InitSkirmishAIs();
+	finishedLoading = true;
 
 	if (!gu->globalQuit && saveFile) {
 		loadscreen->SetLoadMessage("Loading game");
@@ -822,9 +824,29 @@ void CGame::LoadLua()
 	defsParser = NULL;
 }
 
+void CGame::InitSkirmishAIs()
+{
+	if (gameSetup->hostDemo) {
+		return;
+	}
+
+	// create a Skirmish AI if required
+	const CSkirmishAIHandler::ids_t& localAIs = skirmishAIHandler.GetSkirmishAIsByPlayer(gu->myPlayerNum);
+
+	if (!localAIs.empty()) {
+		loadscreen->SetLoadMessage("Loading Skirmish AIs");
+
+		for (auto ai = localAIs.begin(); ai != localAIs.end(); ++ai) {
+			skirmishAIHandler.CreateLocalSkirmishAI(*ai);
+		}
+	}
+}
+
 void CGame::LoadFinalize()
 {
+	ENTER_SYNCED_CODE();
 	eventHandler.GamePreload();
+	LEAVE_SYNCED_CODE();
 
 	{
 		loadscreen->SetLoadMessage("[" + std::string(__FUNCTION__) + "] finalizing PFS");
@@ -848,8 +870,6 @@ void CGame::LoadFinalize()
 	lastSimFrameTime = lastReadNetTime;
 	lastDrawFrameTime = lastReadNetTime;
 	updateDeltaSeconds = 0.0f;
-
-	finishedLoading = true;
 }
 
 
@@ -907,6 +927,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 			return 0;
 		}
 	}
+
 
 	// try our list of actions
 	for (const Action& action: actionList) {
@@ -1077,7 +1098,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	if (doDrawWorld) {
 		worldDrawer->Update();
 		CNamedTextures::Update();
-		modelParser->Update();
 		CFontTexture::Update();
 
 		if (newSimFrame) {
@@ -1155,6 +1175,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	assert(infoConsole);
 	infoConsole->PushNewLinesToEventHandler();
+	infoConsole->Update();
 
 	configHandler->Update();
 	mouse->Update();
@@ -1458,40 +1479,20 @@ void CGame::StartPlaying()
 //	grouphandler->team = gu->myTeam;
 	CLuaUI::UpdateTeams();
 
-	{
-		// keep connection to server alive in case we need to instantiate AI's
-		// (which can individually trigger massive thread-blocking operations)
-		net->KeepUpdating(true);
-		boost::thread pingThread = boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
+	// setup the teams
+	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
+		CTeam* team = teamHandler->Team(a);
 
-		// setup the teams
-		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-			CTeam* team = teamHandler->Team(a);
+		if (team->gaia)
+			continue;
 
-			if (team->gaia)
-				continue;
-
-			if (!team->HasValidStartPos() && gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame) {
-				// if the player did not choose a start position (eg. if
-				// the game was force-started by the host before sending
-				// any), silently generate one for him
-				// TODO: notify Lua of this also?
-				team->SetDefaultStartPos();
-			}
-
-			if (gameSetup->hostDemo)
-				continue;
-
-			// create a Skirmish AI if required
-			const CSkirmishAIHandler::ids_t& localAIs = skirmishAIHandler.GetSkirmishAIsInTeam(a, gu->myPlayerNum);
-
-			for (auto ai = localAIs.begin(); ai != localAIs.end(); ++ai) {
-				skirmishAIHandler.CreateLocalSkirmishAI(*ai);
-			}
+		if (!team->HasValidStartPos() && gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame) {
+			// if the player did not choose a start position (eg. if
+			// the game was force-started by the host before sending
+			// any), silently generate one for him
+			// TODO: notify Lua of this also?
+			team->SetDefaultStartPos();
 		}
-
-		net->KeepUpdating(false);
-		pingThread.join();
 	}
 
 	eventHandler.GameStart();
@@ -1526,7 +1527,6 @@ void CGame::SimFrame() {
 
 	if (!skipping) {
 		// everything here is unsynced and should ideally moved to Game::Update()
-		infoConsole->Update();
 		waitCommandsAI.Update();
 		geometricObjects->Update();
 		sound->NewFrame();
@@ -1751,20 +1751,20 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			const bool allied = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
 			if (gu->spectating || (allied && !player->spectator)) {
 				LOG("%sAllies: %s", label.c_str(), s.c_str());
-				Channels::UserInterface.PlaySample(chatSound, 5);
+				Channels::UserInterface->PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_SPECTATORS) {
 			if (gu->spectating || myMsg) {
 				LOG("%sSpectators: %s", label.c_str(), s.c_str());
-				Channels::UserInterface.PlaySample(chatSound, 5);
+				Channels::UserInterface->PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_EVERYONE) {
 			const bool specsOnly = noSpectatorChat && (player && player->spectator);
 			if (gu->spectating || !specsOnly) {
 				LOG("%s%s", label.c_str(), s.c_str());
-				Channels::UserInterface.PlaySample(chatSound, 5);
+				Channels::UserInterface->PlaySample(chatSound, 5);
 			}
 		}
 		else if ((msg.destination < playerHandler->ActivePlayers()) && player)
@@ -1772,7 +1772,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			// player <-> player and spectator <-> spectator are allowed
 			if (msg.destination == gu->myPlayerNum && player->spectator == gu->spectating) {
 				LOG("%sPrivate: %s", label.c_str(), s.c_str());
-				Channels::UserInterface.PlaySample(chatSound, 5);
+				Channels::UserInterface->PlaySample(chatSound, 5);
 			}
 			else if (player->playerNum == gu->myPlayerNum)
 			{

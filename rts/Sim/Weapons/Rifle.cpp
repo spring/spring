@@ -13,11 +13,11 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CRifle, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CRifle, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CRifle,(
 	CR_RESERVED(8)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

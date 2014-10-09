@@ -12,7 +12,7 @@ namespace std {
 	public:
 		// copy ctors
 		//using string::string; // gcc4.8 and newer
-		u8string(const std::string& s) : string(s) {}
+		explicit u8string(const std::string& s) : string(s) {}
 		u8string(const char* c) : string(c) {}
 
 		//! this is an important difference, we return an unsigned value here!
@@ -25,29 +25,22 @@ namespace std {
 			auto& str = *static_cast<const std::string*>(this);
 			return *reinterpret_cast<const char8_t*>(&str[t]);
 		}
-
-		operator string&() {
-			return *this;
-		}
-		operator const string& () const {
-			return *this;
-		}
 	};
 
 	// alternative solution
 	// We would need to overload all ctors & funcs with "char*" argument then.
 	// too complicated -> the above is less code
 	//using u8string = basic_string<char8_t>;
-};
+}
 
 static inline const std::u8string& toustring(const std::string& str)
 {
-	return *(const std::u8string*)&str;
+	return *static_cast<const std::u8string*>(&str);
 }
 
 static inline std::u8string& toustring(std::string& str)
 {
-	return *(std::u8string*)&str;
+	return *static_cast<std::u8string*>(&str);
 }
 
 #endif

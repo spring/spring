@@ -24,7 +24,7 @@
 class float3
 {
 public:
-	CR_DECLARE_STRUCT(float3);
+	CR_DECLARE_STRUCT(float3)
 /*	void* operator new(size_t size) { return mempool.Alloc(size); }
 	void* operator new(size_t n, void* p) { return p; } // cp visual
 	void operator delete(void* p, size_t size) { mempool.Free(p, size); }

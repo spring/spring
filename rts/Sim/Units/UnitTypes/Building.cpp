@@ -9,12 +9,12 @@
 #include "Sim/Units/UnitLoader.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CBuilding, CUnit, );
+CR_BIND_DERIVED(CBuilding, CUnit, )
 
 CR_REG_METADATA(CBuilding, (
 	CR_RESERVED(8),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

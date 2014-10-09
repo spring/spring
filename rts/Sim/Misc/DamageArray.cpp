@@ -3,7 +3,7 @@
 #include "DamageArray.h"
 #include "DamageArrayHandler.h"
 
-CR_BIND(DamageArray, );
+CR_BIND(DamageArray, )
 
 CR_REG_METADATA(DamageArray, (
 	CR_MEMBER(paralyzeDamageTime),
@@ -12,7 +12,7 @@ CR_REG_METADATA(DamageArray, (
 	CR_MEMBER(craterMult),
 	CR_MEMBER(craterBoost),
 	CR_MEMBER(damages)
-));
+))
 
 
 

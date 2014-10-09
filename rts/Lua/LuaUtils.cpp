@@ -514,14 +514,17 @@ void LuaUtils::PrintStack(lua_State* L)
 	for (int i = 1; i <= top; i++) {
 		LOG_L(L_ERROR, "  %i: type = %s (%p)", i, luaL_typename(L, i), lua_topointer(L, i));
 		const int type = lua_type(L, i);
-		if (type == LUA_TSTRING) {
-			LOG_L(L_ERROR, "\t\t%s\n", lua_tostring(L, i));
-		} else if (type == LUA_TNUMBER) {
-			LOG_L(L_ERROR, "\t\t%f\n", lua_tonumber(L, i));
-		} else if (type == LUA_TBOOLEAN) {
-			LOG_L(L_ERROR, "\t\t%s\n", lua_toboolean(L, i) ? "true" : "false");
-		} else {
-			LOG_L(L_ERROR, "\n");
+		switch(type) {
+			case LUA_TSTRING:
+				LOG_L(L_ERROR, "\t\t%s", lua_tostring(L, i));
+				break;
+			case LUA_TNUMBER:
+				LOG_L(L_ERROR, "\t\t%f", lua_tonumber(L, i));
+				break;
+			case LUA_TBOOLEAN:
+				LOG_L(L_ERROR, "\t\t%s", lua_toboolean(L, i) ? "true" : "false");
+				break;
+			default: {}
 		}
 	}
 }

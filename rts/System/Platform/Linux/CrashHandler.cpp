@@ -1020,4 +1020,4 @@ namespace CrashHandler
 
 		std::set_new_handler(NULL);
 	}
-};
+}

@@ -7,7 +7,7 @@
 #ifdef USING_CREG
 namespace springLegacyAI {
 
-CR_BIND(DamageArray, );
+CR_BIND(DamageArray, )
 
 CR_REG_METADATA(DamageArray, (
 		CR_MEMBER(paralyzeDamageTime),
@@ -18,7 +18,7 @@ CR_REG_METADATA(DamageArray, (
 		CR_MEMBER(numTypes),
 		CR_RESERVED(16),
 		CR_SERIALIZER(creg_Serialize) // damages
-));
+))
 
 } // namespace springLegacyAI
 

@@ -58,7 +58,7 @@ static std::string FloatToSmallString(float num, float mul = 1) {
 	}
 
 	return c;
-};
+}
 
 
 void CResourceBar::Draw()

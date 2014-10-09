@@ -132,6 +132,7 @@ CMouseHandler::CMouseHandler()
 
 CMouseHandler::~CMouseHandler()
 {
+	configHandler->RemoveObserver(this);
 	if (hwHide)
 		SDL_ShowCursor(SDL_ENABLE);
 

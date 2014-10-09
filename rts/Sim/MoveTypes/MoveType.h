@@ -12,7 +12,7 @@ class CUnit;
 
 class AMoveType : public CObject
 {
-	CR_DECLARE(AMoveType);
+	CR_DECLARE(AMoveType)
 
 public:
 	AMoveType(CUnit* owner);
@@ -42,6 +42,7 @@ public:
 	//     MoveType classes expects maxSpeed to be != 0
 	virtual void SetMaxSpeed(float speed) { maxSpeed = std::max(0.001f, speed); }
 	virtual void SetWantedMaxSpeed(float speed) { maxWantedSpeed = speed; }
+	virtual void SetManeuverLeash(float leashLength) { maneuverLeash = leashLength; }
 
 	virtual bool Update() = 0;
 	virtual void SlowUpdate();
@@ -63,6 +64,7 @@ public:
 	float GetMaxSpeedDef() const { return maxSpeedDef; }
 	float GetMaxWantedSpeed() const { return maxWantedSpeed; }
 	float GetRepairBelowHealth() const { return repairBelowHealth; }
+	float GetManeuverLeash() const { return maneuverLeash; }
 
 	float CalcStaticTurnRadius() const;
 
@@ -89,6 +91,7 @@ protected:
 	float maxWantedSpeed;      // maximum speed (temporarily) set by a CMD_SET_WANTED_MAX_SPEED modifier command
 
 	float repairBelowHealth;
+	float maneuverLeash;       // maximum distance away a target can be and still be chased
 };
 
 #endif // MOVETYPE_H

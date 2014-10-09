@@ -23,7 +23,7 @@ struct SyncedFloat3
 {
 public:
 	// value type -> _STRUCT (because no virtual dtor or vtable is required)
-	CR_DECLARE_STRUCT(SyncedFloat3);
+	CR_DECLARE_STRUCT(SyncedFloat3)
 
 	/**
 	 * @brief Constructor

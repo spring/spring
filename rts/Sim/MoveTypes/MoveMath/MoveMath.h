@@ -10,7 +10,7 @@
 struct MoveDef;
 class CSolidObject;
 class CMoveMath {
-	CR_DECLARE(CMoveMath);
+	CR_DECLARE(CMoveMath)
 
 protected:
 	static float GroundSpeedMod(const MoveDef& moveDef, float height, float slope);

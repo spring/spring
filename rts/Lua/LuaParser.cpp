@@ -1166,7 +1166,7 @@ bool LuaTable::GetMap(map<string, string>& data) const
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2)) {
-			if (lua_isstring(L, -1)) {
+			if (lua_isstring(L, -1)) { // includes numbers
 				const string key   = lua_tostring(L, -2);
 				const string value = lua_tostring(L, -1);
 				data[key] = value;

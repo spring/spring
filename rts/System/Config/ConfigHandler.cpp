@@ -66,7 +66,6 @@ private:
 
 	OverlayConfigSource* overlay;
 	FileConfigSource* writableSource;
-	DefaultConfigSource* defaultSource;
 	vector<ReadOnlyConfigSource*> sources;
 
 	// observer related
@@ -126,6 +125,7 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool
 
 ConfigHandlerImpl::~ConfigHandlerImpl()
 {
+	assert(observers.empty()); //all observers have to be deregistered by RemoveObserver()
 	for_each_source(it) {
 		delete (*it);
 	}

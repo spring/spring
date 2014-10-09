@@ -7,7 +7,7 @@
 
 class CGfxProjectile : public CProjectile
 {
-	CR_DECLARE(CGfxProjectile);
+	CR_DECLARE(CGfxProjectile)
 
 public:
 	CGfxProjectile();

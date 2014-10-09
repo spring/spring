@@ -31,7 +31,7 @@ extern "C" {
  *   ",,".
  */
 void log_file_addLogFile(const char* filePath, const char* sections = NULL,
-		int minLevel = LOG_LEVEL_ALL, bool flush = false);
+		int minLevel = LOG_LEVEL_ALL, int flushLevel = LOG_LEVEL_ERROR);
 
 void log_file_removeLogFile(const char* filePath);
 

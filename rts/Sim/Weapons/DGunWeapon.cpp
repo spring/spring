@@ -6,11 +6,11 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CDGunWeapon,(
 	CR_RESERVED(8)
-));
+))
 
 CDGunWeapon::CDGunWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {

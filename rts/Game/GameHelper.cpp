@@ -37,11 +37,10 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
 #define NUM_WAITING_DAMAGE_LISTS 128
-#define PLAY_SOUNDS 1
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -315,7 +314,6 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	CExplosionEvent explosionEvent(params.pos, damages.GetDefaultDamage(), damageAOE, weaponDef);
 	CExplosionCreator::FireExplosionEvent(explosionEvent);
 
-	#if (PLAY_SOUNDS == 1)
 	if (weaponDef != NULL) {
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
 
@@ -326,10 +324,9 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 		const int soundID = soundSet.getID(soundNum);
 
 		if (soundID > 0) {
-			Channels::Battle.PlaySample(soundID, params.pos, soundSet.getVolume(soundNum));
+			Channels::Battle->PlaySample(soundID, params.pos, soundSet.getVolume(soundNum));
 		}
 	}
-	#endif
 }
 
 
@@ -480,7 +477,7 @@ namespace {
 			}
 		};
 
-	}; // end of namespace Filter
+	} // end of namespace Filter
 
 
 	namespace Query {
@@ -628,8 +625,8 @@ namespace {
 			}
 		};
 
-	}; // end of namespace Query
-}; // end of namespace
+	} // end of namespace Query
+} // end of namespace
 
 // Use this instead of unit->tempNum here, because it requires a mutex lock that will deadlock if luaRules is invoked simultaneously.
 // Not the cleanest solution, but faster than e.g. a std::set, and this function is called quite frequently.

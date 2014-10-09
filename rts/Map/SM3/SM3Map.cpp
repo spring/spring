@@ -98,6 +98,7 @@ CSM3ReadMap::CSM3ReadMap(const std::string& mapName)
 
 CSM3ReadMap::~CSM3ReadMap()
 {
+	configHandler->RemoveObserver(this);
 	delete groundDrawer;
 	delete renderer;
 

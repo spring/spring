@@ -43,7 +43,7 @@ static AAirMoveType* GetAirMoveType(const CUnit* owner) {
 
 
 
-CR_BIND_DERIVED(CMobileCAI ,CCommandAI , );
+CR_BIND_DERIVED(CMobileCAI ,CCommandAI , )
 CR_REG_METADATA(CMobileCAI, (
 	CR_MEMBER(goalPos),
 	CR_MEMBER(goalRadius),
@@ -68,7 +68,7 @@ CR_REG_METADATA(CMobileCAI, (
 	CR_MEMBER(slowGuard),
 	CR_MEMBER(moveDir),
 	CR_RESERVED(16)
-));
+))
 
 CMobileCAI::CMobileCAI():
 	CCommandAI(),
@@ -687,7 +687,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 	if (tempOrder && orderTarget) {
 		const float3& closestPos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 		const float curTargetDist = LinePointDist(closestPos, commandPos2, orderTarget->pos);
-		const float maxTargetDist = (500 * owner->moveState + owner->maxRange);
+		const float maxTargetDist = (owner->moveType->GetManeuverLeash() * owner->moveState + owner->maxRange);
 
 		if (owner->moveState < MOVESTATE_ROAM && curTargetDist > maxTargetDist) {
 			StopMove();

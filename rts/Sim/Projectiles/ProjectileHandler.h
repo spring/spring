@@ -43,7 +43,7 @@ typedef ThreadMapRender<CProjectile*, int, ProjectileMapValPair, ProjectileIndex
 
 class CProjectileHandler
 {
-	CR_DECLARE_STRUCT(CProjectileHandler);
+	CR_DECLARE_STRUCT(CProjectileHandler)
 
 public:
 	CProjectileHandler();

@@ -23,10 +23,10 @@
 #include "System/float3.h"
 #include "System/myMath.h"
 #include "System/Sync/SyncTracer.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Log/ILog.h"
 
-CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL));
+CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL))
 
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
@@ -101,7 +101,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(errorVectorAdd),
 	CR_MEMBER(targetPos),
 	CR_MEMBER(targetBorderPos)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -1287,7 +1287,7 @@ void CWeapon::Fire(bool scriptCall)
 	FireImpl(scriptCall);
 
 	if (fireSoundId > 0 && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1)) {
-		Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);
+		Channels::Battle->PlaySample(fireSoundId, owner, fireSoundVolume);
 	}
 }
 

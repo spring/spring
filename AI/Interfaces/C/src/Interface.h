@@ -4,7 +4,7 @@
 #define _INTERFACE_H
 
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
-#include "CUtils/SSkirmishAISpecifier.h"
+#include "SSkirmishAISpecifier.h"
 #include "CUtils/SharedLibrary.h"
 
 #include <map>

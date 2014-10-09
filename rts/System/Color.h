@@ -29,6 +29,12 @@ union SColor
 		, b(f[2] * 255.0f)
 		, a(f[3] * 255.0f)
 	{}
+	SColor(const unsigned char* u)
+		: r(u[0])
+		, g(u[1])
+		, b(u[2])
+		, a(u[3])
+	{}
 
 	/// individual color channel values in the range [0, 255]
 	struct { boost::uint8_t r, g, b, a; };

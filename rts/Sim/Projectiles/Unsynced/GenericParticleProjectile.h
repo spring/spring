@@ -10,11 +10,11 @@ class CColorMap;
 
 class CGenericParticleProjectile : public CProjectile
 {
-	CR_DECLARE(CGenericParticleProjectile);
+	CR_DECLARE(CGenericParticleProjectile)
 
 public:
 	CGenericParticleProjectile(
-		CUnit* owner,
+		const CUnit* owner,
 		const float3& pos,
 		const float3& speed
 	);

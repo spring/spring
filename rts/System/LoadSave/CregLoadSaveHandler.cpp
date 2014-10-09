@@ -43,7 +43,7 @@ CCregLoadSaveHandler::~CCregLoadSaveHandler()
 
 class CGameStateCollector
 {
-	CR_DECLARE_STRUCT(CGameStateCollector);
+	CR_DECLARE_STRUCT(CGameStateCollector)
 
 public:
 	CGameStateCollector() {}
@@ -51,10 +51,10 @@ public:
 	void Serialize(creg::ISerializer& s);
 };
 
-CR_BIND(CGameStateCollector, );
+CR_BIND(CGameStateCollector, )
 CR_REG_METADATA(CGameStateCollector, (
 	CR_SERIALIZER(Serialize)
-));
+))
 
 static void WriteString(std::ostream& s, const std::string& str)
 {
@@ -152,8 +152,7 @@ void CCregLoadSaveHandler::SaveGame(const std::string& file)
 /// this just loads the mapname and some other early stuff
 void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 {
-	const std::string file2 = FindSaveFile(file);
-	ifs = new std::ifstream(dataDirsAccess.LocateFile(file2).c_str(), std::ios::in|std::ios::binary);
+	ifs = new std::ifstream(dataDirsAccess.LocateFile(FindSaveFile(file)), std::ios::in|std::ios::binary);
 
 	// in case these contained values alredy
 	// (this is the case when loading a game through the spring menu eg),

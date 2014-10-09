@@ -17,7 +17,7 @@
 
 #include <assert.h>
 
-CR_BIND(CSkirmishAIHandler,);
+CR_BIND(CSkirmishAIHandler,)
 
 CR_REG_METADATA(CSkirmishAIHandler, (
 	CR_MEMBER(id_ai),
@@ -27,7 +27,7 @@ CR_REG_METADATA(CSkirmishAIHandler, (
 	CR_MEMBER(gameInitialized),
 	CR_MEMBER(luaAIShortNames),
 	CR_IGNORED(currentAIId)
-));
+))
 
 
 CSkirmishAIHandler& CSkirmishAIHandler::GetInstance()

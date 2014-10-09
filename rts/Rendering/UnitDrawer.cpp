@@ -1723,7 +1723,6 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	CFeature* feature = NULL;
-	CVertexArray* va = GetVertexArray();
 
 	std::vector<float3> buildableSquares; // buildable squares
 	std::vector<float3> featureSquares; // occupied squares
@@ -1753,6 +1752,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		glColor4f(0.9f, 0.8f, 0.0f, 0.7f);
 	}
 
+	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(buildableSquares.size() * 4, 0, VA_SIZE_0);
 
@@ -1766,6 +1766,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 
 
 	glColor4f(0.9f, 0.8f, 0.0f, 0.7f);
+	va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(featureSquares.size() * 4, 0, VA_SIZE_0);
 
@@ -1779,6 +1780,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 
 
 	glColor4f(0.9f, 0.0f, 0.0f, 0.7f);
+	va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(illegalSquares.size() * 4, 0, VA_SIZE_0);
 
@@ -1795,6 +1797,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		const unsigned char s[4] = { 0,   0, 255, 128 }; // start color
 		const unsigned char e[4] = { 0, 128, 255, 255 }; // end color
 
+		va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(8, 0, VA_SIZE_C);
 		va->AddVertexQC(float3(x1, h, z1), s); va->AddVertexQC(float3(x1, 0.f, z1), e);
@@ -1803,6 +1806,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		va->AddVertexQC(float3(x2, h, z1), s); va->AddVertexQC(float3(x2, 0.f, z1), e);
 		va->DrawArrayC(GL_LINES);
 
+		va = GetVertexArray();
 		va->Initialize();
 		va->AddVertexQC(float3(x1, 0.0f, z1), e);
 		va->AddVertexQC(float3(x1, 0.0f, z2), e);

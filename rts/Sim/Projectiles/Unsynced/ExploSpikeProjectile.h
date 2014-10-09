@@ -7,7 +7,7 @@
 
 class CExploSpikeProjectile : public CProjectile
 {
-	CR_DECLARE(CExploSpikeProjectile);
+	CR_DECLARE(CExploSpikeProjectile)
 
 	/// used only by creg
 	CExploSpikeProjectile();

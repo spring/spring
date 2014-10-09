@@ -28,6 +28,7 @@ public:
 
 	void Alloc(int w, int h, int c);
 	void Alloc(int w, int h);
+	void AllocDummy(const SColor fill = SColor(255,0,0,255));
 
 	/// Load data from a file on the VFS
 	bool Load(std::string const& filename, unsigned char defaultAlpha = 255);
@@ -39,7 +40,7 @@ public:
 	const unsigned int CreateDDSTexture(unsigned int texID = 0, bool mipmaps = false) const;
 
 	void CreateAlpha(unsigned char red, unsigned char green, unsigned char blue);
-	void SetTransparent(const SColor& c, const SColor& trans = SColor(0,0,0,0));
+	void SetTransparent(const SColor& c, const SColor trans = SColor(0,0,0,0));
 
 	void Renormalize(float3 newCol);
 	void Blur(int iterations = 1, float weight = 1.0f);
@@ -80,12 +81,6 @@ public:
 	void InvertAlpha();
 	void GrayScale();
 	void Tint(const float tint[3]);
-
-private:
-	/**
-	 * Allocates a red 1x1, 4-channel bitmap
-	 */
-	void AllocDummy();
 };
 
 #endif // _BITMAP_H

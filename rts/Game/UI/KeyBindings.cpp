@@ -186,7 +186,7 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	{ "Any+f3",  "LastMsgPos"            },
 	{ "Any+f4",  "ShowMetalMap"          },
 	{ "Any+f5",  "HideInterface"         },
-	{ "Any+f6",  "NoSound"               },
+	{ "Any+f6",  "MuteSound"             },
 	{ "Any+f7",  "DynamicSky"            },
 	{  "Any+l",  "togglelos"             },
 	{  "Any+;",  "toggleradarandjammer"  },
@@ -285,6 +285,7 @@ CKeyBindings::CKeyBindings()
 
 CKeyBindings::~CKeyBindings()
 {
+	configHandler->RemoveObserver(this);
 }
 
 
@@ -470,7 +471,6 @@ bool CKeyBindings::UnBind(const std::string& keystr, const std::string& command)
 
 	KeyMap::iterator it = bindings.find(ks);
 	if (it != bindings.end()) {
-		success = true;
 		ActionList& al = it->second;
 		success = RemoveCommandFromList(al, command);
 		if (al.empty()) {

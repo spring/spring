@@ -15,13 +15,13 @@
 #include "System/Util.h"
 
 
-CR_BIND(CDamageArrayHandler, (NULL));
+CR_BIND(CDamageArrayHandler, (NULL))
 
 CR_REG_METADATA(CDamageArrayHandler, (
 	CR_MEMBER(armorDefNameIdxMap),
 	CR_MEMBER(armorDefKeys),
 	CR_RESERVED(16)
-));
+))
 
 
 CDamageArrayHandler* damageArrayHandler;

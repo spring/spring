@@ -22,7 +22,7 @@ CGlobalSynced* gs = NULL;
 
 
 
-CR_BIND(CGlobalSynced, );
+CR_BIND(CGlobalSynced, )
 
 CR_REG_METADATA(CGlobalSynced, (
 	CR_MEMBER(frameNum),
@@ -49,7 +49,7 @@ CR_REG_METADATA(CGlobalSynced, (
 	CR_MEMBER(useLuaGaia),
 	CR_MEMBER(randSeed),
 	CR_MEMBER(initRandSeed)
-));
+))
 
 
 /**

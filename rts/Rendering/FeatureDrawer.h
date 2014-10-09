@@ -11,13 +11,12 @@
 
 class CFeature;
 class IWorldObjectModelRenderer;
-class CVertexArray;
 
 
 class CFeatureDrawer: public CEventClient
 {
-	CR_DECLARE_STRUCT(CFeatureDrawer);
-	CR_DECLARE_SUB(DrawQuad);
+	CR_DECLARE_STRUCT(CFeatureDrawer)
+	CR_DECLARE_SUB(DrawQuad)
 
 typedef std::map<CFeature*, float> FeatureSet;
 typedef std::map<int, FeatureSet> FeatureRenderBin;
@@ -61,7 +60,7 @@ private:
 	std::set<CFeature*> unsortedFeatures;
 
 	struct DrawQuad {
-		CR_DECLARE_STRUCT(DrawQuad);
+		CR_DECLARE_STRUCT(DrawQuad)
 		std::set<CFeature*> features;
 	};
 

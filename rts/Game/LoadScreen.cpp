@@ -31,12 +31,10 @@
 #include "System/Platform/Watchdog.h"
 #include "System/Platform/Threading.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 
-#if !defined(HEADLESS) && !defined(NO_SOUND)
-	#include "System/Sound/EFX.h"
-	#include "System/Sound/EFXPresets.h"
-#endif
+#include "System/Sound/OpenAL/EFX.h"
+#include "System/Sound/OpenAL/EFXPresets.h"
 
 #include <vector>
 
@@ -109,7 +107,7 @@ void CLoadScreen::Init()
 
 		const std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
 		if (!mapStartMusic.empty())
-			Channels::BGMusic.StreamPlay(mapStartMusic);
+			Channels::BGMusic->StreamPlay(mapStartMusic);
 	}
 
 	try {

@@ -37,6 +37,6 @@ namespace IPath {
 		float goalRadius;
 		float pathCost;
 	};
-};
+}
 
 #endif

@@ -11,7 +11,7 @@
 
 class AllyTeam
 {
-	CR_DECLARE_STRUCT(AllyTeam);
+	CR_DECLARE_STRUCT(AllyTeam)
 
 public:
 	AllyTeam();

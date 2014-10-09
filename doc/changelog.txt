@@ -2,14 +2,31 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 99.0 ---------------------------------------------------------
+- fix #4576 F6 does not sound mute
+
 -- 98.0 ---------------------------------------------------------
+Major:
+ - vaporized PathFinder's runtime precache cpu usage
+
+
 Cmdline Arguments:
  - allow ./spring --game rapid://ba:stable --map DeltaSiegeDry
+ - give correct error message when cmdline given filepath wasn't quoted and contained spaces
+
+GameServer:
+ - rename BypassScriptPasswordCheck to AllowSpectatorJoin and default to true
 
 Lua:
+ - added AssignPlayerToTeam(playerID, teamID)
  - added SetAlly(firstAllyTeamId, secondAllyTeamId, ally)
  - added VFS.UnmapArchive(string fileName)
+ - added VFS.GetMaps(), VFS.GetGames(), VFS.GetAllArchives(), VFS.HasArchive(archiveName)
+ - added VFS.GetArchiveInfo(archiveName)
+ - added VFS.GetArchiveChecksum(archiveName)
+ - added VFS.GetArchiveDependencies(archiveName), VFS.GetArchiveReplaces(archiveName)
  - allow tcp connections by luasocket as default (udp is still restricted)
+ - add callin DrawInMiniMapBackground(sizex, sizey) -> nil
  - add callin AllowBuilderHoldFire(unitID, unitDefID, action) --> boolean
      action is one of:
        Build      -1
@@ -19,6 +36,37 @@ Lua:
        Resurrect 125 (CMD_RESURRECT)
        Capture   130 (CMD_CAPTURE)
 
+Rendering:
+ - glFont: make inlined colorcodes reuse current set alpha value
+
+Pather:
+ - make lowRes PathEstimator using medRes PE instead of maxRes PathFinder (massively reducing cputime)
+ - massive cleanup & modularization
+ - reduced memory usage
+ - modrules: add system.pathFinderUpdateRate tag
+ - fixed/reduced PathEstimator update rate
+ - crashing aircraft doesn't spam PE updates anymore (#4500)
+
+CEG:
+ ! fixed booleans in CEGs (sometimes they were randomly overriden with random data)
+
+Weapons:
+ - Beamlasers respect repulser-shields' armorclass (pullrequest by sprunk)
+ ! move magic number to weapondef_post.lua: crater were 1.5x of craterAreaOfEffect while decals are 1.0x -> make them _both same size_
+ ! fixed #4523: typo in craterAoE loading
+
+Sim:
+ - GroundBlocking: don't align immobile objects to even squares
+ - reduce load in Collisions handling (by doing blocked ground squares scans only every 2nd frame)
+
+Misc:
+ - AI is initializated earlier: no more hang on game start
+ - add /set GrassDetail to console
+ - slightly speed up scanning for archives
+ - add HostIPDefault, HostPortDefault to set default host ip/port
+ - reduce default spintime of ThreadPool workers to 1ms (from 5ms)
+ ! rename /nosound to /mutesound
+
 Bugfixes:
  - fix #4417 (spring spring://username:passwd@hostname:port doesn't work)
  - fix #4413 (widget:GameProgress() was no longer called for rejoining player)
@@ -26,6 +74,17 @@ Bugfixes:
  - fix #4406 (crash at start)
  - fix #4377 (compile with cmake 3.0)
  - fix #3677 (bounceExplosionGenerator tag does not work for bouncing aircraftbomb weapon types)
+ - fix #4483 (Spring.SetProjectileAlwaysVisible doesn't always make a projectile always visible)
+ - KingRaptor found the cause of a _very_ old bug: fix green screen tint in startselector stage
+ - PE: fix bug where buildings weren't registered as blocking, cause they were not snapped to ground when the PE update was called (c03022cc)
+
+AI:
+ - fixed return-type and value of Pathing::GetApproximateLength (pullrequest by rlcevg)
+
+Buildprocess:
+ - heavily reduced files which are compiled multiple times
+ ! add check for gcc >=4.7 at configure
+
 
 -- 97.0 ---------------------------------------------------------
 Major:

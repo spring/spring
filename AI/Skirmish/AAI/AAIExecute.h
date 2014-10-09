@@ -7,17 +7,24 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#pragma once
+#ifndef AAI_EXECUTE_H
+#define AAI_EXECUTE_H
 
-#include "AAI.h"
 #include "aidef.h"
-#include "AAIGroup.h"
+
+namespace springLegacyAI {
+	struct UnitDef;
+}
+using namespace springLegacyAI;
+
+enum BuildOrderStatus {BUILDORDER_FAILED, BUILDORDER_NOBUILDPOS, BUILDORDER_NOBUILDER, BUILDORDER_SUCCESFUL};
 
 class AAI;
 class AAIBuildTable;
 class AAIBrain;
 class AAIMap;
 class AAIUnitTable;
+class AAISector;
 
 class AAIExecute
 {
@@ -30,15 +37,9 @@ public:
 	// return true if building will be placed at a valid pos = inside sectors
 	bool InitBuildingAt(const UnitDef *def, float3 *pos, bool water);
 
-	void ConstructBuildingAt(int building, int builder, float3 position);
-
 	void CreateBuildTask(int unit, const UnitDef *def, float3 *pos);
 
 	void MoveUnitTo(int unit, float3 *position);
-
-	void stopUnit(int unit);
-
-	bool IsBusy(int unit);
 
 	void AddUnitToGroup(int unit_id, int def_id, UnitCategory category);
 
@@ -55,10 +56,6 @@ public:
 	// checks if ressources are sufficient and orders construction of new buildings
 	void CheckRessources();
 
-	float GetEnergyUrgency();
-	float GetMetalUrgency();
-	float GetEnergyStorageUrgency();
-	float GetMetalStorageUrgency();
 
 	// checks if buildings of that type could be replaced with more efficient one (e.g. mex -> moho)
 	void CheckMexUpgrade();
@@ -82,17 +79,8 @@ public:
 	void CheckDefences();
 
 	// builds all kind of buildings
-	bool BuildFactory();
-	bool BuildDefences();
+
 //	void BuildUnit(UnitCategory category, float speed, float cost, float range, float power, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, float eff, bool urgent);
-	bool BuildRadar();
-	bool BuildJammer();
-	bool BuildExtractor();
-	bool BuildMetalMaker();
-	bool BuildStorage();
-	bool BuildPowerPlant();
-	bool BuildArty();
-	bool BuildAirBase();
 
 	// called when building has been finished / contruction failed
 	void ConstructionFailed(float3 build_pos, int def_id);
@@ -107,15 +95,10 @@ public:
 
 	void CheckFallBack(int unit_id, int def_id);
 
-	// tries to build a defence building vs category in the specified sector
-	// returns BUILDORDER_SUCCESFUL if succesful
-	BuildOrderStatus BuildStationaryDefenceVS(UnitCategory category, AAISector *dest);
 
 	// tries to call support vs air (returns true if succesful)
 	void DefendUnitVS(int unit, unsigned int enemy_movement_type, float3 *enemy_pos, int importance);
 
-	// returns true if successfully assisting construction
-	bool AssistConstructionOfCategory(UnitCategory category, int importance = 5);
 
 	// adds a unit to the correct wishlist
 	bool AddUnitToBuildqueue(int def_id, int number, bool urgent);
@@ -123,31 +106,40 @@ public:
 	// returns buildque for a certain factory
 	list<int>* GetBuildqueueOfFactory(int def_id);
 
-	// returns the the total ground offensive power of all units
-	float GetTotalGroundPower();
-
-	// returns the the total air defence power of all units
-	float GetTotalAirPower();
-
-	// chooses a starting sector close to specified sector
-	void ChooseDifferentStartingSector(int x, int y);
-
-	// returns closest (taking into account movement speed) group with units of specified unit type that may reach the location
-	AAIGroup* GetClosestGroupForDefence(UnitType group_type, float3 *pos, int continent, int importance);
 
 	float3 GetRallyPoint(unsigned int unit_movement_type, int continent_id, int min_dist, int max_dist);
-	float3 GetRallyPointCloseTo(UnitCategory category, unsigned int unit_movement_type, int continent_id, float3 pos, int min_dist, int max_dist);
-
-	float3 GetBuildsite(int builder, int building, UnitCategory category);
 	float3 GetUnitBuildsite(int builder, int unit);
 
-	void InitBuildques();
+	int unitProductionRate;
 
+	// ressource management
+	// tells ai, how many times additional metal/energy has been requested
+	float futureRequestedMetal;
+	float futureRequestedEnergy;
+	float futureAvailableMetal;
+	float futureAvailableEnergy;
+	float futureStoredMetal;
+	float futureStoredEnergy;
+	float averageMetalSurplus;
+	float averageEnergySurplus;
+	int disabledMMakers;
+
+
+	// urgency of construction of building of the different categories
+	float urgency[METAL_MAKER+1];
+
+	// sector where next def vs category needs to be built (0 if none)
+
+	// debug
+	void GiveOrder(Command *c, int unit, const char *owner);
+
+private:
 	// accelerates game startup
 	void AddStartFactory();
 
 	// custom relations
 	float static sector_threat(AAISector *);
+
 	bool static least_dangerous(AAISector *left, AAISector *right);
 	bool static suitable_for_power_plant(AAISector *left, AAISector *right);
 	bool static suitable_for_ground_factory(AAISector *left, AAISector *right);
@@ -164,49 +156,74 @@ public:
 	// cache to speed things up a bit
 	float static learned;
 	float static current;
-
 	// buildques for the factories
 	vector<list<int> > buildques;
-
 	// number of factories (both mobile and sationary)
+
 	int numOfFactories;
 
-	int unitProductionRate;
+	// tries to build a defence building vs category in the specified sector
+	// returns BUILDORDER_SUCCESFUL if succesful
+	BuildOrderStatus BuildStationaryDefenceVS(UnitCategory category, AAISector *dest);
 
-	// ressource management
-	// tells ai, how many times additional metal/energy has been requested
-	float futureRequestedMetal;
-	float futureRequestedEnergy;
-	float futureAvailableMetal;
-	float futureAvailableEnergy;
-	float futureStoredMetal;
-	float futureStoredEnergy;
+	// returns true if successfully assisting construction
+	bool AssistConstructionOfCategory(UnitCategory category, int importance = 5);
+
+	// returns the the total ground offensive power of all units
+
+
+
+	float GetTotalGroundPower();
+
+	// returns the the total air defence power of all units
+	float GetTotalAirPower();
+
+	// chooses a starting sector close to specified sector
+	void ChooseDifferentStartingSector(int x, int y);
+
+	// returns closest (taking into account movement speed) group with units of specified unit type that may reach the location
+
+	AAIGroup* GetClosestGroupForDefence(UnitType group_type, float3 *pos, int continent, int importance);
+	float3 GetRallyPointCloseTo(UnitCategory category, unsigned int unit_movement_type, int continent_id, float3 pos, int min_dist, int max_dist);
+	float3 GetBuildsite(int builder, int building, UnitCategory category);
+	void InitBuildques();
+
+	void stopUnit(int unit);
+	void ConstructBuildingAt(int building, int builder, float3 position);
+	bool IsBusy(int unit);
+
+	float GetEnergyUrgency();
+
+	float GetMetalUrgency();
+	float GetEnergyStorageUrgency();
+	float GetMetalStorageUrgency();
+
+	bool BuildFactory();
+	bool BuildDefences();
+	bool BuildRadar();
+	bool BuildJammer();
+	bool BuildExtractor();
+	bool BuildMetalMaker();
+	bool BuildStorage();
+	bool BuildPowerPlant();
+	bool BuildArty();
+	bool BuildAirBase();
+
 	float averageMetalUsage;
 	float averageEnergyUsage;
-	float averageMetalSurplus;
-	float averageEnergySurplus;
-	int disabledMMakers;
-
 	int counter;
 	float metalSurplus[8];
 	float energySurplus[8];
-
-	// urgency of construction of building of the different categories
-	float urgency[METAL_MAKER+1];
-
-	// sector where next def vs category needs to be built (0 if none)
 	AAISector *next_defence;
 	UnitCategory def_category;
 
-	// debug
 	int issued_orders;
-	void GiveOrder(Command *c, int unit, const char *owner);
 
-
-private:
 	AAI *ai;
 
 	// stores which buildque belongs to what kind of factory
 	vector<int> factory_table;
-
 };
+
+#endif
+

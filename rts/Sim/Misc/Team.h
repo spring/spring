@@ -19,7 +19,7 @@
 
 class CTeam : public TeamBase, private boost::noncopyable //! cannot allow shallow copying of Teams, contains pointers
 {
-	CR_DECLARE(CTeam);
+	CR_DECLARE(CTeam)
 public:
 	CTeam(int _teamNum);
 

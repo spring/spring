@@ -20,7 +20,7 @@ class CFeature;
 
 struct CollisionVolume
 {
-	CR_DECLARE_STRUCT(CollisionVolume);
+	CR_DECLARE_STRUCT(CollisionVolume)
 
 public:
 	enum {

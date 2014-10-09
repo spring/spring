@@ -62,7 +62,7 @@ void CClassicGroundMoveType::LeaveTransport() {}
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/type2.h"
@@ -321,7 +321,7 @@ void CClassicGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadiu
 	StartEngine();
 
 	if (owner->team == gu->myTeam) {
-		Channels::General.PlayRandomSample(owner->unitDef->sounds.activate, owner);
+		Channels::General->PlayRandomSample(owner->unitDef->sounds.activate, owner);
 	}
 }
 
@@ -524,9 +524,9 @@ void CClassicGroundMoveType::UpdateSkid()
 			ChangeHeading(owner->heading);
 		} else {
 			if (onSlope) {
-				const float3 dir = CGround::GetNormal(midPos.x, midPos.z);
-				const float3 normalForce = dir*dir.dot(UpVector*mapInfo->map.gravity);
-				const float3 newForce = UpVector*mapInfo->map.gravity - normalForce;
+				const float3& dir = CGround::GetNormal(midPos.x, midPos.z);
+				const float3 normalForce = dir * dir.dot(UpVector * mapInfo->map.gravity);
+				const float3 newForce = UpVector * mapInfo->map.gravity - normalForce;
 
 				owner->SetVelocity(spd + newForce);
 				owner->SetVelocity(spd * (1.0f - (0.1f * dir.y)));
@@ -1017,7 +1017,7 @@ void CClassicGroundMoveType::Arrived()
 		StopEngine();
 
 		if (owner->team == gu->myTeam) {
-			Channels::General.PlayRandomSample(owner->unitDef->sounds.arrived, owner);
+			Channels::General->PlayRandomSample(owner->unitDef->sounds.arrived, owner);
 		}
 
 		progressState = Done;

@@ -21,6 +21,6 @@ SET(sources_engine_ExternalAI
 		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAILibrary.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAILibraryInfo.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAIWrapper.cpp"
+		PARENT_SCOPE
 	)
 
-MakeGlobal(sources_engine_ExternalAI)

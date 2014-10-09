@@ -908,7 +908,7 @@ void CDynWater::DrawWaterSurface()
 			const int yhlod = y + hlod;
 
 			const int nloop = (xe - xs) / lod + 1;
-			va->EnlargeArrays(nloop*13, 4*nloop + 1);
+			va->EnlargeArrays(nloop*13);
 			for (int x = xs; x < xe; x += lod) {
 				const int xlod = x + lod;
 				const int xhlod = x + hlod;
@@ -924,49 +924,49 @@ void CDynWater::DrawWaterSurface()
 				} else { // inre begr?sning mot f?eg?nde lod FIXME
 					if (x >= (cx + vrhlod)) {
 						if (inStrip) {
-							va->EndStripQ();
+							va->EndStrip();
 							inStrip = false;
 						}
 						DrawVertexAQ(x,y);
 						DrawVertexAQ(x,yhlod);
 						DrawVertexAQ(xhlod,y);
 						DrawVertexAQ(xhlod,yhlod);
-						va->EndStripQ();
+						va->EndStrip();
 						DrawVertexAQ(x,yhlod);
 						DrawVertexAQ(x,ylod);
 						DrawVertexAQ(xhlod,yhlod);
 						DrawVertexAQ(xhlod,ylod);
-						va->EndStripQ();
+						va->EndStrip();
 						DrawVertexAQ(xhlod,ylod);
 						DrawVertexAQ(xlod,ylod);
 						DrawVertexAQ(xhlod,yhlod);
 						DrawVertexAQ(xlod,y);
 						DrawVertexAQ(xhlod,y);
-						va->EndStripQ();
+						va->EndStrip();
 					} else if (x <= (cx - vrhlod)) {
 						if (inStrip) {
-							va->EndStripQ();
+							va->EndStrip();
 							inStrip = false;
 						}
 						DrawVertexAQ(xlod,  yhlod);
 						DrawVertexAQ(xlod,  y);
 						DrawVertexAQ(xhlod, yhlod);
 						DrawVertexAQ(xhlod, y);
-						va->EndStripQ();
+						va->EndStrip();
 						DrawVertexAQ(xlod,  ylod);
 						DrawVertexAQ(xlod,  yhlod);
 						DrawVertexAQ(xhlod, ylod);
 						DrawVertexAQ(xhlod, yhlod);
-						va->EndStripQ();
+						va->EndStrip();
 						DrawVertexAQ(xhlod, y);
 						DrawVertexAQ(x,     y);
 						DrawVertexAQ(xhlod, yhlod);
 						DrawVertexAQ(x,     ylod);
 						DrawVertexAQ(xhlod, ylod);
-						va->EndStripQ();
+						va->EndStrip();
 					} else if (y >= (cy + vrhlod)) {
 						if (inStrip) {
-							va->EndStripQ();
+							va->EndStrip();
 							inStrip = false;
 						}
 						DrawVertexAQ(x,     y);
@@ -975,16 +975,16 @@ void CDynWater::DrawWaterSurface()
 						DrawVertexAQ(xhlod, yhlod);
 						DrawVertexAQ(xlod,  y);
 						DrawVertexAQ(xlod,  yhlod);
-						va->EndStripQ();
+						va->EndStrip();
 						DrawVertexAQ(x,     yhlod);
 						DrawVertexAQ(x,     ylod);
 						DrawVertexAQ(xhlod, yhlod);
 						DrawVertexAQ(xlod,  ylod);
 						DrawVertexAQ(xlod,  yhlod);
-						va->EndStripQ();
+						va->EndStrip();
 					} else if (y <= (cy - vrhlod)) {
 						if (inStrip) {
-							va->EndStripQ();
+							va->EndStrip();
 							inStrip = false;
 						}
 						DrawVertexAQ(x,     yhlod);
@@ -993,18 +993,18 @@ void CDynWater::DrawWaterSurface()
 						DrawVertexAQ(xhlod, ylod);
 						DrawVertexAQ(xlod,  yhlod);
 						DrawVertexAQ(xlod,  ylod);
-						va->EndStripQ();
+						va->EndStrip();
 						DrawVertexAQ(xlod,  yhlod);
 						DrawVertexAQ(xlod,  y);
 						DrawVertexAQ(xhlod, yhlod);
 						DrawVertexAQ(x,     y);
 						DrawVertexAQ(x,     yhlod);
-						va->EndStripQ();
+						va->EndStrip();
 					}
 				}
 			}
 			if (inStrip) {
-				va->EndStripQ();
+				va->EndStrip();
 				inStrip = false;
 			}
 		}
@@ -1346,7 +1346,7 @@ void CDynWater::DrawOuterSurface()
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 
-	va->EnlargeArrays(3*3*16*16*4, 0);
+	va->EnlargeArrays(3*3*16*16*4);
 	float posx = camPosBig2.x - WH_SIZE - WF_SIZE;
 	float posy = camPosBig2.z - WH_SIZE - WF_SIZE;
 

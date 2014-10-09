@@ -21,4 +21,4 @@ std::string ErrorString(int code)
 		default:
 			return std::string("Unknown Ogg error.");
 	}
-};
+}

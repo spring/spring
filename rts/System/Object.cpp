@@ -19,7 +19,7 @@ CR_REG_METADATA(CObject, (
 
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
-	));
+	))
 
 Threading::AtomicCounterInt64 CObject::cur_sync_id(0);
 

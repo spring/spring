@@ -17,7 +17,7 @@
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(radius),
@@ -28,7 +28,7 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(isEnabled),
 	CR_MEMBER(shieldProjectile),
 	CR_MEMBER(repulsedProjectiles)
-));
+))
 
 
 CPlasmaRepulser::CPlasmaRepulser(CUnit* owner, const WeaponDef* def): CWeapon(owner, def),
@@ -257,7 +257,9 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 		return -1.0f;
 	}
 
-	if (emitter->weaponDef->damages[0] > curPower) {
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponPos);
+
+	if (damageArray[weaponDef->shieldArmorType] > curPower) {
 		return -1.0f;
 	}
 	if (weaponDef->smartShield && teamHandler->AlliedTeams(emitter->owner->team, owner->team)) {
@@ -297,11 +299,12 @@ void CPlasmaRepulser::DependentDied(CObject* o)
 }
 
 
-bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter, float damageMultiplier)
+bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter, float3 start, float damageMultiplier)
 {
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponPos);
+
 	if (weaponDef->shieldPower > 0) {
-		//FIXME some weapons do range dependent damage! (mantis #2345)
-		curPower -= emitter->weaponDef->damages[0] * damageMultiplier;
+		curPower -= damageArray[weaponDef->shieldArmorType] * damageMultiplier;
 	}
 	return weaponDef->shieldRepulser;
 }

@@ -11,8 +11,8 @@ class CSmokeTrailProjectile;
 
 class CStarburstProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CStarburstProjectile);
-	CR_DECLARE_SUB(TracerPart);
+	CR_DECLARE(CStarburstProjectile)
+	CR_DECLARE_SUB(TracerPart)
 
 public:
 	CStarburstProjectile(const ProjectileParams& params);
@@ -55,7 +55,7 @@ private:
 	unsigned int curTracerPart;
 
 	struct TracerPart {
-		CR_DECLARE_STRUCT(TracerPart);
+		CR_DECLARE_STRUCT(TracerPart)
 
 		float3 pos;
 		float3 dir;
