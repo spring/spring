@@ -949,8 +949,14 @@ int CGame::KeyPressed(int key, bool isRepeat)
 
 int CGame::KeyReleased(int k)
 {
-	if (userWriting && keyCodes->IsPrintable(k)) {
-		return 0;
+	if (userWriting) {
+		if (
+			   keyCodes->IsPrintable(k)
+			|| k == SDLK_RETURN || k == SDLK_BACKSPACE || k == SDLK_DELETE
+			|| k == SDLK_HOME || k == SDLK_END || k == SDLK_RIGHT || k == SDLK_LEFT
+		) {
+			return 0;
+		}
 	}
 
 	// try the input receivers
