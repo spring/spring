@@ -1171,7 +1171,7 @@ bool java_initSkirmishAIClass(
 	// sai is now either the instantiated one, or a free one
 
 	// instantiate AI (if not already instantiated)
-	assert(sai < skirmishAiImpl_size);
+	assert(sai < skirmishAiImpl_sizeMax);
 	if (skirmishAiImpl_className[sai] == NULL) {
 		sai = firstFree;
 		java_establishJavaEnv();
@@ -1222,7 +1222,7 @@ bool java_releaseSkirmishAIClass(const char* className) {
 	// sai is now either the instantiated one, or a free one
 
 	// release AI (if its instance was found)
-	assert(sai < skirmishAiImpl_size);
+	assert(sai < skirmishAiImpl_sizeMax);
 	if (skirmishAiImpl_className[sai] != NULL) {
 		java_establishJavaEnv();
 		JNIEnv* env = java_getJNIEnv();
