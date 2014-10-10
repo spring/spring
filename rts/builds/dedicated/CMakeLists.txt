@@ -53,6 +53,9 @@ IF    (MINGW OR APPLE)
 	# due to some #define magic, which is practically impossible to workaround.
 	FIND_PACKAGE(SDL2 REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
+	if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
+		message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
+	endif()
 ELSE  (MINGW OR APPLE)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
