@@ -176,6 +176,18 @@ bool SpringApp::Initialize()
 	assert(cmdline != NULL);
 	assert(configHandler != NULL);
 
+	// list user's config
+	LOG("============== <User Config> ==============");
+	const std::map<std::string, std::string> settings = configHandler->GetDataWithoutDefaults();
+	for (auto& it: settings) {
+		// exclude non-engine configtags
+		if (ConfigVariable::GetMetaData(it.first) == nullptr)
+			continue;
+
+		LOG("%s = %s", it.first.c_str(), it.second.c_str());
+	}
+	LOG("============== </User Config> ==============");
+
 	FileSystemInitializer::InitializeLogOutput();
 	CLogOutput::LogSystemInfo();
 	LOG("         CPU Clock: %s", spring_clock::GetName());

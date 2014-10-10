@@ -44,6 +44,7 @@ public:
 	void Delete(const string& key);
 	string GetConfigFile() const;
 	const StringMap GetData() const;
+	StringMap GetDataWithoutDefaults() const;
 	void Update();
 	void EnableWriting(bool write) { writingEnabled = write; }
 
@@ -168,6 +169,31 @@ void ConfigHandlerImpl::RemoveDefaults()
 		}
 	}
 }
+
+
+StringMap ConfigHandlerImpl::GetDataWithoutDefaults() const
+{
+	StringMap cleanConfig;
+	StringMap defaults = sources.back()->GetData();
+
+	for (auto rsource = sources.crbegin(); rsource != sources.crend(); ++rsource) {
+		const FileConfigSource* source = dynamic_cast<const FileConfigSource*> (*rsource);
+		if (source == nullptr) continue;
+
+		// Copy the map; we modify the original while iterating over the copy.
+		StringMap file = source->GetData();
+		for (auto it = file.cbegin(); it != file.cend(); ++it) {
+			const auto pos = defaults.find(it->first);
+			if (pos != defaults.end() && pos->second == it->second)
+				continue;
+
+			cleanConfig[it->first] = it->second;
+		}
+	}
+
+	return cleanConfig;
+}
+
 
 void ConfigHandlerImpl::Delete(const string& key)
 {
