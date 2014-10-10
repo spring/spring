@@ -641,7 +641,7 @@ namespace creg {
  *   class
  */
 #define CR_SERIALIZER(SerializeFunc) \
-	(class_->serializeProc = Type::SerializeFunc)
+	(class_->serializeProc = &Type::SerializeFunc)
 
 /** @def CR_POSTLOAD
  * Registers a custom post-loading method for the class/struct
@@ -650,7 +650,7 @@ namespace creg {
  * There can only be one postload method per class/struct
  */
 #define CR_POSTLOAD(PostLoadFunc) \
-	(class_->postLoadProc = Type::PostLoadFunc)
+	(class_->postLoadProc = &Type::PostLoadFunc)
 }
 
 #endif // _CREG_H
