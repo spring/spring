@@ -1156,6 +1156,8 @@ bool java_initSkirmishAIClass(
 	for (sai = 0; sai < skirmishAiImpl_size; ++sai) {
 		if (skirmishAiImpl_className[sai] == NULL) {
 			firstFree = sai;
+		} else if (strcmp(skirmishAiImpl_className[sai], className) == 0) {
+			break;
 		}
 	}
 	// sai is now either the instantiated one, or a free one
