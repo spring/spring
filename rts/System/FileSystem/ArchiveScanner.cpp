@@ -686,7 +686,7 @@ IFileFilter* CArchiveScanner::CreateIgnoreFilter(IArchive* ar)
 {
 	IFileFilter* ignore = IFileFilter::Create();
 	std::vector<boost::uint8_t> buf;
-	if (ar->GetFile("springignore.txt", buf) || buf.empty()) {
+	if (ar->GetFile("springignore.txt", buf) && !buf.empty()) {
 		// this automatically splits lines
 		ignore->AddRule(std::string((char*)(&buf[0]), buf.size()));
 	}
