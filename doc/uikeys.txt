@@ -106,6 +106,22 @@
 //      bind Ctrl+space firestate 0  // hold fire
 //
 
+//
+//  Keychains (new in 98.0):
+//
+//    A keychain is a timed combination of keysets,
+//    i.e. "press A, then B".
+//
+//    Here are some examples:
+//
+//      bind            a,b  fake_action
+//      bind Ctrl+a, Ctrl+b  fake_action
+//
+//    The format then goes like this:
+//
+//      <keyset>, <keyset>, ...
+//
+
 
 //
 //  Extra Run-Time Commands
