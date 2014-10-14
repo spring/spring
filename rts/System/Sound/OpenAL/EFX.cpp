@@ -14,9 +14,6 @@
 /******************************************************************************/
 /******************************************************************************/
 
-CONFIG(float, snd_airAbsorption).defaultValue(0.1f);
-CONFIG(bool, UseEFX).defaultValue(true).safemodeValue(false);
-
 static std::string default_preset = "outdoors_valley";//"bathroom";
 
 /******************************************************************************/
