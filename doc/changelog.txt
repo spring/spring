@@ -3,11 +3,12 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 -- 99.0 ---------------------------------------------------------
-! don't read old config file locations any more:
+ ! don't read old config file locations any more:
     AppData\Local\springsettings.cfg
     ~/.springrc
-- new linux crashhandler by Major Bor3d0m
-- fix #4576 F6 does not sound mute
+ ! new linux crashhandler by Major Bor3d0m
+    libunwind is required to compile spring on linux
+ - fix #4576 F6 does not sound mute
 
 -- 98.0 ---------------------------------------------------------
 Major:
