@@ -250,7 +250,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	if (unitDef->fullHealthFactory && buildee->health < buildee->maxHealth) { return; }
 
 	{
-		if (group && buildee->group == 0) {
+		if (group && !buildee->group) {
 			buildee->SetGroup(group, true);
 		}
 	}

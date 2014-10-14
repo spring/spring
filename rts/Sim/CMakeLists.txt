@@ -118,8 +118,6 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/FactoryCAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/MobileCAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/TransportCAI.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Groups/Group.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Groups/GroupHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobEngine.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobFile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobInstance.cpp"
@@ -163,7 +161,6 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponLoader.cpp"
 	)
 
-include_directories(${SDL2_INCLUDE_DIR})
 
 get_property(SPRING_SIM_LIBRARIES TARGET engineSim PROPERTY LOCATION)
 if( CMAKE_COMPILER_IS_GNUCXX)

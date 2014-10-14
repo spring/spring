@@ -53,7 +53,7 @@
 #include "Lua/LuaUI.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
-#include "Sim/Units/Groups/GroupHandler.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/EndGameBox.h"

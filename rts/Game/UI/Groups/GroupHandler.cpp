@@ -28,8 +28,8 @@ CR_REG_METADATA(CGroupHandler, (
 //////////////////////////////////////////////////////////////////////
 
 CGroupHandler::CGroupHandler(int teamId)
-		: team(teamId),
-		firstUnusedGroup(FIRST_SPECIAL_GROUP)
+: team(teamId)
+, firstUnusedGroup(FIRST_SPECIAL_GROUP)
 {
 	for (int g = 0; g < FIRST_SPECIAL_GROUP; ++g) {
 		groups.push_back(new CGroup(g, this));
@@ -176,4 +176,3 @@ void CGroupHandler::PushGroupChange(int id)
 {
 	changedGroups.insert(id);
 }
-

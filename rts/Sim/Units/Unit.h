@@ -122,8 +122,6 @@ public:
 
 	void DependentDied(CObject* o);
 
-	bool SetGroup(CGroup* group, bool fromFactory = false);
-
 	bool AllowedReclaim(CUnit* builder) const;
 	bool UseMetal(float metal);
 	void AddMetal(float metal, bool useIncomeMultiplier = true);
@@ -195,6 +193,9 @@ protected:
 	void UpdateLosStatus(int allyTeam);
 	float GetFlankingDamageBonus(const float3& attackDir);
 
+public: // unsynced methods
+	bool SetGroup(CGroup* newGroup, bool fromFactory = false);
+
 public:
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
 	static void  SetExpPowerScale(float value) { expPowerScale = value; }
@@ -232,8 +233,6 @@ public:
 	AMoveType* prevMoveType;
 
 	CCommandAI* commandAI;
-	/// if the unit is part of an group (hotkey group)
-	CGroup* group;
 
 	/// Our shield weapon, NULL if we have none
 	CWeapon* shieldWeapon;
@@ -531,6 +530,8 @@ public:
 	unsigned int lastUnitUpdate;
 
 	std::string tooltip;
+
+	CGroup* group;
 
 private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)

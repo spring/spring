@@ -3,7 +3,6 @@
 
 #include "FactoryCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "Sim/Units/Groups/Group.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"

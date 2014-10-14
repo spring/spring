@@ -48,8 +48,8 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/Groups/Group.h"
-#include "Sim/Units/Groups/GroupHandler.h"
+#include "Game/UI/Groups/Group.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
@@ -2172,7 +2172,7 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 	const int groupID = luaL_checkint(L, 2);
 
 	if (groupID == -1) {
-		unit->SetGroup(NULL);
+		unit->SetGroup(nullptr);
 		return 0;
 	}
 

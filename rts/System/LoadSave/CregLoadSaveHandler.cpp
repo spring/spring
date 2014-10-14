@@ -24,7 +24,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
-#include "Sim/Units/Groups/GroupHandler.h"
+#include "Game/UI/Groups/GroupHandler.h"
 
 #include "System/Platform/errorhandler.h"
 #include "System/FileSystem/DataDirsAccess.h"

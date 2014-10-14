@@ -30,14 +30,6 @@ public:
 	/// lowest ID of the first group not reachable through a hot-key
 	static const size_t FIRST_SPECIAL_GROUP = 10;
 
-	/**
-	 * Initializes a singleton instance,
-	 * if not yet done by a call to GetInstance()
-	 */
-//	static void Initialize(int teamId);
-//	static CGroupHandler* GetInstance(int teamId);
-//	static void Destroy(int teamId);
-
 	void Update();
 
 	bool GroupCommand(int num);

@@ -33,7 +33,7 @@
 #include "Rendering/Models/IModelParser.h"
 #include "Rendering/GroundFlash.h"
 
-#include "Sim/Units/Groups/Group.h"
+#include "Game/UI/Groups/Group.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -91,7 +91,6 @@ CUnit::CUnit() : CSolidObject(),
 	prevMoveType(NULL),
 
 	commandAI(NULL),
-	group(NULL),
 
 	shieldWeapon(NULL),
 	stockpileWeapon(NULL),
@@ -241,7 +240,8 @@ CUnit::CUnit() : CSolidObject(),
 	lastDrawFrame(-30),
 	lastUnitUpdate(0),
 
-	stunned(false)
+	stunned(false),
+	group(nullptr)
 {
 }
 
@@ -290,7 +290,7 @@ CUnit::~CUnit()
 	UnBlock();
 
 	// Remove us from our group, if we were in one
-	SetGroup(NULL);
+	SetGroup(nullptr);
 
 	if (script != &CNullUnitScript::value) {
 		delete script;
@@ -1364,7 +1364,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	const int oldteam = team;
 
 	selectedUnitsHandler.RemoveUnit(this);
-	SetGroup(NULL);
+	SetGroup(nullptr);
 
 	eventHandler.UnitTaken(this, oldteam, newteam);
 	eoh->UnitCaptured(*this, oldteam, newteam);
@@ -1698,23 +1698,24 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 	if (fromFactory && !selectedUnitsHandler.AutoAddBuiltUnitsToFactoryGroup())
 		return false;
 
-	if (group != NULL) {
+	if (group != nullptr) {
 		group->RemoveUnit(this);
 	}
 
 	group = newGroup;
 
-	if (group) {
-		if (!group->AddUnit(this)){
-			// group did not accept us
-			group = NULL;
-			return false;
-		} else {
-			// add unit to the set of selected units iff its new group is already selected
-			// and (user wants the unit to be auto-selected or the unit is not newly built)
-			if (selectedUnitsHandler.IsGroupSelected(group->id) && (selectedUnitsHandler.AutoAddBuiltUnitsToSelectedGroup() || !fromFactory)) {
-				selectedUnitsHandler.AddUnit(this);
-			}
+	if (newGroup == nullptr)
+		return true;
+
+	if (!newGroup->AddUnit(this)){
+		// group did not accept us
+		group = nullptr;
+		return false;
+	} else {
+		// add unit to the set of selected units iff its new group is already selected
+		// and (user wants the unit to be auto-selected or the unit is not newly built)
+		if (selectedUnitsHandler.IsGroupSelected(newGroup->id) && (selectedUnitsHandler.AutoAddBuiltUnitsToSelectedGroup() || !fromFactory)) {
+			selectedUnitsHandler.AddUnit(this);
 		}
 	}
 
@@ -1919,7 +1920,7 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 	eoh->UnitDestroyed(*this, attacker);
 
 	// Will be called in the destructor again, but this can not hurt
-	SetGroup(NULL);
+	SetGroup(nullptr);
 
 	blockHeightChanges = false;
 
