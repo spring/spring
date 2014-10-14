@@ -137,19 +137,6 @@
 
 
 //
-//  Hotbinding:
-//
-//    The default bindings include the 'hotbind' (Ctrl+insert) and
-//    'hotunbind' (Ctrl+delete) capabilities. Place the mouse cursor over one
-//    of the control panel icons (normal command or build command), and press
-//    Ctrl+insert. Spring will then ask for a keyset, which will then have the
-//    icon's command immediately appended to its list of actions. Placing the
-//    mouse cursor over an icon and hitting Ctrl+delete will delete all bindings
-//    associated with that icon's command.
-//
-
-
-//
 //  Default Bindings:
 //
 //  fakemeta          space
@@ -200,9 +187,6 @@
 //  bind                  .  nextmenu
 //  bind            Shift+,  decguiopacity
 //  bind            Shift+.  incguiopacity
-//
-//  bind        Ctrl+insert  hotbind
-//  bind        Ctrl+delete  hotunbind
 //
 //  bind              Any++  speedup
 //  bind              Any+=  speedup
