@@ -12,6 +12,7 @@
 #include "System/Log/ILog.h"
 
 #include <stdexcept>
+#include <algorithm>
 
 
 CWordCompletion::CWordCompletion()

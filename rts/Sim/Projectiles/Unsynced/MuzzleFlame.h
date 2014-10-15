@@ -9,7 +9,7 @@ class CMuzzleFlame : public CProjectile
 {
 	CR_DECLARE(CMuzzleFlame)
 
-	void creg_Serialize(creg::ISerializer& s);
+	void creg_Serialize(creg::ISerializer* s);
 public:
 	CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size);
 	~CMuzzleFlame();

@@ -154,7 +154,7 @@ void CGrassDrawer::ChangeDetail(int detail) {
 	maxDetailedDist = 146 + detail * 24;
 	detailedBlocks = int((maxDetailedDist + 128.f * 1.5f) / bMSsq) + 1;
 	numTurfs = 3 + int(detail_lim * 0.5f);
-	strawPerTurf = std::min(50 + int(std::sqrt(detail_lim) * 10), mapInfo->grass.maxStrawsPerTurf);
+	strawPerTurf = std::min(50 + int(std::sqrt((float)detail_lim) * 10), mapInfo->grass.maxStrawsPerTurf);
 
 	// recreate textures & XBOs
 	CreateGrassDispList(grassDL);
@@ -954,7 +954,7 @@ void CGrassDrawer::CreateFarTex()
 
 	// blur non-rendered areas, so in mipmaps color data isn't blurred with background color
 	{
-		const int mipLevels = std::ceil(std::log(std::max(texSizeX, texSizeY) + 1));
+		const int mipLevels = std::ceil(std::log((float)(std::max(texSizeX, texSizeY) + 1)));
 
 		glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();

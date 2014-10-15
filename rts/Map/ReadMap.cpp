@@ -113,15 +113,15 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 }
 
 
-void CReadMap::Serialize(creg::ISerializer& s)
+void CReadMap::Serialize(creg::ISerializer* s)
 {
 	// remove the const
 	const float* cshm = GetCornerHeightMapSynced();
 	      float*  shm = const_cast<float*>(cshm);
 
-	s.Serialize(shm, 4 * gs->mapxp1 * gs->mapyp1);
+	s->Serialize(shm, 4 * gs->mapxp1 * gs->mapyp1);
 
-	if (!s.IsWriting())
+	if (!s->IsWriting())
 		mapDamage->RecalcArea(2, gs->mapx - 3, 2, gs->mapy - 3);
 }
 

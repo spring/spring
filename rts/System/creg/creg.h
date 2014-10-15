@@ -70,8 +70,6 @@ namespace creg {
 		CF_Synced = 8,
 	};
 
-	struct _DummyStruct {};
-
 	/** Class member flags to use with CR_MEMBER_SETFLAG */
 	enum ClassMemberFlag {
 		CM_NoSerialize = 1, /// Make the serializers skip the member
@@ -150,7 +148,7 @@ namespace creg {
 		};
 
 		Class();
-		~Class();
+		virtual ~Class();
 
 		/// Returns true if this class is equal to or derived from other
 		bool IsSubclassOf(Class* other) const;
@@ -171,6 +169,11 @@ namespace creg {
 
 		bool IsAbstract() const { return (binder->flags & CF_Abstract) != 0; }
 
+		virtual void CallSerializeProc(void* object, ISerializer* s) = 0;
+		virtual void CallPostLoadProc(void* object) = 0;
+		virtual bool HasSerialize() = 0;
+		virtual bool HasPostLoad() = 0;
+
 		/// Returns all concrete classes that implement this class
 		std::vector<Class*> GetImplementations();
 
@@ -182,10 +185,42 @@ namespace creg {
 		int size;
 		int alignment;
 		Class* base;
-		void (_DummyStruct::*serializeProc)(ISerializer& s);
-		void (_DummyStruct::*postLoadProc)();
 
 		friend class ClassBinder;
+	};
+
+	template<class T>
+	class ClassStrong : public Class
+	{
+	public:
+		ClassStrong() :
+			serializeProc(NULL),
+			postLoadProc(NULL) { }
+
+		virtual ~ClassStrong() { }
+
+		virtual void CallSerializeProc(void* object, ISerializer* s)
+		{
+			(static_cast<T*>(object)->*serializeProc)(s);
+		}
+
+		virtual void CallPostLoadProc(void* object)
+		{
+			(static_cast<T*>(object)->*postLoadProc)();
+		}
+
+		virtual bool HasSerialize()
+		{
+			return !!serializeProc;
+		}
+
+		virtual bool HasPostLoad()
+		{
+			return !!postLoadProc;
+		}
+
+		void (T::*serializeProc)(ISerializer* s);
+		void (T::*postLoadProc)();
 	};
 
 // -------------------------------------------------------------------
@@ -482,7 +517,8 @@ namespace creg {
 	TClass##MemberRegistrator() {				\
 		Type::memberRegistrator=this;				\
 	}												\
-	void RegisterMembers(creg::Class* class_) {		\
+	void RegisterMembers(creg::Class* class_base_) {		\
+		creg::ClassStrong<TClass>* class_ = static_cast<creg::ClassStrong<TClass>*>(class_base_); \
 		Type* null=nullptr;						\
 		(void)null; /*suppress compiler warning if this isn't used*/	\
 		Members; }									\
@@ -498,7 +534,8 @@ namespace creg {
 	TSubClass##MemberRegistrator() {				\
 		Type::memberRegistrator=this;				\
 	}												\
-	void RegisterMembers(creg::Class* class_) { \
+	void RegisterMembers(creg::Class* class_base_) { \
+		creg::ClassStrong<TSubClass>* class_ = static_cast<creg::ClassStrong<TSubClass>*>(class_base_); \
 		Type* null=nullptr; \
 		(void)null; \
 		Members; } \
@@ -604,7 +641,7 @@ namespace creg {
  *   class
  */
 #define CR_SERIALIZER(SerializeFunc) \
-	(class_->serializeProc = (void(creg::_DummyStruct::*)(creg::ISerializer&))&Type::SerializeFunc)
+	(class_->serializeProc = &Type::SerializeFunc)
 
 /** @def CR_POSTLOAD
  * Registers a custom post-loading method for the class/struct
@@ -613,7 +650,7 @@ namespace creg {
  * There can only be one postload method per class/struct
  */
 #define CR_POSTLOAD(PostLoadFunc) \
-	(class_->postLoadProc = (void(creg::_DummyStruct::*)())&Type::PostLoadFunc)
+	(class_->postLoadProc = &Type::PostLoadFunc)
 }
 
 #endif // _CREG_H

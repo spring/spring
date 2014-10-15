@@ -141,12 +141,14 @@ else  (UNIX AND NOT MINGW)
 			${MINGWLIBS}/freetype
 			${CMAKE_FIND_ROOT_PATH})
 		set(ENV{OPENALDIR} ${MINGWLIBS}/OpenAL)
-		include_directories(${MINGWLIBS}/zlib/include)
+		include_directories(${ZLIB_INCLUDE_DIR})
 
 		set(BOOST_LIBRARYDIR ${MINGWLIBS}/boost/lib)
 		add_definitions("-DBOOST_ALL_NO_LIB")
 		set(Boost_USE_STATIC_LIBS ON)
 		set(GLEW_STATIC ON)
+		
+		add_definitions("-DNOMINMAX")
 
 		set(EXE_FLAGS WIN32)
 	else(MSVC)

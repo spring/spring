@@ -5,6 +5,7 @@
 	#include <intrin.h>
 #endif
 #include <cstring>
+#include <boost/cstdint.hpp>
 
 
 std::string StringReplace(const std::string& text,
@@ -123,10 +124,17 @@ void InverseOrSetBool(bool& container, const std::string& argValue, const bool i
 
 
 
-static inline unsigned count_leading_ones(uint8_t x)
+static inline unsigned count_leading_ones(boost::uint8_t x)
 {
-	uint32_t i = ~x;
-	return __builtin_clz((i<<24) | 0x00FFFFFF);
+	boost::uint32_t i = ~x;
+	i = (i<<24) | 0x00FFFFFF;
+#ifdef _MSC_VER
+	unsigned long r;
+	_BitScanReverse(&r, (unsigned long)i);
+	return 31 - r;
+#else
+	return __builtin_clz(i);
+#endif
 }
 
 
@@ -144,15 +152,15 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 	static const auto UTF8_CONT_OKAY = 0x80; // 10xxxxxx
 
 	union UTF8_4Byte {
-		uint32_t i;
-		uint8_t  c[4];
+		boost::uint32_t i;
+		boost::uint8_t  c[4];
 	};
 
 	// read next 4bytes and check if it is an utf8 sequence
 	UTF8_4Byte utf8 = { 0 };
 	const int remainingChars = text.length() - pos;
 	if (remainingChars >= 4) {
-		utf8.i = *(uint32_t*)(&text[pos]);
+		utf8.i = *(boost::uint32_t*)(&text[pos]);
 	} else {
 		// read ahead of end of string
 		if (remainingChars <= 0)
@@ -160,9 +168,9 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 
 		// end of string reached, only read till end
 		switch (remainingChars) {
-			case 3: utf8.c[2] = uint8_t(text[pos + 2]);
-			case 2: utf8.c[1] = uint8_t(text[pos + 1]);
-			case 1: utf8.c[0] = uint8_t(text[pos    ]);
+			case 3: utf8.c[2] = boost::uint8_t(text[pos + 2]);
+			case 2: utf8.c[1] = boost::uint8_t(text[pos + 1]);
+			case 1: utf8.c[0] = boost::uint8_t(text[pos    ]);
 		};
 	}
 
