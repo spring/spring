@@ -257,14 +257,14 @@ void spring_time::sleep_until()
 }
 
 #ifndef UNIT_TEST
-void spring_time::Serialize(creg::ISerializer& s)
+void spring_time::Serialize(creg::ISerializer* s)
 {
-	if (s.IsWriting()) {
+	if (s->IsWriting()) {
 		int y = spring_tomsecs(*this - spring_gettime());
-		s.SerializeInt(&y, 4);
+		s->SerializeInt(&y, 4);
 	} else {
 		int y;
-		s.SerializeInt(&y, 4);
+		s->SerializeInt(&y, 4);
 		*this = *this + spring_msecs(y);
 	}
 }

@@ -161,6 +161,7 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponLoader.cpp"
 	)
 
+include_directories(${GLEW_INCLUDE_DIR})
 
 get_property(SPRING_SIM_LIBRARIES TARGET engineSim PROPERTY LOCATION)
 if( CMAKE_COMPILER_IS_GNUCXX)

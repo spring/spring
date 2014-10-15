@@ -117,9 +117,9 @@ extern void log_frontend_cleanup();
  * Pre-processor trickery, useful to create unique identifiers.
  * see http://stackoverflow.com/questions/461062/c-anonymous-variables
  */
-#define _CONCAT_SUB(start, end)   start##end
-#define _CONCAT(start, end)   _CONCAT_SUB(start, end)
-#define _UNIQUE_IDENT(prefix)   _CONCAT(prefix##__, _CONCAT(_CONCAT(__COUNTER__, __), __LINE__))
+#define _STR_CONCAT_SUB(start, end)   start##end
+#define _STR_CONCAT(start, end)   _STR_CONCAT_SUB(start, end)
+#define _UNIQUE_IDENT(prefix)   _STR_CONCAT(prefix##__, _STR_CONCAT(_STR_CONCAT(__COUNTER__, __), __LINE__))
 
 // Register a section (only the first time the code is run)
 #if       defined(__cplusplus)

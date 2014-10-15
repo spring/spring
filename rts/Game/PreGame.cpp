@@ -44,6 +44,7 @@
 #include "System/Net/RawPacket.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Sync/SyncedPrimitiveBase.h"
 #include "lib/luasocket/src/restrictions.h"
 #ifdef SYNCDEBUG
 	#include "System/Sync/SyncDebugger.h"

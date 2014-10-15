@@ -426,7 +426,7 @@ void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint interna
 {
 #ifdef GLEW_ARB_texture_storage
 	if (levels < 0)
-		levels = std::ceil(std::log(std::max(width, height) + 1));
+		levels = std::ceil(std::log((float)(std::max(width, height) + 1)));
 
 	if (GLEW_ARB_texture_storage) {
 		glTexStorage2D(target, levels, internalFormat, width, height);

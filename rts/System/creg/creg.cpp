@@ -61,7 +61,11 @@ void System::InitializeClasses()
 
 	// Create Class instances
 	for (ClassBinder* c = binderList; c; c = c->nextBinder) {
-		c->class_ = new Class;
+		// Create class instance
+		// They'll never be used on the System type, but will be cast to the appropriate type instead
+		// Create them with System anyway, otherwise the creation will need to go through the binder,
+		// which would need to be templated to do that, and it would add unnecessary complexity 
+		c->class_ = new ClassStrong<System>;
 	}
 
 	// Initialize class instances
@@ -120,9 +124,7 @@ Class::Class() :
 	binder(NULL),
 	size(0),
 	alignment(0),
-	base(NULL),
-	serializeProc(NULL),
-	postLoadProc(NULL)
+	base(NULL)
 {}
 
 Class::~Class()
