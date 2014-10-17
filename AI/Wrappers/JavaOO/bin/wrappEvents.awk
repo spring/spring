@@ -92,6 +92,9 @@ function printOOAIHeader(outFile, clsName) {
 		print("import " myMainPkgA ".clb.WrappUnit;") >> outFile;
 		print("import " myMainPkgA ".clb.WrappWeaponDef;") >> outFile;
 	}
+	if (clsName == myOOAIAbstractClass ) {
+		print("import " myParentPkgA ".AICallback;") >> outFile;
+	}
 	print("import " myMainPkgA ".AIFloat3;") >> outFile;
 	print("import " myMainPkgA ".clb.OOAICallback;") >> outFile;
 	print("import " myMainPkgA ".clb.Unit;") >> outFile;
@@ -118,10 +121,20 @@ function printOOAIHeader(outFile, clsName) {
 	print("") >> outFile;
 
 	if (clsName == myOOAIClass) {
-		print("\t" "private AICallback   clb   = null;") >> outFile;
-		print("\t" "private OOAICallback clbOO = null;") >> outFile;
+		print("\t" "protected AICallback   clb          = null;") >> outFile;
+		print("\t" "protected OOAICallback clbOO        = null;") >> outFile;
+		print("\t" "protected Integer      skirmishAIId = null;") >> outFile;
 		print("") >> outFile;
 	}
+	if ( clsName == myOOAIAbstractClass  ){
+		print("") >> outFile;
+        print("\t" "public " clsName "(int skirmishAIId, AICallback callback){") >> outFile;
+        print("\t" "\t" "super(skirmishAIId, callback);") >> outFile;
+        print("\t" "\t" "init(skirmishAIId, clbOO);") >> outFile;
+        print("\t" "}") >> outFile;
+	}
+	
+
 }
 function printOOAIEnd(outFile) {
 
@@ -147,6 +160,9 @@ function printOOEventAIHeader(outFile) {
 	print(" * @author	hoijui") >> outFile;
 	print(" * @version	GENERATED") >> outFile;
 	print(" */") >> outFile;
+	if ( outFile == myOOEventAIFile ) {
+		print("import " myParentPkgA ".AICallback;") >> outFile;
+	}
 	if (outFile == myOOEventAIFile) {
 		print("public abstract class " myOOEventAIClass " extends " myOOAIClass " implements " myOOEventAIInterface ", AI {") >> outFile;
 	} else {
@@ -163,6 +179,13 @@ function printOOEventAIHeader(outFile) {
 	_modifyer = "";
 	if (outFile == myOOEventAIFile) {
 		_modifyer = " abstract";
+	}
+	if ( outFile == myOOEventAIFile ){
+		print("") >> outFile;
+        print("\t" "public " myOOEventAIClass "(int skirmishAIId, AICallback callback){") >> outFile;
+        print("\t" "\t" "super(skirmishAIId, callback);") >> outFile;
+        print("\t" "\t" "init(skirmishAIId, clbOO);") >> outFile;
+        print("\t" "}") >> outFile;
 	}
 	print("\t" "public" _modifyer " void handleEvent(AIEvent event) throws EventAIException;") >> outFile;
 	print("") >> outFile;
@@ -221,6 +244,9 @@ function convertJavaSimpleTypeToOO(paType_sto, paName_sto,
 		paramNameNew = "oo_" paramNameNew;
 		paramTypeNew = "WeaponDef";
 		conversionCode_pre = conversionCode_pre "\t\t" paramTypeNew " " paramNameNew " = Wrapp" paramTypeNew ".getInstance(this.clb, " paName_sto ");" "\n";
+	} else if ((paType_sto == "int") && (paName_sto == "skirmishAIId") ) {
+		conversionCode_pre = conversionCode_pre "\t\t" "this.skirmishAIId   = " paName_sto ";" "\n";
+		
 	} else if (paType_sto == "AICallback") {
 		# convert AICallback to OOAICallback
 		paramNameNew = "oo_" paramNameNew;
@@ -348,6 +374,12 @@ function printEventOO(ind_evt_em) {
 	print("\t" "@Override") >> myOOAIFile;
 	if (retType_em == "int") {
 		print("\t" "public " retType_em " " name_em "(" ooParams_em ") { return 0; }") >> myOOAIFile;
+		if (  name_em == "init" ){
+			print("") >> myOOAIFile;
+            print("\t" "public OOAI(int skirmishAIId, AICallback callback){") >> myOOAIFile;
+            print("\t" "\t" "init(skirmishAIId, callback);") >> myOOAIFile;
+            print("\t" "}") >> myOOAIFile;
+		}
 	} else {
 		print("Warning: No default return value given for event return-type " retType_em);
 		print("\t" "public abstract " retType_em " " name_em "(" ooParams_em ");") >> myOOAIFile;
