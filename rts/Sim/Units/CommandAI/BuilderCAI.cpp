@@ -528,9 +528,7 @@ void CBuilderCAI::ReclaimFeature(CFeature* f)
 
 void CBuilderCAI::FinishCommand()
 {
-	if (commandQue.front().timeOut == INT_MAX) {
-		buildRetries = 0;
-	}
+	buildRetries = 0;
 	CMobileCAI::FinishCommand();
 }
 
@@ -611,7 +609,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 
 		build.pos = CGameHelper::Pos2BuildPos(build, true);
 
-		// keep moving until until 3D distance to buildPos is LEQ our buildDistance
+		// keep moving until 3D distance to buildPos is LEQ our buildDistance
 		if (MoveInBuildRange(build.pos, 0.0f, true)) {
 			if (IsBuildPosBlocked(build)) {
 				StopMove();

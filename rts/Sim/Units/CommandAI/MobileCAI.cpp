@@ -952,17 +952,33 @@ int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius)
 {
-	if (pos.SqDistance(goalPos) < Square(goalRadius))
+	// already in range?
+	if (goalPos.SqDistance(owner->pos) < Square(goalRadius)) {
+		//FIXME owner->moveType->progressState = AMoveType::Done;
+		return;
+	}
+
+	// already have equal move order?
+	if (owner->moveType->progressState == AMoveType::Active && goalPos == pos && this->goalRadius == goalRadius)
 		return;
 
+	// give new move order
 	owner->moveType->StartMoving(goalPos = pos, this->goalRadius = goalRadius);
 }
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius, float speed)
 {
-	if (pos.SqDistance(goalPos) < Square(goalRadius))
+	// already in range?
+	if (goalPos.SqDistance(owner->pos) < Square(goalRadius)) {
+		//FIXME owner->moveType->progressState = AMoveType::Done;
+		return;
+	}
+
+	// already have equal move order?
+	if (owner->moveType->progressState == AMoveType::Active && goalPos == pos && this->goalRadius == goalRadius)
 		return;
 
+	// give new move order
 	owner->moveType->StartMoving(goalPos = pos, this->goalRadius = goalRadius, speed);
 }
 
