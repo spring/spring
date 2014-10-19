@@ -4,6 +4,8 @@
 
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "ExternalAI/Interface/AISCommands.h"
+// FIXME: @see depthMod issue within this code
+#include "Sim/MoveTypes/MoveDefHandler.h"
 
 // these are all copies from the engine, so we do not have to adjust
 // to each minor change done there
@@ -749,8 +751,10 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 			unitDef->movedata->depth = sAICallback->UnitDef_MoveData_getDepth(skirmishAIId, unitDefId);
 			unitDef->movedata->maxSlope = sAICallback->UnitDef_MoveData_getMaxSlope(skirmishAIId, unitDefId);
 			unitDef->movedata->slopeMod = sAICallback->UnitDef_MoveData_getSlopeMod(skirmishAIId, unitDefId);
-			unitDef->movedata->depthMod = sAICallback->UnitDef_MoveData_getDepthMod(skirmishAIId, unitDefId);
 			unitDef->movedata->pathType = sAICallback->UnitDef_MoveData_getPathType(skirmishAIId, unitDefId);
+			// FIXME: replace depthMod constant with GetDepthMod(float height) function
+			const MoveDef* moveDef = moveDefHandler->GetMoveDefByPathType(unitDef->movedata->pathType);
+			unitDef->movedata->depthMod = moveDef->depthModParams[MoveDef::DEPTHMOD_LIN_COEFF];
 			unitDef->movedata->crushStrength = sAICallback->UnitDef_MoveData_getCrushStrength(skirmishAIId, unitDefId);
 			unitDef->movedata->moveType = (enum MoveData::MoveType) sAICallback->UnitDef_MoveData_getMoveType(skirmishAIId, unitDefId);
 			unitDef->movedata->moveFamily = (enum MoveData::MoveFamily) sAICallback->UnitDef_MoveData_getSpeedModClass(skirmishAIId, unitDefId);
