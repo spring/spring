@@ -64,6 +64,7 @@
 #include "System/Sync/SyncedPrimitive.h"
 #include "System/Sync/SyncTracer.h"
 
+
 // See end of source for member bindings
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -169,34 +170,10 @@ CUnit::CUnit() : CSolidObject(),
 	hasRadarPos(false),
 	stealth(false),
 	sonarStealth(false),
-	condUseMetal(0.0f),
-	condUseEnergy(0.0f),
-	condMakeMetal(0.0f),
-	condMakeEnergy(0.0f),
-	uncondUseMetal(0.0f),
-	uncondUseEnergy(0.0f),
-	uncondMakeMetal(0.0f),
-	uncondMakeEnergy(0.0f),
-	metalUse(0.0f),
-	energyUse(0.0f),
-	metalMake(0.0f),
-	energyMake(0.0f),
-	metalUseI(0.0f),
-	energyUseI(0.0f),
-	metalMakeI(0.0f),
-	energyMakeI(0.0f),
-	metalUseold(0.0f),
-	energyUseold(0.0f),
-	metalMakeold(0.0f),
-	energyMakeold(0.0f),
 	energyTickMake(0.0f),
 	metalExtract(0.0f),
-	metalCost(100.0f),
-	energyCost(0.0f),
+	cost(100.0f, 0.0f),
 	buildTime(100.0f),
-	metalStorage(0.0f),
-	energyStorage(0.0f),
-	harvestStorage(0.0f),
 	lastAttackedPieceFrame(-1),
 	lastAttackFrame(-200),
 	lastFireWeapon(0),
@@ -312,17 +289,17 @@ CUnit::~CUnit()
 
 void CUnit::SetMetalStorage(float newStorage)
 {
-	teamHandler->Team(team)->metalStorage -= metalStorage;
-	metalStorage = newStorage;
-	teamHandler->Team(team)->metalStorage += metalStorage;
+	teamHandler->Team(team)->resStorage.metal -= storage.metal;
+	storage.metal = newStorage;
+	teamHandler->Team(team)->resStorage.metal += storage.metal;
 }
 
 
 void CUnit::SetEnergyStorage(float newStorage)
 {
-	teamHandler->Team(team)->energyStorage -= energyStorage;
-	energyStorage = newStorage;
-	teamHandler->Team(team)->energyStorage += energyStorage;
+	teamHandler->Team(team)->resStorage.energy -= storage.energy;
+	storage.energy = newStorage;
+	teamHandler->Team(team)->resStorage.energy += storage.energy;
 }
 
 
@@ -404,8 +381,8 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	health = beingBuilt? 0.1f: unitDef->health;
 	losHeight = unitDef->losHeight;
 	radarHeight = unitDef->radarHeight;
-	metalCost = unitDef->metal;
-	energyCost = unitDef->energy;
+	cost.metal = unitDef->metal;
+	cost.energy = unitDef->energy;
 	buildTime = unitDef->buildTime;
 	currentFuel = unitDef->maxFuel;
 	armoredMultiple = std::max(0.0001f, unitDef->armoredMultiple); // armored multiple of 0 will crash spring
@@ -677,17 +654,17 @@ void CUnit::Update()
 
 void CUnit::UpdateResources()
 {
-	metalMake  = metalMakeI  + metalMakeold;
-	metalUse   = metalUseI   + metalUseold;
-	energyMake = energyMakeI + energyMakeold;
-	energyUse  = energyUseI  + energyUseold;
+	resourcesMake.metal  = resourcesMakeI.metal  + resourcesMakeOld.metal;
+	resourcesUse.metal   = resourcesUseI.metal   + resourcesUseOld.metal;
+	resourcesMake.energy = resourcesMakeI.energy + resourcesMakeOld.energy;
+	resourcesUse.energy  = resourcesUseI.energy  + resourcesUseOld.energy;
 
-	metalMakeold  = metalMakeI;
-	metalUseold   = metalUseI;
-	energyMakeold = energyMakeI;
-	energyUseold  = energyUseI;
+	resourcesMakeOld.metal  = resourcesMakeI.metal;
+	resourcesUseOld.metal   = resourcesUseI.metal;
+	resourcesMakeOld.energy = resourcesMakeI.energy;
+	resourcesUseOld.energy  = resourcesUseI.energy;
 
-	metalMakeI = metalUseI = energyMakeI = energyUseI = 0.0f;
+	resourcesMakeI.metal = resourcesUseI.metal = resourcesMakeI.energy = resourcesUseI.energy = 0.0f;
 }
 
 void CUnit::SetLosStatus(int at, unsigned short newStatus)
@@ -860,7 +837,7 @@ void CUnit::SlowUpdate()
 			health         = std::max(0.0f, health - maxHealth * buildDecay);
 			buildProgress -= buildDecay;
 
-			AddMetal(metalCost * buildDecay, false);
+			AddMetal(cost.metal * buildDecay, false);
 
 			if (health <= 0.0f || buildProgress <= 0.0f) {
 				KillUnit(NULL, false, true);
@@ -876,16 +853,16 @@ void CUnit::SlowUpdate()
 	moveType->SlowUpdate();
 
 	// FIXME: scriptMakeMetal ...?
-	AddMetal(uncondMakeMetal);
-	AddEnergy(uncondMakeEnergy);
-	UseMetal(uncondUseMetal);
-	UseEnergy(uncondUseEnergy);
+	AddMetal(resourcesUncondMake.metal);
+	AddEnergy(resourcesUncondMake.energy);
+	UseMetal(resourcesUncondUse.metal);
+	UseEnergy(resourcesUncondUse.energy);
 	if (activated) {
-		if (UseMetal(condUseMetal)) {
-			AddEnergy(condMakeEnergy);
+		if (UseMetal(resourcesCondUse.metal)) {
+			AddEnergy(resourcesCondMake.energy);
 		}
-		if (UseEnergy(condUseEnergy)) {
-			AddMetal(condMakeMetal);
+		if (UseEnergy(resourcesCondUse.energy)) {
+			AddMetal(resourcesCondMake.metal);
 		}
 	}
 
@@ -1388,11 +1365,11 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	}
 
 	if (!beingBuilt) {
-		teamHandler->Team(oldteam)->metalStorage  -= metalStorage;
-		teamHandler->Team(oldteam)->energyStorage -= energyStorage;
+		teamHandler->Team(oldteam)->resStorage.metal  -= storage.metal;
+		teamHandler->Team(oldteam)->resStorage.energy -= storage.energy;
 
-		teamHandler->Team(newteam)->metalStorage  += metalStorage;
-		teamHandler->Team(newteam)->energyStorage += energyStorage;
+		teamHandler->Team(newteam)->resStorage.metal  += storage.metal;
+		teamHandler->Team(newteam)->resStorage.energy += storage.energy;
 	}
 
 
@@ -1738,13 +1715,13 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		if (beingBuilt) {
 			// build
 			const float step = std::min(amount / buildTime, 1.0f - buildProgress);
-			const float metalCostStep  = metalCost  * step;
-			const float energyCostStep = energyCost * step;
+			const float metalCostStep  = cost.metal  * step;
+			const float energyCostStep = cost.energy * step;
 
-			if (builderTeam->metal < metalCostStep || builderTeam->energy < energyCostStep) {
+			if (builderTeam->res.metal < metalCostStep || builderTeam->res.energy < energyCostStep) {
 				// update the energy and metal required counts
-				builderTeam->metalPull  += metalCostStep;
-				builderTeam->energyPull += energyCostStep;
+				builderTeam->resPull.metal  += metalCostStep;
+				builderTeam->resPull.energy += energyCostStep;
 				return false;
 			}
 
@@ -1753,7 +1730,7 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 
 			if (builder->UseMetal(metalCostStep)) {
 				// FIXME eventHandler.AllowUnitBuildStep() may have changed the storages!!! so the checks can be invalid!
-				// TODO add a builder->UseResources(SResources(metalCostStep, energyCostStep))
+				// TODO add a builder->UseResources(SResources(cost.metalStep, cost.energyStep))
 				if (builder->UseEnergy(energyCostStep)) {
 					health += (maxHealth * step);
 					health = std::min(health, maxHealth);
@@ -1773,12 +1750,12 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		else if (health < maxHealth) {
 			// repair
 			const float step = std::min(amount / buildTime, 1.0f - (health / maxHealth));
-			const float energyUse = (energyCost * step);
+			const float energyUse = (cost.energy * step);
 			const float energyUseScaled = energyUse * modInfo.repairEnergyCostFactor;
 
-			if ((builderTeam->energy < energyUseScaled)) {
+			if ((builderTeam->res.energy < energyUseScaled)) {
 				// update the energy and metal required counts
-				builderTeam->energyPull += energyUseScaled;
+				builderTeam->resPull.energy += energyUseScaled;
 				return false;
 			}
 
@@ -1786,8 +1763,6 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 				return false;
 
 	  		if (!builder->UseEnergy(energyUseScaled)) {
-				// UseEnergy already increases the team's pull when it returns false!
-				// builderTeam->energyPull += energyUseScaled;
 				return false;
 			}
 
@@ -1803,13 +1778,13 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 			return false;
 
 		const float step = std::max(amount / buildTime, -buildProgress);
-		const float energyRefundStep = energyCost * step;
-		const float metalRefundStep  =  metalCost * step;
+		const float energyRefundStep = cost.energy * step;
+		const float metalRefundStep  =  cost.metal * step;
 		const float metalRefundStepScaled  =  metalRefundStep * modInfo.reclaimUnitEfficiency;
 		const float energyRefundStepScaled = energyRefundStep * modInfo.reclaimUnitEnergyCostFactor;
 
-		if (builderTeam->energy < -energyRefundStepScaled) {
-			builderTeam->energyPull += -energyRefundStepScaled;
+		if (builderTeam->res.energy < -energyRefundStepScaled) {
+			builderTeam->resPull.energy += -energyRefundStepScaled;
 			return false;
 		}
 
@@ -1824,8 +1799,6 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		}
 
 		if (!builder->UseEnergy(-energyRefundStepScaled)) {
-			// UseEnergy already increases the team's pull when it returns false!
-			// builderTeam->energyPull += energyRefundStepScaled;
 			return false;
 		}
 
@@ -1834,16 +1807,15 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 
 		if (modInfo.reclaimUnitMethod == 0) {
 			// gradual reclamation of invested metal
-			if (!builder->AddHarvestedMetal(-metalRefundStepScaled)) {
-				eventHandler.UnitHarvestStorageFull(this);
+			if (!builder->AddHarvestedMetal(-metalRefundStepScaled))
 				return false;
-			}
+
 			// turn reclaimee into nanoframe (even living units)
 			beingBuilt = true;
 		} else {
 			// lump reclamation of invested metal
 			if (buildProgress <= 0.0f || health <= 0.0f) {
-				builder->AddHarvestedMetal((metalCost * buildProgress) * modInfo.reclaimUnitEfficiency);
+				builder->AddHarvestedMetal((cost.metal * buildProgress) * modInfo.reclaimUnitEfficiency);
 			}
 		}
 
@@ -1996,10 +1968,10 @@ bool CUnit::UseMetal(float metal)
 	}
 
 	CTeam* myTeam = teamHandler->Team(team);
-	myTeam->metalPull += metal;
+	myTeam->resPull.metal += metal;
 
 	if (myTeam->UseMetal(metal)) {
-		metalUseI += metal;
+		resourcesUseI.metal += metal;
 		return true;
 	}
 
@@ -2013,7 +1985,7 @@ void CUnit::AddMetal(float metal, bool useIncomeMultiplier)
 		return;
 	}
 
-	metalMakeI += metal;
+	resourcesMakeI.metal += metal;
 	teamHandler->Team(team)->AddMetal(metal, useIncomeMultiplier);
 }
 
@@ -2026,10 +1998,10 @@ bool CUnit::UseEnergy(float energy)
 	}
 
 	CTeam* myTeam = teamHandler->Team(team);
-	myTeam->energyPull += energy;
+	myTeam->resPull.energy += energy;
 
 	if (myTeam->UseEnergy(energy)) {
-		energyUseI += energy;
+		resourcesUseI.energy += energy;
 		return true;
 	}
 
@@ -2042,7 +2014,7 @@ void CUnit::AddEnergy(float energy, bool useIncomeMultiplier)
 		UseEnergy(-energy);
 		return;
 	}
-	energyMakeI += energy;
+	resourcesMakeI.energy += energy;
 	teamHandler->Team(team)->AddEnergy(energy, useIncomeMultiplier);
 }
 
@@ -2054,11 +2026,16 @@ bool CUnit::AddHarvestedMetal(float metal)
 		return true;
 	}
 
-	if (harvestStorage >= unitDef->harvestStorage)
+	if (harvestStorage.metal >= unitDef->harvestStorage) {
+		eventHandler.UnitHarvestStorageFull(this);
 		return false;
+	}
 
 	//FIXME what do with exceeding metal?
-	harvestStorage = std::min(harvestStorage + metal, unitDef->harvestStorage);
+	harvestStorage.metal = std::min(harvestStorage.metal + metal, unitDef->harvestStorage);
+	if (harvestStorage.metal >= unitDef->harvestStorage) {
+		eventHandler.UnitHarvestStorageFull(this);
+	}
 	return true;
 }
 
@@ -2359,39 +2336,27 @@ CR_REG_METADATA(CUnit, (
 	//CR_MEMBER(localModel), //
 	// CR_MEMBER(script),
 
-	CR_MEMBER(condUseMetal),
-	CR_MEMBER(condUseEnergy),
-	CR_MEMBER(condMakeMetal),
-	CR_MEMBER(condMakeEnergy),
-	CR_MEMBER(uncondUseMetal),
-	CR_MEMBER(uncondUseEnergy),
-	CR_MEMBER(uncondMakeMetal),
-	CR_MEMBER(uncondMakeEnergy),
+	CR_MEMBER(resourcesCondUse),
+	CR_MEMBER(resourcesCondMake),
+	CR_MEMBER(resourcesUncondUse),
+	CR_MEMBER(resourcesUncondMake),
 
-	CR_MEMBER(metalUse),
-	CR_MEMBER(energyUse),
-	CR_MEMBER(metalMake),
-	CR_MEMBER(energyMake),
+	CR_MEMBER(resourcesUse),
+	CR_MEMBER(resourcesMake),
 
-	CR_MEMBER(metalUseI),
-	CR_MEMBER(energyUseI),
-	CR_MEMBER(metalMakeI),
-	CR_MEMBER(energyMakeI),
-	CR_MEMBER(metalUseold),
-	CR_MEMBER(energyUseold),
-	CR_MEMBER(metalMakeold),
-	CR_MEMBER(energyMakeold),
+	CR_MEMBER(resourcesUseI),
+	CR_MEMBER(resourcesMakeI),
+	CR_MEMBER(resourcesUseOld),
+	CR_MEMBER(resourcesMakeOld),
+
+	CR_MEMBER(storage),
+	CR_MEMBER(harvestStorage),
+
 	CR_MEMBER(energyTickMake),
-
 	CR_MEMBER(metalExtract),
 
-	CR_MEMBER(metalCost),
-	CR_MEMBER(energyCost),
+	CR_MEMBER(cost),
 	CR_MEMBER(buildTime),
-
-	CR_MEMBER(metalStorage),
-	CR_MEMBER(energyStorage),
-	CR_MEMBER(harvestStorage),
 
 	CR_MEMBER(lastAttacker),
 	CR_MEMBER(lastAttackedPiece),

@@ -879,12 +879,12 @@ std::string CSelectedUnitsHandler::GetTooltip()
 			maxHealth  += unit->maxHealth;
 			curHealth  += unit->health;
 			exp        += unit->experience;
-			cost       += unit->metalCost + (unit->energyCost / 60.0f);
+			cost       += unit->cost.metal + (unit->cost.energy / 60.0f);
 			range      += unit->maxRange;
-			metalMake  += unit->metalMake;
-			metalUse   += unit->metalUse;
-			energyMake += unit->energyMake;
-			energyUse  += unit->energyUse;
+			metalMake  += unit->resourcesMake.metal;
+			metalUse   += unit->resourcesUse.metal;
+			energyMake += unit->resourcesMake.energy;
+			energyUse  += unit->resourcesUse.energy;
 			maxFuel    += unit->unitDef->maxFuel;
 			curFuel    += unit->currentFuel;
 			if (unit->unitDef->maxFuel > 0) {

@@ -452,7 +452,7 @@ void CBuilder::Update()
 					const float captureProgressTemp = std::min(curCapture->captureProgress + captureProgressStep, 1.0f);
 
 					const float captureFraction = captureProgressTemp - curCapture->captureProgress;
-					const float energyUseScaled = curCapture->energyCost * captureFraction * modInfo.captureEnergyCostFactor;
+					const float energyUseScaled = curCapture->cost.energy * captureFraction * modInfo.captureEnergyCostFactor;
 
 					const bool captureAllowed = (eventHandler.AllowUnitBuildStep(this, curCapture, captureProgressStep));
 					const bool canExecCapture = (captureAllowed && UseEnergy(energyUseScaled));

@@ -200,13 +200,13 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 	// is not in LOS
 	if (!enemyUnit || (!effectiveDef->hideDamage && (losStatus & LOS_INLOS))) {
 		if (!decoyDef) {
-			const float cost = unit->metalCost + (unit->energyCost / 60.0f);
+			const float cost = unit->cost.metal + (unit->cost.energy / 60.0f);
 			s += MakeUnitStatsString(
 						 unit->health, unit->maxHealth,
 						 unit->currentFuel, unitDef->maxFuel,
 						 unit->experience, cost, unit->maxRange,
-						 unit->metalMake,  unit->metalUse,
-						 unit->energyMake, unit->energyUse);
+						 unit->resourcesMake.metal,  unit->resourcesUse.metal,
+						 unit->resourcesMake.energy, unit->resourcesUse.energy);
 		} else {
 			// display adjusted decoy stats
 			const float cost = decoyDef->metal + (decoyDef->energy / 60.0f);

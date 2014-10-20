@@ -42,14 +42,14 @@ static const float MAX_FLOAT = 1E+37;
 
 CResourceHandler::CResourceHandler()
 {
-	CResource rMetal;
+	CResourceDescription rMetal;
 	rMetal.name = "Metal";
 	rMetal.optimum = MAX_FLOAT;
 	rMetal.extractorRadius = mapInfo->map.extractorRadius;
 	rMetal.maxWorth = mapInfo->map.maxMetal;
 	metalResourceId = AddResource(rMetal);
 
-	CResource rEnergy;
+	CResourceDescription rEnergy;
 	rEnergy.name = "Energy";
 	rEnergy.optimum = MAX_FLOAT;
 	rEnergy.extractorRadius = 0.0f;
@@ -61,7 +61,7 @@ CResourceHandler::~CResourceHandler()
 {
 }
 
-int CResourceHandler::AddResource(const CResource& resource) {
+int CResourceHandler::AddResource(const CResourceDescription& resource) {
 
 	resources.push_back(resource);
 	int resourceId = resources.size()-1;
@@ -69,7 +69,7 @@ int CResourceHandler::AddResource(const CResource& resource) {
 	return resourceId;
 }
 
-const CResource* CResourceHandler::GetResource(int resourceId) const
+const CResourceDescription* CResourceHandler::GetResource(int resourceId) const
 {
 	if (IsValidId(resourceId)) {
 		return &resources[resourceId];
@@ -78,7 +78,7 @@ const CResource* CResourceHandler::GetResource(int resourceId) const
 	}
 }
 
-const CResource* CResourceHandler::GetResourceByName(const std::string& resourceName) const
+const CResourceDescription* CResourceHandler::GetResourceByName(const std::string& resourceName) const
 {
 	return GetResource(GetResourceId(resourceName));
 }
@@ -147,18 +147,6 @@ size_t CResourceHandler::GetNumResources() const
 	return resources.size();
 }
 
-
-//bool CResourceHandler::IsMetal(int resourceId) const
-//{
-//	const CResource* res = GetResource(resourceId);
-//	return res && (res->name == "Metal");
-//}
-//
-//bool CResourceHandler::IsEnergy(int resourceId) const
-//{
-//	const CResource* res = GetResource(resourceId);
-//	return res && (res->name == "Energy");
-//}
 
 int CResourceHandler::GetMetalId() const
 {

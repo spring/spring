@@ -4,12 +4,16 @@
 #define _COLOR_H
 
 #include <boost/cstdint.hpp>
+#include "System/creg/creg_cond.h"
+
 
 /**
  * A 32bit RGBA color.
  */
-union SColor
+struct SColor
 {
+	CR_DECLARE_STRUCT(SColor)
+
 	/// Initialize with values in the range [0, 255]
 	SColor(const boost::uint8_t r, const boost::uint8_t g, const boost::uint8_t b, const boost::uint8_t a = 255)
 		: r(r), g(g), b(b), a(a) {}
@@ -36,13 +40,16 @@ union SColor
 		, a(u[3])
 	{}
 
-	/// individual color channel values in the range [0, 255]
-	struct { boost::uint8_t r, g, b, a; };
-	/// The color as a single 32bit value
-	boost::uint32_t i;
-
 	operator const unsigned char* () const { return &r; }
 	operator unsigned char* () { return &r; }
+
+public:
+	union {
+		/// individual color channel values in the range [0, 255]
+		struct { boost::uint8_t r, g, b, a; };
+		/// The color as a single 32bit value
+		boost::uint32_t i;
+	};
 };
 
 #endif // _COLOR_H

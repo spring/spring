@@ -180,8 +180,8 @@ void CBeamLaser::UpdateSweep()
 	if (reloadStatus > gs->frameNum)
 		return;
 
-	if (teamHandler->Team(owner->team)->metal < metalFireCost) { return; }
-	if (teamHandler->Team(owner->team)->energy < energyFireCost) { return; }
+	if (teamHandler->Team(owner->team)->res.metal < metalFireCost) { return; }
+	if (teamHandler->Team(owner->team)->res.energy < energyFireCost) { return; }
 
 	owner->UseEnergy(energyFireCost / salvoSize);
 	owner->UseMetal(metalFireCost / salvoSize);

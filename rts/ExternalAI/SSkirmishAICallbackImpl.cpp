@@ -1255,9 +1255,9 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceCurrent(int skirmishAIId, i
 	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId)->metal;
+			res = teamHandler->Team(otherTeamId)->res.metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(otherTeamId)->energy;
+			res = teamHandler->Team(otherTeamId)->res.energy;
 		}
 	}
 
@@ -1271,9 +1271,9 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceIncome(int skirmishAIId, in
 	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId)->prevMetalIncome;
+			res = teamHandler->Team(otherTeamId)->resPrevIncome.metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(otherTeamId)->prevEnergyIncome;
+			res = teamHandler->Team(otherTeamId)->resPrevIncome.energy;
 		}
 	}
 
@@ -1287,9 +1287,9 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceUsage(int skirmishAIId, int
 	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId)->prevMetalExpense;
+			res = teamHandler->Team(otherTeamId)->resPrevExpense.metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(otherTeamId)->prevEnergyExpense;
+			res = teamHandler->Team(otherTeamId)->resPrevExpense.energy;
 		}
 	}
 
@@ -1303,9 +1303,9 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceStorage(int skirmishAIId, i
 	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId)->metalStorage;
+			res = teamHandler->Team(otherTeamId)->resStorage.metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(otherTeamId)->energyStorage;
+			res = teamHandler->Team(otherTeamId)->resStorage.energy;
 		}
 	}
 

@@ -269,7 +269,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		// Work out how much that will cost
 		const float metalUse  = step * def->metal;
 		const float energyUse = step * def->energy;
-		const bool canExecRepair = (builderTeam->metal >= metalUse && builderTeam->energy >= energyUse);
+		const bool canExecRepair = (builderTeam->res.metal >= metalUse && builderTeam->res.energy >= energyUse);
 		const bool repairAllowed = !canExecRepair ? false : eventHandler.AllowFeatureBuildStep(builder, this, step);
 
 		if (repairAllowed) {
@@ -290,8 +290,8 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 			return true;
 		} else {
 			// update the energy and metal required counts
-			teamHandler->Team(builder->team)->energyPull += energyUse;
-			teamHandler->Team(builder->team)->metalPull  += metalUse;
+			teamHandler->Team(builder->team)->resPull.energy += energyUse;
+			teamHandler->Team(builder->team)->resPull.metal  += metalUse;
 		}
 		return false;
 	} else {
@@ -322,7 +322,6 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		const float energyUseScaled = metalFraction * modInfo.reclaimFeatureEnergyCostFactor;
 
 		if (!builder->UseEnergy(energyUseScaled)) {
-			teamHandler->Team(builder->team)->energyPull += energyUseScaled;
 			return false;
 		}
 
@@ -330,13 +329,13 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 
 		if ((modInfo.reclaimMethod == 1) && (reclaimLeft == 0.0f)) {
 			// All-at-end method
-			builder->AddMetal(def->metal, false);
-			builder->AddEnergy(def->energy, false);
+			builder->AddMetal(def->metal, false); //FIXME
+			builder->AddEnergy(def->energy, false); //FIXME
 		}
 		else if (modInfo.reclaimMethod == 0) {
 			// Gradual reclaim
-			builder->AddMetal(metalFraction, false);
-			builder->AddEnergy(energyFraction, false);
+			builder->AddMetal(metalFraction, false); //FIXME
+			builder->AddEnergy(energyFraction, false); //FIXME
 		}
 		else {
 			// Chunky reclaiming, work out how many chunk boundaries we crossed

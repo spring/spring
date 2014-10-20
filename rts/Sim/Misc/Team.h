@@ -11,10 +11,11 @@
 
 #include "TeamBase.h"
 #include "TeamStatistics.h"
+#include "Sim/Misc/Resource.h"
 #include "Sim/Units/UnitSet.h"
+#include "System/Color.h"
 #include "ExternalAI/SkirmishAIKey.h"
 #include "Lua/LuaRulesParams.h"
-#include "System/Sync/SyncedPrimitive.h" //! SyncedFloat
 
 
 class CTeam : public TeamBase, private boost::noncopyable //! cannot allow shallow copying of Teams, contains pointers
@@ -66,51 +67,38 @@ public:
 	void AddUnit(CUnit* unit, AddType type);
 	void RemoveUnit(CUnit* unit, RemoveType type);
 
-
+public:
 	int teamNum;
 	unsigned int maxUnits;
 
 	bool isDead;
 	bool gaia;
 
-	/// color info is unsynced
-	unsigned char origColor[4];
-
 	CUnitSet units;
 
-	SyncedFloat metal;
-	SyncedFloat energy;
+	SResourcePack res;
+	SResourcePack resStorage;
 
-	float metalPull,    prevMetalPull;
-	float metalIncome,  prevMetalIncome;
-	float metalExpense, prevMetalExpense;
-
-	float energyPull,    prevEnergyPull;
-	float energyIncome,  prevEnergyIncome;
-	float energyExpense, prevEnergyExpense;
-
-	SyncedFloat metalStorage, energyStorage;
-
-	float metalShare, energyShare;
-	SyncedFloat delayedMetalShare, delayedEnergyShare; // excess that might be shared next SlowUpdate
-
-	float metalSent,      prevMetalSent;
-	float metalReceived,  prevMetalReceived;
-	float energySent,     prevEnergySent;
-	float energyReceived, prevEnergyReceived;
-
-	float prevMetalExcess;
-	float prevEnergyExcess;
+	SResourcePack resPull,    resPrevPull;
+	SResourcePack resIncome,  resPrevIncome;
+	SResourcePack resExpense, resPrevExpense;
+	SResourcePack resShare;
+	SResourcePack resDelayedShare; //< excess that might be shared next SlowUpdate
+	SResourcePack resSent,     resPrevSent;
+	SResourcePack resReceived, resPrevReceived;
+	SResourcePack resPrevExcess;
 
 	int nextHistoryEntry;
 	TeamStatistics* currentStats;
 	std::list<TeamStatistics> statHistory;
-	typedef TeamStatistics Statistics; //! for easier access via CTeam::Statistics
+	typedef TeamStatistics Statistics; //< for easier access via CTeam::Statistics
 
 	/// mod controlled parameters
 	LuaRulesParams::Params  modParams;
-	LuaRulesParams::HashMap modParamsMap; /// name map for mod parameters
+	LuaRulesParams::HashMap modParamsMap; //< name map for mod parameters
 
+	/// unsynced
+	SColor origColor;
 	float highlight;
 };
 

@@ -123,7 +123,7 @@ void CPlasmaRepulser::Update()
 			continue;
 		}
 
-		if (teamHandler->Team(owner->team)->energy < weaponDef->shieldEnergyUse) {
+		if (teamHandler->Team(owner->team)->res.energy < weaponDef->shieldEnergyUse) {
 			// team does not have enough energy, don't touch the projectile
 			continue;
 		}
