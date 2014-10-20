@@ -20,6 +20,7 @@
 #include <sys/resource.h> //for getrlimits
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
+#include <dlfcn.h>
 
 #include "thread_backtrace.h"
 #include "System/FileSystem/FileSystem.h"
@@ -146,10 +147,13 @@ static std::string CreateAbsolutePath(const std::string& relativePath)
  *   -> "/usr/lib/debug/usr/games/spring-dedicated"
  * - "/usr/lib/spring/libunitsync.so"
  *   -> "/usr/lib/debug/usr/lib/spring/libunitsync.so"
+ *   -> "/usr/lib/spring/libunitsync.so"
  * - "/usr/lib/AI/Interfaces/Java/0.1/libAIInterface.so"
  *   -> "/usr/lib/debug/usr/lib/AI/Interfaces/Java/0.1/libAIInterface.so"
+ *   -> "/usr/lib/AI/Interfaces/Java/0.1/libAIInterface.so"
  * - "/usr/lib/AI/Skirmish/RAI/0.601/libSkirmishAI.so"
  *   -> "/usr/lib/debug/usr/lib/AI/Skirmish/RAI/0.601/libSkirmishAI.so"
+ *   -> "/usr/lib/AI/Skirmish/RAI/0.601/libSkirmishAI.so"
  */
 static std::string LocateSymbolFile(const std::string& binaryFile)
 {
@@ -161,19 +165,17 @@ static std::string LocateSymbolFile(const std::string& binaryFile)
 	const std::string bin_file = FileSystem::GetFilename(binaryFile);
 	const std::string bin_ext  = FileSystem::GetExtension(binaryFile);
 
-	if (!bin_ext.empty()) {
-		symbolFile = bin_path + '/' + bin_file + bin_ext + ".dbg";
-		if (FileSystem::IsReadableFile(symbolFile)) {
-			return symbolFile;
-		}
-	}
-
-	symbolFile = bin_path + '/' + bin_file + ".dbg";
+	symbolFile = bin_path + bin_file + ".dbg";
 	if (FileSystem::IsReadableFile(symbolFile)) {
 		return symbolFile;
 	}
 
-	symbolFile = debugPath + bin_path + '/' + bin_file + bin_ext;
+	symbolFile = debugPath + bin_path + bin_file;
+	if (FileSystem::IsReadableFile(symbolFile)) {
+		return symbolFile;
+	}
+
+	symbolFile = binaryFile;
 	if (FileSystem::IsReadableFile(symbolFile)) {
 		return symbolFile;
 	}
@@ -300,10 +302,11 @@ static std::string ExtractPath(const std::string& line)
 /**
  * extracts the debug addr's from the output of backtrace_symbols()
  */
-static uintptr_t ExtractAddr(const std::string& line)
+static uintptr_t ExtractAddr(const StackFrame& frame)
 {
 	// example address: "0x89a8206"
 	uintptr_t addr = INVALID_ADDR_INDICATOR;
+	const std::string& line = frame.symbol;
 	size_t begin = line.find_last_of('[');
 	size_t end = std::string::npos;
 	if (begin != std::string::npos) {
@@ -312,6 +315,16 @@ static uintptr_t ExtractAddr(const std::string& line)
 	if ((begin != std::string::npos) && (end != std::string::npos)) {
 		addr = HexToInt(line.substr(begin+1, end-begin-1).c_str());
 	}
+
+	begin = line.find_last_of('(');
+	end = line.find_last_of(')');
+	if (end - begin != 1) {
+		Dl_info info;
+		if (dladdr(frame.ip, &info) != 0) {
+			addr = (uintptr_t)frame.ip - (uintptr_t)info.dli_fbase;
+		}
+	}
+
 	return addr;
 }
 
@@ -364,7 +377,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		const std::string path    = ExtractPath(it->symbol);
 		const std::string absPath = CreateAbsolutePath(path);
 		it->path = absPath;
-		it->addr = ExtractAddr(it->symbol);
+		it->addr = ExtractAddr(*it);
 
 		LOG_L(L_DEBUG, "symbol = \"%s\", path = \"%s\", absPath = \"%s\", addr = 0x%lx", it->symbol.c_str(), path.c_str(), absPath.c_str(), it->addr);
 
