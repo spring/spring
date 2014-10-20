@@ -7,15 +7,17 @@
 #include "Map/ReadMap.h" // for the metal map
 #include "Map/MetalMap.h"
 #include "GlobalSynced.h" // for the map size
+#include <float.h>
+
 
 CR_BIND(CResourceHandler, )
-
 CR_REG_METADATA(CResourceHandler, (
 	CR_MEMBER(resources),
 //	CR_MEMBER(resourceMapAnalyzers),
 	CR_MEMBER(metalResourceId),
 	CR_MEMBER(energyResourceId)
 ))
+
 
 CResourceHandler* CResourceHandler::instance;
 
@@ -36,22 +38,18 @@ void CResourceHandler::FreeInstance()
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-// This is the minimum of a max float for all platforms
-// see: http://en.wikipedia.org/wiki/Float.h
-static const float MAX_FLOAT = 1E+37;
-
 CResourceHandler::CResourceHandler()
 {
 	CResourceDescription rMetal;
 	rMetal.name = "Metal";
-	rMetal.optimum = MAX_FLOAT;
+	rMetal.optimum = FLT_MAX;
 	rMetal.extractorRadius = mapInfo->map.extractorRadius;
 	rMetal.maxWorth = mapInfo->map.maxMetal;
 	metalResourceId = AddResource(rMetal);
 
 	CResourceDescription rEnergy;
 	rEnergy.name = "Energy";
-	rEnergy.optimum = MAX_FLOAT;
+	rEnergy.optimum = FLT_MAX;
 	rEnergy.extractorRadius = 0.0f;
 	rEnergy.maxWorth = 0.0f;
 	energyResourceId = AddResource(rEnergy);

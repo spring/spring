@@ -7,6 +7,7 @@
 CR_BIND(CResourceDescription, )
 CR_REG_METADATA(CResourceDescription, (
 	CR_MEMBER(name),
+	CR_MEMBER(description),
 	CR_MEMBER(optimum),
 	CR_MEMBER(extractorRadius),
 	CR_MEMBER(maxWorth)
