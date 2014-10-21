@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <functional>
 
 #include "System/creg/creg_cond.h"
 
@@ -26,7 +27,6 @@ struct MoveData {
 		, depth(0.0f)
 		, maxSlope(0.0f)
 		, slopeMod(0.0f)
-		, depthMod(0.0f)
 		, pathType(0)
 		, crushStrength(0.0f)
 		, name("tank")
@@ -75,7 +75,7 @@ struct MoveData {
 	float depth;
 	float maxSlope;
 	float slopeMod;
-	float depthMod;
+	std::function<float (float height)> GetDepthMod;
 
 	int pathType;
 	float crushStrength;

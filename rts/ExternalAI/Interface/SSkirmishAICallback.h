@@ -1084,7 +1084,7 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_MoveData_getSlopeMod)(int skirmishAIId, int unitDefId);
 
-	float             (CALLING_CONV *UnitDef_MoveData_getDepthMod)(int skirmishAIId, int unitDefId);
+	float             (CALLING_CONV *UnitDef_MoveData_getDepthMod)(int skirmishAIId, int unitDefId, float height);
 
 	int               (CALLING_CONV *UnitDef_MoveData_getPathType)(int skirmishAIId, int unitDefId);
 

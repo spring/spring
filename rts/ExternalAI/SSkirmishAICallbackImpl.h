@@ -615,7 +615,7 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getMaxSlope(int sk
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getSlopeMod(int skirmishAIId, int unitDefId);
 
-EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getDepthMod(int skirmishAIId, int unitDefId);
+EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getDepthMod(int skirmishAIId, int unitDefId, float height);
 
 EXPORT(int              ) skirmishAiCallback_UnitDef_MoveData_getPathType(int skirmishAIId, int unitDefId);
 
