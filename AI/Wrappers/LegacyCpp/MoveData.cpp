@@ -21,7 +21,6 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(depth),
 	CR_MEMBER(maxSlope),
 	CR_MEMBER(slopeMod),
-	CR_MEMBER(depthMod),
 
 	CR_MEMBER(pathType),
 	CR_MEMBER(crushStrength),
