@@ -217,8 +217,8 @@ CUnit::CUnit() : CSolidObject(),
 	lastDrawFrame(-30),
 	lastUnitUpdate(0),
 
-	stunned(false),
-	group(nullptr)
+	group(nullptr),
+	stunned(false)
 {
 }
 
