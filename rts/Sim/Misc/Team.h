@@ -34,7 +34,6 @@ public:
 	void AddEnergy(float amount, bool useIncomeMultiplier = true);
 	bool UseEnergy(float amount);
 	bool UseMetal(float amount);
-	bool AtUnitLimit() const { return (units.size() >= maxUnits); }
 
 	void GiveEverythingTo(const unsigned toTeam);
 
@@ -47,6 +46,7 @@ public:
 
 	void SetMaxUnits(unsigned int n) { maxUnits = n; }
 	unsigned int GetMaxUnits() const { return maxUnits; }
+	bool AtUnitLimit() const { return (units.size() >= maxUnits); }
 
 	CTeam& operator = (const TeamBase& base) {
 		TeamBase::operator = (base);

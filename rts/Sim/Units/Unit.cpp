@@ -287,22 +287,8 @@ CUnit::~CUnit()
 }
 
 
-void CUnit::SetMetalStorage(float newStorage)
-{
-	teamHandler->Team(team)->resStorage.metal -= storage.metal;
-	storage.metal = newStorage;
-	teamHandler->Team(team)->resStorage.metal += storage.metal;
-}
-
-
-void CUnit::SetEnergyStorage(float newStorage)
-{
-	teamHandler->Team(team)->resStorage.energy -= storage.energy;
-	storage.energy = newStorage;
-	teamHandler->Team(team)->resStorage.energy += storage.energy;
-}
-
-
+//////////////////////////////////////////////////////////////////////
+//
 
 void CUnit::PreInit(const UnitLoadParams& params)
 {
@@ -415,7 +401,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	decloakDistance = unitDef->decloakDistance;
 	cloakTimeout = unitDef->cloakTimeout;
 
-
 	flankingBonusMode        = unitDef->flankingBonusMode;
 	flankingBonusDir         = unitDef->flankingBonusDir;
 	flankingBonusMobility    = unitDef->flankingBonusMobilityAdd * 1000;
@@ -511,6 +496,157 @@ void CUnit::PostInit(const CUnit* builder)
 	}
 }
 
+void CUnit::PostLoad()
+{
+	//HACK:Initializing after load
+	unitDef = unitDefHandler->GetUnitDefByID(unitDefID); // strange. creg should handle this by itself already, but it doesn't
+	objectDef = unitDef;
+	model = unitDef->LoadModel();
+	localModel = new LocalModel(model);
+	modelParser->CreateLocalModel(localModel);
+	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
+
+	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
+	SetRadiusAndHeight(model);
+	UpdateDirVectors(!upright);
+	UpdateMidAndAimPos();
+
+	// FIXME: how to handle other script types (e.g. Lua) here?
+	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
+
+	// Call initializing script functions
+	script->Create();
+	script->SetSFXOccupy(curTerrainType);
+
+	if (unitDef->windGenerator > 0.0f) {
+		wind.AddUnit(this);
+	}
+
+	if (activated) {
+		script->Activate();
+	}
+
+	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(this, isCloaked));
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+
+void CUnit::FinishedBuilding(bool postInit)
+{
+	if (!beingBuilt && !postInit) {
+		return;
+	}
+
+	beingBuilt = false;
+	buildProgress = 1.0f;
+	mass = unitDef->mass;
+
+	if (soloBuilder) {
+		DeleteDeathDependence(soloBuilder, DEPENDENCE_BUILDER);
+		soloBuilder = NULL;
+	}
+
+	ChangeLos(realLosRadius, realAirLosRadius);
+
+	if (unitDef->activateWhenBuilt) {
+		Activate();
+	}
+	SetMetalStorage(unitDef->metalStorage);
+	SetEnergyStorage(unitDef->energyStorage);
+
+
+	// Sets the frontdir in sync with heading.
+	frontdir = GetVectorFromHeading(heading) + float3(0, frontdir.y, 0);
+
+	if (unitDef->isAirBase) {
+		airBaseHandler->RegisterAirBase(this);
+	}
+
+	eventHandler.UnitFinished(this);
+	eoh->UnitFinished(*this);
+
+	if (unitDef->isFeature && CUnit::spawnFeature) {
+		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
+		CFeature* f = featureHandler->CreateWreckage(p, 0, false);
+
+		if (f != NULL) {
+			f->blockHeightChanges = true;
+		}
+
+		UnBlock();
+		KillUnit(NULL, false, true);
+	}
+}
+
+
+void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
+{
+	if (isDead) { return; }
+	if (IsCrashing() && !beingBuilt) { return; }
+
+	isDead = true;
+	deathSpeed = speed;
+
+	// TODO: add UnitPreDestroyed, call these later
+	eventHandler.UnitDestroyed(this, attacker);
+	eoh->UnitDestroyed(*this, attacker);
+
+	// Will be called in the destructor again, but this can not hurt
+	SetGroup(nullptr);
+
+	blockHeightChanges = false;
+
+	if (unitDef->windGenerator > 0.0f) {
+		wind.DelUnit(this);
+	}
+
+	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
+		const WeaponDef* wd = (selfDestruct)? unitDef->selfdExpWeaponDef: unitDef->deathExpWeaponDef;
+
+		if (wd != NULL) {
+			CGameHelper::ExplosionParams params = {
+				pos,
+				ZeroVector,
+				wd->damages,
+				wd,
+				this,                              // owner
+				NULL,                              // hitUnit
+				NULL,                              // hitFeature
+				wd->craterAreaOfEffect,
+				wd->damageAreaOfEffect,
+				wd->edgeEffectiveness,
+				wd->explosionSpeed,
+				wd->damages[0] > 500? 1.0f: 2.0f,  // gfxMod
+				false,                             // impactOnly
+				false,                             // ignoreOwner
+				true,                              // damageGround
+				-1u                                // projectileID
+			};
+
+			helper->Explosion(params);
+		}
+
+		if (selfDestruct) {
+			recentDamage += (maxHealth * 2.0f);
+		}
+
+		// start running the unit's kill-script
+		script->Killed();
+	} else {
+		deathScriptFinished = true;
+	}
+
+	if (!deathScriptFinished) {
+		// put the unit in a pseudo-zombie state until Killed finishes
+		SetVelocity(ZeroVector);
+		SetStunned(true);
+
+		paralyzeDamage = 100.0f * maxHealth;
+		health = std::max(health, 0.0f);
+	}
+}
 
 
 
@@ -1703,6 +1839,9 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 }
 
 
+/******************************************************************************/
+/******************************************************************************/
+
 bool CUnit::AddBuildPower(CUnit* builder, float amount)
 {
 	// stop decaying on building AND reclaim
@@ -1842,120 +1981,24 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 }
 
 
-void CUnit::FinishedBuilding(bool postInit)
+//////////////////////////////////////////////////////////////////////
+//
+
+void CUnit::SetMetalStorage(float newStorage)
 {
-	if (!beingBuilt && !postInit) {
-		return;
-	}
-
-	beingBuilt = false;
-	buildProgress = 1.0f;
-	mass = unitDef->mass;
-
-	if (soloBuilder) {
-		DeleteDeathDependence(soloBuilder, DEPENDENCE_BUILDER);
-		soloBuilder = NULL;
-	}
-
-	ChangeLos(realLosRadius, realAirLosRadius);
-
-	if (unitDef->activateWhenBuilt) {
-		Activate();
-	}
-	SetMetalStorage(unitDef->metalStorage);
-	SetEnergyStorage(unitDef->energyStorage);
-
-
-	// Sets the frontdir in sync with heading.
-	frontdir = GetVectorFromHeading(heading) + float3(0, frontdir.y, 0);
-
-	if (unitDef->isAirBase) {
-		airBaseHandler->RegisterAirBase(this);
-	}
-
-	eventHandler.UnitFinished(this);
-	eoh->UnitFinished(*this);
-
-	if (unitDef->isFeature && CUnit::spawnFeature) {
-		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
-		CFeature* f = featureHandler->CreateWreckage(p, 0, false);
-
-		if (f != NULL) {
-			f->blockHeightChanges = true;
-		}
-
-		UnBlock();
-		KillUnit(NULL, false, true);
-	}
+	teamHandler->Team(team)->resStorage.metal -= storage.metal;
+	storage.metal = newStorage;
+	teamHandler->Team(team)->resStorage.metal += storage.metal;
 }
 
 
-void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
+void CUnit::SetEnergyStorage(float newStorage)
 {
-	if (isDead) { return; }
-	if (IsCrashing() && !beingBuilt) { return; }
-
-	isDead = true;
-	deathSpeed = speed;
-
-	// TODO: add UnitPreDestroyed, call these later
-	eventHandler.UnitDestroyed(this, attacker);
-	eoh->UnitDestroyed(*this, attacker);
-
-	// Will be called in the destructor again, but this can not hurt
-	SetGroup(nullptr);
-
-	blockHeightChanges = false;
-
-	if (unitDef->windGenerator > 0.0f) {
-		wind.DelUnit(this);
-	}
-
-	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
-		const WeaponDef* wd = (selfDestruct)? unitDef->selfdExpWeaponDef: unitDef->deathExpWeaponDef;
-
-		if (wd != NULL) {
-			CGameHelper::ExplosionParams params = {
-				pos,
-				ZeroVector,
-				wd->damages,
-				wd,
-				this,                              // owner
-				NULL,                              // hitUnit
-				NULL,                              // hitFeature
-				wd->craterAreaOfEffect,
-				wd->damageAreaOfEffect,
-				wd->edgeEffectiveness,
-				wd->explosionSpeed,
-				wd->damages[0] > 500? 1.0f: 2.0f,  // gfxMod
-				false,                             // impactOnly
-				false,                             // ignoreOwner
-				true,                              // damageGround
-				-1u                                // projectileID
-			};
-
-			helper->Explosion(params);
-		}
-
-		if (selfDestruct) {
-			recentDamage += (maxHealth * 2.0f);
-		}
-
-		// start running the unit's kill-script
-		script->Killed();
-	} else {
-		deathScriptFinished = true;
-	}
-
-	if (!deathScriptFinished) {
-		// put the unit in a pseudo-zombie state until Killed finishes
-		SetVelocity(ZeroVector);
-		SetStunned(true);
-
-		paralyzeDamage = 100.0f * maxHealth;
-		health = std::max(health, 0.0f);
-	}
+	teamHandler->Team(team)->resStorage.energy -= storage.energy;
+	storage.energy = newStorage;
+	teamHandler->Team(team)->resStorage.energy += storage.energy;
 }
+
 
 bool CUnit::AllowedReclaim(CUnit* builder) const
 {
@@ -1970,6 +2013,7 @@ bool CUnit::AllowedReclaim(CUnit* builder) const
 
 	return true;
 }
+
 
 bool CUnit::UseMetal(float metal)
 {
@@ -2048,46 +2092,6 @@ bool CUnit::AddHarvestedMetal(float metal)
 		eventHandler.UnitHarvestStorageFull(this);
 	}
 	return true;
-}
-
-
-
-void CUnit::Activate()
-{
-	if (activated)
-		return;
-
-	activated = true;
-	script->Activate();
-
-	if (unitDef->targfac) {
-		radarHandler->DecreaseAllyTeamRadarErrorSize(allyteam);
-	}
-
-	radarHandler->MoveUnit(this);
-
-	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General->PlayRandomSample(unitDef->sounds.activate, this);
-	}
-}
-
-void CUnit::Deactivate()
-{
-	if (!activated)
-		return;
-
-	activated = false;
-	script->Deactivate();
-
-	if (unitDef->targfac) {
-		radarHandler->IncreaseAllyTeamRadarErrorSize(allyteam);
-	}
-
-	radarHandler->RemoveUnit(this);
-
-	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General->PlayRandomSample(unitDef->sounds.deactivate, this);
-	}
 }
 
 
@@ -2235,6 +2239,47 @@ bool CUnit::IssueResourceOrder(SResourceOrder* order)
 /******************************************************************************/
 /******************************************************************************/
 
+void CUnit::Activate()
+{
+	if (activated)
+		return;
+
+	activated = true;
+	script->Activate();
+
+	if (unitDef->targfac) {
+		radarHandler->DecreaseAllyTeamRadarErrorSize(allyteam);
+	}
+
+	radarHandler->MoveUnit(this);
+
+	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
+		Channels::General->PlayRandomSample(unitDef->sounds.activate, this);
+	}
+}
+
+
+void CUnit::Deactivate()
+{
+	if (!activated)
+		return;
+
+	activated = false;
+	script->Deactivate();
+
+	if (unitDef->targfac) {
+		radarHandler->IncreaseAllyTeamRadarErrorSize(allyteam);
+	}
+
+	radarHandler->RemoveUnit(this);
+
+	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
+		Channels::General->PlayRandomSample(unitDef->sounds.deactivate, this);
+	}
+}
+
+
+
 void CUnit::UpdateWind(float x, float z, float strength)
 {
 	const float windHeading = ClampRad(GetHeadingFromVectorF(-x, -z) - heading * TAANG2RAD);
@@ -2273,42 +2318,6 @@ void CUnit::TempHoldFire(int cmdID)
 
 	// clear current target (if any)
 	AttackUnit(NULL, false, false);
-}
-
-
-
-void CUnit::PostLoad()
-{
-	//HACK:Initializing after load
-	unitDef = unitDefHandler->GetUnitDefByID(unitDefID); // strange. creg should handle this by itself already, but it doesn't
-	objectDef = unitDef;
-	model = unitDef->LoadModel();
-	localModel = new LocalModel(model);
-	modelParser->CreateLocalModel(localModel);
-	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
-
-	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-	SetRadiusAndHeight(model);
-	UpdateDirVectors(!upright);
-	UpdateMidAndAimPos();
-
-	// FIXME: how to handle other script types (e.g. Lua) here?
-	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
-
-	// Call initializing script functions
-	script->Create();
-	script->SetSFXOccupy(curTerrainType);
-
-	if (unitDef->windGenerator > 0.0f) {
-		wind.AddUnit(this);
-	}
-
-	if (activated) {
-		script->Activate();
-	}
-
-	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(this, isCloaked));
-
 }
 
 
@@ -2357,6 +2366,8 @@ bool CUnit::GetNewCloakState(bool stunCheck) {
 
 	return false;
 }
+
+
 void CUnit::SlowUpdateCloak(bool stunCheck)
 {
 	const bool oldCloak = isCloaked;
@@ -2373,6 +2384,7 @@ void CUnit::SlowUpdateCloak(bool stunCheck)
 	isCloaked = newCloak;
 }
 
+
 void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 {
 	if (scriptCloak <= 2) {
@@ -2386,6 +2398,10 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 		}
 	}
 }
+
+
+/******************************************************************************/
+/******************************************************************************/
 
 CR_BIND_DERIVED(CUnit, CSolidObject, )
 CR_REG_METADATA(CUnit, (
