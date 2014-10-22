@@ -35,7 +35,7 @@ ClassBinder* System::binderList = 0;
 vector<Class*> System::classes;
 
 ClassBinder::ClassBinder(const char* className, unsigned int cf,
-		ClassBinder* baseClsBinder, IMemberRegistrator** mreg, int instanceSize, int instanceAlignment, bool hasVTable,
+		ClassBinder* baseClsBinder, IMemberRegistrator** mreg, int instanceSize, int instanceAlignment, bool hasVTable, bool isCregStruct,
 		void (*constructorProc)(void* inst), void (*destructorProc)(void* inst))
 	: class_(NULL)
 	, base(baseClsBinder)
@@ -45,6 +45,7 @@ ClassBinder::ClassBinder(const char* className, unsigned int cf,
 	, size(instanceSize)
 	, alignment(instanceAlignment)
 	, hasVTable(hasVTable)
+	, isCregStruct(isCregStruct)
 	, constructor(constructorProc)
 	, destructor(destructorProc)
 	, nextBinder(NULL)
