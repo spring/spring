@@ -189,6 +189,9 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(lastDrawFrameTime),
 	CR_IGNORED(lastFrameTime),
 	CR_IGNORED(lastReadNetTime),
+	CR_IGNORED(lastNetPacketProcessTime),
+	CR_IGNORED(lastReceivedNetPacketTime),
+	CR_IGNORED(lastSimFrameNetPacketTime),
 	CR_IGNORED(updateDeltaSeconds),
 	CR_MEMBER(totalGameTime),
 	CR_MEMBER(userInputPrefix),
@@ -202,6 +205,9 @@ CR_REG_METADATA(CGame, (
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
 	CR_MEMBER(showMTInfo),
+	CR_IGNORED(chatting),
+	CR_IGNORED(curKeyChain),
+	CR_IGNORED(playerTraffic),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(gameID),
 	//CR_MEMBER(infoConsole),
@@ -215,6 +221,31 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(msgProcTimeLeft),
 	CR_IGNORED(consumeSpeedMult),
 
+	CR_IGNORED(skipStartFrame),
+	CR_IGNORED(skipEndFrame),
+	CR_IGNORED(skipTotalFrames),
+	CR_IGNORED(skipSeconds),
+	CR_IGNORED(skipSoundmute),
+	CR_IGNORED(skipOldSpeed),
+	CR_IGNORED(skipOldUserSpeed),
+	CR_IGNORED(skipLastDrawTime),
+
+	CR_MEMBER(speedControl),
+
+	CR_IGNORED(infoConsole),
+	CR_IGNORED(consoleHistory),
+	CR_IGNORED(worldDrawer),
+	CR_IGNORED(defsParser),
+	CR_IGNORED(saveFile),
+
+	// from CGameController
+	CR_IGNORED(writingPos),
+	CR_IGNORED(ignoreNextChar),
+	CR_IGNORED(userInput),
+	CR_IGNORED(userPrompt),
+	CR_IGNORED(userWriting),
+
+	// Post Load
 	CR_POSTLOAD(PostLoad)
 ))
 

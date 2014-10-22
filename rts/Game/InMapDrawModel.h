@@ -129,7 +129,7 @@ public:
 	 * cell of a grid structure.
 	 */
 	struct DrawQuad {
-		CR_DECLARE_STRUCT(DrawQuad)
+		CR_DECLARE(DrawQuad)
 		std::list<CInMapDrawModel::MapPoint> points;
 		std::list<CInMapDrawModel::MapLine> lines;
 	};

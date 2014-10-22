@@ -2449,6 +2449,8 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(weapons),
 	CR_MEMBER(shieldWeapon),
 	CR_MEMBER(stockpileWeapon),
+	CR_MEMBER(localModel),
+
 	CR_MEMBER(reloadSpeed),
 	CR_MEMBER(maxRange),
 
@@ -2489,13 +2491,12 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(moveType),
 	CR_MEMBER(prevMoveType),
 
-	// CR_MEMBER(fpsControlPlayer),
+	CR_MEMBER(fpsControlPlayer),
 	CR_MEMBER(commandAI),
 	CR_MEMBER(group),
 
-
-	//CR_MEMBER(localModel), //
-	// CR_MEMBER(script),
+	CR_MEMBER(localModel),
+	CR_MEMBER(script),
 
 	CR_MEMBER(resourcesCondUse),
 	CR_MEMBER(resourcesCondMake),
@@ -2568,8 +2569,8 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(selfDCountdown),
 
-	CR_IGNORED(myTrack),
-	CR_IGNORED(myIcon),
+	CR_MEMBER_UN(myTrack),
+	CR_MEMBER_UN(myIcon),
 
 	CR_MEMBER(incomingMissiles),
 	CR_MEMBER(lastFlareDrop),
@@ -2587,12 +2588,15 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER_UN(isIcon),
 	CR_MEMBER(iconRadius),
 
-	CR_MEMBER_UN(lodCount),
-	CR_MEMBER_UN(currentLOD),
 	CR_MEMBER_UN(lastDrawFrame),
 	CR_MEMBER(lastUnitUpdate),
 
 	CR_MEMBER_UN(tooltip),
+
+	CR_MEMBER_UN(lodCount),
+	CR_MEMBER_UN(currentLOD),
+	CR_MEMBER_UN(lodLengths),
+	CR_MEMBER_UN(luaMats),
 
 	CR_MEMBER(stunned),
 

@@ -22,6 +22,7 @@ CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_MEMBER(tilelength),
 	CR_MEMBER(scrollspeed),
 	CR_MEMBER(pulseSpeed),
+	CR_MEMBER(decay),
 	CR_MEMBER(beamtex),
 	CR_MEMBER(sidetex),
 	CR_RESERVED(16)

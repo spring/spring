@@ -30,8 +30,8 @@ CR_BIND(CInMapDrawModel::MapDrawPrimitive, (false, -1, NULL))
 
 CR_REG_METADATA_SUB(CInMapDrawModel, MapDrawPrimitive, (
 	CR_MEMBER(spectator),
-	CR_MEMBER(teamID)//,
-	//CR_MEMBER(teamController)
+	CR_MEMBER(teamID),
+	CR_MEMBER(teamController)
 ))
 
 CR_BIND_DERIVED(CInMapDrawModel::MapPoint, CInMapDrawModel::MapDrawPrimitive, (false, -1, NULL, ZeroVector, ""))

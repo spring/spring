@@ -21,6 +21,7 @@
 CR_BIND_DERIVED(CHoverAirMoveType, AAirMoveType, (NULL))
 
 CR_REG_METADATA(CHoverAirMoveType, (
+	CR_MEMBER(flyState),
 	CR_MEMBER(bankingAllowed),
 	CR_MEMBER(airStrafe),
 	CR_MEMBER(wantToStop),
