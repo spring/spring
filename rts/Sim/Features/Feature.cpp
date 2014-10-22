@@ -33,6 +33,7 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(inUpdateQue),
 	CR_MEMBER(resurrectProgress),
 	CR_MEMBER(reclaimLeft),
+	CR_MEMBER(resources),
 	CR_MEMBER(finalHeight),
 	CR_MEMBER(lastReclaim),
 	CR_MEMBER(drawQuad),
@@ -48,28 +49,31 @@ CR_REG_METADATA(CFeature, (
 ))
 
 
-CFeature::CFeature() : CSolidObject(),
-	defID(-1),
-	isRepairingBeforeResurrect(false),
-	isAtFinalHeight(false),
-	inUpdateQue(false),
-	resurrectProgress(0.0f),
-	reclaimLeft(1.0f),
-	finalHeight(0.0f),
-	lastReclaim(0),
-	drawQuad(-2),
-	fireTime(0),
-	smokeTime(0),
+CFeature::CFeature()
+: CSolidObject()
+, defID(-1)
+, isRepairingBeforeResurrect(false)
+, isAtFinalHeight(false)
+, inUpdateQue(false)
+, resurrectProgress(0.0f)
+, finalHeight(0.0f)
+, lastReclaim(0)
+, reclaimLeft(1.0f)
+, resources(0.0f, 1.0f)
+, drawQuad(-2)
+, fireTime(0)
+, smokeTime(0)
 
-	def(NULL),
-	udef(NULL),
+, def(NULL)
+, udef(NULL)
 
-	myFire(NULL),
-	solidOnTop(NULL)
+, myFire(NULL)
+, solidOnTop(NULL)
 {
 	crushable = true;
 	immobile = true;
 }
+
 
 CFeature::~CFeature()
 {
@@ -89,6 +93,7 @@ CFeature::~CFeature()
 		CGeoThermSmokeProjectile::GeoThermDestroyed(this);
 	}
 }
+
 
 void CFeature::PostLoad()
 {
@@ -123,6 +128,7 @@ void CFeature::ChangeTeam(int newTeam)
 		allyteam = teamHandler->AllyTeam(newTeam);
 	}
 }
+
 
 bool CFeature::IsInLosForAllyTeam(int argAllyTeam) const
 {
@@ -166,6 +172,8 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	mass = def->mass;
 	health = def->health;
+
+	resources = SResourcePack(def->metal, def->energy);
 
 	crushResistance = def->crushResistance;
 
@@ -277,6 +285,10 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 			builder->UseEnergy(energyUse);
 
 			reclaimLeft += step;
+			resources.metal  += metalUse;
+			resources.energy += energyUse;
+			resources.metal  = std::min(resources.metal, def->metal);
+			resources.energy = std::min(resources.energy, def->energy);
 
 			if (reclaimLeft >= 1.0f) {
 				isRepairingBeforeResurrect = false; // They can start reclaiming it again if they so wish
@@ -315,27 +327,29 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 
 		// stop the last bit giving too much resource
 		const float reclaimLeftTemp = std::max(0.0f, reclaimLeft - step);
-
 		const float fractionReclaimed = oldReclaimLeft - reclaimLeftTemp;
-		const float metalFraction = def->metal * fractionReclaimed;
-		const float energyFraction = def->energy * fractionReclaimed;
+		const float metalFraction  = std::min(def->metal  * fractionReclaimed, resources.metal);
+		const float energyFraction = std::min(def->energy * fractionReclaimed, resources.energy);
 		const float energyUseScaled = metalFraction * modInfo.reclaimFeatureEnergyCostFactor;
 
-		if (!builder->UseEnergy(energyUseScaled)) {
-			return false;
-		}
-
-		reclaimLeft = reclaimLeftTemp;
-
-		if ((modInfo.reclaimMethod == 1) && (reclaimLeft == 0.0f)) {
-			// All-at-end method
-			builder->AddMetal(def->metal, false); //FIXME
-			builder->AddEnergy(def->energy, false); //FIXME
+		SResourceOrder order;
+		order.quantum    = false;
+		order.overflow   = builder->harvestStorage.empty();
+		order.separate   = true;
+		order.use.energy = energyUseScaled;
+		if (reclaimLeftTemp == 0.0f) {
+			// always give remaining resources at the end
+			order.add.metal  = resources.metal;
+			order.add.energy = resources.energy;
 		}
 		else if (modInfo.reclaimMethod == 0) {
 			// Gradual reclaim
-			builder->AddMetal(metalFraction, false); //FIXME
-			builder->AddEnergy(energyFraction, false); //FIXME
+			order.add.metal  = metalFraction;
+			order.add.energy = energyFraction;
+		}
+		else if (modInfo.reclaimMethod == 1) {
+			// All-at-end method
+			// see `reclaimLeftTemp == 0.0f` case
 		}
 		else {
 			// Chunky reclaiming, work out how many chunk boundaries we crossed
@@ -344,19 +358,25 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 			const int newChunk = ChunkNumber(reclaimLeft);
 
 			if (oldChunk != newChunk) {
-				const float numChunks = (float)oldChunk - (float)newChunk;
-				builder->AddMetal(numChunks * def->metal * chunkSize, false);
-				builder->AddEnergy(numChunks * def->energy * chunkSize, false);
+				const float numChunks = oldChunk - newChunk;
+				order.add.metal  = std::min(numChunks * def->metal * chunkSize,  resources.metal);
+				order.add.energy = std::min(numChunks * def->energy * chunkSize, resources.energy);
 			}
 		}
+
+		if (!builder->IssueResourceOrder(&order)) {
+			return false;
+		}
+
+		resources  -= order.add;
+		reclaimLeft = reclaimLeftTemp;
+		lastReclaim = gs->frameNum;
 
 		// Has the reclaim finished?
 		if (reclaimLeft <= 0) {
 			featureHandler->DeleteFeature(this);
 			return false;
 		}
-
-		lastReclaim = gs->frameNum;
 		return true;
 	}
 
@@ -406,7 +426,8 @@ void CFeature::DoDamage(
 			// if a partially reclaimed corpse got blasted,
 			// ensure its wreck is not worth the full amount
 			// (which might be more than the amount remaining)
-			deathFeature->reclaimLeft = reclaimLeft;
+			deathFeature->resources.metal  *= resources.metal  / def->metal;
+			deathFeature->resources.energy *= resources.energy / def->energy;
 		}
 
 		featureHandler->DeleteFeature(this);
@@ -435,6 +456,7 @@ void CFeature::SetVelocity(const float3& v)
 	}
 }
 
+
 void CFeature::ForcedMove(const float3& newPos)
 {
 	// remove from managers
@@ -454,6 +476,7 @@ void CFeature::ForcedMove(const float3& newPos)
 	// insert into managers
 	quadField->AddFeature(this);
 }
+
 
 void CFeature::ForcedSpin(const float3& newDir)
 {
@@ -568,6 +591,7 @@ bool CFeature::UpdatePosition()
 	return (IsMoving());
 }
 
+
 void CFeature::UpdateFinalHeight(bool useGroundHeight)
 {
 	if (isAtFinalHeight)
@@ -587,6 +611,7 @@ void CFeature::UpdateFinalHeight(bool useGroundHeight)
 		finalHeight = pos.y;
 	}
 }
+
 
 bool CFeature::Update()
 {
@@ -627,6 +652,8 @@ void CFeature::StartFire()
 
 	myFire = new CFireProjectile(midPos, UpVector, 0, 300, 70, radius * 0.8f, 20.0f);
 }
+
+
 void CFeature::EmitGeoSmoke()
 {
 	if ((gs->frameNum + id % 5) % 5 == 0) {
@@ -668,26 +695,5 @@ void CFeature::EmitGeoSmoke()
 }
 
 
-
-float CFeature::RemainingResource(float res) const
-{
-	// Gradual reclaim
-	if (modInfo.reclaimMethod == 0) {
-		return res * reclaimLeft;
-	}
-
-	// Old style - all reclaimed at the end
-	if (modInfo.reclaimMethod == 1) {
-		return res;
-	}
-
-	// Otherwise we are doing chunk reclaiming
-	float chunkSize = res / modInfo.reclaimMethod; // resource/no_chunks
-	float chunksLeft = math::ceil(reclaimLeft * modInfo.reclaimMethod);
-	return chunkSize * chunksLeft;
-}
-
-float CFeature::RemainingMetal() const { return RemainingResource(def->metal); }
-float CFeature::RemainingEnergy() const { return RemainingResource(def->energy); }
-int CFeature::ChunkNumber(float f) const { return int(math::ceil(f * modInfo.reclaimMethod)); }
+int CFeature::ChunkNumber(float f) { return int(math::ceil(f * modInfo.reclaimMethod)); }
 

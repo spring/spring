@@ -3053,9 +3053,11 @@ int LuaSyncedRead::GetUnitHarvestStorage(lua_State* L)
 		return 0;
 	}
 
-	lua_pushnumber(L, unit->harvestStorage.metal);
-	lua_pushnumber(L, unit->harvestStorage.energy);
-	return 2;
+	for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
+		lua_pushnumber(L, unit->harvested[i]);
+		lua_pushnumber(L, unit->harvestStorage[i]);
+	}
+	return 2 * SResourcePack::MAX_RESOURCES;
 }
 
 
@@ -4476,9 +4478,9 @@ int LuaSyncedRead::GetFeatureResources(lua_State* L)
 	if (feature == NULL || !IsFeatureVisible(L, feature)) {
 		return 0;
 	}
-	lua_pushnumber(L,  feature->RemainingMetal());
+	lua_pushnumber(L,  feature->resources.metal);
 	lua_pushnumber(L,  feature->def->metal);
-	lua_pushnumber(L,  feature->RemainingEnergy());
+	lua_pushnumber(L,  feature->resources.energy);
 	lua_pushnumber(L,  feature->def->energy);
 	lua_pushnumber(L,  feature->reclaimLeft);
 	return 5;

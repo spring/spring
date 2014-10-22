@@ -865,49 +865,25 @@ std::string CSelectedUnitsHandler::GetTooltip()
 	}
 
 	{
-		int numFuel = 0;
-		float maxHealth = 0.0f, curHealth = 0.0f;
-		float maxFuel = 0.0f, curFuel = 0.0f;
-		float exp = 0.0f, cost = 0.0f, range = 0.0f;
-		float metalMake = 0.0f, metalUse = 0.0f, energyMake = 0.0f, energyUse = 0.0f;
-
-#define NO_TEAM -32
-#define MULTI_TEAM -64
+		#define NO_TEAM -32
+		#define MULTI_TEAM -64
 		int ctrlTeam = NO_TEAM;
 
+		SUnitStats stats;
+
 		for (const CUnit* unit: selectedUnits) {
-			maxHealth  += unit->maxHealth;
-			curHealth  += unit->health;
-			exp        += unit->experience;
-			cost       += unit->cost.metal + (unit->cost.energy / 60.0f);
-			range      += unit->maxRange;
-			metalMake  += unit->resourcesMake.metal;
-			metalUse   += unit->resourcesUse.metal;
-			energyMake += unit->resourcesMake.energy;
-			energyUse  += unit->resourcesUse.energy;
-			maxFuel    += unit->unitDef->maxFuel;
-			curFuel    += unit->currentFuel;
-			if (unit->unitDef->maxFuel > 0) {
-				numFuel++;
-			}
+			stats.AddUnit(unit, false);
+
 			if (ctrlTeam == NO_TEAM) {
 				ctrlTeam = unit->team;
 			} else if (ctrlTeam != unit->team) {
 				ctrlTeam = MULTI_TEAM;
 			}
 		}
-		if ((numFuel > 0) && (maxFuel > 0.0f)) {
-			curFuel = curFuel / numFuel;
-			maxFuel = maxFuel / numFuel;
-		}
-		const float num = selectedUnits.size();
 
-		s += CTooltipConsole::MakeUnitStatsString(
-			curHealth, maxHealth,
-			curFuel,   maxFuel,
-			(exp / num), cost, (range / num),
-			metalMake,  metalUse,
-			energyMake, energyUse);
+		s += CTooltipConsole::MakeUnitStatsString(stats);
+
+		const float num = selectedUnits.size();
 
 		if (gs->cheatEnabled && (num == 1)) {
 			const CUnit* unit = *selectedUnits.begin();

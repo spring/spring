@@ -104,7 +104,8 @@ public:
 	float tidalGenerator;
 	float metalStorage;
 	float energyStorage;
-	float harvestStorage;
+	float harvestMetalStorage;
+	float harvestEnergyStorage;
 
 	float autoHeal;     ///< amount autohealed
 	float idleAutoHeal; ///< amount autohealed only during idling

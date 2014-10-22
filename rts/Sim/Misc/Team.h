@@ -27,6 +27,9 @@ public:
 	void ResetResourceState();
 	void SlowUpdate();
 
+	void AddResources(SResourcePack res, bool useIncomeMultiplier = true);
+	bool UseResources(const SResourcePack& res);
+
 	void AddMetal(float amount, bool useIncomeMultiplier = true);
 	void AddEnergy(float amount, bool useIncomeMultiplier = true);
 	bool UseEnergy(float amount);

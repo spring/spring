@@ -1715,8 +1715,11 @@ int LuaSyncedCtrl::SetUnitHarvestStorage(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	unit->harvestStorage.metal  = luaL_optfloat(L, 2, unit->harvestStorage.metal);
-	unit->harvestStorage.energy = luaL_optfloat(L, 3, unit->harvestStorage.energy);
+
+	for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
+		unit->harvested[i]       = luaL_optfloat(L, 2 + i * 2,     unit->harvested[i]);
+		unit->harvestStorage[i]  = luaL_optfloat(L, 2 + i * 2 + 1, unit->harvestStorage[i]);
+	}
 	return 0;
 }
 

@@ -45,6 +45,12 @@ public:
 		}
 		return true;
 	}
+	bool operator>=(const SResourcePack& other) const {
+		for (int i = 0; i < MAX_RESOURCES; ++i) {
+			if (res[i] < other.res[i]) return false;
+		}
+		return true;
+	}
 
 	SResourcePack operator+(const SResourcePack& other) const {
 		SResourcePack out = *this;
@@ -52,6 +58,26 @@ public:
 			out[i] += other.res[i];
 		}
 		return out;
+	}
+
+	SResourcePack& operator+=(const SResourcePack& other) {
+		for (int i = 0; i < MAX_RESOURCES; ++i) {
+			res[i] += other.res[i];
+		}
+		return *this;
+	}
+	SResourcePack& operator-=(const SResourcePack& other) {
+		for (int i = 0; i < MAX_RESOURCES; ++i) {
+			res[i] -= other.res[i];
+		}
+		return *this;
+	}
+
+	SResourcePack& operator*=(float scale) {
+		for (int i = 0; i < MAX_RESOURCES; ++i) {
+			res[i] *= scale;
+		}
+		return *this;
 	}
 };
 
@@ -66,8 +92,11 @@ struct SResourceOrder {
 	//! allow excessing when storages are full (only matters when quantum := true)
 	bool overflow;
 
+	//! handle resources separate, i.e. when metal storage is full still allow energy one to be filled?
+	bool separate;
+
 public:
-	SResourceOrder() : quantum(false), overflow(false) {}
+	SResourceOrder() : quantum(false), overflow(false), separate(false) {}
 	CR_DECLARE_STRUCT(SResourceOrder)
 };
 

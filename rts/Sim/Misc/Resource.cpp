@@ -33,11 +33,11 @@ CR_REG_METADATA(SResourceOrder,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CResourceDescription::CResourceDescription():
-		name("UNNAMED_RESOURCE"),
-		optimum(FLT_MAX),
-		extractorRadius(0.0f),
-		maxWorth(0.0f)
+CResourceDescription::CResourceDescription()
+: name("UNNAMED_RESOURCE")
+, optimum(FLT_MAX)
+, extractorRadius(0.0f)
+, maxWorth(0.0f)
 {
 }
 

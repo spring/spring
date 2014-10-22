@@ -429,6 +429,9 @@ void CUnit::PreInit(const UnitLoadParams& params)
 		unitDef->energyMake +
 		unitDef->tidalGenerator * mapInfo->map.tidalStrength;
 
+	harvestStorage.metal  = unitDef->harvestMetalStorage;
+	harvestStorage.energy = unitDef->harvestEnergyStorage;
+
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
 	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
 }
@@ -1777,49 +1780,57 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		if (isDead || IsCrashing())
 			return false;
 
+		if (!AllowedReclaim(builder)) {
+			builder->DependentDied(this);
+			return false;
+		}
+
 		const float step = std::max(amount / buildTime, -buildProgress);
 		const float energyRefundStep = cost.energy * step;
 		const float metalRefundStep  =  cost.metal * step;
 		const float metalRefundStepScaled  =  metalRefundStep * modInfo.reclaimUnitEfficiency;
 		const float energyRefundStepScaled = energyRefundStep * modInfo.reclaimUnitEnergyCostFactor;
-
-		if (builderTeam->res.energy < -energyRefundStepScaled) {
-			builderTeam->resPull.energy += -energyRefundStepScaled;
-			return false;
-		}
+		const float healthStep        = maxHealth * step;
+		const float buildProgressStep = int(modInfo.reclaimUnitMethod == 0) * step;
+		const float postHealth        = health + healthStep;
+		const float postBuildProgress = buildProgress + buildProgressStep;
 
 		if (!eventHandler.AllowUnitBuildStep(builder, this, step))
 			return false;
 
 		restTime = 0;
 
-		if (!AllowedReclaim(builder)) {
-			builder->DependentDied(this);
-			return false;
-		}
-
-		if (!builder->UseEnergy(-energyRefundStepScaled)) {
-			return false;
-		}
-
-		health += (maxHealth * step);
-		buildProgress += (step * int(beingBuilt) * int(modInfo.reclaimUnitMethod == 0));
-
+		bool killMe = false;
+		SResourceOrder order;
+		order.quantum    = false;
+		order.overflow   = true;
+		order.use.energy = -energyRefundStepScaled;
 		if (modInfo.reclaimUnitMethod == 0) {
 			// gradual reclamation of invested metal
-			if (!builder->AddHarvestedMetal(-metalRefundStepScaled))
-				return false;
-
-			// turn reclaimee into nanoframe (even living units)
-			beingBuilt = true;
+			order.add.metal = -metalRefundStepScaled;
 		} else {
 			// lump reclamation of invested metal
-			if (buildProgress <= 0.0f || health <= 0.0f) {
-				builder->AddHarvestedMetal((cost.metal * buildProgress) * modInfo.reclaimUnitEfficiency);
+			if (postHealth <= 0.0f || postBuildProgress <= 0.0f) {
+				order.add.metal = (cost.metal * buildProgress) * modInfo.reclaimUnitEfficiency;
+				killMe = true; // to make 100% sure the unit gets killed, and so no resources are reclaimed twice!
 			}
 		}
 
-		if (buildProgress <= 0.0f || health <= 0.0f) {
+		if (!builder->IssueResourceOrder(&order)) {
+			return false;
+		}
+
+		// turn reclaimee into nanoframe (even living units)
+		if (modInfo.reclaimUnitMethod == 0) beingBuilt = true;
+
+		// reduce health & resources
+		health = postHealth;
+		buildProgress = postBuildProgress;
+
+		// reclaim finished?
+		if (killMe || buildProgress <= 0.0f || health <= 0.0f) {
+			health = 0.0f;
+			buildProgress = 0.0f;
 			KillUnit(NULL, false, true);
 			return false;
 		}
@@ -2021,19 +2032,19 @@ void CUnit::AddEnergy(float energy, bool useIncomeMultiplier)
 
 bool CUnit::AddHarvestedMetal(float metal)
 {
-	if (unitDef->harvestStorage <= 0.0f) {
+	if (harvestStorage.metal <= 0.0f) {
 		AddMetal(metal, false);
 		return true;
 	}
 
-	if (harvestStorage.metal >= unitDef->harvestStorage) {
+	if (harvested.metal >= harvestStorage.metal) {
 		eventHandler.UnitHarvestStorageFull(this);
 		return false;
 	}
 
 	//FIXME what do with exceeding metal?
-	harvestStorage.metal = std::min(harvestStorage.metal + metal, unitDef->harvestStorage);
-	if (harvestStorage.metal >= unitDef->harvestStorage) {
+	harvested.metal = std::min(harvested.metal + metal, harvestStorage.metal);
+	if (harvested.metal >= harvestStorage.metal) {
 		eventHandler.UnitHarvestStorageFull(this);
 	}
 	return true;
@@ -2080,6 +2091,149 @@ void CUnit::Deactivate()
 }
 
 
+void CUnit::SetStorage(const SResourcePack& newStorage)
+{
+	teamHandler->Team(team)->resStorage -= storage;
+	storage = newStorage;
+	teamHandler->Team(team)->resStorage += storage;
+}
+
+
+bool CUnit::UseResources(const SResourcePack& pack)
+{
+	//FIXME
+	/*if (energy < 0.0f) {
+		AddEnergy(-energy);
+		return true;
+	}*/
+	if (teamHandler->Team(team)->UseResources(pack)) {
+		resourcesUseI += pack;
+		return true;
+	}
+	return false;
+}
+
+
+void CUnit::AddResources(const SResourcePack& pack, bool useIncomeMultiplier)
+{
+	//FIXME
+	/*if (energy < 0.0f) {
+		UseEnergy(-energy);
+		return true;
+	}*/
+	resourcesMakeI += pack;
+	teamHandler->Team(team)->AddResources(pack, useIncomeMultiplier);
+}
+
+
+static bool CanDispatch(const CUnit* u, const CTeam* team, const SResourceOrder& order)
+{
+	const bool haveEnoughResources = (team->res >= order.use);
+	bool canDispatch = haveEnoughResources;
+
+	if (order.overflow)
+		return canDispatch;
+
+	if (u->harvestStorage.empty()) {
+		const bool haveEnoughStorageFree = ((order.add + team->res) <= team->resStorage);
+		canDispatch = canDispatch && haveEnoughStorageFree;
+	} else {
+		const bool haveEnoughHarvestStorageFree = ((order.add + u->harvested) <= u->harvestStorage);
+		canDispatch = canDispatch && haveEnoughHarvestStorageFree;
+	}
+
+	return canDispatch;
+}
+
+
+static void GetScale(const float x1, const float x2, float* scale)
+{
+	const float v = std::min(x1, x2);
+	*scale = (x1 == 0.0f) ? *scale : std::min(*scale, v / x1);
+}
+
+
+static bool LimitToFullStorage(const CUnit* u, const CTeam* team, SResourceOrder* order)
+{
+	float scales[SResourcePack::MAX_RESOURCES];
+
+	for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
+		scales[i] = 1.0f;
+		float& scale = order->separate ? scales[i] : scales[0];
+
+		GetScale(order->use[i], team->res[i], &scale);
+
+		if (u->harvestStorage.empty()) {
+			GetScale(order->add[i], team->resStorage.res[i] - team->res[i], &scale);
+		} else {
+			GetScale(order->add[i], u->harvestStorage[i] - u->harvested[i], &scale);
+		}
+	}
+
+	if (order->separate) {
+		bool nonempty = false;
+		for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
+			if ((order->use[i] != 0.0f || order->add[i] != 0.0f) && scales[i] != 0.0f) nonempty = true;
+			order->use[i] *= scales[i];
+			order->add[i] *= scales[i];
+		}
+		return nonempty;
+	}
+
+	order->use *= scales[0];
+	order->add *= scales[0];
+	return (scales[0] != 0.0f);
+}
+
+
+bool CUnit::IssueResourceOrder(SResourceOrder* order)
+{
+	//FIXME assert(order.use.energy >= 0.0f && order.use.metal >= 0.0f);
+	//FIXME assert(order.add.energy >= 0.0f && order.add.metal >= 0.0f);
+
+	CTeam* myTeam = teamHandler->Team(team);
+	myTeam->resPull += order->use;
+
+	// check
+	if (!CanDispatch(this, myTeam, *order)) {
+		if (order->quantum)
+			return false;
+
+		if (!LimitToFullStorage(this, myTeam, order))
+			return false;
+	}
+
+	// use
+	if (!order->use.empty()) {
+		UseResources(order->use);
+	}
+
+	// add
+	if (!order->add.empty()) {
+		if (harvestStorage.empty()) {
+			AddResources(order->add);
+		} else {
+			bool isFull = false;
+			for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
+				if (order->add[i] > 0.0f) {
+					harvested[i] += order->add[i];
+					harvested[i]  = std::min(harvested[i], harvestStorage[i]);
+					isFull |= (harvested[i] >= harvestStorage[i]);
+				}
+			}
+
+			if (isFull) {
+				eventHandler.UnitHarvestStorageFull(this);
+			}
+		}
+	}
+
+	return true;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
 
 void CUnit::UpdateWind(float x, float z, float strength)
 {
@@ -2350,7 +2504,9 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(resourcesMakeOld),
 
 	CR_MEMBER(storage),
+
 	CR_MEMBER(harvestStorage),
+	CR_MEMBER(harvested),
 
 	CR_MEMBER(energyTickMake),
 	CR_MEMBER(metalExtract),

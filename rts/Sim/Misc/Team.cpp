@@ -160,6 +160,29 @@ void CTeam::AddEnergy(float amount, bool useIncomeMultiplier)
 }
 
 
+void CTeam::AddResources(SResourcePack amount, bool useIncomeMultiplier)
+{
+	if (useIncomeMultiplier) { amount *= GetIncomeMultiplier(); }
+	res += amount;
+	resIncome += amount;
+	for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
+		if (res[i] > resStorage[i]) {
+			resDelayedShare[i] += (res[i] - resStorage[i]);
+			res[i] = resStorage[i];
+		}
+	}
+}
+
+bool CTeam::UseResources(const SResourcePack& amount)
+{
+	if (res >= amount) {
+		res -= amount;
+		resExpense += amount;
+		return true;
+	}
+	return false;
+}
+
 
 void CTeam::GiveEverythingTo(const unsigned toTeam)
 {

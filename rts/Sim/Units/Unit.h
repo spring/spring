@@ -134,6 +134,11 @@ public:
 	void AddEnergy(float energy, bool useIncomeMultiplier = true);
 	bool AddHarvestedMetal(float metal);
 
+	void SetStorage(const SResourcePack& newstorage);
+	bool UseResources(const SResourcePack& res);
+	void AddResources(const SResourcePack& res, bool useIncomeMultiplier = true);
+	bool IssueResourceOrder(SResourceOrder* order);
+
 	/// push the new wind to the script
 	void UpdateWind(float x, float z, float strength);
 	void SetMetalStorage(float newStorage);
@@ -432,6 +437,7 @@ public:
 
 	/// per unit metal storage (gets filled on reclaim and needs then to be unloaded at some storage building -> 2nd part is lua's job)
 	SResourcePack harvestStorage;
+	SResourcePack harvested;
 
 	SResourcePack cost;
 	float buildTime;
