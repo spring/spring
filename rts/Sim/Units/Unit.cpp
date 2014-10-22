@@ -81,144 +81,135 @@ float CUnit::expReloadScale = 0.4f;
 float CUnit::expGrade       = 0.0f;
 
 
-CUnit::CUnit() : CSolidObject(),
-	unitDef(NULL),
-	soloBuilder(NULL),
-	lastAttacker(NULL),
-	attackTarget(NULL),
-	transporter(NULL),
+CUnit::CUnit()
+: CSolidObject()
+, unitDef(NULL)
+, shieldWeapon(NULL)
+, stockpileWeapon(NULL)
+, soloBuilder(NULL)
+, lastAttacker(NULL)
+, attackTarget(NULL)
+, lastAttackedPiece(NULL)
+, lastAttackedPieceFrame(-1)
+, lastAttackFrame(-200)
+, lastFireWeapon(0)
+, transporter(NULL)
+, moveType(NULL)
+, prevMoveType(NULL)
+, commandAI(NULL)
+, localModel(NULL)
+, script(NULL)
+, los(NULL)
+, losStatus(teamHandler->ActiveAllyTeams(), 0)
+, fpsControlPlayer(NULL)
+, attackPos(ZeroVector)
+, deathSpeed(ZeroVector)
+, lastMuzzleFlameDir(UpVector)
+, flankingBonusDir(RgtVector)
+, posErrorVector(ZeroVector)
+, posErrorDelta(ZeroVector)
+, unitDefID(-1)
+, featureDefID(-1)
+, power(100.0f)
+, buildProgress(0.0f)
+, maxHealth(100.0f)
+, paralyzeDamage(0.0f)
+, captureProgress(0.0f)
+, experience(0.0f)
+, limExperience(0.0f)
+, neutral(false)
+, beingBuilt(true)
+, upright(true)
+, groundLevelled(true)
+, terraformLeft(0.0f)
+, lastNanoAdd(gs->frameNum)
+, lastFlareDrop(0)
+, repairAmount(0.0f)
+, loadingTransportId(-1)
+, inBuildStance(false)
+, useHighTrajectory(false)
+, dontUseWeapons(false)
+, dontFire(false)
+, deathScriptFinished(false)
+, delayedWreckLevel(-1)
+, restTime(0)
+, outOfMapTime(0)
+, reloadSpeed(1.0f)
+, maxRange(0.0f)
+, haveTarget(false)
+, haveManualFireRequest(false)
+, lastMuzzleFlameSize(0.0f)
+, armorType(0)
+, category(0)
+, mapSquare(-1)
+, realLosRadius(0)
+, realAirLosRadius(0)
+, losRadius(0)
+, airLosRadius(0)
+, lastLosUpdate(0)
+, losHeight(0.0f)
+, radarHeight(0.0f)
+, radarRadius(0)
+, sonarRadius(0)
+, jammerRadius(0)
+, sonarJamRadius(0)
+, seismicRadius(0)
+, seismicSignature(0.0f)
+, oldRadarPos(0, 0)
+, hasRadarPos(false)
+, stealth(false)
+, sonarStealth(false)
+, hasRadarCapacity(false)
+, energyTickMake(0.0f)
+, metalExtract(0.0f)
+, cost(100.0f, 0.0f)
+, buildTime(100.0f)
+, recentDamage(0.0f)
+, fireState(FIRESTATE_FIREATWILL)
+, moveState(MOVESTATE_MANEUVER)
+, userAttackGround(false)
+, activated(false)
+, isDead(false)
+, fallSpeed(0.2f)
+, travel(0.0f)
+, travelPeriod(0.0f)
+, flankingBonusMode(0)
+, flankingBonusMobility(10.0f)
+, flankingBonusMobilityAdd(0.01f)
+, flankingBonusAvgDamage(1.4f)
+, flankingBonusDifDamage(0.5f)
+, armoredState(false)
+, armoredMultiple(1.0f)
+, curArmorMultiple(1.0f)
+, nextPosErrorUpdate(1)
+, isCloaked(false)
+, wantCloak(false)
+, scriptCloak(0)
+, cloakTimeout(128)
+, curCloakTimeout(gs->frameNum)
+, decloakDistance(0.0f)
+, lastTerrainType(-1)
+, curTerrainType(0)
+, selfDCountdown(0)
+, currentFuel(0.0f)
+, alphaThreshold(0.1f)
+, cegDamage(1)
 
-	moveType(NULL),
-	prevMoveType(NULL),
+, noDraw(false)
+, noMinimap(false)
+, leaveTracks(false)
+, isSelected(false)
+, isIcon(false)
+, iconRadius(0.0f)
+, lodCount(0)
+, currentLOD(0)
+, lastDrawFrame(-30)
+, lastUnitUpdate(0)
+, group(nullptr)
+, myTrack(NULL)
+, myIcon(NULL)
 
-	commandAI(NULL),
-
-	shieldWeapon(NULL),
-	stockpileWeapon(NULL),
-
-	localModel(NULL),
-	script(NULL),
-	lastAttackedPiece(NULL),
-	los(NULL),
-
-	fpsControlPlayer(NULL),
-	myTrack(NULL),
-	myIcon(NULL),
-
-	losStatus(teamHandler->ActiveAllyTeams(), 0),
-
-	attackPos(ZeroVector),
-	deathSpeed(ZeroVector),
-	lastMuzzleFlameDir(UpVector),
-	flankingBonusDir(RgtVector),
-	posErrorVector(ZeroVector),
-	posErrorDelta(ZeroVector),
-
-	unitDefID(-1),
-	featureDefID(-1),
-
-	upright(true),
-	travel(0.0f),
-	travelPeriod(0.0f),
-	power(100.0f),
-	maxHealth(100.0f),
-	paralyzeDamage(0.0f),
-	captureProgress(0.0f),
-	experience(0.0f),
-	limExperience(0.0f),
-	neutral(false),
-	beingBuilt(true),
-	lastNanoAdd(gs->frameNum),
-	lastFlareDrop(0),
-	repairAmount(0.0f),
-	loadingTransportId(-1),
-	buildProgress(0.0f),
-	groundLevelled(true),
-	terraformLeft(0.0f),
-	realLosRadius(0),
-	realAirLosRadius(0),
-
-	inBuildStance(false),
-	useHighTrajectory(false),
-	dontUseWeapons(false),
-	dontFire(false),
-	deathScriptFinished(false),
-	delayedWreckLevel(-1),
-	restTime(0),
-	outOfMapTime(0),
-	reloadSpeed(1.0f),
-	maxRange(0.0f),
-	haveTarget(false),
-	haveManualFireRequest(false),
-	lastMuzzleFlameSize(0.0f),
-	armorType(0),
-	category(0),
-	mapSquare(-1),
-	losRadius(0),
-	airLosRadius(0),
-	lastLosUpdate(0),
-	losHeight(0.0f),
-	radarHeight(0.0f),
-	radarRadius(0),
-	sonarRadius(0),
-	jammerRadius(0),
-	sonarJamRadius(0),
-	seismicRadius(0),
-	seismicSignature(0.0f),
-	hasRadarCapacity(false),
-	oldRadarPos(0, 0),
-	hasRadarPos(false),
-	stealth(false),
-	sonarStealth(false),
-	energyTickMake(0.0f),
-	metalExtract(0.0f),
-	cost(100.0f, 0.0f),
-	buildTime(100.0f),
-	lastAttackedPieceFrame(-1),
-	lastAttackFrame(-200),
-	lastFireWeapon(0),
-	recentDamage(0.0f),
-	userAttackGround(false),
-	fireState(FIRESTATE_FIREATWILL),
-	moveState(MOVESTATE_MANEUVER),
-	activated(false),
-	isDead(false),
-	fallSpeed(0.2f),
-	flankingBonusMode(0),
-	flankingBonusMobility(10.0f),
-	flankingBonusMobilityAdd(0.01f),
-	flankingBonusAvgDamage(1.4f),
-	flankingBonusDifDamage(0.5f),
-	armoredState(false),
-	armoredMultiple(1.0f),
-	curArmorMultiple(1.0f),
-	nextPosErrorUpdate(1),
-	wantCloak(false),
-	scriptCloak(0),
-	cloakTimeout(128),
-	curCloakTimeout(gs->frameNum),
-	isCloaked(false),
-	decloakDistance(0.0f),
-	lastTerrainType(-1),
-	curTerrainType(0),
-	selfDCountdown(0),
-	currentFuel(0.0f),
-	alphaThreshold(0.1f),
-	cegDamage(1),
-	noDraw(false),
-	noMinimap(false),
-	leaveTracks(false),
-	isSelected(false),
-	isIcon(false),
-	iconRadius(0.0f),
-	lodCount(0),
-	currentLOD(0),
-
-	lastDrawFrame(-30),
-	lastUnitUpdate(0),
-
-	group(nullptr),
-	stunned(false)
+, stunned(false)
 {
 }
 
@@ -496,6 +487,7 @@ void CUnit::PostInit(const CUnit* builder)
 	}
 }
 
+
 void CUnit::PostLoad()
 {
 	//HACK:Initializing after load
@@ -647,7 +639,6 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 		health = std::max(health, 0.0f);
 	}
 }
-
 
 
 void CUnit::ForcedMove(const float3& newPos)

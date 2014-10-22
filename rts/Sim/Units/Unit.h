@@ -128,6 +128,10 @@ public:
 	void DependentDied(CObject* o);
 
 	bool AllowedReclaim(CUnit* builder) const;
+
+	void SetMetalStorage(float newStorage);
+	void SetEnergyStorage(float newStorage);
+
 	bool UseMetal(float metal);
 	void AddMetal(float metal, bool useIncomeMultiplier = true);
 	bool UseEnergy(float energy);
@@ -141,8 +145,6 @@ public:
 
 	/// push the new wind to the script
 	void UpdateWind(float x, float z, float strength);
-	void SetMetalStorage(float newStorage);
-	void SetEnergyStorage(float newStorage);
 
 	void AddExperience(float exp);
 
@@ -230,11 +232,28 @@ public:
 public:
 	const UnitDef* unitDef;
 
+	std::vector<CWeapon*> weapons;
+
+	/// Our shield weapon, NULL if we have none
+	CWeapon* shieldWeapon;
+	/// Our weapon with stockpiled ammo, NULL if we have none
+	CWeapon* stockpileWeapon;
+
 	CUnit* soloBuilder;
 	/// last attacker
 	CUnit* lastAttacker;
 	/// current attackee
 	CUnit* attackTarget;
+
+	/// piece that was last hit by a projectile
+	LocalModelPiece* lastAttackedPiece;
+
+	/// frame in which lastAttackedPiece was hit
+	int lastAttackedPieceFrame;
+	/// last frame unit was attacked by other unit
+	int lastAttackFrame;
+	/// last time this unit fired a weapon
+	int lastFireWeapon;
 
 	/// transport that the unit is currently in
 	CTransportUnit* transporter;
@@ -244,37 +263,21 @@ public:
 
 	CCommandAI* commandAI;
 
-	/// Our shield weapon, NULL if we have none
-	CWeapon* shieldWeapon;
-	/// Our weapon with stockpiled ammo, NULL if we have none
-	CWeapon* stockpileWeapon;
-
 	LocalModel* localModel;
 	CUnitScript* script;
-
-	/// piece that was last hit by a projectile
-	LocalModelPiece* lastAttackedPiece;
 
 	/// which squares the unit can currently observe
 	LosInstance* los;
 
-	/// player who is currently FPS'ing this unit
-	CPlayer* fpsControlPlayer;
-
-	UnitTrackStruct* myTrack;
-	icon::CIconData* myIcon;
-
-
-	std::vector<CWeapon*> weapons;
-	/// quads the unit is part of
-	std::vector<int> quads;
-	std::vector<int> radarSquares;
-
 	/// indicate the los/radar status the allyteam has on this unit
 	std::vector<unsigned short> losStatus;
 
-	/// length-per-pixel (UNSYNCED)
-	std::vector<float> lodLengths;
+	/// player who is currently FPS'ing this unit
+	CPlayer* fpsControlPlayer;
+
+	/// quads the unit is part of
+	std::vector<int> quads;
+	std::vector<int> radarSquares;
 
 	std::list<CMissileProjectile*> incomingMissiles; //FIXME make std::set?
 
@@ -290,7 +293,6 @@ public:
 	float3 posErrorVector;
 	float3 posErrorDelta;
 
-
 	int unitDefID;
 	int featureDefID; // FeatureDef id of the wreck we spawn on death
 
@@ -305,16 +307,11 @@ public:
 	LuaRulesParams::Params  modParams;
 	LuaRulesParams::HashMap modParamsMap; ///< name map for mod parameters
 
-	/// if the updir is straight up or align to the ground vector
-	bool upright;
-
-	/// total distance the unit has moved
-	float travel;
-	/// 0.0f disables travel accumulation
-	float travelPeriod;
-
 	/// indicate the relative power of the unit, used for experience calulations etc
 	float power;
+
+	/// 0.0-1.0
+	float buildProgress;
 
 	float maxHealth;
 	/// if health-this is negative the unit is stunned
@@ -331,7 +328,14 @@ public:
 	 * FIRESTATE_FIREATWILL
 	 */
 	bool neutral;
+	/// is in built (:= nanoframe)
 	bool beingBuilt;
+	/// if the updir is straight up or align to the ground vector
+	bool upright;
+	/// whether the ground below this unit has been terraformed
+	bool groundLevelled;
+	/// how much terraforming is left to do
+	float terraformLeft;
 
 	/// if we arent built on for a while start decaying
 	int lastNanoAdd;
@@ -342,15 +346,7 @@ public:
 
 	/// id of transport that the unit is about to be picked up by
 	int loadingTransportId;
-	/// 0.0-1.0
-	float buildProgress;
-	/// whether the ground below this unit has been terraformed
-	bool groundLevelled;
-	/// how much terraforming is left to do
-	float terraformLeft;
-	/// set los to this when finished building
-	int realLosRadius;
-	int realAirLosRadius;
+
 
 	/// used by constructing units
 	bool inBuildStance;
@@ -387,6 +383,10 @@ public:
 
 	int mapSquare;
 
+	/// set los to this when finished building
+	int realLosRadius;
+	int realAirLosRadius;
+
 	int losRadius;
 	int airLosRadius;
 	int lastLosUpdate;
@@ -400,11 +400,11 @@ public:
 	int sonarJamRadius;
 	int seismicRadius;
 	float seismicSignature;
-	bool hasRadarCapacity;
 	int2 oldRadarPos;
 	bool hasRadarPos;
 	bool stealth;
 	bool sonarStealth;
+	bool hasRadarCapacity;
 
 	/// only when the unit is active
 	SResourcePack resourcesCondUse;
@@ -420,7 +420,7 @@ public:
 	/// incomes per 16 frames
 	SResourcePack resourcesMake;
 
-	// variables used for calculating unit resource usage
+	/// variables used for calculating unit resource usage
 	SResourcePack resourcesUseI;
 	SResourcePack resourcesMakeI;
 	SResourcePack resourcesUseOld;
@@ -442,20 +442,13 @@ public:
 	SResourcePack cost;
 	float buildTime;
 
-	/// frame in which lastAttackedPiece was hit
-	int lastAttackedPieceFrame;
-	/// last frame unit was attacked by other unit
-	int lastAttackFrame;
-	/// last time this unit fired a weapon
-	int lastFireWeapon;
-
 	/// decaying value of how much damage the unit has taken recently (for severity of death)
 	float recentDamage;
 
-	bool userAttackGround;
-
 	int fireState;
 	int moveState;
+
+	bool userAttackGround;
 
 	/// if the unit is in it's 'on'-state
 	bool activated;
@@ -464,6 +457,11 @@ public:
 
 	/// for units being dropped from transports (parachute drops)
 	float fallSpeed;
+
+	/// total distance the unit has moved
+	float travel;
+	/// 0.0f disables travel accumulation
+	float travelPeriod;
 
 	/**
 	 * 0 = no flanking bonus
@@ -486,8 +484,10 @@ public:
 	/// multiply all damage the unit take with this
 	float curArmorMultiple;
 
-	int	nextPosErrorUpdate;
+	int nextPosErrorUpdate;
 
+	///true if the unit is currently cloaked (has enough energy etc)
+	bool isCloaked;
 	/// true if the unit currently wants to be cloaked
 	bool wantCloak;
 	/// true if a script currently wants the unit to be cloaked
@@ -496,8 +496,6 @@ public:
 	int cloakTimeout;
 	/// the earliest frame the unit can cloak again
 	int curCloakTimeout;
-	///true if the unit is currently cloaked (has enough energy etc)
-	bool isCloaked;
 	float decloakDistance;
 
 	int lastTerrainType;
@@ -534,6 +532,12 @@ public:
 	std::string tooltip;
 
 	CGroup* group;
+
+	UnitTrackStruct* myTrack;
+	icon::CIconData* myIcon;
+
+	/// LOD length-per-pixel
+	std::vector<float> lodLengths;
 
 private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)
