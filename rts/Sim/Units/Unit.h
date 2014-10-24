@@ -521,11 +521,6 @@ public:
 	bool isIcon;
 	float iconRadius;
 
-	unsigned int lodCount;
-	unsigned int currentLOD;
-
-	LuaUnitMaterial luaMats[LUAMAT_TYPE_COUNT];
-
 	int lastDrawFrame;
 	unsigned int lastUnitUpdate;
 
@@ -537,7 +532,10 @@ public:
 	icon::CIconData* myIcon;
 
 	/// LOD length-per-pixel
+	unsigned int lodCount;
+	unsigned int currentLOD;
 	std::vector<float> lodLengths;
+	LuaUnitMaterial luaMats[LUAMAT_TYPE_COUNT];
 
 private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)

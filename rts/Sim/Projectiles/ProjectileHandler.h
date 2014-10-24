@@ -38,7 +38,7 @@ typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, C
 
 typedef ThreadListSimRender<std::set<FlyingPiece*, FlyingPieceComparator>, void, FlyingPiece*> FlyingPieceContainer;
 
-typedef ThreadMapRender<CProjectile*, int, ProjectileMapValPair, ProjectileIndexer> ProjectileRenderMap;
+typedef ThreadMapRender<CProjectile*, ProjectileMapValPair, ProjectileIndexer> ProjectileRenderMap;
 
 
 class CProjectileHandler

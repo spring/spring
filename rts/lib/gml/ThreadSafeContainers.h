@@ -222,10 +222,10 @@ private:
 };
 
 
-template <class C, class K, class V, class I>
+template <class Key, class Value, class Indexer>
 class ThreadMapRender {
 private:
-	typedef std::map<K,V> TMapC;
+	typedef std::map<int,Value> TMapC;
 
 public:
 	CR_DECLARE_STRUCT(ThreadMapRender)
@@ -236,14 +236,14 @@ public:
 	}
 
 	//! SIMULATION/SYNCED METHODS
-	void push(const C& x, const V& y) {
-		contRender[I::Index(x)] = y;
+	void push(const Key& x, const Value& y) {
+		contRender[Indexer::Index(x)] = y;
 	}
 
 public:
 	//! RENDER/UNSYNCED METHODS
-	void erase_delete(const C& x) {
-		contRender.erase(I::Index(x));
+	void erase_delete(const Key& x) {
+		contRender.erase(Indexer::Index(x));
 	}
 
 
