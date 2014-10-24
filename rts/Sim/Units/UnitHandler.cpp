@@ -192,8 +192,6 @@ void CUnitHandler::Update()
 				DeleteUnitNow(delUnit);
 			}
 		}
-
-		eventHandler.UpdateUnits();
 	}
 
 	#define MAPPOS_SANITY_CHECK(unit)                          \

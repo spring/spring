@@ -37,16 +37,9 @@ class CEventHandler
 		bool IsController(const std::string& ciName) const;
 
 	public: // EventBatchHandler
-		void UpdateUnits();
-		void UpdateDrawUnits();
 		void DeleteSyncedUnits();
-		void UpdateFeatures();
-		void UpdateDrawFeatures();
-		void DeleteSyncedFeatures();
-		void UpdateProjectiles();
-		void UpdateDrawProjectiles();
+
 		void DeleteSyncedProjectiles();
-		void UpdateObjects();
 		void DeleteSyncedObjects();
 	public:
 		/**
@@ -267,9 +260,6 @@ class CEventHandler
 		void CollectGarbage();
 		void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
 		/// @}
-
-		//FIXME no real event
-		void LoadedModelRequested();
 
 	private:
 		typedef vector<CEventClient*> EventClientList;

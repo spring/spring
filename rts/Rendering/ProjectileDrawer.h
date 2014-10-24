@@ -41,8 +41,6 @@ public:
 	void LoadWeaponTextures();
 	void UpdateTextures();
 
-	void Update();
-
 
 	bool WantsEvent(const std::string& eventName) {
 		return (eventName == "RenderProjectileCreated" || eventName == "RenderProjectileDestroyed");

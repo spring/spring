@@ -607,11 +607,6 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 }
 
 
-void CProjectileDrawer::Update() {
-	eventHandler.UpdateDrawProjectiles();
-}
-
-
 void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	glDisable(GL_BLEND);
 	glEnable(GL_TEXTURE_2D);

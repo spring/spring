@@ -586,8 +586,6 @@ S3DModel* WeaponDef::LoadModel()
 			// not useful, too much spam
 			// LOG_L(L_WARNING, "[WeaponDef::%s] weapon \"%s\" has no model defined", __FUNCTION__, name.c_str());
 		}
-	} else {
-		eventHandler.LoadedModelRequested();
 	}
 
 	return visuals.model;

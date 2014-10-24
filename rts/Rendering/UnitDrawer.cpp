@@ -233,8 +233,6 @@ void CUnitDrawer::Update()
 		}
 	}
 
-	eventHandler.UpdateDrawUnits();
-
 	{
 
 		drawIcon.clear();

@@ -163,12 +163,8 @@ void CFeatureDrawer::UpdateDrawQuad(CFeature* feature)
 
 void CFeatureDrawer::Update()
 {
-	eventHandler.UpdateDrawFeatures();
-
-	{
-		for (std::set<CFeature*>::iterator fsi = unsortedFeatures.begin(); fsi != unsortedFeatures.end(); ++fsi) {
-			UpdateDrawPos(*fsi);
-		}
+	for (CFeature* f: unsortedFeatures) {
+		UpdateDrawPos(f);
 	}
 }
 

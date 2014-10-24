@@ -126,8 +126,6 @@ S3DModel* SolidObjectDef::LoadModel() const
 			// not useful, too much spam
 			// LOG_L(L_WARNING, "[SolidObjectDef::%s] object \"%s\" has no model defined", __FUNCTION__, name.c_str());
 		}
-	} else {
-		eventHandler.LoadedModelRequested();
 	}
 
 	return model;

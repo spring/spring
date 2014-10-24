@@ -241,22 +241,12 @@ void CProjectileHandler::Update()
 
 
 		{
-
-			syncedRenderProjectileIDs.delay_delete();
-			syncedRenderProjectileIDs.delay_add();
-#if !UNSYNCED_PROJ_NOEVENT
-			unsyncedRenderProjectileIDs.delay_delete();
-			unsyncedRenderProjectileIDs.delay_add();
-#endif
-
 			if (syncedProjectiles.can_delete_synced()) {
 				eventHandler.DeleteSyncedProjectiles();
 				//! delete all projectiles that were
 				//! queued (push_back'ed) for deletion
 				syncedProjectiles.detach_erased_synced();
 			}
-
-			eventHandler.UpdateProjectiles();
 		}
 
 

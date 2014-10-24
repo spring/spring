@@ -1041,10 +1041,6 @@ bool CGame::Update()
 	}
 	LEAVE_SYNCED_CODE();
 
-	//TODO move this to ::Draw()?
-	if (gs->frameNum == 0 || gs->paused)
-		eventHandler.UpdateObjects(); // we must add new rendering objects even if the game has not started yet
-
 	return true;
 }
 

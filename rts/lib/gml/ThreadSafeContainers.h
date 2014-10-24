@@ -180,16 +180,6 @@ private:
 public:
 	CR_DECLARE_STRUCT(ThreadListRender)
 
-	~ThreadListRender() {
-		clear();
-	}
-
-	void clear() {
-	}
-
-	void PostLoad() {
-	}
-
 	//! SIMULATION/SYNCED METHODS
 	void push(const T& x) {
 		D::Add(x);
@@ -202,45 +192,14 @@ public:
 		D::Remove(x);
 	}
 
-	void remove_erased_synced() {
-	}
-
 public:
 	//! RENDER/UNSYNCED METHODS
-	void delay_add() {
-	}
-
-	void add_delayed() {
-	}
-
 	void erase_delete(const T& x) {
 		D::Remove(x);
 	}
 
-	void delay_delete() {
-	}
-
-	void delete_delayed() {
-	}
-
 	void enqueue(const T& x) {
 		D::Add(x);
-	}
-
-	void delay() {
-	}
-
-	void execute() {
-	}
-
-	void clean() {
-	}
-
-	void clean(std::vector<C> *delQueue) {
-	}
-
-	std::vector<C> *to_destroy() {
-		return NULL;
 	}
 
 	void dequeue(const C& x) {
@@ -249,9 +208,6 @@ public:
 
 	void dequeue_synced(const C& x) {
 		simDelQueue.push_back(x);
-	}
-
-	void destroy() {
 	}
 
 	void destroy_synced() {
@@ -274,14 +230,7 @@ private:
 public:
 	CR_DECLARE_STRUCT(ThreadMapRender)
 
-	~ThreadMapRender() {
-		clear();
-	}
-
 	const TMapC& get_render_map() const { return contRender; }
-
-	void clear() {
-	}
 
 	void PostLoad() {
 	}
@@ -293,21 +242,10 @@ public:
 
 public:
 	//! RENDER/UNSYNCED METHODS
-	void delay_add() {
-	}
-
-	void add_delayed() {
-	}
-
 	void erase_delete(const C& x) {
 		contRender.erase(I::Index(x));
 	}
 
-	void delay_delete() {
-	}
-
-	void delete_delayed() {
-	}
 
 private:
 	TMapC contRender;

@@ -504,27 +504,14 @@ void CEventHandler::Update()
 
 
 
-void CEventHandler::UpdateUnits() { eventBatchHandler->UpdateUnits(); }
-void CEventHandler::UpdateDrawUnits() { eventBatchHandler->UpdateDrawUnits(); }
 void CEventHandler::DeleteSyncedUnits() { eventBatchHandler->DeleteSyncedUnits(); }
-
-void CEventHandler::UpdateFeatures() { eventBatchHandler->UpdateFeatures(); }
-void CEventHandler::UpdateDrawFeatures() { eventBatchHandler->UpdateDrawFeatures(); }
-void CEventHandler::DeleteSyncedFeatures() { eventBatchHandler->DeleteSyncedFeatures(); }
-
-void CEventHandler::UpdateProjectiles() { eventBatchHandler->UpdateProjectiles(); }
-void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProjectiles(); }
 
 inline void ExecuteAllCallsFromSynced() { } //FIXME delete
 
 void CEventHandler::DeleteSyncedProjectiles() {
 	ExecuteAllCallsFromSynced();
-	eventBatchHandler->DeleteSyncedProjectiles();
 }
 
-void CEventHandler::UpdateObjects() {
-	eventBatchHandler->UpdateObjects();
-}
 void CEventHandler::DeleteSyncedObjects() {
 	ExecuteAllCallsFromSynced();
 }
@@ -762,11 +749,6 @@ void CEventHandler::UnsyncedProjectileCreated(const CProjectile* proj) {
 void CEventHandler::UnsyncedProjectileDestroyed(const CProjectile* proj) {
 	//FIXME no real event
 	(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).erase_delete(proj);
-}
-
-void CEventHandler::LoadedModelRequested() {
-	//FIXME no real event
-	eventBatchHandler->LoadedModelRequested();
 }
 
 
