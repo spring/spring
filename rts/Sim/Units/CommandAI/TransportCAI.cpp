@@ -32,6 +32,7 @@ CR_REG_METADATA(CTransportCAI, (
 	CR_MEMBER(unloadType),
 	CR_MEMBER(dropSpots),
 	CR_MEMBER(isFirstIteration),
+	CR_MEMBER(startingDropPos),
 	CR_MEMBER(lastDropPos),
 	CR_MEMBER(approachVector),
 	CR_MEMBER(endDropPos),

@@ -49,9 +49,18 @@ CFeatureDrawer* featureDrawer = NULL;
 /******************************************************************************/
 
 CR_BIND(CFeatureDrawer, )
-CR_BIND(CFeatureDrawer::DrawQuad, )
 
 CR_REG_METADATA(CFeatureDrawer, (
+	CR_IGNORED(unsortedFeatures),
+	CR_IGNORED(drawQuads),
+	CR_IGNORED(drawQuadsX),
+	CR_IGNORED(drawQuadsY),
+	CR_IGNORED(farDist),
+	CR_IGNORED(featureDrawDistance),
+	CR_IGNORED(featureFadeDistance),
+	CR_IGNORED(opaqueModelRenderers),
+	CR_IGNORED(cloakedModelRenderers),
+
 	CR_POSTLOAD(PostLoad)
 ))
 

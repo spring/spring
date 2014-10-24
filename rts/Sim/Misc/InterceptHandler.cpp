@@ -22,8 +22,8 @@
 CR_BIND_DERIVED(CInterceptHandler, CObject, )
 CR_REG_METADATA(CInterceptHandler, (
 	CR_MEMBER(interceptors),
-	CR_MEMBER(repulsors)//,
-	//CR_MEMBER(interceptables) FIXME
+	CR_MEMBER(repulsors),
+	CR_MEMBER(interceptables)
 ))
 
 CInterceptHandler interceptHandler;

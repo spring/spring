@@ -30,7 +30,7 @@ CR_REG_METADATA(CPlayer, (
 	CR_MEMBER(playerNum),
 	CR_IGNORED(ping),
 	CR_MEMBER(currentStats),
-	//CR_MEMBER(fpsController), FIXME add their classes to creg
+	CR_IGNORED(fpsController),
 	CR_MEMBER(controlledTeams)
 ))
 

@@ -65,7 +65,7 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(drawPos),
 	CR_MEMBER(drawMidPos),
-	// CR_MEMBER(blockMap), //FIXME add bitwiseenum to creg
+	CR_IGNORED(blockMap), // reloaded in CUnit's PostLoad
 
 	CR_MEMBER(buildFacing)
 ))
