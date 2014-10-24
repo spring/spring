@@ -424,8 +424,8 @@ void CFeature::DoDamage(
 			// if a partially reclaimed corpse got blasted,
 			// ensure its wreck is not worth the full amount
 			// (which might be more than the amount remaining)
-			deathFeature->resources.metal  *= resources.metal  / def->metal;
-			deathFeature->resources.energy *= resources.energy / def->energy;
+			deathFeature->resources.metal  *= (def->metal != 0.0f)  ? resources.metal  / def->metal  : 1.0f;
+			deathFeature->resources.energy *= (def->energy != 0.0f) ? resources.energy / def->energy : 1.0f;
 		}
 
 		featureHandler->DeleteFeature(this);
