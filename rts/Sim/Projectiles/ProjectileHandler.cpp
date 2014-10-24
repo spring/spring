@@ -42,6 +42,7 @@ CProjectileHandler* projectileHandler = NULL;
 CR_BIND_TEMPLATE(ProjectileContainer, )
 CR_REG_METADATA(ProjectileContainer, (
 	CR_MEMBER(cont),
+	CR_MEMBER(del),
 	CR_POSTLOAD(PostLoad)
 ))
 CR_BIND_TEMPLATE(GroundFlashContainer, )
