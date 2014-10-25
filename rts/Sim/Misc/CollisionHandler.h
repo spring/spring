@@ -37,12 +37,14 @@ public:
 	bool InsideHit() const { return (b0 == CQ_POINT_IN_VOL); }
 	bool IngressHit() const { return (b0 == CQ_POINT_ON_RAY); }
 	bool EgressHit() const { return (b1 == CQ_POINT_ON_RAY); }
+	bool AnyHit() const { return (b0 != CQ_POINT_NO_INT) || (b1 != CQ_POINT_NO_INT); }
 
 	const float3& GetIngressPos() const { return p0; }
 	const float3& GetEgressPos() const { return p1; }
 	const float3& GetHitPos() const {
-		if (IngressHit()) return (GetIngressPos());
-		if (EgressHit()) return (GetEgressPos());
+		if (IngressHit()) return GetIngressPos();
+		if (EgressHit()) return GetEgressPos();
+		if (InsideHit()) return p0;
 		return ZeroVector;
 	}
 
