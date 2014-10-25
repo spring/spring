@@ -100,17 +100,17 @@ public:
 	bool RenderAccess(const CProjectile *p) const;
 
 public:
-	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state
-	ProjectileContainer unsyncedProjectiles;  // contains only projectiles that cannot change simulation state
-	FlyingPieceContainer flyingPieces3DO;     // unsynced
-	FlyingPieceContainer flyingPiecesS3O;     // unsynced
-	GroundFlashContainer groundFlashes;       // unsynced
-
 	int maxParticles;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached
 	int maxNanoParticles;
 	int currentParticles;          // number of particles weighted by how complex they are
 	int currentNanoParticles;
 	float particleSaturation;      // currentParticles / maxParticles ratio
+
+	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state
+	ProjectileContainer unsyncedProjectiles;  // contains only projectiles that cannot change simulation state
+	FlyingPieceContainer flyingPieces3DO;     // unsynced
+	FlyingPieceContainer flyingPiecesS3O;     // unsynced
+	GroundFlashContainer groundFlashes;       // unsynced
 
 private:
 	void UpdateProjectileContainer(ProjectileContainer&, bool);
