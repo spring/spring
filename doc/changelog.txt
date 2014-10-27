@@ -73,6 +73,10 @@ Misc:
  - slightly speed up scanning for archives
  - add HostIPDefault, HostPortDefault to set default host ip/port
  - reduce default spintime of ThreadPool workers to 1ms (from 5ms)
+ ! remove LogFlush, introduce LogFlushLevel:
+   when a log-message with level >= LogFlushLevel is logged,
+   logfile is flushed, else not,
+   see rts/System/Log/Level.h for int values
  ! rename /nosound to /mutesound
 
 Bugfixes:
