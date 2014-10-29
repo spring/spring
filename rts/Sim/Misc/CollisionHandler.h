@@ -22,10 +22,10 @@ struct CollisionQuery {
 public:
 	CollisionQuery()
 	: b0(CQ_POINT_NO_INT)
-	, t0(0.0f)
-	, p0(ZeroVector)
 	, b1(CQ_POINT_NO_INT)
+	, t0(0.0f)
 	, t1(0.0f)
+	, p0(ZeroVector)
 	, p1(ZeroVector)
 	, lmp(nullptr)
 	{ }
