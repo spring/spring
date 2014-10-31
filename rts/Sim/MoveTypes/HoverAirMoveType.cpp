@@ -415,8 +415,6 @@ void CHoverAirMoveType::UpdateFlying()
 	// Direction to where we would like to be
 	float3 goalVec = goalPos - pos;
 
-	owner->restTime = 0;
-
 	// don't change direction for waypoints we just flew over and missed slightly
 	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands()) {
 		float3 goalDir = goalVec;
