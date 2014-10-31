@@ -304,7 +304,6 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	{
 		if (!IsValidImageFormat(ilGetInteger(IL_IMAGE_FORMAT))) {
 			LOG_L(L_ERROR, "Invalid image format for %s: %d", filename.c_str(), ilGetInteger(IL_IMAGE_FORMAT));
-			delete[] buffer;
 			return false;
 		}
 	}
@@ -622,7 +621,7 @@ void CBitmap::Renormalize(float3 newCol)
 			}
 		}
 		aCol[a] = cCol / 255.0f / numCounted;
-		cCol /= xsize*ysize;
+		//cCol /= xsize*ysize; //??
 		colorDif[a] = newCol[a] - aCol[a];
 	}
 	for (int a=0; a < 3; ++a) {

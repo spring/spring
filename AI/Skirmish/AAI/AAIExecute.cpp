@@ -1782,7 +1782,7 @@ bool AAIExecute::BuildFactory()
 
 	if(building)
 	{
-		bool water;
+		bool water = false;
 
 		// land
 		if(ai->Getbt()->CanPlacedLand(building))
@@ -2758,15 +2758,16 @@ void AAIExecute::CheckConstruction()
 	// get category with highest urgency
 	if(ai->Getbrain()->enemy_pressure_estimation > 0.01f)
 	{
-		double current_urgency;
+//		double current_urgency;
 
 		for(int i = 1; i <= METAL_MAKER; ++i)
 		{
+/*
 			current_urgency = urgency[i];
 
 			if(i != STATIONARY_DEF && i != POWER_PLANT && i != EXTRACTOR && i != STATIONARY_CONSTRUCTOR)
 				current_urgency *= (1.1f - ai->Getbrain()->enemy_pressure_estimation);
-
+*/
 			if(urgency[i] > highest_urgency)
 			{
 				highest_urgency = urgency[i];
