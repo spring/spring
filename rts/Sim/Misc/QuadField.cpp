@@ -863,13 +863,11 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	int* endQuad = &tempQuads[0];
 
 	// bail early if caches are already full
-	if (numUnits >= units.size())
-		return;
-	if (numFeatures >= features.size())
+	if (numUnits >= units.size() && numFeatures >= features.size())
 		return;
 
-	assert(numUnits == 0 || units[numUnits] == NULL);
-	assert(numFeatures == 0 || features[numFeatures] == NULL);
+	assert(numUnits == 0 || numUnits == units.size() || units[numUnits] == NULL);
+	assert(numFeatures == 0 || numFeatures == features.size() || features[numFeatures] == NULL);
 
 	GetQuads(pos, radius, begQuad, endQuad);
 
@@ -879,8 +877,16 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	for (int* a = begQuad; a != endQuad; ++a) {
 		const Quad& quad = baseQuads[*a];
 
+		// bail early if caches are already full
+		if (numUnits >= units.size() && numFeatures >= features.size())
+			break;
+
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			CUnit* u = *ui;
+
+			// bail early if cache is full
+			if (numUnits >= units.size())
+				break;
 
 			// prevent double adding
 			if (u->tempNum == tempNum)
@@ -903,6 +909,10 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
 			CFeature* f = *fi;
 
+			// bail early if cache is full
+			if (numFeatures >= features.size())
+				break;
+
 			// prevent double adding
 			if (f->tempNum == tempNum)
 				continue;
@@ -922,8 +932,8 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 		}
 	}
 
-	assert(numUnits < units.size());
-	assert(numFeatures < features.size());
+	assert(numUnits <= units.size());
+	assert(numFeatures <= features.size());
 
 	// set end-of-list sentinels
 	if (numUnits < units.size())
