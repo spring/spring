@@ -35,7 +35,6 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 
 	drawMode = drawNormal;
 	drawLineOfSight = false;
-	drawRadarAndJammer = true;
 	drawMapEdges = false;
 	drawDeferred = false;
 	wireframe = false;
@@ -215,18 +214,6 @@ void CBaseGroundDrawer::ToggleLosTexture()
 }
 
 
-void CBaseGroundDrawer::ToggleRadarAndJammer()
-{
-	drawRadarAndJammer = !drawRadarAndJammer;
-
-	if (drawMode != drawLos)
-		return;
-
-	updateTextureState = 0;
-	while (!UpdateExtraTexture(drawMode));
-}
-
-
 
 static inline int InterpolateLos(
 	const unsigned short* p,
@@ -389,58 +376,40 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 				const int airSizeY = losHandler->airSizeY;
 				const int losMipLevel = losHandler->losMipLevel + lowRes;
 				const int airMipLevel = losHandler->airMipLevel + lowRes;
+				const int rxsize = radarHandler->xsize;
+				const int rzsize = radarHandler->zsize;
 
-				if (drawRadarAndJammer) {
-					const int rxsize = radarHandler->xsize;
-					const int rzsize = radarHandler->zsize;
+				for (int y = starty; y < endy; ++y) {
+					for (int x = 0; x < endx; ++x) {
+						int totalLos = 255;
 
-					for (int y = starty; y < endy; ++y) {
-						for (int x = 0; x < endx; ++x) {
-							int totalLos = 255;
-
-							if (!gs->globalLOS[gu->myAllyTeam]) {
-								const int inLos = InterpolateLos(myLos,    losSizeX, losSizeY, losMipLevel, 128, x, y);
-								const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel, 128, x, y);
-								totalLos = inLos + inAir;
-							}
-#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
-							const bool useRadar = (CGround::GetHeightReal(xPos, zPos, false) >= 0.0f);
-							const unsigned short* radarMap  = useRadar ? myRadar  : mySonar;
-							const unsigned short* jammerMap = useRadar ? myJammer : mySonarJammer;
-#else
-							const unsigned short* radarMap  = myRadar;
-							const unsigned short* jammerMap = myJammer;
-#endif
-							const int inRadar = InterpolateLos(radarMap,  rxsize, rzsize, 3 + lowRes, 255, x, y);
-							const int inJam   = InterpolateLos(jammerMap, rxsize, rzsize, 3 + lowRes, 255, x, y);
-
-							const int a = ((y * pwr2mapx) + x) * 4 - offset;
-
-							for (int c = 0; c < 3; c++) {
-								int val = alwaysColor[c] * 255;
-								val += (jamColor[c]   * inJam);
-								val += (losColor[c]   * totalLos);
-								val += (radarColor[c] * inRadar);
-								infoTexMem[a + (2 - c)] = (val / losColorScale);
-							}
-
-							infoTexMem[a + COLOR_A] = 255;
+						if (!gs->globalLOS[gu->myAllyTeam]) {
+							const int inLos = InterpolateLos(myLos,    losSizeX, losSizeY, losMipLevel, 128, x, y);
+							const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel, 128, x, y);
+							totalLos = inLos + inAir;
 						}
-					}
-				} else {
-					for (int y = starty; y < endy; ++y) {
-						const int y_pwr2mapx = y * pwr2mapx;
-						for (int x = 0; x < endx; ++x) {
-							const int inLos = InterpolateLos(myLos,    losSizeX, losSizeY, losMipLevel, 32, x, y);
-							const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel, 32, x, y);
-							const int value = 64 + inLos + inAir;
-							const int a = (y_pwr2mapx + x) * 4 - offset;
+					#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
+						const bool useRadar = (CGround::GetHeightReal(xPos, zPos, false) >= 0.0f);
+						const unsigned short* radarMap  = useRadar ? myRadar  : mySonar;
+						const unsigned short* jammerMap = useRadar ? myJammer : mySonarJammer;
+					#else
+						const unsigned short* radarMap  = myRadar;
+						const unsigned short* jammerMap = myJammer;
+					#endif
+						const int inRadar = InterpolateLos(radarMap,  rxsize, rzsize, 3 + lowRes, 255, x, y);
+						const int inJam   = InterpolateLos(jammerMap, rxsize, rzsize, 3 + lowRes, 255, x, y);
 
-							infoTexMem[a + COLOR_R] = value;
-							infoTexMem[a + COLOR_G] = value;
-							infoTexMem[a + COLOR_B] = value;
-							infoTexMem[a + COLOR_A] = 255;
+						const int a = ((y * pwr2mapx) + x) * 4 - offset;
+
+						for (int c = 0; c < 3; c++) {
+							int val = alwaysColor[c] * 255;
+							val += (jamColor[c]   * inJam);
+							val += (losColor[c]   * totalLos);
+							val += (radarColor[c] * inRadar);
+							infoTexMem[a + (2 - c)] = (val / losColorScale);
 						}
+
+						infoTexMem[a + COLOR_A] = 255;
 					}
 				}
 				break;

@@ -76,7 +76,6 @@ public:
 	void SetMetalTexture();
 	void TogglePathTexture(BaseGroundDrawMode);
 	void ToggleLosTexture();
-	void ToggleRadarAndJammer();
 	bool UpdateExtraTexture(unsigned int texDrawMode);
 
 	bool DrawExtraTex() const { return drawMode != drawNormal; }
@@ -100,7 +99,6 @@ public:
 	void UpdateCamRestraints(CCamera* camera);
 
 public:
-	bool drawRadarAndJammer;
 	bool drawLineOfSight;
 
 	bool highResLosTex;

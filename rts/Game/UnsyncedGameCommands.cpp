@@ -1789,19 +1789,6 @@ public:
 
 
 
-class ToggleRadarAndJammerActionExecutor : public IUnsyncedActionExecutor {
-public:
-	ToggleRadarAndJammerActionExecutor() : IUnsyncedActionExecutor("ToggleRadarAndJammer",
-			"Enable/Disable rendering of the auxiliary radar- & jammer-map overlay") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->ToggleRadarAndJammer();
-		return true;
-	}
-};
-
-
-
 class ShowMetalMapActionExecutor : public IUnsyncedActionExecutor {
 public:
 	ShowMetalMapActionExecutor() : IUnsyncedActionExecutor("ShowMetalMap",
@@ -3257,7 +3244,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ControlUnitActionExecutor());
 	AddActionExecutor(new ShowStandardActionExecutor());
 	AddActionExecutor(new ShowElevationActionExecutor());
-	AddActionExecutor(new ToggleRadarAndJammerActionExecutor());
 	AddActionExecutor(new ShowMetalMapActionExecutor());
 	AddActionExecutor(new ShowPathTravActionExecutor());
 	AddActionExecutor(new ShowPathHeatActionExecutor());
