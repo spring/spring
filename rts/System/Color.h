@@ -40,6 +40,10 @@ struct SColor
 		, a(u[3])
 	{}
 
+	SColor()
+		: SColor(0, 0, 0)
+	{}
+
 	operator const unsigned char* () const { return &r; }
 	operator unsigned char* () { return &r; }
 
