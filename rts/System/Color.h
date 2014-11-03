@@ -14,6 +14,8 @@ struct SColor
 {
 	CR_DECLARE_STRUCT(SColor)
 
+	SColor() : r(255), g(255), b(255), a(255) {}
+
 	/// Initialize with values in the range [0, 255]
 	SColor(const boost::uint8_t r, const boost::uint8_t g, const boost::uint8_t b, const boost::uint8_t a = 255)
 		: r(r), g(g), b(b), a(a) {}
@@ -38,10 +40,6 @@ struct SColor
 		, g(u[1])
 		, b(u[2])
 		, a(u[3])
-	{}
-
-	SColor()
-		: SColor(0, 0, 0)
 	{}
 
 	operator const unsigned char* () const { return &r; }
