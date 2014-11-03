@@ -69,9 +69,9 @@ public:
 			"Allows/Disallows spectators to draw on the map") {}
 
 	bool Execute(const SyncedAction& action) const {
-		bool disabled;
-		InverseOrSetBool(disabled, action.GetArgs());
-		inMapDrawer->SetSpecMapDrawingAllowed(!disabled);
+		bool allowSpecMapDrawing = inMapDrawer->GetSpecMapDrawingAllowed();
+		InverseOrSetBool(allowSpecMapDrawing, action.GetArgs(), true);
+		inMapDrawer->SetSpecMapDrawingAllowed(allowSpecMapDrawing);
 		return true;
 	}
 };
