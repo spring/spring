@@ -49,10 +49,24 @@ void CLosHandler::PostLoad()
 }
 
 CR_REG_METADATA(CLosHandler,(
+	CR_IGNORED(losMipLevel),
+	CR_IGNORED(airMipLevel),
+	CR_IGNORED(losDiv),
+	CR_IGNORED(airDiv),
+	CR_IGNORED(invLosDiv),
+	CR_IGNORED(invAirDiv),
+	CR_IGNORED(airSizeX),
+	CR_IGNORED(airSizeY),
+	CR_IGNORED(losSizeX),
+	CR_IGNORED(losSizeY),
+	CR_IGNORED(requireSonarUnderWater),
+
+	CR_MEMBER(losAlgo),
+	CR_MEMBER(losMaps),
+	CR_MEMBER(airLosMaps),
 	CR_MEMBER(instanceHash),
 	CR_MEMBER(toBeDeleted),
 	CR_MEMBER(delayQue),
-	CR_RESERVED(8),
 	CR_POSTLOAD(PostLoad)
 ))
 

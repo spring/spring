@@ -21,12 +21,6 @@
 /////////////////////////////////////////////////////////
 //
 
-//FIXME class ThreadVector<class T>;
-//class ThreadListSimRender<class T>;
-//class ThreadVectorSimRender<class T>;
-
-/////////////////////////////////////////////////////////
-
 template <class C, class R, class T>
 class ThreadListSimRender {
 private:
@@ -168,7 +162,8 @@ public:
 
 
 
-
+/////////////////////////////////////////////////////////
+//
 
 template <class C, class R, class T, class D>
 class ThreadListRender {
@@ -222,6 +217,9 @@ private:
 };
 
 
+/////////////////////////////////////////////////////////
+//
+
 template <class Key, class Value, class Indexer>
 class ThreadMapRender {
 private:
@@ -250,6 +248,10 @@ public:
 private:
 	TMapC contRender;
 };
+
+
+/////////////////////////////////////////////////////////
+//
 
 template <class C, class R, class T, class D>
 class ThreadListSim {

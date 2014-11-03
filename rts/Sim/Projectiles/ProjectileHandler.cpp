@@ -48,6 +48,7 @@ CR_REG_METADATA(ProjectileContainer, (
 CR_BIND_TEMPLATE(GroundFlashContainer, )
 CR_REG_METADATA(GroundFlashContainer, (
 	CR_MEMBER(cont),
+	CR_MEMBER(delObj),
 	CR_POSTLOAD(PostLoad)
 ))
 
@@ -55,9 +56,9 @@ CR_BIND(CProjectileHandler, )
 CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(syncedProjectiles),
 	CR_MEMBER(unsyncedProjectiles),
-	//CR_MEMBER(flyingPieces3DO),
-	//CR_MEMBER(flyingPiecesS3O),
-	//CR_MEMBER(groundFlashes),
+	CR_MEMBER_UN(flyingPieces3DO),
+	CR_MEMBER_UN(flyingPiecesS3O),
+	CR_MEMBER_UN(groundFlashes),
 
 	CR_MEMBER(maxParticles),
 	CR_MEMBER(maxNanoParticles),

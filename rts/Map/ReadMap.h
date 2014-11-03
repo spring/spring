@@ -62,6 +62,7 @@ public:
 
 	/// creg serialize callback
 	void Serialize(creg::ISerializer* s);
+	void PostLoad();
 
 
 	/**
