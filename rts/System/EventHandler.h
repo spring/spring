@@ -259,6 +259,7 @@ class CEventHandler
 
 		void CollectGarbage();
 		void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
+		void MetalMapChanged(const int x, const int z);
 		/// @}
 
 	private:

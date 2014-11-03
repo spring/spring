@@ -229,6 +229,7 @@ class CLuaHandle : public CEventClient
 		void DrawInMiniMapBackground();
 
 		void GameProgress(int frameNum);
+		//FIXME void MetalMapChanged(const int x, const int z);
 
 		void CollectGarbage();
 

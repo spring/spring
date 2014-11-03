@@ -321,6 +321,7 @@ class CEventClient
 
 		virtual void CollectGarbage();
 		virtual void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
+		virtual void MetalMapChanged(const int x, const int z);
 		/// @}
 };
 
