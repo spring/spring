@@ -51,20 +51,20 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 	highResLosTex = configHandler->GetBool("HighResLos");
 	extraTextureUpdateRate = std::max(4, configHandler->GetInt("ExtraTextureUpdateRate") - 1);
 
-	jamColor[0] = (int)(losColorScale * 0.25f);
-	jamColor[1] = (int)(losColorScale * 0.0f);
-	jamColor[2] = (int)(losColorScale * 0.0f);
+	jamColor[0] = (int)(losColorScale * 0.60f);
+	jamColor[1] = (int)(losColorScale * 0.00f);
+	jamColor[2] = (int)(losColorScale * 0.00f);
 
 	losColor[0] = (int)(losColorScale * 0.15f);
 	losColor[1] = (int)(losColorScale * 0.05f);
 	losColor[2] = (int)(losColorScale * 0.40f);
 
 	radarColor[0] = (int)(losColorScale *  0.05f);
-	radarColor[1] = (int)(losColorScale *  0.15f);
+	radarColor[1] = (int)(losColorScale *  0.25f);
 	radarColor[2] = (int)(losColorScale * -0.20f);
 
 	alwaysColor[0] = (int)(losColorScale * 0.25f);
-	alwaysColor[1] = (int)(losColorScale * 0.25f);
+	alwaysColor[1] = (int)(losColorScale * 0.20f);
 	alwaysColor[2] = (int)(losColorScale * 0.25f);
 
 	groundTextures = NULL;
