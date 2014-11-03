@@ -27,9 +27,9 @@ static std::array<SColor, 256> CreateColored()
 		arr[a].b = 255 - (a - 172) * 3;
 	}
 	for (SColor& c: arr) {
-		c.r = 64 + c.r >> 1;
-		c.g = 64 + c.g >> 1;
-		c.b = 64 + c.b >> 1;
+		c.r = (64 + c.r) >> 1;
+		c.g = (64 + c.g) >> 1;
+		c.b = (64 + c.b) >> 1;
 	}
 	return arr;
 }
@@ -48,9 +48,9 @@ static std::array<SColor, 256> CreateBW()
 		arr[a].b = a;
 	}
 	for (SColor& c: arr) {
-		c.r = 64 + c.r >> 1;
-		c.g = 64 + c.g >> 1;
-		c.b = 64 + c.b >> 1;
+		c.r = (64 + c.r) >> 1;
+		c.g = (64 + c.g) >> 1;
+		c.b = (64 + c.b) >> 1;
 	}
 	return arr;
 }
