@@ -68,7 +68,6 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 	alwaysColor[1] = (int)(losColorScale * 0.25f);
 	alwaysColor[2] = (int)(losColorScale * 0.25f);
 
-	heightLinePal = new CHeightLinePalette();
 	groundTextures = NULL;
 }
 
@@ -78,8 +77,6 @@ CBaseGroundDrawer::~CBaseGroundDrawer()
 	for (unsigned int n = 0; n < NUM_INFOTEXTURES; n++) {
 		glDeleteTextures(1, &infoTextureIDs[n]);
 	}
-
-	delete heightLinePal;
 }
 
 
@@ -343,7 +340,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 			}
 
 			case drawHeight: {
-				const unsigned char* extraTexPal = heightLinePal->GetData();
+				const SColor* extraTexPal = CHeightLinePalette::GetData();
 
 				// NOTE:
 				//   PBO/ExtraTexture resolution is always gs->pwr2mapx * gs->pwr2mapy
@@ -360,13 +357,13 @@ bool CBaseGroundDrawer::UpdateExtraTexture(unsigned int texDrawMode)
 
 					for (int x = 0; x < gs->mapx; ++x) {
 						const float height = heightMap[y_mapx + x];
-						const unsigned int value = (((unsigned int)(height * 8.0f)) % 255) * 3;
+						const unsigned int value = ((unsigned int)(height * 8.0f)) % 255;
 						const int i = (y_pwr2mapx + x) * 4 - offset;
 
-						infoTexMem[i + COLOR_R] = 64 + (extraTexPal[value    ] >> 1);
-						infoTexMem[i + COLOR_G] = 64 + (extraTexPal[value + 1] >> 1);
-						infoTexMem[i + COLOR_B] = 64 + (extraTexPal[value + 2] >> 1);
-						infoTexMem[i + COLOR_A] = 255;
+						infoTexMem[i + COLOR_R] = extraTexPal[value].r;
+						infoTexMem[i + COLOR_G] = extraTexPal[value].g;
+						infoTexMem[i + COLOR_B] = extraTexPal[value].b;
+						infoTexMem[i + COLOR_A] = extraTexPal[value].a;
 					}
 				}
 

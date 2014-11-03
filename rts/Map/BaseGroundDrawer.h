@@ -13,7 +13,6 @@
 #define NUM_INFOTEXTURES (1 + 4 + 3)
 
 class CMetalMap;
-class CHeightLinePalette;
 class CBaseGroundTextures;
 class CCamera;
 
@@ -130,7 +129,6 @@ protected:
 
 	PBO infoTexPBO;
 
-	CHeightLinePalette* heightLinePal;
 	CBaseGroundTextures* groundTextures;
 
 	bool drawMapEdges;
