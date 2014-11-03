@@ -64,7 +64,6 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/UnitDrawer.h"
-#include "Rendering/VerticalSync.h"
 #include "Rendering/Models/ModelDrawer.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Rendering/Textures/ColorMap.h"
@@ -1142,7 +1141,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	}
 
 	static spring_time lastUnsyncedUpdateTime = spring_gettime();
-	const float unsyncedUpdateDeltaTime = spring_diffsecs(currentTime, lastUnsyncedUpdateTime);
+	const float unsyncedUpdateDeltaTime = (currentTime - lastUnsyncedUpdateTime).toSecsf();
 
 	// always update ExtraTexture & SoundListener with <= 30Hz (even when paused)
 	// garbage collection event must also run regularly because of unsynced code
