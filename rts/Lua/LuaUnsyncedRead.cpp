@@ -1280,8 +1280,7 @@ int LuaUnsyncedRead::GetLosViewColors(lua_State* L)
 	lua_createtable(L, 3, 0); \
 	lua_pushnumber(L, color[0] / scale); lua_rawseti(L, -2, 1); \
 	lua_pushnumber(L, color[1] / scale); lua_rawseti(L, -2, 2); \
-	lua_pushnumber(L, color[2] / scale); lua_rawseti(L, -2, 3); \
-	lua_rawset(L, -3)
+	lua_pushnumber(L, color[2] / scale); lua_rawseti(L, -2, 3);
 
 	const float scale = (float)CBaseGroundDrawer::losColorScale;
 	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
