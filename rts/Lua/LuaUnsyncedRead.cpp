@@ -152,6 +152,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetMapDrawMode);
 	REGISTER_LUA_CFUNC(GetMapSquareTexture);
 
+	REGISTER_LUA_CFUNC(GetLosViewColors);
+
 	REGISTER_LUA_CFUNC(GetCameraNames);
 	REGISTER_LUA_CFUNC(GetCameraState);
 	REGISTER_LUA_CFUNC(GetCameraPosition);
@@ -1268,6 +1270,29 @@ int LuaUnsyncedRead::GetMapSquareTexture(lua_State* L)
 	lua_pushboolean(L, groundTextures->GetSquareLuaTexture(texSquareX, texSquareY, tid, txs, tys, texMipLevel));
 	return 1;
 }
+
+
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetLosViewColors(lua_State* L)
+{
+#define PACK_COLOR_VECTOR(color) \
+	lua_createtable(L, 3, 0); \
+	lua_pushnumber(L, color[0] / scale); lua_rawseti(L, -2, 1); \
+	lua_pushnumber(L, color[1] / scale); lua_rawseti(L, -2, 2); \
+	lua_pushnumber(L, color[2] / scale); lua_rawseti(L, -2, 3); \
+	lua_rawset(L, -3)
+
+	const float scale = (float)CBaseGroundDrawer::losColorScale;
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+
+	PACK_COLOR_VECTOR(gd->alwaysColor);
+	PACK_COLOR_VECTOR(gd->losColor);
+	PACK_COLOR_VECTOR(gd->radarColor);
+	PACK_COLOR_VECTOR(gd->jamColor);
+	return 4;
+}
+
 
 /******************************************************************************/
 
