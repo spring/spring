@@ -166,7 +166,6 @@ CONFIG(bool, FullscreenEdgeMove).defaultValue(true).description("see WindowedEdg
 CONFIG(bool, ShowFPS).defaultValue(false).description("Displays current framerate.");
 CONFIG(bool, ShowClock).defaultValue(true).description("Displays a clock on the top-right corner of the screen showing the elapsed time of the current game.");
 CONFIG(bool, ShowSpeed).defaultValue(false).description("Displays current game speed.");
-CONFIG(bool, ShowMTInfo).defaultValue(true);
 CONFIG(int, ShowPlayerInfo).defaultValue(1);
 CONFIG(float, GuiOpacity).defaultValue(0.8f).minimumValue(0.0f).maximumValue(1.0f).description("Sets the opacity of the built-in Spring UI. Generally has no effect on LuaUI widgets. Can be set in-game using shift+, to decrease and shift+. to increase.");
 CONFIG(std::string, InputTextGeo).defaultValue("");
@@ -203,7 +202,6 @@ CR_REG_METADATA(CGame, (
 	CR_MEMBER(showFPS),
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
-	CR_MEMBER(showMTInfo),
 	CR_IGNORED(chatting),
 	CR_IGNORED(curKeyChain),
 	CR_IGNORED(playerTraffic),
@@ -393,7 +391,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	showFPS   = configHandler->GetBool("ShowFPS");
 	showClock = configHandler->GetBool("ShowClock");
 	showSpeed = configHandler->GetBool("ShowSpeed");
-	showMTInfo = configHandler->GetBool("ShowMTInfo");
 
 	speedControl = configHandler->GetInt("SpeedControl");
 
@@ -416,7 +413,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 	}
 
-	showMTInfo = -1;
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
