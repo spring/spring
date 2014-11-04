@@ -172,7 +172,6 @@ public:
 	bool showFPS;
 	bool showClock;
 	bool showSpeed;
-	int showMTInfo;
 
 	float inputTextPosX;
 	float inputTextPosY;
