@@ -8,6 +8,9 @@ Spring changelog
     ~/.springrc
  ! new linux crashhandler by Major Bor3d0m
     libunwind is required to compile spring on linux
+ ! add dedicatedValue & headlesValue to confighandler:
+    make spring-dedicated listen at 0.0.0.0 as default again
+    add headless values from springrc-tempate-headless.txt
  - fix #4576 F6 does not sound mute
 
 -- 98.0 ---------------------------------------------------------
