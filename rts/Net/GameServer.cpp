@@ -2174,7 +2174,7 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
 	}
 	else if (action.command == "nospecdraw") {
-		InverseOrSetBool(allowSpecDraw, action.extra);
+		InverseOrSetBool(allowSpecDraw, action.extra, true);
 		// sent it because clients have to do stuff when this changes
 		CommandMessage msg(action, SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
