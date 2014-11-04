@@ -75,11 +75,7 @@ CONFIG(int, SpeedControl).defaultValue(1).minimumValue(1).maximumValue(2)
 	.description("Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest");
 CONFIG(bool, AllowSpectatorJoin).defaultValue(true);
 CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
-#ifdef DEDICATED
-CONFIG(bool, ServerRecordDemos).defaultValue(true);
-#else
-CONFIG(bool, ServerRecordDemos).defaultValue(false);
-#endif
+CONFIG(bool, ServerRecordDemos).defaultValue(false).dedicatedValue(true);
 CONFIG(bool, ServerLogInfoMessages).defaultValue(false);
 CONFIG(bool, ServerLogDebugMessages).defaultValue(false);
 CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");

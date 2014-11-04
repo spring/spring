@@ -14,7 +14,7 @@
 #include "System/Input/KeyInput.h"
 
 CONFIG(int, TWScrollSpeed).defaultValue(10);
-CONFIG(bool, TWEnabled).defaultValue(true);
+CONFIG(bool, TWEnabled).defaultValue(true).headlessValue(0);
 CONFIG(float, TWFOV).defaultValue(45.0f);
 
 

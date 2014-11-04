@@ -59,7 +59,7 @@
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
 
-CONFIG(bool, MiniMapMarker).defaultValue(true);
+CONFIG(bool, MiniMapMarker).defaultValue(true).headlessValue(false);
 CONFIG(bool, InvertQueueKey).defaultValue(false);
 
 //////////////////////////////////////////////////////////////////////

@@ -15,7 +15,7 @@
 #include "System/Log/ILog.h"
 
 CONFIG(bool, UseVBO).defaultValue(true).safemodeValue(false);
-CONFIG(bool, UsePBO).defaultValue(true).safemodeValue(false);
+CONFIG(bool, UsePBO).defaultValue(true).safemodeValue(false).headlessValue(false);
 
 
 /**

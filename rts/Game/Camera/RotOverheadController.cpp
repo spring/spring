@@ -11,7 +11,7 @@
 
 CONFIG(float, RotOverheadMouseScale).defaultValue(0.01f);
 CONFIG(int, RotOverheadScrollSpeed).defaultValue(10);
-CONFIG(bool, RotOverheadEnabled).defaultValue(true);
+CONFIG(bool, RotOverheadEnabled).defaultValue(true).headlessValue(false);
 CONFIG(float, RotOverheadFOV).defaultValue(45.0f);
 
 

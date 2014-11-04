@@ -31,7 +31,7 @@
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 
-CONFIG(int, GrassDetail).defaultValue(7).minimumValue(0).description("Sets how detailed the engine rendered grass will be on any given map.");
+CONFIG(int, GrassDetail).defaultValue(7).headlessValue(0).minimumValue(0).description("Sets how detailed the engine rendered grass will be on any given map.");
 
 static const float turfSize        = 20.0f;            // single turf size
 static const float partTurfSize    = turfSize * 1.0f;  // single turf size

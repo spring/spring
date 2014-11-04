@@ -63,13 +63,11 @@ CONFIG(float, MiniMapUnitSize)
 
 CONFIG(float, MiniMapUnitExp).defaultValue(0.25f);
 CONFIG(float, MiniMapCursorScale).defaultValue(-0.5f);
-CONFIG(bool, MiniMapIcons).defaultValue(true);
+CONFIG(bool, MiniMapIcons).defaultValue(true).headlessValue(false);
 
-CONFIG(int, MiniMapDrawCommands)
-	.defaultValue(1)
-	.minimumValue(0);
+CONFIG(int, MiniMapDrawCommands).defaultValue(1).headlessValue(0).minimumValue(0);
 
-CONFIG(bool, MiniMapDrawProjectiles).defaultValue(true);
+CONFIG(bool, MiniMapDrawProjectiles).defaultValue(true).headlessValue(false);
 CONFIG(bool, SimpleMiniMapColors).defaultValue(false);
 
 CONFIG(bool, MiniMapRenderToTexture).defaultValue(true).safemodeValue(false).description("Asynchronous render MiniMap to a texture independent of screen FPS.");

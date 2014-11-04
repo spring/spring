@@ -16,6 +16,7 @@
 CONFIG(int, ReflectiveWater)
 .defaultValue(IWater::WATER_RENDERER_REFLECTIVE)
 .safemodeValue(IWater::WATER_RENDERER_BASIC)
+.headlessValue(0)
 .minimumValue(0)
 .maximumValue(IWater::NUM_WATER_RENDERERS - 1)
 .description("Defines the type of water rendering. Can be set in game. Options are: 0 = Basic water, 1 = Reflective water, 2 = Reflective and Refractive water, 3 = Dynamic water, 4 = Bumpmapped water");

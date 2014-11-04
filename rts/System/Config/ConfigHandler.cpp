@@ -100,6 +100,12 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool
 	size_t sources_num = 3;
 	sources_num += (safemode) ? 1 : 0;
 	sources_num += locations.size() - 1;
+#ifdef DEDICATED
+	sources_num++;
+#endif
+#ifdef HEADLESS
+	sources_num++;
+#endif
 	sources.reserve(sources_num);
 
 	sources.push_back(overlay);
@@ -115,7 +121,12 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool
 	for (; loc != locations.end(); ++loc) {
 		sources.push_back(new FileConfigSource(*loc));
 	}
-
+#ifdef DEDICATED
+	sources.push_back(new DedicatedConfigSource());
+#endif
+#ifdef HEADLESS
+	sources.push_back(new HeadlessConfigSource());
+#endif
 	sources.push_back(new DefaultConfigSource());
 
 	assert(sources.size() <= sources_num);

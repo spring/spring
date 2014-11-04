@@ -13,7 +13,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Input/KeyInput.h"
 
-CONFIG(bool, OrbitControllerEnabled).defaultValue(true);
+CONFIG(bool, OrbitControllerEnabled).defaultValue(true).headlessValue(false);
 CONFIG(float, OrbitControllerOrbitSpeed).defaultValue(0.25f).minimumValue(0.1f).maximumValue(10.0f);
 CONFIG(float, OrbitControllerPanSpeed).defaultValue(2.00f).minimumValue(0.1f).maximumValue(10.0f);
 CONFIG(float, OrbitControllerZoomSpeed).defaultValue(5.00f).minimumValue(0.1f).maximumValue(10.0f);

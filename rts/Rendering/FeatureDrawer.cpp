@@ -32,7 +32,7 @@
 
 #define DRAW_QUAD_SIZE 32
 
-CONFIG(bool, ShowRezBars).defaultValue(true);
+CONFIG(bool, ShowRezBars).defaultValue(true).headlessValue(false);
 
 CONFIG(float, FeatureDrawDistance)
 .defaultValue(6000.0f)

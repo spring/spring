@@ -109,6 +109,12 @@ static std::ostream& operator<< (std::ostream& out, const ConfigVariableMetaData
 	if (d->GetSafemodeValue().IsSet()) {
 		KV(safemodeValue, Quote(d->GetType(), d->GetSafemodeValue().ToString()));
 	}
+	if (d->GetHeadlessValue().IsSet()) {
+		KV(safemodeValue, Quote(d->GetType(), d->GetHeadlessValue().ToString()));
+	}
+	if (d->GetDedicatedValue().IsSet()) {
+		KV(safemodeValue, Quote(d->GetType(), d->GetDedicatedValue().ToString()));
+	}
 	// Type is required.
 	// Easiest to do this last because of the trailing comma that isn't there.
 	out << INDENT << Quote("type") << ": " << Quote(d->GetType()) << "\n";

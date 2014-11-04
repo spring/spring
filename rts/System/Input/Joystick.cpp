@@ -9,7 +9,7 @@
 #include "System/Log/ILog.h"
 #include "System/EventHandler.h"
 
-CONFIG(bool, JoystickEnabled).defaultValue(true);
+CONFIG(bool, JoystickEnabled).defaultValue(true).headlessValue(false);
 CONFIG(int, JoystickUse).defaultValue(0);
 
 Joystick* stick = NULL;
