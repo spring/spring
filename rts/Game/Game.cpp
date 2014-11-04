@@ -1795,7 +1795,11 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		else if (msg.destination == ChatMessage::TO_EVERYONE) {
 			const bool specsOnly = noSpectatorChat && (player && player->spectator);
 			if (gu->spectating || !specsOnly) {
-				LOG("%s%s", label.c_str(), s.c_str());
+				if (specsOnly) {
+					LOG("%sSpectators: %s", label.c_str(), s.c_str());
+				} else {
+					LOG("%s%s", label.c_str(), s.c_str());
+				}
 				Channels::UserInterface->PlaySample(chatSound, 5);
 			}
 		}
