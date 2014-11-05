@@ -31,6 +31,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Map/InfoTexture/Legacy/LegacyInfoTextureHandler.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
@@ -109,7 +110,7 @@ void DefaultPathDrawer::DrawInMiniMap()
 
 void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
-		case CBaseGroundDrawer::drawPathTrav: {
+		case CLegacyInfoTextureHandler::drawPathTrav: {
 			bool useCurrentBuildOrder = true;
 
 			if (guihandler->inCommand <= 0) {
@@ -148,10 +149,10 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 						}
 
 						const SColor& col = GetBuildColor(status);
-						texMem[idx + CBaseGroundDrawer::COLOR_R] = col.r;
-						texMem[idx + CBaseGroundDrawer::COLOR_G] = col.g;
-						texMem[idx + CBaseGroundDrawer::COLOR_B] = col.b;
-						texMem[idx + CBaseGroundDrawer::COLOR_A] = col.a;
+						texMem[idx + CLegacyInfoTextureHandler::COLOR_R] = col.r;
+						texMem[idx + CLegacyInfoTextureHandler::COLOR_G] = col.g;
+						texMem[idx + CLegacyInfoTextureHandler::COLOR_B] = col.b;
+						texMem[idx + CLegacyInfoTextureHandler::COLOR_A] = col.a;
 					}
 				}
 			} else {
@@ -180,10 +181,10 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 							const float sm = CMoveMath::GetPosSpeedMod(*md, sqx, sqy);
 							const SColor& smc = GetSpeedModColor(sm * scale);
 
-							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = smc.r;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = smc.g;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = smc.b;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = smc.a;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = smc.r;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = smc.g;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = smc.b;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = smc.a;
 						}
 					}
 				} else {
@@ -192,32 +193,32 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 						for (int tx = 0; tx < gs->hmapx; ++tx) {
 							const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
 
-							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = 100;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = 0;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = 0;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = 100;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = 0;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = 0;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = 255;
 						}
 					}
 				}
 			}
 		} break;
 
-		case CBaseGroundDrawer::drawPathHeat: {
+		case CLegacyInfoTextureHandler::drawPathHeat: {
 			const PathHeatMap* phm = pm->pathHeatMap;
 
 			for (int ty = starty; ty < endy; ++ty) {
 				for (int tx = 0; tx < gs->hmapx; ++tx) {
 					const unsigned int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
 
-					texMem[texIdx + CBaseGroundDrawer::COLOR_R] = Clamp(8 * phm->GetHeatValue(tx << 1, ty << 1), 32, 255);
-					texMem[texIdx + CBaseGroundDrawer::COLOR_G] = 32;
-					texMem[texIdx + CBaseGroundDrawer::COLOR_B] = 32;
-					texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = Clamp(8 * phm->GetHeatValue(tx << 1, ty << 1), 32, 255);
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = 32;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = 32;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = 255;
 				}
 			}
 		} break;
 
-		case CBaseGroundDrawer::drawPathFlow: {
+		case CLegacyInfoTextureHandler::drawPathFlow: {
 			const PathFlowMap* pfm = pm->pathFlowMap;
 			const float maxFlow = pfm->GetMaxFlow();
 
@@ -227,16 +228,16 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 						const unsigned int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
 						const float3& flow = pfm->GetFlowVec(tx << 1, ty << 1);
 
-						texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (((flow.x + 1.0f) * 0.5f) * 255);
-						texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (((flow.z + 1.0f) * 0.5f) * 255);
-						texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (( flow.y               ) * 255);
-						texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = (((flow.x + 1.0f) * 0.5f) * 255);
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = (((flow.z + 1.0f) * 0.5f) * 255);
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = (( flow.y               ) * 255);
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = 255;
 					}
 				}
 			}
 		} break;
 
-		case CBaseGroundDrawer::drawPathCost: {
+		case CLegacyInfoTextureHandler::drawPathCost: {
 			const PathNodeStateBuffer& maxResStates = pm->maxResPF->blockStates;
 			const PathNodeStateBuffer& medResStates = pm->medResPE->blockStates;
 			const PathNodeStateBuffer& lowResStates = pm->lowResPE->blockStates;
@@ -273,10 +274,10 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					//     the normalisation means each extraTextureUpdate block
 					//     of rows gets assigned different colors when units are
 					//     moving (so view it while paused)
-					texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (gCost[0] / gCostMax[0]) * 255;
-					texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (gCost[1] / gCostMax[1]) * 255;
-					texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (gCost[2] / gCostMax[2]) * 255;
-					texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = (gCost[0] / gCostMax[0]) * 255;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = (gCost[1] / gCostMax[1]) * 255;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = (gCost[2] / gCostMax[2]) * 255;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = 255;
 				}
 			}
 		} break;

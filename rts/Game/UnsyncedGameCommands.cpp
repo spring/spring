@@ -27,7 +27,6 @@
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Net/GameServer.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
@@ -49,6 +48,7 @@
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaUI.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -1769,7 +1769,7 @@ public:
 			"Disable rendering of all auxiliary map overlays") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->DisableExtraTexture();
+		infoTextureHandler->SetMode("");
 		return true;
 	}
 };
@@ -1782,7 +1782,7 @@ public:
 			"Enable rendering of the auxiliary height-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->SetHeightTexture();
+		infoTextureHandler->ToggleMode("height");
 		return true;
 	}
 };
@@ -1795,7 +1795,7 @@ public:
 			"Enable rendering of the auxiliary metal-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->SetMetalTexture();
+		infoTextureHandler->ToggleMode("metal");
 		return true;
 	}
 };
@@ -1808,7 +1808,7 @@ public:
 			"Enable rendering of the path traversability-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathTrav);
+		infoTextureHandler->ToggleMode("path");
 		return true;
 	}
 };
@@ -1819,7 +1819,7 @@ public:
 			"Enable/Disable rendering of the path heat-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathHeat);
+		infoTextureHandler->ToggleMode("heat");
 		return true;
 	}
 };
@@ -1830,7 +1830,7 @@ public:
 			"Enable/Disable rendering of the path flow-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathFlow);
+		infoTextureHandler->ToggleMode("flow");
 		return true;
 	}
 };
@@ -1841,7 +1841,7 @@ public:
 			"Enable rendering of the path cost-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathCost);
+		infoTextureHandler->ToggleMode("pathcost");
 		return true;
 	}
 };
@@ -1854,7 +1854,7 @@ public:
 			"Enable rendering of the auxiliary LOS-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->ToggleLosTexture();
+		infoTextureHandler->ToggleMode("los");
 		return true;
 	}
 };

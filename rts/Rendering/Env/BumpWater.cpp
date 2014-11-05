@@ -13,15 +13,16 @@
 #include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
+#include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -1097,10 +1098,8 @@ void CBumpWater::Draw()
 		glDisable(GL_BLEND);
 	}
 
-	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
 	waterShader->SetFlag("opt_shadows", (shadowHandler && shadowHandler->shadowsLoaded));
-	waterShader->SetFlag("opt_infotex", gd->DrawExtraTex());
+	waterShader->SetFlag("opt_infotex", infoTextureHandler->IsEnabled());
 
 	waterShader->Enable();
 	waterShader->SetUniform3fv(0, &camera->GetPos()[0]);
@@ -1126,7 +1125,7 @@ void CBumpWater::Draw()
 	glActiveTexture(GL_TEXTURE7); glBindTexture(target,        depthTexture);
 	glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, waveRandTexture);
 	//glActiveTexture(GL_TEXTURE9); see above
-	glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
+	glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, normalTexture);
 
 	if (useUniforms) {

@@ -11,6 +11,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SkyLight.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -186,7 +187,7 @@ void SMFRenderStateGLSL::Kill() {
 
 
 bool SMFRenderStateFFP::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const {
-	return (!smfGroundDrawer->UseAdvShading() || smfGroundDrawer->DrawExtraTex());
+	return (!smfGroundDrawer->UseAdvShading() || infoTextureHandler->IsEnabled());
 }
 
 bool SMFRenderStateARB::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const {
@@ -194,7 +195,7 @@ bool SMFRenderStateARB::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const
 	//     the ARB shaders assume shadows are always on, so
 	//     SMFRenderStateARB can be used only when they are
 	//     in fact enabled (see Init)
-	return (smfGroundDrawer->UseAdvShading() && !smfGroundDrawer->DrawExtraTex() && shadowHandler->shadowsLoaded);
+	return (smfGroundDrawer->UseAdvShading() && !infoTextureHandler->IsEnabled() && shadowHandler->shadowsLoaded);
 }
 
 bool SMFRenderStateGLSL::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const {
@@ -210,10 +211,10 @@ void SMFRenderStateFFP::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-	if (smfGroundDrawer->DrawExtraTex()) {
+	if (infoTextureHandler->IsEnabled()) {
 		glActiveTexture(GL_TEXTURE1);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, smfGroundDrawer->GetActiveInfoTexture());
+		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 		glMultiTexCoord4f(GL_TEXTURE1_ARB, 1.0f, 1.0f, 1.0f, 1.0f); // fix nvidia bug with gltexgen
 		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
@@ -225,7 +226,7 @@ void SMFRenderStateFFP::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 		glBindTexture(GL_TEXTURE_2D, smfMap->GetShadingTexture());
 		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f, 1.0f, 1.0f, 1.0f); // fix nvidia bug with gltexgen
 
-		if (smfGroundDrawer->GetDrawMode() == CBaseGroundDrawer::drawMetal) {
+		if (infoTextureHandler->GetMode() == "metal") {
 			// increase brightness for metal spots
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
@@ -411,14 +412,14 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_SHADOWS", shadowHandler->shadowsLoaded);
-	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_INFOTEX", smfGroundDrawer->DrawExtraTex());
+	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("mapHeights", readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight());
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("cameraPos", &camera->GetPos()[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4("shadowMat", false, shadowHandler->shadowMatrix.m);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("infoTexIntensityMul", float(smfGroundDrawer->GetDrawMode() == CBaseGroundDrawer::drawMetal) + 1.0f);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("infoTexIntensityMul", float(infoTextureHandler->GetMode() == "metal") + 1.0f);
 
 	// already on the MV stack at this point
 	glLoadIdentity();
@@ -444,7 +445,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailNormalTexture());
 	glActiveTexture(GL_TEXTURE12); glBindTexture(GL_TEXTURE_2D, smfMap->GetLightEmissionTexture());
 	glActiveTexture(GL_TEXTURE13); glBindTexture(GL_TEXTURE_2D, smfMap->GetParallaxHeightTexture());
-	glActiveTexture(GL_TEXTURE14); glBindTexture(GL_TEXTURE_2D, smfGroundDrawer->GetActiveInfoTexture());
+	glActiveTexture(GL_TEXTURE14); glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 
 	glActiveTexture(GL_TEXTURE0);
 }

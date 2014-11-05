@@ -2,7 +2,6 @@
 
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/LosHandler.h"
@@ -25,6 +24,7 @@
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Map/InfoTexture/Legacy/LegacyInfoTextureHandler.h"
 #include "System/Util.h"
 
 QTPFSPathDrawer::QTPFSPathDrawer(): IPathDrawer() {
@@ -338,7 +338,7 @@ void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS:
 
 void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
-		case CBaseGroundDrawer::drawPathTrav: {
+		case CLegacyInfoTextureHandler::drawPathTrav: {
 			const MoveDef* md = GetSelectedMoveDef();
 
 			if (md != NULL) {
@@ -374,10 +374,10 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 						const SColor& smc = GetSpeedModColor(sm * scale);
 						#endif
 
-						texMem[texIdx + CBaseGroundDrawer::COLOR_R] = smc.r;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_G] = smc.g;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_B] = smc.b;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_A] = smc.a;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = smc.r;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = smc.g;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = smc.b;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = smc.a;
 					}
 				}
 			} else {
@@ -386,16 +386,16 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 					for (int tx = 0; tx < gs->hmapx; ++tx) {
 						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
 
-						texMem[texIdx + CBaseGroundDrawer::COLOR_R] = 100;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_G] = 0;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_B] = 0;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = 100;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = 0;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = 0;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = 255;
 					}
 				}
 			}
 		} break;
 
-		case CBaseGroundDrawer::drawPathCost: {
+		case CLegacyInfoTextureHandler::drawPathCost: {
 		} break;
 	}
 }

@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <map>
+#include <set>
 #include <boost/assign/list_of.hpp>
 
 #include "LuaOpenGLUtils.h"
@@ -18,6 +19,8 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/GeometryBuffer.h"
 #include "Rendering/Env/CubeMapHandler.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
+#include "Rendering/Map/InfoTexture/InfoTexture.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
@@ -31,6 +34,12 @@
 #include "System/Util.h"
 #include "System/Log/ILog.h"
 
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+static std::set<std::string> stringSet;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -286,6 +295,17 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 			texUnit.type = LuaMatTexture::LUATEX_MINIMAP;
 		}
 
+		else if (image.find("$info:") == 0) {
+			const std::string infoTexName = image.substr(6);
+			CInfoTexture* itex = infoTextureHandler->GetInfoTexture(infoTexName);
+			if (!itex)
+				return false;
+
+			stringSet.insert(infoTexName);
+			texUnit.type = LuaMatTexture::LUATEX_INFOTEX;
+			texUnit.data = &*stringSet.find(infoTexName);
+		}
+
 		else if (image == "$info"        || image == "$extra"       ) { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_ACTIVE; }
 		else if (image == "$info_losmap" || image == "$extra_losmap") { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_LOSMAP; }
 		else if (image == "$info_mtlmap" || image == "$extra_mtlmap") { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_MTLMAP; }
@@ -399,11 +419,30 @@ GLuint LuaMatTexture::GetTextureID() const
 			texID = (readMap != NULL)? readMap->GetMiniMapTexture(): 0;
 		} break;
 
-		case LUATEX_INFOTEX_ACTIVE: { texID = (readMap != NULL)? groundDrawer->GetActiveInfoTexture()                         : 0; } break;
-		case LUATEX_INFOTEX_LOSMAP: { texID = (readMap != NULL)? groundDrawer->GetInfoTexture(CBaseGroundDrawer::drawLos     ): 0; } break;
-		case LUATEX_INFOTEX_MTLMAP: { texID = (readMap != NULL)? groundDrawer->GetInfoTexture(CBaseGroundDrawer::drawMetal   ): 0; } break;
-		case LUATEX_INFOTEX_HGTMAP: { texID = (readMap != NULL)? groundDrawer->GetInfoTexture(CBaseGroundDrawer::drawHeight  ): 0; } break;
-		case LUATEX_INFOTEX_BLKMAP: { texID = (readMap != NULL)? groundDrawer->GetInfoTexture(CBaseGroundDrawer::drawPathTrav): 0; } break;
+		case LUATEX_INFOTEX: if (infoTextureHandler != nullptr) {
+			CInfoTexture* itex = infoTextureHandler->GetInfoTexture(*static_cast<const std::string*>(data));
+			texID = (itex) ? itex->GetTexture() : 0;
+		} break;
+
+		case LUATEX_INFOTEX_ACTIVE: if (infoTextureHandler != nullptr) {
+			texID = infoTextureHandler->GetCurrentInfoTexture();
+		} break;
+		case LUATEX_INFOTEX_LOSMAP: if (infoTextureHandler != nullptr) {
+			CInfoTexture* itex = infoTextureHandler->GetInfoTexture("los");
+			texID = (itex) ? itex->GetTexture() : 0;
+		} break;
+		case LUATEX_INFOTEX_MTLMAP: if (infoTextureHandler != nullptr) {
+			CInfoTexture* itex = infoTextureHandler->GetInfoTexture("metal");
+			texID = (itex) ? itex->GetTexture() : 0;
+		} break;
+		case LUATEX_INFOTEX_HGTMAP: if (infoTextureHandler != nullptr) {
+			CInfoTexture* itex = infoTextureHandler->GetInfoTexture("height");
+			texID = (itex) ? itex->GetTexture() : 0;
+		} break;
+		case LUATEX_INFOTEX_BLKMAP: if (infoTextureHandler != nullptr) {
+			CInfoTexture* itex = infoTextureHandler->GetInfoTexture("path");
+			texID = (itex) ? itex->GetTexture() : 0;
+		} break;
 
 		case LUATEX_MAP_GBUFFER_NORMTEX: { texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX); } break;
 		case LUATEX_MAP_GBUFFER_DIFFTEX: { texID = gdGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_DIFFTEX); } break;
@@ -461,6 +500,7 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_FONTSMALL:
 		case LUATEX_MINIMAP:
 
+		case LUATEX_INFOTEX:
 		case LUATEX_INFOTEX_ACTIVE:
 		case LUATEX_INFOTEX_LOSMAP:
 		case LUATEX_INFOTEX_MTLMAP:
@@ -590,15 +630,39 @@ int2 LuaMatTexture::GetSize() const
 			return readMap->GetMiniMapTextureSize();
 		} break;
 
-		case LUATEX_INFOTEX_ACTIVE:
-		case LUATEX_INFOTEX_LOSMAP:
-		case LUATEX_INFOTEX_MTLMAP:
-		case LUATEX_INFOTEX_HGTMAP:
-		case LUATEX_INFOTEX_BLKMAP: {
-			if (readMap != NULL) {
-				return (readMap->GetGroundDrawer()->GetInfoTexSize());
+		case LUATEX_INFOTEX: if (infoTextureHandler != nullptr) {
+			CInfoTexture* itex = infoTextureHandler->GetInfoTexture(*static_cast<const std::string*>(data));
+			if (itex) {
+				return itex->GetTexSize();
 			}
-		}
+		} break;
+		case LUATEX_INFOTEX_ACTIVE: if (infoTextureHandler != nullptr) {
+			return infoTextureHandler->GetCurrentInfoTextureSize();
+		} break;
+		case LUATEX_INFOTEX_LOSMAP: if (infoTextureHandler != nullptr) {
+			CInfoTexture* itex = infoTextureHandler->GetInfoTexture("los");
+			if (itex) {
+				return itex->GetTexSize();
+			}
+		} break;
+		case LUATEX_INFOTEX_MTLMAP: if (infoTextureHandler != nullptr) {
+			CInfoTexture* itex = infoTextureHandler->GetInfoTexture("metal");
+			if (itex) {
+				return itex->GetTexSize();
+			}
+		} break;
+		case LUATEX_INFOTEX_HGTMAP: if (infoTextureHandler != nullptr) {
+			CInfoTexture* itex = infoTextureHandler->GetInfoTexture("height");
+			if (itex) {
+				return itex->GetTexSize();
+			}
+		} break;
+		case LUATEX_INFOTEX_BLKMAP: if (infoTextureHandler != nullptr) {
+			CInfoTexture* itex = infoTextureHandler->GetInfoTexture("path");
+			if (itex) {
+				return itex->GetTexSize();
+			}
+		} break;
 
 		case LUATEX_MAP_GBUFFER_NORMTEX:
 		case LUATEX_MAP_GBUFFER_DIFFTEX:
@@ -690,6 +754,7 @@ void LuaMatTexture::Print(const string& indent) const
 		STRING_CASE(typeName, LUATEX_FONTSMALL);
 		STRING_CASE(typeName, LUATEX_MINIMAP);
 
+		STRING_CASE(typeName, LUATEX_INFOTEX);
 		STRING_CASE(typeName, LUATEX_INFOTEX_ACTIVE);
 		STRING_CASE(typeName, LUATEX_INFOTEX_LOSMAP);
 		STRING_CASE(typeName, LUATEX_INFOTEX_MTLMAP);

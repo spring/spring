@@ -11,6 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/bitops.h"
 #include "System/Config/ConfigHandler.h"
@@ -684,14 +685,14 @@ void CSMFReadMap::DrawMinimap() const
 	glBindTexture(GL_TEXTURE_2D, minimapTex);
 	// glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-	if (groundDrawer->DrawExtraTex()) {
+	if (infoTextureHandler->IsEnabled()) {
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-		glBindTexture(GL_TEXTURE_2D, groundDrawer->GetActiveInfoTexture());
-		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 	}
+	glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	static float isx = gs->mapx / float(gs->pwr2mapx);
 	static float isy = gs->mapy / float(gs->pwr2mapy);

@@ -19,7 +19,6 @@
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
@@ -28,6 +27,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Features/Feature.h"
@@ -925,17 +925,15 @@ void CGuiHandler::ConvertCommands(std::vector<CommandDescription>& cmds)
 
 void CGuiHandler::SetShowingMetal(bool show)
 {
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
 	if (!show) {
 		if (showingMetal) {
-			gd->DisableExtraTexture();
+			infoTextureHandler->DisableCurrentMode();
 			showingMetal = false;
 		}
 	} else {
 		if (autoShowMetal) {
-			if (gd->GetDrawMode() != CBaseGroundDrawer::drawMetal) {
-				gd->SetMetalTexture();
+			if (infoTextureHandler->GetMode() == "metal") {
+				infoTextureHandler->SetMode("metal");
 				showingMetal = true;
 			}
 		}

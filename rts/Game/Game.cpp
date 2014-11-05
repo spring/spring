@@ -64,6 +64,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Models/ModelDrawer.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Rendering/Textures/ColorMap.h"
@@ -461,6 +462,7 @@ CGame::~CGame()
 	CWordCompletion::DestroyInstance();
 
 	LOG("[%s][6]", __FUNCTION__);
+	SafeDelete(infoTextureHandler);
 	SafeDelete(worldDrawer);
 	SafeDelete(guihandler); // frees LuaUI
 	SafeDelete(minimap);
@@ -816,6 +818,7 @@ void CGame::LoadInterface()
 	keyBindings = new CKeyBindings();
 	keyBindings->Load("uikeys.txt");
 	selectionKeys = new CSelectionKeyHandler();
+	IInfoTextureHandler::Create();
 
 	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		grouphandlers.push_back(new CGroupHandler(t));
@@ -1141,9 +1144,9 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	if (newSimFrame || unsyncedUpdateDeltaTime >= (1.0f / GAME_SPEED)) {
 		lastUnsyncedUpdateTime = currentTime;
 
-		if (gd->GetDrawMode() != CBaseGroundDrawer::drawNormal) {
-			SCOPED_TIMER("GroundDrawer::UpdateExtraTex");
-			gd->UpdateExtraTexture(gd->GetDrawMode());
+		{
+			SCOPED_TIMER("InfoTexture");
+			infoTextureHandler->Update();
 		}
 
 		// TODO call only when camera changed

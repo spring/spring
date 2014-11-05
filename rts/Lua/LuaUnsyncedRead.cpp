@@ -35,6 +35,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/IWater.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -1211,16 +1212,14 @@ int LuaUnsyncedRead::GetWaterMode(lua_State* L)
 
 int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 {
-	switch (readMap->GetGroundDrawer()->GetDrawMode()) {
-		case CBaseGroundDrawer::drawNormal:   { HSTR_PUSH(L, "normal"            ); break; }
-		case CBaseGroundDrawer::drawHeight:   { HSTR_PUSH(L, "height"            ); break; }
-		case CBaseGroundDrawer::drawMetal:    { HSTR_PUSH(L, "metal"             ); break; }
-		case CBaseGroundDrawer::drawLos:      { HSTR_PUSH(L, "los"               ); break; }
-		case CBaseGroundDrawer::drawPathTrav: { HSTR_PUSH(L, "pathTraversability"); break; }
-		case CBaseGroundDrawer::drawPathHeat: { HSTR_PUSH(L, "pathHeat"          ); break; }
-		case CBaseGroundDrawer::drawPathFlow: { HSTR_PUSH(L, "pathFlow"          ); break; }
-		case CBaseGroundDrawer::drawPathCost: { HSTR_PUSH(L, "pathCost"          ); break; }
-	}
+	std::string mode = infoTextureHandler->GetMode();
+	     if (mode.empty())       { mode = "normal"; }
+	else if (mode == "path")     { mode = "pathTraversability"; }
+	else if (mode == "heat")     { mode = "pathHeat"; }
+	else if (mode == "flow")     { mode = "pathFlow"; }
+	else if (mode == "pathcost") { mode = "pathCost"; }
+
+	lua_pushsstring(L, mode);
 	return 1;
 }
 

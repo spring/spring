@@ -4,7 +4,6 @@
 
 #include "GrassDrawer.h"
 #include "Game/Camera.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -15,6 +14,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -222,14 +222,13 @@ void CGrassDrawer::LoadGrassShaders() {
 
 
 void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	const float3 windSpeed =
 		wind.GetCurrentDirection() *
 		wind.GetCurrentStrength() *
 		mapInfo->grass.bladeWaveScale;
 
 	grassShader = grassShaders[type];
-	grassShader->SetFlag("HAVE_INFOTEX", gd->DrawExtraTex());
+	grassShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 	grassShader->SetFlag("HAVE_SHADOWS", shadowHandler->shadowsLoaded);
 	grassShader->Enable();
 
@@ -608,8 +607,6 @@ void CGrassDrawer::DrawShadow()
 
 void CGrassDrawer::SetupGlStateNear()
 {
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
 	// bind textures
 	{
 		glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -618,10 +615,8 @@ void CGrassDrawer::SetupGlStateNear()
 			glBindTexture(GL_TEXTURE_2D, readMap->GetGrassShadingTexture());
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 			glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
-		if (gd->DrawExtraTex()) {
-			glActiveTextureARB(GL_TEXTURE3_ARB);
-				glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
-		}
+		glActiveTextureARB(GL_TEXTURE3_ARB);
+			glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 		glActiveTextureARB(GL_TEXTURE5_ARB);
 			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
 	}
@@ -661,7 +656,7 @@ void CGrassDrawer::SetupGlStateNear()
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_TEXTURE);
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
 			glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2);
-		if (gd->DrawExtraTex()) {
+		if (infoTextureHandler->IsEnabled()) {
 			glActiveTextureARB(GL_TEXTURE3_ARB);
 				glEnable(GL_TEXTURE_2D);
 				glMultiTexCoord4f(GL_TEXTURE3_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
@@ -712,7 +707,7 @@ void CGrassDrawer::ResetGlStateNear()
 			glDisable(GL_TEXTURE_GEN_T);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1);
-		if (gd->DrawExtraTex()) {
+		if (infoTextureHandler->IsEnabled()) {
 			glActiveTextureARB(GL_TEXTURE3_ARB);
 				glDisable(GL_TEXTURE_2D);
 				glDisable(GL_TEXTURE_GEN_S);
@@ -730,8 +725,6 @@ void CGrassDrawer::ResetGlStateNear()
 void CGrassDrawer::SetupGlStateFar()
 {
 	assert(globalRendering->haveGLSL);
-
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	//glEnable(GL_ALPHA_TEST);
 	//glAlphaFunc(GL_GREATER, 0.01f);
@@ -754,10 +747,8 @@ void CGrassDrawer::SetupGlStateFar()
 		glBindTexture(GL_TEXTURE_2D, readMap->GetGrassShadingTexture());
 	glActiveTextureARB(GL_TEXTURE2_ARB);
 		glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
-	if (gd->DrawExtraTex()) {
-		glActiveTextureARB(GL_TEXTURE3_ARB);
-			glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
-	}
+	glActiveTextureARB(GL_TEXTURE3_ARB);
+		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 	if (shadowHandler->shadowsLoaded) {
 		glActiveTextureARB(GL_TEXTURE4_ARB);
 			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
