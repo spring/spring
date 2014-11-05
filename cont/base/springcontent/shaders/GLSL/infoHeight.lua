@@ -39,7 +39,7 @@ return {
 
 		void main() {
 			gl_FragColor = getTexel(tex0, texCoord);
-			gl_FragColor.a = 1.0;
+			gl_FragColor.a = 0.3;
 		}
 	]],
 	uniformInt = {
