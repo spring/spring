@@ -779,21 +779,18 @@ void CGame::LoadInterface()
 		// add the Skirmish AIs instance names to word completion,
 		// for various things, eg chatting
 		const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
-		CSkirmishAIHandler::id_ai_t::const_iterator ai;
-		for (ai = ais.begin(); ai != ais.end(); ++ai) {
-			wordCompletion->AddWord(ai->second.name + " ", false, false, false);
+		for (const auto& ai: ais) {
+			wordCompletion->AddWord(ai.second.name + " ", false, false, false);
 		}
 		// add the available Skirmish AI libraries to word completion, for /aicontrol
 		const IAILibraryManager::T_skirmishAIKeys& aiLibs = aiLibManager->GetSkirmishAIKeys();
-		IAILibraryManager::T_skirmishAIKeys::const_iterator aiLib;
-		for (aiLib = aiLibs.begin(); aiLib != aiLibs.end(); ++aiLib) {
-			wordCompletion->AddWord(aiLib->GetShortName() + " " + aiLib->GetVersion() + " ", false, false, false);
+		for (const auto& aiLib: aiLibs) {
+			wordCompletion->AddWord(aiLib.GetShortName() + " " + aiLib.GetVersion() + " ", false, false, false);
 		}
 		// add the available Lua AI implementations to word completion, for /aicontrol
 		const std::set<std::string>& luaAIShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
-		for (std::set<std::string>::const_iterator sn = luaAIShortNames.begin();
-				sn != luaAIShortNames.end(); ++sn) {
-			wordCompletion->AddWord(*sn + " ", false, false, false);
+		for (const std::string& sn:  luaAIShortNames) {
+			wordCompletion->AddWord(sn + " ", false, false, false);
 		}
 
 		const std::map<std::string, int>& unitDefs = unitDefHandler->unitDefIDsByName;
