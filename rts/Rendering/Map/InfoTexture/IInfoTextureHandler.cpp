@@ -11,7 +11,11 @@ IInfoTextureHandler* infoTextureHandler = nullptr;
 
 void IInfoTextureHandler::Create()
 {
-	if (globalRendering->haveGLSL && globalRendering->supportNPOTs && glGenerateMipmap && FBO::IsSupported()) {
+	if (
+		globalRendering->haveGLSL && globalRendering->supportNPOTs
+		&& glGenerateMipmap && FBO::IsSupported()
+		&& GLEW_ARB_texture_query_lod && GLEW_VERSION_3_0
+	) {
 		infoTextureHandler = new CInfoTextureHandler();
 	}
 
