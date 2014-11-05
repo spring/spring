@@ -28,7 +28,7 @@ public:
 	bool IsUpdateNeeded() { return !disabled; }
 
 private:
-	bool CreateShader(const std::string& filename, const SColor clearColor = SColor(0.0f, 0.0f, 0.0f, 1.0f));
+	bool CreateShader(const std::string& filename, const bool clear = false);
 
 private:
 	bool disabled;

@@ -50,7 +50,7 @@ void CInfoTextureCombiner::SwitchMode(const std::string& name)
 	if (name.empty()) {
 		curMode = name;
 		disabled = true;
-		CreateShader("");
+		CreateShader("", true);
 		return;
 	}
 
@@ -58,7 +58,7 @@ void CInfoTextureCombiner::SwitchMode(const std::string& name)
 		disabled = !CreateShader("shaders/GLSL/infoLOS.lua");
 	} else
 	if (name == "metal") {
-		disabled = !CreateShader("shaders/GLSL/infoMetal.lua");
+		disabled = !CreateShader("shaders/GLSL/infoMetal.lua", true);
 	} else
 	if (name == "height") {
 		disabled = !CreateShader("shaders/GLSL/infoHeight.lua");
@@ -74,17 +74,19 @@ void CInfoTextureCombiner::SwitchMode(const std::string& name)
 }
 
 
-bool CInfoTextureCombiner::CreateShader(const std::string& filename, const SColor clearColor)
+bool CInfoTextureCombiner::CreateShader(const std::string& filename, const bool clear)
 {
-	// clear
-	fbo.Bind();
-	glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
-	if (fbo.IsValid()) glClear(GL_COLOR_BUFFER_BIT);
-	FBO::Unbind();
+	if (clear) {
+		// clear
+		fbo.Bind();
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		if (fbo.IsValid()) glClear(GL_COLOR_BUFFER_BIT);
+		FBO::Unbind();
 
-	// create mipmaps
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glGenerateMipmap(GL_TEXTURE_2D);
+		// create mipmaps
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
 
 	if (filename.empty())
 		return false;
