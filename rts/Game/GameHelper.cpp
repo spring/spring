@@ -861,15 +861,17 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo, bool synced)
 {
 	float3 pos;
 
+	static const int HALFMAP_SQ = SQUARE_SIZE * 2;
+
 	if (buildInfo.GetXSize() & 2)
-		pos.x = math::floor((buildInfo.pos.x              ) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2 + SQUARE_SIZE;
+		pos.x = math::floor((buildInfo.pos.x              ) / (HALFMAP_SQ)) * HALFMAP_SQ + SQUARE_SIZE;
 	else
-		pos.x = math::floor((buildInfo.pos.x + SQUARE_SIZE) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
+		pos.x = math::floor((buildInfo.pos.x + SQUARE_SIZE) / (HALFMAP_SQ)) * HALFMAP_SQ;
 
 	if (buildInfo.GetZSize() & 2)
-		pos.z = math::floor((buildInfo.pos.z              ) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2 + SQUARE_SIZE;
+		pos.z = math::floor((buildInfo.pos.z              ) / (HALFMAP_SQ)) * HALFMAP_SQ + SQUARE_SIZE;
 	else
-		pos.z = math::floor((buildInfo.pos.z + SQUARE_SIZE) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
+		pos.z = math::floor((buildInfo.pos.z + SQUARE_SIZE) / (HALFMAP_SQ)) * HALFMAP_SQ;
 
 	pos.y = CGameHelper::GetBuildHeight(pos, buildInfo.def, synced);
 	return pos;
@@ -1080,9 +1082,8 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 
 	const int x1 = int(pos.x / SQUARE_SIZE) - (xsize >> 1), x2 = x1 + xsize;
 	const int z1 = int(pos.z / SQUARE_SIZE) - (zsize >> 1), z2 = z1 + zsize;
-
-	const int2 xrange = int2(x1, x2);
-	const int2 zrange = int2(z1, z2);
+	int2 xrange = int2(x1, x2);
+	int2 zrange = int2(z1, z2);
 
 	const MoveDef* moveDef = (buildInfo.def->pathType != -1U) ? moveDefHandler->GetMoveDefByPathType(buildInfo.def->pathType) : NULL;
 	/*const S3DModel* model =*/ buildInfo.def->LoadModel();
@@ -1121,14 +1122,15 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 
 		for (int z = z1; z < z2; z++) {
 			for (int x = x1; x < x2; x++) {
-				BuildSquareStatus tbs = TestBuildSquare(float3(x * SQUARE_SIZE, buildHeight, z * SQUARE_SIZE), xrange, zrange, buildInfo.def, moveDef, feature, gu->myAllyTeam, synced);
+				const float3 bpos(x * SQUARE_SIZE, buildHeight, z * SQUARE_SIZE);
+				BuildSquareStatus tbs = (bpos.IsInBounds()) ? TestBuildSquare(bpos, xrange, zrange, buildInfo.def, moveDef, feature, gu->myAllyTeam, synced) : BUILDSQUARE_BLOCKED;
 
 				if (tbs != BUILDSQUARE_BLOCKED) {
 					// test if build-position overlaps a queued command
 					for (std::vector<Command>::const_iterator ci = commands->begin(); ci != commands->end(); ++ci) {
 						BuildInfo bc(*ci);
-						if (std::max(bc.pos.x - x * SQUARE_SIZE - SQUARE_SIZE, x * SQUARE_SIZE - bc.pos.x) * 2 < bc.GetXSize() * SQUARE_SIZE &&
-							std::max(bc.pos.z - z * SQUARE_SIZE - SQUARE_SIZE, z * SQUARE_SIZE - bc.pos.z) * 2 < bc.GetZSize() * SQUARE_SIZE) {
+						if (std::max(bc.pos.x - bpos.x - SQUARE_SIZE, bpos.x - bc.pos.x) * 2 < bc.GetXSize() * SQUARE_SIZE &&
+							std::max(bc.pos.z - bpos.z - SQUARE_SIZE, bpos.z - bc.pos.z) * 2 < bc.GetZSize() * SQUARE_SIZE) {
 							tbs = BUILDSQUARE_BLOCKED;
 							break;
 						}
@@ -1137,14 +1139,14 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 
 				switch (tbs) {
 					case BUILDSQUARE_OPEN:
-						canbuildpos->push_back(float3(x * SQUARE_SIZE, buildHeight, z * SQUARE_SIZE));
+						canbuildpos->push_back(bpos);
 						break;
 					case BUILDSQUARE_RECLAIMABLE:
 					case BUILDSQUARE_OCCUPIED:
-						featurepos->push_back(float3(x * SQUARE_SIZE, buildHeight, z * SQUARE_SIZE));
+						featurepos->push_back(bpos);
 						break;
 					case BUILDSQUARE_BLOCKED:
-						nobuildpos->push_back(float3(x * SQUARE_SIZE, buildHeight, z * SQUARE_SIZE));
+						nobuildpos->push_back(bpos);
 						break;
 				}
 
@@ -1152,6 +1154,10 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 			}
 		}
 	} else {
+		// out of map?
+		if (unsigned(x1) > gs->mapxm1 || unsigned(x2) > gs->mapxm1 || unsigned(z1) > gs->mapym1 || unsigned(z2) > gs->mapym1)
+			return BUILDSQUARE_BLOCKED;
+
 		// this can be called in either context
 		for (int z = z1; z < z2; z++) {
 			for (int x = x1; x < x2; x++) {
@@ -1177,17 +1183,31 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	int allyteam,
 	bool synced
 ) {
-	if (!pos.IsInBounds())
+	assert(pos.IsInBounds());
+
+	const int sqx = unsigned(pos.x) / SQUARE_SIZE;
+	const int sqz = unsigned(pos.z) / SQUARE_SIZE;
+	const float groundHeight = CGround::GetApproximateHeightUnsafe(sqx, sqz, synced);
+
+	if (!unitDef->CheckTerrainConstraints(moveDef, groundHeight))
 		return BUILDSQUARE_BLOCKED;
 
-	const int yardxpos = int(pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
-	const int yardypos = int(pos.z + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
-
-	const float groundHeight = CGround::GetHeightReal(pos.x, pos.z, synced);
+	// check maxHeightDif constraint (structures only)
+	//
+	// if we are capable of floating, only test local
+	// height difference IF terrain is above sea-level
+	if (unitDef->IsImmobileUnit()) {
+		if (!unitDef->floatOnWater || groundHeight > 0.0f) {
+			if (std::abs(pos.y - groundHeight) > unitDef->maxHeightDif) {
+				return BUILDSQUARE_BLOCKED;
+			}
+		}
+	}
 
 	BuildSquareStatus ret = BUILDSQUARE_OPEN;
+	const int yardxpos = unsigned(pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
+	const int yardypos = unsigned(pos.z + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
 	CSolidObject* so = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
-
 	if (so != NULL) {
 		CFeature* f = dynamic_cast<CFeature*>(so);
 		CUnit* u = dynamic_cast<CUnit*>(so);
@@ -1205,11 +1225,14 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 					feature = f;
 				}
 			}
-		} else if (u == NULL || (allyteam < 0) || (u->losStatus[allyteam] & LOS_INLOS)) {
-			if (so->immobile) {
-				ret = BUILDSQUARE_BLOCKED;
-			} else {
-				ret = BUILDSQUARE_OCCUPIED;
+		} else {
+			assert(u);
+			if ((allyteam < 0) || (u->losStatus[allyteam] & LOS_INLOS)) {
+				if (so->immobile) {
+					ret = BUILDSQUARE_BLOCKED;
+				} else {
+					ret = BUILDSQUARE_OCCUPIED;
+				}
 			}
 		}
 
@@ -1244,38 +1267,6 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 			return ret;
 		}
 	}
-
-	// check maxHeightDif constraint (structures only)
-	//
-	// if we are capable of floating, only test local
-	// height difference IF terrain is above sea-level
-	if (unitDef->IsImmobileUnit()) {
-		if (!unitDef->floatOnWater || groundHeight > 0.0f) {
-			const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
-			const float* curHeightMap = readMap->GetCornerHeightMapSynced();
-
-			#ifdef USE_UNSYNCED_HEIGHTMAP
-			if (!synced) {
-				orgHeightMap = readMap->GetCornerHeightMapUnsynced();
-				curHeightMap = readMap->GetCornerHeightMapUnsynced();
-			}
-			#endif
-
-			const int sqx = pos.x / SQUARE_SIZE;
-			const int sqz = pos.z / SQUARE_SIZE;
-
-			// FIXME: we do not want to use maxHeightDif for a MOBILE unit!
-			const float orgHgt = orgHeightMap[sqz * gs->mapxp1 + sqx];
-			const float curHgt = curHeightMap[sqz * gs->mapxp1 + sqx];
-			const float difHgt = unitDef->maxHeightDif;
-
-			if (pos.y > std::max(orgHgt + difHgt, curHgt + difHgt)) { return BUILDSQUARE_BLOCKED; }
-			if (pos.y < std::min(orgHgt - difHgt, curHgt - difHgt)) { return BUILDSQUARE_BLOCKED; }
-		}
-	}
-
-	if (!unitDef->CheckTerrainConstraints(moveDef, groundHeight))
-		ret = BUILDSQUARE_BLOCKED;
 
 	return ret;
 }

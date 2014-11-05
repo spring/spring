@@ -376,12 +376,20 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 
 float CGround::GetApproximateHeight(float x, float z, bool synced)
 {
-	const int xsquare = Clamp(int(x) / SQUARE_SIZE, 0, gs->mapxm1);
-	const int zsquare = Clamp(int(z) / SQUARE_SIZE, 0, gs->mapym1);
 	const float* heightMap = readMap->GetSharedCenterHeightMap(synced);
 
-	return heightMap[xsquare + zsquare * gs->mapx];
+	const int xsquare = Clamp(int(x) / SQUARE_SIZE, 0, gs->mapxm1);
+	const int zsquare = Clamp(int(z) / SQUARE_SIZE, 0, gs->mapym1);
+	return heightMap[zsquare * gs->mapx + xsquare];
 }
+
+
+float CGround::GetApproximateHeightUnsafe(int x, int z, bool synced)
+{
+	const float* heightMap = readMap->GetSharedCenterHeightMap(synced);
+	return heightMap[z * gs->mapx + x];
+}
+
 
 float CGround::GetHeightAboveWater(float x, float z, bool synced)
 {
