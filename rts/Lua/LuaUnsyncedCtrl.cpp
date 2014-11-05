@@ -207,7 +207,6 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetCameraOffset);
 
-	REGISTER_LUA_CFUNC(UpdateInfoTexture);
 	REGISTER_LUA_CFUNC(SetLosViewColors);
 
 	REGISTER_LUA_CFUNC(Restart);
@@ -1868,23 +1867,6 @@ int LuaUnsyncedCtrl::SetCameraOffset(lua_State* L)
 
 
 /******************************************************************************/
-
-int LuaUnsyncedCtrl::UpdateInfoTexture(lua_State* L)
-{
-	const int rawMode = CBaseGroundDrawer::BaseGroundDrawMode(luaL_checkint(L, 1));
-	const int texMode = Clamp(rawMode, int(CBaseGroundDrawer::drawLos), int(CBaseGroundDrawer::drawPathCost));
-
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
-	if (gd->GetDrawMode() == CBaseGroundDrawer::drawNormal) {
-		// allow background updates only when no infotex is active
-		lua_pushboolean(L, gd->UpdateExtraTexture(texMode));
-	} else {
-		lua_pushboolean(L, false);
-	}
-
-	return 1;
-}
 
 int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 {
