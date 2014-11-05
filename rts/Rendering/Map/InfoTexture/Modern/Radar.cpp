@@ -41,7 +41,7 @@ void CRadarTexture::Update()
 
 	for (int y = 0; y < texSize.y; ++y) {
 		for (int x = 0; x < texSize.x; ++x) {
-			const int idx = (y * texSize.y) + x;
+			const int idx = (y * texSize.x) + x;
 
 			const unsigned short* radarMap  = myRadar;
 			const unsigned short* jammerMap = myJammer;
