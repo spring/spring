@@ -5,7 +5,7 @@
 
 #include "PboInfoTexture.h"
 #include "Rendering/GL/FBO.h"
-#include "System/Color.h"
+#include "System/float4.h"
 #include <string>
 
 
@@ -28,7 +28,7 @@ public:
 	bool IsUpdateNeeded() { return !disabled; }
 
 private:
-	bool CreateShader(const std::string& filename, const bool clear = false);
+	bool CreateShader(const std::string& filename, const bool clear = false, const float4 clearColor = float4(0.5f, 0.5f, 0.5f, 1.0f));
 
 private:
 	bool disabled;

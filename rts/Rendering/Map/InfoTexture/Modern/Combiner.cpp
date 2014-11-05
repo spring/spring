@@ -58,7 +58,7 @@ void CInfoTextureCombiner::SwitchMode(const std::string& name)
 		disabled = !CreateShader("shaders/GLSL/infoLOS.lua");
 	} else
 	if (name == "metal") {
-		disabled = !CreateShader("shaders/GLSL/infoMetal.lua", true);
+		disabled = !CreateShader("shaders/GLSL/infoMetal.lua", true, float4(0.f, 0.f, 0.f, 1.0f));
 	} else
 	if (name == "height") {
 		disabled = !CreateShader("shaders/GLSL/infoHeight.lua");
@@ -74,12 +74,12 @@ void CInfoTextureCombiner::SwitchMode(const std::string& name)
 }
 
 
-bool CInfoTextureCombiner::CreateShader(const std::string& filename, const bool clear)
+bool CInfoTextureCombiner::CreateShader(const std::string& filename, const bool clear, const float4 clearColor)
 {
 	if (clear) {
 		// clear
 		fbo.Bind();
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
 		if (fbo.IsValid()) glClear(GL_COLOR_BUFFER_BIT);
 		FBO::Unbind();
 
