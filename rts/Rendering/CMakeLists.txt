@@ -62,6 +62,7 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/ProjectileDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Screenshot.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/GLSLCopyState.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/LuaShaderContainer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/Shader.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/ShaderHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/ShaderStates.cpp"

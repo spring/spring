@@ -1,9 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Rendering/Shaders/Shader.h"
+#include "Rendering/Shaders/LuaShaderContainer.h"
 #include "Rendering/Shaders/GLSLCopyState.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
+#include "Lua/LuaMaterial.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Log/ILog.h"
@@ -73,6 +75,9 @@ static std::string glslGetLog(GLuint obj)
 
 static std::string GetShaderSource(const std::string& fileName)
 {
+	if (fileName.find("void main()") != std::string::npos)
+		return fileName;
+
 	std::string soPath = "shaders/" + fileName;
 	std::string soSource = "";
 
@@ -111,6 +116,8 @@ namespace Shader {
 	NullShaderObject* nullShaderObject = &nullShaderObject_;
 	NullProgramObject* nullProgramObject = &nullProgramObject_;
 
+
+	/*****************************************************************/
 
 	ARBShaderObject::ARBShaderObject(
 		unsigned int shType,
@@ -151,6 +158,7 @@ namespace Shader {
 	}
 
 
+	/*****************************************************************/
 
 	GLSLShaderObject::GLSLShaderObject(
 		unsigned int shType,
@@ -197,7 +205,8 @@ namespace Shader {
 		log   = glslGetLog(objID);
 
 		if (!IsValid()) {
-			LOG_L(L_WARNING, "[GLSL-SO::%s] shader-object name: %s, compile-log:\n%s\n", __FUNCTION__, srcFile.c_str(), log.c_str());
+			const std::string& name = srcFile.find("void main()") ? "unknown" : srcFile;
+			LOG_L(L_WARNING, "[GLSL-SO::%s] shader-object name: %s, compile-log:\n%s\n", __FUNCTION__, name.c_str(), log.c_str());
 			LOG_L(L_WARNING, "\n%s%s%s%s%s%s%s", sources[0], sources[1], sources[2], sources[3], sources[4], sources[5], sources[6]);
 		}
 	}
@@ -208,6 +217,7 @@ namespace Shader {
 	}
 
 
+	/*****************************************************************/
 
 	IProgramObject::IProgramObject(const std::string& poName): name(poName), objID(0), curHash(0), valid(false), bound(false) {
 	}
@@ -230,11 +240,19 @@ namespace Shader {
 			delete so;
 		}
 
+		uniformStates.clear();
 		shaderObjs.clear();
+		textures.clear();
+		valid = false;
+		log = "";
 	}
 
 	bool IProgramObject::IsShaderAttached(const IShaderObject* so) const {
 		return (std::find(shaderObjs.begin(), shaderObjs.end(), so) != shaderObjs.end());
+	}
+
+	bool IProgramObject::LoadFromLua(const std::string& filename) {
+		return Shader::LoadFromLua(this, filename);
 	}
 
 	void IProgramObject::RecompileIfNeeded()
@@ -281,6 +299,25 @@ namespace Shader {
 		return us;
 	}
 
+	void IProgramObject::AddTextureBinding(const int index, const std::string& luaTexName)
+	{
+		textures[index] = luaTexName;
+	}
+
+	void IProgramObject::BindTextures() const
+	{
+		LuaMatTexture luaTex;
+		for (auto& p: textures) {
+			if (LuaOpenGLUtils::ParseTextureImage(nullptr, luaTex, p.second)) {
+				glActiveTexture(GL_TEXTURE0 + p.first);
+				luaTex.Bind();
+			}
+		}
+		glActiveTexture(GL_TEXTURE0);
+	}
+
+
+	/*****************************************************************/
 
 	ARBProgramObject::ARBProgramObject(const std::string& poName): IProgramObject(poName) {
 		objID = -1; // not used for ARBProgramObject instances
@@ -357,10 +394,17 @@ namespace Shader {
 	}
 
 
+	/*****************************************************************/
 
 	GLSLProgramObject::GLSLProgramObject(const std::string& poName): IProgramObject(poName) {
 		objID = 0;
 		objID = glCreateProgram();
+	}
+
+	GLSLProgramObject::~GLSLProgramObject() {
+		IProgramObject::Release();
+		glDeleteProgram(objID);
+		objID = 0;
 	}
 
 	void GLSLProgramObject::Enable() { RecompileIfNeeded(); glUseProgram(objID); IProgramObject::Enable(); }
@@ -429,9 +473,9 @@ namespace Shader {
 
 	void GLSLProgramObject::Release() {
 		IProgramObject::Release();
-
 		glDeleteProgram(objID);
 		objID = 0;
+		objID = glCreateProgram();
 	}
 
 	void GLSLProgramObject::Reload(bool reloadFromDisk) {

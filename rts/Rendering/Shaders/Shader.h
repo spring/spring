@@ -90,6 +90,7 @@ namespace Shader {
 		virtual void Reload(bool reloadFromDisk) = 0;
 
 		void PrintInfo();
+		const std::string& GetName() const { return name; }
 
 	private:
 		virtual int GetUniformLoc(const std::string& name) = 0;
@@ -193,6 +194,7 @@ namespace Shader {
 
 		virtual void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
 		SOVec& GetAttachedShaderObjs() { return shaderObjs; }
+		bool LoadFromLua(const std::string& filename);
 
 		void RecompileIfNeeded();
 
@@ -203,6 +205,10 @@ namespace Shader {
 		unsigned int GetObjID() const { return objID; }
 
 		const std::string& GetLog() const { return log; }
+
+	public:
+		void AddTextureBinding(const int index, const std::string& luaTexName);
+		void BindTextures() const;
 
 	protected:
 		std::string name;
@@ -216,6 +222,7 @@ namespace Shader {
 		SOVec shaderObjs;
 	public:
 		std::unordered_map<std::size_t, UniformState, fast_hash> uniformStates;
+		std::unordered_map<int, std::string> textures;
 	};
 
 	struct NullProgramObject: public Shader::IProgramObject {
@@ -285,6 +292,7 @@ namespace Shader {
 	struct GLSLProgramObject: public Shader::IProgramObject {
 	public:
 		GLSLProgramObject(const std::string& poName);
+		~GLSLProgramObject();
 		void Enable();
 		void Disable();
 		void Link();

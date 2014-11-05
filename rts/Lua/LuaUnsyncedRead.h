@@ -12,7 +12,7 @@ class LuaUnsyncedRead {
 	public:
 		static bool PushEntries(lua_State* L);
 
-	private:
+	public:
 		static int IsReplay(lua_State* L);
 		static int GetReplayLength(lua_State* L);
 		static int GetModUICtrl(lua_State* L);
