@@ -31,7 +31,7 @@ CInfoTextureCombiner::CInfoTextureCombiner()
 	if (FBO::IsSupported()) {
 		fbo.Bind();
 		fbo.AttachTexture(texture);
-		bool status = fbo.CheckStatus("CInfoTextureCombiner");
+		/*bool status =*/ fbo.CheckStatus("CInfoTextureCombiner");
 		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 		if (fbo.IsValid()) glClear(GL_COLOR_BUFFER_BIT);
 		FBO::Unbind();

@@ -36,7 +36,7 @@ CMetalExtractionTexture::CMetalExtractionTexture()
 	if (FBO::IsSupported()) {
 		fbo.Bind();
 		fbo.AttachTexture(texture);
-		bool status = fbo.CheckStatus("CMetalExtractionTexture");
+		/*bool status =*/ fbo.CheckStatus("CMetalExtractionTexture");
 		FBO::Unbind();
 	}
 
@@ -93,7 +93,7 @@ void CMetalExtractionTexture::Update()
 
 	const      CMetalMap* metalMap        = readMap->metalMap;
 	const          float* extractDepthMap = metalMap->GetExtractionMap();
-	const unsigned short* myAirLos        = &losHandler->airLosMaps[gu->myAllyTeam].front();
+//	const unsigned short* myAirLos        = &losHandler->airLosMaps[gu->myAllyTeam].front();
 	assert(metalMap->GetSizeX() == texSize.x && metalMap->GetSizeZ() == texSize.y);
 
 	// upload raw data to gpu

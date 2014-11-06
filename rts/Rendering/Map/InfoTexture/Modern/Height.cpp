@@ -48,7 +48,7 @@ CHeightTexture::CHeightTexture()
 	if (FBO::IsSupported()) {
 		fbo.Bind();
 		fbo.AttachTexture(texture);
-		bool status = fbo.CheckStatus("CHeightTexture");
+		/*bool status =*/ fbo.CheckStatus("CHeightTexture");
 		FBO::Unbind();
 	}
 

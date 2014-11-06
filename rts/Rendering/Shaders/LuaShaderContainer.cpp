@@ -76,7 +76,7 @@ static void ParseUniformsTable(Shader::IProgramObject* program, const LuaTable* 
 							program->SetUniformMatrix4x4(key, false, vf);
 						} break;
 						default:
-							LOG_L(L_ERROR, "%s-shader uniformMatrix error: only square matrices supported right now", program->GetName().c_str(), program->GetLog().c_str());
+							LOG_L(L_ERROR, "%s-shader uniformMatrix error: only square matrices supported right now: %s", program->GetName().c_str(), program->GetLog().c_str());
 					}
 				}
 			} break;
