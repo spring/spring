@@ -13,7 +13,7 @@
 #endif
 
 
-CONFIG(std::string, HostIPDefault).defaultValue("localhost").dedicatedValue("0.0.0.0").description("Default IP to use for hosting if not specified in script.txt");
+CONFIG(std::string, HostIPDefault).defaultValue("localhost").dedicatedValue("").description("Default IP to use for hosting if not specified in script.txt");
 CONFIG(int, HostPortDefault).defaultValue(8452).minimumValue(0).maximumValue(65535).description("Default Port to use for hosting if not specified in script.txt");
 
 ClientSetup::ClientSetup()
