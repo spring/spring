@@ -1155,7 +1155,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 		}
 	} else {
 		// out of map?
-		if (unsigned(x1) > gs->mapxm1 || unsigned(x2) > gs->mapxm1 || unsigned(z1) > gs->mapym1 || unsigned(z2) > gs->mapym1)
+		if (unsigned(x1) > gs->mapx || unsigned(x2) > gs->mapx || unsigned(z1) > gs->mapy || unsigned(z2) > gs->mapy)
 			return BUILDSQUARE_BLOCKED;
 
 		// this can be called in either context
