@@ -40,6 +40,7 @@ LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
 LIST(APPEND engineHeadlessLibraries engineaGui)
 LIST(APPEND engineHeadlessLibraries no-sound)
 LIST(APPEND engineHeadlessLibraries engineSim)
+LIST(APPEND engineHeadlessLibraries pr-downloader_static)
 
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 

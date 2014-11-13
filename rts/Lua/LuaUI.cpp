@@ -11,6 +11,7 @@
 #include "LuaConstCMD.h"
 #include "LuaConstCMDTYPE.h"
 #include "LuaConstGame.h"
+#include "LuaDownloader.h"
 #include "LuaSyncedRead.h"
 #include "LuaInterCall.h"
 #include "LuaUnsyncedRead.h"
@@ -205,7 +206,8 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
 	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
 	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
-	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)
+	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)     ||
+	    !AddEntriesToTable(L, "Spring",      LuaDownloader::PushEntries)
 	) {
 		KillLua();
 		return;
