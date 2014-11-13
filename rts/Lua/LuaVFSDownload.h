@@ -5,12 +5,12 @@
 
 struct lua_State;
 
-class LuaDownloader {
+class LuaVFSDownload {
 	public:
 		static bool PushEntries(lua_State* L);
 
 	private:
-		static int Download(lua_State* L);
+		static int DownloadArchive(lua_State* L);
 
 };
 

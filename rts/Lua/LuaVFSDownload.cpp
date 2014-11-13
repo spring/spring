@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
-#include "LuaDownloader.h"
+#include "LuaVFSDownload.h"
 
 #include "LuaInclude.h"
 #include "../tools/pr-downloader/src/pr-downloader.h"
@@ -14,15 +14,15 @@
         lua_rawset(L, -3)
 
 
-bool LuaDownloader::PushEntries(lua_State* L)
+bool LuaVFSDownload::PushEntries(lua_State* L)
 {
-	REGISTER_LUA_CFUNC(Download);
+	REGISTER_LUA_CFUNC(DownloadArchive);
 	return true;
 }
 
 /******************************************************************************/
 
-int LuaDownloader::Download(lua_State* L)
+int LuaVFSDownload::DownloadArchive(lua_State* L)
 {
 	const std::string filename = luaL_checkstring(L, 1);
 	const std::string category = luaL_checkstring(L, 2);

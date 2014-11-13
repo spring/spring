@@ -12,5 +12,5 @@ end
 
 function widget:Initialize()
 	Spring.Echo("Starting to download")
-	Spring.Download("ba:stable", "game")
+	VFS.DownloadArchive("ba:stable", "game")
 end
