@@ -207,7 +207,7 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
 	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
 	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)     ||
-	    !AddEntriesToTable(L, "Spring",      LuaVFSDownload::PushEntries)
+	    !AddEntriesToTable(L, "VFS",         LuaVFSDownload::PushEntries)
 	) {
 		KillLua();
 		return;
