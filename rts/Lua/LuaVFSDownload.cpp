@@ -3,6 +3,8 @@
 
 #include "LuaVFSDownload.h"
 
+#include <future>
+
 #include "LuaInclude.h"
 #include "../tools/pr-downloader/src/pr-downloader.h"
 
@@ -20,18 +22,8 @@ bool LuaVFSDownload::PushEntries(lua_State* L)
 	return true;
 }
 
-/******************************************************************************/
-
-int LuaVFSDownload::DownloadArchive(lua_State* L)
+int Download(const std::string& filename)
 {
-	const std::string filename = luaL_checkstring(L, 1);
-	const std::string category = luaL_checkstring(L, 2);
-	if (filename.empty())
-		return 0;
-	if (category.empty())
-		return 0;
-
-//FIXME: make async!
 	LOG_L(L_DEBUG, "going to download %s", filename.c_str());
 	DownloadInit();
 	const int count = DownloadSearch(DL_ANY, CAT_ANY, filename.c_str());
@@ -44,7 +36,23 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 	}
 	DownloadStart();
 	DownloadShutdown();
+	LOG_L(L_DEBUG, "download finished %s", filename.c_str());
+	return 0;
+}
 
+static std::future<int> result;
+
+/******************************************************************************/
+
+int LuaVFSDownload::DownloadArchive(lua_State* L)
+{
+	const std::string filename = luaL_checkstring(L, 1);
+	const std::string category = luaL_checkstring(L, 2);
+	if (filename.empty())
+		return 0;
+	if (category.empty())
+		return 0;
+	result = std::async(std::launch::async, Download, filename);
 	return 0;
 }
 
