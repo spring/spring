@@ -39,6 +39,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -1893,6 +1894,7 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 	gd->jamColor[0]    = (int)(scale *   red[3]);
 	gd->jamColor[1]    = (int)(scale * green[3]);
 	gd->jamColor[2]    = (int)(scale *  blue[3]);
+	infoTextureHandler->SetMode(infoTextureHandler->GetMode());
 	return 0;
 }
 
