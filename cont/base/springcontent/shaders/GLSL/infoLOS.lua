@@ -34,34 +34,20 @@ return {
 			return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
 		}
 
-		//! source: http://www.iquilezles.org/www/articles/texture/texture.htm
 		vec4 getTexel(sampler2D tex, vec2 p)
 		{
 			int lod = int(textureQueryLOD(tex, p).x);
-			vec2 texSize = vec2(textureSize(tex, lod)) * 0.5;
-			p = p * texSize + 0.5;
-
-			vec2 i = floor(p);
-			vec2 f = p - i;
-			vec2 ff = f*f;
-			f = ff * f * ((ff * 6.0 - f * 15.0) + 10.0);
-			p = i + f;
-
-			p = (p - 0.5) / texSize;
-
+			vec2 texSize = vec2(textureSize(tex, lod));
 			vec2 off = vec2(0.0);
 			vec4 c = vec4(0.0);
 
-			off = (vec2(rand(p.st + off),rand(p.ts + off)) * 2.0 - 1.0) / texSize;
-			c += texture2D(tex, p + off * 0.25);
-			off = (vec2(rand(p.st + off),rand(p.ts + off)) * 2.0 - 1.0) / texSize;
-			c += texture2D(tex, p + off * 0.25);
-			off = (vec2(rand(p.st + off),rand(p.ts + off)) * 2.0 - 1.0) / texSize;
-			c += texture2D(tex, p + off * 0.25);
-			off = (vec2(rand(p.st + off),rand(p.ts + off)) * 2.0 - 1.0) / texSize;
-			c += texture2D(tex, p + off * 0.25);
+			for (int i = 0; i<8; i++) {
+				c += texture2D(tex, p + off);
+				off = (vec2(rand(p.st + off.st), rand(p.ts - off.ts)) * 2.0 - 1.0) / texSize;
+			}
+			c *= 0.125;
 
-			return c * 0.15;
+			return smoothstep(0.1, 1.0, c);
 		}
 	#else
 		#define getTexel texture2D
@@ -71,7 +57,11 @@ return {
 			gl_FragColor  = alwaysColor;
 			gl_FragColor += COLORMATRIX0 * getTexel(tex0, texCoord);
 			gl_FragColor += COLORMATRIX1 * getTexel(tex1, texCoord);
-			gl_FragColor += COLORMATRIX2 * getTexel(tex2, texCoord);
+
+			vec4 radarJammer = getTexel(tex2, texCoord);
+			radarJammer.r = fract(radarJammer.r); // needed for zk's radar edge detection
+
+			gl_FragColor += COLORMATRIX2 * radarJammer;
 			gl_FragColor.a = 0.05;
 		}
 	]],
