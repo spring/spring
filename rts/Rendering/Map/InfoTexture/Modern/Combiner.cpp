@@ -116,6 +116,7 @@ void CInfoTextureCombiner::Update()
 	glEnable(GL_BLEND);
 
 	shader->BindTextures();
+	shader->SetUniform("time", float(gs->frameNum + globalRendering->timeOffset));
 
 	const float isx = 2.0f * (gs->mapx / float(gs->pwr2mapx)) - 1.0f;
 	const float isy = 2.0f * (gs->mapy / float(gs->pwr2mapy)) - 1.0f;

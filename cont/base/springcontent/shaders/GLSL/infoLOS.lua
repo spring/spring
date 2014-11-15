@@ -11,6 +11,8 @@ return {
 		}
 	]],
 	fragment = [[#version 130
+		uniform float time;
+
 		uniform vec4 alwaysColor;
 		uniform vec4 losColor;
 		uniform vec4 radarColor;
@@ -21,47 +23,46 @@ return {
 		uniform sampler2D tex2;
 		varying vec2 texCoord;
 
-		mat4 COLORMATRIX0 = mat4(losColor,   0.00,0.00,0.00,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,1.0);
-		mat4 COLORMATRIX1 = mat4(losColor,   0.00,0.00,0.00,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,1.0);
-		mat4 COLORMATRIX2 = mat4(radarColor, jamColor,           0.0,0.0,0.0,0.0, 0.0,0.0,0.0,1.0);
-
 	#ifdef HIGH_QUALITY
 	#extension GL_ARB_texture_query_lod : enable
 
 		//! source: http://www.ozone3d.net/blogs/lab/20110427/glsl-random-generator/
-		float rand(vec2 n)
+		float rand(const in vec2 n)
 		{
-			return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
+			return fract(sin(dot(n, vec2(12.9898, 78.233))) * 43758.5453);
 		}
 
-		vec4 getTexel(sampler2D tex, vec2 p)
+		vec4 getTexel(in sampler2D tex, in vec2 p)
 		{
 			int lod = int(textureQueryLOD(tex, p).x);
 			vec2 texSize = vec2(textureSize(tex, lod));
-			vec2 off = vec2(0.0);
+			vec2 off = vec2(time);
 			vec4 c = vec4(0.0);
 
-			for (int i = 0; i<8; i++) {
-				c += texture2D(tex, p + off);
+			for (int i = 0; i<4; i++) {
 				off = (vec2(rand(p.st + off.st), rand(p.ts - off.ts)) * 2.0 - 1.0) / texSize;
+				c += texture2D(tex, p + off);
 			}
-			c *= 0.125;
+			c *= 0.25;
 
-			return smoothstep(0.1, 1.0, c);
+			return smoothstep(0.5, 1.0, c);
 		}
 	#else
 		#define getTexel texture2D
 	#endif
 
 		void main() {
-			gl_FragColor  = alwaysColor;
-			gl_FragColor += COLORMATRIX0 * getTexel(tex0, texCoord);
-			gl_FragColor += COLORMATRIX1 * getTexel(tex1, texCoord);
+			gl_FragColor  = vec4(0.0);
+			//gl_FragColor  = alwaysColor;
+			gl_FragColor += losColor * getTexel(tex0, texCoord).r;
+			gl_FragColor += losColor * getTexel(tex1, texCoord).r;
 
-			vec4 radarJammer = getTexel(tex2, texCoord);
-			radarJammer.r = fract(radarJammer.r); // needed for zk's radar edge detection
+			vec2 radarJammer = getTexel(tex2, texCoord).rg;
+			gl_FragColor += radarColor * radarJammer.r;
+			gl_FragColor +=   jamColor * radarJammer.g;
+			gl_FragColor.rgb = fract(gl_FragColor.rgb); // fract() needed for zk's radar edge detection
 
-			gl_FragColor += COLORMATRIX2 * radarJammer;
+			gl_FragColor += alwaysColor;
 			gl_FragColor.a = 0.05;
 		}
 	]],
