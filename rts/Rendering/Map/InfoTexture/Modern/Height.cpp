@@ -142,10 +142,10 @@ void CHeightTexture::Update()
 	glViewport(0,0, texSize.x, texSize.y);
 	shader->Enable();
 	glDisable(GL_BLEND);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, heightMapTexture->GetTextureID());
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, paletteTex);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, heightMapTexture->GetTextureID());
 	glBegin(GL_QUADS);
 		glVertex2f(0.f, 0.f);
 		glVertex2f(0.f, 1.f);

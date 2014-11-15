@@ -147,7 +147,6 @@ void CLosTexture::Update()
 	// has no native support for them and so the transformation would happen on the CPU, too.
 	glBindTexture(GL_TEXTURE_2D, uploadTex);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RG, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
-	glGenerateMipmap(GL_TEXTURE_2D);
 	infoTexPBO.Invalidate();
 	infoTexPBO.Unbind();
 
@@ -169,5 +168,4 @@ void CLosTexture::Update()
 	// generate mipmaps
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glGenerateMipmap(GL_TEXTURE_2D);
-
 }
