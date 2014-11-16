@@ -1266,6 +1266,8 @@ public:
 		game->chatting = true;
 		game->ignoreNextChar = true;
 		game->consoleHistory->ResetPosition();
+		inMapDrawer->SetDrawMode(false);
+
 		return true;
 	}
 
