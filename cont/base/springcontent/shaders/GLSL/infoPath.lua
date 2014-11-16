@@ -65,8 +65,8 @@ return {
 			vec4 pathData = texture2D(tex0, texCoord);
 			gl_FragColor = COLORMATRIX0 * pathData;
 
-			gl_FragColor.r -= step(1.0, pathData.r) * 0.3;
-			gl_FragColor.b += step(1.0, pathData.r) * 1.0;
+			gl_FragColor.r -= smoothstep(0.75, 1.0, pathData.r) * 0.3;
+			gl_FragColor.b += smoothstep(0.75, 1.0, pathData.r) * 1.0;
 
 			gl_FragColor = mix(vec4(1.0), gl_FragColor, getTexel(tex1, texCoord).r * 0.35 + 0.7);
 			gl_FragColor.a = 0.3;
