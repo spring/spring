@@ -54,8 +54,9 @@ return {
 		void main() {
 			gl_FragColor  = vec4(0.0);
 			//gl_FragColor  = alwaysColor;
-			gl_FragColor += losColor * getTexel(tex0, texCoord).r;
-			gl_FragColor += losColor * getTexel(tex1, texCoord).r;
+			float los = getTexel(tex0, texCoord).r;
+			float airlos = getTexel(tex1, texCoord).r;
+			gl_FragColor += losColor * ((los + airlos) * 0.5);
 
 			vec2 radarJammer = getTexel(tex2, texCoord).rg;
 			gl_FragColor += radarColor * radarJammer.r;
