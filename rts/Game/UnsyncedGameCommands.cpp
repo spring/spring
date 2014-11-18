@@ -1848,8 +1848,6 @@ public:
 	}
 };
 
-
-
 class ToggleLOSActionExecutor : public IUnsyncedActionExecutor {
 public:
 	ToggleLOSActionExecutor() : IUnsyncedActionExecutor("ToggleLOS",
@@ -1857,6 +1855,17 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		infoTextureHandler->ToggleMode("los");
+		return true;
+	}
+};
+
+class ToggleInfoActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ToggleInfoActionExecutor() : IUnsyncedActionExecutor("ToggleInfo",
+			"Toggles current info texture view") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		infoTextureHandler->ToggleMode(action.GetArgs());
 		return true;
 	}
 };
@@ -3252,6 +3261,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ShowPathFlowActionExecutor());
 	AddActionExecutor(new ShowPathCostActionExecutor());
 	AddActionExecutor(new ToggleLOSActionExecutor());
+	AddActionExecutor(new ToggleInfoActionExecutor());
 	AddActionExecutor(new ShareDialogActionExecutor());
 	AddActionExecutor(new QuitMessageActionExecutor());
 	AddActionExecutor(new QuitMenuActionExecutor());

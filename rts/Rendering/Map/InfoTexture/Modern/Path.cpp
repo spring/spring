@@ -71,12 +71,10 @@ static inline const SColor& GetBuildColor(const BuildSquareStatus& status) {
 
 
 static SColor GetSpeedModColor(const float sm) {
-	SColor col(0, 0, 0);
+	SColor col(255, 0, 0);
 	if (sm > 0.0f) {
 		col.r = 255 - std::min(sm * 255.0f, 255.0f);
 		col.g = 255 - col.r;
-	} else {
-		col.r = 255;
 	}
 	return col;
 }
