@@ -37,12 +37,14 @@ private:
 
 private:
 	float middleClickScrollSpeed;
-	float zscale;
 	float height;
 	float oldAltHeight;
 	bool changeAltHeight;
 	float maxHeight;
 	float tiltSpeed;
+	float angle;
+
+	static constexpr float DEFAULT_ANGLE = 0.464f;
 };
 
 #endif // _OVERHEAD_CONTROLLER_H
