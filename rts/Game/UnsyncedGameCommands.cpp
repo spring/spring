@@ -49,9 +49,12 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
+#include "Rendering/Map/InfoTexture/Modern/Path.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaUI.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -1871,6 +1874,53 @@ public:
 };
 
 
+class ShowPathTypeActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShowPathTypeActionExecutor() : IUnsyncedActionExecutor("ShowPathType",
+			"Toggles current info texture view") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		CPathTexture* pathTexInfo = dynamic_cast<CPathTexture*>(infoTextureHandler->GetInfoTexture("path"));
+		if (pathTexInfo) {
+			bool set = false;
+
+			if (!action.GetArgs().empty()) {
+				if (!set) {
+					bool failed = false;
+					unsigned int i = StringToInt(action.GetArgs(), &failed);
+					if (failed) i = -1;
+					const MoveDef* md = moveDefHandler->GetMoveDefByName(action.GetArgs());
+					if (!md && i<moveDefHandler->GetNumMoveDefs()) md = moveDefHandler->GetMoveDefByPathType(i);
+					if (md) {
+						set = true;
+						pathTexInfo->ShowMoveDef(md->pathType);
+						LOG("Showing PathView for MoveDef: %s", md->name.c_str());
+					}
+				}
+
+				if (!set) {
+					const UnitDef* ud = unitDefHandler->GetUnitDefByName(action.GetArgs());
+					if (ud) {
+						set = true;
+						pathTexInfo->ShowUnitDef(ud->id);
+						LOG("Showing BuildView for UnitDef: %s", ud->name.c_str());
+					}
+				}
+			}
+
+			if (!set) {
+				pathTexInfo->ShowMoveDef(-1);
+				LOG("Switching back to automatic PathView");
+			}
+
+			if (set && infoTextureHandler->GetMode() != "path")
+				infoTextureHandler->ToggleMode("path");
+		}
+		return true;
+	}
+};
+
+
 
 class ShareDialogActionExecutor : public IUnsyncedActionExecutor {
 public:
@@ -3262,6 +3312,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ShowPathCostActionExecutor());
 	AddActionExecutor(new ToggleLOSActionExecutor());
 	AddActionExecutor(new ToggleInfoActionExecutor());
+	AddActionExecutor(new ShowPathTypeActionExecutor());
 	AddActionExecutor(new ShareDialogActionExecutor());
 	AddActionExecutor(new QuitMessageActionExecutor());
 	AddActionExecutor(new QuitMenuActionExecutor());

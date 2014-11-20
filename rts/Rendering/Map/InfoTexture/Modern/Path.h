@@ -8,6 +8,10 @@
 #include "System/Misc/SpringTime.h"
 
 
+class MoveDef;
+class UnitDef;
+
+
 class CPathTexture : public CPboInfoTexture
 {
 public:
@@ -19,10 +23,20 @@ public:
 
 	GLuint GetTexture();
 
+	bool ShowMoveDef(const int pathType);
+	bool ShowUnitDef(const int udefid);
+
 private:
+	const MoveDef* GetSelectedMoveDef();
+	const UnitDef* GetCurrentBuildCmdUnitDef();
+
+private:
+	bool isCleared;
 	int updateFrame;
 	int updateProcess;
 	unsigned int lastSelectedPathType;
+	int forcedPathType;
+	int forcedUnitDef;
 	spring_time lastUsage;
 	FBO fbo;
 };
