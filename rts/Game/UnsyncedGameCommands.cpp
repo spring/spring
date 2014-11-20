@@ -1877,7 +1877,7 @@ public:
 class ShowPathTypeActionExecutor : public IUnsyncedActionExecutor {
 public:
 	ShowPathTypeActionExecutor() : IUnsyncedActionExecutor("ShowPathType",
-			"Toggles current info texture view") {}
+			"Shows path traversability for a given MoveDefName, MoveDefID or UnitDefName") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		CPathTexture* pathTexInfo = dynamic_cast<CPathTexture*>(infoTextureHandler->GetInfoTexture("path"));
