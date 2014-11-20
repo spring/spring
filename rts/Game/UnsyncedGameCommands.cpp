@@ -1813,6 +1813,8 @@ public:
 			"Enable rendering of the path traversability-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		CPathTexture* pathTexInfo = dynamic_cast<CPathTexture*>(infoTextureHandler->GetInfoTexture("path"));
+		if (pathTexInfo) pathTexInfo->ShowMoveDef(-1);
 		infoTextureHandler->ToggleMode("path");
 		return true;
 	}

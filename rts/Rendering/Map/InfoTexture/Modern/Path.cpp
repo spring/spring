@@ -141,8 +141,10 @@ bool CPathTexture::ShowUnitDef(const int udefid)
 bool CPathTexture::IsUpdateNeeded()
 {
 	// don't update when not rendered/used
-	if ((spring_gettime() - lastUsage).toSecsi() > 2)
+	if ((spring_gettime() - lastUsage).toSecsi() > 2) {
+		forcedUnitDef = forcedPathType = -1;
 		return false;
+	}
 
 	// newly build cmd active?
 	const UnitDef* ud = GetCurrentBuildCmdUnitDef();
