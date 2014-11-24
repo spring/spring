@@ -64,6 +64,23 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 		dynamic_cast<CPathEstimator*>(pf)->nextPathEstimator = this;
 	}
 
+	// precalc for FindOffset()
+	{
+		offsetBlocksSortedByCost.reserve(BLOCK_SIZE * BLOCK_SIZE);
+		for (unsigned int z = 0; z < BLOCK_SIZE; ++z) {
+			for (unsigned int x = 0; x < BLOCK_SIZE; ++x) {
+				const float dx = x - (float)(BLOCK_SIZE - 1) * 0.5f;
+				const float dz = z - (float)(BLOCK_SIZE - 1) * 0.5f;
+				const float cost = (dx * dx + dz * dz);
+
+				offsetBlocksSortedByCost.emplace_back(cost, x, z);
+			}
+		}
+		std::sort(offsetBlocksSortedByCost.begin(), offsetBlocksSortedByCost.end(), [](const SOffsetBlock a, const SOffsetBlock b) {
+			return a.cost < b.cost;
+		});
+	}
+
 	// load precalculated data if it exists
 	InitEstimator(cacheFileName, mapFileName);
 }
@@ -241,7 +258,7 @@ int2 CPathEstimator::FindOffset(const MoveDef& moveDef, unsigned int blockX, uns
 	float bestCost = std::numeric_limits<float>::max();
 
 	// search for an accessible position within this block
-	for (unsigned int z = 0; z < BLOCK_SIZE; ++z) {
+	/*for (unsigned int z = 0; z < BLOCK_SIZE; ++z) {
 		for (unsigned int x = 0; x < BLOCK_SIZE; ++x) {
 			float speedMod = CMoveMath::GetPosSpeedMod(moveDef, lowerX + x, lowerZ + z);
 			bool curblock = (speedMod == 0.0f) || CMoveMath::IsBlockedStructure(moveDef, lowerX + x, lowerZ + z, NULL);
@@ -258,7 +275,28 @@ int2 CPathEstimator::FindOffset(const MoveDef& moveDef, unsigned int blockX, uns
 				}
 			}
 		}
+	}*/
 
+	// Equal code
+	// just that we have sorted the squares by their baseCost, so
+	// can early exit, when it increases above our current best one.
+	// Performance: tests showed that only ~60% need to be tested
+	for (const SOffsetBlock& ob: offsetBlocksSortedByCost) {
+		if (ob.cost >= bestCost) {
+			break;
+		}
+
+		const int2 blockPos(lowerX + ob.offset.x, lowerZ + ob.offset.y);
+		const float speedMod = CMoveMath::GetPosSpeedMod(moveDef, blockPos.x, blockPos.y);
+
+		//assert((blockArea / (0.001f + speedMod) >= 0.0f);
+		const float cost = ob.cost + (blockArea / (0.001f + speedMod));
+		if (cost < bestCost) {
+			if (!CMoveMath::IsBlockedStructure(moveDef, blockPos.x, blockPos.y, NULL)) {
+				bestCost = cost;
+				bestPos  = blockPos;
+			}
+		}
 	}
 
 	// return the offset found
