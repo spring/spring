@@ -76,7 +76,7 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 				offsetBlocksSortedByCost.emplace_back(cost, x, z);
 			}
 		}
-		std::sort(offsetBlocksSortedByCost.begin(), offsetBlocksSortedByCost.end(), [](const SOffsetBlock a, const SOffsetBlock b) {
+		std::stable_sort(offsetBlocksSortedByCost.begin(), offsetBlocksSortedByCost.end(), [](const SOffsetBlock a, const SOffsetBlock b) {
 			return a.cost < b.cost;
 		});
 	}
