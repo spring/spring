@@ -228,7 +228,7 @@ void CPathEstimator::EstimatePathCosts(unsigned int blockIdx, unsigned int threa
 
 
 /**
- * Finds a square accessable by the given MoveDef within the given block
+ * Move around the blockPos a bit, so we `surround` unpassable blocks.
  */
 int2 CPathEstimator::FindOffset(const MoveDef& moveDef, unsigned int blockX, unsigned int blockZ) const
 {
@@ -237,45 +237,32 @@ int2 CPathEstimator::FindOffset(const MoveDef& moveDef, unsigned int blockX, uns
 	const unsigned int lowerZ = blockZ * BLOCK_SIZE;
 	const unsigned int blockArea = (BLOCK_SIZE * BLOCK_SIZE) / SQUARE_SIZE;
 
-	unsigned int bestPosX = BLOCK_SIZE >> 1;
-	unsigned int bestPosZ = BLOCK_SIZE >> 1;
-
+	int2 bestPos(lowerX + (BLOCK_SIZE >> 1), lowerZ + (BLOCK_SIZE >> 1));
 	float bestCost = std::numeric_limits<float>::max();
-	float speedMod = CMoveMath::GetPosSpeedMod(moveDef, lowerX, lowerZ);
-	bool curblock = (speedMod == 0.0f) || CMoveMath::IsBlockedStructure(moveDef, lowerX, lowerZ, NULL);
 
 	// search for an accessible position within this block
 	for (unsigned int z = 0; z < BLOCK_SIZE; ++z) {
-		bool zcurblock = curblock;
-
 		for (unsigned int x = 0; x < BLOCK_SIZE; ++x) {
+			float speedMod = CMoveMath::GetPosSpeedMod(moveDef, lowerX + x, lowerZ + z);
+			bool curblock = (speedMod == 0.0f) || CMoveMath::IsBlockedStructure(moveDef, lowerX + x, lowerZ + z, NULL);
+
 			if (!curblock) {
-				const float dx = x - (float)(BLOCK_SIZE - 1) / 2.0f;
-				const float dz = z - (float)(BLOCK_SIZE - 1) / 2.0f;
+				const float dx = x - (float)(BLOCK_SIZE - 1) * 0.5f;
+				const float dz = z - (float)(BLOCK_SIZE - 1) * 0.5f;
 				const float cost = (dx * dx + dz * dz) + (blockArea / (0.001f + speedMod));
 
 				if (cost < bestCost) {
 					bestCost = cost;
-					bestPosX = x;
-					bestPosZ = z;
+					bestPos.x = lowerX + x;
+					bestPos.y = lowerZ + z;
 				}
 			}
-
-			// if last position was not blocked, then we do not need to check the entire square
-			speedMod = CMoveMath::GetPosSpeedMod(moveDef, lowerX + x, lowerZ + z);
-			curblock = (speedMod == 0.0f) || (curblock ?
-				CMoveMath::IsBlockedStructure(moveDef, lowerX + x, lowerZ + z, NULL) :
-				CMoveMath::IsBlockedStructureXmax(moveDef, lowerX + x, lowerZ + z, NULL));
 		}
 
-		speedMod = CMoveMath::GetPosSpeedMod(moveDef, lowerX, lowerZ + z);
-		curblock = (speedMod == 0.0f) || (zcurblock ?
-			CMoveMath::IsBlockedStructure(moveDef, lowerX, lowerZ + z, NULL) :
-			CMoveMath::IsBlockedStructureZmax(moveDef, lowerX, lowerZ + z, NULL));
 	}
 
 	// return the offset found
-	return int2(blockX * BLOCK_SIZE + bestPosX, blockZ * BLOCK_SIZE + bestPosZ);
+	return bestPos;
 }
 
 
