@@ -3,15 +3,57 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 -- 99.0 ---------------------------------------------------------
+Major:
+ - new shader based InfoTexture
+ - new linux crashhandler by Major Bor3d0m
+ - bugfixes & improvements
+
+
+SpringSettings.cfg:
  ! don't read old config file locations any more:
     AppData\Local\springsettings.cfg
     ~/.springrc
- ! new linux crashhandler by Major Bor3d0m
-    libunwind is required to compile spring on linux
  ! add dedicatedValue & headlesValue to confighandler:
-    make spring-dedicated listen at 0.0.0.0 as default again
-    add headless values from springrc-tempate-headless.txt
+  ! make spring-dedicated listen at 0.0.0.0 as default again
+  ! add headless values from springrc-tempate-headless.txt
+ - print user's config to infolog
+
+System:
+ ! new linux crashhandler by Major Bor3d0m
+  - libunwind is required to compile spring on linux
+ - fix headless compile on systems w/o x11 & SDL
+
+(G)UI:
  - fix #4576 F6 does not sound mute
+ - fix #4578: backspace key events aren't captured by chat entry mode
+ - disable in-map draw when user starts writing (should fix #4455)
+ - document keychains in uikeys.txt
+ - improve default cmdcolors.txt
+ - improve default los colors
+ - OverheadCamera: make angle 100% stable when doing `mousewheel down then up`
+ ! remove los view w/o radar a.k.a. [;] (can be emulated with Spring.SetLosViewColors)
+
+Sim:
+ - fix harvesting
+ - fix #4591: builders `randomly` remove build orders from queue
+ - fix units disobey move cmds
+ - fix #4587 (stuck units in labs): remove a failing optimization CPathEstimator::FindOffset()
+
+Collisions:
+ - fix #4592: broken per-piece coldet
+ - fix and improve CQuadField::GetUnitsAndFeaturesColVol (fixes #4602)
+
+New InfoTexture Renderer:
+ - new shader based InfoTexture (faster, shinier & modular)
+  - add new `/ToggleInfo %name_or_shader_path%`
+  - fix #4608: add new /showpathtype [movdefname | movedefid | unitdefname | -1]
+
+Lua:
+ - add Spring.GetLosViewColors
+ ! remove Spring.UpdateInfoTexture
+
+
+
 
 -- 98.0 ---------------------------------------------------------
 Major:
