@@ -51,6 +51,8 @@ New InfoTexture Renderer:
 Lua:
  - add Spring.GetLosViewColors
  ! remove Spring.UpdateInfoTexture
+ ! fix Spring.GetKeyState & Spring.PressedKeys expecting SDL2 keycodes while whole lua gets SDL1 ones
+ ! Spring.PressedKeys now also returns keynames
 
 
 

@@ -2044,8 +2044,16 @@ int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
 	lua_newtable(L);
 	for (auto key: KeyInput::GetPressedKeys()) {
 		if (key.second) {
+			const int keyCode = SDL21_keysyms(key.first);
+
+			// [keyCode] = true
 			lua_pushboolean(L, true);
-			lua_rawseti(L, -2, SDL21_keysyms(key.first));
+			lua_rawseti(L, -2, keyCode);
+
+			// ["keyName"] = true
+			lua_pushsstring(L, keyCodes->GetName(keyCode));
+			lua_pushboolean(L, true);
+			lua_rawset(L, -3);
 		}
 	}
 	return 1;
