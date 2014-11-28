@@ -283,18 +283,18 @@ unsigned int CPathManager::RequestPath(
 	unsigned int pathID = 0;
 
 	if (result != IPath::Error) {
-		if (result != IPath::CantGetCloser) {
-			LowRes2MedRes(*newPath, startPos, caller, synced);
-			MedRes2MaxRes(*newPath, startPos, caller, synced);
-		} else {
-			// add one dummy waypoint so that the calling MoveType
-			// does not consider this request a failure, which can
-			// happen when startPos is very close to goalPos
-			//
-			// otherwise, code relying on MoveType::progressState
-			// (eg. BuilderCAI::MoveInBuildRange) would misbehave
-			// (eg. reject build orders)
-			if (newPath->maxResPath.path.empty()) {
+		if (newPath->maxResPath.path.empty()) {
+			if (result != IPath::CantGetCloser) {
+				LowRes2MedRes(*newPath, startPos, caller, synced);
+				MedRes2MaxRes(*newPath, startPos, caller, synced);
+			} else {
+				// add one dummy waypoint so that the calling MoveType
+				// does not consider this request a failure, which can
+				// happen when startPos is very close to goalPos
+				//
+				// otherwise, code relying on MoveType::progressState
+				// (eg. BuilderCAI::MoveInBuildRange) would misbehave
+				// (eg. reject build orders)
 				newPath->maxResPath.path.push_back(startPos);
 				newPath->maxResPath.squares.push_back(int2(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE));
 			}
@@ -340,7 +340,7 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, c
 	medResPath.path.pop_back();
 
 	// remove med-res waypoints until the next one is far enough
-	while (!medResPath.path.empty() && (medResPath.path.back()).SqDistance2D(startPos) < Square(MAXRES_SEARCH_DISTANCE * SQUARE_SIZE)) {
+	while (!medResPath.path.empty() && startPos.SqDistance2D(medResPath.path.back()) < Square(MAXRES_SEARCH_DISTANCE * SQUARE_SIZE)) {
 		medResPath.path.pop_back();
 	}
 
@@ -351,18 +351,14 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, c
 	}
 
 	// define the search
-	CCircularSearchConstraint rangedGoalPFD(startPos, goalPos, 0.0f, 2.0f, 1000);
-	rangedGoalPFD.synced = synced;
+	CCircularSearchConstraint rangedGoalDef(startPos, goalPos, 0.0f, 2.0f, 1000);
+	rangedGoalDef.synced = synced;
 
 	// Perform the search.
 	// If this is the final improvement of the path, then use the original goal.
 	IPath::SearchResult result = IPath::Error;
-
-	if (medResPath.path.empty() && lowResPath.path.empty()) {
-		result = maxResPF->GetPath(*multiPath.moveDef, *multiPath.peDef, owner, startPos, maxResPath, MAX_SEARCHED_NODES_PF >> 3);
-	} else {
-		result = maxResPF->GetPath(*multiPath.moveDef, rangedGoalPFD, owner, startPos, maxResPath, MAX_SEARCHED_NODES_PF >> 3);
-	}
+	auto pfd = (medResPath.path.empty() && lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
+	result = maxResPF->GetPath(*multiPath.moveDef, pfd, owner, startPos, maxResPath, MAX_SEARCHED_NODES_ON_REFINE);
 
 	// If no refined path could be found, set goal as desired goal.
 	if (result == IPath::CantGetCloser || result == IPath::Error) {
@@ -384,7 +380,7 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, c
 	lowResPath.path.pop_back();
 
 	// remove low-res waypoints until the next one is far enough
-	while (!lowResPath.path.empty() && (lowResPath.path.back()).SqDistance2D(startPos) < Square(MEDRES_SEARCH_DISTANCE * SQUARE_SIZE)) {
+	while (!lowResPath.path.empty() && startPos.SqDistance2D(lowResPath.path.back()) < Square(MEDRES_SEARCH_DISTANCE * SQUARE_SIZE)) {
 		lowResPath.path.pop_back();
 	}
 
@@ -404,12 +400,8 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, c
 	// Perform the search.
 	// If there is no low-res path left, use original goal.
 	IPath::SearchResult result = IPath::Error;
-
-	if (lowResPath.path.empty()) {
-		result = medResPE->GetPath(*multiPath.moveDef, *multiPath.peDef, owner, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE);
-	} else {
-		result = medResPE->GetPath(*multiPath.moveDef, rangedGoalDef, owner, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE);
-	}
+	auto pfd = (lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
+	result = medResPE->GetPath(*multiPath.moveDef, pfd, owner, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE);
 
 	// If no refined path could be found, set goal as desired goal.
 	if (result == IPath::CantGetCloser || result == IPath::Error) {
