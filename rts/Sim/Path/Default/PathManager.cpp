@@ -351,7 +351,7 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, c
 	}
 
 	// define the search
-	CCircularSearchConstraint rangedGoalDef(startPos, goalPos, 0.0f, 2.0f, 1000);
+	CCircularSearchConstraint rangedGoalDef(startPos, goalPos, 0.0f, 2.0f, Square(MAXRES_SEARCH_DISTANCE));
 	rangedGoalDef.synced = synced;
 
 	// Perform the search.
@@ -385,16 +385,13 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, c
 	}
 
 	// get the goal of the detailed search
-	float3 goalPos;
-
-	if (lowResPath.path.empty()) {
-		goalPos = lowResPath.pathGoal;
-	} else {
+	float3 goalPos = lowResPath.pathGoal;
+	if (!lowResPath.path.empty()) {
 		goalPos = lowResPath.path.back();
 	}
 
 	// define the search
-	CCircularSearchConstraint rangedGoalDef(startPos, goalPos, 0.0f, 2.0f, 20);
+	CCircularSearchConstraint rangedGoalDef(startPos, goalPos, 0.0f, 2.0f, Square(MEDRES_SEARCH_DISTANCE));
 	rangedGoalDef.synced = synced;
 
 	// Perform the search.
