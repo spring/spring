@@ -1930,50 +1930,6 @@ int LuaUnsyncedRead::GetMouseStartPosition(lua_State* L)
 	return 8;
 }
 
-
-/******************************************************************************/
-/******************************************************************************/
-
-int LuaUnsyncedRead::GetKeyState(lua_State* L)
-{
-	const int key = luaL_checkint(L, 1);
-	lua_pushboolean(L, KeyInput::IsKeyPressed(key));
-	return 1;
-}
-
-
-int LuaUnsyncedRead::GetModKeyState(lua_State* L)
-{
-	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_ALT));
-	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_CTRL));
-	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_GUI));
-	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_SHIFT));
-	return 4;
-}
-
-
-int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
-{
-	lua_newtable(L);
-	for (auto key: KeyInput::GetPressedKeys()) {
-		if (key.second) {
-			lua_pushboolean(L, true);
-			lua_rawseti(L, -2, key.first);
-		}
-	}
-	return 1;
-}
-
-
-int LuaUnsyncedRead::GetInvertQueueKey(lua_State* L)
-{
-	if (guihandler == NULL) {
-		return 0;
-	}
-	lua_pushboolean(L, guihandler->GetInvertQueueKey());
-	return 1;
-}
-
 /******************************************************************************/
 
 int LuaUnsyncedRead::GetClipboard(lua_State* L)
@@ -2058,6 +2014,50 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 int LuaUnsyncedRead::GetCurrentTooltip(lua_State* L)
 {
 	lua_pushsstring(L, mouse->GetCurrentTooltip());
+	return 1;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetKeyState(lua_State* L)
+{
+	const int key = SDL12_keysyms(luaL_checkint(L, 1));
+	lua_pushboolean(L, KeyInput::IsKeyPressed(key));
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetModKeyState(lua_State* L)
+{
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_ALT));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_CTRL));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_GUI));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_SHIFT));
+	return 4;
+}
+
+
+int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
+{
+	lua_newtable(L);
+	for (auto key: KeyInput::GetPressedKeys()) {
+		if (key.second) {
+			lua_pushboolean(L, true);
+			lua_rawseti(L, -2, SDL21_keysyms(key.first));
+		}
+	}
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetInvertQueueKey(lua_State* L)
+{
+	if (guihandler == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, guihandler->GetInvertQueueKey());
 	return 1;
 }
 
