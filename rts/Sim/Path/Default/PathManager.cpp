@@ -457,14 +457,12 @@ float3 CPathManager::NextWayPoint(
 	// recursive refinement of its lower-resolution segments
 	// if so, check if the med-res path also needs extending
 	if (extendMaxResPath) {
-		if (extendMedResPath) {
-			LowRes2MedRes(*multiPath, callerPos, owner, synced);
-		}
-
 		if (multiPath->caller != NULL) {
 			multiPath->caller->UnBlock();
 		}
 
+		if (extendMedResPath)
+			LowRes2MedRes(*multiPath, callerPos, owner, synced);
 		MedRes2MaxRes(*multiPath, callerPos, owner, synced);
 
 		if (multiPath->caller != NULL) {
@@ -474,8 +472,7 @@ float3 CPathManager::NextWayPoint(
 		FinalizePath(multiPath, callerPos, multiPath->finalGoal, multiPath->searchResult == IPath::CantGetCloser);
 	}
 
-	float3 waypoint;
-
+	float3 waypoint = noPathPoint;
 	do {
 		// get the next waypoint from the max-res path
 		//
