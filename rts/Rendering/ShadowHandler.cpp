@@ -546,7 +546,7 @@ float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& p
 	// using the length of that projected vector instead
 	//
 	// note: "radius" is actually the diameter
-	static const float maxMapDiameter = math::sqrtf(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE));
+	static const float maxMapDiameter = math::sqrt(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE));
 	static       float curMapDiameter = 0.0f;
 
 	static float3 sunDir3D = ZeroVector;
@@ -649,8 +649,8 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& proje
 		frustumRadius = std::max(frustumRadius, rad);
 	}
 
-	static const float maxMapDiameter = math::sqrtf(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE));
-	       const float frustumDiameter = math::sqrtf(frustumRadius) * 2.0f;
+	static const float maxMapDiameter = math::sqrt(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE));
+	       const float frustumDiameter = math::sqrt(frustumRadius) * 2.0f;
 
 	return std::min(maxMapDiameter, frustumDiameter);
 }

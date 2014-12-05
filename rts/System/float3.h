@@ -679,7 +679,7 @@ public:
 	/**
 	 * @brief Clamps to FaceHeightmap
 	 *
-	 * Clamps to the `face heightmap` resolution [0 .. gs->mapxy-1]
+	 * Clamps to the `face heightmap` resolution [0 .. gs->mapxy-1] * SQUARE_SIZE
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
 	 * @deprecated  use ClampInMap instead, but see the note!
 	 * @see #ClampInMap
@@ -689,7 +689,7 @@ public:
 	/**
 	 * @brief Clamps to VertexHeightmap
 	 *
-	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. gs->mapxy]
+	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. gs->mapxy] * SQUARE_SIZE
 	 * @note USE THIS!
 	 */
 	void ClampInMap();
