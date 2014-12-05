@@ -33,9 +33,6 @@ public:
 	bool flipped;
 
 private:
-	void UpdateVectors();
-
-private:
 	float middleClickScrollSpeed;
 	float height;
 	float oldAltHeight;

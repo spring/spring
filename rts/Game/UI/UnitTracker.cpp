@@ -248,7 +248,7 @@ void CUnitTracker::SetCam()
 	if (timeOut > 0) {
 		// Transition between 2 targets
 		timeOut++;
-		camera->forward = oldCamDir;
+		camera->SetDir(oldCamDir);
 		camera->SetPos(oldCamPos);
 		if (camHandler->GetCurrentControllerNum() == CCameraHandler::CAMERA_MODE_FIRSTPERSON) {
 			camHandler->GetCurrentController().SetDir(oldCamDir);
@@ -298,13 +298,14 @@ void CUnitTracker::SetCam()
 
 		camera->SetPos(trackPos);
 
-		camera->forward = u->pos + (u->speed * globalRendering->timeOffset) - camera->GetPos();
-		camera->forward.ANormalize();
-		camera->forward += trackDir;
-		camera->forward.ANormalize();
+		float3 wantedDir = u->drawMidPos - camera->GetPos();
+		wantedDir.ANormalize();
+		wantedDir += trackDir;
+		wantedDir.ANormalize();
+		camera->SetDir(wantedDir);
 
 		CFPSController& fpsCamera = static_cast<CFPSController&>(camHandler->GetCurrentController());
-		fpsCamera.SetDir(camera->forward);
+		fpsCamera.SetDir(camera->GetDir());
 		fpsCamera.SetPos(trackPos);
 
 		if (doRoll) {
@@ -318,7 +319,7 @@ void CUnitTracker::SetCam()
 			camera->up = UpVector;
 		}
 
-		oldCamDir = camera->forward;
+		oldCamDir = camera->GetDir();
 		oldCamPos = camera->GetPos();
 	}
 }

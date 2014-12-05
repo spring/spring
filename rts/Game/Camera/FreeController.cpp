@@ -50,8 +50,8 @@ CFreeController::CFreeController()
 
 	if (camera) {
 		const float hDist = math::sqrt((dir.x * dir.x) + (dir.z * dir.z));
-		camera->rot.y = math::atan2(dir.x, dir.z); // yaw
-		camera->rot.x = math::atan2(dir.y, hDist); // pitch
+		camera->SetRotY(math::atan2(dir.x, dir.z)); // yaw
+		camera->SetRotX(math::atan2(dir.y, hDist)); // pitch
 	}
 	pos -= (dir * 1000.0f);
 
@@ -85,15 +85,15 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 	const float rads = math::atan2(diff.x, diff.z);
 	const float len2D = diff.Length2D();
 
-	camera->rot.y = rads;
+	camera->SetRotY(rads);
 
 	if (math::fabs(len2D) <= 0.001f) {
-		camera->rot.x = 0.0f;
+		camera->SetRotX(0.0f);
 	} else {
-		camera->rot.x = math::atan2((trackPos.y - pos.y), len2D);
+		camera->SetRotX(math::atan2((trackPos.y - pos.y), len2D));
 	}
 
-	camera->UpdateForward(GetDir());
+	camera->SetDir(GetDir());
 }
 
 
@@ -127,14 +127,11 @@ void CFreeController::Update()
 	if (gndLock && (autoTilt > 0.0f)) {
 		const float gndHeight = CGround::GetHeightReal(pos.x, pos.z, false);
 		if (pos.y < (gndHeight + gndOffset + 1.0f)) {
-			float3 hDir;
-			hDir.y = 0.0f;
-			hDir.x = (float)math::sin(camera->rot.y);
-			hDir.z = (float)math::cos(camera->rot.y);
+			const float3 hDir(math::sin(camera->GetRot().y), 0.f, math::cos(camera->GetRot().y));
 			const float3 gndNormal = CGround::GetSmoothNormal(pos.x, pos.z, false);
 			const float dot = gndNormal.dot(hDir);
 			const float gndRotX = (float)math::acos(dot) - (PI * 0.5f);
-			const float rotXdiff = (gndRotX - camera->rot.x);
+			const float rotXdiff = (gndRotX - camera->GetRot().x);
 			autoTiltVel = (autoTilt * rotXdiff);
 		}
 	}
@@ -178,9 +175,9 @@ void CFreeController::Update()
 
 	// set the new position/rotation
 	if (!tracking) {
-		pos           += (vel         * ft);
-		camera->rot   += (avel        * ft);
-		camera->rot.x += (autoTiltVel * ft); // note that this is not smoothed
+		pos += (vel * ft);
+		camera->SetRot( camera->GetRot()   + (avel        * ft));
+		camera->SetRotX(camera->GetRot().x + (autoTiltVel * ft)); // note that this is not smoothed
 	} else {
 		// speed along the tracking direction varies with distance
 		const float3 diff = (pos - trackPos);
@@ -251,14 +248,15 @@ void CFreeController::Update()
 	// angular clamps
 	const float xRotLimit = PI * 0.499f;
 
-	if (camera->rot.x >= xRotLimit) {
+	if (camera->GetRot().x >= xRotLimit) {
 		// maximum upward pitch
-		camera->rot.x = xRotLimit; avel.x = 0.0f;
-	} else if (camera->rot.x <= -xRotLimit) {
+		camera->SetRotX(xRotLimit);
+		avel.x = 0.0f;
+	} else if (camera->GetRot().x <= -xRotLimit) {
 		// maximum downward pitch
-		camera->rot.x = -xRotLimit; avel.x = 0.0f;
+		camera->SetRotX(-xRotLimit);
+		avel.x = 0.0f;
 	}
-	camera->rot.y = math::fmod(camera->rot.y, PI * 2.0f);
 
 	// setup for the next loop
 	prevVel  = vel;
@@ -271,12 +269,7 @@ void CFreeController::Update()
 
 float3 CFreeController::GetDir() const
 {
-	float3 dir;
-	dir.x = (float)(math::sin(camera->rot.y) * math::cos(camera->rot.x));
-	dir.z = (float)(math::cos(camera->rot.y) * math::cos(camera->rot.x));
-	dir.y = (float)(math::sin(camera->rot.x));
-	dir.ANormalize();
-	return dir;
+	return camera->GetDir();
 }
 
 
@@ -422,9 +415,9 @@ void CFreeController::GetState(StateMap& sm) const
 	sm["invertAlt"]   = invertAlt ? +1.0f : -1.0f;
 	sm["gndLock"]     = gndLock   ? +1.0f : -1.0f;
 
-	sm["rx"] = camera->rot.x;
-	sm["ry"] = camera->rot.y;
-	sm["rz"] = camera->rot.z;
+	sm["rx"] = camera->GetRot().x;
+	sm["ry"] = camera->GetRot().y;
+	sm["rz"] = camera->GetRot().z;
 
 	sm["vx"] = prevVel.x;
 	sm["vy"] = prevVel.y;
@@ -454,9 +447,11 @@ bool CFreeController::SetState(const StateMap& sm)
 	SetStateBool (sm, "invertAlt",   invertAlt);
 	SetStateBool (sm, "gndLock",     gndLock);
 
-	SetStateFloat(sm, "rx", camera->rot.x);
-	SetStateFloat(sm, "ry", camera->rot.y);
-	SetStateFloat(sm, "rz", camera->rot.z);
+	float3 rot;
+	SetStateFloat(sm, "rx", rot.x);
+	SetStateFloat(sm, "ry", rot.y);
+	SetStateFloat(sm, "rz", rot.z);
+	camera->SetRot(rot);
 
 	SetStateFloat(sm, "vx", prevVel.x);
 	SetStateFloat(sm, "vy", prevVel.y);

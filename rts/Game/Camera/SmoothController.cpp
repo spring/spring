@@ -47,7 +47,7 @@ SmoothController::SmoothController()
 	}
 
 	maxHeight = 9.5f * std::max(gs->mapx, gs->mapy);
-	UpdateVectors();
+	Update();
 }
 
 void SmoothController::KeyMove(float3 move)
@@ -119,7 +119,7 @@ void SmoothController::MouseMove(float3 move)
 
 	pos += (thisMove + lastMove) / 2.0f;
 	lastMove = (thisMove + lastMove) / 2.0f;
-	UpdateVectors();
+	Update();
 }
 
 
@@ -192,20 +192,16 @@ void SmoothController::MouseWheelMove(float move)
 		}
 	}
 
-	UpdateVectors();
+	Update();
 }
 
-void SmoothController::UpdateVectors()
+void SmoothController::Update()
 {
 	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
 	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 	height = Clamp(height, 60.0f, maxHeight);
 	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
-}
-
-void SmoothController::Update()
-{
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * height * 2.0f;
 }
 
@@ -219,7 +215,7 @@ float3 SmoothController::GetPos() const
 void SmoothController::SetPos(const float3& newPos)
 {
 	pos = newPos;
-	UpdateVectors();
+	Update();
 }
 
 float3 SmoothController::SwitchFrom() const
@@ -252,7 +248,6 @@ bool SmoothController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "height",  height);
 	SetStateFloat(sm, "zscale",  zscale);
 	SetStateBool (sm, "flipped", flipped);
-	UpdateVectors();
 
 	return true;
 }
@@ -284,5 +279,5 @@ void SmoothController::Move(const float3& move, const float timeDiff)
 		pos += move;
 		lastMove = move;
 	}
-	UpdateVectors();
+	Update();
 }

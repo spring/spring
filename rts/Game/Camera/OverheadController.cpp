@@ -46,7 +46,7 @@ COverheadController::COverheadController()
 	}
 
 	maxHeight = 9.5f * std::max(gs->mapx, gs->mapy);
-	UpdateVectors();
+	Update();
 }
 
 void COverheadController::KeyMove(float3 move)
@@ -59,7 +59,7 @@ void COverheadController::KeyMove(float3 move)
 
 	pos.x += move.x * pixelSize * 2.0f * scrollSpeed;
 	pos.z -= move.y * pixelSize * 2.0f * scrollSpeed;
-	UpdateVectors();
+	Update();
 }
 
 void COverheadController::MouseMove(float3 move)
@@ -72,7 +72,7 @@ void COverheadController::MouseMove(float3 move)
 
 	pos.x += move.x * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed;
 	pos.z += move.y * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed;
-	UpdateVectors();
+	Update();
 }
 
 void COverheadController::ScreenEdgeMove(float3 move)
@@ -150,10 +150,10 @@ void COverheadController::MouseWheelMove(float move)
 		}
 	}
 
-	UpdateVectors();
+	Update();
 }
 
-void COverheadController::UpdateVectors()
+void COverheadController::Update()
 {
 	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
 	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
@@ -163,10 +163,6 @@ void COverheadController::UpdateVectors()
 	float alpha = std::roundf(angle / angleStep) * angleStep;
 	alpha = Clamp(alpha, 0.01f, fastmath::HALFPI);
 	dir = float3(0.0f, -fastmath::cos(alpha), flipped ? fastmath::sin(alpha) : -fastmath::sin(alpha));
-}
-
-void COverheadController::Update()
-{
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * height * 2.0f;
 }
 
@@ -179,7 +175,7 @@ float3 COverheadController::GetPos() const
 void COverheadController::SetPos(const float3& newPos)
 {
 	pos = newPos;
-	UpdateVectors();
+	Update();
 }
 
 float3 COverheadController::SwitchFrom() const
@@ -193,7 +189,7 @@ void COverheadController::SwitchTo(bool showText)
 		LOG("Switching to Overhead (TA) style camera");
 	}
 	angle = DEFAULT_ANGLE;
-	UpdateVectors();
+	Update();
 }
 
 void COverheadController::GetState(StateMap& sm) const
@@ -212,7 +208,6 @@ bool COverheadController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "height", height);
 	SetStateFloat(sm, "angle", angle);
 	SetStateBool (sm, "flipped", flipped);
-	UpdateVectors();
 
 	return true;
 }

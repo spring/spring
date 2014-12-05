@@ -1624,7 +1624,7 @@ bool CClassicGroundMoveType::UpdateDirectControl()
 	if (unitCon.right) { ChangeHeading(owner->heading - turnRate); turnSign = -1.0f; }
 
 	if (selfCon.GetControllee() == owner) {
-		camera->rot.y += (turnRate * turnSign * TAANG2RAD);
+		camera->SetRotY(camera->GetRot().y + turnRate * turnSign * TAANG2RAD);
 	}
 
 	return false;

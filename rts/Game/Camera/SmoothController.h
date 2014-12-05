@@ -37,7 +37,6 @@ public:
 	bool flipped;
 
 private:
-	void UpdateVectors();
 	void Move(const float3& move, const float timeDiff);
 
 private:

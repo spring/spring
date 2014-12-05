@@ -159,8 +159,7 @@ void COrbitController::Orbit()
 {
 	camera->SetPos(cen + GetOrbitPos());
 	camera->SetPos((camera->GetPos() + XZVector) + (UpVector * std::max(camera->GetPos().y, CGround::GetHeightReal(camera->GetPos().x, camera->GetPos().z, false))));
-	camera->forward = (cen - camera->GetPos()).ANormalize();
-	camera->up = UpVector;
+	camera->SetDir((cen - camera->GetPos()).ANormalize());
 }
 
 void COrbitController::Pan(int rdx, int rdy)
@@ -184,7 +183,7 @@ void COrbitController::Pan(int rdx, int rdy)
 
 	if (cen.y < cenGH) {
 		cen.y = cenGH;
-		camera->forward = (cen - camera->GetPos()).ANormalize();
+		camera->SetDir((cen - camera->GetPos()).ANormalize());
 
 		Init(camera->GetPos(), cen);
 	}

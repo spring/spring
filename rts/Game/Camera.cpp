@@ -266,9 +266,9 @@ void CCamera::UpdateDirFromRot()
 	forward.z = math::sin(rot.x) * math::sin(rot.y - fastmath::HALFPI);
 	forward.y = math::cos(rot.x);
 
-	right.x = math::sin(rot.z + fastmath::HALFPI) * math::cos(rot.y);
-	right.z = math::sin(rot.z + fastmath::HALFPI) * math::sin(rot.y);
-	right.y = math::cos(rot.z + fastmath::HALFPI);
+	right.x = math::sin(fastmath::HALFPI - rot.z) * math::cos(rot.y);
+	right.z = math::sin(fastmath::HALFPI - rot.z) * math::sin(rot.y);
+	right.y = math::cos(fastmath::HALFPI - rot.z);
 
 	up = right.cross(forward);
 }

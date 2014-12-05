@@ -22,7 +22,7 @@ CRotOverheadController::CRotOverheadController()
 	scrollSpeed = configHandler->GetInt("RotOverheadScrollSpeed") * 0.1f;
 	enabled     = configHandler->GetBool("RotOverheadEnabled");
 	fov         = configHandler->GetFloat("RotOverheadFOV");
-	UpdateVectors();
+	Update();
 }
 
 
@@ -37,16 +37,17 @@ void CRotOverheadController::KeyMove(float3 move)
 	flatForward.ANormalize();
 
 	pos += (flatForward * move.y + camera->GetRight() * move.x) * scrollSpeed;
-	UpdateVectors();
+	Update();
 }
 
 
 void CRotOverheadController::MouseMove(float3 move)
 {
-	camera->rot.y -= mouseScale * move.x;
-	camera->rot.x -= mouseScale * move.y * move.z;
-	camera->rot.x = Clamp(camera->rot.x, -PI*0.4999f, PI*0.4999f);
-	UpdateVectors();
+	camera->SetRotY(camera->GetRot().y + mouseScale * move.x);
+	camera->SetRotX(camera->GetRot().x + mouseScale * move.y * move.z);
+	camera->SetRotX(Clamp(camera->GetRot().x, PI*0.4999f, PI));
+	dir = camera->GetDir();
+	Update();
 }
 
 
@@ -64,16 +65,11 @@ void CRotOverheadController::MouseWheelMove(float move)
 	height *= (1.0f + (move * mouseScale));
 	pos.y = height + gheight;
 
-	UpdateVectors();
+	Update();
 }
 
-void CRotOverheadController::UpdateVectors()
+void CRotOverheadController::Update()
 {
-	dir.x=(float)(math::sin(camera->rot.y) * math::cos(camera->rot.x));
-	dir.y=(float)(math::sin(camera->rot.x));
-	dir.z=(float)(math::cos(camera->rot.y) * math::cos(camera->rot.x));
-	dir.ANormalize();
-
 	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
 	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
 
@@ -86,7 +82,7 @@ void CRotOverheadController::SetPos(const float3& newPos)
 {
 	CCameraController::SetPos(newPos);
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + oldHeight;
-	UpdateVectors();
+	Update();
 }
 
 

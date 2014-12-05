@@ -2214,7 +2214,7 @@ bool CGroundMoveType::UpdateDirectControl()
 
 	if (selfCon.GetControllee() == owner) {
 		// local client is controlling us
-		camera->rot.y += (turnRate * turnSign * TAANG2RAD);
+		camera->SetRotY(camera->GetRot().y + turnRate * turnSign * TAANG2RAD);
 	}
 
 	return wantReverse;

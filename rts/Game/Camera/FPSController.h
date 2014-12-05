@@ -27,8 +27,7 @@ public:
 	void GetState(StateMap& sm) const;
 	bool SetState(const StateMap& sm);
 
-private:
-	void UpdateVectors();
+	void Update();
 
 private:
 	float mouseScale;
