@@ -76,7 +76,7 @@ private:
 
 	struct {
 		float3 pos;
-		float3 dir;
+		float3 rot;
 		float  fov;
 	} startCam;
 

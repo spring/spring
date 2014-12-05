@@ -128,30 +128,24 @@ CCameraHandler::~CCameraHandler()
 
 void CCameraHandler::UpdateCam()
 {
-
-	//??? a lot CameraControllers depend on the calling every frame the 1st part of the if-clause
-	//if (cameraTimeEnd < 0.0f)
-	//	return;
-
 	const float  wantedCamFOV = currCamCtrl->GetFOV();
 	const float3 wantedCamPos = currCamCtrl->GetPos();
-	const float3 wantedCamDir = currCamCtrl->GetDir();
+	const float3 wantedCamRot = currCamCtrl->GetRot();
 
 	const float curTime = spring_now().toMilliSecsf();
 
 	if (curTime >= cameraTimeEnd) {
 		camera->SetPos(wantedCamPos);
-		camera->forward = wantedCamDir;
+		camera->SetRot(wantedCamRot);
 		camera->SetFov(wantedCamFOV);
 	} else {
-		if ((cameraTimeEnd - cameraTimeStart) > 0.0f) {
+		if (cameraTimeEnd > cameraTimeStart) {
 			const float timeRatio = (cameraTimeEnd - curTime) / (cameraTimeEnd - cameraTimeStart);
-			const float tweenFact = 1.0f - (float)math::pow(timeRatio, cameraTimeExponent);
+			const float tweenFact = 1.0f - math::pow(timeRatio, cameraTimeExponent);
 
-			camera->SetPos(   mix(startCam.pos, wantedCamPos, tweenFact));
-			camera->forward = mix(startCam.dir, wantedCamDir, tweenFact);
-			camera->SetFov(   mix(startCam.fov, wantedCamFOV, tweenFact));
-			camera->forward.Normalize();
+			camera->SetPos(mix(startCam.pos, wantedCamPos, tweenFact));
+			camera->SetRot(mix(startCam.rot, wantedCamRot, tweenFact));
+			camera->SetFov(mix(startCam.fov, wantedCamFOV, tweenFact));
 		}
 	}
 }
@@ -168,7 +162,7 @@ void CCameraHandler::CameraTransition(float nsecs)
 	cameraTimeEnd   = cameraTimeStart + nsecs * 1000.0f;
 
 	startCam.pos = camera->GetPos();
-	startCam.dir = camera->forward;
+	startCam.rot = camera->GetRot();
 	startCam.fov = camera->GetFov();
 }
 
