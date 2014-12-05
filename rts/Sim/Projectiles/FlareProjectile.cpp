@@ -123,10 +123,10 @@ void CFlareProjectile::Draw()
 		const float3 interPos = subPos[a] + subSpeed[a] * globalRendering->timeOffset;
 
 		#define fpt projectileDrawer->flareprojectiletex
-		va->AddVertexQTC(interPos - camera->right * rad - camera->up * rad, fpt->xstart, fpt->ystart, col);
-		va->AddVertexQTC(interPos + camera->right * rad - camera->up * rad, fpt->xend,   fpt->ystart, col);
-		va->AddVertexQTC(interPos + camera->right * rad + camera->up * rad, fpt->xend,   fpt->yend,   col);
-		va->AddVertexQTC(interPos - camera->right * rad + camera->up * rad, fpt->xstart, fpt->yend,   col);
+		va->AddVertexQTC(interPos - camera->GetRight() * rad - camera->GetUp() * rad, fpt->xstart, fpt->ystart, col);
+		va->AddVertexQTC(interPos + camera->GetRight() * rad - camera->GetUp() * rad, fpt->xend,   fpt->ystart, col);
+		va->AddVertexQTC(interPos + camera->GetRight() * rad + camera->GetUp() * rad, fpt->xend,   fpt->yend,   col);
+		va->AddVertexQTC(interPos - camera->GetRight() * rad + camera->GetUp() * rad, fpt->xstart, fpt->yend,   col);
 		#undef fpt
 	}
 }

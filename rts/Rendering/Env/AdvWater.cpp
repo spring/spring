@@ -163,7 +163,7 @@ void CAdvWater::Draw(bool useBlending)
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, waterFP);
 	glEnable(GL_FRAGMENT_PROGRAM_ARB);
 
-	float3 forward = camera->forward;
+	float3 forward = camera->GetDir();
 	forward.y = 0;
 	forward.ANormalize();
 

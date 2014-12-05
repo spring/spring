@@ -40,10 +40,10 @@ COrbitController::COrbitController():
 void COrbitController::Init(const float3& p, const float3& tar)
 {
 	const float l = (tar == ZeroVector)?
-		std::max(CGround::LineGroundCol(p, p + camera->forward * 1024.0f, false), 512.0f):
+		std::max(CGround::LineGroundCol(p, p + camera->GetDir() * 1024.0f, false), 512.0f):
 		p.distance(tar);
 
-	const float3 t = (tar == ZeroVector)? (p + camera->forward * l): tar;
+	const float3 t = (tar == ZeroVector)? (p + camera->GetDir() * l): tar;
 	const float3 v = (t - p);
 	const float3 w = (v / v.Length()); // do not normalize v in-place
 
@@ -166,12 +166,12 @@ void COrbitController::Orbit()
 void COrbitController::Pan(int rdx, int rdy)
 {
 	// horizontal pan
-	camera->SetPos(camera->GetPos() + (camera->right * -rdx * panSpeedFact));
-	cen += (camera->right * -rdx * panSpeedFact);
+	camera->SetPos(camera->GetPos() + (camera->GetRight() * -rdx * panSpeedFact));
+	cen += (camera->GetRight() * -rdx * panSpeedFact);
 
 	// vertical pan
-	camera->SetPos(camera->GetPos() + (camera->up * rdy * panSpeedFact));
-	cen += (camera->up * rdy * panSpeedFact);
+	camera->SetPos(camera->GetPos() + (camera->GetUp() * rdy * panSpeedFact));
+	cen += (camera->GetUp() * rdy * panSpeedFact);
 
 
 	// don't allow orbit center or ourselves to drop below the terrain
@@ -192,7 +192,7 @@ void COrbitController::Pan(int rdx, int rdy)
 
 void COrbitController::Zoom()
 {
-	camera->SetPos(cen - (camera->forward * distance));
+	camera->SetPos(cen - (camera->GetDir() * distance));
 }
 
 

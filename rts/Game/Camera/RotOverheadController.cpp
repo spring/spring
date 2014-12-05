@@ -30,13 +30,13 @@ void CRotOverheadController::KeyMove(float3 move)
 {
 	move *= math::sqrt(move.z) * 400;
 
-	float3 flatForward = camera->forward;
-	if(camera->forward.y < -0.9f)
-		flatForward += camera->up;
+	float3 flatForward = camera->GetDir();
+	if(camera->GetDir().y < -0.9f)
+		flatForward += camera->GetUp();
 	flatForward.y = 0;
 	flatForward.ANormalize();
 
-	pos += (flatForward * move.y + camera->right * move.x) * scrollSpeed;
+	pos += (flatForward * move.y + camera->GetRight() * move.x) * scrollSpeed;
 	UpdateVectors();
 }
 

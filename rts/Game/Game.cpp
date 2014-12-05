@@ -1150,7 +1150,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		}
 
 		// TODO call only when camera changed
-		sound->UpdateListener(camera->GetPos(), camera->forward, camera->up, unsyncedUpdateDeltaTime);
+		sound->UpdateListener(camera->GetPos(), camera->GetDir(), camera->GetUp(), unsyncedUpdateDeltaTime);
 	}
 
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?

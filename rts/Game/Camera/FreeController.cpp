@@ -142,16 +142,16 @@ void CFreeController::Update()
 	// convert control velocity into position velocity
 	if (!tracking) {
 		if (goForward) {
-			const float3 tmpVel((camera->forward * vel.x) +
-			                    (UpVector        * vel.y) +
-			                    (camera->right   * vel.z));
+			const float3 tmpVel((camera->GetDir()   * vel.x) +
+					    (UpVector           * vel.y) +
+					    (camera->GetRight() * vel.z));
 			vel = tmpVel;
 		} else {
-			float3 forwardNoY(camera->forward.x, 0.0f, camera->forward.z);
+			float3 forwardNoY(camera->GetDir().x, 0.0f, camera->GetDir().z);
 			forwardNoY.ANormalize();
 			const float3 tmpVel((forwardNoY    * vel.x) +
 			                    (UpVector      * vel.y) +
-			                    (camera->right * vel.z));
+					    (camera->GetRight() * vel.z));
 			vel = tmpVel;
 		}
 	}

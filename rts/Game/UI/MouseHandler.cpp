@@ -227,7 +227,7 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 	scrollx += lastx - screenCenterX;
 	scrolly += lasty - screenCenterY;
 
-	dir = hide ? camera->forward : camera->CalcPixelDir(x,y);
+	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x,y);
 
 	if (locked) {
 		camHandler->GetCurrentController().MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
@@ -265,7 +265,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 	camHandler->GetCurrentController().MousePress(x, y, button);
 
-	dir = hide ? camera->forward : camera->CalcPixelDir(x, y);
+	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
 
 	if (!game->IsGameOver())
 		playerHandler->Player(gu->myPlayerNum)->currentStats.mouseClicks++;
@@ -354,16 +354,16 @@ void CMouseHandler::GetSelectionBoxCoeff(const float3& pos1, const float3& dir1,
 	const float3 cdir2 = (gpos2 - camera->GetPos()).ANormalize();
 
 	// prevent DivByZero
-	float cdir1_fw = cdir1.dot(camera->forward); if (cdir1_fw == 0.0f) cdir1_fw = 0.0001f;
-	float cdir2_fw = cdir2.dot(camera->forward); if (cdir2_fw == 0.0f) cdir2_fw = 0.0001f;
+	float cdir1_fw = cdir1.dot(camera->GetDir()); if (cdir1_fw == 0.0f) cdir1_fw = 0.0001f;
+	float cdir2_fw = cdir2.dot(camera->GetDir()); if (cdir2_fw == 0.0f) cdir2_fw = 0.0001f;
 
 	// one corner of the rectangle
-	topright.x = cdir1.dot(camera->right) / cdir1_fw;
-	topright.y = cdir1.dot(camera->up)    / cdir1_fw;
+	topright.x = cdir1.dot(camera->GetRight()) / cdir1_fw;
+	topright.y = cdir1.dot(camera->GetUp())    / cdir1_fw;
 
 	// opposite corner
-	btmleft.x = cdir2.dot(camera->right) / cdir2_fw;
-	btmleft.y = cdir2.dot(camera->up)    / cdir2_fw;
+	btmleft.x = cdir2.dot(camera->GetRight()) / cdir2_fw;
+	btmleft.y = cdir2.dot(camera->GetUp())    / cdir2_fw;
 
 	// sort coeff so topright really is the topright corner
 	if (topright.x < btmleft.x) std::swap(topright.x, btmleft.x);
@@ -378,7 +378,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 	camHandler->GetCurrentController().MouseRelease(x, y, button);
 
-	dir = hide ? camera->forward : camera->CalcPixelDir(x, y);
+	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
 	buttons[button].pressed = false;
 
 	if (inMapDrawer && inMapDrawer->IsDrawMode()){
@@ -422,16 +422,16 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 			// GetSelectionBoxCoeff returns us the corner pos, but we want to do a inview frustum check.
 			// To do so we need the frustum planes (= plane normal + plane offset).
-			float3 norm1 = camera->up;
-			float3 norm2 = -camera->up;
-			float3 norm3 = camera->right;
-			float3 norm4 = -camera->right;
+			float3 norm1 = camera->GetUp();
+			float3 norm2 = -camera->GetUp();
+			float3 norm3 = camera->GetRight();
+			float3 norm4 = -camera->GetRight();
 
 			#define signf(x) ((x>0.0f) ? 1.0f : -1)
-			if (topright.y != 0) norm1 = (camera->forward * signf(-topright.y)) + (camera->up / math::fabs(topright.y));
-			if (btmleft.y  != 0) norm2 = (camera->forward * signf(  btmleft.y)) - (camera->up / math::fabs(btmleft.y));
-			if (topright.x != 0) norm3 = (camera->forward * signf(-topright.x)) + (camera->right / math::fabs(topright.x));
-			if (btmleft.x  != 0) norm4 = (camera->forward * signf(  btmleft.x)) - (camera->right / math::fabs(btmleft.x));
+			if (topright.y != 0) norm1 = (camera->GetDir() * signf(-topright.y)) + (camera->GetUp() / math::fabs(topright.y));
+			if (btmleft.y  != 0) norm2 = (camera->GetDir() * signf(  btmleft.y)) - (camera->GetUp() / math::fabs(btmleft.y));
+			if (topright.x != 0) norm3 = (camera->GetDir() * signf(-topright.x)) + (camera->GetRight() / math::fabs(topright.x));
+			if (btmleft.x  != 0) norm4 = (camera->GetDir() * signf(  btmleft.x)) - (camera->GetRight() / math::fabs(btmleft.x));
 
 			const float4 plane1(norm1, -(norm1.dot(camera->GetPos())));
 			const float4 plane2(norm2, -(norm2.dot(camera->GetPos())));
@@ -464,7 +464,7 @@ void CMouseHandler::MouseWheel(float delta)
 
 void CMouseHandler::DrawSelectionBox()
 {
-	dir = hide ? camera->forward : camera->CalcPixelDir(lastx, lasty);
+	dir = hide ? camera->GetDir() : camera->CalcPixelDir(lastx, lasty);
 	if (activeReceiver) {
 		return;
 	}
@@ -481,10 +481,10 @@ void CMouseHandler::DrawSelectionBox()
 		float2 topright, btmleft;
 		GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->GetPos(), dir, topright, btmleft);
 
-		float3 dir1S = camera->right * topright.x;
-		float3 dir1U = camera->up    * topright.y;
-		float3 dir2S = camera->right * btmleft.x;
-		float3 dir2U = camera->up    * btmleft.y;
+		float3 dir1S = camera->GetRight() * topright.x;
+		float3 dir1U = camera->GetUp()    * topright.y;
+		float3 dir2S = camera->GetRight() * btmleft.x;
+		float3 dir2U = camera->GetUp()    * btmleft.y;
 
 		glColor4fv(cmdColors.mouseBox);
 
@@ -501,10 +501,10 @@ void CMouseHandler::DrawSelectionBox()
 		glLineWidth(cmdColors.MouseBoxLineWidth());
 
 		float3 verts[] = {
-			camera->GetPos() + (dir1U + dir1S + camera->forward) * 30,
-			camera->GetPos() + (dir2U + dir1S + camera->forward) * 30,
-			camera->GetPos() + (dir2U + dir2S + camera->forward) * 30,
-			camera->GetPos() + (dir1U + dir2S + camera->forward) * 30,
+			camera->GetPos() + (dir1U + dir1S + camera->GetDir()) * 30,
+			camera->GetPos() + (dir2U + dir1S + camera->GetDir()) * 30,
+			camera->GetPos() + (dir2U + dir2S + camera->GetDir()) * 30,
+			camera->GetPos() + (dir1U + dir2S + camera->GetDir()) * 30,
 		};
 
 		glEnableClientState(GL_VERTEX_ARRAY);

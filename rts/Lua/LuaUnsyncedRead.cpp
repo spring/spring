@@ -1340,9 +1340,9 @@ int LuaUnsyncedRead::GetCameraPosition(lua_State* L)
 
 int LuaUnsyncedRead::GetCameraDirection(lua_State* L)
 {
-	lua_pushnumber(L, camera->forward.x);
-	lua_pushnumber(L, camera->forward.y);
-	lua_pushnumber(L, camera->forward.z);
+	lua_pushnumber(L, camera->GetDir().x);
+	lua_pushnumber(L, camera->GetDir().y);
+	lua_pushnumber(L, camera->GetDir().z);
 	return 3;
 }
 
@@ -1356,8 +1356,8 @@ int LuaUnsyncedRead::GetCameraFOV(lua_State* L)
 
 int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 {
-#define PACK_CAMERA_VECTOR(n) \
-	HSTR_PUSH(L, #n);           \
+#define PACK_CAMERA_VECTOR(s,n) \
+	HSTR_PUSH(L, #s);           \
 	lua_createtable(L, 3, 0);            \
 	lua_pushnumber(L, camera-> n .x); lua_rawseti(L, -2, 1); \
 	lua_pushnumber(L, camera-> n .y); lua_rawseti(L, -2, 2); \
@@ -1365,13 +1365,13 @@ int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 	lua_rawset(L, -3)
 
 	lua_newtable(L);
-	PACK_CAMERA_VECTOR(forward);
-	PACK_CAMERA_VECTOR(up);
-	PACK_CAMERA_VECTOR(right);
-	PACK_CAMERA_VECTOR(topFrustumSideDir);
-	PACK_CAMERA_VECTOR(botFrustumSideDir);
-	PACK_CAMERA_VECTOR(lftFrustumSideDir);
-	PACK_CAMERA_VECTOR(rgtFrustumSideDir);
+	PACK_CAMERA_VECTOR(forward, GetDir());
+	PACK_CAMERA_VECTOR(up, GetUp());
+	PACK_CAMERA_VECTOR(right, GetRight());
+	PACK_CAMERA_VECTOR(topFrustumSideDir, topFrustumSideDir);
+	PACK_CAMERA_VECTOR(botFrustumSideDir, botFrustumSideDir);
+	PACK_CAMERA_VECTOR(lftFrustumSideDir, lftFrustumSideDir);
+	PACK_CAMERA_VECTOR(rgtFrustumSideDir, rgtFrustumSideDir);
 
 	return 1;
 }

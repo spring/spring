@@ -33,7 +33,7 @@ CFPSController::CFPSController()
 void CFPSController::KeyMove(float3 move)
 {
 	move *= move.z * 400;
-	pos  += (camera->forward * move.y + camera->right * move.x) * scrollSpeed;
+	pos  += (camera->GetDir() * move.y + camera->GetRight() * move.x) * scrollSpeed;
 	UpdateVectors();
 }
 
@@ -55,7 +55,7 @@ void CFPSController::ScreenEdgeMove(float3 move)
 
 void CFPSController::MouseWheelMove(float move)
 {
-	pos += (camera->up * move);
+	pos += (camera->GetUp() * move);
 	UpdateVectors();
 }
 

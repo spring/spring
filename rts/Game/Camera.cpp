@@ -20,16 +20,16 @@ CCamera* cam2;
 
 
 CCamera::CCamera()
-	: rot(ZeroVector)
+	: pos(ZeroVector)
+	, rot(ZeroVector)
 	, forward(RgtVector)
 	, up(UpVector)
-	, posOffset(ZeroVector)
-	, tiltOffset(ZeroVector)
-	, pos(ZeroVector)
 	, fov(0.0f)
 	, halfFov(0.0f)
 	, tanHalfFov(0.0f)
 	, lppScale(0.0f)
+	, posOffset(ZeroVector)
+	, tiltOffset(ZeroVector)
 {
 	if (gs) {
 		// center map
@@ -202,7 +202,7 @@ void CCamera::UpdateRightAndUp(bool terrainReflectionPass)
 		// make sure we can still yaw at limits of pitch
 		// (since CamHandler only updates forward, which
 		// is derived from rot)
-		right = float3(-std::cos(rot.y), 0.0f, std::sin(camera->rot.y));
+		right = float3(-std::cos(rot.y), 0.0f, std::sin(rot.y));
 		up = (right.cross(forward)).UnsafeANormalize();
 	} else {
 		// in the terrain reflection pass everything is upside-down!
