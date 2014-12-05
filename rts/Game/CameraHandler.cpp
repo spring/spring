@@ -182,6 +182,7 @@ void CCameraHandler::SetCameraMode(unsigned int mode)
 	currCamCtrl = camControllers[mode];
 	currCamCtrl->SetPos(oldCamCtrl->SwitchFrom());
 	currCamCtrl->SwitchTo();
+	currCamCtrl->Update();
 }
 
 
@@ -335,13 +336,14 @@ bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 			currCamCtrl->SwitchTo();
 		}
 	}
-	return currCamCtrl->SetState(sm);
+	bool result = currCamCtrl->SetState(sm);
+	currCamCtrl->Update();
+	return result;
 }
 
 
 const std::string CCameraHandler::GetCurrentControllerName() const
 {
-
 	return currCamCtrl->GetName();
 }
 
@@ -386,7 +388,7 @@ void CCameraHandler::PushAction(const Action& action)
 			} else {
 				taCam->flipped = !taCam->flipped;
 			}
-			taCam->KeyMove(ZeroVector); //FIXME add a more clean way to force a call to ::UpdateVectors()
+			taCam->Update();
 		}
 		if (smCam) {
 			if (!action.extra.empty()) {
@@ -394,7 +396,7 @@ void CCameraHandler::PushAction(const Action& action)
 			} else {
 				smCam->flipped = !smCam->flipped;
 			}
-			smCam->KeyMove(ZeroVector); //FIXME add a more clean way to force a call to ::UpdateVectors()
+			smCam->Update();
 		}
 	}
 	else if (cmd == "viewsave") {
